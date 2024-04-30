@@ -2,9 +2,10 @@
 
 set -e
 
-sudo apt-get update -y --quiet
+apt-get update -y --quiet
 
-sudo DEBIAN_FRONTEND=noninteractive apt-get -y --quiet --no-install-recommends install \
+#Build Tools
+DEBIAN_FRONTEND=noninteractive apt-get -y --quiet --no-install-recommends install \
 	build-essential \
 	ccache \
 	cmake \
@@ -19,20 +20,25 @@ sudo DEBIAN_FRONTEND=noninteractive apt-get -y --quiet --no-install-recommends i
 	ninja-build \
 	rsync \
     binutils \
+    locales \
     patchelf
 
-sudo DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
+#Qt Required
+DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
 	libxcb-xinerama0 \
     libxkbcommon-x11-0 \
-    libxcb-cursor0 \
-    libdrm-dev \
+    libxcb-cursor0
+
+#QGC
+DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
 	libsdl2-dev \
 	libspeechd2 \
 	flite \
 	speech-dispatcher \
 	speech-dispatcher-flite
 
-sudo DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
+#GStreamer
+DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
 	libgstreamer1.0-dev \
 	libgstreamer-plugins-base1.0-dev \
 	libgstreamer-plugins-good1.0-dev \
@@ -53,4 +59,5 @@ sudo DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
 	gstreamer1.0-gl \
 	gstreamer1.0-libav \
 	gstreamer1.0-vaapi \
-	gstreamer1.0-rtsp
+	gstreamer1.0-rtsp \
+    libdrm-dev

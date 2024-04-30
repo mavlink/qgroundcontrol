@@ -46,8 +46,8 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          chmod a+x ./tools/setup/ubuntu.sh
-          ./tools/setup/ubuntu.sh
+          chmod a+x ./tools/setup/install-dependencies-debian.sh
+          sudo ./tools/setup/install-dependencies-debian.sh
 
       - name: Install Build Tools
         run: |
