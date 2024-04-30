@@ -15,7 +15,7 @@
 #include "QGCApplication.h"
 #include "FirmwarePlugin.h"
 #include "Vehicle.h"
-#include "FactSystem.h"
+#include "VehicleComponent.h"
 
 AutoPilotPlugin::AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     : QObject(parent)

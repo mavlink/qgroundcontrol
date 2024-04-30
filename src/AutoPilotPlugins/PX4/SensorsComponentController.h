@@ -14,7 +14,7 @@
 #ifndef SENSORSCOMPONENTCONTROLLER_H
 #define SENSORSCOMPONENTCONTROLLER_H
 
-#include <QQuickItem>
+#include <QtQuick/QQuickItem>
 #include <QtCore/QLoggingCategory>
 
 #include "FactPanelController.h"

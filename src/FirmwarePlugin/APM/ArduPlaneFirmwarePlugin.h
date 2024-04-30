@@ -11,8 +11,7 @@
 /// @file
 ///     @author Pritam Ghanghas <pritam.ghanghas@gmail.com>
 
-#ifndef ArduPlaneFirmwarePlugin_H
-#define ArduPlaneFirmwarePlugin_H
+#pragma once
 
 #include "APMFirmwarePlugin.h"
 
@@ -68,5 +67,3 @@ private:
     static bool _remapParamNameIntialized;
     static FirmwarePlugin::remapParamNameMajorVersionMap_t  _remapParamName;
 };
-
-#endif

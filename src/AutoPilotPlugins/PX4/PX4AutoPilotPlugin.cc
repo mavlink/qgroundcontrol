@@ -20,6 +20,7 @@
 #include "FactSystem.h"
 #include "ParameterManager.h"
 #include "Vehicle.h"
+#include "ActuatorComponent.h"
 
 /// @file
 ///     @brief This is the AutoPilotPlugin implementatin for the MAV_AUTOPILOT_PX4 type.

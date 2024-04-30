@@ -8,8 +8,7 @@
  ****************************************************************************/
 
 
-#ifndef APMAirframeComponent_H
-#define APMAirframeComponent_H
+#pragma once
 
 #include "VehicleComponent.h"
 
@@ -42,5 +41,3 @@ private:
 
     static const char* _frameClassParam;
 };
-
-#endif
