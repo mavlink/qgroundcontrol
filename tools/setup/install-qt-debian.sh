@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
 # Set default variables
-QT_VERSION="${QT_VERSION:-5.15.2}"
+QT_VERSION="${QT_VERSION:-6.6.3}"
 QT_PATH="${QT_PATH:-/opt/Qt}"
 QT_HOST="${QT_HOST:-linux}"
 QT_TARGET="${QT_TARGET:-desktop}"
-QT_MODULES="${QT_MODULES:-qtcharts}"
+QT_MODULES="${QT_MODULES:-qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d}"
 
 # Exit immediately if a command exits with a non-zero status
 set -e
