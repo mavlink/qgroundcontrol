@@ -2,7 +2,7 @@
 <Package>
     <DisplayName>QGroundControl Application</DisplayName>
     <Description>Install QGroundControl.</Description>
-    <Version>1.0.0-1</Version>
+    <Version>5.0</Version>
     <ReleaseDate>2024-02-28</ReleaseDate>
     <Name>org.mavlink.qgroundcontrol</Name>
     <Licenses>
