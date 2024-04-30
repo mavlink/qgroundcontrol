@@ -10,17 +10,17 @@
 #pragma once
 /// @file
 
-#include "QGCMAVLink.h"
-#include "VehicleComponent.h"
-#include "AutoPilotPlugin.h"
-#include "GeoFenceManager.h"
-#include "RallyPointManager.h"
-#include "FollowMe.h"
-
 #include <QtCore/QList>
 #include <QtCore/QString>
 #include <QtCore/QVariantList>
+#include <QtPositioning/QGeoCoordinate>
 
+#include "QGCMAVLink.h"
+#include "FollowMe.h"
+#include "FactMetaData.h"
+
+class VehicleComponent;
+class AutoPilotPlugin;
 class Vehicle;
 class MavlinkCameraControl;
 class QGCCameraManager;

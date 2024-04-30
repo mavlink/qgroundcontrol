@@ -8,8 +8,7 @@
  ****************************************************************************/
 
 
-#ifndef APMMotorComponent_H
-#define APMMotorComponent_H
+#pragma once
 
 #include "MotorComponent.h"
 
@@ -31,5 +30,3 @@ public:
 private:
     const QString   _name;
 };
-
-#endif

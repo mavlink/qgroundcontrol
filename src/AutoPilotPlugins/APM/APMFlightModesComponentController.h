@@ -8,12 +8,10 @@
  ****************************************************************************/
 
 
-#ifndef APMFlightModesComponentController_H
-#define APMFlightModesComponentController_H
+#pragma once
 
-#include <QStringList>
+#include <QtCore/QStringList>
 
-#include "AutoPilotPlugin.h"
 #include "FactPanelController.h"
 #include "Vehicle.h"
 
@@ -86,5 +84,3 @@ private:
 
     static bool _typeRegistered;
 };
-
-#endif

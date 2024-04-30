@@ -9,7 +9,6 @@
 
 
 #include "APMFlightModesComponent.h"
-#include "APMAutoPilotPlugin.h"
 
 APMFlightModesComponent::APMFlightModesComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
     VehicleComponent(vehicle, autopilot, parent),

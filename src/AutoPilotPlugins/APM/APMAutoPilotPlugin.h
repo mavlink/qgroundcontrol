@@ -8,11 +8,9 @@
  ****************************************************************************/
 
 
-#ifndef APMAutoPilotPlugin_H
-#define APMAutoPilotPlugin_H
+#pragma once
 
 #include "AutoPilotPlugin.h"
-#include "Vehicle.h"
 
 class APMAirframeComponent;
 class APMFlightModesComponent;
@@ -29,6 +27,7 @@ class ESP8266Component;
 class APMHeliComponent;
 class APMRemoteSupportComponent;
 class APMFollowComponent;
+class Vehicle;
 
 /// This is the APM specific implementation of the AutoPilot class.
 class APMAutoPilotPlugin : public AutoPilotPlugin
@@ -72,5 +71,3 @@ private slots:
 private:
     QVariantList                _components;
 };
-
-#endif

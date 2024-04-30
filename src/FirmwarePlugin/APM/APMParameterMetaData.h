@@ -8,13 +8,12 @@
  ****************************************************************************/
 
 
-#ifndef APMParameterMetaData_H
-#define APMParameterMetaData_H
+#pragma once
 
-#include <QObject>
-#include <QMap>
-#include <QXmlStreamReader>
-#include <QLoggingCategory>
+#include <QtCore/QObject>
+#include <QtCore/QMap>
+#include <QtCore/QXmlStreamReader>
+#include <QtCore/QLoggingCategory>
 
 #include "QGCMAVLink.h"
 #include "FactMetaData.h"
@@ -86,5 +85,3 @@ private:
     // FIXME: metadata is vehicle type specific now
     QMap<QString, ParameterNametoFactMetaDataMap>   _vehicleTypeToParametersMap;                ///< Maps from a vehicle type to paramametertoFactMeta map>
 };
-
-#endif

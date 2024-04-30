@@ -69,6 +69,7 @@ target_link_libraries(qgc
                 AutoPilotPlugins
                 Camera
                 comm
+                CommonAutoPilotPlugin
                 FactSystem
                 FirmwarePlugin
                 FlightMap
