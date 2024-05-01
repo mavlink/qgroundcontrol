@@ -90,8 +90,7 @@ if(QGC_ZEROCONF_ENABLED)
 	include(FetchContent)
 	FetchContent_Declare(qmdnsengine
 		GIT_REPOSITORY https://github.com/nitroshare/qmdnsengine.git
-		GIT_TAG d61e497
-		GIT_SHALLOW TRUE
+		GIT_TAG 4e54bc86c8ed2d4fa2e7449d4ba6a6a2742d9eb1
 	)
 	FetchContent_MakeAvailable(qmdnsengine)
 
@@ -102,8 +101,7 @@ endif()
 include(FetchContent)
 FetchContent_Declare(mavlink
 	GIT_REPOSITORY https://github.com/mavlink/c_library_v2.git
-	GIT_TAG d9a68c5
-	GIT_SHALLOW TRUE
+	GIT_TAG 878a0660666bbb7b982bad4f0d10fad88b1b82d1
 )
 FetchContent_MakeAvailable(mavlink)
 
