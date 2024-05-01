@@ -717,7 +717,7 @@ ApplicationWindow {
         function calcXPosition() {
             if (indicatorItem) {
                 var xCenter = indicatorItem.mapToItem(mainWindow.contentItem, indicatorItem.width / 2, 0).x
-                return Math.max(_margins, xCenter - (contentItem.implicitWidth / 2))
+                return Math.max(_margins, Math.min(xCenter - (contentItem.implicitWidth / 2), mainWindow.contentItem.width - contentItem.implicitWidth - _margins - (indicatorDrawer.padding * 2) - (ScreenTools.defaultFontPixelHeight / 2)))
             } else {
                 return _margins
             }
