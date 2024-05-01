@@ -122,3 +122,5 @@ else()
 			RunGuard.h
 	)
 endif()
+
+target_precompile_headers(qgc PUBLIC ${CMAKE_SOURCE_DIR}/src/pch.h)

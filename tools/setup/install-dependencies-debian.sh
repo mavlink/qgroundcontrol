@@ -54,10 +54,7 @@ DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
 	gstreamer1.0-alsa \
 	gstreamer1.0-gl \
 	gstreamer1.0-gtk3 \
-	gstreamer1.0-qt5 \
-	gstreamer1.0-pulseaudio \
 	gstreamer1.0-gl \
-	gstreamer1.0-libav \
 	gstreamer1.0-vaapi \
 	gstreamer1.0-rtsp \
     libdrm-dev

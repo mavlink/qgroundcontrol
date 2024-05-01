@@ -48,6 +48,7 @@ jobs:
         run: |
           chmod a+x ./tools/setup/install-dependencies-debian.sh
           sudo ./tools/setup/install-dependencies-debian.sh
+          sudo apt clean
 
       - name: Install Build Tools
         run: |
