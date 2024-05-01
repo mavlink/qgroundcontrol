@@ -37,8 +37,7 @@ set(BUILD_APPS OFF CACHE INTERNAL "")
 include(FetchContent)
 FetchContent_Declare(shapelib
 	GIT_REPOSITORY https://github.com/OSGeo/shapelib.git
-	GIT_TAG 6fe5012
-	GIT_SHALLOW TRUE
+	GIT_TAG 6fe5012d0d893964943befc2034a055d5aa588a8
 )
 FetchContent_GetProperties(shapelib)
 if(NOT shapelib_POPULATED)
