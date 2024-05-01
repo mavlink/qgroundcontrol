@@ -27,8 +27,6 @@ target_link_libraries(libevents_wrapper
 		libevents
 )
 
-cmake_print_variables(libevents_SOURCE_DIR)
-
 target_include_directories(libevents_wrapper
 	PUBLIC
 		${CMAKE_CURRENT_SOURCE_DIR}
