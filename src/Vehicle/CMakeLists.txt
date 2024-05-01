@@ -1,4 +1,6 @@
 add_subdirectory(Actuators)
+add_subdirectory(Components)
+add_subdirectory(FactGroups)
 add_subdirectory(LibEvents)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Positioning Qml)
@@ -6,26 +8,8 @@ find_package(Qt6 REQUIRED COMPONENTS Core Gui Positioning Qml)
 qt_add_library(Vehicle STATIC
 	Autotune.cpp
 	Autotune.h
-	CompInfo.cc
-	CompInfo.h
-	CompInfoActuators.cc
-	CompInfoActuators.h
-	CompInfoEvents.cc
-	CompInfoEvents.h
-	CompInfoGeneral.cc
-	CompInfoGeneral.h
-	CompInfoParam.cc
-	CompInfoParam.h
-	ComponentInformationCache.cc
-	ComponentInformationCache.h
-	ComponentInformationManager.cc
-	ComponentInformationManager.h
-	ComponentInformationTranslation.cc
-	ComponentInformationTranslation.h
 	FTPManager.cc
 	FTPManager.h
-	GPSRTKFactGroup.cc
-	GPSRTKFactGroup.h
 	ImageProtocolManager.cc
 	ImageProtocolManager.h
 	InitialConnectStateMachine.cc
@@ -40,12 +24,8 @@ qt_add_library(Vehicle STATIC
 	RemoteIDManager.h
 	StandardModes.cc
 	StandardModes.h
-	StateMachine.cc
-	StateMachine.h
 	SysStatusSensorInfo.cc
 	SysStatusSensorInfo.h
-	TerrainFactGroup.cc
-	TerrainFactGroup.h
 	TerrainProtocolHandler.cc
 	TerrainProtocolHandler.h
 	TrajectoryPoints.cc
@@ -54,55 +34,22 @@ qt_add_library(Vehicle STATIC
 	UASMessageHandler.h
 	Vehicle.cc
 	Vehicle.h
-	VehicleBatteryFactGroup.cc
-	VehicleBatteryFactGroup.h
-	VehicleClockFactGroup.cc
-	VehicleClockFactGroup.h
-	VehicleDistanceSensorFactGroup.cc
-	VehicleDistanceSensorFactGroup.h
-	VehicleEFIFactGroup.cc
-	VehicleEFIFactGroup.h
-	VehicleEscStatusFactGroup.cc
-	VehicleEscStatusFactGroup.h
-	VehicleEstimatorStatusFactGroup.cc
-	VehicleEstimatorStatusFactGroup.h
-	VehicleGeneratorFactGroup.cc
-	VehicleGeneratorFactGroup.h
-	VehicleGPS2FactGroup.cc
-	VehicleGPS2FactGroup.h
-	VehicleGPSFactGroup.cc
-	VehicleGPSFactGroup.h
 	VehicleLinkManager.cc
 	VehicleLinkManager.h
-	VehicleLocalPositionFactGroup.cc
-	VehicleLocalPositionFactGroup.h
-	VehicleLocalPositionSetpointFactGroup.cc
-	VehicleLocalPositionSetpointFactGroup.h
 	VehicleObjectAvoidance.cc
 	VehicleObjectAvoidance.h
-	VehicleSetpointFactGroup.cc
-	VehicleSetpointFactGroup.h
-	VehicleTemperatureFactGroup.cc
-	VehicleTemperatureFactGroup.h
-	VehicleVibrationFactGroup.cc
-	VehicleVibrationFactGroup.h
-	VehicleWindFactGroup.cc
-	VehicleWindFactGroup.h
-	VehicleHygrometerFactGroup.cc
-	VehicleHygrometerFactGroup.h
 )
 
 target_link_libraries(Vehicle
 	PRIVATE
 		Qt6::Qml
-		Actuators
+		VehicleActuators
+		VehicleComponents
 		ADSB
         api
 		Audio
         Camera
-		Compression
 		FirmwarePlugin
-        Geo
         MockLink
         Utilities
 		UTMSP
@@ -115,6 +62,7 @@ target_link_libraries(Vehicle
 		FactSystem
         MissionManager
         qgc
+        VehicleFactGroups
 )
 
 target_include_directories(Vehicle PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

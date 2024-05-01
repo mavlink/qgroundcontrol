@@ -30,6 +30,7 @@ target_link_libraries(FactSystem
 		Settings
 		Utilities
 		Vehicle
+		VehicleComponents
     PUBLIC
     	Qt6::Core
 		qgc
