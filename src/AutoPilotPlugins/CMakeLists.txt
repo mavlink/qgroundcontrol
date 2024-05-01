@@ -108,7 +108,7 @@ target_link_libraries(AutoPilotPlugins
                 FirmwarePlugin
                 VehicleSetup
     PRIVATE
-        Actuators
+        VehicleActuators
         qgc
 )
 

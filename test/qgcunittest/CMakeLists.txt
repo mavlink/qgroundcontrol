@@ -18,6 +18,7 @@ target_link_libraries(qgcunittest
 	PUBLIC
 		MockLink
 		qgc
+                VehicleComponents
 		Qt6::Test
 )
 

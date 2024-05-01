@@ -19,6 +19,8 @@ qt_add_library(Utilities STATIC
     ShapeFileHelper.h
     SHPFileHelper.cc
     SHPFileHelper.h
+	StateMachine.cc
+	StateMachine.h
 )
 
 if(MOBILE)
