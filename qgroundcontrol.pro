@@ -379,6 +379,8 @@ INCLUDEPATH += \
     src/Terrain \
     src/Vehicle \
     src/Vehicle/Actuators \
+    src/Vehicle/Components \
+    src/Vehicle/FactGroups \
     src/Vehicle/LibEvents \
     src/Audio \
     src/comm \
@@ -405,7 +407,7 @@ HEADERS += \
     src/QmlControls/CustomAction.h \
     src/QmlControls/CustomActionManager.h \
     src/QmlControls/QmlUnitsConversion.h \
-    src/Vehicle/VehicleEscStatusFactGroup.h \
+    src/Vehicle/FactGroups/VehicleEscStatusFactGroup.h \
     src/api/QGCCorePlugin.h \
     src/api/QGCOptions.h \
     src/api/QGCSettings.h \
@@ -414,7 +416,7 @@ HEADERS += \
 
 SOURCES += \
     src/QmlControls/CustomActionManager.cc \
-    src/Vehicle/VehicleEscStatusFactGroup.cc \
+    src/Vehicle/FactGroups/VehicleEscStatusFactGroup.cc \
     src/api/QGCCorePlugin.cc \
     src/api/QGCOptions.cc \
     src/api/QGCSettings.cc \
@@ -562,46 +564,46 @@ HEADERS += \
     src/Vehicle/LibEvents/EventHandler.h \
     src/Vehicle/LibEvents/HealthAndArmingCheckReport.h \
     src/Vehicle/LibEvents/libevents_includes.h \
-    src/Vehicle/CompInfo.h \
-    src/Vehicle/CompInfoActuators.h \
-    src/Vehicle/CompInfoEvents.h \
-    src/Vehicle/CompInfoParam.h \
-    src/Vehicle/CompInfoGeneral.h \
-    src/Vehicle/ComponentInformationCache.h \
-    src/Vehicle/ComponentInformationManager.h \
-    src/Vehicle/ComponentInformationTranslation.h \
+    src/Vehicle/Components/CompInfo.h \
+    src/Vehicle/Components/CompInfoActuators.h \
+    src/Vehicle/Components/CompInfoEvents.h \
+    src/Vehicle/Components/CompInfoParam.h \
+    src/Vehicle/Components/CompInfoGeneral.h \
+    src/Vehicle/Components/ComponentInformationCache.h \
+    src/Vehicle/Components/ComponentInformationManager.h \
+    src/Vehicle/Components/ComponentInformationTranslation.h \
     src/Vehicle/FTPManager.h \
-    src/Vehicle/GPSRTKFactGroup.h \
+    src/Vehicle/FactGroups/GPSRTKFactGroup.h \
     src/Vehicle/ImageProtocolManager.h \
     src/Vehicle/InitialConnectStateMachine.h \
     src/Vehicle/MAVLinkLogManager.h \
     src/Vehicle/MAVLinkStreamConfig.h \
     src/Vehicle/MultiVehicleManager.h \
     src/Vehicle/RemoteIDManager.h \
-    src/Vehicle/StateMachine.h \
+    src/Utilities/StateMachine.h \
     src/Vehicle/StandardModes.h \
     src/Vehicle/SysStatusSensorInfo.h \
-    src/Vehicle/TerrainFactGroup.h \
+    src/Vehicle/FactGroups/TerrainFactGroup.h \
     src/Vehicle/TerrainProtocolHandler.h \
     src/Vehicle/TrajectoryPoints.h \
     src/Vehicle/Vehicle.h \
     src/Vehicle/VehicleObjectAvoidance.h \
-    src/Vehicle/VehicleBatteryFactGroup.h \
-    src/Vehicle/VehicleClockFactGroup.h \
-    src/Vehicle/VehicleDistanceSensorFactGroup.h \
-    src/Vehicle/VehicleEstimatorStatusFactGroup.h \
-    src/Vehicle/VehicleLocalPositionFactGroup.h \
-    src/Vehicle/VehicleLocalPositionSetpointFactGroup.h \
-    src/Vehicle/VehicleGPSFactGroup.h \
-    src/Vehicle/VehicleGPS2FactGroup.h \
+    src/Vehicle/FactGroups/VehicleBatteryFactGroup.h \
+    src/Vehicle/FactGroups/VehicleClockFactGroup.h \
+    src/Vehicle/FactGroups/VehicleDistanceSensorFactGroup.h \
+    src/Vehicle/FactGroups/VehicleEstimatorStatusFactGroup.h \
+    src/Vehicle/FactGroups/VehicleLocalPositionFactGroup.h \
+    src/Vehicle/FactGroups/VehicleLocalPositionSetpointFactGroup.h \
+    src/Vehicle/FactGroups/VehicleGPSFactGroup.h \
+    src/Vehicle/FactGroups/VehicleGPS2FactGroup.h \
     src/Vehicle/VehicleLinkManager.h \
-    src/Vehicle/VehicleSetpointFactGroup.h \
-    src/Vehicle/VehicleTemperatureFactGroup.h \
-    src/Vehicle/VehicleVibrationFactGroup.h \
-    src/Vehicle/VehicleWindFactGroup.h \
-    src/Vehicle/VehicleHygrometerFactGroup.h \
-    src/Vehicle/VehicleGeneratorFactGroup.h \
-    src/Vehicle/VehicleEFIFactGroup.h \
+    src/Vehicle/FactGroups/VehicleSetpointFactGroup.h \
+    src/Vehicle/FactGroups/VehicleTemperatureFactGroup.h \
+    src/Vehicle/FactGroups/VehicleVibrationFactGroup.h \
+    src/Vehicle/FactGroups/VehicleWindFactGroup.h \
+    src/Vehicle/FactGroups/VehicleHygrometerFactGroup.h \
+    src/Vehicle/FactGroups/VehicleGeneratorFactGroup.h \
+    src/Vehicle/FactGroups/VehicleEFIFactGroup.h \
     src/VehicleSetup/JoystickConfigController.h \
     src/comm/LinkConfiguration.h \
     src/comm/LinkInterface.h \
@@ -826,46 +828,46 @@ SOURCES += \
     src/Vehicle/LibEvents/EventHandler.cc \
     src/Vehicle/LibEvents/HealthAndArmingCheckReport.cc \
     src/Vehicle/LibEvents/logging.cpp \
-    src/Vehicle/CompInfo.cc \
-    src/Vehicle/CompInfoActuators.cc \
-    src/Vehicle/CompInfoEvents.cc \
-    src/Vehicle/CompInfoParam.cc \
-    src/Vehicle/CompInfoGeneral.cc \
-    src/Vehicle/ComponentInformationCache.cc \
-    src/Vehicle/ComponentInformationManager.cc \
-    src/Vehicle/ComponentInformationTranslation.cc \
+    src/Vehicle/Components/CompInfo.cc \
+    src/Vehicle/Components/CompInfoActuators.cc \
+    src/Vehicle/Components/CompInfoEvents.cc \
+    src/Vehicle/Components/CompInfoParam.cc \
+    src/Vehicle/Components/CompInfoGeneral.cc \
+    src/Vehicle/Components/ComponentInformationCache.cc \
+    src/Vehicle/Components/ComponentInformationManager.cc \
+    src/Vehicle/Components/ComponentInformationTranslation.cc \
     src/Vehicle/FTPManager.cc \
-    src/Vehicle/GPSRTKFactGroup.cc \
+    src/Vehicle/FactGroups/GPSRTKFactGroup.cc \
     src/Vehicle/ImageProtocolManager.cc \
     src/Vehicle/InitialConnectStateMachine.cc \
     src/Vehicle/MAVLinkLogManager.cc \
     src/Vehicle/MAVLinkStreamConfig.cc \
     src/Vehicle/MultiVehicleManager.cc \
     src/Vehicle/RemoteIDManager.cc \
-    src/Vehicle/StateMachine.cc \
+    src/Utilities/StateMachine.cc \
     src/Vehicle/StandardModes.cc \
     src/Vehicle/SysStatusSensorInfo.cc \
-    src/Vehicle/TerrainFactGroup.cc \
+    src/Vehicle/FactGroups/TerrainFactGroup.cc \
     src/Vehicle/TerrainProtocolHandler.cc \
     src/Vehicle/TrajectoryPoints.cc \
     src/Vehicle/Vehicle.cc \
     src/Vehicle/VehicleObjectAvoidance.cc \
-    src/Vehicle/VehicleBatteryFactGroup.cc \
-    src/Vehicle/VehicleClockFactGroup.cc \
-    src/Vehicle/VehicleDistanceSensorFactGroup.cc \
-    src/Vehicle/VehicleEstimatorStatusFactGroup.cc \
-    src/Vehicle/VehicleLocalPositionFactGroup.cc \
-    src/Vehicle/VehicleLocalPositionSetpointFactGroup.cc \
-    src/Vehicle/VehicleGPSFactGroup.cc \
-    src/Vehicle/VehicleGPS2FactGroup.cc \
+    src/Vehicle/FactGroups/VehicleBatteryFactGroup.cc \
+    src/Vehicle/FactGroups/VehicleClockFactGroup.cc \
+    src/Vehicle/FactGroups/VehicleDistanceSensorFactGroup.cc \
+    src/Vehicle/FactGroups/VehicleEstimatorStatusFactGroup.cc \
+    src/Vehicle/FactGroups/VehicleLocalPositionFactGroup.cc \
+    src/Vehicle/FactGroups/VehicleLocalPositionSetpointFactGroup.cc \
+    src/Vehicle/FactGroups/VehicleGPSFactGroup.cc \
+    src/Vehicle/FactGroups/VehicleGPS2FactGroup.cc \
     src/Vehicle/VehicleLinkManager.cc \
-    src/Vehicle/VehicleSetpointFactGroup.cc \
-    src/Vehicle/VehicleTemperatureFactGroup.cc \
-    src/Vehicle/VehicleVibrationFactGroup.cc \
-    src/Vehicle/VehicleHygrometerFactGroup.cc \
-    src/Vehicle/VehicleGeneratorFactGroup.cc \
-    src/Vehicle/VehicleEFIFactGroup.cc \
-    src/Vehicle/VehicleWindFactGroup.cc \
+    src/Vehicle/FactGroups/VehicleSetpointFactGroup.cc \
+    src/Vehicle/FactGroups/VehicleTemperatureFactGroup.cc \
+    src/Vehicle/FactGroups/VehicleVibrationFactGroup.cc \
+    src/Vehicle/FactGroups/VehicleHygrometerFactGroup.cc \
+    src/Vehicle/FactGroups/VehicleGeneratorFactGroup.cc \
+    src/Vehicle/FactGroups/VehicleEFIFactGroup.cc \
+    src/Vehicle/FactGroups/VehicleWindFactGroup.cc \
     src/VehicleSetup/JoystickConfigController.cc \
     src/comm/LinkConfiguration.cc \
     src/comm/LinkInterface.cc \
