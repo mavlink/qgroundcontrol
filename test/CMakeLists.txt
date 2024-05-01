@@ -20,6 +20,7 @@ if (QGC_BUILD_TESTING)
 
     add_subdirectory(AnalyzeView)
     add_subdirectory(Audio)
+    add_subdirectory(Compression)
     add_subdirectory(FactSystem)
     add_subdirectory(Geo)
     add_subdirectory(MissionManager)
@@ -33,6 +34,7 @@ if (QGC_BUILD_TESTING)
     add_qgc_test(CameraCalcTest)
     add_qgc_test(CameraSectionTest)
     add_qgc_test(CorridorScanComplexItemTest)
+    add_qgc_test(DecompressionTest)
     add_qgc_test(FactSystemTestGeneric)
     add_qgc_test(FactSystemTestPX4)
     #add_qgc_test(FileDialogTest)
@@ -64,6 +66,7 @@ if (QGC_BUILD_TESTING)
         PUBLIC
             AnalyzeViewTest
             AudioTest
+            CompressionTest
             FactSystemTest
             GeoTest
             MissionManagerTest
