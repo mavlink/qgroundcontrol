@@ -10,10 +10,11 @@ elseif(LINUX)
 	set(GST_TARGET_VERSION 1.16)
 else()
 	set(GST_TARGET_VERSION 1.22.11)
-	include(DownloadGStreamer)
-	# TODO: Download using ${GST_gstreamer-1.0_VERSION}
-	download_gstreamer(${GST_TARGET_VERSION})
 endif()
+# TODO: Download using ${GST_gstreamer-1.0_VERSION}
+
+include(DownloadGStreamer)
+download_gstreamer(${GST_TARGET_VERSION})
 
 set(GST_TARGET_PLUGINS
     gstcoreelements

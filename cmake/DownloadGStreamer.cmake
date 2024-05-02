@@ -23,11 +23,13 @@ function(download_gstreamer version)
         endif()
 	endif()
 
-	FetchContent_Declare(gstreamer_good_plugins
-		URL https://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-${GST_VERSION}.tar.xz
-		DOWNLOAD_EXTRACT_TIMESTAMP true
-	)
-	FetchContent_MakeAvailable(gstreamer_good_plugins)
-	cmake_print_variables(gstreamer_good_plugins_SOURCE_DIR)
-	set(GST_QT6_PLUGIN_PATH ${gstreamer_good_plugins_SOURCE_DIR}/ext/qt6 PARENT_SCOPE)
+	if(NOT LINUX)
+		FetchContent_Declare(gstreamer_good_plugins
+			URL https://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-${GST_VERSION}.tar.xz
+			DOWNLOAD_EXTRACT_TIMESTAMP true
+		)
+		FetchContent_MakeAvailable(gstreamer_good_plugins)
+		cmake_print_variables(gstreamer_good_plugins_SOURCE_DIR)
+		set(GST_QT6_PLUGIN_PATH ${gstreamer_good_plugins_SOURCE_DIR}/ext/qt6 PARENT_SCOPE)
+	endif()
 endfunction()
