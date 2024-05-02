@@ -64,7 +64,7 @@ jobs:
           create-symlink: true
           key: ${{ runner.os }}-Android-${{ matrix.BuildType }}
           restore-keys: ${{ runner.os }}-Android-${{ matrix.BuildType }}
-          max-size: 2G
+          max-size: 1G
           append-timestamp: false
           save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
@@ -156,7 +156,11 @@ jobs:
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
           cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
 
-      - run: mkdir ${{ runner.temp }}/shadow_build_dir
+      - name: Cleanup
+        run: sudo apt clean
+
+      - name: Create build directory
+        run: mkdir ${{ runner.temp }}/shadow_build_dir
 
       - name: Configure
         working-directory: ${{ runner.temp }}/shadow_build_dir
