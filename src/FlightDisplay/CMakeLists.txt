@@ -1,55 +1,38 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Qml)
 
-add_custom_target(FlightDisplayQml
-	SOURCES
-		DefaultChecklist.qml
-		FixedWingChecklist.qml
-		FlightDisplayViewDummy.qml
-		FlightDisplayViewUVC.qml
-		FlightDisplayViewVideo.qml
-		FlyView.qml
-		FlyViewCustomLayer.qml
-		FlyViewInstrumentPanel.qml
-		FlyViewMap.qml
-		FlyViewMissionCompleteDialog.qml
-		FlyViewPreFlightChecklistPopup.qml
-		FlyViewToolStrip.qml
-		FlyViewToolStripActionList.qml
-		FlyViewVideo.qml
-		FlyViewWidgetLayer.qml
-		GripperMenu.qml
-		GuidedActionActionList.qml
-		GuidedActionConfirm.qml
-		GuidedActionGripper.qml
-		GuidedActionLand.qml
-		GuidedActionList.qml
-		GuidedActionPause.qml
-		GuidedActionRTL.qml
-		GuidedActionsController.qml
-		GuidedActionTakeoff.qml
-		GuidedToolStripAction.qml
-		GuidedValueSlider.qml
-		MultiRotorChecklist.qml
-		MultiVehicleList.qml
-		ObstacleDistanceOverlay.qml
-		ObstacleDistanceOverlayMap.qml
-		ObstacleDistanceOverlayVideo.qml
-		PreFlightBatteryCheck.qml
-		PreFlightCheckList.qml
-		PreFlightCheckListShowAction.qml
-		PreFlightGPSCheck.qml
-		PreFlightRCCheck.qml
-		PreFlightSensorsHealthCheck.qml
-		PreFlightSoundCheck.qml
-		ProximityRadarValues.qml
-		ProximityRadarVideoView.qml
-		RoverChecklist.qml
-		SubChecklist.qml
-		TelemetryValuesBar.qml
-		TerrainProgress.qml
-		VehicleWarnings.qml
-		VirtualJoystick.qml
-		VTOLChecklist.qml
-        FlyViewBottomRightRowLayout.qml
-        FlyViewTopRightColumnLayout.qml
+qt_add_library(FlightDisplay STATIC)
+
+file(GLOB_RECURSE QML_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.qml)
+set(QML_RESOURCES)
+qt_add_qml_module(FlightDisplay
+    URI FlightDisplay
+    VERSION 1.0
+    QML_FILES ${QML_SOURCES}
+    RESOURCES "${QML_RESOURCES}"
+    OUTPUT_TARGETS FlightDisplay_targets
+    IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
+    IMPORTS
+		QtCharts
+    	QtLocation
+    	QtMultimedia
+		QtPositioning
+	    QtQml
+		QtQml.Models
+		QtQuick
+		QtQuick.Controls
+		QtQuick.Dialogs
+		QtQuick.Extras
+		QtQuick.Layouts
+		QtQuick.Window
+		QGroundControl
+		QGroundControl.Controllers
+		QGroundControl.Controls
+		QGroundControl.FactControls
+		QGroundControl.FactSystem
+		QGroundControl.FlightMap
+		QGroundControl.Palette
+		QGroundControl.ScreenTools
+		QGroundControl.ShapeFileHelper
+		QGroundControl.UTMSP
+		QGroundControl.Vehicle
 )
