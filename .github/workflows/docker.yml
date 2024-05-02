@@ -1,0 +1,24 @@
+name: Docker
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-tags: true
+
+      - run: chmod a+x ./deploy/docker/run-docker.sh
+
+      - name: Run Docker Build
+        run: ./deploy/docker/run-docker.sh
