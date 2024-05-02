@@ -50,6 +50,13 @@ jobs:
           submodules: recursive
           fetch-tags: true
 
+      # Temporary solution
+      - name: Remove unused dependencies
+        run: |
+          rm -rf libs/Frameworks
+          rm -rf libs/sdl2
+          rm -rf libs/OpenSSL
+
       - name: Install dependencies
         run: |
           sudo apt-get install -y ninja-build

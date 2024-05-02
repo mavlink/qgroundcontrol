@@ -44,6 +44,13 @@ jobs:
           submodules: recursive
           fetch-tags: true
 
+      # Temporary solution
+      - name: Remove unused dependencies
+        run: |
+          rm -rf libs/Frameworks
+          rm -rf libs/sdl2
+          rm -rf libs/OpenSSL
+
       - name: Install Dependencies
         run: |
           chmod a+x ./tools/setup/install-dependencies-debian.sh
