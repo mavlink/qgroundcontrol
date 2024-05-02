@@ -1,7 +1,7 @@
 find_package(Git)
 
 if(GIT_FOUND AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
-    option(GIT_SUBMODULE "Check submodules during build" ON)
+    option(GIT_SUBMODULE "Check submodules during build" OFF)
     if(GIT_SUBMODULE)
         message(STATUS "Submodule update")
         execute_process(
@@ -30,15 +30,7 @@ execute_process(
 cmake_print_variables(APP_VERSION_STR)
 
 execute_process(
-    COMMAND ${GIT_EXECUTABLE} rev-parse --abbrev-ref HEAD
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    OUTPUT_VARIABLE GIT_BRANCH
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-cmake_print_variables(GIT_BRANCH)
-
-execute_process(
-    COMMAND ${GIT_EXECUTABLE} describe --abbrev=0
+    COMMAND ${GIT_EXECUTABLE} describe --always --abbrev=0
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     OUTPUT_VARIABLE REL_VERSION
     OUTPUT_STRIP_TRAILING_WHITESPACE
