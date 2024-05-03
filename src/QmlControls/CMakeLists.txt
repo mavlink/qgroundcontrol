@@ -1,4 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Concurrent Core Gui Location Positioning Qml Quick Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Concurrent Core Gui Location Positioning Qml QmlIntegration Quick Widgets)
 
 qt_add_library(QmlControls STATIC
 	AppMessages.cc
@@ -25,6 +25,10 @@ qt_add_library(QmlControls STATIC
 	QGCGeoBoundingCube.h
 	QGCImageProvider.cc
 	QGCImageProvider.h
+	QGCMapPalette.cc
+	QGCMapPalette.h
+	QGCPalette.cc
+	QGCPalette.h
 	QGroundControlQmlGlobal.cc
 	QGroundControlQmlGlobal.h
 	QmlObjectListModel.cc
@@ -42,104 +46,6 @@ qt_add_library(QmlControls STATIC
 	ToolStripAction.h
 	ToolStripActionList.cc
 	ToolStripActionList.h
-    QGCMapPalette.cc
-    QGCMapPalette.h
-    QGCPalette.cc
-    QGCPalette.h
-)
-
-add_custom_target(QmlControlsQml
-	SOURCES
-		APMSubMotorDisplay.qml
-		AppMessages.qml
-		AxisMonitor.qml
-		ClickableColor.qml
-		DeadMouseArea.qml
-		DropButton.qml
-		DropPanel.qml
-		EditPositionDialog.qml
-		ExclusiveGroupItem.qml
-		FactSliderPanel.qml
-		AutotuneUI.qml
-		FileButton.qml
-		FlightModeDropdown.qml
-		FlightModeMenu.qml
-		HackAndroidFileDialog.qml
-		HeightIndicator.qml
-		HorizontalFactValueGrid.qml
-		IndicatorButton.qml
-		InstrumentValueEditDialog.qml
-		InstrumentValueLabel.qml
-		InstrumentValueValue.qml
-		JoystickThumbPad.qml
-		KMLOrSHPFileDialog.qml
-        LabelledButton.qml
-        LabelledComboBox.qml
-        LabelledLabel.qml
-		LogReplayStatusBar.qml
-		MainWindowSavedState.qml
-		MAVLinkChart.qml
-		MAVLinkMessageButton.qml
-		MissionCommandDialog.qml
-		MissionItemIndexLabel.qml
-		ModeSwitchDisplay.qml
-		MultiRotorMotorDisplay.qml
-		OfflineMapButton.qml
-		ParameterDiffDialog.qml
-		ParameterEditorDialog.qml
-		ParameterEditor.qml
-		PIDTuning.qml
-		PreFlightCheckButton.qml
-		PreFlightCheckGroup.qml
-		PreFlightCheckList.qml
-		PreFlightCheckModel.qml
-		QGCButton.qml
-		QGCCheckBox.qml
-		QGCColoredImage.qml
-		QGCComboBox.qml
-		QGCDynamicObjectManager.qml
-		QGCFileDialog.qml
-		QGCFlickableHorizontalIndicator.qml
-		QGCFlickable.qml
-		QGCFlickableVerticalIndicator.qml
-		QGCGroupBox.qml
-		QGCHoverButton.qml
-		QGCLabel.qml
-		QGCListView.qml
-		QGCMapLabel.qml
-		QGCMenuItem.qml
-		QGCMenu.qml
-		QGCMenuSeparator.qml
-		QGCMouseArea.qml
-		QGCMovableItem.qml
-		QGCOptionsComboBox.qml
-		PipView.qml
-		PipState.qml
-		QGCPopupDialogContainer.qml
-		QGCPopupDialog.qml
-		QGCRadioButton.qml
-		QGCSlider.qml
-		QGCSwitch.qml
-		QGCTabBar.qml
-		QGCTabButton.qml
-		QGCTextField.qml
-		QGCToolBarButton.qml
-		QGCToolInsets.qml
-		QGCViewDialogContainer.qml
-		QGCViewDialog.qml
-		QGCViewMessage.qml
-		RCChannelMonitor.qml
-		RCToParamDialog.qml
-		QGCRoundButton.qml
-		ScreenTools.qml
-		SectionHeader.qml
-        SelectableControl.qml
-        SettingsGroupLayout.qml
-		SliderSwitch.qml
-		SubMenuButton.qml
-		ToolStrip.qml
-		VehicleRotationCal.qml
-		VehicleSummaryRow.qml
 )
 
 target_link_libraries(QmlControls
@@ -155,6 +61,7 @@ target_link_libraries(QmlControls
 		Qt6::Core
 		Qt6::Gui
 		Qt6::Positioning
+		Qt6::QmlIntegration
 		Qt6::Quick
 		ADSB
         AirLink
@@ -175,3 +82,65 @@ target_link_libraries(QmlControls
 )
 
 target_include_directories(QmlControls PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+# file(GLOB_RECURSE QML_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.qml)
+# qt_add_qml_module(QmlControls
+#     URI QGroundControl.Controls
+#     VERSION 1.0
+#     QML_FILES ${QML_SOURCES}
+#     RESOURCES
+#     	arrow-down.png
+#     	checkbox-check.svg
+#     	EditPositionDialog.FactMetaData.json
+#     	RCToParamDialog.FactMetaData.json
+#     OUTPUT_TARGETS QmlControls_targets
+#     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
+#     IMPORTS
+# 		QtQuick
+# 		QtQuick.Controls
+# 		QtQuick.Window
+# 		QtQuick.Dialogs
+# 		QtQuick.Layouts
+# 		Qt.labs.platform
+# 		QGroundControl
+# 		QGroundControl.Controllers
+# 		QGroundControl.FactControls
+# 		QGroundControl.Palette
+# 		QGroundControl.ScreenTools
+#     DEPENDENCIES
+#         QtCore
+# )
+
+############# QmlPalette
+
+# find_package(Qt6 REQUIRED COMPONENTS Core Gui QmlIntegration)
+
+# qt_add_library(QmlPalette STATIC
+# 	QGCMapPalette.cc
+# 	QGCMapPalette.h
+# 	QGCPalette.cc
+# 	QGCPalette.h
+# )
+
+# target_link_libraries(QmlPalette
+# 	PRIVATE
+# 		API
+# 		QGC
+# 	PUBLIC
+# 		Qt6::Core
+# 		Qt6::Gui
+# 		Qt6::QmlIntegration
+# )
+
+# target_include_directories(QmlPalette PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+# qt_add_qml_module(QmlPalette
+#     URI QGroundControl.Palette
+#     RESOURCE_PREFIX "/"
+#     VERSION 1.0
+#     OUTPUT_TARGETS QmlPalette_targets
+#     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
+#     DEPENDENCIES
+#         QtCore
+#         QtGui
+# )

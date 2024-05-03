@@ -20,6 +20,7 @@
 #include <QtCore/QVariantList>
 #include <QtCore/QLoggingCategory>
 #include <QtCharts/QAbstractSeries>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "QGCMAVLink.h"
 #include "QmlObjectListModel.h"
@@ -27,7 +28,6 @@
 Q_DECLARE_LOGGING_CATEGORY(MAVLinkInspectorLog)
 
 class QGCMAVLinkMessage;
-class QGCMAVLinkSystem;
 class MAVLinkChartController;
 class MAVLinkInspectorController;
 class Vehicle;
@@ -253,6 +253,9 @@ private:
 class MAVLinkInspectorController : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    Q_MOC_INCLUDE("LinkInterface.h")
+    Q_MOC_INCLUDE("Vehicle.h")
 public:
     MAVLinkInspectorController();
     ~MAVLinkInspectorController();

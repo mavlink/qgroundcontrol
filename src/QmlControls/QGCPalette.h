@@ -12,6 +12,7 @@
 #include <QtCore/QObject>
 #include <QtGui/QColor>
 #include <QtCore/QMap>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #define DECLARE_QGC_COLOR(name, lightDisabled, lightEnabled, darkDisabled, darkEnabled) \
     { \
@@ -90,6 +91,7 @@
 class QGCPalette : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
 
 public:
     enum ColorGroup {

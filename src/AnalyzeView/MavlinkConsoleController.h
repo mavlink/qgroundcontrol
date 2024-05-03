@@ -13,6 +13,7 @@
 #include <QtCore/QString>
 #include <QtCore/QMetaObject>
 #include <QtCore/QStringListModel>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "QGCPalette.h"
 
@@ -23,6 +24,7 @@ class Vehicle;
 class MavlinkConsoleController : public QStringListModel
 {
     Q_OBJECT
+    QML_ELEMENT
 
 public:
     MavlinkConsoleController();
