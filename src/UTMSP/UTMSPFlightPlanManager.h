@@ -9,7 +9,6 @@
 
 #pragma once
 
-#include <QObject>
 #include <string>
 #include <nlohmann/json.hpp>
 

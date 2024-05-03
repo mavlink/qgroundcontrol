@@ -9,6 +9,7 @@
 
 #include "APMFollowComponentController.h"
 #include "ArduRoverFirmwarePlugin.h"
+#include "Vehicle.h"
 
 const char* APMFollowComponentController::settingsGroup =   "APMFollow";
 const char* APMFollowComponentController::angleName =       "angle";

@@ -146,10 +146,10 @@ target_link_libraries(QmlControls
 		Qt6::Concurrent
 		Qt6::Location
 		Qt6::Widgets
-        api
+        API
         FirmwarePlugin
         Geo
-        gps
+        GPS
         MockLink
 		Settings
 	PUBLIC
@@ -159,10 +159,11 @@ target_link_libraries(QmlControls
 		Qt6::Quick
 		ADSB
         AirLink
-        comm
+        Comms
         FactControls
 		FactSystem
-		qgc
+		PositionManager # Only used to register to QML
+		QGC
         Terrain
 		Utilities
 		UTMSP

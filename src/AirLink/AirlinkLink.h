@@ -1,7 +1,8 @@
 #pragma once
 
-#include "UDPLink.h"
 #include <QtCore/QMutex>
+
+#include "UDPLink.h"
 
 class AirlinkConfiguration : public UDPConfiguration
 {

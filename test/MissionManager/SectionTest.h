@@ -12,6 +12,7 @@
 #include "VisualMissionItemTest.h"
 
 class Section;
+class SimpleMissionItem;
 
 /// Unit test for Sections
 class SectionTest : public VisualMissionItemTest

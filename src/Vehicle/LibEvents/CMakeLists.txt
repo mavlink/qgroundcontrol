@@ -23,7 +23,7 @@ target_link_libraries(libevents_wrapper
                 Utilities
 	PUBLIC
 		Qt6::Core
-		comm
+		Comms
 		libevents
 )
 

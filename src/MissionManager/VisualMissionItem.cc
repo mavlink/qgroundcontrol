@@ -9,7 +9,6 @@
 
 #include "VisualMissionItem.h"
 #include "TerrainQuery.h"
-#include "TakeoffMissionItem.h"
 #include "PlanMasterController.h"
 #include "QGC.h"
 

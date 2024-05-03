@@ -8,11 +8,12 @@
  ****************************************************************************/
 
 #include "MissionSettingsItem.h"
-#include "JsonHelper.h"
-#include "MissionController.h"
 #include "PlanMasterController.h"
+#include "MissionItem.h"
 #include "QGC.h"
 #include "QGCLoggingCategory.h"
+
+#include <QtCore/QJsonArray>
 
 QGC_LOGGING_CATEGORY(MissionSettingsItemLog, "MissionSettingsItemLog")
 

@@ -44,7 +44,7 @@ target_link_libraries(VehicleFactGroups
         Geo
 		Vehicle
 	PUBLIC
-		comm
+		Comms
 		FactSystem
 )
 

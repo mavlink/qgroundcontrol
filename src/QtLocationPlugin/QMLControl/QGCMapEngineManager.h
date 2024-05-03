@@ -15,12 +15,14 @@
 
 #include "QmlObjectListModel.h"
 #include "QGCToolbox.h"
-#include "QGCMapTileSet.h"
 #include "QGCTileSet.h"
+#include "QGCMapEngineData.h"
 
 #include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(QGCMapEngineManagerLog)
+
+class QGCCachedTileSet;
 
 class QGCMapEngineManager : public QGCTool
 {

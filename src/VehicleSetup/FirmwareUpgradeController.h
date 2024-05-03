@@ -9,10 +9,7 @@
 
 #pragma once
 
-#include "PX4FirmwareUpgradeThread.h"
 #include "QGCSerialPortInfo.h"
-#include "FirmwareImage.h"
-#include "Fact.h"
 
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
@@ -23,6 +20,11 @@
 #else
 #include <QtSerialPort/QSerialPortInfo>
 #endif
+
+class PX4FirmwareUpgradeThread;
+class PX4FirmwareUpgradeThreadController;
+class FirmwareImage;
+class Fact;
 
 /// Supported firmware types. If you modify these you will need to update the qml file as well.
 

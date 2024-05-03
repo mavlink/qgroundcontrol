@@ -8,6 +8,7 @@
  ****************************************************************************/
 
 #include "FirmwareUpgradeController.h"
+#include "PX4FirmwareUpgradeThread.h"
 #include "Bootloader.h"
 #include "QGCApplication.h"
 #include "QGCFileDownload.h"
@@ -18,8 +19,10 @@
 #include "QGCZlib.h"
 #include "JsonHelper.h"
 #include "LinkManager.h"
-#include "QGCLoggingCategory.h"
 #include "MultiVehicleManager.h"
+#include "FirmwareImage.h"
+#include "Fact.h"
+#include "QGCLoggingCategory.h"
 
 #include <QtCore/QDir>
 #include <QtCore/QStandardPaths>

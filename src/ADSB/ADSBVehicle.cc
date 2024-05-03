@@ -8,8 +8,8 @@
  ****************************************************************************/
 
 #include "ADSBVehicle.h"
-#include "QGCLoggingCategory.h"
 #include "QGC.h"
+#include "QGCLoggingCategory.h"
 
 #include <QtCore/QtNumeric>
 

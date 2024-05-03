@@ -18,7 +18,7 @@ target_link_libraries(Camera
 		Qt6::Network
 		Qt6::Qml
 		Qt6::Xml
-		api
+		API
 		Compression
 		FirmwarePlugin
 		Joystick
@@ -28,10 +28,10 @@ target_link_libraries(Camera
 		VideoManager
 	PUBLIC
 		Qt6::Core
-		comm
+		Comms
 		FactSystem
 		QmlControls
-		qgc
+		QGC
 )
 
 target_include_directories(Camera PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

@@ -59,7 +59,7 @@ target_link_libraries(QGCLocation
 		Qt6::LocationPrivate
 		Qt6::Network
 		Qt6::Sql
-		qgc
+		QGC
 		QmlControls
 )
 

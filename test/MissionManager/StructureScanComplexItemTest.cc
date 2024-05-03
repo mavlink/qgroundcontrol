@@ -13,6 +13,8 @@
 #include "StructureScanComplexItem.h"
 #include "PlanMasterController.h"
 
+#include <QtCore/QJsonArray>
+
 StructureScanComplexItemTest::StructureScanComplexItemTest(void)
 {
     _polyPoints << QGeoCoordinate(47.633550640000003, -122.08982199) << QGeoCoordinate(47.634129020000003, -122.08887249) <<

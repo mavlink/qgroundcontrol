@@ -13,6 +13,8 @@
 #include "SettingsManager.h"
 #include "PlanMasterController.h"
 #include "MultiSignalSpy.h"
+#include "CameraSection.h"
+#include "SpeedSection.h"
 
 #include <QtTest/QTest>
 

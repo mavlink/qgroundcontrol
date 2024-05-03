@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include<QString>
+#include <QtCore/QString>
 #include <string>
 
 #include "UTMSPRestInterface.h"

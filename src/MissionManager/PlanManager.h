@@ -9,9 +9,9 @@
 
 #pragma once
 
-#include <QObject>
-#include <QLoggingCategory>
-#include <QTimer>
+#include <QtCore/QObject>
+#include <QtCore/QTimer>
+#include <QtCore/QLoggingCategory>
 
 #include "MissionItem.h"
 #include "QGCMAVLink.h"

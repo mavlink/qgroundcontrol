@@ -18,6 +18,8 @@
 #include "LinkManager.h"
 #include "QGC.h"
 #include "Fact.h"
+#include "MockLink.h"
+#include "MissionItem.h"
 
 #include <QtTest/QTest>
 #include <QtTest/QSignalSpy>

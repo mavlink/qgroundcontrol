@@ -9,14 +9,17 @@
 
 #include "ComplexMissionItem.h"
 #include "QGCApplication.h"
+#include "QGCToolbox.h"
 #include "QGCCorePlugin.h"
 #include "QGCOptions.h"
 #include "PlanMasterController.h"
 #include "FlightPathSegment.h"
 #include "MissionController.h"
+#include "KMLPlanDomDocument.h"
+#include "SettingsManager.h"
 
-#include <QCborValue>
-#include <QSettings>
+#include <QtCore/QCborMap>
+#include <QtCore/QSettings>
 
 const char* ComplexMissionItem::jsonComplexItemTypeKey = "complexItemType";
 

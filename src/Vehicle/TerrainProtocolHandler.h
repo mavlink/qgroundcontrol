@@ -9,12 +9,12 @@
 
 #pragma once
 
-#include "QGCMAVLink.h"
-
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
 #include <QtPositioning/QGeoCoordinate>
+
+#include "QGCMAVLink.h"
 
 class TerrainFactGroup;
 class Vehicle;

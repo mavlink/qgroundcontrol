@@ -11,9 +11,9 @@
 
 #include "Section.h"
 #include "Fact.h"
-#include "QmlObjectListModel.h"
 
 class PlanMasterController;
+class QmlObjectListModel;
 
 class SpeedSection : public Section
 {

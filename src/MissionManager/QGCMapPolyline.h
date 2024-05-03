@@ -9,9 +9,9 @@
 
 #pragma once
 
-#include <QObject>
-#include <QGeoCoordinate>
-#include <QVariantList>
+#include <QtCore/QObject>
+#include <QtCore/QVariantList>
+#include <QtPositioning/QGeoCoordinate>
 
 #include "QmlObjectListModel.h"
 

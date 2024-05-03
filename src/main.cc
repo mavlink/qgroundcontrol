@@ -32,13 +32,13 @@
     #endif
 #endif
 
-#include <QtWidgets/QApplication>
-#include <QtGui/QIcon>
-#include <QtWidgets/QMessageBox>
 #include <QtCore/QProcessEnvironment>
 #include <QtCore/QtPlugin>
-#include <QtQuickControls2/QQuickStyle>
+#include <QtGui/QIcon>
 #include <QtQuick/QQuickWindow>
+#include <QtQuickControls2/QQuickStyle>
+#include <QtWidgets/QApplication>
+#include <QtWidgets/QMessageBox>
 #ifdef QGC_ENABLE_BLUETOOTH
 #include <QtBluetooth/QBluetoothSocket>
 #endif

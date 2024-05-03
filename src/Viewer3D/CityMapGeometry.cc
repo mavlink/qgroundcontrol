@@ -1,6 +1,7 @@
 #include "CityMapGeometry.h"
 #include "QGCApplication.h"
 #include "SettingsManager.h"
+#include "OsmParser.h"
 
 
 CityMapGeometry::CityMapGeometry()

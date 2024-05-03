@@ -18,9 +18,9 @@
 #include <boost/asio/connect.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/ssl.hpp>
-#include <QSharedPointer>
 #include <string>
-#include "qobject.h"
+#include <QtCore/QSharedPointer>
+#include <QtCore/QObject>
 
 namespace beast = boost::beast;
 namespace http = beast::http;

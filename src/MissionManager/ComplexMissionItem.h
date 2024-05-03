@@ -10,14 +10,14 @@
 #pragma once
 
 #include "VisualMissionItem.h"
-#include "QGCToolbox.h"
-#include "SettingsManager.h"
-#include "KMLPlanDomDocument.h"
 #include "QmlObjectListModel.h"
 #include "FlightPathSegment.h"
 
 class PlanMasterController;
 class MissionController;
+class KMLPlanDomDocument;
+class SettingsManager;
+class QGCToolbox;
 
 class ComplexMissionItem : public VisualMissionItem
 {

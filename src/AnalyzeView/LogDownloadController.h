@@ -10,13 +10,12 @@
 
 #pragma once
 
-#include "AutoPilotPlugin.h"
-#include "QmlObjectListModel.h"
-
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QDateTime>
+
+#include "QmlObjectListModel.h"
 
 class  MultiVehicleManager;
 class  Vehicle;

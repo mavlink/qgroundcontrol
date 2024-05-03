@@ -1,8 +1,7 @@
-#ifndef VIEWER3DQMLVARIABLETYPES_H
-#define VIEWER3DQMLVARIABLETYPES_H
+#pragma once
 
-#include <QObject>
-#include <QGeoCoordinate>
+#include <QtCore/QObject>
+#include <QtPositioning/QGeoCoordinate>
 
 #include "Viewer3DUtils.h"
 
@@ -93,8 +92,3 @@ private:
     QGeoCoordinate _coordinate;
     QVector3D _localCoordinate;
 };
-
-
-#endif // VIEWER3DQMLVARIABLETYPES_H
-
-

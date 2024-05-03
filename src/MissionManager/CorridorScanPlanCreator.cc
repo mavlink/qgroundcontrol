@@ -9,7 +9,6 @@
 
 #include "CorridorScanPlanCreator.h"
 #include "PlanMasterController.h"
-#include "MissionSettingsItem.h"
 #include "CorridorScanComplexItem.h"
 
 CorridorScanPlanCreator::CorridorScanPlanCreator(PlanMasterController* planMasterController, QObject* parent)

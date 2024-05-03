@@ -8,11 +8,14 @@
  ****************************************************************************/
 
 #include "QGCZlib.h"
+#include "QGCLoggingCategory.h"
 
 #include <QtCore/QFile>
 #include <QtCore/QtDebug>
 
-#include "zlib.h"
+#include <zlib.h>
+
+QGC_LOGGING_CATEGORY(QGCZlibLog, "qgc.compression.qgczlib")
 
 bool QGCZlib::inflateGzipFile(const QString& gzippedFileName, const QString& decompressedFilename)
 {
@@ -25,13 +28,13 @@ bool QGCZlib::inflateGzipFile(const QString& gzippedFileName, const QString& dec
 
     QFile inputFile(gzippedFileName);
     if (!inputFile.open(QIODevice::ReadOnly)) {
-        qWarning() << "QGCZlib::inflateGzipFile: open input file failed" << gzippedFileName << inputFile.errorString();
+        qCWarning(QGCZlibLog) << "QGCZlib::inflateGzipFile: open input file failed" << gzippedFileName << inputFile.errorString();
         return false;
     }
 
     QFile outputFile(decompressedFilename);
     if (!outputFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-        qWarning() << "QGCZlib::inflateGzipFile: open input file failed" << outputFile.fileName() << outputFile.errorString();
+        qCWarning(QGCZlibLog) << "QGCZlib::inflateGzipFile: open input file failed" << outputFile.fileName() << outputFile.errorString();
         return false;
     }
 
@@ -43,7 +46,7 @@ bool QGCZlib::inflateGzipFile(const QString& gzippedFileName, const QString& dec
 
     ret = inflateInit2(&strm, 16+MAX_WBITS);
     if (ret != Z_OK) {
-        qWarning() << "QGCZlib::inflateGzipFile: inflateInit2 failed:" << ret;
+        qCWarning(QGCZlibLog) << "QGCZlib::inflateGzipFile: inflateInit2 failed:" << ret;
         goto Error;
     }
 
@@ -60,14 +63,14 @@ bool QGCZlib::inflateGzipFile(const QString& gzippedFileName, const QString& dec
 
             ret = inflate(&strm, Z_NO_FLUSH);
             if (ret != Z_OK && ret != Z_STREAM_END) {
-                qWarning() << "QGCZlib::inflateGzipFile: inflate failed:" << ret;
+                qCWarning(QGCZlibLog) << "QGCZlib::inflateGzipFile: inflate failed:" << ret;
                 goto Error;
             }
 
             unsigned cBytesInflated = cBuffer - strm.avail_out;
             qint64 cBytesWritten = outputFile.write((char*)outputBuffer, static_cast<int>(cBytesInflated));
             if (cBytesWritten != cBytesInflated) {
-                qWarning() << "QGCZlib::inflateGzipFile: output file write failed:" << outputFile.fileName() << outputFile.errorString();
+                qCWarning(QGCZlibLog) << "QGCZlib::inflateGzipFile: output file write failed:" << outputFile.fileName() << outputFile.errorString();
                 goto Error;
 
             }

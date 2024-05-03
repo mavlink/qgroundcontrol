@@ -15,6 +15,7 @@
 #include "Vehicle.h"
 #include "FirmwarePlugin.h"
 #include "QGCLoggingCategory.h"
+#include "Joystick.h"
 
 #include <QtQml/QQmlEngine>
 

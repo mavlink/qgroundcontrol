@@ -7,11 +7,12 @@
  *
  ****************************************************************************/
 
-#include "Vehicle.h"
 
-#include "UTMSPVehicle.h"
 #include "UTMSPManager.h"
+#include "UTMSPVehicle.h"
 #include "UTMSPLogger.h"
+#include "services/dispatcher.h"
+#include "Vehicle.h"
 
 UTMSPManager::UTMSPManager(QGCApplication* app, QGCToolbox* toolbox) :
     QGCTool(app, toolbox),

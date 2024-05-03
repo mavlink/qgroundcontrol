@@ -8,6 +8,7 @@
  ****************************************************************************/
 
 #include "PowerComponentController.h"
+#include "Vehicle.h"
 
 PowerComponentController::PowerComponentController(void)
 {

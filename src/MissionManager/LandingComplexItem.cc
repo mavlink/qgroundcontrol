@@ -14,6 +14,9 @@
 #include "SimpleMissionItem.h"
 #include "PlanMasterController.h"
 #include "TakeoffMissionItem.h"
+#include "MissionItem.h"
+#include "Fact.h"
+#include "CameraSection.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(LandingComplexItemLog, "LandingComplexItemLog")

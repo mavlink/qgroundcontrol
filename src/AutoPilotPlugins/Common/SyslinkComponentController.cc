@@ -8,6 +8,7 @@
  ****************************************************************************/
 
 #include "SyslinkComponentController.h"
+#include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(SyslinkComponentControllerLog, "SyslinkComponentControllerLog")

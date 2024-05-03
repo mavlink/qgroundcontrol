@@ -15,6 +15,7 @@
 
 #include <QtTest/QTest>
 #include <QtTest/QSignalSpy>
+#include <QtCore/QJsonArray>
 
 #if 0
 const MissionItemTest::TestCase_t MissionItemTest::_rgTestCases[] = {

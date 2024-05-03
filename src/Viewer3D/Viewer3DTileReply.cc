@@ -3,7 +3,11 @@
 #include "QGCMapEngine.h"
 #include "MapProvider.h"
 #include "QGCMapUrlEngine.h"
-#include <QFile>
+
+#include <QtCore/QFile>
+#include <QtNetwork/QNetworkAccessManager>
+#include <QtNetwork/QNetworkReply>
+#include <QtCore/QTimer>
 
 QByteArray  Viewer3DTileReply::_bingNoTileImage;
 

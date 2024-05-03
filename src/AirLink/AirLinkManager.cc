@@ -8,13 +8,13 @@
  ****************************************************************************/
 
 #include "AirLinkManager.h"
-#include "QGCApplication.h"
-#include "QGCCorePlugin.h"
-#include "LinkManager.h"
 #include "SettingsManager.h"
 
-#include <QtCore/QSettings>
 #include <QtCore/QJsonDocument>
+#include <QtNetwork/QNetworkReply>
+#include <QtNetwork/QNetworkRequest>
+#include <QtNetwork/QNetworkAccessManager>
+#include <QtCore/QJsonObject>
 #include <QtCore/QJsonArray>
 
 const QString AirLinkManager::airlinkHost = "air-link.space";

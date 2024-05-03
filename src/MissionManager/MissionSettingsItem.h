@@ -7,11 +7,9 @@
  *
  ****************************************************************************/
 
-#ifndef MissionSettingsComplexItem_H
-#define MissionSettingsComplexItem_H
+#pragma once
 
 #include "ComplexMissionItem.h"
-#include "MissionItem.h"
 #include "Fact.h"
 #include "CameraSection.h"
 #include "SpeedSection.h"
@@ -21,6 +19,7 @@
 Q_DECLARE_LOGGING_CATEGORY(MissionSettingsItemLog)
 
 class PlanMasterController;
+class MissionItem;
 
 class MissionSettingsItem : public ComplexMissionItem
 {
@@ -120,5 +119,3 @@ private:
 
     static const char* _plannedHomePositionAltitudeName;
 };
-
-#endif

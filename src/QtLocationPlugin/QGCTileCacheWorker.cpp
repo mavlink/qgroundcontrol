@@ -21,14 +21,15 @@
 #include "QGCMapUrlEngine.h"
 #include "QGCLoggingCategory.h"
 
-#include <QtCore/QVariant>
 #include <QtSql/QSqlQuery>
 #include <QtSql/QSqlError>
 #include <QtCore/QDateTime>
 #include <QtWidgets/QApplication>
 #include <QtCore/QFile>
 #include <QtCore/QSettings>
+#ifndef Q_OS_ANDROID
 #include <QtNetwork/QNetworkProxy>
+#endif
 
 #include "time.h"
 

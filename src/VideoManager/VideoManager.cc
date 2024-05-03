@@ -17,6 +17,7 @@
 #include "QGCCameraManager.h"
 #include "QGCLoggingCategory.h"
 #include <QtQml/QQmlEngine>
+#include "VideoReceiver.h"
 
 #if defined(QGC_GST_STREAMING)
 #include "GStreamer.h"

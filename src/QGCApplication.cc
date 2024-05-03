@@ -22,6 +22,9 @@
 #include <QtQuick/QQuickWindow>
 #include <QtQuick/QQuickImageProvider>
 #include <QtQuickControls2/QQuickStyle>
+#include <QtNetwork/QNetworkProxyFactory>
+#include <QtQml/QQmlContext>
+#include <QtQml/QQmlApplicationEngine>
 
 #ifdef QGC_ENABLE_BLUETOOTH
 #include <QtBluetooth/QBluetoothLocalDevice>
@@ -101,6 +104,8 @@
 #include "CustomAction.h"
 #include "CustomActionManager.h"
 #include "AudioOutput.h"
+#include "LinkConfiguration.h"
+// #ifdef QGC_VIEWER3D
 #include "CityMapGeometry.h"
 #include "Viewer3DQmlBackend.h"
 #include "Viewer3DQmlVariableTypes.h"
@@ -108,8 +113,7 @@
 #include "Viewer3DManager.h"
 #include "Viewer3DTerrainGeometry.h"
 #include "Viewer3DTerrainTexture.h"
-#include "LinkConfiguration.h"
-
+// #endif
 #ifndef NO_SERIAL_LINK
 #include "FirmwareUpgradeController.h"
 #include "SerialLink.h"
@@ -403,7 +407,7 @@ void QGCApplication::_initCommon()
     static const char* kQGCControllers  = "QGroundControl.Controllers";
     static const char* kQGCVehicle      = "QGroundControl.Vehicle";
     static const char* kQGCTemplates    = "QGroundControl.Templates";
-    
+
     QSettings settings;
 
     // Register our Qml objects
@@ -412,6 +416,7 @@ void QGCApplication::_initCommon()
     qmlRegisterType<QGCMapPalette>  ("QGroundControl.Palette", 1, 0, "QGCMapPalette");
 
     // For 3D viewer types
+    // #ifdef QGC_VIEWER3D
     qmlRegisterType<GeoCoordinateType>                  ("QGroundControl.Viewer3D", 1, 0, "GeoCoordinateType");
     qmlRegisterType<CityMapGeometry>                    ("QGroundControl.Viewer3D", 1, 0, "CityMapGeometry");
     qmlRegisterType<Viewer3DManager>                    ("QGroundControl.Viewer3D", 1, 0, "Viewer3DManager");
@@ -419,7 +424,8 @@ void QGCApplication::_initCommon()
     qmlRegisterUncreatableType<OsmParser>               ("QGroundControl.Viewer3D", 1, 0, "OsmParser",                   kRefOnly);
     qmlRegisterType<Viewer3DTerrainGeometry>            ("QGroundControl.Viewer3D", 1, 0, "Viewer3DTerrainGeometry");
     qmlRegisterType<Viewer3DTerrainTexture>             ("QGroundControl.Viewer3D", 1, 0, "Viewer3DTerrainTexture");
-    
+    // #endif
+
     qmlRegisterUncreatableType<Vehicle>                 (kQGCVehicle,                       1, 0, "Vehicle",                    kRefOnly);
     qmlRegisterUncreatableType<MissionManager>          (kQGCVehicle,                       1, 0, "MissionManager",             kRefOnly);
     qmlRegisterUncreatableType<ParameterManager>        (kQGCVehicle,                       1, 0, "ParameterManager",           kRefOnly);

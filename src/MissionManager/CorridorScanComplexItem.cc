@@ -9,12 +9,13 @@
 
 #include "CorridorScanComplexItem.h"
 #include "JsonHelper.h"
-#include "MissionController.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
 #include "PlanMasterController.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
+
+#include <QtCore/QJsonArray>
 
 QGC_LOGGING_CATEGORY(CorridorScanComplexItemLog, "CorridorScanComplexItemLog")
 

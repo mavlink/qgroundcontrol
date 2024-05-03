@@ -9,8 +9,6 @@
 
 #include "BlankPlanCreator.h"
 #include "PlanMasterController.h"
-#include "MissionSettingsItem.h"
-#include "FixedWingLandingComplexItem.h"
 
 BlankPlanCreator::BlankPlanCreator(PlanMasterController* planMasterController, QObject* parent)
     : PlanCreator(planMasterController, tr("Blank"), QStringLiteral("/qmlimages/PlanCreator/BlankPlanCreator.png"), parent)

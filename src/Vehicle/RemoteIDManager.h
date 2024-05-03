@@ -9,13 +9,13 @@
 
 #pragma once
 
-#include "QGCMAVLink.h"
-
 #include <QtCore/QObject>
 #include <QtCore/QDateTime>
 #include <QtCore/QTimer>
 #include <QtPositioning/QGeoPositionInfo>
 #include <QtCore/QLoggingCategory>
+
+#include "QGCMAVLink.h"
 
 Q_DECLARE_LOGGING_CATEGORY(RemoteIDManagerLog)
 

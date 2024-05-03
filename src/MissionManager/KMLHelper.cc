@@ -9,7 +9,7 @@
 
 #include "KMLHelper.h"
 
-#include <QFile>
+#include <QtCore/QFile>
 
 const char* KMLHelper::_errorPrefix = QT_TR_NOOP("KML file load failed. %1");
 

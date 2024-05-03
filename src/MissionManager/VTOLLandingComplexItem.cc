@@ -13,8 +13,12 @@
 #include "MissionController.h"
 #include "PlanMasterController.h"
 #include "FlightPathSegment.h"
+#include "MissionItem.h"
+#include "SettingsManager.h"
 #include "QGC.h"
 #include "QGCLoggingCategory.h"
+
+#include <QtCore/QJsonArray>
 
 QGC_LOGGING_CATEGORY(VTOLLandingComplexItemLog, "VTOLLandingComplexItemLog")
 

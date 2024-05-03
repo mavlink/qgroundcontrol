@@ -9,6 +9,7 @@
 
 #include "UTMSPServiceController.h"
 #include "UTMSPLogger.h"
+#include <QGCMAVLink.h>
 
 UTMSPServiceController::UTMSPServiceController(QObject *parent):
     QObject(parent),

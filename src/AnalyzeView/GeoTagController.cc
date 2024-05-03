@@ -12,6 +12,7 @@
 #include "ULogParser.h"
 #include "PX4LogParser.h"
 #include "QGCLoggingCategory.h"
+
 #include <QtCore/QtEndian>
 #include <QtCore/QDir>
 #include <QtCore/QUrl>

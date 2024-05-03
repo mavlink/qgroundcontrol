@@ -21,6 +21,8 @@
 
 Q_DECLARE_LOGGING_CATEGORY(ESP8266ComponentControllerLog)
 
+class Vehicle;
+
 namespace Ui {
     class ESP8266ComponentController;
 }
@@ -28,6 +30,7 @@ namespace Ui {
 class ESP8266ComponentController : public FactPanelController
 {
     Q_OBJECT
+    Q_MOC_INCLUDE("Vehicle.h")
 
 public:
     ESP8266ComponentController      ();
@@ -49,7 +52,7 @@ public:
     Q_INVOKABLE void restoreDefaults();
     Q_INVOKABLE void reboot         ();
 
-    int             componentID     () { return MAV_COMP_ID_UDP_BRIDGE; }
+    int             componentID     ();
     QString         version         ();
     QString         wifiIPAddress   ();
     QString         wifiSSID        ();

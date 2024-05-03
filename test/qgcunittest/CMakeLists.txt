@@ -28,18 +28,18 @@ target_link_libraries(qgcunittest
 	PRIVATE
 		Qt6::Test
 		FactSystem
-		qgc
+		QGC
 		Settings
 		Vehicle
-                VehicleComponents
+		VehicleComponents
 	PUBLIC
 		Qt6::Core
 		Qt6::Positioning
 		Qt6::Widgets
 		AutoPilotPlugins
-		comm
+		Comms
 		MissionManager
-                MockLink
+		MockLink
 )
 
 qt_add_resources(qgcunittest

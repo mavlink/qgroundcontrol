@@ -8,7 +8,8 @@
  ****************************************************************************/
 
 
-#include <QStringList>
+#include <QtCore/QStringList>
+#include <QtCore/QJsonArray>
 
 #include "MissionItem.h"
 #include "JsonHelper.h"

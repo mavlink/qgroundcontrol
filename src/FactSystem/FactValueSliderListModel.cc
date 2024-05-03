@@ -8,6 +8,7 @@
  ****************************************************************************/
 
 #include "FactValueSliderListModel.h"
+#include "Fact.h"
 
 #include <QtQml/QQmlEngine>
 #include <QtCore/QtMath>

@@ -1,12 +1,10 @@
 #include "Viewer3DTerrainGeometry.h"
-#include <QRandomGenerator>
-#include <QVector3D>
-
-#include "math.h"
-
 #include "Viewer3DUtils.h"
 #include "QGCApplication.h"
 #include "SettingsManager.h"
+#include "Viewer3DSettings.h"
+
+#include "math.h"
 
 #define PI                  acos(-1.0f)
 #define MaxLatitude         85.05112878

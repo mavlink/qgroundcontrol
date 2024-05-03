@@ -13,9 +13,9 @@
 #include "QGCQGeoCoordinate.h"
 #include "QGCApplication.h"
 #include "ShapeFileHelper.h"
-#include "QGCLoggingCategory.h"
+#include "KMLDomDocument.h"
 
-#include <QLineF>
+#include <QtCore/QLineF>
 
 const char* QGCMapPolygon::jsonPolygonKey = "polygon";
 
@@ -636,9 +636,8 @@ void QGCMapPolygon::selectVertex(int index)
         _selectedVertexIndex = index;
     } else {
         if (!qgcApp()->runningUnitTests()) {
-            qCWarning(ParameterManagerLog)
-                    << QString("QGCMapPolygon: Selected vertex index (%1) is out of bounds! "
-                               "Polygon vertices indexes range is [%2..%3].").arg(index).arg(0).arg(count()-1);
+            qWarning() << QString("QGCMapPolygon: Selected vertex index (%1) is out of bounds! "
+                                  "Polygon vertices indexes range is [%2..%3].").arg(index).arg(0).arg(count()-1);
         }
         _selectedVertexIndex = -1;   // deselect vertex
     }
