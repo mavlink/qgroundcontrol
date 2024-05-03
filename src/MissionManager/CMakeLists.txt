@@ -90,14 +90,6 @@ qt_add_library(MissionManager STATIC
 	VTOLLandingComplexItem.h
 )
 
-add_custom_Target(MisionManagerQml
-	SOURCES
-		MapLineArrow.qml
-		QGCMapCircleVisuals.qml
-		QGCMapPolygonVisuals.qml
-		QGCMapPolylineVisuals.qml
-)
-
 target_link_libraries(MissionManager
 	PRIVATE
 		Qt6::Qml
@@ -120,3 +112,31 @@ target_link_libraries(MissionManager
 )
 
 target_include_directories(MissionManager PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+# qt_add_qml_module(MissionManager
+#     URI QGroundControl.MissionManager
+#     VERSION 1.0
+#     RESOURCES
+#     	BlankPlanCreator.png
+#     	CogWheel.svg
+#     	StructureScanPlanCreator.png
+#     	SurveyPlanCreator.png
+#     QML_FILES
+#     	MapLineArrow.qml
+# 		QGCMapCircleVisuals.qml
+# 		QGCMapPolygonVisuals.qml
+# 		QGCMapPolylineVisuals.qml
+#     OUTPUT_TARGETS MissionManager_targets
+#     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
+#     IMPORTS
+# 		QtQuick
+# 		QtQuick.Controls
+# 		QtLocation
+# 		QtPositioning
+
+# 		QGroundControl
+# 		QGroundControl.ScreenTools
+# 		QGroundControl.Palette
+# 		QGroundControl.Controls
+# 		QGroundControl.FlightMap
+# )

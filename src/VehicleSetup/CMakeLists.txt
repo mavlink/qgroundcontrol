@@ -7,23 +7,9 @@ qt_add_library(VehicleSetup STATIC
 	VehicleComponent.h
 )
 
-add_custom_target(VehicleSetupQml
-	SOURCES
-		JoystickConfig.qml
-		JoystickConfigAdvanced.qml
-		JoystickConfigButtons.qml
-		JoystickConfigCalibration.qml
-		JoystickConfigGeneral.qml
-		PX4FlowSensor.qml
-		SetupParameterEditor.qml
-		SetupView.qml
-		VehicleSummary.qml
-)
-
 target_link_libraries(VehicleSetup
 	PRIVATE
 		Qt6::Qml
-		API
 		Compression
 		FactSystem
 		QGC
@@ -35,7 +21,6 @@ target_link_libraries(VehicleSetup
 		Qt6::Core
 		Qt6::Gui
 		Qt6::Quick
-		Comms
 		FactControls
 		Joystick
 )
@@ -55,10 +40,46 @@ if(NOT QGC_NO_SERIAL_LINK)
 			PX4FirmwareUpgradeThread.h
 	)
 
-	target_link_libraries(VehicleSetup PUBLIC Comms)
-
-	target_sources(VehicleSetupQml
-		PRIVATE
-			FirmwareUpgrade.qml
-	)
+        target_link_libraries(VehicleSetup
+                PRIVATE
+                        API
+                PUBLIC
+                        Comms
+        )
 endif()
+
+# qt_add_qml_module(VehicleSetup
+#     URI QGroundControl.VehicleSetup
+#     VERSION 1.0
+#     QML_FILES
+# 		FirmwareUpgrade.qml
+# 		JoystickConfig.qml
+# 		JoystickConfigAdvanced.qml
+# 		JoystickConfigButtons.qml
+# 		JoystickConfigCalibration.qml
+# 		JoystickConfigGeneral.qml
+# 		PX4FlowSensor.qml
+# 		SetupParameterEditor.qml
+# 		SetupView.qml
+# 		VehicleSummary.qml
+# 	RESOURCES
+# 		FirmwareUpgradeIcon.png
+# 		VehicleSummaryIcon.png
+#     OUTPUT_TARGETS QGCLocation_targets
+#     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
+#     IMPORTS
+# 		QtQuick
+# 		QtQuick.Controls
+# 		QtQuick.Dialogs
+# 		QtQuick.Layouts
+
+# 		QGroundControl
+# 		QGroundControl.Controls
+# 		QGroundControl.FactSystem
+# 		QGroundControl.FactControls
+# 		QGroundControl.Palette
+# 		QGroundControl.Controllers
+# 		QGroundControl.ScreenTools
+# 		QGroundControl.MultiVehicleManager
+# 		QGroundControl.AutoPilotPlugin
+# )

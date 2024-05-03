@@ -30,3 +30,26 @@ target_link_libraries(PX4FirmwarePlugin
 )
 
 target_include_directories(PX4FirmwarePlugin PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+# file(GLOB QML_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.qml)
+# # file(GLOB QML_RESOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/res/*/*.*)
+# qt_add_qml_module(PX4FirmwarePlugin
+#     URI QGroundControl.PX4FirmwarePlugin
+#     VERSION 1.0
+#     # RESOURCES ${QML_RESOURCES}
+#     QML_FILES ${QML_SOURCES}
+#     OUTPUT_TARGETS PX4FirmwarePlugin_targets
+#     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
+#     IMPORTS
+#         QtQuick
+#         QtQuick.Controls
+#         QtQuick.Layouts
+
+#         QGroundControl
+#         QGroundControl.Controls
+#         QGroundControl.MultiVehicleManager
+#         QGroundControl.ScreenTools
+#         QGroundControl.Palette
+#         QGroundControl.FactSystem
+#         QGroundControl.FactControls
+# )

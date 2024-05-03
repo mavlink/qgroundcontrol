@@ -68,3 +68,40 @@ target_include_directories(QGCLocation
 		${CMAKE_CURRENT_SOURCE_DIR}
 		QMLControl
 )
+
+set_source_files_properties(QMLControl/OfflineMap.qml
+    PROPERTIES
+        QT_RESOURCE_ALIAS OfflineMap.qml
+)
+
+set_source_files_properties(QMLControl/OfflineMapEditor.qml
+    PROPERTIES
+        QT_RESOURCE_ALIAS OfflineMapEditor.qml
+)
+
+# qt_add_qml_module(QGCLocation
+#     URI QGroundControl.QGCLocation
+#     VERSION 1.0
+#     QML_FILES
+#         QMLControl/OfflineMap.qml
+#         QMLControl/OfflineMapEditor.qml
+#     OUTPUT_TARGETS QGCLocation_targets
+#     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
+#     IMPORTS
+# 		QtQuick
+# 		QtQuick.Controls
+# 		QtQuick.Layouts
+# 		QtQuick.Dialogs
+# 		QtQuick.Controls
+# 		QtLocation
+# 		QtPositioning
+
+# 		QGroundControl
+# 		QGroundControl.Controls
+# 		QGroundControl.ScreenTools
+# 		QGroundControl.Palette
+# 		QGroundControl.FlightMap
+# 		QGroundControl.QGCMapEngineManager
+# 		QGroundControl.FactSystem
+# 		QGroundControl.FactControls
+# )
