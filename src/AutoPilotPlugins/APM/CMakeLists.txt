@@ -45,7 +45,7 @@ qt_add_library(APMAutoPilotPlugin STATIC
 
 target_link_libraries(APMAutoPilotPlugin
     PRIVATE
-        Actuators
+        VehicleActuators
         APMFirmwarePlugin
         AutoPilotPlugins
         FactSystem

@@ -1,12 +1,12 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Network)
 
-# set(APM_RESOURCES)
-# qt_add_resources(APM_RESOURCES APMResources.qrc)
+set(APM_RESOURCES)
+qt_add_resources(APM_RESOURCES APMResources.qrc)
 qt_add_library(APMFirmwarePlugin STATIC
     APMFirmwarePlugin.cc
     APMFirmwarePlugin.h
-    APMFirmwarePluginFactory.cc
-    APMFirmwarePluginFactory.h
+    # APMFirmwarePluginFactory.cc
+    # APMFirmwarePluginFactory.h
     APMParameterMetaData.cc
     APMParameterMetaData.h
     ArduCopterFirmwarePlugin.cc
@@ -17,7 +17,7 @@ qt_add_library(APMFirmwarePlugin STATIC
     ArduRoverFirmwarePlugin.h
     ArduSubFirmwarePlugin.cc
     ArduSubFirmwarePlugin.h
-    # ${APM_RESOURCES}
+    ${APM_RESOURCES}
 )
 
 target_link_libraries(APMFirmwarePlugin

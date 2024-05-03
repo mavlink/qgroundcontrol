@@ -10,12 +10,18 @@ qt_add_library(FirmwarePlugin STATIC
 	FirmwarePlugin.h
 	FirmwarePluginManager.cc
 	FirmwarePluginManager.h
+    APM/APMFirmwarePluginFactory.cc
+    APM/APMFirmwarePluginFactory.h
+    PX4/PX4FirmwarePluginFactory.cc
+    PX4/PX4FirmwarePluginFactory.h
 )
 
 target_link_libraries(FirmwarePlugin
     PRIVATE
         AutoPilotPlugins
         CommonAutoPilotPlugin
+        APMFirmwarePlugin
+        PX4FirmwarePlugin
         Camera
         MissionManager
         qgc
