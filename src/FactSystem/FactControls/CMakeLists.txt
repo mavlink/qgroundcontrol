@@ -26,10 +26,12 @@ target_link_libraries(FactControls
 	PRIVATE
 		AutoPilotPlugins
 		FactSystem
-		qgc
+		QGC
 		Utilities
-	PUBLIC
 		Vehicle
+	PUBLIC
+		Qt6::Core
+		Qt6::Qml
 )
 
 target_include_directories(FactControls PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

@@ -9,18 +9,16 @@
 
 #include "ParameterManager.h"
 #include "QGCApplication.h"
-#include "QGCLoggingCategory.h"
-#include "QGCApplication.h"
-#include "UASMessageHandler.h"
 #include "FirmwarePlugin.h"
-#include "ComponentInformationManager.h"
 #include "CompInfoParam.h"
 #include "FTPManager.h"
 #include "Vehicle.h"
 #include "AutoPilotPlugin.h"
 #include "MAVLinkProtocol.h"
 #include "FactSystem.h"
+#include "ComponentInformationManager.h"
 #include "QGC.h"
+#include "QGCLoggingCategory.h"
 
 #include <QtCore/QEasingCurve>
 #include <QtCore/QFile>

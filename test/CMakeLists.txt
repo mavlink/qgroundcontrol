@@ -33,7 +33,7 @@ add_subdirectory(AnalyzeView)
 add_subdirectory(Audio)
 add_qgc_test(AudioOutputTest)
 
-add_subdirectory(comm)
+add_subdirectory(Comms)
 
 add_subdirectory(Compression)
 add_qgc_test(DecompressionTest)
@@ -81,7 +81,7 @@ add_qgc_test(ComponentInformationTranslationTest)
 
 add_subdirectory(QmlControls)
 
-add_subdirectory(ui)
+add_subdirectory(UI)
 
 add_subdirectory(Vehicle)
 add_qgc_test(FTPManagerTest)
@@ -99,13 +99,13 @@ target_link_libraries(qgctest
     PRIVATE
         AnalyzeViewTest
         AudioTest
-        CommTest
+        CommsTest
         CompressionTest
         FactSystemTest
         GeoTest
         MissionManagerTest
         QmlControlsTest
-        uiTest
+        UITest
         VehicleTest
     PUBLIC
         qgcunittest

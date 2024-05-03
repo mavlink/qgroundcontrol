@@ -21,13 +21,12 @@ if(NOT QGC_AIRLINK_DISABLED)
 
     target_link_libraries(AirLink
         PRIVATE
-            api
+            Qt6::Network
             Settings
         PUBLIC
             Qt6::Core
-            Qt6::Network
-            comm
-            qgc
+            Comms
+            QGC
     )
 
     target_include_directories(AirLink PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

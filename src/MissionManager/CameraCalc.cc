@@ -13,7 +13,7 @@
 #include "CameraMetaData.h"
 #include "PlanMasterController.h"
 
-#include <QQmlEngine>
+#include <QtQml/QQmlEngine>
 
 const char* CameraCalc::cameraNameName                  = "CameraName";
 const char* CameraCalc::valueSetIsDistanceName          = "ValueSetIsDistance";

@@ -8,15 +8,14 @@ qt_add_library(FollowMe STATIC
 target_link_libraries(FollowMe
 	PRIVATE
 		Qt6::Positioning
-		comm
-                FirmwarePlugin
+        FirmwarePlugin
 		PositionManager
 		Settings
 		Utilities
 		Vehicle
 	PUBLIC
 		Qt6::Core
-		qgc
+		QGC
 )
 
 target_include_directories(FollowMe PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

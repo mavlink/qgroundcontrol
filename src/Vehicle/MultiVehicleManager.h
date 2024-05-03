@@ -13,12 +13,12 @@
 
 #pragma once
 
+#include <QtCore/QTimer>
+#include <QtPositioning/QGeoCoordinate>
+#include <QtCore/QLoggingCategory>
+
 #include "QGCToolbox.h"
 #include "QmlObjectListModel.h"
-
-#include <QtCore/QTimer>
-#include <QtCore/QLoggingCategory>
-#include <QtPositioning/QGeoCoordinate>
 
 class FirmwarePluginManager;
 class FollowMe;

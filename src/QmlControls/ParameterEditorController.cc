@@ -11,6 +11,7 @@
 #include "QGCApplication.h"
 #include "ParameterManager.h"
 #include "AppSettings.h"
+#include "Vehicle.h"
 
 ParameterEditorController::ParameterEditorController(void)
     : _parameterMgr(_vehicle->parameterManager())

@@ -11,6 +11,7 @@
 
 #include "FactPanelController.h"
 #include "QmlObjectListModel.h"
+#include "FactMetaData.h"
 
 #include <QtCore/QObject>
 

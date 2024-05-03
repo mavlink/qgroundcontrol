@@ -1,16 +1,12 @@
-#ifndef OSMPARSERTHREAD_H
-#define OSMPARSERTHREAD_H
+#pragma once
 
-#include <QObject>
-#include <QThread>
-#include <QtXml>
-#include <QFile>
-#include <QMap>
-#include <QVector3D>
-#include <QVector2D>
-#include "qgeocoordinate.h"
-#include <QVariant>
-
+#include <QtCore/QObject>
+#include <QtCore/QThread>
+#include <QtXml/QDomDocument>
+#include <QtCore/QMap>
+#include <QtGui/QVector3D>
+#include <QtGui/QVector2D>
+#include <QtPositioning/QGeoCoordinate>
 
 ///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
 
@@ -83,5 +79,3 @@ signals:
 private slots:
     void startThreadEvent(QString filePath);
 };
-
-#endif // OSMPARSERTHREAD_H

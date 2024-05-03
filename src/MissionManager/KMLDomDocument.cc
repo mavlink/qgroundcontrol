@@ -8,7 +8,8 @@
  ****************************************************************************/
 
 #include "KMLDomDocument.h"
-#include "QGCPalette.h"
+// #include "QGCPalette.h"
+#include <QtPositioning/QGeoCoordinate>
 
 const char* KMLDomDocument::balloonStyleName = "BalloonStyle";
 
@@ -43,7 +44,7 @@ QString KMLDomDocument::kmlColorString (const QColor& color, double opacity)
 
 void KMLDomDocument::_addStandardStyles(void)
 {
-    QGCPalette palette;
+    // QGCPalette palette;
 
     QDomElement styleElementForBalloon = createElement("Style");
     styleElementForBalloon.setAttribute("id", balloonStyleName);

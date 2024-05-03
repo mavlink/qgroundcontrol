@@ -10,11 +10,11 @@
 
 #include "JoystickManager.h"
 #include "MultiVehicleManager.h"
-#ifndef __mobile__
+#include "Joystick.h"
+#if !defined(__mobile__) || defined(QGC_SDL_JOYSTICK)
     #include "JoystickSDL.h"
     #define __sdljoystick__
-#endif
-#ifdef Q_OS_ANDROID
+#elif defined(Q_OS_ANDROID)
     #include "JoystickAndroid.h"
 #endif
 #include "QGCLoggingCategory.h"

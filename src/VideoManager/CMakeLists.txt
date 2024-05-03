@@ -11,7 +11,7 @@ qt_add_library(VideoManager STATIC
 
 target_link_libraries(VideoManager
     PRIVATE
-        api
+        API
         Camera
         FactSystem
         QmlControls
@@ -21,7 +21,7 @@ target_link_libraries(VideoManager
     PUBLIC
         Qt6::Core
         Qt6::Quick
-        qgc
+        QGC
         VideoReceiver
 )
 

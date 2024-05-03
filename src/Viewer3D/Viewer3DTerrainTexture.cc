@@ -4,6 +4,8 @@
 #include "SettingsManager.h"
 #include "QGCMapEngine.h"
 #include "QGCMapUrlEngine.h"
+#include "FlightMapSettings.h"
+#include "OsmParser.h"
 
 
 Viewer3DTerrainTexture::Viewer3DTerrainTexture()

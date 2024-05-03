@@ -31,18 +31,17 @@ add_custom_target(AnalyzeViewQml
 target_link_libraries(AnalyzeView
 	PRIVATE
 		Qt6::Charts
-        Qt6::Gui
+		Qt6::Gui
 		Qt6::Qml
-        Qt6::Widgets
+		Qt6::Widgets
 		FactSystem
-		qgc
+		QGC
 		QGCLocation
 		Settings
 		Utilities
 		Vehicle
 	PUBLIC
 		Qt6::Core
-                AutoPilotPlugins
 		QmlControls
 )
 

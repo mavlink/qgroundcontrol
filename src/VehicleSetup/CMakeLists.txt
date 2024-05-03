@@ -23,11 +23,10 @@ add_custom_target(VehicleSetupQml
 target_link_libraries(VehicleSetup
 	PRIVATE
 		Qt6::Qml
-		api
-                AutoPilotPlugins
+		API
 		Compression
 		FactSystem
-		qgc
+		QGC
 		Settings
 		Utilities
 		Vehicle
@@ -36,7 +35,7 @@ target_link_libraries(VehicleSetup
 		Qt6::Core
 		Qt6::Gui
 		Qt6::Quick
-		comm
+		Comms
 		FactControls
 		Joystick
 )
@@ -56,7 +55,7 @@ if(NOT QGC_NO_SERIAL_LINK)
 			PX4FirmwareUpgradeThread.h
 	)
 
-	target_link_libraries(VehicleSetup PUBLIC comm)
+	target_link_libraries(VehicleSetup PUBLIC Comms)
 
 	target_sources(VehicleSetupQml
 		PRIVATE

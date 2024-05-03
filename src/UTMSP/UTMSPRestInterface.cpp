@@ -7,11 +7,11 @@
  *
  ****************************************************************************/
 
-#include <QList>
-#include <QNetworkInterface>
-
 #include "UTMSPRestInterface.h"
 #include "UTMSPLogger.h"
+
+#include <QtCore/QList>
+#include <QtNetwork/QNetworkInterface>
 
 UTMSPRestInterface::UTMSPRestInterface(std::string host, std::string port):
     _ssl_ctx{boost::asio::ssl::context::tlsv13_client},

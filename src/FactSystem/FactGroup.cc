@@ -10,7 +10,6 @@
 
 #include "FactGroup.h"
 
-#include <QtCore/QJsonDocument>
 #include <QtCore/QJsonArray>
 #include <QtQml/QQmlEngine>
 

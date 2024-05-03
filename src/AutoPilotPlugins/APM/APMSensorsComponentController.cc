@@ -14,6 +14,7 @@
 #include "APMAutoPilotPlugin.h"
 #include "ParameterManager.h"
 #include "FactSystem.h"
+#include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QVariant>

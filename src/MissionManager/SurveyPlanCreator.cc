@@ -9,7 +9,6 @@
 
 #include "SurveyPlanCreator.h"
 #include "PlanMasterController.h"
-#include "MissionSettingsItem.h"
 #include "SurveyComplexItem.h"
 
 SurveyPlanCreator::SurveyPlanCreator(PlanMasterController* planMasterController, QObject* parent)

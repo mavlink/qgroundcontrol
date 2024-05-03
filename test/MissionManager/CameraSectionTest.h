@@ -13,6 +13,7 @@
 
 class CameraSection;
 class PlanMasterController;
+class SimpleMissionItem;
 
 /// Unit test for CameraSection
 class CameraSectionTest : public SectionTest

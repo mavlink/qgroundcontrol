@@ -7,12 +7,10 @@
  *
  ****************************************************************************/
 
-#include "Vehicle.h"
-
-#include <QQmlApplicationEngine>
-
 #include "UTMSPVehicle.h"
 #include "UTMSPLogger.h"
+#include "services/dispatcher.h"
+#include "Vehicle.h"
 
 UTMSPVehicle::UTMSPVehicle(std::shared_ptr<Dispatcher> dispatcher, const Vehicle& vehicle):
     _dispatcher(dispatcher),

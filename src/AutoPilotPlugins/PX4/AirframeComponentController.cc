@@ -14,6 +14,8 @@
 #include "LinkManager.h"
 #include "QGC.h"
 #include "FactSystem.h"
+#include "Fact.h"
+#include "Vehicle.h"
 
 #include <QtCore/QVariant>
 #include <QtQml/QtQml>

@@ -9,6 +9,7 @@
 
 #include "Bootloader.h"
 #include "QGCLoggingCategory.h"
+#include "FirmwareImage.h"
 #include "QGC.h"
 #include <QtCore/QFile>
 #include <QtCore/QElapsedTimer>

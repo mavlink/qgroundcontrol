@@ -22,7 +22,7 @@ qt_add_library(FactSystem STATIC
 target_link_libraries(FactSystem
 	PRIVATE
     	Qt6::Qml
-    	api
+    	API
 		AutoPilotPlugins
 		FactControls
 		FirmwarePlugin
@@ -32,8 +32,8 @@ target_link_libraries(FactSystem
 		VehicleComponents
     PUBLIC
     	Qt6::Core
-		comm
-		qgc
+		Comms
+		QGC
 )
 
 target_include_directories(FactSystem PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

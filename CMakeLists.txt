@@ -312,13 +312,19 @@ add_compile_definitions(
 add_subdirectory(src)
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
+        Qt6::Bluetooth
         Qt6::Core
         Qt6::Gui
         Qt6::Qml
         Qt6::Quick
         Qt6::QuickControls2
+        Qt6::Widgets
         Qt6::Svg # Used to import QSvgPlugin
-        qgc
+        QGC
+        QGCLocation
+        QmlControls
+        Utilities
+        Vehicle
 )
 if(QGC_BUILD_TESTING)
     add_subdirectory(test)
@@ -328,6 +334,11 @@ endif()
 #######################################################
 #		Install Configuration
 #######################################################
+
+qt_import_plugins(${PROJECT_NAME}
+    INCLUDE
+        Qt6::QSvgPlugin
+)
 
 install(
     TARGETS ${PROJECT_NAME}

@@ -39,8 +39,8 @@ qt_add_library(PX4AutoPilotPlugin STATIC
 
 target_link_libraries(PX4AutoPilotPlugin
     PRIVATE
-		comm
-        qgc
+		Comms
+        QGC
 		Utilities
 	PUBLIC
 		Qt6::Core

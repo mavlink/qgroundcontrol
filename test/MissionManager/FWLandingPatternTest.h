@@ -13,6 +13,7 @@
 
 class MultiSignalSpy;
 class FixedWingLandingComplexItem;
+class SimpleMissionItem;
 
 class FWLandingPatternTest : public VisualMissionItemTest
 {

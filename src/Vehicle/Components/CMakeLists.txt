@@ -21,13 +21,13 @@ qt_add_library(VehicleComponents STATIC
 
 target_link_libraries(VehicleComponents
 	PRIVATE
-                Compression
+	    Compression
 		FirmwarePlugin
-		qgc
+		QGC
 		Vehicle
 	PUBLIC
 		Qt6::Core
-		comm
+		Comms
 		FactSystem
 		Utilities
 )

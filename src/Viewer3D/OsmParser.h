@@ -1,18 +1,15 @@
-#ifndef OSMPARSER_H
-#define OSMPARSER_H
+#pragma once
 
-#include <QObject>
-#include <QMap>
-#include <QVector3D>
-#include <QVector2D>
-#include <QGeoCoordinate>
-#include <QVariant>
-#include <QDomElement>
+#include <QtCore/QObject>
+#include <QtGui/QVector3D>
+#include <QtGui/QVector2D>
+#include <QtPositioning/QGeoCoordinate>
+#include <QtCore/QVariant>
 
-#include "OsmParserThread.h"
 ///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
 
 class Viewer3DSettings;
+class OsmParserThread;
 
 class OsmParser : public QObject
 {
@@ -62,5 +59,3 @@ private slots:
 
 
 };
-
-#endif // OSMPARSER_H

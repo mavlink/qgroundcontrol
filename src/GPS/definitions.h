@@ -39,7 +39,7 @@
 
 #pragma once
 
-#include <QtGlobal>
+#include <QtCore/QtGlobal>
 
 #define GPS_READ_BUFFER_SIZE 1024
 
@@ -58,7 +58,7 @@
 
 #define M_PI_2_F M_PI
 
-#include <QThread>
+#include <QtCore/QThread>
 
 class Sleeper : public QThread
 {
@@ -72,7 +72,7 @@ static inline void gps_usleep(unsigned long usecs) {
 
 typedef uint64_t gps_abstime;
 
-#include <QDateTime>
+#include <QtCore/QDateTime>
 /**
  * Get the current time in us. Function signature:
  * uint64_t hrt_absolute_time()

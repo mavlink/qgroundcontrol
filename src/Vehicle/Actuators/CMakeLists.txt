@@ -21,12 +21,12 @@ qt_add_library(VehicleActuators STATIC
 
 target_link_libraries(VehicleActuators
 	PRIVATE
-		qgc
+		QGC
 		Utilities
 	PUBLIC
 		Qt6::Core
 		Qt6::Gui
-		comm
+		Comms
 		FactSystem
 		QmlControls
 		Vehicle

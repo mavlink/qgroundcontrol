@@ -9,12 +9,12 @@
 
 #include "VehicleLinkManager.h"
 #include "Vehicle.h"
-#include "QGCLoggingCategory.h"
 #include "LinkManager.h"
 #include "QGCApplication.h"
 #ifndef NO_SERIAL_LINK
     #include "SerialLink.h"
 #endif
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(VehicleLinkManagerLog, "VehicleLinkManagerLog")
 

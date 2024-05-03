@@ -13,8 +13,6 @@
 
 #pragma once
 
-#include "QGCMAVLink.h"
-#include "QmlObjectListModel.h"
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QTimer>
@@ -22,6 +20,9 @@
 #include <QtCore/QVariantList>
 #include <QtCore/QLoggingCategory>
 #include <QtCharts/QAbstractSeries>
+
+#include "QGCMAVLink.h"
+#include "QmlObjectListModel.h"
 
 Q_DECLARE_LOGGING_CATEGORY(MAVLinkInspectorLog)
 

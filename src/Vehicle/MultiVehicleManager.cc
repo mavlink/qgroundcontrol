@@ -8,21 +8,18 @@
  ****************************************************************************/
 
 #include "MultiVehicleManager.h"
-#include "AutoPilotPlugin.h"
 #include "MAVLinkProtocol.h"
 #include "QGCApplication.h"
-#include "FollowMe.h"
 #include "ParameterManager.h"
 #include "SettingsManager.h"
 #include "QGCCorePlugin.h"
 #include "QGCOptions.h"
 #include "LinkManager.h"
 #include "Vehicle.h"
-#include "QGCLoggingCategory.h"
-
 #if defined (Q_OS_IOS) || defined(Q_OS_ANDROID)
 #include "MobileScreenMgr.h"
 #endif
+#include "QGCLoggingCategory.h"
 
 #include <QtQml/QQmlEngine>
 

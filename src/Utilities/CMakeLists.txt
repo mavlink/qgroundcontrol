@@ -53,7 +53,7 @@ target_link_libraries(Utilities
 		shp
 		FactSystem
 		Geo
-		qgc
+		QGC
 		QmlControls
 		Settings
 	PUBLIC

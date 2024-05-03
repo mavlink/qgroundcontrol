@@ -1,12 +1,11 @@
 #pragma once
 
-
-#include "GeoTagController.h"
 #include <QtCore/QByteArray>
 #include <QtCore/QMap>
 #include <QtCore/QString>
 #include <QtCore/QCoreApplication>
 
+#include "GeoTagController.h"
 
 #define ULOG_FILE_HEADER_LEN 16
 

@@ -8,14 +8,13 @@
  ****************************************************************************/
 
 
-#ifndef MissionItem_H
-#define MissionItem_H
+#pragma once
 
-#include <QObject>
-#include <QString>
-#include <QTextStream>
-#include <QJsonObject>
-#include <QGeoCoordinate>
+#include <QtCore/QObject>
+#include <QtCore/QString>
+#include <QtCore/QTextStream>
+#include <QtCore/QJsonObject>
+#include <QtPositioning/QGeoCoordinate>
 
 #include "QGCMAVLink.h"
 #include "Fact.h"
@@ -152,5 +151,3 @@ private:
     friend class MissionItemTest;
 #endif
 };
-
-#endif

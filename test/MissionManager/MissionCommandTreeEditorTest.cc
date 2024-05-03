@@ -17,6 +17,8 @@
 #include "PlanMasterController.h"
 
 #include <QtTest/QTest>
+#include <QtQml/QQmlApplicationEngine>
+#include <QtQml/QQmlContext>
 
 MissionCommandTreeEditorTest::MissionCommandTreeEditorTest(void)
 {

@@ -9,21 +9,23 @@
 
 #pragma once
 
-#include "ComplexMissionItem.h"
-#include "MissionItem.h"
-#include "Fact.h"
-
 #include <QtCore/QLoggingCategory>
+
+#include "ComplexMissionItem.h"
 
 Q_DECLARE_LOGGING_CATEGORY(LandingComplexItemLog)
 
 class PlanMasterController;
 class LandingComplexItemTest;
+class Fact;
+class MissionItem;
 
 // Base class for landing patterns complex items.
 class LandingComplexItem : public ComplexMissionItem
 {
     Q_OBJECT
+    Q_MOC_INCLUDE("Fact.h")
+    Q_MOC_INCLUDE("MissionItem.h")
 
 public:
     LandingComplexItem(PlanMasterController* masterController, bool flyView);

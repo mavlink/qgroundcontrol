@@ -1,6 +1,6 @@
 find_package(Qt6 REQUIRED COMPONENTS Core)
 
-qt_add_library(gps STATIC)
+qt_add_library(GPS STATIC)
 
 if(NOT QGC_NO_SERIAL_LINK)
 	# include(FetchContent)
@@ -15,7 +15,7 @@ if(NOT QGC_NO_SERIAL_LINK)
 	# 	add_subdirectory(${gps_drivers_SOURCE_DIR} ${gps_drivers_BINARY_DIR} EXCLUDE_FROM_ALL)
 	# endif()
 
-	target_sources(gps
+	target_sources(GPS
 		PRIVATE
 			definitions.h
 			Drivers/src/ashtech.cpp
@@ -42,20 +42,21 @@ if(NOT QGC_NO_SERIAL_LINK)
 			sensor_gps.h
 	)
 
-	target_link_libraries(gps
+	target_link_libraries(GPS
 		PRIVATE
 			Settings
 			Utilities
 			Vehicle
 		PUBLIC
 			Qt6::Core
-			comm
-			qgc
+			Comms
+			QGC
 	)
 
-	target_include_directories(gps
-		PUBLIC
-			${CMAKE_CURRENT_SOURCE_DIR}
+	target_include_directories(GPS
+		PRIVATE
 			Drivers/src
+		INTERFACE
+			${CMAKE_CURRENT_SOURCE_DIR}
 	)
 endif()

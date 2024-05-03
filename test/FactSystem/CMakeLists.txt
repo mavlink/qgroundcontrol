@@ -18,7 +18,7 @@ target_link_libraries(FactSystemTest
     	Qt6::Test
         AutoPilotPlugins
         FactSystem
-        qgc
+        QGC
         Settings
         Vehicle
 	PUBLIC

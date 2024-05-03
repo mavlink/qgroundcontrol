@@ -46,25 +46,25 @@ target_link_libraries(Vehicle
 		VehicleActuators
 		VehicleComponents
 		ADSB
-                api
+		API
 		Audio
-                AutoPilotPlugins
-        	Camera
+		AutoPilotPlugins
+		Camera
 		FirmwarePlugin
-                Joystick
-        	MockLink
-        	Utilities
+		Joystick
+		MockLink
+		Utilities
 		UTMSP
 	PUBLIC
 		Qt6::Core
 		Qt6::Gui
 		Qt6::Positioning
 		libevents_wrapper
-		comm
+		Comms
 		FactSystem
-	        MissionManager
-	        qgc
-	        VehicleFactGroups
+		MissionManager
+		QGC
+		VehicleFactGroups
 )
 
 target_include_directories(Vehicle PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
