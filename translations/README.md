@@ -2,8 +2,14 @@
 
 QGC uses the standard Qt Linguist mechanisms for string translation. QGC uses crowd sourced string translation through a [Crowdin project](https://crowdin.com/project/qgroundcontrol) for translation.
 
-## `source qgc-lupdate.sh`
-Run this command to update the translations files for both Qt and Json. Crowdin will automatically pull these up and submit a pull request back when new translations are available.
+## Crowdin integration
+Crowdin is configured to automatically sychronize the qgc.ts file once a day. So it will pick up any new changes automatically. Once it has processed those changes it will submit a pull request back with the translations.
+
+### Adding a new language for translation
+Add the new language from the CrowdIn settings as the first step.
+
+### Periodically update the base transation files during the release cycle
+You do this by running the `source qgc-lupdate.sh` script to update the translations files for both Qt and Json. Crowdin will automatically pull these up and submit a pull request back when new translations are available.
 
 ## C++ and Qml code strings
 These are coded using the standard Qt tr() for C++ and qsTr() for Qml mechanisms.
@@ -47,5 +53,3 @@ This is used when you have two strings in the same file which are equal, but the
 
 In the example above "baz" is the string which is the same for two different keys. The prefix `#loc.disambiguation#` indicates a disambiguation is to follow which is the string between the next set of `#`s.
 
-## Crowdin integration
-Crowdin is configured to automatically sychronize the qgc.ts file once a day. So it will pick up any new changes automatically. Once it has processed those changes it will submit a pull request back with the translations.
