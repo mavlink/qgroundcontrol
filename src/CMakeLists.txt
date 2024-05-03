@@ -123,4 +123,5 @@ else()
 	)
 endif()
 
-target_precompile_headers(qgc PRIVATE ${CMAKE_SOURCE_DIR}/src/pch.h)
+target_precompile_headers(qgc PRIVATE pch.h)
+# target_precompile_headers(Vehicle REUSE_FROM qgc)
