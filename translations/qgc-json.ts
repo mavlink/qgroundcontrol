@@ -2,71 +2,11 @@
 <!DOCTYPE TS>
 <TS version="2.1">
 <context>
-    <name>APM-MavCmdInfoCommon.json</name>
+    <name>FlyView.SettingsGroup.json</name>
     <message>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].description, </extracomment>
-        <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
-        <source>Take off from the ground and ascend to specified altitude.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].description, </extracomment>
-        <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
-        <source>Takeoff to specified altitude.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].category, .mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].category, </extracomment>
-        <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
-        <source>VTOL</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].description, </extracomment>
-        <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
-        <source>Land using VTOL mode.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_RELAY].param2.label, </extracomment>
-        <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
-        <source>Setting</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_RELAY].param2.enumStrings, </extracomment>
-        <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
-        <source>On,Off</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param1.label, </extracomment>
-        <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
-        <source>Pitch</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param2.label, </extracomment>
-        <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
-        <source>Roll</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param3.label, </extracomment>
-        <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
-        <source>Yaw</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].param1.label, </extracomment>
-        <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
-        <source>Enable</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].param1.enumStrings, </extracomment>
-        <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
-        <source>Enable,Disable</source>
+        <extracomment>.QGC.MetaData.Facts[instrumentQmlFile].enumStrings, </extracomment>
+        <location filename="../src/Settings/FlyView.SettingsGroup.json"/>
+        <source>Integrated Compass & Attitude,Horizontal Compass & Atttitude,Large Vertical</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -110,6 +50,39 @@
     </message>
 </context>
 <context>
+    <name>FirmwareUpgrade.SettingsGroup.json</name>
+    <message>
+        <extracomment>.QGC.MetaData.Facts[apmChibiOS].enumStrings, </extracomment>
+        <location filename="../src/Settings/FirmwareUpgrade.SettingsGroup.json"/>
+        <source>ChibiOS,NuttX</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <extracomment>.QGC.MetaData.Facts[apmVehicleType].enumStrings, </extracomment>
+        <location filename="../src/Settings/FirmwareUpgrade.SettingsGroup.json"/>
+        <source>Multi-Rotor,Helicopter,Plane,Rover,Sub</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>APMMavlinkStreamRate.SettingsGroup.json</name>
+    <message>
+        <extracomment>.QGC.MetaData.Defines.StreamRateEnumStrings, </extracomment>
+        <location filename="../src/Settings/APMMavlinkStreamRate.SettingsGroup.json"/>
+        <source>Controlled By Vehicle,0 hz,1 hz,2 hz,3 hz,4 hz,5 hz,6 hz,7 hz,8 hz,9 hz,10 hz,50 hz,100 hz</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>BatteryIndicator.SettingsGroup.json</name>
+    <message>
+        <extracomment>.QGC.MetaData.Facts[display].enumStrings, </extracomment>
+        <location filename="../src/Settings/BatteryIndicator.SettingsGroup.json"/>
+        <source>Percentage,Voltage,Percentage and Voltage</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>Video.SettingsGroup.json</name>
     <message>
         <extracomment>.QGC.MetaData.Facts[gridLines].enumStrings, </extracomment>
@@ -133,48 +106,6 @@
         <extracomment>.QGC.MetaData.Facts[forceVideoDecoder].enumStrings, </extracomment>
         <location filename="../src/Settings/Video.SettingsGroup.json"/>
         <source>Default,Force software decoder,Force NVIDIA decoder,Force VA-API decoder,Force DirectX3D 11 decoder,Force VideoToolbox decoder</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>BatteryIndicator.SettingsGroup.json</name>
-    <message>
-        <extracomment>.QGC.MetaData.Facts[display].enumStrings, </extracomment>
-        <location filename="../src/Settings/BatteryIndicator.SettingsGroup.json"/>
-        <source>Percentage,Voltage,Percentage and Voltage</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>FlyView.SettingsGroup.json</name>
-    <message>
-        <extracomment>.QGC.MetaData.Facts[instrumentQmlFile].enumStrings, </extracomment>
-        <location filename="../src/Settings/FlyView.SettingsGroup.json"/>
-        <source>Integrated Compass & Attitude,Horizontal Compass & Atttitude,Large Vertical</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>APMMavlinkStreamRate.SettingsGroup.json</name>
-    <message>
-        <extracomment>.QGC.MetaData.Defines.StreamRateEnumStrings, </extracomment>
-        <location filename="../src/Settings/APMMavlinkStreamRate.SettingsGroup.json"/>
-        <source>Controlled By Vehicle,0 hz,1 hz,2 hz,3 hz,4 hz,5 hz,6 hz,7 hz,8 hz,9 hz,10 hz,50 hz,100 hz</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>FirmwareUpgrade.SettingsGroup.json</name>
-    <message>
-        <extracomment>.QGC.MetaData.Facts[apmChibiOS].enumStrings, </extracomment>
-        <location filename="../src/Settings/FirmwareUpgrade.SettingsGroup.json"/>
-        <source>ChibiOS,NuttX</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <extracomment>.QGC.MetaData.Facts[apmVehicleType].enumStrings, </extracomment>
-        <location filename="../src/Settings/FirmwareUpgrade.SettingsGroup.json"/>
-        <source>Multi-Rotor,Helicopter,Plane,Rover,Sub</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -236,6 +167,51 @@
     </message>
 </context>
 <context>
+    <name>BatteryFact.json</name>
+    <message>
+        <extracomment>.QGC.MetaData.Facts[batteryFunction].enumStrings, </extracomment>
+        <location filename="../src/Vehicle/FactGroups/BatteryFact.json"/>
+        <source>n/a,All Flight Systems,Propulsion,Avionics,Payload</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <extracomment>.QGC.MetaData.Facts[batteryType].enumStrings, </extracomment>
+        <location filename="../src/Vehicle/FactGroups/BatteryFact.json"/>
+        <source>n/a,LIPO,LIFE,LION,NIMH</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <extracomment>.QGC.MetaData.Facts[chargeState].enumStrings, </extracomment>
+        <location filename="../src/Vehicle/FactGroups/BatteryFact.json"/>
+        <source>n/a,Ok,Low,Critical,Emergency,Failed,Unhealthy,Charging</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GPSFact.json</name>
+    <message>
+        <extracomment>.QGC.MetaData.Facts[lock].enumStrings, </extracomment>
+        <location filename="../src/Vehicle/FactGroups/GPSFact.json"/>
+        <source>None,None,2D Lock,3D Lock,3D DGPS Lock,3D RTK GPS Lock (float),3D RTK GPS Lock (fixed),Static (fixed)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>SubmarineFact.json</name>
+    <message>
+        <extracomment>.QGC.MetaData.Facts[inputHold].enumStrings, </extracomment>
+        <location filename="../src/Vehicle/FactGroups/SubmarineFact.json"/>
+        <source>Disabled,Enabled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <extracomment>.QGC.MetaData.Facts[rollPitchToggle].enumStrings, </extracomment>
+        <location filename="../src/Vehicle/FactGroups/SubmarineFact.json"/>
+        <source>Disabled,Enabled,Unavailable</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>EditPositionDialog.FactMetaData.json</name>
     <message>
         <extracomment>.QGC.MetaData.Facts[Hemisphere].enumStrings, </extracomment>
@@ -245,56 +221,20 @@
     </message>
 </context>
 <context>
-    <name>BatteryFact.json</name>
-    <message>
-        <extracomment>.QGC.MetaData.Facts[batteryFunction].enumStrings, </extracomment>
-        <location filename="../src/Vehicle/BatteryFact.json"/>
-        <source>n/a,All Flight Systems,Propulsion,Avionics,Payload</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <extracomment>.QGC.MetaData.Facts[batteryType].enumStrings, </extracomment>
-        <location filename="../src/Vehicle/BatteryFact.json"/>
-        <source>n/a,LIPO,LIFE,LION,NIMH</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <extracomment>.QGC.MetaData.Facts[chargeState].enumStrings, </extracomment>
-        <location filename="../src/Vehicle/BatteryFact.json"/>
-        <source>n/a,Ok,Low,Critical,Emergency,Failed,Unhealthy,Charging</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>GPSFact.json</name>
-    <message>
-        <extracomment>.QGC.MetaData.Facts[lock].enumStrings, </extracomment>
-        <location filename="../src/Vehicle/GPSFact.json"/>
-        <source>None,None,2D Lock,3D Lock,3D DGPS Lock,3D RTK GPS Lock (float),3D RTK GPS Lock (fixed),Static (fixed)</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>SubmarineFact.json</name>
-    <message>
-        <extracomment>.QGC.MetaData.Facts[inputHold].enumStrings, </extracomment>
-        <location filename="../src/Vehicle/SubmarineFact.json"/>
-        <source>Disabled,Enabled</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <extracomment>.QGC.MetaData.Facts[rollPitchToggle].enumStrings, </extracomment>
-        <location filename="../src/Vehicle/SubmarineFact.json"/>
-        <source>Disabled,Enabled,Unavailable</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>MavCmdInfoMultiRotor.json</name>
     <message>
         <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].param4.label, </extracomment>
         <location filename="../src/MissionManager/MavCmdInfoMultiRotor.json"/>
         <source>Yaw</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MavCmdInfoFixedWing.json</name>
+    <message>
+        <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].param1.label, </extracomment>
+        <location filename="../src/MissionManager/MavCmdInfoFixedWing.json"/>
+        <source>Pitch</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1865,11 +1805,71 @@
     </message>
 </context>
 <context>
-    <name>MavCmdInfoFixedWing.json</name>
+    <name>APM-MavCmdInfoCommon.json</name>
     <message>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].param1.label, </extracomment>
-        <location filename="../src/MissionManager/MavCmdInfoFixedWing.json"/>
+        <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].description, </extracomment>
+        <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
+        <source>Take off from the ground and ascend to specified altitude.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].description, </extracomment>
+        <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
+        <source>Takeoff to specified altitude.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].category, .mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].category, </extracomment>
+        <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
+        <source>VTOL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].description, </extracomment>
+        <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
+        <source>Land using VTOL mode.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_RELAY].param2.label, </extracomment>
+        <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
+        <source>Setting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_RELAY].param2.enumStrings, </extracomment>
+        <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
+        <source>On,Off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param1.label, </extracomment>
+        <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
         <source>Pitch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param2.label, </extracomment>
+        <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
+        <source>Roll</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param3.label, </extracomment>
+        <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
+        <source>Yaw</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <extracomment>.mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].param1.label, </extracomment>
+        <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
+        <source>Enable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <extracomment>.mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].param1.enumStrings, </extracomment>
+        <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
+        <source>Enable,Disable</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
