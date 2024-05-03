@@ -8,21 +8,23 @@
  ****************************************************************************/
 
 
-#ifndef SimpleMissionItem_H
-#define SimpleMissionItem_H
+#pragma once
 
 #include "VisualMissionItem.h"
 #include "MissionItem.h"
-#include "MissionCommandTree.h"
-#include "CameraSection.h"
-#include "SpeedSection.h"
 #include "QGroundControlQmlGlobal.h"
+
+class MissionCommandTree;
+class SpeedSection;
+class CameraSection;
 
 /// A SimpleMissionItem is used to represent a single MissionItem to the ui.
 class SimpleMissionItem : public VisualMissionItem
 {
     Q_OBJECT
-    
+    Q_MOC_INCLUDE("SpeedSection.h")
+    Q_MOC_INCLUDE("CameraSection.h")
+
 public:
     SimpleMissionItem(PlanMasterController* masterController, bool flyView, bool forLoad);
     SimpleMissionItem(PlanMasterController* masterController, bool flyView, const MissionItem& missionItem);
@@ -213,5 +215,3 @@ private:
     static const char* _jsonAltitudeKey;
     static const char* _jsonAMSLAltAboveTerrainKey;
 };
-
-#endif

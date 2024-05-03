@@ -9,22 +9,25 @@
 
 #pragma once
 
-#include <QObject>
+#include <QtCore/QObject>
 #include <QtCore/QLoggingCategory>
 
 #include "MissionController.h"
 #include "GeoFenceController.h"
 #include "RallyPointController.h"
-#include "Vehicle.h"
-#include "MultiVehicleManager.h"
-#include "QmlObjectListModel.h"
 
 Q_DECLARE_LOGGING_CATEGORY(PlanMasterControllerLog)
+
+class QmlObjectListModel;
+class MultiVehicleManager;
+class Vehicle;
 
 /// Master controller for mission, fence, rally
 class PlanMasterController : public QObject
 {
     Q_OBJECT
+    Q_MOC_INCLUDE("QmlObjectListModel.h")
+    Q_MOC_INCLUDE("Vehicle.h")
     
 public:
     PlanMasterController(QObject* parent = nullptr);

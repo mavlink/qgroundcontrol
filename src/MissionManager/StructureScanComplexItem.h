@@ -8,8 +8,7 @@
  ****************************************************************************/
 
 
-#ifndef StructureScanComplexItem_H
-#define StructureScanComplexItem_H
+#pragma once
 
 #include "ComplexMissionItem.h"
 #include "MissionItem.h"
@@ -167,5 +166,3 @@ private:
 
     friend class StructureScanComplexItemTest;
 };
-
-#endif

@@ -8,14 +8,16 @@
  ****************************************************************************/
 
 #include "QGCLZMA.h"
+#include "QGCLoggingCategory.h"
 
 #include <QtCore/QFile>
 #include <QtCore/QtDebug>
 
 #include <mutex>
 
-#include "xz.h"
+#include <xz.h>
 
+QGC_LOGGING_CATEGORY(QGCLZMALog, "qgc.compression.qgclzma")
 
 static std::once_flag crc_init;
 
@@ -23,13 +25,13 @@ bool QGCLZMA::inflateLZMAFile(const QString& lzmaFilename, const QString& decomp
 {
     QFile inputFile(lzmaFilename);
     if (!inputFile.open(QIODevice::ReadOnly)) {
-        qWarning() << "QGCLZMA::inflateLZMAFile: open input file failed" << lzmaFilename << inputFile.errorString();
+        qCWarning(QGCLZMALog) << "QGCLZMA::inflateLZMAFile: open input file failed" << lzmaFilename << inputFile.errorString();
         return false;
     }
 
     QFile outputFile(decompressedFilename);
     if (!outputFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-        qWarning() << "QGCLZMA::inflateLZMAFile: open input file failed" << outputFile.fileName() << outputFile.errorString();
+        qCWarning(QGCLZMALog) << "QGCLZMA::inflateLZMAFile: open input file failed" << outputFile.fileName() << outputFile.errorString();
         return false;
     }
 
@@ -42,7 +44,7 @@ bool QGCLZMA::inflateLZMAFile(const QString& lzmaFilename, const QString& decomp
 
     xz_dec *s = xz_dec_init(XZ_DYNALLOC, (uint32_t)-1);
     if (s == nullptr) {
-        qWarning() << "QGCLZMA::inflateLZMAFile: Memory allocation failed";
+        qCWarning(QGCLZMALog) << "QGCLZMA::inflateLZMAFile: Memory allocation failed";
         return false;
     }
 
@@ -69,7 +71,7 @@ bool QGCLZMA::inflateLZMAFile(const QString& lzmaFilename, const QString& decomp
         if (b.out_pos == sizeof(out)) {
             size_t cBytesWritten = (size_t)outputFile.write((char*)out, static_cast<int>(b.out_pos));
             if (cBytesWritten != b.out_pos) {
-                qWarning() << "QGCLZMA::inflateLZMAFile: output file write failed:" << outputFile.fileName() << outputFile.errorString();
+                qCWarning(QGCLZMALog) << "QGCLZMA::inflateLZMAFile: output file write failed:" << outputFile.fileName() << outputFile.errorString();
                 goto error;
             }
 
@@ -80,13 +82,13 @@ bool QGCLZMA::inflateLZMAFile(const QString& lzmaFilename, const QString& decomp
             continue;
 
         if (ret == XZ_UNSUPPORTED_CHECK) {
-            qWarning() << "QGCLZMA::inflateLZMAFile: Unsupported check; not verifying file integrity";
+            qCWarning(QGCLZMALog) << "QGCLZMA::inflateLZMAFile: Unsupported check; not verifying file integrity";
             continue;
         }
 
         size_t cBytesWritten = (size_t)outputFile.write((char*)out, static_cast<int>(b.out_pos));
         if (cBytesWritten != b.out_pos) {
-            qWarning() << "QGCLZMA::inflateLZMAFile: output file write failed:" << outputFile.fileName() << outputFile.errorString();
+            qCWarning(QGCLZMALog) << "QGCLZMA::inflateLZMAFile: output file write failed:" << outputFile.fileName() << outputFile.errorString();
             goto error;
         }
 
@@ -96,28 +98,28 @@ bool QGCLZMA::inflateLZMAFile(const QString& lzmaFilename, const QString& decomp
             return true;
 
         case XZ_MEM_ERROR:
-            qWarning() << "QGCLZMA::inflateLZMAFile: Memory allocation failed";
+            qCWarning(QGCLZMALog) << "QGCLZMA::inflateLZMAFile: Memory allocation failed";
             goto error;
 
         case XZ_MEMLIMIT_ERROR:
-            qWarning() << "QGCLZMA::inflateLZMAFile: Memory usage limit reached";
+            qCWarning(QGCLZMALog) << "QGCLZMA::inflateLZMAFile: Memory usage limit reached";
             goto error;
 
         case XZ_FORMAT_ERROR:
-            qWarning() << "QGCLZMA::inflateLZMAFile: Not a .xz file";
+            qCWarning(QGCLZMALog) << "QGCLZMA::inflateLZMAFile: Not a .xz file";
             goto error;
 
         case XZ_OPTIONS_ERROR:
-            qWarning() << "QGCLZMA::inflateLZMAFile: Unsupported options in the .xz headers";
+            qCWarning(QGCLZMALog) << "QGCLZMA::inflateLZMAFile: Unsupported options in the .xz headers";
             goto error;
 
         case XZ_DATA_ERROR:
         case XZ_BUF_ERROR:
-            qWarning() << "QGCLZMA::inflateLZMAFile: File is corrupt";
+            qCWarning(QGCLZMALog) << "QGCLZMA::inflateLZMAFile: File is corrupt";
             goto error;
 
         default:
-            qWarning() << "QGCLZMA::inflateLZMAFile: Bug!";
+            qCWarning(QGCLZMALog) << "QGCLZMA::inflateLZMAFile: Bug!";
             goto error;
         }
     }

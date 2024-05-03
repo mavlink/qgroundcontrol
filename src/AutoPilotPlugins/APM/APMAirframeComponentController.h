@@ -15,11 +15,13 @@
 
 class APMAirframeModel;
 class APMAirframeType;
+class QmlObjectListModel;
 
 /// MVC Controller for APMAirframeComponent.qml.
 class APMAirframeComponentController : public FactPanelController
 {
     Q_OBJECT
+    Q_MOC_INCLUDE("QmlObjectListModel.h")
     
 public:
     APMAirframeComponentController(void);
@@ -60,7 +62,7 @@ public:
     Q_PROPERTY(QString      imageResourceDefault    MEMBER _imageResourceDefault    CONSTANT)
     Q_PROPERTY(bool         frameTypeSupported      MEMBER _frameTypeSupported      CONSTANT)
 
-    int     frameType       (void) { return _frameTypeFact->rawValue().toInt(); }
+    int     frameType       (void);
     QString imageResource   (void);
 
     QString         _name;

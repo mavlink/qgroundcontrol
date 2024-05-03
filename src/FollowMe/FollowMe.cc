@@ -10,7 +10,6 @@
 #include "FollowMe.h"
 #include "MultiVehicleManager.h"
 #include "FirmwarePlugin.h"
-#include "MAVLinkProtocol.h"
 #include "Vehicle.h"
 #include "PositionManager.h"
 #include "SettingsManager.h"
@@ -18,7 +17,6 @@
 #include "QGCLoggingCategory.h"
 
 #include <QtPositioning/QGeoPositionInfo>
-#include <cmath>
 
 QGC_LOGGING_CATEGORY(FollowMeLog, "FollowMeLog")
 

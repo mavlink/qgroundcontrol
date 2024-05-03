@@ -12,7 +12,8 @@
 #include <nlohmann/json.hpp>
 
 #include "UTMSPBlenderRestInterface.h"
-#include "services/dispatcher.h"
+
+class Dispatcher;
 
 using json = nlohmann::ordered_json;
 

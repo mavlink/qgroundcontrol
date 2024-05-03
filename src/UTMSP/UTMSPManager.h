@@ -9,23 +9,17 @@
 
 #pragma once
 
-#include "QGCLoggingCategory.h"
 #include "QGCToolbox.h"
-#include <memory>
-#include <QTimer>
-#include <QDebug>
 
-#include "UTMSPVehicle.h"
-#include "services/dispatcher.h"
-#include "UTMSPAuthorization.h"
-
-class QGCToolbox;
 class UTMSPVehicle;
 class Vehicle;
+class Dispatcher;
+class UTMSPAuthorization;
 
 class UTMSPManager : public QGCTool
 {
     Q_OBJECT
+    Q_MOC_INCLUDE("UTMSPAuthorization.h")
 
 public:
     UTMSPManager(QGCApplication* app, QGCToolbox* toolbox);

@@ -10,7 +10,7 @@ qt_add_library(Terrain STATIC
 target_link_libraries(Terrain
 	PRIVATE
 		Qt6::LocationPrivate
-		qgc
+		QGC
 		QGCLocation
 		Utilities
 	PUBLIC

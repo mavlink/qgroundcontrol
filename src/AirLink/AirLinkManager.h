@@ -11,11 +11,12 @@
 
 #include "QGCToolbox.h"
 
-#include <QtNetwork/QNetworkReply>
+#include <QtCore/QMap>
 
 class AppSettings;
 class QGCApplication;
 class LinkInterface;
+class QNetworkReply;
 
 //-----------------------------------------------------------------------------
 class AirLinkManager : public QGCTool

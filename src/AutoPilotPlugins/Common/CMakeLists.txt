@@ -19,7 +19,7 @@ target_link_libraries(CommonAutoPilotPlugin
     PRIVATE
         AutoPilotPlugins
         FactSystem
-        qgc
+        QGC
         Utilities
     PUBLIC
         Qt6::Core

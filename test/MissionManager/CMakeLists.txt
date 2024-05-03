@@ -30,9 +30,9 @@ qt_add_library(MissionManagerTest
 target_link_libraries(MissionManagerTest
     PRIVATE
     	Qt6::Test
-        api
+        API
         FirmwarePlugin
-		qgc
+		QGC
 		Settings
 		Utilities
 		Vehicle

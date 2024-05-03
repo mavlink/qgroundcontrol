@@ -10,16 +10,17 @@
 
 #include "SurveyComplexItem.h"
 #include "JsonHelper.h"
-#include "MissionController.h"
 #include "QGCGeo.h"
 #include "QGCQGeoCoordinate.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
 #include "PlanMasterController.h"
+#include "MissionItem.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 
-#include <QPolygonF>
+#include <QtGui/QPolygonF>
+#include <QtCore/QJsonArray>
 
 QGC_LOGGING_CATEGORY(SurveyComplexItemLog, "SurveyComplexItemLog")
 

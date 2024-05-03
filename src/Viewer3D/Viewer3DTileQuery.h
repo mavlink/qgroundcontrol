@@ -1,16 +1,11 @@
-#ifndef VIEWER3DTILEQUERY_H
-#define VIEWER3DTILEQUERY_H
+#pragma once
 
-#include "qvectornd.h"
-#include <QPixmap>
-#include <QObject>
-#include <QImage>
-#include <QNetworkAccessManager>
-#include <QNetworkRequest>
-#include <QNetworkReply>
-#include <QPainter>
-#include <QDebug>
-#include <QGeoCoordinate>
+#include <QtGui/QPixmap>
+#include <QtCore/QObject>
+#include <QtGui/QImage>
+#include <QtGui/QPainter>
+#include <QtCore/QDebug>
+#include <QtPositioning/QGeoCoordinate>
 
 #include "Viewer3DTileReply.h"
 
@@ -136,5 +131,3 @@ signals:
     void mapTileDownloaded(float progress);
     void textureGeometryReady(TileStatistics_t tileInfo);
 };
-
-#endif // VIEWER3DTILEQUERY_H

@@ -17,33 +17,35 @@
 #include <QtCore/QPointF>
 #include <QtPositioning/QGeoCoordinate>
 
-class QGCToolbox;
-class LinkManager;
-class FactGroup;
-class QGCPalette;
-class AirLinkManager;
-class UTMSPManager;
-class ADSBVehicleManager;
-class MultiVehicleManager;
-class QGCPositionManager;
-class SettingsManager;
-class QGCCorePlugin;
-class MissionCommandTree;
 class QGCApplication;
 
-Q_MOC_INCLUDE("QGCPalette.h")
+class ADSBVehicleManager;
+class FactGroup;
+class LinkManager;
+class MAVLinkLogManager;
+class MissionCommandTree;
+class MultiVehicleManager;
+class QGCCorePlugin;
+class QGCMapEngineManager;
+class QGCPalette;
+class QGCPositionManager;
+class SettingsManager;
+class VideoManager;
+class UTMSPManager;
+class AirLinkManager;
+
+Q_MOC_INCLUDE("ADSBVehicleManager.h")
 Q_MOC_INCLUDE("FactGroup.h")
 Q_MOC_INCLUDE("LinkManager.h")
-Q_MOC_INCLUDE("QGCMapEngineManager.h")
-Q_MOC_INCLUDE("PositionManager.h")
-Q_MOC_INCLUDE("VideoManager.h")
 Q_MOC_INCLUDE("MAVLinkLogManager.h")
-Q_MOC_INCLUDE("SettingsManager.h")
-Q_MOC_INCLUDE("QGCCorePlugin.h")
 Q_MOC_INCLUDE("MissionCommandTree.h")
-Q_MOC_INCLUDE("ADSBVehicleManager.h")
 Q_MOC_INCLUDE("MultiVehicleManager.h")
+Q_MOC_INCLUDE("QGCCorePlugin.h")
+Q_MOC_INCLUDE("QGCMapEngineManager.h")
+Q_MOC_INCLUDE("QGCPalette.h")
 Q_MOC_INCLUDE("PositionManager.h")
+Q_MOC_INCLUDE("SettingsManager.h")
+Q_MOC_INCLUDE("VideoManager.h")
 #ifdef CONFIG_UTM_ADAPTER
 Q_MOC_INCLUDE("UTMSPManager.h")
 #endif

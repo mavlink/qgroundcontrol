@@ -15,7 +15,7 @@ target_link_libraries(ADSB
 	PUBLIC
 		Qt6::Core
 		Qt6::Positioning
-		qgc
+		QGC
 		QmlControls
 )
 

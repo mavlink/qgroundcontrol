@@ -12,6 +12,9 @@
 #include "FactPanelController.h"
 
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QVariant>
+
+class Vehicle;
 
 Q_DECLARE_LOGGING_CATEGORY(SyslinkComponentControllerLog)
 
@@ -22,6 +25,7 @@ namespace Ui {
 class SyslinkComponentController : public FactPanelController
 {
     Q_OBJECT
+    Q_MOC_INCLUDE("Vehicle.h")
 
 public:
     SyslinkComponentController      ();

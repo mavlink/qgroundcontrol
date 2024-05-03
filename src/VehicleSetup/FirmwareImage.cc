@@ -8,11 +8,11 @@
  ****************************************************************************/
 
 #include "FirmwareImage.h"
-#include "QGCLoggingCategory.h"
 #include "JsonHelper.h"
 #include "QGCApplication.h"
 #include "CompInfoParam.h"
 #include "Bootloader.h"
+#include "QGCLoggingCategory.h"
 
 #include <QtCore/QFile>
 #include <QtCore/QTextStream>

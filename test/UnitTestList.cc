@@ -132,7 +132,7 @@ UT_REGISTER_TEST(ComponentInformationTranslationTest)
 
 // QmlControls
 
-// ui
+// UI
 
 // Vehicle
 UT_REGISTER_TEST(FTPManagerTest)

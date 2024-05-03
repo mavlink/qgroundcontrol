@@ -15,7 +15,7 @@
 #include "KMLHelper.h"
 #include "QGCLoggingCategory.h"
 
-#include <QLineF>
+#include <QtCore/QLineF>
 
 const char* QGCMapPolyline::jsonPolylineKey = "polyline";
 

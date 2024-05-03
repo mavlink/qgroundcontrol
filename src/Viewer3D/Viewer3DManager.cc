@@ -1,5 +1,6 @@
 #include "Viewer3DManager.h"
-
+#include "OsmParser.h"
+#include "Viewer3DQmlBackend.h"
 
 Viewer3DManager::Viewer3DManager()
 {

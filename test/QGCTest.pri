@@ -18,14 +18,14 @@ ReleaseBuild {
     INCLUDEPATH += \
         $$PWD/AnalyzeView \
         $$PWD/Audio \
-        $$PWD/comm \
+        $$PWD/Comms \
         $$PWD/Compression \
         $$PWD/FactSystem \
         $$PWD/Geo \
         $$PWD/MissionManager \
         $$PWD/qgcunittest \
         $$PWD/QmlControls \
-        $$PWD/ui \
+        $$PWD/UI \
         $$PWD/Vehicle
 
     HEADERS += \

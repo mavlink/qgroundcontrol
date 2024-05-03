@@ -9,8 +9,6 @@
 
 #pragma once
 
-#include <string>
-
 class UTMSPFlightDetails{
 public:
     UTMSPFlightDetails();

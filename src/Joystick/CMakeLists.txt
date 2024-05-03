@@ -30,6 +30,8 @@ else()
 
     	target_link_libraries(Joystick PRIVATE SDL2::SDL2-static)
 
+	    target_compile_definitions(Joystick PRIVATE QGC_SDL_JOYSTICK)
+
     	include(FetchContent)
 	    FetchContent_Declare(sdl_db
 	        GIT_REPOSITORY https://github.com/mdqinc/SDL_GameControllerDB.git
@@ -37,6 +39,7 @@ else()
 	        GIT_SHALLOW TRUE
 	    )
 	    FetchContent_MakeAvailable(sdl_db)
+
 	    set_source_files_properties(${sdl_db_SOURCE_DIR}/gamecontrollerdb.txt
 		    PROPERTIES
 		        QT_RESOURCE_ALIAS gamecontrollerdb.txt
@@ -45,23 +48,21 @@ else()
 		    PREFIX "/db/mapping/joystick"
 		    FILES ${sdl_db_SOURCE_DIR}/gamecontrollerdb.txt
 	    )
+
 	endif()
 endif()
 
 target_link_libraries(Joystick
 	PRIVATE
 		Qt6::Qml
-		AutoPilotPlugins
-		Camera
         FirmwarePlugin
 		Settings
 		Utilities
 		Vehicle
-		VideoManager
 	PUBLIC
 		Qt6::Core
-		comm
-		qgc
+		Comms
+		QGC
 		QmlControls
 )
 

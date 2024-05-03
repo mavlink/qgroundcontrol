@@ -67,6 +67,7 @@ target_link_libraries(Compression
 	PRIVATE
         zlibstatic
         xz
+        Utilities
 	PUBLIC
 		Qt6::Core
 )

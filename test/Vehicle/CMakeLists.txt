@@ -17,9 +17,9 @@ qt_add_library(VehicleTest
 target_link_libraries(VehicleTest
 	PRIVATE
 		Qt6::Test
-		qgc
+		QGC
 	PUBLIC
-		comm
+		Comms
 		qgcunittest
 		Vehicle
 )

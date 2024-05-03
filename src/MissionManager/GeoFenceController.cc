@@ -13,19 +13,20 @@
 
 #include "GeoFenceController.h"
 #include "Vehicle.h"
-#include "FirmwarePlugin.h"
-#include "MAVLinkProtocol.h"
 #include "QGCApplication.h"
 #include "ParameterManager.h"
 #include "JsonHelper.h"
-#include "AppSettings.h"
 #include "PlanMasterController.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
 #include "FactSystem.h"
+#include "GeoFenceManager.h"
+#include "QGCFenceCircle.h"
+#include "QGCFencePolygon.h"
 #include "QGCLoggingCategory.h"
 
-#include <QJsonArray>
+#include <QtCore/QJsonArray>
+#include <QtCore/QJsonDocument>
 
 QGC_LOGGING_CATEGORY(GeoFenceControllerLog, "GeoFenceControllerLog")
 

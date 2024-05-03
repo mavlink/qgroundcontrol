@@ -9,9 +9,9 @@
 
 #pragma once
 
-#include <QObject>
-#include <QString>
-#include <QGeoCoordinate>
+#include <QtCore/QObject>
+#include <QtCore/QString>
+#include <QtPositioning/QGeoCoordinate>
 
 class PlanMasterController;
 class MissionController;

@@ -15,6 +15,7 @@
 #define AIRFRAMECOMPONENTCONTROLLER_H
 
 #include <QtCore/QObject>
+#include <QtCore/QVariant>
 
 #include "FactPanelController.h"
 

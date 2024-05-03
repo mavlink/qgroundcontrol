@@ -12,6 +12,7 @@
 #include "MissionCommandUIInfo.h"
 #include "MissionCommandList.h"
 #include "MissionCommandTree.h"
+#include "Vehicle.h"
 
 #include <QtTest/QTest>
 

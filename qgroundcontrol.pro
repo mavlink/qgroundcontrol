@@ -357,7 +357,7 @@ INCLUDEPATH += \
     include/ui \
     src \
     src/ADSB \
-    src/api \
+    src/API \
     src/AnalyzeView \
     src/Camera \
     src/Compression \
@@ -383,8 +383,8 @@ INCLUDEPATH += \
     src/Vehicle/FactGroups \
     src/Vehicle/LibEvents \
     src/Audio \
-    src/comm \
-    src/comm/MockLink \
+    src/Comms \
+    src/Comms/MockLink \
     src/input \
     src/lib/qmapcontrol \
     src/uas \
@@ -408,19 +408,19 @@ HEADERS += \
     src/QmlControls/CustomActionManager.h \
     src/QmlControls/QmlUnitsConversion.h \
     src/Vehicle/FactGroups/VehicleEscStatusFactGroup.h \
-    src/api/QGCCorePlugin.h \
-    src/api/QGCOptions.h \
-    src/api/QGCSettings.h \
-    src/api/QmlComponentInfo.h \
+    src/API/QGCCorePlugin.h \
+    src/API/QGCOptions.h \
+    src/API/QGCSettings.h \
+    src/API/QmlComponentInfo.h \
     src/GPS/Drivers/src/base_station.h \
 
 SOURCES += \
     src/QmlControls/CustomActionManager.cc \
     src/Vehicle/FactGroups/VehicleEscStatusFactGroup.cc \
-    src/api/QGCCorePlugin.cc \
-    src/api/QGCOptions.cc \
-    src/api/QGCSettings.cc \
-    src/api/QmlComponentInfo.cc \
+    src/API/QGCCorePlugin.cc \
+    src/API/QGCOptions.cc \
+    src/API/QGCSettings.cc \
+    src/API/QmlComponentInfo.cc \
 
 # Main QGC Headers and Source files
 
@@ -605,15 +605,15 @@ HEADERS += \
     src/Vehicle/FactGroups/VehicleGeneratorFactGroup.h \
     src/Vehicle/FactGroups/VehicleEFIFactGroup.h \
     src/VehicleSetup/JoystickConfigController.h \
-    src/comm/LinkConfiguration.h \
-    src/comm/LinkInterface.h \
-    src/comm/LinkManager.h \
-    src/comm/LogReplayLink.h \
-    src/comm/MAVLinkProtocol.h \
-    src/comm/QGCMAVLink.h \
-    src/comm/TCPLink.h \
-    src/comm/UDPLink.h \
-    src/comm/UdpIODevice.h \
+    src/Comms/LinkConfiguration.h \
+    src/Comms/LinkInterface.h \
+    src/Comms/LinkManager.h \
+    src/Comms/LogReplayLink.h \
+    src/Comms/MAVLinkProtocol.h \
+    src/Comms/QGCMAVLink.h \
+    src/Comms/TCPLink.h \
+    src/Comms/UDPLink.h \
+    src/Comms/UdpIODevice.h \
     src/Vehicle/UASMessageHandler.h \
     src/AnalyzeView/GeoTagController.h \
     src/AnalyzeView/ExifParser.h \
@@ -637,9 +637,9 @@ AndroidBuild {
 
 DebugBuild {
 HEADERS += \
-    src/comm/MockLink/MockLink.h \
-    src/comm/MockLink/MockLinkFTP.h \
-    src/comm/MockLink/MockLinkMissionItemHandler.h \
+    src/Comms/MockLink/MockLink.h \
+    src/Comms/MockLink/MockLinkFTP.h \
+    src/Comms/MockLink/MockLinkMissionItemHandler.h \
 }
 
 WindowsBuild {
@@ -651,16 +651,16 @@ WindowsBuild {
 
 contains(DEFINES, QGC_ENABLE_BLUETOOTH) {
     HEADERS += \
-    src/comm/BluetoothLink.h \
+    src/Comms/BluetoothLink.h \
 }
 
 !contains(DEFINES, NO_SERIAL_LINK) {
 HEADERS += \
-    src/comm/QGCSerialPortInfo.h \
-    src/comm/SerialLink.h \
+    src/Comms/QGCSerialPortInfo.h \
+    src/Comms/SerialLink.h \
 }
 
-!MobileBuild {
+!iosBuild {
 HEADERS += \
     src/GPS/Drivers/src/gps_helper.h \
     src/GPS/Drivers/src/rtcm.h \
@@ -674,9 +674,13 @@ HEADERS += \
     src/GPS/definitions.h \
     src/GPS/satellite_info.h \
     src/GPS/sensor_gps.h \
-    src/GPS/sensor_gnss_relative.h \
+    src/GPS/sensor_gnss_relative.h
+}
+
+!MobileBuild {
+HEADERS += \
     src/Joystick/JoystickSDL.h \
-    src/RunGuard.h \
+    src/RunGuard.h
 }
 
 iOSBuild {
@@ -869,15 +873,15 @@ SOURCES += \
     src/Vehicle/FactGroups/VehicleEFIFactGroup.cc \
     src/Vehicle/FactGroups/VehicleWindFactGroup.cc \
     src/VehicleSetup/JoystickConfigController.cc \
-    src/comm/LinkConfiguration.cc \
-    src/comm/LinkInterface.cc \
-    src/comm/LinkManager.cc \
-    src/comm/LogReplayLink.cc \
-    src/comm/MAVLinkProtocol.cc \
-    src/comm/QGCMAVLink.cc \
-    src/comm/TCPLink.cc \
-    src/comm/UDPLink.cc \
-    src/comm/UdpIODevice.cc \
+    src/Comms/LinkConfiguration.cc \
+    src/Comms/LinkInterface.cc \
+    src/Comms/LinkManager.cc \
+    src/Comms/LogReplayLink.cc \
+    src/Comms/MAVLinkProtocol.cc \
+    src/Comms/QGCMAVLink.cc \
+    src/Comms/TCPLink.cc \
+    src/Comms/UDPLink.cc \
+    src/Comms/UdpIODevice.cc \
     src/main.cc \
     src/Vehicle/UASMessageHandler.cc \
     src/AnalyzeView/GeoTagController.cc \
@@ -896,23 +900,23 @@ SOURCES += \
 
 DebugBuild {
 SOURCES += \
-    src/comm/MockLink/MockLink.cc \
-    src/comm/MockLink/MockLinkFTP.cc \
-    src/comm/MockLink/MockLinkMissionItemHandler.cc \
+    src/Comms/MockLink/MockLink.cc \
+    src/Comms/MockLink/MockLinkFTP.cc \
+    src/Comms/MockLink/MockLinkMissionItemHandler.cc \
 }
 
 !contains(DEFINES, NO_SERIAL_LINK) {
 SOURCES += \
-    src/comm/QGCSerialPortInfo.cc \
-    src/comm/SerialLink.cc \
+    src/Comms/QGCSerialPortInfo.cc \
+    src/Comms/SerialLink.cc \
 }
 
 contains(DEFINES, QGC_ENABLE_BLUETOOTH) {
     SOURCES += \
-    src/comm/BluetoothLink.cc \
+    src/Comms/BluetoothLink.cc \
 }
 
-!MobileBuild {
+!iosBuild {
 SOURCES += \
     src/GPS/Drivers/src/gps_helper.cpp \
     src/GPS/Drivers/src/rtcm.cpp \
@@ -921,7 +925,11 @@ SOURCES += \
     src/GPS/Drivers/src/sbf.cpp \
     src/GPS/GPSManager.cc \
     src/GPS/GPSProvider.cc \
-    src/GPS/RTCMMavlink.cc \
+    src/GPS/RTCMMavlink.cc
+}
+
+!MobileBuild {
+SOURCES += \
     src/Joystick/JoystickSDL.cc \
     src/RunGuard.cc \
 }
@@ -947,10 +955,11 @@ HEADERS+= \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.h \
     src/FirmwarePlugin/CameraMetaData.h \
     src/FirmwarePlugin/FirmwarePlugin.h \
+    src/FirmwarePlugin/FirmwarePluginFactory.h \
     src/FirmwarePlugin/FirmwarePluginManager.h \
     src/VehicleSetup/VehicleComponent.h \
 
-!MobileBuild { !contains(DEFINES, NO_SERIAL_LINK) {
+!iosBuild { !contains(DEFINES, NO_SERIAL_LINK) {
     HEADERS += \
         src/VehicleSetup/Bootloader.h \
         src/VehicleSetup/FirmwareImage.h \
@@ -969,10 +978,11 @@ SOURCES += \
     src/AutoPilotPlugins/Generic/GenericAutoPilotPlugin.cc \
     src/FirmwarePlugin/CameraMetaData.cc \
     src/FirmwarePlugin/FirmwarePlugin.cc \
+    src/FirmwarePlugin/FirmwarePluginFactory.cc \
     src/FirmwarePlugin/FirmwarePluginManager.cc \
     src/VehicleSetup/VehicleComponent.cc \
 
-!MobileBuild { !contains(DEFINES, NO_SERIAL_LINK) {
+!iosBuild { !contains(DEFINES, NO_SERIAL_LINK) {
     SOURCES += \
         src/VehicleSetup/Bootloader.cc \
         src/VehicleSetup/FirmwareImage.cc \

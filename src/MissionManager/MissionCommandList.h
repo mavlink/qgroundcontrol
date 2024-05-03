@@ -11,9 +11,9 @@
 
 #include "QGCMAVLink.h"
 
-#include <QObject>
-#include <QString>
-#include <QMap>
+#include <QtCore/QObject>
+#include <QtCore/QString>
+#include <QtCore/QMap>
 
 class MissionCommandUIInfo;
 

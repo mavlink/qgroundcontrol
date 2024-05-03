@@ -13,6 +13,7 @@
 #include "ParameterManager.h"
 #include "FactSystem.h"
 #include "AutoPilotPlugin.h"
+#include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtQml/QQmlEngine>

@@ -9,7 +9,7 @@
 
 #include "SysStatusSensorInfo.h"
 
-#include <QDebug>
+#include <QtCore/QDebug>
 
 SysStatusSensorInfo::SysStatusSensorInfo(QObject* parent)
     : QObject(parent)

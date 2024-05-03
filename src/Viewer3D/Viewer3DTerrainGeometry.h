@@ -1,13 +1,11 @@
-#ifndef VIEWER3DTERRAINGEOMETRY_H
-#define VIEWER3DTERRAINGEOMETRY_H
+#pragma once
 
-#include <QObject>
-#include <QQuick3DGeometry>
-#include <QVector3D>
-#include <QCamera>
-#include <QGeoCoordinate>
+#include <QtQuick3D/QQuick3DGeometry>
+#include <QtPositioning/QGeoCoordinate>
+#include <QtGui/QVector3D>
+#include <QtGui/QVector2D>
 
-#include "Viewer3DSettings.h"
+class Viewer3DSettings;
 
 ///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
 
@@ -77,5 +75,3 @@ signals:
     void roiMaxChanged();
     void refCoordinateChanged();
 };
-
-#endif // VIEWER3DTERRAINGEOMETRY_H

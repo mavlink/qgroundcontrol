@@ -1,7 +1,8 @@
 #include "OsmParser.h"
-#include "earcut.hpp"
 #include "QGCApplication.h"
 #include "SettingsManager.h"
+#include "OsmParserThread.h"
+#include "earcut.hpp"
 
 typedef union {
     uint array[3];

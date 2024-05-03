@@ -1,24 +1,27 @@
-if(ANDROID)
-	find_package(Qt6 REQUIRED COMPONENTS Core)
-
-	qt_add_library(qtandroidserialport STATIC
-		src/qserialport.cpp
-		src/qserialport.h
-		src/qserialport_p.h
-		src/qserialport_android.cpp
-		src/qserialport_android_p.h
-		src/qserialportinfo.cpp
-		src/qserialportinfo.h
-		src/qserialportinfo_p.h
-		src/qserialportinfo_android.cpp
-	)
-
-	target_link_libraries(qtandroidserialport
-		PRIVATE
-			qgc
-		PUBLIC
-			Qt6::CorePrivate
-	)
-
-	target_include_directories(qtandroidserialport PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+if(NOT ANDROID)
+	return()
 endif()
+
+find_package(Qt6 REQUIRED COMPONENTS Core)
+
+qt_add_library(qtandroidserialport STATIC
+	qserialport.cpp
+	qserialport.h
+	qserialport_p.h
+	qserialport_android.cpp
+	qserialport_android_p.h
+	qserialportinfo.cpp
+	qserialportinfo.h
+	qserialportinfo_p.h
+	qserialportinfo_android.cpp
+)
+
+target_link_libraries(qtandroidserialport
+	PRIVATE
+		Utilities
+	PUBLIC
+		Qt6::Core
+		Qt6::CorePrivate
+)
+
+target_include_directories(qtandroidserialport PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

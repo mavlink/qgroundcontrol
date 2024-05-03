@@ -7,16 +7,17 @@
  *
  ****************************************************************************/
 
-#ifndef QGCMapPolygon_H
-#define QGCMapPolygon_H
+#pragma once
 
-#include <QObject>
-#include <QGeoCoordinate>
-#include <QVariantList>
-#include <QPolygon>
+#include <QtCore/QObject>
+#include <QtPositioning/QGeoCoordinate>
+#include <QtCore/QVariantList>
+#include <QtGui/QPolygonF>
+#include <QtXml/QDomElement>
 
 #include "QmlObjectListModel.h"
-#include "KMLDomDocument.h"
+
+class KMLDomDocument;
 
 /// The QGCMapPolygon class provides a polygon which can be displayed on a map using a map visuals control.
 /// It maintains a representation of the polygon on QVariantList and QmlObjectListModel format.
@@ -168,5 +169,3 @@ private:
     bool                _showAltColor =         false;
     int                 _selectedVertexIndex =  -1;
 };
-
-#endif

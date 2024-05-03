@@ -1,7 +1,5 @@
 #include "Viewer3DTileQuery.h"
 
-#include "QGCMapEngine.h"
-
 #define PI                  acos(-1.0f)
 #define DEG_TO_RAD          PI/180.0f
 #define RAD_TO_DEG          180.0f/PI

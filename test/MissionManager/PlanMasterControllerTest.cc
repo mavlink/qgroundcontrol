@@ -11,6 +11,7 @@
 #include "MultiSignalSpyV2.h"
 #include "MissionManager.h"
 #include "PlanMasterController.h"
+#include "Vehicle.h"
 
 #include <QtTest/QTest>
 
