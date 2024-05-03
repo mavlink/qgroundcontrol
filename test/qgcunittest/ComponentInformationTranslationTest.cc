@@ -9,7 +9,10 @@
 
 
 #include "ComponentInformationTranslationTest.h"
+#include "ComponentInformationTranslation.h"
 #include "QGCCachedFileDownload.h"
+
+#include <QtTest/QTest>
 
 void ComponentInformationTranslationTest::_basic_test()
 {

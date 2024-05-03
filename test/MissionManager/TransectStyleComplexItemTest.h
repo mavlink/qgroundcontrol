@@ -10,13 +10,13 @@
 #pragma once
 
 #include "TransectStyleComplexItemTestBase.h"
-#include "MultiSignalSpyV2.h"
-#include "CorridorScanComplexItem.h"
-#include "PlanMasterController.h"
+#include "TransectStyleComplexItem.h"
 
 #include <QGeoCoordinate>
 
 class TestTransectStyleItem;
+class MultiSignalSpyV2;
+class PlanMasterController;
 
 class TransectStyleComplexItemTest : public TransectStyleComplexItemTestBase
 {

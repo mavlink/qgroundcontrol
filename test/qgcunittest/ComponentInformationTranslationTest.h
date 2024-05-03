@@ -10,13 +10,10 @@
 
 #pragma once
 
-#include "ComponentInformationTranslation.h"
-
 #include "UnitTest.h"
 
-#include <QString>
-#include <QJsonDocument>
-#include <QByteArray>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QByteArray>
 
 class ComponentInformationTranslationTest : public UnitTest
 {

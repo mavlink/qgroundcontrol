@@ -10,12 +10,12 @@
 #pragma once
 
 #include "TransectStyleComplexItemTestBase.h"
-#include "MultiSignalSpy.h"
-#include "SurveyComplexItem.h"
-#include "PlanMasterController.h"
-#include "PlanViewSettings.h"
 
-#include <QGeoCoordinate>
+#include <QtPositioning/QGeoCoordinate>
+
+class SurveyComplexItem;
+class QGCMapPolygon;
+class MultiSignalSpy;
 
 /// Unit test for SurveyComplexItem
 class SurveyComplexItemTest : public TransectStyleComplexItemTestBase

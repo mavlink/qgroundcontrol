@@ -10,11 +10,10 @@
 #pragma once
 
 #include "UnitTest.h"
-#include "MultiSignalSpyV2.h"
-#include "CameraCalc.h"
-#include "PlanMasterController.h"
 
-#include <QGeoCoordinate>
+class MultiSignalSpyV2;
+class CameraCalc;
+class PlanMasterController;
 
 class CameraCalcTest : public UnitTest
 {

@@ -8,8 +8,9 @@
  ****************************************************************************/
 
 #include "SurveyComplexItemTest.h"
-#include "QGCApplication.h"
-#include "JsonHelper.h"
+#include "SurveyComplexItem.h"
+#include "PlanViewSettings.h"
+#include "MultiSignalSpy.h"
 
 SurveyComplexItemTest::SurveyComplexItemTest(void)
 {

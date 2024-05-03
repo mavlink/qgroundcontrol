@@ -16,7 +16,7 @@
 #pragma once
 
 #include "UnitTest.h"
-#include "MainWindow.h"
+#include "QGCMAVLink.h"
 
 class MainWindowTest : public UnitTest
 {

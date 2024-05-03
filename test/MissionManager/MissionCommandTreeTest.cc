@@ -11,7 +11,9 @@
 #include "QGCApplication.h"
 #include "MissionCommandUIInfo.h"
 #include "MissionCommandList.h"
-#include "FactMetaData.h"
+#include "MissionCommandTree.h"
+
+#include <QtTest/QTest>
 
 MissionCommandTreeTest::MissionCommandTreeTest(void)
 {

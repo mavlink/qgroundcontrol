@@ -15,9 +15,9 @@
 
 #pragma once
 
-#include <QGeoCoordinate>
-
 #include "UnitTest.h"
+
+#include <QtPositioning/QGeoCoordinate>
 
 class GeoTest : public UnitTest
 {

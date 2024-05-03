@@ -12,8 +12,11 @@
 #include "QGCCorePlugin.h"
 #include "FirmwarePlugin.h"
 #include "FirmwarePluginManager.h"
+#include "SettingsManager.h"
 #include "SimpleMissionItem.h"
 #include "PlanMasterController.h"
+
+#include <QtTest/QTest>
 
 MissionCommandTreeEditorTest::MissionCommandTreeEditorTest(void)
 {
