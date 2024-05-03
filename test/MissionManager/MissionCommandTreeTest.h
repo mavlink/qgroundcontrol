@@ -11,7 +11,9 @@
 #define MissionCommandTreeTest_H
 
 #include "UnitTest.h"
-#include "MissionCommandTree.h"
+
+class MissionCommandTree;
+class MissionCommandUIInfo;
 
 /// Unit test for the MissionItem Object
 class MissionCommandTreeTest : public UnitTest

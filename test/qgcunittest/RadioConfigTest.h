@@ -11,12 +11,12 @@
 #pragma once
 
 #include "UnitTest.h"
-#include "MockLink.h"
-#include "MultiSignalSpy.h"
-#include "RadioComponentController.h"
-#include "QGCLoggingCategory.h"
-#include "AutoPilotPlugin.h"
-#include "QGCQmlWidgetHolder.h"
+
+#include <QtCore/QLoggingCategory>
+
+class MultiSignalSpy;
+class AutoPilotPlugin;
+class QGCQmlWidgetHolder;
 
 /// @file
 ///     @brief Radio Config unit test

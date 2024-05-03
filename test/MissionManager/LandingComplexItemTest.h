@@ -11,8 +11,9 @@
 
 #include "VisualMissionItemTest.h"
 #include "LandingComplexItem.h"
-#include "MultiSignalSpy.h"
-#include "PlanMasterController.h"
+
+class MultiSignalSpy;
+class PlanMasterController;
 
 class LandingComplexItemTest : public VisualMissionItemTest
 {

@@ -10,9 +10,10 @@
 #pragma once
 
 #include "UnitTest.h"
-#include "MultiSignalSpy.h"
-#include "QGCMapPolyline.h"
-#include "QmlObjectListModel.h"
+
+class QmlObjectListModel;
+class QGCMapPolyline;
+class MultiSignalSpy;
 
 class QGCMapPolylineTest : public UnitTest
 {

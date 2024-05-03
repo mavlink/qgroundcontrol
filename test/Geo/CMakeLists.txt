@@ -1,4 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Positioning)
+find_package(Qt6 REQUIRED COMPONENTS Core Positioning Test)
 
 qt_add_library(GeoTest
 	STATIC
@@ -8,6 +8,7 @@ qt_add_library(GeoTest
 
 target_link_libraries(GeoTest
     PRIVATE
+    	Qt6::Test
         Geo
 	PUBLIC
 		Qt6::Positioning

@@ -12,6 +12,8 @@
 #include "QGCApplication.h"
 #include "MockLink.h"
 
+#include <QtTest/QTest>
+
 SendMavCommandWithHandlerTest::TestCase_t SendMavCommandWithHandlerTest::_rgTestCases[] = {
     {  MockLink::MAV_CMD_MOCKLINK_ALWAYS_RESULT_ACCEPTED,           MAV_RESULT_ACCEPTED,    false,  Vehicle::MavCmdResultCommandResultOnly,             1 },
     {  MockLink::MAV_CMD_MOCKLINK_ALWAYS_RESULT_FAILED,             MAV_RESULT_FAILED,      false,  Vehicle::MavCmdResultCommandResultOnly,             1 },

@@ -8,14 +8,11 @@
  ****************************************************************************/
 
 #include "PlanMasterControllerTest.h"
-#include "LinkManager.h"
-#include "MultiVehicleManager.h"
-#include "SimpleMissionItem.h"
-#include "MissionSettingsItem.h"
-#include "QGCApplication.h"
-#include "SettingsManager.h"
-#include "AppSettings.h"
 #include "MultiSignalSpyV2.h"
+#include "MissionManager.h"
+#include "PlanMasterController.h"
+
+#include <QtTest/QTest>
 
 PlanMasterControllerTest::PlanMasterControllerTest(void)
     : _masterController(nullptr)

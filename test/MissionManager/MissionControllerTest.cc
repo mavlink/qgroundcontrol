@@ -9,13 +9,16 @@
 
 
 #include "MissionControllerTest.h"
-#include "LinkManager.h"
-#include "MultiVehicleManager.h"
+#include "MissionController.h"
+#include "PlanMasterController.h"
 #include "SimpleMissionItem.h"
 #include "MissionSettingsItem.h"
 #include "QGCApplication.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
+#include "MultiSignalSpy.h"
+
+#include <QtTest/QTest>
 
 MissionControllerTest::MissionControllerTest(void)
 {

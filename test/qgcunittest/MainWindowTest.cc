@@ -14,7 +14,7 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "MainWindowTest.h"
-#include "MockLink.h"
+#include "MainWindow.h"
 #include "QGCMessageBox.h"
 #include "MultiVehicleManager.h"
 

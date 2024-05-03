@@ -10,9 +10,10 @@
 #pragma once
 
 #include "UnitTest.h"
-#include "MultiSignalSpy.h"
-#include "StructureScanComplexItem.h"
-#include "PlanMasterController.h"
+
+class PlanMasterController;
+class StructureScanComplexItem;
+class MultiSignalSpy;
 
 class StructureScanComplexItemTest : public UnitTest
 {

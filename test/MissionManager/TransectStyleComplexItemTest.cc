@@ -8,8 +8,11 @@
  ****************************************************************************/
 
 #include "TransectStyleComplexItemTest.h"
-#include "QGCApplication.h"
 #include "QGroundControlQmlGlobal.h"
+#include "PlanMasterController.h"
+#include "MultiSignalSpyV2.h"
+
+#include <QtTest/QTest>
 
 TransectStyleComplexItemTest::TransectStyleComplexItemTest(void)
 {

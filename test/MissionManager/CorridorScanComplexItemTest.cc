@@ -8,7 +8,10 @@
  ****************************************************************************/
 
 #include "CorridorScanComplexItemTest.h"
-#include "QGCApplication.h"
+#include "CorridorScanComplexItem.h"
+#include "MultiSignalSpy.h"
+
+#include <QtTest/QTest>
 
 CorridorScanComplexItemTest::CorridorScanComplexItemTest(void)
 {
