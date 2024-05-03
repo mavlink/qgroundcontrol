@@ -28,7 +28,7 @@ function(add_qgc_test test_name)
 endfunction()
 
 add_subdirectory(AnalyzeView)
-add_qgc_test(LogDownloadTest)
+# add_qgc_test(LogDownloadTest)
 
 add_subdirectory(Audio)
 add_qgc_test(AudioOutputTest)

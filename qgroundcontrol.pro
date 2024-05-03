@@ -932,6 +932,7 @@ SOURCES += \
 
 INCLUDEPATH += \
     src/AutoPilotPlugins/Common \
+    src/AutoPilotPlugins/Generic \
     src/FirmwarePlugin \
     src/VehicleSetup \
 
