@@ -14,12 +14,14 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "MavlinkLogTest.h"
-#include "MockLink.h"
 #include "QGCTemporaryFile.h"
 #include "QGCApplication.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
 #include "MAVLinkProtocol.h"
+
+#include <QtCore/QStandardPaths>
+#include <QtTest/QTest>
 
 const char* MavlinkLogTest::_tempLogFileTemplate = "FlightDataXXXXXX"; ///< Template for temporary log file
 const char* MavlinkLogTest::_logFileExtension = "mavlink";             ///< Extension for log files

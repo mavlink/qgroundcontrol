@@ -9,9 +9,11 @@
 
 #pragma once
 
-#include <QObject>
-#include <QSignalSpy>
-#include <QGeoCoordinate>
+#include <QtCore/QObject>
+#include <QtTest/QSignalSpy>
+#include <QtPositioning/QGeoCoordinate>
+
+class QSignalSpy;
 
 /// @file
 ///     @brief This class allows you to keep track of signal counts on a set of signals associated with an object.

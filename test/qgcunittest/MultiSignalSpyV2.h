@@ -9,9 +9,10 @@
 
 #pragma once
 
-#include <QObject>
-#include <QSignalSpy>
-#include <QGeoCoordinate>
+#include <QtCore/QObject>
+#include <QtPositioning/QGeoCoordinate>
+
+class QSignalSpy;
 
 /// @file
 ///     @brief Works just like MultiSignalSpy but the signal arrays are setup automatically through introspection on

@@ -8,10 +8,10 @@
  ****************************************************************************/
 
 #include "MultiSignalSpy.h"
-#include <QEventLoop>
-#include <QCoreApplication>
-#include <QDebug>
-#include <QTest>
+
+#include <QtCore/QDebug>
+#include <QtTest/QTest>
+#include <QtTest/QSignalSpy>
 
 /// @file
 ///     @brief This class allows you to keep track of signal counts on a set of signals associated with an object.

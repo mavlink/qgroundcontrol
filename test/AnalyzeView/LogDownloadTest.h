@@ -11,7 +11,8 @@
 #define LogDownloadTest_H
 
 #include "UnitTest.h"
-#include "MultiSignalSpy.h"
+
+class MultiSignalSpy;
 
 class LogDownloadTest : public UnitTest
 {

@@ -9,7 +9,10 @@
 
 
 #include "ComponentInformationCacheTest.h"
+#include "ComponentInformationCache.h"
 
+#include <QtCore/QStandardPaths>
+#include <QtTest/QTest>
 
 ComponentInformationCacheTest::ComponentInformationCacheTest()
 {

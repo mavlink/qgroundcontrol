@@ -12,11 +12,11 @@
 #define MissionControllerManagerTest_H
 
 #include "UnitTest.h"
-#include "MockLink.h"
 #include "MissionManager.h"
-#include "MultiSignalSpy.h"
 
-#include <QGeoCoordinate>
+#include <QtPositioning/QGeoCoordinate>
+
+class MultiSignalSpy;
 
 /// This is the base class for the MissionManager and MissionController unit tests.
 class MissionControllerManagerTest : public UnitTest

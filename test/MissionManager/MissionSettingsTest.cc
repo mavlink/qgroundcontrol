@@ -8,8 +8,9 @@
  ****************************************************************************/
 
 #include "MissionSettingsTest.h"
-#include "QGCApplication.h"
-#include "SettingsManager.h"
+#include "MissionSettingsItem.h"
+
+#include <QtTest/QTest>
 
 MissionSettingsTest::MissionSettingsTest(void)
     : _settingsItem(nullptr)

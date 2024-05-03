@@ -12,8 +12,7 @@
 #define ParameterManagerTest_H
 
 #include "UnitTest.h"
-#include "MockLink.h"
-#include "MultiSignalSpy.h"
+#include "MockLinkMissionItemHandler.h"
 
 class ParameterManagerTest : public UnitTest
 {

@@ -10,12 +10,11 @@
 #pragma once
 
 #include "TransectStyleComplexItemTestBase.h"
-#include "TCPLink.h"
-#include "MultiSignalSpy.h"
-#include "CorridorScanComplexItem.h"
-#include "PlanMasterController.h"
 
-#include <QGeoCoordinate>
+#include <QtPositioning/QGeoCoordinate>
+
+class MultiSignalSpy;
+class CorridorScanComplexItem;
 
 class CorridorScanComplexItemTest : public TransectStyleComplexItemTestBase
 {

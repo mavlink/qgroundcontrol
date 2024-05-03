@@ -9,6 +9,9 @@
 
 #include "TransectStyleComplexItemTestBase.h"
 #include "QGCApplication.h"
+#include "SettingsManager.h"
+#include "PlanMasterController.h"
+#include "PlanViewSettings.h"
 
 TransectStyleComplexItemTestBase::TransectStyleComplexItemTestBase(void)
 {

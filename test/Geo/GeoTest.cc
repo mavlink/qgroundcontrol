@@ -16,6 +16,8 @@
 #include "GeoTest.h"
 #include "QGCGeo.h"
 
+#include <QtTest/QTest>
+
 /*
 GeoTest::GeoTest(void)
 {

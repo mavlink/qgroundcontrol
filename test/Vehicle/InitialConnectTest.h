@@ -10,8 +10,6 @@
 #pragma once
 
 #include "UnitTest.h"
-#include "MockLink.h"
-#include "Vehicle.h"
 
 class InitialConnectTest : public UnitTest
 {
