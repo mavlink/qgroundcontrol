@@ -113,7 +113,7 @@ DECLARE_SETTINGGROUP(App, "")
                     qgcApp()->showAppMessage(AppSettings::tr("Save to SD card specified for application data. But no SD card present. Using internal storage."));
                 } else if (!QFileInfo(rootDirPath).isWritable()) {
                     rootDirPath.clear();
-                    qgcApp()->showAppMessage(AppSettings::trtr("Save to SD card specified for application data. But SD card is write protected. Using internal storage."));
+                    qgcApp()->showAppMessage(AppSettings::tr("Save to SD card specified for application data. But SD card is write protected. Using internal storage."));
                 }
             }
         #endif
