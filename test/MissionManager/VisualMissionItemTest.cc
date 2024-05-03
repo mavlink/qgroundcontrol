@@ -8,9 +8,11 @@
  ****************************************************************************/
 
 #include "VisualMissionItemTest.h"
-#include "SimpleMissionItem.h"
-#include "QGCApplication.h"
+#include "MultiSignalSpy.h"
 #include "PlanMasterController.h"
+#include "VisualMissionItem.h"
+
+#include <QtTest/QTest>
 
 VisualMissionItemTest::VisualMissionItemTest(void)
 {

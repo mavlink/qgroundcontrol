@@ -9,16 +9,13 @@
 
 #pragma once
 
-#include <QObject>
-#include <QtTest>
-#include <QMessageBox>
-#include <QFileDialog>
-
-#include "QGCMAVLink.h"
-#include "LinkInterface.h"
-#include "Fact.h"
-#include "MissionItem.h"
 #include "MockLink.h"
+#include "QGCMAVLink.h"
+#include "MissionItem.h"
+
+#include <QtCore/QObject>
+#include <QtWidgets/QFileDialog>
+#include <QtWidgets/QMessageBox>
 
 #define UT_REGISTER_TEST(className)             static UnitTestWrapper<className> className(#className, false);
 #define UT_REGISTER_TEST_STANDALONE(className)  static UnitTestWrapper<className> className(#className, true);  // Test will only be run with specifically called to from command line
@@ -28,6 +25,8 @@ class QGCQFileDialog;
 class LinkManager;
 class MockLink;
 class Vehicle;
+class Fact;
+class LinkInterface;
 
 class UnitTest : public QObject
 {

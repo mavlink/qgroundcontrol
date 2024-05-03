@@ -9,10 +9,10 @@
 
 
 #include "MissionControllerManagerTest.h"
-#include "LinkManager.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
 #include "QGCApplication.h"
+#include "MultiSignalSpy.h"
 
 MissionControllerManagerTest::MissionControllerManagerTest(void)
 {

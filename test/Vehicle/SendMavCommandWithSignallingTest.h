@@ -12,6 +12,9 @@
 #include "UnitTest.h"
 #include "Vehicle.h"
 
+#include <QtTest/QTest>
+#include <QtTest/QSignalSpy>
+
 class SendMavCommandWithSignallingTest : public UnitTest
 {
     Q_OBJECT

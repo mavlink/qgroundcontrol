@@ -1,4 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Qml)
+find_package(Qt6 REQUIRED COMPONENTS Core Positioning Qml Test)
 
 qt_add_library(MissionManagerTest
 	STATIC
@@ -29,12 +29,18 @@ qt_add_library(MissionManagerTest
 
 target_link_libraries(MissionManagerTest
     PRIVATE
+    	Qt6::Test
         api
         FirmwarePlugin
-        MockLink
-	PUBLIC
 		qgc
+		Settings
+		Utilities
+		Vehicle
+	PUBLIC
+		Qt6::Positioning
+		MissionManager
 		qgcunittest
+		QmlControls
 )
 
 target_include_directories(MissionManagerTest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

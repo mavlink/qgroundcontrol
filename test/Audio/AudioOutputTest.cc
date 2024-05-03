@@ -10,6 +10,8 @@
 #include "AudioOutputTest.h"
 #include "AudioOutput.h"
 
+#include <QtTest/QTest>
+
 AudioOutputTest::AudioOutputTest(void)
 {
 

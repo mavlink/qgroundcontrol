@@ -11,16 +11,12 @@
 #ifndef MissionControllerTest_H
 #define MissionControllerTest_H
 
-#include "UnitTest.h"
-#include "MockLink.h"
-#include "MissionManager.h"
-#include "MultiSignalSpy.h"
 #include "MissionControllerManagerTest.h"
-#include "PlanMasterController.h"
-#include "MissionController.h"
-#include "SimpleMissionItem.h"
 
-#include <QGeoCoordinate>
+class MissionController;
+class MultiSignalSpy;
+class PlanMasterController;
+class VisualMissionItem;
 
 class MissionControllerTest : public MissionControllerManagerTest
 {

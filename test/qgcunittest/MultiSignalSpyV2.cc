@@ -8,10 +8,10 @@
  ****************************************************************************/
 
 #include "MultiSignalSpyV2.h"
-#include <QEventLoop>
-#include <QCoreApplication>
-#include <QDebug>
-#include <QTest>
+
+#include <QtCore/QDebug>
+#include <QtTest/QTest>
+#include <QtTest/QSignalSpy>
 
 MultiSignalSpyV2::MultiSignalSpyV2(QObject* parent)
     : QObject(parent)

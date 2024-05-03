@@ -17,6 +17,10 @@
 #include "MockLink.h"
 #include "LinkManager.h"
 #include "QGC.h"
+#include "Fact.h"
+
+#include <QtTest/QTest>
+#include <QtTest/QSignalSpy>
 
 bool UnitTest::_messageBoxRespondedTo = false;
 bool UnitTest::_badResponseButton = false;

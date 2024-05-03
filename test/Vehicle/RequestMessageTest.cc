@@ -12,6 +12,8 @@
 #include "QGCApplication.h"
 #include "MockLink.h"
 
+#include <QtTest/QTest>
+
 RequestMessageTest::TestCase_t RequestMessageTest::_rgTestCases[] = {
     {  MockLink::FailRequestMessageNone,                                MAV_RESULT_ACCEPTED,    Vehicle::RequestMessageNoFailure,                   1,                                  false },
     {  MockLink::FailRequestMessageCommandAcceptedMsgNotSent,           MAV_RESULT_FAILED,      Vehicle::RequestMessageFailureMessageNotReceived,   1,                                  false },
