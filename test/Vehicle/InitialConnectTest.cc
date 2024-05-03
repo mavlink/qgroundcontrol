@@ -12,6 +12,10 @@
 #include "QGCApplication.h"
 #include "LinkManager.h"
 #include "MockLink.h"
+#include "Vehicle.h"
+
+#include <QtTest/QSignalSpy>
+#include <QtTest/QTest>
 
 void InitialConnectTest::_performTestCases(void)
 {
