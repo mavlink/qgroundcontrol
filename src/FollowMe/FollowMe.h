@@ -10,9 +10,10 @@
 
 #pragma once
 
-#include "QGCToolbox.h"
 #include <QtCore/QTimer>
 #include <QtCore/QLoggingCategory>
+
+#include "QGCToolbox.h"
 
 Q_DECLARE_LOGGING_CATEGORY(FollowMeLog)
 

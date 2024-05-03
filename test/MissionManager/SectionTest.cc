@@ -11,6 +11,7 @@
 #include "SurveyComplexItem.h"
 #include "SimpleMissionItem.h"
 #include "MultiSignalSpy.h"
+#include "Section.h"
 
 SectionTest::SectionTest(void)
     : _simpleItem(nullptr)

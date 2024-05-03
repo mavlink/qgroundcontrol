@@ -10,12 +10,12 @@ qt_add_library(PositionManager STATIC
 target_link_libraries(PositionManager
 	PRIVATE
 		Qt6::PositioningPrivate
-		api
+		API
 		Vehicle
 	PUBLIC
 		Qt6::Core
 		Qt6::Positioning
-		qgc
+		QGC
 )
 
 target_include_directories(PositionManager PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

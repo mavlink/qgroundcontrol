@@ -48,15 +48,15 @@ qt_add_library(Settings STATIC
 target_link_libraries(Settings
 	PRIVATE
 		Qt6::Multimedia
-		api
+		API
 		QmlControls
 		Vehicle
 	PUBLIC
 		Qt6::Core
 		Qt6::Qml
-		comm
+		Comms
 		FactSystem
-		qgc
+		QGC
 )
 
 target_include_directories(Settings PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

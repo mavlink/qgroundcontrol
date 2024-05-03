@@ -1,4 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Xml)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Positioning Qml Xml)
 
 qt_add_library(MissionManager STATIC
 	BlankPlanCreator.cc
@@ -99,17 +99,25 @@ add_custom_Target(MisionManagerQml
 )
 
 target_link_libraries(MissionManager
-        PRIVATE
-                api
-                FirmwarePlugin
-                Geo
+	PRIVATE
+		Qt6::Qml
+		API
+		FirmwarePlugin
+		Geo
+		# UTMSP
 	PUBLIC
+		Qt6::Core
+		Qt6::Gui
+		Qt6::Positioning
 		Qt6::Xml
-		comm
-		qgc
-                Settings
-		UTMSP
-                Vehicle
+		Comms
+		FactSystem
+		QGC
+		QmlControls
+		Settings
+		Terrain
+		Utilities
+		Vehicle
 )
 
 target_include_directories(MissionManager PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

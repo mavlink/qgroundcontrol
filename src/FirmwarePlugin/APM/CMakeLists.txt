@@ -25,7 +25,7 @@ target_link_libraries(APMFirmwarePlugin
         APMAutoPilotPlugin
         AutoPilotPlugins
         MissionManager
-        qgc
+        QGC
         Settings
         Utilities
         Vehicle
@@ -33,7 +33,7 @@ target_link_libraries(APMFirmwarePlugin
     PUBLIC
         Qt6::Core
         Qt6::Network
-        comm
+        Comms
         FactSystem
         FollowMe
         FirmwarePlugin

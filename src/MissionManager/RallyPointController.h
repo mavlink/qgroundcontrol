@@ -7,19 +7,19 @@
  *
  ****************************************************************************/
 
-#ifndef RallyPointController_H
-#define RallyPointController_H
+#pragma once
 
 #include "PlanElementController.h"
-#include "RallyPointManager.h"
-#include "Vehicle.h"
 #include "QmlObjectListModel.h"
 
+#include <QtPositioning/QGeoCoordinate>
 #include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(RallyPointControllerLog)
 
 class GeoFenceManager;
+class RallyPointManager;
+class Vehicle;
 
 class RallyPointController : public PlanElementController
 {
@@ -81,5 +81,3 @@ private:
     static const char*  _jsonFileTypeValue;
     static const char*  _jsonPointsKey;
 };
-
-#endif

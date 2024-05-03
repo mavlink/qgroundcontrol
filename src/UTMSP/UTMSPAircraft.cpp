@@ -8,6 +8,7 @@
  ****************************************************************************/
 
 #include "UTMSPAircraft.h"
+#include "QGCMAVLink.h"
 
 UTMSPAircraft::UTMSPAircraft()
 {

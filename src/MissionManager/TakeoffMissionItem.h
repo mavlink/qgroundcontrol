@@ -10,9 +10,9 @@
 #pragma once
 
 #include "SimpleMissionItem.h"
-#include "MissionSettingsItem.h"
 
 class PlanMasterController;
+class MissionSettingsItem;
 
 /// Takeoff mission item is a special case of a SimpleMissionItem which supports Launch Location display/editing
 /// which is tied to home position.
@@ -29,7 +29,7 @@ public:
     Q_PROPERTY(QGeoCoordinate   launchCoordinate            READ launchCoordinate               WRITE setLaunchCoordinate               NOTIFY launchCoordinateChanged)
     Q_PROPERTY(bool             launchTakeoffAtSameLocation READ launchTakeoffAtSameLocation    WRITE setLaunchTakeoffAtSameLocation    NOTIFY launchTakeoffAtSameLocationChanged)
 
-    QGeoCoordinate  launchCoordinate            (void) const { return _settingsItem->coordinate(); }
+    QGeoCoordinate  launchCoordinate            (void) const;
     bool            launchTakeoffAtSameLocation (void) const { return _launchTakeoffAtSameLocation; }
 
     void setLaunchCoordinate            (const QGeoCoordinate& launchCoordinate);

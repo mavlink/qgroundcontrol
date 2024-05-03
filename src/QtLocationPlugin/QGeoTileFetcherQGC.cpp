@@ -44,8 +44,8 @@
 **
 ****************************************************************************/
 
-#include "QGCMapEngine.h"
 #include "QGeoTileFetcherQGC.h"
+#include "QGCMapEngine.h"
 #include "QGeoMapReplyQGC.h"
 #include "QGCMapUrlEngine.h"
 

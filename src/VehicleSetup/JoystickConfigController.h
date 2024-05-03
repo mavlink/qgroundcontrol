@@ -21,12 +21,7 @@
 
 Q_DECLARE_LOGGING_CATEGORY(JoystickConfigControllerLog)
 
-class RadioConfigest;
 class JoystickManager;
-
-namespace Ui {
-    class JoystickConfigController;
-}
 
 class JoystickConfigController : public FactPanelController
 {

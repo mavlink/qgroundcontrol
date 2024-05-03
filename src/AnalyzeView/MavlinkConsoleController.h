@@ -9,11 +9,12 @@
 
 #pragma once
 
-#include "QGCPalette.h"
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QMetaObject>
 #include <QtCore/QStringListModel>
+
+#include "QGCPalette.h"
 
 // Fordward decls
 class Vehicle;

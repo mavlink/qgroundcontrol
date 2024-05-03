@@ -9,14 +9,13 @@
 
 #pragma once
 
-#include <QObject>
-#include <QGeoCoordinate>
+#include <QtCore/QObject>
+#include <QtPositioning/QGeoCoordinate>
 #include <QtCore/QLoggingCategory>
 
 #include "PlanManager.h"
 
 class Vehicle;
-class PlanManager;
 
 Q_DECLARE_LOGGING_CATEGORY(RallyPointManagerLog)
 

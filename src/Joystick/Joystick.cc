@@ -10,10 +10,7 @@
 
 #include "Joystick.h"
 #include "QGC.h"
-#include "AutoPilotPlugin.h"
 #include "QGCApplication.h"
-#include "VideoManager.h"
-#include "QGCCameraManager.h"
 #include "CustomAction.h"
 #include "SettingsManager.h"
 #include "CustomMavlinkActionsSettings.h"

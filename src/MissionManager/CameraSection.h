@@ -10,14 +10,13 @@
 #pragma once
 
 #include "Section.h"
-#include "ComplexMissionItem.h"
-#include "MissionItem.h"
 #include "Fact.h"
 
 #define VIDEO_CAPTURE_STATUS_INTERVAL 0.2   //-- Send capture status every 5 seconds
 
 class PlanMasterController;
 class CameraSectionTest;
+class MissionItem;
 
 
 class CameraSection : public Section

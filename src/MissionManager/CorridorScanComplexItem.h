@@ -9,11 +9,11 @@
 
 #pragma once
 
+#include <QtCore/QLoggingCategory>
+
 #include "TransectStyleComplexItem.h"
 #include "SettingsFact.h"
 #include "QGCMapPolyline.h"
-
-#include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(CorridorScanComplexItemLog)
 

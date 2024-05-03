@@ -10,13 +10,14 @@
 #pragma once
 
 #include "UTMSPServiceController.h"
-#include "services/dispatcher.h"
 #include "UTMSPAircraft.h"
 #include "UTMSPOperator.h"
 #include "UTMSPFlightDetails.h"
 
 // UTM-Adapter per vehicle management class.
+class Dispatcher;
 class Vehicle;
+
 class UTMSPVehicle : public UTMSPServiceController
 {
     Q_OBJECT

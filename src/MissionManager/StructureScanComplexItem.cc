@@ -11,13 +11,14 @@
 #include "JsonHelper.h"
 #include "MissionController.h"
 #include "QGCApplication.h"
-#include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
-#include "QGCLoggingCategory.h"
 #include "PlanMasterController.h"
 #include "FlightPathSegment.h"
 #include "QGC.h"
+#include "QGCLoggingCategory.h"
+
+#include <QtCore/QJsonArray>
 
 QGC_LOGGING_CATEGORY(StructureScanComplexItemLog, "StructureScanComplexItemLog")
 

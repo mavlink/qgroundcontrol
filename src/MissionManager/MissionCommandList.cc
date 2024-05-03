@@ -12,8 +12,7 @@
 #include "MissionCommandUIInfo.h"
 #include "QGCLoggingCategory.h"
 
-#include <QStringList>
-#include <QJsonArray>
+#include <QtCore/QJsonArray>
 
 const char* MissionCommandList::qgcFileType =           "MavCmdInfo";
 const char* MissionCommandList::_versionJsonKey =       "version";

@@ -12,7 +12,6 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "VehicleComponent.h"
-#include "AutoPilotPlugin.h"
 #include "ParameterManager.h"
 #include "Vehicle.h"
 #include "FactSystem.h"

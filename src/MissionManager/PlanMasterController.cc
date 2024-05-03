@@ -11,6 +11,7 @@
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 #include "MultiVehicleManager.h"
+#include "Vehicle.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
 #include "JsonHelper.h"
@@ -20,10 +21,13 @@
 #include "StructureScanPlanCreator.h"
 #include "CorridorScanPlanCreator.h"
 #include "BlankPlanCreator.h"
+#include "QmlObjectListModel.h"
+#include "GeoFenceManager.h"
+#include "RallyPointManager.h"
 #include "QGCLoggingCategory.h"
 
-#include <QJsonDocument>
-#include <QFileInfo>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QFileInfo>
 
 QGC_LOGGING_CATEGORY(PlanMasterControllerLog, "PlanMasterControllerLog")
 

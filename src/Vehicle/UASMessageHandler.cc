@@ -14,8 +14,8 @@
  *   @author Gus Grubba <gus@auterion.com>
  */
 
-#include "QGCApplication.h"
 #include "UASMessageHandler.h"
+#include "QGCApplication.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
 

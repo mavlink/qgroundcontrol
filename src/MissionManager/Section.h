@@ -9,14 +9,14 @@
 
 #pragma once
 
-#include "MissionItem.h"
-#include "QmlObjectListModel.h"
-
+#include <QtCore/QObject>
 #include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(SectionLog)
 
 class PlanMasterController;
+class QmlObjectListModel;
+class MissionItem;
 
 // A Section encapsulates a set of mission commands which can be associated with another simple mission item.
 class Section : public QObject

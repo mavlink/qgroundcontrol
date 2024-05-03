@@ -18,13 +18,13 @@ target_link_libraries(PX4FirmwarePlugin
         AutoPilotPlugins
         MissionManager
         PX4AutoPilotPlugin
-        qgc
+        QGC
         Settings
         VehicleSetup
         Utilities
     PUBLIC
         Qt6::Core
-        comm
+        Comms
         FactSystem
         FirmwarePlugin
 )

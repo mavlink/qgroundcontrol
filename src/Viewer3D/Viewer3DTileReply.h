@@ -1,11 +1,10 @@
-#ifndef VIEWER3DTILEREPLY_H
-#define VIEWER3DTILEREPLY_H
+#pragma once
 
-#include <QObject>
-#include <QNetworkAccessManager>
-#include <QNetworkRequest>
-#include <QNetworkReply>
-#include <QTimer>
+#include <QtCore/QObject>
+
+class QNetworkReply;
+class QNetworkAccessManager;
+class QTimer;
 
 ///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
 
@@ -45,5 +44,3 @@ signals:
     void tileError(tileInfo_t);
     void tileGiveUp(tileInfo_t);
 };
-
-#endif // VIEWER3DTILEREPLY_H

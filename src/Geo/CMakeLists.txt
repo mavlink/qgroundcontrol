@@ -34,7 +34,4 @@ target_link_libraries(Geo
 		Qt6::Positioning
 )
 
-target_include_directories(Geo
-	PUBLIC
-		${CMAKE_CURRENT_SOURCE_DIR}
-)
+target_include_directories(Geo PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

@@ -9,11 +9,9 @@
 
 #pragma once
 
-#include <QObject>
-#include <QString>
-#include <QtQml>
-#include <QJsonObject>
-#include <QGeoCoordinate>
+#include <QtCore/QObject>
+#include <QtCore/QString>
+#include <QtPositioning/QGeoCoordinate>
 #include <QtCore/QLoggingCategory>
 
 #include "QGCMAVLink.h"
@@ -23,13 +21,13 @@
 
 class MissionItem;
 class PlanMasterController;
-class MissionController;
 class TerrainAtCoordinateQuery;
 
 // Abstract base class for all Simple and Complex visual mission objects.
 class VisualMissionItem : public QObject
 {
     Q_OBJECT
+    Q_MOC_INCLUDE("PlanMasterController.h")
 
 public:
     VisualMissionItem(PlanMasterController* masterController, bool flyView);

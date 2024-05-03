@@ -49,7 +49,7 @@ target_link_libraries(APMAutoPilotPlugin
         APMFirmwarePlugin
         AutoPilotPlugins
         FactSystem
-        qgc
+        QGC
         Settings
         Utilities
     PUBLIC

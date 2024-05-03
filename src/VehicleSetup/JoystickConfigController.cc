@@ -12,6 +12,7 @@
 #include "JoystickManager.h"
 #include "QGCApplication.h"
 #include "MultiVehicleManager.h"
+#include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(JoystickConfigControllerLog, "JoystickConfigControllerLog")

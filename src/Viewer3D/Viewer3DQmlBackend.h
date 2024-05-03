@@ -1,15 +1,13 @@
-#ifndef Viewer3DQmlBackend_H
-#define Viewer3DQmlBackend_H
+#pragma once
 
-#include <QObject>
-
-#include "OsmParser.h"
-#include "Viewer3DSettings.h"
+#include <QtCore/QObject>
+#include <QtPositioning/QGeoCoordinate>
 
 ///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
 
 class Viewer3DSettings;
 class Vehicle;
+class OsmParser;
 
 class Viewer3DQmlBackend : public QObject
 {
@@ -42,5 +40,3 @@ protected slots:
     void _activeVehicleChangedEvent(Vehicle* vehicle);
     void _activeVehicleCoordinateChanged(QGeoCoordinate newCoordinate);
 };
-
-#endif // Viewer3DQmlBackend_H

@@ -11,10 +11,9 @@
 
 #include "QGCToolbox.h"
 #include "QGCMAVLink.h"
-#include "Vehicle.h"
 
-#include <QVariantList>
-#include <QMap>
+#include <QtCore/QVariantList>
+#include <QtCore/QMap>
 
 class MissionCommandUIInfo;
 class MissionCommandList;
@@ -22,6 +21,7 @@ class SettingsManager;
 #ifdef UNITTEST_BUILD
 class MissionCommandTreeTest;
 #endif
+class Vehicle;
 
 /// Manages a hierarchy of MissionCommandUIInfo.
 ///

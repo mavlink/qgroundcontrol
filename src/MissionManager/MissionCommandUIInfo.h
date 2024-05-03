@@ -7,14 +7,12 @@
  *
  ****************************************************************************/
 
-#ifndef MissionCommandUIInfo_H
-#define MissionCommandUIInfo_H
+#pragma once
 
-#include "QGCToolbox.h"
 #include "QGCMAVLink.h"
 
-#include <QString>
-#include <QVariant>
+#include <QtCore/QString>
+#include <QtCore/QVariant>
 
 class MissionCommandTree;
 class MissionCommandUIInfo;
@@ -219,4 +217,3 @@ private:
 #endif
 };
 
-#endif

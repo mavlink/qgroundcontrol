@@ -6,6 +6,8 @@
 #include "MAVLinkProtocol.h"
 
 #include <QtNetwork/QUdpSocket>
+#include <QtCore/QSettings>
+#include <QtCore/QTimer>
 
 
 AirlinkConfiguration::AirlinkConfiguration(const QString &name) : UDPConfiguration(name)

@@ -9,11 +9,10 @@
 
 #pragma once
 
-#include <QObject>
-#include <QGeoCoordinate>
+#include <QtCore/QObject>
+#include <QtPositioning/QGeoCoordinate>
 #include <QtCore/QLoggingCategory>
 
-#include "PlanManager.h"
 #include "QGCFencePolygon.h"
 #include "QGCFenceCircle.h"
 #include "PlanManager.h"

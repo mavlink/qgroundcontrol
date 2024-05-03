@@ -9,14 +9,15 @@
 
 #pragma once
 
-#include "qelapsedtimer.h"
-#include "qgeocoordinate.h"
-#include <QGCMAVLink.h>
-#include <QObject>
-
 #include "UTMSPAuthorization.h"
 #include "UTMSPFlightPlanManager.h"
 #include "UTMSPNetworkRemoteIDManager.h"
+
+#include <QtCore/QElapsedTimer>
+#include <QtPositioning/QGeoCoordinate>
+#include <QtCore/QObject>
+
+struct mavlink_message_t;
 
 class UTMSPServiceController : public QObject
 {

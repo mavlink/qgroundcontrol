@@ -10,6 +10,7 @@
 #include "CorridorScanComplexItemTest.h"
 #include "CorridorScanComplexItem.h"
 #include "MultiSignalSpy.h"
+#include "PlanViewSettings.h"
 
 #include <QtTest/QTest>
 

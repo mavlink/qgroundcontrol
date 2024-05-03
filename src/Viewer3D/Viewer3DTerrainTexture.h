@@ -1,22 +1,20 @@
-#ifndef VIEWER3DTERRAINTEXTURE_H
-#define VIEWER3DTERRAINTEXTURE_H
+#pragma once
 
-#include <QObject>
-#include <QQuick3DTextureData>
-#include <QImage>
-#include <QNetworkAccessManager>
-#include <QNetworkRequest>
-#include <QNetworkReply>
+#include <QtQuick3D/QQuick3DTextureData>
 
 #include "Viewer3DTileQuery.h"
-#include "OsmParser.h"
-#include "FlightMapSettings.h"
+
+class FlightMapSettings;
+class OsmParser;
 
 ///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
 
 
 class Viewer3DTerrainTexture : public QQuick3DTextureData
 {
+    Q_OBJECT
+    Q_MOC_INCLUDE("OsmParser.h")
+
     Q_PROPERTY(OsmParser* osmParser READ osmParser WRITE setOsmParser NOTIFY osmParserChanged)
     Q_PROPERTY(QGeoCoordinate roiMinCoordinate READ roiMinCoordinate WRITE setRoiMinCoordinate NOTIFY roiMinCoordinateChanged)
     Q_PROPERTY(QGeoCoordinate roiMaxCoordinate READ roiMaxCoordinate WRITE setRoiMaxCoordinate NOTIFY roiMaxCoordinateChanged)
@@ -26,7 +24,6 @@ class Viewer3DTerrainTexture : public QQuick3DTextureData
     Q_PROPERTY(float textureDownloadProgress READ textureDownloadProgress NOTIFY textureDownloadProgressChanged)
 
 
-    Q_OBJECT
 public:
     explicit Viewer3DTerrainTexture();
     ~Viewer3DTerrainTexture();
@@ -91,5 +88,3 @@ signals:
     void mapProviderIdChanged();
     void textureDownloadProgressChanged();
 };
-
-#endif // VIEWER3DTERRAINTEXTURE_H

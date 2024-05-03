@@ -14,8 +14,8 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QElapsedTimer>
+#include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(VehicleLinkManagerLog)
 

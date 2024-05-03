@@ -16,6 +16,7 @@
 #pragma once
 
 #include "FactPanelController.h"
+#include "Vehicle.h"
 
 #include <QtCore/QLoggingCategory>
 #include <QtQuick/QQuickItem>

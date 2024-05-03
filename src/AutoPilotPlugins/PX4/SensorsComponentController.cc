@@ -11,6 +11,7 @@
 #include "QGCApplication.h"
 #include "ParameterManager.h"
 #include "FactSystem.h"
+#include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(SensorsComponentControllerLog, "SensorsComponentControllerLog")

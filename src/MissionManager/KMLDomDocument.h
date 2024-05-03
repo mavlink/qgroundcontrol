@@ -9,12 +9,13 @@
 
 #pragma once
 
-#include <QDomDocument>
-#include <QDomElement>
-#include <QGeoCoordinate>
+#include <QtXml/QDomDocument>
+#include <QtXml/QDomElement>
+#include <QtGui/QColor>
 
 class MissionItem;
 class Vehicle;
+class QGeoCoordinate;
 
 /// Used to convert a Plan to a KML document
 class KMLDomDocument : public QDomDocument

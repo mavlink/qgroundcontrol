@@ -25,33 +25,11 @@
 
 QGC_LOGGING_CATEGORY(FirmwarePluginLog, "FirmwarePluginLog")
 
-static FirmwarePluginFactoryRegister* _instance = nullptr;
-
 const QString guided_mode_not_supported_by_vehicle = QObject::tr("Guided mode not supported by Vehicle.");
 
 QVariantList FirmwarePlugin::_cameraList;
 
 const QString FirmwarePlugin::px4FollowMeFlightMode(QObject::tr("Follow Me"));
-
-FirmwarePluginFactory::FirmwarePluginFactory(void)
-{
-    FirmwarePluginFactoryRegister::instance()->registerPluginFactory(this);
-}
-
-QList<QGCMAVLink::VehicleClass_t> FirmwarePluginFactory::supportedVehicleClasses(void) const
-{
-    return QGCMAVLink::allVehicleClasses();
-}
-
-FirmwarePluginFactoryRegister* FirmwarePluginFactoryRegister::instance(void)
-{
-    if (!_instance) {
-        _instance = new FirmwarePluginFactoryRegister;
-    }
-
-    return _instance;
-}
-
 
 FirmwarePlugin::FirmwarePlugin(void)
 {

@@ -10,7 +10,7 @@
 #include "CameraSpec.h"
 #include "JsonHelper.h"
 
-#include <QQmlEngine>
+#include <QtQml/QQmlEngine>
 
 const char* CameraSpec::_sensorWidthName =          "SensorWidth";
 const char* CameraSpec::_sensorHeightName =         "SensorHeight";

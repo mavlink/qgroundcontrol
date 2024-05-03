@@ -9,7 +9,6 @@
 
 #include "StructureScanPlanCreator.h"
 #include "PlanMasterController.h"
-#include "MissionSettingsItem.h"
 #include "StructureScanComplexItem.h"
 
 StructureScanPlanCreator::StructureScanPlanCreator(PlanMasterController* planMasterController, QObject* parent)

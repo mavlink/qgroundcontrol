@@ -7,25 +7,28 @@
  *
  ****************************************************************************/
 
-#ifndef GeoFenceController_H
-#define GeoFenceController_H
-
-#include "PlanElementController.h"
-#include "GeoFenceManager.h"
-#include "QGCFencePolygon.h"
-#include "QGCFenceCircle.h"
-#include "Vehicle.h"
+#pragma once
 
 #include <QtCore/QLoggingCategory>
+#include <QtPositioning/QGeoCoordinate>
+
+#include "PlanElementController.h"
+#include "QmlObjectListModel.h"
+#include "Fact.h"
 
 Q_DECLARE_LOGGING_CATEGORY(GeoFenceControllerLog)
 
 class GeoFenceManager;
+class QGCFenceCircle;
+class QGCFencePolygon;
+class Vehicle;
 
 class GeoFenceController : public PlanElementController
 {
     Q_OBJECT
-    
+    Q_MOC_INCLUDE("QGCFencePolygon.h")
+    Q_MOC_INCLUDE("QGCFenceCircle.h")
+
 public:
     GeoFenceController(PlanMasterController* masterController, QObject* parent = nullptr);
     ~GeoFenceController();
@@ -146,5 +149,3 @@ private:
 
     static const char* _breachReturnAltitudeFactName;
 };
-
-#endif

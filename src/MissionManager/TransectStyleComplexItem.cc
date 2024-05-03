@@ -17,7 +17,10 @@
 #include "MissionCommandUIInfo.h"
 #include "QGC.h"
 #include "FirmwarePlugin.h"
+#include "KMLPlanDomDocument.h"
 #include "QGCLoggingCategory.h"
+
+#include <QtCore/QJsonArray>
 
 QGC_LOGGING_CATEGORY(TransectStyleComplexItemLog, "TransectStyleComplexItemLog")
 

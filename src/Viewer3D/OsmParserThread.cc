@@ -1,6 +1,7 @@
 #include "OsmParserThread.h"
-
 #include "Viewer3DUtils.h"
+
+#include <QtCore/QFile>
 
 OsmParserThread::OsmParserThread(QObject *parent)
     : QThread{parent}

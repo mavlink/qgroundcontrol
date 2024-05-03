@@ -7,23 +7,23 @@
  *
  ****************************************************************************/
 
-#ifndef FixedWingLandingComplexItem_H
-#define FixedWingLandingComplexItem_H
-
-#include "LandingComplexItem.h"
-#include "MissionItem.h"
-#include "Fact.h"
+#pragma once
 
 #include <QtCore/QLoggingCategory>
+
+#include "LandingComplexItem.h"
+#include "Fact.h"
 
 Q_DECLARE_LOGGING_CATEGORY(FixedWingLandingComplexItemLog)
 
 class FWLandingPatternTest;
 class PlanMasterController;
+class MissionItem;
 
 class FixedWingLandingComplexItem : public LandingComplexItem
 {
     Q_OBJECT
+    Q_MOC_INCLUDE("MissionItem.h")
 
 public:
     FixedWingLandingComplexItem(PlanMasterController* masterController, bool flyView);
@@ -94,5 +94,3 @@ private:
 
     friend FWLandingPatternTest;
 };
-
-#endif
