@@ -55,3 +55,30 @@ target_link_libraries(PX4AutoPilotPlugin
 )
 
 target_include_directories(PX4AutoPilotPlugin PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+qt_add_resources(PX4AutoPilotPlugin "PX4AutoPilotPlugin_res" FILES AirframeFactMetaData.xml)
+
+# file(GLOB QML_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.qml)
+# file(GLOB QML_RESOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/Images/*.*)
+# qt_add_qml_module(PX4AutoPilotPlugin
+#     URI QGroundControl.PX4AutoPilotPlugin
+#     VERSION 1.0
+#     QML_FILES ${QML_SOURCES}
+#     RESOURCES ${QML_RESOURCES}
+#     OUTPUT_TARGETS PX4AutoPilotPlugin_targets
+#     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
+#     IMPORTS
+#         QtQuick
+#         QtQuick.Controls
+#         QtQuick.Dialogs
+#         QtQuick.Layouts
+
+#         QGroundControl
+#         QGroundControl.FactSystem
+#         QGroundControl.FactControls
+#         QGroundControl.Controls
+#         QGroundControl.ScreenTools
+#         QGroundControl.Controllers
+#         QGroundControl.Palette
+#         QGroundControl.Vehicle
+# )
