@@ -1,4 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Charts Gui Qml Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Core Charts Gui Qml QmlIntegration Widgets)
 
 qt_add_library(AnalyzeView STATIC
 	ExifParser.cc
@@ -17,17 +17,6 @@ qt_add_library(AnalyzeView STATIC
 	ULogParser.h
 )
 
-add_custom_target(AnalyzeViewQml
-	SOURCES
-		AnalyzePage.qml
-		AnalyzeView.qml
-		GeoTagPage.qml
-		LogDownloadPage.qml
-		MavlinkConsolePage.qml
-		MAVLinkInspectorPage.qml
-		VibrationPage.qml
-)
-
 target_link_libraries(AnalyzeView
 	PRIVATE
 		Qt6::Charts
@@ -42,7 +31,47 @@ target_link_libraries(AnalyzeView
 		Vehicle
 	PUBLIC
 		Qt6::Core
+		Qt6::QmlIntegration
 		QmlControls
 )
 
-target_include_directories(AnalyzeView PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(AnalyzeView INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+
+# qt_add_qml_module(AnalyzeView
+#     URI QGroundControl.AnalyzeView
+#     VERSION 1.0
+#     QML_FILES
+# 		AnalyzePage.qml
+# 		AnalyzeView.qml
+# 		GeoTagPage.qml
+# 		LogDownloadPage.qml
+# 		MavlinkConsolePage.qml
+# 		MAVLinkInspectorPage.qml
+# 		VibrationPage.qml
+#     RESOURCES
+#     	FloatingWindow.svg
+#     	GeoTagIcon.svg
+#     	LogDownloadIcon.svg
+#     	MavlinkConsoleIcon.svg
+#     	MAVLinkInspector.svg
+#     	VibrationPageIcon.png
+#     OUTPUT_TARGETS AnalyzeView_targets
+#     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
+#     IMPORTS
+# 		QtQuick
+# 		QtQuick.Controls
+# 		QtQuick.Dialogs
+# 		QtQuick.Layouts
+# 		QtQuick.Window
+# 		QtCharts
+# 		Qt.labs.qmlmodels
+# 		QGroundControl
+# 		QGroundControl.Palette
+# 		QGroundControl.Controls
+# 		QGroundControl.Controllers
+# 		QGroundControl.FactSystem
+# 		QGroundControl.FactControls
+# 		QGroundControl.ScreenTools
+#     DEPENDENCIES
+#         QtCore
+# )

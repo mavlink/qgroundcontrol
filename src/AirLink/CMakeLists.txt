@@ -30,6 +30,32 @@ if(NOT QGC_AIRLINK_DISABLED)
     )
 
     target_include_directories(AirLink PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+    # qt_add_qml_module(AirLink
+    #     URI QGroundControl.AirLink
+    #     VERSION 1.0
+    #     QML_FILES
+    #         AirLinkSettings.qml
+    #     OUTPUT_TARGETS AirLink_targets
+    #     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
+    #     IMPORTS
+    #         QtMultimedia
+    #         QtQuick
+    #         QtQuick.Controls
+    #         QtQuick.Dialogs
+    #         QtQuick.Layouts
+    #         QtLocation
+    #         QtPositioning
+
+    #         QGroundControl
+    #         QGroundControl.Controllers
+    #         QGroundControl.Controls
+    #         QGroundControl.FactControls
+    #         QGroundControl.FactSystem
+    #         QGroundControl.Palette
+    #         QGroundControl.ScreenTools
+    #         QGroundControl.SettingsManager
+    # )
 else()
     target_compile_definitions(AirLink PUBLIC QGC_AIRLINK_DISABLED)
 endif()

@@ -29,6 +29,7 @@ add_subdirectory(Comms)
 add_subdirectory(Compression)
 add_subdirectory(FactSystem)
 add_subdirectory(FirmwarePlugin)
+add_subdirectory(FirstRunPromptDialogs)
 add_subdirectory(FlightDisplay)
 add_subdirectory(FlightMap)
 add_subdirectory(FollowMe)
@@ -72,15 +73,19 @@ target_link_libraries(QGC
 		CommonAutoPilotPlugin
 		FactSystem
 		FirmwarePlugin
+		FirstRunPromptDialogs
 		FlightMap
+		FlightDisplay
 		FollowMe
 		GPS
 		Joystick
 		MissionManager
+		PlanView
 		PositionManager
 		QmlControls
 		Settings
 		Terrain
+		UI
 		Utilities
 		UTMSP
 		Vehicle
