@@ -5,13 +5,13 @@ endif()
 include(CTest)
 enable_testing()
 
-set(UNIT_TESTING_RESOURCES)
-qt_add_resources(UNIT_TESTING_RESOURCES UnitTest.qrc)
+# set(UNIT_TESTING_RESOURCES)
+# qt_add_resources(UNIT_TESTING_RESOURCES UnitTest.qrc)
 
 qt_add_library(qgctest
     STATIC
         UnitTestList.cc
-        ${UNIT_TESTING_RESOURCES}
+        # ${UNIT_TESTING_RESOURCES}
 )
 
 add_custom_target(check
