@@ -36,23 +36,6 @@ AnalyzePage {
             width:  availableWidth
             height: availableHeight
 
-            function columnWidthProvider(column) {
-                switch (column) {
-                case 0:
-                    return ScreenTools.defaultFontPixelWidth * 2
-                case 1:
-                    return ScreenTools.defaultFontPixelWidth * 2
-                case 2:
-                    return ScreenTools.defaultFontPixelWidth * 15
-                case 3:
-                    return ScreenTools.defaultFontPixelWidth * 10
-                case 4:
-                    return  ScreenTools.defaultFontPixelWidth * 15
-                default:
-                    return 0
-                }
-            }
-
             QGCFlickable {
                 Layout.fillWidth:   true
                 Layout.fillHeight:  true
@@ -64,6 +47,7 @@ AnalyzePage {
                     rows:               logController.model.count + 1
                     columns:            5
                     flow:               GridLayout.TopToBottom
+                    columnSpacing:      ScreenTools.defaultFontPixelWidth
                     rowSpacing:         0
 
                     QGCCheckBox {
@@ -84,22 +68,19 @@ AnalyzePage {
                     }
 
                     QGCLabel {
-                        Layout.preferredWidth:  columnWidthProvider(1)
-                        text:                   qsTr("Id")
+                        text: qsTr("Id")
                     }
 
                     Repeater {
                         model: logController.model
 
                         QGCLabel {
-                            Layout.preferredWidth:  columnWidthProvider(1)
-                            text:                   object.id 
+                            text: object.id 
                         }
                     }
 
                     QGCLabel {
-                        Layout.preferredWidth:  columnWidthProvider(2)
-                        text:                   qsTr("Date")
+                        text: qsTr("Date")
                     }
 
                     Repeater {
@@ -120,8 +101,7 @@ AnalyzePage {
                     }
 
                     QGCLabel { 
-                        Layout.preferredWidth:  columnWidthProvider(3)
-                        text:                   qsTr("Size")
+                        text: qsTr("Size")
                     }
 
                     Repeater {
@@ -131,8 +111,7 @@ AnalyzePage {
                     }
 
                     QGCLabel { 
-                        Layout.preferredWidth:  columnWidthProvider(4)
-                        text:                   qsTr("Status")
+                        text: qsTr("Status")
                     }
 
                     Repeater {
