@@ -327,7 +327,9 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     _toolbox = new QGCToolbox(this);
     _toolbox->setChildToolboxes();
 
+#ifndef DAILY_BUILD
     _checkForNewVersion();
+#endif
 }
 
 void QGCApplication::_exitWithError(QString errorMessage)
