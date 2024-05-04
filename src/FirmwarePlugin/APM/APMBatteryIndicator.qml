@@ -23,49 +23,57 @@ BatteryIndicator {
     waitForParameters: true
 
     expandedPageComponent: Component {
-        SettingsGroupLayout {
-            Layout.fillWidth:   true
-            heading:            qsTr("Battery Failsafes")
-            visible:            batt1Monitor.rawValue !== 0
-
+        ColumnLayout {
             FactPanelController { id: controller }
 
             property Fact batt1Monitor: controller.getParameterFact(-1, "BATT_MONITOR")
 
-            LabelledFactComboBox {
-                label:              qsTr("Low Action")
-                fact:               controller.getParameterFact(-1, "BATT_FS_LOW_ACT")
-                indexModel:         false
-            }
-
-            LabelledFactTextField {
+            SettingsGroupLayout {
                 Layout.fillWidth:   true
-                label:              qsTr("Low Voltage Threshold")
-                fact:               controller.getParameterFact(-1, "BATT_LOW_VOLT")
+                heading:            qsTr("Low Voltage Failsafe")
+                visible:            batt1Monitor.rawValue !== 0
+
+                LabelledFactComboBox {
+                    label:              qsTr("Action")
+                    fact:               controller.getParameterFact(-1, "BATT_FS_LOW_ACT")
+                    indexModel:         false
+                }
+
+                LabelledFactTextField {
+                    Layout.fillWidth:   true
+                    label:              qsTr("Voltage Trigger")
+                    fact:               controller.getParameterFact(-1, "BATT_LOW_VOLT")
+                }
+
+                LabelledFactTextField {
+                    Layout.fillWidth:   true
+                    label:              qsTr("mAh Trigger")
+                    fact:               controller.getParameterFact(-1, "BATT_LOW_MAH")
+                }
             }
 
-            LabelledFactTextField {
+            SettingsGroupLayout {
                 Layout.fillWidth:   true
-                label:              qsTr("Low mAh Threshold")
-                fact:               controller.getParameterFact(-1, "BATT_LOW_MAH")
-            }
+                heading:            qsTr("Critical Voltage Failsafe")
+                visible:            batt1Monitor.rawValue !== 0
 
-            LabelledFactComboBox {
-                label:              qsTr("Critical Action")
-                fact:               controller.getParameterFact(-1, "BATT_FS_LOW_ACT")
-                indexModel:         false
-            }
+                LabelledFactComboBox {
+                    label:              qsTr("Action")
+                    fact:               controller.getParameterFact(-1, "BATT_FS_CRT_ACT")
+                    indexModel:         false
+                }
 
-            LabelledFactTextField {
-                Layout.fillWidth:   true
-                label:              qsTr("Low Voltage Threshold")
-                fact:               controller.getParameterFact(-1, "BATT_CRT_VOLT")
-            }
+                LabelledFactTextField {
+                    Layout.fillWidth:   true
+                    label:              qsTr("Voltage Trigger")
+                    fact:               controller.getParameterFact(-1, "BATT_CRT_VOLT")
+                }
 
-            LabelledFactTextField {
-                Layout.fillWidth:   true
-                label:              qsTr("Low mAh Threshold")
-                fact:               controller.getParameterFact(-1, "BATT_CRT_MAH")
+                LabelledFactTextField {
+                    Layout.fillWidth:   true
+                    label:              qsTr("mAh Trigger")
+                    fact:               controller.getParameterFact(-1, "BATT_CRT_MAH")
+                }
             }
         }
     }
