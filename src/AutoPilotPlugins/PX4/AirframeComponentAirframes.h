@@ -11,8 +11,7 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-#ifndef AIRFRAMECOMPONENTAIRFRAMES_H
-#define AIRFRAMECOMPONENTAIRFRAMES_H
+#pragma once
 
 #include <QtCore/QList>
 #include <QtCore/QMap>
@@ -41,5 +40,3 @@ protected:
     
 private:
 };
-
-#endif

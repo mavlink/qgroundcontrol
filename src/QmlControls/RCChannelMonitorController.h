@@ -11,7 +11,7 @@
 #pragma once
 
 #include "FactPanelController.h"
-#include "Vehicle.h"
+#include "QGCMAVLink.h"
 
 class RCChannelMonitorController : public FactPanelController
 {
@@ -29,7 +29,7 @@ signals:
     void channelRCValueChanged(int channel, int rcValue);
 
 private slots:
-    void _rcChannelsChanged(int channelCount, int pwmValues[Vehicle::cMaxRcChannels]);
+    void _rcChannelsChanged(int channelCount, int pwmValues[QGCMAVLink::maxRcChannels]);
 
 private:
     int _chanCount;

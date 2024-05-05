@@ -28,6 +28,7 @@
 #include "ArduSubFirmwarePlugin.h"
 #include "APMParameterMetaData.h"
 #include "LinkManager.h"
+#include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtNetwork/QTcpSocket>

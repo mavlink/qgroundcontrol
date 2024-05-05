@@ -11,8 +11,7 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-#ifndef SENSORSCOMPONENTCONTROLLER_H
-#define SENSORSCOMPONENTCONTROLLER_H
+#pragma once
 
 #include <QtQuick/QQuickItem>
 #include <QtCore/QLoggingCategory>
@@ -167,5 +166,3 @@ private:
     
     static const int _supportedFirmwareCalVersion = 2;
 };
-
-#endif

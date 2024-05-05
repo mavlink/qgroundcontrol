@@ -1840,7 +1840,7 @@ void Vehicle::_handleRCChannels(mavlink_message_t& message)
 
     mavlink_msg_rc_channels_decode(&message, &channels);
 
-    uint16_t* _rgChannelvalues[cMaxRcChannels] = {
+    uint16_t* _rgChannelvalues[QGCMAVLink::maxRcChannels] = {
         &channels.chan1_raw,
         &channels.chan2_raw,
         &channels.chan3_raw,
@@ -1860,9 +1860,9 @@ void Vehicle::_handleRCChannels(mavlink_message_t& message)
         &channels.chan17_raw,
         &channels.chan18_raw,
     };
-    int pwmValues[cMaxRcChannels];
+    int pwmValues[QGCMAVLink::maxRcChannels];
 
-    for (int i=0; i<cMaxRcChannels; i++) {
+    for (int i=0; i<QGCMAVLink::maxRcChannels; i++) {
         uint16_t channelValue = *_rgChannelvalues[i];
 
         if (i < channels.chancount) {

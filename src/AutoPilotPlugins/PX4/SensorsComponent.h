@@ -8,8 +8,7 @@
  ****************************************************************************/
 
 
-#ifndef SENSORSCOMPONENT_H
-#define SENSORSCOMPONENT_H
+#pragma once
 
 #include "VehicleComponent.h"
 
@@ -48,5 +47,3 @@ private:
     static const char* _magEnabledParam;
     static const char* _magCalParam;
 };
-
-#endif
