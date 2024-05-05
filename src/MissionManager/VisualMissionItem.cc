@@ -10,6 +10,7 @@
 #include "VisualMissionItem.h"
 #include "TerrainQuery.h"
 #include "PlanMasterController.h"
+#include "Vehicle.h"
 #include "QGC.h"
 
 const char* VisualMissionItem::jsonTypeKey =                "type";

@@ -16,12 +16,12 @@
 
 #include "QGCMAVLink.h"
 #include "QmlObjectListModel.h"
-#include "Vehicle.h"
 #include "MissionController.h"
 
 class MissionItem;
 class PlanMasterController;
 class TerrainAtCoordinateQuery;
+class Vehicle;
 
 // Abstract base class for all Simple and Complex visual mission objects.
 class VisualMissionItem : public QObject

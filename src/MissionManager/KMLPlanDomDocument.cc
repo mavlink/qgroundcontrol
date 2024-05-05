@@ -15,6 +15,7 @@
 #include "MissionItem.h"
 #include "FactMetaData.h"
 #include "ComplexMissionItem.h"
+#include "Vehicle.h"
 #include "QmlObjectListModel.h"
 
 const char* KMLPlanDomDocument::_missionLineStyleName =     "MissionLineStyle";
