@@ -20,7 +20,7 @@ const char* VisualMissionItem::jsonTypeComplexItemValue =   "ComplexItem";
 // All VisualMissionItem derived classes are parented to masterController in order to tie their lifecycles together.
 
 VisualMissionItem::VisualMissionItem(PlanMasterController* masterController, bool flyView)
-    : QObject           (masterController)
+    : QmlObjectListItem (masterController)
     , _flyView          (flyView)
     , _masterController (masterController)
     , _missionController(masterController->missionController())
@@ -30,8 +30,8 @@ VisualMissionItem::VisualMissionItem(PlanMasterController* masterController, boo
 }
 
 VisualMissionItem::VisualMissionItem(const VisualMissionItem& other, bool flyView)
-    : QObject                   (other._masterController)
-    , _flyView                  (flyView)
+    : QmlObjectListItem (other._masterController)
+    , _flyView          (flyView)
 {
     *this = other;
 

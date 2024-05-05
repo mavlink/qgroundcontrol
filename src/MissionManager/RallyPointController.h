@@ -45,8 +45,6 @@ public:
     void removeAll                  (void) final;
     void removeAllFromVehicle       (void) final;
     bool syncInProgress             (void) const final;
-    bool dirty                      (void) const final { return _dirty; }
-    void setDirty                   (bool dirty) final;
     bool containsItems              (void) const final;
     bool showPlanFromManagerVehicle (void) final;
 
@@ -72,7 +70,6 @@ private slots:
 private:
     Vehicle*            _managerVehicle =       nullptr;
     RallyPointManager*  _rallyPointManager =    nullptr;
-    bool                _dirty =                false;
     QmlObjectListModel  _points;
     QObject*            _currentRallyPoint =    nullptr;
     bool                _itemsRequested =       false;

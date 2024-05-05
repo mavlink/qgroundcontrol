@@ -187,14 +187,6 @@ bool RallyPointController::syncInProgress(void) const
     return _rallyPointManager->inProgress();
 }
 
-void RallyPointController::setDirty(bool dirty)
-{
-    if (dirty != _dirty) {
-        _dirty = dirty;
-        emit dirtyChanged(dirty);
-    }
-}
-
 QString RallyPointController::editorQml(void) const
 {
     return _rallyPointManager->editorQml();

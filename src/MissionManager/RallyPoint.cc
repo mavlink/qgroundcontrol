@@ -16,8 +16,7 @@ const char* RallyPoint::_altitudeFactName =     "RelativeAltitude";
 QMap<QString, FactMetaData*> RallyPoint::_metaDataMap;
 
 RallyPoint::RallyPoint(const QGeoCoordinate& coordinate, QObject* parent)
-    : QObject(parent)
-    , _dirty(false)
+    : QmlObjectListItem(parent)
     , _longitudeFact(0, _longitudeFactName, FactMetaData::valueTypeDouble)
     , _latitudeFact(0, _latitudeFactName, FactMetaData::valueTypeDouble)
     , _altitudeFact(0, _altitudeFactName, FactMetaData::valueTypeDouble)
@@ -28,8 +27,7 @@ RallyPoint::RallyPoint(const QGeoCoordinate& coordinate, QObject* parent)
 }
 
 RallyPoint::RallyPoint(const RallyPoint& other, QObject* parent)
-    : QObject(parent)
-    , _dirty(false)
+    : QmlObjectListItem(parent)
     , _longitudeFact(0, _longitudeFactName, FactMetaData::valueTypeDouble)
     , _latitudeFact(0, _latitudeFactName, FactMetaData::valueTypeDouble)
     , _altitudeFact(0, _altitudeFactName, FactMetaData::valueTypeDouble)
@@ -88,14 +86,6 @@ void RallyPoint::setCoordinate(const QGeoCoordinate& coordinate)
         _altitudeFact.setRawValue(coordinate.altitude());
         emit coordinateChanged(coordinate);
         setDirty(true);
-    }
-}
-
-void RallyPoint::setDirty(bool dirty)
-{
-    if (dirty != _dirty) {
-        _dirty = dirty;
-        emit dirtyChanged(dirty);
     }
 }
 

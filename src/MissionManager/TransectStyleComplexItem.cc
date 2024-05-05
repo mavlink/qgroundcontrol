@@ -138,10 +138,7 @@ void TransectStyleComplexItem::setDirty(bool dirty)
         _surveyAreaPolygon.setDirty(false);
         _cameraCalc.setDirty(false);
     }
-    if (_dirty != dirty) {
-        _dirty = dirty;
-        emit dirtyChanged(_dirty);
-    }
+    QmlObjectListItem::setDirty(dirty);
 }
 
 void TransectStyleComplexItem::_save(QJsonObject& complexObject)
@@ -360,18 +357,6 @@ void TransectStyleComplexItem::setMissionFlightStatus(MissionController::Mission
         // Vehicle speed change affects max climb/descent rates calcs for terrain so we need to re-adjust
         _rebuildTransects();
         emit timeBetweenShotsChanged();
-    }
-}
-
-void TransectStyleComplexItem::_setDirty(void)
-{
-    setDirty(true);
-}
-
-void TransectStyleComplexItem::_setIfDirty(bool dirty)
-{
-    if (dirty) {
-        setDirty(true);
     }
 }
 

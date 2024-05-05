@@ -104,8 +104,6 @@ signals:
 #endif
 
 private slots:
-    void _polygonDirtyChanged       (bool dirty);
-    void _setDirty                  (void);
     void _setFenceFromManager       (const QList<QGCFencePolygon>& polygons, const QList<QGCFenceCircle>&  circles);
     void _setReturnPointFromManager (QGeoCoordinate breachReturnPoint);
     void _managerLoadComplete       (void);
@@ -120,7 +118,6 @@ private:
 
     Vehicle*            _managerVehicle =               nullptr;
     GeoFenceManager*    _geoFenceManager =              nullptr;
-    bool                _dirty =                        false;
     QmlObjectListModel  _polygons;
     QmlObjectListModel  _circles;
     QGeoCoordinate      _breachReturnPoint;

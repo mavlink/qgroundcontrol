@@ -43,7 +43,7 @@ CorridorScanComplexItem::CorridorScanComplexItem(PlanMasterController* masterCon
     connect(&_corridorWidthFact,    &Fact::valueChanged,                            this, &CorridorScanComplexItem::_setDirty);
     connect(&_corridorPolyline,     &QGCMapPolyline::pathChanged,                   this, &CorridorScanComplexItem::_setDirty);
 
-    connect(&_corridorPolyline,     &QGCMapPolyline::dirtyChanged,                  this, &CorridorScanComplexItem::_polylineDirtyChanged);
+    connect(&_corridorPolyline,     &QGCMapPolyline::dirtyChanged,                  this, &CorridorScanComplexItem::_setIfDirty);
 
     connect(&_corridorPolyline,     &QGCMapPolyline::pathChanged,                   this, &CorridorScanComplexItem::_rebuildCorridorPolygon);
     connect(&_corridorWidthFact,    &Fact::valueChanged,                            this, &CorridorScanComplexItem::_rebuildCorridorPolygon);
@@ -173,13 +173,6 @@ int CorridorScanComplexItem::_calcTransectCount(void) const
 {
     double fullWidth = _corridorWidthFact.rawValue().toDouble();
     return fullWidth > 0.0 ? qCeil(fullWidth / _calcTransectSpacing()) : 1;
-}
-
-void CorridorScanComplexItem::_polylineDirtyChanged(bool dirty)
-{
-    if (dirty) {
-        setDirty(true);
-    }
 }
 
 void CorridorScanComplexItem::rotateEntryPoint(void)

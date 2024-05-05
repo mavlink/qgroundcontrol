@@ -674,13 +674,6 @@ void SimpleMissionItem::setDirty(bool dirty)
     }
 }
 
-void SimpleMissionItem::_setDirty(void)
-{
-    if (!_ignoreDirtyChangeSignals) {
-        setDirty(true);
-    }
-}
-
 void SimpleMissionItem::_sendCoordinateChanged(void)
 {
     emit coordinateChanged(coordinate());
@@ -952,14 +945,14 @@ void SimpleMissionItem::_updateOptionalSections(void)
         _speedSection->setAvailable(true);
     }
 
-    connect(_cameraSection, &CameraSection::dirtyChanged,                   this, &SimpleMissionItem::_sectionDirtyChanged);
+    connect(_cameraSection, &CameraSection::dirtyChanged,                   this, &SimpleMissionItem::_setIfDirty);
     connect(_cameraSection, &CameraSection::itemCountChanged,               this, &SimpleMissionItem::_updateLastSequenceNumber);
     connect(_cameraSection, &CameraSection::availableChanged,               this, &SimpleMissionItem::specifiedGimbalYawChanged);
     connect(_cameraSection, &CameraSection::availableChanged,               this, &SimpleMissionItem::specifiedGimbalPitchChanged);
     connect(_cameraSection, &CameraSection::specifiedGimbalPitchChanged,    this, &SimpleMissionItem::specifiedGimbalPitchChanged);
     connect(_cameraSection, &CameraSection::specifiedGimbalYawChanged,      this, &SimpleMissionItem::specifiedGimbalYawChanged);
 
-    connect(_speedSection,  &SpeedSection::dirtyChanged,                this, &SimpleMissionItem::_sectionDirtyChanged);
+    connect(_speedSection,  &SpeedSection::dirtyChanged,                this, &SimpleMissionItem::_setIfDirty);
     connect(_speedSection,  &SpeedSection::itemCountChanged,            this, &SimpleMissionItem::_updateLastSequenceNumber);
     connect(_speedSection,  &SpeedSection::specifiedFlightSpeedChanged, this, &SimpleMissionItem::specifiedFlightSpeedChanged);
 
@@ -976,13 +969,6 @@ int SimpleMissionItem::lastSequenceNumber(void) const
 void SimpleMissionItem::_updateLastSequenceNumber(void)
 {
     emit lastSequenceNumberChanged(lastSequenceNumber());
-}
-
-void SimpleMissionItem::_sectionDirtyChanged(bool dirty)
-{
-    if (dirty) {
-        setDirty(true);
-    }
 }
 
 void SimpleMissionItem::appendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent)

@@ -16,6 +16,7 @@
 
 #include "QGCMAVLink.h"
 #include "QmlObjectListModel.h"
+#include <QmlObjectListItem.h>
 #include "MissionController.h"
 
 class MissionItem;
@@ -24,7 +25,7 @@ class TerrainAtCoordinateQuery;
 class Vehicle;
 
 // Abstract base class for all Simple and Complex visual mission objects.
-class VisualMissionItem : public QObject
+class VisualMissionItem : public QmlObjectListItem
 {
     Q_OBJECT
     Q_MOC_INCLUDE("PlanMasterController.h")
@@ -54,7 +55,6 @@ public:
     Q_PROPERTY(QString          commandDescription                  READ commandDescription                                                 NOTIFY commandDescriptionChanged)
     Q_PROPERTY(QString          commandName                         READ commandName                                                        NOTIFY commandNameChanged)
     Q_PROPERTY(QString          abbreviation                        READ abbreviation                                                       NOTIFY abbreviationChanged)
-    Q_PROPERTY(bool             dirty                               READ dirty                              WRITE setDirty                  NOTIFY dirtyChanged)                                ///< Item is dirty and requires save/send
     Q_PROPERTY(bool             isCurrentItem                       READ isCurrentItem                      WRITE setIsCurrentItem          NOTIFY isCurrentItemChanged)
     Q_PROPERTY(bool             hasCurrentChildItem                 READ hasCurrentChildItem                WRITE setHasCurrentChildItem    NOTIFY hasCurrentChildItemChanged)                  ///< true: On of this items children is current
     Q_PROPERTY(int              sequenceNumber                      READ sequenceNumber                     WRITE setSequenceNumber         NOTIFY sequenceNumberChanged)
@@ -134,7 +134,6 @@ public:
 
     // Pure virtuals which must be provides by derived classes
 
-    virtual bool            dirty                   (void) const = 0;
     virtual bool            isSimpleItem            (void) const = 0;
     virtual bool            isTakeoffItem           (void) const { return false; }
     virtual bool            isLandCommand           (void) const { return false; }
@@ -164,7 +163,6 @@ public:
 
     virtual bool exitCoordinateSameAsEntry          (void) const = 0;
 
-    virtual void setDirty           (bool dirty) = 0;
     virtual void setCoordinate      (const QGeoCoordinate& coordinate) = 0;
     virtual void setSequenceNumber  (int sequenceNumber) = 0;
     virtual int  lastSequenceNumber (void) const = 0;
@@ -209,7 +207,6 @@ signals:
     void abbreviationChanged            (void);
     void coordinateChanged              (const QGeoCoordinate& coordinate);
     void exitCoordinateChanged          (const QGeoCoordinate& exitCoordinate);
-    void dirtyChanged                   (bool dirty);
     void distanceChanged                (double distance);
     void distanceFromStartChanged       (double distanceFromStart);
     void isCurrentItemChanged           (bool isCurrentItem);
@@ -249,7 +246,6 @@ protected:
     bool                         _flyView                   = false;
     bool                        _isCurrentItem              = false;
     bool                        _hasCurrentChildItem        = false;
-    bool                        _dirty                      = false;
     bool                        _homePositionSpecialCase    = false;                            ///< true: This item is being used as a ui home position indicator
     bool                        _wizardMode                 = false;                            ///< true: Item editor is showing wizard completion panel
     double                      _terrainAltitude            = qQNaN();                          ///< Altitude of terrain at coordinate position, NaN for not known

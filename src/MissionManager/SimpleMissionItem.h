@@ -106,7 +106,6 @@ public:
     const MissionItem& missionItem(void) const { return _missionItem; }
 
     // Overrides from VisualMissionItem
-    bool            dirty                       (void) const override { return _dirty; }
     bool            isSimpleItem                (void) const final { return true; }
     bool            isStandaloneCoordinate      (void) const final;
     bool            isLandCommand               (void) const final;
@@ -151,8 +150,6 @@ signals:
     void loiterRadiusChanged        (double loiterRadius);
 
 private slots:
-    void _setDirty                              (void);
-    void _sectionDirtyChanged                   (bool dirty);
     void _sendCommandChanged                    (void);
     void _sendCoordinateChanged                 (void);
     void _sendFriendlyEditAllowedChanged        (void);
@@ -177,8 +174,6 @@ private:
 
     MissionItem     _missionItem;
     bool            _rawEdit =                  false;
-    bool            _dirty =                    false;
-    bool            _ignoreDirtyChangeSignals = false;
     QGeoCoordinate  _mapCenterHint;
     SpeedSection*   _speedSection =             nullptr;
     CameraSection*  _cameraSection =             nullptr;

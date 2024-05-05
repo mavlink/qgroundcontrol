@@ -43,6 +43,8 @@ qt_add_library(QmlControls STATIC
 	QGCPalette.h
 	QGroundControlQmlGlobal.cc
 	QGroundControlQmlGlobal.h
+	QmlObjectListItem.cc
+	QmlObjectListItem.h
 	QmlObjectListModel.cc
 	QmlObjectListModel.h
 	QmlUnitsConversion.h
@@ -68,6 +70,7 @@ target_link_libraries(QmlControls
         Geo
         GPS
         MockLink
+        Vehicle
 	PUBLIC
 		Qt6::Core
 		Qt6::Gui
@@ -89,7 +92,6 @@ target_link_libraries(QmlControls
         Terrain
 		Utilities
 		UTMSP
-        Vehicle
         VideoManager
 )
 

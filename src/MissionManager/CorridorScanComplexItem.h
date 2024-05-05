@@ -62,7 +62,6 @@ public:
     static const char* corridorWidthName;
 
 private slots:
-    void _polylineDirtyChanged          (bool dirty);
     void _rebuildCorridorPolygon        (void);
     void _updateWizardMode              (void);
 

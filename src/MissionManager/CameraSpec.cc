@@ -22,8 +22,7 @@ const char* CameraSpec::_fixedOrientationName =     "FixedOrientation";
 const char* CameraSpec::_minTriggerIntervalName =   "MinTriggerInterval";
 
 CameraSpec::CameraSpec(const QString& settingsGroup, QObject* parent)
-    : QObject                   (parent)
-    , _dirty                    (false)
+    : QmlObjectListItem         (parent)
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/CameraSpec.FactMetaData.json"), this))
     , _sensorWidthFact          (settingsGroup, _metaDataMap[_sensorWidthName])
     , _sensorHeightFact         (settingsGroup, _metaDataMap[_sensorHeightName])
@@ -49,14 +48,6 @@ const CameraSpec& CameraSpec::operator=(const CameraSpec& other)
     _minTriggerIntervalFact.setRawValue (other._minTriggerIntervalFact.rawValue());
 
     return *this;
-}
-
-void CameraSpec::setDirty(bool dirty)
-{
-    if (_dirty != dirty) {
-        _dirty = dirty;
-        emit dirtyChanged(_dirty);
-    }
 }
 
 void CameraSpec::save(QJsonObject& json) const

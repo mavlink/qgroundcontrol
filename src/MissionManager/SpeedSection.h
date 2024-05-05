@@ -35,9 +35,7 @@ public:
 
     // Overrides from Section
     bool available          (void) const override { return _available; }
-    bool dirty              (void) const override { return _dirty; }
     void setAvailable       (bool available) override;
-    void setDirty           (bool dirty) override;
     bool scanForSection     (QmlObjectListModel* visualItems, int scanIndex) override;
     void appendSectionItems (QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum) override;
     int  itemCount          (void) const override;
@@ -53,7 +51,6 @@ private slots:
 
 private:
     bool    _available;
-    bool    _dirty;
     bool    _specifyFlightSpeed;
     Fact    _flightSpeedFact;
 

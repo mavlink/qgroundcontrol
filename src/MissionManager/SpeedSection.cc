@@ -20,7 +20,6 @@ QMap<QString, FactMetaData*> SpeedSection::_metaDataMap;
 SpeedSection::SpeedSection(PlanMasterController* masterController, QObject* parent)
     : Section               (masterController, parent)
     , _available            (false)
-    , _dirty                (false)
     , _specifyFlightSpeed   (false)
     , _flightSpeedFact      (0, _flightSpeedName,   FactMetaData::valueTypeDouble)
 {
@@ -58,14 +57,6 @@ void SpeedSection::setAvailable(bool available)
             _available = available;
             emit availableChanged(available);
         }
-    }
-}
-
-void SpeedSection::setDirty(bool dirty)
-{
-    if (_dirty != dirty) {
-        _dirty = dirty;
-        emit dirtyChanged(_dirty);
     }
 }
 

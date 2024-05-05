@@ -323,11 +323,6 @@ void CameraCalc::setDistanceMode(QGroundControlQmlGlobal::AltMode altMode)
     }
 }
 
-void CameraCalc::_setDirty(void)
-{
-    setDirty(true);
-}
-
 void CameraCalc::setCameraBrand(const QString& cameraBrand)
 {
     // Note that cameraBrand can also be manual or custom camera

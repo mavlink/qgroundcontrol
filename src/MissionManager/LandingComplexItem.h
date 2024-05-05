@@ -83,7 +83,6 @@ public:
     int     lastSequenceNumber  (void) const final;
 
     // Overrides from VisualMissionItem
-    bool                dirty                       (void) const final { return _dirty; }
     bool                isSimpleItem                (void) const final { return false; }
     bool                isStandaloneCoordinate      (void) const final { return false; }
     bool                specifiesCoordinate         (void) const final { return true; }
@@ -102,7 +101,6 @@ public:
     double              additionalTimeDelay         (void) const final { return 0; }
     ReadyForSaveState   readyForSaveState           (void) const final;
     bool                exitCoordinateSameAsEntry   (void) const final { return false; }
-    void                setDirty                    (bool dirty) final;
     void                setCoordinate               (const QGeoCoordinate& coordinate) final { setFinalApproachCoordinate(coordinate); }
     void                setSequenceNumber           (int sequenceNumber) final;
     double              amslEntryAlt                (void) const final;
@@ -133,7 +131,6 @@ protected slots:
 
     void _recalcFromHeadingAndDistanceChange        (void);
     void _recalcFromCoordinateChange                (void);
-    void _setDirty                                  (void);
 
 protected:
     virtual const Fact*     _finalApproachAltitude  (void) const = 0;
@@ -161,7 +158,6 @@ protected:
     static bool _scanForItem(QmlObjectListModel* visualItems, bool flyView, PlanMasterController* masterController, IsLandItemFunc isLandItemFunc, CreateItemFunc createItemFunc);
 
     int             _sequenceNumber             = 0;
-    bool            _dirty                      = false;
     QGeoCoordinate  _finalApproachCoordinate;
     QGeoCoordinate  _loiterTangentCoordinate;
     QGeoCoordinate  _landingCoordinate;

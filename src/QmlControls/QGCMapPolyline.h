@@ -14,8 +14,9 @@
 #include <QtPositioning/QGeoCoordinate>
 
 #include "QmlObjectListModel.h"
+#include <QmlObjectListItem.h>
 
-class QGCMapPolyline : public QObject
+class QGCMapPolyline : public QmlObjectListItem
 {
     Q_OBJECT
 
@@ -28,7 +29,6 @@ public:
     Q_PROPERTY(int                  count       READ count                                  NOTIFY countChanged)
     Q_PROPERTY(QVariantList         path        READ path                                   NOTIFY pathChanged)
     Q_PROPERTY(QmlObjectListModel*  pathModel   READ qmlPathModel                           CONSTANT)
-    Q_PROPERTY(bool                 dirty       READ dirty          WRITE setDirty          NOTIFY dirtyChanged)
     Q_PROPERTY(bool                 interactive READ interactive    WRITE setInteractive    NOTIFY interactiveChanged)
     Q_PROPERTY(bool                 isValid     READ isValid                                NOTIFY isValidChanged)
     Q_PROPERTY(bool                 empty       READ empty                                  NOTIFY isEmptyChanged)
@@ -84,8 +84,7 @@ public:
 
     // Property methods
     int             count       (void) const { return _polylinePath.count(); }
-    bool            dirty       (void) const { return _dirty; }
-    void            setDirty    (bool dirty);
+    void            setDirty    (bool dirty) final;
     bool            interactive (void) const { return _interactive; }
     QVariantList    path        (void) const { return _polylinePath; }
     bool            isValid     (void) const { return _polylineModel.count() >= 2; }
@@ -107,7 +106,6 @@ public:
 signals:
     void countChanged       (int count);
     void pathChanged        (void);
-    void dirtyChanged       (bool dirty);
     void cleared            (void);
     void interactiveChanged (bool interactive);
     void isValidChanged     (void);
@@ -117,7 +115,6 @@ signals:
 
 private slots:
     void _polylineModelCountChanged(int count);
-    void _polylineModelDirtyChanged(bool dirty);
 
 private:
     void            _init                   (void);
@@ -128,7 +125,6 @@ private:
 
     QVariantList        _polylinePath;
     QmlObjectListModel  _polylineModel;
-    bool                _dirty;
     bool                _interactive;
     bool                _resetActive;
     bool                _traceMode = false;

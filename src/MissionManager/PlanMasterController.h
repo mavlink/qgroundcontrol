@@ -15,6 +15,7 @@
 #include "MissionController.h"
 #include "GeoFenceController.h"
 #include "RallyPointController.h"
+#include <QmlObjectListItem.h>
 
 Q_DECLARE_LOGGING_CATEGORY(PlanMasterControllerLog)
 
@@ -23,7 +24,7 @@ class MultiVehicleManager;
 class Vehicle;
 
 /// Master controller for mission, fence, rally
-class PlanMasterController : public QObject
+class PlanMasterController : public QmlObjectListItem
 {
     Q_OBJECT
     Q_MOC_INCLUDE("QmlObjectListModel.h")
@@ -47,7 +48,6 @@ public:
     Q_PROPERTY(bool                     offline                 READ offline                                NOTIFY offlineChanged)          ///< true: controller is not connected to an active vehicle
     Q_PROPERTY(bool                     containsItems           READ containsItems                          NOTIFY containsItemsChanged)    ///< true: Elemement is non-empty
     Q_PROPERTY(bool                     syncInProgress          READ syncInProgress                         NOTIFY syncInProgressChanged)   ///< true: Information is currently being saved/sent, false: no active save/send in progress
-    Q_PROPERTY(bool                     dirty                   READ dirty                  WRITE setDirty  NOTIFY dirtyChanged)            ///< true: Unsaved/sent changes are present, false: no changes since last save/send
     Q_PROPERTY(QString                  fileExtension           READ fileExtension                          CONSTANT)                       ///< File extension for missions
     Q_PROPERTY(QString                  kmlFileExtension        READ kmlFileExtension                       CONSTANT)
     Q_PROPERTY(QString                  currentPlanFile         READ currentPlanFile                        NOTIFY currentPlanFileChanged)
@@ -91,8 +91,8 @@ public:
     bool        offline         (void) const { return _offline; }
     bool        containsItems   (void) const;
     bool        syncInProgress  (void) const;
-    bool        dirty           (void) const;
-    void        setDirty        (bool dirty);
+    bool        dirty           (void) const final;
+    void        setDirty        (bool dirty) final;
     QString     fileExtension   (void) const;
     QString     kmlFileExtension(void) const;
     QString     currentPlanFile (void) const { return _currentPlanFile; }
@@ -116,7 +116,6 @@ public:
 signals:
     void containsItemsChanged               (bool containsItems);
     void syncInProgressChanged              (void);
-    void dirtyChanged                       (bool dirty);
     void offlineChanged                     (bool offlineEditing);
     void currentPlanFileChanged             (void);
     void planCreatorsChanged                (QmlObjectListModel* planCreators);

@@ -38,7 +38,7 @@ const char* PlanMasterController::kJsonGeoFenceObjectKey =      "geoFence";
 const char* PlanMasterController::kJsonRallyPointsObjectKey =   "rallyPoints";
 
 PlanMasterController::PlanMasterController(QObject* parent)
-    : QObject               (parent)
+    : QmlObjectListItem     (parent)
     , _multiVehicleMgr      (qgcApp()->toolbox()->multiVehicleManager())
     , _controllerVehicle    (new Vehicle(Vehicle::MAV_AUTOPILOT_TRACK, Vehicle::MAV_TYPE_TRACK, qgcApp()->toolbox()->firmwarePluginManager(), this))
     , _managerVehicle       (_controllerVehicle)
@@ -51,7 +51,7 @@ PlanMasterController::PlanMasterController(QObject* parent)
 
 #ifdef QT_DEBUG
 PlanMasterController::PlanMasterController(MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, QObject* parent)
-    : QObject               (parent)
+    : QmlObjectListItem     (parent)
     , _multiVehicleMgr      (qgcApp()->toolbox()->multiVehicleManager())
     , _controllerVehicle    (new Vehicle(firmwareType, vehicleType, qgcApp()->toolbox()->firmwarePluginManager()))
     , _managerVehicle       (_controllerVehicle)

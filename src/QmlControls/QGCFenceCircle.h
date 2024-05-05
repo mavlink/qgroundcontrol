@@ -43,9 +43,6 @@ public:
 signals:
     void inclusionChanged(bool inclusion);
 
-private slots:
-    void _setDirty(void);
-
 private:
     void _init(void);
 

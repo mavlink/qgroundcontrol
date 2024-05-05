@@ -12,9 +12,8 @@
 #include <QtQml/QQmlEngine>
 
 QGCQGeoCoordinate::QGCQGeoCoordinate(const QGeoCoordinate& coord, QObject* parent)
-    : QObject       (parent)
+    : QmlObjectListItem(parent)
     , _coordinate   (coord)
-    , _dirty        (false)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
@@ -25,13 +24,5 @@ void QGCQGeoCoordinate::setCoordinate(const QGeoCoordinate& coordinate)
         _coordinate = coordinate;
         emit coordinateChanged(coordinate);
         setDirty(true);
-    }
-}
-
-void QGCQGeoCoordinate::setDirty(bool dirty)
-{
-    if (_dirty != dirty) {
-        _dirty = dirty;
-        emit dirtyChanged(dirty);
     }
 }

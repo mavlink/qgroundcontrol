@@ -51,8 +51,6 @@ public:
     bool load(QTextStream &loadStream) final;
     bool load(const QJsonObject& json, int sequenceNumber, QString& errorString) final;
 
-    //void setDirty(bool dirty) final;
-
 signals:
     void launchCoordinateChanged            (const QGeoCoordinate& launchCoordinate);
     void launchTakeoffAtSameLocationChanged (bool launchTakeoffAtSameLocation);

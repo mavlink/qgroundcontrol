@@ -20,8 +20,7 @@
 const char* QGCMapPolyline::jsonPolylineKey = "polyline";
 
 QGCMapPolyline::QGCMapPolyline(QObject* parent)
-    : QObject               (parent)
-    , _dirty                (false)
+    : QmlObjectListItem     (parent)
     , _interactive          (false)
     , _resetActive          (false)
 {
@@ -29,8 +28,7 @@ QGCMapPolyline::QGCMapPolyline(QObject* parent)
 }
 
 QGCMapPolyline::QGCMapPolyline(const QGCMapPolyline& other, QObject* parent)
-    : QObject               (parent)
-    , _dirty                (false)
+    : QmlObjectListItem     (parent)
     , _interactive          (false)
     , _resetActive          (false)
 {
@@ -55,7 +53,7 @@ const QGCMapPolyline& QGCMapPolyline::operator=(const QGCMapPolyline& other)
 
 void QGCMapPolyline::_init(void)
 {
-    connect(&_polylineModel, &QmlObjectListModel::dirtyChanged, this, &QGCMapPolyline::_polylineModelDirtyChanged);
+    connect(&_polylineModel, &QmlObjectListModel::dirtyChanged, this, &QGCMapPolyline::_setIfDirty);
     connect(&_polylineModel, &QmlObjectListModel::countChanged, this, &QGCMapPolyline::_polylineModelCountChanged);
 
     connect(this, &QGCMapPolyline::countChanged, this, &QGCMapPolyline::isValidChanged);
@@ -365,13 +363,6 @@ bool QGCMapPolyline::loadKMLFile(const QString& kmlFile)
     _endResetIfNotActive();
 
     return true;
-}
-
-void QGCMapPolyline::_polylineModelDirtyChanged(bool dirty)
-{
-    if (dirty) {
-        setDirty(true);
-    }
 }
 
 void QGCMapPolyline::_polylineModelCountChanged(int count)

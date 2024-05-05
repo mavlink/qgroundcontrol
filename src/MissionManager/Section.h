@@ -12,6 +12,8 @@
 #include <QtCore/QObject>
 #include <QtCore/QLoggingCategory>
 
+#include <QmlObjectListItem.h>
+
 Q_DECLARE_LOGGING_CATEGORY(SectionLog)
 
 class PlanMasterController;
@@ -19,28 +21,25 @@ class QmlObjectListModel;
 class MissionItem;
 
 // A Section encapsulates a set of mission commands which can be associated with another simple mission item.
-class Section : public QObject
+class Section : public QmlObjectListItem
 {
     Q_OBJECT
 
 public:
     Section(PlanMasterController* masterController, QObject* parent = nullptr)
-        : QObject           (parent)
+        : QmlObjectListItem (parent)
         , _masterController (masterController)
     {
-
+        connect(this, &Section::dirtyChanged, this, &Section::availableChanged);
     }
 
     Q_PROPERTY(bool     available           READ available          WRITE setAvailable  NOTIFY availableChanged)
     Q_PROPERTY(bool     settingsSpecified   READ settingsSpecified                      NOTIFY settingsSpecifiedChanged)
-    Q_PROPERTY(bool     dirty               READ dirty              WRITE setDirty      NOTIFY availableChanged)
 
     virtual bool available          (void) const = 0;
     virtual bool settingsSpecified  (void) const = 0;
-    virtual bool dirty              (void) const = 0;
 
     virtual void setAvailable       (bool available) = 0;
-    virtual void setDirty           (bool dirty) = 0;
 
     /// Scans the loaded items for the section items
     ///     @param visualItems Item list
@@ -61,7 +60,6 @@ public:
 signals:
     void availableChanged           (bool available);
     void settingsSpecifiedChanged   (bool settingsSpecified);
-    void dirtyChanged               (bool dirty);
     void itemCountChanged           (int itemCount);
 
 protected:

@@ -520,19 +520,6 @@ LandingComplexItem::ReadyForSaveState LandingComplexItem::readyForSaveState(void
     return _landingCoordSet && !_wizardMode ? ReadyForSave : NotReadyForSaveData;
 }
 
-void LandingComplexItem::setDirty(bool dirty)
-{
-    if (_dirty != dirty) {
-        _dirty = dirty;
-        emit dirtyChanged(_dirty);
-    }
-}
-
-void LandingComplexItem::_setDirty(void)
-{
-    setDirty(true);
-}
-
 void LandingComplexItem::setSequenceNumber(int sequenceNumber)
 {
     if (_sequenceNumber != sequenceNumber) {

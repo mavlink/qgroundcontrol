@@ -70,7 +70,7 @@ StructureScanComplexItem::StructureScanComplexItem(PlanMasterController* masterC
 
     connect(&_entranceAltFact, &Fact::valueChanged, this, &StructureScanComplexItem::_updateCoordinateAltitudes);
 
-    connect(&_structurePolygon, &QGCMapPolygon::dirtyChanged,   this, &StructureScanComplexItem::_polygonDirtyChanged);
+    connect(&_structurePolygon, &QGCMapPolygon::dirtyChanged,   this, &StructureScanComplexItem::_setIfDirty);
     connect(&_structurePolygon, &QGCMapPolygon::pathChanged,    this, &StructureScanComplexItem::_rebuildFlightPolygon);
     connect(&_structurePolygon, &QGCMapPolygon::isValidChanged, this, &StructureScanComplexItem::readyForSaveStateChanged);
     connect(&_structurePolygon, &QGCMapPolygon::isValidChanged,     this, &StructureScanComplexItem::_updateWizardMode);
@@ -163,14 +163,6 @@ int StructureScanComplexItem::lastSequenceNumber(void) const
     int itemCount = multiLayerItemCount + 2 + 2;
 
     return _sequenceNumber + itemCount - 1;
-}
-
-void StructureScanComplexItem::setDirty(bool dirty)
-{
-    if (_dirty != dirty) {
-        _dirty = dirty;
-        emit dirtyChanged(_dirty);
-    }
 }
 
 void StructureScanComplexItem::save(QJsonArray&  missionItems)
@@ -476,21 +468,9 @@ void StructureScanComplexItem::setMissionFlightStatus(MissionController::Mission
     }
 }
 
-void StructureScanComplexItem::_setDirty(void)
-{
-    setDirty(true);
-}
-
 void StructureScanComplexItem::applyNewAltitude(double newAltitude)
 {
     _entranceAltFact.setRawValue(newAltitude);
-}
-
-void StructureScanComplexItem::_polygonDirtyChanged(bool dirty)
-{
-    if (dirty) {
-        setDirty(true);
-    }
 }
 
 double StructureScanComplexItem::timeBetweenShots(void)

@@ -16,12 +16,13 @@
 #include <QtXml/QDomElement>
 
 #include "QmlObjectListModel.h"
+#include <QmlObjectListItem.h>
 
 class KMLDomDocument;
 
 /// The QGCMapPolygon class provides a polygon which can be displayed on a map using a map visuals control.
 /// It maintains a representation of the polygon on QVariantList and QmlObjectListModel format.
-class QGCMapPolygon : public QObject
+class QGCMapPolygon : public QmlObjectListItem
 {
     Q_OBJECT
 
@@ -35,7 +36,6 @@ public:
     Q_PROPERTY(QVariantList         path            READ path                                   NOTIFY pathChanged)
     Q_PROPERTY(double               area            READ area                                   NOTIFY pathChanged)
     Q_PROPERTY(QmlObjectListModel*  pathModel       READ qmlPathModel                           CONSTANT)
-    Q_PROPERTY(bool                 dirty           READ dirty          WRITE setDirty          NOTIFY dirtyChanged)
     Q_PROPERTY(QGeoCoordinate       center          READ center         WRITE setCenter         NOTIFY centerChanged)
     Q_PROPERTY(bool                 centerDrag      READ centerDrag     WRITE setCenterDrag     NOTIFY centerDragChanged)
     Q_PROPERTY(bool                 interactive     READ interactive    WRITE setInteractive    NOTIFY interactiveChanged)
@@ -104,8 +104,7 @@ public:
     // Property methods
 
     int             count       (void) const { return _polygonPath.count(); }
-    bool            dirty       (void) const { return _dirty; }
-    void            setDirty    (bool dirty);
+    void            setDirty    (bool dirty) final;
     QGeoCoordinate  center      (void) const { return _center; }
     bool            centerDrag  (void) const { return _centerDrag; }
     bool            interactive (void) const { return _interactive; }
@@ -133,7 +132,6 @@ public:
 signals:
     void countChanged       (int count);
     void pathChanged        (void);
-    void dirtyChanged       (bool dirty);
     void cleared            (void);
     void centerChanged      (QGeoCoordinate center);
     void centerDragChanged  (bool centerDrag);
@@ -146,7 +144,6 @@ signals:
 
 private slots:
     void _polygonModelCountChanged(int count);
-    void _polygonModelDirtyChanged(bool dirty);
     void _updateCenter(void);
 
 private:
@@ -159,7 +156,6 @@ private:
 
     QVariantList        _polygonPath;
     QmlObjectListModel  _polygonModel;
-    bool                _dirty =                false;
     QGeoCoordinate      _center;
     bool                _centerDrag =           false;
     bool                _ignoreCenterUpdates =  false;

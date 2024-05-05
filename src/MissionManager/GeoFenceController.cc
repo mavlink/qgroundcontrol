@@ -303,18 +303,6 @@ void GeoFenceController::setDirty(bool dirty)
     }
 }
 
-void GeoFenceController::_polygonDirtyChanged(bool dirty)
-{
-    if (dirty) {
-        setDirty(true);
-    }
-}
-
-void GeoFenceController::_setDirty(void)
-{
-    setDirty(true);
-}
-
 void GeoFenceController::_setFenceFromManager(const QList<QGCFencePolygon>& polygons,
                                               const QList<QGCFenceCircle>&  circles)
 {

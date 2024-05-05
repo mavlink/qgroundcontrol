@@ -11,12 +11,13 @@
 
 #include <QtCore/QObject>
 
-class PlanMasterController;
+#include <QmlObjectListItem.h>
 
+class PlanMasterController;
 
 /// This is the abstract base clas for Plan Element controllers.
 /// Examples of plan elements are: missions (MissionController), geofence (GeoFenceController)
-class PlanElementController : public QObject
+class PlanElementController : public QmlObjectListItem
 {
     Q_OBJECT
     Q_MOC_INCLUDE("PlanMasterController.h")
@@ -29,7 +30,6 @@ public:
     Q_PROPERTY(bool                     supported           READ supported                      NOTIFY supportedChanged)        ///< true: Element is supported by Vehicle
     Q_PROPERTY(bool                     containsItems       READ containsItems                  NOTIFY containsItemsChanged)    ///< true: Elemement is non-empty
     Q_PROPERTY(bool                     syncInProgress      READ syncInProgress                 NOTIFY syncInProgressChanged)   ///< true: information is currently being saved/sent, false: no active save/send in progress
-    Q_PROPERTY(bool                     dirty               READ dirty          WRITE setDirty  NOTIFY dirtyChanged)            ///< true: unsaved/sent changes are present, false: no changes since last save/send
 
     PlanMasterController* masterController(void) { return _masterController; }
 
@@ -45,8 +45,6 @@ public:
     virtual bool    supported       (void) const = 0;
     virtual bool    containsItems   (void) const = 0;
     virtual bool    syncInProgress  (void) const = 0;
-    virtual bool    dirty           (void) const = 0;
-    virtual void    setDirty        (bool dirty) = 0;
 
     /// Sends the current plan element to the vehicle
     ///     Signals sendComplete when done
@@ -60,7 +58,6 @@ signals:
     void supportedChanged       (bool supported);
     void containsItemsChanged   (bool containsItems);
     void syncInProgressChanged  (bool syncInProgress);
-    void dirtyChanged           (bool dirty);
     void sendComplete           (void);
     void removeAllComplete      (void);
 

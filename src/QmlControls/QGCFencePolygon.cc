@@ -40,11 +40,6 @@ const QGCFencePolygon& QGCFencePolygon::operator=(const QGCFencePolygon& other)
     return *this;
 }
 
-void QGCFencePolygon::_setDirty(void)
-{
-    setDirty(true);
-}
-
 void QGCFencePolygon::saveToJson(QJsonObject& json)
 {
     json[JsonHelper::jsonVersionKey] = _jsonCurrentVersion;

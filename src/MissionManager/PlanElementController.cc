@@ -11,7 +11,7 @@
 #include "PlanMasterController.h"
 
 PlanElementController::PlanElementController(PlanMasterController* masterController, QObject* parent)
-    : QObject           (parent)
+    : QmlObjectListItem (parent)
     , _masterController (masterController)
     , _flyView          (false)
 {

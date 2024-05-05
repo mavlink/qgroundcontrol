@@ -67,7 +67,6 @@ public:
     bool    terrainCollision    (void) const final { return false; }
 
     // Overrides from VisualMissionItem
-    bool            dirty                       (void) const final { return _dirty; }
     bool            isSimpleItem                (void) const final { return false; }
     bool            isStandaloneCoordinate      (void) const final { return false; }
     bool            specifiesCoordinate         (void) const final;
@@ -99,8 +98,6 @@ signals:
 
 private slots:
     void _setDirtyAndUpdateLastSequenceNumber   (void);
-    void _setDirty                              (void);
-    void _sectionDirtyChanged                   (bool dirty);
     void _updateAltitudeInCoordinate            (QVariant value);
     void _setHomeAltFromTerrain                 (double terrainAltitude);
     void _setCoordinateWorker                   (const QGeoCoordinate& coordinate);

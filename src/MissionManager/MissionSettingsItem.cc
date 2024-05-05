@@ -47,8 +47,8 @@ MissionSettingsItem::MissionSettingsItem(PlanMasterController* masterController,
     connect(&_cameraSection,    &CameraSection::itemCountChanged,                       this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
     connect(&_speedSection,     &CameraSection::itemCountChanged,                       this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
     connect(this,               &MissionSettingsItem::terrainAltitudeChanged,           this, &MissionSettingsItem::_setHomeAltFromTerrain);
-    connect(&_cameraSection,    &CameraSection::dirtyChanged,                           this, &MissionSettingsItem::_sectionDirtyChanged);
-    connect(&_speedSection,     &SpeedSection::dirtyChanged,                            this, &MissionSettingsItem::_sectionDirtyChanged);
+    connect(&_cameraSection,    &CameraSection::dirtyChanged,                           this, &MissionSettingsItem::_setIfDirty);
+    connect(&_speedSection,     &SpeedSection::dirtyChanged,                            this, &MissionSettingsItem::_setIfDirty);
     connect(&_cameraSection,    &CameraSection::specifiedGimbalYawChanged,              this, &MissionSettingsItem::specifiedGimbalYawChanged);
     connect(&_cameraSection,    &CameraSection::specifiedGimbalPitchChanged,            this, &MissionSettingsItem::specifiedGimbalPitchChanged);
     connect(&_speedSection,     &SpeedSection::specifiedFlightSpeedChanged,             this, &MissionSettingsItem::specifiedFlightSpeedChanged);
@@ -177,11 +177,6 @@ double MissionSettingsItem::complexDistance(void) const
     return 0;
 }
 
-void MissionSettingsItem::_setDirty(void)
-{
-    setDirty(true);
-}
-
 void MissionSettingsItem::_setCoordinateWorker(const QGeoCoordinate& coordinate)
 {
     if (_plannedHomePositionCoordinate != coordinate) {
@@ -236,13 +231,6 @@ void MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber(void)
 {
     emit lastSequenceNumberChanged(lastSequenceNumber());
     setDirty(true);
-}
-
-void MissionSettingsItem::_sectionDirtyChanged(bool dirty)
-{
-    if (dirty) {
-        setDirty(true);
-    }
 }
 
 double MissionSettingsItem::specifiedGimbalYaw(void)

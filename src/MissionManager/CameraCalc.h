@@ -109,7 +109,6 @@ signals:
 
 private slots:
     void _recalcTriggerDistance             (void);
-    void _setDirty                          (void);
     void _cameraNameChanged                 (void);
 
 private:

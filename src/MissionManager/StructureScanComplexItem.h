@@ -71,7 +71,6 @@ public:
     QString mapVisualQML        (void) const final { return QStringLiteral("StructureScanMapVisual.qml"); }
 
     // Overrides from VisualMissionItem
-    bool                dirty                       (void) const final { return _dirty; }
     bool                isSimpleItem                (void) const final { return false; }
     bool                isStandaloneCoordinate      (void) const final { return false; }
     bool                specifiesCoordinate         (void) const final { return true; }
@@ -91,7 +90,6 @@ public:
     double              additionalTimeDelay         (void) const final { return 0; }
     ReadyForSaveState   readyForSaveState           (void) const final;
     bool                exitCoordinateSameAsEntry   (void) const final { return true; }
-    void                setDirty                    (bool dirty) final;
     void                setCoordinate               (const QGeoCoordinate& coordinate) final { Q_UNUSED(coordinate); }
     void                setSequenceNumber           (int sequenceNumber) final;
     void                save                        (QJsonArray&  missionItems) final;
@@ -120,8 +118,6 @@ signals:
 
 private slots:
     void _segmentTerrainCollisionChanged            (bool terrainCollision) final;
-    void _setDirty                                  (void);
-    void _polygonDirtyChanged                       (bool dirty);
     void _flightPathChanged                         (void);
     void _clearInternal                             (void);
     void _updateCoordinateAltitudes                 (void);

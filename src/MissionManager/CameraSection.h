@@ -80,9 +80,7 @@ public:
 
     // Overrides from Section
     bool available          (void) const override { return _available; }
-    bool dirty              (void) const override { return _dirty; }
     void setAvailable       (bool available) override;
-    void setDirty           (bool dirty) override;
     bool scanForSection     (QmlObjectListModel* visualItems, int scanIndex) override;
     void appendSectionItems (QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum) override;
     int  itemCount          (void) const override;
@@ -95,7 +93,6 @@ signals:
     void specifiedGimbalPitchChanged(double gimbalPitch);
 
 private slots:
-    void _setDirty(void);
     void _setDirtyAndUpdateItemCount(void);
     void _updateSpecifiedGimbalYaw(void);
     void _updateSpecifiedGimbalPitch(void);
@@ -123,7 +120,6 @@ private:
     Fact    _cameraPhotoIntervalDistanceFact;
     Fact    _cameraPhotoIntervalTimeFact;
     Fact    _cameraModeFact;
-    bool    _dirty;
 
     static QMap<QString, FactMetaData*> _metaDataMap;
 

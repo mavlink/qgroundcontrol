@@ -10,8 +10,9 @@
 #pragma once
 
 #include "SettingsFact.h"
+#include <QmlObjectListItem.h>
 
-class CameraSpec : public QObject
+class CameraSpec : public QmlObjectListItem
 {
     Q_OBJECT
 
@@ -39,18 +40,10 @@ public:
     SettingsFact* fixedOrientation  (void) { return &_fixedOrientationFact; }
     SettingsFact* minTriggerInterval(void) { return &_minTriggerIntervalFact; }
 
-    bool dirty      (void) const { return _dirty; }
-    void setDirty   (bool dirty);
-
     void save(QJsonObject& json) const;
     bool load(const QJsonObject& json, QString& errorString);
 
-signals:
-    void dirtyChanged(bool dirty);
-
 private:
-    bool _dirty;
-
     QMap<QString, FactMetaData*> _metaDataMap;
 
     SettingsFact _sensorWidthFact;

@@ -86,7 +86,6 @@ public:
     bool                specifiesCoordinate         (void) const override = 0;
     void                appendMissionItems          (QList<MissionItem*>& items, QObject* missionItemParent) final;
     void                applyNewAltitude            (double newAltitude) final;
-    bool                dirty                       (void) const final { return _dirty; }
     bool                isSimpleItem                (void) const final { return false; }
     bool                isStandaloneCoordinate      (void) const final { return false; }
     bool                specifiesAltitudeOnly       (void) const final { return false; }
@@ -127,8 +126,7 @@ signals:
     void _updateFlightPathSegmentsSignal(void);
 
 protected slots:
-    void _setDirty                          (void);
-    void _setIfDirty                        (bool dirty);
+
     void _updateCoordinateAltitudes         (void);
     void _polyPathTerrainData               (bool success, const QList<TerrainPathQuery::PathHeightInfo_t>& rgPathHeightInfo);
     void _missionItemCoordTerrainData       (bool success, QList<double> heights);
