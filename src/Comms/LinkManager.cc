@@ -15,6 +15,7 @@
 #include "LogReplayLink.h"
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
+#include "DeviceInfo.h"
 #include "QGCLoggingCategory.h"
 
 #ifdef QGC_ENABLE_BLUETOOTH
@@ -776,7 +777,7 @@ void LinkManager::_removeConfiguration(LinkConfiguration* config)
 
 bool LinkManager::isBluetoothAvailable(void)
 {
-    return qgcApp()->isBluetoothAvailable();
+    return QGCDeviceInfo::isBluetoothAvailable();
 }
 
 bool LinkManager::containsLink(LinkInterface* link)

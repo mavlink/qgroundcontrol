@@ -105,7 +105,6 @@ public:
 
     enum TaskType {
         taskInit,
-        taskTestInternet,
         taskCacheTile,
         taskFetchTile,
         taskFetchTileSets,
@@ -138,16 +137,6 @@ signals:
 
 private:
     TaskType    _type;
-};
-
-//-----------------------------------------------------------------------------
-class QGCTestInternetTask : public QGCMapTask
-{
-    Q_OBJECT
-public:
-    QGCTestInternetTask()
-        : QGCMapTask(QGCMapTask::taskTestInternet)
-    {}
 };
 
 //-----------------------------------------------------------------------------

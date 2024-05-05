@@ -312,7 +312,6 @@ add_compile_definitions(
 add_subdirectory(src)
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
-        Qt6::Bluetooth
         Qt6::Core
         Qt6::Gui
         Qt6::Qml

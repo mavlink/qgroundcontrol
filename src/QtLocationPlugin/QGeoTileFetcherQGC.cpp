@@ -58,10 +58,7 @@ QGeoTileFetcherQGC::QGeoTileFetcherQGC(QGeoTiledMappingManagerEngine *parent)
     : QGeoTileFetcher(parent)
     , _networkManager(new QNetworkAccessManager(this))
 {
-    //-- Check internet status every 30 seconds or so
-    connect(&_timer, &QTimer::timeout, this, &QGeoTileFetcherQGC::timeout);
-    _timer.setSingleShot(false);
-    _timer.start(30000);
+
 }
 
 //-----------------------------------------------------------------------------
@@ -82,11 +79,4 @@ QGeoTileFetcherQGC::getTileImage(const QGeoTileSpec &spec)
     else {
         return nullptr;
     }
-}
-
-//-----------------------------------------------------------------------------
-void
-QGeoTileFetcherQGC::timeout()
-{
-    getQGCMapEngine()->testInternet();
 }

@@ -51,7 +51,6 @@ public:
     const QString               getCacheFilename    () { return _cacheFile; }
     void                        testInternet        ();
     bool                        wasCacheReset       () const{ return _cacheWasReset; }
-    bool                        isInternetActive    () const{ return _isInternetActive; }
 
     UrlFactory*                 urlFactory          () { return _urlFactory; }
 
@@ -66,11 +65,9 @@ public:
 private slots:
     void _updateTotals          (quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize);
     void _pruned                ();
-    void _internetStatus        (bool active);
 
 signals:
     void updateTotals           (quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize);
-    void internetUpdated        ();
 
 private:
     void _wipeOldCaches         ();
@@ -85,7 +82,6 @@ private:
     QString                 _userAgent;
     bool                    _prunning;
     bool                    _cacheWasReset;
-    bool                    _isInternetActive;
 };
 
 extern QGCMapEngine*    getQGCMapEngine();
