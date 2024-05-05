@@ -56,7 +56,6 @@ QGCCacheWorker::QGCCacheWorker()
     , _defaultCount(0)
     , _lastUpdate(0)
     , _updateTimeout(SHORT_TIMEOUT)
-    , _hostLookupID(0)
 {
 }
 
@@ -76,9 +75,6 @@ QGCCacheWorker::setDatabaseFile(const QString& path)
 void
 QGCCacheWorker::quit()
 {
-    if(_hostLookupID) {
-        QHostInfo::abortHostLookup(_hostLookupID);
-    }
     QMutexLocker lock(&_taskQueueMutex);
     while(_taskQueue.count()) {
         QGCMapTask* task = _taskQueue.dequeue();
@@ -205,9 +201,6 @@ QGCCacheWorker::_runTask(QGCMapTask *task)
             return;
         case QGCMapTask::taskImport:
             _importSets(task);
-            return;
-        case QGCMapTask::taskTestInternet:
-            _testInternet();
             return;
     }
     qCWarning(QGCTileCacheLog) << "_runTask given unhandled task type" << task->type();
@@ -1032,7 +1025,6 @@ QGCCacheWorker::_init()
         qCritical() << "Could not find suitable cache directory.";
         _failed = true;
     }
-    _testInternet();
     return _failed;
 }
 
@@ -1143,66 +1135,4 @@ QGCCacheWorker::_disconnectDB()
         _db.reset();
         QSqlDatabase::removeDatabase(kSession);
     }
-}
-
-//-----------------------------------------------------------------------------
-void
-QGCCacheWorker::_testInternet()
-{
-    /*
-        To test if you have Internet connection, the code tests a connection to
-        8.8.8.8:53 (google DNS). It appears that some routers are now blocking TCP
-        connections to port 53. So instead, we use a TCP connection to "github.com"
-        (80). On exit, if the look up for "github.com" is under way, a call to abort
-        the lookup is made. This abort call on Android has no effect, and the code
-        blocks for a full minute. So to work around the issue, we continue a direct
-        TCP connection to 8.8.8.8:53 on Android and do the lookup/connect on the
-        other platforms.
-    */
-#if defined(Q_OS_ANDROID)
-    QTcpSocket socket;
-    socket.connectToHost("8.8.8.8", 53);
-    if (socket.waitForConnected(2000)) {
-        qCDebug(QGCTileCacheLog) << "Yes Internet Access";
-        emit internetStatus(true);
-        return;
-    }
-    qWarning() << "No Internet Access";
-    emit internetStatus(false);
-#else
-    if(!_hostLookupID) {
-        _hostLookupID = QHostInfo::lookupHost("www.github.com", this, &QGCCacheWorker::_lookupReady);
-    }
-#endif
-}
-
-//-----------------------------------------------------------------------------
-void
-QGCCacheWorker::_lookupReady(QHostInfo info)
-{
-#if defined(Q_OS_ANDROID)
-    Q_UNUSED(info);
-#else
-    _hostLookupID = 0;
-    if(info.error() == QHostInfo::NoError && info.addresses().size()) {
-        auto socket = new QTcpSocket();
-        QNetworkProxy tempProxy;
-        tempProxy.setType(QNetworkProxy::DefaultProxy);
-        socket->setProxy(tempProxy);
-        socket->connectToHost(info.addresses().first(), 80);
-        connect(socket, &QTcpSocket::connected, this, [this, socket] {
-            qCDebug(QGCTileCacheLog) << "Yes Internet Access";
-            emit internetStatus(true);
-            socket->deleteLater();
-        });
-        connect(socket, &QAbstractSocket::errorOccurred, this, [this, socket](QAbstractSocket::SocketError error) {
-            qCDebug(QGCTileCacheLog) << "No internet connection, reason:" << error;
-            emit internetStatus(false);
-            socket->deleteLater();
-        });
-    } else {
-        qCDebug(QGCTileCacheLog) << "No Internet Access";
-        emit internetStatus(false);
-    }
-#endif
 }

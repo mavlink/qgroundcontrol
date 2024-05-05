@@ -12,13 +12,14 @@
 #include "QmlObjectListModel.h"
 #include "MissionCommandList.h"
 #include "FactMetaData.h"
-#include "QGCApplication.h"
 
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonParseError>
 #include <QtCore/QObject>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
+#include <QtCore/QTranslator>
+#include <QtCore/qapplicationstatic.h>
 
 const char* JsonHelper::jsonVersionKey                      = "version";
 const char* JsonHelper::jsonGroundStationKey                = "groundStation";
@@ -26,6 +27,13 @@ const char* JsonHelper::jsonGroundStationValue              = "QGroundControl";
 const char* JsonHelper::jsonFileTypeKey                     = "fileType";
 const char* JsonHelper::_translateKeysKey                   = "translateKeys";
 const char* JsonHelper::_arrayIDKeysKey                     = "_arrayIDKeys";
+
+Q_APPLICATION_STATIC(QTranslator, s_jsonTranslator);
+
+QTranslator* JsonHelper::translator()
+{
+    return s_jsonTranslator();
+}
 
 bool JsonHelper::validateRequiredKeys(const QJsonObject& jsonObject, const QStringList& keys, QString& errorString)
 {
@@ -288,7 +296,7 @@ QJsonObject JsonHelper::_translateObject(QJsonObject& jsonObject, const QString&
                     }
                 }
 
-                QString xlatString = qgcApp()->qgcJSONTranslator().translate(translateContext.toUtf8().constData(), locString.toUtf8().constData(), disambiguation.toUtf8().constData());
+                QString xlatString = translator()->translate(translateContext.toUtf8().constData(), locString.toUtf8().constData(), disambiguation.toUtf8().constData());
                 if (!xlatString.isNull()) {
                     jsonObject[key] = xlatString;
                 }
