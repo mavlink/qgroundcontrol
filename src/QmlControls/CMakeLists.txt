@@ -3,6 +3,7 @@ find_package(Qt6 REQUIRED COMPONENTS Concurrent Core Gui Location Positioning Qm
 qt_add_library(QmlControls STATIC
 	AppMessages.cc
 	AppMessages.h
+	CustomAction.cc
 	CustomAction.h
 	CustomActionManager.cc
 	CustomActionManager.h
@@ -146,12 +147,10 @@ target_link_libraries(QmlControls
 		Qt6::Concurrent
 		Qt6::Location
 		Qt6::Widgets
-        API
         FirmwarePlugin
         Geo
         GPS
         MockLink
-		Settings
 	PUBLIC
 		Qt6::Core
 		Qt6::Gui
@@ -159,15 +158,20 @@ target_link_libraries(QmlControls
 		Qt6::Quick
 		ADSB
         AirLink
+        API
         Comms
         FactControls
 		FactSystem
-		PositionManager # Only used to register to QML
+		MissionManager
+        PositionManager
 		QGC
+		QGCLocation
+		Settings
         Terrain
 		Utilities
 		UTMSP
         Vehicle
+        VideoManager
 )
 
 target_include_directories(QmlControls PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

@@ -21,10 +21,12 @@ target_link_libraries(CommonAutoPilotPlugin
         FactSystem
         QGC
         Utilities
+        Vehicle
     PUBLIC
         Qt6::Core
         Qt6::Network
         Qt6::Quick
+        Comms
         FactControls
         VehicleSetup
 )

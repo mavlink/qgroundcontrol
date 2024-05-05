@@ -8,8 +8,7 @@
  ****************************************************************************/
 
 
-#ifndef PX4AUTOPILOT_H
-#define PX4AUTOPILOT_H
+#pragma once
 
 #include "AutoPilotPlugin.h"
 #include "ActuatorComponent.h"
@@ -66,5 +65,3 @@ protected:
 private:
     QVariantList            _components;
 };
-
-#endif
