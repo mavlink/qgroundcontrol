@@ -51,7 +51,7 @@ public:
     LinkManager(QGCApplication* app, QGCToolbox* toolbox);
     ~LinkManager();
 
-    Q_PROPERTY(bool                 isBluetoothAvailable            READ isBluetoothAvailable            CONSTANT)
+    Q_PROPERTY(bool                 isBluetoothAvailable            READ isBluetoothAvailable            NOTIFY isBluetoothAvailableChanged)
     Q_PROPERTY(QmlObjectListModel*  linkConfigurations              READ _qmlLinkConfigurations          CONSTANT)
     Q_PROPERTY(QStringList          linkTypeStrings                 READ linkTypeStrings                 CONSTANT)
     Q_PROPERTY(bool                 mavlinkSupportForwardingEnabled READ mavlinkSupportForwardingEnabled NOTIFY mavlinkSupportForwardingEnabledChanged)
@@ -134,6 +134,7 @@ public:
 
 signals:
     void mavlinkSupportForwardingEnabledChanged();
+    void isBluetoothAvailableChanged();
 
 private slots:
     void _linkDisconnected  (void);

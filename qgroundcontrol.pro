@@ -497,6 +497,7 @@ HEADERS += \
     src/PositionManager/SimulatedPosition.h \
     src/Geo/QGCGeo.h \
     src/Utilities/QGC.h \
+    src/Utilities/DeviceInfo.h \
     src/QGCApplication.h \
     src/Utilities/QGCCachedFileDownload.h \
     src/QGCConfig.h \
@@ -764,6 +765,7 @@ SOURCES += \
     src/PositionManager/SimulatedPosition.cc \
     src/Geo/QGCGeo.cc \
     src/Utilities/QGC.cc \
+    src/Utilities/DeviceInfo.cc \
     src/QGCApplication.cc \
     src/Utilities/QGCCachedFileDownload.cc \
     src/Utilities/QGCFileDownload.cc \

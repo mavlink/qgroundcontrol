@@ -8,14 +8,13 @@
  ****************************************************************************/
 
 #include "BluetoothLink.h"
-#include "QGCApplication.h"
-#include "LinkManager.h"
+#include "DeviceInfo.h"
 
 #include <QtBluetooth/QBluetoothDeviceDiscoveryAgent>
 #include <QtBluetooth/QBluetoothSocket>
+#include <QtBluetooth/QBluetoothServiceInfo>
 #ifdef Q_OS_IOS
     #include <QtBluetooth/QBluetoothServiceDiscoveryAgent>
-    #include <QtBluetooth/QBluetoothServiceInfo>
 #else
     #include <QtBluetooth/QBluetoothUuid>
 #endif
@@ -24,7 +23,8 @@ BluetoothLink::BluetoothLink(SharedLinkConfigurationPtr& config)
     : LinkInterface(config)
     , _bluetoothConfig(qobject_cast<BluetoothConfiguration*>(config.get()))
 {
-
+    qRegisterMetaType<QBluetoothSocket::SocketError>();
+    qRegisterMetaType<QBluetoothServiceInfo>();
 }
 
 BluetoothLink::~BluetoothLink()
@@ -215,7 +215,7 @@ BluetoothConfiguration::~BluetoothConfiguration()
 
 QString BluetoothConfiguration::settingsTitle()
 {
-    if(qgcApp()->toolbox()->linkManager()->isBluetoothAvailable()) {
+    if(QGCDeviceInfo::isBluetoothAvailable()) {
         return tr("Bluetooth Link Settings");
     } else {
         return tr("Bluetooth Not Available");

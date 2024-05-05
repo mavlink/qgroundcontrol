@@ -11,6 +11,7 @@
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QRegularExpression>
+#include <QtCore/qapplicationstatic.h>
 
 #define MAX_TEXT_QUEUE_SIZE 20U
 

@@ -39,9 +39,7 @@
 #include <QtQuickControls2/QQuickStyle>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QMessageBox>
-#ifdef QGC_ENABLE_BLUETOOTH
-#include <QtBluetooth/QBluetoothSocket>
-#endif
+#include <QtNetwork/QAbstractSocket>
 
 /* SDL does ugly things to main() */
 #ifdef main
@@ -156,10 +154,6 @@ int main(int argc, char *argv[])
     // that we use these types in signals, and without calling qRegisterMetaType we can't queue
     // these signals. In general we don't queue these signals, but we do what the warning says
     // anyway to silence the debug output.
-#ifdef QGC_ENABLE_BLUETOOTH
-    qRegisterMetaType<QBluetoothSocket::SocketError>();
-    qRegisterMetaType<QBluetoothServiceInfo>();
-#endif
     qRegisterMetaType<QAbstractSocket::SocketError>();
 
     qRegisterMetaType<Vehicle::MavCmdResultFailureCode_t>("Vehicle::MavCmdResultFailureCode_t");
