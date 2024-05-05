@@ -3,14 +3,17 @@ find_package(Qt6 REQUIRED COMPONENTS Core Location Network Positioning)
 qt_add_library(Terrain STATIC
 	TerrainQuery.cc
 	TerrainQuery.h
+	TerrainQueryAirMap.cc
+	TerrainQueryAirMap.h
     TerrainTile.cc
     TerrainTile.h
+    TerrainTileManager.cc
+    TerrainTileManager.h
 )
 
 target_link_libraries(Terrain
 	PRIVATE
 		Qt6::LocationPrivate
-		QGC
 		QGCLocation
 		Utilities
 	PUBLIC

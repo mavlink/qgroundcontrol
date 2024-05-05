@@ -16,7 +16,7 @@
 #include <QtCore/QJsonArray>
 #include <QtCore/QtNumeric>
 
-QGC_LOGGING_CATEGORY(TerrainTileLog, "TerrainTileLog");
+QGC_LOGGING_CATEGORY(TerrainTileLog, "qgc.terrain.terraintile");
 
 const char*  TerrainTile::_jsonStatusKey        = "status";
 const char*  TerrainTile::_jsonDataKey          = "data";
