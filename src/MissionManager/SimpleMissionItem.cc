@@ -18,6 +18,7 @@
 #include "SpeedSection.h"
 #include "MultiVehicleManager.h"
 #include "CameraSection.h"
+#include "Vehicle.h"
 #include "QGC.h"
 
 #include <QtCore/QStringList>

@@ -104,7 +104,6 @@ target_link_libraries(MissionManager
 		API
 		FirmwarePlugin
 		Geo
-		# UTMSP
 	PUBLIC
 		Qt6::Core
 		Qt6::Gui

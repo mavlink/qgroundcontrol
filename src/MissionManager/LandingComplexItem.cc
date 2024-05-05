@@ -17,6 +17,7 @@
 #include "MissionItem.h"
 #include "Fact.h"
 #include "CameraSection.h"
+#include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(LandingComplexItemLog, "LandingComplexItemLog")
