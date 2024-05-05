@@ -11,6 +11,7 @@
 #include "QGroundControlQmlGlobal.h"
 #include "PlanMasterController.h"
 #include "MultiSignalSpyV2.h"
+#include "TerrainQueryTest.h"
 
 #include <QtTest/QTest>
 

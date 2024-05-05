@@ -62,7 +62,10 @@
 
 // QmlControls
 
-// ui
+// Terrain
+#include "TerrainQueryTest.h"
+
+// UI
 
 // Vehicle
 #include "FTPManagerTest.h"
@@ -131,6 +134,9 @@ UT_REGISTER_TEST(ComponentInformationTranslationTest)
 // UT_REGISTER_TEST(RadioConfigTest)
 
 // QmlControls
+
+// Terrain
+// UT_REGISTER_TEST(TerrainQueryTest)
 
 // UI
 
