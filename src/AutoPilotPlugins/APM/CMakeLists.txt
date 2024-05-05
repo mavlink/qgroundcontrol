@@ -45,19 +45,20 @@ qt_add_library(APMAutoPilotPlugin STATIC
 
 target_link_libraries(APMAutoPilotPlugin
     PRIVATE
-        VehicleActuators
         APMFirmwarePlugin
         AutoPilotPlugins
         FactSystem
         QGC
         Settings
         Utilities
+        Vehicle
+        VehicleActuators
     PUBLIC
         Qt6::Core
         Qt6::Quick
+        Comms
         CommonAutoPilotPlugin
         FactControls
-        Vehicle
         VehicleSetup
 )
 

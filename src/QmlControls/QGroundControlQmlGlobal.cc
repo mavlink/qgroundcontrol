@@ -14,6 +14,7 @@
 #include "QGCMapUrlEngine.h"
 #include "FirmwarePluginManager.h"
 #include "AppSettings.h"
+#include "PositionManager.h"
 #ifndef NO_SERIAL_LINK
 #include "GPSManager.h"
 #endif

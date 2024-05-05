@@ -8,8 +8,7 @@
  ****************************************************************************/
 
 
-#ifndef PX4TuningComponent_H
-#define PX4TuningComponent_H
+#pragma once
 
 #include "VehicleComponent.h"
 
@@ -37,5 +36,3 @@ public:
 private:
     const QString   _name;
 };
-
-#endif

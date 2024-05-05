@@ -20,6 +20,7 @@
 #include "FactSystem.h"
 #include "ParameterManager.h"
 #include "Vehicle.h"
+#include "Actuators.h"
 #include "ActuatorComponent.h"
 
 /// @file
