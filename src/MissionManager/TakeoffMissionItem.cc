@@ -15,6 +15,7 @@
 #include "PlanMasterController.h"
 #include "MissionSettingsItem.h"
 #include "MultiVehicleManager.h"
+#include "Vehicle.h"
 
 TakeoffMissionItem::TakeoffMissionItem(PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, bool forLoad)
     : SimpleMissionItem (masterController, flyView, forLoad)

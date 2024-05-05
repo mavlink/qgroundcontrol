@@ -13,6 +13,8 @@
 
 Q_DECLARE_LOGGING_CATEGORY(MissionManagerLog)
 
+class Vehicle;
+
 class MissionManager : public PlanManager
 {
     Q_OBJECT

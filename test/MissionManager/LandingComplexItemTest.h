@@ -11,6 +11,7 @@
 
 #include "VisualMissionItemTest.h"
 #include "LandingComplexItem.h"
+#include "Fact.h"
 
 class MultiSignalSpy;
 class PlanMasterController;
