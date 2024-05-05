@@ -1,5 +1,11 @@
 # Using QGC on CentOS 7
 
+  ::: warning
+  **This guide has not been updated.**
+  Follow the regular build instructions instead. This page is left here in case there is some other useful info which is not really QGC
+  specific, but OS setup related.
+  :::
+
 ## OS Installation
 
 To install CentOS 7:
