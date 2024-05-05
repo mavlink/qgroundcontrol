@@ -8,11 +8,10 @@
  ****************************************************************************/
 
 
-#ifndef PX4SimpleFlightModesController_H
-#define PX4SimpleFlightModesController_H
+#pragma once
 
 #include "FactPanelController.h"
-#include "Vehicle.h"
+#include "QGCMAVLink.h"
 
 /// MVC Controller for PX4SimpleFlightModes.qml
 class PX4SimpleFlightModesController : public FactPanelController
@@ -34,12 +33,10 @@ signals:
     void rcChannelValuesChanged(void);
     
 private slots:
-    void _rcChannelsChanged(int channelCount, int pwmValues[Vehicle::cMaxRcChannels]);
+    void _rcChannelsChanged(int channelCount, int pwmValues[QGCMAVLink::maxRcChannels]);
     
 private:
     int             _activeFlightMode;
     int             _channelCount;
     QVariantList    _rcChannelValues;
 };
-
-#endif

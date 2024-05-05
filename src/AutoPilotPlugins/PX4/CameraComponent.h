@@ -8,8 +8,7 @@
  ****************************************************************************/
 
 
-#ifndef CameraComponent_H
-#define CameraComponent_H
+#pragma once
 
 #include "VehicleComponent.h"
 
@@ -42,5 +41,3 @@ private:
     const QString   _name;
     QVariantList    _summaryItems;
 };
-
-#endif

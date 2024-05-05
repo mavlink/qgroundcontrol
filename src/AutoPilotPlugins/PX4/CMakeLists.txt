@@ -39,18 +39,18 @@ qt_add_library(PX4AutoPilotPlugin STATIC
 
 target_link_libraries(PX4AutoPilotPlugin
     PRIVATE
-		Comms
+		FactSystem
         QGC
 		Utilities
+		Vehicle
+        VehicleActuators
 	PUBLIC
 		Qt6::Core
 		Qt6::Quick
 		AutoPilotPlugins
 		CommonAutoPilotPlugin
+		Comms
 		FactControls
-		FactSystem
-		Vehicle
-        VehicleActuators
         VehicleSetup
 )
 

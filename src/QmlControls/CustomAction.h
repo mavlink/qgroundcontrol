@@ -10,9 +10,10 @@
 #pragma once
 
 #include "QGCMAVLink.h"
-#include "Vehicle.h"
 
 #include <QtCore/QObject>
+
+class Vehicle;
 
 class CustomAction: public QObject
 {
@@ -44,13 +45,7 @@ public:
         , _params       { param1, param2, param3, param4, param5, param6, param7 }
     {};
 
-    Q_INVOKABLE void sendTo(Vehicle* vehicle) 
-    {
-        if (vehicle) {
-            const bool showError = true;
-            vehicle->sendMavCommand(_compId, _mavCmd, showError, _params[0], _params[1], _params[2], _params[3], _params[4], _params[5], _params[6]);
-        }
-    };
+    Q_INVOKABLE void sendTo(Vehicle* vehicle);
 
     QString  label      () const { return _label; }
     QString  description() const { return _description; }

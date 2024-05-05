@@ -8,8 +8,7 @@
  ****************************************************************************/
 
 
-#ifndef PX4AIRFRAMELOADER_H
-#define PX4AIRFRAMELOADER_H
+#pragma once
 
 #include <QtCore/QObject>
 #include <QtCore/QMap>
@@ -52,5 +51,3 @@ private:
     static bool _airframeMetaDataLoaded;   ///< true: parameter meta data already loaded
     static QMap<QString, FactMetaData*> _mapParameterName2FactMetaData; ///< Maps from a parameter name to FactMetaData
 };
-
-#endif // PX4AIRFRAMELOADER_H

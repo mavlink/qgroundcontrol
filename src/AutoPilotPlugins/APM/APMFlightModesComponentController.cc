@@ -10,6 +10,8 @@
 
 #include "APMFlightModesComponentController.h"
 #include "FactSystem.h"
+#include "Fact.h"
+#include "Vehicle.h"
 
 #include <QtCore/QVariant>
 #include <QtQml/QQmlEngine>
@@ -21,7 +23,7 @@ const char* APMFlightModesComponentController::_superSimpleParamName =  "SUPER_S
 
 APMFlightModesComponentController::APMFlightModesComponentController(void)
     : _activeFlightMode     (0)
-    , _channelCount         (Vehicle::cMaxRcChannels)
+    , _channelCount         (QGCMAVLink::maxRcChannels)
     , _simpleMode           (SimpleModeStandard)
     , _simpleModeFact       (parameterExists(-1, _simpleParamName)      ? getParameterFact(-1, _simpleParamName) : nullptr)
     , _superSimpleModeFact  (parameterExists(-1, _superSimpleParamName) ? getParameterFact(-1, _superSimpleParamName) : nullptr)
@@ -75,7 +77,7 @@ APMFlightModesComponentController::APMFlightModesComponentController(void)
 }
 
 /// Connected to Vehicle::rcChannelsChanged signal
-void APMFlightModesComponentController::_rcChannelsChanged(int channelCount, int pwmValues[Vehicle::cMaxRcChannels])
+void APMFlightModesComponentController::_rcChannelsChanged(int channelCount, int pwmValues[QGCMAVLink::maxRcChannels])
 {
     int flightModeChannel = 4;
 

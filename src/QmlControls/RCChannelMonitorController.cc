@@ -9,6 +9,7 @@
 
 
 #include "RCChannelMonitorController.h"
+#include "Vehicle.h"
 
 RCChannelMonitorController::RCChannelMonitorController(void)
     : _chanCount(0)
@@ -16,7 +17,7 @@ RCChannelMonitorController::RCChannelMonitorController(void)
     connect(_vehicle, &Vehicle::rcChannelsChanged, this, &RCChannelMonitorController::_rcChannelsChanged);
 }
 
-void RCChannelMonitorController::_rcChannelsChanged(int channelCount, int pwmValues[Vehicle::cMaxRcChannels])
+void RCChannelMonitorController::_rcChannelsChanged(int channelCount, int pwmValues[QGCMAVLink::maxRcChannels])
 {
     for (int channel=0; channel<channelCount; channel++) {
         int channelValue = pwmValues[channel];

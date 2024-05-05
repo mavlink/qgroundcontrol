@@ -16,9 +16,10 @@
 #pragma once
 
 #include "FactPanelController.h"
-#include "Vehicle.h"
+#include "QGCMAVLink.h"
 
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QElapsedTimer>
 #include <QtQuick/QQuickItem>
 
 Q_DECLARE_LOGGING_CATEGORY(RadioComponentControllerLog)
@@ -138,7 +139,7 @@ signals:
     void throttleReversedCalFailure(void);
 
 private slots:
-    void _rcChannelsChanged(int channelCount, int pwmValues[Vehicle::cMaxRcChannels]);
+    void _rcChannelsChanged(int channelCount, int pwmValues[QGCMAVLink::maxRcChannels]);
 
 private:
     /// @brief These identify the various controls functions. They are also used as indices into the _rgFunctioInfo
