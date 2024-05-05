@@ -81,6 +81,9 @@ add_qgc_test(ComponentInformationTranslationTest)
 
 add_subdirectory(QmlControls)
 
+add_subdirectory(Terrain)
+add_qgc_test(TerrainQueryTest)
+
 add_subdirectory(UI)
 
 add_subdirectory(Vehicle)
@@ -105,6 +108,7 @@ target_link_libraries(qgctest
         GeoTest
         MissionManagerTest
         QmlControlsTest
+        TerrainTest
         UITest
         VehicleTest
     PUBLIC
