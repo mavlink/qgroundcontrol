@@ -49,6 +49,7 @@
 #include "TerrainTile.h"
 #include "MapProvider.h"
 #include "QGCMapUrlEngine.h"
+#include "DeviceInfo.h"
 
 #include <QtLocation/private/qgeotilespec_p.h>
 #include <QtNetwork/QNetworkAccessManager>
@@ -191,7 +192,7 @@ QGeoTiledMapReplyQGC::networkReplyError(QNetworkReply::NetworkError error)
 void
 QGeoTiledMapReplyQGC::cacheError(QGCMapTask::TaskType type, QString /*errorString*/)
 {
-    if(!getQGCMapEngine()->isInternetActive()) {
+    if(!QGCDeviceInfo::isInternetAvailable()) {
         if( getQGCMapEngine()->urlFactory()->isElevation(tileSpec().mapId())){
             emit terrainDone(QByteArray(), QNetworkReply::NetworkSessionFailedError);
         } else {

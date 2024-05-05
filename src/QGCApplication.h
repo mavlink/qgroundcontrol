@@ -69,14 +69,6 @@ public:
     // Still working on getting rid of this and using dependency injection instead for everything
     QGCToolbox* toolbox(void) { return _toolbox; }
 
-    /// Do we have Bluetooth Support?
-    bool isBluetoothAvailable() const{ return _bluetoothAvailable; }
-
-    /// Is Internet available?
-    bool isInternetAvailable();
-
-    QTranslator& qgcJSONTranslator(void) { return _qgcTranslatorJSON; }
-
     void            setLanguage();
     QQuickWindow*   mainRootWindow();
     uint64_t        msecsSinceBoot(void) { return _msecsElapsedTime.elapsed(); }
@@ -188,9 +180,7 @@ private:
     int                 _buildVersion           = 0;
     QGCToolbox*         _toolbox                = nullptr;
     QQuickWindow*       _mainRootWindow         = nullptr;
-    bool                _bluetoothAvailable     = false;
     QTranslator         _qgcTranslatorSourceCode;           ///< translations for source code C++/Qml
-    QTranslator         _qgcTranslatorJSON;                 ///< translations for json files
     QTranslator         _qgcTranslatorQtLibs;               ///< tranlsations for Qt libraries
     QLocale             _locale;
     bool                _error                  = false;

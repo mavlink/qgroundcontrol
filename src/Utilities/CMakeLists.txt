@@ -1,6 +1,8 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Network Positioning Qml)
+find_package(Qt6 REQUIRED COMPONENTS Bluetooth Core Network Positioning Qml)
 
 qt_add_library(Utilities STATIC
+	DeviceInfo.cc
+	DeviceInfo.h
     JsonHelper.cc
     JsonHelper.h
     QGC.cc
@@ -50,6 +52,7 @@ endif()
 target_link_libraries(Utilities
 	PRIVATE
 		Qt6::Qml
+		Qt6::Bluetooth
 		shp
 		FactSystem
 		Geo
