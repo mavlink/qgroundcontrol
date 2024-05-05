@@ -545,7 +545,9 @@ HEADERS += \
     src/Utilities/ShapeFileHelper.h \
     src/Utilities/SHPFileHelper.h \
     src/Terrain/TerrainQuery.h \
+    src/Terrain/TerrainQueryAirMap.h \
     src/Terrain/TerrainTile.h \
+    src/Terrain/TerrainTileManager.h \
     src/Vehicle/Actuators/ActuatorActions.h \
     src/Vehicle/Actuators/Actuators.h \
     src/Vehicle/Actuators/ActuatorOutputs.h \
@@ -807,7 +809,9 @@ SOURCES += \
     src/Utilities/ShapeFileHelper.cc \
     src/Utilities/SHPFileHelper.cc \
     src/Terrain/TerrainQuery.cc \
+    src/Terrain/TerrainQueryAirMap.cc \
     src/Terrain/TerrainTile.cc \
+    src/Terrain/TerrainTileManager.cc \
     src/Vehicle/Actuators/ActuatorActions.cc \
     src/Vehicle/Actuators/Actuators.cc \
     src/Vehicle/Actuators/ActuatorOutputs.cc \

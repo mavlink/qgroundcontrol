@@ -36,6 +36,7 @@ target_link_libraries(MissionManagerTest
 		Settings
 		Utilities
 		Vehicle
+		TerrainTest
 	PUBLIC
 		Qt6::Positioning
 		MissionManager
