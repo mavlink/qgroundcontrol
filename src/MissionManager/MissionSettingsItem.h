@@ -20,6 +20,7 @@ Q_DECLARE_LOGGING_CATEGORY(MissionSettingsItemLog)
 
 class PlanMasterController;
 class MissionItem;
+class Vehicle;
 
 class MissionSettingsItem : public ComplexMissionItem
 {

@@ -11,6 +11,7 @@
 #include "PlanMasterController.h"
 #include "MissionItem.h"
 #include "QGC.h"
+#include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QJsonArray>

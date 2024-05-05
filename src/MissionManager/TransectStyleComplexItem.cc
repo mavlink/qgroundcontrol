@@ -18,6 +18,7 @@
 #include "QGC.h"
 #include "FirmwarePlugin.h"
 #include "KMLPlanDomDocument.h"
+#include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QJsonArray>

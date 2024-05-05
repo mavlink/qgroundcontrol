@@ -10,6 +10,7 @@
 #include "SpeedSection.h"
 #include "SimpleMissionItem.h"
 #include "PlanMasterController.h"
+#include "Vehicle.h"
 #include "QmlObjectListModel.h"
 
 const char* SpeedSection::_flightSpeedName = "FlightSpeed";

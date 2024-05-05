@@ -17,6 +17,7 @@
 class PlanMasterController;
 class CameraSectionTest;
 class MissionItem;
+class QmlObjectListModel;
 
 
 class CameraSection : public Section

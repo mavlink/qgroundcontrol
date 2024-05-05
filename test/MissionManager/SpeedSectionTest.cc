@@ -11,6 +11,7 @@
 #include "SpeedSection.h"
 #include "SimpleMissionItem.h"
 #include "MultiSignalSpy.h"
+#include "Vehicle.h"
 
 #include <QtTest/QTest>
 

@@ -17,6 +17,7 @@
 #include "PlanMasterController.h"
 #include "MissionItem.h"
 #include "QGCApplication.h"
+#include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtGui/QPolygonF>
