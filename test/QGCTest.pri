@@ -25,6 +25,7 @@ ReleaseBuild {
         $$PWD/MissionManager \
         $$PWD/qgcunittest \
         $$PWD/QmlControls \
+        $$PWD/Terrain \
         $$PWD/UI \
         $$PWD/Vehicle
 
@@ -70,6 +71,7 @@ ReleaseBuild {
         $$PWD/qgcunittest/MultiSignalSpy.h \
         $$PWD/qgcunittest/MultiSignalSpyV2.h \
         $$PWD/qgcunittest/UnitTest.h \
+        $$PWD/Terrain/TerrainQueryTest.h \
         $$PWD/Vehicle/FTPManagerTest.h \
         $$PWD/Vehicle/InitialConnectTest.h \
         $$PWD/Vehicle/RequestMessageTest.h \
@@ -119,6 +121,7 @@ ReleaseBuild {
         $$PWD/qgcunittest/MultiSignalSpy.cc \
         $$PWD/qgcunittest/MultiSignalSpyV2.cc \
         $$PWD/qgcunittest/UnitTest.cc \
+        $$PWD/Terrain/TerrainQueryTest.cc \
         $$PWD/UnitTestList.cc \
         $$PWD/Vehicle/FTPManagerTest.cc \
         $$PWD/Vehicle/InitialConnectTest.cc \

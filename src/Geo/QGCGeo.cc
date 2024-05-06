@@ -91,7 +91,8 @@ namespace QGCGeo {
             bool northp;
             GeographicLib::UTMUPS::Forward(coord.latitude(), coord.longitude(), zone, northp, easting, northing);
             return zone;
-        } catch(GeographicLib::GeographicErr) {
+        } catch(const GeographicLib::GeographicErr& e) {
+            qCDebug(QGCGeoLog) << Q_FUNC_INFO << e.what();
             return 0;
         }
     }
@@ -102,7 +103,8 @@ namespace QGCGeo {
 
         try {
             GeographicLib::UTMUPS::Reverse(zone, !southhemi, easting, northing, lat, lon);
-        } catch(GeographicLib::GeographicErr) {
+        } catch(const GeographicLib::GeographicErr& e) {
+            qCDebug(QGCGeoLog) << Q_FUNC_INFO << e.what();
             return false;
         }
 
@@ -122,7 +124,8 @@ namespace QGCGeo {
             double x, y;
             GeographicLib::UTMUPS::Forward(coord.latitude(), coord.longitude(), zone, northp, x, y);
             GeographicLib::MGRS::Forward(zone, northp, x, y, coord.latitude(), 5, mgrs);
-        } catch(GeographicLib::GeographicErr) {
+        } catch(const GeographicLib::GeographicErr& e) {
+            qCDebug(QGCGeoLog) << Q_FUNC_INFO << e.what();
             mgrs = "";
         }
 
@@ -147,7 +150,8 @@ namespace QGCGeo {
             double x, y;
             GeographicLib::MGRS::Reverse(mgrs.simplified().replace(" ", "").toStdString(), zone, northp, x, y, prec);
             GeographicLib::UTMUPS::Reverse(zone, northp, x, y, lat, lon);
-        } catch(GeographicLib::GeographicErr) {
+        } catch(const GeographicLib::GeographicErr& e) {
+            qCDebug(QGCGeoLog) << Q_FUNC_INFO << e.what();
             return false;
         }
 
