@@ -71,7 +71,7 @@
     "name":         "instrumentQmlFile",
     "shortDesc":    "Qml file for instrument panel",
     "type":         "string",
-    "enumStrings":  "Integrated Compass & Attitude,Horizontal Compass & Atttitude,Large Vertical",
+    "enumStrings":  "Integrated Compass/Attitude,Horizontal Compass/Atttitude,Large Vertical",
     "enumValues":   "qrc:/qml/IntegratedCompassAttitude.qml,qrc:/qml/HorizontalCompassAttitude.qml,qrc:/qml/VerticalCompassAttitude.qml",
     "default":      "qrc:/qml/IntegratedCompassAttitude.qml"
 }
