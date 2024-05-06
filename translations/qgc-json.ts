@@ -6,7 +6,7 @@
     <message>
         <extracomment>.QGC.MetaData.Facts[instrumentQmlFile].enumStrings, </extracomment>
         <location filename="../src/Settings/FlyView.SettingsGroup.json"/>
-        <source>Integrated Compass & Attitude,Horizontal Compass & Atttitude,Large Vertical</source>
+        <source>Integrated Compass/Attitude,Horizontal Compass/Atttitude,Large Vertical</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
