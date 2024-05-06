@@ -20,6 +20,7 @@ target_link_libraries(Camera
 		Qt6::Xml
 		API
 		Compression
+		Comms
 		FirmwarePlugin
 		Joystick
 		QGCLocation
@@ -28,8 +29,8 @@ target_link_libraries(Camera
 		VideoManager
 	PUBLIC
 		Qt6::Core
-		Comms
 		FactSystem
+		MAVLink
 		QmlControls
 		QGC
 )

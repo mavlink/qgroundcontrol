@@ -46,6 +46,9 @@ add_qgc_test(ParameterManagerTest)
 add_subdirectory(Geo)
 add_qgc_test(GeoTest)
 
+add_subdirectory(MAVLink)
+add_qgc_test(MAVLinkTest)
+
 add_subdirectory(MissionManager)
 add_qgc_test(CameraCalcTest)
 add_qgc_test(CameraSectionTest)
@@ -106,6 +109,7 @@ target_link_libraries(qgctest
         CompressionTest
         FactSystemTest
         GeoTest
+        MAVLinkTest
         MissionManagerTest
         QmlControlsTest
         TerrainTest

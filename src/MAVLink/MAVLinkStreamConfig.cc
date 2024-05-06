@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 #include "MAVLinkStreamConfig.h"
-#include "QGCMAVLink.h"
+#include "MAVLinkLib.h"
 
 MAVLinkStreamConfig::MAVLinkStreamConfig(const SetMessageIntervalCb &messageIntervalCb)
     : _messageIntervalCb(messageIntervalCb)

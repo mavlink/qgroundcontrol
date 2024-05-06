@@ -37,6 +37,7 @@ target_link_libraries(APMFirmwarePlugin
         FactSystem
         FollowMe
         FirmwarePlugin
+        MAVLink
 )
 
 target_include_directories(APMFirmwarePlugin PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

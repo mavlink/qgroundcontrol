@@ -15,6 +15,7 @@
 #include "ParameterManager.h"
 #include "FactSystem.h"
 #include "Vehicle.h"
+#include "MAVLinkProtocol.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QVariant>

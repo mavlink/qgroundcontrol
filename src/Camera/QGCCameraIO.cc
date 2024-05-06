@@ -13,6 +13,7 @@
 #include "QGCApplication.h"
 #include "QGCToolbox.h"
 #include "LinkInterface.h"
+#include "MAVLinkProtocol.h"
 #include "Vehicle.h"
 
 #include <QtQml/QQmlEngine>

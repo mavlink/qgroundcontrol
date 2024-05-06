@@ -22,7 +22,7 @@
 #include <QtCharts/QAbstractSeries>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-#include "QGCMAVLink.h"
+#include "MAVLinkLib.h"
 #include "QmlObjectListModel.h"
 
 Q_DECLARE_LOGGING_CATEGORY(MAVLinkInspectorLog)

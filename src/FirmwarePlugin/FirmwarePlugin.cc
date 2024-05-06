@@ -18,6 +18,7 @@
 #include "Autotune.h"
 #include "VehicleCameraControl.h"
 #include "VehicleComponent.h"
+#include "MAVLinkProtocol.h"
 #include "QGC.h"
 #include "QGCLoggingCategory.h"
 

@@ -10,6 +10,7 @@
 #pragma once
 
 #include "FirmwarePlugin.h"
+#include "QGCMAVLink.h"
 
 class PX4FirmwarePlugin : public FirmwarePlugin
 {

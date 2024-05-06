@@ -11,6 +11,8 @@
 #include "TerrainQuery.h"
 #include "Vehicle.h"
 #include "QGCApplication.h"
+#include "QGCToolbox.h"
+#include "MAVLinkProtocol.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(TerrainProtocolHandlerLog, "TerrainProtocolHandlerLog")
