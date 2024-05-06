@@ -29,15 +29,15 @@ add_subdirectory(Comms)
 add_subdirectory(Compression)
 add_subdirectory(FactSystem)
 add_subdirectory(FirmwarePlugin)
-add_subdirectory(FirstRunPromptDialogs)
-add_subdirectory(FlightDisplay)
-add_subdirectory(FlightMap)
+# add_subdirectory(FirstRunPromptDialogs)
+# add_subdirectory(FlightDisplay)
+# add_subdirectory(FlightMap)
 add_subdirectory(FollowMe)
 add_subdirectory(Geo)
 add_subdirectory(GPS)
 add_subdirectory(Joystick)
 add_subdirectory(MissionManager)
-add_subdirectory(PlanView)
+# add_subdirectory(PlanView)
 add_subdirectory(PositionManager)
 add_subdirectory(QmlControls)
 add_subdirectory(QtLocationPlugin)
@@ -73,14 +73,14 @@ target_link_libraries(QGC
 		CommonAutoPilotPlugin
 		FactSystem
 		FirmwarePlugin
-		FirstRunPromptDialogs
-		FlightMap
-		FlightDisplay
+		# FirstRunPromptDialogs
+		# FlightMap
+		# FlightDisplay
 		FollowMe
 		GPS
 		Joystick
 		MissionManager
-		PlanView
+		# PlanView
 		PositionManager
 		QmlControls
 		Settings
