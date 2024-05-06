@@ -1,10 +1,16 @@
-find_package(Qt6 REQUIRED COMPONENTS Bluetooth Core Network Positioning Qml)
+add_subdirectory(Compression)
+
+find_package(Qt6 REQUIRED COMPONENTS Bluetooth Core Gui Network Positioning Qml Xml)
 
 qt_add_library(Utilities STATIC
 	DeviceInfo.cc
 	DeviceInfo.h
     JsonHelper.cc
     JsonHelper.h
+	KMLDomDocument.cc
+	KMLDomDocument.h
+	KMLHelper.cc
+	KMLHelper.h
     QGC.cc
     QGC.h
     QGCCachedFileDownload.cc
@@ -13,8 +19,6 @@ qt_add_library(Utilities STATIC
     QGCFileDownload.h
     QGCLoggingCategory.cc
     QGCLoggingCategory.h
-    QGCQGeoCoordinate.cc
-    QGCQGeoCoordinate.h
     QGCTemporaryFile.cc
     QGCTemporaryFile.h
     ShapeFileHelper.cc
@@ -51,8 +55,8 @@ endif()
 
 target_link_libraries(Utilities
 	PRIVATE
-		Qt6::Qml
 		Qt6::Bluetooth
+		Qt6::Qml
 		shp
 		FactSystem
 		Geo
@@ -61,8 +65,10 @@ target_link_libraries(Utilities
 		Settings
 	PUBLIC
 		Qt6::Core
+		Qt6::Gui
 		Qt6::Network
 		Qt6::Positioning
+		Qt6::Xml
 )
 
 target_include_directories(Utilities PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
