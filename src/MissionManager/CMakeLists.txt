@@ -21,10 +21,6 @@ qt_add_library(MissionManager STATIC
 	GeoFenceController.h
 	GeoFenceManager.cc
 	GeoFenceManager.h
-	KMLDomDocument.cc
-	KMLDomDocument.h
-	KMLHelper.cc
-	KMLHelper.h
 	KMLPlanDomDocument.cc
 	KMLPlanDomDocument.h
 	LandingComplexItem.cc
@@ -51,16 +47,6 @@ qt_add_library(MissionManager STATIC
 	PlanManager.h
 	PlanMasterController.cc
 	PlanMasterController.h
-	QGCFenceCircle.cc
-	QGCFenceCircle.h
-	QGCFencePolygon.cc
-	QGCFencePolygon.h
-	QGCMapCircle.cc
-	QGCMapCircle.h
-	QGCMapPolygon.cc
-	QGCMapPolygon.h
-	QGCMapPolyline.cc
-	QGCMapPolyline.h
 	RallyPoint.cc
 	RallyPointController.cc
 	RallyPointController.h
