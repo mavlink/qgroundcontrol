@@ -11,7 +11,7 @@
 #pragma once
 
 #include "QGCToolbox.h"
-#include "QGCMAVLink.h"
+#include "MAVLinkLib.h"
 
 #include <QtCore/QObject>
 #include <QtCore/QElapsedTimer>

@@ -24,9 +24,9 @@ target_link_libraries(PX4FirmwarePlugin
         Utilities
     PUBLIC
         Qt6::Core
-        Comms
         FactSystem
         FirmwarePlugin
+        MAVLink
 )
 
 target_include_directories(PX4FirmwarePlugin PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

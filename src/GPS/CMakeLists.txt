@@ -49,7 +49,7 @@ if(NOT QGC_NO_SERIAL_LINK)
 			Vehicle
 		PUBLIC
 			Qt6::Core
-			Comms
+			MAVLink
 			QGC
 	)
 

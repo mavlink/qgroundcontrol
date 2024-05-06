@@ -56,9 +56,9 @@ target_link_libraries(APMAutoPilotPlugin
     PUBLIC
         Qt6::Core
         Qt6::Quick
-        Comms
         CommonAutoPilotPlugin
         FactControls
+        MAVLink
         VehicleSetup
 )
 

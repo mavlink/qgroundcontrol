@@ -21,7 +21,7 @@ void qgc_events_parser_debug_printf(const char *fmt, ...);
 //#define LIBEVENTS_PARSER_DEBUG_PRINTF qgc_events_parser_debug_printf
 #define LIBEVENTS_DEBUG_PRINTF qgc_events_parser_debug_printf
 
-#include <MAVLinkProtocol.h>
+#include <MAVLinkLib.h>
 
 #include "protocol/receive.h"
 #include "parse/health_and_arming_checks.h"

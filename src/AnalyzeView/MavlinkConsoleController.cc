@@ -12,6 +12,7 @@
 #include "QGCToolbox.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
+#include "MAVLinkProtocol.h"
 
 #include <QtWidgets/QApplication>
 #include <QtGui/QClipboard>

@@ -13,6 +13,7 @@
 #include "RemoteIDSettings.h"
 #include "PositionManager.h"
 #include "Vehicle.h"
+#include "MAVLinkProtocol.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(RemoteIDManagerLog, "RemoteIDManagerLog")

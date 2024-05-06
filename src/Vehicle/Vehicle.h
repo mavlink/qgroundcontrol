@@ -16,6 +16,7 @@
 #include <QtCore/QTimer>
 #include <QtCore/QVariantList>
 #include <QtPositioning/QGeoCoordinate>
+#include <QtCore/QFile>
 
 #include "HealthAndArmingCheckReport.h"
 #include "MAVLinkStreamConfig.h"
@@ -75,6 +76,7 @@ class TrajectoryPoints;
 class UASMessage;
 class VehicleBatteryFactGroup;
 class VehicleObjectAvoidance;
+class QGCToolbox;
 #ifdef CONFIG_UTM_ADAPTER
 class UTMSPVehicle;
 #endif

@@ -369,6 +369,8 @@ INCLUDEPATH += \
     src/Geo \
     src/GPS \
     src/Joystick \
+    src/MAVLink \
+    src/MAVLink/LibEvents \
     src/PlanView \
     src/MissionManager \
     src/PositionManager \
@@ -557,9 +559,9 @@ HEADERS += \
     src/Vehicle/Actuators/GeometryImage.h \
     src/Vehicle/Actuators/Mixer.h \
     src/Vehicle/Actuators/MotorAssignment.h \
-    src/Vehicle/LibEvents/EventHandler.h \
-    src/Vehicle/LibEvents/HealthAndArmingCheckReport.h \
-    src/Vehicle/LibEvents/libevents_includes.h \
+    src/MAVLink/LibEvents/EventHandler.h \
+    src/MAVLink/LibEvents/HealthAndArmingCheckReport.h \
+    src/MAVLink/LibEvents/libevents_includes.h \
     src/Vehicle/Components/CompInfo.h \
     src/Vehicle/Components/CompInfoActuators.h \
     src/Vehicle/Components/CompInfoEvents.h \
@@ -570,15 +572,15 @@ HEADERS += \
     src/Vehicle/Components/ComponentInformationTranslation.h \
     src/Vehicle/FTPManager.h \
     src/Vehicle/FactGroups/GPSRTKFactGroup.h \
-    src/Vehicle/ImageProtocolManager.h \
+    src/MAVLink/ImageProtocolManager.h \
     src/Vehicle/InitialConnectStateMachine.h \
     src/Vehicle/MAVLinkLogManager.h \
-    src/Vehicle/MAVLinkStreamConfig.h \
+    src/MAVLink/MAVLinkStreamConfig.h \
     src/Vehicle/MultiVehicleManager.h \
     src/Vehicle/RemoteIDManager.h \
     src/Utilities/StateMachine.h \
     src/Vehicle/StandardModes.h \
-    src/Vehicle/SysStatusSensorInfo.h \
+    src/MAVLink/SysStatusSensorInfo.h \
     src/Vehicle/FactGroups/TerrainFactGroup.h \
     src/Vehicle/TerrainProtocolHandler.h \
     src/Vehicle/TrajectoryPoints.h \
@@ -606,7 +608,9 @@ HEADERS += \
     src/Comms/LinkManager.h \
     src/Comms/LogReplayLink.h \
     src/Comms/MAVLinkProtocol.h \
-    src/Comms/QGCMAVLink.h \
+    src/MAVLink/QGCMAVLink.h \
+    src/MAVLink/MAVLinkLib.h \
+    src/MAVLink/MAVLinkFTP.h \
     src/Comms/TCPLink.h \
     src/Comms/UDPLink.h \
     src/Comms/UdpIODevice.h \
@@ -821,9 +825,9 @@ SOURCES += \
     src/Vehicle/Actuators/GeometryImage.cc \
     src/Vehicle/Actuators/Mixer.cc \
     src/Vehicle/Actuators/MotorAssignment.cc \
-    src/Vehicle/LibEvents/EventHandler.cc \
-    src/Vehicle/LibEvents/HealthAndArmingCheckReport.cc \
-    src/Vehicle/LibEvents/logging.cpp \
+    src/MAVLink/LibEvents/EventHandler.cc \
+    src/MAVLink/LibEvents/HealthAndArmingCheckReport.cc \
+    src/MAVLink/LibEvents/logging.cpp \
     src/Vehicle/Components/CompInfo.cc \
     src/Vehicle/Components/CompInfoActuators.cc \
     src/Vehicle/Components/CompInfoEvents.cc \
@@ -834,15 +838,15 @@ SOURCES += \
     src/Vehicle/Components/ComponentInformationTranslation.cc \
     src/Vehicle/FTPManager.cc \
     src/Vehicle/FactGroups/GPSRTKFactGroup.cc \
-    src/Vehicle/ImageProtocolManager.cc \
+    src/MAVLink/ImageProtocolManager.cc \
     src/Vehicle/InitialConnectStateMachine.cc \
     src/Vehicle/MAVLinkLogManager.cc \
-    src/Vehicle/MAVLinkStreamConfig.cc \
+    src/MAVLink/MAVLinkStreamConfig.cc \
     src/Vehicle/MultiVehicleManager.cc \
     src/Vehicle/RemoteIDManager.cc \
     src/Utilities/StateMachine.cc \
     src/Vehicle/StandardModes.cc \
-    src/Vehicle/SysStatusSensorInfo.cc \
+    src/MAVLink/SysStatusSensorInfo.cc \
     src/Vehicle/FactGroups/TerrainFactGroup.cc \
     src/Vehicle/TerrainProtocolHandler.cc \
     src/Vehicle/TrajectoryPoints.cc \
@@ -870,7 +874,8 @@ SOURCES += \
     src/Comms/LinkManager.cc \
     src/Comms/LogReplayLink.cc \
     src/Comms/MAVLinkProtocol.cc \
-    src/Comms/QGCMAVLink.cc \
+    src/MAVLink/QGCMAVLink.cc \
+    src/MAVLink/MAVLinkFTP.cc \
     src/Comms/TCPLink.cc \
     src/Comms/UDPLink.cc \
     src/Comms/UdpIODevice.cc \

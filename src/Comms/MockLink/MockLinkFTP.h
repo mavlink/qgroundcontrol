@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "QGCMAVLink.h"
+#include "MAVLinkFTP.h"
 
 #include <QtCore/QStringList>
 #include <QtCore/QFile>
