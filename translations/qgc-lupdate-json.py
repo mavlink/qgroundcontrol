@@ -15,6 +15,18 @@ def parseJsonObjectForTranslateKeys(jsonObjectHierarchy, jsonObject, translateKe
     for translateKey in translateKeys:
         if (translateKey in jsonObject):
             locStr = jsonObject[translateKey]
+            if "&" in locStr:
+                print("Error: & in string %s" % locStr)
+                sys.exit()
+            if "<" in locStr:
+                print("Error: < in string %s" % locStr)
+                sys.exit()
+            if ">" in locStr:
+                print("Error: > in string %s" % locStr)
+                sys.exit()
+            if "'" in locStr:    
+                print("Error: ' in string %s" % locStr)
+                sys.exit()
             currentHierarchy = jsonObjectHierarchy + "." + translateKey
             if locStr in locStringDict:
                 # Duplicate of an existing string
