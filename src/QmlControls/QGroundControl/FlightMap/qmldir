@@ -29,5 +29,8 @@ MissionLineView             1.0 MissionLineView.qml
 PlanMapItems                1.0 PlanMapItems.qml
 PolygonEditor               1.0 PolygonEditor.qml
 ProximityRadarMapView       1.0 ProximityRadarMapView.qml
+QGCMapCircleVisuals         1.0 QGCMapCircleVisuals.qml
+QGCMapPolygonVisuals        1.0 QGCMapPolygonVisuals.qml
+QGCMapPolylineVisuals       1.0 QGCMapPolylineVisuals.qml
 SplitIndicator              1.0 SplitIndicator.qml
 VehicleMapItem              1.0 VehicleMapItem.qml
