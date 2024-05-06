@@ -32,7 +32,7 @@ AnalyzePage {
     // E.g. for android see https://bugreports.qt.io/browse/QTBUG-40803
     readonly property bool _separateCommandInput: ScreenTools.isMobile
 
-    MavlinkConsoleController {
+    MAVLinkConsoleController {
         id: conController
     }
 

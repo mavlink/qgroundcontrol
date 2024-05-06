@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 #include "LogDownloadController.h"
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
@@ -18,87 +17,15 @@
 #include "Vehicle.h"
 #include "SettingsManager.h"
 #include "MAVLinkProtocol.h"
+#include "LogEntry.h"
 #include "QGCLoggingCategory.h"
-
-#include <QtCore/QBitArray>
-#include <QtCore/QtMath>
 
 #define kTimeOutMilliseconds 500
 #define kGUIRateMilliseconds 17
 #define kTableBins           512
 #define kChunkSize           (kTableBins * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN)
 
-QGC_LOGGING_CATEGORY(LogDownloadLog, "LogDownloadLog")
-
-//-----------------------------------------------------------------------------
-struct LogDownloadData {
-    LogDownloadData(QGCLogEntry* entry);
-    QBitArray     chunk_table;
-    uint32_t      current_chunk;
-    QFile         file;
-    QString       filename;
-    uint          ID;
-    QGCLogEntry*  entry;
-    uint          written;
-    size_t        rate_bytes;
-    qreal         rate_avg;
-    QElapsedTimer elapsed;
-
-    void advanceChunk()
-    {
-           current_chunk++;
-           chunk_table = QBitArray(chunkBins(), false);
-    }
-
-    // The number of MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN bins in the current chunk
-    uint32_t chunkBins() const
-    {
-        return qMin(qCeil((entry->size() - current_chunk*kChunkSize)/static_cast<qreal>(MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN)),
-                    kTableBins);
-    }
-
-    // The number of kChunkSize chunks in the file
-    uint32_t numChunks() const
-    {
-        return qCeil(entry->size() / static_cast<qreal>(kChunkSize));
-    }
-
-    // True if all bins in the chunk have been set to val
-    bool chunkEquals(const bool val) const
-    {
-        return chunk_table == QBitArray(chunk_table.size(), val);
-    }
-
-};
-
-//----------------------------------------------------------------------------------------
-LogDownloadData::LogDownloadData(QGCLogEntry* entry_)
-    : ID(entry_->id())
-    , entry(entry_)
-    , written(0)
-    , rate_bytes(0)
-    , rate_avg(0)
-{
-
-}
-
-//----------------------------------------------------------------------------------------
-QGCLogEntry::QGCLogEntry(uint logId, const QDateTime& dateTime, uint logSize, bool received)
-    : _logID(logId)
-    , _logSize(logSize)
-    , _logTimeUTC(dateTime)
-    , _received(received)
-    , _selected(false)
-{
-    _status = tr("Pending");
-}
-
-//----------------------------------------------------------------------------------------
-QString
-QGCLogEntry::sizeStr() const
-{
-    return QGCMapEngine::bigSizeToString(_logSize);
-}
+QGC_LOGGING_CATEGORY(LogDownloadControllerLog, "qgc.analyzeview.logdownloadcontroller")
 
 //----------------------------------------------------------------------------------------
 LogDownloadController::LogDownloadController(void)
@@ -174,7 +101,7 @@ LogDownloadController::_logEntry(uint32_t time_utc, uint32_t size, uint16_t id, 
                 entry->setReceived(true);
                 entry->setStatus(tr("Available"));
             } else {
-                qWarning() << "Received log entry for out-of-bound index:" << id;
+                qCWarning(LogDownloadControllerLog) << "Received log entry for out-of-bound index:" << id;
             }
         }
     } else {
@@ -271,7 +198,7 @@ LogDownloadController::_findMissingEntries()
             }
             //-- Give up
             _receivedAllEntries();
-            qWarning() << "Too many errors retreiving log list. Giving up.";
+            qCWarning(LogDownloadControllerLog) << "Too many errors retreiving log list. Giving up.";
             return;
         }
         //-- Is it a sequence or just one entry?
@@ -305,7 +232,6 @@ void LogDownloadController::_updateDataRate(void)
     }
 }
 
-
 //----------------------------------------------------------------------------------------
 void
 LogDownloadController::_logData(uint32_t ofs, uint16_t id, uint8_t count, const uint8_t* data)
@@ -316,12 +242,12 @@ LogDownloadController::_logData(uint32_t ofs, uint16_t id, uint8_t count, const 
     //-- APM "Fix"
     id -= _apmOneBased;
     if(_downloadData->ID != id) {
-        qWarning() << "Received log data for wrong log";
+        qCWarning(LogDownloadControllerLog) << "Received log data for wrong log";
         return;
     }
 
     if ((ofs % MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN) != 0) {
-        qWarning() << "Ignored misaligned incoming packet @" << ofs;
+        qCWarning(LogDownloadControllerLog) << "Ignored misaligned incoming packet @" << ofs;
         return;
     }
 
@@ -330,18 +256,18 @@ LogDownloadController::_logData(uint32_t ofs, uint16_t id, uint8_t count, const 
     if(ofs <= _downloadData->entry->size()) {
         const uint32_t chunk = ofs / kChunkSize;
         if (chunk != _downloadData->current_chunk) {
-            qWarning() << "Ignored packet for out of order chunk actual:expected" << chunk << _downloadData->current_chunk;
+            qCWarning(LogDownloadControllerLog) << "Ignored packet for out of order chunk actual:expected" << chunk << _downloadData->current_chunk;
             return;
         }
         const uint16_t bin = (ofs - chunk*kChunkSize) / MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN;
         if (bin >= _downloadData->chunk_table.size()) {
-            qWarning() << "Out of range bin received";
+            qCWarning(LogDownloadControllerLog) << "Out of range bin received";
         } else
             _downloadData->chunk_table.setBit(bin);
         if (_downloadData->file.pos() != ofs) {
             // Seek to correct position
             if (!_downloadData->file.seek(ofs)) {
-                qWarning() << "Error while seeking log file offset";
+                qCWarning(LogDownloadControllerLog) << "Error while seeking log file offset";
                 return;
             }
         }
@@ -371,10 +297,10 @@ LogDownloadController::_logData(uint32_t ofs, uint16_t id, uint8_t count, const 
                 _findMissingData();
             }
         } else {
-            qWarning() << "Error while writing log file chunk";
+            qCWarning(LogDownloadControllerLog) << "Error while writing log file chunk";
         }
     } else {
-        qWarning() << "Received log offset greater than expected";
+        qCWarning(LogDownloadControllerLog) << "Received log offset greater than expected";
     }
     if(!result) {
         _downloadData->entry->setStatus(tr("Error"));
@@ -430,7 +356,7 @@ LogDownloadController::_findMissingData()
     if(_retries > 5) {
         _downloadData->entry->setStatus(tr("Timed Out"));
         //-- Give up
-        qWarning() << "Too many errors retreiving log data. Giving up.";
+        qCWarning(LogDownloadControllerLog) << "Too many errors retreiving log data. Giving up.";
         _receivedAllData();
         return;
     }
@@ -468,7 +394,7 @@ LogDownloadController::_requestLogData(uint16_t id, uint32_t offset, uint32_t co
 
             //-- APM "Fix"
             id += _apmOneBased;
-            qCDebug(LogDownloadLog) << "Request log data (id:" << id << "offset:" << offset << "size:" << count << "retryCount" << retryCount << ")";
+            qCDebug(LogDownloadControllerLog) << "Request log data (id:" << id << "offset:" << offset << "size:" << count << "retryCount" << retryCount << ")";
             mavlink_message_t msg;
             mavlink_msg_log_request_data_pack_chan(
                         qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
@@ -496,7 +422,7 @@ void
 LogDownloadController::_requestLogList(uint32_t start, uint32_t end)
 {
     if(_vehicle) {
-        qCDebug(LogDownloadLog) << "Request log entry list (" << start << "through" << end << ")";
+        qCDebug(LogDownloadControllerLog) << "Request log entry list (" << start << "through" << end << ")";
         _setListing(true);
         WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
         if (!weakLink.expired()) {
@@ -557,7 +483,6 @@ void LogDownloadController::downloadToDirectory(const QString& dir)
         _receivedAllData();
     }
 }
-
 
 //----------------------------------------------------------------------------------------
 QGCLogEntry*
@@ -622,11 +547,11 @@ LogDownloadController::_prepareLogDownload()
     }
     //-- Create file
     if (!_downloadData->file.open(QIODevice::WriteOnly)) {
-        qWarning() << "Failed to create log file:" <<  _downloadData->filename;
+        qCWarning(LogDownloadControllerLog) << "Failed to create log file:" <<  _downloadData->filename;
     } else {
         //-- Preallocate file
         if(!_downloadData->file.resize(entry->size())) {
-            qWarning() << "Failed to allocate space for log file:" <<  _downloadData->filename;
+            qCWarning(LogDownloadControllerLog) << "Failed to allocate space for log file:" <<  _downloadData->filename;
         } else {
             _downloadData->current_chunk = 0;
             _downloadData->chunk_table = QBitArray(_downloadData->chunkBins(), false);

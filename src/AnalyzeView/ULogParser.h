@@ -4,18 +4,19 @@
 #include <QtCore/QMap>
 #include <QtCore/QString>
 #include <QtCore/QCoreApplication>
+#include <QtCore/QLoggingCategory>
 
-#include "GeoTagController.h"
+#include "GeoTagWorker.h"
 
-#define ULOG_FILE_HEADER_LEN 16
+Q_DECLARE_LOGGING_CATEGORY(ULogParserLog)
 
 class ULogParser
 {
     Q_DECLARE_TR_FUNCTIONS(ULogParser)
 
 public:
-    ULogParser();
-    ~ULogParser();
+    ULogParser() = default;
+    ~ULogParser() = default;
 
     /// @return true: failed, errorMessage set
     bool getTagsFromLog(QByteArray& log, QList<GeoTagWorker::cameraFeedbackPacket>& cameraFeedback, QString& errorMessage);
@@ -27,7 +28,7 @@ private:
 
     const char _ULogMagic[8] = {'U', 'L', 'o', 'g', 0x01, 0x12, 0x35};
 
-    int sizeOfType(QString& typeName);
+    static int sizeOfType(QString& typeName);
     int sizeOfFullType(QString &typeNameFull);
     QString extractArraySize(QString& typeNameFull, int& arraySize);
 
@@ -66,5 +67,4 @@ private:
 	  uint16_t msgID;
 	  char msgName[255];
 	};
-
 };

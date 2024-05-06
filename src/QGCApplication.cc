@@ -81,7 +81,8 @@
 #include "FactValueSliderListModel.h"
 #include "ShapeFileHelper.h"
 #include "QGCFileDownload.h"
-#include "MavlinkConsoleController.h"
+#include "MAVLinkConsoleController.h"
+#include "MAVLinkChartController.h"
 #include "GeoTagController.h"
 #include "LogReplayLink.h"
 #include "VehicleObjectAvoidance.h"
@@ -435,7 +436,7 @@ void QGCApplication::_initCommon()
 #endif
     qmlRegisterType<GeoTagController>        ("QGroundControl.Controllers", 1, 0, "GeoTagController");
     qmlRegisterType<LogDownloadController>   ("QGroundControl.Controllers", 1, 0, "LogDownloadController");
-    qmlRegisterType<MavlinkConsoleController>("QGroundControl.Controllers", 1, 0, "MavlinkConsoleController");
+    qmlRegisterType<MAVLinkConsoleController>("QGroundControl.Controllers", 1, 0, "MAVLinkConsoleController");
 
 
     qmlRegisterUncreatableType<AutoPilotPlugin>("QGroundControl.AutoPilotPlugin", 1, 0, "AutoPilotPlugin", "Reference only");
