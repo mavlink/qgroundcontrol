@@ -23,8 +23,20 @@ qt_add_library(QmlControls STATIC
 	QGCFileDialogController.h
 	QGCGeoBoundingCube.cc
 	QGCGeoBoundingCube.h
+    QGCQGeoCoordinate.cc
+    QGCQGeoCoordinate.h
 	QGCImageProvider.cc
 	QGCImageProvider.h
+	QGCFenceCircle.cc
+	QGCFenceCircle.h
+	QGCFencePolygon.cc
+	QGCFencePolygon.h
+	QGCMapCircle.cc
+	QGCMapCircle.h
+	QGCMapPolygon.cc
+	QGCMapPolygon.h
+	QGCMapPolyline.cc
+	QGCMapPolyline.h
 	QGCMapPalette.cc
 	QGCMapPalette.h
 	QGCPalette.cc
