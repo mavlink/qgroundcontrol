@@ -55,7 +55,7 @@
 		<file alias="LogDownloadPage.qml">../src/AnalyzeView/LogDownloadPage.qml</file>
 		<file alias="LogReplaySettings.qml">../src/ui/preferences/LogReplaySettings.qml</file>
 		<file alias="MainRootWindow.qml">../src/ui/MainRootWindow.qml</file>
-		<file alias="MavlinkConsolePage.qml">../src/AnalyzeView/MavlinkConsolePage.qml</file>
+		<file alias="MAVLinkConsolePage.qml">../src/AnalyzeView/MAVLinkConsolePage.qml</file>
 		<file alias="MAVLinkInspectorPage.qml">../src/AnalyzeView/MAVLinkInspectorPage.qml</file>
 		<file alias="PX4LogTransferSettings.qml">../src/ui/preferences/PX4LogTransferSettings.qml</file>
 		<file alias="MissionSettingsEditor.qml">../src/PlanView/MissionSettingsEditor.qml</file>

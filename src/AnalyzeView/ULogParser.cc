@@ -1,14 +1,9 @@
 #include "ULogParser.h"
+#include "QGCLoggingCategory.h"
 
-ULogParser::ULogParser()
-{
+QGC_LOGGING_CATEGORY(ULogParserLog, "qgc.analyzeview.ulogparser")
 
-}
-
-ULogParser::~ULogParser()
-{
-
-}
+#define ULOG_FILE_HEADER_LEN 16
 
 int ULogParser::sizeOfType(QString& typeName)
 {
@@ -34,7 +29,7 @@ int ULogParser::sizeOfType(QString& typeName)
         return 1;
     }
 
-    qWarning() << "Unknown type in ULog : " << typeName;
+    qCWarning(ULogParserLog) << "Unknown type in ULog : " << typeName;
     return 0;
 }
 
