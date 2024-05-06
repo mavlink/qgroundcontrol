@@ -27,13 +27,12 @@ target_link_libraries(FirmwarePlugin
         QGC
         Utilities
         VehicleSetup
-
     PUBLIC
     	Qt6::Core
         Qt6::Positioning
-        Comms
         FactSystem
         FollowMe
+        MAVLink
 )
 
 target_include_directories(FirmwarePlugin PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

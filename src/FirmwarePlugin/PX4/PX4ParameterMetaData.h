@@ -10,7 +10,7 @@
 #pragma once
 
 
-#include "QGCMAVLink.h"
+#include "MAVLinkLib.h"
 #include "FactMetaData.h"
 
 #include <QtCore/QObject>

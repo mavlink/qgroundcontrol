@@ -10,7 +10,7 @@
 #pragma once
 
 #include "FactPanelController.h"
-#include "QGCMAVLink.h"
+#include "MAVLinkLib.h"
 
 #include <QtQuick/QQuickItem>
 #include <QtCore/QObject>
