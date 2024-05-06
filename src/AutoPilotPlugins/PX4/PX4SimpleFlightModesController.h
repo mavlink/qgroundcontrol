@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include <QtCore/QVariantList>
+
 #include "FactPanelController.h"
 #include "QGCMAVLink.h"
 
