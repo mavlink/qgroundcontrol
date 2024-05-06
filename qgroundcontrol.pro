@@ -360,7 +360,6 @@ INCLUDEPATH += \
     src/API \
     src/AnalyzeView \
     src/Camera \
-    src/Compression \
     src/AutoPilotPlugins \
     src/FlightDisplay \
     src/FlightMap \
@@ -399,7 +398,8 @@ INCLUDEPATH += \
     src/ui/toolbar \
     src/ui/uas \
     src/Viewer3D \
-    src/Utilities
+    src/Utilities \
+    src/Utilities/Compression
 
 #
 # Plugin API
@@ -442,15 +442,15 @@ HEADERS += \
     src/Camera/QGCCameraIO.h \
     src/Camera/QGCCameraManager.h \
     src/CmdLineOptParser.h \
-    src/Compression/QGCLZMA.h \
-    src/Compression/QGCZlib.h \
+    src/Utilities/Compression/QGCLZMA.h \
+    src/Utilities/Compression/QGCZlib.h \
     src/FirmwarePlugin/PX4/px4_custom_mode.h \
     src/FollowMe/FollowMe.h \
     src/Joystick/Joystick.h \
     src/Joystick/JoystickManager.h \
     src/Utilities/JsonHelper.h \
-    src/MissionManager/KMLDomDocument.h \
-    src/MissionManager/KMLHelper.h \
+    src/Utilities/KMLDomDocument.h \
+    src/Utilities/KMLHelper.h \
     src/MissionManager/CameraCalc.h \
     src/MissionManager/CameraSection.h \
     src/MissionManager/CameraSpec.h \
@@ -474,11 +474,11 @@ HEADERS += \
     src/MissionManager/PlanCreator.h \
     src/MissionManager/PlanManager.h \
     src/MissionManager/PlanMasterController.h \
-    src/MissionManager/QGCFenceCircle.h \
-    src/MissionManager/QGCFencePolygon.h \
-    src/MissionManager/QGCMapCircle.h \
-    src/MissionManager/QGCMapPolygon.h \
-    src/MissionManager/QGCMapPolyline.h \
+    src/QmlControls/QGCFenceCircle.h \
+    src/QmlControls/QGCFencePolygon.h \
+    src/QmlControls/QGCMapCircle.h \
+    src/QmlControls/QGCMapPolygon.h \
+    src/QmlControls/QGCMapPolyline.h \
     src/MissionManager/RallyPoint.h \
     src/MissionManager/RallyPointController.h \
     src/MissionManager/RallyPointManager.h \
@@ -505,7 +505,7 @@ HEADERS += \
     src/Utilities/QGCLoggingCategory.h \
     src/QmlControls/QGCMapPalette.h \
     src/QmlControls/QGCPalette.h \
-    src/Utilities/QGCQGeoCoordinate.h \
+    src/QmlControls/QGCQGeoCoordinate.h \
     src/Utilities/QGCTemporaryFile.h \
     src/QGCToolbox.h \
     src/QmlControls/AppMessages.h \
@@ -712,14 +712,14 @@ SOURCES += \
     src/Camera/QGCCameraIO.cc \
     src/Camera/QGCCameraManager.cc \
     src/CmdLineOptParser.cc \
-    src/Compression/QGCLZMA.cc \
-    src/Compression/QGCZlib.cc \
+    src/Utilities/Compression/QGCLZMA.cc \
+    src/Utilities/Compression/QGCZlib.cc \
     src/FollowMe/FollowMe.cc \
     src/Joystick/Joystick.cc \
     src/Joystick/JoystickManager.cc \
     src/Utilities/JsonHelper.cc \
-    src/MissionManager/KMLDomDocument.cc \
-    src/MissionManager/KMLHelper.cc \
+    src/Utilities/KMLDomDocument.cc \
+    src/Utilities/KMLHelper.cc \
     src/MissionManager/CameraCalc.cc \
     src/MissionManager/CameraSection.cc \
     src/MissionManager/CameraSpec.cc \
@@ -743,11 +743,11 @@ SOURCES += \
     src/MissionManager/PlanCreator.cc \
     src/MissionManager/PlanManager.cc \
     src/MissionManager/PlanMasterController.cc \
-    src/MissionManager/QGCFenceCircle.cc \
-    src/MissionManager/QGCFencePolygon.cc \
-    src/MissionManager/QGCMapCircle.cc \
-    src/MissionManager/QGCMapPolygon.cc \
-    src/MissionManager/QGCMapPolyline.cc \
+    src/QmlControls/QGCFenceCircle.cc \
+    src/QmlControls/QGCFencePolygon.cc \
+    src/QmlControls/QGCMapCircle.cc \
+    src/QmlControls/QGCMapPolygon.cc \
+    src/QmlControls/QGCMapPolyline.cc \
     src/MissionManager/RallyPoint.cc \
     src/MissionManager/RallyPointController.cc \
     src/MissionManager/RallyPointManager.cc \
@@ -772,7 +772,7 @@ SOURCES += \
     src/Utilities/QGCLoggingCategory.cc \
     src/QmlControls/QGCMapPalette.cc \
     src/QmlControls/QGCPalette.cc \
-    src/Utilities/QGCQGeoCoordinate.cc \
+    src/QmlControls/QGCQGeoCoordinate.cc \
     src/Utilities/QGCTemporaryFile.cc \
     src/QGCToolbox.cc \
     src/QmlControls/AppMessages.cc \

@@ -27,7 +27,7 @@
         <file alias="QGroundControl/Controls/QGCDynamicObjectManager.qml">src/QmlControls/QGCDynamicObjectManager.qml</file>
         <file alias="QGroundControl/Controls/QGCOptionsComboBox.qml">src/QmlControls/QGCOptionsComboBox.qml</file>
         <file alias="QGroundControl/Controls/TransectStyleMapVisuals.qml">src/PlanView/TransectStyleMapVisuals.qml</file>
-        <file alias="QGroundControl/FlightMap/MapLineArrow.qml">src/MissionManager/MapLineArrow.qml</file>
+        <file alias="QGroundControl/FlightMap/MapLineArrow.qml">src/FlightMap/MapItems/MapLineArrow.qml</file>
         <file alias="QGroundControl/FlightMap/SplitIndicator.qml">src/FlightMap/MapItems/SplitIndicator.qml</file>
         <file alias="ADSBServerSettings.qml">src/UI/preferences/ADSBServerSettings.qml</file>
         <file alias="AirLinkSettings.qml">src/AirLink/AirLinkSettings.qml</file>
@@ -153,10 +153,10 @@
         <file alias="QGroundControl/Controls/QGCGroupBox.qml">src/QmlControls/QGCGroupBox.qml</file>
         <file alias="QGroundControl/Controls/QGCLabel.qml">src/QmlControls/QGCLabel.qml</file>
         <file alias="QGroundControl/Controls/QGCListView.qml">src/QmlControls/QGCListView.qml</file>
-        <file alias="QGroundControl/Controls/QGCMapCircleVisuals.qml">src/MissionManager/QGCMapCircleVisuals.qml</file>
+        <file alias="QGroundControl/FlightMap/QGCMapCircleVisuals.qml">src/FlightMap/MapItems/QGCMapCircleVisuals.qml</file>
         <file alias="QGroundControl/Controls/QGCMapLabel.qml">src/QmlControls/QGCMapLabel.qml</file>
-        <file alias="QGroundControl/Controls/QGCMapPolygonVisuals.qml">src/MissionManager/QGCMapPolygonVisuals.qml</file>
-        <file alias="QGroundControl/Controls/QGCMapPolylineVisuals.qml">src/MissionManager/QGCMapPolylineVisuals.qml</file>
+        <file alias="QGroundControl/FlightMap/QGCMapPolygonVisuals.qml">src/FlightMap/MapItems/QGCMapPolygonVisuals.qml</file>
+        <file alias="QGroundControl/FlightMap/QGCMapPolylineVisuals.qml">src/FlightMap/MapItems/QGCMapPolylineVisuals.qml</file>
         <file alias="QGroundControl/Controls/QGCMarqueeLabel.qml">src/QmlControls/QGCMarqueeLabel.qml</file>
         <file alias="QGroundControl/Controls/QGCMenu.qml">src/QmlControls/QGCMenu.qml</file>
         <file alias="QGroundControl/Controls/QGCMenuItem.qml">src/QmlControls/QGCMenuItem.qml</file>
@@ -381,7 +381,7 @@
         <file alias="MissionSettings.FactMetaData.json">src/MissionManager/MissionSettings.FactMetaData.json</file>
         <file alias="OfflineMaps.SettingsGroup.json">src/Settings/OfflineMaps.SettingsGroup.json</file>
         <file alias="PlanView.SettingsGroup.json">src/Settings/PlanView.SettingsGroup.json</file>
-        <file alias="QGCMapCircle.Facts.json">src/MissionManager/QGCMapCircle.Facts.json</file>
+        <file alias="QGCMapCircle.Facts.json">src/QmlControls/QGCMapCircle.Facts.json</file>
         <file alias="RallyPoint.FactMetaData.json">src/MissionManager/RallyPoint.FactMetaData.json</file>
         <file alias="RCToParamDialog.FactMetaData.json">src/QmlControls/RCToParamDialog.FactMetaData.json</file>
         <file alias="RTK.SettingsGroup.json">src/Settings/RTK.SettingsGroup.json</file>
