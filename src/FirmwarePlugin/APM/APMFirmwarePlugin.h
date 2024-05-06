@@ -10,6 +10,7 @@
 #pragma once
 
 #include "FirmwarePlugin.h"
+#include "QGCMAVLink.h"
 #include "FollowMe.h"
 
 #include <QtNetwork/QAbstractSocket>

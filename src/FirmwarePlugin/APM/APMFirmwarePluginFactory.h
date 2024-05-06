@@ -10,6 +10,7 @@
 #pragma once
 
 #include "FirmwarePluginFactory.h"
+#include "QGCMAVLink.h"
 
 class ArduCopterFirmwarePlugin;
 class ArduPlaneFirmwarePlugin;

@@ -22,6 +22,7 @@ ReleaseBuild {
         $$PWD/Compression \
         $$PWD/FactSystem \
         $$PWD/Geo \
+        $$PWD/MAVLink \
         $$PWD/MissionManager \
         $$PWD/qgcunittest \
         $$PWD/QmlControls \

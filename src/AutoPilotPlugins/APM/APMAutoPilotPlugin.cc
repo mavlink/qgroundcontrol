@@ -28,9 +28,9 @@
 #include "QGCApplication.h"
 #include "ParameterManager.h"
 
-#if !defined(NO_SERIAL_LINK) && !defined(Q_OS_ANDROID)
-#include <QSerialPortInfo>
-#endif
+// #if !defined(NO_SERIAL_LINK) && !defined(Q_OS_ANDROID)
+// #include <QSerialPortInfo>
+// #endif
 
 /// This is the AutoPilotPlugin implementatin for the MAV_AUTOPILOT_ARDUPILOT type.
 APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent)

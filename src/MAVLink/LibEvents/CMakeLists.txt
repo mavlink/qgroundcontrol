@@ -9,7 +9,7 @@ FetchContent_Declare(libevents
 )
 FetchContent_MakeAvailable(libevents)
 
-qt_add_library(libevents_wrapper STATIC
+qt_add_library(LibEventsWrapper STATIC
 	EventHandler.cc
 	EventHandler.h
 	HealthAndArmingCheckReport.cc
@@ -17,17 +17,17 @@ qt_add_library(libevents_wrapper STATIC
 	logging.cpp
 )
 
-target_link_libraries(libevents_wrapper
+target_link_libraries(LibEventsWrapper
 	PRIVATE
 		QmlControls
-                Utilities
+		Utilities
 	PUBLIC
 		Qt6::Core
-		Comms
 		libevents
+		MAVLink
 )
 
-target_include_directories(libevents_wrapper
+target_include_directories(LibEventsWrapper
 	PUBLIC
 		${CMAKE_CURRENT_SOURCE_DIR}
 		${libevents_SOURCE_DIR}/libs/cpp

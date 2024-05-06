@@ -11,6 +11,7 @@
 #include "QGCApplication.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
+#include "MAVLinkProtocol.h"
 #include "QGC.h"
 #include "QGCLoggingCategory.h"
 

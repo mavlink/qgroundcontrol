@@ -11,6 +11,7 @@
 #include "RTCMMavlink.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
+#include "MAVLinkProtocol.h"
 
 RTCMMavlink::RTCMMavlink(QGCToolbox& toolbox)
     : _toolbox(toolbox)

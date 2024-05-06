@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "QGCMAVLink.h"
+#include "MAVLinkLib.h"
 
 #include <QtCore/QObject>
 #include <QtCore/QByteArray>

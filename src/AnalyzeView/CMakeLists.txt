@@ -32,6 +32,7 @@ target_link_libraries(AnalyzeView
 	PUBLIC
 		Qt6::Core
 		Qt6::QmlIntegration
+		MAVLink
 		QmlControls
 )
 

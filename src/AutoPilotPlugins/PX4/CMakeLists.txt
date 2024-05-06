@@ -39,6 +39,7 @@ qt_add_library(PX4AutoPilotPlugin STATIC
 
 target_link_libraries(PX4AutoPilotPlugin
     PRIVATE
+		Comms
 		FactSystem
         QGC
 		Utilities
@@ -49,8 +50,8 @@ target_link_libraries(PX4AutoPilotPlugin
 		Qt6::Quick
 		AutoPilotPlugins
 		CommonAutoPilotPlugin
-		Comms
 		FactControls
+		MAVLink
         VehicleSetup
 )
 

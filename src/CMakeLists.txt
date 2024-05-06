@@ -36,6 +36,7 @@ add_subdirectory(FollowMe)
 add_subdirectory(Geo)
 add_subdirectory(GPS)
 add_subdirectory(Joystick)
+add_subdirectory(MAVLink)
 add_subdirectory(MissionManager)
 # add_subdirectory(PlanView)
 add_subdirectory(PositionManager)
@@ -79,6 +80,7 @@ target_link_libraries(QGC
 		FollowMe
 		GPS
 		Joystick
+		MAVLink
 		MissionManager
 		# PlanView
 		PositionManager

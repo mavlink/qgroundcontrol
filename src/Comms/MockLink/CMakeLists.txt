@@ -24,6 +24,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 			Qt6::Core
 			Qt6::Positioning
 			Comms
+			MAVLink
 	)
 
 	target_include_directories(MockLink PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

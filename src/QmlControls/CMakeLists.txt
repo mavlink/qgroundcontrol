@@ -69,6 +69,7 @@ target_link_libraries(QmlControls
         Comms
         FactControls
 		FactSystem
+		MAVLink
 		MissionManager
         PositionManager
 		QGC
