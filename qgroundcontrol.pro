@@ -428,6 +428,7 @@ SOURCES += \
 # Main QGC Headers and Source files
 
 HEADERS += \
+    src/ADSB/ADSBTCPLink.h \
     src/ADSB/ADSBVehicle.h \
     src/ADSB/ADSBVehicleManager.h \
     src/AnalyzeView/LogDownloadController.h \
@@ -703,6 +704,7 @@ AndroidBuild {
 }
 
 SOURCES += \
+    src/ADSB/ADSBTCPLink.cc \
     src/ADSB/ADSBVehicle.cc \
     src/ADSB/ADSBVehicleManager.cc \
     src/AnalyzeView/LogDownloadController.cc \
