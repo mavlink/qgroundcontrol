@@ -14,10 +14,10 @@
 #include "FactSystem.h"
 #include "FactGroup.h"
 #include "FactPanelController.h"
+#include "FactValueSliderListModel.h"
+#include "ParameterManager.h"
 
 #include <QtQml/QtQml>
-
-const char* FactSystem::_factSystemQmlUri = "QGroundControl.FactSystem";
 
 FactSystem::FactSystem(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
@@ -29,9 +29,11 @@ void FactSystem::setToolbox(QGCToolbox *toolbox)
 {
     QGCTool::setToolbox(toolbox);
 
-    qmlRegisterType<Fact>               (_factSystemQmlUri, 1, 0, "Fact");
-    qmlRegisterType<FactMetaData>       (_factSystemQmlUri, 1, 0, "FactMetaData");
-    qmlRegisterType<FactPanelController>(_factSystemQmlUri, 1, 0, "FactPanelController");
+    qmlRegisterType<Fact>               ("QGroundControl.FactSystem", 1, 0, "Fact");
+    qmlRegisterType<FactMetaData>       ("QGroundControl.FactSystem", 1, 0, "FactMetaData");
+    qmlRegisterType<FactPanelController>("QGroundControl.FactSystem", 1, 0, "FactPanelController");
 
-    qmlRegisterUncreatableType<FactGroup>(_factSystemQmlUri, 1, 0, "FactGroup", "ReferenceOnly");
+    qmlRegisterUncreatableType<FactGroup>               ("QGroundControl.FactSystem",   1, 0, "FactGroup",                  "Reference only");
+    qmlRegisterUncreatableType<FactValueSliderListModel>("QGroundControl.FactControls", 1, 0, "FactValueSliderListModel",   "Reference only");
+    qmlRegisterUncreatableType<ParameterManager>        ("QGroundControl.Vehicle",      1, 0, "ParameterManager",           "Reference only");
 }

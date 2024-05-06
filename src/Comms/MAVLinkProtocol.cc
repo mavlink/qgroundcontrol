@@ -20,12 +20,19 @@
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
 
+#include <QtQml/QtQml>
+
 Q_DECLARE_METATYPE(mavlink_message_t)
 
 QGC_LOGGING_CATEGORY(MAVLinkProtocolLog, "MAVLinkProtocolLog")
 
 const char* MAVLinkProtocol::_tempLogFileTemplate   = "FlightDataXXXXXX";   ///< Template for temporary log file
 const char* MAVLinkProtocol::_logFileExtension      = "mavlink";            ///< Extension for log files
+
+static QObject* mavlinkSingletonFactory(QQmlEngine*, QJSEngine*)
+{
+    return new QGCMAVLink();
+}
 
 /**
  * The default constructor will create a new MAVLink object sending heartbeats at
@@ -86,6 +93,7 @@ void MAVLinkProtocol::setToolbox(QGCToolbox *toolbox)
    _linkMgr =               _toolbox->linkManager();
    _multiVehicleManager =   _toolbox->multiVehicleManager();
 
+   qmlRegisterSingletonType<QGCMAVLink>("MAVLink", 1, 0, "MAVLink", mavlinkSingletonFactory);
    qRegisterMetaType<mavlink_message_t>("mavlink_message_t");
 
    loadSettings();

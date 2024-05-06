@@ -16,6 +16,8 @@
 #include <QtPositioning/private/qgeopositioninfosource_p.h>
 #include <QtPositioning/QNmeaPositionInfoSource>
 
+#include <QtQml/QtQml>
+
 QGCPositionManager::QGCPositionManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool           (app, toolbox)
 {
@@ -57,7 +59,8 @@ void QGCPositionManager::_setupPositionSources(QGCToolbox *toolbox)
 
 void QGCPositionManager::setToolbox(QGCToolbox *toolbox)
 {
-   QGCTool::setToolbox(toolbox);
+    QGCTool::setToolbox(toolbox);
+    qmlRegisterUncreatableType<QGCPositionManager>("QGroundControl.QGCPositionManager", 1, 0, "QGCPositionManager", "Reference only");
 
 #if QT_CONFIG(permissions)
     QLocationPermission locationPermission;
