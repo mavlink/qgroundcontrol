@@ -14,22 +14,24 @@
 #include <QtCore/QMetaObject>
 #include <QtCore/QStringListModel>
 #include <QtQmlIntegration/QtQmlIntegration>
+#include <QtCore/QLoggingCategory>
 
 #include "QGCPalette.h"
 
-// Fordward decls
+Q_DECLARE_LOGGING_CATEGORY(MAVLinkConsoleControllerLog)
+
 class Vehicle;
 
 /// Controller for MavlinkConsole.qml.
-class MavlinkConsoleController : public QStringListModel
+class MAVLinkConsoleController : public QStringListModel
 {
     Q_OBJECT
     QML_ELEMENT
     Q_MOC_INCLUDE("Vehicle.h")
 
 public:
-    MavlinkConsoleController();
-    virtual ~MavlinkConsoleController();
+    MAVLinkConsoleController();
+    virtual ~MAVLinkConsoleController();
 
     Q_INVOKABLE void sendCommand(QString command);
 

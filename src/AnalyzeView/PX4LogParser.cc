@@ -1,41 +1,17 @@
 #include "PX4LogParser.h"
+#include "QGCLoggingCategory.h"
+
 #include <QtCore/QtEndian>
 
-PX4LogParser::PX4LogParser()
-{
-
-}
-
-PX4LogParser::~PX4LogParser()
-{
-
-}
+QGC_LOGGING_CATEGORY(PX4LogParserLog, "qgc.analyzeview.px4logparser")
 
 bool PX4LogParser::getTagsFromLog(QByteArray& log, QList<GeoTagWorker::cameraFeedbackPacket>& cameraFeedback)
 {
-
-     // general message header
-    char header[] = {(char)0xA3, (char)0x95, (char)0x00};
-    // header for GPOS message header
-    char gposHeaderHeader[] = {(char)0xA3, (char)0x95, (char)0x80, (char)0x10, (char)0x00};
-    int gposHeaderOffset;
-    // header for GPOS message
-    char gposHeader[] = {(char)0xA3, (char)0x95, (char)0x10, (char)0x00};
-    int gposOffsets[3] = {3, 7, 11};
-    int gposLengths[3] = {4, 4, 4};
-    // header for trigger message header
-    char triggerHeaderHeader[] = {(char)0xA3, (char)0x95, (char)0x80, (char)0x37, (char)0x00};
-    int triggerHeaderOffset;
-    // header for trigger message
-    char triggerHeader[] = {(char)0xA3, (char)0x95, (char)0x37, (char)0x00};
-    int triggerOffsets[2] = {3, 11};
-    int triggerLengths[2] = {8, 4};
-
     // extract header information: message lengths
     uint8_t* iptr = reinterpret_cast<uint8_t*>(log.mid(log.indexOf(gposHeaderHeader) + 4, 1).data());
-    gposHeaderOffset = static_cast<int>(qFromLittleEndian(*iptr));
+    int gposHeaderOffset = static_cast<int>(qFromLittleEndian(*iptr));
     iptr = reinterpret_cast<uint8_t*>(log.mid(log.indexOf(triggerHeaderHeader) + 4, 1).data());
-    triggerHeaderOffset = static_cast<int>(qFromLittleEndian(*iptr));
+    int triggerHeaderOffset = static_cast<int>(qFromLittleEndian(*iptr));
 
     // extract trigger data
     int index = 1;

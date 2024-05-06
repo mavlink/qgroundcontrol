@@ -7,72 +7,27 @@
  *
  ****************************************************************************/
 
-
 #pragma once
 
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
 #include <QtCore/QLoggingCategory>
-#include <QtCore/QDateTime>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "QmlObjectListModel.h"
 
-class  MultiVehicleManager;
-class  Vehicle;
+Q_DECLARE_LOGGING_CATEGORY(LogDownloadControllerLog)
+
+class Vehicle;
+class QGCLogEntry;
 struct LogDownloadData;
-
-Q_DECLARE_LOGGING_CATEGORY(LogDownloadLog)
-
-//-----------------------------------------------------------------------------
-class QGCLogEntry : public QObject {
-    Q_OBJECT
-    Q_PROPERTY(uint         id          READ id                             CONSTANT)
-    Q_PROPERTY(QDateTime    time        READ time                           NOTIFY timeChanged)
-    Q_PROPERTY(uint         size        READ size                           NOTIFY sizeChanged)
-    Q_PROPERTY(QString      sizeStr     READ sizeStr                        NOTIFY sizeChanged)
-    Q_PROPERTY(bool         received    READ received                       NOTIFY receivedChanged)
-    Q_PROPERTY(bool         selected    READ selected   WRITE setSelected   NOTIFY selectedChanged)
-    Q_PROPERTY(QString      status      READ status                         NOTIFY statusChanged)
-
-public:
-    QGCLogEntry(uint logId, const QDateTime& dateTime = QDateTime(), uint logSize = 0, bool received = false);
-
-    uint        id          () const { return _logID; }
-    uint        size        () const { return _logSize; }
-    QString     sizeStr     () const;
-    QDateTime   time        () const { return _logTimeUTC; }
-    bool        received    () const { return _received; }
-    bool        selected    () const { return _selected; }
-    QString     status      () const { return _status; }
-
-    void        setId       (uint id_)          { _logID = id_; }
-    void        setSize     (uint size_)        { _logSize = size_;     emit sizeChanged(); }
-    void        setTime     (QDateTime date_)   { _logTimeUTC = date_;  emit timeChanged(); }
-    void        setReceived (bool rec_)         { _received = rec_;     emit receivedChanged(); }
-    void        setSelected (bool sel_)         { _selected = sel_;     emit selectedChanged(); }
-    void        setStatus   (QString stat_)     { _status = stat_;      emit statusChanged(); }
-
-signals:
-    void        idChanged       ();
-    void        timeChanged     ();
-    void        sizeChanged     ();
-    void        receivedChanged ();
-    void        selectedChanged ();
-    void        statusChanged   ();
-
-private:
-    uint        _logID;
-    uint        _logSize;
-    QDateTime   _logTimeUTC;
-    bool        _received;
-    bool        _selected;
-    QString     _status;
-};
 
 //-----------------------------------------------------------------------------
 class LogDownloadController : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    Q_MOC_INCLUDE("Vehicle.h")
 
 public:
     LogDownloadController(void);

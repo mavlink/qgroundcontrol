@@ -9,6 +9,7 @@
 
 #include "LogDownloadTest.h"
 #include "LogDownloadController.h"
+#include "LogEntry.h"
 #include "MockLink.h"
 #include "MultiSignalSpy.h"
 
