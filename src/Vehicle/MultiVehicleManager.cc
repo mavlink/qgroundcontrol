@@ -54,6 +54,8 @@ void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
 
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<MultiVehicleManager>("QGroundControl.MultiVehicleManager", 1, 0, "MultiVehicleManager", "Reference only");
+    qmlRegisterUncreatableType<Vehicle>            ("QGroundControl.Vehicle",             1, 0, "Vehicle",             "Reference only");
+    qmlRegisterUncreatableType<VehicleLinkManager> ("QGroundControl.Vehicle",             1, 0, "VehicleLinkManager",  "Reference only");
 
     connect(_mavlinkProtocol, &MAVLinkProtocol::vehicleHeartbeatInfo, this, &MultiVehicleManager::_vehicleHeartbeatInfo);
     connect(&_gcsHeartbeatTimer, &QTimer::timeout, this, &MultiVehicleManager::_sendGCSHeartbeat);

@@ -23,6 +23,8 @@ public:
 
     ~Viewer3DManager();
 
+    static void registerQmlTypes();
+
 protected:
     OsmParser *_osmParser = nullptr;
     Viewer3DQmlBackend *_qmlBackend = nullptr;

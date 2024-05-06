@@ -21,6 +21,7 @@
 
 #include <QtCore/QSettings>
 #include <QtQml/QQmlEngine>
+#include <QtQml/QtQml>
 
 QGC_LOGGING_CATEGORY(JoystickManagerLog, "JoystickManagerLog")
 
@@ -51,6 +52,8 @@ void JoystickManager::setToolbox(QGCToolbox *toolbox)
     _multiVehicleManager = _toolbox->multiVehicleManager();
 
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
+    qmlRegisterUncreatableType<JoystickManager>("QGroundControl.JoystickManager", 1, 0, "JoystickManager", "Reference only");
+    qmlRegisterUncreatableType<Joystick>       ("QGroundControl.JoystickManager", 1, 0, "Joystick",        "Reference only");
 }
 
 void JoystickManager::init() {
