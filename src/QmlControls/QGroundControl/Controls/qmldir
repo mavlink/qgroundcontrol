@@ -78,10 +78,7 @@ QGCFlickable                            1.0 QGCFlickable.qml
 QGCGroupBox                             1.0 QGCGroupBox.qml
 QGCLabel                                1.0 QGCLabel.qml
 QGCListView                             1.0 QGCListView.qml
-QGCMapCircleVisuals                     1.0 QGCMapCircleVisuals.qml
 QGCMapLabel                             1.0 QGCMapLabel.qml
-QGCMapPolygonVisuals                    1.0 QGCMapPolygonVisuals.qml
-QGCMapPolylineVisuals                   1.0 QGCMapPolylineVisuals.qml
 QGCMarqueeLabel                         1.0 QGCMarqueeLabel.qml
 QGCMenu                                 1.0 QGCMenu.qml
 QGCMenuItem                             1.0 QGCMenuItem.qml
