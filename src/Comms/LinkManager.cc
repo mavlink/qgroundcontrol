@@ -79,9 +79,13 @@ LinkManager::LinkManager(QGCApplication* app, QGCToolbox* toolbox)
     , _nmeaPort(nullptr)
     #endif
 {
-    qmlRegisterUncreatableType<LinkManager>         ("QGroundControl", 1, 0, "LinkManager",         "Reference only");
-    qmlRegisterUncreatableType<LinkConfiguration>   ("QGroundControl", 1, 0, "LinkConfiguration",   "Reference only");
-    qmlRegisterUncreatableType<LinkInterface>       ("QGroundControl", 1, 0, "LinkInterface",       "Reference only");
+    qmlRegisterUncreatableType<LinkManager>      ("QGroundControl", 1, 0, "LinkManager",         "Reference only");
+    qmlRegisterUncreatableType<LinkConfiguration>("QGroundControl", 1, 0, "LinkConfiguration",   "Reference only");
+    qmlRegisterUncreatableType<LinkInterface>    ("QGroundControl", 1, 0, "LinkInterface",       "Reference only");
+
+    qmlRegisterUncreatableType<LinkInterface>("QGroundControl.Vehicle", 1, 0, "LinkInterface", "Reference only");
+    qmlRegisterUncreatableType<LogReplayLink>("QGroundControl",         1, 0, "LogReplayLink", "Reference only");
+    qmlRegisterType<LogReplayLinkController> ("QGroundControl",         1, 0, "LogReplayLinkController");
 }
 
 LinkManager::~LinkManager()

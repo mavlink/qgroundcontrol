@@ -41,24 +41,10 @@
 #include "UTMSPManager.h"
 #endif
 
- /**
-  * @brief Helper function to register a type with QML that is not creatable from QML
-  * @param uri The URI to register the type under
-  * @param majorVersion The major version of the type
-  * @param minorVersion The minor version of the type
-  * @param qmlName The name of the type in QML
-  */
- template<class T>
- void registerUncreatableQmlType(const char *uri, int majorVersion, int minorVersion, const char *qmlName)
- {
-     qmlRegisterUncreatableType<T>(uri, majorVersion, minorVersion, qmlName, "Reference only");
- }
-
 QGCToolbox::QGCToolbox(QGCApplication* app)
 {
     // SettingsManager must be first so settings are available to any subsequent tools
     _settingsManager        = new SettingsManager           (app, this);
-    registerUncreatableQmlType<SettingsManager>("QGroundControl.SettingsManager", 1, 0, "SettingsManager");
 
     //-- Scan and load plugins
     _scanAndLoadPlugins(app);
@@ -74,12 +60,10 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     _missionCommandTree     = new MissionCommandTree        (app, this);
     _multiVehicleManager    = new MultiVehicleManager       (app, this);
     _mapEngineManager       = new QGCMapEngineManager       (app, this);
-    registerUncreatableQmlType<QGCMapEngineManager>("QGroundControl.QGCMapEngineManager", 1, 0, "QGCMapEngineManager");
     _uasMessageHandler      = new UASMessageHandler         (app, this);
     _qgcPositionManager     = new QGCPositionManager        (app, this);
     _followMe               = new FollowMe                  (app, this);
     _videoManager           = new VideoManager              (app, this);
-    registerUncreatableQmlType<VideoManager>("QGroundControl.VideoManager", 1, 0, "VideoManager");
 
     _mavlinkLogManager      = new MAVLinkLogManager         (app, this);
     _adsbVehicleManager     = new ADSBVehicleManager        (app, this);
