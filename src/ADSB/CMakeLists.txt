@@ -3,6 +3,8 @@ find_package(Qt6 REQUIRED COMPONENTS Core Network Positioning)
 qt_add_library(ADSB STATIC
 	ADSBVehicle.cc
 	ADSBVehicle.h
+	ADSBTCPLink.cc
+	ADSBTCPLink.h
 	ADSBVehicleManager.cc
 	ADSBVehicleManager.h
 )

@@ -9,69 +9,39 @@
 
 #pragma once
 
+#include <QtCore/QTimer>
+#include <QtCore/QLoggingCategory>
+
 #include "QGCToolbox.h"
 #include "QmlObjectListModel.h"
 #include "ADSBVehicle.h"
 
-#include <QtCore/QThread>
-#include <QtCore/QTimer>
+Q_DECLARE_LOGGING_CATEGORY(ADSBVehicleManagerLog)
 
-class ADSBVehicleManagerSettings;
-class QTcpSocket;
+class ADSBTCPLink;
 
-class ADSBTCPLink : public QThread
+class ADSBVehicleManager : public QGCTool
 {
     Q_OBJECT
+    Q_PROPERTY(QmlObjectListModel* adsbVehicles READ adsbVehicles CONSTANT)
 
-public:
-    ADSBTCPLink(const QString& hostAddress, int port, QObject* parent);
-    ~ADSBTCPLink();
-
-signals:
-    void adsbVehicleUpdate(const ADSBVehicle::ADSBVehicleInfo_t vehicleInfo);
-    void error(const QString errorMsg);
-
-protected:
-    void run(void) final;
-
-private slots:
-    void _readBytes(void);
-
-private:
-    void _hardwareConnect(void);
-    void _parseLine(const QString& line);
-
-    QString         _hostAddress;
-    int             _port;
-    QTcpSocket*     _socket =   nullptr;
-    void _parseAndEmitCallsign(ADSBVehicle::ADSBVehicleInfo_t &adsbInfo, QStringList values);
-    void _parseAndEmitLocation(ADSBVehicle::ADSBVehicleInfo_t &adsbInfo, QStringList values);
-    void _parseAndEmitHeading(ADSBVehicle::ADSBVehicleInfo_t &adsbInfo, QStringList values);
-};
-
-class ADSBVehicleManager : public QGCTool {
-    Q_OBJECT
-    
 public:
     ADSBVehicleManager(QGCApplication* app, QGCToolbox* toolbox);
 
-    Q_PROPERTY(QmlObjectListModel* adsbVehicles READ adsbVehicles CONSTANT)
+    void setToolbox(QGCToolbox* toolbox) final;
 
     QmlObjectListModel* adsbVehicles(void) { return &_adsbVehicles; }
 
-    // QGCTool overrides
-    void setToolbox(QGCToolbox* toolbox) final;
-
 public slots:
-    void adsbVehicleUpdate  (const ADSBVehicle::ADSBVehicleInfo_t vehicleInfo);
-    void _tcpError          (const QString errorMsg);
+    void adsbVehicleUpdate(const ADSBVehicle::ADSBVehicleInfo_t vehicleInfo);
+    void _tcpError(const QString errorMsg);
 
 private slots:
     void _cleanupStaleVehicles(void);
 
 private:
-    QmlObjectListModel              _adsbVehicles;
-    QMap<uint32_t, ADSBVehicle*>    _adsbICAOMap;
-    QTimer                          _adsbVehicleCleanupTimer;
-    ADSBTCPLink*                    _tcpLink = nullptr;
+    QmlObjectListModel _adsbVehicles;
+    QMap<uint32_t, ADSBVehicle*> _adsbICAOMap;
+    QTimer _adsbVehicleCleanupTimer;
+    ADSBTCPLink* _tcpLink = nullptr;
 };
