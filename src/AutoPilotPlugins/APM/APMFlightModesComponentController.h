@@ -11,6 +11,7 @@
 #pragma once
 
 #include <QtCore/QStringList>
+#include <QtCore/QVariantList>
 
 #include "FactPanelController.h"
 #include "QGCMAVLink.h"

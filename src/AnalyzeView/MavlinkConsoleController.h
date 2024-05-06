@@ -25,6 +25,7 @@ class MavlinkConsoleController : public QStringListModel
 {
     Q_OBJECT
     QML_ELEMENT
+    Q_MOC_INCLUDE("Vehicle.h")
 
 public:
     MavlinkConsoleController();
