@@ -1,0 +1,51 @@
+name: Bug Report
+description: File a bug report.
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: Bug description
+      description: Explain the buggy behavior, and how to reproduce it.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect?
+    validations:
+      required: true
+  - type: dropdown
+    id: operatingSystem
+    attributes:
+      label: Operating System
+      description: On what Operating System(s) do you observe the problem?
+      multiple: true
+      options:
+        - "Linux/Unix"
+        - MacOS
+        - Windows
+        - Android
+        - iOS
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+      render: shell
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our [Code of Conduct](https://aqtinstall.readthedocs.io/en/latest/CODE_OF_CONDUCT.html). 
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true
