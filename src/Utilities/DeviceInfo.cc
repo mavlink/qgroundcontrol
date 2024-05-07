@@ -12,16 +12,20 @@ namespace QGCDeviceInfo {
 	//	- Allow to select by transportMedium()
 
 	bool isInternetAvailable() {
-		if(QNetworkInformation::availableBackends().isEmpty()) return false;
+        if(QNetworkInformation::availableBackends().isEmpty()) return false;
 
-		// Note: Qt6.7 will do this automatically
-		// if(!QNetworkInformation::loadDefaultBackend()) return false;
-		// if(!QNetworkInformation::instance()->supports(QNetworkInformation::Feature::Reachability)) return false;
+        if(!QNetworkInformation::loadDefaultBackend()) return false;
 
-		if(!QNetworkInformation::loadBackendByFeatures(QNetworkInformation::Feature::Reachability)) return false;
+        // Note: Qt6.7 will do this automatically
+        if(!QNetworkInformation::instance()->supports(QNetworkInformation::Feature::Reachability))
+        {
+            if(!QNetworkInformation::loadBackendByFeatures(QNetworkInformation::Feature::Reachability)) return false;
+        }
 
-		return (QNetworkInformation::instance()->reachability() == QNetworkInformation::Reachability::Online);
-	}
+        const QNetworkInformation::Reachability reachability = QNetworkInformation::instance()->reachability();
+
+        return (reachability == QNetworkInformation::Reachability::Online);
+    }
 
 	bool isBluetoothAvailable() {
 		#ifdef QGC_ENABLE_BLUETOOTH
