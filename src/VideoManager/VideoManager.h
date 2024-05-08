@@ -10,9 +10,12 @@
 
 #pragma once
 
+#include <QtCore/QSize>
+#include <QtCore/QRunnable>
+#include <QtCore/QLoggingCategory>
+
 #include "QGCToolbox.h"
 #include "SubtitleWriter.h"
-#include <QtCore/QSize>
 
 Q_DECLARE_LOGGING_CATEGORY(VideoManagerLog)
 
@@ -165,4 +168,19 @@ protected:
     QString                 _uvcVideoSourceID;
     bool                    _fullScreen             = false;
     Vehicle*                _activeVehicle          = nullptr;
+};
+
+class FinishVideoInitialization : public QRunnable
+{
+public:
+    explicit FinishVideoInitialization(VideoManager* manager)
+        : _manager(manager)
+    {}
+
+    void run () {
+        _manager->_initVideo();
+    }
+
+private:
+    VideoManager* _manager = nullptr;
 };

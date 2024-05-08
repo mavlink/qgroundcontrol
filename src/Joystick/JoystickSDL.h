@@ -14,6 +14,8 @@
 
 #include "Joystick.h"
 
+#define SDL_MAIN_HANDLED
+
 #include <SDL.h>
 
 class MultiVehicleManager;

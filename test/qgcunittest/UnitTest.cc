@@ -141,7 +141,7 @@ void UnitTest::cleanup(void)
     // If you have a failure whose stack trace points to this then
     // your test is leaking signals or events. It could cause use-after-free or
     // segmentation faults from wild pointers.
-    qgcApp()->processEvents();
+    QCoreApplication::processEvents();
 }
 
 void UnitTest::setExpectedMessageBox(QMessageBox::StandardButton response)

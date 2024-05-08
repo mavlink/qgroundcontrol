@@ -132,7 +132,7 @@ bool SerialLink::_hardwareConnect(QSerialPort::SerialPortError& error, QString& 
         // Wait 50 ms while continuing to run the event queue
         for (unsigned i = 0; i < 10; i++) {
             QGC::SLEEP::usleep(5000);
-            qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
+            QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
         }
         delete _port;
         _port = nullptr;
@@ -151,7 +151,7 @@ bool SerialLink::_hardwareConnect(QSerialPort::SerialPortError& error, QString& 
                 // Wait 500 ms while continuing to run the event loop
                 for (unsigned i = 0; i < 100; i++) {
                     QGC::SLEEP::msleep(5);
-                    qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
+                    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
                 }
                 break;
             }
@@ -159,7 +159,7 @@ bool SerialLink::_hardwareConnect(QSerialPort::SerialPortError& error, QString& 
             // Wait 500 ms while continuing to run the event loop
             for (unsigned i = 0; i < 100; i++) {
                 QGC::SLEEP::msleep(5);
-                qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
+                QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
             }
         }
         // Check limit
@@ -188,9 +188,9 @@ bool SerialLink::_hardwareConnect(QSerialPort::SerialPortError& error, QString& 
             // Wait 250 ms while continuing to run the event loop
             for (unsigned i = 0; i < 50; i++) {
                 QGC::SLEEP::msleep(5);
-                qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
+                QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
             }
-            qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
+            QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
         } else {
             break;
         }

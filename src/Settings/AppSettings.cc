@@ -88,7 +88,7 @@ DECLARE_SETTINGGROUP(App, "")
     // Instantiate savePath so we can check for override and setup default path if needed
 
     SettingsFact* savePathFact = qobject_cast<SettingsFact*>(savePath());
-    QString appName = qgcApp()->applicationName();
+    QString appName = QCoreApplication::applicationName();
 #ifdef __mobile__
     // Mobile builds always use the runtime generated location for savePath.
     bool userHasModifiedSavePath = false;

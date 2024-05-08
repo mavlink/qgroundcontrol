@@ -1220,7 +1220,7 @@ void ParameterManager::_checkInitialLoadComplete(void)
         QString errorMsg = tr("%1 was unable to retrieve the full set of parameters from vehicle %2. "
                               "This will cause %1 to be unable to display its full user interface. "
                               "If you are using modified firmware, you may need to resolve any vehicle startup errors to resolve the issue. "
-                              "If you are using standard firmware, you may need to upgrade to a newer version to resolve the issue.").arg(qgcApp()->applicationName()).arg(_vehicle->id());
+                              "If you are using standard firmware, you may need to upgrade to a newer version to resolve the issue.").arg(QCoreApplication::applicationName()).arg(_vehicle->id());
         qCDebug(ParameterManagerLog) << errorMsg;
         qgcApp()->showAppMessage(errorMsg);
         if (!qgcApp()->runningUnitTests()) {
@@ -1244,7 +1244,7 @@ void ParameterManager::_initialRequestTimeout(void)
     } else {
         if (!_vehicle->genericFirmware()) {
             QString errorMsg = tr("Vehicle %1 did not respond to request for parameters. "
-                                  "This will cause %2 to be unable to display its full user interface.").arg(_vehicle->id()).arg(qgcApp()->applicationName());
+                                  "This will cause %2 to be unable to display its full user interface.").arg(_vehicle->id()).arg(QCoreApplication::applicationName());
             qCDebug(ParameterManagerLog) << errorMsg;
             qgcApp()->showAppMessage(errorMsg);
         }

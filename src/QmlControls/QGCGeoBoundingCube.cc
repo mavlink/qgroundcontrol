@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 #include "QGCGeoBoundingCube.h"
-#include <QDebug>
+#include <QtCore/QDebug>
 #include <cmath>
 
 double QGCGeoBoundingCube::MaxAlt    =  1000000.0;

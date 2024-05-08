@@ -64,7 +64,6 @@ target_link_libraries(QmlControls
 	PRIVATE
 		Qt6::Concurrent
 		Qt6::Location
-		Qt6::Widgets
         FirmwarePlugin
         Geo
         GPS
