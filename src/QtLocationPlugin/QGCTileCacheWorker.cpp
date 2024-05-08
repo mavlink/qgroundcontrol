@@ -24,7 +24,7 @@
 #include <QtSql/QSqlQuery>
 #include <QtSql/QSqlError>
 #include <QtCore/QDateTime>
-#include <QtWidgets/QApplication>
+#include <QtCore/QCoreApplication>
 #include <QtCore/QFile>
 #include <QtCore/QSettings>
 #ifndef Q_OS_ANDROID
@@ -369,7 +369,7 @@ QGCCacheWorker::_getTileSets(QGCMapTask* mtask)
             set->setCreationDate(QDateTime::fromSecsSinceEpoch(query.value("date").toUInt()));
             _updateSetTotals(set);
             //-- Object created here must be moved to app thread to be used there
-            set->moveToThread(QApplication::instance()->thread());
+            set->moveToThread(QCoreApplication::instance()->thread());
             task->tileSetFetched(set);
         }
     } else {

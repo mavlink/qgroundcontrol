@@ -12,7 +12,7 @@
 #include "QGCLoggingCategory.h"
 #include "QGCApplication.h"
 #include "SettingsManager.h"
-#include <QDir>
+#include <QtCore/QDir>
 
 QGC_LOGGING_CATEGORY(QGCFileDialogControllerLog, "QGCFileDialogControllerLog")
 
@@ -85,7 +85,7 @@ QString QGCFileDialogController::fullFolderPathToShortMobilePath(const QString& 
     QString defaultSavePath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValueString();
     if (fullFolderPath.startsWith(defaultSavePath)) {
         int lastDirSepIndex = fullFolderPath.lastIndexOf(QStringLiteral("/"));
-        return qgcApp()->applicationName() + QStringLiteral("/") + fullFolderPath.right(fullFolderPath.length() - lastDirSepIndex);
+        return QCoreApplication::applicationName() + QStringLiteral("/") + fullFolderPath.right(fullFolderPath.length() - lastDirSepIndex);
     } else {
         return fullFolderPath;
     }

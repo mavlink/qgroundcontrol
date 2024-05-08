@@ -44,8 +44,9 @@
 **
 ****************************************************************************/
 
-#include "QGCMapEngine.h"
 #include "QGeoTiledMappingManagerEngineQGC.h"
+#include "QGCApplication.h"
+#include "QGCMapEngine.h"
 #include "QGeoTileFetcherQGC.h"
 #include "QGCMapUrlEngine.h"
 #include "MapProvider.h"
@@ -68,6 +69,7 @@ QGeoTiledMapQGC::QGeoTiledMapQGC(QGeoTiledMappingManagerEngine *engine, QObject 
 QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString)
 :   QGeoTiledMappingManagerEngine()
 {
+    getQGCMapEngine()->init();
 
     QGeoCameraCapabilities cameraCaps;
     cameraCaps.setMinimumZoomLevel(2.0);
@@ -123,10 +125,15 @@ QGeoTiledMappingManagerEngineQGC::createMap()
 void
 QGeoTiledMappingManagerEngineQGC::_setCache(const QVariantMap &parameters)
 {
+    if (getQGCMapEngine()->wasCacheReset()) {
+        qgcApp()->showAppMessage(tr("The Offline Map Cache database has been upgraded. "
+                    "Your old map cache sets have been reset."));
+    }
+
     QString cacheDir;
-    if (parameters.contains(QStringLiteral("mapping.cache.directory")))
+    if (parameters.contains(QStringLiteral("mapping.cache.directory"))) {
         cacheDir = parameters.value(QStringLiteral("mapping.cache.directory")).toString();
-    else {
+    } else {
         cacheDir = getQGCMapEngine()->getCachePath();
         if(!QFileInfo::exists(cacheDir)) {
             if(!QDir::root().mkpath(cacheDir)) {
@@ -146,8 +153,9 @@ QGeoTiledMappingManagerEngineQGC::_setCache(const QVariantMap &parameters)
     if (parameters.contains(QStringLiteral("mapping.cache.memory.size"))) {
       bool ok = false;
       memLimit = parameters.value(QStringLiteral("mapping.cache.memory.size")).toString().toUInt(&ok);
-      if (!ok)
+      if (!ok) {
           memLimit = 0;
+      }
     }
     if(!memLimit)
     {
@@ -155,16 +163,17 @@ QGeoTiledMappingManagerEngineQGC::_setCache(const QVariantMap &parameters)
         memLimit = getQGCMapEngine()->getMaxMemCache() * (1024 * 1024);
     }
     //-- It won't work with less than 1M of memory cache
-    if(memLimit < 1024 * 1024)
+    if(memLimit < 1024 * 1024) {
         memLimit = 1024 * 1024;
+    }
     //-- On the other hand, Qt uses signed 32-bit integers. Limit to 1G to round it down (you don't need more than that).
-    if(memLimit > 1024 * 1024 * 1024)
+    if(memLimit > 1024 * 1024 * 1024) {
         memLimit = 1024 * 1024 * 1024;
+    }
     //-- Disable Qt's disk cache (sort of)
     QAbstractGeoTileCache *pTileCache = new QGeoFileTileCache(cacheDir);
     setTileCache(pTileCache);
-    if(pTileCache)
-    {
+    if(pTileCache) {
         //-- We're basically telling it to use 100k of disk for cache. It doesn't like
         //   values smaller than that and I could not find a way to make it NOT cache.
         //   We handle our own disk caching elsewhere.

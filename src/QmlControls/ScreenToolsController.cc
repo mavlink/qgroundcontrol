@@ -13,9 +13,9 @@
 
 #include "ScreenToolsController.h"
 #include "QGCApplication.h"
-#include <QFontDatabase>
-#include <QFontMetrics>
-#include <QInputDevice>
+#include <QtGui/QFontDatabase>
+#include <QtGui/QFontMetrics>
+#include <QtGui/QInputDevice>
 
 #include "SettingsManager.h"
 

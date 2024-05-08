@@ -15,7 +15,7 @@ JoystickSDL::JoystickSDL(const QString& name, int axisCount, int buttonCount, in
 }
 
 bool JoystickSDL::init(void) {
-    // SDL_SetMainReady
+    SDL_SetMainReady();
     if (SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK) < 0) {
         SDL_JoystickEventState(SDL_ENABLE);
         qWarning() << "Couldn't initialize SimpleDirectMediaLayer:" << SDL_GetError();

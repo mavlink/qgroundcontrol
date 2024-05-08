@@ -173,11 +173,6 @@ int runTests(bool stress, QStringView unitTestOptions)
 	int result = 0;
 
     for (int i=0; i < (stress ? 20 : 1); i++) {
-        if (!qgcApp()->_initForUnitTests()) {
-            result = -1;
-            break;
-        }
-
         // Run the test
         const int failures = UnitTest::run(unitTestOptions);
         if (failures == 0) {
