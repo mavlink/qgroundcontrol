@@ -1,4 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Location Network Positioning Qml Sql Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Core Location Network Positioning Qml Sql)
 
 # QGC_NO_GOOGLE_MAPS
 
@@ -50,7 +50,6 @@ target_compile_definitions(QGCLocation PRIVATE CMAKE_LOCATION_PLUGIN)
 target_link_libraries(QGCLocation
 	PRIVATE
 		Qt6::Positioning
-		Qt6::Widgets
 		Settings
 		Utilities
 	PUBLIC

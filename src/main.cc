@@ -7,47 +7,31 @@
  *
  ****************************************************************************/
 
+#include <QtCore/QProcessEnvironment>
+#include <QtCore/QtPlugin>
+#include <QtWidgets/QApplication>
+#include <QtWidgets/QMessageBox>
+#include <QtQuick/QQuickWindow>
+
 #include "QGCApplication.h"
 #include "QGC.h"
 #include "AppMessages.h"
-#include "QGCMapEngine.h"
-#include "Vehicle.h"
 
 #ifndef __mobile__
     #include "RunGuard.h"
 #endif
 
-#ifdef Q_OS_ANDROID
-    #include "AndroidInterface.h"
-#endif
+#ifdef QT_DEBUG
+
+#include "CmdLineOptParser.h"
 
 #ifdef UNITTEST_BUILD
-    #include "UnitTestList.h"
-#endif
-
-#ifdef QT_DEBUG
-    #include "CmdLineOptParser.h"
-    #ifdef Q_OS_WIN
-        #include <crtdbg.h>
-    #endif
-#endif
-
-#include <QtCore/QProcessEnvironment>
-#include <QtCore/QtPlugin>
-#include <QtGui/QIcon>
-#include <QtQuick/QQuickWindow>
-#include <QtQuickControls2/QQuickStyle>
-#include <QtWidgets/QApplication>
-#include <QtWidgets/QMessageBox>
-#include <QtNetwork/QAbstractSocket>
-
-/* SDL does ugly things to main() */
-#ifdef main
-#undef main
+#include "UnitTestList.h"
 #endif
 
 #ifdef Q_OS_WIN
 
+#include <crtdbg.h>
 #include <windows.h>
 #include <iostream>
 
@@ -62,18 +46,23 @@ int WindowsCrtReportHook(int reportType, char* message, int* returnValue)
     return true;                        // We handled this fully ourselves
 }
 
-#endif
+#endif // Q_OS_WIN
+
+#endif // QT_DEBUG
 
 // To shut down QGC on Ctrl+C on Linux
 #ifdef Q_OS_LINUX
+
 #include <csignal>
 
 void sigHandler(int s)
 {
     std::signal(s, SIG_DFL);
-    qgcApp()->mainRootWindow()->close();
-    QEvent event{QEvent::Quit};
-    qgcApp()->event(&event);
+    if(qgcApp()) {
+        qgcApp()->mainRootWindow()->close();
+        QEvent event{QEvent::Quit};
+        qgcApp()->event(&event);
+    }
 }
 
 #endif /* Q_OS_LINUX */
@@ -94,8 +83,7 @@ int main(int argc, char *argv[])
     // builds, so they can be executed together in the same device.
     // Stable and Daily have same QGC_APPLICATION_NAME so they would
     // not be able to run at the same time
-    QString runguardString(QGC_APPLICATION_NAME);
-    runguardString.append("RunGuardKey");
+    const QString runguardString = QString("%1 RunGuardKey").arg(QGC_APPLICATION_NAME);
 
     RunGuard guard(runguardString);
     if (!guard.tryToRun()) {
@@ -108,13 +96,28 @@ int main(int argc, char *argv[])
     }
 #endif
 
+#ifdef Q_OS_LINUX
+#ifndef Q_OS_ANDROID
+    if (getuid() == 0) {
+        QApplication errorApp(argc, argv);
+        QMessageBox::critical(nullptr, QObject::tr("Error"),
+            QObject::tr("You are running %1 as root. "
+                "You should not do this since it will cause other issues with %1."
+                "%1 will now exit.<br/><br/>").arg(QGC_APPLICATION_NAME)
+        );
+        return -1;
+    }
+#endif
+#endif
+
     //-- Record boot time
     QGC::initTimer();
 
 #ifdef Q_OS_UNIX
     //Force writing to the console on UNIX/BSD devices
-    if (!qEnvironmentVariableIsSet("QT_LOGGING_TO_CONSOLE"))
+    if (!qEnvironmentVariableIsSet("QT_LOGGING_TO_CONSOLE")) {
         qputenv("QT_LOGGING_TO_CONSOLE", "1");
+    }
 #endif
 
     // install the message handler
@@ -143,28 +146,13 @@ int main(int argc, char *argv[])
             break;
         }
     }
+
+// In Windows, the compiler doesn't see the use of the class created by Q_IMPORT_PLUGIN
+#pragma warning( disable : 4930 4101 )
+
 #endif
-
-#ifdef Q_OS_LINUX
-    std::signal(SIGINT, sigHandler);
-    std::signal(SIGTERM, sigHandler);
-#endif /* Q_OS_LINUX */
-
-    // The following calls to qRegisterMetaType are done to silence debug output which warns
-    // that we use these types in signals, and without calling qRegisterMetaType we can't queue
-    // these signals. In general we don't queue these signals, but we do what the warning says
-    // anyway to silence the debug output.
-    qRegisterMetaType<QAbstractSocket::SocketError>();
-
-    qRegisterMetaType<Vehicle::MavCmdResultFailureCode_t>("Vehicle::MavCmdResultFailureCode_t");
 
     // We statically link our own QtLocation plugin
-
-#ifdef Q_OS_WIN
-    // In Windows, the compiler doesn't see the use of the class created by Q_IMPORT_PLUGIN
-#pragma warning( disable : 4930 4101 )
-#endif
-
     Q_IMPORT_PLUGIN(QGeoServiceProviderFactoryQGC)
 
     bool runUnitTests = false;          // Run unit tests
@@ -189,49 +177,28 @@ int main(int argc, char *argv[])
         runUnitTests = true;
     }
 
-    if (quietWindowsAsserts) {
 #ifdef Q_OS_WIN
+    if (quietWindowsAsserts) {
         _CrtSetReportHook(WindowsCrtReportHook);
-#endif
     }
 
-#ifdef Q_OS_WIN
     if (runUnitTests) {
         // Don't pop up Windows Error Reporting dialog when app crashes. This prevents TeamCity from
         // hanging.
-        DWORD dwMode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
+        const DWORD dwMode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
         SetErrorMode(dwMode | SEM_NOGPFAULTERRORBOX);
     }
-#endif
+#endif // Q_OS_WIN
 #endif // QT_DEBUG
 
-#ifdef Q_OS_DARWIN
-    // Gstreamer video playback requires OpenGL
-    QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
-#endif
+    QGCApplication app(argc, argv, runUnitTests);
 
-    QQuickStyle::setStyle("Basic");
-    QGCApplication* app = new QGCApplication(argc, argv, runUnitTests);
-    Q_CHECK_PTR(app);
-    if(app->isErrorState()) {
-        app->exec();
-        return -1;
-    }
+    #ifdef Q_OS_LINUX
+        std::signal(SIGINT, sigHandler);
+        std::signal(SIGTERM, sigHandler);
+    #endif
 
-#ifdef Q_OS_LINUX
-    QApplication::setWindowIcon(QIcon(":/res/resources/icons/qgroundcontrol.ico"));
-#endif /* Q_OS_LINUX */
-
-    // There appears to be a threading issue in qRegisterMetaType which can cause it to throw a qWarning
-    // about duplicate type converters. This is caused by a race condition in the Qt code. Still working
-    // with them on tracking down the bug. For now we register the type which is giving us problems here
-    // while we only have the main thread. That should prevent it from hitting the race condition later
-    // on in the code.
-    qRegisterMetaType<QList<QPair<QByteArray,QByteArray> > >();
-
-    app->_initCommon();
-    //-- Initialize Cache System
-    getQGCMapEngine()->init();
+    app.init();
 
     int exitCode = 0;
 
@@ -241,22 +208,12 @@ int main(int argc, char *argv[])
     } else
 #endif
     {
-#ifdef Q_OS_ANDROID
-        AndroidInterface::checkStoragePermissions();
-        QNativeInterface::QAndroidApplication::hideSplashScreen(333);
-#endif
-        if (!app->_initForNormalAppBoot()) {
-            return -1;
-        }
-        exitCode = app->exec();
+        exitCode = app.exec();
     }
 
-    app->_shutdown();
-    delete app;
-    //-- Shutdown Cache System
-    destroyMapEngine();
+    app.shutdown();
 
-    qDebug() << "After app delete";
+    qDebug() << "Exit";
 
     return exitCode;
 }

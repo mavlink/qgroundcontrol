@@ -981,7 +981,7 @@ bool MissionController::_loadTextMissionFile(QTextStream& stream, QmlObjectListM
             }
         }
     } else {
-        errorString = tr("The mission file is not compatible with this version of %1.").arg(qgcApp()->applicationName());
+        errorString = tr("The mission file is not compatible with this version of %1.").arg(QCoreApplication::applicationName());
         return false;
     }
 

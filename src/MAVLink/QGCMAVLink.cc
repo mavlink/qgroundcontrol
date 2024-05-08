@@ -23,6 +23,9 @@ constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassMultiRotor;
 constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassVTOL;
 constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassGeneric;
 
+// Mavlink status structures for entire app
+mavlink_status_t m_mavlink_status[MAVLINK_COMM_NUM_BUFFERS];
+
 QGCMAVLink::QGCMAVLink(QObject* parent)
     : QObject(parent)
 {
