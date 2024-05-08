@@ -22,6 +22,7 @@
 
 #include <QtGui/QPolygonF>
 #include <QtCore/QJsonArray>
+#include <QtCore/QLineF>
 
 QGC_LOGGING_CATEGORY(SurveyComplexItemLog, "SurveyComplexItemLog")
 

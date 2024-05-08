@@ -11,9 +11,6 @@
 #include "MAVLinkMessage.h"
 #include "QGCLoggingCategory.h"
 
-#include <QtCharts/QLineSeries>
-#include <QtCharts/QAbstractSeries>
-
 QGC_LOGGING_CATEGORY(MAVLinkSystemLog, "qgc.analyzeview.mavlinksystem")
 
 //-----------------------------------------------------------------------------

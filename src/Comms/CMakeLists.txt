@@ -25,7 +25,6 @@ target_link_libraries(Comms
 	PRIVATE
 		Qt6::Qml
 		Qt6::Test
-		Qt6::Widgets
 		AirLink
 		MockLink
 		Settings

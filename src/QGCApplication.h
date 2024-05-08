@@ -28,6 +28,19 @@ class QQmlApplicationEngine;
 class QGCToolbox;
 class QQuickWindow;
 class QGCImageProvider;
+class QGCApplication;
+
+#if defined(qApp)
+#undef qApp
+#endif
+#define qApp (static_cast<QGCApplication *>(QApplication::instance()))
+
+#if defined(qGuiApp)
+#undef qGuiApp
+#endif
+#define qGuiApp (static_cast<QGCApplication *>(QGuiApplication::instance()))
+
+#define qgcApp() qApp
 
 /**
  * @brief The main application and management class.
@@ -41,6 +54,8 @@ class QGCImageProvider;
  * Note: `lastWindowClosed` will be sent by MessageBox popups and other
  * dialogs, that are spawned in QML, when they are closed
 **/
+
+// TODO: Use QtGraphs to convert to QGuiApplication
 class QGCApplication : public QApplication
 {
     Q_OBJECT
@@ -99,7 +114,7 @@ public slots:
     void qmlAttemptWindowClose();
 
     /// Save the specified telemetry Log
-    void saveTelemetryLogOnMainThread(QString tempLogfile);
+    void saveTelemetryLogOnMainThread(const QString &tempLogfile);
 
     /// Check that the telemetry save path is set correctly
     void checkTelemetrySavePathOnMainThread();
@@ -127,33 +142,12 @@ signals:
     void languageChanged        (const QLocale locale);
 
 public:
-    // Although public, these methods are internal and should only be called by UnitTest code
-
     /// @brief Perform initialize which is common to both normal application running and unit tests.
-    ///         Although public should only be called by main.
-    void _initCommon();
+    void init();
+    void shutdown();
 
-    /// @brief Initialize the application for normal application boot. Or in other words we are not going to run
-    ///         unit tests. Although public should only be called by main.
-    bool _initForNormalAppBoot();
-
-    /// @brief Initialize the application for normal application boot. Or in other words we are not going to run
-    ///         unit tests. Although public should only be called by main.
-    bool _initForUnitTests();
-
-    static QGCApplication*  _app;   ///< Our own singleton. Should be reference directly by qgcApp
-
-    bool    isErrorState() const { return _error; }
-
-    QQmlApplicationEngine* qmlAppEngine() { return _qmlAppEngine; }
-
-public:
     // Although public, these methods are internal and should only be called by UnitTest code
-
-    /// Shutdown the application object
-    void _shutdown();
-
-    bool _checkTelemetrySavePath(bool useMessageBox);
+    QQmlApplicationEngine* qmlAppEngine() { return _qmlAppEngine; }
 
 private slots:
     void _missingParamsDisplay                      (void);
@@ -162,9 +156,12 @@ private slots:
     void _showDelayedAppMessages                    (void);
 
 private:
-    QObject*    _rootQmlObject          ();
-    void        _checkForNewVersion     ();
-    void        _exitWithError          (QString errorMessage);
+    /// @brief Initialize the application for normal application boot. Or in other words we are not going to run unit tests.
+    void _initForNormalAppBoot();
+
+    QObject* _rootQmlObject();
+    void _checkForNewVersion();
+    bool _checkTelemetrySavePath(bool useMessageBox);
 
     // Overrides from QApplication
     bool compressEvent(QEvent *event, QObject *receiver, QPostEventList *postedEvents) override;
@@ -209,14 +206,11 @@ private:
 
     CompressedSignalList _compressedSignals;
 
-    static const char* _settingsVersionKey;             ///< Settings key which hold settings version
-    static const char* _deleteAllSettingsKey;           ///< If this settings key is set on boot, all settings will be deleted
+    const QString _settingsVersionKey = QStringLiteral("SettingsVersion"); ///< Settings key which hold settings version
+    const QString _deleteAllSettingsKey = QStringLiteral("DeleteAllSettingsNextBoot"); ///< If this settings key is set on boot, all settings will be deleted
 
     const QString qgcImageProviderId = QStringLiteral("QGCImages");
 
     /// Unit Test have access to creating and destroying singletons
     friend class UnitTest;
 };
-
-/// @brief Returns the QGCApplication object singleton.
-QGCApplication* qgcApp(void);

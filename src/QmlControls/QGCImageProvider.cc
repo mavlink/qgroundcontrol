@@ -9,8 +9,8 @@
 
 #include "QGCImageProvider.h"
 
-#include <QPainter>
-#include <QFont>
+#include <QtGui/QPainter>
+#include <QtGui/QFont>
 
 QGCImageProvider::QGCImageProvider(QQmlImageProviderBase::ImageType imageType)
     : QQuickImageProvider(imageType)

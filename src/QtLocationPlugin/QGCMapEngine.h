@@ -34,6 +34,8 @@ public:
     QGCMapEngine                ();
     ~QGCMapEngine               ();
 
+    static QGCMapEngine* instance();
+
     void                        init                ();
     void                        addTask             (QGCMapTask *task);
     void                        cacheTile           (const QString& type, int x, int y, int z, const QByteArray& image, const QString& format, qulonglong set = UINT64_MAX);
@@ -85,4 +87,3 @@ private:
 };
 
 extern QGCMapEngine*    getQGCMapEngine();
-extern void             destroyMapEngine();

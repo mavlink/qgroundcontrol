@@ -15,7 +15,7 @@
 #include "QGCLoggingCategory.h"
 #include "QGCApplication.h"
 
-#include <QSGFlatColorMaterial>
+#include <QtQuick/QSGFlatColorMaterial>
 
 QGC_LOGGING_CATEGORY(TerrainProfileLog, "TerrainProfileLog")
 

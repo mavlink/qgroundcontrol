@@ -937,7 +937,7 @@ bool FirmwarePlugin::_armVehicleAndValidate(Vehicle* vehicle)
             break;
         }
         QGC::SLEEP::msleep(100);
-        qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
+        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
     }
 
     return vehicleArmed;
@@ -962,7 +962,7 @@ bool FirmwarePlugin::_setFlightModeAndValidate(Vehicle* vehicle, const QString& 
                 break;
             }
             QGC::SLEEP::msleep(100);
-            qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
+            QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
         }
         if (flightModeChanged) {
             break;

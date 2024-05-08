@@ -74,6 +74,7 @@ ReleaseBuild {
         $$PWD/qgcunittest/MultiSignalSpyV2.h \
         $$PWD/qgcunittest/UnitTest.h \
         $$PWD/Terrain/TerrainQueryTest.h \
+        $$PWD/UnitTestList.h \
         $$PWD/Vehicle/FTPManagerTest.h \
         $$PWD/Vehicle/InitialConnectTest.h \
         $$PWD/Vehicle/RequestMessageTest.h \

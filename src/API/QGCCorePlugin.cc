@@ -292,6 +292,12 @@ void QGCCorePlugin::factValueGridCreateDefaultSettings(const QString& defaultSet
 QQmlApplicationEngine* QGCCorePlugin::createQmlApplicationEngine(QObject* parent)
 {
     QQmlApplicationEngine* qmlEngine = new QQmlApplicationEngine(parent);
+    /* EventDatabase eventDatabase;
+    EventMonitor eventMonitor;
+    qmlEngine->setInitialProperties({
+        { "eventDatabase", QVariant::fromValue(&eventDatabase) },
+        { "eventMonitor", QVariant::fromValue(&eventMonitor) }
+    }); */
     qmlEngine->addImportPath("qrc:/qml");
     qmlEngine->rootContext()->setContextProperty("joystickManager", qgcApp()->toolbox()->joystickManager());
     qmlEngine->rootContext()->setContextProperty("debugMessageModel", AppMessages::getModel());

@@ -22,7 +22,7 @@ const char* KMLPlanDomDocument::_missionLineStyleName =     "MissionLineStyle";
 const char* KMLPlanDomDocument::surveyPolygonStyleName =   "SurveyPolygonStyle";
 
 KMLPlanDomDocument::KMLPlanDomDocument()
-    : KMLDomDocument(QStringLiteral("%1 Plan KML").arg(qgcApp()->applicationName()))
+    : KMLDomDocument(QStringLiteral("%1 Plan KML").arg(QCoreApplication::applicationName()))
 {
     _addStyles();
 }

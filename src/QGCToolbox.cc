@@ -41,6 +41,7 @@
 #endif
 
 QGCToolbox::QGCToolbox(QGCApplication* app)
+    : QObject(app)
 {
     // SettingsManager must be first so settings are available to any subsequent tools
     _settingsManager        = new SettingsManager           (app, this);
