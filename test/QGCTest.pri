@@ -18,8 +18,8 @@ ReleaseBuild {
     INCLUDEPATH += \
         $$PWD/AnalyzeView \
         $$PWD/Audio \
+        $$PWD/AutoPilotPlugins \
         $$PWD/Comms \
-        $$PWD/Compression \
         $$PWD/FactSystem \
         $$PWD/Geo \
         $$PWD/MAVLink \
@@ -28,12 +28,13 @@ ReleaseBuild {
         $$PWD/QmlControls \
         $$PWD/Terrain \
         $$PWD/UI \
+        $$PWD/Utilities/Compression \
         $$PWD/Vehicle
 
     HEADERS += \
         #$$PWD/AnalyzeView/LogDownloadTest.h \
         $$PWD/Audio/AudioOutputTest.h \
-        $$PWD/Compression/DecompressionTest.h \
+        $$PWD/Utilities/Compression/DecompressionTest.h \
         $$PWD/FactSystem/FactSystemTestBase.h \
         $$PWD/FactSystem/FactSystemTestGeneric.h \
         $$PWD/FactSystem/FactSystemTestPX4.h \
@@ -65,10 +66,10 @@ ReleaseBuild {
         #$$PWD/qgcunittest/FileDialogTest.h \
         #$$PWD/qgcunittest/MainWindowTest.h \
         #$$PWD/qgcunittest/MessageBoxTest.h \
-        #$$PWD/qgcunittest/RadioConfigTest.h \
-        $$PWD/qgcunittest/ComponentInformationCacheTest.h \
-        $$PWD/qgcunittest/ComponentInformationTranslationTest.h \
-        $$PWD/qgcunittest/MavlinkLogTest.h \
+        #$$PWD/AutoPilotPlugins/RadioConfigTest.h \
+        $$PWD/Vehicle/Components/ComponentInformationCacheTest.h \
+        $$PWD/Vehicle/Components/ComponentInformationTranslationTest.h \
+        $$PWD/AnalyzeView/MavlinkLogTest.h \
         $$PWD/qgcunittest/MultiSignalSpy.h \
         $$PWD/qgcunittest/MultiSignalSpyV2.h \
         $$PWD/qgcunittest/UnitTest.h \
@@ -83,7 +84,7 @@ ReleaseBuild {
     SOURCES += \
         #$$PWD/AnalyzeView/LogDownloadTest.cc \
         $$PWD/Audio/AudioOutputTest.cc \
-        $$PWD/Compression/DecompressionTest.cc \
+        $$PWD/Utilities/Compression/DecompressionTest.cc \
         $$PWD/FactSystem/FactSystemTestBase.cc \
         $$PWD/FactSystem/FactSystemTestGeneric.cc \
         $$PWD/FactSystem/FactSystemTestPX4.cc \
@@ -115,10 +116,10 @@ ReleaseBuild {
         #$$PWD/qgcunittest/FileDialogTest.cc \
         #$$PWD/qgcunittest/MainWindowTest.cc \
         #$$PWD/qgcunittest/MessageBoxTest.cc \
-        #$$PWD/qgcunittest/RadioConfigTest.cc \
-        $$PWD/qgcunittest/ComponentInformationCacheTest.cc \
-        $$PWD/qgcunittest/ComponentInformationTranslationTest.cc \
-        $$PWD/qgcunittest/MavlinkLogTest.cc \
+        #$$PWD/AutoPilotPlugins/RadioConfigTest.cc \
+        $$PWD/Vehicle/Components/ComponentInformationCacheTest.cc \
+        $$PWD/Vehicle/Components/ComponentInformationTranslationTest.cc \
+        $$PWD/AnalyzeView/MavlinkLogTest.cc \
         $$PWD/qgcunittest/MultiSignalSpy.cc \
         $$PWD/qgcunittest/MultiSignalSpyV2.cc \
         $$PWD/qgcunittest/UnitTest.cc \

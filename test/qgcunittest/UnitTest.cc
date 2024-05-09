@@ -14,11 +14,9 @@
 #include "Vehicle.h"
 #include "AppSettings.h"
 #include "SettingsManager.h"
-#include "MockLink.h"
 #include "LinkManager.h"
 #include "QGC.h"
 #include "Fact.h"
-#include "MockLink.h"
 #include "MissionItem.h"
 
 #include <QtTest/QTest>
@@ -70,7 +68,7 @@ QList<UnitTest*>& UnitTest::_testList(void)
     return tests;
 }
 
-int UnitTest::run(QString& singleTest)
+int UnitTest::run(QStringView singleTest)
 {
     int ret = 0;
 
