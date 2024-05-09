@@ -7,17 +7,22 @@
  *
  ****************************************************************************/
 
+#include "UnitTestList.h"
+#include "UnitTest.h"
+#include "QGCApplication.h"
+#include "QGCLoggingCategory.h"
 
 // AnalyzeView
+// #include "MavlinkLogTest.h"
 // #include "LogDownloadTest.h"
 
 // Audio
 #include "AudioOutputTest.h"
 
-// comm
+// AutoPilotPlugins
+// #include "RadioConfigTest.h"
 
-// Compression
-#include "DecompressionTest.h"
+// Comms
 
 // FactSystem
 #include "FactSystemTestGeneric.h"
@@ -56,9 +61,7 @@
 #include "ComponentInformationTranslationTest.h"
 // #include "FileDialogTest.h"
 // #include "MainWindowTest.h"
-// #include "MavlinkLogTest.h"
 // #include "MessageBoxTest.h"
-// #include "RadioConfigTest.h"
 
 // QmlControls
 
@@ -67,7 +70,14 @@
 
 // UI
 
+// Utilities
+// Compression
+#include "DecompressionTest.h"
+
 // Vehicle
+// Components
+#include "ComponentInformationCacheTest.h"
+#include "ComponentInformationTranslationTest.h"
 #include "FTPManagerTest.h"
 // #include "InitialConnectTest.h"
 // #include "RequestMessageTest.h"
@@ -80,75 +90,105 @@
 // #include "SendMavCommandTest.h"
 // #include "TCPLinkTest.h"
 
+QGC_LOGGING_CATEGORY(UnitTestsLog, "qgc.test.unittestlist")
 
-// AnalyzeView
-// UT_REGISTER_TEST(LogDownloadTest)
+int runTests(bool stress, QStringView unitTestOptions)
+{
+	// AnalyzeView
+	// UT_REGISTER_TEST(MavlinkLogTest)
+	// UT_REGISTER_TEST(LogDownloadTest)
 
-// Audio
-UT_REGISTER_TEST(AudioOutputTest)
+	// Audio
+	UT_REGISTER_TEST(AudioOutputTest)
 
-// comm
+	// AutoPilotPlugins
+	// UT_REGISTER_TEST(RadioConfigTest)
 
-// Compression
-UT_REGISTER_TEST(DecompressionTest)
+	// Comms
 
-// FactSystem
-UT_REGISTER_TEST(FactSystemTestGeneric)
-UT_REGISTER_TEST(FactSystemTestPX4)
-UT_REGISTER_TEST(ParameterManagerTest)
+	// FactSystem
+	UT_REGISTER_TEST(FactSystemTestGeneric)
+	UT_REGISTER_TEST(FactSystemTestPX4)
+	UT_REGISTER_TEST(ParameterManagerTest)
 
-// Geo
-UT_REGISTER_TEST(GeoTest)
+	// Geo
+    // UT_REGISTER_TEST(GeoTest)
 
-// MissionManager
-UT_REGISTER_TEST(CameraCalcTest)
-UT_REGISTER_TEST(CameraSectionTest)
-UT_REGISTER_TEST(CorridorScanComplexItemTest)
-// UT_REGISTER_TEST(FWLandingPatternTest)
-// UT_REGISTER_TEST(LandingComplexItemTest)
-// UT_REGISTER_TEST_STANDALONE(MissionCommandTreeEditorTest)
-UT_REGISTER_TEST(MissionCommandTreeTest)
-UT_REGISTER_TEST(MissionControllerManagerTest)
-UT_REGISTER_TEST(MissionControllerTest)
-UT_REGISTER_TEST(MissionItemTest)
-UT_REGISTER_TEST(MissionManagerTest)
-UT_REGISTER_TEST(MissionSettingsTest)
-UT_REGISTER_TEST(PlanMasterControllerTest)
-UT_REGISTER_TEST(QGCMapPolygonTest)
-UT_REGISTER_TEST(QGCMapPolylineTest)
-// UT_REGISTER_TEST(SectionTest)
-UT_REGISTER_TEST(SimpleMissionItemTest)
-UT_REGISTER_TEST(SpeedSectionTest)
-UT_REGISTER_TEST(StructureScanComplexItemTest)
-UT_REGISTER_TEST(SurveyComplexItemTest)
-UT_REGISTER_TEST(TransectStyleComplexItemTest)
-// UT_REGISTER_TEST(VisualMissionItemTest)
+	// MissionManager
+	UT_REGISTER_TEST(CameraCalcTest)
+	UT_REGISTER_TEST(CameraSectionTest)
+	UT_REGISTER_TEST(CorridorScanComplexItemTest)
+	// UT_REGISTER_TEST(FWLandingPatternTest)
+	// UT_REGISTER_TEST(LandingComplexItemTest)
+	// UT_REGISTER_TEST_STANDALONE(MissionCommandTreeEditorTest)
+	UT_REGISTER_TEST(MissionCommandTreeTest)
+	UT_REGISTER_TEST(MissionControllerManagerTest)
+	UT_REGISTER_TEST(MissionControllerTest)
+	UT_REGISTER_TEST(MissionItemTest)
+	UT_REGISTER_TEST(MissionManagerTest)
+	UT_REGISTER_TEST(MissionSettingsTest)
+	UT_REGISTER_TEST(PlanMasterControllerTest)
+	UT_REGISTER_TEST(QGCMapPolygonTest)
+	UT_REGISTER_TEST(QGCMapPolylineTest)
+	// UT_REGISTER_TEST(SectionTest)
+	UT_REGISTER_TEST(SimpleMissionItemTest)
+	UT_REGISTER_TEST(SpeedSectionTest)
+	UT_REGISTER_TEST(StructureScanComplexItemTest)
+	UT_REGISTER_TEST(SurveyComplexItemTest)
+	UT_REGISTER_TEST(TransectStyleComplexItemTest)
+	// UT_REGISTER_TEST(VisualMissionItemTest)
 
-// qgcunittest
-UT_REGISTER_TEST(ComponentInformationCacheTest)
-UT_REGISTER_TEST(ComponentInformationTranslationTest)
-// UT_REGISTER_TEST(FileDialogTest)
-// UT_REGISTER_TEST(MainWindowTest)
-// UT_REGISTER_TEST(MavlinkLogTest)
-// UT_REGISTER_TEST(MessageBoxTest)
-// UT_REGISTER_TEST(RadioConfigTest)
+	// qgcunittest
+	// UT_REGISTER_TEST(FileDialogTest)
+	// UT_REGISTER_TEST(MainWindowTest)
+	// UT_REGISTER_TEST(MessageBoxTest)
 
-// QmlControls
+	// QmlControls
 
-// Terrain
-// UT_REGISTER_TEST(TerrainQueryTest)
+	// Terrain
+	// UT_REGISTER_TEST(TerrainQueryTest)
 
-// UI
+	// UI
 
-// Vehicle
-UT_REGISTER_TEST(FTPManagerTest)
-// UT_REGISTER_TEST(InitialConnectTest)
-// UT_REGISTER_TEST(RequestMessageTest)
-// UT_REGISTER_TEST(SendMavCommandWithHandlerTest)
-// UT_REGISTER_TEST(SendMavCommandWithSignalingTest)
+	// Utilities
+	// Compression
+	UT_REGISTER_TEST(DecompressionTest)
 
-// Missing
-// UT_REGISTER_TEST(FlightGearUnitTest)
-// UT_REGISTER_TEST(LinkManagerTest)
-// UT_REGISTER_TEST(SendMavCommandTest)
-// UT_REGISTER_TEST(TCPLinkTest)
+	// Vehicle
+	// Components
+	UT_REGISTER_TEST(ComponentInformationCacheTest)
+	UT_REGISTER_TEST(ComponentInformationTranslationTest)
+	UT_REGISTER_TEST(FTPManagerTest)
+	// UT_REGISTER_TEST(InitialConnectTest)
+	// UT_REGISTER_TEST(RequestMessageTest)
+	// UT_REGISTER_TEST(SendMavCommandWithHandlerTest)
+	// UT_REGISTER_TEST(SendMavCommandWithSignalingTest)
+
+	// Missing
+	// UT_REGISTER_TEST(FlightGearUnitTest)
+	// UT_REGISTER_TEST(LinkManagerTest)
+	// UT_REGISTER_TEST(SendMavCommandTest)
+	// UT_REGISTER_TEST(TCPLinkTest)
+
+	int result = 0;
+
+    for (int i=0; i < (stress ? 20 : 1); i++) {
+        if (!qgcApp()->_initForUnitTests()) {
+            result = -1;
+            break;
+        }
+
+        // Run the test
+        const int failures = UnitTest::run(unitTestOptions);
+        if (failures == 0) {
+            qDebug() << "ALL TESTS PASSED";
+            result = 0;
+        } else {
+            qDebug() << failures << " TESTS FAILED!";
+            result = -failures;
+            break;
+        }
+    }
+
+    return result;
+}

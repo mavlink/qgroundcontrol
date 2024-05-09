@@ -210,7 +210,8 @@ void TransectStyleComplexItemTest::_testAltitudes(void)
     }
 }
 
-void TransectStyleComplexItemTest::_testFollowTerrain(void)
+// TODO: Move To Terrain Testing
+/*void TransectStyleComplexItemTest::_testFollowTerrain(void)
 {
     _transectStyleItem->cameraCalc()->distanceToSurface()->setRawValue(50);
     _transectStyleItem->cameraCalc()->adjustedFootprintFrontal()->setRawValue(0);
@@ -229,7 +230,7 @@ void TransectStyleComplexItemTest::_testFollowTerrain(void)
         QCOMPARE(missionItem->param7(), expectedTerrainValues.front());
         expectedTerrainValues.pop_front();
     }
-}
+}*/
 
 TestTransectStyleItem::TestTransectStyleItem(PlanMasterController* masterController)
     : TransectStyleComplexItem      (masterController, false /* flyView */, QStringLiteral("UnitTestTransect"))

@@ -22,7 +22,7 @@
 #endif
 
 #ifdef UNITTEST_BUILD
-    #include "UnitTest.h"
+    #include "UnitTestList.h"
 #endif
 
 #ifdef QT_DEBUG
@@ -237,26 +237,10 @@ int main(int argc, char *argv[])
 
 #ifdef UNITTEST_BUILD
     if (runUnitTests) {
-        for (int i=0; i < (stressUnitTests ? 20 : 1); i++) {
-            if (!app->_initForUnitTests()) {
-                return -1;
-            }
-
-            // Run the test
-            int failures = UnitTest::run(unitTestOptions);
-            if (failures == 0) {
-                qDebug() << "ALL TESTS PASSED";
-                exitCode = 0;
-            } else {
-                qDebug() << failures << " TESTS FAILED!";
-                exitCode = -failures;
-                break;
-            }
-        }
+        exitCode = runTests(stressUnitTests, unitTestOptions);
     } else
 #endif
     {
-
 #ifdef Q_OS_ANDROID
         AndroidInterface::checkStoragePermissions();
         QNativeInterface::QAndroidApplication::hideSplashScreen(333);

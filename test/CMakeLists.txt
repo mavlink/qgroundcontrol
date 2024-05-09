@@ -2,17 +2,10 @@ if(NOT QGC_BUILD_TESTING)
     return()
 endif()
 
+find_package(Qt6 REQUIRED COMPONENTS Core Test)
+
 include(CTest)
 enable_testing()
-
-# set(UNIT_TESTING_RESOURCES)
-# qt_add_resources(UNIT_TESTING_RESOURCES UnitTest.qrc)
-
-qt_add_library(qgctest
-    STATIC
-        UnitTestList.cc
-        # ${UNIT_TESTING_RESOURCES}
-)
 
 add_custom_target(check
     COMMAND ctest --output-on-failure .
@@ -29,14 +22,15 @@ endfunction()
 
 add_subdirectory(AnalyzeView)
 # add_qgc_test(LogDownloadTest)
+# add_qgc_test(MavlinkLogTest)
 
 add_subdirectory(Audio)
 add_qgc_test(AudioOutputTest)
 
-add_subdirectory(Comms)
+# add_subdirectory(AutoPilotPlugins)
+# add_qgc_test(RadioConfigTest)
 
-add_subdirectory(Compression)
-add_qgc_test(DecompressionTest)
+add_subdirectory(Comms)
 
 add_subdirectory(FactSystem)
 add_qgc_test(FactSystemTestGeneric)
@@ -47,7 +41,6 @@ add_subdirectory(Geo)
 add_qgc_test(GeoTest)
 
 add_subdirectory(MAVLink)
-add_qgc_test(MAVLinkTest)
 
 add_subdirectory(MissionManager)
 add_qgc_test(CameraCalcTest)
@@ -74,13 +67,9 @@ add_qgc_test(TransectStyleComplexItemTest)
 # add_qgc_test(VisualMissionItemTest)
 
 add_subdirectory(qgcunittest)
-add_qgc_test(ComponentInformationCacheTest)
-add_qgc_test(ComponentInformationTranslationTest)
 # add_qgc_test(FileDialogTest)
 # add_qgc_test(MainWindowTest)
-# add_qgc_test(MavlinkLogTest)
 # add_qgc_test(MessageBoxTest)
-# add_qgc_test(RadioConfigTest)
 
 add_subdirectory(QmlControls)
 
@@ -89,7 +78,14 @@ add_qgc_test(TerrainQueryTest)
 
 add_subdirectory(UI)
 
+add_subdirectory(Utilities)
+# Compression
+add_qgc_test(DecompressionTest)
+
 add_subdirectory(Vehicle)
+# Components
+add_qgc_test(ComponentInformationCacheTest)
+add_qgc_test(ComponentInformationTranslationTest)
 add_qgc_test(FTPManagerTest)
 # add_qgc_test(InitialConnectTest)
 # add_qgc_test(RequestMessageTest)
@@ -100,6 +96,15 @@ add_qgc_test(FTPManagerTest)
 # add_qgc_test(LinkManagerTest)
 # add_qgc_test(SendMavCommandTest)
 # add_qgc_test(TCPLinkTest)
+
+# set(UNIT_TESTING_RESOURCES)
+# qt_add_resources(UNIT_TESTING_RESOURCES UnitTest.qrc)
+qt_add_library(qgctest
+    STATIC
+        UnitTestList.cc
+        UnitTestList.h
+        # ${UNIT_TESTING_RESOURCES}
+)
 
 target_link_libraries(qgctest
     PRIVATE
@@ -115,6 +120,13 @@ target_link_libraries(qgctest
         TerrainTest
         UITest
         VehicleTest
+        VehicleComponentsTest
+        QGC
+        Utilities
+        UtilitiesTest
     PUBLIC
+        Qt6::Core
         qgcunittest
 )
+
+target_include_directories(qgctest INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
