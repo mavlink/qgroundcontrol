@@ -2476,7 +2476,7 @@ void Vehicle::_sendQGCTimeToVehicle()
 void Vehicle::_imageProtocolImageReady(void)
 {
     QImage img = _imageProtocolManager->getImage();
-    _toolbox->imageProvider()->setImage(&img, _id);
+    qgcApp()->qgcImageProvider()->setImage(&img, _id);
     _flowImageIndex++;
     emit flowImageIndexChanged();
 }

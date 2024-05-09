@@ -27,6 +27,7 @@
 class QQmlApplicationEngine;
 class QGCToolbox;
 class QQuickWindow;
+class QGCImageProvider;
 
 /**
  * @brief The main application and management class.
@@ -115,6 +116,8 @@ public slots:
     /// Show modal application message to the user about the need for a reboot. Multiple messages will be supressed if they occur
     /// one after the other.
     void showRebootAppMessage(const QString& message, const QString& title = QString());
+
+    QGCImageProvider* qgcImageProvider();
 
 signals:
     /// This is connected to MAVLinkProtocol::checkForLostLogFiles. We signal this to ourselves to call the slot
@@ -208,6 +211,8 @@ private:
 
     static const char* _settingsVersionKey;             ///< Settings key which hold settings version
     static const char* _deleteAllSettingsKey;           ///< If this settings key is set on boot, all settings will be deleted
+
+    const QString qgcImageProviderId = QStringLiteral("QGCImages");
 
     /// Unit Test have access to creating and destroying singletons
     friend class UnitTest;

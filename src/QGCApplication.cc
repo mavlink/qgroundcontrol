@@ -16,6 +16,7 @@
  *
  */
 
+#include "QmlControls/QGCImageProvider.h"
 #include <QtCore/QFile>
 #include <QtCore/QRegularExpression>
 #include <QtGui/QFontDatabase>
@@ -477,8 +478,7 @@ bool QGCApplication::_initForNormalAppBoot()
     toolbox()->corePlugin()->createRootWindow(_qmlAppEngine);
 
     // Image provider for PX4 Flow
-    QQuickImageProvider* pImgProvider = dynamic_cast<QQuickImageProvider*>(qgcApp()->toolbox()->imageProvider());
-    _qmlAppEngine->addImageProvider(QStringLiteral("QGCImages"), pImgProvider);
+    _qmlAppEngine->addImageProvider(qgcImageProviderId, new QGCImageProvider());
 
     QQuickWindow* rootWindow = qgcApp()->mainRootWindow();
 
@@ -948,4 +948,9 @@ bool QGCApplication::event(QEvent *e)
         }
     }
     return QApplication::event(e);
+}
+
+QGCImageProvider* QGCApplication::qgcImageProvider()
+{
+    return dynamic_cast<QGCImageProvider*>(_qmlAppEngine->imageProvider(qgcImageProviderId));
 }
