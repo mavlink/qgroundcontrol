@@ -11,6 +11,7 @@
 #pragma once
 
 #include "UnitTest.h"
+#include "RadioComponentController.h"
 
 #include <QtCore/QLoggingCategory>
 
