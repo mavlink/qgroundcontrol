@@ -76,7 +76,7 @@ Vagrant.configure(2) do |config|
      sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install %{apt_pkgs}
 
      # use common package installation:
-     /usr/bin/env bash /vagrant/tools/setup/ubuntu.sh
+     /usr/bin/env bash /vagrant/tools/setup/install-dependencies-debian.sh
 
      sudo systemctl set-default graphical.target
 
