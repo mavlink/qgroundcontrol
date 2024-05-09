@@ -9,30 +9,24 @@
 
 #pragma once
 
-#include "QGCToolbox.h"
-
 #include <QtCore/QObject>
 #include <QtQuick/QQuickImageProvider>
 
 // This is used to expose images from ImageProtocolHandler
-class QGCImageProvider : public QGCTool, public QQuickImageProvider
+class QGCImageProvider : public QQuickImageProvider
 {
 public:
-    QGCImageProvider        (QGCApplication* app, QGCToolbox* toolbox);
-    ~QGCImageProvider       ();
+    QGCImageProvider(QQmlImageProviderBase::ImageType type = QQmlImageProviderBase::ImageType::Image);
+    ~QGCImageProvider();
 
-    void    setImage        (QImage* pImage, int id = 0);
+    void setImage(QImage* pImage, int id = 0);
 
-    // Overrdies from QQuickImageProvider
-    QImage  requestImage    (const QString& id, QSize* size, const QSize& requestedSize) override;
-
-    // Overrides from QGCTool
-    void    setToolbox      (QGCToolbox *toolbox) override;
+    QImage requestImage(const QString& id, QSize* size, const QSize& requestedSize) override;
 
 private:
     //-- TODO: For now this is holding a single image. If you happen to have two
     //   or more vehicles with flow, it will not work. To properly manage that condition
     //   this should be a map between each vehicle and its image. The URL provided
     //   for the image request would contain the vehicle identification.
-    QImage _image;
+    QImage m_image;
 };
