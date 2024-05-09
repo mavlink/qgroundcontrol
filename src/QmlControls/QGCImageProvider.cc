@@ -12,29 +12,23 @@
 #include <QPainter>
 #include <QFont>
 
-QGCImageProvider::QGCImageProvider(QGCApplication *app, QGCToolbox* toolbox)
-    : QGCTool               (app, toolbox)
-    , QQuickImageProvider   (QQmlImageProviderBase::Image)
+QGCImageProvider::QGCImageProvider(QQmlImageProviderBase::ImageType imageType)
+    : QQuickImageProvider(imageType)
 {
-}
-
-QGCImageProvider::~QGCImageProvider()
-{
-
-}
-
-void QGCImageProvider::setToolbox(QGCToolbox *toolbox)
-{
-   QGCTool::setToolbox(toolbox);
-   //-- Dummy temporary image until something comes along
-   _image = QImage(320, 240, QImage::Format_RGBA8888);
-   _image.fill(Qt::black);
-   QPainter painter(&_image);
+    //-- Dummy temporary image until something comes along
+   m_image = QImage(320, 240, QImage::Format_RGBA8888);
+   m_image.fill(Qt::black);
+   QPainter painter(&m_image);
    QFont f = painter.font();
    f.setPixelSize(20);
    painter.setFont(f);
    painter.setPen(Qt::white);
    painter.drawText(QRectF(0, 0, 320, 240), Qt::AlignCenter, "Waiting...");
+}
+
+QGCImageProvider::~QGCImageProvider()
+{
+
 }
 
 QImage QGCImageProvider::requestImage(const QString & /* image url with vehicle id*/, QSize *, const QSize &)
@@ -64,11 +58,10 @@ QImage QGCImageProvider::requestImage(const QString & /* image url with vehicle 
     For now, we don't even look at the URL. This will have to be fixed if we're to support multiple
     vehicles transmitting flow images.
 */
-    return _image;
+    return m_image;
 }
 
 void QGCImageProvider::setImage(QImage* pImage, int /* vehicle id*/)
 {
-    _image = pImage->mirrored();
+    m_image = pImage->mirrored();
 }
-
