@@ -87,6 +87,11 @@ public:
     void                guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle* vehicle, double airspeed_equiv) override;
     QVariant            mainStatusIndicatorContentItem  (const Vehicle* vehicle) const override;
 
+    // support for changing speed in Copter guide mode:
+    bool mulirotorSpeedLimitsAvailable(Vehicle* vehicle);
+    double maximumHorizontalSpeedMultirotor(Vehicle* vehicle);
+    void guidedModeChangeGroundSpeedMetersSecond(Vehicle *vehicle, double speed);
+
 protected:
     /// All access to singleton is through stack specific implementation
     APMFirmwarePlugin(void);

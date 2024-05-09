@@ -897,6 +897,35 @@ void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
     }
 }
 
+bool APMFirmwarePlugin::mulirotorSpeedLimitsAvailable(Vehicle* vehicle)
+{
+    return vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "WPNAV_SPEED");
+}
+
+double APMFirmwarePlugin::maximumHorizontalSpeedMultirotor(Vehicle* vehicle)
+{
+    QString speedParam("WPNAV_SPEED");
+
+    if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, speedParam)) {
+        return vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, speedParam)->rawValue().toDouble() * 0.01;  // note cm/s -> m/s
+    }
+
+    return FirmwarePlugin::maximumHorizontalSpeedMultirotor(vehicle);
+}
+
+void APMFirmwarePlugin::guidedModeChangeGroundSpeedMetersSecond(Vehicle *vehicle, double groundspeed)
+{
+    vehicle->sendMavCommand(
+        vehicle->defaultComponentId(),
+        MAV_CMD_DO_CHANGE_SPEED,
+        true,                                   // show error is fails
+        1,                                     // 0: airspeed, 1: groundspeed
+        static_cast<float>(groundspeed),       // groundspeed setpoint
+        -1,                                   // throttle
+        0,                                    // 0: absolute speed, 1: relative to current
+        NAN, NAN,NAN);                        // param 5-7 unused
+}
+
 void APMFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
 {
     _guidedModeTakeoff(vehicle, altitudeRel);
