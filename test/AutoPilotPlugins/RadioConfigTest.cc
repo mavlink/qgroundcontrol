@@ -16,7 +16,6 @@
 #include "APM/APMAutoPilotPlugin.h"
 #include "APM/APMRadioComponent.h"
 #include "PX4RadioComponent.h"
-#include "QGCQmlWidgetHolder.h"
 #include "AutoPilotPlugin.h"
 #include "MultiSignalSpy.h"
 

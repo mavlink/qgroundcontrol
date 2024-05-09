@@ -14,8 +14,8 @@
         <file alias="PolygonGood.kml">MissionManager/PolygonGood.kml</file>
         <file alias="PolygonMissingNode.kml">MissionManager/PolygonMissingNode.kml</file>
         <file alias="SectionTest.plan">MissionManager/SectionTest.plan</file>
-        <file alias="TranslationTest.json">qgcunittest/TranslationTest.json</file>
-        <file alias="TranslationTest_de_DE.ts">qgcunittest/TranslationTest_de_DE.ts</file>
+        <file alias="TranslationTest.json">Vehicle/Components/TranslationTest.json</file>
+        <file alias="TranslationTest_de_DE.ts">Vehicle/Components/TranslationTest_de_DE.ts</file>
         <file alias="FactSystemTest.qml">FactSystem/FactSystemTest.qml</file>
         <file alias="MissionPlanner.waypoints">MissionManager/MissionPlanner.waypoints</file>
         <file alias="MockLinkOptionsDlg.qml">Comms/MockLinkOptionsDlg.qml</file>

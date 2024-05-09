@@ -9,8 +9,8 @@
 
 #pragma once
 
-#include "QGCMAVLink.h"
 #include "MockLink.h"
+#include "MAVLinkLib.h"
 
 #include <QtCore/QObject>
 #include <QtWidgets/QFileDialog>
@@ -23,7 +23,6 @@
 class QGCMessageBox;
 class QGCQFileDialog;
 class LinkManager;
-class MockLink;
 class Vehicle;
 class Fact;
 class LinkInterface;
@@ -39,7 +38,7 @@ public:
 
     /// @brief Called to run all the registered unit tests
     ///     @param singleTest Name of test to just run a single test
-    static int run(QString& singleTest);
+    static int run(QStringView singleTest);
 
     /// @brief Sets up for an expected QGCMessageBox
     ///     @param response Response to take on message box
