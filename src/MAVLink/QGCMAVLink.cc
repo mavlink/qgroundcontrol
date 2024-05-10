@@ -8,6 +8,7 @@
  ****************************************************************************/
 
 #include "QGCMAVLink.h"
+#include <QGCLoggingCategory.h>
 
 #include <QtCore/QDebug>
 
@@ -259,4 +260,145 @@ QString QGCMAVLink::mavSysStatusSensorToString(MAV_SYS_STATUS_SENSOR sysStatusSe
     qWarning() << "QGCMAVLink::mavSysStatusSensorToString: Unknown sensor" << sysStatusSensor;
 
     return QT_TRANSLATE_NOOP("MAVLink unknown SYS_STATUS_SENSOR value", "Unknown sensor");
+}
+
+QString QGCMAVLink::mavTypeToString(MAV_TYPE mavType) {
+    static QMap<int, QString> typeNames = {
+        { MAV_TYPE_GENERIC,         tr("Generic micro air vehicle" )},
+        { MAV_TYPE_FIXED_WING,      tr("Fixed wing aircraft")},
+        { MAV_TYPE_QUADROTOR,       tr("Quadrotor")},
+        { MAV_TYPE_COAXIAL,         tr("Coaxial helicopter")},
+        { MAV_TYPE_HELICOPTER,      tr("Normal helicopter with tail rotor.")},
+        { MAV_TYPE_ANTENNA_TRACKER, tr("Ground installation")},
+        { MAV_TYPE_GCS,             tr("Operator control unit / ground control station")},
+        { MAV_TYPE_AIRSHIP,         tr("Airship, controlled")},
+        { MAV_TYPE_FREE_BALLOON,    tr("Free balloon, uncontrolled")},
+        { MAV_TYPE_ROCKET,          tr("Rocket")},
+        { MAV_TYPE_GROUND_ROVER,    tr("Ground rover")},
+        { MAV_TYPE_SURFACE_BOAT,    tr("Surface vessel, boat, ship")},
+        { MAV_TYPE_SUBMARINE,       tr("Submarine")},
+        { MAV_TYPE_HEXAROTOR,       tr("Hexarotor")},
+        { MAV_TYPE_OCTOROTOR,       tr("Octorotor")},
+        { MAV_TYPE_TRICOPTER,       tr("trirotor")},
+        { MAV_TYPE_FLAPPING_WING,   tr("Flapping wing")},
+        { MAV_TYPE_KITE,            tr("Kite")},
+        { MAV_TYPE_ONBOARD_CONTROLLER, tr("Onboard companion controller")},
+        { MAV_TYPE_VTOL_TAILSITTER_DUOROTOR,   tr("Two-rotor VTOL using control surfaces in vertical operation in addition. Tailsitter")},
+        { MAV_TYPE_VTOL_TAILSITTER_QUADROTOR,  tr("Quad-rotor VTOL using a V-shaped quad config in vertical operation. Tailsitter")},
+        { MAV_TYPE_VTOL_TILTROTOR,  tr("Tiltrotor VTOL")},
+        { MAV_TYPE_VTOL_FIXEDROTOR,  tr("VTOL Fixedrotor")},
+        { MAV_TYPE_VTOL_TAILSITTER,  tr("VTOL Tailsitter")},
+        { MAV_TYPE_VTOL_TILTWING,   tr("VTOL Tiltwing")},
+        { MAV_TYPE_VTOL_RESERVED5,  tr("VTOL reserved 5")},
+        { MAV_TYPE_GIMBAL,          tr("Onboard gimbal")},
+        { MAV_TYPE_ADSB,            tr("Onboard ADSB peripheral")},
+    };
+
+    return typeNames.value(mavType, "MAV_TYPE_UNKNOWN");
+}
+
+QString QGCMAVLink::firmwareVersionTypeToString(FIRMWARE_VERSION_TYPE firmwareVersionType)
+{
+    switch (firmwareVersionType) {
+    case FIRMWARE_VERSION_TYPE_DEV:
+        return QStringLiteral("dev");
+    case FIRMWARE_VERSION_TYPE_ALPHA:
+        return QStringLiteral("alpha");
+    case FIRMWARE_VERSION_TYPE_BETA:
+        return QStringLiteral("beta");
+    case FIRMWARE_VERSION_TYPE_RC:
+        return QStringLiteral("rc");
+    case FIRMWARE_VERSION_TYPE_OFFICIAL:
+    default:
+        return QStringLiteral("");
+    }
+}
+
+int QGCMAVLink::motorCount(MAV_TYPE mavType, uint8_t frameType)
+{
+    switch (mavType) {
+    case MAV_TYPE_HELICOPTER:
+        return 1;
+    case MAV_TYPE_VTOL_TAILSITTER_DUOROTOR:
+        return 2;
+    case MAV_TYPE_TRICOPTER:
+        return 3;
+    case MAV_TYPE_QUADROTOR:
+    case MAV_TYPE_VTOL_TAILSITTER_QUADROTOR:
+        return 4;
+    case MAV_TYPE_HEXAROTOR:
+        return 6;
+    case MAV_TYPE_OCTOROTOR:
+        return 8;
+    case MAV_TYPE_SUBMARINE:
+    {
+        // Supported frame types
+        enum {
+            SUB_FRAME_BLUEROV1,
+            SUB_FRAME_VECTORED,
+            SUB_FRAME_VECTORED_6DOF,
+            SUB_FRAME_VECTORED_6DOF_90DEG,
+            SUB_FRAME_SIMPLEROV_3,
+            SUB_FRAME_SIMPLEROV_4,
+            SUB_FRAME_SIMPLEROV_5,
+            SUB_FRAME_CUSTOM
+        };
+
+        switch (frameType) {  // ardupilot/libraries/AP_Motors/AP_Motors6DOF.h sub_frame_t
+
+        case SUB_FRAME_BLUEROV1:
+        case SUB_FRAME_VECTORED:
+            return 6;
+
+        case SUB_FRAME_SIMPLEROV_3:
+            return 3;
+
+        case SUB_FRAME_SIMPLEROV_4:
+            return 4;
+
+        case SUB_FRAME_SIMPLEROV_5:
+            return 5;
+
+        case SUB_FRAME_VECTORED_6DOF:
+        case SUB_FRAME_VECTORED_6DOF_90DEG:
+        case SUB_FRAME_CUSTOM:
+            return 8;
+
+        default:
+            return -1;
+        }
+    }
+
+    default:
+        return -1;
+    }
+}
+
+uint32_t QGCMAVLink::highLatencyFailuresToMavSysStatus(mavlink_high_latency2_t& highLatency2)
+{
+    struct failure2Sensor_s {
+        HL_FAILURE_FLAG         failureBit;
+        MAV_SYS_STATUS_SENSOR   sensorBit;
+    };
+
+    static const failure2Sensor_s rgFailure2Sensor[] = {
+        { HL_FAILURE_FLAG_GPS,                      MAV_SYS_STATUS_SENSOR_GPS },
+        { HL_FAILURE_FLAG_DIFFERENTIAL_PRESSURE,    MAV_SYS_STATUS_SENSOR_DIFFERENTIAL_PRESSURE },
+        { HL_FAILURE_FLAG_ABSOLUTE_PRESSURE,        MAV_SYS_STATUS_SENSOR_ABSOLUTE_PRESSURE },
+        { HL_FAILURE_FLAG_3D_ACCEL,                 MAV_SYS_STATUS_SENSOR_3D_ACCEL },
+        { HL_FAILURE_FLAG_3D_GYRO,                  MAV_SYS_STATUS_SENSOR_3D_GYRO },
+        { HL_FAILURE_FLAG_3D_MAG,                   MAV_SYS_STATUS_SENSOR_3D_MAG },
+    };
+
+    // Map from MAV_FAILURE bits to standard SYS_STATUS message handling
+    uint32_t onboardControlSensorsEnabled = 0;
+    for (size_t i=0; i<sizeof(rgFailure2Sensor)/sizeof(failure2Sensor_s); i++) {
+        const failure2Sensor_s* pFailure2Sensor = &rgFailure2Sensor[i];
+        if (highLatency2.failure_flags & pFailure2Sensor->failureBit) {
+            // Assume if reporting as unhealthy that is it present and enabled
+            onboardControlSensorsEnabled |= pFailure2Sensor->sensorBit;
+        }
+    }
+
+    return onboardControlSensorsEnabled;
 }
