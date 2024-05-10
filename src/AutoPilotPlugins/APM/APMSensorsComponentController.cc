@@ -32,7 +32,7 @@ APMSensorsComponentController::APMSensorsComponentController(void)
     , _nextButton(nullptr)
     , _cancelButton(nullptr)
     , _showOrientationCalArea(false)
-    , _calTypeInProgress(CalTypeNone)
+    , _calTypeInProgress(QGCMAVLink::CalibrationNone)
     , _orientationCalDownSideDone(false)
     , _orientationCalUpsideDownSideDone(false)
     , _orientationCalLeftSideDone(false)
@@ -101,10 +101,10 @@ void APMSensorsComponentController::_startLogCalibration(void)
     connect(_vehicle, &Vehicle::textMessageReceived, this, &APMSensorsComponentController::_handleUASTextMessage);
     
     emit setAllCalButtonsEnabled(false);
-    if (_calTypeInProgress == CalTypeAccel || _calTypeInProgress == CalTypeCompassMot) {
+    if (_calTypeInProgress == QGCMAVLink::CalibrationAccel || _calTypeInProgress == QGCMAVLink::CalibrationAPMCompassMot) {
         _nextButton->setEnabled(true);
     }
-    _cancelButton->setEnabled(_calTypeInProgress == CalTypeOnboardCompass);
+    _cancelButton->setEnabled(_calTypeInProgress == QGCMAVLink::CalibrationMag);
 
     connect(qgcApp()->toolbox()->mavlinkProtocol(), &MAVLinkProtocol::messageReceived, this, &APMSensorsComponentController::_mavlinkMessageReceived);
 }
@@ -159,7 +159,7 @@ void APMSensorsComponentController::_stopCalibration(APMSensorsComponentControll
     _nextButton->setEnabled(false);
     _cancelButton->setEnabled(false);
 
-    if (_calTypeInProgress == CalTypeOnboardCompass) {
+    if (_calTypeInProgress == QGCMAVLink::CalibrationMag) {
         _restorePreviousCompassCalFitness();
     }
 
@@ -201,7 +201,7 @@ void APMSensorsComponentController::_stopCalibration(APMSensorsComponentControll
         break;
     }
     
-    _calTypeInProgress = CalTypeNone;
+    _calTypeInProgress = QGCMAVLink::CalibrationNone;
 }
 
 void APMSensorsComponentController::_mavCommandResult(int vehicleId, int component, int command, int result, bool noReponseFromVehicle)
@@ -217,7 +217,7 @@ void APMSensorsComponentController::_mavCommandResult(int vehicleId, int compone
         disconnect(_vehicle, &Vehicle::mavCommandResult, this, &APMSensorsComponentController::_mavCommandResult);
         if (result == MAV_RESULT_ACCEPTED) {
             // Onboard mag cal is supported
-            _calTypeInProgress = CalTypeOnboardCompass;
+            _calTypeInProgress = QGCMAVLink::CalibrationMag;
             _rgCompassCalProgress[0] = 0;
             _rgCompassCalProgress[1] = 0;
             _rgCompassCalProgress[2] = 0;
@@ -305,11 +305,11 @@ void APMSensorsComponentController::calibrateCompassNorth(float lat, float lon, 
 void APMSensorsComponentController::calibrateAccel(bool doSimpleAccelCal)
 {
 
-    _calTypeInProgress = CalTypeAccel;
+    _calTypeInProgress = QGCMAVLink::CalibrationAccel;
     if (doSimpleAccelCal) {
         _startLogCalibration();
-        _calTypeInProgress = CalTypeAccelFast;
-        _vehicle->startCalibration(Vehicle::CalibrationAPMAccelSimple);
+        _calTypeInProgress = QGCMAVLink::CalibrationAPMAccelSimple;
+        _vehicle->startCalibration(_calTypeInProgress);
         return;
     }
     _vehicle->vehicleLinkManager()->setCommunicationLostEnabled(false);
@@ -339,7 +339,7 @@ void APMSensorsComponentController::calibrateAccel(bool doSimpleAccelCal)
     _orientationCalTailDownSideVisible = false;
     _orientationCalNoseDownSideVisible = false;
 
-    _calTypeInProgress = CalTypeAccel;
+    _calTypeInProgress = QGCMAVLink::CalibrationAccel;
     _orientationCalDownSideVisible = true;
     _orientationCalUpsideDownSideVisible = true;
     _orientationCalLeftSideVisible = true;
@@ -352,45 +352,45 @@ void APMSensorsComponentController::calibrateAccel(bool doSimpleAccelCal)
     emit orientationCalSidesInProgressChanged();
     _updateAndEmitShowOrientationCalArea(true);
 
-    _vehicle->startCalibration(Vehicle::CalibrationAccel);
+    _vehicle->startCalibration(_calTypeInProgress);
 }
 
 void APMSensorsComponentController::calibrateMotorInterference(void)
 {
-    _calTypeInProgress = CalTypeCompassMot;
+    _calTypeInProgress = QGCMAVLink::CalibrationAPMCompassMot;
     _vehicle->vehicleLinkManager()->setCommunicationLostEnabled(false);
     _startLogCalibration();
     _appendStatusLog(tr("Raise the throttle slowly to between 50% ~ 75% (the props will spin!) for 5 ~ 10 seconds."));
     _appendStatusLog(tr("Quickly bring the throttle back down to zero"));
     _appendStatusLog(tr("Press the Next button to complete the calibration"));
-    _vehicle->startCalibration(Vehicle::CalibrationAPMCompassMot);
+    _vehicle->startCalibration(_calTypeInProgress);
 }
 
 void APMSensorsComponentController::levelHorizon(void)
 {
-    _calTypeInProgress = CalTypeLevelHorizon;
+    _calTypeInProgress = QGCMAVLink::CalibrationLevel;
     _vehicle->vehicleLinkManager()->setCommunicationLostEnabled(false);
     _startLogCalibration();
     _appendStatusLog(tr("Hold the vehicle in its level flight position."));
-    _vehicle->startCalibration(Vehicle::CalibrationLevel);
+    _vehicle->startCalibration(_calTypeInProgress);
 }
 
 void APMSensorsComponentController::calibratePressure(void)
 {
-    _calTypeInProgress = CalTypePressure;
+    _calTypeInProgress = QGCMAVLink::CalibrationAPMPressureAirspeed;
     _vehicle->vehicleLinkManager()->setCommunicationLostEnabled(false);
     _startLogCalibration();
     _appendStatusLog(tr("Requesting pressure calibration..."));
-    _vehicle->startCalibration(Vehicle::CalibrationAPMPressureAirspeed);
+    _vehicle->startCalibration(_calTypeInProgress);
 }
 
 void APMSensorsComponentController::calibrateGyro(void)
 {
-    _calTypeInProgress = CalTypeGyro;
+    _calTypeInProgress = QGCMAVLink::CalibrationGyro;
     _vehicle->vehicleLinkManager()->setCommunicationLostEnabled(false);
     _startLogCalibration();
     _appendStatusLog(tr("Requesting gyro calibration..."));
-    _vehicle->startCalibration(Vehicle::CalibrationGyro);
+    _vehicle->startCalibration(_calTypeInProgress);
 }
 
 void APMSensorsComponentController::_handleUASTextMessage(int uasId, int compId, int severity, QString text)
@@ -446,7 +446,7 @@ void APMSensorsComponentController::cancelCalibration(void)
 {
     _cancelButton->setEnabled(false);
 
-    if (_calTypeInProgress == CalTypeOnboardCompass) {
+    if (_calTypeInProgress == QGCMAVLink::CalibrationMag) {
         _vehicle->sendMavCommand(_vehicle->defaultComponentId(), MAV_CMD_DO_CANCEL_MAG_CAL, true /* showError */);
         _stopCalibration(StopCalibrationCancelled);
     } else {
@@ -479,7 +479,7 @@ void APMSensorsComponentController::nextClicked(void)
 
         _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
 
-        if (_calTypeInProgress == CalTypeCompassMot) {
+        if (_calTypeInProgress == QGCMAVLink::CalibrationAPMCompassMot) {
             _stopCalibration(StopCalibrationSuccess);
         }
     }
@@ -508,7 +508,7 @@ bool APMSensorsComponentController::usingUDPLink(void)
 
 void APMSensorsComponentController::_handleCommandAck(mavlink_message_t& message)
 {
-    if (_calTypeInProgress == CalTypeLevelHorizon || _calTypeInProgress == CalTypeGyro || _calTypeInProgress == CalTypePressure || _calTypeInProgress == CalTypeAccelFast) {
+    if (_calTypeInProgress == QGCMAVLink::CalibrationLevel || _calTypeInProgress == QGCMAVLink::CalibrationGyro || _calTypeInProgress == QGCMAVLink::CalibrationAPMPressureAirspeed || _calTypeInProgress == QGCMAVLink::CalibrationAPMAccelSimple) {
         mavlink_command_ack_t commandAck;
         mavlink_msg_command_ack_decode(&message, &commandAck);
 
@@ -532,7 +532,7 @@ void APMSensorsComponentController::_handleCommandAck(mavlink_message_t& message
 
 void APMSensorsComponentController::_handleMagCalProgress(mavlink_message_t& message)
 {
-    if (_calTypeInProgress == CalTypeOnboardCompass) {
+    if (_calTypeInProgress == QGCMAVLink::CalibrationMag) {
         mavlink_mag_cal_progress_t magCalProgress;
         mavlink_msg_mag_cal_progress_decode(&message, &magCalProgress);
 
@@ -560,7 +560,7 @@ void APMSensorsComponentController::_handleMagCalProgress(mavlink_message_t& mes
 
 void APMSensorsComponentController::_handleMagCalReport(mavlink_message_t& message)
 {
-    if (_calTypeInProgress == CalTypeOnboardCompass) {
+    if (_calTypeInProgress == QGCMAVLink::CalibrationMag) {
         mavlink_mag_cal_report_t magCalReport;
         mavlink_msg_mag_cal_report_decode(&message, &magCalReport);
 

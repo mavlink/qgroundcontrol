@@ -526,32 +526,7 @@ void Vehicle::_offlineHoverSpeedSettingChanged(QVariant value)
 
 QString Vehicle::firmwareTypeString() const
 {
-    if (px4Firmware()) {
-        return QStringLiteral("PX4 Pro");
-    } else if (apmFirmware()) {
-        return QStringLiteral("ArduPilot");
-    } else {
-        return tr("MAVLink Generic");
-    }
-}
-
-QString Vehicle::vehicleTypeString() const
-{
-    if (airship()) {
-        return tr("Airship");
-    } else if (fixedWing()) {
-        return tr("Fixed Wing");
-    } else if (multiRotor()) {
-        return tr("Multi-Rotor");
-    } else if (vtol()) {
-        return tr("VTOL");
-    } else if (rover()) {
-        return tr("Rover");
-    } else if (sub()) {
-        return tr("Sub");
-    } else {
-        return tr("Unknown");
-    }
+    return QGCMAVLink::firmwareClassToString(_firmwareType);
 }
 
 void Vehicle::resetCounters()
@@ -1032,24 +1007,6 @@ void Vehicle::_handleNavControllerOutput(mavlink_message_t& message)
     _distanceToNextWPFact.setRawValue(navControllerOutput.wp_dist);
 }
 
-// Ignore warnings from mavlink headers for both GCC/Clang and MSVC
-#ifdef __GNUC__
-
-#if __GNUC__ > 8
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
-#elif defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Waddress-of-packed-member"
-#else
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wall"
-#endif
-
-#else
-#pragma warning(push, 0)
-#endif
-
 void Vehicle::_handleAttitudeWorker(double rollRadians, double pitchRadians, double yawRadians)
 {
     double roll, pitch, yaw;
@@ -1249,29 +1206,8 @@ void Vehicle::_handleHighLatency2(mavlink_message_t& message)
     _altitudeRelativeFact.setRawValue(qQNaN());
     _altitudeAMSLFact.setRawValue(highLatency2.altitude);
 
-    struct failure2Sensor_s {
-        HL_FAILURE_FLAG         failureBit;
-        MAV_SYS_STATUS_SENSOR   sensorBit;
-    };
-
-    static const failure2Sensor_s rgFailure2Sensor[] = {
-        { HL_FAILURE_FLAG_GPS,                      MAV_SYS_STATUS_SENSOR_GPS },
-        { HL_FAILURE_FLAG_DIFFERENTIAL_PRESSURE,    MAV_SYS_STATUS_SENSOR_DIFFERENTIAL_PRESSURE },
-        { HL_FAILURE_FLAG_ABSOLUTE_PRESSURE,        MAV_SYS_STATUS_SENSOR_ABSOLUTE_PRESSURE },
-        { HL_FAILURE_FLAG_3D_ACCEL,                 MAV_SYS_STATUS_SENSOR_3D_ACCEL },
-        { HL_FAILURE_FLAG_3D_GYRO,                  MAV_SYS_STATUS_SENSOR_3D_GYRO },
-        { HL_FAILURE_FLAG_3D_MAG,                   MAV_SYS_STATUS_SENSOR_3D_MAG },
-    };
-
     // Map from MAV_FAILURE bits to standard SYS_STATUS message handling
-    uint32_t newOnboardControlSensorsEnabled = 0;
-    for (size_t i=0; i<sizeof(rgFailure2Sensor)/sizeof(failure2Sensor_s); i++) {
-        const failure2Sensor_s* pFailure2Sensor = &rgFailure2Sensor[i];
-        if (highLatency2.failure_flags & pFailure2Sensor->failureBit) {
-            // Assume if reporting as unhealthy that is it present and enabled
-            newOnboardControlSensorsEnabled |= pFailure2Sensor->sensorBit;
-        }
-    }
+    const uint32_t newOnboardControlSensorsEnabled = QGCMAVLink::highLatencyFailuresToMavSysStatus(highLatency2);
     if (newOnboardControlSensorsEnabled != _onboardControlSensorsEnabled) {
         _onboardControlSensorsEnabled = newOnboardControlSensorsEnabled;
         _onboardControlSensorsPresent = newOnboardControlSensorsEnabled;
@@ -1876,17 +1812,6 @@ void Vehicle::_handleRCChannels(mavlink_message_t& message)
     emit rcChannelsChanged(channels.chancount, pwmValues);
 }
 
-// Pop warnings ignoring for mavlink headers for both GCC/Clang and MSVC
-#ifdef __GNUC__
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#else
-#pragma GCC diagnostic pop
-#endif
-#else
-#pragma warning(pop, 0)
-#endif
-
 bool Vehicle::sendMessageOnLinkThreadSafe(LinkInterface* link, mavlink_message_t message)
 {
     if (!link->isConnected()) {
@@ -1910,64 +1835,11 @@ bool Vehicle::sendMessageOnLinkThreadSafe(LinkInterface* link, mavlink_message_t
 
 int Vehicle::motorCount()
 {
-    switch (_vehicleType) {
-    case MAV_TYPE_HELICOPTER:
-        return 1;
-    case MAV_TYPE_VTOL_TAILSITTER_DUOROTOR:
-        return 2;
-    case MAV_TYPE_TRICOPTER:
-        return 3;
-    case MAV_TYPE_QUADROTOR:
-    case MAV_TYPE_VTOL_TAILSITTER_QUADROTOR:
-        return 4;
-    case MAV_TYPE_HEXAROTOR:
-        return 6;
-    case MAV_TYPE_OCTOROTOR:
-        return 8;
-    case MAV_TYPE_SUBMARINE:
-    {
-        // Supported frame types
-        enum {
-            SUB_FRAME_BLUEROV1,
-            SUB_FRAME_VECTORED,
-            SUB_FRAME_VECTORED_6DOF,
-            SUB_FRAME_VECTORED_6DOF_90DEG,
-            SUB_FRAME_SIMPLEROV_3,
-            SUB_FRAME_SIMPLEROV_4,
-            SUB_FRAME_SIMPLEROV_5,
-            SUB_FRAME_CUSTOM
-        };
-
-        uint8_t frameType = parameterManager()->getParameter(_compID, "FRAME_CONFIG")->rawValue().toInt();
-
-        switch (frameType) {  // ardupilot/libraries/AP_Motors/AP_Motors6DOF.h sub_frame_t
-
-        case SUB_FRAME_BLUEROV1:
-        case SUB_FRAME_VECTORED:
-            return 6;
-
-        case SUB_FRAME_SIMPLEROV_3:
-            return 3;
-
-        case SUB_FRAME_SIMPLEROV_4:
-            return 4;
-
-        case SUB_FRAME_SIMPLEROV_5:
-            return 5;
-
-        case SUB_FRAME_VECTORED_6DOF:
-        case SUB_FRAME_VECTORED_6DOF_90DEG:
-        case SUB_FRAME_CUSTOM:
-            return 8;
-
-        default:
-            return -1;
-        }
+    uint8_t frameType = 0;
+    if (_vehicleType == MAV_TYPE_SUBMARINE) {
+        frameType = parameterManager()->getParameter(_compID, "FRAME_CONFIG")->rawValue().toInt();
     }
-
-    default:
-        return -1;
-    }
+    return QGCMAVLink::motorCount(_vehicleType, frameType);
 }
 
 bool Vehicle::coaxialMotors()
@@ -2585,38 +2457,9 @@ bool Vehicle::supportsTerrainFrame() const
     return !px4Firmware();
 }
 
-QString Vehicle::vehicleTypeName() const {
-    static QMap<int, QString> typeNames = {
-        { MAV_TYPE_GENERIC,         tr("Generic micro air vehicle" )},
-        { MAV_TYPE_FIXED_WING,      tr("Fixed wing aircraft")},
-        { MAV_TYPE_QUADROTOR,       tr("Quadrotor")},
-        { MAV_TYPE_COAXIAL,         tr("Coaxial helicopter")},
-        { MAV_TYPE_HELICOPTER,      tr("Normal helicopter with tail rotor.")},
-        { MAV_TYPE_ANTENNA_TRACKER, tr("Ground installation")},
-        { MAV_TYPE_GCS,             tr("Operator control unit / ground control station")},
-        { MAV_TYPE_AIRSHIP,         tr("Airship, controlled")},
-        { MAV_TYPE_FREE_BALLOON,    tr("Free balloon, uncontrolled")},
-        { MAV_TYPE_ROCKET,          tr("Rocket")},
-        { MAV_TYPE_GROUND_ROVER,    tr("Ground rover")},
-        { MAV_TYPE_SURFACE_BOAT,    tr("Surface vessel, boat, ship")},
-        { MAV_TYPE_SUBMARINE,       tr("Submarine")},
-        { MAV_TYPE_HEXAROTOR,       tr("Hexarotor")},
-        { MAV_TYPE_OCTOROTOR,       tr("Octorotor")},
-        { MAV_TYPE_TRICOPTER,       tr("Octorotor")},
-        { MAV_TYPE_FLAPPING_WING,   tr("Flapping wing")},
-        { MAV_TYPE_KITE,            tr("Kite")},
-        { MAV_TYPE_ONBOARD_CONTROLLER, tr("Onboard companion controller")},
-        { MAV_TYPE_VTOL_TAILSITTER_DUOROTOR,   tr("Two-rotor VTOL using control surfaces in vertical operation in addition. Tailsitter")},
-        { MAV_TYPE_VTOL_TAILSITTER_QUADROTOR,  tr("Quad-rotor VTOL using a V-shaped quad config in vertical operation. Tailsitter")},
-        { MAV_TYPE_VTOL_TILTROTOR,  tr("Tiltrotor VTOL")},
-        { MAV_TYPE_VTOL_FIXEDROTOR,  tr("VTOL Fixedrotor")},
-        { MAV_TYPE_VTOL_TAILSITTER,  tr("VTOL Tailsitter")},
-        { MAV_TYPE_VTOL_TILTWING,   tr("VTOL Tiltwing")},
-        { MAV_TYPE_VTOL_RESERVED5,  tr("VTOL reserved 5")},
-        { MAV_TYPE_GIMBAL,          tr("Onboard gimbal")},
-        { MAV_TYPE_ADSB,            tr("Onboard ADSB peripheral")},
-    };
-    return typeNames[_vehicleType];
+QString Vehicle::vehicleTypeString() const
+{
+    return QGCMAVLink::mavTypeToString(_vehicleType);
 }
 
 QString Vehicle::vehicleClassInternalName() const
@@ -3511,19 +3354,7 @@ void Vehicle::setFirmwareCustomVersion(int majorVersion, int minorVersion, int p
 
 QString Vehicle::firmwareVersionTypeString() const
 {
-    switch (_firmwareVersionType) {
-    case FIRMWARE_VERSION_TYPE_DEV:
-        return QStringLiteral("dev");
-    case FIRMWARE_VERSION_TYPE_ALPHA:
-        return QStringLiteral("alpha");
-    case FIRMWARE_VERSION_TYPE_BETA:
-        return QStringLiteral("beta");
-    case FIRMWARE_VERSION_TYPE_RC:
-        return QStringLiteral("rc");
-    case FIRMWARE_VERSION_TYPE_OFFICIAL:
-    default:
-        return QStringLiteral("");
-    }
+    return QGCMAVLink::firmwareVersionTypeToString(_firmwareVersionType);
 }
 
 void Vehicle::_rebootCommandResultHandler(void* resultHandlerData, int /*compId*/, const mavlink_command_ack_t& ack, MavCmdResultFailureCode_t failureCode)
@@ -3557,7 +3388,7 @@ void Vehicle::rebootVehicle()
     sendMavCommandWithHandler(&handlerInfo, _defaultComponentId, MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 1);
 }
 
-void Vehicle::startCalibration(Vehicle::CalibrationType calType)
+void Vehicle::startCalibration(QGCMAVLink::CalibrationType calType)
 {
     SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
@@ -3574,48 +3405,51 @@ void Vehicle::startCalibration(Vehicle::CalibrationType calType)
     float param7 = 0;
 
     switch (calType) {
-    case CalibrationGyro:
+    case QGCMAVLink::CalibrationGyro:
         param1 = 1;
         break;
-    case CalibrationMag:
+    case QGCMAVLink::CalibrationMag:
         param2 = 1;
         break;
-    case CalibrationRadio:
+    case QGCMAVLink::CalibrationRadio:
         param4 = 1;
         break;
-    case CalibrationCopyTrims:
+    case QGCMAVLink::CalibrationCopyTrims:
         param4 = 2;
         break;
-    case CalibrationAccel:
+    case QGCMAVLink::CalibrationAccel:
         param5 = 1;
         break;
-    case CalibrationLevel:
+    case QGCMAVLink::CalibrationLevel:
         param5 = 2;
         break;
-    case CalibrationEsc:
+    case QGCMAVLink::CalibrationEsc:
         param7 = 1;
         break;
-    case CalibrationPX4Airspeed:
+    case QGCMAVLink::CalibrationPX4Airspeed:
         param6 = 1;
         break;
-    case CalibrationPX4Pressure:
+    case QGCMAVLink::CalibrationPX4Pressure:
         param3 = 1;
         break;
-    case CalibrationAPMCompassMot:
+    case QGCMAVLink::CalibrationAPMCompassMot:
         param6 = 1;
         break;
-    case CalibrationAPMPressureAirspeed:
+    case QGCMAVLink::CalibrationAPMPressureAirspeed:
         param3 = 1;
         break;
-    case CalibrationAPMPreFlight:
+    case QGCMAVLink::CalibrationAPMPreFlight:
         param3 = 1; // GroundPressure/Airspeed
         if (multiRotor() || rover()) {
             // Gyro cal for ArduCopter only
             param1 = 1;
         }
         break;
-    case CalibrationAPMAccelSimple:
+    case QGCMAVLink::CalibrationAPMAccelSimple:
         param5 = 4;
+        break;
+    case QGCMAVLink::CalibrationNone:
+    default:
         break;
     }
 
@@ -4507,16 +4341,16 @@ void Vehicle::setGripperAction(GRIPPER_ACTIONS gripperAction)
             0, 0, 0, 0, 0);                      // Param 3 ~ 7 : unused
 }
 
-void Vehicle::sendGripperAction(GRIPPER_OPTIONS gripperOption)
+void Vehicle::sendGripperAction(QGCMAVLink::GRIPPER_OPTIONS gripperOption)
 {
     switch(gripperOption) {
-        case Gripper_release: 
+        case QGCMAVLink::Gripper_release:
             setGripperAction(GRIPPER_ACTION_RELEASE);
             break;
-        case Gripper_grab: 
+        case QGCMAVLink::Gripper_grab:
             setGripperAction(GRIPPER_ACTION_GRAB);
             break;
-        case Invalid_option:
+        case QGCMAVLink::Invalid_option:
             qDebug("unknown function");
             break;
         default: 

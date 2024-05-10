@@ -12,12 +12,18 @@
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QList>
+#include <QtCore/QLoggingCategory>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "MAVLinkLib.h"
+
+Q_DECLARE_LOGGING_CATEGORY(QGCMAVLinkLog)
 
 class QGCMAVLink : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 
 public:
     // Creating an instance of QGCMAVLink is only meant to be used for the Qml Singleton
@@ -62,6 +68,10 @@ public:
 
     static QString                  mavResultToString           (MAV_RESULT result);
     static QString                  mavSysStatusSensorToString  (MAV_SYS_STATUS_SENSOR sysStatusSensor);
+    static QString                  mavTypeToString             (MAV_TYPE mavType);
+    static QString                  firmwareVersionTypeToString (FIRMWARE_VERSION_TYPE firmwareVersionType);
+    static int                      motorCount                  (MAV_TYPE mavType, uint8_t frameType = 0);
+    static uint32_t                 highLatencyFailuresToMavSysStatus(mavlink_high_latency2_t& highLatency2);
 
     // Expose mavlink enums to Qml. I've tried various way to make this work without duping, but haven't found anything that works.
 
@@ -86,4 +96,60 @@ public:
        MAV_BATTERY_CHARGE_STATE_CHARGING=7, /* Battery is charging. | */
     };
     Q_ENUM(MAV_BATTERY_CHARGE_STATE)
+
+    /// Sensor bits from sensors*Bits properties
+    enum MavlinkSysStatus {
+        SysStatusSensor3dGyro =                 MAV_SYS_STATUS_SENSOR_3D_GYRO,
+        SysStatusSensor3dAccel =                MAV_SYS_STATUS_SENSOR_3D_ACCEL,
+        SysStatusSensor3dMag =                  MAV_SYS_STATUS_SENSOR_3D_MAG,
+        SysStatusSensorAbsolutePressure =       MAV_SYS_STATUS_SENSOR_ABSOLUTE_PRESSURE,
+        SysStatusSensorDifferentialPressure =   MAV_SYS_STATUS_SENSOR_DIFFERENTIAL_PRESSURE,
+        SysStatusSensorGPS =                    MAV_SYS_STATUS_SENSOR_GPS,
+        SysStatusSensorOpticalFlow =            MAV_SYS_STATUS_SENSOR_OPTICAL_FLOW,
+        SysStatusSensorVisionPosition =         MAV_SYS_STATUS_SENSOR_VISION_POSITION,
+        SysStatusSensorLaserPosition =          MAV_SYS_STATUS_SENSOR_LASER_POSITION,
+        SysStatusSensorExternalGroundTruth =    MAV_SYS_STATUS_SENSOR_EXTERNAL_GROUND_TRUTH,
+        SysStatusSensorAngularRateControl =     MAV_SYS_STATUS_SENSOR_ANGULAR_RATE_CONTROL,
+        SysStatusSensorAttitudeStabilization =  MAV_SYS_STATUS_SENSOR_ATTITUDE_STABILIZATION,
+        SysStatusSensorYawPosition =            MAV_SYS_STATUS_SENSOR_YAW_POSITION,
+        SysStatusSensorZAltitudeControl =       MAV_SYS_STATUS_SENSOR_Z_ALTITUDE_CONTROL,
+        SysStatusSensorXYPositionControl =      MAV_SYS_STATUS_SENSOR_XY_POSITION_CONTROL,
+        SysStatusSensorMotorOutputs =           MAV_SYS_STATUS_SENSOR_MOTOR_OUTPUTS,
+        SysStatusSensorRCReceiver =             MAV_SYS_STATUS_SENSOR_RC_RECEIVER,
+        SysStatusSensor3dGyro2 =                MAV_SYS_STATUS_SENSOR_3D_GYRO2,
+        SysStatusSensor3dAccel2 =               MAV_SYS_STATUS_SENSOR_3D_ACCEL2,
+        SysStatusSensor3dMag2 =                 MAV_SYS_STATUS_SENSOR_3D_MAG2,
+        SysStatusSensorGeoFence =               MAV_SYS_STATUS_GEOFENCE,
+        SysStatusSensorAHRS =                   MAV_SYS_STATUS_AHRS,
+        SysStatusSensorTerrain =                MAV_SYS_STATUS_TERRAIN,
+        SysStatusSensorReverseMotor =           MAV_SYS_STATUS_REVERSE_MOTOR,
+        SysStatusSensorLogging =                MAV_SYS_STATUS_LOGGING,
+        SysStatusSensorBattery =                MAV_SYS_STATUS_SENSOR_BATTERY,
+    };
+    Q_ENUM(MavlinkSysStatus)
+
+    enum GRIPPER_OPTIONS {
+        Gripper_release = GRIPPER_ACTION_RELEASE,
+        Gripper_grab    = GRIPPER_ACTION_GRAB,
+        Invalid_option  = GRIPPER_ACTIONS_ENUM_END,
+    };
+    Q_ENUM(GRIPPER_OPTIONS)
+
+    enum CalibrationType {
+        CalibrationNone,
+        CalibrationRadio,
+        CalibrationGyro,
+        CalibrationMag,
+        CalibrationAccel,
+        CalibrationLevel,
+        CalibrationEsc,
+        CalibrationCopyTrims,
+        CalibrationAPMCompassMot,
+        CalibrationAPMPressureAirspeed,
+        CalibrationAPMPreFlight,
+        CalibrationPX4Airspeed,
+        CalibrationPX4Pressure,
+        CalibrationAPMAccelSimple,
+    };
+    Q_ENUM(CalibrationType)
 };
