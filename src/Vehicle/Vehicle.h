@@ -133,37 +133,6 @@ public:
 
     ~Vehicle();
 
-    /// Sensor bits from sensors*Bits properties
-    enum MavlinkSysStatus {
-        SysStatusSensor3dGyro =                 MAV_SYS_STATUS_SENSOR_3D_GYRO,
-        SysStatusSensor3dAccel =                MAV_SYS_STATUS_SENSOR_3D_ACCEL,
-        SysStatusSensor3dMag =                  MAV_SYS_STATUS_SENSOR_3D_MAG,
-        SysStatusSensorAbsolutePressure =       MAV_SYS_STATUS_SENSOR_ABSOLUTE_PRESSURE,
-        SysStatusSensorDifferentialPressure =   MAV_SYS_STATUS_SENSOR_DIFFERENTIAL_PRESSURE,
-        SysStatusSensorGPS =                    MAV_SYS_STATUS_SENSOR_GPS,
-        SysStatusSensorOpticalFlow =            MAV_SYS_STATUS_SENSOR_OPTICAL_FLOW,
-        SysStatusSensorVisionPosition =         MAV_SYS_STATUS_SENSOR_VISION_POSITION,
-        SysStatusSensorLaserPosition =          MAV_SYS_STATUS_SENSOR_LASER_POSITION,
-        SysStatusSensorExternalGroundTruth =    MAV_SYS_STATUS_SENSOR_EXTERNAL_GROUND_TRUTH,
-        SysStatusSensorAngularRateControl =     MAV_SYS_STATUS_SENSOR_ANGULAR_RATE_CONTROL,
-        SysStatusSensorAttitudeStabilization =  MAV_SYS_STATUS_SENSOR_ATTITUDE_STABILIZATION,
-        SysStatusSensorYawPosition =            MAV_SYS_STATUS_SENSOR_YAW_POSITION,
-        SysStatusSensorZAltitudeControl =       MAV_SYS_STATUS_SENSOR_Z_ALTITUDE_CONTROL,
-        SysStatusSensorXYPositionControl =      MAV_SYS_STATUS_SENSOR_XY_POSITION_CONTROL,
-        SysStatusSensorMotorOutputs =           MAV_SYS_STATUS_SENSOR_MOTOR_OUTPUTS,
-        SysStatusSensorRCReceiver =             MAV_SYS_STATUS_SENSOR_RC_RECEIVER,
-        SysStatusSensor3dGyro2 =                MAV_SYS_STATUS_SENSOR_3D_GYRO2,
-        SysStatusSensor3dAccel2 =               MAV_SYS_STATUS_SENSOR_3D_ACCEL2,
-        SysStatusSensor3dMag2 =                 MAV_SYS_STATUS_SENSOR_3D_MAG2,
-        SysStatusSensorGeoFence =               MAV_SYS_STATUS_GEOFENCE,
-        SysStatusSensorAHRS =                   MAV_SYS_STATUS_AHRS,
-        SysStatusSensorTerrain =                MAV_SYS_STATUS_TERRAIN,
-        SysStatusSensorReverseMotor =           MAV_SYS_STATUS_REVERSE_MOTOR,
-        SysStatusSensorLogging =                MAV_SYS_STATUS_LOGGING,
-        SysStatusSensorBattery =                MAV_SYS_STATUS_SENSOR_BATTERY,
-    };
-    Q_ENUM(MavlinkSysStatus)
-
     enum CheckList {
         CheckListNotSetup = 0,
         CheckListPassed,
@@ -519,7 +488,6 @@ public:
     MAV_AUTOPILOT firmwareType() const { return _firmwareType; }
     MAV_TYPE vehicleType() const { return _vehicleType; }
     QGCMAVLink::VehicleClass_t vehicleClass(void) const { return QGCMAVLink::vehicleClass(_vehicleType); }
-    Q_INVOKABLE QString vehicleTypeName() const;
     Q_INVOKABLE QString vehicleClassInternalName() const;
 
     /// Sends a message to the specified link
@@ -556,16 +524,8 @@ public:
      * @param gripperAction Gripper action to trigger
     */
 
-    enum    GRIPPER_OPTIONS
-    {
-    Gripper_release = GRIPPER_ACTION_RELEASE,
-    Gripper_grab    = GRIPPER_ACTION_GRAB,
-    Invalid_option  = GRIPPER_ACTIONS_ENUM_END,
-    };
-    Q_ENUM(GRIPPER_OPTIONS)
-
     void setGripperAction(GRIPPER_ACTIONS gripperAction);
-    Q_INVOKABLE void sendGripperAction(GRIPPER_OPTIONS gripperOption);
+    Q_INVOKABLE void sendGripperAction(QGCMAVLink::GRIPPER_OPTIONS gripperOption);
 
     void pairRX(int rxType, int rxSubType);
 
@@ -667,7 +627,7 @@ public:
     bool            readyToFly                  () const{ return _readyToFly; }
     bool            allSensorsHealthy           () const{ return _allSensorsHealthy; }
     QObject*        sysStatusSensorInfo         () { return &_sysStatusSensorInfo; }
-    bool            requiresGpsFix              () const { return static_cast<bool>(_onboardControlSensorsPresent & SysStatusSensorGPS); }
+    bool            requiresGpsFix              () const { return static_cast<bool>(_onboardControlSensorsPresent & QGCMAVLink::SysStatusSensorGPS); }
     bool            hilMode                     () const { return _base_mode & MAV_MODE_FLAG_HIL_ENABLED; }
     Actuators*      actuators                   () const { return _actuators; }
 
@@ -675,23 +635,7 @@ public:
     /// @return the maximum version
     unsigned        maxProtoVersion         () const { return _maxProtoVersion; }
 
-    enum CalibrationType {
-        CalibrationRadio,
-        CalibrationGyro,
-        CalibrationMag,
-        CalibrationAccel,
-        CalibrationLevel,
-        CalibrationEsc,
-        CalibrationCopyTrims,
-        CalibrationAPMCompassMot,
-        CalibrationAPMPressureAirspeed,
-        CalibrationAPMPreFlight,
-        CalibrationPX4Airspeed,
-        CalibrationPX4Pressure,
-        CalibrationAPMAccelSimple,
-    };
-
-    void startCalibration   (CalibrationType calType);
+    void startCalibration   (QGCMAVLink::CalibrationType calType);
     void stopCalibration    (bool showError);
 
     void startUAVCANBusConfig(void);

@@ -196,31 +196,31 @@ void SensorsComponentController::_stopCalibration(SensorsComponentController::St
 void SensorsComponentController::calibrateGyro(void)
 {
     _startLogCalibration();
-    _vehicle->startCalibration(Vehicle::CalibrationGyro);
+    _vehicle->startCalibration(QGCMAVLink::CalibrationGyro);
 }
 
 void SensorsComponentController::calibrateCompass(void)
 {
     _startLogCalibration();
-    _vehicle->startCalibration(Vehicle::CalibrationMag);
+    _vehicle->startCalibration(QGCMAVLink::CalibrationMag);
 }
 
 void SensorsComponentController::calibrateAccel(void)
 {
     _startLogCalibration();
-    _vehicle->startCalibration(Vehicle::CalibrationAccel);
+    _vehicle->startCalibration(QGCMAVLink::CalibrationAccel);
 }
 
 void SensorsComponentController::calibrateLevel(void)
 {
     _startLogCalibration();
-    _vehicle->startCalibration(Vehicle::CalibrationLevel);
+    _vehicle->startCalibration(QGCMAVLink::CalibrationLevel);
 }
 
 void SensorsComponentController::calibrateAirspeed(void)
 {
     _startLogCalibration();
-    _vehicle->startCalibration(Vehicle::CalibrationPX4Airspeed);
+    _vehicle->startCalibration(QGCMAVLink::CalibrationPX4Airspeed);
 }
 
 void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, int severity, QString text)

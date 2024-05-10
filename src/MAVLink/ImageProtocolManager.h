@@ -13,8 +13,8 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QByteArray>
-#include <QtGui/QImage>
 #include <QtCore/QLoggingCategory>
+#include <QtGui/QImage>
 
 Q_DECLARE_LOGGING_CATEGORY(ImageProtocolManagerLog)
 

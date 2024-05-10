@@ -800,7 +800,7 @@ void RadioComponentController::_startCalibration(void)
     _resetInternalCalibrationValues();
 
     // Let the mav known we are starting calibration. This should turn off motors and so forth.
-    _vehicle->startCalibration(Vehicle::CalibrationRadio);
+    _vehicle->startCalibration(QGCMAVLink::CalibrationRadio);
 
     _nextButton->setProperty("text", tr("Next"));
     _cancelButton->setEnabled(true);
@@ -1025,7 +1025,7 @@ void RadioComponentController::_signalAllAttitudeValueChanges(void)
 
 void RadioComponentController::copyTrims(void)
 {
-    _vehicle->startCalibration(Vehicle::CalibrationCopyTrims);
+    _vehicle->startCalibration(QGCMAVLink::CalibrationCopyTrims);
 }
 
 bool RadioComponentController::_px4Vehicle(void) const
