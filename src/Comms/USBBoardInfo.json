@@ -40,6 +40,8 @@
 
         { "vendorID": 11694, "productID": 0,        "boardClass": "Pixhawk",    "name": "CubePilot" },
 
+        { "vendorID": 2702,  "productID": 110,      "boardClass": "Pixhawk",    "name": "JFB JFB110" },
+
         { "vendorID": 13735, "productID": 1,        "boardClass": "Pixhawk",    "name": "ThePeach FCC-K1" },
         { "vendorID": 13735, "productID": 2,        "boardClass": "Pixhawk",    "name": "ThePeach FCC-R1" },
 
@@ -86,6 +88,8 @@
         { "regExp": "^PX4 BL ASC v1.x$",    "boardClass": "Pixhawk" },
         { "regExp": "^PX4 FMU",             "boardClass": "Pixhawk" },
         { "regExp": "^PX4 Crazyflie v2.0",  "boardClass": "Pixhawk" },
+        { "regExp": "^JFB JFB110$",         "boardClass": "Pixhawk" },
+        { "regExp": "^JFB BL JFB110$",      "boardClass": "Pixhawk" },
         { "regExp": "^Crazyflie BL",        "boardClass": "Pixhawk" },
         { "regExp": "^PX4 OmnibusF4SD",     "boardClass": "Pixhawk" },
         { "regExp": "^fmuv[2345]$",         "boardClass": "Pixhawk" },
