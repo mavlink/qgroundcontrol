@@ -23,7 +23,6 @@ target_link_libraries(Camera
 		Comms
 		FirmwarePlugin
 		Joystick
-		QGCLocation
 		Settings
 		Vehicle
 		VideoManager

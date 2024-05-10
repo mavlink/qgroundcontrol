@@ -26,7 +26,6 @@ class MAVLinkLogManager;
 class MissionCommandTree;
 class MultiVehicleManager;
 class QGCCorePlugin;
-class QGCMapEngineManager;
 class QGCPalette;
 class QGCPositionManager;
 class SettingsManager;
@@ -41,7 +40,6 @@ Q_MOC_INCLUDE("MAVLinkLogManager.h")
 Q_MOC_INCLUDE("MissionCommandTree.h")
 Q_MOC_INCLUDE("MultiVehicleManager.h")
 Q_MOC_INCLUDE("QGCCorePlugin.h")
-Q_MOC_INCLUDE("QGCMapEngineManager.h")
 Q_MOC_INCLUDE("QGCPalette.h")
 Q_MOC_INCLUDE("PositionManager.h")
 Q_MOC_INCLUDE("SettingsManager.h")
@@ -74,7 +72,6 @@ public:
     Q_PROPERTY(QString              appName                 READ    appName                 CONSTANT)
     Q_PROPERTY(LinkManager*         linkManager             READ    linkManager             CONSTANT)
     Q_PROPERTY(MultiVehicleManager* multiVehicleManager     READ    multiVehicleManager     CONSTANT)
-    Q_PROPERTY(QGCMapEngineManager* mapEngineManager        READ    mapEngineManager        CONSTANT)
     Q_PROPERTY(QGCPositionManager*  qgcPositionManger       READ    qgcPositionManger       CONSTANT)
     Q_PROPERTY(VideoManager*        videoManager            READ    videoManager            CONSTANT)
     Q_PROPERTY(MAVLinkLogManager*   mavlinkLogManager       READ    mavlinkLogManager       CONSTANT)
@@ -132,45 +129,44 @@ public:
     Q_PROPERTY(UTMSPManager*     utmspManager             READ    utmspManager                CONSTANT)
 #endif
 
-    Q_INVOKABLE void    saveGlobalSetting       (const QString& key, const QString& value);
-    Q_INVOKABLE QString loadGlobalSetting       (const QString& key, const QString& defaultValue);
-    Q_INVOKABLE void    saveBoolGlobalSetting   (const QString& key, bool value);
-    Q_INVOKABLE bool    loadBoolGlobalSetting   (const QString& key, bool defaultValue);
+    Q_INVOKABLE static void    saveGlobalSetting       (const QString& key, const QString& value);
+    Q_INVOKABLE static QString loadGlobalSetting       (const QString& key, const QString& defaultValue);
+    Q_INVOKABLE static void    saveBoolGlobalSetting   (const QString& key, bool value);
+    Q_INVOKABLE static bool    loadBoolGlobalSetting   (const QString& key, bool defaultValue);
 
     Q_INVOKABLE void    deleteAllSettingsNextBoot       ();
     Q_INVOKABLE void    clearDeleteAllSettingsNextBoot  ();
 
-    Q_INVOKABLE void    startPX4MockLink            (bool sendStatusText);
-    Q_INVOKABLE void    startGenericMockLink        (bool sendStatusText);
-    Q_INVOKABLE void    startAPMArduCopterMockLink  (bool sendStatusText);
-    Q_INVOKABLE void    startAPMArduPlaneMockLink   (bool sendStatusText);
-    Q_INVOKABLE void    startAPMArduSubMockLink     (bool sendStatusText);
-    Q_INVOKABLE void    startAPMArduRoverMockLink   (bool sendStatusText);
+    Q_INVOKABLE static void    startPX4MockLink            (bool sendStatusText);
+    Q_INVOKABLE static void    startGenericMockLink        (bool sendStatusText);
+    Q_INVOKABLE static void    startAPMArduCopterMockLink  (bool sendStatusText);
+    Q_INVOKABLE static void    startAPMArduPlaneMockLink   (bool sendStatusText);
+    Q_INVOKABLE static void    startAPMArduSubMockLink     (bool sendStatusText);
+    Q_INVOKABLE static void    startAPMArduRoverMockLink   (bool sendStatusText);
     Q_INVOKABLE void    stopOneMockLink             (void);
 
     /// Returns the list of available logging category names.
-    Q_INVOKABLE QStringList loggingCategories(void) const { return QGCLoggingCategoryRegister::instance()->registeredCategories(); }
+    Q_INVOKABLE static QStringList loggingCategories(void) { return QGCLoggingCategoryRegister::instance()->registeredCategories(); }
 
     /// Turns on/off logging for the specified category. State is saved in app settings.
-    Q_INVOKABLE void setCategoryLoggingOn(const QString& category, bool enable) { QGCLoggingCategoryRegister::instance()->setCategoryLoggingOn(category, enable); }
+    Q_INVOKABLE static void setCategoryLoggingOn(const QString& category, bool enable) { QGCLoggingCategoryRegister::instance()->setCategoryLoggingOn(category, enable); }
 
     /// Returns true if logging is turned on for the specified category.
-    Q_INVOKABLE bool categoryLoggingOn(const QString& category) { return QGCLoggingCategoryRegister::instance()->categoryLoggingOn(category); }
+    Q_INVOKABLE static bool categoryLoggingOn(const QString& category) { return QGCLoggingCategoryRegister::instance()->categoryLoggingOn(category); }
 
     /// Updates the logging filter rules after settings have changed
-    Q_INVOKABLE void updateLoggingFilterRules(void) { QGCLoggingCategoryRegister::instance()->setFilterRulesFromSettings(QString()); }
+    Q_INVOKABLE static void updateLoggingFilterRules(void) { QGCLoggingCategoryRegister::instance()->setFilterRulesFromSettings(QString()); }
 
-    Q_INVOKABLE bool linesIntersect(QPointF xLine1, QPointF yLine1, QPointF xLine2, QPointF yLine2);
+    Q_INVOKABLE static bool linesIntersect(QPointF xLine1, QPointF yLine1, QPointF xLine2, QPointF yLine2);
 
-    Q_INVOKABLE QString altitudeModeExtraUnits(AltMode altMode);        ///< String shown in the FactTextField.extraUnits ui
-    Q_INVOKABLE QString altitudeModeShortDescription(AltMode altMode);  ///< String shown when a user needs to select an altitude mode
+    Q_INVOKABLE static QString altitudeModeExtraUnits(AltMode altMode);        ///< String shown in the FactTextField.extraUnits ui
+    Q_INVOKABLE static QString altitudeModeShortDescription(AltMode altMode);  ///< String shown when a user needs to select an altitude mode
 
     // Property accesors
 
     QString                 appName             ();
     LinkManager*            linkManager         ()  { return _linkManager; }
     MultiVehicleManager*    multiVehicleManager ()  { return _multiVehicleManager; }
-    QGCMapEngineManager*    mapEngineManager    ()  { return _mapEngineManager; }
     QGCPositionManager*     qgcPositionManger   ()  { return _qgcPositionManager; }
     MissionCommandTree*     missionCommandTree  ()  { return _missionCommandTree; }
     VideoManager*           videoManager        ()  { return _videoManager; }
@@ -218,8 +214,8 @@ public:
     bool    hasMAVLinkInspector     () { return true; }
 #endif
 
-    QString elevationProviderName   ();
-    QString elevationProviderNotice ();
+    static QString elevationProviderName   ();
+    static QString elevationProviderNotice ();
 
     bool    singleFirmwareSupport   ();
     bool    singleVehicleSupport    ();
@@ -233,9 +229,9 @@ public:
     void    setFlightMapPosition        (QGeoCoordinate& coordinate);
     void    setFlightMapZoom            (double zoom);
 
-    QString parameterFileExtension  (void) const;
-    QString missionFileExtension    (void) const;
-    QString telemetryFileExtension  (void) const;
+    static QString parameterFileExtension  (void);
+    static QString missionFileExtension    (void);
+    static QString telemetryFileExtension  (void);
 
     QString qgcVersion              (void) const;
 
@@ -260,7 +256,6 @@ private:
     double                  _flightMapInitialZoom   = 17.0;
     LinkManager*            _linkManager            = nullptr;
     MultiVehicleManager*    _multiVehicleManager    = nullptr;
-    QGCMapEngineManager*    _mapEngineManager       = nullptr;
     QGCPositionManager*     _qgcPositionManager     = nullptr;
     MissionCommandTree*     _missionCommandTree     = nullptr;
     VideoManager*           _videoManager           = nullptr;

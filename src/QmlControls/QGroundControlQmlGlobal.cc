@@ -12,6 +12,7 @@
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
 #include "QGCMapUrlEngine.h"
+#include "ElevationMapProvider.h"
 #include "FirmwarePluginManager.h"
 #include "AppSettings.h"
 #include "PositionManager.h"
@@ -80,7 +81,6 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
 
     _linkManager            = toolbox->linkManager();
     _multiVehicleManager    = toolbox->multiVehicleManager();
-    _mapEngineManager       = toolbox->mapEngineManager();
     _qgcPositionManager     = toolbox->qgcPositionManager();
     _missionCommandTree     = toolbox->missionCommandTree();
     _videoManager           = toolbox->videoManager();
@@ -340,25 +340,25 @@ int QGroundControlQmlGlobal::mavlinkSystemID()
 
 QString QGroundControlQmlGlobal::elevationProviderName()
 {
-    return UrlFactory::kCopernicusElevationProviderKey;
+    return CopernicusElevationProvider::kProviderKey;
 }
 
 QString QGroundControlQmlGlobal::elevationProviderNotice()
 {
-    return UrlFactory::kCopernicusElevationProviderNotice;
+    return CopernicusElevationProvider::kProviderNotice;
 }
 
-QString QGroundControlQmlGlobal::parameterFileExtension() const
+QString QGroundControlQmlGlobal::parameterFileExtension()
 {
     return AppSettings::parameterFileExtension;
 }
 
-QString QGroundControlQmlGlobal::missionFileExtension() const
+QString QGroundControlQmlGlobal::missionFileExtension()
 {
     return AppSettings::missionFileExtension;
 }
 
-QString QGroundControlQmlGlobal::telemetryFileExtension() const
+QString QGroundControlQmlGlobal::telemetryFileExtension()
 {
     return AppSettings::telemetryFileExtension;
 }

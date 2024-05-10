@@ -1,39 +1,40 @@
 #pragma once
 
 #include <QtCore/QtTypes>
+#include <QtCore/QMetaType>
 
-//-----------------------------------------------------------------------------
 class QGCTileSet
 {
 public:
-    QGCTileSet()
+    QGCTileSet() = default;
+
+    QGCTileSet& operator += (const QGCTileSet& other)
     {
-        clear();
-    }
-    QGCTileSet& operator += (QGCTileSet& other)
-    {
-        tileX0      += other.tileX0;
-        tileX1      += other.tileX1;
-        tileY0      += other.tileY0;
-        tileY1      += other.tileY1;
-        tileCount   += other.tileCount;
-        tileSize    += other.tileSize;
+        tileX0 += other.tileX0;
+        tileX1 += other.tileX1;
+        tileY0 += other.tileY0;
+        tileY1 += other.tileY1;
+        tileCount += other.tileCount;
+        tileSize += other.tileSize;
         return *this;
     }
+
     void clear()
     {
-        tileX0      = 0;
-        tileX1      = 0;
-        tileY0      = 0;
-        tileY1      = 0;
-        tileCount   = 0;
-        tileSize    = 0;
+        tileX0 = 0;
+        tileX1 = 0;
+        tileY0 = 0;
+        tileY1 = 0;
+        tileCount = 0;
+        tileSize = 0;
     }
 
-    int         tileX0;
-    int         tileX1;
-    int         tileY0;
-    int         tileY1;
-    quint64     tileCount;
-    quint64     tileSize;
+    int tileX0 = 0;
+    int tileX1 = 0;
+    int tileY0 = 0;
+    int tileY1 = 0;
+    quint64 tileCount = 0;
+    quint64 tileSize = 0;
 };
+
+Q_DECLARE_METATYPE(QGCTileSet)

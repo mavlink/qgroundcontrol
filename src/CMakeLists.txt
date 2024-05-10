@@ -83,6 +83,7 @@ target_link_libraries(QGC
 		MissionManager
 		# PlanView
 		PositionManager
+		QGCLocation
 		QmlControls
 		Settings
 		Terrain
@@ -97,7 +98,6 @@ target_link_libraries(QGC
 		Qt6::CorePrivate
 		Qt6::Widgets
 
-		QGCLocation
 		VideoManager
 )
 

@@ -1,0 +1,123 @@
+{
+    "CustomProviders": [
+        {
+            "style": "StreetMap",
+            "name": "World Street Map",
+            "description": "ArcGIS Online World Street Map",
+            "mobile": true,
+            "night": false,
+            "url": "https://services.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer",
+            "copyrightText": "&copy; <a href='https://www.arcgis.com/home/item.html?id=3b93337983e9436f8db950e38a8629af'>Esri</a> contributors"
+        },
+
+        {
+            "style": "SatelliteMapDay",
+            "name": "World Imagery",
+            "": "ArcGIS Online World Imagery",
+            "mobile": true,
+            "night": false,
+            "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+            "copyrightText": "&copy; <a href='https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9'>Esri</a> contributors"
+        },
+
+        {
+            "style": "TerrainMap",
+            "name": "World Terrain Base",
+            "description": "ArcGIS Online World Terrain Base",
+            "mobile": false,
+            "night": false,
+            "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer",
+            "copyrightText": "&copy; <a href='https://www.arcgis.com/home/item.html?id=c61ad8ab017d49e1a82f580ee1298931'>Esri</a> contributors"
+        },
+
+        {
+            "style": "CustomMap",
+            "name": "World Topography",
+            "description": "ArcGIS Online World Topography",
+            "mobile": true,
+            "night": false,
+            "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer",
+            "copyrightText": "&copy; <a href='https://www.arcgis.com/home/item.html?id=30e5fe3149c34df1ba922e6f5bbf808f'>Esri</a> contributors"
+        },
+
+        {
+            "style": "CustomMap",
+            "name": "USA Topo Maps",
+            "description": "This map presents land cover and detailed topographic maps for the United States.",
+            "mobile": true,
+            "night": false,
+            "url": "https://services.arcgisonline.com/ArcGIS/rest/services/USA_Topo_Maps/MapServer",
+            "copyrightText": "&copy; <a href='https://www.arcgis.com/home/item.html?id=99cd5fbd98934028802b4f797c4b1732'>Esri</a> contributors"
+        },
+
+        {
+            "style": "CustomMap",
+            "name": "National Geographic World Map",
+            "description": "National Geographic World Map",
+            "mobile": false,
+            "night": false,
+            "url": "https://services.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer",
+            "copyrightText": "&copy; <a href='https://www.arcgis.com/home/item.html?id=b9b1b422198944fbbd5250b3241691b6'>Esri</a> contributors"
+        },
+
+        {
+            "style": "GrayStreetMap",
+            "name": "Light Gray Canvas",
+            "description": "Thematic content providing a neutral background with minimal colors",
+            "mobile": true,
+            "night": false,
+            "url": "https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer",
+            "copyrightText": "&copy; <a href='https://www.arcgis.com/home/item.html?id=ed712cb1db3e4bae9e85329040fb9a49'>Esri</a> contributors"
+        },
+
+        {
+            "style": "CustomMap",
+            "name": "World Physical Map",
+            "description": "Natural Earth physical map for the world",
+            "mobile": false,
+            "night": false,
+            "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Physical_Map/MapServer",
+            "copyrightText": "&copy; <a href='https://www.arcgis.com/home/item.html?id=c4ec722a1cd34cf0a23904aadf8923a0'>Esri</a> contributors"
+        },
+
+        {
+            "style": "CustomMap",
+            "name": "World Shaded Relief",
+            "description": "Portrays surface elevation as shaded relief",
+            "mobile": false,
+            "night": false,
+            "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer",
+            "copyrightText": "&copy; <a href='https://www.arcgis.com/home/item.html?id=9c5370d0b54f4de1b48a3792d7377ff2'>Esri</a> contributors"
+        },
+
+        {
+            "style": "CustomMap",
+            "name": "World Ocean Base",
+            "description": "This map is designed to be used as a basemap by marine GIS professionals and as a reference map by anyone interested in ocean data",
+            "mobile": false,
+            "night": false,
+            "url": "https://server.arcgisonline.com/arcgis/rest/services/Ocean/World_Ocean_Base/MapServer",
+            "copyrightText": "&copy; <a href='https://www.arcgis.com/home/item.html?id=1e126e7520f9466c9ca28b8f28b5e500'>Esri</a> contributors"
+        },
+
+        {
+            "style": "GrayStreetMap",
+            "name": "Dark Gray Canvas",
+            "description": "Thematic content providing a neutral background with minimal colors",
+            "mobile": false,
+            "night": true,
+            "url": "https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer",
+            "copyrightText": "&copy; <a href='https://www.arcgis.com/home/item.html?id=a284a9b99b3446a3910d4144a50990f6'>Esri</a> contributors"
+        },
+
+        {
+            "style": "CustomMap",
+            "name": "DeLorme World Basemap",
+            "description": "DeLorme’s topographic basemap is a seamless global data set that portrays transportation, hydrography, jurisdiction boundaries, and major geographic features",
+            "mobile": false,
+            "night": false,
+            "url": "https://server.arcgisonline.com/ArcGIS/rest/services/Specialty/DeLorme_World_Base_Map/MapServer",
+            "copyrightText": "&copy; <a href='https://www.arcgis.com/home/item.html?id=b165c3df453e4be6b5ac4fdb241effbe'>Esri</a> contributors"
+        }
+    ]
+}

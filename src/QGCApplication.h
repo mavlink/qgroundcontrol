@@ -88,6 +88,9 @@ public:
     void            setLanguage();
     QQuickWindow*   mainRootWindow();
     uint64_t        msecsSinceBoot(void) { return _msecsElapsedTime.elapsed(); }
+    QString         numberToString(quint64 number);
+    QString         bigSizeToString(quint64 size);
+    QString         storageFreeSizeToString(quint64 size_MB);
 
     /// Registers the signal such that only the last duplicate signal added is left in the queue.
     void addCompressedSignal(const QMetaMethod & method);

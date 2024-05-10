@@ -36,7 +36,6 @@ target_link_libraries(AnalyzeView
 		Qt6::Qml
 		FactSystem
 		QGC
-		QGCLocation
 		Settings
 		Utilities
 		Vehicle

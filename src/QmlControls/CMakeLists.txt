@@ -68,6 +68,7 @@ target_link_libraries(QmlControls
         Geo
         GPS
         MockLink
+		QGCLocation
 	PUBLIC
 		Qt6::Core
 		Qt6::Gui
@@ -84,7 +85,6 @@ target_link_libraries(QmlControls
 		MissionManager
         PositionManager
 		QGC
-		QGCLocation
 		Settings
         Terrain
 		Utilities

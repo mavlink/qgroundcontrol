@@ -7,30 +7,34 @@
  *
  ****************************************************************************/
 
+// TODO: This is just an alternate QGeoTileFetcher, hook this into mapping manager engine
+
 #include "TerrainTileManager.h"
 #include "TerrainQuery.h"
 #include "TerrainQueryAirMap.h"
-#include "QGCMapEngine.h"
 #include "QGeoMapReplyQGC.h"
 #include "QGCMapUrlEngine.h"
+#include "ElevationMapProvider.h"
 #include "QGCLoggingCategory.h"
 
+#include <QtCore/qapplicationstatic.h>
 #include <QtNetwork/QNetworkRequest>
 #include <QtNetwork/QNetworkReply>
 #include <QtLocation/private/qgeotilespec_p.h>
 
 QGC_LOGGING_CATEGORY(TerrainTileManagerLog, "qgc.terrain.terraintilemanager")
 
-static const auto kMapType = UrlFactory::kCopernicusElevationProviderKey;
+static const QString kMapType = QString(CopernicusElevationProvider::kProviderKey);
 
-Q_GLOBAL_STATIC(TerrainTileManager, s_terrainTileManager)
+Q_APPLICATION_STATIC(TerrainTileManager, s_terrainTileManager)
 
 TerrainTileManager* TerrainTileManager::instance(void)
 {
     return s_terrainTileManager();
 }
 
-TerrainTileManager::TerrainTileManager(void)
+TerrainTileManager::TerrainTileManager(QObject* parent)
+    : QObject(parent)
 {
 
 }
@@ -143,19 +147,14 @@ bool TerrainTileManager::getAltitudesForCoordinates(const QList<QGeoCoordinate>&
             altitudes.push_back(elevation);
         } else {
             if (_state != State::Downloading) {
-                QNetworkRequest request = getQGCMapEngine()->urlFactory()->getTileURL(
-                    kMapType, getQGCMapEngine()->urlFactory()->long2tileX(kMapType, coordinate.longitude(), 1),
-                    getQGCMapEngine()->urlFactory()->lat2tileY(kMapType, coordinate.latitude(), 1),
-                    1,
-                    &_networkManager);
-                qCDebug(TerrainTileManagerLog) << "TerrainTileManager::getAltitudesForCoordinates query from database" << request.url();
+                const SharedMapProvider provider = UrlFactory::getProviderFromProviderType(kMapType);
                 QGeoTileSpec spec;
-                spec.setX(getQGCMapEngine()->urlFactory()->long2tileX(kMapType, coordinate.longitude(), 1));
-                spec.setY(getQGCMapEngine()->urlFactory()->lat2tileY(kMapType, coordinate.latitude(), 1));
+                spec.setX(provider->long2tileX(coordinate.longitude(), 1));
+                spec.setY(provider->lat2tileY(coordinate.latitude(), 1));
                 spec.setZoom(1);
-                spec.setMapId(getQGCMapEngine()->urlFactory()->getQtMapIdFromProviderType(kMapType));
-                QGeoTiledMapReplyQGC* reply = new QGeoTiledMapReplyQGC(&_networkManager, request, spec);
-                connect(reply, &QGeoTiledMapReplyQGC::terrainDone, this, &TerrainTileManager::_terrainDone);
+                spec.setMapId(provider->getMapId());
+                QGeoTiledMapReplyQGC* reply = new QGeoTiledMapReplyQGC(&_networkManager, spec, this);
+                (void) connect(reply, &QGeoTiledMapReplyQGC::finished, this, &TerrainTileManager::_terrainDone);
                 _state = State::Downloading;
             }
             _tilesMutex.unlock();
@@ -182,7 +181,7 @@ void TerrainTileManager::_tileFailed(void)
     _requestQueue.clear();
 }
 
-void TerrainTileManager::_terrainDone(QByteArray responseBytes, QNetworkReply::NetworkError error)
+void TerrainTileManager::_terrainDone()
 {
     QGeoTiledMapReplyQGC* reply = qobject_cast<QGeoTiledMapReplyQGC*>(QObject::sender());
     _state = State::Idle;
@@ -193,12 +192,13 @@ void TerrainTileManager::_terrainDone(QByteArray responseBytes, QNetworkReply::N
     }
 
     // remove from download queue
-    QGeoTileSpec spec = reply->tileSpec();
-    QString hash = getQGCMapEngine()->getTileHash(kMapType, spec.x(), spec.y(), spec.zoom());
+    const QByteArray responseBytes = reply->mapImageData();
+    const QGeoTileSpec spec = reply->tileSpec();
+    const QString hash = UrlFactory::getTileHash(kMapType, spec.x(), spec.y(), spec.zoom());
 
     // handle potential errors
-    if (error != QNetworkReply::NoError) {
-        qCWarning(TerrainTileManagerLog) << "Elevation tile fetching returned error (" << error << ")";
+    if (reply->error() != QGeoTiledMapReplyQGC::NoError) {
+        qCWarning(TerrainTileManagerLog) << "Elevation tile fetching returned error (" << reply->error() << ")";
         _tileFailed();
         reply->deleteLater();
         return;
@@ -260,12 +260,13 @@ void TerrainTileManager::_terrainDone(QByteArray responseBytes, QNetworkReply::N
 
 QString TerrainTileManager::_getTileHash(const QGeoCoordinate& coordinate)
 {
-    QString ret = getQGCMapEngine()->getTileHash(
+    const SharedMapProvider provider = UrlFactory::getProviderFromProviderType(kMapType);
+    const QString ret = UrlFactory::getTileHash(
         kMapType,
-        getQGCMapEngine()->urlFactory()->long2tileX(kMapType, coordinate.longitude(), 1),
-        getQGCMapEngine()->urlFactory()->lat2tileY(kMapType, coordinate.latitude(), 1),
-        1);
+        provider->long2tileX(coordinate.longitude(), 1),
+        provider->lat2tileY(coordinate.latitude(), 1),
+        1
+    );
     qCDebug(TerrainQueryVerboseLog) << "Computing unique tile hash for " << coordinate << ret;
-
     return ret;
 }

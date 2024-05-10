@@ -11,7 +11,6 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
-import QtQuick.Controls
 import QtLocation
 import QtPositioning
 
@@ -20,7 +19,6 @@ import QGroundControl.Controls
 import QGroundControl.ScreenTools
 import QGroundControl.Palette
 import QGroundControl.FlightMap
-import QGroundControl.QGCMapEngineManager
 import QGroundControl.FactSystem
 import QGroundControl.FactControls
 
@@ -60,7 +58,7 @@ FlightMap {
     property real   _adjustableFontPointSize: _saveRealEstate ? ScreenTools.smallFontPointSize : ScreenTools.defaultFontPointSize
 
     property var    _mapAdjustedColor:  _map.isSatelliteMap ? "white" : "black"
-    property bool   _tooManyTiles:      QGroundControl.mapEngineManager.tileCount > _maxTilesForDownload
+    property bool   _tooManyTiles:      MapEngineManager.tileCount > _maxTilesForDownload
     property var    _addNewSetViewObject: null
 
     readonly property real minZoomLevel:    1
@@ -72,14 +70,14 @@ FlightMap {
     QGCPalette { id: qgcPal }
 
     Component.onCompleted: {
-        QGroundControl.mapEngineManager.loadTileSets()
+        MapEngineManager.loadTileSets()
         resetMapToDefaults()
         updateMap()
         savedCenter = _map.toCoordinate(Qt.point(_map.width / 2, _map.height / 2), false /* clipToViewPort */)
     }
 
     Connections {
-        target:                 QGroundControl.mapEngineManager
+        target:                 MapEngineManager
         onErrorMessageChanged:  errorDialogComponent.createObject(mainWindow).open()
     }
 
@@ -91,7 +89,7 @@ FlightMap {
             var yr = _map.height.toFixed(0) - 1 // Must be within boundaries of visible map
             var c0 = _map.toCoordinate(Qt.point(xl, yl), false /* clipToViewPort */)
             var c1 = _map.toCoordinate(Qt.point(xr, yr), false /* clipToViewPort */)
-            QGroundControl.mapEngineManager.updateForCurrentView(c0.longitude, c0.latitude, c1.longitude, c1.latitude, _addNewSetViewObject.sliderMinZoom.value, _addNewSetViewObject.sliderMaxZoom.value, mapType)
+            MapEngineManager.updateForCurrentView(c0.longitude, c0.latitude, c1.longitude, c1.latitude, _addNewSetViewObject.sliderMinZoom.value, _addNewSetViewObject.sliderMaxZoom.value, mapType)
         }
     }
 
@@ -165,7 +163,7 @@ FlightMap {
     onMapTypeChanged: {
         updateMap()
         if(isMapInteractive) {
-            QGroundControl.mapEngineManager.saveSetting(mapKey, mapType)
+            MapEngineManager.saveSetting(mapKey, mapType)
         }
     }
 
@@ -340,7 +338,7 @@ FlightMap {
                         enabled:    editSetName.text !== ""
                         onClicked: {
                             if (editSetName.text !== tileSet.name) {
-                                QGroundControl.mapEngineManager.renameTileSet(tileSet, editSetName.text)
+                                MapEngineManager.renameTileSet(tileSet, editSetName.text)
                             }
                             _map.destroy()
                         }
@@ -510,10 +508,10 @@ FlightMap {
                                 id:                     setName
                                 anchors.left:           parent.left
                                 anchors.right:          parent.right
-                                Component.onCompleted:  text = QGroundControl.mapEngineManager.getUniqueName()
+                                Component.onCompleted:  text = MapEngineManager.getUniqueName()
                                 Connections {
-                                    target:             QGroundControl.mapEngineManager
-                                    onTileSetsChanged:  setName.text = QGroundControl.mapEngineManager.getUniqueName()
+                                    target:             MapEngineManager
+                                    onTileSetsChanged:  setName.text = MapEngineManager.getUniqueName()
                                 }
                             }
                         }
@@ -530,7 +528,7 @@ FlightMap {
                                 id:             mapCombo
                                 anchors.left:   parent.left
                                 anchors.right:  parent.right
-                                model:          QGroundControl.mapEngineManager.mapList
+                                model:          MapEngineManager.mapList
                                 onActivated: (index) => {
                                     mapType = textAt(index)
                                 }
@@ -547,9 +545,9 @@ FlightMap {
                                 anchors.left:   parent.left
                                 anchors.right:  parent.right
                                 text:           qsTr("Fetch elevation data")
-                                checked:        QGroundControl.mapEngineManager.fetchElevation
+                                checked:        MapEngineManager.fetchElevation
                                 onClicked: {
-                                    QGroundControl.mapEngineManager.fetchElevation = checked
+                                    MapEngineManager.fetchElevation = checked
                                     handleChanges()
                                 }
                             }
@@ -671,7 +669,7 @@ FlightMap {
                                         font.pointSize: _adjustableFontPointSize
                                     }
                                     QGCLabel {
-                                        text:            QGroundControl.mapEngineManager.tileCountStr
+                                        text:            MapEngineManager.tileCountStr
                                         font.pointSize: _adjustableFontPointSize
                                     }
 
@@ -680,7 +678,7 @@ FlightMap {
                                         font.pointSize: _adjustableFontPointSize
                                     }
                                     QGCLabel {
-                                        text:           QGroundControl.mapEngineManager.tileSizeStr
+                                        text:           MapEngineManager.tileSizeStr
                                         font.pointSize: _adjustableFontPointSize
                                     }
                                 }
@@ -703,10 +701,10 @@ FlightMap {
                                 width:      (addNewSetColumn.width * 0.5) - (addButtonRow.spacing * 0.5)
                                 enabled:    !_tooManyTiles && setName.text.length > 0
                                 onClicked: {
-                                    if (QGroundControl.mapEngineManager.findName(setName.text)) {
+                                    if (MapEngineManager.findName(setName.text)) {
                                         duplicateName.visible = true
                                     } else {
-                                        QGroundControl.mapEngineManager.startDownload(setName.text, mapType);
+                                        MapEngineManager.startDownload(setName.text, mapType);
                                         _map.destroy()
                                     }
                                 }
@@ -756,7 +754,7 @@ FlightMap {
             buttons:    Dialog.Yes | Dialog.No
 
             onAccepted: {
-                QGroundControl.mapEngineManager.deleteTileSet(tileSet)
+                MapEngineManager.deleteTileSet(tileSet)
                 _map.destroy()
             }
         }

@@ -1,44 +1,44 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Location Network Positioning Qml Sql)
 
-# QGC_NO_GOOGLE_MAPS
-
 qt_add_plugin(QGCLocation STATIC
     CLASS_NAME QGeoServiceProviderFactoryQGC
     OUTPUT_TARGETS QGCLocation_targets
-	BingMapProvider.cpp
-	BingMapProvider.h
-	ElevationMapProvider.cpp
-	ElevationMapProvider.h
-	EsriMapProvider.cpp
-	EsriMapProvider.h
-	GenericMapProvider.cpp
-	GenericMapProvider.h
-	GoogleMapProvider.cpp
-	GoogleMapProvider.h
-	MapboxMapProvider.cpp
-	MapboxMapProvider.h
-	MapProvider.cpp
-	MapProvider.h
+	MapProviders/BingMapProvider.cpp
+	MapProviders/BingMapProvider.h
+	MapProviders/ElevationMapProvider.cpp
+	MapProviders/ElevationMapProvider.h
+	MapProviders/EsriMapProvider.cpp
+	MapProviders/EsriMapProvider.h
+	MapProviders/GenericMapProvider.cpp
+	MapProviders/GenericMapProvider.h
+	MapProviders/GoogleMapProvider.cpp
+	MapProviders/GoogleMapProvider.h
+	MapProviders/MapboxMapProvider.cpp
+	MapProviders/MapboxMapProvider.h
+	MapProviders/MapProvider.cpp
+	MapProviders/MapProvider.h
+	QGCCacheTile.h
 	QGCMapEngine.cpp
 	QGCMapEngine.h
 	QGCMapEngineData.h
-	QGCMapTileSet.cpp
-	QGCMapTileSet.h
+	QGCCachedTileSet.cpp
+	QGCCachedTileSet.h
 	QGCMapUrlEngine.cpp
 	QGCMapUrlEngine.h
+	QGCTile.h
 	QGCTileCacheWorker.cpp
 	QGCTileCacheWorker.h
 	QGCTileSet.h
-	QGeoCodeReplyQGC.cpp
-	QGeoCodeReplyQGC.h
-	QGeoCodingManagerEngineQGC.cpp
-	QGeoCodingManagerEngineQGC.h
+	QGeoFileTileCacheQGC.cpp
+	QGeoFileTileCacheQGC.h
 	QGeoMapReplyQGC.cpp
 	QGeoMapReplyQGC.h
 	QGeoServiceProviderPluginQGC.cpp
 	QGeoServiceProviderPluginQGC.h
 	QGeoTiledMappingManagerEngineQGC.cpp
 	QGeoTiledMappingManagerEngineQGC.h
+	QGeoTiledMapQGC.cpp
+	QGeoTiledMapQGC.h
 	QGeoTileFetcherQGC.cpp
 	QGeoTileFetcherQGC.h
 	QMLControl/QGCMapEngineManager.cc
@@ -46,6 +46,9 @@ qt_add_plugin(QGCLocation STATIC
 )
 
 target_compile_definitions(QGCLocation PRIVATE CMAKE_LOCATION_PLUGIN)
+if(IOS)
+	target_compile_definitions(QGCLocation PRIVATE QGC_NO_GOOGLE_MAPS)
+endif()
 
 target_link_libraries(QGCLocation
 	PRIVATE
@@ -66,6 +69,7 @@ target_include_directories(QGCLocation
 	PUBLIC
 		${CMAKE_CURRENT_SOURCE_DIR}
 		QMLControl
+		MapProviders
 )
 
 set_source_files_properties(QMLControl/OfflineMap.qml
@@ -77,6 +81,10 @@ set_source_files_properties(QMLControl/OfflineMapEditor.qml
     PROPERTIES
         QT_RESOURCE_ALIAS OfflineMapEditor.qml
 )
+
+# set(QGCLOCATION_RESOURCES)
+# qt_add_resources(QGCLOCATION_RESOURCES MapProviders/maps.json)
+# target_sources(QGCLocation PRIVATE ${QGCLOCATION_RESOURCES})
 
 # qt_add_qml_module(QGCLocation
 #     URI QGroundControl.QGCLocation

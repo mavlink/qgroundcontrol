@@ -1,8 +1,8 @@
 #include "Viewer3DTileReply.h"
 
-#include "QGCMapEngine.h"
 #include "MapProvider.h"
 #include "QGCMapUrlEngine.h"
+#include "QGeoTileFetcherQGC.h"
 
 #include <QtCore/QFile>
 #include <QtNetwork/QNetworkAccessManager>
@@ -47,7 +47,8 @@ Viewer3DTileReply::~Viewer3DTileReply()
 
 void Viewer3DTileReply::prepareDownload()
 {
-    QNetworkRequest request = getQGCMapEngine()->urlFactory()->getTileURL(_mapId, _tile.x, _tile.y, _tile.zoomLevel, _networkManager);
+    QNetworkRequest request = QGeoTileFetcherQGC::getNetworkRequest(_mapId, _tile.x, _tile.y, _tile.zoomLevel);
+    request.setOriginatingObject(this);
     _reply = _networkManager->get(request);
     connect(_reply, &QNetworkReply::finished, this, &Viewer3DTileReply::requestFinished);
     connect(_reply, &QNetworkReply::errorOccurred, this, &Viewer3DTileReply::requestError);
@@ -56,15 +57,14 @@ void Viewer3DTileReply::prepareDownload()
 void Viewer3DTileReply::requestFinished()
 {
     _tile.data = _reply->readAll();
-    UrlFactory* urlFactory = getQGCMapEngine()->urlFactory();
-    MapProvider* mapProvider = urlFactory->getMapProviderFromQtMapId(_tile.mapId);
+    const SharedMapProvider mapProvider = UrlFactory::getProviderFromQtMapId(_tile.mapId);
     // disconnect(_networkManager, &QNetworkAccessManager::finished, this, &Viewer3DTileReply::requestFinished);
     _timeoutTimer->stop();
     disconnect(_reply, &QNetworkReply::finished, this, &Viewer3DTileReply::requestFinished);
     disconnect(_reply, &QNetworkReply::errorOccurred, this, &Viewer3DTileReply::requestError);
     disconnect(_timeoutTimer, &QTimer::timeout, this, &Viewer3DTileReply::timeoutTimerEvent);
 
-    if(mapProvider && mapProvider->_isBingProvider() && _tile.data.size() && _tile.data == _bingNoTileImage){
+    if(mapProvider && mapProvider->isBingProvider() && _tile.data.size() && _tile.data == _bingNoTileImage){
         // Bing doesn't return an error if you request a tile above supported zoom level
         // It instead returns an image of a missing tile graphic. We need to detect that
         // and error out so 3D View will deal with zooming correctly even if it doesn't have the tile.

@@ -20,7 +20,6 @@ import QGroundControl.Controls
 import QGroundControl.ScreenTools
 import QGroundControl.MultiVehicleManager
 import QGroundControl.Palette
-import QGroundControl.QGCMapEngineManager
 
 Item {
     id: root
@@ -28,8 +27,7 @@ Item {
     property var    _settingsManager:               QGroundControl.settingsManager
     property var    _appSettings:                   _settingsManager.appSettings
     property var    _mapsSettings:                  _settingsManager.mapsSettings
-    property var    _mapEngineManager:              QGroundControl.mapEngineManager
-    property bool   _currentlyImportOrExporting:    _mapEngineManager.importAction === QGCMapEngineManager.ActionExporting || _mapEngineManager.importAction === QGCMapEngineManager.ActionImporting
+    property bool   _currentlyImportOrExporting:    MapEngineManager.importAction === MapEngineManager.ActionExporting || MapEngineManager.importAction === MapEngineManager.ActionImporting
     property real   _largeTextFieldWidth:           ScreenTools.defaultFontPixelWidth * 30
 
     property Fact   _mapProviderFact:   _settingsManager.flightMapSettings.mapProvider
@@ -46,11 +44,11 @@ Item {
         anchors.fill: parent
 
         Component.onCompleted: {
-            QGroundControl.mapEngineManager.loadTileSets()
+            MapEngineManager.loadTileSets()
         }
 
         Connections {
-            target:                 _mapEngineManager
+            target:                 MapEngineManager
             onErrorMessageChanged:  errorDialogComponent.createObject(mainWindow).open()
         }
 
@@ -59,11 +57,11 @@ Item {
 
             LabelledComboBox {
                 label:      qsTr("Provider")
-                model:      _mapEngineManager.mapProviderList
+                model:      MapEngineManager.mapProviderList
 
                 onActivated: (index) => {
                     _mapProviderFact.rawValue = comboBox.textAt(index)
-                    _mapTypeFact.rawValue = _mapEngineManager.mapTypeList(comboBox.textAt(index))[0]
+                    _mapTypeFact.rawValue = MapEngineManager.mapTypeList(comboBox.textAt(index))[0]
                 }
 
                 Component.onCompleted: {
@@ -75,7 +73,7 @@ Item {
 
             LabelledComboBox {
                 label: qsTr("Type")
-                model: _mapEngineManager.mapTypeList(_mapProviderFact.rawValue)
+                model: MapEngineManager.mapTypeList(_mapProviderFact.rawValue)
 
                 onActivated: (index) => { _mapTypeFact.rawValue = comboBox.textAt(index) }
 
@@ -93,7 +91,7 @@ Item {
             headingDescription: qsTr("Download map tiles for use when offline")
 
             Repeater {
-                model: QGroundControl.mapEngineManager.tileSets
+                model: MapEngineManager.tileSets
 
                 OfflineMapInfo {
                     tileSet:    object
@@ -115,7 +113,7 @@ Item {
                 visible:    QGroundControl.corePlugin.options.showOfflineMapImport
                 enabled:    !_currentlyImportOrExporting
                 onClicked: {
-                    _mapEngineManager.importAction = QGCMapEngineManager.ActionNone
+                    MapEngineManager.importAction = MapEngineManager.ActionNone
                     importDialogComponent.createObject(mainWindow).open()
                 }
             }
@@ -134,14 +132,14 @@ Item {
 
                 QGCLabel {
                     Layout.fillWidth:   true
-                    text:               _mapEngineManager.importAction === QGCMapEngineManager.ActionExporting ? qsTr("Exporting") : qsTr("Importing")
+                    text:               MapEngineManager.importAction === MapEngineManager.ActionExporting ? qsTr("Exporting") : qsTr("Importing")
                     font.bold:          true
                 }
                 ProgressBar {
                     width:          ScreenTools.defaultFontPixelWidth * 25
                     from:           0
                     to:             100
-                    value:          _mapEngineManager.actionProgress
+                    value:          MapEngineManager.actionProgress
                 }
             }
         }
@@ -220,12 +218,12 @@ Item {
 
             onAcceptedForSave: (file) => {
                 close()
-                _mapEngineManager.exportSets(file)
+                MapEngineManager.exportSets(file)
             }
 
             onAcceptedForLoad: (file) => {
                 close()
-                _mapEngineManager.importSets(file)
+                MapEngineManager.importSets(file)
             }
         }
 
@@ -246,7 +244,7 @@ Item {
                     spacing: ScreenTools.defaultFontPixelWidth / 2
 
                     Repeater {
-                        model: _mapEngineManager.tileSets
+                        model: MapEngineManager.tileSets
 
                         QGCCheckBox {
                             text:       object.name
@@ -276,13 +274,13 @@ Item {
 
                     QGCRadioButton {
                         text:           qsTr("Append to existing sets")
-                        checked:        !_mapEngineManager.importReplace
-                        onClicked:      _mapEngineManager.importReplace = !checked
+                        checked:        !MapEngineManager.importReplace
+                        onClicked:      MapEngineManager.importReplace = !checked
                     }
                     QGCRadioButton {
                         text:           qsTr("Replace existing sets")
-                        checked:        _mapEngineManager.importReplace
-                        onClicked:      _mapEngineManager.importReplace = checked
+                        checked:        MapEngineManager.importReplace
+                        onClicked:      MapEngineManager.importReplace = checked
                     }
                 }
             }
@@ -293,7 +291,7 @@ Item {
 
             QGCSimpleMessageDialog {
                 title:      qsTr("Error Message")
-                text:       _mapEngineManager.errorMessage
+                text:       MapEngineManager.errorMessage
                 buttons:    Dialog.Close
             }
         }

@@ -21,88 +21,15 @@
 #include <QtCore/QObject>
 #include <QtCore/QString>
 
-class QGCCachedTileSet;
+#include "QGCTile.h"
+#include "QGCCacheTile.h"
+#include "QGCCachedTileSet.h"
 
-//-----------------------------------------------------------------------------
-class QGCTile
-{
-public:
-    QGCTile()
-        : _x(0)
-        , _y(0)
-        , _z(0)
-        , _set(UINT64_MAX)
-        , _type("Invalid")
-    {
-    }
-
-    enum TyleState {
-        StatePending = 0,
-        StateDownloading,
-        StateError,
-        StateComplete
-    };
-
-    int                 x           () const { return _x; }
-    int                 y           () const { return _y; }
-    int                 z           () const { return _z; }
-    qulonglong          set         () const { return _set;  }
-    const QString       hash        () const { return _hash; }
-    QString type        () const { return _type; }
-
-    void                setX        (int x) { _x = x; }
-    void                setY        (int y) { _y = y; }
-    void                setZ        (int z) { _z = z; }
-    void                setTileSet  (qulonglong set) { _set = set;  }
-    void                setHash     (const QString& hash) { _hash = hash; }
-    void                setType     (QString type) { _type = type; }
-
-private:
-    int         _x;
-    int         _y;
-    int         _z;
-    qulonglong  _set;
-    QString     _hash;
-    QString _type;
-};
-
-//-----------------------------------------------------------------------------
-class QGCCacheTile : public QObject
-{
-    Q_OBJECT
-public:
-    QGCCacheTile    (const QString& hash, const QByteArray& img, const QString& format, const QString& type, qulonglong set = UINT64_MAX)
-        : _set(set)
-        , _hash(hash)
-        , _img(img)
-        , _format(format)
-        , _type(type)
-    {
-    }
-    QGCCacheTile    (const QString hash, qulonglong set)
-        : _set(set)
-        , _hash(hash)
-    {
-    }
-    qulonglong          set     () const{ return _set;   }
-    QString             hash    () { return _hash;  }
-    QByteArray          img     () { return _img;   }
-    QString             format  () { return _format;}
-    QString type    () { return _type; }
-private:
-    qulonglong  _set;
-    QString     _hash;
-    QByteArray  _img;
-    QString     _format;
-    QString _type;
-};
-
-//-----------------------------------------------------------------------------
 class QGCMapTask : public QObject
 {
     Q_OBJECT
-public:
 
+public:
     enum TaskType {
         taskInit,
         taskCacheTile,
@@ -120,29 +47,31 @@ public:
     };
 
     QGCMapTask(TaskType type)
-        : _type(type)
-    {}
-    virtual ~QGCMapTask()
+        : m_type(type)
     {}
 
-    virtual TaskType    type            () { return _type; }
+    virtual ~QGCMapTask() = default;
 
-    void setError(QString errorString = QString())
+    TaskType type() const { return m_type; }
+
+    void setError(const QString &errorString = QString())
     {
-        emit error(_type, errorString);
+        emit error(m_type, errorString);
     }
 
 signals:
-    void error          (QGCMapTask::TaskType type, QString errorString);
+    void error(QGCMapTask::TaskType type, const QString &errorString);
 
 private:
-    TaskType    _type;
+    TaskType m_type;
 };
 
-//-----------------------------------------------------------------------------
+Q_DECLARE_METATYPE(QGCMapTask::TaskType)
+
 class QGCFetchTileSetTask : public QGCMapTask
 {
     Q_OBJECT
+
 public:
     QGCFetchTileSetTask()
         : QGCMapTask(QGCMapTask::taskFetchTileSets)
@@ -154,102 +83,101 @@ public:
     }
 
 signals:
-    void            tileSetFetched  (QGCCachedTileSet* tileSet);
+    void tileSetFetched(QGCCachedTileSet* tileSet);
 };
 
-//-----------------------------------------------------------------------------
 class QGCCreateTileSetTask : public QGCMapTask
 {
     Q_OBJECT
+
 public:
     QGCCreateTileSetTask(QGCCachedTileSet* tileSet)
         : QGCMapTask(QGCMapTask::taskCreateTileSet)
-        , _tileSet(tileSet)
-        , _saved(false)
+        , m_tileSet(tileSet)
+        , m_saved(false)
     {}
 
-    ~QGCCreateTileSetTask();
+    ~QGCCreateTileSetTask()
+    {
+        if(!m_saved && m_tileSet) {
+            delete m_tileSet;
+        }
+    }
 
-    QGCCachedTileSet*   tileSet () { return _tileSet; }
+    QGCCachedTileSet* tileSet() { return m_tileSet; }
 
     void setTileSetSaved()
     {
-        //-- Flag as saved. Signalee wll maintain it.
-        _saved = true;
-        emit tileSetSaved(_tileSet);
+        m_saved = true;
+        emit tileSetSaved(m_tileSet);
     }
 
 signals:
-    void tileSetSaved   (QGCCachedTileSet* tileSet);
+    void tileSetSaved(QGCCachedTileSet* tileSet);
 
 private:
-    QGCCachedTileSet* _tileSet;
-    bool              _saved;
+    QGCCachedTileSet* m_tileSet;
+    bool m_saved;
 };
 
-//-----------------------------------------------------------------------------
 class QGCFetchTileTask : public QGCMapTask
 {
     Q_OBJECT
 public:
-    QGCFetchTileTask(const QString hash)
+    QGCFetchTileTask(const QString &hash)
         : QGCMapTask(QGCMapTask::taskFetchTile)
-        , _hash(hash)
+        , m_hash(hash)
     {}
-
-    ~QGCFetchTileTask()
-    {
-    }
 
     void setTileFetched(QGCCacheTile* tile)
     {
         emit tileFetched(tile);
     }
 
-    QString         hash() { return _hash; }
+    QString hash() const { return m_hash; }
 
 signals:
-    void            tileFetched     (QGCCacheTile* tile);
+    void tileFetched(QGCCacheTile* tile);
 
 private:
-    QString         _hash;
+    QString m_hash;
 };
 
-//-----------------------------------------------------------------------------
 class QGCSaveTileTask : public QGCMapTask
 {
     Q_OBJECT
+
 public:
     QGCSaveTileTask(QGCCacheTile* tile)
         : QGCMapTask(QGCMapTask::taskCacheTile)
-        , _tile(tile)
+        , m_tile(tile)
     {}
 
     ~QGCSaveTileTask()
     {
-        delete _tile;
-        _tile = nullptr;
+        delete m_tile;
+        m_tile = nullptr;
     }
 
-    QGCCacheTile*   tile() { return _tile; }
+    QGCCacheTile* tile() { return m_tile; }
 
 private:
-    QGCCacheTile*   _tile;
+    QGCCacheTile* m_tile;
 };
 
-//-----------------------------------------------------------------------------
 class QGCGetTileDownloadListTask : public QGCMapTask
 {
     Q_OBJECT
+
 public:
     QGCGetTileDownloadListTask(qulonglong setID, int count)
         : QGCMapTask(QGCMapTask::taskGetTileDownloadList)
-        , _setID(setID)
-        , _count(count)
+        , m_setID(setID)
+        , m_count(count)
     {}
 
-    qulonglong  setID() const{ return _setID; }
-    int         count() const{ return _count; }
+    qulonglong setID() const { return m_setID; }
+    int count() const { return m_count; }
 
     void setTileListFetched(QList<QGCTile*> tiles)
     {
@@ -257,89 +185,89 @@ public:
     }
 
 signals:
-    void            tileListFetched  (QList<QGCTile*> tiles);
+    void tileListFetched(QList<QGCTile*> tiles);
 
 private:
-    qulonglong  _setID;
-    int         _count;
+    qulonglong m_setID;
+    int m_count;
 };
 
-//-----------------------------------------------------------------------------
 class QGCUpdateTileDownloadStateTask : public QGCMapTask
 {
     Q_OBJECT
+
 public:
-    QGCUpdateTileDownloadStateTask(qulonglong setID, QGCTile::TyleState state, const QString& hash)
+    QGCUpdateTileDownloadStateTask(qulonglong setID, QGCTile::TileState state, const QString& hash)
         : QGCMapTask(QGCMapTask::taskUpdateTileDownloadState)
-        , _setID(setID)
-        , _state(state)
-        , _hash(hash)
+        , m_setID(setID)
+        , m_state(state)
+        , m_hash(hash)
     {}
 
-    QString             hash    () { return _hash; }
-    qulonglong          setID   () const{ return _setID; }
-    QGCTile::TyleState  state   () { return _state; }
+    QString hash() const { return m_hash; }
+    qulonglong setID() const { return m_setID; }
+    QGCTile::TileState state() const { return m_state; }
 
 private:
-    qulonglong          _setID;
-    QGCTile::TyleState  _state;
-    QString             _hash;
+    qulonglong m_setID;
+    QGCTile::TileState m_state;
+    QString m_hash;
 };
 
-//-----------------------------------------------------------------------------
 class QGCDeleteTileSetTask : public QGCMapTask
 {
     Q_OBJECT
+
 public:
     QGCDeleteTileSetTask(qulonglong setID)
         : QGCMapTask(QGCMapTask::taskDeleteTileSet)
-        , _setID(setID)
+        , m_setID(setID)
     {}
 
-    qulonglong  setID() const{ return _setID; }
+    qulonglong setID() const { return m_setID; }
 
     void setTileSetDeleted()
     {
-        emit tileSetDeleted(_setID);
+        emit tileSetDeleted(m_setID);
     }
 
 signals:
     void tileSetDeleted(qulonglong setID);
 
 private:
-    qulonglong  _setID;
+    qulonglong m_setID;
 };
 
-//-----------------------------------------------------------------------------
 class QGCRenameTileSetTask : public QGCMapTask
 {
     Q_OBJECT
+
 public:
-    QGCRenameTileSetTask(qulonglong setID, QString newName)
+    QGCRenameTileSetTask(qulonglong setID, const QString &newName)
         : QGCMapTask(QGCMapTask::taskRenameTileSet)
-        , _setID(setID)
-        , _newName(newName)
+        , m_setID(setID)
+        , m_newName(newName)
     {}
 
-    qulonglong  setID   () const{ return _setID; }
-    QString     newName () { return _newName; }
+    qulonglong setID() const { return m_setID; }
+    QString newName() const { return m_newName; }
 
 private:
-    qulonglong  _setID;
-    QString     _newName;
+    qulonglong m_setID;
+    QString m_newName;
 };
 
-//-----------------------------------------------------------------------------
 class QGCPruneCacheTask : public QGCMapTask
 {
     Q_OBJECT
+
 public:
     QGCPruneCacheTask(quint64 amount)
         : QGCMapTask(QGCMapTask::taskPruneCache)
-        , _amount(amount)
+        , m_amount(amount)
     {}
 
-    quint64  amount() const{ return _amount; }
+    quint64 amount() const { return m_amount; }
 
     void setPruned()
     {
@@ -350,13 +278,13 @@ signals:
     void pruned();
 
 private:
-    quint64  _amount;
+    quint64 m_amount;
 };
 
-//-----------------------------------------------------------------------------
 class QGCResetTask : public QGCMapTask
 {
     Q_OBJECT
+
 public:
     QGCResetTask()
         : QGCMapTask(QGCMapTask::taskReset)
@@ -371,23 +299,19 @@ signals:
     void resetCompleted();
 };
 
-//-----------------------------------------------------------------------------
 class QGCExportTileTask : public QGCMapTask
 {
     Q_OBJECT
+
 public:
-    QGCExportTileTask(QVector<QGCCachedTileSet*> sets, QString path)
+    QGCExportTileTask(QVector<QGCCachedTileSet*> sets, const QString &path)
         : QGCMapTask(QGCMapTask::taskExport)
-        , _sets(sets)
-        , _path(path)
+        , m_sets(sets)
+        , m_path(path)
     {}
 
-    ~QGCExportTileTask()
-    {
-    }
-
-    QVector<QGCCachedTileSet*> sets() { return _sets; }
-    QString                    path() { return _path; }
+    QVector<QGCCachedTileSet*> sets() const { return m_sets; }
+    QString path() const { return m_path; }
 
     void setExportCompleted()
     {
@@ -399,33 +323,28 @@ public:
         emit actionProgress(percentage);
     }
 
-private:
-    QVector<QGCCachedTileSet*>  _sets;
-    QString                     _path;
-
 signals:
-    void actionCompleted        ();
-    void actionProgress         (int percentage);
+    void actionCompleted();
+    void actionProgress(int percentage);
 
+private:
+    QVector<QGCCachedTileSet*> m_sets;
+    QString m_path;
 };
 
-//-----------------------------------------------------------------------------
 class QGCImportTileTask : public QGCMapTask
 {
     Q_OBJECT
+
 public:
-    QGCImportTileTask(QString path, bool replace)
+    QGCImportTileTask(const QString &path, bool replace)
         : QGCMapTask(QGCMapTask::taskImport)
-        , _path(path)
-        , _replace(replace)
+        , m_path(path)
+        , m_replace(replace)
     {}
 
-    ~QGCImportTileTask()
-    {
-    }
-
-    QString                    path     () { return _path; }
-    bool                       replace  () const{ return _replace; }
+    QString path() const { return m_path; }
+    bool replace() const { return m_replace; }
 
     void setImportCompleted()
     {
@@ -437,12 +356,11 @@ public:
         emit actionProgress(percentage);
     }
 
-private:
-    QString                     _path;
-    bool                        _replace;
-
 signals:
-    void actionCompleted        ();
-    void actionProgress         (int percentage);
+    void actionCompleted();
+    void actionProgress(int percentage);
 
+private:
+    QString m_path;
+    bool m_replace;
 };

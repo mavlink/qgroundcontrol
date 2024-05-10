@@ -10,7 +10,6 @@
 #include "QGCApplication.h"
 #include "SettingsManager.h"
 #include "VideoManager.h"
-#include "QGCMapEngine.h"
 #include "QGCCameraManager.h"
 #include "FTPManager.h"
 #include "QGCLZMA.h"
@@ -273,7 +272,7 @@ VehicleCameraControl::photoCaptureStatus()
 QString
 VehicleCameraControl::storageFreeStr()
 {
-    return QGCMapEngine::storageFreeSizeToString(static_cast<quint64>(_storageFree));
+    return qgcApp()->storageFreeSizeToString(static_cast<quint64>(_storageFree));
 }
 
 //-----------------------------------------------------------------------------
@@ -281,7 +280,7 @@ QString
 VehicleCameraControl::batteryRemainingStr()
 {
     if(_batteryRemaining >= 0) {
-        return QGCMapEngine::numberToString(static_cast<quint64>(_batteryRemaining)) + " %";
+        return qgcApp()->numberToString(static_cast<quint64>(_batteryRemaining)) + " %";
     }
     return "";
 }

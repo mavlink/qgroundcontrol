@@ -41,6 +41,14 @@ QObject* QmlObjectListModel::get(int index)
     return _objectList[index];
 }
 
+const QObject* QmlObjectListModel::getConst(int index) const
+{
+    if (index < 0 || index >= _objectList.count()) {
+        return nullptr;
+    }
+    return _objectList.at(index);
+}
+
 int QmlObjectListModel::rowCount(const QModelIndex& parent) const
 {
     Q_UNUSED(parent);

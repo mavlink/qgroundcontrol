@@ -20,7 +20,6 @@ import QGroundControl.Controls
 import QGroundControl.ScreenTools
 import QGroundControl.Palette
 import QGroundControl.FlightMap
-import QGroundControl.QGCMapEngineManager
 import QGroundControl.FactSystem
 import QGroundControl.FactControls
 
@@ -58,7 +57,7 @@ Item {
     property real   _adjustableFontPointSize: _saveRealEstate ? ScreenTools.smallFontPointSize : ScreenTools.defaultFontPointSize
 
     property var    _mapAdjustedColor:  _map.isSatelliteMap ? "white" : "black"
-    property bool   _tooManyTiles:      QGroundControl.mapEngineManager.tileCount > _maxTilesForDownload
+    property bool   _tooManyTiles:      MapEngineManager.tileCount > _maxTilesForDownload
 
     readonly property real minZoomLevel:    1
     readonly property real maxZoomLevel:    20
@@ -69,15 +68,15 @@ Item {
     QGCPalette { id: qgcPal }
 
     Component.onCompleted: {
-        QGroundControl.mapEngineManager.loadTileSets()
+        MapEngineManager.loadTileSets()
         updateMap()
         savedCenter = _map.toCoordinate(Qt.point(_map.width / 2, _map.height / 2), false /* clipToViewPort */)
     }
 
     Connections {
-        target: QGroundControl.mapEngineManager
+        target: MapEngineManager
         onTileSetsChanged: {
-            setName.text = QGroundControl.mapEngineManager.getUniqueName()
+            setName.text = MapEngineManager.getUniqueName()
         }
         onErrorMessageChanged: {
             errorDialog.visible = true
@@ -92,7 +91,7 @@ Item {
             var yr = _map.height.toFixed(0) - 1 // Must be within boundaries of visible map
             var c0 = _map.toCoordinate(Qt.point(xl, yl), false /* clipToViewPort */)
             var c1 = _map.toCoordinate(Qt.point(xr, yr), false /* clipToViewPort */)
-            QGroundControl.mapEngineManager.updateForCurrentView(c0.longitude, c0.latitude, c1.longitude, c1.latitude, sliderMinZoom.value, sliderMaxZoom.value, mapType)
+            MapEngineManager.updateForCurrentView(c0.longitude, c0.latitude, c1.longitude, c1.latitude, sliderMinZoom.value, sliderMaxZoom.value, mapType)
         }
     }
 
@@ -125,7 +124,7 @@ Item {
         _tileSetList.visible = true
         infoView.visible = false
         addNewSetView.visible = false
-        QGroundControl.mapEngineManager.resetAction();
+        MapEngineManager.resetAction();
     }
 
     function showExport() {
@@ -207,7 +206,7 @@ Item {
     onMapTypeChanged: {
         updateMap()
         if(isMapInteractive) {
-            QGroundControl.mapEngineManager.saveSetting(mapKey, mapType)
+            MapEngineManager.saveSetting(mapKey, mapType)
         }
     }
 
@@ -218,7 +217,7 @@ Item {
         defaultSuffix:  _appSettings.tilesetFileExtension
 
         onAcceptedForSave: (file) => {
-            if (QGroundControl.mapEngineManager.exportSets(file)) {
+            if (MapEngineManager.exportSets(file)) {
                 exportToDiskProgress.open()
             } else {
                 showList()
@@ -227,7 +226,7 @@ Item {
         }
 
         onAcceptedForLoad: (file) => {
-            if(!QGroundControl.mapEngineManager.importSets(file)) {
+            if(!MapEngineManager.importSets(file)) {
                 showList();
             }
             close()
@@ -237,7 +236,7 @@ Item {
     MessageDialog {
         id:         errorDialog
         visible:    false
-        text:       QGroundControl.mapEngineManager.errorMessage
+        text:       MapEngineManager.errorMessage
         //icon:       StandardIcon.Critical
         buttons:    MessageDialog.Ok
         title:      qsTr("Error Message")
@@ -258,8 +257,8 @@ Item {
             buttons:    Dialog.Save | Dialog.Cancel
 
             onAccepted: {
-                QGroundControl.mapEngineManager.maxDiskCache = parseInt(maxCacheSize.text)
-                QGroundControl.mapEngineManager.maxMemCache  = parseInt(maxCacheMemSize.text)
+                MapEngineManager.maxDiskCache = parseInt(maxCacheSize.text)
+                MapEngineManager.maxMemCache  = parseInt(maxCacheMemSize.text)
             }
 
             Column {
@@ -272,7 +271,7 @@ Item {
                     maximumLength:      6
                     inputMethodHints:   Qt.ImhDigitsOnly
                     validator:          IntValidator {bottom: 1; top: 262144;}
-                    text:               QGroundControl.mapEngineManager.maxDiskCache
+                    text:               MapEngineManager.maxDiskCache
                 }
 
                 Item { width: 1; height: 1 }
@@ -289,7 +288,7 @@ Item {
                     maximumLength:      4
                     inputMethodHints:   Qt.ImhDigitsOnly
                     validator:          IntValidator {bottom: 1; top: 1024;}
-                    text:               QGroundControl.mapEngineManager.maxMemCache
+                    text:               MapEngineManager.maxMemCache
                 }
 
                 QGCLabel {
@@ -415,7 +414,7 @@ Item {
             buttons:    Dialog.Yes | Dialog.No
 
             onAccepted: {
-                QGroundControl.mapEngineManager.deleteTileSet(offlineMapView._currentSelection)
+                MapEngineManager.deleteTileSet(offlineMapView._currentSelection)
                 leaveInfoView()
                 showList()
             }
@@ -604,7 +603,7 @@ Item {
                             enabled:    editSetName.text !== ""
                             onClicked: {
                                 if(editSetName.text !== _currentSelection.name) {
-                                    QGroundControl.mapEngineManager.renameTileSet(_currentSelection, editSetName.text)
+                                    MapEngineManager.renameTileSet(_currentSelection, editSetName.text)
                                 }
                                 leaveInfoView()
                                 showList()
@@ -804,7 +803,7 @@ Item {
                             id:             mapCombo
                             anchors.left:   parent.left
                             anchors.right:  parent.right
-                            model:          QGroundControl.mapEngineManager.mapList
+                            model:          MapEngineManager.mapList
                             onActivated: (index) => {
                                 mapType = textAt(index)
                             }
@@ -821,9 +820,9 @@ Item {
                             anchors.left:   parent.left
                             anchors.right:  parent.right
                             text:           qsTr("Fetch elevation data")
-                            checked:        QGroundControl.mapEngineManager.fetchElevation
+                            checked:        MapEngineManager.fetchElevation
                             onClicked: {
-                                QGroundControl.mapEngineManager.fetchElevation = checked
+                                MapEngineManager.fetchElevation = checked
                                 handleChanges()
                             }
                         }
@@ -945,7 +944,7 @@ Item {
                                     font.pointSize: _adjustableFontPointSize
                                 }
                                 QGCLabel {
-                                    text:            QGroundControl.mapEngineManager.tileCountStr
+                                    text:            MapEngineManager.tileCountStr
                                     font.pointSize: _adjustableFontPointSize
                                 }
 
@@ -954,7 +953,7 @@ Item {
                                     font.pointSize: _adjustableFontPointSize
                                 }
                                 QGCLabel {
-                                    text:           QGroundControl.mapEngineManager.tileSizeStr
+                                    text:           MapEngineManager.tileSizeStr
                                     font.pointSize: _adjustableFontPointSize
                                 }
                             }
@@ -977,10 +976,10 @@ Item {
                             width:      (addNewSetColumn.width * 0.5) - (addButtonRow.spacing * 0.5)
                             enabled:    !_tooManyTiles && setName.text.length > 0
                             onClicked: {
-                                if(QGroundControl.mapEngineManager.findName(setName.text)) {
+                                if(MapEngineManager.findName(setName.text)) {
                                     duplicateName.visible = true
                                 } else {
-                                    QGroundControl.mapEngineManager.startDownload(setName.text, mapType);
+                                    MapEngineManager.startDownload(setName.text, mapType);
                                     showList()
                                 }
                             }
@@ -1028,11 +1027,11 @@ Item {
                         addNewSet()
                     }
                 }
-        QGCLabel { text: QGroundControl.mapEngineManager.tileSets.count }
+        QGCLabel { text: MapEngineManager.tileSets.count }
 
                 Repeater {
                     id: repeater
-                    model: QGroundControl.mapEngineManager.tileSets
+                    model: MapEngineManager.tileSets
 
                     delegate: OfflineMapButton {
                         text:           object.name
@@ -1064,7 +1063,7 @@ Item {
                 width:          _buttonSize
                 visible:        QGroundControl.corePlugin.options.showOfflineMapImport
                 onClicked: {
-                    QGroundControl.mapEngineManager.importAction = QGCMapEngineManager.ActionNone
+                    MapEngineManager.importAction = MapEngineManager.ActionNone
                     importDialog.open()
                 }
             }
@@ -1103,7 +1102,7 @@ Item {
                 }
                 Item { width: 1; height: ScreenTools.defaultFontPixelHeight; }
                 Repeater {
-                    model: QGroundControl.mapEngineManager.tileSets
+                    model: MapEngineManager.tileSets
                     delegate: QGCCheckBox {
                         text:           object.name
                         checked:        object.selected
@@ -1129,17 +1128,17 @@ Item {
             QGCButton {
                 text:           qsTr("Select All")
                 width:          _bigButtonSize
-                onClicked:      QGroundControl.mapEngineManager.selectAll()
+                onClicked:      MapEngineManager.selectAll()
             }
             QGCButton {
                 text:           qsTr("Select None")
                 width:          _bigButtonSize
-                onClicked:      QGroundControl.mapEngineManager.selectNone()
+                onClicked:      MapEngineManager.selectNone()
             }
             QGCButton {
                 text:           qsTr("Export")
                 width:          _bigButtonSize
-                enabled:        QGroundControl.mapEngineManager.selectedCount > 0
+                enabled:        MapEngineManager.selectedCount > 0
                 onClicked: {
                     fileDialog.title = qsTr("Export Tile Set")
                     fileDialog.openForSave()
@@ -1175,7 +1174,7 @@ Item {
             width:              parent.width
             anchors.centerIn:   parent
             QGCLabel {
-                text:               QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionExporting ? qsTr("Tile Set Export Progress") : qsTr("Tile Set Export Completed")
+                text:               MapEngineManager.importAction === MapEngineManager.ActionExporting ? qsTr("Tile Set Export Progress") : qsTr("Tile Set Export Completed")
                 font.family:        ScreenTools.demiboldFontFamily
                 font.pointSize:     ScreenTools.mediumFontPointSize
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -1184,12 +1183,12 @@ Item {
                 width:          parent.width * 0.45
                 from:           0
                 to:             100
-                value:          QGroundControl.mapEngineManager.actionProgress
+                value:          MapEngineManager.actionProgress
                 anchors.horizontalCenter: parent.horizontalCenter
             }
             BusyIndicator {
-                visible:        QGroundControl.mapEngineManager ? QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionExporting : false
-                running:        QGroundControl.mapEngineManager ? QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionExporting : false
+                visible:        MapEngineManager ? MapEngineManager.importAction === MapEngineManager.ActionExporting : false
+                running:        MapEngineManager ? MapEngineManager.importAction === MapEngineManager.ActionExporting : false
                 width:          exportCloseButton.height
                 height:         exportCloseButton.height
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -1198,7 +1197,7 @@ Item {
                 id:             exportCloseButton
                 text:           qsTr("Close")
                 width:          _buttonSize
-                visible:        !QGroundControl.mapEngineManager.exporting
+                visible:        !MapEngineManager.exporting
                 anchors.horizontalCenter: parent.horizontalCenter
                 onClicked: {
                     exportToDiskProgress.close()
@@ -1230,9 +1229,9 @@ Item {
             anchors.centerIn:   parent
             QGCLabel {
                 text: {
-                    if(QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionNone) {
+                    if(MapEngineManager.importAction === MapEngineManager.ActionNone) {
                         return qsTr("Map Tile Set Import");
-                    } else if(QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionImporting) {
+                    } else if(MapEngineManager.importAction === MapEngineManager.ActionImporting) {
                         return qsTr("Map Tile Set import Progress");
                     } else {
                         return qsTr("Map Tile Set import Completed");
@@ -1246,13 +1245,13 @@ Item {
                 width:          parent.width * 0.45
                 from:           0
                 to:             100
-                visible:        QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionImporting
-                value:          QGroundControl.mapEngineManager.actionProgress
+                visible:        MapEngineManager.importAction === MapEngineManager.ActionImporting
+                value:          MapEngineManager.actionProgress
                 anchors.horizontalCenter: parent.horizontalCenter
             }
             BusyIndicator {
-                visible:        QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionImporting
-                running:        QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionImporting
+                visible:        MapEngineManager.importAction === MapEngineManager.ActionImporting
+                running:        MapEngineManager.importAction === MapEngineManager.ActionImporting
                 width:          ScreenTools.defaultFontPixelWidth * 2
                 height:         width
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -1264,21 +1263,21 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 QGCRadioButton {
                     text:           qsTr("Append to existing set")
-                    checked:        !QGroundControl.mapEngineManager.importReplace
-                    onClicked:      QGroundControl.mapEngineManager.importReplace = !checked
-                    visible:        QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionNone
+                    checked:        !MapEngineManager.importReplace
+                    onClicked:      MapEngineManager.importReplace = !checked
+                    visible:        MapEngineManager.importAction === MapEngineManager.ActionNone
                 }
                 QGCRadioButton {
                     text:           qsTr("Replace existing set")
-                    checked:        QGroundControl.mapEngineManager.importReplace
-                    onClicked:      QGroundControl.mapEngineManager.importReplace = checked
-                    visible:        QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionNone
+                    checked:        MapEngineManager.importReplace
+                    onClicked:      MapEngineManager.importReplace = checked
+                    visible:        MapEngineManager.importAction === MapEngineManager.ActionNone
                 }
             }
             QGCButton {
                 text:           qsTr("Close")
                 width:          _bigButtonSize * 1.25
-                visible:        QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionDone
+                visible:        MapEngineManager.importAction === MapEngineManager.ActionDone
                 anchors.horizontalCenter: parent.horizontalCenter
                 onClicked: {
                     showList();
@@ -1287,7 +1286,7 @@ Item {
             }
             Row {
                 spacing:            _margins
-                visible:            QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionNone
+                visible:            MapEngineManager.importAction === MapEngineManager.ActionNone
                 anchors.horizontalCenter: parent.horizontalCenter
                 QGCButton {
                     text:           qsTr("Import")

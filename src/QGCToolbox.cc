@@ -19,7 +19,6 @@
 #include "MissionCommandTree.h"
 #include "MultiVehicleManager.h"
 #include "UASMessageHandler.h"
-#include "QGCMapEngineManager.h"
 #include "FollowMe.h"
 #include "PositionManager.h"
 #include "VideoManager.h"
@@ -58,7 +57,6 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     _mavlinkProtocol        = new MAVLinkProtocol           (app, this);
     _missionCommandTree     = new MissionCommandTree        (app, this);
     _multiVehicleManager    = new MultiVehicleManager       (app, this);
-    _mapEngineManager       = new QGCMapEngineManager       (app, this);
     _uasMessageHandler      = new UASMessageHandler         (app, this);
     _qgcPositionManager     = new QGCPositionManager        (app, this);
     _followMe               = new FollowMe                  (app, this);
@@ -90,7 +88,6 @@ void QGCToolbox::setChildToolboxes(void)
     _mavlinkProtocol->setToolbox(this);
     _missionCommandTree->setToolbox(this);
     _multiVehicleManager->setToolbox(this);
-    _mapEngineManager->setToolbox(this);
     _uasMessageHandler->setToolbox(this);
     _followMe->setToolbox(this);
     _qgcPositionManager->setToolbox(this);
