@@ -1345,4 +1345,5 @@ else {
        src/UTMSP/dummy/utmsp_dummy.qrc
 }
 
+QT += testlib
 # include(test/QGCTest.pri)
