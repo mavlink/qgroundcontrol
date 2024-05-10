@@ -31,6 +31,8 @@ HEADERS += \
     $$PWD/EsriMapProvider.h \
     $$PWD/MapboxMapProvider.h \
     $$PWD/QGCTileSet.h \
+    $$PWD/QGeoTiledMapQGC.h \
+    $$PWD/QGeoFileTileCacheQGC.h
 
 
 SOURCES += \
@@ -51,6 +53,8 @@ SOURCES += \
     $$PWD/GenericMapProvider.cpp \
     $$PWD/EsriMapProvider.cpp \
     $$PWD/MapboxMapProvider.cpp \
+    $$PWD/QGeoTiledMapQGC.cpp \
+    $$PWD/QGeoFileTileCacheQGC.cpp
 
 OTHER_FILES += \
     $$PWD/qgc_maps_plugin.json

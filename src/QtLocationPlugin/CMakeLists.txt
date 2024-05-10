@@ -1,7 +1,5 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Location Network Positioning Qml Sql)
 
-# QGC_NO_GOOGLE_MAPS
-
 qt_add_plugin(QGCLocation STATIC
     CLASS_NAME QGeoServiceProviderFactoryQGC
     OUTPUT_TARGETS QGCLocation_targets
@@ -33,12 +31,16 @@ qt_add_plugin(QGCLocation STATIC
 	QGeoCodeReplyQGC.h
 	QGeoCodingManagerEngineQGC.cpp
 	QGeoCodingManagerEngineQGC.h
+	QGeoFileTileCacheQGC.cpp
+	QGeoFileTileCacheQGC.h
 	QGeoMapReplyQGC.cpp
 	QGeoMapReplyQGC.h
 	QGeoServiceProviderPluginQGC.cpp
 	QGeoServiceProviderPluginQGC.h
 	QGeoTiledMappingManagerEngineQGC.cpp
 	QGeoTiledMappingManagerEngineQGC.h
+	QGeoTiledMapQGC.cpp
+	QGeoTiledMapQGC.h
 	QGeoTileFetcherQGC.cpp
 	QGeoTileFetcherQGC.h
 	QMLControl/QGCMapEngineManager.cc
@@ -46,6 +48,9 @@ qt_add_plugin(QGCLocation STATIC
 )
 
 target_compile_definitions(QGCLocation PRIVATE CMAKE_LOCATION_PLUGIN)
+if(IOS)
+	target_compile_definitions(QGCLocation PRIVATE QGC_NO_GOOGLE_MAPS)
+endif()
 
 target_link_libraries(QGCLocation
 	PRIVATE

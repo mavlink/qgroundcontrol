@@ -7,6 +7,8 @@
  *
  ****************************************************************************/
 
+// TODO: This is just an alternate QGeoTileFetcher, hook this into mapping manager engine
+
 #include "TerrainTileManager.h"
 #include "TerrainQuery.h"
 #include "TerrainQueryAirMap.h"
@@ -155,7 +157,7 @@ bool TerrainTileManager::getAltitudesForCoordinates(const QList<QGeoCoordinate>&
                 spec.setZoom(1);
                 spec.setMapId(getQGCMapEngine()->urlFactory()->getQtMapIdFromProviderType(kMapType));
                 QGeoTiledMapReplyQGC* reply = new QGeoTiledMapReplyQGC(&_networkManager, request, spec);
-                connect(reply, &QGeoTiledMapReplyQGC::terrainDone, this, &TerrainTileManager::_terrainDone);
+                connect(reply, &QGeoTiledMapReplyQGC::finished, this, &TerrainTileManager::_terrainDone);
                 _state = State::Downloading;
             }
             _tilesMutex.unlock();
@@ -182,7 +184,7 @@ void TerrainTileManager::_tileFailed(void)
     _requestQueue.clear();
 }
 
-void TerrainTileManager::_terrainDone(QByteArray responseBytes, QNetworkReply::NetworkError error)
+void TerrainTileManager::_terrainDone()
 {
     QGeoTiledMapReplyQGC* reply = qobject_cast<QGeoTiledMapReplyQGC*>(QObject::sender());
     _state = State::Idle;
@@ -193,12 +195,13 @@ void TerrainTileManager::_terrainDone(QByteArray responseBytes, QNetworkReply::N
     }
 
     // remove from download queue
-    QGeoTileSpec spec = reply->tileSpec();
-    QString hash = getQGCMapEngine()->getTileHash(kMapType, spec.x(), spec.y(), spec.zoom());
+    const QByteArray responseBytes = reply->mapImageData();
+    const QGeoTileSpec spec = reply->tileSpec();
+    const QString hash = getQGCMapEngine()->getTileHash(kMapType, spec.x(), spec.y(), spec.zoom());
 
     // handle potential errors
-    if (error != QNetworkReply::NoError) {
-        qCWarning(TerrainTileManagerLog) << "Elevation tile fetching returned error (" << error << ")";
+    if (reply->error() != QGeoTiledMapReplyQGC::NoError) {
+        qCWarning(TerrainTileManagerLog) << "Elevation tile fetching returned error (" << reply->error() << ")";
         _tileFailed();
         reply->deleteLater();
         return;

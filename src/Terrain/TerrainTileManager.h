@@ -37,7 +37,7 @@ public:
     static QList<QGeoCoordinate> pathQueryToCoords(const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord, double& distanceBetween, double& finalDistanceBetween);
 
 private slots:
-    void _terrainDone(QByteArray responseBytes, QNetworkReply::NetworkError error);
+    void _terrainDone();
 
 private:
     enum class State {
