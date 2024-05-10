@@ -29,7 +29,9 @@ ReleaseBuild {
         $$PWD/Terrain \
         $$PWD/UI \
         $$PWD/Utilities/Compression \
-        $$PWD/Vehicle
+        $$PWD/Vehicle \
+        $$PWD/Vehicle/Components \
+        $$PWD
 
     HEADERS += \
         #$$PWD/AnalyzeView/LogDownloadTest.h \
