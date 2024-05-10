@@ -1345,4 +1345,4 @@ else {
        src/UTMSP/dummy/utmsp_dummy.qrc
 }
 
-include(test/QGCTest.pri)
+# include(test/QGCTest.pri)
