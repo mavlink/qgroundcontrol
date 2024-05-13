@@ -141,8 +141,6 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
 
     JoystickAndroid::setNativeMethods();
 
-    AndroidInterface::checkStoragePermissions();
-
     QNativeInterface::QAndroidApplication::hideSplashScreen(333);
 
     return JNI_VERSION_1_6;
