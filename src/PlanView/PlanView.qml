@@ -926,7 +926,11 @@ Item {
                                                       UTMSPStateStorage.startTimeStamp = "";
                                                       UTMSPStateStorage.showActivationTab = false;
                                                       UTMSPStateStorage.flightID = "";
-                                                      UTMSPStateStorage.enableMissionUploadButton = false;}})
+                                                      UTMSPStateStorage.enableMissionUploadButton = false;
+                                                      UTMSPStateStorage.indicatorPendingStatus = true;
+                                                      UTMSPStateStorage.indicatorApprovedStatus = false;
+                                                      UTMSPStateStorage.indicatorActivatedStatus = false;
+                                                      UTMSPStateStorage.currentStateIndex = 0}})
     }
 
     //- ToolStrip DropPanel Components
