@@ -21,6 +21,10 @@
     #include "RunGuard.h"
 #endif
 
+#ifdef Q_OS_ANDROID
+    #include "AndroidInterface.h"
+#endif
+
 #ifdef QT_DEBUG
 
 #include "CmdLineOptParser.h"
@@ -208,6 +212,10 @@ int main(int argc, char *argv[])
     } else
 #endif
     {
+        #ifdef Q_OS_ANDROID
+            AndroidInterface::checkStoragePermissions();
+        #endif
+
         exitCode = app.exec();
     }
 
