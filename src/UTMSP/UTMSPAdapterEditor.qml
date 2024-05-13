@@ -173,6 +173,13 @@ QGCFlickable {
                             removeFlightPlanTriggered()
                             geoSwitch.enabled = true
                             UTMSPStateStorage.removeFlightPlanState
+
+                            UTMSPStateStorage.indicatorIdleStatus = true
+                            UTMSPStateStorage.indicatorApprovedStatus = false
+                            UTMSPStateStorage.indicatorActivatedStatus = false
+                            UTMSPStateStorage.indicatorDisplayStatus = false
+                            UTMSPStateStorage.currentStateIndex = 0
+                            UTMSPStateStorage.currentNotificationIndex = 5
                         }
                     }
 
@@ -287,6 +294,8 @@ QGCFlickable {
                                     delayTimer.interval = 2500
                                     delayTimer.repeat = false
                                     delayTimer.start()
+                                    UTMSPStateStorage.indicatorDisplayStatus = true
+                                    UTMSPStateStorage.currentNotificationIndex = 1
                                 }
                                 else{
                                     errorLogin.visible = true
@@ -1326,6 +1335,7 @@ QGCFlickable {
                         UTMSPStateStorage.startTimeStamp = activateTD
                         UTMSPStateStorage.showActivationTab = responseFlag
                         UTMSPStateStorage.flightID = flightID
+                        UTMSPStateStorage.serialNumber = serialNumber
                     }
                 }
 
@@ -1341,6 +1351,11 @@ QGCFlickable {
                             deletePolygon.visible = false
                             deleteFlightPlan.visible = true
                             geoSwitch.enabled = false
+                            UTMSPStateStorage.indicatorIdleStatus = false
+                            UTMSPStateStorage.indicatorApprovedStatus = true
+                            UTMSPStateStorage.indicatorDisplayStatus = true
+                            UTMSPStateStorage.currentStateIndex = 1
+                            UTMSPStateStorage.currentNotificationIndex = 2
                         }
                         else{
                             submitFlightPlan.enabled = true
@@ -1364,6 +1379,12 @@ QGCFlickable {
                         UTMSPStateStorage.showActivationTab = false
                         UTMSPStateStorage.flightID = ""
                         UTMSPStateStorage.enableMissionUploadButton = false
+                        UTMSPStateStorage.indicatorIdleStatus = true
+                        UTMSPStateStorage.indicatorApprovedStatus = false
+                        UTMSPStateStorage.indicatorActivatedStatus = false
+                        UTMSPStateStorage.indicatorDisplayStatus = false
+                        UTMSPStateStorage.currentStateIndex = 0
+                        UTMSPStateStorage.currentNotificationIndex = 6
                     }
                 }
             }

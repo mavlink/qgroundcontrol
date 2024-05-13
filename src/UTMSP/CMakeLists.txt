@@ -53,7 +53,6 @@ if(QGC_UTM_ADAPTER)
 
     target_link_libraries(UTMSP
         PRIVATE
-            boost_system
             nlohmann_json
             Threads::Threads
             Qt6::Network
