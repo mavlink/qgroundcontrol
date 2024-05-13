@@ -6,5 +6,7 @@
         <file alias="QGroundControl/UTMSP/UTMSPActivationStatusBar.qml">UTMSPActivationStatusBar.qml</file>
         <file alias="QGroundControl/UTMSP/UTMSPMapPolygonVisuals.qml">UTMSPMapPolygonVisuals.qml</file>
         <file alias="QGroundControl/UTMSP/UTMSPStateStorage.qml">UTMSPStateStorage.qml</file>
+        <file alias="QGroundControl/UTMSP/UTMSPNotificationSlider.qml">UTMSPNotificationSlider.qml</file>
+        <file alias="QGroundControl/UTMSP/UTMSPFlightStatusIndicator.qml">UTMSPFlightStatusIndicator.qml</file>
     </qresource>
 </RCC>

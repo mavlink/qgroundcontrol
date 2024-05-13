@@ -147,6 +147,7 @@ void UTMSPNetworkRemoteIDManager::startTelemetry(const double &latitude,
     auto [statusCode, response] = requestTelemetry( QString::fromStdString(data.dump(4)));
     _statusCode = statusCode;
     _response = response.toStdString();
+    UTMSP_LOG_DEBUG()<< "Response " << _response;
     UTMSP_LOG_DEBUG()<< "Status Code: " << _statusCode;
 
     if(!_response.empty()){

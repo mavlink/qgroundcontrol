@@ -51,6 +51,8 @@ void UTMSPFlightPlanManager::registerFlightPlan(const std::string &token,
     this->_flightData.user      =  "user@example.com"; //TODO
     this->_flightData.operation = 1;
     this->_flightData.party     = "Flight 1023"; //TODO
+    this->_flightData.aircraftID = "Test Flight-01"; //TODO : Replace with actual ID
+    this->_flightData.gcsID = "Test GCS-01"; //TODO : Replace with actual ID
     this->_flightData.startDateTime = startDateTime;
     this->_flightData.endDateTime   = endDateTime;
     this->_flightData.flightDeclaration.type  = "FeatureCollection";
@@ -62,6 +64,7 @@ void UTMSPFlightPlanManager::registerFlightPlan(const std::string &token,
     this->_flightData.flightDeclaration.features.geometry.type = "Polygon";
     this->_flightData.flightDeclaration.features.geometry.coordinates = boundaryPolygons;
 
+
     _flightDataJson.clear();
 
     // Generate GeoJson for flight plan
@@ -69,6 +72,8 @@ void UTMSPFlightPlanManager::registerFlightPlan(const std::string &token,
     _flightDataJson["submitted_by"] = this->_flightData.user;
     _flightDataJson["type_of_operation"]= this->_flightData.operation;
     _flightDataJson["originating_party"]= this->_flightData.party;
+    _flightDataJson["aircraft_id"]=this->_flightData.aircraftID ;
+    _flightDataJson["gcs_id"]=this->_flightData.gcsID;
     _flightDataJson["start_datetime"]= this->_flightData.startDateTime;
     _flightDataJson["end_datetime"] = this->_flightData.endDateTime;
     _flightDataJson["flight_declaration_geo_json"]["type"] = this->_flightData.flightDeclaration.type;

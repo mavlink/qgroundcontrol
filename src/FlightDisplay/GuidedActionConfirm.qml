@@ -15,6 +15,7 @@ import QGroundControl
 import QGroundControl.ScreenTools
 import QGroundControl.Controls
 import QGroundControl.Palette
+import QGroundControl.UTMSP
 
 Rectangle {
     id:         _root
@@ -133,6 +134,10 @@ Rectangle {
                         mapIndicator.actionConfirmed()
                         mapIndicator = undefined
                     }
+
+                    UTMSPStateStorage.indicatorOnMissionStatus = true
+                    UTMSPStateStorage.currentNotificationIndex = 7
+                    UTMSPStateStorage.currentStateIndex = 3
                 }
             }
 
