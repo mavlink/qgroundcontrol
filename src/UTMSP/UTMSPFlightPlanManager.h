@@ -83,6 +83,8 @@ public:
     struct FlightData{
         std::string user;
         int operation;
+        std::string aircraftID;
+        std::string gcsID;
         std::string party;
         std::string startDateTime;
         std::string endDateTime;

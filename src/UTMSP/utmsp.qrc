@@ -6,6 +6,8 @@
         <file alias="QGroundControl/UTMSP/UTMSPMapPolygonVisuals.qml">UTMSPMapPolygonVisuals.qml</file>
         <file alias="QGroundControl/UTMSP/UTMSPActivationStatusBar.qml">UTMSPActivationStatusBar.qml</file>
         <file alias="QGroundControl/UTMSP/UTMSPStateStorage.qml">UTMSPStateStorage.qml</file>
+        <file alias="QGroundControl/UTMSP/UTMSPNotificationSlider.qml">UTMSPNotificationSlider.qml</file>
+        <file alias="QGroundControl/UTMSP/UTMSPFlightStatusIndicator.qml">UTMSPFlightStatusIndicator.qml</file>
     </qresource>
     <qresource prefix="/utmsp">
         <file alias="red.png">images/red.png</file>
@@ -14,5 +16,11 @@
         <file alias="date.svg">images/date.svg</file>
         <file alias="load.gif">images/load.gif</file>
         <file alias="timer.gif">images/timer.gif</file>
+        <file alias="red_led.png">images/red_led.png</file>
+        <file alias="yellow_led.png">images/yellow_led.png</file>
+        <file alias="orange_led.png">images/orange_led.png</file>
+        <file alias="green_led.png">images/green_led.png</file>
+        <file alias="pale_green.png">images/pale_green.png</file>
+        <file alias="parrot_green.png">images/parrot_green.png</file>
     </qresource>
 </RCC>

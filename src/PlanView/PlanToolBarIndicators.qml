@@ -221,6 +221,7 @@ Item {
                 if (_utmspEnabled) {
                     QGroundControl.utmspManager.utmspVehicle.triggerActivationStatusBar(true);
                     UTMSPStateStorage.removeFlightPlanState = true
+                    UTMSPStateStorage.indicatorDisplayStatus = true
                 }
                 _planMasterController.upload();
             }
