@@ -6,7 +6,10 @@ android {
 
     PUBLIC_HEADERS += \
         $$PWD/qserialport.h \
-        $$PWD/qserialportinfo.h
+        $$PWD/qserialportinfo.h \
+        $$PWD/qserialportglobal.h \
+        $$PWD/qtserialportexports.h \
+        $$PWD/qtserialportversion.h
 
     PRIVATE_HEADERS += \
         $$PWD/qserialport_p.h \
