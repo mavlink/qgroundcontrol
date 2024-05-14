@@ -23,11 +23,13 @@ QList<QSerialPortInfo> availablePortsByFiltersOfDevices(bool &ok)
 {
     QJniEnvironment env;
     if (!env.isValid()) {
+        ok = false;
         qCWarning(QSerialPortInfo_AndroidLog) << "Invalid QJniEnvironment";
         return QList<QSerialPortInfo>();
     }
 
     if (!QJniObject::isClassAvailable(jniClassName)) {
+        ok = false;
         qCWarning(QSerialPortInfo_AndroidLog) << "Class Not Available";
         return QList<QSerialPortInfo>();
     }
@@ -39,14 +41,14 @@ QList<QSerialPortInfo> availablePortsByFiltersOfDevices(bool &ok)
         return QList<QSerialPortInfo>();
     }
 
-    jmethodID methodId = env.findStaticMethod<jobjectArray, void>(javaClass, "availableDevicesInfo");
+    jmethodID methodId = env.findStaticMethod(javaClass, "availableDevicesInfo", "()[Ljava/lang/String;");
     if (!methodId) {
         ok = false;
         qCWarning(QSerialPortInfo_AndroidLog) << "Method Not Found";
         return QList<QSerialPortInfo>();
     }
 
-    const QJniObject result = QJniObject::callStaticMethod<jobjectArray>(javaClass, methodId);
+    const QJniObject result = QJniObject::callStaticObjectMethod(javaClass, methodId);
     if (!result.isValid()) {
         ok = false;
         qCWarning(QSerialPortInfo_AndroidLog) << "Method Call Failed";
@@ -88,7 +90,7 @@ QList<QSerialPortInfo> availablePortsByFiltersOfDevices(bool &ok)
         serialPortInfoList.append(priv);
     }
 
-    ok = true;
+    ok = !serialPortInfoList.isEmpty();
     return serialPortInfoList;
 }
 
