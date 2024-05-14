@@ -75,8 +75,17 @@ private:
 
     QElapsedTimer                   _downloadStartTime;
 
-    static const StateFn  _rgStates[];
-    static const int      _cStates;
+    static constexpr const StateFn _rgStates[]= {
+        _stateRequestCompInfo,
+        _stateRequestCompInfoDeprecated,
+        _stateRequestMetaDataJson,
+        _stateRequestMetaDataJsonFallback,
+        _stateRequestTranslationJson,
+        _stateRequestTranslate,
+        _stateRequestComplete,
+    };
+
+    static constexpr int _cStates = sizeof(_rgStates) / sizeof(_rgStates[0]);
 };
 
 class ComponentInformationManager : public StateMachine
@@ -133,8 +142,16 @@ private:
 
     QMap<uint8_t /* compId */, QMap<COMP_METADATA_TYPE, CompInfo*>> _compInfoMap;
 
-    static const StateFn                  _rgStates[];
-    static const int                      _cStates;
+    static constexpr const StateFn _rgStates[]= {
+        _stateRequestCompInfoGeneral,
+        _stateRequestCompInfoGeneralComplete,
+        _stateRequestCompInfoParam,
+        _stateRequestCompInfoEvents,
+        _stateRequestCompInfoActuators,
+        _stateRequestAllCompInfoComplete
+    };
+
+    static constexpr int _cStates = sizeof(_rgStates) / sizeof(_rgStates[0]);
 
     friend class RequestMetaDataTypeStateMachine;
 };

@@ -14,8 +14,6 @@
 #include <QtCore/QDebug>
 #include <QtCore/QRegularExpression>
 
-const char* SHPFileHelper::_errorPrefix = QT_TR_NOOP("SHP file load failed. %1");
-
 /// Validates the specified SHP file is truly a SHP file and is in the format we understand.
 ///     @param utmZone[out] Zone for UTM shape, 0 for lat/lon shape
 ///     @param utmSouthernHemisphere[out] true/false for UTM hemisphere

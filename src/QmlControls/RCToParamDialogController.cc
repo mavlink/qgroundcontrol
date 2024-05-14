@@ -15,11 +15,6 @@
 #include "Vehicle.h"
 #include "FactSystem.h"
 
-const char*  RCToParamDialogController::_scaleFactName =    "Scale";
-const char*  RCToParamDialogController::_centerFactName =   "CenterValue";
-const char*  RCToParamDialogController::_minFactName =      "MinValue";
-const char*  RCToParamDialogController::_maxFactName =      "MaxValue";
-
 QMap<QString, FactMetaData*> RCToParamDialogController::_metaDataMap;
 
 RCToParamDialogController::RCToParamDialogController(void)

@@ -22,36 +22,6 @@
 
 QGC_LOGGING_CATEGORY(LandingComplexItemLog, "LandingComplexItemLog")
 
-const char* LandingComplexItem::_jsonFinalApproachCoordinateKey = "landingApproachCoordinate";
-const char* LandingComplexItem::_jsonLoiterRadiusKey            = "loiterRadius";
-const char* LandingComplexItem::_jsonLoiterClockwiseKey         = "loiterClockwise";
-const char* LandingComplexItem::_jsonLandingCoordinateKey       = "landCoordinate";
-const char* LandingComplexItem::_jsonAltitudesAreRelativeKey    = "altitudesAreRelative";
-const char* LandingComplexItem::_jsonUseLoiterToAltKey          = "useLoiterToAlt";
-const char* LandingComplexItem::_jsonStopTakingPhotosKey        = "stopTakingPhotos";
-const char* LandingComplexItem::_jsonStopTakingVideoKey         = "stopVideoPhotos";
-
-const char* LandingComplexItem::finalApproachToLandDistanceName = "LandingDistance";
-const char* LandingComplexItem::landingHeadingName              = "LandingHeading";
-const char* LandingComplexItem::finalApproachAltitudeName       = "FinalApproachAltitude";
-const char* LandingComplexItem::loiterRadiusName                = "LoiterRadius";
-const char* LandingComplexItem::loiterClockwiseName             = "LoiterClockwise";
-const char* LandingComplexItem::landingAltitudeName             = "LandingAltitude";
-const char* LandingComplexItem::useLoiterToAltName              = "UseLoiterToAlt";
-const char* LandingComplexItem::stopTakingPhotosName            = "StopTakingPhotos";
-const char* LandingComplexItem::stopTakingVideoName             = "StopTakingVideo";
-
-// Deprecated keys
-
-// Support for separate relative alt settings for land/loiter was removed. It now only has a single
-// relative alt setting stored in _jsonAltitudesAreRelativeKey.
-const char* LandingComplexItem::_jsonDeprecatedLandingAltitudeRelativeKey   = "landAltitudeRelative";
-const char* LandingComplexItem::_jsonDeprecatedLoiterAltitudeRelativeKey    = "loiterAltitudeRelative";
-
-// Name changed from _jsonDeprecatedLoiterCoordinateKey to _jsonFinalApproachCoordinateKey to reflect
-// the new support for using either a loiter or just a waypoint as the approach entry point.
-const char* LandingComplexItem::_jsonDeprecatedLoiterCoordinateKey          = "loiterCoordinate";
-
 LandingComplexItem::LandingComplexItem(PlanMasterController* masterController, bool flyView)
     : ComplexMissionItem        (masterController, flyView)
 {

@@ -70,4 +70,7 @@ protected:
     QString         _settingsGroup;
 
     QMap<QString, FactMetaData*> _nameToMetaDataMap;
+
+private:
+    static constexpr const char* kJsonFile = ":/json/%1.SettingsGroup.json";
 };

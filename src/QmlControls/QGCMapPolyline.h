@@ -102,7 +102,7 @@ public:
     void setTraceMode   (bool traceMode);
     void selectVertex   (int index);
 
-    static const char* jsonPolylineKey;
+    static constexpr const char* jsonPolylineKey = "polyline";
 
 signals:
     void countChanged       (int count);

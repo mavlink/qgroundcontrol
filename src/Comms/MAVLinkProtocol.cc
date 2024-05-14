@@ -26,9 +26,6 @@ Q_DECLARE_METATYPE(mavlink_message_t)
 
 QGC_LOGGING_CATEGORY(MAVLinkProtocolLog, "MAVLinkProtocolLog")
 
-const char* MAVLinkProtocol::_tempLogFileTemplate   = "FlightDataXXXXXX";   ///< Template for temporary log file
-const char* MAVLinkProtocol::_logFileExtension      = "mavlink";            ///< Extension for log files
-
 static QObject* mavlinkSingletonFactory(QQmlEngine*, QJSEngine*)
 {
     return new QGCMAVLink();

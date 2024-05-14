@@ -59,7 +59,7 @@ public:
     void setShowRotation        (bool showRotation);
     void setClockwiseRotation   (bool clockwiseRotation);
 
-    static const char* jsonCircleKey;
+    static constexpr const char* jsonCircleKey =   "circle";
 
 signals:
     void dirtyChanged               (bool dirty);
@@ -83,7 +83,7 @@ private:
 
     QMap<QString, FactMetaData*> _nameToMetaDataMap;
 
-    static const char* _jsonCenterKey;
-    static const char* _jsonRadiusKey;
-    static const char* _radiusFactName;
+    static constexpr const char* _jsonCenterKey =  "center";
+    static constexpr const char* _jsonRadiusKey =  "radius";
+    static constexpr const char* _radiusFactName = "Radius";
 };

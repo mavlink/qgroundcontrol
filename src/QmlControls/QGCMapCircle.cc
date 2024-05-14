@@ -11,11 +11,6 @@
 #include "JsonHelper.h"
 #include "FactSystem.h"
 
-const char* QGCMapCircle::jsonCircleKey =   "circle";
-const char* QGCMapCircle::_jsonCenterKey =  "center";
-const char* QGCMapCircle::_jsonRadiusKey =  "radius";
-const char* QGCMapCircle::_radiusFactName = "Radius";
-
 QGCMapCircle::QGCMapCircle(QObject* parent)
     : QObject           (parent)
     , _dirty            (false)

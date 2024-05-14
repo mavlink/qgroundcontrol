@@ -90,14 +90,14 @@ private:
     bool                    _isValid;       /// data loaded is valid
 
     // Json keys
-    static const char*  _jsonStatusKey;
-    static const char*  _jsonDataKey;
-    static const char*  _jsonBoundsKey;
-    static const char*  _jsonSouthWestKey;
-    static const char*  _jsonNorthEastKey;
-    static const char*  _jsonStatsKey;
-    static const char*  _jsonMaxElevationKey;
-    static const char*  _jsonMinElevationKey;
-    static const char*  _jsonAvgElevationKey;
-    static const char*  _jsonCarpetKey;
+    static constexpr const char*  _jsonStatusKey        = "status";
+    static constexpr const char*  _jsonDataKey          = "data";
+    static constexpr const char*  _jsonBoundsKey        = "bounds";
+    static constexpr const char*  _jsonSouthWestKey     = "sw";
+    static constexpr const char*  _jsonNorthEastKey     = "ne";
+    static constexpr const char*  _jsonStatsKey         = "stats";
+    static constexpr const char*  _jsonMaxElevationKey  = "max";
+    static constexpr const char*  _jsonMinElevationKey  = "min";
+    static constexpr const char*  _jsonAvgElevationKey  = "avg";
+    static constexpr const char*  _jsonCarpetKey        = "carpet";
 };

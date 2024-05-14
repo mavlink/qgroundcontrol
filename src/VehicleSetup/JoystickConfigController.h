@@ -226,25 +226,62 @@ private:
     int     _calStateIdentifyOldMapping;            ///< Previous mapping for axis being currently identified
     int     _calStateReverseOldMapping;             ///< Previous mapping for axis being currently used to detect inversion
 
-    static const int _calCenterPoint;
-    static const int _calValidMinValue;
-    static const int _calValidMaxValue;
-    static const int _calDefaultMinValue;
-    static const int _calDefaultMaxValue;
-    static const int _calRoughCenterDelta;
-    static const int _calMoveDelta;
-    static const int _calSettleDelta;
-    static const int _calMinDelta;
-
     int     _stickDetectAxis;
     int     _stickDetectInitialValue;
     int     _stickDetectValue;
     bool    _stickDetectSettleStarted;
     QElapsedTimer   _stickDetectSettleElapsed;
 
-    static const int _stickDetectSettleMSecs;
-
     QString             _statusText;
     JoystickManager*    _joystickManager;
+
+    static constexpr int _calCenterPoint =       0;
+    static constexpr int _calValidMinValue =     -32768;     ///< Largest valid minimum axis value
+    static constexpr int _calValidMaxValue =     32767;      ///< Smallest valid maximum axis value
+    static constexpr int _calDefaultMinValue =   -32768;     ///< Default value for Min if not set
+    static constexpr int _calDefaultMaxValue =   32767;      ///< Default value for Max if not set
+    static constexpr int _calRoughCenterDelta =  500;        ///< Delta around center point which is considered to be roughly centered
+    static constexpr int _calMoveDelta =         32768/2;    ///< Amount of delta past center which is considered stick movement
+    static constexpr int _calSettleDelta =       600;        ///< Amount of delta which is considered no stick movement
+    static constexpr int _calMinDelta =          1000;       ///< Amount of delta allowed around min value to consider channel at min
+
+    static constexpr int _stickDetectSettleMSecs = 500;
+
+    static constexpr const stateStickPositions stSticksCentered {
+        0.25, 0.5, 0.75, 0.5
+    };
+
+    static constexpr const stateStickPositions stLeftStickUp {
+        0.25, 0.3084, 0.75, 0.5
+    };
+
+    static constexpr const stateStickPositions stLeftStickDown {
+        0.25, 0.6916, 0.75, 0.5
+    };
+
+    static constexpr const stateStickPositions stLeftStickLeft {
+        0.1542, 0.5, 0.75, 0.5
+    };
+
+    static constexpr const stateStickPositions stLeftStickRight {
+        0.3458, 0.5, 0.75, 0.5
+    };
+
+    static constexpr const stateStickPositions stRightStickUp {
+        0.25, 0.5, 0.75, 0.3084
+    };
+
+    static constexpr const stateStickPositions stRightStickDown {
+        0.25, 0.5, 0.75, 0.6916
+    };
+
+    static constexpr const stateStickPositions stRightStickLeft {
+        0.25, 0.5, 0.6542, 0.5
+    };
+
+    static constexpr const stateStickPositions stRightStickRight {
+        0.25, 0.5, 0.8423, 0.5
+    };
+
 };
 

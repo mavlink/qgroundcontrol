@@ -69,7 +69,7 @@ typedef struct {
     const char* imageResource;
 } FrameToImageInfo_t;
 
-static const FrameToImageInfo_t s_rgFrameToImageCopter[] = {
+static constexpr const FrameToImageInfo_t s_rgFrameToImageCopter[] = {
     { FRAME_CLASS_QUAD,         FRAME_TYPE_X,       "QuadRotorX" },             // Default
     { FRAME_CLASS_QUAD,         FRAME_TYPE_PLUS,    "QuadRotorPlus" },
     { FRAME_CLASS_QUAD,         FRAME_TYPE_V,       "QuadRotorWide" },
@@ -101,7 +101,7 @@ static const FrameToImageInfo_t s_rgFrameToImageCopter[] = {
     { FRAME_CLASS_TRI,          -1,                 "YPlus" },
 };
 
-static const FrameToImageInfo_t s_rgFrameToImageRover[] = {
+static constexpr const FrameToImageInfo_t s_rgFrameToImageRover[] = {
     { FRAME_CLASS_ROVER,    -1, "Rover" },
     { FRAME_CLASS_BOAT,     -1, "Boat" },
 };

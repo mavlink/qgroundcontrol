@@ -9,10 +9,6 @@
 
 #include "RallyPoint.h"
 
-const char* RallyPoint::_longitudeFactName =    "Longitude";
-const char* RallyPoint::_latitudeFactName =     "Latitude";
-const char* RallyPoint::_altitudeFactName =     "RelativeAltitude";
-
 QMap<QString, FactMetaData*> RallyPoint::_metaDataMap;
 
 RallyPoint::RallyPoint(const QGeoCoordinate& coordinate, QObject* parent)
