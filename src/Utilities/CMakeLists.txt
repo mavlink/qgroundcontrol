@@ -56,6 +56,7 @@ endif()
 target_link_libraries(Utilities
 	PRIVATE
 		Qt6::Bluetooth
+		Qt6::Sensors
 		Qt6::Qml
 		shp
 		FactSystem
