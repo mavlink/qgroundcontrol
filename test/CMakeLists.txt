@@ -55,6 +55,9 @@ add_qgc_test(FollowMeTest)
 add_subdirectory(Geo)
 add_qgc_test(GeoTest)
 
+add_subdirectory(GPS)
+add_qgc_test(GpsTest)
+
 add_subdirectory(MAVLink)
 add_qgc_test(StatusTextHandlerTest)
 add_qgc_test(SigningTest)
@@ -134,6 +137,7 @@ target_link_libraries(qgctest
         FactSystemTest
         FollowMeTest
         GeoTest
+        GpsTest
         MAVLinkTest
         MissionManagerTest
         QmlControlsTest
