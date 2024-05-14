@@ -39,5 +39,5 @@ private:
     const QString   _name;
     Fact*           _frameClassFact;
 
-    static const char* _frameClassParam;
+    static constexpr const char* _frameClassParam = "FRAME_CLASS";
 };

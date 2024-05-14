@@ -79,6 +79,8 @@ private:
     bool                    _cacheWasReset;
     QString                 _cachePath;
     QString                 _cacheFile;
+
+    static constexpr const char* kDbFileName = "qgcMapCache.db";
 };
 
 extern QGCMapEngine*    getQGCMapEngine();

@@ -17,24 +17,6 @@
 #include <QtCore/QSettings>
 #include <QtCore/QDir>
 
-const char* FactValueGrid::_columnsKey          = "columns";
-const char* FactValueGrid::_rowsKey             = "rows";
-const char* FactValueGrid::_rowCountKey         = "rowCount";
-const char* FactValueGrid::_fontSizeKey         = "fontSize";
-const char* FactValueGrid::_versionKey          = "version";
-const char* FactValueGrid::_factGroupNameKey    = "factGroupName";
-const char* FactValueGrid::_factNameKey         = "factName";
-const char* FactValueGrid::_textKey             = "text";
-const char* FactValueGrid::_showUnitsKey        = "showUnits";
-const char* FactValueGrid::_iconKey             = "icon";
-const char* FactValueGrid::_rangeTypeKey        = "rangeType";
-const char* FactValueGrid::_rangeValuesKey      = "rangeValues";
-const char* FactValueGrid::_rangeColorsKey      = "rangeColors";
-const char* FactValueGrid::_rangeIconsKey       = "rangeIcons";
-const char* FactValueGrid::_rangeOpacitiesKey   = "rangeOpacities";
-
-const char* FactValueGrid::_deprecatedGroupKey =  "ValuesWidget";
-
 QStringList FactValueGrid::_iconNames;
 
 // Important: The indices of these strings must match the FactValueGrid::FontSize enum

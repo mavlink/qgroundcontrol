@@ -55,18 +55,18 @@ public:
     QString  mpegtsVideoSource      () { return videoSourceMPEGTS; }
     QString  disabledVideoSource    () { return videoDisabled; }
 
-    static const char* videoSourceNoVideo;
-    static const char* videoDisabled;
-    static const char* videoSourceUDPH264;
-    static const char* videoSourceUDPH265;
-    static const char* videoSourceRTSP;
-    static const char* videoSourceTCP;
-    static const char* videoSourceMPEGTS;
-    static const char* videoSource3DRSolo;
-    static const char* videoSourceParrotDiscovery;
-    static const char* videoSourceYuneecMantisG;
-    static const char* videoSourceHerelinkAirUnit;
-    static const char* videoSourceHerelinkHotspot;
+    static constexpr const char* videoSourceNoVideo           = QT_TRANSLATE_NOOP("VideoSettings", "No Video Available");
+    static constexpr const char* videoDisabled                = QT_TRANSLATE_NOOP("VideoSettings", "Video Stream Disabled");
+    static constexpr const char* videoSourceRTSP              = QT_TRANSLATE_NOOP("VideoSettings", "RTSP Video Stream");
+    static constexpr const char* videoSourceUDPH264           = QT_TRANSLATE_NOOP("VideoSettings", "UDP h.264 Video Stream");
+    static constexpr const char* videoSourceUDPH265           = QT_TRANSLATE_NOOP("VideoSettings", "UDP h.265 Video Stream");
+    static constexpr const char* videoSourceTCP               = QT_TRANSLATE_NOOP("VideoSettings", "TCP-MPEG2 Video Stream");
+    static constexpr const char* videoSourceMPEGTS            = QT_TRANSLATE_NOOP("VideoSettings", "MPEG-TS (h.264) Video Stream");
+    static constexpr const char* videoSource3DRSolo           = QT_TRANSLATE_NOOP("VideoSettings", "3DR Solo (requires restart)");
+    static constexpr const char* videoSourceParrotDiscovery   = QT_TRANSLATE_NOOP("VideoSettings", "Parrot Discovery");
+    static constexpr const char* videoSourceYuneecMantisG     = QT_TRANSLATE_NOOP("VideoSettings", "Yuneec Mantis G");
+    static constexpr const char* videoSourceHerelinkAirUnit   = QT_TRANSLATE_NOOP("VideoSettings", "Herelink AirUnit");
+    static constexpr const char* videoSourceHerelinkHotspot   = QT_TRANSLATE_NOOP("VideoSettings", "Herelink Hotspot");
 
 signals:
     void streamConfiguredChanged    (bool configured);

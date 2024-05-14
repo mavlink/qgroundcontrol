@@ -84,4 +84,6 @@ private:
     bool                                            _parameterMetaDataLoaded        = false;    ///< true: parameter meta data already loaded
     // FIXME: metadata is vehicle type specific now
     QMap<QString, ParameterNametoFactMetaDataMap>   _vehicleTypeToParametersMap;                ///< Maps from a vehicle type to paramametertoFactMeta map>
+
+    static constexpr const char* kInvalidConverstion = "Internal Error: No support for string parameters";
 };

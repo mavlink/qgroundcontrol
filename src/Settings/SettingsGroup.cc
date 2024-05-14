@@ -13,8 +13,6 @@
 
 #include <QtQml/QQmlEngine>
 
-static const char* kJsonFile = ":/json/%1.SettingsGroup.json";
-
 SettingsGroup::SettingsGroup(const QString& name, const QString& settingsGroup, QObject* parent)
     : QObject       (parent)
     , _visible      (qgcApp()->toolbox()->corePlugin()->overrideSettingsGroupVisibility(name))

@@ -21,12 +21,6 @@ QGC_LOGGING_CATEGORY(CorridorScanComplexItemLog, "CorridorScanComplexItemLog")
 
 const QString CorridorScanComplexItem::name(CorridorScanComplexItem::tr("Corridor Scan"));
 
-const char* CorridorScanComplexItem::settingsGroup =            "CorridorScan";
-const char* CorridorScanComplexItem::corridorWidthName =        "CorridorWidth";
-const char* CorridorScanComplexItem::_jsonEntryPointKey =       "EntryPoint";
-
-const char* CorridorScanComplexItem::jsonComplexItemTypeValue = "CorridorScan";
-
 CorridorScanComplexItem::CorridorScanComplexItem(PlanMasterController* masterController, bool flyView, const QString& kmlFile)
     : TransectStyleComplexItem  (masterController, flyView, settingsGroup)
     , _entryPoint               (0)

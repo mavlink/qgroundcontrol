@@ -85,6 +85,6 @@ private:
     bool _skipDirtyFirstItem;
     bool _externalBeginResetModel;
         
-    static const int ObjectRole;
-    static const int TextRole;
+    static constexpr int ObjectRole = Qt::UserRole;
+    static constexpr int TextRole = Qt::UserRole + 1;
 };

@@ -132,4 +132,6 @@ private:
 #if defined(QGC_ZEROCONF_ENABLED)
     DNSServiceRef       _dnssServiceRef;
 #endif
+
+    static constexpr const char* kZeroconfRegistration = "_qgroundcontrol._udp";
 };

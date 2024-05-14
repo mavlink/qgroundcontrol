@@ -118,5 +118,5 @@ private:
 
     static QMap<QString, FactMetaData*> _metaDataMap;
 
-    static const char* _plannedHomePositionAltitudeName;
+    static constexpr const char* _plannedHomePositionAltitudeName = "PlannedHomePositionAltitude";
 };

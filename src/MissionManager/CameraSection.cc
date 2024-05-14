@@ -17,13 +17,6 @@
 
 QGC_LOGGING_CATEGORY(CameraSectionLog, "CameraSectionLog")
 
-const char* CameraSection::_gimbalPitchName =                   "GimbalPitch";
-const char* CameraSection::_gimbalYawName =                     "GimbalYaw";
-const char* CameraSection::_cameraActionName =                  "CameraAction";
-const char* CameraSection::_cameraPhotoIntervalDistanceName =   "CameraPhotoIntervalDistance";
-const char* CameraSection::_cameraPhotoIntervalTimeName =       "CameraPhotoIntervalTime";
-const char* CameraSection::_cameraModeName =                    "CameraMode";
-
 QMap<QString, FactMetaData*> CameraSection::_metaDataMap;
 
 CameraSection::CameraSection(PlanMasterController* masterController, QObject* parent)

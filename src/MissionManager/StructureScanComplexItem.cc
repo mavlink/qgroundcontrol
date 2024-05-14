@@ -24,17 +24,6 @@ QGC_LOGGING_CATEGORY(StructureScanComplexItemLog, "StructureScanComplexItemLog")
 
 const QString StructureScanComplexItem::name(StructureScanComplexItem::tr("Structure Scan"));
 
-const char* StructureScanComplexItem::settingsGroup =               "StructureScan";
-const char* StructureScanComplexItem::_entranceAltName =            "EntranceAltitude";
-const char* StructureScanComplexItem::scanBottomAltName =           "ScanBottomAlt";
-const char* StructureScanComplexItem::structureHeightName =         "StructureHeight";
-const char* StructureScanComplexItem::layersName =                  "Layers";
-const char* StructureScanComplexItem::gimbalPitchName =             "GimbalPitch";
-const char* StructureScanComplexItem::startFromTopName =            "StartFromTop";
-
-const char* StructureScanComplexItem::jsonComplexItemTypeValue =    "StructureScan";
-const char* StructureScanComplexItem::_jsonCameraCalcKey =          "CameraCalc";
-
 StructureScanComplexItem::StructureScanComplexItem(PlanMasterController* masterController, bool flyView, const QString& kmlOrShpFile)
     : ComplexMissionItem        (masterController, flyView)
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/StructureScan.SettingsGroup.json"), this /* QObject parent */))

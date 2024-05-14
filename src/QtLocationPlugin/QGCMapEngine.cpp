@@ -32,7 +32,6 @@ Q_DECLARE_METATYPE(QGCMapTask::TaskType)
 Q_DECLARE_METATYPE(QGCTile)
 Q_DECLARE_METATYPE(QList<QGCTile*>)
 
-static const char* kDbFileName = "qgcMapCache.db";
 static QLocale kLocale;
 
 #define CACHE_PATH_VERSION  "300"
