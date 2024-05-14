@@ -81,24 +81,8 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - uses: actions/checkout@v4
-        with:
-          repository: jurplel/install-qt-action
-          ref: master
-          path: install-qt-action
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: install-qt-action/action/
-
-      - name: Build jurplel/install-qt-action
-        run: |
-          cd install-qt-action/action/
-          npm ci || npm install
-          npm run build
-        shell: bash
+      - name: Build install-qt-action
+        uses: ./.github/actions/qt
 
       - name: Install Qt6 for Linux
         uses: ./install-qt-action/action/
