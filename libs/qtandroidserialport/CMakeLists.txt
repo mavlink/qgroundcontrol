@@ -10,10 +10,13 @@ qt_add_library(qtandroidserialport STATIC
 	qserialport_p.h
 	qserialport_android.cpp
 	qserialport_android_p.h
+	qserialportglobal.h
 	qserialportinfo.cpp
 	qserialportinfo.h
 	qserialportinfo_p.h
 	qserialportinfo_android.cpp
+	qtserialportexports.h
+	qtserialportversion.h
 )
 
 target_link_libraries(qtandroidserialport
