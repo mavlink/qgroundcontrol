@@ -1,6 +1,6 @@
 add_subdirectory(Compression)
 
-find_package(Qt6 REQUIRED COMPONENTS Bluetooth Core Gui Network Positioning Qml Xml)
+find_package(Qt6 REQUIRED COMPONENTS Bluetooth Core Gui Network Positioning Sensors Qml Xml)
 
 qt_add_library(Utilities STATIC
 	DeviceInfo.cc
@@ -68,6 +68,7 @@ target_link_libraries(Utilities
 		Qt6::Gui
 		Qt6::Network
 		Qt6::Positioning
+                Qt6::Sensors
 		Qt6::Xml
 )
 
