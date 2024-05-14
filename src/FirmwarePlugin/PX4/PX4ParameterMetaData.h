@@ -55,4 +55,7 @@ private:
 
     bool                                _parameterMetaDataLoaded        = false;    ///< true: parameter meta data already loaded
     FactMetaData::NameToMetaDataMap_t   _mapParameterName2FactMetaData;             ///< Maps from a parameter name to FactMetaData
+
+    static constexpr const char* kInvalidConverstion = "Internal Error: No support for string parameters";
+
 };

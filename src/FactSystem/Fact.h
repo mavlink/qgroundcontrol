@@ -209,4 +209,6 @@ protected:
     bool                        _deferredValueChangeSignal;
     FactValueSliderListModel*   _valueSliderModel;
     bool                        _ignoreQGCRebootRequired;
+
+    static constexpr const char* kMissingMetadata = "Meta data pointer missing";
 };

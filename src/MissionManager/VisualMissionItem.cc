@@ -13,10 +13,6 @@
 #include "Vehicle.h"
 #include "QGC.h"
 
-const char* VisualMissionItem::jsonTypeKey =                "type";
-const char* VisualMissionItem::jsonTypeSimpleItemValue =    "SimpleItem";
-const char* VisualMissionItem::jsonTypeComplexItemValue =   "ComplexItem";
-
 // All VisualMissionItem derived classes are parented to masterController in order to tie their lifecycles together.
 
 VisualMissionItem::VisualMissionItem(PlanMasterController* masterController, bool flyView)

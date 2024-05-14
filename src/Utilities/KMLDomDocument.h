@@ -31,7 +31,7 @@ public:
     QString     kmlCoordString      (const QGeoCoordinate& coord);
     void        addLookAt           (QDomElement& parentElement, const QGeoCoordinate& coord);
 
-    static const char* balloonStyleName;
+    static constexpr const char* balloonStyleName = "BalloonStyle";
 
 protected:
     QDomElement _rootDocumentElement;

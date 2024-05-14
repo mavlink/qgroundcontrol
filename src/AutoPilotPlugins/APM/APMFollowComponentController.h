@@ -29,10 +29,10 @@ public:
     Fact* heightFact    (void) { return &_heightFact; }
     bool  roverFirmware (void);
 
-    static const char* settingsGroup;
-    static const char* angleName;
-    static const char* distanceName;
-    static const char* heightName;
+    static constexpr const char* settingsGroup =   "APMFollow";
+    static constexpr const char* angleName =       "angle";
+    static constexpr const char* distanceName =    "distance";
+    static constexpr const char* heightName =      "height";
 
 private:
     QMap<QString, FactMetaData*> _metaDataMap;

@@ -28,7 +28,7 @@
 
 QGC_LOGGING_CATEGORY(QGCMapEngineManagerLog, "QGCMapEngineManagerLog")
 
-static const char* kQmlOfflineMapKeyName = "QGCOfflineMap";
+static constexpr const char* kQmlOfflineMapKeyName = "QGCOfflineMap";
 
 static const auto kElevationMapType = CopernicusElevationProvider::kProviderKey;
 

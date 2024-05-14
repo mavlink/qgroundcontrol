@@ -48,5 +48,5 @@ private:
     QTime _lastEndTime;
     QFile _file;
 
-    static const int _sampleRate; // Sample rate in Hz for getting telemetry data, most players do weird stuff when > 1Hz
+    static constexpr int _sampleRate = 1; // Sample rate in Hz for getting telemetry data, most players do weird stuff when > 1Hz
 };

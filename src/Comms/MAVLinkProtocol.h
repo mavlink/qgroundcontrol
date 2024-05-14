@@ -159,8 +159,8 @@ private:
     bool _vehicleWasArmed;      ///< true: Vehicle was armed during log sequence
 
     QGCTemporaryFile    _tempLogFile;            ///< File to log to
-    static const char*  _tempLogFileTemplate;    ///< Template for temporary log file
-    static const char*  _logFileExtension;       ///< Extension for log files
+    static constexpr const char* _tempLogFileTemplate   = "FlightDataXXXXXX";   ///< Template for temporary log file
+    static constexpr const char* _logFileExtension      = "mavlink";            ///< Extension for log files
 
     LinkManager*            _linkMgr;
     MultiVehicleManager*    _multiVehicleManager;

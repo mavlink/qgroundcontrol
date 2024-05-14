@@ -19,8 +19,6 @@
 #include <QtNetwork/QHostInfo>
 #include <QtNetwork/QUdpSocket>
 
-static const char* kZeroconfRegistration = "_qgroundcontrol._udp";
-
 static bool is_ip(const QString& address)
 {
     int a,b,c,d;

@@ -24,12 +24,12 @@ public:
 
     void addMission(Vehicle* vehicle, QmlObjectListModel* visualItems, QList<MissionItem*> rgMissionItems);
 
-    static const char* surveyPolygonStyleName;
+    static constexpr const char* surveyPolygonStyleName =   "SurveyPolygonStyle";
 
 private:
     void _addStyles         (void);
     void _addFlightPath     (Vehicle* vehicle, QList<MissionItem*> rgMissionItems);
     void _addComplexItems   (QmlObjectListModel* visualItems);
 
-    static const char* _missionLineStyleName;
+    static constexpr const char* _missionLineStyleName =     "MissionLineStyle";
 };

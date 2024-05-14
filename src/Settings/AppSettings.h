@@ -102,27 +102,27 @@ public:
     Q_INVOKABLE void  firstRunPromptIdsMarkIdAsShown    (int id);
 
     // Application wide file extensions
-    static const char* parameterFileExtension;
-    static const char* planFileExtension;
-    static const char* missionFileExtension;
-    static const char* waypointsFileExtension;
-    static const char* fenceFileExtension;
-    static const char* rallyPointFileExtension;
-    static const char* telemetryFileExtension;
-    static const char* kmlFileExtension;
-    static const char* shpFileExtension;
-    static const char* logFileExtension;
-    static const char* tilesetFileExtension;
-    
+    static constexpr const char* parameterFileExtension =   "params";
+    static constexpr const char* planFileExtension =        "plan";
+    static constexpr const char* missionFileExtension =     "mission";
+    static constexpr const char* waypointsFileExtension =   "waypoints";
+    static constexpr const char* fenceFileExtension =       "fence";
+    static constexpr const char* rallyPointFileExtension =  "rally";
+    static constexpr const char* telemetryFileExtension =   "tlog";
+    static constexpr const char* kmlFileExtension =         "kml";
+    static constexpr const char* shpFileExtension =         "shp";
+    static constexpr const char* logFileExtension =         "ulg";
+    static constexpr const char* tilesetFileExtension =     "qgctiledb";
+
     // Child directories of savePath for specific file types
-    static const char* parameterDirectory;
-    static const char* telemetryDirectory;
-    static const char* missionDirectory;
-    static const char* logDirectory;
-    static const char* videoDirectory;
-    static const char* photoDirectory;
-    static const char* crashDirectory;
-    static const char* customActionsDirectory;
+    static constexpr const char* parameterDirectory =       QT_TRANSLATE_NOOP("AppSettings", "Parameters");
+    static constexpr const char* telemetryDirectory =       QT_TRANSLATE_NOOP("AppSettings", "Telemetry");
+    static constexpr const char* missionDirectory =         QT_TRANSLATE_NOOP("AppSettings", "Missions");
+    static constexpr const char* logDirectory =             QT_TRANSLATE_NOOP("AppSettings", "Logs");
+    static constexpr const char* videoDirectory =           QT_TRANSLATE_NOOP("AppSettings", "Video");
+    static constexpr const char* photoDirectory =           QT_TRANSLATE_NOOP("AppSettings", "Photo");
+    static constexpr const char* crashDirectory =           QT_TRANSLATE_NOOP("AppSettings", "CrashLogs");
+    static constexpr const char* customActionsDirectory =   QT_TRANSLATE_NOOP("AppSettings", "CustomActions");
 
     // Returns the current qLocaleLanguage setting bypassing the standard SettingsGroup path. This should only be used
     // by QGCApplication::setLanguage to query the language setting as early in the boot process as possible.

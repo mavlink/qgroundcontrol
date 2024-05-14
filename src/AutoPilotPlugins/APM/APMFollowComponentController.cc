@@ -11,11 +11,6 @@
 #include "ArduRoverFirmwarePlugin.h"
 #include "Vehicle.h"
 
-const char* APMFollowComponentController::settingsGroup =   "APMFollow";
-const char* APMFollowComponentController::angleName =       "angle";
-const char* APMFollowComponentController::distanceName =    "distance";
-const char* APMFollowComponentController::heightName =      "height";
-
 APMFollowComponentController::APMFollowComponentController(void)
     : _metaDataMap  (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/APMFollowComponent.FactMetaData.json"), this))
     , _angleFact    (settingsGroup, _metaDataMap[angleName])

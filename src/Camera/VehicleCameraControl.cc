@@ -28,57 +28,6 @@
 #include <QtNetwork/QNetworkProxy>
 #include <QtNetwork/QNetworkReply>
 
-static const char* kCondition       = "condition";
-static const char* kControl         = "control";
-static const char* kDefault         = "default";
-static const char* kDefnition       = "definition";
-static const char* kDescription     = "description";
-static const char* kExclusion       = "exclude";
-static const char* kExclusions      = "exclusions";
-static const char* kLocale          = "locale";
-static const char* kLocalization    = "localization";
-static const char* kMax             = "max";
-static const char* kMin             = "min";
-static const char* kModel           = "model";
-static const char* kName            = "name";
-static const char* kOption          = "option";
-static const char* kOptions         = "options";
-static const char* kOriginal        = "original";
-static const char* kParameter       = "parameter";
-static const char* kParameterrange  = "parameterrange";
-static const char* kParameterranges = "parameterranges";
-static const char* kParameters      = "parameters";
-static const char* kReadOnly        = "readonly";
-static const char* kWriteOnly       = "writeonly";
-static const char* kRoption         = "roption";
-static const char* kStep            = "step";
-static const char* kDecimalPlaces   = "decimalPlaces";
-static const char* kStrings         = "strings";
-static const char* kTranslated      = "translated";
-static const char* kType            = "type";
-static const char* kUnit            = "unit";
-static const char* kUpdate          = "update";
-static const char* kUpdates         = "updates";
-static const char* kValue           = "value";
-static const char* kVendor          = "vendor";
-static const char* kVersion         = "version";
-
-static const char* kPhotoMode       = "PhotoCaptureMode";
-static const char* kPhotoLapse      = "PhotoLapse";
-static const char* kPhotoLapseCount = "PhotoLapseCount";
-static const char* kThermalOpacity  = "ThermalOpacity";
-static const char* kThermalMode     = "ThermalMode";
-
-//-----------------------------------------------------------------------------
-// Known Parameters
-const char* VehicleCameraControl::kCAM_EV          = "CAM_EV";
-const char* VehicleCameraControl::kCAM_EXPMODE     = "CAM_EXPMODE";
-const char* VehicleCameraControl::kCAM_ISO         = "CAM_ISO";
-const char* VehicleCameraControl::kCAM_SHUTTERSPD  = "CAM_SHUTTERSPD";
-const char* VehicleCameraControl::kCAM_APERTURE    = "CAM_APERTURE";
-const char* VehicleCameraControl::kCAM_WBMODE      = "CAM_WBMODE";
-const char* VehicleCameraControl::kCAM_MODE        = "CAM_MODE";
-
 //-----------------------------------------------------------------------------
 QGCCameraOptionExclusion::QGCCameraOptionExclusion(QObject* parent, QString param_, QString value_, QStringList exclusions_)
     : QObject(parent)
