@@ -94,7 +94,7 @@ Vagrant.configure(2) do |config|
      version="6.6"
      host="linux"
      target="desktop"
-     modules="qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d"
+     modules="qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors"
      su - vagrant -c "rm -rf ${dir}"
      su - vagrant -c "mkdir -p ${dir}"
      su - vagrant -c "python3 -m aqt install-qt -O ${dir} ${host} ${target} ${version} -m ${modules}"

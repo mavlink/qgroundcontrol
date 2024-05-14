@@ -92,12 +92,20 @@ public:
     double maximumHorizontalSpeedMultirotor(Vehicle* vehicle);
     void guidedModeChangeGroundSpeedMetersSecond(Vehicle *vehicle, double speed);
 
+    static QPair<QMetaObject::Connection,QMetaObject::Connection> startCompensatingBaro(Vehicle* vehicle);
+    static bool stopCompensatingBaro(const Vehicle* vehicle, QPair<QMetaObject::Connection,QMetaObject::Connection> updaters);
+    static qreal calcAltOffsetPT(uint32_t atmospheric1, qreal temperature1, uint32_t atmospheric2, qreal temperature2);
+    static qreal calcAltOffsetP(uint32_t atmospheric1, uint32_t atmospheric2);
+
 protected:
     /// All access to singleton is through stack specific implementation
     APMFirmwarePlugin(void);
 
     void setSupportedModes  (QList<APMCustomMode> supportedModes);
     void _sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimatationCapabilities);
+
+    static void _setBaroGndTemp(Vehicle* vehicle, qreal temperature);
+    static void _setBaroAltOffset(Vehicle* vehicle, qreal offset);
 
     bool                _coaxialMotors;
 
