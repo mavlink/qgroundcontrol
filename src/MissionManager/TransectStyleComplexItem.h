@@ -110,14 +110,14 @@ public:
     double              minAMSLAltitude             (void) const final;
     double              maxAMSLAltitude             (void) const final;
 
-    static const char* turnAroundDistanceName;
-    static const char* turnAroundDistanceMultiRotorName;
-    static const char* cameraTriggerInTurnAroundName;
-    static const char* hoverAndCaptureName;
-    static const char* refly90DegreesName;
-    static const char* terrainAdjustToleranceName;
-    static const char* terrainAdjustMaxClimbRateName;
-    static const char* terrainAdjustMaxDescentRateName;
+    static constexpr const char* turnAroundDistanceName                = "TurnAroundDistance";
+    static constexpr const char* turnAroundDistanceMultiRotorName      = "TurnAroundDistanceMultiRotor";
+    static constexpr const char* cameraTriggerInTurnAroundName         = "CameraTriggerInTurnAround";
+    static constexpr const char* hoverAndCaptureName                   = "HoverAndCapture";
+    static constexpr const char* refly90DegreesName                    = "Refly90Degrees";
+    static constexpr const char* terrainAdjustToleranceName            = "TerrainAdjustTolerance";
+    static constexpr const char* terrainAdjustMaxClimbRateName         = "TerrainAdjustMaxClimbRate";
+    static constexpr const char* terrainAdjustMaxDescentRateName       = "TerrainAdjustMaxDescentRate";
 
 signals:
     void cameraShotsChanged             (void);
@@ -202,15 +202,15 @@ protected:
     SettingsFact _terrainAdjustMaxClimbRateFact;
     SettingsFact _terrainAdjustMaxDescentRateFact;
 
-    static const char* _jsonCameraCalcKey;
-    static const char* _jsonTransectStyleComplexItemKey;
-    static const char* _jsonVisualTransectPointsKey;
-    static const char* _jsonItemsKey;
-    static const char* _jsonTerrainFlightSpeed;
-    static const char* _jsonCameraShotsKey;
+    static constexpr const char* _jsonTransectStyleComplexItemKey      = "TransectStyleComplexItem";
+    static constexpr const char* _jsonCameraCalcKey                    = "CameraCalc";
+    static constexpr const char* _jsonVisualTransectPointsKey          = "VisualTransectPoints";
+    static constexpr const char* _jsonItemsKey                         = "Items";
+    static constexpr const char* _jsonTerrainFlightSpeed               = "TerrainFlightSpeed";
+    static constexpr const char* _jsonCameraShotsKey                   = "CameraShots";
 
-    static const int _terrainQueryTimeoutMsecs=     1000;
-    static const int _hoverAndCaptureDelaySeconds = 4;
+    static constexpr int _terrainQueryTimeoutMsecs=     1000;
+    static constexpr int _hoverAndCaptureDelaySeconds = 4;
 
 private slots:
     void _reallyQueryTransectsPathHeightInfo        (void);
@@ -245,5 +245,5 @@ private:
     QTimer                      _terrainPolyPathQueryTimer;
 
     // Deprecated json keys
-    static const char* _jsonTerrainFollowKeyDeprecated;
+    static constexpr const char* _jsonTerrainFollowKeyDeprecated       = "FollowTerrain";
 };

@@ -11,8 +11,6 @@
 
 #include <QtCore/QFile>
 
-const char* KMLHelper::_errorPrefix = QT_TR_NOOP("KML file load failed. %1");
-
 QDomDocument KMLHelper::_loadFile(const QString& kmlFile, QString& errorString)
 {
     QFile file(kmlFile);

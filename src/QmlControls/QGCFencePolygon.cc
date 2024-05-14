@@ -10,8 +10,6 @@
 #include "QGCFencePolygon.h"
 #include "JsonHelper.h"
 
-const char* QGCFencePolygon::_jsonInclusionKey = "inclusion";
-
 QGCFencePolygon::QGCFencePolygon(bool inclusion, QObject* parent)
     : QGCMapPolygon (parent)
     , _inclusion    (inclusion)

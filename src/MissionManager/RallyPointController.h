@@ -77,7 +77,7 @@ private:
     QObject*            _currentRallyPoint =    nullptr;
     bool                _itemsRequested =       false;
 
-    static const int    _jsonCurrentVersion = 2;
-    static const char*  _jsonFileTypeValue;
-    static const char*  _jsonPointsKey;
+    static constexpr int    _jsonCurrentVersion = 2;
+    static constexpr const char* _jsonFileTypeValue =  "RallyPoints";
+    static constexpr const char* _jsonPointsKey =      "points";
 };

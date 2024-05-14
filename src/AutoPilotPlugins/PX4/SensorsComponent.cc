@@ -12,9 +12,6 @@
 #include "ParameterManager.h"
 #include "Vehicle.h"
 
-const char* SensorsComponent::_magEnabledParam =  "SYS_HAS_MAG";
-const char* SensorsComponent::_magCalParam =  "CAL_MAG0_ID";
-
 SensorsComponent::SensorsComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
     VehicleComponent(vehicle, autopilot, parent),
     _name(tr("Sensors"))

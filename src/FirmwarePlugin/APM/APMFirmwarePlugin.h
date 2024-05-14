@@ -137,8 +137,8 @@ private:
 
     QMutex _adjustOutgoingMavlinkMutex;
 
-    static const char*      _artooIP;
-    static const int        _artooVideoHandshakePort;
+    static constexpr const char* _artooIP =                   "10.1.1.1"; ///< IP address of ARTOO controller
+    static constexpr int   _artooVideoHandshakePort =   5502;       ///< Port for video handshake on ARTOO controller
 
     static uint8_t          _reencodeMavlinkChannel();
     static QMutex&          _reencodeMavlinkChannelMutex();

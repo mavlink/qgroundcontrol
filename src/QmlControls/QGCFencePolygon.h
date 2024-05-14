@@ -51,7 +51,7 @@ private:
 
     bool _inclusion;
 
-    static const int _jsonCurrentVersion = 1;
+    static constexpr int _jsonCurrentVersion = 1;
 
-    static const char* _jsonInclusionKey;
+    static constexpr const char* _jsonInclusionKey = "inclusion";
 };

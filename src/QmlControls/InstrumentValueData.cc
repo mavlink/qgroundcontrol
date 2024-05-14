@@ -17,8 +17,6 @@
 #include "Vehicle.h"
 #include "FactGroup.h"
 
-const char*  InstrumentValueData::vehicleFactGroupName =   "Vehicle";
-
 // Important: The indices of these strings must match the InstrumentValueData::RangeType enum
 const QStringList InstrumentValueData::_rangeTypeNames = {
     QT_TRANSLATE_NOOP("InstrumentValue", "None"),

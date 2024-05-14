@@ -282,12 +282,14 @@ private:
     bool                    _skipSetupPage          = false;
     QStringList             _altitudeModeEnumString;
 
-    static const char* _flightMapPositionSettingsGroup;
-    static const char* _flightMapPositionLatitudeSettingsKey;
-    static const char* _flightMapPositionLongitudeSettingsKey;
-    static const char* _flightMapZoomSettingsKey;
-
     static QGeoCoordinate   _coord;
     static double           _zoom;
     QTimer                  _flightMapPositionSettledTimer;
+
+    static constexpr const char* kQmlGlobalKeyName = "QGCQml";
+
+    static constexpr const char* _flightMapPositionSettingsGroup =          "FlightMapPosition";
+    static constexpr const char* _flightMapPositionLatitudeSettingsKey =    "Latitude";
+    static constexpr const char* _flightMapPositionLongitudeSettingsKey =   "Longitude";
+    static constexpr const char* _flightMapZoomSettingsKey =                "FlightMapZoom";
 };

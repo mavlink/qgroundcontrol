@@ -89,6 +89,6 @@ private:
     QTimer *m_processTimer = nullptr;   ///< Timer for periodic processing of ADS-B data
     QStringList m_lineBuffer;           ///< Buffer for storing incoming lines of ADS-B data
 
-    static constexpr const int s_processInterval = 50;     ///< Interval for processing lines
-    static constexpr const int s_maxLinesToProcess = 100;  ///< Maximum number of lines to process per timer timeout
+    static constexpr int s_processInterval = 50;     ///< Interval for processing lines
+    static constexpr int s_maxLinesToProcess = 100;  ///< Maximum number of lines to process per timer timeout
 };

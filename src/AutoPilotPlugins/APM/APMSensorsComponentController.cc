@@ -23,8 +23,6 @@
 QGC_LOGGING_CATEGORY(APMSensorsComponentControllerLog, "APMSensorsComponentControllerLog")
 QGC_LOGGING_CATEGORY(APMSensorsComponentControllerVerboseLog, "APMSensorsComponentControllerVerboseLog")
 
-const char* APMSensorsComponentController::_compassCalFitnessParam = "COMPASS_CAL_FIT";
-
 APMSensorsComponentController::APMSensorsComponentController(void)
     : _sensorsComponent(nullptr)
     , _statusLog(nullptr)

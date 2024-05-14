@@ -56,6 +56,9 @@ public:
 
     static int hashFromProviderType(QStringView type);
 
+    static constexpr const char* kCopernicusElevationProviderKey = "Copernicus Elevation";
+    static constexpr const char* kCopernicusElevationProviderNotice = "© Airbus Defence and Space GmbH";
+
 private:
     static const QList<std::shared_ptr<const MapProvider>> _providers;
 };

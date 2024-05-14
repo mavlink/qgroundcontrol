@@ -63,11 +63,11 @@ private:
     Fact _northingFact;
     Fact _mgrsFact;
 
-    static const char*  _latitudeFactName;
-    static const char*  _longitudeFactName;
-    static const char*  _zoneFactName;
-    static const char*  _hemisphereFactName;
-    static const char*  _eastingFactName;
-    static const char*  _northingFactName;
-    static const char*  _mgrsFactName;
+    static constexpr const char*  _latitudeFactName =      "Latitude";
+    static constexpr const char*  _longitudeFactName =     "Longitude";
+    static constexpr const char*  _zoneFactName =          "Zone";
+    static constexpr const char*  _hemisphereFactName =    "Hemisphere";
+    static constexpr const char*  _eastingFactName =       "Easting";
+    static constexpr const char*  _northingFactName =      "Northing";
+    static constexpr const char*  _mgrsFactName =          "MGRS";
 };
