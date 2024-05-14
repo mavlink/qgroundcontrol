@@ -67,7 +67,7 @@ jobs:
           target: desktop
           arch: win64_msvc2019_64
           dir: ${{ runner.temp }}
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
+          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
           cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
 
       - name: Install Qt6 for Windows (ARM64)
@@ -78,7 +78,7 @@ jobs:
           target: desktop
           arch: win64_msvc2019_arm64
           dir: ${{ runner.temp }}
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
+          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
           cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
 
       - name: Install Dependencies

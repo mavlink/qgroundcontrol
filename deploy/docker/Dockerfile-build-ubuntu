@@ -6,7 +6,7 @@ FROM ubuntu:22.04
 LABEL authors="Daniel Agar <daniel@agar.ca>, Patrick José Pereira <patrickelectric@gmail.com>"
 
 ARG QT_VERSION=6.6.3
-ARG QT_MODULES="qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d"
+ARG QT_MODULES="qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors"
 
 ENV DEBIAN_FRONTEND noninteractive
 

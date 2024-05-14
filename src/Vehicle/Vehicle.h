@@ -476,6 +476,11 @@ public:
     QGeoCoordinate coordinate() { return _coordinate; }
     QGeoCoordinate armedPosition    () { return _armedPosition; }
 
+    qreal getInitialGCSPressure() const { return _initialGCSPressure; }
+    qreal getInitialGCSTemperature() const { return _initialGCSTemperature; }
+    void setInitialGCSPressure(qreal pressure) { _initialGCSPressure = pressure; }
+    void setInitialGCSTemperature(qreal temperature) { _initialGCSTemperature = temperature; }
+
     void updateFlightDistance(double distance);
 
     bool joystickEnabled            () const;
@@ -1114,6 +1119,9 @@ private:
     QGeoCoordinate  _coordinate;
     QGeoCoordinate  _homePosition;
     QGeoCoordinate  _armedPosition;
+
+    qreal           _initialGCSPressure = 0.;
+    qreal           _initialGCSTemperature = 0.;
 
     int             _currentMessageCount = 0;
     int             _messageCount = 0;
