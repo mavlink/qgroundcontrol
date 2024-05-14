@@ -7,74 +7,96 @@
  *
  ****************************************************************************/
 
-
 #include "RTCMMavlink.h"
-#include "MultiVehicleManager.h"
-#include "Vehicle.h"
 #include "MAVLinkProtocol.h"
+#include "MultiVehicleManager.h"
+#include "QGCApplication.h"
+#include "QGCLoggingCategory.h"
+#include "Vehicle.h"
 
-RTCMMavlink::RTCMMavlink(QGCToolbox& toolbox)
-    : _toolbox(toolbox)
+QGC_LOGGING_CATEGORY(RTCMMavlinkLog, "qgc.gps.rtcmmavlink")
+
+RTCMMavlink::RTCMMavlink(QObject *parent)
+    : QObject(parent)
 {
+    // qCDebug(RTCMMavlinkLog) << Q_FUNC_INFO << this;
+
     _bandwidthTimer.start();
 }
 
-void RTCMMavlink::RTCMDataUpdate(QByteArray message)
+RTCMMavlink::~RTCMMavlink()
 {
-    /* statistics */
-    _bandwidthByteCounter += message.size();
-    qint64 elapsed = _bandwidthTimer.elapsed();
-    if (elapsed > 1000) {
-        qDebug() << QStringLiteral("RTCM bandwidth: %1 kB/s\n").arg(_bandwidthByteCounter / elapsed * 1000.f / 1024.f);
-        _bandwidthTimer.restart();
-        _bandwidthByteCounter = 0;
-    }
+    // qCDebug(RTCMMavlinkLog) << Q_FUNC_INFO << this;
+}
 
-    const qsizetype maxMessageLength = MAVLINK_MSG_GPS_RTCM_DATA_FIELD_DATA_LEN;
-    mavlink_gps_rtcm_data_t mavlinkRtcmData;
-    memset(&mavlinkRtcmData, 0, sizeof(mavlink_gps_rtcm_data_t));
+void RTCMMavlink::RTCMDataUpdate(QByteArrayView data)
+{
+#ifdef QT_DEBUG
+    _calculateBandwith(data.size());
+#endif
 
-    if (message.size() < maxMessageLength) {
-        mavlinkRtcmData.len = message.size();
-        mavlinkRtcmData.flags = (_sequenceId & 0x1F) << 3;
-        memcpy(&mavlinkRtcmData.data, message.data(), message.size());
-        sendMessageToVehicle(mavlinkRtcmData);
+    mavlink_gps_rtcm_data_t gpsRtcmData{};
+
+    static constexpr qsizetype maxMessageLength = MAVLINK_MSG_GPS_RTCM_DATA_FIELD_DATA_LEN;
+    if (data.size() < maxMessageLength) {
+        gpsRtcmData.len = data.size();
+        gpsRtcmData.flags = (_sequenceId & 0x1FU) << 3;
+        (void) memcpy(&gpsRtcmData.data, data.data(), data.size());
+        _sendMessageToVehicle(gpsRtcmData);
     } else {
-        // We need to fragment
+        uint8_t fragmentId = 0;
+        qsizetype start = 0;
+        while (start < data.size()) {
+            gpsRtcmData.flags = 0x01U; // LSB set indicates message is fragmented
+            gpsRtcmData.flags |= fragmentId++ << 1; // Next 2 bits are fragment id
+            gpsRtcmData.flags |= (_sequenceId & 0x1FU) << 3; // Next 5 bits are sequence id
 
-        uint8_t fragmentId = 0;         // Fragment id indicates the fragment within a set
-        int start = 0;
-        while (start < message.size()) {
-            int length = std::min(message.size() - start, maxMessageLength);
-            mavlinkRtcmData.flags = 1;                      // LSB set indicates message is fragmented
-            mavlinkRtcmData.flags |= fragmentId++ << 1;     // Next 2 bits are fragment id
-            mavlinkRtcmData.flags |= (_sequenceId & 0x1F) << 3;     // Next 5 bits are sequence id
-            mavlinkRtcmData.len = length;
-            memcpy(&mavlinkRtcmData.data, message.data() + start, length);
-            sendMessageToVehicle(mavlinkRtcmData);
+            const qsizetype length = std::min(data.size() - start, maxMessageLength);
+            gpsRtcmData.len = length;
+
+            (void) memcpy(gpsRtcmData.data, data.constData() + start, length);
+            _sendMessageToVehicle(gpsRtcmData);
+
             start += length;
         }
     }
+
     ++_sequenceId;
 }
 
-void RTCMMavlink::sendMessageToVehicle(const mavlink_gps_rtcm_data_t& msg)
+void RTCMMavlink::_sendMessageToVehicle(const mavlink_gps_rtcm_data_t &data)
 {
-    QmlObjectListModel& vehicles = *_toolbox.multiVehicleManager()->vehicles();
-    MAVLinkProtocol* mavlinkProtocol = _toolbox.mavlinkProtocol();
-    for (int i = 0; i < vehicles.count(); i++) {
-        Vehicle*                vehicle     = qobject_cast<Vehicle*>(vehicles[i]);
-        SharedLinkInterfacePtr  sharedLink  = vehicle->vehicleLinkManager()->primaryLink().lock();
-
+    QmlObjectListModel* const vehicles = qgcApp()->toolbox()->multiVehicleManager()->vehicles();
+    for (qsizetype i = 0; i < vehicles->count(); i++) {
+        Vehicle* const vehicle = qobject_cast<Vehicle*>(vehicles->get(i));
+        const SharedLinkInterfacePtr sharedLink = vehicle->vehicleLinkManager()->primaryLink().lock();
         if (sharedLink) {
-            mavlink_message_t       message;
-
-            mavlink_msg_gps_rtcm_data_encode_chan(mavlinkProtocol->getSystemId(),
-                                                  mavlinkProtocol->getComponentId(),
-                                                  sharedLink->mavlinkChannel(),
-                                                  &message,
-                                                  &msg);
-            vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
+            const MAVLinkProtocol* const mavlinkProtocol = qgcApp()->toolbox()->mavlinkProtocol();
+            mavlink_message_t message;
+            (void) mavlink_msg_gps_rtcm_data_encode_chan(
+                mavlinkProtocol->getSystemId(),
+                mavlinkProtocol->getComponentId(),
+                sharedLink->mavlinkChannel(),
+                &message,
+                &data
+            );
+            (void) vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
         }
+    }
+}
+
+void RTCMMavlink::_calculateBandwith(qsizetype bytes)
+{
+    if (!_bandwidthTimer.isValid()) {
+        return;
+    }
+
+    _bandwidthByteCounter += bytes;
+
+    const qint64 elapsed = _bandwidthTimer.elapsed();
+    if (elapsed > 1000) {
+        qCDebug(RTCMMavlinkLog) << QStringLiteral("RTCM bandwidth: %1 kB/s").arg(((_bandwidthByteCounter / elapsed) * 1000.f) / 1024.f);
+        (void) _bandwidthTimer.restart();
+        _bandwidthByteCounter = 0;
     }
 }
