@@ -31,16 +31,18 @@
  *
  ****************************************************************************/
 
+/* https://github.com/PX4/Firmware/blob/master/msg/SatelliteInfo.msg */
+
 #pragma once
+
 #include <stdint.h>
+#include <QtCore/QMetaType>
 
-/*
- * This file is auto-generated from https://github.com/PX4/Firmware/blob/master/msg/satellite_info.msg
- * and was manually copied here.
- */
-
-struct satellite_info_s {
+struct satellite_info_s
+{
 	uint64_t timestamp;
+	static constexpr const uint8_t SAT_INFO_MAX_SATELLITES = 20;
+
 	uint8_t count;
 	uint8_t svid[20];
 	uint8_t used[20];
@@ -48,8 +50,5 @@ struct satellite_info_s {
 	uint8_t azimuth[20];
 	uint8_t snr[20];
 	uint8_t prn[20];
-#ifdef __cplusplus
-	static const uint8_t SAT_INFO_MAX_SATELLITES = 20;
-
-#endif
 };
+Q_DECLARE_METATYPE(satellite_info_s);

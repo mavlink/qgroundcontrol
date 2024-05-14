@@ -10,31 +10,29 @@
 
 #pragma once
 
-#include "QGCToolbox.h"
-#include "MAVLinkLib.h"
-
 #include <QtCore/QObject>
 #include <QtCore/QElapsedTimer>
+#include <QtCore/QLoggingCategory>
 
-/**
- ** class RTCMMavlink
- * Receives RTCM updates and sends them via MAVLINK to the device
- */
+typedef struct __mavlink_gps_rtcm_data_t mavlink_gps_rtcm_data_t;
+
+Q_DECLARE_LOGGING_CATEGORY(RTCMMavlinkLog)
+
 class RTCMMavlink : public QObject
 {
     Q_OBJECT
+
 public:
-    RTCMMavlink(QGCToolbox& toolbox);
-    //TODO: API to select device(s)?
+    RTCMMavlink(QObject* parent = nullptr);
+    ~RTCMMavlink();
 
 public slots:
-    void RTCMDataUpdate(QByteArray message);
+    void RTCMDataUpdate(QByteArrayView data);
 
 private:
-    void sendMessageToVehicle(const mavlink_gps_rtcm_data_t& msg);
+    void _sendMessageToVehicle(const mavlink_gps_rtcm_data_t& data);
 
-    QGCToolbox& _toolbox;
-    QElapsedTimer _bandwidthTimer;
-    int _bandwidthByteCounter = 0;
-    uint8_t _sequenceId = 0;
+    QElapsedTimer m_bandwidthTimer{};
+    qsizetype m_bandwidthByteCounter = 0;
+    uint8_t m_sequenceId = 0;
 };

@@ -41,7 +41,7 @@
 
 #include <QtCore/QtGlobal>
 
-#define GPS_READ_BUFFER_SIZE 1024
+#include <QGC.h>
 
 #define GPS_INFO(...) qInfo(__VA_ARGS__)
 #define GPS_WARN(...) qWarning(__VA_ARGS__)
@@ -58,31 +58,19 @@
 
 #define M_PI_2_F M_PI
 
-#include <QtCore/QThread>
-
-class Sleeper : public QThread
-{
-public:
-    static void usleep(unsigned long usecs) { QThread::usleep(usecs); }
-};
-
 static inline void gps_usleep(unsigned long usecs) {
-    Sleeper::usleep(usecs);
+    QGC::SLEEP::usleep(usecs);
 }
 
-typedef uint64_t gps_abstime;
-
 #include <QtCore/QDateTime>
-/**
- * Get the current time in us. Function signature:
- * uint64_t hrt_absolute_time()
- */
+
+typedef uint64_t gps_abstime;
 static inline gps_abstime gps_absolute_time() {
-    //FIXME: is there something with microsecond accuracy?
+    // FIXME: is there something with microsecond accuracy?
     return QDateTime::currentMSecsSinceEpoch() * 1000;
 }
 
-//timespec is UNIX-specific
+// timespec is UNIX-specific
 #ifdef _WIN32
 #if _MSC_VER < 1900
 struct timespec

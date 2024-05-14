@@ -675,7 +675,6 @@ HEADERS += \
     src/GPS/Drivers/src/ubx.h \
     src/GPS/Drivers/src/sbf.h \
     src/GPS/GPSManager.h \
-    src/GPS/GPSPositionMessage.h \
     src/GPS/GPSProvider.h \
     src/GPS/RTCMMavlink.h \
     src/GPS/definitions.h \

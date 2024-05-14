@@ -43,7 +43,7 @@ public:
     /** @brief Get the system id of this application */
     int getSystemId() const;
     /** @brief Get the component id of this application */
-    int getComponentId();
+    static int getComponentId();
 
     /** @brief Get protocol version check state */
     bool versionCheckEnabled() const {

@@ -17,6 +17,7 @@
 #include "PositionManager.h"
 #ifndef NO_SERIAL_LINK
 #include "GPSManager.h"
+#include "GPSRtk.h"
 #endif
 #include "QGCPalette.h"
 #ifdef QT_DEBUG
@@ -89,7 +90,7 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
     _firmwarePluginManager  = toolbox->firmwarePluginManager();
     _settingsManager        = toolbox->settingsManager();
 #ifndef NO_SERIAL_LINK
-    _gpsRtkFactGroup        = toolbox->gpsManager()->gpsRtkFactGroup();
+    _gpsRtkFactGroup        = GPSManager::instance()->gpsRtk()->gpsRtkFactGroup();
 #endif
     _adsbVehicleManager     = toolbox->adsbVehicleManager();
     _globalPalette          = new QGCPalette(this);

@@ -25,6 +25,7 @@
 #include "PositionManager.h"
 #ifndef NO_SERIAL_LINK
 #include "GPSManager.h"
+#include "GPSRtk.h"
 #endif
 
 #ifdef QT_DEBUG
@@ -627,7 +628,7 @@ void LinkManager::_updateAutoConnectLinks(void)
                 case QGCSerialPortInfo::BoardTypeRTKGPS:
                     qCDebug(LinkManagerLog) << "RTK GPS auto-connected" << portInfo.portName().trimmed();
                     _autoConnectRTKPort = portInfo.systemLocation();
-                    _toolbox->gpsManager()->connectGPS(portInfo.systemLocation(), boardName);
+                    GPSManager::instance()->gpsRtk()->connectGPS(portInfo.systemLocation(), boardName);
                     break;
                 default:
                     qCWarning(LinkManagerLog) << "Internal error: Unknown board type" << boardType;
@@ -650,7 +651,7 @@ void LinkManager::_updateAutoConnectLinks(void)
     // Check for RTK GPS connection gone
     if (!_autoConnectRTKPort.isEmpty() && !currentPorts.contains(_autoConnectRTKPort)) {
         qCDebug(LinkManagerLog) << "RTK GPS disconnected" << _autoConnectRTKPort;
-        _toolbox->gpsManager()->disconnectGPS();
+        GPSManager::instance()->gpsRtk()->disconnectGPS();
         _autoConnectRTKPort.clear();
     }
 
@@ -893,7 +894,7 @@ bool LinkManager::_allowAutoConnectToBoard(QGCSerialPortInfo::BoardType_t boardT
         }
         break;
     case QGCSerialPortInfo::BoardTypeRTKGPS:
-        if (_autoConnectSettings->autoConnectRTKGPS()->rawValue().toBool() && !_toolbox->gpsManager()->connected()) {
+        if (_autoConnectSettings->autoConnectRTKGPS()->rawValue().toBool() && !GPSManager::instance()->gpsRtk()->connected()) {
             return true;
         }
         break;
