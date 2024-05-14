@@ -9,8 +9,7 @@
 
 QGC_LOGGING_CATEGORY(QGCDeviceInfoLog, "qgc.utilities.deviceinfo")
 
-namespace QGCDeviceInfo
-{
+namespace QGCDeviceInfo {
 
 //  TODO:
 //    - reachabilityChanged()
@@ -276,4 +275,126 @@ bool QGCPressureFilter::filter(QPressureReading *reading)
     return true;
 }
 
+////////////////////////////////////////////////////////////////////
+
+Q_APPLICATION_STATIC(QGCCompass, s_compass);
+
+QGCCompass* QGCCompass::instance()
+{
+    return s_compass();
 }
+
+QGCCompass::QGCCompass(QObject* parent)
+    : QObject(parent)
+    , _compass(new QCompass(this))
+    , _compassFilter(std::make_shared<QGCCompassFilter>())
+{
+    // qCDebug(QGCDeviceInfoLog) << Q_FUNC_INFO << this;
+
+    (void) connect(_compass, &QCompass::sensorError, this, [](int error) {
+        qCWarning(QGCDeviceInfoLog) << Q_FUNC_INFO << "Compass error:" << error;
+    });
+
+    if (!init()) {
+        qCWarning(QGCDeviceInfoLog) << Q_FUNC_INFO << "Error Initializing Compass Sensor";
+    }
+}
+
+QGCCompass::~QGCCompass()
+{
+    // qCDebug(QGCDeviceInfoLog) << Q_FUNC_INFO << this;
+}
+
+bool QGCCompass::init()
+{
+    _compass->addFilter(_compassFilter.get());
+
+    const bool connected = _compass->connectToBackend();
+    if (!connected) {
+        qCWarning(QGCDeviceInfoLog) << Q_FUNC_INFO << "Failed to connect to compass backend";
+        return false;
+    } else {
+        qCDebug(QGCDeviceInfoLog) << Q_FUNC_INFO << "Connected to compass backend:" << _compass->identifier();
+    }
+
+    if (_compass->isFeatureSupported(QSensor::SkipDuplicates)) {
+        _compass->setSkipDuplicates(true);
+    }
+
+    const qrangelist dataRates = _compass->availableDataRates();
+    if (!dataRates.isEmpty()) {
+        qCDebug(QGCDeviceInfoLog) << Q_FUNC_INFO << "Available Data Rates:" << dataRates;
+        // _compass->setDataRate(dataRates.first().first);
+        qCDebug(QGCDeviceInfoLog) << Q_FUNC_INFO << "Selected Data Rate:" << _compass->dataRate();
+    }
+
+    const qoutputrangelist outputRanges = _compass->outputRanges();
+    if (!outputRanges.isEmpty()) {
+        // qCDebug(QGCDeviceInfoLog) << Q_FUNC_INFO << "Output Ranges:" << outputRanges;
+        // _compass->setOutputRange(outputRanges.first().first);
+        const int outputRangeIndex = _compass->outputRange();
+        if (outputRangeIndex < outputRanges.size()) {
+            const qoutputrange outputRange = outputRanges.at(_compass->outputRange());
+            qCDebug(QGCDeviceInfoLog) << Q_FUNC_INFO << "Selected Output Range:" << outputRange.minimum << outputRange.maximum << outputRange.accuracy;
+        }
+    }
+
+    _readingChangedConnection = connect(_compass, &QCompass::readingChanged, this, [this]() {
+        QCompassReading* const reading = _compass->reading();
+        if (!reading) {
+            return;
+        }
+
+        _calibrationLevel = reading->calibrationLevel();
+        _azimuth = reading->azimuth();
+
+        emit compassUpdated(_azimuth);
+
+        QGeoPositionInfo update;
+        update.setAttribute(QGeoPositionInfo::Attribute::Direction, _azimuth);
+        update.setAttribute(QGeoPositionInfo::Attribute::DirectionAccuracy, _calibrationLevel);
+        update.setTimestamp(QDateTime::currentDateTimeUtc());
+        emit positionUpdated(update);
+    });
+
+    // _compass->setActive(true);
+    const bool started = _compass->start();
+    if (!started) {
+        qCWarning(QGCDeviceInfoLog) << Q_FUNC_INFO << "Failed to start compass";
+        return false;
+    }
+
+    return true;
+}
+
+void QGCCompass::quit()
+{
+    // _compass->setActive(false);
+    _compass->stop();
+    _compass->disconnect(_readingChangedConnection);
+}
+
+QGCCompassFilter::QGCCompassFilter()
+    : QCompassFilter()
+{
+    qCDebug(QGCDeviceInfoLog) << Q_FUNC_INFO << this;
+}
+
+QGCCompassFilter::~QGCCompassFilter()
+{
+    qCDebug(QGCDeviceInfoLog) << Q_FUNC_INFO << this;
+}
+
+bool QGCCompassFilter::filter(QCompassReading *reading)
+{
+    if (!reading) {
+        return false;
+    }
+
+    const qreal calibration = reading->calibrationLevel();
+    return (calibration >= s_minCompassCalibrationLevel);
+}
+
+////////////////////////////////////////////////////////////////////
+
+} /* namespace QGCDeviceInfo */
