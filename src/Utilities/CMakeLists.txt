@@ -55,7 +55,6 @@ endif()
 
 target_link_libraries(Utilities
     PRIVATE
-        Qt6::Bluetooth
         Qt6::Qml
         shp
         FactSystem
@@ -68,8 +67,16 @@ target_link_libraries(Utilities
         Qt6::Gui
         Qt6::Network
         Qt6::Positioning
-                Qt6::Sensors
+        Qt6::Sensors
         Qt6::Xml
 )
+
+if(QGC_ENABLE_BLUETOOTH)
+    target_link_libraries(Utilities
+        PRIVATE
+            Qt6::Bluetooth
+    )
+endif()
+
 
 target_include_directories(Utilities PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

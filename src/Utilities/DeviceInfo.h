@@ -1,16 +1,19 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtSensors/QAmbientTemperatureSensor>
 #include <QtSensors/QPressureSensor>
+#include <QtSensors/QCompass>
+#include <QtPositioning/QGeoPositionInfo>
+#include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(QGCDeviceInfoLog)
 
-namespace QGCDeviceInfo
-{
+namespace QGCDeviceInfo {
 
 bool isInternetAvailable();
 bool isBluetoothAvailable();
+
+////////////////////////////////////////////////////////////////////
 
 class QGCAmbientTemperatureFilter : public QAmbientTemperatureFilter
 {
@@ -52,6 +55,7 @@ private:
     qreal _temperatureC = 0;
 };
 
+////////////////////////////////////////////////////////////////////
 
 class QGCPressureFilter : public QPressureFilter
 {
@@ -98,4 +102,47 @@ private:
     qreal _pressurePa = 0;
 };
 
-}
+////////////////////////////////////////////////////////////////////
+
+class QGCCompassFilter : public QCompassFilter
+{
+public:
+    QGCCompassFilter();
+    ~QGCCompassFilter();
+
+    bool filter(QCompassReading *reading) final;
+
+private:
+    static constexpr qreal s_minCompassCalibrationLevel = 0.65;
+};
+
+class QGCCompass : public QObject
+{
+    Q_OBJECT
+
+public:
+    QGCCompass(QObject *parent = nullptr);
+    ~QGCCompass();
+
+    static QGCCompass* instance();
+
+    bool init();
+    void quit();
+
+signals:
+    void compassUpdated(qreal azimuth);
+    void positionUpdated(QGeoPositionInfo update);
+
+private:
+    QCompass *_compass = nullptr;
+    std::shared_ptr<QGCCompassFilter> _compassFilter = nullptr;
+
+    QMetaObject::Connection _readingChangedConnection;
+
+    qreal _azimuth = 0;
+    qreal _calibrationLevel = 0;
+};
+
+////////////////////////////////////////////////////////////////////
+
+} /* namespace QGCDeviceInfo */
