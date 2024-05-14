@@ -9,40 +9,45 @@
 
 #pragma once
 
-#include <QtCore/QTimer>
 #include <QtPositioning/QGeoPositionInfoSource>
+#include <QtCore/QLoggingCategory>
+
+Q_DECLARE_LOGGING_CATEGORY(SimulatedPositionLog)
 
 class Vehicle;
+class QTimer;
 
 class SimulatedPosition : public QGeoPositionInfoSource
 {
    Q_OBJECT
 
 public:
-    SimulatedPosition();
+    SimulatedPosition(QObject* parent = nullptr);
+    ~SimulatedPosition();
 
-    QGeoPositionInfo lastKnownPosition(bool fromSatellitePositioningMethodsOnly = false) const override;
+    QGeoPositionInfo lastKnownPosition(bool /*fromSatellitePositioningMethodsOnly = false*/) const final { return m_lastPosition; }
 
-    PositioningMethods  supportedPositioningMethods (void) const override;
-    int                 minimumUpdateInterval       (void) const override { return _updateIntervalMsecs; }
-    Error               error                       (void) const override;
+    PositioningMethods supportedPositioningMethods() const final { return PositioningMethod::AllPositioningMethods; }
+    int minimumUpdateInterval() const final { return s_updateIntervalMsecs; }
+    Error error() const final { return QGeoPositionInfoSource::NoError; }
 
 public slots:
-    void startUpdates   (void) override;
-    void stopUpdates    (void) override;
-    void requestUpdate  (int timeout = 5000) override;
+    void startUpdates() final;
+    void stopUpdates() final;
+    void requestUpdate(int timeout = 5000) final;
 
 private slots:
-    void _updatePosition                (void);
-    void _vehicleAdded                  (Vehicle* vehicle);
-    void _vehicleHomePositionChanged    (QGeoCoordinate homePosition);
+    void _updatePosition();
+    void _vehicleAdded(Vehicle *vehicle);
+    void _vehicleHomePositionChanged(QGeoCoordinate homePosition);
 
 private:
-    QTimer              _updateTimer;
-    QGeoPositionInfo    _lastPosition;
+    QTimer *m_updateTimer = nullptr;
+    QGeoPositionInfo m_lastPosition;
+    QMetaObject::Connection m_homePositionChangedConnection;
 
-    static constexpr int    _updateIntervalMsecs =              1000;
-    static constexpr double _horizontalVelocityMetersPerSec =   0.5;
-    static constexpr double _verticalVelocityMetersPerSec =     0.1;
-    static constexpr double _heading =                          45;
+    static constexpr int s_updateIntervalMsecs = 1000;
+    static constexpr qreal s_horizontalVelocityMetersPerSec = 0.5;
+    static constexpr qreal s_verticalVelocityMetersPerSec = 0.1;
+    static constexpr qreal s_heading = 45.;
 };

@@ -11,190 +11,209 @@
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 #include "SimulatedPosition.h"
+#include <DeviceInfo.h>
+#include <QGCLoggingCategory.h>
 
 #include <QtCore/QPermissions>
+#include <QtPositioning/QGeoPositionInfoSource>
 #include <QtPositioning/private/qgeopositioninfosource_p.h>
 #include <QtPositioning/QNmeaPositionInfoSource>
-
 #include <QtQml/QtQml>
 
-QGCPositionManager::QGCPositionManager(QGCApplication* app, QGCToolbox* toolbox)
-    : QGCTool           (app, toolbox)
-{
+QGC_LOGGING_CATEGORY(QGCPositionManagerLog, "qgc.positionmanager.positionmanager")
 
+QGCPositionManager::QGCPositionManager(QGCApplication *app, QGCToolbox *toolbox)
+    : QGCTool(app, toolbox)
+{
+    // qCDebug(QGCPositionManagerLog) << Q_FUNC_INFO << this;
 }
 
 QGCPositionManager::~QGCPositionManager()
 {
-    delete(_simulatedSource);
-    delete(_nmeaSource);
+    // qCDebug(QGCPositionManagerLog) << Q_FUNC_INFO << this;
 }
 
-void QGCPositionManager::_setupPositionSources(QGCToolbox *toolbox)
+void QGCPositionManager::_setupPositionSources()
 {
-    //-- First see if plugin provides a position source
-    _defaultSource = toolbox->corePlugin()->createPositionSource(this);
-    if (_defaultSource) {
-        _usingPluginSource = true;
+    m_defaultSource = _toolbox->corePlugin()->createPositionSource(this);
+    if (m_defaultSource) {
+        m_usingPluginSource = true;
+    } else {
+        qCDebug(QGCPositionManagerLog) << Q_FUNC_INFO << QGeoPositionInfoSource::availableSources();
+
+        m_defaultSource = QGeoPositionInfoSource::createDefaultSource(this);
+        if (!m_defaultSource) {
+            qCWarning(QGCPositionManagerLog) << Q_FUNC_INFO << "No default source available";
+            return;
+        }
     }
 
-    if (qgcApp()->runningUnitTests()) {
-        // Units test on travis fail due to lack of position source
-        return;
+    _setPositionSource(QGCPositionSource::InternalGPS);
+}
+
+void QGCPositionManager::_handlePermissionStatus(Qt::PermissionStatus permissionStatus)
+{
+    if (permissionStatus == Qt::PermissionStatus::Granted) {
+        _setupPositionSources();
+    } else {
+        qCWarning(QGCPositionManagerLog) << Q_FUNC_INFO << "Location Permission Denied";
     }
+}
 
-    if (!_defaultSource) {
-        //-- Otherwise, create a default one
-        _defaultSource = QGeoPositionInfoSource::createDefaultSource(this);
+void QGCPositionManager::_checkPermission()
+{
+    QLocationPermission locationPermission;
+    locationPermission.setAccuracy(QLocationPermission::Precise);
+
+    const Qt::PermissionStatus permissionStatus = _app->checkPermission(locationPermission);
+    if (permissionStatus == Qt::PermissionStatus::Undetermined) {
+        _app->requestPermission(locationPermission, this, [this](const QPermission &permission) {
+            _handlePermissionStatus(permission.status());
+        });
+    } else {
+        _handlePermissionStatus(permissionStatus);
     }
-
-    _simulatedSource = new SimulatedPosition();
-
-#if 1
-   setPositionSource(QGCPositionSource::InternalGPS);
-#else
-   setPositionSource(QGCPositionManager::Simulated);
-#endif
 }
 
 void QGCPositionManager::setToolbox(QGCToolbox *toolbox)
 {
     QGCTool::setToolbox(toolbox);
-    qmlRegisterUncreatableType<QGCPositionManager>("QGroundControl.QGCPositionManager", 1, 0, "QGCPositionManager", "Reference only");
 
-#if QT_CONFIG(permissions)
-    QLocationPermission locationPermission;
-    if (qApp->checkPermission(locationPermission) == Qt::PermissionStatus::Undetermined) {
-        qApp->requestPermission(locationPermission, [this, toolbox](const QPermission &permission) {
-            if (permission.status() == Qt::PermissionStatus::Granted) {
-                _setupPositionSources(toolbox);
-            }
-        });
+    (void) qmlRegisterUncreatableType<QGCPositionManager>("QGroundControl.QGCPositionManager", 1, 0, "QGCPositionManager", "Reference only");
+
+    if (_app->runningUnitTests()) {
+        m_simulatedSource = new SimulatedPosition(this);
+        _setPositionSource(QGCPositionSource::Simulated);
     } else {
-        _setupPositionSources(toolbox);
+        _checkPermission();
     }
-#else
-    _setupPositionSources(toolbox);
-#endif
 }
 
-void QGCPositionManager::setNmeaSourceDevice(QIODevice* device)
+void QGCPositionManager::setNmeaSourceDevice(QIODevice *device)
 {
-    // stop and release _nmeaSource
-    if (_nmeaSource) {
-        _nmeaSource->stopUpdates();
-        disconnect(_nmeaSource);
+    if (m_nmeaSource) {
+        m_nmeaSource->stopUpdates();
+        (void) disconnect(m_nmeaSource);
 
-        // if _currentSource is pointing there, point to null
-        if (_currentSource == _nmeaSource){
-            _currentSource = nullptr;
+        if (m_currentSource == m_nmeaSource) {
+            m_currentSource = nullptr;
         }
 
-        delete _nmeaSource;
-        _nmeaSource = nullptr;
-
+        delete m_nmeaSource;
+        m_nmeaSource = nullptr;
     }
-    _nmeaSource = new QNmeaPositionInfoSource(QNmeaPositionInfoSource::RealTimeMode, this);
-    _nmeaSource->setDevice(device);
-    // set equivalent range error to enable position accuracy reporting
-    _nmeaSource->setUserEquivalentRangeError(5.1);
-    setPositionSource(QGCPositionManager::NmeaGPS);
+
+    m_nmeaSource = new QNmeaPositionInfoSource(QNmeaPositionInfoSource::RealTimeMode, this);
+    m_nmeaSource->setDevice(device);
+    m_nmeaSource->setUserEquivalentRangeError(5.1);
+    _setPositionSource(QGCPositionManager::NmeaGPS);
 }
 
 void QGCPositionManager::_positionUpdated(const QGeoPositionInfo &update)
 {
-    _geoPositionInfo = update;
+    m_geoPositionInfo = update;
 
-    QGeoCoordinate newGCSPosition = QGeoCoordinate();
-    qreal newGCSHeading = update.attribute(QGeoPositionInfo::Direction);
+    QGeoCoordinate newGCSPosition(m_gcsPosition);
 
-    if (update.isValid() && update.hasAttribute(QGeoPositionInfo::HorizontalAccuracy)) {
-        // Note that gcsPosition filters out possible crap values
-        if (qAbs(update.coordinate().latitude()) > 0.001 &&
-            qAbs(update.coordinate().longitude()) > 0.001 ) {
-            _gcsPositionHorizontalAccuracy = update.attribute(QGeoPositionInfo::HorizontalAccuracy);
-            if (_gcsPositionHorizontalAccuracy <= MinHorizonalAccuracyMeters) {
-                newGCSPosition = update.coordinate();
+    if (update.hasAttribute(QGeoPositionInfo::HorizontalAccuracy)) {
+        if ((qAbs(update.coordinate().latitude()) > 0.001) && (qAbs(update.coordinate().longitude()) > 0.001)) {
+            m_gcsPositionHorizontalAccuracy = update.attribute(QGeoPositionInfo::HorizontalAccuracy);
+            if (m_gcsPositionHorizontalAccuracy <= s_minHorizonalAccuracyMeters) {
+                newGCSPosition.setLatitude(update.coordinate().latitude());
+                newGCSPosition.setLongitude(update.coordinate().longitude());
             }
-            emit gcsPositionHorizontalAccuracyChanged();
+            emit gcsPositionHorizontalAccuracyChanged(m_gcsPositionHorizontalAccuracy);
         }
     }
-    if (newGCSPosition != _gcsPosition) {
-        _gcsPosition = newGCSPosition;
-        emit gcsPositionChanged(_gcsPosition);
+
+    if (update.hasAttribute(QGeoPositionInfo::VerticalAccuracy)) {
+        m_gcsPositionVerticalAccuracy = update.attribute(QGeoPositionInfo::VerticalAccuracy);
+        if (m_gcsPositionVerticalAccuracy <= s_minVerticalAccuracyMeters) {
+            newGCSPosition.setAltitude(update.coordinate().altitude());
+        }
     }
 
-    // At this point only plugins support gcs heading. The reason is that the quality of heading information from a local
-    // position device (not a compass) is unknown. In many cases it can only be trusted if the GCS location is moving above
-    // a certain rate of speed. When it is not, or the gcs is standing still the heading is just random. We don't want these
-    // random heading to be shown on the fly view. So until we can get a true compass based heading or some smarted heading quality
-    // information which takes into account the speed of movement we normally don't set a heading. We do use the heading though
-    // if the plugin overrides the position source. In that case we assume that it hopefully know what it is doing.
-    if (_usingPluginSource && newGCSHeading != _gcsHeading) {
-        _gcsHeading = newGCSHeading;
-        emit gcsHeadingChanged(_gcsHeading);
+    m_gcsPositionAccuracy = sqrt(pow(m_gcsPositionHorizontalAccuracy, 2) + pow(m_gcsPositionVerticalAccuracy, 2));
+
+    _setGCSPosition(newGCSPosition);
+
+    if (update.hasAttribute(QGeoPositionInfo::DirectionAccuracy)) {
+        m_gcsDirectionAccuracy = update.attribute(QGeoPositionInfo::DirectionAccuracy);
+        if (m_gcsDirectionAccuracy <= s_minDirectionAccuracyDegrees) {
+            _setGCSHeading(update.attribute(QGeoPositionInfo::Direction));
+        }
+    } else if (m_usingPluginSource) {
+        _setGCSHeading(update.attribute(QGeoPositionInfo::Direction));
     }
 
     emit positionInfoUpdated(update);
 }
 
-int QGCPositionManager::updateInterval() const
+void QGCPositionManager::_setGCSHeading(qreal newGCSHeading)
 {
-    return _updateInterval;
+    if (newGCSHeading != m_gcsHeading) {
+        m_gcsHeading = newGCSHeading;
+        emit gcsHeadingChanged(m_gcsHeading);
+    }
 }
 
-void QGCPositionManager::setPositionSource(QGCPositionManager::QGCPositionSource source)
+void QGCPositionManager::_setGCSPosition(const QGeoCoordinate& newGCSPosition)
 {
-    if (_currentSource != nullptr) {
-        _currentSource->stopUpdates();
-        disconnect(_currentSource);
+    if (newGCSPosition != m_gcsPosition) {
+        m_gcsPosition = newGCSPosition;
+        emit gcsPositionChanged(m_gcsPosition);
+    }
+}
 
-        // Reset all values so we dont get stuck on old values
-        _geoPositionInfo = QGeoPositionInfo();
-        _gcsPosition = QGeoCoordinate();
-        _gcsHeading =       qQNaN();
-        _gcsPositionHorizontalAccuracy = std::numeric_limits<qreal>::infinity();
+void QGCPositionManager::_setPositionSource(QGCPositionSource source)
+{
+    if (m_currentSource != nullptr) {
+        m_currentSource->stopUpdates();
+        (void) disconnect(m_currentSource);
 
-        emit gcsPositionChanged(_gcsPosition);
-        emit gcsHeadingChanged(_gcsHeading);
-        emit positionInfoUpdated(_geoPositionInfo);
-        emit gcsPositionHorizontalAccuracyChanged();
+        m_geoPositionInfo = QGeoPositionInfo();
+        m_gcsPosition = QGeoCoordinate();
+        m_gcsHeading = qQNaN();
+        m_gcsPositionHorizontalAccuracy = std::numeric_limits<qreal>::infinity();
+
+        emit gcsPositionChanged(m_gcsPosition);
+        emit gcsHeadingChanged(m_gcsHeading);
+        emit positionInfoUpdated(m_geoPositionInfo);
+        emit gcsPositionHorizontalAccuracyChanged(m_gcsPositionHorizontalAccuracy);
     }
 
-    if (qgcApp()->runningUnitTests()) {
-        // Units test on travis fail due to lack of position source
-        return;
-    }
-
-    switch(source) {
+    switch (source) {
     case QGCPositionManager::Log:
         break;
     case QGCPositionManager::Simulated:
-        _currentSource = _simulatedSource;
+        m_currentSource = m_simulatedSource;
         break;
     case QGCPositionManager::NmeaGPS:
-        _currentSource = _nmeaSource;
+        m_currentSource = m_nmeaSource;
         break;
     case QGCPositionManager::InternalGPS:
+        m_currentSource = m_defaultSource;
+        break;
+    case QGCPositionManager::ExternalGPS:
+        break;
     default:
-        _currentSource = _defaultSource;
+        m_currentSource = m_defaultSource;
         break;
     }
 
-    if (_currentSource != nullptr) {
-        _updateInterval = _currentSource->minimumUpdateInterval();
-        _currentSource->setPreferredPositioningMethods(QGeoPositionInfoSource::SatellitePositioningMethods);
-        // OSX and iOS do not support setting the update interval
-#if !defined(Q_OS_DARWIN) && !defined(Q_OS_IOS)
-        _currentSource->setUpdateInterval(_updateInterval);
-#endif
-        connect(_currentSource, &QGeoPositionInfoSource::positionUpdated, this, &QGCPositionManager::_positionUpdated);
-        connect(_currentSource, &QGeoPositionInfoSource::errorOccurred, this, &QGCPositionManager::_error);
-        _currentSource->startUpdates();
-    }
-}
+    if (m_currentSource != nullptr) {
+        m_currentSource->setPreferredPositioningMethods(QGeoPositionInfoSource::SatellitePositioningMethods);
+        m_updateInterval = m_currentSource->minimumUpdateInterval();
+        #if !defined(Q_OS_DARWIN) && !defined(Q_OS_IOS)
+            m_currentSource->setUpdateInterval(m_updateInterval);
+        #endif
+        (void) connect(m_currentSource, &QGeoPositionInfoSource::positionUpdated, this, &QGCPositionManager::_positionUpdated);
+        (void) connect(m_currentSource, &QGeoPositionInfoSource::errorOccurred, this, [](QGeoPositionInfoSource::Error positioningError) {
+            qCWarning(QGCPositionManagerLog) << Q_FUNC_INFO << positioningError;
+        });
 
-void QGCPositionManager::_error(QGeoPositionInfoSource::Error positioningError)
-{
-    qWarning() << "QGCPositionManager error" << positioningError;
+        // (void) connect(QGCCompass::instance(), &QGCCompass::positionUpdated, this, &QGCPositionManager::_positionUpdated);
+
+        m_currentSource->startUpdates();
+    }
 }
