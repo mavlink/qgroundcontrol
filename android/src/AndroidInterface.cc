@@ -8,19 +8,25 @@
  ****************************************************************************/
 
 #include "AndroidInterface.h"
+#include <QGCLoggingCategory.h>
 
 #include <QtCore/QJniObject>
+#include <QtCore/QJniEnvironment>
 #include <QtCore/private/qandroidextras_p.h>
 
-bool AndroidInterface::checkStoragePermissions()
-{
-    QString readPermission("android.permission.READ_EXTERNAL_STORAGE");
-    QString writePermission("android.permission.WRITE_EXTERNAL_STORAGE");
+QGC_LOGGING_CATEGORY(AndroidInterfaceLog, "qgc.android.src.androidinterface")
 
-    QStringList permissions = { readPermission, writePermission };
+namespace AndroidInterface {
+
+bool checkStoragePermissions()
+{
+    const QString readPermission("android.permission.READ_EXTERNAL_STORAGE");
+    const QString writePermission("android.permission.WRITE_EXTERNAL_STORAGE");
+
+    const QStringList permissions = { readPermission, writePermission };
     for (const auto& permission: permissions) {
-        auto futurePermissionResult = QtAndroidPrivate::checkPermission(permission);
-        auto permissionResult = futurePermissionResult.result();
+        QFuture<QtAndroidPrivate::PermissionResult> futurePermissionResult = QtAndroidPrivate::checkPermission(permission);
+        QtAndroidPrivate::PermissionResult permissionResult = futurePermissionResult.result();
         if (permissionResult == QtAndroidPrivate::PermissionResult::Denied) {
             futurePermissionResult = QtAndroidPrivate::requestPermission(permission);
             permissionResult = futurePermissionResult.result();
@@ -33,12 +39,46 @@ bool AndroidInterface::checkStoragePermissions()
     return true;
 }
 
-QString AndroidInterface::getSDCardPath()
+QString getSDCardPath()
 {
     if (!checkStoragePermissions()) {
+        qCWarning(AndroidInterfaceLog) << "Storage Permission Denied";
         return QString();
-    } else {
-        auto value = QJniObject::callStaticObjectMethod("org/mavlink/qgroundcontrol/QGCActivity", "getSDCardPath", "()Ljava/lang/String;");
-        return value.toString();
     }
+
+    const QJniObject result = QJniObject::callStaticObjectMethod(kJniQGCActivityClassName, "getSDCardPath", "()Ljava/lang/String;");
+    if (!result.isValid()) {
+        qCWarning(AndroidInterfaceLog) << "Invalid Result";
+        return QString();
+    }
+
+    return result.toString();
 }
+
+jclass getActivityClass()
+{
+    static jclass javaClass = nullptr;
+
+    if (!javaClass) {
+        QJniEnvironment env;
+        if (!env.isValid()) {
+            qCWarning(AndroidInterfaceLog) << "Invalid QJniEnvironment";
+            return nullptr;
+        }
+
+        if (!QJniObject::isClassAvailable(kJniQGCActivityClassName)) {
+            qCWarning(AndroidInterfaceLog) << "Class Not Available";
+            return nullptr;
+        }
+
+        javaClass = env.findClass(kJniQGCActivityClassName);
+        if (!javaClass) {
+            qCWarning(AndroidInterfaceLog) << "Class Not Found";
+            return nullptr;
+        }
+    }
+
+    return javaClass;
+}
+
+} // namespace AndroidInterface
