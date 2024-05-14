@@ -227,4 +227,19 @@ private:
     QString                 _ulogExtension;
     bool                    _logginDenied;
 
+    static constexpr const char* kMAVLinkLogGroup         = "MAVLinkLogGroup";
+    static constexpr const char* kEmailAddressKey         = "Email";
+    static constexpr const char* kDescriptionsKey         = "Description";
+    static constexpr const char* kDefaultDescr            = "QGroundControl Session";
+    static constexpr const char* kPx4URLKey               = "LogURL";
+    static constexpr const char* kDefaultPx4URL           = "https://logs.px4.io/upload";
+    static constexpr const char* kEnableAutoUploadKey     = "EnableAutoUpload";
+    static constexpr const char* kEnableAutoStartKey      = "EnableAutoStart";
+    static constexpr const char* kEnableDeletetKey        = "EnableDelete";
+    static constexpr const char* kVideoURLKey             = "VideoURL";
+    static constexpr const char* kWindSpeedKey            = "WindSpeed";
+    static constexpr const char* kRateKey                 = "RateKey";
+    static constexpr const char* kPublicLogKey            = "PublicLog";
+    static constexpr const char* kFeedback                = "feedback";
+    static constexpr const char* kVideoURL                = "videoUrl";
 };

@@ -77,9 +77,9 @@ private:
     QMap<QString, Joystick*>    _name2JoystickMap;
     MultiVehicleManager*        _multiVehicleManager;
 
-    static const char * _settingsGroup;
-    static const char * _settingsKeyActiveJoystick;
-
     int _joystickCheckTimerCounter;
     QTimer _joystickCheckTimer;
+
+    static constexpr const char * _settingsGroup =              "JoystickManager";
+    static constexpr const char * _settingsKeyActiveJoystick =  "ActiveJoystick";
 };

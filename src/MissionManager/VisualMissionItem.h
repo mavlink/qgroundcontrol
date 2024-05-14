@@ -194,9 +194,9 @@ public:
     double  missionVehicleYaw   (void) const { return _missionVehicleYaw; }
     void    setMissionVehicleYaw(double vehicleYaw);
 
-    static const char* jsonTypeKey;                 ///< Json file attribute which specifies the item type
-    static const char* jsonTypeSimpleItemValue;     ///< Item type is MISSION_ITEM
-    static const char* jsonTypeComplexItemValue;    ///< Item type is Complex Item
+    static constexpr const char* jsonTypeKey =                "type"; ///< Json file attribute which specifies the item type
+    static constexpr const char* jsonTypeSimpleItemValue =    "SimpleItem"; ///< Item type is MISSION_ITEM
+    static constexpr const char* jsonTypeComplexItemValue =   "ComplexItem"; ///< Item type is Complex Item
 
 signals:
     void altDifferenceChanged           (double altDifference);

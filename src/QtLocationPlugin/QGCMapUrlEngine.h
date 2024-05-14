@@ -31,9 +31,6 @@ class UrlFactory : public QObject {
     Q_OBJECT
 
 public:
-    static const char* kCopernicusElevationProviderKey;
-    static const char* kCopernicusElevationProviderNotice;
-
     UrlFactory      ();
     ~UrlFactory     ();
 
@@ -63,6 +60,9 @@ public:
                             const QString& mapType);
 
     bool isElevation(int qtMapId);
+
+    static constexpr const char* kCopernicusElevationProviderKey = "Copernicus Elevation";
+    static constexpr const char* kCopernicusElevationProviderNotice = "© Airbus Defence and Space GmbH";
 
 private:
     int                   _timeout;

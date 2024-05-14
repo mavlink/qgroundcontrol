@@ -21,27 +21,6 @@
 #include <QtCore/QDir>
 #include <QtCore/QSettings>
 
-const char* AppSettings::parameterFileExtension =   "params";
-const char* AppSettings::planFileExtension =        "plan";
-const char* AppSettings::missionFileExtension =     "mission";
-const char* AppSettings::waypointsFileExtension =   "waypoints";
-const char* AppSettings::fenceFileExtension =       "fence";
-const char* AppSettings::rallyPointFileExtension =  "rally";
-const char* AppSettings::telemetryFileExtension =   "tlog";
-const char* AppSettings::kmlFileExtension =         "kml";
-const char* AppSettings::shpFileExtension =         "shp";
-const char* AppSettings::logFileExtension =         "ulg";
-const char* AppSettings::tilesetFileExtension =     "qgctiledb";
-
-const char* AppSettings::parameterDirectory =       QT_TRANSLATE_NOOP("AppSettings", "Parameters");
-const char* AppSettings::telemetryDirectory =       QT_TRANSLATE_NOOP("AppSettings", "Telemetry");
-const char* AppSettings::missionDirectory =         QT_TRANSLATE_NOOP("AppSettings", "Missions");
-const char* AppSettings::logDirectory =             QT_TRANSLATE_NOOP("AppSettings", "Logs");
-const char* AppSettings::videoDirectory =           QT_TRANSLATE_NOOP("AppSettings", "Video");
-const char* AppSettings::photoDirectory =           QT_TRANSLATE_NOOP("AppSettings", "Photo");
-const char* AppSettings::crashDirectory =           QT_TRANSLATE_NOOP("AppSettings", "CrashLogs");
-const char* AppSettings::customActionsDirectory =   QT_TRANSLATE_NOOP("AppSettings", "CustomActions");
-
 // Release languages are 90%+ complete
 QList<int> AppSettings::_rgReleaseLanguages = {
     QLocale::AnyLanguage,  // System

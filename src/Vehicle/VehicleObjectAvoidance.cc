@@ -11,8 +11,6 @@
 #include "Vehicle.h"
 #include "ParameterManager.h"
 
-static const char* kColPrevParam = "CP_DIST";
-
 //-----------------------------------------------------------------------------
 VehicleObjectAvoidance::VehicleObjectAvoidance(Vehicle *vehicle, QObject* parent)
     : QObject(parent)

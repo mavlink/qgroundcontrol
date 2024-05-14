@@ -40,23 +40,6 @@
 
 QGC_LOGGING_CATEGORY(MissionControllerLog, "MissionControllerLog")
 
-const char* MissionController::_settingsGroup =                 "MissionController";
-const char* MissionController::_jsonFileTypeValue =             "Mission";
-const char* MissionController::_jsonItemsKey =                  "items";
-const char* MissionController::_jsonPlannedHomePositionKey =    "plannedHomePosition";
-const char* MissionController::_jsonFirmwareTypeKey =           "firmwareType";
-const char* MissionController::_jsonVehicleTypeKey =            "vehicleType";
-const char* MissionController::_jsonCruiseSpeedKey =            "cruiseSpeed";
-const char* MissionController::_jsonHoverSpeedKey =             "hoverSpeed";
-const char* MissionController::_jsonParamsKey =                 "params";
-const char* MissionController::_jsonGlobalPlanAltitudeModeKey = "globalPlanAltitudeMode";
-
-// Deprecated V1 format keys
-const char* MissionController::_jsonComplexItemsKey =           "complexItems";
-const char* MissionController::_jsonMavAutopilotKey =           "MAV_AUTOPILOT";
-
-const int   MissionController::_missionFileVersion =            2;
-
 MissionController::MissionController(PlanMasterController* masterController, QObject *parent)
     : PlanElementController (masterController, parent)
     , _controllerVehicle    (masterController->controllerVehicle())

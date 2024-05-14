@@ -14,8 +14,6 @@
 
 #include <QtQml/QQmlEngine>
 
-static const char* kMissingMetadata = "Meta data pointer missing";
-
 Fact::Fact(QObject* parent)
     : QObject                   (parent)
     , _componentId              (-1)

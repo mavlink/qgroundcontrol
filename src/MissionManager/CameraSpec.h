@@ -62,12 +62,12 @@ private:
     SettingsFact _fixedOrientationFact;
     SettingsFact _minTriggerIntervalFact;
 
-    static const char* _sensorWidthName;
-    static const char* _sensorHeightName;
-    static const char* _imageWidthName;
-    static const char* _imageHeightName;
-    static const char* _focalLengthName;
-    static const char* _landscapeName;
-    static const char* _fixedOrientationName;
-    static const char* _minTriggerIntervalName;
+    static constexpr const char* _sensorWidthName =          "SensorWidth";
+    static constexpr const char* _sensorHeightName =         "SensorHeight";
+    static constexpr const char* _imageWidthName =           "ImageWidth";
+    static constexpr const char* _imageHeightName =          "ImageHeight";
+    static constexpr const char* _focalLengthName =          "FocalLength";
+    static constexpr const char* _landscapeName =            "Landscape";
+    static constexpr const char* _fixedOrientationName =     "FixedOrientation";
+    static constexpr const char* _minTriggerIntervalName =   "MinTriggerInterval";
 };

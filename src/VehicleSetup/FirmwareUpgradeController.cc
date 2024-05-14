@@ -30,19 +30,6 @@
 #include <QtCore/QJsonObject>
 #include <QtCore/QJsonArray>
 
-const char* FirmwareUpgradeController::_manifestFirmwareJsonKey =               "firmware";
-const char* FirmwareUpgradeController::_manifestBoardIdJsonKey =                "board_id";
-const char* FirmwareUpgradeController::_manifestMavTypeJsonKey =                "mav-type";
-const char* FirmwareUpgradeController::_manifestFormatJsonKey =                 "format";
-const char* FirmwareUpgradeController::_manifestUrlJsonKey =                    "url";
-const char* FirmwareUpgradeController::_manifestMavFirmwareVersionTypeJsonKey = "mav-firmware-version-type";
-const char* FirmwareUpgradeController::_manifestUSBIDJsonKey =                  "USBID";
-const char* FirmwareUpgradeController::_manifestMavFirmwareVersionJsonKey =     "mav-firmware-version";
-const char* FirmwareUpgradeController::_manifestBootloaderStrJsonKey =          "bootloader_str";
-const char* FirmwareUpgradeController::_manifestLatestKey =                     "latest";
-const char* FirmwareUpgradeController::_manifestPlatformKey =                   "platform";
-const char* FirmwareUpgradeController::_manifestBrandNameKey =                  "brand_name";
-
 struct FirmwareToUrlElement_t {
     FirmwareUpgradeController::AutoPilotStackType_t     stackType;
     FirmwareUpgradeController::FirmwareBuildType_t      firmwareType;

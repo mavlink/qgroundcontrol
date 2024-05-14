@@ -18,8 +18,6 @@
 
 QGC_LOGGING_CATEGORY(FTPManagerLog, "FTPManagerLog")
 
-const char* FTPManager::mavlinkFTPScheme = "mftp";
-
 FTPManager::FTPManager(Vehicle* vehicle)
     : QObject   (vehicle)
     , _vehicle  (vehicle)

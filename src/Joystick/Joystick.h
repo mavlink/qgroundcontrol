@@ -266,8 +266,8 @@ protected:
         BUTTON_REPEAT
     };
 
-    static const float  _defaultAxisFrequencyHz;
-    static const float  _defaultButtonFrequencyHz;
+    static constexpr const float _defaultAxisFrequencyHz   = 25.0f;
+    static constexpr const float _defaultButtonFrequencyHz = 5.0f;
 
     uint8_t*_rgButtonValues         = nullptr;
 
@@ -306,61 +306,69 @@ protected:
 
     CustomActionManager _customActionManager;
 
-    static const float  _minAxisFrequencyHz;
-    static const float  _maxAxisFrequencyHz;
-    static const float  _minButtonFrequencyHz;
-    static const float  _maxButtonFrequencyHz;
+    static constexpr const float _minAxisFrequencyHz       = 0.25f;
+    static constexpr const float _maxAxisFrequencyHz       = 200.0f;
+    static constexpr const float _minButtonFrequencyHz     = 0.25f;
+    static constexpr const float _maxButtonFrequencyHz     = 50.0f;
 
 private:
-    static const char*  _rgFunctionSettingsKey[maxFunction];
+    const char* _txModeSettingsKey = nullptr;
 
-    static const char* _settingsGroup;
-    static const char* _calibratedSettingsKey;
-    static const char* _buttonActionNameKey;
-    static const char* _buttonActionRepeatKey;
-    static const char* _throttleModeSettingsKey;
-    static const char* _negativeThrustSettingsKey;
-    static const char* _exponentialSettingsKey;
-    static const char* _accumulatorSettingsKey;
-    static const char* _deadbandSettingsKey;
-    static const char* _circleCorrectionSettingsKey;
-    static const char* _axisFrequencySettingsKey;
-    static const char* _buttonFrequencySettingsKey;
-    static const char* _txModeSettingsKey;
-    static const char* _fixedWingTXModeSettingsKey;
-    static const char* _multiRotorTXModeSettingsKey;
-    static const char* _roverTXModeSettingsKey;
-    static const char* _vtolTXModeSettingsKey;
-    static const char* _submarineTXModeSettingsKey;
+    static constexpr const char* _rgFunctionSettingsKey[maxFunction] = {
+        "RollAxis",
+        "PitchAxis",
+        "YawAxis",
+        "ThrottleAxis",
+        "GimbalPitchAxis",
+        "GimbalYawAxis"
+    };
 
-    static const char* _buttonActionNone;
-    static const char* _buttonActionArm;
-    static const char* _buttonActionDisarm;
-    static const char* _buttonActionToggleArm;
-    static const char* _buttonActionVTOLFixedWing;
-    static const char* _buttonActionVTOLMultiRotor;
-    static const char* _buttonActionStepZoomIn;
-    static const char* _buttonActionStepZoomOut;
-    static const char* _buttonActionContinuousZoomIn;
-    static const char* _buttonActionContinuousZoomOut;
-    static const char* _buttonActionNextStream;
-    static const char* _buttonActionPreviousStream;
-    static const char* _buttonActionNextCamera;
-    static const char* _buttonActionPreviousCamera;
-    static const char* _buttonActionTriggerCamera;
-    static const char* _buttonActionStartVideoRecord;
-    static const char* _buttonActionStopVideoRecord;
-    static const char* _buttonActionToggleVideoRecord;
-    static const char* _buttonActionGimbalDown;
-    static const char* _buttonActionGimbalUp;
-    static const char* _buttonActionGimbalLeft;
-    static const char* _buttonActionGimbalRight;
-    static const char* _buttonActionGimbalCenter;
-    static const char* _buttonActionEmergencyStop;
-    static const char* _buttonActionGripperGrab;
-    static const char* _buttonActionGripperRelease;
-    static const char* _buttonActionLandingGearDeploy;
-    static const char* _buttonActionLandingGearRetract;
+    static constexpr const char* _settingsGroup =                  "Joysticks";
+    static constexpr const char* _calibratedSettingsKey =          "Calibrated4"; // Increment number to force recalibration
+    static constexpr const char* _buttonActionNameKey =            "ButtonActionName%1";
+    static constexpr const char* _buttonActionRepeatKey =          "ButtonActionRepeat%1";
+    static constexpr const char* _throttleModeSettingsKey =        "ThrottleMode";
+    static constexpr const char* _negativeThrustSettingsKey =      "NegativeThrust";
+    static constexpr const char* _exponentialSettingsKey =         "Exponential";
+    static constexpr const char* _accumulatorSettingsKey =         "Accumulator";
+    static constexpr const char* _deadbandSettingsKey =            "Deadband";
+    static constexpr const char* _circleCorrectionSettingsKey =    "Circle_Correction";
+    static constexpr const char* _axisFrequencySettingsKey =       "AxisFrequency";
+    static constexpr const char* _buttonFrequencySettingsKey =     "ButtonFrequency";
+    static constexpr const char* _fixedWingTXModeSettingsKey =     "TXMode_FixedWing";
+    static constexpr const char* _multiRotorTXModeSettingsKey =    "TXMode_MultiRotor";
+    static constexpr const char* _roverTXModeSettingsKey =         "TXMode_Rover";
+    static constexpr const char* _vtolTXModeSettingsKey =          "TXMode_VTOL";
+    static constexpr const char* _submarineTXModeSettingsKey =     "TXMode_Submarine";
+
+    static constexpr const char* _buttonActionNone =               QT_TR_NOOP("No Action");
+    static constexpr const char* _buttonActionArm =                QT_TR_NOOP("Arm");
+    static constexpr const char* _buttonActionDisarm =             QT_TR_NOOP("Disarm");
+    static constexpr const char* _buttonActionToggleArm =          QT_TR_NOOP("Toggle Arm");
+    static constexpr const char* _buttonActionVTOLFixedWing =      QT_TR_NOOP("VTOL: Fixed Wing");
+    static constexpr const char* _buttonActionVTOLMultiRotor =     QT_TR_NOOP("VTOL: Multi-Rotor");
+    static constexpr const char* _buttonActionContinuousZoomIn =   QT_TR_NOOP("Continuous Zoom In");
+    static constexpr const char* _buttonActionContinuousZoomOut =  QT_TR_NOOP("Continuous Zoom Out");
+    static constexpr const char* _buttonActionStepZoomIn =         QT_TR_NOOP("Step Zoom In");
+    static constexpr const char* _buttonActionStepZoomOut =        QT_TR_NOOP("Step Zoom Out");
+    static constexpr const char* _buttonActionNextStream =         QT_TR_NOOP("Next Video Stream");
+    static constexpr const char* _buttonActionPreviousStream =     QT_TR_NOOP("Previous Video Stream");
+    static constexpr const char* _buttonActionNextCamera =         QT_TR_NOOP("Next Camera");
+    static constexpr const char* _buttonActionPreviousCamera =     QT_TR_NOOP("Previous Camera");
+    static constexpr const char* _buttonActionTriggerCamera =      QT_TR_NOOP("Trigger Camera");
+    static constexpr const char* _buttonActionStartVideoRecord =   QT_TR_NOOP("Start Recording Video");
+    static constexpr const char* _buttonActionStopVideoRecord =    QT_TR_NOOP("Stop Recording Video");
+    static constexpr const char* _buttonActionToggleVideoRecord =  QT_TR_NOOP("Toggle Recording Video");
+    static constexpr const char* _buttonActionGimbalDown =         QT_TR_NOOP("Gimbal Down");
+    static constexpr const char* _buttonActionGimbalUp =           QT_TR_NOOP("Gimbal Up");
+    static constexpr const char* _buttonActionGimbalLeft =         QT_TR_NOOP("Gimbal Left");
+    static constexpr const char* _buttonActionGimbalRight =        QT_TR_NOOP("Gimbal Right");
+    static constexpr const char* _buttonActionGimbalCenter =       QT_TR_NOOP("Gimbal Center");
+    static constexpr const char* _buttonActionEmergencyStop =      QT_TR_NOOP("Emergency Stop");
+    static constexpr const char* _buttonActionGripperGrab =        QT_TR_NOOP("Gripper Close");
+    static constexpr const char* _buttonActionGripperRelease =     QT_TR_NOOP("Gripper Open");
+    static constexpr const char* _buttonActionLandingGearDeploy=   QT_TR_NOOP("Landing gear deploy");
+    static constexpr const char* _buttonActionLandingGearRetract=  QT_TR_NOOP("Landing gear retract");
 
 private slots:
     void _activeVehicleChanged(Vehicle* activeVehicle);

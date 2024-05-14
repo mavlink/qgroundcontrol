@@ -161,10 +161,10 @@ public:
     /// Returns NaN if the value is null, or if not, the double value
     static double possibleNaNJsonValue(const QJsonValue& value);
 
-    static const char* jsonVersionKey;
-    static const char* jsonGroundStationKey;
-    static const char* jsonGroundStationValue;
-    static const char* jsonFileTypeKey;
+    static constexpr const char* jsonVersionKey                      = "version";
+    static constexpr const char* jsonGroundStationKey                = "groundStation";
+    static constexpr const char* jsonGroundStationValue              = "QGroundControl";
+    static constexpr const char* jsonFileTypeKey                     = "fileType";
 
 private:
     static QString _jsonValueTypeToString(QJsonValue::Type type);
@@ -182,6 +182,6 @@ private:
     static QJsonObject _translateObject(QJsonObject& jsonObject, const QString& translateContext, const QStringList& translateKeys);
     static QJsonArray _translateArray(QJsonArray& jsonArray, const QString& translateContext, const QStringList& translateKeys);
 
-    static const char*  _translateKeysKey;
-    static const char*  _arrayIDKeysKey;
+    static constexpr const char* _translateKeysKey                   = "translateKeys";
+    static constexpr const char* _arrayIDKeysKey                     = "_arrayIDKeys";
 };

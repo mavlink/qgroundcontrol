@@ -15,19 +15,6 @@
 
 #include <QtQml/QQmlEngine>
 
-const char* CameraCalc::cameraNameName                  = "CameraName";
-const char* CameraCalc::valueSetIsDistanceName          = "ValueSetIsDistance";
-const char* CameraCalc::distanceToSurfaceName           = "DistanceToSurface";
-const char* CameraCalc::distanceModeName                = "DistanceMode";
-const char* CameraCalc::imageDensityName                = "ImageDensity";
-const char* CameraCalc::frontalOverlapName              = "FrontalOverlap";
-const char* CameraCalc::sideOverlapName                 = "SideOverlap";
-const char* CameraCalc::adjustedFootprintFrontalName    = "AdjustedFootprintFrontal";
-const char* CameraCalc::adjustedFootprintSideName       = "AdjustedFootprintSide";
-
-const char* CameraCalc::_jsonCameraSpecTypeKeyDeprecated            = "CameraSpecType";
-const char* CameraCalc::_jsonDistanceToSurfaceRelativeKeyDeprecated = "DistanceToSurfaceRelative";
-
 CameraCalc::CameraCalc(PlanMasterController* masterController, const QString& settingsGroup, QObject* parent)
     : CameraSpec                    (settingsGroup, parent)
     , _distanceMode                 (masterController->missionController()->globalAltitudeModeDefault())

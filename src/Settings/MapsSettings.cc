@@ -18,8 +18,8 @@ DECLARE_SETTINGGROUP(Maps, "Maps")
 
     // Move deprecated keys to new location
 
-    static const char* kMaxDiskCacheKey = "MaxDiskCache";
-    static const char* kMaxMemCacheKey  = "MaxMemoryCache";
+    static constexpr const char* kMaxDiskCacheKey = "MaxDiskCache";
+    static constexpr const char* kMaxMemCacheKey  = "MaxMemoryCache";
 
     QSettings deprecatedSettings;
     QSettings newSettings;

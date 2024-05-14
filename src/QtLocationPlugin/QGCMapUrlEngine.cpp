@@ -27,9 +27,6 @@
 
 QGC_LOGGING_CATEGORY(QGCMapUrlEngineLog, "QGCMapUrlEngineLog")
 
-const char* UrlFactory::kCopernicusElevationProviderKey = "Copernicus Elevation";
-const char* UrlFactory::kCopernicusElevationProviderNotice = "© Airbus Defence and Space GmbH";
-
 //-----------------------------------------------------------------------------
 UrlFactory::UrlFactory() : 
     _timeout(5 * 1000) 

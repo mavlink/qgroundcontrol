@@ -29,54 +29,6 @@ QGC_LOGGING_CATEGORY(RadioComponentControllerVerboseLog, "RadioComponentControll
 RadioComponentController* RadioComponentController::_unitTestController = nullptr;
 #endif
 
-const int RadioComponentController::_updateInterval = 150;              ///< Interval for timer which updates radio channel widgets
-const int RadioComponentController::_rcCalPWMCenterPoint = ((RadioComponentController::_rcCalPWMValidMaxValue - RadioComponentController::_rcCalPWMValidMinValue) / 2.0f) + RadioComponentController::_rcCalPWMValidMinValue;
-const int RadioComponentController::_rcCalPWMValidMinValue =    1300;   ///< Largest valid minimum PWM Min range value
-const int RadioComponentController::_rcCalPWMValidMaxValue =    1700;   ///< Smallest valid maximum PWM Max range value
-const int RadioComponentController::_rcCalPWMDefaultMinValue =  1000;   ///< Default value for Min if not set
-const int RadioComponentController::_rcCalPWMDefaultMaxValue =  2000;   ///< Default value for Max if not set
-const int RadioComponentController::_rcCalRoughCenterDelta =    50;     ///< Delta around center point which is considered to be roughly centered
-const int RadioComponentController::_rcCalMoveDelta =           300;    ///< Amount of delta past center which is considered stick movement
-const int RadioComponentController::_rcCalSettleDelta =         20;     ///< Amount of delta which is considered no stick movement
-const int RadioComponentController::_rcCalMinDelta =            100;    ///< Amount of delta allowed around min value to consider channel at min
-
-const int RadioComponentController::_stickDetectSettleMSecs = 500;
-
-const char*  RadioComponentController::_imageFilePrefix =   "calibration/";
-const char*  RadioComponentController::_imageFileMode1Dir = "mode1/";
-const char*  RadioComponentController::_imageFileMode2Dir = "mode2/";
-const char*  RadioComponentController::_imageCenter =       "radioCenter.png";
-const char*  RadioComponentController::_imageHome =         "radioHome.png";
-const char*  RadioComponentController::_imageThrottleUp =   "radioThrottleUp.png";
-const char*  RadioComponentController::_imageThrottleDown = "radioThrottleDown.png";
-const char*  RadioComponentController::_imageYawLeft =      "radioYawLeft.png";
-const char*  RadioComponentController::_imageYawRight =     "radioYawRight.png";
-const char*  RadioComponentController::_imageRollLeft =     "radioRollLeft.png";
-const char*  RadioComponentController::_imageRollRight =    "radioRollRight.png";
-const char*  RadioComponentController::_imagePitchUp =      "radioPitchUp.png";
-const char*  RadioComponentController::_imagePitchDown =    "radioPitchDown.png";
-const char*  RadioComponentController::_imageSwitchMinMax = "radioSwitchMinMax.png";
-
-const char* RadioComponentController::_settingsGroup =              "RadioCalibration";
-const char* RadioComponentController::_settingsKeyTransmitterMode = "TransmitterMode";
-
-const char* RadioComponentController::_px4RevParamFormat =      "RC%1_REV";
-const char* RadioComponentController::_apmNewRevParamFormat =   "RC%1_REVERSED";
-
-const struct RadioComponentController::FunctionInfo RadioComponentController::_rgFunctionInfoPX4[RadioComponentController::rcCalFunctionMax] = {
-{ "RC_MAP_ROLL" },
-{ "RC_MAP_PITCH" },
-{ "RC_MAP_YAW" },
-{ "RC_MAP_THROTTLE" }
-};
-
-const struct RadioComponentController::FunctionInfo RadioComponentController::_rgFunctionInfoAPM[RadioComponentController::rcCalFunctionMax] = {
-{ "RCMAP_ROLL" },
-{ "RCMAP_PITCH" },
-{ "RCMAP_YAW" },
-{ "RCMAP_THROTTLE" }
-};
-
 RadioComponentController::RadioComponentController(void)
     : _currentStep(-1)
     , _transmitterMode(2)

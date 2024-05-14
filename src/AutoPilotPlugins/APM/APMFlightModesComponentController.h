@@ -80,8 +80,8 @@ private:
     static const int        _cSimpleModeBits =  8;
     static const int        _cFltModes =        6;
 
-    static const char*      _simpleParamName;
-    static const char*      _superSimpleParamName;
+    static constexpr const char*      _simpleParamName = "SIMPLE";
+    static constexpr const char*      _superSimpleParamName = "SUPER_SIMPLE";
 
     static bool _typeRegistered;
 };

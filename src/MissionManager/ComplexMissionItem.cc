@@ -21,10 +21,6 @@
 #include <QtCore/QCborMap>
 #include <QtCore/QSettings>
 
-const char* ComplexMissionItem::jsonComplexItemTypeKey = "complexItemType";
-
-const char* ComplexMissionItem::_presetSettingsKey =        "_presets";
-
 ComplexMissionItem::ComplexMissionItem(PlanMasterController* masterController, bool flyView)
     : VisualMissionItem (masterController, flyView)
     , _toolbox          (qgcApp()->toolbox())

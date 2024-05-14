@@ -21,15 +21,6 @@
 #include <QtCore/QFileInfo>
 #include <QtCore/QDir>
 
-const char* FirmwareImage::_jsonBoardIdKey =            "board_id";
-const char* FirmwareImage::_jsonParamXmlSizeKey =       "parameter_xml_size";
-const char* FirmwareImage::_jsonParamXmlKey =           "parameter_xml";
-const char* FirmwareImage::_jsonAirframeXmlSizeKey =    "airframe_xml_size";
-const char* FirmwareImage::_jsonAirframeXmlKey =        "airframe_xml";
-const char* FirmwareImage::_jsonImageSizeKey =          "image_size";
-const char* FirmwareImage::_jsonImageKey =              "image";
-const char* FirmwareImage::_jsonMavAutopilotKey =       "mav_autopilot";
-
 FirmwareImage::FirmwareImage(QObject* parent) :
     QObject(parent),
     _imageSize(0)

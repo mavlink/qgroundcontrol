@@ -15,7 +15,7 @@
 
 #include <QtCore/QSettings>
 
-static const char* kVideoAllLogCategory = "VideoAllLog";
+static constexpr const char* kVideoAllLogCategory = "VideoAllLog";
 
 // Add Global logging categories (not class specific) here using QGC_LOGGING_CATEGORY
 QGC_LOGGING_CATEGORY(FirmwareUpgradeLog,            "FirmwareUpgradeLog")
@@ -32,7 +32,6 @@ QGC_LOGGING_CATEGORY(JoystickLog,                   "JoystickLog")
 
 
 QGCLoggingCategoryRegister* _instance = nullptr;
-const char* QGCLoggingCategoryRegister::_filterRulesSettingsGroup = "LoggingFilters";
 
 QGCLoggingCategoryRegister* QGCLoggingCategoryRegister::instance(void)
 {

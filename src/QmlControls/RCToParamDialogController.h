@@ -51,8 +51,8 @@ private:
     Fact _minFact;
     Fact _maxFact;
 
-    static const char*  _scaleFactName;
-    static const char*  _centerFactName;
-    static const char*  _minFactName;
-    static const char*  _maxFactName;
+    static constexpr const char*  _scaleFactName =    "Scale";
+    static constexpr const char*  _centerFactName =   "CenterValue";
+    static constexpr const char*  _minFactName =      "MinValue";
+    static constexpr const char*  _maxFactName =      "MaxValue";
 };

@@ -31,30 +31,6 @@ FactMetaData* SimpleMissionItem::_frameMetaData =           nullptr;
 FactMetaData* SimpleMissionItem::_latitudeMetaData =        nullptr;
 FactMetaData* SimpleMissionItem::_longitudeMetaData =       nullptr;
 
-const char* SimpleMissionItem::_jsonAltitudeModeKey =           "AltitudeMode";
-const char* SimpleMissionItem::_jsonAltitudeKey =               "Altitude";
-const char* SimpleMissionItem::_jsonAMSLAltAboveTerrainKey =    "AMSLAltAboveTerrain";
-
-struct EnumInfo_s {
-    const char *    label;
-    MAV_FRAME       frame;
-};
-
-static const struct EnumInfo_s _rgMavFrameInfo[] = {
-{ "MAV_FRAME_GLOBAL",                   MAV_FRAME_GLOBAL },
-{ "MAV_FRAME_LOCAL_NED",                MAV_FRAME_LOCAL_NED },
-{ "MAV_FRAME_MISSION",                  MAV_FRAME_MISSION },
-{ "MAV_FRAME_GLOBAL_RELATIVE_ALT",      MAV_FRAME_GLOBAL_RELATIVE_ALT },
-{ "MAV_FRAME_LOCAL_ENU",                MAV_FRAME_LOCAL_ENU },
-{ "MAV_FRAME_GLOBAL_INT",               MAV_FRAME_GLOBAL_INT },
-{ "MAV_FRAME_GLOBAL_RELATIVE_ALT_INT",  MAV_FRAME_GLOBAL_RELATIVE_ALT_INT },
-{ "MAV_FRAME_LOCAL_OFFSET_NED",         MAV_FRAME_LOCAL_OFFSET_NED },
-{ "MAV_FRAME_BODY_NED",                 MAV_FRAME_BODY_NED },
-{ "MAV_FRAME_BODY_OFFSET_NED",          MAV_FRAME_BODY_OFFSET_NED },
-{ "MAV_FRAME_GLOBAL_TERRAIN_ALT",       MAV_FRAME_GLOBAL_TERRAIN_ALT },
-{ "MAV_FRAME_GLOBAL_TERRAIN_ALT_INT",   MAV_FRAME_GLOBAL_TERRAIN_ALT_INT },
-};
-
 SimpleMissionItem::SimpleMissionItem(PlanMasterController* masterController, bool flyView, bool forLoad)
     : VisualMissionItem                 (masterController, flyView)
     , _commandTree                      (qgcApp()->toolbox()->missionCommandTree())

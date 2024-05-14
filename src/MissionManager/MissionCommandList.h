@@ -34,7 +34,7 @@ public:
 
     const QList<MAV_CMD>& commandIds(void) const { return _ids; }
     
-    static const char* qgcFileType;
+    static constexpr const char* qgcFileType = "MavCmdInfo";
 
 private:
     void _loadMavCmdInfoJson(const QString& jsonFilename, bool baseCommandList);
@@ -43,6 +43,6 @@ private:
     QList<MAV_CMD>                          _ids;
     QStringList                             _categories;
 
-    static const char* _versionJsonKey;
-    static const char* _mavCmdInfoJsonKey;
+    static constexpr const char* _versionJsonKey =       "version";
+    static constexpr const char* _mavCmdInfoJsonKey =    "mavCmdInfo";
 };

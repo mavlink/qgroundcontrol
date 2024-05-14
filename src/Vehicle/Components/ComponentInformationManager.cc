@@ -25,29 +25,6 @@
 
 QGC_LOGGING_CATEGORY(ComponentInformationManagerLog, "ComponentInformationManagerLog")
 
-const ComponentInformationManager::StateFn ComponentInformationManager::_rgStates[]= {
-    ComponentInformationManager::_stateRequestCompInfoGeneral,
-    ComponentInformationManager::_stateRequestCompInfoGeneralComplete,
-    ComponentInformationManager::_stateRequestCompInfoParam,
-    ComponentInformationManager::_stateRequestCompInfoEvents,
-    ComponentInformationManager::_stateRequestCompInfoActuators,
-    ComponentInformationManager::_stateRequestAllCompInfoComplete
-};
-
-const int ComponentInformationManager::_cStates = sizeof(ComponentInformationManager::_rgStates) / sizeof(ComponentInformationManager::_rgStates[0]);
-
-const RequestMetaDataTypeStateMachine::StateFn RequestMetaDataTypeStateMachine::_rgStates[]= {
-    RequestMetaDataTypeStateMachine::_stateRequestCompInfo,
-    RequestMetaDataTypeStateMachine::_stateRequestCompInfoDeprecated,
-    RequestMetaDataTypeStateMachine::_stateRequestMetaDataJson,
-    RequestMetaDataTypeStateMachine::_stateRequestMetaDataJsonFallback,
-    RequestMetaDataTypeStateMachine::_stateRequestTranslationJson,
-    RequestMetaDataTypeStateMachine::_stateRequestTranslate,
-    RequestMetaDataTypeStateMachine::_stateRequestComplete,
-};
-
-const int RequestMetaDataTypeStateMachine::_cStates = sizeof(RequestMetaDataTypeStateMachine::_rgStates) / sizeof(RequestMetaDataTypeStateMachine::_rgStates[0]);
-
 ComponentInformationManager::ComponentInformationManager(Vehicle* vehicle)
     : _vehicle                  (vehicle)
     , _requestTypeStateMachine  (this)

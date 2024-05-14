@@ -49,11 +49,11 @@ public:
 
     static const QString name;
 
-    static const char* jsonComplexItemTypeValue;
+    static constexpr const char* settingsGroup                      = "FixedWingLanding";
+    static constexpr const char* jsonComplexItemTypeValue           = "fwLandingPattern";
 
-    static const char* settingsGroup;
-    static const char* glideSlopeName;
-    static const char* valueSetIsDistanceName;
+    static constexpr const char* glideSlopeName                     = "GlideSlope";
+    static constexpr const char* valueSetIsDistanceName             = "ValueSetIsDistance";
 
 private slots:
     void _updateFlightPathSegmentsDontCallDirectly  (void) override;
@@ -90,7 +90,7 @@ private:
     Fact            _stopTakingVideoFact;
     Fact            _valueSetIsDistanceFact;
 
-    static const char* _jsonValueSetIsDistanceKey;
+    static constexpr const char* _jsonValueSetIsDistanceKey         = "valueSetIsDistance";
 
     friend FWLandingPatternTest;
 };

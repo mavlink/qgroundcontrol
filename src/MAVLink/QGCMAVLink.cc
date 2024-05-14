@@ -12,18 +12,6 @@
 
 #include <QtCore/QDebug>
 
-constexpr QGCMAVLink::FirmwareClass_t QGCMAVLink::FirmwareClassPX4;
-constexpr QGCMAVLink::FirmwareClass_t QGCMAVLink::FirmwareClassArduPilot;
-constexpr QGCMAVLink::FirmwareClass_t QGCMAVLink::FirmwareClassGeneric;
-
-constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassAirship;
-constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassFixedWing;
-constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassRoverBoat;
-constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassSub;
-constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassMultiRotor;
-constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassVTOL;
-constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassGeneric;
-
 // Mavlink status structures for entire app
 mavlink_status_t m_mavlink_status[MAVLINK_COMM_NUM_BUFFERS];
 

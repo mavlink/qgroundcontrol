@@ -13,9 +13,6 @@
 #include <QtQml/QQmlEngine>
 #include <QtCore/QtMath>
 
-const int FactValueSliderListModel::_valueRole =        Qt::UserRole;
-const int FactValueSliderListModel::_valueIndexRole =   Qt::UserRole + 1;
-
 FactValueSliderListModel::FactValueSliderListModel(Fact& fact, QObject* parent)
     : QAbstractListModel        (parent)
     , _fact                     (fact)
