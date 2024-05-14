@@ -10,10 +10,16 @@
 #pragma once
 
 #include <QtCore/QString>
+#include <QtCore/QLoggingCategory>
 
-class AndroidInterface
-{
-public:
-    static bool checkStoragePermissions();
-    static QString getSDCardPath();
+#include <jni.h>
+
+Q_DECLARE_LOGGING_CATEGORY(AndroidInterfaceLog)
+
+namespace AndroidInterface {
+    bool checkStoragePermissions();
+    QString getSDCardPath();
+    jclass getActivityClass();
+
+    constexpr const char* kJniQGCActivityClassName = "org/mavlink/qgroundcontrol/QGCActivity";
 };
