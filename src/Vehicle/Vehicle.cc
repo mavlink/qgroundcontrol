@@ -50,6 +50,7 @@
 #include "VideoManager.h"
 #include "VideoReceiver.h"
 #include "VideoSettings.h"
+#include <DeviceInfo.h>
 
 #ifdef CONFIG_UTM_ADAPTER
 #include "UTMSPVehicle.h"
@@ -154,6 +155,12 @@ Vehicle::Vehicle(LinkInterface*             link,
 
     connect(this, &Vehicle::flightModeChanged,          this, &Vehicle::_handleFlightModeChanged);
     connect(this, &Vehicle::armedChanged,               this, &Vehicle::_announceArmedChanged);
+    connect(this, &Vehicle::flyingChanged, this, [this](bool flying){
+        if (flying) {
+            setInitialGCSPressure(QGCDeviceInfo::QGCPressure::instance()->pressure());
+            setInitialGCSTemperature(QGCDeviceInfo::QGCPressure::instance()->temperature());
+        }
+    });
 
     connect(_toolbox->multiVehicleManager(), &MultiVehicleManager::parameterReadyVehicleAvailableChanged, this, &Vehicle::_vehicleParamLoaded);
 
