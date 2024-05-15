@@ -125,17 +125,6 @@ if(ANDROID)
     )
 
     target_include_directories(QGC PUBLIC ${CMAKE_SOURCE_DIR}/android/src)
-
-    if(!QGC_NO_SERIAL_LINK)
-        find_package(Qt6 REQUIRED COMPONENTS SerialPort)
-
-        target_link_libraries(QGC
-            PRIVATE
-                Qt6::SerialPortPrivate
-            PUBLIC
-                Qt6::SerialPort
-        )
-    endif()
 else()
     target_sources(QGC
         PRIVATE
