@@ -74,6 +74,7 @@ ui_*
 
 # android
 android/local.properties
+*.class
 
 # doxygen
 src/html/
