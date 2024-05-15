@@ -5,7 +5,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.4.1'
+        classpath 'com.android.tools.build:gradle:8.5.1'
     }
 }
 
@@ -19,8 +19,8 @@ apply plugin: 'com.android.application'
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
-    implementation 'androidx.core:core:1.12.0'
-    implementation 'com.github.mik3y:usb-serial-for-android:3.7.3'
+    implementation 'androidx.core:core:1.13.1'
+    implementation 'com.github.mik3y:usb-serial-for-android:3.8.0'
 }
 
 android {

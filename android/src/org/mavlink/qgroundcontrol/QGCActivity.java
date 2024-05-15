@@ -36,7 +36,6 @@ import com.hoho.android.usbserial.driver.SerialTimeoutException;
 import com.hoho.android.usbserial.driver.*;
 import com.hoho.android.usbserial.util.UsbUtils;
 import com.hoho.android.usbserial.util.HexDump;
-import com.hoho.android.usbserial.util.MonotonicClock;
 
 import org.mavlink.qgroundcontrol.SerialInputOutputManager;
 import org.mavlink.qgroundcontrol.QGCProber;
@@ -140,7 +139,7 @@ public class QGCActivity extends QtActivity
         final UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
         if (device != null) {
             final UsbSerialDriver driver = _findDriverByDeviceId(device.getDeviceId());
-            if (driver != null && !_usbManager.hasPermission(device)) {
+            if ((driver != null) && !_usbManager.hasPermission(device)) {
                 qgcLogDebug("Requesting permission for device " + device.getDeviceName());
                 _usbManager.requestPermission(device, _usbPermissionIntent);
             }
@@ -289,6 +288,23 @@ public class QGCActivity extends QtActivity
         }
 
         return null;
+    }
+
+    private static UsbSerialPort _findPortByDeviceId(int deviceId)
+    {
+        final UsbSerialDriver driver = _findDriverByDeviceId(deviceId);
+        if (driver == null) {
+            return null;
+        }
+
+        final List<UsbSerialPort> ports = driver.getPorts();
+        if (ports.isEmpty()) {
+            qgcLogWarning("No ports available on device ID " + deviceId);
+            return null;
+        }
+
+        final UsbSerialPort port = ports.get(0);
+        return port;
     }
 
     public static void refreshUsbDevices()
@@ -483,89 +499,49 @@ public class QGCActivity extends QtActivity
         final UsbDevice device = driver.getDevice();
         final int deviceId = device.getDeviceId();
 
-        final long startTime = MonotonicClock.millis();
-
-        try {
-            openDriver(port, device, deviceId, userData);
-        } catch (final IOException ex) {
-            handleOpenException(port, deviceId, ex);
+        if (!openDriver(port, device, deviceId, userData)) {
             return BAD_DEVICE_ID;
         }
-
-        final long endTime = MonotonicClock.millis();
-        Log.d(TAG, "Time taken to open device: " + (endTime - startTime) + " ms");
 
         return deviceId;
     }
 
-    private static void openDriver(final UsbSerialPort port, final UsbDevice device, final int deviceId, final long userData) throws IOException
+    private static boolean openDriver(final UsbSerialPort port, final UsbDevice device, final int deviceId, final long userData)
     {
         final UsbDeviceConnection connection = _usbManager.openDevice(device);
         if (connection == null) {
             qgcLogWarning("No Usb Device Connection");
-            // add UsbManager.requestPermission(driver.getDevice(), ..) handling here
-            return;
+            // TODO: add UsbManager.requestPermission(driver.getDevice(), ..) handling here?
+            return false;
         }
-        port.open(connection);
-        port.setParameters(115200, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE);
+
+        try {
+            port.open(connection);
+        } catch (final IOException ex) {
+            Log.e(TAG, "Error opening driver", ex);
+            return false;
+        }
+
+        if (!setParameters(deviceId, 115200, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE)) {
+            return false;
+        }
+
+        if (!createIoManager(deviceId, port, userData)) {
+            return false;
+        }
 
         _userDataHashByDeviceId.put(deviceId, userData);
 
-        final SerialInputOutputManager ioManager = configureAndStartIoManager(port, userData);
-        _serialIoManager.put(deviceId, ioManager);
-        m_Executor.submit(ioManager);
-
         qgcLogDebug("Port open successful");
+        return true;
     }
 
-    private static void handleOpenException(final UsbSerialPort driver, final int deviceId, final IOException ex)
+    private static boolean createIoManager(final int deviceId, final UsbSerialPort port, final long userData)
     {
-        _userDataHashByDeviceId.remove(deviceId);
-
         if (_serialIoManager.get(deviceId) != null) {
-            _serialIoManager.get(deviceId).stop();
-            _serialIoManager.remove(deviceId);
+            return true;
         }
 
-        qgcLogWarning("Port open exception: " + ex.getMessage());
-    }
-
-    public static void startIoManager(final int id)
-    {
-        if (_serialIoManager.get(id) != null) {
-            return;
-        }
-
-        final UsbSerialDriver driver = _findDriverByDeviceId(id);
-        if (driver == null) {
-            return;
-        }
-
-        final List<UsbSerialPort> ports = driver.getPorts();
-        if (ports.isEmpty()) {
-            qgcLogWarning("No ports available on device ID " + id);
-            return;
-        }
-
-        final UsbSerialPort port = ports.get(0);
-
-        final SerialInputOutputManager manager = configureAndStartIoManager(port, _userDataHashByDeviceId.get(id));
-        _serialIoManager.put(id, manager);
-        m_Executor.submit(manager);
-    }
-
-    public static void stopIoManager(final int id)
-    {
-        if(_serialIoManager.get(id) == null) {
-            return;
-        }
-
-        _serialIoManager.get(id).stop();
-        _serialIoManager.remove(id);
-    }
-
-    private static SerialInputOutputManager configureAndStartIoManager(final UsbSerialPort port, final long userData)
-    {
         final SerialInputOutputManager ioManager = new SerialInputOutputManager(port, m_Listener, userData);
 
         // ioManager.setReadBufferSize(8192);
@@ -577,7 +553,8 @@ public class QGCActivity extends QtActivity
         try {
             ioManager.setReadTimeout(1000);
         } catch (final IllegalStateException e) {
-            qgcLogWarning("Set Read Timeout exception: " + e.getMessage());
+            Log.e(TAG, "Set Read Timeout exception:", e);
+            return false;
         }
 
         ioManager.setWriteTimeout(1000);
@@ -585,55 +562,50 @@ public class QGCActivity extends QtActivity
         // try {
         //     ioManager.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
         // } catch (final IllegalStateException e) {
-        //     qgcLogWarning("Set Thread Priority exception: " + e.getMessage());
+        //     Log.e(TAG, "Set Thread Priority exception: " + e.getMessage());
         // }
+
+        _serialIoManager.put(deviceId, ioManager);
+        m_Executor.submit(ioManager);
+
+        return true;
+    }
+
+    public static boolean startIoManager(final int id)
+    {
+        final SerialInputOutputManager ioManager = _serialIoManager.get(id);
+        if(ioManager == null) {
+            return false;
+        }
+
+        final SerialInputOutputManager.State ioState = ioManager.getState();
+        if (ioState == SerialInputOutputManager.State.RUNNING) {
+            return true;
+        }
 
         try {
             ioManager.start();
         } catch (final IllegalStateException e) {
-            qgcLogWarning("IO Manager Start exception: " + e.getMessage());
+            Log.e(TAG, "IO Manager Start exception:", e);
+            return false;
         }
 
-        // final State ioState = ioManager.getState();
-        // STOPPED,
-        // RUNNING,
-        // STOPPING
-
-        return ioManager;
+        return true;
     }
 
-    /**
-     * @brief Sets the parameters on an open port.
-     *
-     * @param id ID number from the open command.
-     * @param baudRate Decimal value of the baud rate. For example, 9600, 57600, 115200, etc.
-     * @param dataBits Number of data bits. Valid numbers are 5, 6, 7, 8.
-     * @param stopBits Number of stop bits. Valid numbers are 1, 2.
-     * @param parity Parity setting: No Parity=0, Odd Parity=1, Even Parity=2.
-     * @return true if the operation is successful, false otherwise.
-     */
-    public static boolean setParameters(final int id, final int baudRate, final int dataBits, final int stopBits, final int parity)
+    public static boolean stopIoManager(final int id)
     {
-        final UsbSerialDriver driver = _findDriverByDeviceId(id);
-
-        if (driver == null) {
+        final SerialInputOutputManager ioManager = _serialIoManager.get(id);
+        if (ioManager == null) {
             return false;
         }
 
-        final List<UsbSerialPort> ports = driver.getPorts();
-        if (ports.isEmpty()) {
-            qgcLogWarning("No ports available on device ID " + id);
-            return false;
+        final SerialInputOutputManager.State ioState = ioManager.getState();
+        if (ioState == SerialInputOutputManager.State.STOPPED || ioState == SerialInputOutputManager.State.STOPPING) {
+            return true;
         }
 
-        final UsbSerialPort port = ports.get(0);
-
-        try {
-            port.setParameters(baudRate, dataBits, stopBits, parity);
-        } catch (final IOException e) {
-            Log.e(TAG, "Error setting parameters", e);
-            return false;
-        }
+        ioManager.stop();
 
         return true;
     }
@@ -646,64 +618,44 @@ public class QGCActivity extends QtActivity
      */
     public static boolean close(int id)
     {
-        final UsbSerialDriver driver = _findDriverByDeviceId(id);
-
-        if (driver == null) {
+        final UsbSerialPort port = _findPortByDeviceId(id);
+        if (port == null) {
             return false;
         }
-
-        final List<UsbSerialPort> ports = driver.getPorts();
-        if (ports.isEmpty()) {
-            qgcLogWarning("No ports available on device ID " + id);
-            return false;
-        }
-
-        final UsbSerialPort port = ports.get(0);
 
         try {
-            closeDriver(port, id);
-        } catch (final IOException e) {
-            Log.e(TAG, "Error closing device", e);
+            port.close();
+        } catch (final IOException ex) {
+            Log.e(TAG, "Error closing driver:", ex);
             return false;
         }
 
-        return true;
-    }
+        if (stopIoManager(id)) {
+            _serialIoManager.remove(id);
+        }
 
-    private static void closeDriver(final UsbSerialPort port, final int id) throws IOException
-    {
-        stopIoManager(id);
         _userDataHashByDeviceId.remove(id);
 
-        port.close();
+        return true;
     }
 
     /**
      * @brief Writes data to the device.
      *
      * @param id ID number from the open command.
-     * @param source Byte array of data to write.
+     * @param data Byte array of data to write.
      * @param timeoutMsec Amount of time in milliseconds to wait for the write to occur.
      * @return int Number of bytes written.
      */
-    public static int write(final int id, final byte[] source, final int timeoutMSec)
+    public static int write(final int id, final byte[] data, final int timeoutMSec)
     {
-        final UsbSerialDriver driver = _findDriverByDeviceId(id);
-
-        if (driver == null) {
-            return 0;
+        final UsbSerialPort port = _findPortByDeviceId(id);
+        if (port == null) {
+            return -1;
         }
-
-        final List<UsbSerialPort> ports = driver.getPorts();
-        if (ports.isEmpty()) {
-            qgcLogWarning("No ports available on device ID " + id);
-            return 0;
-        }
-
-        final UsbSerialPort port = ports.get(0);
 
         try {
-            port.write(source, timeoutMSec);
+            port.write(data, timeoutMSec);
         } catch (final SerialTimeoutException e) {
             Log.e(TAG, "Write timeout occurred", e);
             return -1;
@@ -732,33 +684,21 @@ public class QGCActivity extends QtActivity
         }
     }
 
-    public static byte[] readWithTimeout(final int id, final int timeoutMs) throws IOException
+    public static byte[] read(final int id, final int length, final int timeoutMs)
     {
-        final UsbSerialDriver driver = _findDriverByDeviceId(id);
-
-        if (driver == null) {
-            throw new IOException("Device not found");
+        final UsbSerialPort port = _findPortByDeviceId(id);
+        if (port == null) {
+            return new byte[] {};
         }
 
-        final List<UsbSerialPort> ports = driver.getPorts();
-        if (ports.isEmpty()) {
-            throw new IOException("No ports available on device ID " + id);
-        }
-
-        final UsbSerialPort port = ports.get(0);
-        long startTime = MonotonicClock.millis();
-        byte[] buffer = new byte[1024];
+        byte[] buffer = new byte[length];
         int bytesRead = 0;
 
-        while ((MonotonicClock.millis() - startTime) < timeoutMs) {
-            bytesRead = port.read(buffer, 100);
-            if (bytesRead > 0) {
-                break;
-            }
-        }
-
-        if (bytesRead == 0) {
-            throw new SerialTimeoutException("Read operation timed out", bytesRead);
+        try {
+            // TODO: Use bytesRead
+            bytesRead = port.read(buffer, timeoutMs);
+        } catch (final IOException e) {
+            Log.e(TAG, "Error reading data", e);
         }
 
         return buffer;
@@ -788,28 +728,57 @@ public class QGCActivity extends QtActivity
     }
 
     /**
-     * @brief Sets the Data Terminal Ready (DTR) flag on the device.
+     * @brief Get Device ID.
+     *
+     * @param deviceName Device Name.
+     * @return int Device ID.
+     */
+    public static int getDeviceId(final String deviceName)
+    {
+        final UsbSerialDriver driver = _findDriverByDeviceName(deviceName);
+        if (driver == null) {
+            qgcLogWarning("Attempt to open unknown device " + deviceName);
+            return BAD_DEVICE_ID;
+        }
+
+        final UsbDevice device = driver.getDevice();
+        final int deviceId = device.getDeviceId();
+
+        return deviceId;
+    }
+
+    /**
+     * @brief Sets the parameters on an open port.
      *
      * @param id ID number from the open command.
-     * @param on true to turn on, false to turn off.
+     * @param baudRate Decimal value of the baud rate. For example, 9600, 57600, 115200, etc.
+     * @param dataBits Number of data bits. Valid numbers are 5, 6, 7, 8.
+     * @param stopBits Number of stop bits. Valid numbers are 1, 2.
+     * @param parity Parity setting: No Parity=0, Odd Parity=1, Even Parity=2.
      * @return true if the operation is successful, false otherwise.
      */
-    public static boolean setDataTerminalReady(final int id, final boolean on)
+    public static boolean setParameters(final int id, final int baudRate, final int dataBits, final int stopBits, final int parity)
     {
-        final UsbSerialDriver driver = _findDriverByDeviceId(id);
-
-        if (driver == null) {
+        final UsbSerialPort port = _findPortByDeviceId(id);
+        if (port == null) {
             return false;
         }
 
-        final List<UsbSerialPort> ports = driver.getPorts();
-        if (ports.isEmpty()) {
-            qgcLogWarning("No ports available on device ID " + id);
+        try {
+            port.setParameters(baudRate, dataBits, stopBits, parity);
+        } catch (final IOException e) {
+            Log.e(TAG, "Error setting parameters", e);
+            return false;
+        } catch (final UnsupportedOperationException e) {
+            Log.e(TAG, "Error setting parameters", e);
             return false;
         }
 
-        final UsbSerialPort port = ports.get(0);
+        return true;
+    }
 
+    private static boolean _isControlLineSupported(final UsbSerialPort port, final UsbSerialPort.ControlLine controlLine)
+    {
         EnumSet<UsbSerialPort.ControlLine> supportedControlLines;
 
         try {
@@ -819,7 +788,152 @@ public class QGCActivity extends QtActivity
             return false;
         }
 
-        if (!supportedControlLines.contains(UsbSerialPort.ControlLine.DTR)) {
+        return supportedControlLines.contains(controlLine);
+    }
+
+    /**
+     * @brief Gets the Carrier Detect (CD) flag.
+     *
+     * @param id ID number from the open command.
+     */
+    public static boolean getCarrierDetect(final int id)
+    {
+        final UsbSerialPort port = _findPortByDeviceId(id);
+        if (port == null) {
+            return false;
+        }
+
+        if (!_isControlLineSupported(port, UsbSerialPort.ControlLine.CD)) {
+            Log.e(TAG, "Getting CD Not Supported");
+            return false;
+        }
+
+        boolean cd;
+
+        try {
+            cd = port.getCD();
+        } catch (final IOException e) {
+            Log.e(TAG, "Error getting CD", e);
+            return false;
+        } catch (final UnsupportedOperationException e) {
+            Log.e(TAG, "Error getting CD", e);
+            return false;
+        }
+
+        return cd;
+    }
+
+    /**
+     * @brief Gets the Clear To Send (CTS) flag.
+     *
+     * @param id ID number from the open command.
+     */
+    public static boolean getClearToSend(final int id)
+    {
+        final UsbSerialPort port = _findPortByDeviceId(id);
+        if (port == null) {
+            return false;
+        }
+
+        if (!_isControlLineSupported(port, UsbSerialPort.ControlLine.CTS)) {
+            Log.e(TAG, "Getting CTS Not Supported");
+            return false;
+        }
+
+        boolean cts;
+
+        try {
+            cts = port.getCTS();
+        } catch (final IOException e) {
+            Log.e(TAG, "Error getting CTS", e);
+            return false;
+        } catch (final UnsupportedOperationException e) {
+            Log.e(TAG, "Error getting CTS", e);
+            return false;
+        }
+
+        return cts;
+    }
+
+    /**
+     * @brief Gets the Data Set Ready (DSR) flag.
+     *
+     * @param id ID number from the open command.
+     */
+    public static boolean getDataSetReady(final int id)
+    {
+        final UsbSerialPort port = _findPortByDeviceId(id);
+        if (port == null) {
+            return false;
+        }
+
+        if (!_isControlLineSupported(port, UsbSerialPort.ControlLine.DSR)) {
+            Log.e(TAG, "Getting DSR Not Supported");
+            return false;
+        }
+
+        boolean dsr;
+
+        try {
+            dsr = port.getDSR();
+        } catch (final IOException e) {
+            Log.e(TAG, "Error getting DSR", e);
+            return false;
+        } catch (final UnsupportedOperationException e) {
+            Log.e(TAG, "Error getting DSR", e);
+            return false;
+        }
+
+        return dsr;
+    }
+
+    /**
+     * @brief Gets the Data Terminal Ready (DTR) flag.
+     *
+     * @param id ID number from the open command.
+     */
+    public static boolean getDataTerminalReady(final int id)
+    {
+        final UsbSerialPort port = _findPortByDeviceId(id);
+        if (port == null) {
+            return false;
+        }
+
+        if (!_isControlLineSupported(port, UsbSerialPort.ControlLine.DTR)) {
+            Log.e(TAG, "Getting DTR Not Supported");
+            return false;
+        }
+
+        boolean dtr;
+
+        try {
+            dtr = port.getDTR();
+        } catch (final IOException e) {
+            Log.e(TAG, "Error getting DTR", e);
+            return false;
+        } catch (final UnsupportedOperationException e) {
+            Log.e(TAG, "Error getting DTR", e);
+            return false;
+        }
+
+        return dtr;
+    }
+
+    /**
+     * @brief Sets the Data Terminal Ready (DTR) flag on the device.
+     *
+     * @param id ID number from the open command.
+     * @param on true to turn on, false to turn off.
+     * @return true if the operation is successful, false otherwise.
+     */
+    public static boolean setDataTerminalReady(final int id, final boolean on)
+    {
+        final UsbSerialPort port = _findPortByDeviceId(id);
+        if (port == null) {
+            return false;
+        }
+
+        if (!_isControlLineSupported(port, UsbSerialPort.ControlLine.DTR)) {
             Log.e(TAG, "Setting DTR Not Supported");
             return false;
         }
@@ -829,9 +943,76 @@ public class QGCActivity extends QtActivity
         } catch (final IOException e) {
             Log.e(TAG, "Error setting DTR", e);
             return false;
+        } catch (final UnsupportedOperationException e) {
+            Log.e(TAG, "Error setting DTR", e);
+            return false;
         }
 
         return true;
+    }
+
+    /**
+     * @brief Gets the Ring Indicator (RI) flag.
+     *
+     * @param id ID number from the open command.
+     */
+    public static boolean getRingIndicator(final int id)
+    {
+        final UsbSerialPort port = _findPortByDeviceId(id);
+        if (port == null) {
+            return false;
+        }
+
+        if (!_isControlLineSupported(port, UsbSerialPort.ControlLine.RI)) {
+            Log.e(TAG, "Getting RI Not Supported");
+            return false;
+        }
+
+        boolean ri;
+
+        try {
+            ri = port.getRI();
+        } catch (final IOException e) {
+            Log.e(TAG, "Error getting RI", e);
+            return false;
+        } catch (final UnsupportedOperationException e) {
+            Log.e(TAG, "Error getting RI", e);
+            return false;
+        }
+
+        return ri;
+    }
+
+    /**
+     * @brief Gets the Request to Send (RTS) flag.
+     *
+     * @param id ID number from the open command.
+     */
+    public static boolean getRequestToSend(final int id)
+    {
+        final UsbSerialPort port = _findPortByDeviceId(id);
+        if (port == null) {
+            return false;
+        }
+
+        if (!_isControlLineSupported(port, UsbSerialPort.ControlLine.RTS)) {
+            Log.e(TAG, "Getting RTS Not Supported");
+            return false;
+        }
+
+        boolean rts;
+
+        try {
+            rts = port.getRTS();
+        } catch (final IOException e) {
+            Log.e(TAG, "Error getting RTS", e);
+            return false;
+        } catch (final UnsupportedOperationException e) {
+            Log.e(TAG, "Error getting RTS", e);
+            return false;
+        }
+
+        return rts;
     }
 
     /**
@@ -843,30 +1024,12 @@ public class QGCActivity extends QtActivity
      */
     public static boolean setRequestToSend(final int id, final boolean on)
     {
-        final UsbSerialDriver driver = _findDriverByDeviceId(id);
-
-        if (driver == null) {
+        final UsbSerialPort port = _findPortByDeviceId(id);
+        if (port == null) {
             return false;
         }
 
-        final List<UsbSerialPort> ports = driver.getPorts();
-        if (ports.isEmpty()) {
-            qgcLogWarning("No ports available on device ID " + id);
-            return false;
-        }
-
-        final UsbSerialPort port = ports.get(0);
-
-        EnumSet<UsbSerialPort.ControlLine> supportedControlLines;
-
-        try {
-            supportedControlLines = port.getSupportedControlLines();
-        } catch (final IOException e) {
-            Log.e(TAG, "Error getting supported control lines", e);
-            return false;
-        }
-
-        if (!supportedControlLines.contains(UsbSerialPort.ControlLine.RTS)) {
+        if (!_isControlLineSupported(port, UsbSerialPort.ControlLine.RTS)) {
             Log.e(TAG, "Setting RTS Not Supported");
             return false;
         }
@@ -875,6 +1038,119 @@ public class QGCActivity extends QtActivity
             port.setRTS(on);
         } catch (final IOException e) {
             Log.e(TAG, "Error setting RTS", e);
+            return false;
+        } catch (final UnsupportedOperationException e) {
+            Log.e(TAG, "Error setting RTS", e);
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @brief Gets the Control Lines flags.
+     *
+     * @param id ID number from the open command.
+     */
+    public static int[] getControlLines(final int id)
+    {
+        final UsbSerialPort port = _findPortByDeviceId(id);
+        if (port == null) {
+            return new int[] {};
+        }
+
+        EnumSet<UsbSerialPort.ControlLine> supportedControlLines;
+
+        try {
+            supportedControlLines = port.getSupportedControlLines();
+        } catch (final IOException e) {
+            Log.e(TAG, "Error getting supported control lines", e);
+            return new int[] {};
+        }
+
+        if (supportedControlLines.isEmpty()) {
+            Log.e(TAG, "Control Lines Not Supported");
+            return new int[] {};
+        }
+
+        EnumSet<UsbSerialPort.ControlLine> controlLines;
+
+        try {
+            controlLines = port.getControlLines();
+        } catch (final IOException e) {
+            Log.e(TAG, "Error getting RTS", e);
+            return new int[] {};
+        }
+
+        return controlLines.stream().mapToInt(UsbSerialPort.ControlLine::ordinal).toArray();
+    }
+
+    /**
+     * @brief Gets the Flow Control type.
+     *
+     * @param id ID number from the open command.
+     */
+    public static int getFlowControl(final int id)
+    {
+        final UsbSerialPort port = _findPortByDeviceId(id);
+        if (port == null) {
+            return 0;
+        }
+
+        final EnumSet<UsbSerialPort.FlowControl> supportedFlowControl = port.getSupportedFlowControl();
+
+        if (supportedFlowControl.isEmpty()) {
+            Log.e(TAG, "Flow Control Not Supported");
+            return 0;
+        }
+
+        final UsbSerialPort.FlowControl flowControl = port.getFlowControl();
+
+        return flowControl.ordinal();
+    }
+
+    /**
+     * @brief Sets the Flow Control flag.
+     *
+     * @param id ID number from the open command.
+     */
+    public static boolean setFlowControl(final int id, final int flowControl)
+    {
+        if (getFlowControl(id) == flowControl) {
+            return true;
+        }
+
+        if ((flowControl < 0) || (flowControl >= UsbSerialPort.FlowControl.values().length)) {
+            qgcLogWarning("Invalid flow control ordinal " + flowControl);
+            return false;
+        }
+
+        final UsbSerialPort.FlowControl flowControlEnum = UsbSerialPort.FlowControl.values()[flowControl];
+
+        final UsbSerialPort port = _findPortByDeviceId(id);
+        if (port == null) {
+            return false;
+        }
+
+        final EnumSet<UsbSerialPort.FlowControl> supportedFlowControl = port.getSupportedFlowControl();
+
+        if (!supportedFlowControl.contains(flowControlEnum)) {
+            Log.e(TAG, "Setting Flow Control Not Supported");
+            return false;
+        }
+
+        // TODO: This shouldn't be necessary but an UnsupportedOperationException is thrown for NONE
+        // if ((flowControlEnum == UsbSerialPort.FlowControl.NONE) && (supportedFlowControl.size() == 1)) {
+        //     return true;
+        // }
+
+        try {
+            port.setFlowControl(flowControlEnum);
+        } catch (final IOException e) {
+            Log.e(TAG, "Error setting Flow Control", e);
+            return false;
+        } catch (final UnsupportedOperationException e) {
+            Log.e(TAG, "Error setting Flow Control", e);
             return false;
         }
 
@@ -888,25 +1164,16 @@ public class QGCActivity extends QtActivity
      * @param on true to set break, false to clear break.
      * @return true if the operation is successful, false otherwise.
      */
-    public static boolean setBreak(int id, boolean on)
+    public static boolean setBreak(final int id, final boolean on)
     {
-        final UsbSerialDriver driver = _findDriverByDeviceId(id);
-
-        if (driver == null) {
+        final UsbSerialPort port = _findPortByDeviceId(id);
+        if (port == null) {
             return false;
         }
-
-        final List<UsbSerialPort> ports = driver.getPorts();
-        if (ports.isEmpty()) {
-            qgcLogWarning("No ports available on device ID " + id);
-            return false;
-        }
-
-        final UsbSerialPort port = ports.get(0);
 
         try {
             port.setBreak(on);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             Log.e(TAG, "Error setting break condition", e);
             return false;
         }
@@ -924,23 +1191,17 @@ public class QGCActivity extends QtActivity
      */
     public static boolean purgeBuffers(final int id, final boolean input, final boolean output)
     {
-        final UsbSerialDriver driver = _findDriverByDeviceId(id);
-
-        if (driver == null) {
+        final UsbSerialPort port = _findPortByDeviceId(id);
+        if (port == null) {
             return false;
         }
-
-        final List<UsbSerialPort> ports = driver.getPorts();
-        if (ports.isEmpty()) {
-            qgcLogWarning("No ports available on device ID " + id);
-            return false;
-        }
-
-        final UsbSerialPort port = ports.get(0);
 
         try {
             port.purgeHwBuffers(input, output);
-        } catch (IOException e) {
+        } catch (final IOException e) {
+            Log.e(TAG, "Error purging buffers", e);
+            return false;
+        } catch (final UnsupportedOperationException e) {
             Log.e(TAG, "Error purging buffers", e);
             return false;
         }
@@ -970,7 +1231,36 @@ public class QGCActivity extends QtActivity
         return connect.getFileDescriptor();
     }
 
-    public static void logUsbDescriptors(int deviceId)
+    /**
+     * @brief Gets the device serial number.
+     *
+     * @param id ID number from the open command.
+     * @return String Device serial number.
+     */
+    public static String getSerialNumber(final int id)
+    {
+        final UsbSerialDriver driver = _findDriverByDeviceId(id);
+
+        if (driver == null) {
+            return "";
+        }
+
+        final UsbDeviceConnection connect = _usbManager.openDevice(driver.getDevice());
+        if (connect == null) {
+            return "";
+        }
+
+        String serialNumber = "";
+        try {
+            serialNumber = connect.getSerial();
+        } catch (final SecurityException e) {
+            Log.e(TAG, "Error getting serial number", e);
+        }
+
+        return serialNumber;
+    }
+
+    public static void logUsbDescriptors(final int deviceId)
     {
         final UsbSerialDriver driver = _findDriverByDeviceId(deviceId);
 

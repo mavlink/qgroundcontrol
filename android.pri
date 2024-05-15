@@ -1,4 +1,4 @@
-include($$PWD/libs/qtandroidserialport/qtandroidserialport.pri)
+include($$PWD/android/libs/qtandroidserialport/qtandroidserialport.pri)
 
 ANDROID_MIN_SDK_VERSION = 26
 ANDROID_TARGET_SDK_VERSION = 33
