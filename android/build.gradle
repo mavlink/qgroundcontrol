@@ -5,13 +5,14 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.3.2'
+        classpath 'com.android.tools.build:gradle:8.4.1'
     }
 }
 
 repositories {
     google()
     mavenCentral()
+    maven { url 'https://jitpack.io' }
 }
 
 apply plugin: 'com.android.application'
@@ -19,6 +20,7 @@ apply plugin: 'com.android.application'
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
     implementation 'androidx.core:core:1.12.0'
+    implementation 'com.github.mik3y:usb-serial-for-android:3.7.3'
 }
 
 android {
@@ -57,6 +59,10 @@ android {
 
     tasks.withType(JavaCompile) {
         options.incremental = true
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     compileOptions {
