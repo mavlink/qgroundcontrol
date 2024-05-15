@@ -51,7 +51,7 @@ QList<QSerialPortInfo> availablePortsByFiltersOfDevices(bool &ok)
     const QJniObject result = QJniObject::callStaticObjectMethod(javaClass, methodId);
     if (!result.isValid()) {
         ok = false;
-        qCWarning(QSerialPortInfo_AndroidLog) << "Method Call Failed";
+        qCDebug(QSerialPortInfo_AndroidLog) << "Method Call Failed";
         return QList<QSerialPortInfo>();
     }
 

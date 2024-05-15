@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="baud_rate">
+        <item>300</item>
+        <item>600</item>
+        <item>1200</item>
+        <item>4800</item>
+        <item>9600</item>
+        <item>19200</item>
+        <item>38400</item>
+        <item>57600</item>
+        <item>115200</item>
+        <item>230400</item>
+        <item>460800</item>
+        <item>921600</item>
+        <item>1000000</item>
+        <item>1500000</item>
+        <item>2000000</item>
+        <item>3000000</item>
+        <item>4000000</item>
+        <item>5000000</item>
+        <item>6000000</item>
+        <item>7000000</item>
+        <item>8000000</item>
+        <item>9000000</item>
+        <item>10000000</item>
+        <item>11000000</item>
+        <item>12000000</item>
+    </string-array>
+
+    <string-array name="stop_bits">
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+
+    <string-array name="data_bits">
+        <item>7</item>
+        <item>8</item>
+    </string-array>
+
+    <string-array name="parity">
+        <item>none</item>
+        <item>odd</item>
+        <item>even</item>
+        <item>mark</item>
+        <item>space</item>
+    </string-array>
+
+    <string-array name="flow_control">
+        <item>none</item>
+        <item>CTS/RTS</item>
+        <item>DTR/DSR</item>
+        <item>XOFF/XON</item>
+    </string-array>
+
+    <string-array name="buffer_size">
+        <item>32768</item>
+        <item>1M</item>
+        <item>2M</item>
+        <item>3M</item>
+        <item>4M</item>
+        <item>5M</item>
+        <item>6M</item>
+        <item>7M</item>
+        <item>8M</item>
+        <item>9M</item>
+        <item>10M</item>
+    </string-array>
+
+    <string-array name="max_transfer_size">
+        <item>32768</item>
+        <item>16384</item>
+        <item>8192</item>
+        <item>4096</item>
+        <item>2048</item>
+        <item>1024</item>
+        <item>512</item>
+        <item>256</item>
+        <item>128</item>
+        <item>64</item>
+    </string-array>
+
+    <string-array name="read_modes">
+        <item>event: SerialInputOutputManager.onNewData()</item>
+        <item>direct: UsbSerialPort.read()</item>
+    </string-array>
+
+</resources>
