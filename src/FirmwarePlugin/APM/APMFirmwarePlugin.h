@@ -88,9 +88,9 @@ public:
     QVariant            mainStatusIndicatorContentItem  (const Vehicle* vehicle) const override;
 
     // support for changing speed in Copter guide mode:
-    bool mulirotorSpeedLimitsAvailable(Vehicle* vehicle);
-    double maximumHorizontalSpeedMultirotor(Vehicle* vehicle);
-    void guidedModeChangeGroundSpeedMetersSecond(Vehicle *vehicle, double speed);
+    bool mulirotorSpeedLimitsAvailable(Vehicle* vehicle) override;
+    double maximumHorizontalSpeedMultirotor(Vehicle* vehicle) override;
+    void guidedModeChangeGroundSpeedMetersSecond(Vehicle *vehicle, double speed) override;
 
 protected:
     /// All access to singleton is through stack specific implementation
