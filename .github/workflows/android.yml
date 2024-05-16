@@ -8,12 +8,10 @@ on:
     tags:
       - 'v*'
     paths-ignore:
-      - 'android/**'
       - 'deploy/**'
       - 'docs/**'
   pull_request:
     paths-ignore:
-      - 'android/**'
       - 'deploy/**'
       - 'docs/**'
       - '.github/workflows/docs_deploy.yml'
