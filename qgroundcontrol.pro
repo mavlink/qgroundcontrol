@@ -618,10 +618,10 @@ HEADERS += \
     src/MAVLink/QGCMAVLink.h \
     src/MAVLink/MAVLinkLib.h \
     src/MAVLink/MAVLinkFTP.h \
+    src/MAVLink/StatusTextHandler.h \
     src/Comms/TCPLink.h \
     src/Comms/UDPLink.h \
     src/Comms/UdpIODevice.h \
-    src/Vehicle/UASMessageHandler.h \
     src/AnalyzeView/GeoTagController.h \
     src/AnalyzeView/GeoTagWorker.h \
     src/AnalyzeView/ExifParser.h \
@@ -890,11 +890,11 @@ SOURCES += \
     src/Comms/MAVLinkProtocol.cc \
     src/MAVLink/QGCMAVLink.cc \
     src/MAVLink/MAVLinkFTP.cc \
+    src/MAVLink/StatusTextHandler.cc \
     src/Comms/TCPLink.cc \
     src/Comms/UDPLink.cc \
     src/Comms/UdpIODevice.cc \
     src/main.cc \
-    src/Vehicle/UASMessageHandler.cc \
     src/AnalyzeView/GeoTagController.cc \
     src/AnalyzeView/GeoTagWorker.cc \
     src/AnalyzeView/ExifParser.cc \

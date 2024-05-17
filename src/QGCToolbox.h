@@ -24,7 +24,6 @@ class MissionCommandTree;
 class MultiVehicleManager;
 class QGCMapEngineManager;
 class QGCApplication;
-class UASMessageHandler;
 class QGCPositionManager;
 class VideoManager;
 class MAVLinkLogManager;
@@ -52,7 +51,6 @@ public:
     MissionCommandTree*         missionCommandTree      () { return _missionCommandTree; }
     MultiVehicleManager*        multiVehicleManager     () { return _multiVehicleManager; }
     QGCMapEngineManager*        mapEngineManager        () { return _mapEngineManager; }
-    UASMessageHandler*          uasMessageHandler       () { return _uasMessageHandler; }
     FollowMe*                   followMe                () { return _followMe; }
     QGCPositionManager*         qgcPositionManager      () { return _qgcPositionManager; }
     VideoManager*               videoManager            () { return _videoManager; }
@@ -86,7 +84,6 @@ private:
     MissionCommandTree*         _missionCommandTree     = nullptr;
     MultiVehicleManager*        _multiVehicleManager    = nullptr;
     QGCMapEngineManager*        _mapEngineManager       = nullptr;
-    UASMessageHandler*          _uasMessageHandler      = nullptr;
     FollowMe*                   _followMe               = nullptr;
     QGCPositionManager*         _qgcPositionManager     = nullptr;
     VideoManager*               _videoManager           = nullptr;
