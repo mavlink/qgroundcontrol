@@ -1,6 +1,6 @@
 add_subdirectory(LibEvents)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Gui)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui QmlIntegration)
 
 qt_add_library(MAVLink STATIC
     ImageProtocolManager.cc
@@ -12,6 +12,8 @@ qt_add_library(MAVLink STATIC
     MAVLinkStreamConfig.h
     QGCMAVLink.cc
     QGCMAVLink.h
+    StatusTextHandler.cc
+    StatusTextHandler.h
     SysStatusSensorInfo.cc
     SysStatusSensorInfo.h
 )
@@ -22,6 +24,7 @@ target_link_libraries(MAVLink
     PUBLIC
         Qt6::Core
         Qt6::Gui
+        Qt6::QmlIntegration
 )
 
 target_include_directories(MAVLink PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

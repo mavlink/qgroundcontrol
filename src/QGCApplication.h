@@ -184,6 +184,7 @@ private:
     QTranslator         _qgcTranslatorQtLibs;               ///< tranlsations for Qt libraries
     QLocale             _locale;
     bool                _error                  = false;
+    bool                _showErrorsInToolbar    = false;
     QElapsedTimer       _msecsElapsedTime;
 
     QList<QPair<QString /* title */, QString /* message */>> _delayedAppMessages;

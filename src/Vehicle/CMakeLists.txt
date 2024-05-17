@@ -23,8 +23,6 @@ qt_add_library(Vehicle STATIC
     TerrainProtocolHandler.h
     TrajectoryPoints.cc
     TrajectoryPoints.h
-    UASMessageHandler.cc
-    UASMessageHandler.h
     Vehicle.cc
     Vehicle.h
     VehicleLinkManager.cc
