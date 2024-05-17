@@ -13,6 +13,7 @@
 #include "QGCLoggingCategory.h"
 
 // AnalyzeView
+#include "ExifParserTest.h"
 // #include "MavlinkLogTest.h"
 // #include "LogDownloadTest.h"
 
@@ -95,6 +96,7 @@ QGC_LOGGING_CATEGORY(UnitTestsLog, "qgc.test.unittestlist")
 int runTests(bool stress, QStringView unitTestOptions)
 {
 	// AnalyzeView
+	UT_REGISTER_TEST(ExifParserTest)
 	// UT_REGISTER_TEST(MavlinkLogTest)
 	// UT_REGISTER_TEST(LogDownloadTest)
 
