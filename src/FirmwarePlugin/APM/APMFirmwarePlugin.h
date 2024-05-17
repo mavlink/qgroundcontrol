@@ -115,7 +115,6 @@ private slots:
 private:
     void _adjustCalibrationMessageSeverity(mavlink_message_t* message) const;
     void _setInfoSeverity(mavlink_message_t* message) const;
-    QString _getMessageText(mavlink_message_t* message) const;
     void _handleIncomingParamValue(Vehicle* vehicle, mavlink_message_t* message);
     bool _handleIncomingStatusText(Vehicle* vehicle, mavlink_message_t* message);
     void _handleIncomingHeartbeat(Vehicle* vehicle, mavlink_message_t* message);
