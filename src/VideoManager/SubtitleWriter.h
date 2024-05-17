@@ -17,12 +17,12 @@
 #pragma once
 
 #include <QtCore/QObject>
-#include <QtCore/QTimer>
 #include <QtCore/QTime>
 #include <QtCore/QFile>
 #include <QtCore/QLoggingCategory>
 
 class Fact;
+class QTimer;
 
 Q_DECLARE_LOGGING_CATEGORY(SubtitleWriterLog)
 
@@ -43,7 +43,7 @@ private slots:
     void _captureTelemetry();
 
 private:
-    QTimer _timer;
+    QTimer* _timer = nullptr;
     QList<Fact*> _facts;
     QTime _lastEndTime;
     QFile _file;
