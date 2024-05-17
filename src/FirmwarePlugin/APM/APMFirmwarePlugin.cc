@@ -29,6 +29,7 @@
 #include "APMParameterMetaData.h"
 #include "LinkManager.h"
 #include "Vehicle.h"
+#include <StatusTextHandler.h>
 #include "MAVLinkProtocol.h"
 #include "QGCLoggingCategory.h"
 #include <DeviceInfo.h>
@@ -262,7 +263,7 @@ bool APMFirmwarePlugin::_handleIncomingStatusText(Vehicle* /*vehicle*/, mavlink_
     // APM user facing calibration messages come through as high severity, we need to parse them out
     // and lower the severity on them so that they don't pop in the users face.
 
-    const QString messageText = _getMessageText(message);
+    const QString messageText = StatusTextHandler::getMessageText(*message);
     if (messageText.contains("Place vehicle") || messageText.contains("Calibration successful")) {
         _adjustCalibrationMessageSeverity(message);
         return true;
@@ -354,18 +355,6 @@ void APMFirmwarePlugin::adjustOutgoingMavlinkMessageThreadSafe(Vehicle* vehicle,
         _handleOutgoingParamSetThreadSafe(vehicle, outgoingLink, message);
         break;
     }
-}
-
-QString APMFirmwarePlugin::_getMessageText(mavlink_message_t* message) const
-{
-    QByteArray b;
-
-    b.resize(MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN+1);
-    mavlink_msg_statustext_get_text(message, b.data());
-
-    // Ensure NUL-termination
-    b[b.length()-1] = '\0';
-    return QString::fromLocal8Bit(b, std::strlen(b.constData()));
 }
 
 void APMFirmwarePlugin::_setInfoSeverity(mavlink_message_t* message) const
