@@ -16,7 +16,6 @@
  *
  */
 
-#include "QmlControls/QGCImageProvider.h"
 #include <QtCore/QFile>
 #include <QtCore/QRegularExpression>
 #include <QtGui/QFontDatabase>
@@ -27,10 +26,6 @@
 #include <QtNetwork/QNetworkProxyFactory>
 #include <QtQml/QQmlContext>
 #include <QtQml/QQmlApplicationEngine>
-
-#if defined(QGC_GST_STREAMING)
-#include "GStreamer.h"
-#endif
 
 #include "QGCConfig.h"
 #include "QGCApplication.h"
@@ -242,16 +237,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 
     // Set up our logging filters
     QGCLoggingCategoryRegister::instance()->setFilterRulesFromSettings(loggingOptions);
-
-#if defined(QGC_GST_STREAMING)
-    // Gstreamer debug settings
-    int gstDebugLevel = 0;
-    if (settings.contains(AppSettings::gstDebugLevelName)) {
-        gstDebugLevel = settings.value(AppSettings::gstDebugLevelName).toInt();
-    }
-    // Initialize Video Receiver
-    GStreamer::initialize(argc, argv, gstDebugLevel);
-#endif
 
     // We need to set language as early as possible prior to loading on JSON files.
     setLanguage();

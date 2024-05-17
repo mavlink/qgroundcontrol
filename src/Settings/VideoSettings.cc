@@ -27,23 +27,16 @@ DECLARE_SETTINGGROUP(Video, "Video")
     QVariantList videoSourceList;
 #ifdef QGC_GST_STREAMING
     videoSourceList.append(videoSourceRTSP);
-#ifndef NO_UDP_VIDEO
     videoSourceList.append(videoSourceUDPH264);
     videoSourceList.append(videoSourceUDPH265);
-#endif
     videoSourceList.append(videoSourceTCP);
     videoSourceList.append(videoSourceMPEGTS);
     videoSourceList.append(videoSource3DRSolo);
     videoSourceList.append(videoSourceParrotDiscovery);
     videoSourceList.append(videoSourceYuneecMantisG);
-#endif
-
-#ifdef QGC_HERELINK_AIRUNIT_VIDEO
     videoSourceList.append(videoSourceHerelinkAirUnit);
-#else
     videoSourceList.append(videoSourceHerelinkHotspot);
 #endif
-
 #ifndef QGC_DISABLE_UVC
     QList<QCameraDevice> videoInputs = QMediaDevices::videoInputs();
     for (const auto& cameraDevice: videoInputs) {
@@ -179,9 +172,6 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, tcpUrl)
 
 bool VideoSettings::streamConfigured(void)
 {
-#if !defined(QGC_GST_STREAMING)
-    return false;
-#endif
     //-- First, check if it's autoconfigured
     if(qgcApp()->toolbox()->videoManager()->autoStreamConfigured()) {
         qCDebug(VideoManagerLog) << "Stream auto configured";
@@ -222,6 +212,15 @@ bool VideoSettings::streamConfigured(void)
         qCDebug(VideoManagerLog) << "Stream configured for Herelink Hotspot";
         return true;
     }
+#ifndef QGC_DISABLE_UVC
+    const QList<QCameraDevice> videoInputs = QMediaDevices::videoInputs();
+    for (const auto& cameraDevice: videoInputs) {
+        if(vSource == cameraDevice.description()) {
+            qCDebug(VideoManagerLog) << "Stream configured for UVC";
+            return true;
+        }
+    }
+#endif
     return false;
 }
 

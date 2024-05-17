@@ -51,6 +51,8 @@ target_link_libraries(Settings
         API
         QmlControls
         Vehicle
+        VideoManager
+        VideoReceiver
     PUBLIC
         Qt6::Core
         Qt6::Qml
