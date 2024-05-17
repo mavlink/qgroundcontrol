@@ -81,13 +81,9 @@ void GeoTagWorker::run()
     bool parseComplete = false;
     QString errorString;
     if (isULog) {
-        ULogParser parser;
-        parseComplete = parser.getTagsFromLog(log, _triggerList, errorString);
-
+        parseComplete = ULogParser::getTagsFromLog(log, _triggerList, errorString);
     } else {
-        PX4LogParser parser;
-        parseComplete = parser.getTagsFromLog(log, _triggerList);
-
+        parseComplete = PX4LogParser::getTagsFromLog(log, _triggerList);
     }
 
     if (!parseComplete) {

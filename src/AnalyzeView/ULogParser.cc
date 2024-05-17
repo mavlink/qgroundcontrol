@@ -3,9 +3,47 @@
 
 QGC_LOGGING_CATEGORY(ULogParserLog, "qgc.analyzeview.ulogparser")
 
-#define ULOG_FILE_HEADER_LEN 16
+namespace {
 
-int ULogParser::sizeOfType(QString& typeName)
+#define ULOG_FILE_HEADER_LEN 16
+#define ULOG_MSG_HEADER_LEN 3
+
+enum class ULogMessageType : uint8_t {
+    FORMAT = 'F',
+    DATA = 'D',
+    INFO = 'I',
+    PARAMETER = 'P',
+    ADD_LOGGED_MSG = 'A',
+    REMOVE_LOGGED_MSG = 'R',
+    SYNC = 'S',
+    DROPOUT = 'O',
+    LOGGING = 'L',
+};
+
+struct ULogMessageHeader {
+    uint16_t msgSize;
+    uint8_t msgType;
+};
+
+struct ULogMessageFormat {
+    uint16_t msgSize;
+    uint8_t msgType;
+
+    char format[2096];
+};
+
+struct ULogMessageAddLogged {
+    uint16_t msgSize;
+    uint8_t msgType;
+
+    uint8_t multiID;
+    uint16_t msgID;
+    char msgName[255];
+};
+
+constexpr const char _ULogMagic[8] = {'U', 'L', 'o', 'g', static_cast<char>(0x01), static_cast<char>(0x12), static_cast<char>(0x35)};
+
+int sizeOfType(QStringView typeName)
 {
     if (typeName == QLatin1String("int8_t") || typeName == QLatin1String("uint8_t")) {
         return 1;
@@ -33,17 +71,10 @@ int ULogParser::sizeOfType(QString& typeName)
     return 0;
 }
 
-int ULogParser::sizeOfFullType(QString& typeNameFull)
+QString extractArraySize(const QString &typeNameFull, int &arraySize)
 {
-    int arraySize;
-    QString typeName = extractArraySize(typeNameFull, arraySize);
-    return sizeOfType(typeName) * arraySize;
-}
-
-QString ULogParser::extractArraySize(QString &typeNameFull, int &arraySize)
-{
-    int startPos = typeNameFull.indexOf('[');
-    int endPos = typeNameFull.indexOf(']');
+    const qsizetype startPos = typeNameFull.indexOf('[');
+    const qsizetype endPos = typeNameFull.indexOf(']');
 
     if (startPos == -1 || endPos == -1) {
         arraySize = 1;
@@ -54,21 +85,28 @@ QString ULogParser::extractArraySize(QString &typeNameFull, int &arraySize)
     return typeNameFull.mid(0, startPos);
 }
 
-bool ULogParser::parseFieldFormat(QString& fields)
+int sizeOfFullType(const QString &typeNameFull)
+{
+    int arraySize;
+    const QString typeName = extractArraySize(typeNameFull, arraySize);
+    return (sizeOfType(typeName) * arraySize);
+}
+
+void parseFieldFormat(const QString &fields, QMap<QString, int> &cameraCaptureOffsets)
 {
     int prevFieldEnd = 0;
     int fieldEnd = fields.indexOf(';');
     int offset = 0;
 
     while (fieldEnd != -1) {
-        int spacePos = fields.indexOf(' ', prevFieldEnd);
+        const int spacePos = fields.indexOf(' ', prevFieldEnd);
 
         if (spacePos != -1) {
-            QString typeNameFull = fields.mid(prevFieldEnd, spacePos - prevFieldEnd);
-            QString fieldName = fields.mid(spacePos + 1, fieldEnd - spacePos - 1);
+            const QString typeNameFull = fields.mid(prevFieldEnd, spacePos - prevFieldEnd);
+            const QString fieldName = fields.mid(spacePos + 1, fieldEnd - spacePos - 1);
 
             if (!fieldName.contains(QLatin1String("_padding"))) {
-                _cameraCaptureOffsets.insert(fieldName, offset);
+                (void) cameraCaptureOffsets.insert(fieldName, offset);
                 offset += sizeOfFullType(typeNameFull);
             }
         }
@@ -76,86 +114,96 @@ bool ULogParser::parseFieldFormat(QString& fields)
         prevFieldEnd = fieldEnd + 1;
         fieldEnd = fields.indexOf(';', prevFieldEnd);
     }
-    return false;
 }
 
-bool ULogParser::getTagsFromLog(QByteArray& log, QList<GeoTagWorker::cameraFeedbackPacket>& cameraFeedback, QString& errorMessage)
+} // namespace
+
+namespace ULogParser {
+
+bool getTagsFromLog(const QByteArray &log, QList<GeoTagWorker::cameraFeedbackPacket> &cameraFeedback, QString &errorMessage)
 {
     errorMessage.clear();
 
-    //verify it's an ULog file
-    if(!log.contains(_ULogMagic)) {
-        errorMessage = tr("Could not detect ULog file header magic");
+    if (!log.contains(_ULogMagic)) {
+        errorMessage = QT_TR_NOOP("Could not detect ULog file header magic");
         return false;
     }
 
     int index = ULOG_FILE_HEADER_LEN;
     bool geotagFound = false;
+    QMap<QString /*fieldname*/, int /*fieldOffset*/> cameraCaptureOffsets;
+    int cameraCaptureMsgID = -1;
 
-    while(index < log.length() - 1) {
+    while(index < (log.length() - 1)) {
 
         ULogMessageHeader header;
-        memset(&header, 0, sizeof(header));
-        memcpy(&header, log.data() + index, ULOG_MSG_HEADER_LEN);
+        (void) memset(&header, 0, sizeof(header));
+        (void) memcpy(&header, log.constData() + index, ULOG_MSG_HEADER_LEN);
 
         switch (header.msgType) {
-            case (int)ULogMessageType::FORMAT:
+            case static_cast<int>(ULogMessageType::FORMAT):
             {
                 ULogMessageFormat format_msg;
-                memset(&format_msg, 0, sizeof(format_msg));
-                memcpy(&format_msg, log.data() + index, ULOG_MSG_HEADER_LEN + header.msgSize);
+                (void) memset(&format_msg, 0, sizeof(format_msg));
+                (void) memcpy(&format_msg, log.constData() + index, ULOG_MSG_HEADER_LEN + header.msgSize);
 
-                QString fmt(format_msg.format);
-                int posSeparator = fmt.indexOf(':');
-                QString messageName = fmt.left(posSeparator);
-                QString messageFields = fmt.mid(posSeparator + 1, header.msgSize - posSeparator - 1);
+                const QString fmt(format_msg.format);
+                const int posSeparator = fmt.indexOf(':');
+                const QString messageName = fmt.left(posSeparator);
+                const QString messageFields = fmt.mid(posSeparator + 1, header.msgSize - posSeparator - 1);
 
                 if(messageName == QLatin1String("camera_capture")) {
-                    parseFieldFormat(messageFields);
+                    parseFieldFormat(messageFields, cameraCaptureOffsets);
                 }
+
                 break;
             }
 
-            case (int)ULogMessageType::ADD_LOGGED_MSG:
+            case static_cast<int>(ULogMessageType::ADD_LOGGED_MSG):
             {
                 ULogMessageAddLogged addLoggedMsg;
-                memset(&addLoggedMsg, 0, sizeof(addLoggedMsg));
-                memcpy(&addLoggedMsg, log.data() + index, ULOG_MSG_HEADER_LEN + header.msgSize);
+                (void) memset(&addLoggedMsg, 0, sizeof(addLoggedMsg));
+                (void) memcpy(&addLoggedMsg, log.constData() + index, ULOG_MSG_HEADER_LEN + header.msgSize);
 
-                QString messageName(addLoggedMsg.msgName);
+                const QString messageName(addLoggedMsg.msgName);
 
                 if(messageName.contains(QLatin1String("camera_capture"))) {
-                    _cameraCaptureMsgID = addLoggedMsg.msgID;
+                    cameraCaptureMsgID = addLoggedMsg.msgID;
                     geotagFound = true;
                 }
 
                 break;
             }
 
-            case (int)ULogMessageType::DATA:
+            case static_cast<int>(ULogMessageType::DATA):
             {
                 uint16_t msgID = -1;
-                memcpy(&msgID, log.data() + index + ULOG_MSG_HEADER_LEN, 2);
+                (void) memcpy(&msgID, log.constData() + index + ULOG_MSG_HEADER_LEN, 2);
 
-                if (geotagFound && msgID == _cameraCaptureMsgID) {
-
+                if (geotagFound && (msgID == cameraCaptureMsgID)) {
                     // Completely dynamic parsing, so that changing/reordering the message format will not break the parser
                     GeoTagWorker::cameraFeedbackPacket feedback;
-                    memset(&feedback, 0, sizeof(feedback));
-                    memcpy(&feedback.timestamp, log.data() + index + 5 + _cameraCaptureOffsets.value(QStringLiteral("timestamp")), 8);
+                    (void) memset(&feedback, 0, sizeof(feedback));
+
+                    const char* const data = log.constData() + index + 5;
+
+                    (void) memcpy(&feedback.timestamp, data + cameraCaptureOffsets.value(QStringLiteral("timestamp")), 8);
                     feedback.timestamp /= 1.0e6; // to seconds
-                    memcpy(&feedback.timestampUTC, log.data() + index + 5 + _cameraCaptureOffsets.value(QStringLiteral("timestamp_utc")), 8);
+
+                    (void) memcpy(&feedback.timestampUTC, data + cameraCaptureOffsets.value(QStringLiteral("timestamp_utc")), 8);
                     feedback.timestampUTC /= 1.0e6; // to seconds
-                    memcpy(&feedback.imageSequence, log.data() + index + 5 + _cameraCaptureOffsets.value(QStringLiteral("seq")), 4);
-                    memcpy(&feedback.latitude, log.data() + index + 5 + _cameraCaptureOffsets.value(QStringLiteral("lat")), 8);
-                    memcpy(&feedback.longitude, log.data() + index + 5 + _cameraCaptureOffsets.value(QStringLiteral("lon")), 8);
+
+                    (void) memcpy(&feedback.imageSequence, data + cameraCaptureOffsets.value(QStringLiteral("seq")), 4);
+                    (void) memcpy(&feedback.latitude, data + cameraCaptureOffsets.value(QStringLiteral("lat")), 8);
+                    (void) memcpy(&feedback.longitude, data + cameraCaptureOffsets.value(QStringLiteral("lon")), 8);
+
                     feedback.longitude = fmod(180.0 + feedback.longitude, 360.0) - 180.0;
-                    memcpy(&feedback.altitude, log.data() + index + 5 + _cameraCaptureOffsets.value(QStringLiteral("alt")), 4);
-                    memcpy(&feedback.groundDistance, log.data() + index + 5 + _cameraCaptureOffsets.value(QStringLiteral("ground_distance")), 4);
-                    memcpy(&feedback.captureResult, log.data() + index + 5 + _cameraCaptureOffsets.value(QStringLiteral("result")), 1);
 
-                    cameraFeedback.append(feedback);
+                    (void) memcpy(&feedback.altitude, data + cameraCaptureOffsets.value(QStringLiteral("alt")), 4);
+                    (void) memcpy(&feedback.groundDistance, data + cameraCaptureOffsets.value(QStringLiteral("ground_distance")), 4);
+                    (void) memcpy(&feedback.captureResult, data + cameraCaptureOffsets.value(QStringLiteral("result")), 1);
 
+                    (void) cameraFeedback.append(feedback);
                 }
 
                 break;
@@ -169,10 +217,12 @@ bool ULogParser::getTagsFromLog(QByteArray& log, QList<GeoTagWorker::cameraFeedb
 
     }
 
-    if (cameraFeedback.count() == 0) {
-        errorMessage = tr("Could not detect camera_capture packets in ULog");
+    if (cameraFeedback.isEmpty()) {
+        errorMessage = QT_TR_NOOP("Could not detect camera_capture packets in ULog");
         return false;
     }
 
     return true;
 }
+
+} // namespace ULogParser
