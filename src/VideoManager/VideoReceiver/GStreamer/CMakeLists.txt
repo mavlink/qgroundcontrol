@@ -9,7 +9,6 @@ message(STATUS "Building GStreamer VideoReceiver")
 find_package(Qt6 REQUIRED COMPONENTS Core Quick)
 
 qt_add_library(GStreamerReceiver STATIC
-    GLVideoItemStub.cc
     GLVideoItemStub.h
     gstqgc.c
     gstqgcvideosinkbin.c

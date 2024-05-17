@@ -15,11 +15,12 @@
 #include "SettingsManager.h"
 #include "AppMessages.h"
 #include "QmlObjectListModel.h"
-#include "VideoManager.h"
 #include "JoystickManager.h"
 #if defined(QGC_GST_STREAMING)
 #include "GStreamer.h"
 #endif
+#include "VideoManager.h"
+#include "VideoReceiver.h"
 #include "HorizontalFactValueGrid.h"
 #include "InstrumentValueData.h"
 #include "QGCLoggingCategory.h"

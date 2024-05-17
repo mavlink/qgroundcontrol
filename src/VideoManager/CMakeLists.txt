@@ -15,6 +15,7 @@ target_link_libraries(VideoManager
         Camera
         FactSystem
         QmlControls
+        QtMultimediaReceiver
         Settings
         Utilities
         Vehicle
@@ -22,8 +23,6 @@ target_link_libraries(VideoManager
         Qt6::Core
         GStreamerReceiver
         QGC
-        QtMultimediaReceiver
-        VideoReceiver
 )
 
 target_include_directories(VideoManager PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
