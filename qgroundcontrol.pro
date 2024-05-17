@@ -1234,9 +1234,6 @@ contains (CONFIG, DISABLE_VIDEOSTREAMING) {
     HEADERS += \
         src/VideoManager/VideoReceiver/GStreamer/GLVideoItemStub.h \
         src/VideoManager/VideoReceiver/VideoReceiver.h
-
-    SOURCES += \
-        src/VideoManager/VideoReceiver/GStreamer/GLVideoItemStub.cc
 }
 
 #-------------------------------------------------------------------------------------
