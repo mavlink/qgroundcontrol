@@ -10,6 +10,8 @@ int JoystickAndroid::_androidBtnListCount;
 int *JoystickAndroid::_androidBtnList;
 int JoystickAndroid::ACTION_DOWN;
 int JoystickAndroid::ACTION_UP;
+int JoystickAndroid::AXIS_HAT_X;
+int JoystickAndroid::AXIS_HAT_Y;
 QMutex JoystickAndroid::m_mutex;
 
 static void clear_jni_exception()
@@ -202,10 +204,33 @@ int JoystickAndroid::_getAxis(int i) {
     return axisValue[ i ];
 }
 
+int  JoystickAndroid::_getAndroidHatAxis(int axisHatCode) {
+    for(int i = 0; i < _axisCount; i++) {
+        if (axisCode[i] == axisHatCode) {
+            return _getAxis(i);
+        }
+    }
+    return 0;
+}
+
 bool JoystickAndroid::_getHat(int hat,int i) {
-    Q_UNUSED(hat);
-    Q_UNUSED(i);
-    return false;
+    // Android supports only one hat button
+    if (hat != 0) {
+        return false;
+    }
+
+    switch (i) {
+        case 0:
+            return _getAndroidHatAxis(AXIS_HAT_Y) < 0;
+        case 1:
+            return _getAndroidHatAxis(AXIS_HAT_Y) > 0;
+        case 2:
+            return _getAndroidHatAxis(AXIS_HAT_X) < 0;
+        case 3:
+            return _getAndroidHatAxis(AXIS_HAT_X) > 0;
+        default:
+            return false;
+    }
 }
 
 static JoystickManager *_manager = nullptr;
@@ -249,6 +274,8 @@ bool JoystickAndroid::init(JoystickManager *manager) {
 
     ACTION_DOWN = QJniObject::getStaticField<jint>("android/view/KeyEvent", "ACTION_DOWN");
     ACTION_UP = QJniObject::getStaticField<jint>("android/view/KeyEvent", "ACTION_UP");
+    AXIS_HAT_X = QJniObject::getStaticField<jint>("android/view/MotionEvent", "AXIS_HAT_X");
+    AXIS_HAT_Y = QJniObject::getStaticField<jint>("android/view/MotionEvent", "AXIS_HAT_Y");
 
     return true;
 }
