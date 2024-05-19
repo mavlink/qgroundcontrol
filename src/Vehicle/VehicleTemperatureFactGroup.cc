@@ -10,60 +10,79 @@
 #include "VehicleSetpointFactGroup.h"
 #include "Vehicle.h"
 
-const char* VehicleTemperatureFactGroup::_temperature1FactName =      "temperature1";
-const char* VehicleTemperatureFactGroup::_temperature2FactName =      "temperature2";
-const char* VehicleTemperatureFactGroup::_temperature3FactName =      "temperature3";
+const char* VehicleTemperatureFactGroup::_temperature1FactName =                        "temperature1";
+const char* VehicleTemperatureFactGroup::_temperature2FactName =                        "temperature2";
+const char* VehicleTemperatureFactGroup::_temperature3FactName =                        "temperature3";
 /* TD test */
-const char* VehicleTemperatureFactGroup::_temperature4FactName =      "temperature4";
+const char* VehicleTemperatureFactGroup::_temperature4FactName =                        "temperature4";
 // needs to be capped this way so it's compatible with old flight logs
-const char* VehicleTemperatureFactGroup::_timeUAVMillisecondsFactName =      "uAVMilliseconds"; 
-const char* VehicleTemperatureFactGroup::_timeUnixMillisecondsFactName =      "timeUnixMilliseconds";
-const char* VehicleTemperatureFactGroup::_timeUAVBootMillisecondsFactName =      "timeUAVBootMilliseconds";
-const char* VehicleTemperatureFactGroup::_altitudeMillimetersMSLFactName =      "altitudeMillimetersMSL";
-const char* VehicleTemperatureFactGroup::_absolutePressureMillibarsFactName =      "absolutePressureMillibars";
-const char* VehicleTemperatureFactGroup::_temperature0KelvinFactName =      "temperature0Kelvin";
-const char* VehicleTemperatureFactGroup::_temperature1KelvinFactName =      "temperature1Kelvin";
-const char* VehicleTemperatureFactGroup::_temperature2KelvinFactName =      "temperature2Kelvin";
-const char* VehicleTemperatureFactGroup::_relativeHumidityFactName =      "relativeHumidity";
-const char* VehicleTemperatureFactGroup::_relativeHumidity0FactName =      "relativeHumidity0";
-const char* VehicleTemperatureFactGroup::_relativeHumidity1FactName =      "relativeHumidity1";
-const char* VehicleTemperatureFactGroup::_relativeHumidity2FactName =      "relativeHumidity2";
-const char* VehicleTemperatureFactGroup::_windSpeedMetersPerSecondFactName =      "windSpeedMetersPerSecond";
-const char* VehicleTemperatureFactGroup::_windBearingDegreesFactName =      "windBearingDegrees";
-const char* VehicleTemperatureFactGroup::_latitudeDegreesE7FactName =      "latitudeDegreesE7";
-const char* VehicleTemperatureFactGroup::_longitudeDegreesE7FactName =      "longitudeDegreesE7";
-const char* VehicleTemperatureFactGroup::_rollRadiansFactName =      "rollRadians";
-const char* VehicleTemperatureFactGroup::_pitchRadiansFactName =      "pitchRadians";
-const char* VehicleTemperatureFactGroup::_yawRadiansFactName =      "yawRadiansFact";
-const char* VehicleTemperatureFactGroup::_rollRateRadiansPerSecondFactName =      "rollRateRadiansPerSecond";
-const char* VehicleTemperatureFactGroup::_pitchRateRadiansPerSecondFactName =      "pitchRateRadiansPerSecond";
-const char* VehicleTemperatureFactGroup::_yawRateRadiansPerSecondFactName =      "yawRateRadiansPerSecond";
-const char* VehicleTemperatureFactGroup::_zVelocityMetersPerSecondInvertedFactName =      "zVelocityMetersPerSecondInverted";
-const char* VehicleTemperatureFactGroup::_xVelocityMetersPerSecondFactName =      "xVelocityMetersPerSecond";
-const char* VehicleTemperatureFactGroup::_yVelocityMetersPerSecondFactName =      "yVelocityMetersPerSecond";
-const char* VehicleTemperatureFactGroup::_groundSpeedMetersPerSecondFactName =      "groundSpeedMetersPerSecond";
-const char* VehicleTemperatureFactGroup::_heartBeatCustomModeFactName =      "heartBeatCustomMode";
-const char* VehicleTemperatureFactGroup::_ascendingFactName =      "ascending";
-const char* VehicleTemperatureFactGroup::_timeUAVSecondsFactName =      "timeUAVSeconds";
-const char* VehicleTemperatureFactGroup::_timeUnixSecondsFactName =      "timeUnixSeconds";
-const char* VehicleTemperatureFactGroup::_timeUAVBootSecondsFactName =      "timeUAVBootSeconds";
-const char* VehicleTemperatureFactGroup::_altitudeMetersMSLFactName =      "altitudeMetersMSL";
-const char* VehicleTemperatureFactGroup::_temperatureCelsiusFactName =      "temperatureCelsius";
-const char* VehicleTemperatureFactGroup::_latitudeDegreesFactName =      "latitudeDegrees";
-const char* VehicleTemperatureFactGroup::_longitudeDegreesFactName =      "longitudeDegrees";
-const char* VehicleTemperatureFactGroup::_rollDegreesFactName =      "rollDegrees";
-const char* VehicleTemperatureFactGroup::_pitchDegreesFactName =      "pitchDegrees";
-const char* VehicleTemperatureFactGroup::_yawDegreesFactName =      "yawDegrees";
-const char* VehicleTemperatureFactGroup::_rollRateDegreesPerSecondFactName =      "rollRateDegreesPerSecond";
-const char* VehicleTemperatureFactGroup::_pitchRateDegreesPerSecondFactName =      "pitchRateDegreesPerSecond";
-const char* VehicleTemperatureFactGroup::_yawRateDegreesPerSecondFactName =      "yawRateDegreesPerSecond";
-const char* VehicleTemperatureFactGroup::_zVelocityMetersPerSecondFactName =      "zVelocityMetersPerSecond";
-const char* VehicleTemperatureFactGroup::_lastStateFactName =      "lastState";
-const char* VehicleTemperatureFactGroup::_ascentsFactName =      "ascents";
-
+const char* VehicleTemperatureFactGroup::_timeUAVMillisecondsFactName =                 "uAVMilliseconds";
+const char* VehicleTemperatureFactGroup::_timeUnixMillisecondsFactName =                "timeUnixMilliseconds";
+const char* VehicleTemperatureFactGroup::_timeUAVBootMillisecondsFactName =             "timeUAVBootMilliseconds";
+const char* VehicleTemperatureFactGroup::_altitudeMillimetersMSLFactName =              "altitudeMillimetersMSL";
+const char* VehicleTemperatureFactGroup::_absolutePressureMillibarsFactName =           "absolutePressureMillibars";
+const char* VehicleTemperatureFactGroup::_temperature0KelvinFactName =                  "temperature0Kelvin";
+const char* VehicleTemperatureFactGroup::_temperature1KelvinFactName =                  "temperature1Kelvin";
+const char* VehicleTemperatureFactGroup::_temperature2KelvinFactName =                  "temperature2Kelvin";
+const char* VehicleTemperatureFactGroup::_relativeHumidityFactName =                    "relativeHumidity";
+const char* VehicleTemperatureFactGroup::_relativeHumidity0FactName =                   "relativeHumidity0";
+const char* VehicleTemperatureFactGroup::_relativeHumidity1FactName =                   "relativeHumidity1";
+const char* VehicleTemperatureFactGroup::_relativeHumidity2FactName =                   "relativeHumidity2";
+const char* VehicleTemperatureFactGroup::_windSpeedMetersPerSecondFactName =            "windSpeedMetersPerSecond";
+const char* VehicleTemperatureFactGroup::_windBearingDegreesFactName =                  "windBearingDegrees";
+const char* VehicleTemperatureFactGroup::_latitudeDegreesE7FactName =                   "latitudeDegreesE7";
+const char* VehicleTemperatureFactGroup::_longitudeDegreesE7FactName =                  "longitudeDegreesE7";
+const char* VehicleTemperatureFactGroup::_rollRadiansFactName =                         "rollRadians";
+const char* VehicleTemperatureFactGroup::_pitchRadiansFactName =                        "pitchRadians";
+const char* VehicleTemperatureFactGroup::_yawRadiansFactName =                          "yawRadiansFact";
+const char* VehicleTemperatureFactGroup::_rollRateRadiansPerSecondFactName =            "rollRateRadiansPerSecond";
+const char* VehicleTemperatureFactGroup::_pitchRateRadiansPerSecondFactName =           "pitchRateRadiansPerSecond";
+const char* VehicleTemperatureFactGroup::_yawRateRadiansPerSecondFactName =             "yawRateRadiansPerSecond";
+const char* VehicleTemperatureFactGroup::_zVelocityMetersPerSecondInvertedFactName =    "zVelocityMetersPerSecondInverted";
+const char* VehicleTemperatureFactGroup::_xVelocityMetersPerSecondFactName =            "xVelocityMetersPerSecond";
+const char* VehicleTemperatureFactGroup::_yVelocityMetersPerSecondFactName =            "yVelocityMetersPerSecond";
+const char* VehicleTemperatureFactGroup::_groundSpeedMetersPerSecondFactName =          "groundSpeedMetersPerSecond";
+const char* VehicleTemperatureFactGroup::_heartBeatCustomModeFactName =                 "heartBeatCustomMode";
+const char* VehicleTemperatureFactGroup::_ascendingFactName =                           "ascending";
+const char* VehicleTemperatureFactGroup::_timeUAVSecondsFactName =                      "timeUAVSeconds";
+const char* VehicleTemperatureFactGroup::_timeUnixSecondsFactName =                     "timeUnixSeconds";
+const char* VehicleTemperatureFactGroup::_timeUAVBootSecondsFactName =                  "timeUAVBootSeconds";
+const char* VehicleTemperatureFactGroup::_altitudeMetersMSLFactName =                   "altitudeMetersMSL";
+const char* VehicleTemperatureFactGroup::_temperatureCelsiusFactName =                  "temperatureCelsius";
+const char* VehicleTemperatureFactGroup::_latitudeDegreesFactName =                     "latitudeDegrees";
+const char* VehicleTemperatureFactGroup::_longitudeDegreesFactName =                    "longitudeDegrees";
+const char* VehicleTemperatureFactGroup::_rollDegreesFactName =                         "rollDegrees";
+const char* VehicleTemperatureFactGroup::_pitchDegreesFactName =                        "pitchDegrees";
+const char* VehicleTemperatureFactGroup::_yawDegreesFactName =                          "yawDegrees";
+const char* VehicleTemperatureFactGroup::_rollRateDegreesPerSecondFactName =            "rollRateDegreesPerSecond";
+const char* VehicleTemperatureFactGroup::_pitchRateDegreesPerSecondFactName =           "pitchRateDegreesPerSecond";
+const char* VehicleTemperatureFactGroup::_yawRateDegreesPerSecondFactName =             "yawRateDegreesPerSecond";
+const char* VehicleTemperatureFactGroup::_zVelocityMetersPerSecondFactName =            "zVelocityMetersPerSecond";
+const char* VehicleTemperatureFactGroup::_lastStateFactName =                           "lastState";
+const char* VehicleTemperatureFactGroup::_ascentsFactName =                             "ascents";
+/* Altitude Level message */
+const char* VehicleTemperatureFactGroup::_aslFactName =                                 "asl";
+const char* VehicleTemperatureFactGroup::_timeFactName =                                "time";
+const char* VehicleTemperatureFactGroup::_pressureFactName =                            "pressure";
+const char* VehicleTemperatureFactGroup::_airTempFactName =                             "airTemp";
+const char* VehicleTemperatureFactGroup::_relHumFactName =                              "relHum";
+const char* VehicleTemperatureFactGroup::_windSpeedFactName =                           "windSpeed";
+const char* VehicleTemperatureFactGroup::_windDirectionFactName =                       "windDirection";
+const char* VehicleTemperatureFactGroup::_latitudeFactName =                            "latitude";
+const char* VehicleTemperatureFactGroup::_longitudeFactName =                           "longitude";
+const char* VehicleTemperatureFactGroup::_rollFactName =                                "roll";
+const char* VehicleTemperatureFactGroup::_rollRateFactName =                            "rollRate";
+const char* VehicleTemperatureFactGroup::_pitchFactName =                               "pitch";
+const char* VehicleTemperatureFactGroup::_pitchRateFactName =                           "pitchRate";
+const char* VehicleTemperatureFactGroup::_yawFactName =                                 "yaw";
+const char* VehicleTemperatureFactGroup::_yawRateFactName =                             "yawRate";
+const char* VehicleTemperatureFactGroup::_ascentRateFactName =                          "ascentRate";
+const char* VehicleTemperatureFactGroup::_speedOverGroundFactName =                     "speedOverGround";
+const char* VehicleTemperatureFactGroup::_ALMIsProcessedFactName =                      "ALMIsProcessed";
+const char* VehicleTemperatureFactGroup::_updateFactName =                             "update";
 
 VehicleTemperatureFactGroup::VehicleTemperatureFactGroup(QObject* parent)
-    : FactGroup(1000, ":/json/Vehicle/TemperatureFact.json", parent)
+    : FactGroup(1000, ":/json/Vehicle/TemperatureFact.json", parent, true)
     , _temperature1Fact    (0, _temperature1FactName,     FactMetaData::valueTypeDouble)
     , _temperature2Fact    (0, _temperature2FactName,     FactMetaData::valueTypeDouble)
     , _temperature3Fact    (0, _temperature3FactName,     FactMetaData::valueTypeDouble)
@@ -113,6 +132,26 @@ VehicleTemperatureFactGroup::VehicleTemperatureFactGroup(QObject* parent)
     , _zVelocityMetersPerSecondFact    (0, _zVelocityMetersPerSecondFactName,     FactMetaData::valueTypeFloat)
     , _lastStateFact    (0, _lastStateFactName,     FactMetaData::valueTypeBool)
     , _ascentsFact    (0, _ascentsFactName,     FactMetaData::valueTypeUint32)
+    /* Altitude Level message */
+    , _aslFact    (0, _aslFactName,     FactMetaData::valueTypeFloat)
+    , _timeFact    (0, _timeFactName,     FactMetaData::valueTypeDouble)
+    , _pressureFact    (0, _pressureFactName,     FactMetaData::valueTypeFloat)
+    , _airTempFact    (0, _airTempFactName,     FactMetaData::valueTypeFloat)
+    , _relHumFact    (0, _relHumFactName,     FactMetaData::valueTypeFloat)
+    , _windSpeedFact    (0, _windSpeedFactName,     FactMetaData::valueTypeFloat)
+    , _windDirectionFact    (0, _windDirectionFactName,     FactMetaData::valueTypeFloat)
+    , _latitudeFact    (0, _latitudeFactName,     FactMetaData::valueTypeDouble)
+    , _longitudeFact    (0, _longitudeFactName,     FactMetaData::valueTypeDouble)
+    , _rollFact    (0, _rollFactName,     FactMetaData::valueTypeFloat)
+    , _rollRateFact    (0, _rollRateFactName,     FactMetaData::valueTypeFloat)
+    , _pitchFact    (0, _pitchFactName,     FactMetaData::valueTypeFloat)
+    , _pitchRateFact    (0, _pitchRateFactName,     FactMetaData::valueTypeFloat)
+    , _yawFact    (0, _yawFactName,     FactMetaData::valueTypeFloat)
+    , _yawRateFact    (0, _yawRateFactName,     FactMetaData::valueTypeFloat)
+    , _ascentRateFact    (0, _ascentRateFactName,     FactMetaData::valueTypeFloat)
+    , _speedOverGroundFact    (0, _speedOverGroundFactName,     FactMetaData::valueTypeFloat)
+    , _ALMIsProcessedFact    (0, _ALMIsProcessedFactName,     FactMetaData::valueTypeBool)
+    , _updateFact    (0, _updateFactName,     FactMetaData::valueTypeInt32)
 {
     _addFact(&_temperature1Fact,       _temperature1FactName);
     _addFact(&_temperature2Fact,       _temperature2FactName);
@@ -163,6 +202,26 @@ VehicleTemperatureFactGroup::VehicleTemperatureFactGroup(QObject* parent)
     _addFact(&_zVelocityMetersPerSecondFact,       _zVelocityMetersPerSecondFactName);
     _addFact(&_lastStateFact,       _lastStateFactName);
     _addFact(&_ascentsFact,       _ascentsFactName);
+    /* Altitude Level message */
+    _addFact(&_aslFact,       _aslFactName);
+    _addFact(&_timeFact,       _timeFactName);
+    _addFact(&_pressureFact,       _pressureFactName);
+    _addFact(&_airTempFact,       _airTempFactName);
+    _addFact(&_relHumFact,       _relHumFactName);
+    _addFact(&_windSpeedFact,       _windSpeedFactName);
+    _addFact(&_windDirectionFact,       _windDirectionFactName);
+    _addFact(&_latitudeFact,       _latitudeFactName);
+    _addFact(&_longitudeFact,       _longitudeFactName);
+    _addFact(&_rollFact,       _rollFactName);
+    _addFact(&_rollRateFact,       _rollRateFactName);
+    _addFact(&_pitchFact,       _pitchFactName);
+    _addFact(&_pitchRateFact,       _pitchRateFactName);
+    _addFact(&_yawFact,       _yawFactName);
+    _addFact(&_yawRateFact,       _yawRateFactName);
+    _addFact(&_ascentRateFact,       _ascentRateFactName);
+    _addFact(&_speedOverGroundFact,       _speedOverGroundFactName);
+    _addFact(&_ALMIsProcessedFact,       _ALMIsProcessedFactName);
+    _addFact(&_updateFact,       _updateFactName);
 
     // Start out as not available "--.--"
     _temperature1Fact.setRawValue      (qQNaN());
@@ -214,18 +273,51 @@ VehicleTemperatureFactGroup::VehicleTemperatureFactGroup(QObject* parent)
     _zVelocityMetersPerSecondFact.setRawValue      (qQNaN());
     _lastStateFact.setRawValue      (false);
     _ascentsFact.setRawValue      (std::numeric_limits<unsigned int>::quiet_NaN());
+    /* Altitude Level message */
+    _aslFact.setRawValue      (qQNaN());
+    _timeFact.setRawValue      (qQNaN());
+    _pressureFact.setRawValue      (qQNaN());
+    _airTempFact.setRawValue      (qQNaN());
+    _relHumFact.setRawValue      (qQNaN());
+    _windSpeedFact.setRawValue      (qQNaN());
+    _windDirectionFact.setRawValue      (qQNaN());
+    _latitudeFact.setRawValue      (qQNaN());
+    _longitudeFact.setRawValue      (qQNaN());
+    _rollFact.setRawValue      (qQNaN());
+    _rollRateFact.setRawValue      (qQNaN());
+    _pitchFact.setRawValue      (qQNaN());
+    _pitchRateFact.setRawValue      (qQNaN());
+    _yawFact.setRawValue      (qQNaN());
+    _yawRateFact.setRawValue      (qQNaN());
+    _ascentRateFact.setRawValue      (qQNaN());
+    _speedOverGroundFact.setRawValue      (qQNaN());
+    _ALMIsProcessedFact.setRawValue      (true);
+    _updateFact.setRawValue      (std::numeric_limits<signed int>::quiet_NaN());
 }
 
 void VehicleTemperatureFactGroup::handleMessage(Vehicle* /* vehicle */, mavlink_message_t& message)
 {
-    /* TD test */
     balancer.update(&message, timeUAVMilliseconds(), timeUnixMilliseconds(), timeUAVBootMilliseconds(), altitudeMillimetersMSL(), absolutePressureMillibars(),
                     temperature0Kelvin(), temperature1Kelvin(), temperature2Kelvin(), relativeHumidity(), relativeHumidity0(), relativeHumidity1(), relativeHumidity2(),
                     windSpeedMetersPerSecond(), windBearingDegrees(), latitudeDegreesE7(), longitudeDegreesE7(), rollRadians(), pitchRadians(), yawRadians(),
                     rollRateRadiansPerSecond(), pitchRateRadiansPerSecond(), yawRateRadiansPerSecond(), zVelocityMetersPerSecondInverted(), xVelocityMetersPerSecond(),
                     yVelocityMetersPerSecond(), groundSpeedMetersPerSecond(), heartBeatCustomMode(), ascending(), timeUAVSeconds(), timeUnixSeconds(),
                     timeUAVBootSeconds(), altitudeMetersMSL(), temperatureCelsius(), latitudeDegrees(), longitudeDegrees(), rollDegrees(), pitchDegrees(),
-                    yawDegrees(), rollRateDegreesPerSecond(), pitchRateDegreesPerSecond(), yawRateDegreesPerSecond(), zVelocityMetersPerSecond(), lastState(), ascents());
+                    yawDegrees(), rollRateDegreesPerSecond(), pitchRateDegreesPerSecond(), yawRateDegreesPerSecond(), zVelocityMetersPerSecond(), lastState(),
+                    ascents());
+
+    switch(balancer.updateALM()){
+    case DataBalancer::DATA_NOT_INITIALIZED:
+        break;
+    case DataBalancer::NOT_ASCENDING:
+        break;
+    case DataBalancer::ALTITUDE_CHANGE_TOO_SMALL:
+        break;
+    case DataBalancer::SUCCESS:
+        balancer.onALMUpdate(asl(), time(), pressure(), airTemp(), relHum(), windSpeed(), windDirection(), latitude(), longitude(),
+                             roll(), rollRate(), pitch(), pitchRate(), yaw(), yawRate(), ascentRate(), speedOverGround(), update());
+        break;
+    }
 
     switch (message.msgid) {
     case MAVLINK_MSG_ID_SCALED_PRESSURE:

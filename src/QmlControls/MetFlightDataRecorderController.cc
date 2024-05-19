@@ -23,6 +23,7 @@ MetFlightDataRecorderController::MetFlightDataRecorderController(QQuickItem* par
 {
     connect(this, &MetFlightDataRecorderController::flightFileNameChanged, qgcApp()->toolbox()->metDataLogManager(), &MetDataLogManager::setFlightFileName);
     connect(&_altLevelMsgTimer, &QTimer::timeout, this, &MetFlightDataRecorderController::addAltLevelMsg);
+    /* TAD 4/24/24 Changed this to 20hz instead of 1hz */
     _altLevelMsgTimer.start(1000);
 }
 
@@ -38,22 +39,36 @@ void MetFlightDataRecorderController::addAltLevelMsg()
     if(!factGroup) {
         return;
     }
+    /* TAD 4/24/24 break if the current ALM has already been processed */
+    QString s = factGroup->getFact("update")->rawValueString();
+
+    if (s != QString("1")){
+        return;
+    }
 
     // // truncate time string to nearest second
-    QString time = factGroup->getFact("timeUnixSeconds")->rawValueString();
+    /* TAD 4/24/24 Changed these to reference the new ALM facts */
+    QString time = factGroup->getFact("time")->rawValueString();
     if(time.indexOf('.') != -1) {
         time.truncate(time.indexOf('.'));
     }
 
     tempAltLevelMsg_t* tempAltLevelMsg = new tempAltLevelMsg_t();
-    tempAltLevelMsg->altitude         = factGroup->getFact("altitudeMetersMSL"        )->rawValueString();
+    tempAltLevelMsg->altitude         = factGroup->getFact("asl"        )->rawValueString();
     tempAltLevelMsg->time             = time;
-    tempAltLevelMsg->pressure         = factGroup->getFact("absolutePressureMillibars")->rawValueString();
-    tempAltLevelMsg->temperature      = factGroup->getFact("temperatureCelsius"       )->rawValueString();
-    tempAltLevelMsg->relativeHumidity = factGroup->getFact("relativeHumidity"         )->rawValueString();
-    tempAltLevelMsg->windSpeed        = factGroup->getFact("windSpeedMetersPerSecond" )->rawValueString();
-    tempAltLevelMsg->windDirection    = factGroup->getFact("windBearingDegrees"       )->rawValueString();
+    tempAltLevelMsg->pressure         = factGroup->getFact("pressure")->rawValueString();
+    tempAltLevelMsg->temperature      = factGroup->getFact("airTemp"       )->rawValueString();
+    tempAltLevelMsg->relativeHumidity = factGroup->getFact("relHum"         )->rawValueString();
+    tempAltLevelMsg->windSpeed        = factGroup->getFact("windSpeed" )->rawValueString();
+    //tempAltLevelMsg->windSpeed        =s;
+    tempAltLevelMsg->windDirection    = factGroup->getFact("windDirection"       )->rawValueString();
     _tempAltLevelMsgList.append(tempAltLevelMsg);
+
+    /* TAD 4/24/24 record that we processed the current ALM */
+
+
+
+    factGroup->getFact("update")->setRawValue(0);
 
     emit tempAltLevelMsgListChanged();
 }
