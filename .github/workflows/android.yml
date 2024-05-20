@@ -80,41 +80,23 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - uses: actions/checkout@v4
-        with:
-          repository: jurplel/install-qt-action
-          ref: master
-          path: install-qt-action
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: install-qt-action/action/
-
-      - name: Build jurplel/install-qt-action
-        run: |
-          cd install-qt-action/action/
-          npm ci || npm install
-          npm run build
-        shell: bash
-
       - name: Install Qt6 for Linux
-        uses: ./install-qt-action/action/
+        uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
+          aqtversion: ==3.1.*
           host: linux
           target: desktop
           dir: ${{ runner.temp }}
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
           cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
-          tools: 'tools_cmake'
 
       - name: Install Qt6 for Android (armv7)
-        uses: ./install-qt-action/action/
+        uses: jurplel/install-qt-action@v4
         if: contains( env.QT_ANDROID_ABIS, 'armeabi-v7a')
         with:
           version: ${{ env.QT_VERSION }}
+          aqtversion: ==3.1.*
           host: linux
           target: android
           arch: android_armv7
@@ -124,10 +106,11 @@ jobs:
           cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
 
       - name: Install Qt6 for Android (arm64_v8a)
-        uses: ./install-qt-action/action/
+        uses: jurplel/install-qt-action@v4
         if: contains( env.QT_ANDROID_ABIS, 'arm64-v8a')
         with:
           version: ${{ env.QT_VERSION }}
+          aqtversion: ==3.1.*
           host: linux
           target: android
           arch: android_arm64_v8a
@@ -137,10 +120,11 @@ jobs:
           cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
 
       - name: Install Qt6 for Android (x86)
-        uses: ./install-qt-action/action/
+        uses: jurplel/install-qt-action@v4
         if: contains( env.QT_ANDROID_ABIS, 'x86')
         with:
           version: ${{ env.QT_VERSION }}
+          aqtversion: ==3.1.*
           host: linux
           target: android
           arch: android_x86
@@ -150,10 +134,11 @@ jobs:
           cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
 
       - name: Install Qt6 for Android (x86_64)
-        uses: ./install-qt-action/action/
+        uses: jurplel/install-qt-action@v4
         if: contains( env.QT_ANDROID_ABIS, 'x86_64')
         with:
           version: ${{ env.QT_VERSION }}
+          aqtversion: ==3.1.*
           host: linux
           target: android
           arch: android_x86_64
