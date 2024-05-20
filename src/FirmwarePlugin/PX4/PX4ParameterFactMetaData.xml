@@ -7604,6 +7604,16 @@
       <short_desc>PX4 Flow Optical Flow</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter name="SENS_EN_SCH16T" default="0" type="INT32">
+      <short_desc>Murata SCH16T IMU (external SPI)</short_desc>
+      <min>0</min>
+      <max>1</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Enabled</value>
+      </values>
+    </parameter>
     <parameter name="SENS_EN_SDP3X" default="0" type="INT32" boolean="true">
       <short_desc>Sensirion SDP3X differential pressure sensor (external I2C)</short_desc>
       <reboot_required>true</reboot_required>
