@@ -310,8 +310,11 @@ GimbalController::_checkComplete(Gimbal& gimbal, uint8_t compid)
         _requestGimbalInformation(compid);
         --gimbal._requestInformationRetries;
     }
-
-    if (!gimbal._receivedStatus && gimbal._requestStatusRetries > 0) {
+    // Limit to 1 second between set message interfacl requests
+    static qint64 lastRequestStatusMessage = 0;
+    qint64 now = QDateTime::currentMSecsSinceEpoch();
+    if (!gimbal._receivedStatus && gimbal._requestStatusRetries > 0 && now - lastRequestStatusMessage > 1000) {
+        lastRequestStatusMessage = now;
         _vehicle->sendMavCommand(compid,
                                  MAV_CMD_SET_MESSAGE_INTERVAL,
                                  false /* no error */,
