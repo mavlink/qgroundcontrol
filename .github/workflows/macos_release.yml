@@ -29,7 +29,7 @@ env:
 
 jobs:
   build:
-    runs-on:  macos-latest
+    runs-on:  macos-12
 
     steps:
       - name: Checkout repo
@@ -46,11 +46,12 @@ jobs:
         uses: jurplel/install-qt-action@v3
         with:
           version:      ${{ env.QT_VERSION }}
+          aqtversion:   ==3.1.*
           host:         mac
           target:       desktop
           dir:          ${{ runner.temp }}
           modules:      qtcharts
-          setup-python: false
+          setup-python: true
 
       - name: Install Gstreamer
         run: |
