@@ -730,6 +730,36 @@
       <decimal>8</decimal>
     </parameter>
   </group>
+  <group name="CDCACM">
+    <parameter name="SYS_USB_AUTO" default="2" type="INT32">
+      <short_desc>Enable USB autostart</short_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Auto-detect</value>
+        <value code="2">MAVLink</value>
+      </values>
+    </parameter>
+    <parameter name="USB_MAV_MODE" default="2" type="INT32">
+      <short_desc>Specify USB MAVLink mode</short_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">normal</value>
+        <value code="1">custom</value>
+        <value code="2">onboard</value>
+        <value code="3">osd</value>
+        <value code="4">magic</value>
+        <value code="5">config</value>
+        <value code="6">iridium</value>
+        <value code="7">minimal</value>
+        <value code="8">extvision</value>
+        <value code="9">extvisionmin</value>
+        <value code="10">gimbal</value>
+        <value code="11">onboard_low_bandwidth</value>
+        <value code="12">uavionix</value>
+      </values>
+    </parameter>
+  </group>
   <group name="Camera Capture">
     <parameter name="CAM_CAP_DELAY" default="0.0" type="FLOAT">
       <short_desc>Camera strobe delay</short_desc>
