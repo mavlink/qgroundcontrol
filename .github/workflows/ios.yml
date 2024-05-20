@@ -27,40 +27,22 @@ jobs:
           fetch-tags: true
           fetch-depth: 0
 
-      - uses: actions/checkout@v4
-        with:
-          repository: jurplel/install-qt-action
-          ref: master
-          path: install-qt-action
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: install-qt-action/action/
-
-      - name: Build jurplel/install-qt-action
-        run: |
-          cd install-qt-action/action/
-          npm ci || npm install
-          npm run build
-        shell: bash
-
       - name: Install Qt6 for MacOS
-        uses: ./install-qt-action/action/
+        uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
+          aqtversion: ==3.1.*
           host: mac
           target: desktop
           dir: ${{ runner.temp }}
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
           cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
-          tools: 'tools_cmake'
 
       - name: Install Qt6 for iOS
-        uses: ./install-qt-action/action/
+        uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
+          aqtversion: ==3.1.*
           host: mac
           target: ios
           dir: ${{ runner.temp }}
