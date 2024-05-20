@@ -4,6 +4,7 @@
 #include "Vehicle.h"
 #include "QGCApplication.h"
 #include "SettingsManager.h"
+#include "ParameterManager.h"
 
 #include <Eigen/Eigen>
 
@@ -108,6 +109,11 @@ GimbalController::setActiveGimbal(Gimbal* gimbal)
 void
 GimbalController::_mavlinkMessageReceived(const mavlink_message_t& message)
 {
+    // Don't proceed until parameters are ready, otherwise the gimbal controller handshake
+    // could potentially not work due to the high traffic for parameters, mission download, etc
+    if (!_vehicle->parameterManager()->parametersReady() ) {
+        return;
+    }
     switch (message.msgid) {
         case MAVLINK_MSG_ID_HEARTBEAT:
             _handleHeartbeat(message);
