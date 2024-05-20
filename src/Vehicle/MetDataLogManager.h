@@ -14,6 +14,7 @@ class MetDataLogManager : public QGCTool
     
     public slots:
         void setFlightFileName(QString flightName);
+        void setAscentNumber(int ascentNumber);
 
     private:
 
@@ -29,14 +30,14 @@ class MetDataLogManager : public QGCTool
         QFile               _metAlmCsvFile;
 
         QString             _flightName = "unnamed flight";
-        int                 ascentNumber = 1;
+        int                 _ascentNumber = 0;
 
         QString             _latestRawTimestamp = "0";
         QString             _latestAlmTimestamp = "0";
 
         QStringList metAlmFactHeaders = {
-            "Time",
             "ASL",
+            "Time",
             "Pressure",
             "Air Temp",
             "Rel Hum",
@@ -55,8 +56,8 @@ class MetDataLogManager : public QGCTool
         };
 
         QStringList metAlmFactUnits = {
-            "s",
             "m",
+            "s",
             "mB",
             "C",
             "%",
@@ -75,23 +76,23 @@ class MetDataLogManager : public QGCTool
         };
 
         QStringList metAlmFactNames = {
-            "timeUnixSeconds",
-            "altitudeMetersMSL",
-            "absolutePressureMillibars",
-            "temperatureCelsius",
-            "relativeHumidity",
-            "windSpeedMetersPerSecond",
-            "windBearingDegrees",
-            "latitudeDegrees",
-            "longitudeDegrees",
-            "rollDegrees",
-            "rollRateDegreesPerSecond",
-            "pitchDegrees",
-            "pitchRateDegreesPerSecond",
-            "yawDegrees",
-            "yawRateDegreesPerSecond",
-            "zVelocityMetersPerSecond",
-            "groundSpeedMetersPerSecond"
+            "asl",
+            "time",
+            "pressure",
+            "airTemp",
+            "relHum",
+            "windSpeed",
+            "windDirection",
+            "latitude",
+            "longitude",
+            "roll",
+            "rollRate",
+            "pitch",
+            "pitchRate",
+            "yaw",
+            "yawRate",
+            "ascentRate",
+            "speedOverGround"
         };
 
         QStringList metRawFactHeaders = {

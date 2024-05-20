@@ -23,8 +23,7 @@ MetFlightDataRecorderController::MetFlightDataRecorderController(QQuickItem* par
 {
     connect(this, &MetFlightDataRecorderController::flightFileNameChanged, qgcApp()->toolbox()->metDataLogManager(), &MetDataLogManager::setFlightFileName);
     connect(&_altLevelMsgTimer, &QTimer::timeout, this, &MetFlightDataRecorderController::addAltLevelMsg);
-    /* TAD 4/24/24 Changed this to 20hz instead of 1hz */
-    _altLevelMsgTimer.start(1000);
+    _altLevelMsgTimer.start(20); // below nyquist rate for 50ms balancedDataFrequency to ensure no data is missed
 }
 
 void MetFlightDataRecorderController::addAltLevelMsg()
@@ -46,28 +45,41 @@ void MetFlightDataRecorderController::addAltLevelMsg()
         return;
     }
 
-    // // truncate time string to nearest second
-    /* TAD 4/24/24 Changed these to reference the new ALM facts */
-    QString time = factGroup->getFact("time")->rawValueString();
-    if(time.indexOf('.') != -1) {
-        time.truncate(time.indexOf('.'));
+    // only capture ALM data during ascent
+    if(factGroup->getFact("ascending")->rawValue().toBool() == false) {
+        return;
     }
 
+    //update ascent number
+    if(factGroup->getFact("ascents")->rawValue().toInt() != ascentNumber) {
+        ascentNumber = factGroup->getFact("ascents")->rawValue().toInt();
+        emit ascentNumberChanged();
+        // clear previous data points
+        _tempAltLevelMsgList.clear();
+    }
+
+    // store exact time to compare with previous time, skip logging if same
+    QString time = factGroup->getFact("time")->rawValueString();
+    if(QString::compare(prevTime, time) == 0) {
+        return;
+    }
+    prevTime = time;
+    QString displayTime = time;
+    // truncate time string to nearest second
+    if(displayTime.indexOf('.') != -1) {
+        displayTime.truncate(time.indexOf('.'));
+    }
     tempAltLevelMsg_t* tempAltLevelMsg = new tempAltLevelMsg_t();
-    tempAltLevelMsg->altitude         = factGroup->getFact("asl"        )->rawValueString();
-    tempAltLevelMsg->time             = time;
-    tempAltLevelMsg->pressure         = factGroup->getFact("pressure")->rawValueString();
-    tempAltLevelMsg->temperature      = factGroup->getFact("airTemp"       )->rawValueString();
-    tempAltLevelMsg->relativeHumidity = factGroup->getFact("relHum"         )->rawValueString();
-    tempAltLevelMsg->windSpeed        = factGroup->getFact("windSpeed" )->rawValueString();
-    //tempAltLevelMsg->windSpeed        =s;
-    tempAltLevelMsg->windDirection    = factGroup->getFact("windDirection"       )->rawValueString();
+    tempAltLevelMsg->altitude         = factGroup->getFact("asl"          )->rawValueString();
+    tempAltLevelMsg->time             = displayTime;
+    tempAltLevelMsg->pressure         = factGroup->getFact("pressure"     )->rawValueString();
+    tempAltLevelMsg->temperature      = factGroup->getFact("airTemp"      )->rawValueString();
+    tempAltLevelMsg->relativeHumidity = factGroup->getFact("relHum"       )->rawValueString();
+    tempAltLevelMsg->windSpeed        = factGroup->getFact("windSpeed"    )->rawValueString();
+    tempAltLevelMsg->windDirection    = factGroup->getFact("windDirection")->rawValueString();
     _tempAltLevelMsgList.append(tempAltLevelMsg);
 
-    /* TAD 4/24/24 record that we processed the current ALM */
-
-
-
+    /* record that we processed the current ALM */
     factGroup->getFact("update")->setRawValue(0);
 
     emit tempAltLevelMsgListChanged();

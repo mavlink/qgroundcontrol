@@ -39,7 +39,7 @@ set(COPYRIGHT "Copyright (c) 2018 QGroundControl. All rights reserved.")
 set(IDENTIFIER "io.mavlink.qgroundcontrol")
 
 add_definitions(
-	-DQGC_APPLICATION_NAME="QGroundControl"
+	-DQGC_APPLICATION_NAME="QGroundControl - MetGC"
 	-DQGC_ORG_NAME="QGroundControl.org"
 	-DQGC_ORG_DOMAIN="org.qgroundcontrol"
 	)

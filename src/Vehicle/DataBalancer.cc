@@ -4,6 +4,7 @@
 #include "Vehicle.h"
 #include "QGCApplication.h"
 #include "VehicleTemperatureFactGroup.h"
+#include "MetDataLogManager.h"
 #include <chrono>
 
 #define _CRT_SECURE_NO_WARNINGS
@@ -211,6 +212,7 @@ void DataBalancer::update(const mavlink_message_t* m, Fact* timeUAVMilliseconds,
         createFlightFile(ascents)
         updateGUIAscentsValue(ascents)
         */
+        qgcApp()->toolbox()->metDataLogManager()->setAscentNumber(data.ascents);
     }
 
     if (!data.ascending && data.lastState){
@@ -221,6 +223,7 @@ void DataBalancer::update(const mavlink_message_t* m, Fact* timeUAVMilliseconds,
 
     data.lastState = data.ascending;
 
+    ascents->setRawValue(data.ascents);
     timeUAVMilliseconds->setRawValue(data.timeUAVMilliseconds);
     timeUnixMilliseconds->setRawValue(data.timeUnixMilliseconds);
     timeUAVBootMilliseconds->setRawValue(data.timeUAVBootMilliseconds);

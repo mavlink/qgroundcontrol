@@ -27,9 +27,14 @@ Rectangle {
     color:              qgcPal.window
     radius:             ScreenTools.defaultFontPixelWidth / 2
 
-
     property real _toolsMargin:           ScreenTools.defaultFontPixelWidth
     property real _fontSize:              ScreenTools.defaultFontPointSize
+
+    // mouse area to prevent clicks from going through to the map
+    MouseArea {
+        anchors.fill: parent
+        onClicked: {}
+    }
 
     MetFlightDataRecorder {
         id:             metFlightData

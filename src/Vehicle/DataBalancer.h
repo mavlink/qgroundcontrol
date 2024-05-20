@@ -96,7 +96,7 @@ private:
 
     uint64_t UAVBootMilliseconds = 0; /* UAV boot time from Unix reference frame */    
     uint64_t lastUpdate = UINT64_MAX; /* time since last IMetDataRaw creation */
-    uint32_t balancedDataFrequency = 200; /* min milliseconds between BalancedDataRecord creation */
+    uint32_t balancedDataFrequency = 50; /* min milliseconds between BalancedDataRecord creation */
 
     /* IMetData helpers */
     size_t cassTemp0C = 0;
