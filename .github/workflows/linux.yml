@@ -136,3 +136,14 @@ jobs:
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           source: ''
+
+      - name: Post Artifacts to PR
+        uses: thollander/actions-comment-pull-request@v2
+        if: >
+          github.event.workflow_run.event == 'pull_request' &&
+          github.event.workflow_run.conclusion == 'success'
+        with:
+          GITHUB_TOKEN: ${{ secrets.PX4BUILDBOT_ACCESSTOKEN }}
+          comment_tag: execution
+          reactions: rocket
+          filePath: ${{ env. ARTIFACT }}
