@@ -146,4 +146,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.PX4BUILDBOT_ACCESSTOKEN }}
           comment_tag: execution
           reactions: rocket
-          filePath: ${{ env. ARTIFACT }}
+          filePath: ${{ runner.temp }}/shadow_build_dir/${{ env. ARTIFACT }}
