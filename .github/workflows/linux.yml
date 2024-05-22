@@ -22,6 +22,8 @@ on:
       - '.github/workflows/windows.yml'
 
 jobs:
+  permissions:
+    pull-requests: write
   build:
     runs-on: ubuntu-20.04
 
@@ -139,8 +141,6 @@ jobs:
 
       - name: Post Artifacts to PR
         uses: thollander/actions-comment-pull-request@v2
-        permissions:
-          pull-requests: write
         #if: >
           #github.event.workflow_run.event == 'pull_request' &&
           #github.event.workflow_run.conclusion == 'success'
