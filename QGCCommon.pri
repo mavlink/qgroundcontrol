@@ -233,6 +233,10 @@ AndroidBuild {
         DEV_VERSION = $$join(DEV_VERSION, "", "0")
     }
 
+    # Use a shell command to strip "rc" and everything after it.
+    # Otherwise rc version tags will break the Android build.
+    PATCH_VERSION = $$system(echo $$PATCH_VERSION | sed 's/rc.*//')
+
     # Bitness for android version number is 66/34 instead of 64/32 in because of a required version number bump screw-up ages ago
     equals(ANDROID_TARGET_ARCH, arm64-v8a)  {
         ANDROID_TRUE_BITNESS = 64
