@@ -160,7 +160,7 @@
 {
     "name":             "asl",
     "shortDesc":        "Altitude (MSL)",
-    "type":             "int32",
+    "type":             "float",
     "decimalPlaces":    1,
     "units":            "m"
 },
