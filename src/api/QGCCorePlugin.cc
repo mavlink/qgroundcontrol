@@ -317,18 +317,21 @@ void QGCCorePlugin::factValueGridCreateDefaultSettings(const QString& defaultSet
         value->setFact("Temperature", "absolutePressureMillibars");
         value->setIcon("");
         value->setText(value->fact()->shortDescription());
+        value->setShowRawValue(true);
         value->setShowUnits(true);
 
         value = column->value<InstrumentValueData*>(rowIndex++);
         value->setFact("Temperature", "temperatureCelsius");
         value->setIcon("");
         value->setText(value->fact()->shortDescription());
+        value->setShowRawValue(true);
         value->setShowUnits(true);
 
         value = column->value<InstrumentValueData*>(rowIndex++);
         value->setFact("Temperature", "relativeHumidity");
         value->setIcon("");
         value->setText(value->fact()->shortDescription());
+        value->setShowRawValue(true);
         value->setShowUnits(true);
 
 
@@ -336,6 +339,7 @@ void QGCCorePlugin::factValueGridCreateDefaultSettings(const QString& defaultSet
         value->setFact("Temperature", "windSpeedMetersPerSecond");
         // value->setIcon("");
         value->setText(value->fact()->shortDescription());
+        value->setShowRawValue(true);
         value->setShowUnits(true);
 
 
@@ -343,6 +347,7 @@ void QGCCorePlugin::factValueGridCreateDefaultSettings(const QString& defaultSet
         value->setFact("Temperature", "windBearingDegrees");
         // value->setIcon("");
         value->setText(value->fact()->shortDescription());
+        value->setShowRawValue(true);
         value->setShowUnits(true);
 
     } else {

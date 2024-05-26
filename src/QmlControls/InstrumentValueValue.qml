@@ -14,7 +14,6 @@ import QtQuick.Controls 2.5
 import QGroundControl               1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.Templates     1.0
-import QGroundControl.Templates     1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Palette       1.0
 
@@ -43,6 +42,11 @@ ColumnLayout {
 
         function valueText() {
             if (instrumentValueData.fact) {
+                if(instrumentValueData.showRawValue) {
+                    let rawValue = instrumentValueData.fact.rawValue;
+                    let formattedValue = isNaN(rawValue) ? "--.--" : rawValue.toFixed(instrumentValueData.fact.decimalPlaces);
+                    return formattedValue + (instrumentValueData.showUnits ? " " + instrumentValueData.fact.rawUnits : "")
+                }
                 return instrumentValueData.fact.enumOrValueString + (instrumentValueData.showUnits ? " " + instrumentValueData.fact.units : "")
             } else {
                 return qsTr("--.--")

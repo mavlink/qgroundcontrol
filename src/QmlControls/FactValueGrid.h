@@ -117,6 +117,7 @@ private:
     static const char* _factNameKey;
     static const char* _textKey;
     static const char* _showUnitsKey;
+    static const char* _showRawValueKey;
     static const char* _iconKey;
     static const char* _rangeTypeKey;
     static const char* _rangeValuesKey;

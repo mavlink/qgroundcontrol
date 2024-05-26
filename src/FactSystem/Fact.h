@@ -61,6 +61,7 @@ public:
     Q_PROPERTY(bool         qgcRebootRequired       READ qgcRebootRequired                                  CONSTANT)
     Q_PROPERTY(QString      shortDescription        READ shortDescription                                   CONSTANT)
     Q_PROPERTY(QString      units                   READ cookedUnits                                        CONSTANT)
+    Q_PROPERTY(QString      rawUnits                READ rawUnits                                           CONSTANT)
     Q_PROPERTY(QVariant     value                   READ cookedValue            WRITE setCookedValue        NOTIFY valueChanged)
     Q_PROPERTY(QVariant     rawValue                READ rawValue               WRITE setRawValue           NOTIFY rawValueChanged)
     Q_PROPERTY(bool         valueEqualsDefault      READ valueEqualsDefault                                 NOTIFY valueChanged)

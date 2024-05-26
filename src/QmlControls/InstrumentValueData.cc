@@ -76,6 +76,7 @@ void InstrumentValueData::clearFact(void)
     _text.clear();
     _icon.clear();
     _showUnits = true;
+    _showRawValue = false;
 
     emit factValueNamesChanged  ();
     emit factChanged            (_fact);
@@ -84,6 +85,7 @@ void InstrumentValueData::clearFact(void)
     emit textChanged            (_text);
     emit iconChanged            (_icon);
     emit showUnitsChanged       (_showUnits);
+    emit showRawValueChanged    (_showRawValue);
 }
 
 void InstrumentValueData::_setFactWorker(void)
@@ -143,6 +145,14 @@ void InstrumentValueData::setShowUnits(bool showUnits)
     if (showUnits != _showUnits) {
         _showUnits = showUnits;
         emit showUnitsChanged(showUnits);
+    }
+}
+
+void InstrumentValueData::setShowRawValue(bool showRawValue)
+{
+    if (showRawValue != _showRawValue) {
+        _showRawValue = showRawValue;
+        emit showRawValueChanged(showRawValue);
     }
 }
 

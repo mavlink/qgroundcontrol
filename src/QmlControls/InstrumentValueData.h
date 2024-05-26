@@ -41,6 +41,7 @@ public:
     Q_PROPERTY(QString              text                READ    text                WRITE setText           NOTIFY textChanged)
     Q_PROPERTY(QString              icon                READ    icon                WRITE setIcon           NOTIFY iconChanged)             ///< If !isEmpty icon will be show instead of label
     Q_PROPERTY(bool                 showUnits           READ    showUnits           WRITE setShowUnits      NOTIFY showUnitsChanged)
+    Q_PROPERTY(bool                 showRawValue        READ    showRawValue                                NOTIFY showRawValueChanged)
     Q_PROPERTY(QStringList          rangeTypeNames      MEMBER _rangeTypeNames                              CONSTANT)
     Q_PROPERTY(RangeType            rangeType           READ    rangeType           WRITE setRangeType      NOTIFY rangeTypeChanged)
     Q_PROPERTY(QVariantList         rangeValues         READ    rangeValues         WRITE setRangeValues    NOTIFY rangeValuesChanged)
@@ -65,6 +66,7 @@ public:
     Fact*           fact                    (void) { return _fact; }
     QString         text                    (void) const { return _text; }
     bool            showUnits               (void) const { return _showUnits; }
+    bool            showRawValue            (void) const { return _showRawValue; }
     QString         icon                    (void) const { return _icon; }
     RangeType       rangeType               (void) const { return _rangeType; }
     QVariantList    rangeValues             (void) const { return _rangeValues; }
@@ -73,6 +75,7 @@ public:
     QVariantList    rangeOpacities          (void) const { return _rangeOpacities; }
     void            setText                 (const QString& text);
     void            setShowUnits            (bool showUnits);
+    void            setShowRawValue         (bool showRawValue);
     void            setIcon                 (const QString& icon);
     void            setRangeType            (RangeType rangeType);
     void            setRangeValues          (const QVariantList& rangeValues);
@@ -89,6 +92,7 @@ signals:
     void factGroupNameChanged   (const QString& factGroup);
     void textChanged            (QString text);
     void showUnitsChanged       (bool showUnits);
+    void showRawValueChanged    (bool showRawValue);
     void iconChanged            (const QString& icon);
     void factGroupNamesChanged  (void);
     void factValueNamesChanged  (void);
@@ -122,6 +126,7 @@ private:
     QString                 _factGroupName;
     QString                 _text;
     bool                    _showUnits =            true;
+    bool                    _showRawValue =         false;
     QString                 _icon;
     QColor                  _currentColor;
     double                  _currentOpacity =       1.0;

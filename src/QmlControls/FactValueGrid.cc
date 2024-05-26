@@ -23,6 +23,7 @@ const char* FactValueGrid::_factGroupNameKey    = "factGroupName";
 const char* FactValueGrid::_factNameKey         = "factName";
 const char* FactValueGrid::_textKey             = "text";
 const char* FactValueGrid::_showUnitsKey        = "showUnits";
+const char* FactValueGrid::_showRawValueKey     = "showRawValue";
 const char* FactValueGrid::_iconKey             = "icon";
 const char* FactValueGrid::_rangeTypeKey        = "rangeType";
 const char* FactValueGrid::_rangeValuesKey      = "rangeValues";
@@ -115,6 +116,7 @@ void FactValueGrid::_saveValueData(QSettings& settings, InstrumentValueData* val
 {
     settings.setValue(_textKey,         value->text());
     settings.setValue(_showUnitsKey,    value->showUnits());
+    settings.setValue(_showRawValueKey, value->showRawValue());
     settings.setValue(_iconKey,         value->icon());
     settings.setValue(_rangeTypeKey,    value->rangeType());
 
@@ -147,10 +149,11 @@ void FactValueGrid::_loadValueData(QSettings& settings, InstrumentValueData* val
         value->setFact(settings.value(_factGroupNameKey).toString(), factName);
     }
 
-    value->setText      (settings.value(_textKey).toString());
-    value->setShowUnits (settings.value(_showUnitsKey, true).toBool());
-    value->setIcon      (settings.value(_iconKey).toString());
-    value->setRangeType (settings.value(_rangeTypeKey, InstrumentValueData::NoRangeInfo).value<InstrumentValueData::RangeType>());
+    value->setText        (settings.value(_textKey).toString());
+    value->setShowUnits   (settings.value(_showUnitsKey, true).toBool());
+    value->setShowRawValue(settings.value(_showRawValueKey, false).toBool());
+    value->setIcon        (settings.value(_iconKey).toString());
+    value->setRangeType   (settings.value(_rangeTypeKey, InstrumentValueData::NoRangeInfo).value<InstrumentValueData::RangeType>());
 
     if (value->rangeType() != InstrumentValueData::NoRangeInfo) {
         value->setRangeValues(settings.value(_rangeValuesKey).value<QVariantList>());
@@ -176,6 +179,7 @@ void FactValueGrid::_connectSaveSignals(InstrumentValueData* value)
     connect(value, &InstrumentValueData::factGroupNameChanged,  this, &FactValueGrid::_saveSettings);
     connect(value, &InstrumentValueData::textChanged,           this, &FactValueGrid::_saveSettings);
     connect(value, &InstrumentValueData::showUnitsChanged,      this, &FactValueGrid::_saveSettings);
+    connect(value, &InstrumentValueData::showRawValueChanged,   this, &FactValueGrid::_saveSettings);
     connect(value, &InstrumentValueData::iconChanged,           this, &FactValueGrid::_saveSettings);
     connect(value, &InstrumentValueData::rangeTypeChanged,      this, &FactValueGrid::_saveSettings);
     connect(value, &InstrumentValueData::rangeValuesChanged,    this, &FactValueGrid::_saveSettings);
