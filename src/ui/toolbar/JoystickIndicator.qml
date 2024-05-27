@@ -22,7 +22,10 @@ Item {
     width:          joystickRow.width * 1.1
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
-    visible:        globals.activeVehicle ? globals.activeVehicle.sub : false
+    // visible:        globals.activeVehicle ? globals.activeVehicle.sub : false
+    // visible:        globals.activeVehicle ? globals.activeVehicle.rover : false
+
+    property bool showIndicator: true
 
 
     Component {
