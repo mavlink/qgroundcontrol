@@ -6,6 +6,7 @@
  * COPYING.md in the root of the source code directory.
  *
  ****************************************************************************/
+#include <iostream>
 
 #include <QTime>
 #include <QDateTime>
@@ -2158,6 +2159,8 @@ bool Vehicle::joystickEnabled() const
 
 void Vehicle::setJoystickEnabled(bool enabled)
 {
+    std::cout << "WTF" << enabled << std::endl;
+
     if (enabled){
         qCDebug(JoystickLog) << "Vehicle " << this->id() << " Joystick Enabled";
     }
