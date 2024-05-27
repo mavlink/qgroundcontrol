@@ -216,9 +216,7 @@ void DataBalancer::update(const mavlink_message_t* m, Fact* timeUAVMilliseconds,
     }
 
     if (!data.ascending && data.lastState){
-        /* This is where we hook in for this.
-        resetDataProcessing()
-        */
+        resetALM();
     }
 
     data.lastState = data.ascending;
@@ -406,6 +404,27 @@ void DataBalancer::onALMUpdate(Fact* asl, Fact* time, Fact* pressure, Fact* airT
     speedOverGround->setRawValue(alm.speedOverGround);
 
     update->setRawValue(1);
+}
+
+void DataBalancer::resetALM(){
+    ALMInit = 0;
+    aslC = 0;
+    timeC = 0;
+    pressureC = 0;
+    airTempC = 0;
+    relHumC = 0;
+    windSpeedC = 0;
+    windDirectionC = 0;
+    latitudeC = 0;
+    longitudeC = 0;
+    rollC = 0;
+    rollRateC = 0;
+    pitchC = 0;
+    pitchRateC = 0;
+    yawC = 0;
+    yawRateC = 0;
+    ascentRateC = 0;
+    speedOverGroundC = 0;
 }
 
 #undef DEGREES

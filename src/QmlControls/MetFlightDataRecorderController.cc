@@ -13,6 +13,7 @@
 #include "QGCCorePlugin.h"
 #include "SettingsManager.h"
 #include <QSettings>
+#include <fstream>
 
 double generateRandomDouble(double lowerBound, double upperBound) {
     double randomValue = lowerBound + static_cast<double>(rand()) / (static_cast<double>(RAND_MAX/(upperBound-lowerBound)));
@@ -28,25 +29,47 @@ MetFlightDataRecorderController::MetFlightDataRecorderController(QQuickItem* par
 
 void MetFlightDataRecorderController::addAltLevelMsg()
 {
+#ifdef _DEBUG
+    std::ofstream logfile("ALM_debug_log.txt", std::ios_base::app);
+    std::time_t now = std::time(nullptr);
+    char buf[100];
+    std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
+    std::string strbuf = std::string(buf);
+
+#endif
 
     Vehicle* _activeVehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
     if(!_activeVehicle || !_activeVehicle->armed()) {
+#ifdef _DEBUG
+        logfile << strbuf << " - NOT_ARMED" << std::endl;
+#endif
         return;
     }
     FactGroup* factGroup = nullptr;
     factGroup = _activeVehicle->getFactGroup("temperature");
     if(!factGroup) {
+#ifdef _DEBUG
+        logfile << strbuf << " - NULL_FACTGROUP" << std::endl;
+#endif
         return;
     }
     /* TAD 4/24/24 break if the current ALM has already been processed */
     QString s = factGroup->getFact("update")->rawValueString();
 
     if (s != QString("1")){
+#ifdef _DEBUG
+        float alt = factGroup->getFact("asl"          )->rawValue().toFloat();
+        logfile << strbuf << " - ALM_NOT_FRESH: " << alt << std::endl;
+#endif
         return;
     }
 
     // only capture ALM data during ascent
     if(factGroup->getFact("ascending")->rawValue().toBool() == false) {
+#ifdef _DEBUG
+        float alt = factGroup->getFact("asl"          )->rawValue().toFloat();
+        logfile << strbuf << " - NOT_ASCENDING: " << alt << std::endl;
+#endif
         return;
     }
 
@@ -61,6 +84,10 @@ void MetFlightDataRecorderController::addAltLevelMsg()
     // store exact time to compare with previous time, skip logging if same
     QString time = factGroup->getFact("time")->rawValueString();
     if(QString::compare(prevTime, time) == 0) {
+#ifdef _DEBUG
+        float alt = factGroup->getFact("asl"          )->rawValue().toFloat();
+        logfile << strbuf << " - TOO_CLOSE_TIME: " << alt << std::endl;
+#endif
         return;
     }
     prevTime = time;

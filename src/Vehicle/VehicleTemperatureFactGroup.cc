@@ -9,6 +9,7 @@
 
 #include "VehicleSetpointFactGroup.h"
 #include "Vehicle.h"
+#include <fstream>
 
 const char* VehicleTemperatureFactGroup::_temperature1FactName =                        "temperature1";
 const char* VehicleTemperatureFactGroup::_temperature2FactName =                        "temperature2";
