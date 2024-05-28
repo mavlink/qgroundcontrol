@@ -504,7 +504,7 @@ HEADERS += \
     src/Utilities/DeviceInfo.h \
     src/QGCApplication.h \
     src/Utilities/QGCCachedFileDownload.h \
-    src/QGCConfig.h \
+    src/API/QGCConfig.h \
     src/Utilities/QGCFileDownload.h \
     src/Utilities/QGCLoggingCategory.h \
     src/QmlControls/QGCMapPalette.h \

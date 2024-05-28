@@ -188,7 +188,7 @@ public:
     void setShowAdvancedUI(bool show);
 
     // Override from QGCTool
-    void                            setToolbox              (QGCToolbox* toolbox);
+    void setToolbox(QGCToolbox* toolbox) override;
 
     // Standard first run prompt ids
     static const int unitsFirstRunPromptId =            1;
@@ -196,6 +196,9 @@ public:
 
     // Custom builds can start there first run prompt ids from here
     static const int firstRunPromptIdsFirstCustomId = 10000;
+
+    // static void startupFunction();
+    // static void cleanupFunction();
 
 signals:
     void analyzePagesChanged        ();

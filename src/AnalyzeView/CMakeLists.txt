@@ -11,12 +11,10 @@ qt_add_library(AnalyzeView STATIC
 	LogDownloadController.h
 	LogEntry.cc
 	LogEntry.h
-	MAVLinkChartController.cc
-	MAVLinkChartController.h
+
 	MAVLinkConsoleController.cc
 	MAVLinkConsoleController.h
-	MAVLinkInspectorController.cc
-	MAVLinkInspectorController.h
+
 	MAVLinkMessage.cc
 	MAVLinkMessage.h
 	MAVLinkMessageField.cc
@@ -87,3 +85,15 @@ target_include_directories(AnalyzeView PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 #     DEPENDENCIES
 #         QtCore
 # )
+
+option(QGC_DISABLE_MAVLINK_INSPECTOR "Disable Mavlink Inspector" OFF) # This removes QtCharts which is GPL licensed
+if(NOT QGC_DISABLE_MAVLINK_INSPECTOR)
+	target_sources(AnalyzeView
+		PRIVATE
+			MAVLinkChartController.cc
+			MAVLinkChartController.h
+			MAVLinkInspectorController.cc
+			MAVLinkInspectorController.h
+	)
+	target_compile_definitions(AnalyzeView PUBLIC QGC_DISABLE_MAVLINK_INSPECTOR)
+endif()

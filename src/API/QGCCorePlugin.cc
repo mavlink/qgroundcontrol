@@ -29,6 +29,8 @@
 #include <QtQml/QQmlApplicationEngine>
 #include <QtQml/QQmlContext>
 
+QGC_LOGGING_CATEGORY(QGCCorePluginLog, "qgc.api.qgccoreplugin")
+
 /// @file
 ///     @brief Core Plugin Interface for QGroundControl - Default Implementation
 ///     @author Gus Grubba <gus@auterion.com>
@@ -422,3 +424,17 @@ QString QGCCorePlugin::firstRunPromptResource(int id)
 
     return QString();
 }
+
+/*void QGCCorePlugin::cleanupFunction()
+{
+    qCDebug(QGCCorePluginLog) << "App Destroyed";
+}
+
+void QGCCorePlugin::startupFunction()
+{
+    qAddPostRoutine(QGCCorePlugin::cleanupFunction);
+
+    qCDebug(QGCCorePluginLog) << "App Created at" << QCoreApplication::instance();
+}
+
+Q_COREAPP_STARTUP_FUNCTION(QGCCorePlugin::startupFunction)*/

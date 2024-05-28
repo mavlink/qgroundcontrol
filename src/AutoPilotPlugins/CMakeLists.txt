@@ -1,6 +1,4 @@
-add_subdirectory(APM)
 add_subdirectory(Common)
-add_subdirectory(PX4)
 
 find_package(Qt6 REQUIRED COMPONENTS Core)
 
@@ -26,3 +24,11 @@ target_include_directories(AutoPilotPlugins
 		${CMAKE_CURRENT_SOURCE_DIR}
 		Generic
 )
+
+if(NOT QGC_DISABLE_APM_PLUGIN)
+	add_subdirectory(APM)
+endif()
+
+if(NOT QGC_DISABLE_PX4_PLUGIN)
+	add_subdirectory(PX4)
+endif()

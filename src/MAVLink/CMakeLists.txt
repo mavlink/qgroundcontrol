@@ -45,3 +45,8 @@ target_include_directories(MAVLink
 # if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 # 	target_compile_options(comm PRIVATE -Wno-address-of-packed-member)
 # endif()
+
+option(QGC_NO_ARDUPILOT_DIALECT "Disable APM in MAVLink" OFF)
+if(QGC_NO_ARDUPILOT_DIALECT)
+    target_compile_definitions(MAVLink PUBLIC NO_ARDUPILOT_DIALECT)
+endif()

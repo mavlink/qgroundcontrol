@@ -13,7 +13,6 @@ qt_add_library(QGC STATIC
 	CmdLineOptParser.h
 	QGCApplication.cc
 	QGCApplication.h
-	QGCConfig.h
 	QGCToolbox.cc
 	QGCToolbox.h
 )

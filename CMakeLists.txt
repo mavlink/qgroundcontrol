@@ -181,9 +181,7 @@ if(QGC_BUILD_TESTING)
     add_compile_definitions(UNITTEST_BUILD) # TODO: QGC_UNITTEST_BUILD
 endif()
 
-# option(QGC_CUSTOM_BUILD "Enable Custom Build" OFF)
-
-# option(QGC_DISABLE_MAVLINK_INSPECTOR "Disable Mavlink Inspector" OFF) # This removes QtCharts which is GPL licensed
+option(QGC_CUSTOM_BUILD "Enable Custom Build" OFF)
 
 cmake_dependent_option(QGC_DEBUG_QML "Build QGroundControl with QML debugging/profiling support." OFF "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
 if(QGC_DEBUG_QML)
@@ -192,6 +190,12 @@ if(QGC_DEBUG_QML)
 endif()
 
 cmake_dependent_option(QGC_NO_SERIAL_LINK "Build QGroundControl without Serial Support Support." OFF "NOT IOS" ON)
+
+option(QGC_LGPL_COMPATIBLE "Disable Dependencies that are LGPL Incompatible")
+if(QGC_LGPL_COMPATIBLE)
+    set(QGC_DISABLE_VIEWER3D OFF)
+    set(QGC_DISABLE_MAVLINK_INSPECTOR ON)
+endif()
 
 #######################################################
 #                QGroundControl Resources
@@ -328,6 +332,9 @@ target_link_libraries(${PROJECT_NAME}
 if(QGC_BUILD_TESTING)
     add_subdirectory(test)
     target_link_libraries(${PROJECT_NAME} PRIVATE qgctest)
+endif()
+if(QGC_CUSTOM_BUILD)
+    add_subdirectory(custom-example)
 endif()
 
 #######################################################

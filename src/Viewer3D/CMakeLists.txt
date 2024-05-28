@@ -3,8 +3,8 @@ find_package(Qt6 REQUIRED COMPONENTS Core)
 qt_add_library(Viewer3D STATIC)
 
 find_package(Qt6 COMPONENTS Quick3D)
-cmake_dependent_option(QGC_VIEWER3D "Enable Viewer3D" ON "Qt6Quick3D_FOUND" OFF)
-if(QGC_VIEWER3D)
+cmake_dependent_option(QGC_DISABLE_VIEWER3D "Disable Viewer3D" OFF "Qt6Quick3D_FOUND" ON) # This removes QtQuick3D which is GPL licensed
+if(NOT QGC_DISABLE_VIEWER3D)
 	message(STATUS "Viewer3D is Initialized")
 
 	find_package(Qt6 REQUIRED COMPONENTS Core Gui Network Positioning Qml Quick3D Xml)

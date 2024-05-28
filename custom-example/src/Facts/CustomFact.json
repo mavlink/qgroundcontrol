@@ -1,0 +1,13 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":             "custom",
+    "shortDesc":        "Custom Fact",
+    "type":             "bool",
+    "default":          true
+}
+]
+}

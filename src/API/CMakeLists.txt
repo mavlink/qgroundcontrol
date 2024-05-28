@@ -1,6 +1,7 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml)
 
 qt_add_library(API STATIC
+	QGCConfig.h
 	QGCCorePlugin.cc
 	QGCCorePlugin.h
 	QGCOptions.cc
