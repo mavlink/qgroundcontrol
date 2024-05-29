@@ -18,6 +18,12 @@
         <file alias="PX4TuningComponentCopterRate.qml">../../AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml</file>
         <file alias="PX4TuningComponentCopterVelocity.qml">../../AutoPilotPlugins/PX4/PX4TuningComponentCopterVelocity.qml</file>
         <file alias="PX4TuningComponentCopterPosition.qml">../../AutoPilotPlugins/PX4/PX4TuningComponentCopterPosition.qml</file>
+        <file alias="PX4TuningComponentSpacecraft.qml">../../AutoPilotPlugins/PX4/PX4TuningComponentSpacecraft.qml</file>
+        <file alias="PX4TuningComponentSpacecraftAll.qml">../../AutoPilotPlugins/PX4/PX4TuningComponentSpacecraftAll.qml</file>
+        <file alias="PX4TuningComponentSpacecraftAttitude.qml">../../AutoPilotPlugins/PX4/PX4TuningComponentSpacecraftAttitude.qml</file>
+        <file alias="PX4TuningComponentSpacecraftRate.qml">../../AutoPilotPlugins/PX4/PX4TuningComponentSpacecraftRate.qml</file>
+        <file alias="PX4TuningComponentSpacecraftVelocity.qml">../../AutoPilotPlugins/PX4/PX4TuningComponentSpacecraftVelocity.qml</file>
+        <file alias="PX4TuningComponentSpacecraftPosition.qml">../../AutoPilotPlugins/PX4/PX4TuningComponentSpacecraftPosition.qml</file>
         <file alias="PX4TuningComponentPlane.qml">../../AutoPilotPlugins/PX4/PX4TuningComponentPlane.qml</file>
         <file alias="PX4TuningComponentPlaneAll.qml">../../AutoPilotPlugins/PX4/PX4TuningComponentPlaneAll.qml</file>
         <file alias="PX4TuningComponentPlaneAttitude.qml">../../AutoPilotPlugins/PX4/PX4TuningComponentPlaneAttitude.qml</file>

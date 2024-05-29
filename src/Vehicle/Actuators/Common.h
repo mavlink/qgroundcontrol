@@ -127,6 +127,7 @@ struct ActuatorGeometry
     enum class Type {
         Motor,
         Servo,
+        Thruster,
         Other
     };
 

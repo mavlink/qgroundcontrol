@@ -19,6 +19,7 @@
 #include <QtCore/QJsonObject>
 
 #include <algorithm>
+#include <iostream>
 
 using namespace ActuatorOutputs;
 
@@ -113,7 +114,8 @@ void Actuators::updateGeometryImage()
 
 bool Actuators::isMultirotor() const
 {
-    return _mixer.configuredType() == "multirotor";
+    std::cout << "Configured type:" << _mixer.configuredType().toStdString() << std::endl;
+    return _mixer.configuredType() == "multirotor" || _mixer.configuredType() == "spacecraft";
 }
 
 void Actuators::load(const QString &json_file)
@@ -126,6 +128,7 @@ void Actuators::load(const QString &json_file)
 
     // store the metadata to be loaded later after all params are available
     _jsonMetadata = QJsonDocument::fromJson(json_data.toUtf8());
+    std::cout << "Json: " << json_file.toStdString() << std::endl;
 }
 
 void Actuators::init()
@@ -223,7 +226,8 @@ void Actuators::parametersChanged()
             for (const auto& actuatorTypeName : actuatorTypes.keys()) {
                 const Mixer::ActuatorType& actuatorType = actuatorTypes[actuatorTypeName];
                 if (function >= actuatorType.functionMin && function <= actuatorType.functionMax) {
-                    bool isMotor = ActuatorGeometry::typeFromStr(actuatorTypeName) == ActuatorGeometry::Type::Motor;
+                    bool isMotor = ActuatorGeometry::typeFromStr(actuatorTypeName) == ActuatorGeometry::Type::Motor || 
+                                   ActuatorGeometry::typeFromStr(actuatorTypeName) == ActuatorGeometry::Type::Thruster;
                     actuators.append(
                             new ActuatorTesting::Actuator(&_actuatorTest, label, actuatorType.values.min, actuatorType.values.max,
                                     actuatorType.values.defaultVal, function, isMotor));
@@ -251,6 +255,7 @@ void Actuators::parametersChanged()
     }
     emit hasUnsetRequiredFunctionsChanged();
 
+    // PEDRO: HERE
     updateFunctionMetadata();
 
     updateActuatorActions();
@@ -599,6 +604,7 @@ bool Actuators::parseJson(const QJsonDocument &json)
         option.type = mixerConfig["type"].toString();
         option.title = mixerConfig["title"].toString();
         option.helpUrl = mixerConfig["help-url"].toString();
+        std::cout << " MAYBE HERE: " << option.title.toStdString() << option.type.toStdString() << option.helpUrl.toStdString() << std::endl;
         QJsonArray actuatorsJson = mixerConfig["actuators"].toArray();
         for (const auto&& actuatorJson : actuatorsJson) {
             QJsonValue actuatorJsonVal = actuatorJson.toObject();
@@ -768,8 +774,15 @@ bool Actuators::initMotorAssignment()
     // get the minimum function for motors
     bool ret = false;
     auto iter = _mixer.actuatorTypes().find("motor");
+    std::cout << "\n\n Thrusters: " << iter->functionMin << "\n\n" << std::endl;
     if (iter == _mixer.actuatorTypes().end()) {
-        qWarning() << "Actuator type 'motor' not found";
+        iter = _mixer.actuatorTypes().find("thruster");
+        if (iter == _mixer.actuatorTypes().end()) {
+            qCWarning(ActuatorsConfigLog) << "No motor or thruster actuator type found";
+        } else {
+            std::cout << "\n\n Thrusters: " << iter->functionMin << "\n\n" << std::endl;
+            ret = _motorAssignment.initAssignment(_selectedActuatorOutput, iter->functionMin, numMotors);
+        }
     } else {
         ret = _motorAssignment.initAssignment(_selectedActuatorOutput, iter->functionMin, numMotors);
     }
@@ -781,7 +794,7 @@ void Actuators::highlightActuators(bool highlight)
     GeometryImage::VehicleGeometryImageProvider* provider = GeometryImage::VehicleGeometryImageProvider::instance();
     QList<ActuatorGeometry>& actuators = provider->actuators();
     for (auto& actuator : actuators) {
-        if (actuator.type == ActuatorGeometry::Type::Motor) {
+        if (actuator.type == ActuatorGeometry::Type::Motor || actuator.type == ActuatorGeometry::Type::Thruster) {
             actuator.renderOptions.highlight = highlight;
         }
     }

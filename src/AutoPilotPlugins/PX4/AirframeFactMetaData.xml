@@ -381,4 +381,22 @@
       <type>VTOL Tiltrotor</type>
     </airframe>
   </airframe_group>
+  <airframe_group name="Spacecraft" image="AirframeUnknown">
+    <airframe name="Generic 2D Spacecraft" id="70000" maintainer="Pedro Roque &lt;padr@kth.se&gt;">
+      <class>Spacecraft</class>
+      <type>Ground Facility</type>
+    </airframe>
+    <airframe name="Generic 3D DART" id="70001" maintainer="Pedro Roque &lt;padr@kth.se&gt;">
+      <class>Spacecraft</class>
+      <type>Spacecraft</type>
+    </airframe>
+    <airframe name="Generic 2D Spacecraft Simulation" id="71000" maintainer="Pedro Roque &lt;padr@kth.se&gt;">
+      <class>Spacecraft</class>
+      <type>Ground Facility</type>
+    </airframe>
+    <airframe name="Generic 3D DART Simulatation" id="71001" maintainer="Pedro Roque &lt;padr@kth.se&gt;">
+      <class>Spacecraft</class>
+      <type>Spacecraft</type>
+    </airframe>
+  </airframe_group>
 </airframes>

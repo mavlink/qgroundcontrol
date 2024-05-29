@@ -184,6 +184,8 @@ ActuatorGeometry::Type ActuatorGeometry::typeFromStr(const QString &type)
         return ActuatorGeometry::Type::Motor;
     } else if (type == "servo") {
         return ActuatorGeometry::Type::Servo;
+    } else if (type == "thruster") {
+        return ActuatorGeometry::Type::Thruster;
     }
     return ActuatorGeometry::Type::Other;
 }

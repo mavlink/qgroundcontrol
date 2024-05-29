@@ -11,6 +11,7 @@
 #include "PX4TuningComponent.h"
 #include "QGCMAVLink.h"
 #include "Vehicle.h"
+#include <iostream>
 
 PX4TuningComponent::PX4TuningComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
     : VehicleComponent(vehicle, autopilot, parent)
@@ -51,6 +52,7 @@ QStringList PX4TuningComponent::setupCompleteChangedTriggerList(void) const
 QUrl PX4TuningComponent::setupSource(void) const
 {
     QString qmlFile;
+    std::cout << "Vehicle Type: " << _vehicle->vehicleType() << std::endl;
 
     switch (_vehicle->vehicleType()) {
         case MAV_TYPE_FIXED_WING:
@@ -73,6 +75,9 @@ QUrl PX4TuningComponent::setupSource(void) const
         case MAV_TYPE_VTOL_RESERVED5:
             qmlFile = "qrc:/qml/PX4TuningComponentVTOL.qml";
             break;
+        case 99:
+            // Spacecraft Type
+            qmlFile = "qrc:/qml/PX4TuningComponentSpacecraft.qml";
         default:
             break;
     }
