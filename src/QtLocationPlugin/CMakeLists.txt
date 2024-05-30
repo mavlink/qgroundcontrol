@@ -29,10 +29,6 @@ qt_add_plugin(QGCLocation STATIC
 	QGCTileCacheWorker.cpp
 	QGCTileCacheWorker.h
 	QGCTileSet.h
-	QGeoCodeReplyQGC.cpp
-	QGeoCodeReplyQGC.h
-	QGeoCodingManagerEngineQGC.cpp
-	QGeoCodingManagerEngineQGC.h
 	QGeoMapReplyQGC.cpp
 	QGeoMapReplyQGC.h
 	QGeoServiceProviderPluginQGC.cpp
