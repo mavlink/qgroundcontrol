@@ -222,7 +222,7 @@ bool PX4FirmwarePlugin::isCapable(const Vehicle *vehicle, FirmwareCapabilities c
     int available = SetFlightModeCapability | PauseVehicleCapability | GuidedModeCapability;
     //-- This is arbitrary until I find how to really tell if ROI is avaiable
     if (vehicle->multiRotor()) {
-        available |= ROIModeCapability;
+        available |= ROIModeCapability | ChangeHeadingCapability;
     }
     if (vehicle->multiRotor() || vehicle->vtol()) {
         available |= TakeoffVehicleCapability | OrbitModeCapability;
@@ -597,6 +597,27 @@ void PX4FirmwarePlugin::guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle* 
         -1,                                   // throttle
         0,                                    // 0: absolute speed, 1: relative to current
         NAN, NAN,NAN);                        // param 5-7 unused
+}
+
+void PX4FirmwarePlugin::guidedModeChangeHeading(Vehicle* vehicle, const QGeoCoordinate &headingCoord)
+{
+    if (!isCapable(vehicle, FirmwarePlugin::ChangeHeadingCapability)) {
+        qgcApp()->showAppMessage(tr("Vehicle does not support guided rotate"));
+        return;
+    }
+
+    const float degrees = vehicle->coordinate().azimuthTo(headingCoord);
+
+    vehicle->sendMavCommand(
+        vehicle->defaultComponentId(),
+        MAV_CMD_DO_REPOSITION,
+        true,
+        -1.0f,                                  // no change in ground speed
+        MAV_DO_REPOSITION_FLAGS_CHANGE_MODE,    // switch to guided mode
+        0.0f,                                   // reserved
+        degrees,                                // change heading
+        NAN, NAN, NAN                           // no change lat, lon, alt
+    );
 }
 
 void PX4FirmwarePlugin::startMission(Vehicle* vehicle)
