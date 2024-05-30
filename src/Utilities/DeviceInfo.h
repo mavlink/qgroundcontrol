@@ -18,7 +18,7 @@ public:
     QGCAmbientTemperatureFilter();
     ~QGCAmbientTemperatureFilter();
 
-	bool filter(QAmbientTemperatureReading *reading) final;
+    bool filter(QAmbientTemperatureReading *reading) final;
 
 private:
     static constexpr const qreal s_minValidTemperatureC = -40.;
@@ -27,15 +27,15 @@ private:
 
 class QGCAmbientTemperature : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	QGCAmbientTemperature(QObject* parent = nullptr);
-	~QGCAmbientTemperature();
+    QGCAmbientTemperature(QObject* parent = nullptr);
+    ~QGCAmbientTemperature();
 
-	static QGCAmbientTemperature* instance();
+    static QGCAmbientTemperature* instance();
 
-	qreal temperature() const { return _temperatureC; }
+    qreal temperature() const { return _temperatureC; }
 
     bool init();
     void quit();
@@ -44,12 +44,12 @@ signals:
     void temperatureUpdated(qreal temperature);
 
 private:
-	std::shared_ptr<QGCAmbientTemperatureFilter> _ambientTemperatureFilter = nullptr;
     QAmbientTemperatureSensor* _ambientTemperature = nullptr;
+    std::shared_ptr<QGCAmbientTemperatureFilter> _ambientTemperatureFilter = nullptr;
 
     QMetaObject::Connection _readingChangedConnection;
 
-	qreal _temperatureC = 0;
+    qreal _temperatureC = 0;
 };
 
 
@@ -59,7 +59,7 @@ public:
     QGCPressureFilter();
     ~QGCPressureFilter();
 
-	bool filter(QPressureReading *reading) final;
+    bool filter(QPressureReading *reading) final;
 
 private:
     static constexpr const qreal s_minValidPressurePa = 45000.;
@@ -71,16 +71,16 @@ private:
 
 class QGCPressure : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	QGCPressure(QObject* parent = nullptr);
-	~QGCPressure();
+    QGCPressure(QObject* parent = nullptr);
+    ~QGCPressure();
 
     static QGCPressure* instance();
 
-	qreal pressure() const { return _pressurePa; }
-	qreal temperature() const { return _temperatureC; }
+    qreal pressure() const { return _pressurePa; }
+    qreal temperature() const { return _temperatureC; }
 
     bool init();
     void quit();
@@ -89,13 +89,13 @@ signals:
     void pressureUpdated(qreal pressure, qreal temperature);
 
 private:
-	std::shared_ptr<QGCPressureFilter> _pressureFilter = nullptr;
     QPressureSensor* _pressure = nullptr;
+    std::shared_ptr<QGCPressureFilter> _pressureFilter = nullptr;
 
     QMetaObject::Connection _readingChangedConnection;
 
-	qreal _temperatureC = 0;
-	qreal _pressurePa = 0;
+    qreal _temperatureC = 0;
+    qreal _pressurePa = 0;
 };
 
 }

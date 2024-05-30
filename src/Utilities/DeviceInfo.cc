@@ -4,7 +4,7 @@
 #include <QtCore/qapplicationstatic.h>
 #include <QtNetwork/QNetworkInformation>
 #ifdef QGC_ENABLE_BLUETOOTH
-#	include <QtBluetooth/QBluetoothLocalDevice>
+#    include <QtBluetooth/QBluetoothLocalDevice>
 #endif
 
 QGC_LOGGING_CATEGORY(QGCDeviceInfoLog, "qgc.utilities.deviceinfo")
@@ -13,8 +13,8 @@ namespace QGCDeviceInfo
 {
 
 //  TODO:
-//	- reachabilityChanged()
-//	- Allow to select by transportMedium()
+//    - reachabilityChanged()
+//    - Allow to select by transportMedium()
 
 bool isInternetAvailable() {
     if(QNetworkInformation::availableBackends().isEmpty()) return false;
@@ -51,7 +51,7 @@ QGCAmbientTemperature* QGCAmbientTemperature::instance()
 }
 
 QGCAmbientTemperature::QGCAmbientTemperature(QObject* parent)
-	: QObject(parent)
+    : QObject(parent)
     , _ambientTemperature(new QAmbientTemperatureSensor(this))
     , _ambientTemperatureFilter(std::make_shared<QGCAmbientTemperatureFilter>())
 {
@@ -146,11 +146,11 @@ QGCAmbientTemperatureFilter::~QGCAmbientTemperatureFilter()
 
 bool QGCAmbientTemperatureFilter::filter(QAmbientTemperatureReading *reading)
 {
-	if (!reading) {
-		return false;
-	}
+    if (!reading) {
+        return false;
+    }
 
-	const qreal temperature = reading->temperature();
+    const qreal temperature = reading->temperature();
     return ((temperature >= s_minValidTemperatureC) && (temperature <= s_maxValidTemperatureC));
 }
 
@@ -164,7 +164,7 @@ QGCPressure* QGCPressure::instance()
 }
 
 QGCPressure::QGCPressure(QObject* parent)
-	: QObject(parent)
+    : QObject(parent)
     , _pressure(new QPressureSensor(this))
     , _pressureFilter(std::make_shared<QGCPressureFilter>())
 {
@@ -259,21 +259,21 @@ QGCPressureFilter::~QGCPressureFilter()
 
 bool QGCPressureFilter::filter(QPressureReading *reading)
 {
-	if (!reading) {
-		return false;
-	}
+    if (!reading) {
+        return false;
+    }
 
-	const qreal temperature = reading->temperature();
-	if ((temperature < s_minValidTemperatureC) || (temperature > s_maxValidTemperatureC)) {
-		return false;
-	}
+    const qreal temperature = reading->temperature();
+    if ((temperature < s_minValidTemperatureC) || (temperature > s_maxValidTemperatureC)) {
+        return false;
+    }
 
-	const qreal pressure = reading->pressure();
+    const qreal pressure = reading->pressure();
     if ((pressure < s_minValidPressurePa) || (pressure > s_maxValidPressurePa)) {
-		return false;
-	}
+        return false;
+    }
 
-	return true;
+    return true;
 }
 
 }
