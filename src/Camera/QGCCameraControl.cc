@@ -744,7 +744,7 @@ QGCCameraControl::_mavCommandResult(int vehicleId, int component, int command, i
                 break;
                 case MAV_CMD_IMAGE_START_CAPTURE:
                 case MAV_CMD_IMAGE_STOP_CAPTURE:
-                    if(++_captureInfoRetries < 3) {
+                    if(++_captureInfoRetries < 5) {
                         _captureStatusTimer.start(1000);
                     } else {
                         qCDebug(CameraControlLog) << "Giving up start/stop image capture";
@@ -752,14 +752,14 @@ QGCCameraControl::_mavCommandResult(int vehicleId, int component, int command, i
                     }
                     break;
                 case MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS:
-                    if(++_captureInfoRetries < 3) {
+                    if(++_captureInfoRetries < 5) {
                         _captureStatusTimer.start(500);
                     } else {
                         qCDebug(CameraControlLog) << "Giving up requesting capture status";
                     }
                     break;
                 case MAV_CMD_REQUEST_STORAGE_INFORMATION:
-                    if(++_storageInfoRetries < 3) {
+                    if(++_storageInfoRetries < 5) {
                         QTimer::singleShot(500, this, &QGCCameraControl::_requestStorageInfo);
                     } else {
                         qCDebug(CameraControlLog) << "Giving up requesting storage status";
@@ -1459,12 +1459,24 @@ QGCCameraControl::_requestCameraSettings()
 {
     qCDebug(CameraControlLog) << "_requestCameraSettings()";
     if(_vehicle) {
-        _vehicle->sendMavCommand(
-            _compID,                                // Target component
-            MAV_CMD_REQUEST_CAMERA_SETTINGS,        // command id
-            false,                                  // showError
-            1);                                     // Do Request
+        // Use REQUEST_MESSAGE instead of deprecated REQUEST_CAMERA_SETTINGS
+        // first time and every other time after that.
+
+        if(_cameraSettingsRetries++ % 2 == 0) {
+            _vehicle->sendMavCommand(
+                _compID,                                 // target component
+                MAV_CMD_REQUEST_MESSAGE,                // command id
+                false,                                  // showError
+                MAVLINK_MSG_ID_CAMERA_SETTINGS);        // msgid
+        } else {
+            _vehicle->sendMavCommand(
+                _compID,                                // Target component
+                MAV_CMD_REQUEST_CAMERA_SETTINGS,        // command id
+                false,                                  // showError
+                1);                                     // Do Request
+        }
     }
+
 }
 
 //-----------------------------------------------------------------------------
@@ -1473,12 +1485,23 @@ QGCCameraControl::_requestStorageInfo()
 {
     qCDebug(CameraControlLog) << "_requestStorageInfo()";
     if(_vehicle) {
-        _vehicle->sendMavCommand(
-            _compID,                                // Target component
-            MAV_CMD_REQUEST_STORAGE_INFORMATION,    // command id
-            false,                                  // showError
-            0,                                      // Storage ID (0 for all, 1 for first, 2 for second, etc.)
-            1);                                     // Do Request
+        // Use REQUEST_MESSAGE instead of deprecated REQUEST_CAMERA_SETTINGS
+        // first time and every other time after that.
+        if(_storageInfoRetries++ % 2 == 0) {
+            _vehicle->sendMavCommand(
+                _compID,                                 // target component
+                MAV_CMD_REQUEST_MESSAGE,                // command id
+                false,                                  // showError
+                MAVLINK_MSG_ID_STORAGE_INFORMATION,     // msgid
+                0);                                     // storage ID
+        } else {
+            _vehicle->sendMavCommand(
+                _compID,                                // Target component
+                MAV_CMD_REQUEST_STORAGE_INFORMATION,    // command id
+                false,                                  // showError
+                0,                                      // Storage ID (0 for all, 1 for first, 2 for second, etc.)
+                1);                                     // Do Request
+        }
     }
 }
 
@@ -1604,6 +1627,7 @@ QGCCameraControl::handleVideoInfo(const mavlink_video_stream_information_t* vi)
         //-- Done
         qCDebug(CameraControlLog) << "All stream handlers done";
         _streamInfoTimer.stop();
+        _videoStreamInfoRetries = 0;
         emit autoStreamChanged();
         emit _vehicle->cameraManager()->streamChanged();
     }
@@ -1619,6 +1643,7 @@ QGCCameraControl::handleVideoStatus(const mavlink_video_stream_status_t* vs)
     if(pInfo) {
         pInfo->update(vs);
     }
+    _videoStreamStatusRetries = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -1769,11 +1794,22 @@ void
 QGCCameraControl::_requestStreamInfo(uint8_t streamID)
 {
     qCDebug(CameraControlLog) << "Requesting video stream info for:" << streamID;
-    _vehicle->sendMavCommand(
-        _compID,                                            // Target component
-        MAV_CMD_REQUEST_VIDEO_STREAM_INFORMATION,           // Command id
-        false,                                              // ShowError
-        streamID);                                          // Stream ID
+    // By default, try to use new REQUEST_MESSAGE command instead of 
+    // deprecated MAV_CMD_REQUEST_VIDEO_STREAM_INFORMATION.
+    if (_videoStreamStatusRetries % 2 == 0) {
+        _vehicle->sendMavCommand(
+            _compID,                                         // target component
+            MAV_CMD_REQUEST_MESSAGE,                        // command id
+            false,                                          // showError
+            MAVLINK_MSG_ID_VIDEO_STREAM_INFORMATION,        // msgid
+            streamID);                                      // stream ID
+    } else {
+        _vehicle->sendMavCommand(
+            _compID,                                            // Target component
+            MAV_CMD_REQUEST_VIDEO_STREAM_INFORMATION,           // Command id
+            false,                                              // ShowError
+            streamID);                                          // Stream ID
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -1781,11 +1817,22 @@ void
 QGCCameraControl::_requestStreamStatus(uint8_t streamID)
 {
     qCDebug(CameraControlLog) << "Requesting video stream status for:" << streamID;
+    // By default, try to use new REQUEST_MESSAGE command instead of
+    // deprecated MAV_CMD_REQUEST_VIDEO_STREAM_INFORMATION.
+    if (_videoStreamInfoRetries % 2 == 0) {
+        _vehicle->sendMavCommand(
+            _compID,                                         // target component
+            MAV_CMD_REQUEST_MESSAGE,                        // command id
+            false,                                          // showError
+            MAVLINK_MSG_ID_VIDEO_STREAM_STATUS,             // msgid
+            streamID);                                      // stream id
+    } else {
     _vehicle->sendMavCommand(
         _compID,                                            // Target component
         MAV_CMD_REQUEST_VIDEO_STREAM_STATUS,                // Command id
         false,                                              // ShowError
         streamID);                                          // Stream ID
+    }
     _streamStatusTimer.start(1000);                         // Wait up to a second for it
 }
 
@@ -1830,11 +1877,11 @@ QGCCameraControl::_findStream(const QString name)
 
 //-----------------------------------------------------------------------------
 void
-QGCCameraControl::_streamTimeout()
+QGCCameraControl::_streamInfoTimeout()
 {
-    _requestCount++;
-    int count = _expectedCount * 3;
-    if(_requestCount > count) {
+    _videoStreamInfoRetries++;
+    int count = _expectedCount * 5;
+    if(_videoStreamInfoRetries > count) {
         qCWarning(CameraControlLog) << "Giving up requesting video stream info";
         _streamInfoTimer.stop();
         //-- If we have at least one stream, work with what we have.
@@ -1857,6 +1904,7 @@ QGCCameraControl::_streamTimeout()
 void
 QGCCameraControl::_streamStatusTimeout()
 {
+    _videoStreamStatusRetries++;
     QGCVideoStreamInfo* pStream = currentStreamInstance();
     if(pStream) {
         _requestStreamStatus(static_cast<uint8_t>(pStream->streamID()));
@@ -2181,7 +2229,7 @@ QGCCameraControl::_checkForVideoStreams()
     if(_info.flags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM) {
         //-- Skip it if using Taisync as it has its own video settings
         if(!qgcApp()->toolbox()->videoManager()->isTaisync()) {
-            connect(&_streamInfoTimer, &QTimer::timeout, this, &QGCCameraControl::_streamTimeout);
+        connect(&_streamInfoTimer, &QTimer::timeout, this, &QGCCameraControl::_streamInfoTimeout);
             _streamInfoTimer.setSingleShot(false);
             connect(&_streamStatusTimer, &QTimer::timeout, this, &QGCCameraControl::_streamStatusTimeout);
             _streamStatusTimer.setSingleShot(true);
