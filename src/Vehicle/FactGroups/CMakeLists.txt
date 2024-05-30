@@ -19,6 +19,8 @@ qt_add_library(VehicleFactGroups STATIC
     VehicleEstimatorStatusFactGroup.h
     VehicleGeneratorFactGroup.cc
     VehicleGeneratorFactGroup.h
+    VehicleFactGroup.cc
+    VehicleFactGroup.h
     VehicleGPS2FactGroup.cc
     VehicleGPS2FactGroup.h
     VehicleGPSFactGroup.cc

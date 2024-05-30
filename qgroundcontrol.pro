@@ -593,6 +593,7 @@ HEADERS += \
     src/Vehicle/TrajectoryPoints.h \
     src/Vehicle/Vehicle.h \
     src/Vehicle/VehicleObjectAvoidance.h \
+    src/Vehicle/FactGroups/VehicleFactGroup.h \
     src/Vehicle/FactGroups/VehicleBatteryFactGroup.h \
     src/Vehicle/FactGroups/VehicleClockFactGroup.h \
     src/Vehicle/FactGroups/VehicleDistanceSensorFactGroup.h \
@@ -866,6 +867,7 @@ SOURCES += \
     src/Vehicle/TrajectoryPoints.cc \
     src/Vehicle/Vehicle.cc \
     src/Vehicle/VehicleObjectAvoidance.cc \
+    src/Vehicle/FactGroups/VehicleFactGroup.cc \
     src/Vehicle/FactGroups/VehicleBatteryFactGroup.cc \
     src/Vehicle/FactGroups/VehicleClockFactGroup.cc \
     src/Vehicle/FactGroups/VehicleDistanceSensorFactGroup.cc \

@@ -130,7 +130,7 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
         _app->showAppMessage(tr("Warning: A vehicle is using the same system id as %1: %2").arg(QCoreApplication::applicationName()).arg(vehicleId));
     }
 
-    Vehicle* vehicle = new Vehicle(link, vehicleId, componentId, (MAV_AUTOPILOT)vehicleFirmwareType, (MAV_TYPE)vehicleType, _firmwarePluginManager, _joystickManager);
+    Vehicle* vehicle = new Vehicle(link, vehicleId, componentId, (MAV_AUTOPILOT)vehicleFirmwareType, (MAV_TYPE)vehicleType, _firmwarePluginManager, _joystickManager, this);
     connect(vehicle,                        &Vehicle::requestProtocolVersion,           this, &MultiVehicleManager::_requestProtocolVersion);
     connect(vehicle->vehicleLinkManager(),  &VehicleLinkManager::allLinksRemoved,       this, &MultiVehicleManager::_deleteVehiclePhase1);
     connect(vehicle->parameterManager(),    &ParameterManager::parametersReadyChanged,  this, &MultiVehicleManager::_vehicleParametersReadyChanged);
