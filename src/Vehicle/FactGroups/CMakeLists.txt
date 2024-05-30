@@ -5,6 +5,8 @@ qt_add_library(VehicleFactGroups STATIC
 	GPSRTKFactGroup.h
 	TerrainFactGroup.cc
 	TerrainFactGroup.h
+	VehicleFactGroup.cc
+	VehicleFactGroup.h
 	VehicleBatteryFactGroup.cc
 	VehicleBatteryFactGroup.h
 	VehicleClockFactGroup.cc

@@ -61,8 +61,6 @@
 #endif
 
 #include <QtCore/QDateTime>
-#include <QtGui/QQuaternion>
-#include <QtGui/QVector3D>
 
 QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 
@@ -81,8 +79,9 @@ Vehicle::Vehicle(LinkInterface*             link,
                  MAV_AUTOPILOT              firmwareType,
                  MAV_TYPE                   vehicleType,
                  FirmwarePluginManager*     firmwarePluginManager,
-                 JoystickManager*           joystickManager)
-    : FactGroup                     (_vehicleUIUpdateRateMSecs, ":/json/Vehicle/VehicleFact.json")
+                 JoystickManager*           joystickManager,
+                 QObject*                   parent)
+    : VehicleFactGroup              (parent)
     , _id                           (vehicleId)
     , _defaultComponentId           (defaultComponentId)
     , _firmwareType                 (firmwareType)
@@ -95,35 +94,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _joystickManager              (joystickManager)
     , _trajectoryPoints             (new TrajectoryPoints(this, this))
     , _mavlinkStreamConfig          (std::bind(&Vehicle::_setMessageInterval, this, std::placeholders::_1, std::placeholders::_2))
-    , _rollFact                     (0, _rollFactName,              FactMetaData::valueTypeDouble)
-    , _pitchFact                    (0, _pitchFactName,             FactMetaData::valueTypeDouble)
-    , _headingFact                  (0, _headingFactName,           FactMetaData::valueTypeDouble)
-    , _rollRateFact                 (0, _rollRateFactName,          FactMetaData::valueTypeDouble)
-    , _pitchRateFact                (0, _pitchRateFactName,         FactMetaData::valueTypeDouble)
-    , _yawRateFact                  (0, _yawRateFactName,           FactMetaData::valueTypeDouble)
-    , _groundSpeedFact              (0, _groundSpeedFactName,       FactMetaData::valueTypeDouble)
-    , _airSpeedFact                 (0, _airSpeedFactName,          FactMetaData::valueTypeDouble)
-    , _airSpeedSetpointFact         (0, _airSpeedSetpointFactName,  FactMetaData::valueTypeDouble)
-    , _climbRateFact                (0, _climbRateFactName,         FactMetaData::valueTypeDouble)
-    , _altitudeRelativeFact         (0, _altitudeRelativeFactName,  FactMetaData::valueTypeDouble)
-    , _altitudeAMSLFact             (0, _altitudeAMSLFactName,      FactMetaData::valueTypeDouble)
-    , _altitudeAboveTerrFact        (0, _altitudeAboveTerrFactName, FactMetaData::valueTypeDouble)
-    , _altitudeTuningFact           (0, _altitudeTuningFactName,    FactMetaData::valueTypeDouble)
-    , _altitudeTuningSetpointFact   (0, _altitudeTuningSetpointFactName, FactMetaData::valueTypeDouble)
-    , _xTrackErrorFact              (0, _xTrackErrorFactName,       FactMetaData::valueTypeDouble)
-    , _rangeFinderDistFact          (0, _rangeFinderDistFactName,   FactMetaData::valueTypeFloat)
-    , _flightDistanceFact           (0, _flightDistanceFactName,    FactMetaData::valueTypeDouble)
-    , _flightTimeFact               (0, _flightTimeFactName,        FactMetaData::valueTypeElapsedTimeInSeconds)
-    , _distanceToHomeFact           (0, _distanceToHomeFactName,    FactMetaData::valueTypeDouble)
-    , _timeToHomeFact               (0, _timeToHomeFactName,        FactMetaData::valueTypeDouble)
-    , _missionItemIndexFact         (0, _missionItemIndexFactName,  FactMetaData::valueTypeUint16)
-    , _headingToNextWPFact          (0, _headingToNextWPFactName,   FactMetaData::valueTypeDouble)
-    , _distanceToNextWPFact         (0, _distanceToNextWPFactName,  FactMetaData::valueTypeDouble)
-    , _headingToHomeFact            (0, _headingToHomeFactName,     FactMetaData::valueTypeDouble)
-    , _distanceToGCSFact            (0, _distanceToGCSFactName,     FactMetaData::valueTypeDouble)
-    , _hobbsFact                    (0, _hobbsFactName,             FactMetaData::valueTypeString)
-    , _throttlePctFact              (0, _throttlePctFactName,       FactMetaData::valueTypeUint16)
-    , _imuTempFact                  (0, _imuTempFactName,           FactMetaData::valueTypeInt16)
+    , _vehicleFactGroup             (this)
     , _gpsFactGroup                 (this)
     , _gps2FactGroup                (this)
     , _windFactGroup                (this)
@@ -239,7 +210,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
                  MAV_TYPE                   vehicleType,
                  FirmwarePluginManager*     firmwarePluginManager,
                  QObject*                   parent)
-    : FactGroup                         (_vehicleUIUpdateRateMSecs, ":/json/Vehicle/VehicleFact.json", parent)
+    : VehicleFactGroup                  (parent)
     , _id                               (0)
     , _defaultComponentId               (MAV_COMP_ID_ALL)
     , _offlineEditingVehicle            (true)
@@ -256,34 +227,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _firmwarePluginManager            (firmwarePluginManager)
     , _trajectoryPoints                 (new TrajectoryPoints(this, this))
     , _mavlinkStreamConfig              (std::bind(&Vehicle::_setMessageInterval, this, std::placeholders::_1, std::placeholders::_2))
-    , _rollFact                         (0, _rollFactName,              FactMetaData::valueTypeDouble)
-    , _pitchFact                        (0, _pitchFactName,             FactMetaData::valueTypeDouble)
-    , _headingFact                      (0, _headingFactName,           FactMetaData::valueTypeDouble)
-    , _rollRateFact                     (0, _rollRateFactName,          FactMetaData::valueTypeDouble)
-    , _pitchRateFact                    (0, _pitchRateFactName,         FactMetaData::valueTypeDouble)
-    , _yawRateFact                      (0, _yawRateFactName,           FactMetaData::valueTypeDouble)
-    , _groundSpeedFact                  (0, _groundSpeedFactName,       FactMetaData::valueTypeDouble)
-    , _airSpeedFact                     (0, _airSpeedFactName,          FactMetaData::valueTypeDouble)
-    , _airSpeedSetpointFact             (0, _airSpeedSetpointFactName,  FactMetaData::valueTypeDouble)
-    , _climbRateFact                    (0, _climbRateFactName,         FactMetaData::valueTypeDouble)
-    , _altitudeRelativeFact             (0, _altitudeRelativeFactName,  FactMetaData::valueTypeDouble)
-    , _altitudeAMSLFact                 (0, _altitudeAMSLFactName,      FactMetaData::valueTypeDouble)
-    , _altitudeAboveTerrFact            (0, _altitudeAboveTerrFactName, FactMetaData::valueTypeDouble)
-    , _altitudeTuningFact               (0, _altitudeTuningFactName,    FactMetaData::valueTypeDouble)
-    , _altitudeTuningSetpointFact       (0, _altitudeTuningSetpointFactName, FactMetaData::valueTypeDouble)
-    , _xTrackErrorFact                  (0, _xTrackErrorFactName,       FactMetaData::valueTypeDouble)
-    , _rangeFinderDistFact              (0, _rangeFinderDistFactName,   FactMetaData::valueTypeFloat)
-    , _flightDistanceFact               (0, _flightDistanceFactName,    FactMetaData::valueTypeDouble)
-    , _flightTimeFact                   (0, _flightTimeFactName,        FactMetaData::valueTypeElapsedTimeInSeconds)
-    , _distanceToHomeFact               (0, _distanceToHomeFactName,    FactMetaData::valueTypeDouble)
-    , _missionItemIndexFact             (0, _missionItemIndexFactName,  FactMetaData::valueTypeUint16)
-    , _headingToNextWPFact              (0, _headingToNextWPFactName,   FactMetaData::valueTypeDouble)
-    , _distanceToNextWPFact             (0, _distanceToNextWPFactName,  FactMetaData::valueTypeDouble)
-    , _headingToHomeFact                (0, _headingToHomeFactName,     FactMetaData::valueTypeDouble)
-    , _distanceToGCSFact                (0, _distanceToGCSFactName,     FactMetaData::valueTypeDouble)
-    , _hobbsFact                        (0, _hobbsFactName,             FactMetaData::valueTypeString)
-    , _throttlePctFact                  (0, _throttlePctFactName,       FactMetaData::valueTypeUint16)
-    , _imuTempFact                      (0, _imuTempFactName,           FactMetaData::valueTypeInt16)
+    , _vehicleFactGroup                 (this)
     , _gpsFactGroup                     (this)
     , _gps2FactGroup                    (this)
     , _windFactGroup                    (this)
@@ -391,40 +335,7 @@ void Vehicle::_commonInit()
 
     connect(_imageProtocolManager, &ImageProtocolManager::imageReady, this, &Vehicle::_imageProtocolImageReady);
 
-    // Build FactGroup object model
-
-    _addFact(&_rollFact,                _rollFactName);
-    _addFact(&_pitchFact,               _pitchFactName);
-    _addFact(&_headingFact,             _headingFactName);
-    _addFact(&_rollRateFact,            _rollRateFactName);
-    _addFact(&_pitchRateFact,           _pitchRateFactName);
-    _addFact(&_yawRateFact,             _yawRateFactName);
-    _addFact(&_groundSpeedFact,         _groundSpeedFactName);
-    _addFact(&_airSpeedFact,            _airSpeedFactName);
-    _addFact(&_airSpeedSetpointFact,    _airSpeedSetpointFactName);
-    _addFact(&_climbRateFact,           _climbRateFactName);
-    _addFact(&_altitudeRelativeFact,    _altitudeRelativeFactName);
-    _addFact(&_altitudeAMSLFact,        _altitudeAMSLFactName);
-    _addFact(&_altitudeAboveTerrFact,   _altitudeAboveTerrFactName);
-    _addFact(&_altitudeTuningFact,       _altitudeTuningFactName);
-    _addFact(&_altitudeTuningSetpointFact, _altitudeTuningSetpointFactName);
-    _addFact(&_xTrackErrorFact,         _xTrackErrorFactName);
-    _addFact(&_rangeFinderDistFact,     _rangeFinderDistFactName);
-    _addFact(&_flightDistanceFact,      _flightDistanceFactName);
-    _addFact(&_flightTimeFact,          _flightTimeFactName);
-    _addFact(&_distanceToHomeFact,      _distanceToHomeFactName);
-    _addFact(&_timeToHomeFact,          _timeToHomeFactName);
-    _addFact(&_missionItemIndexFact,    _missionItemIndexFactName);
-    _addFact(&_headingToNextWPFact,     _headingToNextWPFactName);
-    _addFact(&_distanceToNextWPFact,    _distanceToNextWPFactName);
-    _addFact(&_headingToHomeFact,       _headingToHomeFactName);
-    _addFact(&_distanceToGCSFact,       _distanceToGCSFactName);
-    _addFact(&_throttlePctFact,         _throttlePctFactName);
-    _addFact(&_imuTempFact,             _imuTempFactName);
-
-    _hobbsFact.setRawValue(QVariant(QString("0000:00:00")));
-    _addFact(&_hobbsFact,               _hobbsFactName);
-
+    // _addFactGroup(_vehicleFactGroup,            _vehicleFactGroupName);
     _addFactGroup(&_gpsFactGroup,               _gpsFactGroupName);
     _addFactGroup(&_gps2FactGroup,              _gps2FactGroupName);
     _addFactGroup(&_windFactGroup,              _windFactGroupName);
@@ -618,6 +529,8 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         factGroup->handleMessage(this, message);
     }
 
+    this->handleMessage(this, message);
+
     switch (message.msgid) {
     case MAVLINK_MSG_ID_HOME_POSITION:
         _handleHomePosition(message);
@@ -636,18 +549,6 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         break;
     case MAVLINK_MSG_ID_SYS_STATUS:
         _handleSysStatus(message);
-        break;
-    case MAVLINK_MSG_ID_RAW_IMU:
-        _handleRawImuTemp(message);
-        break;
-    case MAVLINK_MSG_ID_SCALED_IMU:
-        emit mavlinkScaledImu1(message);
-        break;
-    case MAVLINK_MSG_ID_SCALED_IMU2:
-        emit mavlinkScaledImu2(message);
-        break;
-    case MAVLINK_MSG_ID_SCALED_IMU3:
-        emit mavlinkScaledImu3(message);
         break;
     case MAVLINK_MSG_ID_EXTENDED_SYS_STATE:
         _handleExtendedSysState(message);
@@ -670,12 +571,6 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_ALTITUDE:
         _handleAltitude(message);
         break;
-    case MAVLINK_MSG_ID_VFR_HUD:
-        _handleVfrHud(message);
-        break;
-    case MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT:
-        _handleNavControllerOutput(message);
-        break;
     case MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED:
         _handleCameraImageCaptured(message);
         break;
@@ -687,12 +582,6 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         break;
     case MAVLINK_MSG_ID_HIGH_LATENCY2:
         _handleHighLatency2(message);
-        break;
-    case MAVLINK_MSG_ID_ATTITUDE:
-        _handleAttitude(message);
-        break;
-    case MAVLINK_MSG_ID_ATTITUDE_QUATERNION:
-        _handleAttitudeQuaternion(message);
         break;
     case MAVLINK_MSG_ID_STATUSTEXT:
         _handleStatusText(message);
@@ -752,9 +641,6 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_CAMERA_FEEDBACK:
         _handleCameraFeedback(message);
         break;
-    case MAVLINK_MSG_ID_RANGEFINDER:
-        _handleRangefinder(message);
-        break;
 #endif
     case MAVLINK_MSG_ID_LOG_ENTRY:
     {
@@ -792,14 +678,6 @@ void Vehicle::_handleCameraFeedback(const mavlink_message_t& message)
     QGeoCoordinate imageCoordinate((double)feedback.lat / qPow(10.0, 7.0), (double)feedback.lng / qPow(10.0, 7.0), feedback.alt_msl);
     qCDebug(VehicleLog) << "_handleCameraFeedback coord:index" << imageCoordinate << feedback.img_idx;
     _cameraTriggerPoints.append(new QGCQGeoCoordinate(imageCoordinate, this));
-}
-
-void Vehicle::_handleRangefinder(mavlink_message_t& message)
-{
-
-    mavlink_rangefinder_t rangefinder;
-    mavlink_msg_rangefinder_decode(&message, &rangefinder);
-    _rangeFinderDistFact.setRawValue(qIsNaN(rangefinder.distance) ? 0 : rangefinder.distance);
 }
 #endif
 
@@ -985,108 +863,7 @@ void Vehicle::_handleStatusText(mavlink_message_t& message)
     }
 }
 
-void Vehicle::_handleVfrHud(mavlink_message_t& message)
-{
-    mavlink_vfr_hud_t vfrHud;
-    mavlink_msg_vfr_hud_decode(&message, &vfrHud);
-
-    _airSpeedFact.setRawValue(qIsNaN(vfrHud.airspeed) ? 0 : vfrHud.airspeed);
-    _groundSpeedFact.setRawValue(qIsNaN(vfrHud.groundspeed) ? 0 : vfrHud.groundspeed);
-    _climbRateFact.setRawValue(qIsNaN(vfrHud.climb) ? 0 : vfrHud.climb);
-    _throttlePctFact.setRawValue(static_cast<int16_t>(vfrHud.throttle));
-    if (qIsNaN(_altitudeTuningOffset)) {
-        _altitudeTuningOffset = vfrHud.alt;
-    }
-    _altitudeTuningFact.setRawValue(vfrHud.alt - _altitudeTuningOffset);
-    if (!qIsNaN(vfrHud.groundspeed) && !qIsNaN(_distanceToHomeFact.cookedValue().toDouble())) {
-      _timeToHomeFact.setRawValue(_distanceToHomeFact.cookedValue().toDouble() / vfrHud.groundspeed);
-    }
-}
-
-void Vehicle::_handleNavControllerOutput(mavlink_message_t& message)
-{
-    mavlink_nav_controller_output_t navControllerOutput;
-    mavlink_msg_nav_controller_output_decode(&message, &navControllerOutput);
-
-    _altitudeTuningSetpointFact.setRawValue(_altitudeTuningFact.rawValue().toDouble() - navControllerOutput.alt_error);
-    _xTrackErrorFact.setRawValue(navControllerOutput.xtrack_error);
-    _airSpeedSetpointFact.setRawValue(_airSpeedFact.rawValue().toDouble() - navControllerOutput.aspd_error);
-    _distanceToNextWPFact.setRawValue(navControllerOutput.wp_dist);
-}
-
-void Vehicle::_handleAttitudeWorker(double rollRadians, double pitchRadians, double yawRadians)
-{
-    double roll, pitch, yaw;
-
-    roll = QGC::limitAngleToPMPIf(rollRadians);
-    pitch = QGC::limitAngleToPMPIf(pitchRadians);
-    yaw = QGC::limitAngleToPMPIf(yawRadians);
-
-    roll = qRadiansToDegrees(roll);
-    pitch = qRadiansToDegrees(pitch);
-    yaw = qRadiansToDegrees(yaw);
-
-    if (yaw < 0.0) {
-        yaw += 360.0;
-    }
-    // truncate to integer so widget never displays 360
-    yaw = trunc(yaw);
-
-    _rollFact.setRawValue(roll);
-    _pitchFact.setRawValue(pitch);
-    _headingFact.setRawValue(yaw);
-}
-
-void Vehicle::_handleAttitude(mavlink_message_t& message)
-{
-    // only accept the attitude message from the vehicle's flight controller
-    if (message.sysid != _id || message.compid != _compID) {
-        return;
-    }
-
-    if (_receivingAttitudeQuaternion) {
-        return;
-    }
-
-    mavlink_attitude_t attitude;
-    mavlink_msg_attitude_decode(&message, &attitude);
-
-    _handleAttitudeWorker(attitude.roll, attitude.pitch, attitude.yaw);
-}
-
-void Vehicle::_handleAttitudeQuaternion(mavlink_message_t& message)
-{
-    // only accept the attitude message from the vehicle's flight controller
-    if (message.sysid != _id || message.compid != _compID) {
-        return;
-    }
-
-    _receivingAttitudeQuaternion = true;
-
-    mavlink_attitude_quaternion_t attitudeQuaternion;
-    mavlink_msg_attitude_quaternion_decode(&message, &attitudeQuaternion);
-
-    QQuaternion quat(attitudeQuaternion.q1, attitudeQuaternion.q2, attitudeQuaternion.q3, attitudeQuaternion.q4);
-    QVector3D rates(attitudeQuaternion.rollspeed, attitudeQuaternion.pitchspeed, attitudeQuaternion.yawspeed);
-    QQuaternion repr_offset(attitudeQuaternion.repr_offset_q[0], attitudeQuaternion.repr_offset_q[1], attitudeQuaternion.repr_offset_q[2], attitudeQuaternion.repr_offset_q[3]);
-
-    // if repr_offset is valid, rotate attitude and rates
-    if (repr_offset.length() >= 0.5f) {
-        quat = quat * repr_offset;
-        rates = repr_offset * rates;
-    }
-
-    float roll, pitch, yaw;
-    float q[] = { quat.scalar(), quat.x(), quat.y(), quat.z() };
-    mavlink_quaternion_to_euler(q, &roll, &pitch, &yaw);
-
-    _handleAttitudeWorker(roll, pitch, yaw);
-
-    rollRate()->setRawValue(qRadiansToDegrees(rates[0]));
-    pitchRate()->setRawValue(qRadiansToDegrees(rates[1]));
-    yawRate()->setRawValue(qRadiansToDegrees(rates[2]));
-}
-
+// TODO: VehicleFactGroup
 void Vehicle::_handleGpsRawInt(mavlink_message_t& message)
 {
     mavlink_gps_raw_int_t gpsRawInt;
@@ -1108,6 +885,7 @@ void Vehicle::_handleGpsRawInt(mavlink_message_t& message)
     }
 }
 
+// TODO: VehicleFactGroup
 void Vehicle::_handleGlobalPositionInt(mavlink_message_t& message)
 {
     mavlink_global_position_int_t globalPositionInt;
@@ -1132,6 +910,7 @@ void Vehicle::_handleGlobalPositionInt(mavlink_message_t& message)
     }
 }
 
+// TODO: VehicleFactGroup
 void Vehicle::_handleHighLatency(mavlink_message_t& message)
 {
     mavlink_high_latency_t highLatency;
@@ -1178,6 +957,7 @@ void Vehicle::_handleHighLatency(mavlink_message_t& message)
     _altitudeAMSLFact.setRawValue(coordinate.altitude);
 }
 
+// TODO: VehicleFactGroup
 void Vehicle::_handleHighLatency2(mavlink_message_t& message)
 {
     mavlink_high_latency2_t highLatency2;
@@ -1222,6 +1002,7 @@ void Vehicle::_handleHighLatency2(mavlink_message_t& message)
     }
 }
 
+// TODO: VehicleFactGroup
 void Vehicle::_handleAltitude(mavlink_message_t& message)
 {
     mavlink_altitude_t altitude;
@@ -3758,17 +3539,6 @@ void Vehicle::_handleADSBVehicle(const mavlink_message_t& message)
 
         _toolbox->adsbVehicleManager()->adsbVehicleUpdate(vehicleInfo);
     }
-}
-
-void Vehicle::_handleRawImuTemp(mavlink_message_t& message)
-{
-    // This is used by compass calibration
-    emit mavlinkRawImu(message);
-    
-    mavlink_raw_imu_t imuRaw;
-    mavlink_msg_raw_imu_decode(&message, &imuRaw);
-
-    _imuTempFact.setRawValue(imuRaw.temperature == 0 ? 0 : imuRaw.temperature * 0.01);
 }
 
 void Vehicle::_updateDistanceHeadingToHome()
