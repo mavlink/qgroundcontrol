@@ -50,6 +50,7 @@ public:
         OrbitModeCapability =               1 << 3, ///< Vehicle supports orbit mode
         TakeoffVehicleCapability =          1 << 4, ///< Vehicle supports guided takeoff
         ROIModeCapability =                 1 << 5, ///< Vehicle supports ROI (both in Fly guided mode and from Plan creation)
+        ChangeHeadingCapability =           1 << 6, ///< Vehicle supports changing heading at current location
     } FirmwareCapabilities;
 
     /// Maps from on parameter name to another
@@ -143,6 +144,9 @@ public:
 
     /// Command vehicle to takeoff from current location to a firmware specific height.
     virtual void guidedModeTakeoff(Vehicle* vehicle, double takeoffAltRel);
+
+    /// Command vehicle to rotate towards specified location.
+    virtual void guidedModeChangeHeading(Vehicle *vehicle, const QGeoCoordinate &headingCoord);
 
     /// @return The minimum takeoff altitude (relative) for guided takeoff.
     virtual double minimumTakeoffAltitudeMeters(Vehicle* /*vehicle*/) { return 3.048; }

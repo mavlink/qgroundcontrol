@@ -83,8 +83,11 @@ bool APMFirmwarePlugin::isCapable(const Vehicle* vehicle, FirmwareCapabilities c
     if (vehicle->multiRotor()) {
         available |= TakeoffVehicleCapability;
         available |= ROIModeCapability;
+        available |= ChangeHeadingCapability;
     } else if (vehicle->vtol()) {
         available |= TakeoffVehicleCapability;
+    } else if (vehicle->sub()) {
+        available |= ChangeHeadingCapability;
     }
 
     return (capabilities & available) == capabilities;
@@ -915,6 +918,43 @@ void APMFirmwarePlugin::guidedModeChangeGroundSpeedMetersSecond(Vehicle *vehicle
 void APMFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
 {
     _guidedModeTakeoff(vehicle, altitudeRel);
+}
+
+void APMFirmwarePlugin::guidedModeChangeHeading(Vehicle* vehicle, const QGeoCoordinate &headingCoord)
+{
+    if (!isCapable(vehicle, FirmwarePlugin::ChangeHeadingCapability)) {
+        qgcApp()->showAppMessage(tr("Vehicle does not support guided rotate"));
+        return;
+    }
+
+    const float degrees = vehicle->coordinate().azimuthTo(headingCoord);
+    const float currentHeading = vehicle->heading()->rawValue().toFloat();
+
+    float diff = degrees - currentHeading;
+    if (diff < -180) {
+        diff += 360;
+    } else if (diff > 180) {
+        diff -= 360;
+    }
+
+    const int8_t direction = (diff > 0) ? 1 : -1;
+    diff = qAbs(diff);
+
+    float maxYawRate = 0.f;
+    static const QString maxYawRateParam = QStringLiteral("ATC_RATE_Y_MAX");
+    if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, maxYawRateParam)) {
+        maxYawRate = vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, maxYawRateParam)->rawValue().toFloat();
+    }
+
+    vehicle->sendMavCommand(
+        vehicle->defaultComponentId(),
+        MAV_CMD_CONDITION_YAW,
+        true,
+        diff,
+        maxYawRate,
+        direction,
+        true
+    );
 }
 
 double APMFirmwarePlugin::minimumTakeoffAltitudeMeters(Vehicle* vehicle)
