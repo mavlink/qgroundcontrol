@@ -3591,7 +3591,7 @@
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
-    <parameter name="MIS_DIST_1WP" default="900" type="FLOAT">
+    <parameter name="MIS_DIST_1WP" default="10000" type="FLOAT">
       <short_desc>Maximal horizontal distance from current position to first waypoint</short_desc>
       <long_desc>Failsafe check to prevent running mission stored from previous flight at a new takeoff location. Set a value of zero or less to disable. The mission will not be started if the current waypoint is more distant than MIS_DIST_1WP from the current position.</long_desc>
       <min>-1</min>
