@@ -2068,6 +2068,11 @@ bool Vehicle::takeoffVehicleSupported() const
     return _firmwarePlugin->isCapable(this, FirmwarePlugin::TakeoffVehicleCapability);
 }
 
+bool Vehicle::changeHeadingSupported() const
+{
+    return _firmwarePlugin->isCapable(this, FirmwarePlugin::ChangeHeadingCapability);
+}
+
 QString Vehicle::gotoFlightMode() const
 {
     return _firmwarePlugin->gotoFlightMode();
@@ -2287,6 +2292,16 @@ void Vehicle::stopGuidedModeROI()
                     static_cast<float>(qQNaN()),    // Empty
                     static_cast<float>(qQNaN()));   // Empty
     }
+}
+
+void Vehicle::guidedModeChangeHeading(const QGeoCoordinate &headingCoord)
+{
+    if (!changeHeadingSupported()) {
+        qgcApp()->showAppMessage(tr("Change Heading not supported by Vehicle."));
+        return;
+    }
+
+    _firmwarePlugin->guidedModeChangeHeading(this, headingCoord);
 }
 
 void Vehicle::pauseVehicle()
