@@ -38,7 +38,7 @@ jobs:
       QT_ANDROID_KEYSTORE_ALIAS: QGCAndroidKeyStore
       QT_ANDROID_KEYSTORE_STORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       QT_ANDROID_KEYSTORE_KEY_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-      QT_ANDROID_ABIS: "armeabi-v7a;arm64-v8a"
+      QT_ANDROID_ABIS: ${{ matrix.BuildType == 'Release' && 'armeabi-v7a;arm64-v8a' || 'arm64-v8a' }}
       GST_VERSION: 1.22.11
 
     steps:
