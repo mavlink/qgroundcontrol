@@ -1,0 +1,64 @@
+name: Linux-QMake
+
+on:
+  push:
+    branches:
+      - master
+      - 'Stable*'
+    tags:
+      - 'v*'
+    paths-ignore:
+      - 'android/**'
+      - 'deploy/**'
+      - 'docs/**'
+  pull_request:
+    paths-ignore:
+      - 'android/**'
+      - 'deploy/**'
+      - 'docs/**'
+      - '.github/workflows/docs_deploy.yml'
+      - '.github/workflows/android.yml'
+      - '.github/workflows/macos.yml'
+      - '.github/workflows/windows.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-tags: true
+
+      - name: Install Dependencies
+        run: |
+          chmod a+x ./tools/setup/install-dependencies-debian.sh
+          sudo ./tools/setup/install-dependencies-debian.sh
+          sudo apt clean
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: 6.6.3
+          aqtversion: ==3.1.*
+          host: linux
+          target: desktop
+          dir: ${{ runner.temp }}
+          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
+          setup-python: true
+          cache: false
+
+      - name: Create build directory
+        run:  mkdir ${{ runner.temp }}/shadow_build_dir
+
+      - name: Build
+        working-directory: ${{ runner.temp }}/shadow_build_dir
+        run: |
+          qmake -r ${{ github.workspace }}/qgroundcontrol.pro CONFIG+=debug CONFIG+=DailyBuild
+          make -j2
