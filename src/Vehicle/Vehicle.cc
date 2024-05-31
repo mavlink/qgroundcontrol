@@ -409,6 +409,14 @@ void Vehicle::prepareDelete()
 #endif
 }
 
+void Vehicle::deleteCameraManager()
+{
+    if(_cameraManager) {
+        delete _cameraManager;
+        _cameraManager = nullptr;
+    }
+}
+
 void Vehicle::deleteGimbalController()
 {
     if (_gimbalController) {
