@@ -47,7 +47,7 @@ Viewer3DTileReply::~Viewer3DTileReply()
 
 void Viewer3DTileReply::prepareDownload()
 {
-    QNetworkRequest request = getQGCMapEngine()->urlFactory()->getTileURL(_mapId, _tile.x, _tile.y, _tile.zoomLevel, _networkManager);
+    QNetworkRequest request = getQGCMapEngine()->urlFactory()->getTileURL(_mapId, _tile.x, _tile.y, _tile.zoomLevel);
     _reply = _networkManager->get(request);
     connect(_reply, &QNetworkReply::finished, this, &Viewer3DTileReply::requestFinished);
     connect(_reply, &QNetworkReply::errorOccurred, this, &Viewer3DTileReply::requestError);
@@ -64,7 +64,7 @@ void Viewer3DTileReply::requestFinished()
     disconnect(_reply, &QNetworkReply::errorOccurred, this, &Viewer3DTileReply::requestError);
     disconnect(_timeoutTimer, &QTimer::timeout, this, &Viewer3DTileReply::timeoutTimerEvent);
 
-    if(mapProvider && mapProvider->_isBingProvider() && _tile.data.size() && _tile.data == _bingNoTileImage){
+    if(mapProvider && mapProvider->isBingProvider() && _tile.data.size() && _tile.data == _bingNoTileImage){
         // Bing doesn't return an error if you request a tile above supported zoom level
         // It instead returns an image of a missing tile graphic. We need to detect that
         // and error out so 3D View will deal with zooming correctly even if it doesn't have the tile.
