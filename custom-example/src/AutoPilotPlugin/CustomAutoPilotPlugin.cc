@@ -12,6 +12,7 @@
 
 #include "CustomAutoPilotPlugin.h"
 
+#include "ParameterManager.h"
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 

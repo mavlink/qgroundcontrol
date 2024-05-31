@@ -181,7 +181,10 @@ if(QGC_BUILD_TESTING)
     add_compile_definitions(UNITTEST_BUILD) # TODO: QGC_UNITTEST_BUILD
 endif()
 
-# option(QGC_CUSTOM_BUILD "Enable Custom Build" OFF)
+option(QGC_CUSTOM_BUILD "Enable Custom Build" OFF)
+if(QGC_CUSTOM_BUILD)
+    add_subdirectory(custom)
+endif()
 
 # option(QGC_DISABLE_MAVLINK_INSPECTOR "Disable Mavlink Inspector" OFF) # This removes QtCharts which is GPL licensed
 
@@ -197,10 +200,15 @@ cmake_dependent_option(QGC_NO_SERIAL_LINK "Build QGroundControl without Serial S
 #                QGroundControl Resources
 #######################################################
 
-set(QGC_RESOURCES
-    ${CMAKE_SOURCE_DIR}/qgcimages.qrc
-    ${CMAKE_SOURCE_DIR}/qgcresources.qrc
-    ${CMAKE_SOURCE_DIR}/qgroundcontrol.qrc
+if(NOT QGC_CUSTOM_BUILD)
+    list(APPEND QGC_RESOURCES
+        ${CMAKE_SOURCE_DIR}/qgcimages.qrc
+        ${CMAKE_SOURCE_DIR}/qgcresources.qrc
+        ${CMAKE_SOURCE_DIR}/qgroundcontrol.qrc
+    )
+endif()
+
+list(APPEND QGC_RESOURCES
     ${CMAKE_SOURCE_DIR}/resources/InstrumentValueIcons/InstrumentValueIcons.qrc
     ${CMAKE_SOURCE_DIR}/src/FirmwarePlugin/APM/APMResources.qrc
     ${CMAKE_SOURCE_DIR}/src/FirmwarePlugin/PX4/PX4Resources.qrc
@@ -302,12 +310,14 @@ elseif(LINUX)
 
 endif()
 
-add_compile_definitions(
-    QGC_APPLICATION_NAME="QGroundControl"
-    QGC_ORG_NAME="QGroundControl.org"
-    QGC_ORG_DOMAIN="org.qgroundcontrol"
-    APP_VERSION_STR="${APP_VERSION_STR}"
-)
+if(NOT QGC_CUSTOM_BUILD)
+    add_compile_definitions(
+        QGC_APPLICATION_NAME="QGroundControl"
+        QGC_ORG_NAME="QGroundControl.org"
+        QGC_ORG_DOMAIN="org.qgroundcontrol"
+        APP_VERSION_STR="${APP_VERSION_STR}"
+    )
+endif()
 
 add_subdirectory(src)
 target_link_libraries(${PROJECT_NAME}

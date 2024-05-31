@@ -1,4 +1,6 @@
-add_subdirectory(APM)
+if(NOT QGC_DISABLE_APM_PLUGIN)
+    add_subdirectory(APM)
+endif()
 add_subdirectory(Common)
 add_subdirectory(PX4)
 
