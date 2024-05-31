@@ -158,7 +158,7 @@ ColumnLayout {
         QGCComboBox {
             Layout.preferredWidth:  _secondColumnWidth
             model:                  [ "5", "6", "7", "8" ]
-            currentIndex:           Math.max(Math.min(subEditConfig.dataBits - 5, 0), 3)
+            currentIndex:           Math.max(Math.min(subEditConfig.dataBits - 5, 3), 0)
             onActivated: (index) => { subEditConfig.dataBits = index + 5 }
         }
 
@@ -166,7 +166,7 @@ ColumnLayout {
         QGCComboBox {
             Layout.preferredWidth:  _secondColumnWidth
             model:                  [ "1", "2" ]
-            currentIndex:           Math.max(Math.min(subEditConfig.stopBits - 1, 0), 1)
+            currentIndex:           Math.max(Math.min(subEditConfig.stopBits - 1, 1), 0)
             onActivated: (index) => { subEditConfig.stopBits = index + 1 }
         }
     }
