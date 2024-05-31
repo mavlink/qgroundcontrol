@@ -838,6 +838,9 @@ public:
     /// Vehicle is about to be deleted
     void prepareDelete();
 
+    /// Delete camera manager, just for testing
+    void deleteCameraManager();
+
     quint64     mavlinkSentCount        () const{ return _mavlinkSentCount; }        /// Calculated total number of messages sent to us
     quint64     mavlinkReceivedCount    () const{ return _mavlinkReceivedCount; }    /// Total number of sucessful messages received
     quint64     mavlinkLossCount        () const{ return _mavlinkLossCount; }        /// Total number of lost messages

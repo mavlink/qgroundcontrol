@@ -493,6 +493,14 @@ void Vehicle::prepareDelete()
 #endif
 }
 
+void Vehicle::deleteCameraManager()
+{
+    if(_cameraManager) {
+        delete _cameraManager;
+        _cameraManager = nullptr;
+    }
+}
+
 void Vehicle::_offlineFirmwareTypeSettingChanged(QVariant varFirmwareType)
 {
     _firmwareType = static_cast<MAV_AUTOPILOT>(varFirmwareType.toInt());
