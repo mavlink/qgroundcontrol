@@ -137,6 +137,8 @@ VideoEnabled {
 
     INCLUDEPATH += \
         $$PWD
+        $$PWD/GStreamer \
+        $$PWD/QtMultimedia
 
     iOSBuild {
         OBJECTIVE_SOURCES += \
@@ -144,21 +146,21 @@ VideoEnabled {
     }
 
     HEADERS += \
-        $$PWD/GStreamer.h \
-        $$PWD/GstVideoReceiver.h \
+        $$PWD/GStreamer/GStreamer.h \
+        $$PWD/GStreamer/GstVideoReceiver.h \
         $$PWD/VideoReceiver.h
 
     SOURCES += \
-        $$PWD/gstqgcvideosinkbin.c \
-        $$PWD/gstqgc.c \
-        $$PWD/GStreamer.cc \
-        $$PWD/GstVideoReceiver.cc
+        $$PWD/GStreamer/gstqgcvideosinkbin.c \
+        $$PWD/GStreamer/gstqgc.c \
+        $$PWD/GStreamer/GStreamer.cc \
+        $$PWD/GStreamer/GstVideoReceiver.cc
 
-    include($$PWD/../../qmlglsink.pri)
+    include($$PWD/../../../qmlglsink.pri)
 } else {
     LinuxBuild|MacBuild|iOSBuild|WindowsBuild|AndroidBuild {
         message("Skipping support for video streaming (GStreamer libraries not installed)")
-        message("Installation instructions here: https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoReceiver/README.md")
+        message("Installation instructions here: https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoManager/VideoReceiver/GStreamer/README.md")
     } else {
         message("Skipping support for video streaming (Unsupported platform)")
     }
