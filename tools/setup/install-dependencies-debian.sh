@@ -24,7 +24,8 @@ DEBIAN_FRONTEND=noninteractive apt -y --quiet --no-install-recommends install \
 	ninja-build \
 	patchelf \
 	pkgconf \
-	rsync
+	rsync \
+	libunwind-dev
 
 #Qt Required - https://doc.qt.io/qt-6/linux-requirements.html
 DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
@@ -58,6 +59,7 @@ DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
 #Qt Additional
 DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
 	flite \
+	libdrm-dev \
 	libgl1-mesa-dev \
 	libpulse-dev \
 	libspeechd2 \
@@ -72,8 +74,10 @@ DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
 #GStreamer
 DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
 	libgstreamer1.0-0 \
+	libgstreamer1.0-dev \
 	libgstreamer-plugins-bad1.0-0 \
 	libgstreamer-plugins-base1.0-0 \
+	libgstreamer-plugins-base1.0-dev \
 	libgstreamer-plugins-good1.0-0 \
 	libgstreamer-gl1.0-0 \
 	gstreamer1.0-plugins-bad \
