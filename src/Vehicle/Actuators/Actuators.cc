@@ -45,7 +45,8 @@ void Actuators::imageClicked(float x, float y)
         QList<ActuatorGeometry>& actuators = provider->actuators();
         bool found = false;
         for (auto& actuator : actuators) {
-            if (actuator.type == ActuatorGeometry::Type::Motor && actuator.index == motorIndex) {
+            if ((actuator.type == ActuatorGeometry::Type::Motor && actuator.index == motorIndex) ||
+                (actuator.type == ActuatorGeometry::Type::Thruster && actuator.index == motorIndex)) {
                 actuator.renderOptions.highlight = false;
                 found = true;
             }
@@ -289,7 +290,10 @@ void Actuators::updateFunctionMetadata()
             continue;
 
         for (int i = iter.value().functionMin; i <= iter.value().functionMax; ++i) {
-            if (!usedMixerFunctions.contains(i)) {
+            qDebug("Checking %d", i);
+            if (!usedMixerFunctions.contains(i))
+            {
+                qDebug("Removing %d", i);
                 removedMixerFunctions.insert(i);
             }
         }
@@ -604,7 +608,6 @@ bool Actuators::parseJson(const QJsonDocument &json)
         option.type = mixerConfig["type"].toString();
         option.title = mixerConfig["title"].toString();
         option.helpUrl = mixerConfig["help-url"].toString();
-        std::cout << " MAYBE HERE: " << option.title.toStdString() << option.type.toStdString() << option.helpUrl.toStdString() << std::endl;
         QJsonArray actuatorsJson = mixerConfig["actuators"].toArray();
         for (const auto&& actuatorJson : actuatorsJson) {
             QJsonValue actuatorJsonVal = actuatorJson.toObject();
@@ -738,6 +741,7 @@ bool Actuators::parseJson(const QJsonDocument &json)
     }
 
     _mixer.reset(actuatorTypes, mixerOptions, outputFunctions, rules);
+    qDebug("\n\nHEYOOOO\n\n");
     _init = true;
     return true;
 }

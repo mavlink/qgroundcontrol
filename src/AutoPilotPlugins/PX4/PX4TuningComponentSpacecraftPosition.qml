@@ -48,16 +48,16 @@ ColumnLayout {
                     description:    qsTr("Increase for more responsiveness, reduce if the position overshoots.")
                     param:          "SPC_POS_I"
                     min:            0
-                    max:            20
-                    step:           0.05
+                    max:            2
+                    step:           0.001
                 }
                 ListElement {
                     title:          qsTr("Proportional gain (SPC_POS_I_LIM)")
                     description:    qsTr("Increase to enlarge the allowed integral compensation.")
                     param:          "SPC_POS_I_LIM"
                     min:            0
-                    max:            5
-                    step:           0.05
+                    max:            2
+                    step:           0.001
                 }
                 ListElement {
                     title:          qsTr("Position Error Limit (SPC_VEL_MAX)")
