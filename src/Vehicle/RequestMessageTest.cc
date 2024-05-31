@@ -41,6 +41,9 @@ void RequestMessageTest::_testCaseWorker(TestCase_t& testCase)
     // Gimbal controller sends message requests when receiving heartbeats, trying to find a gimbal, and it messes with this test so we disable it
     vehicle->deleteGimbalController();
 
+    // Camera manager also messes with it.
+    vehicle->deleteCameraManager();
+
     _mockLink->clearReceivedMavCommandCounts();
     _mockLink->setRequestMessageFailureMode(testCase.failureMode);
 
