@@ -39,6 +39,7 @@
 
 #include <errno.h>
 #include <stdio.h>
+#include <termios.h>
 
 #include <QtCore/qelapsedtimer.h>
 #include <QtCore/qsocketnotifier.h>
