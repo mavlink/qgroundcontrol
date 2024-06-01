@@ -141,8 +141,7 @@ Item {
         Loader {
             // GStreamer is causing crashes on Lenovo laptop OpenGL Intel drivers. In order to workaround this
             // we don't load a QGCVideoBackground object when video is disabled. This prevents any video rendering
-            // code from running. Setting QGCVideoBackground.receiver = null does not work to prevent any
-            // video OpenGL from being generated. Hence the Loader to completely remove it.
+            // code from running. Hence the Loader to completely remove it.
             height:             parent.getHeight()
             width:              parent.getWidth()
             anchors.centerIn:   parent
@@ -187,7 +186,6 @@ Item {
                 id:             thermalVideo
                 objectName:     "thermalVideo"
                 anchors.fill:   parent
-                receiver:       QGroundControl.videoManager.thermalVideoReceiver
                 opacity:        _camera ? (_camera.thermalMode === MavlinkCameraControl.THERMAL_BLEND ? _camera.thermalOpacity / 100 : 1.0) : 0
             }
         }
