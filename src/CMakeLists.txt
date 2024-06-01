@@ -92,13 +92,13 @@ target_link_libraries(QGC
 		Vehicle
 		VehicleSetup
 		Viewer3D
+		VideoManager
+		VideoReceiver
 	PUBLIC
 		Qt6::Core
 		Qt6::CorePrivate
 		Qt6::Widgets
-
 		QGCLocation
-		VideoManager
 )
 
 if(QGC_CUSTOM_BUILD)

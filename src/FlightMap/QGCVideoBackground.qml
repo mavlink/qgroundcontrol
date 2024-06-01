@@ -20,5 +20,4 @@ import org.freedesktop.gstreamer.Qt6GLVideoItem
 
 GstGLQt6VideoItem {
     id: videoBackground
-    property var receiver
 }
