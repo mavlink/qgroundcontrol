@@ -89,8 +89,6 @@ signals:
     void usbDirectChanged       (bool usbDirect);
 
 private:
-    static void _initBaudRates();
-
     int _baud;
     int _dataBits;
     int _flowControl;
