@@ -18,8 +18,8 @@ target_link_libraries(API
 		Joystick
 		Settings
 		Utilities
-		VideoReceiver
 		VideoManager
+		VideoReceiver
 	PUBLIC
 		Qt6::Core
 		Qt6::Gui
