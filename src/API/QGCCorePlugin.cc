@@ -19,7 +19,6 @@
 #include "JoystickManager.h"
 #if defined(QGC_GST_STREAMING)
 #include "GStreamer.h"
-#include "VideoReceiver.h"
 #endif
 #include "HorizontalFactValueGrid.h"
 #include "InstrumentValueData.h"
