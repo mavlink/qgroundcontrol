@@ -136,3 +136,13 @@ jobs:
         with:
           name: ${{ matrix.ARTIFACT }}
           path: ${{ runner.temp }}/shadow_build_dir/package/${{ matrix.ARTIFACT }}
+
+      - name: Publish artifact to GitHub release
+        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ${{ runner.temp }}/shadow_build_dir/package/${{ matrix.ARTIFACT }}
+          asset_name: ${{ matrix.ARTIFACT }}
+          tag: ${{ github.ref }}
+          overwrite: true
