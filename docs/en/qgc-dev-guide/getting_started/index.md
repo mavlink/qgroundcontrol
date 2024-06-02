@@ -98,6 +98,7 @@ To see a complete list of all available components in the installer _Select Comp
      - _Qt Location (TP)_
      - _Qt Multimedia_
      - _Qt Positioning_
+     - _Qt Sensors_
      - _Qt Serial Port_
      - _Qt Speech_
 
