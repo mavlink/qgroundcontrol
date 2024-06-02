@@ -209,6 +209,9 @@ QGeoTiledMapReplyQGC::cacheError(QGCMapTask::TaskType type, QString /*errorStrin
 #endif
         _reply = _networkManager->get(_request);
         _reply->setParent(nullptr);
+
+        setIgnoreSSLErrorsIfNeeded(*_reply);
+
         connect(_reply, &QNetworkReply::finished, this, &QGeoTiledMapReplyQGC::networkReplyFinished);
         connect(_reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(networkReplyError(QNetworkReply::NetworkError)));
 #if !defined(__mobile__)
@@ -247,4 +250,21 @@ QGeoTiledMapReplyQGC::timeout()
         _reply->abort();
     }
     emit aborted();
+}
+
+//-----------------------------------------------------------------------------
+void QGeoTiledMapReplyQGC::setIgnoreSSLErrorsIfNeeded(QNetworkReply& networkReply)
+{
+    // Some systems (like Ubuntu 22.04) only ship with OpenSSL 3.x, however Qt 5.15.2 links against OpenSSL 1.x.
+    // This results in unresolved symbols for EVP_PKEY_base_id and SSL_get_peer_certificate.
+    // To still get a connection we have to ignore certificate verification (connection is still encrypted but open to MITM attacks)
+    // See https://bugreports.qt.io/browse/QTBUG-115146
+    const bool sslLibraryBuildIs1x = (QSslSocket::sslLibraryBuildVersionNumber() & 0xf0000000) == 0x10000000;
+    const bool sslLibraryIs3x = (QSslSocket::sslLibraryVersionNumber() & 0xf0000000) == 0x30000000;
+    if (sslLibraryBuildIs1x && sslLibraryIs3x) {
+        qWarning() << "Ignoring ssl certificates due to OpenSSL version mismatch";
+        QList<QSslError> errorsThatCanBeIgnored;
+        errorsThatCanBeIgnored << QSslError(QSslError::NoPeerCertificate);
+        networkReply.ignoreSslErrors(errorsThatCanBeIgnored);
+    }
 }
