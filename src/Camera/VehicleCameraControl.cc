@@ -1759,7 +1759,7 @@ VehicleCameraControl::_requestStreamInfo(uint8_t streamID)
     qCDebug(CameraControlLog) << "Requesting video stream info for:" << streamID;
     // By default, try to use new REQUEST_MESSAGE command instead of 
     // deprecated MAV_CMD_REQUEST_VIDEO_STREAM_INFORMATION.
-    if (_videoStreamStatusRetries % 2 == 0) {
+    if (_videoStreamStatusRetries++ % 2 == 0) {
         _vehicle->sendMavCommand(
             _compID,                                         // target component
             MAV_CMD_REQUEST_MESSAGE,                        // command id
@@ -1790,11 +1790,11 @@ VehicleCameraControl::_requestStreamStatus(uint8_t streamID)
             MAVLINK_MSG_ID_VIDEO_STREAM_STATUS,             // msgid
             streamID);                                      // stream id
     } else {
-    _vehicle->sendMavCommand(
-        _compID,                                            // Target component
-        MAV_CMD_REQUEST_VIDEO_STREAM_STATUS,                // Command id
-        false,                                              // ShowError
-        streamID);                                          // Stream ID
+        _vehicle->sendMavCommand(
+            _compID,                                            // Target component
+            MAV_CMD_REQUEST_VIDEO_STREAM_STATUS,                // Command id
+            false,                                              // ShowError
+            streamID);                                          // Stream ID
     }
     _streamStatusTimer.start(1000);                         // Wait up to a second for it
 }
@@ -1867,7 +1867,6 @@ VehicleCameraControl::_streamInfoTimeout()
 void
 VehicleCameraControl::_streamStatusTimeout()
 {
-    _videoStreamStatusRetries++;
     QGCVideoStreamInfo* pStream = currentStreamInstance();
     if(pStream) {
         _requestStreamStatus(static_cast<uint8_t>(pStream->streamID()));
