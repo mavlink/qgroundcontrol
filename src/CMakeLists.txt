@@ -123,10 +123,18 @@ if(ANDROID)
 
 	target_include_directories(QGC PUBLIC ${CMAKE_SOURCE_DIR}/android/src)
 else()
-	target_sources(QGC
-		PRIVATE
-			RunGuard.cc
-			RunGuard.h
+	set(QT_DEFAULT_MAJOR_VERSION 6 CACHE STRING "Qt version to use, defaults to 6")
+	set(QAPPLICATION_CLASS QApplication CACHE STRING "Inheritance class for SingleApplication")
+	FetchContent_Declare(
+		SingleApplication
+		GIT_REPOSITORY 	https://github.com/itay-grudev/SingleApplication
+		GIT_TAG        	v3.5.1
+		GIT_SHALLOW 	TRUE
+	)
+	FetchContent_MakeAvailable(SingleApplication)
+	target_link_libraries(QGC
+		PUBLIC
+			SingleApplication::SingleApplication
 	)
 endif()
 
