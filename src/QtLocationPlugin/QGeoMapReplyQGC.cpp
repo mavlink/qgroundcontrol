@@ -262,7 +262,7 @@ void QGeoTiledMapReplyQGC::setIgnoreSSLErrorsIfNeeded(QNetworkReply& networkRepl
     const bool sslLibraryBuildIs1x = (QSslSocket::sslLibraryBuildVersionNumber() & 0xf0000000) == 0x10000000;
     const bool sslLibraryIs3x = (QSslSocket::sslLibraryVersionNumber() & 0xf0000000) == 0x30000000;
     if (sslLibraryBuildIs1x && sslLibraryIs3x) {
-        qWarning() << "Ignoring ssl certificates due to OpenSSL version mismatch";
+        //qWarning() << "Ignoring ssl certificates due to OpenSSL version mismatch";
         QList<QSslError> errorsThatCanBeIgnored;
         errorsThatCanBeIgnored << QSslError(QSslError::NoPeerCertificate);
         networkReply.ignoreSslErrors(errorsThatCanBeIgnored);
