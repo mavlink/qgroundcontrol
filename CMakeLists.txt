@@ -302,6 +302,12 @@ elseif(LINUX)
 
 endif()
 
+if(QGC_STABLE_BUILD)
+    set(APP_VERSION_STR ${REL_VERSION})
+else()
+    set(APP_VERSION_STR ${GIT_BRANCH}-${GIT_HASH})
+endif()
+
 add_compile_definitions(
     QGC_APPLICATION_NAME="QGroundControl"
     QGC_ORG_NAME="QGroundControl.org"

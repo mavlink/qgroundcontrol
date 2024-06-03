@@ -22,12 +22,20 @@ endif()
 include(CMakePrintHelpers)
 
 execute_process(
-    COMMAND ${GIT_EXECUTABLE} describe --always --tags
+    COMMAND ${GIT_EXECUTABLE} rev-parse --abbrev-ref @
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    OUTPUT_VARIABLE APP_VERSION_STR
+    OUTPUT_VARIABLE GIT_BRANCH
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-cmake_print_variables(APP_VERSION_STR)
+cmake_print_variables(GIT_BRANCH)
+
+execute_process(
+    COMMAND ${GIT_EXECUTABLE} rev-parse --short @
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_HASH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+cmake_print_variables(GIT_HASH)
 
 execute_process(
     COMMAND ${GIT_EXECUTABLE} describe --always --abbrev=0
