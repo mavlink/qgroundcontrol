@@ -45,7 +45,7 @@ MapQuickItem {
         opacity:    _adsbVehicle || vehicle === _activeVehicle ? 1.0 : 0.5
 
         Repeater {
-            model: vehicle.gimbalController.gimbals
+            model: vehicle ? vehicle.gimbalController.gimbals : [] 
             
             Item {
                 id:                           canvasItem
