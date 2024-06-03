@@ -8,6 +8,8 @@ qt_add_library(MAVLink STATIC
     MAVLinkFTP.cc
     MAVLinkFTP.h
     MAVLinkLib.h
+    MAVLinkSigning.cc
+    MAVLinkSigning.h
     MAVLinkStreamConfig.cc
     MAVLinkStreamConfig.h
     QGCMAVLink.cc

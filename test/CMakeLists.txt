@@ -45,6 +45,7 @@ add_qgc_test(GeoTest)
 
 add_subdirectory(MAVLink)
 add_qgc_test(StatusTextHandlerTest)
+add_qgc_test(SigningTest)
 
 add_subdirectory(MissionManager)
 add_qgc_test(CameraCalcTest)

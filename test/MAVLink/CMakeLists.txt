@@ -3,6 +3,8 @@ find_package(Qt6 REQUIRED COMPONENTS Core)
 qt_add_library(MAVLinkTest STATIC
     StatusTextHandlerTest.cc
     StatusTextHandlerTest.h
+    SigningTest.cc
+    SigningTest.h
 )
 
 target_link_libraries(MAVLinkTest
