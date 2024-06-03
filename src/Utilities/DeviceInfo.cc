@@ -32,6 +32,14 @@ bool isInternetAvailable() {
     return (reachability == QNetworkInformation::Reachability::Online);
 }
 
+bool isNetworkWired() {
+    if(QNetworkInformation::availableBackends().isEmpty()) return false;
+
+    if(!QNetworkInformation::loadDefaultBackend()) return false;
+
+    return QNetworkInformation::instance()->transportMedium() == QNetworkInformation::TransportMedium::Ethernet;
+}
+
 bool isBluetoothAvailable() {
     #ifdef QGC_ENABLE_BLUETOOTH
         const QList<QBluetoothHostInfo> devices = QBluetoothLocalDevice::allDevices();
