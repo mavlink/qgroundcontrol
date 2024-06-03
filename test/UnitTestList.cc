@@ -37,6 +37,7 @@
 
 // MAVLink
 #include "StatusTextHandlerTest.h"
+#include "SigningTest.h"
 
 // MissionManager
 #include "CameraCalcTest.h"
@@ -125,6 +126,7 @@ int runTests(bool stress, QStringView unitTestOptions)
 
     // MAVLink
     UT_REGISTER_TEST(StatusTextHandlerTest)
+    UT_REGISTER_TEST(SigningTest)
 
 	// MissionManager
 	UT_REGISTER_TEST(CameraCalcTest)

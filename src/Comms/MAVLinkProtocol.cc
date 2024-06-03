@@ -255,6 +255,9 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
             //-----------------------------------------------------------------
             // MAVLink forwarding
             bool forwardingEnabled = _app->toolbox()->settingsManager()->appSettings()->forwardMavlink()->rawValue().toBool();
+            if (_message.msgid == MAVLINK_MSG_ID_SETUP_SIGNING) {
+                forwardingEnabled = false;
+            }
             if (forwardingEnabled) {
                 SharedLinkInterfacePtr forwardingLink = _linkMgr->mavlinkForwardingLink();
 
@@ -267,6 +270,9 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 
             // MAVLink forwarding support
             bool forwardingSupportEnabled = _linkMgr->mavlinkSupportForwardingEnabled();
+            if (_message.msgid == MAVLINK_MSG_ID_SETUP_SIGNING) {
+                forwardingSupportEnabled = false;
+            }
             if (forwardingSupportEnabled) {
                 SharedLinkInterfacePtr forwardingSupportLink = _linkMgr->mavlinkForwardingSupportLink();
 

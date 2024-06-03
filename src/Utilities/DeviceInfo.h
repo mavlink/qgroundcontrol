@@ -8,10 +8,12 @@
 
 Q_DECLARE_LOGGING_CATEGORY(QGCDeviceInfoLog)
 
-namespace QGCDeviceInfo {
+namespace QGCDeviceInfo
+{
 
 bool isInternetAvailable();
 bool isBluetoothAvailable();
+bool isNetworkWired();
 
 ////////////////////////////////////////////////////////////////////
 
