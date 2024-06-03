@@ -23,6 +23,13 @@
 #include <QtCore/private/qthread_p.h>
 #include <QtCore/private/qobject_p.h>
 
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
+    #define QGCAPPLICATION_CLASS QApplication
+#else
+    #include <SingleApplication>
+    #define QGCAPPLICATION_CLASS SingleApplication
+#endif
+
 // Work around circular header includes
 class QQmlApplicationEngine;
 class QGCToolbox;
@@ -56,7 +63,7 @@ class QGCApplication;
 **/
 
 // TODO: Use QtGraphs to convert to QGuiApplication
-class QGCApplication : public QApplication
+class QGCApplication : public QGCAPPLICATION_CLASS
 {
     Q_OBJECT
 public:
