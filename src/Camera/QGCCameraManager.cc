@@ -135,7 +135,7 @@ QGCCameraManager::_handleHeartbeat(const mavlink_message_t &message)
                     if(pInfo->tryCount > 10) {
                         if(!pInfo->gaveUp) {
                             pInfo->gaveUp = true;
-                            qWarning() << "Giving up requesting camera info from" << _vehicle->id() << message.compid;
+                            qCDebug(CameraManagerLog) << "Giving up requesting camera info from" << _vehicle->id() << message.compid;
                         }
                     } else {
                         pInfo->tryCount++;
