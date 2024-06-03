@@ -214,8 +214,7 @@ Item {
     QGCFileDialog {
         id:             fileDialog
         folder:         QGroundControl.settingsManager.appSettings.missionSavePath
-        nameFilters:    [ qsTr("Tile Sets (*.%1)").arg(defaultSuffix) ]
-        defaultSuffix:  _appSettings.tilesetFileExtension
+        nameFilters:    ["Tile Sets (*.qgctiledb)"]
 
         onAcceptedForSave: {
             if (QGroundControl.mapEngineManager.exportSets(file)) {
