@@ -119,6 +119,7 @@ public:
     Q_PROPERTY(int      mavlinkSystemID         READ mavlinkSystemID            WRITE setMavlinkSystemID            NOTIFY mavlinkSystemIDChanged)
     Q_PROPERTY(bool     hasAPMSupport           READ hasAPMSupport              CONSTANT)
     Q_PROPERTY(bool     hasMAVLinkInspector     READ hasMAVLinkInspector        CONSTANT)
+    Q_PROPERTY(bool     has3DViewer             READ has3DViewer                CONSTANT)
 
 
     //-------------------------------------------------------------------------
@@ -216,6 +217,12 @@ public:
     bool    hasMAVLinkInspector     () { return false; }
 #else
     bool    hasMAVLinkInspector     () { return true; }
+#endif
+
+#if defined(QGC_DISABLE_VIEWER3D)
+    bool    has3DViewer             () { return false; }
+#else
+    bool    has3DViewer             () { return true; }
 #endif
 
     static QString elevationProviderName   ();

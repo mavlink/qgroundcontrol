@@ -17,3 +17,5 @@ option(QGC_DISABLE_APM_PLUGIN_FACTORY "Disable APM Plugin Factory" OFF)
 # PX4
 option(QGC_DISABLE_PX4_PLUGIN "Disable PX4 Plugin" OFF)
 option(QGC_DISABLE_PX4_PLUGIN_FACTORY "Disable PX4 Plugin Factory" OFF)
+
+option(QGC_LGPL_COMPATIBLE "Disable Dependencies that are LGPL Incompatible" OFF)

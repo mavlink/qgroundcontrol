@@ -36,6 +36,7 @@ Item {
     // These should only be used by MainRootWindow
     property var planController:    _planController
     property var guidedController:  _guidedController
+    property var viewer3DWindow:  view3DManagerLoader.active ? view3DManagerLoader.item : null
 
     // Properties of UTM adapter
     property bool utmspSendActTrigger: false
@@ -100,7 +101,7 @@ Item {
             pipMode:                !_mainWindowIsMap
             toolInsets:             customOverlay.totalToolInsets
             mapName:                "FlightDisplayView"
-            enabled:                !viewer3DWindow.isOpen
+            enabled:                view3DManagerLoader.active && !viewer3DWindow.isOpen
         }
 
         FlyViewVideo {
@@ -135,7 +136,7 @@ Item {
             mapControl:             _mapControl
             visible:                !QGroundControl.videoManager.fullScreen
             utmspActTrigger:        utmspSendActTrigger
-            isViewer3DOpen:         viewer3DWindow.isOpen
+            isViewer3DOpen:         view3DManagerLoader.active && viewer3DWindow.isOpen
         }
 
         FlyViewCustomLayer {
@@ -186,9 +187,14 @@ Item {
             visible:            false
         }
 
-        Viewer3D{
-            id:                     viewer3DWindow
-            anchors.fill:           parent
+        Loader {
+            id: view3DManagerLoader
+            active: QGroundControl.has3DViewer
+            source: "qrc:/Viewer3D/Viewer3D.qml"
+            // sourceComponent: Viewer3D {
+            //     id: viewer3DWindow
+            //     anchors.fill: parent
+            // }
         }
     }
 }

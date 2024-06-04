@@ -39,9 +39,17 @@ qt_add_library(APMAutoPilotPlugin STATIC
     APMSubFrameComponent.h
     APMSubMotorComponentController.cc
     APMSubMotorComponentController.h
-    APMTuningComponent.cc
-    APMTuningComponent.h
 )
+
+if(NOT QGC_LGPL_COMPATIBLE)
+    target_sources(APMAutoPilotPlugin
+        PRIVATE
+            APMTuningComponent.cc
+            APMTuningComponent.h
+    )
+else()
+    target_compile_definitions(APMAutoPilotPlugin PUBLIC DISABLE_APMTUNINGCOMPONENT)
+endif()
 
 target_link_libraries(APMAutoPilotPlugin
     PRIVATE

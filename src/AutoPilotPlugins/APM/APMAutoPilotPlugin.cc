@@ -15,7 +15,9 @@
 #include "APMFlightModesComponent.h"
 #include "APMRadioComponent.h"
 #include "APMSafetyComponent.h"
+#ifndef DISABLE_APMTUNINGCOMPONENT
 #include "APMTuningComponent.h"
+#endif
 #include "APMSensorsComponent.h"
 #include "APMPowerComponent.h"
 #include "APMMotorComponent.h"
@@ -120,9 +122,11 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
                 _components.append(QVariant::fromValue((VehicleComponent*)_heliComponent));
             }
 
-            _tuningComponent = new APMTuningComponent(_vehicle, this);
-            _tuningComponent->setupTriggerSignals();
-            _components.append(QVariant::fromValue((VehicleComponent*)_tuningComponent));
+            #ifndef DISABLE_APMTUNINGCOMPONENT
+                _tuningComponent = new APMTuningComponent(_vehicle, this);
+                _tuningComponent->setupTriggerSignals();
+                _components.append(QVariant::fromValue((VehicleComponent*)_tuningComponent));
+            #endif
 
             if(_vehicle->parameterManager()->parameterExists(-1, "MNT1_TYPE")) {
                 _cameraComponent = new APMCameraComponent(_vehicle, this);
@@ -180,8 +184,10 @@ QString APMAutoPilotPlugin::prerequisiteSetup(VehicleComponent* component) const
         requiresAirframeCheck = true;
     } else if (qobject_cast<const APMSafetyComponent*>(component)) {
         requiresAirframeCheck = true;
+    #ifndef DISABLE_APMTUNINGCOMPONENT
     } else if (qobject_cast<const APMTuningComponent*>(component)) {
         requiresAirframeCheck = true;
+    #endif
     } else if (qobject_cast<const APMSensorsComponent*>(component)) {
         requiresAirframeCheck = true;
     }

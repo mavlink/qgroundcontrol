@@ -95,6 +95,7 @@ target_link_libraries(QmlControls
         UTMSP
         Vehicle
         VideoManager
+        Viewer3D
 )
 
 target_include_directories(QmlControls PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

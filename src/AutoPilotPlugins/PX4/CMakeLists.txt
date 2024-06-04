@@ -27,8 +27,6 @@ qt_add_library(PX4AutoPilotPlugin STATIC
     PX4RadioComponent.h
     PX4SimpleFlightModesController.cc
     PX4SimpleFlightModesController.h
-    PX4TuningComponent.cc
-    PX4TuningComponent.h
     SafetyComponent.cc
     SafetyComponent.h
     SensorsComponent.cc
@@ -36,6 +34,16 @@ qt_add_library(PX4AutoPilotPlugin STATIC
     SensorsComponentController.cc
     SensorsComponentController.h
 )
+
+if(NOT QGC_LGPL_COMPATIBLE)
+    target_sources(PX4AutoPilotPlugin
+        PRIVATE
+            PX4TuningComponent.cc
+            PX4TuningComponent.h
+    )
+else()
+    target_compile_definitions(PX4AutoPilotPlugin PUBLIC DISABLE_PX4TUNINGCOMPONENT)
+endif()
 
 target_link_libraries(PX4AutoPilotPlugin
     PRIVATE
