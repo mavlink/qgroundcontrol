@@ -133,7 +133,6 @@ find_package(Qt6
     REQUIRED
     COMPONENTS
         Bluetooth
-        Charts
         Concurrent
         Core
         Core5Compat
@@ -152,7 +151,9 @@ find_package(Qt6
         Widgets
         Xml
     OPTIONAL_COMPONENTS
+        Charts
         LinguistTools
+        Quick3D
         SerialPort
     HINTS
         ${QT_LIBRARY_HINTS}
@@ -183,8 +184,6 @@ endif()
 
 # option(QGC_CUSTOM_BUILD "Enable Custom Build" OFF)
 
-# option(QGC_DISABLE_MAVLINK_INSPECTOR "Disable Mavlink Inspector" OFF) # This removes QtCharts which is GPL licensed
-
 cmake_dependent_option(QGC_DEBUG_QML "Build QGroundControl with QML debugging/profiling support." OFF "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
 if(QGC_DEBUG_QML)
     message(STATUS "To enable the QML debugger/profiler, run with: '-qmljsdebugger=port:1234'")
@@ -192,6 +191,12 @@ if(QGC_DEBUG_QML)
 endif()
 
 cmake_dependent_option(QGC_NO_SERIAL_LINK "Build QGroundControl without Serial Support Support." OFF "NOT IOS" ON)
+
+option(QGC_LGPL_COMPATIBLE "Disable Dependencies that are LGPL Incompatible")
+if(QGC_LGPL_COMPATIBLE)
+    set(QGC_DISABLE_VIEWER3D ON)
+    set(QGC_DISABLE_MAVLINK_INSPECTOR ON)
+endif()
 
 #######################################################
 #                QGroundControl Resources
