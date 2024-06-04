@@ -428,8 +428,8 @@ void LinkManager::_addZeroConfAutoConnectLink()
     server.reset(new QMdnsEngine::Server());
     browser.reset(new QMdnsEngine::Browser(server.get(), QMdnsEngine::MdnsBrowseType));
 
-    auto checkIfConnectionLinkExist = [this](LinkConfiguration::LinkType linkType, const QString &linkName) {
-        for (const SharedLinkConfigurationPtr &link : std::as_const(_rgLinks)) {
+    const auto checkIfConnectionLinkExist = [this](LinkConfiguration::LinkType linkType, const QString &linkName) {
+        for (const SharedLinkInterfacePtr &link : std::as_const(_rgLinks)) {
             const SharedLinkConfigurationPtr linkConfig = link->linkConfiguration();
             if ((linkConfig->type() == linkType) && (linkConfig->name() == linkName)) {
                 return true;
@@ -440,13 +440,14 @@ void LinkManager::_addZeroConfAutoConnectLink()
     };
 
     (void) connect(browser.get(), &QMdnsEngine::Browser::serviceAdded, this, [checkIfConnectionLinkExist, this](const QMdnsEngine::Service &service) {
-        qCDebug(LinkManagerVerboseLog) << "Found Zero-Conf:" << service.type() << service.name() << service.hostname() << service.port() << service.attributes();
+        qCDebug(LinkManagerLog) << "Found Zero-Conf:" << service.type() << service.name() << service.hostname() << service.port() << service.attributes();
 
         if (!service.type().startsWith("_mavlink")) {
+            qCWarning(LinkManagerLog) << "Invalid ZeroConf SericeType" << service.type();
             return;
         }
 
-        // Windows dont accept trailling dots in mdns
+        // Windows doesnt accept trailling dots in mdns
         // http://www.dns-sd.org/trailingdotsindomainnames.html
         QString hostname = service.hostname();
         if (hostname.endsWith('.')) {
@@ -456,34 +457,34 @@ void LinkManager::_addZeroConfAutoConnectLink()
         if (service.type().startsWith("_mavlink._udp")) {
             static const QString udpName = QStringLiteral("ZeroConf UDP");
             if (checkIfConnectionLinkExist(LinkConfiguration::TypeUdp, udpName)) {
-                qCDebug(LinkManagerVerboseLog) << "Connection already exist";
+                qCDebug(LinkManagerLog) << "Connection already exist";
                 return;
             }
 
-            UDPConfiguration link = new UDPConfiguration(udpName);
+            UDPConfiguration *const link = new UDPConfiguration(udpName);
             link->addHost(hostname, service.port());
             link->setAutoConnect(true);
             link->setDynamic(true);
             SharedLinkConfigurationPtr config = addConfiguration(link);
-            createConnectedLink(config);
-            return;
-        }
-
-        if (service.type().startsWith("_mavlink._tcp")) {
-            static QString tcpName("ZeroConf TCP");
+            if (!createConnectedLink(config)) {
+                qCWarning(LinkManagerLog) << "Failed to create" << udpName;
+            }
+        } else if (service.type().startsWith("_mavlink._tcp")) {
+            static QString tcpName = QStringLiteral("ZeroConf TCP");
             if (checkIfConnectionLinkExist(LinkConfiguration::TypeTcp, tcpName)) {
-                qCDebug(LinkManagerVerboseLog) << "Connection already exist";
+                qCDebug(LinkManagerLog) << "Connection already exist";
                 return;
             }
 
-            TCPConfiguration link = new TCPConfiguration(tcpName);
+            TCPConfiguration *const link = new TCPConfiguration(tcpName);
             link->setHost(hostname);
             link->setPort(service.port());
             link->setAutoConnect(true);
             link->setDynamic(true);
             SharedLinkConfigurationPtr config = addConfiguration(link);
-            createConnectedLink(config);
-            return;
+            if (!createConnectedLink(config)) {
+                qCWarning(LinkManagerLog) << "Failed to create" << tcpName;
+            }
         }
     });
 }
