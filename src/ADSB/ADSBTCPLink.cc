@@ -8,165 +8,217 @@
  ****************************************************************************/
 
 #include "ADSBTCPLink.h"
-#include "QGCLoggingCategory.h"
+#include <QGCLoggingCategory.h>
 
 #include <QtNetwork/QTcpSocket>
-#include <QtPositioning/QGeoCoordinate>
+#include <QtCore/QTimer>
 
 QGC_LOGGING_CATEGORY(ADSBTCPLinkLog, "qgc.adsb.adsbtcplink")
 
-ADSBTCPLink::ADSBTCPLink(const QString& hostAddress, int port, QObject* parent)
-    : QThread       (parent)
-    , _hostAddress  (hostAddress)
-    , _port         (port)
+ADSBTCPLink::ADSBTCPLink(const QString &hostAddress, quint16 port, QObject *parent)
+    : QObject(parent)
+    , m_socket(new QTcpSocket(this))
+    , m_processTimer(new QTimer(this))
 {
-    moveToThread(this);
-    start();
-}
+    // qCDebug(ADSBTCPLinkLog) << Q_FUNC_INFO << this;
 
-ADSBTCPLink::~ADSBTCPLink(void)
-{
-    if (_socket) {
-        QObject::disconnect(_socket, &QTcpSocket::readyRead, this, &ADSBTCPLink::_readBytes);
-        _socket->disconnectFromHost();
-        _socket->deleteLater();
-        _socket = nullptr;
-    }
-    quit();
-    wait();
-}
+    (void) connect(m_socket, &QTcpSocket::stateChanged, this, [this](QTcpSocket::SocketState state) {
+        switch (state) {
+            case QTcpSocket::SocketState::UnconnectedState:
+                qCDebug(ADSBTCPLinkLog) << "ADSB Socket disconnected";
+                break;
 
-void ADSBTCPLink::run(void)
-{
-    _hardwareConnect();
-    exec();
-}
+            case QTcpSocket::SocketState::ConnectingState:
+                qCDebug(ADSBTCPLinkLog) << "ADSB Socket connecting...";
+                break;
 
-void ADSBTCPLink::_hardwareConnect()
-{
-    _socket = new QTcpSocket();
-    QObject::connect(_socket, &QTcpSocket::readyRead, this, &ADSBTCPLink::_readBytes);
-    _socket->connectToHost(_hostAddress, static_cast<quint16>(_port));
+            case QTcpSocket::SocketState::ConnectedState:
+                qCDebug(ADSBTCPLinkLog) << "ADSB Socket connected";
+                break;
 
-    // Give the socket a second to connect to the other side otherwise error out
-    if (!_socket->waitForConnected(1000)) {
-        qCDebug(ADSBTCPLinkLog) << "ADSB Socket failed to connect";
-        emit error(_socket->errorString());
-        delete _socket;
-        _socket = nullptr;
-        return;
-    }
+            case QTcpSocket::SocketState::ClosingState:
+                qCDebug(ADSBTCPLinkLog) << "ADSB Socket closing...";
 
-    qCDebug(ADSBTCPLinkLog) << "ADSB Socket connected";
-}
-
-void ADSBTCPLink::_readBytes(void)
-{
-    if (_socket) {
-        while(_socket->canReadLine()) {
-            QByteArray bytes = _socket->readLine();
-            _parseLine(QString::fromLocal8Bit(bytes));
+            default:
+                break;
         }
+    }, Qt::AutoConnection);
+
+    (void) QObject::connect(m_socket, &QTcpSocket::errorOccurred, this, [this](QTcpSocket::SocketError error) {
+        qCDebug(ADSBTCPLinkLog) << error << m_socket->errorString();
+        emit errorOccurred(m_socket->errorString());
+    }, Qt::AutoConnection);
+
+    (void) connect(m_socket, &QTcpSocket::readyRead, this, &ADSBTCPLink::_readBytes);
+
+    m_processTimer->setInterval(s_processInterval); // Set an interval for processing lines
+    (void) connect(m_processTimer, &QTimer::timeout, this, &ADSBTCPLink::_processLines);
+
+    m_socket->connectToHost(hostAddress, port);
+}
+
+ADSBTCPLink::~ADSBTCPLink()
+{
+    // qCDebug(ADSBTCPLinkLog) << Q_FUNC_INFO << this;
+}
+
+void ADSBTCPLink::_readBytes()
+{
+    while (m_socket && m_socket->canReadLine()) {
+        const QByteArray bytes = m_socket->readLine();
+        m_lineBuffer.append(QString::fromLocal8Bit(bytes));
+    }
+
+    // Start or restart the timer to process lines
+    if (!m_processTimer->isActive()) {
+        m_processTimer->start();
+    }
+}
+
+void ADSBTCPLink::_processLines()
+{
+    int linesProcessed = 0;
+    while (!m_lineBuffer.isEmpty() && (linesProcessed < s_maxLinesToProcess)) {
+        const QString line = m_lineBuffer.takeFirst();
+        _parseLine(line);
+        ++linesProcessed;
+    }
+
+    // Stop the timer if there are no more lines to process
+    if (m_lineBuffer.isEmpty()) {
+        m_processTimer->stop();
     }
 }
 
 void ADSBTCPLink::_parseLine(const QString &line)
 {
-    if (line.startsWith(QStringLiteral("MSG"))) {
-        bool icaoOk;
-        int msgType = line.at(4).digitValue();
-        if (msgType == -1) {
-            qCDebug(ADSBTCPLinkLog) << "ADSB Invalid message type " << line.at(4);
-            return;
-        }
-        // Skip unsupported mesg types to avoid parsing
-        if (msgType == 2 || msgType > 6) {
-            return;
-        }
-        qCDebug(ADSBTCPLinkLog) << " ADSB SBS-1 " << line;
-        QStringList values = line.split(QChar(','));
-        uint32_t icaoAddress = values[4].toUInt(&icaoOk, 16);
+    if (line.size() <= 4) {
+        return;
+    }
 
-        if (!icaoOk) {
-            return;
-        }
+    if (!line.startsWith(QStringLiteral("MSG"))) {
+        return;
+    }
 
-        ADSBVehicle::ADSBVehicleInfo_t adsbInfo;
-        adsbInfo.icaoAddress = icaoAddress;
+    const int msgType = line.at(4).digitValue();
+    if (msgType == ADSB::ADSBMessageType::Unsupported) {
+        qCDebug(ADSBTCPLinkLog) << "ADSB Invalid message type " << msgType;
+        return;
+    }
 
-        switch (msgType) {
-        case 1:
-        case 5:
-        case 6:
+    // Skip unsupported mesg types to avoid parsing
+    if ((msgType == ADSB::ADSBMessageType::SurfacePosition) || (msgType > ADSB::ADSBMessageType::SurveillanceId)) {
+        return;
+    }
+
+    qCDebug(ADSBTCPLinkLog) << "ADSB SBS-1" << line;
+
+    const QStringList values = line.split(QChar(','));
+    if (values.size() <= 4) {
+        return;
+    }
+
+    bool icaoOk;
+    const uint32_t icaoAddress = values.at(4).toUInt(&icaoOk, 16);
+    if (!icaoOk) {
+        return;
+    }
+
+    ADSBVehicle::ADSBVehicleInfo_t adsbInfo;
+    adsbInfo.icaoAddress = icaoAddress;
+
+    switch (msgType) {
+        case ADSB::ADSBMessageType::IdentificationAndCategory:
+        case ADSB::ADSBMessageType::SurveillanceAltitude:
+        case ADSB::ADSBMessageType::SurveillanceId:
             _parseAndEmitCallsign(adsbInfo, values);
             break;
-        case 3:
+
+        case ADSB::ADSBMessageType::AirbornePosition:
             _parseAndEmitLocation(adsbInfo, values);
             break;
-        case 4:
+
+        case ADSB::ADSBMessageType::AirborneVelocity:
             _parseAndEmitHeading(adsbInfo, values);
             break;
-        }
+
+        default:
+            break;
     }
 }
 
-void ADSBTCPLink::_parseAndEmitCallsign(ADSBVehicle::ADSBVehicleInfo_t &adsbInfo, QStringList values)
+void ADSBTCPLink::_parseAndEmitCallsign(ADSBVehicle::ADSBVehicleInfo_t &adsbInfo, const QStringList &values)
 {
-    QString callsign = values[10].trimmed();
+    if (values.size() <= 10) {
+        return;
+    }
+
+    const QString callsign = values.at(10).trimmed();
     if (callsign.isEmpty()) {
         return;
     }
 
     adsbInfo.callsign = callsign;
     adsbInfo.availableFlags = ADSBVehicle::CallsignAvailable;
+
     emit adsbVehicleUpdate(adsbInfo);
 }
 
-void ADSBTCPLink::_parseAndEmitLocation(ADSBVehicle::ADSBVehicleInfo_t &adsbInfo, QStringList values)
+void ADSBTCPLink::_parseAndEmitLocation(ADSBVehicle::ADSBVehicleInfo_t &adsbInfo, const QStringList &values)
 {
-    bool altOk, latOk, lonOk;
-    int modeCAltitude;
+    if (values.size() <= 19) {
+        return;
+    }
 
-    QString altitudeStr = values[11];
     // Altitude is either Barometric - based on pressure, in ft
     // or HAE - as reported by GPS - based on WGS84 Ellipsoid, in ft
     // If altitude ends with H, we have HAE
     // There's a slight difference between Barometric alt and HAE, but it would require
     // knowledge about Geoid shape in particular Lat, Lon. It's not worth complicating the code
+    QString altitudeStr = values.at(11);
     if (altitudeStr.endsWith('H')) {
         altitudeStr.chop(1);
     }
-    modeCAltitude = altitudeStr.toInt(&altOk);
 
-    double lat = values[14].toDouble(&latOk);
-    double lon = values[15].toDouble(&lonOk);
-    int alert = values[19].toInt();
+    bool altOk, latOk, lonOk, alertOk;
+    const int modeCAltitude = altitudeStr.toInt(&altOk);
+    const double lat = values.at(14).toDouble(&latOk);
+    const double lon = values.at(15).toDouble(&lonOk);
+    const int alert = values.at(19).toInt(&alertOk);
 
-    if (!altOk || !latOk || !lonOk) {
+    if (!altOk || !latOk || !lonOk || !alertOk) {
         return;
     }
-    if (lat == 0 && lon == 0) {
+
+    if (qFuzzyIsNull(lat) && qFuzzyIsNull(lon)) {
         return;
     }
 
-    double altitude = modeCAltitude * 0.3048;
-    QGeoCoordinate location(lat, lon);
+    const double altitude = modeCAltitude * 0.3048;
+    const QGeoCoordinate location(lat, lon);
+
     adsbInfo.location = location;
     adsbInfo.altitude = altitude;
-    adsbInfo.alert = alert == 1;
+    adsbInfo.alert = (alert == 1);
     adsbInfo.availableFlags = ADSBVehicle::LocationAvailable | ADSBVehicle::AltitudeAvailable | ADSBVehicle::AlertAvailable;
+
     emit adsbVehicleUpdate(adsbInfo);
 }
 
-void ADSBTCPLink::_parseAndEmitHeading(ADSBVehicle::ADSBVehicleInfo_t &adsbInfo, QStringList values)
+void ADSBTCPLink::_parseAndEmitHeading(ADSBVehicle::ADSBVehicleInfo_t &adsbInfo, const QStringList &values)
 {
+    if (values.size() <= 13) {
+        return;
+    }
+
     bool headingOk;
-    double heading = values[13].toDouble(&headingOk);
+    const double heading = values.at(13).toDouble(&headingOk);
     if (!headingOk) {
         return;
     }
 
     adsbInfo.heading = heading;
     adsbInfo.availableFlags = ADSBVehicle::HeadingAvailable;
+
     emit adsbVehicleUpdate(adsbInfo);
 }
