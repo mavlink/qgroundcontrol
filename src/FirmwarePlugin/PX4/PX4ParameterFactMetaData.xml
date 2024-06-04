@@ -10172,6 +10172,43 @@
     </parameter>
   </group>
   <group name="Miscellaneous">
+    <parameter name="SCH16T_ACC_FILT" default="6" type="INT32">
+      <short_desc>Accel filter settings</short_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">13 Hz</value>
+        <value code="1">30 Hz</value>
+        <value code="2">68 Hz</value>
+        <value code="3">235 Hz</value>
+        <value code="4">280 Hz</value>
+        <value code="5">370 Hz</value>
+        <value code="6">No filter</value>
+      </values>
+    </parameter>
+    <parameter name="SCH16T_DECIM" default="4" type="INT32">
+      <short_desc>Gyro and Accel decimation settings</short_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">None</value>
+        <value code="1">5900 Hz</value>
+        <value code="2">2950 Hz</value>
+        <value code="3">1475 Hz</value>
+        <value code="4">738 Hz</value>
+      </values>
+    </parameter>
+    <parameter name="SCH16T_GYRO_FILT" default="2" type="INT32">
+      <short_desc>Gyro filter settings</short_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">13 Hz</value>
+        <value code="1">30 Hz</value>
+        <value code="2">68 Hz</value>
+        <value code="3">235 Hz</value>
+        <value code="4">280 Hz</value>
+        <value code="5">370 Hz</value>
+        <value code="6">No filter</value>
+      </values>
+    </parameter>
     <parameter name="SF1XX_MODE" default="1" type="INT32">
       <short_desc>Lightware SF1xx/SF20/LW20 Operation Mode</short_desc>
       <min>0</min>
