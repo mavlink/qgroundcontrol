@@ -9,143 +9,151 @@
 
 #include "TCPLink.h"
 #include "DeviceInfo.h"
+#include "QGCLoggingCategory.h"
 
-#include <QtCore/QList>
 #include <QtNetwork/QTcpSocket>
-#include <QtTest/QSignalSpy>
 
-TCPLink::TCPLink(SharedLinkConfigurationPtr& config)
-    : LinkInterface(config)
+QGC_LOGGING_CATEGORY(TCPLinkLog, "TEST.comms.tcplink")
+
+// MAVLINK_COMM_NUM_BUFFERS
+
+TCPLink::TCPLink(SharedLinkConfigurationPtr &config, QObject *parent)
+    : LinkInterface(config, parent)
     , _tcpConfig(qobject_cast<const TCPConfiguration*>(config.get()))
-    , _socket(nullptr)
-    , _socketIsConnected(false)
+    , _socket(new QTcpSocket())
 {
-    Q_ASSERT(_tcpConfig);
+    // qCDebug(TCPLinkLog) << Q_FUNC_INFO << this;
+
+    Q_CHECK_PTR(_tcpConfig);
+
+    _socket->setSocketOption(QAbstractSocket::KeepAliveOption, 1);
+    // _socket->setSocketOption(QAbstractSocket::TypeOfServiceOption, 32);
+    // MAVLINK_MAX_PACKET_LEN
+    _socket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption, 1024);
+    _socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 1024);
+    // _socket->setReadBufferSize(1024);
+
+    (void) QObject::connect(_socket, &QTcpSocket::connected, this, &TCPLink::connected, Qt::AutoConnection);
+    (void) QObject::connect(_socket, &QTcpSocket::disconnected, this, &TCPLink::disconnected, Qt::AutoConnection);
+
+    (void) QObject::connect(_socket, &QTcpSocket::errorOccurred, this, [this](QTcpSocket::SocketError error) {
+        qCWarning(TCPLinkLog) << "TCP Link Error:" << error << _socket->errorString();
+        emit communicationError(QStringLiteral("TCP Link Error"), QStringLiteral("Link: %1, %2.").arg(_tcpConfig->name(), _socket->errorString()));
+    }, Qt::AutoConnection);
+
+#ifdef QT_DEBUG
+    (void) QObject::connect(_socket, &QTcpSocket::stateChanged, this, [](QTcpSocket::SocketState state) {
+        qCDebug(TCPLinkLog) << "TCP State Changed:" << state;
+    }, Qt::AutoConnection);
+
+    (void) QObject::connect(_socket, &QTcpSocket::hostFound, this, []() {
+        qCDebug(TCPLinkLog) << "TCP Host Found";
+    }, Qt::AutoConnection);
+#endif
 }
 
 TCPLink::~TCPLink()
 {
-    disconnect();
+    _socket->deleteLater();
+
+    // qCDebug(TCPLinkLog) << Q_FUNC_INFO << this;
 }
 
-#ifdef TCPLINK_READWRITE_DEBUG
-void TCPLink::_writeDebugBytes(const QByteArray data)
+bool TCPLink::isConnected() const
 {
-    QString bytes;
-    QString ascii;
-    for (int i=0, size = data.size(); i<size; i++)
-    {
-        unsigned char v = data[i];
-        bytes.append(QString::asprintf("%02x ", v));
-        if (data[i] > 31 && data[i] < 127)
-        {
-            ascii.append(data[i]);
-        }
-        else
-        {
-            ascii.append(219);
-        }
-    }
-    qDebug() << "Sent" << size << "bytes to" << _tcpConfig->host() << ":" << _tcpConfig->port() << "data:";
-    qDebug() << bytes;
-    qDebug() << "ASCII:" << ascii;
+    return ((_socket->state() == QAbstractSocket::ConnectedState) || (_socket->state() == QAbstractSocket::ConnectingState));
 }
-#endif
 
-void TCPLink::_writeBytes(const QByteArray &data)
+void TCPLink::disconnect()
 {
-#ifdef TCPLINK_READWRITE_DEBUG
-    _writeDebugBytes(data);
-#endif
+    (void) QObject::disconnect(_socket, &QTcpSocket::readyRead, this, &TCPLink::_readBytes);
 
-    if (_socket) {
-        _socket->write(data);
-        emit bytesSent(this, data);
+    _socket->disconnectFromHost();
+}
+
+bool TCPLink::_connect()
+{
+    if (isConnected()) {
+        return true;
     }
+
+    static const QString title = tr("TCP Link Connect Error");
+    static const QString error = tr("Link %1: %2.");
+
+    (void) QObject::connect(_socket, &QTcpSocket::readyRead, this, &TCPLink::_readBytes, Qt::AutoConnection);
+    // (void) connect(_socket, &QTcpSocket::bytesWritten, this, [this](qint64 written) {});
+
+    _socket->connectToHost(_tcpConfig->host(), _tcpConfig->port());
+
+    if (!_socket->isValid()) {
+        return false;
+    }
+
+    if (!_socket->waitForConnected(1000)) {
+        emit communicationError(title, error.arg(_tcpConfig->name(), tr("Connection failed")));
+    }
+
+    return true;
+}
+
+void TCPLink::_writeBytes(const QByteArray &bytes)
+{
+    if (!_socket->isValid()) {
+        return;
+    }
+
+    static const QString title = tr("TCP Link Write Error");
+    static const QString error = tr("Link %1: %2.");
+
+    if (!isConnected()) {
+        emit communicationError(title, error.arg(_tcpConfig->name(), tr("Could Not Send Data - Link is Disconnected!")));
+        return;
+    }
+
+    const qint64 bytesWritten = _socket->write(bytes);
+    if (bytesWritten < 0) {
+        emit communicationError(title, error.arg(_tcpConfig->name(), tr("Could Not Send Data - Write Failed!")));
+        return;
+    }
+
+    if (bytesWritten < bytes.size()) {
+        qCWarning(TCPLinkLog) << "Wrote" << bytesWritten << "Out of" << bytes.size() << "total bytes";
+        // const QByteArray remainingBytes = bytes.sliced(bytesWritten - 1, bytes.size() - bytesWritten);
+        // writeBytesThreadSafe(remainingBytes.constData(), remainingBytes.size());
+    }
+
+    emit bytesSent(this, bytes);
 }
 
 void TCPLink::_readBytes()
 {
-    if (_socket) {
-        qint64 byteCount = _socket->bytesAvailable();
-        if (byteCount)
-        {
-            QByteArray buffer;
-            buffer.resize(byteCount);
-            _socket->read(buffer.data(), buffer.size());
-            emit bytesReceived(this, buffer);
-#ifdef TCPLINK_READWRITE_DEBUG
-            writeDebugBytes(buffer.data(), buffer.size());
-#endif
-        }
-    }
-}
-
-void TCPLink::disconnect(void)
-{
-    if (_socket) {
-        // This prevents stale signal from calling the link after it has been deleted
-        QObject::disconnect(_socket, &QIODevice::readyRead, this, &TCPLink::_readBytes);
-        _socketIsConnected = false;
-        _socket->disconnectFromHost(); // Disconnect tcp
-        _socket->deleteLater(); // Make sure delete happens on correct thread
-        _socket = nullptr;
-        emit disconnected();
-    }
-}
-
-bool TCPLink::_connect(void)
-{
-    if (_socket) {
-        qWarning() << "connect called while already connected";
-        return true;
+    if (!_socket->isValid()) {
+        return;
     }
 
-    return _hardwareConnect();
-}
+    static const QString title = tr("TCP Link Read Error");
+    static const QString error = tr("Link %1: %2.");
 
-bool TCPLink::_hardwareConnect()
-{
-    Q_ASSERT(_socket == nullptr);
-    _socket = new QTcpSocket();
-    QObject::connect(_socket, &QIODevice::readyRead, this, &TCPLink::_readBytes);
-
-    QSignalSpy errorSpy(_socket, &QAbstractSocket::errorOccurred);
-    QObject::connect(_socket, &QAbstractSocket::errorOccurred, this, &TCPLink::_socketError);
-
-    _socket->connectToHost(_tcpConfig->host(), _tcpConfig->port());
-
-    // Give the socket a second to connect to the other side otherwise error out
-    if (!_socket->waitForConnected(1000))
-    {
-        // Whether a failed connection emits an error signal or not is platform specific.
-        // So in cases where it is not emitted, we emit one ourselves.
-        if (errorSpy.count() == 0) {
-            emit communicationError(tr("Link Error"), tr("Error on link %1. Connection failed").arg(_config->name()));
-        }
-        delete _socket;
-        _socket = nullptr;
-        return false;
+    if (!isConnected()) {
+        emit communicationError(title, error.arg(_tcpConfig->name(), tr("Could Not Read Data - link is Disconnected!")));
+        return;
     }
-    _socketIsConnected = true;
-    emit connected();
-    return true;
-}
 
-void TCPLink::_socketError(QAbstractSocket::SocketError socketError)
-{
-    Q_UNUSED(socketError);
-    emit communicationError(tr("Link Error"), tr("Error on link %1. Error on socket: %2.").arg(_config->name()).arg(_socket->errorString()));
-}
+    const qint64 byteCount = _socket->bytesAvailable();
+    // MAVLINK_NUM_NON_PAYLOAD_BYTES
+    if (byteCount <= 0) {
+        emit communicationError(title, error.arg(_tcpConfig->name(), tr("Could Not Read Data - No Data Available!")));
+        return;
+    }
 
-/**
- * @brief Check if connection is active.
- *
- * @return True if link is connected, false otherwise.
- **/
-bool TCPLink::isConnected() const
-{
-    return _socketIsConnected;
+    QByteArray buffer(byteCount, Qt::Initialization::Uninitialized);
+    // _socket->readAll()
+    if (_socket->read(buffer.data(), buffer.size()) < 0) {
+        emit communicationError(title, error.arg(_tcpConfig->name(), tr("Could Not Read Data - Read Failed!")));
+        return;
+    }
+
+    emit bytesReceived(this, buffer);
 }
 
 bool TCPLink::isSecureConnection()
@@ -153,52 +161,59 @@ bool TCPLink::isSecureConnection()
     return QGCDeviceInfo::isNetworkWired();
 }
 
-//--------------------------------------------------------------------------
-//-- TCPConfiguration
+/*===========================================================================*/
 
-TCPConfiguration::TCPConfiguration(const QString& name) : LinkConfiguration(name)
+TCPConfiguration::TCPConfiguration(const QString &name, QObject *parent)
+    : LinkConfiguration(name, parent)
 {
-    _port    = QGC_TCP_PORT;
-    _host    = QLatin1String("0.0.0.0");
+    // qCDebug(TCPLinkLog) << Q_FUNC_INFO << this;
 }
 
-TCPConfiguration::TCPConfiguration(const TCPConfiguration* source) : LinkConfiguration(source)
+TCPConfiguration::TCPConfiguration(const TCPConfiguration *copy, QObject *parent)
+    : LinkConfiguration(copy, parent)
+    , _host(copy->host())
+    , _port(copy->port())
 {
-    _port    = source->port();
-    _host    = source->host();
+    // qCDebug(TCPLinkLog) << Q_FUNC_INFO << this;
+
+    Q_CHECK_PTR(copy);
+
+    LinkConfiguration::copyFrom(copy);
+}
+
+TCPConfiguration::~TCPConfiguration()
+{
+    // qCDebug(TCPLinkLog) << Q_FUNC_INFO << this;
 }
 
 void TCPConfiguration::copyFrom(const LinkConfiguration *source)
 {
+    Q_CHECK_PTR(source);
     LinkConfiguration::copyFrom(source);
-    const TCPConfiguration* usource = qobject_cast<const TCPConfiguration*>(source);
-    Q_ASSERT(usource != nullptr);
-    _port    = usource->port();
-    _host = usource->host();
+
+    const TCPConfiguration* const tcpSource = qobject_cast<const TCPConfiguration*>(source);
+    Q_CHECK_PTR(tcpSource);
+
+    setHost(tcpSource->host());
+    setPort(tcpSource->port());
 }
 
-void TCPConfiguration::setPort(quint16 port)
-{
-    _port = port;
-}
-
-void TCPConfiguration::setHost(const QString host)
-{
-    _host = host;
-}
-
-void TCPConfiguration::saveSettings(QSettings& settings, const QString& root)
+void TCPConfiguration::loadSettings(QSettings &settings, const QString &root)
 {
     settings.beginGroup(root);
-    settings.setValue("port", (int)_port);
-    settings.setValue("host", _host);
+
+    setHost(settings.value(QStringLiteral("host"), host()).toString());
+    setPort(static_cast<quint16>(settings.value(QStringLiteral("port"), port()).toUInt()));
+
     settings.endGroup();
 }
 
-void TCPConfiguration::loadSettings(QSettings& settings, const QString& root)
+void TCPConfiguration::saveSettings(QSettings &settings, const QString &root)
 {
     settings.beginGroup(root);
-    _port = (quint16)settings.value("port", QGC_TCP_PORT).toUInt();
-    _host = settings.value("host", _host).toString();
+
+    settings.setValue(QStringLiteral("host"), host());
+    settings.setValue(QStringLiteral("port"), port());
+
     settings.endGroup();
 }
