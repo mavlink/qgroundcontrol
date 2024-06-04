@@ -112,7 +112,10 @@ DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
     speech-dispatcher-audio-plugins \
     speech-dispatcher-espeak \
     speech-dispatcher-espeak-ng \
-    speech-dispatcher-flite \
+    speech-dispatcher-flite
+
+# DNS
+# DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install libavahi-compat-libdnssd-dev
 
 # Additional
 DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
