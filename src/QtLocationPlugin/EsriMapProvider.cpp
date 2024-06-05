@@ -30,5 +30,5 @@ QNetworkRequest EsriMapProvider::getTileURL(int x, int y, int zoom) const
 
 QString EsriMapProvider::_getURL(int x, int y, int zoom) const
 {
-    return _mapUrl.arg(_mapName).arg(zoom).arg(y).arg(x);
+    return _mapUrl.arg(_mapTypeId).arg(zoom).arg(y).arg(x);
 }
