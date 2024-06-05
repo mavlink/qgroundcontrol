@@ -70,7 +70,7 @@ void Viewer3DTerrainTexture::mapTypeChangedEvent(void)
     _mapType = _flightMapSettings->mapProvider()->rawValue().toString() + QString(" ");
     _mapType += _flightMapSettings->mapType()->rawValue().toString();
 
-    int mapId = getQGCMapEngine()->urlFactory()->getQtMapIdFromProviderType(_mapType);
+    int mapId = UrlFactory::getQtMapIdFromProviderType(_mapType);
 
     if(mapId == _mapId){
         return;
