@@ -39,8 +39,8 @@ public:
 
     typedef QPair<QString, MapProvider*> ProviderPair;
 
-    QNetworkRequest getTileURL          (const QString& type, int x, int y, int zoom, QNetworkAccessManager* networkManager);
-    QNetworkRequest getTileURL          (int qtMapId, int x, int y, int zoom, QNetworkAccessManager* networkManager);
+    QNetworkRequest getTileURL          (const QString& type, int x, int y, int zoom);
+    QNetworkRequest getTileURL          (int qtMapId, int x, int y, int zoom);
 
     QString         getImageFormat      (const QString& type, const QByteArray& image);
     QString         getImageFormat      (int qtMapId, const QByteArray& image);

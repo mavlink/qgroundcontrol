@@ -11,22 +11,26 @@
 
 #include "MapProvider.h"
 
-static const quint32 AVERAGE_MAPBOX_SAT_MAP     = 15739;
-static const quint32 AVERAGE_MAPBOX_STREET_MAP  = 5648;
+static constexpr const quint32 AVERAGE_MAPBOX_SAT_MAP     = 15739;
+static constexpr const quint32 AVERAGE_MAPBOX_STREET_MAP  = 5648;
 
-class MapboxMapProvider : public MapProvider {
+class MapboxMapProvider : public MapProvider
+{
     Q_OBJECT
 
-public:
-    MapboxMapProvider(const QString& mapName, const quint32 averageSize, const QGeoMapType::MapStyle mapType, QObject* parent = nullptr);
-
 protected:
-    QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
+    MapboxMapProvider(const QString& mapName, quint32 averageSize, QGeoMapType::MapStyle mapType, QObject* parent = nullptr)
+        : MapProvider(QStringLiteral("https://www.mapbox.com/"), QStringLiteral("jpg"), averageSize, mapType, parent)
+        , _mapboxName(mapName) {}
 
-    QString _mapboxName;
+private:
+    QString _getURL(int x, int y, int zoom) const final;
+
+    const QString _mapboxName;
 };
 
-class MapboxStreetMapProvider : public MapboxMapProvider {
+class MapboxStreetMapProvider : public MapboxMapProvider
+{
     Q_OBJECT
 
 public:
@@ -35,7 +39,8 @@ public:
                             QGeoMapType::StreetMap, parent) {}
 };
 
-class MapboxLightMapProvider : public MapboxMapProvider {
+class MapboxLightMapProvider : public MapboxMapProvider
+{
     Q_OBJECT
 
 public:
@@ -44,7 +49,8 @@ public:
                             QGeoMapType::CustomMap, parent) {}
 };
 
-class MapboxDarkMapProvider : public MapboxMapProvider {
+class MapboxDarkMapProvider : public MapboxMapProvider
+{
     Q_OBJECT
 
 public:
@@ -53,7 +59,8 @@ public:
                             QGeoMapType::CustomMap, parent) {}
 };
 
-class MapboxSatelliteMapProvider : public MapboxMapProvider {
+class MapboxSatelliteMapProvider : public MapboxMapProvider
+{
     Q_OBJECT
 
 public:
@@ -62,7 +69,8 @@ public:
                             QGeoMapType::SatelliteMapDay, parent) {}
 };
 
-class MapboxHybridMapProvider : public MapboxMapProvider {
+class MapboxHybridMapProvider : public MapboxMapProvider
+{
     Q_OBJECT
 
 public:
@@ -71,7 +79,8 @@ public:
                             QGeoMapType::HybridMap, parent) {}
 };
 
-class MapboxBrightMapProvider : public MapboxMapProvider {
+class MapboxBrightMapProvider : public MapboxMapProvider
+{
     Q_OBJECT
 
 public:
@@ -80,7 +89,8 @@ public:
                             QGeoMapType::CustomMap, parent) {}
 };
 
-class MapboxStreetsBasicMapProvider : public MapboxMapProvider {
+class MapboxStreetsBasicMapProvider : public MapboxMapProvider
+{
     Q_OBJECT
 
 public:
@@ -89,7 +99,8 @@ public:
                             QGeoMapType::StreetMap, parent) {}
 };
 
-class MapboxOutdoorsMapProvider : public MapboxMapProvider {
+class MapboxOutdoorsMapProvider : public MapboxMapProvider
+{
     Q_OBJECT
 
 public:
@@ -98,7 +109,8 @@ public:
                             QGeoMapType::CustomMap, parent) {}
 };
 
-class MapboxCustomMapProvider : public MapboxMapProvider {
+class MapboxCustomMapProvider : public MapboxMapProvider
+{
     Q_OBJECT
 
 public:
