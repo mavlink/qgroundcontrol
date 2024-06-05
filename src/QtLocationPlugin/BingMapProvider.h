@@ -11,59 +11,53 @@
 
 #include "MapProvider.h"
 
-class BingMapProvider : public MapProvider {
+static constexpr const quint32 AVERAGE_BING_STREET_MAP = 1297;
+static constexpr const quint32 AVERAGE_BING_SAT_MAP    = 19597;
+
+class BingMapProvider : public MapProvider
+{
     Q_OBJECT
 
-public:
-    BingMapProvider(const QString &imageFormat, const quint32 averageSize,
-                    const QGeoMapType::MapStyle mapType, QObject* parent = nullptr);
-
-    ~BingMapProvider() = default;
-
-    bool _isBingProvider() const override { return true; }
-
-
 protected:
-    const QString _versionBingMaps = QStringLiteral("563");
+    BingMapProvider(const QString &mapName, const QString &imageFormat, quint32 averageSize,
+                    QGeoMapType::MapStyle mapType, QObject* parent = nullptr)
+        : MapProvider(QStringLiteral("https://www.bing.com/maps/"), imageFormat, averageSize, mapType, parent)
+        , _mapName(mapName) {}
+
+public:
+    bool isBingProvider() const final { return true; }
+
+private:
+    QString _getURL(int x, int y, int zoom) const final;
+
+    const QString _mapName;
+    const QString _mapUrl = QStringLiteral("http://ecn.t%1.tiles.virtualearth.net/tiles/%2%3.%4?g=%5&mkt=%6");
+    const QString _versionBingMaps = QStringLiteral("2981");
 };
 
-static const quint32 AVERAGE_BING_STREET_MAP = 1297;
-static const quint32 AVERAGE_BING_SAT_MAP    = 19597;
-
-// -----------------------------------------------------------
-// Bing Road Map
-
-class BingRoadMapProvider : public BingMapProvider {
+class BingRoadMapProvider : public BingMapProvider
+{
     Q_OBJECT
 
 public:
     BingRoadMapProvider(QObject* parent = nullptr)
-        : BingMapProvider(QStringLiteral("png"), AVERAGE_BING_STREET_MAP, QGeoMapType::StreetMap, parent) {}
-
-    QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
+        : BingMapProvider(QStringLiteral("r"), QStringLiteral("png"), AVERAGE_BING_STREET_MAP, QGeoMapType::StreetMap, parent) {}
 };
 
-// -----------------------------------------------------------
-// Bing Satellite Map
-
-class BingSatelliteMapProvider : public BingMapProvider {
+class BingSatelliteMapProvider : public BingMapProvider
+{
     Q_OBJECT
 
 public:
     BingSatelliteMapProvider(QObject* parent = nullptr)
-        : BingMapProvider(QStringLiteral("jpg"), AVERAGE_BING_SAT_MAP, QGeoMapType::SatelliteMapDay, parent) {}
-
-    QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
+        : BingMapProvider(QStringLiteral("a"), QStringLiteral("jpg"), AVERAGE_BING_SAT_MAP, QGeoMapType::SatelliteMapDay, parent) {}
 };
 
-// -----------------------------------------------------------
-// Bing Hybrid Map
-
-class BingHybridMapProvider : public BingMapProvider {
+class BingHybridMapProvider : public BingMapProvider
+{
     Q_OBJECT
+
 public:
     BingHybridMapProvider(QObject* parent = nullptr)
-        : BingMapProvider(QStringLiteral("jpg"),AVERAGE_BING_SAT_MAP, QGeoMapType::HybridMap, parent) {}
-
-    QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
+        : BingMapProvider(QStringLiteral("h"), QStringLiteral("jpg"),AVERAGE_BING_SAT_MAP, QGeoMapType::HybridMap, parent) {}
 };

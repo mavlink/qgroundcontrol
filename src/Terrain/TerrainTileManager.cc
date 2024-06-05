@@ -146,8 +146,7 @@ bool TerrainTileManager::getAltitudesForCoordinates(const QList<QGeoCoordinate>&
                 QNetworkRequest request = getQGCMapEngine()->urlFactory()->getTileURL(
                     kMapType, getQGCMapEngine()->urlFactory()->long2tileX(kMapType, coordinate.longitude(), 1),
                     getQGCMapEngine()->urlFactory()->lat2tileY(kMapType, coordinate.latitude(), 1),
-                    1,
-                    &_networkManager);
+                    1);
                 qCDebug(TerrainTileManagerLog) << "TerrainTileManager::getAltitudesForCoordinates query from database" << request.url();
                 QGeoTileSpec spec;
                 spec.setX(getQGCMapEngine()->urlFactory()->long2tileX(kMapType, coordinate.longitude(), 1));
