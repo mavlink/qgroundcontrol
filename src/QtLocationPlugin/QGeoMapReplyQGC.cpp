@@ -147,7 +147,7 @@ QGeoTiledMapReplyQGC::networkReplyFinished()
         emit terrainDone(a, QNetworkReply::NoError);
     } else {
         MapProvider* mapProvider = urlFactory->getMapProviderFromQtMapId(tileSpec().mapId());
-        if (mapProvider && mapProvider->_isBingProvider() && a.size() && _bingNoTileImage.size() && a == _bingNoTileImage) {
+        if (mapProvider && mapProvider->isBingProvider() && a.size() && _bingNoTileImage.size() && a == _bingNoTileImage) {
             // Bing doesn't return an error if you request a tile above supported zoom level
             // It instead returns an image of a missing tile graphic. We need to detect that
             // and error out so Qt will deal with zooming correctly even if it doesn't have the tile.

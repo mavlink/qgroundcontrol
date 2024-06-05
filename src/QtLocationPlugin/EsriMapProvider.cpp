@@ -13,13 +13,10 @@
 
 #include <QtNetwork/QNetworkRequest>
 
-EsriMapProvider::EsriMapProvider(const quint32 averageSize, const QGeoMapType::MapStyle mapType, QObject *parent)
-    : MapProvider(QString(), QString(), averageSize, mapType, parent) {}
-
-QNetworkRequest EsriMapProvider::getTileURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) {
-    //-- Build URL
+QNetworkRequest EsriMapProvider::getTileURL(int x, int y, int zoom) const
+{
     QNetworkRequest request;
-    const QString url = _getURL(x, y, zoom, networkManager);
+    const QString url = _getURL(x, y, zoom);
     if (url.isEmpty()) {
         return request;
     }
@@ -31,23 +28,7 @@ QNetworkRequest EsriMapProvider::getTileURL(const int x, const int y, const int 
     return request;
 }
 
-static const QString WorldStreetMapUrl = QStringLiteral("http://services.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/%1/%2/%3");
-
-QString EsriWorldStreetMapProvider::_getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) {
-    Q_UNUSED(networkManager)
-    return WorldStreetMapUrl.arg(zoom).arg(y).arg(x);
-}
-
-static const QString WorldSatelliteMapUrl = QStringLiteral("http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/%1/%2/%3");
-
-QString EsriWorldSatelliteMapProvider::_getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) {
-    Q_UNUSED(networkManager)
-    return WorldSatelliteMapUrl.arg(zoom).arg(y).arg(x);
-}
-
-static const QString TerrainMapUrl = QStringLiteral("http://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/%1/%2/%3");
-
-QString EsriTerrainMapProvider::_getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) {
-    Q_UNUSED(networkManager)
-    return TerrainMapUrl.arg(zoom).arg(y).arg(x);
+QString EsriMapProvider::_getURL(int x, int y, int zoom) const
+{
+    return _mapUrl.arg(_mapName).arg(zoom).arg(y).arg(x);
 }
