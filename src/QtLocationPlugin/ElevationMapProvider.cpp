@@ -30,7 +30,7 @@ int CopernicusElevationProvider::lat2tileY(double lat, int z) const
 QString CopernicusElevationProvider::_getURL(int x, int y, int zoom) const
 {
     Q_UNUSED(zoom)
-    return QStringLiteral("https://terrain-ce.suite.auterion.com/api/v1/carpet?points=%1,%2,%3,%4")
+    return _mapUrl
         .arg((static_cast<double>(y) * TerrainTile::tileSizeDegrees) - 90.0)
         .arg((static_cast<double>(x) * TerrainTile::tileSizeDegrees) - 180.0)
         .arg((static_cast<double>(y + 1) * TerrainTile::tileSizeDegrees) - 90.0)

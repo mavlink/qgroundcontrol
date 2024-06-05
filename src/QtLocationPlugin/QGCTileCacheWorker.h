@@ -36,7 +36,7 @@ class QGCCacheWorker : public QThread
 {
     Q_OBJECT
 public:
-    QGCCacheWorker  ();
+    QGCCacheWorker  (QObject* parent = nullptr);
     ~QGCCacheWorker ();
 
     void    quit            ();
