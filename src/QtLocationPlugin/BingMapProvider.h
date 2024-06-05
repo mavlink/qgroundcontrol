@@ -16,13 +16,11 @@ static constexpr const quint32 AVERAGE_BING_SAT_MAP    = 19597;
 
 class BingMapProvider : public MapProvider
 {
-    Q_OBJECT
-
 protected:
-    BingMapProvider(const QString &mapName, const QString &imageFormat, quint32 averageSize,
-                    QGeoMapType::MapStyle mapType, QObject* parent = nullptr)
-        : MapProvider(QStringLiteral("https://www.bing.com/maps/"), imageFormat, averageSize, mapType, parent)
-        , _mapName(mapName) {}
+    BingMapProvider(const QString &mapName, const QString &mapTypeCode, const QString &imageFormat, quint32 averageSize,
+                    QGeoMapType::MapStyle mapType)
+        : MapProvider(mapName, QStringLiteral("https://www.bing.com/maps/"), imageFormat, averageSize, mapType)
+        , _mapTypeId(mapTypeCode) {}
 
 public:
     bool isBingProvider() const final { return true; }
@@ -30,34 +28,43 @@ public:
 private:
     QString _getURL(int x, int y, int zoom) const final;
 
-    const QString _mapName;
+    const QString _mapTypeId;
     const QString _mapUrl = QStringLiteral("http://ecn.t%1.tiles.virtualearth.net/tiles/%2%3.%4?g=%5&mkt=%6");
     const QString _versionBingMaps = QStringLiteral("2981");
 };
 
 class BingRoadMapProvider : public BingMapProvider
 {
-    Q_OBJECT
-
 public:
-    BingRoadMapProvider(QObject* parent = nullptr)
-        : BingMapProvider(QStringLiteral("r"), QStringLiteral("png"), AVERAGE_BING_STREET_MAP, QGeoMapType::StreetMap, parent) {}
+    BingRoadMapProvider()
+        : BingMapProvider(
+            QStringLiteral("Bing Road"),
+            QStringLiteral("r"),
+            QStringLiteral("png"),
+            AVERAGE_BING_STREET_MAP,
+            QGeoMapType::StreetMap) {}
 };
 
 class BingSatelliteMapProvider : public BingMapProvider
 {
-    Q_OBJECT
-
 public:
-    BingSatelliteMapProvider(QObject* parent = nullptr)
-        : BingMapProvider(QStringLiteral("a"), QStringLiteral("jpg"), AVERAGE_BING_SAT_MAP, QGeoMapType::SatelliteMapDay, parent) {}
+    BingSatelliteMapProvider()
+        : BingMapProvider(
+            QStringLiteral("Bing Satellite"),
+            QStringLiteral("a"),
+            QStringLiteral("jpg"),
+            AVERAGE_BING_SAT_MAP,
+            QGeoMapType::SatelliteMapDay) {}
 };
 
 class BingHybridMapProvider : public BingMapProvider
 {
-    Q_OBJECT
-
 public:
-    BingHybridMapProvider(QObject* parent = nullptr)
-        : BingMapProvider(QStringLiteral("h"), QStringLiteral("jpg"),AVERAGE_BING_SAT_MAP, QGeoMapType::HybridMap, parent) {}
+    BingHybridMapProvider()
+        : BingMapProvider(
+            QStringLiteral("Bing Hybrid"),
+            QStringLiteral("h"),
+            QStringLiteral("jpg"),
+            AVERAGE_BING_SAT_MAP,
+            QGeoMapType::HybridMap) {}
 };
