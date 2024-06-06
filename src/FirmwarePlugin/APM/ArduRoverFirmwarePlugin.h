@@ -21,11 +21,14 @@ public:
     enum Mode {
         MANUAL          = 0,
         ACRO            = 1,
+        LEARNING        = 2, // Deprecated
         STEERING        = 3,
         HOLD            = 4,
         LOITER          = 5,
         FOLLOW          = 6,
         SIMPLE          = 7,
+        DOCK            = 8,
+        CIRCLE          = 9,
         AUTO            = 10,
         RTL             = 11,
         SMART_RTL       = 12,
