@@ -289,6 +289,10 @@
       <output name="Motor1">Speed of left wheels</output>
       <output name="Servo1">Steering servo</output>
     </airframe>
+    <airframe name="Generic ackermann rover" id="50010" maintainer="John Doe &lt;john@example.com&gt;">
+      <class>Rover</class>
+      <type>Rover</type>
+    </airframe>
   </airframe_group>
   <airframe_group name="Underwater Robot" image="AirframeUnknown">
     <airframe name="Generic Underwater Robot" id="60000" maintainer="John Doe &lt;john@example.com&gt;">
