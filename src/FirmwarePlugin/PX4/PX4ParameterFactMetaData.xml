@@ -1971,7 +1971,7 @@
   <group name="FW Path Control">
     <parameter name="FW_PN_R_SLEW_MAX" default="90.0" type="FLOAT">
       <short_desc>Path navigation roll slew rate limit</short_desc>
-      <long_desc>The maximum change in roll angle setpoint per second.</long_desc>
+      <long_desc>The maximum change in roll angle setpoint per second. This limit is applied in all Auto modes, plus manual Position and Altitude modes.</long_desc>
       <min>0</min>
       <unit>deg/s</unit>
       <decimal>0</decimal>
