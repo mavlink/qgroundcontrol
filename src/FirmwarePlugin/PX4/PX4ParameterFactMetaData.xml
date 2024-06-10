@@ -407,19 +407,19 @@
       <unit>m</unit>
       <decimal>1</decimal>
     </parameter>
-    <parameter name="ASPD_FS_T_START" default="-1" type="INT32">
+    <parameter name="ASPD_FS_T_START" default="-1." type="FLOAT">
       <short_desc>Airspeed failsafe start delay</short_desc>
       <long_desc>Delay before switching back to using airspeed sensor if checks indicate sensor is good. Set to a negative value to disable the re-enabling in flight.</long_desc>
-      <min>-1</min>
-      <max>1000</max>
+      <min>-1.0</min>
       <unit>s</unit>
+      <decimal>1</decimal>
     </parameter>
-    <parameter name="ASPD_FS_T_STOP" default="2" type="INT32">
+    <parameter name="ASPD_FS_T_STOP" default="1." type="FLOAT">
       <short_desc>Airspeed failsafe stop delay</short_desc>
       <long_desc>Delay before stopping use of airspeed sensor if checks indicate sensor is bad.</long_desc>
-      <min>1</min>
-      <max>10</max>
+      <min>0.0</min>
       <unit>s</unit>
+      <decimal>1</decimal>
     </parameter>
     <parameter name="ASPD_PRIMARY" default="1" type="INT32">
       <short_desc>Index or primary airspeed measurement source</short_desc>
