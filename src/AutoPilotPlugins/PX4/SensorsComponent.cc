@@ -7,18 +7,10 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "SensorsComponent.h"
 #include "FactSystem.h"
 #include "ParameterManager.h"
 #include "Vehicle.h"
-
-const char* SensorsComponent::_airspeedBreakerParam =   "CBRK_AIRSPD_CHK";
-const char* SensorsComponent::_airspeedDisabledParam =  "FW_ARSP_MODE";
-const char* SensorsComponent::_airspeedCalParam =       "SENS_DPRES_OFF";
 
 const char* SensorsComponent::_magEnabledParam =  "SYS_HAS_MAG";
 const char* SensorsComponent::_magCalParam =  "CAL_MAG0_ID";
@@ -28,6 +20,15 @@ SensorsComponent::SensorsComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot,
     _name(tr("Sensors"))
 {
     _deviceIds = QStringList({QStringLiteral("CAL_GYRO0_ID"), QStringLiteral("CAL_ACC0_ID") });
+
+    if (_vehicle->fixedWing() || _vehicle->vtol() || _vehicle->airship()) {
+        _airspeedCalTriggerParams << "SENS_DPRES_OFF";
+        if (_vehicle->firmwareMajorVersion() >= 1 && _vehicle->firmwareMinorVersion() >= 14) {
+            _airspeedCalTriggerParams << "SYS_HAS_NUM_ASPD";
+        } else {
+            _airspeedCalTriggerParams << "FW_ARSP_MODE" << "CBRK_AIRSPD_CHK";
+        }
+    }
 }
 
 QString SensorsComponent::name(void) const
@@ -67,10 +68,17 @@ bool SensorsComponent::setupComplete(void) const
     }
 
     if (_vehicle->fixedWing() || _vehicle->vtol() || _vehicle->airship()) {
-        if (!_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, _airspeedDisabledParam)->rawValue().toBool() &&
-                _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, _airspeedBreakerParam)->rawValue().toInt() != 162128 &&
-                _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, _airspeedCalParam)->rawValue().toFloat() == 0.0f) {
-            return false;
+        if (_vehicle->firmwareMajorVersion() >= 1 && _vehicle->firmwareMinorVersion() >= 14) {
+            if (_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "SYS_HAS_NUM_ASPD")->rawValue().toBool() &&
+                    _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "SENS_DPRES_OFF")->rawValue().toFloat() == 0.0f) {
+                return false;
+            }
+        } else {
+            if (!_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "FW_ARSP_MODE")->rawValue().toBool() &&
+                    _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "CBRK_AIRSPD_CHK")->rawValue().toInt() != 162128 &&
+                    _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "SENS_DPRES_OFF")->rawValue().toFloat() == 0.0f) {
+                return false;
+            }
         }
     }
 
@@ -83,7 +91,7 @@ QStringList SensorsComponent::setupCompleteChangedTriggerList(void) const
     
     triggers << _deviceIds << _magCalParam << _magEnabledParam;
     if (_vehicle->fixedWing() || _vehicle->vtol() || _vehicle->airship()) {
-        triggers << _airspeedCalParam << _airspeedBreakerParam;
+        triggers << _airspeedCalTriggerParams;
     }
     
     return triggers;
@@ -106,3 +114,26 @@ QUrl SensorsComponent::summaryQmlSource(void) const
     
     return QUrl::fromUserInput(summaryQml);
 }
+
+ bool SensorsComponent::_airspeedCalSupported(void) const
+ {
+    if (_vehicle->fixedWing() || _vehicle->vtol() || _vehicle->airship()) {
+        if (_vehicle->firmwareMajorVersion() >= 1 && _vehicle->firmwareMinorVersion() >= 14) {
+            if (_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "SYS_HAS_NUM_ASPD")->rawValue().toBool()) {
+                return true;
+            }
+        } else {
+            if (!_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "FW_ARSP_MODE")->rawValue().toBool() &&
+                    _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "CBRK_AIRSPD_CHK")->rawValue().toInt() != 162128) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+ }
+
+ bool SensorsComponent::_airspeedCalRequired(void) const
+ {
+    return _airspeedCalSupported() && _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "SENS_DPRES_OFF")->rawValue().toFloat() == 0.0f;
+ }
