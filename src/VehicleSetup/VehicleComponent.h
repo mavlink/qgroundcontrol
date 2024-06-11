@@ -69,8 +69,8 @@ public:
     virtual void setupTriggerSignals(void);
 
 signals:
-    void setupCompleteChanged(bool setupComplete);
-    void setupSourceChanged(void);
+    void setupCompleteChanged   (void);
+    void setupSourceChanged     (void);
 
 protected slots:
     void _triggerUpdated(QVariant value);
