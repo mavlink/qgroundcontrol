@@ -124,7 +124,7 @@ void APMRadioComponent::_connectSetupTriggers(void)
 
 void APMRadioComponent::_triggerChanged(void)
 {
-    emit setupCompleteChanged(setupComplete());
+    emit setupCompleteChanged();
 
     // Control mapping may have changed so we need to reset triggers
     _connectSetupTriggers();

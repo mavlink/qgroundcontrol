@@ -24,6 +24,9 @@ class SensorsComponent : public VehicleComponent
 public:
     SensorsComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
     
+    Q_PROPERTY(bool airspeedCalSupported    READ _airspeedCalSupported  STORED false NOTIFY setupCompleteChanged)
+    Q_PROPERTY(bool airspeedCalRequired     READ _airspeedCalRequired   STORED false NOTIFY setupCompleteChanged)
+
     // Virtuals from VehicleComponent
     QStringList setupCompleteChangedTriggerList(void) const override;
     
@@ -37,13 +40,13 @@ public:
     virtual QUrl summaryQmlSource(void) const override;
     
 private:
+    bool _airspeedCalSupported  (void) const;
+    bool _airspeedCalRequired   (void) const;
+
     const QString   _name;
     QVariantList    _summaryItems;
     QStringList     _deviceIds;
-
-    static const char* _airspeedDisabledParam;
-    static const char* _airspeedBreakerParam;
-    static const char* _airspeedCalParam;
+    QStringList     _airspeedCalTriggerParams;
 
     static const char* _magEnabledParam;
     static const char* _magCalParam;

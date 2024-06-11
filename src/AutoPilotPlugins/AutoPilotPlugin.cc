@@ -49,7 +49,7 @@ void AutoPilotPlugin::_recalcSetupComplete(void)
 
     if (_setupComplete != newSetupComplete) {
         _setupComplete = newSetupComplete;
-        emit setupCompleteChanged(_setupComplete);
+        emit setupCompleteChanged();
     }
 }
 
