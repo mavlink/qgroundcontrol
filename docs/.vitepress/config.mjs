@@ -87,6 +87,16 @@ export default defineConfig({
             ariaLabel: "QGC website link",
           },
           {
+            text: "Download QGC (stable)",
+            link: "https://docs.qgroundcontrol.com/master/en/qgc-user-guide/getting_started/download_and_install.html",
+            ariaLabel: "Download stable QGC",
+          },
+          {
+            text: "Download QGC (daily build)",
+            link: "https://docs.qgroundcontrol.com/master/en/qgc-user-guide/releases/daily_builds.html",
+            ariaLabel: "Download stable QGC",
+          },
+          {
             text: "Source Code",
             link: "https://github.com/mavlink/qgroundcontrol",
           },
@@ -139,7 +149,7 @@ export default defineConfig({
       },
       {
         text: "Support",
-        link: "https://docs.qgroundcontrol.com/master/en/support/support.html",
+        link: "https://docs.qgroundcontrol.com/master/en/qgc-user-guide/support/support.html",
       },
       {
         text: "Version",
