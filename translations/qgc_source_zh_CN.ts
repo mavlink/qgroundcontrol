@@ -5953,7 +5953,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/VehicleSetup/FirmwareImage.cc" line="340"/>
       <source>Write failed for decompressed image file, error: %1</source>
-      <translation>解压后的镜像文件写入失败，错误：%1</translation>
+      <translation>解压后的图像文件写入失败，错误：%1</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareImage.cc" line="364"/>
