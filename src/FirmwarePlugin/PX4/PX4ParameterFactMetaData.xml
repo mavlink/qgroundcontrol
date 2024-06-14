@@ -712,18 +712,6 @@
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter name="BAT_N_CELLS" default="3" type="INT32" category="System">
-      <short_desc>This parameter is deprecated. Please use BAT1_N_CELLS instead</short_desc>
-    </parameter>
-    <parameter name="BAT_V_CHARGED" default="4.05" type="FLOAT" category="System">
-      <short_desc>This parameter is deprecated. Please use BAT1_V_CHARGED instead</short_desc>
-    </parameter>
-    <parameter name="BAT_V_EMPTY" default="3.6" type="FLOAT" category="System">
-      <short_desc>This parameter is deprecated. Please use BAT1_V_EMPTY instead</short_desc>
-    </parameter>
-    <parameter name="BAT_V_LOAD_DROP" default="0.3" type="FLOAT" category="System">
-      <short_desc>This parameter is deprecated. Please use BAT1_V_LOAD_DROP instead</short_desc>
-    </parameter>
     <parameter name="BAT_V_OFFS_CURR" default="0.0" type="FLOAT">
       <short_desc>Offset in volt as seen by the ADC input of the current sensor</short_desc>
       <long_desc>This offset will be subtracted before calculating the battery current based on the voltage.</long_desc>
