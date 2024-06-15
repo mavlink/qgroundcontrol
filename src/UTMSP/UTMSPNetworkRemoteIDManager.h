@@ -10,6 +10,7 @@
 #pragma once
 
 #include <nlohmann/json.hpp>
+#include "services/dispatcher.h"
 
 #include "UTMSPBlenderRestInterface.h"
 
