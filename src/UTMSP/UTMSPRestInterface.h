@@ -9,46 +9,32 @@
 
 #pragma once
 
-#include <boost/asio/ssl.hpp>
-#include <boost/beast/core.hpp>
-#include <boost/beast.hpp>
-#include <boost/asio.hpp>
-#include <boost/beast/http.hpp>
-#include <boost/beast/version.hpp>
-#include <boost/asio/connect.hpp>
-#include <boost/asio/ip/tcp.hpp>
-#include <boost/asio/ssl.hpp>
-#include <string>
-#include <QtCore/QSharedPointer>
-#include <QtCore/QObject>
+#include <QObject>
+#include <QtNetwork/QNetworkAccessManager>
+#include <QtNetwork/QNetworkReply>
+#include <QtNetwork/QNetworkRequest>
+#include <QString>
+#include <QUrl>
+#include <QPair>
 
-namespace beast = boost::beast;
-namespace http = beast::http;
-namespace net = boost::asio;
-using tcp = net::ip::tcp;
-
-class UTMSPRestInterface {
+class UTMSPRestInterface : public QObject {
+    Q_OBJECT
 
 public:
-    UTMSPRestInterface(std::string host, std::string port = "443");
-    virtual ~UTMSPRestInterface();
+    UTMSPRestInterface(QObject *parent = nullptr);
+    ~UTMSPRestInterface();
 
-    bool connectNetwork();
-    void setBearerToken(const std::string& token);
-    std::pair<int, std::string> executeRequest();
-    void modifyRequest(std::string target, http::verb method, std::string body = "");
-    void setBasicToken(const std::string& basicToken);
-    void setHost(std::string target);
+    void setBearerToken(const QString &token);
+    QPair<int, QString> executeRequest();
+    void modifyRequest(const QString &target, QNetworkAccessManager::Operation method, const QString &body = "");
+    void setHost(const QString &target);
+    void setBasicToken(const QString &basicToken);
 
 private:
-    net::io_context                                 _ioc;
-    net::ssl::context                               _ssl_ctx;
-    net::ip::tcp::resolver                          _resolver{_ioc};
-    QSharedPointer<net::ssl::stream<tcp::socket>>   _stream;
-    std::mutex                                      _mutex;
-    std::string                                     _basicToken;
-    std::string                                     _host;
-    std::string                                     _port;
-
-    static http::request<http::string_body> _request;
+    QNetworkAccessManager *             _networkManager = nullptr;
+    QNetworkRequest                     _currentRequest;
+    QString                             _currentBody;
+    QNetworkAccessManager::Operation    _currentMethod;
+    QString                             _currentURL;
+    QString                             _basicToken;
 };

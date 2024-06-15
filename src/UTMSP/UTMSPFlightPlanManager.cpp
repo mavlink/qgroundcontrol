@@ -95,20 +95,20 @@ void UTMSPFlightPlanManager::registerFlightPlan(const std::string &token,
 
 
     json data = _flightDataJson;
+    auto dataString = QString::fromStdString(data.dump(4));
     setHost("BlenderClient");
-    connectNetwork();
-    setBearerToken(token);
-    auto [statusCode, response] =  setFlightPlan(data.dump(4));
+    setBearerToken(token.c_str());
+    auto [statusCode, response] =  setFlightPlan(dataString);
     UTMSP_LOG_INFO() << "UTMSPFlightPlanManager: Register Response -->" << response;
 
     if(statusCode == 201)
     {
         try {
-            json jsonData = json::parse(response);
+            json jsonData = json::parse(response.toStdString());
             std::string flightID = jsonData["id"];
 
             _flightResponseID = flightID;
-            _responseJSON = response;
+            _responseJSON = response.toStdString();
             _responseStatus = true;
         }
         catch (const json::parse_error& e) {

@@ -10,191 +10,99 @@
 #include "UTMSPRestInterface.h"
 #include "UTMSPLogger.h"
 
-#include <QtCore/QList>
-#include <QtNetwork/QNetworkInterface>
+#include <QList>
+#include <QNetworkInterface>
+#include "qeventloop.h"
 
-UTMSPRestInterface::UTMSPRestInterface(std::string host, std::string port):
-    _ssl_ctx{boost::asio::ssl::context::tlsv13_client},
-    _host(host),
-    _port(port)
+UTMSPRestInterface::UTMSPRestInterface(QObject *parent):
+    QObject(parent)
 {
-
+    _networkManager = new QNetworkAccessManager(this);
 }
 
 UTMSPRestInterface::~UTMSPRestInterface()
 {
-
+    delete _networkManager;
+    _networkManager = nullptr;
 }
 
 
-http::request<http::string_body> UTMSPRestInterface::_request;
-
-bool isNetworkAvailable()
+void UTMSPRestInterface::setHost(const QString &target)
 {
-    bool hasConnectivity = false;
-
-    QList<QNetworkInterface> interfaces = QNetworkInterface::allInterfaces();
-    for (const QNetworkInterface& interface : interfaces) {
-
-        // Check if the interface is up and not loopback
-        if (interface.isValid() && interface.flags().testFlag(QNetworkInterface::IsUp)
-            && !interface.flags().testFlag(QNetworkInterface::IsLoopBack))
-        {
-            hasConnectivity = true;
-            break;
-        }
+    if (target == "AuthClient") {
+        _currentURL = "https://passport.utm.dev.airoplatform.com";
+        _currentRequest.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+    } else if (target == "BlenderClient") {
+        _currentURL = "https://blender.utm.dev.airoplatform.com";
+        _currentRequest.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     }
+    _currentRequest.setRawHeader("User-Agent", QString("Qt/%1").arg(QT_VERSION_STR).toUtf8());
+    _currentRequest.setRawHeader("Accept", "*/*");
+    _currentRequest.setRawHeader("Accept-Encoding", "gzip, deflate, br");
+    _currentRequest.setRawHeader("Connection", "keep-alive");
 
-    if (!hasConnectivity)
-    {
-        UTMSP_LOG_DEBUG() << "UTMSPRestInterfaceLog: No network/internet connectivity";
-    }
-    return hasConnectivity;
+    QSslConfiguration sslConfig = QSslConfiguration::defaultConfiguration();
+    sslConfig.setProtocol(QSsl::TlsV1_3);
+    _currentRequest.setSslConfiguration(sslConfig);
 }
 
-void UTMSPRestInterface::setHost(std::string target)
-{
-    _request.set(http::field::content_length, 0);
-    _request.version(11);
-    _request.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-
-    if(target == "AuthClient"){
-        _request.set(http::field::host, "passport.utm.dev.airoplatform.com");
-        _request.set(http::field::content_type, "application/x-www-form-urlencoded");
-    }
-    else if(target == "BlenderClient"){
-        _request.set(http::field::host, "blender.utm.dev.airoplatform.com");
-        _request.set(http::field::content_type, "application/json");
-    }
-
-    _request.set(http::field::accept,  "*/*");
-    _request.set(http::field::accept_encoding, "gzip, deflate, br");
-    _request.set(http::field::connection, "keep-alive");
-}
-
-void UTMSPRestInterface::setBasicToken(const std::string &basicToken){
+void UTMSPRestInterface::setBasicToken(const QString &basicToken){
     _basicToken = basicToken;
-    _request.set(http::field::authorization, "Basic "+ _basicToken);
+    _currentRequest.setRawHeader("Authorization", ("Basic " + _basicToken).toUtf8());
 }
 
-bool UTMSPRestInterface::connectNetwork()
+void UTMSPRestInterface::modifyRequest(const QString &target, QNetworkAccessManager::Operation method, const QString &body)
 {
-    if (!isNetworkAvailable())
-        return "";
-
-    _ssl_ctx.set_default_verify_paths();
-    _stream = QSharedPointer<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>::create(_ioc, _ssl_ctx);
-
-    if (!SSL_set_tlsext_host_name(_stream->native_handle(), _host.c_str()))
-    {
-        boost::system::error_code ec{ static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category() };
-        throw boost::system::system_error{ ec };
-    }
-
-    boost::system::error_code ec;
-
-    const auto results = _resolver.resolve(_host, _port, ec);
-
-    if (ec)
-    {
-        UTMSP_LOG_ERROR() << "UTMSPRestInterfaceLog: Error during resolving: " << ec.message();
-        return false;
-    }
-    else
-    {
-        UTMSP_LOG_DEBUG() << "UTMSPRestInterfaceLog: Resolving successfull";
-    }
-
-    boost::asio::connect(_stream->lowest_layer(), results.begin(), results.end(), ec);
-
-    if (ec)
-    {
-        UTMSP_LOG_ERROR() << "UTMSPRestInterfaceLog: Error during connection: " << ec.message();
-        return false;
-    }
-    else
-    {
-        UTMSP_LOG_DEBUG() << "UTMSPRestInterfaceLog: Connection successfull";
-    }
-
-    _stream->set_verify_mode(boost::asio::ssl::verify_peer, ec);
-    if (ec)
-    {
-        UTMSP_LOG_ERROR() << "UTMSPRestInterfaceLog: Error during set_verify_mode: " << ec.message();
-        return false;
-    }
-    else
-    {
-        UTMSP_LOG_DEBUG() << "UTMSPRestInterfaceLog: set_verify_mode successfull";
-    }
-
-    _stream->handshake(boost::asio::ssl::stream_base::client, ec);
-    if (ec)
-    {
-        UTMSP_LOG_ERROR() << "UTMSPRestInterfaceLog: Error during handshake: " << ec.message();
-        return false;
-    }
-    else
-    {
-        UTMSP_LOG_INFO() << "UTMSPRestInterfaceLog: Handshake successfull";
-    }
-
-    return true;
-
+    QUrl url(_currentURL+target);
+    _currentRequest.setUrl(url);
+    _currentMethod = method;
+    _currentBody = body;
 }
 
-void UTMSPRestInterface::modifyRequest(std::string target, http::verb method, std::string body)
+QPair<int, QString> UTMSPRestInterface::executeRequest()
 {
-    _request.target(target);
-    _request.method(method);
-    _request.body() = body;
-    _request.prepare_payload();
+    if (!_networkManager) {
+        qDebug() << "Network manager is not initialized!";
+        return qMakePair(0, QString("Network manager is not initialized"));
+    }
+
+    QNetworkReply *reply = nullptr;
+    switch(_currentMethod) {
+    case QNetworkAccessManager::GetOperation:
+        reply = _networkManager->get(_currentRequest);
+        break;
+    case QNetworkAccessManager::PostOperation:
+        reply = _networkManager->post(_currentRequest, _currentBody.toUtf8());
+        break;
+    case QNetworkAccessManager::PutOperation:
+        reply = _networkManager->put(_currentRequest, _currentBody.toUtf8());
+        break;
+    case QNetworkAccessManager::DeleteOperation:
+        reply = _networkManager->deleteResource(_currentRequest);
+        break;
+    case QNetworkAccessManager::HeadOperation:
+        reply = _networkManager->head(_currentRequest);
+        break;
+    default:
+        qDebug() << "Unsupported HTTP method: " << _currentMethod;
+        return qMakePair(0, QString("Unsupported HTTP method"));
+    }
+
+    if (!reply) return qMakePair(0, QString("Failed to create network reply"));
+
+    QEventLoop loop;
+    connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+    loop.exec();
+
+    auto response = reply->readAll();
+    int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+
+    reply->deleteLater();
+
+    return qMakePair(statusCode, QString::fromUtf8(response));
 }
 
-std::pair<int, std::string> UTMSPRestInterface::executeRequest()
+void UTMSPRestInterface::setBearerToken(const QString& token)
 {
-    if (!isNetworkAvailable())
-        return std::pair<int, std::string>(0,"");
-
-    // sendRequest
-    std::lock_guard<std::mutex> lock_guard(_mutex);
-    boost::system::error_code ec;
-    beast::http::write(*_stream.data(), _request, ec);
-
-    if (ec) {
-        UTMSP_LOG_ERROR() << "UTMSPRestInterfaceLog: Error during connection: " << ec.message();
-    } else {
-        UTMSP_LOG_DEBUG() << "UTMSPRestInterfaceLog: Write successfull";
-    }
-
-    // ReceivedResponse
-    beast::flat_buffer buffer;
-    http::response<http::dynamic_body> response;
-    http::read(*_stream.data(), buffer, response, ec);
-
-    if (ec) {
-        UTMSP_LOG_ERROR() << "UTMSPRestInterfaceLog: Error during connection: " << ec.message();
-    } else {
-        UTMSP_LOG_DEBUG() << "UTMSPRestInterfaceLog: Read successfull";
-    }
-
-    if (response.result() == beast::http::status::ok)
-    {
-        // Handle successful response
-        UTMSP_LOG_INFO() << "UTMSPRestInterfaceLog: Received OK response.";
-    }
-    else
-    {
-        UTMSP_LOG_INFO() << "UTMSPRestInterfaceLog: Received response with status code: "<< response.result_int();
-    }
-    if (response.body().size() == 0) {
-        return std::pair<int, std::string>(response.result_int(),"");
-    }
-
-    return std::pair<int, std::string>(response.result_int(), boost::beast::buffers_to_string(response.body().data()));
-}
-
-void UTMSPRestInterface::setBearerToken(const std::string& token)
-{
-    _request.set(http::field::authorization, "Bearer " + token);
+    _currentRequest.setRawHeader("Authorization", ("Bearer " + token).toUtf8());
 }
