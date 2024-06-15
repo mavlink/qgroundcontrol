@@ -101,6 +101,10 @@ target_link_libraries(QGC
 		VideoManager
 )
 
+if(QGC_CUSTOM_BUILD)
+    target_link_libraries(QGC PRIVATE custom)
+endif()
+
 target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(ANDROID)

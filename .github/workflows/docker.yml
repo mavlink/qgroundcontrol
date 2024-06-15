@@ -17,6 +17,7 @@ jobs:
         with:
           submodules: recursive
           fetch-tags: true
+          fetch-depth: 0
 
       - run: chmod a+x ./deploy/docker/run-docker.sh
 

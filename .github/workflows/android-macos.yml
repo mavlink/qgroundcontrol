@@ -30,6 +30,7 @@ jobs:
         with:
           submodules: recursive
           fetch-tags: true
+          fetch-depth: 0
 
       - name: Setup Java Environment
         uses: actions/setup-java@v4
