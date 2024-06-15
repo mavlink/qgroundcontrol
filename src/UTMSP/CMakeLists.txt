@@ -6,6 +6,7 @@ qt_add_library(UTMSP STATIC)
 option(QGC_UTM_ADAPTER "Enable UTM Adapter" OFF)
 if(QGC_UTM_ADAPTER)
     message(STATUS "UTMSP is Initialized")
+    add_definitions(-DQGC_UTM_ADAPTER)
 
     if(NOT nlohmann_json_FOUND)
         message(STATUS "UTMSP: Fetching nlohmann/json")
@@ -30,6 +31,8 @@ if(QGC_UTM_ADAPTER)
             UTMSPAuthorization.h
             UTMSPBlenderRestInterface.cpp
             UTMSPBlenderRestInterface.h
+            UTMSPFlightDetails.cpp
+            UTMSPFlightDetails.h
             UTMSPFlightPlanManager.cpp
             UTMSPFlightPlanManager.h
             UTMSPLogger.h

@@ -18,9 +18,6 @@ qt_add_library(QGC STATIC
     QGCToolbox.h
 )
 
-#######################################################
-#             UTMSP FLAG
-#######################################################
 if(QGC_UTM_ADAPTER)
     add_definitions(-DQGC_UTM_ADAPTER)
 endif()
