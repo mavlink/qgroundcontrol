@@ -14,23 +14,22 @@
 
 #include "UTMSPRestInterface.h"
 
-class UTMSPAuthorization: public QObject, public UTMSPRestInterface
+class UTMSPAuthorization: public QObject
 {
     Q_OBJECT
 public:
-    UTMSPAuthorization();
-    ~UTMSPAuthorization();
+    UTMSPAuthorization(QObject *parent = nullptr);
+    virtual ~UTMSPAuthorization() = default;
 
     const std::string& getOAuth2Token();
+    std::string base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len);
 
 protected slots:
     bool requestOAuth2Client(const QString& clientID, const QString& clientSecret);
 
-protected:
-    http::request<http::string_body> _request;
-
 private:
-    std::string          _clientID;
-    std::string          _clientSecret;
     bool                 _isValidToken;
+    UTMSPRestInterface   _utmspRestInterface;
+
+    static const std::string base64_chars;
 };
