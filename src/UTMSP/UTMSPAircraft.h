@@ -9,10 +9,9 @@
 
 #pragma once
 
+#include "mavlink_types.h"
 #include <string>
 #include <vector>
-
-typedef struct __mavlink_message_t mavlink_message_t;
 
 class UTMSPAircraft {
 public:

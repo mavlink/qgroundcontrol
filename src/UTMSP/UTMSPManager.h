@@ -11,6 +11,8 @@
 
 #include "QGCToolbox.h"
 
+#include "UTMSPVehicle.h"
+
 class UTMSPVehicle;
 class Vehicle;
 class Dispatcher;

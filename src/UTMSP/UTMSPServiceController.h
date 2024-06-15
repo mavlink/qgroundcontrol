@@ -12,12 +12,11 @@
 #include "UTMSPAuthorization.h"
 #include "UTMSPFlightPlanManager.h"
 #include "UTMSPNetworkRemoteIDManager.h"
+#include "UTMSPAircraft.h"
 
 #include <QtCore/QElapsedTimer>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtCore/QObject>
-
-struct mavlink_message_t;
 
 class UTMSPServiceController : public QObject
 {
