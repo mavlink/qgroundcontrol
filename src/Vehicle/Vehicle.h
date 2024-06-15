@@ -79,7 +79,7 @@ class VehicleBatteryFactGroup;
 class VehicleObjectAvoidance;
 class QGCToolbox;
 class GimbalController;
-#ifdef CONFIG_UTM_ADAPTER
+#ifdef QGC_UTM_ADAPTER
 class UTMSPVehicle;
 #endif
 #ifndef OPAQUE_PTR_VEHICLE
@@ -1068,7 +1068,7 @@ private:
     Autotune*                       _autotune                       = nullptr;
     GimbalController*               _gimbalController               = nullptr;
 
-#ifdef CONFIG_UTM_ADAPTER
+#ifdef QGC_UTM_ADAPTER
     UTMSPVehicle*                    _utmspVehicle                    = nullptr;
 #endif
 

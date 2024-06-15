@@ -91,7 +91,7 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
 #ifndef QGC_AIRLINK_DISABLED
     _airlinkManager         = toolbox->airlinkManager();
 #endif
-#ifdef CONFIG_UTM_ADAPTER
+#ifdef QGC_UTM_ADAPTER
     _utmspManager            = toolbox->utmspManager();
 #endif
 }
