@@ -11,15 +11,16 @@
 
 #include "UTMSPRestInterface.h"
 
+#include <QPair>
+#include <QString>
+
 class UTMSPBlenderRestInterface: public UTMSPRestInterface
 {
 public:
-    UTMSPBlenderRestInterface();
+    UTMSPBlenderRestInterface(QObject *parent = nullptr);
 
-    std::pair<int, std::string> setFlightPlan(const std::string& body);
-    std::pair<int, std::string> requestTelemetry(const std::string& body);
-    std::pair<int, std::string> ping();
+    QPair<int, QString> setFlightPlan(const QString& body);
+    QPair<int, QString> requestTelemetry(const QString& body);
+    QPair<int, QString> ping();
 
-private:
-    http::request<http::string_body> _request;
 };

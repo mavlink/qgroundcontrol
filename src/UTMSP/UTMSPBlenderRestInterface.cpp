@@ -9,34 +9,34 @@
 
 #include "UTMSPBlenderRestInterface.h"
 
-UTMSPBlenderRestInterface::UTMSPBlenderRestInterface():
-    UTMSPRestInterface("blender.utm.dev.airoplatform.com")
+UTMSPBlenderRestInterface::UTMSPBlenderRestInterface(QObject *parent):
+    UTMSPRestInterface(parent)
 {
-
+    setHost("BlenderClient");
 }
 
-std::pair<int, std::string> UTMSPBlenderRestInterface::setFlightPlan(const std::string& body)
+QPair<int, QString> UTMSPBlenderRestInterface::setFlightPlan(const QString& body)
 {
     // Post Flight plan
-    const std::string setFlightPlanTarget = "/flight_declaration_ops/set_flight_declaration";
-    modifyRequest(setFlightPlanTarget, http::verb::post, body);
+    QString setFlightPlanTarget = "/flight_declaration_ops/set_flight_declaration";
+    modifyRequest(setFlightPlanTarget, QNetworkAccessManager::PostOperation, body);
 
     return executeRequest();
 }
 
-std::pair<int, std::string> UTMSPBlenderRestInterface::requestTelemetry(const std::string& body)
+QPair<int, QString> UTMSPBlenderRestInterface::requestTelemetry(const QString& body)
 {
     // Post RID data
-    const std::string target = "/flight_stream/set_telemetry";
-    modifyRequest(target, http::verb::put, body);
+    QString target = "/flight_stream/set_telemetry";
+    modifyRequest(target, QNetworkAccessManager::PutOperation, body);
 
     return executeRequest();
 }
 
-std::pair<int, std::string> UTMSPBlenderRestInterface::ping()
+QPair<int, QString> UTMSPBlenderRestInterface::ping()
 {
-    const std::string target = "/ping";
-    modifyRequest(target, http::verb::get);
+    QString target = "/ping";
+    modifyRequest(target, QNetworkAccessManager::GetOperation);
 
     return executeRequest();
 }
