@@ -33,7 +33,7 @@
 #include CUSTOMHEADER
 #endif
 
-#ifdef CONFIG_UTM_ADAPTER
+#ifdef QGC_UTM_ADAPTER
 #include "UTMSPManager.h"
 #endif
 
@@ -63,7 +63,7 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
 #ifndef QGC_AIRLINK_DISABLED
     _airlinkManager         = new AirLinkManager            (app, this);
 #endif
-#ifdef CONFIG_UTM_ADAPTER
+#ifdef QGC_UTM_ADAPTER
     _utmspManager            = new UTMSPManager               (app, this);
 #endif
 }
@@ -91,7 +91,7 @@ void QGCToolbox::setChildToolboxes(void)
 #ifndef QGC_AIRLINK_DISABLED
     _airlinkManager->setToolbox(this);
 #endif
-#ifdef CONFIG_UTM_ADAPTER
+#ifdef QGC_UTM_ADAPTER
     _utmspManager->setToolbox(this);
 #endif
 }
