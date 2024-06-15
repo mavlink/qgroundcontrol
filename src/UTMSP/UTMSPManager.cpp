@@ -9,10 +9,11 @@
 
 
 #include "UTMSPManager.h"
-#include "UTMSPVehicle.h"
 #include "UTMSPLogger.h"
+
 #include "services/dispatcher.h"
 #include "Vehicle.h"
+#include "qqml.h"
 
 UTMSPManager::UTMSPManager(QGCApplication* app, QGCToolbox* toolbox) :
     QGCTool(app, toolbox),

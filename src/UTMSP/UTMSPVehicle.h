@@ -10,7 +10,6 @@
 #pragma once
 
 #include "UTMSPServiceController.h"
-#include "UTMSPAircraft.h"
 #include "UTMSPOperator.h"
 #include "UTMSPFlightDetails.h"
 
