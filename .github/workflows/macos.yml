@@ -44,6 +44,7 @@ jobs:
         with:
           submodules: recursive
           fetch-tags: true
+          fetch-depth: 0
 
       - name: Install Dependencies
         run: |

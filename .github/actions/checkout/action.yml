@@ -1,0 +1,11 @@
+name: Checkout Repository
+description: Checks out the QGC repo with all the correct settings
+runs:
+  using: "composite"
+  steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-tags: true
+          fetch-depth: 0

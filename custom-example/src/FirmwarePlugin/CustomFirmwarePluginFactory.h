@@ -14,6 +14,7 @@
 #pragma once
 
 #include "FirmwarePlugin.h"
+#include "FirmwarePluginFactory.h"
 
 class CustomFirmwarePlugin;
 
