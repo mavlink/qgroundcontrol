@@ -29,7 +29,7 @@ class SettingsManager;
 #ifndef QGC_AIRLINK_DISABLED
 class AirLinkManager;
 #endif
-#ifdef CONFIG_UTM_ADAPTER
+#ifdef QGC_UTM_ADAPTER
 class UTMSPManager;
 #endif
 
@@ -57,7 +57,7 @@ public:
 #ifndef QGC_AIRLINK_DISABLED
     AirLinkManager*              airlinkManager          () { return _airlinkManager; }
 #endif
-#ifdef CONFIG_UTM_ADAPTER
+#ifdef QGC_UTM_ADAPTER
     UTMSPManager*                utmspManager             () { return _utmspManager; }
 #endif
 
@@ -83,7 +83,7 @@ private:
     AirLinkManager*             _airlinkManager         = nullptr;
 #endif
 
-#ifdef CONFIG_UTM_ADAPTER
+#ifdef QGC_UTM_ADAPTER
     UTMSPManager*                _utmspManager            = nullptr;
 #endif
     friend class QGCApplication;

@@ -46,7 +46,7 @@ Q_MOC_INCLUDE("QGCPalette.h")
 Q_MOC_INCLUDE("PositionManager.h")
 Q_MOC_INCLUDE("SettingsManager.h")
 Q_MOC_INCLUDE("VideoManager.h")
-#ifdef CONFIG_UTM_ADAPTER
+#ifdef QGC_UTM_ADAPTER
 Q_MOC_INCLUDE("UTMSPManager.h")
 #endif
 #ifndef QGC_AIRLINK_DISABLED
@@ -128,7 +128,7 @@ public:
 
     Q_PROPERTY(bool              utmspSupported           READ    utmspSupported              CONSTANT)
 
-#ifdef CONFIG_UTM_ADAPTER
+#ifdef QGC_UTM_ADAPTER
     Q_PROPERTY(UTMSPManager*     utmspManager             READ    utmspManager                CONSTANT)
 #endif
 
@@ -192,7 +192,7 @@ public:
     bool                    airlinkSupported    () { return false; }
 #endif
 
-#ifdef CONFIG_UTM_ADAPTER
+#ifdef QGC_UTM_ADAPTER
     UTMSPManager*            utmspManager         ()  {return _utmspManager;}
 #endif
 
@@ -239,7 +239,7 @@ public:
 
     QString qgcVersion              (void) const;
 
-#ifdef CONFIG_UTM_ADAPTER
+#ifdef QGC_UTM_ADAPTER
     bool    utmspSupported() { return true; }
 #else
     bool    utmspSupported() { return false; }
@@ -275,7 +275,7 @@ private:
     ADSBVehicleManager*     _adsbVehicleManager     = nullptr;
     QGCPalette*             _globalPalette          = nullptr;
     QmlUnitsConversion      _unitsConversion;
-#ifdef CONFIG_UTM_ADAPTER
+#ifdef QGC_UTM_ADAPTER
     UTMSPManager*            _utmspManager;
 #endif
 
