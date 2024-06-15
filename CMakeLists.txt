@@ -25,30 +25,6 @@ elseif(WIN32)
 endif()
 
 #######################################################
-#                   Project Info
-#######################################################
-
-project(QGroundControl
-    VERSION 5.0
-    DESCRIPTION "Open Source Ground Control App"
-    HOMEPAGE_URL "https://qgroundcontrol.com/"
-    LANGUAGES C CXX
-)
-
-if(UNIX AND NOT APPLE AND NOT ANDROID)
-    set(LINUX TRUE)
-endif()
-
-if(APPLE AND NOT IOS)
-    set(MACOS TRUE)
-endif()
-
-if(IOS OR ANDROID)
-    set(MOBILE TRUE)
-    add_compile_definitions(__mobile__)
-endif()
-
-#######################################################
 #            CMake Configuration Options
 #######################################################
 
@@ -83,6 +59,43 @@ cmake_print_variables(CMAKE_SYSTEM_VERSION)
 cmake_print_variables(CMAKE_CURRENT_SOURCE_DIR)
 cmake_print_variables(CMAKE_BUILD_TYPE)
 cmake_print_variables(CMAKE_TOOLCHAIN_FILE)
+
+include(Git)
+include(CustomOptions)
+
+#######################################################
+#                Custom Build Configuration
+#######################################################
+
+if(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/custom)
+    message(STATUS "Enabling custom build")
+    set(QGC_CUSTOM_BUILD ON)
+    include(${CMAKE_SOURCE_DIR}/custom/CustomOverrides.cmake)
+endif()
+
+#######################################################
+#                   Project Info
+#######################################################
+
+project(QGroundControl
+    VERSION ${QGC_APP_VERSION}
+    DESCRIPTION ${QGC_APP_DESCRIPTION}
+    HOMEPAGE_URL "https://qgroundcontrol.com/"
+    LANGUAGES C CXX
+)
+
+if(UNIX AND NOT APPLE AND NOT ANDROID)
+    set(LINUX TRUE)
+endif()
+
+if(APPLE AND NOT IOS)
+    set(MACOS TRUE)
+endif()
+
+if(IOS OR ANDROID)
+    set(MOBILE TRUE)
+    add_compile_definitions(__mobile__)
+endif()
 
 #######################################################
 #               Qt6 Configuration
@@ -181,8 +194,6 @@ if(QGC_BUILD_TESTING)
     add_compile_definitions(UNITTEST_BUILD) # TODO: QGC_UNITTEST_BUILD
 endif()
 
-# option(QGC_CUSTOM_BUILD "Enable Custom Build" OFF)
-
 # option(QGC_DISABLE_MAVLINK_INSPECTOR "Disable Mavlink Inspector" OFF) # This removes QtCharts which is GPL licensed
 
 cmake_dependent_option(QGC_DEBUG_QML "Build QGroundControl with QML debugging/profiling support." OFF "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
@@ -194,13 +205,27 @@ endif()
 cmake_dependent_option(QGC_NO_SERIAL_LINK "Build QGroundControl without Serial Support Support." OFF "NOT IOS" ON)
 
 #######################################################
+#                Custom Build Configuration
+#######################################################
+
+if(QGC_CUSTOM_BUILD)
+    add_subdirectory(custom)
+endif()
+
+#######################################################
 #                QGroundControl Resources
 #######################################################
 
-set(QGC_RESOURCES
-    ${CMAKE_SOURCE_DIR}/qgcimages.qrc
-    ${CMAKE_SOURCE_DIR}/qgcresources.qrc
-    ${CMAKE_SOURCE_DIR}/qgroundcontrol.qrc
+if(NOT QGC_CUSTOM_BUILD)
+    # Custom builds can override the resources
+    list(APPEND QGC_RESOURCES
+        ${CMAKE_SOURCE_DIR}/qgcimages.qrc
+        ${CMAKE_SOURCE_DIR}/qgcresources.qrc
+        ${CMAKE_SOURCE_DIR}/qgroundcontrol.qrc
+    )
+endif()
+
+list(APPEND QGC_RESOURCES
     ${CMAKE_SOURCE_DIR}/resources/InstrumentValueIcons/InstrumentValueIcons.qrc
     ${CMAKE_SOURCE_DIR}/src/FirmwarePlugin/APM/APMResources.qrc
     ${CMAKE_SOURCE_DIR}/src/FirmwarePlugin/PX4/PX4Resources.qrc
@@ -219,7 +244,7 @@ endif()
 if(WIN32)
     list(APPEND QGC_RESOURCES ${CMAKE_SOURCE_DIR}/deploy/windows/QGroundControl.rc)
 elseif(MACOS)
-    set(app_icon_macos "${CMAKE_SOURCE_DIR}/resources/icons/macx.icns")
+    set(app_icon_macos "${QGC_MACOS_ICON_PATH}/macx.icns")
     set_source_files_properties(${app_icon_macos} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
     list(APPEND QGC_RESOURCES ${app_icon_macos})
 endif()
@@ -239,8 +264,7 @@ if(Qt6LinguistTools_FOUND)
 endif()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES QT_RESOURCE_PREFIX "/qgc")
-
-include(Git)
+set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${QGC_APP_NAME})
 
 if(WIN32)
     set_target_properties(${PROJECT_NAME}
@@ -254,12 +278,12 @@ elseif(MACOS)
         PROPERTIES
             MACOSX_BUNDLE TRUE
             MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/deploy/mac/MacOSXBundleInfo.plist.in"
-            MACOSX_BUNDLE_BUNDLE_NAME "${PROJECT_NAME}"
+            MACOSX_BUNDLE_BUNDLE_NAME "${QGC_APP_NAME}"
             MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
-            MACOSX_BUNDLE_COPYRIGHT "Copyright (c) 2020 QGroundControl. All rights reserved."
-            MACOSX_BUNDLE_GUI_IDENTIFIER "io.mavlink.qgroundcontrol"
+            MACOSX_BUNDLE_COPYRIGHT "${QGC_APP_COPYRIGHT}"
+            MACOSX_BUNDLE_GUI_IDENTIFIER "${QGC_BUNDLE_ID}"
             MACOSX_BUNDLE_ICON_FILE "macx.icns"
-            MACOSX_BUNDLE_INFO_STRING "Open Source Ground Control App"
+            MACOSX_BUNDLE_INFO_STRING "${QGC_APP_DESCRIPTION}"
             MACOSX_BUNDLE_LONG_VERSION_STRING "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}"
             MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}"
     )
@@ -303,10 +327,10 @@ elseif(LINUX)
 endif()
 
 add_compile_definitions(
-    QGC_APPLICATION_NAME="QGroundControl"
-    QGC_ORG_NAME="QGroundControl.org"
-    QGC_ORG_DOMAIN="org.qgroundcontrol"
-    APP_VERSION_STR="${APP_VERSION_STR}"
+    QGC_APP_NAME="${QGC_APP_NAME}"
+    QGC_ORG_NAME="${QGC_ORG_NAME}"
+    QGC_ORG_DOMAIN="${QGC_ORG_DOMAIN}"
+    QGC_APP_VERSION_STR="${QGC_APP_VERSION_STR}"
 )
 
 add_subdirectory(src)

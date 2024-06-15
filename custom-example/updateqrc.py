@@ -3,8 +3,10 @@ import os
 
 qgc_rc  = "qgroundcontrol.qrc"
 res_rc  = "qgcresources.qrc"
+img_rc  = "qgcimages.qrc"
 qgc_exc = "qgroundcontrol.exclusion"
 res_exc = "qgcresources.exclusion"
+img_exc = "qgcimages.exclusion"
 
 def read_file(filename):
     with open(filename) as src:
@@ -33,6 +35,8 @@ def main():
         process(os.path.join("../",qgc_rc), qgc_exc, qgc_rc)
     if(os.path.isfile(res_exc)):
         process(os.path.join("../",res_rc), res_exc, res_rc)
+    if(os.path.isfile(img_exc)):
+        process(os.path.join("../",img_rc), img_exc, img_rc)
 
 if __name__ == '__main__':
     main()

@@ -154,7 +154,7 @@ StableBuild {
 }
 
 # Set the QGC version from git
-APP_VERSION_STR = vUnknown
+QGC_APP_VERSION_STR = vUnknown
 VERSION         = 0.0.0   # Marker to indicate out-of-tree build
 MAC_VERSION     = 0.0.0
 MAC_BUILD       = 0
@@ -168,17 +168,17 @@ exists ($$PWD/.git) {
 
     # Pull the version info from the last annotated version tag. Format: v#.#.#
     contains(GIT_DESCRIBE, ^v[0-9]+.[0-9]+.[0-9]+.*) {
-        APP_VERSION_STR = $${GIT_DESCRIBE}
+        QGC_APP_VERSION_STR = $${GIT_DESCRIBE}
         VERSION         = $$replace(GIT_DESCRIBE, "v", "")
         VERSION         = $$replace(VERSION, "-", ".")
         VERSION         = $$section(VERSION, ".", 0, 3)
     }
 
     DailyBuild {
-        APP_VERSION_STR = "Daily $${GIT_BRANCH}:$${GIT_HASH} $${GIT_TIME}"
+        QGC_APP_VERSION_STR = "Daily $${GIT_BRANCH}:$${GIT_HASH} $${GIT_TIME}"
     }
 
-    message(QGroundControl APP_VERSION_STR VERSION $${APP_VERSION_STR} $${VERSION})
+    message(QGroundControl QGC_APP_VERSION_STR VERSION $${QGC_APP_VERSION_STR} $${VERSION})
 
     MacBuild {
         MAC_VERSION  = $$section(VERSION, ".", 0, 2)
@@ -186,7 +186,7 @@ exists ($$PWD/.git) {
         message(QGroundControl MAC_VERSION MAC_BUILD $${MAC_VERSION} $${MAC_BUILD})
     }
 }
-DEFINES += APP_VERSION_STR=\"\\\"$$APP_VERSION_STR\\\"\"
+DEFINES += QGC_APP_VERSION_STR=\"\\\"$$QGC_APP_VERSION_STR\\\"\"
 
 AndroidBuild {
     QGC_ANDROID_PACKAGE = org.mavlink.qgroundcontrol
@@ -242,7 +242,7 @@ AndroidBuild {
 
     message(Android version info: $${ANDROID_VERSION_CODE} bitness:$${ANDROID_VERSION_BITNESS} major:$${MAJOR_VERSION} minor:$${MINOR_VERSION} patch:$${PATCH_VERSION} dev:$${DEV_VERSION})
 
-    ANDROID_VERSION_NAME    = $${APP_VERSION_STR}
+    ANDROID_VERSION_NAME    = $${QGC_APP_VERSION_STR}
 
     QMAKE_LFLAGS += -Wl,-Bsymbolic
 }
