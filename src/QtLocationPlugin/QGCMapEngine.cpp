@@ -25,7 +25,6 @@
 
 #include <QtCore/QStandardPaths>
 #include <QtCore/QDir>
-#include <QtCore/qapplicationstatic.h>
 
 Q_DECLARE_METATYPE(QGCMapTask::TaskType)
 Q_DECLARE_METATYPE(QGCTile)
@@ -43,7 +42,7 @@ struct stQGeoTileCacheQGCMapTypes {
 
 //-----------------------------------------------------------------------------
 
-Q_APPLICATION_STATIC(QGCMapEngine, s_mapEngine);
+Q_GLOBAL_STATIC(QGCMapEngine, s_mapEngine);
 
 QGCMapEngine* QGCMapEngine::instance()
 {
