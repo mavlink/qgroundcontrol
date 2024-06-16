@@ -330,8 +330,9 @@ endif()
 #######################################################
 
 qt_import_plugins(${PROJECT_NAME}
-    INCLUDE
-        Qt6::QSvgPlugin
+    INCLUDE Qt6::QSvgPlugin
+    EXCLUDE_BY_TYPE geoservices
+    INCLUDE_BY_TYPE sqldrivers Qt6::QSQLiteDriverPlugin
 )
 
 install(
