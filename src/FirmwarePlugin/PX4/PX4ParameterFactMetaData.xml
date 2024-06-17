@@ -9301,6 +9301,28 @@
       <unit>bit/s</unit>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter name="UAVCAN_ECU_FUELT" default="1" type="INT32">
+      <short_desc>UAVCAN fuel tank fuel type</short_desc>
+      <long_desc>This parameter defines the type of fuel used in the vehicle's fuel tank. 0: Unknown 1: Liquid (e.g., gasoline, diesel) 2: Gas (e.g., hydrogen, methane, propane)</long_desc>
+      <min>0</min>
+      <max>2</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Unknown</value>
+        <value code="1">Liquid</value>
+        <value code="2">Gas</value>
+      </values>
+    </parameter>
+    <parameter name="UAVCAN_ECU_MAXF" default="15.0" type="FLOAT">
+      <short_desc>UAVCAN fuel tank maximum capacity</short_desc>
+      <long_desc>This parameter defines the maximum fuel capacity of the vehicle's fuel tank.</long_desc>
+      <min>0.0</min>
+      <max>100000.0</max>
+      <unit>liters</unit>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter name="UAVCAN_ENABLE" default="0" type="INT32">
       <short_desc>UAVCAN mode</short_desc>
       <long_desc>0 - UAVCAN disabled. 1 - Enables support for UAVCAN sensors without dynamic node ID allocation and firmware update. 2 - Enables support for UAVCAN sensors with dynamic node ID allocation and firmware update. 3 - Enables support for UAVCAN sensors and actuators with dynamic node ID allocation and firmware update. Also sets the motor control outputs to UAVCAN.</long_desc>
@@ -9433,6 +9455,11 @@
     <parameter name="UAVCAN_SUB_FLOW" default="0" type="INT32" boolean="true">
       <short_desc>subscription flow</short_desc>
       <long_desc>Enable UAVCAN optical flow subscription.</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="UAVCAN_SUB_FUEL" default="0" type="INT32" boolean="true">
+      <short_desc>subscription fuel tank</short_desc>
+      <long_desc>Enable UAVCAN fuel tank status subscription.</long_desc>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="UAVCAN_SUB_GPS" default="1" type="INT32" boolean="true">
