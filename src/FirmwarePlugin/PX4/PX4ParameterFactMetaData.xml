@@ -2753,7 +2753,6 @@
         <value code="4">Emlid Reach</value>
         <value code="5">Femtomes</value>
         <value code="6">NMEA (generic)</value>
-        <value code="7">Septentrio (SBF)</value>
       </values>
     </parameter>
     <parameter name="GPS_2_GNSS" default="0" type="INT32">
@@ -2797,15 +2796,6 @@
         <value code="1">Full communication</value>
         <value code="2">RTCM output (PPK)</value>
       </values>
-    </parameter>
-    <parameter name="GPS_PITCH_OFFSET" default="0." type="FLOAT">
-      <short_desc>Pitch offset for dual antenna GPS</short_desc>
-      <long_desc>Vertical offsets can be compensated for by adjusting the Pitch offset (Septentrio). Note that this can be interpreted as the "roll" angle in case the antennas are aligned along the perpendicular axis. This occurs in situations where the two antenna ARPs may not be exactly at the same height in the vehicle reference frame. Since pitch is defined as the right-handed rotation about the vehicle Y axis, a situation where the main antenna is mounted lower than the aux antenna (assuming the default antenna setup) will result in a positive pitch.</long_desc>
-      <min>-90</min>
-      <max>90</max>
-      <unit>deg</unit>
-      <decimal>3</decimal>
-      <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="GPS_SAT_INFO" default="0" type="INT32" boolean="true">
       <short_desc>Enable sat info (if available)</short_desc>
@@ -6085,32 +6075,6 @@
       <min>-1</min>
       <max>1</max>
     </parameter>
-    <parameter name="RC_MAP_ACRO_SW" default="0" type="INT32">
-      <short_desc>Acro switch channel (deprecated)</short_desc>
-      <min>0</min>
-      <max>18</max>
-      <values>
-        <value code="0">Unassigned</value>
-        <value code="1">Channel 1</value>
-        <value code="2">Channel 2</value>
-        <value code="3">Channel 3</value>
-        <value code="4">Channel 4</value>
-        <value code="5">Channel 5</value>
-        <value code="6">Channel 6</value>
-        <value code="7">Channel 7</value>
-        <value code="8">Channel 8</value>
-        <value code="9">Channel 9</value>
-        <value code="10">Channel 10</value>
-        <value code="11">Channel 11</value>
-        <value code="12">Channel 12</value>
-        <value code="13">Channel 13</value>
-        <value code="14">Channel 14</value>
-        <value code="15">Channel 15</value>
-        <value code="16">Channel 16</value>
-        <value code="17">Channel 17</value>
-        <value code="18">Channel 18</value>
-      </values>
-    </parameter>
     <parameter name="RC_MAP_ARM_SW" default="0" type="INT32">
       <short_desc>Arm switch channel</short_desc>
       <long_desc>Use it to arm/disarm via switch instead of default throttle stick. If this is assigned, arming and disarming via stick is disabled.</long_desc>
@@ -6295,32 +6259,6 @@
         <value code="18">Channel 18</value>
       </values>
     </parameter>
-    <parameter name="RC_MAP_MAN_SW" default="0" type="INT32">
-      <short_desc>Manual switch channel mapping (deprecated)</short_desc>
-      <min>0</min>
-      <max>18</max>
-      <values>
-        <value code="0">Unassigned</value>
-        <value code="1">Channel 1</value>
-        <value code="2">Channel 2</value>
-        <value code="3">Channel 3</value>
-        <value code="4">Channel 4</value>
-        <value code="5">Channel 5</value>
-        <value code="6">Channel 6</value>
-        <value code="7">Channel 7</value>
-        <value code="8">Channel 8</value>
-        <value code="9">Channel 9</value>
-        <value code="10">Channel 10</value>
-        <value code="11">Channel 11</value>
-        <value code="12">Channel 12</value>
-        <value code="13">Channel 13</value>
-        <value code="14">Channel 14</value>
-        <value code="15">Channel 15</value>
-        <value code="16">Channel 16</value>
-        <value code="17">Channel 17</value>
-        <value code="18">Channel 18</value>
-      </values>
-    </parameter>
     <parameter name="RC_MAP_MODE_SW" default="0" type="INT32">
       <short_desc>Mode switch channel mapping (deprecated)</short_desc>
       <long_desc>This is the main flight mode selector. The channel index (starting from 1 for channel 1) indicates which channel should be used for deciding about the main mode. A value of zero indicates the switch is not assigned.</long_desc>
@@ -6374,86 +6312,8 @@
         <value code="18">Channel 18</value>
       </values>
     </parameter>
-    <parameter name="RC_MAP_POSCTL_SW" default="0" type="INT32">
-      <short_desc>Position Control switch channel (deprecated)</short_desc>
-      <min>0</min>
-      <max>18</max>
-      <values>
-        <value code="0">Unassigned</value>
-        <value code="1">Channel 1</value>
-        <value code="2">Channel 2</value>
-        <value code="3">Channel 3</value>
-        <value code="4">Channel 4</value>
-        <value code="5">Channel 5</value>
-        <value code="6">Channel 6</value>
-        <value code="7">Channel 7</value>
-        <value code="8">Channel 8</value>
-        <value code="9">Channel 9</value>
-        <value code="10">Channel 10</value>
-        <value code="11">Channel 11</value>
-        <value code="12">Channel 12</value>
-        <value code="13">Channel 13</value>
-        <value code="14">Channel 14</value>
-        <value code="15">Channel 15</value>
-        <value code="16">Channel 16</value>
-        <value code="17">Channel 17</value>
-        <value code="18">Channel 18</value>
-      </values>
-    </parameter>
-    <parameter name="RC_MAP_RATT_SW" default="0" type="INT32">
-      <short_desc>Rattitude switch channel (deprecated)</short_desc>
-      <min>0</min>
-      <max>18</max>
-      <values>
-        <value code="0">Unassigned</value>
-        <value code="1">Channel 1</value>
-        <value code="2">Channel 2</value>
-        <value code="3">Channel 3</value>
-        <value code="4">Channel 4</value>
-        <value code="5">Channel 5</value>
-        <value code="6">Channel 6</value>
-        <value code="7">Channel 7</value>
-        <value code="8">Channel 8</value>
-        <value code="9">Channel 9</value>
-        <value code="10">Channel 10</value>
-        <value code="11">Channel 11</value>
-        <value code="12">Channel 12</value>
-        <value code="13">Channel 13</value>
-        <value code="14">Channel 14</value>
-        <value code="15">Channel 15</value>
-        <value code="16">Channel 16</value>
-        <value code="17">Channel 17</value>
-        <value code="18">Channel 18</value>
-      </values>
-    </parameter>
     <parameter name="RC_MAP_RETURN_SW" default="0" type="INT32">
       <short_desc>Return switch channel</short_desc>
-      <min>0</min>
-      <max>18</max>
-      <values>
-        <value code="0">Unassigned</value>
-        <value code="1">Channel 1</value>
-        <value code="2">Channel 2</value>
-        <value code="3">Channel 3</value>
-        <value code="4">Channel 4</value>
-        <value code="5">Channel 5</value>
-        <value code="6">Channel 6</value>
-        <value code="7">Channel 7</value>
-        <value code="8">Channel 8</value>
-        <value code="9">Channel 9</value>
-        <value code="10">Channel 10</value>
-        <value code="11">Channel 11</value>
-        <value code="12">Channel 12</value>
-        <value code="13">Channel 13</value>
-        <value code="14">Channel 14</value>
-        <value code="15">Channel 15</value>
-        <value code="16">Channel 16</value>
-        <value code="17">Channel 17</value>
-        <value code="18">Channel 18</value>
-      </values>
-    </parameter>
-    <parameter name="RC_MAP_STAB_SW" default="0" type="INT32">
-      <short_desc>Stabilize switch channel mapping  (deprecated)</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
