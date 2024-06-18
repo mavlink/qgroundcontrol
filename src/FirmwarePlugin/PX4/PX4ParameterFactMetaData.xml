@@ -4356,9 +4356,19 @@
       <long_desc>Disable to use the fixed parameter MPC_THR_HOVER Enable to use the hover thrust estimator</long_desc>
     </parameter>
     <parameter name="MPC_VELD_LP" default="5.0" type="FLOAT">
-      <short_desc>Numerical velocity derivative low pass cutoff frequency</short_desc>
+      <short_desc>Velocity derivative low pass cutoff frequency</short_desc>
+      <long_desc>A value of 0 disables the filter.</long_desc>
       <min>0</min>
-      <max>10</max>
+      <max>50</max>
+      <unit>Hz</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
+    </parameter>
+    <parameter name="MPC_VEL_LP" default="0.0" type="FLOAT">
+      <short_desc>Velocity low pass cutoff frequency</short_desc>
+      <long_desc>A value of 0 disables the filter.</long_desc>
+      <min>0</min>
+      <max>50</max>
       <unit>Hz</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
@@ -4389,6 +4399,24 @@
       <unit>m/s</unit>
       <decimal>1</decimal>
       <increment>1</increment>
+    </parameter>
+    <parameter name="MPC_VEL_NF_BW" default="5.0" type="FLOAT">
+      <short_desc>Velocity notch filter bandwidth</short_desc>
+      <long_desc>A value of 0 disables the filter.</long_desc>
+      <min>0</min>
+      <max>50</max>
+      <unit>Hz</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
+    </parameter>
+    <parameter name="MPC_VEL_NF_FRQ" default="0.0" type="FLOAT">
+      <short_desc>Velocity notch filter frequency</short_desc>
+      <long_desc>The center frequency for the 2nd order notch filter on the velocity. A value of 0 disables the filter.</long_desc>
+      <min>0</min>
+      <max>50</max>
+      <unit>Hz</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
     </parameter>
     <parameter name="MPC_XY_CRUISE" default="5." type="FLOAT">
       <short_desc>Default horizontal velocity in autonomous modes</short_desc>
