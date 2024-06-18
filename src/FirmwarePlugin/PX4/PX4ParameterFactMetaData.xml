@@ -8449,6 +8449,11 @@
         <value code="2">SIH enabled</value>
       </values>
     </parameter>
+    <parameter name="SYS_PARAM_VER" default="1" type="INT32">
+      <short_desc>Parameter version</short_desc>
+      <long_desc>This is used internally only: an airframe configuration might set an expected parameter version value via PARAM_DEFAULTS_VER. This is checked on bootup against SYS_PARAM_VER, and if they do not match, parameters are reset and reloaded from the airframe configuration.</long_desc>
+      <min>0</min>
+    </parameter>
     <parameter name="SYS_RGB_MAXBRT" default="1." type="FLOAT">
       <short_desc>RGB Led brightness limit</short_desc>
       <long_desc>Set to 0 to disable, 1 for maximum brightness</long_desc>
