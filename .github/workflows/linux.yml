@@ -37,6 +37,9 @@ jobs:
       run:
         shell: bash
 
+    permissions:
+      pull-requests: write
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -136,3 +139,14 @@ jobs:
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           source: ''
+
+      - name: Post Artifacts to PR
+        uses: thollander/actions-comment-pull-request@v2
+        #if: >
+          #github.event.workflow_run.event == 'pull_request' &&
+          #github.event.workflow_run.conclusion == 'success'
+        with:
+          GITHUB_TOKEN: ${{ secrets.PX4BUILDBOT_ACCESSTOKEN }}
+          comment_tag: execution
+          reactions: rocket
+          filePath: ${{ runner.temp }}/shadow_build_dir/${{ env. ARTIFACT }}
