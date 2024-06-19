@@ -106,7 +106,7 @@ public:
     Q_PROPERTY(int      throttleMode            READ throttleMode           WRITE setThrottleMode       NOTIFY throttleModeChanged)
     Q_PROPERTY(float    axisFrequencyHz         READ axisFrequencyHz        WRITE setAxisFrequency      NOTIFY axisFrequencyHzChanged)
     Q_PROPERTY(float    minAxisFrequencyHz      MEMBER _minAxisFrequencyHz                              CONSTANT)
-    Q_PROPERTY(float    maxAxisFrequencyHz      MEMBER _minAxisFrequencyHz                              CONSTANT)
+    Q_PROPERTY(float    maxAxisFrequencyHz      MEMBER _maxAxisFrequencyHz                              CONSTANT)
     Q_PROPERTY(float    buttonFrequencyHz       READ buttonFrequencyHz      WRITE setButtonFrequency    NOTIFY buttonFrequencyHzChanged)
     Q_PROPERTY(float    minButtonFrequencyHz    MEMBER _minButtonFrequencyHz                            CONSTANT)
     Q_PROPERTY(float    maxButtonFrequencyHz    MEMBER _maxButtonFrequencyHz                            CONSTANT)
