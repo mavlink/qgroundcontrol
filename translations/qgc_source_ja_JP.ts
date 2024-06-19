@@ -4279,7 +4279,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/UI/toolbar/ArmedIndicator.qml" line="25"/>
       <source>Disarm</source>
-      <translation>ディスアーム</translation>
+      <translation type="unfinished">Disarm</translation>
     </message>
   </context>
   <context>
