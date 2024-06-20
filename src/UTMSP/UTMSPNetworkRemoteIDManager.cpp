@@ -144,33 +144,31 @@ void UTMSPNetworkRemoteIDManager::startTelemetry(const double &latitude,
     final_format["observations"] = final_array;
     json data = final_format;
 
-    auto [statusCode, response] = requestTelemetry( QString::fromStdString(data.dump(4)));
+    auto [statusCode, response] = requestTelemetry(data.dump(4));
     _statusCode = statusCode;
-    _response = response.toStdString();
+    _response = response;
     UTMSP_LOG_DEBUG()<< "Response " << _response;
     UTMSP_LOG_DEBUG()<< "Status Code: " << _statusCode;
 
-    if(!_response.empty()){
-
-        if(_statusCode == 201)
-        {
-            try {
-                auto now = std::chrono::system_clock::now();
-                std::time_t now_c = std::chrono::system_clock::to_time_t(now);
-                char buffer[20];
-                std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", std::localtime(&now_c));
-                UTMSP_LOG_DEBUG() <<"The Telemetry RID data submitted at " << buffer;
-                UTMSP_LOG_DEBUG() << "--------------Telemetry Submitted Successfully---------------";
-            }
-            catch (const json::parse_error& e) {
-                UTMSP_LOG_ERROR() << "UTMSPNetworkRemoteManager: Error parsing the Telemetry response: " << e.what();
-            }
+    if(_statusCode == 201)
+    {
+        try {
+            auto now = std::chrono::system_clock::now();
+            std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+            char buffer[20];
+            std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", std::localtime(&now_c));
+            UTMSP_LOG_DEBUG() <<"The Telemetry RID data submitted at " << buffer;
+            UTMSP_LOG_DEBUG() << "--------------Telemetry Submitted Successfully---------------";
         }
-        else
-        {
-            UTMSP_LOG_ERROR() << "UTMSPNetworkRemoteManager: Invalid Status Code";
+        catch (const json::parse_error& e) {
+            UTMSP_LOG_ERROR() << "UTMSPNetworkRemoteManager: Error parsing the Telemetry response: " << e.what();
         }
     }
+    else
+    {
+        UTMSP_LOG_ERROR() << "UTMSPNetworkRemoteManager: Invalid Status Code";
+    }
+
 }
 
 bool UTMSPNetworkRemoteIDManager::stopTelemetry()

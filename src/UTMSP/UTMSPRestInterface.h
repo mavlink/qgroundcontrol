@@ -24,8 +24,8 @@ public:
     UTMSPRestInterface(QObject *parent = nullptr);
     ~UTMSPRestInterface();
 
-    void setBearerToken(const QString &token);
-    QPair<int, QString> executeRequest();
+    void setBearerToken(const std::string &token);
+    QPair<int, std::string> executeRequest();
     void modifyRequest(const QString &target, QNetworkAccessManager::Operation method, const QString &body = "");
     void setHost(const QString &target);
     void setBasicToken(const QString &basicToken);

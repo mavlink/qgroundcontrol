@@ -41,7 +41,7 @@ public:
                             const std::string& startDateTime,
                             const std::string& endDateTime);
     std::tuple<std::string, std::string, bool> registerFlightPlanNotification();
-    void activateFlightPlan();
+    bool activateFlightPlan(const std::string &token);
     void activateFlightPlanNotification();
     void  updateFlightPlanState(FlightState state);
     FlightState getFlightPlanState();
@@ -98,4 +98,5 @@ private:
     std::string                _responseJSON;
     bool                       _responseStatus;
     std::string                _flightResponseID;
+    json                       _updateState;
 };
