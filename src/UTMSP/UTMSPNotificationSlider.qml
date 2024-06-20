@@ -45,7 +45,7 @@ Rectangle {
     property var overlay
     property var indicatorTopText: ["No mission exist",
                                     "You've logged in successfully!",
-                                    "Your Flight Plan is Approved!",
+                                    "      Your Flight Plan is Approved!",
                                     "Activation Time",
                                     "Activated Successfully!",
                                     "You've been logged out",
@@ -57,7 +57,7 @@ Rectangle {
                                     ]
     property var indicatorBottomText: ["Login to Create a UTM Mission",
                                        "Create a UTM Mission",
-                                       "Proceed to upload flight plan to vehcile",
+                                       "  Proceed to upload flight plan to vehcile",
                                        UTMSPStateStorage.indicatorActivationTime,
                                        "You are allowed to fly...",
                                        "Login to Create a UTM Mission",
