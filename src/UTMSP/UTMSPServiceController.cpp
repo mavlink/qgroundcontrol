@@ -36,6 +36,7 @@ std::string UTMSPServiceController::flightPlanAuthorization()
 
     //Get the Token
     _blenderToken = _utmspAuthorizaton.getOAuth2Token();
+    UTMSP_LOG_INFO() << "BlenderToken" + _blenderToken;
 
     // State 1 --> Register
     _utmspFlightPlanManager.getFlightPlanState();
@@ -54,15 +55,12 @@ std::string UTMSPServiceController::flightPlanAuthorization()
     QString _flightID = QString::fromStdString(flightID);
     _responseFlightID = _flightID;
     emit responseFlightIDChanged();
-    _responseJson = _Json;
-    emit responseJsonChanged();
-    _responseFlag = flag;
-    emit responseFlagChanged();
     _utmspFlightPlanManager.updateFlightPlanState(_currentState);
 
     // State 2 --> Activate Flight Plan
     _utmspFlightPlanManager.getFlightPlanState();
-    if(flag == true){
+    bool activated_flag = _utmspFlightPlanManager.activateFlightPlan(_blenderToken);
+    if(activated_flag == true){
         _currentState = UTMSPFlightPlanManager::FlightState::Activated;
         _activationFlag = true;
         emit activationFlagChanged();

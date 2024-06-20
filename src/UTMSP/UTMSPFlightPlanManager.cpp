@@ -9,6 +9,7 @@
 
 #include "UTMSPFlightPlanManager.h"
 #include "UTMSPLogger.h"
+#include <iostream>
 
 UTMSPFlightPlanManager::UTMSPFlightPlanManager():
     _currentState(FlightState::Idle),
@@ -100,20 +101,19 @@ void UTMSPFlightPlanManager::registerFlightPlan(const std::string &token,
 
 
     json data = _flightDataJson;
-    auto dataString = QString::fromStdString(data.dump(4));
     setHost("BlenderClient");
-    setBearerToken(token.c_str());
-    auto [statusCode, response] =  setFlightPlan(dataString);
+    setBearerToken(token);
+    auto [statusCode, response] =  setFlightPlan(data.dump(4));
     UTMSP_LOG_INFO() << "UTMSPFlightPlanManager: Register Response -->" << response;
 
-    if(statusCode == 201)
+    if(statusCode == 200)
     {
         try {
-            json jsonData = json::parse(response.toStdString());
+            json jsonData = json::parse(response);
             std::string flightID = jsonData["id"];
 
             _flightResponseID = flightID;
-            _responseJSON = response.toStdString();
+            _responseJSON = response;
             _responseStatus = true;
         }
         catch (const json::parse_error& e) {
@@ -135,9 +135,33 @@ std::tuple<std::string, std::string, bool> UTMSPFlightPlanManager::registerFligh
     return std::make_tuple(_responseJSON, _flightResponseID, _responseStatus);
 }
 
-void UTMSPFlightPlanManager::activateFlightPlan()
+bool UTMSPFlightPlanManager::activateFlightPlan(const std::string &token)
 {
     //TODO : Plan for conformance Monitering phase 2
+    _updateState["state"] = 2;
+    _updateState["submitted_by"] = this->_flightData.user;
+    json data = _updateState;
+    std::cout << data.dump(4) << std::endl;
+    setHost("BlenderClient");
+    setBearerToken(token);
+    auto [statusCode, response] =  updateFlightState(data.dump(4), _flightResponseID);
+
+    if(statusCode == 200)
+    {
+        try {
+            UTMSP_LOG_DEBUG() << "Update flight plan response" << response;
+            return true;
+        }
+        catch (const json::parse_error& e) {
+            UTMSP_LOG_ERROR() << "UTMSPFlightPlanManager: Error parsing the response: " << e.what();
+            return false;
+        }
+    }
+    else
+    {
+        UTMSP_LOG_ERROR() << "UTMSPFlightPlanManager: Invalid Status Code";
+        return false;
+    }
 }
 
 void UTMSPFlightPlanManager::activateFlightPlanNotification()

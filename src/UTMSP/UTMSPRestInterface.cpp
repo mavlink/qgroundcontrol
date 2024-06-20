@@ -30,10 +30,10 @@ UTMSPRestInterface::~UTMSPRestInterface()
 void UTMSPRestInterface::setHost(const QString &target)
 {
     if (target == "AuthClient") {
-        _currentURL = "https://passport.utm.dev.airoplatform.com";
+        _currentURL = "https://id.openskies.sh";
         _currentRequest.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
     } else if (target == "BlenderClient") {
-        _currentURL = "https://blender.utm.dev.airoplatform.com";
+        _currentURL = "https://testflight.flightblender.com";
         _currentRequest.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     }
     _currentRequest.setRawHeader("User-Agent", QString("Qt/%1").arg(QT_VERSION_STR).toUtf8());
@@ -59,11 +59,11 @@ void UTMSPRestInterface::modifyRequest(const QString &target, QNetworkAccessMana
     _currentBody = body;
 }
 
-QPair<int, QString> UTMSPRestInterface::executeRequest()
+QPair<int, std::string> UTMSPRestInterface::executeRequest()
 {
     if (!_networkManager) {
         qDebug() << "Network manager is not initialized!";
-        return qMakePair(0, QString("Network manager is not initialized"));
+        return qMakePair(0, "Network manager is not initialized");
     }
 
     QNetworkReply *reply = nullptr;
@@ -85,10 +85,10 @@ QPair<int, QString> UTMSPRestInterface::executeRequest()
         break;
     default:
         qDebug() << "Unsupported HTTP method: " << _currentMethod;
-        return qMakePair(0, QString("Unsupported HTTP method"));
+        return qMakePair(0, "Unsupported HTTP method");
     }
 
-    if (!reply) return qMakePair(0, QString("Failed to create network reply"));
+    if (!reply) return qMakePair(0, "Failed to create network reply");
 
     QEventLoop loop;
     connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
@@ -99,10 +99,11 @@ QPair<int, QString> UTMSPRestInterface::executeRequest()
 
     reply->deleteLater();
 
-    return qMakePair(statusCode, QString::fromUtf8(response));
+    return qMakePair(statusCode, (QString::fromUtf8(response)).toStdString());
 }
 
-void UTMSPRestInterface::setBearerToken(const QString& token)
+void UTMSPRestInterface::setBearerToken(const std::string& token)
 {
-    _currentRequest.setRawHeader("Authorization", ("Bearer " + token).toUtf8());
+    QString Token = QString::fromStdString(token);
+    _currentRequest.setRawHeader("Authorization", ("Bearer " + Token).toUtf8());
 }
