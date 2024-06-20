@@ -51,7 +51,6 @@ QGCFlickable {
     readonly property real  _radius:            ScreenTools.defaultFontPixelWidth / 2
 
     // Send parameters to PlanView qml
-    signal responseSent(string response, bool responseFlag)                     // Send the flight blender response to PlanVeiw
     signal vehicleIDSent(string id)                                             // Send Vehcile ID to PlanView
     signal resetGeofencePolygonTriggered()                                      // Send FlightPlan Trigger Value to PlanView
     signal removeFlightPlanTriggered()
@@ -453,7 +452,14 @@ QGCFlickable {
                                     deletePolygon.visible = true
                                     deleteFlightPlan.visible = false
                                 }
+                            }else {
+                                myGeoFenceController.deletePolygon(0)
                             }
+                        }
+
+                        ListView {
+                            id: deletePolygon
+                            model: myGeoFenceController.polygons
                         }
                     }
 
@@ -581,23 +587,6 @@ QGCFlickable {
                         }
                     }
 
-                    Row {
-                        ListView {
-                            id: deletePolygon
-                            model: myGeoFenceController.polygons
-                            delegate: QGCButton {
-                                text: qsTr("Delete")
-                                width: ScreenTools.defaultFontPixelWidth * 7.667
-                                height: ScreenTools.defaultFontPixelHeight * 1.667
-                                x: ScreenTools.defaultFontPixelWidth * 41
-                                y: ScreenTools.defaultFontPixelHeight * 2
-                                onClicked: {
-                                    myGeoFenceController.deletePolygon(index)
-                                    geoSwitch.checked =false
-                                }
-                            }
-                        }
-                    }
                 }
 
                 // Date Interface
@@ -1324,14 +1313,11 @@ QGCFlickable {
                         QGroundControl.utmspManager.utmspVehicle.updateMaxAltitude(maxAltitude)
                         QGroundControl.utmspManager.utmspVehicle.triggerFlightAuthorization()
                         var responseFlightID = QGroundControl.utmspManager.utmspVehicle.responseFlightID
-                        var responseFlag = QGroundControl.utmspManager.utmspVehicle.responseFlag
-                        var responseJson = QGroundControl.utmspManager.utmspVehicle.responseJson
+                        var responseFlag = QGroundControl.utmspManager.utmspVehicle.activationFlag
                         var serialNumber = QGroundControl.utmspManager.utmspVehicle.vehicleSerialNumber
                         vehicleIDSent(serialNumber)
                         flightID = responseFlightID
-                        startTimeStamp = activateTD
                         submissionFlag = responseFlag
-                        responseSent(responseJson,responseFlag)
                         UTMSPStateStorage.startTimeStamp = activateTD
                         UTMSPStateStorage.showActivationTab = responseFlag
                         UTMSPStateStorage.flightID = flightID
