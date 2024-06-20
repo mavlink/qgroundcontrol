@@ -115,7 +115,7 @@ Item {
             var centerY = parent.height - ScreenTools.defaultFontPixelHeight * 7.5 /2 - ScreenTools.defaultFontPixelHeight * 0.3
             var ctx = getContext("2d")
             ctx.reset()
-            ctx.strokeStyle = qgcPal.primaryButton
+            ctx.strokeStyle = qgcPal.window
             ctx.lineWidth = ScreenTools.defaultFontPixelHeight * 0.75
             ctx.beginPath()
 
