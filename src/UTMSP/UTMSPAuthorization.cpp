@@ -33,7 +33,7 @@ bool UTMSPAuthorization::requestOAuth2Client(const QString &clientID, const QStr
     _utmspRestInterface.setBasicToken(encodedBasicToken);
     _utmspRestInterface.setHost("AuthClient");
     const QString target = "/oauth/token/";
-    QString body = "grant_type=client_credentials&scope=blender.write blender.read&audience=blender.utm.dev.airoplatform.com&client_id=" + clientID + "&client_secret=" + clientSecret + "\r\n\r\n";
+    QString body = "grant_type=client_credentials&scope=blender.write blender.read&audience=testflight.flightblender.com&client_id=" + clientID + "&client_secret=" + clientSecret + "\r\n\r\n";
     _utmspRestInterface.modifyRequest(target, QNetworkAccessManager::PostOperation, body);
     auto [status, response] = _utmspRestInterface.executeRequest();
     UTMSP_LOG_INFO() << "UTMSPAuthorization: Authorization Response: " << response;
@@ -41,7 +41,7 @@ bool UTMSPAuthorization::requestOAuth2Client(const QString &clientID, const QStr
     if(status == 200)
     {
         try {
-            json responseJson = json::parse(response.toStdString());
+            json responseJson = json::parse(response);
             clientToken = responseJson["access_token"];
             _isValidToken = true;
         }
