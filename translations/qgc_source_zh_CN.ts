@@ -7261,7 +7261,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/FlyViewToolStrip.qml" line="18"/>
       <source>Fly</source>
-      <translation>飞</translation>
+      <translation>飞行</translation>
     </message>
   </context>
   <context>
