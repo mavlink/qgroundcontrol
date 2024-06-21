@@ -10,6 +10,7 @@
 #include "VehicleGPSFactGroup.h"
 #include "Vehicle.h"
 #include "QGCGeo.h"
+#include "development/mavlink_msg_gnss_integrity.h"
 
 VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent)
     : FactGroup(1000, ":/json/Vehicle/GPSFact.json", parent)
@@ -57,6 +58,9 @@ void VehicleGPSFactGroup::handleMessage(Vehicle* /* vehicle */, mavlink_message_
     case MAVLINK_MSG_ID_HIGH_LATENCY2:
         _handleHighLatency2(message);
         break;
+    case MAVLINK_MSG_ID_GNSS_INTEGRITY:
+        _handleGnssIntegrity(message);
+        break;
     default:
         break;
     }
@@ -75,9 +79,6 @@ void VehicleGPSFactGroup::_handleGpsRawInt(mavlink_message_t& message)
     vdop()->setRawValue                 (gpsRawInt.epv == UINT16_MAX ? qQNaN() : gpsRawInt.epv / 100.0);
     courseOverGround()->setRawValue     (gpsRawInt.cog == UINT16_MAX ? qQNaN() : gpsRawInt.cog / 100.0);
     lock()->setRawValue                 (gpsRawInt.fix_type);
-    systemErrors()->setRawValue         (gpsRawInt.system_errors);
-    spoofingState()->setRawValue        (gpsRawInt.spoofing_state);
-    authenticationState()->setRawValue  (gpsRawInt.authentication_state);
 }
 
 void VehicleGPSFactGroup::_handleHighLatency(mavlink_message_t& message)
@@ -112,4 +113,14 @@ void VehicleGPSFactGroup::_handleHighLatency2(mavlink_message_t& message)
     count()->setRawValue(0);
     hdop()->setRawValue (highLatency2.eph == UINT8_MAX ? qQNaN() : highLatency2.eph / 10.0);
     vdop()->setRawValue (highLatency2.epv == UINT8_MAX ? qQNaN() : highLatency2.epv / 10.0);
+}
+
+void VehicleGPSFactGroup::_handleGnssIntegrity(mavlink_message_t& message)
+{
+    mavlink_gnss_integrity_t gnssIntegrity;
+    mavlink_msg_gnss_integrity_decode(&message, &gnssIntegrity);
+
+    systemErrors()->setRawValue       (gnssIntegrity.system_errors);
+    spoofingState()->setRawValue      (gnssIntegrity.spoofing_state);
+    authenticationState()->setRawValue(gnssIntegrity.authentication_state);
 }

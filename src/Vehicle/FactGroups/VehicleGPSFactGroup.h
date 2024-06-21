@@ -47,9 +47,10 @@ public:
     virtual void handleMessage(Vehicle* vehicle, mavlink_message_t& message) override;
 
 protected:
-    void _handleGpsRawInt   (mavlink_message_t& message);
-    void _handleHighLatency (mavlink_message_t& message);
-    void _handleHighLatency2(mavlink_message_t& message);
+    void _handleGpsRawInt    (mavlink_message_t& message);
+    void _handleHighLatency  (mavlink_message_t& message);
+    void _handleHighLatency2 (mavlink_message_t& message);
+    void _handleGnssIntegrity(mavlink_message_t& message);
 
     const QString _latFactName =                 QStringLiteral("lat");
     const QString _lonFactName =                 QStringLiteral("lon");
