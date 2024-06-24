@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package>
+    <DisplayName>@PROJECT_NAME@</DisplayName>
+    <Description>@PROJECT_DESCRIPTION@</Description>
+    <Version>@PROJECT_VERSION@</Version>
+    <ReleaseDate>@QGC_APP_DATE@</ReleaseDate>
+    <Name>@QGC_ORG_NAME@</Name>
+    <Licenses>
+        <License name="License Agreement" file="license.txt" />
+    </Licenses>
+    <Default>true</Default>
+    <Script>installscript.qs</Script>
+    <UpdateText>Update @QGC_APP_NAME@</UpdateText>
+    <Translations>
+        <!-- <Translation>de.qm</Translation> -->
+    </Translations>
+</Package>
