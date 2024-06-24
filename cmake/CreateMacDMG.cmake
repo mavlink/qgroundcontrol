@@ -1,3 +1,5 @@
+# include(BundleUtilities)
+
 message(STATUS "Copy GStreamer framework into bundle")
 file(COPY /Library/Frameworks/GStreamer.framework DESTINATION staging/QGroundControl.app/Contents/Frameworks)
 file(REMOVE_RECURSE staging/QGroundControl.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/bin)

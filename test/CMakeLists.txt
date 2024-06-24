@@ -7,6 +7,10 @@ find_package(Qt6 REQUIRED COMPONENTS Core Test)
 include(CTest)
 enable_testing()
 
+# if(ANDROID)
+    # include(AndroidTestUtilities)
+# endif()
+
 add_custom_target(check
     COMMAND ctest --output-on-failure .
     USES_TERMINAL

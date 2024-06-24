@@ -7,7 +7,7 @@ set(QGC_ORG_DOMAIN "org.qgroundcontrol" CACHE STRING "Domain")
 
 # MacOS
 set(QGC_BUNDLE_ID "org.qgroundcontrol.QGroundControl" CACHE STRING "MacOS Bundle ID")
-set(QGC_MACOS_ICON_PATH "${CMAKE_SOURCE_DIR}/resources/icons" CACHE PATH "MacOS Icon Path")
+set(QGC_MACOS_ICON_PATH "${CMAKE_SOURCE_DIR}/deploy/mac" CACHE PATH "MacOS Icon Path")
 
 # APM
 option(QGC_DISABLE_APM_MAVLINK "Disable APM Dialect" OFF)
