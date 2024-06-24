@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package>
+    <DisplayName>@CMAKE_PROJECT_NAME@</DisplayName>
+    <Description>@CMAKE_PROJECT_DESCRIPTION@</Description>
+    <Version>@CMAKE_PROJECT_VERSION@</Version>
+    <ReleaseDate>@QGC_APP_DATE@</ReleaseDate>
+    <Name>@QGC_ORG_NAME@</Name>
+    <Licenses>
+        <License name="License Agreement" file="license.txt" />
+    </Licenses>
+    <Default>true</Default>
+    <Script>installscript.js</Script>
+    <UpdateText>Update @CMAKE_PROJECT_NAME@</UpdateText>
+    <Translations>
+        <!-- <Translation>de.qm</Translation> -->
+    </Translations>
+</Package>
