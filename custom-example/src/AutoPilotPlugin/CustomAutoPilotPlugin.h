@@ -14,6 +14,7 @@
 
 #include "PX4AutoPilotPlugin.h"
 #include "Vehicle.h"
+#include "ParameterManager.h"
 
 class CustomAutoPilotPlugin : public PX4AutoPilotPlugin
 {
