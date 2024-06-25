@@ -101,7 +101,7 @@ target_link_libraries(QGC
 )
 
 if(QGC_CUSTOM_BUILD)
-    target_link_libraries(QGC PRIVATE custom)
+    target_link_libraries(QGC PRIVATE CustomPlugin)
 endif()
 
 target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

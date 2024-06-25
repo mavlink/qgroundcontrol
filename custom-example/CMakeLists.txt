@@ -1,14 +1,6 @@
 message(STATUS "Adding Custom Plugin")
 find_package(Qt6 REQUIRED COMPONENTS Core)
 
-# Build a single flight stack by disabling APM support
-set(QGC_DISABLE_APM_MAVLINK ON PARENT_SCOPE)
-set(QGC_DISABLE_APM_PLUGIN ON PARENT_SCOPE)
-set(QGC_DISABLE_APM_PLUGIN_FACTORY ON PARENT_SCOPE)
-
-# We implement our own PX4 plugin factory
-set(QGC_DISABLE_PX4_PLUGIN_FACTORY ON PARENT_SCOPE)
-
 # Enable custom build
 set_property(DIRECTORY ${CMAKE_SOURCE_DIR}
     APPEND PROPERTY COMPILE_DEFINITIONS
@@ -16,6 +8,20 @@ set_property(DIRECTORY ${CMAKE_SOURCE_DIR}
     CUSTOMHEADER="CustomPlugin.h"
     CUSTOMCLASS=CustomPlugin
 )
+
+find_package(Python)
+if(PYTHON_FOUND)
+    execute_process(
+        COMMAND ${PYTHON_EXECUTABLE}
+        RESULT_VARIABLE PYTHON_RESULT
+        OUTPUT_VARIABLE PYTHON_OUTPUT
+        ERROR_VARIABLE PYTHON_ERROR
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        INPUT_FILE updateqrc.py
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    cmake_print_variables(RESULT_VARIABLE OUTPUT_VARIABLE ERROR_VARIABLE)
+endif()
 
 # Our own, custom resources
 list(APPEND CUSTOM_RESOURCES
@@ -26,10 +32,9 @@ list(APPEND CUSTOM_RESOURCES
 )
 set(QGC_RESOURCES ${CUSTOM_RESOURCES} PARENT_SCOPE)
 
-set(QML_IMPORT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/res"
-    CACHE STRING "Qt Creator 4.1 extra qml import paths" PARENT_SCOPE)
+set(QML_IMPORT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/res" CACHE STRING "Extra qml import paths" PARENT_SCOPE)
 
-qt_add_library(custom STATIC
+qt_add_library(CustomPlugin STATIC
     src/CustomPlugin.cc
     src/CustomPlugin.h
     src/AutoPilotPlugin/CustomAutoPilotPlugin.cc
@@ -40,20 +45,44 @@ qt_add_library(custom STATIC
     src/FirmwarePlugin/CustomFirmwarePluginFactory.h
 )
 
-target_link_libraries(custom
+target_link_libraries(CustomPlugin
     PRIVATE
+        FactSystem
         FirmwarePlugin
         PX4AutoPilotPlugin
         PX4FirmwarePlugin
-        Settings
+        QmlControls
         Vehicle
     PUBLIC
         Qt6::Core
+        MAVLink
         QGC
+        Settings
 )
 
-target_include_directories(custom
+target_include_directories(CustomPlugin
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/src/AutoPilotPlugin
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/FirmwarePlugin
 )
+
+# file(GLOB_RECURSE QML_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/res/*.qml)
+# file(GLOB QML_RESOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/res/Images/*.*)
+# qt_add_qml_module(CustomPlugin
+#     URI QGroundControl.CustomPlugin
+#     VERSION 1.0
+#     RESOURCE_PREFIX "/"
+#     QML_FILES ${QML_SOURCES}
+#     RESOURCES ${QML_RESOURCES}
+#     OUTPUT_TARGETS CustomPlugin_targets
+#     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
+#     IMPORTS
+#         QtQuick
+#         QtQuick.Controls
+#         QtQuick.Layouts
+#         QGroundControl
+#         QGroundControl.Controls
+#         QGroundControl.Palette
+#         QGroundControl.ScreenTools
+# )
