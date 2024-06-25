@@ -13,6 +13,7 @@
 
 #include "CustomFirmwarePlugin.h"
 #include "CustomAutoPilotPlugin.h"
+#include "Vehicle.h"
 
 //-----------------------------------------------------------------------------
 CustomFirmwarePlugin::CustomFirmwarePlugin()

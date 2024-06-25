@@ -56,10 +56,10 @@ cmake_print_variables(QGC_APP_VERSION)
 execute_process(
     COMMAND ${GIT_EXECUTABLE} log -1 --format=%aI ${QGC_APP_VERSION}
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    OUTPUT_VARIABLE QGC_REL_DATE
+    OUTPUT_VARIABLE QGC_APP_DATE
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-cmake_print_variables(QGC_REL_DATE)
+cmake_print_variables(QGC_APP_DATE)
 
 string(FIND ${QGC_APP_VERSION} "v" QGC_APP_VERSION_VALID)
 cmake_print_variables(QGC_APP_VERSION_VALID)

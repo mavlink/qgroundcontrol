@@ -11,7 +11,8 @@ include(CustomOptions)
 if(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/custom)
     message(STATUS "Enabling custom build")
     set(QGC_CUSTOM_BUILD ON)
-    include(${CMAKE_SOURCE_DIR}/custom/CustomOverrides.cmake)
+    list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/custom/cmake)
+    include(CustomOverrides)
 endif()
 
 #######################################################
@@ -208,6 +209,10 @@ endif()
 
 cmake_dependent_option(QGC_NO_SERIAL_LINK "Build QGroundControl without Serial Support Support." OFF "NOT IOS" ON)
 
+if(QGC_DISABLE_APM_MAVLINK)
+    add_compile_definitions(NO_ARDUPILOT_DIALECT)
+endif()
+
 #######################################################
 #                Custom Build Configuration
 #######################################################
@@ -395,8 +400,13 @@ install(
     DESTINATION ${CMAKE_INSTALL_DATADIR}/qgroundcontrol
 )
 if(LINUX)
+    configure_file(
+        ${CMAKE_SOURCE_DIR}/deploy/linux/org.mavlink.qgroundcontrol.desktop.in
+        ${CMAKE_BINARY_DIR}/org.mavlink.qgroundcontrol.desktop
+        @ONLY
+    )
     install(
-        FILES ${CMAKE_SOURCE_DIR}/deploy/linux/org.mavlink.qgroundcontrol.desktop
+        FILES ${CMAKE_BINARY_DIR}/org.mavlink.qgroundcontrol.desktop
         DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
     )
     install(
