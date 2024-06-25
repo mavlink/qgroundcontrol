@@ -13,7 +13,8 @@
 #pragma once
 
 #include "PX4AutoPilotPlugin.h"
-#include "Vehicle.h"
+
+class Vehicle;
 
 class CustomAutoPilotPlugin : public PX4AutoPilotPlugin
 {
@@ -28,5 +29,4 @@ private slots:
 
 private:
     QVariantList _components;
-
 };

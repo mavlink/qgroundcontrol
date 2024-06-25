@@ -43,7 +43,7 @@ add_subdirectory(QmlControls)
 add_subdirectory(QtLocationPlugin)
 add_subdirectory(Settings)
 add_subdirectory(Terrain)
-add_subdirectory(UI)
+# add_subdirectory(UI)
 add_subdirectory(Utilities)
 add_subdirectory(UTMSP)
 add_subdirectory(Vehicle)
@@ -86,7 +86,7 @@ target_link_libraries(QGC
 		QmlControls
 		Settings
 		Terrain
-		UI
+		# UI
 		Utilities
 		UTMSP
 		Vehicle
@@ -102,7 +102,7 @@ target_link_libraries(QGC
 )
 
 if(QGC_CUSTOM_BUILD)
-    target_link_libraries(QGC PRIVATE custom)
+    target_link_libraries(QGC PRIVATE CustomPlugin)
 endif()
 
 target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
