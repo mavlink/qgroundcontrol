@@ -1,9 +1,9 @@
 [Desktop Entry]
 Type=Application
-Name=QGroundControl
+Name=@CMAKE_PROJECT_NAME@
 GenericName=Ground Control Station
-Comment=UAS ground control station
+Comment=@CMAKE_PROJECT_DESCRIPTION@
 Icon=org.mavlink.qgroundcontrol
-Exec=QGroundControl
+Exec=@CMAKE_PROJECT_NAME@
 Terminal=false
 Categories=Utility;
