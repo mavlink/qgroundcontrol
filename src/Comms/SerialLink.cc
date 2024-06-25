@@ -21,8 +21,6 @@
 
 QGC_LOGGING_CATEGORY(SerialLinkLog, "SerialLinkLog")
 
-static QStringList kSupportedBaudRates;
-
 SerialLink::SerialLink(SharedLinkConfigurationPtr& config, bool isPX4Flow)
     : LinkInterface(config, isPX4Flow)
     , _serialConfig(qobject_cast<SerialConfiguration*>(config.get()))
@@ -395,60 +393,12 @@ void SerialConfiguration::loadSettings(QSettings& settings, const QString& root)
 
 QStringList SerialConfiguration::supportedBaudRates()
 {
-    if(!kSupportedBaudRates.size())
-        _initBaudRates();
-    return kSupportedBaudRates;
-}
+    QStringList supportBaudRateStrings;
+    for (int rate : QSerialPortInfo::standardBaudRates()) {
+        (void) supportBaudRateStrings.append(QString::number(rate));
+    }
 
-void SerialConfiguration::_initBaudRates()
-{
-    kSupportedBaudRates.clear();
-    kSupportedBaudRates = QStringList({
-#if USE_ANCIENT_RATES
-#if defined(Q_OS_UNIX) || defined(Q_OS_LINUX) || defined(Q_OS_DARWIN)
-        "50",
-        "75",
-#endif
-        "110",
-#if defined(Q_OS_UNIX) || defined(Q_OS_LINUX) || defined(Q_OS_DARWIN)
-        "150",
-        "200" ,
-        "134"  ,
-#endif
-        "300",
-        "600",
-        "1200",
-#if defined(Q_OS_UNIX) || defined(Q_OS_LINUX) || defined(Q_OS_DARWIN)
-        "1800",
-#endif
-#endif
-        "2400",
-        "4800",
-        "9600",
-#if defined(Q_OS_WIN)
-        "14400",
-#endif
-        "19200",
-        "38400",
-#if defined(Q_OS_WIN)
-        "56000",
-#endif
-        "57600",
-        "115200",
-#if defined(Q_OS_WIN)
-        "128000",
-#endif
-        "230400",
-#if defined(Q_OS_WIN)
-        "256000",
-#endif
-        "460800",
-        "500000",
-#if defined(Q_OS_LINUX)
-        "576000",
-#endif
-        "921600",
-    });
+    return supportBaudRateStrings;
 }
 
 void SerialConfiguration::setUsbDirect(bool usbDirect)
