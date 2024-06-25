@@ -11,16 +11,16 @@
 
 #pragma once
 
+#include <QtCore/QTranslator>
+
 #include "QGCCorePlugin.h"
 #include "QGCOptions.h"
-#include "QGCLoggingCategory.h"
-#include "SettingsManager.h"
-
-#include <QTranslator>
+#include <QGCLoggingCategory.h>
 
 class CustomOptions;
 class CustomPlugin;
 class CustomSettings;
+class QQmlApplicationEngine;
 
 Q_DECLARE_LOGGING_CATEGORY(CustomLog)
 
