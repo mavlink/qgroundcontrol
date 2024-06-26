@@ -38,9 +38,9 @@ QML_IMPORT_PATH += $$PWD/src/QmlControls
 #
 
 MacBuild {
-    QMAKE_INFO_PLIST    = deploy/mac/Custom-Info.plist
+    QMAKE_INFO_PLIST    = deploy/mac/QGC-qmake-info.plist
     ICON                = $${SOURCE_DIR}/resources/icons/macx.icns
-    OTHER_FILES        += deploy/mac/Custom-Info.plist
+    OTHER_FILES        += deploy/mac/QGC-qmake-info.plist
     LIBS               += -framework ApplicationServices
 }
 
@@ -258,7 +258,8 @@ QT += \
     texttospeech \
     core-private \
     core5compat \
-    quick3d
+    quick3d \
+    sensors
 
 # Multimedia only used if QVC is enabled
 !contains (DEFINES, QGC_DISABLE_UVC) {
@@ -333,7 +334,7 @@ CustomBuild {
         RESOURCES += $$PWD/resources/InstrumentValueIcons/InstrumentValueIcons.qrc
     }
 } else {
-    DEFINES += QGC_APPLICATION_NAME=\"\\\"QGroundControl\\\"\"
+    DEFINES += QGC_APP_NAME=\"\\\"QGroundControl\\\"\"
     DEFINES += QGC_ORG_NAME=\"\\\"QGroundControl.org\\\"\"
     DEFINES += QGC_ORG_DOMAIN=\"\\\"org.qgroundcontrol\\\"\"
     RESOURCES += \

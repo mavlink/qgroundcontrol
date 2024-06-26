@@ -25,6 +25,7 @@ jobs:
         with:
           submodules: recursive
           fetch-tags: true
+          fetch-depth: 0
 
       - name: Install SCCache
         run: |
@@ -41,44 +42,28 @@ jobs:
           variant: sccache
           save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
-      - uses: actions/checkout@v4
-        with:
-          repository: jurplel/install-qt-action
-          ref: master
-          path: install-qt-action
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: install-qt-action/action/
-
-      - name: Build jurplel/install-qt-action
-        run: |
-          cd .\install-qt-action\action
-          npm ci || npm install
-          npm run build
-
       - name: Install Qt6 for Windows (MSVC)
-        uses: ./install-qt-action/action/
+        uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
+          aqtversion: ==3.1.*
           host: windows
           target: desktop
           arch: win64_msvc2019_64
           dir: ${{ runner.temp }}
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
+          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
           cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
 
       - name: Install Qt6 for Windows (ARM64)
-        uses: ./install-qt-action/action/
+        uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
+          aqtversion: ==3.1.*
           host: windows
           target: desktop
           arch: win64_msvc2019_arm64
           dir: ${{ runner.temp }}
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
+          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
           cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
 
       - name: Install Dependencies

@@ -43,6 +43,7 @@ jobs:
         with:
           submodules: recursive
           fetch-tags: true
+          fetch-depth: 0
 
       # Temporary solution
       - name: Remove unused dependencies
@@ -63,7 +64,7 @@ jobs:
           tar -xvf ccache-*-linux-x86_64.tar.xz
           cd ccache-*-linux-x86_64
           sudo make install
-          sudo add-apt-repository ppa:ubuntu-toolchain-r/ppa
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test
           sudo apt install gcc-13 g++-13
           sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100 --slave /usr/bin/g++ g++ /usr/bin/g++-13 --slave /usr/bin/gcov gcov /usr/bin/gcov-13
           sudo update-alternatives --set gcc /usr/bin/gcc-13
@@ -87,17 +88,16 @@ jobs:
           save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
       - name: Install Qt
-        uses: jurplel/install-qt-action@v3
+        uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
           aqtversion: ==3.1.*
           host: linux
           target: desktop
           dir: ${{ runner.temp }}
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
+          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
           setup-python: true
           cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
-          tools: 'tools_cmake'
 
     # - name: Build GStreamer
     #   uses: ./.github/actions/gstreamer

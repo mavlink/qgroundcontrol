@@ -51,7 +51,7 @@ UrlFactory::UrlFactory() :
     _providers.append(ProviderPair("Bing Satellite", new BingSatelliteMapProvider(this)));
     _providers.append(ProviderPair("Bing Hybrid", new BingHybridMapProvider(this)));
 
-    _providers.append(ProviderPair("Statkart Topo", new StatkartMapProvider(this)));
+    _providers.append(ProviderPair("Statkart Topo", new StatkartTopoMapProvider(this)));
     _providers.append(ProviderPair("Statkart Basemap", new StatkartBaseMapProvider(this)));
 
     _providers.append(ProviderPair("Eniro Topo", new EniroMapProvider(this)));
@@ -113,11 +113,11 @@ QString UrlFactory::getImageFormat(const QString& type, const QByteArray& image)
         return "";
     }
 }
-QNetworkRequest UrlFactory::getTileURL(int qtMapId, int x, int y, int zoom, QNetworkAccessManager* networkManager) 
+QNetworkRequest UrlFactory::getTileURL(int qtMapId, int x, int y, int zoom) 
 {
     MapProvider* provider = getMapProviderFromQtMapId(qtMapId);
     if (provider) {
-        return provider->getTileURL(x, y, zoom, networkManager);
+        return provider->getTileURL(x, y, zoom);
     } else {
         qCWarning(QGCMapUrlEngineLog) << "getTileURL : map id not found:" << qtMapId;
         return QNetworkRequest(QUrl());
@@ -125,11 +125,11 @@ QNetworkRequest UrlFactory::getTileURL(int qtMapId, int x, int y, int zoom, QNet
 }
 
 //-----------------------------------------------------------------------------
-QNetworkRequest UrlFactory::getTileURL(const QString& type, int x, int y, int zoom, QNetworkAccessManager* networkManager) 
+QNetworkRequest UrlFactory::getTileURL(const QString& type, int x, int y, int zoom) 
 {
     MapProvider* provider = getMapProviderFromProviderType(type);
     if (provider) {
-        return provider->getTileURL(x, y, zoom, networkManager);
+        return provider->getTileURL(x, y, zoom);
     } else {
         qCWarning(QGCMapUrlEngineLog) << "getTileURL : type not found:" << type;
         return QNetworkRequest(QUrl());
@@ -225,7 +225,7 @@ bool UrlFactory::isElevation(int qtMapId)
 {
     MapProvider* provider = getMapProviderFromQtMapId(qtMapId);
     if (provider) {
-        return provider->_isElevationProvider();
+        return provider->isElevationProvider();
     } else {
         qCWarning(QGCMapUrlEngineLog) << "isElevation : map id not found:" << qtMapId;
         return false;

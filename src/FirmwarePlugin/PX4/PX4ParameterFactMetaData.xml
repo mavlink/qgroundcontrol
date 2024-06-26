@@ -407,19 +407,19 @@
       <unit>m</unit>
       <decimal>1</decimal>
     </parameter>
-    <parameter name="ASPD_FS_T_START" default="-1" type="INT32">
+    <parameter name="ASPD_FS_T_START" default="-1." type="FLOAT">
       <short_desc>Airspeed failsafe start delay</short_desc>
       <long_desc>Delay before switching back to using airspeed sensor if checks indicate sensor is good. Set to a negative value to disable the re-enabling in flight.</long_desc>
-      <min>-1</min>
-      <max>1000</max>
+      <min>-1.0</min>
       <unit>s</unit>
+      <decimal>1</decimal>
     </parameter>
-    <parameter name="ASPD_FS_T_STOP" default="2" type="INT32">
+    <parameter name="ASPD_FS_T_STOP" default="1." type="FLOAT">
       <short_desc>Airspeed failsafe stop delay</short_desc>
       <long_desc>Delay before stopping use of airspeed sensor if checks indicate sensor is bad.</long_desc>
-      <min>1</min>
-      <max>10</max>
+      <min>0.0</min>
       <unit>s</unit>
+      <decimal>1</decimal>
     </parameter>
     <parameter name="ASPD_PRIMARY" default="1" type="INT32">
       <short_desc>Index or primary airspeed measurement source</short_desc>
@@ -712,22 +712,40 @@
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter name="BAT_N_CELLS" default="3" type="INT32" category="System">
-      <short_desc>This parameter is deprecated. Please use BAT1_N_CELLS instead</short_desc>
-    </parameter>
-    <parameter name="BAT_V_CHARGED" default="4.05" type="FLOAT" category="System">
-      <short_desc>This parameter is deprecated. Please use BAT1_V_CHARGED instead</short_desc>
-    </parameter>
-    <parameter name="BAT_V_EMPTY" default="3.6" type="FLOAT" category="System">
-      <short_desc>This parameter is deprecated. Please use BAT1_V_EMPTY instead</short_desc>
-    </parameter>
-    <parameter name="BAT_V_LOAD_DROP" default="0.3" type="FLOAT" category="System">
-      <short_desc>This parameter is deprecated. Please use BAT1_V_LOAD_DROP instead</short_desc>
-    </parameter>
     <parameter name="BAT_V_OFFS_CURR" default="0.0" type="FLOAT">
       <short_desc>Offset in volt as seen by the ADC input of the current sensor</short_desc>
       <long_desc>This offset will be subtracted before calculating the battery current based on the voltage.</long_desc>
       <decimal>8</decimal>
+    </parameter>
+  </group>
+  <group name="CDCACM">
+    <parameter name="SYS_USB_AUTO" default="2" type="INT32">
+      <short_desc>Enable USB autostart</short_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Auto-detect</value>
+        <value code="2">MAVLink</value>
+      </values>
+    </parameter>
+    <parameter name="USB_MAV_MODE" default="2" type="INT32">
+      <short_desc>Specify USB MAVLink mode</short_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">normal</value>
+        <value code="1">custom</value>
+        <value code="2">onboard</value>
+        <value code="3">osd</value>
+        <value code="4">magic</value>
+        <value code="5">config</value>
+        <value code="6">iridium</value>
+        <value code="7">minimal</value>
+        <value code="8">extvision</value>
+        <value code="9">extvisionmin</value>
+        <value code="10">gimbal</value>
+        <value code="11">onboard_low_bandwidth</value>
+        <value code="12">uavionix</value>
+      </values>
     </parameter>
   </group>
   <group name="Camera Capture">
@@ -1941,7 +1959,7 @@
   <group name="FW Path Control">
     <parameter name="FW_PN_R_SLEW_MAX" default="90.0" type="FLOAT">
       <short_desc>Path navigation roll slew rate limit</short_desc>
-      <long_desc>The maximum change in roll angle setpoint per second.</long_desc>
+      <long_desc>The maximum change in roll angle setpoint per second. This limit is applied in all Auto modes, plus manual Position and Altitude modes.</long_desc>
       <min>0</min>
       <unit>deg/s</unit>
       <decimal>0</decimal>
@@ -2735,7 +2753,6 @@
         <value code="4">Emlid Reach</value>
         <value code="5">Femtomes</value>
         <value code="6">NMEA (generic)</value>
-        <value code="7">Septentrio (SBF)</value>
       </values>
     </parameter>
     <parameter name="GPS_2_GNSS" default="0" type="INT32">
@@ -2779,15 +2796,6 @@
         <value code="1">Full communication</value>
         <value code="2">RTCM output (PPK)</value>
       </values>
-    </parameter>
-    <parameter name="GPS_PITCH_OFFSET" default="0." type="FLOAT">
-      <short_desc>Pitch offset for dual antenna GPS</short_desc>
-      <long_desc>Vertical offsets can be compensated for by adjusting the Pitch offset (Septentrio). Note that this can be interpreted as the "roll" angle in case the antennas are aligned along the perpendicular axis. This occurs in situations where the two antenna ARPs may not be exactly at the same height in the vehicle reference frame. Since pitch is defined as the right-handed rotation about the vehicle Y axis, a situation where the main antenna is mounted lower than the aux antenna (assuming the default antenna setup) will result in a positive pitch.</long_desc>
-      <min>-90</min>
-      <max>90</max>
-      <unit>deg</unit>
-      <decimal>3</decimal>
-      <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="GPS_SAT_INFO" default="0" type="INT32" boolean="true">
       <short_desc>Enable sat info (if available)</short_desc>
@@ -3561,7 +3569,7 @@
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
-    <parameter name="MIS_DIST_1WP" default="900" type="FLOAT">
+    <parameter name="MIS_DIST_1WP" default="10000" type="FLOAT">
       <short_desc>Maximal horizontal distance from current position to first waypoint</short_desc>
       <long_desc>Failsafe check to prevent running mission stored from previous flight at a new takeoff location. Set a value of zero or less to disable. The mission will not be started if the current waypoint is more distant than MIS_DIST_1WP from the current position.</long_desc>
       <min>-1</min>
@@ -4348,9 +4356,19 @@
       <long_desc>Disable to use the fixed parameter MPC_THR_HOVER Enable to use the hover thrust estimator</long_desc>
     </parameter>
     <parameter name="MPC_VELD_LP" default="5.0" type="FLOAT">
-      <short_desc>Numerical velocity derivative low pass cutoff frequency</short_desc>
+      <short_desc>Velocity derivative low pass cutoff frequency</short_desc>
+      <long_desc>A value of 0 disables the filter.</long_desc>
       <min>0</min>
-      <max>10</max>
+      <max>50</max>
+      <unit>Hz</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
+    </parameter>
+    <parameter name="MPC_VEL_LP" default="0.0" type="FLOAT">
+      <short_desc>Velocity low pass cutoff frequency</short_desc>
+      <long_desc>A value of 0 disables the filter.</long_desc>
+      <min>0</min>
+      <max>50</max>
       <unit>Hz</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
@@ -4381,6 +4399,24 @@
       <unit>m/s</unit>
       <decimal>1</decimal>
       <increment>1</increment>
+    </parameter>
+    <parameter name="MPC_VEL_NF_BW" default="5.0" type="FLOAT">
+      <short_desc>Velocity notch filter bandwidth</short_desc>
+      <long_desc>A value of 0 disables the filter.</long_desc>
+      <min>0</min>
+      <max>50</max>
+      <unit>Hz</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
+    </parameter>
+    <parameter name="MPC_VEL_NF_FRQ" default="0.0" type="FLOAT">
+      <short_desc>Velocity notch filter frequency</short_desc>
+      <long_desc>The center frequency for the 2nd order notch filter on the velocity. A value of 0 disables the filter.</long_desc>
+      <min>0</min>
+      <max>50</max>
+      <unit>Hz</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
     </parameter>
     <parameter name="MPC_XY_CRUISE" default="5." type="FLOAT">
       <short_desc>Default horizontal velocity in autonomous modes</short_desc>
@@ -6067,32 +6103,6 @@
       <min>-1</min>
       <max>1</max>
     </parameter>
-    <parameter name="RC_MAP_ACRO_SW" default="0" type="INT32">
-      <short_desc>Acro switch channel (deprecated)</short_desc>
-      <min>0</min>
-      <max>18</max>
-      <values>
-        <value code="0">Unassigned</value>
-        <value code="1">Channel 1</value>
-        <value code="2">Channel 2</value>
-        <value code="3">Channel 3</value>
-        <value code="4">Channel 4</value>
-        <value code="5">Channel 5</value>
-        <value code="6">Channel 6</value>
-        <value code="7">Channel 7</value>
-        <value code="8">Channel 8</value>
-        <value code="9">Channel 9</value>
-        <value code="10">Channel 10</value>
-        <value code="11">Channel 11</value>
-        <value code="12">Channel 12</value>
-        <value code="13">Channel 13</value>
-        <value code="14">Channel 14</value>
-        <value code="15">Channel 15</value>
-        <value code="16">Channel 16</value>
-        <value code="17">Channel 17</value>
-        <value code="18">Channel 18</value>
-      </values>
-    </parameter>
     <parameter name="RC_MAP_ARM_SW" default="0" type="INT32">
       <short_desc>Arm switch channel</short_desc>
       <long_desc>Use it to arm/disarm via switch instead of default throttle stick. If this is assigned, arming and disarming via stick is disabled.</long_desc>
@@ -6277,32 +6287,6 @@
         <value code="18">Channel 18</value>
       </values>
     </parameter>
-    <parameter name="RC_MAP_MAN_SW" default="0" type="INT32">
-      <short_desc>Manual switch channel mapping (deprecated)</short_desc>
-      <min>0</min>
-      <max>18</max>
-      <values>
-        <value code="0">Unassigned</value>
-        <value code="1">Channel 1</value>
-        <value code="2">Channel 2</value>
-        <value code="3">Channel 3</value>
-        <value code="4">Channel 4</value>
-        <value code="5">Channel 5</value>
-        <value code="6">Channel 6</value>
-        <value code="7">Channel 7</value>
-        <value code="8">Channel 8</value>
-        <value code="9">Channel 9</value>
-        <value code="10">Channel 10</value>
-        <value code="11">Channel 11</value>
-        <value code="12">Channel 12</value>
-        <value code="13">Channel 13</value>
-        <value code="14">Channel 14</value>
-        <value code="15">Channel 15</value>
-        <value code="16">Channel 16</value>
-        <value code="17">Channel 17</value>
-        <value code="18">Channel 18</value>
-      </values>
-    </parameter>
     <parameter name="RC_MAP_MODE_SW" default="0" type="INT32">
       <short_desc>Mode switch channel mapping (deprecated)</short_desc>
       <long_desc>This is the main flight mode selector. The channel index (starting from 1 for channel 1) indicates which channel should be used for deciding about the main mode. A value of zero indicates the switch is not assigned.</long_desc>
@@ -6356,86 +6340,8 @@
         <value code="18">Channel 18</value>
       </values>
     </parameter>
-    <parameter name="RC_MAP_POSCTL_SW" default="0" type="INT32">
-      <short_desc>Position Control switch channel (deprecated)</short_desc>
-      <min>0</min>
-      <max>18</max>
-      <values>
-        <value code="0">Unassigned</value>
-        <value code="1">Channel 1</value>
-        <value code="2">Channel 2</value>
-        <value code="3">Channel 3</value>
-        <value code="4">Channel 4</value>
-        <value code="5">Channel 5</value>
-        <value code="6">Channel 6</value>
-        <value code="7">Channel 7</value>
-        <value code="8">Channel 8</value>
-        <value code="9">Channel 9</value>
-        <value code="10">Channel 10</value>
-        <value code="11">Channel 11</value>
-        <value code="12">Channel 12</value>
-        <value code="13">Channel 13</value>
-        <value code="14">Channel 14</value>
-        <value code="15">Channel 15</value>
-        <value code="16">Channel 16</value>
-        <value code="17">Channel 17</value>
-        <value code="18">Channel 18</value>
-      </values>
-    </parameter>
-    <parameter name="RC_MAP_RATT_SW" default="0" type="INT32">
-      <short_desc>Rattitude switch channel (deprecated)</short_desc>
-      <min>0</min>
-      <max>18</max>
-      <values>
-        <value code="0">Unassigned</value>
-        <value code="1">Channel 1</value>
-        <value code="2">Channel 2</value>
-        <value code="3">Channel 3</value>
-        <value code="4">Channel 4</value>
-        <value code="5">Channel 5</value>
-        <value code="6">Channel 6</value>
-        <value code="7">Channel 7</value>
-        <value code="8">Channel 8</value>
-        <value code="9">Channel 9</value>
-        <value code="10">Channel 10</value>
-        <value code="11">Channel 11</value>
-        <value code="12">Channel 12</value>
-        <value code="13">Channel 13</value>
-        <value code="14">Channel 14</value>
-        <value code="15">Channel 15</value>
-        <value code="16">Channel 16</value>
-        <value code="17">Channel 17</value>
-        <value code="18">Channel 18</value>
-      </values>
-    </parameter>
     <parameter name="RC_MAP_RETURN_SW" default="0" type="INT32">
       <short_desc>Return switch channel</short_desc>
-      <min>0</min>
-      <max>18</max>
-      <values>
-        <value code="0">Unassigned</value>
-        <value code="1">Channel 1</value>
-        <value code="2">Channel 2</value>
-        <value code="3">Channel 3</value>
-        <value code="4">Channel 4</value>
-        <value code="5">Channel 5</value>
-        <value code="6">Channel 6</value>
-        <value code="7">Channel 7</value>
-        <value code="8">Channel 8</value>
-        <value code="9">Channel 9</value>
-        <value code="10">Channel 10</value>
-        <value code="11">Channel 11</value>
-        <value code="12">Channel 12</value>
-        <value code="13">Channel 13</value>
-        <value code="14">Channel 14</value>
-        <value code="15">Channel 15</value>
-        <value code="16">Channel 16</value>
-        <value code="17">Channel 17</value>
-        <value code="18">Channel 18</value>
-      </values>
-    </parameter>
-    <parameter name="RC_MAP_STAB_SW" default="0" type="INT32">
-      <short_desc>Stabilize switch channel mapping  (deprecated)</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
@@ -7574,6 +7480,16 @@
       <short_desc>PX4 Flow Optical Flow</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter name="SENS_EN_SCH16T" default="0" type="INT32">
+      <short_desc>Murata SCH16T IMU (external SPI)</short_desc>
+      <min>0</min>
+      <max>1</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Enabled</value>
+      </values>
+    </parameter>
     <parameter name="SENS_EN_SDP3X" default="0" type="INT32" boolean="true">
       <short_desc>Sensirion SDP3X differential pressure sensor (external I2C)</short_desc>
       <reboot_required>true</reboot_required>
@@ -8561,6 +8477,11 @@
         <value code="2">SIH enabled</value>
       </values>
     </parameter>
+    <parameter name="SYS_PARAM_VER" default="1" type="INT32">
+      <short_desc>Parameter version</short_desc>
+      <long_desc>This is used internally only: an airframe configuration might set an expected parameter version value via PARAM_DEFAULTS_VER. This is checked on bootup against SYS_PARAM_VER, and if they do not match, parameters are reset and reloaded from the airframe configuration.</long_desc>
+      <min>0</min>
+    </parameter>
     <parameter name="SYS_RGB_MAXBRT" default="1." type="FLOAT">
       <short_desc>RGB Led brightness limit</short_desc>
       <long_desc>Set to 0 to disable, 1 for maximum brightness</long_desc>
@@ -9413,6 +9334,28 @@
       <unit>bit/s</unit>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter name="UAVCAN_ECU_FUELT" default="1" type="INT32">
+      <short_desc>UAVCAN fuel tank fuel type</short_desc>
+      <long_desc>This parameter defines the type of fuel used in the vehicle's fuel tank. 0: Unknown 1: Liquid (e.g., gasoline, diesel) 2: Gas (e.g., hydrogen, methane, propane)</long_desc>
+      <min>0</min>
+      <max>2</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Unknown</value>
+        <value code="1">Liquid</value>
+        <value code="2">Gas</value>
+      </values>
+    </parameter>
+    <parameter name="UAVCAN_ECU_MAXF" default="15.0" type="FLOAT">
+      <short_desc>UAVCAN fuel tank maximum capacity</short_desc>
+      <long_desc>This parameter defines the maximum fuel capacity of the vehicle's fuel tank.</long_desc>
+      <min>0.0</min>
+      <max>100000.0</max>
+      <unit>liters</unit>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter name="UAVCAN_ENABLE" default="0" type="INT32">
       <short_desc>UAVCAN mode</short_desc>
       <long_desc>0 - UAVCAN disabled. 1 - Enables support for UAVCAN sensors without dynamic node ID allocation and firmware update. 2 - Enables support for UAVCAN sensors with dynamic node ID allocation and firmware update. 3 - Enables support for UAVCAN sensors and actuators with dynamic node ID allocation and firmware update. Also sets the motor control outputs to UAVCAN.</long_desc>
@@ -9545,6 +9488,11 @@
     <parameter name="UAVCAN_SUB_FLOW" default="0" type="INT32" boolean="true">
       <short_desc>subscription flow</short_desc>
       <long_desc>Enable UAVCAN optical flow subscription.</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="UAVCAN_SUB_FUEL" default="0" type="INT32" boolean="true">
+      <short_desc>subscription fuel tank</short_desc>
+      <long_desc>Enable UAVCAN fuel tank status subscription.</long_desc>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="UAVCAN_SUB_GPS" default="1" type="INT32" boolean="true">
@@ -10132,6 +10080,43 @@
     </parameter>
   </group>
   <group name="Miscellaneous">
+    <parameter name="SCH16T_ACC_FILT" default="6" type="INT32">
+      <short_desc>Accel filter settings</short_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">13 Hz</value>
+        <value code="1">30 Hz</value>
+        <value code="2">68 Hz</value>
+        <value code="3">235 Hz</value>
+        <value code="4">280 Hz</value>
+        <value code="5">370 Hz</value>
+        <value code="6">No filter</value>
+      </values>
+    </parameter>
+    <parameter name="SCH16T_DECIM" default="4" type="INT32">
+      <short_desc>Gyro and Accel decimation settings</short_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">None</value>
+        <value code="1">5900 Hz</value>
+        <value code="2">2950 Hz</value>
+        <value code="3">1475 Hz</value>
+        <value code="4">738 Hz</value>
+      </values>
+    </parameter>
+    <parameter name="SCH16T_GYRO_FILT" default="2" type="INT32">
+      <short_desc>Gyro filter settings</short_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">13 Hz</value>
+        <value code="1">30 Hz</value>
+        <value code="2">68 Hz</value>
+        <value code="3">235 Hz</value>
+        <value code="4">280 Hz</value>
+        <value code="5">370 Hz</value>
+        <value code="6">No filter</value>
+      </values>
+    </parameter>
     <parameter name="SF1XX_MODE" default="1" type="INT32">
       <short_desc>Lightware SF1xx/SF20/LW20 Operation Mode</short_desc>
       <min>0</min>

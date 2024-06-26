@@ -2,37 +2,37 @@
 
 #include "MapProvider.h"
 
-#include <QtCore/QString>
+static constexpr const quint32 AVERAGE_AIRMAP_ELEV_SIZE = 2786;
 
-static const quint32 AVERAGE_AIRMAP_ELEV_SIZE = 2786;
-
-class ElevationProvider : public MapProvider {
+class ElevationProvider : public MapProvider
+{
     Q_OBJECT
-  public:
-    ElevationProvider(const QString& imageFormat, quint32 averageSize,
-                      QGeoMapType::MapStyle mapType, QObject* parent = nullptr);
 
-    virtual bool _isElevationProvider() const override { return true; }
+protected:
+    ElevationProvider(const QString& imageFormat, quint32 averageSize,
+                      QGeoMapType::MapStyle mapType, QObject* parent = nullptr)
+        : MapProvider(QStringLiteral("https://terrain-ce.suite.auterion.com/"), imageFormat, averageSize, mapType, parent) {}
+
+public:
+    bool isElevationProvider() const final { return true; }
 };
 
-// -----------------------------------------------------------
-// Airmap Elevation
-
-class CopernicusElevationProvider : public ElevationProvider {
+class CopernicusElevationProvider : public ElevationProvider
+{
     Q_OBJECT
-  public:
+
+public:
     CopernicusElevationProvider(QObject* parent = nullptr)
         : ElevationProvider(QStringLiteral("bin"), AVERAGE_AIRMAP_ELEV_SIZE,
                             QGeoMapType::StreetMap, parent) {}
 
-    int long2tileX(const double lon, const int z) const override;
+    int long2tileX(double lon, int z) const final;
+    int lat2tileY(double lat, int z) const final;
 
-    int lat2tileY(const double lat, const int z) const override;
+    QGCTileSet getTileCount(int zoom, double topleftLon,
+                            double topleftLat, double bottomRightLon,
+                            double bottomRightLat) const final;
 
-    QGCTileSet getTileCount(const int zoom, const double topleftLon,
-                            const double topleftLat, const double bottomRightLon,
-                            const double bottomRightLat) const override;
-
-  protected:
-    QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
+private:
+    QString _getURL(int x, int y, int zoom) const final;
 };

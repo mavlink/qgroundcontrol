@@ -1,4 +1,6 @@
-add_subdirectory(APM)
+if(NOT QGC_DISABLE_APM_PLUGIN)
+    add_subdirectory(APM)
+endif()
 add_subdirectory(PX4)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Positioning)
@@ -8,14 +10,14 @@ qt_add_library(FirmwarePlugin STATIC
 	CameraMetaData.h
 	FirmwarePlugin.cc
 	FirmwarePlugin.h
-    FirmwarePluginFactory.cc
-    FirmwarePluginFactory.h
+	FirmwarePluginFactory.cc
+	FirmwarePluginFactory.h
 	FirmwarePluginManager.cc
 	FirmwarePluginManager.h
-    APM/APMFirmwarePluginFactory.cc
-    APM/APMFirmwarePluginFactory.h
-    PX4/PX4FirmwarePluginFactory.cc
-    PX4/PX4FirmwarePluginFactory.h
+	$<$<NOT:$<BOOL:${QGC_DISABLE_APM_PLUGIN_FACTORY}>>:APM/APMFirmwarePluginFactory.cc>
+	$<$<NOT:$<BOOL:${QGC_DISABLE_APM_PLUGIN_FACTORY}>>:APM/APMFirmwarePluginFactory.h>
+	$<$<NOT:$<BOOL:${QGC_DISABLE_PX4_PLUGIN_FACTORY}>>:PX4/PX4FirmwarePluginFactory.cc>
+	$<$<NOT:$<BOOL:${QGC_DISABLE_PX4_PLUGIN_FACTORY}>>:PX4/PX4FirmwarePluginFactory.h>
 )
 
 target_link_libraries(FirmwarePlugin

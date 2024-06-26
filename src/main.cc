@@ -21,6 +21,10 @@
     #include "RunGuard.h"
 #endif
 
+#ifdef Q_OS_ANDROID
+    #include "AndroidInterface.h"
+#endif
+
 #ifdef QT_DEBUG
 
 #include "CmdLineOptParser.h"
@@ -81,16 +85,16 @@ int main(int argc, char *argv[])
 #ifndef __mobile__
     // We make the runguard key different for custom and non custom
     // builds, so they can be executed together in the same device.
-    // Stable and Daily have same QGC_APPLICATION_NAME so they would
+    // Stable and Daily have same QGC_APP_NAME so they would
     // not be able to run at the same time
-    const QString runguardString = QString("%1 RunGuardKey").arg(QGC_APPLICATION_NAME);
+    const QString runguardString = QString("%1 RunGuardKey").arg(QGC_APP_NAME);
 
     RunGuard guard(runguardString);
     if (!guard.tryToRun()) {
         // QApplication is necessary to use QMessageBox
         QApplication errorApp(argc, argv);
         QMessageBox::critical(nullptr, QObject::tr("Error"),
-            QObject::tr("A second instance of %1 is already running. Please close the other instance and try again.").arg(QGC_APPLICATION_NAME)
+            QObject::tr("A second instance of %1 is already running. Please close the other instance and try again.").arg(QGC_APP_NAME)
         );
         return -1;
     }
@@ -103,7 +107,7 @@ int main(int argc, char *argv[])
         QMessageBox::critical(nullptr, QObject::tr("Error"),
             QObject::tr("You are running %1 as root. "
                 "You should not do this since it will cause other issues with %1."
-                "%1 will now exit.<br/><br/>").arg(QGC_APPLICATION_NAME)
+                "%1 will now exit.<br/><br/>").arg(QGC_APP_NAME)
         );
         return -1;
     }
@@ -208,6 +212,10 @@ int main(int argc, char *argv[])
     } else
 #endif
     {
+        #ifdef Q_OS_ANDROID
+            AndroidInterface::checkStoragePermissions();
+        #endif
+
         exitCode = app.exec();
     }
 

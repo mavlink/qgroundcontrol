@@ -8,12 +8,10 @@ on:
     tags:
       - 'v*'
     paths-ignore:
-      - 'android/**'
       - 'deploy/**'
       - 'docs/**'
   pull_request:
     paths-ignore:
-      - 'android/**'
       - 'deploy/**'
       - 'docs/**'
       - '.github/workflows/docs_deploy.yml'
@@ -40,7 +38,7 @@ jobs:
       QT_ANDROID_KEYSTORE_ALIAS: QGCAndroidKeyStore
       QT_ANDROID_KEYSTORE_STORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       QT_ANDROID_KEYSTORE_KEY_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-      QT_ANDROID_ABIS: "armeabi-v7a;arm64-v8a"
+      QT_ANDROID_ABIS: ${{ matrix.BuildType == 'Release' && 'armeabi-v7a;arm64-v8a' || 'arm64-v8a' }}
       GST_VERSION: 1.22.11
 
     steps:
@@ -49,6 +47,7 @@ jobs:
         with:
           submodules: recursive
           fetch-tags: true
+          fetch-depth: 0
 
       # Temporary solution
       - name: Remove unused dependencies
@@ -81,70 +80,71 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Build install-qt-action
-        uses: ./.github/actions/qt
-
       - name: Install Qt6 for Linux
-        uses: ./install-qt-action/action/
+        uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
+          aqtversion: ==3.1.*
           host: linux
           target: desktop
           dir: ${{ runner.temp }}
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
+          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
           cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
-          tools: 'tools_cmake'
 
       - name: Install Qt6 for Android (armv7)
-        uses: ./install-qt-action/action/
+        uses: jurplel/install-qt-action@v4
         if: contains( env.QT_ANDROID_ABIS, 'armeabi-v7a')
         with:
           version: ${{ env.QT_VERSION }}
+          aqtversion: ==3.1.*
           host: linux
           target: android
           arch: android_armv7
           dir: ${{ runner.temp }}
           extra: --autodesktop
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
+          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
           cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
 
       - name: Install Qt6 for Android (arm64_v8a)
-        uses: ./install-qt-action/action/
+        uses: jurplel/install-qt-action@v4
         if: contains( env.QT_ANDROID_ABIS, 'arm64-v8a')
         with:
           version: ${{ env.QT_VERSION }}
+          aqtversion: ==3.1.*
           host: linux
           target: android
           arch: android_arm64_v8a
           dir: ${{ runner.temp }}
           extra: --autodesktop
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
+          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
           cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
 
       - name: Install Qt6 for Android (x86)
-        uses: ./install-qt-action/action/
+        uses: jurplel/install-qt-action@v4
         if: contains( env.QT_ANDROID_ABIS, 'x86')
         with:
           version: ${{ env.QT_VERSION }}
+          aqtversion: ==3.1.*
           host: linux
           target: android
           arch: android_x86
           dir: ${{ runner.temp }}
           extra: --autodesktop
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
+          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
           cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
 
       - name: Install Qt6 for Android (x86_64)
-        uses: ./install-qt-action/action/
+        uses: jurplel/install-qt-action@v4
         if: contains( env.QT_ANDROID_ABIS, 'x86_64')
         with:
           version: ${{ env.QT_VERSION }}
+          aqtversion: ==3.1.*
           host: linux
           target: android
           arch: android_x86_64
           dir: ${{ runner.temp }}
           extra: --autodesktop
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
+          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
           cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
 
       - name: Cleanup
