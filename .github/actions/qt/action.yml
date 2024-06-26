@@ -1,0 +1,23 @@
+name: Build jurplel/install-qt-action
+description: Build jurplel/install-qt-action
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v4
+      with:
+        repository: jurplel/install-qt-action
+        ref: master
+        path: install-qt-action
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: npm
+        cache-dependency-path: install-qt-action/action/
+
+    - name: Build jurplel/install-qt-action
+      run: |
+        cd install-qt-action/action/
+        npm ci || npm install
+        npm run build
+      shell: bash
