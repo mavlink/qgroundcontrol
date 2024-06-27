@@ -47,7 +47,7 @@ Viewer3DTileReply::~Viewer3DTileReply()
 
 void Viewer3DTileReply::prepareDownload()
 {
-    QNetworkRequest request = getQGCMapEngine()->urlFactory()->getTileURL(_mapId, _tile.x, _tile.y, _tile.zoomLevel);
+    QNetworkRequest request = UrlFactory::getTileURL(_mapId, _tile.x, _tile.y, _tile.zoomLevel);
     _reply = _networkManager->get(request);
     connect(_reply, &QNetworkReply::finished, this, &Viewer3DTileReply::requestFinished);
     connect(_reply, &QNetworkReply::errorOccurred, this, &Viewer3DTileReply::requestError);
@@ -56,8 +56,7 @@ void Viewer3DTileReply::prepareDownload()
 void Viewer3DTileReply::requestFinished()
 {
     _tile.data = _reply->readAll();
-    UrlFactory* urlFactory = getQGCMapEngine()->urlFactory();
-    MapProvider* mapProvider = urlFactory->getMapProviderFromQtMapId(_tile.mapId);
+    const SharedMapProvider mapProvider = UrlFactory::getMapProviderFromQtMapId(_tile.mapId);
     // disconnect(_networkManager, &QNetworkAccessManager::finished, this, &Viewer3DTileReply::requestFinished);
     _timeoutTimer->stop();
     disconnect(_reply, &QNetworkReply::finished, this, &Viewer3DTileReply::requestFinished);

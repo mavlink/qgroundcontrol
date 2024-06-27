@@ -17,7 +17,7 @@
 
 #include "QGCMapEngineManager.h"
 #include "QGCMapTileSet.h"
-#include "QGCMapUrlEngine.h"
+#include "ElevationMapProvider.h"
 #include "QGCMapEngine.h"
 #include "QGCLoggingCategory.h"
 
@@ -30,7 +30,7 @@ QGC_LOGGING_CATEGORY(QGCMapEngineManagerLog, "QGCMapEngineManagerLog")
 
 static const char* kQmlOfflineMapKeyName = "QGCOfflineMap";
 
-static const auto kElevationMapType = UrlFactory::kCopernicusElevationProviderKey;
+static const auto kElevationMapType = CopernicusElevationProvider::kProviderKey;
 
 //-----------------------------------------------------------------------------
 QGCMapEngineManager::QGCMapEngineManager(QGCApplication* app, QGCToolbox* toolbox)
@@ -218,16 +218,16 @@ QGCMapEngineManager::loadSetting (const QString& key, const QString& defaultValu
 QStringList
 QGCMapEngineManager::mapList()
 {
-    return getQGCMapEngine()->getMapNameList();
+    return QGCMapEngine::getMapNameList();
 }
 //-----------------------------------------------------------------------------
 QStringList
 QGCMapEngineManager::mapProviderList()
 {
-    QStringList mapList = getQGCMapEngine()->getMapNameList();
+    QStringList mapList = QGCMapEngine::getMapNameList();
 
     // Don't return the Elevations provider. This is not selectable as a map provider by the user.
-    mapList.removeAll(UrlFactory::kCopernicusElevationProviderKey);
+    mapList.removeAll(kElevationMapType);
 
     // Extract Provider name from MapName ( format : "Provider Type")
     mapList.replaceInStrings(QRegularExpression("^([^\\ ]*) (.*)$"),"\\1");
@@ -241,7 +241,7 @@ QStringList
 QGCMapEngineManager::mapTypeList(QString provider)
 {
     // Extract type name from MapName ( format : "Provider Type")
-    QStringList mapList = getQGCMapEngine()->getMapNameList();
+    QStringList mapList = QGCMapEngine::getMapNameList();
     mapList = mapList.filter(QRegularExpression(provider));
     mapList.replaceInStrings(QRegularExpression("^([^\\ ]*) (.*)$"),"\\2");
     mapList.removeDuplicates();

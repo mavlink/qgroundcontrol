@@ -16,105 +16,117 @@ static constexpr const quint32 AVERAGE_MAPBOX_STREET_MAP  = 5648;
 
 class MapboxMapProvider : public MapProvider
 {
-    Q_OBJECT
-
 protected:
-    MapboxMapProvider(const QString& mapName, quint32 averageSize, QGeoMapType::MapStyle mapType, QObject* parent = nullptr)
-        : MapProvider(QStringLiteral("https://www.mapbox.com/"), QStringLiteral("jpg"), averageSize, mapType, parent)
-        , _mapboxName(mapName) {}
+    MapboxMapProvider(const QString &mapName, const QString &mapTypeId, quint32 averageSize, QGeoMapType::MapStyle mapType)
+        : MapProvider(
+            mapName,
+            QStringLiteral("https://www.mapbox.com/"),
+            QStringLiteral("jpg"),
+            averageSize,
+            mapType)
+        , _mapTypeId(mapTypeId) {}
 
 private:
     QString _getURL(int x, int y, int zoom) const final;
 
-    const QString _mapboxName;
+    const QString _mapTypeId;
 };
 
 class MapboxStreetMapProvider : public MapboxMapProvider
 {
-    Q_OBJECT
-
 public:
-    MapboxStreetMapProvider(QObject* parent = nullptr)
-        : MapboxMapProvider(QStringLiteral("streets-v10"), AVERAGE_MAPBOX_STREET_MAP,
-                            QGeoMapType::StreetMap, parent) {}
+    MapboxStreetMapProvider()
+        : MapboxMapProvider(
+            QStringLiteral("Mapbox Streets"),
+            QStringLiteral("streets-v10"),
+            AVERAGE_MAPBOX_STREET_MAP,
+            QGeoMapType::StreetMap) {}
 };
 
 class MapboxLightMapProvider : public MapboxMapProvider
 {
-    Q_OBJECT
-
 public:
-    MapboxLightMapProvider(QObject* parent = nullptr)
-        : MapboxMapProvider(QStringLiteral("light-v9"), AVERAGE_TILE_SIZE,
-                            QGeoMapType::CustomMap, parent) {}
+    MapboxLightMapProvider()
+        : MapboxMapProvider(
+            QStringLiteral("Mapbox Light"),
+            QStringLiteral("light-v9"),
+            AVERAGE_TILE_SIZE,
+            QGeoMapType::CustomMap) {}
 };
 
 class MapboxDarkMapProvider : public MapboxMapProvider
 {
-    Q_OBJECT
-
 public:
-    MapboxDarkMapProvider(QObject* parent = nullptr)
-        : MapboxMapProvider(QStringLiteral("dark-v9"), AVERAGE_TILE_SIZE,
-                            QGeoMapType::CustomMap, parent) {}
+    MapboxDarkMapProvider()
+        : MapboxMapProvider(
+            QStringLiteral("Mapbox Dark"),
+            QStringLiteral("dark-v9"),
+            AVERAGE_TILE_SIZE,
+            QGeoMapType::CustomMap) {}
 };
 
 class MapboxSatelliteMapProvider : public MapboxMapProvider
 {
-    Q_OBJECT
-
 public:
-    MapboxSatelliteMapProvider(QObject* parent = nullptr)
-        : MapboxMapProvider(QStringLiteral("satellite-v9"), AVERAGE_MAPBOX_SAT_MAP,
-                            QGeoMapType::SatelliteMapDay, parent) {}
+    MapboxSatelliteMapProvider()
+        : MapboxMapProvider(
+            QStringLiteral("Mapbox Satellite"),
+            QStringLiteral("satellite-v9"),
+            AVERAGE_MAPBOX_SAT_MAP,
+            QGeoMapType::SatelliteMapDay) {}
 };
 
 class MapboxHybridMapProvider : public MapboxMapProvider
 {
-    Q_OBJECT
-
 public:
-    MapboxHybridMapProvider(QObject* parent = nullptr)
-        : MapboxMapProvider(QStringLiteral("satellite-streets-v10"), AVERAGE_MAPBOX_SAT_MAP,
-                            QGeoMapType::HybridMap, parent) {}
+    MapboxHybridMapProvider()
+        : MapboxMapProvider(
+            QStringLiteral("Mapbox Hybrid"),
+            QStringLiteral("satellite-streets-v10"),
+            AVERAGE_MAPBOX_SAT_MAP,
+            QGeoMapType::HybridMap) {}
 };
 
 class MapboxBrightMapProvider : public MapboxMapProvider
 {
-    Q_OBJECT
-
 public:
-    MapboxBrightMapProvider(QObject* parent = nullptr)
-        : MapboxMapProvider(QStringLiteral("bright-v9"), AVERAGE_TILE_SIZE,
-                            QGeoMapType::CustomMap, parent) {}
+    MapboxBrightMapProvider()
+        : MapboxMapProvider(
+            QStringLiteral("Mapbox Bright"),
+            QStringLiteral("bright-v9"),
+            AVERAGE_TILE_SIZE,
+            QGeoMapType::CustomMap) {}
 };
 
 class MapboxStreetsBasicMapProvider : public MapboxMapProvider
 {
-    Q_OBJECT
-
 public:
-    MapboxStreetsBasicMapProvider(QObject* parent = nullptr)
-        : MapboxMapProvider(QStringLiteral("basic-v9"), AVERAGE_TILE_SIZE,
-                            QGeoMapType::StreetMap, parent) {}
+    MapboxStreetsBasicMapProvider()
+        : MapboxMapProvider(
+            QStringLiteral("Mapbox StreetsBasic"),
+            QStringLiteral("basic-v9"),
+            AVERAGE_TILE_SIZE,
+            QGeoMapType::StreetMap) {}
 };
 
 class MapboxOutdoorsMapProvider : public MapboxMapProvider
 {
-    Q_OBJECT
-
 public:
-    MapboxOutdoorsMapProvider(QObject* parent = nullptr)
-        : MapboxMapProvider(QStringLiteral("outdoors-v10"), AVERAGE_TILE_SIZE,
-                            QGeoMapType::CustomMap, parent) {}
+    MapboxOutdoorsMapProvider()
+        : MapboxMapProvider(
+            QStringLiteral("Mapbox Outdoors"),
+            QStringLiteral("outdoors-v10"),
+            AVERAGE_TILE_SIZE,
+            QGeoMapType::CustomMap) {}
 };
 
 class MapboxCustomMapProvider : public MapboxMapProvider
 {
-    Q_OBJECT
-
 public:
-    MapboxCustomMapProvider(QObject* parent = nullptr)
-        : MapboxMapProvider(QStringLiteral("mapbox.custom"), AVERAGE_TILE_SIZE,
-                            QGeoMapType::CustomMap, parent) {}
+    MapboxCustomMapProvider()
+        : MapboxMapProvider(
+            QStringLiteral("Mapbox Custom"),
+            QStringLiteral("mapbox.custom"),
+            AVERAGE_TILE_SIZE,
+            QGeoMapType::CustomMap) {}
 };

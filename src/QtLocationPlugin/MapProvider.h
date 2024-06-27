@@ -38,18 +38,21 @@ static constexpr const quint32 AVERAGE_TILE_SIZE = 13652;
 
 class QNetworkRequest;
 
-class MapProvider : public QObject
+class MapProvider
 {
-    Q_OBJECT
-
 public:
-    MapProvider(const QString& referrer, const QString& imageFormat, quint32 averageSize = AVERAGE_TILE_SIZE,
-                QGeoMapType::MapStyle mapStyle = QGeoMapType::CustomMap, QObject* parent = nullptr);
+    MapProvider(const QString &mapName, const QString &referrer, const QString &imageFormat, quint32 averageSize = AVERAGE_TILE_SIZE,
+                QGeoMapType::MapStyle mapStyle = QGeoMapType::CustomMap);
+    virtual ~MapProvider();
 
     QString getImageFormat(QByteArrayView image) const;
 
+    // TODO: Download Random Tile And Use That Size Instead?
     quint32 getAverageSize() const { return _averageSize; }
+
     QGeoMapType::MapStyle getMapStyle() const { return _mapStyle; }
+    const QString& getMapName() const { return _mapName; }
+    int getMapId() const { return _mapId; }
 
     virtual QNetworkRequest getTileURL(int x, int y, int zoom) const;
 
@@ -69,9 +72,14 @@ protected:
 
     virtual QString _getURL(int x, int y, int zoom) const = 0;
 
+    const QString _mapName;
     const QString _referrer;
     const QString _imageFormat;
     const quint32 _averageSize;
     const QGeoMapType::MapStyle _mapStyle;
     const QString _language;
+    const int _mapId;
+
+private:
+    static int _mapIdIndex;
 };

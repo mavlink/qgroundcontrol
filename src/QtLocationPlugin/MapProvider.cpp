@@ -15,18 +15,30 @@
 
 QGC_LOGGING_CATEGORY(MapProviderLog, "qgc.qtlocationplugin.mapprovider")
 
+// QtLocation expects MapIds to start at 1 and be sequential.
+int MapProvider::_mapIdIndex = 1;
+
 MapProvider::MapProvider(
+    const QString &mapName,
     const QString &referrer,
     const QString &imageFormat,
     quint32 averageSize,
-    QGeoMapType::MapStyle mapStyle,
-    QObject* parent)
-    : QObject(parent)
+    QGeoMapType::MapStyle mapStyle)
+    : _mapName(mapName)
     , _referrer(referrer)
     , _imageFormat(imageFormat)
     , _averageSize(averageSize)
     , _mapStyle(mapStyle)
-    , _language(!QLocale::system().uiLanguages().isEmpty() ? QLocale::system().uiLanguages().constFirst() : "en") {}
+    , _language(!QLocale::system().uiLanguages().isEmpty() ? QLocale::system().uiLanguages().constFirst() : "en")
+    , _mapId(_mapIdIndex++)
+{
+    // qCDebug(MapProviderLog) << Q_FUNC_INFO << this << _mapId;
+}
+
+MapProvider::~MapProvider()
+{
+    // qCDebug(MapProviderLog) << Q_FUNC_INFO << this << _mapId;
+}
 
 QNetworkRequest MapProvider::getTileURL(int x, int y, int zoom) const
 {
