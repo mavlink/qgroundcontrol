@@ -1,0 +1,49 @@
+include(CPack)
+include(InstallRequiredSystemLibraries)
+
+set(CPACK_VERBATIM_VARIABLES YES)
+
+set(CPACK_PACKAGE_CONTACT "example@email.com")
+set(CPACK_PACKAGE_NAME ${QGC_APP_NAME})
+set(CPACK_PACKAGE_VENDOR ${QGC_ORG_NAME})
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${PROJECT_DESCRIPTION}")
+set(CPACK_PACKAGE_DIRECTORY "${CMAKE_BINARY_DIR}")
+set(CPACK_PACKAGE_INSTALL_DIRECTORY ${QGC_APP_NAME})
+set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
+set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
+set(CPACK_PACKAGE_HOMEPAGE_URL ${PROJECT_HOMEPAGE_URL})
+set(CPACK_PACKAGE_ICON "${INSTALLER_ROOT}/config/icons/qgroundcontrol.png")
+set(CPACK_PACKAGE_EXECUTABLES ${QGC_APP_NAME})
+set(CPACK_PACKAGE_FILE_NAME "${QGC_INSTALLER_NAME}")
+QGC_ORG_NAME
+set(CPACK_RESOURCE_FILE_LICENSE ${QGC_INSTALLER_ROOT}/LICENSE)
+set(CPACK_RESOURCE_FILE_README ${QGC_INSTALLER_ROOT}/README.md)
+# set(CPACK_RESOURCE_FILE_WELCOME "${CMAKE_CURRENT_SOURCE_DIR}/desc/welcome.txt")
+
+set(CPACK_CREATE_DESKTOP_LINKS ${QGC_APP_NAME})
+
+option(QGC_ONLINE_INSTALLER "Create Online Installer" OFF)
+if(QGC_OFFLINE_INSTALLER)
+    cpack_add_component(${QGC_APP_NAME} DOWNLOADED)
+else()
+    cpack_add_component(${QGC_APP_NAME})
+endif()
+
+if(${CMAKE_SYSTEM_NAME} MATCHES Linux)
+    # find_program(LINUXDEPLOYQT linuxdeployqt
+    #     HINTS
+    #         "$ENV{HOME}/dev/linuxdeployqt/build/tools/linuxdeployqt"
+    #         "$ENV{HOME}/project/linuxdeployqt/bin"
+    # )
+    # configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/deploy-qt-linux.cmake.in"
+    #                "${CMAKE_BINARY_DIR}/cmake/deploy-qt-linux.cmake" @ONLY)
+    # set(CPACK_PRE_BUILD_SCRIPTS ${CMAKE_BINARY_DIR}/cmake/deploy-qt-linux.cmake)
+elseif(${CMAKE_SYSTEM_NAME} MATCHES Windows)
+elseif(${CMAKE_SYSTEM_NAME} MATCHES Darwin)
+    set(CPACK_BUNDLE_NAME ${QGC_APP_NAME})
+    set(CPACK_BUNDLE_ICON "${QGC_INSTALLER_ROOT}/config/logos/macx.icns")
+endif()
+
+include(CPackIFW)

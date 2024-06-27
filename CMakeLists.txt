@@ -31,7 +31,6 @@ endif()
 include(FeatureSummary)
 include(FetchContent)
 include(ExternalProject)
-include(GNUInstallDirs)
 include(CMakeDependentOption)
 include(CMakePrintHelpers)
 
@@ -96,6 +95,8 @@ if(IOS OR ANDROID)
     set(MOBILE TRUE)
     add_compile_definitions(__mobile__)
 endif()
+
+include(GNUInstallDirs)
 
 #######################################################
 #               Qt6 Configuration
@@ -244,9 +245,9 @@ endif()
 if(WIN32)
     list(APPEND QGC_RESOURCES ${CMAKE_SOURCE_DIR}/deploy/windows/QGroundControl.rc)
 elseif(MACOS)
-    set(app_icon_macos "${QGC_MACOS_ICON_PATH}/macx.icns")
-    set_source_files_properties(${app_icon_macos} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
-    list(APPEND QGC_RESOURCES ${app_icon_macos})
+    set(QGC_APP_ICON "${QGC_MACOS_ICON_PATH}/macx.icns")
+    set_source_files_properties(${QGC_APP_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+    list(APPEND QGC_RESOURCES ${QGC_APP_ICON})
 endif()
 
 #######################################################
@@ -267,10 +268,11 @@ set_target_properties(${PROJECT_NAME} PROPERTIES QT_RESOURCE_PREFIX "/qgc")
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${QGC_APP_NAME})
 
 if(WIN32)
+    set(QGC_APP_ICON "${CMAKE_SOURCE_DIR}/deploy/windows/WindowsQGC.ico")
     set_target_properties(${PROJECT_NAME}
         PROPERTIES
             WIN32_EXECUTABLE TRUE
-            QT_TARGET_RC_ICONS "${CMAKE_SOURCE_DIR}/deploy/windows/WindowsQGC.ico"
+            QT_TARGET_RC_ICONS ${QGC_APP_ICON}
     )
     add_compile_definitions(_USE_MATH_DEFINES)
 elseif(MACOS)
