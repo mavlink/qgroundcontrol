@@ -48,6 +48,7 @@ target_link_libraries(Vehicle
 		MockLink
 		Utilities
 		UTMSP
+		VideoReceiver
 	PUBLIC
 		Qt6::Core
 		Qt6::Gui
