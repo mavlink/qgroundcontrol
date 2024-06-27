@@ -11,6 +11,7 @@
 #include "SettingsManager.h"
 #include "JsonHelper.h"
 #include "QGCApplication.h"
+#include <MAVLinkLib.h>
 
 #include <QtCore/QtMath>
 #include <QtCore/QJsonArray>
