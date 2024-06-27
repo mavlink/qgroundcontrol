@@ -41,8 +41,8 @@ public:
     Q_PROPERTY(qreal        hfov                READ hfov               NOTIFY infoChanged)
     Q_PROPERTY(bool         isThermal           READ isThermal          NOTIFY infoChanged)
 
-    QString uri             () { return QString(_streamInfo.uri);  }
-    QString name            () { return QString(_streamInfo.name); }
+    QString uri             () const { return QString(_streamInfo.uri);  }
+    QString name            () const { return QString(_streamInfo.name); }
     qreal   aspectRatio     () const;
     qreal   hfov            () const{ return _streamInfo.hfov; }
     int     type            () const{ return _streamInfo.type; }

@@ -7,11 +7,6 @@ class GLVideoItemStub : public QQuickItem
     Q_OBJECT
 
 public:
-    GLVideoItemStub();
-    ~GLVideoItemStub();
-
-protected:
-
-private:
-
+    GLVideoItemStub() = default;
+    ~GLVideoItemStub() = default;
 };

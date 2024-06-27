@@ -1,7 +1,6 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Quick)
 
 qt_add_library(VideoManager STATIC
-    GLVideoItemStub.cc
     GLVideoItemStub.h
     SubtitleWriter.cc
     SubtitleWriter.h
@@ -18,11 +17,11 @@ target_link_libraries(VideoManager
         Settings
         Utilities
         Vehicle
+        VideoReceiver
     PUBLIC
         Qt6::Core
         Qt6::Quick
         QGC
-        VideoReceiver
 )
 
 option(QGC_DISABLE_UVC "Disable UVC Devices" OFF)

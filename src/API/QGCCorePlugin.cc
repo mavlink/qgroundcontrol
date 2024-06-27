@@ -20,6 +20,7 @@
 #if defined(QGC_GST_STREAMING)
 #include "GStreamer.h"
 #endif
+#include "VideoReceiver.h"
 #include "HorizontalFactValueGrid.h"
 #include "InstrumentValueData.h"
 #include "QGCLoggingCategory.h"
