@@ -1,10 +1,10 @@
 find_package(Qt6 REQUIRED COMPONENTS Core)
 
 qt_add_library(Compression STATIC
-	QGCLZMA.cc
-	QGCLZMA.h
-	QGCZlib.cc
-	QGCZlib.h
+    QGCLZMA.cc
+    QGCLZMA.h
+    QGCZlib.cc
+    QGCZlib.h
 )
 
 include(FetchContent)
@@ -19,9 +19,9 @@ set(SKIP_INSTALL_HEADERS ON CACHE INTERNAL "")
 set(SKIP_INSTALL_ALL ON CACHE INTERNAL "")
 
 FetchContent_Declare(zlib
-	GIT_REPOSITORY https://github.com/madler/zlib.git
-	GIT_TAG v1.3.1
-	GIT_SHALLOW TRUE
+    GIT_REPOSITORY https://github.com/madler/zlib.git
+    GIT_TAG v1.3.1
+    GIT_SHALLOW TRUE
 )
 
 ############### XZ
@@ -47,7 +47,7 @@ qt_add_library(xz STATIC
 )
 
 target_include_directories(xz
-	PUBLIC
+    PUBLIC
         ${xz-embedded_SOURCE_DIR}/linux/include/linux
     PRIVATE
         ${xz-embedded_SOURCE_DIR}/linux/lib/xz
@@ -64,12 +64,12 @@ target_compile_definitions(xz
 ###############
 
 target_link_libraries(Compression
-	PRIVATE
+    PRIVATE
         zlibstatic
         xz
         Utilities
-	PUBLIC
-		Qt6::Core
+    PUBLIC
+        Qt6::Core
 )
 
 target_include_directories(Compression PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

@@ -1,94 +1,94 @@
 find_package(Qt6 REQUIRED COMPONENTS Concurrent Core Gui Location Positioning Qml QmlIntegration Quick Widgets)
 
 qt_add_library(QmlControls STATIC
-	AppMessages.cc
-	AppMessages.h
-	CustomAction.cc
-	CustomAction.h
-	CustomActionManager.cc
-	CustomActionManager.h
-	EditPositionDialogController.cc
-	EditPositionDialogController.h
-	FactValueGrid.cc
-	FactValueGrid.h
-	FlightPathSegment.cc
-	FlightPathSegment.h
-	HorizontalFactValueGrid.cc
-	HorizontalFactValueGrid.h
-	InstrumentValueData.cc
-	InstrumentValueData.h
-	ParameterEditorController.cc
-	ParameterEditorController.h
-	QGCFileDialogController.cc
-	QGCFileDialogController.h
-	QGCGeoBoundingCube.cc
-	QGCGeoBoundingCube.h
+    AppMessages.cc
+    AppMessages.h
+    CustomAction.cc
+    CustomAction.h
+    CustomActionManager.cc
+    CustomActionManager.h
+    EditPositionDialogController.cc
+    EditPositionDialogController.h
+    FactValueGrid.cc
+    FactValueGrid.h
+    FlightPathSegment.cc
+    FlightPathSegment.h
+    HorizontalFactValueGrid.cc
+    HorizontalFactValueGrid.h
+    InstrumentValueData.cc
+    InstrumentValueData.h
+    ParameterEditorController.cc
+    ParameterEditorController.h
+    QGCFileDialogController.cc
+    QGCFileDialogController.h
+    QGCGeoBoundingCube.cc
+    QGCGeoBoundingCube.h
     QGCQGeoCoordinate.cc
     QGCQGeoCoordinate.h
-	QGCImageProvider.cc
-	QGCImageProvider.h
-	QGCFenceCircle.cc
-	QGCFenceCircle.h
-	QGCFencePolygon.cc
-	QGCFencePolygon.h
-	QGCMapCircle.cc
-	QGCMapCircle.h
-	QGCMapPolygon.cc
-	QGCMapPolygon.h
-	QGCMapPolyline.cc
-	QGCMapPolyline.h
-	QGCMapPalette.cc
-	QGCMapPalette.h
-	QGCPalette.cc
-	QGCPalette.h
-	QGroundControlQmlGlobal.cc
-	QGroundControlQmlGlobal.h
-	QmlObjectListModel.cc
-	QmlObjectListModel.h
-	QmlUnitsConversion.h
-	RCChannelMonitorController.cc
-	RCChannelMonitorController.h
-	RCToParamDialogController.cc
-	RCToParamDialogController.h
-	ScreenToolsController.cc
-	ScreenToolsController.h
-	TerrainProfile.cc
-	TerrainProfile.h
-	ToolStripAction.cc
-	ToolStripAction.h
-	ToolStripActionList.cc
-	ToolStripActionList.h
+    QGCImageProvider.cc
+    QGCImageProvider.h
+    QGCFenceCircle.cc
+    QGCFenceCircle.h
+    QGCFencePolygon.cc
+    QGCFencePolygon.h
+    QGCMapCircle.cc
+    QGCMapCircle.h
+    QGCMapPolygon.cc
+    QGCMapPolygon.h
+    QGCMapPolyline.cc
+    QGCMapPolyline.h
+    QGCMapPalette.cc
+    QGCMapPalette.h
+    QGCPalette.cc
+    QGCPalette.h
+    QGroundControlQmlGlobal.cc
+    QGroundControlQmlGlobal.h
+    QmlObjectListModel.cc
+    QmlObjectListModel.h
+    QmlUnitsConversion.h
+    RCChannelMonitorController.cc
+    RCChannelMonitorController.h
+    RCToParamDialogController.cc
+    RCToParamDialogController.h
+    ScreenToolsController.cc
+    ScreenToolsController.h
+    TerrainProfile.cc
+    TerrainProfile.h
+    ToolStripAction.cc
+    ToolStripAction.h
+    ToolStripActionList.cc
+    ToolStripActionList.h
 )
 
 target_link_libraries(QmlControls
-	PRIVATE
-		Qt6::Concurrent
-		Qt6::Location
+    PRIVATE
+        Qt6::Concurrent
+        Qt6::Location
         FirmwarePlugin
         Geo
         GPS
         MockLink
-	PUBLIC
-		Qt6::Core
-		Qt6::Gui
-		Qt6::Positioning
-		Qt6::QmlIntegration
-		Qt6::Quick
-		ADSB
+    PUBLIC
+        Qt6::Core
+        Qt6::Gui
+        Qt6::Positioning
+        Qt6::QmlIntegration
+        Qt6::Quick
+        ADSB
         AirLink
         API
         Comms
         FactControls
-		FactSystem
-		MAVLink
-		MissionManager
+        FactSystem
+        MAVLink
+        MissionManager
         PositionManager
-		QGC
-		QGCLocation
-		Settings
+        QGC
+        QGCLocation
+        Settings
         Terrain
-		Utilities
-		UTMSP
+        Utilities
+        UTMSP
         Vehicle
         VideoManager
 )
@@ -101,24 +101,24 @@ target_include_directories(QmlControls PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 #     VERSION 1.0
 #     QML_FILES ${QML_SOURCES}
 #     RESOURCES
-#     	arrow-down.png
-#     	checkbox-check.svg
-#     	EditPositionDialog.FactMetaData.json
-#     	RCToParamDialog.FactMetaData.json
+#       arrow-down.png
+#       checkbox-check.svg
+#       EditPositionDialog.FactMetaData.json
+#       RCToParamDialog.FactMetaData.json
 #     OUTPUT_TARGETS QmlControls_targets
 #     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
 #     IMPORTS
-# 		QtQuick
-# 		QtQuick.Controls
-# 		QtQuick.Window
-# 		QtQuick.Dialogs
-# 		QtQuick.Layouts
-# 		Qt.labs.platform
-# 		QGroundControl
-# 		QGroundControl.Controllers
-# 		QGroundControl.FactControls
-# 		QGroundControl.Palette
-# 		QGroundControl.ScreenTools
+#       QtQuick
+#       QtQuick.Controls
+#       QtQuick.Window
+#       QtQuick.Dialogs
+#       QtQuick.Layouts
+#       Qt.labs.platform
+#       QGroundControl
+#       QGroundControl.Controllers
+#       QGroundControl.FactControls
+#       QGroundControl.Palette
+#       QGroundControl.ScreenTools
 #     DEPENDENCIES
 #         QtCore
 # )
@@ -128,20 +128,20 @@ target_include_directories(QmlControls PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 # find_package(Qt6 REQUIRED COMPONENTS Core Gui QmlIntegration)
 
 # qt_add_library(QmlPalette STATIC
-# 	QGCMapPalette.cc
-# 	QGCMapPalette.h
-# 	QGCPalette.cc
-# 	QGCPalette.h
+#   QGCMapPalette.cc
+#   QGCMapPalette.h
+#   QGCPalette.cc
+#   QGCPalette.h
 # )
 
 # target_link_libraries(QmlPalette
-# 	PRIVATE
-# 		API
-# 		QGC
-# 	PUBLIC
-# 		Qt6::Core
-# 		Qt6::Gui
-# 		Qt6::QmlIntegration
+#   PRIVATE
+#       API
+#       QGC
+#   PUBLIC
+#       Qt6::Core
+#       Qt6::Gui
+#       Qt6::QmlIntegration
 # )
 
 # target_include_directories(QmlPalette PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

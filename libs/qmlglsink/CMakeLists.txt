@@ -5,7 +5,7 @@ if(QGC_ENABLE_VIDEOSTREAMING)
 	find_package(Qt6 REQUIRED COMPONENTS Core)
 	qt_add_library(qmlglsink STATIC)
 
-	include(FindGStreamer)
+	include(GStreamer)
 	if(GST_FOUND)
 		message(STATUS "GST Modules Found")
 		include(BuildGstQtPlugin)

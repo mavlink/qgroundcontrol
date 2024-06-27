@@ -10,14 +10,14 @@ qt_add_qml_module(PlanView
     OUTPUT_TARGETS PlanView_targets
     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
     IMPORTS
-		QtQuick
-		QtQuick.Controls
-		QtLocation
-		QtPositioning
+        QtQuick
+        QtQuick.Controls
+        QtLocation
+        QtPositioning
 
-		QGroundControl
-		QGroundControl.ScreenTools
-		QGroundControl.Palette
-		QGroundControl.Controls
-		QGroundControl.FlightMap
+        QGroundControl
+        QGroundControl.ScreenTools
+        QGroundControl.Palette
+        QGroundControl.Controls
+        QGroundControl.FlightMap
 )
