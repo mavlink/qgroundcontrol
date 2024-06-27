@@ -253,7 +253,7 @@
     "name":                 "apmStartMavlinkStreams",
     "shortDesc":     "Request start of MAVLink telemetry streams (ArduPilot only)",
     "type":                 "bool",
-    "default":         true,
+    "default":         false,
     "qgcRebootRequired":    true
 },
 {
