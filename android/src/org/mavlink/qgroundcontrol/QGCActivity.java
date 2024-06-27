@@ -1,261 +1,338 @@
 package org.mavlink.qgroundcontrol;
 
-/* Copyright 2013 Google Inc.
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
- * USA.
- *
- * Project home page: http://code.google.com/p/usb-serial-for-android/
- */
-///////////////////////////////////////////////////////////////////////////////////////////
-//  Written by: Mike Goza April 2014
-//
-//  These routines interface with the Android USB Host devices for serial port communication.
-//  The code uses the usb-serial-for-android software library.  The QGCActivity class is the
-//  interface to the C++ routines through jni calls.  Do not change the functions without also
-//  changing the corresponding calls in the C++ routines or you will break the interface.
-//
-////////////////////////////////////////////////////////////////////////////////////////////
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Timer;
+import java.util.EnumSet;
+import java.util.TimerTask;
 
 import android.app.Activity;
 import android.app.PendingIntent;
+import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.hardware.usb.UsbAccessory;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
-import android.widget.Toast;
-import android.util.Log;
-import android.os.PowerManager;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.app.PendingIntent;
-import android.view.WindowManager;
-import android.os.Bundle;
-import android.bluetooth.BluetoothDevice;
+import android.os.PowerManager;
 import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
+import android.util.Log;
+import android.view.WindowManager;
 
+import com.hoho.android.usbserial.driver.UsbSerialDriver;
+import com.hoho.android.usbserial.driver.UsbSerialPort;
+import com.hoho.android.usbserial.driver.UsbSerialProber;
+import com.hoho.android.usbserial.driver.SerialTimeoutException;
 import com.hoho.android.usbserial.driver.*;
+import com.hoho.android.usbserial.util.UsbUtils;
+import com.hoho.android.usbserial.util.HexDump;
+import com.hoho.android.usbserial.util.MonotonicClock;
+
+import org.mavlink.qgroundcontrol.SerialInputOutputManager;
+import org.mavlink.qgroundcontrol.QGCProber;
+
 import org.qtproject.qt.android.bindings.QtActivity;
-import org.qtproject.qt.android.bindings.QtApplication;
+import org.qtproject.qt.android.QtNative;
 
 public class QGCActivity extends QtActivity
 {
-    public  static int                                  BAD_DEVICE_ID = 0;
-    private static QGCActivity                          _instance = null;
-    private static UsbManager                           _usbManager = null;
-    private static List<UsbSerialDriver>                _drivers;
-    private static HashMap<Integer, UsbIoManager>       m_ioManager;
-    private static HashMap<Integer, Long>               _userDataHashByDeviceId;
-    private static final String                         TAG = "QGC_QGCActivity";
-    private static PowerManager.WakeLock                _wakeLock;
-    private static final String                         ACTION_USB_PERMISSION = "org.mavlink.qgroundcontrol.action.USB_PERMISSION";
-    private static PendingIntent                        _usbPermissionIntent = null;
-    private static WifiManager.MulticastLock            _wifiMulticastLock;
-    
-    public static Context m_context;
+    private static final int BAD_DEVICE_ID = 0;
+    private static final String TAG = "QGC_QGCActivity";
+    private static final String ACTION_USB_PERMISSION = "org.mavlink.qgroundcontrol.action.USB_PERMISSION";
+
+    private static final String SCREEN_BRIGHT_WAKE_LOCK_TAG = "QGroundControl";
+    private static final String MULTICAST_LOCK_TAG = "QGroundControl";
+
+    private static QGCActivity _instance = null;
+    private static Context m_context;
+
+    private static PendingIntent _usbPermissionIntent = null;
+    private static UsbManager _usbManager = null;
+    private static List<UsbSerialDriver> _drivers;
+    private static HashMap<Integer, SerialInputOutputManager> _serialIoManager;
+    private static HashMap<Integer, Long> _userDataHashByDeviceId;
+
+    private static PowerManager.WakeLock _wakeLock;
+    private static WifiManager.MulticastLock _wifiMulticastLock;
 
     private final static ExecutorService m_Executor = Executors.newSingleThreadExecutor();
 
-    private final static UsbIoManager.Listener m_Listener =
-            new UsbIoManager.Listener()
-            {
-                @Override
-                public void onRunError(Exception eA, long userData)
-                {
-                    Log.e(TAG, "onRunError Exception");
-                    nativeDeviceException(userData, eA.getMessage());
-                }
-
-                @Override
-                public void onNewData(final byte[] dataA, long userData)
-                {
-                    nativeDeviceNewData(userData, dataA);
-                }
-            };
-
-    private static UsbSerialDriver _findDriverByDeviceId(int deviceId) {
-        for (UsbSerialDriver driver: _drivers) {
-            if (driver.getDevice().getDeviceId() == deviceId) {
-                return driver;
-            }
+    private final static SerialInputOutputManager.Listener m_Listener = new SerialInputOutputManager.Listener() {
+        @Override
+        public void onRunError(Exception e, long userData)
+        {
+            Log.e(TAG, "onRunError Exception", e);
+            nativeDeviceException(userData, e.getMessage());
         }
-        return null;
-    }
 
-    private static UsbSerialDriver _findDriverByDeviceName(String deviceName) {
-        for (UsbSerialDriver driver: _drivers) {
-            if (driver.getDevice().getDeviceName().equals(deviceName)) {
-                return driver;
-            }
+        @Override
+        public void onNewData(final byte[] data, long userData)
+        {
+            nativeDeviceNewData(userData, data);
         }
-        return null;
-    }
+    };
 
     private final static BroadcastReceiver _usbReceiver = new BroadcastReceiver() {
-            public void onReceive(Context context, Intent intent) {
-                String action = intent.getAction();
-                Log.i(TAG, "BroadcastReceiver USB action " + action);
+        public void onReceive(Context context, Intent intent)
+        {
+            final String action = intent.getAction();
+            Log.i(TAG, "BroadcastReceiver USB action " + action);
 
-                if (ACTION_USB_PERMISSION.equals(action)) {
-                    synchronized (_instance) {
-                        UsbDevice device = (UsbDevice)intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
-                        if (device != null) {
-                            UsbSerialDriver driver = _findDriverByDeviceId(device.getDeviceId());
-
-                            if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
-                                qgcLogDebug("Permission granted to " + device.getDeviceName());
-                                driver.setPermissionStatus(UsbSerialDriver.permissionStatusSuccess);
-                            } else {
-                                qgcLogDebug("Permission denied for " + device.getDeviceName());
-                                driver.setPermissionStatus(UsbSerialDriver.permissionStatusDenied);
-                            }
-                        }
-                    }
-                } else if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
-                    UsbDevice device = (UsbDevice)intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
-                    if (device != null) {
-                        if (_userDataHashByDeviceId.containsKey(device.getDeviceId())) {
-                            nativeDeviceHasDisconnected(_userDataHashByDeviceId.get(device.getDeviceId()));
-                        }
-                    }
-                }
-
-
-                // FIXME-QT6: Not ye converted to Qt6
-                //try {
-                //    nativeUpdateAvailableJoysticks();
-                //} catch(Exception e) {
-                //    Log.e(TAG, "Exception nativeUpdateAvailableJoysticks()");
-                //}
+            if (ACTION_USB_PERMISSION.equals(action)) {
+                handleUsbPermission(intent);
+            } else if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
+                handleUsbDeviceDetached(intent);
+            } else if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) {
+                handleUsbDeviceAttached(intent);
             }
-        };
+
+            try {
+               nativeUpdateAvailableJoysticks();
+            } catch (final Exception e) {
+               Log.e(TAG, "Exception nativeUpdateAvailableJoysticks()", e);
+            }
+        }
+    };
+
+    private static void handleUsbPermission(final Intent intent)
+    {
+        synchronized (_instance) {
+            final UsbDevice device = (UsbDevice)intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+            if (device != null) {
+                final UsbSerialDriver driver = _findDriverByDeviceId(device.getDeviceId());
+
+                if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
+                    qgcLogDebug("Permission granted to " + device.getDeviceName());
+                    try {
+                        driver.getPorts().get(0).open(_usbManager.openDevice(device));
+                    } catch (final IOException e) {
+                        Log.e(TAG, "Error opening port", e);
+                    }
+                } else {
+                    qgcLogDebug("Permission denied for " + device.getDeviceName());
+                }
+            }
+        }
+    }
+
+    private static void handleUsbDeviceDetached(final Intent intent)
+    {
+        final UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+        if (device != null) {
+            if (_userDataHashByDeviceId.containsKey(device.getDeviceId())) {
+                nativeDeviceHasDisconnected(_userDataHashByDeviceId.get(device.getDeviceId()));
+            }
+        }
+    }
+
+    private static void handleUsbDeviceAttached(final Intent intent)
+    {
+        final UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+        if (device != null) {
+            final UsbSerialDriver driver = _findDriverByDeviceId(device.getDeviceId());
+            if (driver != null && !_usbManager.hasPermission(device)) {
+                qgcLogDebug("Requesting permission for device " + device.getDeviceName());
+                _usbManager.requestPermission(device, _usbPermissionIntent);
+            }
+        }
+    }
 
     // Native C++ functions which connect back to QSerialPort code
-    private static native void nativeDeviceHasDisconnected(long userData);
-    private static native void nativeDeviceException(long userData, String messageA);
-    private static native void nativeDeviceNewData(long userData, byte[] dataA);
+    private static native void nativeDeviceHasDisconnected(final long userData);
+    private static native void nativeDeviceException(final long userData, final String message);
+    private static native void nativeDeviceNewData(final long userData, final byte[] data);
     private static native void nativeUpdateAvailableJoysticks();
 
     // Native C++ functions called to log output
-    public static native void qgcLogDebug(String message);
-    public static native void qgcLogWarning(String message);
+    public static native void qgcLogDebug(final String message);
+    public static native void qgcLogWarning(final String message);
 
     public native void nativeInit();
 
     // QGCActivity singleton
     public QGCActivity()
     {
-        _instance =                 this;
-        _drivers =                  new ArrayList<UsbSerialDriver>();
-        _userDataHashByDeviceId =   new HashMap<Integer, Long>();
-        m_ioManager =               new HashMap<Integer, UsbIoManager>();
+        _instance = this;
+        _drivers = new ArrayList<>();
+        _userDataHashByDeviceId = new HashMap<>();
+        _serialIoManager = new HashMap<>();
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
+
         nativeInit();
-        PowerManager pm = (PowerManager)_instance.getSystemService(Context.POWER_SERVICE);
-        _wakeLock = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, "QGroundControl");
-        if(_wakeLock != null) {
+        acquireWakeLock();
+        keepScreenOn();
+        setupMulticastLock();
+        registerReceivers();
+        setupUsbPermissionIntent();
+
+        _usbManager = (UsbManager) _instance.getSystemService(Context.USB_SERVICE);
+    }
+
+    private void acquireWakeLock()
+    {
+        final PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        _wakeLock = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, SCREEN_BRIGHT_WAKE_LOCK_TAG);
+        if (_wakeLock != null) {
             _wakeLock.acquire();
         } else {
             Log.i(TAG, "SCREEN_BRIGHT_WAKE_LOCK not acquired!!!");
         }
-        _instance.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    }
 
-        _usbManager = (UsbManager)_instance.getSystemService(Context.USB_SERVICE);
+    private void keepScreenOn()
+    {
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    }
 
-        // Register for USB Detach and USB Permission intent
-        IntentFilter filter = new IntentFilter();
+    // Workaround for QTBUG-73138
+    private void setupMulticastLock()
+    {
+        if (_wifiMulticastLock == null) {
+            final WifiManager wifi = (WifiManager)getSystemService(Context.WIFI_SERVICE);
+            _wifiMulticastLock = wifi.createMulticastLock(MULTICAST_LOCK_TAG);
+            _wifiMulticastLock.setReferenceCounted(true);
+        }
+
+        _wifiMulticastLock.acquire();
+        Log.d(TAG, "Multicast lock: " + _wifiMulticastLock.toString());
+    }
+
+    private void registerReceivers()
+    {
+        final IntentFilter filter = new IntentFilter();
         filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
         filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
         filter.addAction(ACTION_USB_PERMISSION);
         filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
         filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
-        if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            _instance.registerReceiver(_instance._usbReceiver, filter, RECEIVER_EXPORTED);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(_usbReceiver, filter, RECEIVER_EXPORTED);
         } else {
-            _instance.registerReceiver(_instance._usbReceiver, filter);
+            registerReceiver(_usbReceiver, filter);
         }
+    }
 
-        // Create intent for usb permission request
+    private void setupUsbPermissionIntent()
+    {
         int intentFlags = 0;
-        if (android.os.Build.VERSION.SDK_INT >= 23) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
             intentFlags = PendingIntent.FLAG_IMMUTABLE;
         }
-        _usbPermissionIntent = PendingIntent.getBroadcast(_instance, 0, new Intent(ACTION_USB_PERMISSION), intentFlags);
-
-        // Workaround for QTBUG-73138
-        if (_wifiMulticastLock == null)
-                {
-                    WifiManager wifi = (WifiManager) _instance.getSystemService(Context.WIFI_SERVICE);
-                    _wifiMulticastLock = wifi.createMulticastLock("QGroundControl");
-                    _wifiMulticastLock.setReferenceCounted(true);
-                }
-
-        _wifiMulticastLock.acquire();
-        Log.d(TAG, "Multicast lock: " + _wifiMulticastLock.toString());
+        _usbPermissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), intentFlags);
     }
 
     @Override
     protected void onDestroy()
     {
         try {
-            if (_wifiMulticastLock != null) {
-                _wifiMulticastLock.release();
-                Log.d(TAG, "Multicast lock released.");
-            }
-            if(_wakeLock != null) {
-                _wakeLock.release();
-            }
-        } catch(Exception e) {
-           Log.e(TAG, "Exception onDestroy()");
+            releaseMulticastLock();
+            releaseWakeLock();
+        } catch(final Exception e) {
+           Log.e(TAG, "Exception onDestroy()", e);
         }
+
         super.onDestroy();
     }
 
-    public void onInit(int status) {
+    private void releaseMulticastLock()
+    {
+        if (_wifiMulticastLock != null) {
+            _wifiMulticastLock.release();
+            Log.d(TAG, "Multicast lock released.");
+        }
     }
 
-    /// Incrementally updates the list of drivers connected to the device
+    private void releaseWakeLock()
+    {
+        if(_wakeLock != null) {
+            _wakeLock.release();
+        }
+    }
+
+    public void onInit(int status)
+    {
+
+    }
+
+    private static UsbSerialDriver _findDriverByDeviceId(int deviceId)
+    {
+        for (final UsbSerialDriver driver: _drivers) {
+            if (driver.getDevice().getDeviceId() == deviceId) {
+                return driver;
+            }
+        }
+
+        return null;
+    }
+
+    private static UsbSerialDriver _findDriverByDeviceName(final String deviceName)
+    {
+        for (final UsbSerialDriver driver: _drivers) {
+            if (driver.getDevice().getDeviceName().equals(deviceName)) {
+                return driver;
+            }
+        }
+
+        return null;
+    }
+
+    public static void refreshUsbDevices()
+    {
+        final UsbSerialProber usbDefaultProber = UsbSerialProber.getDefaultProber();
+        final UsbSerialProber usbQGCProber = QGCProber.getQGCProber();
+
+        _drivers.clear();
+        for (final UsbDevice device : _usbManager.getDeviceList().values()) {
+            UsbSerialDriver driver = usbDefaultProber.probeDevice(device);
+            if (driver == null) {
+                driver = usbQGCProber.probeDevice(device);
+            }
+            if (driver != null) {
+                _drivers.add(driver);
+            }
+        }
+    }
+
+    /**
+     * @brief Incrementally updates the list of drivers connected to the device.
+     */
     private static void updateCurrentDrivers()
     {
-        List<UsbSerialDriver> currentDrivers = UsbSerialProber.findAllDevices(_usbManager);
+        final UsbSerialProber usbDefaultProber = UsbSerialProber.getDefaultProber();
+        List<UsbSerialDriver> currentDrivers = usbDefaultProber.findAllDrivers(_usbManager);
+        if (currentDrivers.isEmpty()) {
+            currentDrivers = QGCProber.getQGCProber().findAllDrivers(_usbManager);
+        }
 
-        // Remove stale drivers
-        for (int i=_drivers.size()-1; i>=0; i--) {
+        if (currentDrivers.isEmpty()) {
+            return;
+        }
+
+        removeStaleDrivers(currentDrivers);
+
+        addNewDrivers(currentDrivers);
+    }
+
+    private static void removeStaleDrivers(final List<UsbSerialDriver> currentDrivers)
+    {
+        for (int i = _drivers.size() - 1; i >= 0; i--) {
             boolean found = false;
-            for (UsbSerialDriver currentDriver: currentDrivers) {
+            for (final UsbSerialDriver currentDriver : currentDrivers) {
                 if (_drivers.get(i).getDevice().getDeviceId() == currentDriver.getDevice().getDeviceId()) {
                     found = true;
                     break;
@@ -267,40 +344,46 @@ public class QGCActivity extends QtActivity
                 _drivers.remove(i);
             }
         }
+    }
 
-        // Add new drivers
-        for (int i=0; i<currentDrivers.size(); i++) {
+    private static void addNewDrivers(final List<UsbSerialDriver> currentDrivers)
+    {
+        for (final UsbSerialDriver newDriver : currentDrivers) {
             boolean found = false;
-            for (int j=0; j<_drivers.size(); j++) {
-                if (currentDrivers.get(i).getDevice().getDeviceId() == _drivers.get(j).getDevice().getDeviceId()) {
+            for (final UsbSerialDriver driver : _drivers) {
+                if (newDriver.getDevice().getDeviceId() == driver.getDevice().getDeviceId()) {
                     found = true;
                     break;
                 }
             }
 
             if (!found) {
-                UsbSerialDriver newDriver =     currentDrivers.get(i);
-                UsbDevice       device =        newDriver.getDevice();
-                String          deviceName =    device.getDeviceName();
-
-                _drivers.add(newDriver);
-                qgcLogDebug("Adding new driver " + deviceName);
-
-                // Request permission if needed
-                if (_usbManager.hasPermission(device)) {
-                    qgcLogDebug("Already have permission to use device " + deviceName);
-                    newDriver.setPermissionStatus(UsbSerialDriver.permissionStatusSuccess);
-                } else {
-                    qgcLogDebug("Requesting permission to use device " + deviceName);
-                    newDriver.setPermissionStatus(UsbSerialDriver.permissionStatusRequested);
-                    _usbManager.requestPermission(device, _usbPermissionIntent);
-                }
+                addDriver(newDriver);
             }
         }
     }
 
-    /// Returns array of device info for each unopened device.
-    /// @return Device info format DeviceName:Company:ProductId:VendorId
+    private static void addDriver(final UsbSerialDriver newDriver)
+    {
+        final UsbDevice device = newDriver.getDevice();
+        final String deviceName = device.getDeviceName();
+
+        _drivers.add(newDriver);
+        qgcLogDebug("Adding new driver " + deviceName);
+
+        if (_usbManager.hasPermission(device)) {
+            qgcLogDebug("Already have permission to use device " + deviceName);
+        } else {
+            qgcLogDebug("Requesting permission to use device " + deviceName);
+            _usbManager.requestPermission(device, _usbPermissionIntent);
+        }
+    }
+
+    /**
+     * @brief Returns an array of device info for each unopened device.
+     *
+     * @return String[] Device info in the format "DeviceName:Company:ProductId:VendorId".
+     */
     public static String[] availableDevicesInfo()
     {
         updateCurrentDrivers();
@@ -309,239 +392,394 @@ public class QGCActivity extends QtActivity
             return null;
         }
 
-        List<String> deviceInfoList = new ArrayList<String>();
+        final List<String> deviceInfoList = new ArrayList<>();
 
-        for (int i=0; i<_drivers.size(); i++) {
-            String          deviceInfo;
-            UsbSerialDriver driver = _drivers.get(i);
-
-            if (driver.permissionStatus() != UsbSerialDriver.permissionStatusSuccess) {
-                continue;
-            }
-
-            UsbDevice device = driver.getDevice();
-
-            deviceInfo = device.getDeviceName() + ":";
-
-            if (driver instanceof FtdiSerialDriver) {
-                deviceInfo = deviceInfo + "FTDI:";
-            } else if (driver instanceof CdcAcmSerialDriver) {
-                deviceInfo = deviceInfo + "Cdc Acm:";
-            } else if (driver instanceof Cp2102SerialDriver) {
-                deviceInfo = deviceInfo + "Cp2102:";
-            } else if (driver instanceof ProlificSerialDriver) {
-                deviceInfo = deviceInfo + "Prolific:";
-            } else {
-                deviceInfo = deviceInfo + "Unknown:";
-            }
-
-            deviceInfo = deviceInfo + Integer.toString(device.getProductId()) + ":";
-            deviceInfo = deviceInfo + Integer.toString(device.getVendorId()) + ":";
+        for (final UsbSerialDriver driver : _drivers) {
+            final UsbSerialPort port = driver.getPorts().get(0);
+            final UsbDevice device = driver.getDevice();
+            final String deviceInfo = formatDeviceInfo(device, driver);
 
             deviceInfoList.add(deviceInfo);
         }
 
-        String[] rgDeviceInfo = new String[deviceInfoList.size()];
-        for (int i=0; i<deviceInfoList.size(); i++) {
-            rgDeviceInfo[i] = deviceInfoList.get(i);
-        }
-
-        return rgDeviceInfo;
+        return deviceInfoList.toArray(new String[0]);
     }
 
-    /// Open the specified device
-    ///     @param userData Data to associate with device and pass back through to native calls.
-    /// @return Device id
-    public static int open(Context parentContext, String deviceName, long userData)
+    private static String formatDeviceInfo(final UsbDevice device, final UsbSerialDriver driver)
     {
-        int deviceId = BAD_DEVICE_ID;
+        String deviceInfo = device.getDeviceName() + ":";
 
+        if (driver instanceof FtdiSerialDriver) {
+            deviceInfo += "FTDI:";
+        } else if (driver instanceof CdcAcmSerialDriver) {
+            deviceInfo += "Cdc Acm:";
+        } else if (driver instanceof Cp21xxSerialDriver) {
+            deviceInfo += "Cp21xx:";
+        } else if (driver instanceof ProlificSerialDriver) {
+            deviceInfo += "Prolific:";
+        } else if (driver instanceof Ch34xSerialDriver) {
+            deviceInfo += "CH34x:";
+        } else if (driver instanceof ChromeCcdSerialDriver) {
+            deviceInfo += "Chrome CCD:";
+        } else if (driver instanceof GsmModemSerialDriver) {
+            deviceInfo += "GSM Modem:";
+        } else {
+            deviceInfo += "Unknown:";
+        }
+
+        deviceInfo += device.getProductId() + ":";
+        deviceInfo += device.getVendorId() + ":";
+
+        return deviceInfo;
+    }
+
+    /**
+     * Format device information for display.
+     *
+     * @param driver UsbSerialDriver instance.
+     * @return String containing formatted device information.
+     */
+    private static String formatDeviceInfo(final UsbSerialDriver driver)
+    {
+        final UsbDevice device = driver.getDevice();
+        final List<UsbSerialPort> ports = driver.getPorts();
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(String.format("Vendor %04X Product %04X", device.getVendorId(), device.getProductId()));
+
+        for (int i = 0; i < ports.size(); i++) {
+            final UsbSerialPort port = ports.get(i);
+            sb.append("\nPort ").append(i).append(": ");
+            sb.append(String.format("Port number %d", port.getPortNumber()));
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * @brief Opens the specified device.
+     *
+     * @param userData Data to associate with the device and pass back through to native calls.
+     * @return int Device ID.
+     */
+    public static int open(final Context parentContext, final String deviceName, final long userData)
+    {
         m_context = parentContext;
 
-        UsbSerialDriver driver = _findDriverByDeviceName(deviceName);
+        final UsbSerialDriver driver = _findDriverByDeviceName(deviceName);
         if (driver == null) {
             qgcLogWarning("Attempt to open unknown device " + deviceName);
             return BAD_DEVICE_ID;
         }
 
-        if (driver.permissionStatus() != UsbSerialDriver.permissionStatusSuccess) {
-            qgcLogWarning("Attempt to open device with incorrect permission status " + deviceName + " " + driver.permissionStatus());
+        final List<UsbSerialPort> ports = driver.getPorts();
+        if (ports.isEmpty()) {
+            qgcLogWarning("No ports available on device " + deviceName);
             return BAD_DEVICE_ID;
         }
 
-        UsbDevice device = driver.getDevice();
-        deviceId = device.getDeviceId();
+        final UsbSerialPort port = ports.get(0);
+
+        final UsbDevice device = driver.getDevice();
+        final int deviceId = device.getDeviceId();
+
+        final long startTime = MonotonicClock.millis();
 
         try {
-            driver.setConnection(_usbManager.openDevice(device));
-            driver.open();
-            driver.setPermissionStatus(UsbSerialDriver.permissionStatusOpen);
-
-            _userDataHashByDeviceId.put(deviceId, userData);
-
-            UsbIoManager ioManager = new UsbIoManager(driver, m_Listener, userData);
-            m_ioManager.put(deviceId, ioManager);
-            m_Executor.submit(ioManager);
-
-            qgcLogDebug("Port open successful");
-        } catch(IOException exA) {
-            driver.setPermissionStatus(UsbSerialDriver.permissionStatusRequestRequired);
-            _userDataHashByDeviceId.remove(deviceId);
-
-            if(m_ioManager.get(deviceId) != null) {
-                m_ioManager.get(deviceId).stop();
-                m_ioManager.remove(deviceId);
-            }
-            qgcLogWarning("Port open exception: " + exA.getMessage());
+            openDriver(port, device, deviceId, userData);
+        } catch (final IOException ex) {
+            handleOpenException(port, deviceId, ex);
             return BAD_DEVICE_ID;
         }
+
+        final long endTime = MonotonicClock.millis();
+        Log.d(TAG, "Time taken to open device: " + (endTime - startTime) + " ms");
 
         return deviceId;
     }
 
-    public static void startIoManager(int idA)
+    private static void openDriver(final UsbSerialPort port, final UsbDevice device, final int deviceId, final long userData) throws IOException
     {
-        if (m_ioManager.get(idA) != null)
+        final UsbDeviceConnection connection = _usbManager.openDevice(device);
+        if (connection == null) {
+            qgcLogWarning("No Usb Device Connection");
+            // add UsbManager.requestPermission(driver.getDevice(), ..) handling here
             return;
+        }
+        port.open(connection);
+        port.setParameters(115200, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE);
 
-        UsbSerialDriver driverL = _findDriverByDeviceId(idA);
+        _userDataHashByDeviceId.put(deviceId, userData);
 
-        if (driverL == null)
+        final SerialInputOutputManager ioManager = configureAndStartIoManager(port, userData);
+        _serialIoManager.put(deviceId, ioManager);
+        m_Executor.submit(ioManager);
+
+        qgcLogDebug("Port open successful");
+    }
+
+    private static void handleOpenException(final UsbSerialPort driver, final int deviceId, final IOException ex)
+    {
+        _userDataHashByDeviceId.remove(deviceId);
+
+        if (_serialIoManager.get(deviceId) != null) {
+            _serialIoManager.get(deviceId).stop();
+            _serialIoManager.remove(deviceId);
+        }
+
+        qgcLogWarning("Port open exception: " + ex.getMessage());
+    }
+
+    public static void startIoManager(final int id)
+    {
+        if (_serialIoManager.get(id) != null) {
             return;
+        }
 
-        UsbIoManager managerL = new UsbIoManager(driverL, m_Listener, _userDataHashByDeviceId.get(idA));
-        m_ioManager.put(idA, managerL);
-        m_Executor.submit(managerL);
-    }
-
-    public static void stopIoManager(int idA)
-    {
-        if(m_ioManager.get(idA) == null)
+        final UsbSerialDriver driver = _findDriverByDeviceId(id);
+        if (driver == null) {
             return;
+        }
 
-        m_ioManager.get(idA).stop();
-        m_ioManager.remove(idA);
+        final List<UsbSerialPort> ports = driver.getPorts();
+        if (ports.isEmpty()) {
+            qgcLogWarning("No ports available on device ID " + id);
+            return;
+        }
+
+        final UsbSerialPort port = ports.get(0);
+
+        final SerialInputOutputManager manager = configureAndStartIoManager(port, _userDataHashByDeviceId.get(id));
+        _serialIoManager.put(id, manager);
+        m_Executor.submit(manager);
     }
 
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  Sets the parameters on an open port.
-    //
-    //  Args:   idA - ID number from the open command
-    //          baudRateA - Decimal value of the baud rate.  I.E. 9600, 57600, 115200, etc.
-    //          dataBitsA - number of data bits.  Valid numbers are 5, 6, 7, 8
-    //          stopBitsA - number of stop bits.  Valid numbers are 1, 2
-    //          parityA - No Parity=0, Odd Parity=1, Even Parity=2
-    //
-    //  Returns:  T/F Success/Failure
-    //
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////
-    public static boolean setParameters(int idA, int baudRateA, int dataBitsA, int stopBitsA, int parityA)
+    public static void stopIoManager(final int id)
     {
-        UsbSerialDriver driverL = _findDriverByDeviceId(idA);
-
-        if (driverL == null)
-            return false;
-
-        try
-        {
-            driverL.setParameters(baudRateA, dataBitsA, stopBitsA, parityA);
-            return true;
+        if(_serialIoManager.get(id) == null) {
+            return;
         }
-        catch(IOException eA)
-        {
-            return false;
-        }
+
+        _serialIoManager.get(id).stop();
+        _serialIoManager.remove(id);
     }
 
-
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  Close the device.
-    //
-    //  Args:  idA - ID number from the open command
-    //
-    //  Returns:  T/F Success/Failure
-    //
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////
-    public static boolean close(int idA)
+    private static SerialInputOutputManager configureAndStartIoManager(final UsbSerialPort port, final long userData)
     {
-        UsbSerialDriver driverL = _findDriverByDeviceId(idA);
+        final SerialInputOutputManager ioManager = new SerialInputOutputManager(port, m_Listener, userData);
 
-        if (driverL == null)
-            return false;
+        // ioManager.setReadBufferSize(8192);
+        // ioManager.setWriteBufferSize(8192);
 
-        try
-        {
-            stopIoManager(idA);
-            _userDataHashByDeviceId.remove(idA);
-            driverL.setPermissionStatus(UsbSerialDriver.permissionStatusRequestRequired);
-            driverL.close();
+        // ioManager.getReadBufferSize();
+        // ioManager.getWriteBufferSize();
 
-            return true;
+        try {
+            ioManager.setReadTimeout(1000);
+        } catch (final IllegalStateException e) {
+            qgcLogWarning("Set Read Timeout exception: " + e.getMessage());
         }
-        catch(IOException eA)
-        {
-            return false;
+
+        ioManager.setWriteTimeout(1000);
+
+        // try {
+        //     ioManager.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
+        // } catch (final IllegalStateException e) {
+        //     qgcLogWarning("Set Thread Priority exception: " + e.getMessage());
+        // }
+
+        try {
+            ioManager.start();
+        } catch (final IllegalStateException e) {
+            qgcLogWarning("IO Manager Start exception: " + e.getMessage());
         }
+
+        // final State ioState = ioManager.getState();
+        // STOPPED,
+        // RUNNING,
+        // STOPPING
+
+        return ioManager;
     }
 
-
-
-    //////////////////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  Write data to the device.
-    //
-    //  Args:   idA - ID number from the open command
-    //          sourceA - byte array of data to write
-    //          timeoutMsecA - amount of time in milliseconds to wait for the write to occur
-    //
-    //  Returns:  number of bytes written
-    //
-    /////////////////////////////////////////////////////////////////////////////////////////////////////
-    public static int write(int idA, byte[] sourceA, int timeoutMSecA)
+    /**
+     * @brief Sets the parameters on an open port.
+     *
+     * @param id ID number from the open command.
+     * @param baudRate Decimal value of the baud rate. For example, 9600, 57600, 115200, etc.
+     * @param dataBits Number of data bits. Valid numbers are 5, 6, 7, 8.
+     * @param stopBits Number of stop bits. Valid numbers are 1, 2.
+     * @param parity Parity setting: No Parity=0, Odd Parity=1, Even Parity=2.
+     * @return true if the operation is successful, false otherwise.
+     */
+    public static boolean setParameters(final int id, final int baudRate, final int dataBits, final int stopBits, final int parity)
     {
-        UsbSerialDriver driverL = _findDriverByDeviceId(idA);
+        final UsbSerialDriver driver = _findDriverByDeviceId(id);
 
-        if (driverL == null)
+        if (driver == null) {
+            return false;
+        }
+
+        final List<UsbSerialPort> ports = driver.getPorts();
+        if (ports.isEmpty()) {
+            qgcLogWarning("No ports available on device ID " + id);
+            return false;
+        }
+
+        final UsbSerialPort port = ports.get(0);
+
+        try {
+            port.setParameters(baudRate, dataBits, stopBits, parity);
+        } catch (final IOException e) {
+            Log.e(TAG, "Error setting parameters", e);
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @brief Closes the device.
+     *
+     * @param id ID number from the open command.
+     * @return true if the operation is successful, false otherwise.
+     */
+    public static boolean close(int id)
+    {
+        final UsbSerialDriver driver = _findDriverByDeviceId(id);
+
+        if (driver == null) {
+            return false;
+        }
+
+        final List<UsbSerialPort> ports = driver.getPorts();
+        if (ports.isEmpty()) {
+            qgcLogWarning("No ports available on device ID " + id);
+            return false;
+        }
+
+        final UsbSerialPort port = ports.get(0);
+
+        try {
+            closeDriver(port, id);
+        } catch (final IOException e) {
+            Log.e(TAG, "Error closing device", e);
+            return false;
+        }
+
+        return true;
+    }
+
+    private static void closeDriver(final UsbSerialPort port, final int id) throws IOException
+    {
+        stopIoManager(id);
+        _userDataHashByDeviceId.remove(id);
+
+        port.close();
+    }
+
+    /**
+     * @brief Writes data to the device.
+     *
+     * @param id ID number from the open command.
+     * @param source Byte array of data to write.
+     * @param timeoutMsec Amount of time in milliseconds to wait for the write to occur.
+     * @return int Number of bytes written.
+     */
+    public static int write(final int id, final byte[] source, final int timeoutMSec)
+    {
+        final UsbSerialDriver driver = _findDriverByDeviceId(id);
+
+        if (driver == null) {
             return 0;
-
-        try
-        {
-            return driverL.write(sourceA, timeoutMSecA);
         }
-        catch(IOException eA)
-        {
+
+        final List<UsbSerialPort> ports = driver.getPorts();
+        if (ports.isEmpty()) {
+            qgcLogWarning("No ports available on device ID " + id);
             return 0;
         }
-        /*
-        UsbIoManager managerL = m_ioManager.get(idA);
 
-        if(managerL != null)
-        {
-            managerL.writeAsync(sourceA);
-            return sourceA.length;
+        final UsbSerialPort port = ports.get(0);
+
+        try {
+            port.write(source, timeoutMSec);
+        } catch (final SerialTimeoutException e) {
+            Log.e(TAG, "Write timeout occurred", e);
+            return -1;
+        } catch (final IOException e) {
+            Log.e(TAG, "Error writing data", e);
+            return -1;
         }
-        else
-            return 0;
-        */
+
+        return 0;
     }
 
-    public static boolean isDeviceNameValid(String nameA)
+    /**
+     * Writes data to the device asynchronously.
+     *
+     * @param id ID number from the open command.
+     * @param data Byte array of data to write.
+     */
+    public static void writeAsync(final int id, final byte[] data)
     {
-        for (UsbSerialDriver driver: _drivers) {
-            if (driver.getDevice().getDeviceName() == nameA)
+        final SerialInputOutputManager ioManager = _serialIoManager.get(id);
+
+        if (ioManager != null) {
+            ioManager.writeAsync(data);
+        } else {
+            Log.w(TAG, "IO Manager not found for device ID " + id);
+        }
+    }
+
+    public static byte[] readWithTimeout(final int id, final int timeoutMs) throws IOException
+    {
+        final UsbSerialDriver driver = _findDriverByDeviceId(id);
+
+        if (driver == null) {
+            throw new IOException("Device not found");
+        }
+
+        final List<UsbSerialPort> ports = driver.getPorts();
+        if (ports.isEmpty()) {
+            throw new IOException("No ports available on device ID " + id);
+        }
+
+        final UsbSerialPort port = ports.get(0);
+        long startTime = MonotonicClock.millis();
+        byte[] buffer = new byte[1024];
+        int bytesRead = 0;
+
+        while ((MonotonicClock.millis() - startTime) < timeoutMs) {
+            bytesRead = port.read(buffer, 100);
+            if (bytesRead > 0) {
+                break;
+            }
+        }
+
+        if (bytesRead == 0) {
+            throw new SerialTimeoutException("Read operation timed out", bytesRead);
+        }
+
+        return buffer;
+    }
+
+    public static boolean isDeviceNameValid(final String name)
+    {
+        for (final UsbSerialDriver driver: _drivers) {
+            if (driver.getDevice().getDeviceName().equals(name)) {
                 return true;
+            }
         }
 
         return false;
     }
 
-    public static boolean isDeviceNameOpen(String nameA)
+    public static boolean isDeviceNameOpen(final String name)
     {
-        for (UsbSerialDriver driverL: _drivers) {
-            if (nameA.equals(driverL.getDevice().getDeviceName()) && driverL.permissionStatus() == UsbSerialDriver.permissionStatusOpen) {
+        for (final UsbSerialDriver driver: _drivers) {
+            final List<UsbSerialPort> ports = driver.getPorts();
+            if (!ports.isEmpty() && name.equals(driver.getDevice().getDeviceName()) && ports.get(0).isOpen()) {
                 return true;
             }
         }
@@ -549,149 +787,239 @@ public class QGCActivity extends QtActivity
         return false;
     }
 
-
-
-    /////////////////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  Set the Data Terminal Ready flag on the device
-    //
-    //  Args:   idA - ID number from the open command
-    //          onA - on=T, off=F
-    //
-    //  Returns:  T/F Success/Failure
-    //
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    public static boolean setDataTerminalReady(int idA, boolean onA)
+    /**
+     * @brief Sets the Data Terminal Ready (DTR) flag on the device.
+     *
+     * @param id ID number from the open command.
+     * @param on true to turn on, false to turn off.
+     * @return true if the operation is successful, false otherwise.
+     */
+    public static boolean setDataTerminalReady(final int id, final boolean on)
     {
-        try
-        {
-            UsbSerialDriver driverL = _findDriverByDeviceId(idA);
+        final UsbSerialDriver driver = _findDriverByDeviceId(id);
 
-            if (driverL == null)
-                return false;
-
-            driverL.setDTR(onA);
-            return true;
-        }
-        catch(IOException eA)
-        {
+        if (driver == null) {
             return false;
         }
-    }
 
-
-
-    ////////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  Set the Request to Send flag
-    //
-    //  Args:   idA - ID number from the open command
-    //          onA - on=T, off=F
-    //
-    //  Returns:  T/F Success/Failure
-    //
-    ////////////////////////////////////////////////////////////////////////////////////////////
-    public static boolean setRequestToSend(int idA, boolean onA)
-    {
-        try
-        {
-            UsbSerialDriver driverL = _findDriverByDeviceId(idA);
-
-            if (driverL == null)
-                return false;
-
-            driverL.setRTS(onA);
-            return true;
-        }
-        catch(IOException eA)
-        {
+        final List<UsbSerialPort> ports = driver.getPorts();
+        if (ports.isEmpty()) {
+            qgcLogWarning("No ports available on device ID " + id);
             return false;
         }
-    }
 
+        final UsbSerialPort port = ports.get(0);
 
+        EnumSet<UsbSerialPort.ControlLine> supportedControlLines;
 
-    ///////////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  Purge the hardware buffers based on the input and output flags
-    //
-    //  Args:   idA - ID number from the open command
-    //          inputA - input buffer purge.  purge=T
-    //          outputA - output buffer purge.  purge=T
-    //
-    //  Returns:  T/F Success/Failure
-    //
-    ///////////////////////////////////////////////////////////////////////////////////////////////
-    public static boolean purgeBuffers(int idA, boolean inputA, boolean outputA)
-    {
-        try
-        {
-            UsbSerialDriver driverL = _findDriverByDeviceId(idA);
-
-            if (driverL == null)
-                return false;
-
-            return driverL.purgeHwBuffers(inputA, outputA);
-        }
-        catch(IOException eA)
-        {
+        try {
+            supportedControlLines = port.getSupportedControlLines();
+        } catch (final IOException e) {
+            Log.e(TAG, "Error getting supported control lines", e);
             return false;
         }
+
+        if (!supportedControlLines.contains(UsbSerialPort.ControlLine.DTR)) {
+            Log.e(TAG, "Setting DTR Not Supported");
+            return false;
+        }
+
+        try {
+            port.setDTR(on);
+        } catch (final IOException e) {
+            Log.e(TAG, "Error setting DTR", e);
+            return false;
+        }
+
+        return true;
     }
 
-
-
-    //////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  Get the native device handle (file descriptor)
-    //
-    //  Args:   idA - ID number from the open command
-    //
-    //  Returns:  device handle
-    //
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    public static int getDeviceHandle(int idA)
+    /**
+     * @brief Sets the Request to Send (RTS) flag.
+     *
+     * @param id ID number from the open command.
+     * @param on true to turn on, false to turn off.
+     * @return true if the operation is successful, false otherwise.
+     */
+    public static boolean setRequestToSend(final int id, final boolean on)
     {
-        UsbSerialDriver driverL = _findDriverByDeviceId(idA);
+        final UsbSerialDriver driver = _findDriverByDeviceId(id);
 
-        if (driverL == null)
+        if (driver == null) {
+            return false;
+        }
+
+        final List<UsbSerialPort> ports = driver.getPorts();
+        if (ports.isEmpty()) {
+            qgcLogWarning("No ports available on device ID " + id);
+            return false;
+        }
+
+        final UsbSerialPort port = ports.get(0);
+
+        EnumSet<UsbSerialPort.ControlLine> supportedControlLines;
+
+        try {
+            supportedControlLines = port.getSupportedControlLines();
+        } catch (final IOException e) {
+            Log.e(TAG, "Error getting supported control lines", e);
+            return false;
+        }
+
+        if (!supportedControlLines.contains(UsbSerialPort.ControlLine.RTS)) {
+            Log.e(TAG, "Setting RTS Not Supported");
+            return false;
+        }
+
+        try {
+            port.setRTS(on);
+        } catch (final IOException e) {
+            Log.e(TAG, "Error setting RTS", e);
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Sets the break condition on the device.
+     *
+     * @param id ID number from the open command.
+     * @param on true to set break, false to clear break.
+     * @return true if the operation is successful, false otherwise.
+     */
+    public static boolean setBreak(int id, boolean on)
+    {
+        final UsbSerialDriver driver = _findDriverByDeviceId(id);
+
+        if (driver == null) {
+            return false;
+        }
+
+        final List<UsbSerialPort> ports = driver.getPorts();
+        if (ports.isEmpty()) {
+            qgcLogWarning("No ports available on device ID " + id);
+            return false;
+        }
+
+        final UsbSerialPort port = ports.get(0);
+
+        try {
+            port.setBreak(on);
+        } catch (IOException e) {
+            Log.e(TAG, "Error setting break condition", e);
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @brief Purges the hardware buffers based on the input and output flags.
+     *
+     * @param id ID number from the open command.
+     * @param input true to purge the input buffer.
+     * @param output true to purge the output buffer.
+     * @return true if the operation is successful, false otherwise.
+     */
+    public static boolean purgeBuffers(final int id, final boolean input, final boolean output)
+    {
+        final UsbSerialDriver driver = _findDriverByDeviceId(id);
+
+        if (driver == null) {
+            return false;
+        }
+
+        final List<UsbSerialPort> ports = driver.getPorts();
+        if (ports.isEmpty()) {
+            qgcLogWarning("No ports available on device ID " + id);
+            return false;
+        }
+
+        final UsbSerialPort port = ports.get(0);
+
+        try {
+            port.purgeHwBuffers(input, output);
+        } catch (IOException e) {
+            Log.e(TAG, "Error purging buffers", e);
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @brief Gets the native device handle (file descriptor).
+     *
+     * @param id ID number from the open command.
+     * @return int Device handle.
+     */
+    public static int getDeviceHandle(final int id)
+    {
+        final UsbSerialDriver driver = _findDriverByDeviceId(id);
+
+        if (driver == null) {
             return -1;
+        }
 
-        UsbDeviceConnection connectL = driverL.getDeviceConnection();
-        if (connectL == null)
+        final UsbDeviceConnection connect = _usbManager.openDevice(driver.getDevice());
+        if (connect == null) {
             return -1;
-        else
-            return connectL.getFileDescriptor();
+        }
+
+        return connect.getFileDescriptor();
     }
 
+    public static void logUsbDescriptors(int deviceId)
+    {
+        final UsbSerialDriver driver = _findDriverByDeviceId(deviceId);
 
-    public static String getSDCardPath() {
-        StorageManager storageManager = (StorageManager)_instance.getSystemService(Activity.STORAGE_SERVICE);
-        List<StorageVolume> volumes = storageManager.getStorageVolumes();
-        Method mMethodGetPath;
-        String path = "";
-        for (StorageVolume vol : volumes) {
-            try {
-                mMethodGetPath = vol.getClass().getMethod("getPath");
-            } catch (NoSuchMethodException e) {
-                e.printStackTrace();
-                continue;
-            }
-            try {
-                path = (String) mMethodGetPath.invoke(vol);
-            } catch (Exception e) {
-                e.printStackTrace();
-                continue;
-            }
+        if (driver == null) {
+            Log.w(TAG, "No driver found for device ID " + deviceId);
+            return;
+        }
 
-            if (vol.isRemovable() == true) {
+        final UsbDeviceConnection connection = _usbManager.openDevice(driver.getDevice());
+        if (connection == null) {
+            Log.w(TAG, "No connection found for device ID " + deviceId);
+            return;
+        }
+
+        final ArrayList<byte[]> descriptors = UsbUtils.getDescriptors(connection);
+        for (byte[] descriptor : descriptors) {
+            Log.d(TAG, "Descriptor: " + HexDump.toHexString(descriptor));
+        }
+    }
+
+    public static String getSDCardPath()
+    {
+        final StorageManager storageManager = (StorageManager) _instance.getSystemService(Activity.STORAGE_SERVICE);
+        final List<StorageVolume> volumes = storageManager.getStorageVolumes();
+        for (final StorageVolume vol : volumes) {
+            final String path = getStorageVolumePath(vol);
+            if (path != null) {
+                return path;
+            }
+        }
+
+        return "";
+    }
+
+    private static String getStorageVolumePath(final StorageVolume vol)
+    {
+        try {
+            final Method mMethodGetPath = vol.getClass().getMethod("getPath");
+            final String path = (String) mMethodGetPath.invoke(vol);
+            if (vol.isRemovable()) {
                 Log.i(TAG, "removable sd card mounted " + path);
                 return path;
             } else {
                 Log.i(TAG, "storage mounted " + path);
             }
+        } catch (final Exception e) {
+            Log.e(TAG, "Error getting storage volume path", e);
         }
-        return "";
+
+        return null;
     }
 }
-
