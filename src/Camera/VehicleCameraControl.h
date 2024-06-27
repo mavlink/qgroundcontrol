@@ -187,7 +187,7 @@ protected slots:
     virtual void    _mavCommandResult       (int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
     virtual void    _dataReady              (QByteArray data);
     virtual void    _paramDone              ();
-    virtual void    _streamTimeout          ();
+    virtual void    _streamInfoTimeout      ();
     virtual void    _streamStatusTimeout    ();
     virtual void    _recTimerHandler        ();
     virtual void    _checkForVideoStreams   ();
@@ -244,6 +244,7 @@ protected:
     QMap<QString, QStringList>          _originalOptNames;
     QMap<QString, QVariantList>         _originalOptValues;
     QMap<QString, QGCCameraParamIO*>    _paramIO;
+    int                                 _cameraSettingsRetries = 0;
     int                                 _storageInfoRetries = 0;
     int                                 _captureInfoRetries = 0;
     bool                                _resetting          = false;
@@ -254,7 +255,8 @@ protected:
     QMap<QString, QStringList>          _requestUpdates;
     QStringList                         _updatesToRequest;
     //-- Video Streams
-    int                                 _requestCount       = 0;
+    int                                 _videoStreamInfoRetries = 0;
+    int                                 _videoStreamStatusRetries = 0;
     int                                 _currentStream      = 0;
     int                                 _expectedCount      = 1;
     QTimer                              _streamInfoTimer;
