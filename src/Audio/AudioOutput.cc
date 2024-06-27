@@ -49,6 +49,8 @@ AudioOutput* AudioOutput::instance()
 AudioOutput::AudioOutput(QObject* parent)
     : QTextToSpeech(QStringLiteral("none"), parent)
 {
+    // qCDebug(AudioOutputLog) << Q_FUNC_INFO << this;
+
     (void) connect(this, &QTextToSpeech::stateChanged, [](QTextToSpeech::State state) {
         qCDebug(AudioOutputLog) << Q_FUNC_INFO << "State:" << state;
     });
@@ -72,6 +74,11 @@ AudioOutput::AudioOutput(QObject* parent)
             });
         }
     }
+}
+
+AudioOutput::~AudioOutput()
+{
+    // qCDebug(AudioOutputLog) << Q_FUNC_INFO << this;
 }
 
 bool AudioOutput::isMuted() const
@@ -109,7 +116,7 @@ void AudioOutput::read(const QString& text, AudioOutput::TextMods textMods)
     }
 
     qsizetype index = -1;
-    (void) QMetaObject::invokeMethod(this, "enqueue", Qt::AutoConnection, qReturnArg(m_textQueueSize), outText);
+    (void) QMetaObject::invokeMethod(this, "enqueue", Qt::AutoConnection, qReturnArg(index), outText);
     if (index != -1) {
         m_textQueueSize = index;
     }
