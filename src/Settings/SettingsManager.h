@@ -22,7 +22,9 @@
 #include "PlanViewSettings.h"
 #include "BrandImageSettings.h"
 #include "OfflineMapsSettings.h"
+#if !defined(NO_ARDUPILOT_DIALECT)
 #include "APMMavlinkStreamRateSettings.h"
+#endif
 #include "FirmwareUpgradeSettings.h"
 #include "ADSBVehicleManagerSettings.h"
 #include "BatteryIndicatorSettings.h"
