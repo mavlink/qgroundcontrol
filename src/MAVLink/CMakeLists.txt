@@ -1,27 +1,30 @@
 add_subdirectory(LibEvents)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Gui)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui QmlIntegration)
 
 qt_add_library(MAVLink STATIC
-	ImageProtocolManager.cc
-	ImageProtocolManager.h
-	MAVLinkFTP.cc
-	MAVLinkFTP.h
-	MAVLinkLib.h
-	MAVLinkStreamConfig.cc
-	MAVLinkStreamConfig.h
-	QGCMAVLink.cc
-	QGCMAVLink.h
-	SysStatusSensorInfo.cc
-	SysStatusSensorInfo.h
+    ImageProtocolManager.cc
+    ImageProtocolManager.h
+    MAVLinkFTP.cc
+    MAVLinkFTP.h
+    MAVLinkLib.h
+    MAVLinkStreamConfig.cc
+    MAVLinkStreamConfig.h
+    QGCMAVLink.cc
+    QGCMAVLink.h
+    StatusTextHandler.cc
+    StatusTextHandler.h
+    SysStatusSensorInfo.cc
+    SysStatusSensorInfo.h
 )
 
 target_link_libraries(MAVLink
-	PRIVATE
-		Utilities
-	PUBLIC
-		Qt6::Core
-		Qt6::Gui
+    PRIVATE
+        Utilities
+    PUBLIC
+        Qt6::Core
+        Qt6::Gui
+        Qt6::QmlIntegration
 )
 
 target_include_directories(MAVLink PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
@@ -43,5 +46,5 @@ target_include_directories(MAVLink
 )
 
 # if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-# 	target_compile_options(comm PRIVATE -Wno-address-of-packed-member)
+#   target_compile_options(comm PRIVATE -Wno-address-of-packed-member)
 # endif()

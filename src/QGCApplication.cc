@@ -38,7 +38,6 @@
 #include "UDPLink.h"
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
-#include "UASMessageHandler.h"
 #include "QGCPalette.h"
 #include "QGCMapPalette.h"
 #include "QGCLoggingCategory.h"
@@ -434,10 +433,7 @@ void QGCApplication::_initForNormalAppBoot()
     }
 
     // Safe to show popup error messages now that main window is created
-    UASMessageHandler* msgHandler = _toolbox->uasMessageHandler();
-    if (msgHandler) {
-        msgHandler->showErrorsInToolbar();
-    }
+    _showErrorsInToolbar = true;
 
     #ifdef Q_OS_LINUX
     #ifndef Q_OS_ANDROID
@@ -611,11 +607,11 @@ void QGCApplication::showCriticalVehicleMessage(const QString& message)
         return;
     }
     QObject* rootQmlObject = _rootQmlObject();
-    if (rootQmlObject) {
+    if (rootQmlObject && _showErrorsInToolbar) {
         QVariant varReturn;
         QVariant varMessage = QVariant::fromValue(message);
         QMetaObject::invokeMethod(rootQmlObject, "showCriticalVehicleMessage", Q_RETURN_ARG(QVariant, varReturn), Q_ARG(QVariant, varMessage));
-    } else if (runningUnitTests()) {
+    } else if (runningUnitTests() || !_showErrorsInToolbar) {
         // Unit tests can run without UI
         qCDebug(QGCApplicationLog) << "QGCApplication::showCriticalVehicleMessage unittest" << message;
     } else {
