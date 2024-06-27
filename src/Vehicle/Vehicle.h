@@ -532,6 +532,9 @@ public:
     void setGripperAction(GRIPPER_ACTIONS gripperAction);
     Q_INVOKABLE void sendGripperAction(QGCMAVLink::GRIPPER_OPTIONS gripperOption);
 
+    Q_INVOKABLE void changeHeading(float degrees, float maxYawRate, int8_t direction, bool relative);
+    Q_INVOKABLE void changeHeading(const QGeoCoordinate& headingCoord);
+
     void pairRX(int rxType, int rxSubType);
 
     bool fixedWing() const;

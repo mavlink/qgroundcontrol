@@ -4483,3 +4483,43 @@ void Vehicle::setMessageRate(uint8_t compId, uint16_t msgId, int32_t rate)
         interval
     );
 }
+
+void Vehicle::changeHeading(float degrees, float maxYawRate, int8_t direction, bool relative)
+{
+    sendMavCommand(
+        _defaultComponentId,
+       MAV_CMD_CONDITION_YAW,
+       true,
+       degrees,
+       maxYawRate,
+       direction,
+       relative
+    );
+}
+
+void Vehicle::changeHeading(const QGeoCoordinate& headingCoord)
+{
+    const float degrees = _coordinate.azimuthTo(headingCoord);
+    const float currentHeading = _headingFact.rawValue().toFloat();
+
+    float diff = degrees - currentHeading;
+    if(diff < -180)
+    {
+        diff += 360;
+    }
+    if(diff > 180)
+    {
+        diff -= 360;
+    }
+
+    constexpr const bool relative = true;
+    const int8_t direction = (relative && (diff > 0)) ? 1 : -1;
+
+    const QString maxYawRateParam = QStringLiteral("ATC_RATE_Y_MAX");
+    float maxYawRate = 0.f;
+    if (_parameterManager->parameterExists(_defaultComponentId, maxYawRateParam)) {
+        maxYawRate = _parameterManager->getParameter(FactSystem::defaultComponentId, maxYawRateParam)->rawValue().toFloat();
+    }
+
+    changeHeading(diff, maxYawRate, direction, relative);
+}

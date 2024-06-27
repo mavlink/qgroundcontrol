@@ -58,6 +58,7 @@ Item {
     readonly property string setHomeTitle:                  qsTr("Set Home")
     readonly property string actionListTitle:               qsTr("Action")
     readonly property string setEstimatorOriginTitle:       qsTr("Set Estimator origin")
+    readonly property string changeHeadingTitle:            qsTr("Change Heading")
 
     readonly property string armMessage:                        qsTr("Arm the vehicle.")
     readonly property string forceArmMessage:                   qsTr("WARNING: This will force arming of the vehicle bypassing any safety checks.")
@@ -84,6 +85,7 @@ Item {
     readonly property string roiMessage:                        qsTr("Make the specified location a Region Of Interest.")
     readonly property string setHomeMessage:                    qsTr("Set vehicle home as the specified location. This will affect Return to Home position")
     readonly property string setEstimatorOriginMessage:         qsTr("Make the specified location the estimator origin.")
+    readonly property string changeHeadingMessage:              qsTr("Set the vehicle heading towards the specified location.")
 
     readonly property int actionRTL:                        1
     readonly property int actionLand:                       2
@@ -113,7 +115,7 @@ Item {
     readonly property int actionGripper:                    26
     readonly property int actionSetHome:                    27
     readonly property int actionSetEstimatorOrigin:         28
-  
+    readonly property int actionChangeHeading:              29
 
     property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
     property bool   _useChecklist:              QGroundControl.settingsManager.appSettings.useChecklist.rawValue && QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length
@@ -144,6 +146,7 @@ Item {
     property bool showActionList:           _guidedActionsEnabled && (showStartMission || showResumeMission || showChangeAlt || showLandAbort || actionList.hasCustomActions)
     property bool showGripper:              _initialConnectComplete ? _activeVehicle.hasGripper : false
     property bool showSetEstimatorOrigin:   _activeVehicle && !(_activeVehicle.sensorsPresentBits & Vehicle.SysStatusSensorGPS)
+    property bool showChangeHeading:        _guidedActionsEnabled && _vehicleFlying
 
     property string changeSpeedTitle:   _fixedWing ? changeAirspeedTitle : changeCruiseSpeedTitle
     property string changeSpeedMessage: _fixedWing ? changeAirspeedMessage : changeCruiseSpeedMessage
@@ -528,6 +531,10 @@ Item {
             confirmDialog.title = setEstimatorOriginTitle
             confirmDialog.message = setEstimatorOriginMessage
             break
+        case actionChangeHeading:
+            confirmDialog.title = changeHeadingTitle
+            confirmDialog.message = changeHeadingMessage
+            break
         default:
             console.warn("Unknown actionCode", actionCode)
             return
@@ -627,6 +634,9 @@ Item {
             break
         case actionSetEstimatorOrigin:
             _activeVehicle.setEstimatorOrigin(actionData)
+            break
+        case actionChangeHeading:
+            _activeVehicle.changeHeading(actionData)
             break
         default:
             console.warn(qsTr("Internal error: unknown actionCode"), actionCode)

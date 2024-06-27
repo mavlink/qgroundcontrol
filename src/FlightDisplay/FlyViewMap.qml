@@ -639,9 +639,21 @@ FlightMap {
                     if (popup.opened) {
                         popup.close()
                     }
-                    globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionSetEstimatorOrigin, mapClickCoord)
+                    globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionSetEstimatorOrigin, mapClickCoord, gotoLocationItem)
                 }
-            }        
+            }
+
+            QGCButton {
+                Layout.fillWidth:   true
+                text:               qsTr("Set Heading")
+                visible:            globals.guidedControllerFlyView.showChangeHeading
+                onClicked: {
+                    if (popup.opened) {
+                        popup.close()
+                    }
+                    globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionChangeHeading, mapClickCoord, gotoLocationItem)
+                }
+            }
         }
     }
 
