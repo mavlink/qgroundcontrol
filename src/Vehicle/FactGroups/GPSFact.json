@@ -51,6 +51,21 @@
     "name":             "count",
     "shortDesc": "Sat Count",
     "type":             "uint32"
+},
+{
+    "name":             "systemErrors",
+    "shortDesc": "General System Errors",
+    "type":             "uint32"
+},
+{
+    "name":             "spoofingState",
+    "shortDesc": "Signal Spoofing State",
+    "type":             "uint8"
+},
+{
+    "name":             "authenticationState",
+    "shortDesc": "Signal Authentication State",
+    "type":             "uint8"
 }
 ]
 }

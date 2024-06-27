@@ -13,6 +13,8 @@
         <file alias="TelemetryRSSIIndicator.qml">src/UI/toolbar/TelemetryRSSIIndicator.qml</file>
         <file alias="VTOLModeIndicator.qml">src/UI/toolbar/VTOLModeIndicator.qml</file>
         <file alias="APMSupportForwardingIndicator.qml">src/UI/toolbar/APMSupportForwardingIndicator.qml</file>
+        <file alias="GPSAuthenticationIndicator.qml">src/UI/toolbar/GPSAuthenticationIndicator.qml</file>
+        <file alias="GPSInterferenceIndicator.qml">src/UI/toolbar/GPSInterferenceIndicator.qml</file>
     </qresource>
     <qresource prefix="/checklists">
         <file alias="DefaultChecklist.qml">src/FlightDisplay/DefaultChecklist.qml</file>
