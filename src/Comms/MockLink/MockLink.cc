@@ -32,11 +32,11 @@ QGC_LOGGING_CATEGORY(MockLinkVerboseLog, "MockLinkVerboseLog")
 #if 1
 double      MockLink::_defaultVehicleLatitude =     47.397;
 double      MockLink::_defaultVehicleLongitude =    8.5455;
-double      MockLink::_defaultVehicleAltitude =     488.056;
+double      MockLink::_defaultVehicleHomeAltitude = 488.056;
 #else
 double      MockLink::_defaultVehicleLatitude =     47.6333022928789;
 double      MockLink::_defaultVehicleLongitude =    -122.08833157994995;
-double      MockLink::_defaultVehicleAltitude =     19.0;
+double      MockLink::_defaultVehicleHomeAltitude = 19.0;
 #endif
 int         MockLink::_nextVehicleSystemId =        128;
 
@@ -55,7 +55,7 @@ MockLink::MockLink(SharedLinkConfigurationPtr& config)
     , _mavState                             (MAV_STATE_STANDBY)
     , _firmwareType                         (MAV_AUTOPILOT_PX4)
     , _vehicleType                          (MAV_TYPE_QUADROTOR)
-    , _vehicleAltitude                      (_defaultVehicleAltitude)
+    , _vehicleAltitudeAMSL                      (_defaultVehicleHomeAltitude)
     , _sendStatusText                       (false)
     , _apmSendHomePositionOnEmptyList       (false)
     , _failureMode                          (MockConfiguration::FailNone)
@@ -251,6 +251,8 @@ void MockLink::_run10HzTasks(void)
             _sendGPSPositionDelayCount--;
         } else {
             _sendGpsRawInt();
+            _sendGlobalPositionInt();
+            _sendExtendedSysState();
         }
     }
 }
@@ -351,11 +353,11 @@ void MockLink::_sendHeartBeat(void)
                                     _vehicleComponentId,
                                     mavlinkChannel(),
                                     &msg,
-                                    _vehicleType,        // MAV_TYPE
+                                    _vehicleType,       // MAV_TYPE
                                     _firmwareType,      // MAV_AUTOPILOT
-                                    _mavBaseMode,        // MAV_MODE
-                                    _mavCustomMode,      // custom mode
-                                    _mavState);          // MAV_STATE
+                                    _mavBaseMode,       // MAV_MODE
+                                    _mavCustomMode,     // custom mode
+                                    _mavState);         // MAV_STATE
 
     respondWithMavlinkMessage(msg);
 }
@@ -378,8 +380,8 @@ void MockLink::_sendHighLatency2(void)
                                         px4_cm.custom_mode_hl,      // custom_mode
                                         (int32_t)(_vehicleLatitude  * 1E7),
                                         (int32_t)(_vehicleLongitude * 1E7),
-                                        (int16_t)_vehicleAltitude,
-                                        (int16_t)_vehicleAltitude,  // target_altitude,
+                                        (int16_t)_vehicleAltitudeAMSL,
+                                        (int16_t)_vehicleAltitudeAMSL,  // target_altitude,
                                         0,                          // heading
                                         0,                          // target_heading
                                         0,                          // target_distance
@@ -1133,6 +1135,10 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
             commandResult = MAV_RESULT_ACCEPTED;
         }
         break;
+    case MAV_CMD_NAV_TAKEOFF:
+        _handleTakeoff(request);
+        commandResult = MAV_RESULT_ACCEPTED;
+        break;
     case MAV_CMD_MOCKLINK_ALWAYS_RESULT_ACCEPTED:
         // Test command which always returns MAV_RESULT_ACCEPTED
         commandResult = MAV_RESULT_ACCEPTED;
@@ -1274,7 +1280,7 @@ void MockLink::_sendHomePosition(void)
                                         &msg,
                                         (int32_t)(_vehicleLatitude * 1E7),
                                         (int32_t)(_vehicleLongitude * 1E7),
-                                        (int32_t)(_vehicleAltitude * 1000),
+                                        (int32_t)(_defaultVehicleHomeAltitude * 1000),
                                         0.0f, 0.0f, 0.0f,
                                         &bogus[0],
             0.0f, 0.0f, 0.0f,
@@ -1292,10 +1298,10 @@ void MockLink::_sendGpsRawInt(void)
                                       mavlinkChannel(),
                                       &msg,
                                       timeTick++,                           // time since boot
-                                      3,                                    // 3D fix
+                                      GPS_FIX_TYPE_3D_FIX,
                                       (int32_t)(_vehicleLatitude  * 1E7),
                                       (int32_t)(_vehicleLongitude * 1E7),
-                                      (int32_t)(_vehicleAltitude  * 1000),
+                                      (int32_t)(_vehicleAltitudeAMSL  * 1000),
                                       UINT16_MAX, UINT16_MAX,               // HDOP/VDOP not known
                                       UINT16_MAX,                           // velocity not known
                                       UINT16_MAX,                           // course over ground not known
@@ -1307,6 +1313,39 @@ void MockLink::_sendGpsRawInt(void)
                                       0,                                    // Speed uncertainty in meters * 1000 (positive for up).
                                       0,                                    // Heading / track uncertainty in degrees * 1e5.
                                       65535);                               // Yaw not provided
+    respondWithMavlinkMessage(msg);
+}
+
+void MockLink::_sendGlobalPositionInt(void)
+{
+    static uint64_t timeTick = 0;
+    mavlink_message_t msg;
+
+    mavlink_msg_global_position_int_pack_chan(_vehicleSystemId,
+                                      _vehicleComponentId,
+                                      mavlinkChannel(),
+                                      &msg,
+                                      timeTick++,                           // time since boot
+                                      (int32_t)(_vehicleLatitude  * 1E7),
+                                      (int32_t)(_vehicleLongitude * 1E7),
+                                      (int32_t)(_vehicleAltitudeAMSL  * 1000),
+                                      (int32_t)((_vehicleAltitudeAMSL - _defaultVehicleHomeAltitude) * 1000),
+                                      0, 0, 0,                              // no speed sent
+                                      UINT16_MAX);                          // no heading sent
+    respondWithMavlinkMessage(msg);
+}
+
+void MockLink::_sendExtendedSysState(void)
+{
+    static uint64_t timeTick = 0;
+    mavlink_message_t msg;
+
+    mavlink_msg_extended_sys_state_pack_chan(_vehicleSystemId,
+                                      _vehicleComponentId,
+                                      mavlinkChannel(),
+                                      &msg,
+                                      MAV_VTOL_STATE_UNDEFINED,
+                                      _vehicleAltitudeAMSL > _defaultVehicleHomeAltitude ? MAV_LANDED_STATE_IN_AIR : MAV_LANDED_STATE_ON_GROUND);
     respondWithMavlinkMessage(msg);
 }
 
@@ -1554,6 +1593,12 @@ void MockLink::_handlePreFlightCalibration(const mavlink_command_long_t& request
                                      pCalMessage,
                                      0, 0);                 // Not chunked
     respondWithMavlinkMessage(msg);
+}
+
+void MockLink::_handleTakeoff(const mavlink_command_long_t& request)
+{
+    _vehicleAltitudeAMSL = request.param7 + _defaultVehicleHomeAltitude;
+    _mavBaseMode |= MAV_MODE_FLAG_SAFETY_ARMED;
 }
 
 void MockLink::_handleLogRequestList(const mavlink_message_t& msg)
