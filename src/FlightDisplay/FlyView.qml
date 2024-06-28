@@ -183,8 +183,6 @@ Item {
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
             z:                  QGroundControl.zOrderTopMost
-            radius:             ScreenTools.defaultFontPixelWidth / 2
-            color:              qgcPal.window
             visible:            false
         }
 

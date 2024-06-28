@@ -33,15 +33,25 @@ Item {
     property real defaultFontPointSize:     10
     property real platformFontPointSize:    10
 
-    /// You can use this property to position ui elements in a screen resolution independent manner. Using fixed positioning values should not
+    readonly property real smallFontPointRatio:      0.75
+    readonly property real mediumFontPointRatio:     1.25
+    readonly property real largeFontPointRatio:      1.5
+
+    /// You can use these properties to position ui elements in a screen resolution independent manner. Using fixed positioning values should not
     /// be done. All positioning should be done using anchors or a ratio of the defaultFontPixelHeight and defaultFontPixelWidth values. This way
     /// your ui elements will reposition themselves appropriately on varying screen sizes and resolutions.
     property real defaultFontPixelHeight:   10
+    property real largeFontPixelHeight:     defaultFontPixelHeight * largeFontPointRatio
+    property real mediumFontPixelHeight:    defaultFontPixelHeight * mediumFontPointRatio
+    property real smallFontPixelHeight:     defaultFontPixelHeight * smallFontPointRatio
 
-    /// You can use this property to position ui elements in a screen resolution independent manner. Using fixed positioning values should not
+    /// You can use these properties to position ui elements in a screen resolution independent manner. Using fixed positioning values should not
     /// be done. All positioning should be done using anchors or a ratio of the defaultFontPixelHeight and defaultFontPixelWidth values. This way
     /// your ui elements will reposition themselves appropriately on varying screen sizes and resolutions.
     property real defaultFontPixelWidth:    10
+    property real largeFontPixelWidth:      defaultFontPixelWidth * largeFontPointRatio
+    property real mediumFontPixelWidth:     defaultFontPixelWidth * mediumFontPointRatio
+    property real smallFontPixelWidth:      defaultFontPixelWidth * smallFontPointRatio
 
     /// QFontMetrics::descent for default font at default point size
     property real defaultFontDescent:       0
@@ -55,9 +65,6 @@ Item {
 
     property real toolbarHeight:            0
 
-    readonly property real smallFontPointRatio:      0.75
-    readonly property real mediumFontPointRatio:     1.25
-    readonly property real largeFontPointRatio:      1.5
 
     property real realPixelDensity: {
         //-- If a plugin defines it, just use what it tells us
