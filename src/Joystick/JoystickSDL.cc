@@ -11,14 +11,21 @@ JoystickSDL::JoystickSDL(const QString& name, int axisCount, int buttonCount, in
     , _isGameController(isGameController)
     , _index(index)
 {
+    // qCDebug(JoystickLog) << Q_FUNC_INFO << this;
+
     if(_isGameController) _setDefaultCalibration();
+}
+
+JoystickSDL::~JoystickSDL()
+{
+    // qCDebug(JoystickLog) << Q_FUNC_INFO << this;
 }
 
 bool JoystickSDL::init(void) {
     SDL_SetMainReady();
     if (SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK) < 0) {
-        SDL_JoystickEventState(SDL_ENABLE);
-        qWarning() << "Couldn't initialize SimpleDirectMediaLayer:" << SDL_GetError();
+        SDL_JoystickEventState(SDL_DISABLE);
+        qCWarning(JoystickLog) << "Couldn't initialize SimpleDirectMediaLayer:" << SDL_GetError();
         return false;
     }
     _loadGameControllerMappings();
@@ -130,18 +137,10 @@ void JoystickSDL::_close(void) {
 
     qCDebug(JoystickLog) << "Closing" << SDL_JoystickName(sdlJoystick) << "at" << sdlJoystick;
 
-    // We get a segfault if we try to close a joystick that has been detached
-    if (SDL_JoystickGetAttached(sdlJoystick) == SDL_FALSE) {
-        qCDebug(JoystickLog) << "\tJoystick is not attached!";
+    if (_isGameController) {
+        SDL_GameControllerClose(sdlController);
     } else {
-
-        if (SDL_JoystickInstanceID(sdlJoystick) != -1) {
-            qCDebug(JoystickLog) << "\tID:" << SDL_JoystickInstanceID(sdlJoystick);
-            // This segfaults so often, and I've spent so much time trying to find the cause and fix it
-            // I think this might be an SDL bug
-            // We are much more stable just commenting this out
-            //SDL_JoystickClose(sdlJoystick);
-        }
+        SDL_JoystickClose(sdlJoystick);
     }
 
     sdlJoystick   = nullptr;
@@ -150,8 +149,11 @@ void JoystickSDL::_close(void) {
 
 bool JoystickSDL::_update(void)
 {
-    SDL_JoystickUpdate();
-    SDL_GameControllerUpdate();
+    if (_isGameController) {
+        SDL_GameControllerUpdate();
+    } else {
+        SDL_JoystickUpdate();
+    }
     return true;
 }
 

@@ -113,6 +113,8 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatC
     , _multiVehicleManager  (multiVehicleManager)
     , _customActionManager  (qgcApp()->toolbox()->settingsManager()->customMavlinkActionsSettings()->joystickActionsFile())
 {
+    // qCDebug(JoystickLog) << Q_FUNC_INFO << this;
+
     qRegisterMetaType<GRIPPER_ACTIONS>();
 
     _rgAxisValues   = new int[static_cast<size_t>(_axisCount)];
@@ -152,6 +154,8 @@ Joystick::~Joystick()
             _buttonActionArray[button]->deleteLater();
         }
     }
+
+    // qCDebug(JoystickLog) << Q_FUNC_INFO << this;
 }
 
 void Joystick::_setDefaultCalibration(void) {
