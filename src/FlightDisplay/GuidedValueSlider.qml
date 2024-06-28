@@ -77,7 +77,7 @@ Item {
             _indicatorCenterPos = height / 2
         }
 
-        // Calculate the full range of the slider. We have been told a min/max but that is for clamping the selected slider values.
+        // Calculate the full range of the slider. We have been given a min/max but that is for clamping the selected slider values.
         // We need expand that range to take into account additional values that must be displayed above/below the value indicator
         // when it is at min/max.
 
