@@ -2316,9 +2316,9 @@ void Vehicle::guidedModeTakeoff(double altitudeRelative)
     _firmwarePlugin->guidedModeTakeoff(this, altitudeRelative);
 }
 
-double Vehicle::minimumTakeoffAltitude()
+double Vehicle::minimumTakeoffAltitudeMeters()
 {
-    return _firmwarePlugin->minimumTakeoffAltitude(this);
+    return _firmwarePlugin->minimumTakeoffAltitudeMeters(this);
 }
 
 double Vehicle::maximumHorizontalSpeedMultirotor()
