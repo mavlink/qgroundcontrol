@@ -929,7 +929,7 @@ void APMFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
     _guidedModeTakeoff(vehicle, altitudeRel);
 }
 
-double APMFirmwarePlugin::minimumTakeoffAltitude(Vehicle* vehicle)
+double APMFirmwarePlugin::minimumTakeoffAltitudeMeters(Vehicle* vehicle)
 {
     double minTakeoffAlt = 0;
     QString takeoffAltParam(vehicle->vtol() ? QStringLiteral("Q_RTL_ALT") : QStringLiteral("PILOT_TKOFF_ALT"));
@@ -940,7 +940,7 @@ double APMFirmwarePlugin::minimumTakeoffAltitude(Vehicle* vehicle)
     }
 
     if (minTakeoffAlt == 0) {
-        minTakeoffAlt = FirmwarePlugin::minimumTakeoffAltitude(vehicle);
+        minTakeoffAlt = FirmwarePlugin::minimumTakeoffAltitudeMeters(vehicle);
     }
 
     return minTakeoffAlt;
@@ -959,7 +959,7 @@ bool APMFirmwarePlugin::_guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
         return false;
     }
 
-    double takeoffAltRel = minimumTakeoffAltitude(vehicle);
+    double takeoffAltRel = minimumTakeoffAltitudeMeters(vehicle);
     if (!qIsNaN(altitudeRel) && altitudeRel > takeoffAltRel) {
         takeoffAltRel = altitudeRel;
     }
