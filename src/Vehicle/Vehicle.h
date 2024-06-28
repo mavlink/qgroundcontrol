@@ -334,7 +334,7 @@ public:
     Q_INVOKABLE void guidedModeTakeoff(double altitudeRelative);
 
     /// @return The minimum takeoff altitude (relative) for guided takeoff.
-    Q_INVOKABLE double minimumTakeoffAltitude();
+    Q_INVOKABLE double minimumTakeoffAltitudeMeters();
 
     /// @return Maximum horizontal speed multirotor.
     Q_INVOKABLE double maximumHorizontalSpeedMultirotor();
