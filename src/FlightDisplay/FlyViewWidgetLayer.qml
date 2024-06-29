@@ -115,25 +115,32 @@ Item {
     Loader {
         id:                         virtualJoystickMultiTouch
         z:                          QGroundControl.zOrderTopMost + 1
-        width:                      parent.width  - (_pipView.width / 2)
+        anchors.right:              parent.right
+        anchors.rightMargin:        anchors.leftMargin
         height:                     Math.min(parent.height * 0.25, ScreenTools.defaultFontPixelWidth * 16)
         visible:                    _virtualJoystickEnabled && !QGroundControl.videoManager.fullScreen && !(_activeVehicle ? _activeVehicle.usingHighLatencyLink : false)
         anchors.bottom:             parent.bottom
-        anchors.bottomMargin:       parentToolInsets.leftEdgeBottomInset + ScreenTools.defaultFontPixelHeight * 2
-        anchors.horizontalCenter:   parent.horizontalCenter
+        anchors.bottomMargin:       bottomLoaderMargin
+        anchors.left:               parent.left   
+        anchors.leftMargin:         ( y > toolStrip.y + toolStrip.height ? toolStrip.width / 2 : toolStrip.width * 1.05 + toolStrip.x) 
         source:                     "qrc:/qml/VirtualJoystick.qml"
         active:                     _virtualJoystickEnabled && !(_activeVehicle ? _activeVehicle.usingHighLatencyLink : false)
 
-        property bool autoCenterThrottle: QGroundControl.settingsManager.appSettings.virtualJoystickAutoCenterThrottle.rawValue
-
+        property real bottomEdgeLeftInset:     parent.height-y
+        property bool autoCenterThrottle:      QGroundControl.settingsManager.appSettings.virtualJoystickAutoCenterThrottle.rawValue
         property bool _virtualJoystickEnabled: QGroundControl.settingsManager.appSettings.virtualJoystick.rawValue
+        property real bottomEdgeRightInset:    parent.height-y
+        property var  _pipViewMargin:          _pipView.visible ? parentToolInsets.bottomEdgeLeftInset + ScreenTools.defaultFontPixelHeight * 2 : 
+                                               bottomRightRowLayout.height + ScreenTools.defaultFontPixelHeight * 1.5
 
-        property real bottomEdgeLeftInset: parent.height-y
-        property real bottomEdgeRightInset: parent.height-y
+        property var  bottomLoaderMargin:      _pipViewMargin >= parent.height / 2 ? parent.height / 2 : _pipViewMargin
 
         // Width is difficult to access directly hence this hack which may not work in all circumstances
-        property real leftEdgeBottomInset: visible ? bottomEdgeLeftInset + width/18 - ScreenTools.defaultFontPixelHeight*2 : 0
+        property real leftEdgeBottomInset:  visible ? bottomEdgeLeftInset + width/18 - ScreenTools.defaultFontPixelHeight*2 : 0
         property real rightEdgeBottomInset: visible ? bottomEdgeRightInset + width/18 - ScreenTools.defaultFontPixelHeight*2 : 0
+
+        //Loader status logic
+        onLoaded:           virtualJoystickMultiTouch.visible ?  virtualJoystickMultiTouch.item.calibration = true : virtualJoystickMultiTouch.item.calibration = false
     }
 
     FlyViewToolStrip {
