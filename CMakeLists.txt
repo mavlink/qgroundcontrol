@@ -54,7 +54,6 @@ endif()
 
 include(FeatureSummary)
 include(FetchContent)
-include(ExternalProject)
 include(GNUInstallDirs)
 include(CMakeDependentOption)
 include(CMakePrintHelpers)
