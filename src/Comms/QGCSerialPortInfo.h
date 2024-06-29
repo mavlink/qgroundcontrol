@@ -75,16 +75,16 @@ private:
     static QString _boardTypeToString(BoardType_t boardType);
 
     static bool         _jsonLoaded;
-    static const char*  _jsonFileTypeValue;
-    static const char*  _jsonBoardInfoKey;
-    static const char*  _jsonBoardDescriptionFallbackKey;
-    static const char*  _jsonBoardManufacturerFallbackKey;
-    static const char*  _jsonVendorIDKey;
-    static const char*  _jsonProductIDKey;
-    static const char*  _jsonBoardClassKey;
-    static const char*  _jsonNameKey;
-    static const char*  _jsonRegExpKey;
-    static const char*  _jsonAndroidOnlyKey;
+    static constexpr const char*  _jsonFileTypeValue =                "USBBoardInfo";
+    static constexpr const char*  _jsonBoardInfoKey =                 "boardInfo";
+    static constexpr const char*  _jsonBoardDescriptionFallbackKey =  "boardDescriptionFallback";
+    static constexpr const char*  _jsonBoardManufacturerFallbackKey = "boardManufacturerFallback";
+    static constexpr const char*  _jsonVendorIDKey =                  "vendorID";
+    static constexpr const char*  _jsonProductIDKey =                 "productID";
+    static constexpr const char*  _jsonBoardClassKey =                "boardClass";
+    static constexpr const char*  _jsonNameKey =                      "name";
+    static constexpr const char*  _jsonRegExpKey =                    "regExp";
+    static constexpr const char*  _jsonAndroidOnlyKey =               "androidOnly";
 
     static const BoardClassString2BoardType_t   _rgBoardClass2BoardType[BoardTypeUnknown];
     static QList<BoardInfo_t>                   _boardInfoList;

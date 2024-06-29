@@ -211,7 +211,27 @@ private:
     FactMetaData    _param6MetaData;
     FactMetaData    _param7MetaData;
 
-    static const char* _jsonAltitudeModeKey;
-    static const char* _jsonAltitudeKey;
-    static const char* _jsonAMSLAltAboveTerrainKey;
+    static constexpr const char* _jsonAltitudeModeKey =           "AltitudeMode";
+    static constexpr const char* _jsonAltitudeKey =               "Altitude";
+    static constexpr const char* _jsonAMSLAltAboveTerrainKey =    "AMSLAltAboveTerrain";
+
+    struct EnumInfo_s {
+        const char *    label;
+        MAV_FRAME       frame;
+    };
+
+    static constexpr const struct EnumInfo_s _rgMavFrameInfo[] = {
+        { "MAV_FRAME_GLOBAL",                   MAV_FRAME_GLOBAL },
+        { "MAV_FRAME_LOCAL_NED",                MAV_FRAME_LOCAL_NED },
+        { "MAV_FRAME_MISSION",                  MAV_FRAME_MISSION },
+        { "MAV_FRAME_GLOBAL_RELATIVE_ALT",      MAV_FRAME_GLOBAL_RELATIVE_ALT },
+        { "MAV_FRAME_LOCAL_ENU",                MAV_FRAME_LOCAL_ENU },
+        { "MAV_FRAME_GLOBAL_INT",               MAV_FRAME_GLOBAL_INT },
+        { "MAV_FRAME_GLOBAL_RELATIVE_ALT_INT",  MAV_FRAME_GLOBAL_RELATIVE_ALT_INT },
+        { "MAV_FRAME_LOCAL_OFFSET_NED",         MAV_FRAME_LOCAL_OFFSET_NED },
+        { "MAV_FRAME_BODY_NED",                 MAV_FRAME_BODY_NED },
+        { "MAV_FRAME_BODY_OFFSET_NED",          MAV_FRAME_BODY_OFFSET_NED },
+        { "MAV_FRAME_GLOBAL_TERRAIN_ALT",       MAV_FRAME_GLOBAL_TERRAIN_ALT },
+        { "MAV_FRAME_GLOBAL_TERRAIN_ALT_INT",   MAV_FRAME_GLOBAL_TERRAIN_ALT_INT },
+    };
 };

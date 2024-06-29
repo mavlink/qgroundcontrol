@@ -21,7 +21,7 @@
 
 QGC_LOGGING_CATEGORY(TerrainTileManagerLog, "qgc.terrain.terraintilemanager")
 
-static const auto kMapType = UrlFactory::kCopernicusElevationProviderKey;
+static constexpr const auto kMapType = UrlFactory::kCopernicusElevationProviderKey;
 
 Q_GLOBAL_STATIC(TerrainTileManager, s_terrainTileManager)
 

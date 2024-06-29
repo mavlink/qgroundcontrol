@@ -12,17 +12,6 @@
 #include "MockLink.h"
 #include "QGCTemporaryFile.h"
 
-const MockLinkFTP::ErrorMode_t MockLinkFTP::rgFailureModes[] = {
-    MockLinkFTP::errModeNoResponse,
-    MockLinkFTP::errModeNakResponse,
-    MockLinkFTP::errModeNoSecondResponse,
-    MockLinkFTP::errModeNakSecondResponse,
-    MockLinkFTP::errModeBadSequence,
-};
-const size_t MockLinkFTP::cFailureModes = sizeof(MockLinkFTP::rgFailureModes) / sizeof(MockLinkFTP::rgFailureModes[0]);
-
-const char* MockLinkFTP::sizeFilenamePrefix = "mocklink-size-";
-
 MockLinkFTP::MockLinkFTP(uint8_t systemIdServer, uint8_t componentIdServer, MockLink* mockLink)
     : _systemIdServer   (systemIdServer)
     , _componentIdServer(componentIdServer)

@@ -11,8 +11,6 @@
 // #include "QGCPalette.h"
 #include <QtPositioning/QGeoCoordinate>
 
-const char* KMLDomDocument::balloonStyleName = "BalloonStyle";
-
 KMLDomDocument::KMLDomDocument(const QString& name)
 {
     QDomProcessingInstruction header = createProcessingInstruction(QStringLiteral("xml"), QStringLiteral("version=\"1.0\" encoding=\"UTF-8\""));

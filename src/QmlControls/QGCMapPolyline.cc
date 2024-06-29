@@ -17,8 +17,6 @@
 
 #include <QtCore/QLineF>
 
-const char* QGCMapPolyline::jsonPolylineKey = "polyline";
-
 QGCMapPolyline::QGCMapPolyline(QObject* parent)
     : QObject               (parent)
     , _dirty                (false)

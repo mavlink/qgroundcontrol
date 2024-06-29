@@ -38,5 +38,5 @@ public:
 private:
     QMap<COMP_METADATA_TYPE, Uris>   _supportedTypes;
 
-    static const char*          _jsonMetadataTypesKey;
+    static constexpr const char* _jsonMetadataTypesKey = "metadataTypes";
 };

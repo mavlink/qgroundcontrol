@@ -28,5 +28,5 @@ public:
 private:
     static QDomDocument _loadFile(const QString& kmlFile, QString& errorString);
 
-    static const char* _errorPrefix;
+    static constexpr const char* _errorPrefix = QT_TR_NOOP("KML file load failed. %1");
 };

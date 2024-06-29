@@ -20,8 +20,8 @@ DECLARE_SETTINGGROUP(CustomMavlinkActions, "CustomMavlinkActions")
 
     // Notify the user of new Fly View custom actions support
     QSettings deprecatedSettings;
-    static const char* deprecatedKey1 = "enableCustomActions";
-    static const char* deprecatedKey2 = "customActionsDefinitions";
+    static constexpr const char* deprecatedKey1 = "enableCustomActions";
+    static constexpr const char* deprecatedKey2 = "customActionsDefinitions";
     deprecatedSettings.beginGroup("FlyView");
     if (deprecatedSettings.contains(deprecatedKey1) || deprecatedSettings.contains(deprecatedKey2)) {
         deprecatedSettings.remove(deprecatedKey1);
@@ -30,7 +30,7 @@ DECLARE_SETTINGGROUP(CustomMavlinkActions, "CustomMavlinkActions")
     }
 
     // Notify the user of new Joystick custom actions support
-    static const char* joystickFileName = "JoystickMavCommands.json";
+    static constexpr const char* joystickFileName = "JoystickMavCommands.json";
     if (QFile(joystickFileName).exists()) {
         qgcApp()->showAppMessage(CustomMavlinkActionsSettings::tr("Support for Joystick custom actions has changed. The format and location of the files has changed. New setting is available from Fly View Settings. File format is documented in user guide. Delete the %1 file to disable this warning").arg(joystickFileName));
     }

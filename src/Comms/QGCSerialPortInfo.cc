@@ -19,16 +19,6 @@
 QGC_LOGGING_CATEGORY(QGCSerialPortInfoLog, "QGCSerialPortInfoLog")
 
 bool         QGCSerialPortInfo::_jsonLoaded =                       false;
-const char*  QGCSerialPortInfo::_jsonFileTypeValue =                "USBBoardInfo";
-const char*  QGCSerialPortInfo::_jsonBoardInfoKey =                 "boardInfo";
-const char*  QGCSerialPortInfo::_jsonBoardDescriptionFallbackKey =  "boardDescriptionFallback";
-const char*  QGCSerialPortInfo::_jsonBoardManufacturerFallbackKey = "boardManufacturerFallback";
-const char*  QGCSerialPortInfo::_jsonVendorIDKey =                  "vendorID";
-const char*  QGCSerialPortInfo::_jsonProductIDKey =                 "productID";
-const char*  QGCSerialPortInfo::_jsonBoardClassKey =                "boardClass";
-const char*  QGCSerialPortInfo::_jsonNameKey =                      "name";
-const char*  QGCSerialPortInfo::_jsonRegExpKey =                    "regExp";
-const char*  QGCSerialPortInfo::_jsonAndroidOnlyKey =               "androidOnly";
 
 const QGCSerialPortInfo::BoardClassString2BoardType_t QGCSerialPortInfo::_rgBoardClass2BoardType[] = {
     { "Pixhawk",    QGCSerialPortInfo::BoardTypePixhawk },

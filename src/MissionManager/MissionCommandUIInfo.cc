@@ -12,40 +12,6 @@
 #include "FactMetaData.h"
 #include "QGCLoggingCategory.h"
 
-const char* MissionCommandUIInfo::_categoryJsonKey              = "category";
-const char* MissionCommandUIInfo::_decimalPlacesJsonKey         = "decimalPlaces";
-const char* MissionCommandUIInfo::_defaultJsonKey               = "default";
-const char* MissionCommandUIInfo::_descriptionJsonKey           = "description";
-const char* MissionCommandUIInfo::_enumStringsJsonKey           = "enumStrings";
-const char* MissionCommandUIInfo::_enumValuesJsonKey            = "enumValues";
-const char* MissionCommandUIInfo::_nanUnchangedJsonKey          = "nanUnchanged";
-const char* MissionCommandUIInfo::_friendlyEditJsonKey          = "friendlyEdit";
-const char* MissionCommandUIInfo::_friendlyNameJsonKey          = "friendlyName";
-const char* MissionCommandUIInfo::_idJsonKey                    = "id";
-const char* MissionCommandUIInfo::_labelJsonKey                 = "label";
-const char* MissionCommandUIInfo::_mavCmdInfoJsonKey            = "mavCmdInfo";
-const char* MissionCommandUIInfo::_maxJsonKey                   = "max";
-const char* MissionCommandUIInfo::_minJsonKey                   = "min";
-const char* MissionCommandUIInfo::_param1JsonKey                = "param1";
-const char* MissionCommandUIInfo::_param2JsonKey                = "param2";
-const char* MissionCommandUIInfo::_param3JsonKey                = "param3";
-const char* MissionCommandUIInfo::_param4JsonKey                = "param4";
-const char* MissionCommandUIInfo::_param5JsonKey                = "param5";
-const char* MissionCommandUIInfo::_param6JsonKey                = "param6";
-const char* MissionCommandUIInfo::_param7JsonKey                = "param7";
-const char* MissionCommandUIInfo::_paramJsonKeyFormat           = "param%1";
-const char* MissionCommandUIInfo::_paramRemoveJsonKey           = "paramRemove";
-const char* MissionCommandUIInfo::_rawNameJsonKey               = "rawName";
-const char* MissionCommandUIInfo::_standaloneCoordinateJsonKey  = "standaloneCoordinate";
-const char* MissionCommandUIInfo::_specifiesCoordinateJsonKey   = "specifiesCoordinate";
-const char* MissionCommandUIInfo::_specifiesAltitudeOnlyJsonKey = "specifiesAltitudeOnly";
-const char* MissionCommandUIInfo::_isLandCommandJsonKey         = "isLandCommand";
-const char* MissionCommandUIInfo::_isTakeoffCommandJsonKey      = "isTakeoffCommand";
-const char* MissionCommandUIInfo::_isLoiterCommandJsonKey       = "isLoiterCommand";
-const char* MissionCommandUIInfo::_unitsJsonKey                 = "units";
-const char* MissionCommandUIInfo::_commentJsonKey               = "comment";
-const char* MissionCommandUIInfo::_advancedCategory             = "Advanced";
-
 MissionCmdParamInfo::MissionCmdParamInfo(QObject* parent)
     : QObject(parent)
     , _min   (FactMetaData::minForType(FactMetaData::valueTypeDouble).toDouble())

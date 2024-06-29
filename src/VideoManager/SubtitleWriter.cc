@@ -29,8 +29,6 @@
 
 QGC_LOGGING_CATEGORY(SubtitleWriterLog, "SubtitleWriterLog")
 
-const int SubtitleWriter::_sampleRate = 1; // Sample rate in Hz for getting telemetry data, most players do weird stuff when > 1Hz
-
 SubtitleWriter::SubtitleWriter(QObject* parent)
     : QObject(parent)
 {

@@ -25,24 +25,6 @@
 
 QGC_LOGGING_CATEGORY(TransectStyleComplexItemLog, "TransectStyleComplexItemLog")
 
-const char* TransectStyleComplexItem::turnAroundDistanceName                = "TurnAroundDistance";
-const char* TransectStyleComplexItem::turnAroundDistanceMultiRotorName      = "TurnAroundDistanceMultiRotor";
-const char* TransectStyleComplexItem::cameraTriggerInTurnAroundName         = "CameraTriggerInTurnAround";
-const char* TransectStyleComplexItem::hoverAndCaptureName                   = "HoverAndCapture";
-const char* TransectStyleComplexItem::refly90DegreesName                    = "Refly90Degrees";
-const char* TransectStyleComplexItem::terrainAdjustToleranceName            = "TerrainAdjustTolerance";
-const char* TransectStyleComplexItem::terrainAdjustMaxClimbRateName         = "TerrainAdjustMaxClimbRate";
-const char* TransectStyleComplexItem::terrainAdjustMaxDescentRateName       = "TerrainAdjustMaxDescentRate";
-
-const char* TransectStyleComplexItem::_jsonTransectStyleComplexItemKey      = "TransectStyleComplexItem";
-const char* TransectStyleComplexItem::_jsonCameraCalcKey                    = "CameraCalc";
-const char* TransectStyleComplexItem::_jsonVisualTransectPointsKey          = "VisualTransectPoints";
-const char* TransectStyleComplexItem::_jsonItemsKey                         = "Items";
-const char* TransectStyleComplexItem::_jsonTerrainFlightSpeed               = "TerrainFlightSpeed";
-const char* TransectStyleComplexItem::_jsonCameraShotsKey                   = "CameraShots";
-
-const char* TransectStyleComplexItem::_jsonTerrainFollowKeyDeprecated       = "FollowTerrain";
-
 TransectStyleComplexItem::TransectStyleComplexItem(PlanMasterController* masterController, bool flyView, QString settingsGroup)
     : ComplexMissionItem                (masterController, flyView)
     , _cameraCalc                       (masterController, settingsGroup)

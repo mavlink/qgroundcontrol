@@ -32,19 +32,19 @@ public:
     typedef int FirmwareClass_t;
     typedef int VehicleClass_t;
 
-    static constexpr FirmwareClass_t FirmwareClassPX4       = MAV_AUTOPILOT_PX4;
-    static constexpr FirmwareClass_t FirmwareClassArduPilot = MAV_AUTOPILOT_ARDUPILOTMEGA;
-    static constexpr FirmwareClass_t FirmwareClassGeneric   = MAV_AUTOPILOT_GENERIC;
+    static constexpr const FirmwareClass_t FirmwareClassPX4       = MAV_AUTOPILOT_PX4;
+    static constexpr const FirmwareClass_t FirmwareClassArduPilot = MAV_AUTOPILOT_ARDUPILOTMEGA;
+    static constexpr const FirmwareClass_t FirmwareClassGeneric   = MAV_AUTOPILOT_GENERIC;
 
-    static constexpr VehicleClass_t VehicleClassAirship     = MAV_TYPE_AIRSHIP;
-    static constexpr VehicleClass_t VehicleClassFixedWing   = MAV_TYPE_FIXED_WING;
-    static constexpr VehicleClass_t VehicleClassRoverBoat   = MAV_TYPE_GROUND_ROVER;
-    static constexpr VehicleClass_t VehicleClassSub         = MAV_TYPE_SUBMARINE;
-    static constexpr VehicleClass_t VehicleClassMultiRotor  = MAV_TYPE_QUADROTOR;
-    static constexpr VehicleClass_t VehicleClassVTOL        = MAV_TYPE_VTOL_TAILSITTER_QUADROTOR;
-    static constexpr VehicleClass_t VehicleClassGeneric     = MAV_TYPE_GENERIC;
+    static constexpr const VehicleClass_t VehicleClassAirship     = MAV_TYPE_AIRSHIP;
+    static constexpr const VehicleClass_t VehicleClassFixedWing   = MAV_TYPE_FIXED_WING;
+    static constexpr const VehicleClass_t VehicleClassRoverBoat   = MAV_TYPE_GROUND_ROVER;
+    static constexpr const VehicleClass_t VehicleClassSub         = MAV_TYPE_SUBMARINE;
+    static constexpr const VehicleClass_t VehicleClassMultiRotor  = MAV_TYPE_QUADROTOR;
+    static constexpr const VehicleClass_t VehicleClassVTOL        = MAV_TYPE_VTOL_TAILSITTER_QUADROTOR;
+    static constexpr const VehicleClass_t VehicleClassGeneric     = MAV_TYPE_GENERIC;
 
-    static constexpr uint8_t        maxRcChannels           = 18; // mavlink_rc_channels_t->chancount
+    static constexpr const uint8_t        maxRcChannels           = 18; // mavlink_rc_channels_t->chancount
 
     static bool                     isPX4FirmwareClass          (MAV_AUTOPILOT autopilot) { return autopilot == MAV_AUTOPILOT_PX4; }
     static bool                     isArduPilotFirmwareClass    (MAV_AUTOPILOT autopilot) { return autopilot == MAV_AUTOPILOT_ARDUPILOTMEGA; }

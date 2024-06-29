@@ -127,12 +127,12 @@ private:
 
     static QMap<QString, FactMetaData*> _metaDataMap;
 
-    static const char* _gimbalPitchName;
-    static const char* _gimbalYawName;
-    static const char* _cameraActionName;
-    static const char* _cameraPhotoIntervalDistanceName;
-    static const char* _cameraPhotoIntervalTimeName;
-    static const char* _cameraModeName;
+    static constexpr const char* _gimbalPitchName =                   "GimbalPitch";
+    static constexpr const char* _gimbalYawName =                     "GimbalYaw";
+    static constexpr const char* _cameraActionName =                  "CameraAction";
+    static constexpr const char* _cameraPhotoIntervalDistanceName =   "CameraPhotoIntervalDistance";
+    static constexpr const char* _cameraPhotoIntervalTimeName =       "CameraPhotoIntervalTime";
+    static constexpr const char* _cameraModeName =                    "CameraMode";
 
     friend CameraSectionTest;
 };

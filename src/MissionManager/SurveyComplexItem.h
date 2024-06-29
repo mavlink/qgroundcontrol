@@ -74,14 +74,14 @@ public:
 
     static const QString name;
 
-    static const char* jsonComplexItemTypeValue;
-    static const char* settingsGroup;
-    static const char* gridAngleName;
-    static const char* gridEntryLocationName;
-    static const char* flyAlternateTransectsName;
-    static const char* splitConcavePolygonsName;
+    static constexpr const char* jsonComplexItemTypeValue =   "survey";
+    static constexpr const char* jsonV3ComplexItemTypeValue = "survey";
 
-    static const char* jsonV3ComplexItemTypeValue;
+    static constexpr const char* settingsGroup =              "Survey";
+    static constexpr const char* gridAngleName =              "GridAngle";
+    static constexpr const char* gridEntryLocationName =      "GridEntryLocation";
+    static constexpr const char* flyAlternateTransectsName =  "FlyAlternateTransects";
+    static constexpr const char* splitConcavePolygonsName =   "SplitConcavePolygons";
 
 signals:
     void refly90DegreesChanged(bool refly90Degrees);
@@ -149,34 +149,34 @@ private:
     SettingsFact    _splitConcavePolygonsFact;
     int             _entryPoint;
 
-    static const char* _jsonGridAngleKey;
-    static const char* _jsonEntryPointKey;
-    static const char* _jsonFlyAlternateTransectsKey;
-    static const char* _jsonSplitConcavePolygonsKey;
+    static constexpr const char* _jsonGridAngleKey =          "angle";
+    static constexpr const char* _jsonEntryPointKey =         "entryLocation";
 
-    static const char* _jsonV3GridObjectKey;
-    static const char* _jsonV3GridAltitudeKey;
-    static const char* _jsonV3GridAltitudeRelativeKey;
-    static const char* _jsonV3GridAngleKey;
-    static const char* _jsonV3GridSpacingKey;
-    static const char* _jsonV3EntryPointKey;
-    static const char* _jsonV3TurnaroundDistKey;
-    static const char* _jsonV3CameraTriggerDistanceKey;
-    static const char* _jsonV3CameraTriggerInTurnaroundKey;
-    static const char* _jsonV3HoverAndCaptureKey;
-    static const char* _jsonV3GroundResolutionKey;
-    static const char* _jsonV3FrontalOverlapKey;
-    static const char* _jsonV3SideOverlapKey;
-    static const char* _jsonV3CameraSensorWidthKey;
-    static const char* _jsonV3CameraSensorHeightKey;
-    static const char* _jsonV3CameraResolutionWidthKey;
-    static const char* _jsonV3CameraResolutionHeightKey;
-    static const char* _jsonV3CameraFocalLengthKey;
-    static const char* _jsonV3CameraMinTriggerIntervalKey;
-    static const char* _jsonV3ManualGridKey;
-    static const char* _jsonV3CameraObjectKey;
-    static const char* _jsonV3CameraNameKey;
-    static const char* _jsonV3CameraOrientationLandscapeKey;
-    static const char* _jsonV3FixedValueIsAltitudeKey;
-    static const char* _jsonV3Refly90DegreesKey;
+    static constexpr const char* _jsonV3GridObjectKey =                   "grid";
+    static constexpr const char* _jsonV3GridAltitudeKey =                 "altitude";
+    static constexpr const char* _jsonV3GridAltitudeRelativeKey =         "relativeAltitude";
+    static constexpr const char* _jsonV3GridAngleKey =                    "angle";
+    static constexpr const char* _jsonV3GridSpacingKey =                  "spacing";
+    static constexpr const char* _jsonV3EntryPointKey =                   "entryLocation";
+    static constexpr const char* _jsonV3TurnaroundDistKey =               "turnAroundDistance";
+    static constexpr const char* _jsonV3CameraTriggerDistanceKey =        "cameraTriggerDistance";
+    static constexpr const char* _jsonV3CameraTriggerInTurnaroundKey =    "cameraTriggerInTurnaround";
+    static constexpr const char* _jsonV3HoverAndCaptureKey =              "hoverAndCapture";
+    static constexpr const char* _jsonV3GroundResolutionKey =             "groundResolution";
+    static constexpr const char* _jsonV3FrontalOverlapKey =               "imageFrontalOverlap";
+    static constexpr const char* _jsonV3SideOverlapKey =                  "imageSideOverlap";
+    static constexpr const char* _jsonV3CameraSensorWidthKey =            "sensorWidth";
+    static constexpr const char* _jsonV3CameraSensorHeightKey =           "sensorHeight";
+    static constexpr const char* _jsonV3CameraResolutionWidthKey =        "resolutionWidth";
+    static constexpr const char* _jsonV3CameraResolutionHeightKey =       "resolutionHeight";
+    static constexpr const char* _jsonV3CameraFocalLengthKey =            "focalLength";
+    static constexpr const char* _jsonV3CameraMinTriggerIntervalKey =     "minTriggerInterval";
+    static constexpr const char* _jsonV3CameraObjectKey =                 "camera";
+    static constexpr const char* _jsonV3CameraNameKey =                   "name";
+    static constexpr const char* _jsonV3ManualGridKey =                   "manualGrid";
+    static constexpr const char* _jsonV3CameraOrientationLandscapeKey =   "orientationLandscape";
+    static constexpr const char* _jsonV3FixedValueIsAltitudeKey =         "fixedValueIsAltitude";
+    static constexpr const char* _jsonV3Refly90DegreesKey =               "refly90Degrees";
+    static constexpr const char* _jsonFlyAlternateTransectsKey =          "flyAlternateTransects";
+    static constexpr const char* _jsonSplitConcavePolygonsKey =           "splitConcavePolygons";
 };

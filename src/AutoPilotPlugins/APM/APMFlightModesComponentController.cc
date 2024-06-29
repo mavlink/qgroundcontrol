@@ -18,9 +18,6 @@
 
 bool APMFlightModesComponentController::_typeRegistered = false;
 
-const char* APMFlightModesComponentController::_simpleParamName =       "SIMPLE";
-const char* APMFlightModesComponentController::_superSimpleParamName =  "SUPER_SIMPLE";
-
 APMFlightModesComponentController::APMFlightModesComponentController(void)
     : _activeFlightMode     (0)
     , _channelCount         (QGCMAVLink::maxRcChannels)

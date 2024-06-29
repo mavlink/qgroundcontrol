@@ -14,14 +14,6 @@
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
 
-const char*  EditPositionDialogController::_latitudeFactName =      "Latitude";
-const char*  EditPositionDialogController::_longitudeFactName =     "Longitude";
-const char*  EditPositionDialogController::_zoneFactName =          "Zone";
-const char*  EditPositionDialogController::_hemisphereFactName =    "Hemisphere";
-const char*  EditPositionDialogController::_eastingFactName =       "Easting";
-const char*  EditPositionDialogController::_northingFactName =      "Northing";
-const char*  EditPositionDialogController::_mgrsFactName =          "MGRS";
-
 QMap<QString, FactMetaData*> EditPositionDialogController::_metaDataMap;
 
 EditPositionDialogController::EditPositionDialogController(void)

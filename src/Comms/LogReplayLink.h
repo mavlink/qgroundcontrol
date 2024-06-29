@@ -46,7 +46,7 @@ signals:
     void fileNameChanged();
 
 private:
-    static const char*  _logFilenameKey;
+    static constexpr const char*  _logFilenameKey = "logFilename";
     QString             _logFilename;
 };
 

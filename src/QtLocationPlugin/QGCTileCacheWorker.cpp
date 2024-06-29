@@ -33,7 +33,6 @@
 
 #include "time.h"
 
-static const char*      kDefaultSet     = "Default Tile Set";
 static const QString    kSession        = QStringLiteral("QGeoTileWorkerSession");
 static const QString    kExportSession  = QStringLiteral("QGeoTileExportSession");
 

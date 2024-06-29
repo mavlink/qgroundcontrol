@@ -17,54 +17,6 @@
 
 QGC_LOGGING_CATEGORY(JoystickConfigControllerLog, "JoystickConfigControllerLog")
 
-const int JoystickConfigController::_calCenterPoint =       0;
-const int JoystickConfigController::_calValidMinValue =     -32768;     ///< Largest valid minimum axis value
-const int JoystickConfigController::_calValidMaxValue =     32767;      ///< Smallest valid maximum axis value
-const int JoystickConfigController::_calDefaultMinValue =   -32768;     ///< Default value for Min if not set
-const int JoystickConfigController::_calDefaultMaxValue =   32767;      ///< Default value for Max if not set
-const int JoystickConfigController::_calRoughCenterDelta =  500;        ///< Delta around center point which is considered to be roughly centered
-const int JoystickConfigController::_calMoveDelta =         32768/2;    ///< Amount of delta past center which is considered stick movement
-const int JoystickConfigController::_calSettleDelta =       600;        ///< Amount of delta which is considered no stick movement
-const int JoystickConfigController::_calMinDelta =          1000;       ///< Amount of delta allowed around min value to consider channel at min
-
-const int JoystickConfigController::_stickDetectSettleMSecs = 500;
-
-static const JoystickConfigController::stateStickPositions stSticksCentered {
-    0.25, 0.5, 0.75, 0.5
-};
-
-static const JoystickConfigController::stateStickPositions stLeftStickUp {
-    0.25, 0.3084, 0.75, 0.5
-};
-
-static const JoystickConfigController::stateStickPositions stLeftStickDown {
-    0.25, 0.6916, 0.75, 0.5
-};
-
-static const JoystickConfigController::stateStickPositions stLeftStickLeft {
-    0.1542, 0.5, 0.75, 0.5
-};
-
-static const JoystickConfigController::stateStickPositions stLeftStickRight {
-    0.3458, 0.5, 0.75, 0.5
-};
-
-static const JoystickConfigController::stateStickPositions stRightStickUp {
-    0.25, 0.5, 0.75, 0.3084
-};
-
-static const JoystickConfigController::stateStickPositions stRightStickDown {
-    0.25, 0.5, 0.75, 0.6916
-};
-
-static const JoystickConfigController::stateStickPositions stRightStickLeft {
-    0.25, 0.5, 0.6542, 0.5
-};
-
-static const JoystickConfigController::stateStickPositions stRightStickRight {
-    0.25, 0.5, 0.8423, 0.5
-};
-
 JoystickConfigController::JoystickConfigController(void)
     : _joystickManager(qgcApp()->toolbox()->joystickManager())
 {
@@ -100,17 +52,17 @@ JoystickConfigController::~JoystickConfigController()
 /// @brief Returns the state machine entry for the specified state.
 const JoystickConfigController::stateMachineEntry* JoystickConfigController::_getStateMachineEntry(int step)
 {
-    static const char* msgBegin =               "Allow all sticks to center as shown in diagram.\nClick Next to continue";
-    static const char* msgThrottleUp =          "Move the Throttle stick all the way up and hold it there...";
-    static const char* msgThrottleDown =        "Move the Throttle stick all the way down and hold it there...";
-    static const char* msgYawLeft =             "Move the Yaw stick all the way to the left and hold it there...";
-    static const char* msgYawRight =            "Move the Yaw stick all the way to the right and hold it there...";
-    static const char* msgRollLeft =            "Move the Roll stick all the way to the left and hold it there...";
-    static const char* msgRollRight =           "Move the Roll stick all the way to the right and hold it there...";
-    static const char* msgPitchDown =           "Move the Pitch stick all the way down and hold it there...";
-    static const char* msgPitchUp =             "Move the Pitch stick all the way up and hold it there...";
-    static const char* msgPitchCenter =         "Allow the Pitch stick to move back to center...";
-    static const char* msgComplete =            "All settings have been captured.\nClick Next to enable the joystick.";
+    static constexpr const char* msgBegin =               "Allow all sticks to center as shown in diagram.\nClick Next to continue";
+    static constexpr const char* msgThrottleUp =          "Move the Throttle stick all the way up and hold it there...";
+    static constexpr const char* msgThrottleDown =        "Move the Throttle stick all the way down and hold it there...";
+    static constexpr const char* msgYawLeft =             "Move the Yaw stick all the way to the left and hold it there...";
+    static constexpr const char* msgYawRight =            "Move the Yaw stick all the way to the right and hold it there...";
+    static constexpr const char* msgRollLeft =            "Move the Roll stick all the way to the left and hold it there...";
+    static constexpr const char* msgRollRight =           "Move the Roll stick all the way to the right and hold it there...";
+    static constexpr const char* msgPitchDown =           "Move the Pitch stick all the way down and hold it there...";
+    static constexpr const char* msgPitchUp =             "Move the Pitch stick all the way up and hold it there...";
+    static constexpr const char* msgPitchCenter =         "Allow the Pitch stick to move back to center...";
+    static constexpr const char* msgComplete =            "All settings have been captured.\nClick Next to enable the joystick.";
 
     static const stateMachineEntry rgStateMachine[] = {
         //Function

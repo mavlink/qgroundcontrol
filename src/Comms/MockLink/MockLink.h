@@ -94,11 +94,11 @@ private:
     uint16_t        _boardVendorId      = 0;
     uint16_t        _boardProductId     = 0;
 
-    static const char* _firmwareTypeKey;
-    static const char* _vehicleTypeKey;
-    static const char* _sendStatusTextKey;
-    static const char* _incrementVehicleIdKey;
-    static const char* _failureModeKey;
+    static constexpr const char* _firmwareTypeKey         = "FirmwareType";
+    static constexpr const char* _vehicleTypeKey          = "VehicleType";
+    static constexpr const char* _sendStatusTextKey       = "SendStatusText";
+    static constexpr const char* _incrementVehicleIdKey   = "IncrementVehicleId";
+    static constexpr const char* _failureModeKey          = "FailureMode";
 };
 
 class MockLink : public LinkInterface
@@ -328,6 +328,6 @@ private:
     static double       _defaultVehicleLongitude;
     static double       _defaultVehicleAltitude;
     static int          _nextVehicleSystemId;
-    static const char*  _failParam;
+    static constexpr const char*  _failParam = "COM_FLTMODE6";
 };
 

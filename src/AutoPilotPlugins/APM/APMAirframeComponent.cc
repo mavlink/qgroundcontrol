@@ -12,8 +12,6 @@
 #include "FactSystem.h"
 #include "Vehicle.h"
 
-const char* APMAirframeComponent::_frameClassParam = "FRAME_CLASS";
-
 APMAirframeComponent::APMAirframeComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
     : VehicleComponent      (vehicle, autopilot, parent)
     , _requiresFrameSetup   (false)

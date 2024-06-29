@@ -40,9 +40,8 @@ public:
 
     static const QString name;
 
-    static const char* jsonComplexItemTypeValue;
-
-    static const char* settingsGroup;
+    static constexpr const char* settingsGroup =            "VTOLLanding";
+    static constexpr const char* jsonComplexItemTypeValue = "vtolLandingPattern";
 
 private slots:
     void _updateFlightPathSegmentsDontCallDirectly(void) override;

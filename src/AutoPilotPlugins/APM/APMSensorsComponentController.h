@@ -199,7 +199,7 @@ private:
 
     bool _restoreCompassCalFitness;
     float _previousCompassCalFitness;
-    static const char* _compassCalFitnessParam;
+    static constexpr const char* _compassCalFitnessParam = "COMPASS_CAL_FIT";
     
     static const int _supportedFirmwareCalVersion = 2;
 };

@@ -39,23 +39,6 @@ double      MockLink::_defaultVehicleLongitude =    -122.08833157994995;
 double      MockLink::_defaultVehicleAltitude =     19.0;
 #endif
 int         MockLink::_nextVehicleSystemId =        128;
-const char* MockLink::_failParam =                  "COM_FLTMODE6";
-
-const char* MockConfiguration::_firmwareTypeKey         = "FirmwareType";
-const char* MockConfiguration::_vehicleTypeKey          = "VehicleType";
-const char* MockConfiguration::_sendStatusTextKey       = "SendStatusText";
-const char* MockConfiguration::_incrementVehicleIdKey   = "IncrementVehicleId";
-const char* MockConfiguration::_failureModeKey          = "FailureMode";
-
-constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_ALWAYS_RESULT_ACCEPTED;
-constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_ALWAYS_RESULT_FAILED;
-constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_SECOND_ATTEMPT_RESULT_ACCEPTED;
-constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_SECOND_ATTEMPT_RESULT_FAILED;
-constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE;
-constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE_NO_RETRY;
-constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_RESULT_IN_PROGRESS_ACCEPTED;
-constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_RESULT_IN_PROGRESS_FAILED;
-constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_RESULT_IN_PROGRESS_NO_ACK;
 
 // The LinkManager is only forward declared in the header, so a static_assert is here instead to ensure we update if the value changes.
 static_assert(LinkManager::invalidMavlinkChannel() == std::numeric_limits<uint8_t>::max(), "update MockLink::_mavlinkAuxChannel");

@@ -55,18 +55,6 @@
 QGC_LOGGING_CATEGORY(LinkManagerLog, "LinkManagerLog")
 QGC_LOGGING_CATEGORY(LinkManagerVerboseLog, "LinkManagerVerboseLog")
 
-const char* LinkManager::_defaultUDPLinkName =                  "UDP Link (AutoConnect)";
-const char* LinkManager::_mavlinkForwardingLinkName =           "MAVLink Forwarding Link";
-const char* LinkManager::_mavlinkForwardingSupportLinkName =    "MAVLink Support Forwarding Link";
-
-const int LinkManager::_autoconnectUpdateTimerMSecs =   1000;
-#ifdef Q_OS_WIN
-// Have to manually let the bootloader go by on Windows to get a working connect
-const int LinkManager::_autoconnectConnectDelayMSecs =  6000;
-#else
-const int LinkManager::_autoconnectConnectDelayMSecs =  1000;
-#endif
-
 LinkManager::LinkManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
     , _configUpdateSuspended(false)

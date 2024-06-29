@@ -19,8 +19,6 @@
 #include <QtCore/QDebug>
 #include <QtCore/QXmlStreamReader>
 
-static const char* kInvalidConverstion = "Internal Error: No support for string parameters";
-
 QGC_LOGGING_CATEGORY(PX4ParameterMetaDataLog, "PX4ParameterMetaDataLog")
 
 PX4ParameterMetaData::PX4ParameterMetaData(void)

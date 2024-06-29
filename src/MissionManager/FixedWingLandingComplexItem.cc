@@ -21,14 +21,6 @@ QGC_LOGGING_CATEGORY(FixedWingLandingComplexItemLog, "FixedWingLandingComplexIte
 
 const QString FixedWingLandingComplexItem::name(FixedWingLandingComplexItem::tr("Fixed Wing Landing"));
 
-const char* FixedWingLandingComplexItem::settingsGroup                      = "FixedWingLanding";
-const char* FixedWingLandingComplexItem::jsonComplexItemTypeValue           = "fwLandingPattern";
-
-const char* FixedWingLandingComplexItem::glideSlopeName                     = "GlideSlope";
-const char* FixedWingLandingComplexItem::valueSetIsDistanceName             = "ValueSetIsDistance";
-
-const char* FixedWingLandingComplexItem::_jsonValueSetIsDistanceKey         = "valueSetIsDistance";
-
 FixedWingLandingComplexItem::FixedWingLandingComplexItem(PlanMasterController* masterController, bool flyView)
     : LandingComplexItem        (masterController, flyView)
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/FWLandingPattern.FactMetaData.json"), this))

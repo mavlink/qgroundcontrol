@@ -20,8 +20,6 @@
 #include <QtCore/QtEndian>
 #include <QtTest/QSignalSpy>
 
-const char*  LogReplayLinkConfiguration::_logFilenameKey = "logFilename";
-
 LogReplayLinkConfiguration::LogReplayLinkConfiguration(const QString& name)
     : LinkConfiguration(name)
 {

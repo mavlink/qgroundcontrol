@@ -17,8 +17,6 @@
 
 #include <QtCore/QLineF>
 
-const char* QGCMapPolygon::jsonPolygonKey = "polygon";
-
 QGCMapPolygon::QGCMapPolygon(QObject* parent)
     : QObject               (parent)
     , _dirty                (false)

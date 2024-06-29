@@ -10,8 +10,6 @@
 #include "QGCFenceCircle.h"
 #include "JsonHelper.h"
 
-const char* QGCFenceCircle::_jsonInclusionKey = "inclusion";
-
 QGCFenceCircle::QGCFenceCircle(QObject* parent)
     : QGCMapCircle  (parent)
     , _inclusion    (true)

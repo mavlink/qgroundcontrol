@@ -46,10 +46,16 @@ public:
     /// @brief Array of failure modes you can cycle through for testing. By looping through this array you can avoid
     /// hardcoding the specific error modes in your unit test. This way when new error modes are added your unit test
     /// code may not need to be modified.
-    static const ErrorMode_t rgFailureModes[];
+    static constexpr const ErrorMode_t rgFailureModes[] = {
+        errModeNoResponse,
+        errModeNakResponse,
+        errModeNoSecondResponse,
+        errModeNakSecondResponse,
+        errModeBadSequence,
+    };
     
     /// @brief The number of ErrorModes in the rgFailureModes array.
-    static const size_t cFailureModes;
+    static constexpr const size_t cFailureModes = sizeof(MockLinkFTP::rgFailureModes) / sizeof(MockLinkFTP::rgFailureModes[0]);
     
     /// Called to handle an FTP message
     void mavlinkMessageReceived(const mavlink_message_t& message);
@@ -57,7 +63,7 @@ public:
     void enableRandromDrops(bool enable) { _randomDropsEnabled = enable; }
     void enableBinParamFile(bool enable) { _BinParamFileEnabled = enable; }
 
-    static const char* sizeFilenamePrefix;
+    static constexpr const char* sizeFilenamePrefix = "mocklink-size-";
 
 signals:
     /// You can connect to this signal to be notified when the server receives a Terminate command.

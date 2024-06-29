@@ -13,8 +13,6 @@
 #include <QtCore/QDir>
 #include <QtCore/QUrl>
 
-static const char* kTagged = "/TAGGED";
-
 QGC_LOGGING_CATEGORY(GeoTagControllerLog, "qgc.analyzeview.geotagcontroller")
 
 GeoTagController::GeoTagController()

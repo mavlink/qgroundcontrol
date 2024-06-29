@@ -53,6 +53,6 @@ private:
     double  _initialValueAtPrecision;
     double  _increment;
 
-    static const int _valueRole;
-    static const int _valueIndexRole;
+    static constexpr const int _valueRole =        Qt::UserRole;
+    static constexpr const int _valueIndexRole =   Qt::UserRole + 1;
 };

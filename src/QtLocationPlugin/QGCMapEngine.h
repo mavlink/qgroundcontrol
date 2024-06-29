@@ -84,6 +84,8 @@ private:
     QString                 _userAgent;
     bool                    _prunning;
     bool                    _cacheWasReset;
+
+    static constexpr const char* kDbFileName = "qgcMapCache.db";
 };
 
 extern QGCMapEngine*    getQGCMapEngine();

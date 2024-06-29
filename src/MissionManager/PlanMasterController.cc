@@ -31,12 +31,6 @@
 
 QGC_LOGGING_CATEGORY(PlanMasterControllerLog, "PlanMasterControllerLog")
 
-const int   PlanMasterController::kPlanFileVersion =            1;
-const char* PlanMasterController::kPlanFileType =               "Plan";
-const char* PlanMasterController::kJsonMissionObjectKey =       "mission";
-const char* PlanMasterController::kJsonGeoFenceObjectKey =      "geoFence";
-const char* PlanMasterController::kJsonRallyPointsObjectKey =   "rallyPoints";
-
 PlanMasterController::PlanMasterController(QObject* parent)
     : QObject               (parent)
     , _multiVehicleMgr      (qgcApp()->toolbox()->multiVehicleManager())
