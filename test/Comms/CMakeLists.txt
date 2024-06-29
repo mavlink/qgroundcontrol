@@ -6,6 +6,6 @@ qt_add_qml_module(CommsTest
     URI commstest
     VERSION 1.0
     QML_FILES
-    	MockLinkOptionsDlg.qml
-	IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
+        MockLinkOptionsDlg.qml
+    IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
 )

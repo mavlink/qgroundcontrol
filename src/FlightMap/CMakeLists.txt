@@ -12,18 +12,18 @@ qt_add_qml_module(FlightMap
     OUTPUT_TARGETS FlightMap_targets
     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
     IMPORTS
-		QtQuick
-		QtQuick.Controls
-		QtLocation
-		QtPositioning
-		QtQuick.Dialogs
+        QtQuick
+        QtQuick.Controls
+        QtLocation
+        QtPositioning
+        QtQuick.Dialogs
 
-		QGroundControl
-		QGroundControl.FactSystem
-		QGroundControl.Controls
-		QGroundControl.FlightMap
-		QGroundControl.ScreenTools
-		QGroundControl.MultiVehicleManager
-		QGroundControl.Vehicle
-		QGroundControl.QGCPositionManager
+        QGroundControl
+        QGroundControl.FactSystem
+        QGroundControl.Controls
+        QGroundControl.FlightMap
+        QGroundControl.ScreenTools
+        QGroundControl.MultiVehicleManager
+        QGroundControl.Vehicle
+        QGroundControl.QGCPositionManager
 )
