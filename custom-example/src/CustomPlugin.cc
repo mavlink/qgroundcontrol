@@ -9,18 +9,8 @@
  *   @author Gus Grubba <gus@auterion.com>
  */
 
-#include <QtQml>
-#include <QQmlEngine>
-#include <QDateTime>
-#include "QGCSettings.h"
-#include "MAVLinkLogManager.h"
-
 #include "CustomPlugin.h"
-
-#include "MultiVehicleManager.h"
 #include "QGCApplication.h"
-#include "SettingsManager.h"
-#include "AppMessages.h"
 #include "QmlComponentInfo.h"
 #include "QGCPalette.h"
 

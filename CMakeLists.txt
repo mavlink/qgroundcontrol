@@ -31,7 +31,6 @@ endif()
 include(FeatureSummary)
 include(FetchContent)
 include(ExternalProject)
-include(GNUInstallDirs)
 include(CMakeDependentOption)
 include(CMakePrintHelpers)
 
@@ -50,15 +49,17 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR OFF)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
-cmake_print_variables(CMAKE_VERSION)
-cmake_print_variables(CMAKE_PREFIX_PATH)
-cmake_print_variables(CMAKE_HOST_SYSTEM_NAME)
-cmake_print_variables(CMAKE_HOST_SYSTEM_VERSION)
-cmake_print_variables(CMAKE_SYSTEM_NAME)
-cmake_print_variables(CMAKE_SYSTEM_VERSION)
-cmake_print_variables(CMAKE_CURRENT_SOURCE_DIR)
-cmake_print_variables(CMAKE_BUILD_TYPE)
-cmake_print_variables(CMAKE_TOOLCHAIN_FILE)
+cmake_print_variables(
+    CMAKE_VERSION
+    CMAKE_PREFIX_PATH
+    CMAKE_HOST_SYSTEM_NAME
+    CMAKE_HOST_SYSTEM_VERSION
+    CMAKE_SYSTEM_NAME
+    CMAKE_SYSTEM_VERSION
+    CMAKE_CURRENT_SOURCE_DIR
+    CMAKE_BUILD_TYPE
+    CMAKE_TOOLCHAIN_FILE
+)
 
 include(Git)
 include(CustomOptions)
@@ -70,7 +71,8 @@ include(CustomOptions)
 if(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/custom)
     message(STATUS "Enabling custom build")
     set(QGC_CUSTOM_BUILD ON)
-    include(${CMAKE_SOURCE_DIR}/custom/CustomOverrides.cmake)
+    list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/custom/cmake)
+    include(CustomOverrides)
 endif()
 
 #######################################################
@@ -96,6 +98,8 @@ if(IOS OR ANDROID)
     set(MOBILE TRUE)
     add_compile_definitions(__mobile__)
 endif()
+
+include(GNUInstallDirs)
 
 #######################################################
 #               Qt6 Configuration
@@ -158,6 +162,7 @@ find_package(Qt6
         QuickControls2
         QuickWidgets
         OpenGL
+        Sensors
         Sql
         Svg
         Test
@@ -204,6 +209,10 @@ endif()
 
 cmake_dependent_option(QGC_NO_SERIAL_LINK "Build QGroundControl without Serial Support Support." OFF "NOT IOS" ON)
 
+if(QGC_DISABLE_APM_MAVLINK)
+    add_compile_definitions(NO_ARDUPILOT_DIALECT)
+endif()
+
 #######################################################
 #                Custom Build Configuration
 #######################################################
@@ -241,14 +250,6 @@ if(QGC_BUILD_TESTING)
     list(APPEND QGC_RESOURCES ${CMAKE_SOURCE_DIR}/test/UnitTest.qrc)
 endif()
 
-if(WIN32)
-    list(APPEND QGC_RESOURCES ${CMAKE_SOURCE_DIR}/deploy/windows/QGroundControl.rc)
-elseif(MACOS)
-    set(app_icon_macos "${QGC_MACOS_ICON_PATH}/macx.icns")
-    set_source_files_properties(${app_icon_macos} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
-    list(APPEND QGC_RESOURCES ${app_icon_macos})
-endif()
-
 #######################################################
 #               QGroundControl Target
 #######################################################
@@ -263,17 +264,27 @@ if(Qt6LinguistTools_FOUND)
     qt_add_translations(${PROJECT_NAME} TS_FILES ${TS_SOURCES}) # TODO: Update to new qt_add_translations form in Qt6.7
 endif()
 
-set_target_properties(${PROJECT_NAME} PROPERTIES QT_RESOURCE_PREFIX "/qgc")
-set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${QGC_APP_NAME})
+set_target_properties(${PROJECT_NAME}
+    PROPERTIES
+        QT_RESOURCE_PREFIX "/qgc"
+        OUTPUT_NAME ${QGC_APP_NAME}
+)
 
 if(WIN32)
+    set(QGC_APP_ICON "${CMAKE_SOURCE_DIR}/deploy/windows/WindowsQGC.ico")
     set_target_properties(${PROJECT_NAME}
         PROPERTIES
             WIN32_EXECUTABLE TRUE
-            QT_TARGET_RC_ICONS "${CMAKE_SOURCE_DIR}/deploy/windows/WindowsQGC.ico"
+            QT_TARGET_RC_ICONS ${QGC_APP_ICON}
     )
     add_compile_definitions(_USE_MATH_DEFINES)
 elseif(MACOS)
+    set(QGC_APP_ICON "${QGC_MACOS_ICON_PATH}/macx.icns")
+    set_source_files_properties(${QGC_APP_ICON}
+        PROPERTIES
+            MACOSX_PACKAGE_LOCATION "Resources"
+    )
+    target_sources(${PROJECT_NAME} PRIVATE ${QGC_APP_ICON})
     set_target_properties(${PROJECT_NAME}
         PROPERTIES
             MACOSX_BUNDLE TRUE
@@ -289,7 +300,10 @@ elseif(MACOS)
     )
 elseif(IOS)
     enable_language(OBJC)
-    set_target_properties(${PROJECT_NAME} PROPERTIES QT_IOS_LAUNCH_SCREEN ${CMAKE_SOURCE_DIR}/deploy/ios/QGCLaunchScreen.xib)
+    set_target_properties(${PROJECT_NAME}
+        PROPERTIES
+            QT_IOS_LAUNCH_SCREEN ${CMAKE_SOURCE_DIR}/deploy/ios/QGCLaunchScreen.xib
+    )
 elseif(ANDROID)
     FetchContent_Declare(android_openssl
         DOWNLOAD_EXTRACT_TIMESTAMP true
@@ -319,7 +333,7 @@ elseif(ANDROID)
             QT_ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_SOURCE_DIR}/android
             QT_ANDROID_VERSION_NAME ${CMAKE_PROJECT_VERSION}
             QT_ANDROID_VERSION_CODE ${ANDROID_VERSION_CODE}
-            QT_QML_ROOT_PATH ${CMAKE_SOURCE_DIR}
+            # QT_QML_ROOT_PATH ${CMAKE_SOURCE_DIR}
     )
     # get_target_property(QGC_ANDROID_DEPLOY_FILE ${PROJECT_NAME} QT_ANDROID_DEPLOYMENT_SETTINGS_FILE)
 elseif(LINUX)
@@ -381,8 +395,13 @@ install(
     DESTINATION ${CMAKE_INSTALL_DATADIR}/qgroundcontrol
 )
 if(LINUX)
+    configure_file(
+        ${CMAKE_SOURCE_DIR}/deploy/linux/org.mavlink.qgroundcontrol.desktop.in
+        ${CMAKE_BINARY_DIR}/org.mavlink.qgroundcontrol.desktop
+        @ONLY
+    )
     install(
-        FILES ${CMAKE_SOURCE_DIR}/deploy/linux/org.mavlink.qgroundcontrol.desktop
+        FILES ${CMAKE_BINARY_DIR}/org.mavlink.qgroundcontrol.desktop
         DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
     )
     install(

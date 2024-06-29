@@ -13,9 +13,10 @@
 
 #pragma once
 
-#include "FirmwarePlugin.h"
 #include "FirmwarePluginFactory.h"
+#include <QGCMAVLink.h>
 
+class FirmwarePlugin;
 class CustomFirmwarePlugin;
 
 /// This custom implementation of FirmwarePluginFactory creates a custom build which only supports

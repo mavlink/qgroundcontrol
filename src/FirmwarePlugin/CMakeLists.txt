@@ -29,6 +29,8 @@ target_link_libraries(FirmwarePlugin
         QGC
         Utilities
         VehicleSetup
+        $<$<NOT:$<BOOL:${QGC_DISABLE_APM_PLUGIN}>>:APMFirmwarePlugin>
+        $<$<NOT:$<BOOL:${QGC_DISABLE_PX4_PLUGIN}>>:PX4FirmwarePlugin>
     PUBLIC
     	Qt6::Core
         Qt6::Positioning
@@ -39,16 +41,6 @@ target_link_libraries(FirmwarePlugin
 
 target_include_directories(FirmwarePlugin PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-# Load These Firmware Plugins
-
-if(NOT QGC_NO_ARDUPILOT_DIALECT)
-    target_link_libraries(FirmwarePlugin PRIVATE APMFirmwarePlugin)
-else()
-    target_compile_definitions(FirmwarePlugin PUBLIC NO_ARDUPILOT_DIALECT)
-endif()
-
-if(NOT QGC_NO_PX4_DIALECT)
-    target_link_libraries(FirmwarePlugin PRIVATE PX4FirmwarePlugin)
-else()
-    target_compile_definitions(FirmwarePlugin PUBLIC NO_PX4_DIALECT)
-endif()
+# if(QGC_DISABLE_APM_MAVLINK)
+#     target_compile_definitions(FirmwarePlugin PUBLIC NO_ARDUPILOT_DIALECT)
+# endif()
