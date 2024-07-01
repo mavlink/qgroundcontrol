@@ -158,6 +158,7 @@ find_package(Qt6
         QuickControls2
         QuickWidgets
         OpenGL
+        Sensors
         Sql
         Svg
         Test
