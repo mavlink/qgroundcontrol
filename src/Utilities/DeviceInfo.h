@@ -11,6 +11,7 @@ namespace QGCDeviceInfo
 
 bool isInternetAvailable();
 bool isBluetoothAvailable();
+bool isNetworkWired();
 
 class QGCAmbientTemperatureFilter : public QAmbientTemperatureFilter
 {

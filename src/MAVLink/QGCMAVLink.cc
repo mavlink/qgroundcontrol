@@ -12,6 +12,8 @@
 
 #include <QtCore/QDebug>
 
+QGC_LOGGING_CATEGORY(QGCMAVLinkLog, "qgc.mavlink.qgcmavlink")
+
 constexpr QGCMAVLink::FirmwareClass_t QGCMAVLink::FirmwareClassPX4;
 constexpr QGCMAVLink::FirmwareClass_t QGCMAVLink::FirmwareClassArduPilot;
 constexpr QGCMAVLink::FirmwareClass_t QGCMAVLink::FirmwareClassGeneric;
