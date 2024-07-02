@@ -37,6 +37,7 @@ public:
         bool            alert;
         uint32_t        availableFlags;
     } ADSBVehicleInfo_t;
+    // TODO: Why can't we just use QGeoLocation with heading & altitude?
 
     ADSBVehicle(const ADSBVehicleInfo_t &vehicleInfo, QObject* parent);
 

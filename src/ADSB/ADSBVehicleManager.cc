@@ -30,9 +30,9 @@ void ADSBVehicleManager::setToolbox(QGCToolbox* toolbox)
 
     ADSBVehicleManagerSettings* settings = toolbox->settingsManager()->adsbVehicleManagerSettings();
     if (settings->adsbServerConnectEnabled()->rawValue().toBool()) {
-        _tcpLink = new ADSBTCPLink(settings->adsbServerHostAddress()->rawValue().toString(), settings->adsbServerPort()->rawValue().toInt(), this);
-        connect(_tcpLink, &ADSBTCPLink::adsbVehicleUpdate,  this, &ADSBVehicleManager::adsbVehicleUpdate,   Qt::QueuedConnection);
-        connect(_tcpLink, &ADSBTCPLink::error,              this, &ADSBVehicleManager::_tcpError,           Qt::QueuedConnection);
+        _tcpLink = new ADSBTCPLink(settings->adsbServerHostAddress()->rawValue().toString(), settings->adsbServerPort()->rawValue().toUInt(), this);
+        connect(_tcpLink, &ADSBTCPLink::adsbVehicleUpdate,  this, &ADSBVehicleManager::adsbVehicleUpdate,   Qt::AutoConnection);
+        connect(_tcpLink, &ADSBTCPLink::errorOccurred, this, &ADSBVehicleManager::_tcpError, Qt::AutoConnection);
     }
 }
 
@@ -68,5 +68,6 @@ void ADSBVehicleManager::adsbVehicleUpdate(const ADSBVehicle::ADSBVehicleInfo_t 
 
 void ADSBVehicleManager::_tcpError(const QString errorMsg)
 {
+    qCDebug(ADSBVehicleManagerLog) << errorMsg;
     _app->showAppMessage(tr("ADSB Server Error: %1").arg(errorMsg));
 }
