@@ -16,7 +16,7 @@ Before using the container, you have to build the image.
 You can accomplish this using docker, running the following script from the root of the QGC source code directory.
 
 ```
-docker build --file ./deploy/docker/Dockerfile-build-linux -t qgc-linux-docker .
+docker build --file ./deploy/docker/Dockerfile-build-ubuntu -t qgc-linux-docker .
 ```
 
 ::: info
