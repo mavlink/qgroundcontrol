@@ -36,7 +36,7 @@ Item {
 
     property var    _unitsSettings:         QGroundControl.settingsManager.unitsSettings
     property real   _margins:               ScreenTools.defaultFontPixelWidth / 2
-    property real   _indicatorCenterPos
+    property real   _indicatorCenterPos:    sliderFlickable.height / 2
 
     property int    _fullSliderRangeIndex:  2
     property var    _rgValueRanges:         [ 400, 200, 100, 50, 25, 10 ]
@@ -48,66 +48,45 @@ Item {
     property real   _minorTickWidth:        _majorTickWidth / 2
     property real   _majorTickPixelHeight:  ScreenTools.largeFontPixelHeight * 2
     property real   _sliderValuePerPixel:   _majorTickValueStep / _majorTickPixelHeight
-    property real   _firstTickPixelOffset:  0
-    property real   _firstPixelValue:       0
 
-    property int     _cMajorTicks:           0
     property int    _majorTickValueStep:    10
     property int    _minorTickValueStep:    _majorTickValueStep / 2
 
-    property int    _majorTickMaxValue:     0
-    property int    _majorTickMinValue:     0
-
-    property real   _sliderHeight:          0
     property real   _sliderValue:           _firstPixelValue - ((sliderFlickable.contentY + _indicatorCenterPos) * _sliderValuePerPixel)
+
+    // Calculate the full range of the slider. We have been given a min/max but that is for clamping the selected slider values.
+    // We need expand that range to take into account additional values that must be displayed above/below the value indicator
+    // when it is at min/max.
+
+    // Add additional major ticks above/below min/max to ensure we can display the full visual range of the slider
+    property int    _majorTicksVisibleAboveIndicator:   Math.floor(_indicatorCenterPos / _majorTickPixelHeight)
+    property int    _majorTickAdjustment:               _majorTicksVisibleAboveIndicator * _majorTickValueStep
+
+    // Calculate the next major tick above/below min/max
+    property int    _majorTickMaxValue:     Math.ceil((_sliderMaxVal + _majorTickAdjustment)/ _majorTickValueStep) * _majorTickValueStep 
+    property int    _majorTickMinValue:     Math.floor((_sliderMinVal - _majorTickAdjustment)/ _majorTickValueStep) * _majorTickValueStep
+
+    // Now calculate the position we draw the first tick mark such that we are not allowed to flick above the max value
+    property real   _firstTickPixelOffset:  _indicatorCenterPos - ((_majorTickMaxValue - _sliderMaxVal) / _sliderValuePerPixel)
+    property real   _firstPixelValue:       _majorTickMaxValue + (_firstTickPixelOffset * _sliderValuePerPixel)
+
+    // Calculate the slider height such that we can flick below the min value
+    property real   _sliderHeight:          (_firstPixelValue - _sliderMinVal) / _sliderValuePerPixel + (sliderFlickable.height - _indicatorCenterPos)
+
+    property int     _cMajorTicks:          (_majorTickMaxValue - _majorTickMinValue) / _majorTickValueStep + 1
 
     property var _qgcPal: QGroundControl.globalPalette
 
     /// Slider values should be in converted app units.
     function setupSlider(sliderType, minValue, maxValue, currentValue, displayText) {
+        console.log("setupSlider: sliderType: ", sliderType, " minValue: ", minValue, " maxValue: ", maxValue, " currentValue: ", currentValue, " displayText: ", displayText)
         _sliderType = sliderType
         _sliderMinVal = minValue
         _sliderMaxVal = maxValue
         _displayText = displayText
 
-        // Value indicator is normally centered. For takeoff slider it is at the bottom.
-        if (_sliderType === GuidedValueSlider.SliderType.Takeoff) {
-            _indicatorCenterPos = height - _margins - indicatorCanvas.height / 2
-        } else {
-            _indicatorCenterPos = height / 2
-        }
-
-        // Calculate the full range of the slider. We have been given a min/max but that is for clamping the selected slider values.
-        // We need expand that range to take into account additional values that must be displayed above/below the value indicator
-        // when it is at min/max.
-
-        // Calculate the next major tick above/below min/max
-        _majorTickMaxValue = Math.ceil(_sliderMaxVal / _majorTickValueStep) * _majorTickValueStep
-        _majorTickMinValue = Math.floor(_sliderMinVal / _majorTickValueStep) * _majorTickValueStep
-
-        // Add additional major ticks above/below min/max to ensure we can display the full visual range of the slider
-        var pixelsAboveIndicator = _indicatorCenterPos
-        var majorTicksVisibleAbove = Math.floor(pixelsAboveIndicator / _majorTickPixelHeight)
-        _majorTickMaxValue += majorTicksVisibleAbove * _majorTickValueStep
-        var pixelsBelowIndicator = height - _indicatorCenterPos
-        var majorTicksVisibleBelow = Math.floor(pixelsBelowIndicator / _majorTickPixelHeight)
-        _majorTickMinValue -= majorTicksVisibleBelow * _majorTickValueStep
-
-        // We always increase the ticks by one above/below so that the we draw enough of them to cover the full range of the slider
-        _majorTickMaxValue += _majorTickValueStep
-        _majorTickMinValue -= _majorTickValueStep
-
-        // Now calculate the position we draw the first tick mark such that we are not allowed to flick above the max value
-        _firstTickPixelOffset = _indicatorCenterPos - ((_majorTickMaxValue - _sliderMaxVal) / _sliderValuePerPixel)
-        _firstPixelValue = _majorTickMaxValue + (_firstTickPixelOffset * _sliderValuePerPixel)
-
-        // Calculate the slider height such that we can flick below the min value
-        _sliderHeight = (_firstPixelValue - _sliderMinVal) / _sliderValuePerPixel + (control.height - _indicatorCenterPos)
-
         // Position the slider such that the indicator is pointing to the current value
         sliderFlickable.contentY = (_firstPixelValue - currentValue) / _sliderValuePerPixel - _indicatorCenterPos
-
-        _cMajorTicks = (_majorTickMaxValue - _majorTickMinValue) / _majorTickValueStep + 1
     }
 
     function _clampedSliderValue(value) {
@@ -157,9 +136,12 @@ Item {
                     model: _cMajorTicks
 
                     Item {
-                        width:  sliderContainer.width
-                        height: 1
-                        y:      _majorTickPixelHeight * index + _firstTickPixelOffset
+                        width:      sliderContainer.width
+                        height:     1
+                        y:          _majorTickPixelHeight * index + _firstTickPixelOffset
+                        opacity:    tickValue < _sliderMinVal || tickValue > _sliderMaxVal ? 0.5 : 1
+
+                        property real tickValue: _majorTickMaxValue - (_majorTickValueStep * index)
 
                         Rectangle {
                             width:  _majorTickWidth
@@ -170,7 +152,7 @@ Item {
                         QGCLabel {
                             anchors.right:          parent.right
                             anchors.verticalCenter: parent.verticalCenter
-                            text:                   _majorTickMaxValue - (_majorTickValueStep * index)
+                            text:                   parent.tickValue
                             font.pointSize:         ScreenTools.largeFontPointSize
                         }
                     }
@@ -181,10 +163,14 @@ Item {
                     model: _cMajorTicks * 2
 
                     Rectangle {
-                        y:      _majorTickPixelHeight / 2 * index +  + _firstTickPixelOffset
-                        width:  _minorTickWidth
-                        height: 1
-                        color:  _qgcPal.text
+                        y:          _majorTickPixelHeight / 2 * index +  + _firstTickPixelOffset
+                        width:      _minorTickWidth
+                        height:     1
+                        color:      _qgcPal.text
+                        opacity:    tickValue < _sliderMinVal || tickValue > _sliderMaxVal ? 0.5 : 1
+                        visible:    index % 2 === 1
+
+                        property real tickValue: _majorTickMaxValue - ((_majorTickValueStep  / 2) * index)
                     }
                 }
             }
@@ -194,7 +180,7 @@ Item {
     // Value indicator
     Canvas {
         id:     indicatorCanvas
-        y:      _indicatorCenterPos - height / 2
+        y:      sliderFlickable.y + _indicatorCenterPos - height / 2
         width:  Math.max(minIndicatorWidth, minTickDisplayWidth)
         height: indicatorHeight
         clip:   false
