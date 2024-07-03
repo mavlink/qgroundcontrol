@@ -28,7 +28,7 @@ Keep in mind this is tagging the image for later reference since you can have mu
 If building on a Mac computer with an M1 chip you must also specify the build option `--platform linux/x86_64` as shown:
 
 ```
-docker build --platform linux/x86_64 --file ./deploy/docker/Dockerfile-build-linux -t qgc-linux-docker .
+docker build --platform linux/x86_64 --file ./deploy/docker/Dockerfile-build-ubuntu -t qgc-linux-docker .
 ```
 
 Otherwise you will get a build error like:
