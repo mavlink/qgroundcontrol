@@ -220,7 +220,6 @@ Item {
             } else {
                 console.error("setupSlider called for inapproproate change speed action", _fixedWing, _activeVehicle.haveMRSpeedLimits)
             }
-            // FIXME: What about other choices. Review old code
         } else if (actionCode === actionChangeAlt || actionCode === actionOrbit || actionCode === actionGoto || actionCode === actionPause) {
             guidedValueSlider.setupSlider(
                 GuidedValueSlider.SliderType.Altitude,
