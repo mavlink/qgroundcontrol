@@ -59,27 +59,11 @@ QGCMapEngine* getQGCMapEngine()
 QGCMapEngine::QGCMapEngine(QObject* parent)
     : QObject(parent)
     , _worker(new QGCCacheWorker(this))
-#ifdef WE_ARE_KOSHER
-    //-- TODO: Get proper version
-    #if defined Q_OS_MAC
-        , _userAgent("QGroundControl (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.75.14 (KHTML, like Gecko) Version/2.9.0")
-    #elif defined Q_OS_WIN32
-        , _userAgent("QGroundControl (Windows; Windows NT 6.0) (KHTML, like Gecko) Version/2.9.0")
-    #else
-        , _userAgent("QGroundControl (X11; Ubuntu; Linux x86_64) (KHTML, like Gecko) Version/2.9.0")
-    #endif
-#else
-    #if defined Q_OS_MAC
-        , _userAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10.6; rv:25.0) Gecko/20100101 Firefox/25.0")
-    #elif defined Q_OS_WIN32
-        , _userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:31.0) Gecko/20130401 Firefox/31.0")
-    #else
-        , _userAgent("Mozilla/5.0 (X11; Linux i586; rv:31.0) Gecko/20100101 Firefox/31.0")
-    #endif
-#endif
     , _prunning(false)
     , _cacheWasReset(false)
 {
+    // qCDebug(QGeoTiledMappingManagerEngineQGCLog) << Q_FUNC_INFO << this;
+
     qRegisterMetaType<QGCMapTask::TaskType>();
     qRegisterMetaType<QGCTile>();
     qRegisterMetaType<QList<QGCTile*>>();
@@ -92,6 +76,8 @@ QGCMapEngine::~QGCMapEngine()
     (void) disconnect(_worker);
     _worker->quit();
     _worker->wait();
+
+    // qCDebug(QGeoTiledMappingManagerEngineQGCLog) << Q_FUNC_INFO << this;
 }
 
 //-----------------------------------------------------------------------------
@@ -263,41 +249,6 @@ QGCMapEngine::getMaxMemCache()
 }
 
 //-----------------------------------------------------------------------------
-QString
-QGCMapEngine::bigSizeToString(quint64 size)
-{
-    if(size < 1024)
-        return kLocale.toString(size);
-    else if(size < 1024 * 1024)
-        return kLocale.toString(static_cast<double>(size) / 1024.0, 'f', 1) + "kB";
-    else if(size < 1024 * 1024 * 1024)
-        return kLocale.toString(static_cast<double>(size) / (1024.0 * 1024.0), 'f', 1) + "MB";
-    else if(size < 1024.0 * 1024.0 * 1024.0 * 1024.0)
-        return kLocale.toString(static_cast<double>(size) / (1024.0 * 1024.0 * 1024.0), 'f', 1) + "GB";
-    else
-        return kLocale.toString(static_cast<double>(size) / (1024.0 * 1024.0 * 1024.0 * 1024), 'f', 1) + "TB";
-}
-
-//-----------------------------------------------------------------------------
-QString
-QGCMapEngine::storageFreeSizeToString(quint64 size_MB)
-{
-    if(size_MB < 1024)
-        return kLocale.toString(static_cast<double>(size_MB) , 'f', 0) + " MB";
-    else if(size_MB < 1024.0 * 1024.0)
-        return kLocale.toString(static_cast<double>(size_MB) / (1024.0), 'f', 2) + " GB";
-    else
-        return kLocale.toString(static_cast<double>(size_MB) / (1024.0 * 1024), 'f', 2) + " TB";
-}
-
-//-----------------------------------------------------------------------------
-QString
-QGCMapEngine::numberToString(quint64 number)
-{
-    return kLocale.toString(number);
-}
-
-//-----------------------------------------------------------------------------
 void
 QGCMapEngine::_updateTotals(quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize)
 {
@@ -310,23 +261,6 @@ QGCMapEngine::_updateTotals(quint32 totaltiles, quint64 totalsize, quint32 defau
         connect(task, &QGCPruneCacheTask::pruned, this, &QGCMapEngine::_pruned);
         addTask(task);
     }
-}
-//-----------------------------------------------------------------------------
-void
-QGCMapEngine::_pruned()
-{
-    _prunning = false;
-}
-
-//-----------------------------------------------------------------------------
-int
-QGCMapEngine::concurrentDownloads(const QString& type)
-{
-    Q_UNUSED(type);
-    // TODO : We may want different values depending on
-    // the provider here, let it like this as all provider are set to 12
-    // at the moment
-    return 12;
 }
 
 //-----------------------------------------------------------------------------

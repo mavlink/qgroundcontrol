@@ -83,6 +83,7 @@ target_link_libraries(QGC
         MissionManager
         # PlanView
         PositionManager
+        QGCLocation
         QmlControls
         Settings
         Terrain
@@ -98,7 +99,6 @@ target_link_libraries(QGC
         Qt6::Core
         Qt6::CorePrivate
         Qt6::Widgets
-        QGCLocation
 )
 
 if(QGC_CUSTOM_BUILD)

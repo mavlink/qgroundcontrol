@@ -11,7 +11,6 @@
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
 #include "QGCToolbox.h"
-#include "QGCMapEngine.h"
 #include "ParameterManager.h"
 #include "FactSystem.h"
 #include "Vehicle.h"
@@ -224,8 +223,8 @@ void LogDownloadController::_updateDataRate(void)
         _downloadData->rate_bytes = 0;
 
         //-- Update status
-        const QString status = QString("%1 (%2/s)").arg(QGCMapEngine::bigSizeToString(_downloadData->written),
-                                                        QGCMapEngine::bigSizeToString(_downloadData->rate_avg));
+        const QString status = QString("%1 (%2/s)").arg(qgcApp()->bigSizeToString(_downloadData->written),
+                                                        qgcApp()->bigSizeToString(_downloadData->rate_avg));
 
         _downloadData->entry->setStatus(status);
         _downloadData->elapsed.start();
