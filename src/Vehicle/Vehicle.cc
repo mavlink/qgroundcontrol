@@ -3161,11 +3161,12 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
                 // HacK to support PX4 autotune which does not send final result ack and just sends in progress
                 commandEntry = _mavCommandList.takeAt(entryIndex);
             } else {
-                commandEntry = _mavCommandList.at(entryIndex);  // Command has not completed yet, don't remove
+                // Command has not completed yet, don't remove
+                MavCommandListEntry_t& commandEntryRef = _mavCommandList[entryIndex];
+                commandEntryRef.maxTries = 1;         // Vehicle responsed to command so don't retry
+                commandEntryRef.elapsedTimer.start(); // We've heard from vehicle, restart elapsed timer for no ack received timeout
+                commandEntry = commandEntryRef;
             }
-
-            commandEntry.maxTries = 1;              // Vehicle responsed to command so don't retry
-            commandEntry.elapsedTimer.restart();    // We've heard from vehicle, restart elapsed timer for no ack received timeout
 
             if (commandEntry.ackHandlerInfo.progressHandler) {
                 (*commandEntry.ackHandlerInfo.progressHandler)(commandEntry.ackHandlerInfo.progressHandlerData, message.compid, ack);
