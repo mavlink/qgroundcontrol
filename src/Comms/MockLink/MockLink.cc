@@ -1337,7 +1337,6 @@ void MockLink::_sendGlobalPositionInt(void)
 
 void MockLink::_sendExtendedSysState(void)
 {
-    static uint64_t timeTick = 0;
     mavlink_message_t msg;
 
     mavlink_msg_extended_sys_state_pack_chan(_vehicleSystemId,
