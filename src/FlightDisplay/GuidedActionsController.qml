@@ -204,14 +204,14 @@ Item {
                 qsTr("Height (rel)"))
         } else if (actionCode === actionChangeSpeed) {
             if (_fixedWing) {
-                guidedValuesSlider.setupSlider(
+                guidedValueSlider.setupSlider(
                     GuidedValueSlider.SliderType.Speed,
                     _unitsConversion.metersSecondToAppSettingsSpeedUnits(_activeVehicle.minimumEquivalentAirspeed().toFixed(1)),
                     _unitsConversion.metersSecondToAppSettingsSpeedUnits(_activeVehicle.maximumEquivalentAirspeed().toFixed(1)),
                     _unitsConversion.metersSecondToAppSettingsSpeedUnits(_activeVehicle.minimumEquivalentAirspeed()),
                     qsTr("Airspeed"))
             } else if (!_fixedWing && _activeVehicle.haveMRSpeedLimits) {
-                guidedValuesSlider.setupSlider(
+                guidedValueSlider.setupSlider(
                     GuidedValueSlider.SliderType.Speed,
                     _unitsConversion.metersSecondToAppSettingsSpeedUnits(0.1).toFixed(1),
                     _unitsConversion.metersSecondToAppSettingsSpeedUnits(_activeVehicle.maximumHorizontalSpeedMultirotor()).toFixed(1),
