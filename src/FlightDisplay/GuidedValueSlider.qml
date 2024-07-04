@@ -215,8 +215,12 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             horizontalAlignment:    Text.AlignRight
             verticalAlignment:      Text.AlignVCenter
-            text:                   _clampedSliderValue(_sliderValue) + " " + QGroundControl.unitsConversion.appSettingsVerticalDistanceUnitsString
+            text:                   _clampedSliderValue(_sliderValue) + " " + unitsString
             font.pointSize:         ScreenTools.largeFontPointSize
+
+            property var unitsString: _sliderType === GuidedValueSlider.Speed ? 
+                                        QGroundControl.unitsConversion.appSettingsSpeedUnitsString : 
+                                            QGroundControl.unitsConversion.appSettingsVerticalDistanceUnitsString
         }
     }
 
