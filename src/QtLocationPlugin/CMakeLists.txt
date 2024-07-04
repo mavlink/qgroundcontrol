@@ -35,6 +35,8 @@ qt_add_plugin(QGCLocation STATIC
     QGeoServiceProviderPluginQGC.h
     QGeoTiledMappingManagerEngineQGC.cpp
     QGeoTiledMappingManagerEngineQGC.h
+    QGeoTiledMapQGC.cpp
+    QGeoTiledMapQGC.h
     QGeoTileFetcherQGC.cpp
     QGeoTileFetcherQGC.h
     QMLControl/QGCMapEngineManager.cc

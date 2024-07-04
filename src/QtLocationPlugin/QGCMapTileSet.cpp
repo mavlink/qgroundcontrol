@@ -16,14 +16,17 @@
  *
  */
 
-#include "QGCMapEngine.h"
 #include "QGCMapTileSet.h"
+#include "QGCMapEngine.h"
 #include "QGCMapEngineManager.h"
 #include "QGCFileDownload.h"
+#include "QGeoTileFetcherQGC.h"
 #include "TerrainTile.h"
 #include "QGCMapUrlEngine.h"
-#include "ElevationMapProvider.h"
+#include "QGCMapEngineData.h"
+#include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
+#include "ElevationMapProvider.h"
 
 #include <QtNetwork/QNetworkProxy>
 
@@ -72,49 +75,49 @@ QGCCachedTileSet::~QGCCachedTileSet()
 QString
 QGCCachedTileSet::errorCountStr() const
 {
-    return QGCMapEngine::numberToString(_errorCount);
+    return qgcApp()->numberToString(_errorCount);
 }
 
 //-----------------------------------------------------------------------------
 QString
 QGCCachedTileSet::totalTileCountStr() const
 {
-    return QGCMapEngine::numberToString(_totalTileCount);
+    return qgcApp()->numberToString(_totalTileCount);
 }
 
 //-----------------------------------------------------------------------------
 QString
 QGCCachedTileSet::totalTilesSizeStr() const
 {
-    return QGCMapEngine::bigSizeToString(_totalTileSize);
+    return qgcApp()->bigSizeToString(_totalTileSize);
 }
 
 //-----------------------------------------------------------------------------
 QString
 QGCCachedTileSet::uniqueTileSizeStr() const
 {
-    return QGCMapEngine::bigSizeToString(_uniqueTileSize);
+    return qgcApp()->bigSizeToString(_uniqueTileSize);
 }
 
 //-----------------------------------------------------------------------------
 QString
 QGCCachedTileSet::uniqueTileCountStr() const
 {
-    return QGCMapEngine::numberToString(_uniqueTileCount);
+    return qgcApp()->numberToString(_uniqueTileCount);
 }
 
 //-----------------------------------------------------------------------------
 QString
 QGCCachedTileSet::savedTileCountStr() const
 {
-    return QGCMapEngine::numberToString(_savedTileCount);
+    return qgcApp()->numberToString(_savedTileCount);
 }
 
 //-----------------------------------------------------------------------------
 QString
 QGCCachedTileSet::savedTileSizeStr() const
 {
-    return QGCMapEngine::bigSizeToString(_savedTileSize);
+    return qgcApp()->bigSizeToString(_savedTileSize);
 }
 
 //-----------------------------------------------------------------------------
@@ -238,7 +241,7 @@ void QGCCachedTileSet::_prepareDownload()
         return;
     }
     //-- Prepare queue (QNetworkAccessManager has a limit for concurrent downloads)
-    for(int i = _replies.count(); i < QGCMapEngine::concurrentDownloads(_type); i++) {
+    for(uint32_t i = _replies.count(); i < QGeoTileFetcherQGC::concurrentDownloads(_type); i++) {
         if(_tilesToDownload.count()) {
             QGCTile* tile = _tilesToDownload.first();
             _tilesToDownload.removeFirst();
@@ -261,7 +264,7 @@ void QGCCachedTileSet::_prepareDownload()
 #endif
             delete tile;
             //-- Refill queue if running low
-            if(!_batchRequested && !_noMoreTiles && _tilesToDownload.count() < (QGCMapEngine::concurrentDownloads(_type) * 10)) {
+            if(!_batchRequested && !_noMoreTiles && _tilesToDownload.count() < (QGeoTileFetcherQGC::concurrentDownloads(_type) * 10)) {
                 //-- Request new batch of tiles
                 createDownloadTask();
             }

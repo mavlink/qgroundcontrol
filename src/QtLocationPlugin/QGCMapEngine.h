@@ -42,8 +42,6 @@ public:
     void                        cacheTile           (const QString& type, const QString& hash, const QByteArray& image, const QString& format, qulonglong set = UINT64_MAX);
     static QGCFetchTileTask*    createFetchTileTask (const QString& type, int x, int y, int z);
     static QStringList          getMapNameList      ();
-    const QString               userAgent           () { return _userAgent; }
-    void                        setUserAgent        (const QString& ua) { _userAgent = ua; }
     static QString              tileHashToType      (const QString& tileHash);
     static QString              getTileHash         (const QString& type, int x, int y, int z);
     static quint32              getMaxDiskCache     ();
@@ -55,14 +53,10 @@ public:
     //-- Tile Math
     static QGCTileSet           getTileCount        (int zoom, double topleftLon, double topleftLat, double bottomRightLon, double bottomRightLat, const QString& mapType);
     static QString              getTypeFromName     (const QString& name);
-    static QString              bigSizeToString     (quint64 size);
-    static QString              storageFreeSizeToString(quint64 size_MB);
-    static QString              numberToString      (quint64 number);
-    static int                  concurrentDownloads (const QString& type);
 
 private slots:
     void _updateTotals          (quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize);
-    void _pruned                ();
+    void _pruned                () { _prunning = false; }
 
 signals:
     void updateTotals           (quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize);
@@ -74,7 +68,6 @@ private:
 
 private:
     QGCCacheWorker*         _worker = nullptr;
-    QString                 _userAgent;
     bool                    _prunning;
     bool                    _cacheWasReset;
     QString                 _cachePath;
