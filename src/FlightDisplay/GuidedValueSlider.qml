@@ -114,7 +114,7 @@ Item {
         QGCLabel {
             Layout.fillWidth:   true
             horizontalAlignment: Text.AlignHCenter
-            font.pointSize:     ScreenTools.SmallFontPointSize
+            font.pointSize:     ScreenTools.smallFontPointSize
             text:               _displayText
         }
       
