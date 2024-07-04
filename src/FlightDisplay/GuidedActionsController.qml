@@ -206,9 +206,9 @@ Item {
             if (_fixedWing) {
                 guidedValueSlider.setupSlider(
                     GuidedValueSlider.SliderType.Speed,
-                    _unitsConversion.metersSecondToAppSettingsSpeedUnits(_activeVehicle.minimumEquivalentAirspeed().toFixed(1)),
-                    _unitsConversion.metersSecondToAppSettingsSpeedUnits(_activeVehicle.maximumEquivalentAirspeed().toFixed(1)),
-                    _unitsConversion.metersSecondToAppSettingsSpeedUnits(_activeVehicle.minimumEquivalentAirspeed()),
+                    _unitsConversion.metersSecondToAppSettingsSpeedUnits(_activeVehicle.minimumEquivalentAirspeed()).toFixed(1),
+                    _unitsConversion.metersSecondToAppSettingsSpeedUnits(_activeVehicle.maximumEquivalentAirspeed()).toFixed(1),
+                    _unitsConversion.metersSecondToAppSettingsSpeedUnits(_activeVehicle.minimumEquivalentAirspeed()).toFixed(1),
                     qsTr("Airspeed"))
             } else if (!_fixedWing && _activeVehicle.haveMRSpeedLimits) {
                 guidedValueSlider.setupSlider(
