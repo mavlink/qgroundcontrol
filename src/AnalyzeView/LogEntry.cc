@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 #include "LogEntry.h"
-#include "QGCMapEngine.h"
+#include "QGCApplication.h"
 #include "MAVLinkLib.h"
 #include "QGCLoggingCategory.h"
 
@@ -69,5 +69,5 @@ QGCLogEntry::QGCLogEntry(uint logId, const QDateTime& dateTime, uint logSize, bo
 //----------------------------------------------------------------------------------------
 QString QGCLogEntry::sizeStr() const
 {
-    return QGCMapEngine::bigSizeToString(_logSize);
+    return qgcApp()->bigSizeToString(_logSize);
 }

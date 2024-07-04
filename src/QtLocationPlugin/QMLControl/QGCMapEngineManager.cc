@@ -19,6 +19,7 @@
 #include "QGCMapTileSet.h"
 #include "ElevationMapProvider.h"
 #include "QGCMapEngine.h"
+#include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QSettings>
@@ -102,14 +103,14 @@ QGCMapEngineManager::updateForCurrentView(double lon0, double lat0, double lon1,
 QString
 QGCMapEngineManager::tileCountStr() const
 {
-    return QGCMapEngine::numberToString(_imageSet.tileCount + _elevationSet.tileCount);
+    return qgcApp()->numberToString(_imageSet.tileCount + _elevationSet.tileCount);
 }
 
 //-----------------------------------------------------------------------------
 QString
 QGCMapEngineManager::tileSizeStr() const
 {
-    return QGCMapEngine::bigSizeToString(_imageSet.tileSize + _elevationSet.tileSize);
+    return qgcApp()->bigSizeToString(_imageSet.tileSize + _elevationSet.tileSize);
 }
 
 //-----------------------------------------------------------------------------
