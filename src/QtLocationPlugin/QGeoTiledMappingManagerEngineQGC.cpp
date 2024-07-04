@@ -1,82 +1,50 @@
-/****************************************************************************
-**
-** Copyright (C) 2013 Aaron McCarthy <mccarthy.aaron@gmail.com>
-** Contact: http://www.qt-project.org/legal
-**
-** This file is part of the QtLocation module of the Qt Toolkit.
-**
-** $QT_BEGIN_LICENSE:LGPL$
-** Commercial License Usage
-** Licensees holding valid commercial Qt licenses may use this file in
-** accordance with the commercial license agreement provided with the
-** Software or, alternatively, in accordance with the terms contained in
-** a written agreement between you and Digia.  For licensing terms and
-** conditions see http://qt.digia.com/licensing.  For further information
-** use the contact form at http://qt.digia.com/contact-us.
-**
-** GNU Lesser General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU Lesser
-** General Public License version 2.1 as published by the Free Software
-** Foundation and appearing in the file LICENSE.LGPL included in the
-** packaging of this file.  Please review the following information to
-** ensure the GNU Lesser General Public License version 2.1 requirements
-** will be met: http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
-**
-** In addition, as a special exception, Digia gives you certain additional
-** rights.  These rights are described in the Digia Qt LGPL Exception
-** version 1.1, included in the file LGPL_EXCEPTION.txt in this package.
-**
-** GNU General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU
-** General Public License version 3.0 as published by the Free Software
-** Foundation and appearing in the file LICENSE.GPL included in the
-** packaging of this file.  Please review the following information to
-** ensure the GNU General Public License version 3.0 requirements will be
-** met: http://www.gnu.org/copyleft/gpl.html.
-**
-**
-** $QT_END_LICENSE$
-**
-** 2015.4.4
-** Adapted for use with QGroundControl
-**
-** Gus Grubba <gus@auterion.com>
-**
-****************************************************************************/
-
 #include "QGeoTiledMappingManagerEngineQGC.h"
 #include "QGCApplication.h"
 #include "QGCMapEngine.h"
 #include "QGeoTileFetcherQGC.h"
+#include "QGeoTiledMapQGC.h"
 #include "QGCMapUrlEngine.h"
 #include "MapProvider.h"
+#include "QGCMapEngineManager.h"
+#include <QGCLoggingCategory.h>
 
+#include <QtCore/QDir>
+#include <QtNetwork/QNetworkAccessManager>
 #include <QtLocation/private/qgeocameracapabilities_p.h>
 #include <QtLocation/private/qgeomaptype_p.h>
 #include <QtLocation/private/qgeotiledmap_p.h>
 #include <QtLocation/private/qgeofiletilecache_p.h>
 
-#include <QtCore/QDir>
+#define TILE_VERSION 1
 
-//-----------------------------------------------------------------------------
-QGeoTiledMapQGC::QGeoTiledMapQGC(QGeoTiledMappingManagerEngine *engine, QObject *parent)
-    : QGeoTiledMap(engine, parent)
+QGC_LOGGING_CATEGORY(QGeoTiledMappingManagerEngineQGCLog, "qgc.qtlocationplugin.qgeotiledmappingmanagerengineqgc")
+
+QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString, QObject *parent)
+    : QGeoTiledMappingManagerEngine(parent)
+    , m_networkManager(new QNetworkAccessManager(this))
 {
+    // qCDebug(QGeoTiledMappingManagerEngineQGCLog) << Q_FUNC_INFO << this;
 
-}
+    // TODO: Better way to get current language without qgcApp()?
+    setLocale(qgcApp()->getCurrentLanguage());
 
-//-----------------------------------------------------------------------------
-QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString)
-:   QGeoTiledMappingManagerEngine()
-{
     getQGCMapEngine()->init();
 
     QGeoCameraCapabilities cameraCaps;
+    cameraCaps.setTileSize(256);
     cameraCaps.setMinimumZoomLevel(2.0);
     cameraCaps.setMaximumZoomLevel(MAX_MAP_ZOOM);
     cameraCaps.setSupportsBearing(true);
+    cameraCaps.setSupportsRolling(false);
+    cameraCaps.setSupportsTilting(false);
+    cameraCaps.setMinimumTilt(0.0);
+    cameraCaps.setMaximumTilt(0.0);
+    cameraCaps.setMinimumFieldOfView(45.0);
+    cameraCaps.setMaximumFieldOfView(45.0);
+    cameraCaps.setOverzoomEnabled(true);
     setCameraCapabilities(cameraCaps);
 
+    setTileVersion(TILE_VERSION);
     setTileSize(QSize(256, 256));
 
     QList<QGeoMapType> mapList;
@@ -96,34 +64,35 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
     }
     setSupportedMapTypes(mapList);
 
-    //-- Users (QML code) can define a different user agent
-    if (parameters.contains(QStringLiteral("useragent"))) {
-        getQGCMapEngine()->setUserAgent(parameters.value(QStringLiteral("useragent")).toString().toLatin1());
-    }
-
+    setCacheHint(QAbstractGeoTileCache::CacheArea::AllCaches);
     _setCache(parameters);
 
-    setTileFetcher(new QGeoTileFetcherQGC(this));
+    m_prefetchStyle = QGeoTiledMap::PrefetchTwoNeighbourLayers;
 
     *error = QGeoServiceProvider::NoError;
     errorString->clear();
+
+     QGeoTileFetcherQGC* const tileFetcher = new QGeoTileFetcherQGC(m_networkManager, this);
+    // TODO: Allow useragent override again
+    /*if (parameters.contains(QStringLiteral("useragent"))) {
+        tileFetcher()->setUserAgent(parameters.value(QStringLiteral("useragent")).toString().toLatin1());
+    }*/
+    setTileFetcher(tileFetcher); /* Calls engineInitialized */
 }
 
-//-----------------------------------------------------------------------------
 QGeoTiledMappingManagerEngineQGC::~QGeoTiledMappingManagerEngineQGC()
 {
+    qCDebug(QGeoTiledMappingManagerEngineQGCLog) << Q_FUNC_INFO << this;
 }
 
-//-----------------------------------------------------------------------------
-QGeoMap*
-QGeoTiledMappingManagerEngineQGC::createMap()
+QGeoMap* QGeoTiledMappingManagerEngineQGC::createMap()
 {
-    return new QGeoTiledMapQGC(this);
+    QGeoTiledMapQGC* map = new QGeoTiledMapQGC(this, this);
+    map->setPrefetchStyle(m_prefetchStyle);
+    return map;
 }
 
-//-----------------------------------------------------------------------------
-void
-QGeoTiledMappingManagerEngineQGC::_setCache(const QVariantMap &parameters)
+void QGeoTiledMappingManagerEngineQGC::_setCache(const QVariantMap &parameters)
 {
     if (getQGCMapEngine()->wasCacheReset()) {
         qgcApp()->showAppMessage(tr("The Offline Map Cache database has been upgraded. "
