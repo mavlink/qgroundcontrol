@@ -78,6 +78,8 @@
 #include "CameraCalc.h"
 #include "VisualMissionItem.h"
 #include "EditPositionDialogController.h"
+#include "FactGroup.h"
+#include "FactPanelController.h"
 #include "FactValueSliderListModel.h"
 #include "ShapeFileHelper.h"
 #include "QGCFileDownload.h"
@@ -317,6 +319,14 @@ QGCApplication::~QGCApplication()
 void QGCApplication::init()
 {
     // Register our Qml objects
+
+    qmlRegisterType<Fact>               ("QGroundControl.FactSystem", 1, 0, "Fact");
+    qmlRegisterType<FactMetaData>       ("QGroundControl.FactSystem", 1, 0, "FactMetaData");
+    qmlRegisterType<FactPanelController>("QGroundControl.FactSystem", 1, 0, "FactPanelController");
+
+    qmlRegisterUncreatableType<FactGroup>               ("QGroundControl.FactSystem",   1, 0, "FactGroup",                  "Reference only");
+    qmlRegisterUncreatableType<FactValueSliderListModel>("QGroundControl.FactControls", 1, 0, "FactValueSliderListModel",   "Reference only");
+    qmlRegisterUncreatableType<ParameterManager>        ("QGroundControl.Vehicle",      1, 0, "ParameterManager",           "Reference only");
 
     qmlRegisterUncreatableType<FactValueGrid>        ("QGroundControl.Templates",             1, 0, "FactValueGrid",       "Reference only");
     qmlRegisterUncreatableType<FlightPathSegment>    ("QGroundControl",                       1, 0, "FlightPathSegment",   "Reference only");

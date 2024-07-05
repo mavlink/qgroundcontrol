@@ -12,7 +12,6 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "FactSystemTestBase.h"
-#include "FactSystem.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
 #include "QGCApplication.h"
@@ -46,8 +45,8 @@ void FactSystemTestBase::_cleanup(void)
 /// Basic test of parameter values in Fact System
 void FactSystemTestBase::_parameter_default_component_id_test(void)
 {
-    QVERIFY(_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "RC_MAP_THROTTLE"));
-    Fact* fact = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "RC_MAP_THROTTLE");
+    QVERIFY(_vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "RC_MAP_THROTTLE"));
+    Fact* fact = _vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, "RC_MAP_THROTTLE");
     QVERIFY(fact != nullptr);
     QVariant factValue = fact->rawValue();
     QCOMPARE(factValue.isValid(), true);
@@ -101,7 +100,7 @@ void FactSystemTestBase::_qmlUpdate_test(void)
     // Change the value
 
     QVariant paramValue = 12;
-    qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->parameterManager()->getParameter(FactSystem::defaultComponentId, "RC_MAP_THROTTLE")->setRawValue(paramValue);
+    qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->parameterManager()->getParameter(ParameterManager::defaultComponentId, "RC_MAP_THROTTLE")->setRawValue(paramValue);
 
     QTest::qWait(500); // Let the signals flow through
 

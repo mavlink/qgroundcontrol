@@ -12,7 +12,6 @@
 #include "QGCApplication.h"
 #include "QGCFileDownload.h"
 #include "ParameterManager.h"
-#include "FactSystem.h"
 #include "Vehicle.h"
 #include "ArduCopterFirmwarePlugin.h"
 #include "ArduRoverFirmwarePlugin.h"
@@ -139,8 +138,8 @@ static QString s_findImageResourceRover(int frameClass, int frameType)
 }
 
 APMAirframeComponentController::APMAirframeComponentController(void)
-    : _frameClassFact   (getParameterFact(FactSystem::defaultComponentId, QStringLiteral("FRAME_CLASS"), false /* reportMissing */))
-    , _frameTypeFact    (getParameterFact(FactSystem::defaultComponentId, QStringLiteral("FRAME_TYPE"), false /* reportMissing */))
+    : _frameClassFact   (getParameterFact(ParameterManager::defaultComponentId, QStringLiteral("FRAME_CLASS"), false /* reportMissing */))
+    , _frameTypeFact    (getParameterFact(ParameterManager::defaultComponentId, QStringLiteral("FRAME_TYPE"), false /* reportMissing */))
     , _frameClassModel  (new QmlObjectListModel(this))
 {
     _fillFrameClasses();

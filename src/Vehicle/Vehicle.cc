@@ -14,7 +14,6 @@
 #include "AutoPilotPlugin.h"
 #include "ComponentInformationManager.h"
 #include "EventHandler.h"
-#include "FactSystem.h"
 #include "FirmwarePlugin.h"
 #include "FirmwarePluginManager.h"
 #include "FTPManager.h"
@@ -1187,8 +1186,8 @@ void Vehicle::_handleExtendedSysState(mavlink_message_t& message)
 bool Vehicle::_apmArmingNotRequired()
 {
     QString armingRequireParam("ARMING_REQUIRE");
-    return _parameterManager->parameterExists(FactSystem::defaultComponentId, armingRequireParam) &&
-            _parameterManager->getParameter(FactSystem::defaultComponentId, armingRequireParam)->rawValue().toInt() == 0;
+    return _parameterManager->parameterExists(ParameterManager::defaultComponentId, armingRequireParam) &&
+            _parameterManager->getParameter(ParameterManager::defaultComponentId, armingRequireParam)->rawValue().toInt() == 0;
 }
 
 void Vehicle::_handleSysStatus(mavlink_message_t& message)
@@ -3452,8 +3451,8 @@ void Vehicle::_setupAutoDisarmSignalling()
 {
     QString param = _firmwarePlugin->autoDisarmParameter(this);
 
-    if (!param.isEmpty() && _parameterManager->parameterExists(FactSystem::defaultComponentId, param)) {
-        Fact* fact = _parameterManager->getParameter(FactSystem::defaultComponentId,param);
+    if (!param.isEmpty() && _parameterManager->parameterExists(ParameterManager::defaultComponentId, param)) {
+        Fact* fact = _parameterManager->getParameter(ParameterManager::defaultComponentId,param);
         connect(fact, &Fact::rawValueChanged, this, &Vehicle::autoDisarmChanged);
         emit autoDisarmChanged();
     }
@@ -3463,8 +3462,8 @@ bool Vehicle::autoDisarm()
 {
     QString param = _firmwarePlugin->autoDisarmParameter(this);
 
-    if (!param.isEmpty() && _parameterManager->parameterExists(FactSystem::defaultComponentId, param)) {
-        Fact* fact = _parameterManager->getParameter(FactSystem::defaultComponentId,param);
+    if (!param.isEmpty() && _parameterManager->parameterExists(ParameterManager::defaultComponentId, param)) {
+        Fact* fact = _parameterManager->getParameter(ParameterManager::defaultComponentId,param);
         return fact->rawValue().toDouble() > 0;
     }
 

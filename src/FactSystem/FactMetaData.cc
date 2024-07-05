@@ -14,7 +14,6 @@
 #include <MAVLinkLib.h>
 
 #include <QtCore/QtMath>
-#include <QtCore/QJsonArray>
 
 // Built in translations for all Facts
 const FactMetaData::BuiltInTranslation_s FactMetaData::_rgBuiltInTranslations[] = {
