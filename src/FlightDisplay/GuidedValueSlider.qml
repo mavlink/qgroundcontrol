@@ -119,12 +119,13 @@ Item {
         }
       
         QGCFlickable {
-            id:                 sliderFlickable
-            Layout.fillWidth:   true
-            Layout.fillHeight:  true
-            contentWidth:       sliderContainer.width
-            contentHeight:      sliderContainer.height
-            flickDeceleration:  0.5
+            id:                      sliderFlickable
+            Layout.fillWidth:        true
+            Layout.fillHeight:       true
+            contentWidth:            sliderContainer.width
+            contentHeight:           sliderContainer.height
+            flickDeceleration:       0.5
+            showHorizontalFlickable: false
 
             Item {
                 id:     sliderContainer
@@ -151,6 +152,7 @@ Item {
 
                         QGCLabel {
                             anchors.right:          parent.right
+                            anchors.rightMargin:    control.width / 10
                             anchors.verticalCenter: parent.verticalCenter
                             text:                   parent.tickValue
                             font.pointSize:         ScreenTools.largeFontPointSize
@@ -187,7 +189,7 @@ Item {
 
         property real indicatorHeight:      valueLabel.contentHeight
         property real pointerWidth:         ScreenTools.defaultFontPixelWidth
-        property real minIndicatorWidth:    pointerWidth + (_margins * 2) + valueLabel.contentWidth
+        property real minIndicatorWidth:    pointerWidth + (_margins * 3) + valueLabel.contentWidth
         property real minTickDisplayWidth:  _majorTickWidth + ScreenTools.defaultFontPixelWidth + ScreenTools.defaultFontPixelWidth * 3
 
         onPaint: {

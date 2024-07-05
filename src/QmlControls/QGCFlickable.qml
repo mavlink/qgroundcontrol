@@ -10,7 +10,8 @@ Flickable {
     clip:                   true
     maximumFlickVelocity:   (ScreenTools.realPixelDensity * 25.4) * 8   // About two inches per second
 
-    property color indicatorColor: qgcPal.text
+    property color indicatorColor:          qgcPal.text
+    property bool  showHorizontalFlickable: true
 
     Component.onCompleted: {
         var indicatorComponent = Qt.createComponent("QGCFlickableVerticalIndicator.qml")

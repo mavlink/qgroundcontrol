@@ -9,7 +9,7 @@ Rectangle {
     height:                2
     width:                 parent.width * (parent.width / parent.contentWidth)
     color:                 parent.indicatorColor
-    visible:               showIndicator
+    visible:               showIndicator && showHorizontalFlickable
 
     property bool showIndicator: (parent.flickableDirection === Flickable.AutoFlickDirection ||
                                   parent.flickableDirection === Flickable.HorizontalFlick ||
