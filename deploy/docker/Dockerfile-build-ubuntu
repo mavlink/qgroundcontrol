@@ -1,7 +1,3 @@
-#
-# QGroundControl ubuntu build environment
-#
-
 FROM ubuntu:22.04
 LABEL authors="Daniel Agar <daniel@agar.ca>, Patrick José Pereira <patrickelectric@gmail.com>"
 
