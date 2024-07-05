@@ -1,6 +1,6 @@
-#! /usr/bin/env bash
+#!/usr/bin/env bash
 
-#Run this from root directory
+# Run this from root directory
 
 set -e
 
