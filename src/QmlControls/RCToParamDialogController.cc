@@ -13,7 +13,6 @@
 #include "ParameterManager.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
-#include "FactSystem.h"
 
 QMap<QString, FactMetaData*> RCToParamDialogController::_metaDataMap;
 
@@ -43,7 +42,7 @@ void RCToParamDialogController::setTuningFact(Fact* tuningFact)
     _maxFact.setRawValue(_tuningFact->rawMax().toDouble());
 
     connect(_tuningFact, &Fact::vehicleUpdated, this, &RCToParamDialogController::_parameterUpdated);
-    qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->parameterManager()->refreshParameter(FactSystem::defaultComponentId, _tuningFact->name());
+    qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->parameterManager()->refreshParameter(ParameterManager::defaultComponentId, _tuningFact->name());
 }
 
 void RCToParamDialogController::_parameterUpdated(void)

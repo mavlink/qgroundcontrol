@@ -9,6 +9,9 @@
 
 #pragma once
 
+#include <QtCore/QObject>
+#include <QtCore/QString>
+
 #include "Fact.h"
 
 /// @brief A SettingsFact is Fact which holds a QSettings value.

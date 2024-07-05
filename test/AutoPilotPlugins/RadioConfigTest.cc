@@ -378,7 +378,7 @@ void RadioConfigTest::_fullCalibrationWorker(MAV_AUTOPILOT firmwareType)
         if (!found) {
             const char* paramName = _functionInfo()[function].parameterName;
             if (paramName) {
-                _rgFunctionChannelMap[function] = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, paramName)->rawValue().toInt();
+                _rgFunctionChannelMap[function] = _vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, paramName)->rawValue().toInt();
                 qCDebug(RadioConfigTestLog) << "Assigning switch" << function << _rgFunctionChannelMap[function];
                 if (_rgFunctionChannelMap[function] == 0) {
                     _rgFunctionChannelMap[function] = -1;   // -1 signals no mapping
@@ -456,8 +456,8 @@ void RadioConfigTest::_validateParameters(void)
         
         const char* paramName = _functionInfo()[chanFunction].parameterName;
         if (paramName) {
-            qCDebug(RadioConfigTestLog) << "Validate" << chanFunction << _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, paramName)->rawValue().toInt();
-            QCOMPARE(_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, paramName)->rawValue().toInt(), expectedParameterValue);
+            qCDebug(RadioConfigTestLog) << "Validate" << chanFunction << _vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, paramName)->rawValue().toInt();
+            QCOMPARE(_vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, paramName)->rawValue().toInt(), expectedParameterValue);
         }
     }
 
@@ -472,20 +472,20 @@ void RadioConfigTest::_validateParameters(void)
         int rcTrimExpected = _channelSettingsValidate()[chan].rcTrim;
         bool rcReversedExpected = _channelSettingsValidate()[chan].reversed;
 
-        int rcMinActual = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, minTpl.arg(oneBasedChannel))->rawValue().toInt(&convertOk);
+        int rcMinActual = _vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, minTpl.arg(oneBasedChannel))->rawValue().toInt(&convertOk);
         QCOMPARE(convertOk, true);
-        int rcMaxActual = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, maxTpl.arg(oneBasedChannel))->rawValue().toInt(&convertOk);
+        int rcMaxActual = _vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, maxTpl.arg(oneBasedChannel))->rawValue().toInt(&convertOk);
         QCOMPARE(convertOk, true);
-        int rcTrimActual = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, trimTpl.arg(oneBasedChannel))->rawValue().toInt(&convertOk);
+        int rcTrimActual = _vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, trimTpl.arg(oneBasedChannel))->rawValue().toInt(&convertOk);
         QCOMPARE(convertOk, true);
 
         bool rcReversedActual;
         if (_vehicle->px4Firmware()) {
-            float rcReversedFloat = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, revTplPX4.arg(oneBasedChannel))->rawValue().toFloat(&convertOk);
+            float rcReversedFloat = _vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, revTplPX4.arg(oneBasedChannel))->rawValue().toFloat(&convertOk);
             QCOMPARE(convertOk, true);
             rcReversedActual = (rcReversedFloat == -1.0f);
         } else {
-            rcReversedActual = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, revTplAPM.arg(oneBasedChannel))->rawValue().toBool();
+            rcReversedActual = _vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, revTplAPM.arg(oneBasedChannel))->rawValue().toBool();
         }
         
         qCDebug(RadioConfigTestLog) << "_validateParameters expected channel:min:max:trim:rev" << chan << rcMinExpected << rcMaxExpected << rcTrimExpected << rcReversedExpected;
@@ -508,7 +508,7 @@ void RadioConfigTest::_validateParameters(void)
         const char* paramName = _functionInfo()[chanFunction].parameterName;
         if (paramName) {
             // qCDebug(RadioConfigTestLog) << chanFunction << expectedValue << mapParamsSet[paramName].toInt();
-            QCOMPARE(_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, paramName)->rawValue().toInt(), expectedValue);
+            QCOMPARE(_vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, paramName)->rawValue().toInt(), expectedValue);
         }
     }
 }

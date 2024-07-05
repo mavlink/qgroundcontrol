@@ -13,7 +13,6 @@
 
 #include <QtCore/QObject>
 
-class FactSystem;
 class FirmwarePluginManager;
 class GPSManager;
 class JoystickManager;
@@ -72,8 +71,6 @@ private:
     void setChildToolboxes(void);
     void _scanAndLoadPlugins(QGCApplication *app);
 
-
-    FactSystem*                 _factSystem             = nullptr;
     FirmwarePluginManager*      _firmwarePluginManager  = nullptr;
 #ifndef NO_SERIAL_LINK
     GPSManager*                 _gpsManager             = nullptr;

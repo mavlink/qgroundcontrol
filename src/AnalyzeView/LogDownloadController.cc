@@ -12,7 +12,6 @@
 #include "QGCApplication.h"
 #include "QGCToolbox.h"
 #include "ParameterManager.h"
-#include "FactSystem.h"
 #include "Vehicle.h"
 #include "SettingsManager.h"
 #include "MAVLinkProtocol.h"
@@ -525,8 +524,8 @@ LogDownloadController::_prepareLogDownload()
     _downloadData->filename = QString("log_") + QString::number(entry->id()) + "_" + ftime;
     if (_vehicle->firmwareType() == MAV_AUTOPILOT_PX4) {
         QString loggerParam = QStringLiteral("SYS_LOGGER");
-        if (_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, loggerParam) &&
-                _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, loggerParam)->rawValue().toInt() == 0) {
+        if (_vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, loggerParam) &&
+                _vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, loggerParam)->rawValue().toInt() == 0) {
             _downloadData->filename += ".px4log";
         } else {
             _downloadData->filename += ".ulg";

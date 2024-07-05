@@ -8,7 +8,6 @@
  ****************************************************************************/
 
 #include "Common.h"
-#include "FactSystem.h"
 #include "ParameterManager.h"
 #include "QGCLoggingCategory.h"
 
@@ -135,8 +134,8 @@ Condition::Condition(const QString &condition, ParameterManager* parameterManage
 
         qCDebug(ActuatorsConfigLog) << "Condition: Param:" << _parameter << "op:" << operation << "value:" << _value;
 
-        if (parameterManager->parameterExists(FactSystem::defaultComponentId, _parameter)) {
-            Fact* param = parameterManager->getParameter(FactSystem::defaultComponentId, _parameter);
+        if (parameterManager->parameterExists(ParameterManager::defaultComponentId, _parameter)) {
+            Fact* param = parameterManager->getParameter(ParameterManager::defaultComponentId, _parameter);
             if (param->type() == FactMetaData::ValueType_t::valueTypeBool ||
                     param->type() == FactMetaData::ValueType_t::valueTypeInt32) {
                 _fact = param;

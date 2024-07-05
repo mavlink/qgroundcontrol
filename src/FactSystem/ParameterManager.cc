@@ -11,14 +11,13 @@
 #include "QGCApplication.h"
 #include "FirmwarePlugin.h"
 #include "CompInfoParam.h"
+#include "ComponentInformationManager.h"
 #include "FTPManager.h"
 #include "Vehicle.h"
 #include "AutoPilotPlugin.h"
 #include "MAVLinkProtocol.h"
-#include "FactSystem.h"
-#include "ComponentInformationManager.h"
 #include "QGC.h"
-#include "QGCLoggingCategory.h"
+#include <QGCLoggingCategory.h>
 
 #include <QtCore/QEasingCurve>
 #include <QtCore/QFile>
@@ -563,12 +562,12 @@ void ParameterManager::refreshAllParameters(uint8_t componentId)
     qCDebug(ParameterManagerLog) << _logVehiclePrefix(-1) << "Request to refresh all parameters for component ID:" << what;
 }
 
-/// Translates FactSystem::defaultComponentId to real component id if needed
+/// Translates ParameterManager::defaultComponentId to real component id if needed
 int ParameterManager::_actualComponentId(int componentId)
 {
-    if (componentId == FactSystem::defaultComponentId) {
+    if (componentId == defaultComponentId) {
         componentId = _vehicle->defaultComponentId();
-        if (componentId == FactSystem::defaultComponentId) {
+        if (componentId == defaultComponentId) {
             qWarning() << _logVehiclePrefix(-1) << "Default component id not set";
         }
     }
