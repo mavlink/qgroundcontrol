@@ -10,6 +10,9 @@
 #pragma once
 
 #include <QtCore/QAbstractListModel>
+#include <QtCore/QByteArray>
+#include <QtCore/QHash>
+#include <QtCore/QObject>
 
 class Fact;
 

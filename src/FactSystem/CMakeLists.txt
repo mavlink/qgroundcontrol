@@ -9,8 +9,6 @@ qt_add_library(FactSystem STATIC
     FactGroup.h
     FactMetaData.cc
     FactMetaData.h
-    FactSystem.cc
-    FactSystem.h
     FactValueSliderListModel.cc
     FactValueSliderListModel.h
     ParameterManager.cc
@@ -26,14 +24,14 @@ target_link_libraries(FactSystem
         AutoPilotPlugins
         FactControls
         FirmwarePlugin
+        QGC
         Settings
         Utilities
         Vehicle
         VehicleComponents
     PUBLIC
         Qt6::Core
-        Comms
-        QGC
+        MAVLink
 )
 
 target_include_directories(FactSystem PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

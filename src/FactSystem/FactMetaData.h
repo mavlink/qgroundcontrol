@@ -12,6 +12,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QVariant>
+#include <QtCore/QJsonArray>
 #include <QtCore/QJsonObject>
 
 /// Holds the meta data associated with a Fact.
