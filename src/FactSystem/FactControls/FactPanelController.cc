@@ -11,7 +11,6 @@
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
 #include "ParameterManager.h"
-#include "FactSystem.h"
 #include "AutoPilotPlugin.h"
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
@@ -39,7 +38,7 @@ FactPanelController::FactPanelController()
 
 void FactPanelController::_reportMissingParameter(int componentId, const QString& name)
 {
-    if (componentId == FactSystem::defaultComponentId) {
+    if (componentId == ParameterManager::defaultComponentId) {
         componentId = _vehicle->defaultComponentId();
     }
 

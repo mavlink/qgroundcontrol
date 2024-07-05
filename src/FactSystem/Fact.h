@@ -9,11 +9,11 @@
 
 #pragma once
 
-#include "FactMetaData.h"
-
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QVariant>
+
+#include "FactMetaData.h"
 
 class FactValueSliderListModel;
 

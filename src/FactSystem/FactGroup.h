@@ -9,12 +9,13 @@
 
 #pragma once
 
-#include "Fact.h"
-#include "QGCMAVLink.h"
-
 #include <QtCore/QStringList>
 #include <QtCore/QMap>
 #include <QtCore/QTimer>
+#include <QtCore/QJsonArray>
+
+#include "Fact.h"
+#include "MAVLinkLib.h"
 
 class Vehicle;
 

@@ -14,7 +14,6 @@
 #include "VehicleComponent.h"
 #include "ParameterManager.h"
 #include "Vehicle.h"
-#include "FactSystem.h"
 
 #include <QtQml/QQmlContext>
 #include <QtQuick/QQuickItem>
@@ -59,8 +58,8 @@ void VehicleComponent::setupTriggerSignals(void)
 {
     // Watch for changed on trigger list params
     for (const QString &paramName: setupCompleteChangedTriggerList()) {
-        if (_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, paramName)) {
-            Fact* fact = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, paramName);
+        if (_vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, paramName)) {
+            Fact* fact = _vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, paramName);
             connect(fact, &Fact::valueChanged, this, &VehicleComponent::_triggerUpdated);
         }
     }

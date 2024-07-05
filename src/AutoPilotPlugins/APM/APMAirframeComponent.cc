@@ -9,7 +9,6 @@
 
 #include "APMAirframeComponent.h"
 #include "ParameterManager.h"
-#include "FactSystem.h"
 #include "Vehicle.h"
 
 APMAirframeComponent::APMAirframeComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
@@ -19,8 +18,8 @@ APMAirframeComponent::APMAirframeComponent(Vehicle* vehicle, AutoPilotPlugin* au
 {
     ParameterManager* paramMgr = vehicle->parameterManager();
 
-    if (paramMgr->parameterExists(FactSystem::defaultComponentId, _frameClassParam)) {
-        _frameClassFact = paramMgr->getParameter(FactSystem::defaultComponentId, _frameClassParam);
+    if (paramMgr->parameterExists(ParameterManager::defaultComponentId, _frameClassParam)) {
+        _frameClassFact = paramMgr->getParameter(ParameterManager::defaultComponentId, _frameClassParam);
         if (vehicle->vehicleType() != MAV_TYPE_HELICOPTER) {
             _requiresFrameSetup = true;
         }

@@ -8,7 +8,6 @@
  ****************************************************************************/
 
 
-#include "FactSystem.h"
 #include "FirmwarePluginManager.h"
 #ifndef NO_SERIAL_LINK
 #include "GPSManager.h"
@@ -47,7 +46,6 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
 
     //-- Scan and load plugins
     _scanAndLoadPlugins(app);
-    _factSystem             = new FactSystem                (app, this);
     _firmwarePluginManager  = new FirmwarePluginManager     (app, this);
 #ifndef NO_SERIAL_LINK
     _gpsManager             = new GPSManager                (app, this);
@@ -78,7 +76,6 @@ void QGCToolbox::setChildToolboxes(void)
     _settingsManager->setToolbox(this);
 
     _corePlugin->setToolbox(this);
-    _factSystem->setToolbox(this);
     _firmwarePluginManager->setToolbox(this);
 #ifndef NO_SERIAL_LINK
     _gpsManager->setToolbox(this);

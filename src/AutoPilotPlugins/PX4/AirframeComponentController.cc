@@ -13,9 +13,9 @@
 #include "QGCApplication.h"
 #include "LinkManager.h"
 #include "QGC.h"
-#include "FactSystem.h"
 #include "Fact.h"
 #include "Vehicle.h"
+#include "ParameterManager.h"
 
 #include <QtCore/QVariant>
 #include <QtQml/QtQml>
@@ -36,14 +36,14 @@ AirframeComponentController::AirframeComponentController(void) :
     
     QStringList usedParams;
     usedParams << "SYS_AUTOSTART" << "SYS_AUTOCONFIG";
-    if (!_allParametersExists(FactSystem::defaultComponentId, usedParams)) {
+    if (!_allParametersExists(ParameterManager::defaultComponentId, usedParams)) {
         return;
     }
     
     // Load up member variables
     
     bool autostartFound = false;
-    _autostartId = getParameterFact(FactSystem::defaultComponentId, "SYS_AUTOSTART")->rawValue().toInt();
+    _autostartId = getParameterFact(ParameterManager::defaultComponentId, "SYS_AUTOSTART")->rawValue().toInt();
 
     
     for (int tindex = 0; tindex < AirframeComponentAirframes::get().count(); tindex++) {
