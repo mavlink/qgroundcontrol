@@ -34,13 +34,13 @@
       <extracomment>.QGC.MetaData.Facts[indoorPalette].enumStrings, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>Indoor,Outdoor</source>
-      <translation>室内，室外</translation>
+      <translation>室内,室外</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[followTarget].enumStrings, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>Never,Always,When in Follow Me Flight Mode</source>
-      <translation>从不，总是，处于“跟随我”飞行模式时</translation>
+      <translation>从不,总是,处于“跟随我”飞行模式时</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[qLocaleLanguage].enumStrings, </extracomment>
@@ -55,13 +55,13 @@
       <extracomment>.QGC.MetaData.Facts[apmChibiOS].enumStrings, </extracomment>
       <location filename="../src/Settings/FirmwareUpgrade.SettingsGroup.json"/>
       <source>ChibiOS,NuttX</source>
-      <translation>ChibiOS，NuttX</translation>
+      <translation>ChibiOS,NuttX</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[apmVehicleType].enumStrings, </extracomment>
       <location filename="../src/Settings/FirmwareUpgrade.SettingsGroup.json"/>
       <source>Multi-Rotor,Helicopter,Plane,Rover,Sub</source>
-      <translation>多机器人，直升机，固定翼，旋翼和水下装置</translation>
+      <translation>多机器人,直升机,固定翼,旋翼,水下装置</translation>
     </message>
   </context>
   <context>
@@ -88,7 +88,7 @@
       <extracomment>.QGC.MetaData.Facts[gridLines].enumStrings, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Hide,Show</source>
-      <translation>隐藏，显示</translation>
+      <translation>隐藏,显示</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[videoFit].enumStrings, </extracomment>
@@ -100,7 +100,7 @@
       <extracomment>.QGC.MetaData.Facts[recordingFormat].enumStrings, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>mkv,mov,mp4</source>
-      <translation>mkv，mov，mp4</translation>
+      <translation>mkv,mov,mp4</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[forceVideoDecoder].enumStrings, </extracomment>
@@ -202,13 +202,13 @@
       <extracomment>.QGC.MetaData.Facts[inputHold].enumStrings, </extracomment>
       <location filename="../src/Vehicle/FactGroups/SubmarineFact.json"/>
       <source>Disabled,Enabled</source>
-      <translation>禁用，启用</translation>
+      <translation>禁用,启用</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[rollPitchToggle].enumStrings, </extracomment>
       <location filename="../src/Vehicle/FactGroups/SubmarineFact.json"/>
       <source>Disabled,Enabled,Unavailable</source>
-      <translation>禁用，启用，不可用</translation>
+      <translation>禁用,启用,不可用</translation>
     </message>
   </context>
   <context>
@@ -217,7 +217,7 @@
       <extracomment>.QGC.MetaData.Facts[Hemisphere].enumStrings, </extracomment>
       <location filename="../src/QmlControls/EditPositionDialog.FactMetaData.json"/>
       <source>North,South</source>
-      <translation>北，南</translation>
+      <translation>北,南</translation>
     </message>
   </context>
   <context>
