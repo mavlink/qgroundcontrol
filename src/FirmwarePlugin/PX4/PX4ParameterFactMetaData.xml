@@ -8311,7 +8311,7 @@
       <decimal>3</decimal>
       <increment>0.005</increment>
     </parameter>
-    <parameter name="SIH_LOC_H0" default="32.34" type="FLOAT">
+    <parameter name="SIH_LOC_H0" default="489.4" type="FLOAT">
       <short_desc>Initial AMSL ground altitude</short_desc>
       <long_desc>This value represents the Above Mean Sea Level (AMSL) altitude where the simulation begins. If using FlightGear as a visual animation, this value can be tweaked such that the vehicle lies on the ground at takeoff. LAT0, LON0, H0, MU_X, MU_Y, and MU_Z should ideally be consistent among each others to represent a physical ground location on Earth.</long_desc>
       <min>-420.0</min>
@@ -8320,19 +8320,19 @@
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter name="SIH_LOC_LAT0" default="454671160" type="INT32">
+    <parameter name="SIH_LOC_LAT0" default="47.397742" type="FLOAT">
       <short_desc>Initial geodetic latitude</short_desc>
-      <long_desc>This value represents the North-South location on Earth where the simulation begins. A value of 45 deg should be written 450000000. LAT0, LON0, H0, MU_X, MU_Y, and MU_Z should ideally be consistent among each others to represent a physical ground location on Earth.</long_desc>
-      <min>-850000000</min>
-      <max>850000000</max>
-      <unit>deg*1e7</unit>
+      <long_desc>This value represents the North-South location on Earth where the simulation begins. LAT0, LON0, H0, MU_X, MU_Y, and MU_Z should ideally be consistent among each others to represent a physical ground location on Earth.</long_desc>
+      <min>-90</min>
+      <max>90</max>
+      <unit>deg</unit>
     </parameter>
-    <parameter name="SIH_LOC_LON0" default="-737578370" type="INT32">
+    <parameter name="SIH_LOC_LON0" default="8.545594" type="FLOAT">
       <short_desc>Initial geodetic longitude</short_desc>
-      <long_desc>This value represents the East-West location on Earth where the simulation begins. A value of 45 deg should be written 450000000. LAT0, LON0, H0, MU_X, MU_Y, and MU_Z should ideally be consistent among each others to represent a physical ground location on Earth.</long_desc>
-      <min>-1800000000</min>
-      <max>1800000000</max>
-      <unit>deg*1e7</unit>
+      <long_desc>This value represents the East-West location on Earth where the simulation begins. LAT0, LON0, H0, MU_X, MU_Y, and MU_Z should ideally be consistent among each others to represent a physical ground location on Earth.</long_desc>
+      <min>-180</min>
+      <max>180</max>
+      <unit>deg</unit>
     </parameter>
     <parameter name="SIH_L_PITCH" default="0.2" type="FLOAT">
       <short_desc>Pitch arm length</short_desc>
