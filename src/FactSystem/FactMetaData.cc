@@ -1224,17 +1224,17 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QMap<Q
 
     bool foundBitmask = false;
     if (!_parseValuesArray(json, rgDescriptions, rgDoubleValues, errorString)) {
-        qWarning() << QStringLiteral("FactMetaData::createFromJsonObject _parseValueDescriptionArray for %1 failed. %2").arg(metaData->_name).arg(errorString);
+        qWarning() << QStringLiteral("FactMetaData::createFromJsonObject _parseValueDescriptionArray for '%1' failed. %2").arg(metaData->_name).arg(errorString);
     }
     if (rgDescriptions.isEmpty()) {
         if (!_parseBitmaskArray(json, rgDescriptions, rgIntValues, errorString)) {
-            qWarning() << QStringLiteral("FactMetaData::createFromJsonObject _parseBitmaskArray for %1 failed. %2").arg(metaData->_name).arg(errorString);
+            qWarning() << QStringLiteral("FactMetaData::createFromJsonObject _parseBitmaskArray for '%1' failed. %2").arg(metaData->_name).arg(errorString);
         }
         foundBitmask = rgDescriptions.count() != 0;
     }
     if (rgDescriptions.isEmpty()) {
         if (!_parseEnum(json, defineMap, rgDescriptions, rgStringValues, errorString)) {
-            qWarning() << QStringLiteral("FactMetaData::createFromJsonObject _parseEnum for %1 failed. %2").arg(metaData->_name).arg(errorString);
+            qWarning() << QStringLiteral("FactMetaData::createFromJsonObject _parseEnum for '%1' failed. %2").arg(metaData->_name).arg(errorString);
         }
     }
 
@@ -1461,14 +1461,16 @@ bool FactMetaData::_parseEnum(const QJsonObject& jsonObject, DefineMap_t defineM
         return true;
     }
 
-    QString strings = jsonObject.value(_enumStringsJsonKey).toString();
-    rgDescriptions = defineMap.value(strings, strings).split(",", Qt::SkipEmptyParts);
+    QString jsonStrings = jsonObject.value(_enumStringsJsonKey).toString();
+    QString defineMapStrings = defineMap.value(jsonStrings, jsonStrings);
+    rgDescriptions = defineMapStrings.split(",", Qt::SkipEmptyParts);
 
-    QString values = jsonObject.value(_enumValuesJsonKey).toString();
-    rgValues = defineMap.value(values, values).split(",", Qt::SkipEmptyParts);
+    QString jsonValues = jsonObject.value(_enumValuesJsonKey).toString();
+    QString defineMapValues = defineMap.value(jsonValues, jsonValues);
+    rgValues = defineMapValues.split(",", Qt::SkipEmptyParts);
 
     if (rgDescriptions.count() != rgValues.count()) {
-        errorString = QStringLiteral("Enum strings/values count mismatch - strings:values %1:%2").arg(rgDescriptions.count()).arg(rgValues.count());
+        errorString = QStringLiteral("Enum strings/values count mismatch - strings: '%1'[%2,%3] values: '%4'[%5,%6]").arg(defineMapStrings).arg(rgDescriptions.count()).arg(defineMapStrings.contains(",")).arg(defineMapValues).arg(rgValues.count()).arg(defineMapValues.contains(","));
         return false;
     }
 
