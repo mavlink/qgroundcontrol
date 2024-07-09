@@ -268,7 +268,7 @@ void QGCApplication::setLanguage()
     _locale = QLocale::system();
     qCDebug(QGCApplicationLog) << "System reported locale:" << _locale << "; Name" << _locale.name() << "; Preffered (used in maps): " << (QLocale::system().uiLanguages().length() > 0 ? QLocale::system().uiLanguages()[0] : "None");
 
-    QLocale::Language possibleLocale = AppSettings::_qLocaleLanguageID();
+    QLocale::Language possibleLocale = AppSettings::_qLocaleLanguageEarlyAccess();
     if (possibleLocale != QLocale::AnyLanguage) {
         _locale = QLocale(possibleLocale);
     }

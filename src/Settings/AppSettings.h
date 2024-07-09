@@ -124,12 +124,6 @@ public:
     static const char* crashDirectory;
     static const char* customActionsDirectory;
 
-    // Returns the current qLocaleLanguage setting bypassing the standard SettingsGroup path. This should only be used
-    // by QGCApplication::setLanguage to query the language setting as early in the boot process as possible.
-    // Specfically prior to any JSON files being loaded such that JSON file can be translated. Also since this
-    // is a one-off mechanism custom build overrides for language are not currently supported.
-    static QLocale::Language _qLocaleLanguageID(void);
-
 signals:
     void savePathsChanged();
 
@@ -139,6 +133,16 @@ private slots:
     void _qLocaleLanguageChanged();
 
 private:
-    static QList<int> _rgReleaseLanguages;
-    static QList<int> _rgPartialLanguages;
+    static QLocale::Language _qLocaleLanguageEarlyAccess(void);
+
+    static QList<QLocale::Language> _rgReleaseLanguages;
+    static QList<QLocale::Language> _rgPartialLanguages;
+
+    typedef struct {
+        QLocale::Language   languageId;
+        const char*         languageName;
+    } LanguageInfo_t;
+    static LanguageInfo_t _rgLanguageInfo[];
+    
+    friend class QGCApplication;
 };
