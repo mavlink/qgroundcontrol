@@ -44,12 +44,13 @@
 #include "TerrainProtocolHandler.h"
 #include "TerrainQuery.h"
 #include "TrajectoryPoints.h"
-#include "UASMessageHandler.h"
 #include "VehicleBatteryFactGroup.h"
+#include "VehicleLinkManager.h"
 #include "VehicleObjectAvoidance.h"
 #include "VideoManager.h"
 #include "VideoSettings.h"
 #include <DeviceInfo.h>
+#include <StatusTextHandler.h>
 
 #ifdef CONFIG_UTM_ADAPTER
 #include "UTMSPVehicle.h"
@@ -195,15 +196,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     _mavCommandResponseCheckTimer.setInterval(_mavCommandResponseCheckTimeoutMSecs);
     _mavCommandResponseCheckTimer.start();
     connect(&_mavCommandResponseCheckTimer, &QTimer::timeout, this, &Vehicle::_sendMavCommandResponseTimeoutCheck);
-
-    // Chunked status text timeout timer
-    _chunkedStatusTextTimer.setSingleShot(true);
-    _chunkedStatusTextTimer.setInterval(1000);
-    connect(&_chunkedStatusTextTimer, &QTimer::timeout, this, &Vehicle::_chunkedStatusTextTimeout);
-
-    // Listen for system messages
-    connect(_toolbox->uasMessageHandler(), &UASMessageHandler::textMessageCountChanged,  this, &Vehicle::_handleTextMessage);
-    connect(_toolbox->uasMessageHandler(), &UASMessageHandler::textMessageReceived,      this, &Vehicle::_handletextMessageReceived);
 
     // MAV_TYPE_GENERIC is used by unit test for creating a vehicle which doesn't do the connect sequence. This
     // way we can test the methods that are used within the connect sequence.
@@ -389,6 +381,8 @@ void Vehicle::_commonInit()
     connect(_toolbox->corePlugin(), &QGCCorePlugin::showAdvancedUIChanged, this, &Vehicle::flightModesChanged);
 
     connect(_imageProtocolManager, &ImageProtocolManager::imageReady, this, &Vehicle::_imageProtocolImageReady);
+
+    _createStatusTextHandler();
 
     // Build FactGroup object model
 
@@ -694,7 +688,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         _handleAttitudeQuaternion(message);
         break;
     case MAVLINK_MSG_ID_STATUSTEXT:
-        _handleStatusText(message);
+        m_statusTextHandler->mavlinkMessageReceived(message);
         break;
     case MAVLINK_MSG_ID_ORBIT_EXECUTION_STATUS:
         _handleOrbitExecutionStatus(message);
@@ -848,139 +842,6 @@ void Vehicle::_handleCameraImageCaptured(const mavlink_message_t& message)
     qCDebug(VehicleLog) << "_handleCameraFeedback coord:index" << imageCoordinate << feedback.image_index << feedback.capture_result;
     if (feedback.capture_result == 1) {
         _cameraTriggerPoints.append(new QGCQGeoCoordinate(imageCoordinate, this));
-    }
-}
-
-void Vehicle::_chunkedStatusTextTimeout(void)
-{
-    // Spit out all incomplete chunks
-    QList<uint8_t> rgCompId = _chunkedStatusTextInfoMap.keys();
-    for (uint8_t compId : rgCompId) {
-        _chunkedStatusTextInfoMap[compId].rgMessageChunks.append(QString());
-        _chunkedStatusTextCompleted(compId);
-    }
-}
-
-void Vehicle::_chunkedStatusTextCompleted(uint8_t compId)
-{
-    ChunkedStatusTextInfo_t&    chunkedInfo =   _chunkedStatusTextInfoMap[compId];
-    uint8_t                     severity =      chunkedInfo.severity;
-    QStringList&                rgChunks =      chunkedInfo.rgMessageChunks;
-
-    // Build up message from chunks
-    QString messageText;
-    for (const QString& chunk : rgChunks) {
-        if (chunk.isEmpty()) {
-            // Indicates missing chunk
-            messageText += tr(" ... ", "Indicates missing chunk from chunked STATUS_TEXT");
-        } else {
-            messageText += chunk;
-        }
-    }
-
-    _chunkedStatusTextInfoMap.remove(compId);
-
-    // PX4 backwards compatibility: messages sent out ending with a tab are also sent as event
-    if (messageText.endsWith('\t') && px4Firmware()) {
-        qCDebug(VehicleLog) << "Dropping message (expected as event):" << messageText;
-        return;
-    }
-
-    bool skipSpoken = false;
-    bool ardupilotPrearm = messageText.startsWith(QStringLiteral("PreArm"));
-    bool px4Prearm = messageText.startsWith(QStringLiteral("preflight"), Qt::CaseInsensitive) && severity >= MAV_SEVERITY_CRITICAL;
-    if (ardupilotPrearm || px4Prearm) {
-        // check if expected as event
-        auto eventData = _events.find(compId);
-        if (eventData != _events.end()) {
-            if (eventData->data()->healthAndArmingChecksSupported()) {
-                qCDebug(VehicleLog) << "Dropping preflight message (expected as event):" << messageText;
-                return;
-            }
-        }
-
-        // Limit repeated PreArm message to once every 10 seconds
-        if (_noisySpokenPrearmMap.contains(messageText) && _noisySpokenPrearmMap[messageText].msecsTo(QTime::currentTime()) < (10 * 1000)) {
-            skipSpoken = true;
-        } else {
-            _noisySpokenPrearmMap[messageText] = QTime::currentTime();
-            setPrearmError(messageText);
-        }
-    }
-
-    // If the message is NOTIFY or higher severity, or starts with a '#',
-    // then read it aloud.
-    bool readAloud = false;
-
-    if (messageText.startsWith("#")) {
-        messageText.remove(0, 1);
-        readAloud = true;
-    }
-    else if (severity <= MAV_SEVERITY_NOTICE) {
-        readAloud = true;
-    }
-
-    if (readAloud) {
-        if (!skipSpoken) {
-            _say(messageText);
-        }
-    }
-    emit textMessageReceived(id(), compId, severity, messageText.toHtmlEscaped(), "");
-}
-
-void Vehicle::_handleStatusText(mavlink_message_t& message)
-{
-    QString     messageText;
-
-    mavlink_statustext_t statustext;
-    mavlink_msg_statustext_decode(&message, &statustext);
-
-    uint8_t compId = message.compid;
-
-    char b[MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN+1];
-    strncpy(b, statustext.text, MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN);
-    b[sizeof(b)-1] = '\0';
-    messageText = QString(b);
-    bool includesNullTerminator = messageText.length() < MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN;
-
-    if (_chunkedStatusTextInfoMap.contains(compId) && _chunkedStatusTextInfoMap[compId].chunkId != statustext.id) {
-        // We have an incomplete chunked status still pending
-        _chunkedStatusTextInfoMap[compId].rgMessageChunks.append(QString());
-        _chunkedStatusTextCompleted(compId);
-    }
-
-    if (statustext.id == 0) {
-        // Non-chunked status text. We still use common chunked text output mechanism.
-        ChunkedStatusTextInfo_t chunkedInfo;
-        chunkedInfo.chunkId = 0;
-        chunkedInfo.severity = statustext.severity;
-        chunkedInfo.rgMessageChunks.append(messageText);
-        _chunkedStatusTextInfoMap[compId] = chunkedInfo;
-    } else {
-        if (_chunkedStatusTextInfoMap.contains(compId)) {
-            // A chunk sequence is in progress
-            QStringList& chunks = _chunkedStatusTextInfoMap[compId].rgMessageChunks;
-            if (statustext.chunk_seq > chunks.size()) {
-                // We are missing some chunks in between, fill them in as missing
-                for (int i=chunks.size(); i<statustext.chunk_seq; i++) {
-                    chunks.append(QString());
-                }
-            }
-            chunks.append(messageText);
-        } else {
-            // Starting a new chunk sequence
-            ChunkedStatusTextInfo_t chunkedInfo;
-            chunkedInfo.chunkId = statustext.id;
-            chunkedInfo.severity = statustext.severity;
-            chunkedInfo.rgMessageChunks.append(messageText);
-            _chunkedStatusTextInfoMap[compId] = chunkedInfo;
-        }
-        _chunkedStatusTextTimer.start();
-    }
-
-    if (statustext.id == 0 || includesNullTerminator) {
-        _chunkedStatusTextTimer.stop();
-        _chunkedStatusTextCompleted(message.compid);
     }
 }
 
@@ -1577,7 +1438,13 @@ void Vehicle::_handleEvent(uint8_t comp_id, std::unique_ptr<events::parser::Pars
         }
 
         if (!message.empty()) {
-            emit textMessageReceived(id(), comp_id, severity, QString::fromStdString(message), QString::fromStdString(description));
+            const QString text = QString::fromStdString(message);
+            // Hack to prevent calibration messages from cluttering things up
+            if (px4Firmware() && text.startsWith(QStringLiteral("[cal]"))) {
+                return;
+            }
+
+            m_statusTextHandler->handleTextMessage(static_cast<MAV_COMPONENT>(comp_id), static_cast<MAV_SEVERITY>(severity), text, QString::fromStdString(description));
         }
     }
 }
@@ -1856,130 +1723,6 @@ bool Vehicle::xConfigMotors()
     return _firmwarePlugin->multiRotorXConfig(this);
 }
 
-QString Vehicle::formattedMessages()
-{
-    QString messages;
-    for(UASMessage* message: _toolbox->uasMessageHandler()->messages()) {
-        messages.prepend(message->getFormatedText());
-    }
-    return messages;
-}
-
-void Vehicle::clearMessages()
-{
-    _toolbox->uasMessageHandler()->clearMessages();
-}
-
-void Vehicle::_handletextMessageReceived(UASMessage* message)
-{
-    if (message) {
-        emit newFormattedMessage(message->getFormatedText());
-    }
-}
-
-void Vehicle::_handleTextMessage(int newCount)
-{
-    // Reset?
-    if(!newCount) {
-        _currentMessageCount = 0;
-        _currentNormalCount  = 0;
-        _currentWarningCount = 0;
-        _currentErrorCount   = 0;
-        _messageCount        = 0;
-        _currentMessageType  = MessageNone;
-        emit newMessageCountChanged();
-        emit messageTypeChanged();
-        emit messageCountChanged();
-        return;
-    }
-
-    UASMessageHandler* pMh = _toolbox->uasMessageHandler();
-    MessageType_t type = newCount ? _currentMessageType : MessageNone;
-    int errorCount     = _currentErrorCount;
-    int warnCount      = _currentWarningCount;
-    int normalCount    = _currentNormalCount;
-    //-- Add current message counts
-    errorCount  += pMh->getErrorCount();
-    warnCount   += pMh->getWarningCount();
-    normalCount += pMh->getNormalCount();
-    //-- See if we have a higher level
-    if(errorCount != _currentErrorCount) {
-        _currentErrorCount = errorCount;
-        type = MessageError;
-    }
-    if(warnCount != _currentWarningCount) {
-        _currentWarningCount = warnCount;
-        if(_currentMessageType != MessageError) {
-            type = MessageWarning;
-        }
-    }
-    if(normalCount != _currentNormalCount) {
-        _currentNormalCount = normalCount;
-        if(_currentMessageType != MessageError && _currentMessageType != MessageWarning) {
-            type = MessageNormal;
-        }
-    }
-    int count = _currentErrorCount + _currentWarningCount + _currentNormalCount;
-    if(count != _currentMessageCount) {
-        _currentMessageCount = count;
-        // Display current total new messages count
-        emit newMessageCountChanged();
-    }
-    if(type != _currentMessageType) {
-        _currentMessageType = type;
-        // Update message level
-        emit messageTypeChanged();
-    }
-    // Update message count (all messages)
-    if(newCount != _messageCount) {
-        _messageCount = newCount;
-        emit messageCountChanged();
-    }
-}
-
-void Vehicle::resetAllMessages()
-{
-    // Reset Counts
-    int count = _currentMessageCount;
-    MessageType_t type = _currentMessageType;
-    _currentErrorCount   = 0;
-    _currentWarningCount = 0;
-    _currentNormalCount  = 0;
-    _currentMessageCount = 0;
-    _currentMessageType = MessageNone;
-    if(count != _currentMessageCount) {
-        emit newMessageCountChanged();
-    }
-    if(type != _currentMessageType) {
-        emit messageTypeChanged();
-    }
-}
-
-// Reset warning counts only
-void Vehicle::resetErrorLevelMessages()
-{
-    int prevMessageCount = _currentMessageCount;
-    MessageType_t prevMessagetype = _currentMessageType;
-
-    _currentMessageCount -= _currentErrorCount;
-    _currentErrorCount   = 0;
-
-    if (_currentWarningCount > 0) {
-        _currentMessageType = MessageWarning;
-    } else if (_currentNormalCount > 0) {
-        _currentMessageType = MessageNormal;
-    } else {
-        _currentMessageType = MessageNone;
-    }
-
-    if (prevMessageCount != _currentMessageCount) {
-        emit newMessageCountChanged();
-    }
-    if (prevMessagetype != _currentMessageType) {
-        emit messageTypeChanged();
-    }
-}
-
 // this function called in three cases:
 // 1. On constructor of vehicle, to see if we should enable a joystick
 // 2. When there is a new active joystick
@@ -2047,6 +1790,9 @@ void Vehicle::_activeVehicleChanged(Vehicle *newActiveVehicle)
     if (newActiveVehicle == this){
         qCDebug(JoystickLog) << "Vehicle " << this->id() << " is the new active vehicle";
         _captureJoystick();
+        _isActiveVehicle = true;
+    } else {
+        _isActiveVehicle = false;
     }
 }
 
@@ -2570,9 +2316,9 @@ void Vehicle::guidedModeTakeoff(double altitudeRelative)
     _firmwarePlugin->guidedModeTakeoff(this, altitudeRelative);
 }
 
-double Vehicle::minimumTakeoffAltitude()
+double Vehicle::minimumTakeoffAltitudeMeters()
 {
-    return _firmwarePlugin->minimumTakeoffAltitude(this);
+    return _firmwarePlugin->minimumTakeoffAltitudeMeters(this);
 }
 
 double Vehicle::maximumHorizontalSpeedMultirotor()
@@ -3161,11 +2907,12 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
                 // HacK to support PX4 autotune which does not send final result ack and just sends in progress
                 commandEntry = _mavCommandList.takeAt(entryIndex);
             } else {
-                commandEntry = _mavCommandList.at(entryIndex);  // Command has not completed yet, don't remove
+                // Command has not completed yet, don't remove
+                MavCommandListEntry_t& commandEntryRef = _mavCommandList[entryIndex];
+                commandEntryRef.maxTries = 1;         // Vehicle responsed to command so don't retry
+                commandEntryRef.elapsedTimer.start(); // We've heard from vehicle, restart elapsed timer for no ack received timeout
+                commandEntry = commandEntryRef;
             }
-
-            commandEntry.maxTries = 1;              // Vehicle responsed to command so don't retry
-            commandEntry.elapsedTimer.restart();    // We've heard from vehicle, restart elapsed timer for no ack received timeout
 
             if (commandEntry.ackHandlerInfo.progressHandler) {
                 (*commandEntry.ackHandlerInfo.progressHandler)(commandEntry.ackHandlerInfo.progressHandlerData, message.compid, ack);
@@ -4483,3 +4230,81 @@ void Vehicle::setMessageRate(uint8_t compId, uint16_t msgId, int32_t rate)
         interval
     );
 }
+
+/*===========================================================================*/
+/*                         STATUS TEXT HANDLER                               */
+/*===========================================================================*/
+
+void Vehicle::resetAllMessages() { m_statusTextHandler->resetAllMessages(); }
+void Vehicle::resetErrorLevelMessages() { m_statusTextHandler->resetErrorLevelMessages(); }
+void Vehicle::clearMessages() { m_statusTextHandler->clearMessages(); }
+bool Vehicle::messageTypeNone() const { return m_statusTextHandler->messageTypeNone(); }
+bool Vehicle::messageTypeNormal() const { return m_statusTextHandler->messageTypeNormal(); }
+bool Vehicle::messageTypeWarning() const { return m_statusTextHandler->messageTypeWarning(); }
+bool Vehicle::messageTypeError() const { return m_statusTextHandler->messageTypeError(); }
+int Vehicle::messageCount() const { return m_statusTextHandler->messageCount(); }
+QString Vehicle::formattedMessages() const { return m_statusTextHandler->formattedMessages(); }
+
+void Vehicle::_createStatusTextHandler()
+{
+    m_statusTextHandler = new StatusTextHandler(this);
+    (void) connect(m_statusTextHandler, &StatusTextHandler::messageTypeChanged, this, &Vehicle::messageTypeChanged);
+    (void) connect(m_statusTextHandler, &StatusTextHandler::messageCountChanged, this, &Vehicle::messageCountChanged);
+    (void) connect(m_statusTextHandler, &StatusTextHandler::newFormattedMessage, this, &Vehicle::newFormattedMessage);
+    (void) connect(m_statusTextHandler, &StatusTextHandler::textMessageReceived, this, &Vehicle::_textMessageReceived);
+    (void) connect(m_statusTextHandler, &StatusTextHandler::newErrorMessage, this, &Vehicle::_errorMessageReceived);
+}
+
+void Vehicle::_textMessageReceived(MAV_COMPONENT componentid, MAV_SEVERITY severity, QString text, QString description)
+{
+    // PX4 backwards compatibility: messages sent out ending with a tab are also sent as event
+    if (px4Firmware() && text.endsWith('\t')) {
+        qCDebug(VehicleLog) << "Dropping message (expected as event):" << text;
+        return;
+    }
+
+    bool skipSpoken = false;
+    const bool ardupilotPrearm = text.startsWith(QStringLiteral("PreArm"));
+    const bool px4Prearm = text.startsWith(QStringLiteral("preflight"), Qt::CaseInsensitive) && (severity >= MAV_SEVERITY::MAV_SEVERITY_CRITICAL);
+    if (ardupilotPrearm || px4Prearm) {
+        auto eventData = _events.find(componentid);
+        if (eventData != _events.end()) {
+            if (eventData->data()->healthAndArmingChecksSupported()) {
+                qCDebug(VehicleLog) << "Dropping preflight message (expected as event):" << text;
+                return;
+            }
+        }
+
+        // Limit repeated PreArm message to once every 10 seconds
+        if (_noisySpokenPrearmMap.contains(text) && _noisySpokenPrearmMap.value(text).msecsTo(QTime::currentTime()) < (10 * 1000)) {
+            skipSpoken = true;
+        } else {
+            (void) _noisySpokenPrearmMap.insert(text, QTime::currentTime());
+            setPrearmError(text);
+        }
+    }
+
+    bool readAloud = false;
+
+    if (text.startsWith("#")) {
+        (void) text.remove(0, 1);
+        readAloud = true;
+    } else if (severity <= MAV_SEVERITY::MAV_SEVERITY_NOTICE) {
+        readAloud = true;
+    }
+
+    if (readAloud && !skipSpoken) {
+        _say(text);
+    }
+
+    m_statusTextHandler->handleTextMessage(componentid, severity, text.toHtmlEscaped(), description);
+}
+
+void Vehicle::_errorMessageReceived(QString message)
+{
+    if (_isActiveVehicle) {
+        qgcApp()->showCriticalVehicleMessage(message);
+    }
+}
+
+/*---------------------------------------------------------------------------*/

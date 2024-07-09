@@ -15,164 +15,219 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.Vehicle
 import QGroundControl.Palette
+import QGroundControl.ScreenTools
+import QGroundControl.SettingsManager
 
-Rectangle {
-    width: mainLayout.x + mainLayout.width + mainLayout.anchors.margins
+Item {
+    id:     control
+    width:  indicatorCanvas.width
+    clip:   true
 
-    property var  _flyViewSettings:     QGroundControl.settingsManager.flyViewSettings
-    property real _vehicleAltitude:     _activeVehicle ? _activeVehicle.altitudeRelative.rawValue : 0
-    property bool _fixedWing:           _activeVehicle ? _activeVehicle.fixedWing : false
-    property real _sliderMaxVal:        _flyViewSettings ? _flyViewSettings.guidedMaximumAltitude.rawValue : 0
-    property real _sliderMinVal:        _flyViewSettings ? _flyViewSettings.guidedMinimumAltitude.rawValue : 0
-    property real _sliderCenterValue:   _vehicleAltitude
-    property string _displayText:       ""
-    property bool _altSlider:         true
-    property bool _speedSlider:       false
-
-    property var sliderValue : valueSlider.value
-
-    onSliderValueChanged: {
-        valueField.updateFunction(sliderValue)
+    enum SliderType {
+        Altitude,
+        Takeoff,
+        Speed
     }
 
-    on_SliderCenterValueChanged: {
-        valueField.updateFunction(sliderValue)
+    property real   _sliderMaxVal:          0
+    property real   _sliderMinVal:          0
+    property int    _sliderType:            GuidedValueSlider.SliderType.Altitude
+    property string _displayText:           ""
+
+    property var    _unitsSettings:         QGroundControl.settingsManager.unitsSettings
+    property real   _margins:               ScreenTools.defaultFontPixelWidth / 2
+    property real   _indicatorCenterPos:    sliderFlickable.height / 2
+
+    property int    _fullSliderRangeIndex:  2
+    property var    _rgValueRanges:         [ 400, 200, 100, 50, 25, 10 ]
+    property var    _rgValidMajorTickSteps: [ 10, 25, 50, 100 ]
+    property int    _fullSliderValueRange:  _rgValueRanges[_fullSliderRangeIndex]
+    property int    _halfSliderValueRange:  _fullSliderValueRange / 2
+
+    property real   _majorTickWidth:        ScreenTools.largeFontPixelWidth * 3
+    property real   _minorTickWidth:        _majorTickWidth / 2
+    property real   _majorTickPixelHeight:  ScreenTools.largeFontPixelHeight * 2
+    property real   _sliderValuePerPixel:   _majorTickValueStep / _majorTickPixelHeight
+
+    property int    _majorTickValueStep:    10
+    property int    _minorTickValueStep:    _majorTickValueStep / 2
+
+    property real   _sliderValue:           _firstPixelValue - ((sliderFlickable.contentY + _indicatorCenterPos) * _sliderValuePerPixel)
+
+    // Calculate the full range of the slider. We have been given a min/max but that is for clamping the selected slider values.
+    // We need expand that range to take into account additional values that must be displayed above/below the value indicator
+    // when it is at min/max.
+
+    // Add additional major ticks above/below min/max to ensure we can display the full visual range of the slider
+    property int    _majorTicksVisibleAboveIndicator:   Math.floor(_indicatorCenterPos / _majorTickPixelHeight)
+    property int    _majorTickAdjustment:               _majorTicksVisibleAboveIndicator * _majorTickValueStep
+
+    // Calculate the next major tick above/below min/max
+    property int    _majorTickMaxValue:     Math.ceil((_sliderMaxVal + _majorTickAdjustment)/ _majorTickValueStep) * _majorTickValueStep 
+    property int    _majorTickMinValue:     Math.floor((_sliderMinVal - _majorTickAdjustment)/ _majorTickValueStep) * _majorTickValueStep
+
+    // Now calculate the position we draw the first tick mark such that we are not allowed to flick above the max value
+    property real   _firstTickPixelOffset:  _indicatorCenterPos - ((_majorTickMaxValue - _sliderMaxVal) / _sliderValuePerPixel)
+    property real   _firstPixelValue:       _majorTickMaxValue + (_firstTickPixelOffset * _sliderValuePerPixel)
+
+    // Calculate the slider height such that we can flick below the min value
+    property real   _sliderHeight:          (_firstPixelValue - _sliderMinVal) / _sliderValuePerPixel + (sliderFlickable.height - _indicatorCenterPos)
+
+    property int     _cMajorTicks:          (_majorTickMaxValue - _majorTickMinValue) / _majorTickValueStep + 1
+
+    property var _qgcPal: QGroundControl.globalPalette
+
+    /// Slider values should be in converted app units.
+    function setupSlider(sliderType, minValue, maxValue, currentValue, displayText) {
+        console.log("setupSlider: sliderType: ", sliderType, " minValue: ", minValue, " maxValue: ", maxValue, " currentValue: ", currentValue, " displayText: ", displayText)
+        _sliderType = sliderType
+        _sliderMinVal = minValue
+        _sliderMaxVal = maxValue
+        _displayText = displayText
+
+        // Position the slider such that the indicator is pointing to the current value
+        sliderFlickable.contentY = (_firstPixelValue - currentValue) / _sliderValuePerPixel - _indicatorCenterPos
     }
 
-    function setValue(val) {
-        valueSlider.value = valueField.getSliderValueFromOutput(val)
-        valueField.updateFunction(valueSlider.value)
-    }
-
-    function configureAsRelativeAltSliderExp() {
-        _sliderMaxVal = _flyViewSettings ? _flyViewSettings.guidedMaximumAltitude.rawValue : 0
-        _sliderMinVal = _flyViewSettings ? _flyViewSettings.guidedMinimumAltitude.rawValue : 0
-        _sliderCenterValue = Qt.binding(function() { return _vehicleAltitude })
-        _altSlider = true
-        valueField.updateFunction = valueField.updateExpAroundCenterValue
-        valueSlider.value = 0
-        valueField.updateFunction(sliderValue)
-
-    }
-
-    function configureAsLinearSlider() {
-        _altSlider = false
-        valueField.updateFunction = valueField.updateLinear
-
-    }
-
-    function setMinVal(min_val) {
-        _sliderMinVal = min_val
-    }
-
-    function setMaxVal(max_val) {
-        _sliderMaxVal = max_val
-    }
-
-    function setCenterValue(center) {
-        _sliderCenterValue = center
-    }
-
-    function setDisplayText(text) {
-        _displayText = text
-    }
-
-    function setIsSpeedSlider(isSpeed) {
-        _speedSlider = isSpeed
+    function _clampedSliderValue(value) {
+        var decimalPlaces = 0
+        if (_unitsSettings.verticalDistanceUnits.rawValue === UnitsSettings.VerticalDistanceUnitsMeters) {
+            decimalPlaces = 1
+        }
+        return value.toFixed(decimalPlaces)
     }
 
     function getOutputValue() {
-        if (_altSlider) {
-            return valueField.newValue - _sliderCenterValue
-        } else {
-            return valueField.newValue
+        return _clampedSliderValue(_sliderValue)
+    }
+
+    Rectangle {
+        anchors.fill:   parent
+        color:          _qgcPal.window
+        opacity:        0.5
+    }
+
+    ColumnLayout {
+        anchors.fill:       parent
+        spacing:            0
+
+        QGCLabel {
+            Layout.fillWidth:   true
+            horizontalAlignment: Text.AlignHCenter
+            font.pointSize:     ScreenTools.smallFontPointSize
+            text:               _displayText
+        }
+      
+        QGCFlickable {
+            id:                 sliderFlickable
+            Layout.fillWidth:   true
+            Layout.fillHeight:  true
+            contentWidth:       sliderContainer.width
+            contentHeight:      sliderContainer.height
+            flickDeceleration:  0.5
+
+            Item {
+                id:     sliderContainer
+                width:  control.width
+                height: _sliderHeight
+
+                // Major tick marks
+                Repeater {
+                    model: _cMajorTicks
+
+                    Item {
+                        width:      sliderContainer.width
+                        height:     1
+                        y:          _majorTickPixelHeight * index + _firstTickPixelOffset
+                        opacity:    tickValue < _sliderMinVal || tickValue > _sliderMaxVal ? 0.5 : 1
+
+                        property real tickValue: _majorTickMaxValue - (_majorTickValueStep * index)
+
+                        Rectangle {
+                            width:  _majorTickWidth
+                            height: 1
+                            color:  _qgcPal.text
+                        }
+
+                        QGCLabel {
+                            anchors.right:          parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            text:                   parent.tickValue
+                            font.pointSize:         ScreenTools.largeFontPointSize
+                        }
+                    }
+                }
+
+                // Minor tick marks
+                Repeater {
+                    model: _cMajorTicks * 2
+
+                    Rectangle {
+                        y:          _majorTickPixelHeight / 2 * index +  + _firstTickPixelOffset
+                        width:      _minorTickWidth
+                        height:     1
+                        color:      _qgcPal.text
+                        opacity:    tickValue < _sliderMinVal || tickValue > _sliderMaxVal ? 0.5 : 1
+                        visible:    index % 2 === 1
+
+                        property real tickValue: _majorTickMaxValue - ((_majorTickValueStep  / 2) * index)
+                    }
+                }
+            }
+        }
+    }
+
+    // Value indicator
+    Canvas {
+        id:     indicatorCanvas
+        y:      sliderFlickable.y + _indicatorCenterPos - height / 2
+        width:  Math.max(minIndicatorWidth, minTickDisplayWidth)
+        height: indicatorHeight
+        clip:   false
+
+        property real indicatorHeight:      valueLabel.contentHeight
+        property real pointerWidth:         ScreenTools.defaultFontPixelWidth
+        property real minIndicatorWidth:    pointerWidth + (_margins * 2) + valueLabel.contentWidth
+        property real minTickDisplayWidth:  _majorTickWidth + ScreenTools.defaultFontPixelWidth + ScreenTools.defaultFontPixelWidth * 3
+
+        onPaint: {
+            var ctx = getContext("2d")
+            ctx.strokeStyle = _qgcPal.text
+            ctx.fillStyle = _qgcPal.window
+            ctx.lineWidth = 1
+            ctx.beginPath()
+            ctx.moveTo(0, indicatorHeight / 2)
+            ctx.lineTo(pointerWidth, indicatorHeight / 4)
+            ctx.lineTo(pointerWidth, 0)
+            ctx.lineTo(width - 1, 0)
+            ctx.lineTo(width - 1, indicatorHeight)
+            ctx.lineTo(pointerWidth, indicatorHeight)
+            ctx.lineTo(pointerWidth, indicatorHeight / 4 * 3)
+            ctx.lineTo(0, indicatorHeight / 2)
+            ctx.fill()
+            ctx.stroke()
+        }
+
+        QGCLabel {
+            id:                     valueLabel
+            anchors.margins:        _margins
+            anchors.right:          parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            horizontalAlignment:    Text.AlignRight
+            verticalAlignment:      Text.AlignVCenter
+            text:                   _clampedSliderValue(_sliderValue) + " " + unitsString
+            font.pointSize:         ScreenTools.largeFontPointSize
+
+            property var unitsString: _sliderType === GuidedValueSlider.Speed ? 
+                                        QGroundControl.unitsConversion.appSettingsSpeedUnitsString : 
+                                            QGroundControl.unitsConversion.appSettingsVerticalDistanceUnitsString
         }
     }
 
     ColumnLayout {
         id:                 mainLayout
-        anchors.margins:    _margins
-        anchors.left:       parent.left
-        anchors.top:        parent.top
         anchors.bottom:     parent.bottom
         spacing:            0
-
-        QGCLabel {
-            Layout.preferredWidth:  1
-            Layout.alignment:       Qt.AlignHCenter
-            wrapMode:               Text.WordWrap
-            text:                   _displayText
-            horizontalAlignment:    Text.AlignHCenter
-        }
-
-        QGCLabel {
-            id:                 valueField
-            Layout.alignment:   Qt.AlignHCenter
-            text:               newValueAppUnits + " " + 
-                                    (_speedSlider ? QGroundControl.unitsConversion.appSettingsSpeedUnitsString : QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString)
-
-            property real   newValue
-            property string newValueAppUnits
-
-            property var updateFunction : updateExpAroundCenterValue
-
-            function updateExpAroundCenterValue(value) {
-                var   decreaseRange = Math.max(_sliderCenterValue - _sliderMinVal, 0)
-                var   increaseRange = Math.max(_sliderMaxVal - _sliderCenterValue, 0)
-                var   valExp = Math.pow(valueSlider.value, 3)
-                var   delta = valExp * (valueSlider.value > 0 ? increaseRange : decreaseRange)
-                newValue = _sliderCenterValue + delta
-                newValueAppUnits = QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(newValue).toFixed(1)
-            }
-
-            function updateLinear(value) {
-                // value is between -1 and 1
-                newValue = _sliderMinVal + (value + 1) * 0.5 * (_sliderMaxVal - _sliderMinVal)
-                if (_speedSlider) {
-                    // Already working in converted units
-                    newValueAppUnits = newValue.toFixed(1)
-                } else {
-                    newValueAppUnits = QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(newValue).toFixed(1)
-                }
-            }
-
-            function getSliderValueFromOutputLinear(val) {
-                return 2 * (val - _sliderMinVal) / (_sliderMaxVal - _sliderMinVal) - 1
-            }
-
-            function getSliderValueFromOutputExp(val) {
-                if (val >= _sliderCenterValue) {
-                    return Math.pow(val / Math.max(_sliderMaxVal - _sliderCenterValue, 0), 1.0/3.0)
-                } else {
-                    return -Math.pow(val / Math.max(_sliderCenterValue - _sliderMinVal, 0), 1.0/3.0)
-                }
-            }
-
-            function getSliderValueFromOutput(output) {
-                if (updateFunction == updateExpAroundCenterValue) {
-                    return getSliderValueFromOutputExp(output)
-                } else {
-                    return getSliderValueFromOutputLinear(output)
-                }
-            }
-        }
-
-        QGCSlider {
-            id:                 valueSlider
-            Layout.alignment:   Qt.AlignHCenter
-            Layout.fillHeight:  true
-            orientation:        Qt.Vertical
-            from:               -1
-            to:                 1
-            zeroCentered:       false
-            rotation:           180
-
-            // We want slide up to be positive values
-            transform: Rotation {
-                origin.x:   valueSlider.width  / 2
-                origin.y:   valueSlider.height / 2
-                angle:      180
-            }
-        }
+        width:              200
     }
 }

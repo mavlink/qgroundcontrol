@@ -29,6 +29,7 @@
 #include "APMParameterMetaData.h"
 #include "LinkManager.h"
 #include "Vehicle.h"
+#include <StatusTextHandler.h>
 #include "MAVLinkProtocol.h"
 #include "QGCLoggingCategory.h"
 #include <DeviceInfo.h>
@@ -38,9 +39,6 @@
 #include <QtCore/QRegularExpressionMatch>
 
 QGC_LOGGING_CATEGORY(APMFirmwarePluginLog, "APMFirmwarePluginLog")
-
-const char* APMFirmwarePlugin::_artooIP =                   "10.1.1.1"; ///< IP address of ARTOO controller
-const int   APMFirmwarePlugin::_artooVideoHandshakePort =   5502;       ///< Port for video handshake on ARTOO controller
 
 /*
  * @brief APMCustomMode encapsulates the custom modes for APM
@@ -265,7 +263,7 @@ bool APMFirmwarePlugin::_handleIncomingStatusText(Vehicle* /*vehicle*/, mavlink_
     // APM user facing calibration messages come through as high severity, we need to parse them out
     // and lower the severity on them so that they don't pop in the users face.
 
-    const QString messageText = _getMessageText(message);
+    const QString messageText = StatusTextHandler::getMessageText(*message);
     if (messageText.contains("Place vehicle") || messageText.contains("Calibration successful")) {
         _adjustCalibrationMessageSeverity(message);
         return true;
@@ -357,18 +355,6 @@ void APMFirmwarePlugin::adjustOutgoingMavlinkMessageThreadSafe(Vehicle* vehicle,
         _handleOutgoingParamSetThreadSafe(vehicle, outgoingLink, message);
         break;
     }
-}
-
-QString APMFirmwarePlugin::_getMessageText(mavlink_message_t* message) const
-{
-    QByteArray b;
-
-    b.resize(MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN+1);
-    mavlink_msg_statustext_get_text(message, b.data());
-
-    // Ensure NUL-termination
-    b[b.length()-1] = '\0';
-    return QString::fromLocal8Bit(b, std::strlen(b.constData()));
 }
 
 void APMFirmwarePlugin::_setInfoSeverity(mavlink_message_t* message) const
@@ -932,7 +918,7 @@ void APMFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
     _guidedModeTakeoff(vehicle, altitudeRel);
 }
 
-double APMFirmwarePlugin::minimumTakeoffAltitude(Vehicle* vehicle)
+double APMFirmwarePlugin::minimumTakeoffAltitudeMeters(Vehicle* vehicle)
 {
     double minTakeoffAlt = 0;
     QString takeoffAltParam(vehicle->vtol() ? QStringLiteral("Q_RTL_ALT") : QStringLiteral("PILOT_TKOFF_ALT"));
@@ -943,7 +929,7 @@ double APMFirmwarePlugin::minimumTakeoffAltitude(Vehicle* vehicle)
     }
 
     if (minTakeoffAlt == 0) {
-        minTakeoffAlt = FirmwarePlugin::minimumTakeoffAltitude(vehicle);
+        minTakeoffAlt = FirmwarePlugin::minimumTakeoffAltitudeMeters(vehicle);
     }
 
     return minTakeoffAlt;
@@ -962,7 +948,7 @@ bool APMFirmwarePlugin::_guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
         return false;
     }
 
-    double takeoffAltRel = minimumTakeoffAltitude(vehicle);
+    double takeoffAltRel = minimumTakeoffAltitudeMeters(vehicle);
     if (!qIsNaN(altitudeRel) && altitudeRel > takeoffAltRel) {
         takeoffAltRel = altitudeRel;
     }

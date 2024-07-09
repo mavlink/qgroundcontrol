@@ -205,8 +205,6 @@ public:
 
     static const int kDefaultDecimalPlaces = 3;  ///< Default value for decimal places if not specified/known
     static const int kUnknownDecimalPlaces = -1; ///< Number of decimal places to specify is not known
-    static const char* kDefaultCategory;
-    static const char* kDefaultGroup;
 
     static ValueType_t stringToType(const QString& typeString, bool& unknownType);
     static QString typeToString(ValueType_t type);
@@ -215,7 +213,9 @@ public:
     static QVariant minForType(ValueType_t type);
     static QVariant maxForType(ValueType_t type);
 
-    static const char* qgcFileType;
+    static constexpr const char* kDefaultCategory = QT_TRANSLATE_NOOP("FactMetaData", "Other");
+    static constexpr const char* kDefaultGroup    = QT_TRANSLATE_NOOP("FactMetaData", "Misc");
+    static constexpr const char* qgcFileType                           = "FactMetaData";
 
 private:
     QVariant _minForType                (void) const { return minForType(_type); };
@@ -340,57 +340,89 @@ private:
     CustomCookedValidator _customCookedValidator = nullptr;
 
     // Exact conversion constants
-    static const struct UnitConsts_s {
-        static const qreal secondsPerHour;
-        static const qreal knotsToKPH;
-        static const qreal milesToMeters;
-        static const qreal feetToMeters;
-        static const qreal inchesToCentimeters;
-        static const qreal ouncesToGrams;
-        static const qreal poundsToGrams;
-    } constants;
+    static constexpr const struct UnitConsts_s {
+        static constexpr const qreal secondsPerHour = 3600.0;
+        static constexpr const qreal knotsToKPH = 1.852;
+        static constexpr const qreal milesToMeters = 1609.344;
+        static constexpr const qreal feetToMeters = 0.3048;
+        static constexpr const qreal inchesToCentimeters = 2.54;
+        static constexpr const qreal ouncesToGrams = 28.3495;
+        static constexpr const qreal poundsToGrams = 453.592;
+    } constants{};
 
     struct BuiltInTranslation_s {
         QString rawUnits;
         const char* cookedUnits;
         Translator  rawTranslator;
         Translator  cookedTranslator;
-
     };
 
     static const BuiltInTranslation_s _rgBuiltInTranslations[];
 
     static const AppSettingsTranslation_s _rgAppSettingsTranslations[];
 
-    static const char*          _rgKnownTypeStrings[];
-    static const ValueType_t    _rgKnownValueTypes[];
+    static constexpr const char* _jsonMetaDataDefinesName              = "QGC.MetaData.Defines";
+    static constexpr const char* _jsonMetaDataFactsName                = "QGC.MetaData.Facts";
+    static constexpr const char* _enumStringsJsonKey                   = "enumStrings";
+    static constexpr const char* _enumValuesJsonKey                    = "enumValues";
 
-    static const char* _nameJsonKey;
-    static const char* _decimalPlacesJsonKey;
-    static const char* _typeJsonKey;
-    static const char* _shortDescriptionJsonKey;
-    static const char* _longDescriptionJsonKey;
-    static const char* _unitsJsonKey;
-    static const char* _defaultValueJsonKey;
-    static const char* _mobileDefaultValueJsonKey;
-    static const char* _minJsonKey;
-    static const char* _maxJsonKey;
-    static const char* _incrementJsonKey;
-    static const char* _hasControlJsonKey;
-    static const char* _qgcRebootRequiredJsonKey;
-    static const char* _rebootRequiredJsonKey;
-    static const char* _categoryJsonKey;
-    static const char* _groupJsonKey;
-    static const char* _volatileJsonKey;
-    static const char* _enumStringsJsonKey;
-    static const char* _enumValuesJsonKey;
-    static const char* _enumValuesArrayJsonKey;
-    static const char* _enumBitmaskArrayJsonKey;
-    static const char* _enumValuesArrayValueJsonKey;
-    static const char* _enumValuesArrayDescriptionJsonKey;
-    static const char* _enumBitmaskArrayIndexJsonKey;
-    static const char* _enumBitmaskArrayDescriptionJsonKey;
+    // This is the newer json format for enums and bitmasks. They are used by the new COMPONENT_METADATA parameter metadata for example.
+    static constexpr const char* _enumValuesArrayJsonKey               = "values";
+    static constexpr const char* _enumBitmaskArrayJsonKey              = "bitmask";
+    static constexpr const char* _enumValuesArrayValueJsonKey          = "value";
+    static constexpr const char* _enumValuesArrayDescriptionJsonKey    = "description";
+    static constexpr const char* _enumBitmaskArrayIndexJsonKey         = "index";
+    static constexpr const char* _enumBitmaskArrayDescriptionJsonKey   = "description";
 
-    static const char* _jsonMetaDataDefinesName;
-    static const char* _jsonMetaDataFactsName;
+    static constexpr const char* _rgKnownTypeStrings[] = {
+        "Uint8",
+        "Int8",
+        "Uint16",
+        "Int16",
+        "Uint32",
+        "Int32",
+        "Uint64",
+        "Int64",
+        "Float",
+        "Double",
+        "String",
+        "Bool",
+        "ElapsedSeconds",
+        "Custom",
+    };
+
+    static constexpr const  ValueType_t _rgKnownValueTypes[] = {
+        valueTypeUint8,
+        valueTypeInt8,
+        valueTypeUint16,
+        valueTypeInt16,
+        valueTypeUint32,
+        valueTypeInt32,
+        valueTypeUint64,
+        valueTypeInt64,
+        valueTypeFloat,
+        valueTypeDouble,
+        valueTypeString,
+        valueTypeBool,
+        valueTypeElapsedTimeInSeconds,
+        valueTypeCustom,
+    };
+
+    static constexpr const char* _decimalPlacesJsonKey =       "decimalPlaces";
+    static constexpr const char* _nameJsonKey =                "name";
+    static constexpr const char* _typeJsonKey =                "type";
+    static constexpr const char* _shortDescriptionJsonKey =    "shortDesc";
+    static constexpr const char* _longDescriptionJsonKey =     "longDesc";
+    static constexpr const char* _unitsJsonKey =               "units";
+    static constexpr const char* _defaultValueJsonKey =        "default";
+    static constexpr const char* _mobileDefaultValueJsonKey =  "mobileDefault";
+    static constexpr const char* _minJsonKey =                 "min";
+    static constexpr const char* _maxJsonKey =                 "max";
+    static constexpr const char* _incrementJsonKey =           "increment";
+    static constexpr const char* _hasControlJsonKey =          "control";
+    static constexpr const char* _qgcRebootRequiredJsonKey =   "qgcRebootRequired";
+    static constexpr const char* _rebootRequiredJsonKey =      "rebootRequired";
+    static constexpr const char* _categoryJsonKey =            "category";
+    static constexpr const char* _groupJsonKey =               "group";
+    static constexpr const char* _volatileJsonKey =            "volatile";
 };

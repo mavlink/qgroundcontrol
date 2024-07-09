@@ -54,6 +54,7 @@ class FirmwarePluginManager;
 class FTPManager;
 class GeoFenceManager;
 class ImageProtocolManager;
+class StatusTextHandler;
 class InitialConnectStateMachine;
 class Joystick;
 class JoystickManager;
@@ -73,7 +74,6 @@ class StandardModes;
 class TerrainAtCoordinateQuery;
 class TerrainProtocolHandler;
 class TrajectoryPoints;
-class UASMessage;
 class VehicleBatteryFactGroup;
 class VehicleObjectAvoidance;
 class QGCToolbox;
@@ -154,13 +154,6 @@ public:
     Q_PROPERTY(QmlObjectListModel*  cameraTriggerPoints         READ cameraTriggerPoints                                            CONSTANT)
     Q_PROPERTY(float                latitude                    READ latitude                                                       NOTIFY coordinateChanged)
     Q_PROPERTY(float                longitude                   READ longitude                                                      NOTIFY coordinateChanged)
-    Q_PROPERTY(bool                 messageTypeNone             READ messageTypeNone                                                NOTIFY messageTypeChanged)
-    Q_PROPERTY(bool                 messageTypeNormal           READ messageTypeNormal                                              NOTIFY messageTypeChanged)
-    Q_PROPERTY(bool                 messageTypeWarning          READ messageTypeWarning                                             NOTIFY messageTypeChanged)
-    Q_PROPERTY(bool                 messageTypeError            READ messageTypeError                                               NOTIFY messageTypeChanged)
-    Q_PROPERTY(int                  newMessageCount             READ newMessageCount                                                NOTIFY newMessageCountChanged)
-    Q_PROPERTY(int                  messageCount                READ messageCount                                                   NOTIFY messageCountChanged)
-    Q_PROPERTY(QString              formattedMessages           READ formattedMessages                                              NOTIFY formattedMessagesChanged)
     Q_PROPERTY(bool                 joystickEnabled             READ joystickEnabled            WRITE setJoystickEnabled            NOTIFY joystickEnabledChanged)
     Q_PROPERTY(int                  flowImageIndex              READ flowImageIndex                                                 NOTIFY flowImageIndexChanged)
     Q_PROPERTY(int                  rcRSSI                      READ rcRSSI                                                         NOTIFY rcRSSIChanged)
@@ -329,10 +322,6 @@ public:
     /// Resets link status counters
     Q_INVOKABLE void resetCounters  ();
 
-    // Called when the message drop-down is invoked to clear current count
-    Q_INVOKABLE void resetAllMessages();
-    Q_INVOKABLE void resetErrorLevelMessages();
-
     Q_INVOKABLE void virtualTabletJoystickValue(double roll, double pitch, double yaw, double thrust);
 
     /// Command vehicle to return to launch
@@ -345,7 +334,7 @@ public:
     Q_INVOKABLE void guidedModeTakeoff(double altitudeRelative);
 
     /// @return The minimum takeoff altitude (relative) for guided takeoff.
-    Q_INVOKABLE double minimumTakeoffAltitude();
+    Q_INVOKABLE double minimumTakeoffAltitudeMeters();
 
     /// @return Maximum horizontal speed multirotor.
     Q_INVOKABLE double maximumHorizontalSpeedMultirotor();
@@ -406,8 +395,7 @@ public:
     /// Reboot vehicle
     Q_INVOKABLE void rebootVehicle();
 
-    /// Clear Messages
-    Q_INVOKABLE void clearMessages();
+
 
     Q_INVOKABLE void sendPlan(QString planFile);
     Q_INVOKABLE void setEstimatorOrigin(const QGeoCoordinate& centerCoord);
@@ -570,20 +558,6 @@ public:
     void trackFirmwareVehicleTypeChanges(void);
     void stopTrackingFirmwareVehicleTypeChanges(void);
 
-    typedef enum {
-        MessageNone,
-        MessageNormal,
-        MessageWarning,
-        MessageError
-    } MessageType_t;
-
-    bool            messageTypeNone             () { return _currentMessageType == MessageNone; }
-    bool            messageTypeNormal           () { return _currentMessageType == MessageNormal; }
-    bool            messageTypeWarning          () { return _currentMessageType == MessageWarning; }
-    bool            messageTypeError            () { return _currentMessageType == MessageError; }
-    int             newMessageCount             () const{ return _currentMessageCount; }
-    int             messageCount                () const{ return _messageCount; }
-    QString         formattedMessages           ();
     float           latitude                    () { return static_cast<float>(_coordinate.latitude()); }
     float           longitude                   () { return static_cast<float>(_coordinate.longitude()); }
     int             rcRSSI                      () const{ return _rcRSSI; }
@@ -915,17 +889,8 @@ signals:
     void capabilityBitsChanged          (uint64_t capabilityBits);
     void toolIndicatorsChanged          ();
     void modeIndicatorsChanged          ();
-    void textMessageReceived            (int uasid, int componentid, int severity, QString text, QString description);
     void calibrationEventReceived       (int uasid, int componentid, int severity, QSharedPointer<events::parser::ParsedEvent> event);
     void checkListStateChanged          ();
-    void messagesReceivedChanged        ();
-    void messagesSentChanged            ();
-    void messagesLostChanged            ();
-    void messageTypeChanged             ();
-    void newMessageCountChanged         ();
-    void messageCountChanged            ();
-    void formattedMessagesChanged       ();
-    void newFormattedMessage            (QString formattedMessage);
     void longitudeChanged               ();
     void currentConfigChanged           ();
     void flowImageIndexChanged          ();
@@ -1009,8 +974,6 @@ private slots:
     void _announceArmedChanged              (bool armed);
     void _offlineCruiseSpeedSettingChanged  (QVariant value);
     void _offlineHoverSpeedSettingChanged   (QVariant value);
-    void _handleTextMessage                 (int newCount);
-    void _handletextMessageReceived         (UASMessage* message);
     void _imageProtocolImageReady           (void);
     void _prearmErrorTimeout                ();
     void _firstMissionLoadComplete          ();
@@ -1058,7 +1021,6 @@ private:
     void _handleAttitudeWorker          (double rollRadians, double pitchRadians, double yawRadians);
     void _handleAttitude                (mavlink_message_t& message);
     void _handleAttitudeQuaternion      (mavlink_message_t& message);
-    void _handleStatusText              (mavlink_message_t& message);
     void _handleOrbitExecutionStatus    (const mavlink_message_t& message);
     void _handleGimbalOrientation       (const mavlink_message_t& message);
     void _handleObstacleDistance        (const mavlink_message_t& message);
@@ -1089,8 +1051,6 @@ private:
     void _writeCsvLine                  ();
     void _flightTimerStart              ();
     void _flightTimerStop               ();
-    void _chunkedStatusTextTimeout      (void);
-    void _chunkedStatusTextCompleted    (uint8_t compId);
     void _setMessageInterval            (int messageId, int rate);
     EventHandler& _eventHandler         (uint8_t compid);
     bool setFlightModeCustom            (const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode);
@@ -1115,6 +1075,7 @@ private:
     QFile               _csvLogFile;
 
     bool            _joystickEnabled = false;
+    bool _isActiveVehicle = false;
 
     QGeoCoordinate  _coordinate;
     QGeoCoordinate  _homePosition;
@@ -1123,13 +1084,6 @@ private:
     qreal           _initialGCSPressure = 0.;
     qreal           _initialGCSTemperature = 0.;
 
-    int             _currentMessageCount = 0;
-    int             _messageCount = 0;
-    int             _currentErrorCount = 0;
-    int             _currentWarningCount = 0;
-    int             _currentNormalCount = 0;
-    MessageType_t   _currentMessageType = MessageNone;
-    int             _updateCount = 0;
     int             _rcRSSI = 255;
     double          _rcRSSIstore = 255;
     bool            _flying = false;
@@ -1269,15 +1223,6 @@ private:
     HealthAndArmingCheckReport _healthAndArmingCheckReport;
 
     MAVLinkStreamConfig _mavlinkStreamConfig;
-
-    // Chunked status text support
-    typedef struct {
-        uint16_t    chunkId;
-        uint8_t     severity;
-        QStringList rgMessageChunks;
-    } ChunkedStatusTextInfo_t;
-    QMap<uint8_t /* compId */, ChunkedStatusTextInfo_t> _chunkedStatusTextInfoMap;
-    QTimer _chunkedStatusTextTimer;
 
     /// Callback for waitForMavlinkMessage
     ///     @param resultHandleData     Opaque data passed in to waitForMavlinkMessage call
@@ -1503,6 +1448,56 @@ private:
     QHash<MavCompMsgId, int32_t> _mavlinkMsgIntervals;
     QMultiHash<uint8_t, uint16_t> _unsupportedMessageIds;
     uint16_t _lastSetMsgIntervalMsgId = 0;
+
+/*===========================================================================*/
+/*                         STATUS TEXT HANDLER                               */
+/*===========================================================================*/
+private:
+    Q_PROPERTY(bool    messageTypeNone    READ messageTypeNone    NOTIFY messageTypeChanged)
+    Q_PROPERTY(bool    messageTypeNormal  READ messageTypeNormal  NOTIFY messageTypeChanged)
+    Q_PROPERTY(bool    messageTypeWarning READ messageTypeWarning NOTIFY messageTypeChanged)
+    Q_PROPERTY(bool    messageTypeError   READ messageTypeError   NOTIFY messageTypeChanged)
+    Q_PROPERTY(int     messageCount       READ messageCount       NOTIFY messageCountChanged)
+    Q_PROPERTY(QString formattedMessages  READ formattedMessages  NOTIFY formattedMessagesChanged)
+
+    // Q_PROPERTY(StatusTextHandler *statusTextHandler READ statusTextHandler NOTIFY statusTextHandlerChanged)
+
+public:
+    Q_INVOKABLE void resetAllMessages();
+    Q_INVOKABLE void resetErrorLevelMessages();
+    Q_INVOKABLE void clearMessages();
+
+    bool messageTypeNone() const;
+    bool messageTypeNormal() const;
+    bool messageTypeWarning() const;
+    bool messageTypeError() const;
+    int messageCount() const;
+    QString formattedMessages() const;
+
+    // StatusTextHandler* statusTextHandler() { return m_statusTextHandler; }
+
+signals:
+    void textMessageReceived(int sysid, int componentid, int severity, QString text, QString description);
+
+    void messagesReceivedChanged();
+    void messagesSentChanged();
+    void messagesLostChanged();
+    void messageTypeChanged();
+    void messageCountChanged();
+    void formattedMessagesChanged();
+    void newFormattedMessage(QString formattedMessage);
+
+    // void statusTextHandlerChanged();
+
+private slots:
+    void _textMessageReceived(MAV_COMPONENT componentid, MAV_SEVERITY severity, QString text, QString description);
+    void _errorMessageReceived(QString message);
+
+private:
+    void _createStatusTextHandler();
+
+    StatusTextHandler *m_statusTextHandler = nullptr;
+/*---------------------------------------------------------------------------*/
 };
 
 Q_DECLARE_METATYPE(Vehicle::MavCmdResultFailureCode_t)

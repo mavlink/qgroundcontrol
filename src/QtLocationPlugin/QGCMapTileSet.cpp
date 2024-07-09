@@ -22,6 +22,7 @@
 #include "QGCFileDownload.h"
 #include "TerrainTile.h"
 #include "QGCMapUrlEngine.h"
+#include "ElevationMapProvider.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtNetwork/QNetworkProxy>
@@ -241,7 +242,7 @@ void QGCCachedTileSet::_prepareDownload()
         if(_tilesToDownload.count()) {
             QGCTile* tile = _tilesToDownload.first();
             _tilesToDownload.removeFirst();
-            QNetworkRequest request = getQGCMapEngine()->urlFactory()->getTileURL(tile->type(), tile->x(), tile->y(), tile->z());
+            QNetworkRequest request = UrlFactory::getTileURL(tile->type(), tile->x(), tile->y(), tile->z());
             request.setAttribute(QNetworkRequest::User, tile->hash());
 #if !defined(__mobile__)
             QNetworkProxy proxy = _networkManager->proxy();
@@ -289,11 +290,11 @@ QGCCachedTileSet::_networkReplyFinished()
             }
             qCDebug(QGCCachedTileSetLog) << "Tile fetched" << hash;
             QByteArray image = reply->readAll();
-            QString type = getQGCMapEngine()->tileHashToType(hash);
-            if (type == UrlFactory::kCopernicusElevationProviderKey) {
+            QString type = QGCMapEngine::tileHashToType(hash);
+            if (type == CopernicusElevationProvider::kProviderKey) {
                 image = TerrainTile::serializeFromAirMapJson(image);
             }
-            QString format = getQGCMapEngine()->urlFactory()->getImageFormat(type, image);
+            QString format = UrlFactory::getImageFormat(type, image);
             if(!format.isEmpty()) {
                 //-- Cache tile
                 getQGCMapEngine()->cacheTile(type, hash, image, format, _id);

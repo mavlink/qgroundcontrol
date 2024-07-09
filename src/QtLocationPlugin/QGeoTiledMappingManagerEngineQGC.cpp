@@ -79,21 +79,21 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
 
     setTileSize(QSize(256, 256));
 
-    #define QGCGEOMAPTYPE(a,b,c,d,e,f)  QGeoMapType(a,b,c,d,e,f,QByteArray("QGroundControl"), cameraCaps)
-
-
-    // Qt Map Ids must start at 1 and are sequential.
-    int qtMapId = 1;
-    auto urlFactory = getQGCMapEngine()->urlFactory();
-    MapProvider* provider = urlFactory->getMapProviderFromQtMapId(qtMapId);
     QList<QGeoMapType> mapList;
-
-    while (provider) {
-        QString providerType = urlFactory->getProviderTypeFromQtMapId(qtMapId);
-        mapList.append(QGCGEOMAPTYPE(provider->getMapStyle(), providerType, providerType, false, false, qtMapId++));
-        provider = urlFactory->getMapProviderFromQtMapId(qtMapId);
+    const QList<SharedMapProvider> providers = UrlFactory::getProviders();
+    for (const SharedMapProvider &provider : providers) {
+        const QGeoMapType map = QGeoMapType(
+            provider->getMapStyle(),
+            provider->getMapName(),
+            provider->getMapName(),
+            false,
+            false,
+            provider->getMapId(),
+            QByteArrayLiteral("QGroundControl"),
+            cameraCapabilities()
+        );
+        (void) mapList.append(map);
     }
-
     setSupportedMapTypes(mapList);
 
     //-- Users (QML code) can define a different user agent
@@ -160,7 +160,7 @@ QGeoTiledMappingManagerEngineQGC::_setCache(const QVariantMap &parameters)
     if(!memLimit)
     {
         //-- Value saved in MB
-        memLimit = getQGCMapEngine()->getMaxMemCache() * (1024 * 1024);
+        memLimit = QGCMapEngine::getMaxMemCache() * (1024 * 1024);
     }
     //-- It won't work with less than 1M of memory cache
     if(memLimit < 1024 * 1024) {

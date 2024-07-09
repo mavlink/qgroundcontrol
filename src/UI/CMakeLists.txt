@@ -12,16 +12,16 @@ qt_add_qml_module(UI
     OUTPUT_TARGETS UI_targets
     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
     IMPORTS
-		QtQuick
-		QtQuick.Controls
-		QtQuick.Dialogs
-		QtQuick.Layouts
-		QtQuick.Window
+        QtQuick
+        QtQuick.Controls
+        QtQuick.Dialogs
+        QtQuick.Layouts
+        QtQuick.Window
 
-		QGroundControl
-		QGroundControl.Palette
-		QGroundControl.Controls
-		QGroundControl.ScreenTools
-		QGroundControl.FlightDisplay
-		QGroundControl.FlightMap
+        QGroundControl
+        QGroundControl.Palette
+        QGroundControl.Controls
+        QGroundControl.ScreenTools
+        QGroundControl.FlightDisplay
+        QGroundControl.FlightMap
 )

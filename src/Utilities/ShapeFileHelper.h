@@ -44,5 +44,5 @@ public:
 private:
     static bool _fileIsKML(const QString& file, QString& errorString);
 
-    static const char* _errorPrefix;
+    static constexpr const char* _errorPrefix = QT_TR_NOOP("Shape file load failed. %1");
 };

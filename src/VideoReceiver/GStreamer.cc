@@ -99,10 +99,10 @@ G_BEGIN_DECLS
     GST_PLUGIN_STATIC_DECLARE(qgc);
 G_END_DECLS
 
-#if (defined(Q_OS_MAC) && defined(QGC_INSTALL_RELEASE)) || defined(Q_OS_WIN)
+#if (defined(Q_OS_MAC) && defined(QGC_INSTALL_RELEASE)) || defined(Q_OS_WIN) || defined(Q_OS_LINUX)
 static void qgcputenv(const QString& key, const QString& root, const QString& path)
 {
-    QString value = root + path;
+    const QString value = root + path;
     qputenv(key.toStdString().c_str(), QByteArray(value.toStdString().c_str()));
 }
 #endif
@@ -183,6 +183,17 @@ GStreamer::initialize(int argc, char* argv[], int debuglevel)
 #elif defined(Q_OS_WIN)
     QString currentDir = QCoreApplication::applicationDirPath();
     qgcputenv("GST_PLUGIN_PATH", currentDir, "/gstreamer-plugins");
+#elif defined(Q_OS_LINUX)
+    const QString currentDir = QCoreApplication::applicationDirPath();
+    qgcputenv("GST_REGISTRY_REUSE_PLUGIN_SCANNER", "no", "");
+    qgcputenv("GST_PLUGIN_SCANNER", "/usr/lib/x86_64-linux-gnu", "/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner");
+    qgcputenv("GST_PTP_HELPER_1_0", "/usr/lib/x86_64-linux-gnu", "/gstreamer1.0/gstreamer-1.0/gst-ptp-helper");
+    qgcputenv("GTK_PATH", "/usr", "");
+    qgcputenv("GIO_EXTRA_MODULES", "/usr/lib/x86_64-linux-gnu", "/gio/modules");
+    qgcputenv("GST_PLUGIN_SYSTEM_PATH_1_0", "/usr/lib/x86_64-linux-gnu", "/gstreamer-1.0");
+    qgcputenv("GST_PLUGIN_SYSTEM_PATH", "/usr/lib/x86_64-linux-gnu", "/gstreamer-1.0");
+    qgcputenv("GST_PLUGIN_PATH_1_0", currentDir, "../lib");
+    qgcputenv("GST_PLUGIN_PATH", currentDir, "../lib");
 #endif
 
     //-- If gstreamer debugging is not configured via environment then use internal QT logging

@@ -36,7 +36,7 @@ class QGCCacheWorker : public QThread
 {
     Q_OBJECT
 public:
-    QGCCacheWorker  ();
+    QGCCacheWorker  (QObject* parent = nullptr);
     ~QGCCacheWorker ();
 
     void    quit            ();
@@ -93,4 +93,6 @@ private:
     quint32                         _defaultCount;
     time_t                          _lastUpdate;
     int                             _updateTimeout;
+
+    static constexpr const char*      kDefaultSet     = "Default Tile Set";
 };

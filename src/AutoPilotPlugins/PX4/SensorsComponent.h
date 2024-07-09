@@ -47,6 +47,9 @@ private:
     QStringList     _deviceIds;
     QStringList     _airspeedCalTriggerParams;
 
-    static const char* _magEnabledParam;
-    static const char* _magCalParam;
+    static constexpr const char* _airspeedBreakerParam = "CBRK_AIRSPD_CHK";
+    static constexpr const char* _airspeedDisabledParam = "FW_ARSP_MODE";
+    static constexpr const char* _airspeedCalParam = "SENS_DPRES_OFF";
+    static constexpr const char* _magEnabledParam = "SYS_HAS_MAG";
+    static constexpr const char* _magCalParam = "CAL_MAG0_ID";
 };

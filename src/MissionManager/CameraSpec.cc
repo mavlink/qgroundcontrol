@@ -12,15 +12,6 @@
 
 #include <QtQml/QQmlEngine>
 
-const char* CameraSpec::_sensorWidthName =          "SensorWidth";
-const char* CameraSpec::_sensorHeightName =         "SensorHeight";
-const char* CameraSpec::_imageWidthName =           "ImageWidth";
-const char* CameraSpec::_imageHeightName =          "ImageHeight";
-const char* CameraSpec::_focalLengthName =          "FocalLength";
-const char* CameraSpec::_landscapeName =            "Landscape";
-const char* CameraSpec::_fixedOrientationName =     "FixedOrientation";
-const char* CameraSpec::_minTriggerIntervalName =   "MinTriggerInterval";
-
 CameraSpec::CameraSpec(const QString& settingsGroup, QObject* parent)
     : QObject                   (parent)
     , _dirty                    (false)

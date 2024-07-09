@@ -118,6 +118,6 @@ private:
 
     QTimer              _gcsHeartbeatTimer;             ///< Timer to emit heartbeats
     bool                _gcsHeartbeatEnabled;           ///< Enabled/disable heartbeat emission
-    static const int    _gcsHeartbeatRateMSecs = 1000;  ///< Heartbeat rate
-    static const char*  _gcsHeartbeatEnabledKey;
+    static constexpr int    _gcsHeartbeatRateMSecs = 1000;  ///< Heartbeat rate
+    static constexpr const char* _gcsHeartbeatEnabledKey = "gcsHeartbeatEnabled";
 };

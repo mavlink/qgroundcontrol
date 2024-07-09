@@ -1504,6 +1504,46 @@
       <min>-1</min>
       <max>6143</max>
     </parameter>
+    <parameter name="UCAN1_FB0_SUB" default="-1" type="INT32">
+      <short_desc>Cyphal ESC 0 zubax feedback port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
+    <parameter name="UCAN1_FB1_SUB" default="-1" type="INT32">
+      <short_desc>Cyphal ESC 1 zubax feedback port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
+    <parameter name="UCAN1_FB2_SUB" default="-1" type="INT32">
+      <short_desc>Cyphal ESC 2 zubax feedback port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
+    <parameter name="UCAN1_FB3_SUB" default="-1" type="INT32">
+      <short_desc>Cyphal ESC 3 zubax feedback port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
+    <parameter name="UCAN1_FB4_SUB" default="-1" type="INT32">
+      <short_desc>Cyphal ESC 4 zubax feedback port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
+    <parameter name="UCAN1_FB5_SUB" default="-1" type="INT32">
+      <short_desc>Cyphal ESC 5 zubax feedback port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
+    <parameter name="UCAN1_FB6_SUB" default="-1" type="INT32">
+      <short_desc>Cyphal ESC 6 zubax feedback port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
+    <parameter name="UCAN1_FB7_SUB" default="-1" type="INT32">
+      <short_desc>Cyphal ESC 7 zubax feedback port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
     <parameter name="UCAN1_GPS0_SUB" default="-1" type="INT32">
       <short_desc>GPS 0 subscription port ID</short_desc>
       <min>-1</min>
@@ -1521,6 +1561,11 @@
     </parameter>
     <parameter name="UCAN1_LG_BMS_SUB" default="-1" type="INT32">
       <short_desc>Cyphal legacy battery port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
+    <parameter name="UCAN1_READ_PUB" default="-1" type="INT32">
+      <short_desc>Cyphal ESC readiness port ID</short_desc>
       <min>-1</min>
       <max>6143</max>
     </parameter>
@@ -1647,14 +1692,6 @@
       <decimal>2</decimal>
       <increment>0.05</increment>
     </parameter>
-    <parameter name="FW_SPOILERS_DESC" default="0." type="FLOAT">
-      <short_desc>Spoiler descend setting</short_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <unit>norm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
     <parameter name="FW_SPOILERS_LND" default="0." type="FLOAT">
       <short_desc>Spoiler landing setting</short_desc>
       <min>0.0</min>
@@ -1731,7 +1768,7 @@
     </parameter>
     <parameter name="FW_LND_AIRSPD" default="-1." type="FLOAT">
       <short_desc>Landing airspeed</short_desc>
-      <long_desc>The calibrated airspeed setpoint during landing. If set &lt;= 0.0, landing airspeed = FW_AIRSPD_MIN by default.</long_desc>
+      <long_desc>The calibrated airspeed setpoint during landing. If set &lt;= 0, landing airspeed = FW_AIRSPD_MIN by default.</long_desc>
       <min>-1.0</min>
       <unit>m/s</unit>
       <decimal>1</decimal>
@@ -1748,7 +1785,7 @@
     </parameter>
     <parameter name="FW_LND_EARLYCFG" default="0" type="INT32" boolean="true">
       <short_desc>Early landing configuration deployment</short_desc>
-      <long_desc>When disabled, the landing configuration (flaps, landing airspeed, etc.) is only activated on the final approach to landing. When enabled, it is already activated when entering the final loiter-down (loiter-to-alt) waypoint before the landing approach.</long_desc>
+      <long_desc>Allows to deploy the landing configuration (flaps, landing airspeed, etc.) already in the loiter-down waypoint before the final approach. Otherwise is enabled only in the final approach.</long_desc>
     </parameter>
     <parameter name="FW_LND_FLALT" default="0.5" type="FLOAT">
       <short_desc>Landing flare altitude (relative to landing altitude)</short_desc>
@@ -1760,7 +1797,7 @@
     </parameter>
     <parameter name="FW_LND_FL_PMAX" default="15.0" type="FLOAT">
       <short_desc>Flare, maximum pitch</short_desc>
-      <long_desc>Maximum pitch during flare, a positive sign means nose up Applied once flaring is triggered</long_desc>
+      <long_desc>Maximum pitch during landing flare.</long_desc>
       <min>0</min>
       <max>45.0</max>
       <unit>deg</unit>
@@ -1769,7 +1806,7 @@
     </parameter>
     <parameter name="FW_LND_FL_PMIN" default="2.5" type="FLOAT">
       <short_desc>Flare, minimum pitch</short_desc>
-      <long_desc>Minimum pitch during flare, a positive sign means nose up Applied once flaring is triggered</long_desc>
+      <long_desc>Minimum pitch during landing flare.</long_desc>
       <min>-5</min>
       <max>15.0</max>
       <unit>deg</unit>
@@ -1796,7 +1833,7 @@
     </parameter>
     <parameter name="FW_LND_NUDGE" default="2" type="INT32">
       <short_desc>Landing touchdown nudging option</short_desc>
-      <long_desc>Approach angle nudging: shifts the touchdown point laterally while keeping the approach entrance point constant Approach path nudging: shifts the touchdown point laterally along with the entire approach path This is useful for manually adjusting the landing point in real time when map or GNSS errors cause an offset from the desired landing vector. Nuding is done with yaw stick, constrained to FW_LND_TD_OFF (in meters) and the direction is relative to the vehicle heading (stick deflection to the right = land point moves to the right as seen by the vehicle).</long_desc>
+      <long_desc>Approach angle nudging: shifts the touchdown point laterally while keeping the approach entrance point constant Approach path nudging: shifts the touchdown point laterally along with the entire approach path This is useful for manually adjusting the landing point in real time when map or GNSS errors cause an offset from the desired landing vector. Nudging is done with yaw stick, constrained to FW_LND_TD_OFF (in meters) and the direction is relative to the vehicle heading (stick deflection to the right = land point moves to the right as seen by the vehicle).</long_desc>
       <min>0</min>
       <max>2</max>
       <values>
@@ -1824,7 +1861,7 @@
     </parameter>
     <parameter name="FW_LND_THRTC_SC" default="1.0" type="FLOAT">
       <short_desc>Altitude time constant factor for landing</short_desc>
-      <long_desc>Set this parameter to less than 1.0 to make TECS react faster to altitude errors during landing than during normal flight. During landing, the TECS altitude time constant (FW_T_ALT_TC) is multiplied by this value.</long_desc>
+      <long_desc>During landing, the TECS altitude time constant (FW_T_ALT_TC) is multiplied by this value.</long_desc>
       <min>0.2</min>
       <max>1.0</max>
       <unit />
@@ -1832,8 +1869,8 @@
       <increment>0.1</increment>
     </parameter>
     <parameter name="FW_LND_USETER" default="1" type="INT32">
-      <short_desc>Use terrain estimation during landing. This is critical for detecting when to flare, and should be enabled if possible</short_desc>
-      <long_desc>NOTE: terrain estimate is currently solely derived from a distance sensor. If enabled and no measurement is found within a given timeout, the landing waypoint altitude will be used OR the landing will be aborted, depending on the criteria set in FW_LND_ABORT. If disabled, FW_LND_ABORT terrain based criteria are ignored.</long_desc>
+      <short_desc>Use terrain estimation during landing</short_desc>
+      <long_desc>This is critical for detecting when to flare, and should be enabled if possible. NOTE: terrain estimate is currently solely derived from a distance sensor. If enabled and no measurement is found within a given timeout, the landing waypoint altitude will be used OR the landing will be aborted, depending on the criteria set in FW_LND_ABORT. If disabled, FW_LND_ABORT terrain based criteria are ignored.</long_desc>
       <min>0</min>
       <max>2</max>
       <values>
@@ -1974,8 +2011,8 @@
       <increment>1</increment>
     </parameter>
     <parameter name="FW_POS_STK_CONF" default="2" type="INT32">
-      <short_desc>RC stick configuration fixed-wing</short_desc>
-      <long_desc>Set RC/joystick configuration for fixed-wing manual position and altitude controlled flight.</long_desc>
+      <short_desc>Custom stick configuration</short_desc>
+      <long_desc>Applies in manual Position and Altitude flight modes.</long_desc>
       <min>0</min>
       <max>3</max>
       <bitmask>
@@ -1984,8 +2021,8 @@
       </bitmask>
     </parameter>
     <parameter name="FW_R_LIM" default="50.0" type="FLOAT">
-      <short_desc>Maximum roll angle</short_desc>
-      <long_desc>The maximum roll angle setpoint for setpoint for a height-rate or altitude controlled mode.</long_desc>
+      <short_desc>Maximum roll angle setpoint</short_desc>
+      <long_desc>Applies in any altitude controlled flight mode.</long_desc>
       <min>35.0</min>
       <max>65.0</max>
       <unit>deg</unit>
@@ -2375,8 +2412,8 @@
       <increment>0.5</increment>
     </parameter>
     <parameter name="FW_P_LIM_MAX" default="30.0" type="FLOAT">
-      <short_desc>Maximum pitch angle</short_desc>
-      <long_desc>The maximum pitch angle setpoint setpoint for a height-rate or altitude controlled mode.</long_desc>
+      <short_desc>Maximum pitch angle setpoint</short_desc>
+      <long_desc>Applies in any altitude controlled flight mode.</long_desc>
       <min>0.0</min>
       <max>60.0</max>
       <unit>deg</unit>
@@ -2384,8 +2421,8 @@
       <increment>0.5</increment>
     </parameter>
     <parameter name="FW_P_LIM_MIN" default="-30.0" type="FLOAT">
-      <short_desc>Minimum pitch angle</short_desc>
-      <long_desc>The minimum pitch angle setpoint for a height-rate or altitude controlled mode.</long_desc>
+      <short_desc>Minimum pitch angle setpoint</short_desc>
+      <long_desc>Applies in any altitude controlled flight mode.</long_desc>
       <min>-60.0</min>
       <max>0.0</max>
       <unit>deg</unit>
@@ -2394,7 +2431,7 @@
     </parameter>
     <parameter name="FW_THR_IDLE" default="0.0" type="FLOAT">
       <short_desc>Idle throttle</short_desc>
-      <long_desc>This is the minimum throttle while on the ground For aircraft with internal combustion engines, this parameter should be set above the desired idle rpm. For electric motors, idle should typically be set to zero. Note that in automatic modes, "landed" conditions will engage idle throttle.</long_desc>
+      <long_desc>This is the minimum throttle while on the ground ("landed") in auto modes.</long_desc>
       <min>0.0</min>
       <max>0.4</max>
       <unit>norm</unit>
@@ -2403,7 +2440,7 @@
     </parameter>
     <parameter name="FW_THR_MAX" default="1.0" type="FLOAT">
       <short_desc>Throttle limit max</short_desc>
-      <long_desc>Maximum throttle limit in altitude controlled modes. Should be set accordingly to achieve FW_T_CLMB_MAX.</long_desc>
+      <long_desc>Applies in any altitude controlled flight mode. Should be set accordingly to achieve FW_T_CLMB_MAX.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <unit>norm</unit>
@@ -2412,7 +2449,7 @@
     </parameter>
     <parameter name="FW_THR_MIN" default="0.0" type="FLOAT">
       <short_desc>Throttle limit min</short_desc>
-      <long_desc>Minimum throttle limit in altitude controlled modes. Usually set to 0 but can be increased to prevent the motor from stopping when descending, which can increase achievable descent rates. For aircraft with internal combustion engine this parameter should be set for desired idle rpm.</long_desc>
+      <long_desc>Applies in any altitude controlled flight mode. Usually set to 0 but can be increased to prevent the motor from stopping when descending, which can increase achievable descent rates.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <unit>norm</unit>
@@ -2429,7 +2466,7 @@
     </parameter>
     <parameter name="FW_TKO_AIRSPD" default="-1.0" type="FLOAT">
       <short_desc>Takeoff Airspeed</short_desc>
-      <long_desc>The calibrated airspeed setpoint TECS will stabilize to during the takeoff climbout. If set &lt;= 0.0, FW_AIRSPD_MIN will be set by default.</long_desc>
+      <long_desc>The calibrated airspeed setpoint during the takeoff climbout. If set &lt;= 0, FW_AIRSPD_MIN will be set by default.</long_desc>
       <min>-1.0</min>
       <unit>m/s</unit>
       <decimal>1</decimal>
@@ -2443,7 +2480,7 @@
     </parameter>
     <parameter name="FW_T_CLMB_R_SP" default="3.0" type="FLOAT">
       <short_desc>Default target climbrate</short_desc>
-      <long_desc>The default rate at which the vehicle will climb in autonomous modes to achieve altitude setpoints. In manual modes this defines the maximum rate at which the altitude setpoint can be increased.</long_desc>
+      <long_desc>In auto modes: default climb rate output by controller to achieve altitude setpoints. In manual modes: maximum climb rate setpoint.</long_desc>
       <min>0.5</min>
       <max>15</max>
       <unit>m/s</unit>
@@ -2451,7 +2488,8 @@
       <increment>0.01</increment>
     </parameter>
     <parameter name="FW_T_F_ALT_ERR" default="-1.0" type="FLOAT">
-      <short_desc>Minimum altitude error needed to descend with max airspeed. A negative value disables fast descend</short_desc>
+      <short_desc>Fast descend: minimum altitude error</short_desc>
+      <long_desc>Minimum altitude error needed to descend with max airspeed and minimal throttle. A negative value disables fast descend.</long_desc>
       <min>-1.0</min>
       <decimal>0</decimal>
     </parameter>
@@ -2464,15 +2502,14 @@
     </parameter>
     <parameter name="FW_T_I_GAIN_PIT" default="0.1" type="FLOAT">
       <short_desc>Integrator gain pitch</short_desc>
-      <long_desc>Integrator gain on the pitch part of the control loop. Increase it to trim out speed and height offsets faster, with the downside of possible overshoots and oscillations.</long_desc>
+      <long_desc>Increase it to trim out speed and height offsets faster, with the downside of possible overshoots and oscillations.</long_desc>
       <min>0.0</min>
       <max>2.0</max>
       <decimal>2</decimal>
       <increment>0.05</increment>
     </parameter>
     <parameter name="FW_T_PTCH_DAMP" default="0.1" type="FLOAT">
-      <short_desc>Pitch damping factor</short_desc>
-      <long_desc>This is the damping gain for the pitch demand loop. Increase to add damping to correct for oscillations in height. The default value of 0.0 will work well provided the pitch to servo controller has been tuned properly.</long_desc>
+      <short_desc>Pitch damping gain</short_desc>
       <min>0.0</min>
       <max>2.0</max>
       <decimal>2</decimal>
@@ -2480,7 +2517,7 @@
     </parameter>
     <parameter name="FW_T_RLL2THR" default="15.0" type="FLOAT">
       <short_desc>Roll -&gt; Throttle feedforward</short_desc>
-      <long_desc>Increasing this gain turn increases the amount of throttle that will be used to compensate for the additional drag created by turning. Ideally this should be set to  approximately 10 x the extra sink rate in m/s created by a 45 degree bank turn. Increase this gain if the aircraft initially loses energy in turns and reduce if the aircraft initially gains energy in turns. Efficient high aspect-ratio aircraft (eg powered sailplanes) can use a lower value, whereas inefficient low aspect-ratio models (eg delta wings) can use a higher value.</long_desc>
+      <long_desc>Is used to compensate for the additional drag created by turning. Increase this gain if the aircraft initially loses energy in turns and reduce if the aircraft initially gains energy in turns.</long_desc>
       <min>0.0</min>
       <max>20.0</max>
       <decimal>1</decimal>
@@ -2495,7 +2532,7 @@
     </parameter>
     <parameter name="FW_T_SINK_MAX" default="5.0" type="FLOAT">
       <short_desc>Maximum descent rate</short_desc>
-      <long_desc>This sets the maximum descent rate that the controller will use. If this value is too large, the aircraft can over-speed on descent. This should be set to a value that can be achieved without exceeding the lower pitch angle limit and without over-speeding the aircraft.</long_desc>
+      <long_desc>This sets the maximum descent rate that the controller will use.</long_desc>
       <min>1.0</min>
       <max>15.0</max>
       <unit>m/s</unit>
@@ -2504,7 +2541,7 @@
     </parameter>
     <parameter name="FW_T_SINK_R_SP" default="2.0" type="FLOAT">
       <short_desc>Default target sinkrate</short_desc>
-      <long_desc>The default rate at which the vehicle will sink in autonomous modes to achieve altitude setpoints. In manual modes this defines the maximum rate at which the altitude setpoint can be decreased.</long_desc>
+      <long_desc>In auto modes: default sink rate output by controller to achieve altitude setpoints. In manual modes: maximum sink rate setpoint.</long_desc>
       <min>0.5</min>
       <max>15</max>
       <unit>m/s</unit>
@@ -2513,15 +2550,15 @@
     </parameter>
     <parameter name="FW_T_SPDWEIGHT" default="1.0" type="FLOAT">
       <short_desc>Speed &lt;--&gt; Altitude priority</short_desc>
-      <long_desc>This parameter adjusts the amount of weighting that the pitch control applies to speed vs height errors. Setting it to 0.0 will cause the pitch control to control height and ignore speed errors. This will normally improve height accuracy but give larger airspeed errors. Setting it to 2.0 will cause the pitch control loop to control speed and ignore height errors. This will normally reduce airspeed errors, but give larger height errors. The default value of 1.0 allows the pitch control to simultaneously control height and speed. Set to 2 for gliders.</long_desc>
+      <long_desc>Adjusts the amount of weighting that the pitch control applies to speed vs height errors. Setting it to 0.0 will cause the pitch control to control height and ignore speed errors. Setting it to 2.0 will cause the pitch control loop to control speed and ignore height errors. The default value of 1.0 allows the pitch control to simultaneously control height and speed. Set to 2 for gliders.</long_desc>
       <min>0.0</min>
       <max>2.0</max>
       <decimal>1</decimal>
       <increment>1.0</increment>
     </parameter>
     <parameter name="FW_T_SPD_DEV_STD" default="0.2" type="FLOAT">
-      <short_desc>Airspeed rate measurement standard deviation for airspeed filter</short_desc>
-      <long_desc>This is the measurement standard deviation for the airspeed rate used in the airspeed filter in TECS.</long_desc>
+      <short_desc>Airspeed rate measurement standard deviation</short_desc>
+      <long_desc>For the airspeed filter in TECS.</long_desc>
       <min>0.01</min>
       <max>10.0</max>
       <unit>m/s^2</unit>
@@ -2529,8 +2566,8 @@
       <increment>0.1</increment>
     </parameter>
     <parameter name="FW_T_SPD_PRC_STD" default="0.2" type="FLOAT">
-      <short_desc>Process noise standard deviation for the airspeed rate in the airspeed filter</short_desc>
-      <long_desc>This is the process noise standard deviation in the airspeed filter filter defining the noise in the airspeed rate for the constant airspeed rate model. This is used to define how much the airspeed and the airspeed rate are filtered. The smaller the value the more the measurements are smoothed with the drawback for delays.</long_desc>
+      <short_desc>Process noise standard deviation for the airspeed rate</short_desc>
+      <long_desc>This is defining the noise in the airspeed rate for the constant airspeed rate model of the TECS airspeed filter.</long_desc>
       <min>0.01</min>
       <max>10.0</max>
       <unit>m/s^2</unit>
@@ -2538,8 +2575,8 @@
       <increment>0.1</increment>
     </parameter>
     <parameter name="FW_T_SPD_STD" default="0.2" type="FLOAT">
-      <short_desc>Airspeed measurement standard deviation for airspeed filter</short_desc>
-      <long_desc>This is the measurement standard deviation for the airspeed used in the airspeed filter in TECS.</long_desc>
+      <short_desc>Airspeed measurement standard deviation</short_desc>
+      <long_desc>For the airspeed filter in TECS.</long_desc>
       <min>0.01</min>
       <max>10.0</max>
       <unit>m/s</unit>
@@ -2562,7 +2599,7 @@
     </parameter>
     <parameter name="FW_T_THR_DAMPING" default="0.05" type="FLOAT">
       <short_desc>Throttle damping factor</short_desc>
-      <long_desc>This is the damping gain for the throttle demand loop. Increase to add damping to correct for oscillations in speed and height.</long_desc>
+      <long_desc>This is the damping gain for the throttle demand loop.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <decimal>3</decimal>
@@ -2570,7 +2607,7 @@
     </parameter>
     <parameter name="FW_T_THR_INTEG" default="0.02" type="FLOAT">
       <short_desc>Integrator gain throttle</short_desc>
-      <long_desc>Integrator gain on the throttle part of the control loop. Increase it to trim out speed and height offsets faster, with the downside of possible overshoots and oscillations.</long_desc>
+      <long_desc>Increase it to trim out speed and height offsets faster, with the downside of possible overshoots and oscillations.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <decimal>3</decimal>
@@ -2578,7 +2615,7 @@
     </parameter>
     <parameter name="FW_T_VERT_ACC" default="7.0" type="FLOAT">
       <short_desc>Maximum vertical acceleration</short_desc>
-      <long_desc>This is the maximum vertical acceleration (in m/s/s) either up or down that the controller will use to correct speed or height errors. The default value of 7 m/s/s (equivalent to +- 0.7 g) allows for reasonably aggressive pitch changes if required to recover from under-speed conditions.</long_desc>
+      <long_desc>This is the maximum vertical acceleration either up or down that the controller will use to correct speed or height errors.</long_desc>
       <min>1.0</min>
       <max>10.0</max>
       <unit>m/s^2</unit>
@@ -2587,7 +2624,7 @@
     </parameter>
     <parameter name="FW_WIND_ARSP_SC" default="0." type="FLOAT">
       <short_desc>Wind-based airspeed scaling factor</short_desc>
-      <long_desc>Multiplying this factor with the current absolute wind estimate gives the airspeed offset added to the minimum airspeed setpoint limit. This helps to make the system more robust against disturbances (turbulence) in high wind. Only applies to AUTO flight mode.</long_desc>
+      <long_desc>Multiplying this factor with the current absolute wind estimate gives the airspeed offset added to the minimum airspeed setpoint limit. This helps to make the system more robust against disturbances (turbulence) in high wind.</long_desc>
       <min>0</min>
       <decimal>2</decimal>
       <increment>0.01</increment>
@@ -3563,14 +3600,14 @@
   <group name="Mission">
     <parameter name="FW_GPSF_LT" default="30" type="INT32">
       <short_desc>GPS failure loiter time</short_desc>
-      <long_desc>The time in seconds the system should do open loop loiter and wait for GPS recovery before it starts descending. Set to 0 to disable. Roll angle is set to FW_GPSF_R. Does only apply for fixed-wing vehicles or VTOLs with NAV_FORCE_VT set to 0.</long_desc>
+      <long_desc>The time the system should do open loop loiter and wait for GPS recovery before it starts descending. Set to 0 to disable. Roll angle is set to FW_GPSF_R. Does only apply for fixed-wing vehicles or VTOLs with NAV_FORCE_VT set to 0.</long_desc>
       <min>0</min>
       <max>3600</max>
       <unit>s</unit>
     </parameter>
     <parameter name="FW_GPSF_R" default="15.0" type="FLOAT">
       <short_desc>GPS failure fixed roll angle</short_desc>
-      <long_desc>Roll in degrees during the loiter after the vehicle has lost GPS in an auto mode (e.g. mission or loiter).</long_desc>
+      <long_desc>Roll angle in GPS failure loiter mode.</long_desc>
       <min>0.0</min>
       <max>30.0</max>
       <unit>deg</unit>
@@ -8266,7 +8303,7 @@
       <decimal>3</decimal>
       <increment>0.005</increment>
     </parameter>
-    <parameter name="SIH_LOC_H0" default="32.34" type="FLOAT">
+    <parameter name="SIH_LOC_H0" default="489.4" type="FLOAT">
       <short_desc>Initial AMSL ground altitude</short_desc>
       <long_desc>This value represents the Above Mean Sea Level (AMSL) altitude where the simulation begins. If using FlightGear as a visual animation, this value can be tweaked such that the vehicle lies on the ground at takeoff. LAT0, LON0, H0, MU_X, MU_Y, and MU_Z should ideally be consistent among each others to represent a physical ground location on Earth.</long_desc>
       <min>-420.0</min>
@@ -8275,19 +8312,19 @@
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter name="SIH_LOC_LAT0" default="454671160" type="INT32">
+    <parameter name="SIH_LOC_LAT0" default="47.397742" type="FLOAT">
       <short_desc>Initial geodetic latitude</short_desc>
-      <long_desc>This value represents the North-South location on Earth where the simulation begins. A value of 45 deg should be written 450000000. LAT0, LON0, H0, MU_X, MU_Y, and MU_Z should ideally be consistent among each others to represent a physical ground location on Earth.</long_desc>
-      <min>-850000000</min>
-      <max>850000000</max>
-      <unit>deg*1e7</unit>
+      <long_desc>This value represents the North-South location on Earth where the simulation begins. LAT0, LON0, H0, MU_X, MU_Y, and MU_Z should ideally be consistent among each others to represent a physical ground location on Earth.</long_desc>
+      <min>-90</min>
+      <max>90</max>
+      <unit>deg</unit>
     </parameter>
-    <parameter name="SIH_LOC_LON0" default="-737578370" type="INT32">
+    <parameter name="SIH_LOC_LON0" default="8.545594" type="FLOAT">
       <short_desc>Initial geodetic longitude</short_desc>
-      <long_desc>This value represents the East-West location on Earth where the simulation begins. A value of 45 deg should be written 450000000. LAT0, LON0, H0, MU_X, MU_Y, and MU_Z should ideally be consistent among each others to represent a physical ground location on Earth.</long_desc>
-      <min>-1800000000</min>
-      <max>1800000000</max>
-      <unit>deg*1e7</unit>
+      <long_desc>This value represents the East-West location on Earth where the simulation begins. LAT0, LON0, H0, MU_X, MU_Y, and MU_Z should ideally be consistent among each others to represent a physical ground location on Earth.</long_desc>
+      <min>-180</min>
+      <max>180</max>
+      <unit>deg</unit>
     </parameter>
     <parameter name="SIH_L_PITCH" default="0.2" type="FLOAT">
       <short_desc>Pitch arm length</short_desc>

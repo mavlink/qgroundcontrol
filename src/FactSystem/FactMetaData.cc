@@ -11,42 +11,10 @@
 #include "SettingsManager.h"
 #include "JsonHelper.h"
 #include "QGCApplication.h"
+#include <MAVLinkLib.h>
 
 #include <QtCore/QtMath>
 #include <QtCore/QJsonArray>
-
-// Conversion Constants
-// Time
-const qreal FactMetaData::UnitConsts_s::secondsPerHour = 3600.0;
-
-// Velocity
-const qreal FactMetaData::UnitConsts_s::knotsToKPH = 1.852; // exact, hence weird base for knotsToMetersPerSecond
-
-// Length
-const qreal FactMetaData::UnitConsts_s::milesToMeters       = 1609.344;
-const qreal FactMetaData::UnitConsts_s::feetToMeters        = 0.3048;
-const qreal FactMetaData::UnitConsts_s::inchesToCentimeters = 2.54;
-
-//Weight
-const qreal FactMetaData::UnitConsts_s::ouncesToGrams = 28.3495;
-const qreal FactMetaData::UnitConsts_s::poundsToGrams = 453.592;
-
-const char* FactMetaData::kDefaultCategory = QT_TRANSLATE_NOOP("FactMetaData", "Other");
-const char* FactMetaData::kDefaultGroup    = QT_TRANSLATE_NOOP("FactMetaData", "Misc");
-
-const char* FactMetaData::qgcFileType                           = "FactMetaData";
-const char* FactMetaData::_jsonMetaDataDefinesName              = "QGC.MetaData.Defines";
-const char* FactMetaData::_jsonMetaDataFactsName                = "QGC.MetaData.Facts";
-const char* FactMetaData::_enumStringsJsonKey                   = "enumStrings";
-const char* FactMetaData::_enumValuesJsonKey                    = "enumValues";
-
-// This is the newer json format for enums and bitmasks. They are used by the new COMPONENT_METADATA parameter metadata for example.
-const char* FactMetaData::_enumValuesArrayJsonKey               = "values";
-const char* FactMetaData::_enumBitmaskArrayJsonKey              = "bitmask";
-const char* FactMetaData::_enumValuesArrayValueJsonKey          = "value";
-const char* FactMetaData::_enumValuesArrayDescriptionJsonKey    = "description";
-const char* FactMetaData::_enumBitmaskArrayIndexJsonKey         = "index";
-const char* FactMetaData::_enumBitmaskArrayDescriptionJsonKey   = "description";
 
 // Built in translations for all Facts
 const FactMetaData::BuiltInTranslation_s FactMetaData::_rgBuiltInTranslations[] = {
@@ -88,58 +56,6 @@ const FactMetaData::AppSettingsTranslation_s FactMetaData::_rgAppSettingsTransla
     { "g",      "oz",       FactMetaData::UnitWeight,                UnitsSettings::WeightUnitsOz,                 FactMetaData::_gramsToOunces,                       FactMetaData::_ouncesToGrams },
     { "g",      "lbs",      FactMetaData::UnitWeight,                UnitsSettings::WeightUnitsLbs,                FactMetaData::_gramsToPunds,                        FactMetaData::_poundsToGrams },
 };
-
-const char* FactMetaData::_rgKnownTypeStrings[] = {
-    "Uint8",
-    "Int8",
-    "Uint16",
-    "Int16",
-    "Uint32",
-    "Int32",
-    "Uint64",
-    "Int64",
-    "Float",
-    "Double",
-    "String",
-    "Bool",
-    "ElapsedSeconds",
-    "Custom",
-};
-
-const  FactMetaData::ValueType_t FactMetaData::_rgKnownValueTypes[] = {
-    valueTypeUint8,
-    valueTypeInt8,
-    valueTypeUint16,
-    valueTypeInt16,
-    valueTypeUint32,
-    valueTypeInt32,
-    valueTypeUint64,
-    valueTypeInt64,
-    valueTypeFloat,
-    valueTypeDouble,
-    valueTypeString,
-    valueTypeBool,
-    valueTypeElapsedTimeInSeconds,
-    valueTypeCustom,
-};
-
-const char* FactMetaData::_decimalPlacesJsonKey =       "decimalPlaces";
-const char* FactMetaData::_nameJsonKey =                "name";
-const char* FactMetaData::_typeJsonKey =                "type";
-const char* FactMetaData::_shortDescriptionJsonKey =    "shortDesc";
-const char* FactMetaData::_longDescriptionJsonKey =     "longDesc";
-const char* FactMetaData::_unitsJsonKey =               "units";
-const char* FactMetaData::_defaultValueJsonKey =        "default";
-const char* FactMetaData::_mobileDefaultValueJsonKey =  "mobileDefault";
-const char* FactMetaData::_minJsonKey =                 "min";
-const char* FactMetaData::_maxJsonKey =                 "max";
-const char* FactMetaData::_incrementJsonKey =           "increment";
-const char* FactMetaData::_hasControlJsonKey =          "control";
-const char* FactMetaData::_qgcRebootRequiredJsonKey =   "qgcRebootRequired";
-const char* FactMetaData::_rebootRequiredJsonKey =      "rebootRequired";
-const char* FactMetaData::_categoryJsonKey =            "category";
-const char* FactMetaData::_groupJsonKey =               "group";
-const char* FactMetaData::_volatileJsonKey =            "volatile";
 
 FactMetaData::FactMetaData(QObject* parent)
     : QObject               (parent)

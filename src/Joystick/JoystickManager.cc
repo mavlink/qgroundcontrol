@@ -25,24 +25,24 @@
 
 QGC_LOGGING_CATEGORY(JoystickManagerLog, "JoystickManagerLog")
 
-const char * JoystickManager::_settingsGroup =              "JoystickManager";
-const char * JoystickManager::_settingsKeyActiveJoystick =  "ActiveJoystick";
-
 JoystickManager::JoystickManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
     , _activeJoystick(nullptr)
     , _multiVehicleManager(nullptr)
 {
+    // qCDebug(JoystickManagerLog) << Q_FUNC_INFO << this;
 }
 
-JoystickManager::~JoystickManager() {
+JoystickManager::~JoystickManager()
+{
     QMap<QString, Joystick*>::iterator i;
     for (i = _name2JoystickMap.begin(); i != _name2JoystickMap.end(); ++i) {
         qCDebug(JoystickManagerLog) << "Releasing joystick:" << i.key();
         i.value()->stop();
         delete i.value();
     }
-    qDebug() << "Done";
+
+    // qCDebug(JoystickManagerLog) << Q_FUNC_INFO << this;
 }
 
 void JoystickManager::setToolbox(QGCToolbox *toolbox)

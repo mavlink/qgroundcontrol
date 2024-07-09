@@ -405,22 +405,20 @@ private:
 
     QGroundControlQmlGlobal::AltMode _globalAltMode = QGroundControlQmlGlobal::AltitudeModeRelative;
 
-    static const char*  _settingsGroup;
-
-    // Json file keys for persistence
-    static const char*  _jsonFileTypeValue;
-    static const char*  _jsonFirmwareTypeKey;
-    static const char*  _jsonVehicleTypeKey;
-    static const char*  _jsonCruiseSpeedKey;
-    static const char*  _jsonHoverSpeedKey;
-    static const char*  _jsonItemsKey;
-    static const char*  _jsonPlannedHomePositionKey;
-    static const char*  _jsonParamsKey;
-    static const char*  _jsonGlobalPlanAltitudeModeKey;
+    static constexpr const char* _settingsGroup =                 "MissionController";
+    static constexpr const char* _jsonFileTypeValue =             "Mission";
+    static constexpr const char* _jsonItemsKey =                  "items";
+    static constexpr const char* _jsonPlannedHomePositionKey =    "plannedHomePosition";
+    static constexpr const char* _jsonFirmwareTypeKey =           "firmwareType";
+    static constexpr const char* _jsonVehicleTypeKey =            "vehicleType";
+    static constexpr const char* _jsonCruiseSpeedKey =            "cruiseSpeed";
+    static constexpr const char* _jsonHoverSpeedKey =             "hoverSpeed";
+    static constexpr const char* _jsonParamsKey =                 "params";
+    static constexpr const char* _jsonGlobalPlanAltitudeModeKey = "globalPlanAltitudeMode";
 
     // Deprecated V1 format keys
-    static const char*  _jsonMavAutopilotKey;
-    static const char*  _jsonComplexItemsKey;
+    static constexpr const char* _jsonComplexItemsKey =           "complexItems";
+    static constexpr const char* _jsonMavAutopilotKey =           "MAV_AUTOPILOT";
 
-    static const int    _missionFileVersion;
+    static constexpr int   _missionFileVersion =            2;
 };

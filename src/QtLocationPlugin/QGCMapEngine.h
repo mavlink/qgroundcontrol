@@ -19,19 +19,19 @@
 #pragma once
 
 #include "QGCMapEngineData.h"
-#include "QGCTileCacheWorker.h"
 #include "QGCTileSet.h"
 
 #include <QtCore/QString>
 
 class UrlFactory;
+class QGCCacheWorker;
 
 //-----------------------------------------------------------------------------
 class QGCMapEngine : public QObject
 {
     Q_OBJECT
 public:
-    QGCMapEngine                ();
+    QGCMapEngine(QObject* parent = nullptr);
     ~QGCMapEngine               ();
 
     static QGCMapEngine* instance();
@@ -40,21 +40,17 @@ public:
     void                        addTask             (QGCMapTask *task);
     void                        cacheTile           (const QString& type, int x, int y, int z, const QByteArray& image, const QString& format, qulonglong set = UINT64_MAX);
     void                        cacheTile           (const QString& type, const QString& hash, const QByteArray& image, const QString& format, qulonglong set = UINT64_MAX);
-    QGCFetchTileTask*           createFetchTileTask (const QString& type, int x, int y, int z);
-    QStringList                 getMapNameList      ();
+    static QGCFetchTileTask*    createFetchTileTask (const QString& type, int x, int y, int z);
+    static QStringList          getMapNameList      ();
     const QString               userAgent           () { return _userAgent; }
     void                        setUserAgent        (const QString& ua) { _userAgent = ua; }
-    QString                     tileHashToType      (const QString& tileHash);
-    QString                     getTileHash         (const QString& type, int x, int y, int z);
-    quint32                     getMaxDiskCache     ();
-    quint32                     getMaxMemCache      ();
-    void                        setMaxMemCache      (quint32 size);
+    static QString              tileHashToType      (const QString& tileHash);
+    static QString              getTileHash         (const QString& type, int x, int y, int z);
+    static quint32              getMaxDiskCache     ();
+    static quint32              getMaxMemCache      ();
     const QString               getCachePath        () { return _cachePath; }
     const QString               getCacheFilename    () { return _cacheFile; }
-    void                        testInternet        ();
     bool                        wasCacheReset       () const{ return _cacheWasReset; }
-
-    UrlFactory*                 urlFactory          () { return _urlFactory; }
 
     //-- Tile Math
     static QGCTileSet           getTileCount        (int zoom, double topleftLon, double topleftLat, double bottomRightLon, double bottomRightLat, const QString& mapType);
@@ -77,13 +73,14 @@ private:
     bool _wipeDirectory         (const QString& dirPath);
 
 private:
-    QGCCacheWorker          _worker;
-    QString                 _cachePath;
-    QString                 _cacheFile;
-    UrlFactory*             _urlFactory;
+    QGCCacheWorker*         _worker = nullptr;
     QString                 _userAgent;
     bool                    _prunning;
     bool                    _cacheWasReset;
+    QString                 _cachePath;
+    QString                 _cacheFile;
+
+    static constexpr const char* kDbFileName = "qgcMapCache.db";
 };
 
 extern QGCMapEngine*    getQGCMapEngine();

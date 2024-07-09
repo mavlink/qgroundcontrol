@@ -18,17 +18,6 @@
 
 QGC_LOGGING_CATEGORY(TerrainTileLog, "qgc.terrain.terraintile");
 
-const char*  TerrainTile::_jsonStatusKey        = "status";
-const char*  TerrainTile::_jsonDataKey          = "data";
-const char*  TerrainTile::_jsonBoundsKey        = "bounds";
-const char*  TerrainTile::_jsonSouthWestKey     = "sw";
-const char*  TerrainTile::_jsonNorthEastKey     = "ne";
-const char*  TerrainTile::_jsonStatsKey         = "stats";
-const char*  TerrainTile::_jsonMaxElevationKey  = "max";
-const char*  TerrainTile::_jsonMinElevationKey  = "min";
-const char*  TerrainTile::_jsonAvgElevationKey  = "avg";
-const char*  TerrainTile::_jsonCarpetKey        = "carpet";
-
 TerrainTile::TerrainTile(const QByteArray& byteArray)
 {
     // Copy tile info

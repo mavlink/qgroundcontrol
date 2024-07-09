@@ -110,15 +110,15 @@ public:
     double              minAMSLAltitude             (void) const final { return amslExitAlt(); }
     double              maxAMSLAltitude             (void) const final { return amslEntryAlt(); }
 
-    static const char* finalApproachToLandDistanceName;
-    static const char* finalApproachAltitudeName;
-    static const char* loiterRadiusName;
-    static const char* loiterClockwiseName;
-    static const char* landingHeadingName;
-    static const char* landingAltitudeName;
-    static const char* useLoiterToAltName;
-    static const char* stopTakingPhotosName;
-    static const char* stopTakingVideoName;
+    static constexpr const char* finalApproachToLandDistanceName = "LandingDistance";
+    static constexpr const char* landingHeadingName              = "LandingHeading";
+    static constexpr const char* finalApproachAltitudeName       = "FinalApproachAltitude";
+    static constexpr const char* loiterRadiusName                = "LoiterRadius";
+    static constexpr const char* loiterClockwiseName             = "LoiterClockwise";
+    static constexpr const char* landingAltitudeName             = "LandingAltitude";
+    static constexpr const char* useLoiterToAltName              = "UseLoiterToAlt";
+    static constexpr const char* stopTakingPhotosName            = "StopTakingPhotos";
+    static constexpr const char* stopTakingVideoName             = "StopTakingVideo";
 
 signals:
     void finalApproachCoordinateChanged (QGeoCoordinate coordinate);
@@ -169,19 +169,23 @@ protected:
     bool            _ignoreRecalcSignals        = false;
     bool            _altitudesAreRelative       = true;
 
-    static const char* _jsonFinalApproachCoordinateKey;
-    static const char* _jsonLoiterRadiusKey;
-    static const char* _jsonLoiterClockwiseKey;
-    static const char* _jsonLandingCoordinateKey;
-    static const char* _jsonAltitudesAreRelativeKey;
-    static const char* _jsonUseLoiterToAltKey;
-    static const char* _jsonStopTakingPhotosKey;
-    static const char* _jsonStopTakingVideoKey;
+    // Support for separate relative alt settings for land/loiter was removed. It now only has a single
+    // relative alt setting stored in _jsonAltitudesAreRelativeKey.
+    static constexpr const char* _jsonDeprecatedLandingAltitudeRelativeKey   = "landAltitudeRelative";
+    static constexpr const char* _jsonDeprecatedLoiterAltitudeRelativeKey    = "loiterAltitudeRelative";
 
-    // Only in older file formats
-    static const char* _jsonDeprecatedLandingAltitudeRelativeKey;
-    static const char* _jsonDeprecatedLoiterAltitudeRelativeKey;
-    static const char* _jsonDeprecatedLoiterCoordinateKey;
+    // Name changed from _jsonDeprecatedLoiterCoordinateKey to _jsonFinalApproachCoordinateKey to reflect
+    // the new support for using either a loiter or just a waypoint as the approach entry point.
+    static constexpr const char* _jsonDeprecatedLoiterCoordinateKey          = "loiterCoordinate";
+
+    static constexpr const char* _jsonFinalApproachCoordinateKey = "landingApproachCoordinate";
+    static constexpr const char* _jsonLoiterRadiusKey            = "loiterRadius";
+    static constexpr const char* _jsonLoiterClockwiseKey         = "loiterClockwise";
+    static constexpr const char* _jsonLandingCoordinateKey       = "landCoordinate";
+    static constexpr const char* _jsonAltitudesAreRelativeKey    = "altitudesAreRelative";
+    static constexpr const char* _jsonUseLoiterToAltKey          = "useLoiterToAlt";
+    static constexpr const char* _jsonStopTakingPhotosKey        = "stopTakingPhotos";
+    static constexpr const char* _jsonStopTakingVideoKey         = "stopVideoPhotos";
 
 private slots:
     void    _recalcFromRadiusChange                         (void);

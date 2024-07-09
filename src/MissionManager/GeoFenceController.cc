@@ -32,18 +32,6 @@ QGC_LOGGING_CATEGORY(GeoFenceControllerLog, "GeoFenceControllerLog")
 
 QMap<QString, FactMetaData*> GeoFenceController::_metaDataMap;
 
-const char* GeoFenceController::_jsonFileTypeValue =        "GeoFence";
-const char* GeoFenceController::_jsonBreachReturnKey =      "breachReturn";
-const char* GeoFenceController::_jsonPolygonsKey =          "polygons";
-const char* GeoFenceController::_jsonCirclesKey =           "circles";
-
-const char* GeoFenceController::_breachReturnAltitudeFactName = "Altitude";
-
-const char* GeoFenceController::_px4ParamCircularFence =    "GF_MAX_HOR_DIST";
-const char* GeoFenceController::_apmParamCircularFenceRadius =    "FENCE_RADIUS";
-const char* GeoFenceController::_apmParamCircularFenceEnabled =    "FENCE_ENABLE";
-const char* GeoFenceController::_apmParamCircularFenceType =    "FENCE_TYPE";
-
 GeoFenceController::GeoFenceController(PlanMasterController* masterController, QObject* parent)
     : PlanElementController         (masterController, parent)
     , _managerVehicle               (masterController->managerVehicle())

@@ -52,7 +52,7 @@ public:
     void                setGuidedMode                   (Vehicle* vehicle, bool guidedMode) override;
     void                guidedModeTakeoff               (Vehicle* vehicle, double altitudeRel) override;
     void                guidedModeGotoLocation          (Vehicle* vehicle, const QGeoCoordinate& gotoCoord) override;
-    double              minimumTakeoffAltitude          (Vehicle* vehicle) override;
+    double              minimumTakeoffAltitudeMeters    (Vehicle* vehicle) override;
     void                startMission                    (Vehicle* vehicle) override;
     QStringList         flightModes                     (Vehicle* vehicle) override;
     QString             flightMode                      (uint8_t base_mode, uint32_t custom_mode) const override;
@@ -115,7 +115,6 @@ private slots:
 private:
     void _adjustCalibrationMessageSeverity(mavlink_message_t* message) const;
     void _setInfoSeverity(mavlink_message_t* message) const;
-    QString _getMessageText(mavlink_message_t* message) const;
     void _handleIncomingParamValue(Vehicle* vehicle, mavlink_message_t* message);
     bool _handleIncomingStatusText(Vehicle* vehicle, mavlink_message_t* message);
     void _handleIncomingHeartbeat(Vehicle* vehicle, mavlink_message_t* message);
@@ -137,8 +136,8 @@ private:
 
     QMutex _adjustOutgoingMavlinkMutex;
 
-    static const char*      _artooIP;
-    static const int        _artooVideoHandshakePort;
+    static constexpr const char* _artooIP =                   "10.1.1.1"; ///< IP address of ARTOO controller
+    static constexpr int   _artooVideoHandshakePort =   5502;       ///< Port for video handshake on ARTOO controller
 
     static uint8_t          _reencodeMavlinkChannel();
     static QMutex&          _reencodeMavlinkChannelMutex();
