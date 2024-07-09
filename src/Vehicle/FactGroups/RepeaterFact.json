@@ -1,0 +1,75 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":             "rssi",
+    "shortDesc":        "LM RSSI",
+    "type":             "double",
+    "decimalPlaces":    2
+},
+{
+    "name":             "rssnr",
+    "shortDesc":        "LM RSSNR",
+    "type":             "double",
+    "decimalPlaces":    2
+},
+{
+    "name":             "freq",
+    "shortDesc":        "LM FREQ",
+    "type":             "double",
+    "decimalPlaces":    2
+},
+{
+    "name":             "videoKbps",
+    "shortDesc":        "LM Video kbps",
+    "type":             "double",
+    "decimalPlaces":    2
+},
+{
+    "name":             "mavlinkToDroneKbps",
+    "shortDesc":        "LM Mavlink To Drone Kbps",
+    "type":             "double",
+    "decimalPlaces":    2
+},
+{
+    "name":             "mavlinkFromDroneKbps",
+    "shortDesc":        "LM Mavlink From Drone Kbps",
+    "type":             "double",
+    "decimalPlaces":    2
+},
+{
+    "name":             "isDroneConnected",
+    "shortDesc":        "LM Drone Connected",
+    "type":             "double",
+    "default":          false
+},
+{
+    "name":             "isDroneStats",
+    "shortDesc":        "LM Is On Drone Side",
+    "type":             "bool",
+    "default":          true
+},
+{
+    "name":             "isRoutable",
+    "shortDesc":        "LM routable",
+    "type":             "bool",
+    "default":          false
+},
+{
+    "name":             "latencyMs",
+    "shortDesc":        "LM latency",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "ms"
+},
+{
+    "name":             "lossPercent",
+    "shortDesc":        "LM loss",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "%"
+}
+]
+}

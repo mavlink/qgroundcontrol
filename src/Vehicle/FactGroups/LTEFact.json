@@ -1,0 +1,60 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":             "rsrq",
+    "shortDesc":        "LTE RSRQ",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "dB"
+},
+{
+    "name":             "rsrp",
+    "shortDesc":        "LTE RSRP",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "dBm"
+},
+{
+    "name":             "rssi",
+    "shortDesc":        "LTE RSSI",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "dBm"
+},
+{
+    "name":             "rssnr",
+    "shortDesc":        "LTE RSSNR",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "dB"
+},
+{
+    "name":             "earfcn",
+    "shortDesc":        "LTE EARFCN",
+    "type":             "uint32"
+},
+{
+    "name":             "isRoutable",
+    "shortDesc":        "LTE routable",
+    "type":             "bool",
+    "default":          false
+},
+{
+    "name":             "latencyMs",
+    "shortDesc":        "LTE latency",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "ms"
+},
+{
+    "name":             "lossPercent",
+    "shortDesc":        "LTE loss",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "%"
+}
+]
+}
