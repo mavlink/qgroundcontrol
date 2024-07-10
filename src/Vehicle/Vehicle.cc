@@ -2365,13 +2365,13 @@ void Vehicle::guidedModeGotoLocation(const QGeoCoordinate& gotoCoord)
     _firmwarePlugin->guidedModeGotoLocation(this, gotoCoord);
 }
 
-void Vehicle::guidedModeChangeAltitude(double altitudeChange, bool pauseVehicle)
+void Vehicle::guidedModeChangeAltitudeAMSL(double altitudeAMSL, bool pauseVehicle)
 {
     if (!guidedModeSupported()) {
         qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
         return;
     }
-    _firmwarePlugin->guidedModeChangeAltitude(this, altitudeChange, pauseVehicle);
+    _firmwarePlugin->guidedModeChangeAltitudeAMSL(this, altitudeAMSL, pauseVehicle);
 }
 
 void

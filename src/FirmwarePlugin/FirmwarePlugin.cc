@@ -249,22 +249,20 @@ void FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordina
     qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
-void FirmwarePlugin::guidedModeChangeAltitude(Vehicle*, double, bool pauseVehicle)
+void FirmwarePlugin::guidedModeChangeAltitudeAMSL(Vehicle*, double, bool pauseVehicle)
 {
     // Not supported by generic vehicle
     Q_UNUSED(pauseVehicle);
     qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
-void
-FirmwarePlugin::guidedModeChangeGroundSpeedMetersSecond(Vehicle*, double)
+void FirmwarePlugin::guidedModeChangeGroundSpeedMetersSecond(Vehicle*, double)
 {
     // Not supported by generic vehicle
     qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
-void
-FirmwarePlugin::guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle*, double)
+void FirmwarePlugin::guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle*, double)
 {
     // Not supported by generic vehicle
     qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);

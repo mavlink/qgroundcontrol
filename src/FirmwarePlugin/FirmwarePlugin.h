@@ -172,9 +172,9 @@ public:
     virtual void guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord);
 
     /// Command vehicle to change altitude
-    ///     @param altitudeChange If > 0, go up by amount specified, if < 0, go down by amount specified
+    ///     @param altitudeAMSL New altitude for vehicle in meters above mean sea level
     ///     @param pauseVehicle true: pause vehicle prior to altitude change
-    virtual void guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange, bool pauseVehicle);
+    virtual void guidedModeChangeAltitudeAMSL(Vehicle* vehicle, double altitudeAMSL, bool pauseVehicle);
 
         /// Command vehicle to change groundspeed
     ///     @param groundspeed Groundspeed in m/s

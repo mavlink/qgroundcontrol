@@ -838,20 +838,10 @@ void APMFirmwarePlugin::guidedModeRTL(Vehicle* vehicle, bool smartRTL)
     _setFlightModeAndValidate(vehicle, smartRTL ? smartRTLFlightMode() : rtlFlightMode());
 }
 
-void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange, bool pauseVehicle)
+void APMFirmwarePlugin::guidedModeChangeAltitudeAMSL(Vehicle* vehicle, double altitudeAMSL, bool pauseVehicle)
 {
-    if (qIsNaN(vehicle->altitudeRelative()->rawValue().toDouble())) {
-        qgcApp()->showAppMessage(tr("Unable to change altitude, vehicle altitude not known."));
-        return;
-    }
-
     if (pauseVehicle && !_setFlightModeAndValidate(vehicle, pauseFlightMode())) {
         qgcApp()->showAppMessage(tr("Unable to pause vehicle."));
-        return;
-    }
-
-    if (abs(altitudeChange) < 0.01) {
-        // This prevents unecessary changes to Guided mode when the users selects pause and doesn't really touch the altitude slider
         return;
     }
 
@@ -866,11 +856,11 @@ void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
 
         cmd.target_system    = static_cast<uint8_t>(vehicle->id());
         cmd.target_component = static_cast<uint8_t>(vehicle->defaultComponentId());
-        cmd.coordinate_frame = MAV_FRAME_LOCAL_OFFSET_NED;
+        cmd.coordinate_frame = MAV_FRAME_LOCAL_NED;
         cmd.type_mask = 0xFFF8; // Only x/y/z valid
         cmd.x = 0.0f;
         cmd.y = 0.0f;
-        cmd.z = static_cast<float>(-(altitudeChange));
+        cmd.z = static_cast<float>(-altitudeAMSL);
 
         MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
         mavlink_msg_set_position_target_local_ned_encode_chan(

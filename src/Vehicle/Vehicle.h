@@ -349,9 +349,9 @@ public:
     Q_INVOKABLE void guidedModeGotoLocation(const QGeoCoordinate& gotoCoord);
 
     /// Command vehicle to change altitude
-    ///     @param altitudeChange If > 0, go up by amount specified, if < 0, go down by amount specified
+    ///     @param altitudeAMSL New altitude for vehicle in meters above mean sea level
     ///     @param pauseVehicle true: pause vehicle prior to altitude change
-    Q_INVOKABLE void guidedModeChangeAltitude(double altitudeChange, bool pauseVehicle);
+    Q_INVOKABLE void guidedModeChangeAltitudeAMSL(double altitudeAMSL, bool pauseVehicle);
 
     /// Command vehicle to change groundspeed
     ///     @param groundspeed Target horizontal groundspeed

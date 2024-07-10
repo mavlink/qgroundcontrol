@@ -72,7 +72,7 @@ int ArduRoverFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVer
     return majorVersionNumber == 3 ? 5 : Vehicle::versionNotSetValue;
 }
 
-void ArduRoverFirmwarePlugin::guidedModeChangeAltitude(Vehicle* /*vehicle*/, double /*altitudeChange*/, bool /*pauseVehicle*/)
+void ArduRoverFirmwarePlugin::guidedModeChangeAltitudeAMSL(Vehicle* /*vehicle*/, double /*altitudeAMSL*/, bool /*pauseVehicle*/)
 {
     qgcApp()->showAppMessage(QStringLiteral("Change altitude not supported."));
 }

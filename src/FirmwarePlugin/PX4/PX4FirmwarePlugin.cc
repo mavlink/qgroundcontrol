@@ -535,24 +535,12 @@ void PX4FirmwarePlugin::_changeAltAfterPause(void* resultHandlerData, bool pause
     delete pData;
 }
 
-void PX4FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange, bool pauseVehicle)
+void PX4FirmwarePlugin::guidedModeChangeAltitudeAMSL(Vehicle* vehicle, double altitudeAMSL, bool pauseVehicle)
 {
-    if (!vehicle->homePosition().isValid()) {
-        qgcApp()->showAppMessage(tr("Unable to change altitude, home position unknown."));
-        return;
-    }
-    if (qIsNaN(vehicle->homePosition().altitude())) {
-        qgcApp()->showAppMessage(tr("Unable to change altitude, home position altitude unknown."));
-        return;
-    }
-
-    double currentAltRel = vehicle->altitudeRelative()->rawValue().toDouble();
-    double newAltRel = currentAltRel + altitudeChange;
-
     PauseVehicleThenChangeAltData_t* resultData = new PauseVehicleThenChangeAltData_t;
     resultData->plugin      = this;
     resultData->vehicle     = vehicle;
-    resultData->newAMSLAlt  = vehicle->homePosition().altitude() + newAltRel;
+    resultData->newAMSLAlt  = altitudeAMSL;
 
     if (pauseVehicle) {
         Vehicle::MavCmdAckHandlerInfo_t handlerInfo = {};
