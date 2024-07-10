@@ -20,6 +20,7 @@
 #include "QGCMapEngine.h"
 #include "QGCMapTileSet.h"
 #include "QGCMapUrlEngine.h"
+#include "QGCMapEngineData.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtSql/QSqlQuery>
@@ -506,14 +507,14 @@ QGCCacheWorker::_createTileSet(QGCMapTask *mtask)
             //-- Prepare Download List
             _db->transaction();
             for(int z = task->tileSet()->minZoom(); z <= task->tileSet()->maxZoom(); z++) {
-                QGCTileSet set = QGCMapEngine::getTileCount(z,
+                QGCTileSet set = UrlFactory::getTileCount(z,
                     task->tileSet()->topleftLon(), task->tileSet()->topleftLat(),
                     task->tileSet()->bottomRightLon(), task->tileSet()->bottomRightLat(), task->tileSet()->type());
                 QString type = task->tileSet()->type();
                 for(int x = set.tileX0; x <= set.tileX1; x++) {
                     for(int y = set.tileY0; y <= set.tileY1; y++) {
                         //-- See if tile is already downloaded
-                        QString hash = QGCMapEngine::getTileHash(type, x, y, z);
+                        QString hash = UrlFactory::getTileHash(type, x, y, z);
                         quint64 tileID = _findTile(hash);
                         if(!tileID) {
                             //-- Set to download

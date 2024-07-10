@@ -44,8 +44,9 @@
 **
 ****************************************************************************/
 
-#include "QGCMapEngine.h"
 #include "QGeoMapReplyQGC.h"
+#include "QGCMapEngine.h"
+#include "QGeoFileTileCacheQGC.h"
 #include "TerrainTile.h"
 #include "MapProvider.h"
 #include "QGCMapUrlEngine.h"
@@ -83,10 +84,10 @@ QGeoTiledMapReplyQGC::QGeoTiledMapReplyQGC(QNetworkAccessManager *networkManager
         setFinished(true);
         setCached(false);
     } else {
-        QGCFetchTileTask* task = QGCMapEngine::createFetchTileTask(UrlFactory::getProviderTypeFromQtMapId(spec.mapId()), spec.x(), spec.y(), spec.zoom());
+        QGCFetchTileTask* task = QGeoFileTileCacheQGC::createFetchTileTask(UrlFactory::getProviderTypeFromQtMapId(spec.mapId()), spec.x(), spec.y(), spec.zoom());
         connect(task, &QGCFetchTileTask::tileFetched, this, &QGeoTiledMapReplyQGC::cacheReply);
         connect(task, &QGCMapTask::error, this, &QGeoTiledMapReplyQGC::cacheError);
-        getQGCMapEngine()->addTask(task);
+        (void) getQGCMapEngine()->addTask(task);
     }
 }
 
@@ -138,7 +139,7 @@ QGeoTiledMapReplyQGC::networkReplyFinished()
         a = TerrainTile::serializeFromAirMapJson(a);
         //-- Cache it if valid
         if(!a.isEmpty()) {
-            getQGCMapEngine()->cacheTile(
+            QGeoFileTileCacheQGC::cacheTile(
                 UrlFactory::getProviderTypeFromQtMapId(
                     tileSpec().mapId()),
                 tileSpec().x(), tileSpec().y(), tileSpec().zoom(), a, format);
@@ -157,7 +158,7 @@ QGeoTiledMapReplyQGC::networkReplyFinished()
             setMapImageData(a);
             if(!format.isEmpty()) {
                 setMapImageFormat(format);
-                getQGCMapEngine()->cacheTile(UrlFactory::getProviderTypeFromQtMapId(tileSpec().mapId()), tileSpec().x(), tileSpec().y(), tileSpec().zoom(), a, format);
+                QGeoFileTileCacheQGC::cacheTile(UrlFactory::getProviderTypeFromQtMapId(tileSpec().mapId()), tileSpec().x(), tileSpec().y(), tileSpec().zoom(), a, format);
             }
         }
         setFinished(true);

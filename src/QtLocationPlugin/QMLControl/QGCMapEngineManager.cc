@@ -17,6 +17,7 @@
 
 #include "QGCMapEngineManager.h"
 #include "QGCMapTileSet.h"
+#include "QGCMapUrlEngine.h"
 #include "ElevationMapProvider.h"
 #include "QGCMapEngine.h"
 #include "QGCApplication.h"
@@ -29,9 +30,8 @@
 
 QGC_LOGGING_CATEGORY(QGCMapEngineManagerLog, "QGCMapEngineManagerLog")
 
-static constexpr const char* kQmlOfflineMapKeyName = "QGCOfflineMap";
-
-static const auto kElevationMapType = CopernicusElevationProvider::kProviderKey;
+static const QString kQmlOfflineMapKeyName = QStringLiteral("QGCOfflineMap");
+static const QString kElevationMapType = QString(CopernicusElevationProvider::kProviderKey);
 
 //-----------------------------------------------------------------------------
 QGCMapEngineManager::QGCMapEngineManager(QGCApplication* app, QGCToolbox* toolbox)
@@ -85,11 +85,11 @@ QGCMapEngineManager::updateForCurrentView(double lon0, double lat0, double lon1,
     _elevationSet.clear();
 
     for(int z = minZoom; z <= maxZoom; z++) {
-        QGCTileSet set = QGCMapEngine::getTileCount(z, lon0, lat0, lon1, lat1, mapName);
+        QGCTileSet set = UrlFactory::getTileCount(z, lon0, lat0, lon1, lat1, mapName);
         _imageSet += set;
     }
     if (_fetchElevation) {
-        QGCTileSet set = QGCMapEngine::getTileCount(1, lon0, lat0, lon1, lat1, kElevationMapType);
+        QGCTileSet set = UrlFactory::getTileCount(1, lon0, lat0, lon1, lat1, kElevationMapType);
         _elevationSet += set;
     }
 
@@ -124,7 +124,7 @@ QGCMapEngineManager::loadTileSets()
     QGCFetchTileSetTask* task = new QGCFetchTileSetTask();
     connect(task, &QGCFetchTileSetTask::tileSetFetched, this, &QGCMapEngineManager::_tileSetFetched);
     connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
-    getQGCMapEngine()->addTask(task);
+    (void) getQGCMapEngine()->addTask(task);
 }
 
 //-----------------------------------------------------------------------------
@@ -160,7 +160,7 @@ QGCMapEngineManager::startDownload(const QString& name, const QString& mapType)
         //-- Create Tile Set (it will also create a list of tiles to download)
         connect(task, &QGCCreateTileSetTask::tileSetSaved, this, &QGCMapEngineManager::_tileSetSaved);
         connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
-        getQGCMapEngine()->addTask(task);
+        (void) getQGCMapEngine()->addTask(task);
     } else {
         qWarning() <<  "QGCMapEngineManager::startDownload() No Tiles to save";
     }
@@ -180,7 +180,7 @@ QGCMapEngineManager::startDownload(const QString& name, const QString& mapType)
         //-- Create Tile Set (it will also create a list of tiles to download)
         connect(task, &QGCCreateTileSetTask::tileSetSaved, this, &QGCMapEngineManager::_tileSetSaved);
         connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
-        getQGCMapEngine()->addTask(task);
+        (void) getQGCMapEngine()->addTask(task);
     } else {
         qWarning() <<  "QGCMapEngineManager::startDownload() No Tiles to save";
     }
@@ -219,22 +219,22 @@ QGCMapEngineManager::loadSetting (const QString& key, const QString& defaultValu
 QStringList
 QGCMapEngineManager::mapList()
 {
-    return QGCMapEngine::getMapNameList();
+    return UrlFactory::getProviderTypes();
 }
 //-----------------------------------------------------------------------------
 QStringList
 QGCMapEngineManager::mapProviderList()
 {
-    QStringList mapList = QGCMapEngine::getMapNameList();
+    QStringList maps = mapList();
 
     // Don't return the Elevations provider. This is not selectable as a map provider by the user.
-    mapList.removeAll(kElevationMapType);
+    maps.removeAll(kElevationMapType);
 
     // Extract Provider name from MapName ( format : "Provider Type")
-    mapList.replaceInStrings(QRegularExpression("^([^\\ ]*) (.*)$"),"\\1");
-    mapList.removeDuplicates();
+    maps.replaceInStrings(QRegularExpression("^([^\\ ]*) (.*)$"),"\\1");
+    maps.removeDuplicates();
 
-    return mapList;
+    return maps;
 }
 
 //-----------------------------------------------------------------------------
@@ -242,11 +242,11 @@ QStringList
 QGCMapEngineManager::mapTypeList(QString provider)
 {
     // Extract type name from MapName ( format : "Provider Type")
-    QStringList mapList = QGCMapEngine::getMapNameList();
-    mapList = mapList.filter(QRegularExpression(provider));
-    mapList.replaceInStrings(QRegularExpression("^([^\\ ]*) (.*)$"),"\\2");
-    mapList.removeDuplicates();
-    return mapList;
+    QStringList maps = mapList();
+    maps = maps.filter(QRegularExpression(provider));
+    maps.replaceInStrings(QRegularExpression("^([^\\ ]*) (.*)$"),"\\2");
+    maps.removeDuplicates();
+    return maps;
 }
 
 //-----------------------------------------------------------------------------
@@ -265,13 +265,13 @@ QGCMapEngineManager::deleteTileSet(QGCCachedTileSet* tileSet)
         QGCResetTask* task = new QGCResetTask();
         connect(task, &QGCResetTask::resetCompleted, this, &QGCMapEngineManager::_resetCompleted);
         connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
-        getQGCMapEngine()->addTask(task);
+        (void) getQGCMapEngine()->addTask(task);
     } else {
         tileSet->setDeleting(true);
         QGCDeleteTileSetTask* task = new QGCDeleteTileSetTask(tileSet->setID());
         connect(task, &QGCDeleteTileSetTask::tileSetDeleted, this, &QGCMapEngineManager::_tileSetDeleted);
         connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
-        getQGCMapEngine()->addTask(task);
+        (void) getQGCMapEngine()->addTask(task);
     }
 }
 
@@ -289,7 +289,7 @@ QGCMapEngineManager::renameTileSet(QGCCachedTileSet* tileSet, QString newName)
     tileSet->setName(name);
     QGCRenameTileSetTask* task = new QGCRenameTileSetTask(tileSet->setID(), name);
     connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
-    getQGCMapEngine()->addTask(task);
+    (void) getQGCMapEngine()->addTask(task);
     emit tileSet->nameChanged();
 }
 
@@ -450,7 +450,7 @@ QGCMapEngineManager::importSets(QString path) {
         connect(task, &QGCImportTileTask::actionCompleted, this, &QGCMapEngineManager::_actionCompleted);
         connect(task, &QGCImportTileTask::actionProgress, this, &QGCMapEngineManager::_actionProgressHandler);
         connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
-        getQGCMapEngine()->addTask(task);
+        (void) getQGCMapEngine()->addTask(task);
         return true;
     }
     return false;
@@ -490,7 +490,7 @@ QGCMapEngineManager::exportSets(QString path) {
             connect(task, &QGCExportTileTask::actionCompleted, this, &QGCMapEngineManager::_actionCompleted);
             connect(task, &QGCExportTileTask::actionProgress, this, &QGCMapEngineManager::_actionProgressHandler);
             connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
-            getQGCMapEngine()->addTask(task);
+            (void) getQGCMapEngine()->addTask(task);
             return true;
         }
     }
