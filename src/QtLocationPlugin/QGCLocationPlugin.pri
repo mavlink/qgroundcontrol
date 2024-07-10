@@ -17,6 +17,7 @@ HEADERS += \
     $$PWD/QGCMapTileSet.h \
     $$PWD/QGCMapUrlEngine.h \
     $$PWD/QGCTileCacheWorker.h \
+    $$PWD/QGeoFileTileCacheQGC.h \
     $$PWD/QGeoMapReplyQGC.h \
     $$PWD/QGeoServiceProviderPluginQGC.h \
     $$PWD/QGeoTileFetcherQGC.h \
@@ -37,6 +38,7 @@ SOURCES += \
     $$PWD/QGCMapTileSet.cpp \
     $$PWD/QGCMapUrlEngine.cpp \
     $$PWD/QGCTileCacheWorker.cpp \
+    $$PWD/QGeoFileTileCacheQGC.cpp \
     $$PWD/QGeoMapReplyQGC.cpp \
     $$PWD/QGeoServiceProviderPluginQGC.cpp \
     $$PWD/QGeoTileFetcherQGC.cpp \
