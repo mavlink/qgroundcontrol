@@ -194,7 +194,7 @@ void TerrainTileManager::_terrainDone(QByteArray responseBytes, QNetworkReply::N
 
     // remove from download queue
     QGeoTileSpec spec = reply->tileSpec();
-    QString hash = QGCMapEngine::getTileHash(kMapType, spec.x(), spec.y(), spec.zoom());
+    QString hash = UrlFactory::getTileHash(kMapType, spec.x(), spec.y(), spec.zoom());
 
     // handle potential errors
     if (error != QNetworkReply::NoError) {
@@ -260,7 +260,7 @@ void TerrainTileManager::_terrainDone(QByteArray responseBytes, QNetworkReply::N
 
 QString TerrainTileManager::_getTileHash(const QGeoCoordinate& coordinate)
 {
-    QString ret = QGCMapEngine::getTileHash(
+    QString ret = UrlFactory::getTileHash(
         kMapType,
         UrlFactory::long2tileX(kMapType, coordinate.longitude(), 1),
         UrlFactory::lat2tileY(kMapType, coordinate.latitude(), 1),
