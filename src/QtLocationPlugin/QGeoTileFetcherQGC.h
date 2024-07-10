@@ -10,13 +10,14 @@ class QGeoTiledMappingManagerEngineQGC;
 class QGeoTiledMapReplyQGC;
 class QGeoTileSpec;
 class QNetworkAccessManager;
+class QNetworkDiskCache;
 
 class QGeoTileFetcherQGC : public QGeoTileFetcher
 {
     Q_OBJECT
 
 public:
-    explicit QGeoTileFetcherQGC(QNetworkAccessManager *networkManager, QGeoTiledMappingManagerEngineQGC *parent = nullptr);
+    QGeoTileFetcherQGC(QNetworkAccessManager *networkManager, const QVariantMap &parameters, QGeoTiledMappingManagerEngineQGC *parent = nullptr);
     ~QGeoTileFetcherQGC();
 
     static uint32_t concurrentDownloads(const QString &type) { Q_UNUSED(type); return 6; }
@@ -29,6 +30,7 @@ private:
     void handleReply(QGeoTiledMapReply *reply, const QGeoTileSpec &spec) final;
 
     QNetworkAccessManager *m_networkManager = nullptr;
+    // QNetworkDiskCache *m_diskCache = nullptr;
 
 #if defined Q_OS_MAC
     static constexpr const char* s_userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 14.5; rv:125.0) Gecko/20100101 Firefox/125.0";

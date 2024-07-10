@@ -55,6 +55,8 @@ public:
     static QString providerTypeFromHash(int hash);
 
     static int hashFromProviderType(QStringView type);
+    static QString tileHashToType(QStringView tileHash);
+    static QString getTileHash(QStringView type, int x, int y, int z);
 
     static constexpr const char* kCopernicusElevationProviderKey = "Copernicus Elevation";
     static constexpr const char* kCopernicusElevationProviderNotice = "© Airbus Defence and Space GmbH";

@@ -20,8 +20,9 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QString>
+#include <QtCore/QMetaType>
 
-class QGCCachedTileSet;
+#include "QGCMapTileSet.h"
 
 //-----------------------------------------------------------------------------
 class QGCTile
@@ -65,6 +66,7 @@ private:
     QString     _hash;
     QString _type;
 };
+Q_DECLARE_METATYPE(QGCTile)
 
 //-----------------------------------------------------------------------------
 class QGCCacheTile : public QObject
@@ -138,6 +140,7 @@ signals:
 private:
     TaskType    _type;
 };
+Q_DECLARE_METATYPE(QGCMapTask::TaskType)
 
 //-----------------------------------------------------------------------------
 class QGCFetchTileSetTask : public QGCMapTask
@@ -168,7 +171,12 @@ public:
         , _saved(false)
     {}
 
-    ~QGCCreateTileSetTask();
+    ~QGCCreateTileSetTask()
+    {
+        //-- If not sent out, delete it
+        if(!_saved && _tileSet)
+            delete _tileSet;
+    }
 
     QGCCachedTileSet*   tileSet () { return _tileSet; }
 

@@ -131,3 +131,5 @@ QGCTileSet MapProvider::getTileCount(int zoom, double topleftLon,
     set.tileSize = getAverageSize() * set.tileCount;
     return set;
 }
+
+// Resolution math: https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Resolution_and_Scale

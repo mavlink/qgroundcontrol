@@ -21,6 +21,4 @@ public:
 
 private:
     QNetworkAccessManager *m_networkManager = nullptr;
-
-    void _setCache(const QVariantMap &parameters);
 };
