@@ -71,7 +71,7 @@ KLVMetadata::KLVMetadata(uint8_t *data, size_t size) {
     }
 
     // If the data is longer than packet length, trim it to fit packet length
-    size = std::min(size, packetLength.value() + i);
+    size = std::min(size, static_cast<size_t>(packetLength.value()) + i);
 
     while (i < size) {
 
