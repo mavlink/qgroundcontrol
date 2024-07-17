@@ -111,7 +111,7 @@
     "shortDesc":    "Location Type",
     "longDesc":     "Operator location Type",
     "type":         "uint8",
-    "enumStrings":  "Takeoff(Not Supported),Live GNNS, Fixed",
+    "enumStrings":  "Takeoff(Not Supported),Live GNNS, Fixed (not for FAA)",
     "enumValues":   "0,1,2",
     "default":      1
 },
