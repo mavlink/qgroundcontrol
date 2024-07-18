@@ -941,34 +941,6 @@
       <short_desc>Enable checks on ESCs that report telemetry</short_desc>
       <long_desc>If this parameter is set, the system will check ESC's online status and failures. This param is specific for ESCs reporting status. It shall be used only if ESCs support telemetry.</long_desc>
     </parameter>
-    <parameter name="COM_ARM_EKF_HGT" default="1.0" type="FLOAT">
-      <short_desc>Maximum EKF height innovation test ratio that will allow arming</short_desc>
-      <min>0.1</min>
-      <max>1.0</max>
-      <decimal>2</decimal>
-      <increment>0.05</increment>
-    </parameter>
-    <parameter name="COM_ARM_EKF_POS" default="0.5" type="FLOAT">
-      <short_desc>Maximum EKF position innovation test ratio that will allow arming</short_desc>
-      <min>0.1</min>
-      <max>1.0</max>
-      <decimal>2</decimal>
-      <increment>0.05</increment>
-    </parameter>
-    <parameter name="COM_ARM_EKF_VEL" default="0.5" type="FLOAT">
-      <short_desc>Maximum EKF velocity innovation test ratio that will allow arming</short_desc>
-      <min>0.1</min>
-      <max>1.0</max>
-      <decimal>2</decimal>
-      <increment>0.05</increment>
-    </parameter>
-    <parameter name="COM_ARM_EKF_YAW" default="0.5" type="FLOAT">
-      <short_desc>Maximum EKF yaw innovation test ratio that will allow arming</short_desc>
-      <min>0.1</min>
-      <max>1.0</max>
-      <decimal>2</decimal>
-      <increment>0.05</increment>
-    </parameter>
     <parameter name="COM_ARM_HFLT_CHK" default="1" type="INT32" boolean="true">
       <short_desc>Enable FMU SD card hardfault detection check</short_desc>
       <long_desc>This check detects if there are hardfault files present on the SD card. If so, and the parameter is enabled, arming is prevented.</long_desc>
