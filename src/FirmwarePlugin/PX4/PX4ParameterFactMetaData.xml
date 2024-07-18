@@ -685,41 +685,6 @@
     <parameter name="BAT_ADC_CHANNEL" default="-1" type="INT32">
       <short_desc>This parameter is deprecated. Please use BAT1_I_CHANNEL</short_desc>
     </parameter>
-    <parameter name="BAT_AVRG_CURRENT" default="15.0" type="FLOAT">
-      <short_desc>Expected battery current in flight</short_desc>
-      <long_desc>This value is used to initialize the in-flight average current estimation, which in turn is used for estimating remaining flight time and RTL triggering.</long_desc>
-      <min>0</min>
-      <max>500</max>
-      <unit>A</unit>
-      <increment>0.1</increment>
-    </parameter>
-    <parameter name="BAT_CRIT_THR" default="0.07" type="FLOAT">
-      <short_desc>Critical threshold</short_desc>
-      <long_desc>Sets the threshold when the battery will be reported as critically low. This has to be lower than the low threshold. This threshold commonly will trigger RTL.</long_desc>
-      <min>0.05</min>
-      <max>0.25</max>
-      <unit>norm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="BAT_EMERGEN_THR" default="0.05" type="FLOAT">
-      <short_desc>Emergency threshold</short_desc>
-      <long_desc>Sets the threshold when the battery will be reported as dangerously low. This has to be lower than the critical threshold. This threshold commonly will trigger landing.</long_desc>
-      <min>0.03</min>
-      <max>0.1</max>
-      <unit>norm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="BAT_LOW_THR" default="0.15" type="FLOAT">
-      <short_desc>Low threshold</short_desc>
-      <long_desc>Sets the threshold when the battery will be reported as low. This has to be higher than the critical threshold.</long_desc>
-      <min>0.12</min>
-      <max>0.5</max>
-      <unit>norm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
     <parameter name="BAT_V_OFFS_CURR" default="0.0" type="FLOAT">
       <short_desc>Offset in volt as seen by the ADC input of the current sensor</short_desc>
       <long_desc>This offset will be subtracted before calculating the battery current based on the voltage.</long_desc>
