@@ -95,24 +95,24 @@ QString UrlFactory::getImageFormat(QStringView type, QByteArrayView image)
     return QStringLiteral("");
 }
 
-QNetworkRequest UrlFactory::getTileURL(int qtMapId, int x, int y, int zoom)
+QUrl UrlFactory::getTileURL(int qtMapId, int x, int y, int zoom)
 {
     const SharedMapProvider provider = getMapProviderFromQtMapId(qtMapId);
     if (provider) {
         return provider->getTileURL(x, y, zoom);
     }
 
-    return QNetworkRequest(QUrl());
+    return QUrl();
 }
 
-QNetworkRequest UrlFactory::getTileURL(QStringView type, int x, int y, int zoom)
+QUrl UrlFactory::getTileURL(QStringView type, int x, int y, int zoom)
 {
     const SharedMapProvider provider = getMapProviderFromProviderType(type);
     if (provider) {
         return provider->getTileURL(x, y, zoom);
     }
 
-    return QNetworkRequest(QUrl());
+    return QUrl();
 }
 
 quint32 UrlFactory::averageSizeForType(QStringView type)

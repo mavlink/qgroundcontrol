@@ -1,85 +1,47 @@
-/****************************************************************************
-**
-** Copyright (C) 2013 Aaron McCarthy <mccarthy.aaron@gmail.com>
-** Contact: http://www.qt-project.org/legal
-**
-** This file is part of the QtLocation module of the Qt Toolkit.
-**
-** $QT_BEGIN_LICENSE:LGPL$
-** Commercial License Usage
-** Licensees holding valid commercial Qt licenses may use this file in
-** accordance with the commercial license agreement provided with the
-** Software or, alternatively, in accordance with the terms contained in
-** a written agreement between you and Digia.  For licensing terms and
-** conditions see http://qt.digia.com/licensing.  For further information
-** use the contact form at http://qt.digia.com/contact-us.
-**
-** GNU Lesser General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU Lesser
-** General Public License version 2.1 as published by the Free Software
-** Foundation and appearing in the file LICENSE.LGPL included in the
-** packaging of this file.  Please review the following information to
-** ensure the GNU Lesser General Public License version 2.1 requirements
-** will be met: http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
-**
-** In addition, as a special exception, Digia gives you certain additional
-** rights.  These rights are described in the Digia Qt LGPL Exception
-** version 1.1, included in the file LGPL_EXCEPTION.txt in this package.
-**
-** GNU General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU
-** General Public License version 3.0 as published by the Free Software
-** Foundation and appearing in the file LICENSE.GPL included in the
-** packaging of this file.  Please review the following information to
-** ensure the GNU General Public License version 3.0 requirements will be
-** met: http://www.gnu.org/copyleft/gpl.html.
-**
-**
-** $QT_END_LICENSE$
-**
-** 2015.4.4
-** Adapted for use with QGroundControl
-**
-** Gus Grubba <gus@auterion.com>
-**
-****************************************************************************/
-
 #pragma once
+
+#include <QtCore/QLoggingCategory>
+#include <QtLocation/private/qgeotiledmapreply_p.h>
+#include <QtNetwork/QNetworkReply>
+#include <QtNetwork/QNetworkRequest>
 
 #include "QGCMapTasks.h"
 
-#include <QtNetwork/QNetworkReply>
-#include <QtLocation/private/qgeotiledmapreply_p.h>
-#include <QtCore/QTimer>
+Q_DECLARE_LOGGING_CATEGORY(QGeoTiledMapReplyQGCLog)
+
+class QNetworkAccessManager;
+class QSslError;
 
 class QGeoTiledMapReplyQGC : public QGeoTiledMapReply
 {
     Q_OBJECT
-public:
-    QGeoTiledMapReplyQGC(QNetworkAccessManager*  networkManager, const QNetworkRequest& request, const QGeoTileSpec &spec, QObject *parent = 0);
-    ~QGeoTiledMapReplyQGC();
-    void abort();
 
-signals:
-    void terrainDone            (QByteArray responseBytes, QNetworkReply::NetworkError error);
+public:
+    QGeoTiledMapReplyQGC(QNetworkAccessManager *networkManager, const QNetworkRequest &request, const QGeoTileSpec &spec, QObject *parent = nullptr);
+    ~QGeoTiledMapReplyQGC();
+
+    void abort() final;
 
 private slots:
-    void networkReplyFinished   ();
-    void networkReplyError      (QNetworkReply::NetworkError error);
-    void cacheReply             (QGCCacheTile* tile);
-    void cacheError             (QGCMapTask::TaskType type, QString errorString);
-    void timeout                ();
+    void _networkReplyFinished();
+    void _networkReplyError(QNetworkReply::NetworkError error);
+#if QT_CONFIG(ssl)
+    void _networkReplySslErrors(const QList<QSslError> &errors);
+#endif
+    void _cacheReply(QGCCacheTile *tile);
+    void _cacheError(QGCMapTask::TaskType type, QStringView errorString);
 
 private:
-    void _clearReply            ();
+    static void _initDataFromResources();
 
-private:
-    QNetworkReply*          _reply;
-    QNetworkRequest         _request;
-    QNetworkAccessManager*  _networkManager;
-    QByteArray              _badMapbox;
-    QByteArray              _badTile;
-    QTimer                  _timer;
-    static QByteArray       _bingNoTileImage;
-    static int              _requestCount;
+    QNetworkAccessManager *_networkManager = nullptr;
+    QNetworkRequest _request;
+
+    static QByteArray _bingNoTileImage;
+    static QByteArray _badTile;
+
+    enum HTTP_Response {
+        SUCCESS_OK = 200,
+        REDIRECTION_MULTIPLE_CHOICES = 300
+    };
 };

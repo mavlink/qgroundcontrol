@@ -18,6 +18,7 @@ protected:
 
 public:
     bool isElevationProvider() const final { return true; }
+    virtual QByteArray serialize(const QByteArray &image) const = 0;
 };
 
 class CopernicusElevationProvider : public ElevationProvider
@@ -38,8 +39,10 @@ public:
                             double topleftLat, double bottomRightLon,
                             double bottomRightLat) const final;
 
-    static constexpr const char* kProviderKey = "Copernicus Elevation";
-    static constexpr const char* kProviderNotice = "© Airbus Defence and Space GmbH";
+    QByteArray serialize(const QByteArray &image) const final;
+
+    static constexpr const char *kProviderKey = "Copernicus Elevation";
+    static constexpr const char *kProviderNotice = "© Airbus Defence and Space GmbH";
 
 private:
     QString _getURL(int x, int y, int zoom) const final;
