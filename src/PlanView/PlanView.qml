@@ -916,10 +916,26 @@ Item {
     }
 
     function clearButtonClicked() {
-        mainWindow.showMessageDialog(qsTr("Clear"),
-                                     qsTr("Are you sure you want to remove all mission items and clear the mission from the vehicle?"),
-                                     Dialog.Yes | Dialog.Cancel,
-                                     function() { _planMasterController.removeAllFromVehicle(); _missionController.setCurrentPlanViewSeqNum(0, true); if(_utmspEnabled){_resetRegisterFlightPlan = true; QGroundControl.utmspManager.utmspVehicle.triggerActivationStatusBar(false);}})
+    mainWindow.showMessageDialog(qsTr("Clear"),
+                                 qsTr("Are you sure you want to remove all mission items and clear the mission from the vehicle?"),
+                                 Dialog.Yes | Dialog.Cancel,
+                                 function(result) {
+                                     if (result === Dialog.Yes) {
+                                         console.log("User confirmed: Clearing mission items from the vehicle");
+                                         _planMasterController.removeAllFromVehicle();
+                                         console.log("Called _planMasterController.removeAllFromVehicle");
+                                         _missionController.setCurrentPlanViewSeqNum(0, true);
+                                         console.log("Reset current plan view sequence number");
+                                         if (_utmspEnabled) {
+                                             console.log("UTMSP enabled: Performing additional UTMSP operations");
+                                             _resetRegisterFlightPlan = true;
+                                             QGroundControl.utmspManager.utmspVehicle.triggerActivationStatusBar(false);
+                                             console.log("Triggered UTMSP activation status bar");
+                                         }
+                                     } else {
+                                         console.log("User cancelled: Did not clear mission items from the vehicle");
+                                     }
+                                 });
     }
 
     //- ToolStrip DropPanel Components
@@ -1161,7 +1177,8 @@ Item {
                     text:               qsTr("Clear")
                     Layout.fillWidth:   true
                     Layout.columnSpan:  2
-                    enabled:            !_planMasterController.offline && !_planMasterController.syncInProgress
+                    
+                    enabled:            true
                     visible:            !QGroundControl.corePlugin.options.disableVehicleConnection
                     onClicked: {
                         dropPanel.hide()
