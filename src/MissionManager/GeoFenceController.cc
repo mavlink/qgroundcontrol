@@ -240,12 +240,16 @@ void GeoFenceController::removeAll(void)
 
 void GeoFenceController::removeAllFromVehicle(void)
 {
+    qCInfo(GeoFenceControllerLog) << "GeoFenceController::removeAllFromVehicle called";
     if (_masterController->offline()) {
         qCWarning(GeoFenceControllerLog) << "GeoFenceController::removeAllFromVehicle called while offline";
-    } else if (syncInProgress()) {
-        qCWarning(GeoFenceControllerLog) << "GeoFenceController::removeAllFromVehicle called while syncInProgress";
-    } else {
+    }
+
+    try {
         _geoFenceManager->removeAll();
+        qCInfo(GeoFenceControllerLog) << "All geofences removed from the vehicle";
+    } catch (const std::exception& e) {
+        qCCritical(GeoFenceControllerLog) << "Failed to remove geofences:" << e.what();
     }
 }
 

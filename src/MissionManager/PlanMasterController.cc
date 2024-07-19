@@ -520,18 +520,12 @@ void PlanMasterController::removeAll(void)
 
 void PlanMasterController::removeAllFromVehicle(void)
 {
-    if (!offline()) {
-        _missionController.removeAllFromVehicle();
-        if (_geoFenceController.supported()) {
-            _geoFenceController.removeAllFromVehicle();
-        }
-        if (_rallyPointController.supported()) {
-            _rallyPointController.removeAllFromVehicle();
-        }
-        setDirty(false);
-    } else {
-        qWarning() << "PlanMasterController::removeAllFromVehicle called while offline";
-    }
+    qCInfo(PlanMasterControllerLog) << "PlanMasterController::removeAllFromVehicle called";
+    _missionController.removeAllFromVehicle();
+    _geoFenceController.removeAllFromVehicle();
+    _rallyPointController.removeAllFromVehicle();
+    setDirty(false);
+    qCInfo(PlanMasterControllerLog) << "PlanMasterController::removeAllFromVehicle completed";
 }
 
 bool PlanMasterController::containsItems(void) const

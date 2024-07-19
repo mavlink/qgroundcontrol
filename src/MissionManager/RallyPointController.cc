@@ -144,12 +144,27 @@ void RallyPointController::removeAll(void)
 
 void RallyPointController::removeAllFromVehicle(void)
 {
+    qCInfo(RallyPointControllerLog) << "RallyPointController::removeAllFromVehicle called";
     if (_masterController->offline()) {
         qCWarning(RallyPointControllerLog) << "RallyPointController::removeAllFromVehicle called while offline";
-    } else if (syncInProgress()) {
-        qCWarning(RallyPointControllerLog) << "RallyPointController::removeAllFromVehicle called while syncInProgress";
-    } else {
-        _rallyPointManager->removeAll();
+    }
+
+    const int maxRetries = 3;
+    int attempt = 0;
+    bool success = false;
+
+    while (attempt < maxRetries && !success) {
+        try {
+            _rallyPointManager->removeAll();
+            success = true;
+            qCInfo(RallyPointControllerLog) << "All rally points removed from the vehicle";
+        } catch (const std::exception& e) {
+            attempt++;
+            qCWarning(RallyPointControllerLog) << "Attempt" << attempt << "to remove rally points failed:" << e.what();
+            if (attempt == maxRetries) {
+                qCCritical(RallyPointControllerLog) << "Rally point transfer failed, maximum retries exceeded";
+            }
+        }
     }
 }
 

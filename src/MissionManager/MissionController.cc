@@ -2246,13 +2246,16 @@ bool MissionController::containsItems(void) const
 
 void MissionController::removeAllFromVehicle(void)
 {
+    qCInfo(MissionControllerLog) << "MissionController::removeAllFromVehicle called";
     if (_masterController->offline()) {
-        qCWarning(MissionControllerLog) << "MissionControllerLog::removeAllFromVehicle called while offline";
-    } else if (syncInProgress()) {
-        qCWarning(MissionControllerLog) << "MissionControllerLog::removeAllFromVehicle called while syncInProgress";
-    } else {
-        _itemsRequested = true;
+        qCWarning(MissionControllerLog) << "MissionController::removeAllFromVehicle called while offline";
+    }
+
+    try {
         _missionManager->removeAll();
+        qCInfo(MissionControllerLog) << "All mission items removed from the vehicle";
+    } catch (const std::exception& e) {
+        qCCritical(MissionControllerLog) << "Failed to remove mission items:" << e.what();
     }
 }
 
