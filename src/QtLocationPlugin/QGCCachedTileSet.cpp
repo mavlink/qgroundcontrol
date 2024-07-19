@@ -246,7 +246,8 @@ void QGCCachedTileSet::_prepareDownload()
         if(_tilesToDownload.count()) {
             QGCTile* tile = _tilesToDownload.first();
             _tilesToDownload.removeFirst();
-            QNetworkRequest request = UrlFactory::getTileURL(tile->type(), tile->x(), tile->y(), tile->z());
+            const int mapId = UrlFactory::getQtMapIdFromProviderType(tile->type());
+            QNetworkRequest request = QGeoTileFetcherQGC::getNetworkRequest(mapId, tile->x(), tile->y(), tile->z());
             request.setAttribute(QNetworkRequest::User, tile->hash());
 #if !defined(__mobile__)
             QNetworkProxy proxy = _networkManager->proxy();
