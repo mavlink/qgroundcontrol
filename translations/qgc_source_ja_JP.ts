@@ -14755,7 +14755,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/UI/toolbar/RCRSSIIndicator.qml" line="51"/>
       <source>RC RSSI Status</source>
-      <translation>RC RSSIステータス</translation>
+      <translation>送信機 RSSI状態</translation>
     </message>
     <message>
       <location filename="../src/UI/toolbar/RCRSSIIndicator.qml" line="51"/>
@@ -17417,12 +17417,12 @@ ROTATION_NONEは、コンポーネントが飛行方向を向いていること�
     <message>
       <location filename="../src/PlanView/TransectStyleComplexItemTerrainFollow.qml" line="62"/>
       <source>Max Climb Rate</source>
-      <translation>最大上昇率</translation>
+      <translation>最大上昇レート</translation>
     </message>
     <message>
       <location filename="../src/PlanView/TransectStyleComplexItemTerrainFollow.qml" line="68"/>
       <source>Max Descent Rate</source>
-      <translation>最大降下率</translation>
+      <translation>最大降下レート</translation>
     </message>
   </context>
   <context>
