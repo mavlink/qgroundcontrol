@@ -11,7 +11,6 @@
 #include <QGCLoggingCategory.h>
 
 #include <QtCore/QLocale>
-#include <QtNetwork/QNetworkRequest>
 
 QGC_LOGGING_CATEGORY(MapProviderLog, "qgc.qtlocationplugin.mapprovider")
 
@@ -40,18 +39,9 @@ MapProvider::~MapProvider()
     // qCDebug(MapProviderLog) << Q_FUNC_INFO << this << _mapId;
 }
 
-QNetworkRequest MapProvider::getTileURL(int x, int y, int zoom) const
+QUrl MapProvider::getTileURL(int x, int y, int zoom) const
 {
-    QNetworkRequest request;
-    const QString url = _getURL(x, y, zoom);
-    if (url.isEmpty()) {
-        return request;
-    }
-    request.setUrl(QUrl(url));
-    request.setRawHeader(QByteArrayLiteral("Accept"), QByteArrayLiteral("*/*"));
-    request.setRawHeader(QByteArrayLiteral("Referrer"), _referrer.toUtf8());
-    request.setRawHeader(QByteArrayLiteral("User-Agent"), QByteArrayLiteral("Qt Location based application"));
-    return request;
+    return QUrl(_getURL(x, y, zoom));
 }
 
 QString MapProvider::getImageFormat(QByteArrayView image) const

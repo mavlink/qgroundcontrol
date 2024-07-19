@@ -34,16 +34,18 @@ Q_DECLARE_LOGGING_CATEGORY(MapProviderLog)
     CustomMap = 100
 };*/
 
+#define MAX_MAP_ZOOM 23.0
 static constexpr const quint32 AVERAGE_TILE_SIZE = 13652;
 
-class QNetworkRequest;
-
+// TODO: Inherit from QGeoMapType
 class MapProvider
 {
 public:
     MapProvider(const QString &mapName, const QString &referrer, const QString &imageFormat, quint32 averageSize = AVERAGE_TILE_SIZE,
                 QGeoMapType::MapStyle mapStyle = QGeoMapType::CustomMap);
     virtual ~MapProvider();
+
+    QUrl getTileURL(int x, int y, int zoom) const;
 
     QString getImageFormat(QByteArrayView image) const;
 
@@ -53,8 +55,8 @@ public:
     QGeoMapType::MapStyle getMapStyle() const { return _mapStyle; }
     const QString& getMapName() const { return _mapName; }
     int getMapId() const { return _mapId; }
-
-    virtual QNetworkRequest getTileURL(int x, int y, int zoom) const;
+    const QString& getReferrer() const { return _referrer; }
+    virtual QByteArray getToken() const { return QByteArray(); }
 
     virtual int long2tileX(double lon, int z) const;
     virtual int lat2tileY(double lat, int z) const;
