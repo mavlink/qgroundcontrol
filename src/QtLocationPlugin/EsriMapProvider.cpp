@@ -11,21 +11,9 @@
 #include "QGCApplication.h"
 #include "SettingsManager.h"
 
-#include <QtNetwork/QNetworkRequest>
-
-QNetworkRequest EsriMapProvider::getTileURL(int x, int y, int zoom) const
+QByteArray EsriMapProvider::getToken() const
 {
-    QNetworkRequest request;
-    const QString url = _getURL(x, y, zoom);
-    if (url.isEmpty()) {
-        return request;
-    }
-    request.setUrl(QUrl(url));
-    request.setRawHeader(QByteArrayLiteral("Accept"), QByteArrayLiteral("*/*"));
-    const QByteArray token = qgcApp()->toolbox()->settingsManager()->appSettings()->esriToken()->rawValue().toString().toLatin1();
-    request.setRawHeader(QByteArrayLiteral("User-Agent"), QByteArrayLiteral("Qt Location based application"));
-    request.setRawHeader(QByteArrayLiteral("User-Token"), token);
-    return request;
+    return qgcApp()->toolbox()->settingsManager()->appSettings()->esriToken()->rawValue().toString().toUtf8();
 }
 
 QString EsriMapProvider::_getURL(int x, int y, int zoom) const

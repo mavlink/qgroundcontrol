@@ -24,7 +24,7 @@ protected:
         , _mapTypeId(mapTypeId) {}
 
 public:
-    QNetworkRequest getTileURL(int x, int y, int zoom) const final;
+    QByteArray getToken() const final;
 
 private:
     QString _getURL(int x, int y, int zoom) const final;
