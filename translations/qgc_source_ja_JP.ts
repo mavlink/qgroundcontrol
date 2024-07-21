@@ -4158,12 +4158,12 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/QmlControls/AppMessages.qml" line="179"/>
       <source>Clear</source>
-      <translation>クリア</translation>
+      <translation>消去</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AppMessages.qml" line="187"/>
       <source>Clear All</source>
-      <translation>すべてクリア</translation>
+      <translation>すべて消去</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AppMessages.qml" line="86"/>
@@ -7440,7 +7440,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/UI/preferences/GeneralSettings.qml" line="77"/>
       <source>Clear all settings on next start</source>
-      <translation>次回の開始時にすべての設定をクリア</translation>
+      <translation>次回の開始時にすべての設定を消去</translation>
     </message>
     <message>
       <location filename="../src/UI/preferences/GeneralSettings.qml" line="138"/>
@@ -10724,7 +10724,7 @@ Do you wish to proceed?</translation>
     <message>
       <location filename="../src/QtLocationPlugin/QMLControl/OfflineMap.qml" line="400"/>
       <source>URL with {x} {y} {z} or {zoom} substitutions</source>
-      <translation>{x} {y} {z} または {zoom} の代用URL</translation>
+      <translation>{x} {y} {z} または {zoom} 置換URL</translation>
     </message>
     <message>
       <location filename="../src/QtLocationPlugin/QMLControl/OfflineMap.qml" line="413"/>
@@ -10762,7 +10762,7 @@ Is this really what you want?</source>
     <message>
       <location filename="../src/QtLocationPlugin/QMLControl/OfflineMap.qml" line="540"/>
       <source>Unique:</source>
-      <translation>ユニーク:</translation>
+      <translation>固有 (Unique):</translation>
     </message>
     <message>
       <location filename="../src/QtLocationPlugin/QMLControl/OfflineMap.qml" line="548"/>
@@ -10874,7 +10874,7 @@ Is this really what you want?</source>
     <message>
       <location filename="../src/QtLocationPlugin/QMLControl/OfflineMap.qml" line="800"/>
       <source>Map type:</source>
-      <translation>マップの種類:</translation>
+      <translation>マップのタイプ:</translation>
     </message>
     <message>
       <location filename="../src/QtLocationPlugin/QMLControl/OfflineMap.qml" line="823"/>
@@ -11183,7 +11183,7 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/QmlControls/PIDTuning.qml" line="251"/>
       <source>Clear</source>
-      <translation>クリア</translation>
+      <translation>消去</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/PIDTuning.qml" line="122"/>
@@ -12563,7 +12563,7 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="72"/>
       <source>Clear</source>
-      <translation>クリア</translation>
+      <translation>消去</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="83"/>
@@ -12619,7 +12619,7 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="137"/>
       <source>Clear all RC to Param</source>
-      <translation>すべての送信機パラメータをクリア</translation>
+      <translation>すべての送信機パラメータを消去</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="297"/>
@@ -13450,12 +13450,12 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
       <location filename="../src/PlanView/PlanView.qml" line="919"/>
       <location filename="../src/PlanView/PlanView.qml" line="1161"/>
       <source>Clear</source>
-      <translation>クリア</translation>
+      <translation>消去</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="920"/>
       <source>Are you sure you want to remove all mission items and clear the mission from the vehicle?</source>
-      <translation>すべてのミッション項目を削除し、機体からミッションをクリアしてもよろしいですか？</translation>
+      <translation>すべてのミッション項目を削除し、機体からミッションを消去してもよろしいですか？</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="942"/>
