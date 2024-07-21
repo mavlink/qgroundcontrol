@@ -4062,7 +4062,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/AirLink/AirlinkLink.h" line="32"/>
       <source>Airlink Link Settings</source>
-      <translation type="unfinished">Airlink Link Settings</translation>
+      <translation>エアリンクの設定</translation>
     </message>
   </context>
   <context>
@@ -4237,17 +4237,17 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/Settings/AppSettings.cc" line="43"/>
       <source>CustomActions</source>
-      <translation type="unfinished">CustomActions</translation>
+      <translation>カスタムアクション</translation>
     </message>
     <message>
       <location filename="../src/Settings/AppSettings.cc" line="113"/>
       <source>Save to SD card specified for application data. But no SD card present. Using internal storage.</source>
-      <translation type="unfinished">Save to SD card specified for application data. But no SD card present. Using internal storage.</translation>
+      <translation>アプリケーションデータをSDカードに保存します。しかしながらSDカードがありません。現在、内部ストレージを使用しています。</translation>
     </message>
     <message>
       <location filename="../src/Settings/AppSettings.cc" line="116"/>
       <source>Save to SD card specified for application data. But SD card is write protected. Using internal storage.</source>
-      <translation type="unfinished">Save to SD card specified for application data. But SD card is write protected. Using internal storage.</translation>
+      <translation>アプリケーションデータをSDカードに保存します。しかしながらSDカードは書き込み保護されています。現在、内部ストレージを使用しています。</translation>
     </message>
     <message>
       <location filename="../src/Settings/AppSettings.cc" line="207"/>
@@ -4280,7 +4280,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/UI/toolbar/ArmedIndicator.qml" line="25"/>
       <source>Disarm</source>
-      <translation type="unfinished">Disarm</translation>
+      <translation>ディスアーム</translation>
     </message>
   </context>
   <context>
@@ -4387,7 +4387,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/QmlControls/AutotuneUI.qml" line="31"/>
       <source>Start AutoTune</source>
-      <translation type="unfinished">Start AutoTune</translation>
+      <translation>自動調整 開始</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AutotuneUI.qml" line="35"/>
@@ -4402,17 +4402,16 @@ Before starting the auto-tuning process, make sure that:
 
 Click Ok to start the auto-tuning process.
 </source>
-      <translation type="unfinished">WARNING!        
+      <translation>警告！        
 
-The auto-tuning procedure should be executed with caution and requires the vehicle to fly stable enough before attempting the procedure!         
+自動調整を行う前に、機体が十分に安定していることを確認してください！         
 
-Before starting the auto-tuning process, make sure that:         
-1. You have read the auto-tuning guide and have followed the preliminary steps         
-2. The current control gains are good enough to stabilize the drone in presence of medium disturbances         
-3. You are ready to abort the auto-tuning sequence by moving the RC sticks, if anything unexpected happens.         
+自動調整を開始する前に、以下を確認してください:         
+1. 自動調整ガイドを確認し、予備ステップに従っていること         
+2. 現在の制御のゲイン[強度]が、中程度の外乱がある場合でもドローンを安定させるのに十分であること         
+3. 予期せぬことが起こった場合、送信機スティックを動かして自動調整シーケンスを中止する準備ができていること         
 
-Click Ok to start the auto-tuning process.
-</translation>
+OKをクリックして、自動調整プロセスを開始します。</translation>
     </message>
   </context>
   <context>
@@ -11219,12 +11218,12 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/QmlControls/PIDTuning.qml" line="310"/>
       <source>Use auto-tuning</source>
-      <translation type="unfinished">Use auto-tuning</translation>
+      <translation>自動調整を使用</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/PIDTuning.qml" line="316"/>
       <source>Use manual tuning</source>
-      <translation type="unfinished">Use manual tuning</translation>
+      <translation>手動調整を使用</translation>
     </message>
   </context>
   <context>
@@ -12076,7 +12075,7 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="32"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="32"/>
       <source>Airmode (disable during tuning) &lt;b&gt;&lt;a href=&quot;https://docs.px4.io/master/en/config_mc/pid_tuning_guide_multicopter.html#airmode-mixer-saturation&quot;&gt;?&lt;/a&gt;&lt;/b&gt;</source>
-      <translation type="unfinished">Airmode (disable during tuning) &lt;b&gt;&lt;a href=&quot;https://docs.px4.io/master/en/config_mc/pid_tuning_guide_multicopter.html#airmode-mixer-saturation&quot;&gt;?&lt;/a&gt;&lt;/b&gt;</translation>
+      <translation>エアモード (チューニング中は無効) &lt;b&gt;&lt;a href=&quot;https://docs.px4.io/master/en/config_mc/pid_tuning_guide_multicopter.html#airmode-mixer-saturation&quot;&gt;?&lt;/a&gt;&lt;/b&gt;</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="49"/>
