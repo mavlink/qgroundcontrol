@@ -16,13 +16,13 @@
       <extracomment>.QGC.MetaData.Facts[offlineEditingFirmwareClass].enumStrings, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>ArduPilot,PX4 Pro,Mavlink Generic</source>
-      <translation>ArduPilot,PX4 Pro,Mavlink 汎用</translation>
+      <translation>ArduPilot,PX4 Pro,MAVLink 汎用</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[offlineEditingVehicleClass].enumStrings, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>Fixed Wing,Multi-Rotor,VTOL,Rover,Sub,Mavlink Generic</source>
-      <translation>固定翼機,マルチコプター,VTOL機,ローバー,サブマリン,Mavlink 汎用</translation>
+      <translation>固定翼機,マルチコプター,VTOL機,ローバー,サブマリン,MAVLink 汎用</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[gstDebugLevel].enumStrings, </extracomment>
@@ -1258,7 +1258,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param1.enumStrings, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param7.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Retract,Neutral,Mavlink Targeting,RC Targeting,GPS Point</source>
-      <translation>リトラクト,ニュートラル,Mavlinkターゲット,RCターゲット,GPSポイント</translation>
+      <translation>リトラクト,ニュートラル,MAVLinkターゲット,RCターゲット,GPSポイント</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param2.label, </extracomment>
