@@ -661,6 +661,8 @@ ApplicationWindow {
         closePolicy:    Popup.CloseOnEscape | Popup.CloseOnPressOutside
         property var    currentItem:        null
         property var    currentIndicator:   null
+        y:              ScreenTools.toolbarHeight
+        
         background: Rectangle {
             width:  loader.width
             height: loader.height
