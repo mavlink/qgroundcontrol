@@ -105,7 +105,25 @@ Item {
     function thumbDown(touchPoints) {
         // Position the control around the initial thumb position
         _centerXY = _joyRoot.width / 2  // make sure to know the correct center of the item
-        xPositionDelta = touchPoints[0].x - _centerXY
+
+        var limitOffset = uiRealX >= _joyRoot.width / 2 ? true : false // as the joystick become small the UI too so we limit the maxOffset for reCentering joystick to prevent misclicks
+        var maxDelta = _joyRoot.x > uiTotalWidth / 2  ? uiTotalWidth - uiRealX - _joyRoot.x - _centerXY : uiRealX
+        var isRightJoystick = _joyRoot.x > uiTotalWidth / 2 ? true : false
+
+        // Check if new xDelta will make joystick to be beyond screen boundaries or can cause a misclick
+        if ( !limitOffset && isRightJoystick && touchPoints[0].x  <= maxDelta || !limitOffset && !isRightJoystick && touchPoints[0].x >= maxDelta ) {
+            xPositionDelta = touchPoints[0].x - _centerXY
+        }
+        else if( limitOffset && !isRightJoystick && touchPoints[0].x >= _centerXY * 0.25 && touchPoints[0].x <= _centerXY * 2 ) { // more offset at the side near to the center
+            xPositionDelta = touchPoints[0].x - _centerXY
+        }
+        else if( limitOffset && isRightJoystick && touchPoints[0].x >= 0 && touchPoints[0].x <= _centerXY * 1.75 ) {
+            xPositionDelta = touchPoints[0].x - _centerXY
+        }
+        else {
+            return;
+        }
+
         if (yAxisPositiveRangeOnly) {
             yPositionDelta = touchPoints[0].y - stickPositionY
         } else {
