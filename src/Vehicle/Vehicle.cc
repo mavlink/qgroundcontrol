@@ -2182,7 +2182,7 @@ void Vehicle::guidedModeOrbit(const QGeoCoordinate& centerCoord, double radius, 
                     true,                           // show error if fails
                     static_cast<float>(radius),
                     static_cast<float>(qQNaN()),    // Use default velocity
-                    static_cast<float>(qQNaN()),    // Use vehicle default yaw behavior
+                    static_cast<float>(5.0f),       // Use current or vehicle default yaw behavior
                     static_cast<float>(qQNaN()),    // Use vehicle default num of orbits behavior
                     centerCoord.latitude(), centerCoord.longitude(), static_cast<float>(amslAltitude));
     } else {
@@ -2192,7 +2192,7 @@ void Vehicle::guidedModeOrbit(const QGeoCoordinate& centerCoord, double radius, 
                     true,                           // show error if fails
                     static_cast<float>(radius),
                     static_cast<float>(qQNaN()),    // Use default velocity
-                    static_cast<float>(qQNaN()),    // Use vehicle default yaw behavior
+                    static_cast<float>(5.0f),       // Use current or vehicle default yaw behavior
                     static_cast<float>(qQNaN()),    // Use vehicle default num of orbits behavior
                     static_cast<float>(centerCoord.latitude()),
                     static_cast<float>(centerCoord.longitude()),
