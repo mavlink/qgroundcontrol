@@ -13,6 +13,7 @@
 #include "SettingsManager.h"
 #include "QGCLoggingCategory.h"
 #include "ParameterManager.h"
+#include "MAVLinkProtocol.h"
 
 #include <QtQml/QQmlEngine>
 
