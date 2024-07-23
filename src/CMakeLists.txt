@@ -33,6 +33,7 @@ add_subdirectory(FirmwarePlugin)
 # add_subdirectory(FlightMap)
 add_subdirectory(FollowMe)
 add_subdirectory(Geo)
+add_subdirectory(Gimbal)
 add_subdirectory(GPS)
 add_subdirectory(Joystick)
 add_subdirectory(MAVLink)
@@ -76,6 +77,7 @@ target_link_libraries(QGC
         # FlightMap
         # FlightDisplay
         FollowMe
+        Gimbal
         GPS
         Joystick
         MAVLink
