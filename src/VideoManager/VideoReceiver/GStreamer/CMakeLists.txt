@@ -8,10 +8,8 @@ if(NOT GST_QT6_PLUGIN_FOUND)
     )
 
     target_link_libraries(GStreamerReceiver
-        PRIVATE
-            Qt6::Quick
         PUBLIC
-            Qt6::Core
+            Qt6::Quick
     )
 
     target_include_directories(GStreamerReceiver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
