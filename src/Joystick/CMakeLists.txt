@@ -56,6 +56,7 @@ target_link_libraries(Joystick
     PRIVATE
         Qt6::Qml
         FirmwarePlugin
+        Gimbal
         Settings
         Utilities
         Vehicle
