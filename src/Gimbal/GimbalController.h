@@ -9,15 +9,17 @@
 
 #pragma once
 
-#include <QLoggingCategory>
-#include <cstdint>
-#include "Vehicle.h"
-#include "QmlObjectListModel.h"
-#include "MAVLinkProtocol.h"
+#include <QtCore/QLoggingCategory>
+
+#include <QmlObjectListModel.h>
+#include <FactGroup.h>
+#include <MAVLinkLib.h>
 
 Q_DECLARE_LOGGING_CATEGORY(GimbalLog)
 
 class MavlinkProtocol;
+class Vehicle;
+class MAVLinkProtocol;
 
 class Gimbal : public FactGroup
 {
