@@ -10,7 +10,6 @@ if(NOT GST_QT6_PLUGIN_FOUND)
     target_link_libraries(GStreamerReceiver
         PRIVATE
             Qt6::Quick
-            Utilities
         PUBLIC
             Qt6::Core
     )
