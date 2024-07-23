@@ -1,12 +1,26 @@
 add_subdirectory(${CMAKE_SOURCE_DIR}/libs/qmlglsink qmlglsink.build)
 
+find_package(Qt6 REQUIRED COMPONENTS Core Quick)
+
 if(NOT GST_QT6_PLUGIN_FOUND)
+    qt_add_library(GStreamerReceiver STATIC
+        GLVideoItemStub.h
+    )
+
+    target_link_libraries(GStreamerReceiver
+        PRIVATE
+            Qt6::Quick
+            Utilities
+        PUBLIC
+            Qt6::Core
+    )
+
+    target_include_directories(GStreamerReceiver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
     return()
 endif()
 
 message(STATUS "Building GStreamer VideoReceiver")
-
-find_package(Qt6 REQUIRED COMPONENTS Core Quick)
 
 qt_add_library(GStreamerReceiver STATIC
     GLVideoItemStub.h
