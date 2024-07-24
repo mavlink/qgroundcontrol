@@ -19,8 +19,7 @@ namespace AndroidSerial
         Data5 = 5,
         Data6 = 6,
         Data7 = 7,
-        Data8 = 8,
-        UnknownDataBits = -1
+        Data8 = 8
     };
 
     enum Parity {
@@ -28,15 +27,13 @@ namespace AndroidSerial
         OddParity,
         EvenParity,
         MarkParity,
-        SpaceParity,
-        UnknownParity = -1
+        SpaceParity
     };
 
     enum StopBits {
         OneStop = 1,
         OneAndHalfStop = 3,
-        TwoStop = 2,
-        UnknownStopBits = -1
+        TwoStop = 2
     };
 
     enum ControlLine {
@@ -45,8 +42,7 @@ namespace AndroidSerial
         DtrControlLine,
         DsrControlLine,
         CdControlLine,
-        RiControlLine,
-        UnknownControlLine = -1
+        RiControlLine
     };
 
     enum FlowControl {
@@ -54,8 +50,7 @@ namespace AndroidSerial
         RtsCtsFlowControl,
         DtrDsrFlowControl,
         XonXoffFlowControl,
-        XonXoffInlineFlowControl,
-        UnknownFlowControl = -1
+        XonXoffInlineFlowControl
     };
 
     static constexpr char CHAR_XON = 17;
@@ -68,6 +63,7 @@ namespace AndroidSerial
     QList<QSerialPortInfo> availableDevices();
     QString getSerialNumber(int deviceId);
     int getDeviceId(const QString &portName);
+    int getDeviceHandle(int deviceId);
     int open(const QString &portName, QSerialPortPrivate *userData);
     bool close(int deviceId);
     bool isOpen(const QString &portName);
@@ -85,9 +81,10 @@ namespace AndroidSerial
     QSerialPort::PinoutSignals getControlLines(int deviceId);
     int getFlowControl(int deviceId);
     bool setFlowControl(int deviceId, int flowControl);
-    bool flush(int deviceId, bool input, bool output);
+    bool purgeBuffers(int deviceId, bool input, bool output);
     bool setBreak(int deviceId, bool set);
     bool startReadThread(int deviceId);
     bool stopReadThread(int deviceId);
-    int getDeviceHandle(int deviceId);
+    bool readThreadRunning(int deviceId);
+    int getReadBufferSize(int deviceId);
 }; // namespace AndroidSerial

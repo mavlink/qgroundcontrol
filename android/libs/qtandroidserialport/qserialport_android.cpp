@@ -1,42 +1,52 @@
-#include "qserialport_android_p.h"
+#include "qserialport_p.h"
 #include <QGCLoggingCategory.h>
 
 #include <QtCore/QMap>
 #include <QtCore/QThread>
 #include <QtCore/QTimer>
 
-#include <termios.h>
-#include <errno.h>
+#include <asm/termbits.h>
 
 QGC_LOGGING_CATEGORY(AndroidSerialPortLog, "qgc.android.libs.qtandroidserialport.qserialport_android")
 
 QT_BEGIN_NAMESPACE
 
-QSerialPortPrivate::QSerialPortPrivate(QSerialPort *q)
-    : QSerialPortPrivateData(q)
-{
-    qCDebug(AndroidSerialPortLog) << Q_FUNC_INFO << this;
-    // readBufferMaxSize = MAX_READ_SIZE;
-}
-
 bool QSerialPortPrivate::open(QIODevice::OpenMode mode)
 {
-    qCDebug(AndroidSerialPortLog) << "Opening" << systemLocation.toLatin1().data();
+    qCDebug(AndroidSerialPortLog) << "Opening" << systemLocation.toLatin1().constData();
 
-    deviceId = AndroidSerial::open(systemLocation, this);
-
-    if (!isDeviceValid()) {
-        qCWarning(AndroidSerialPortLog) << "Error opening" << systemLocation.toLatin1().data();
-        q_ptr->setError(QSerialPort::DeviceNotFoundError);
+    m_deviceId = AndroidSerial::open(systemLocation, this);
+    if (m_deviceId == BAD_PORT) {
+        qCWarning(AndroidSerialPortLog) << "Error opening" << systemLocation.toLatin1().constData();
+        setError(QSerialPortErrorInfo(QSerialPort::DeviceNotFoundError));
         return false;
     }
 
-    descriptor = AndroidSerial::getDeviceHandle(deviceId);
-
-    isReadStopped = false;
-    if (mode == QIODevice::WriteOnly) {
-        stopReadThread();
+    descriptor = AndroidSerial::getDeviceHandle(m_deviceId);
+    if (descriptor == -1) {
+        setError(QSerialPortErrorInfo(QSerialPort::OpenError));
+        close();
+        return false;
     }
+
+    if (!setDataBits(dataBits) ||
+        !setParity(parity) ||
+        !setStopBits(stopBits) ||
+        !setFlowControl(flowControl) ||
+        !setBaudRate()) {
+        close();
+        return false;
+    }
+
+    /*if (mode & QIODevice::ReadOnly) {
+        // readBufferMaxSize = AndroidSerial::getReadBufferSize();
+        startAsyncRead();
+    }
+
+    if (!clear(QSerialPort::AllDirections)) {
+        close();
+        return false;
+    }*/
 
     return true;
 }
@@ -45,94 +55,125 @@ void QSerialPortPrivate::close()
 {
     qCDebug(AndroidSerialPortLog) << "Closing" << systemLocation.toLatin1().data();
 
-    if (!isDeviceValid()) return;
-
     descriptor = -1;
-    pendingBytesWritten = 0;
-    deviceId = BAD_PORT;
+    m_pendingBytesWritten = 0;
+    m_deviceId = BAD_PORT;
 
-    const bool result = AndroidSerial::close(deviceId);
-    if (!result) {
-        q_ptr->setErrorString(QStringLiteral("Closing device failed"));
+    if (!AndroidSerial::close(m_deviceId)) {
+        setError(QSerialPortErrorInfo(QSerialPort::ResourceError, QStringLiteral("Closing device failed")));
     }
 }
 
-bool QSerialPortPrivate::setParameters(int baudRate, int dataBits, int stopBits, int parity)
+bool QSerialPortPrivate::_stopAsyncRead()
 {
-    if (!isDeviceValid()) {
-        q_ptr->setError(QSerialPort::NotOpenError);
-        return false;
+    if (!AndroidSerial::readThreadRunning(m_deviceId)) {
+        return true;
     }
-
-    const bool result = AndroidSerial::setParameters(deviceId, baudRate, dataBits, stopBits, parity);
-    if (result) {
-        inputBaudRate = outputBaudRate = baudRate;
-        m_dataBits = dataBits;
-        m_stopBits = stopBits;
-        m_parity = parity;
-    }
-
-    return result;
+    return AndroidSerial::stopReadThread(m_deviceId);
 }
 
-void QSerialPortPrivate::stopReadThread()
+bool QSerialPortPrivate::startAsyncRead()
 {
-    if (isReadStopped) return;
-    if (AndroidSerial::stopReadThread(deviceId)) {
-        isReadStopped = true;
+    if (AndroidSerial::readThreadRunning(m_deviceId)) {
+        return true;
     }
+    return AndroidSerial::startReadThread(m_deviceId);
 }
 
-void QSerialPortPrivate::startReadThread()
+void QSerialPortPrivate::newDataArrived(char *bytes, int length)
 {
-    if (!isReadStopped) return;
-    if (AndroidSerial::startReadThread(deviceId)) {
-        isReadStopped = false;
+    if (!q_func()->isOpen()) {
+        return;
     }
+
+    Q_Q(QSerialPort);
+
+    int bytesToRead = length;
+    if (readBufferMaxSize && (bytesToRead > (readBufferMaxSize - buffer.size()))) {
+        bytesToRead = static_cast<int>(readBufferMaxSize - buffer.size());
+        if (bytesToRead <= 0) {
+            (void) _stopAsyncRead();
+            return;
+        }
+    }
+
+    char * const ptr = buffer.reserve(bytesToRead);
+    (void) memcpy(ptr, bytes, static_cast<size_t>(bytesToRead));
+
+    emit q->readyRead();
 }
 
-QSerialPort::PinoutSignals QSerialPortPrivate::pinoutSignals()
+void QSerialPortPrivate::exceptionArrived(const QString &ex)
 {
-    if (!isDeviceValid()) {
-        q_ptr->setError(QSerialPort::NotOpenError);
-        return QSerialPort::NoSignal;
-    }
-
-    return AndroidSerial::getControlLines(deviceId);
+    setError(QSerialPortErrorInfo(QSerialPort::UnknownError, ex));
 }
 
-bool QSerialPortPrivate::setDataTerminalReady(bool set)
+bool QSerialPortPrivate::waitForReadyRead(int msecs)
 {
-    if (!isDeviceValid()) {
-        q_ptr->setError(QSerialPort::NotOpenError);
-        return false;
+    const int orig = static_cast<int>(buffer.size());
+
+    if (orig > 0) {
+        return true;
     }
 
-    return AndroidSerial::setDataTerminalReady(deviceId, set);
+    for (int i = 0; i < msecs; i++) {
+        if (orig < buffer.size()) {
+            return true;
+        } else {
+            QThread::msleep(1);
+        }
+    }
+
+    return false;
 }
 
-bool QSerialPortPrivate::setRequestToSend(bool set)
+bool QSerialPortPrivate::waitForBytesWritten(int msecs)
 {
-    if (!isDeviceValid()) {
-        q_ptr->setError(QSerialPort::NotOpenError);
-        return false;
+    m_internalWriteTimeoutMsec = msecs;
+    const bool ret = _writeDataOneShot();
+    m_internalWriteTimeoutMsec = 0;
+    return ret;
+}
+
+bool QSerialPortPrivate::_writeDataOneShot()
+{
+    Q_Q(QSerialPort);
+
+    m_pendingBytesWritten = -1;
+
+    while (!writeBuffer.isEmpty()) {
+        m_pendingBytesWritten = writeToPort(writeBuffer.readPointer(), writeBuffer.nextDataBlockSize());
+
+        if (m_pendingBytesWritten <= 0) {
+            setError(QSerialPortErrorInfo(QSerialPort::WriteError));
+            return false;
+        }
+
+        writeBuffer.free(m_pendingBytesWritten);
+
+        emit q->bytesWritten(m_pendingBytesWritten);
     }
 
-    return AndroidSerial::setRequestToSend(deviceId, set);
+    return (m_pendingBytesWritten >= 0);
+}
+
+qint64 QSerialPortPrivate::writeToPort(const char *data, qint64 maxSize)
+{
+    return AndroidSerial::write(m_deviceId, data, maxSize, m_internalWriteTimeoutMsec, false);
+}
+
+qint64 QSerialPortPrivate::writeData(const char *data, qint64 maxSize)
+{
+    return writeToPort(data, maxSize);
 }
 
 bool QSerialPortPrivate::flush()
 {
-    return writeDataOneShot();
+    return _writeDataOneShot();
 }
 
 bool QSerialPortPrivate::clear(QSerialPort::Directions directions)
 {
-    if (!isDeviceValid()) {
-        q_ptr->setError(QSerialPort::NotOpenError);
-        return false;
-    }
-
     bool input = false;
     bool output = false;
 
@@ -148,59 +189,35 @@ bool QSerialPortPrivate::clear(QSerialPort::Directions directions)
         }
     }
 
-    return AndroidSerial::flush(deviceId, input, output);
+    return AndroidSerial::purgeBuffers(m_deviceId, input, output);
 }
 
-bool QSerialPortPrivate::sendBreak(int duration)
+QSerialPort::PinoutSignals QSerialPortPrivate::pinoutSignals()
 {
-    bool result = false;
+    return AndroidSerial::getControlLines(m_deviceId);
+}
 
-    if (m_breakEnabled) {
-        result = AndroidSerial::setBreak(deviceId, true);
-        QTimer* const timer = new QTimer(q_ptr);
-        timer->setSingleShot(true);
-        timer->setInterval(duration);
-        (void) timer->callOnTimeout([this, timer]() {
-            (void) AndroidSerial::setBreak(deviceId, false);
-            timer->deleteLater();
-        });
-        timer->start();
+bool QSerialPortPrivate::setDataTerminalReady(bool set)
+{
+    return AndroidSerial::setDataTerminalReady(m_deviceId, set);
+}
+
+bool QSerialPortPrivate::setRequestToSend(bool set)
+{
+    return AndroidSerial::setRequestToSend(m_deviceId, set);
+}
+
+bool QSerialPortPrivate::_setParameters(int baudRate, int dataBits, int stopBits, int parity)
+{
+    const bool result = AndroidSerial::setParameters(m_deviceId, baudRate, dataBits, stopBits, parity);
+    if (result) {
+        inputBaudRate = outputBaudRate = baudRate;
+        m_dataBits = dataBits;
+        m_stopBits = stopBits;
+        m_parity = parity;
     }
 
     return result;
-}
-
-bool QSerialPortPrivate::setBreakEnabled(bool set)
-{
-    m_breakEnabled = set;
-    return true;
-}
-
-bool QSerialPortPrivate::waitForReadyRead(int msecs)
-{
-    const int orig = static_cast<int>(readBuffer.size());
-
-    if (orig > 0) {
-        return true;
-    }
-
-    for (int i = 0; i < msecs; i++) {
-        if (orig < readBuffer.size()) {
-            return true;
-        } else {
-            QThread::msleep(1);
-        }
-    }
-
-    return false;
-}
-
-bool QSerialPortPrivate::waitForBytesWritten(int msecs)
-{
-    internalWriteTimeoutMsec = msecs;
-    const bool ret = writeDataOneShot();
-    internalWriteTimeoutMsec = 0;
-    return ret;
 }
 
 bool QSerialPortPrivate::setBaudRate()
@@ -210,8 +227,23 @@ bool QSerialPortPrivate::setBaudRate()
 
 bool QSerialPortPrivate::setBaudRate(qint32 baudRate, QSerialPort::Directions directions)
 {
-    Q_UNUSED(directions);
-    return setParameters(baudRate, m_dataBits, m_stopBits, m_parity);
+    if (baudRate <= 0) {
+        setError(QSerialPortErrorInfo(QSerialPort::UnsupportedOperationError, QSerialPort::tr("Invalid baud rate value")));
+        return false;
+    }
+
+    if (directions != QSerialPort::AllDirections) {
+        setError(QSerialPortErrorInfo(QSerialPort::UnsupportedOperationError, QSerialPort::tr("Custom baud rate direction is unsupported")));
+        return false;
+    }
+
+    const qint32 standardBaudRate = QSerialPortPrivate::_settingFromBaudRate(baudRate);
+    if (standardBaudRate <= 0) {
+        setError(QSerialPortErrorInfo(QSerialPort::UnsupportedOperationError, QSerialPort::tr("Invalid Baud Rate")));
+        return false;
+    }
+
+    return _setParameters(baudRate, m_dataBits, m_stopBits, m_parity);
 }
 
 bool QSerialPortPrivate::setDataBits(QSerialPort::DataBits dataBits)
@@ -234,7 +266,7 @@ bool QSerialPortPrivate::setDataBits(QSerialPort::DataBits dataBits)
         break;
     }
 
-    return setParameters(inputBaudRate, numBits, m_stopBits, m_parity);
+    return _setParameters(inputBaudRate, numBits, m_stopBits, m_parity);
 }
 
 bool QSerialPortPrivate::setParity(QSerialPort::Parity parity)
@@ -260,7 +292,7 @@ bool QSerialPortPrivate::setParity(QSerialPort::Parity parity)
         break;
     }
 
-    return setParameters(inputBaudRate, m_dataBits, m_stopBits, par);
+    return _setParameters(inputBaudRate, m_dataBits, m_stopBits, par);
 }
 
 bool QSerialPortPrivate::setStopBits(QSerialPort::StopBits stopBits)
@@ -280,7 +312,7 @@ bool QSerialPortPrivate::setStopBits(QSerialPort::StopBits stopBits)
         break;
     }
 
-    return setParameters(inputBaudRate, m_dataBits, stop, m_parity);
+    return _setParameters(inputBaudRate, m_dataBits, stop, m_parity);
 }
 
 bool QSerialPortPrivate::setFlowControl(QSerialPort::FlowControl flowControl)
@@ -300,104 +332,12 @@ bool QSerialPortPrivate::setFlowControl(QSerialPort::FlowControl flowControl)
         break;
     }
 
-    m_flowControl = control;
-
-    return AndroidSerial::setFlowControl(deviceId, control);
+    return AndroidSerial::setFlowControl(m_deviceId, control);
 }
 
-void QSerialPortPrivate::newDataArrived(char *bytes, int length)
+bool QSerialPortPrivate::setBreakEnabled(bool set)
 {
-    Q_Q(QSerialPort);
-
-    int bytesToRead = length;
-
-    // Always buffered, read data from the port into the read buffer
-    if (readBufferMaxSize && (bytesToRead > (readBufferMaxSize - readBuffer.size()))) {
-        bytesToRead = static_cast<int>(readBufferMaxSize - readBuffer.size());
-        if (bytesToRead <= 0) {
-            // Buffer is full. User must read data from the buffer
-            // before we can read more from the port.
-            stopReadThread();
-            return;
-        }
-    }
-
-    char *ptr = readBuffer.reserve(bytesToRead);
-    memcpy(ptr, bytes, static_cast<size_t>(bytesToRead));
-
-    emit q->readyRead();
-}
-
-void QSerialPortPrivate::exceptionArrived(QString str)
-{
-    q_ptr->setErrorString(str);
-}
-
-static QSerialPort::SerialPortError decodeSystemError()
-{
-    QSerialPort::SerialPortError error;
-
-    switch (errno) {
-    case ENODEV:
-        error = QSerialPort::DeviceNotFoundError;
-        break;
-    case EACCES:
-        error = QSerialPort::PermissionError;
-        break;
-    case EBUSY:
-        error = QSerialPort::PermissionError;
-        break;
-    case EAGAIN:
-        error = QSerialPort::ResourceError;
-        break;
-    case EIO:
-        error = QSerialPort::ResourceError;
-        break;
-    case EBADF:
-        error = QSerialPort::ResourceError;
-        break;
-    default:
-        error = QSerialPort::UnknownError;
-        break;
-    }
-
-    return error;
-}
-
-bool QSerialPortPrivate::writeDataOneShot()
-{
-    Q_Q(QSerialPort);
-
-    pendingBytesWritten = -1;
-
-    while (!writeBuffer.isEmpty()) {
-        pendingBytesWritten = writeToPort(writeBuffer.readPointer(), writeBuffer.nextDataBlockSize());
-
-        if (pendingBytesWritten <= 0) {
-            QSerialPort::SerialPortError error = decodeSystemError();
-            if (error != QSerialPort::ResourceError) {
-                error = QSerialPort::WriteError;
-            }
-            q->setError(error);
-            return false;
-        }
-
-        writeBuffer.free(pendingBytesWritten);
-
-        emit q->bytesWritten(pendingBytesWritten);
-    }
-
-    return (pendingBytesWritten >= 0);
-}
-
-qint64 QSerialPortPrivate::writeToPort(const char *data, qint64 maxSize)
-{
-    if (!isDeviceValid()) {
-        q_ptr->setError(QSerialPort::NotOpenError);
-        return 0;
-    }
-
-    return AndroidSerial::write(deviceId, data, maxSize, internalWriteTimeoutMsec, false);
+    return AndroidSerial::setBreak(m_deviceId, set);
 }
 
 typedef QMap<qint32, qint32> BaudRateMap;
@@ -545,10 +485,15 @@ static const BaudRateMap createStandardBaudRateMap()
     return baudRateMap;
 }
 
-static const BaudRateMap& standardBaudRateMap()
+static const BaudRateMap &standardBaudRateMap()
 {
     static const BaudRateMap baudRateMap = createStandardBaudRateMap();
     return baudRateMap;
+}
+
+qint32 QSerialPortPrivate::_settingFromBaudRate(qint32 baudRate)
+{
+    return standardBaudRateMap().value(baudRate, 0);
 }
 
 QList<qint32> QSerialPortPrivate::standardBaudRates()
@@ -560,16 +505,6 @@ QSerialPort::Handle QSerialPort::handle() const
 {
     Q_D(const QSerialPort);
     return d->descriptor;
-}
-
-qint64 QSerialPortPrivate::bytesToWrite() const
-{
-    return writeBuffer.size();
-}
-
-qint64 QSerialPortPrivate::writeData(const char *data, qint64 maxSize)
-{
-    return writeToPort(data, maxSize);
 }
 
 QT_END_NAMESPACE

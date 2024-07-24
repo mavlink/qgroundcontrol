@@ -1,37 +1,7 @@
-/****************************************************************************
-**
-** Copyright (C) 2011-2012 Denis Shienkov <denis.shienkov@gmail.com>
-** Copyright (C) 2011 Sergey Belyashov <Sergey.Belyashov@gmail.com>
-** Copyright (C) 2012 Laszlo Papp <lpapp@kde.org>
-** Contact: http://www.qt.io/licensing/
-**
-** This file is part of the QtSerialPort module of the Qt Toolkit.
-**
-** $QT_BEGIN_LICENSE:LGPL21$
-** Commercial License Usage
-** Licensees holding valid commercial Qt licenses may use this file in
-** accordance with the commercial license agreement provided with the
-** Software or, alternatively, in accordance with the terms contained in
-** a written agreement between you and The Qt Company. For licensing terms
-** and conditions see http://www.qt.io/terms-conditions. For further
-** information use the contact form at http://www.qt.io/contact-us.
-**
-** GNU Lesser General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU Lesser
-** General Public License version 2.1 or version 3 as published by the Free
-** Software Foundation and appearing in the file LICENSE.LGPLv21 and
-** LICENSE.LGPLv3 included in the packaging of this file. Please review the
-** following information to ensure the GNU Lesser General Public License
-** requirements will be met: https://www.gnu.org/licenses/lgpl.html and
-** http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
-**
-** As a special exception, The Qt Company gives you certain additional
-** rights. These rights are described in The Qt Company LGPL Exception
-** version 1.1, included in the file LGPL_EXCEPTION.txt in this package.
-**
-** $QT_END_LICENSE$
-**
-****************************************************************************/
+// Copyright (C) 2011-2012 Denis Shienkov <denis.shienkov@gmail.com>
+// Copyright (C) 2011 Sergey Belyashov <Sergey.Belyashov@gmail.com>
+// Copyright (C) 2012 Laszlo Papp <lpapp@kde.org>
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
 
 #ifndef QSERIALPORT_P_H
 #define QSERIALPORT_P_H
@@ -47,41 +17,127 @@
 // We mean it.
 //
 
+#include <QtCore/private/qiodevice_p.h>
+#include <QtCore/private/qproperty_p.h>
+#include <QtCore/QLoggingCategory>
+
 #include "qserialport.h"
-#include "private/qringbuffer_p.h"
+#include <AndroidSerial.h>
 
+#define BAD_PORT 0
+#define MAX_READ_SIZE (16 * 1024);
 
-#include <QDebug>
+#ifndef QSERIALPORT_BUFFERSIZE
+#define QSERIALPORT_BUFFERSIZE 32768
+#endif
+
+Q_DECLARE_LOGGING_CATEGORY(AndroidSerialPortLog)
 
 QT_BEGIN_NAMESPACE
 
-  
-class QSerialPortPrivateData
+class QSerialPortErrorInfo
 {
 public:
-    enum IoConstants {
-        ReadChunkSize = 512
-    };
+    QSerialPortErrorInfo(QSerialPort::SerialPortError newErrorCode = QSerialPort::UnknownError,
+                                  const QString &newErrorString = QString());
+    QSerialPort::SerialPortError errorCode = QSerialPort::UnknownError;
+    QString errorString;
+};
 
-    QSerialPortPrivateData(QSerialPort *q);
-    int timeoutValue(int msecs, int elapsed);
+class QSerialPortPrivate : public QIODevicePrivate
+{
+public:
+    Q_DECLARE_PUBLIC(QSerialPort)
 
-    qint64 readBufferMaxSize;
-    QRingBuffer readBuffer;
-    QRingBuffer writeBuffer;
-    QSerialPort::SerialPortError error;
+    QSerialPortPrivate();
+
+    bool open(QIODevice::OpenMode mode);
+    void close();
+
+    bool flush();
+    bool clear(QSerialPort::Directions directions);
+
+    QSerialPort::PinoutSignals pinoutSignals();
+
+    bool setDataTerminalReady(bool set);
+    bool setRequestToSend(bool set);
+
+    bool setBaudRate();
+    bool setBaudRate(qint32 baudRate, QSerialPort::Directions directions);
+    bool setDataBits(QSerialPort::DataBits dataBits);
+    bool setParity(QSerialPort::Parity parity);
+    bool setStopBits(QSerialPort::StopBits stopBits);
+    bool setFlowControl(QSerialPort::FlowControl flowControl);
+
+    bool setBreakEnabled(bool set);
+
+    void setError(const QSerialPortErrorInfo &errorInfo);
+
+    void setBindableError(QSerialPort::SerialPortError error)
+    { setError(error); }
+    Q_OBJECT_COMPAT_PROPERTY_WITH_ARGS(QSerialPortPrivate, QSerialPort::SerialPortError, error,
+        &QSerialPortPrivate::setBindableError, QSerialPort::NoError)
+
+    bool setBindableDataBits(QSerialPort::DataBits dataBits)
+    { return q_func()->setDataBits(dataBits); }
+    Q_OBJECT_COMPAT_PROPERTY_WITH_ARGS(QSerialPortPrivate, QSerialPort::DataBits, dataBits,
+        &QSerialPortPrivate::setBindableDataBits, QSerialPort::Data8)
+
+    bool setBindableParity(QSerialPort::Parity parity)
+    { return q_func()->setParity(parity); }
+    Q_OBJECT_COMPAT_PROPERTY_WITH_ARGS(QSerialPortPrivate, QSerialPort::Parity, parity,
+        &QSerialPortPrivate::setBindableParity, QSerialPort::NoParity)
+
+    bool setBindableStopBits(QSerialPort::StopBits stopBits)
+    { return q_func()->setStopBits(stopBits); }
+    Q_OBJECT_COMPAT_PROPERTY_WITH_ARGS(QSerialPortPrivate, QSerialPort::StopBits, stopBits,
+        &QSerialPortPrivate::setBindableStopBits, QSerialPort::OneStop)
+
+    bool setBindableFlowControl(QSerialPort::FlowControl flowControl)
+    { return q_func()->setFlowControl(flowControl); }
+    Q_OBJECT_COMPAT_PROPERTY_WITH_ARGS(QSerialPortPrivate, QSerialPort::FlowControl, flowControl,
+        &QSerialPortPrivate::setBindableFlowControl, QSerialPort::NoFlowControl)
+
+    bool setBindableBreakEnabled(bool isBreakEnabled)
+    { return q_func()->setBreakEnabled(isBreakEnabled); }
+    Q_OBJECT_COMPAT_PROPERTY_WITH_ARGS(QSerialPortPrivate, bool, isBreakEnabled,
+        &QSerialPortPrivate::setBindableBreakEnabled, false)
+
+    bool waitForReadyRead(int msec);
+    bool waitForBytesWritten(int msec);
+
+    bool startAsyncRead();
+
+    qint64 writeData(const char *data, qint64 maxSize);
+    qint64 writeToPort(const char *data, qint64 maxSize);
+
+    void newDataArrived(char *bytes, int length);
+    void exceptionArrived(const QString &ex);
+
+    static QList<qint32> standardBaudRates();
+
     QString systemLocation;
-    qint32 inputBaudRate;
-    qint32 outputBaudRate;
-    QSerialPort::DataBits dataBits;
-    QSerialPort::Parity parity;
-    QSerialPort::StopBits stopBits;
-    QSerialPort::FlowControl flowControl;
-    #if QT_DEPRECATED_SINCE(5, 2)
-        QSerialPort::DataErrorPolicy policy;
-    #endif
-    bool settingsRestoredOnClose;
-    QSerialPort * const q_ptr;
+    qint32 inputBaudRate = QSerialPort::Baud9600;
+    qint32 outputBaudRate = QSerialPort::Baud9600;
+    qint64 readBufferMaxSize = 0;
+    int descriptor = -1;
+
+private:
+    bool _stopAsyncRead();
+    bool _setParameters(int baudRate, int dataBits, int stopBits, int parity);
+    bool _writeDataOneShot();
+
+    static qint32 _settingFromBaudRate(qint32 baudRate);
+
+    // bool m_settingsRestoredOnClose = true;
+
+    qint64 m_pendingBytesWritten = 0;
+
+    int m_deviceId = BAD_PORT;
+    int m_dataBits = AndroidSerial::Data8;
+    int m_stopBits = AndroidSerial::OneStop;
+    int m_parity = AndroidSerial::NoParity;
+    qint64 m_internalWriteTimeoutMsec = 0;
 };
 
 QT_END_NAMESPACE
