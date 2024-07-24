@@ -16,7 +16,6 @@
  *
  */
 
-#include "QmlControls/QGCImageProvider.h"
 #include <QtCore/QFile>
 #include <QtCore/QRegularExpression>
 #include <QtGui/QFontDatabase>
@@ -28,17 +27,12 @@
 #include <QtQml/QQmlContext>
 #include <QtQml/QQmlApplicationEngine>
 
-#if defined(QGC_GST_STREAMING)
-#include "GStreamer.h"
-#endif
-
 #include "QGCConfig.h"
 #include "QGCApplication.h"
 #include "CmdLineOptParser.h"
 #include "UDPLink.h"
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
-#include "UASMessageHandler.h"
 #include "QGCPalette.h"
 #include "QGCMapPalette.h"
 #include "QGCLoggingCategory.h"
@@ -79,6 +73,8 @@
 #include "CameraCalc.h"
 #include "VisualMissionItem.h"
 #include "EditPositionDialogController.h"
+#include "FactGroup.h"
+#include "FactPanelController.h"
 #include "FactValueSliderListModel.h"
 #include "ShapeFileHelper.h"
 #include "QGCFileDownload.h"
@@ -242,16 +238,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     // Set up our logging filters
     QGCLoggingCategoryRegister::instance()->setFilterRulesFromSettings(loggingOptions);
 
-#if defined(QGC_GST_STREAMING)
-    // Gstreamer debug settings
-    int gstDebugLevel = 0;
-    if (settings.contains(AppSettings::gstDebugLevelName)) {
-        gstDebugLevel = settings.value(AppSettings::gstDebugLevelName).toInt();
-    }
-    // Initialize Video Receiver
-    GStreamer::initialize(argc, argv, gstDebugLevel);
-#endif
-
     // We need to set language as early as possible prior to loading on JSON files.
     setLanguage();
 
@@ -268,7 +254,7 @@ void QGCApplication::setLanguage()
     _locale = QLocale::system();
     qCDebug(QGCApplicationLog) << "System reported locale:" << _locale << "; Name" << _locale.name() << "; Preffered (used in maps): " << (QLocale::system().uiLanguages().length() > 0 ? QLocale::system().uiLanguages()[0] : "None");
 
-    QLocale::Language possibleLocale = AppSettings::_qLocaleLanguageID();
+    QLocale::Language possibleLocale = AppSettings::_qLocaleLanguageEarlyAccess();
     if (possibleLocale != QLocale::AnyLanguage) {
         _locale = QLocale(possibleLocale);
     }
@@ -318,6 +304,14 @@ QGCApplication::~QGCApplication()
 void QGCApplication::init()
 {
     // Register our Qml objects
+
+    qmlRegisterType<Fact>               ("QGroundControl.FactSystem", 1, 0, "Fact");
+    qmlRegisterType<FactMetaData>       ("QGroundControl.FactSystem", 1, 0, "FactMetaData");
+    qmlRegisterType<FactPanelController>("QGroundControl.FactSystem", 1, 0, "FactPanelController");
+
+    qmlRegisterUncreatableType<FactGroup>               ("QGroundControl.FactSystem",   1, 0, "FactGroup",                  "Reference only");
+    qmlRegisterUncreatableType<FactValueSliderListModel>("QGroundControl.FactControls", 1, 0, "FactValueSliderListModel",   "Reference only");
+    qmlRegisterUncreatableType<ParameterManager>        ("QGroundControl.Vehicle",      1, 0, "ParameterManager",           "Reference only");
 
     qmlRegisterUncreatableType<FactValueGrid>        ("QGroundControl.Templates",             1, 0, "FactValueGrid",       "Reference only");
     qmlRegisterUncreatableType<FlightPathSegment>    ("QGroundControl",                       1, 0, "FlightPathSegment",   "Reference only");
@@ -434,10 +428,7 @@ void QGCApplication::_initForNormalAppBoot()
     }
 
     // Safe to show popup error messages now that main window is created
-    UASMessageHandler* msgHandler = _toolbox->uasMessageHandler();
-    if (msgHandler) {
-        msgHandler->showErrorsInToolbar();
-    }
+    _showErrorsInToolbar = true;
 
     #ifdef Q_OS_LINUX
     #ifndef Q_OS_ANDROID
@@ -611,11 +602,11 @@ void QGCApplication::showCriticalVehicleMessage(const QString& message)
         return;
     }
     QObject* rootQmlObject = _rootQmlObject();
-    if (rootQmlObject) {
+    if (rootQmlObject && _showErrorsInToolbar) {
         QVariant varReturn;
         QVariant varMessage = QVariant::fromValue(message);
         QMetaObject::invokeMethod(rootQmlObject, "showCriticalVehicleMessage", Q_RETURN_ARG(QVariant, varReturn), Q_ARG(QVariant, varMessage));
-    } else if (runningUnitTests()) {
+    } else if (runningUnitTests() || !_showErrorsInToolbar) {
         // Unit tests can run without UI
         qCDebug(QGCApplicationLog) << "QGCApplication::showCriticalVehicleMessage unittest" << message;
     } else {
@@ -888,4 +879,41 @@ void QGCApplication::shutdown()
     qCDebug(QGCApplicationLog) << "Exit";
     // This is bad, but currently qobject inheritances are incorrect and cause crashes on exit without
     delete _qmlAppEngine;
+}
+
+QString QGCApplication::numberToString(quint64 number)
+{
+    return getCurrentLanguage().toString(number);
+}
+
+QString QGCApplication::bigSizeToString(quint64 size)
+{
+    QString result;
+    const QLocale kLocale = getCurrentLanguage();
+    if (size < 1024) {
+        result = kLocale.toString(size);
+    } else if (size < pow(1024, 2)) {
+        result = kLocale.toString(static_cast<double>(size) / 1024.0, 'f', 1) + "kB";
+    } else if (size < pow(1024, 3)) {
+        result = kLocale.toString(static_cast<double>(size) / pow(1024, 2), 'f', 1) + "MB";
+    } else if (size < pow(1024, 4)) {
+        result = kLocale.toString(static_cast<double>(size) / pow(1024, 3), 'f', 1) + "GB";
+    } else {
+        result = kLocale.toString(static_cast<double>(size) / pow(1024, 4), 'f', 1) + "TB";
+    }
+    return result;
+}
+
+QString QGCApplication::bigSizeMBToString(quint64 size_MB)
+{
+    QString result;
+    const QLocale kLocale = getCurrentLanguage();
+    if (size_MB < 1024) {
+        result = kLocale.toString(static_cast<double>(size_MB) , 'f', 0) + " MB";
+    } else if(size_MB < pow(1024, 2)) {
+        result = kLocale.toString(static_cast<double>(size_MB) / 1024.0, 'f', 1) + " GB";
+    } else {
+        result = kLocale.toString(static_cast<double>(size_MB) / pow(1024, 2), 'f', 2) + " TB";
+    }
+    return result;
 }

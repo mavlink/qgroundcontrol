@@ -11,7 +11,7 @@
 #include "QGCApplication.h"
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
-#include "QGCMapUrlEngine.h"
+#include "ElevationMapProvider.h"
 #include "FirmwarePluginManager.h"
 #include "AppSettings.h"
 #include "PositionManager.h"
@@ -25,13 +25,6 @@
 
 #include <QtCore/QSettings>
 #include <QtCore/QLineF>
-
-static const char* kQmlGlobalKeyName = "QGCQml";
-
-const char* QGroundControlQmlGlobal::_flightMapPositionSettingsGroup =          "FlightMapPosition";
-const char* QGroundControlQmlGlobal::_flightMapPositionLatitudeSettingsKey =    "Latitude";
-const char* QGroundControlQmlGlobal::_flightMapPositionLongitudeSettingsKey =   "Longitude";
-const char* QGroundControlQmlGlobal::_flightMapZoomSettingsKey =                "FlightMapZoom";
 
 QGeoCoordinate   QGroundControlQmlGlobal::_coord = QGeoCoordinate(0.0,0.0);
 double           QGroundControlQmlGlobal::_zoom = 2;
@@ -340,12 +333,12 @@ int QGroundControlQmlGlobal::mavlinkSystemID()
 
 QString QGroundControlQmlGlobal::elevationProviderName()
 {
-    return UrlFactory::kCopernicusElevationProviderKey;
+    return CopernicusElevationProvider::kProviderKey;
 }
 
 QString QGroundControlQmlGlobal::elevationProviderNotice()
 {
-    return UrlFactory::kCopernicusElevationProviderNotice;
+    return CopernicusElevationProvider::kProviderNotice;
 }
 
 QString QGroundControlQmlGlobal::parameterFileExtension() const

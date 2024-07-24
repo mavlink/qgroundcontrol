@@ -130,8 +130,6 @@ public:
 
     void startAutoConnectedLinks(void);
 
-    static const char*  settingsGroup;
-
 signals:
     void mavlinkSupportForwardingEnabledChanged();
     void isBluetoothAvailableChanged();
@@ -168,12 +166,19 @@ private:
     QString                             _nmeaDeviceName;
     UdpIODevice                         _nmeaSocket;
 
-    static const char*  _defaultUDPLinkName;
-    static const char*  _mavlinkForwardingLinkName;
-    static const char*  _mavlinkForwardingSupportLinkName;
-    static const int    _autoconnectUpdateTimerMSecs;
-    static const int    _autoconnectConnectDelayMSecs;
     bool                _mavlinkSupportForwardingEnabled = false;
+
+    static constexpr const char* _defaultUDPLinkName =                  "UDP Link (AutoConnect)";
+    static constexpr const char* _mavlinkForwardingLinkName =           "MAVLink Forwarding Link";
+    static constexpr const char* _mavlinkForwardingSupportLinkName =    "MAVLink Support Forwarding Link";
+
+    static constexpr int _autoconnectUpdateTimerMSecs =   1000;
+#ifdef Q_OS_WIN
+    // Have to manually let the bootloader go by on Windows to get a working connect
+    static constexpr int _autoconnectConnectDelayMSecs =  6000;
+#else
+    static constexpr int _autoconnectConnectDelayMSecs =  1000;
+#endif
 
 #ifndef NO_SERIAL_LINK
 

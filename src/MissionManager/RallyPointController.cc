@@ -23,9 +23,6 @@
 
 QGC_LOGGING_CATEGORY(RallyPointControllerLog, "RallyPointControllerLog")
 
-const char* RallyPointController::_jsonFileTypeValue =  "RallyPoints";
-const char* RallyPointController::_jsonPointsKey =      "points";
-
 RallyPointController::RallyPointController(PlanMasterController* masterController, QObject* parent)
     : PlanElementController (masterController, parent)
     , _managerVehicle               (masterController->managerVehicle())

@@ -17,10 +17,12 @@ HEADERS += \
     $$PWD/QGCMapTileSet.h \
     $$PWD/QGCMapUrlEngine.h \
     $$PWD/QGCTileCacheWorker.h \
+    $$PWD/QGeoFileTileCacheQGC.h \
     $$PWD/QGeoMapReplyQGC.h \
     $$PWD/QGeoServiceProviderPluginQGC.h \
     $$PWD/QGeoTileFetcherQGC.h \
     $$PWD/QGeoTiledMappingManagerEngineQGC.h \
+    $$PWD/QGeoTiledMapQGC.h \
     $$PWD/MapProvider.h \
     $$PWD/ElevationMapProvider.h \
     $$PWD/GoogleMapProvider.h \
@@ -36,10 +38,12 @@ SOURCES += \
     $$PWD/QGCMapTileSet.cpp \
     $$PWD/QGCMapUrlEngine.cpp \
     $$PWD/QGCTileCacheWorker.cpp \
+    $$PWD/QGeoFileTileCacheQGC.cpp \
     $$PWD/QGeoMapReplyQGC.cpp \
     $$PWD/QGeoServiceProviderPluginQGC.cpp \
     $$PWD/QGeoTileFetcherQGC.cpp \
     $$PWD/QGeoTiledMappingManagerEngineQGC.cpp \
+    $$PWD/QGeoTiledMapQGC.cpp \
     $$PWD/MapProvider.cpp \
     $$PWD/ElevationMapProvider.cpp \
     $$PWD/GoogleMapProvider.cpp \

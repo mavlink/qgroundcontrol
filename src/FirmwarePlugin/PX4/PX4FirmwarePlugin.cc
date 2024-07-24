@@ -18,7 +18,6 @@
 #include "SettingsManager.h"
 #include "PlanViewSettings.h"
 #include "ParameterManager.h"
-#include "FactSystem.h"
 #include "Vehicle.h"
 
 #include <QDebug>
@@ -415,8 +414,8 @@ double PX4FirmwarePlugin::maximumHorizontalSpeedMultirotor(Vehicle* vehicle)
 {
     QString speedParam("MPC_XY_VEL_MAX");
 
-    if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, speedParam)) {
-        return vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, speedParam)->rawValue().toDouble();
+    if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, speedParam)) {
+        return vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, speedParam)->rawValue().toDouble();
     }
 
     return FirmwarePlugin::maximumHorizontalSpeedMultirotor(vehicle);
@@ -426,8 +425,8 @@ double PX4FirmwarePlugin::maximumEquivalentAirspeed(Vehicle* vehicle)
 {
     QString airspeedMax("FW_AIRSPD_MAX");
 
-    if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, airspeedMax)) {
-        return vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, airspeedMax)->rawValue().toDouble();
+    if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, airspeedMax)) {
+        return vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, airspeedMax)->rawValue().toDouble();
     }
 
     return FirmwarePlugin::maximumEquivalentAirspeed(vehicle);
@@ -437,8 +436,8 @@ double PX4FirmwarePlugin::minimumEquivalentAirspeed(Vehicle* vehicle)
 {
     QString airspeedMin("FW_AIRSPD_MIN");
 
-    if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, airspeedMin)) {
-        return vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, airspeedMin)->rawValue().toDouble();
+    if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, airspeedMin)) {
+        return vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, airspeedMin)->rawValue().toDouble();
     }
 
     return FirmwarePlugin::minimumEquivalentAirspeed(vehicle);
@@ -446,13 +445,13 @@ double PX4FirmwarePlugin::minimumEquivalentAirspeed(Vehicle* vehicle)
 
 bool PX4FirmwarePlugin::mulirotorSpeedLimitsAvailable(Vehicle* vehicle)
 {
-    return vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "MPC_XY_VEL_MAX");
+    return vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "MPC_XY_VEL_MAX");
 }
 
 bool PX4FirmwarePlugin::fixedWingAirSpeedLimitsAvailable(Vehicle* vehicle)
 {
-    return vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "FW_AIRSPD_MIN") &&
-            vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "FW_AIRSPD_MAX");
+    return vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "FW_AIRSPD_MIN") &&
+            vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "FW_AIRSPD_MAX");
 }
 
 void PX4FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord)
@@ -714,10 +713,10 @@ QString PX4FirmwarePlugin::getHobbsMeter(Vehicle* vehicle)
     static const char* HOOBS_LO = "LND_FLIGHT_T_LO";
     uint64_t hobbsTimeSeconds = 0;
 
-    if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, HOOBS_HI) &&
-            vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, HOOBS_LO)) {
-        Fact* factHi = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, HOOBS_HI);
-        Fact* factLo = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, HOOBS_LO);
+    if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, HOOBS_HI) &&
+            vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, HOOBS_LO)) {
+        Fact* factHi = vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, HOOBS_HI);
+        Fact* factLo = vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, HOOBS_LO);
         hobbsTimeSeconds = ((uint64_t)factHi->rawValue().toUInt() << 32 | (uint64_t)factLo->rawValue().toUInt()) / 1000000;
         qCDebug(VehicleLog) << "Hobbs Meter raw PX4:" << "(" << factHi->rawValue().toUInt() << factLo->rawValue().toUInt() << ")";
     }
@@ -732,8 +731,8 @@ QString PX4FirmwarePlugin::getHobbsMeter(Vehicle* vehicle)
 
 bool PX4FirmwarePlugin::hasGripper(const Vehicle* vehicle) const
 {
-    if(vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, QStringLiteral("PD_GRIPPER_EN"))) {
-        bool _hasGripper = (vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, QStringLiteral("PD_GRIPPER_EN"))->rawValue().toInt()) != 0 ? true : false;
+    if(vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, QStringLiteral("PD_GRIPPER_EN"))) {
+        bool _hasGripper = (vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, QStringLiteral("PD_GRIPPER_EN"))->rawValue().toInt()) != 0 ? true : false;
         return _hasGripper;
     }
     return false;

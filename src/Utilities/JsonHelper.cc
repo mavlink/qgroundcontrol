@@ -21,13 +21,6 @@
 #include <QtCore/QTranslator>
 #include <QtCore/qapplicationstatic.h>
 
-const char* JsonHelper::jsonVersionKey                      = "version";
-const char* JsonHelper::jsonGroundStationKey                = "groundStation";
-const char* JsonHelper::jsonGroundStationValue              = "QGroundControl";
-const char* JsonHelper::jsonFileTypeKey                     = "fileType";
-const char* JsonHelper::_translateKeysKey                   = "translateKeys";
-const char* JsonHelper::_arrayIDKeysKey                     = "_arrayIDKeys";
-
 Q_APPLICATION_STATIC(QTranslator, s_jsonTranslator);
 
 QTranslator* JsonHelper::translator()

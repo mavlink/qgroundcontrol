@@ -94,11 +94,11 @@ private:
     uint16_t        _boardVendorId      = 0;
     uint16_t        _boardProductId     = 0;
 
-    static const char* _firmwareTypeKey;
-    static const char* _vehicleTypeKey;
-    static const char* _sendStatusTextKey;
-    static const char* _incrementVehicleIdKey;
-    static const char* _failureModeKey;
+    static constexpr const char* _firmwareTypeKey         = "FirmwareType";
+    static constexpr const char* _vehicleTypeKey          = "VehicleType";
+    static constexpr const char* _sendStatusTextKey       = "SendStatusText";
+    static constexpr const char* _incrementVehicleIdKey   = "IncrementVehicleId";
+    static constexpr const char* _failureModeKey          = "FailureMode";
 };
 
 class MockLink : public LinkInterface
@@ -228,6 +228,7 @@ private:
     void _handleInProgressCommandLong   (const mavlink_command_long_t& request);
     void _handleManualControl           (const mavlink_message_t& msg);
     void _handlePreFlightCalibration    (const mavlink_command_long_t& request);
+    void _handleTakeoff                 (const mavlink_command_long_t& request);
     void _handleLogRequestList          (const mavlink_message_t& msg);
     void _handleLogRequestData          (const mavlink_message_t& msg);
     void _handleParamMapRC              (const mavlink_message_t& msg);
@@ -236,6 +237,8 @@ private:
     void _setParamFloatUnionIntoMap     (int componentId, const QString& paramName, float paramFloat);
     void _sendHomePosition              (void);
     void _sendGpsRawInt                 (void);
+    void _sendGlobalPositionInt         (void);
+    void _sendExtendedSysState          (void);
     void _sendVibration                 (void);
     void _sendSysStatus                 (void);
     void _sendBatteryStatus             (void);
@@ -286,7 +289,7 @@ private:
     MAV_TYPE                    _vehicleType;
     double                      _vehicleLatitude;
     double                      _vehicleLongitude;
-    double                      _vehicleAltitude;
+    double                      _vehicleAltitudeAMSL;
     bool                        _commLost                       = false;
     bool                        _highLatencyTransmissionEnabled = true;
 
@@ -326,8 +329,8 @@ private:
 
     static double       _defaultVehicleLatitude;
     static double       _defaultVehicleLongitude;
-    static double       _defaultVehicleAltitude;
+    static double       _defaultVehicleHomeAltitude;
     static int          _nextVehicleSystemId;
-    static const char*  _failParam;
+    static constexpr const char*  _failParam = "COM_FLTMODE6";
 };
 

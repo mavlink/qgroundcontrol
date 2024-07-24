@@ -128,7 +128,7 @@ public:
     void setShowAltColor(bool showAltColor);
     void selectVertex   (int index);
 
-    static const char* jsonPolygonKey;
+    static constexpr const char* jsonPolygonKey = "polygon";
 
 signals:
     void countChanged       (int count);

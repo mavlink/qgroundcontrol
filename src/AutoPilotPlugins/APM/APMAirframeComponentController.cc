@@ -12,7 +12,6 @@
 #include "QGCApplication.h"
 #include "QGCFileDownload.h"
 #include "ParameterManager.h"
-#include "FactSystem.h"
 #include "Vehicle.h"
 #include "ArduCopterFirmwarePlugin.h"
 #include "ArduRoverFirmwarePlugin.h"
@@ -69,7 +68,7 @@ typedef struct {
     const char* imageResource;
 } FrameToImageInfo_t;
 
-static const FrameToImageInfo_t s_rgFrameToImageCopter[] = {
+static constexpr const FrameToImageInfo_t s_rgFrameToImageCopter[] = {
     { FRAME_CLASS_QUAD,         FRAME_TYPE_X,       "QuadRotorX" },             // Default
     { FRAME_CLASS_QUAD,         FRAME_TYPE_PLUS,    "QuadRotorPlus" },
     { FRAME_CLASS_QUAD,         FRAME_TYPE_V,       "QuadRotorWide" },
@@ -101,7 +100,7 @@ static const FrameToImageInfo_t s_rgFrameToImageCopter[] = {
     { FRAME_CLASS_TRI,          -1,                 "YPlus" },
 };
 
-static const FrameToImageInfo_t s_rgFrameToImageRover[] = {
+static constexpr const FrameToImageInfo_t s_rgFrameToImageRover[] = {
     { FRAME_CLASS_ROVER,    -1, "Rover" },
     { FRAME_CLASS_BOAT,     -1, "Boat" },
 };
@@ -139,8 +138,8 @@ static QString s_findImageResourceRover(int frameClass, int frameType)
 }
 
 APMAirframeComponentController::APMAirframeComponentController(void)
-    : _frameClassFact   (getParameterFact(FactSystem::defaultComponentId, QStringLiteral("FRAME_CLASS"), false /* reportMissing */))
-    , _frameTypeFact    (getParameterFact(FactSystem::defaultComponentId, QStringLiteral("FRAME_TYPE"), false /* reportMissing */))
+    : _frameClassFact   (getParameterFact(ParameterManager::defaultComponentId, QStringLiteral("FRAME_CLASS"), false /* reportMissing */))
+    , _frameTypeFact    (getParameterFact(ParameterManager::defaultComponentId, QStringLiteral("FRAME_TYPE"), false /* reportMissing */))
     , _frameClassModel  (new QmlObjectListModel(this))
 {
     _fillFrameClasses();

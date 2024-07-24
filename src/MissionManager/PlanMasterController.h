@@ -107,11 +107,11 @@ public:
     Vehicle* controllerVehicle(void) { return _controllerVehicle; }
     Vehicle* managerVehicle(void) { return _managerVehicle; }
 
-    static const int    kPlanFileVersion;
-    static const char*  kPlanFileType;
-    static const char*  kJsonMissionObjectKey;
-    static const char*  kJsonGeoFenceObjectKey;
-    static const char*  kJsonRallyPointsObjectKey;
+    static constexpr int   kPlanFileVersion =            1;
+    static constexpr const char* kPlanFileType =               "Plan";
+    static constexpr const char* kJsonMissionObjectKey =       "mission";
+    static constexpr const char* kJsonGeoFenceObjectKey =      "geoFence";
+    static constexpr const char* kJsonRallyPointsObjectKey =   "rallyPoints";
 
 signals:
     void containsItemsChanged               (bool containsItems);

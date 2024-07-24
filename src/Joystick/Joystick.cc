@@ -24,71 +24,7 @@
 // JoystickLog Category declaration moved to QGCLoggingCategory.cc to allow access in Vehicle
 QGC_LOGGING_CATEGORY(JoystickValuesLog, "JoystickValuesLog")
 
-const char* Joystick::_settingsGroup =                  "Joysticks";
-const char* Joystick::_calibratedSettingsKey =          "Calibrated4"; // Increment number to force recalibration
-const char* Joystick::_buttonActionNameKey =            "ButtonActionName%1";
-const char* Joystick::_buttonActionRepeatKey =          "ButtonActionRepeat%1";
-const char* Joystick::_throttleModeSettingsKey =        "ThrottleMode";
-const char* Joystick::_negativeThrustSettingsKey =      "NegativeThrust";
-const char* Joystick::_exponentialSettingsKey =         "Exponential";
-const char* Joystick::_accumulatorSettingsKey =         "Accumulator";
-const char* Joystick::_deadbandSettingsKey =            "Deadband";
-const char* Joystick::_circleCorrectionSettingsKey =    "Circle_Correction";
-const char* Joystick::_axisFrequencySettingsKey =       "AxisFrequency";
-const char* Joystick::_buttonFrequencySettingsKey =     "ButtonFrequency";
-const char* Joystick::_txModeSettingsKey =              nullptr;
-const char* Joystick::_fixedWingTXModeSettingsKey =     "TXMode_FixedWing";
-const char* Joystick::_multiRotorTXModeSettingsKey =    "TXMode_MultiRotor";
-const char* Joystick::_roverTXModeSettingsKey =         "TXMode_Rover";
-const char* Joystick::_vtolTXModeSettingsKey =          "TXMode_VTOL";
-const char* Joystick::_submarineTXModeSettingsKey =     "TXMode_Submarine";
-
-const char* Joystick::_buttonActionNone =               QT_TR_NOOP("No Action");
-const char* Joystick::_buttonActionArm =                QT_TR_NOOP("Arm");
-const char* Joystick::_buttonActionDisarm =             QT_TR_NOOP("Disarm");
-const char* Joystick::_buttonActionToggleArm =          QT_TR_NOOP("Toggle Arm");
-const char* Joystick::_buttonActionVTOLFixedWing =      QT_TR_NOOP("VTOL: Fixed Wing");
-const char* Joystick::_buttonActionVTOLMultiRotor =     QT_TR_NOOP("VTOL: Multi-Rotor");
-const char* Joystick::_buttonActionContinuousZoomIn =   QT_TR_NOOP("Continuous Zoom In");
-const char* Joystick::_buttonActionContinuousZoomOut =  QT_TR_NOOP("Continuous Zoom Out");
-const char* Joystick::_buttonActionStepZoomIn =         QT_TR_NOOP("Step Zoom In");
-const char* Joystick::_buttonActionStepZoomOut =        QT_TR_NOOP("Step Zoom Out");
-const char* Joystick::_buttonActionNextStream =         QT_TR_NOOP("Next Video Stream");
-const char* Joystick::_buttonActionPreviousStream =     QT_TR_NOOP("Previous Video Stream");
-const char* Joystick::_buttonActionNextCamera =         QT_TR_NOOP("Next Camera");
-const char* Joystick::_buttonActionPreviousCamera =     QT_TR_NOOP("Previous Camera");
-const char* Joystick::_buttonActionTriggerCamera =      QT_TR_NOOP("Trigger Camera");
-const char* Joystick::_buttonActionStartVideoRecord =   QT_TR_NOOP("Start Recording Video");
-const char* Joystick::_buttonActionStopVideoRecord =    QT_TR_NOOP("Stop Recording Video");
-const char* Joystick::_buttonActionToggleVideoRecord =  QT_TR_NOOP("Toggle Recording Video");
-const char* Joystick::_buttonActionGimbalDown =         QT_TR_NOOP("Gimbal Down");
-const char* Joystick::_buttonActionGimbalUp =           QT_TR_NOOP("Gimbal Up");
-const char* Joystick::_buttonActionGimbalLeft =         QT_TR_NOOP("Gimbal Left");
-const char* Joystick::_buttonActionGimbalRight =        QT_TR_NOOP("Gimbal Right");
-const char* Joystick::_buttonActionGimbalCenter =       QT_TR_NOOP("Gimbal Center");
-const char* Joystick::_buttonActionEmergencyStop =      QT_TR_NOOP("Emergency Stop");
-const char* Joystick::_buttonActionGripperGrab =        QT_TR_NOOP("Gripper Close");
-const char* Joystick::_buttonActionGripperRelease =     QT_TR_NOOP("Gripper Open");
-const char* Joystick::_buttonActionLandingGearDeploy=   QT_TR_NOOP("Landing gear deploy");
-const char* Joystick::_buttonActionLandingGearRetract=  QT_TR_NOOP("Landing gear retract");
-
-const char* Joystick::_rgFunctionSettingsKey[Joystick::maxFunction] = {
-    "RollAxis",
-    "PitchAxis",
-    "YawAxis",
-    "ThrottleAxis",
-    "GimbalPitchAxis",
-    "GimbalYawAxis"
-};
-
 int Joystick::_transmitterMode = 2;
-
-const float Joystick::_defaultAxisFrequencyHz   = 25.0f;
-const float Joystick::_defaultButtonFrequencyHz = 5.0f;
-const float Joystick::_minAxisFrequencyHz       = 0.25f;
-const float Joystick::_maxAxisFrequencyHz       = 200.0f;
-const float Joystick::_minButtonFrequencyHz     = 0.25f;
-const float Joystick::_maxButtonFrequencyHz     = 50.0f;
 
 AssignedButtonAction::AssignedButtonAction(QObject* parent, const QString name)
     : QObject(parent)
@@ -113,6 +49,8 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatC
     , _multiVehicleManager  (multiVehicleManager)
     , _customActionManager  (qgcApp()->toolbox()->settingsManager()->customMavlinkActionsSettings()->joystickActionsFile())
 {
+    // qCDebug(JoystickLog) << Q_FUNC_INFO << this;
+
     qRegisterMetaType<GRIPPER_ACTIONS>();
 
     _rgAxisValues   = new int[static_cast<size_t>(_axisCount)];
@@ -152,6 +90,8 @@ Joystick::~Joystick()
             _buttonActionArray[button]->deleteLater();
         }
     }
+
+    // qCDebug(JoystickLog) << Q_FUNC_INFO << this;
 }
 
 void Joystick::_setDefaultCalibration(void) {

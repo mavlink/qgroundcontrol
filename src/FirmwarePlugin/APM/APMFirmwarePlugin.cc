@@ -18,7 +18,6 @@
 #include "APMSubMotorComponentController.h"
 #include "MissionManager.h"
 #include "ParameterManager.h"
-#include "FactSystem.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
 #include "APMMavlinkStreamRateSettings.h"
@@ -29,6 +28,7 @@
 #include "APMParameterMetaData.h"
 #include "LinkManager.h"
 #include "Vehicle.h"
+#include <StatusTextHandler.h>
 #include "MAVLinkProtocol.h"
 #include "QGCLoggingCategory.h"
 #include <DeviceInfo.h>
@@ -38,9 +38,6 @@
 #include <QtCore/QRegularExpressionMatch>
 
 QGC_LOGGING_CATEGORY(APMFirmwarePluginLog, "APMFirmwarePluginLog")
-
-const char* APMFirmwarePlugin::_artooIP =                   "10.1.1.1"; ///< IP address of ARTOO controller
-const int   APMFirmwarePlugin::_artooVideoHandshakePort =   5502;       ///< Port for video handshake on ARTOO controller
 
 /*
  * @brief APMCustomMode encapsulates the custom modes for APM
@@ -265,7 +262,7 @@ bool APMFirmwarePlugin::_handleIncomingStatusText(Vehicle* /*vehicle*/, mavlink_
     // APM user facing calibration messages come through as high severity, we need to parse them out
     // and lower the severity on them so that they don't pop in the users face.
 
-    const QString messageText = _getMessageText(message);
+    const QString messageText = StatusTextHandler::getMessageText(*message);
     if (messageText.contains("Place vehicle") || messageText.contains("Calibration successful")) {
         _adjustCalibrationMessageSeverity(message);
         return true;
@@ -357,18 +354,6 @@ void APMFirmwarePlugin::adjustOutgoingMavlinkMessageThreadSafe(Vehicle* vehicle,
         _handleOutgoingParamSetThreadSafe(vehicle, outgoingLink, message);
         break;
     }
-}
-
-QString APMFirmwarePlugin::_getMessageText(mavlink_message_t* message) const
-{
-    QByteArray b;
-
-    b.resize(MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN+1);
-    mavlink_msg_statustext_get_text(message, b.data());
-
-    // Ensure NUL-termination
-    b[b.length()-1] = '\0';
-    return QString::fromLocal8Bit(b, std::strlen(b.constData()));
 }
 
 void APMFirmwarePlugin::_setInfoSeverity(mavlink_message_t* message) const
@@ -626,8 +611,8 @@ QString APMFirmwarePlugin::getHobbsMeter(Vehicle* vehicle)
 {
     uint64_t hobbsTimeSeconds = 0;
 
-    if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "STAT_FLTTIME")) {
-        Fact* factFltTime = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "STAT_FLTTIME");
+    if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "STAT_FLTTIME")) {
+        Fact* factFltTime = vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, "STAT_FLTTIME");
         hobbsTimeSeconds = (uint64_t)factFltTime->rawValue().toUInt();
         qCDebug(VehicleLog) << "Hobbs Meter raw Ardupilot(s):" << "(" <<  hobbsTimeSeconds << ")";
     }
@@ -642,8 +627,8 @@ QString APMFirmwarePlugin::getHobbsMeter(Vehicle* vehicle)
 
 bool APMFirmwarePlugin::hasGripper(const Vehicle* vehicle) const
 {
-    if(vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "GRIP_ENABLE")) {
-        bool _hasGripper = (vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, QStringLiteral("GRIP_ENABLE"))->rawValue().toInt()) == 1 ? true : false;
+    if(vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "GRIP_ENABLE")) {
+        bool _hasGripper = (vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, QStringLiteral("GRIP_ENABLE"))->rawValue().toInt()) == 1 ? true : false;
         return _hasGripper;
     }
     return false;
@@ -900,15 +885,15 @@ void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
 
 bool APMFirmwarePlugin::mulirotorSpeedLimitsAvailable(Vehicle* vehicle)
 {
-    return vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "WPNAV_SPEED");
+    return vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "WPNAV_SPEED");
 }
 
 double APMFirmwarePlugin::maximumHorizontalSpeedMultirotor(Vehicle* vehicle)
 {
     QString speedParam("WPNAV_SPEED");
 
-    if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, speedParam)) {
-        return vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, speedParam)->rawValue().toDouble() * 0.01;  // note cm/s -> m/s
+    if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, speedParam)) {
+        return vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, speedParam)->rawValue().toDouble() * 0.01;  // note cm/s -> m/s
     }
 
     return FirmwarePlugin::maximumHorizontalSpeedMultirotor(vehicle);
@@ -932,18 +917,18 @@ void APMFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
     _guidedModeTakeoff(vehicle, altitudeRel);
 }
 
-double APMFirmwarePlugin::minimumTakeoffAltitude(Vehicle* vehicle)
+double APMFirmwarePlugin::minimumTakeoffAltitudeMeters(Vehicle* vehicle)
 {
     double minTakeoffAlt = 0;
     QString takeoffAltParam(vehicle->vtol() ? QStringLiteral("Q_RTL_ALT") : QStringLiteral("PILOT_TKOFF_ALT"));
     float paramDivisor = vehicle->vtol() ? 1.0 : 100.0; // PILOT_TAKEOFF_ALT is in centimeters
 
-    if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, takeoffAltParam)) {
-        minTakeoffAlt = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, takeoffAltParam)->rawValue().toDouble() / static_cast<double>(paramDivisor);
+    if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, takeoffAltParam)) {
+        minTakeoffAlt = vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, takeoffAltParam)->rawValue().toDouble() / static_cast<double>(paramDivisor);
     }
 
     if (minTakeoffAlt == 0) {
-        minTakeoffAlt = FirmwarePlugin::minimumTakeoffAltitude(vehicle);
+        minTakeoffAlt = FirmwarePlugin::minimumTakeoffAltitudeMeters(vehicle);
     }
 
     return minTakeoffAlt;
@@ -962,7 +947,7 @@ bool APMFirmwarePlugin::_guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
         return false;
     }
 
-    double takeoffAltRel = minimumTakeoffAltitude(vehicle);
+    double takeoffAltRel = minimumTakeoffAltitudeMeters(vehicle);
     if (!qIsNaN(altitudeRel) && altitudeRel > takeoffAltRel) {
         takeoffAltRel = altitudeRel;
     }
@@ -1166,8 +1151,8 @@ double APMFirmwarePlugin::maximumEquivalentAirspeed(Vehicle* vehicle)
 {
     QString airspeedMax("ARSPD_FBW_MAX");
 
-    if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, airspeedMax)) {
-        return vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, airspeedMax)->rawValue().toDouble();
+    if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, airspeedMax)) {
+        return vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, airspeedMax)->rawValue().toDouble();
     }
 
     return FirmwarePlugin::maximumEquivalentAirspeed(vehicle);
@@ -1177,8 +1162,8 @@ double APMFirmwarePlugin::minimumEquivalentAirspeed(Vehicle* vehicle)
 {
     QString airspeedMin("ARSPD_FBW_MIN");
 
-    if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, airspeedMin)) {
-        return vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, airspeedMin)->rawValue().toDouble();
+    if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, airspeedMin)) {
+        return vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, airspeedMin)->rawValue().toDouble();
     }
 
     return FirmwarePlugin::minimumEquivalentAirspeed(vehicle);
@@ -1186,8 +1171,8 @@ double APMFirmwarePlugin::minimumEquivalentAirspeed(Vehicle* vehicle)
 
 bool APMFirmwarePlugin::fixedWingAirSpeedLimitsAvailable(Vehicle* vehicle)
 {
-    return vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "ARSPD_FBW_MIN") &&
-           vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "ARSPD_FBW_MAX");
+    return vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "ARSPD_FBW_MIN") &&
+           vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "ARSPD_FBW_MAX");
 }
 
 void APMFirmwarePlugin::guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle* vehicle, double airspeed_equiv)
@@ -1217,8 +1202,8 @@ void APMFirmwarePlugin::_setBaroGndTemp(Vehicle* vehicle, qreal temp)
 
     const QString bareGndTemp("BARO_GND_TEMP");
 
-    if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, bareGndTemp)) {
-        Fact* const param = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, bareGndTemp);
+    if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, bareGndTemp)) {
+        Fact* const param = vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, bareGndTemp);
         param->setRawValue(temp);
     }
 }
@@ -1231,8 +1216,8 @@ void APMFirmwarePlugin::_setBaroAltOffset(Vehicle* vehicle, qreal offset)
 
     const QString baroAltOffset("BARO_ALT_OFFSET");
 
-    if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, baroAltOffset)) {
-        Fact* const param = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, baroAltOffset);
+    if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, baroAltOffset)) {
+        Fact* const param = vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, baroAltOffset);
         param->setRawValue(offset);
     }
 }

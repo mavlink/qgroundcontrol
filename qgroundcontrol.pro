@@ -593,6 +593,7 @@ HEADERS += \
     src/Vehicle/TrajectoryPoints.h \
     src/Vehicle/Vehicle.h \
     src/Vehicle/VehicleObjectAvoidance.h \
+    src/Vehicle/FactGroups/VehicleFactGroup.h \
     src/Vehicle/FactGroups/VehicleBatteryFactGroup.h \
     src/Vehicle/FactGroups/VehicleClockFactGroup.h \
     src/Vehicle/FactGroups/VehicleDistanceSensorFactGroup.h \
@@ -618,10 +619,10 @@ HEADERS += \
     src/MAVLink/QGCMAVLink.h \
     src/MAVLink/MAVLinkLib.h \
     src/MAVLink/MAVLinkFTP.h \
+    src/MAVLink/StatusTextHandler.h \
     src/Comms/TCPLink.h \
     src/Comms/UDPLink.h \
     src/Comms/UdpIODevice.h \
-    src/Vehicle/UASMessageHandler.h \
     src/AnalyzeView/GeoTagController.h \
     src/AnalyzeView/GeoTagWorker.h \
     src/AnalyzeView/ExifParser.h \
@@ -866,6 +867,7 @@ SOURCES += \
     src/Vehicle/TrajectoryPoints.cc \
     src/Vehicle/Vehicle.cc \
     src/Vehicle/VehicleObjectAvoidance.cc \
+    src/Vehicle/FactGroups/VehicleFactGroup.cc \
     src/Vehicle/FactGroups/VehicleBatteryFactGroup.cc \
     src/Vehicle/FactGroups/VehicleClockFactGroup.cc \
     src/Vehicle/FactGroups/VehicleDistanceSensorFactGroup.cc \
@@ -890,11 +892,11 @@ SOURCES += \
     src/Comms/MAVLinkProtocol.cc \
     src/MAVLink/QGCMAVLink.cc \
     src/MAVLink/MAVLinkFTP.cc \
+    src/MAVLink/StatusTextHandler.cc \
     src/Comms/TCPLink.cc \
     src/Comms/UDPLink.cc \
     src/Comms/UdpIODevice.cc \
     src/main.cc \
-    src/Vehicle/UASMessageHandler.cc \
     src/AnalyzeView/GeoTagController.cc \
     src/AnalyzeView/GeoTagWorker.cc \
     src/AnalyzeView/ExifParser.cc \
@@ -1151,7 +1153,6 @@ HEADERS += \
     src/FactSystem/FactControls/FactPanelController.h \
     src/FactSystem/FactGroup.h \
     src/FactSystem/FactMetaData.h \
-    src/FactSystem/FactSystem.h \
     src/FactSystem/FactValueSliderListModel.h \
     src/FactSystem/ParameterManager.h \
     src/FactSystem/SettingsFact.h \
@@ -1161,7 +1162,6 @@ SOURCES += \
     src/FactSystem/FactControls/FactPanelController.cc \
     src/FactSystem/FactGroup.cc \
     src/FactSystem/FactMetaData.cc \
-    src/FactSystem/FactSystem.cc \
     src/FactSystem/FactValueSliderListModel.cc \
     src/FactSystem/ParameterManager.cc \
     src/FactSystem/SettingsFact.cc \
@@ -1223,19 +1223,17 @@ contains (CONFIG, DISABLE_VIDEOSTREAMING) {
     QT += \
         opengl \
         gui-private
-    include(src/VideoReceiver/VideoReceiver.pri)
+    include(src/VideoManager/VideoReceiver/VideoReceiver.pri)
 }
 
 !VideoEnabled {
     INCLUDEPATH += \
-        src/VideoReceiver
+        src/VideoManager/VideoReceiver \
+        src/VideoManager/VideoReceiver/GStreamer
 
     HEADERS += \
-        src/VideoManager/GLVideoItemStub.h \
-        src/VideoReceiver/VideoReceiver.h
-
-    SOURCES += \
-        src/VideoManager/GLVideoItemStub.cc
+        src/VideoManager/VideoReceiver/GStreamer/GLVideoItemStub.h \
+        src/VideoManager/VideoReceiver/VideoReceiver.h
 }
 
 #-------------------------------------------------------------------------------------

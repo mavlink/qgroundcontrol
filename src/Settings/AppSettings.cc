@@ -21,41 +21,44 @@
 #include <QtCore/QDir>
 #include <QtCore/QSettings>
 
-const char* AppSettings::parameterFileExtension =   "params";
-const char* AppSettings::planFileExtension =        "plan";
-const char* AppSettings::missionFileExtension =     "mission";
-const char* AppSettings::waypointsFileExtension =   "waypoints";
-const char* AppSettings::fenceFileExtension =       "fence";
-const char* AppSettings::rallyPointFileExtension =  "rally";
-const char* AppSettings::telemetryFileExtension =   "tlog";
-const char* AppSettings::kmlFileExtension =         "kml";
-const char* AppSettings::shpFileExtension =         "shp";
-const char* AppSettings::logFileExtension =         "ulg";
-const char* AppSettings::tilesetFileExtension =     "qgctiledb";
-
-const char* AppSettings::parameterDirectory =       QT_TRANSLATE_NOOP("AppSettings", "Parameters");
-const char* AppSettings::telemetryDirectory =       QT_TRANSLATE_NOOP("AppSettings", "Telemetry");
-const char* AppSettings::missionDirectory =         QT_TRANSLATE_NOOP("AppSettings", "Missions");
-const char* AppSettings::logDirectory =             QT_TRANSLATE_NOOP("AppSettings", "Logs");
-const char* AppSettings::videoDirectory =           QT_TRANSLATE_NOOP("AppSettings", "Video");
-const char* AppSettings::photoDirectory =           QT_TRANSLATE_NOOP("AppSettings", "Photo");
-const char* AppSettings::crashDirectory =           QT_TRANSLATE_NOOP("AppSettings", "CrashLogs");
-const char* AppSettings::customActionsDirectory =   QT_TRANSLATE_NOOP("AppSettings", "CustomActions");
-
 // Release languages are 90%+ complete
-QList<int> AppSettings::_rgReleaseLanguages = {
-    QLocale::AnyLanguage,  // System
-    QLocale::Chinese,
+QList<QLocale::Language> AppSettings::_rgReleaseLanguages = {
     QLocale::English,
+    QLocale::Azerbaijani,    
+    QLocale::Chinese,
     QLocale::Japanese,
     QLocale::Korean,
-    QLocale::Azerbaijani,
+    QLocale::Portuguese,
+    QLocale::Russian,
 };
+
 // Partial languages are 40%+ complete
-QList<int> AppSettings::_rgPartialLanguages = {
-    QLocale::German,
-    QLocale::Turkish,
+QList<QLocale::Language> AppSettings::_rgPartialLanguages = {
     QLocale::Ukrainian,
+};
+
+AppSettings::LanguageInfo_t AppSettings::_rgLanguageInfo[] = {
+    { QLocale::AnyLanguage,     "System" },                     // Must be first
+    { QLocale::Azerbaijani,     "Azerbaijani (Azerbaijani)" },
+    { QLocale::Bulgarian,       "български (Bulgarian)" },
+    { QLocale::Chinese,         "中文 (Chinese)" },
+    { QLocale::Dutch,           "Nederlands (Dutch)" },
+    { QLocale::English,         "English" },
+    { QLocale::Finnish,         "Suomi (Finnish)" },
+    { QLocale::French,          "Français (French)" },
+    { QLocale::German,          "Deutsche (German)" },
+    { QLocale::Greek,           "Ελληνικά (Greek)" },
+    { QLocale::Hebrew,          "עברית (Hebrew)" },
+    { QLocale::Italian,         "Italiano (Italian)" },
+    { QLocale::Japanese,        "日本語 (Japanese)" },
+    { QLocale::Korean,          "한국어 (Korean)" },
+    { QLocale::NorwegianBokmal, "Norsk (Norwegian)" },
+    { QLocale::Polish,          "Polskie (Polish)" },
+    { QLocale::Portuguese,      "Português (Portuguese)" },
+    { QLocale::Russian,         "Pусский (Russian)" },
+    { QLocale::Spanish,         "Español (Spanish)" },
+    { QLocale::Swedish,         "Svenska (Swedish)" },
+    { QLocale::Turkish,         "Türk (Turkish)" }
 };
 
 DECLARE_SETTINGGROUP(App, "")
@@ -190,35 +193,39 @@ DECLARE_SETTINGSFACT_NO_FUNC(AppSettings, qLocaleLanguage)
         connect(_qLocaleLanguageFact, &Fact::rawValueChanged, this, &AppSettings::_qLocaleLanguageChanged);
 
         FactMetaData*   metaData            = _qLocaleLanguageFact->metaData();
-        QStringList     rgOriginalStrings   = metaData->enumStrings();
-        QVariantList    rgOriginalValues    = metaData->enumValues();
-        QStringList     rgUpdatedStrings;
-        QVariantList    rgUpdatedValues;
+        QStringList     rgEnumStrings;
+        QVariantList    rgEnumValues;
 
-        // All builds contains released and partial languages
-        for (int i=0; i<rgOriginalStrings.count(); i++) {
-            if (_rgReleaseLanguages.contains(rgOriginalValues[i].toInt())) {
-                rgUpdatedStrings.append(rgOriginalStrings[i]);
-                rgUpdatedValues.append(rgOriginalValues[i]);
+        // System is always an available selection
+        rgEnumStrings.append(_rgLanguageInfo[0].languageName);
+        rgEnumValues.append(_rgLanguageInfo[0].languageId);
+
+        for (const auto& languageInfo: _rgLanguageInfo) {
+            if (_rgReleaseLanguages.contains(languageInfo.languageId)) {
+                rgEnumStrings.append(languageInfo.languageName);
+                rgEnumValues.append(languageInfo.languageId);
             }
         }
-        for (int i=0; i<rgOriginalStrings.count(); i++) {
-            if (_rgPartialLanguages.contains(rgOriginalValues[i].toInt())) {
-                rgUpdatedStrings.append(rgOriginalStrings[i] + AppSettings::tr(" (Partial)"));
-                rgUpdatedValues.append(rgOriginalValues[i].toInt());
+        for (const auto& languageInfo: _rgLanguageInfo) {
+            if (_rgPartialLanguages.contains(languageInfo.languageId)) {
+                rgEnumStrings.append(QString(languageInfo.languageName) + AppSettings::tr(" (Partial)"));
+                rgEnumValues.append(languageInfo.languageId);
             }
         }
 #ifdef DAILY_BUILD
-        // Only daily builds include full set
-        for (int i=0; i<rgOriginalStrings.count(); i++) {
-            int languageId = rgOriginalValues[i].toInt();
-            if (!_rgReleaseLanguages.contains(languageId)  || !_rgPartialLanguages.contains(languageId)) {
-                rgUpdatedStrings.append(rgOriginalStrings[i] + AppSettings::tr(" (Test only)"));
-                rgUpdatedValues.append(rgOriginalValues[i].toInt());
+        // Only daily builds include full set of languages for testing purposes
+        for (const auto& languageInfo: _rgLanguageInfo) {
+            if (!_rgReleaseLanguages.contains(languageInfo.languageId) && !_rgPartialLanguages.contains(languageInfo.languageId)) {
+                rgEnumStrings.append(QString(languageInfo.languageName) + AppSettings::tr(" (Test Only)"));
+                rgEnumValues.append(languageInfo.languageId);
             }
         }
 #endif
-        metaData->setEnumInfo(rgUpdatedStrings, rgUpdatedValues);
+        metaData->setEnumInfo(rgEnumStrings, rgEnumValues);
+
+        if (_qLocaleLanguageFact->enumIndex() == -1) {
+            _qLocaleLanguageFact->setRawValue(QLocale::AnyLanguage);
+        }
     }
     return _qLocaleLanguageFact;
 }
@@ -361,35 +368,25 @@ void AppSettings::firstRunPromptIdsMarkIdAsShown(int id)
     }
 }
 
-/// Hack to provide language settings as early in the boot process as possible. Must be known
-/// prior to loading any json files.
-QLocale::Language AppSettings::_qLocaleLanguageID(void)
+/// Returns the current qLocaleLanguage setting bypassing the standard SettingsGroup path. It also validates
+/// that the value is a supported language. This should only be used by QGCApplication::setLanguage to query 
+/// the language setting as early in the boot process as possible. Specfically prior to any JSON files being 
+/// loaded such that JSON file can be translated. Also since this is a one-off mechanism custom build overrides 
+/// for language are not currently supported.
+QLocale::Language AppSettings::_qLocaleLanguageEarlyAccess(void)
 {
     QSettings settings;
 
-    if (settings.childKeys().contains("language")) {
-        // We need to convert to the new settings key/values
-#if 0
-        // Old vales
-        "enumStrings":      "System,български (Bulgarian),中文 (Chinese),Nederlands (Dutch),English,Suomi (Finnish),Français (French),Deutsche (German),Ελληνικά (Greek), עברית (Hebrew),Italiano (Italian),日本語 (Japanese),한국어 (Korean),Norsk (Norwegian),Polskie (Polish),Português (Portuguese),Pусский (Russian),Español (Spanish),Svenska (Swedish),Türk (Turkish),Azerbaijani (Azerbaijani)",
-        "enumValues":       "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20",
-#endif
-        static QList<int> rgNewValues = { 0,20,25,30,31,36,37,42,43,48,58,59,66,85,90,91,96,111,114,125,15 };
-
-        int oldValue = settings.value("language").toInt();
-        settings.setValue(qLocaleLanguageName, rgNewValues[oldValue]);
-        settings.remove("language");
-    }
-
-    QLocale::Language id = settings.value(qLocaleLanguageName, QLocale::AnyLanguage).value<QLocale::Language>();
-    if (id == QLocale::AnyLanguage) {
-#ifndef DAILY_BUILD
-        // Stable builds only support released and partial languages
-        if (!_rgReleaseLanguages.contains(id) && _rgPartialLanguages.contains(id)) {
-            id = QLocale::English;
+    // Note that the AppSettings group has no group name
+    QLocale::Language localeLanguage = static_cast<QLocale::Language>(settings.value(qLocaleLanguageName).toInt());
+    for (auto& languageInfo: _rgLanguageInfo) {
+        if (languageInfo.languageId == localeLanguage) {
+            return localeLanguage;
         }
-#endif
     }
 
-    return id;
+    localeLanguage = QLocale::AnyLanguage;
+    settings.setValue(qLocaleLanguageName, localeLanguage);
+
+    return localeLanguage;
 }

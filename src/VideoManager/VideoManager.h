@@ -15,32 +15,28 @@
 #include <QtCore/QLoggingCategory>
 
 #include "QGCToolbox.h"
-#include "SubtitleWriter.h"
 
 Q_DECLARE_LOGGING_CATEGORY(VideoManagerLog)
+
+#define MAX_VIDEO_RECEIVERS 2
 
 class VideoSettings;
 class Vehicle;
 class Joystick;
 class VideoReceiver;
+class SubtitleWriter;
 
 class VideoManager : public QGCTool
 {
     Q_OBJECT
-    Q_MOC_INCLUDE("VideoReceiver.h")
-
-public:
-    VideoManager    (QGCApplication* app, QGCToolbox* toolbox);
-    virtual ~VideoManager   ();
 
     Q_PROPERTY(bool             hasVideo                READ    hasVideo                                    NOTIFY hasVideoChanged)
     Q_PROPERTY(bool             isGStreamer             READ    isGStreamer                                 NOTIFY isGStreamerChanged)
+    Q_PROPERTY(bool             gstreamerEnabled        READ    gstreamerEnabled                            CONSTANT)
     Q_PROPERTY(bool             isUvc                   READ    isUvc                                       NOTIFY isUvcChanged)
     Q_PROPERTY(QString          uvcVideoSourceID        READ    uvcVideoSourceID                            NOTIFY uvcVideoSourceIDChanged)
     Q_PROPERTY(bool             uvcEnabled              READ    uvcEnabled                                  CONSTANT)
     Q_PROPERTY(bool             fullScreen              READ    fullScreen      WRITE   setfullScreen       NOTIFY fullScreenChanged)
-    Q_PROPERTY(VideoReceiver*   videoReceiver           READ    videoReceiver                               CONSTANT)
-    Q_PROPERTY(VideoReceiver*   thermalVideoReceiver    READ    thermalVideoReceiver                        CONSTANT)
     Q_PROPERTY(double           aspectRatio             READ    aspectRatio                                 NOTIFY aspectRatioChanged)
     Q_PROPERTY(double           thermalAspectRatio      READ    thermalAspectRatio                          NOTIFY aspectRatioChanged)
     Q_PROPERTY(double           hfov                    READ    hfov                                        NOTIFY aspectRatioChanged)
@@ -53,57 +49,40 @@ public:
     Q_PROPERTY(bool             recording               READ    recording                                   NOTIFY recordingChanged)
     Q_PROPERTY(QSize            videoSize               READ    videoSize                                   NOTIFY videoSizeChanged)
 
-    virtual bool        hasVideo            ();
-    virtual bool        isGStreamer         ();
-    virtual bool        isUvc               ();
-    virtual bool        fullScreen          () { return _fullScreen; }
-    virtual QString     uvcVideoSourceID    () { return _uvcVideoSourceID; }
-    virtual double      aspectRatio         ();
-    virtual double      thermalAspectRatio  ();
-    virtual double      hfov                ();
-    virtual double      thermalHfov         ();
-    virtual bool        autoStreamConfigured();
-    virtual bool        hasThermal          ();
-    virtual QString     imageFile           ();
+public:
+    VideoManager(QGCApplication* app, QGCToolbox* toolbox);
+    virtual ~VideoManager();
 
-    bool streaming(void) {
-        return _streaming;
-    }
+    void setToolbox(QGCToolbox *toolbox) override;
 
-    bool decoding(void) {
-        return _decoding;
-    }
+    virtual bool        hasVideo            () const;
+    virtual bool        isGStreamer         () const;
+    virtual bool        isUvc               () const;
+    virtual bool        fullScreen          () const { return _fullScreen; }
+    virtual QString     uvcVideoSourceID    () const { return _uvcVideoSourceID; }
+    virtual double      aspectRatio         () const;
+    virtual double      thermalAspectRatio  () const;
+    virtual double      hfov                () const;
+    virtual double      thermalHfov         () const;
+    virtual bool        autoStreamConfigured() const;
+    virtual bool        hasThermal          () const;
+    virtual QString     imageFile           () const { return _imageFile; }
 
-    bool recording(void) {
-        return _recording;
-    }
+    bool streaming() const { return _streaming; }
+    bool decoding() const { return _decoding; }
+    bool recording() const { return _recording; }
+    QSize videoSize() const { return QSize((_videoSize >> 16) & 0xFFFF, _videoSize & 0xFFFF); }
 
-    QSize videoSize(void) {
-        const quint32 size = _videoSize;
-        return QSize((size >> 16) & 0xFFFF, size & 0xFFFF);
-    }
+    virtual bool gstreamerEnabled() const;
+    virtual bool uvcEnabled() const;
 
-// FIXME: AV: they should be removed after finishing multiple video stream support
-// new arcitecture does not assume direct access to video receiver from QML side, even if it works for now
-    virtual VideoReceiver*  videoReceiver           () { return _videoReceiver[0]; }
-    virtual VideoReceiver*  thermalVideoReceiver    () { return _videoReceiver[1]; }
+    virtual void setfullScreen(bool on);
 
-#if defined(QGC_DISABLE_UVC)
-    virtual bool        uvcEnabled          () { return false; }
-#else
-    virtual bool        uvcEnabled          ();
-#endif
+    Q_INVOKABLE void startVideo();
+    Q_INVOKABLE void stopVideo();
 
-    virtual void        setfullScreen       (bool f);
-
-    // Override from QGCTool
-    virtual void        setToolbox          (QGCToolbox *toolbox);
-
-    Q_INVOKABLE void startVideo     ();
-    Q_INVOKABLE void stopVideo      ();
-
-    Q_INVOKABLE void startRecording (const QString& videoFile = QString());
-    Q_INVOKABLE void stopRecording  ();
+    Q_INVOKABLE void startRecording(const QString& videoFile = QString());
+    Q_INVOKABLE void stopRecording();
 
     Q_INVOKABLE void grabImage(const QString& imageFile = QString());
 
@@ -129,37 +108,41 @@ protected slots:
     void _rtspUrlChanged            ();
     void _tcpUrlChanged             ();
     void _lowLatencyModeChanged     ();
-    void _updateUVC                 ();
+    bool _updateUVC                 ();
     void _setActiveVehicle          (Vehicle* vehicle);
-    void _aspectRatioChanged        ();
     void _communicationLostChanged  (bool communicationLost);
 
 protected:
     friend class FinishVideoInitialization;
 
-    void _initVideo                 ();
-    bool _updateSettings            (unsigned id);
-    bool _updateVideoUri            (unsigned id, const QString& uri);
-    void _cleanupOldVideos          ();
-    void _restartAllVideos          ();
-    void _restartVideo              (unsigned id);
-    void _startReceiver             (unsigned id);
-    void _stopReceiver              (unsigned id);
+    void _initVideo       ();
+    bool _updateSettings  (unsigned id);
+    bool _updateVideoUri  (unsigned id, const QString& uri);
+    void _cleanupOldVideos();
+    void _restartAllVideos();
+    void _restartVideo    (unsigned id);
+    void _startReceiver   (unsigned id);
+    void _stopReceiver    (unsigned id);
 
-protected:
     QString                 _videoFile;
     QString                 _imageFile;
-    SubtitleWriter          _subtitleWriter;
-    VideoReceiver*          _videoReceiver[2]       = { nullptr, nullptr };
-    void*                   _videoSink[2]           = { nullptr, nullptr };
-    QString                 _videoUri[2];
+    SubtitleWriter*         _subtitleWriter = nullptr;
+
+    struct VideoReceiverData {
+        VideoReceiver* receiver = nullptr;
+        void* sink = nullptr;
+        QString uri;
+        bool started = false;
+        bool lowLatencyStreaming = false;
+        size_t index = 0;
+    };
+    QList<VideoReceiverData>       _videoReceiverData = QList<VideoReceiverData>(MAX_VIDEO_RECEIVERS);
     // FIXME: AV: _videoStarted seems to be access from 3 different threads, from time to time
     // 1) Video Receiver thread
     // 2) Video Manager/main app thread
     // 3) Qt rendering thread (during video sink creation process which should happen in this thread)
     // It works for now but...
-    bool                    _videoStarted[2]        = { false, false };
-    bool                    _lowLatencyStreaming[2] = { false, false };
+
     QAtomicInteger<bool>    _streaming              = false;
     QAtomicInteger<bool>    _decoding               = false;
     QAtomicInteger<bool>    _recording              = false;
@@ -177,7 +160,8 @@ public:
         : _manager(manager)
     {}
 
-    void run () {
+    void run()
+    {
         _manager->_initVideo();
     }
 

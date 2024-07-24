@@ -87,13 +87,13 @@ private:
     QList<IntelHexBlock_t>  _ihxBlocks;
     uint32_t                _imageSize;
 
-    static const char* _jsonBoardIdKey;
-    static const char* _jsonParamXmlSizeKey;
-    static const char* _jsonParamXmlKey;
-    static const char* _jsonAirframeXmlSizeKey;
-    static const char* _jsonAirframeXmlKey;
-    static const char* _jsonImageSizeKey;
-    static const char* _jsonImageKey;
-    static const char* _jsonMavAutopilotKey;
+    static constexpr const char* _jsonBoardIdKey =            "board_id";
+    static constexpr const char* _jsonParamXmlSizeKey =       "parameter_xml_size";
+    static constexpr const char* _jsonParamXmlKey =           "parameter_xml";
+    static constexpr const char* _jsonAirframeXmlSizeKey =    "airframe_xml_size";
+    static constexpr const char* _jsonAirframeXmlKey =        "airframe_xml";
+    static constexpr const char* _jsonImageSizeKey =          "image_size";
+    static constexpr const char* _jsonImageKey =              "image";
+    static constexpr const char* _jsonMavAutopilotKey =       "mav_autopilot";
 };
 

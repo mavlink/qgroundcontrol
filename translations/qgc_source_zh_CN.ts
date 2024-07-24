@@ -14894,7 +14894,7 @@ sudo apt-get 移除调制解调器管理器</translation>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponent.qml" line="318"/>
       <source>Please turn on transmitter.</source>
-      <translation>请打开发射机。</translation>
+      <translation>请打开遥控器。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponent.qml" line="320"/>

@@ -14,7 +14,6 @@
 #include "ArduCopterFirmwarePlugin.h"
 #include "ParameterManager.h"
 #include "Vehicle.h"
-#include "FactSystem.h"
 
 bool ArduCopterFirmwarePlugin::_remapParamNameIntialized = false;
 FirmwarePlugin::remapParamNameMajorVersionMap_t ArduCopterFirmwarePlugin::_remapParamName;
@@ -133,7 +132,7 @@ bool ArduCopterFirmwarePlugin::multiRotorCoaxialMotors(Vehicle* vehicle)
 
 bool ArduCopterFirmwarePlugin::multiRotorXConfig(Vehicle* vehicle)
 {
-    return vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "FRAME")->rawValue().toInt() != 0;
+    return vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, "FRAME")->rawValue().toInt() != 0;
 }
 
 void ArduCopterFirmwarePlugin::sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimatationCapabilities)

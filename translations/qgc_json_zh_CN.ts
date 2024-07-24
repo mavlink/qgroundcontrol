@@ -16,7 +16,7 @@
       <extracomment>.QGC.MetaData.Facts[offlineEditingFirmwareClass].enumStrings, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>ArduPilot,PX4 Pro,Mavlink Generic</source>
-      <translation>ArduPilot，PX4 Pro，Mavlink 通用</translation>
+      <translation>ArduPilot,PX4 Pro,Mavlink 通用</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[offlineEditingVehicleClass].enumStrings, </extracomment>
@@ -34,13 +34,13 @@
       <extracomment>.QGC.MetaData.Facts[indoorPalette].enumStrings, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>Indoor,Outdoor</source>
-      <translation>室内，室外</translation>
+      <translation>室内,室外</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[followTarget].enumStrings, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>Never,Always,When in Follow Me Flight Mode</source>
-      <translation>从不，总是，处于“跟随我”飞行模式时</translation>
+      <translation>从不,总是,处于“跟随我”飞行模式时</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[qLocaleLanguage].enumStrings, </extracomment>
@@ -55,13 +55,13 @@
       <extracomment>.QGC.MetaData.Facts[apmChibiOS].enumStrings, </extracomment>
       <location filename="../src/Settings/FirmwareUpgrade.SettingsGroup.json"/>
       <source>ChibiOS,NuttX</source>
-      <translation>ChibiOS，NuttX</translation>
+      <translation>ChibiOS,NuttX</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[apmVehicleType].enumStrings, </extracomment>
       <location filename="../src/Settings/FirmwareUpgrade.SettingsGroup.json"/>
       <source>Multi-Rotor,Helicopter,Plane,Rover,Sub</source>
-      <translation>多机器人，直升机，固定翼，旋翼和水下装置</translation>
+      <translation>多机器人,直升机,固定翼,旋翼,水下装置</translation>
     </message>
   </context>
   <context>
@@ -70,7 +70,7 @@
       <extracomment>.QGC.MetaData.Defines.StreamRateEnumStrings, </extracomment>
       <location filename="../src/Settings/APMMavlinkStreamRate.SettingsGroup.json"/>
       <source>Controlled By Vehicle,0 hz,1 hz,2 hz,3 hz,4 hz,5 hz,6 hz,7 hz,8 hz,9 hz,10 hz,50 hz,100 hz</source>
-      <translation>由无人机控制，0 赫兹，1赫兹,2  赫兹，3  赫兹，4 赫兹，5  赫兹，6 赫兹，7 赫兹，8  赫兹，9 赫兹，10  赫兹，50  赫兹，100 赫兹</translation>
+      <translation>由无人机控制,0 赫兹,1 赫兹,2 赫兹,3 赫兹,4 赫兹,5 赫兹,6 赫兹,7 赫兹,8 赫兹,9 赫兹,10 赫兹,50 赫兹,100 赫兹</translation>
     </message>
   </context>
   <context>
@@ -88,7 +88,7 @@
       <extracomment>.QGC.MetaData.Facts[gridLines].enumStrings, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Hide,Show</source>
-      <translation>隐藏，显示</translation>
+      <translation>隐藏,显示</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[videoFit].enumStrings, </extracomment>
@@ -100,7 +100,7 @@
       <extracomment>.QGC.MetaData.Facts[recordingFormat].enumStrings, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>mkv,mov,mp4</source>
-      <translation>mkv，mov，mp4</translation>
+      <translation>mkv,mov,mp4</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[forceVideoDecoder].enumStrings, </extracomment>
@@ -193,7 +193,7 @@
       <extracomment>.QGC.MetaData.Facts[lock].enumStrings, </extracomment>
       <location filename="../src/Vehicle/FactGroups/GPSFact.json"/>
       <source>None,None,2D Lock,3D Lock,3D DGPS Lock,3D RTK GPS Lock (float),3D RTK GPS Lock (fixed),Static (fixed)</source>
-      <translation>无，无，2D锁定，3D锁定，3D DGPS锁定，3D RTK GPS 锁定（浮动），3D RTK GPS锁定（固定），静态（固定）</translation>
+      <translation>无,无,2D锁定,3D锁定,3D DGPS锁定,3D RTK GPS 锁定（浮动）,3D RTK GPS锁定（固定）,静态（固定）</translation>
     </message>
   </context>
   <context>
@@ -202,13 +202,13 @@
       <extracomment>.QGC.MetaData.Facts[inputHold].enumStrings, </extracomment>
       <location filename="../src/Vehicle/FactGroups/SubmarineFact.json"/>
       <source>Disabled,Enabled</source>
-      <translation>禁用，启用</translation>
+      <translation>禁用,启用</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[rollPitchToggle].enumStrings, </extracomment>
       <location filename="../src/Vehicle/FactGroups/SubmarineFact.json"/>
       <source>Disabled,Enabled,Unavailable</source>
-      <translation>禁用，启用，不可用</translation>
+      <translation>禁用,启用,不可用</translation>
     </message>
   </context>
   <context>
@@ -217,7 +217,7 @@
       <extracomment>.QGC.MetaData.Facts[Hemisphere].enumStrings, </extracomment>
       <location filename="../src/QmlControls/EditPositionDialog.FactMetaData.json"/>
       <source>North,South</source>
-      <translation>北，南</translation>
+      <translation>北,南</translation>
     </message>
   </context>
   <context>

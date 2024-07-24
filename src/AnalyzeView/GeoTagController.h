@@ -74,4 +74,6 @@ private:
     bool                _inProgress;
 
     GeoTagWorker        _worker;
+
+    static constexpr const char* kTagged = "/TAGGED";
 };

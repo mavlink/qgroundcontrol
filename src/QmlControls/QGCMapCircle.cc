@@ -9,12 +9,7 @@
 
 #include "QGCMapCircle.h"
 #include "JsonHelper.h"
-#include "FactSystem.h"
-
-const char* QGCMapCircle::jsonCircleKey =   "circle";
-const char* QGCMapCircle::_jsonCenterKey =  "center";
-const char* QGCMapCircle::_jsonRadiusKey =  "radius";
-const char* QGCMapCircle::_radiusFactName = "Radius";
+#include "ParameterManager.h"
 
 QGCMapCircle::QGCMapCircle(QObject* parent)
     : QObject           (parent)
@@ -30,7 +25,7 @@ QGCMapCircle::QGCMapCircle(const QGeoCoordinate& center, double radius, bool sho
     : QObject           (parent)
     , _dirty            (false)
     , _center           (center)
-    , _radius           (FactSystem::defaultComponentId, _radiusFactName, FactMetaData::valueTypeDouble)
+    , _radius           (ParameterManager::defaultComponentId, _radiusFactName, FactMetaData::valueTypeDouble)
     , _interactive      (false)
     , _showRotation     (showRotation)
     , _clockwiseRotation(clockwiseRotation)
@@ -43,7 +38,7 @@ QGCMapCircle::QGCMapCircle(const QGCMapCircle& other, QObject* parent)
     : QObject           (parent)
     , _dirty            (false)
     , _center           (other._center)
-    , _radius           (FactSystem::defaultComponentId, _radiusFactName, FactMetaData::valueTypeDouble)
+    , _radius           (ParameterManager::defaultComponentId, _radiusFactName, FactMetaData::valueTypeDouble)
     , _interactive      (false)
     , _showRotation     (other._showRotation)
     , _clockwiseRotation(other._clockwiseRotation)

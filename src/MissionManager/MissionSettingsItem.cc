@@ -18,8 +18,6 @@
 
 QGC_LOGGING_CATEGORY(MissionSettingsItemLog, "MissionSettingsItemLog")
 
-const char* MissionSettingsItem::_plannedHomePositionAltitudeName = "PlannedHomePositionAltitude";
-
 QMap<QString, FactMetaData*> MissionSettingsItem::_metaDataMap;
 
 MissionSettingsItem::MissionSettingsItem(PlanMasterController* masterController, bool flyView)

@@ -9,11 +9,11 @@
 
 #pragma once
 
-#include "FactMetaData.h"
-
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QVariant>
+
+#include "FactMetaData.h"
 
 class FactValueSliderListModel;
 
@@ -209,4 +209,6 @@ protected:
     bool                        _deferredValueChangeSignal;
     FactValueSliderListModel*   _valueSliderModel;
     bool                        _ignoreQGCRebootRequired;
+
+    static constexpr const char* kMissingMetadata = "Meta data pointer missing";
 };

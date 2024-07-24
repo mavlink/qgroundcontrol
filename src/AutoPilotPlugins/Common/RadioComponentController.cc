@@ -14,9 +14,9 @@
 
 #include "RadioComponentController.h"
 #include "QGCApplication.h"
-#include "FactSystem.h"
 #include "Fact.h"
 #include "Vehicle.h"
+#include "ParameterManager.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QSettings>
@@ -29,54 +29,6 @@ QGC_LOGGING_CATEGORY(RadioComponentControllerVerboseLog, "RadioComponentControll
 RadioComponentController* RadioComponentController::_unitTestController = nullptr;
 #endif
 
-const int RadioComponentController::_updateInterval = 150;              ///< Interval for timer which updates radio channel widgets
-const int RadioComponentController::_rcCalPWMCenterPoint = ((RadioComponentController::_rcCalPWMValidMaxValue - RadioComponentController::_rcCalPWMValidMinValue) / 2.0f) + RadioComponentController::_rcCalPWMValidMinValue;
-const int RadioComponentController::_rcCalPWMValidMinValue =    1300;   ///< Largest valid minimum PWM Min range value
-const int RadioComponentController::_rcCalPWMValidMaxValue =    1700;   ///< Smallest valid maximum PWM Max range value
-const int RadioComponentController::_rcCalPWMDefaultMinValue =  1000;   ///< Default value for Min if not set
-const int RadioComponentController::_rcCalPWMDefaultMaxValue =  2000;   ///< Default value for Max if not set
-const int RadioComponentController::_rcCalRoughCenterDelta =    50;     ///< Delta around center point which is considered to be roughly centered
-const int RadioComponentController::_rcCalMoveDelta =           300;    ///< Amount of delta past center which is considered stick movement
-const int RadioComponentController::_rcCalSettleDelta =         20;     ///< Amount of delta which is considered no stick movement
-const int RadioComponentController::_rcCalMinDelta =            100;    ///< Amount of delta allowed around min value to consider channel at min
-
-const int RadioComponentController::_stickDetectSettleMSecs = 500;
-
-const char*  RadioComponentController::_imageFilePrefix =   "calibration/";
-const char*  RadioComponentController::_imageFileMode1Dir = "mode1/";
-const char*  RadioComponentController::_imageFileMode2Dir = "mode2/";
-const char*  RadioComponentController::_imageCenter =       "radioCenter.png";
-const char*  RadioComponentController::_imageHome =         "radioHome.png";
-const char*  RadioComponentController::_imageThrottleUp =   "radioThrottleUp.png";
-const char*  RadioComponentController::_imageThrottleDown = "radioThrottleDown.png";
-const char*  RadioComponentController::_imageYawLeft =      "radioYawLeft.png";
-const char*  RadioComponentController::_imageYawRight =     "radioYawRight.png";
-const char*  RadioComponentController::_imageRollLeft =     "radioRollLeft.png";
-const char*  RadioComponentController::_imageRollRight =    "radioRollRight.png";
-const char*  RadioComponentController::_imagePitchUp =      "radioPitchUp.png";
-const char*  RadioComponentController::_imagePitchDown =    "radioPitchDown.png";
-const char*  RadioComponentController::_imageSwitchMinMax = "radioSwitchMinMax.png";
-
-const char* RadioComponentController::_settingsGroup =              "RadioCalibration";
-const char* RadioComponentController::_settingsKeyTransmitterMode = "TransmitterMode";
-
-const char* RadioComponentController::_px4RevParamFormat =      "RC%1_REV";
-const char* RadioComponentController::_apmNewRevParamFormat =   "RC%1_REVERSED";
-
-const struct RadioComponentController::FunctionInfo RadioComponentController::_rgFunctionInfoPX4[RadioComponentController::rcCalFunctionMax] = {
-{ "RC_MAP_ROLL" },
-{ "RC_MAP_PITCH" },
-{ "RC_MAP_YAW" },
-{ "RC_MAP_THROTTLE" }
-};
-
-const struct RadioComponentController::FunctionInfo RadioComponentController::_rgFunctionInfoAPM[RadioComponentController::rcCalFunctionMax] = {
-{ "RCMAP_ROLL" },
-{ "RCMAP_PITCH" },
-{ "RCMAP_YAW" },
-{ "RCMAP_THROTTLE" }
-};
-
 RadioComponentController::RadioComponentController(void)
     : _currentStep(-1)
     , _transmitterMode(2)
@@ -88,7 +40,7 @@ RadioComponentController::RadioComponentController(void)
     _unitTestController = this;
 #endif
 
-    if (parameterExists(FactSystem::defaultComponentId, QStringLiteral("RC1_REVERSED"))) {
+    if (parameterExists(ParameterManager::defaultComponentId, QStringLiteral("RC1_REVERSED"))) {
         // Newer ardupilot firmwares have a different reverse param naming scheme and value scheme
         _revParamFormat = _apmNewRevParamFormat;
         _revParamIsBool = true; // param value is boolean 0/1 for reversed or not
@@ -605,7 +557,7 @@ void RadioComponentController::_setInternalCalibrationValuesFromParameters(void)
     for (int i = 0; i < _chanMax; ++i) {
         struct ChannelInfo* info = &_rgChannelInfo[i];
 
-        if (!parameterExists(FactSystem::defaultComponentId, minTpl.arg(i+1))) {
+        if (!parameterExists(ParameterManager::defaultComponentId, minTpl.arg(i+1))) {
             info->rcTrim = 1500;
             info->rcMin = 1100;
             info->rcMax = 1900;
@@ -613,19 +565,19 @@ void RadioComponentController::_setInternalCalibrationValuesFromParameters(void)
             continue;
         }
 
-        Fact* paramFact = getParameterFact(FactSystem::defaultComponentId, trimTpl.arg(i+1));
+        Fact* paramFact = getParameterFact(ParameterManager::defaultComponentId, trimTpl.arg(i+1));
         if (paramFact) {
             info->rcTrim = paramFact->rawValue().toInt();
         }
 
-        paramFact = getParameterFact(FactSystem::defaultComponentId, minTpl.arg(i+1));
+        paramFact = getParameterFact(ParameterManager::defaultComponentId, minTpl.arg(i+1));
         if (paramFact) {
             info->rcMin = paramFact->rawValue().toInt();
         }
 
-        paramFact = getParameterFact(FactSystem::defaultComponentId, maxTpl.arg(i+1));
+        paramFact = getParameterFact(ParameterManager::defaultComponentId, maxTpl.arg(i+1));
         if (paramFact) {
-            info->rcMax = getParameterFact(FactSystem::defaultComponentId, maxTpl.arg(i+1))->rawValue().toInt();
+            info->rcMax = getParameterFact(ParameterManager::defaultComponentId, maxTpl.arg(i+1))->rawValue().toInt();
         }
 
         info->reversed = _channelReversedParamValue(i);
@@ -636,7 +588,7 @@ void RadioComponentController::_setInternalCalibrationValuesFromParameters(void)
 
         const char* paramName = _functionInfo()[i].parameterName;
         if (paramName) {
-            Fact* paramFact = getParameterFact(FactSystem::defaultComponentId, paramName);
+            Fact* paramFact = getParameterFact(ParameterManager::defaultComponentId, paramName);
             if (paramFact) {
                 paramChannel = paramFact->rawValue().toInt();
 
@@ -723,19 +675,19 @@ void RadioComponentController::_writeCalibration(void)
             struct ChannelInfo* info = &_rgChannelInfo[chan];
             int                 oneBasedChannel = chan + 1;
 
-            if (!parameterExists(FactSystem::defaultComponentId, minTpl.arg(chan+1))) {
+            if (!parameterExists(ParameterManager::defaultComponentId, minTpl.arg(chan+1))) {
                 continue;
             }
 
-            Fact* paramFact = getParameterFact(FactSystem::defaultComponentId, trimTpl.arg(oneBasedChannel));
+            Fact* paramFact = getParameterFact(ParameterManager::defaultComponentId, trimTpl.arg(oneBasedChannel));
             if (paramFact) {
                 paramFact->setRawValue(static_cast<float>(info->rcTrim));
             }
-            paramFact = getParameterFact(FactSystem::defaultComponentId, minTpl.arg(oneBasedChannel));
+            paramFact = getParameterFact(ParameterManager::defaultComponentId, minTpl.arg(oneBasedChannel));
             if (paramFact) {
                 paramFact->setRawValue(static_cast<float>(info->rcMin));
             }
-            paramFact = getParameterFact(FactSystem::defaultComponentId, maxTpl.arg(oneBasedChannel));
+            paramFact = getParameterFact(ParameterManager::defaultComponentId, maxTpl.arg(oneBasedChannel));
             if (paramFact) {
                 paramFact->setRawValue(static_cast<float>(info->rcMax));
             }
@@ -766,10 +718,10 @@ void RadioComponentController::_writeCalibration(void)
             }
             const char* paramName = _functionInfo()[i].parameterName;
             if (paramName) {
-                Fact* paramFact = getParameterFact(FactSystem::defaultComponentId, _functionInfo()[i].parameterName);
+                Fact* paramFact = getParameterFact(ParameterManager::defaultComponentId, _functionInfo()[i].parameterName);
 
                 if (paramFact && paramFact->rawValue().toInt() != paramChannel) {
-                    paramFact = getParameterFact(FactSystem::defaultComponentId, _functionInfo()[i].parameterName);
+                    paramFact = getParameterFact(ParameterManager::defaultComponentId, _functionInfo()[i].parameterName);
                     if (paramFact) {
                         paramFact->setRawValue(paramChannel);
                     }
@@ -780,8 +732,8 @@ void RadioComponentController::_writeCalibration(void)
 
     if (_px4Vehicle()) {
         // If the RC_CHAN_COUNT parameter is available write the channel count
-        if (parameterExists(FactSystem::defaultComponentId, QStringLiteral("RC_CHAN_CNT"))) {
-            getParameterFact(FactSystem::defaultComponentId, QStringLiteral("RC_CHAN_CNT"))->setRawValue(_chanCount);
+        if (parameterExists(ParameterManager::defaultComponentId, QStringLiteral("RC_CHAN_CNT"))) {
+            getParameterFact(ParameterManager::defaultComponentId, QStringLiteral("RC_CHAN_CNT"))->setRawValue(_chanCount);
         }
     }
 
@@ -1040,7 +992,7 @@ const struct RadioComponentController::FunctionInfo* RadioComponentController::_
 
 bool RadioComponentController::_channelReversedParamValue(int channel)
 {
-    Fact* paramFact = getParameterFact(FactSystem::defaultComponentId, _revParamFormat.arg(channel+1));
+    Fact* paramFact = getParameterFact(ParameterManager::defaultComponentId, _revParamFormat.arg(channel+1));
     if (paramFact) {
         if (_revParamIsBool) {
             return paramFact->rawValue().toBool();
@@ -1059,7 +1011,7 @@ bool RadioComponentController::_channelReversedParamValue(int channel)
 
 void RadioComponentController::_setChannelReversedParamValue(int channel, bool reversed)
 {
-    Fact* paramFact = getParameterFact(FactSystem::defaultComponentId, _revParamFormat.arg(channel+1));
+    Fact* paramFact = getParameterFact(ParameterManager::defaultComponentId, _revParamFormat.arg(channel+1));
     if (paramFact) {
         if (_revParamIsBool) {
             paramFact->setRawValue(reversed);

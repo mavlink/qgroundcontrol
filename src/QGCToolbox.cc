@@ -8,7 +8,6 @@
  ****************************************************************************/
 
 
-#include "FactSystem.h"
 #include "FirmwarePluginManager.h"
 #ifndef NO_SERIAL_LINK
 #include "GPSManager.h"
@@ -18,7 +17,6 @@
 #include "MAVLinkProtocol.h"
 #include "MissionCommandTree.h"
 #include "MultiVehicleManager.h"
-#include "UASMessageHandler.h"
 #include "QGCMapEngineManager.h"
 #include "FollowMe.h"
 #include "PositionManager.h"
@@ -48,7 +46,6 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
 
     //-- Scan and load plugins
     _scanAndLoadPlugins(app);
-    _factSystem             = new FactSystem                (app, this);
     _firmwarePluginManager  = new FirmwarePluginManager     (app, this);
 #ifndef NO_SERIAL_LINK
     _gpsManager             = new GPSManager                (app, this);
@@ -59,7 +56,6 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     _missionCommandTree     = new MissionCommandTree        (app, this);
     _multiVehicleManager    = new MultiVehicleManager       (app, this);
     _mapEngineManager       = new QGCMapEngineManager       (app, this);
-    _uasMessageHandler      = new UASMessageHandler         (app, this);
     _qgcPositionManager     = new QGCPositionManager        (app, this);
     _followMe               = new FollowMe                  (app, this);
     _videoManager           = new VideoManager              (app, this);
@@ -80,7 +76,6 @@ void QGCToolbox::setChildToolboxes(void)
     _settingsManager->setToolbox(this);
 
     _corePlugin->setToolbox(this);
-    _factSystem->setToolbox(this);
     _firmwarePluginManager->setToolbox(this);
 #ifndef NO_SERIAL_LINK
     _gpsManager->setToolbox(this);
@@ -91,7 +86,6 @@ void QGCToolbox::setChildToolboxes(void)
     _missionCommandTree->setToolbox(this);
     _multiVehicleManager->setToolbox(this);
     _mapEngineManager->setToolbox(this);
-    _uasMessageHandler->setToolbox(this);
     _followMe->setToolbox(this);
     _qgcPositionManager->setToolbox(this);
     _videoManager->setToolbox(this);
