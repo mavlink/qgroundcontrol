@@ -16,10 +16,13 @@
  *
  */
 #include "QGCMapEngine.h"
-#include "QGCMapTileSet.h"
+#include "QGCCachedTileSet.h"
 #include "QGCTileCacheWorker.h"
 #include "QGeoFileTileCacheQGC.h"
-#include "QGCMapEngineData.h"
+#include "QGCMapTasks.h"
+#include "QGCTileSet.h"
+#include "QGCTile.h"
+#include "QGCCacheTile.h"
 #include "QGCApplication.h"
 #include <QGCLoggingCategory.h>
 
@@ -54,6 +57,8 @@ QGCMapEngine::QGCMapEngine(QObject *parent)
     (void) qRegisterMetaType<QGCMapTask::TaskType>();
     (void) qRegisterMetaType<QGCTile>();
     (void) qRegisterMetaType<QList<QGCTile*>>();
+    (void) qRegisterMetaType<QGCTileSet>();
+    (void) qRegisterMetaType<QGCCacheTile>();
 
     (void) connect(m_worker, &QGCCacheWorker::updateTotals, this, &QGCMapEngine::_updateTotals);
 }
