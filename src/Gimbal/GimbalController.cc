@@ -236,6 +236,11 @@ GimbalController::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t& mes
     // If the gimbal_device_id field is set to 1-6, we must use this device id instead
     } else if (attitude_status.gimbal_device_id <= 6) {
         gimbal_device_id_or_compid = attitude_status.gimbal_device_id;
+
+    // Otherwise, this is invalid and we don't know how to deal with it.
+    } else {
+        qCDebug(GimbalLog) << "_handleGimbalDeviceAttitudeStatus for invalid device id: " << attitude_status.gimbal_device_id << " from component id: " << message.compid;
+        return;
     }
 
     // We do a reverse lookup here
