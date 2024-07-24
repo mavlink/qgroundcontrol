@@ -239,7 +239,7 @@ QGeoTiledMapReplyQGC::cacheReply(QGCCacheTile* tile)
         setFinished(true);
         setCached(true);
     }
-    tile->deleteLater();
+    delete tile;
 }
 
 //-----------------------------------------------------------------------------

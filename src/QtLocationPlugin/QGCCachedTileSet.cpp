@@ -16,7 +16,7 @@
  *
  */
 
-#include "QGCMapTileSet.h"
+#include "QGCCachedTileSet.h"
 #include "QGCMapEngine.h"
 #include "QGCMapEngineManager.h"
 #include "QGCFileDownload.h"
@@ -24,7 +24,7 @@
 #include "QGeoFileTileCacheQGC.h"
 #include "TerrainTile.h"
 #include "QGCMapUrlEngine.h"
-#include "QGCMapEngineData.h"
+#include "QGCMapTasks.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "ElevationMapProvider.h"
