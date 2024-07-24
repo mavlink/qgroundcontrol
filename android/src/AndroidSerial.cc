@@ -6,7 +6,8 @@
 #include <QtCore/QDebug>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QCoreApplication>
-#include <qserialport_android_p.h>
+
+#include <qserialport_p.h>
 #include <qserialportinfo_p.h>
 
 #include <jni.h>
@@ -43,7 +44,7 @@ void setNativeMethods()
         qCDebug(AndroidSerialLog) << "Native Functions Registered";
     }
 
-    (void) AndroidInterface::cleanJavaException();
+    (void) jniEnv.checkAndClearExceptions();
 }
 
 void jniDeviceHasDisconnected(JNIEnv *env, jobject obj, jlong userData)
@@ -52,9 +53,10 @@ void jniDeviceHasDisconnected(JNIEnv *env, jobject obj, jlong userData)
     Q_UNUSED(obj);
 
     if (userData != 0) {
-        QSerialPortPrivate* const serialPort = reinterpret_cast<QSerialPortPrivate*>(userData);
-        qCDebug(AndroidSerialLog) << "Device disconnected" << serialPort->systemLocation.toLatin1().data();
-        serialPort->q_ptr->close();
+        QSerialPortPrivate* const serialPortPrivate = reinterpret_cast<QSerialPortPrivate*>(userData);
+        qCDebug(AndroidSerialLog) << "Device disconnected" << serialPortPrivate->systemLocation.toLatin1().data();
+        QSerialPort* const serialPort = static_cast<QSerialPort*>(serialPortPrivate->q_ptr);
+        serialPort->close();
     }
 }
 
@@ -69,6 +71,7 @@ void jniDeviceNewData(JNIEnv *env, jobject obj, jlong userData, jbyteArray data)
         QSerialPortPrivate* const serialPort = reinterpret_cast<QSerialPortPrivate*>(userData);
         serialPort->newDataArrived(reinterpret_cast<char*>(bytes), len);
         env->ReleaseByteArrayElements(data, bytes, JNI_ABORT);
+        (void) QJniEnvironment::checkAndClearExceptions(env);
     }
 }
 
@@ -79,9 +82,10 @@ void jniDeviceException(JNIEnv *env, jobject obj, jlong userData, jstring messag
     if (userData != 0) {
         const char* const string = env->GetStringUTFChars(message, nullptr);
         const QString str = QString::fromUtf8(string);
+        QSerialPortPrivate* const serialPort = reinterpret_cast<QSerialPortPrivate*>(userData);
+        serialPort->exceptionArrived(str);
         env->ReleaseStringUTFChars(message, string);
         (void) QJniEnvironment::checkAndClearExceptions(env);
-        (reinterpret_cast<QSerialPortPrivate*>(userData))->exceptionArrived(str);
     }
 }
 
@@ -140,6 +144,7 @@ QList<QSerialPortInfo> availableDevices()
 
         (void) serialPortInfoList.append(priv);
     }
+    (void) env.checkAndClearExceptions();
 
     return serialPortInfoList;
 }
@@ -173,6 +178,20 @@ int getDeviceId(const QString &portName)
         "getDeviceId",
         "(Ljava/lang/String;)I",
         name.object<jstring>()
+    );
+    (void) AndroidInterface::cleanJavaException();
+
+    return result;
+}
+
+int getDeviceHandle(int deviceId)
+{
+    (void) AndroidInterface::cleanJavaException();
+    const int result = QJniObject::callStaticMethod<jint>(
+        AndroidInterface::getActivityClass(),
+        "getDeviceHandle",
+        "(I)I",
+        deviceId
     );
     (void) AndroidInterface::cleanJavaException();
 
@@ -246,6 +265,7 @@ QByteArray read(int deviceId, int length, int timeout)
     const jsize len = jniEnv->GetArrayLength(jarray);
     QByteArray data = QByteArray::fromRawData(reinterpret_cast<char*>(bytes), len);
     jniEnv->ReleaseByteArrayElements(jarray, bytes, JNI_ABORT);
+    (void) jniEnv.checkAndClearExceptions();
 
     return data;
 }
@@ -254,31 +274,31 @@ int write(int deviceId, QByteArrayView data, int length, int timeout, bool async
 {
     QJniEnvironment jniEnv;
     jbyteArray jarray = jniEnv->NewByteArray(static_cast<jsize>(length));
-    jniEnv->SetByteArrayRegion(jarray, 0, static_cast<jsize>(length), (jbyte*)data.constData());
+    jniEnv->SetByteArrayRegion(jarray, 0, static_cast<jsize>(length), reinterpret_cast<const jbyte*>(data.constData()));
 
+    (void) jniEnv.checkAndClearExceptions();
     int result;
-    (void) AndroidInterface::cleanJavaException();
     if (async) {
-        QJniObject::callStaticMethod<void>(
+        result = QJniObject::callStaticMethod<jint>(
             AndroidInterface::getActivityClass(),
             "writeAsync",
             "(I[B)V",
             deviceId,
             jarray
         );
-        result = 0;
     } else {
         result = QJniObject::callStaticMethod<jint>(
             AndroidInterface::getActivityClass(),
             "write",
-            "(I[BI)I",
+            "(I[BII)I",
             deviceId,
             jarray,
+            length,
             timeout
         );
     }
-    (void) AndroidInterface::cleanJavaException();
     jniEnv->DeleteLocalRef(jarray);
+    (void) jniEnv.checkAndClearExceptions();
 
     return result;
 }
@@ -434,7 +454,7 @@ QSerialPort::PinoutSignals getControlLines(int deviceId)
     QSerialPort::PinoutSignals data = QSerialPort::PinoutSignals::fromInt(0);
     for (jsize i = 0; i < len; i++) {
         const jint value = ints[i];
-        if ((value <= ControlLine::UnknownControlLine) || (value >= ControlLine::RiControlLine)) {
+        if ((value < ControlLine::RtsControlLine) || (value > ControlLine::RiControlLine)) {
             continue;
         }
 
@@ -458,12 +478,12 @@ QSerialPort::PinoutSignals getControlLines(int deviceId)
         case ControlLine::RiControlLine:
             (void) data.setFlag(QSerialPort::PinoutSignal::RingIndicatorSignal, true);
             break;
-        case ControlLine::UnknownControlLine:
         default:
             break;
         }
     }
     jniEnv->ReleaseIntArrayElements(jarray, ints, JNI_ABORT);
+    (void) jniEnv.checkAndClearExceptions();
 
     return data;
 }
@@ -497,7 +517,7 @@ bool setFlowControl(int deviceId, int flowControl)
     return result;
 }
 
-bool flush(int deviceId, bool input, bool output)
+bool purgeBuffers(int deviceId, bool input, bool output)
 {
     (void) AndroidInterface::cleanJavaException();
     const bool result = QJniObject::callStaticMethod<jboolean>(
@@ -556,12 +576,26 @@ bool stopReadThread(int deviceId)
     return result;
 }
 
-int getDeviceHandle(int deviceId)
+bool readThreadRunning(int deviceId)
+{
+    (void) AndroidInterface::cleanJavaException();
+    const bool result = QJniObject::callStaticMethod<jboolean>(
+        AndroidInterface::getActivityClass(),
+        "ioManagerRunning",
+        "(I)Z",
+        deviceId
+    );
+    (void) AndroidInterface::cleanJavaException();
+
+    return result;
+}
+
+int getReadBufferSize(int deviceId)
 {
     (void) AndroidInterface::cleanJavaException();
     const int result = QJniObject::callStaticMethod<jint>(
         AndroidInterface::getActivityClass(),
-        "getDeviceHandle",
+        "ioManagerReadBufferSize",
         "(I)I",
         deviceId
     );
