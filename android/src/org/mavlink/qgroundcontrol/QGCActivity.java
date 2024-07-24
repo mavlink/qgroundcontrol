@@ -24,6 +24,7 @@ import android.hardware.usb.UsbManager;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.PowerManager;
+import android.os.Process;
 import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
 import android.util.Log;
@@ -43,10 +44,16 @@ import org.mavlink.qgroundcontrol.QGCProber;
 import org.qtproject.qt.android.bindings.QtActivity;
 import org.qtproject.qt.android.QtNative;
 
+// TODO:
+// UsbSerialDriver getDriver();
+// UsbEndpoint getWriteEndpoint();
+// UsbEndpoint getReadEndpoint();
+// boolean getXON() throws IOException;
+
 public class QGCActivity extends QtActivity
 {
     private static final int BAD_DEVICE_ID = 0;
-    private static final String TAG = "QGC_QGCActivity";
+    private static final String TAG = "QGCActivity";
     private static final String ACTION_USB_PERMISSION = "org.mavlink.qgroundcontrol.action.USB_PERMISSION";
 
     private static final String SCREEN_BRIGHT_WAKE_LOCK_TAG = "QGroundControl";
@@ -111,14 +118,14 @@ public class QGCActivity extends QtActivity
                 final UsbSerialDriver driver = _findDriverByDeviceId(device.getDeviceId());
 
                 if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
-                    qgcLogDebug("Permission granted to " + device.getDeviceName());
+                    Log.i(TAG, "Permission granted to " + device.getDeviceName());
                     try {
                         driver.getPorts().get(0).open(_usbManager.openDevice(device));
                     } catch (final IOException e) {
                         Log.e(TAG, "Error opening port", e);
                     }
                 } else {
-                    qgcLogDebug("Permission denied for " + device.getDeviceName());
+                    Log.i(TAG, "Permission denied for " + device.getDeviceName());
                 }
             }
         }
@@ -140,7 +147,7 @@ public class QGCActivity extends QtActivity
         if (device != null) {
             final UsbSerialDriver driver = _findDriverByDeviceId(device.getDeviceId());
             if ((driver != null) && !_usbManager.hasPermission(device)) {
-                qgcLogDebug("Requesting permission for device " + device.getDeviceName());
+                Log.i(TAG, "Requesting permission for device " + device.getDeviceName());
                 _usbManager.requestPermission(device, _usbPermissionIntent);
             }
         }
@@ -189,7 +196,7 @@ public class QGCActivity extends QtActivity
         if (_wakeLock != null) {
             _wakeLock.acquire();
         } else {
-            Log.i(TAG, "SCREEN_BRIGHT_WAKE_LOCK not acquired!!!");
+            Log.w(TAG, "SCREEN_BRIGHT_WAKE_LOCK not acquired!");
         }
     }
 
@@ -299,7 +306,7 @@ public class QGCActivity extends QtActivity
 
         final List<UsbSerialPort> ports = driver.getPorts();
         if (ports.isEmpty()) {
-            qgcLogWarning("No ports available on device ID " + deviceId);
+            Log.w(TAG, "No ports available on device ID " + deviceId);
             return null;
         }
 
@@ -356,7 +363,7 @@ public class QGCActivity extends QtActivity
             }
 
             if (!found) {
-                qgcLogDebug("Remove stale driver " + _drivers.get(i).getDevice().getDeviceName());
+                Log.i(TAG, "Remove stale driver " + _drivers.get(i).getDevice().getDeviceName());
                 _drivers.remove(i);
             }
         }
@@ -385,12 +392,12 @@ public class QGCActivity extends QtActivity
         final String deviceName = device.getDeviceName();
 
         _drivers.add(newDriver);
-        qgcLogDebug("Adding new driver " + deviceName);
+        Log.i(TAG, "Adding new driver " + deviceName);
 
         if (_usbManager.hasPermission(device)) {
-            qgcLogDebug("Already have permission to use device " + deviceName);
+            Log.i(TAG, "Already have permission to use device " + deviceName);
         } else {
-            qgcLogDebug("Requesting permission to use device " + deviceName);
+            Log.i(TAG, "Requesting permission to use device " + deviceName);
             _usbManager.requestPermission(device, _usbPermissionIntent);
         }
     }
@@ -484,13 +491,13 @@ public class QGCActivity extends QtActivity
 
         final UsbSerialDriver driver = _findDriverByDeviceName(deviceName);
         if (driver == null) {
-            qgcLogWarning("Attempt to open unknown device " + deviceName);
+            Log.w(TAG, "Attempt to open unknown device " + deviceName);
             return BAD_DEVICE_ID;
         }
 
         final List<UsbSerialPort> ports = driver.getPorts();
         if (ports.isEmpty()) {
-            qgcLogWarning("No ports available on device " + deviceName);
+            Log.w(TAG, "No ports available on device " + deviceName);
             return BAD_DEVICE_ID;
         }
 
@@ -510,7 +517,7 @@ public class QGCActivity extends QtActivity
     {
         final UsbDeviceConnection connection = _usbManager.openDevice(device);
         if (connection == null) {
-            qgcLogWarning("No Usb Device Connection");
+            Log.w(TAG, "No Usb Device Connection");
             // TODO: add UsbManager.requestPermission(driver.getDevice(), ..) handling here?
             return false;
         }
@@ -532,7 +539,7 @@ public class QGCActivity extends QtActivity
 
         _userDataHashByDeviceId.put(deviceId, userData);
 
-        qgcLogDebug("Port open successful");
+        Log.d(TAG, "Port open successful");
         return true;
     }
 
@@ -544,11 +551,11 @@ public class QGCActivity extends QtActivity
 
         final SerialInputOutputManager ioManager = new SerialInputOutputManager(port, m_Listener, userData);
 
-        // ioManager.setReadBufferSize(8192);
-        // ioManager.setWriteBufferSize(8192);
+        // ioManager.setReadBufferSize(4096);
+        // ioManager.setWriteBufferSize(4096);
 
-        // ioManager.getReadBufferSize();
-        // ioManager.getWriteBufferSize();
+        Log.d(TAG, "Read Buffer Size: " + ioManager.getReadBufferSize());
+        Log.d(TAG, "Write Buffer Size: " + ioManager.getWriteBufferSize());
 
         try {
             ioManager.setReadTimeout(1000);
@@ -559,11 +566,11 @@ public class QGCActivity extends QtActivity
 
         ioManager.setWriteTimeout(1000);
 
-        // try {
-        //     ioManager.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
-        // } catch (final IllegalStateException e) {
-        //     Log.e(TAG, "Set Thread Priority exception: " + e.getMessage());
-        // }
+        try {
+            ioManager.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
+        } catch (final IllegalStateException e) {
+            Log.e(TAG, "Set Thread Priority exception:", e);
+        }
 
         _serialIoManager.put(deviceId, ioManager);
         m_Executor.submit(ioManager);
@@ -605,9 +612,32 @@ public class QGCActivity extends QtActivity
             return true;
         }
 
-        ioManager.stop();
+        if (ioManagerRunning(id)) {
+            ioManager.stop();
+        }
 
         return true;
+    }
+
+    public static boolean ioManagerRunning(final int id)
+    {
+        final SerialInputOutputManager ioManager = _serialIoManager.get(id);
+        if (ioManager == null) {
+            return false;
+        }
+
+        final SerialInputOutputManager.State ioState = ioManager.getState();
+        return (ioState == SerialInputOutputManager.State.RUNNING);
+    }
+
+    public static int ioManagerReadBufferSize(final int id)
+    {
+        final SerialInputOutputManager ioManager = _serialIoManager.get(id);
+        if (ioManager == null) {
+            return 0;
+        }
+
+        return ioManager.getReadBufferSize();
     }
 
     /**
@@ -647,7 +677,7 @@ public class QGCActivity extends QtActivity
      * @param timeoutMsec Amount of time in milliseconds to wait for the write to occur.
      * @return int Number of bytes written.
      */
-    public static int write(final int id, final byte[] data, final int timeoutMSec)
+    public static int write(final int id, final byte[] data, final int length, final int timeoutMSec)
     {
         final UsbSerialPort port = _findPortByDeviceId(id);
         if (port == null) {
@@ -655,7 +685,7 @@ public class QGCActivity extends QtActivity
         }
 
         try {
-            port.write(data, timeoutMSec);
+            port.write(data, length, timeoutMSec);
         } catch (final SerialTimeoutException e) {
             Log.e(TAG, "Write timeout occurred", e);
             return -1;
@@ -664,7 +694,7 @@ public class QGCActivity extends QtActivity
             return -1;
         }
 
-        return 0;
+        return length;
     }
 
     /**
@@ -673,15 +703,21 @@ public class QGCActivity extends QtActivity
      * @param id ID number from the open command.
      * @param data Byte array of data to write.
      */
-    public static void writeAsync(final int id, final byte[] data)
+    public static int writeAsync(final int id, final byte[] data)
     {
         final SerialInputOutputManager ioManager = _serialIoManager.get(id);
-
-        if (ioManager != null) {
-            ioManager.writeAsync(data);
-        } else {
+        if (ioManager == null) {
             Log.w(TAG, "IO Manager not found for device ID " + id);
+            return -1;
         }
+
+        if (ioManager.getReadTimeout() == 0) {
+            return -1;
+        }
+
+        ioManager.writeAsync(data);
+
+        return data.length;
     }
 
     public static byte[] read(final int id, final int length, final int timeoutMs)
@@ -737,7 +773,7 @@ public class QGCActivity extends QtActivity
     {
         final UsbSerialDriver driver = _findDriverByDeviceName(deviceName);
         if (driver == null) {
-            qgcLogWarning("Attempt to open unknown device " + deviceName);
+            Log.w(TAG, "Attempt to open unknown device " + deviceName);
             return BAD_DEVICE_ID;
         }
 
@@ -1121,7 +1157,7 @@ public class QGCActivity extends QtActivity
         }
 
         if ((flowControl < 0) || (flowControl >= UsbSerialPort.FlowControl.values().length)) {
-            qgcLogWarning("Invalid flow control ordinal " + flowControl);
+            Log.w(TAG, "Invalid flow control ordinal " + flowControl);
             return false;
         }
 
