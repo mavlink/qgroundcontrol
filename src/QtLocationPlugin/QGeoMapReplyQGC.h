@@ -46,7 +46,7 @@
 
 #pragma once
 
-#include "QGCMapEngineData.h"
+#include "QGCMapTasks.h"
 
 #include <QtNetwork/QNetworkReply>
 #include <QtLocation/private/qgeotiledmapreply_p.h>
