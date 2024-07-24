@@ -6,7 +6,7 @@
 #include "qserialportinfo.h"
 #include "qserialportinfo_p.h"
 #include "qserialport.h"
-#include "qserialport_android_p.h"
+#include "qserialport_p.h"
 
 QT_BEGIN_NAMESPACE
 
