@@ -528,7 +528,7 @@ void GimbalController::sendPitchBodyYaw(float pitch, float yaw, bool showError) 
         | GIMBAL_MANAGER_FLAGS_YAW_IN_VEHICLE_FRAME;
 
     _vehicle->sendMavCommand(
-                _vehicle->compId(),
+                _activeGimbal->managerCompid()->rawValue().toUInt(),
                 MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW,
                 showError,
                 pitch,
@@ -561,7 +561,7 @@ void GimbalController::sendPitchAbsoluteYaw(float pitch, float yaw, bool showErr
         | GIMBAL_MANAGER_FLAGS_YAW_IN_EARTH_FRAME;
 
     _vehicle->sendMavCommand(
-                _vehicle->compId(),
+                _activeGimbal->managerCompid()->rawValue().toUInt(),
                 MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW,
                 showError,
                 pitch,
@@ -609,7 +609,7 @@ void GimbalController::sendPitchYawFlags(uint32_t flags)
     const bool yaw_in_vehicle_frame = _yawInVehicleFrame(flags);
 
     _vehicle->sendMavCommand(
-                _vehicle->compId(),
+                _activeGimbal->managerCompid()->rawValue().toUInt(),
                 MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW,
                 true,
                 _activeGimbal->absolutePitch()->rawValue().toFloat(),
@@ -628,7 +628,7 @@ void GimbalController::acquireGimbalControl()
         return;
     }
     _vehicle->sendMavCommand(
-        _vehicle->compId(),
+        _activeGimbal->managerCompid()->rawValue().toUInt(),
         MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE,
         true,
         _mavlink->getSystemId(), // Set us in primary control.
@@ -647,7 +647,7 @@ void GimbalController::releaseGimbalControl()
         return;
     }
     _vehicle->sendMavCommand(
-        _vehicle->compId(),
+        _activeGimbal->managerCompid()->rawValue().toUInt(),
         MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE,
         true,
         -3.f, // Release primary control if we have control
