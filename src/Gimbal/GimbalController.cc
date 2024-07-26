@@ -293,7 +293,7 @@ GimbalController::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t& mes
 
     if (yaw_in_vehicle_frame) {
         float bodyYaw = qRadiansToDegrees(yaw);
-        float absoluteYaw = gimbal_it->bodyYaw()->rawValue().toFloat() + _vehicle->heading()->rawValue().toFloat();
+        float absoluteYaw = bodyYaw + _vehicle->heading()->rawValue().toFloat();
         if (absoluteYaw > 180.0f) {
             absoluteYaw -= 360.0f;
         }
@@ -303,7 +303,7 @@ GimbalController::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t& mes
 
     } else {
         float absoluteYaw = qRadiansToDegrees(yaw);
-        float bodyYaw = gimbal_it->bodyYaw()->rawValue().toFloat() - _vehicle->heading()->rawValue().toFloat();
+        float bodyYaw = absoluteYaw - _vehicle->heading()->rawValue().toFloat();
         if (bodyYaw < 180.0f) {
             bodyYaw += 360.0f;
         }
