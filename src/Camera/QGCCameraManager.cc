@@ -132,8 +132,8 @@ QGCCameraManager::_handleHeartbeat(const mavlink_message_t &message)
                 pInfo->lastHeartbeat.start();
             } else {
                 //-- Try again. Maybe.
-                if(pInfo->lastHeartbeat.elapsed() > 2000) {
-                    if (pInfo->tryCount > 50) {
+                if(pInfo->lastHeartbeat.elapsed() > 3000) {
+                    if (pInfo->tryCount > 200) {
                         if(!pInfo->gaveUp) {
                             pInfo->gaveUp = true;
                             qCDebug(CameraManagerLog) << "Giving up requesting camera info from" << _vehicle->id() << message.compid;
@@ -241,7 +241,7 @@ QGCCameraManager::_cameraTimeout()
             //-- Have we received a camera info message?
             if(pInfo->infoReceived) {
                 //-- Has the camera stopped talking to us?
-                if(pInfo->lastHeartbeat.elapsed() > 5000) {
+                if(pInfo->lastHeartbeat.elapsed() > 60000) {
                     //-- Camera is gone. Remove it.
                     bool autoStream = false;
                     QGCCameraControl* pCamera = _findCamera(pInfo->compID);
