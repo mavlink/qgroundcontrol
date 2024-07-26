@@ -202,8 +202,9 @@ ApplicationWindow {
                               qsTr("You have a mission edit in progress which has not been saved/sent. If you close you will lose changes. Are you sure you want to close?"),
                               Dialog.Yes | Dialog.No,
                               function() { checkForPendingParameterWrites() })
+            return false
         } else {
-            checkForPendingParameterWrites()
+            return checkForPendingParameterWrites()
         }
     }
 
@@ -214,10 +215,10 @@ ApplicationWindow {
                     qsTr("You have pending parameter updates to a vehicle. If you close you will lose changes. Are you sure you want to close?"),
                     Dialog.Yes | Dialog.No,
                     function() { checkForActiveConnections() })
-                return
+                return false
             }
         }
-        checkForActiveConnections()
+        return checkForActiveConnections()
     }
 
     function checkForActiveConnections() {
@@ -226,15 +227,16 @@ ApplicationWindow {
                 qsTr("There are still active connections to vehicles. Are you sure you want to exit?"),
                 Dialog.Yes | Dialog.No,
                 function() { finishCloseProcess() })
+            return false
         } else {
             finishCloseProcess()
+            return true
         }
     }
 
     onClosing: (close) => {
         if (!_forceClose) {
-            close.accepted = false
-            checkForUnsavedMission()
+            close.accepted = checkForUnsavedMission()
         }
     }
 
