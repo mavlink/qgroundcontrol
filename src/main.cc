@@ -221,7 +221,7 @@ int main(int argc, char *argv[])
 
     app.shutdown();
 
-    qDebug() << "Exit";
+    qDebug() << "Exiting main";
 
     return exitCode;
 }
