@@ -3,8 +3,6 @@ package org.mavlink.qgroundcontrol;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ExecutorService;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
@@ -30,16 +28,8 @@ import android.os.storage.StorageVolume;
 import android.util.Log;
 import android.view.WindowManager;
 
-import com.hoho.android.usbserial.driver.UsbSerialDriver;
-import com.hoho.android.usbserial.driver.UsbSerialPort;
-import com.hoho.android.usbserial.driver.UsbSerialProber;
-import com.hoho.android.usbserial.driver.SerialTimeoutException;
 import com.hoho.android.usbserial.driver.*;
-import com.hoho.android.usbserial.util.UsbUtils;
-import com.hoho.android.usbserial.util.HexDump;
-
-import org.mavlink.qgroundcontrol.SerialInputOutputManager;
-import org.mavlink.qgroundcontrol.QGCProber;
+import com.hoho.android.usbserial.util.*;
 
 import org.qtproject.qt.android.bindings.QtActivity;
 import org.qtproject.qt.android.QtNative;
@@ -49,81 +39,58 @@ import org.qtproject.qt.android.QtNative;
 // UsbEndpoint getWriteEndpoint();
 // UsbEndpoint getReadEndpoint();
 // boolean getXON() throws IOException;
+// UsbAccessory, UsbConfiguration, UsbConstants, UsbDevice, UsbDeviceConnection, UsbEndpoint, UsbInterface, UsbManager, UsbRequest
 
 public class QGCActivity extends QtActivity
 {
-    private static final int BAD_DEVICE_ID = 0;
-    private static final String TAG = "QGCActivity";
-    private static final String ACTION_USB_PERMISSION = "org.mavlink.qgroundcontrol.action.USB_PERMISSION";
+    private static final String TAG = QGCActivity.class.getSimpleName();
+    private static final String SCREEN_BRIGHT_WAKE_LOCK_TAG = "QGroundControl"; // BuildConfig.LIBRARY_PACKAGE_NAME, Context.getPackageName()
+    private static final String MULTICAST_LOCK_TAG = "QGroundControl"; // BuildConfig.LIBRARY_PACKAGE_NAME, Context.getPackageName()
 
-    private static final String SCREEN_BRIGHT_WAKE_LOCK_TAG = "QGroundControl";
-    private static final String MULTICAST_LOCK_TAG = "QGroundControl";
-
-    private static QGCActivity _instance = null;
+    private static QGCActivity m_instance = null;
     private static Context m_context;
 
-    private static PendingIntent _usbPermissionIntent = null;
-    private static UsbManager _usbManager = null;
-    private static List<UsbSerialDriver> _drivers;
-    private static HashMap<Integer, SerialInputOutputManager> _serialIoManager;
-    private static HashMap<Integer, Long> _userDataHashByDeviceId;
+    private static final int BAD_DEVICE_ID = 0;
+    private static final String ACTION_USB_PERMISSION = "org.mavlink.qgroundcontrol.action.USB_PERMISSION";
+    private static PendingIntent m_usbPermissionIntent = null;
+    private static UsbManager m_usbManager = null;
+    private static List<UsbSerialDriver> m_drivers;
+    private static HashMap<Integer, SerialInputOutputManager> m_serialIoManagerHashByDeviceId;
+    private static HashMap<Integer, Integer> m_fileDescriptorHashByDeviceId;
+    private static HashMap<Integer, Long> m_classPtrHashByDeviceId;
 
-    private static PowerManager.WakeLock _wakeLock;
-    private static WifiManager.MulticastLock _wifiMulticastLock;
+    private static PowerManager.WakeLock m_wakeLock;
+    private static WifiManager.MulticastLock m_wifiMulticastLock;
 
-    private final static ExecutorService m_Executor = Executors.newSingleThreadExecutor();
-
-    private final static SerialInputOutputManager.Listener m_Listener = new SerialInputOutputManager.Listener() {
-        @Override
-        public void onRunError(Exception e, long userData)
-        {
-            Log.e(TAG, "onRunError Exception", e);
-            nativeDeviceException(userData, e.getMessage());
-        }
-
-        @Override
-        public void onNewData(final byte[] data, long userData)
-        {
-            nativeDeviceNewData(userData, data);
-        }
-    };
-
-    private final static BroadcastReceiver _usbReceiver = new BroadcastReceiver() {
+    private final static BroadcastReceiver m_usbReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent)
         {
             final String action = intent.getAction();
             Log.i(TAG, "BroadcastReceiver USB action " + action);
 
             if (ACTION_USB_PERMISSION.equals(action)) {
-                handleUsbPermission(intent);
+                _handleUsbPermission(intent);
             } else if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
-                handleUsbDeviceDetached(intent);
+                _handleUsbDeviceDetached(intent);
             } else if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) {
-                handleUsbDeviceAttached(intent);
+                _handleUsbDeviceAttached(intent);
             }
 
             try {
                nativeUpdateAvailableJoysticks();
-            } catch (final Exception e) {
-               Log.e(TAG, "Exception nativeUpdateAvailableJoysticks()", e);
+            } catch (final Exception ex) {
+               Log.e(TAG, "Exception nativeUpdateAvailableJoysticks()", ex);
             }
         }
     };
 
-    private static void handleUsbPermission(final Intent intent)
+    private static void _handleUsbPermission(final Intent intent)
     {
-        synchronized (_instance) {
+        synchronized (m_instance) {
             final UsbDevice device = (UsbDevice)intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
             if (device != null) {
-                final UsbSerialDriver driver = _findDriverByDeviceId(device.getDeviceId());
-
                 if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
                     Log.i(TAG, "Permission granted to " + device.getDeviceName());
-                    try {
-                        driver.getPorts().get(0).open(_usbManager.openDevice(device));
-                    } catch (final IOException e) {
-                        Log.e(TAG, "Error opening port", e);
-                    }
                 } else {
                     Log.i(TAG, "Permission denied for " + device.getDeviceName());
                 }
@@ -131,32 +98,32 @@ public class QGCActivity extends QtActivity
         }
     }
 
-    private static void handleUsbDeviceDetached(final Intent intent)
+    private static void _handleUsbDeviceDetached(final Intent intent)
     {
         final UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
         if (device != null) {
-            if (_userDataHashByDeviceId.containsKey(device.getDeviceId())) {
-                nativeDeviceHasDisconnected(_userDataHashByDeviceId.get(device.getDeviceId()));
+            if (m_classPtrHashByDeviceId.containsKey(device.getDeviceId())) {
+                nativeDeviceHasDisconnected(m_classPtrHashByDeviceId.get(device.getDeviceId()));
             }
         }
     }
 
-    private static void handleUsbDeviceAttached(final Intent intent)
+    private static void _handleUsbDeviceAttached(final Intent intent)
     {
         final UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
         if (device != null) {
             final UsbSerialDriver driver = _findDriverByDeviceId(device.getDeviceId());
-            if ((driver != null) && !_usbManager.hasPermission(device)) {
+            if ((driver != null) && !m_usbManager.hasPermission(device)) {
                 Log.i(TAG, "Requesting permission for device " + device.getDeviceName());
-                _usbManager.requestPermission(device, _usbPermissionIntent);
+                m_usbManager.requestPermission(device, m_usbPermissionIntent);
             }
         }
     }
 
     // Native C++ functions which connect back to QSerialPort code
-    private static native void nativeDeviceHasDisconnected(final long userData);
-    private static native void nativeDeviceException(final long userData, final String message);
-    private static native void nativeDeviceNewData(final long userData, final byte[] data);
+    private static native void nativeDeviceHasDisconnected(final long classPtr);
+    public static native void nativeDeviceException(final long classPtr, final String message);
+    public static native void nativeDeviceNewData(final long classPtr, final byte[] data);
     private static native void nativeUpdateAvailableJoysticks();
 
     // Native C++ functions called to log output
@@ -168,10 +135,16 @@ public class QGCActivity extends QtActivity
     // QGCActivity singleton
     public QGCActivity()
     {
-        _instance = this;
-        _drivers = new ArrayList<>();
-        _userDataHashByDeviceId = new HashMap<>();
-        _serialIoManager = new HashMap<>();
+        m_instance = this;
+        m_drivers = new ArrayList<>();
+        m_classPtrHashByDeviceId = new HashMap<>();
+        m_serialIoManagerHashByDeviceId = new HashMap<>();
+        m_fileDescriptorHashByDeviceId = new HashMap<>();
+    }
+
+    public void onInit(int status)
+    {
+
     }
 
     @Override
@@ -180,45 +153,73 @@ public class QGCActivity extends QtActivity
         super.onCreate(savedInstanceState);
 
         nativeInit();
-        acquireWakeLock();
-        keepScreenOn();
-        setupMulticastLock();
-        registerReceivers();
-        setupUsbPermissionIntent();
+        _acquireWakeLock();
+        _keepScreenOn();
+        _setupMulticastLock();
+        _registerReceivers();
+        _setupUsbPermissionIntent();
 
-        _usbManager = (UsbManager) _instance.getSystemService(Context.USB_SERVICE);
+        m_usbManager = (UsbManager) m_instance.getSystemService(Context.USB_SERVICE);
     }
 
-    private void acquireWakeLock()
+    @Override
+    protected void onDestroy()
+    {
+        try {
+            _releaseMulticastLock();
+            _releaseWakeLock();
+        } catch(final Exception e) {
+           Log.e(TAG, "Exception onDestroy()", e);
+        }
+
+        super.onDestroy();
+    }
+
+    private void _keepScreenOn()
+    {
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    }
+
+    private void _acquireWakeLock()
     {
         final PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        _wakeLock = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, SCREEN_BRIGHT_WAKE_LOCK_TAG);
-        if (_wakeLock != null) {
-            _wakeLock.acquire();
+        m_wakeLock = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, SCREEN_BRIGHT_WAKE_LOCK_TAG);
+        if (m_wakeLock != null) {
+            m_wakeLock.acquire();
         } else {
             Log.w(TAG, "SCREEN_BRIGHT_WAKE_LOCK not acquired!");
         }
     }
 
-    private void keepScreenOn()
+    private void _releaseWakeLock()
     {
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        if (m_wakeLock != null) {
+            m_wakeLock.release();
+        }
     }
 
     // Workaround for QTBUG-73138
-    private void setupMulticastLock()
+    private void _setupMulticastLock()
     {
-        if (_wifiMulticastLock == null) {
+        if (m_wifiMulticastLock == null) {
             final WifiManager wifi = (WifiManager)getSystemService(Context.WIFI_SERVICE);
-            _wifiMulticastLock = wifi.createMulticastLock(MULTICAST_LOCK_TAG);
-            _wifiMulticastLock.setReferenceCounted(true);
+            m_wifiMulticastLock = wifi.createMulticastLock(MULTICAST_LOCK_TAG);
+            m_wifiMulticastLock.setReferenceCounted(true);
         }
 
-        _wifiMulticastLock.acquire();
-        Log.d(TAG, "Multicast lock: " + _wifiMulticastLock.toString());
+        m_wifiMulticastLock.acquire();
+        Log.d(TAG, "Multicast lock: " + m_wifiMulticastLock.toString());
     }
 
-    private void registerReceivers()
+    private void _releaseMulticastLock()
+    {
+        if (m_wifiMulticastLock != null) {
+            m_wifiMulticastLock.release();
+            Log.d(TAG, "Multicast lock released.");
+        }
+    }
+
+    private void _registerReceivers()
     {
         final IntentFilter filter = new IntentFilter();
         filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
@@ -227,57 +228,24 @@ public class QGCActivity extends QtActivity
         filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
         filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(_usbReceiver, filter, RECEIVER_EXPORTED);
+            registerReceiver(m_usbReceiver, filter, RECEIVER_EXPORTED);
         } else {
-            registerReceiver(_usbReceiver, filter);
+            registerReceiver(m_usbReceiver, filter);
         }
     }
 
-    private void setupUsbPermissionIntent()
+    private void _setupUsbPermissionIntent()
     {
         int intentFlags = 0;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
             intentFlags = PendingIntent.FLAG_IMMUTABLE;
         }
-        _usbPermissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), intentFlags);
-    }
-
-    @Override
-    protected void onDestroy()
-    {
-        try {
-            releaseMulticastLock();
-            releaseWakeLock();
-        } catch(final Exception e) {
-           Log.e(TAG, "Exception onDestroy()", e);
-        }
-
-        super.onDestroy();
-    }
-
-    private void releaseMulticastLock()
-    {
-        if (_wifiMulticastLock != null) {
-            _wifiMulticastLock.release();
-            Log.d(TAG, "Multicast lock released.");
-        }
-    }
-
-    private void releaseWakeLock()
-    {
-        if(_wakeLock != null) {
-            _wakeLock.release();
-        }
-    }
-
-    public void onInit(int status)
-    {
-
+        m_usbPermissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), intentFlags);
     }
 
     private static UsbSerialDriver _findDriverByDeviceId(int deviceId)
     {
-        for (final UsbSerialDriver driver: _drivers) {
+        for (final UsbSerialDriver driver: m_drivers) {
             if (driver.getDevice().getDeviceId() == deviceId) {
                 return driver;
             }
@@ -288,7 +256,7 @@ public class QGCActivity extends QtActivity
 
     private static UsbSerialDriver _findDriverByDeviceName(final String deviceName)
     {
-        for (final UsbSerialDriver driver: _drivers) {
+        for (final UsbSerialDriver driver: m_drivers) {
             if (driver.getDevice().getDeviceName().equals(deviceName)) {
                 return driver;
             }
@@ -314,66 +282,66 @@ public class QGCActivity extends QtActivity
         return port;
     }
 
-    public static void refreshUsbDevices()
+    /*private static void _refreshUsbDevices()
     {
         final UsbSerialProber usbDefaultProber = UsbSerialProber.getDefaultProber();
         final UsbSerialProber usbQGCProber = QGCProber.getQGCProber();
 
-        _drivers.clear();
-        for (final UsbDevice device : _usbManager.getDeviceList().values()) {
+        m_drivers.clear();
+        for (final UsbDevice device : m_usbManager.getDeviceList().values()) {
             UsbSerialDriver driver = usbDefaultProber.probeDevice(device);
             if (driver == null) {
                 driver = usbQGCProber.probeDevice(device);
             }
             if (driver != null) {
-                _drivers.add(driver);
+                m_drivers.add(driver);
             }
         }
-    }
+    }*/
 
     /**
      * @brief Incrementally updates the list of drivers connected to the device.
      */
-    private static void updateCurrentDrivers()
+    private static void _updateCurrentDrivers()
     {
         final UsbSerialProber usbDefaultProber = UsbSerialProber.getDefaultProber();
-        List<UsbSerialDriver> currentDrivers = usbDefaultProber.findAllDrivers(_usbManager);
+        List<UsbSerialDriver> currentDrivers = usbDefaultProber.findAllDrivers(m_usbManager);
         if (currentDrivers.isEmpty()) {
-            currentDrivers = QGCProber.getQGCProber().findAllDrivers(_usbManager);
+            currentDrivers = QGCProber.getQGCProber().findAllDrivers(m_usbManager);
         }
 
         if (currentDrivers.isEmpty()) {
             return;
         }
 
-        removeStaleDrivers(currentDrivers);
+        _removeStaleDrivers(currentDrivers);
 
-        addNewDrivers(currentDrivers);
+        _addNewDrivers(currentDrivers);
     }
 
-    private static void removeStaleDrivers(final List<UsbSerialDriver> currentDrivers)
+    private static void _removeStaleDrivers(final List<UsbSerialDriver> currentDrivers)
     {
-        for (int i = _drivers.size() - 1; i >= 0; i--) {
+        for (int i = m_drivers.size() - 1; i >= 0; i--) {
             boolean found = false;
             for (final UsbSerialDriver currentDriver : currentDrivers) {
-                if (_drivers.get(i).getDevice().getDeviceId() == currentDriver.getDevice().getDeviceId()) {
+                if (m_drivers.get(i).getDevice().getDeviceId() == currentDriver.getDevice().getDeviceId()) {
                     found = true;
                     break;
                 }
             }
 
             if (!found) {
-                Log.i(TAG, "Remove stale driver " + _drivers.get(i).getDevice().getDeviceName());
-                _drivers.remove(i);
+                Log.i(TAG, "Remove stale driver " + m_drivers.get(i).getDevice().getDeviceName());
+                m_drivers.remove(i);
             }
         }
     }
 
-    private static void addNewDrivers(final List<UsbSerialDriver> currentDrivers)
+    private static void _addNewDrivers(final List<UsbSerialDriver> currentDrivers)
     {
         for (final UsbSerialDriver newDriver : currentDrivers) {
             boolean found = false;
-            for (final UsbSerialDriver driver : _drivers) {
+            for (final UsbSerialDriver driver : m_drivers) {
                 if (newDriver.getDevice().getDeviceId() == driver.getDevice().getDeviceId()) {
                     found = true;
                     break;
@@ -381,111 +349,72 @@ public class QGCActivity extends QtActivity
             }
 
             if (!found) {
-                addDriver(newDriver);
+                _addDriver(newDriver);
             }
         }
     }
 
-    private static void addDriver(final UsbSerialDriver newDriver)
+    private static void _addDriver(final UsbSerialDriver newDriver)
     {
         final UsbDevice device = newDriver.getDevice();
         final String deviceName = device.getDeviceName();
 
-        _drivers.add(newDriver);
+        m_drivers.add(newDriver);
         Log.i(TAG, "Adding new driver " + deviceName);
 
-        if (_usbManager.hasPermission(device)) {
+        if (m_usbManager.hasPermission(device)) {
             Log.i(TAG, "Already have permission to use device " + deviceName);
         } else {
             Log.i(TAG, "Requesting permission to use device " + deviceName);
-            _usbManager.requestPermission(device, _usbPermissionIntent);
+            m_usbManager.requestPermission(device, m_usbPermissionIntent);
         }
     }
 
     /**
-     * @brief Returns an array of device info for each unopened device.
+     * @brief Returns an array of device info for each device.
      *
-     * @return String[] Device info in the format "DeviceName:Company:ProductId:VendorId".
+     * @return String[] Device info in the format "DeviceName:ProductName:Manufacturer:SerialNumber:ProductId:VendorId".
      */
     public static String[] availableDevicesInfo()
     {
-        updateCurrentDrivers();
+        _updateCurrentDrivers();
 
-        if (_drivers.size() <= 0) {
+        if (m_usbManager.getDeviceList().size() < 1) {
             return null;
         }
 
         final List<String> deviceInfoList = new ArrayList<>();
 
-        for (final UsbSerialDriver driver : _drivers) {
-            final UsbSerialPort port = driver.getPorts().get(0);
-            final UsbDevice device = driver.getDevice();
-            final String deviceInfo = formatDeviceInfo(device, driver);
-
+        for (final UsbDevice device : m_usbManager.getDeviceList().values()) {
+            final String deviceInfo = _formatDeviceInfo(device);
             deviceInfoList.add(deviceInfo);
         }
 
         return deviceInfoList.toArray(new String[0]);
     }
 
-    private static String formatDeviceInfo(final UsbDevice device, final UsbSerialDriver driver)
+    private static String _formatDeviceInfo(final UsbDevice device)
     {
-        String deviceInfo = device.getDeviceName() + ":";
-
-        if (driver instanceof FtdiSerialDriver) {
-            deviceInfo += "FTDI:";
-        } else if (driver instanceof CdcAcmSerialDriver) {
-            deviceInfo += "Cdc Acm:";
-        } else if (driver instanceof Cp21xxSerialDriver) {
-            deviceInfo += "Cp21xx:";
-        } else if (driver instanceof ProlificSerialDriver) {
-            deviceInfo += "Prolific:";
-        } else if (driver instanceof Ch34xSerialDriver) {
-            deviceInfo += "CH34x:";
-        } else if (driver instanceof ChromeCcdSerialDriver) {
-            deviceInfo += "Chrome CCD:";
-        } else if (driver instanceof GsmModemSerialDriver) {
-            deviceInfo += "GSM Modem:";
-        } else {
-            deviceInfo += "Unknown:";
-        }
-
+        String deviceInfo = "";
+        deviceInfo += device.getDeviceName() + ":";
+        deviceInfo += device.getProductName() + ":";
+        deviceInfo += device.getManufacturerName() + ":";
+        deviceInfo += device.getSerialNumber() + ":";
         deviceInfo += device.getProductId() + ":";
         deviceInfo += device.getVendorId() + ":";
+
+        Log.i(TAG, "_formatDeviceInfo " + deviceInfo);
 
         return deviceInfo;
     }
 
     /**
-     * Format device information for display.
-     *
-     * @param driver UsbSerialDriver instance.
-     * @return String containing formatted device information.
-     */
-    private static String formatDeviceInfo(final UsbSerialDriver driver)
-    {
-        final UsbDevice device = driver.getDevice();
-        final List<UsbSerialPort> ports = driver.getPorts();
-        StringBuilder sb = new StringBuilder();
-
-        sb.append(String.format("Vendor %04X Product %04X", device.getVendorId(), device.getProductId()));
-
-        for (int i = 0; i < ports.size(); i++) {
-            final UsbSerialPort port = ports.get(i);
-            sb.append("\nPort ").append(i).append(": ");
-            sb.append(String.format("Port number %d", port.getPortNumber()));
-        }
-
-        return sb.toString();
-    }
-
-    /**
      * @brief Opens the specified device.
      *
-     * @param userData Data to associate with the device and pass back through to native calls.
+     * @param classPtr Data to associate with the device and pass back through to native calls.
      * @return int Device ID.
      */
-    public static int open(final Context parentContext, final String deviceName, final long userData)
+    public static int open(final Context parentContext, final String deviceName, final long classPtr)
     {
         m_context = parentContext;
 
@@ -506,16 +435,16 @@ public class QGCActivity extends QtActivity
         final UsbDevice device = driver.getDevice();
         final int deviceId = device.getDeviceId();
 
-        if (!openDriver(port, device, deviceId, userData)) {
+        if (!_openDriver(port, device, deviceId, classPtr)) {
             return BAD_DEVICE_ID;
         }
 
         return deviceId;
     }
 
-    private static boolean openDriver(final UsbSerialPort port, final UsbDevice device, final int deviceId, final long userData)
+    private static boolean _openDriver(final UsbSerialPort port, final UsbDevice device, final int deviceId, final long classPtr)
     {
-        final UsbDeviceConnection connection = _usbManager.openDevice(device);
+        final UsbDeviceConnection connection = m_usbManager.openDevice(device);
         if (connection == null) {
             Log.w(TAG, "No Usb Device Connection");
             // TODO: add UsbManager.requestPermission(driver.getDevice(), ..) handling here?
@@ -533,23 +462,30 @@ public class QGCActivity extends QtActivity
             return false;
         }
 
-        if (!createIoManager(deviceId, port, userData)) {
+        if (!_createIoManager(deviceId, port, classPtr)) {
             return false;
         }
 
-        _userDataHashByDeviceId.put(deviceId, userData);
+        m_classPtrHashByDeviceId.put(deviceId, classPtr);
+        m_fileDescriptorHashByDeviceId.put(deviceId, connection.getFileDescriptor());
+
+        /*final ArrayList<byte[]> descriptors = UsbUtils.getDescriptors(connection);
+        for (byte[] descriptor : descriptors) {
+            Log.d(TAG, "Descriptor: " + HexDump.toHexString(descriptor));
+        }*/
 
         Log.d(TAG, "Port open successful");
         return true;
     }
 
-    private static boolean createIoManager(final int deviceId, final UsbSerialPort port, final long userData)
+    private static boolean _createIoManager(final int deviceId, final UsbSerialPort port, final long classPtr)
     {
-        if (_serialIoManager.get(deviceId) != null) {
+        if (m_serialIoManagerHashByDeviceId.get(deviceId) != null) {
             return true;
         }
 
-        final SerialInputOutputManager ioManager = new SerialInputOutputManager(port, m_Listener, userData);
+        final QGCSerialListener listener = new QGCSerialListener(classPtr);
+        final SerialInputOutputManager ioManager = new SerialInputOutputManager(port, listener);
 
         // ioManager.setReadBufferSize(4096);
         // ioManager.setWriteBufferSize(4096);
@@ -558,13 +494,13 @@ public class QGCActivity extends QtActivity
         Log.d(TAG, "Write Buffer Size: " + ioManager.getWriteBufferSize());
 
         try {
-            ioManager.setReadTimeout(1000);
+            ioManager.setReadTimeout(0);
         } catch (final IllegalStateException e) {
             Log.e(TAG, "Set Read Timeout exception:", e);
             return false;
         }
 
-        ioManager.setWriteTimeout(1000);
+        ioManager.setWriteTimeout(0);
 
         try {
             ioManager.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
@@ -572,22 +508,20 @@ public class QGCActivity extends QtActivity
             Log.e(TAG, "Set Thread Priority exception:", e);
         }
 
-        _serialIoManager.put(deviceId, ioManager);
-        m_Executor.submit(ioManager);
+        m_serialIoManagerHashByDeviceId.put(deviceId, ioManager);
 
         return true;
     }
 
-    public static boolean startIoManager(final int id)
+    public static boolean startIoManager(final int deviceId)
     {
-        final SerialInputOutputManager ioManager = _serialIoManager.get(id);
-        if(ioManager == null) {
-            return false;
+        if (ioManagerRunning(deviceId)) {
+            return true;
         }
 
-        final SerialInputOutputManager.State ioState = ioManager.getState();
-        if (ioState == SerialInputOutputManager.State.RUNNING) {
-            return true;
+        final SerialInputOutputManager ioManager = m_serialIoManagerHashByDeviceId.get(deviceId);
+        if (ioManager == null) {
+            return false;
         }
 
         try {
@@ -600,9 +534,9 @@ public class QGCActivity extends QtActivity
         return true;
     }
 
-    public static boolean stopIoManager(final int id)
+    public static boolean stopIoManager(final int deviceId)
     {
-        final SerialInputOutputManager ioManager = _serialIoManager.get(id);
+        final SerialInputOutputManager ioManager = m_serialIoManagerHashByDeviceId.get(deviceId);
         if (ioManager == null) {
             return false;
         }
@@ -612,16 +546,16 @@ public class QGCActivity extends QtActivity
             return true;
         }
 
-        if (ioManagerRunning(id)) {
+        if (ioManagerRunning(deviceId)) {
             ioManager.stop();
         }
 
         return true;
     }
 
-    public static boolean ioManagerRunning(final int id)
+    public static boolean ioManagerRunning(final int deviceId)
     {
-        final SerialInputOutputManager ioManager = _serialIoManager.get(id);
+        final SerialInputOutputManager ioManager = m_serialIoManagerHashByDeviceId.get(deviceId);
         if (ioManager == null) {
             return false;
         }
@@ -630,9 +564,9 @@ public class QGCActivity extends QtActivity
         return (ioState == SerialInputOutputManager.State.RUNNING);
     }
 
-    public static int ioManagerReadBufferSize(final int id)
+    public static int ioManagerReadBufferSize(final int deviceId)
     {
-        final SerialInputOutputManager ioManager = _serialIoManager.get(id);
+        final SerialInputOutputManager ioManager = m_serialIoManagerHashByDeviceId.get(deviceId);
         if (ioManager == null) {
             return 0;
         }
@@ -643,12 +577,12 @@ public class QGCActivity extends QtActivity
     /**
      * @brief Closes the device.
      *
-     * @param id ID number from the open command.
+     * @param deviceId ID number from the open command.
      * @return true if the operation is successful, false otherwise.
      */
-    public static boolean close(int id)
+    public static boolean close(int deviceId)
     {
-        final UsbSerialPort port = _findPortByDeviceId(id);
+        final UsbSerialPort port = _findPortByDeviceId(deviceId);
         if (port == null) {
             return false;
         }
@@ -660,11 +594,12 @@ public class QGCActivity extends QtActivity
             return false;
         }
 
-        if (stopIoManager(id)) {
-            _serialIoManager.remove(id);
+        if (stopIoManager(deviceId)) {
+            m_serialIoManagerHashByDeviceId.remove(deviceId);
         }
 
-        _userDataHashByDeviceId.remove(id);
+        m_classPtrHashByDeviceId.remove(deviceId);
+        m_fileDescriptorHashByDeviceId.remove(deviceId);
 
         return true;
     }
@@ -672,14 +607,14 @@ public class QGCActivity extends QtActivity
     /**
      * @brief Writes data to the device.
      *
-     * @param id ID number from the open command.
+     * @param deviceId ID number from the open command.
      * @param data Byte array of data to write.
      * @param timeoutMsec Amount of time in milliseconds to wait for the write to occur.
      * @return int Number of bytes written.
      */
-    public static int write(final int id, final byte[] data, final int length, final int timeoutMSec)
+    public static int write(final int deviceId, final byte[] data, final int length, final int timeoutMSec)
     {
-        final UsbSerialPort port = _findPortByDeviceId(id);
+        final UsbSerialPort port = _findPortByDeviceId(deviceId);
         if (port == null) {
             return -1;
         }
@@ -700,14 +635,14 @@ public class QGCActivity extends QtActivity
     /**
      * Writes data to the device asynchronously.
      *
-     * @param id ID number from the open command.
+     * @param deviceId ID number from the open command.
      * @param data Byte array of data to write.
      */
-    public static int writeAsync(final int id, final byte[] data)
+    public static int writeAsync(final int deviceId, final byte[] data, final int timeoutMSec)
     {
-        final SerialInputOutputManager ioManager = _serialIoManager.get(id);
+        final SerialInputOutputManager ioManager = m_serialIoManagerHashByDeviceId.get(deviceId);
         if (ioManager == null) {
-            Log.w(TAG, "IO Manager not found for device ID " + id);
+            Log.w(TAG, "IO Manager not found for device ID " + deviceId);
             return -1;
         }
 
@@ -715,14 +650,16 @@ public class QGCActivity extends QtActivity
             return -1;
         }
 
+        ioManager.setWriteTimeout(timeoutMSec);
+
         ioManager.writeAsync(data);
 
         return data.length;
     }
 
-    public static byte[] read(final int id, final int length, final int timeoutMs)
+    public static byte[] read(final int deviceId, final int length, final int timeoutMs)
     {
-        final UsbSerialPort port = _findPortByDeviceId(id);
+        final UsbSerialPort port = _findPortByDeviceId(deviceId);
         if (port == null) {
             return new byte[] {};
         }
@@ -742,7 +679,7 @@ public class QGCActivity extends QtActivity
 
     public static boolean isDeviceNameValid(final String name)
     {
-        for (final UsbSerialDriver driver: _drivers) {
+        for (final UsbSerialDriver driver: m_drivers) {
             if (driver.getDevice().getDeviceName().equals(name)) {
                 return true;
             }
@@ -753,7 +690,7 @@ public class QGCActivity extends QtActivity
 
     public static boolean isDeviceNameOpen(final String name)
     {
-        for (final UsbSerialDriver driver: _drivers) {
+        for (final UsbSerialDriver driver: m_drivers) {
             final List<UsbSerialPort> ports = driver.getPorts();
             if (!ports.isEmpty() && name.equals(driver.getDevice().getDeviceName()) && ports.get(0).isOpen()) {
                 return true;
@@ -786,16 +723,16 @@ public class QGCActivity extends QtActivity
     /**
      * @brief Sets the parameters on an open port.
      *
-     * @param id ID number from the open command.
+     * @param deviceId ID number from the open command.
      * @param baudRate Decimal value of the baud rate. For example, 9600, 57600, 115200, etc.
      * @param dataBits Number of data bits. Valid numbers are 5, 6, 7, 8.
      * @param stopBits Number of stop bits. Valid numbers are 1, 2.
      * @param parity Parity setting: No Parity=0, Odd Parity=1, Even Parity=2.
      * @return true if the operation is successful, false otherwise.
      */
-    public static boolean setParameters(final int id, final int baudRate, final int dataBits, final int stopBits, final int parity)
+    public static boolean setParameters(final int deviceId, final int baudRate, final int dataBits, final int stopBits, final int parity)
     {
-        final UsbSerialPort port = _findPortByDeviceId(id);
+        final UsbSerialPort port = _findPortByDeviceId(deviceId);
         if (port == null) {
             return false;
         }
@@ -830,11 +767,11 @@ public class QGCActivity extends QtActivity
     /**
      * @brief Gets the Carrier Detect (CD) flag.
      *
-     * @param id ID number from the open command.
+     * @param deviceId ID number from the open command.
      */
-    public static boolean getCarrierDetect(final int id)
+    public static boolean getCarrierDetect(final int deviceId)
     {
-        final UsbSerialPort port = _findPortByDeviceId(id);
+        final UsbSerialPort port = _findPortByDeviceId(deviceId);
         if (port == null) {
             return false;
         }
@@ -862,11 +799,11 @@ public class QGCActivity extends QtActivity
     /**
      * @brief Gets the Clear To Send (CTS) flag.
      *
-     * @param id ID number from the open command.
+     * @param deviceId ID number from the open command.
      */
-    public static boolean getClearToSend(final int id)
+    public static boolean getClearToSend(final int deviceId)
     {
-        final UsbSerialPort port = _findPortByDeviceId(id);
+        final UsbSerialPort port = _findPortByDeviceId(deviceId);
         if (port == null) {
             return false;
         }
@@ -894,11 +831,11 @@ public class QGCActivity extends QtActivity
     /**
      * @brief Gets the Data Set Ready (DSR) flag.
      *
-     * @param id ID number from the open command.
+     * @param deviceId ID number from the open command.
      */
-    public static boolean getDataSetReady(final int id)
+    public static boolean getDataSetReady(final int deviceId)
     {
-        final UsbSerialPort port = _findPortByDeviceId(id);
+        final UsbSerialPort port = _findPortByDeviceId(deviceId);
         if (port == null) {
             return false;
         }
@@ -926,11 +863,11 @@ public class QGCActivity extends QtActivity
     /**
      * @brief Gets the Data Terminal Ready (DTR) flag.
      *
-     * @param id ID number from the open command.
+     * @param deviceId ID number from the open command.
      */
-    public static boolean getDataTerminalReady(final int id)
+    public static boolean getDataTerminalReady(final int deviceId)
     {
-        final UsbSerialPort port = _findPortByDeviceId(id);
+        final UsbSerialPort port = _findPortByDeviceId(deviceId);
         if (port == null) {
             return false;
         }
@@ -958,13 +895,13 @@ public class QGCActivity extends QtActivity
     /**
      * @brief Sets the Data Terminal Ready (DTR) flag on the device.
      *
-     * @param id ID number from the open command.
+     * @param deviceId ID number from the open command.
      * @param on true to turn on, false to turn off.
      * @return true if the operation is successful, false otherwise.
      */
-    public static boolean setDataTerminalReady(final int id, final boolean on)
+    public static boolean setDataTerminalReady(final int deviceId, final boolean on)
     {
-        final UsbSerialPort port = _findPortByDeviceId(id);
+        final UsbSerialPort port = _findPortByDeviceId(deviceId);
         if (port == null) {
             return false;
         }
@@ -990,11 +927,11 @@ public class QGCActivity extends QtActivity
     /**
      * @brief Gets the Ring Indicator (RI) flag.
      *
-     * @param id ID number from the open command.
+     * @param deviceId ID number from the open command.
      */
-    public static boolean getRingIndicator(final int id)
+    public static boolean getRingIndicator(final int deviceId)
     {
-        final UsbSerialPort port = _findPortByDeviceId(id);
+        final UsbSerialPort port = _findPortByDeviceId(deviceId);
         if (port == null) {
             return false;
         }
@@ -1022,11 +959,11 @@ public class QGCActivity extends QtActivity
     /**
      * @brief Gets the Request to Send (RTS) flag.
      *
-     * @param id ID number from the open command.
+     * @param deviceId ID number from the open command.
      */
-    public static boolean getRequestToSend(final int id)
+    public static boolean getRequestToSend(final int deviceId)
     {
-        final UsbSerialPort port = _findPortByDeviceId(id);
+        final UsbSerialPort port = _findPortByDeviceId(deviceId);
         if (port == null) {
             return false;
         }
@@ -1054,13 +991,13 @@ public class QGCActivity extends QtActivity
     /**
      * @brief Sets the Request to Send (RTS) flag.
      *
-     * @param id ID number from the open command.
+     * @param deviceId ID number from the open command.
      * @param on true to turn on, false to turn off.
      * @return true if the operation is successful, false otherwise.
      */
-    public static boolean setRequestToSend(final int id, final boolean on)
+    public static boolean setRequestToSend(final int deviceId, final boolean on)
     {
-        final UsbSerialPort port = _findPortByDeviceId(id);
+        final UsbSerialPort port = _findPortByDeviceId(deviceId);
         if (port == null) {
             return false;
         }
@@ -1086,11 +1023,11 @@ public class QGCActivity extends QtActivity
     /**
      * @brief Gets the Control Lines flags.
      *
-     * @param id ID number from the open command.
+     * @param deviceId ID number from the open command.
      */
-    public static int[] getControlLines(final int id)
+    public static int[] getControlLines(final int deviceId)
     {
-        final UsbSerialPort port = _findPortByDeviceId(id);
+        final UsbSerialPort port = _findPortByDeviceId(deviceId);
         if (port == null) {
             return new int[] {};
         }
@@ -1124,11 +1061,11 @@ public class QGCActivity extends QtActivity
     /**
      * @brief Gets the Flow Control type.
      *
-     * @param id ID number from the open command.
+     * @param deviceId ID number from the open command.
      */
-    public static int getFlowControl(final int id)
+    public static int getFlowControl(final int deviceId)
     {
-        final UsbSerialPort port = _findPortByDeviceId(id);
+        final UsbSerialPort port = _findPortByDeviceId(deviceId);
         if (port == null) {
             return 0;
         }
@@ -1148,11 +1085,11 @@ public class QGCActivity extends QtActivity
     /**
      * @brief Sets the Flow Control flag.
      *
-     * @param id ID number from the open command.
+     * @param deviceId ID number from the open command.
      */
-    public static boolean setFlowControl(final int id, final int flowControl)
+    public static boolean setFlowControl(final int deviceId, final int flowControl)
     {
-        if (getFlowControl(id) == flowControl) {
+        if (getFlowControl(deviceId) == flowControl) {
             return true;
         }
 
@@ -1163,7 +1100,7 @@ public class QGCActivity extends QtActivity
 
         final UsbSerialPort.FlowControl flowControlEnum = UsbSerialPort.FlowControl.values()[flowControl];
 
-        final UsbSerialPort port = _findPortByDeviceId(id);
+        final UsbSerialPort port = _findPortByDeviceId(deviceId);
         if (port == null) {
             return false;
         }
@@ -1196,13 +1133,13 @@ public class QGCActivity extends QtActivity
     /**
      * Sets the break condition on the device.
      *
-     * @param id ID number from the open command.
+     * @param deviceId ID number from the open command.
      * @param on true to set break, false to clear break.
      * @return true if the operation is successful, false otherwise.
      */
-    public static boolean setBreak(final int id, final boolean on)
+    public static boolean setBreak(final int deviceId, final boolean on)
     {
-        final UsbSerialPort port = _findPortByDeviceId(id);
+        final UsbSerialPort port = _findPortByDeviceId(deviceId);
         if (port == null) {
             return false;
         }
@@ -1220,14 +1157,14 @@ public class QGCActivity extends QtActivity
     /**
      * @brief Purges the hardware buffers based on the input and output flags.
      *
-     * @param id ID number from the open command.
+     * @param deviceId ID number from the open command.
      * @param input true to purge the input buffer.
      * @param output true to purge the output buffer.
      * @return true if the operation is successful, false otherwise.
      */
-    public static boolean purgeBuffers(final int id, final boolean input, final boolean output)
+    public static boolean purgeBuffers(final int deviceId, final boolean input, final boolean output)
     {
-        final UsbSerialPort port = _findPortByDeviceId(id);
+        final UsbSerialPort port = _findPortByDeviceId(deviceId);
         if (port == null) {
             return false;
         }
@@ -1248,78 +1185,17 @@ public class QGCActivity extends QtActivity
     /**
      * @brief Gets the native device handle (file descriptor).
      *
-     * @param id ID number from the open command.
+     * @param deviceId ID number from the open command.
      * @return int Device handle.
      */
-    public static int getDeviceHandle(final int id)
+    public static int getDeviceHandle(final int deviceId)
     {
-        final UsbSerialDriver driver = _findDriverByDeviceId(id);
-
-        if (driver == null) {
-            return -1;
-        }
-
-        final UsbDeviceConnection connect = _usbManager.openDevice(driver.getDevice());
-        if (connect == null) {
-            return -1;
-        }
-
-        return connect.getFileDescriptor();
-    }
-
-    /**
-     * @brief Gets the device serial number.
-     *
-     * @param id ID number from the open command.
-     * @return String Device serial number.
-     */
-    public static String getSerialNumber(final int id)
-    {
-        final UsbSerialDriver driver = _findDriverByDeviceId(id);
-
-        if (driver == null) {
-            return "";
-        }
-
-        final UsbDeviceConnection connect = _usbManager.openDevice(driver.getDevice());
-        if (connect == null) {
-            return "";
-        }
-
-        String serialNumber = "";
-        try {
-            serialNumber = connect.getSerial();
-        } catch (final SecurityException e) {
-            Log.e(TAG, "Error getting serial number", e);
-        }
-
-        return serialNumber;
-    }
-
-    public static void logUsbDescriptors(final int deviceId)
-    {
-        final UsbSerialDriver driver = _findDriverByDeviceId(deviceId);
-
-        if (driver == null) {
-            Log.w(TAG, "No driver found for device ID " + deviceId);
-            return;
-        }
-
-        final UsbDeviceConnection connection = _usbManager.openDevice(driver.getDevice());
-        if (connection == null) {
-            Log.w(TAG, "No connection found for device ID " + deviceId);
-            return;
-        }
-
-        final ArrayList<byte[]> descriptors = UsbUtils.getDescriptors(connection);
-        for (byte[] descriptor : descriptors) {
-            Log.d(TAG, "Descriptor: " + HexDump.toHexString(descriptor));
-        }
+        return m_fileDescriptorHashByDeviceId.getOrDefault(deviceId, -1);
     }
 
     public static String getSDCardPath()
     {
-        final StorageManager storageManager = (StorageManager) _instance.getSystemService(Activity.STORAGE_SERVICE);
+        final StorageManager storageManager = (StorageManager) m_instance.getSystemService(Activity.STORAGE_SERVICE);
         final List<StorageVolume> volumes = storageManager.getStorageVolumes();
         for (final StorageVolume vol : volumes) {
             final String path = getStorageVolumePath(vol);
@@ -1334,8 +1210,8 @@ public class QGCActivity extends QtActivity
     private static String getStorageVolumePath(final StorageVolume vol)
     {
         try {
-            final Method mMethodGetPath = vol.getClass().getMethod("getPath");
-            final String path = (String) mMethodGetPath.invoke(vol);
+            final Method methodGetPath = vol.getClass().getMethod("getPath");
+            final String path = (String) methodGetPath.invoke(vol);
             if (vol.isRemovable()) {
                 Log.i(TAG, "removable sd card mounted " + path);
                 return path;
