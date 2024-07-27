@@ -109,7 +109,6 @@ public:
     bool startAsyncRead();
 
     qint64 writeData(const char *data, qint64 maxSize);
-    qint64 writeToPort(const char *data, qint64 maxSize);
 
     void newDataArrived(char *bytes, int length);
     void exceptionArrived(const QString &ex);
@@ -123,13 +122,12 @@ public:
     int descriptor = -1;
 
 private:
+    qint64 _writeToPort(const char *data, qint64 maxSize, int timeout = 0, bool async = false);
     bool _stopAsyncRead();
     bool _setParameters(int baudRate, int dataBits, int stopBits, int parity);
-    bool _writeDataOneShot();
+    bool _writeDataOneShot(int msecs);
 
     static qint32 _settingFromBaudRate(qint32 baudRate);
-
-    // bool m_settingsRestoredOnClose = true;
 
     qint64 m_pendingBytesWritten = 0;
 
@@ -137,7 +135,6 @@ private:
     int m_dataBits = AndroidSerial::Data8;
     int m_stopBits = AndroidSerial::OneStop;
     int m_parity = AndroidSerial::NoParity;
-    qint64 m_internalWriteTimeoutMsec = 0;
 };
 
 QT_END_NAMESPACE

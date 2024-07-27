@@ -89,6 +89,7 @@ android {
         // versionName "5.0"
         // versionCode 5
 
+        // println "applicationId: ${applicationId}"
         println "minSdkVersion: ${minSdkVersion}"
         println "targetSdkVersion: ${targetSdkVersion}"
         println "ndk.abiFilters: ${ndk.abiFilters}"

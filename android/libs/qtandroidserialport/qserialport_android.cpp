@@ -1,8 +1,8 @@
 #include "qserialport_p.h"
+#include <QGC.h>
 #include <QGCLoggingCategory.h>
 
 #include <QtCore/QMap>
-#include <QtCore/QThread>
 #include <QtCore/QTimer>
 
 #include <asm/termbits.h>
@@ -38,12 +38,12 @@ bool QSerialPortPrivate::open(QIODevice::OpenMode mode)
         return false;
     }
 
-    /*if (mode & QIODevice::ReadOnly) {
+    if (mode & QIODevice::ReadOnly) {
         // readBufferMaxSize = AndroidSerial::getReadBufferSize();
         startAsyncRead();
     }
 
-    if (!clear(QSerialPort::AllDirections)) {
+    /*if (!clear(QSerialPort::AllDirections)) {
         close();
         return false;
     }*/
@@ -82,11 +82,11 @@ bool QSerialPortPrivate::startAsyncRead()
 
 void QSerialPortPrivate::newDataArrived(char *bytes, int length)
 {
-    if (!q_func()->isOpen()) {
+    Q_Q(QSerialPort);
+
+    if (!q->isOpen()) {
         return;
     }
-
-    Q_Q(QSerialPort);
 
     int bytesToRead = length;
     if (readBufferMaxSize && (bytesToRead > (readBufferMaxSize - buffer.size()))) {
@@ -97,7 +97,7 @@ void QSerialPortPrivate::newDataArrived(char *bytes, int length)
         }
     }
 
-    char * const ptr = buffer.reserve(bytesToRead);
+    char* const ptr = buffer.reserve(bytesToRead);
     (void) memcpy(ptr, bytes, static_cast<size_t>(bytesToRead));
 
     emit q->readyRead();
@@ -110,7 +110,7 @@ void QSerialPortPrivate::exceptionArrived(const QString &ex)
 
 bool QSerialPortPrivate::waitForReadyRead(int msecs)
 {
-    const int orig = static_cast<int>(buffer.size());
+    const qint64 orig = static_cast<int>(buffer.size());
 
     if (orig > 0) {
         return true;
@@ -120,7 +120,7 @@ bool QSerialPortPrivate::waitForReadyRead(int msecs)
         if (orig < buffer.size()) {
             return true;
         } else {
-            QThread::msleep(1);
+            QGC::SLEEP::msleep(1);
         }
     }
 
@@ -129,20 +129,21 @@ bool QSerialPortPrivate::waitForReadyRead(int msecs)
 
 bool QSerialPortPrivate::waitForBytesWritten(int msecs)
 {
-    m_internalWriteTimeoutMsec = msecs;
-    const bool ret = _writeDataOneShot();
-    m_internalWriteTimeoutMsec = 0;
-    return ret;
+    // if (writeBuffer.isEmpty() && (m_pendingBytesWritten <= 0)) {
+    //     return false;
+    // }
+
+    return _writeDataOneShot(msecs);
 }
 
-bool QSerialPortPrivate::_writeDataOneShot()
+bool QSerialPortPrivate::_writeDataOneShot(int msecs)
 {
     Q_Q(QSerialPort);
 
     m_pendingBytesWritten = -1;
 
     while (!writeBuffer.isEmpty()) {
-        m_pendingBytesWritten = writeToPort(writeBuffer.readPointer(), writeBuffer.nextDataBlockSize());
+        m_pendingBytesWritten = _writeToPort(writeBuffer.readPointer(), writeBuffer.nextDataBlockSize(), msecs, false);
 
         if (m_pendingBytesWritten <= 0) {
             setError(QSerialPortErrorInfo(QSerialPort::WriteError));
@@ -157,19 +158,20 @@ bool QSerialPortPrivate::_writeDataOneShot()
     return (m_pendingBytesWritten >= 0);
 }
 
-qint64 QSerialPortPrivate::writeToPort(const char *data, qint64 maxSize)
+qint64 QSerialPortPrivate::_writeToPort(const char *data, qint64 maxSize, int timeout, bool async)
 {
-    return AndroidSerial::write(m_deviceId, data, maxSize, m_internalWriteTimeoutMsec, false);
+    return AndroidSerial::write(m_deviceId, data, maxSize, timeout, async);
 }
 
 qint64 QSerialPortPrivate::writeData(const char *data, qint64 maxSize)
 {
-    return writeToPort(data, maxSize);
+    (void) writeBuffer.append(data, maxSize);
+    return _writeDataOneShot(0);
 }
 
 bool QSerialPortPrivate::flush()
 {
-    return _writeDataOneShot();
+    return _writeDataOneShot(0);
 }
 
 bool QSerialPortPrivate::clear(QSerialPort::Directions directions)
