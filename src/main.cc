@@ -124,8 +124,7 @@ int main(int argc, char *argv[])
     }
 #endif
 
-    // install the message handler
-    AppMessages::installHandler();
+    AppLogModel::installHandler();
 
 #ifdef Q_OS_MAC
 #ifndef Q_OS_IOS
@@ -136,6 +135,10 @@ int main(int argc, char *argv[])
 #endif
 
 #ifdef Q_OS_WIN
+    if (!qEnvironmentVariableIsSet("QT_WIN_DEBUG_CONSOLE")) {
+        qputenv("QT_WIN_DEBUG_CONSOLE", "attach"); // new
+    }
+
     // Set our own OpenGL buglist
     // qputenv("QT_OPENGL_BUGLIST", ":/opengl/resources/opengl/buglist.json");
 

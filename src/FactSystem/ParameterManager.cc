@@ -24,6 +24,7 @@
 #include <QtCore/QVariantAnimation>
 #include <QtCore/QStandardPaths>
 
+QGC_LOGGING_CATEGORY(ParameterManagerLog,                   "ParameterManagerLog")
 QGC_LOGGING_CATEGORY(ParameterManagerVerbose1Log,           "ParameterManagerVerbose1Log")
 QGC_LOGGING_CATEGORY(ParameterManagerVerbose2Log,           "ParameterManagerVerbose2Log")
 QGC_LOGGING_CATEGORY(ParameterManagerDebugCacheFailureLog,  "ParameterManagerDebugCacheFailureLog") // Turn on to debug parameter cache crc misses
