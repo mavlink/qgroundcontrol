@@ -47,42 +47,42 @@ void setNativeMethods()
     (void) jniEnv.checkAndClearExceptions();
 }
 
-void jniDeviceHasDisconnected(JNIEnv *env, jobject obj, jlong userData)
+void jniDeviceHasDisconnected(JNIEnv *env, jobject obj, jlong classPtr)
 {
     Q_UNUSED(env);
     Q_UNUSED(obj);
 
-    if (userData != 0) {
-        QSerialPortPrivate* const serialPortPrivate = reinterpret_cast<QSerialPortPrivate*>(userData);
-        qCDebug(AndroidSerialLog) << "Device disconnected" << serialPortPrivate->systemLocation.toLatin1().data();
+    if (classPtr != 0) {
+        QSerialPortPrivate* const serialPortPrivate = reinterpret_cast<QSerialPortPrivate*>(classPtr);
+        qCDebug(AndroidSerialLog) << "Device disconnected" << serialPortPrivate->systemLocation.toLatin1().constData();
         QSerialPort* const serialPort = static_cast<QSerialPort*>(serialPortPrivate->q_ptr);
         serialPort->close();
     }
 }
 
-void jniDeviceNewData(JNIEnv *env, jobject obj, jlong userData, jbyteArray data)
+void jniDeviceNewData(JNIEnv *env, jobject obj, jlong classPtr, jbyteArray data)
 {
     Q_UNUSED(obj);
 
-    if (userData != 0) {
+    if (classPtr != 0) {
         jbyte* const bytes = env->GetByteArrayElements(data, nullptr);
         const jsize len = env->GetArrayLength(data);
         // QByteArray data = QByteArray::fromRawData(reinterpret_cast<char*>(bytes), len);
-        QSerialPortPrivate* const serialPort = reinterpret_cast<QSerialPortPrivate*>(userData);
+        QSerialPortPrivate* const serialPort = reinterpret_cast<QSerialPortPrivate*>(classPtr);
         serialPort->newDataArrived(reinterpret_cast<char*>(bytes), len);
         env->ReleaseByteArrayElements(data, bytes, JNI_ABORT);
         (void) QJniEnvironment::checkAndClearExceptions(env);
     }
 }
 
-void jniDeviceException(JNIEnv *env, jobject obj, jlong userData, jstring message)
+void jniDeviceException(JNIEnv *env, jobject obj, jlong classPtr, jstring message)
 {
     Q_UNUSED(obj);
 
-    if (userData != 0) {
+    if (classPtr != 0) {
         const char* const string = env->GetStringUTFChars(message, nullptr);
         const QString str = QString::fromUtf8(string);
-        QSerialPortPrivate* const serialPort = reinterpret_cast<QSerialPortPrivate*>(userData);
+        QSerialPortPrivate* const serialPort = reinterpret_cast<QSerialPortPrivate*>(classPtr);
         serialPort->exceptionArrived(str);
         env->ReleaseStringUTFChars(message, string);
         (void) QJniEnvironment::checkAndClearExceptions(env);
@@ -125,47 +125,28 @@ QList<QSerialPortInfo> availableDevices()
         env->ReleaseStringUTFChars(string, rawString);
         env->DeleteLocalRef(string);
 
-        if (strList.size() < 4) {
+        if (strList.size() < 6) {
             qCWarning(AndroidSerialLog) << "Invalid device info";
             continue;
         }
 
         QSerialPortInfoPrivate priv;
 
-        priv.portName             = strList.at(0);
-        priv.device               = strList.at(0);
-        priv.description          = "";
-        priv.manufacturer         = strList.at(1);
-        priv.serialNumber         = ""; // getSerialNumber(getDeviceId(priv.portName));
-        priv.productIdentifier    = strList.at(2).toInt();
+        priv.portName = QSerialPortInfoPrivate::portNameFromSystemLocation(strList.at(0));
+        priv.device = strList.at(0);
+        priv.description = strList.at(1);
+        priv.manufacturer = strList.at(2);
+        priv.serialNumber = strList.at(3);
+        priv.productIdentifier = strList.at(4).toInt();
         priv.hasProductIdentifier = (priv.productIdentifier != BAD_PORT);
-        priv.vendorIdentifier     = strList.at(3).toInt();
-        priv.hasVendorIdentifier  = (priv.vendorIdentifier != BAD_PORT);
+        priv.vendorIdentifier = strList.at(5).toInt();
+        priv.hasVendorIdentifier = (priv.vendorIdentifier != BAD_PORT);
 
         (void) serialPortInfoList.append(priv);
     }
     (void) env.checkAndClearExceptions();
 
     return serialPortInfoList;
-}
-
-QString getSerialNumber(int deviceId)
-{
-    (void) AndroidInterface::cleanJavaException();
-    const QJniObject result = QJniObject::callStaticMethod<jobject>(
-        AndroidInterface::getActivityClass(),
-        "getSerialNumber",
-        "(I)Ljava/lang/String;",
-        deviceId
-    );
-    (void) AndroidInterface::cleanJavaException();
-
-    if (!result.isValid()) {
-        qCWarning(AndroidSerialLog) << "Invalid Result";
-        return QString();
-    }
-
-    return result.toString();
 }
 
 int getDeviceId(const QString &portName)
@@ -198,7 +179,7 @@ int getDeviceHandle(int deviceId)
     return result;
 }
 
-int open(const QString &portName, QSerialPortPrivate *userData)
+int open(const QString &portName, QSerialPortPrivate *classPtr)
 {
     QJniObject name = QJniObject::fromString(portName);
 
@@ -209,7 +190,7 @@ int open(const QString &portName, QSerialPortPrivate *userData)
         "(Landroid/content/Context;Ljava/lang/String;J)I",
         QNativeInterface::QAndroidApplication::context(),
         name.object<jstring>(),
-        reinterpret_cast<jlong>(userData)
+        reinterpret_cast<jlong>(classPtr)
     );
     (void) AndroidInterface::cleanJavaException();
 
@@ -277,6 +258,7 @@ int write(int deviceId, QByteArrayView data, int length, int timeout, bool async
     jniEnv->SetByteArrayRegion(jarray, 0, static_cast<jsize>(length), reinterpret_cast<const jbyte*>(data.constData()));
 
     (void) jniEnv.checkAndClearExceptions();
+    timeout = qMax(0, timeout);
     int result;
     if (async) {
         result = QJniObject::callStaticMethod<jint>(
@@ -284,7 +266,8 @@ int write(int deviceId, QByteArrayView data, int length, int timeout, bool async
             "writeAsync",
             "(I[B)V",
             deviceId,
-            jarray
+            jarray,
+            timeout
         );
     } else {
         result = QJniObject::callStaticMethod<jint>(
