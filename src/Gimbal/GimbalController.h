@@ -136,7 +136,7 @@ public:
             }
         }
 
-        bool operator=(const GimbalPairId& other) const {
+        bool operator==(const GimbalPairId& other) const {
             return (managerCompid == other.managerCompid) && (deviceId == other.deviceId);
         }
     };
