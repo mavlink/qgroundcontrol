@@ -10,8 +10,6 @@
 #include "MavlinkCameraControl.h"
 #include "QGCCameraIO.h"
 #include "QGCLoggingCategory.h"
-#include "QGCApplication.h"
-#include "QGCToolbox.h"
 #include "LinkInterface.h"
 #include "MAVLinkProtocol.h"
 #include "Vehicle.h"
@@ -47,7 +45,6 @@ QGCCameraParamIO::QGCCameraParamIO(MavlinkCameraControl *control, Fact* fact, Ve
     connect(&_paramWriteTimer,   &QTimer::timeout, this, &QGCCameraParamIO::_paramWriteTimeout);
     connect(_fact, &Fact::rawValueChanged, this, &QGCCameraParamIO::_factChanged);
     connect(_fact, &Fact::_containerRawValueChanged, this, &QGCCameraParamIO::_containerRawValueChanged);
-    _pMavlink = qgcApp()->toolbox()->mavlinkProtocol();
     //-- TODO: Even though we don't use anything larger than 32-bit, this should
     //   probably be updated.
     switch (_fact->type()) {
@@ -196,8 +193,8 @@ QGCCameraParamIO::_sendParameter()
         p.target_component  = static_cast<uint8_t>(_control->compID());
         strncpy(p.param_id, _fact->name().toStdString().c_str(), MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_ID_LEN);
         mavlink_msg_param_ext_set_encode_chan(
-                    static_cast<uint8_t>(_pMavlink->getSystemId()),
-                    static_cast<uint8_t>(_pMavlink->getComponentId()),
+                    static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
+                    static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
                     sharedLink->mavlinkChannel(),
                     &msg,
                     &p);
@@ -369,8 +366,8 @@ QGCCameraParamIO::paramRequest(bool reset)
         strncpy(param_id, _fact->name().toStdString().c_str(), MAVLINK_MSG_PARAM_EXT_REQUEST_READ_FIELD_PARAM_ID_LEN);
         mavlink_message_t msg;
         mavlink_msg_param_ext_request_read_pack_chan(
-                    static_cast<uint8_t>(_pMavlink->getSystemId()),
-                    static_cast<uint8_t>(_pMavlink->getComponentId()),
+                    static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
+                    static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
                     sharedLink->mavlinkChannel(),
                     &msg,
                     static_cast<uint8_t>(_vehicle->id()),

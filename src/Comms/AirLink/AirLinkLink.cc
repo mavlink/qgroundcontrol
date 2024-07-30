@@ -61,7 +61,7 @@ void AirLinkLink::disconnect()
 bool AirLinkLink::_connect()
 {
     std::shared_ptr<QMetaObject::Connection> conn = std::make_shared<QMetaObject::Connection>();
-    *conn = connect(qgcApp()->toolbox()->mavlinkProtocol(), &MAVLinkProtocol::messageReceived, this, [this, conn] (const LinkInterface* linkSrc, const mavlink_message_t &message) {
+    *conn = connect(MAVLinkProtocol::instance(), &MAVLinkProtocol::messageReceived, this, [this, conn] (const LinkInterface* linkSrc, const mavlink_message_t &message) {
         if (this != linkSrc || message.msgid != MAVLINK_MSG_ID_AIRLINK_AUTH_RESPONSE) {
             return;
         }
