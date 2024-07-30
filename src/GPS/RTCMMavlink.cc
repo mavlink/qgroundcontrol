@@ -71,11 +71,10 @@ void RTCMMavlink::_sendMessageToVehicle(const mavlink_gps_rtcm_data_t &data)
         Vehicle* const vehicle = qobject_cast<Vehicle*>(vehicles->get(i));
         const SharedLinkInterfacePtr sharedLink = vehicle->vehicleLinkManager()->primaryLink().lock();
         if (sharedLink) {
-            const MAVLinkProtocol* const mavlinkProtocol = qgcApp()->toolbox()->mavlinkProtocol();
             mavlink_message_t message;
             (void) mavlink_msg_gps_rtcm_data_encode_chan(
-                mavlinkProtocol->getSystemId(),
-                mavlinkProtocol->getComponentId(),
+                MAVLinkProtocol::instance()->getSystemId(),
+                MAVLinkProtocol::getComponentId(),
                 sharedLink->mavlinkChannel(),
                 &message,
                 &data

@@ -36,7 +36,6 @@ MultiVehicleManager::MultiVehicleManager(QGCApplication* app, QGCToolbox* toolbo
     , _parameterReadyVehicleAvailable(false)
     , _activeVehicle(nullptr)
     , _offlineEditingVehicle(nullptr)
-    , _mavlinkProtocol(nullptr)
     , _gcsHeartbeatEnabled(true)
 {
     QSettings settings;
@@ -49,8 +48,6 @@ void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
 {
     QGCTool::setToolbox(toolbox);
 
-    _mavlinkProtocol =           _toolbox->mavlinkProtocol();
-
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<MultiVehicleManager>     ("QGroundControl.MultiVehicleManager", 1, 0, "MultiVehicleManager", "Reference only");
     qmlRegisterUncreatableType<Vehicle>                 ("QGroundControl.Vehicle",             1, 0, "Vehicle",             "Reference only");
@@ -62,7 +59,7 @@ void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
 
     qRegisterMetaType<Vehicle::MavCmdResultFailureCode_t>("MavCmdResultFailureCode_t");
 
-    connect(_mavlinkProtocol, &MAVLinkProtocol::vehicleHeartbeatInfo, this, &MultiVehicleManager::_vehicleHeartbeatInfo);
+    connect(MAVLinkProtocol::instance(), &MAVLinkProtocol::vehicleHeartbeatInfo, this, &MultiVehicleManager::_vehicleHeartbeatInfo);
     connect(&_gcsHeartbeatTimer, &QTimer::timeout, this, &MultiVehicleManager::_sendGCSHeartbeat);
 
     if (_gcsHeartbeatEnabled) {
@@ -89,7 +86,7 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
     // When you flash a new ArduCopter it does not set a FRAME_CLASS for some reason. This is the only ArduPilot variant which
     // works this way. Because of this the vehicle type is not known at first connection. In order to make QGC work reasonably
     // we assume ArduCopter for this case.
-    if (vehicleType == 0 && vehicleFirmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+    if ((vehicleType == MAV_TYPE_GENERIC) && (vehicleFirmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA)) {
         vehicleType = MAV_TYPE_QUADROTOR;
     }
 #endif
@@ -120,7 +117,7 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
                                       << vehicleFirmwareType
                                       << vehicleType;
 
-    if (vehicleId == _mavlinkProtocol->getSystemId()) {
+    if (vehicleId == MAVLinkProtocol::instance()->getSystemId()) {
         _app->showAppMessage(tr("Warning: A vehicle is using the same system id as %1: %2").arg(QCoreApplication::applicationName()).arg(vehicleId));
     }
 
@@ -161,7 +158,7 @@ void MultiVehicleManager::_requestProtocolVersion(unsigned version)
     unsigned maxversion = 0;
 
     if (_vehicles.count() == 0) {
-        _mavlinkProtocol->setVersion(version);
+        MAVLinkProtocol::instance()->setVersion(version);
         return;
     }
 
@@ -173,8 +170,8 @@ void MultiVehicleManager::_requestProtocolVersion(unsigned version)
         }
     }
 
-    if (_mavlinkProtocol->getCurrentVersion() != maxversion) {
-        _mavlinkProtocol->setVersion(maxversion);
+    if (MAVLinkProtocol::instance()->getCurrentVersion() != maxversion) {
+        MAVLinkProtocol::instance()->setVersion(maxversion);
     }
 }
 
@@ -374,8 +371,8 @@ void MultiVehicleManager::_sendGCSHeartbeat(void)
         auto linkConfiguration = link->linkConfiguration();
         if (link->isConnected() && linkConfiguration && !linkConfiguration->isHighLatency()) {
             mavlink_message_t message;
-            mavlink_msg_heartbeat_pack_chan(_mavlinkProtocol->getSystemId(),
-                                            _mavlinkProtocol->getComponentId(),
+            mavlink_msg_heartbeat_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                            MAVLinkProtocol::getComponentId(),
                                             link->mavlinkChannel(),
                                             &message,
                                             MAV_TYPE_GCS,            // MAV_TYPE

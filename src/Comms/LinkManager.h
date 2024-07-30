@@ -149,7 +149,6 @@ private:
     QString _connectionsSuspendedReason;            ///< User visible reason for suspension
 
     AutoConnectSettings *_autoConnectSettings = nullptr;
-    MAVLinkProtocol *_mavlinkProtocol = nullptr;
     QTimer *_portListTimer = nullptr;
     QmlObjectListModel *_qmlConfigurations = nullptr;
 

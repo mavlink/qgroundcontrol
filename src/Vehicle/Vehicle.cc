@@ -116,11 +116,10 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(JoystickManager::instance(), &JoystickManager::activeJoystickChanged, this, &Vehicle::_loadJoystickSettings);
     connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged, this, &Vehicle::_activeVehicleChanged);
 
-    _mavlink = _toolbox->mavlinkProtocol();
-    qCDebug(VehicleLog) << "Link started with Mavlink " << (_mavlink->getCurrentVersion() >= 200 ? "V2" : "V1");
+    qCDebug(VehicleLog) << "Link started with Mavlink " << (MAVLinkProtocol::instance()->getCurrentVersion() >= 200 ? "V2" : "V1");
 
-    connect(_mavlink, &MAVLinkProtocol::messageReceived,        this, &Vehicle::_mavlinkMessageReceived);
-    connect(_mavlink, &MAVLinkProtocol::mavlinkMessageStatus,   this, &Vehicle::_mavlinkMessageStatus);
+    connect(MAVLinkProtocol::instance(), &MAVLinkProtocol::messageReceived,        this, &Vehicle::_mavlinkMessageReceived);
+    connect(MAVLinkProtocol::instance(), &MAVLinkProtocol::mavlinkMessageStatus,   this, &Vehicle::_mavlinkMessageStatus);
 
     connect(this, &Vehicle::flightModeChanged,          this, &Vehicle::_handleFlightModeChanged);
     connect(this, &Vehicle::armedChanged,               this, &Vehicle::_announceArmedChanged);
@@ -364,7 +363,7 @@ void Vehicle::_commonInit()
     // enable Joystick if appropriate
     _loadJoystickSettings();
 
-    _gimbalController = new GimbalController(_mavlink, this);
+    _gimbalController = new GimbalController(MAVLinkProtocol::instance(), this);
 }
 
 Vehicle::~Vehicle()
@@ -459,7 +458,7 @@ void Vehicle::resetCounters()
 void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message)
 {
     // If the link is already running at Mavlink V2 set our max proto version to it.
-    unsigned mavlinkVersion = _mavlink->getCurrentVersion();
+    unsigned mavlinkVersion = MAVLinkProtocol::instance()->getCurrentVersion();
     if (_maxProtoVersion != mavlinkVersion && mavlinkVersion >= 200) {
         _maxProtoVersion = mavlinkVersion;
         qCDebug(VehicleLog) << "_mavlinkMessageReceived Link already running Mavlink v2. Setting _maxProtoVersion" << _maxProtoVersion;
@@ -1135,8 +1134,8 @@ void Vehicle::_handlePing(LinkInterface* link, mavlink_message_t& message)
     if ((ping.target_system == 0) && (ping.target_component == 0)) {
         // Mavlink defines a ping request as a MSG_ID_PING which contains target_system = 0 and target_component = 0
         // So only send a ping response when you receive a valid ping request
-        mavlink_msg_ping_pack_chan(static_cast<uint8_t>(_mavlink->getSystemId()),
-                                   static_cast<uint8_t>(_mavlink->getComponentId()),
+        mavlink_msg_ping_pack_chan(static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
+                                   static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
                                    sharedLink->mavlinkChannel(),
                                    &msg,
                                    ping.time_usec,
@@ -1229,8 +1228,8 @@ EventHandler& Vehicle::_eventHandler(uint8_t compid)
             SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
             if (sharedLink) {
                 mavlink_message_t message;
-                mavlink_msg_request_event_encode_chan(_mavlink->getSystemId(),
-                        _mavlink->getComponentId(),
+                mavlink_msg_request_event_encode_chan(MAVLinkProtocol::instance()->getSystemId(),
+                        MAVLinkProtocol::getComponentId(),
                         sharedLink->mavlinkChannel(),
                         &message,
                         &msg);
@@ -1243,7 +1242,7 @@ EventHandler& Vehicle::_eventHandler(uint8_t compid)
         QSharedPointer<EventHandler> eventHandler{new EventHandler(this, profile,
                 std::bind(&Vehicle::_handleEvent, this, compid, std::placeholders::_1),
                 sendRequestEventMessageCB,
-                _mavlink->getSystemId(), _mavlink->getComponentId(), _id, compid)};
+                MAVLinkProtocol::instance()->getSystemId(), MAVLinkProtocol::getComponentId(), _id, compid)};
         eventData = _events.insert(compid, eventHandler);
 
         // connect health and arming check updates
@@ -1657,8 +1656,8 @@ void Vehicle::setFlightMode(const QString& flightMode)
                            custom_mode);
         } else {
             mavlink_message_t msg;
-            mavlink_msg_set_mode_pack_chan(_mavlink->getSystemId(),
-                                           _mavlink->getComponentId(),
+            mavlink_msg_set_mode_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                           MAVLinkProtocol::getComponentId(),
                                            sharedLink->mavlinkChannel(),
                                            &msg,
                                            id(),
@@ -1701,8 +1700,8 @@ void Vehicle::requestDataStream(MAV_DATA_STREAM stream, uint16_t rate, bool send
     dataStream.target_system = id();
     dataStream.target_component = _defaultComponentId;
 
-    mavlink_msg_request_data_stream_encode_chan(_mavlink->getSystemId(),
-                                                _mavlink->getComponentId(),
+    mavlink_msg_request_data_stream_encode_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                                MAVLinkProtocol::getComponentId(),
                                                 sharedLink->mavlinkChannel(),
                                                 &msg,
                                                 &dataStream);
@@ -1856,8 +1855,8 @@ void Vehicle::_sendQGCTimeToVehicle()
     cmd.time_unix_usec = QDateTime::currentDateTime().currentMSecsSinceEpoch()*1000;
     // Timestamp of the component clock since boot time in milliseconds (Not necessary).
     cmd.time_boot_ms = 0;
-    mavlink_msg_system_time_encode_chan(_mavlink->getSystemId(),
-                                        _mavlink->getComponentId(),
+    mavlink_msg_system_time_encode_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                        MAVLinkProtocol::getComponentId(),
                                         sharedLink->mavlinkChannel(),
                                         &msg,
                                         &cmd);
@@ -2354,8 +2353,8 @@ void Vehicle::setCurrentMissionSequence(int seq)
         seq--;
     }
     mavlink_msg_mission_set_current_pack_chan(
-                static_cast<uint8_t>(_mavlink->getSystemId()),
-                static_cast<uint8_t>(_mavlink->getComponentId()),
+                static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
+                static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
                 sharedLink->mavlinkChannel(),
                 &msg,
                 static_cast<uint8_t>(id()),
@@ -2612,8 +2611,8 @@ void Vehicle::_sendMavCommandFromList(int index)
         cmd.x =                 commandEntry.frame == MAV_FRAME_MISSION ? commandEntry.rgParam5 : commandEntry.rgParam5 * 1e7;
         cmd.y =                 commandEntry.frame == MAV_FRAME_MISSION ? commandEntry.rgParam6 : commandEntry.rgParam6 * 1e7;
         cmd.z =                 commandEntry.rgParam7;
-        mavlink_msg_command_int_encode_chan(_mavlink->getSystemId(),
-                                            _mavlink->getComponentId(),
+        mavlink_msg_command_int_encode_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                            MAVLinkProtocol::getComponentId(),
                                             sharedLink->mavlinkChannel(),
                                             &msg,
                                             &cmd);
@@ -2632,8 +2631,8 @@ void Vehicle::_sendMavCommandFromList(int index)
         cmd.param5 =            static_cast<float>(commandEntry.rgParam5);
         cmd.param6 =            static_cast<float>(commandEntry.rgParam6);
         cmd.param7 =            commandEntry.rgParam7;
-        mavlink_msg_command_long_encode_chan(_mavlink->getSystemId(),
-                                             _mavlink->getComponentId(),
+        mavlink_msg_command_long_encode_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                             MAVLinkProtocol::getComponentId(),
                                              sharedLink->mavlinkChannel(),
                                              &msg,
                                              &cmd);
@@ -3016,8 +3015,8 @@ void Vehicle::startCalibration(QGCMAVLink::CalibrationType calType)
     // We can't use sendMavCommand here since we have no idea how long it will be before the command returns a result. This in turn
     // causes the retry logic to break down.
     mavlink_message_t msg;
-    mavlink_msg_command_long_pack_chan(_mavlink->getSystemId(),
-                                       _mavlink->getComponentId(),
+    mavlink_msg_command_long_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                       MAVLinkProtocol::getComponentId(),
                                        sharedLink->mavlinkChannel(),
                                        &msg,
                                        id(),
@@ -3127,8 +3126,8 @@ void Vehicle::_ackMavlinkLogData(uint16_t sequence)
     ack.target_component = _defaultComponentId;
     ack.target_system = id();
     mavlink_msg_logging_ack_encode_chan(
-                _mavlink->getSystemId(),
-                _mavlink->getComponentId(),
+                MAVLinkProtocol::instance()->getSystemId(),
+                MAVLinkProtocol::getComponentId(),
                 sharedLink->mavlinkChannel(),
                 &msg,
                 &ack);
@@ -3728,8 +3727,8 @@ void Vehicle::sendParamMapRC(const QString& paramName, double scale, double cent
         }
     }
 
-    mavlink_msg_param_map_rc_pack_chan(static_cast<uint8_t>(_mavlink->getSystemId()),
-                                       static_cast<uint8_t>(_mavlink->getComponentId()),
+    mavlink_msg_param_map_rc_pack_chan(static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
+                                       static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
                                        sharedLink->mavlinkChannel(),
                                        &message,
                                        _id,
@@ -3756,8 +3755,8 @@ void Vehicle::clearAllParamMapRC(void)
 
     for (int i = 0; i < 3; i++) {
         mavlink_message_t message;
-        mavlink_msg_param_map_rc_pack_chan(static_cast<uint8_t>(_mavlink->getSystemId()),
-                                           static_cast<uint8_t>(_mavlink->getComponentId()),
+        mavlink_msg_param_map_rc_pack_chan(static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
+                                           static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
                                            sharedLink->mavlinkChannel(),
                                            &message,
                                            _id,
@@ -3792,8 +3791,8 @@ void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, flo
     float newThrustCommand =    thrust * axesScaling;
 
     mavlink_msg_manual_control_pack_chan(
-        static_cast<uint8_t>(_mavlink->getSystemId()),
-        static_cast<uint8_t>(_mavlink->getComponentId()),
+        static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
+        static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
         sharedLink->mavlinkChannel(),
         &message,
         static_cast<uint8_t>(_id),
@@ -3856,8 +3855,8 @@ void Vehicle::setEstimatorOrigin(const QGeoCoordinate& centerCoord)
 
     mavlink_message_t msg;
     mavlink_msg_set_gps_global_origin_pack_chan(
-        _mavlink->getSystemId(),
-        _mavlink->getComponentId(),
+        MAVLinkProtocol::instance()->getSystemId(),
+        MAVLinkProtocol::getComponentId(),
         sharedLink->mavlinkChannel(),
         &msg,
         id(),
@@ -4069,7 +4068,7 @@ void Vehicle::sendSetupSigning()
     MAVLinkSigning::createSetupSigning(channel, target_system, setup_signing);
 
     mavlink_message_t msg;
-    (void) mavlink_msg_setup_signing_encode_chan(_mavlink->getSystemId(), _mavlink->getComponentId(), channel, &msg, &setup_signing);
+    (void) mavlink_msg_setup_signing_encode_chan(MAVLinkProtocol::instance()->getSystemId(), MAVLinkProtocol::getComponentId(), channel, &msg, &setup_signing);
 
     // Since we don't get an ack back that the message was received send twice to try to make sure it makes it to the vehicle
     for (uint8_t i = 0; i < 2; ++i) {
