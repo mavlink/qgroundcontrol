@@ -28,8 +28,7 @@ MAVLinkInspectorController::MAVLinkInspectorController()
     connect(multiVehicleManager, &MultiVehicleManager::vehicleAdded,   this, &MAVLinkInspectorController::_vehicleAdded);
     connect(multiVehicleManager, &MultiVehicleManager::vehicleRemoved, this, &MAVLinkInspectorController::_vehicleRemoved);
     connect(multiVehicleManager, &MultiVehicleManager::activeVehicleChanged, this, &MAVLinkInspectorController::_setActiveVehicle);
-    MAVLinkProtocol* mavlinkProtocol = qgcApp()->toolbox()->mavlinkProtocol();
-    connect(mavlinkProtocol, &MAVLinkProtocol::messageReceived, this, &MAVLinkInspectorController::_receiveMessage);
+    connect(MAVLinkProtocol::instance(), &MAVLinkProtocol::messageReceived, this, &MAVLinkInspectorController::_receiveMessage);
     connect(&_updateFrequencyTimer, &QTimer::timeout, this, &MAVLinkInspectorController::_refreshFrequency);
     _updateFrequencyTimer.start(1000);
     _timeScaleSt.append(new TimeScale_st(this, tr("5 Sec"),   5 * 1000));

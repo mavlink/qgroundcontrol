@@ -168,7 +168,7 @@ void InitialConnectStateMachine::_autopilotVersionRequestMessageHandler(void* re
     if (failureCode != Vehicle::RequestMessageNoFailure) {
         qCDebug(InitialConnectStateMachineLog) << "REQUEST_MESSAGE:AUTOPILOT_VERSION failed. Setting no capabilities";
         uint64_t assumedCapabilities = 0;
-        if (vehicle->_mavlinkProtocolRequestMaxProtoVersion >= 200) {
+        if (vehicle->_mavlinkProtocolRequestMaxProtoVersion >= 2) {
             // Link already running mavlink 2
             assumedCapabilities |= MAV_PROTOCOL_CAPABILITY_MAVLINK2;
         }
@@ -220,7 +220,7 @@ void InitialConnectStateMachine::_protocolVersionRequestMessageHandler(void* res
         mavlink_msg_protocol_version_decode(&message, &protoVersion);
 
         qCDebug(InitialConnectStateMachineLog) << "PROTOCOL_VERSION received mav_version:" << protoVersion.max_version;
-        vehicle->_mavlinkProtocolRequestMaxProtoVersion = protoVersion.max_version;
+        vehicle->_mavlinkProtocolRequestMaxProtoVersion = protoVersion.max_version / 100;
         vehicle->_mavlinkProtocolRequestComplete = true;
         vehicle->_setMaxProtoVersionFromBothSources();
     }
@@ -243,7 +243,7 @@ void InitialConnectStateMachine::_protocolVersionRequestMessageHandler(void* res
         // Either the PROTOCOL_VERSION message didn't make it through the pipe from Vehicle->QGC because the pipe is mavlink 1.
         // Or the PROTOCOL_VERSION message was lost on a noisy connection. Either way the best we can do is fall back to mavlink 1.
         qCDebug(InitialConnectStateMachineLog) << QStringLiteral("Setting _maxProtoVersion to 100 due to timeout on receiving PROTOCOL_VERSION message.");
-        vehicle->_mavlinkProtocolRequestMaxProtoVersion = 100;
+        vehicle->_mavlinkProtocolRequestMaxProtoVersion = 1;
         vehicle->_mavlinkProtocolRequestComplete = true;
         vehicle->_setMaxProtoVersionFromBothSources();
     }
