@@ -1125,7 +1125,6 @@ void FirmwarePlugin::sendGCSMotionReport(Vehicle *vehicle, FollowMe::GCSMotionRe
         return;
     }
 
-    const MAVLinkProtocol* const mavlinkProtocol = qgcApp()->toolbox()->mavlinkProtocol();
     mavlink_follow_target_t follow_target{0};
 
     follow_target.timestamp = qgcApp()->msecsSinceBoot();
@@ -1140,8 +1139,8 @@ void FirmwarePlugin::sendGCSMotionReport(Vehicle *vehicle, FollowMe::GCSMotionRe
 
     mavlink_message_t message;
     mavlink_msg_follow_target_encode_chan(
-        static_cast<uint8_t>(mavlinkProtocol->getSystemId()),
-        static_cast<uint8_t>(mavlinkProtocol->getComponentId()),
+        static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
+        static_cast<uint8_t>(MAVLinkProtocol::instance()->getComponentId()),
         sharedLink->mavlinkChannel(),
         &message,
         &follow_target
