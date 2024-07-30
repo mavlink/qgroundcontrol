@@ -11,6 +11,7 @@
 #include "MAVLinkProtocol.h"
 #include "Vehicle.h"
 #include "QGCApplication.h"
+#include "QGCToolbox.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QFile>
@@ -230,7 +231,7 @@ void FTPManager::_mavlinkMessageReceived(const mavlink_message_t& message)
     mavlink_msg_file_transfer_protocol_decode(&message, &data);
 
     // Make sure we are the target system
-    int qgcId = qgcApp()->toolbox()->mavlinkProtocol()->getSystemId();
+    int qgcId = MAVLinkProtocol::instance()->getSystemId();
     if (data.target_system != qgcId) {
         return;
     }
@@ -738,8 +739,8 @@ void FTPManager::_sendRequestExpectAck(MavlinkFTP::Request* request)
         qCDebug(FTPManagerLog) << "_sendRequestExpectAck opcode:" << MavlinkFTP::opCodeToString(static_cast<MavlinkFTP::OpCode_t>(request->hdr.opcode)) << "seqNumber:" << request->hdr.seqNumber;
 
         mavlink_message_t message;
-        mavlink_msg_file_transfer_protocol_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-                                                     qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+        mavlink_msg_file_transfer_protocol_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                                     MAVLinkProtocol::getComponentId(),
                                                      sharedLink->mavlinkChannel(),
                                                      &message,
                                                      0,                                                     // Target network, 0=broadcast?

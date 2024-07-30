@@ -26,7 +26,6 @@ Q_DECLARE_LOGGING_CATEGORY(ParameterManagerDebugCacheFailureLog)
 
 class ParameterEditorController;
 class Vehicle;
-class MAVLinkProtocol;
 
 class ParameterManager : public QObject
 {
@@ -136,7 +135,6 @@ private:
     static QVariant _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool failOk = false);
 
     Vehicle*            _vehicle;
-    MAVLinkProtocol*    _mavlink;
 
     QMap<int /* comp id */, QMap<QString /* parameter name */, Fact*>> _mapCompId2FactMap;
 

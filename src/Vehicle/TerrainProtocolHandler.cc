@@ -164,8 +164,8 @@ void TerrainProtocolHandler::_sendTerrainData(const QGeoCoordinate &swCorner, ui
     if (sharedLink) {
         mavlink_message_t msg;
         (void) mavlink_msg_terrain_data_pack_chan(
-            qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-            qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+            MAVLinkProtocol::instance()->getSystemId(),
+            MAVLinkProtocol::getComponentId(),
             sharedLink->mavlinkChannel(),
             &msg,
             _currentTerrainRequest.lat,

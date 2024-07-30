@@ -268,13 +268,13 @@ void QGroundControlQmlGlobal::stopOneMockLink(void)
 
 void QGroundControlQmlGlobal::setIsVersionCheckEnabled(bool enable)
 {
-    _toolbox->mavlinkProtocol()->enableVersionCheck(enable);
+    MAVLinkProtocol::instance()->enableVersionCheck(enable);
     emit isVersionCheckEnabledChanged(enable);
 }
 
 void QGroundControlQmlGlobal::setMavlinkSystemID(int id)
 {
-    _toolbox->mavlinkProtocol()->setSystemId(id);
+    MAVLinkProtocol::instance()->setSystemId(id);
     emit mavlinkSystemIDChanged(id);
 }
 
@@ -397,12 +397,12 @@ QString QGroundControlQmlGlobal::altitudeModeShortDescription(AltMode altMode)
 
 bool QGroundControlQmlGlobal::isVersionCheckEnabled()
 {
-    return _toolbox->mavlinkProtocol()->versionCheckEnabled();
+    return MAVLinkProtocol::instance()->versionCheckEnabled();
 }
 
 int QGroundControlQmlGlobal::mavlinkSystemID()
 {
-    return _toolbox->mavlinkProtocol()->getSystemId();
+    return MAVLinkProtocol::instance()->getSystemId();
 }
 
 QString QGroundControlQmlGlobal::elevationProviderName()

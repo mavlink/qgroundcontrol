@@ -60,7 +60,6 @@ class Joystick;
 class LinkInterface;
 class LinkManager;
 class MAVLinkLogManager;
-class MAVLinkProtocol;
 class MissionManager;
 class ParameterManager;
 class QGCCameraManager;
@@ -993,7 +992,6 @@ private:
     FirmwarePlugin*     _firmwarePlugin = nullptr;
     QObject*            _firmwarePluginInstanceData = nullptr;
     AutoPilotPlugin*    _autopilotPlugin = nullptr;
-    MAVLinkProtocol*    _mavlink = nullptr;
     bool                _soloFirmware = false;
     QGCToolbox*         _toolbox = nullptr;
     SettingsManager*    _settingsManager = nullptr;
