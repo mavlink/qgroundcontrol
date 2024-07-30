@@ -1675,6 +1675,14 @@ void Vehicle::setFlightMode(const QString& flightMode)
     }
 }
 
+void Vehicle::terminateFlight()
+{
+    sendMavCommand(_defaultComponentId,
+                   MAV_CMD_DO_FLIGHTTERMINATION,
+                   false, /*showError,*/
+                   1.0f);
+}
+
 #if 0
 QVariantList Vehicle::links() const {
     QVariantList ret;

@@ -482,6 +482,7 @@ public:
     QString flightMode                      () const;
     void setFlightMode                      (const QString& flightMode);
 
+    Q_INVOKABLE void terminateFlight();
     bool airship() const;
 
     /**

@@ -31,12 +31,11 @@ Item {
             onClicked: {
                 if (!isTerminated) {
                     // TODO [lpavic]:
-                    // set is Terminated to true but only if slider is confirmed
+                    // set isTerminated to true but only if slider is confirmed
                     // There should be pop out slider for termination
-                    // Call termination function
-                    // _activeVehicle.Terminate()
 
                     isTerminated = !isTerminated
+                    _activeVehicle.terminateFlight()
                 }
             }
         }
