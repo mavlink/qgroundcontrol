@@ -159,12 +159,10 @@ void MAVLinkConsoleController::_sendSerialData(const QByteArray &data, bool clos
 
         const uint8_t flags = close ? 0 : SERIAL_CONTROL_FLAG_EXCLUSIVE |  SERIAL_CONTROL_FLAG_RESPOND | SERIAL_CONTROL_FLAG_MULTI;
 
-        MAVLinkProtocol *const protocol = qgcApp()->toolbox()->mavlinkProtocol();
-
         mavlink_message_t msg;
         (void) mavlink_msg_serial_control_pack_chan(
-            protocol->getSystemId(),
-            protocol->getComponentId(),
+            MAVLinkProtocol::instance()->getSystemId(),
+            MAVLinkProtocol::getComponentId(),
             sharedLink->mavlinkChannel(),
             &msg,
             SERIAL_CONTROL_DEV_SHELL,

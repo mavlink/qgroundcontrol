@@ -116,12 +116,6 @@ public slots:
 
     void qmlAttemptWindowClose();
 
-    /// Save the specified telemetry Log
-    void saveTelemetryLogOnMainThread(const QString &tempLogfile);
-
-    /// Check that the telemetry save path is set correctly
-    void checkTelemetrySavePathOnMainThread();
-
     /// Get current language
     const QLocale getCurrentLanguage() { return _locale; }
 
@@ -138,11 +132,7 @@ public slots:
     QGCImageProvider* qgcImageProvider();
 
 signals:
-    /// This is connected to MAVLinkProtocol::checkForLostLogFiles. We signal this to ourselves to call the slot
-    /// on the MAVLinkProtocol thread;
-    void checkForLostLogFiles   ();
-
-    void languageChanged        (const QLocale locale);
+    void languageChanged(const QLocale locale);
 
 public:
     /// @brief Perform initialize which is common to both normal application running and unit tests.
@@ -164,7 +154,6 @@ private:
 
     QObject* _rootQmlObject();
     void _checkForNewVersion();
-    bool _checkTelemetrySavePath(bool useMessageBox);
 
     // Overrides from QApplication
     bool compressEvent(QEvent *event, QObject *receiver, QPostEventList *postedEvents) override;

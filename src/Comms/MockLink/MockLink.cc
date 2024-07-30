@@ -11,6 +11,7 @@
 #include "QGCLoggingCategory.h"
 #include "QGCApplication.h"
 #include "LinkManager.h"
+#include "MAVLinkProtocol.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QFile>
@@ -45,7 +46,7 @@ static_assert(LinkManager::invalidMavlinkChannel() == std::numeric_limits<uint8_
 
 MockLink::MockLink(SharedLinkConfigurationPtr& config)
     : LinkInterface                         (config)
-    , _missionItemHandler                   (this, qgcApp()->toolbox()->mavlinkProtocol())
+    , _missionItemHandler                   (this, MAVLinkProtocol::instance())
     , _name                                 ("MockLink")
     , _connected                            (false)
     , _vehicleComponentId                   (MAV_COMP_ID_AUTOPILOT1)

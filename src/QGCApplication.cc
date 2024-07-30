@@ -90,6 +90,11 @@ static QObject* shapeFileHelperSingletonFactory(QQmlEngine*, QJSEngine*)
     return new ShapeFileHelper;
 }
 
+static QObject *mavlinkSingletonFactory(QQmlEngine*, QJSEngine*)
+{
+    return new QGCMAVLink();
+}
+
 QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     : QApplication(argc, argv)
     , _runningUnitTests(unitTesting)
@@ -293,6 +298,8 @@ void QGCApplication::init()
 
     qmlRegisterSingletonType<ShapeFileHelper>("QGroundControl.ShapeFileHelper", 1, 0, "ShapeFileHelper", shapeFileHelperSingletonFactory);
 
+    qmlRegisterSingletonType<QGCMAVLink>("MAVLink", 1, 0, "MAVLink", mavlinkSingletonFactory);
+
 
     // Although this should really be in _initForNormalAppBoot putting it here allowws us to create unit tests which pop up more easily
     if(QFontDatabase::addApplicationFont(":/fonts/opensans") < 0) {
@@ -363,8 +370,7 @@ void QGCApplication::_initForNormalAppBoot()
     #endif
 
     // Now that main window is up check for lost log files
-    connect(this, &QGCApplication::checkForLostLogFiles, _toolbox->mavlinkProtocol(), &MAVLinkProtocol::checkForLostLogFiles);
-    emit checkForLostLogFiles();
+    MAVLinkProtocol::instance()->checkForLostLogFiles();
 
     // Load known link configurations
     _toolbox->linkManager()->loadLinkConfigurationList();
@@ -406,60 +412,6 @@ void QGCApplication::warningMessageBoxOnMainThread(const QString& /*title*/, con
 void QGCApplication::criticalMessageBoxOnMainThread(const QString& /*title*/, const QString& msg)
 {
     showAppMessage(msg);
-}
-
-void QGCApplication::saveTelemetryLogOnMainThread(const QString &tempLogfile)
-{
-    // The vehicle is gone now and we are shutting down so we need to use a message box for errors to hold shutdown and show the error
-    if (_checkTelemetrySavePath(true /* useMessageBox */)) {
-
-        const QString saveDirPath = _toolbox->settingsManager()->appSettings()->telemetrySavePath();
-        const QDir saveDir(saveDirPath);
-
-        const QString nameFormat("%1%2.%3");
-        const QString dtFormat("yyyy-MM-dd hh-mm-ss");
-
-        int tryIndex = 1;
-        QString saveFileName = nameFormat.arg(
-            QDateTime::currentDateTime().toString(dtFormat)).arg(QStringLiteral("")).arg(_toolbox->settingsManager()->appSettings()->telemetryFileExtension);
-        while (saveDir.exists(saveFileName)) {
-            saveFileName = nameFormat.arg(
-                QDateTime::currentDateTime().toString(dtFormat)).arg(QStringLiteral(".%1").arg(tryIndex++)).arg(_toolbox->settingsManager()->appSettings()->telemetryFileExtension);
-        }
-        const QString saveFilePath = saveDir.absoluteFilePath(saveFileName);
-
-        QFile tempFile(tempLogfile);
-        if (!tempFile.copy(saveFilePath)) {
-            const QString error = tr("Unable to save telemetry log. Error copying telemetry to '%1': '%2'.").arg(saveFilePath).arg(tempFile.errorString());
-            showAppMessage(error);
-        }
-    }
-    QFile::remove(tempLogfile);
-}
-
-void QGCApplication::checkTelemetrySavePathOnMainThread()
-{
-    // This is called with an active vehicle so don't pop message boxes which holds ui thread
-    _checkTelemetrySavePath(false /* useMessageBox */);
-}
-
-bool QGCApplication::_checkTelemetrySavePath(bool /*useMessageBox*/)
-{
-    const QString saveDirPath = _toolbox->settingsManager()->appSettings()->telemetrySavePath();
-    if (saveDirPath.isEmpty()) {
-        const QString error = tr("Unable to save telemetry log. Application save directory is not set.");
-        showAppMessage(error);
-        return false;
-    }
-
-    const QDir saveDir(saveDirPath);
-    if (!saveDir.exists()) {
-        const QString error = tr("Unable to save telemetry log. Telemetry save directory \"%1\" does not exist.").arg(saveDirPath);
-        showAppMessage(error);
-        return false;
-    }
-
-    return true;
 }
 
 void QGCApplication::reportMissingParameter(int componentId, const QString& name)
