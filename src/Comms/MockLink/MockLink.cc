@@ -69,7 +69,7 @@ MockLink::MockLink(SharedLinkConfigurationPtr& config)
 {
     qCDebug(MockLinkLog) << "MockLink" << this;
 
-    MockConfiguration* mockConfig = qobject_cast<MockConfiguration*>(_config.get());
+    MockConfiguration* mockConfig = qobject_cast<MockConfiguration*>(m_config.get());
     _firmwareType       = mockConfig->firmwareType();
     _vehicleType        = mockConfig->vehicleType();
     _sendStatusText     = mockConfig->sendStatusText();
@@ -537,7 +537,7 @@ void MockLink::respondWithMavlinkMessage(const mavlink_message_t& msg)
 }
 
 /// @brief Called when QGC wants to write bytes to the MAV
-void MockLink::_writeBytes(const QByteArray bytes)
+void MockLink::_writeBytes(const QByteArray &bytes)
 {
     // This prevents the responses to mavlink messages from being sent until the _writeBytes returns.
     emit writeBytesQueuedSignal(bytes);

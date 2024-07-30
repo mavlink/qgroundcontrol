@@ -76,6 +76,7 @@ LinkManager::LinkManager(QGCApplication* app, QGCToolbox* toolbox)
     qmlRegisterType<LogReplayLinkController> ("QGroundControl",         1, 0, "LogReplayLinkController");
 
     qRegisterMetaType<QAbstractSocket::SocketError>();
+    qRegisterMetaType<LinkInterface*>("LinkInterface*");
 }
 
 LinkManager::~LinkManager()
