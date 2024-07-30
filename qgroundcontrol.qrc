@@ -305,6 +305,7 @@
         <file alias="VibrationPage.qml">src/AnalyzeView/VibrationPage.qml</file>
         <file alias="VideoSettings.qml">src/UI/preferences/VideoSettings.qml</file>
         <file alias="VirtualJoystick.qml">src/FlightDisplay/VirtualJoystick.qml</file>
+        <file alias="VirtualTerminateButton.qml">src/FlightDisplay/VirtualTerminateButton.qml</file>
         <file alias="VTOLLandingPatternEditor.qml">src/PlanView/VTOLLandingPatternEditor.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlyViewInsetViewer.qml">src/FlightDisplay/FlyViewInsetViewer.qml</file>
         <file alias="Viewer3D/Viewer3D.qml">src/Viewer3D/Viewer3DQml/Viewer3D.qml</file>

@@ -187,4 +187,21 @@ Item {
         FlyViewPreFlightChecklistPopup {
         }
     }
+
+    //-- Virtual Terminate Button
+    Loader {
+        id: virtualTerminateButtonLoader
+        anchors {
+            left: parent.left
+            top: parent.top
+            leftMargin: parent.width * 0.025
+            topMargin: parent.height * 0.6
+        }
+        width: parent.width * 0.125
+        height: parent.height * 0.125
+
+        source:                     "qrc:/qml/VirtualTerminateButton.qml"
+        // active:                     _activeVehicle
+        active:                     true
+    }
 }
