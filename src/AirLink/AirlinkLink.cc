@@ -149,7 +149,7 @@ void AirlinkLink::_configureUdpSettings()
     QUdpSocket udpSocket;
     while (!udpSocket.bind(QHostAddress::LocalHost, availablePort))
         availablePort++;
-    UDPConfiguration* udpConfig = dynamic_cast<UDPConfiguration*>(UDPLink::_config.get());
+    UDPConfiguration* udpConfig = dynamic_cast<UDPConfiguration*>(UDPLink::m_config.get());
     udpConfig->addHost(AirLinkManager::airlinkHost, AirLinkManager::airlinkPort);
     udpConfig->setLocalPort(availablePort);
     udpConfig->setDynamic(false);
@@ -160,7 +160,7 @@ void AirlinkLink::_sendLoginMsgToAirLink()
     __mavlink_airlink_auth_t auth;
     uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
     mavlink_message_t mavmsg;
-    AirlinkConfiguration* config = dynamic_cast<AirlinkConfiguration*>(_config.get());
+    AirlinkConfiguration* config = dynamic_cast<AirlinkConfiguration*>(m_config.get());
     QString login = config->modemName(); ///< Connect not to account but to specific modem
     QString pass  = config->password();
 
