@@ -1,9 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=CustomQGroundControl
-GenericName=Ground Control Station
-Comment=UAS ground control station
-Icon=CustomAppIcon
-Exec=qgroundcontrol-start.sh
-Terminal=false
-Categories=Utility;
