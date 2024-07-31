@@ -25,6 +25,7 @@
 #include "PositionManager.h"
 #ifndef NO_SERIAL_LINK
 #include "GPSManager.h"
+#include "SerialLink.h"
 #endif
 
 #ifdef QT_DEBUG
@@ -43,10 +44,6 @@
 #include <qmdnsengine/service.h>
 #endif
 
-#ifndef NO_SERIAL_LINK
-    #include "SerialLink.h"
-#endif
-
 #include <QtQml/QtQml>
 #include <QtCore/QList>
 
@@ -63,9 +60,6 @@ LinkManager::LinkManager(QGCApplication* app, QGCToolbox* toolbox)
     , _mavlinkChannelsUsedBitMask(1)    // We never use channel 0 to avoid sequence numbering problems
     , _autoConnectSettings(nullptr)
     , _mavlinkProtocol(nullptr)
-    #ifndef NO_SERIAL_LINK
-    , _nmeaPort(nullptr)
-    #endif
 {
     qmlRegisterUncreatableType<LinkManager>      ("QGroundControl", 1, 0, "LinkManager",         "Reference only");
     qmlRegisterUncreatableType<LinkConfiguration>("QGroundControl", 1, 0, "LinkConfiguration",   "Reference only");
@@ -77,13 +71,12 @@ LinkManager::LinkManager(QGCApplication* app, QGCToolbox* toolbox)
 
     qRegisterMetaType<QAbstractSocket::SocketError>();
     qRegisterMetaType<LinkInterface*>("LinkInterface*");
+    qRegisterMetaType<QGCSerialPortInfo>("QGCSerialPortInfo");
 }
 
 LinkManager::~LinkManager()
 {
-#ifndef NO_SERIAL_LINK
-    delete _nmeaPort;
-#endif
+
 }
 
 void LinkManager::setToolbox(QGCToolbox *toolbox)
@@ -514,7 +507,7 @@ void LinkManager::_updateAutoConnectLinks(void)
             _toolbox->qgcPositionManager()->setNmeaSourceDevice(&_nmeaSocket);
         }
 #ifndef NO_SERIAL_LINK
-        //close serial port
+        // close serial port
         if (_nmeaPort) {
             _nmeaPort->close();
             delete _nmeaPort;
@@ -527,8 +520,8 @@ void LinkManager::_updateAutoConnectLinks(void)
     }
 
 #ifndef NO_SERIAL_LINK
-    QStringList                 currentPorts;
-    QList<QGCSerialPortInfo>    portList;
+    QStringList currentPorts;
+    QList<QGCSerialPortInfo> portList;
 #ifdef Q_OS_ANDROID
     // Android builds only support a single serial connection. Repeatedly calling availablePorts after that one serial
     // port is connected leaks file handles due to a bug somewhere in android serial code. In order to work around that
@@ -541,7 +534,7 @@ void LinkManager::_updateAutoConnectLinks(void)
 #endif
 
     // Iterate Comm Ports
-    for (const QGCSerialPortInfo& portInfo: portList) {
+    for (const QGCSerialPortInfo &portInfo: portList) {
         qCDebug(LinkManagerVerboseLog) << "-----------------------------------------------------";
         qCDebug(LinkManagerVerboseLog) << "portName:          " << portInfo.portName();
         qCDebug(LinkManagerVerboseLog) << "systemLocation:    " << portInfo.systemLocation();
@@ -562,7 +555,7 @@ void LinkManager::_updateAutoConnectLinks(void)
             if (portInfo.systemLocation().trimmed() != _nmeaDeviceName) {
                 _nmeaDeviceName = portInfo.systemLocation().trimmed();
                 qCDebug(LinkManagerLog) << "Configuring nmea port" << _nmeaDeviceName;
-                QSerialPort* newPort = new QSerialPort(portInfo);
+                QSerialPort* newPort = new QSerialPort(portInfo, this);
                 _nmeaBaud = _autoConnectSettings->autoConnectNmeaBaud()->cookedValue().toUInt();
                 newPort->setBaudRate(static_cast<qint32>(_nmeaBaud));
                 qCDebug(LinkManagerLog) << "Configuring nmea baudrate" << _nmeaBaud;
@@ -916,22 +909,19 @@ bool LinkManager::_allowAutoConnectToBoard(QGCSerialPortInfo::BoardType_t boardT
         return false;
     }
 
-    return false; // Some compilers as too stupid to understand that all paths are covered
+    return false;
 }
 
-bool LinkManager::_portAlreadyConnected(const QString& portName)
+bool LinkManager::_portAlreadyConnected(const QString &portName)
 {
-    QString searchPort = portName.trimmed();
-
-    for (int i=0; i<_rgLinks.count(); i++) {
-        SharedLinkConfigurationPtr linkConfig = _rgLinks[i]->linkConfiguration();
-        SerialConfiguration* serialConfig = qobject_cast<SerialConfiguration*>(linkConfig.get());
-        if (serialConfig) {
-            if (serialConfig->portName() == searchPort) {
-                return true;
-            }
+    const QString searchPort = portName.trimmed();
+    for (const SharedLinkInterfacePtr &linkConfig : _rgLinks) {
+        const SerialConfiguration* const serialConfig = qobject_cast<const SerialConfiguration*>(linkConfig.get());
+        if (serialConfig && (serialConfig->portName() == searchPort)) {
+            return true;
         }
     }
+
     return false;
 }
 
@@ -939,45 +929,45 @@ void LinkManager::_updateSerialPorts()
 {
     _commPortList.clear();
     _commPortDisplayList.clear();
-    QList<QGCSerialPortInfo> portList = QGCSerialPortInfo::availablePorts();
-    for (const QGCSerialPortInfo &info: portList)
-    {
-        QString port = info.systemLocation().trimmed();
+    const QList<QGCSerialPortInfo> portList = QGCSerialPortInfo::availablePorts();
+    for (const QGCSerialPortInfo &info: portList) {
+        const QString port = info.systemLocation().trimmed(); // + " " + info.description();
         _commPortList += port;
         _commPortDisplayList += SerialConfiguration::cleanPortDisplayname(port);
     }
 }
 
-QStringList LinkManager::serialPortStrings(void)
+QStringList LinkManager::serialPortStrings()
 {
-    if(!_commPortDisplayList.size())
-    {
+    if (!_commPortDisplayList.size()) {
         _updateSerialPorts();
     }
+
     return _commPortDisplayList;
 }
 
-QStringList LinkManager::serialPorts(void)
+QStringList LinkManager::serialPorts()
 {
-    if(!_commPortList.size())
-    {
+    if (!_commPortList.size()) {
         _updateSerialPorts();
     }
+
     return _commPortList;
 }
 
-QStringList LinkManager::serialBaudRates(void)
+QStringList LinkManager::serialBaudRates()
 {
     return SerialConfiguration::supportedBaudRates();
 }
 
-bool LinkManager::_isSerialPortConnected(void)
+bool LinkManager::_isSerialPortConnected()
 {
-    for (SharedLinkInterfacePtr link: _rgLinks) {
-        if (qobject_cast<SerialLink*>(link.get())) {
+    for (const SharedLinkInterfacePtr &link: _rgLinks) {
+        if (qobject_cast<const SerialLink*>(link.get())) {
             return true;
         }
     }
+
     return false;
 }
 
