@@ -26,6 +26,7 @@
 // #include "RadioConfigTest.h"
 
 // Comms
+#include "QGCSerialPortInfoTest.h"
 
 // FactSystem
 #include "FactSystemTestGeneric.h"
@@ -115,6 +116,7 @@ int runTests(bool stress, QStringView unitTestOptions)
 	// UT_REGISTER_TEST(RadioConfigTest)
 
 	// Comms
+	UT_REGISTER_TEST(QGCSerialPortInfoTest)
 
 	// FactSystem
 	UT_REGISTER_TEST(FactSystemTestGeneric)
