@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 #include "BluetoothLink.h"
-#include "DeviceInfo.h"
+#include "QGCDeviceInfo.h"
 
 #include <QtBluetooth/QBluetoothDeviceDiscoveryAgent>
 #include <QtBluetooth/QBluetoothSocket>

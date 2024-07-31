@@ -31,7 +31,7 @@
 #include <StatusTextHandler.h>
 #include "MAVLinkProtocol.h"
 #include "QGCLoggingCategory.h"
-#include <DeviceInfo.h>
+#include "QGCDeviceInfo.h"
 
 #include <QtNetwork/QTcpSocket>
 #include <QtCore/QRegularExpression>

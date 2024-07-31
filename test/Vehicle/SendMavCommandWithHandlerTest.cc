@@ -58,7 +58,7 @@ void SendMavCommandWithHandlerTest::_mavCmdProgressHandler(void* progressHandler
 
 void SendMavCommandWithHandlerTest::_testCaseWorker(TestCase_t& testCase)
 {
-    _connectMockLinkNoInitialConnectSequence();
+    _connectMockLinkNoInitialConnectSequenceWait();
 
     MultiVehicleManager*    vehicleMgr  = qgcApp()->toolbox()->multiVehicleManager();
     Vehicle*                vehicle     = vehicleMgr->activeVehicle();
@@ -97,7 +97,7 @@ void SendMavCommandWithHandlerTest::_performTestCases(void)
 
 void SendMavCommandWithHandlerTest::_duplicateCommand(void)
 {
-    _connectMockLinkNoInitialConnectSequence();
+    _connectMockLinkNoInitialConnectSequenceWait();
 
     SendMavCommandWithHandlerTest::TestCase_t testCase = {
         MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE, MAV_RESULT_FAILED, 0, Vehicle::MavCmdResultFailureDuplicateCommand, 1
@@ -139,7 +139,7 @@ void SendMavCommandWithHandlerTest::_compIdAllFailureMavCmdResultHandler(void* /
 
 void SendMavCommandWithHandlerTest::_compIdAllFailure(void)
 {
-    _connectMockLinkNoInitialConnectSequence();
+    _connectMockLinkNoInitialConnectSequenceWait();
 
     SendMavCommandWithHandlerTest::TestCase_t testCase = {
         MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE, MAV_RESULT_FAILED, 0, Vehicle::MavCmdResultFailureDuplicateCommand, 0

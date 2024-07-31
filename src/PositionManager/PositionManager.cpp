@@ -11,7 +11,7 @@
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 #include "SimulatedPosition.h"
-#include <DeviceInfo.h>
+#include "QGCDeviceInfo.h"
 #include <QGCLoggingCategory.h>
 
 #include <QtCore/QPermissions>

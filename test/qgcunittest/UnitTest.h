@@ -109,8 +109,8 @@ protected slots:
     virtual void cleanup(void);
 
 protected:
-    void _connectMockLink(MAV_AUTOPILOT autopilot = MAV_AUTOPILOT_PX4, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
-    void _connectMockLinkNoInitialConnectSequence(void) { _connectMockLink(MAV_AUTOPILOT_INVALID); }
+    void _connectMockLink(MAV_AUTOPILOT mavAutopilot, MAV_TYPE mavType, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
+    void _connectMockLinkNoInitialConnectSequenceWait(void) { _connectMockLink(MAV_AUTOPILOT_PX4, MAV_TYPE_GENERIC); }
     void _disconnectMockLink(void);
     void _missionItemsEqual(MissionItem& actual, MissionItem& expected);
 
@@ -171,7 +171,6 @@ private:
     // This allows the private calls to the file dialog methods
     friend class QGCQFileDialog;
 
-    void _unitTestCalled(void);
     static QList<UnitTest*>& _testList(void);
 
     // Catch QGCMessageBox calls
@@ -187,7 +186,6 @@ private:
     static enum FileDialogType _fileDialogExpectedType; ///< type of file dialog expected to show
     static int          _missedFileDialogCount;         ///< Count of file dialogs not checked with call to UnitTest::fileDialogWasDisplayed
 
-    bool _unitTestRun   = false;    ///< true: Unit Test was run
     bool _initCalled    = false;    ///< true: UnitTest::_init was called
     bool _cleanupCalled = false;    ///< true: UnitTest::_cleanup was called
     bool _standalone    = false;    ///< true: Only run when requested specifically from command line

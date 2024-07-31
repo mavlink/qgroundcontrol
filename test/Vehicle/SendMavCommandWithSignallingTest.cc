@@ -26,7 +26,7 @@ SendMavCommandWithSignallingTest::TestCase_t SendMavCommandWithSignallingTest::_
 
 void SendMavCommandWithSignallingTest::_testCaseWorker(TestCase_t& testCase)
 {
-    _connectMockLinkNoInitialConnectSequence();
+    _connectMockLinkNoInitialConnectSequenceWait();
 
     MultiVehicleManager*    vehicleMgr  = qgcApp()->toolbox()->multiVehicleManager();
     Vehicle*                vehicle     = vehicleMgr->activeVehicle();
@@ -61,7 +61,7 @@ void SendMavCommandWithSignallingTest::_performTestCases(void)
 
 void SendMavCommandWithSignallingTest::_duplicateCommand(void)
 {
-    _connectMockLinkNoInitialConnectSequence();
+    _connectMockLinkNoInitialConnectSequenceWait();
 
     MultiVehicleManager*    vehicleMgr  = qgcApp()->toolbox()->multiVehicleManager();
     Vehicle*                vehicle     = vehicleMgr->activeVehicle();

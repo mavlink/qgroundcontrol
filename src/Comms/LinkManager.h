@@ -103,6 +103,9 @@ public:
     /// Returns pointer to the mavlink support forwarding link, or nullptr if it does not exist
     SharedLinkInterfacePtr mavlinkForwardingSupportLink();
 
+    /// Re-initilize the mavlink signing for all links. Used when the signing key changes.
+    void resetMavlinkSigning();
+
     void disconnectAll(void);
 
 #ifdef QT_DEBUG
@@ -125,6 +128,8 @@ public:
     SharedLinkInterfacePtr sharedLinkInterfacePointerForLink(LinkInterface* link, bool ignoreNull=false);
 
     bool containsLink(LinkInterface* link);
+
+    static bool isLinkUSBDirect(LinkInterface* link);
 
     SharedLinkConfigurationPtr addConfiguration(LinkConfiguration* config);
 
@@ -154,7 +159,7 @@ private:
     bool                                _connectionsSuspended;                      ///< true: all new connections should not be allowed
     QString                             _connectionsSuspendedReason;                ///< User visible reason for suspension
     QTimer                              _portListTimer;
-    uint32_t                            _mavlinkChannelsUsedBitMask;
+    uint32_t                            m_mavlinkChannelsUsedBitMask;
 
     AutoConnectSettings*                _autoConnectSettings;
     MAVLinkProtocol*                    _mavlinkProtocol;

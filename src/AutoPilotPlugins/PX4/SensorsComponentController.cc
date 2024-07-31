@@ -64,12 +64,11 @@ SensorsComponentController::SensorsComponentController(void)
 
 bool SensorsComponentController::usingUDPLink(void)
 {
-    WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
-    if (weakLink.expired()) {
-        return false;
-    } else {
-        SharedLinkInterfacePtr sharedLink = weakLink.lock();
+    SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
+    if (sharedLink) {
         return sharedLink->linkConfiguration()->type() == LinkConfiguration::TypeUdp;
+    } else {
+        return false;
     }
 }
 

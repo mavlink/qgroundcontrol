@@ -108,8 +108,9 @@ public:
     virtual ~SerialLink();
 
     // LinkInterface overrides
-    bool isConnected(void) const override;
-    void disconnect (void) override;
+    bool isConnected        (void) const override;
+    void disconnect         (void) override;
+    bool isSecureConnection (void) override;
 
     /// Don't even think of calling this method!
     QSerialPort* _hackAccessToPort(void) { return _port; }
@@ -124,7 +125,6 @@ private slots:
     void _readBytes     (void);
 
 private:
-
     // LinkInterface overrides
     bool _connect(void) override;
 
@@ -141,5 +141,4 @@ private:
     QMutex                  _stoppMutex;                    ///< Mutex for accessing _stopp
     QByteArray              _transmitBuffer;                ///< An internal buffer for receiving data from member functions and actually transmitting them via the serial port.
     SerialConfiguration*    _serialConfig       = nullptr;
-
 };

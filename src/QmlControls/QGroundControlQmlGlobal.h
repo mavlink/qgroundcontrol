@@ -140,13 +140,18 @@ public:
     Q_INVOKABLE void    deleteAllSettingsNextBoot       ();
     Q_INVOKABLE void    clearDeleteAllSettingsNextBoot  ();
 
-    Q_INVOKABLE void    startPX4MockLink            (bool sendStatusText);
-    Q_INVOKABLE void    startGenericMockLink        (bool sendStatusText);
-    Q_INVOKABLE void    startAPMArduCopterMockLink  (bool sendStatusText);
-    Q_INVOKABLE void    startAPMArduPlaneMockLink   (bool sendStatusText);
-    Q_INVOKABLE void    startAPMArduSubMockLink     (bool sendStatusText);
-    Q_INVOKABLE void    startAPMArduRoverMockLink   (bool sendStatusText);
-    Q_INVOKABLE void    stopOneMockLink             (void);
+    enum MockLinkType {
+        MockLinkTypeGeneric,
+        MockLinkTypePX4,
+        MockLinkTypeArduCopter,
+        MockLinkTypeArduPlane,
+        MockLinkTypeArduSub,
+        MockLinkTypeArduRover
+    };
+    Q_ENUM(MockLinkType)
+
+    Q_INVOKABLE void    startMockLink   (MockLinkType mockLinkType, bool sendStatusText, bool isSecureConnection);
+    Q_INVOKABLE void    stopOneMockLink (void);
 
     /// Returns the list of available logging category names.
     Q_INVOKABLE QStringList loggingCategories(void) const { return QGCLoggingCategoryRegister::instance()->registeredCategories(); }

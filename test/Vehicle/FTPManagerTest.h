@@ -25,9 +25,6 @@ private slots:
     void _testListDirectoryNakSecondResponse            (void);
     void _testListDirectoryBadSequence                  (void);
 
-    // Overrides from UnitTest
-    void cleanup(void) override;
-
 private:
     void _performSizeBasedTestCases (void);
     void _performTestCases          (void);

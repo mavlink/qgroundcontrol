@@ -5,8 +5,8 @@
 #include "QGCMapEngine.h"
 #include "QGCMapUrlEngine.h"
 #include "QGeoFileTileCacheQGC.h"
+#include "QGCDeviceInfo.h"
 
-#include <DeviceInfo.h>
 #include <QGCFileDownload.h>
 #include <QGCLoggingCategory.h>
 

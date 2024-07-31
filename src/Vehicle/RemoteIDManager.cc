@@ -191,8 +191,7 @@ void RemoteIDManager::_sendMessages()
 
 void RemoteIDManager::_sendSelfIDMsg()
 {
-    WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
-    SharedLinkInterfacePtr sharedLink = weakLink.lock();
+    SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
 
     if (sharedLink) {
         mavlink_message_t msg;

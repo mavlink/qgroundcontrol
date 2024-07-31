@@ -22,14 +22,9 @@ const FTPManagerTest::TestCase_t FTPManagerTest::_rgTestCases[] = {
     {  "/general.json" },
 };
 
-void FTPManagerTest::cleanup(void)
-{
-    _disconnectMockLink();
-}
-
 void FTPManagerTest::_testCaseWorker(const TestCase_t& testCase)
 {
-    _connectMockLinkNoInitialConnectSequence();
+    _connectMockLinkNoInitialConnectSequenceWait();
 
     MultiVehicleManager*    vehicleMgr  = qgcApp()->toolbox()->multiVehicleManager();
     Vehicle*                vehicle     = vehicleMgr->activeVehicle();
@@ -51,7 +46,7 @@ void FTPManagerTest::_testCaseWorker(const TestCase_t& testCase)
 
 void FTPManagerTest::_sizeTestCaseWorker(int fileSize)
 {
-    _connectMockLinkNoInitialConnectSequence();
+    _connectMockLinkNoInitialConnectSequenceWait();
 
     FTPManager* ftpManager  = _vehicle->ftpManager();
     QString     filename    = QStringLiteral("%1%2").arg(MockLinkFTP::sizeFilenamePrefix).arg(fileSize);
@@ -102,7 +97,7 @@ void FTPManagerTest::_performTestCases(void)
 
 void FTPManagerTest::_testLostPackets(void)
 {
-    _connectMockLinkNoInitialConnectSequence();
+    _connectMockLinkNoInitialConnectSequenceWait();
 
     FTPManager* ftpManager  = _vehicle->ftpManager();
     int         fileSize    = 4 * 1024;
@@ -144,7 +139,7 @@ void FTPManagerTest::_verifyFileSizeAndDelete(const QString& filename, int expec
 
 void FTPManagerTest::_testListDirectory(void)
 {
-    _connectMockLinkNoInitialConnectSequence();
+    _connectMockLinkNoInitialConnectSequenceWait();
 
     MultiVehicleManager*    vehicleMgr  = qgcApp()->toolbox()->multiVehicleManager();
     Vehicle*                vehicle     = vehicleMgr->activeVehicle();
@@ -161,13 +156,11 @@ void FTPManagerTest::_testListDirectory(void)
     QList<QVariant> arguments = spyListDirectoryComplete.takeFirst();
     qDebug() << arguments[0];
     QCOMPARE(arguments[0].toStringList().count(), 6);
-
-    _disconnectMockLink();
 }
 
 void FTPManagerTest::_testListDirectoryNoResponse(void)
 {
-    _connectMockLinkNoInitialConnectSequence();
+    _connectMockLinkNoInitialConnectSequenceWait();
 
     MultiVehicleManager*    vehicleMgr  = qgcApp()->toolbox()->multiVehicleManager();
     Vehicle*                vehicle     = vehicleMgr->activeVehicle();
@@ -184,13 +177,11 @@ void FTPManagerTest::_testListDirectoryNoResponse(void)
     QList<QVariant> arguments = spyListDirectoryComplete.takeFirst();
     QCOMPARE(arguments[0].toStringList().count(), 0);
     QVERIFY(!arguments[1].toString().isEmpty());
-
-    _disconnectMockLink();
 }
 
 void FTPManagerTest::_testListDirectoryNakResponse(void)
 {
-    _connectMockLinkNoInitialConnectSequence();
+    _connectMockLinkNoInitialConnectSequenceWait();
 
     MultiVehicleManager*    vehicleMgr  = qgcApp()->toolbox()->multiVehicleManager();
     Vehicle*                vehicle     = vehicleMgr->activeVehicle();
@@ -207,13 +198,11 @@ void FTPManagerTest::_testListDirectoryNakResponse(void)
     QList<QVariant> arguments = spyListDirectoryComplete.takeFirst();
     QCOMPARE(arguments[0].toStringList().count(), 0);
     QVERIFY(!arguments[1].toString().isEmpty());
-
-    _disconnectMockLink();
 }
 
 void FTPManagerTest::_testListDirectoryNoSecondResponse(void)
 {
-    _connectMockLinkNoInitialConnectSequence();
+    _connectMockLinkNoInitialConnectSequenceWait();
 
     MultiVehicleManager*    vehicleMgr  = qgcApp()->toolbox()->multiVehicleManager();
     Vehicle*                vehicle     = vehicleMgr->activeVehicle();
@@ -230,13 +219,11 @@ void FTPManagerTest::_testListDirectoryNoSecondResponse(void)
     QList<QVariant> arguments = spyListDirectoryComplete.takeFirst();
     QCOMPARE(arguments[0].toStringList().count(), 0);
     QVERIFY(!arguments[1].toString().isEmpty());
-
-    _disconnectMockLink();
 }
 
 void FTPManagerTest::_testListDirectoryNoSecondResponseAllowRetry(void)
 {
-    _connectMockLinkNoInitialConnectSequence();
+    _connectMockLinkNoInitialConnectSequenceWait();
 
     MultiVehicleManager*    vehicleMgr  = qgcApp()->toolbox()->multiVehicleManager();
     Vehicle*                vehicle     = vehicleMgr->activeVehicle();
@@ -253,13 +240,11 @@ void FTPManagerTest::_testListDirectoryNoSecondResponseAllowRetry(void)
     QList<QVariant> arguments = spyListDirectoryComplete.takeFirst();
     qDebug() << arguments[0];
     QCOMPARE(arguments[0].toStringList().count(), 6);
-
-    _disconnectMockLink();
 }
 
 void FTPManagerTest::_testListDirectoryNakSecondResponse(void)
 {
-    _connectMockLinkNoInitialConnectSequence();
+    _connectMockLinkNoInitialConnectSequenceWait();
 
     MultiVehicleManager*    vehicleMgr  = qgcApp()->toolbox()->multiVehicleManager();
     Vehicle*                vehicle     = vehicleMgr->activeVehicle();
@@ -276,13 +261,11 @@ void FTPManagerTest::_testListDirectoryNakSecondResponse(void)
     QList<QVariant> arguments = spyListDirectoryComplete.takeFirst();
     QCOMPARE(arguments[0].toStringList().count(), 0);
     QVERIFY(!arguments[1].toString().isEmpty());
-
-    _disconnectMockLink();
 }
 
 void FTPManagerTest::_testListDirectoryBadSequence(void)
 {
-    _connectMockLinkNoInitialConnectSequence();
+    _connectMockLinkNoInitialConnectSequenceWait();
 
     MultiVehicleManager*    vehicleMgr  = qgcApp()->toolbox()->multiVehicleManager();
     Vehicle*                vehicle     = vehicleMgr->activeVehicle();
@@ -299,6 +282,4 @@ void FTPManagerTest::_testListDirectoryBadSequence(void)
     QList<QVariant> arguments = spyListDirectoryComplete.takeFirst();
     QCOMPARE(arguments[0].toStringList().count(), 0);
     QVERIFY(!arguments[1].toString().isEmpty());
-
-    _disconnectMockLink();
 }

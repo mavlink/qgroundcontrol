@@ -45,6 +45,8 @@ GridLayout {
             break
         }
         subEditConfig.sendStatus = sendStatus.checked
+        subEditConfig.isSecureConnection = isSecureConnection.checked
+        subEditConfig.signingKey = signingKey.text
         subEditConfig.incrementVehicleId = incrementVehicleId.checked
     }
 
@@ -75,12 +77,26 @@ GridLayout {
     }
 
     QGCCheckBox {
+        id:                 isSecureConnection
+        Layout.columnSpan:  2
+        text:               qsTr("Simulate Secure Connection")
+        checked:            subEditConfig.isSecureConnection
+    }
+
+    QGCCheckBox {
         id:                 incrementVehicleId
         Layout.columnSpan:  2
         text:               qsTr("Increment Vehicle Id")
         checked:            subEditConfig.incrementVehicleId
     }
 
+    QGCLabel { text: qsTr("Signing Key") }
+    QGCTextField {
+        id:                     signingKey
+        Layout.preferredWidth:  _secondColumnWidth
+        text:                   subEditConfig.signingKey
+    }
+    
     QGCLabel { text: qsTr("Firmware") }
     QGCComboBox {
         id:                     firmwareTypeCombo

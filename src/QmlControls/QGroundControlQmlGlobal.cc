@@ -122,57 +122,33 @@ bool QGroundControlQmlGlobal::loadBoolGlobalSetting (const QString& key, bool de
     return settings.value(key, defaultValue).toBool();
 }
 
-void QGroundControlQmlGlobal::startPX4MockLink(bool sendStatusText)
+void QGroundControlQmlGlobal::startMockLink(MockLinkType mockLinkType, bool sendStatusText, bool isSecureConnection)
 {
 #ifdef QT_DEBUG
-    MockLink::startPX4MockLink(sendStatusText);
+    switch (mockLinkType) {
+    case MockLinkTypePX4:
+        MockLink::startMockLink(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, sendStatusText, isSecureConnection);
+        break;
+    case MockLinkTypeGeneric:
+        MockLink::startMockLink(MAV_AUTOPILOT_PX4, MAV_TYPE_GENERIC, sendStatusText, isSecureConnection);
+        break;
+    case MockLinkTypeArduCopter:
+        MockLink::startMockLink(MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_QUADROTOR, sendStatusText, isSecureConnection);
+        break;
+    case MockLinkTypeArduPlane:
+        MockLink::startMockLink(MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_FIXED_WING, sendStatusText, isSecureConnection);
+        break;
+    case MockLinkTypeArduSub:
+        MockLink::startMockLink(MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_SUBMARINE, sendStatusText, isSecureConnection);
+        break;
+    case MockLinkTypeArduRover:
+        MockLink::startMockLink(MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_GROUND_ROVER, sendStatusText, isSecureConnection);
+        break;
+    }
 #else
+    Q_UNUSED(mockLinkType);
     Q_UNUSED(sendStatusText);
-#endif
-}
-
-void QGroundControlQmlGlobal::startGenericMockLink(bool sendStatusText)
-{
-#ifdef QT_DEBUG
-    MockLink::startGenericMockLink(sendStatusText);
-#else
-    Q_UNUSED(sendStatusText);
-#endif
-}
-
-void QGroundControlQmlGlobal::startAPMArduCopterMockLink(bool sendStatusText)
-{
-#ifdef QT_DEBUG
-    MockLink::startAPMArduCopterMockLink(sendStatusText);
-#else
-    Q_UNUSED(sendStatusText);
-#endif
-}
-
-void QGroundControlQmlGlobal::startAPMArduPlaneMockLink(bool sendStatusText)
-{
-#ifdef QT_DEBUG
-    MockLink::startAPMArduPlaneMockLink(sendStatusText);
-#else
-    Q_UNUSED(sendStatusText);
-#endif
-}
-
-void QGroundControlQmlGlobal::startAPMArduSubMockLink(bool sendStatusText)
-{
-#ifdef QT_DEBUG
-    MockLink::startAPMArduSubMockLink(sendStatusText);
-#else
-    Q_UNUSED(sendStatusText);
-#endif
-}
-
-void QGroundControlQmlGlobal::startAPMArduRoverMockLink(bool sendStatusText)
-{
-#ifdef QT_DEBUG
-    MockLink::startAPMArduRoverMockLink(sendStatusText);
-#else
-    Q_UNUSED(sendStatusText);
+    Q_UNUSED(isSecureConnection);
 #endif
 }
 

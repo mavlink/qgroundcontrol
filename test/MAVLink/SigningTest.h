@@ -10,16 +10,24 @@
 #pragma once
 
 #include "UnitTest.h"
+#include "MultiVehicleManager.h"
 
 class SigningTest : public UnitTest
 {
     Q_OBJECT
 
 public:
-    SigningTest() = default;
+    SigningTest();
 
 private slots:
     void _testInitSigning();
     void _testCheckSigningLinkId();
     void _testCreateSetupSigning();
+    void _testDenyUnsignedMessages();
+    void _testGoodSignatures();
+    void _testNoSigning();
+    void _testBadSignature();
+
+private:
+    MultiVehicleManager* _multiVehicleMgr = nullptr;
 };

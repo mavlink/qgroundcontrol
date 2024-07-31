@@ -12,6 +12,7 @@
 #include "QGCApplication.h"
 #include "LinkManager.h"
 #include "QGCLoggingCategory.h"
+#include "MAVLinkSigning.h"
 
 #include <QtCore/QFile>
 #include <QtCore/QMutexLocker>
@@ -40,11 +41,73 @@ double      MockLink::_defaultVehicleHomeAltitude = 19.0;
 #endif
 int         MockLink::_nextVehicleSystemId =        128;
 
-// The LinkManager is only forward declared in the header, so a static_assert is here instead to ensure we update if the value changes.
-static_assert(LinkManager::invalidMavlinkChannel() == std::numeric_limits<uint8_t>::max(), "update MockLink::_mavlinkAuxChannel");
+MockConfiguration::MockConfiguration(const QString& name)
+    : LinkConfiguration(name)
+{
+
+}
+
+MockConfiguration::MockConfiguration(MockConfiguration* source)
+    : LinkConfiguration(source)
+{
+    _firmwareType       = source->_firmwareType;
+    _vehicleType        = source->_vehicleType;
+    _sendStatusText     = source->_sendStatusText;
+    _isSecureConnection = source->_isSecureConnection;
+    _signingKey         = source->_signingKey;
+    _incrementVehicleId = source->_incrementVehicleId;
+    _failureMode        = source->_failureMode;
+}
+
+void MockConfiguration::copyFrom(LinkConfiguration *source)
+{
+    LinkConfiguration::copyFrom(source);
+    auto* usource = qobject_cast<MockConfiguration*>(source);
+
+    if (!usource) {
+        qCWarning(MockLinkLog) << "dynamic_cast failed" << source << usource;
+        return;
+    }
+
+    _firmwareType       = usource->_firmwareType;
+    _vehicleType        = usource->_vehicleType;
+    _sendStatusText     = usource->_sendStatusText;
+    _incrementVehicleId = usource->_incrementVehicleId;
+    _failureMode        = usource->_failureMode;
+    _isSecureConnection = usource->_isSecureConnection;
+    _signingKey         = usource->_signingKey;
+}
+
+void MockConfiguration::saveSettings(QSettings& settings, const QString& root)
+{
+    settings.beginGroup(root);
+    settings.setValue(_firmwareTypeKey,         (int)_firmwareType);
+    settings.setValue(_vehicleTypeKey,          (int)_vehicleType);
+    settings.setValue(_sendStatusTextKey,       _sendStatusText);
+    settings.setValue(_incrementVehicleIdKey,   _incrementVehicleId);
+    settings.setValue(_failureModeKey,          (int)_failureMode);
+    settings.setValue(_isSecureConnectionKey,   _isSecureConnection);
+    settings.setValue(_signingKeyKey,           _signingKey);
+    settings.sync();
+    settings.endGroup();
+}
+
+void MockConfiguration::loadSettings(QSettings& settings, const QString& root)
+{
+    settings.beginGroup(root);
+    _firmwareType       = (MAV_AUTOPILOT)settings.value(_firmwareTypeKey, (int)MAV_AUTOPILOT_PX4).toInt();
+    _vehicleType        = (MAV_TYPE)settings.value(_vehicleTypeKey, (int)MAV_TYPE_QUADROTOR).toInt();
+    _sendStatusText     = settings.value(_sendStatusTextKey, false).toBool();
+    _incrementVehicleId = settings.value(_incrementVehicleIdKey, true).toBool();
+    _failureMode        = (FailureMode_t)settings.value(_failureModeKey, (int)FailNone).toInt();
+    _isSecureConnection = settings.value(_isSecureConnectionKey, false).toBool();
+    _signingKey         = settings.value(_signingKeyKey, "").toString();
+    settings.endGroup();
+}
 
 MockLink::MockLink(SharedLinkConfigurationPtr& config)
     : LinkInterface                         (config)
+    , _mavlinkIncomingChannel               (LinkManager::invalidMavlinkChannel())
     , _missionItemHandler                   (this, qgcApp()->toolbox()->mavlinkProtocol())
     , _name                                 ("MockLink")
     , _connected                            (false)
@@ -55,7 +118,7 @@ MockLink::MockLink(SharedLinkConfigurationPtr& config)
     , _mavState                             (MAV_STATE_STANDBY)
     , _firmwareType                         (MAV_AUTOPILOT_PX4)
     , _vehicleType                          (MAV_TYPE_QUADROTOR)
-    , _vehicleAltitudeAMSL                      (_defaultVehicleHomeAltitude)
+    , _vehicleAltitudeAMSL                  (_defaultVehicleHomeAltitude)
     , _sendStatusText                       (false)
     , _apmSendHomePositionOnEmptyList       (false)
     , _failureMode                          (MockConfiguration::FailNone)
@@ -73,6 +136,8 @@ MockLink::MockLink(SharedLinkConfigurationPtr& config)
     _firmwareType       = mockConfig->firmwareType();
     _vehicleType        = mockConfig->vehicleType();
     _sendStatusText     = mockConfig->sendStatusText();
+    _isSecureConnection = mockConfig->isSecureConnection();
+    _signingKey         = mockConfig->signingKey();
     _failureMode        = mockConfig->failureMode();
     _vehicleSystemId    = mockConfig->incrementVehicleId() ?  _nextVehicleSystemId++ : _nextVehicleSystemId;
     _vehicleLatitude    = _defaultVehicleLatitude + ((_vehicleSystemId - 128) * 0.0001);
@@ -111,11 +176,9 @@ bool MockLink::_connect(void)
 {
     if (!_connected) {
         _connected = true;
-        // MockLinks use Mavlink 2.0
+        // MockLinks start with Mavlink 2.0 outgoing
         mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(mavlinkChannel());
         mavlinkStatus->flags &= ~MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
-        mavlink_status_t* auxStatus = mavlink_get_channel_status(mavlinkAuxChannel());
-        auxStatus->flags &= ~MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
         start();
         emit connected();
     }
@@ -125,47 +188,55 @@ bool MockLink::_connect(void)
 
 bool MockLink::_allocateMavlinkChannel()
 {
-    // should only be called by the LinkManager during setup
-    Q_ASSERT(!mavlinkAuxChannelIsSet());
+    // We override this LinkInterface method to allocate/setup the seperate incoming mavlink channel as well
+
+    Q_ASSERT(_mavlinkIncomingChannel == LinkManager::invalidMavlinkChannel());
     Q_ASSERT(!mavlinkChannelIsSet());
 
     if (!LinkInterface::_allocateMavlinkChannel()) {
-        qCWarning(MockLinkLog) << "LinkInterface::_allocateMavlinkChannel failed";
+        qWarning() << Q_FUNC_INFO << "LinkInterface::_allocateMavlinkChannel failed";
         return false;
     }
 
-    auto mgr = qgcApp()->toolbox()->linkManager();
-    _mavlinkAuxChannel = mgr->allocateMavlinkChannel();
-    if (!mavlinkAuxChannelIsSet()) {
-        qCWarning(MockLinkLog) << "_allocateMavlinkChannel failed";
+    auto linkManager = qgcApp()->toolbox()->linkManager();
+    _mavlinkIncomingChannel = linkManager->allocateMavlinkChannel();
+    if (_mavlinkIncomingChannel == LinkManager::invalidMavlinkChannel()) {
+        qWarning() << Q_FUNC_INFO << "No more mavlink channels available";
         LinkInterface::_freeMavlinkChannel();
         return false;
     }
-    qCDebug(MockLinkLog) << "_allocateMavlinkChannel" << _mavlinkAuxChannel;
+
+    auto mockConfig = qobject_cast<MockConfiguration*>(m_config.get());
+    QByteArray signingKeyBytes = mockConfig->signingKey().toUtf8();
+    if (MAVLinkSigning::initSigning(static_cast<mavlink_channel_t>(_mavlinkIncomingChannel), signingKeyBytes, isSecureConnection() ? MAVLinkSigning::secureConnectionAccceptUnsignedCallback : MAVLinkSigning::insecureConnectionAccceptUnsignedCallback)) {
+        if (signingKeyBytes.isEmpty()) {
+            qCDebug(MockLinkLog) << Q_FUNC_INFO << "Signing disabled on incoming channel" << _mavlinkIncomingChannel;
+        } else {
+            qCDebug(MockLinkLog) << Q_FUNC_INFO << "Signing enabled on incoming channel" << _mavlinkIncomingChannel;
+        }
+    } else {
+        qWarning() << Q_FUNC_INFO << "Failed To Init Signing on incoming channel" << _mavlinkIncomingChannel;
+        LinkInterface::_freeMavlinkChannel();
+        linkManager->freeMavlinkChannel(_mavlinkIncomingChannel);
+        _mavlinkIncomingChannel = LinkManager::invalidMavlinkChannel();
+        return false;
+    }
+
+    qCDebug(MockLinkLog) << Q_FUNC_INFO << "outgoing:incoming" << mavlinkChannel() << _mavlinkIncomingChannel;
+
     return true;
 }
 
 void MockLink::_freeMavlinkChannel()
 {
-    qCDebug(MockLinkLog) << "_freeMavlinkChannel" << _mavlinkAuxChannel;
-    if (!mavlinkAuxChannelIsSet()) {
-        Q_ASSERT(!mavlinkChannelIsSet());
-        return;
-    }
+    qCDebug(MockLinkLog) << "_freeMavlinkChannel" << _mavlinkIncomingChannel;
 
-    auto mgr = qgcApp()->toolbox()->linkManager();
-    mgr->freeMavlinkChannel(_mavlinkAuxChannel);
+    Q_ASSERT(_mavlinkIncomingChannel != LinkManager::invalidMavlinkChannel());
+
+    auto linkManager = qgcApp()->toolbox()->linkManager();
+    linkManager->freeMavlinkChannel(_mavlinkIncomingChannel);
+    _mavlinkIncomingChannel = LinkManager::invalidMavlinkChannel();
     LinkInterface::_freeMavlinkChannel();
-}
-
-uint8_t MockLink::mavlinkAuxChannel(void) const
-{
-    return _mavlinkAuxChannel;
-}
-
-bool MockLink::mavlinkAuxChannelIsSet(void) const
-{
-    return (LinkManager::invalidMavlinkChannel() != _mavlinkAuxChannel);
 }
 
 void MockLink::disconnect(void)
@@ -584,7 +655,7 @@ void MockLink::_handleIncomingNSHBytes(const char* bytes, int cBytes)
 /// @brief Handle incoming bytes which are meant to be handled by the mavlink protocol
 void MockLink::_handleIncomingMavlinkBytes(const uint8_t* bytes, int cBytes)
 {
-    QMutexLocker lock{&_mavlinkAuxMutex};
+    QMutexLocker lock{&_mavlinkIncomingMutex};
     mavlink_message_t msg;
     mavlink_status_t comm;
     memset(&comm, 0, sizeof(comm));
@@ -592,13 +663,24 @@ void MockLink::_handleIncomingMavlinkBytes(const uint8_t* bytes, int cBytes)
 
     for (qint64 i=0; i<cBytes; i++)
     {
-        parsed = mavlink_parse_char(mavlinkAuxChannel(), bytes[i], &msg, &comm);
-        if (!parsed) {
-            continue;
+        parsed = mavlink_parse_char(_mavlinkIncomingChannel, bytes[i], &msg, &comm);
+        if (parsed) {
+            lock.unlock();
+            _handleIncomingMavlinkMsg(msg);
+            lock.relock();
         }
-        lock.unlock();
-        _handleIncomingMavlinkMsg(msg);
-        lock.relock();
+
+        mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(_mavlinkIncomingChannel);
+        if (mavlinkStatus->signing && mavlinkStatus->signing->last_status != _lastSigningStatus) {
+            _lastSigningStatus = mavlinkStatus->signing->last_status;
+            qDebug() << "MockLink: Signing status changed" << _lastSigningStatus << parsed << msg.msgid;
+            emit lastSigningStatusChanged(_lastSigningStatus);
+            if (_lastSigningStatus == MAVLINK_SIGNING_STATUS_BAD_SIGNATURE) {
+                qCWarning(MockLinkLog) << Q_FUNC_INFO << "MAVLINK_SIGNING_STATUS_BAD_SIGNATURE";
+            } else if (_lastSigningStatus == MAVLINK_SIGNING_STATUS_OK) {
+                qCDebug(MockLinkLog) << Q_FUNC_INFO << "MAVLINK_SIGNING_STATUS_OK";
+            }
+        }
     }
 }
 
@@ -650,7 +732,7 @@ void MockLink::_handleIncomingMavlinkMsg(const mavlink_message_t &msg)
 void MockLink::_handleHeartBeat(const mavlink_message_t& msg)
 {
     Q_UNUSED(msg);
-    qCDebug(MockLinkLog) << "Heartbeat";
+    qCDebug(MockLinkLog) << "Incoming Heartbeat";
 }
 
 void MockLink::_handleParamMapRC(const mavlink_message_t& msg)
@@ -685,7 +767,7 @@ void MockLink::_handleManualControl(const mavlink_message_t& msg)
     mavlink_manual_control_t manualControl;
     mavlink_msg_manual_control_decode(&msg, &manualControl);
 
-    qCDebug(MockLinkLog) << "MANUAL_CONTROL" << manualControl.x << manualControl.y << manualControl.z << manualControl.r;
+    qCDebug(MockLinkVerboseLog) << "MANUAL_CONTROL" << manualControl.x << manualControl.y << manualControl.z << manualControl.r;
 }
 
 void MockLink::_setParamFloatUnionIntoMap(int componentId, const QString& paramName, float paramFloat)
@@ -863,7 +945,7 @@ void MockLink::_paramRequestListWorker(void)
         Q_ASSERT(paramName.length() <= MAVLINK_MSG_ID_PARAM_VALUE_LEN);
         strncpy(paramId, paramName.toLocal8Bit().constData(), MAVLINK_MSG_ID_PARAM_VALUE_LEN);
 
-        qCDebug(MockLinkLog) << "Sending msg_param_value" << componentId << paramId << paramType << _mapParamName2Value[componentId][paramId];
+        qCDebug(MockLinkVerboseLog) << "Sending msg_param_value" << componentId << paramId << paramType << _mapParamName2Value[componentId][paramId];
 
         mavlink_msg_param_value_pack_chan(_vehicleSystemId,
                                           componentId,                                   // component id
@@ -1095,6 +1177,8 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
     uint8_t commandResult = MAV_RESULT_UNSUPPORTED;
 
     mavlink_msg_command_long_decode(&msg, &request);
+
+    qCDebug(MockLinkLog) << Q_FUNC_INFO << "request.command" << request.command;
 
     _receivedMavCommandCountMap[static_cast<MAV_CMD>(request.command)]++;
 
@@ -1427,63 +1511,7 @@ void MockLink::_sendStatusTextMessages(void)
     _sendChunkedStatusText(4, true /* missingChunks */);    // This should cause the timeout to fire
 }
 
-MockConfiguration::MockConfiguration(const QString& name)
-    : LinkConfiguration(name)
-{
-
-}
-
-MockConfiguration::MockConfiguration(MockConfiguration* source)
-    : LinkConfiguration(source)
-{
-    _firmwareType       = source->_firmwareType;
-    _vehicleType        = source->_vehicleType;
-    _sendStatusText     = source->_sendStatusText;
-    _incrementVehicleId = source->_incrementVehicleId;
-    _failureMode        = source->_failureMode;
-}
-
-void MockConfiguration::copyFrom(LinkConfiguration *source)
-{
-    LinkConfiguration::copyFrom(source);
-    auto* usource = qobject_cast<MockConfiguration*>(source);
-
-    if (!usource) {
-        qCWarning(MockLinkLog) << "dynamic_cast failed" << source << usource;
-        return;
-    }
-
-    _firmwareType       = usource->_firmwareType;
-    _vehicleType        = usource->_vehicleType;
-    _sendStatusText     = usource->_sendStatusText;
-    _incrementVehicleId = usource->_incrementVehicleId;
-    _failureMode        = usource->_failureMode;
-}
-
-void MockConfiguration::saveSettings(QSettings& settings, const QString& root)
-{
-    settings.beginGroup(root);
-    settings.setValue(_firmwareTypeKey,         (int)_firmwareType);
-    settings.setValue(_vehicleTypeKey,          (int)_vehicleType);
-    settings.setValue(_sendStatusTextKey,       _sendStatusText);
-    settings.setValue(_incrementVehicleIdKey,   _incrementVehicleId);
-    settings.setValue(_failureModeKey,          (int)_failureMode);
-    settings.sync();
-    settings.endGroup();
-}
-
-void MockConfiguration::loadSettings(QSettings& settings, const QString& root)
-{
-    settings.beginGroup(root);
-    _firmwareType       = (MAV_AUTOPILOT)settings.value(_firmwareTypeKey, (int)MAV_AUTOPILOT_PX4).toInt();
-    _vehicleType        = (MAV_TYPE)settings.value(_vehicleTypeKey, (int)MAV_TYPE_QUADROTOR).toInt();
-    _sendStatusText     = settings.value(_sendStatusTextKey, false).toBool();
-    _incrementVehicleId = settings.value(_incrementVehicleIdKey, true).toBool();
-    _failureMode        = (FailureMode_t)settings.value(_failureModeKey, (int)FailNone).toInt();
-    settings.endGroup();
-}
-
-MockLink* MockLink::_startMockLink(MockConfiguration* mockConfig)
+MockLink* MockLink::startMockLink(MockConfiguration* mockConfig)
 {
     LinkManager* linkMgr = qgcApp()->toolbox()->linkManager();
 
@@ -1497,51 +1525,18 @@ MockLink* MockLink::_startMockLink(MockConfiguration* mockConfig)
     }
 }
 
-MockLink* MockLink::_startMockLinkWorker(QString configName, MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, bool sendStatusText, MockConfiguration::FailureMode_t failureMode)
+MockLink* MockLink::startMockLink(MAV_AUTOPILOT mavAutopilot, MAV_TYPE mavType, bool sendStatusText, bool isSecureConnection, QString signingKey, MockConfiguration::FailureMode_t failureMode)
 {
-    MockConfiguration* mockConfig = new MockConfiguration(configName);
+    MockConfiguration* mockConfig = new MockConfiguration(QStringLiteral("%1 %2 MockLink").arg(QGCMAVLink::mavAutopilotToString(mavAutopilot)).arg(QGCMAVLink::mavTypeToString(mavType)));
 
-    mockConfig->setFirmwareType(firmwareType);
-    mockConfig->setVehicleType(vehicleType);
+    mockConfig->setFirmwareType(mavAutopilot);
+    mockConfig->setVehicleType(mavType);
     mockConfig->setSendStatusText(sendStatusText);
     mockConfig->setFailureMode(failureMode);
+    mockConfig->setIsSecureConnection(isSecureConnection);
+    mockConfig->setSigningKey(signingKey);
 
-    return _startMockLink(mockConfig);
-}
-
-MockLink*  MockLink::startPX4MockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode)
-{
-    return _startMockLinkWorker("PX4 MultiRotor MockLink", MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, sendStatusText, failureMode);
-}
-
-MockLink*  MockLink::startGenericMockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode)
-{
-    return _startMockLinkWorker("Generic MockLink", MAV_AUTOPILOT_GENERIC, MAV_TYPE_QUADROTOR, sendStatusText, failureMode);
-}
-
-MockLink* MockLink::startNoInitialConnectMockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode)
-{
-    return _startMockLinkWorker("No Initial Connect MockLink", MAV_AUTOPILOT_PX4, MAV_TYPE_GENERIC, sendStatusText, failureMode);
-}
-
-MockLink*  MockLink::startAPMArduCopterMockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode)
-{
-    return _startMockLinkWorker("ArduCopter MockLink",MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_QUADROTOR, sendStatusText, failureMode);
-}
-
-MockLink*  MockLink::startAPMArduPlaneMockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode)
-{
-    return _startMockLinkWorker("ArduPlane MockLink", MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_FIXED_WING, sendStatusText, failureMode);
-}
-
-MockLink*  MockLink::startAPMArduSubMockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode)
-{
-    return _startMockLinkWorker("ArduSub MockLink", MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_SUBMARINE, sendStatusText, failureMode);
-}
-
-MockLink*  MockLink::startAPMArduRoverMockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode)
-{
-    return _startMockLinkWorker("ArduRover MockLink", MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_GROUND_ROVER, sendStatusText, failureMode);
+    return startMockLink(mockConfig);
 }
 
 void MockLink::_sendRCChannels(void)

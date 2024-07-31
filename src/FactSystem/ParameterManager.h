@@ -38,14 +38,14 @@ public:
     /// @param uas Uas which this set of facts is associated with
     ParameterManager(Vehicle* vehicle);
 
-    Q_PROPERTY(bool     parametersReady     READ parametersReady    NOTIFY parametersReadyChanged)      ///< true: Parameters are ready for use
-    Q_PROPERTY(bool     missingParameters   READ missingParameters  NOTIFY missingParametersChanged)    ///< true: Parameters are missing from firmware response, false: all parameters received from firmware
-    Q_PROPERTY(double   loadProgress        READ loadProgress       NOTIFY loadProgressChanged)
-    Q_PROPERTY(bool     pendingWrites       READ pendingWrites      NOTIFY pendingWritesChanged)        ///< true: There are still pending write updates against the vehicle
+    Q_PROPERTY(bool     parameterLoadComplete   READ parameterLoadComplete  NOTIFY parameterLoadCompleteChanged)    ///< true: Parameter load complete, still might have missing parameters though
+    Q_PROPERTY(bool     missingParameters       READ missingParameters      NOTIFY missingParametersChanged)        ///< true: Parameters are missing from firmware response, false: all parameters received from firmware
+    Q_PROPERTY(double   loadProgress            READ loadProgress           NOTIFY loadProgressChanged)
+    Q_PROPERTY(bool     pendingWrites           READ pendingWrites          NOTIFY pendingWritesChanged)        ///< true: There are still pending write updates against the vehicle
 
-    bool parametersReady    (void) const { return _parametersReady; }
-    bool missingParameters  (void) const { return _missingParameters; }
-    double loadProgress     (void) const { return _loadProgress; }
+    bool parameterLoadComplete   (void) const { return _parameterLoadComplete; }
+    bool missingParameters      (void) const { return _missingParameters; }
+    double loadProgress         (void) const { return _loadProgress; }
 
     /// @return Directory of parameter caches
     static QDir parameterCacheDir();
@@ -98,11 +98,11 @@ public:
     static constexpr int defaultComponentId = -1;
 
 signals:
-    void parametersReadyChanged     (bool parametersReady);
-    void missingParametersChanged   (bool missingParameters);
-    void loadProgressChanged        (float value);
-    void pendingWritesChanged       (bool pendingWrites);
-    void factAdded                  (int componentId, Fact* fact);
+    void parameterLoadCompleteChanged   (bool parameterLoadComplete);
+    void missingParametersChanged       (bool missingParameters);
+    void loadProgressChanged            (float value);
+    void pendingWritesChanged           (bool pendingWrites);
+    void factAdded                      (int componentId, Fact* fact);
 
 private slots:
     void    _factRawValueUpdated                (const QVariant& rawValue);
@@ -139,8 +139,8 @@ private:
     QMap<int /* comp id */, QMap<QString /* parameter name */, Fact*>> _mapCompId2FactMap;
 
     double      _loadProgress;                  ///< Parameter load progess, [0.0,1.0]
-    bool        _parametersReady;               ///< true: parameter load complete
-    bool        _missingParameters;             ///< true: parameter missing from initial load
+    bool        _parameterLoadComplete;         ///< true: parameter load complete
+    bool        _missingParameters;             ///< true: parameters missing from initial load
     bool        _initialLoadComplete;           ///< true: Initial load of all parameters complete, whether successful or not
     bool        _waitingForDefaultComponent;    ///< true: last chance wait for default component params
     bool        _saveRequired;                  ///< true: _saveToEEPROM should be called

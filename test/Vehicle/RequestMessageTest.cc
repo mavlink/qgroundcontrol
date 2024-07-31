@@ -35,7 +35,7 @@ void RequestMessageTest::_requestMessageResultHandler(void* resultHandlerData, M
 
 void RequestMessageTest::_testCaseWorker(TestCase_t& testCase)
 {
-    _connectMockLinkNoInitialConnectSequence();
+    _connectMockLinkNoInitialConnectSequenceWait();
 
     MultiVehicleManager*    vehicleMgr  = qgcApp()->toolbox()->multiVehicleManager();
     Vehicle*                vehicle     = vehicleMgr->activeVehicle();
@@ -70,7 +70,7 @@ void RequestMessageTest::_performTestCases(void)
 
 void RequestMessageTest::_duplicateCommand(void)
 {
-    _connectMockLinkNoInitialConnectSequence();
+    _connectMockLinkNoInitialConnectSequenceWait();
 
     RequestMessageTest::TestCase_t testCase = {
         MockLink::FailRequestMessageCommandNoResponse, MAV_RESULT_FAILED, Vehicle::RequestMessageFailureDuplicateCommand, 1, false
@@ -116,7 +116,7 @@ void RequestMessageTest::_compIdAllRequestMessageResultHandler(void* resultHandl
 
 void RequestMessageTest::_compIdAllFailure(void)
 {
-    _connectMockLinkNoInitialConnectSequence();
+    _connectMockLinkNoInitialConnectSequenceWait();
 
     RequestMessageTest::TestCase_t testCase = {
         MockLink::FailRequestMessageCommandNoResponse, MAV_RESULT_FAILED, Vehicle::RequestMessageFailureCommandError, 0, false

@@ -31,7 +31,7 @@ void FactSystemTestBase::_init(MAV_AUTOPILOT autopilot)
 {
     UnitTest::init();
 
-    _connectMockLink(autopilot);
+    _connectMockLink(autopilot, MAV_TYPE_QUADROTOR);
 
     _plugin = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->autopilotPlugin();
     Q_ASSERT(_plugin);

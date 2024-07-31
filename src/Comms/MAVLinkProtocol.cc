@@ -202,12 +202,11 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
         if (mavlink_parse_char(mavlinkChannel, static_cast<uint8_t>(b[position]), &_message, &_status)) {
             // Got a valid message
             if (!link->decodedFirstMavlinkPacket()) {
+                // If the incoming packet is v2, then switch all outgoing traffic to v2
                 link->setDecodedFirstMavlinkPacket(true);
                 mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(mavlinkChannel);
-                if (!(mavlinkStatus->flags & MAVLINK_STATUS_FLAG_IN_MAVLINK1) && (mavlinkStatus->flags & MAVLINK_STATUS_FLAG_OUT_MAVLINK1)) {
-                    qCDebug(MAVLinkProtocolLog) << "Switching outbound to mavlink 2.0 due to incoming mavlink 2.0 packet:" << mavlinkStatus << mavlinkChannel << mavlinkStatus->flags;
-                    mavlinkStatus->flags &= ~MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
-                    // Set all links to v2
+                if (!(mavlinkStatus->flags & MAVLINK_STATUS_FLAG_IN_MAVLINK1)) {
+                    qCDebug(MAVLinkProtocolLog) << Q_FUNC_INFO << QStringLiteral("Detected incoming Mavlink v2 on channel(%1), switching all outbound traffics to mavlink 2.0").arg(mavlinkChannel);
                     setVersion(200);
                 }
             }
@@ -382,6 +381,11 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
             // Reset message parsing
             memset(&_status,  0, sizeof(_status));
             memset(&_message, 0, sizeof(_message));
+        }
+
+        mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(mavlinkChannel);
+        if (mavlinkStatus->signing) {
+            link->setSigningSignatureFailure(mavlinkStatus->signing->last_status == MAVLINK_SIGNING_STATUS_BAD_SIGNATURE);
         }
     }
 }
