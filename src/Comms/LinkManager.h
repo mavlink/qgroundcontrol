@@ -168,7 +168,6 @@ private:
     QList<SharedLinkConfigurationPtr>   _rgLinkConfigs;
     QmlObjectListModel                  _qmlConfigurations;
 
-    QString                             _nmeaDeviceName;
     UdpIODevice                         _nmeaSocket;
 
     bool                _mavlinkSupportForwardingEnabled = false;
@@ -186,34 +185,32 @@ private:
 #endif
 
 #ifndef NO_SERIAL_LINK
-
 public:
-    Q_PROPERTY(QStringList  serialBaudRates     READ serialBaudRates    CONSTANT)
-    Q_PROPERTY(QStringList  serialPortStrings   READ serialPortStrings  NOTIFY commPortStringsChanged)
-    Q_PROPERTY(QStringList  serialPorts         READ serialPorts        NOTIFY commPortsChanged)
+    Q_PROPERTY(QStringList serialBaudRates   READ serialBaudRates   CONSTANT)
+    Q_PROPERTY(QStringList serialPortStrings READ serialPortStrings NOTIFY commPortStringsChanged)
+    Q_PROPERTY(QStringList serialPorts       READ serialPorts       NOTIFY commPortsChanged)
 
-    QStringList serialBaudRates     (void);
-    QStringList serialPortStrings   (void);
-    QStringList serialPorts         (void);
+    static QStringList serialBaudRates();
+    QStringList serialPortStrings();
+    QStringList serialPorts();
 
 signals:
     void commPortStringsChanged();
     void commPortsChanged();
 
 private:
-    bool _isSerialPortConnected     (void);
-    void _updateSerialPorts         (void);
-    bool _allowAutoConnectToBoard   (QGCSerialPortInfo::BoardType_t boardType);
-    bool _portAlreadyConnected      (const QString& portName);
+    bool _isSerialPortConnected();
+    void _updateSerialPorts();
+    bool _allowAutoConnectToBoard(QGCSerialPortInfo::BoardType_t boardType);
+    bool _portAlreadyConnected(const QString &portName);
 
-    QMap<QString, int>  _autoconnectPortWaitList; ///< key: QGCSerialPortInfo::systemLocation, value: wait count
-    QStringList         _commPortList;
-    QStringList         _commPortDisplayList;
-    QString             _autoConnectRTKPort;
-    QList<SerialLink*>  _activeLinkCheckList; ///< List of links we are waiting for a vehicle to show up on
-
-    QSerialPort*        _nmeaPort;
-    uint32_t            _nmeaBaud;
-
+    QMap<QString, int> _autoconnectPortWaitList;   ///< key: QGCSerialPortInfo::systemLocation, value: wait count
+    QList<SerialLink*> _activeLinkCheckList;       ///< List of links we are waiting for a vehicle to show up on
+    QStringList _commPortList;
+    QStringList _commPortDisplayList;
+    QString _autoConnectRTKPort;
+    QString _nmeaDeviceName;
+    uint32_t _nmeaBaud = 0;
+    QSerialPort *_nmeaPort = nullptr;
 #endif // NO_SERIAL_LINK
 };
