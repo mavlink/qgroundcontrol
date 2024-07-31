@@ -1,5 +1,5 @@
 if(NOT GST_QT6_PLUGIN_PATH)
-    set(GST_QT6_PLUGIN_PATH ${CMAKE_SOURCE_DIR}/libs/qmlglsink/qt6)
+    set(GST_QT6_PLUGIN_PATH ${CMAKE_SOURCE_DIR}/src/VideoManager/VideoReceiver/GStreamer/qmlglsink/qt6)
 endif()
 cmake_print_variables(GST_QT6_PLUGIN_PATH)
 
