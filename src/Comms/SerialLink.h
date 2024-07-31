@@ -55,8 +55,8 @@ public:
     int  parity() const      { return _parity; }         ///< QSerialPort Enums
     bool usbDirect() const   { return _usbDirect; }
 
-    const QString portName          () { return _portName; }
-    const QString portDisplayName   () { return _portDisplayName; }
+    const QString portName          () const { return _portName; }
+    const QString portDisplayName   () const { return _portDisplayName; }
 
     void setBaud            (int baud);
     void setDataBits        (int databits);

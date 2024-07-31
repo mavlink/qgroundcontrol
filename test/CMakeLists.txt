@@ -38,6 +38,7 @@ add_qgc_test(AudioOutputTest)
 # add_qgc_test(RadioConfigTest)
 
 add_subdirectory(Comms)
+add_qgc_test(QGCSerialPortInfoTest)
 
 add_subdirectory(FactSystem)
 add_qgc_test(FactSystemTestGeneric)
