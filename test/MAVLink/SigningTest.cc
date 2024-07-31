@@ -25,6 +25,7 @@ void SigningTest::_testInitSigning()
 
 void SigningTest::_testCheckSigningLinkId()
 {
+    QVERIFY(MAVLinkSigning::initSigning(MAVLINK_COMM_0, "secret_key", nullptr));
     const mavlink_heartbeat_t heartbeat = {0};
     mavlink_message_t message;
     (void) mavlink_msg_heartbeat_encode_chan(1, MAV_COMP_ID_USER1, MAVLINK_COMM_0, &message, &heartbeat);
@@ -36,8 +37,7 @@ void SigningTest::_testCreateSetupSigning()
     QVERIFY(MAVLinkSigning::initSigning(MAVLINK_COMM_0, "secret_key", nullptr));
     const mavlink_system_t target_system = {1, MAV_COMP_ID_AUTOPILOT1};
     mavlink_setup_signing_t setup_signing;
-    const bool result = MAVLinkSigning::createSetupSigning(MAVLINK_COMM_0, target_system, setup_signing);
-    QVERIFY(result);
+    MAVLinkSigning::createSetupSigning(MAVLINK_COMM_0, target_system, setup_signing);
     QVERIFY(setup_signing.initial_timestamp != 0);
     QCOMPARE(setup_signing.target_system, target_system.sysid);
     QCOMPARE(setup_signing.target_component, target_system.compid);

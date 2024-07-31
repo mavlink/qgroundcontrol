@@ -11,6 +11,9 @@
 #include "LinkManager.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
+#include "MAVLinkSigning.h"
+#include "SettingsManager.h"
+#include "AppSettings.h"
 
 #include <QtQml/QQmlEngine>
 
@@ -47,6 +50,23 @@ bool LinkInterface::mavlinkChannelIsSet() const
     return (LinkManager::invalidMavlinkChannel() != m_mavlinkChannel);
 }
 
+bool LinkInterface::initMavlinkSigning(void)
+{
+    if (!LinkManager::isLinkUSBDirect(this) && !isLogReplay()) {
+        auto appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
+        QByteArray signingKeyBytes = appSettings->mavlink2SigningKey()->rawValue().toByteArray();
+        if (MAVLinkSigning::initSigning(static_cast<mavlink_channel_t>(_mavlinkChannel), signingKeyBytes, nullptr)) {
+            qCDebug(LinkInterfaceLog) << "Signing initialized on channel" << _mavlinkChannel;
+        } else {
+            qWarning() << Q_FUNC_INFO << "Failed To Init Signing on channel" << _mavlinkChannel;
+            // FIXME: What should we do here?
+            return false;
+        }
+    }
+
+    return true;
+}
+
 bool LinkInterface::_allocateMavlinkChannel()
 {
     Q_ASSERT(!mavlinkChannelIsSet());
@@ -64,6 +84,10 @@ bool LinkInterface::_allocateMavlinkChannel()
     }
 
     qCDebug(LinkInterfaceLog) << Q_FUNC_INFO << m_mavlinkChannel;
+    qCDebug(LinkInterfaceLog) << "_allocateMavlinkChannel" << _mavlinkChannel;
+
+    initMavlinkSigning();
+
     return true;
 }
 
