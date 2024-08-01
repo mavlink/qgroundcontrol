@@ -78,7 +78,8 @@ void QGCCameraManager::_vehicleReady(bool ready)
 void QGCCameraManager::_mavlinkMessageReceived(const mavlink_message_t& message)
 {
     //-- Only pay attention to camera components, as identified by their compId
-    if(message.sysid == _vehicle->id() && (message.compid >= MAV_COMP_ID_CAMERA && message.compid <= MAV_COMP_ID_CAMERA6)) {
+    if(message.sysid == _vehicle->id() && (message.compid == MAV_COMP_ID_AUTOPILOT1 ||
+        (message.compid >= MAV_COMP_ID_CAMERA && message.compid <= MAV_COMP_ID_CAMERA6))) {
         switch (message.msgid) {
             case MAVLINK_MSG_ID_CAMERA_CAPTURE_STATUS:
                 _handleCaptureStatus(message);
@@ -127,7 +128,7 @@ void QGCCameraManager::_handleHeartbeat(const mavlink_message_t &message)
         pInfo->lastHeartbeat.start();
         _cameraInfoRequest[sCompID] = pInfo;
         //-- Request camera info
-        _requestCameraInfo(message.compid);
+        _requestCameraInfo(message.compid, pInfo->tryCount);
     } else {
         if(_cameraInfoRequest[sCompID]) {
             CameraStruct* pInfo = _cameraInfoRequest[sCompID];
@@ -146,7 +147,7 @@ void QGCCameraManager::_handleHeartbeat(const mavlink_message_t &message)
                     } else {
                         pInfo->tryCount++;
                         //-- Request camera info again.
-                        _requestCameraInfo(message.compid);
+                        _requestCameraInfo(message.compid, pInfo->tryCount);
                     }
                 }
             }
@@ -398,15 +399,25 @@ QGCCameraManager::_handleTrackingImageStatus(const mavlink_message_t& message)
 
 //-----------------------------------------------------------------------------
 void
-QGCCameraManager::_requestCameraInfo(int compID)
+QGCCameraManager::_requestCameraInfo(int compID, int tryCount)
 {
     qCDebug(CameraManagerLog) << "_requestCameraInfo(" << compID << ")";
     if(_vehicle) {
-        _vehicle->sendMavCommand(
-            compID,                                 // target component
-            MAV_CMD_REQUEST_CAMERA_INFORMATION,     // command id
-            false,                                  // showError
-            1);                                     // Do Request
+        // The MAV_CMD_REQUEST_CAMERA_INFORMATION command is deprecated, so we
+        // only fall back to it on the second and every other try.
+        if (tryCount % 2 == 0) {
+            _vehicle->sendMavCommand(
+                compID,                                 // target component
+                MAV_CMD_REQUEST_MESSAGE,                // command id
+                false,                                  // showError
+                MAVLINK_MSG_ID_CAMERA_INFORMATION);     // msgid
+        } else {
+            _vehicle->sendMavCommand(
+                compID,                                 // target component
+                MAV_CMD_REQUEST_CAMERA_INFORMATION,     // command id
+                false,                                  // showError
+                1);                                     // Do Request
+        }
     }
 }
 
