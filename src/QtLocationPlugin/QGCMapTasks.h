@@ -19,6 +19,7 @@
 #pragma once
 
 #include <QtCore/QObject>
+#include <QtCore/QQueue>
 #include <QtCore/QString>
 
 #include "QGCTile.h"
@@ -189,13 +190,13 @@ public:
     quint64 setID() const { return m_setID; }
     int count() const { return m_count; }
 
-    void setTileListFetched(const QList<QGCTile*> &tiles)
+    void setTileListFetched(const QQueue<QGCTile*> &tiles)
     {
         emit tileListFetched(tiles);
     }
 
 signals:
-    void tileListFetched(QList<QGCTile*> tiles);
+    void tileListFetched(QQueue<QGCTile*> tiles);
 
 private:
     const quint64 m_setID = 0;
