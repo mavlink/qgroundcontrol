@@ -561,7 +561,7 @@ QGCCacheWorker::_getTileDownloadList(QGCMapTask* mtask)
     if(!_testTask(mtask)) {
         return;
     }
-    QList<QGCTile*> tiles;
+    QQueue<QGCTile*> tiles;
     QGCGetTileDownloadListTask* task = static_cast<QGCGetTileDownloadListTask*>(mtask);
     QSqlQuery query(*_db);
     QString s = QString("SELECT hash, type, x, y, z FROM TilesDownload WHERE setID = %1 AND state = 0 LIMIT %2").arg(task->setID()).arg(task->count());
@@ -574,7 +574,7 @@ QGCCacheWorker::_getTileDownloadList(QGCMapTask* mtask)
             tile->setX(query.value("x").toInt());
             tile->setY(query.value("y").toInt());
             tile->setZ(query.value("z").toInt());
-            tiles.append(tile);
+            tiles.enqueue(tile);
         }
         for(int i = 0; i < tiles.size(); i++) {
             s = QString("UPDATE TilesDownload SET state = %1 WHERE setID = %2 and hash = \"%3\"").arg(static_cast<int>(QGCTile::StateDownloading)).arg(task->setID()).arg(tiles[i]->hash());
