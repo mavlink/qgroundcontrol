@@ -482,7 +482,9 @@ public:
     QString flightMode                      () const;
     void setFlightMode                      (const QString& flightMode);
 
-    Q_INVOKABLE void terminateFlight();
+    Q_INVOKABLE bool terminated              () const{ return _terminated; }
+    Q_INVOKABLE void setTerminated();
+
     bool airship() const;
 
     /**
@@ -1304,6 +1306,8 @@ private:
     // We use this to limit above terrain altitude queries based on distance and altitude change
     QGeoCoordinate              _altitudeAboveTerrLastCoord;
     float                       _altitudeAboveTerrLastRelAlt = qQNaN();
+
+    bool _terminated = false;
 
 public:
     int32_t getMessageRate(uint8_t compId, uint16_t msgId);

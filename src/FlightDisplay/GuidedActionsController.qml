@@ -58,6 +58,7 @@ Item {
     readonly property string setHomeTitle:                  qsTr("Set Home")
     readonly property string actionListTitle:               qsTr("Action")
     readonly property string setEstimatorOriginTitle:       qsTr("Set Estimator origin")
+    readonly property string terminateTitle:                qsTr("Terminate")
 
     readonly property string armMessage:                        qsTr("Arm the vehicle.")
     readonly property string forceArmMessage:                   qsTr("WARNING: This will force arming of the vehicle bypassing any safety checks.")
@@ -84,6 +85,7 @@ Item {
     readonly property string roiMessage:                        qsTr("Make the specified location a Region Of Interest.")
     readonly property string setHomeMessage:                    qsTr("Set vehicle home as the specified location. This will affect Return to Home position")
     readonly property string setEstimatorOriginMessage:         qsTr("Make the specified location the estimator origin.")
+    readonly property string terminateMessage:                  qsTr("Terminate current flight.")
 
     readonly property int actionRTL:                        1
     readonly property int actionLand:                       2
@@ -113,6 +115,7 @@ Item {
     readonly property int actionGripper:                    26
     readonly property int actionSetHome:                    27
     readonly property int actionSetEstimatorOrigin:         28
+    readonly property int actionTerminate:                  29
   
 
     property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
@@ -344,6 +347,7 @@ Item {
         function onDisarmVehicleRequest() { disarmVehicleRequest() }
         function onVtolTransitionToFwdFlightRequest() { vtolTransitionToFwdFlightRequest() }
         function onVtolTransitionToMRFlightRequest() { vtolTransitionToMRFlightRequest() }
+        function onTerminateRequest() { terminateRequest() }
     }
 
     function armVehicleRequest() {
@@ -369,6 +373,10 @@ Item {
 
     function vtolTransitionToMRFlightRequest() {
         confirmAction(actionVtolTransitionToMRFlight)
+    }
+
+    function terminateRequest() {
+        confirmAction(actionTerminate)
     }
 
     function closeAll() {
@@ -538,6 +546,10 @@ Item {
             confirmDialog.title = setEstimatorOriginTitle
             confirmDialog.message = setEstimatorOriginMessage
             break
+        case actionTerminate:
+            confirmDialog.title = terminateTitle
+            confirmDialog.message = terminateMessage
+            break;
         default:
             console.warn("Unknown actionCode", actionCode)
             return
@@ -644,6 +656,9 @@ Item {
         case actionSetEstimatorOrigin:
             _activeVehicle.setEstimatorOrigin(actionData)
             break
+        case actionTerminate:
+            _activeVehicle.setTerminated()
+            break;
         default:
             console.warn(qsTr("Internal error: unknown actionCode"), actionCode)
             break

@@ -9,8 +9,9 @@ Item {
     id: virtualTerminateButton
 
     property var   _activeVehicle:            QGroundControl.multiVehicleManager.activeVehicle
-    // TODO [lpavic]: isTerminated = _activeVehicle.isTerminated() or something simillar
-    property bool  isTerminated: false
+    property bool  isTerminated: _activeVehicle.terminated()
+
+    signal terminateRequest
 
     Rectangle {
         width: parent.width
@@ -30,12 +31,7 @@ Item {
             anchors.fill: parent
             onClicked: {
                 if (!isTerminated) {
-                    // TODO [lpavic]:
-                    // set isTerminated to true but only if slider is confirmed
-                    // There should be pop out slider for termination
-
-                    isTerminated = !isTerminated
-                    _activeVehicle.terminateFlight()
+                    virtualTerminateButton.terminateRequest()
                 }
             }
         }

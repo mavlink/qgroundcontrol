@@ -108,6 +108,7 @@ ApplicationWindow {
     signal vtolTransitionToFwdFlightRequest
     signal vtolTransitionToMRFlightRequest
     signal showPreFlightChecklistIfNeeded
+    signal terminateRequest
 
     //-------------------------------------------------------------------------
     //-- Global Scope Functions

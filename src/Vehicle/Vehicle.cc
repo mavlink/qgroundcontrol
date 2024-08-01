@@ -1605,6 +1605,16 @@ void Vehicle::forceArm(void)
                    2989);   // force arm
 }
 
+void Vehicle::setTerminated()
+{
+    _terminated = true;
+
+    sendMavCommand(_defaultComponentId,
+                   MAV_CMD_DO_FLIGHTTERMINATION,
+                   false, /*showError,*/
+                   1.0f);
+}
+
 bool Vehicle::flightModeSetAvailable()
 {
     return _firmwarePlugin->isCapable(this, FirmwarePlugin::SetFlightModeCapability);
@@ -1673,14 +1683,6 @@ void Vehicle::setFlightMode(const QString& flightMode)
     } else {
         qCWarning(VehicleLog) << "FirmwarePlugin::setFlightMode failed, flightMode:" << flightMode;
     }
-}
-
-void Vehicle::terminateFlight()
-{
-    sendMavCommand(_defaultComponentId,
-                   MAV_CMD_DO_FLIGHTTERMINATION,
-                   false, /*showError,*/
-                   1.0f);
 }
 
 #if 0
