@@ -1607,7 +1607,9 @@ void Vehicle::forceArm(void)
 
 void Vehicle::setTerminated()
 {
+    // TODO [lpavic]: setting _terminated to true and emitting terminatedChanged should be in seperated method
     _terminated = true;
+    emit terminatedChanged();
 
     sendMavCommand(_defaultComponentId,
                    MAV_CMD_DO_FLIGHTTERMINATION,

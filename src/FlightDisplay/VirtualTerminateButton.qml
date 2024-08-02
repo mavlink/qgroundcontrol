@@ -9,7 +9,7 @@ Item {
     id: virtualTerminateButton
 
     property var   _activeVehicle:            QGroundControl.multiVehicleManager.activeVehicle
-    property bool  isTerminated: _activeVehicle.terminated()
+    property bool  isTerminated:              _activeVehicle ? _activeVehicle.terminated() : false
 
     signal terminateRequest
 
@@ -36,5 +36,12 @@ Item {
             }
         }
 
+    }
+
+    Connections {
+        target: _activeVehicle
+        onTerminatedChanged: {
+            isTerminated = _activeVehicle.terminated();
+        }
     }
 }

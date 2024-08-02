@@ -376,7 +376,9 @@ Item {
     }
 
     function terminateRequest() {
-        confirmAction(actionTerminate)
+        if (_activeVehicle && !_activeVehicle.terminated()) {
+            confirmAction(actionTerminate)
+        }
     }
 
     function closeAll() {
