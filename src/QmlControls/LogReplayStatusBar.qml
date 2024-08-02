@@ -8,11 +8,11 @@ import QGroundControl.Palette
 import QGroundControl.ScreenTools
 
 Rectangle {
-    height:             visible ? (rowLayout.height + (_margins * 2)) : 0
-    color:              qgcPal.window
+    height: visible ? (rowLayout.height + (_margins * 2)) : 0
+    color: qgcPal.window
 
-    property real   _margins:       ScreenTools.defaultFontPixelHeight / 4
-    property var    _logReplayLink: null
+    property real _margins: ScreenTools.defaultFontPixelHeight / 4
+    property var _logReplayLink: null
 
     function pickLogFile() {
         if (globals.activeVehicle) {
@@ -26,10 +26,10 @@ Rectangle {
     QGCPalette { id: qgcPal }
 
     QGCFileDialog {
-        id:                 filePicker
-        title:              qsTr("Select Telemetery Log")
-        nameFilters:        [ qsTr("Telemetry Logs (*.%1)").arg(_logFileExtension), qsTr("All Files (*)") ]
-        folder:             QGroundControl.settingsManager.appSettings.telemetrySavePath
+        id: filePicker
+        title: qsTr("Select Telemetery Log")
+        nameFilters: [ qsTr("Telemetry Logs (*.%1)").arg(_logFileExtension), qsTr("All Files (*)") ]
+        folder: QGroundControl.settingsManager.appSettings.telemetrySavePath
         onAcceptedForLoad: (file) => {
             controller.link = QGroundControl.linkManager.startLogReplay(file)
             close()
@@ -41,25 +41,27 @@ Rectangle {
     LogReplayLinkController {
         id: controller
 
-        onPercentCompleteChanged: slider.updatePercentComplete(percentComplete)
+        onPercentCompleteChanged: (percentComplete) => slider.updatePercentComplete(percentComplete)
     }
 
     RowLayout {
-        id:                 rowLayout
-        anchors.margins:    _margins
-        anchors.top:        parent.top
-        anchors.left:       parent.left
-        anchors.right:      parent.right
+        id: rowLayout
+        anchors {
+            margins: _margins
+            top: parent.top
+            left: parent.left
+            right: parent.right
+        }
 
         QGCButton {
-            text:       controller.isPlaying ? qsTr("Pause") : qsTr("Play")
-            enabled:    controller.link
-            onClicked:  controller.isPlaying = !controller.isPlaying
+            enabled: controller.link
+            text: controller.isPlaying ? qsTr("Pause") : qsTr("Play")
+            onClicked: controller.isPlaying = !controller.isPlaying
         }
 
         QGCComboBox {
-            textRole:       "text"
-            currentIndex:   3
+            textRole: "text"
+            currentIndex: 3
 
             model: ListModel {
                 ListElement { text: "0.1";  value: 0.1 }
@@ -77,11 +79,11 @@ Rectangle {
         QGCLabel { text: controller.playheadTime }
 
         Slider {
-            id:                 slider
-            Layout.fillWidth:   true
-            from:               0
-            to:                 100
-            enabled:            controller.link
+            id: slider
+            Layout.fillWidth: true
+            from: 0
+            to: 100
+            enabled: controller.link
 
             property bool manualUpdate: false
 
@@ -101,13 +103,13 @@ Rectangle {
         QGCLabel { text: controller.totalTime }
 
         QGCButton {
-            text:       qsTr("Load Telemetry Log")
-            onClicked:  pickLogFile()
-            visible:    !controller.link
+            text: qsTr("Load Telemetry Log")
+            onClicked: pickLogFile()
+            visible: !controller.link
         }
 
         QGCButton {
-            text:       qsTr("Close")
+            text: qsTr("Close")
             onClicked: {
                 var activeVehicle = QGroundControl.multiVehicleManager.activeVehicle
                 if (activeVehicle) {
