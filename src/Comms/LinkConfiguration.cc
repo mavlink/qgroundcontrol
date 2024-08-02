@@ -82,7 +82,7 @@ LinkConfiguration *LinkConfiguration::createSettings(int type, const QString &na
         break;
 #endif
     case TypeLogReplay:
-        config = new LogReplayLinkConfiguration(name);
+        config = new LogReplayConfiguration(name);
         break;
 #ifdef QT_DEBUG
     case TypeMock:
@@ -124,7 +124,7 @@ LinkConfiguration *LinkConfiguration::duplicateSettings(const LinkConfiguration 
         break;
 #endif
     case TypeLogReplay:
-        dupe = new LogReplayLinkConfiguration(qobject_cast<const LogReplayLinkConfiguration*>(source));
+        dupe = new LogReplayConfiguration(qobject_cast<const LogReplayConfiguration*>(source));
         break;
 #ifdef QT_DEBUG
     case TypeMock:
