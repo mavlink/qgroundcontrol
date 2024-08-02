@@ -9,7 +9,7 @@
 
 #include "LinkManager.h"
 #include "DeviceInfo.h"
-#include "LogReplayLink.h"
+#include "LogReplayLinkController.h"
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
@@ -346,7 +346,7 @@ void LinkManager::loadLinkConfigurationList()
                 break;
 #endif
             case LinkConfiguration::TypeLogReplay:
-                link = new LogReplayLinkConfiguration(name);
+                link = new LogReplayConfiguration(name);
                 break;
 #ifdef QT_DEBUG
             case LinkConfiguration::TypeMock:
@@ -726,7 +726,7 @@ void LinkManager::freeMavlinkChannel(uint8_t channel)
 
 LogReplayLink *LinkManager::startLogReplay(const QString &logFile)
 {
-    LogReplayLinkConfiguration* const linkConfig = new LogReplayLinkConfiguration(tr("Log Replay"));
+    LogReplayConfiguration* const linkConfig = new LogReplayConfiguration(tr("Log Replay"));
     linkConfig->setLogFilename(logFile);
     linkConfig->setName(linkConfig->logFilenameShort());
 
