@@ -45,6 +45,12 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          android: 'false'
+        continue-on-error: true
+
       - name: Get all tags for correct version determination
         working-directory:  ${{ github.workspace }}
         run: |
