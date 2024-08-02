@@ -12,6 +12,8 @@ qt_add_library(Comms STATIC
     LinkManager.h
     LogReplayLink.cc
     LogReplayLink.h
+    LogReplayLinkController.cc
+    LogReplayLinkController.h
     MAVLinkProtocol.cc
     MAVLinkProtocol.h
     TCPLink.cc
