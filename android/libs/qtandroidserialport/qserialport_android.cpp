@@ -228,6 +228,8 @@ qint64 QSerialPortPrivate::writeData(const char *data, qint64 maxSize)
         return -1;
     }
 
+    // writeBuffer.append(data, maxSize);
+
     const qint64 result = _writeToPort(data, maxSize);
     if (result < 0) {
         setError(QSerialPortErrorInfo(QSerialPort::WriteError, QSerialPort::tr("Failed to write data")));

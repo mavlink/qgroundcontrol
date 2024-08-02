@@ -945,7 +945,7 @@ void LinkManager::_updateSerialPorts()
     for (const QGCSerialPortInfo &info: portList) {
         const QString port = info.systemLocation().trimmed();
         _commPortList += port;
-        _commPortDisplayList += SerialConfiguration::cleanPortDisplayname(port);
+        _commPortDisplayList += SerialConfiguration::cleanPortDisplayName(port);
     }
 }
 
