@@ -144,6 +144,8 @@ public class QGCUsbSerialManager {
                     break;
             }
 
+            updateCurrentDrivers();
+
             try {
                 nativeUpdateAvailableJoysticks();
             } catch (final Exception ex) {
@@ -409,7 +411,7 @@ public class QGCUsbSerialManager {
      * @return An array of device information strings or null if no devices are available.
      */
     public static String[] availableDevicesInfo() {
-        updateCurrentDrivers();
+        // updateCurrentDrivers();
 
         if (usbManager.getDeviceList().size() < 1) {
             return null;
