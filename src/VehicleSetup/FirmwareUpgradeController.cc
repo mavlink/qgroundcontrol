@@ -97,6 +97,7 @@ static QMap<int, QString> px4_board_name_map {
     {1048, "holybro_kakuteh7_default"},
     {1053, "holybro_kakuteh7v2_default"},
     {1054, "holybro_kakuteh7mini_default"},
+    {1123, "siyi_n7_default"},
 };
 
 uint qHash(const FirmwareUpgradeController::FirmwareIdentifier& firmwareId)
