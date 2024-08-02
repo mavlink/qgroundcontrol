@@ -4,6 +4,7 @@
 #pragma once
 
 #include <QLoggingCategory>
+#include <cstdint>
 #include "Vehicle.h"
 #include "QmlObjectListModel.h"
 
@@ -27,6 +28,7 @@ public:
     Q_PROPERTY(Fact* bodyYaw                    READ bodyYaw                    CONSTANT)
     Q_PROPERTY(Fact* absoluteYaw                READ absoluteYaw                CONSTANT)
     Q_PROPERTY(Fact* deviceId                   READ deviceId                   CONSTANT)
+    Q_PROPERTY(Fact* managerCompid              READ managerCompid              CONSTANT)
     Q_PROPERTY(bool  yawLock                    READ yawLock                    NOTIFY yawLockChanged)
     Q_PROPERTY(bool  retracted                  READ retracted                  NOTIFY retractedChanged)
     Q_PROPERTY(bool  gimbalHaveControl          READ gimbalHaveControl          NOTIFY gimbalHaveControlChanged)
@@ -37,6 +39,7 @@ public:
     Fact* bodyYaw()                       { return &_bodyYawFact;       }
     Fact* absoluteYaw()                   { return &_absoluteYawFact;   }
     Fact* deviceId()                      { return &_deviceIdFact;      }
+    Fact* managerCompid()                 { return &_managerCompidFact; }
     bool  yawLock() const                 { return _yawLock;            }
     bool  retracted() const               { return _retracted;          }
     bool  gimbalHaveControl() const       { return _haveControl;        }
@@ -47,8 +50,9 @@ public:
     void  setBodyYaw(float bodyYaw)             { _bodyYawFact.setRawValue(bodyYaw);                               }
     void  setAbsoluteYaw(float absoluteYaw)     { _absoluteYawFact.setRawValue(absoluteYaw);                       }
     void  setDeviceId(uint id)                  { _deviceIdFact.setRawValue(id);                                   }
+    void  setManagerCompid(uint id)             { _managerCompidFact.setRawValue(id);                              }
     void  setYawLock(bool yawLock)              { _yawLock = yawLock;       emit yawLockChanged();                 }
-    void  setRetracted(bool retracted)          { _retracted = retracted;   emit retractedChanged();                 }
+    void  setRetracted(bool retracted)          { _retracted = retracted;   emit retractedChanged();               }
     void  setGimbalHaveControl(bool set)        { _haveControl = set;       emit gimbalHaveControlChanged();       }
     void  setGimbalOthersHaveControl(bool set)  { _othersHaveControl = set; emit gimbalOthersHaveControlChanged(); }
 
@@ -78,6 +82,7 @@ private:
     Fact _bodyYawFact;
     Fact _absoluteYawFact;
     Fact _deviceIdFact; // Component ID of gimbal device (or 1-6 for non-MAVLink gimbal)
+    Fact _managerCompidFact;
     bool _yawLock = false;
     bool _retracted = false;
     bool _haveControl = false;
@@ -89,6 +94,7 @@ private:
     static const char* _bodyYawFactName;
     static const char* _absoluteYawFactName;
     static const char* _deviceIdFactName;
+    static const char* _managerCompidFactName;
 };
 
 class GimbalController : public QObject
@@ -98,10 +104,41 @@ public:
     GimbalController(MAVLinkProtocol* mavlink, Vehicle* vehicle);
     ~GimbalController();
 
-    class GimbalManager {
+    class PotentialGimbalManager {
     public:
         unsigned requestGimbalManagerInformationRetries = 6;
         bool receivedInformation = false;
+    };
+
+    class GimbalPairId {
+    public:
+        uint8_t managerCompid {0};
+        uint8_t deviceId {0};
+
+        GimbalPairId() = default;
+        GimbalPairId(uint8_t _managerCompid, uint8_t _deviceId) :
+            managerCompid(_managerCompid),
+            deviceId(_deviceId) {}
+
+        // In order to use this as a key, we need to implement <,
+        bool operator<(const GimbalPairId& other) const {
+            // We compare managerCompid primarily, if they are equal, we compare the deviceId
+            if (managerCompid < other.managerCompid) {
+                return true;
+            } else if (managerCompid > other.managerCompid) {
+                return false;
+            } else {
+                if (deviceId < other.deviceId) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        }
+
+        bool operator==(const GimbalPairId& other) const {
+            return (managerCompid == other.managerCompid) && (deviceId == other.deviceId);
+        }
     };
 
     Q_PROPERTY(Gimbal*              activeGimbal    READ activeGimbal   WRITE setActiveGimbal   NOTIFY activeGimbalChanged)
@@ -141,17 +178,18 @@ private:
     void    _handleGimbalManagerInformation     (const mavlink_message_t& message);
     void    _handleGimbalManagerStatus          (const mavlink_message_t& message);
     void    _handleGimbalDeviceAttitudeStatus   (const mavlink_message_t& message);
-    void    _checkComplete                      (Gimbal& gimbal, uint8_t compid);
+    void    _checkComplete                      (Gimbal& gimbal, GimbalPairId pairId);
     bool    _tryGetGimbalControl                ();
     bool    _yawInVehicleFrame                  (uint32_t flags);
-    
+
     MAVLinkProtocol*    _mavlink            = nullptr;
     Vehicle*            _vehicle            = nullptr;
     Gimbal*             _activeGimbal       = nullptr;
 
-    QMap<uint8_t, GimbalManager> _potentialGimbalManagers;
-    QMap<uint8_t, Gimbal> _potentialGimbals;
+    QMap<uint8_t, PotentialGimbalManager> _potentialGimbalManagers; // key is compid
+
+    QMap<GimbalPairId, Gimbal> _potentialGimbals;
     QmlObjectListModel _gimbals;
-    
+
     static const char* _gimbalFactGroupNamePrefix;
 };
