@@ -34,9 +34,10 @@ jobs:
         shell: cmd
 
     env:
+      ARTIFACT: QGroundControl-installer.exe
       QT_VERSION: 6.6.3
       GST_VERSION: 1.22.11
-      ARTIFACT: QGroundControl-installer.exe
+      SCCACHE_GHA_ENABLED: "true"
 
     steps:
       - name: Checkout repo
@@ -48,7 +49,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          choco install --no-progress sccache ninja -y
+          choco install --no-progress ninja sccache -y
           choco install --no-progress cmake --installargs 'ADD_CMAKE_TO_PATH=System' --apply-install-arguments-to-dependencies
 
       - name: Install Vulkan
@@ -68,7 +69,6 @@ jobs:
       - name: Set Up Cache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
-          create-symlink: true
           key: ${{ runner.os }}-${{ matrix.BuildType }}
           restore-keys: ${{ runner.os }}-${{ matrix.BuildType }}
           max-size: 1G
