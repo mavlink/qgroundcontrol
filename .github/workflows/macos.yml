@@ -23,20 +23,20 @@ on:
 
 jobs:
   build:
-    runs-on: macos-12
+    runs-on: macos-13
 
     strategy:
       matrix:
         BuildType: [Debug, Release]
 
-    defaults:
-      run:
-        shell: bash
-
     env:
       ARTIFACT: QGroundControl.dmg
       QT_VERSION: 6.6.3
-      GST_VERSION: 1.22.11
+      GST_VERSION: 1.22.12
+
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - name: Checkout repo
@@ -46,24 +46,25 @@ jobs:
           fetch-tags: true
           fetch-depth: 0
 
+      - uses: seanmiddleditch/gha-setup-ninja@v5
+
       - name: Install Dependencies
         run: |
           brew update
-          brew install ninja cmake SDL2 ccache
+          brew install cmake ninja ccache geographiclib SDL2
 
       - name: Install Gstreamer
         run: |
-            wget --quiet https://gstreamer.freedesktop.org/data/pkg/osx/${{ env.GST_VERSION }}/gstreamer-1.0-devel-${{ env.GST_VERSION }}-universal.pkg
-            wget --quiet https://gstreamer.freedesktop.org/data/pkg/osx/${{ env.GST_VERSION }}/gstreamer-1.0-${{ env.GST_VERSION }}-universal.pkg
-            for package in *.pkg ;
-              do sudo installer -verbose -pkg "$package" -target /
-            done
-            echo "PKG_CONFIG_PATH=/Library/Frameworks/GStreamer.framework/lib/pkgconfig:${{ env.PKG_CONFIG_PATH }}" >> "$GITHUB_ENV"
+          wget --quiet https://gstreamer.freedesktop.org/data/pkg/osx/${{ env.GST_VERSION }}/gstreamer-1.0-devel-${{ env.GST_VERSION }}-universal.pkg
+          wget --quiet https://gstreamer.freedesktop.org/data/pkg/osx/${{ env.GST_VERSION }}/gstreamer-1.0-${{ env.GST_VERSION }}-universal.pkg
+          for package in *.pkg ;
+            do sudo installer -verbose -pkg "$package" -target /
+          done
+          echo "PKG_CONFIG_PATH=/Library/Frameworks/GStreamer.framework/lib/pkgconfig:${{ env.PKG_CONFIG_PATH }}" >> "$GITHUB_ENV"
 
       - name: Set Up Cache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
-          create-symlink: true
           key: ${{ runner.os }}-${{ matrix.BuildType }}
           restore-keys: ${{ runner.os }}-${{ matrix.BuildType }}
           max-size: 1G
@@ -79,11 +80,9 @@ jobs:
           target: desktop
           dir: ${{ runner.temp }}
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
-          setup-python: true
-          cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
+          cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
-      - name: Create build directory
-        run:  mkdir ${{ runner.temp }}/shadow_build_dir
+      - run: mkdir ${{ runner.temp }}/shadow_build_dir
 
       - name: Configure
         working-directory: ${{ runner.temp }}/shadow_build_dir
@@ -101,8 +100,8 @@ jobs:
         run: cmake --install . --config ${{ matrix.BuildType }}
 
       - name: Upload Build File
-        uses: ./.github/actions/upload
         if: matrix.BuildType == 'Release'
+        uses: ./.github/actions/upload
         with:
           artifact_name: ${{ env.ARTIFACT }}
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
