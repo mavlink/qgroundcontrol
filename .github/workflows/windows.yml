@@ -28,6 +28,7 @@ jobs:
     strategy:
       matrix:
         BuildType: [Debug, Release]
+        Arch: [x64] # Arm64
 
     defaults:
       run:
@@ -36,7 +37,7 @@ jobs:
     env:
       ARTIFACT: QGroundControl-installer.exe
       QT_VERSION: 6.6.3
-      GST_VERSION: 1.22.11
+      GST_VERSION: 1.22.12
       SCCACHE_GHA_ENABLED: "true"
 
     steps:
@@ -46,6 +47,8 @@ jobs:
           submodules: recursive
           fetch-tags: true
           fetch-depth: 0
+
+      - uses: seanmiddleditch/gha-setup-ninja@v5
 
       - name: Install Dependencies
         run: |
@@ -60,23 +63,29 @@ jobs:
           .\vulkan-sdk.exe --root C:\VulkanSDK\latest --accept-licenses --default-answer --confirm-command install com.lunarg.vulkan.glm com.lunarg.vulkan.volk com.lunarg.vulkan.vma com.lunarg.vulkan.debug
           echo "VULKAN_SDK=C:\VulkanSDK\latest" >> $env:GITHUB_ENV
 
-      - name: Install Gstreamer
+      - name: Install GStreamer
         uses: blinemedical/setup-gstreamer@v1
         with:
           version: ${{ env.GST_VERSION }}
-        # run: choco install --no-progress gstreamer gstreamer-devel --version=1.22.8
+
+      # - name: Install Gstreamer
+      #   run: choco install --no-progress gstreamer gstreamer-devel --version=${{ env.GST_VERSION }}
+
+      # - name: Set Up sccache
+      #   uses: mozilla-actions/sccache-action@v0.0.5
 
       - name: Set Up Cache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
-          key: ${{ runner.os }}-${{ matrix.BuildType }}
-          restore-keys: ${{ runner.os }}-${{ matrix.BuildType }}
+          key: ${{ runner.os }}-${{ matrix.Arch }}-${{ matrix.BuildType }}
+          restore-keys: ${{ runner.os }}-${{ matrix.Arch }}-${{ matrix.BuildType }}
           max-size: 1G
           append-timestamp: false
           variant: sccache
           save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
-      - name: Install Qt
+      - name: Install Qt for Windows (x64)
+        if: matrix.Arch == 'x64'
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
@@ -86,16 +95,28 @@ jobs:
           arch: win64_msvc2019_64
           dir: ${{ runner.temp }}
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
-          setup-python: true
-          cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
+          cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+
+      - name: Install Qt for Windows (Arm64)
+        if: matrix.Arch == 'Arm64'
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          aqtversion: ==3.1.*
+          host: windows
+          target: desktop
+          arch: win64_msvc2019_64
+          dir: ${{ runner.temp }}
+          extra: --autodesktop
+          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
+          cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
       - name: Set up Visual Studio shell
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64
 
-      - name: Create build directory
-        run: mkdir ${{ runner.temp }}\shadow_build_dir
+      - run: mkdir ${{ runner.temp }}\shadow_build_dir
 
       - name: Configure
         working-directory: ${{ runner.temp }}\shadow_build_dir
@@ -112,8 +133,8 @@ jobs:
         run: cmake --install . --config ${{ matrix.BuildType }}
 
       - name: Upload Build File
-        uses: ./.github/actions/upload
         if: matrix.BuildType == 'Release'
+        uses: ./.github/actions/upload
         with:
           artifact_name: ${{ env.ARTIFACT }}
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
