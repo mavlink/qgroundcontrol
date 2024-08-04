@@ -1,0 +1,123 @@
+name: Android Qt
+description: Install Qt for Android
+inputs:
+  host:
+    description: Host
+    required: true
+  version:
+    description: Qt Version
+    required: false
+    default: 6.6.3
+  abis:
+    description: ABIs to Build
+    required: false
+    default: 'armeabi-v7a;arm64-v8a'
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Java Environment
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: 17
+
+    - name: Setup Android Environment
+      uses: android-actions/setup-android@v3
+      with:
+        cmdline-tools-version: 11076708
+        packages: 'platform-tools platforms;android-34 build-tools;34.0.0' # ndk;25.1.8937393'
+        log-accepted-android-sdk-licenses: false
+
+    - name: Update Android SDK / NDK / Tools
+      run: sdkmanager --update
+      shell: bash
+
+    - name: Install Android NDK
+      uses: nttld/setup-ndk@v1
+      id: setup-ndk
+      with:
+        ndk-version: r25b
+        add-to-path: false
+
+    - run: |
+        echo "ANDROID_NDK_ROOT=${{ steps.setup-ndk.outputs.ndk-path }}" >> "$GITHUB_ENV"
+        echo "ANDROID_NDK_HOME=${{ steps.setup-ndk.outputs.ndk-path }}" >> "$GITHUB_ENV"
+        echo "ANDROID_NDK=${{ steps.setup-ndk.outputs.ndk-path }}" >> "$GITHUB_ENV"
+      shell: bash
+
+    - name: Set Up Cache
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        create-symlink: true
+        key: ${{ runner.os }}-Android-${{ matrix.BuildType }}
+        restore-keys: ${{ runner.os }}-Android-${{ matrix.BuildType }}
+        max-size: 1G
+        append-timestamp: false
+        save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+
+    - name: Install Qt for ${{ runner.os }}
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: ${{ inputs.version }}
+        aqtversion: ==3.1.*
+        host: ${{ inputs.host }}
+        target: desktop
+        dir: ${{ runner.temp }}
+        modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
+        cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+
+    - name: Install Qt for Android (armv7)
+      if: contains( inputs.abis, 'armeabi-v7a')
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: ${{ inputs.version }}
+        aqtversion: ==3.1.*
+        host: ${{ inputs.host }}
+        target: android
+        arch: android_armv7
+        dir: ${{ runner.temp }}
+        extra: --autodesktop
+        modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
+        cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+
+    - name: Install Qt for Android (arm64_v8a)
+      if: contains( inputs.abis, 'arm64-v8a')
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: ${{ inputs.version }}
+        aqtversion: ==3.1.*
+        host: ${{ inputs.host }}
+        target: android
+        arch: android_arm64_v8a
+        dir: ${{ runner.temp }}
+        extra: --autodesktop
+        modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
+        cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+
+    - name: Install Qt for Android (x86)
+      if: contains( inputs.abis, 'x86')
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: ${{ inputs.version }}
+        aqtversion: ==3.1.*
+        host: ${{ inputs.host }}
+        target: android
+        arch: android_x86
+        dir: ${{ runner.temp }}
+        extra: --autodesktop
+        modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
+        cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+
+    - name: Install Qt for Android (x86_64)
+      if: contains( inputs.abis, 'x86_64')
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: ${{ inputs.version }}
+        aqtversion: ==3.1.*
+        host: ${{ inputs.host }}
+        target: android
+        arch: android_x86_64
+        dir: ${{ runner.temp }}
+        extra: --autodesktop
+        modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
+        cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}

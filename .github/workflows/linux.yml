@@ -32,6 +32,7 @@ jobs:
     env:
       ARTIFACT: QGroundControl-x86_64.AppImage
       QT_VERSION: 6.6.3
+      # GST_VERSION: 1.22.12
 
     defaults:
       run:
@@ -55,6 +56,8 @@ jobs:
           sudo ./tools/setup/install-dependencies-debian.sh
           python3 -m pip install --user ninja cmake
 
+      - uses: lukka/get-cmake@latest
+
       - name: Install Vulkan
         run: |
           wget -qO - http://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo apt-key add -
@@ -71,14 +74,12 @@ jobs:
 
       - name: Install CCache
         run: |
-          wget --quiet https://github.com/ccache/ccache/releases/download/v4.9.1/ccache-4.9.1-linux-x86_64.tar.xz
+          wget --quiet https://github.com/ccache/ccache/releases/download/v4.10.2/ccache-4.10.2-linux-x86_64.tar.xz
           tar -xvf ccache-*-linux-x86_64.tar.xz
           cd ccache-*-linux-x86_64
           sudo make install
 
-      - name: Install Unit-Test Dependencies
-        if: matrix.BuildType == 'Debug'
-        run: sudo apt install xvfb x11-xserver-utils
+      - uses: seanmiddleditch/gha-setup-ninja@v5
 
       - name: Set Up Cache
         uses: hendrikmuhs/ccache-action@v1.2
@@ -90,7 +91,7 @@ jobs:
           append-timestamp: false
           save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
-      - name: Install Qt
+      - name: Install Qt for Linux
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
@@ -99,17 +100,16 @@ jobs:
           target: desktop
           dir: ${{ runner.temp }}
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
-          setup-python: true
-          cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
+          cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
-      - name: Installation Cleanup
-        run: sudo apt clean
+      # - name: Build GStreamer
+      #   uses: ./.github/actions/gstreamer
 
-    # - name: Build GStreamer
-    #   uses: ./.github/actions/gstreamer
+      - run: mkdir ${{ runner.temp }}/shadow_build_dir
 
-      - name: Create build directory
-        run:  mkdir ${{ runner.temp }}/shadow_build_dir
+      # - name: Run CMake
+      #   uses: lukka/run-cmake@v10
+      #   with:
 
       - name: Configure
         working-directory: ${{ runner.temp }}/shadow_build_dir
@@ -128,12 +128,14 @@ jobs:
 
       - name: Run unit tests
         if: matrix.BuildType == 'Debug'
-        working-directory:  ${{ runner.temp }}/shadow_build_dir
-        run: xvfb-run -a ./${{ env.ARTIFACT }} --unittest
+        uses: coactions/setup-xvfb@v1
+        with:
+          run: ./${{ env.ARTIFACT }} --unittest
+          working-directory: ${{ runner.temp }}/shadow_build_dir
 
       - name: Upload Build File
-        uses: ./.github/actions/upload
         if: matrix.BuildType == 'Release'
+        uses: ./.github/actions/upload
         with:
           artifact_name: ${{ env.ARTIFACT }}
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}

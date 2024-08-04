@@ -86,6 +86,7 @@ DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
     libdrm-dev \
     libegl1-mesa-dev \
     libgbm-dev \
+    libgeographic-dev \
     libgl1-mesa-dev \
     libgles2-mesa-dev \
     libglfw3-dev \
