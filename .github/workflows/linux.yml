@@ -38,21 +38,16 @@ jobs:
         shell: bash
 
     steps:
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        continue-on-error: true
+
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
           submodules: recursive
           fetch-tags: true
           fetch-depth: 0
-
-      # Temporary solution
-      - name: Remove unused dependencies
-        run: |
-          rm -rf libs/Frameworks
-          rm -rf libs/libevents
-          rm -rf libs/mavlink
-          rm -rf libs/OpenSSL
-          rm -rf libs/sdl2
 
       - name: Install Dependencies
         run: |
