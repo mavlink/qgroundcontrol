@@ -138,8 +138,9 @@ To see a complete list of all available components in the installer _Select Comp
    - **Ubuntu:** Desktop Qt {{ $frontmatter.qt_version }} GCC 64bit
    - **Windows:** Desktop Qt {{ $frontmatter.qt_version }} MSVC2019 **64bit**
    - **Android:** Android for armeabi-v7a (GCC 4.9, Qt {{ $frontmatter.qt_version }})
-     - JDK11 is required.
+     - JDK17 is required for the latest updated versions. NDK Version: 25.1.8937393
        You can confirm it is being used by reviewing the project setting: **Projects > Manage Kits > Devices > Android (tab) > Android Settings > _JDK location_**.
+	Note: Visit here for more detailed configurations ![android.yml](.github/workflows/android.yml)
 
 1. Build using the "hammer" (or "play") icons:
 
