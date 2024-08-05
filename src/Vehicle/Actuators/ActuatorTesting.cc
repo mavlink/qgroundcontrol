@@ -31,7 +31,11 @@ ActuatorTest::~ActuatorTest()
 void ActuatorTest::updateFunctions(const QList<Actuator*> &actuators)
 {
     _actuators->clearAndDeleteContents();
-    _allMotorsActuator->deleteLater();
+
+    if (_allMotorsActuator) {
+      _allMotorsActuator->deleteLater();
+    }
+
     _allMotorsActuator = nullptr;
 
     Actuator* motorActuator{nullptr};
