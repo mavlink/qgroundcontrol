@@ -159,7 +159,7 @@ private:
     bool                                _connectionsSuspended;                      ///< true: all new connections should not be allowed
     QString                             _connectionsSuspendedReason;                ///< User visible reason for suspension
     QTimer                              _portListTimer;
-    uint32_t                            _mavlinkChannelsUsedBitMask;
+    uint32_t                            m_mavlinkChannelsUsedBitMask;
 
     AutoConnectSettings*                _autoConnectSettings;
     MAVLinkProtocol*                    _mavlinkProtocol;

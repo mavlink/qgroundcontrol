@@ -1,6 +1,6 @@
 #include "MAVLinkSigning.h"
 #include "QGCMAVLink.h"
-#include <DeviceInfo.h>
+#include "QGCDeviceInfo.h"
 
 #include <QtCore/QDateTime>
 
@@ -49,7 +49,7 @@ bool _defaultAcceptUnsignedCallback(const mavlink_status_t *status, uint32_t mes
 
     static const QSet<uint32_t> unsigned_messages({MAVLINK_MSG_ID_RADIO_STATUS});
 
-    return (unsigned_messages.contains(message_id) || QGCDeviceInfo::isNetworkWired());
+    return (unsigned_messages.contains(message_id) || QGCDeviceInfo::isNetworkEthernet());
 }
 
 void _setSigningAcceptUnsignedCallback(mavlink_signing_t *signing, mavlink_accept_unsigned_t callback)

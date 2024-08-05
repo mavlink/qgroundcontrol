@@ -42,39 +42,43 @@ Rectangle {
                 id:             sendStatusText
                 text:           qsTr("Send status text + voice")
             }
+            QGCCheckBox {
+                id:             isSecureConnection
+                text:           qsTr("Simulate secure connection")
+            }
             QGCButton {
                 text:               qsTr("PX4 Vehicle")
                 Layout.fillWidth:   true
-                onClicked:          QGroundControl.startPX4MockLink(sendStatusText.checked)
+                onClicked:          QGroundControl.startMockLink(QGroundControl.MockLinkTypePX4, sendStatusText.checked, isSecureConnection.checked)
             }
             QGCButton {
                 text:               qsTr("APM ArduCopter Vehicle")
                 visible:            QGroundControl.hasAPMSupport
                 Layout.fillWidth:   true
-                onClicked:          QGroundControl.startAPMArduCopterMockLink(sendStatusText.checked)
+                onClicked:          QGroundControl.startMockLink(QGroundControl.MockLinkTypeArduCopter, sendStatusText.checked, isSecureConnection.checked)
             }
             QGCButton {
                 text:               qsTr("APM ArduPlane Vehicle")
                 visible:            QGroundControl.hasAPMSupport
                 Layout.fillWidth:   true
-                onClicked:          QGroundControl.startAPMArduPlaneMockLink(sendStatusText.checked)
+                onClicked:          QGroundControl.startMockLink(QGroundControl.MockLinkTypeArduPlane, sendStatusText.checked, isSecureConnection.checked)
             }
             QGCButton {
                 text:               qsTr("APM ArduSub Vehicle")
                 visible:            QGroundControl.hasAPMSupport
                 Layout.fillWidth:   true
-                onClicked:          QGroundControl.startAPMArduSubMockLink(sendStatusText.checked)
+                onClicked:          QGroundControl.startMockLink(QGroundControl.MockLinkTypeArduSub, sendStatusText.checked, isSecureConnection.checked)
             }
             QGCButton {
                 text:               qsTr("APM ArduRover Vehicle")
                 visible:            QGroundControl.hasAPMSupport
                 Layout.fillWidth:   true
-                onClicked:          QGroundControl.startAPMArduRoverMockLink(sendStatusText.checked)
+                onClicked:          QGroundControl.startMockLink(QGroundControl.MockLinkTypeArduRover, sendStatusText.checked, isSecureConnection.checked)
             }
             QGCButton {
                 text:               qsTr("Generic Vehicle")
                 Layout.fillWidth:   true
-                onClicked:          QGroundControl.startGenericMockLink(sendStatusText.checked)
+                onClicked:          QGroundControl.startMockLink(QGroundControl.MockLinkTypeGeneric, sendStatusText.checked, isSecureConnection.checked)
             }
             QGCButton {
                 text:               qsTr("Stop One MockLink")

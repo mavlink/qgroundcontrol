@@ -67,7 +67,7 @@ LogReplayLink::LogReplayLink(SharedLinkConfigurationPtr& config)
     : LinkInterface              (config)
     , _logReplayConfig           (qobject_cast<LogReplayLinkConfiguration*>(config.get()))
     , _connected                 (false)
-    , _mavlinkChannel            (0)
+    , m_mavlinkChannel            (0)
     , _logCurrentTimeUSecs       (0)
     , _logStartTimeUSecs         (0)
     , _logEndTimeUSecs           (0)
@@ -184,7 +184,7 @@ quint64 LogReplayLink::_readNextMavlinkMessage(QByteArray& bytes)
 
     while (_logFile.getChar(&nextByte)) { // Loop over every byte
         mavlink_message_t message;
-        bool messageFound = mavlink_parse_char(_mavlinkChannel, nextByte, &message, &status);
+        bool messageFound = mavlink_parse_char(m_mavlinkChannel, nextByte, &message, &status);
 
         if (status.parse_state == MAVLINK_PARSE_STATE_GOT_STX) {
             // This is the possible beginning of a mavlink message, clear any partial bytes
@@ -211,10 +211,10 @@ quint64 LogReplayLink::_seekToNextMavlinkMessage(mavlink_message_t* nextMsg)
     mavlink_status_t    status;
     qint64              messageStartPos = -1;
 
-    mavlink_reset_channel_status(_mavlinkChannel);
+    mavlink_reset_channel_status(m_mavlinkChannel);
 
     while (_logFile.getChar(&nextByte)) {
-        bool messageFound = mavlink_parse_char(_mavlinkChannel, nextByte, nextMsg, &status);
+        bool messageFound = mavlink_parse_char(m_mavlinkChannel, nextByte, nextMsg, &status);
 
         if (status.parse_state == MAVLINK_PARSE_STATE_GOT_STX) {
             // This is the possible beginning of a mavlink message
@@ -244,14 +244,14 @@ quint64 LogReplayLink::_findLastTimestamp(void)
     // end of the file can be way slower due to all the seeking back and forth required. So instead we take the simple reliable approach.
 
     _logFile.reset();
-    mavlink_reset_channel_status(_mavlinkChannel);
+    mavlink_reset_channel_status(m_mavlinkChannel);
 
     while (_logFile.bytesAvailable() > cbTimestamp) {
         lastTimestamp = _parseTimestamp(_logFile.read(cbTimestamp));
 
         bool endOfMessage = false;
         while (!endOfMessage && _logFile.getChar(&nextByte)) {
-            endOfMessage = mavlink_parse_char(_mavlinkChannel, nextByte, &msg, &status);
+            endOfMessage = mavlink_parse_char(m_mavlinkChannel, nextByte, &msg, &status);
         }
     }
 

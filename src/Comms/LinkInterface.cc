@@ -52,13 +52,13 @@ bool LinkInterface::mavlinkChannelIsSet() const
 
 bool LinkInterface::initMavlinkSigning(void)
 {
-    if (!LinkManager::isLinkUSBDirect(this) && !isLogReplay()) {
+    if (!isSecureConnection()) {
         auto appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
         QByteArray signingKeyBytes = appSettings->mavlink2SigningKey()->rawValue().toByteArray();
-        if (MAVLinkSigning::initSigning(static_cast<mavlink_channel_t>(_mavlinkChannel), signingKeyBytes, nullptr)) {
-            qCDebug(LinkInterfaceLog) << "Signing initialized on channel" << _mavlinkChannel;
+        if (MAVLinkSigning::initSigning(static_cast<mavlink_channel_t>(m_mavlinkChannel), signingKeyBytes, nullptr)) {
+            qCDebug(LinkInterfaceLog) << "Signing initialized on channel" << m_mavlinkChannel;
         } else {
-            qWarning() << Q_FUNC_INFO << "Failed To Init Signing on channel" << _mavlinkChannel;
+            qWarning() << Q_FUNC_INFO << "Failed To Init Signing on channel" << m_mavlinkChannel;
             // FIXME: What should we do here?
             return false;
         }
@@ -83,8 +83,7 @@ bool LinkInterface::_allocateMavlinkChannel()
         return false;
     }
 
-    qCDebug(LinkInterfaceLog) << Q_FUNC_INFO << m_mavlinkChannel;
-    qCDebug(LinkInterfaceLog) << "_allocateMavlinkChannel" << _mavlinkChannel;
+    qCDebug(LinkInterfaceLog) << "_allocateMavlinkChannel" << m_mavlinkChannel;
 
     initMavlinkSigning();
 

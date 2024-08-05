@@ -3,8 +3,8 @@ add_subdirectory(Compression)
 find_package(Qt6 REQUIRED COMPONENTS Bluetooth Core Gui Network Positioning Sensors Qml Xml)
 
 qt_add_library(Utilities STATIC
-    DeviceInfo.cc
-    DeviceInfo.h
+    QGCDeviceInfo.cc
+    QGCDeviceInfo.h
     JsonHelper.cc
     JsonHelper.h
     KMLDomDocument.cc

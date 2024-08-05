@@ -15,7 +15,7 @@
 #include "LogReplayLink.h"
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
-#include "DeviceInfo.h"
+#include "QGCDeviceInfo.h"
 #include "QGCLoggingCategory.h"
 
 #ifdef QGC_ENABLE_BLUETOOTH
@@ -60,7 +60,7 @@ LinkManager::LinkManager(QGCApplication* app, QGCToolbox* toolbox)
     , _configUpdateSuspended(false)
     , _configurationsLoaded(false)
     , _connectionsSuspended(false)
-    , _mavlinkChannelsUsedBitMask(1)    // We never use channel 0 to avoid sequence numbering problems
+    , m_mavlinkChannelsUsedBitMask(1)    // We never use channel 0 to avoid sequence numbering problems
     , _autoConnectSettings(nullptr)
     , _mavlinkProtocol(nullptr)
     #ifndef NO_SERIAL_LINK
@@ -806,12 +806,12 @@ uint8_t LinkManager::allocateMavlinkChannel(void)
 {
     // Find a mavlink channel to use for this link
     for (uint8_t mavlinkChannel = 0; mavlinkChannel < MAVLINK_COMM_NUM_BUFFERS; mavlinkChannel++) {
-        if (!(_mavlinkChannelsUsedBitMask & 1 << mavlinkChannel)) {
+        if (!(m_mavlinkChannelsUsedBitMask & 1 << mavlinkChannel)) {
             mavlink_reset_channel_status(mavlinkChannel);
             // Start the channel on Mav 1 protocol
             mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(mavlinkChannel);
             mavlinkStatus->flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
-            _mavlinkChannelsUsedBitMask |= 1 << mavlinkChannel;
+            m_mavlinkChannelsUsedBitMask |= 1 << mavlinkChannel;
             qCDebug(LinkManagerLog) << "allocateMavlinkChannel" << mavlinkChannel;
             return mavlinkChannel;
         }
@@ -826,7 +826,7 @@ void LinkManager::freeMavlinkChannel(uint8_t channel)
     if (invalidMavlinkChannel() == channel) {
         return;
     }
-    _mavlinkChannelsUsedBitMask &= ~(1 << channel);
+    m_mavlinkChannelsUsedBitMask &= ~(1 << channel);
 }
 
 LogReplayLink* LinkManager::startLogReplay(const QString& logFile)

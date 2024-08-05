@@ -124,7 +124,7 @@ void MavlinkLogTest::_bootLogDetectionZeroLength_test(void)
 
 void MavlinkLogTest::_connectLogWorker(bool arm)
 {
-    _connectMockLink();
+    _connectMockLink(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR);
 
     QDir logSaveDir;
     

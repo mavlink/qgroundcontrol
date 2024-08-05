@@ -70,7 +70,7 @@ void PlanMasterControllerTest::_testActiveVehicleChanged(void) {
     spyMissionManager.clearSignal("error");
     QVERIFY(spyMissionManager.checkNoSignals());
 
-    _connectMockLink(MAV_AUTOPILOT_PX4);
+    _connectMockLink(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR);
     auto masterControllerMgrVehicleChanged = spyMasterController.signalNameToMask("managerVehicleChanged");
     QVERIFY(spyMasterController.checkSignalByMask(masterControllerMgrVehicleChanged));
 

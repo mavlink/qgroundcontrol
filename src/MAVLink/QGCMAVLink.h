@@ -70,6 +70,7 @@ public:
 
     static QString                  mavResultToString           (MAV_RESULT result);
     static QString                  mavSysStatusSensorToString  (MAV_SYS_STATUS_SENSOR sysStatusSensor);
+    static QString                  mavAutopilotToString        (MAV_AUTOPILOT mavAutopilot) { return firmwareClassToString(firmwareClass(mavAutopilot)); }
     static QString                  mavTypeToString             (MAV_TYPE mavType);
     static QString                  firmwareVersionTypeToString (FIRMWARE_VERSION_TYPE firmwareVersionType);
     static int                      motorCount                  (MAV_TYPE mavType, uint8_t frameType = 0);

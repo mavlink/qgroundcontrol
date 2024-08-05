@@ -48,7 +48,7 @@
 #include "VehicleObjectAvoidance.h"
 #include "VideoManager.h"
 #include "VideoSettings.h"
-#include <DeviceInfo.h>
+#include "QGCDeviceInfo.h"
 #include <StatusTextHandler.h>
 #include <MAVLinkSigning.h>
 
