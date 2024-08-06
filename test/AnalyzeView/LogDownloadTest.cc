@@ -23,7 +23,7 @@ LogDownloadTest::LogDownloadTest(void)
 void LogDownloadTest::downloadTest(void)
 {
 
-    _connectMockLink(MAV_AUTOPILOT_PX4);
+    _connectMockLink(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR);
 
     LogDownloadController* controller = new LogDownloadController();
 

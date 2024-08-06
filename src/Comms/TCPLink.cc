@@ -8,6 +8,7 @@
  ****************************************************************************/
 
 #include "TCPLink.h"
+#include "QGCDeviceInfo.h"
 
 #include <QtCore/QList>
 #include <QtNetwork/QTcpSocket>
@@ -145,6 +146,11 @@ void TCPLink::_socketError(QAbstractSocket::SocketError socketError)
 bool TCPLink::isConnected() const
 {
     return _socketIsConnected;
+}
+
+bool TCPLink::isSecureConnection()
+{
+    return QGCDeviceInfo::isNetworkEthernet();
 }
 
 //--------------------------------------------------------------------------

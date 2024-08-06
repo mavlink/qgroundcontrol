@@ -63,7 +63,6 @@ public:
     DEFINE_SETTINGFACT(forwardMavlinkAPMSupportHostName)
     DEFINE_SETTINGFACT(loginAirLink)
     DEFINE_SETTINGFACT(passAirLink)
-    DEFINE_SETTINGFACT(mavlink2Signing)
     DEFINE_SETTINGFACT(mavlink2SigningKey)
 
     // Although this is a global setting it only affects ArduPilot vehicle since PX4 automatically starts the stream from the vehicle side
@@ -132,6 +131,7 @@ private slots:
     void _indoorPaletteChanged();
     void _checkSavePathDirectories();
     void _qLocaleLanguageChanged();
+    void _mavlink2SigningKeyChanged();
 
 private:
     static QLocale::Language _qLocaleLanguageEarlyAccess(void);

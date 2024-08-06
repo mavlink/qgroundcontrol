@@ -50,7 +50,7 @@
 #include "TerrainTile.h"
 #include "MapProvider.h"
 #include "QGCMapUrlEngine.h"
-#include "DeviceInfo.h"
+#include "QGCDeviceInfo.h"
 
 #include <QtLocation/private/qgeotilespec_p.h>
 #include <QtNetwork/QNetworkAccessManager>

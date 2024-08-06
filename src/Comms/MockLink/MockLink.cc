@@ -1458,6 +1458,7 @@ void MockConfiguration::copyFrom(LinkConfiguration *source)
     _sendStatusText     = usource->_sendStatusText;
     _incrementVehicleId = usource->_incrementVehicleId;
     _failureMode        = usource->_failureMode;
+    _isSecureConnection = usource->_isSecureConnection;
 }
 
 void MockConfiguration::saveSettings(QSettings& settings, const QString& root)
@@ -1468,6 +1469,7 @@ void MockConfiguration::saveSettings(QSettings& settings, const QString& root)
     settings.setValue(_sendStatusTextKey,       _sendStatusText);
     settings.setValue(_incrementVehicleIdKey,   _incrementVehicleId);
     settings.setValue(_failureModeKey,          (int)_failureMode);
+    settings.setValue(_isSecureConnectionKey,   _isSecureConnection);
     settings.sync();
     settings.endGroup();
 }
@@ -1480,6 +1482,7 @@ void MockConfiguration::loadSettings(QSettings& settings, const QString& root)
     _sendStatusText     = settings.value(_sendStatusTextKey, false).toBool();
     _incrementVehicleId = settings.value(_incrementVehicleIdKey, true).toBool();
     _failureMode        = (FailureMode_t)settings.value(_failureModeKey, (int)FailNone).toInt();
+    _isSecureConnection = settings.value(_isSecureConnectionKey, false).toBool();
     settings.endGroup();
 }
 
@@ -1497,51 +1500,17 @@ MockLink* MockLink::_startMockLink(MockConfiguration* mockConfig)
     }
 }
 
-MockLink* MockLink::_startMockLinkWorker(QString configName, MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, bool sendStatusText, MockConfiguration::FailureMode_t failureMode)
+MockLink*  MockLink::startMockLink(MAV_AUTOPILOT mavAutopilot, MAV_TYPE mavType, bool sendStatusText, bool isSecureConnection, MockConfiguration::FailureMode_t failureMode)
 {
-    MockConfiguration* mockConfig = new MockConfiguration(configName);
+    MockConfiguration* mockConfig = new MockConfiguration(QStringLiteral("%1 %2 MockLink").arg(QGCMAVLink::mavAutopilotToString(mavAutopilot)).arg(QGCMAVLink::mavTypeToString(mavType)));
 
-    mockConfig->setFirmwareType(firmwareType);
-    mockConfig->setVehicleType(vehicleType);
+    mockConfig->setFirmwareType(mavAutopilot);
+    mockConfig->setVehicleType(mavType);
     mockConfig->setSendStatusText(sendStatusText);
     mockConfig->setFailureMode(failureMode);
+    mockConfig->setIsSecureConnection(isSecureConnection);
 
     return _startMockLink(mockConfig);
-}
-
-MockLink*  MockLink::startPX4MockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode)
-{
-    return _startMockLinkWorker("PX4 MultiRotor MockLink", MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, sendStatusText, failureMode);
-}
-
-MockLink*  MockLink::startGenericMockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode)
-{
-    return _startMockLinkWorker("Generic MockLink", MAV_AUTOPILOT_GENERIC, MAV_TYPE_QUADROTOR, sendStatusText, failureMode);
-}
-
-MockLink* MockLink::startNoInitialConnectMockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode)
-{
-    return _startMockLinkWorker("No Initial Connect MockLink", MAV_AUTOPILOT_PX4, MAV_TYPE_GENERIC, sendStatusText, failureMode);
-}
-
-MockLink*  MockLink::startAPMArduCopterMockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode)
-{
-    return _startMockLinkWorker("ArduCopter MockLink",MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_QUADROTOR, sendStatusText, failureMode);
-}
-
-MockLink*  MockLink::startAPMArduPlaneMockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode)
-{
-    return _startMockLinkWorker("ArduPlane MockLink", MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_FIXED_WING, sendStatusText, failureMode);
-}
-
-MockLink*  MockLink::startAPMArduSubMockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode)
-{
-    return _startMockLinkWorker("ArduSub MockLink", MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_SUBMARINE, sendStatusText, failureMode);
-}
-
-MockLink*  MockLink::startAPMArduRoverMockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode)
-{
-    return _startMockLinkWorker("ArduRover MockLink", MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_GROUND_ROVER, sendStatusText, failureMode);
 }
 
 void MockLink::_sendRCChannels(void)

@@ -38,14 +38,16 @@ public:
     Q_PROPERTY(int      vehicle             READ vehicle            WRITE setVehicle            NOTIFY vehicleChanged)
     Q_PROPERTY(bool     sendStatus          READ sendStatusText     WRITE setSendStatusText     NOTIFY sendStatusChanged)
     Q_PROPERTY(bool     incrementVehicleId  READ incrementVehicleId WRITE setIncrementVehicleId NOTIFY incrementVehicleIdChanged)
+    Q_PROPERTY(bool     isSecureConnection  READ isSecureConnection WRITE setIsSecureConnection NOTIFY isSecureConnectionChanged)
 
     int     firmware                (void)                      { return (int)_firmwareType; }
     void    setFirmware             (int type)                  { _firmwareType = (MAV_AUTOPILOT)type; emit firmwareChanged(); }
     int     vehicle                 (void)                      { return (int)_vehicleType; }
-    bool    incrementVehicleId      (void) const                     { return _incrementVehicleId; }
+    bool    incrementVehicleId      (void) const                { return _incrementVehicleId; }
+    bool    isSecureConnection      (void) const                { return _isSecureConnection; }
     void    setVehicle              (int type)                  { _vehicleType = (MAV_TYPE)type; emit vehicleChanged(); }
     void    setIncrementVehicleId   (bool incrementVehicleId)   { _incrementVehicleId = incrementVehicleId; emit incrementVehicleIdChanged(); }
-
+    void    setIsSecureConnection   (bool isSecureConnection)   { _isSecureConnection = isSecureConnection; emit isSecureConnectionChanged(); }
 
     MAV_AUTOPILOT   firmwareType        (void)                          { return _firmwareType; }
     uint16_t        boardVendorId       (void)                          { return _boardVendorId; }
@@ -84,6 +86,7 @@ signals:
     void vehicleChanged             (void);
     void sendStatusChanged          (void);
     void incrementVehicleIdChanged  (void);
+    void isSecureConnectionChanged  (void);
 
 private:
     MAV_AUTOPILOT   _firmwareType       = MAV_AUTOPILOT_PX4;
@@ -93,12 +96,14 @@ private:
     bool            _incrementVehicleId = true;
     uint16_t        _boardVendorId      = 0;
     uint16_t        _boardProductId     = 0;
+    bool            _isSecureConnection = false;
 
     static constexpr const char* _firmwareTypeKey         = "FirmwareType";
     static constexpr const char* _vehicleTypeKey          = "VehicleType";
     static constexpr const char* _sendStatusTextKey       = "SendStatusText";
     static constexpr const char* _incrementVehicleIdKey   = "IncrementVehicleId";
     static constexpr const char* _failureModeKey          = "FailureMode";
+    static constexpr const char* _isSecureConnectionKey   = "IsSecureConnection";
 };
 
 class MockLink : public LinkInterface
@@ -114,6 +119,7 @@ public:
     void            setFirmwareType     (MAV_AUTOPILOT autopilot)                       { _firmwareType = autopilot; }
     void            setSendStatusText   (bool sendStatusText)                           { _sendStatusText = sendStatusText; }
     void            setFailureMode      (MockConfiguration::FailureMode_t failureMode)  { _failureMode = failureMode; }
+    void            setIsSecureConnection(bool isSecureConnection)                      { _isSecureConnection = isSecureConnection; }
 
     /// APM stack has strange handling of the first item of the mission list. If it has no
     /// onboard mission items, sometimes it sends back a home position in position 0 and
@@ -154,15 +160,10 @@ public:
     /// Returns the filename for the simulated log file. Only available after a download is requested.
     QString logDownloadFile(void) { return _logDownloadFilename; }
 
-    Q_INVOKABLE void setCommLost                    (bool commLost)   { _commLost = commLost; }
-    Q_INVOKABLE void simulateConnectionRemoved      (void);
-    static MockLink* startPX4MockLink               (bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
-    static MockLink* startGenericMockLink           (bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
-    static MockLink* startNoInitialConnectMockLink  (bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
-    static MockLink* startAPMArduCopterMockLink     (bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
-    static MockLink* startAPMArduPlaneMockLink      (bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
-    static MockLink* startAPMArduSubMockLink        (bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
-    static MockLink* startAPMArduRoverMockLink      (bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
+    Q_INVOKABLE void setCommLost(bool commLost) { _commLost = commLost; }
+    Q_INVOKABLE void simulateConnectionRemoved(void);
+
+    static MockLink* startMockLink(MAV_AUTOPILOT mavAutopilot, MAV_TYPE mavType, bool sendStatusText, bool isSecureConnection, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
 
     // Special commands for testing Vehicle::sendMavCommandWithHandler
     static constexpr MAV_CMD MAV_CMD_MOCKLINK_ALWAYS_RESULT_ACCEPTED            = MAV_CMD_USER_1;
@@ -185,6 +186,9 @@ public:
         FailRequestMessageCommandNoResponse,
     } RequestMessageFailureMode_t;
     void setRequestMessageFailureMode(RequestMessageFailureMode_t failureMode) { _requestMessageFailureMode = failureMode; }
+
+    // LinkInterface overrides
+    bool isSecureConnection (void) override { return _isSecureConnection; };
 
 signals:
     void writeBytesQueuedSignal                 (const QByteArray bytes);
@@ -251,7 +255,6 @@ private:
     void _moveADSBVehicle               (void);
     void _sendGeneralMetaData           (void);
 
-    static MockLink* _startMockLinkWorker(QString configName, MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, bool sendStatusText, MockConfiguration::FailureMode_t failureMode);
     static MockLink* _startMockLink(MockConfiguration* mockConfig);
 
     /// Creates a file with random contents of the specified size.
@@ -260,6 +263,7 @@ private:
 
     uint8_t                     _mavlinkAuxChannel              = std::numeric_limits<uint8_t>::max();
     QMutex                      _mavlinkAuxMutex;
+    bool                        _isSecureConnection             = false;    // true: simulate secure connection (e.g. USB, wired ethernet)
 
     MockLinkMissionItemHandler  _missionItemHandler;
 

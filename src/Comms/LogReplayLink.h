@@ -118,7 +118,7 @@ private:
     LogReplayLinkConfiguration* _logReplayConfig;
 
     bool    _connected;
-    uint8_t _mavlinkChannel;
+    uint8_t m_mavlinkChannel;
     QTimer  _readTickTimer;      ///< Timer which signals a read of next log record
 
     QString _errorTitle; ///< Title for communicatorError signals

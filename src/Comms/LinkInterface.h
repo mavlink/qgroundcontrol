@@ -34,6 +34,7 @@ public:
 
     virtual bool isConnected() const = 0;
     virtual bool isLogReplay() { return false; }
+    virtual bool isSecureConnection() { return false; } ///< Returns true if the connection is secure (e.g. USB, wired ethernet)
 
     SharedLinkConfigurationPtr linkConfiguration() { return m_config; }
     uint8_t mavlinkChannel() const;
@@ -44,6 +45,7 @@ public:
     void writeBytesThreadSafe(const char *bytes, int length);
     void addVehicleReference() { ++m_vehicleReferenceCount; }
     void removeVehicleReference();
+    bool initMavlinkSigning();
 
 signals:
     void bytesReceived(LinkInterface *link, const QByteArray &data);

@@ -109,8 +109,8 @@ protected slots:
     virtual void cleanup(void);
 
 protected:
-    void _connectMockLink(MAV_AUTOPILOT autopilot = MAV_AUTOPILOT_PX4, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
-    void _connectMockLinkNoInitialConnectSequence(void) { _connectMockLink(MAV_AUTOPILOT_INVALID); }
+    void _connectMockLink(MAV_AUTOPILOT mavAutopilot, MAV_TYPE mavType, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
+    void _connectMockLinkNoInitialConnectSequence(void) { _connectMockLink(MAV_AUTOPILOT_PX4, MAV_TYPE_GENERIC); }
     void _disconnectMockLink(void);
     void _missionItemsEqual(MissionItem& actual, MissionItem& expected);
 

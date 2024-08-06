@@ -779,7 +779,7 @@ SOURCES += \
     src/PositionManager/SimulatedPosition.cc \
     src/Geo/QGCGeo.cc \
     src/Utilities/QGC.cc \
-    src/Utilities/DeviceInfo.cc \
+    src/Utilities/QGCDeviceInfo.cc \
     src/QGCApplication.cc \
     src/Utilities/QGCCachedFileDownload.cc \
     src/Utilities/QGCFileDownload.cc \

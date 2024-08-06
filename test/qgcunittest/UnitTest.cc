@@ -371,36 +371,21 @@ QString UnitTest::_getSaveFileName(
     return _fileDialogResponseSingle(getSaveFileName);
 }
 
-void UnitTest::_connectMockLink(MAV_AUTOPILOT autopilot, MockConfiguration::FailureMode_t failureMode)
+void UnitTest::_connectMockLink(MAV_AUTOPILOT mavAutopilot, MAV_TYPE mavType, MockConfiguration::FailureMode_t failureMode)
 {
     Q_ASSERT(!_mockLink);
 
     QSignalSpy spyVehicle(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged);
 
-    switch (autopilot) {
-    case MAV_AUTOPILOT_PX4:
-        _mockLink = MockLink::startPX4MockLink(false, failureMode);
-        break;
-    case MAV_AUTOPILOT_ARDUPILOTMEGA:
-        _mockLink = MockLink::startAPMArduCopterMockLink(false, failureMode);
-        break;
-    case MAV_AUTOPILOT_GENERIC:
-        _mockLink = MockLink::startGenericMockLink(false, failureMode);
-        break;
-    case MAV_AUTOPILOT_INVALID:
-        _mockLink = MockLink::startNoInitialConnectMockLink(false);
-        break;
-    default:
-        qWarning() << "Type not supported";
-        break;
-    }
+    _mockLink = MockLink::startMockLink(mavAutopilot, mavType, false /* sendStatusText */, false /* isSecureConnection */, failureMode);
+    QVERIFY(_mockLink);
 
     // Wait for the Vehicle to get created
     QCOMPARE(spyVehicle.wait(10000), true);
     _vehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
     QVERIFY(_vehicle);
 
-    if (autopilot != MAV_AUTOPILOT_INVALID) {
+    if (mavType != MAV_TYPE_GENERIC) {
         // Wait for initial connect sequence to complete
         QSignalSpy spyPlan(_vehicle, &Vehicle::initialConnectComplete);
         QCOMPARE(spyPlan.wait(30000), true);

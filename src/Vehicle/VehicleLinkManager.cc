@@ -245,17 +245,11 @@ SharedLinkInterfacePtr VehicleLinkManager::_bestActivePrimaryLink(void)
     // Best choice is a USB connection
     for (const LinkInfo_t& linkInfo: _rgLinkInfo) {
         if (!linkInfo.commLost) {
-            SharedLinkInterfacePtr  link        = linkInfo.link;
-            SerialLink*             serialLink  = qobject_cast<SerialLink*>(link.get());
-            if (serialLink) {
-                SharedLinkConfigurationPtr config = serialLink->linkConfiguration();
-                if (config) {
-                    SerialConfiguration* serialConfig = qobject_cast<SerialConfiguration*>(config.get());
-                    if (serialConfig && serialConfig->usbDirect()) {
-                        return link;
-                    }
-                }
-            }
+            SharedLinkInterfacePtr link = linkInfo.link;
+            auto linkInterface = link.get();
+            if (linkInterface && LinkManager::isLinkUSBDirect(linkInterface)) {
+                return link;
+            } 
         }
     }
 #endif

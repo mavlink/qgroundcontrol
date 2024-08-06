@@ -21,7 +21,8 @@
 void ParameterManagerTest::_noFailureWorker(MockConfiguration::FailureMode_t failureMode)
 {
     Q_ASSERT(!_mockLink);
-    _mockLink = MockLink::startPX4MockLink(false, failureMode);
+    _mockLink = MockLink::startMockLink(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, false /* sendStatusText */, false /* isSecureConnection */, failureMode);
+    QVERIFY(_mockLink);
 
     MultiVehicleManager* vehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
     QVERIFY(vehicleMgr);
@@ -75,7 +76,8 @@ void ParameterManagerTest::_requestListNoResponse(void)
     setExpectedMessageBox(QMessageBox::Ok);
 
     Q_ASSERT(!_mockLink);
-    _mockLink = MockLink::startPX4MockLink(false, MockConfiguration::FailParamNoReponseToRequestList);
+    _mockLink = MockLink::startMockLink(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, false /* sendStatusText */, false /* isSecureConnection */, MockConfiguration::FailParamNoReponseToRequestList);
+    QVERIFY(_mockLink);
 
     MultiVehicleManager* vehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
     QVERIFY(vehicleMgr);
@@ -110,7 +112,8 @@ void ParameterManagerTest::_requestListMissingParamFail(void)
     setExpectedMessageBox(QMessageBox::Ok);
 
     Q_ASSERT(!_mockLink);
-    _mockLink = MockLink::startPX4MockLink(false, MockConfiguration::FailMissingParamOnAllRequests);
+    _mockLink = MockLink::startMockLink(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, false /* sendStatusText */, false /* isSecureConnection */, MockConfiguration::FailMissingParamOnAllRequests);
+    QVERIFY(_mockLink);
 
     MultiVehicleManager* vehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
     QVERIFY(vehicleMgr);
@@ -146,7 +149,8 @@ void ParameterManagerTest::_requestListMissingParamFail(void)
 void ParameterManagerTest::_FTPnoFailure()
 {
     Q_ASSERT(!_mockLink);
-    _mockLink = MockLink::startAPMArduPlaneMockLink(false, MockConfiguration::FailParamNoReponseToRequestList);
+    _mockLink = MockLink::startMockLink(MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_FIXED_WING, false /* sendStatusText */, false /* isSecureConnection */, MockConfiguration::FailParamNoReponseToRequestList);
+    QVERIFY(_mockLink);
     _mockLink->mockLinkFTP()->enableBinParamFile(true);
     MultiVehicleManager* vehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
     QVERIFY(vehicleMgr);
@@ -187,7 +191,8 @@ void ParameterManagerTest::_FTPnoFailure()
 void ParameterManagerTest::_FTPChangeParam()
 {
     Q_ASSERT(!_mockLink);
-    _mockLink = MockLink::startAPMArduPlaneMockLink(false, MockConfiguration::FailParamNoReponseToRequestList);
+    _mockLink = MockLink::startMockLink(MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_FIXED_WING, false /* sendStatusText */, false /* isSecureConnection */, MockConfiguration::FailParamNoReponseToRequestList);
+    QVERIFY(_mockLink);
     _mockLink->mockLinkFTP()->enableBinParamFile(true);
     MultiVehicleManager* vehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
     QVERIFY(vehicleMgr);

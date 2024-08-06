@@ -1,4 +1,4 @@
-#include "DeviceInfo.h"
+#include "QGCDeviceInfo.h"
 #include <QGCLoggingCategory.h>
 
 #include <QtCore/qapplicationstatic.h>
@@ -33,7 +33,7 @@ bool isInternetAvailable()
     return (reachability == QNetworkInformation::Reachability::Online);
 }
 
-bool isNetworkWired()
+bool isNetworkEthernet()
 {
     if(QNetworkInformation::availableBackends().isEmpty()) return false;
 

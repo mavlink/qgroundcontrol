@@ -29,7 +29,7 @@ void MissionControllerManagerTest::cleanup(void)
 
 void MissionControllerManagerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareType)
 {
-    _connectMockLink(firmwareType);
+    _connectMockLink(firmwareType, MAV_TYPE_QUADROTOR);
     
     // Wait for the Mission Manager to finish it's initial load
     
