@@ -18,9 +18,9 @@ import QGroundControl.Palette
 
 Rectangle {
     id:         _root
-    width:      ScreenTools.defaultFontPixelWidth * 35
-    height:     mainLayout.height + (_margins * 2)
-    radius:     ScreenTools.defaultFontPixelWidth / 2
+    width:      ScreenTools.defaultFontPixelWidth * 35 * 4
+    height:     mainLayout.height + (_margins * 2) * 2
+    radius:     ScreenTools.defaultFontPixelWidth * 10
     color:      qgcPal.window
     visible:    _utmspEnabled === true ? utmspSliderTrigger: false
 
@@ -98,7 +98,7 @@ Rectangle {
             Layout.fillWidth:       true
             horizontalAlignment:    Text.AlignHCenter
             wrapMode:               Text.WordWrap
-            font.pointSize:         ScreenTools.defaultFontPointSize
+            font.pointSize:         ScreenTools.defaultFontPointSize * 3
             font.bold:              true
         }
 
@@ -115,7 +115,7 @@ Rectangle {
 
             SliderSwitch {
                 id:                 slider
-                confirmText:        ScreenTools.isMobile ? qsTr("Slide to confirm") : qsTr("Slide or hold spacebar")
+                confirmText:        qsTr("Slide to confirm")
                 Layout.fillWidth:   true
                 enabled: _utmspEnabled === true? utmspSliderTrigger : true
                 opacity: if(_utmspEnabled){utmspSliderTrigger === true ? 1 : 0.5} else{1}

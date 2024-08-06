@@ -5,11 +5,11 @@ import QGroundControl.ScreenTools
 import QGroundControl.Palette
 
 /// The SliderSwitch control implements a sliding switch control similar to the power off
-/// control on an iPhone. It supports holding the space bar to slide the switch.
+/// control on an iPhone.
 Rectangle {
     id:             _root
-    implicitWidth:  label.contentWidth + (_diameter * 2.5) + (_border * 4)
-    implicitHeight: label.height * 2.5
+    implicitWidth:  label.contentWidth + (_diameter * 2.5) + (_border * 4)     
+    implicitHeight: label.height * 2.5 * 2
     radius:         height /2
     color:          qgcPal.windowShade
 
@@ -22,24 +22,6 @@ Rectangle {
     property real _diameter:                    height - (_border * 2)
     property real _dragStartX:                  _border
     property real _dragStopX:                   _root.width - (_diameter + _border)
-
-    Keys.onSpacePressed: (event) => {
-        if (visible && event.modifiers === Qt.NoModifier && !sliderDragArea.drag.active) {
-            event.accepted = true
-            sliderAnimation.start()
-        }
-    }
-
-    Keys.onReleased: (event) => {
-        if (visible && event.key === Qt.Key_Space) {
-            event.accepted = true
-            resetSpaceBarSliding()
-        }
-    }
-
-    function resetSpaceBarSliding() {
-        slider.reset()
-    }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
