@@ -2519,7 +2519,7 @@
       <decimal>2</decimal>
       <increment>0.1</increment>
     </parameter>
-    <parameter name="FW_T_SPD_STD" default="0.2" type="FLOAT">
+    <parameter name="FW_T_SPD_STD" default="0.07" type="FLOAT">
       <short_desc>Airspeed measurement standard deviation</short_desc>
       <long_desc>For the airspeed filter in TECS.</long_desc>
       <min>0.01</min>
@@ -3687,6 +3687,14 @@
       <unit>m</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
+    </parameter>
+    <parameter name="NAV_MIN_GND_DIST" default="-1." type="FLOAT">
+      <short_desc>Minimum height above ground during Mission and RTL</short_desc>
+      <long_desc>Minimum height above ground the vehicle is allowed to descend to during Mission and RTL, excluding landing commands. Requires a distance sensor to be set up. Note: only prevents the vehicle from descending further, but does not force it to climb. Set to a negative value to disable.</long_desc>
+      <min>-1</min>
+      <unit>m</unit>
+      <decimal>1</decimal>
+      <increment>1</increment>
     </parameter>
     <parameter name="NAV_MIN_LTR_ALT" default="-1." type="FLOAT">
       <short_desc>Minimum Loiter altitude</short_desc>
