@@ -407,10 +407,6 @@ qt_generate_deploy_qml_app_script(
 )
 install(SCRIPT ${deploy_script})
 
-install(
-    DIRECTORY ${CMAKE_SOURCE_DIR}/resources/
-    DESTINATION ${CMAKE_INSTALL_DATADIR}/qgroundcontrol
-)
 if(LINUX)
     configure_file(
         ${CMAKE_SOURCE_DIR}/deploy/linux/org.mavlink.qgroundcontrol.desktop.in
