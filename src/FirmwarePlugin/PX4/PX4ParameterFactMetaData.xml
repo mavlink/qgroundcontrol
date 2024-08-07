@@ -11963,7 +11963,7 @@
       <increment>1</increment>
     </parameter>
   </group>
-  <group name="FlightTaskOrbit">
+  <group name="Flight Task Orbit">
     <parameter name="MC_ORBIT_RAD_MAX" default="1000.0" type="FLOAT">
       <short_desc>Maximum radius of orbit</short_desc>
       <min>1.0</min>
@@ -11971,6 +11971,16 @@
       <unit>m</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
+    </parameter>
+    <parameter name="MC_ORBIT_YAW_MOD" default="0" type="INT32">
+      <short_desc>Yaw behaviour during orbit flight</short_desc>
+      <values>
+        <value code="0">Front to Circle Center</value>
+        <value code="1">Hold Initial Heading</value>
+        <value code="2">Uncontrolled</value>
+        <value code="3">Hold Front Tangent to Circle</value>
+        <value code="4">RC Controlled</value>
+      </values>
     </parameter>
   </group>
   <group name="Follow target">
