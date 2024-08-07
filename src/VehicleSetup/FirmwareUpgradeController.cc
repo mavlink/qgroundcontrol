@@ -88,6 +88,7 @@ static QMap<int, QString> px4_board_name_map {
     {1054, "holybro_kakuteh7mini_default"},
     {1110, "jfb_jfb110_default"},
     {1123, "siyi_n7_default"},    
+    {1124, "3dr_ctrl-zero-h7-oem-revg_default"},
 };
 
 uint qHash(const FirmwareUpgradeController::FirmwareIdentifier& firmwareId)
