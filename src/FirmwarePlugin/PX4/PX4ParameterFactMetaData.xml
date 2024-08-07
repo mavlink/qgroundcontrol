@@ -18387,29 +18387,30 @@
       <increment>0.001</increment>
     </parameter>
   </group>
-  <group name="Rover Differential Drive">
-    <parameter name="RDD_ANG_SCALE" default="1" type="FLOAT">
-      <short_desc>Manual angular velocity scale</short_desc>
+  <group name="Rover Differential">
+    <parameter name="RD_HEADING_I" default="0.1" type="FLOAT">
+      <short_desc>Integral gain for heading controller</short_desc>
       <min>0</min>
+      <max>100</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RD_HEADING_P" default="1" type="FLOAT">
+      <short_desc>Proportional gain for heading controller</short_desc>
+      <min>0</min>
+      <max>100</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RD_MAN_YAW_SCALE" default="1" type="FLOAT">
+      <short_desc>Manual yaw rate scale</short_desc>
+      <long_desc>In manual mode the setpoint for the yaw rate received from the rc remote is scaled by this value.</long_desc>
+      <min>0.01</min>
       <max>1</max>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter name="RDD_I_ANG_VEL" default="0" type="FLOAT">
-      <short_desc>Integral gain for angular velocity controller</short_desc>
-      <min>0</min>
-      <max>100</max>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="RDD_I_SPEED" default="0" type="FLOAT">
-      <short_desc>Integral gain for ground speed controller</short_desc>
-      <min>0</min>
-      <max>100</max>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="RDD_MAX_ACCEL" default="0.5" type="FLOAT">
+    <parameter name="RD_MAX_ACCEL" default="0.5" type="FLOAT">
       <short_desc>Maximum acceleration</short_desc>
       <long_desc>Maximum acceleration is used to limit the acceleration of the rover</long_desc>
       <min>0</min>
@@ -18418,7 +18419,7 @@
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter name="RDD_MAX_JERK" default="0.5" type="FLOAT">
+    <parameter name="RD_MAX_JERK" default="0.5" type="FLOAT">
       <short_desc>Maximum jerk</short_desc>
       <long_desc>Limit for forwards acc/deceleration change.</long_desc>
       <min>0</min>
@@ -18427,36 +18428,64 @@
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter name="RDD_P_ANG_VEL" default="1" type="FLOAT">
-      <short_desc>Proportional gain for angular velocity controller</short_desc>
+    <parameter name="RD_MAX_SPEED" default="7" type="FLOAT">
+      <short_desc>Maximum speed the rover can drive</short_desc>
+      <long_desc>This parameter is used to map desired speeds to normalized motor commands.</long_desc>
+      <min>0</min>
+      <max>100</max>
+      <unit>m/s</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RD_MAX_YAW_RATE" default="90" type="FLOAT">
+      <short_desc>Maximum allowed yaw rate for the rover</short_desc>
+      <long_desc>This parameter is used to cap desired yaw rates and map controller inputs to desired yaw rates in acro mode.</long_desc>
+      <min>0.01</min>
+      <max>1000</max>
+      <unit>deg/s</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RD_MISS_SPD_DEF" default="1" type="FLOAT">
+      <short_desc>Default rover speed during a mission</short_desc>
+      <min>0</min>
+      <max>100</max>
+      <unit>m/s</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RD_SPEED_I" default="0" type="FLOAT">
+      <short_desc>Integral gain for ground speed controller</short_desc>
       <min>0</min>
       <max>100</max>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter name="RDD_P_HEADING" default="1" type="FLOAT">
-      <short_desc>Proportional gain for heading controller</short_desc>
-      <min>0</min>
-      <max>100</max>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="RDD_P_SPEED" default="1" type="FLOAT">
+    <parameter name="RD_SPEED_P" default="1" type="FLOAT">
       <short_desc>Proportional gain for speed controller</short_desc>
       <min>0</min>
       <max>100</max>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter name="RDD_SPEED_SCALE" default="1" type="FLOAT">
-      <short_desc>Manual speed scale</short_desc>
-      <min>0</min>
-      <max>1</max>
-      <decimal>2</decimal>
+    <parameter name="RD_TRANS_DRV_TRN" default="0.174533" type="FLOAT">
+      <short_desc>Heading error threshhold to switch from driving to spot turning</short_desc>
+      <min>0.001</min>
+      <max>180</max>
+      <unit>rad</unit>
+      <decimal>3</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter name="RDD_WHEEL_BASE" default="0.5" type="FLOAT">
-      <short_desc>Wheel base</short_desc>
+    <parameter name="RD_TRANS_TRN_DRV" default="0.0872665" type="FLOAT">
+      <short_desc>Heading error threshhold to switch from spot turning to driving</short_desc>
+      <min>0.001</min>
+      <max>180</max>
+      <unit>rad</unit>
+      <decimal>3</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RD_WHEEL_TRACK" default="0.5" type="FLOAT">
+      <short_desc>Wheel track</short_desc>
       <long_desc>Distance from the center of the right wheel to the center of the left wheel</long_desc>
       <min>0.001</min>
       <max>100</max>
@@ -18464,20 +18493,17 @@
       <decimal>3</decimal>
       <increment>0.001</increment>
     </parameter>
-    <parameter name="RDD_WHEEL_RADIUS" default="0.1" type="FLOAT">
-      <short_desc>Wheel radius</short_desc>
-      <long_desc>Size of the wheel, half the diameter of the wheel</long_desc>
-      <min>0.001</min>
-      <max>100</max>
-      <unit>m</unit>
-      <decimal>3</decimal>
-      <increment>0.001</increment>
-    </parameter>
-    <parameter name="RDD_WHEEL_SPEED" default="0.3" type="FLOAT">
-      <short_desc>Maximum wheel speed</short_desc>
+    <parameter name="RD_YAW_RATE_I" default="0" type="FLOAT">
+      <short_desc>Integral gain for angular velocity controller</short_desc>
       <min>0</min>
       <max>100</max>
-      <unit>rad/s</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RD_YAW_RATE_P" default="1" type="FLOAT">
+      <short_desc>Proportional gain for angular velocity controller</short_desc>
+      <min>0</min>
+      <max>100</max>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
