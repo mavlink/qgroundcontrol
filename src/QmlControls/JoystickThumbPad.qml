@@ -111,16 +111,13 @@ Item {
         var isRightJoystick = _joyRoot.x > uiTotalWidth / 2 ? true : false
 
         // Check if new xDelta will make joystick to be beyond screen boundaries or can cause a misclick
-        if ( !limitOffset && isRightJoystick && touchPoints[0].x  <= maxDelta || !limitOffset && !isRightJoystick && touchPoints[0].x >= maxDelta ) {
+        if (!limitOffset && isRightJoystick && touchPoints[0].x  <= maxDelta || !limitOffset && !isRightJoystick && touchPoints[0].x >= maxDelta) {
             xPositionDelta = touchPoints[0].x - _centerXY
-        }
-        else if( limitOffset && !isRightJoystick && touchPoints[0].x >= _centerXY * 0.25 && touchPoints[0].x <= _centerXY * 2 ) { // more offset at the side near to the center
+        } else if (limitOffset && !isRightJoystick && touchPoints[0].x >= _centerXY * 0.25 && touchPoints[0].x <= _centerXY * 2) { // more offset at the side near to the center
             xPositionDelta = touchPoints[0].x - _centerXY
-        }
-        else if( limitOffset && isRightJoystick && touchPoints[0].x >= 0 && touchPoints[0].x <= _centerXY * 1.75 ) {
+        } else if (limitOffset && isRightJoystick && touchPoints[0].x >= 0 && touchPoints[0].x <= _centerXY * 1.75) {
             xPositionDelta = touchPoints[0].x - _centerXY
-        }
-        else {
+        } else {
             return;
         }
 
