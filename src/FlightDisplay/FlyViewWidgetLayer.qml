@@ -138,9 +138,22 @@ Item {
         // Width is difficult to access directly hence this hack which may not work in all circumstances
         property real leftEdgeBottomInset:  visible ? bottomEdgeLeftInset + width/18 - ScreenTools.defaultFontPixelHeight*2 : 0
         property real rightEdgeBottomInset: visible ? bottomEdgeRightInset + width/18 - ScreenTools.defaultFontPixelHeight*2 : 0
+        property real rootWidth:            _root.width
+        property var  itemX:                virtualJoystickMultiTouch.x   // real X on screen
+
+        onRootWidthChanged: virtualJoystickMultiTouch.status == Loader.Ready && visible ? virtualJoystickMultiTouch.item.uiTotalWidth = rootWidth : undefined
+        onItemXChanged:     virtualJoystickMultiTouch.status == Loader.Ready && visible ? virtualJoystickMultiTouch.item.uiRealX = itemX : undefined
 
         //Loader status logic
-        onLoaded:           virtualJoystickMultiTouch.visible ?  virtualJoystickMultiTouch.item.calibration = true : virtualJoystickMultiTouch.item.calibration = false
+        onLoaded: {
+            if (virtualJoystickMultiTouch.visible) {
+                virtualJoystickMultiTouch.item.calibration = true 
+                virtualJoystickMultiTouch.item.uiTotalWidth = rootWidth
+                virtualJoystickMultiTouch.item.uiRealX = itemX
+            } else {
+                virtualJoystickMultiTouch.item.calibration = false
+            }
+        }
     }
 
     FlyViewToolStrip {
