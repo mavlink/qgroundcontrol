@@ -270,28 +270,37 @@
     </airframe>
   </airframe_group>
   <airframe_group name="Rover" image="Rover">
-    <airframe name="Generic Ground Vehicle (Ackermann)" id="50000" maintainer="">
+    <airframe name="Generic Rover Differential" id="50000" maintainer="John Doe &lt;john@example.com&gt;">
+      <class>Rover</class>
+      <type>Rover</type>
+    </airframe>
+    <airframe name="Aion Robotics R1 UGV" id="50001" maintainer="John Doe &lt;john@example.com&gt;">
+      <class>Rover</class>
+      <type>Rover</type>
+      <url>https://www.aionrobotics.com/r1</url>
+    </airframe>
+    <airframe name="Generic Rover Ackermann" id="51000" maintainer="John Doe &lt;john@example.com&gt;">
+      <class>Rover</class>
+      <type>Rover</type>
+    </airframe>
+    <airframe name="Axial SCX10 2 Trail Honcho" id="51001" maintainer="John Doe &lt;john@example.com&gt;">
+      <class>Rover</class>
+      <type>Rover</type>
+      <url>https://www.axialadventure.com/product/1-10-scx10-ii-trail-honcho-4wd-rock-crawler-brushed-rtr/AXID9059.html</url>
+    </airframe>
+    <airframe name="Generic Ground Vehicle (Deprecated)" id="59000" maintainer="">
       <class>Rover</class>
       <maintainer />
       <type>Rover</type>
       <output name="Motor1">throttle</output>
       <output name="Servo1">steering</output>
     </airframe>
-    <airframe name="Aion Robotics R1 UGV" id="50003" maintainer="John Doe &lt;john@example.com&gt;">
-      <class>Rover</class>
-      <type>Rover</type>
-      <url>https://www.aionrobotics.com/r1</url>
-    </airframe>
-    <airframe name="NXP Cup car: DF Robot GPX" id="50004" maintainer="Katrin Moritz">
+    <airframe name="NXP Cup car: DF Robot GPX (Deprecated)" id="59001" maintainer="Katrin Moritz">
       <class>Rover</class>
       <maintainer>Katrin Moritz</maintainer>
       <type>Rover</type>
       <output name="Motor1">Speed of left wheels</output>
       <output name="Servo1">Steering servo</output>
-    </airframe>
-    <airframe name="Generic ackermann rover" id="50010" maintainer="John Doe &lt;john@example.com&gt;">
-      <class>Rover</class>
-      <type>Rover</type>
     </airframe>
   </airframe_group>
   <airframe_group name="Underwater Robot" image="AirframeUnknown">
