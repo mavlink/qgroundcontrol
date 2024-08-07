@@ -1605,6 +1605,18 @@ void Vehicle::forceArm(void)
                    2989);   // force arm
 }
 
+void Vehicle::setTerminated()
+{
+    // TODO [lpavic]: setting _terminated to true and emitting terminatedChanged should be in seperated method
+    _terminated = true;
+    emit terminatedChanged();
+
+    sendMavCommand(_defaultComponentId,
+                   MAV_CMD_DO_FLIGHTTERMINATION,
+                   false, /*showError,*/
+                   1.0f);
+}
+
 bool Vehicle::flightModeSetAvailable()
 {
     return _firmwarePlugin->isCapable(this, FirmwarePlugin::SetFlightModeCapability);

@@ -482,6 +482,9 @@ public:
     QString flightMode                      () const;
     void setFlightMode                      (const QString& flightMode);
 
+    Q_INVOKABLE bool terminated              () const{ return _terminated; }
+    Q_INVOKABLE void setTerminated();
+
     bool airship() const;
 
     /**
@@ -908,6 +911,8 @@ signals:
     void logEntry                       (uint32_t time_utc, uint32_t size, uint16_t id, uint16_t num_logs, uint16_t last_log_num);
     void logData                        (uint32_t ofs, uint16_t id, uint8_t count, const uint8_t* data);
 
+    void terminatedChanged              ();
+
 private slots:
     void _mavlinkMessageReceived            (LinkInterface* link, mavlink_message_t message);
     void _sendMessageMultipleNext           ();
@@ -1303,6 +1308,8 @@ private:
     // We use this to limit above terrain altitude queries based on distance and altitude change
     QGeoCoordinate              _altitudeAboveTerrLastCoord;
     float                       _altitudeAboveTerrLastRelAlt = qQNaN();
+
+    bool _terminated = false;
 
 public:
     int32_t getMessageRate(uint8_t compId, uint16_t msgId);
