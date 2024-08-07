@@ -29,13 +29,20 @@ qt_add_library(AnalyzeView STATIC
     ULogParser.h
 )
 
-# TODO: https://github.com/PX4/ulog_cpp.git
+include(FetchContent)
+FetchContent_Declare(ulogparser
+    GIT_REPOSITORY https://github.com/PX4/ulog_cpp.git
+    GIT_TAG windows
+    GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(ulogparser)
 
 target_link_libraries(AnalyzeView
     PRIVATE
         Qt6::Charts
         Qt6::Gui
         Qt6::Qml
+        ulog_cpp::ulog_cpp
         FactSystem
         QGC
         Settings
