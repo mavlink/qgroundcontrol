@@ -17,7 +17,6 @@ Button {
     rightPadding:   _horizontalPadding
     focusPolicy:    Qt.ClickFocus
     font.family:    ScreenTools.normalFontFamily
-    font.pointSize: ScreenTools.defaultFontPointSize
     text:           ""
 
     property bool   primary:        false                               ///< primary button for a group of buttons
@@ -25,6 +24,8 @@ Button {
     property real   backRadius:     ScreenTools.buttonBorderRadius
     property real   heightFactor:   0.5
     property string iconSource:     ""
+    property real   fontWeight:     Font.Normal // default for qml Text
+    property real   pointSize:      ScreenTools.defaultFontPointSize
 
     property alias wrapMode:            text.wrapMode
     property alias horizontalAlignment: text.horizontalAlignment
@@ -65,8 +66,9 @@ Button {
                 id:                     text
                 Layout.alignment:       Qt.AlignHCenter
                 text:                   control.text
-                font.pointSize:         control.font.pointSize
+                font.pointSize:         control.pointSize
                 font.family:            control.font.family
+                font.weight:            fontWeight
                 color:                  _showHighlight ? qgcPal.buttonHighlightText : (primary ? qgcPal.primaryButtonText : qgcPal.buttonText)
                 visible:                control.text !== "" 
             }

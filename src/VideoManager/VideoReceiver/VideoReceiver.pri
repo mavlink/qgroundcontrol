@@ -136,7 +136,7 @@ VideoEnabled {
         QGC_GST_STREAMING
 
     INCLUDEPATH += \
-        $$PWD
+        $$PWD \
         $$PWD/GStreamer \
         $$PWD/QtMultimedia
 

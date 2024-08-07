@@ -28,6 +28,7 @@
 #include "FirmwareUpgradeSettings.h"
 #include "ADSBVehicleManagerSettings.h"
 #include "BatteryIndicatorSettings.h"
+#include "GimbalControllerSettings.h"
 #include "RemoteIDSettings.h"
 #include "Viewer3DSettings.h"
 #include "CustomMavlinkActionsSettings.h"
@@ -56,6 +57,7 @@ public:
     Q_PROPERTY(QObject* batteryIndicatorSettings        READ batteryIndicatorSettings       CONSTANT)
     Q_PROPERTY(QObject* mapsSettings                    READ mapsSettings                   CONSTANT)
     Q_PROPERTY(QObject* viewer3DSettings                READ viewer3DSettings               CONSTANT)
+    Q_PROPERTY(QObject* gimbalControllerSettings        READ gimbalControllerSettings       CONSTANT)
 #if !defined(NO_ARDUPILOT_DIALECT)
     Q_PROPERTY(QObject* apmMavlinkStreamRateSettings    READ apmMavlinkStreamRateSettings   CONSTANT)
 #endif
@@ -82,6 +84,7 @@ public:
     BatteryIndicatorSettings*       batteryIndicatorSettings    (void) { return _batteryIndicatorSettings; }
     MapsSettings*                   mapsSettings                (void) { return _mapsSettings; }
     Viewer3DSettings*               viewer3DSettings            (void) { return _viewer3DSettings; }
+    GimbalControllerSettings*       gimbalControllerSettings    (void) { return _gimbalControllerSettings; }
 #if !defined(NO_ARDUPILOT_DIALECT)
     APMMavlinkStreamRateSettings*   apmMavlinkStreamRateSettings(void) { return _apmMavlinkStreamRateSettings; }
 #endif
@@ -105,6 +108,7 @@ private:
     BatteryIndicatorSettings*       _batteryIndicatorSettings;
     MapsSettings*                   _mapsSettings;
     Viewer3DSettings*               _viewer3DSettings;
+    GimbalControllerSettings*       _gimbalControllerSettings;
 #if !defined(NO_ARDUPILOT_DIALECT)
     APMMavlinkStreamRateSettings*   _apmMavlinkStreamRateSettings;
 #endif

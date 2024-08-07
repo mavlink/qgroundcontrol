@@ -56,6 +56,68 @@ MapQuickItem {
             blurMax: 32
             blurMultiplier: .1
         }
+            
+        Repeater {
+            model: vehicle ? vehicle.gimbalController.gimbals : [] 
+            
+            Item {
+                id:                           canvasItem
+                anchors.centerIn:             vehicleItem
+                width:                        vehicleItem.width * 2
+                height:                       vehicleItem.height * 2
+                property var gimbalYaw:       object.absoluteYaw.rawValue
+                rotation:                     gimbalYaw + 180
+                onGimbalYawChanged:           canvas.requestPaint()
+                visible:                      vehicle && !isNaN(gimbalYaw) && QGroundControl.settingsManager.gimbalControllerSettings.showAzimuthIndicatorOnMap.rawValue
+                opacity:                      object === vehicle.gimbalController.activeGimbal ? 1.0 : 0.4
+
+                Canvas {
+                    id:                           canvas
+                    anchors.centerIn:             canvasItem
+                    anchors.verticalCenterOffset: vehicleItem.width
+                    width:                        vehicleItem.width
+                    height:                       vehicleItem.height
+
+                    onPaint:                      paintHeading()
+
+                    function paintHeading() {
+                        var context = getContext("2d")
+                        // console.log("painting heading " + object.param1Raw + " " + opacity + " " + visible + " " + _index)
+                        context.clearRect(0, 0, vehicleIcon.width, vehicleIcon.height);
+
+                        var centerX = canvas.width / 2;
+                        var centerY = canvas.height / 2;
+                        var length = canvas.height * 1.3
+                        var width = canvas.width * 0.6
+
+                        var point1 = [centerX - width , centerY + canvas.height * 0.6]
+                        var point2 = [centerX, centerY - canvas.height * 0.5]
+                        var point3 = [centerX + width , centerY + canvas.height * 0.6]
+                        var point4 = [centerX, centerY + canvas.height * 0.2]
+
+                        // Draw the arrow
+                        context.save();
+                        context.globalAlpha = 0.9;
+                        context.beginPath();
+                        context.moveTo(centerX, centerY + canvas.height * 0.2);
+                        context.lineTo(point1[0], point1[1]);
+                        context.lineTo(point2[0], point2[1]);
+                        context.lineTo(point3[0], point3[1]);
+                        context.lineTo(point4[0], point4[1]);
+                        context.closePath();
+
+                        const gradient = context.createLinearGradient(canvas.width / 2, canvas.height , canvas.width / 2, 0);
+                        gradient.addColorStop(0.3, Qt.rgba(255,255,255,0));
+                        gradient.addColorStop(0.5, Qt.rgba(255,255,255,0.5));
+                        gradient.addColorStop(1, qgcPal.mapIndicator);
+
+                        context.fillStyle = gradient;
+                        context.fill();
+                        context.restore();
+                    }
+                }
+            }
+        }
 
         Image {
             id:                 vehicleIcon

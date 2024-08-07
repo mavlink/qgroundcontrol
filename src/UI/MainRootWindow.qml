@@ -639,9 +639,10 @@ ApplicationWindow {
     //-------------------------------------------------------------------------
     //-- Indicator Popups - deprecated, use Indicator Drawer instead
 
-    function showIndicatorPopup(item, dropItem) {
+    function showIndicatorPopup(item, dropItem, dim = true) {
         indicatorPopup.currentIndicator = dropItem
         indicatorPopup.currentItem = item
+        indicatorPopup.dim = dim
         indicatorPopup.open()
     }
 
@@ -656,9 +657,12 @@ ApplicationWindow {
         padding:        ScreenTools.defaultFontPixelWidth * 0.75
         modal:          true
         focus:          true
+        dim:            false
         closePolicy:    Popup.CloseOnEscape | Popup.CloseOnPressOutside
         property var    currentItem:        null
         property var    currentIndicator:   null
+        y:              ScreenTools.toolbarHeight
+        
         background: Rectangle {
             width:  loader.width
             height: loader.height

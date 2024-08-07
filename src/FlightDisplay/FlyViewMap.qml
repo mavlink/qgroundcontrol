@@ -490,17 +490,27 @@ FlightMap {
         anchorPoint.x:  sourceItem.anchorPointX
         anchorPoint.y:  sourceItem.anchorPointY
 
-        sourceItem: MissionItemIndexLabel {
-            checked:    true
-            index:      -1
-            label:      qsTr("ROI here", "Make this a Region Of Interest")
+        Connections {
+            target: _activeVehicle
+            onRoiCoordChanged: (centerCoord) => {
+                roiLocationItem.show(centerCoord)
+            }
+        }
 
+        MouseArea {
+            anchors.fill: parent
             onClicked: (position) => {
                 var roiEditMenu = popupMenuComponent.createObject(_root, { coord: roiLocationItem.coordinate, contentItemComponent: roiEditMenuComponent })
                 var clickPoint = mapToItem(_root, position.x, position.y)
                 roiEditMenu.setPosition(clickPoint.x, clickPoint.y)
                 roiEditMenu.open()
             }
+        }
+
+        sourceItem: MissionItemIndexLabel {
+            checked:    true
+            index:      -1
+            label:      qsTr("ROI here", "Make this a Region Of Interest")
         }
 
         //-- Visibilty controlled by actual state
@@ -614,7 +624,6 @@ FlightMap {
                     if (popup.opened) {
                         popup.close()
                     }
-                    roiLocationItem.show(mapClickCoord)
                     globals.guidedControllerFlyView.executeAction(globals.guidedControllerFlyView.actionROI, mapClickCoord, 0, false)
                 }
             }

@@ -367,6 +367,7 @@ INCLUDEPATH += \
     src/FlightMap/Widgets \
     src/FollowMe \
     src/Geo \
+    src/Gimbal \
     src/GPS \
     src/Joystick \
     src/MAVLink \
@@ -504,6 +505,7 @@ HEADERS += \
     src/Geo/QGCGeo.h \
     src/Utilities/QGC.h \
     src/Utilities/DeviceInfo.h \
+    src/Gimbal/GimbalController.h \
     src/QGCApplication.h \
     src/Utilities/QGCCachedFileDownload.h \
     src/QGCConfig.h \
@@ -552,6 +554,7 @@ HEADERS += \
     src/Settings/SettingsManager.h \
     src/Settings/UnitsSettings.h \
     src/Settings/VideoSettings.h \
+    src/Settings/GimbalControllerSettings.h \
     src/Utilities/ShapeFileHelper.h \
     src/Utilities/SHPFileHelper.h \
     src/Terrain/TerrainQuery.h \
@@ -780,6 +783,7 @@ SOURCES += \
     src/Geo/QGCGeo.cc \
     src/Utilities/QGC.cc \
     src/Utilities/DeviceInfo.cc \
+    src/Gimbal/GimbalController.cc \
     src/QGCApplication.cc \
     src/Utilities/QGCCachedFileDownload.cc \
     src/Utilities/QGCFileDownload.cc \
@@ -827,6 +831,7 @@ SOURCES += \
     src/Settings/SettingsManager.cc \
     src/Settings/UnitsSettings.cc \
     src/Settings/VideoSettings.cc \
+    src/Settings/GimbalControllerSettings.cc \
     src/Utilities/ShapeFileHelper.cc \
     src/Utilities/SHPFileHelper.cc \
     src/Terrain/TerrainQuery.cc \
