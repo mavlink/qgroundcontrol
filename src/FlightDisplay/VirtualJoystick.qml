@@ -26,6 +26,8 @@ Item {
     property bool  _initialConnectComplete:   _activeVehicle ? _activeVehicle.initialConnectComplete : false
     property real  leftYAxisValue:            autoCenterThrottle ? height / 2 : height
     property var   calibration:               false
+    property var   uiTotalWidth
+    property var   uiRealX
         
     Timer {
         interval:   40  // 25Hz, same as real joystick rate
