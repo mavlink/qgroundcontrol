@@ -146,12 +146,11 @@ Item {
 
         //Loader status logic
         onLoaded: {
-            if(virtualJoystickMultiTouch.visible) {
+            if (virtualJoystickMultiTouch.visible) {
                 virtualJoystickMultiTouch.item.calibration = true 
                 virtualJoystickMultiTouch.item.uiTotalWidth = rootWidth
                 virtualJoystickMultiTouch.item.uiRealX = itemX
-            }
-            else {
+            } else {
                 virtualJoystickMultiTouch.item.calibration = false
             }
         }
