@@ -8,6 +8,7 @@ import QGroundControl.Palette
 CheckBox {
     id:         control
     focusPolicy: Qt.ClickFocus
+    checked:    true
 
     property var            color:          qgcPal.text
     property bool           showSpacer:     true
