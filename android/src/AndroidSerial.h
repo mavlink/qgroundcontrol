@@ -57,14 +57,13 @@ namespace AndroidSerial
     static constexpr char CHAR_XOFF = 19;
 
     void setNativeMethods();
-    void jniDeviceHasDisconnected(JNIEnv *env, jobject obj, jlong userData);
-    void jniDeviceNewData(JNIEnv *env, jobject obj, jlong userData, jbyteArray data);
-    void jniDeviceException(JNIEnv *env, jobject obj, jlong userData, jstring message);
+    void jniDeviceHasDisconnected(JNIEnv *env, jobject obj, jlong classPtr);
+    void jniDeviceNewData(JNIEnv *env, jobject obj, jlong classPtr, jbyteArray data);
+    void jniDeviceException(JNIEnv *env, jobject obj, jlong classPtr, jstring message);
     QList<QSerialPortInfo> availableDevices();
-    QString getSerialNumber(int deviceId);
     int getDeviceId(const QString &portName);
     int getDeviceHandle(int deviceId);
-    int open(const QString &portName, QSerialPortPrivate *userData);
+    int open(const QString &portName, QSerialPortPrivate *classPtr);
     bool close(int deviceId);
     bool isOpen(const QString &portName);
     QByteArray read(int deviceId, int length, int timeout);

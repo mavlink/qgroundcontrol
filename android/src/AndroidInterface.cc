@@ -135,6 +135,8 @@ jclass getActivityClass()
             qCWarning(AndroidInterfaceLog) << "Class Not Found";
             return nullptr;
         }
+
+        env.checkAndClearExceptions();
     }
 
     return javaClass;
