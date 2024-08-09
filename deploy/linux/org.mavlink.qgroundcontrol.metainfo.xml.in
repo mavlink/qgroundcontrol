@@ -2,9 +2,9 @@
 <component type="desktop-application">
   <id>org.mavlink.qgroundcontrol</id>
 
-  <name>QGroundControl</name>
-  <summary>UAS ground control station</summary>
-  <developer_name>Dronecode Project, Inc.</developer_name>
+  <name>@CMAKE_PROJECT_NAME@</name>
+  <summary>@CMAKE_PROJECT_DESCRIPTION@</summary>
+  <developer_name>@QGC_ORG_NAME@</developer_name>
 
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0 AND Apache-2.0</project_license>
@@ -18,14 +18,14 @@
 
   <description>
     <p>
-      Intuitive and Powerful Ground Control Station for the MAVLink protocol.
+      @CMAKE_PROJECT_DESCRIPTION@
     </p>
   </description>
 
-  <content_rating type="oars-1.1" />
+  <content_rating type="oars-1.1"/>
 
   <releases>
-    <release date="@REL_DATE@" version="@QGC_APP_VERSION@"/>
+    <release date="@QGC_APP_DATE@" version="@CMAKE_PROJECT_VERSION@"/>
   </releases>
 
   <launchable type="desktop-id">org.mavlink.qgroundcontrol.desktop</launchable>
@@ -35,7 +35,7 @@
     </screenshot>
   </screenshots>
 
-  <url type="homepage">http://qgroundcontrol.com/</url>
+  <url type="homepage">@CMAKE_PROJECT_HOMEPAGE_URL@</url>
   <url type="help">https://docs.qgroundcontrol.com/master/en/index.html</url>
   <url type="bugtracker">https://github.com/mavlink/qgroundcontrol/issues</url>
 
@@ -45,6 +45,6 @@
   </categories>
 
   <provides>
-    <binary>QGroundControl</binary>
+    <binary>@CMAKE_PROJECT_NAME@</binary>
   </provides>
 </component>

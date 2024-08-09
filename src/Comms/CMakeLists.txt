@@ -58,7 +58,13 @@ else()
             PositionManager
     )
     if(ANDROID)
-        add_subdirectory(${CMAKE_SOURCE_DIR}/libs/qtandroidserialport qtandroidserialport.build)
+        add_subdirectory(${CMAKE_SOURCE_DIR}/android/libs/qtandroidserialport qtandroidserialport.build)
+        target_sources(qtandroidserialport
+            PRIVATE
+                ${CMAKE_SOURCE_DIR}/android/src/AndroidSerial.cc
+                ${CMAKE_SOURCE_DIR}/android/src/AndroidSerial.h
+        )
+        target_include_directories(qtandroidserialport PUBLIC ${CMAKE_SOURCE_DIR}/android/src)
         target_link_libraries(Comms PUBLIC qtandroidserialport)
     else()
         find_package(Qt6 REQUIRED COMPONENTS SerialPort)

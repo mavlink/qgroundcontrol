@@ -16,7 +16,7 @@
  *
  */
 
-#include "QGCMapTileSet.h"
+#include "QGCCachedTileSet.h"
 #include "QGCMapEngine.h"
 #include "QGCMapEngineManager.h"
 #include "QGCFileDownload.h"
@@ -24,7 +24,7 @@
 #include "QGeoFileTileCacheQGC.h"
 #include "TerrainTile.h"
 #include "QGCMapUrlEngine.h"
-#include "QGCMapEngineData.h"
+#include "QGCMapTasks.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "ElevationMapProvider.h"
@@ -246,7 +246,8 @@ void QGCCachedTileSet::_prepareDownload()
         if(_tilesToDownload.count()) {
             QGCTile* tile = _tilesToDownload.first();
             _tilesToDownload.removeFirst();
-            QNetworkRequest request = UrlFactory::getTileURL(tile->type(), tile->x(), tile->y(), tile->z());
+            const int mapId = UrlFactory::getQtMapIdFromProviderType(tile->type());
+            QNetworkRequest request = QGeoTileFetcherQGC::getNetworkRequest(mapId, tile->x(), tile->y(), tile->z());
             request.setAttribute(QNetworkRequest::User, tile->hash());
 #if !defined(__mobile__)
             QNetworkProxy proxy = _networkManager->proxy();

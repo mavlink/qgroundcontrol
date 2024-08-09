@@ -16,7 +16,7 @@
 #endif
 
 #include "QGCMapEngineManager.h"
-#include "QGCMapTileSet.h"
+#include "QGCCachedTileSet.h"
 #include "QGCMapUrlEngine.h"
 #include "ElevationMapProvider.h"
 #include "QGCMapEngine.h"

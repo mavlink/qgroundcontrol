@@ -324,6 +324,18 @@
     "shortDesc": "AirLink Password",
     "type": "string",
     "default": ""
+},
+{
+    "name":      "mavlink2Signing",
+    "shortDesc": "Use MAVLink 2.0 Signing",
+    "type":      "bool",
+    "default":   false
+},
+{
+    "name":      "mavlink2SigningKey",
+    "shortDesc": "MAVLink 2.0 signing key",
+    "type":      "string",
+    "default":   ""
 }
 ]
 }

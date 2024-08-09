@@ -292,6 +292,8 @@ public:
     Q_PROPERTY(quint64  vehicleUID                  READ vehicleUID                 NOTIFY vehicleUIDChanged)
     Q_PROPERTY(QString  vehicleUIDStr               READ vehicleUIDStr              NOTIFY vehicleUIDChanged)
 
+    Q_PROPERTY(bool     mavlinkSigning              READ mavlinkSigning             NOTIFY mavlinkSigningChanged)
+
     /// Resets link status counters
     Q_INVOKABLE void resetCounters  ();
 
@@ -367,8 +369,6 @@ public:
 
     /// Reboot vehicle
     Q_INVOKABLE void rebootVehicle();
-
-
 
     Q_INVOKABLE void sendPlan(QString planFile);
     Q_INVOKABLE void setEstimatorOrigin(const QGeoCoordinate& centerCoord);
@@ -586,6 +586,8 @@ public:
     /// Get the maximum MAVLink protocol version supported
     /// @return the maximum version
     unsigned        maxProtoVersion         () const { return _maxProtoVersion; }
+
+    bool            mavlinkSigning          () const { return _mavlinkSigning; }
 
     void startCalibration   (QGCMAVLink::CalibrationType calType);
     void stopCalibration    (bool showError);
@@ -892,6 +894,7 @@ signals:
     // MAVLink protocol version
     void requestProtocolVersion         (unsigned version);
     void mavlinkStatusChanged           ();
+    void mavlinkSigningChanged          ();
 
     void gimbalRollChanged              ();
     void gimbalPitchChanged             ();
@@ -936,6 +939,7 @@ private slots:
     void _doSetHomeTerrainReceived          (bool success, QList<double> heights);
     void _updateAltAboveTerrain             ();
     void _altitudeAboveTerrainReceived      (bool sucess, QList<double> heights);
+    void _sendSetupSigning                  ();
 
 private:
     void _loadJoystickSettings          ();
@@ -1046,6 +1050,7 @@ private:
     bool            _readyToFlyAvailable                    = false;
     bool            _readyToFly                             = false;
     bool            _allSensorsHealthy                      = true;
+    bool            _mavlinkSigning                         = false;
 
     SysStatusSensorInfo _sysStatusSensorInfo;
 

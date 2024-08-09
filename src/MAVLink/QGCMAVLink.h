@@ -19,6 +19,7 @@
 
 Q_DECLARE_LOGGING_CATEGORY(QGCMAVLinkLog)
 
+// TODO: Q_NAMESPACE
 class QGCMAVLink : public QObject
 {
     Q_OBJECT
@@ -27,7 +28,8 @@ class QGCMAVLink : public QObject
 
 public:
     // Creating an instance of QGCMAVLink is only meant to be used for the Qml Singleton
-    QGCMAVLink(QObject* parent = nullptr);
+    QGCMAVLink(QObject *parent = nullptr);
+    ~QGCMAVLink();
 
     typedef int FirmwareClass_t;
     typedef int VehicleClass_t;
@@ -152,4 +154,9 @@ public:
         CalibrationAPMAccelSimple,
     };
     Q_ENUM(CalibrationType)
+
+    static bool isValidChannel(uint8_t channel) { return (channel < MAVLINK_COMM_NUM_BUFFERS); }
+    static bool isValidChannel(mavlink_channel_t channel) { return isValidChannel(static_cast<uint8_t>(channel)); }
+
+    static mavlink_status_t* getChannelStatus(mavlink_channel_t channel) { return mavlink_get_channel_status(static_cast<uint8_t>(channel)); }
 };

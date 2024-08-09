@@ -27,7 +27,8 @@ class TerrainTileManager : public QObject {
     Q_OBJECT
 
 public:
-    TerrainTileManager(void);
+    TerrainTileManager(QObject *parent = nullptr);
+    ~TerrainTileManager();
 
     void addCoordinateQuery         (TerrainOfflineAirMapQuery* terrainQueryInterface, const QList<QGeoCoordinate>& coordinates);
     void addPathQuery               (TerrainOfflineAirMapQuery* terrainQueryInterface, const QGeoCoordinate& startPoint, const QGeoCoordinate& endPoint);
@@ -37,7 +38,7 @@ public:
     static QList<QGeoCoordinate> pathQueryToCoords(const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord, double& distanceBetween, double& finalDistanceBetween);
 
 private slots:
-    void _terrainDone(QByteArray responseBytes, QNetworkReply::NetworkError error);
+    void _terrainDone();
 
 private:
     enum class State {
@@ -64,7 +65,7 @@ private:
 
     QList<QueuedRequestInfo_t>  _requestQueue;
     State                       _state = State::Idle;
-    QNetworkAccessManager       _networkManager;
+    QNetworkAccessManager*      _networkManager = nullptr;
 
     QMutex                      _tilesMutex;
     QHash<QString, TerrainTile> _tiles;

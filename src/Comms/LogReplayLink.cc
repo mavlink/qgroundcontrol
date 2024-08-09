@@ -151,7 +151,7 @@ void LogReplayLink::_replayError(const QString& errorMsg)
 }
 
 /// Since this is log replay, we just drops writes on the floor
-void LogReplayLink::_writeBytes(const QByteArray bytes)
+void LogReplayLink::_writeBytes(const QByteArray &bytes)
 {
     Q_UNUSED(bytes);
 }

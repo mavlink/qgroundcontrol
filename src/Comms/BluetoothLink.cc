@@ -45,7 +45,7 @@ void BluetoothLink::run()
 
 }
 
-void BluetoothLink::_writeBytes(const QByteArray bytes)
+void BluetoothLink::_writeBytes(const QByteArray &bytes)
 {
     if (_targetSocket) {
         if(_targetSocket->write(bytes) > 0) {

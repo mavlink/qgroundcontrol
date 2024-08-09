@@ -192,7 +192,7 @@ signals:
 
 private slots:
     // LinkInterface overrides
-    void _writeBytes(const QByteArray bytes) final;
+    void _writeBytes(const QByteArray &bytes) final;
 
     void _writeBytesQueued      (const QByteArray bytes);
     void _run1HzTasks           (void);

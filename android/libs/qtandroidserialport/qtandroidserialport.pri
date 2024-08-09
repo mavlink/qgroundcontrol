@@ -13,8 +13,7 @@ android {
 
     PRIVATE_HEADERS += \
         $$PWD/qserialport_p.h \
-        $$PWD/qserialportinfo_p.h \
-        $$PWD/qserialport_android_p.h
+        $$PWD/qserialportinfo_p.h
 
     SOURCES += \
         $$PWD/qserialport.cpp \

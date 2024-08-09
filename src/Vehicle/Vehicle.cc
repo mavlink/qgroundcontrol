@@ -50,6 +50,7 @@
 #include "VideoSettings.h"
 #include <DeviceInfo.h>
 #include <StatusTextHandler.h>
+#include <MAVLinkSigning.h>
 
 #ifdef CONFIG_UTM_ADAPTER
 #include "UTMSPVehicle.h"
@@ -325,6 +326,8 @@ void Vehicle::_commonInit()
 
     connect(_imageProtocolManager, &ImageProtocolManager::imageReady, this, &Vehicle::_imageProtocolImageReady);
 
+    (void) connect(_settingsManager->appSettings()->mavlink2Signing(), &Fact::rawValueChanged, this, &Vehicle::_sendSetupSigning);
+
     _createStatusTextHandler();
 
     // _addFactGroup(_vehicleFactGroup,            _vehicleFactGroupName);
@@ -491,6 +494,12 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
             if(packet_lost_count)
                 emit messagesLostChanged();
         }
+    }
+    // TODO: Set Signing AppSetting Based on First Message?
+    const bool mavlinkSigning = message.incompat_flags & MAVLINK_IFLAG_SIGNED;
+    if (mavlinkSigning != _mavlinkSigning) {
+        _mavlinkSigning = mavlinkSigning;
+        emit mavlinkSigningChanged();
     }
 
     // Give the plugin a change to adjust the message contents
@@ -4058,6 +4067,53 @@ void Vehicle::_errorMessageReceived(QString message)
 {
     if (_isActiveVehicle) {
         qgcApp()->showCriticalVehicleMessage(message);
+    }
+}
+
+/*---------------------------------------------------------------------------*/
+/*===========================================================================*/
+/*                                 Signing                                   */
+/*===========================================================================*/
+
+void Vehicle::_sendSetupSigning()
+{
+    SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
+    if (!sharedLink) {
+        qCDebug(VehicleLog) << Q_FUNC_INFO << "Primary Link Gone!";
+        return;
+    }
+
+    const mavlink_channel_t channel = static_cast<mavlink_channel_t>(sharedLink->mavlinkChannel());
+    const bool enabled = _settingsManager->appSettings()->mavlink2Signing()->rawValue().toBool();
+
+    QByteArray secret_key("");
+    if (enabled) {
+        secret_key = _settingsManager->appSettings()->mavlink2SigningKey()->rawValue().toByteArray();
+    }
+
+    if (!MAVLinkSigning::initSigning(channel, secret_key, nullptr)) {
+        qCDebug(VehicleLog) << Q_FUNC_INFO << "Failed To Init Signing";
+        return;
+    }
+
+    mavlink_setup_signing_t setup_signing;
+
+    mavlink_system_t target_system;
+    target_system.sysid = id();
+    target_system.compid = defaultComponentId();
+
+    if (!MAVLinkSigning::createSetupSigning(channel, target_system, setup_signing)) {
+        qCDebug(VehicleLog) << Q_FUNC_INFO << "Failed To Create Setup Signing Message";
+        return;
+    }
+
+    mavlink_message_t msg;
+    (void) mavlink_msg_setup_signing_encode_chan(_mavlink->getSystemId(), _mavlink->getComponentId(), channel, &msg, &setup_signing);
+
+    for (uint8_t i = 0; i < 2; ++i) {
+        if (!sendMessageOnLinkThreadSafe(sharedLink.get(), msg)) {
+            qCDebug(VehicleLog) << Q_FUNC_INFO << "Failed To Send on Link";
+        }
     }
 }
 

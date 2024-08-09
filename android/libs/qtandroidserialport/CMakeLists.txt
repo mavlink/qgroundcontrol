@@ -7,9 +7,8 @@ find_package(Qt6 REQUIRED COMPONENTS Core)
 qt_add_library(qtandroidserialport STATIC
 	qserialport.cpp
 	qserialport.h
-	qserialport_p.h
 	qserialport_android.cpp
-	qserialport_android_p.h
+	qserialport_p.h
 	qserialportglobal.h
 	qserialportinfo.cpp
 	qserialportinfo.h

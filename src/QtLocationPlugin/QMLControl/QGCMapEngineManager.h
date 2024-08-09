@@ -16,7 +16,7 @@
 #include "QmlObjectListModel.h"
 #include "QGCToolbox.h"
 #include "QGCTileSet.h"
-#include "QGCMapEngineData.h"
+#include "QGCMapTasks.h"
 
 #include <QtCore/QLoggingCategory>
 

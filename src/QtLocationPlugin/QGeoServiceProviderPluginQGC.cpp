@@ -47,6 +47,7 @@ QGeoMappingManagerEngine* QGeoServiceProviderFactoryQGC::createMappingManagerEng
     if (errorString) {
         *errorString = "";
     }
+    // TODO: m_engine->networkAccessManager();
     return new QGeoTiledMappingManagerEngineQGC(parameters, error, errorString);
 }
 
