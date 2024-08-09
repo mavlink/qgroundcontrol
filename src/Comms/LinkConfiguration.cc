@@ -41,8 +41,6 @@ LinkConfiguration::LinkConfiguration(LinkConfiguration *copy, QObject *parent)
 {
     // qCDebug(AudioOutputLog) << Q_FUNC_INFO << this;
 
-    LinkConfiguration::copyFrom(copy);
-
     Q_ASSERT(!m_name.isEmpty());
 }
 
