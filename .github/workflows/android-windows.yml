@@ -18,6 +18,7 @@ jobs:
     env:
       ARTIFACT: QGroundControl.apk
       QT_VERSION: 6.6.3
+      GST_VERSION: 1.22.12
       QT_ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/deploy/android/android_release.keystore
       QT_ANDROID_KEYSTORE_ALIAS: QGCAndroidKeyStore
       QT_ANDROID_KEYSTORE_STORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -32,79 +33,22 @@ jobs:
           fetch-tags: true
           fetch-depth: 0
 
-      - name: Setup Java Environment
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-
-      - name: Install Qt6 for Windows
-        uses: jurplel/install-qt-action@v4
-        with:
-          version: ${{ env.QT_VERSION }}
-          aqtversion: ==3.1.*
-          host: windows
-          target: desktop
-          dir: ${{ runner.temp }}
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
-          cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
-
-      - name: Install Qt6 for Android (armv7)
-        uses: jurplel/install-qt-action@v4
-        if: contains( env.QT_ANDROID_ABIS, 'armeabi-v7a')
-        with:
-          version: ${{ env.QT_VERSION }}
-          aqtversion: ==3.1.*
-          host: windows
-          target: android
-          arch: android_armv7
-          dir: ${{ runner.temp }}
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
-          cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
-
-      - name: Install Qt6 for Android (arm64_v8a)
-        uses: jurplel/install-qt-action@v4
-        if: contains( env.QT_ANDROID_ABIS, 'arm64-v8a')
-        with:
-          version: ${{ env.QT_VERSION }}
-          aqtversion: ==3.1.*
-          host: windows
-          target: android
-          arch: android_arm64_v8a
-          dir: ${{ runner.temp }}
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
-          cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
-
-      - name: Install Qt6 for Android (x86)
-        uses: jurplel/install-qt-action@v4
-        if: contains( env.QT_ANDROID_ABIS, 'x86')
-        with:
-          version: ${{ env.QT_VERSION }}
-          aqtversion: ==3.1.*
-          host: windows
-          target: android
-          arch: android_x86
-          dir: ${{ runner.temp }}
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
-          cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
-
-      - name: Install Qt6 for Android (x86_64)
-        uses: jurplel/install-qt-action@v4
-        if: contains( env.QT_ANDROID_ABIS, 'x86_64')
-        with:
-          version: ${{ env.QT_VERSION }}
-          aqtversion: ==3.1.*
-          host: windows
-          target: android
-          arch: android_x86_64
-          dir: ${{ runner.temp }}
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
-          cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
+      - uses: seanmiddleditch/gha-setup-ninja@v5
 
       - name: Install Dependencies
         run: |
-          choco install --no-progress ninja -y
+          choco install --no-progress ninja sscache -y
           choco install --no-progress cmake --installargs 'ADD_CMAKE_TO_PATH=System' --apply-install-arguments-to-dependencies
+
+      # - name: Set Up sccache
+      #   uses: mozilla-actions/sccache-action@v0.0.5
+
+      - name: Install Qt for Android
+        uses: ./.github/actions/qt-android
+        with:
+          host: windows
+          version: ${{ env.QT_VERSION }}
+          abis: ${{ env.QT_ANDROID_ABIS }}
 
       - name: Set up Visual Studio shell
         uses: ilammy/msvc-dev-cmd@v1
