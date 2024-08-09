@@ -2473,6 +2473,8 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
                 }
             } else {
                 pVI->setIsCurrentItem(false);
+                // Child items will always be later in the mission sequence, so this should be correct, to be sure the HasCurrentChildItem is cleared
+                pVI->setHasCurrentChildItem(false);
             }
         }
 
