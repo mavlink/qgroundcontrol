@@ -38,13 +38,6 @@ SurveyComplexItem::SurveyComplexItem(PlanMasterController* masterController, boo
 {
     _editorQml = "qrc:/qml/SurveyItemEditor.qml";
 
-    // If the user hasn't changed turnaround from the default (which is a fixed wing default) and we are multi-rotor set the multi-rotor default.
-    // NULL check since object creation during unit testing passes NULL for vehicle
-    if (_controllerVehicle && _controllerVehicle->multiRotor() && _turnAroundDistanceFact.rawValue().toDouble() == _turnAroundDistanceFact.rawDefaultValue().toDouble()) {
-        // Note this is set to 10 meters to work around a problem with PX4 Pro turnaround behavior. Don't change unless firmware gets better as well.
-        _turnAroundDistanceFact.setRawValue(10);
-    }
-
     if (_controllerVehicle && !(_controllerVehicle->fixedWing() || _controllerVehicle->vtol())) {
         // Only fixed wing flight paths support alternate transects
         _flyAlternateTransectsFact.setRawValue(false);
