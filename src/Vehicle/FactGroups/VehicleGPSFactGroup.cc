@@ -10,17 +10,21 @@
 #include "VehicleGPSFactGroup.h"
 #include "Vehicle.h"
 #include "QGCGeo.h"
+#include "development/mavlink_msg_gnss_integrity.h"
 
 VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent)
     : FactGroup(1000, ":/json/Vehicle/GPSFact.json", parent)
-    , _latFact              (0, _latFactName,               FactMetaData::valueTypeDouble)
-    , _lonFact              (0, _lonFactName,               FactMetaData::valueTypeDouble)
-    , _mgrsFact             (0, _mgrsFactName,              FactMetaData::valueTypeString)
-    , _hdopFact             (0, _hdopFactName,              FactMetaData::valueTypeDouble)
-    , _vdopFact             (0, _vdopFactName,              FactMetaData::valueTypeDouble)
-    , _courseOverGroundFact (0, _courseOverGroundFactName,  FactMetaData::valueTypeDouble)
-    , _countFact            (0, _countFactName,             FactMetaData::valueTypeInt32)
-    , _lockFact             (0, _lockFactName,              FactMetaData::valueTypeInt32)
+    , _latFact                 (0, _latFactName,                 FactMetaData::valueTypeDouble)
+    , _lonFact                 (0, _lonFactName,                 FactMetaData::valueTypeDouble)
+    , _mgrsFact                (0, _mgrsFactName,                FactMetaData::valueTypeString)
+    , _hdopFact                (0, _hdopFactName,                FactMetaData::valueTypeDouble)
+    , _vdopFact                (0, _vdopFactName,                FactMetaData::valueTypeDouble)
+    , _courseOverGroundFact    (0, _courseOverGroundFactName,    FactMetaData::valueTypeDouble)
+    , _countFact               (0, _countFactName,               FactMetaData::valueTypeInt32)
+    , _lockFact                (0, _lockFactName,                FactMetaData::valueTypeInt32)
+    , _systemErrorsFact        (0, _systemErrorsFactName,        FactMetaData::valueTypeUint32)
+    , _spoofingStateFact       (0, _spoofingStateFactName,       FactMetaData::valueTypeUint8)
+    , _authenticationStateFact (0, _authenticationStateFactName, FactMetaData::valueTypeUint8)
 {
     _addFact(&_latFact,                 _latFactName);
     _addFact(&_lonFact,                 _lonFactName);
@@ -30,6 +34,9 @@ VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent)
     _addFact(&_courseOverGroundFact,    _courseOverGroundFactName);
     _addFact(&_lockFact,                _lockFactName);
     _addFact(&_countFact,               _countFactName);
+    _addFact(&_systemErrorsFact,        _systemErrorsFactName);
+    _addFact(&_spoofingStateFact,       _spoofingStateFactName);
+    _addFact(&_authenticationStateFact, _authenticationStateFactName);
 
     _latFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _lonFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
@@ -51,6 +58,9 @@ void VehicleGPSFactGroup::handleMessage(Vehicle* /* vehicle */, mavlink_message_
     case MAVLINK_MSG_ID_HIGH_LATENCY2:
         _handleHighLatency2(message);
         break;
+    case MAVLINK_MSG_ID_GNSS_INTEGRITY:
+        _handleGnssIntegrity(message);
+        break;
     default:
         break;
     }
@@ -61,14 +71,14 @@ void VehicleGPSFactGroup::_handleGpsRawInt(mavlink_message_t& message)
     mavlink_gps_raw_int_t gpsRawInt;
     mavlink_msg_gps_raw_int_decode(&message, &gpsRawInt);
 
-    lat()->setRawValue              (gpsRawInt.lat * 1e-7);
-    lon()->setRawValue              (gpsRawInt.lon * 1e-7);
-    mgrs()->setRawValue             (QGCGeo::convertGeoToMGRS(QGeoCoordinate(gpsRawInt.lat * 1e-7, gpsRawInt.lon * 1e-7)));
-    count()->setRawValue            (gpsRawInt.satellites_visible == 255 ? 0 : gpsRawInt.satellites_visible);
-    hdop()->setRawValue             (gpsRawInt.eph == UINT16_MAX ? qQNaN() : gpsRawInt.eph / 100.0);
-    vdop()->setRawValue             (gpsRawInt.epv == UINT16_MAX ? qQNaN() : gpsRawInt.epv / 100.0);
-    courseOverGround()->setRawValue (gpsRawInt.cog == UINT16_MAX ? qQNaN() : gpsRawInt.cog / 100.0);
-    lock()->setRawValue             (gpsRawInt.fix_type);
+    lat()->setRawValue                  (gpsRawInt.lat * 1e-7);
+    lon()->setRawValue                  (gpsRawInt.lon * 1e-7);
+    mgrs()->setRawValue                 (QGCGeo::convertGeoToMGRS(QGeoCoordinate(gpsRawInt.lat * 1e-7, gpsRawInt.lon * 1e-7)));
+    count()->setRawValue                (gpsRawInt.satellites_visible == 255 ? 0 : gpsRawInt.satellites_visible);
+    hdop()->setRawValue                 (gpsRawInt.eph == UINT16_MAX ? qQNaN() : gpsRawInt.eph / 100.0);
+    vdop()->setRawValue                 (gpsRawInt.epv == UINT16_MAX ? qQNaN() : gpsRawInt.epv / 100.0);
+    courseOverGround()->setRawValue     (gpsRawInt.cog == UINT16_MAX ? qQNaN() : gpsRawInt.cog / 100.0);
+    lock()->setRawValue                 (gpsRawInt.fix_type);
 }
 
 void VehicleGPSFactGroup::_handleHighLatency(mavlink_message_t& message)
@@ -103,4 +113,14 @@ void VehicleGPSFactGroup::_handleHighLatency2(mavlink_message_t& message)
     count()->setRawValue(0);
     hdop()->setRawValue (highLatency2.eph == UINT8_MAX ? qQNaN() : highLatency2.eph / 10.0);
     vdop()->setRawValue (highLatency2.epv == UINT8_MAX ? qQNaN() : highLatency2.epv / 10.0);
+}
+
+void VehicleGPSFactGroup::_handleGnssIntegrity(mavlink_message_t& message)
+{
+    mavlink_gnss_integrity_t gnssIntegrity;
+    mavlink_msg_gnss_integrity_decode(&message, &gnssIntegrity);
+
+    systemErrors()->setRawValue       (gnssIntegrity.system_errors);
+    spoofingState()->setRawValue      (gnssIntegrity.spoofing_state);
+    authenticationState()->setRawValue(gnssIntegrity.authentication_state);
 }
