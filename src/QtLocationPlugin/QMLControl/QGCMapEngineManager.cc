@@ -268,7 +268,7 @@ QGCMapEngineManager::deleteTileSet(QGCCachedTileSet* tileSet)
         (void) getQGCMapEngine()->addTask(task);
     } else {
         tileSet->setDeleting(true);
-        QGCDeleteTileSetTask* task = new QGCDeleteTileSetTask(tileSet->setID());
+        QGCDeleteTileSetTask* task = new QGCDeleteTileSetTask(tileSet->id());
         connect(task, &QGCDeleteTileSetTask::tileSetDeleted, this, &QGCMapEngineManager::_tileSetDeleted);
         connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
         (void) getQGCMapEngine()->addTask(task);
@@ -287,7 +287,7 @@ QGCMapEngineManager::renameTileSet(QGCCachedTileSet* tileSet, QString newName)
     }
     qCDebug(QGCMapEngineManagerLog) << "Renaming tile set " << tileSet->name() << "to" << name;
     tileSet->setName(name);
-    QGCRenameTileSetTask* task = new QGCRenameTileSetTask(tileSet->setID(), name);
+    QGCRenameTileSetTask* task = new QGCRenameTileSetTask(tileSet->id(), name);
     connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
     (void) getQGCMapEngine()->addTask(task);
     emit tileSet->nameChanged();
@@ -310,7 +310,7 @@ QGCMapEngineManager::_tileSetDeleted(quint64 setID)
     int i = 0;
     for(i = 0; i < _tileSets.count(); i++ ) {
         QGCCachedTileSet* set = qobject_cast<QGCCachedTileSet*>(_tileSets.get(i));
-        if (set && set->setID() == setID) {
+        if (set && set->id() == setID) {
             setToDelete = set;
             break;
         }
