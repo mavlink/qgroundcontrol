@@ -35,6 +35,7 @@ target_link_libraries(Comms
         MAVLink
         QGC
         QmlControls
+        TerminateButton
         Utilities
 )
 

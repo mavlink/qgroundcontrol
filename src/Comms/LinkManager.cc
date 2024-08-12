@@ -171,6 +171,9 @@ bool LinkManager::createConnectedLink(SharedLinkConfigurationPtr& config, bool i
             return false;
         }
 
+        if (config->name() == "TerminateButton" && !_terminateButton) {
+            _terminateButton = std::make_shared<TerminateButton>();
+        }
         return true;
     }
 
@@ -226,6 +229,9 @@ void LinkManager::_linkDisconnected(void)
     link->_freeMavlinkChannel();
     for (int i=0; i<_rgLinks.count(); i++) {
         if (_rgLinks[i].get() == link) {
+            if (_rgLinks[i].get()->linkConfiguration()->name() == "TerminateButton" && _terminateButton) {
+                _terminateButton.reset();
+            }
             qCDebug(LinkManagerLog) << "LinkManager::_linkDisconnected" << _rgLinks[i]->linkConfiguration()->name() << _rgLinks[i].use_count();
             _rgLinks.removeAt(i);
             return;
@@ -957,3 +963,16 @@ bool LinkManager::_isSerialPortConnected(void)
 }
 
 #endif // NO_SERIAL_LINK
+
+bool LinkManager::isLinkTerminateButton(void)
+{
+    // const QList<SharedLinkInterfacePtr> links = qgcApp()->toolbox()->linkManager()->links();
+    // for (const SharedLinkInterfacePtr& link : links) {
+    //     if (link->linkConfiguration()->name() == QString("TerminateButton")) {
+    //         _link = link->linkConfiguration();
+    //         return true;
+    //     }
+    // }
+
+    return false;
+}

@@ -16,16 +16,7 @@
 #include "SerialLink.h"
 
 TerminateButton::TerminateButton(QObject* parent)
-    : QObject(parent)
-{
-    const QList<SharedLinkInterfacePtr> links = qgcApp()->toolbox()->linkManager()->links();
-    for (const SharedLinkInterfacePtr& link : links) {
-        if (link->linkConfiguration()->name() == QString("Terminate")) {
-            _link = link->linkConfiguration();
-            break;
-        }
-    }
-}
+    : QObject(parent) {}
 
 void TerminateButton::setupSerialPort(SerialLink* serialLink) {
 
