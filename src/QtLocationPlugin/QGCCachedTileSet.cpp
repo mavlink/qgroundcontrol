@@ -16,14 +16,15 @@
  *
  */
 
-#include "QGCMapTileSet.h"
+#include "QGCCachedTileSet.h"
 #include "QGCMapEngine.h"
 #include "QGCMapEngineManager.h"
 #include "QGCFileDownload.h"
 #include "QGeoTileFetcherQGC.h"
+#include "QGeoFileTileCacheQGC.h"
 #include "TerrainTile.h"
 #include "QGCMapUrlEngine.h"
-#include "QGCMapEngineData.h"
+#include "QGCMapTasks.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "ElevationMapProvider.h"
@@ -149,7 +150,7 @@ QGCCachedTileSet::createDownloadTask()
     connect(task, &QGCGetTileDownloadListTask::tileListFetched, this, &QGCCachedTileSet::_tileListFetched);
     if(_manager)
         connect(task, &QGCMapTask::error, _manager, &QGCMapEngineManager::taskError);
-    getQGCMapEngine()->addTask(task);
+    (void) getQGCMapEngine()->addTask(task);
     emit totalTileCountChanged();
     emit totalTilesSizeChanged();
     _batchRequested = true;
@@ -161,7 +162,7 @@ QGCCachedTileSet::resumeDownloadTask()
 {
     //-- Reset and download error flag (for all tiles)
     QGCUpdateTileDownloadStateTask* task = new QGCUpdateTileDownloadStateTask(_id, QGCTile::StatePending, "*");
-    getQGCMapEngine()->addTask(task);
+    (void) getQGCMapEngine()->addTask(task);
     //-- Start download
     createDownloadTask();
 }
@@ -245,7 +246,8 @@ void QGCCachedTileSet::_prepareDownload()
         if(_tilesToDownload.count()) {
             QGCTile* tile = _tilesToDownload.first();
             _tilesToDownload.removeFirst();
-            QNetworkRequest request = UrlFactory::getTileURL(tile->type(), tile->x(), tile->y(), tile->z());
+            const int mapId = UrlFactory::getQtMapIdFromProviderType(tile->type());
+            QNetworkRequest request = QGeoTileFetcherQGC::getNetworkRequest(mapId, tile->x(), tile->y(), tile->z());
             request.setAttribute(QNetworkRequest::User, tile->hash());
 #if !defined(__mobile__)
             QNetworkProxy proxy = _networkManager->proxy();
@@ -293,16 +295,16 @@ QGCCachedTileSet::_networkReplyFinished()
             }
             qCDebug(QGCCachedTileSetLog) << "Tile fetched" << hash;
             QByteArray image = reply->readAll();
-            QString type = QGCMapEngine::tileHashToType(hash);
+            QString type = UrlFactory::tileHashToType(hash);
             if (type == CopernicusElevationProvider::kProviderKey) {
                 image = TerrainTile::serializeFromAirMapJson(image);
             }
             QString format = UrlFactory::getImageFormat(type, image);
             if(!format.isEmpty()) {
                 //-- Cache tile
-                getQGCMapEngine()->cacheTile(type, hash, image, format, _id);
+                QGeoFileTileCacheQGC::cacheTile(type, hash, image, format, _id);
                 QGCUpdateTileDownloadStateTask* task = new QGCUpdateTileDownloadStateTask(_id, QGCTile::StateComplete, hash);
-                getQGCMapEngine()->addTask(task);
+                (void) getQGCMapEngine()->addTask(task);
                 //-- Updated cached (downloaded) data
                 _savedTileSize += image.size();
                 _savedTileCount++;
@@ -351,7 +353,7 @@ QGCCachedTileSet::_networkReplyError(QNetworkReply::NetworkError error)
             qWarning() << "QGCMapEngineManager::networkReplyError() Error:" << reply->errorString();
         }
         QGCUpdateTileDownloadStateTask* task = new QGCUpdateTileDownloadStateTask(_id, QGCTile::StateError, hash);
-        getQGCMapEngine()->addTask(task);
+        (void) getQGCMapEngine()->addTask(task);
     } else {
         qWarning() << "QGCMapEngineManager::networkReplyError() Empty Hash";
     }

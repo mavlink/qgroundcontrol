@@ -56,3 +56,8 @@ QGCTileSet CopernicusElevationProvider::getTileCount(int zoom, double topleftLon
 
     return set;
 }
+
+QByteArray CopernicusElevationProvider::serialize(const QByteArray &image) const
+{
+    return TerrainTile::serializeFromAirMapJson(image);
+}

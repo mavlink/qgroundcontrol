@@ -95,24 +95,24 @@ QString UrlFactory::getImageFormat(QStringView type, QByteArrayView image)
     return QStringLiteral("");
 }
 
-QNetworkRequest UrlFactory::getTileURL(int qtMapId, int x, int y, int zoom)
+QUrl UrlFactory::getTileURL(int qtMapId, int x, int y, int zoom)
 {
     const SharedMapProvider provider = getMapProviderFromQtMapId(qtMapId);
     if (provider) {
         return provider->getTileURL(x, y, zoom);
     }
 
-    return QNetworkRequest(QUrl());
+    return QUrl();
 }
 
-QNetworkRequest UrlFactory::getTileURL(QStringView type, int x, int y, int zoom)
+QUrl UrlFactory::getTileURL(QStringView type, int x, int y, int zoom)
 {
     const SharedMapProvider provider = getMapProviderFromProviderType(type);
     if (provider) {
         return provider->getTileURL(x, y, zoom);
     }
 
-    return QNetworkRequest(QUrl());
+    return QUrl();
 }
 
 quint32 UrlFactory::averageSizeForType(QStringView type)
@@ -254,4 +254,16 @@ QString UrlFactory::providerTypeFromHash(int hash)
 int UrlFactory::hashFromProviderType(QStringView type)
 {
     return static_cast<int>(qHash(type) >> 1);
+}
+
+QString UrlFactory::tileHashToType(QStringView tileHash)
+{
+    const int providerHash = tileHash.mid(0,10).toInt();
+    return providerTypeFromHash(providerHash);
+}
+
+QString UrlFactory::getTileHash(QStringView type, int x, int y, int z)
+{
+    const int hash = hashFromProviderType(type);
+    return QString::asprintf("%010d%08d%08d%03d", hash, x, y, z);
 }

@@ -257,13 +257,12 @@
     "qgcRebootRequired":    true
 },
 {
-    "name":         "qLocaleLanguage",
-    "shortDesc":    "Language",
-    "type":         "uint32",
-    "enumStrings":  "System,Azerbaijani (Azerbaijani),български (Bulgarian),中文 (Chinese),Nederlands (Dutch),English,Suomi (Finnish),Français (French),Deutsche (German),Ελληνικά (Greek), עברית (Hebrew),Italiano (Italian),日本語 (Japanese),한국어 (Korean),Norsk (Norwegian),Polskie (Polish),Português (Portuguese),Pусский (Russian),Español (Spanish),Svenska (Swedish),Türk (Turkish)",
-    "enumValues":   "0,12,20,25,30,31,36,37,42,43,48,58,59,66,85,90,91,96,111,114,125",
-    "comment":      "enumValues uses Qt QLocale::Language values",
-    "default":      0
+    "name":                 "qLocaleLanguage",
+    "shortDesc":            "Language",
+    "type":                 "uint32",
+    "default":              0,
+    "qgcRebootRequired":    true,
+    "comment":              "QLocale::Language id. Fact enum metadata is setup in AppSettings code. QGC reboot required in order to load new json translations into FactMetaData."
 },
 {
     "name":             "disableAllPersistence",
@@ -325,6 +324,18 @@
     "shortDesc": "AirLink Password",
     "type": "string",
     "default": ""
+},
+{
+    "name":      "mavlink2Signing",
+    "shortDesc": "Use MAVLink 2.0 Signing",
+    "type":      "bool",
+    "default":   false
+},
+{
+    "name":      "mavlink2SigningKey",
+    "shortDesc": "MAVLink 2.0 signing key",
+    "type":      "string",
+    "default":   ""
 }
 ]
 }

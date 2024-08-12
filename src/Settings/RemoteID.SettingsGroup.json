@@ -78,7 +78,7 @@
     "name":         "basicIDType",
     "shortDesc":    "Basic ID Type",
     "type":         "uint8",
-    "enumStrings":  "None, SerialNumber(ANSI/CTA-2063), CAA, UTM(RFC4122), Specific",
+    "enumStrings":  "None,SerialNumber(ANSI/CTA-2063),CAA,UTM(RFC4122),Specific",
     "enumValues":   "0,1,2,3,4",
     "default":      2
 },
@@ -86,7 +86,7 @@
     "name":         "basicIDUaType",
     "shortDesc":    "UA type",
     "type":         "uint8",
-    "enumStrings":  "Undefined,Airplane/FixedWing,Helicopter/Multirrotor, Gyroplane, VTOL, Ornithopter, Glider, Kite, Free Ballon, Captive Ballon, Airship, Parachute, Rocket, Tethered powered aircraft, Ground Obstacle, Other",
+    "enumStrings":  "Undefined,Airplane/FixedWing,Helicopter/Multirrotor,Gyroplane,VTOL,Ornithopter,Glider,Kite,Free Ballon,Captive Ballon,Airship,Parachute,Rocket,Tethered powered aircraft,Ground Obstacle,Other",
     "enumValues":   "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15",
     "default":      0
 },
@@ -111,7 +111,7 @@
     "shortDesc":    "Location Type",
     "longDesc":     "Operator location Type",
     "type":         "uint8",
-    "enumStrings":  "Takeoff(Not Supported),Live GNNS, Fixed",
+    "enumStrings":  "Takeoff(Not Supported),Live GNNS, Fixed (not for FAA)",
     "enumValues":   "0,1,2",
     "default":      1
 },
@@ -153,7 +153,7 @@
     "shortDesc":    "Category EU",
     "longDesc":     "Category of the UAS in the EU region",
     "type":         "uint8",
-    "enumStrings":  "Undeclared,Open, Specific, Certified",
+    "enumStrings":  "Undeclared,Open,Specific,Certified",
     "enumValues":   "0,1,2,3",
     "default":      0
 },
@@ -162,7 +162,7 @@
     "shortDesc":    "Class EU",
     "longDesc":     "Class of the UAS in the EU region",
     "type":         "uint8",
-    "enumStrings":  "Undeclared,Class 0, Class 1, Class 2, Class 3, Class 4, Class 5, Class 6",
+    "enumStrings":  "Undeclared,Class 0,Class 1,Class 2,Class 3,Class 4,Class 5,Class 6",
     "enumValues":   "0,1,2,3,4,5,6,7",
     "default":      0
 }

@@ -13,10 +13,12 @@ INCLUDEPATH += $$QT.location.includes
 
 HEADERS += \
     $$PWD/QGCMapEngine.h \
-    $$PWD/QGCMapEngineData.h \
-    $$PWD/QGCMapTileSet.h \
+    $$PWD/QGCMapTasks.h \
+    $$PWD/QGCCachedTileSet.h \
+    $$PWD/QGCCacheTile.h \
     $$PWD/QGCMapUrlEngine.h \
     $$PWD/QGCTileCacheWorker.h \
+    $$PWD/QGeoFileTileCacheQGC.h \
     $$PWD/QGeoMapReplyQGC.h \
     $$PWD/QGeoServiceProviderPluginQGC.h \
     $$PWD/QGeoTileFetcherQGC.h \
@@ -29,14 +31,15 @@ HEADERS += \
     $$PWD/GenericMapProvider.h \
     $$PWD/EsriMapProvider.h \
     $$PWD/MapboxMapProvider.h \
-    $$PWD/QGCTileSet.h \
-
+    $$PWD/QGCTile.h \
+    $$PWD/QGCTileSet.h
 
 SOURCES += \
     $$PWD/QGCMapEngine.cpp \
-    $$PWD/QGCMapTileSet.cpp \
+    $$PWD/QGCCachedTileSet.cpp \
     $$PWD/QGCMapUrlEngine.cpp \
     $$PWD/QGCTileCacheWorker.cpp \
+    $$PWD/QGeoFileTileCacheQGC.cpp \
     $$PWD/QGeoMapReplyQGC.cpp \
     $$PWD/QGeoServiceProviderPluginQGC.cpp \
     $$PWD/QGeoTileFetcherQGC.cpp \
@@ -48,7 +51,7 @@ SOURCES += \
     $$PWD/BingMapProvider.cpp \
     $$PWD/GenericMapProvider.cpp \
     $$PWD/EsriMapProvider.cpp \
-    $$PWD/MapboxMapProvider.cpp \
+    $$PWD/MapboxMapProvider.cpp
 
 OTHER_FILES += \
     $$PWD/qgc_maps_plugin.json

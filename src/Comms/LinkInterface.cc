@@ -16,109 +16,91 @@
 
 QGC_LOGGING_CATEGORY(LinkInterfaceLog, "LinkInterfaceLog")
 
-// The LinkManager is only forward declared in the header, so the static_assert is here instead.
-static_assert(LinkManager::invalidMavlinkChannel() == std::numeric_limits<uint8_t>::max(), "update LinkInterface::_mavlinkChannel");
-
-LinkInterface::LinkInterface(SharedLinkConfigurationPtr& config, bool isPX4Flow)
-    : QThread   (0)
-    , _config   (config)
-    , _isPX4Flow(isPX4Flow)
+LinkInterface::LinkInterface(SharedLinkConfigurationPtr &config, bool isPX4Flow, QObject *parent)
+    : QThread(parent)
+    , m_config(config)
+    , m_isPX4Flow(isPX4Flow)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
-    qRegisterMetaType<LinkInterface*>("LinkInterface*");
-
-    // This will cause the writeBytes calls to end up on the thread of the link
-    QObject::connect(this, &LinkInterface::_invokeWriteBytes, this, &LinkInterface::_writeBytes);
 }
 
 LinkInterface::~LinkInterface()
 {
-    if (_vehicleReferenceCount != 0) {
-        qCWarning(LinkInterfaceLog) << "~LinkInterface still have vehicle references:" << _vehicleReferenceCount;
+    if (m_vehicleReferenceCount != 0) {
+        qCWarning(LinkInterfaceLog) << Q_FUNC_INFO << "still have vehicle references:" << m_vehicleReferenceCount;
     }
-    _config.reset();
+
+    m_config.reset();
 }
 
-uint8_t LinkInterface::mavlinkChannel(void) const
+uint8_t LinkInterface::mavlinkChannel() const
 {
     if (!mavlinkChannelIsSet()) {
-        qCWarning(LinkInterfaceLog) << "mavlinkChannel isSet() == false";
+        qCWarning(LinkInterfaceLog) << Q_FUNC_INFO << "mavlinkChannelIsSet() == false";
     }
-    return _mavlinkChannel;
+
+    return m_mavlinkChannel;
 }
 
-bool LinkInterface::mavlinkChannelIsSet(void) const
+bool LinkInterface::mavlinkChannelIsSet() const
 {
-    return (LinkManager::invalidMavlinkChannel() != _mavlinkChannel);
+    return (LinkManager::invalidMavlinkChannel() != m_mavlinkChannel);
 }
 
 bool LinkInterface::_allocateMavlinkChannel()
 {
-    // should only be called by the LinkManager during setup
     Q_ASSERT(!mavlinkChannelIsSet());
+
     if (mavlinkChannelIsSet()) {
-        qCWarning(LinkInterfaceLog) << "_allocateMavlinkChannel already have " << _mavlinkChannel;
+        qCWarning(LinkInterfaceLog) << Q_FUNC_INFO << "already have" << m_mavlinkChannel;
         return true;
     }
 
-    auto mgr = qgcApp()->toolbox()->linkManager();
-    _mavlinkChannel = mgr->allocateMavlinkChannel();
+    m_mavlinkChannel = qgcApp()->toolbox()->linkManager()->allocateMavlinkChannel();
+
     if (!mavlinkChannelIsSet()) {
-        qCWarning(LinkInterfaceLog) << "_allocateMavlinkChannel failed";
+        qCWarning(LinkInterfaceLog) << Q_FUNC_INFO << "failed";
         return false;
     }
-    qCDebug(LinkInterfaceLog) << "_allocateMavlinkChannel" << _mavlinkChannel;
+
+    qCDebug(LinkInterfaceLog) << Q_FUNC_INFO << m_mavlinkChannel;
     return true;
 }
 
 void LinkInterface::_freeMavlinkChannel()
 {
-    qCDebug(LinkInterfaceLog) << "_freeMavlinkChannel" << _mavlinkChannel;
-    if (LinkManager::invalidMavlinkChannel() == _mavlinkChannel) {
+    qCDebug(LinkInterfaceLog) << Q_FUNC_INFO << m_mavlinkChannel;
+
+    if (!mavlinkChannelIsSet()) {
         return;
     }
 
-    auto mgr = qgcApp()->toolbox()->linkManager();
-    mgr->freeMavlinkChannel(_mavlinkChannel);
-    _mavlinkChannel = LinkManager::invalidMavlinkChannel();
+    qgcApp()->toolbox()->linkManager()->freeMavlinkChannel(m_mavlinkChannel);
+    m_mavlinkChannel = LinkManager::invalidMavlinkChannel();
 }
 
 void LinkInterface::writeBytesThreadSafe(const char *bytes, int length)
 {
-    emit _invokeWriteBytes(QByteArray(bytes, length));
+    const QByteArray data(bytes, length);
+    (void) QMetaObject::invokeMethod(this, "_writeBytes", Qt::AutoConnection, data);
 }
 
-void LinkInterface::addVehicleReference(void)
+void LinkInterface::removeVehicleReference()
 {
-    _vehicleReferenceCount++;
-}
-
-void LinkInterface::removeVehicleReference(void)
-{
-    if (_vehicleReferenceCount != 0) {
-        _vehicleReferenceCount--;
-        if (_vehicleReferenceCount == 0) {
-            disconnect();
-        }
+    if (m_vehicleReferenceCount != 0) {
+        m_vehicleReferenceCount--;
+        _connectionRemoved();
     } else {
-        qCWarning(LinkInterfaceLog) << "removeVehicleReference called with no vehicle references";
+        qCWarning(LinkInterfaceLog) << Q_FUNC_INFO << "called with no vehicle references";
     }
 }
 
-void LinkInterface::_connectionRemoved(void)
+void LinkInterface::_connectionRemoved()
 {
-    if (_vehicleReferenceCount == 0) {
+    if (m_vehicleReferenceCount == 0) {
         // Since there are no vehicles on the link we can disconnect it right now
         disconnect();
     } else {
         // If there are still vehicles on this link we allow communication lost to trigger and don't automatically disconect until all the vehicles go away
     }
 }
-
-#ifdef UNITTEST_BUILD
-#include "MockLink.h"
-bool LinkInterface::isMockLink(void)
-{
-    return dynamic_cast<MockLink*>(this);
-}
-#endif

@@ -20,11 +20,9 @@
 #include <QtCore/QObject>
 #include <QtCore/QByteArrayView>
 #include <QtCore/QStringView>
-#include <QtNetwork/QNetworkRequest>
-
-#define MAX_MAP_ZOOM (23.0)
 
 class MapProvider;
+class ElevationProvider;
 
 class UrlFactory
 {
@@ -32,8 +30,8 @@ public:
     static QString getImageFormat(QStringView type, QByteArrayView image);
     static QString getImageFormat(int qtMapId, QByteArrayView image);
 
-    static QNetworkRequest getTileURL(QStringView type, int x, int y, int zoom);
-    static QNetworkRequest getTileURL(int qtMapId, int x, int y, int zoom);
+    static QUrl getTileURL(QStringView type, int x, int y, int zoom);
+    static QUrl getTileURL(int qtMapId, int x, int y, int zoom);
 
     static quint32 averageSizeForType(QStringView type);
 
@@ -55,12 +53,12 @@ public:
     static QString providerTypeFromHash(int hash);
 
     static int hashFromProviderType(QStringView type);
-
-    static constexpr const char* kCopernicusElevationProviderKey = "Copernicus Elevation";
-    static constexpr const char* kCopernicusElevationProviderNotice = "© Airbus Defence and Space GmbH";
+    static QString tileHashToType(QStringView tileHash);
+    static QString getTileHash(QStringView type, int x, int y, int z);
 
 private:
     static const QList<std::shared_ptr<const MapProvider>> _providers;
 };
 
 typedef std::shared_ptr<const MapProvider> SharedMapProvider;
+typedef std::shared_ptr<const ElevationProvider> SharedElevationProvider;

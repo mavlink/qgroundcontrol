@@ -18,8 +18,9 @@
 
 #include "QGCTileCacheWorker.h"
 #include "QGCMapEngine.h"
-#include "QGCMapTileSet.h"
+#include "QGCCachedTileSet.h"
 #include "QGCMapUrlEngine.h"
+#include "QGCMapTasks.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtSql/QSqlQuery>
@@ -297,7 +298,7 @@ QGCCacheWorker::_saveTile(QGCMapTask *mtask)
         query.addBindValue(QDateTime::currentDateTime().toSecsSinceEpoch());
         if(query.exec()) {
             quint64 tileID = query.lastInsertId().toULongLong();
-            quint64 setID = task->tile()->set() == UINT64_MAX ? _getDefaultTileSet() : task->tile()->set();
+            quint64 setID = task->tile()->tileSet() == UINT64_MAX ? _getDefaultTileSet() : task->tile()->tileSet();
             QString s = QString("INSERT INTO SetTiles(tileID, setID) VALUES(%1, %2)").arg(tileID).arg(setID);
             query.prepare(s);
             if(!query.exec()) {
@@ -506,14 +507,14 @@ QGCCacheWorker::_createTileSet(QGCMapTask *mtask)
             //-- Prepare Download List
             _db->transaction();
             for(int z = task->tileSet()->minZoom(); z <= task->tileSet()->maxZoom(); z++) {
-                QGCTileSet set = QGCMapEngine::getTileCount(z,
+                QGCTileSet set = UrlFactory::getTileCount(z,
                     task->tileSet()->topleftLon(), task->tileSet()->topleftLat(),
                     task->tileSet()->bottomRightLon(), task->tileSet()->bottomRightLat(), task->tileSet()->type());
                 QString type = task->tileSet()->type();
                 for(int x = set.tileX0; x <= set.tileX1; x++) {
                     for(int y = set.tileY0; y <= set.tileY1; y++) {
                         //-- See if tile is already downloaded
-                        QString hash = QGCMapEngine::getTileHash(type, x, y, z);
+                        QString hash = UrlFactory::getTileHash(type, x, y, z);
                         quint64 tileID = _findTile(hash);
                         if(!tileID) {
                             //-- Set to download
@@ -567,6 +568,7 @@ QGCCacheWorker::_getTileDownloadList(QGCMapTask* mtask)
     if(query.exec(s)) {
         while(query.next()) {
             QGCTile* tile = new QGCTile;
+            // tile->setTileSet(task->setID());
             tile->setHash(query.value("hash").toString());
             tile->setType(UrlFactory::getProviderTypeFromQtMapId(query.value("type").toInt()));
             tile->setX(query.value("x").toInt());

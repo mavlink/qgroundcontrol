@@ -79,7 +79,7 @@ private slots:
     void _readBytes     (void);
 
     // LinkInterface overrides
-    void _writeBytes(const QByteArray data) override;
+    void _writeBytes(const QByteArray &data) override;
 
 private:
     // LinkInterface overrides

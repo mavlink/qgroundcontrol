@@ -20,30 +20,52 @@ class LinkConfiguration : public QObject
     Q_OBJECT
     Q_MOC_INCLUDE("LinkInterface.h")
 
+    Q_PROPERTY(QString          name            READ name           WRITE setName           NOTIFY nameChanged)
+    Q_PROPERTY(LinkInterface*   link            READ link                                   NOTIFY linkChanged)
+    Q_PROPERTY(LinkType         linkType        READ type                                   CONSTANT)
+    Q_PROPERTY(bool             dynamic         READ isDynamic      WRITE setDynamic        NOTIFY dynamicChanged)
+    Q_PROPERTY(bool             autoConnect     READ isAutoConnect  WRITE setAutoConnect    NOTIFY autoConnectChanged)
+    Q_PROPERTY(QString          settingsURL     READ settingsURL                            CONSTANT)
+    Q_PROPERTY(QString          settingsTitle   READ settingsTitle                          CONSTANT)
+    Q_PROPERTY(bool             highLatency     READ isHighLatency  WRITE setHighLatency    NOTIFY highLatencyChanged)
+
 public:
-    LinkConfiguration(const QString& name);
-    LinkConfiguration(LinkConfiguration* copy);
-    virtual ~LinkConfiguration() {}
+    LinkConfiguration(const QString &name, QObject *parent = nullptr);
+    LinkConfiguration(LinkConfiguration *copy, QObject *parent = nullptr);
+    virtual ~LinkConfiguration();
 
-    Q_PROPERTY(QString          name                READ name           WRITE setName           NOTIFY nameChanged)
-    Q_PROPERTY(LinkInterface*   link                READ link                                   NOTIFY linkChanged)
-    Q_PROPERTY(LinkType         linkType            READ type                                   CONSTANT)
-    Q_PROPERTY(bool             dynamic             READ isDynamic      WRITE setDynamic        NOTIFY dynamicChanged)
-    Q_PROPERTY(bool             autoConnect         READ isAutoConnect  WRITE setAutoConnect    NOTIFY autoConnectChanged)
-    Q_PROPERTY(QString          settingsURL         READ settingsURL                            CONSTANT)
-    Q_PROPERTY(QString          settingsTitle       READ settingsTitle                          CONSTANT)
-    Q_PROPERTY(bool             highLatency         READ isHighLatency  WRITE setHighLatency    NOTIFY highLatencyChanged)
+    QString name() const { return m_name; }
+    void setName(const QString &name);
 
-    // Property accessors
+    LinkInterface *link() { return m_link.lock().get(); }
+    void setLink(std::shared_ptr<LinkInterface> link);
 
-    QString         name(void) const { return _name; }
-    LinkInterface*  link(void)  { return _link.lock().get(); }
+    /// Is this a dynamic configuration?
+    ///     @return True if not persisted
+    bool isDynamic() const { return m_dynamic; }
 
-    void            setName(const QString name);
-    void            setLink(std::shared_ptr<LinkInterface> link);
+    /// Set if this is this a dynamic configuration. (decided at runtime)
+    void setDynamic(bool dynamic = true);
 
-    ///  The link types supported by QGC
-    ///  Any changes here MUST be reflected in LinkManager::linkTypeStrings()
+    bool isAutoConnect() const { return m_autoConnect; }
+
+    /// Set if this is this an Auto Connect configuration.
+    void setAutoConnect(bool autoc = true);
+
+    /// Is this a High Latency configuration?
+    ///     @return True if this is an High Latency configuration (link with large delays).
+    bool isHighLatency() const{ return m_highLatency; }
+
+    /// Set if this is this an High Latency configuration.
+    void setHighLatency(bool hl = false);
+
+    /// Copy instance data, When manipulating data, you create a copy of the configuration using the copy constructor,
+    /// edit it and then transfer its content to the original using this method.
+    ///     @param[in] source The source instance (the edited copy)
+    virtual void copyFrom(LinkConfiguration *source);
+
+    /// The link types supported by QGC
+    /// Any changes here MUST be reflected in LinkManager::linkTypeStrings()
     enum LinkType {
 #ifndef NO_SERIAL_LINK
         TypeSerial,     ///< Serial Link
@@ -64,124 +86,54 @@ public:
     };
     Q_ENUM(LinkType)
 
-    bool isDynamic      () const{ return _dynamic; }     ///< Not persisted
-    bool isAutoConnect  () const{ return _autoConnect; }
-
-    /*!
-     *
-     * Is this a High Latency configuration?
-     * @return True if this is an High Latency configuration (link with large delays).
-     */
-    bool isHighLatency() const{ return _highLatency; }
-
-    /*!
-     * Set if this is this a dynamic configuration. (decided at runtime)
-    */
-    void setDynamic(bool dynamic = true) { _dynamic = dynamic; emit dynamicChanged(); }
-
-    /*!
-     * Set if this is this an Auto Connect configuration.
-    */
-    void setAutoConnect(bool autoc = true) { _autoConnect = autoc; emit autoConnectChanged(); }
-
-    /*!
-     * Set if this is this an High Latency configuration.
-    */
-    void setHighLatency(bool hl = false) { _highLatency = hl; emit highLatencyChanged(); }
-
-    /// Virtual Methods
-
-    /*!
-     * @brief Connection type
-     *
-     * Pure virtual method returning one of the -TypeXxx types above.
-     * @return The type of links these settings belong to.
-     */
+    /// Connection type, pure virtual method returning one of the -TypeXxx types above.
+    ///     @return The type of links these settings belong to.
     virtual LinkType type() = 0;
 
-    /*!
-     * @brief Load settings
-     *
-     * Pure virtual method telling the instance to load its configuration.
-     * @param[in] settings The QSettings instance to use
-     * @param[in] root The root path of the setting.
-     */
-    virtual void loadSettings(QSettings& settings, const QString& root) = 0;
+    /// Load settings, Pure virtual method telling the instance to load its configuration.
+    ///     @param[in] settings The QSettings instance to use
+    ///     @param[in] root The root path of the setting.
+    virtual void loadSettings(QSettings &settings, const QString &root) = 0;
 
-    /*!
-     * @brief Save settings
-     *
-     * Pure virtual method telling the instance to save its configuration.
-     * @param[in] settings The QSettings instance to use
-     * @param[in] root The root path of the setting.
-     */
-    virtual void saveSettings(QSettings& settings, const QString& root) = 0;
+    /// Save settings, Pure virtual method telling the instance to save its configuration.
+    ///     @param[in] settings The QSettings instance to use
+    ///     @param[in] root The root path of the setting.
+    virtual void saveSettings(QSettings &settings, const QString &root) = 0;
 
-    /*!
-     * @brief Settings URL
-     *
-     * Pure virtual method providing the URL for the (QML) settings dialog
-     */
-    virtual QString settingsURL     () = 0;
+    /// Settings URL, Pure virtual method providing the URL for the (QML) settings dialog
+    virtual QString settingsURL() = 0;
 
-    /*!
-     * @brief Settings Title
-     *
-     * Pure virtual method providing the Title for the (QML) settings dialog
-     */
-    virtual QString settingsTitle   () = 0;
+    /// Settings Title, Pure virtual method providing the Title for the (QML) settings dialog
+    virtual QString settingsTitle() = 0;
 
-    /*!
-     * @brief Copy instance data
-     *
-     * When manipulating data, you create a copy of the configuration using the copy constructor,
-     * edit it and then transfer its content to the original using this method.
-     * @param[in] source The source instance (the edited copy)
-     */
-    virtual void copyFrom(LinkConfiguration* source);
+    /// Configuration Factory to create new link configuration instance based on the given type.
+    ///     @return A new instance of the given type
+    static LinkConfiguration *createSettings(int type, const QString &name);
 
-    /// Helper static methods
+    /// Duplicate configuration instance. Helper method to create a new instance copy for editing.
+    ///     @return A new copy of the given settings instance
+    static LinkConfiguration *duplicateSettings(LinkConfiguration *source);
 
-    /*!
-     * @brief Root path for QSettings
-     *
-     * @return The root path of the settings.
-     */
-    static const QString settingsRoot();
-
-    /*!
-     * @brief Create new link configuration instance
-     *
-     * Configuration Factory. Creates an appropriate configuration instance based on the given type.
-     * @return A new instance of the given type
-     */
-    static LinkConfiguration* createSettings(int type, const QString& name);
-
-    /*!
-     * @brief Duplicate configuration instance
-     *
-     * Helper method to create a new instance copy for editing.
-     * @return A new copy of the given settings instance
-     */
-    static LinkConfiguration* duplicateSettings(LinkConfiguration *source);
+    /// Root path for QSettings
+    ///     @return The root path of the settings.
+    static QString settingsRoot() { return QStringLiteral("LinkConfigurations"); }
 
 signals:
-    void nameChanged        (const QString& name);
-    void dynamicChanged     ();
-    void autoConnectChanged ();
-    void highLatencyChanged ();
-    void linkChanged        ();
+    void nameChanged(const QString &name);
+    void linkChanged();
+    void dynamicChanged();
+    void autoConnectChanged();
+    void highLatencyChanged();
 
 protected:
-    std::weak_ptr<LinkInterface> _link; ///< Link currently using this configuration (if any)
+    std::weak_ptr<LinkInterface> m_link; ///< Link currently using this configuration (if any)
 
 private:
-    QString _name;
-    bool    _dynamic;       ///< A connection added automatically and not persistent (unless it's edited).
-    bool    _autoConnect;   ///< This connection is started automatically at boot
-    bool    _highLatency;
+    QString m_name;
+    bool m_dynamic = false;     ///< A connection added automatically and not persistent (unless it's edited).
+    bool m_autoConnect = false; ///< This connection is started automatically at boot
+    bool m_highLatency = false;
 };
 
-typedef std::shared_ptr<LinkConfiguration>  SharedLinkConfigurationPtr;
-typedef std::weak_ptr<LinkConfiguration>    WeakLinkConfigurationPtr;
-
+typedef std::shared_ptr<LinkConfiguration> SharedLinkConfigurationPtr;
+typedef std::weak_ptr<LinkConfiguration> WeakLinkConfigurationPtr;

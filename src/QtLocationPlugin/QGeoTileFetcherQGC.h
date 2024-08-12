@@ -10,15 +10,19 @@ class QGeoTiledMappingManagerEngineQGC;
 class QGeoTiledMapReplyQGC;
 class QGeoTileSpec;
 class QNetworkAccessManager;
+class QNetworkDiskCache;
 
 class QGeoTileFetcherQGC : public QGeoTileFetcher
 {
     Q_OBJECT
 
 public:
-    explicit QGeoTileFetcherQGC(QNetworkAccessManager *networkManager, QGeoTiledMappingManagerEngineQGC *parent = nullptr);
+    QGeoTileFetcherQGC(QNetworkAccessManager *networkManager, const QVariantMap &parameters, QGeoTiledMappingManagerEngineQGC *parent = nullptr);
     ~QGeoTileFetcherQGC();
 
+    static QNetworkRequest getNetworkRequest(int mapId, int x, int y, int zoom);
+    /* Note: QNetworkAccessManager queues the requests it receives. The number of requests executed in parallel is dependent on the protocol.
+     * Currently, for the HTTP protocol on desktop platforms, 6 requests are executed in parallel for one host/port combination. */
     static uint32_t concurrentDownloads(const QString &type) { Q_UNUSED(type); return 6; }
 
 private:
@@ -29,6 +33,7 @@ private:
     void handleReply(QGeoTiledMapReply *reply, const QGeoTileSpec &spec) final;
 
     QNetworkAccessManager *m_networkManager = nullptr;
+    // QNetworkDiskCache *m_diskCache = nullptr;
 
 #if defined Q_OS_MAC
     static constexpr const char* s_userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 14.5; rv:125.0) Gecko/20100101 Firefox/125.0";
@@ -37,6 +42,7 @@ private:
 #elif defined Q_OS_ANDROID
     static constexpr const char* s_userAgent = "Mozilla/5.0 (Android 13; Tablet; rv:68.0) Gecko/68.0 Firefox/112.0";
 #elif defined Q_OS_LINUX
+    // TODO: Detect Wayland vs X11
     static constexpr const char* s_userAgent = "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/112.0";
 #else
     static constexpr const char* s_userAgent = "Qt Location based application";

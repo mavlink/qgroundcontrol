@@ -2,22 +2,16 @@ if(NOT GST_QT6_PLUGIN_PATH)
     set(GST_QT6_PLUGIN_PATH ${CMAKE_SOURCE_DIR}/libs/qmlglsink/qt6)
 endif()
 cmake_print_variables(GST_QT6_PLUGIN_PATH)
+
 if(EXISTS ${GST_QT6_PLUGIN_PATH})
     set(GST_QT6_PLUGIN_FOUND TRUE CACHE INTERNAL "")
+
+    file(GLOB GST_SOURCES ${GST_QT6_PLUGIN_PATH}/*.cc)
+    file(GLOB GST_HEADERS ${GST_QT6_PLUGIN_PATH}/*.h)
     target_sources(qmlglsink
         PRIVATE
-            ${GST_QT6_PLUGIN_PATH}/gstplugin.cc
-            ${GST_QT6_PLUGIN_PATH}/gstqml6glsink.cc
-            ${GST_QT6_PLUGIN_PATH}/gstqml6glsink.h
-            ${GST_QT6_PLUGIN_PATH}/gstqsg6glnode.cc
-            ${GST_QT6_PLUGIN_PATH}/gstqsg6glnode.h
-            ${GST_QT6_PLUGIN_PATH}/gstqt6element.cc
-            ${GST_QT6_PLUGIN_PATH}/gstqt6elements.h
-            ${GST_QT6_PLUGIN_PATH}/gstqt6gl.h
-            ${GST_QT6_PLUGIN_PATH}/gstqt6glutility.cc
-            ${GST_QT6_PLUGIN_PATH}/gstqt6glutility.h
-            ${GST_QT6_PLUGIN_PATH}/qt6glitem.cc
-            ${GST_QT6_PLUGIN_PATH}/qt6glitem.h
+            ${GST_SOURCES}
+            ${GST_HEADERS}
     )
 
     find_package(Qt6 REQUIRED COMPONENTS Core Gui OpenGL Qml Quick)
@@ -40,7 +34,23 @@ if(EXISTS ${GST_QT6_PLUGIN_PATH})
         endif()
     endif()
 
-    target_include_directories(qmlglsink PUBLIC qt6)
+    target_include_directories(qmlglsink PRIVATE ${GST_QT6_PLUGIN_PATH})
+
+    # set(GST_RESOURCES)
+    # qt_add_resources(GST_RESOURCES ${GST_QT6_PLUGIN_PATH}/resources.qrc)
+    # target_sources(qmlglsink
+    #     PRIVATE
+    #         ${GST_RESOURCES}
+    # )
+
+    # file(GLOB GST_RESOURCES_FRAG ${GST_QT6_PLUGIN_PATH}/*.frag)
+    # file(GLOB GST_RESOURCES_VERT ${GST_QT6_PLUGIN_PATH}/*.vert)
+    # qt_add_resources(qmlglsink "qmlglsink_res"
+    #     PREFIX "/org/freedesktop/gstreamer/qml6"
+    #     FILES
+    #         ${GST_RESOURCES_FRAG}
+    #         ${GST_RESOURCES_VERT}
+    # )
 
     target_compile_definitions(qmlglsink
         PRIVATE

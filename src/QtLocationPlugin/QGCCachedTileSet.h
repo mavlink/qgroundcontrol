@@ -18,8 +18,6 @@
 
 #pragma once
 
-#include "QGCMapEngineData.h"
-
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QDateTime>

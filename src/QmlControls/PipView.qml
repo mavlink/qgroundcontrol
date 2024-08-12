@@ -119,30 +119,22 @@ Item {
 
     // MouseArea to drag in order to resize the PiP area
     MouseArea {
-        id:             pipResize
-        anchors.top:    parent.top
-        anchors.right:  parent.right
-        height:         ScreenTools.minTouchPixels
-        width:          height
-        preventStealing: true
-        cursorShape: Qt.PointingHandCursor
+        id:                 pipResize
+        anchors.fill:       pipResizeIcon
+        preventStealing:    true
+        cursorShape:        Qt.PointingHandCursor
 
         property real initialX:     0
         property real initialWidth: 0
 
-        // When we push the mouse button down, we un-anchor the mouse area to prevent a resizing loop
         onPressed: (mouse) => {
-            pipResize.anchors.top = undefined // Top doesn't seem to 'detach'
-            pipResize.anchors.right = undefined // This one works right, which is what we really need
+            // Remove the anchor so the our mouse coordinates stay in the same original place for drag tracking
+            pipResize.anchors.fill = undefined
             pipResize.initialX = mouse.x
             pipResize.initialWidth = _root.width
         }
 
-        // When we let go of the mouse button, we re-anchor the mouse area in the correct position
-        onReleased: {
-            pipResize.anchors.top = _root.top
-            pipResize.anchors.right = _root.right
-        }
+        onReleased: pipResize.anchors.fill = pipResizeIcon
 
         // Drag
         onPositionChanged: (mouse) => {
@@ -158,9 +150,10 @@ Item {
 
     // Resize icon
     Image {
+        id:             pipResizeIcon
         source:         "/qmlimages/pipResize.svg"
         fillMode:       Image.PreserveAspectFit
-        mipmap: true
+        mipmap:         true
         anchors.right:  parent.right
         anchors.top:    parent.top
         visible:        _isExpanded && (ScreenTools.isMobile || pipMouseArea.containsMouse)
