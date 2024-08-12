@@ -18481,7 +18481,7 @@
     <parameter name="RD_TRANS_DRV_TRN" default="0.174533" type="FLOAT">
       <short_desc>Heading error threshhold to switch from driving to spot turning</short_desc>
       <min>0.001</min>
-      <max>180</max>
+      <max>3.14159</max>
       <unit>rad</unit>
       <decimal>3</decimal>
       <increment>0.01</increment>
@@ -18489,7 +18489,7 @@
     <parameter name="RD_TRANS_TRN_DRV" default="0.0872665" type="FLOAT">
       <short_desc>Heading error threshhold to switch from spot turning to driving</short_desc>
       <min>0.001</min>
-      <max>180</max>
+      <max>3.14159</max>
       <unit>rad</unit>
       <decimal>3</decimal>
       <increment>0.01</increment>
