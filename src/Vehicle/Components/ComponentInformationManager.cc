@@ -254,18 +254,14 @@ void RequestMetaDataTypeStateMachine::_stateRequestCompInfo(StateMachine* stateM
 {
     RequestMetaDataTypeStateMachine*    requestMachine  = static_cast<RequestMetaDataTypeStateMachine*>(stateMachine);
     Vehicle*                            vehicle         = requestMachine->_compMgr->vehicle();
-    WeakLinkInterfacePtr                weakLink        = vehicle->vehicleLinkManager()->primaryLink();
 
     if (requestMachine->_compInfo->type != COMP_METADATA_TYPE_GENERAL) {
         requestMachine->advance();
         return;
     }
 
-    if (weakLink.expired()) {
-        qCDebug(ComponentInformationManagerLog) << QStringLiteral("_stateRequestCompInfo Skipping component information %1 request due to no primary link").arg(requestMachine->typeToString());
-        stateMachine->advance();
-    } else {
-        SharedLinkInterfacePtr sharedLink = weakLink.lock();
+    SharedLinkInterfacePtr sharedLink = vehicle->vehicleLinkManager()->primaryLink().lock();
+    if (sharedLink) {
         if (sharedLink->linkConfiguration()->isHighLatency() || sharedLink->isPX4Flow() || sharedLink->isLogReplay()) {
             qCDebug(ComponentInformationManagerLog) << QStringLiteral("_stateRequestCompInfo Skipping component information %1 request due to link type").arg(requestMachine->typeToString());
             stateMachine->advance();
@@ -277,6 +273,9 @@ void RequestMetaDataTypeStateMachine::_stateRequestCompInfo(StateMachine* stateM
                         MAV_COMP_ID_AUTOPILOT1,
                         MAVLINK_MSG_ID_COMPONENT_METADATA);
         }
+    } else {
+        qCDebug(ComponentInformationManagerLog) << QStringLiteral("_stateRequestCompInfo Skipping component information %1 request due to no primary link").arg(requestMachine->typeToString());
+        stateMachine->advance();
     }
 }
 
@@ -284,7 +283,6 @@ void RequestMetaDataTypeStateMachine::_stateRequestCompInfoDeprecated(StateMachi
 {
     RequestMetaDataTypeStateMachine*    requestMachine  = static_cast<RequestMetaDataTypeStateMachine*>(stateMachine);
     Vehicle*                            vehicle         = requestMachine->_compMgr->vehicle();
-    WeakLinkInterfacePtr                weakLink        = vehicle->vehicleLinkManager()->primaryLink();
 
     if (requestMachine->_compInfo->type != COMP_METADATA_TYPE_GENERAL) {
         requestMachine->advance();
@@ -296,11 +294,8 @@ void RequestMetaDataTypeStateMachine::_stateRequestCompInfoDeprecated(StateMachi
         return;
     }
 
-    if (weakLink.expired()) {
-        qCDebug(ComponentInformationManagerLog) << QStringLiteral("_stateRequestCompInfo Skipping component information %1 request due to no primary link").arg(requestMachine->typeToString());
-        stateMachine->advance();
-    } else {
-        SharedLinkInterfacePtr sharedLink = weakLink.lock();
+    SharedLinkInterfacePtr sharedLink = vehicle->vehicleLinkManager()->primaryLink().lock();
+    if (sharedLink) {
         if (sharedLink->linkConfiguration()->isHighLatency() || sharedLink->isPX4Flow() || sharedLink->isLogReplay()) {
             qCDebug(ComponentInformationManagerLog) << QStringLiteral("_stateRequestCompInfo Skipping component information %1 request due to link type").arg(requestMachine->typeToString());
             stateMachine->advance();
@@ -312,6 +307,9 @@ void RequestMetaDataTypeStateMachine::_stateRequestCompInfoDeprecated(StateMachi
                         MAV_COMP_ID_AUTOPILOT1,
                         MAVLINK_MSG_ID_COMPONENT_INFORMATION);
         }
+    } else {
+        qCDebug(ComponentInformationManagerLog) << QStringLiteral("_stateRequestCompInfo Skipping component information %1 request due to no primary link").arg(requestMachine->typeToString());
+        stateMachine->advance();
     }
 }
 
