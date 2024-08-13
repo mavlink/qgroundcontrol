@@ -15,6 +15,7 @@
 #include "QGCLZMA.h"
 #include "QGCCorePlugin.h"
 
+#include <cstring>
 #include <QDir>
 #include <QStandardPaths>
 #include <QDomDocument>
