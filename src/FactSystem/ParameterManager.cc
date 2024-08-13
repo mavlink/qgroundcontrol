@@ -502,13 +502,12 @@ void ParameterManager::_ftpDownloadProgress(float progress)
 
 void ParameterManager::refreshAllParameters(uint8_t componentId)
 {
-    WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
-
-    if (weakLink.expired()) {
+    SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
+    if (!sharedLink) {
         return;
     }
 
-    if (weakLink.lock()->linkConfiguration()->isHighLatency() || _logReplay) {
+    if (sharedLink->linkConfiguration()->isHighLatency() || _logReplay) {
         // These links don't load params
         _parametersReady = true;
         _missingParameters = true;
@@ -547,7 +546,6 @@ void ParameterManager::refreshAllParameters(uint8_t componentId)
         }
         MAVLinkProtocol*        mavlink = qgcApp()->toolbox()->mavlinkProtocol();
         mavlink_message_t       msg;
-        SharedLinkInterfacePtr  sharedLink = weakLink.lock();
 
         mavlink_msg_param_request_list_pack_chan(mavlink->getSystemId(),
                                                  mavlink->getComponentId(),
@@ -784,11 +782,10 @@ Out:
 
 void ParameterManager::_readParameterRaw(int componentId, const QString& paramName, int paramIndex)
 {
-    WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
-    if (!weakLink.expired()) {
+    SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
+    if (sharedLink) {
         mavlink_message_t       msg;
         char                    fixedParamName[MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN];
-        SharedLinkInterfacePtr  sharedLink = weakLink.lock();
 
 
         strncpy(fixedParamName, paramName.toStdString().c_str(), sizeof(fixedParamName));
@@ -806,12 +803,10 @@ void ParameterManager::_readParameterRaw(int componentId, const QString& paramNa
 
 void ParameterManager::_sendParamSetToVehicle(int componentId, const QString& paramName, FactMetaData::ValueType_t valueType, const QVariant& value)
 {
-    WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
-
-    if (!weakLink.expired()) {
+    SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
+    if (sharedLink) {
         mavlink_param_set_t     p;
         mavlink_param_union_t   union_value;
-        SharedLinkInterfacePtr  sharedLink = weakLink.lock();
 
         memset(&p, 0, sizeof(p));
 
@@ -942,12 +937,10 @@ void ParameterManager::_tryCacheHashLoad(int vehicleId, int componentId, QVarian
             _handleParamValue(componentId, name, count, index++, mavParamType, paramTypeVal.second);
         }
 
-        WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
-
-        if (!weakLink.expired()) {
+        SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
+        if (sharedLink) {
             mavlink_param_set_t     p;
             mavlink_param_union_t   union_value;
-            SharedLinkInterfacePtr  sharedLink = weakLink.lock();
 
             // Return the hash value to notify we don't want any more updates
             memset(&p, 0, sizeof(p));
