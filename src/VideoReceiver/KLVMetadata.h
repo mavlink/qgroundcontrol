@@ -6,9 +6,11 @@
 #include <cstdint>
 #include <vector>
 #include <QString>
+#include <QObject>
 
-class KLVMetadata
-{
+class KLVMetadata: public QObject {
+    Q_OBJECT
+
 public:
     KLVMetadata() = delete;
 

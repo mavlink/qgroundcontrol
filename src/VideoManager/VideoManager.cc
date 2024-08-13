@@ -179,7 +179,7 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
         emit videoSizeChanged();
     });
 
-    connect(_videoReceiver[0], &VideoReceiver::klvMetadataReceived, this, [this](KLVMetadata metadata){
+    connect(_videoReceiver[0], &VideoReceiver::klvMetadataReceived, this, [this](KLVMetadata& metadata){
         qCDebug(VideoManagerLog) << "New metadata received";
         // TODO: we can extract more information out of the metadata here and e.g. display it somewhere
         auto timestamp = metadata.getTimestamp();
