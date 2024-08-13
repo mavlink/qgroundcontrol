@@ -64,11 +64,10 @@ void RTCMMavlink::sendMessageToVehicle(const mavlink_gps_rtcm_data_t& msg)
     MAVLinkProtocol* mavlinkProtocol = _toolbox.mavlinkProtocol();
     for (int i = 0; i < vehicles.count(); i++) {
         Vehicle*                vehicle     = qobject_cast<Vehicle*>(vehicles[i]);
-        WeakLinkInterfacePtr    weakLink    = vehicle->vehicleLinkManager()->primaryLink();
+        SharedLinkInterfacePtr  sharedLink  = vehicle->vehicleLinkManager()->primaryLink().lock();
 
-        if (!weakLink.expired()) {
+        if (sharedLink) {
             mavlink_message_t       message;
-            SharedLinkInterfacePtr  sharedLink = weakLink.lock();
 
             mavlink_msg_gps_rtcm_data_encode_chan(mavlinkProtocol->getSystemId(),
                                                   mavlinkProtocol->getComponentId(),
