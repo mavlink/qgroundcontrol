@@ -1,32 +1,16 @@
 #include "MAVLinkSigning.h"
 #include "QGCMAVLink.h"
-#include <DeviceInfo.h>
+#include "DeviceInfo.h"
 
 #include <QtCore/QDateTime>
 
 namespace
 {
 
-bool _isSigningPacketsAvailable()
-{
-#ifdef MAVLINK_NO_SIGN_PACKET
-    qCDebug(QGCMAVLinkLog) << "MAVLINK_NO_SIGN_PACKET is defined";
-    return false;
-#else
-    return true;
-#endif
-}
-
-mavlink_signing_t* _getChannelSigning(mavlink_channel_t channel)
+mavlink_signing_t* _getChannelSigning(uint8_t channel)
 {
     mavlink_status_t* const status = mavlink_get_channel_status(channel);
     mavlink_signing_t* const signing = status->signing;
-
-    if (!signing) {
-        qCWarning(QGCMAVLinkLog) << "Signing Not Found For Channel Number:" << channel;
-    } else if (signing->link_id != channel) {
-        qCWarning(QGCMAVLinkLog) << "Signing Link ID Does Not Match Channel:" << channel;
-    }
 
     return signing;
 }
@@ -34,20 +18,6 @@ mavlink_signing_t* _getChannelSigning(mavlink_channel_t channel)
 mavlink_channel_t _getMessageChannel(const mavlink_message_t &message)
 {
     return static_cast<mavlink_channel_t>(message.signature[0]);
-}
-
-void _setSigningEnabled(mavlink_signing_t *signing, bool enabled)
-{
-    if (enabled) {
-        signing->flags |= MAVLINK_SIGNING_FLAG_SIGN_OUTGOING;
-    } else {
-        signing->flags &= ~MAVLINK_SIGNING_FLAG_SIGN_OUTGOING;
-    }
-}
-
-bool _getSigningEnabled(const mavlink_signing_t *signing)
-{
-    return (signing->flags & MAVLINK_SIGNING_FLAG_SIGN_OUTGOING);
 }
 
 void _setSigningKey(mavlink_signing_t *signing, QByteArrayView key, bool randomize = false)
@@ -73,49 +43,56 @@ void _setSigningTimestamp(mavlink_signing_t *signing)
     signing->timestamp = signing_timestamp;
 }
 
-bool _defaultAcceptUnsignedCallback(const mavlink_status_t *status, uint32_t message_id)
-{
-    Q_UNUSED(status);
-
-    static const QSet<uint32_t> unsigned_messages({MAVLINK_MSG_ID_RADIO_STATUS});
-
-    return (unsigned_messages.contains(message_id) || QGCDeviceInfo::isNetworkWired());
-}
-
-void _setSigningAcceptUnsignedCallback(mavlink_signing_t *signing, mavlink_accept_unsigned_t callback)
-{
-    if (callback) {
-        signing->accept_unsigned_callback = callback;
-    } else {
-        signing->accept_unsigned_callback = static_cast<mavlink_accept_unsigned_t>(&_defaultAcceptUnsignedCallback);
-    }
-}
-
 } // namespace
 
 namespace MAVLinkSigning
 {
 
+bool secureConnectionAccceptUnsignedCallback(const mavlink_status_t *status, uint32_t message_id)
+{
+    Q_UNUSED(status);
+    Q_UNUSED(message_id);
+
+    return true;
+}
+
+bool insecureConnectionAccceptUnsignedCallback(const mavlink_status_t *status, uint32_t message_id)
+{
+    Q_UNUSED(status);
+
+    static const QSet<uint32_t> unsigned_messages({MAVLINK_MSG_ID_RADIO_STATUS});
+
+    return unsigned_messages.contains(message_id);
+}
+
+/// Initialize the signing for a channel, both incoming and outgoing
+/// If key is empty signing will be turned off for channel
 bool initSigning(mavlink_channel_t channel, QByteArrayView key, mavlink_accept_unsigned_t callback)
 {
-    if (!_isSigningPacketsAvailable()) {
-        qCWarning(QGCMAVLinkLog) << Q_FUNC_INFO << "Signing is Unavailable";
+    if (!key.isEmpty() && !callback) {
+        qWarning() << Q_FUNC_INFO << "callback must be specified";
         return false;
     }
 
-    static mavlink_signing_t s_signing[MAVLINK_COMM_NUM_BUFFERS];
-    static mavlink_signing_streams_t s_signing_streams;
-
     mavlink_status_t* const status = mavlink_get_channel_status(channel);
-    mavlink_signing_t* const signing = &s_signing[channel];
-    status->signing = signing;
-    status->signing_streams = &s_signing_streams;
+    if (key.isEmpty()) {
+        status->signing = nullptr;
+        status->signing_streams = nullptr;
+    } else {
+        static mavlink_signing_t s_signing[MAVLINK_COMM_NUM_BUFFERS];
+        static mavlink_signing_streams_t s_signing_streams;
 
-    _setSigningKey(signing, key);
-    _setSigningTimestamp(signing);
-    signing->link_id = channel;
-    _setSigningAcceptUnsignedCallback(signing, callback);
-    _setSigningEnabled(signing, !key.isEmpty());
+        mavlink_signing_t* const signing = &s_signing[channel];
+        signing->link_id = channel;
+        signing->flags |= MAVLINK_SIGNING_FLAG_SIGN_OUTGOING;
+        signing->accept_unsigned_callback = callback;
+
+        _setSigningKey(signing, key);
+        _setSigningTimestamp(signing);
+
+        status->signing = signing;
+        status->signing_streams = &s_signing_streams;
+    }
 
     return true;
 }
@@ -131,23 +108,19 @@ bool checkSigningLinkId(mavlink_channel_t channel, const mavlink_message_t &mess
     return (signing->link_id == _getMessageChannel(message));
 }
 
-bool createSetupSigning(mavlink_channel_t channel, mavlink_system_t target_system, mavlink_setup_signing_t &setup_signing)
+/// Create a setup signing message for a target system.
+/// Assumes that signing has already been initialized for the channel.
+void createSetupSigning(mavlink_channel_t channel, mavlink_system_t target_system, mavlink_setup_signing_t &setup_signing)
 {
-    const mavlink_signing_t* const signing = _getChannelSigning(channel);
-    if (!signing) {
-        qCWarning(QGCMAVLinkLog) << Q_FUNC_INFO << "Invalid Signing Pointer for Channel:" << channel;
-        return false;
-    }
-
     (void) memset(&setup_signing, 0, sizeof(setup_signing));
     setup_signing.target_system = target_system.sysid;
     setup_signing.target_component = target_system.compid;
-    if (_getSigningEnabled(signing)) {
+
+    const mavlink_signing_t* const signing = _getChannelSigning(channel);
+    if (signing) {
         setup_signing.initial_timestamp = signing->timestamp;
         (void) memcpy(setup_signing.secret_key, signing->secret_key, sizeof(setup_signing.secret_key));
     }
-
-    return true;
 }
 
 } // namespace MAVLinkSigning

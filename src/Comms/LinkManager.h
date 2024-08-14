@@ -103,6 +103,9 @@ public:
     /// Returns pointer to the mavlink support forwarding link, or nullptr if it does not exist
     SharedLinkInterfacePtr mavlinkForwardingSupportLink();
 
+    /// Re-initilize the mavlink signing for all links. Used when the signing key changes.
+    void resetMavlinkSigning();
+
     void disconnectAll(void);
 
 #ifdef QT_DEBUG
@@ -125,6 +128,8 @@ public:
     SharedLinkInterfacePtr sharedLinkInterfacePointerForLink(LinkInterface* link, bool ignoreNull=false);
 
     bool containsLink(LinkInterface* link);
+
+    static bool isLinkUSBDirect(LinkInterface* link);
 
     SharedLinkConfigurationPtr addConfiguration(LinkConfiguration* config);
 
