@@ -15673,7 +15673,7 @@
     </parameter>
     <parameter name="MPC_ACC_DECOUPLE" default="1" type="INT32" boolean="true">
       <short_desc>Acceleration to tilt coupling</short_desc>
-      <long_desc>Set to decouple tilt from vertical acceleration.</long_desc>
+      <long_desc>Set to decouple tilt from vertical acceleration. This provides smoother flight but slightly worse tracking in position and auto modes. Unset if accurate position tracking during dynamic maneuvers is more important than a smooth flight.</long_desc>
     </parameter>
     <parameter name="MPC_ACC_DOWN_MAX" default="3." type="FLOAT">
       <short_desc>Maximum downwards acceleration in climb rate controlled modes</short_desc>
