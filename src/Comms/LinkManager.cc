@@ -856,6 +856,31 @@ void LinkManager::_createDynamicForwardLink(const char* linkName, QString hostNa
     qCDebug(LinkManagerLog) << "New dynamic MAVLink forwarding port added: " << linkName << " hostname: " << hostName;
 }
 
+bool LinkManager::isLinkUSBDirect(LinkInterface* link)
+{
+#ifndef NO_SERIAL_LINK
+    SerialLink* serialLink = qobject_cast<SerialLink*>(link);
+    if (serialLink) {
+        SharedLinkConfigurationPtr config = serialLink->linkConfiguration();
+        if (config) {
+            SerialConfiguration* serialConfig = qobject_cast<SerialConfiguration*>(config.get());
+            if (serialConfig && serialConfig->usbDirect()) {
+                return link;
+            }
+        }
+    }
+#endif
+
+    return false;
+}
+
+void LinkManager::resetMavlinkSigning(void)
+{
+    for (const SharedLinkInterfacePtr& sharedLink: _rgLinks) {
+        sharedLink->initMavlinkSigning();
+    }
+}
+
 #ifndef NO_SERIAL_LINK // Serial Only Functions
 
 bool LinkManager::_allowAutoConnectToBoard(QGCSerialPortInfo::BoardType_t boardType)
