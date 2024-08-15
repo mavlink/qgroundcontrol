@@ -15093,6 +15093,41 @@
       <long_desc>If set to 1 incoming HIL GPS messages are parsed.</long_desc>
     </parameter>
   </group>
+  <group name="Magnetometer">
+    <parameter name="BMM350_AVG" default="1" type="INT32">
+      <short_desc>BMM350 data averaging</short_desc>
+      <long_desc>Defines which averaging mode to use during data polling.</long_desc>
+      <reboot_required>True</reboot_required>
+      <values>
+        <value code="0">No averaging</value>
+        <value code="1">2 sample averaging</value>
+        <value code="2">4 sample averaging</value>
+        <value code="3">8 sample averaging</value>
+      </values>
+    </parameter>
+    <parameter name="BMM350_DRIVE" default="7" type="INT32">
+      <short_desc>BMM350 pad drive strength setting</short_desc>
+      <long_desc>This setting helps avoid signal problems like overshoot or undershoot.</long_desc>
+      <min>0</min>
+      <max>7</max>
+    </parameter>
+    <parameter name="BMM350_ODR" default="3" type="INT32">
+      <short_desc>BMM350 ODR rate</short_desc>
+      <long_desc>Defines which ODR rate to use during data polling.</long_desc>
+      <reboot_required>True</reboot_required>
+      <values>
+        <value code="0">400 Hz</value>
+        <value code="1">200 Hz</value>
+        <value code="2">100 Hz</value>
+        <value code="3">50 Hz</value>
+        <value code="4">25 Hz</value>
+        <value code="5">12.5 Hz</value>
+        <value code="6">6.25 Hz</value>
+        <value code="7">3.125 Hz</value>
+        <value code="8">1.5625 Hz</value>
+      </values>
+    </parameter>
+  </group>
   <group name="Magnetometer Bias Estimator">
     <parameter name="MBE_ENABLE" default="1" type="INT32" boolean="true">
       <short_desc>Enable online mag bias calibration</short_desc>
