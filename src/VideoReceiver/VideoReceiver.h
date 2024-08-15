@@ -55,7 +55,7 @@ signals:
     void recordingChanged(bool active);
     void recordingStarted(void);
     void videoSizeChanged(QSize size);
-    void klvMetadataReceived(KLVMetadata& metadata);
+    void klvMetadataReceived(KLVMetadata metadata);
 
     void onStartComplete(STATUS status);
     void onStopComplete(STATUS status);

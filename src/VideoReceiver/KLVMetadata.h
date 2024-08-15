@@ -6,14 +6,11 @@
 #include <cstdint>
 #include <vector>
 #include <QString>
-#include <QObject>
 
-class KLVMetadata: public QObject {
-    Q_OBJECT
+class KLVMetadata {
 
 public:
-    KLVMetadata() = delete;
-
+    KLVMetadata() = default;
     /*!
      * \brief Constructor that decodes the raw data packet
      * \param data KLV metadata packet

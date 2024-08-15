@@ -23,6 +23,7 @@
 #include "SubtitleWriter.h"
 
 Q_DECLARE_LOGGING_CATEGORY(VideoManagerLog)
+Q_DECLARE_METATYPE(KLVMetadata)
 
 class VideoSettings;
 class Vehicle;
