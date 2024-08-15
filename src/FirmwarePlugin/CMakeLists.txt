@@ -1,7 +1,9 @@
 if(NOT QGC_DISABLE_APM_PLUGIN)
     add_subdirectory(APM)
 endif()
-add_subdirectory(PX4)
+if(NOT QGC_DISABLE_PX4_PLUGIN)
+    add_subdirectory(PX4)
+endif()
 
 find_package(Qt6 REQUIRED COMPONENTS Core Positioning)
 

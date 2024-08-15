@@ -9,10 +9,10 @@ set_property(DIRECTORY ${CMAKE_SOURCE_DIR}
     CUSTOMCLASS=CustomPlugin
 )
 
-find_package(Python)
-if(PYTHON_FOUND)
+find_package(Python3)
+if(Python3_FOUND)
     execute_process(
-        COMMAND ${PYTHON_EXECUTABLE}
+        COMMAND ${Python3_EXECUTABLE}
         RESULT_VARIABLE PYTHON_RESULT
         OUTPUT_VARIABLE PYTHON_OUTPUT
         ERROR_VARIABLE PYTHON_ERROR
@@ -20,7 +20,7 @@ if(PYTHON_FOUND)
         INPUT_FILE updateqrc.py
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
-    cmake_print_variables(RESULT_VARIABLE OUTPUT_VARIABLE ERROR_VARIABLE)
+    cmake_print_variables(PYTHON_RESULT PYTHON_OUTPUT PYTHON_ERROR)
 endif()
 
 # Our own, custom resources

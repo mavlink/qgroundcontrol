@@ -1,6 +1,6 @@
-set(QGC_APP_NAME "Custom-QGroundControl")
+set(QGC_APP_NAME "Custom-QGroundControl" CACHE STRING "App Name" FORCE)
 
-set(QGC_MACOS_ICON_PATH "${CMAKE_SOURCE_DIR}/custom/res")
+set(QGC_MACOS_ICON_PATH "${CMAKE_SOURCE_DIR}/custom/res" CACHE PATH "MacOS Icon Path" FORCE)
 
 # Build a single flight stack by disabling APM support
 set(QGC_DISABLE_APM_MAVLINK ON CACHE BOOL "Disable APM Dialect" FORCE)
