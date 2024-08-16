@@ -18,7 +18,8 @@
 QGC_LOGGING_CATEGORY(PlanManagerLog, "PlanManagerLog")
 
 PlanManager::PlanManager(Vehicle* vehicle, MAV_MISSION_TYPE planType)
-    : _vehicle                  (vehicle)
+    : QObject                   (vehicle)
+    , _vehicle                  (vehicle)
     , _missionCommandTree       (qgcApp()->toolbox()->missionCommandTree())
     , _planType                 (planType)
     , _ackTimeoutTimer          (nullptr)
