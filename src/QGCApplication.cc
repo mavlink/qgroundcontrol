@@ -397,6 +397,8 @@ void QGCApplication::init()
 
     if (!_runningUnitTests) {
         _initForNormalAppBoot();
+    } else {
+        AudioOutput::instance()->setMuted(true);
     }
 }
 
