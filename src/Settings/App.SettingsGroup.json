@@ -158,13 +158,6 @@
     "default":     0
 },
 {
-    "name":             "showLargeCompass",
-    "shortDesc": "Show large compass",
-    "longDesc":  "Show large compass on instrument panel",
-    "type":             "bool",
-    "default":     false
-},
-{
     "name":             "savePath",
     "shortDesc": "Application save directory",
     "longDesc":  "Directory to which all data files are saved/loaded from",
@@ -178,20 +171,6 @@
     "type":                 "bool",
     "default":              false,
     "qgcRebootRequired":    true
-},
-{
-    "name":             "userBrandImageIndoor",
-    "shortDesc": "User-selected brand image",
-    "longDesc":  "Location in file system of user-selected brand image (indoor)",
-    "type":             "string",
-    "default":     ""
-},
-{
-    "name":             "userBrandImageOutdoor",
-    "shortDesc": "User-selected brand image",
-    "longDesc":  "Location in file system of user-selected brand image (outdoor)",
-    "type":             "string",
-    "default":     ""
 },
 {
     "name":             "mapboxToken",
@@ -236,12 +215,6 @@
     "default":     ""
 },
 {
-    "name":             "defaultFirmwareType",
-    "shortDesc": "Default firmware type for flashing",
-    "type":             "uint32",
-    "default":     12
-},
-{
     "name":             "followTarget",
     "shortDesc": "Stream GCS' coordinates to Autopilot",
     "type":             "uint32",
@@ -268,13 +241,6 @@
     "name":             "disableAllPersistence",
     "shortDesc": "Disable all data persistence",
     "longDesc":  "If this option is set, nothing will be saved to disk.",
-    "type":             "bool",
-    "default":     false
-},
-{
-    "name":             "usePairing",
-    "shortDesc": "Use Pairing",
-    "longDesc":  "Use Link Pairing.",
     "type":             "bool",
     "default":     false
 },
