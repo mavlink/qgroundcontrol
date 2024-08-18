@@ -106,6 +106,6 @@
         { "regExp": "^Hex/ProfiCNC$",   "boardClass": "Pixhawk" },
         { "regExp": "^Holybro$",        "boardClass": "Pixhawk" },
         { "regExp": "^mRo$",            "boardClass": "Pixhawk" },
-        { "regExp": "^3DR$",            "boardClass": "Pixhawk" },
+        { "regExp": "^3DR$",            "boardClass": "Pixhawk" }
     ]
 }
