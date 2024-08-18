@@ -27,6 +27,7 @@ public:
     Q_PROPERTY(bool dirty READ dirty WRITE setDirty NOTIFY dirtyChanged)
 
     Q_INVOKABLE QObject* get(int index);
+    const QObject *get(int index) const;
 
     // Property accessors
     
