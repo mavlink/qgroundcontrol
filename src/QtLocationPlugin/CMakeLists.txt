@@ -53,6 +53,7 @@ endif()
 target_link_libraries(QGCLocation
     PRIVATE
         Qt6::Positioning
+        QGC
         Settings
         Utilities
     PUBLIC
@@ -61,7 +62,6 @@ target_link_libraries(QGCLocation
         Qt6::LocationPrivate
         Qt6::Network
         Qt6::Sql
-        QGC
         QmlControls
 )
 
@@ -71,15 +71,8 @@ target_include_directories(QGCLocation
         QMLControl
 )
 
-set_source_files_properties(QMLControl/OfflineMap.qml
-    PROPERTIES
-        QT_RESOURCE_ALIAS OfflineMap.qml
-)
-
-set_source_files_properties(QMLControl/OfflineMapEditor.qml
-    PROPERTIES
-        QT_RESOURCE_ALIAS OfflineMapEditor.qml
-)
+set_source_files_properties(QMLControl/OfflineMap.qml PROPERTIES QT_RESOURCE_ALIAS OfflineMap.qml)
+set_source_files_properties(QMLControl/OfflineMapEditor.qml PROPERTIES QT_RESOURCE_ALIAS OfflineMapEditor.qml)
 
 # qt_add_qml_module(QGCLocation
 #     URI QGroundControl.QGCLocation

@@ -15,6 +15,7 @@
 #include "FirmwarePluginManager.h"
 #include "AppSettings.h"
 #include "PositionManager.h"
+#include "QGCMapEngineManager.h"
 #ifndef NO_SERIAL_LINK
 #include "GPSManager.h"
 #endif
@@ -30,7 +31,8 @@ QGeoCoordinate   QGroundControlQmlGlobal::_coord = QGeoCoordinate(0.0,0.0);
 double           QGroundControlQmlGlobal::_zoom = 2;
 
 QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app, QGCToolbox* toolbox)
-    : QGCTool               (app, toolbox)
+    : QGCTool(app, toolbox)
+    , _mapEngineManager(QGCMapEngineManager::instance())
 {
     // We clear the parent on this object since we run into shutdown problems caused by hybrid qml app. Instead we let it leak on shutdown.
     // setParent(nullptr);
@@ -73,7 +75,6 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
 
     _linkManager            = toolbox->linkManager();
     _multiVehicleManager    = toolbox->multiVehicleManager();
-    _mapEngineManager       = toolbox->mapEngineManager();
     _qgcPositionManager     = toolbox->qgcPositionManager();
     _missionCommandTree     = toolbox->missionCommandTree();
     _videoManager           = toolbox->videoManager();
