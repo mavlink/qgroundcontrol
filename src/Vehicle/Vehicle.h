@@ -696,7 +696,7 @@ public:
         RequestMessageFailureCommandError,
         RequestMessageFailureCommandNotAcked,
         RequestMessageFailureMessageNotReceived,
-        RequestMessageFailureDuplicateCommand,    ///< Unabled to send command since duplicate is already being waited on for response
+        RequestMessageFailureDuplicateCommand,    ///< Unabled to send command since another request message isduplicate is already being waited on for response
     } RequestMessageResultHandlerFailureCode_t;
 
     /// Callback for requestMessage
@@ -1159,30 +1159,25 @@ private:
     ///     @param noReponseFromVehicle true: The vehicle did not responsed to the COMMAND_LONG message
     typedef void (*WaitForMavlinkMessageResultHandler)(void* resultHandlerData, bool noResponsefromVehicle, const mavlink_message_t& message);
 
-    /// Waits for the specified msecs for the message to be received. Calls timeoutHandler if not received.
-    void _waitForMavlinkMessage     (WaitForMavlinkMessageResultHandler resultHandler, void* resultHandlerData, int messageId, int timeoutMsecs);
-    void _waitForMavlinkMessageClear(void);
-
-    int                                 _waitForMavlinkMessageId                = 0;
-    bool                                _waitForMavlinkMessageTimeoutActive     = false;
-    int                                 _waitForMavlinkMessageTimeoutMsecs      = 0;
-    QElapsedTimer                       _waitForMavlinkMessageElapsed;
-    WaitForMavlinkMessageResultHandler  _waitForMavlinkMessageResultHandler     = nullptr;
-    void*                               _waitForMavlinkMessageResultHandlerData = nullptr;
-
-    void _waitForMavlinkMessageMessageReceived(const mavlink_message_t& message);
+    void _waitForMavlinkMessageMessageReceivedHandler(const mavlink_message_t& message);
 
     // requestMessage handling
+
     typedef struct RequestMessageInfo {
         Vehicle*                    vehicle             = nullptr;
-        int                         msgId;
         int                         compId;
-        RequestMessageResultHandler resultHandler;
-        void*                       resultHandlerData;
-        bool                        commandAckReceived  = false; // We keep track of the ack/message being received since the order in which this will come in is random
+        int                         msgId;
+        RequestMessageResultHandler resultHandler       = nullptr;
+        void*                       resultHandlerData   = nullptr;
+        bool                        commandAckReceived  = false;    // We keep track of the ack/message being received since the order in which this will come in is random
         bool                        messageReceived     = false;    // We only delete the allocated RequestMessageInfo_t when both happen (or the message wait times out)
+        QElapsedTimer               messageWaitElapsedTimer;        // Elapsed time since we started waiting for the message to show up
         mavlink_message_t           message;
     } RequestMessageInfo_t;
+
+    QMap<int /* compId */, QMap<int /* msgId */, RequestMessageInfo_t*>> _requestMessageInfoMap; // Map of all request message calls currently waiting on a response
+
+    void _removeRequestMessageInfo(int compId, int msgId);
 
     static void _requestMessageCmdResultHandler             (void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, MavCmdResultFailureCode_t failureCode);
     static void _requestMessageWaitForMessageResultHandler  (void* resultHandlerData, bool noResponsefromVehicle, const mavlink_message_t& message);

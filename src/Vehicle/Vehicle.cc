@@ -533,7 +533,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     _imageProtocolManager->mavlinkMessageReceived(message);
     _remoteIDManager->mavlinkMessageReceived(message);
 
-    _waitForMavlinkMessageMessageReceived(message);
+    _waitForMavlinkMessageMessageReceivedHandler(message);
 
     // Battery fact groups are created dynamically as new batteries are discovered
     VehicleBatteryFactGroup::handleMessageForFactGroupCreation(this, message);
@@ -2515,7 +2515,7 @@ void Vehicle::_sendMavCommandWorker(
         bool    compIdAll       = targetCompId == MAV_COMP_ID_ALL;
         QString rawCommandName  = _toolbox->missionCommandTree()->rawName(command);
 
-        qCDebug(VehicleLog) << QStringLiteral("_sendMavCommandWorker failing %1").arg(compIdAll ? "MAV_COMP_ID_ALL not supportded" : "duplicate command") << rawCommandName;
+        qCDebug(VehicleLog) << QStringLiteral("_sendMavCommandWorker failing %1").arg(compIdAll ? "MAV_COMP_ID_ALL not supported" : "duplicate command") << rawCommandName;
 
         MavCmdResultFailureCode_t failureCode = compIdAll ? MavCmdResultCommandResultOnly : MavCmdResultFailureDuplicateCommand;
         if (ackHandlerInfo && ackHandlerInfo->resultHandler) {
@@ -2752,80 +2752,61 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
     }
 }
 
-void Vehicle::_waitForMavlinkMessage(WaitForMavlinkMessageResultHandler resultHandler, void* resultHandlerData, int messageId, int timeoutMsecs)
+void Vehicle::_removeRequestMessageInfo(int compId, int msgId)
 {
-    qCDebug(VehicleLog) << "_waitForMavlinkMessage msg:timeout" << messageId << timeoutMsecs;
-    if (_waitForMavlinkMessageResultHandler) {
-        qCCritical(VehicleLog) << "_waitForMavlinkMessage: collision";
+    if (_requestMessageInfoMap.contains(compId) && _requestMessageInfoMap[compId].contains(msgId)) {
+        delete _requestMessageInfoMap[compId][msgId];
+        _requestMessageInfoMap[compId].remove(msgId);
+    } else {
+        qWarning() << Q_FUNC_INFO << "compId:msgId not found" << compId << msgId;
     }
-    _waitForMavlinkMessageResultHandler     = resultHandler;
-    _waitForMavlinkMessageResultHandlerData = resultHandlerData;
-    _waitForMavlinkMessageId                = messageId;
-    _waitForMavlinkMessageTimeoutActive     = false;                // Timer doesn't start until ack is received from command request
-    _waitForMavlinkMessageTimeoutMsecs      = timeoutMsecs;
 }
 
-void Vehicle::_waitForMavlinkMessageClear(void)
-{
-    qCDebug(VehicleLog) << "_waitForMavlinkMessageClear";
-    _waitForMavlinkMessageResultHandler     = nullptr;
-    _waitForMavlinkMessageResultHandlerData = nullptr;
-    _waitForMavlinkMessageId                = 0;
-    _waitForMavlinkMessageTimeoutActive     = false;
-}
 
-void Vehicle::_waitForMavlinkMessageMessageReceived(const mavlink_message_t& message)
+void Vehicle::_waitForMavlinkMessageMessageReceivedHandler(const mavlink_message_t& message)
 {
-    if (_waitForMavlinkMessageId != 0) {
-        if (_waitForMavlinkMessageId == message.msgid) {
-            WaitForMavlinkMessageResultHandler  resultHandler       = _waitForMavlinkMessageResultHandler;
-            void*                               resultHandlerData   = _waitForMavlinkMessageResultHandlerData;
-            qCDebug(VehicleLog) << "_waitForMavlinkMessageMessageReceived message received" << _waitForMavlinkMessageId;
-            _waitForMavlinkMessageClear();
-            (*resultHandler)(resultHandlerData, false /* noResponseFromVehicle */, message);
-        } else if (_waitForMavlinkMessageTimeoutActive && _waitForMavlinkMessageElapsed.elapsed() > _waitForMavlinkMessageTimeoutMsecs) {
-            WaitForMavlinkMessageResultHandler  resultHandler       = _waitForMavlinkMessageResultHandler;
-            void*                               resultHandlerData   = _waitForMavlinkMessageResultHandlerData;
-            qCDebug(VehicleLog) << "_waitForMavlinkMessageMessageReceived message timed out" << _waitForMavlinkMessageId;
-            _waitForMavlinkMessageClear();
-            (*resultHandler)(resultHandlerData, true /* noResponseFromVehicle */, message);
+    if (_requestMessageInfoMap.contains(message.compid) && _requestMessageInfoMap[message.compid].contains(message.msgid)) {
+        auto pInfo              = _requestMessageInfoMap[message.compid][message.msgid];
+        auto resultHandler      = pInfo->resultHandler;
+        auto resultHandlerData  = pInfo->resultHandlerData;
+
+        qCDebug(VehicleLog) << Q_FUNC_INFO << "message received - compId:msgId" << message.compid << message.msgid;
+
+        _removeRequestMessageInfo(message.compid, message.msgid);
+
+        (*resultHandler)(resultHandlerData, MAV_RESULT_ACCEPTED, RequestMessageNoFailure, message);
+    } else {
+        // We use any incoming message as a trigger to check timeouts on message requests
+
+        for (auto& compIdEntry : _requestMessageInfoMap) {
+            for (auto requestMessageInfo : compIdEntry) {    
+                if (requestMessageInfo->messageWaitElapsedTimer.isValid() && requestMessageInfo->messageWaitElapsedTimer.elapsed() > (qgcApp()->runningUnitTests() ? 50 : 1000)) {
+                    auto resultHandler      = requestMessageInfo->resultHandler;
+                    auto resultHandlerData  = requestMessageInfo->resultHandlerData;
+
+                    qCDebug(VehicleLog) << Q_FUNC_INFO << "request message timed out - compId:msgId" << requestMessageInfo->compId << requestMessageInfo->msgId;
+
+                    _removeRequestMessageInfo(requestMessageInfo->compId, requestMessageInfo->msgId);
+
+                    mavlink_message_t message;
+                    (*resultHandler)(resultHandlerData, MAV_RESULT_FAILED, RequestMessageFailureMessageNotReceived, message);
+
+                    return; // We only handle one timeout at a time
+                }
+            }
         }
     }
 }
 
-void Vehicle::requestMessage(RequestMessageResultHandler resultHandler, void* resultHandlerData, int compId, int messageId, float param1, float param2, float param3, float param4, float param5)
+void Vehicle::_requestMessageCmdResultHandler(void* resultHandlerData_, [[maybe_unused]] int compId, const mavlink_command_ack_t& ack, MavCmdResultFailureCode_t failureCode)
 {
-    RequestMessageInfo_t* pInfo = new RequestMessageInfo_t;
+    auto requestMessageInfo = static_cast<RequestMessageInfo_t*>(resultHandlerData_);
+    auto resultHandler      = requestMessageInfo->resultHandler;
+    auto resultHandlerData  = requestMessageInfo->resultHandlerData;
+    auto vehicle            = requestMessageInfo->vehicle;
+    auto message            = requestMessageInfo->message;
 
-    *pInfo                      = { };
-    pInfo->vehicle              = this;
-    pInfo->msgId                = messageId;
-    pInfo->compId               = compId;
-    pInfo->resultHandler        = resultHandler;
-    pInfo->resultHandlerData    = resultHandlerData;
-
-    _waitForMavlinkMessage(_requestMessageWaitForMessageResultHandler, pInfo, pInfo->msgId, 1000);
-
-    Vehicle::MavCmdAckHandlerInfo_t handlerInfo = {};
-    handlerInfo.resultHandler       = _requestMessageCmdResultHandler;
-    handlerInfo.resultHandlerData   = pInfo;
-
-    _sendMavCommandWorker(false,                                    // commandInt
-                          false,                                    // showError
-                          &handlerInfo,
-                          compId,
-                          MAV_CMD_REQUEST_MESSAGE,
-                          MAV_FRAME_GLOBAL,
-                          messageId,
-                          param1, param2, param3, param4, param5, 0);
-}
-
-void Vehicle::_requestMessageCmdResultHandler(void* resultHandlerData, int /*compId*/, const mavlink_command_ack_t& ack, MavCmdResultFailureCode_t failureCode)
-{
-    RequestMessageInfo_t*   pInfo   = static_cast<RequestMessageInfo_t*>(resultHandlerData);
-    Vehicle*                vehicle = pInfo->vehicle;
-
-    pInfo->commandAckReceived = true;
+    requestMessageInfo->commandAckReceived = true;
     if (ack.result != MAV_RESULT_ACCEPTED) {
         mavlink_message_t                           message;
         RequestMessageResultHandlerFailureCode_t    requestMessageFailureCode;
@@ -2842,17 +2823,20 @@ void Vehicle::_requestMessageCmdResultHandler(void* resultHandlerData, int /*com
             break;
         }
 
-        vehicle->_waitForMavlinkMessageClear();
-        (*pInfo->resultHandler)(pInfo->resultHandlerData, static_cast<MAV_RESULT>(ack.result),  requestMessageFailureCode, message);
+        vehicle->_removeRequestMessageInfo(requestMessageInfo->compId, requestMessageInfo->msgId);
+
+        (*resultHandler)(resultHandlerData, static_cast<MAV_RESULT>(ack.result),  requestMessageFailureCode, message);
+
         return;
     }
 
-    if (pInfo->messageReceived) {
-        (*pInfo->resultHandler)(pInfo->resultHandlerData, static_cast<MAV_RESULT>(ack.result),  RequestMessageNoFailure, pInfo->message);
-        delete pInfo;
+    if (requestMessageInfo->messageReceived) {
+        // We got the message before we got the ack back!
+        vehicle->_removeRequestMessageInfo(requestMessageInfo->compId, requestMessageInfo->msgId);
+        (resultHandler)(resultHandlerData, static_cast<MAV_RESULT>(ack.result),  RequestMessageNoFailure, message);
     } else {
-        vehicle->_waitForMavlinkMessageTimeoutActive = true;
-        vehicle->_waitForMavlinkMessageElapsed.restart();
+        // Now that the request has been acked we start the timer to wait for the message
+        requestMessageInfo->messageWaitElapsedTimer.start();
     }
 }
 
@@ -2867,6 +2851,32 @@ void Vehicle::_requestMessageWaitForMessageResultHandler(void* resultHandlerData
         // Result handler will be called when we get the Ack
         pInfo->message = message;
     }
+}
+
+void Vehicle::requestMessage(RequestMessageResultHandler resultHandler, void* resultHandlerData, int compId, int messageId, float param1, float param2, float param3, float param4, float param5)
+{
+    RequestMessageInfo_t requestInfo = {
+        .vehicle            = this,
+        .compId             = compId,
+        .msgId              = messageId,
+        .resultHandler      = resultHandler,
+        .resultHandlerData  = resultHandlerData,
+    };
+    _requestMessageInfoMap[compId][messageId] = new RequestMessageInfo_t(requestInfo);
+
+    Vehicle::MavCmdAckHandlerInfo_t handlerInfo = {
+        .resultHandler      = _requestMessageCmdResultHandler,
+        .resultHandlerData  = &requestInfo,
+    };
+
+    _sendMavCommandWorker(false,                                    // commandInt
+                          false,                                    // showError
+                          &handlerInfo,
+                          compId,
+                          MAV_CMD_REQUEST_MESSAGE,
+                          MAV_FRAME_GLOBAL,
+                          messageId,
+                          param1, param2, param3, param4, param5, 0);
 }
 
 void Vehicle::setPrearmError(const QString& prearmError)
