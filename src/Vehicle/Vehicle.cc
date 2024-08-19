@@ -3277,36 +3277,37 @@ bool Vehicle::autoDisarm()
     return false;
 }
 
-void Vehicle::_handleADSBVehicle(const mavlink_message_t& message)
+void Vehicle::_handleADSBVehicle(const mavlink_message_t &message)
 {
     mavlink_adsb_vehicle_t adsbVehicleMsg;
-    static const int maxTimeSinceLastSeen = 15;
-
     mavlink_msg_adsb_vehicle_decode(&message, &adsbVehicleMsg);
-    if ((adsbVehicleMsg.flags & ADSB_FLAGS_VALID_COORDS) && adsbVehicleMsg.tslc <= maxTimeSinceLastSeen) {
-        ADSBVehicle::ADSBVehicleInfo_t vehicleInfo;
 
-        vehicleInfo.availableFlags = 0;
+    static constexpr int maxTimeSinceLastSeen = 15;
+
+    if ((adsbVehicleMsg.flags & ADSB_FLAGS_VALID_COORDS) && (adsbVehicleMsg.tslc <= maxTimeSinceLastSeen)) {
+        ADSB::VehicleInfo_t vehicleInfo;
+
+        vehicleInfo.availableFlags = ADSB::AvailableInfoTypes::fromInt(0);
         vehicleInfo.icaoAddress = adsbVehicleMsg.ICAO_address;
 
         vehicleInfo.location.setLatitude(adsbVehicleMsg.lat / 1e7);
         vehicleInfo.location.setLongitude(adsbVehicleMsg.lon / 1e7);
-        vehicleInfo.availableFlags |= ADSBVehicle::LocationAvailable;
+        vehicleInfo.availableFlags |= ADSB::LocationAvailable;
 
         vehicleInfo.callsign = adsbVehicleMsg.callsign;
-        vehicleInfo.availableFlags |= ADSBVehicle::CallsignAvailable;
+        vehicleInfo.availableFlags |= ADSB::CallsignAvailable;
 
         if (adsbVehicleMsg.flags & ADSB_FLAGS_VALID_ALTITUDE) {
-            vehicleInfo.altitude = (double)adsbVehicleMsg.altitude / 1e3;
-            vehicleInfo.availableFlags |= ADSBVehicle::AltitudeAvailable;
+            vehicleInfo.altitude = adsbVehicleMsg.altitude / 1e3;
+            vehicleInfo.availableFlags |= ADSB::AltitudeAvailable;
         }
 
         if (adsbVehicleMsg.flags & ADSB_FLAGS_VALID_HEADING) {
-            vehicleInfo.heading = (double)adsbVehicleMsg.heading / 100.0;
-            vehicleInfo.availableFlags |= ADSBVehicle::HeadingAvailable;
+            vehicleInfo.heading = adsbVehicleMsg.heading / 1e2;
+            vehicleInfo.availableFlags |= ADSB::HeadingAvailable;
         }
 
-        _toolbox->adsbVehicleManager()->adsbVehicleUpdate(vehicleInfo);
+        (void) QMetaObject::invokeMethod(ADSBVehicleManager::instance(), "adsbVehicleUpdate", Qt::AutoConnection, vehicleInfo);
     }
 }
 
