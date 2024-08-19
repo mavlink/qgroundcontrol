@@ -45,6 +45,16 @@ public:
     virtual QGCVideoStreamInfo*     currentStreamInstance();
     virtual QGCVideoStreamInfo*     thermalStreamInstance();
 
+    // This is public to avoid some circular include problems caused by statics
+    class CameraStruct : public QObject {
+    public:
+        CameraStruct(QObject* parent, uint8_t compID_, Vehicle* vehicle);
+        QElapsedTimer lastHeartbeat;
+        bool        infoReceived    = false;
+        uint8_t     compID          = 0;
+        Vehicle*    vehicle         = nullptr;
+    };
+
 signals:
     void    camerasChanged          ();
     void    cameraLabelsChanged     ();
@@ -67,8 +77,10 @@ protected slots:
     virtual void    _toggleVideoRecording   ();
 
 protected:
+
+
     virtual MavlinkCameraControl* _findCamera(int id);
-    virtual void    _requestCameraInfo      (int compID, int tryCount);
+    virtual void    _requestCameraInfo      (CameraStruct* cameraInfo);
     virtual void    _handleHeartbeat        (const mavlink_message_t& message);
     virtual void    _handleCameraInfo       (const mavlink_message_t& message);
     virtual void    _handleStorageInfo      (const mavlink_message_t& message);
@@ -81,18 +93,6 @@ protected:
     virtual void    _handleBatteryStatus    (const mavlink_message_t& message);
     virtual void    _handleTrackingImageStatus(const mavlink_message_t& message);
     virtual void    _addCameraControlToLists(MavlinkCameraControl* cameraControl);
-
-protected:
-
-    class CameraStruct : public QObject {
-    public:
-        CameraStruct(QObject* parent, uint8_t compID_);
-        QElapsedTimer lastHeartbeat;
-        bool    infoReceived = false;
-        bool    gaveUp       = false;
-        int     tryCount     = 0;
-        uint8_t compID       = 0;
-    };
 
     Vehicle*            _vehicle            = nullptr;
     Joystick*           _activeJoystick     = nullptr;
