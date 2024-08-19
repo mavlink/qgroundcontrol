@@ -34,27 +34,27 @@ public:
     LinkConfiguration(LinkConfiguration *copy, QObject *parent = nullptr);
     virtual ~LinkConfiguration();
 
-    QString name() const { return m_name; }
+    QString name() const { return _name; }
     void setName(const QString &name);
 
-    LinkInterface *link() { return m_link.lock().get(); }
+    LinkInterface *link() { return _link.lock().get(); }
     void setLink(std::shared_ptr<LinkInterface> link);
 
     /// Is this a dynamic configuration?
     ///     @return True if not persisted
-    bool isDynamic() const { return m_dynamic; }
+    bool isDynamic() const { return _dynamic; }
 
     /// Set if this is this a dynamic configuration. (decided at runtime)
     void setDynamic(bool dynamic = true);
 
-    bool isAutoConnect() const { return m_autoConnect; }
+    bool isAutoConnect() const { return _autoConnect; }
 
     /// Set if this is this an Auto Connect configuration.
     void setAutoConnect(bool autoc = true);
 
     /// Is this a High Latency configuration?
     ///     @return True if this is an High Latency configuration (link with large delays).
-    bool isHighLatency() const{ return m_highLatency; }
+    bool isHighLatency() const{ return _highLatency; }
 
     /// Set if this is this an High Latency configuration.
     void setHighLatency(bool hl = false);
@@ -126,13 +126,13 @@ signals:
     void highLatencyChanged();
 
 protected:
-    std::weak_ptr<LinkInterface> m_link; ///< Link currently using this configuration (if any)
+    std::weak_ptr<LinkInterface> _link; ///< Link currently using this configuration (if any)
 
 private:
-    QString m_name;
-    bool m_dynamic = false;     ///< A connection added automatically and not persistent (unless it's edited).
-    bool m_autoConnect = false; ///< This connection is started automatically at boot
-    bool m_highLatency = false;
+    QString _name;
+    bool _dynamic = false;     ///< A connection added automatically and not persistent (unless it's edited).
+    bool _autoConnect = false; ///< This connection is started automatically at boot
+    bool _highLatency = false;
 };
 
 typedef std::shared_ptr<LinkConfiguration> SharedLinkConfigurationPtr;

@@ -69,7 +69,7 @@ MockLink::MockLink(SharedLinkConfigurationPtr& config)
 {
     qCDebug(MockLinkLog) << "MockLink" << this;
 
-    MockConfiguration* mockConfig = qobject_cast<MockConfiguration*>(m_config.get());
+    MockConfiguration* mockConfig = qobject_cast<MockConfiguration*>(_config.get());
     _firmwareType       = mockConfig->firmwareType();
     _vehicleType        = mockConfig->vehicleType();
     _sendStatusText     = mockConfig->sendStatusText();

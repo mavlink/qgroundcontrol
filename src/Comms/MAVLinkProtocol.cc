@@ -37,7 +37,7 @@ static QObject* mavlinkSingletonFactory(QQmlEngine*, QJSEngine*)
  */
 MAVLinkProtocol::MAVLinkProtocol(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
-    , m_enable_version_check(true)
+    , _enable_version_check(true)
     , _message({})
     , _status({})
     , versionMismatchIgnore(false)
@@ -105,7 +105,7 @@ void MAVLinkProtocol::setToolbox(QGCToolbox *toolbox)
    connect(_multiVehicleManager, &MultiVehicleManager::vehicleAdded, this, &MAVLinkProtocol::_vehicleCountChanged);
    connect(_multiVehicleManager, &MultiVehicleManager::vehicleRemoved, this, &MAVLinkProtocol::_vehicleCountChanged);
 
-   emit versionCheckChanged(m_enable_version_check);
+   emit versionCheckChanged(_enable_version_check);
 }
 
 void MAVLinkProtocol::loadSettings()
@@ -113,7 +113,7 @@ void MAVLinkProtocol::loadSettings()
     // Load defaults from settings
     QSettings settings;
     settings.beginGroup("QGC_MAVLINK_PROTOCOL");
-    enableVersionCheck(settings.value("VERSION_CHECK_ENABLED", m_enable_version_check).toBool());
+    enableVersionCheck(settings.value("VERSION_CHECK_ENABLED", _enable_version_check).toBool());
 
     // Only set system id if it was valid
     int temp = settings.value("GCS_SYSTEM_ID", systemId).toInt();
@@ -128,7 +128,7 @@ void MAVLinkProtocol::storeSettings()
     // Store settings
     QSettings settings;
     settings.beginGroup("QGC_MAVLINK_PROTOCOL");
-    settings.setValue("VERSION_CHECK_ENABLED", m_enable_version_check);
+    settings.setValue("VERSION_CHECK_ENABLED", _enable_version_check);
     settings.setValue("GCS_SYSTEM_ID", systemId);
     // Parameter interface settings
 }
@@ -413,7 +413,7 @@ int MAVLinkProtocol::getComponentId()
 
 void MAVLinkProtocol::enableVersionCheck(bool enabled)
 {
-    m_enable_version_check = enabled;
+    _enable_version_check = enabled;
     emit versionCheckChanged(enabled);
 }
 

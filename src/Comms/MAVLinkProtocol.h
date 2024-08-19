@@ -47,7 +47,7 @@ public:
 
     /** @brief Get protocol version check state */
     bool versionCheckEnabled() const {
-        return m_enable_version_check;
+        return _enable_version_check;
     }
     /** @brief Get the protocol version */
     int getVersion() {
@@ -96,7 +96,7 @@ public slots:
     void checkForLostLogFiles(void);
 
 protected:
-    bool        m_enable_version_check;                         ///< Enable checking of version match of MAV and QGC
+    bool        _enable_version_check;                         ///< Enable checking of version match of MAV and QGC
     uint8_t     lastIndex[256][256];                            ///< Store the last received sequence ID for each system/componenet pair
     uint8_t     firstMessage[256][256];                         ///< First message flag
     uint64_t    totalReceiveCounter[MAVLINK_COMM_NUM_BUFFERS];  ///< The total number of successfully received messages

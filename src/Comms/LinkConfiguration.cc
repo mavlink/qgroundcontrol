@@ -26,24 +26,22 @@
 
 LinkConfiguration::LinkConfiguration(const QString &name, QObject *parent)
     : QObject(parent)
-    , m_name(name)
+    , _name(name)
 {
     // qCDebug(AudioOutputLog) << Q_FUNC_INFO << this;
 }
 
 LinkConfiguration::LinkConfiguration(LinkConfiguration *copy, QObject *parent)
     : QObject(parent)
-    , m_link(copy->m_link)
-    , m_name(copy->name())
-    , m_dynamic(copy->isDynamic())
-    , m_autoConnect(copy->isAutoConnect())
-    , m_highLatency(copy->isHighLatency())
+    , _link(copy->_link)
+    , _name(copy->name())
+    , _dynamic(copy->isDynamic())
+    , _autoConnect(copy->isAutoConnect())
+    , _highLatency(copy->isHighLatency())
 {
     // qCDebug(AudioOutputLog) << Q_FUNC_INFO << this;
 
-    LinkConfiguration::copyFrom(copy);
-
-    Q_ASSERT(!m_name.isEmpty());
+    Q_ASSERT(!_name.isEmpty());
 }
 
 LinkConfiguration::~LinkConfiguration()
@@ -55,11 +53,11 @@ void LinkConfiguration::copyFrom(LinkConfiguration *source)
 {
     Q_CHECK_PTR(source);
 
-    m_link = source->m_link;
-    m_name = source->name();
-    m_dynamic = source->isDynamic();
-    m_autoConnect = source->isAutoConnect();
-    m_highLatency = source->isHighLatency();
+    _link = source->_link;
+    _name = source->name();
+    _dynamic = source->isDynamic();
+    _autoConnect = source->isAutoConnect();
+    _highLatency = source->isHighLatency();
 }
 
 LinkConfiguration *LinkConfiguration::createSettings(int type, const QString &name)
@@ -148,8 +146,8 @@ LinkConfiguration *LinkConfiguration::duplicateSettings(LinkConfiguration *sourc
 
 void LinkConfiguration::setName(const QString &name)
 {
-    if (name != m_name) {
-        m_name = name;
+    if (name != _name) {
+        _name = name;
         emit nameChanged(name);
     }
 }
@@ -157,31 +155,31 @@ void LinkConfiguration::setName(const QString &name)
 void LinkConfiguration::setLink(SharedLinkInterfacePtr link)
 {
     if (link.get() != this->link()) {
-        m_link = link;
+        _link = link;
         emit linkChanged();
     }
 }
 
 void LinkConfiguration::setDynamic(bool dynamic)
 {
-    if (dynamic != m_dynamic) {
-        m_dynamic = dynamic;
+    if (dynamic != _dynamic) {
+        _dynamic = dynamic;
         emit dynamicChanged();
     }
 }
 
 void LinkConfiguration::setAutoConnect(bool autoc)
 {
-    if (autoc != m_autoConnect) {
-        m_autoConnect = autoc;
+    if (autoc != _autoConnect) {
+        _autoConnect = autoc;
         emit autoConnectChanged();
     }
 }
 
 void LinkConfiguration::setHighLatency(bool hl)
 {
-    if (hl != m_highLatency) {
-        m_highLatency = hl;
+    if (hl != _highLatency) {
+        _highLatency = hl;
         emit highLatencyChanged();
     }
 }
