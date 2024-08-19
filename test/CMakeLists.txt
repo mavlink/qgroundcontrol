@@ -24,6 +24,9 @@ function(add_qgc_test test_name)
     add_dependencies(check ${PROJECT_NAME})
 endfunction()
 
+add_subdirectory(ADSB)
+add_qgc_test(ADSBTest)
+
 add_subdirectory(AnalyzeView)
 add_qgc_test(ExifParserTest)
 # add_qgc_test(LogDownloadTest)
@@ -121,6 +124,7 @@ qt_add_library(qgctest
 
 target_link_libraries(qgctest
     PRIVATE
+        ADSBTest
         AnalyzeViewTest
         AudioTest
         CommsTest
