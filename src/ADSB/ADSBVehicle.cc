@@ -15,59 +15,63 @@
 
 QGC_LOGGING_CATEGORY(ADSBVehicleLog, "qgc.adsb.adsbvehicle")
 
-ADSBVehicle::ADSBVehicle(const ADSBVehicleInfo_t & vehicleInfo, QObject* parent)
-    : QObject       (parent)
-    , _icaoAddress  (vehicleInfo.icaoAddress)
-    , _coordinate   (QGeoCoordinate(qQNaN(),qQNaN()))
-    , _altitude     (qQNaN())
-    , _heading      (qQNaN())
-    , _alert        (false)
+ADSBVehicle::ADSBVehicle(const ADSB::VehicleInfo_t &vehicleInfo, QObject *parent)
+    : QObject(parent)
 {
+    _info.icaoAddress = vehicleInfo.icaoAddress;
     update(vehicleInfo);
+
+    // qCDebug(ADSBTCPLinkLog) << Q_FUNC_INFO << this;
 }
 
-void ADSBVehicle::update(const ADSBVehicleInfo_t & vehicleInfo)
+ADSBVehicle::~ADSBVehicle()
 {
-    if (_icaoAddress != vehicleInfo.icaoAddress) {
-        qCWarning(ADSBVehicleLog) << "ICAO address mismatch expected:actual" << _icaoAddress << vehicleInfo.icaoAddress;
+    // qCDebug(ADSBTCPLinkLog) << Q_FUNC_INFO << this;
+}
+
+void ADSBVehicle::update(const ADSB::VehicleInfo_t &vehicleInfo)
+{
+    if (vehicleInfo.icaoAddress != icaoAddress()) {
+        qCWarning(ADSBVehicleLog) << "ICAO address mismatch expected:" << icaoAddress() << "actual:" << vehicleInfo.icaoAddress;
         return;
     }
+
     qCDebug(ADSBVehicleLog) << "Updating" << QStringLiteral("%1 Flags: %2").arg(vehicleInfo.icaoAddress, 0, 16).arg(vehicleInfo.availableFlags, 0, 2);
 
-    if (vehicleInfo.availableFlags & CallsignAvailable) {
-        if (vehicleInfo.callsign != _callsign) {
-            _callsign = vehicleInfo.callsign;
+    if (vehicleInfo.availableFlags & ADSB::CallsignAvailable) {
+        if (vehicleInfo.callsign != callsign()) {
+            _info.callsign = vehicleInfo.callsign;
             emit callsignChanged();
         }
     }
-    if (vehicleInfo.availableFlags & LocationAvailable) {
-        if (_coordinate != vehicleInfo.location) {
-            _coordinate = vehicleInfo.location;
+
+    if (vehicleInfo.availableFlags & ADSB::LocationAvailable) {
+        if (vehicleInfo.location != coordinate()) {
+            _info.location = vehicleInfo.location;
             emit coordinateChanged();
         }
     }
-    if (vehicleInfo.availableFlags & AltitudeAvailable) {
-        if (!QGC::fuzzyCompare(vehicleInfo.altitude, _altitude)) {
-            _altitude = vehicleInfo.altitude;
+
+    if (vehicleInfo.availableFlags & ADSB::AltitudeAvailable) {
+        if (!QGC::fuzzyCompare(vehicleInfo.altitude, altitude())) {
+            _info.altitude = vehicleInfo.altitude;
             emit altitudeChanged();
         }
     }
-    if (vehicleInfo.availableFlags & HeadingAvailable) {
-        if (!QGC::fuzzyCompare(vehicleInfo.heading, _heading)) {
-            _heading = vehicleInfo.heading;
+
+    if (vehicleInfo.availableFlags & ADSB::HeadingAvailable) {
+        if (!QGC::fuzzyCompare(vehicleInfo.heading, heading())) {
+            _info.heading = vehicleInfo.heading;
             emit headingChanged();
         }
     }
-    if (vehicleInfo.availableFlags & AlertAvailable) {
-        if (vehicleInfo.alert != _alert) {
-            _alert = vehicleInfo.alert;
+
+    if (vehicleInfo.availableFlags & ADSB::AlertAvailable) {
+        if (vehicleInfo.alert != alert()) {
+            _info.alert = vehicleInfo.alert;
             emit alertChanged();
         }
     }
-    _lastUpdateTimer.restart();
-}
 
-bool ADSBVehicle::expired()
-{
-    return _lastUpdateTimer.hasExpired(expirationTimeoutMs);
+    (void) _lastUpdateTimer.restart();
 }
