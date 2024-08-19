@@ -36,14 +36,14 @@ public:
     virtual bool isLogReplay() { return false; }
     virtual bool isSecureConnection() { return false; } ///< Returns true if the connection is secure (e.g. USB, wired ethernet)
 
-    SharedLinkConfigurationPtr linkConfiguration() { return m_config; }
+    SharedLinkConfigurationPtr linkConfiguration() { return _config; }
     uint8_t mavlinkChannel() const;
     bool mavlinkChannelIsSet() const;
-    bool isPX4Flow() const { return m_isPX4Flow; }
-    bool decodedFirstMavlinkPacket(void) const { return m_decodedFirstMavlinkPacket; }
-    void setDecodedFirstMavlinkPacket(bool decodedFirstMavlinkPacket) { m_decodedFirstMavlinkPacket = decodedFirstMavlinkPacket; }
+    bool isPX4Flow() const { return _isPX4Flow; }
+    bool decodedFirstMavlinkPacket(void) const { return _decodedFirstMavlinkPacket; }
+    void setDecodedFirstMavlinkPacket(bool decodedFirstMavlinkPacket) { _decodedFirstMavlinkPacket = decodedFirstMavlinkPacket; }
     void writeBytesThreadSafe(const char *bytes, int length);
-    void addVehicleReference() { ++m_vehicleReferenceCount; }
+    void addVehicleReference() { ++_vehicleReferenceCount; }
     void removeVehicleReference();
     bool initMavlinkSigning();
     void setSigningSignatureFailure(bool failure);
@@ -67,7 +67,7 @@ protected:
 
     void _connectionRemoved();
 
-    SharedLinkConfigurationPtr m_config;
+    SharedLinkConfigurationPtr _config;
 
 private slots:
     /// Not thread safe if called directly, only writeBytesThreadSafe is thread safe
@@ -77,10 +77,10 @@ private:
     /// connect is private since all links should be created through LinkManager::createConnectedLink calls
     virtual bool _connect() = 0;
 
-    uint8_t m_mavlinkChannel = std::numeric_limits<uint8_t>::max();
-    bool m_decodedFirstMavlinkPacket = false;
-    bool m_isPX4Flow = false;
-    int m_vehicleReferenceCount = 0;
+    uint8_t _mavlinkChannel = std::numeric_limits<uint8_t>::max();
+    bool _decodedFirstMavlinkPacket = false;
+    bool _isPX4Flow = false;
+    int _vehicleReferenceCount = 0;
     bool _signingSignatureFailure = false;
 };
 
