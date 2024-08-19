@@ -65,7 +65,7 @@ void SerialLink::_writeBytes(const QByteArray &data)
     } else {
         // Error occurred
         qWarning() << "Serial port not writeable";
-        _emitLinkError(tr("Could not send data - link %1 is disconnected!").arg(m_config->name()));
+        _emitLinkError(tr("Could not send data - link %1 is disconnected!").arg(_config->name()));
     }
 }
 
@@ -103,7 +103,7 @@ bool SerialLink::_connect(void)
 
     // Initialize the connection
     if (!_hardwareConnect(error, errorString)) {
-        if (m_config->isAutoConnect()) {
+        if (_config->isAutoConnect()) {
             // Be careful with spitting out open error related to trying to open a busy port using autoconnect
             if (error == QSerialPort::PermissionError) {
                 // Device already open, ignore and fail connect
@@ -195,7 +195,7 @@ bool SerialLink::_hardwareConnect(QSerialPort::SerialPortError& error, QString& 
     }
 #endif
     if (!_port->isOpen() ) {
-        qDebug() << "open failed" << _port->errorString() << _port->error() << m_config->name() << "autconnect:" << m_config->isAutoConnect();
+        qDebug() << "open failed" << _port->errorString() << _port->error() << _config->name() << "autconnect:" << _config->isAutoConnect();
         error = _port->error();
         errorString = _port->errorString();
         _port->close();
@@ -234,7 +234,7 @@ void SerialLink::_readBytes(void)
     } else {
         // Error occurred
         qWarning() << "Serial port not readable";
-        _emitLinkError(tr("Could not read data - link %1 is disconnected!").arg(m_config->name()));
+        _emitLinkError(tr("Could not read data - link %1 is disconnected!").arg(_config->name()));
     }
 }
 
@@ -272,7 +272,7 @@ void SerialLink::_emitLinkError(const QString& errorMsg)
 {
     QString msg("Error on link %1. %2");
     qDebug() << errorMsg;
-    emit communicationError(tr("Link Error"), msg.arg(m_config->name()).arg(errorMsg));
+    emit communicationError(tr("Link Error"), msg.arg(_config->name()).arg(errorMsg));
 }
 
 bool SerialLink::isSecureConnection()
