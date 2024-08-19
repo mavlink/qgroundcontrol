@@ -25,19 +25,19 @@ QGC_LOGGING_CATEGORY(LinkInterfaceLog, "LinkInterfaceLog")
 
 LinkInterface::LinkInterface(SharedLinkConfigurationPtr &config, bool isPX4Flow, QObject *parent)
     : QThread(parent)
-    , m_config(config)
-    , m_isPX4Flow(isPX4Flow)
+    , _config(config)
+    , _isPX4Flow(isPX4Flow)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
 LinkInterface::~LinkInterface()
 {
-    if (m_vehicleReferenceCount != 0) {
-        qCWarning(LinkInterfaceLog) << Q_FUNC_INFO << "still have vehicle references:" << m_vehicleReferenceCount;
+    if (_vehicleReferenceCount != 0) {
+        qCWarning(LinkInterfaceLog) << Q_FUNC_INFO << "still have vehicle references:" << _vehicleReferenceCount;
     }
 
-    m_config.reset();
+    _config.reset();
 }
 
 uint8_t LinkInterface::mavlinkChannel() const
@@ -46,12 +46,12 @@ uint8_t LinkInterface::mavlinkChannel() const
         qCWarning(LinkInterfaceLog) << Q_FUNC_INFO << "mavlinkChannelIsSet() == false";
     }
 
-    return m_mavlinkChannel;
+    return _mavlinkChannel;
 }
 
 bool LinkInterface::mavlinkChannelIsSet() const
 {
-    return (LinkManager::invalidMavlinkChannel() != m_mavlinkChannel);
+    return (LinkManager::invalidMavlinkChannel() != _mavlinkChannel);
 }
 
 bool LinkInterface::initMavlinkSigning(void)
@@ -59,14 +59,14 @@ bool LinkInterface::initMavlinkSigning(void)
     if (!isSecureConnection()) {
         auto appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
         QByteArray signingKeyBytes = appSettings->mavlink2SigningKey()->rawValue().toByteArray();
-        if (MAVLinkSigning::initSigning(static_cast<mavlink_channel_t>(m_mavlinkChannel), signingKeyBytes, MAVLinkSigning::insecureConnectionAccceptUnsignedCallback)) {
+        if (MAVLinkSigning::initSigning(static_cast<mavlink_channel_t>(_mavlinkChannel), signingKeyBytes, MAVLinkSigning::insecureConnectionAccceptUnsignedCallback)) {
             if (signingKeyBytes.isEmpty()) {
-                qCDebug(LinkInterfaceLog) << "Signing disabled on channel" << m_mavlinkChannel;
+                qCDebug(LinkInterfaceLog) << "Signing disabled on channel" << _mavlinkChannel;
             } else {
-                qCDebug(LinkInterfaceLog) << "Signing enabled on channel" << m_mavlinkChannel;
+                qCDebug(LinkInterfaceLog) << "Signing enabled on channel" << _mavlinkChannel;
             }
         } else {
-            qWarning() << Q_FUNC_INFO << "Failed To enable Signing on channel" << m_mavlinkChannel;
+            qWarning() << Q_FUNC_INFO << "Failed To enable Signing on channel" << _mavlinkChannel;
             // FIXME: What should we do here?
             return false;
         }
@@ -80,18 +80,18 @@ bool LinkInterface::_allocateMavlinkChannel()
     Q_ASSERT(!mavlinkChannelIsSet());
 
     if (mavlinkChannelIsSet()) {
-        qCWarning(LinkInterfaceLog) << Q_FUNC_INFO << "already have" << m_mavlinkChannel;
+        qCWarning(LinkInterfaceLog) << Q_FUNC_INFO << "already have" << _mavlinkChannel;
         return true;
     }
 
-    m_mavlinkChannel = qgcApp()->toolbox()->linkManager()->allocateMavlinkChannel();
+    _mavlinkChannel = qgcApp()->toolbox()->linkManager()->allocateMavlinkChannel();
 
     if (!mavlinkChannelIsSet()) {
         qCWarning(LinkInterfaceLog) << Q_FUNC_INFO << "failed";
         return false;
     }
 
-    qCDebug(LinkInterfaceLog) << "_allocateMavlinkChannel" << m_mavlinkChannel;
+    qCDebug(LinkInterfaceLog) << "_allocateMavlinkChannel" << _mavlinkChannel;
 
     initMavlinkSigning();
 
@@ -100,14 +100,14 @@ bool LinkInterface::_allocateMavlinkChannel()
 
 void LinkInterface::_freeMavlinkChannel()
 {
-    qCDebug(LinkInterfaceLog) << Q_FUNC_INFO << m_mavlinkChannel;
+    qCDebug(LinkInterfaceLog) << Q_FUNC_INFO << _mavlinkChannel;
 
     if (!mavlinkChannelIsSet()) {
         return;
     }
 
-    qgcApp()->toolbox()->linkManager()->freeMavlinkChannel(m_mavlinkChannel);
-    m_mavlinkChannel = LinkManager::invalidMavlinkChannel();
+    qgcApp()->toolbox()->linkManager()->freeMavlinkChannel(_mavlinkChannel);
+    _mavlinkChannel = LinkManager::invalidMavlinkChannel();
 }
 
 void LinkInterface::writeBytesThreadSafe(const char *bytes, int length)
@@ -118,8 +118,8 @@ void LinkInterface::writeBytesThreadSafe(const char *bytes, int length)
 
 void LinkInterface::removeVehicleReference()
 {
-    if (m_vehicleReferenceCount != 0) {
-        m_vehicleReferenceCount--;
+    if (_vehicleReferenceCount != 0) {
+        _vehicleReferenceCount--;
         _connectionRemoved();
     } else {
         qCWarning(LinkInterfaceLog) << Q_FUNC_INFO << "called with no vehicle references";
@@ -128,7 +128,7 @@ void LinkInterface::removeVehicleReference()
 
 void LinkInterface::_connectionRemoved()
 {
-    if (m_vehicleReferenceCount == 0) {
+    if (_vehicleReferenceCount == 0) {
         // Since there are no vehicles on the link we can disconnect it right now
         disconnect();
     } else {
