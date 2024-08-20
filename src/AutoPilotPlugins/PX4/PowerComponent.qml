@@ -223,6 +223,7 @@ SetupPage {
                         batteryIndex:   _batteryIndex
                     }
 
+                    property bool battVoltLoadDropAvailable:    batParams.battVoltLoadDropAvailable
                     property bool battVoltageDividerAvailable:  batParams.battVoltageDividerAvailable
                     property bool battAmpsPerVoltAvailable:     batParams.battAmpsPerVoltAvailable
 
@@ -369,6 +370,7 @@ SetupPage {
                                 id:                 showAdvanced
                                 Layout.columnSpan:  batteryGrid.columns
                                 text:               qsTr("Show Advanced Settings")
+                                visible:            battVoltLoadDropAvailable
                             }
 
                             QGCLabel {
