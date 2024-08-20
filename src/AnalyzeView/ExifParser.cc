@@ -1,8 +1,11 @@
 #include "ExifParser.h"
 #include "QGCLoggingCategory.h"
 
-#include <QtCore/QtEndian>
+#include <QtCore/QByteArray>
 #include <QtCore/QDateTime>
+#include <QtCore/QtEndian>
+
+#include <exif.h>
 
 QGC_LOGGING_CATEGORY(ExifParserLog, "qgc.analyzeview.exifparser")
 
@@ -58,31 +61,19 @@ namespace {
         char c[0xa3];
         readable_s readable;
     };
-}
+} // namespace
 
 namespace ExifParser {
 
 double readTime(const QByteArray &buf)
 {
-    // find creation date header index
-    static const QByteArray createDateHeader("\x04\x90\x02", 3);
-    const uint32_t createDateHeaderIndex = buf.indexOf(createDateHeader);
+    easyexif::EXIFInfo result;
+    if (result.parseFrom(reinterpret_cast<const unsigned char*>(buf.constData()), buf.size()) != PARSE_EXIF_SUCCESS) {
+        qCWarning(ExifParserLog) << "Could not parse buffer";
+        return -1.0;
+    }
 
-    // extract size of date-time string, -1 accounting for null-termination
-    const uint32_t* const sizeString = reinterpret_cast<const uint32_t*>(buf.mid(createDateHeaderIndex + 4, 4).constData());
-    const uint32_t createDateStringSize = qFromLittleEndian(*sizeString) - 1;
-
-    // find header position
-    static const QByteArray tiffHeaderIntel("\x49\x49\x2A\x00", 4);
-    // static const QByteArray tiffHeaderMotorola("\x4D\x4D\x00\x2A", 4);
-    const uint32_t tiffHeaderIndex = buf.indexOf(tiffHeaderIntel);
-
-    // extract location of date-time string
-    const uint32_t* const dataIndex = reinterpret_cast<const uint32_t*>(buf.mid(createDateHeaderIndex + 8, 4).constData());
-    const uint32_t createDateStringDataIndex = qFromLittleEndian(*dataIndex) + tiffHeaderIndex;
-
-    // read out data of create date-time field
-    const QString createDate = buf.mid(createDateStringDataIndex, createDateStringSize);
+    const QString createDate = QString(result.DateTimeOriginal.c_str());
 
     const QStringList createDateList = createDate.split(' ');
     if (createDateList.count() < 2) {
@@ -110,7 +101,7 @@ double readTime(const QByteArray &buf)
     return (tagTime.toMSecsSinceEpoch() / 1000.0);
 }
 
-bool write(QByteArray& buf, const GeoTagWorker::cameraFeedbackPacket& geotag)
+bool write(QByteArray &buf, const GeoTagWorker::cameraFeedbackPacket &geotag)
 {
     static const QByteArray app1Header("\xff\xe1", 2);
 
@@ -242,4 +233,4 @@ bool write(QByteArray& buf, const GeoTagWorker::cameraFeedbackPacket& geotag)
     return true;
 }
 
-}
+} // namespace ExifParser
