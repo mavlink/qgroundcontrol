@@ -171,7 +171,7 @@ Example commands to build a default QGC and run it afterwards:
 1. Configure:
 
    ```sh
-	cmake -B build -G Ninja CMAKE_BUILD_TYPE=Debug
+	cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
    ```
 
 1. Build
