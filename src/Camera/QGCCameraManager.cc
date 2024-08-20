@@ -400,12 +400,11 @@ static void _requestCameraInfoMessageResultHandler(void* resultHandlerData, MAV_
     if (result != MAV_RESULT_ACCEPTED) {
         qCDebug(CameraManagerLog) << "MAV_CMD_REQUEST_MESSAGE:MAVLINK_MSG_ID_CAMERA_INFORMATION failed. Falling back to MAV_CMD_REQUEST_CAMERA_INFORMATION. compId" << cameraInfo->compID << "Result:" << result << "FailureCode:" << failureCode;
 
-        Vehicle::MavCmdAckHandlerInfo_t ackHandlerInfo = {
-            .resultHandler = _requestCameraInfoCommandResultHandler,
-            .resultHandlerData = cameraInfo,
-            .progressHandler = nullptr,
-            .progressHandlerData = nullptr
-        };
+        Vehicle::MavCmdAckHandlerInfo_t ackHandlerInfo;
+        ackHandlerInfo.resultHandler        = _requestCameraInfoCommandResultHandler;
+        ackHandlerInfo.resultHandlerData    = cameraInfo;
+        ackHandlerInfo.progressHandler      = nullptr;
+        ackHandlerInfo.progressHandlerData  = nullptr;
 
         cameraInfo->vehicle->sendMavCommandWithHandler(&ackHandlerInfo, cameraInfo->compID, MAV_CMD_REQUEST_CAMERA_INFORMATION, 1 /* request camera capabilities */);
     }
