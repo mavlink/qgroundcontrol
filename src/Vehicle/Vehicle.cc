@@ -2855,19 +2855,18 @@ void Vehicle::_requestMessageWaitForMessageResultHandler(void* resultHandlerData
 
 void Vehicle::requestMessage(RequestMessageResultHandler resultHandler, void* resultHandlerData, int compId, int messageId, float param1, float param2, float param3, float param4, float param5)
 {
-    RequestMessageInfo_t requestInfo = {
-        .vehicle            = this,
-        .compId             = compId,
-        .msgId              = messageId,
-        .resultHandler      = resultHandler,
-        .resultHandlerData  = resultHandlerData,
-    };
-    _requestMessageInfoMap[compId][messageId] = new RequestMessageInfo_t(requestInfo);
+    auto requestMessageInfo = new RequestMessageInfo_t;
+    requestMessageInfo->vehicle                 = this;
+    requestMessageInfo->compId                  = compId;
+    requestMessageInfo->msgId                   = messageId;
+    requestMessageInfo->resultHandler           = resultHandler;
+    requestMessageInfo->resultHandlerData       = resultHandlerData;
 
-    Vehicle::MavCmdAckHandlerInfo_t handlerInfo = {
-        .resultHandler      = _requestMessageCmdResultHandler,
-        .resultHandlerData  = &requestInfo,
-    };
+    _requestMessageInfoMap[compId][messageId] = requestMessageInfo;
+
+    Vehicle::MavCmdAckHandlerInfo_t handlerInfo;
+    handlerInfo.resultHandler       = _requestMessageCmdResultHandler;
+    handlerInfo.resultHandlerData   = requestMessageInfo;
 
     _sendMavCommandWorker(false,                                    // commandInt
                           false,                                    // showError
