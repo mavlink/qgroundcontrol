@@ -96,6 +96,12 @@ elseif(WIN32)
     endif()
 endif()
 
+if(CMAKE_CROSSCOMPILING AND ANDROID)
+    set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)
+    set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)
+    set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
+endif()
+
 set(BUILD_SHARED_LIBS OFF)
 
 # include(CMakePrintSystemInformation)
