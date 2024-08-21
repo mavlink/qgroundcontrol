@@ -88,9 +88,8 @@ Rectangle {
 
     ColumnLayout {
         id:                 mainLayout
-        anchors.margins:    _margins
-        anchors.left:       parent.left
-        anchors.right:      parent.right
+        anchors.centerIn:   parent
+        width:              parent.width - (_margins * 2)
         spacing:            _margins
 
         QGCLabel {
@@ -147,7 +146,7 @@ Rectangle {
                     anchors.fill:       parent
                     source:             "/res/XDelete.svg"
                     fillMode:           Image.PreserveAspectFit
-                    color:              qgcPal.text
+                    color:              qgcPal.primaryButtonText
                 }
 
                 QGCMouseArea {

@@ -70,7 +70,7 @@ Rectangle {
             fillMode:               Image.PreserveAspectFit
             smooth:                 false
             mipmap:                 false
-            color:                  qgcPal.buttonText
+            color:                  qgcPal.primaryButtonText
             cache:                  false
             source:                 "/res/ArrowRight.svg"
         }
