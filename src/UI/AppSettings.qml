@@ -83,13 +83,15 @@ Rectangle {
                     Layout.fillWidth:   true
                     text:               name
                     padding:            ScreenTools.defaultFontPixelWidth / 2
+                    hoverEnabled:       !ScreenTools.isMobile
                     autoExclusive:      true
                     icon.source:        iconUrl
                     visible:            pageVisible()
 
                     background: Rectangle {
-                        color:  checked ? qgcPal.buttonHighlight : "transparent"
-                        radius: ScreenTools.defaultFontPixelWidth / 2
+                        color:      qgcPal.buttonHighlight
+                        opacity:    checked ? 1 : enabled && hovered ? .2 : 0
+                        radius:     ScreenTools.defaultFontPixelWidth / 2
                     }
 
                     contentItem: RowLayout {
