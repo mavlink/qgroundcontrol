@@ -162,7 +162,7 @@ int runTests(bool stress, QStringView unitTestOptions)
 	// QmlControls
 
 	// Terrain
-	// UT_REGISTER_TEST(TerrainQueryTest)
+	UT_REGISTER_TEST(TerrainQueryTest)
 
 	// UI
 

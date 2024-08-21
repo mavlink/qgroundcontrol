@@ -12,30 +12,49 @@
 #include "QGCFileDownload.h"
 #include "QGCLoggingCategory.h"
 
-#include <QtCore/QUrl>
-#include <QtCore/QUrlQuery>
-#include <QtNetwork/QNetworkRequest>
-#include <QtNetwork/QNetworkProxy>
-#include <QtNetwork/QNetworkReply>
-#include <QtNetwork/QSslConfiguration>
+#include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
-#include <QtCore/QJsonArray>
+#include <QtCore/QUrl>
+#include <QtCore/QUrlQuery>
+#include <QtNetwork/QNetworkAccessManager>
+#include <QtNetwork/QNetworkProxy>
+#include <QtNetwork/QNetworkReply>
+#include <QtNetwork/QNetworkRequest>
+#include <QtNetwork/QSslConfiguration>
 #include <QtPositioning/QGeoCoordinate>
 
 QGC_LOGGING_CATEGORY(TerrainQueryAirMapLog, "qgc.terrain.terrainqueryairmap")
 QGC_LOGGING_CATEGORY(TerrainQueryAirMapVerboseLog, "qgc.terrain.terrainqueryairmap.verbose")
 
-TerrainAirMapQuery::TerrainAirMapQuery(QObject* parent)
+TerrainAirMapQuery::TerrainAirMapQuery(QObject *parent)
     : TerrainQueryInterface(parent)
+    , _networkManager(new QNetworkAccessManager(this))
 {
+    // qCDebug(TerrainAirMapQuery) << Q_FUNC_INFO << this;
+
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
+    QNetworkProxy proxy = _networkManager->proxy();
+    proxy.setType(QNetworkProxy::DefaultProxy);
+    _networkManager->setProxy(proxy);
+#endif
+
     qCDebug(TerrainQueryAirMapVerboseLog) << "supportsSsl" << QSslSocket::supportsSsl() << "sslLibraryBuildVersionString" << QSslSocket::sslLibraryBuildVersionString();
 }
 
-void TerrainAirMapQuery::requestCoordinateHeights(const QList<QGeoCoordinate>& coordinates)
+TerrainAirMapQuery::~TerrainAirMapQuery()
 {
+    // qCDebug(TerrainAirMapQuery) << Q_FUNC_INFO << this;
+}
+
+void TerrainAirMapQuery::requestCoordinateHeights(const QList<QGeoCoordinate> &coordinates)
+{
+    if (coordinates.isEmpty()) {
+        return;
+    }
+
     QString points;
-    for (const QGeoCoordinate& coord: coordinates) {
+    for (const QGeoCoordinate &coord: coordinates) {
             points += QString::number(coord.latitude(), 'f', 10) + ","
                     + QString::number(coord.longitude(), 'f', 10) + ",";
     }
@@ -44,11 +63,11 @@ void TerrainAirMapQuery::requestCoordinateHeights(const QList<QGeoCoordinate>& c
     QUrlQuery query;
     query.addQueryItem(QStringLiteral("points"), points);
 
-    _queryMode = QueryModeCoordinates;
-    _sendQuery(QString() /* path */, query);
+    _queryMode = TerrainQuery::QueryModeCoordinates;
+    _sendQuery(QString(), query);
 }
 
-void TerrainAirMapQuery::requestPathHeights(const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord)
+void TerrainAirMapQuery::requestPathHeights(const QGeoCoordinate &fromCoord, const QGeoCoordinate &toCoord)
 {
     QString points;
     points += QString::number(fromCoord.latitude(), 'f', 10) + ","
@@ -59,11 +78,11 @@ void TerrainAirMapQuery::requestPathHeights(const QGeoCoordinate& fromCoord, con
     QUrlQuery query;
     query.addQueryItem(QStringLiteral("points"), points);
 
-    _queryMode = QueryModePath;
+    _queryMode = TerrainQuery::QueryModePath;
     _sendQuery(QStringLiteral("/path"), query);
 }
 
-void TerrainAirMapQuery::requestCarpetHeights(const QGeoCoordinate& swCoord, const QGeoCoordinate& neCoord, bool statsOnly)
+void TerrainAirMapQuery::requestCarpetHeights(const QGeoCoordinate &swCoord, const QGeoCoordinate &neCoord, bool statsOnly)
 {
     QString points;
     points += QString::number(swCoord.latitude(), 'f', 10) + ","
@@ -74,221 +93,212 @@ void TerrainAirMapQuery::requestCarpetHeights(const QGeoCoordinate& swCoord, con
     QUrlQuery query;
     query.addQueryItem(QStringLiteral("points"), points);
 
-    _queryMode = QueryModeCarpet;
+    _queryMode = TerrainQuery::QueryModeCarpet;
     _carpetStatsOnly = statsOnly;
 
     _sendQuery(QStringLiteral("/carpet"), query);
 }
 
-void TerrainAirMapQuery::_sendQuery(const QString& path, const QUrlQuery& urlQuery)
+void TerrainAirMapQuery::_sendQuery(const QString &path, const QUrlQuery &urlQuery)
 {
+    // TODO: Invalid URL
+    // https://terrain-ce.suite.auterion.com/api/v1/
     QUrl url(QStringLiteral("https://api.airmap.com/elevation/v1/ele") + path);
-    qCDebug(TerrainQueryAirMapLog) << "_sendQuery" << url;
+    qCDebug(TerrainQueryAirMapLog) << Q_FUNC_INFO << url;
     url.setQuery(urlQuery);
 
     QNetworkRequest request(url);
-
     QSslConfiguration sslConf = request.sslConfiguration();
     sslConf.setPeerVerifyMode(QSslSocket::VerifyNone);
     request.setSslConfiguration(sslConf);
 
-    QNetworkProxy tProxy;
-    tProxy.setType(QNetworkProxy::DefaultProxy);
-    _networkManager.setProxy(tProxy);
-
-    QNetworkReply* networkReply = _networkManager.get(request);
+    QNetworkReply* const networkReply = _networkManager->get(request);
     if (!networkReply) {
         qCWarning(TerrainQueryAirMapLog) << "QNetworkManager::Get did not return QNetworkReply";
         _requestFailed();
         return;
     }
+
     QGCFileDownload::setIgnoreSSLErrorsIfNeeded(*networkReply);
 
-    connect(networkReply, &QNetworkReply::finished, this, &TerrainAirMapQuery::_requestFinished);
-    connect(networkReply, &QNetworkReply::sslErrors, this, &TerrainAirMapQuery::_sslErrors);
-
-    connect(networkReply, &QNetworkReply::errorOccurred, this, &TerrainAirMapQuery::_requestError);
+    (void) connect(networkReply, &QNetworkReply::finished, this, &TerrainAirMapQuery::_requestFinished);
+    (void) connect(networkReply, &QNetworkReply::sslErrors, this, &TerrainAirMapQuery::_sslErrors);
+    (void) connect(networkReply, &QNetworkReply::errorOccurred, this, &TerrainAirMapQuery::_requestError);
 }
 
 void TerrainAirMapQuery::_requestError(QNetworkReply::NetworkError code)
 {
-    QNetworkReply* reply = qobject_cast<QNetworkReply*>(QObject::sender());
-
     if (code != QNetworkReply::NoError) {
-        qCWarning(TerrainQueryAirMapLog) << "_requestError error:url:data" << reply->error() << reply->url() << reply->readAll();
-        return;
+        QNetworkReply* const reply = qobject_cast<QNetworkReply*>(QObject::sender());
+        qCWarning(TerrainQueryAirMapLog) << Q_FUNC_INFO << "error:url:data" << reply->error() << reply->url() << reply->readAll();
     }
 }
 
 void TerrainAirMapQuery::_sslErrors(const QList<QSslError> &errors)
 {
-    for (const auto &error : errors) {
-        qCWarning(TerrainQueryAirMapLog) << "SSL error: " << error.errorString();
+    for (const QSslError &error : errors) {
+        qCWarning(TerrainQueryAirMapLog) << "SSL error:" << error.errorString();
 
-        const auto &certificate = error.certificate();
+        const QSslCertificate &certificate = error.certificate();
         if (!certificate.isNull()) {
-            qCWarning(TerrainQueryAirMapLog) << "SSL Certificate problem: " << certificate.toText();
+            qCWarning(TerrainQueryAirMapLog) << "SSL Certificate problem:" << certificate.toText();
         }
     }
 }
 
-void TerrainAirMapQuery::_requestFinished(void)
+void TerrainAirMapQuery::_requestFinished()
 {
-    QNetworkReply* reply = qobject_cast<QNetworkReply*>(QObject::sender());
+    QNetworkReply* const reply = qobject_cast<QNetworkReply*>(QObject::sender());
+    if (!reply) {
+        qCWarning(TerrainQueryAirMapLog) << Q_FUNC_INFO << "null reply";
+        return;
+    }
 
     if (reply->error() != QNetworkReply::NoError) {
-        qCWarning(TerrainQueryAirMapLog) << "_requestFinished error:url:data" << reply->error() << reply->url() << reply->readAll();
+        qCWarning(TerrainQueryAirMapLog) << Q_FUNC_INFO << "error:url:data" << reply->error() << reply->url() << reply->readAll();
         reply->deleteLater();
         _requestFailed();
         return;
     }
 
-    QByteArray responseBytes = reply->readAll();
+    const QByteArray responseBytes = reply->readAll();
     reply->deleteLater();
 
     // Convert the response to Json
     QJsonParseError parseError;
-    QJsonDocument responseJson = QJsonDocument::fromJson(responseBytes, &parseError);
+    const QJsonDocument responseJson = QJsonDocument::fromJson(responseBytes, &parseError);
     if (parseError.error != QJsonParseError::NoError) {
-        qCWarning(TerrainQueryAirMapLog) << "_requestFinished unable to parse json:" << parseError.errorString();
+        qCWarning(TerrainQueryAirMapLog) << Q_FUNC_INFO << "unable to parse json:" << parseError.errorString();
         _requestFailed();
         return;
     }
 
     // Check airmap reponse status
-    QJsonObject rootObject = responseJson.object();
-    QString status = rootObject["status"].toString();
+    const QJsonObject rootObject = responseJson.object();
+    const QString status = rootObject["status"].toString();
     if (status != "success") {
-        qCWarning(TerrainQueryAirMapLog) << "_requestFinished status != success:" << status;
+        qCWarning(TerrainQueryAirMapLog) << Q_FUNC_INFO << "status != success:" << status;
         _requestFailed();
         return;
     }
 
     // Send back data
-    const QJsonValue& jsonData = rootObject["data"];
-    qCDebug(TerrainQueryAirMapLog) << "_requestFinished success";
+    const QJsonValue &jsonData = rootObject["data"];
+    qCDebug(TerrainQueryAirMapLog) << Q_FUNC_INFO << "success";
     switch (_queryMode) {
-    case QueryModeCoordinates:
-        emit _parseCoordinateData(jsonData);
+    case TerrainQuery::QueryModeCoordinates:
+        _parseCoordinateData(jsonData);
         break;
-    case QueryModePath:
-        emit _parsePathData(jsonData);
+    case TerrainQuery::QueryModePath:
+        _parsePathData(jsonData);
         break;
-    case QueryModeCarpet:
-        emit _parseCarpetData(jsonData);
+    case TerrainQuery::QueryModeCarpet:
+        _parseCarpetData(jsonData);
+        break;
+    default:
         break;
     }
 }
 
-void TerrainAirMapQuery::_requestFailed(void)
+void TerrainAirMapQuery::_requestFailed()
 {
     switch (_queryMode) {
-    case QueryModeCoordinates:
-        emit coordinateHeightsReceived(false /* success */, QList<double>() /* heights */);
+    case TerrainQuery::QueryModeCoordinates:
+        emit coordinateHeightsReceived(false, QList<double>());
         break;
-    case QueryModePath:
-        emit pathHeightsReceived(false /* success */, qQNaN() /* latStep */, qQNaN() /* lonStep */, QList<double>() /* heights */);
+    case TerrainQuery::QueryModePath:
+        emit pathHeightsReceived(false, qQNaN(), qQNaN(), QList<double>());
         break;
-    case QueryModeCarpet:
-        emit carpetHeightsReceived(false /* success */, qQNaN() /* minHeight */, qQNaN() /* maxHeight */, QList<QList<double>>() /* carpet */);
+    case TerrainQuery::QueryModeCarpet:
+        emit carpetHeightsReceived(false, qQNaN(), qQNaN(), QList<QList<double>>());
+        break;
+    default:
         break;
     }
 }
 
-void TerrainAirMapQuery::_parseCoordinateData(const QJsonValue& coordinateJson)
+void TerrainAirMapQuery::_parseCoordinateData(const QJsonValue &coordinateJson)
 {
-    QList<double> heights;
-    const QJsonArray& dataArray = coordinateJson.toArray();
-    for (int i = 0; i < dataArray.count(); i++) {
-        heights.append(dataArray[i].toDouble());
-    }
-
-    emit coordinateHeightsReceived(true /* success */, heights);
-}
-
-void TerrainAirMapQuery::_parsePathData(const QJsonValue& pathJson)
-{
-    QJsonObject jsonObject =    pathJson.toArray()[0].toObject();
-    QJsonArray stepArray =      jsonObject["step"].toArray();
-    QJsonArray profileArray =   jsonObject["profile"].toArray();
-
-    double latStep = stepArray[0].toDouble();
-    double lonStep = stepArray[1].toDouble();
+    const QJsonArray dataArray = coordinateJson.toArray();
 
     QList<double> heights;
-    for (QJsonValue profileValue: profileArray) {
-        heights.append(profileValue.toDouble());
+    for (const QJsonValue &dataValue: dataArray) {
+        (void) heights.append(dataValue.toDouble());
     }
 
-    emit pathHeightsReceived(true /* success */, latStep, lonStep, heights);
+    emit coordinateHeightsReceived(true, heights);
 }
 
-void TerrainAirMapQuery::_parseCarpetData(const QJsonValue& carpetJson)
+void TerrainAirMapQuery::_parsePathData(const QJsonValue &pathJson)
 {
-    QJsonObject jsonObject =    carpetJson.toArray()[0].toObject();
+    const QJsonObject jsonObject = pathJson.toArray()[0].toObject();
+    const QJsonArray stepArray = jsonObject["step"].toArray();
+    const QJsonArray profileArray = jsonObject["profile"].toArray();
 
-    QJsonObject statsObject =   jsonObject["stats"].toObject();
-    double      minHeight =     statsObject["min"].toDouble();
-    double      maxHeight =     statsObject["max"].toDouble();
+    const double latStep = stepArray[0].toDouble();
+    const double lonStep = stepArray[1].toDouble();
+
+    QList<double> heights;
+    for (const QJsonValue &profileValue: profileArray) {
+        (void) heights.append(profileValue.toDouble());
+    }
+
+    emit pathHeightsReceived(true, latStep, lonStep, heights);
+}
+
+void TerrainAirMapQuery::_parseCarpetData(const QJsonValue &carpetJson)
+{
+    const QJsonObject jsonObject = carpetJson.toArray()[0].toObject();
+
+    const QJsonObject statsObject = jsonObject["stats"].toObject();
+    const double minHeight = statsObject["min"].toDouble();
+    const double maxHeight = statsObject["max"].toDouble();
 
     QList<QList<double>> carpet;
     if (!_carpetStatsOnly) {
-        QJsonArray carpetArray =   jsonObject["carpet"].toArray();
+        const QJsonArray carpetArray = jsonObject["carpet"].toArray();
 
-        for (int i=0; i<carpetArray.count(); i++) {
-            QJsonArray rowArray = carpetArray[i].toArray();
-            carpet.append(QList<double>());
+        for (qsizetype i = 0; i < carpetArray.count(); i++) {
+            const QJsonArray rowArray = carpetArray[i].toArray();
+            (void) carpet.append(QList<double>());
 
-            for (int j=0; j<rowArray.count(); j++) {
-                double height = rowArray[j].toDouble();
-                carpet.last().append(height);
+            for (qsizetype j = 0; j < rowArray.count(); j++) {
+                const double height = rowArray[j].toDouble();
+                (void) carpet.last().append(height);
             }
         }
     }
 
-    emit carpetHeightsReceived(true /*success*/, minHeight, maxHeight, carpet);
+    emit carpetHeightsReceived(true, minHeight, maxHeight, carpet);
 }
 
-TerrainOfflineAirMapQuery::TerrainOfflineAirMapQuery(QObject* parent)
+/*===========================================================================*/
+
+TerrainOfflineAirMapQuery::TerrainOfflineAirMapQuery(QObject *parent)
     : TerrainQueryInterface(parent)
 {
+    // qCDebug(AudioOutputLog) << Q_FUNC_INFO << this;
+
     qCDebug(TerrainQueryAirMapVerboseLog) << "supportsSsl" << QSslSocket::supportsSsl() << "sslLibraryBuildVersionString" << QSslSocket::sslLibraryBuildVersionString();
 }
 
-void TerrainOfflineAirMapQuery::requestCoordinateHeights(const QList<QGeoCoordinate>& coordinates)
+TerrainOfflineAirMapQuery::~TerrainOfflineAirMapQuery()
 {
-    if (coordinates.length() == 0) {
+    // qCDebug(AudioOutputLog) << Q_FUNC_INFO << this;
+}
+
+void TerrainOfflineAirMapQuery::requestCoordinateHeights(const QList<QGeoCoordinate> &coordinates)
+{
+    if (coordinates.isEmpty()) {
         return;
     }
 
+    _queryMode = TerrainQuery::QueryModeCoordinates;
     TerrainTileManager::instance()->addCoordinateQuery(this, coordinates);
 }
 
-void TerrainOfflineAirMapQuery::requestPathHeights(const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord)
+void TerrainOfflineAirMapQuery::requestPathHeights(const QGeoCoordinate &fromCoord, const QGeoCoordinate &toCoord)
 {
+    _queryMode = TerrainQuery::QueryModePath;
     TerrainTileManager::instance()->addPathQuery(this, fromCoord, toCoord);
-}
-
-void TerrainOfflineAirMapQuery::requestCarpetHeights(const QGeoCoordinate& swCoord, const QGeoCoordinate& neCoord, bool statsOnly)
-{
-    // TODO
-    Q_UNUSED(swCoord);
-    Q_UNUSED(neCoord);
-    Q_UNUSED(statsOnly);
-    qWarning() << "Carpet queries are currently not supported from offline air map data";
-}
-
-void TerrainOfflineAirMapQuery::_signalCoordinateHeights(bool success, QList<double> heights)
-{
-    emit coordinateHeightsReceived(success, heights);
-}
-
-void TerrainOfflineAirMapQuery::_signalPathHeights(bool success, double distanceBetween, double finalDistanceBetween, const QList<double>& heights)
-{
-    emit pathHeightsReceived(success, distanceBetween, finalDistanceBetween, heights);
-}
-
-void TerrainOfflineAirMapQuery::_signalCarpetHeights(bool success, double minHeight, double maxHeight, const QList<QList<double>>& carpet)
-{
-    emit carpetHeightsReceived(success, minHeight, maxHeight, carpet);
 }
