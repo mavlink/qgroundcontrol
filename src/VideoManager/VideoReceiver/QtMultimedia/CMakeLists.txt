@@ -1,3 +1,5 @@
+find_package(Qt6 REQUIRED COMPONENTS Core)
+
 qt_add_library(QtMultimediaReceiver STATIC)
 
 option(QGC_ENABLE_QT_VIDEOSTREAMING "Enable QtMultimedia Video Streaming Backend" ON)
@@ -6,7 +8,7 @@ if(NOT QGC_ENABLE_QT_VIDEOSTREAMING)
     return()
 endif()
 
-find_package(Qt6 REQUIRED COMPONENTS Core Multimedia MultimediaQuickPrivate Quick)
+find_package(Qt6 REQUIRED COMPONENTS Multimedia MultimediaQuickPrivate Quick)
 
 target_sources(QtMultimediaReceiver
     PRIVATE

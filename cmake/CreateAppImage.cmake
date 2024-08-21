@@ -29,4 +29,17 @@ endif()
 #     execute_process(COMMAND chmod a+x "${LD_GSTPLUGIN_PATH}")
 # endif()
 
-execute_process(COMMAND ${LD_PATH} --appdir ${APPDIR_PATH} --output appimage) # --plugin qt --plugin gtk --plugin gstreamer
+execute_process(COMMAND ${LD_PATH} --appdir ${APPDIR_PATH} --output appimage)
+# --exclude-library "libX*"
+# --exclude-library "libglib*"
+# --exclude-library "libgobject*"
+# --exclude-library "libgdk_pixbuf*"
+# --exclude-library "libwayland*"
+# --exclude-library "libgmodule*"
+# --exclude-library "libgio*"
+# --exclude-library "libxcb*"
+# --exclude-library "libxkbcommon*"
+# --exclude-library "libdb*"
+# --exclude-library "libgst*"
+# --exclude-library "libgthread*"
+# --plugin qt --plugin gtk --plugin gstreamer

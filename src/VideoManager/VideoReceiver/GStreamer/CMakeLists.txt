@@ -1,7 +1,9 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Quick)
 
 qt_add_library(GStreamerReceiver STATIC GLVideoItemStub.h)
+
 target_link_libraries(GStreamerReceiver PUBLIC Qt6::Quick)
+
 target_include_directories(GStreamerReceiver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 option(QGC_ENABLE_GST_VIDEOSTREAMING "Enable GStreamer Video Streaming Backend" ON)
@@ -10,9 +12,9 @@ if(NOT QGC_ENABLE_GST_VIDEOSTREAMING)
     return()
 endif()
 
-add_subdirectory(qmlglsink)
+add_subdirectory(gstqml6gl)
 
-if(NOT GST_QT6_PLUGIN_FOUND)
+if(NOT TARGET gstqml6gl)
     return()
 endif()
 
@@ -34,17 +36,18 @@ if(IOS)
     )
 endif()
 
+
 target_link_libraries(GStreamerReceiver
     PRIVATE
         Utilities
     PUBLIC
         Qt6::Core
-        qmlglsink
+        gstqml6gl
         Settings
         VideoReceiver
 )
 
-target_compile_definitions(GStreamerReceiver PUBLIC QGC_GST_STREAMING)
+target_compile_definitions(QGC PUBLIC QGC_GST_STREAMING)
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
     target_compile_definitions(GStreamerReceiver PRIVATE QGC_INSTALL_RELEASE)
 endif()
