@@ -9,64 +9,61 @@
 
 #pragma once
 
-#include "TerrainTile.h"
+#include "TerrainQueryInterface.h"
 
-#include <QtCore/QObject>
-#include <QtPositioning/QGeoCoordinate>
-#include <QtNetwork/QNetworkAccessManager>
-#include <QtNetwork/QNetworkReply>
-#include <QtCore/QMutex>
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QMutex>
+#include <QtCore/QObject>
+#include <QtCore/QQueue>
+#include <QtPositioning/QGeoCoordinate>
+
+class TerrainTile;
+class QNetworkAccessManager;
 
 Q_DECLARE_LOGGING_CATEGORY(TerrainTileManagerLog)
 
-class TerrainOfflineAirMapQuery;
-
-/// Used internally by TerrainOfflineAirMapQuery to manage terrain tiles
-class TerrainTileManager : public QObject {
+class TerrainTileManager : public QObject
+{
     Q_OBJECT
 
 public:
-    TerrainTileManager(QObject *parent = nullptr);
+    explicit TerrainTileManager(QObject *parent = nullptr);
     ~TerrainTileManager();
 
-    void addCoordinateQuery         (TerrainOfflineAirMapQuery* terrainQueryInterface, const QList<QGeoCoordinate>& coordinates);
-    void addPathQuery               (TerrainOfflineAirMapQuery* terrainQueryInterface, const QGeoCoordinate& startPoint, const QGeoCoordinate& endPoint);
-    bool getAltitudesForCoordinates (const QList<QGeoCoordinate>& coordinates, QList<double>& altitudes, bool& error);
+    static TerrainTileManager *instance();
 
-    static TerrainTileManager* instance();
-    static QList<QGeoCoordinate> pathQueryToCoords(const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord, double& distanceBetween, double& finalDistanceBetween);
+    void addCoordinateQuery(TerrainQueryInterface *terrainQueryInterface, const QList<QGeoCoordinate> &coordinates);
+    void addPathQuery(TerrainQueryInterface *terrainQueryInterface, const QGeoCoordinate &startPoint, const QGeoCoordinate &endPoint);
+
+    /// Either returns altitudes from cache or queues database request
+    ///     @param[out] error true: altitude not returned due to error, false: altitudes returned
+    ///     @return true: altitude returned (check error as well), false: database query queued (altitudes not returned)
+    bool getAltitudesForCoordinates(const QList<QGeoCoordinate> &coordinates, QList<double> &altitudes, bool &error);
+
+    /// Returns a list of individual coordinates along the requested path spaced according to the terrain tile value spacing
+    static QList<QGeoCoordinate> pathQueryToCoords(const QGeoCoordinate &fromCoord, const QGeoCoordinate &toCoord, double &distanceBetween, double &finalDistanceBetween);
 
 private slots:
     void _terrainDone();
 
 private:
-    enum class State {
-        Idle,
-        Downloading,
+    void _tileFailed();
+    void _cacheTile(const QByteArray &data, const QString &hash);
+    TerrainTile *_getCachedTile(const QString &hash);
+
+    struct QueuedRequestInfo_t {
+        TerrainQueryInterface *terrainQueryInterface;
+        TerrainQuery::QueryMode queryMode;
+        double distanceBetween;                         ///< Distance between each returned height
+        double finalDistanceBetween;                    ///< Distance between for final height
+        QList<QGeoCoordinate> coordinates;
     };
 
-    enum QueryMode {
-        QueryModeCoordinates,
-        QueryModePath,
-        QueryModeCarpet
-    };
+    QQueue<QueuedRequestInfo_t> _requestQueue;
+    TerrainQuery::State _state = TerrainQuery::State::Idle;
 
-    typedef struct {
-        TerrainOfflineAirMapQuery*  terrainQueryInterface;
-        QueryMode                   queryMode;
-        double                      distanceBetween;        // Distance between each returned height
-        double                      finalDistanceBetween;   // Distance between for final height
-        QList<QGeoCoordinate>       coordinates;
-    } QueuedRequestInfo_t;
+    QMutex _tilesMutex;
+    QHash<QString, TerrainTile*> _tiles;
 
-    void    _tileFailed                         (void);
-    QString _getTileHash                        (const QGeoCoordinate& coordinate);
-
-    QList<QueuedRequestInfo_t>  _requestQueue;
-    State                       _state = State::Idle;
-    QNetworkAccessManager*      _networkManager = nullptr;
-
-    QMutex                      _tilesMutex;
-    QHash<QString, TerrainTile> _tiles;
+    QNetworkAccessManager *_networkManager = nullptr;
 };
