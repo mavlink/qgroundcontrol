@@ -88,6 +88,7 @@ DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
     libgbm-dev \
     libgl1-mesa-dev \
     libgles2-mesa-dev \
+    libglu1-mesa-dev \
     libglfw3-dev \
     libopenal-dev \
     libpulse-dev \
@@ -99,6 +100,7 @@ DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
     libwayland-dev \
     libx11-dev \
     libzstd-dev \
+    mesa-common-dev \
     mesa-va-drivers \
     speech-dispatcher \
     speech-dispatcher-espeak \

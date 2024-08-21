@@ -74,7 +74,7 @@ static void qt_gst_log(GstDebugCategory * category,
 
 G_BEGIN_DECLS
 // The static plugins we use
-#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
+#ifdef QGC_GST_STATIC_BUILD
     GST_PLUGIN_STATIC_DECLARE(coreelements);
     GST_PLUGIN_STATIC_DECLARE(playback);
     GST_PLUGIN_STATIC_DECLARE(libav);
@@ -171,9 +171,11 @@ GStreamer::initialize(int argc, char* argv[], int debuglevel)
 
 #ifdef Q_OS_MAC
     #ifdef QGC_INSTALL_RELEASE
-        QString currentDir = QCoreApplication::applicationDirPath();
-        qgcputenv("GST_PLUGIN_SCANNER",           currentDir, "/../Frameworks/GStreamer.framework/Versions/1.0/libexec/gstreamer-1.0/gst-plugin-scanner");
-        qgcputenv("GTK_PATH",                     currentDir, "/../Frameworks/GStreamer.framework/Versions/Current");
+        const QString currentDir = QCoreApplication::applicationDirPath();
+        qgcputenv("GST_REGISTRY_REUSE_PLUGIN_SCANNER", "no", "");
+        qgcputenv("GST_PLUGIN_SCANNER",           currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/libexec/gstreamer-1.0/gst-plugin-scanner");
+        qgcputenv("GST_PTP_HELPER_1_0",           currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/libexec/gstreamer-1.0/gst-ptp-helper");
+        // qgcputenv("GTK_PATH",                     currentDir, "/../Frameworks/GStreamer.framework/Versions/Current");
         qgcputenv("GIO_EXTRA_MODULES",            currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gio/modules");
         qgcputenv("GST_PLUGIN_SYSTEM_PATH_1_0",   currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
         qgcputenv("GST_PLUGIN_SYSTEM_PATH",       currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
@@ -181,19 +183,26 @@ GStreamer::initialize(int argc, char* argv[], int debuglevel)
         qgcputenv("GST_PLUGIN_PATH",              currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
     #endif
 #elif defined(Q_OS_WIN)
-    QString currentDir = QCoreApplication::applicationDirPath();
-    qgcputenv("GST_PLUGIN_PATH", currentDir, "/gstreamer-plugins");
-#elif defined(Q_OS_LINUX)
     const QString currentDir = QCoreApplication::applicationDirPath();
-    qgcputenv("GST_REGISTRY_REUSE_PLUGIN_SCANNER", "no", "");
-    qgcputenv("GST_PLUGIN_SCANNER", "/usr/lib/x86_64-linux-gnu", "/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner");
-    qgcputenv("GST_PTP_HELPER_1_0", "/usr/lib/x86_64-linux-gnu", "/gstreamer1.0/gstreamer-1.0/gst-ptp-helper");
-    qgcputenv("GTK_PATH", "/usr", "");
-    qgcputenv("GIO_EXTRA_MODULES", "/usr/lib/x86_64-linux-gnu", "/gio/modules");
-    qgcputenv("GST_PLUGIN_SYSTEM_PATH_1_0", "/usr/lib/x86_64-linux-gnu", "/gstreamer-1.0");
-    qgcputenv("GST_PLUGIN_SYSTEM_PATH", "/usr/lib/x86_64-linux-gnu", "/gstreamer-1.0");
-    qgcputenv("GST_PLUGIN_PATH_1_0", currentDir, "../lib");
-    qgcputenv("GST_PLUGIN_PATH", currentDir, "../lib");
+    // qgcputenv("GST_PLUGIN_SCANNER", "C:/gstreamer/1.0/msvc_x86_64", "/libexec/gstreamer-1.0/gst-plugin-scanner");
+    // qgcputenv("GST_PTP_HELPER_1_0", "C:/gstreamer/1.0/msvc_x86_64", "/libexec/gstreamer-1.0/gst-ptp-helper");
+    // qgcputenv("GTK_PATH", "C:/gstreamer/1.0/msvc_x86_64", "");
+    // qgcputenv("GIO_EXTRA_MODULES", "C:/gstreamer/1.0/msvc_x86_64", "/lib/gio/modules");
+    // qgcputenv("GST_PLUGIN_SYSTEM_PATH_1_0", "C:/gstreamer/1.0/msvc_x86_64", "/lib/gstreamer-1.0");
+    // qgcputenv("GST_PLUGIN_SYSTEM_PATH", "C:/gstreamer/1.0/msvc_x86_64", "/lib/gstreamer-1.0");
+    qgcputenv("GST_PLUGIN_PATH_1_0", currentDir, "");
+    qgcputenv("GST_PLUGIN_PATH", currentDir, "");
+#elif defined(Q_OS_LINUX)
+    // const QString currentDir = QCoreApplication::applicationDirPath();
+    // qgcputenv("GST_REGISTRY_REUSE_PLUGIN_SCANNER", "no", "");
+    // qgcputenv("GST_PLUGIN_SCANNER", currentDir, "/../lib/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner");
+    // qgcputenv("GST_PTP_HELPER_1_0", currentDir, "/../lib/gstreamer1.0/gstreamer-1.0/gst-ptp-helper");
+    // qgcputenv("GTK_PATH", currentDir, "");
+    // qgcputenv("GIO_EXTRA_MODULES", currentDir, "/../lib/gio/modules");
+    // qgcputenv("GST_PLUGIN_SYSTEM_PATH_1_0", currentDir, "/../lib");
+    // qgcputenv("GST_PLUGIN_SYSTEM_PATH", currentDir, "/../lib");
+    // qgcputenv("GST_PLUGIN_PATH_1_0", currentDir, "/../lib");
+    // qgcputenv("GST_PLUGIN_PATH", currentDir, "/../lib");
 #endif
 
     //-- If gstreamer debugging is not configured via environment then use internal QT logging
@@ -216,7 +225,7 @@ GStreamer::initialize(int argc, char* argv[], int debuglevel)
     }
 
     // The static plugins we use
-#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
+#ifdef QGC_GST_STATIC_BUILD
     GST_PLUGIN_STATIC_REGISTER(coreelements);
     GST_PLUGIN_STATIC_REGISTER(playback);
     GST_PLUGIN_STATIC_REGISTER(libav);
