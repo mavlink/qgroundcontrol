@@ -12,6 +12,8 @@ Rectangle {
     anchors.margins:    ScreenTools.defaultFontPixelWidth
     color:              "white"
 
+    QGCPalette { id: qgcPal }
+
     property var palette:           QGCPalette { colorGroupEnabled: true }
     property var enabledPalette:    QGCPalette { colorGroupEnabled: true }
     property var disabledPalette:   QGCPalette { colorGroupEnabled: false }
@@ -237,16 +239,16 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 QGCRadioButton {
                     text:       qsTr("Light")
-                    checked:    _root.qgcPal.globalTheme === QGCPalette.Light
+                    checked:    qgcPal.globalTheme === QGCPalette.Light
                     onClicked: {
-                        _root.qgcPal.globalTheme = QGCPalette.Light
+                        qgcPal.globalTheme = QGCPalette.Light
                     }
                 }
                 QGCRadioButton {
                     text:       qsTr("Dark")
-                    checked:    _root.qgcPal.globalTheme === QGCPalette.Dark
+                    checked:    qgcPal.globalTheme === QGCPalette.Dark
                     onClicked: {
-                        _root.qgcPal.globalTheme = QGCPalette.Dark
+                        qgcPal.globalTheme = QGCPalette.Dark
                     }
                 }
             }
@@ -433,12 +435,10 @@ Rectangle {
                         }
                         QGCButton {
                             width: ctlPrevColumn._colWidth
-                            height: ctlPrevColumn._height
                             text: qsTr("Button")
                         }
                         QGCButton {
                             width: ctlPrevColumn._colWidth
-                            height: ctlPrevColumn._height
                             text: qsTr("Button")
                             enabled: false
                         }
@@ -450,13 +450,11 @@ Rectangle {
                         }
                         QGCButton {
                             width: ctlPrevColumn._colWidth
-                            height: ctlPrevColumn._height
                             primary: true
                             text: qsTr("Button")
                         }
                         QGCButton {
                             width:  ctlPrevColumn._colWidth
-                            height: ctlPrevColumn._height
                             text:   qsTr("Button")
                             primary: true
                             enabled: false
@@ -468,19 +466,19 @@ Rectangle {
                             property string text: "ToolStripHoverButton"
                         }
                         ToolStripHoverButton {
-                            width:  ctlPrevColumn._colWidth
-                            height: ctlPrevColumn._height * 2
-                            text:   qsTr("Hover Button")
-                            radius: ScreenTools.defaultFontPointSize
-                            imageSource: "/qmlimages/Gears.svg"
+                            width:  ScreenTools.defaultFontPixelWidth * 10
+                            toolStripAction: ToolStripAction {
+                                text:           qsTr("Button")
+                                iconSource:     "/qmlimages/Gears.svg"
+                            }
                         }
                         ToolStripHoverButton {
-                            width:  ctlPrevColumn._colWidth
-                            height: ctlPrevColumn._height * 2
-                            text:   qsTr("Hover Button")
-                            radius: ScreenTools.defaultFontPointSize
-                            imageSource: "/qmlimages/Gears.svg"
-                            enabled: false
+                            width:  ScreenTools.defaultFontPixelWidth * 10
+                            toolStripAction: ToolStripAction {
+                                text:           qsTr("Button")
+                                iconSource:     "/qmlimages/Gears.svg"
+                                enabled: false
+                            }
                         }
 
                         // QGCButton - menu
@@ -502,13 +500,11 @@ Rectangle {
                         }
                         QGCButton {
                             width: ctlPrevColumn._colWidth
-                            height: ctlPrevColumn._height
                             text: qsTr("Button")
                             onClicked: buttonMenu.popup()
                         }
                         QGCButton {
                             width: ctlPrevColumn._colWidth
-                            height: ctlPrevColumn._height
                             text: qsTr("Button")
                             enabled: false
                             onClicked: buttonMenu.popup()

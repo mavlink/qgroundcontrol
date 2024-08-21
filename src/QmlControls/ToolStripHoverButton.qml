@@ -20,10 +20,10 @@ Button {
     hoverEnabled:   !ScreenTools.isMobile
     enabled:        toolStripAction.enabled
     visible:        toolStripAction.visible
-    imageSource:    toolStripAction.showAlternateIcon ? modelData.alternateIconSource : modelData.iconSource
+    imageSource:    toolStripAction.showAlternateIcon ? toolStripAction.alternateIconSource : toolStripAction.iconSource
     text:           toolStripAction.text
     checked:        toolStripAction.checked
-    checkable:      toolStripAction.dropPanelComponent || modelData.checkable
+    checkable:      toolStripAction.dropPanelComponent || toolStripAction.checkable
 
     property var    toolStripAction:    undefined
     property var    dropPanel:          undefined
@@ -78,7 +78,7 @@ Button {
                 sourceSize.width:           width
                 anchors.horizontalCenter:   parent.horizontalCenter
                 source:                     control.imageSource
-                visible:                    source != "" && modelData.fullColorIcon
+                visible:                    source != "" && toolStripAction.fullColorIcon
             }
 
             QGCColoredImage {
@@ -93,11 +93,11 @@ Button {
                 sourceSize.height:          height
                 sourceSize.width:           width
                 anchors.horizontalCenter:   parent.horizontalCenter
-                visible:                    source != "" && !modelData.fullColorIcon
+                visible:                    source != "" && !toolStripAction.fullColorIcon
                 
                 QGCColoredImage {
                     id:                         innerImageSecondColor
-                    source:                     modelData.alternateIconSource
+                    source:                     toolStripAction.alternateIconSource
                     height:                     contentLayoutItem.height * imageScale
                     width:                      contentLayoutItem.width  * imageScale
                     smooth:                     true
@@ -108,7 +108,7 @@ Button {
                     sourceSize.height:          height
                     sourceSize.width:           width
                     anchors.horizontalCenter:   parent.horizontalCenter
-                    visible:                    source != "" && modelData.biColorIcon
+                    visible:                    source != "" && toolStripAction.biColorIcon
                 }
             }
 
@@ -128,6 +128,7 @@ Button {
         color:          (control.checked || control.pressed) ?
                             qgcPal.buttonHighlight :
                             (control.hovered ? qgcPal.toolStripHoverColor : qgcPal.toolbarBackground)
+        radius:         ScreenTools.defaultFontPixelWidth / 2
         anchors.fill:   parent
     }
 }
