@@ -13,28 +13,28 @@
  ****************************************************************************/
 
 #include "ElevationMapProvider.h"
-#include "TerrainTile.h"
+#include "TerrainTileCopernicus.h"
 
 int CopernicusElevationProvider::long2tileX(double lon, int z) const
 {
     Q_UNUSED(z)
-    return static_cast<int>(floor((lon + 180.0) / TerrainTile::tileSizeDegrees));
+    return static_cast<int>(floor((lon + 180.0) / TerrainTileCopernicus::tileSizeDegrees));
 }
 
 int CopernicusElevationProvider::lat2tileY(double lat, int z) const
 {
     Q_UNUSED(z)
-    return static_cast<int>(floor((lat + 90.0) / TerrainTile::tileSizeDegrees));
+    return static_cast<int>(floor((lat + 90.0) / TerrainTileCopernicus::tileSizeDegrees));
 }
 
 QString CopernicusElevationProvider::_getURL(int x, int y, int zoom) const
 {
     Q_UNUSED(zoom)
     return _mapUrl
-        .arg((static_cast<double>(y) * TerrainTile::tileSizeDegrees) - 90.0)
-        .arg((static_cast<double>(x) * TerrainTile::tileSizeDegrees) - 180.0)
-        .arg((static_cast<double>(y + 1) * TerrainTile::tileSizeDegrees) - 90.0)
-        .arg((static_cast<double>(x + 1) * TerrainTile::tileSizeDegrees) - 180.0);
+        .arg((static_cast<double>(y) * TerrainTileCopernicus::tileSizeDegrees) - 90.0)
+        .arg((static_cast<double>(x) * TerrainTileCopernicus::tileSizeDegrees) - 180.0)
+        .arg((static_cast<double>(y + 1) * TerrainTileCopernicus::tileSizeDegrees) - 90.0)
+        .arg((static_cast<double>(x + 1) * TerrainTileCopernicus::tileSizeDegrees) - 180.0);
 }
 
 QGCTileSet CopernicusElevationProvider::getTileCount(int zoom, double topleftLon,
@@ -59,5 +59,5 @@ QGCTileSet CopernicusElevationProvider::getTileCount(int zoom, double topleftLon
 
 QByteArray CopernicusElevationProvider::serialize(const QByteArray &image) const
 {
-    return TerrainTile::serializeFromAirMapJson(image);
+    return TerrainTileCopernicus::serializeFromJson(image);
 }
