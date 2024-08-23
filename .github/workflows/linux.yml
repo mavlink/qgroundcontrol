@@ -107,13 +107,9 @@ jobs:
 
       - run: mkdir ${{ runner.temp }}/shadow_build_dir
 
-      # - name: Run CMake
-      #   uses: lukka/run-cmake@v10
-      #   with:
-
       - name: Configure
         working-directory: ${{ runner.temp }}/shadow_build_dir
-        run: cmake -S ${{ github.workspace }} -B . -G Ninja
+        run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
               -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }}
               -DQGC_BUILD_TESTING=${{ matrix.BuildType == 'Debug' && 'ON' || 'OFF' }}
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
