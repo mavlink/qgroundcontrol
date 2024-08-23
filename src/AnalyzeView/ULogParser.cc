@@ -44,18 +44,22 @@ bool getTagsFromLog(const QByteArray &log, QList<GeoTagWorker::cameraFeedbackPac
         for (const TypedDataView &sample : *subscription) {
             GeoTagWorker::cameraFeedbackPacket feedback = {0};
 
-            feedback.timestamp = sample.at("timestamp").as<uint64_t>() / 1.0e6; // to seconds
-            feedback.timestampUTC = sample.at("timestamp_utc").as<uint64_t>() / 1.0e6; // to seconds
-            feedback.imageSequence = sample.at("seq").as<uint32_t>();
-            feedback.latitude = sample.at("lat").as<double>();
-            feedback.longitude = sample.at("lon").as<double>();
-            feedback.longitude = fmod(180.0 + feedback.longitude, 360.0) - 180.0;
-            feedback.altitude = sample.at("alt").as<float>();
-            feedback.groundDistance = sample.at("ground_distance").as<float>();
-            // feedback.attitude = sample.at("q");
-            feedback.captureResult = sample.at("result").as<uint8_t>();
+            try {
+                feedback.timestamp = sample.at("timestamp").as<uint64_t>() / 1.0e6; // to seconds
+                feedback.timestampUTC = sample.at("timestamp_utc").as<uint64_t>() / 1.0e6; // to seconds
+                feedback.imageSequence = sample.at("seq").as<uint32_t>();
+                feedback.latitude = sample.at("lat").as<double>();
+                feedback.longitude = sample.at("lon").as<double>();
+                feedback.longitude = fmod(180.0 + feedback.longitude, 360.0) - 180.0;
+                feedback.altitude = sample.at("alt").as<float>();
+                feedback.groundDistance = sample.at("ground_distance").as<float>();
+                // feedback.attitude = sample.at("q");
+                feedback.captureResult = sample.at("result").as<uint8_t>();
 
-            (void) cameraFeedback.append(feedback);
+                (void) cameraFeedback.append(feedback);
+            } catch (const AccessException &exception) {
+                qCDebug(ULogParserLog) << Q_FUNC_INFO << exception.what();
+            }
         }
     }
 
