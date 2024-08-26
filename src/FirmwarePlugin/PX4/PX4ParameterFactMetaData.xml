@@ -20300,7 +20300,7 @@
       <min>1.0</min>
       <max>100.0</max>
       <unit>m</unit>
-      <decimal>1</decimal>
+      <decimal>2</decimal>
       <increment>0.1</increment>
     </parameter>
     <parameter name="SENS_FLOW_MAXR" default="8." type="FLOAT">
@@ -20316,7 +20316,7 @@
       <min>0.0</min>
       <max>1.0</max>
       <unit>m</unit>
-      <decimal>1</decimal>
+      <decimal>2</decimal>
       <increment>0.1</increment>
     </parameter>
   </group>
