@@ -17,6 +17,7 @@
 
 // AnalyzeView
 #include "ExifParserTest.h"
+#include "GeoTagControllerTest.h"
 // #include "MavlinkLogTest.h"
 // #include "LogDownloadTest.h"
 #include "PX4LogParserTest.h"
@@ -113,6 +114,7 @@ int runTests(bool stress, QStringView unitTestOptions)
 
 	// AnalyzeView
 	UT_REGISTER_TEST(ExifParserTest)
+	UT_REGISTER_TEST(GeoTagControllerTest)
 	// UT_REGISTER_TEST(MavlinkLogTest)
 	// UT_REGISTER_TEST(LogDownloadTest)
 	UT_REGISTER_TEST(PX4LogParserTest)
