@@ -12,11 +12,11 @@ void PX4LogParserTest::_getTagsFromLogTest()
     const QByteArray logBuffer = file.readAll();
     file.close();
 
-    QList<GeoTagWorker::cameraFeedbackPacket> cameraFeedback;
+    QList<GeoTagWorker::CameraFeedbackPacket> cameraFeedback;
     QVERIFY(PX4LogParser::getTagsFromLog(logBuffer, cameraFeedback));
     QVERIFY(!cameraFeedback.isEmpty());
 
-    GeoTagWorker::cameraFeedbackPacket firstCameraFeedback = cameraFeedback.first();
+    GeoTagWorker::CameraFeedbackPacket firstCameraFeedback = cameraFeedback.first();
     QVERIFY(!qFuzzyIsNull(firstCameraFeedback.timestamp));
     QVERIFY(firstCameraFeedback.imageSequence != 0);*/
 }

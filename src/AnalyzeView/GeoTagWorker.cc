@@ -17,70 +17,118 @@
 
 QGC_LOGGING_CATEGORY(GeoTagWorkerLog, "qgc.analyzeview.geotagworker")
 
-GeoTagWorker::GeoTagWorker()
-    : _cancel(false)
+GeoTagWorker::GeoTagWorker(QObject *parent)
+    : QObject(parent)
 {
+    // qCDebug(GeoTagWorkerLog) << Q_FUNC_INFO << this;
 
+    (void) connect(this, &GeoTagWorker::error, this, [](const QString &errorMsg) {
+        qCDebug(GeoTagWorkerLog) << errorMsg;
+    }, Qt::AutoConnection);
 }
 
-void GeoTagWorker::run()
+GeoTagWorker::~GeoTagWorker()
+{
+    // qCDebug(GeoTagWorkerLog) << Q_FUNC_INFO << this;
+}
+
+bool GeoTagWorker::process()
 {
     _cancel = false;
     emit progressChanged(1);
-    double nSteps = 5;
 
-    // Load Images
+    using StepFunction = bool (GeoTagWorker::*)();
+    const StepFunction steps[] = {
+        &GeoTagWorker::_loadImages,
+        &GeoTagWorker::_parseExif,
+        &GeoTagWorker::_initParser,
+        &GeoTagWorker::_triggerFiltering,
+        &GeoTagWorker::_tagImages
+    };
+
+    for (StepFunction step : steps) {
+        if (_cancel) {
+            emit error(tr("Tagging cancelled"));
+            return false;
+        }
+
+        if (!(this->*step)()) {
+            return false;
+        }
+    }
+
+    emit progressChanged(100);
+    emit taggingComplete();
+
+    return true;
+}
+
+bool GeoTagWorker::_loadImages()
+{
     _imageList.clear();
+
     QDir imageDirectory = QDir(_imageDirectory);
-    imageDirectory.setFilter(QDir::Files | QDir::Readable | QDir::NoSymLinks | QDir::Writable);
+    imageDirectory.setFilter(QDir::Files | QDir::Readable | QDir::NoSymLinks);
     imageDirectory.setSorting(QDir::Name);
+
     QStringList nameFilters;
     nameFilters << "*.jpg" << "*.JPG";
     imageDirectory.setNameFilters(nameFilters);
-    _imageList = imageDirectory.entryInfoList();
-    if(_imageList.isEmpty()) {
-        emit error(tr("The image directory doesn't contain images, make sure your images are of the JPG format"));
-        return;
-    }
-    emit progressChanged((100/nSteps));
 
-    // Parse EXIF
+    _imageList = imageDirectory.entryInfoList();
+    if (_imageList.isEmpty()) {
+        emit error(tr("The image directory doesn't contain images, make sure your images are of the JPG format"));
+        return false;
+    }
+
+    emit progressChanged(100. / kSteps);
+
+    return true;
+}
+
+bool GeoTagWorker::_parseExif()
+{
     _imageTime.clear();
+
     for (int i = 0; i < _imageList.size(); ++i) {
         QFile file(_imageList.at(i).absoluteFilePath());
         if (!file.open(QIODevice::ReadOnly)) {
             emit error(tr("Geotagging failed. Couldn't open an image."));
-            return;
+            return false;
         }
-        QByteArray imageBuffer = file.readAll();
+
+        const QByteArray imageBuffer = file.readAll();
         file.close();
 
-        _imageTime.append(ExifParser::readTime(imageBuffer));
+        (void) _imageTime.append(ExifParser::readTime(imageBuffer));
 
-        emit progressChanged((100/nSteps) + ((100/nSteps) / _imageList.size())*i);
+        emit progressChanged((100. / kSteps) + ((100. / kSteps) / _imageList.size()) * i);
 
         if (_cancel) {
-            qCDebug(GeotaggingLog) << "Tagging cancelled";
             emit error(tr("Tagging cancelled"));
-            return;
+            return false;
         }
     }
 
-    // Load log
-    bool isULog = _logFile.endsWith(".ulg", Qt::CaseSensitive);
+    return true;
+}
+
+bool GeoTagWorker::_initParser()
+{
     QFile file(_logFile);
     if (!file.open(QIODevice::ReadOnly)) {
         emit error(tr("Geotagging failed. Couldn't open log file."));
-        return;
+        return false;
     }
-    QByteArray log = file.readAll();
+
+    const QByteArray log = file.readAll();
     file.close();
 
-    // Instantiate appropriate parser
     _triggerList.clear();
+
     bool parseComplete = false;
     QString errorString;
-    if (isULog) {
+    if (_logFile.endsWith(".ulg", Qt::CaseSensitive)) {
         parseComplete = ULogParser::getTagsFromLog(log, _triggerList, errorString);
     } else {
         parseComplete = PX4LogParser::getTagsFromLog(log, _triggerList);
@@ -88,104 +136,95 @@ void GeoTagWorker::run()
 
     if (!parseComplete) {
         if (_cancel) {
-            qCDebug(GeotaggingLog) << "Tagging cancelled";
             emit error(tr("Tagging cancelled"));
-            return;
+            return false;
         } else {
-            qCDebug(GeotaggingLog) << "Log parsing failed";
             errorString = tr("%1 - tagging cancelled").arg(errorString.isEmpty() ? tr("Log parsing failed") : errorString);
             emit error(errorString);
-            return;
-        }
-    }
-    emit progressChanged(3*(100/nSteps));
-
-    qCDebug(GeotaggingLog) << "Found " << _triggerList.count() << " trigger logs.";
-
-    if (_cancel) {
-        qCDebug(GeotaggingLog) << "Tagging cancelled";
-        emit error(tr("Tagging cancelled"));
-        return;
-    }
-
-    // Filter Trigger
-    if (!triggerFiltering()) {
-        qCDebug(GeotaggingLog) << "Geotagging failed in trigger filtering";
-        emit error(tr("Geotagging failed in trigger filtering"));
-        return;
-    }
-    emit progressChanged(4*(100/nSteps));
-
-    if (_cancel) {
-        qCDebug(GeotaggingLog) << "Tagging cancelled";
-        emit error(tr("Tagging cancelled"));
-        return;
-    }
-
-    // Tag images
-    auto maxIndex = std::min(_imageIndices.count(), _triggerIndices.count());
-    maxIndex = std::min(maxIndex, _imageList.count());
-    for(int i = 0; i < maxIndex; i++) {
-        int imageIndex = _imageIndices[i];
-        if (imageIndex >= _imageList.count()) {
-            emit error(tr("Geotagging failed. Requesting image #%1, but only %2 images present.").arg(imageIndex).arg(_imageList.count()));
-            return;
-        }
-        QFile fileRead(_imageList.at(_imageIndices[i]).absoluteFilePath());
-        if (!fileRead.open(QIODevice::ReadOnly)) {
-            emit error(tr("Geotagging failed. Couldn't open an image."));
-            return;
-        }
-        QByteArray imageBuffer = fileRead.readAll();
-        fileRead.close();
-
-        if (!ExifParser::write(imageBuffer, _triggerList[_triggerIndices[i]])) {
-            emit error(tr("Geotagging failed. Couldn't write to image."));
-            return;
-        } else {
-            QFile fileWrite;
-            if(_saveDirectory == "") {
-                fileWrite.setFileName(_imageDirectory + "/TAGGED/" + _imageList.at(_imageIndices[i]).fileName());
-            } else {
-                fileWrite.setFileName(_saveDirectory + "/" + _imageList.at(_imageIndices[i]).fileName());
-            }
-            if (!fileWrite.open(QFile::WriteOnly)) {
-                emit error(tr("Geotagging failed. Couldn't write to an image."));
-                return;
-            }
-            fileWrite.write(imageBuffer);
-            fileWrite.close();
-        }
-        emit progressChanged(4*(100/nSteps) + ((100/nSteps) / maxIndex)*i);
-
-        if (_cancel) {
-            qCDebug(GeotaggingLog) << "Tagging cancelled";
-            emit error(tr("Tagging cancelled"));
-            return;
+            return false;
         }
     }
 
-    if (_cancel) {
-        qCDebug(GeotaggingLog) << "Tagging cancelled";
-        emit error(tr("Tagging cancelled"));
-        return;
-    }
+    qCDebug(GeoTagWorkerLog) << "Found" << _triggerList.count() << "trigger logs.";
 
-    emit progressChanged(100);
+    emit progressChanged(3. * (100. / kSteps));
+
+    return true;
 }
 
-bool GeoTagWorker::triggerFiltering()
+bool GeoTagWorker::_triggerFiltering()
 {
     _imageIndices.clear();
     _triggerIndices.clear();
-    if(_imageList.count() > _triggerList.count()) {             // Logging dropouts
-        qCDebug(GeotaggingLog) << "Detected missing feedback packets.";
-    } else if (_imageList.count() < _triggerList.count()) {     // Camera skipped frames
-        qCDebug(GeotaggingLog) << "Detected missing image frames.";
+
+    if (_imageList.count() > _triggerList.count()) {
+        qCDebug(GeoTagWorkerLog) << "Detected missing feedback packets.";
+    } else if (_imageList.count() < _triggerList.count()) {
+        qCDebug(GeoTagWorkerLog) << "Detected missing image frames.";
     }
-    for(int i = 0; i < _imageList.count() && i < _triggerList.count(); i++) {
-        _imageIndices.append(static_cast<int>(_triggerList[i].imageSequence));
-        _triggerIndices.append(i);
+
+    // TODO: handle _triggerList does not start at 0, causes issue in _tagImages loop counter
+    if (_triggerList.first().imageSequence != 0) {
+        qCDebug(GeoTagWorkerLog) << "Image sequence does not start at beginning.";
     }
+
+    for (int i = 0; i < std::min(_imageList.count(), _triggerList.count()); i++) {
+        (void) _imageIndices.append(static_cast<int>(_triggerList[i].imageSequence));
+        (void) _triggerIndices.append(i);
+    }
+
+    emit progressChanged(4. * (100. / kSteps));
+
+    return true;
+}
+
+bool GeoTagWorker::_tagImages()
+{
+    const qsizetype maxIndex = std::min(_imageList.count(), std::min(_imageIndices.count(), _triggerIndices.count()));
+    for (int i = 0; i < maxIndex; i++) {
+        const int imageIndex = _imageIndices[i];
+        if (imageIndex >= _imageList.count()) {
+            emit error(tr("Geotagging failed. Requesting image #%1, but only %2 images present.").arg(imageIndex).arg(_imageList.count()));
+            return false;
+        }
+
+        const QFileInfo imageInfo = _imageList.at(imageIndex);
+        QFile fileRead(imageInfo.absoluteFilePath());
+        if (!fileRead.open(QIODevice::ReadOnly)) {
+            emit error(tr("Geotagging failed. Couldn't open an image."));
+            return false;
+        }
+
+        QByteArray imageBuffer = fileRead.readAll();
+        fileRead.close();
+
+        if (!ExifParser::write(imageBuffer, _triggerList[imageIndex])) {
+            emit error(tr("Geotagging failed. Couldn't write to image."));
+            return false;
+        }
+
+        QFile fileWrite;
+        if (_saveDirectory.isEmpty()) {
+            fileWrite.setFileName(_imageDirectory + "/TAGGED/" + imageInfo.fileName());
+        } else {
+            fileWrite.setFileName(_saveDirectory + "/" + imageInfo.fileName());
+        }
+
+        if (!fileWrite.open(QFile::WriteOnly)) {
+            emit error(tr("Geotagging failed. Couldn't write to an image."));
+            return false;
+        }
+
+        fileWrite.write(imageBuffer);
+        fileWrite.close();
+
+        emit progressChanged(4. * (100. / kSteps) + ((100. / kSteps) / maxIndex) * i);
+
+        if (_cancel) {
+            emit error(tr("Tagging cancelled"));
+            return false;
+        }
+    }
+
     return true;
 }

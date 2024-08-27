@@ -96,6 +96,7 @@ DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
 
 # Additional
 DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
+    expat \
     flite1-dev \
     intel-media-va-driver \
     libasound2-dev \
