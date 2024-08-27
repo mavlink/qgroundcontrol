@@ -1,4 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Charts Gui Qml QmlIntegration)
+find_package(Qt6 REQUIRED COMPONENTS Concurrent Core Charts Gui Qml QmlIntegration)
 
 qt_add_library(AnalyzeView STATIC
     ExifParser.cc
@@ -39,6 +39,7 @@ FetchContent_MakeAvailable(ulogparser)
 
 target_link_libraries(AnalyzeView
     PRIVATE
+        Qt6::Concurrent
         Qt6::Charts
         Qt6::Gui
         Qt6::Qml
