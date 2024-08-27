@@ -9,23 +9,60 @@
 
 #pragma once
 
-#include <QtCore/QObject>
-#include <QtCore/QDateTime>
-#include <QtCore/QString>
 #include <QtCore/QBitArray>
+#include <QtCore/QDateTime>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QObject>
+#include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
+
+#include "MAVLinkLib.h"
+
+class QGCLogEntry;
 
 Q_DECLARE_LOGGING_CATEGORY(LogEntryLog)
 
-//-----------------------------------------------------------------------------
+struct LogDownloadData
+{
+    explicit LogDownloadData(QGCLogEntry * const entry);
+    ~LogDownloadData();
+
+    void advanceChunk();
+
+    /// The number of MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN bins in the current chunk
+    uint32_t chunkBins() const;
+
+    /// The number of kChunkSize chunks in the file
+    uint32_t numChunks() const;
+
+    /// True if all bins in the chunk have been set to val
+    bool chunkEquals(const bool val) const;
+
+    uint ID = 0;
+    QGCLogEntry *const entry = nullptr;
+
+    QBitArray chunk_table;
+    uint32_t current_chunk = 0;
+    QFile file;
+    QString filename;
+    uint written = 0;
+    size_t rate_bytes = 0;
+    qreal rate_avg = 0.;
+    QElapsedTimer elapsed;
+
+    static constexpr uint32_t kTableBins = 512;
+    static constexpr uint32_t kChunkSize = kTableBins * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN;
+};
+
+/*===========================================================================*/
+
 class QGCLogEntry : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
 
-    Q_PROPERTY(uint         id          READ id                             CONSTANT)
+    Q_PROPERTY(uint         id          READ id                             NOTIFY idChanged)
     Q_PROPERTY(QDateTime    time        READ time                           NOTIFY timeChanged)
     Q_PROPERTY(uint         size        READ size                           NOTIFY sizeChanged)
     Q_PROPERTY(QString      sizeStr     READ sizeStr                        NOTIFY sizeChanged)
@@ -34,56 +71,37 @@ class QGCLogEntry : public QObject
     Q_PROPERTY(QString      status      READ status                         NOTIFY statusChanged)
 
 public:
-    QGCLogEntry(uint logId, const QDateTime& dateTime = QDateTime(), uint logSize = 0, bool received = false);
+    explicit QGCLogEntry(uint logId, const QDateTime &dateTime = QDateTime(), uint logSize = 0, bool received = false, QObject *parent = nullptr);
+    ~QGCLogEntry();
 
-    uint        id          () const { return _logID; }
-    uint        size        () const { return _logSize; }
-    QString     sizeStr     () const;
-    QDateTime   time        () const { return _logTimeUTC; }
-    bool        received    () const { return _received; }
-    bool        selected    () const { return _selected; }
-    QString     status      () const { return _status; }
+    uint id() const { return _logID; }
+    uint size() const { return _logSize; }
+    QString sizeStr() const;
+    QDateTime time() const { return _logTimeUTC; }
+    bool received() const { return _received; }
+    bool selected() const { return _selected; }
+    QString status() const { return _status; }
 
-    void        setId       (uint id_)          { _logID = id_; }
-    void        setSize     (uint size_)        { _logSize = size_;     emit sizeChanged(); }
-    void        setTime     (QDateTime date_)   { _logTimeUTC = date_;  emit timeChanged(); }
-    void        setReceived (bool rec_)         { _received = rec_;     emit receivedChanged(); }
-    void        setSelected (bool sel_)         { _selected = sel_;     emit selectedChanged(); }
-    void        setStatus   (QString stat_)     { _status = stat_;      emit statusChanged(); }
+    void setId(uint id) { if (id != _logID) { _logID = id; emit idChanged(); } }
+    void setSize(uint size) { if (size != _logSize) { _logSize = size; emit sizeChanged(); } }
+    void setTime(const QDateTime &date) { if (date != _logTimeUTC) {_logTimeUTC = date; emit timeChanged(); } }
+    void setReceived(bool rec) { if (rec != _received) { _received = rec; emit receivedChanged(); } }
+    void setSelected(bool sel) { if (sel != _selected) { _selected = sel; emit selectedChanged(); } }
+    void setStatus(const QString &stat) { if (stat != _status) { _status = stat; emit statusChanged(); } }
 
 signals:
-    void        idChanged       ();
-    void        timeChanged     ();
-    void        sizeChanged     ();
-    void        receivedChanged ();
-    void        selectedChanged ();
-    void        statusChanged   ();
+    void idChanged();
+    void timeChanged();
+    void sizeChanged();
+    void receivedChanged();
+    void selectedChanged();
+    void statusChanged();
 
 private:
-    uint        _logID;
-    uint        _logSize;
-    QDateTime   _logTimeUTC;
-    bool        _received;
-    bool        _selected;
-    QString     _status;
-};
-
-struct LogDownloadData {
-    LogDownloadData(QGCLogEntry* entry);
-
-    QBitArray     chunk_table;
-    uint32_t      current_chunk;
-    QFile         file;
-    QString       filename;
-    uint          ID;
-    QGCLogEntry*  entry;
-    uint          written;
-    size_t        rate_bytes;
-    qreal         rate_avg;
-    QElapsedTimer elapsed;
-
-    void advanceChunk();
-    uint32_t chunkBins() const;
-    uint32_t numChunks() const;
-    bool chunkEquals(const bool val) const;
+    uint _logID = 0;
+    uint _logSize = 0;
+    QDateTime _logTimeUTC;
+    bool _received = false;
+    bool _selected = false;
+    QString _status = QStringLiteral("Pending");
 };
