@@ -18,5 +18,5 @@
 Q_DECLARE_LOGGING_CATEGORY(PX4LogParserLog)
 
 namespace PX4LogParser {
-    bool getTagsFromLog(const QByteArray &log, QList<GeoTagWorker::cameraFeedbackPacket> &cameraFeedback);
+    bool getTagsFromLog(const QByteArray &log, QList<GeoTagWorker::CameraFeedbackPacket> &cameraFeedback);
 }
