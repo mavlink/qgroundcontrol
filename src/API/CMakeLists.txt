@@ -12,6 +12,7 @@ qt_add_library(API STATIC
 target_link_libraries(API
     PRIVATE
         Qt6::Qml
+        AnalyzeView
         FactSystem
         GStreamerReceiver
         Joystick
