@@ -4,18 +4,8 @@
 
 QGC_LOGGING_CATEGORY(QGeoServiceProviderFactoryQGCLog, "qgc.qtlocationplugin.qgeoserviceproviderfactoryqgc")
 
-#ifndef CMAKE_LOCATION_PLUGIN
-extern "C" Q_DECL_EXPORT QT_PREPEND_NAMESPACE(QPluginMetaData) qt_plugin_query_metadata_v2();
-extern "C" Q_DECL_EXPORT QT_PREPEND_NAMESPACE(QObject) *qt_plugin_instance();
-
-const QT_PREPEND_NAMESPACE(QStaticPlugin) qt_static_plugin_QGeoServiceProviderFactoryQGC()
-{
-    QT_PREPEND_NAMESPACE(QStaticPlugin) plugin = { qt_plugin_instance, qt_plugin_query_metadata_v2};
-    return plugin;
-}
-#endif
-
-QGeoServiceProviderFactoryQGC::QGeoServiceProviderFactoryQGC()
+QGeoServiceProviderFactoryQGC::QGeoServiceProviderFactoryQGC(QObject *parent)
+    : QObject(parent)
 {
     qCDebug(QGeoServiceProviderFactoryQGCLog) << Q_FUNC_INFO << this;
 }
@@ -75,9 +65,4 @@ QPlaceManagerEngine* QGeoServiceProviderFactoryQGC::createPlaceManagerEngine(
         *errorString = "Place Not Supported";
     }
     return nullptr;
-}
-
-void QGeoServiceProviderFactoryQGC::setQmlEngine(QQmlEngine *engine)
-{
-    m_engine = engine;
 }
