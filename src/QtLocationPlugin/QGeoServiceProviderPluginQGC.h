@@ -14,7 +14,7 @@ class QGeoServiceProviderFactoryQGC: public QObject, public QGeoServiceProviderF
     Q_PLUGIN_METADATA(IID "org.qt-project.qt.geoservice.serviceproviderfactory/6.0" FILE "qgc_maps_plugin.json")
 
 public:
-    QGeoServiceProviderFactoryQGC();
+    QGeoServiceProviderFactoryQGC(QObject *parent = nullptr);
     ~QGeoServiceProviderFactoryQGC();
 
     QGeoCodingManagerEngine* createGeocodingManagerEngine(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const final;
@@ -22,7 +22,7 @@ public:
     QGeoRoutingManagerEngine* createRoutingManagerEngine(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const final;
     QPlaceManagerEngine* createPlaceManagerEngine(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const final;
 
-    void setQmlEngine(QQmlEngine* engine) final;
+    void setQmlEngine(QQmlEngine* engine) final { m_engine = engine; }
 
 private:
     QQmlEngine* m_engine = nullptr;
