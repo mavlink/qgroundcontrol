@@ -9065,10 +9065,12 @@
       <long_desc>0: Arming/disarming triggers on switch transition. 1: Arming/disarming triggers when holding the momentary button down for COM_RC_ARM_HYST like the stick gesture.</long_desc>
     </parameter>
     <parameter name="COM_ARM_WO_GPS" default="1" type="INT32">
-      <short_desc>Allow arming without GPS</short_desc>
+      <short_desc>GPS preflight check</short_desc>
+      <long_desc>Measures taken when a check defined by EKF2_GPS_CHECK is failing.</long_desc>
       <values>
-        <value code="0">Require GPS lock to arm</value>
-        <value code="1">Allow arming without GPS</value>
+        <value code="0">Deny arming</value>
+        <value code="1">Warning only</value>
+        <value code="2">Disabled</value>
       </values>
     </parameter>
     <parameter name="COM_CPU_MAX" default="95.0" type="FLOAT">
