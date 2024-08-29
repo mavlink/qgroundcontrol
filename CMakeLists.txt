@@ -96,6 +96,8 @@ elseif(WIN32)
     endif()
 endif()
 
+set(BUILD_SHARED_LIBS OFF)
+
 cmake_print_variables(
     CMAKE_VERSION
     CMAKE_PREFIX_PATH
@@ -125,8 +127,9 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
         QT_NO_DEBUG_OUTPUT
     )
 elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    include(CTest)
+    set(ENABLE_TESTING ON)
     enable_testing()
+    include(CTest)
 
     set(QT_ENABLE_VERBOSE_DEPLOYMENT ON CACHE BOOL "Verbose Deployment")
 endif()
