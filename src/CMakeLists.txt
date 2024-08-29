@@ -128,14 +128,11 @@ if(ANDROID)
 
     target_include_directories(QGC PUBLIC ${CMAKE_SOURCE_DIR}/android/src)
 else()
-    set(QAPPLICATION_CLASS QApplication CACHE STRING "Inheritance class for SingleApplication" FORCE)
-    FetchContent_Declare(SingleApplication
-        GIT_REPOSITORY https://github.com/itay-grudev/SingleApplication
-        GIT_TAG v3.5.1
-        GIT_SHALLOW TRUE
+    target_sources(QGC
+        PRIVATE
+            RunGuard.cc
+            RunGuard.h
     )
-    FetchContent_MakeAvailable(SingleApplication)
-    target_link_libraries(QGC PUBLIC SingleApplication::SingleApplication)
 endif()
 
 target_precompile_headers(QGC PRIVATE ${CMAKE_SOURCE_DIR}/src/pch.h)
