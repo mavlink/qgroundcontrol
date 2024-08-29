@@ -86,7 +86,6 @@ DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
     libdrm-dev \
     libegl1-mesa-dev \
     libgbm-dev \
-    libgeographic-dev \
     libgl1-mesa-dev \
     libgles2-mesa-dev \
     libglfw3-dev \
@@ -106,3 +105,10 @@ DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
     speech-dispatcher-espeak-ng \
     speech-dispatcher-flite \
     vainfo
+
+# Geo
+if apt-cache show libgeographic-dev >/dev/null 2>&1 && apt-cache show libgeographic-dev 2>/dev/null | grep -q "^Package: libgeographic-dev"; then
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --quiet libgeographic-dev
+elif apt-cache show libgeographiclib-dev >/dev/null 2>&1 && apt-cache show libgeographiclib-dev 2>/dev/null | grep -q "^Package: libgeographiclib-dev"; then
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --quiet libgeographiclib-dev
+fi
