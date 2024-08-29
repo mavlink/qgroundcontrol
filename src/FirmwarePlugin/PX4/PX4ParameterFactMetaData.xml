@@ -18435,26 +18435,12 @@
     </parameter>
   </group>
   <group name="Rover Differential">
-    <parameter name="RD_HEADING_I" default="0.1" type="FLOAT">
-      <short_desc>Integral gain for heading controller</short_desc>
-      <min>0</min>
-      <max>100</max>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="RD_HEADING_P" default="1" type="FLOAT">
-      <short_desc>Proportional gain for heading controller</short_desc>
-      <min>0</min>
-      <max>100</max>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
     <parameter name="RD_MAN_YAW_SCALE" default="1" type="FLOAT">
       <short_desc>Manual yaw rate scale</short_desc>
       <long_desc>In manual mode the setpoint for the yaw rate received from the rc remote is scaled by this value.</long_desc>
-      <min>0.01</min>
+      <min>0.001</min>
       <max>1</max>
-      <decimal>2</decimal>
+      <decimal>3</decimal>
       <increment>0.01</increment>
     </parameter>
     <parameter name="RD_MAX_ACCEL" default="0.5" type="FLOAT">
@@ -18475,7 +18461,7 @@
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter name="RD_MAX_SPEED" default="7" type="FLOAT">
+    <parameter name="RD_MAX_SPEED" default="1" type="FLOAT">
       <short_desc>Maximum speed the rover can drive</short_desc>
       <long_desc>This parameter is used to map desired speeds to normalized motor commands.</long_desc>
       <min>0</min>
@@ -18494,7 +18480,7 @@
       <increment>0.01</increment>
     </parameter>
     <parameter name="RD_MISS_SPD_DEF" default="1" type="FLOAT">
-      <short_desc>Default rover speed during a mission</short_desc>
+      <short_desc>Default forward speed for the rover during auto modes</short_desc>
       <min>0</min>
       <max>100</max>
       <unit>m/s</unit>
@@ -18502,21 +18488,22 @@
       <increment>0.01</increment>
     </parameter>
     <parameter name="RD_SPEED_I" default="0" type="FLOAT">
-      <short_desc>Integral gain for ground speed controller</short_desc>
+      <short_desc>Integral gain for closed loop forward speed controller</short_desc>
       <min>0</min>
       <max>100</max>
-      <decimal>2</decimal>
+      <decimal>3</decimal>
       <increment>0.01</increment>
     </parameter>
     <parameter name="RD_SPEED_P" default="1" type="FLOAT">
-      <short_desc>Proportional gain for speed controller</short_desc>
+      <short_desc>Proportional gain for closed loop forward speed controller</short_desc>
       <min>0</min>
       <max>100</max>
-      <decimal>2</decimal>
+      <decimal>3</decimal>
       <increment>0.01</increment>
     </parameter>
     <parameter name="RD_TRANS_DRV_TRN" default="0.174533" type="FLOAT">
-      <short_desc>Heading error threshhold to switch from driving to spot turning</short_desc>
+      <short_desc>Yaw error threshhold to switch from driving to spot turning</short_desc>
+      <long_desc>This threshold is used for the state machine to switch from driving to turning based on the error between the desired and actual yaw. It is also used as the threshold whether the rover should come to a smooth stop at the next waypoint. This slow down effect is active if the angle between the line segments from prevWP-currWP and currWP-nextWP is smaller then 180 - RD_TRANS_DRV_TRN.</long_desc>
       <min>0.001</min>
       <max>3.14159</max>
       <unit>rad</unit>
@@ -18524,7 +18511,7 @@
       <increment>0.01</increment>
     </parameter>
     <parameter name="RD_TRANS_TRN_DRV" default="0.0872665" type="FLOAT">
-      <short_desc>Heading error threshhold to switch from spot turning to driving</short_desc>
+      <short_desc>Yaw error threshhold to switch from spot turning to driving</short_desc>
       <min>0.001</min>
       <max>3.14159</max>
       <unit>rad</unit>
@@ -18540,18 +18527,32 @@
       <decimal>3</decimal>
       <increment>0.001</increment>
     </parameter>
-    <parameter name="RD_YAW_RATE_I" default="0" type="FLOAT">
-      <short_desc>Integral gain for angular velocity controller</short_desc>
+    <parameter name="RD_YAW_I" default="0" type="FLOAT">
+      <short_desc>Integral gain for closed loop yaw controller</short_desc>
       <min>0</min>
       <max>100</max>
-      <decimal>2</decimal>
+      <decimal>3</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RD_YAW_P" default="1" type="FLOAT">
+      <short_desc>Proportional gain for closed loop yaw controller</short_desc>
+      <min>0</min>
+      <max>100</max>
+      <decimal>3</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RD_YAW_RATE_I" default="0" type="FLOAT">
+      <short_desc>Integral gain for closed loop yaw rate controller</short_desc>
+      <min>0</min>
+      <max>100</max>
+      <decimal>3</decimal>
       <increment>0.01</increment>
     </parameter>
     <parameter name="RD_YAW_RATE_P" default="1" type="FLOAT">
-      <short_desc>Proportional gain for angular velocity controller</short_desc>
+      <short_desc>Proportional gain for closed loop yaw rate controller</short_desc>
       <min>0</min>
       <max>100</max>
-      <decimal>2</decimal>
+      <decimal>3</decimal>
       <increment>0.01</increment>
     </parameter>
   </group>
