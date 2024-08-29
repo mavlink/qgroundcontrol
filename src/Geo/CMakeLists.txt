@@ -5,27 +5,8 @@ qt_add_library(Geo STATIC
     QGCGeo.h
 )
 
-set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "")
-set(BUILD_BOTH_LIBS OFF CACHE INTERNAL "")
-set(BUILD_DOCUMENTATION OFF CACHE INTERNAL "")
-set(BUILD_MANPAGES OFF CACHE INTERNAL "")
-
-include(FetchContent)
-FetchContent_Declare(geographiclib
-    GIT_REPOSITORY https://github.com/geographiclib/geographiclib.git
-    GIT_TAG r2.3
-    GIT_SHALLOW TRUE
-)
-FetchContent_GetProperties(geographiclib)
-if(NOT geographiclib_POPULATED)
-    FetchContent_Populate(geographiclib)
-    add_subdirectory(${geographiclib_SOURCE_DIR} ${geographiclib_BINARY_DIR} EXCLUDE_FROM_ALL)
-endif()
-# FetchContent_MakeAvailable(geographiclib)
-
 target_link_libraries(Geo
     PRIVATE
-        GeographicLib::GeographicLib
         Utilities
     PUBLIC
         Qt6::Core
@@ -33,3 +14,27 @@ target_link_libraries(Geo
 )
 
 target_include_directories(Geo PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+if(NOT CMAKE_CROSSCOMPILING)
+    find_package(PkgConfig)
+    if(PkgConfig_FOUND)
+        pkg_check_modules(geographiclib IMPORTED_TARGET geographiclib>=2.3)
+        if(geographiclib_FOUND)
+            target_link_libraries(Geo PRIVATE PkgConfig::geographiclib)
+            return()
+        endif()
+    endif()
+endif()
+
+include(FetchContent)
+FetchContent_Declare(geographiclib
+    GIT_REPOSITORY https://github.com/geographiclib/geographiclib.git
+    GIT_TAG r2.4
+    GIT_SHALLOW TRUE
+)
+set(BUILD_BOTH_LIBS OFF CACHE INTERNAL "" FORCE)
+set(BUILD_DOCUMENTATION OFF CACHE INTERNAL "" FORCE)
+set(BUILD_MANPAGES OFF CACHE INTERNAL "" FORCE)
+FetchContent_MakeAvailable(geographiclib)
+
+target_link_libraries(Geo PRIVATE GeographicLib::GeographicLib)

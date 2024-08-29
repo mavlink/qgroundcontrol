@@ -122,7 +122,7 @@ int runTests(bool stress, QStringView unitTestOptions)
 	UT_REGISTER_TEST(ParameterManagerTest)
 
 	// Geo
-    // UT_REGISTER_TEST(GeoTest)
+    UT_REGISTER_TEST(GeoTest)
 
     // MAVLink
     UT_REGISTER_TEST(StatusTextHandlerTest)
