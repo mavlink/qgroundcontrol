@@ -9114,7 +9114,7 @@
       <min>0.0</min>
       <max>25.0</max>
       <unit>s</unit>
-      <decimal>3</decimal>
+      <decimal>1</decimal>
     </parameter>
     <parameter name="COM_FLIGHT_UUID" default="0" type="INT32" volatile="true" category="System">
       <short_desc>Next flight UUID</short_desc>
@@ -9432,7 +9432,7 @@
       <values>
         <value code="0">Position mode</value>
         <value code="1">Altitude mode</value>
-        <value code="2">Manual</value>
+        <value code="2">Stabilized</value>
         <value code="3">Return mode</value>
         <value code="4">Land mode</value>
         <value code="5">Hold mode</value>
@@ -9455,11 +9455,11 @@
       <short_desc>Expect and require a healthy MAVLink parachute system</short_desc>
     </parameter>
     <parameter name="COM_POSCTL_NAVL" default="0" type="INT32">
-      <short_desc>Position control navigation loss response</short_desc>
-      <long_desc>This sets the flight mode that will be used if navigation accuracy is no longer adequate for position control. If Altitude/Manual is selected: assume use of remote control after fallback. Switch to Altitude mode if a height estimate is available, else switch to MANUAL. If Land/Descend is selected: assume no use of remote control after fallback. Switch to Land mode if a height estimate is available, else switch to Descend.</long_desc>
+      <short_desc>Position mode navigation loss response</short_desc>
+      <long_desc>This sets the flight mode that will be used if navigation accuracy is no longer adequate for position control in manual Position mode.</long_desc>
       <values>
-        <value code="0">Altitude/Manual</value>
-        <value code="1">Land/Descend</value>
+        <value code="0">Altitude mode</value>
+        <value code="1">Land mode (descend)</value>
       </values>
     </parameter>
     <parameter name="COM_POS_FS_DELAY" default="1" type="INT32">
