@@ -23,6 +23,8 @@ RUN /tmp/qt/install-qt-debian.sh
 # Reconfigure locale
 RUN locale-gen en_US.UTF-8 && dpkg-reconfigure locales
 
+RUN git config --global --add safe.directory /project/source
+
 WORKDIR /project/build
 CMD cmake -S /project/source -B . -G Ninja -DCMAKE_BUILD_TYPE=Debug -DQGC_BUILD_TESTING=ON -DQGC_STABLE_BUILD=OFF ; \
 	cmake --build . --target all --config Debug ; \
