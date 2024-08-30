@@ -24,7 +24,7 @@ private slots:
     void _requestListMissingParamSuccess(void);
     void _requestListMissingParamFail(void);
     void _FTPnoFailure(void);
-    void _FTPChangeParam(void);
+    // void _FTPChangeParam(void);
 
 
 private:
