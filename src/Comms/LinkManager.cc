@@ -71,7 +71,9 @@ LinkManager::LinkManager(QGCApplication* app, QGCToolbox* toolbox)
 
     qRegisterMetaType<QAbstractSocket::SocketError>();
     qRegisterMetaType<LinkInterface*>("LinkInterface*");
+#ifndef NO_SERIAL_LINK
     qRegisterMetaType<QGCSerialPortInfo>("QGCSerialPortInfo");
+#endif
 }
 
 LinkManager::~LinkManager()
