@@ -1,0 +1,43 @@
+name: Docker-Linux
+
+on:
+  push:
+    branches:
+      - master
+      - 'Stable*'
+    tags:
+      - 'v*'
+    paths-ignore:
+      - 'android/**'
+      - 'deploy/**'
+      - 'docs/**'
+  pull_request:
+    paths-ignore:
+      - 'android/**'
+      - 'deploy/**'
+      - 'docs/**'
+      - '.github/workflows/docs_deploy.yml'
+      - '.github/workflows/android.yml'
+      - '.github/workflows/macos.yml'
+      - '.github/workflows/windows.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-tags: true
+          fetch-depth: 0
+
+      - run: chmod a+x ./deploy/docker/run-docker-ubuntu.sh
+
+      - name: Run Docker Build
+        run: ./deploy/docker/run-docker-ubuntu.sh

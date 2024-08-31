@@ -9,7 +9,7 @@ jobs:
 
     strategy:
       matrix:
-        BuildType: [Debug, Release]
+        BuildType: [Release]
 
     defaults:
       run:
@@ -21,12 +21,31 @@ jobs:
       GST_VERSION: 1.22.12
 
     steps:
+      - name: Recover disk space
+        run: |
+          df -h
+          ls /Applications
+          brew uninstall google-chrome
+          sudo rm -rf /Users/runner/Library/Android
+          sudo rm -rf /Applications/Xcode_14*
+          sudo rm -rf /Applications/Xcode_15.0*
+          sudo rm -rf /Applications/Xcode_15.1*
+          sudo rm -rf /Applications/Xcode_15.2*
+          sudo rm -rf /Applications/Xcode_15.3*
+          ls /Applications
+          df -h
+
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
           submodules: recursive
           fetch-tags: true
           fetch-depth: 0
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
 
       - uses: seanmiddleditch/gha-setup-ninja@v5
 
@@ -38,8 +57,8 @@ jobs:
       - name: Set Up Cache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
-          key: ${{ runner.os }}-${{ matrix.BuildType }}
-          restore-keys: ${{ runner.os }}-${{ matrix.BuildType }}
+          key: ${{ runner.os }}-iOS-${{ matrix.BuildType }}
+          restore-keys: ${{ runner.os }}-iOS-${{ matrix.BuildType }}
           max-size: 1G
           append-timestamp: false
           save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
@@ -51,6 +70,7 @@ jobs:
           aqtversion: ==3.1.*
           host: mac
           target: desktop
+          arch: clang_64
           dir: ${{ runner.temp }}
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
           cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
@@ -62,12 +82,13 @@ jobs:
           aqtversion: ==3.1.*
           host: mac
           target: ios
+          arch: ios
           dir: ${{ runner.temp }}
           extra: --autodesktop
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
           cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
-      - run:  mkdir ${{ runner.temp }}/shadow_build_dir
+      - run: mkdir ${{ runner.temp }}/shadow_build_dir
 
       - name: Configure
         working-directory: ${{ runner.temp }}/shadow_build_dir

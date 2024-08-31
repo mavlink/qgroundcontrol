@@ -27,7 +27,7 @@ jobs:
 
     strategy:
       matrix:
-        BuildType: [Debug, Release]
+        BuildType: [Release]
         Arch: [x64] # Arm64
 
     defaults:
@@ -52,7 +52,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          choco install --no-progress ninja sccache -y
+          choco install --no-progress ninja pkgconfiglite -y
           choco install --no-progress cmake --installargs 'ADD_CMAKE_TO_PATH=System' --apply-install-arguments-to-dependencies
 
       - name: Install Vulkan
@@ -105,7 +105,7 @@ jobs:
           aqtversion: ==3.1.*
           host: windows
           target: desktop
-          arch: win64_msvc2019_64
+          arch: win64_msvc2019_arm64
           dir: ${{ runner.temp }}
           extra: --autodesktop
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
