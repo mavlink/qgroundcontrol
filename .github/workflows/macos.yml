@@ -27,16 +27,16 @@ jobs:
 
     strategy:
       matrix:
-        BuildType: [Debug, Release]
+        BuildType: [Release]
+
+    defaults:
+      run:
+        shell: bash
 
     env:
       ARTIFACT: QGroundControl.dmg
       QT_VERSION: 6.6.3
       GST_VERSION: 1.22.12
-
-    defaults:
-      run:
-        shell: bash
 
     steps:
       - name: Checkout repo
@@ -45,6 +45,11 @@ jobs:
           submodules: recursive
           fetch-tags: true
           fetch-depth: 0
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
 
       - uses: seanmiddleditch/gha-setup-ninja@v5
 
@@ -78,6 +83,7 @@ jobs:
           aqtversion: ==3.1.*
           host: mac
           target: desktop
+          arch: clang_64
           dir: ${{ runner.temp }}
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
           cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
