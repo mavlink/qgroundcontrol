@@ -9,7 +9,7 @@ jobs:
 
     strategy:
       matrix:
-        BuildType: [Debug, Release]
+        BuildType: [Release]
 
     defaults:
       run:
@@ -23,7 +23,7 @@ jobs:
       QT_ANDROID_KEYSTORE_ALIAS: QGCAndroidKeyStore
       QT_ANDROID_KEYSTORE_STORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       QT_ANDROID_KEYSTORE_KEY_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-      QT_ANDROID_ABIS: "armeabi-v7a;arm64-v8a"
+      QT_ANDROID_ABIS: 'arm64-v8a'
 
     steps:
       - name: Checkout repo
@@ -44,6 +44,7 @@ jobs:
         uses: ./.github/actions/qt-android
         with:
           host: mac
+          arch: clang_64
           version: ${{ env.QT_VERSION }}
           abis: ${{ env.QT_ANDROID_ABIS }}
 
@@ -55,7 +56,7 @@ jobs:
               -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }}
               -DQT_ANDROID_ABIS="${{ env.QT_ANDROID_ABIS }}"
               -DQT_ANDROID_BUILD_ALL_ABIS=OFF
-              -DQT_HOST_PATH="${{ env.QT_ROOT_DIR }}/../msvc2019_64"
+              -DQT_HOST_PATH="${{ env.QT_ROOT_DIR }}/../macos"
               -DQT_ANDROID_SIGN_APK=${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && 'ON' || 'OFF' }}
               -DQT_DEBUG_FIND_PACKAGE=ON
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}

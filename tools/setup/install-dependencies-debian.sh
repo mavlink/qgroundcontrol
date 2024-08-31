@@ -63,9 +63,9 @@ DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
 # GStreamer
 DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
     libgstreamer1.0-dev \
-    libgstreamer-plugins-bad1.0-0 \
+    libgstreamer-plugins-bad1.0-dev \
     libgstreamer-plugins-base1.0-dev \
-    libgstreamer-plugins-good1.0-0 \
+    libgstreamer-plugins-good1.0-dev \
     libgstreamer-gl1.0-0 \
     gstreamer1.0-plugins-bad \
     gstreamer1.0-plugins-base \
@@ -96,12 +96,16 @@ DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
     libspeechd-dev \
     libunwind-dev \
     libva-dev \
+    libvpx-dev \
     libvdpau-dev \
     libwayland-dev \
     libx11-dev \
     libzstd-dev \
     mesa-common-dev \
+    mesa-utils \
     mesa-va-drivers \
+    mesa-vdpau-drivers \
+    mesa-vulkan-drivers \
     speech-dispatcher \
     speech-dispatcher-espeak \
     speech-dispatcher-espeak-ng \

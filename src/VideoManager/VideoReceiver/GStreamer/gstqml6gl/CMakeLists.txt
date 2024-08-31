@@ -1,7 +1,6 @@
-find_package(GStreamer REQUIRED COMPONENTS OPTIONAL_COMPONENTS X11 EGL Wayland)
+find_package(GStreamer REQUIRED COMPONENTS Codecparsers Controller Mpegts Net Pbutils Riff Rtp Rtsp OPTIONAL_COMPONENTS Photography X11 EGL Wayland)
 
 # Use Latest Revisions for each minor version: 1.16.3, 1.18.6, 1.20.7, 1.22.12, 1.24.7
-
 string(REPLACE "." ";" GST_VERSION_LIST ${GStreamer_VERSION})
 list(GET GST_VERSION_LIST 0 GST_VERSION_MAJOR)
 list(GET GST_VERSION_LIST 1 GST_VERSION_MINOR)
@@ -64,7 +63,20 @@ target_link_libraries(gstqml6gl
         Qt6::Qml
         Qt6::Quick
         GStreamer::GStreamer
+        GStreamer::Codecparsers
+        GStreamer::Controller
+        GStreamer::Mpegts
+        GStreamer::Net
+        GStreamer::Pbutils
+        GStreamer::Riff
+        GStreamer::Rtp
+        GStreamer::Rtsp
 )
+
+# Photography not found on ubuntu 20.04?
+if(GStreamer_Photography_FOUND)
+    target_link_libraries(gstqml6gl PUBLIC GStreamer::Photography)
+endif()
 
 target_include_directories(gstqml6gl PUBLIC ${QGC_GST_QT6_PLUGIN_PATH})
 
@@ -218,6 +230,49 @@ if(NOT GST_PLUGINS_FOUND)
             endif()
         endif()
     endforeach()
+
+    if(ANDROID)
+        target_include_directories(gstqml6gl
+            PUBLIC
+                ${GSTREAMER_PREFIX}/include/gstreamer-1.0
+                ${GSTREAMER_PREFIX}/include/glib-2.0
+                ${GSTREAMER_PREFIX}/lib/glib-2.0/include
+                ${GSTREAMER_PREFIX}/lib/gstreamer-1.0/include
+                ${GSTREAMER_PREFIX}/include
+        )
+
+        find_package(FFMPEG REQUIRED COMPONENTS avcodec avfilter avformat avutil swresample)
+        if(FFMPEG_FOUND)
+            target_link_libraries(gstqml6gl PUBLIC ${FFMPEG_LIBRARIES})
+            target_include_directories(gstqml6gl PUBLIC ${FFMPEG_INCLUDE_DIRS})
+        endif()
+
+        find_package(BZip2)
+        if(BZIP2_FOUND)
+            target_link_libraries(gstqml6gl PUBLIC BZip2::BZip2)
+        endif()
+
+        find_library(graphene_LIBRARY graphene-1.0)
+        if(graphene_LIBRARY)
+            target_link_libraries(gstqml6gl PUBLIC ${graphene_LIBRARY})
+        endif()
+
+        find_library(x264_LIBRARY x264)
+        if(x264_LIBRARY)
+            target_link_libraries(gstqml6gl PUBLIC ${x264_LIBRARY})
+        endif()
+
+        find_package(JPEG)
+        if(JPEG_FOUND)
+            target_link_libraries(gstqml6gl PUBLIC JPEG::JPEG)
+        endif()
+
+        find_package(PNG)
+        if(PNG_FOUND)
+            target_link_libraries(gstqml6gl PUBLIC PNG::PNG)
+        endif()
+
+    endif()
 endif()
 
 if(ANDROID)
