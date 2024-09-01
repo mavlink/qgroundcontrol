@@ -113,7 +113,7 @@ Item {
 
             //create a new rectangle at the wanted position
             if(videoStreaming._camera) {
-                if (videoStreaming._camera.trackingEnabled) {
+                if (true) {
                     trackingROI = trackingROIComponent.createObject(flyViewVideoMouseArea, {
                         "x": mouse.x,
                         "y": mouse.y
@@ -142,10 +142,9 @@ Item {
             //if there is already a selection, delete it
             if (trackingROI !== null) {
                 trackingROI.destroy();
-            }
-
+            }        
             if(videoStreaming._camera) {
-                if (videoStreaming._camera.trackingEnabled) {
+                if (true) {
                     // order coordinates --> top/left and bottom/right
                     x0 = Math.min(_track_rec_x, mouse.x)
                     x1 = Math.max(_track_rec_x, mouse.x)
@@ -210,7 +209,7 @@ Item {
             running:                true
             onTriggered: {
                 if (videoStreaming._camera) {
-                    if (videoStreaming._camera.trackingEnabled && videoStreaming._camera.trackingImageStatus) {
+                    if (true) {
                         var margin_hor = (parent.parent.width - videoStreaming.getWidth()) / 2
                         var margin_ver = (parent.parent.height - videoStreaming.getHeight()) / 2
                         var left = margin_hor + videoStreaming.getWidth() * videoStreaming._camera.trackingImageRect.left

@@ -114,6 +114,7 @@ VehicleCameraControl::VehicleCameraControl(const mavlink_camera_information_t *i
     , _vehicle(vehicle)
     , _compID(compID)
 {
+    qCDebug(CameraControlLog) << "Vehicle Camera Control Object initialised";
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     memcpy(&_info, info, sizeof(mavlink_camera_information_t));
     connect(this, &VehicleCameraControl::dataReady, this, &VehicleCameraControl::_dataReady);
@@ -2311,7 +2312,7 @@ VehicleCameraControl::startTracking(QRectF rec)
                                   << static_cast<float>(rec.x() + rec.width()) << ", "
                                   << static_cast<float>(rec.y() + rec.height()) << "]";
 
-        _vehicle->sendMavCommand(_compID,
+        _vehicle->sendMavCommand(0,
                                  MAV_CMD_CAMERA_TRACK_RECTANGLE,
                                  true,
                                  static_cast<float>(rec.x()),
@@ -2334,7 +2335,7 @@ VehicleCameraControl::startTracking(QPointF point, double radius)
                                   << static_cast<float>(point.y()) << "], Radius:  "
                                   << static_cast<float>(radius);
 
-        _vehicle->sendMavCommand(_compID,
+        _vehicle->sendMavCommand(0,
                                  MAV_CMD_CAMERA_TRACK_POINT,
                                  true,
                                  static_cast<float>(point.x()),

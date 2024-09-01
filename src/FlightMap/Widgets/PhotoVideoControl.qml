@@ -254,7 +254,7 @@ Rectangle {
                 id:                 trackingControls
                 Layout.alignment:   Qt.AlignHCenter
                 spacing:            _margins
-                visible:            _camera && _camera.hasTracking
+                visible:            true
 
                 Rectangle {
                     Layout.alignment:       Qt.AlignHCenter
@@ -276,10 +276,10 @@ Rectangle {
                         MouseArea {
                             anchors.fill: parent
                             onClicked: {
-                                _camera.trackingEnabled = !_camera.trackingEnabled;
-                                if (!_camera.trackingEnabled) {
-                                    !camera.stopTracking()
-                                }
+                                _camera.trackingEnabled = true; // !_camera.trackingEnabled;
+                               // if (!_camera.trackingEnabled) {
+                               //     !camera.stopTracking()
+                                //}
                             }
                         }
                     }
@@ -289,7 +289,7 @@ Rectangle {
                     Layout.alignment:   Qt.AlignHCenter
                     text:               qsTr("Camera Tracking")
                     font.pointSize:     ScreenTools.defaultFontPointSize
-                    visible:            _camera && _camera.hasTracking
+                    visible:            true //_camera && _camera.hasTracking
                 }
             }
 
