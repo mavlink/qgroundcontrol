@@ -2,7 +2,6 @@ Module QGroundControl.FlightMap
 
 # Main view controls
 FlightMap           1.0 FlightMap.qml
-QGCVideoBackground  1.0 QGCVideoBackground.qml
 
 # Widgets
 CenterMapDropButton         1.0 CenterMapDropButton.qml

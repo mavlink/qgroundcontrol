@@ -1,11 +1,3 @@
-# option(QGC_ENABLE_VIDEOSTREAMING "Enable video streaming" ON)
-# if(NOT QGC_ENABLE_VIDEOSTREAMING)
-#     return()
-# endif()
-# message(STATUS "Enabling video streaming support")
-
-add_subdirectory(VideoReceiver)
-
 find_package(Qt6 REQUIRED COMPONENTS Core)
 
 qt_add_library(VideoManager STATIC
@@ -15,19 +7,28 @@ qt_add_library(VideoManager STATIC
     VideoManager.h
 )
 
+# option(QGC_ENABLE_VIDEOSTREAMING "Enable video streaming" ON)
+# if(NOT QGC_ENABLE_VIDEOSTREAMING)
+#     return()
+# endif()
+# message(STATUS "Enabling video streaming support")
+
+add_subdirectory(VideoReceiver)
+
 target_link_libraries(VideoManager
     PRIVATE
         API
         Camera
         FactSystem
         QmlControls
-        QtMultimediaReceiver
         Settings
         Utilities
         Vehicle
+        VideoReceiver
     PUBLIC
         Qt6::Core
         GStreamerReceiver
+        QtMultimediaReceiver
         QGC
 )
 

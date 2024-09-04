@@ -41,8 +41,11 @@
         <file alias="ESP8266ComponentSummary.qml">src/AutoPilotPlugins/Common/ESP8266ComponentSummary.qml</file>
         <file alias="ExitWithErrorWindow.qml">src/UI/ExitWithErrorWindow.qml</file>
         <file alias="FirmwareUpgrade.qml">src/VehicleSetup/FirmwareUpgrade.qml</file>
+        <file alias="QGroundControl/FlightDisplay/QGCVideoBackground.qml">src/FlightDisplay/QGCVideoBackground.qml</file>
         <file alias="FlightDisplayViewDummy.qml">src/FlightDisplay/FlightDisplayViewDummy.qml</file>
         <file alias="FlightDisplayViewUVC.qml">src/FlightDisplay/FlightDisplayViewUVC.qml</file>
+        <file alias="QGroundControl/FlightDisplay/FlightDisplayViewGStreamer.qml">src/FlightDisplay/FlightDisplayViewGStreamer.qml</file>
+        <file alias="QGroundControl/FlightDisplay/FlightDisplayViewQtMultimedia.qml">src/FlightDisplay/FlightDisplayViewQtMultimedia.qml</file>
         <file alias="FlyViewSettings.qml">src/UI/preferences/FlyViewSettings.qml</file>
         <file alias="FWLandingPatternEditor.qml">src/PlanView/FWLandingPatternEditor.qml</file>
         <file alias="GeneralSettings.qml">src/UI/preferences/GeneralSettings.qml</file>
@@ -285,7 +288,6 @@
         <file alias="QGroundControl/FlightMap/QGCAttitudeWidget.qml">src/FlightMap/Widgets/QGCAttitudeWidget.qml</file>
         <file alias="QGroundControl/FlightMap/QGCCompassWidget.qml">src/FlightMap/Widgets/QGCCompassWidget.qml</file>
         <file alias="QGroundControl/FlightMap/QGCPitchIndicator.qml">src/FlightMap/Widgets/QGCPitchIndicator.qml</file>
-        <file alias="QGroundControl/FlightMap/QGCVideoBackground.qml">src/FlightMap/QGCVideoBackground.qml</file>
         <file alias="QGroundControl/FlightMap/qmldir">src/QmlControls/QGroundControl/FlightMap/qmldir</file>
         <file alias="QGroundControl/FlightMap/VehicleMapItem.qml">src/FlightMap/MapItems/VehicleMapItem.qml</file>
         <file alias="QGroundControl/ScreenTools/qmldir">src/QmlControls/QGroundControl/ScreenTools/qmldir</file>
