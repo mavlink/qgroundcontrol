@@ -1,30 +1,33 @@
 #include "UVCReceiver.h"
-#include "QtMultimediaReceiver.h"
-#include <QGCLoggingCategory.h>
+#include "QGCApplication.h"
+#include "QGCLoggingCategory.h"
 
 #include <QtCore/QCoreApplication>
+#include <QtCore/QPermissions>
 #include <QtQuick/QQuickItem>
 #include <QtMultimedia/QMediaDevices>
 #include <QtMultimedia/QCameraDevice>
 #include <QtMultimedia/QCamera>
 #include <QtMultimedia/QImageCapture>
 #include <QtMultimedia/QMediaCaptureSession>
+#include <QtMultimediaQuick/private/qquickvideooutput_p.h>
 
 QGC_LOGGING_CATEGORY(UVCReceiverLog, "qgc.video.qtmultimedia.uvcreceiver")
 
-UVCReceiver::UVCReceiver(QObject* parent)
+UVCReceiver::UVCReceiver(QObject *parent)
     : QtMultimediaReceiver(parent)
-    , m_camera(new QCamera(this))
-    , m_imageCapture(new QImageCapture(this))
+    , _camera(new QCamera(this))
+    , _imageCapture(new QImageCapture(this))
 {
-    m_captureSession->setCamera(m_camera);
-    m_captureSession->setImageCapture(m_imageCapture);
-    m_captureSession->setVideoSink(m_videoSink);
+    _captureSession->setCamera(_camera);
+    _captureSession->setImageCapture(_imageCapture);
+    _captureSession->setVideoSink(_videoSink);
 
-    connect(m_captureSession, &QMediaCaptureSession::cameraChanged, this, [this]{
-        // adjustAspectRatio()
-        _checkPermission();
+    (void) connect(_captureSession, &QMediaCaptureSession::cameraChanged, this, [this] {
+        adjustAspectRatio();
     });
+
+    _checkPermission();
 
     qCDebug(UVCReceiverLog) << Q_FUNC_INFO << this;
 }
@@ -34,13 +37,13 @@ UVCReceiver::~UVCReceiver()
     qCDebug(UVCReceiverLog) << Q_FUNC_INFO << this;
 }
 
-void UVCReceiver::adjustAspectRatio(qreal height)
+void UVCReceiver::adjustAspectRatio()
 {
-    if (!m_videoOutput) {
+    if (!_videoOutput) {
         return;
     }
 
-    const QCameraFormat cameraFormat = m_camera->cameraFormat();
+    const QCameraFormat cameraFormat = _camera->cameraFormat();
     if (cameraFormat.isNull()) {
         return;
     }
@@ -49,7 +52,7 @@ void UVCReceiver::adjustAspectRatio(qreal height)
     if (resolution.isValid()) {
         const qreal aspectRatio = resolution.width() / resolution.height();
         const qreal height = height * aspectRatio;
-        m_videoOutput->setHeight(height * aspectRatio);
+        _videoOutput->setHeight(height * aspectRatio);
     }
 }
 
@@ -71,8 +74,8 @@ void UVCReceiver::_checkPermission()
     QCameraPermission cameraPermission;
     if (qApp->checkPermission(cameraPermission) == Qt::PermissionStatus::Undetermined) {
         qApp->requestPermission(cameraPermission, [this](const QPermission &permission) {
-            if (permission.status() == Qt::PermissionStatus::Granted) {
-                // qgcApp()->showRebootAppMessage(tr("Restart application for changes to take effect."));
+            if (permission.status() != Qt::PermissionStatus::Granted) {
+                qgcApp()->showAppMessage(QStringLiteral("Failed to get camera permission"));
             }
         });
     }
@@ -80,5 +83,5 @@ void UVCReceiver::_checkPermission()
 
 bool UVCReceiver::enabled()
 {
-    return QMediaDevices::videoInputs().count() > 0;
+    return (QMediaDevices::videoInputs().count() > 0);
 }

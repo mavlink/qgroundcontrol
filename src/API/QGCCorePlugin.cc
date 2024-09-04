@@ -16,10 +16,12 @@
 #include "AppMessages.h"
 #include "QmlObjectListModel.h"
 #include "JoystickManager.h"
-#if defined(QGC_GST_STREAMING)
+#ifdef QGC_GST_STREAMING
 #include "GStreamer.h"
 #endif
-#include "VideoManager.h"
+#ifdef QGC_QT_STREAMING
+#include "QtMultimediaReceiver.h"
+#endif
 #include "VideoReceiver.h"
 #include "HorizontalFactValueGrid.h"
 #include "InstrumentValueData.h"
@@ -323,38 +325,34 @@ QmlObjectListModel* QGCCorePlugin::customMapItems()
     return &_p->_emptyCustomMapItems;
 }
 
-VideoManager* QGCCorePlugin::createVideoManager(QGCApplication *app, QGCToolbox *toolbox)
-{
-    return new VideoManager(app, toolbox);
-}
-
 VideoReceiver* QGCCorePlugin::createVideoReceiver(QObject* parent)
 {
-#if defined(QGC_GST_STREAMING)
+#ifdef QGC_GST_STREAMING
     return GStreamer::createVideoReceiver(parent);
+#elif defined(QGC_QT_STREAMING)
+    return QtMultimediaReceiver::createVideoReceiver(parent);
 #else
-    Q_UNUSED(parent)
     return nullptr;
 #endif
 }
 
 void* QGCCorePlugin::createVideoSink(QObject* parent, QQuickItem* widget)
 {
-#if defined(QGC_GST_STREAMING)
+#ifdef QGC_GST_STREAMING
     return GStreamer::createVideoSink(parent, widget);
+#elif defined(QGC_QT_STREAMING)
+    return QtMultimediaReceiver::createVideoSink(parent, widget);
 #else
-    Q_UNUSED(parent)
-    Q_UNUSED(widget)
     return nullptr;
 #endif
 }
 
 void QGCCorePlugin::releaseVideoSink(void* sink)
 {
-#if defined(QGC_GST_STREAMING)
+#ifdef QGC_GST_STREAMING
     GStreamer::releaseVideoSink(sink);
-#else
-    Q_UNUSED(sink)
+#elif defined(QGC_QT_STREAMING)
+    QtMultimediaReceiver::releaseVideoSink(sink);
 #endif
 }
 
