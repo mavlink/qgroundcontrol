@@ -19,12 +19,14 @@
 #include "VideoReceiver.h"
 #include "VideoSettings.h"
 #include "SubtitleWriter.h"
-
 #ifdef QGC_GST_STREAMING
 #include "GStreamer.h"
 #include "VideoDecoderOptions.h"
 #else
 #include "GLVideoItemStub.h"
+#endif
+#ifdef QGC_QT_STREAMING
+#include "QtMultimediaReceiver.h"
 #endif
 
 #ifndef QGC_DISABLE_UVC
@@ -50,7 +52,22 @@ VideoManager::VideoManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
     , _subtitleWriter(new SubtitleWriter(this))
 {
-#ifndef QGC_GST_STREAMING
+#ifdef QGC_GST_STREAMING
+    // Gstreamer debug settings
+    int gstDebugLevel = 0;
+    QSettings settings;
+    if (settings.contains(AppSettings::gstDebugLevelName)) {
+        gstDebugLevel = settings.value(AppSettings::gstDebugLevelName).toInt();
+    }
+    QStringList args = _app->arguments();
+    const qsizetype argc = args.size();
+    char** argv = new char*[argc];
+    for (qsizetype i = 0; i < argc; i++) {
+        argv[i] = args[i].toUtf8().data();
+    }
+    GStreamer::initialize(argc, argv, gstDebugLevel);
+    delete[] argv;
+#else
     qmlRegisterType<GLVideoItemStub>("org.freedesktop.gstreamer.Qt6GLVideoItem", 1, 0, "GstGLQt6VideoItem");
 #endif
 }
@@ -71,6 +88,9 @@ VideoManager::~VideoManager()
             // calling _toolbox->corePlugin()->releaseVideoSink(_videoSink[i]);
             // As for now let's call GStreamer::releaseVideoSink() directly
             GStreamer::releaseVideoSink(videoReceiver.sink);
+#endif
+#ifdef QGC_QT_STREAMING
+            QtMultimediaReceiver::releaseVideoSink(videoReceiver.sink);
 #endif
         }
     }
@@ -99,23 +119,7 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
    connect(pVehicleMgr, &MultiVehicleManager::activeVehicleChanged, this, &VideoManager::_setActiveVehicle);
 
 #ifdef QGC_GST_STREAMING
-    // Gstreamer debug settings
-    int gstDebugLevel = 0;
-    QSettings settings;
-    if (settings.contains(AppSettings::gstDebugLevelName)) {
-        gstDebugLevel = settings.value(AppSettings::gstDebugLevelName).toInt();
-    }
-    QStringList args = _app->arguments();
-    const qsizetype argc = args.size();
-    char** argv = new char*[argc];
-    for (qsizetype i = 0; i < argc; i++) {
-        argv[i] = args[i].toUtf8().data();
-    }
-    GStreamer::initialize(argc, argv, gstDebugLevel);
-    delete[] argv;
     GStreamer::blacklist(static_cast<VideoDecoderOptions>(_videoSettings->forceVideoDecoder()->rawValue().toInt()));
-
-    emit isGStreamerChanged();
 #endif
 
     int index = 0;
@@ -224,6 +228,7 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
         (void) _updateSettings(videoReceiver.index);
     }
 
+    emit isStreamSourceChanged();
     startVideo();
 }
 
@@ -462,7 +467,7 @@ VideoManager::_updateUVC()
     bool result = false;
 #ifndef QGC_DISABLE_UVC
     const QString oldUvcVideoSrcID = _uvcVideoSourceID;
-    if (!hasVideo() || isGStreamer()) {
+    if (!hasVideo() || isStreamSource()) {
         _uvcVideoSourceID = "";
     } else {
         const QString videoSource = _videoSettings->videoSource()->rawValue().toString();
@@ -478,7 +483,6 @@ VideoManager::_updateUVC()
 
     if (oldUvcVideoSrcID != _uvcVideoSourceID) {
         qCDebug(VideoManagerLog) << "UVC changed from [" << oldUvcVideoSrcID << "] to [" << _uvcVideoSourceID << "]";
-#if QT_CONFIG(permissions)
         const QCameraPermission cameraPermission;
         if (_app->checkPermission(cameraPermission) == Qt::PermissionStatus::Undetermined) {
             _app->requestPermission(cameraPermission, [this](const QPermission &permission) {
@@ -487,7 +491,6 @@ VideoManager::_updateUVC()
                 }
             });
         }
-#endif
         result = true;
         emit uvcVideoSourceIDChanged();
         emit isUvcChanged();
@@ -502,7 +505,7 @@ VideoManager::_videoSourceChanged()
 {
     (void) _updateSettings(0);
     emit hasVideoChanged();
-    emit isGStreamerChanged();
+    emit isStreamSourceChanged();
     emit isUvcChanged();
     emit isAutoStreamChanged();
     if (hasVideo()) {
@@ -549,9 +552,8 @@ VideoManager::hasVideo() const
 
 //-----------------------------------------------------------------------------
 bool
-VideoManager::isGStreamer() const
+VideoManager::isStreamSource() const
 {
-#ifdef QGC_GST_STREAMING
     const QString videoSource = _videoSettings->videoSource()->rawValue().toString();
     return videoSource == VideoSettings::videoSourceUDPH264 ||
             videoSource == VideoSettings::videoSourceUDPH265 ||
@@ -564,19 +566,12 @@ VideoManager::isGStreamer() const
             videoSource == VideoSettings::videoSourceHerelinkAirUnit ||
             videoSource == VideoSettings::videoSourceHerelinkHotspot ||
             autoStreamConfigured();
-#else
-    return false;
-#endif
 }
 
 bool
 VideoManager::isUvc() const
 {
-#ifndef QGC_DISABLE_UVC
-    return hasVideo() && !_uvcVideoSourceID.isEmpty();
-#else
-    return false;
-#endif
+    return (uvcEnabled() && (hasVideo() && !_uvcVideoSourceID.isEmpty()));
 }
 
 //-----------------------------------------------------------------------------
@@ -595,7 +590,18 @@ bool
 VideoManager::uvcEnabled() const
 {
 #ifndef QGC_DISABLE_UVC
-    return (QMediaDevices::videoInputs().count() > 0);
+    return !QMediaDevices::videoInputs().isEmpty();
+#else
+    return false;
+#endif
+}
+
+//-----------------------------------------------------------------------------
+bool
+VideoManager::qtmultimediaEnabled() const
+{
+#ifdef QGC_QT_STREAMING
+    return true;
 #else
     return false;
 #endif
