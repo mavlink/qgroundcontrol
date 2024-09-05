@@ -99,12 +99,13 @@ Rectangle {
 
                         QGCColoredImage {
                             source: iconUrl
-                            color:  checked || pressed ? qgcPal.buttonHighlightText : qgcPal.buttonText
+                            color:  displayText.color
                             width:  ScreenTools.defaultFontPixelHeight
                             height: ScreenTools.defaultFontPixelHeight
                         }
 
                         QGCLabel {
+                            id:                     displayText
                             Layout.fillWidth:       true
                             text:                   name
                             color:                  checked || pressed ? qgcPal.buttonHighlightText : qgcPal.buttonText
