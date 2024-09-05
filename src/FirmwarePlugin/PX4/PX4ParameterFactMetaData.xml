@@ -18445,7 +18445,7 @@
   <group name="Rover Differential">
     <parameter name="RD_MAN_YAW_SCALE" default="1" type="FLOAT">
       <short_desc>Manual yaw rate scale</short_desc>
-      <long_desc>In manual mode the setpoint for the yaw rate received from the rc remote is scaled by this value.</long_desc>
+      <long_desc>In manual mode the setpoint for the yaw rate received from the yaw stick is scaled by this value.</long_desc>
       <min>0.001</min>
       <max>1</max>
       <decimal>3</decimal>
@@ -18834,7 +18834,7 @@
         <value code="0">when armed until disarm (default)</value>
         <value code="1">from boot until disarm</value>
         <value code="2">from boot until shutdown</value>
-        <value code="3">depending on AUX1 RC channel</value>
+        <value code="3">while manual input AUX1 &gt;30%</value>
         <value code="4">from 1st armed until shutdown</value>
       </values>
     </parameter>
