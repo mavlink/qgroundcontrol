@@ -391,13 +391,3 @@ QStringList VehicleLinkManager::linkStatuses(void) const
 
     return rgStatuses;
 }
-
-bool VehicleLinkManager::primaryLinkIsPX4Flow(void) const
-{
-    SharedLinkInterfacePtr sharedLink = _primaryLink.lock();
-    if (!sharedLink) {
-        return false;
-    } else {
-        return sharedLink->isPX4Flow();
-    }
-}

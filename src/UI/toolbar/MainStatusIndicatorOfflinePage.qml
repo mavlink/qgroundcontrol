@@ -89,17 +89,16 @@ ToolIndicatorPage {
                 Repeater {
                     id: autoConnectRepeater
 
-                    model: [ 
+                    model: [
                         autoConnectSettings.autoConnectPixhawk,
                         autoConnectSettings.autoConnectSiKRadio,
-                        autoConnectSettings.autoConnectPX4Flow,
                         autoConnectSettings.autoConnectLibrePilot,
                         autoConnectSettings.autoConnectUDP,
                         autoConnectSettings.autoConnectZeroConf,
                         autoConnectSettings.autoConnectRTKGPS,
                     ]
 
-                    property var names: [ qsTr("Pixhawk"), qsTr("SiK Radio"), qsTr("PX4 Flow"), qsTr("LibrePilot"), qsTr("UDP"), qsTr("Zero-Conf"), qsTr("RTK") ]
+                    property var names: [ qsTr("Pixhawk"), qsTr("SiK Radio"), qsTr("LibrePilot"), qsTr("UDP"), qsTr("Zero-Conf"), qsTr("RTK") ]
 
                     FactCheckBoxSlider {
                         Layout.fillWidth:   true

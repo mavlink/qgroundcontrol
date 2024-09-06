@@ -293,7 +293,7 @@ void Vehicle::_commonInit()
     _componentInformationManager    = new ComponentInformationManager   (this);
     _initialConnectStateMachine     = new InitialConnectStateMachine    (this);
     _ftpManager                     = new FTPManager                    (this);
-    _imageProtocolManager           = new ImageProtocolManager          ();
+
     _vehicleLinkManager             = new VehicleLinkManager            (this);
 
     connect(_standardModes, &StandardModes::modesUpdated, this, &Vehicle::flightModesChanged);
@@ -325,8 +325,7 @@ void Vehicle::_commonInit()
     // Flight modes can differ based on advanced mode
     connect(_toolbox->corePlugin(), &QGCCorePlugin::showAdvancedUIChanged, this, &Vehicle::flightModesChanged);
 
-    connect(_imageProtocolManager, &ImageProtocolManager::imageReady, this, &Vehicle::_imageProtocolImageReady);
-
+    _createImageProtocolManager();
     _createStatusTextHandler();
 
     // _addFactGroup(_vehicleFactGroup,            _vehicleFactGroupName);
@@ -530,7 +529,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     }
     _ftpManager->_mavlinkMessageReceived(message);
     _parameterManager->mavlinkMessageReceived(message);
-    _imageProtocolManager->mavlinkMessageReceived(message);
+    (void) QMetaObject::invokeMethod(_imageProtocolManager, "mavlinkMessageReceived", Qt::AutoConnection, message);
     _remoteIDManager->mavlinkMessageReceived(message);
 
     _waitForMavlinkMessageMessageReceivedHandler(message);
@@ -1877,14 +1876,6 @@ void Vehicle::_sendQGCTimeToVehicle()
                                         &cmd);
 
     sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
-}
-
-void Vehicle::_imageProtocolImageReady(void)
-{
-    QImage img = _imageProtocolManager->getImage();
-    qgcApp()->qgcImageProvider()->setImage(&img, _id);
-    _flowImageIndex++;
-    emit flowImageIndexChanged();
 }
 
 void Vehicle::_remoteControlRSSIChanged(uint8_t rssi)
@@ -4096,6 +4087,25 @@ void Vehicle::sendSetupSigning()
     for (uint8_t i = 0; i < 2; ++i) {
         sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
     }
+}
+
+/*---------------------------------------------------------------------------*/
+/*===========================================================================*/
+/*                        Image Protocol Manager                             */
+/*===========================================================================*/
+
+void Vehicle::_createImageProtocolManager()
+{
+    _imageProtocolManager = new ImageProtocolManager(this);
+    (void) connect(_imageProtocolManager, &ImageProtocolManager::flowImageIndexChanged, this, &Vehicle::flowImageIndexChanged);
+    (void) connect(_imageProtocolManager, &ImageProtocolManager::imageReady, this, [this](const QImage &image) {
+        qgcApp()->qgcImageProvider()->setImage(image, _id);
+    });
+}
+
+uint32_t Vehicle::flowImageIndex() const
+{
+    return (_imageProtocolManager ? _imageProtocolManager->flowImageIndex() : 0);
 }
 
 /*---------------------------------------------------------------------------*/
