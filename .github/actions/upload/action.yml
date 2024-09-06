@@ -24,7 +24,7 @@ runs:
         path: ${{ runner.temp }}/shadow_build_dir/${{ inputs.source }}/${{ inputs.artifact_name }}
 
     - name: Upload build to S3 Bucket
-      if: github.event_name == 'push'
+      if: github.event_name == 'push' && !github.event.pull_request.head.repo.fork
       working-directory: ${{ runner.temp }}/shadow_build_dir/${{ inputs.source }}
       run: |
         aws configure set aws_access_key_id ${{ inputs.aws_key_id }}
@@ -33,7 +33,7 @@ runs:
       shell: bash
 
     - name: Upload tagged stable build to S3 latest Bucket
-      if: github.event_name == 'push' && github.ref_type == 'tag'
+      if: github.event_name == 'push' && github.ref_type == 'tag' && !github.event.pull_request.head.repo.fork
       working-directory: ${{ runner.temp }}/shadow_build_dir/${{ inputs.source }}
       run: |
         aws configure set aws_access_key_id ${{ inputs.aws_key_id }}
