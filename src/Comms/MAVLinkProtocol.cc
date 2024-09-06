@@ -406,7 +406,7 @@ void MAVLinkProtocol::setSystemId(int id)
 }
 
 /** @return Component id of this application */
-int MAVLinkProtocol::getComponentId()
+int MAVLinkProtocol::getComponentId() const
 {
     return MAV_COMP_ID_MISSIONPLANNER;
 }

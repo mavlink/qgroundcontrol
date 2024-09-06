@@ -86,6 +86,7 @@ public:
     bool                fixedWingAirSpeedLimitsAvailable(Vehicle* vehicle) override;
     void                guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle* vehicle, double airspeed_equiv) override;
     QVariant            mainStatusIndicatorContentItem  (const Vehicle* vehicle) const override;
+    void                sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimatationCapabilities) override;
 
     // support for changing speed in Copter guide mode:
     bool mulirotorSpeedLimitsAvailable(Vehicle* vehicle) override;
@@ -102,7 +103,6 @@ protected:
     APMFirmwarePlugin(void);
 
     void setSupportedModes  (QList<APMCustomMode> supportedModes);
-    void _sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimatationCapabilities);
 
     static void _setBaroGndTemp(Vehicle* vehicle, qreal temperature);
     static void _setBaroAltOffset(Vehicle* vehicle, qreal offset);

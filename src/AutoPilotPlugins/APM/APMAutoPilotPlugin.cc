@@ -25,6 +25,11 @@
 #include "ESP8266Component.h"
 #include "APMHeliComponent.h"
 #include "APMRemoteSupportComponent.h"
+#ifdef QT_DEBUG
+#include "APMFollowComponent.h"
+#include "ArduCopterFirmwarePlugin.h"
+#include "ArduRoverFirmwarePlugin.h"
+#endif
 #include "QGCApplication.h"
 #include "ParameterManager.h"
 
@@ -50,10 +55,6 @@ APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     , _esp8266Component         (nullptr)
     , _heliComponent            (nullptr)
     , _apmRemoteSupportComponent(nullptr)
-#if 0
-    // Follow me not ready for Stable
-    , _followComponent          (nullptr)
-#endif
 {
 #if !defined(NO_SERIAL_LINK) && !defined(Q_OS_ANDROID)
     connect(vehicle->parameterManager(), &ParameterManager::parametersReadyChanged, this, &APMAutoPilotPlugin::_checkForBadCubeBlack);
@@ -104,14 +105,12 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
             _safetyComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_safetyComponent));
 
-#if 0
-    // Follow me not ready for Stable
-
+#ifdef QT_DEBUG
             if ((qobject_cast<ArduCopterFirmwarePlugin*>(_vehicle->firmwarePlugin()) || qobject_cast<ArduRoverFirmwarePlugin*>(_vehicle->firmwarePlugin())) &&
                     _vehicle->parameterManager()->parameterExists(-1, QStringLiteral("FOLL_ENABLE"))) {
                 _followComponent = new APMFollowComponent(_vehicle, this);
                 _followComponent->setupTriggerSignals();
-                _components.append(QVariant::fromValue((VehicleComponent*)_followComponent));
+                (void) _components.append(QVariant::fromValue(qobject_cast<VehicleComponent*>(_followComponent)));
             }
 #endif
 

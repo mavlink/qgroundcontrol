@@ -21,7 +21,6 @@
 #include "QmlObjectListModel.h"
 
 class FirmwarePluginManager;
-class FollowMe;
 class JoystickManager;
 class QGCApplication;
 class MAVLinkProtocol;

@@ -134,8 +134,3 @@ bool ArduCopterFirmwarePlugin::multiRotorXConfig(Vehicle* vehicle)
 {
     return vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, "FRAME")->rawValue().toInt() != 0;
 }
-
-void ArduCopterFirmwarePlugin::sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimatationCapabilities)
-{
-    _sendGCSMotionReport(vehicle, motionReport, estimatationCapabilities);
-}
