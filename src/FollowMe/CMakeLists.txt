@@ -10,12 +10,12 @@ target_link_libraries(FollowMe
         Qt6::Positioning
         FirmwarePlugin
         PositionManager
+        QGC
         Settings
         Utilities
         Vehicle
     PUBLIC
         Qt6::Core
-        QGC
 )
 
 target_include_directories(FollowMe PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
