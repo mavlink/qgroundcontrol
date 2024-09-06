@@ -237,8 +237,6 @@ QString QGCSerialPortInfo::_boardTypeToString(BoardType_t boardType)
         return QStringLiteral("Pixhawk");
     case BoardTypeSiKRadio:
         return QStringLiteral("SiK Radio");
-    case BoardTypePX4Flow:
-        return QStringLiteral("PX4 Flow");
     case BoardTypeOpenPilot:
         return QStringLiteral("OpenPilot");
     case BoardTypeRTKGPS:
@@ -305,7 +303,6 @@ bool QGCSerialPortInfo::canFlash() const
     if (getBoardInfo(boardType, name)) {
         switch(boardType) {
         case QGCSerialPortInfo::BoardTypePixhawk:
-        case QGCSerialPortInfo::BoardTypePX4Flow:
         case QGCSerialPortInfo::BoardTypeSiKRadio:
             return true;
         default:

@@ -249,13 +249,12 @@ Rectangle {
             }
 
             SubMenuButton {
-                id:                 px4FlowButton
-                buttonGroup:     setupButtonGroup
-                visible:            QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle.vehicleLinkManager.primaryLinkIsPX4Flow : false
+                buttonGroup:        setupButtonGroup
+                visible:            QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle.flowImageIndex > 0 : false
                 setupIndicator:     false
-                text:               qsTr("PX4Flow")
+                text:               qsTr("Optical Flow")
                 Layout.fillWidth:   true
-                onClicked:          showPanel(this, "PX4FlowSensor.qml")
+                onClicked:          showPanel(this, "OpticalFlowSensor.qml")
             }
 
             SubMenuButton {

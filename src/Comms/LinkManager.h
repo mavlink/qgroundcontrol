@@ -87,7 +87,7 @@ public:
     void setConnectionsAllowed() { _connectionsSuspended = false; }
 
     /// Creates, connects (and adds) a link  based on the given configuration instance.
-    bool createConnectedLink(SharedLinkConfigurationPtr &config, bool isPX4Flow = false);
+    bool createConnectedLink(SharedLinkConfigurationPtr &config);
 
     /// Returns pointer to the mavlink forwarding link, or nullptr if it does not exist
     SharedLinkInterfacePtr mavlinkForwardingLink();

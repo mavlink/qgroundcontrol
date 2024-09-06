@@ -25,13 +25,6 @@
     "default":     true
 },
 {
-    "name":             "autoConnectPX4Flow",
-    "shortDesc": "Automatically connect to a P4 Flow",
-    "longDesc":  "If this option is enabled GroundControl will automatically connect to a PX4 Flow board which is connected via USB.",
-    "type":             "bool",
-    "default":     true
-},
-{
     "name":             "autoConnectRTKGPS",
     "shortDesc": "Automatically connect to an RTK GPS",
     "longDesc":  "If this option is enabled GroundControl will automatically connect to an RTK GPS which is connected via USB.",

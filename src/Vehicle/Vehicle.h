@@ -158,7 +158,6 @@ public:
     Q_PROPERTY(float                latitude                    READ latitude                                                       NOTIFY coordinateChanged)
     Q_PROPERTY(float                longitude                   READ longitude                                                      NOTIFY coordinateChanged)
     Q_PROPERTY(bool                 joystickEnabled             READ joystickEnabled            WRITE setJoystickEnabled            NOTIFY joystickEnabledChanged)
-    Q_PROPERTY(int                  flowImageIndex              READ flowImageIndex                                                 NOTIFY flowImageIndexChanged)
     Q_PROPERTY(int                  rcRSSI                      READ rcRSSI                                                         NOTIFY rcRSSIChanged)
     Q_PROPERTY(bool                 px4Firmware                 READ px4Firmware                                                    NOTIFY firmwareTypeChanged)
     Q_PROPERTY(bool                 apmFirmware                 READ apmFirmware                                                    NOTIFY firmwareTypeChanged)
@@ -518,8 +517,6 @@ public:
 
     QmlObjectListModel* cameraTriggerPoints () { return &_cameraTriggerPoints; }
 
-    int  flowImageIndex() const{ return _flowImageIndex; }
-
     //-- Mavlink Logging
     void startMavlinkLog();
     void stopMavlinkLog();
@@ -847,7 +844,6 @@ signals:
     void checkListStateChanged          ();
     void longitudeChanged               ();
     void currentConfigChanged           ();
-    void flowImageIndexChanged          ();
     void rcRSSIChanged                  (int rcRSSI);
     void telemetryRRSSIChanged          (int value);
     void telemetryLRSSIChanged          (int value);
@@ -921,7 +917,6 @@ private slots:
     void _announceArmedChanged              (bool armed);
     void _offlineCruiseSpeedSettingChanged  (QVariant value);
     void _offlineHoverSpeedSettingChanged   (QVariant value);
-    void _imageProtocolImageReady           (void);
     void _prearmErrorTimeout                ();
     void _firstMissionLoadComplete          ();
     void _firstGeoFenceLoadComplete         ();
@@ -1106,8 +1101,6 @@ private:
 
     // Toolbox references
 
-    int                         _flowImageIndex = 0;
-
     bool _allLinksRemovedSent = false; ///< true: allLinkRemoved signal already sent one time
 
     uint                _messagesReceived = 0;
@@ -1282,7 +1275,6 @@ private:
     RallyPointManager*              _rallyPointManager          = nullptr;
     VehicleLinkManager*             _vehicleLinkManager         = nullptr;
     FTPManager*                     _ftpManager                 = nullptr;
-    ImageProtocolManager*           _imageProtocolManager       = nullptr;
     InitialConnectStateMachine*     _initialConnectStateMachine = nullptr;
     Actuators*                      _actuators                  = nullptr;
     RemoteIDManager*                _remoteIDManager            = nullptr;
@@ -1368,6 +1360,23 @@ private:
 
     StatusTextHandler *m_statusTextHandler = nullptr;
 /*---------------------------------------------------------------------------*/
+/*===========================================================================*/
+/*                        Image Protocol Manager                             */
+/*===========================================================================*/
+private:
+    Q_PROPERTY(uint flowImageIndex READ flowImageIndex NOTIFY flowImageIndexChanged)
+
+public:
+    uint32_t flowImageIndex() const;
+
+signals:
+    void flowImageIndexChanged();
+
+private:
+    void _createImageProtocolManager();
+
+    ImageProtocolManager *_imageProtocolManager = nullptr;
 };
+/*---------------------------------------------------------------------------*/
 
 Q_DECLARE_METATYPE(Vehicle::MavCmdResultFailureCode_t)

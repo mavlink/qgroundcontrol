@@ -76,7 +76,7 @@
         <file alias="PlanViewSettings.qml">src/UI/preferences/PlanViewSettings.qml</file>
         <file alias="PlanViewToolBar.qml">src/UI/toolbar/PlanViewToolBar.qml</file>
         <file alias="PreFlightCheckList.qml">src/FlightDisplay/PreFlightCheckList.qml</file>
-        <file alias="PX4FlowSensor.qml">src/VehicleSetup/PX4FlowSensor.qml</file>
+        <file alias="OpticalFlowSensor.qml">src/VehicleSetup/OpticalFlowSensor.qml</file>
         <file alias="VerticalCompassAttitude.qml">src/FlightMap/Widgets/VerticalCompassAttitude.qml</file>
         <file alias="HorizontalCompassAttitude.qml">src/FlightMap/Widgets/HorizontalCompassAttitude.qml</file>
         <file alias="QGroundControl/Controls/AnalyzePage.qml">src/AnalyzeView/AnalyzePage.qml</file>

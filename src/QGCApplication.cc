@@ -420,7 +420,7 @@ void QGCApplication::_initForNormalAppBoot()
     AudioOutput::instance()->init(_toolbox->settingsManager()->appSettings()->audioMuted());
     FollowMe::instance()->init();
 
-    // Image provider for PX4 Flow
+    // Image provider for Optical Flow
     _qmlAppEngine->addImageProvider(qgcImageProviderId, new QGCImageProvider());
 
     QQuickWindow* rootWindow = mainRootWindow();

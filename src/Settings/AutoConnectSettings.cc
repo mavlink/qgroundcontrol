@@ -45,17 +45,6 @@ DECLARE_SETTINGSFACT_NO_FUNC(AutoConnectSettings, autoConnectSiKRadio)
     return _autoConnectSiKRadioFact;
 }
 
-DECLARE_SETTINGSFACT_NO_FUNC(AutoConnectSettings, autoConnectPX4Flow)
-{
-    if (!_autoConnectPX4FlowFact) {
-        _autoConnectPX4FlowFact = _createSettingsFact(autoConnectPX4FlowName);
-#ifdef Q_OS_IOS
-        _autoConnectPX4FlowFact->setVisible(false);
-#endif
-    }
-    return _autoConnectPX4FlowFact;
-}
-
 DECLARE_SETTINGSFACT_NO_FUNC(AutoConnectSettings, autoConnectRTKGPS)
 {
     if (!_autoConnectRTKGPSFact) {

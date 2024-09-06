@@ -23,8 +23,6 @@ class LinkInterface : public QThread
 {
     Q_OBJECT
 
-    Q_PROPERTY(bool isPX4Flow  READ isPX4Flow  CONSTANT)
-
     friend class LinkManager;
 
 public:
@@ -40,7 +38,6 @@ public:
     const SharedLinkConfigurationPtr linkConfiguration() const { return _config; }
     uint8_t mavlinkChannel() const;
     bool mavlinkChannelIsSet() const;
-    bool isPX4Flow() const { return _isPX4Flow; }
     bool decodedFirstMavlinkPacket(void) const { return _decodedFirstMavlinkPacket; }
     void setDecodedFirstMavlinkPacket(bool decodedFirstMavlinkPacket) { _decodedFirstMavlinkPacket = decodedFirstMavlinkPacket; }
     void writeBytesThreadSafe(const char *bytes, int length);
@@ -58,7 +55,7 @@ signals:
 
 protected:
     /// Links are only created by LinkManager so constructor is not public
-    LinkInterface(SharedLinkConfigurationPtr &config, bool isPX4Flow = false, QObject *parent = nullptr);
+    LinkInterface(SharedLinkConfigurationPtr &config, QObject *parent = nullptr);
 
     /// Called by the LinkManager during LinkInterface construction instructing the link to setup channels.
     /// Default implementation allocates a single channel. But some link types (such as MockLink) need more than one.
@@ -80,7 +77,6 @@ private:
 
     uint8_t _mavlinkChannel = std::numeric_limits<uint8_t>::max();
     bool _decodedFirstMavlinkPacket = false;
-    bool _isPX4Flow = false;
     int _vehicleReferenceCount = 0;
     bool _signingSignatureFailure = false;
 };
