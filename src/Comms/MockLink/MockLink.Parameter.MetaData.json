@@ -18199,49 +18199,6 @@
       "longDesc": "Probe for optional external I2C devices."
     },
     {
-      "name": "SENS_FLOW_ROT",
-      "type": "Int32",
-      "default": 6,
-      "group": "Sensors",
-      "shortDesc": "PX4Flow board rotation",
-      "longDesc": "This parameter defines the yaw rotation of the PX4FLOW board relative to the vehicle body frame. Zero rotation is defined as X on flow board pointing towards front of vehicle. The recommneded installation default for the PX4FLOW board is with the Y axis forward (270 deg yaw).",
-      "rebootRequired": true,
-      "values": [
-        {
-          "value": 0,
-          "description": "No rotation"
-        },
-        {
-          "value": 1,
-          "description": "Yaw 45\u00b0"
-        },
-        {
-          "value": 2,
-          "description": "Yaw 90\u00b0"
-        },
-        {
-          "value": 3,
-          "description": "Yaw 135\u00b0"
-        },
-        {
-          "value": 4,
-          "description": "Yaw 180\u00b0"
-        },
-        {
-          "value": 5,
-          "description": "Yaw 225\u00b0"
-        },
-        {
-          "value": 6,
-          "description": "Yaw 270\u00b0"
-        },
-        {
-          "value": 7,
-          "description": "Yaw 315\u00b0"
-        }
-      ]
-    },
-    {
       "name": "SENS_GPS_MASK",
       "type": "Int32",
       "default": 0,

@@ -104,7 +104,7 @@ class SerialLink : public LinkInterface
     Q_OBJECT
 
 public:
-    SerialLink(SharedLinkConfigurationPtr& config, bool isPX4Flow = false);
+    SerialLink(SharedLinkConfigurationPtr& config);
     virtual ~SerialLink();
 
     // LinkInterface overrides

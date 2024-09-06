@@ -58,7 +58,7 @@ endif()
 #       JoystickConfigButtons.qml
 #       JoystickConfigCalibration.qml
 #       JoystickConfigGeneral.qml
-#       PX4FlowSensor.qml
+#       OpticalFlowSensor.qml
 #       SetupParameterEditor.qml
 #       SetupView.qml
 #       VehicleSummary.qml

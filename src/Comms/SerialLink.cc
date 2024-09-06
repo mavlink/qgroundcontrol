@@ -22,8 +22,8 @@
 
 QGC_LOGGING_CATEGORY(SerialLinkLog, "SerialLinkLog")
 
-SerialLink::SerialLink(SharedLinkConfigurationPtr& config, bool isPX4Flow)
-    : LinkInterface(config, isPX4Flow)
+SerialLink::SerialLink(SharedLinkConfigurationPtr& config)
+    : LinkInterface(config)
     , _serialConfig(qobject_cast<const SerialConfiguration*>(config.get()))
 {
     qRegisterMetaType<QSerialPort::SerialPortError>();

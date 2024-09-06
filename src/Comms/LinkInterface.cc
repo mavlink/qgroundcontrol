@@ -23,10 +23,9 @@
 
 QGC_LOGGING_CATEGORY(LinkInterfaceLog, "LinkInterfaceLog")
 
-LinkInterface::LinkInterface(SharedLinkConfigurationPtr &config, bool isPX4Flow, QObject *parent)
+LinkInterface::LinkInterface(SharedLinkConfigurationPtr &config, QObject *parent)
     : QThread(parent)
     , _config(config)
-    , _isPX4Flow(isPX4Flow)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }

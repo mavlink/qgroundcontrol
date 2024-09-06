@@ -35,7 +35,6 @@ public:
     enum BoardType_t {
         BoardTypePixhawk,
         BoardTypeSiKRadio,
-        BoardTypePX4Flow,
         BoardTypeOpenPilot,
         BoardTypeRTKGPS,
         BoardTypeUnknown
@@ -68,7 +67,6 @@ private:
     };
     static constexpr const BoardClassString2BoardType_t _rgBoardClass2BoardType[BoardTypeUnknown] = {
         { "Pixhawk", QGCSerialPortInfo::BoardTypePixhawk },
-        { "PX4 Flow", QGCSerialPortInfo::BoardTypePX4Flow },
         { "RTK GPS", QGCSerialPortInfo::BoardTypeRTKGPS },
         { "SiK Radio", QGCSerialPortInfo::BoardTypeSiKRadio },
         { "OpenPilot", QGCSerialPortInfo::BoardTypeOpenPilot },

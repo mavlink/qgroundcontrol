@@ -36,7 +36,6 @@ public:
     bool verify             (const FirmwareImage* image);
     bool reboot             (void);
 
-    static const int boardIDPX4Flow         = 6;        ///< PX4 Flow board, as from USB PID
     static const int boardIDSiKRadio1000    = 78;       ///< Original radio based on SI1000 chip
     static const int boardIDSiKRadio1060    = 80;       ///< Newer radio based on SI1060 chip
 
