@@ -108,12 +108,12 @@ QGCOptions* CustomPlugin::options()
 
 QString CustomPlugin::brandImageIndoor(void) const
 {
-    return QStringLiteral("/custom/img/CustomAppIcon.png");
+    return QStringLiteral("/custom/img/dronecode-white.svg");
 }
 
 QString CustomPlugin::brandImageOutdoor(void) const
 {
-    return QStringLiteral("/custom/img/CustomAppIcon.png");
+    return QStringLiteral("/custom/img/dronecode-black.svg");
 }
 
 bool CustomPlugin::overrideSettingsGroupVisibility(QString name)
