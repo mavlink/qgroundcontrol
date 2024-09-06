@@ -2676,37 +2676,37 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="41"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="41"/>
       <source>If mounted in the direction of flight, select None.</source>
-      <translation>If mounted in the direction of flight, select None.</translation>
+      <translation type="unfinished">If mounted in the direction of flight, select None.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="42"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="42"/>
       <source>Before calibrating make sure rotation settings are correct. </source>
-      <translation>Before calibrating make sure rotation settings are correct. </translation>
+      <translation type="unfinished">Before calibrating make sure rotation settings are correct. </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="43"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="43"/>
       <source>If the compass or GPS module is mounted in flight direction, leave the default value (None)</source>
-      <translation>If the compass or GPS module is mounted in flight direction, leave the default value (None)</translation>
+      <translation type="unfinished">If the compass or GPS module is mounted in flight direction, leave the default value (None)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="45"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="45"/>
       <source>For Compass calibration you will need to rotate your vehicle through a number of positions.</source>
-      <translation>For Compass calibration you will need to rotate your vehicle through a number of positions.</translation>
+      <translation type="unfinished">For Compass calibration you will need to rotate your vehicle through a number of positions.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="46"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="46"/>
       <source>For Gyroscope calibration you will need to place your vehicle on a surface and leave it still.</source>
-      <translation>For Gyroscope calibration you will need to place your vehicle on a surface and leave it still.</translation>
+      <translation type="unfinished">For Gyroscope calibration you will need to place your vehicle on a surface and leave it still.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="47"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="47"/>
       <source>For Accelerometer calibration you will need to place your vehicle on all six sides on a perfectly level surface and hold it still in each orientation for a few seconds.</source>
-      <translation>For Accelerometer calibration you will need to place your vehicle on all six sides on a perfectly level surface and hold it still in each orientation for a few seconds.</translation>
+      <translation type="unfinished">For Accelerometer calibration you will need to place your vehicle on all six sides on a perfectly level surface and hold it still in each orientation for a few seconds.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="48"/>
