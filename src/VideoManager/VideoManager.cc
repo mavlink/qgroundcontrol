@@ -88,8 +88,7 @@ VideoManager::~VideoManager()
             // calling _toolbox->corePlugin()->releaseVideoSink(_videoSink[i]);
             // As for now let's call GStreamer::releaseVideoSink() directly
             GStreamer::releaseVideoSink(videoReceiver.sink);
-#endif
-#ifdef QGC_QT_STREAMING
+#elif defined(QGC_QT_STREAMING)
             QtMultimediaReceiver::releaseVideoSink(videoReceiver.sink);
 #endif
         }
@@ -110,9 +109,9 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
    const QString videoSource = _videoSettings->videoSource()->rawValue().toString();
    qCDebug(VideoManagerLog) << "New Video Source:" << videoSource;
    connect(_videoSettings->videoSource(),   &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
-   connect(_videoSettings->udpPort(),       &Fact::rawValueChanged, this, &VideoManager::_udpPortChanged);
-   connect(_videoSettings->rtspUrl(),       &Fact::rawValueChanged, this, &VideoManager::_rtspUrlChanged);
-   connect(_videoSettings->tcpUrl(),        &Fact::rawValueChanged, this, &VideoManager::_tcpUrlChanged);
+   connect(_videoSettings->udpPort(),       &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
+   connect(_videoSettings->rtspUrl(),       &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
+   connect(_videoSettings->tcpUrl(),        &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
    connect(_videoSettings->aspectRatio(),   &Fact::rawValueChanged, this, &VideoManager::aspectRatioChanged);
    connect(_videoSettings->lowLatencyMode(),&Fact::rawValueChanged, this, &VideoManager::_lowLatencyModeChanged);
    MultiVehicleManager *pVehicleMgr = _toolbox->multiVehicleManager();
@@ -200,8 +199,6 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
         });
     }
 
-    // FIXME: AV: I believe _thermalVideoReceiver should be handled just like _videoReceiver in terms of event
-    // and I expect that it will be changed during multiple video stream activity
     if (_videoReceiverData[1].receiver != nullptr) {
         (void) connect(_videoReceiverData[1].receiver, &VideoReceiver::onStartComplete, this, [this](VideoReceiver::STATUS status) {
             if (status == VideoReceiver::STATUS_OK) {
@@ -279,7 +276,7 @@ VideoManager::startVideo()
         return;
     }
 
-    if(!_videoSettings->streamEnabled()->rawValue().toBool() || !_videoSettings->streamConfigured() || !hasVideo()) {
+    if(!_videoSettings->streamEnabled()->rawValue().toBool() || !hasVideo()) {
         qCDebug(VideoManagerLog) << "Stream not enabled/configured";
         return;
     }
@@ -517,27 +514,6 @@ VideoManager::_videoSourceChanged()
 
 //-----------------------------------------------------------------------------
 void
-VideoManager::_udpPortChanged()
-{
-    _restartVideo(0);
-}
-
-//-----------------------------------------------------------------------------
-void
-VideoManager::_rtspUrlChanged()
-{
-    _restartVideo(0);
-}
-
-//-----------------------------------------------------------------------------
-void
-VideoManager::_tcpUrlChanged()
-{
-    _restartVideo(0);
-}
-
-//-----------------------------------------------------------------------------
-void
 VideoManager::_lowLatencyModeChanged()
 {
     _restartAllVideos();
@@ -674,6 +650,8 @@ VideoManager::_updateSettings(unsigned id)
         settingsChanged = true;
     }
 
+    settingsChanged |= _updateUVC();
+
     //-- Auto discovery
 
     if(_activeVehicle && _activeVehicle->cameraManager()) {
@@ -731,9 +709,12 @@ VideoManager::_updateSettings(unsigned id)
                     }
                 }
             }
+            settingsChanged |= _updateUVC();
             return settingsChanged;
         }
     }
+
+    settingsChanged |= _updateUVC();
 
     const QString source = _videoSettings->videoSource()->rawValue().toString();
     if (source == VideoSettings::videoSourceUDPH264)
@@ -760,7 +741,6 @@ VideoManager::_updateSettings(unsigned id)
         settingsChanged |= _updateVideoUri(0, "");
     else {
         settingsChanged |= _updateVideoUri(0, "");
-        settingsChanged |= _updateUVC();
         if (!isUvc()) {
             qCCritical(VideoManagerLog)
                 << "Video source URI \"" << source << "\" is not supported. Please add support!";
