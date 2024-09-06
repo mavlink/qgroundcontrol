@@ -42,12 +42,6 @@
       <source>Never,Always,When in Follow Me Flight Mode</source>
       <translation>設定しない,常時設定,フォローミーモード時</translation>
     </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[qLocaleLanguage].enumStrings, </extracomment>
-      <location filename="../src/Settings/App.SettingsGroup.json"/>
-      <source>System,Azerbaijani (Azerbaijani),български (Bulgarian),中文 (Chinese),Nederlands (Dutch),English,Suomi (Finnish),Français (French),Deutsche (German),Ελληνικά (Greek), עברית (Hebrew),Italiano (Italian),日本語 (Japanese),한국어 (Korean),Norsk (Norwegian),Polskie (Polish),Português (Portuguese),Pусский (Russian),Español (Spanish),Svenska (Swedish),Türk (Turkish)</source>
-      <translation>System,Azerbaijani (Azerbaijani),български (Bulgarian),中文 (Chinese),Nederlands (Dutch),English,Suomi (Finnish),Français (French),Deutsche (German),Ελληνικά (Greek), עברית (Hebrew),Italiano (Italian),日本語 (Japanese),한국어 (Korean),Norsk (Norwegian),Polskie (Polish),Português (Portuguese),Pусский (Russian),Español (Spanish),Svenska (Swedish),Türk (Turkish)</translation>
-    </message>
   </context>
   <context>
     <name>FirmwareUpgrade.SettingsGroup.json</name>
@@ -126,14 +120,14 @@
     <message>
       <extracomment>.QGC.MetaData.Facts[basicIDType].enumStrings, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>None, SerialNumber(ANSI/CTA-2063), CAA, UTM(RFC4122), Specific</source>
-      <translation>なし, シリアルナンバー(ANSI/CTA-2063), CAA, UTM(RFC4122), 特定</translation>
+      <source>None,SerialNumber(ANSI/CTA-2063),CAA,UTM(RFC4122),Specific</source>
+      <translation type="unfinished">None,SerialNumber(ANSI/CTA-2063),CAA,UTM(RFC4122),Specific</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[basicIDUaType].enumStrings, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>Undefined,Airplane/FixedWing,Helicopter/Multirrotor, Gyroplane, VTOL, Ornithopter, Glider, Kite, Free Ballon, Captive Ballon, Airship, Parachute, Rocket, Tethered powered aircraft, Ground Obstacle, Other</source>
-      <translation>未定義, 飛行機/固定翼機, ヘリコプター/マルチローター, ジャイロプレーン, VTOL, 羽ばたき飛行船, グライダー, カイト, フリーバロン, キャプティブバロン, 飛行船, パラシュート, ロケット, テザー動力機, 地上障害物, その他</translation>
+      <source>Undefined,Airplane/FixedWing,Helicopter/Multirrotor,Gyroplane,VTOL,Ornithopter,Glider,Kite,Free Ballon,Captive Ballon,Airship,Parachute,Rocket,Tethered powered aircraft,Ground Obstacle,Other</source>
+      <translation type="unfinished">Undefined,Airplane/FixedWing,Helicopter/Multirrotor,Gyroplane,VTOL,Ornithopter,Glider,Kite,Free Ballon,Captive Ballon,Airship,Parachute,Rocket,Tethered powered aircraft,Ground Obstacle,Other</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[region].enumStrings, </extracomment>
@@ -144,8 +138,8 @@
     <message>
       <extracomment>.QGC.MetaData.Facts[locationType].enumStrings, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>Takeoff(Not Supported),Live GNNS, Fixed</source>
-      <translation>離陸(未サポート), ライブ, GNNS, Fixed</translation>
+      <source>Takeoff(Not Supported),Live GNNS, Fixed (not for FAA)</source>
+      <translation type="unfinished">Takeoff(Not Supported),Live GNNS, Fixed (not for FAA)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[classificationType].enumStrings, </extracomment>
@@ -156,14 +150,23 @@
     <message>
       <extracomment>.QGC.MetaData.Facts[categoryEU].enumStrings, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>Undeclared,Open, Specific, Certified</source>
-      <translation>未申請、公開、特定、認証済</translation>
+      <source>Undeclared,Open,Specific,Certified</source>
+      <translation type="unfinished">Undeclared,Open,Specific,Certified</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[classEU].enumStrings, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>Undeclared,Class 0, Class 1, Class 2, Class 3, Class 4, Class 5, Class 6</source>
-      <translation>未申請, クラス0, クラス1, クラス2, クラス3, クラス4, クラス5, クラス6</translation>
+      <source>Undeclared,Class 0,Class 1,Class 2,Class 3,Class 4,Class 5,Class 6</source>
+      <translation type="unfinished">Undeclared,Class 0,Class 1,Class 2,Class 3,Class 4,Class 5,Class 6</translation>
+    </message>
+  </context>
+  <context>
+    <name>GimbalController.SettingsGroup.json</name>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[ControlType].enumStrings, </extracomment>
+      <location filename="../src/Settings/GimbalController.SettingsGroup.json"/>
+      <source>Click to point, click and drag</source>
+      <translation type="unfinished">Click to point, click and drag</translation>
     </message>
   </context>
   <context>
