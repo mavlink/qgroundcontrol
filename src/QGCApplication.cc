@@ -95,6 +95,7 @@
 #include "CustomAction.h"
 #include "CustomActionManager.h"
 #include "AudioOutput.h"
+#include "FollowMe.h"
 #include "JsonHelper.h"
 // #ifdef QGC_VIEWER3D
 #include "Viewer3DManager.h"
@@ -420,6 +421,8 @@ void QGCApplication::_initForNormalAppBoot()
         AudioOutput::instance()->setMuted( value.toBool() );
     });
     AudioOutput::instance()->setMuted( _toolbox->settingsManager()->appSettings()->audioMuted()->rawValue().toBool() );
+
+    FollowMe::instance()->init();
 
     // Image provider for PX4 Flow
     _qmlAppEngine->addImageProvider(qgcImageProviderId, new QGCImageProvider());
