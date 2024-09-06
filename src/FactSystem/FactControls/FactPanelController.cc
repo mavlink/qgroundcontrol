@@ -22,7 +22,8 @@
 
 QGC_LOGGING_CATEGORY(FactPanelControllerLog, "FactPanelControllerLog")
 
-FactPanelController::FactPanelController()
+FactPanelController::FactPanelController(QObject *parent)
+    : QObject(parent)
 {
     _vehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
     if (_vehicle) {

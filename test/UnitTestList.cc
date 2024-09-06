@@ -33,6 +33,9 @@
 #include "FactSystemTestPX4.h"
 #include "ParameterManagerTest.h"
 
+// FollowMe
+#include "FollowMeTest.h"
+
 // Geo
 #include "GeoTest.h"
 
@@ -122,6 +125,9 @@ int runTests(bool stress, QStringView unitTestOptions)
 	UT_REGISTER_TEST(FactSystemTestGeneric)
 	UT_REGISTER_TEST(FactSystemTestPX4)
 	UT_REGISTER_TEST(ParameterManagerTest)
+
+	// FollowMe
+	UT_REGISTER_TEST(FollowMeTest)
 
 	// Geo
     UT_REGISTER_TEST(GeoTest)

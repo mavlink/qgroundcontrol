@@ -45,6 +45,9 @@ add_qgc_test(FactSystemTestGeneric)
 add_qgc_test(FactSystemTestPX4)
 add_qgc_test(ParameterManagerTest)
 
+add_subdirectory(FollowMe)
+add_qgc_test(FollowMeTest)
+
 add_subdirectory(Geo)
 add_qgc_test(GeoTest)
 
@@ -123,6 +126,7 @@ target_link_libraries(qgctest
         CommsTest
         CompressionTest
         FactSystemTest
+        FollowMeTest
         GeoTest
         MAVLinkTest
         MissionManagerTest
