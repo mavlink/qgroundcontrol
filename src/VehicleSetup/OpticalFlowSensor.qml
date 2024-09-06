@@ -18,16 +18,16 @@ import QGroundControl.ScreenTools
 
 Item {
     QGCLabel {
-        id:             titleLabel
-        text:           qsTr("PX4Flow Camera")
-        font.bold:      true
+        text: qsTr("Optical Flow Camera")
+        font.bold: true
     }
+
     Image {
-        source:         globals.activeVehicle ? "image://QGCImages/" + globals.activeVehicle.id + "/" + globals.activeVehicle.flowImageIndex : ""
-        width:          parent.width * 0.5
-        height:         width * 0.75
-        cache:          false
-        fillMode:       Image.PreserveAspectFit
+        source: globals.activeVehicle ? "image://QGCImages/" + globals.activeVehicle.id + "/" + globals.activeVehicle.flowImageIndex : ""
+        width: parent.width * 0.5
+        height: width * 0.75
+        cache: false
+        fillMode: Image.PreserveAspectFit
         anchors.centerIn: parent
     }
 }

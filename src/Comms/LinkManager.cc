@@ -109,17 +109,15 @@ void LinkManager::createConnectedLink(const LinkConfiguration *config)
     }
 }
 
-bool LinkManager::createConnectedLink(SharedLinkConfigurationPtr &config, bool isPX4Flow)
+bool LinkManager::createConnectedLink(SharedLinkConfigurationPtr &config)
 {
     SharedLinkInterfacePtr link = nullptr;
 
     switch(config->type()) {
 #ifndef NO_SERIAL_LINK
     case LinkConfiguration::TypeSerial:
-        link = std::make_shared<SerialLink>(config, isPX4Flow);
+        link = std::make_shared<SerialLink>(config);
         break;
-#else
-    Q_UNUSED(isPX4Flow)
 #endif
     case LinkConfiguration::TypeUdp:
         link = std::make_shared<UDPLink>(config);
@@ -845,9 +843,6 @@ void LinkManager::_addSerialAutoConnectLink()
                     pSerialConfig = new SerialConfiguration(tr("%1 on %2 (AutoConnect)").arg(boardName, portInfo.portName().trimmed()));
                     pSerialConfig->setUsbDirect(true);
                     break;
-                case QGCSerialPortInfo::BoardTypePX4Flow:
-                    pSerialConfig = new SerialConfiguration(tr("%1 on %2 (AutoConnect)").arg(boardName, portInfo.portName().trimmed()));
-                    break;
                 case QGCSerialPortInfo::BoardTypeSiKRadio:
                     pSerialConfig = new SerialConfiguration(tr("%1 on %2 (AutoConnect)").arg(boardName, portInfo.portName().trimmed()));
                     break;
@@ -872,7 +867,7 @@ void LinkManager::_addSerialAutoConnectLink()
                     pSerialConfig->setAutoConnect(true);
 
                     SharedLinkConfigurationPtr sharedConfig(pSerialConfig);
-                    createConnectedLink(sharedConfig, boardType == QGCSerialPortInfo::BoardTypePX4Flow);
+                    createConnectedLink(sharedConfig);
                 }
             }
         }
@@ -891,11 +886,6 @@ bool LinkManager::_allowAutoConnectToBoard(QGCSerialPortInfo::BoardType_t boardT
     switch (boardType) {
     case QGCSerialPortInfo::BoardTypePixhawk:
         if (_autoConnectSettings->autoConnectPixhawk()->rawValue().toBool()) {
-            return true;
-        }
-        break;
-    case QGCSerialPortInfo::BoardTypePX4Flow:
-        if (_autoConnectSettings->autoConnectPX4Flow()->rawValue().toBool()) {
             return true;
         }
         break;

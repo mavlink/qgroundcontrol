@@ -28,7 +28,6 @@ public:
     DEFINE_SETTINGFACT(autoConnectUDP)
     DEFINE_SETTINGFACT(autoConnectPixhawk)
     DEFINE_SETTINGFACT(autoConnectSiKRadio)
-    DEFINE_SETTINGFACT(autoConnectPX4Flow)
     DEFINE_SETTINGFACT(autoConnectRTKGPS)
     DEFINE_SETTINGFACT(autoConnectLibrePilot)
     DEFINE_SETTINGFACT(autoConnectNmeaPort)

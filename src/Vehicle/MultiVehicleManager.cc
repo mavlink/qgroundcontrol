@@ -69,26 +69,15 @@ void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
 
 void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int componentId, int vehicleFirmwareType, int vehicleType)
 {
-    // Special case PX4 Flow since depending on firmware it can have different settings. We force to the PX4 Firmware settings.
-    if (link->isPX4Flow()) {
-        vehicleId = 81;
-        componentId = 50;//MAV_COMP_ID_AUTOPILOT1;
-        vehicleFirmwareType = MAV_AUTOPILOT_GENERIC;
-        vehicleType = 0;
-    }
-
     if (componentId != MAV_COMP_ID_AUTOPILOT1) {
-        // Special case for PX4 Flow
-        if (vehicleId != 81 || componentId != 50) {
-            // Don't create vehicles for components other than the autopilot
-            qCDebug(MultiVehicleManagerLog()) << "Ignoring heartbeat from unknown component port:vehicleId:componentId:fwType:vehicleType"
-                                              << link->linkConfiguration()->name()
-                                              << vehicleId
-                                              << componentId
-                                              << vehicleFirmwareType
-                                              << vehicleType;
-            return;
-        }
+        // Don't create vehicles for components other than the autopilot
+        qCDebug(MultiVehicleManagerLog()) << "Ignoring heartbeat from unknown component port:vehicleId:componentId:fwType:vehicleType"
+                                          << link->linkConfiguration()->name()
+                                          << vehicleId
+                                          << componentId
+                                          << vehicleFirmwareType
+                                          << vehicleType;
+        return;
     }
 
 #if !defined(NO_ARDUPILOT_DIALECT)
