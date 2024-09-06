@@ -106,9 +106,6 @@ signals:
 
 protected slots:
     void _videoSourceChanged        ();
-    void _udpPortChanged            ();
-    void _rtspUrlChanged            ();
-    void _tcpUrlChanged             ();
     void _lowLatencyModeChanged     ();
     bool _updateUVC                 ();
     void _setActiveVehicle          (Vehicle* vehicle);
