@@ -12,7 +12,8 @@
         <file alias="microSD.svg">res/Images/microSD.svg</file>
         <file alias="odometer.svg">res/Images/odometer.svg</file>
         <file alias="vertical_speed.svg">res/Images/vertical_speed.svg</file>
-        <file alias="CustomAppIcon.png">res/Images/CustomAppIcon.png</file>
+        <file alias="dronecode-black.svg">res/Images/dronecode-black.svg</file>
+        <file alias="dronecode-white.svg">res/Images/dronecode-white.svg</file>
     </qresource>
     <qresource prefix="/qmlimages">
         <file alias="PaperPlane.svg">res/Images/CustomVehicleIcon.svg</file>
