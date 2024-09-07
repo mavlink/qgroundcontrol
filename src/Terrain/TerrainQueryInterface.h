@@ -12,12 +12,15 @@
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QList>
 #include <QtCore/QObject>
+#include <QtNetwork/QNetworkReply>
 
 class QGeoCoordinate;
+class QNetworkAccessManager;
 
 Q_DECLARE_LOGGING_CATEGORY(TerrainQueryInterfaceLog)
 
-namespace TerrainQuery {
+namespace TerrainQuery
+{
     enum QueryMode {
         QueryModeNone,
         QueryModeCoordinates,
@@ -29,7 +32,7 @@ namespace TerrainQuery {
         Idle,
         Downloading,
     };
-} // namespace TerrainQuery
+}
 
 /// Base class for offline/online terrain queries
 class TerrainQueryInterface : public QObject
@@ -37,8 +40,8 @@ class TerrainQueryInterface : public QObject
     Q_OBJECT
 
 public:
-    explicit TerrainQueryInterface(QObject *parent = nullptr) : QObject(parent) { }
-    virtual ~TerrainQueryInterface() {}
+    explicit TerrainQueryInterface(QObject *parent = nullptr);
+    virtual ~TerrainQueryInterface();
 
     /// Request terrain heights for specified coodinates.
     /// Signals: coordinateHeights when data is available
@@ -67,5 +70,40 @@ signals:
     void carpetHeightsReceived(bool success, double minHeight, double maxHeight, const QList<QList<double>> &carpet);
 
 protected:
+    virtual void _requestFailed();
+
     TerrainQuery::QueryMode _queryMode = TerrainQuery::QueryMode::QueryModeNone;
+};
+
+/*===========================================================================*/
+
+class TerrainOfflineQuery : public TerrainQueryInterface
+{
+    Q_OBJECT
+
+public:
+    explicit TerrainOfflineQuery(QObject *parent = nullptr);
+    ~TerrainOfflineQuery();
+
+    void requestCoordinateHeights(const QList<QGeoCoordinate> &coordinates) override;
+    void requestPathHeights(const QGeoCoordinate &fromCoord, const QGeoCoordinate &toCoord) override;
+};
+
+/*===========================================================================*/
+
+class TerrainOnlineQuery : public TerrainQueryInterface
+{
+    Q_OBJECT
+
+public:
+    explicit TerrainOnlineQuery(QObject *parent = nullptr);
+    virtual ~TerrainOnlineQuery();
+
+protected slots:
+    virtual void _requestFinished();
+    virtual void _requestError(QNetworkReply::NetworkError code);
+    virtual void _sslErrors(const QList<QSslError> &errors);
+
+protected:
+    QNetworkAccessManager *_networkManager = nullptr;
 };

@@ -10,11 +10,12 @@
 #include "TerrainTileManager.h"
 #include "TerrainTile.h"
 #include "TerrainTileCopernicus.h"
-// #include "TerrainQueryAirMap.h"
 #include "QGeoTileFetcherQGC.h"
 #include "QGeoMapReplyQGC.h"
 #include "QGCMapUrlEngine.h"
 #include "ElevationMapProvider.h"
+#include "QGCApplication.h"
+#include "SettingsManager.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtLocation/private/qgeotilespec_p.h>
@@ -51,109 +52,12 @@ TerrainTileManager::~TerrainTileManager()
     // qCDebug(TerrainTileManagerLog) << Q_FUNC_INFO << this;
 }
 
-void TerrainTileManager::addCoordinateQuery(TerrainQueryInterface *terrainQueryInterface, const QList<QGeoCoordinate> &coordinates)
-{
-    qCDebug(TerrainTileManagerLog) << Q_FUNC_INFO << "count" << coordinates.count();
-
-    if (coordinates.isEmpty()) {
-        return;
-    }
-
-    bool error;
-    QList<double> altitudes;
-    if (!getAltitudesForCoordinates(coordinates, altitudes, error)) {
-        qCDebug(TerrainTileManagerLog) << Q_FUNC_INFO << "queue count" << _requestQueue.count();
-        const QueuedRequestInfo_t queuedRequestInfo = {
-            terrainQueryInterface,
-            TerrainQuery::QueryMode::QueryModeCoordinates,
-            0,
-            0,
-            coordinates
-        };
-        _requestQueue.enqueue(queuedRequestInfo);
-        return;
-    }
-
-    if (error) {
-        QList<double> noAltitudes;
-        qCWarning(TerrainTileManagerLog) << Q_FUNC_INFO << "signalling failure due to internal error";
-        terrainQueryInterface->signalCoordinateHeights(false, noAltitudes);
-        return;
-    }
-
-    qCDebug(TerrainTileManagerLog) << Q_FUNC_INFO << "all altitudes taken from cached data";
-    terrainQueryInterface->signalCoordinateHeights((coordinates.count() == altitudes.count()), altitudes);
-}
-
-QList<QGeoCoordinate> TerrainTileManager::pathQueryToCoords(const QGeoCoordinate &fromCoord, const QGeoCoordinate &toCoord, double &distanceBetween, double &finalDistanceBetween)
-{
-    const double lat = fromCoord.latitude();
-    const double lon = fromCoord.longitude();
-    const int steps = qCeil(toCoord.distanceTo(fromCoord) / TerrainTileCopernicus::tileValueSpacingMeters);
-    const double latDiff = toCoord.latitude() - lat;
-    const double lonDiff = toCoord.longitude() - lon;
-
-    QList<QGeoCoordinate> coordinates;
-    if (steps == 0) {
-        (void) coordinates.append(fromCoord);
-        (void) coordinates.append(toCoord);
-        distanceBetween = finalDistanceBetween = coordinates[0].distanceTo(coordinates[1]);
-    } else {
-        for (int i = 0; i <= steps; i++) {
-            const double latStep = lat + ((latDiff * static_cast<double>(i)) / static_cast<double>(steps));
-            const double lonStep = lon + ((lonDiff * static_cast<double>(i)) / static_cast<double>(steps));
-            (void) coordinates.append(QGeoCoordinate(latStep, lonStep));
-        }
-
-        // We always have one too many and we always want the last one to be the endpoint
-        coordinates.last() = toCoord;
-        distanceBetween = coordinates[0].distanceTo(coordinates[1]);
-        finalDistanceBetween = coordinates[coordinates.count() - 2].distanceTo(coordinates.last());
-    }
-
-    qCDebug(TerrainTileManagerLog) << Q_FUNC_INFO << "fromCoord:toCoord:distanceBetween:finalDisanceBetween:coordCount" << fromCoord << toCoord << distanceBetween << finalDistanceBetween << coordinates.count();
-
-    return coordinates;
-}
-
-void TerrainTileManager::addPathQuery(TerrainQueryInterface *terrainQueryInterface, const QGeoCoordinate &startPoint, const QGeoCoordinate &endPoint)
-{
-    double distanceBetween;
-    double finalDistanceBetween;
-    const QList<QGeoCoordinate> coordinates = pathQueryToCoords(startPoint, endPoint, distanceBetween, finalDistanceBetween);
-
-    bool error;
-    QList<double> altitudes;
-    if (!getAltitudesForCoordinates(coordinates, altitudes, error)) {
-        qCDebug(TerrainTileManagerLog) << Q_FUNC_INFO << "queue count" << _requestQueue.count();
-        const QueuedRequestInfo_t queuedRequestInfo = {
-            terrainQueryInterface,
-            TerrainQuery::QueryMode::QueryModePath,
-            distanceBetween,
-            finalDistanceBetween,
-            coordinates
-        };
-        _requestQueue.enqueue(queuedRequestInfo);
-        return;
-    }
-
-    if (error) {
-        QList<double> noAltitudes;
-        qCWarning(TerrainTileManagerLog) << Q_FUNC_INFO << "signalling failure due to internal error";
-        terrainQueryInterface->signalPathHeights(false, distanceBetween, finalDistanceBetween, noAltitudes);
-        return;
-    }
-
-    qCDebug(TerrainTileManagerLog) << Q_FUNC_INFO << "all altitudes taken from cached data";
-    terrainQueryInterface->signalPathHeights((coordinates.count() == altitudes.count()), distanceBetween, finalDistanceBetween, altitudes);
-}
-
 bool TerrainTileManager::getAltitudesForCoordinates(const QList<QGeoCoordinate> &coordinates, QList<double> &altitudes, bool &error)
 {
     error = false;
 
-    static const QString kMapType = CopernicusElevationProvider::kProviderKey;
-    const SharedMapProvider provider = UrlFactory::getMapProviderFromProviderType(kMapType);
+    const QString elevationProviderName = qgcApp()->toolbox()->settingsManager()->flightMapSettings()->elevationMapProvider()->rawValue().toString();
+    const SharedMapProvider provider = UrlFactory::getMapProviderFromProviderType(elevationProviderName);
     for (const QGeoCoordinate &coordinate: coordinates) {
         const QString tileHash = UrlFactory::getTileHash(
             provider->getMapName(),
@@ -191,6 +95,103 @@ bool TerrainTileManager::getAltitudesForCoordinates(const QList<QGeoCoordinate> 
     }
 
     return true;
+}
+
+void TerrainTileManager::addCoordinateQuery(TerrainQueryInterface *terrainQueryInterface, const QList<QGeoCoordinate> &coordinates)
+{
+    qCDebug(TerrainTileManagerLog) << Q_FUNC_INFO << "count" << coordinates.count();
+
+    if (coordinates.isEmpty()) {
+        return;
+    }
+
+    bool error;
+    QList<double> altitudes;
+    if (!getAltitudesForCoordinates(coordinates, altitudes, error)) {
+        qCDebug(TerrainTileManagerLog) << Q_FUNC_INFO << "queue count" << _requestQueue.count();
+        const QueuedRequestInfo_t queuedRequestInfo = {
+            terrainQueryInterface,
+            TerrainQuery::QueryMode::QueryModeCoordinates,
+            0,
+            0,
+            coordinates
+        };
+        _requestQueue.enqueue(queuedRequestInfo);
+        return;
+    }
+
+    if (error) {
+        QList<double> noAltitudes;
+        qCWarning(TerrainTileManagerLog) << Q_FUNC_INFO << "signalling failure due to internal error";
+        terrainQueryInterface->signalCoordinateHeights(false, noAltitudes);
+        return;
+    }
+
+    qCDebug(TerrainTileManagerLog) << Q_FUNC_INFO << "all altitudes taken from cached data";
+    terrainQueryInterface->signalCoordinateHeights((coordinates.count() == altitudes.count()), altitudes);
+}
+
+void TerrainTileManager::addPathQuery(TerrainQueryInterface *terrainQueryInterface, const QGeoCoordinate &startPoint, const QGeoCoordinate &endPoint)
+{
+    double distanceBetween;
+    double finalDistanceBetween;
+    const QList<QGeoCoordinate> coordinates = _pathQueryToCoords(startPoint, endPoint, distanceBetween, finalDistanceBetween);
+
+    bool error;
+    QList<double> altitudes;
+    if (!getAltitudesForCoordinates(coordinates, altitudes, error)) {
+        qCDebug(TerrainTileManagerLog) << Q_FUNC_INFO << "queue count" << _requestQueue.count();
+        const QueuedRequestInfo_t queuedRequestInfo = {
+            terrainQueryInterface,
+            TerrainQuery::QueryMode::QueryModePath,
+            distanceBetween,
+            finalDistanceBetween,
+            coordinates
+        };
+        _requestQueue.enqueue(queuedRequestInfo);
+        return;
+    }
+
+    if (error) {
+        QList<double> noAltitudes;
+        qCWarning(TerrainTileManagerLog) << Q_FUNC_INFO << "signalling failure due to internal error";
+        terrainQueryInterface->signalPathHeights(false, distanceBetween, finalDistanceBetween, noAltitudes);
+        return;
+    }
+
+    qCDebug(TerrainTileManagerLog) << Q_FUNC_INFO << "all altitudes taken from cached data";
+    terrainQueryInterface->signalPathHeights((coordinates.count() == altitudes.count()), distanceBetween, finalDistanceBetween, altitudes);
+}
+
+QList<QGeoCoordinate> TerrainTileManager::_pathQueryToCoords(const QGeoCoordinate &fromCoord, const QGeoCoordinate &toCoord, double &distanceBetween, double &finalDistanceBetween)
+{
+    const double lat = fromCoord.latitude();
+    const double lon = fromCoord.longitude();
+    const int steps = qCeil(toCoord.distanceTo(fromCoord) / TerrainTileCopernicus::kTileValueSpacingMeters); // TODO: get spacing from terrainQueryInterface
+    const double latDiff = toCoord.latitude() - lat;
+    const double lonDiff = toCoord.longitude() - lon;
+
+    QList<QGeoCoordinate> coordinates;
+    if (steps == 0) {
+        (void) coordinates.append(fromCoord);
+        (void) coordinates.append(toCoord);
+        distanceBetween = finalDistanceBetween = coordinates[0].distanceTo(coordinates[1]);
+    } else {
+        for (int i = 0; i <= steps; i++) {
+            const double latStep = lat + ((latDiff * static_cast<double>(i)) / static_cast<double>(steps));
+            const double lonStep = lon + ((lonDiff * static_cast<double>(i)) / static_cast<double>(steps));
+            (void) coordinates.append(QGeoCoordinate(latStep, lonStep));
+        }
+
+        // We always have one too many and we always want the last one to be the endpoint
+        coordinates.last() = toCoord;
+        distanceBetween = coordinates[0].distanceTo(coordinates[1]);
+        finalDistanceBetween = coordinates[coordinates.count() - 2].distanceTo(coordinates.last());
+    }
+
+    qCDebug(TerrainTileManagerLog) << Q_FUNC_INFO << "fromCoord:toCoord:distanceBetween:finalDisanceBetween:coordCount" << fromCoord << toCoord << distanceBetween << finalDistanceBetween << coordinates.count();
+
+    return coordinates;
 }
 
 void TerrainTileManager::_tileFailed()
