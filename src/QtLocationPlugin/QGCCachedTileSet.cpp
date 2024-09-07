@@ -28,7 +28,6 @@
 #include <QGCApplication.h>
 #include <QGCFileDownload.h>
 #include <QGCLoggingCategory.h>
-#include <TerrainTile.h>
 
 #include <QtNetwork/QNetworkProxy>
 

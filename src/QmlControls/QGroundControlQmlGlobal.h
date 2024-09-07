@@ -214,8 +214,8 @@ public:
     bool    hasMAVLinkInspector     () { return true; }
 #endif
 
-    static QString elevationProviderName   ();
-    static QString elevationProviderNotice ();
+    QString elevationProviderName   ();
+    QString elevationProviderNotice ();
 
     bool    singleFirmwareSupport   ();
     bool    singleVehicleSupport    ();

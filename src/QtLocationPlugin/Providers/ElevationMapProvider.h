@@ -11,8 +11,6 @@
 
 #include "MapProvider.h"
 
-static constexpr const quint32 AVERAGE_COPERNICUS_ELEV_SIZE = 2786;
-
 class ElevationProvider : public MapProvider
 {
 protected:
@@ -30,16 +28,17 @@ public:
     virtual QByteArray serialize(const QByteArray &image) const = 0;
 };
 
+/// https://spacedata.copernicus.eu/collections/copernicus-digital-elevation-model
 class CopernicusElevationProvider : public ElevationProvider
 {
 public:
     CopernicusElevationProvider()
         : ElevationProvider(
-            QStringLiteral("Copernicus Elevation"),
-            QStringLiteral("https://terrain-ce.suite.auterion.com/"),
+            kProviderKey,
+            kProviderURL,
             QStringLiteral("bin"),
-            AVERAGE_COPERNICUS_ELEV_SIZE,
-            QGeoMapType::StreetMap) {}
+            kAvgElevSize,
+            QGeoMapType::TerrainMap) {}
 
     int long2tileX(double lon, int z) const final;
     int lat2tileY(double lat, int z) const final;
@@ -50,11 +49,13 @@ public:
 
     QByteArray serialize(const QByteArray &image) const final;
 
-    static constexpr const char *kProviderKey = "Copernicus Elevation";
+    static constexpr const char *kProviderKey = "Copernicus";
     static constexpr const char *kProviderNotice = "© Airbus Defence and Space GmbH";
+    static constexpr const char *kProviderURL = "https://terrain-ce.suite.auterion.com";
+    static constexpr quint32 kAvgElevSize = 2786;
 
 private:
     QString _getURL(int x, int y, int zoom) const final;
 
-    const QString _mapUrl = QStringLiteral("https://terrain-ce.suite.auterion.com/api/v1/carpet?points=%1,%2,%3,%4");
+    const QString _mapUrl = QString(kProviderURL) + QStringLiteral("/api/v1/carpet?points=%1,%2,%3,%4");
 };

@@ -4,6 +4,8 @@ qt_add_library(TerrainTest
     STATIC
         TerrainQueryTest.cc
         TerrainQueryTest.h
+        TerrainTileTest.cc
+        TerrainTileTest.h
 )
 
 target_link_libraries(TerrainTest
