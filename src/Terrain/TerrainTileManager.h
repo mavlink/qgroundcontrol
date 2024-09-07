@@ -19,6 +19,7 @@
 
 class TerrainTile;
 class QNetworkAccessManager;
+class UnitTestTerrainQuery;
 
 Q_DECLARE_LOGGING_CATEGORY(TerrainTileManagerLog)
 
@@ -26,27 +27,27 @@ class TerrainTileManager : public QObject
 {
     Q_OBJECT
 
+    friend class UnitTestTerrainQuery;
 public:
     explicit TerrainTileManager(QObject *parent = nullptr);
     ~TerrainTileManager();
 
     static TerrainTileManager *instance();
 
-    void addCoordinateQuery(TerrainQueryInterface *terrainQueryInterface, const QList<QGeoCoordinate> &coordinates);
-    void addPathQuery(TerrainQueryInterface *terrainQueryInterface, const QGeoCoordinate &startPoint, const QGeoCoordinate &endPoint);
-
     /// Either returns altitudes from cache or queues database request
     ///     @param[out] error true: altitude not returned due to error, false: altitudes returned
     ///     @return true: altitude returned (check error as well), false: database query queued (altitudes not returned)
     bool getAltitudesForCoordinates(const QList<QGeoCoordinate> &coordinates, QList<double> &altitudes, bool &error);
 
-    /// Returns a list of individual coordinates along the requested path spaced according to the terrain tile value spacing
-    static QList<QGeoCoordinate> pathQueryToCoords(const QGeoCoordinate &fromCoord, const QGeoCoordinate &toCoord, double &distanceBetween, double &finalDistanceBetween);
+    void addCoordinateQuery(TerrainQueryInterface *terrainQueryInterface, const QList<QGeoCoordinate> &coordinates);
+    void addPathQuery(TerrainQueryInterface *terrainQueryInterface, const QGeoCoordinate &startPoint, const QGeoCoordinate &endPoint);
 
 private slots:
     void _terrainDone();
 
 private:
+    /// Returns a list of individual coordinates along the requested path spaced according to the terrain tile value spacing
+    static QList<QGeoCoordinate> _pathQueryToCoords(const QGeoCoordinate &fromCoord, const QGeoCoordinate &toCoord, double &distanceBetween, double &finalDistanceBetween);
     void _tileFailed();
     void _cacheTile(const QByteArray &data, const QString &hash);
     TerrainTile *_getCachedTile(const QString &hash);

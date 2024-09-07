@@ -1,16 +1,20 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Location Network Positioning)
 
 qt_add_library(Terrain STATIC
+    Providers/TerrainQueryArduPilot.cc
+    Providers/TerrainQueryArduPilot.h
+    Providers/TerrainQueryCopernicus.cc
+    Providers/TerrainQueryCopernicus.h
+    Providers/TerrainTileArduPilot.cc
+    Providers/TerrainTileArduPilot.h
+    Providers/TerrainTileCopernicus.cc
+    Providers/TerrainTileCopernicus.h
     TerrainQuery.cc
     TerrainQuery.h
-    TerrainQueryAirMap.cc
-    TerrainQueryAirMap.h
     TerrainQueryInterface.cc
     TerrainQueryInterface.h
     TerrainTile.cc
     TerrainTile.h
-    TerrainTileCopernicus.cc
-    TerrainTileCopernicus.h
     TerrainTileManager.cc
     TerrainTileManager.h
 )
@@ -18,6 +22,7 @@ qt_add_library(Terrain STATIC
 target_link_libraries(Terrain
     PRIVATE
         Qt6::LocationPrivate
+        Compression
         QGCLocation
         Utilities
     PUBLIC
@@ -26,4 +31,8 @@ target_link_libraries(Terrain
         Qt6::Positioning
 )
 
-target_include_directories(Terrain PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(Terrain
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/Providers
+)

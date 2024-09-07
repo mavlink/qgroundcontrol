@@ -28,7 +28,6 @@
 #include <QGCApplication.h>
 #include <QGCFileDownload.h>
 #include <QGCLoggingCategory.h>
-#include <TerrainTile.h>
 
 #include <QtNetwork/QNetworkProxy>
 
@@ -217,7 +216,7 @@ void QGCCachedTileSet::_networkReplyFinished()
         return;
     }
 
-    const QString type = UrlFactory::tileHashToType(hash);
+    const QString type = UrlFactory::tileHashToType(hash); // TODO: Type is null for elevation
     const SharedMapProvider mapProvider = UrlFactory::getMapProviderFromProviderType(type);
     Q_CHECK_PTR(mapProvider);
 

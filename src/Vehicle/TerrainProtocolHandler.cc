@@ -15,7 +15,7 @@
 #include "MAVLinkProtocol.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(TerrainProtocolHandlerLog, "TerrainProtocolHandlerLog")
+QGC_LOGGING_CATEGORY(TerrainProtocolHandlerLog, "test.vehicle.terrainprotocolhandler")
 
 TerrainProtocolHandler::TerrainProtocolHandler(Vehicle* vehicle, TerrainFactGroup* terrainFactGroup, QObject *parent)
     : QObject           (parent)
