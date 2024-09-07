@@ -50,6 +50,11 @@ QGroundControl continues to not be signed which causes problem on Catalina. To o
 - 再次右键点击QGC 应用图标，从菜单中选择Open。 这次您会发现有 Open的选项了。 This time you will be presented with the option to Open.
   :::
 
+## Flatpak {#flatpak}
+
+_QGroundControl_ can be installed/run on linux distributions via [flatpak](https://flathub.org/apps/org.mavlink.qgroundcontrol)
+ (Mint Linux, Debian, Ubuntu, Fedora, Suse, etc...)
+
 ## Ubuntu Linux 系统 {#ubuntu}
 
 _QGroundControl_ can be installed/run on Ubuntu LTS 20.04 (and later).
