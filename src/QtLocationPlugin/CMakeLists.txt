@@ -53,6 +53,7 @@ target_link_libraries(QGCLocation
     PRIVATE
         Qt6::Positioning
         Qt6::Sql
+        Compression
         QGC
         Settings
         Utilities

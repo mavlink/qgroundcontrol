@@ -893,9 +893,9 @@ QString QGCApplication::bigSizeToString(quint64 size)
     QString result;
     const QLocale kLocale = getCurrentLanguage();
     if (size < 1024) {
-        result = kLocale.toString(size);
+        result = kLocale.toString(size) + "B";
     } else if (size < pow(1024, 2)) {
-        result = kLocale.toString(static_cast<double>(size) / 1024.0, 'f', 1) + "kB";
+        result = kLocale.toString(static_cast<double>(size) / 1024.0, 'f', 1) + "KB";
     } else if (size < pow(1024, 3)) {
         result = kLocale.toString(static_cast<double>(size) / pow(1024, 2), 'f', 1) + "MB";
     } else if (size < pow(1024, 4)) {

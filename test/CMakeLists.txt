@@ -95,6 +95,7 @@ add_subdirectory(QmlControls)
 
 add_subdirectory(Terrain)
 add_qgc_test(TerrainQueryTest)
+add_qgc_test(TerrainTileTest)
 
 add_subdirectory(UI)
 
