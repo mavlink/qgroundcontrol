@@ -33,5 +33,6 @@
     </qresource>
     <qresource prefix="/res">
 		<file alias="QGCLogoFull">res/QGCLogoFull.svg</file>
+        <file alias="qgroundcontrol.ico">res/icons/custom_qgroundcontrol.ico</file>
     </qresource>
 </RCC>

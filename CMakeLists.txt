@@ -424,11 +424,19 @@ if(LINUX)
         FILES ${CMAKE_BINARY_DIR}/org.mavlink.qgroundcontrol.desktop
         DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
     )
-    install(
-        FILES ${CMAKE_SOURCE_DIR}/resources/icons/qgroundcontrol.png
-        DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/128x128/apps/
-        RENAME org.mavlink.qgroundcontrol.png
-    )
+    if(QGC_CUSTOM_BUILD)
+        install(
+            FILES ${CMAKE_SOURCE_DIR}/custom/res/icons/custom_qgroundcontrol.png
+            DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/128x128/apps/
+            RENAME org.mavlink.qgroundcontrol.png
+        )
+    else()
+        install(
+            FILES ${CMAKE_SOURCE_DIR}/resources/icons/qgroundcontrol.png
+            DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/128x128/apps/
+            RENAME org.mavlink.qgroundcontrol.png
+        )
+    endif()
     configure_file(
         ${CMAKE_SOURCE_DIR}/deploy/linux/org.mavlink.qgroundcontrol.metainfo.xml.in
         ${CMAKE_BINARY_DIR}/metainfo/org.mavlink.qgroundcontrol.metainfo.xml
