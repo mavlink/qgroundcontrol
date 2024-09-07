@@ -187,7 +187,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     setOrganizationDomain(QGC_ORG_DOMAIN);
     setApplicationVersion(QString(QGC_APP_VERSION_STR));
     #ifdef Q_OS_LINUX
-        setWindowIcon(QIcon(":/res/resources/icons/qgroundcontrol.ico"));
+        setWindowIcon(QIcon(":/res/qgroundcontrol.ico"));
     #endif
 
     // Set settings format
