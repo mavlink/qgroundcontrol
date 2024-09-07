@@ -34,6 +34,7 @@ Item {
 
     property Fact   _mapProviderFact:   _settingsManager.flightMapSettings.mapProvider
     property Fact   _mapTypeFact:       _settingsManager.flightMapSettings.mapType
+    property Fact   _elevationProviderFact: _settingsManager.flightMapSettings.elevationMapProvider
     property Fact   _mapboxFact:        _settingsManager ? _settingsManager.appSettings.mapboxToken : null
     property Fact   _mapboxAccountFact: _settingsManager ? _settingsManager.appSettings.mapboxAccount : null
     property Fact   _mapboxStyleFact:   _settingsManager ? _settingsManager.appSettings.mapboxStyle : null
@@ -81,6 +82,19 @@ Item {
 
                 Component.onCompleted: {
                     var index = comboBox.find(_mapTypeFact.rawValue)
+                    if (index < 0) index = 0
+                    comboBox.currentIndex = index
+                }
+            }
+
+            LabelledComboBox {
+                label: qsTr("Elevation Provider")
+                model: _mapEngineManager.elevationProviderList
+
+                onActivated: (index) => { _elevationProviderFact.rawValue = comboBox.textAt(index) }
+
+                Component.onCompleted: {
+                    var index = comboBox.find(_elevationProviderFact.rawValue)
                     if (index < 0) index = 0
                     comboBox.currentIndex = index
                 }
