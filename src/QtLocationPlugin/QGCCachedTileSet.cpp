@@ -216,7 +216,7 @@ void QGCCachedTileSet::_networkReplyFinished()
         return;
     }
 
-    const QString type = UrlFactory::tileHashToType(hash);
+    const QString type = UrlFactory::tileHashToType(hash); // TODO: Type is null for elevation
     const SharedMapProvider mapProvider = UrlFactory::getMapProviderFromProviderType(type);
     Q_CHECK_PTR(mapProvider);
 

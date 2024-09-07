@@ -69,7 +69,7 @@ void TerrainProtocolHandler::_handleTerrainReport(const mavlink_message_t &messa
         QList<double> altitudes;
         QList<QGeoCoordinate> coordinates;
         QGeoCoordinate coord(static_cast<double>(terrainReport.lat) / 1e7, static_cast<double>(terrainReport.lon) / 1e7);
-        (void) coordinates.append(coord);
+        coordinates.append(coord);
         const bool altAvailable = TerrainAtCoordinateQuery::getAltitudesForCoordinates(coordinates, altitudes, error);
         const QString vehicleAlt = terrainReport.spacing ? QStringLiteral("%1").arg(terrainReport.terrain_height) : QStringLiteral("n/a");
         QString qgcAlt;
@@ -80,6 +80,7 @@ void TerrainProtocolHandler::_handleTerrainReport(const mavlink_message_t &messa
         } else {
             qgcAlt = QStringLiteral("N/A");
         }
+
         qCDebug(TerrainProtocolHandlerLog) << "TERRAIN_REPORT" << coord << QStringLiteral("Vehicle(%1) QGC(%2)").arg(vehicleAlt).arg(qgcAlt);
     }
 }

@@ -16,4 +16,6 @@ class TerrainTileTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _testArduPilotParseFileName();
+    void _testArduPilotParseCoordinateData();
 };

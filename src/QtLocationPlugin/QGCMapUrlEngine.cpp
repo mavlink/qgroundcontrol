@@ -72,7 +72,8 @@ const QList<SharedMapProvider> UrlFactory::_providers = {
 
     std::make_shared<CustomURLMapProvider>(),
 
-    std::make_shared<CopernicusElevationProvider>()
+    std::make_shared<CopernicusElevationProvider>(),
+    std::make_shared<ArduPilotTerrainElevationProvider>()
 };
 
 QString UrlFactory::getImageFormat(int qtMapId, QByteArrayView image)

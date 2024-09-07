@@ -18,3 +18,10 @@ target_link_libraries(TerrainTest
 )
 
 target_include_directories(TerrainTest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+qt_add_resources(TerrainTest "TerrainTest"
+    PREFIX "/"
+    FILES
+        # N00E006.hgt
+        N00E006.hgt.zip
+)
