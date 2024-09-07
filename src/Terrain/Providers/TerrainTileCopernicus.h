@@ -16,22 +16,23 @@
 
 Q_DECLARE_LOGGING_CATEGORY(TerrainTileCopernicusLog)
 
-/// Implements an interface for https://developers.airmap.com/v2.0/docs/elevation-api
+/// Implements an interface for https://terrain-ce.suite.auterion.com/api/v1/
 class TerrainTileCopernicus : public TerrainTile
 {
 public:
     TerrainTileCopernicus();
 
     /// Constructor from serialized elevation data (either from file or web)
-    ///    @param document
+    ///    @param byteArray
     explicit TerrainTileCopernicus(const QByteArray &byteArray);
     ~TerrainTileCopernicus();
 
-    static QByteArray serializeFromJson(const QByteArray &input);
+    static QByteArray serializeFromData(const QByteArray &input);
+    static QJsonValue getJsonFromData(const QByteArray &input);
 
-    static constexpr double tileSizeDegrees = 0.01;                 ///< Each terrain tile represents a square area .01 degrees in lat/lon
-    static constexpr double tileValueSpacingDegrees = (1.0 / 3600); ///< 1 Arc-Second spacing of elevation values
-    static constexpr double tileValueSpacingMeters = 30.0;
+    static constexpr double kTileSizeDegrees = 0.01;                 ///< Each terrain tile represents a square area .01 degrees in lat/lon
+    static constexpr double kTleValueSpacingDegrees = (1.0 / 3600); ///< 1 Arc-Second spacing of elevation values
+    static constexpr double kTileValueSpacingMeters = 30.0;
 
 private:
     static constexpr const char *_jsonStatusKey = "status";
