@@ -8,18 +8,18 @@
  ****************************************************************************/
 
 #include "AudioOutput.h"
+#include "Fact.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QRegularExpression>
 #include <QtCore/qapplicationstatic.h>
-
-#define MAX_TEXT_QUEUE_SIZE 20U
+#include <QtTextToSpeech/QTextToSpeech>
 
 QGC_LOGGING_CATEGORY(AudioOutputLog, "qgc.audio.audiooutput");
 // qt.speech.tts.flite
 // qt.speech.tts.android
 
-const QHash<QString, QString> AudioOutput::s_textHash = {
+const QHash<QString, QString> AudioOutput::_textHash = {
     { "ERR",            "error" },
     { "POSCTL",         "Position Control" },
     { "ALTCTL",         "Altitude Control" },
@@ -31,49 +31,49 @@ const QHash<QString, QString> AudioOutput::s_textHash = {
     { "WP",             "waypoint" },
     { "CMD",            "command" },
     { "COMPID",         "component eye dee" },
-    { "params",         "parameters" },
-    { "id",             "I.D." },
+    { "PARAMS",         "parameters" },
+    { "ID",             "I.D." },
     { "ADSB",           "A.D.S.B." },
     { "EKF",            "E.K.F." },
     { "PREARM",         "pre arm" },
     { "PITOT",          "pee toe" },
+    { "SERVOX_FUNCTION","Servo X Function" },
 };
 
-Q_APPLICATION_STATIC(AudioOutput, s_audioOutput);
+Q_APPLICATION_STATIC(AudioOutput, _audioOutput);
 
-AudioOutput* AudioOutput::instance()
-{
-    return s_audioOutput();
-}
-
-AudioOutput::AudioOutput(QObject* parent)
-    : QTextToSpeech(QStringLiteral("none"), parent)
+AudioOutput::AudioOutput(QObject *parent)
+    : QObject(parent)
+    , _engine(new QTextToSpeech(QStringLiteral("none"), this))
 {
     // qCDebug(AudioOutputLog) << Q_FUNC_INFO << this;
 
-    (void) connect(this, &QTextToSpeech::stateChanged, [](QTextToSpeech::State state) {
-        qCDebug(AudioOutputLog) << Q_FUNC_INFO << "State:" << state;
-    });
-    (void) connect(this, &QTextToSpeech::errorOccurred, [](QTextToSpeech::ErrorReason reason, const QString &errorString) {
-        qCDebug(AudioOutputLog) << Q_FUNC_INFO << "Error: (" << reason << ") " << errorString;
-    });
-    (void) connect(this, &QTextToSpeech::volumeChanged, [](double volume) {
-        qCDebug(AudioOutputLog) << Q_FUNC_INFO << "volume:" << volume;
-    });
-
     if (!QTextToSpeech::availableEngines().isEmpty()) {
-        if (setEngine(QString())) { // Autoselect engine by priority
-            qCDebug(AudioOutputLog) << Q_FUNC_INFO << "engine:" << engine();
-            if (availableLocales().contains(QLocale("en_US"))) {
-                setLocale(QLocale("en_US"));
+        if (_engine->setEngine(QString())) {
+            // Autoselect engine by priority
+            qCDebug(AudioOutputLog) << Q_FUNC_INFO << "engine:" << _engine->engine();
+            if (_engine->availableLocales().contains(QLocale("en_US"))) {
+                _engine->setLocale(QLocale("en_US"));
             }
 
-            (void) connect(this, &AudioOutput::mutedChanged, [ this ](bool muted) {
+            (void) connect(this, &AudioOutput::mutedChanged, [this](bool muted) {
                 qCDebug(AudioOutputLog) << Q_FUNC_INFO << "muted:" << muted;
-                (void) QMetaObject::invokeMethod(this, "setVolume", Qt::AutoConnection, muted ? 0. : 1.);
+                (void) QMetaObject::invokeMethod(_engine, "setVolume", Qt::AutoConnection, muted ? 0. : 1.);
             });
         }
     }
+
+#ifdef QT_DEBUG
+    (void) connect(_engine, &QTextToSpeech::stateChanged, [](QTextToSpeech::State state) {
+        qCDebug(AudioOutputLog) << Q_FUNC_INFO << "State:" << state;
+    });
+    (void) connect(_engine, &QTextToSpeech::errorOccurred, [](QTextToSpeech::ErrorReason reason, const QString &errorString) {
+        qCDebug(AudioOutputLog) << Q_FUNC_INFO << "Error: (" << reason << ") " << errorString;
+    });
+    (void) connect(_engine, &QTextToSpeech::volumeChanged, [](double volume) {
+        qCDebug(AudioOutputLog) << Q_FUNC_INFO << "volume:" << volume;
+    });
+#endif
 }
 
 AudioOutput::~AudioOutput()
@@ -81,32 +81,35 @@ AudioOutput::~AudioOutput()
     // qCDebug(AudioOutputLog) << Q_FUNC_INFO << this;
 }
 
-bool AudioOutput::isMuted() const
+AudioOutput *AudioOutput::instance()
 {
-    return m_muted;
+    return _audioOutput();
 }
 
-void AudioOutput::setMuted(bool enable)
+void AudioOutput::init(Fact *mutedFact)
 {
-    if (enable != isMuted()) {
-        m_muted = enable;
-        emit mutedChanged(m_muted);
-    }
+    Q_CHECK_PTR(mutedFact);
+
+    (void) connect(mutedFact, &Fact::valueChanged, this, [this](QVariant value) {
+        setMuted(value.toBool());
+    });
+
+    setMuted(mutedFact->rawValue().toBool());
 }
 
-void AudioOutput::read(const QString& text, AudioOutput::TextMods textMods)
+void AudioOutput::say(const QString &text, AudioOutput::TextMods textMods)
 {
-    if(m_muted) {
+    if (_muted) {
         return;
     }
 
-    if (!engineCapabilities().testFlag(QTextToSpeech::Capability::Speak)) {
+    if (!_engine->engineCapabilities().testFlag(QTextToSpeech::Capability::Speak)) {
         qCWarning(AudioOutputLog) << Q_FUNC_INFO << "Speech Not Supported:" << text;
         return;
     }
 
-    if (m_textQueueSize > MAX_TEXT_QUEUE_SIZE) {
-        (void) QMetaObject::invokeMethod(this, "stop", Qt::AutoConnection, QTextToSpeech::BoundaryHint::Default);
+    if (_textQueueSize > kMaxTextQueueSize) {
+        (void) QMetaObject::invokeMethod(_engine, "stop", Qt::AutoConnection, QTextToSpeech::BoundaryHint::Default);
     }
 
     QString outText = AudioOutput::fixTextMessageForAudio(text);
@@ -116,13 +119,13 @@ void AudioOutput::read(const QString& text, AudioOutput::TextMods textMods)
     }
 
     qsizetype index = -1;
-    (void) QMetaObject::invokeMethod(this, "enqueue", Qt::AutoConnection, qReturnArg(index), outText);
+    (void) QMetaObject::invokeMethod(_engine, "enqueue", Qt::AutoConnection, qReturnArg(index), outText);
     if (index != -1) {
-        m_textQueueSize = index;
+        _textQueueSize = index;
     }
 }
 
-bool AudioOutput::getMillisecondString(const QString& string, QString& match, int& number)
+bool AudioOutput::getMillisecondString(const QString &string, QString &match, int &number)
 {
     static const QRegularExpression regexp("([0-9]+ms)");
 
@@ -140,13 +143,13 @@ bool AudioOutput::getMillisecondString(const QString& string, QString& match, in
     return result;
 }
 
-QString AudioOutput::fixTextMessageForAudio(const QString& string)
+QString AudioOutput::fixTextMessageForAudio(const QString &string)
 {
     QString result = string;
 
-    for (const QString& word: string.split(' ', Qt::SkipEmptyParts)) {
-        if (s_textHash.contains(word.toUpper())) {
-            result.replace(word, s_textHash.value(word.toUpper()));
+    for (const QString &word: string.split(' ', Qt::SkipEmptyParts)) {
+        if (_textHash.contains(word.toUpper())) {
+            result.replace(word, _textHash.value(word.toUpper()));
         }
     }
 
@@ -155,7 +158,7 @@ QString AudioOutput::fixTextMessageForAudio(const QString& string)
     QRegularExpressionMatch negNumRegexMatch = negNumRegex.match(result);
     while (negNumRegexMatch.hasMatch()) {
         if (!negNumRegexMatch.captured(1).isNull()) {
-            result.replace(negNumRegexMatch.capturedStart(1), negNumRegexMatch.capturedEnd(1) - negNumRegexMatch.capturedStart(1), tr(" negative "));
+            result.replace(negNumRegexMatch.capturedStart(1), negNumRegexMatch.capturedEnd(1) - negNumRegexMatch.capturedStart(1), QStringLiteral(" negative "));
         }
         negNumRegexMatch = negNumRegex.match(result);
     }
@@ -165,7 +168,7 @@ QString AudioOutput::fixTextMessageForAudio(const QString& string)
     QRegularExpressionMatch realNumRegexMatch = realNumRegex.match(result);
     while (realNumRegexMatch.hasMatch()) {
         if (!realNumRegexMatch.captured(2).isNull()) {
-            result.replace(realNumRegexMatch.capturedStart(2), realNumRegexMatch.capturedEnd(2) - realNumRegexMatch.capturedStart(2), tr(" point "));
+            result.replace(realNumRegexMatch.capturedStart(2), realNumRegexMatch.capturedEnd(2) - realNumRegexMatch.capturedStart(2), QStringLiteral(" point "));
         }
         realNumRegexMatch = realNumRegex.match(result);
     }
@@ -175,7 +178,7 @@ QString AudioOutput::fixTextMessageForAudio(const QString& string)
     QRegularExpressionMatch realNumMeterRegexMatch = realNumMeterRegex.match(result);
     while (realNumMeterRegexMatch.hasMatch()) {
         if (!realNumMeterRegexMatch.captured(1).isNull()) {
-            result.replace(realNumMeterRegexMatch.capturedStart(1), realNumMeterRegexMatch.capturedEnd(1) - realNumMeterRegexMatch.capturedStart(1), tr(" meters"));
+            result.replace(realNumMeterRegexMatch.capturedStart(1), realNumMeterRegexMatch.capturedEnd(1) - realNumMeterRegexMatch.capturedStart(1), QStringLiteral(" meters"));
         }
         realNumMeterRegexMatch = realNumMeterRegex.match(result);
     }
@@ -186,14 +189,13 @@ QString AudioOutput::fixTextMessageForAudio(const QString& string)
         QString newNumber;
         if (number < 60000) {
             const int seconds = number / 1000;
-            newNumber = QString("%1 second%2").arg(seconds).arg(seconds > 1 ? "s" : "");
+            newNumber = QStringLiteral("%1 second%2").arg(seconds).arg(seconds > 1 ? "s" : "");
         } else {
             const int minutes = number / 60000;
             const int seconds = (number - (minutes * 60000)) / 1000;
-            if (!seconds) {
-                newNumber = QString("%1 minute%2").arg(minutes).arg(minutes > 1 ? "s" : "");
-            } else {
-                newNumber = QString("%1 minute%2 and %3 second%4").arg(minutes).arg(minutes > 1 ? "s" : "").arg(seconds).arg(seconds > 1 ? "s" : "");
+            newNumber = QStringLiteral("%1 minute%2").arg(minutes).arg(minutes > 1 ? "s" : "");
+            if (seconds) {
+                (void) newNumber.append(QStringLiteral(" and %1 second%2").arg(seconds).arg(seconds > 1 ? "s" : ""));
             }
         }
         result.replace(match, newNumber);

@@ -27,6 +27,7 @@
 #include <QtQml/QQmlContext>
 #include <QtQml/QQmlApplicationEngine>
 
+#include "Audio/AudioOutput.h"
 #include "QGCConfig.h"
 #include "QGCApplication.h"
 #include "CmdLineOptParser.h"
@@ -416,12 +417,7 @@ void QGCApplication::_initForNormalAppBoot()
     QObject::connect(_qmlAppEngine, &QQmlApplicationEngine::objectCreationFailed, this, QCoreApplication::quit, Qt::QueuedConnection);
     _toolbox->corePlugin()->createRootWindow(_qmlAppEngine);
 
-    ( void ) connect( _toolbox->settingsManager()->appSettings()->audioMuted(), &Fact::valueChanged, AudioOutput::instance(), []( QVariant value )
-    {
-        AudioOutput::instance()->setMuted( value.toBool() );
-    });
-    AudioOutput::instance()->setMuted( _toolbox->settingsManager()->appSettings()->audioMuted()->rawValue().toBool() );
-
+    AudioOutput::instance()->init(_toolbox->settingsManager()->appSettings()->audioMuted());
     FollowMe::instance()->init();
 
     // Image provider for PX4 Flow
