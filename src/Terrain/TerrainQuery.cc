@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 #include "TerrainQuery.h"
-#include "TerrainQueryAirMap.h"
+#include "TerrainQueryInterface.h"
 #include "TerrainTileManager.h"
 #include "QGCLoggingCategory.h"
 
@@ -22,7 +22,7 @@ Q_GLOBAL_STATIC(TerrainAtCoordinateBatchManager, _terrainAtCoordinateBatchManage
 TerrainAtCoordinateBatchManager::TerrainAtCoordinateBatchManager(QObject *parent)
     : QObject(parent)
     , _batchTimer(new QTimer(this))
-    , _terrainQuery(new TerrainOfflineAirMapQuery(this))
+    , _terrainQuery(new TerrainOfflineQuery(this))
 {
     // qCDebug(TerrainQueryLog) << Q_FUNC_INFO << this;
 
@@ -225,7 +225,7 @@ void TerrainAtCoordinateQuery::signalTerrainData(bool success, const QList<doubl
 TerrainPathQuery::TerrainPathQuery(bool autoDelete, QObject *parent)
    : QObject(parent)
    , _autoDelete(autoDelete)
-   , _terrainQuery(new TerrainOfflineAirMapQuery(this))
+   , _terrainQuery(new TerrainOfflineQuery(this))
 {
     // qCDebug(AudioOutputLog) << Q_FUNC_INFO << this;
 
