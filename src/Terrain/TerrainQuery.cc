@@ -1,6 +1,10 @@
 #include "TerrainQuery.h"
 #include "TerrainQueryInterface.h"
 #include "TerrainTileManager.h"
+#include "TerrainQueryOpenElevation.h"
+#include "ElevationMapProvider.h"
+#include "SettingsManager.h"
+#include "FlightMapSettings.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QTimer>
@@ -8,12 +12,28 @@
 QGC_LOGGING_CATEGORY(TerrainQueryLog, "Terrain.TerrainQuery")
 QGC_LOGGING_CATEGORY(TerrainQueryVerboseLog, "Terrain.TerrainQuery:verbose")
 
+namespace {
+    bool isOpenElevationSelected()
+    {
+        const QString providerName = SettingsManager::instance()->flightMapSettings()->elevationMapProvider()->rawValue().toString();
+        return (providerName == QLatin1String(OpenElevationProvider::kProviderKey));
+    }
+
+    TerrainQueryInterface *createTerrainQuery(QObject *parent)
+    {
+        if (isOpenElevationSelected()) {
+            return new TerrainQueryOpenElevation(parent);
+        }
+        return new TerrainOfflineQuery(parent);
+    }
+}
+
 Q_GLOBAL_STATIC(TerrainAtCoordinateBatchManager, _terrainAtCoordinateBatchManager)
 
 TerrainAtCoordinateBatchManager::TerrainAtCoordinateBatchManager(QObject *parent)
     : QObject(parent)
     , _batchTimer(new QTimer(this))
-    , _terrainQuery(new TerrainOfflineQuery(this))
+    , _terrainQuery(createTerrainQuery(this))
 {
     qCDebug(TerrainQueryLog) << this;
 
@@ -69,7 +89,7 @@ void TerrainAtCoordinateBatchManager::_sendNextBatch()
     qCDebug(TerrainQueryLog) << Q_FUNC_INFO << "_state:_requestQueue.count:_sentRequests.count" << _stateToString(_state) << _requestQueue.count() << _sentRequests.count();
 
     if (_state != TerrainQuery::State::Idle) {
-        // Waiting for last download the complete, wait some more
+        // Waiting for last download to complete, wait some more
         qCDebug(TerrainQueryLog) << Q_FUNC_INFO << "waiting for current batch, restarting timer";
         _batchTimer->start();
         return;
@@ -197,7 +217,7 @@ void TerrainAtCoordinateQuery::signalTerrainData(bool success, const QList<doubl
 TerrainPathQuery::TerrainPathQuery(bool autoDelete, QObject *parent)
     : QObject(parent)
     , _autoDelete(autoDelete)
-    , _terrainQuery(new TerrainOfflineQuery(this))
+    , _terrainQuery(createTerrainQuery(this))
 {
     qCDebug(TerrainQueryLog) << this;
 
@@ -232,7 +252,7 @@ void TerrainPathQuery::_pathHeights(bool success, double distanceBetween, double
 TerrainAreaQuery::TerrainAreaQuery(bool autoDelete, QObject *parent)
     : QObject(parent)
     , _autoDelete(autoDelete)
-    , _terrainQuery(new TerrainOfflineQuery(this))
+    , _terrainQuery(createTerrainQuery(this))
 {
     qCDebug(TerrainQueryLog) << this;
 
