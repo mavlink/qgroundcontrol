@@ -121,13 +121,13 @@
       <extracomment>.QGC.MetaData.Facts[basicIDType].enumStrings, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>None,SerialNumber(ANSI/CTA-2063),CAA,UTM(RFC4122),Specific</source>
-      <translation type="unfinished">None,SerialNumber(ANSI/CTA-2063),CAA,UTM(RFC4122),Specific</translation>
+      <translation>なし,シリアルナンバー(ANSI/CTA-2063),CAA,UTM(RFC4122),特定</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[basicIDUaType].enumStrings, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Undefined,Airplane/FixedWing,Helicopter/Multirrotor,Gyroplane,VTOL,Ornithopter,Glider,Kite,Free Ballon,Captive Ballon,Airship,Parachute,Rocket,Tethered powered aircraft,Ground Obstacle,Other</source>
-      <translation type="unfinished">Undefined,Airplane/FixedWing,Helicopter/Multirrotor,Gyroplane,VTOL,Ornithopter,Glider,Kite,Free Ballon,Captive Ballon,Airship,Parachute,Rocket,Tethered powered aircraft,Ground Obstacle,Other</translation>
+      <translation>未定義,飛行機/固定翼機,ヘリコプター/マルチローター,ジャイロプレーン,VTOL,羽ばたき飛行船,グライダー,カイト,フリーバロン,キャプティブバロン,飛行船,パラシュート,ロケット,テザー動力機,地上障害物,その他</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[region].enumStrings, </extracomment>
@@ -139,7 +139,7 @@
       <extracomment>.QGC.MetaData.Facts[locationType].enumStrings, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Takeoff(Not Supported),Live GNNS, Fixed (not for FAA)</source>
-      <translation type="unfinished">Takeoff(Not Supported),Live GNNS, Fixed (not for FAA)</translation>
+      <translation>離陸(未サポート),リアルタイムGNNS,固定 (FAA対象外)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[classificationType].enumStrings, </extracomment>
@@ -151,13 +151,13 @@
       <extracomment>.QGC.MetaData.Facts[categoryEU].enumStrings, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Undeclared,Open,Specific,Certified</source>
-      <translation type="unfinished">Undeclared,Open,Specific,Certified</translation>
+      <translation>未申請,公開,特定,認証済</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[classEU].enumStrings, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Undeclared,Class 0,Class 1,Class 2,Class 3,Class 4,Class 5,Class 6</source>
-      <translation type="unfinished">Undeclared,Class 0,Class 1,Class 2,Class 3,Class 4,Class 5,Class 6</translation>
+      <translation>未申請,クラス 0,クラス 1,クラス 2,クラス 3,クラス 4,クラス 5,クラス 6</translation>
     </message>
   </context>
   <context>
@@ -166,7 +166,7 @@
       <extracomment>.QGC.MetaData.Facts[ControlType].enumStrings, </extracomment>
       <location filename="../src/Settings/GimbalController.SettingsGroup.json"/>
       <source>Click to point, click and drag</source>
-      <translation type="unfinished">Click to point, click and drag</translation>
+      <translation>クリックでポイント, クリックしてドラッグ</translation>
     </message>
   </context>
   <context>
