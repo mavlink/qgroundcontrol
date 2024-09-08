@@ -4257,7 +4257,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/Settings/AppSettings.cc" line="218"/>
       <source> (Test Only)</source>
-      <translation type="unfinished"> (Test Only)</translation>
+      <translation> (テストのみ)</translation>
     </message>
   </context>
   <context>
@@ -4546,7 +4546,7 @@ OKをクリックして、自動調整プロセスを開始します。</transla
     <message>
       <location filename="../src/MissionManager/BlankPlanCreator.cc" line="14"/>
       <source>Empty Plan</source>
-      <translation type="unfinished">Empty Plan</translation>
+      <translation>プランなし</translation>
     </message>
   </context>
   <context>
@@ -7020,12 +7020,12 @@ OKをクリックして、自動調整プロセスを開始します。</transla
     <message>
       <location filename="../src/FlightDisplay/FlyViewMap.qml" line="657"/>
       <source>Lat: %1</source>
-      <translation type="unfinished">Lat: %1</translation>
+      <translation>緯度: %1</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/FlyViewMap.qml" line="658"/>
       <source>Lon: %1</source>
-      <translation type="unfinished">Lon: %1</translation>
+      <translation>経度: %1</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/FlyViewMap.qml" line="667"/>
@@ -7827,132 +7827,132 @@ OKをクリックして、自動調整プロセスを開始します。</transla
       <location filename="../src/UI/toolbar/GimbalIndicator.qml" line="57"/>
       <location filename="../src/UI/toolbar/GimbalIndicator.qml" line="193"/>
       <source>Gimbal </source>
-      <translation type="unfinished">Gimbal </translation>
+      <translation>ジンバル </translation>
     </message>
     <message>
       <location filename="../src/UI/toolbar/GimbalIndicator.qml" line="59"/>
       <source>&lt;br&gt; Controls</source>
-      <translation type="unfinished">&lt;br&gt; Controls</translation>
+      <translation>コントロール&lt;br&gt;</translation>
     </message>
     <message>
       <location filename="../src/UI/toolbar/GimbalIndicator.qml" line="73"/>
       <source>Yaw &lt;br&gt; Follow</source>
-      <translation type="unfinished">Yaw &lt;br&gt; Follow</translation>
+      <translation>ヨー&lt;br&gt;フォロー</translation>
     </message>
     <message>
       <location filename="../src/UI/toolbar/GimbalIndicator.qml" line="73"/>
       <source>Yaw &lt;br&gt; Lock</source>
-      <translation type="unfinished">Yaw &lt;br&gt; Lock</translation>
+      <translation>ヨー&lt;br&gt;固定</translation>
     </message>
     <message>
       <location filename="../src/UI/toolbar/GimbalIndicator.qml" line="74"/>
       <source>Center</source>
-      <translation type="unfinished">Center</translation>
+      <translation>中央</translation>
     </message>
     <message>
       <location filename="../src/UI/toolbar/GimbalIndicator.qml" line="75"/>
       <source>Tilt 90</source>
-      <translation type="unfinished">Tilt 90</translation>
+      <translation>傾き 90</translation>
     </message>
     <message>
       <location filename="../src/UI/toolbar/GimbalIndicator.qml" line="76"/>
       <source>Point &lt;br&gt; Home</source>
-      <translation type="unfinished">Point &lt;br&gt; Home</translation>
+      <translation>ホーム&lt;br&gt;ポイント</translation>
     </message>
     <message>
       <location filename="../src/UI/toolbar/GimbalIndicator.qml" line="77"/>
       <source>Retract</source>
-      <translation type="unfinished">Retract</translation>
+      <translation>取り消し</translation>
     </message>
     <message>
       <location filename="../src/UI/toolbar/GimbalIndicator.qml" line="78"/>
       <source>Release &lt;br&gt; Control</source>
-      <translation type="unfinished">Release &lt;br&gt; Control</translation>
+      <translation>コントロール&lt;br&gt;解除</translation>
     </message>
     <message>
       <location filename="../src/UI/toolbar/GimbalIndicator.qml" line="78"/>
       <source>Acquire &lt;br&gt; Control</source>
-      <translation type="unfinished">Acquire &lt;br&gt; Control</translation>
+      <translation>コントロール&lt;br&gt;取得</translation>
     </message>
     <message>
       <location filename="../src/UI/toolbar/GimbalIndicator.qml" line="124"/>
       <source>Active &lt;br&gt; Gimbal: </source>
-      <translation type="unfinished">Active &lt;br&gt; Gimbal: </translation>
+      <translation>ジンバル&lt;br&gt;有効</translation>
     </message>
     <message>
       <location filename="../src/UI/toolbar/GimbalIndicator.qml" line="136"/>
       <source>Select &lt;br&gt; Gimbal</source>
-      <translation type="unfinished">Select &lt;br&gt; Gimbal</translation>
+      <translation>ジンバル&lt;br&gt;選択</translation>
     </message>
     <message>
       <location filename="../src/UI/toolbar/GimbalIndicator.qml" line="222"/>
       <source>Settings</source>
-      <translation type="unfinished">Settings</translation>
+      <translation>設定</translation>
     </message>
     <message>
       <location filename="../src/UI/toolbar/GimbalIndicator.qml" line="257"/>
       <source>Control type: </source>
-      <translation type="unfinished">Control type: </translation>
+      <translation>コントロールタイプ: </translation>
     </message>
     <message>
       <location filename="../src/UI/toolbar/GimbalIndicator.qml" line="267"/>
       <source>Horizontal FOV</source>
-      <translation type="unfinished">Horizontal FOV</translation>
+      <translation>水平方向 FOV</translation>
     </message>
     <message>
       <location filename="../src/UI/toolbar/GimbalIndicator.qml" line="276"/>
       <source>Vertical FOV</source>
-      <translation type="unfinished">Vertical FOV</translation>
+      <translation>垂直方向 FOV</translation>
     </message>
     <message>
       <location filename="../src/UI/toolbar/GimbalIndicator.qml" line="285"/>
       <source>Max speed:</source>
-      <translation type="unfinished">Max speed:</translation>
+      <translation>最高速度:</translation>
     </message>
     <message>
       <location filename="../src/UI/toolbar/GimbalIndicator.qml" line="304"/>
       <source>Show gimbal Azimuth indicator in map</source>
-      <translation type="unfinished">Show gimbal Azimuth indicator in map</translation>
+      <translation>ジンバル方位計を地図上に表示</translation>
     </message>
     <message>
       <location filename="../src/UI/toolbar/GimbalIndicator.qml" line="313"/>
       <source>Use Azimuth instead of local yaw on top toolbar indicator</source>
-      <translation type="unfinished">Use Azimuth instead of local yaw on top toolbar indicator</translation>
+      <translation>上部のツールバーインジケータで、ローカル・ヨーの代わりに方位を使用する</translation>
     </message>
     <message>
       <location filename="../src/UI/toolbar/GimbalIndicator.qml" line="322"/>
       <source>Show Acquire/Release control button</source>
-      <translation type="unfinished">Show Acquire/Release control button</translation>
+      <translation>コントロール取得 / 解除ボタンを表示</translation>
     </message>
     <message>
       <location filename="../src/UI/toolbar/GimbalIndicator.qml" line="371"/>
       <source>Retracted</source>
-      <translation type="unfinished">Retracted</translation>
+      <translation>取り消し</translation>
     </message>
     <message>
       <location filename="../src/UI/toolbar/GimbalIndicator.qml" line="372"/>
       <source>Yaw locked</source>
-      <translation type="unfinished">Yaw locked</translation>
+      <translation>ヨー・固定</translation>
     </message>
     <message>
       <location filename="../src/UI/toolbar/GimbalIndicator.qml" line="372"/>
       <source>Yaw follow</source>
-      <translation type="unfinished">Yaw follow</translation>
+      <translation>ヨー・フォロー</translation>
     </message>
     <message>
       <location filename="../src/UI/toolbar/GimbalIndicator.qml" line="378"/>
       <source>P: </source>
-      <translation type="unfinished">P: </translation>
+      <translation>P: </translation>
     </message>
     <message>
       <location filename="../src/UI/toolbar/GimbalIndicator.qml" line="383"/>
       <source>Az: </source>
-      <translation type="unfinished">Az: </translation>
+      <translation>Az: </translation>
     </message>
     <message>
       <location filename="../src/UI/toolbar/GimbalIndicator.qml" line="384"/>
       <source>Y: </source>
-      <translation type="unfinished">Y: </translation>
+      <translation>Y: </translation>
     </message>
   </context>
   <context>
@@ -8116,7 +8116,7 @@ OKをクリックして、自動調整プロセスを開始します。</transla
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="61"/>
       <source>Set Flight Mode</source>
-      <translation type="unfinished">Set Flight Mode</translation>
+      <translation>フライトモード設定</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="63"/>
@@ -8241,7 +8241,7 @@ OKをクリックして、自動調整プロセスを開始します。</transla
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="88"/>
       <source>Set the vehicle flight mode to %1</source>
-      <translation type="unfinished">Set the vehicle flight mode to %1</translation>
+      <translation>機体フライトモードを %1 に設定</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="195"/>
@@ -8251,22 +8251,22 @@ OKをクリックして、自動調整プロセスを開始します。</transla
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="206"/>
       <source>Height (rel)</source>
-      <translation type="unfinished">Height (rel)</translation>
+      <translation>高さ (rel)</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="214"/>
       <source>Airspeed</source>
-      <translation type="unfinished">Airspeed</translation>
+      <translation>対気速度</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="221"/>
       <source>Speed</source>
-      <translation type="unfinished">Speed</translation>
+      <translation>速度</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="231"/>
       <source>Alt (rel)</source>
-      <translation type="unfinished">Alt (rel)</translation>
+      <translation>高度 (rel)</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="462"/>
@@ -8533,12 +8533,12 @@ OKをクリックして、自動調整プロセスを開始します。</transla
     <message>
       <location filename="../src/Joystick/Joystick.h" line="362"/>
       <source>Gimbal Yaw Lock</source>
-      <translation type="unfinished">Gimbal Yaw Lock</translation>
+      <translation>ジンバル ヨー・固定</translation>
     </message>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="363"/>
       <source>Gimbal Yaw Follow</source>
-      <translation type="unfinished">Gimbal Yaw Follow</translation>
+      <translation>ジンバル ヨー・フォロー</translation>
     </message>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="364"/>
@@ -8943,12 +8943,12 @@ OKをクリックして、自動調整プロセスを開始します。</transla
     <message>
       <location filename="../src/Comms/LinkInterface.cc" line="144"/>
       <source>Signing Failure</source>
-      <translation type="unfinished">Signing Failure</translation>
+      <translation>署名の失敗</translation>
     </message>
     <message>
       <location filename="../src/Comms/LinkInterface.cc" line="144"/>
       <source>Signing signature mismatch</source>
-      <translation type="unfinished">Signing signature mismatch</translation>
+      <translation>署名が一致しません</translation>
     </message>
   </context>
   <context>
@@ -9561,17 +9561,17 @@ OKをクリックして、自動調整プロセスを開始します。</transla
     <message>
       <location filename="../src/AnalyzeView/MAVLinkConsolePage.qml" line="26"/>
       <source>Provides a connection to the vehicle&apos;s system shell.</source>
-      <translation type="unfinished">Provides a connection to the vehicle&apos;s system shell.</translation>
+      <translation>機体のシステムshellへの接続を提供します。</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MAVLinkConsolePage.qml" line="245"/>
       <source>Enter Commands here...</source>
-      <translation type="unfinished">Enter Commands here...</translation>
+      <translation>ここにコマンドを入力...</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MAVLinkConsolePage.qml" line="258"/>
       <source>Send</source>
-      <translation type="unfinished">Send</translation>
+      <translation>送信</translation>
     </message>
   </context>
   <context>
@@ -14542,82 +14542,82 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/MAVLink/QGCMAVLink.cc" line="279"/>
       <source>Generic micro air vehicle</source>
-      <translation type="unfinished">Generic micro air vehicle</translation>
+      <translation>汎用マイクロ機体</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/QGCMAVLink.cc" line="280"/>
       <source>Fixed wing aircraft</source>
-      <translation type="unfinished">Fixed wing aircraft</translation>
+      <translation>固定翼機</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/QGCMAVLink.cc" line="281"/>
       <source>Quadrotor</source>
-      <translation type="unfinished">Quadrotor</translation>
+      <translation>クワッドコプター</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/QGCMAVLink.cc" line="282"/>
       <source>Coaxial helicopter</source>
-      <translation type="unfinished">Coaxial helicopter</translation>
+      <translation>同軸型ヘリコプター</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/QGCMAVLink.cc" line="283"/>
       <source>Normal helicopter with tail rotor.</source>
-      <translation type="unfinished">Normal helicopter with tail rotor.</translation>
+      <translation>テールローター通常型ヘリコプター</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/QGCMAVLink.cc" line="284"/>
       <source>Ground installation</source>
-      <translation type="unfinished">Ground installation</translation>
+      <translation>地上へ設置</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/QGCMAVLink.cc" line="285"/>
       <source>Operator control unit / ground control station</source>
-      <translation type="unfinished">Operator control unit / ground control station</translation>
+      <translation>オペレータコントロールユニット / 地上管制ステーション</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/QGCMAVLink.cc" line="286"/>
       <source>Airship, controlled</source>
-      <translation type="unfinished">Airship, controlled</translation>
+      <translation>飛行船, 制御可能</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/QGCMAVLink.cc" line="287"/>
       <source>Free balloon, uncontrolled</source>
-      <translation type="unfinished">Free balloon, uncontrolled</translation>
+      <translation>気球, 制御不能</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/QGCMAVLink.cc" line="288"/>
       <source>Rocket</source>
-      <translation type="unfinished">Rocket</translation>
+      <translation>ロケット</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/QGCMAVLink.cc" line="289"/>
       <source>Ground rover</source>
-      <translation type="unfinished">Ground rover</translation>
+      <translation>グランドローバー</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/QGCMAVLink.cc" line="290"/>
       <source>Surface vessel, boat, ship</source>
-      <translation type="unfinished">Surface vessel, boat, ship</translation>
+      <translation>水上艦, ボート, 船舶</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/QGCMAVLink.cc" line="291"/>
       <source>Submarine</source>
-      <translation type="unfinished">Submarine</translation>
+      <translation>潜水艦</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/QGCMAVLink.cc" line="292"/>
       <source>Hexarotor</source>
-      <translation type="unfinished">Hexarotor</translation>
+      <translation>ヘキサコプター</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/QGCMAVLink.cc" line="293"/>
       <source>Octorotor</source>
-      <translation type="unfinished">Octorotor</translation>
+      <translation>オクトコプター</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/QGCMAVLink.cc" line="294"/>
       <source>trirotor</source>
-      <translation type="unfinished">trirotor</translation>
+      <translation>トライコプター</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/QGCMAVLink.cc" line="295"/>
@@ -14627,57 +14627,57 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/MAVLink/QGCMAVLink.cc" line="296"/>
       <source>Kite</source>
-      <translation type="unfinished">Kite</translation>
+      <translation>凧・カイト</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/QGCMAVLink.cc" line="297"/>
       <source>Onboard companion controller</source>
-      <translation type="unfinished">Onboard companion controller</translation>
+      <translation>オンボードコンパニオンコントローラ</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/QGCMAVLink.cc" line="298"/>
       <source>Two-rotor VTOL using control surfaces in vertical operation in addition. Tailsitter</source>
-      <translation type="unfinished">Two-rotor VTOL using control surfaces in vertical operation in addition. Tailsitter</translation>
+      <translation>垂直飛行でコントロールサーフェスを使用したVTOLバイコプター。※テールシッター</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/QGCMAVLink.cc" line="299"/>
       <source>Quad-rotor VTOL using a V-shaped quad config in vertical operation. Tailsitter</source>
-      <translation type="unfinished">Quad-rotor VTOL using a V-shaped quad config in vertical operation. Tailsitter</translation>
+      <translation>垂直飛行でV字型クワッドコプター構成を使用したVTOLクワッドコプター。※テールシッター</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/QGCMAVLink.cc" line="300"/>
       <source>Tiltrotor VTOL</source>
-      <translation type="unfinished">Tiltrotor VTOL</translation>
+      <translation>VTOL チルトコプター</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/QGCMAVLink.cc" line="301"/>
       <source>VTOL Fixedrotor</source>
-      <translation type="unfinished">VTOL Fixedrotor</translation>
+      <translation>VTOL 固定翼機</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/QGCMAVLink.cc" line="302"/>
       <source>VTOL Tailsitter</source>
-      <translation type="unfinished">VTOL Tailsitter</translation>
+      <translation>VTOL テールシッター</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/QGCMAVLink.cc" line="303"/>
       <source>VTOL Tiltwing</source>
-      <translation type="unfinished">VTOL Tiltwing</translation>
+      <translation>VTOL チルトウィング</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/QGCMAVLink.cc" line="304"/>
       <source>VTOL reserved 5</source>
-      <translation type="unfinished">VTOL reserved 5</translation>
+      <translation>VTOL予約 5</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/QGCMAVLink.cc" line="305"/>
       <source>Onboard gimbal</source>
-      <translation type="unfinished">Onboard gimbal</translation>
+      <translation>オンボードジンバル</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/QGCMAVLink.cc" line="306"/>
       <source>Onboard ADSB peripheral</source>
-      <translation type="unfinished">Onboard ADSB peripheral</translation>
+      <translation>オンボードADSB周辺機器</translation>
     </message>
   </context>
   <context>
@@ -14698,7 +14698,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/QtLocationPlugin/QGCMapEngine.cpp" line="110"/>
       <source>The Offline Map Cache database has been upgraded. Your old map cache sets have been reset.</source>
-      <translation type="unfinished">The Offline Map Cache database has been upgraded. Your old map cache sets have been reset.</translation>
+      <translation>オフライン地図キャッシュデータベースがアップグレードされました。古い地図キャッシュ設定はリセットされました。</translation>
     </message>
   </context>
   <context>
@@ -15078,7 +15078,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/main.cc" line="108"/>
       <source>You are running %1 as root. You should not do this since it will cause other issues with %1.%1 will now exit.&lt;br/&gt;&lt;br/&gt;</source>
-      <translation type="unfinished">You are running %1 as root. You should not do this since it will cause other issues with %1.%1 will now exit.&lt;br/&gt;&lt;br/&gt;</translation>
+      <translation>%1 をroot権限で実行しています。%1 に対して別の問題が発生する為、このようなケースで実行しないでください。%1 を終了します。&lt;br/&gt;&lt;br/&gt;</translation>
     </message>
   </context>
   <context>
@@ -17000,48 +17000,48 @@ ROTATION_NONEは、コンポーネントが飛行方向を向いていること�
     <message>
       <location filename="../src/MAVLink/StatusTextHandler.cc" line="184"/>
       <source>EMERGENCY</source>
-      <translation type="unfinished">EMERGENCY</translation>
+      <translation>緊急</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/StatusTextHandler.cc" line="188"/>
       <source>ALERT</source>
-      <translation type="unfinished">ALERT</translation>
+      <translation>警告</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/StatusTextHandler.cc" line="192"/>
       <source>Critical</source>
-      <translation type="unfinished">Critical</translation>
+      <translation>重大</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/StatusTextHandler.cc" line="196"/>
       <source>Error</source>
-      <translation type="unfinished">Error</translation>
+      <translation>エラー</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/StatusTextHandler.cc" line="200"/>
       <source>Warning</source>
-      <translation type="unfinished">Warning</translation>
+      <translation>警告</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/StatusTextHandler.cc" line="204"/>
       <source>Notice</source>
-      <translation type="unfinished">Notice</translation>
+      <translation>注意</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/StatusTextHandler.cc" line="208"/>
       <source>Info</source>
-      <translation type="unfinished">Info</translation>
+      <translation>情報</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/StatusTextHandler.cc" line="212"/>
       <source>Debug</source>
-      <translation type="unfinished">Debug</translation>
+      <translation>デバッグ</translation>
     </message>
     <message>
       <location filename="../src/MAVLink/StatusTextHandler.cc" line="321"/>
       <source> ... </source>
       <comment>Indicates missing chunk from chunked STATUS_TEXT</comment>
-      <translation type="unfinished"> ... </translation>
+      <translation> ... </translation>
     </message>
   </context>
   <context>
@@ -17527,27 +17527,27 @@ ROTATION_NONEは、コンポーネントが飛行方向を向いていること�
     <message>
       <location filename="../src/UI/preferences/TelemetrySettings.qml" line="75"/>
       <source>MAVLink 2 Signing</source>
-      <translation type="unfinished">MAVLink 2 Signing</translation>
+      <translation>MAVLink 2 署名</translation>
     </message>
     <message>
       <location filename="../src/UI/preferences/TelemetrySettings.qml" line="76"/>
       <source>Signing keys should only be sent to the vehicle over secure links.</source>
-      <translation type="unfinished">Signing keys should only be sent to the vehicle over secure links.</translation>
+      <translation>署名キーは、安全なリンクを介してのみ機体へ送信される必要があります。</translation>
     </message>
     <message>
       <location filename="../src/UI/preferences/TelemetrySettings.qml" line="92"/>
       <source>Key</source>
-      <translation type="unfinished">Key</translation>
+      <translation>キー</translation>
     </message>
     <message>
       <location filename="../src/UI/preferences/TelemetrySettings.qml" line="97"/>
       <source>Send to Vehicle</source>
-      <translation type="unfinished">Send to Vehicle</translation>
+      <translation>機体へ送信</translation>
     </message>
     <message>
       <location filename="../src/UI/preferences/TelemetrySettings.qml" line="110"/>
       <source>Signing key has changed. Don&apos;t forget to send to Vehicle(s) if needed.</source>
-      <translation type="unfinished">Signing key has changed. Don&apos;t forget to send to Vehicle(s) if needed.</translation>
+      <translation>署名キーが変更されました。必要であれば、機体への送信もお忘れなくお願い致しします。</translation>
     </message>
     <message>
       <location filename="../src/UI/preferences/TelemetrySettings.qml" line="117"/>
@@ -17577,7 +17577,7 @@ ROTATION_NONEは、コンポーネントが飛行方向を向いていること�
     <message>
       <location filename="../src/UI/preferences/TelemetrySettings.qml" line="151"/>
       <source>Save logs even if vehicle was not armed</source>
-      <translation>機体がアームしていない場合でもログを保存する</translation>
+      <translation>機体がアームしていない場合でもログを保存</translation>
     </message>
     <message>
       <location filename="../src/UI/preferences/TelemetrySettings.qml" line="160"/>
@@ -17657,7 +17657,7 @@ ROTATION_NONEは、コンポーネントが飛行方向を向いていること�
     <message>
       <location filename="../src/UI/preferences/TelemetrySettings.qml" line="267"/>
       <source>Signing:</source>
-      <translation type="unfinished">Signing:</translation>
+      <translation>署名:</translation>
     </message>
   </context>
   <context>
