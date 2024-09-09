@@ -287,15 +287,49 @@ set_target_properties(${PROJECT_NAME}
 )
 
 if(WIN32)
-    set(app_icon_resource_windows "${CMAKE_SOURCE_DIR}/deploy/windows/QGroundControl.rc")
+    # windows installer files shared with core and custom
+    set(DEPLOY_WIN_FILES
+        "${CMAKE_SOURCE_DIR}/deploy/windows/driver.msi"
+        "${CMAKE_SOURCE_DIR}/deploy/windows/nullsoft_installer.nsi"
+        "${CMAKE_SOURCE_DIR}/deploy/windows/QGroundControl.rc"
+        "${CMAKE_SOURCE_DIR}/deploy/windows/resource.h"
+    )
+    # windows installer files different for core and custom
+    if(IS_FILE ${CMAKE_SOURCE_DIR}/custom/deploy/windows/installheader.bmp)
+        list(APPEND DEPLOY_WIN_FILES ${CMAKE_SOURCE_DIR}/custom/deploy/windows/installheader.bmp)
+    else()
+        list(APPEND DEPLOY_WIN_FILES ${CMAKE_SOURCE_DIR}/deploy/windows/installheader.bmp)
+    endif()
+    if(IS_FILE ${CMAKE_SOURCE_DIR}/custom/deploy/windows/WindowsQGC.ico)
+        list(APPEND DEPLOY_WIN_FILES ${CMAKE_SOURCE_DIR}/custom/deploy/windows/WindowsQGC.ico)
+    else()
+        list(APPEND DEPLOY_WIN_FILES ${CMAKE_SOURCE_DIR}/deploy/windows/WindowsQGC.ico)
+    endif()
+
+    # Destination directory where files will be copied
+    set(DEPLOY_WIN_COPY_DEST "${CMAKE_BINARY_DIR}/deploy/windows")
+    file(MAKE_DIRECTORY ${DEPLOY_WIN_COPY_DEST})
+    foreach(FILE ${DEPLOY_WIN_FILES})
+        # filename without the path
+        get_filename_component(FILE_NAME ${FILE} NAME)
+        # re-copy the file if it changes
+        add_custom_command(
+            OUTPUT "${DEPLOY_WIN_COPY_DEST}/${FILE_NAME}"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different "${FILE}" "${DEPLOY_WIN_COPY_DEST}/${FILE_NAME}"
+            DEPENDS "${FILE}"  # Depend on the source file so that it re-copies when it changes
+            COMMENT "Copying ${FILE_NAME} to ${DEPLOY_WIN_COPY_DEST}"
+        )
+        list(APPEND DEPLOY_WIN_COPIED_FILES "${DEPLOY_WIN_COPY_DEST}/${FILE_NAME}")
+    endforeach()
+
     target_sources(${PROJECT_NAME}
         PRIVATE
-            ${app_icon_resource_windows}
+            ${DEPLOY_WIN_COPIED_FILES}
     )
     set_target_properties(${PROJECT_NAME}
         PROPERTIES
             WIN32_EXECUTABLE TRUE
-            QT_TARGET_RC_ICONS "${CMAKE_SOURCE_DIR}/deploy/windows/WindowsQGC.ico"
+            QT_TARGET_RC_ICONS "${CMAKE_BINARY_DIR}/deploy/windows/WindowsQGC.ico"
     )
     add_compile_definitions(_USE_MATH_DEFINES)
 elseif(MACOS)
