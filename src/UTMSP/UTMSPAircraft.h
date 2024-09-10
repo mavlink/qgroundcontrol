@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "mavlink_types.h"
+#include "MAVLinkLib.h"
 #include <string>
 #include <vector>
 
