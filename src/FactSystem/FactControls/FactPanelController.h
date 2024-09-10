@@ -31,7 +31,7 @@ class FactPanelController : public QObject
     Q_MOC_INCLUDE("Vehicle.h")
     Q_MOC_INCLUDE("Fact.h")
 public:
-    FactPanelController();
+    FactPanelController(QObject *parent = nullptr);
 
     Q_PROPERTY(Vehicle* vehicle MEMBER _vehicle CONSTANT)
 

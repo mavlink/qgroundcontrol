@@ -31,11 +31,12 @@ class VideoManager : public QGCTool
     Q_OBJECT
 
     Q_PROPERTY(bool             hasVideo                READ    hasVideo                                    NOTIFY hasVideoChanged)
-    Q_PROPERTY(bool             isGStreamer             READ    isGStreamer                                 NOTIFY isGStreamerChanged)
+    Q_PROPERTY(bool             isStreamSource          READ    isStreamSource                              NOTIFY isStreamSourceChanged)
     Q_PROPERTY(bool             gstreamerEnabled        READ    gstreamerEnabled                            CONSTANT)
     Q_PROPERTY(bool             isUvc                   READ    isUvc                                       NOTIFY isUvcChanged)
     Q_PROPERTY(QString          uvcVideoSourceID        READ    uvcVideoSourceID                            NOTIFY uvcVideoSourceIDChanged)
     Q_PROPERTY(bool             uvcEnabled              READ    uvcEnabled                                  CONSTANT)
+    Q_PROPERTY(bool             qtmultimediaEnabled     READ    qtmultimediaEnabled                         CONSTANT)
     Q_PROPERTY(bool             fullScreen              READ    fullScreen      WRITE   setfullScreen       NOTIFY fullScreenChanged)
     Q_PROPERTY(double           aspectRatio             READ    aspectRatio                                 NOTIFY aspectRatioChanged)
     Q_PROPERTY(double           thermalAspectRatio      READ    thermalAspectRatio                          NOTIFY aspectRatioChanged)
@@ -56,7 +57,7 @@ public:
     void setToolbox(QGCToolbox *toolbox) override;
 
     virtual bool        hasVideo            () const;
-    virtual bool        isGStreamer         () const;
+    virtual bool        isStreamSource      () const;
     virtual bool        isUvc               () const;
     virtual bool        fullScreen          () const { return _fullScreen; }
     virtual QString     uvcVideoSourceID    () const { return _uvcVideoSourceID; }
@@ -75,6 +76,7 @@ public:
 
     virtual bool gstreamerEnabled() const;
     virtual bool uvcEnabled() const;
+    virtual bool qtmultimediaEnabled() const;
 
     virtual void setfullScreen(bool on);
 
@@ -88,7 +90,7 @@ public:
 
 signals:
     void hasVideoChanged            ();
-    void isGStreamerChanged         ();
+    void isStreamSourceChanged      ();
     void isUvcChanged               ();
     void uvcVideoSourceIDChanged    ();
     void fullScreenChanged          ();
@@ -104,9 +106,6 @@ signals:
 
 protected slots:
     void _videoSourceChanged        ();
-    void _udpPortChanged            ();
-    void _rtspUrlChanged            ();
-    void _tcpUrlChanged             ();
     void _lowLatencyModeChanged     ();
     bool _updateUVC                 ();
     void _setActiveVehicle          (Vehicle* vehicle);

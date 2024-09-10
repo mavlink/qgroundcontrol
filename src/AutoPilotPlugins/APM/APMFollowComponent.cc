@@ -10,33 +10,14 @@
 #include "APMFollowComponent.h"
 #include "APMAutoPilotPlugin.h"
 
-APMFollowComponent::APMFollowComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
+APMFollowComponent::APMFollowComponent(Vehicle *vehicle, AutoPilotPlugin *autopilot, QObject *parent)
     : VehicleComponent(vehicle, autopilot, parent),
-    _name(tr("Follow Me"))
+    _name(QStringLiteral("Follow Me"))
 {
+    // qCDebug() << Q_FUNC_INFO << this;
 }
 
-QString APMFollowComponent::name(void) const
+APMFollowComponent::~APMFollowComponent()
 {
-    return _name;
-}
-
-QString APMFollowComponent::description(void) const
-{
-    return tr("Follow Me Setup is used to configure support for the vehicle following the ground station location.");
-}
-
-QString APMFollowComponent::iconResource(void) const
-{
-    return QStringLiteral("/qmlimages/FollowComponentIcon.png");
-}
-
-QUrl APMFollowComponent::setupSource(void) const
-{
-    return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMFollowComponent.qml"));
-}
-
-QUrl APMFollowComponent::summaryQmlSource(void) const
-{
-    return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMFollowComponentSummary.qml"));
+    // qCDebug() << Q_FUNC_INFO << this;
 }

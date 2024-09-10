@@ -30,8 +30,6 @@ const QString guided_mode_not_supported_by_vehicle = QObject::tr("Guided mode no
 
 QVariantList FirmwarePlugin::_cameraList;
 
-const QString FirmwarePlugin::px4FollowMeFlightMode(QObject::tr("Follow Me"));
-
 FirmwarePlugin::FirmwarePlugin(void)
 {
     qmlRegisterType<RadioComponentController>       ("QGroundControl.Controllers",                       1, 0, "RadioComponentController");
@@ -1112,31 +1110,37 @@ QString FirmwarePlugin::gotoFlightMode(void) const
     return QString();
 }
 
-void FirmwarePlugin::sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimationCapabilities)
+void FirmwarePlugin::sendGCSMotionReport(Vehicle *vehicle, FollowMe::GCSMotionReport &motionReport, uint8_t estimationCapabilities)
 {
+    Q_CHECK_PTR(vehicle);
+
     SharedLinkInterfacePtr sharedLink = vehicle->vehicleLinkManager()->primaryLink().lock();
-    if (sharedLink) {
-        MAVLinkProtocol*        mavlinkProtocol = qgcApp()->toolbox()->mavlinkProtocol();
-        mavlink_follow_target_t follow_target   = {};
-
-        follow_target.timestamp =           qgcApp()->msecsSinceBoot();
-        follow_target.est_capabilities =    estimationCapabilities;
-        follow_target.position_cov[0] =     static_cast<float>(motionReport.pos_std_dev[0]);
-        follow_target.position_cov[2] =     static_cast<float>(motionReport.pos_std_dev[2]);
-        follow_target.alt =                 static_cast<float>(motionReport.altMetersAMSL);
-        follow_target.lat =                 motionReport.lat_int;
-        follow_target.lon =                 motionReport.lon_int;
-        follow_target.vel[0] =              static_cast<float>(motionReport.vxMetersPerSec);
-        follow_target.vel[1] =              static_cast<float>(motionReport.vyMetersPerSec);
-
-        mavlink_message_t message;
-        mavlink_msg_follow_target_encode_chan(static_cast<uint8_t>(mavlinkProtocol->getSystemId()),
-                                              static_cast<uint8_t>(mavlinkProtocol->getComponentId()),
-                                              sharedLink->mavlinkChannel(),
-                                              &message,
-                                              &follow_target);
-        vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
+    if (!sharedLink) {
+        return;
     }
+
+    const MAVLinkProtocol* const mavlinkProtocol = qgcApp()->toolbox()->mavlinkProtocol();
+    mavlink_follow_target_t follow_target{0};
+
+    follow_target.timestamp = qgcApp()->msecsSinceBoot();
+    follow_target.est_capabilities = estimationCapabilities;
+    follow_target.position_cov[0] = static_cast<float>(motionReport.pos_std_dev[0]);
+    follow_target.position_cov[2] = static_cast<float>(motionReport.pos_std_dev[2]);
+    follow_target.alt = static_cast<float>(motionReport.altMetersAMSL);
+    follow_target.lat = motionReport.lat_int;
+    follow_target.lon = motionReport.lon_int;
+    follow_target.vel[0] = static_cast<float>(motionReport.vxMetersPerSec);
+    follow_target.vel[1] = static_cast<float>(motionReport.vyMetersPerSec);
+
+    mavlink_message_t message;
+    mavlink_msg_follow_target_encode_chan(
+        static_cast<uint8_t>(mavlinkProtocol->getSystemId()),
+        static_cast<uint8_t>(mavlinkProtocol->getComponentId()),
+        sharedLink->mavlinkChannel(),
+        &message,
+        &follow_target
+    );
+    vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
 }
 
 Autotune* FirmwarePlugin::createAutotune(Vehicle *vehicle)

@@ -12,6 +12,9 @@
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 
+// ADSB
+#include "ADSBTest.h"
+
 // AnalyzeView
 #include "ExifParserTest.h"
 // #include "MavlinkLogTest.h"
@@ -26,11 +29,15 @@
 // #include "RadioConfigTest.h"
 
 // Comms
+#include "QGCSerialPortInfoTest.h"
 
 // FactSystem
 #include "FactSystemTestGeneric.h"
 #include "FactSystemTestPX4.h"
 #include "ParameterManagerTest.h"
+
+// FollowMe
+#include "FollowMeTest.h"
 
 // Geo
 #include "GeoTest.h"
@@ -101,6 +108,9 @@ QGC_LOGGING_CATEGORY(UnitTestsLog, "qgc.test.unittestlist")
 
 int runTests(bool stress, QStringView unitTestOptions)
 {
+	// ADSB
+	UT_REGISTER_TEST(ADSBTest)
+
 	// AnalyzeView
 	UT_REGISTER_TEST(ExifParserTest)
 	// UT_REGISTER_TEST(MavlinkLogTest)
@@ -115,11 +125,15 @@ int runTests(bool stress, QStringView unitTestOptions)
 	// UT_REGISTER_TEST(RadioConfigTest)
 
 	// Comms
+	UT_REGISTER_TEST(QGCSerialPortInfoTest)
 
 	// FactSystem
 	UT_REGISTER_TEST(FactSystemTestGeneric)
 	UT_REGISTER_TEST(FactSystemTestPX4)
 	UT_REGISTER_TEST(ParameterManagerTest)
+
+	// FollowMe
+	UT_REGISTER_TEST(FollowMeTest)
 
 	// Geo
     UT_REGISTER_TEST(GeoTest)
@@ -160,7 +174,7 @@ int runTests(bool stress, QStringView unitTestOptions)
 	// QmlControls
 
 	// Terrain
-	// UT_REGISTER_TEST(TerrainQueryTest)
+	UT_REGISTER_TEST(TerrainQueryTest)
 
 	// UI
 

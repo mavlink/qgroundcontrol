@@ -55,7 +55,6 @@ public:
     bool    supportsNegativeThrust                  (Vehicle *) final;
     bool    supportsSmartRTL                        (void) const override { return true; }
     QString offlineEditingParamFile                 (Vehicle* vehicle) override { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Rover.OfflineEditing.params"); }
-    void    sendGCSMotionReport                     (Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimatationCapabilities) override;
 
 private:
     static bool _remapParamNameIntialized;

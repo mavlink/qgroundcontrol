@@ -1,33 +1,43 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Multimedia QmlIntegration Quick)
+qt_add_library(QtMultimediaReceiver STATIC)
 
-# MultimediaQuickPrivate
+option(QGC_ENABLE_QT_VIDEOSTREAMING "Enable QtMultimedia Video Streaming Backend" ON)
+cmake_print_variables(QGC_ENABLE_QT_VIDEOSTREAMING)
+if(NOT QGC_ENABLE_QT_VIDEOSTREAMING)
+    return()
+endif()
 
-qt_add_library(QtMultimediaReceiver STATIC
-    QtMultimediaReceiver.cc
-    QtMultimediaReceiver.h
+find_package(Qt6 REQUIRED COMPONENTS Core Multimedia MultimediaQuickPrivate Quick)
+
+target_sources(QtMultimediaReceiver
+    PRIVATE
+        QtMultimediaReceiver.cc
+        QtMultimediaReceiver.h
 )
 
 target_link_libraries(QtMultimediaReceiver
     PRIVATE
-        # Qt6::MultimediaPrivate
+        Qt6::MultimediaQuickPrivate
         Qt6::Quick
+        QGC
         Utilities
     PUBLIC
         Qt6::Core
         Qt6::Multimedia
-        Qt6::QmlIntegration
         VideoReceiver
 )
 
 target_include_directories(QtMultimediaReceiver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-option(QGC_DISABLE_UVC "Disable UVC Devices" OFF)
-if(QGC_DISABLE_UVC)
+target_compile_definitions(QtMultimediaReceiver PUBLIC QGC_QT_STREAMING)
+
+option(QGC_ENABLE_UVC "Disable UVC Devices" ON)
+if(NOT QGC_ENABLE_UVC)
     target_compile_definitions(QtMultimediaReceiver PUBLIC QGC_DISABLE_UVC)
-else()
-    target_sources(QtMultimediaReceiver
-        PRIVATE
-            UVCReceiver.cc
-            UVCReceiver.h
-    )
+    return()
 endif()
+
+target_sources(QtMultimediaReceiver
+    PRIVATE
+        UVCReceiver.cc
+        UVCReceiver.h
+)

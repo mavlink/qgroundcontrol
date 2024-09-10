@@ -16,6 +16,7 @@
 #include "AppSettings.h"
 #include "PositionManager.h"
 #include "QGCMapEngineManager.h"
+#include "ADSBVehicleManager.h"
 #ifndef NO_SERIAL_LINK
 #include "GPSManager.h"
 #endif
@@ -33,6 +34,7 @@ double           QGroundControlQmlGlobal::_zoom = 2;
 QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
     , _mapEngineManager(QGCMapEngineManager::instance())
+    , _adsbVehicleManager(ADSBVehicleManager::instance())
 {
     // We clear the parent on this object since we run into shutdown problems caused by hybrid qml app. Instead we let it leak on shutdown.
     // setParent(nullptr);
@@ -85,7 +87,6 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
 #ifndef NO_SERIAL_LINK
     _gpsRtkFactGroup        = toolbox->gpsManager()->gpsRtkFactGroup();
 #endif
-    _adsbVehicleManager     = toolbox->adsbVehicleManager();
     _globalPalette          = new QGCPalette(this);
 #ifndef QGC_AIRLINK_DISABLED
     _airlinkManager         = toolbox->airlinkManager();

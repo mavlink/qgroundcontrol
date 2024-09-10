@@ -24,6 +24,9 @@ function(add_qgc_test test_name)
     add_dependencies(check ${PROJECT_NAME})
 endfunction()
 
+add_subdirectory(ADSB)
+add_qgc_test(ADSBTest)
+
 add_subdirectory(AnalyzeView)
 add_qgc_test(ExifParserTest)
 # add_qgc_test(LogDownloadTest)
@@ -38,11 +41,15 @@ add_qgc_test(AudioOutputTest)
 # add_qgc_test(RadioConfigTest)
 
 add_subdirectory(Comms)
+add_qgc_test(QGCSerialPortInfoTest)
 
 add_subdirectory(FactSystem)
 add_qgc_test(FactSystemTestGeneric)
 add_qgc_test(FactSystemTestPX4)
 add_qgc_test(ParameterManagerTest)
+
+add_subdirectory(FollowMe)
+add_qgc_test(FollowMeTest)
 
 add_subdirectory(Geo)
 add_qgc_test(GeoTest)
@@ -117,11 +124,13 @@ qt_add_library(qgctest
 
 target_link_libraries(qgctest
     PRIVATE
+        ADSBTest
         AnalyzeViewTest
         AudioTest
         CommsTest
         CompressionTest
         FactSystemTest
+        FollowMeTest
         GeoTest
         MAVLinkTest
         MissionManagerTest

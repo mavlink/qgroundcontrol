@@ -11,13 +11,19 @@
 #include "ArduRoverFirmwarePlugin.h"
 #include "Vehicle.h"
 
-APMFollowComponentController::APMFollowComponentController(void)
-    : _metaDataMap  (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/APMFollowComponent.FactMetaData.json"), this))
-    , _angleFact    (settingsGroup, _metaDataMap[angleName])
-    , _distanceFact (settingsGroup, _metaDataMap[distanceName])
-    , _heightFact   (settingsGroup, _metaDataMap[heightName])
+APMFollowComponentController::APMFollowComponentController(QObject *parent)
+    : FactPanelController(parent)
+    , _metaDataMap(FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/APMFollowComponent.FactMetaData.json"), this))
+    , _angleFact(new SettingsFact(_settingsGroup, _metaDataMap[_angleName], this))
+    , _distanceFact(new SettingsFact(_settingsGroup, _metaDataMap[_distanceName], this))
+    , _heightFact(new SettingsFact(_settingsGroup, _metaDataMap[_heightName], this))
 {
+    // qCDebug() << Q_FUNC_INFO << this;
+}
 
+APMFollowComponentController::~APMFollowComponentController()
+{
+    // qCDebug() << Q_FUNC_INFO << this;
 }
 
 bool APMFollowComponentController::roverFirmware()
