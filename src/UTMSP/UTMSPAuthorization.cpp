@@ -31,7 +31,7 @@ bool UTMSPAuthorization::requestOAuth2Client(const QString &clientID, const QStr
     QString combinedCredential = clientID + ":" + clientSecret;
     QString encodedBasicToken = combinedCredential.toUtf8().toBase64();
     _utmspRestInterface.setBasicToken(encodedBasicToken);
-    _utmspRestInterface.setHost("AuthClient");
+    _utmspRestInterface.setHost(UTMSPRestInterface::HostTarget::AuthClient);
     const QString target = "/oauth/token/";
     QString body = "grant_type=client_credentials&scope=blender.write blender.read&audience=testflight.flightblender.com&client_id=" + clientID + "&client_secret=" + clientSecret + "\r\n\r\n";
     _utmspRestInterface.modifyRequest(target, QNetworkAccessManager::PostOperation, body);
