@@ -24,10 +24,15 @@ public:
     UTMSPRestInterface(QObject *parent = nullptr);
     ~UTMSPRestInterface();
 
+    enum class HostTarget {
+        AuthClient,
+        BlenderClient
+    };
+
     void setBearerToken(const std::string &token);
     QPair<int, std::string> executeRequest();
     void modifyRequest(const QString &target, QNetworkAccessManager::Operation method, const QString &body = "");
-    void setHost(const QString &target);
+    void setHost(const HostTarget &hostTarget);
     void setBasicToken(const QString &basicToken);
 
 private:
