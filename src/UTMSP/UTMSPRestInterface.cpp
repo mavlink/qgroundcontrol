@@ -27,14 +27,17 @@ UTMSPRestInterface::~UTMSPRestInterface()
 }
 
 
-void UTMSPRestInterface::setHost(const QString &target)
+void UTMSPRestInterface::setHost(const HostTarget &hostTarget)
 {
-    if (target == "AuthClient") {
+    switch (hostTarget) {
+    case HostTarget::AuthClient:
         _currentURL = "https://id.openskies.sh";
         _currentRequest.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-    } else if (target == "BlenderClient") {
+        break;
+    case HostTarget::BlenderClient:
         _currentURL = "https://testflight.flightblender.com";
         _currentRequest.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+        break;
     }
     _currentRequest.setRawHeader("User-Agent", QString("Qt/%1").arg(QT_VERSION_STR).toUtf8());
     _currentRequest.setRawHeader("Accept", "*/*");
