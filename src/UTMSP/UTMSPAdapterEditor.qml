@@ -1333,7 +1333,6 @@ QGCFlickable {
                         {
                             UTMSPStateStorage.enableMissionUploadButton = true
                             submitFlightPlan.visible = false
-                            geoSwitch.checked = false
                             deletePolygon.visible = false
                             deleteFlightPlan.visible = true
                             geoSwitch.enabled = false
@@ -1358,7 +1357,6 @@ QGCFlickable {
                     onClicked:{
                         removeFlightPlanTriggered()
                         deleteFlightPlan.visible = false
-                        geoSwitch.enabled = true
                         QGroundControl.utmspManager.utmspVehicle.triggerActivationStatusBar(false)
                         QGroundControl.utmspManager.utmspVehicle.loadTelemetryFlag(false)
                         UTMSPStateStorage.startTimeStamp = ""
