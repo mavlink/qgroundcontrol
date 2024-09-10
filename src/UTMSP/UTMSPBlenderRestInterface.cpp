@@ -12,7 +12,7 @@
 UTMSPBlenderRestInterface::UTMSPBlenderRestInterface(QObject *parent):
     UTMSPRestInterface(parent)
 {
-    setHost("BlenderClient");
+    setHost(HostTarget::BlenderClient);
 }
 
 QPair<int, std::string> UTMSPBlenderRestInterface::setFlightPlan(const std::string& body)

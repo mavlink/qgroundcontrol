@@ -101,7 +101,7 @@ void UTMSPFlightPlanManager::registerFlightPlan(const std::string &token,
 
 
     json data = _flightDataJson;
-    setHost("BlenderClient");
+    setHost(HostTarget::BlenderClient);
     setBearerToken(token);
     auto [statusCode, response] =  setFlightPlan(data.dump(4));
     UTMSP_LOG_INFO() << "UTMSPFlightPlanManager: Register Response -->" << response;
@@ -142,7 +142,7 @@ bool UTMSPFlightPlanManager::activateFlightPlan(const std::string &token)
     _updateState["submitted_by"] = this->_flightData.user;
     json data = _updateState;
     std::cout << data.dump(4) << std::endl;
-    setHost("BlenderClient");
+    setHost(HostTarget::BlenderClient);
     setBearerToken(token);
     auto [statusCode, response] =  updateFlightState(data.dump(4), _flightResponseID);
 
