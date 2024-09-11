@@ -32,7 +32,7 @@ Button {
 
     property bool   _showHighlight:     enabled && (pressed | checked)
 
-    property int _horizontalPadding:    ScreenTools.defaultFontPixelWidth
+    property int _horizontalPadding:    ScreenTools.defaultFontPixelWidth * 2
     property int _verticalPadding:      Math.round(ScreenTools.defaultFontPixelHeight * heightFactor)
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
