@@ -2,7 +2,7 @@ include(CreateCPackCommon)
 
 set(CPACK_GENERATOR "NSIS")
 
-set(QGC_INSTALLER_SOURCE "${CMAKE_SOURCE_DIR}/deploy/windows")
+set(QGC_INSTALLER_SOURCE "${CMAKE_BINARY_DIR}/deploy/windows")
 
 set(CPACK_NSIS_INSTALL_ROOT "C:\\\\Program Files")
 set(CPACK_NSIS_MUI_ICON "${QGC_INSTALLER_SOURCE}/WindowsQGC.ico")
