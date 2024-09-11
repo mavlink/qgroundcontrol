@@ -57,6 +57,8 @@ Popup {
     property var    dialogProperties
     property bool   destroyOnClose:         true
     property bool   preventClose:           false
+    
+    readonly property real headerMinWidth: titleLable.implicitWidth + rejectButton.width + acceptButton.width + titleRowLayout.spacing * 2
 
     signal accepted
     signal rejected
@@ -214,6 +216,7 @@ Popup {
             spacing:                _contentMargin
 
             QGCLabel {
+                id: titleLable
                 Layout.fillWidth:   true
                 text:               root.title
                 font.pointSize:     ScreenTools.mediumFontPointSize
@@ -221,14 +224,16 @@ Popup {
             }
 
             QGCButton {
-                id:         rejectButton
-                onClicked:  _reject()
+                id:                     rejectButton
+                onClicked:              _reject()
+                Layout.preferredWidth:  height * 1.5
             }
 
             QGCButton {
-                id:         acceptButton
-                primary:    true
-                onClicked:  _accept()
+                id:                     acceptButton
+                primary:                true
+                onClicked:              _accept()
+                Layout.preferredWidth:  height * 1.5
             }
         }
 
