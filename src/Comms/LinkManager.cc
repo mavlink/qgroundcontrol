@@ -915,7 +915,8 @@ bool LinkManager::_allowAutoConnectToBoard(QGCSerialPortInfo::BoardType_t boardT
 bool LinkManager::_portAlreadyConnected(const QString &portName)
 {
     const QString searchPort = portName.trimmed();
-    for (const SharedLinkInterfacePtr &linkConfig : _rgLinks) {
+    for (const SharedLinkInterfacePtr &linkInterface : _rgLinks) {
+        const SharedLinkConfigurationPtr linkConfig = linkInterface->linkConfiguration();
         const SerialConfiguration* const serialConfig = qobject_cast<const SerialConfiguration*>(linkConfig.get());
         if (serialConfig && (serialConfig->portName() == searchPort)) {
             return true;
