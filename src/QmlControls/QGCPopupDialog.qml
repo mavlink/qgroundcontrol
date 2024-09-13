@@ -226,14 +226,14 @@ Popup {
             QGCButton {
                 id:                     rejectButton
                 onClicked:              _reject()
-                Layout.preferredWidth:  height * 1.5
+                Layout.minimumWidth:    height * 1.5
             }
 
             QGCButton {
                 id:                     acceptButton
                 primary:                true
                 onClicked:              _accept()
-                Layout.preferredWidth:  height * 1.5
+                Layout.minimumWidth:    height * 1.5
             }
         }
 
