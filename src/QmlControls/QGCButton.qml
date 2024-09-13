@@ -50,6 +50,7 @@ Button {
             anchors.fill:   parent
             color:          qgcPal.buttonHighlight
             opacity:        _showHighlight ? 1 : control.enabled && control.hovered ? .2 : 0
+            radius:         parent.radius
         }
     }
 
