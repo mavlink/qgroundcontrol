@@ -7991,7 +7991,7 @@ OKをクリックして、自動調整プロセスを開始します。</transla
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="38"/>
       <source>Disarm</source>
-      <translation>ディスアーム</translation>
+      <translation>アーム解除</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="39"/>
