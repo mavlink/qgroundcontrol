@@ -4270,7 +4270,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/UI/toolbar/ArmedIndicator.qml" line="24"/>
       <source>Disarmed</source>
-      <translation>ディスアームしました</translation>
+      <translation>アーム解除しました</translation>
     </message>
     <message>
       <location filename="../src/UI/toolbar/ArmedIndicator.qml" line="25"/>
