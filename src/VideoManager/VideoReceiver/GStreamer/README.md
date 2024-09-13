@@ -5,7 +5,7 @@
 For supported platforms, QGroundControl implements an UDP RTP and RSTP video streaming receiver in its Main Flight Display. It uses GStreamer and a stripped down version of QtGstreamer. We've standardized on **GStreamer 1.18.1**. It has been reliable and we will be using it until a good reason to change it surfaces. Newer versions of GStreamer may break the build as some dependent libraries may change.
 To build video streaming support, you will need to install the GStreamer development packages for the desired target platform.
 
-If you do have the proper GStreamer development libraries installed where QGC looks for it, the QGC build system will automatically use it and build video streaming support. If you would like to disable video streaming support, you can add **DISABLE_VIDEOSTREAMING** to the **DEFINES** build variable.
+If you do have the proper GStreamer development libraries installed where QGC looks for it, the QGC build system will automatically use it and build video streaming support. If you would like to disable GStreamer video streaming support, set the **QGC_ENABLE_GST_VIDEOSTREAMING** CMake option to **OFF**.
 
 ### Gstreamer logs
 
