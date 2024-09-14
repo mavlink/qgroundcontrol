@@ -1302,7 +1302,8 @@ void MockLink::_sendGpsRawInt(void)
                                       (int32_t)(_vehicleLatitude  * 1E7),
                                       (int32_t)(_vehicleLongitude * 1E7),
                                       (int32_t)(_vehicleAltitudeAMSL  * 1000),
-                                      UINT16_MAX, UINT16_MAX,               // HDOP/VDOP not known
+                                      3 * 100,                              // hdop
+                                      3 * 100,                              // vdop
                                       UINT16_MAX,                           // velocity not known
                                       UINT16_MAX,                           // course over ground not known
                                       8,                                    // satellites visible
