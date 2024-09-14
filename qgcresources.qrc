@@ -7,6 +7,8 @@
     </qresource>
     <qresource prefix="/res">
         <file alias="action.svg">resources/action.svg</file>
+        <file alias="add-col.svg">resources/add-col.svg</file>
+        <file alias="add-row.svg">resources/add-row.svg</file>
         <file alias="AntennaRC">resources/Antenna_RC.svg</file>
         <file alias="AntennaT">resources/Antenna_T.svg</file>
         <file alias="ArrowDown.svg">resources/ArrowDown.svg</file>
@@ -18,6 +20,8 @@
         <file alias="counter-clockwise-arrow.svg">resources/counter-clockwise-arrow.svg</file>
         <file alias="chevron-down.svg">resources/chevron-down.svg</file>
         <file alias="chevron-up.svg">resources/chevron-up.svg</file>
+        <file alias="del-col.svg">resources/del-col.svg</file>
+        <file alias="del-row.svg">resources/del-row.svg</file>
 		<file alias="DropArrow.svg">resources/DropArrow.svg</file>
         <file alias="gear-black.svg">resources/gear-black.svg</file>
         <file alias="gear-white.svg">resources/gear-white.svg</file>
@@ -28,13 +32,12 @@
         <file alias="land.svg">resources/land.svg</file>
         <file alias="layout-bottom.svg">resources/layout-bottom.svg</file>
         <file alias="layout-right.svg">resources/layout-right.svg</file>
-        <file alias="LockClosed.svg">resources/LockClosed.svg</file>
-        <file alias="LockOpen.svg">resources/LockOpen.svg</file>
         <file alias="notile.png">resources/notile.png</file>
         <file alias="NoVideoBackground.jpg">resources/NoVideoBackground.jpg</file>
         <file alias="Pause.svg">resources/Pause.svg</file>
         <file alias="pause-mission.svg">resources/pause-mission.svg</file>
         <file alias="pencil.svg">resources/pencil.svg</file>
+		<file alias="pencil-finished.svg">resources/pencil-finished.svg</file>
         <file alias="Play">resources/Play.svg</file>
         <file alias="PowerButton">resources/PowerButton.svg</file>
         <file alias="QGCLogoBlack">resources/QGCLogoBlack.svg</file>

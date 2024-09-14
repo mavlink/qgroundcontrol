@@ -26,6 +26,7 @@ T.HorizontalFactValueGrid {
     Layout.preferredHeight: topLayout.height
 
     property bool   settingsUnlocked:       false
+    property bool   editBtnVisible:         false
 
     property real   _margins:               ScreenTools.defaultFontPixelWidth / 2
     property int    _rowMax:                2
@@ -37,127 +38,142 @@ T.HorizontalFactValueGrid {
 
     ColumnLayout {
         id:         topLayout
-        spacing:    0
+        spacing:    ScreenTools.defaultFontPixelWidth
 
         RowLayout {
-            RowLayout {
-                id:         labelValueColumnLayout
-                spacing:    ScreenTools.defaultFontPixelWidth * 1.25
-
-                Repeater {
-                    model: _root.columns
-
-                    GridLayout {
-                        rows:           object.count
-                        columns:        2
-                        rowSpacing:     0
-                        columnSpacing:  ScreenTools.defaultFontPixelWidth / 4
-                        flow:           GridLayout.TopToBottom
-
-                        Repeater {
-                            id:     labelRepeater
-                            model:  object
-
-                            InstrumentValueLabel {
-                                Layout.fillHeight:      true
-                                Layout.alignment:       Qt.AlignRight
-                                instrumentValueData:    object
-                            }
-                        }
-
-                        Repeater {
-                            id:     valueRepeater
-                            model:  object
-
-                            property real   _index:     index
-                            property real   maxWidth:   0
-                            property var    lastCheck:  new Date().getTime()
-
-                            function recalcWidth() {
-                                var newMaxWidth = 0
-                                for (var i=0; i<valueRepeater.count; i++) {
-                                    newMaxWidth = Math.max(newMaxWidth, valueRepeater.itemAt(i).contentWidth)
-                                }
-                                maxWidth = Math.min(maxWidth, newMaxWidth)
-                            }
-
-                            InstrumentValueValue {
-                                Layout.fillHeight:      true
-                                Layout.alignment:       Qt.AlignLeft
-                                Layout.preferredWidth:  valueRepeater.maxWidth
-                                instrumentValueData:    object
-
-                                property real lastContentWidth
-
-                                Component.onCompleted:  {
-                                    valueRepeater.maxWidth = Math.max(valueRepeater.maxWidth, contentWidth)
-                                    lastContentWidth = contentWidth
-                                }
-
-                                onContentWidthChanged: {
-                                    valueRepeater.maxWidth = Math.max(valueRepeater.maxWidth, contentWidth)
-                                    lastContentWidth = contentWidth
-                                    var currentTime = new Date().getTime()
-                                    if (currentTime - valueRepeater.lastCheck > 30 * 1000) {
-                                        valueRepeater.lastCheck = currentTime
-                                        valueRepeater.recalcWidth()
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            ColumnLayout {
-                Layout.bottomMargin:    1
-                Layout.fillHeight:      true
-                Layout.preferredWidth:  ScreenTools.minTouchPixels / 2
-                spacing:                1
-                visible:                settingsUnlocked
-                enabled:                settingsUnlocked
-
-                QGCButton {
-                    Layout.fillHeight:      true
-                    Layout.preferredHeight: ScreenTools.minTouchPixels
-                    Layout.preferredWidth:  parent.width
-                    text:                   qsTr("+")
-                    enabled:                (_root.width + (2 * (_rowButtonWidth + _margins))) < screen.width
-                    onClicked:              appendColumn()
-                }
-
-                QGCButton {
-                    Layout.fillHeight:      true
-                    Layout.preferredHeight: ScreenTools.minTouchPixels
-                    Layout.preferredWidth:  parent.width
-                    text:                   qsTr("-")
-                    enabled:                _root.columns.count > 1
-                    onClicked:              deleteLastColumn()
-                }
-            }
-        }
-
-        RowLayout {
-            Layout.preferredHeight: ScreenTools.minTouchPixels / 2
-            Layout.fillWidth:       true
-            spacing:                1
-            visible:                settingsUnlocked
-            enabled:                settingsUnlocked
+            spacing:                ScreenTools.defaultFontPixelWidth
 
             QGCButton {
-                Layout.fillWidth:       true
-                Layout.preferredHeight: parent.height
-                text:                   qsTr("+")
+                id:                     editBtn
+                visible:                editBtnVisible && !settingsUnlocked
+                iconSource:             "/res/pencil.svg"
+                onClicked:              settingsUnlocked = true
+                Layout.preferredWidth:  height*2
+            }
+
+            QGCButton {
+                visible:                settingsUnlocked
+                iconSource:             "/res/pencil-finished.svg"
+                onClicked:              settingsUnlocked = false
+                Layout.preferredWidth:  height*2
+            }
+
+            Rectangle {
+                visible:                settingsUnlocked
+                color:                  qgcPal.windowShade
+                width:                  ScreenTools.defaultFontPixelWidth / 8
+                height:                 addRowBtn.height
+            }
+
+            QGCButton {
+                id:                     addRowBtn
+                visible:                settingsUnlocked
+                Layout.preferredWidth:  height
+                iconSource:             "/res/add-row.svg"
+                primary:                true
                 enabled:                (_root.height + (2 * (_rowButtonHeight + _margins))) < (screen.height - ScreenTools.toolbarHeight)
                 onClicked:              appendRow()
             }
 
             QGCButton {
-                Layout.fillWidth:       true
-                Layout.preferredHeight: parent.height
-                text:                   qsTr("-")
+                visible:                settingsUnlocked
+                Layout.preferredWidth:  height
+                iconSource:             "/res/add-col.svg"
+                primary:                true
+                enabled:                (_root.width + (2 * (_rowButtonWidth + _margins))) < screen.width
+                onClicked:              appendColumn()
+            }
+
+            Rectangle {
+                visible:                settingsUnlocked
+                color:                  qgcPal.windowShade
+                width:                  ScreenTools.defaultFontPixelWidth / 8
+                height:                 addRowBtn.height
+            }
+
+            QGCButton {
+                visible:                settingsUnlocked
+                Layout.preferredWidth:  height
+                iconSource:             "/res/del-row.svg"
                 enabled:                _root.rowCount > 1
                 onClicked:              deleteLastRow()
+            }
+
+            QGCButton {
+                visible:                settingsUnlocked
+                Layout.preferredWidth:  height
+                iconSource:             "/res/del-col.svg"
+                enabled:                _root.columns.count > 1
+                onClicked:              deleteLastColumn()
+            }
+        }
+
+        RowLayout {
+            id:         labelValueColumnLayout
+            spacing:    ScreenTools.defaultFontPixelWidth * 1.25
+
+            Repeater {
+                model: _root.columns
+
+                GridLayout {
+                    rows:           object.count
+                    columns:        2
+                    rowSpacing:     0
+                    columnSpacing:  ScreenTools.defaultFontPixelWidth / 4
+                    flow:           GridLayout.TopToBottom
+
+                    Repeater {
+                        id:     labelRepeater
+                        model:  object
+
+                        InstrumentValueLabel {
+                            Layout.fillHeight:      true
+                            Layout.alignment:       Qt.AlignRight
+                            instrumentValueData:    object
+                        }
+                    }
+
+                    Repeater {
+                        id:     valueRepeater
+                        model:  object
+
+                        property real   _index:     index
+                        property real   maxWidth:   0
+                        property var    lastCheck:  new Date().getTime()
+
+                        function recalcWidth() {
+                            var newMaxWidth = 0
+                            for (var i=0; i<valueRepeater.count; i++) {
+                                newMaxWidth = Math.max(newMaxWidth, valueRepeater.itemAt(i).contentWidth)
+                            }
+                            maxWidth = Math.min(maxWidth, newMaxWidth)
+                        }
+
+                        InstrumentValueValue {
+                            Layout.fillHeight:      true
+                            Layout.alignment:       Qt.AlignLeft
+                            Layout.preferredWidth:  valueRepeater.maxWidth
+                            instrumentValueData:    object
+
+                            property real lastContentWidth
+
+                            Component.onCompleted:  {
+                                valueRepeater.maxWidth = Math.max(valueRepeater.maxWidth, contentWidth)
+                                lastContentWidth = contentWidth
+                            }
+
+                            onContentWidthChanged: {
+                                valueRepeater.maxWidth = Math.max(valueRepeater.maxWidth, contentWidth)
+                                lastContentWidth = contentWidth
+                                var currentTime = new Date().getTime()
+                                if (currentTime - valueRepeater.lastCheck > 30 * 1000) {
+                                    valueRepeater.lastCheck = currentTime
+                                    valueRepeater.recalcWidth()
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }

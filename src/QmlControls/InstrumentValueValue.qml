@@ -18,7 +18,6 @@ import QGroundControl.Palette
 
 ColumnLayout {
     property var    instrumentValueData:            null
-    property bool   settingsUnlocked:               false
     property alias  contentWidth:                   label.contentWidth
 
     property var    _rgFontSizes:                   [ ScreenTools.defaultFontPointSize, ScreenTools.smallFontPointSize, ScreenTools.mediumFontPointSize, ScreenTools.largeFontPointSize ]
