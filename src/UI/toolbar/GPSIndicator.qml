@@ -16,48 +16,67 @@ import QGroundControl.MultiVehicleManager
 import QGroundControl.ScreenTools
 import QGroundControl.Palette
 
-//-------------------------------------------------------------------------
-//-- GPS Indicator
+// Used as the base class control for nboth VehicleGPSIndicator and RTKGPSIndicator
+
 Item {
     id:             control
-    width:          (gpsValuesColumn.x + gpsValuesColumn.width) * 1.1
+    width:          gpsIndicatorRow.width
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
 
-    property bool showIndicator: true
-
     property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    property bool   _rtkConnected:  QGroundControl.gpsRtk.connected.value
 
-    QGCColoredImage {
-        id:                 gpsIcon
-        width:              height
-        anchors.top:        parent.top
-        anchors.bottom:     parent.bottom
-        source:             "/qmlimages/Gps.svg"
-        fillMode:           Image.PreserveAspectFit
-        sourceSize.height:  height
-        opacity:            (_activeVehicle && _activeVehicle.gps.count.value >= 0) ? 1 : 0.5
-        color:              qgcPal.buttonText
-    }
+    Row {
+        id:             gpsIndicatorRow
+        anchors.top:    parent.top
+        anchors.bottom: parent.bottom
+        spacing:        ScreenTools.defaultFontPixelWidth / 2
 
-    Column {
-        id:                     gpsValuesColumn
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.leftMargin:     ScreenTools.defaultFontPixelWidth / 2
-        anchors.left:           gpsIcon.right
+        Row {
+            anchors.top:    parent.top
+            anchors.bottom: parent.bottom
+            spacing:        -ScreenTools.defaultFontPixelWidth / 2
 
-        QGCLabel {
-            anchors.horizontalCenter:   hdopValue.horizontalCenter
-            visible:                    _activeVehicle && !isNaN(_activeVehicle.gps.hdop.value)
-            color:                      qgcPal.buttonText
-            text:                       _activeVehicle ? _activeVehicle.gps.count.valueString : ""
+            QGCLabel {
+                id:                     gpsLabel
+                rotation:               90
+                text:                   qsTr("RTK")
+                color:                  qgcPal.buttonText
+                anchors.verticalCenter: parent.verticalCenter
+                visible:                _rtkConnected
+            }
+
+            QGCColoredImage {
+                id:                 gpsIcon
+                width:              height
+                anchors.top:        parent.top
+                anchors.bottom:     parent.bottom
+                source:             "/qmlimages/Gps.svg"
+                fillMode:           Image.PreserveAspectFit
+                sourceSize.height:  height
+                opacity:            (_activeVehicle && _activeVehicle.gps.count.value >= 0) ? 1 : 0.5
+                color:              qgcPal.buttonText
+            }
         }
 
-        QGCLabel {
-            id:         hdopValue
-            visible:    _activeVehicle && !isNaN(_activeVehicle.gps.hdop.value)
-            color:      qgcPal.buttonText
-            text:       _activeVehicle ? _activeVehicle.gps.hdop.value.toFixed(1) : ""
+        Column {
+            id:                     gpsValuesColumn
+            anchors.verticalCenter: parent.verticalCenter
+            visible:                _activeVehicle && !isNaN(_activeVehicle.gps.hdop.value)
+            spacing:                0
+
+            QGCLabel {
+                anchors.horizontalCenter:   hdopValue.horizontalCenter
+                color:              qgcPal.buttonText
+                text:               _activeVehicle ? _activeVehicle.gps.count.valueString : ""
+            }
+
+            QGCLabel {
+                id:     hdopValue
+                color:  qgcPal.buttonText
+                text:   _activeVehicle ? _activeVehicle.gps.hdop.value.toFixed(1) : ""
+            }
         }
     }
 
@@ -69,8 +88,6 @@ Item {
     Component {
         id: gpsIndicatorPage
 
-        GPSIndicatorPage {
-
-        }
+        GPSIndicatorPage { }
     }
 }
