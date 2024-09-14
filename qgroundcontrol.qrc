@@ -1,8 +1,8 @@
 <RCC>
     <qresource prefix="/toolbar">
         <file alias="ArmedIndicator.qml">src/UI/toolbar/ArmedIndicator.qml</file>
-        <file alias="GPSIndicator.qml">src/UI/toolbar/GPSIndicator.qml</file>
-        <file alias="GPSRTKIndicator.qml">src/UI/toolbar/GPSRTKIndicator.qml</file>
+        <file alias="RTKGPSIndicator.qml">src/UI/toolbar/RTKGPSIndicator.qml</file>
+        <file alias="VehicleGPSIndicator.qml">src/UI/toolbar/VehicleGPSIndicator.qml</file>
         <file alias="JoystickIndicator.qml">src/UI/toolbar/JoystickIndicator.qml</file>
         <file alias="LinkIndicator.qml">src/UI/toolbar/LinkIndicator.qml</file>
         <file alias="MessageIndicator.qml">src/UI/toolbar/MessageIndicator.qml</file>
@@ -103,6 +103,7 @@
         <file alias="QGroundControl/Controls/FlightModeDropdown.qml">src/QmlControls/FlightModeDropdown.qml</file>
         <file alias="QGroundControl/Controls/FlightModeMenu.qml">src/QmlControls/FlightModeMenu.qml</file>
         <file alias="QGroundControl/Controls/FWLandingPatternMapVisual.qml">src/PlanView/FWLandingPatternMapVisual.qml</file>
+        <file alias="QGroundControl/Controls/GPSIndicator.qml">src/UI/toolbar/GPSIndicator.qml</file>
         <file alias="QGroundControl/Controls/GPSIndicatorPage.qml">src/UI/toolbar/GPSIndicatorPage.qml</file>
         <file alias="QGroundControl/Controls/GeoFenceEditor.qml">src/PlanView/GeoFenceEditor.qml</file>
         <file alias="QGroundControl/Controls/GeoFenceMapVisuals.qml">src/PlanView/GeoFenceMapVisuals.qml</file>
