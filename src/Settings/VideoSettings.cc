@@ -57,19 +57,16 @@ DECLARE_SETTINGGROUP(Video, "Video")
     _nameToMetaDataMap[videoSourceName]->setEnumInfo(videoSourceCookedList, videoSourceList);
 
     const QVariantList removeForceVideoDecodeList{
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
         VideoDecoderOptions::ForceVideoDecoderDirectX3D,
         VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
-#endif
-#ifdef Q_OS_WIN
+#elif defined(Q_OS_WIN)
         VideoDecoderOptions::ForceVideoDecoderVAAPI,
         VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
-#endif
-#ifdef Q_OS_MAC
+#elif defined(Q_OS_MAC)
         VideoDecoderOptions::ForceVideoDecoderDirectX3D,
         VideoDecoderOptions::ForceVideoDecoderVAAPI,
-#endif
-#ifdef Q_OS_ANDROID
+#elif defined(Q_OS_ANDROID)
         VideoDecoderOptions::ForceVideoDecoderDirectX3D,
         VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
         VideoDecoderOptions::ForceVideoDecoderVAAPI,
