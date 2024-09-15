@@ -79,19 +79,69 @@ Item {
             anchors.top:    parent.top
             anchors.bottom: parent.bottom
 
+            // function getBatteryColor() {
+            //     switch (battery.chargeState.rawValue) {
+            //         case MAVLink.MAV_BATTERY_CHARGE_STATE_OK:
+            //         case MAVLink.MAV_BATTERY_CHARGE_STATE_LOW:
+            //         case MAVLink.MAV_BATTERY_CHARGE_STATE_CRITICAL:
+            //             if (!isNaN(battery.percentRemaining.rawValue)) {
+            //                 // Check percentage and return appropriate color
+            //                 if (battery.percentRemaining.rawValue > 80) {
+            //                     return qgcPal.colorGreen // Green for battery > 80%
+            //                 } else if (battery.percentRemaining.rawValue > 60) {
+            //                     return "#9ACD32" // Yellow-Green for 61% - 80%
+            //                 } else if (battery.percentRemaining.rawValue > 40) {
+            //                     return qgcPal.colorYellow // Yellow for 41% - 60%    
+            //                 } else if (battery.percentRemaining.rawValue > 20) {
+            //                     return qgcPal.colorOrange // Orange for 21% - 40%
+            //                 }else {
+            //                     return qgcPal.colorRed 
+            //                 }
+            //             }
+            //             break;        
+            //         case MAVLink.MAV_BATTERY_CHARGE_STATE_EMERGENCY:
+            //         case MAVLink.MAV_BATTERY_CHARGE_STATE_FAILED:
+            //         case MAVLink.MAV_BATTERY_CHARGE_STATE_UNHEALTHY:
+            //             return qgcPal.colorRed // Red for emergency states
+            //         default:
+            //             return qgcPal.text // Default color for undefined states
+            //     }
+            // }
             function getBatteryColor() {
-                switch (battery.chargeState.rawValue) {
-                case MAVLink.MAV_BATTERY_CHARGE_STATE_OK:
-                    return qgcPal.text
-                case MAVLink.MAV_BATTERY_CHARGE_STATE_LOW:
-                    return qgcPal.colorOrange
-                case MAVLink.MAV_BATTERY_CHARGE_STATE_CRITICAL:
-                case MAVLink.MAV_BATTERY_CHARGE_STATE_EMERGENCY:
-                case MAVLink.MAV_BATTERY_CHARGE_STATE_FAILED:
-                case MAVLink.MAV_BATTERY_CHARGE_STATE_UNHEALTHY:
-                    return qgcPal.colorRed
-                default:
-                    return qgcPal.text
+                if (!isNaN(battery.percentRemaining.rawValue)) {
+                    if (battery.percentRemaining.rawValue > 80) {
+                        return qgcPal.colorGreen // Green for battery > 80%
+                    } else if (battery.percentRemaining.rawValue > 60) {
+                        return "#9ACD32" // Yellow-Green for 61% - 80%
+                    } else if (battery.percentRemaining.rawValue > 40) {
+                        return qgcPal.colorYellow // Yellow for 41% - 60%    
+                    } else if (battery.percentRemaining.rawValue > 20) {
+                        return qgcPal.colorOrange // Orange for 21% - 40%
+                    } else {
+                        return qgcPal.colorRed // Red for 0% - 20%
+                    }
+                } else {
+                    return qgcPal.text // Default color for undefined states
+                }
+            }
+
+            function getBatterySvgSource() {
+                if (!isNaN(battery.percentRemaining.rawValue)) {
+                    if (battery.percentRemaining.rawValue > 80) {
+                        return "/qmlimages/BatteryGreen.svg" // Green for battery > 80%
+                    } else if (battery.percentRemaining.rawValue > 60) {
+                        return "/qmlimages/BatteryYellowGreen.svg" // Yellow-Green for 61% - 80%
+                    } else if (battery.percentRemaining.rawValue > 40) {
+                        return "/qmlimages/BatteryYellow.svg" // Yellow for 41% - 60%    
+                    } else if (battery.percentRemaining.rawValue > 20) {
+                        return "/qmlimages/BatteryOrange.svg" // Orange for 21% - 40%
+                    } else if (battery.percentRemaining.rawValue > 10) {
+                        return "/qmlimages/BatteryLow.svg" // Red for 11% - 20%
+                    } else {
+                        return "/qmlimages/BatteryCritical.svg" // Exclamation mark for 0% - 10%
+                    }
+                } else {
+                    return "/qmlimages/Battery.svg" // Fallback if percentage is unavailable
                 }
             }
 
@@ -124,7 +174,7 @@ Item {
                 anchors.bottom:     parent.bottom
                 width:              height
                 sourceSize.width:   width
-                source:             "/qmlimages/Battery.svg"
+                source:             getBatterySvgSource()
                 fillMode:           Image.PreserveAspectFit
                 color:              getBatteryColor()
             }
