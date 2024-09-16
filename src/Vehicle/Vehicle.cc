@@ -2774,6 +2774,15 @@ void Vehicle::_waitForMavlinkMessageMessageReceivedHandler(const mavlink_message
 
         qCDebug(VehicleLog) << Q_FUNC_INFO << "message received - compId:msgId" << message.compid << message.msgid;
 
+        if (!pInfo->commandAckReceived) {
+            qCDebug(VehicleLog) << Q_FUNC_INFO << "message received before ack came back.";
+            int entryIndex = _findMavCommandListEntryIndex(message.compid, MAV_CMD_REQUEST_MESSAGE);
+            if (entryIndex != -1) {
+                _mavCommandList.takeAt(entryIndex);
+            } else {
+                qWarning() << Q_FUNC_INFO << "Removing request message command from list failed - not found in list";
+            }
+        }
         _removeRequestMessageInfo(message.compid, message.msgid);
 
         (*resultHandler)(resultHandlerData, MAV_RESULT_ACCEPTED, RequestMessageNoFailure, message);
@@ -2833,9 +2842,8 @@ void Vehicle::_requestMessageCmdResultHandler(void* resultHandlerData_, [[maybe_
     }
 
     if (requestMessageInfo->messageReceived) {
-        // We got the message before we got the ack back!
-        vehicle->_removeRequestMessageInfo(requestMessageInfo->compId, requestMessageInfo->msgId);
-        (resultHandler)(resultHandlerData, static_cast<MAV_RESULT>(ack.result),  RequestMessageNoFailure, message);
+        // This should never happen. The command should have already been removed from the list when the message was received
+        qWarning() << Q_FUNC_INFO << "Command result handler should now have been called if message has already been received";
     } else {
         // Now that the request has been acked we start the timer to wait for the message
         requestMessageInfo->messageWaitElapsedTimer.start();
