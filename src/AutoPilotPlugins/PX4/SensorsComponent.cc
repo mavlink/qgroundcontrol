@@ -64,7 +64,7 @@ bool SensorsComponent::setupComplete(void) const
     }
 
     if (_vehicle->fixedWing() || _vehicle->vtol() || _vehicle->airship()) {
-        if (_vehicle->firmwareMajorVersion() >= 1 && _vehicle->firmwareMinorVersion() >= 14) {
+        if (_vehicle->firmwareMajorVersion() > 1 || (_vehicle->firmwareMajorVersion() == 1 && _vehicle->firmwareMinorVersion() > 14)) {
             if (_vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, "SYS_HAS_NUM_ASPD")->rawValue().toBool() &&
                     _vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, "SENS_DPRES_OFF")->rawValue().toFloat() == 0.0f) {
                 return false;
@@ -114,7 +114,7 @@ QUrl SensorsComponent::summaryQmlSource(void) const
  bool SensorsComponent::_airspeedCalSupported(void) const
  {
     if (_vehicle->fixedWing() || _vehicle->vtol() || _vehicle->airship()) {
-        if (_vehicle->firmwareMajorVersion() >= 1 && _vehicle->firmwareMinorVersion() >= 14) {
+        if (_vehicle->firmwareMajorVersion() > 1 || (_vehicle->firmwareMajorVersion() == 1 && _vehicle->firmwareMinorVersion() > 14)) {
             if (_vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, "SYS_HAS_NUM_ASPD")->rawValue().toBool()) {
                 return true;
             }
