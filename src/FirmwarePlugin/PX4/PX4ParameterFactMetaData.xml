@@ -24661,7 +24661,7 @@
       <values>
         <value code="0">Disabled</value>
         <value code="1">Enabled</value>
-        <value code="2">Disabled during VTOL fast forward flight</value>
+        <value code="2">Enabled in VTOL MC mode, listen to request from system in FW mode</value>
       </values>
     </parameter>
     <parameter name="UUV_SKIP_CTRL" default="0" type="INT32">
