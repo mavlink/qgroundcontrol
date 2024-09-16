@@ -18469,6 +18469,15 @@
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
+    <parameter name="RD_MAX_SPEED" default="1" type="FLOAT">
+      <short_desc>Maximum speed setpoint</short_desc>
+      <long_desc>This parameter is used to cap desired forward speed and map controller inputs to desired speeds in Position mode.</long_desc>
+      <min>0</min>
+      <max>100</max>
+      <unit>m/s</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
     <parameter name="RD_MAX_THR_SPD" default="1" type="FLOAT">
       <short_desc>Speed the rover drives at maximum throttle</short_desc>
       <long_desc>This parameter is used to calculate the feedforward term of the closed loop speed control which linearly maps desired speeds to normalized motor commands [-1. 1]. A good starting point is the observed ground speed when the rover drives at maximum throttle in manual mode. Increase this parameter if the rover is faster than the setpoint, and decrease if the rover is slower.</long_desc>
@@ -18489,7 +18498,7 @@
     </parameter>
     <parameter name="RD_MAX_YAW_RATE" default="90" type="FLOAT">
       <short_desc>Maximum allowed yaw rate for the rover</short_desc>
-      <long_desc>This parameter is used to cap desired yaw rates and map controller inputs to desired yaw rates in acro mode.</long_desc>
+      <long_desc>This parameter is used to cap desired yaw rates and map controller inputs to desired yaw rates in Acro,Stabilized and Position mode.</long_desc>
       <min>0.01</min>
       <max>1000</max>
       <unit>deg/s</unit>
