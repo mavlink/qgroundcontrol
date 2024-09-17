@@ -79,40 +79,12 @@ Item {
             anchors.top:    parent.top
             anchors.bottom: parent.bottom
 
-            // function getBatteryColor() {
-            //     switch (battery.chargeState.rawValue) {
-            //         case MAVLink.MAV_BATTERY_CHARGE_STATE_OK:
-            //         case MAVLink.MAV_BATTERY_CHARGE_STATE_LOW:
-            //         case MAVLink.MAV_BATTERY_CHARGE_STATE_CRITICAL:
-            //             if (!isNaN(battery.percentRemaining.rawValue)) {
-            //                 // Check percentage and return appropriate color
-            //                 if (battery.percentRemaining.rawValue > 80) {
-            //                     return qgcPal.colorGreen // Green for battery > 80%
-            //                 } else if (battery.percentRemaining.rawValue > 60) {
-            //                     return "#9ACD32" // Yellow-Green for 61% - 80%
-            //                 } else if (battery.percentRemaining.rawValue > 40) {
-            //                     return qgcPal.colorYellow // Yellow for 41% - 60%    
-            //                 } else if (battery.percentRemaining.rawValue > 20) {
-            //                     return qgcPal.colorOrange // Orange for 21% - 40%
-            //                 }else {
-            //                     return qgcPal.colorRed 
-            //                 }
-            //             }
-            //             break;        
-            //         case MAVLink.MAV_BATTERY_CHARGE_STATE_EMERGENCY:
-            //         case MAVLink.MAV_BATTERY_CHARGE_STATE_FAILED:
-            //         case MAVLink.MAV_BATTERY_CHARGE_STATE_UNHEALTHY:
-            //             return qgcPal.colorRed // Red for emergency states
-            //         default:
-            //             return qgcPal.text // Default color for undefined states
-            //     }
-            // }
             function getBatteryColor() {
                 if (!isNaN(battery.percentRemaining.rawValue)) {
                     if (battery.percentRemaining.rawValue > 80) {
                         return qgcPal.colorGreen // Green for battery > 80%
                     } else if (battery.percentRemaining.rawValue > 60) {
-                        return "#9ACD32" // Yellow-Green for 61% - 80%
+                        return qgcPal.colorYellowGreen // Yellow-Green for 61% - 80%
                     } else if (battery.percentRemaining.rawValue > 40) {
                         return qgcPal.colorYellow // Yellow for 41% - 60%    
                     } else if (battery.percentRemaining.rawValue > 20) {
