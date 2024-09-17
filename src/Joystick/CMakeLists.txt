@@ -62,7 +62,7 @@ qt_add_resources(Joystick "gamecontrollerdb.txt"
 
 set(MINIMUM_SDL2_VERSION 2.30.0)
 
-if(NOT CMAKE_CROSSCOMPILING)
+if(NOT QGC_BUILD_DEPENDENCIES)
     find_package(SDL2 ${MINIMUM_SDL2_VERSION})
     if(SDL2_FOUND)
         message(STATUS "Found JoystickSDL ${SDL2_VERSION_STRING}")
