@@ -17,5 +17,8 @@ import QGroundControl.ScreenTools
 import QGroundControl.Palette
 
 GPSIndicator {
-    property bool showIndicator: QGroundControl.gpsRtk.connected.value
+    property bool showIndicator: !_activeVehicle && _rtkConnected
+
+    property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    property bool   _rtkConnected:  QGroundControl.gpsRtk.connected.value
 }
