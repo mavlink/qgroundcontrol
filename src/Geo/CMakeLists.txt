@@ -17,7 +17,7 @@ target_include_directories(Geo PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 set(MINIMUM_GEOGRAPHICLIB_VERSION 2.3)
 
-if(NOT CMAKE_CROSSCOMPILING)
+if(NOT QGC_BUILD_DEPENDENCIES)
     find_package(GeographicLib ${MINIMUM_GEOGRAPHICLIB_VERSION} COMPONENTS STATIC)
     if(GeographicLib_FOUND)
         message(STATUS "Found GeographicLib")
