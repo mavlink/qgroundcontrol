@@ -133,6 +133,7 @@ add_subdirectory(FlightDisplay)
 add_subdirectory(FlightMap)
 add_subdirectory(FollowMe)
 add_subdirectory(Geo)
+add_subdirectory(Gimbal)
 add_subdirectory(GPS)
 add_subdirectory(Joystick)
 if (${QGC_GST_MICROHARD_ENABLED})
@@ -176,6 +177,7 @@ target_link_libraries(qgc
 		FlightMap
 		FollowMe
 		Geo
+		Gimbal
 		gps
 		Joystick
 		MissionManager

@@ -113,6 +113,7 @@ add_library(Vehicle
 target_link_libraries(Vehicle
 	PRIVATE
 		Actuators
+		Gimbal
 		ui
 		compression
 		libevents_generated
