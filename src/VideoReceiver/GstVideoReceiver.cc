@@ -860,6 +860,7 @@ GstVideoReceiver::_makeSource(const QString& uri)
             }
 
             g_object_set(appsink, "sync", false, nullptr);
+            g_object_set(appsink, "async", false, nullptr);
             g_object_set(appsink, "emit-signals", true, nullptr);
             g_signal_connect(appsink, "new-sample", G_CALLBACK(_onNewMedatada), this);
 
