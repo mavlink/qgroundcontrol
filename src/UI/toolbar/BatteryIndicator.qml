@@ -80,20 +80,26 @@ Item {
             anchors.bottom: parent.bottom
 
             function getBatteryColor() {
-                if (!isNaN(battery.percentRemaining.rawValue)) {
-                    if (battery.percentRemaining.rawValue > 80) {
-                        return qgcPal.colorGreen // Green for battery > 80%
-                    } else if (battery.percentRemaining.rawValue > 60) {
-                        return qgcPal.colorYellowGreen // Yellow-Green for 61% - 80%
-                    } else if (battery.percentRemaining.rawValue > 40) {
-                        return qgcPal.colorYellow // Yellow for 41% - 60%    
-                    } else if (battery.percentRemaining.rawValue > 20) {
-                        return qgcPal.colorOrange // Orange for 21% - 40%
+                if (qgcPal.globalTheme === QGCPalette.Dark) {
+                    // Apply the battery color logic only for the dark theme
+                    if (!isNaN(battery.percentRemaining.rawValue)) {
+                        if (battery.percentRemaining.rawValue > 80) {
+                            return qgcPal.colorGreen // Green for battery > 80%
+                        } else if (battery.percentRemaining.rawValue > 60) {
+                            return qgcPal.colorYellowGreen // Yellow-Green for 61% - 80%
+                        } else if (battery.percentRemaining.rawValue > 40) {
+                            return qgcPal.colorYellow // Yellow for 41% - 60%    
+                        } else if (battery.percentRemaining.rawValue > 20) {
+                            return qgcPal.colorOrange // Orange for 21% - 40%
+                        } else {
+                            return qgcPal.colorRed // Red for 0% - 20%
+                        }
                     } else {
-                        return qgcPal.colorRed // Red for 0% - 20%
+                        return qgcPal.text // Default color for undefined states
                     }
                 } else {
-                    return qgcPal.text // Default color for undefined states
+                    // For light theme, return a default color
+                    return qgcPal.text // Use a neutral color for light theme
                 }
             }
 
