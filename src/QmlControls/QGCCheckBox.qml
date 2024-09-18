@@ -7,7 +7,7 @@ import QGroundControl.ScreenTools
 CheckBox {
     id:             control
     spacing:        _noText ? 0 : ScreenTools.defaultFontPixelWidth
-    focusPolicy:    Qt.ClickFocus
+    focusPolicy:    Qt.TabFocus
 
     property color  textColor:          _qgcPal.text
     property bool   textBold:           false
@@ -56,6 +56,14 @@ CheckBox {
             sourceSize.height:  height
             visible:            control.checked
             anchors.centerIn:   parent
+        }
+
+        Rectangle {
+            anchors.fill:   parent
+            color:          "transparent"
+            border.color:   "black"
+            border.width:   control.activeFocus ? 1 : 0
+            radius:         width
         }
     }
 }

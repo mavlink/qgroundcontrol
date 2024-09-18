@@ -24,6 +24,7 @@ Button {
     text:           toolStripAction.text
     checked:        toolStripAction.checked
     checkable:      toolStripAction.dropPanelComponent || modelData.checkable
+    focusPolicy:    Qt.TabFocus
 
     property var    toolStripAction:    undefined
     property var    dropPanel:          undefined
@@ -129,5 +130,7 @@ Button {
                             qgcPal.buttonHighlight :
                             (control.hovered ? qgcPal.toolStripHoverColor : qgcPal.toolbarBackground)
         anchors.fill:   parent
+        border.width:   control.activeFocus ? 1 : 0
+        border.color:   qgcPal.text
     }
 }

@@ -16,7 +16,7 @@ Button {
     property size   sourceSize:     Qt.size(ScreenTools.defaultFontPixelHeight * 2, ScreenTools.defaultFontPixelHeight * 2)
 
     text:               "Button"  ///< Pass in your own button text
-    focusPolicy:    Qt.ClickFocus
+    focusPolicy:    Qt.TabFocus
     hoverEnabled:   !ScreenTools.isMobile
 
     implicitHeight: ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelHeight * 3.5 : ScreenTools.defaultFontPixelHeight * 2.5
@@ -48,6 +48,13 @@ Button {
             anchors.fill:   parent
             color:          qgcPal.buttonHighlight
             opacity:        showHighlight ? 1 : control.enabled && control.hovered ? .2 : 0
+        }
+
+        Rectangle {
+            anchors.fill:   parent
+            color:          "transparent"
+            border.width:   control.activeFocus ? 1 : 0
+            border.color:   qgcPal.text
         }
 
         QGCColoredImage {

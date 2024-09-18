@@ -8,6 +8,7 @@ RadioButton {
     id:             control
     font.family:    ScreenTools.normalFontFamily
     font.pointSize: ScreenTools.defaultFontPointSize
+    focusPolicy:    Qt.TabFocus
 
     property color  textColor:  _qgcPal.text
     property var    _qgcPal:    QGCPalette { colorGroupEnabled: enabled }
@@ -31,6 +32,13 @@ RadioButton {
             radius:             height * 0.5
             color:              "black"
             visible:            control.checked
+        }
+
+        Rectangle {
+            anchors.fill:   parent
+            color:          "transparent"
+            border.width:   control.activeFocus ? 1 : 0
+            border.color:   qgcPal.text
         }
     }
 

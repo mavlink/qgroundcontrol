@@ -24,6 +24,7 @@ Button {
     leftPadding:        _horizontalMargin
     rightPadding:       _horizontalMargin
     checkable:          false
+    focusPolicy:        Qt.TabFocus
 
     property bool logo: false
 
@@ -34,8 +35,8 @@ Button {
     background: Rectangle {
         anchors.fill:   parent
         color:          button.checked ? qgcPal.buttonHighlight : Qt.rgba(0,0,0,0)
-        border.color:   "red"
-        border.width:   QGroundControl.corePlugin.showTouchAreas ? 3 : 0
+        border.color:   qgcPal.text
+        border.width:   button.activeFocus ? 1 : 0
     }
 
     contentItem: Row {
