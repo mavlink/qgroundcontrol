@@ -45,173 +45,247 @@ QGCPopupDialog {
     Component {
         id: editorComponent
 
-        GridLayout {
-            rowSpacing:     _margins
-            columnSpacing:  _margins
-            columns:        2
+        SettingsGroupLayout {
+            showBorder: false
 
-            QGCComboBox {
-                id:                     factGroupCombo
+            RowLayout {
                 Layout.fillWidth:       true
-                model:                  instrumentValueData.factGroupNames
-                sizeToContents:         true
-                Component.onCompleted:  currentIndex = find(instrumentValueData.factGroupName)
-                onActivated: (index) => {
-                    instrumentValueData.setFact(currentText, "")
-                    instrumentValueData.icon = ""
-                    instrumentValueData.text = instrumentValueData.fact.shortDescription
+                Layout.minimumWidth:    ScreenTools.defaultFontPixelWidth * 45
+
+                QGCLabel {
+                    Layout.fillWidth:       true
+                    Layout.topMargin:       (factGroupCombo.height - height) / 2
+                    text:                   qsTr("Value") 
                 }
-                Connections {
-                    target: instrumentValueData
-                    onFactGroupNameChanged: factGroupCombo.currentIndex = factGroupCombo.find(instrumentValueData.factGroupName)
+
+                QGCComboBox {
+                    id:                     factGroupCombo
+                    model:                  instrumentValueData.factGroupNames
+                    sizeToContents:         true
+                    Component.onCompleted:  currentIndex = find(instrumentValueData.factGroupName)
+                    onActivated: (index) => {
+                        instrumentValueData.setFact(currentText, "")
+                        instrumentValueData.icon = ""
+                        instrumentValueData.text = instrumentValueData.fact.shortDescription
+                    }
+                    Connections {
+                        target: instrumentValueData
+                        onFactGroupNameChanged: factGroupCombo.currentIndex = factGroupCombo.find(instrumentValueData.factGroupName)
+                    }
+                }
+
+                QGCComboBox {
+                    id:                     factNamesCombo
+                    model:                  instrumentValueData.factValueNames
+                    sizeToContents:         true
+                    Component.onCompleted:  currentIndex = find(instrumentValueData.factName)
+                    onActivated: (index) => {
+                        instrumentValueData.setFact(instrumentValueData.factGroupName, currentText)
+                        instrumentValueData.icon = ""
+                        instrumentValueData.text = instrumentValueData.fact.shortDescription
+                    }
+                    Connections {
+                        target: instrumentValueData
+                        onFactNameChanged: factNamesCombo.currentIndex = factNamesCombo.find(instrumentValueData.factName)
+                    }
                 }
             }
 
-            QGCComboBox {
-                id:                     factNamesCombo
-                Layout.fillWidth:       true
-                model:                  instrumentValueData.factValueNames
-                sizeToContents:         true
-                Component.onCompleted:  currentIndex = find(instrumentValueData.factName)
-                onActivated: (index) => {
-                    instrumentValueData.setFact(instrumentValueData.factGroupName, currentText)
-                    instrumentValueData.icon = ""
-                    instrumentValueData.text = instrumentValueData.fact.shortDescription
+            RowLayout {
+                Layout.fillWidth:   true
+                QGCLabel {
+                    Layout.fillWidth:       true
+                    text:                   qsTr("Label")   
                 }
-                Connections {
-                    target: instrumentValueData
-                    onFactNameChanged: factNamesCombo.currentIndex = factNamesCombo.find(instrumentValueData.factName)
-                }
-            }
+                QGCButton {
+                    id:                     labelVisToggle
 
-            QGCRadioButton {
-                id:                     iconRadio
-                text:                   qsTr("Icon")
-                Component.onCompleted:  checked = instrumentValueData.icon != ""
-                onClicked: {
-                    instrumentValueData.text = ""
-                    instrumentValueData.icon = instrumentValueData.factValueGrid.iconNames[0]
-                    var updateFunction = function(icon){ instrumentValueData.icon = icon }
-                    iconPickerDialog.createObject(mainWindow, { iconNames: instrumentValueData.factValueGrid.iconNames, icon: instrumentValueData.icon, updateIconFunction: updateFunction }).open()
+                    property bool showOptions:  true
+
+                    iconSource:             labelVisToggle.showOptions
+                                                ? "/InstrumentValueIcons/cheveron-down.svg"
+                                                : "/InstrumentValueIcons/cheveron-right.svg"
+                    Layout.preferredWidth:  height
+                    leftPadding:            topPadding
+                    showBorder:             false
+                    backgroundColor:        "transparent"
+                    textColor:              qgcPal.text
+                    onClicked:              labelVisToggle.showOptions = !labelVisToggle.showOptions
                 }
             }
 
-            QGCColoredImage {
-                id:                 valueIcon
-                Layout.alignment:   Qt.AlignHCenter
-                height:             ScreenTools.implicitComboBoxHeight
-                width:              height
-                source:             "/InstrumentValueIcons/" + (instrumentValueData.icon ? instrumentValueData.icon : instrumentValueData.factValueGrid.iconNames[0])
-                sourceSize.height:  height
-                fillMode:           Image.PreserveAspectFit
-                mipmap:             true
-                smooth:             true
-                color:              enabled ? qgcPal.text : qgcPalDisable.text
-                enabled:            iconRadio.checked
-
-                MouseArea {
-                    anchors.fill:   parent
+            RowLayout {
+                visible:            labelVisToggle.showOptions
+                Layout.fillWidth:   true
+                QGCRadioButton {
+                    id:                     iconRadio
+                    text:                   qsTr("Icon")
+                    Layout.leftMargin:      ScreenTools.defaultFontPixelWidth * 4
+                    Layout.fillWidth:       true
+                    Component.onCompleted:  checked = instrumentValueData.icon != ""
                     onClicked: {
-                        var updateFunction = function(icon){ instrumentValueData.icon = icon }
-                        iconPickerDialog.createObject(mainWindow, { iconNames: instrumentValueData.factValueGrid.iconNames, icon: instrumentValueData.icon, updateIconFunction: updateFunction }).open()
+                        instrumentValueData.text = ""
+                        instrumentValueData.icon = instrumentValueData.factValueGrid.iconNames[0]
+                    }
+                    ButtonGroup.group:      labelTypeGroup
+                    ButtonGroup { id: labelTypeGroup }
+                }
+                RowLayout {
+                    id:         iconOptionInputs
+                    Rectangle {
+                        width:      height
+                        height:     changeIconBtn.height
+                        color:      qgcPal.windowShade
+                        opacity:    iconRadio.checked ? 1 : .3
+
+                        QGCColoredImage {
+                            id:                 valueIcon
+                            anchors.centerIn:   parent
+                            height:             ScreenTools.defaultFontPixelHeight
+                            width:              height
+                            source:             "/InstrumentValueIcons/" + (instrumentValueData.icon ? instrumentValueData.icon : instrumentValueData.factValueGrid.iconNames[0])
+                            sourceSize.height:  height
+                            fillMode:           Image.PreserveAspectFit
+                            mipmap:             true
+                            smooth:             true
+                            color:              valueIcon.status === Image.Error ? "red" : qgcPal.text
+                        }
+                    }
+                    QGCButton {
+                        id:         changeIconBtn
+                        text:       qsTr("Change")
+                        enabled:    iconRadio.checked
+                        onClicked: {
+                            var updateFunction = function(icon){ instrumentValueData.icon = icon }
+                            iconPickerDialog.createObject(mainWindow, { iconNames: instrumentValueData.factValueGrid.iconNames, icon: instrumentValueData.icon, updateIconFunction: updateFunction }).open()
+                        }
                     }
                 }
-
-                Rectangle {
-                    anchors.fill:   valueIcon
-                    color:          qgcPal.text
-                    visible:        valueIcon.status === Image.Error
-                }
             }
 
-            QGCRadioButton {
-                id:                     textRadio
-                text:                   qsTr("Text")
-                Component.onCompleted:  checked = instrumentValueData.icon == ""
-                onClicked: {
-                    instrumentValueData.icon = ""
-                    instrumentValueData.text = instrumentValueData.fact ? instrumentValueData.fact.shortDescription : qsTr("Label")
-                }
-            }
-
-            QGCTextField {
-                id:                     labelTextField
-                Layout.fillWidth:       true
-                Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 10
-                text:                   instrumentValueData.text
-                enabled:                textRadio.checked
-                onEditingFinished:      instrumentValueData.text = text
-            }
-
-            QGCLabel { text: qsTr("Size") }
-
-            QGCComboBox {
-                id:                 fontSizeCombo
+            RowLayout {
+                visible:            labelVisToggle.showOptions
                 Layout.fillWidth:   true
-                model:              instrumentValueData.factValueGrid.fontSizeNames
-                currentIndex:       instrumentValueData.factValueGrid.fontSize
-                sizeToContents:     true
-                onActivated: (index) => { instrumentValueData.factValueGrid.fontSize = index }
+                QGCRadioButton {
+                    id:                     textRadio
+                    text:                   qsTr("Text")
+                    Layout.fillWidth:       true
+                    Layout.leftMargin:      ScreenTools.defaultFontPixelWidth * 4
+                    ButtonGroup.group:      labelTypeGroup
+                    Component.onCompleted:  checked = instrumentValueData.icon == ""
+                    onClicked: {
+                        instrumentValueData.icon = ""
+                        instrumentValueData.text = instrumentValueData.fact ? instrumentValueData.fact.shortDescription : qsTr("Label")
+                    }
+                }
+                QGCTextField {
+                    enabled:                textRadio.checked
+                    Layout.minimumWidth:    iconOptionInputs.width
+                    text:                   textRadio.checked 
+                                                ? instrumentValueData.text
+                                                : instrumentValueData.fact ? instrumentValueData.fact.shortDescription : qsTr("Label")
+                    onEditingFinished:      instrumentValueData.text = text 
+                }
             }
 
-            QGCCheckBox {
-                Layout.columnSpan:  2
-                text:               qsTr("Show Units")
-                checked:            instrumentValueData.showUnits
-                onClicked:          instrumentValueData.showUnits = checked
-            }
-
-            QGCLabel { text: qsTr("Range") }
-
-            QGCComboBox {
-                id:                 rangeTypeCombo
+            RowLayout {
                 Layout.fillWidth:   true
-                model:              instrumentValueData.rangeTypeNames
-                currentIndex:       instrumentValueData.rangeType
-                sizeToContents:     true
-                onActivated: (index) => { instrumentValueData.rangeType = index }
+                spacing:            ScreenTools.defaultFontPixelWidth * 2
+
+                QGCLabel {
+                    Layout.fillWidth:       true
+                    text:                   qsTr("Size") 
+                }
+
+                QGCComboBox {
+                    id:                 fontSizeCombo
+                    model:              instrumentValueData.factValueGrid.fontSizeNames
+                    currentIndex:       instrumentValueData.factValueGrid.fontSize
+                    sizeToContents:     true
+                    onActivated:        (index) => { instrumentValueData.factValueGrid.fontSize = index }
+                }
             }
 
-            Loader {
-                id:                     rangeLoader
-                Layout.columnSpan:      2
-                Layout.fillWidth:       true
-                Layout.preferredWidth:  item ? item.width : 0
-                Layout.preferredHeight: item ? item.height : 0
+            RowLayout {
+                Layout.fillWidth:   true
+                spacing:            ScreenTools.defaultFontPixelWidth * 2
 
-                property var instrumentValueData: root.instrumentValueData
+                QGCLabel {
+                    Layout.fillWidth:       true
+                    text:                   qsTr("Show Units") 
+                }
 
-                function updateSourceComponent() {
-                    switch (instrumentValueData.rangeType) {
-                    case InstrumentValueData.NoRangeInfo:
-                        sourceComponent = undefined
-                        break
-                    case InstrumentValueData.ColorRange:
-                        sourceComponent = colorRangeDialog
-                        break
-                    case InstrumentValueData.OpacityRange:
-                        sourceComponent = opacityRangeDialog
-                        break
-                    case InstrumentValueData.IconSelectRange:
-                        sourceComponent = iconRangeDialog
-                        break
+                QGCCheckBox {
+                    checked:            instrumentValueData.showUnits
+                    onClicked:          instrumentValueData.showUnits = checked
+                }
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+
+                RowLayout {
+                    Layout.fillWidth:   true
+                    spacing:            ScreenTools.defaultFontPixelWidth * 2
+
+                    QGCLabel {
+                        Layout.fillWidth:       true
+                        text:                   qsTr("Range") 
+                    }
+
+                    QGCComboBox {
+                        id:                 rangeTypeCombo
+                        model:              instrumentValueData.rangeTypeNames
+                        currentIndex:       instrumentValueData.rangeType
+                        sizeToContents:     true
+                        onActivated: (index) => { instrumentValueData.rangeType = index }
                     }
                 }
 
-                Component.onCompleted: {
-                    updateSourceComponent()
-                    if (sourceComponent) {
-                        height = item.childrenRect.height
-                        width = item.childrenRect.width
+                Loader {
+                    id:                     rangeLoader
+                    visible:                sourceComponent
+                    Layout.columnSpan:      2
+                    Layout.alignment:       Qt.AlignHCenter
+                    Layout.margins:         ScreenTools.defaultFontPixelWidth
+                    Layout.preferredWidth:  item ? item.width : 0
+                    Layout.preferredHeight: item ? item.height : 0
+
+                    property var instrumentValueData: root.instrumentValueData
+
+                    function updateSourceComponent() {
+                        switch (instrumentValueData.rangeType) {
+                        case InstrumentValueData.NoRangeInfo:
+                            sourceComponent = undefined
+                            break
+                        case InstrumentValueData.ColorRange:
+                            sourceComponent = colorRangeDialog
+                            break
+                        case InstrumentValueData.OpacityRange:
+                            sourceComponent = opacityRangeDialog
+                            break
+                        case InstrumentValueData.IconSelectRange:
+                            sourceComponent = iconRangeDialog
+                            break
+                        }
                     }
-                }
 
-                Connections {
-                    target:             instrumentValueData
-                    onRangeTypeChanged: rangeLoader.updateSourceComponent()
-                }
+                    Component.onCompleted: {
+                        updateSourceComponent()
+                        if (sourceComponent) {
+                            height = item.childrenRect.height
+                            width = item.childrenRect.width
+                        }
+                    }
 
+                    Connections {
+                        target:             instrumentValueData
+                        onRangeTypeChanged: rangeLoader.updateSourceComponent()
+                    }
+
+                }
             }
+
         }
     }
 
