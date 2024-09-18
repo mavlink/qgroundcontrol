@@ -258,7 +258,7 @@ Popup {
                     id:     dialogContentParent
                     focus:  true
 
-                    Keys.onReleased: (event) => {
+                    Keys.onPressed: (event) => {
                         if (event.key === Qt.Key_Escape && rejectAllowed) {
                             _reject()
                             event.accepted = true
