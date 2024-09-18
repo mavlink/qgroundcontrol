@@ -42,7 +42,7 @@ RadioButton {
         color:              control.textColor
         opacity:            enabled ? 1.0 : 0.3
         verticalAlignment:  Text.AlignVCenter
-        leftPadding:        control.indicator.width + (_noText ? 0 : ScreenTools.defaultFontPixelWidth * 0.25)
+        leftPadding:        control.indicator.width + (_noText ? 0 : control.leftPadding)
     }
 
 }
