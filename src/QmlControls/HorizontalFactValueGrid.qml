@@ -37,9 +37,10 @@ T.HorizontalFactValueGrid {
 
     ColumnLayout {
         id:         topLayout
-        spacing:    0
+        spacing:    ScreenTools.defaultFontPixelWidth
 
         RowLayout {
+            spacing: parent.spacing
             RowLayout {
                 id:         labelValueColumnLayout
                 spacing:    ScreenTools.defaultFontPixelWidth * 1.25
@@ -110,17 +111,12 @@ T.HorizontalFactValueGrid {
             }
 
             ColumnLayout {
-                Layout.bottomMargin:    1
-                Layout.fillHeight:      true
-                Layout.preferredWidth:  ScreenTools.minTouchPixels / 2
                 spacing:                1
                 visible:                settingsUnlocked
                 enabled:                settingsUnlocked
 
                 QGCButton {
                     Layout.fillHeight:      true
-                    Layout.preferredHeight: ScreenTools.minTouchPixels
-                    Layout.preferredWidth:  parent.width
                     text:                   qsTr("+")
                     enabled:                (_root.width + (2 * (_rowButtonWidth + _margins))) < screen.width
                     onClicked:              appendColumn()
@@ -128,8 +124,6 @@ T.HorizontalFactValueGrid {
 
                 QGCButton {
                     Layout.fillHeight:      true
-                    Layout.preferredHeight: ScreenTools.minTouchPixels
-                    Layout.preferredWidth:  parent.width
                     text:                   qsTr("-")
                     enabled:                _root.columns.count > 1
                     onClicked:              deleteLastColumn()
@@ -138,7 +132,6 @@ T.HorizontalFactValueGrid {
         }
 
         RowLayout {
-            Layout.preferredHeight: ScreenTools.minTouchPixels / 2
             Layout.fillWidth:       true
             spacing:                1
             visible:                settingsUnlocked
@@ -146,7 +139,6 @@ T.HorizontalFactValueGrid {
 
             QGCButton {
                 Layout.fillWidth:       true
-                Layout.preferredHeight: parent.height
                 text:                   qsTr("+")
                 enabled:                (_root.height + (2 * (_rowButtonHeight + _margins))) < (screen.height - ScreenTools.toolbarHeight)
                 onClicked:              appendRow()
