@@ -29,6 +29,8 @@ Button {
 
     property alias wrapMode:            text.wrapMode
     property alias horizontalAlignment: text.horizontalAlignment
+    property alias backgroundColor:     backRect.color
+    property alias textColor:           text.color
 
     property bool   _showHighlight:     enabled && (pressed | checked)
 
