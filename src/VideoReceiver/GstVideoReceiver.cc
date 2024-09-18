@@ -840,6 +840,7 @@ GstVideoReceiver::_makeSource(const QString& uri)
                 qCCritical(VideoReceiverLog) << "gst_element_factory_make('tsdemux') failed";
                 break;
             }
+            g_object_set(tsdemux, "latency", 10, nullptr);
 
             gst_bin_add(GST_BIN(bin), tsdemux);
 
