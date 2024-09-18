@@ -48,13 +48,11 @@
     "default":     1.777777
 },
 {
-    "name":             "gridLines",
-    "shortDesc": "Video Grid Lines",
-    "longDesc":  "Displays a grid overlaid over the video view.",
-    "type":             "uint32",
-    "enumStrings":      "Hide,Show",
-    "enumValues":       "1,0",
-    "default":     0
+    "name":         "gridLines",
+    "shortDesc":    "Video Grid Lines",
+    "longDesc":     "Displays a grid overlaid over the video view.",
+    "type":         "bool",
+    "default":      false
 },
 {
     "name":             "videoFit",
