@@ -1,13 +1,9 @@
 #include "DecompressionTest.h"
 #include "QGCLZMA.h"
 #include "QGCZlib.h"
+#include "QGCZip.h"
 
 #include <QtTest/QTest>
-
-DecompressionTest::DecompressionTest()
-{
-
-}
 
 void DecompressionTest::_testDecompressGzip()
 {
@@ -23,4 +19,12 @@ void DecompressionTest::_testDecompressLZMA()
 	const QString decompressedFilename = QStringLiteral("manifest.json");
     const bool result = QGCLZMA::inflateLZMAFile(lzmaFilename, decompressedFilename);
 	QVERIFY(result);
+}
+
+void DecompressionTest::_testUnzip()
+{
+    const QString zipFilename = QStringLiteral(":/manifest.json.zip");
+    const QString decompressedPath = QDir::tempPath() + "/QGC_DECOMPRESSION_TEST";
+    const bool result = QGCZip::unzipFile(zipFilename, decompressedPath);
+    QVERIFY(result);
 }
