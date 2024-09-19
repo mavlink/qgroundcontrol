@@ -392,10 +392,10 @@ void QGCApplication::init()
 
     // Although this should really be in _initForNormalAppBoot putting it here allowws us to create unit tests which pop up more easily
     if(QFontDatabase::addApplicationFont(":/fonts/opensans") < 0) {
-        qCWarning(QGCApplicationLog) << "Could not load /fonts/opensans font";
+        qWarning() << "Could not load /fonts/opensans font";
     }
     if(QFontDatabase::addApplicationFont(":/fonts/opensans-demibold") < 0) {
-        qCWarning(QGCApplicationLog) << "Could not load /fonts/opensans-demibold font";
+        qWarning() << "Could not load /fonts/opensans-demibold font";
     }
 
     if (!_runningUnitTests) {
