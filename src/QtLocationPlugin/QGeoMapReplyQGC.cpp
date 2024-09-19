@@ -79,7 +79,7 @@ void QGeoTiledMapReplyQGC::_networkReplyFinished()
 {
     QNetworkReply* const reply = qobject_cast<QNetworkReply*>(sender());
     if (!reply) {
-        setError(QGeoTiledMapReply::UnknownError, QStringLiteral("Unexpected Error"));
+        setError(QGeoTiledMapReply::UnknownError, tr("Unexpected Error"));
         return;
     }
     reply->deleteLater();
@@ -89,7 +89,7 @@ void QGeoTiledMapReplyQGC::_networkReplyFinished()
     }
 
     if (!reply->isOpen()) {
-        setError(QGeoTiledMapReply::ParseError, QStringLiteral("Empty Reply"));
+        setError(QGeoTiledMapReply::ParseError, tr("Empty Reply"));
         return;
     }
 
@@ -101,7 +101,7 @@ void QGeoTiledMapReplyQGC::_networkReplyFinished()
 
     QByteArray image = reply->readAll();
     if (image.isEmpty()) {
-        setError(QGeoTiledMapReply::ParseError, QStringLiteral("Image is Empty"));
+        setError(QGeoTiledMapReply::ParseError, tr("Image is Empty"));
         return;
     }
 
@@ -109,7 +109,7 @@ void QGeoTiledMapReplyQGC::_networkReplyFinished()
     Q_CHECK_PTR(mapProvider);
 
     if (mapProvider->isBingProvider() && (image == _bingNoTileImage)) {
-        setError(QGeoTiledMapReply::CommunicationError, QStringLiteral("Bing Tile Above Zoom Level"));
+        setError(QGeoTiledMapReply::CommunicationError, tr("Bing Tile Above Zoom Level"));
         return;
     }
 
@@ -117,7 +117,7 @@ void QGeoTiledMapReplyQGC::_networkReplyFinished()
         const SharedElevationProvider elevationProvider = std::dynamic_pointer_cast<const ElevationProvider>(mapProvider);
         image = elevationProvider->serialize(image);
         if (image.isEmpty()) {
-            setError(QGeoTiledMapReply::ParseError, QStringLiteral("Failed to Serialize Terrain Tile"));
+            setError(QGeoTiledMapReply::ParseError, tr("Failed to Serialize Terrain Tile"));
             return;
         }
     }
@@ -125,7 +125,7 @@ void QGeoTiledMapReplyQGC::_networkReplyFinished()
 
     const QString format = mapProvider->getImageFormat(image);
     if (format.isEmpty()) {
-        setError(QGeoTiledMapReply::ParseError, QStringLiteral("Unknown Format"));
+        setError(QGeoTiledMapReply::ParseError, tr("Unknown Format"));
         return;
     }
     setMapImageFormat(format);
@@ -140,7 +140,7 @@ void QGeoTiledMapReplyQGC::_networkReplyError(QNetworkReply::NetworkError error)
     if (error != QNetworkReply::OperationCanceledError) {
         const QNetworkReply* const reply = qobject_cast<const QNetworkReply*>(sender());
         if (!reply) {
-            setError(QGeoTiledMapReply::CommunicationError, QStringLiteral("Invalid Reply"));
+            setError(QGeoTiledMapReply::CommunicationError, tr("Invalid Reply"));
         } else {
             setError(QGeoTiledMapReply::CommunicationError, reply->errorString());
         }
@@ -149,7 +149,6 @@ void QGeoTiledMapReplyQGC::_networkReplyError(QNetworkReply::NetworkError error)
     }
 }
 
-#if QT_CONFIG(ssl)
 void QGeoTiledMapReplyQGC::_networkReplySslErrors(const QList<QSslError> &errors)
 {
     QString errorString;
@@ -164,7 +163,6 @@ void QGeoTiledMapReplyQGC::_networkReplySslErrors(const QList<QSslError> &errors
         setError(QGeoTiledMapReply::CommunicationError, errorString);
     }
 }
-#endif
 
 void QGeoTiledMapReplyQGC::_cacheReply(QGCCacheTile *tile)
 {
@@ -175,7 +173,7 @@ void QGeoTiledMapReplyQGC::_cacheReply(QGCCacheTile *tile)
         setFinished(true);
         delete tile;
     } else {
-        setError(QGeoTiledMapReply::UnknownError, QStringLiteral("Invalid Cache Tile"));
+        setError(QGeoTiledMapReply::UnknownError, tr("Invalid Cache Tile"));
     }
 }
 
@@ -186,7 +184,7 @@ void QGeoTiledMapReplyQGC::_cacheError(QGCMapTask::TaskType type, QStringView er
     Q_ASSERT(type == QGCMapTask::taskFetchTile);
 
     if (!QGCDeviceInfo::isInternetAvailable()) {
-        setError(QGeoTiledMapReply::CommunicationError, QStringLiteral("Network Not Available"));
+        setError(QGeoTiledMapReply::CommunicationError, tr("Network Not Available"));
         return;
     }
 
@@ -198,9 +196,7 @@ void QGeoTiledMapReplyQGC::_cacheError(QGCMapTask::TaskType type, QStringView er
 
     (void) connect(reply, &QNetworkReply::finished, this, &QGeoTiledMapReplyQGC::_networkReplyFinished);
     (void) connect(reply, &QNetworkReply::errorOccurred, this, &QGeoTiledMapReplyQGC::_networkReplyError);
-#if QT_CONFIG(ssl)
     (void) connect(reply, &QNetworkReply::sslErrors, this, &QGeoTiledMapReplyQGC::_networkReplySslErrors);
-#endif
     (void) connect(this, &QGeoTiledMapReplyQGC::aborted, reply, &QNetworkReply::abort);
 }
 
