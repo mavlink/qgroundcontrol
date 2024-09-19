@@ -56,7 +56,7 @@ ChartView {
         format:                     "<br/>mm:ss.zzz"
         tickCount:                  5
         gridVisible:                true
-        labelsFont.family:          "Fixed"
+        labelsFont.family:          ScreenTools.fixedFontFamily
         labelsFont.pointSize:       ScreenTools.smallFontPointSize
         labelsColor:                qgcPal.text
     }
@@ -67,7 +67,7 @@ ChartView {
         max:                        chartController ? chartController.rangeYMax : 0
         visible:                    chartController !== null
         lineVisible:                false
-        labelsFont.family:          "Fixed"
+        labelsFont.family:          ScreenTools.fixedFontFamily
         labelsFont.pointSize:       ScreenTools.smallFontPointSize
         labelsColor:                qgcPal.text
     }
