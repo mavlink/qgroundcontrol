@@ -67,7 +67,7 @@ SetupPage {
                 QGCLabel {
                     id:         failsafeLabel
                     text:       qsTr("Failsafe Actions")
-                    font.family: ScreenTools.demiboldFontFamily
+                    font.bold:   true
                 }
 
                 Rectangle {
@@ -354,7 +354,7 @@ SetupPage {
 
                 QGCLabel {
                     text:           qsTr("Arming Checks")
-                    font.family:    ScreenTools.demiboldFontFamily
+                    font.bold:      true
                 }
 
                 Rectangle {

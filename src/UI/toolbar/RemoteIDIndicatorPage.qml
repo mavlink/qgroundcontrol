@@ -71,7 +71,7 @@ ToolIndicatorPage {
                 QGCLabel {
                     id:                         remoteIDLabel
                     text:                       qsTr("RemoteID Status")
-                    font.family:                ScreenTools.demiboldFontFamily
+                    font.bold:                  true
                     anchors.horizontalCenter:   parent.horizontalCenter
                 }
 
@@ -219,7 +219,7 @@ ToolIndicatorPage {
                 QGCLabel {
                     id:                     emergencyDeclareLabel
                     text:                   emergencyDeclared ? qsTr("EMERGENCY HAS BEEN DECLARED, Press and Hold for 3 seconds to cancel") : qsTr("Press and Hold below button to declare emergency")
-                    font.family:            ScreenTools.demiboldFontFamily
+                    font.bold:              true
                     anchors.top:            parent.top
                     anchors.left:           parent.left
                     anchors.right:          parent.right

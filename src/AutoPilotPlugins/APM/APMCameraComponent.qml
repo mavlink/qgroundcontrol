@@ -219,7 +219,7 @@ SetupPage {
                     QGCLabel {
                         id:         directionLabel
                         text:       qsTr("Gimbal ") + directionTitle
-                        font.family: ScreenTools.demiboldFontFamily
+                        font.bold:   true
                     }
 
                     Rectangle {
@@ -404,7 +404,7 @@ SetupPage {
                     QGCLabel {
                         id:             settingsLabel
                         text:           qsTr("Gimbal Settings")
-                        font.family:    ScreenTools.demiboldFontFamily
+                        font.bold:      true
                     }
 
                     Rectangle {

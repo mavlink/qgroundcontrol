@@ -55,7 +55,7 @@ AnalyzePage {
             QGCLabel {
                 text:               geoController.errorMessage
                 color:              "red"
-                font.family:        ScreenTools.demiboldFontFamily
+                font.bold:          true
                 font.pointSize:     ScreenTools.mediumFontPointSize
                 horizontalAlignment:Text.AlignHCenter
                 Layout.alignment:   Qt.AlignHCenter

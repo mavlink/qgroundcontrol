@@ -58,7 +58,7 @@ SetupPage {
 
                 QGCLabel {
                     text:       qsTr("Battery 1")
-                    font.family: ScreenTools.demiboldFontFamily
+                    font.bold:   true
                 }
 
                 Rectangle {
@@ -108,7 +108,7 @@ SetupPage {
 
                 QGCLabel {
                     text:       qsTr("Battery 1")
-                    font.family: ScreenTools.demiboldFontFamily
+                    font.bold:   true
                 }
 
                 Rectangle {
@@ -145,7 +145,7 @@ SetupPage {
 
                 QGCLabel {
                     text:       qsTr("Battery 2")
-                    font.family: ScreenTools.demiboldFontFamily
+                    font.bold:   true
                 }
 
                 Rectangle {
@@ -195,7 +195,7 @@ SetupPage {
 
                 QGCLabel {
                     text:       qsTr("Battery 2")
-                    font.family: ScreenTools.demiboldFontFamily
+                    font.bold:   true
                 }
 
                 Rectangle {
@@ -231,7 +231,7 @@ SetupPage {
 
                 QGCLabel {
                     text:       qsTr("ESC Calibration")
-                    font.family: ScreenTools.demiboldFontFamily
+                    font.bold:   true
                 }
 
                 Rectangle {
