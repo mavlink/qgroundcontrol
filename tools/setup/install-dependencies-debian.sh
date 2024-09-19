@@ -85,6 +85,7 @@ DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
     libass-dev \
     libdrm-dev \
     libegl1-mesa-dev \
+    libexiv2-dev \
     libgbm-dev \
     libgl1-mesa-dev \
     libgles2-mesa-dev \
