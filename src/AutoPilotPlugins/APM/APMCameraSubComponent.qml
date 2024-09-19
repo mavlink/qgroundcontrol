@@ -206,7 +206,7 @@ SetupPage {
             QGCLabel {
                 visible:     !_oldFW
                 text:        qsTr("Camera mount tilt speed:")
-                font.family: ScreenTools.demiboldFontFamily
+                font.bold:   true
             }
 
             QGCSlider {
@@ -288,7 +288,7 @@ SetupPage {
                         QGCLabel {
                             id:          directionLabel
                             text:        qsTr("Gimbal ") + directionTitle
-                            font.family: ScreenTools.demiboldFontFamily
+                            font.bold:   true
                         }
 
                         // Section Backdrop
@@ -451,7 +451,7 @@ SetupPage {
                     QGCLabel {
                         id:             settingsLabel
                         text:           qsTr("Gimbal Settings")
-                        font.family:    ScreenTools.demiboldFontFamily
+                        font.bold:      true
                     }
 
                     Rectangle {

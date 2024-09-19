@@ -109,7 +109,7 @@ SetupPage {
                                          qsTr("You've connected a %1.").arg(controller.currentVehicleName) :
                                          qsTr("Airframe is not set.")) +
                                     qsTr("To change this configuration, select the desired airframe below then click 'Apply and Restart'.")
-                    font.family:    ScreenTools.demiboldFontFamily
+                    font.bold:      true
                     wrapMode:       Text.WordWrap
                 }
 

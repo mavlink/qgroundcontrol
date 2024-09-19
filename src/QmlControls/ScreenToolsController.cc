@@ -69,18 +69,6 @@ ScreenToolsController::normalFontFamily() const
     }
 }
 
-QString
-ScreenToolsController::boldFontFamily() const
-{
-    //-- See App.SettinsGroup.json for index
-    int langID = qgcApp()->toolbox()->settingsManager()->appSettings()->qLocaleLanguage()->rawValue().toInt();
-    if(langID == QLocale::Korean) {
-        return QString("NanumGothic");
-    } else {
-        return QString("Open Sans Semibold");
-    }
-}
-
 double ScreenToolsController::defaultFontDescent(int pointSize) const
 {
     return QFontMetrics(QFont(normalFontFamily(), pointSize)).descent();

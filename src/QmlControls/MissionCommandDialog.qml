@@ -77,7 +77,7 @@ QGCPopupDialog {
                     QGCLabel {
                         text:           mavCmdInfo.friendlyName
                         color:          textColor
-                        font.family:    ScreenTools.demiboldFontFamily
+                        font.bold:      true
                     }
 
                     QGCLabel {
