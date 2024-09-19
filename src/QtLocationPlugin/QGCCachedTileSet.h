@@ -190,4 +190,6 @@ private:
     QQueue<QGCTile*> _tilesToDownload;
     QGCMapEngineManager *_manager = nullptr;
     QNetworkAccessManager *_networkManager = nullptr;
+
+    static constexpr uint32_t kTileBatchSize = 256;
 };

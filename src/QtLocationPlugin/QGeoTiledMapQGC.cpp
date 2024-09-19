@@ -27,7 +27,6 @@ QGeoTiledMapQGC::~QGeoTiledMapQGC()
 QGeoMap::Capabilities QGeoTiledMapQGC::capabilities() const
 {
     return Capabilities(SupportsVisibleRegion
-                        | SupportsSetBearing
                         | SupportsAnchoringCoordinate
                         | SupportsVisibleArea);
 }

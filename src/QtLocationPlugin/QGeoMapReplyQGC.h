@@ -34,9 +34,7 @@ public:
 private slots:
     void _networkReplyFinished();
     void _networkReplyError(QNetworkReply::NetworkError error);
-#if QT_CONFIG(ssl)
     void _networkReplySslErrors(const QList<QSslError> &errors);
-#endif
     void _cacheReply(QGCCacheTile *tile);
     void _cacheError(QGCMapTask::TaskType type, QStringView errorString);
 
