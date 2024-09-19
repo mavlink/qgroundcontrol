@@ -56,7 +56,7 @@ Rectangle{
             anchors.horizontalCenter: parent.horizontalCenter
             text:                progressText + Number(Math.floor(progressBody.progressValue)) + " %"
             color:              qgcPal.text
-            font.family:        ScreenTools.demiboldFontFamily
+            font.bold:          true
             font.pointSize:     ScreenTools.mediumFontPointSize
             horizontalAlignment:Text.AlignHCenter
         }

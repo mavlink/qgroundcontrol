@@ -20,7 +20,7 @@ Item {
     QGCLabel {
         id:             titleLabel
         text:           qsTr("PX4Flow Camera")
-        font.family:    ScreenTools.demiboldFontFamily
+        font.bold:      true
     }
     Image {
         source:         globals.activeVehicle ? "image://QGCImages/" + globals.activeVehicle.id + "/" + globals.activeVehicle.flowImageIndex : ""

@@ -147,7 +147,7 @@ Item {
     QGCMapLabel {
         id:                 scaleText
         map:                mapControl
-        font.family:        ScreenTools.demiboldFontFamily
+        font.bold:          true
         anchors.left:       parent.left
         anchors.right:      rightEnd.right
         horizontalAlignment:Text.AlignRight

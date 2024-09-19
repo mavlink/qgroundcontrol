@@ -80,7 +80,7 @@ Rectangle {
                 width:			parent.width
                 wrapMode:		Text.WordWrap
                 color:			setupComplete ? qgcPal.text : qgcPal.warningText
-                font.family:    ScreenTools.demiboldFontFamily
+                font.bold:      true
                 horizontalAlignment: Text.AlignHCenter
                 text:           setupComplete ?
                     qsTr("Below you will find a summary of the settings for your vehicle. To the left are the setup menus for each component.") :
