@@ -11118,8 +11118,8 @@
       <increment>0.1</increment>
     </parameter>
     <parameter name="FW_LND_THRTC_SC" default="1.0" type="FLOAT">
-      <short_desc>Altitude time constant factor for landing</short_desc>
-      <long_desc>During landing, the TECS altitude time constant (FW_T_ALT_TC) is multiplied by this value.</long_desc>
+      <short_desc>Altitude time constant factor for landing and low-height flight</short_desc>
+      <long_desc>The TECS altitude time constant (FW_T_ALT_TC) is multiplied by this value.</long_desc>
       <min>0.2</min>
       <max>1.0</max>
       <unit />
@@ -11870,6 +11870,14 @@
       <max>1.0</max>
       <decimal>3</decimal>
       <increment>0.005</increment>
+    </parameter>
+    <parameter name="FW_T_THR_LOW_HGT" default="-1." type="FLOAT">
+      <short_desc>Low-height threshold for tighter altitude tracking</short_desc>
+      <long_desc>Defines the height (distance to bottom) threshold below which tighter altitude tracking gets enabled (see FW_LND_THRTC_SC). Below this height, TECS smoothly (1 sec / sec) transitions the altitude tracking time constant from FW_T_ALT_TC to FW_LND_THRTC_SC*FW_T_ALT_TC. If equal to -1, low-height traking is disabled.</long_desc>
+      <min>-1</min>
+      <unit>m</unit>
+      <decimal>0</decimal>
+      <increment>1</increment>
     </parameter>
     <parameter name="FW_T_VERT_ACC" default="7.0" type="FLOAT">
       <short_desc>Maximum vertical acceleration</short_desc>
