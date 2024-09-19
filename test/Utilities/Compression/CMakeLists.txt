@@ -21,4 +21,5 @@ qt_add_resources(CompressionTest "CompressionTest"
     FILES
         manifest.json.gz
         manifest.json.xz
+        manifest.json.zip
 )

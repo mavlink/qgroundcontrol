@@ -14,11 +14,9 @@
 
 Q_DECLARE_LOGGING_CATEGORY(QGCZlibLog)
 
-class QGCZlib
-{
-public:
+namespace QGCZlib {
     /// Decompresses the specified file to the specified directory
-    ///     @param gzipFilename         Fully qualified path to gzip file
+    ///     @param gzippedFileName      Fully qualified path to gzip file
     ///     @param decompressedFilename Fully qualified path to for file to decompress to
-    static bool inflateGzipFile(const QString& gzippedFileName, const QString& decompressedFilename);
-};
+    bool inflateGzipFile(const QString &gzippedFileName, const QString &decompressedFilename);
+} // namespace QGCZlib
