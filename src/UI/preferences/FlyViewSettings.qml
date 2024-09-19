@@ -33,10 +33,11 @@ SettingsPage {
     property Fact   _guidedMinimumAltitude:             _flyViewSettings.guidedMinimumAltitude
     property Fact   _guidedMaximumAltitude:             _flyViewSettings.guidedMaximumAltitude
     property Fact   _maxGoToLocationDistance:           _flyViewSettings.maxGoToLocationDistance
-    property Fact   _viewer3DEnabled:                   _settingsManager.viewer3DSettings.enabled
-    property Fact   _viewer3DOsmFilePath:               _settingsManager.viewer3DSettings.osmFilePath
-    property Fact   _viewer3DBuildingLevelHeight:       _settingsManager.viewer3DSettings.buildingLevelHeight
-    property Fact   _viewer3DAltitudeBias:              _settingsManager.viewer3DSettings.altitudeBias
+    property var    _viewer3DSettings:                  _settingsManager.viewer3DSettings
+    property Fact   _viewer3DEnabled:                   _viewer3DSettings.enabled
+    property Fact   _viewer3DOsmFilePath:               _viewer3DSettings.osmFilePath
+    property Fact   _viewer3DBuildingLevelHeight:       _viewer3DSettings.buildingLevelHeight
+    property Fact   _viewer3DAltitudeBias:              _viewer3DSettings.altitudeBias
 
     QGCFileDialogController { id: fileController }
 
@@ -204,25 +205,29 @@ SettingsPage {
     SettingsGroupLayout {
         Layout.fillWidth:   true
         heading:            qsTr("3D View")
+        visible:            _viewer3DSettings.visible
 
         FactCheckBoxSlider {
             Layout.fillWidth:   true
             text:               qsTr("Enabled")
             fact:               _viewer3DEnabled
+            visible:            _viewer3DEnabled.visible
         }
+
         ColumnLayout{
             Layout.fillWidth:   true
-            spacing: ScreenTools.defaultFontPixelWidth
+            spacing:            ScreenTools.defaultFontPixelWidth
             enabled:            _viewer3DEnabled.rawValue
+            visible:            _viewer3DOsmFilePath.rawValue
 
             RowLayout{
                 Layout.fillWidth:   true
-                spacing: ScreenTools.defaultFontPixelWidth
+                spacing:            ScreenTools.defaultFontPixelWidth
 
                 QGCLabel {
-                    wrapMode:           Text.WordWrap
-                    visible:            true
-                    text: qsTr("3D Map File:")
+                    wrapMode:   Text.WordWrap
+                    visible:    true
+                    text:       qsTr("3D Map File:")
                 }
 
                 QGCTextField {
@@ -232,16 +237,17 @@ SettingsPage {
                     showUnits:          false
                     visible:            true
                     Layout.fillWidth:   true
-                    readOnly: true
-                    text: _viewer3DOsmFilePath.rawValue
+                    readOnly:           true
+                    text:               _viewer3DOsmFilePath.rawValue
                 }
             }
+
             RowLayout{
-                Layout.alignment: Qt.AlignRight
-                spacing: ScreenTools.defaultFontPixelWidth
+                Layout.alignment:   Qt.AlignRight
+                spacing:            ScreenTools.defaultFontPixelWidth
 
                 QGCButton {
-                    text:       qsTr("Clear")
+                    text: qsTr("Clear")
 
                     onClicked: {
                         osmFileTextField.text = "Please select an OSM file"
@@ -250,7 +256,7 @@ SettingsPage {
                 }
 
                 QGCButton {
-                    text:       qsTr("Select File")
+                    text: qsTr("Select File")
 
                     onClicked: {
                         var filename = _viewer3DOsmFilePath.rawValue;
@@ -270,7 +276,7 @@ SettingsPage {
                         onAcceptedForLoad: (file) => {
                                                osmFileTextField.text = file
                                                _viewer3DOsmFilePath.value = osmFileTextField.text
-                                           }
+                        }
                     }
                 }
             }
@@ -281,6 +287,7 @@ SettingsPage {
             label:              qsTr("Average Building Level Height")
             fact:               _viewer3DBuildingLevelHeight
             enabled:            _viewer3DEnabled.rawValue
+            visible:            _viewer3DBuildingLevelHeight.visible
         }
 
         LabelledFactTextField {
@@ -288,6 +295,7 @@ SettingsPage {
             label:              qsTr("Vehicles Altitude Bias")
             fact:               _viewer3DAltitudeBias
             enabled:            _viewer3DEnabled.rawValue
+            visible:            _viewer3DAltitudeBias.visible
         }
     }
 }
