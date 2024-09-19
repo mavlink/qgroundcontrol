@@ -11,6 +11,8 @@
 #include "QGeoTiledMappingManagerEngineQGC.h"
 #include <QGCLoggingCategory.h>
 
+#include <QtQml/QQmlEngine>
+
 QGC_LOGGING_CATEGORY(QGeoServiceProviderFactoryQGCLog, "qgc.qtlocationplugin.qgeoserviceproviderfactoryqgc")
 
 QGeoServiceProviderFactoryQGC::QGeoServiceProviderFactoryQGC(QObject *parent)
@@ -24,7 +26,7 @@ QGeoServiceProviderFactoryQGC::~QGeoServiceProviderFactoryQGC()
     qCDebug(QGeoServiceProviderFactoryQGCLog) << Q_FUNC_INFO << this;
 }
 
-QGeoCodingManagerEngine* QGeoServiceProviderFactoryQGC::createGeocodingManagerEngine(
+QGeoCodingManagerEngine *QGeoServiceProviderFactoryQGC::createGeocodingManagerEngine(
    const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const
 {
     Q_UNUSED(parameters);
@@ -34,10 +36,11 @@ QGeoCodingManagerEngine* QGeoServiceProviderFactoryQGC::createGeocodingManagerEn
     if (errorString) {
         *errorString = "Geocoding Not Supported";
     }
+
     return nullptr;
 }
 
-QGeoMappingManagerEngine* QGeoServiceProviderFactoryQGC::createMappingManagerEngine(
+QGeoMappingManagerEngine *QGeoServiceProviderFactoryQGC::createMappingManagerEngine(
    const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const
 {
     if (error) {
@@ -46,11 +49,16 @@ QGeoMappingManagerEngine* QGeoServiceProviderFactoryQGC::createMappingManagerEng
     if (errorString) {
         *errorString = "";
     }
-    // TODO: m_engine->networkAccessManager();
-    return new QGeoTiledMappingManagerEngineQGC(parameters, error, errorString);
+
+    QNetworkAccessManager *networkManager = nullptr;
+    if (m_engine) {
+        networkManager = m_engine->networkAccessManager();
+    }
+
+    return new QGeoTiledMappingManagerEngineQGC(parameters, error, errorString, networkManager, nullptr);
 }
 
-QGeoRoutingManagerEngine* QGeoServiceProviderFactoryQGC::createRoutingManagerEngine(
+QGeoRoutingManagerEngine *QGeoServiceProviderFactoryQGC::createRoutingManagerEngine(
    const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const
 {
     Q_UNUSED(parameters);
@@ -60,10 +68,11 @@ QGeoRoutingManagerEngine* QGeoServiceProviderFactoryQGC::createRoutingManagerEng
     if (errorString) {
         *errorString = "Routing Not Supported";
     }
+
     return nullptr;
 }
 
-QPlaceManagerEngine* QGeoServiceProviderFactoryQGC::createPlaceManagerEngine(
+QPlaceManagerEngine *QGeoServiceProviderFactoryQGC::createPlaceManagerEngine(
    const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const
 {
     Q_UNUSED(parameters);
@@ -73,5 +82,6 @@ QPlaceManagerEngine* QGeoServiceProviderFactoryQGC::createPlaceManagerEngine(
     if (errorString) {
         *errorString = "Place Not Supported";
     }
+
     return nullptr;
 }

@@ -15,6 +15,7 @@
 #include "QGCCachedTileSet.h"
 #include "QGCMapUrlEngine.h"
 #include "QGCMapEngine.h"
+#include "QGeoFileTileCacheQGC.h"
 #include "ElevationMapProvider.h"
 #include "QmlObjectListModel.h"
 #include "QGCApplication.h"
@@ -42,11 +43,9 @@ QGCMapEngineManager::QGCMapEngineManager(QObject *parent)
     : QObject(parent)
     , _tileSets(new QmlObjectListModel(this))
 {
-    qmlRegisterUncreatableType<QGCMapEngineManager>("QGroundControl.QGCMapEngineManager", 1, 0, "QGCMapEngineManager", "Reference only");
+    (void) qmlRegisterUncreatableType<QGCMapEngineManager>("QGroundControl.QGCMapEngineManager", 1, 0, "QGCMapEngineManager", "Reference only");
 
     (void) connect(getQGCMapEngine(), &QGCMapEngine::updateTotals, this, &QGCMapEngineManager::_updateTotals);
-
-   _updateDiskFreeSpace();
 
     // qCDebug(QGCMapEngineManagerLog) << Q_FUNC_INFO << this;
 }
@@ -98,7 +97,7 @@ QString QGCMapEngineManager::tileSizeStr() const
 
 void QGCMapEngineManager::loadTileSets()
 {
-    if (_tileSets->count()) {
+    if (_tileSets->count() > 0) {
         _tileSets->clear();
         emit tileSetsChanged();
     }
@@ -122,7 +121,7 @@ void QGCMapEngineManager::_tileSetFetched(QGCCachedTileSet *tileSet)
 
 void QGCMapEngineManager::startDownload(const QString &name, const QString &mapType)
 {
-    if (_imageSet.tileSize) {
+    if (_imageSet.tileSize > 0) {
         QGCCachedTileSet* const set = new QGCCachedTileSet(name);
         set->setMapTypeStr(mapType);
         set->setTopleftLat(_topleftLat);
@@ -295,25 +294,6 @@ void QGCMapEngineManager::taskError(QGCMapTask::TaskType type, const QString &er
     qCWarning(QGCMapEngineManagerLog) << serror;
 }
 
-// FIXME: Results are unused
-void QGCMapEngineManager::_updateDiskFreeSpace()
-{
-    const QString path = getQGCMapEngine()->getCachePath();
-    if (path.isEmpty()) {
-        return;
-    }
-
-    const QStorageInfo info(path);
-
-    const quint32 total = static_cast<quint32>(info.bytesTotal() / 1024);
-    _diskSpace = total;
-
-    const quint32 free = static_cast<quint32>(info.bytesFree() / 1024);
-    setFreeDiskSpace(free);
-
-    qCDebug(QGCMapEngineManagerLog) << info.rootPath() << "has" << free << "Kbytes available.";
-}
-
 void QGCMapEngineManager::_updateTotals(quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize)
 {
     for (qsizetype i = 0; i < _tileSets->count(); i++) {
@@ -326,8 +306,6 @@ void QGCMapEngineManager::_updateTotals(quint32 totaltiles, quint64 totalsize, q
             return;
         }
     }
-
-    _updateDiskFreeSpace();
 }
 
 bool QGCMapEngineManager::findName(const QString &name) const

@@ -43,8 +43,6 @@ class QGCMapEngineManager : public QObject
     Q_PROPERTY(QString              tileSizeStr     READ tileSizeStr                                NOTIFY tileSizeChanged)
     Q_PROPERTY(QStringList          mapList         READ mapList                                    CONSTANT)
     Q_PROPERTY(QStringList          mapProviderList READ mapProviderList                            CONSTANT)
-    Q_PROPERTY(quint32              diskSpace       READ diskSpace)
-    Q_PROPERTY(quint32              freeDiskSpace   READ freeDiskSpace                              NOTIFY freeDiskSpaceChanged)
     Q_PROPERTY(quint64              tileCount       READ tileCount                                  NOTIFY tileCountChanged)
     Q_PROPERTY(quint64              tileSize        READ tileSize                                   NOTIFY tileSizeChanged)
 
@@ -85,14 +83,11 @@ public:
     QString errorMessage() const { return _errorMessage; }
     QString tileCountStr() const;
     QString tileSizeStr() const;
-    quint64 diskSpace() const { return _diskSpace; }
-    quint64 freeDiskSpace() const { return _freeDiskSpace; }
     quint64 tileCount() const { return (_imageSet.tileCount + _elevationSet.tileCount); }
     quint64 tileSize() const { return (_imageSet.tileSize + _elevationSet.tileSize); }
 
     void setActionProgress(int percentage) { if (percentage != _actionProgress) { _actionProgress = percentage; emit actionProgressChanged(); } }
     void setErrorMessage(const QString &error) { if (error != _errorMessage) { _errorMessage = error; emit errorMessageChanged(); } }
-    void setFreeDiskSpace(quint64 diskSpace) { if (diskSpace != _freeDiskSpace) { _freeDiskSpace = diskSpace; emit freeDiskSpaceChanged(); } }
     void setImportAction(ImportAction action) { if (action != _importAction) { _importAction = action; emit importActionChanged(); } }
 
     static QStringList mapList();
@@ -123,8 +118,6 @@ private slots:
     void _updateTotals(quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize);
 
 private:
-    void _updateDiskFreeSpace(); 
-
     QmlObjectListModel *_tileSets = nullptr;
     QGCTileSet _imageSet;
     QGCTileSet _elevationSet;
@@ -137,8 +130,6 @@ private:
     int _maxZoom = 0;
     int _actionProgress = 0;
     quint64 _setID = UINT64_MAX;
-    quint32 _freeDiskSpace = 0;
-    quint32 _diskSpace = 0;
     QString _errorMessage;
     bool _fetchElevation = true;
     bool _importReplace = false;

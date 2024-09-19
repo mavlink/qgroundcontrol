@@ -34,5 +34,5 @@ public:
     void setQmlEngine(QQmlEngine* engine) final { m_engine = engine; }
 
 private:
-    QQmlEngine* m_engine = nullptr;
+    QQmlEngine *m_engine = nullptr;
 };
