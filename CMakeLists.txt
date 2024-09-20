@@ -106,20 +106,6 @@ endif()
 
 set(BUILD_SHARED_LIBS OFF)
 
-# include(CMakePrintSystemInformation)
-# include(ProcessorCount)
-cmake_print_variables(
-    CMAKE_VERSION
-    CMAKE_PREFIX_PATH
-    CMAKE_HOST_SYSTEM_NAME
-    CMAKE_HOST_SYSTEM_VERSION
-    CMAKE_SYSTEM_NAME
-    CMAKE_SYSTEM_VERSION
-    CMAKE_CURRENT_SOURCE_DIR
-    CMAKE_BUILD_TYPE
-    CMAKE_TOOLCHAIN_FILE
-)
-
 #######################################################
 #               Qt6 Configuration
 #######################################################
@@ -527,3 +513,5 @@ elseif(WIN32)
 elseif(MACOS)
     install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/CreateMacDMG.cmake")
 endif()
+
+include(printSummary)
