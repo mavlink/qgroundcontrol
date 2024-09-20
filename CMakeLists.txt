@@ -85,16 +85,16 @@ elseif(WIN32)
         message(STATUS "Using SCCache")
         set(CMAKE_C_COMPILER_LAUNCHER ${SCCACHE_PROGRAM})
         set(CMAKE_CXX_COMPILER_LAUNCHER ${SCCACHE_PROGRAM})
-        if(MSVC)
-            if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-                string(REPLACE "/Zi" "/Z7" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-                string(REPLACE "/Zi" "/Z7" CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-            elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
-                string(REPLACE "/Zi" "/Z7" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
-                string(REPLACE "/Zi" "/Z7" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
-            endif()
-            set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT Embedded)
+    endif()
+    if(MSVC)
+        if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+            string(REPLACE "/Zi" "/Z7" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+            string(REPLACE "/Zi" "/Z7" CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
+        elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+            string(REPLACE "/Zi" "/Z7" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+            string(REPLACE "/Zi" "/Z7" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
         endif()
+        set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT Embedded)
     endif()
 endif()
 
@@ -294,8 +294,14 @@ qt_add_executable(${PROJECT_NAME}
 )
 
 if(Qt6LinguistTools_FOUND)
-    file(GLOB TS_SOURCES RELATIVE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/translations/qgc_*.ts)
-    qt_add_translations(${PROJECT_NAME} TS_FILES ${TS_SOURCES}) # TODO: Update to new qt_add_translations form in Qt6.7
+    # TODO: Update to new qt_add_translations form in Qt6.7
+    file(GLOB TS_SOURCES ${CMAKE_SOURCE_DIR}/translations/qgc_*.ts)
+    set_source_files_properties(${TS_SOURCES} PROPERTIES OUTPUT_LOCATION "${CMAKE_BINARY_DIR}/translations")
+    qt_add_translations(${PROJECT_NAME}
+        TS_FILES ${TS_SOURCES}
+        RESOURCE_PREFIX "/i18n"
+        LUPDATE_OPTIONS -no-obsolete
+    )
 endif()
 
 set_target_properties(${PROJECT_NAME}
