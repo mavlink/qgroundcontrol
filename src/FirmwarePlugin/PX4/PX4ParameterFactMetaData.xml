@@ -20858,6 +20858,16 @@
       <short_desc>ASP5033 differential pressure sensor (external I2C)</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter name="SENS_EN_AUAVX" default="0" type="INT32">
+      <short_desc>Amphenol AUAV differential / absolute pressure sensor (external I2C)</short_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Sensor disabled, when explicitly started treated as AUAV L05D</value>
+        <value code="1">AUAV L05D</value>
+        <value code="2">AUAV L10D</value>
+        <value code="3">AUAV L30D</value>
+      </values>
+    </parameter>
     <parameter name="SENS_EN_BAROSIM" default="0" type="INT32">
       <short_desc>Enable simulated barometer sensor instance</short_desc>
       <min>0</min>
