@@ -19,4 +19,6 @@ public:
     DEFINE_SETTING_NAME_GROUP()
 
     DEFINE_SETTINGFACT(display)
+    DEFINE_SETTINGFACT(threshold1)
+    DEFINE_SETTINGFACT(threshold2)
 };
