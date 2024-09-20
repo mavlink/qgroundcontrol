@@ -66,7 +66,7 @@ QGCMapEngine::QGCMapEngine(QObject *parent)
 QGCMapEngine::~QGCMapEngine()
 {
     (void) disconnect(m_worker);
-    m_worker->quit();
+    m_worker->stop();
     m_worker->wait();
 
     // qCDebug(QGCMapEngineLog) << Q_FUNC_INFO << this;
