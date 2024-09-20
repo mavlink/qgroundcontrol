@@ -17,3 +17,5 @@ DECLARE_SETTINGGROUP(BatteryIndicator, "BatteryIndicator")
 }
 
 DECLARE_SETTINGSFACT(BatteryIndicatorSettings, display)
+DECLARE_SETTINGSFACT(BatteryIndicatorSettings, threshold1)
+DECLARE_SETTINGSFACT(BatteryIndicatorSettings, threshold2)
