@@ -111,19 +111,28 @@ T.HorizontalFactValueGrid {
             }
 
             ColumnLayout {
-                spacing:                1
-                visible:                settingsUnlocked
-                enabled:                settingsUnlocked
+                spacing: 1
+                visible: settingsUnlocked
 
                 QGCButton {
+                    Layout.preferredWidth:  ScreenTools.minTouchPixels
                     Layout.fillHeight:      true
+                    topPadding:             0                
+                    bottomPadding:          0
+                    leftPadding:            0
+                    rightPadding:           0
                     text:                   qsTr("+")
                     enabled:                (_root.width + (2 * (_rowButtonWidth + _margins))) < screen.width
                     onClicked:              appendColumn()
                 }
 
                 QGCButton {
+                    Layout.preferredWidth:  ScreenTools.minTouchPixels
                     Layout.fillHeight:      true
+                    topPadding:             0                
+                    bottomPadding:          0
+                    leftPadding:            0
+                    rightPadding:           0
                     text:                   qsTr("-")
                     enabled:                _root.columns.count > 1
                     onClicked:              deleteLastColumn()
@@ -132,13 +141,17 @@ T.HorizontalFactValueGrid {
         }
 
         RowLayout {
-            Layout.fillWidth:       true
-            spacing:                1
-            visible:                settingsUnlocked
-            enabled:                settingsUnlocked
+            Layout.fillWidth:   true
+            spacing:            1
+            visible:            settingsUnlocked
 
             QGCButton {
                 Layout.fillWidth:       true
+                Layout.preferredHeight: ScreenTools.minTouchPixels
+                topPadding:             0                
+                bottomPadding:          0
+                leftPadding:            0
+                rightPadding:           0
                 text:                   qsTr("+")
                 enabled:                (_root.height + (2 * (_rowButtonHeight + _margins))) < (screen.height - ScreenTools.toolbarHeight)
                 onClicked:              appendRow()
@@ -147,6 +160,10 @@ T.HorizontalFactValueGrid {
             QGCButton {
                 Layout.fillWidth:       true
                 Layout.preferredHeight: parent.height
+                topPadding:             0                
+                bottomPadding:          0
+                leftPadding:            0
+                rightPadding:           0
                 text:                   qsTr("-")
                 enabled:                _root.rowCount > 1
                 onClicked:              deleteLastRow()
