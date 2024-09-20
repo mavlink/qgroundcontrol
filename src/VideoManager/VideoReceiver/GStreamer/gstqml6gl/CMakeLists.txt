@@ -1,4 +1,4 @@
-find_package(GStreamer REQUIRED COMPONENTS Codecparsers Controller Mpegts Net Pbutils Riff Rtp Rtsp OPTIONAL_COMPONENTS Photography X11 EGL Wayland)
+find_package(GStreamer REQUIRED COMPONENTS Allocators Audio Codecparsers Controller Mpegts Net Pbutils Riff Rtp Rtsp Sdp Tag OPTIONAL_COMPONENTS Va Photography X11 EGL Wayland)
 
 # Use Latest Revisions for each minor version: 1.16.3, 1.18.6, 1.20.7, 1.22.12, 1.24.7
 string(REPLACE "." ";" GST_VERSION_LIST ${GStreamer_VERSION})
@@ -52,6 +52,8 @@ file(GLOB gstqml6gl_SRCS
 )
 qt_add_library(gstqml6gl STATIC ${gstqml6gl_SRCS})
 
+target_include_directories(gstqml6gl PUBLIC ${QGC_GST_QT6_PLUGIN_PATH})
+
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick)
 
 target_link_libraries(gstqml6gl
@@ -63,6 +65,8 @@ target_link_libraries(gstqml6gl
         Qt6::Qml
         Qt6::Quick
         GStreamer::GStreamer
+        GStreamer::Allocators
+        GStreamer::Audio
         GStreamer::Codecparsers
         GStreamer::Controller
         GStreamer::Mpegts
@@ -71,6 +75,8 @@ target_link_libraries(gstqml6gl
         GStreamer::Riff
         GStreamer::Rtp
         GStreamer::Rtsp
+        GStreamer::Sdp
+        GStreamer::Tag
 )
 
 # Photography not found on ubuntu 20.04?
@@ -78,7 +84,9 @@ if(GStreamer_Photography_FOUND)
     target_link_libraries(gstqml6gl PUBLIC GStreamer::Photography)
 endif()
 
-target_include_directories(gstqml6gl PUBLIC ${QGC_GST_QT6_PLUGIN_PATH})
+if(GStreamer_Va_FOUND)
+    target_link_libraries(gstqml6gl PUBLIC GStreamer::Va)
+endif()
 
 if(GStreamer_X11_FOUND)
     # X11, XCB, X11_XCB, GLX
@@ -172,6 +180,7 @@ if(UNIX)
     )
 endif()
 
+# gstva, gstasf
 set(GST_TARGET_PLUGINS
     gstcoreelements
     gstisomp4
@@ -206,6 +215,11 @@ if(PkgConfig_FOUND)
             install(FILES ${GST_PLUGINS_LIBRARIES} DESTINATION ${CMAKE_INSTALL_LIBDIR})
         endif()
     endif()
+
+    pkg_check_modules(GSTREAMER_PLUGINS_BASE IMPORTED_TARGET gstreamer-plugins-base-1.0)
+    if(GSTREAMER_PLUGINS_BASE_FOUND)
+        target_link_libraries(gstqml6gl PUBLIC PkgConfig::GSTREAMER_PLUGINS_BASE)
+    endif()
 endif()
 
 if(NOT GST_PLUGINS_FOUND)
@@ -220,8 +234,8 @@ if(NOT GST_PLUGINS_FOUND)
                 ${GSTREAMER_PREFIX}/Versions/Current/lib
                 ${GSTREAMER_PREFIX}/Versions/Current/lib/gstreamer-1.0
         )
-        cmake_print_variables(GStreamer_${plugin}_LIBRARY)
         if(GStreamer_${plugin}_LIBRARY)
+            cmake_print_variables(GStreamer_${plugin}_LIBRARY)
             target_link_libraries(gstqml6gl PUBLIC ${GStreamer_${plugin}_LIBRARY})
             if(WIN32)
                 # install(FILES ${GStreamer_${plugin}_LIBRARY} DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -237,6 +251,7 @@ if(NOT GST_PLUGINS_FOUND)
                 ${GSTREAMER_PREFIX}/include/gstreamer-1.0
                 ${GSTREAMER_PREFIX}/include/glib-2.0
                 ${GSTREAMER_PREFIX}/lib/glib-2.0/include
+                ${GSTREAMER_PREFIX}/lib/graphene-1.0/include
                 ${GSTREAMER_PREFIX}/lib/gstreamer-1.0/include
                 ${GSTREAMER_PREFIX}/include
         )
@@ -287,9 +302,16 @@ if(LINUX)
     install(DIRECTORY ${GSTREAMER_PREFIX}/lib/x86_64-linux-gnu/gstreamer1.0 DESTINATION ${CMAKE_INSTALL_LIBDIR})
     install(DIRECTORY ${GSTREAMER_PREFIX}/lib/x86_64-linux-gnu/gio DESTINATION ${CMAKE_INSTALL_LIBDIR})
 elseif(WIN32)
-    # install(FILES ${GSTREAMER_PREFIX}/libexec/gstreamer-1.0/gst-plugin-scanner DESTINATION ${CMAKE_INSTALL_BINDIR})
-    # install(FILES ${GSTREAMER_PREFIX}/libexec/gstreamer-1.0/gst-ptp-helper DESTINATION ${CMAKE_INSTALL_BINDIR})
-    # install(DIRECTORY ${GSTREAMER_PREFIX}/lib/gio DESTINATION ${CMAKE_INSTALL_BINDIR})
+    cmake_path(CONVERT "${GSTREAMER_PREFIX}/libexec/gstreamer-1.0/*.exe" TO_CMAKE_PATH_LIST GST_HELPER_BINS_PATH)
+    file(GLOB GST_HELPER_BINS ${GST_HELPER_BINS_PATH})
+    install(FILES ${GST_HELPER_BINS} DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+    cmake_path(CONVERT "${GSTREAMER_PREFIX}/lib/gio" TO_CMAKE_PATH_LIST GST_GIO_PATH)
+    install(DIRECTORY ${GST_GIO_PATH} DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+    # cmake_path(CONVERT "${GSTREAMER_PREFIX}/share/gstreamer/gst-env" TO_CMAKE_PATH_LIST GST_SHARE_ENV_PATH)
+    # TODO: update GSTREAMER_ROOT & install
+    # install(CODE GST_SHARE_ENV_PATH)
 endif()
 
 if(WIN32)
@@ -305,20 +327,3 @@ if(WIN32)
     file(GLOB GST_WIN_PLUGINS ${GST_WIN_PLUGINS_PATH})
     install(FILES ${GST_WIN_PLUGINS} DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
-
-# if(ANDROID)
-    # configure_file(
-    #     ${GSTREAMER_PREFIX}/share/gst-android/ndk-build/gstreamer_android-1.0.c.in
-    #     ${CMAKE_BINARY_DIR}/gstreamer_android-1.0.c
-    #     @ONLY
-    # )
-    # target_sources(gstqml6gl PRIVATE ${CMAKE_BINARY_DIR}/gstreamer_android-1.0.c)
-    # install(
-    #     DIRECTORY ${GSTREAMER_PREFIX}/share/gst-android/ndk-build/androidmedia
-    #     DESTINATION ${CMAKE_SOURCE_DIR}/android/src/org/freedesktop/gstreamer/androidmedia
-    # )
-    # install(
-    #     FILES ${GSTREAMER_PREFIX}/share/gst-android/ndk-build/GStreamer.java
-    #     DESTINATION ${CMAKE_SOURCE_DIR}/android/src/org/freedesktop/gstreamer/androidmedia/GStreamer.java
-    # )
-# endif()
