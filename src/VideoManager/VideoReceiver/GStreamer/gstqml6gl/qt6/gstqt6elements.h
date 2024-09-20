@@ -1,3 +1,12 @@
+/****************************************************************************
+ *
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 /*
  * Copyright (C) 2020 Huawei Technologies Co., Ltd.
  *   @Author: Julian Bouzas <julian.bouzas@collabora.com>
