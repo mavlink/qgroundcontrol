@@ -96,6 +96,7 @@ elseif(WIN32)
         endif()
         set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT Embedded)
     endif()
+    add_compile_definitions(_USE_MATH_DEFINES)
 endif()
 
 if(CMAKE_CROSSCOMPILING AND ANDROID)
@@ -340,7 +341,6 @@ if(WIN32)
             WIN32_EXECUTABLE TRUE
             QT_TARGET_RC_ICONS "${CMAKE_BINARY_DIR}/deploy/windows/WindowsQGC.ico"
     )
-    add_compile_definitions(_USE_MATH_DEFINES)
 elseif(MACOS)
     set(MACOSX_BUNDLE_ICON_FILE "macx.icns")
     set(app_icon_macos "${QGC_MACOS_ICON_PATH}/macx.icns")
