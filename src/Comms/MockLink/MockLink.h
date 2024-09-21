@@ -32,7 +32,7 @@ class MockConfiguration : public LinkConfiguration
 
 public:
     MockConfiguration(const QString& name);
-    MockConfiguration(MockConfiguration* source);
+    MockConfiguration(const MockConfiguration* source);
 
     Q_PROPERTY(int      firmware            READ firmware           WRITE setFirmware           NOTIFY firmwareChanged)
     Q_PROPERTY(int      vehicle             READ vehicle            WRITE setVehicle            NOTIFY vehicleChanged)
@@ -72,8 +72,8 @@ public:
     void setFailureMode(FailureMode_t failureMode) { _failureMode = failureMode; }
 
     // Overrides from LinkConfiguration
-    LinkType    type            (void) override                                         { return LinkConfiguration::TypeMock; }
-    void        copyFrom        (LinkConfiguration* source) override;
+    LinkType    type            (void) const override                                         { return LinkConfiguration::TypeMock; }
+    void        copyFrom        (const LinkConfiguration* source) override;
     void        loadSettings    (QSettings& settings, const QString& root) override;
     void        saveSettings    (QSettings& settings, const QString& root) override;
     QString     settingsURL     (void) override                                         { return "MockLinkSettings.qml"; }

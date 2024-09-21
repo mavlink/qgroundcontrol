@@ -66,7 +66,7 @@ class BluetoothConfiguration : public LinkConfiguration
 public:
 
     BluetoothConfiguration(const QString& name);
-    BluetoothConfiguration(BluetoothConfiguration* source);
+    BluetoothConfiguration(const BluetoothConfiguration* source);
     ~BluetoothConfiguration();
 
     Q_PROPERTY(QString      devName     READ devName    WRITE setDevName  NOTIFY devNameChanged)
@@ -77,16 +77,16 @@ public:
     Q_INVOKABLE void startScan  (void);
     Q_INVOKABLE void stopScan   (void);
 
-    QString         devName     (void)                  { return _device.name; }
-    QString         address     (void);
-    QStringList     nameList    (void)                  { return _nameList; }
-    bool            scanning    (void)                  { return _deviceDiscover != nullptr; }
-    BluetoothData   device      (void)                  { return _device; }
+    QString         devName     (void) const                 { return _device.name; }
+    QString         address     (void) const;
+    QStringList     nameList    (void) const                  { return _nameList; }
+    bool            scanning    (void) const                 { return _deviceDiscover != nullptr; }
+    BluetoothData   device      (void) const                  { return _device; }
     void            setDevName  (const QString& name);
 
     /// LinkConfiguration overrides
-    LinkType    type            (void) override                                         { return LinkConfiguration::TypeBluetooth; }
-    void        copyFrom        (LinkConfiguration* source) override;
+    LinkType    type            (void) const override                                         { return LinkConfiguration::TypeBluetooth; }
+    void        copyFrom        (const LinkConfiguration* source) override;
     void        loadSettings    (QSettings& settings, const QString& root) override;
     void        saveSettings    (QSettings& settings, const QString& root) override;
     QString     settingsURL     (void) override                                         { return "BluetoothSettings.qml"; }
