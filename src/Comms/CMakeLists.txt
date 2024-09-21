@@ -15,8 +15,6 @@ qt_add_library(Comms STATIC
     MAVLinkProtocol.h
     TCPLink.cc
     TCPLink.h
-    UdpIODevice.cc
-    UdpIODevice.h
     UDPLink.cc
     UDPLink.h
 )
@@ -51,6 +49,8 @@ else()
             QGCSerialPortInfo.h
             SerialLink.cc
             SerialLink.h
+            UdpIODevice.cc
+            UdpIODevice.h
     )
     target_link_libraries(Comms
         PRIVATE

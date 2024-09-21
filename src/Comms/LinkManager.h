@@ -29,11 +29,11 @@ class AutoConnectSettings;
 class LogReplayLink;
 class MAVLinkProtocol;
 class QGCApplication;
+class QmlObjectListModel;
 class QTimer;
 class SerialLink;
 class UDPConfiguration;
 class UdpIODevice;
-class QmlObjectListModel;
 
 /// @brief Manage communication links
 ///        The Link Manager organizes the physical Links. It can manage arbitrary
@@ -58,10 +58,12 @@ public:
     /// Create/Edit Link Configuration
     Q_INVOKABLE LinkConfiguration *createConfiguration(int type, const QString &name);
     Q_INVOKABLE LinkConfiguration *startConfigurationEditing(LinkConfiguration *config);
-    Q_INVOKABLE void cancelConfigurationEditing(LinkConfiguration *config) { delete config; }
+    Q_INVOKABLE void cancelConfigurationEditing(LinkConfiguration *config) const { delete config; }
     Q_INVOKABLE void endConfigurationEditing(LinkConfiguration *config, LinkConfiguration *editedConfig);
     Q_INVOKABLE void endCreateConfiguration(LinkConfiguration *config);
     Q_INVOKABLE void removeConfiguration(LinkConfiguration *config);
+    /// This should only be used by Qml code
+    Q_INVOKABLE void createConnectedLink(const LinkConfiguration *config);
     Q_INVOKABLE void createMavlinkForwardingSupportLink();
     /// Called to signal app shutdown. Disconnects all links while turning off auto-connect.
     Q_INVOKABLE void shutdown();
@@ -87,9 +89,6 @@ public:
     /// Creates, connects (and adds) a link  based on the given configuration instance.
     bool createConnectedLink(SharedLinkConfigurationPtr &config, bool isPX4Flow = false);
 
-    /// This should only be used by Qml code
-    Q_INVOKABLE void createConnectedLink(const LinkConfiguration *config);
-
     /// Returns pointer to the mavlink forwarding link, or nullptr if it does not exist
     SharedLinkInterfacePtr mavlinkForwardingLink();
 
@@ -103,14 +102,14 @@ public:
 
     /// Allocates a mavlink channel for use
     ///     @return Mavlink channel index, invalidMavlinkChannel() for no channels available
-    uint8_t allocateMavlinkChannel(void);
+    uint8_t allocateMavlinkChannel();
     void freeMavlinkChannel(uint8_t channel);
 
     /// If you are going to hold a reference to a LinkInterface* in your object you must reference count it
     /// by using this method to get access to the shared pointer.
-    SharedLinkInterfacePtr sharedLinkInterfacePointerForLink(LinkInterface *link);
+    SharedLinkInterfacePtr sharedLinkInterfacePointerForLink(const LinkInterface *link);
 
-    bool containsLink(const LinkInterface *link);
+    bool containsLink(const LinkInterface *link) const;
 
     SharedLinkConfigurationPtr addConfiguration(LinkConfiguration *config);
 
@@ -131,7 +130,8 @@ private slots:
 
 private:
     QmlObjectListModel *_qmlLinkConfigurations();
-    bool _connectionsSuspendedMsg();
+    /// If all new connections should be suspended a message is displayed to the user and true is returned;
+    bool _connectionsSuspendedMsg() const;
     void _updateAutoConnectLinks();
     void _removeConfiguration(const LinkConfiguration *config);
     void _addUDPAutoConnectLink();
@@ -148,10 +148,9 @@ private:
     uint32_t _mavlinkChannelsUsedBitMask = 1;
     QString _connectionsSuspendedReason;            ///< User visible reason for suspension
 
-    QTimer *_portListTimer = nullptr;
     AutoConnectSettings *_autoConnectSettings = nullptr;
     MAVLinkProtocol *_mavlinkProtocol = nullptr;
-    UdpIODevice *_nmeaSocket = nullptr;
+    QTimer *_portListTimer = nullptr;
     QmlObjectListModel *_qmlConfigurations = nullptr;
 
     QList<SharedLinkInterfacePtr> _rgLinks;
@@ -186,9 +185,9 @@ signals:
 private:
     bool _isSerialPortConnected() const;
     void _updateSerialPorts();
-    bool _allowAutoConnectToBoard(QGCSerialPortInfo::BoardType_t boardType);
+    bool _allowAutoConnectToBoard(QGCSerialPortInfo::BoardType_t boardType) const;
     void _addSerialAutoConnectLink();
-    bool _portAlreadyConnected(const QString &portName);
+    bool _portAlreadyConnected(const QString &portName) const;
 
     QMap<QString, int> _autoconnectPortWaitList;   ///< key: QGCSerialPortInfo::systemLocation, value: wait count
     QList<SerialLink*> _activeLinkCheckList;       ///< List of links we are waiting for a vehicle to show up on
@@ -198,5 +197,6 @@ private:
     QString _nmeaDeviceName;
     uint32_t _nmeaBaud = 0;
     QSerialPort *_nmeaPort = nullptr;
+    UdpIODevice *_nmeaSocket = nullptr;
 #endif // NO_SERIAL_LINK
 };
