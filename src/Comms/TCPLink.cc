@@ -16,7 +16,7 @@
 
 TCPLink::TCPLink(SharedLinkConfigurationPtr& config)
     : LinkInterface(config)
-    , _tcpConfig(qobject_cast<TCPConfiguration*>(config.get()))
+    , _tcpConfig(qobject_cast<const TCPConfiguration*>(config.get()))
     , _socket(nullptr)
     , _socketIsConnected(false)
 {
@@ -162,16 +162,16 @@ TCPConfiguration::TCPConfiguration(const QString& name) : LinkConfiguration(name
     _host    = QLatin1String("0.0.0.0");
 }
 
-TCPConfiguration::TCPConfiguration(TCPConfiguration* source) : LinkConfiguration(source)
+TCPConfiguration::TCPConfiguration(const TCPConfiguration* source) : LinkConfiguration(source)
 {
     _port    = source->port();
     _host    = source->host();
 }
 
-void TCPConfiguration::copyFrom(LinkConfiguration *source)
+void TCPConfiguration::copyFrom(const LinkConfiguration *source)
 {
     LinkConfiguration::copyFrom(source);
-    auto* usource = qobject_cast<TCPConfiguration*>(source);
+    const TCPConfiguration* usource = qobject_cast<const TCPConfiguration*>(source);
     Q_ASSERT(usource != nullptr);
     _port    = usource->port();
     _host = usource->host();

@@ -64,7 +64,7 @@ UDPLink::UDPLink(SharedLinkConfigurationPtr& config)
     : LinkInterface     (config)
     , _running          (false)
     , _socket           (nullptr)
-    , _udpConfig        (qobject_cast<UDPConfiguration*>(config.get()))
+    , _udpConfig        (qobject_cast<const UDPConfiguration*>(config.get()))
     , _connectState     (false)
 #if defined(QGC_ZEROCONF_ENABLED)
     , _dnssServiceRef   (nullptr)
@@ -323,7 +323,7 @@ UDPConfiguration::UDPConfiguration(const QString& name) : LinkConfiguration(name
     }
 }
 
-UDPConfiguration::UDPConfiguration(UDPConfiguration* source) : LinkConfiguration(source)
+UDPConfiguration::UDPConfiguration(const UDPConfiguration* source) : LinkConfiguration(source)
 {
     _copyFrom(source);
 }
@@ -333,15 +333,15 @@ UDPConfiguration::~UDPConfiguration()
     _clearTargetHosts();
 }
 
-void UDPConfiguration::copyFrom(LinkConfiguration *source)
+void UDPConfiguration::copyFrom(const LinkConfiguration *source)
 {
     LinkConfiguration::copyFrom(source);
     _copyFrom(source);
 }
 
-void UDPConfiguration::_copyFrom(LinkConfiguration *source)
+void UDPConfiguration::_copyFrom(const LinkConfiguration *source)
 {
-    auto* usource = qobject_cast<UDPConfiguration*>(source);
+    const UDPConfiguration* usource = qobject_cast<const UDPConfiguration*>(source);
     if (usource) {
         _localPort = usource->localPort();
         _clearTargetHosts();

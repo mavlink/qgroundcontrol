@@ -40,11 +40,11 @@ public:
     QObjectList swapObjectList      (const QObjectList& newlist);
     void        clear               ();
     QObject*    removeAt            (int i);
-    QObject*    removeOne           (QObject* object) { return removeAt(indexOf(object)); }
+    QObject*    removeOne           (const QObject* object) { return removeAt(indexOf(object)); }
     void        insert              (int i, QObject* object);
     void        insert              (int i, QList<QObject*> objects);
-    bool        contains            (QObject* object) { return _objectList.indexOf(object) != -1; }
-    int         indexOf             (QObject* object) { return _objectList.indexOf(object); }
+    bool        contains            (const QObject* object) { return _objectList.indexOf(object) != -1; }
+    int         indexOf             (const QObject* object) { return _objectList.indexOf(object); }
 
     /// Moves an item to a new position
     void move(int from, int to);

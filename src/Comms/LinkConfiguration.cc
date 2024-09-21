@@ -31,7 +31,7 @@ LinkConfiguration::LinkConfiguration(const QString &name, QObject *parent)
     // qCDebug(AudioOutputLog) << Q_FUNC_INFO << this;
 }
 
-LinkConfiguration::LinkConfiguration(LinkConfiguration *copy, QObject *parent)
+LinkConfiguration::LinkConfiguration(const LinkConfiguration *copy, QObject *parent)
     : QObject(parent)
     , _link(copy->_link)
     , _name(copy->name())
@@ -49,7 +49,7 @@ LinkConfiguration::~LinkConfiguration()
     // qCDebug(AudioOutputLog) << Q_FUNC_INFO << this;
 }
 
-void LinkConfiguration::copyFrom(LinkConfiguration *source)
+void LinkConfiguration::copyFrom(const LinkConfiguration *source)
 {
     Q_CHECK_PTR(source);
 
@@ -102,38 +102,38 @@ LinkConfiguration *LinkConfiguration::createSettings(int type, const QString &na
     return config;
 }
 
-LinkConfiguration *LinkConfiguration::duplicateSettings(LinkConfiguration *source)
+LinkConfiguration *LinkConfiguration::duplicateSettings(const LinkConfiguration *source)
 {
     LinkConfiguration *dupe = nullptr;
 
     switch(source->type()) {
 #ifndef NO_SERIAL_LINK
     case TypeSerial:
-        dupe = new SerialConfiguration(qobject_cast<SerialConfiguration*>(source));
+        dupe = new SerialConfiguration(qobject_cast<const SerialConfiguration*>(source));
         break;
 #endif
     case TypeUdp:
-        dupe = new UDPConfiguration(qobject_cast<UDPConfiguration*>(source));
+        dupe = new UDPConfiguration(qobject_cast<const UDPConfiguration*>(source));
         break;
     case TypeTcp:
-        dupe = new TCPConfiguration(qobject_cast<TCPConfiguration*>(source));
+        dupe = new TCPConfiguration(qobject_cast<const TCPConfiguration*>(source));
         break;
 #ifdef QGC_ENABLE_BLUETOOTH
     case TypeBluetooth:
-        dupe = new BluetoothConfiguration(qobject_cast<BluetoothConfiguration*>(source));
+        dupe = new BluetoothConfiguration(qobject_cast<const BluetoothConfiguration*>(source));
         break;
 #endif
     case TypeLogReplay:
-        dupe = new LogReplayLinkConfiguration(qobject_cast<LogReplayLinkConfiguration*>(source));
+        dupe = new LogReplayLinkConfiguration(qobject_cast<const LogReplayLinkConfiguration*>(source));
         break;
 #ifdef QT_DEBUG
     case TypeMock:
-        dupe = new MockConfiguration(qobject_cast<MockConfiguration*>(source));
+        dupe = new MockConfiguration(qobject_cast<const MockConfiguration*>(source));
         break;
 #endif
 #ifndef QGC_AIRLINK_DISABLED
     case Airlink:
-        dupe = new AirlinkConfiguration(qobject_cast<AirlinkConfiguration*>(source));
+        dupe = new AirlinkConfiguration(qobject_cast<const AirlinkConfiguration*>(source));
         break;
 #endif
     case TypeLast:
@@ -152,7 +152,7 @@ void LinkConfiguration::setName(const QString &name)
     }
 }
 
-void LinkConfiguration::setLink(SharedLinkInterfacePtr link)
+void LinkConfiguration::setLink(const SharedLinkInterfacePtr link)
 {
     if (link.get() != this->link()) {
         _link = link;
