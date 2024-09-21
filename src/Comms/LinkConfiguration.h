@@ -31,14 +31,14 @@ class LinkConfiguration : public QObject
 
 public:
     LinkConfiguration(const QString &name, QObject *parent = nullptr);
-    LinkConfiguration(LinkConfiguration *copy, QObject *parent = nullptr);
+    LinkConfiguration(const LinkConfiguration *copy, QObject *parent = nullptr);
     virtual ~LinkConfiguration();
 
     QString name() const { return _name; }
     void setName(const QString &name);
 
     LinkInterface *link() { return _link.lock().get(); }
-    void setLink(std::shared_ptr<LinkInterface> link);
+    void setLink(const std::shared_ptr<LinkInterface> link);
 
     /// Is this a dynamic configuration?
     ///     @return True if not persisted
@@ -62,7 +62,7 @@ public:
     /// Copy instance data, When manipulating data, you create a copy of the configuration using the copy constructor,
     /// edit it and then transfer its content to the original using this method.
     ///     @param[in] source The source instance (the edited copy)
-    virtual void copyFrom(LinkConfiguration *source);
+    virtual void copyFrom(const LinkConfiguration *source);
 
     /// The link types supported by QGC
     /// Any changes here MUST be reflected in LinkManager::linkTypeStrings()
@@ -88,7 +88,7 @@ public:
 
     /// Connection type, pure virtual method returning one of the -TypeXxx types above.
     ///     @return The type of links these settings belong to.
-    virtual LinkType type() = 0;
+    virtual LinkType type() const = 0;
 
     /// Load settings, Pure virtual method telling the instance to load its configuration.
     ///     @param[in] settings The QSettings instance to use
@@ -112,7 +112,7 @@ public:
 
     /// Duplicate configuration instance. Helper method to create a new instance copy for editing.
     ///     @return A new copy of the given settings instance
-    static LinkConfiguration *duplicateSettings(LinkConfiguration *source);
+    static LinkConfiguration *duplicateSettings(const LinkConfiguration *source);
 
     /// Root path for QSettings
     ///     @return The root path of the settings.

@@ -11,13 +11,14 @@
 
 #include "LinkConfiguration.h"
 #include "LinkInterface.h"
-#include "QGCMAVLink.h"
 
 #include <QtCore/QTimer>
 #include <QtCore/QFile>
 
 class LinkManager;
 class MAVLinkProtocol;
+
+typedef struct __mavlink_message mavlink_message_t;
 
 class LogReplayLinkConfiguration : public LinkConfiguration
 {
@@ -27,16 +28,16 @@ public:
     Q_PROPERTY(QString  fileName    READ logFilename    WRITE setLogFilename    NOTIFY fileNameChanged)
 
     LogReplayLinkConfiguration(const QString& name);
-    LogReplayLinkConfiguration(LogReplayLinkConfiguration* copy);
+    LogReplayLinkConfiguration(const LogReplayLinkConfiguration* copy);
 
-    QString logFilename(void) { return _logFilename; }
+    QString logFilename(void) const { return _logFilename; }
     void setLogFilename(const QString logFilename) { _logFilename = logFilename; emit fileNameChanged(); }
 
     QString logFilenameShort(void);
 
     // Virtuals from LinkConfiguration
-    LinkType    type                    (void) override                                         { return LinkConfiguration::TypeLogReplay; }
-    void        copyFrom                (LinkConfiguration* source) override;
+    LinkType    type                    (void) const override                                         { return LinkConfiguration::TypeLogReplay; }
+    void        copyFrom                (const LinkConfiguration* source) override;
     void        loadSettings            (QSettings& settings, const QString& root) override;
     void        saveSettings            (QSettings& settings, const QString& root) override;
     QString     settingsURL             (void) override                                         { return "LogReplaySettings.qml"; }

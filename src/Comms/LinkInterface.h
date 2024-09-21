@@ -37,6 +37,7 @@ public:
     virtual bool isSecureConnection() { return false; } ///< Returns true if the connection is secure (e.g. USB, wired ethernet)
 
     SharedLinkConfigurationPtr linkConfiguration() { return _config; }
+    const SharedLinkConfigurationPtr linkConfiguration() const { return _config; }
     uint8_t mavlinkChannel() const;
     bool mavlinkChannelIsSet() const;
     bool isPX4Flow() const { return _isPX4Flow; }

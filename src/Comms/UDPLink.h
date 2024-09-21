@@ -48,7 +48,7 @@ public:
     Q_PROPERTY(QStringList  hostList    READ hostList                       NOTIFY  hostListChanged)
 
     UDPConfiguration(const QString& name);
-    UDPConfiguration(UDPConfiguration* source);
+    UDPConfiguration(const UDPConfiguration* source);
     ~UDPConfiguration();
 
     quint16 localPort   () const{ return _localPort; }
@@ -64,12 +64,12 @@ public:
     Q_INVOKABLE void removeHost  (const QString host);
 
     void                    setLocalPort(quint16 port);
-    QStringList             hostList    (void)          { return _hostList; }
-    const QList<UDPCLient*> targetHosts (void)          { return _targetHosts; }
+    QStringList             hostList    (void) const         { return _hostList; }
+    const QList<UDPCLient*> targetHosts (void) const         { return _targetHosts; }
 
     /// LinkConfiguration overrides
-    LinkType    type                 (void) override                                        { return LinkConfiguration::TypeUdp; }
-    void        copyFrom             (LinkConfiguration* source) override;
+    LinkType    type                 (void) const override                                        { return LinkConfiguration::TypeUdp; }
+    void        copyFrom             (const LinkConfiguration* source) override;
     void        loadSettings         (QSettings& settings, const QString& root) override;
     void        saveSettings         (QSettings& settings, const QString& root) override;
     QString     settingsURL          (void) override                                        { return "UdpSettings.qml"; }
@@ -82,7 +82,7 @@ signals:
 private:
     void _updateHostList    (void);
     void _clearTargetHosts  (void);
-    void _copyFrom          (LinkConfiguration *source);
+    void _copyFrom          (const LinkConfiguration *source);
 
     QList<UDPCLient*>   _targetHosts;
     QStringList         _hostList;
@@ -125,7 +125,7 @@ private:
 
     bool                _running;
     QUdpSocket*         _socket;
-    UDPConfiguration*   _udpConfig;
+    const UDPConfiguration*   _udpConfig;
     bool                _connectState;
     QList<UDPCLient*>   _sessionTargets;
     QMutex              _sessionTargetsMutex;

@@ -1434,7 +1434,7 @@ MockConfiguration::MockConfiguration(const QString& name)
 
 }
 
-MockConfiguration::MockConfiguration(MockConfiguration* source)
+MockConfiguration::MockConfiguration(const MockConfiguration* source)
     : LinkConfiguration(source)
 {
     _firmwareType       = source->_firmwareType;
@@ -1444,10 +1444,10 @@ MockConfiguration::MockConfiguration(MockConfiguration* source)
     _failureMode        = source->_failureMode;
 }
 
-void MockConfiguration::copyFrom(LinkConfiguration *source)
+void MockConfiguration::copyFrom(const LinkConfiguration *source)
 {
     LinkConfiguration::copyFrom(source);
-    auto* usource = qobject_cast<MockConfiguration*>(source);
+    const MockConfiguration* usource = qobject_cast<const MockConfiguration*>(source);
 
     if (!usource) {
         qCWarning(MockLinkLog) << "dynamic_cast failed" << source << usource;
