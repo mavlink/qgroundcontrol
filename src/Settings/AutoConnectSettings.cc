@@ -12,9 +12,29 @@
 
 #include <QtQml/QQmlEngine>
 
-DECLARE_SETTINGGROUP(AutoConnect, "LinkManager")
+DECLARE_SETTINGGROUP(AutoConnect, "AutoConnect")
 {
-    qmlRegisterUncreatableType<AutoConnectSettings>("QGroundControl.SettingsManager", 1, 0, "AutoConnectSettings", "Reference only"); \
+    qmlRegisterUncreatableType<AutoConnectSettings>("QGroundControl.SettingsManager", 1, 0, "AutoConnectSettings", "Reference only");
+
+    // Settings group name was changed from "LinkManager" to "AutoConnect" in v5.0.0
+    // Copy over an old settings to the new name
+    QSettings settings;
+    static const char* deprecatedGroupName = "LinkManager";
+    if (settings.childGroups().contains(deprecatedGroupName)) {
+        settings.beginGroup(deprecatedGroupName);
+        QList<QPair<QString, QVariant>> values;
+        for (const QString& key: settings.childKeys()) {
+            values.append(QPair<QString, QVariant>(key, settings.value(key)));
+        }
+        settings.endGroup();
+        settings.remove(deprecatedGroupName);
+
+        settings.beginGroup(_name);
+        for (const QPair<QString, QVariant>& pair: values) {
+            settings.setValue(pair.first, pair.second);
+        }
+        settings.endGroup();
+    }
 }
 
 DECLARE_SETTINGSFACT(AutoConnectSettings, autoConnectUDP)
