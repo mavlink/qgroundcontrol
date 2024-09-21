@@ -2,18 +2,19 @@ name: Upload Release
 description: Uploads a built release file
 inputs:
   artifact_name:
-    description: artifact name
+    description: Artifact name
     required: true
   aws_key_id:
-    description: aws key id
-    required: true
+    description: AWS access key ID
+    required: false
   aws_secret_access_key:
-    description: aws secret access key
-    required: true
+    description: AWS secret access key
+    required: false
   source:
-    description: source location
+    description: Source location
     required: false
     default: package
+
 runs:
   using: "composite"
   steps:
@@ -23,20 +24,22 @@ runs:
         name: ${{ inputs.artifact_name }}
         path: ${{ runner.temp }}/shadow_build_dir/${{ inputs.source }}/${{ inputs.artifact_name }}
 
-    - name: Upload build to S3 Bucket
-      if: github.event_name == 'push' && !github.event.pull_request.head.repo.fork
+    - name: Configure AWS Credentials
+      if: ${{ github.event_name == 'push' && !github.event.pull_request.head.repo.fork && inputs.aws_key_id != '' && inputs.aws_secret_access_key != '' }}
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ inputs.aws_key_id }}
+        aws-secret-access-key: ${{ inputs.aws_secret_access_key }}
+        aws-region: us-west-2
+
+    - name: Upload stable build to S3 Bucket
+      if: ${{ github.event_name == 'push' && !github.event.pull_request.head.repo.fork && inputs.aws_key_id != '' && inputs.aws_secret_access_key != '' }}
       working-directory: ${{ runner.temp }}/shadow_build_dir/${{ inputs.source }}
-      run: |
-        aws configure set aws_access_key_id ${{ inputs.aws_key_id }}
-        aws configure set aws_secret_access_key ${{ inputs.aws_secret_access_key }}
-        aws s3 cp ${{ inputs.artifact_name }} s3://qgroundcontrol/builds/${{ github.ref_name }}/${{ inputs.artifact_name }} --region us-west-2 --acl public-read
+      run: aws s3 cp ${{ inputs.artifact_name }} s3://qgroundcontrol/builds/${{ github.ref_name }}/${{ inputs.artifact_name }} --acl public-read
       shell: bash
 
     - name: Upload tagged stable build to S3 latest Bucket
-      if: github.event_name == 'push' && github.ref_type == 'tag' && !github.event.pull_request.head.repo.fork
+      if: ${{ github.event_name == 'push' && github.ref_type == 'tag' && !github.event.pull_request.head.repo.fork && inputs.aws_key_id != '' && inputs.aws_secret_access_key != '' }}
       working-directory: ${{ runner.temp }}/shadow_build_dir/${{ inputs.source }}
-      run: |
-        aws configure set aws_access_key_id ${{ inputs.aws_key_id }}
-        aws configure set aws_secret_access_key ${{ inputs.aws_secret_access_key }}
-        aws s3 cp ${{ inputs.artifact_name }} s3://qgroundcontrol/latest/${{ inputs.artifact_name }} --region us-west-2 --acl public-read
+      run: aws s3 cp ${{ inputs.artifact_name }} s3://qgroundcontrol/latest/${{ inputs.artifact_name }} --acl public-read
       shell: bash
