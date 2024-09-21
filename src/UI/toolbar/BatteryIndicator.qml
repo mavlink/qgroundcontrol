@@ -89,21 +89,15 @@ Item {
             function getBatteryColor() {
                 switch (battery.chargeState.rawValue) {
                     case MAVLink.MAV_BATTERY_CHARGE_STATE_OK:
-                        if (qgcPal.globalTheme === QGCPalette.Dark) {
-                            // Apply the battery color logic only for the dark theme
-                            if (!isNaN(battery.percentRemaining.rawValue)) {
-                                if (battery.percentRemaining.rawValue > threshold1) {
-                                    return qgcPal.colorGreen 
-                                } else if (battery.percentRemaining.rawValue > threshold2) {
-                                    return qgcPal.colorYellowGreen 
-                                } else {
-                                    return qgcPal.colorYellow 
-                                }
+                        if (!isNaN(battery.percentRemaining.rawValue)) {
+                            if (battery.percentRemaining.rawValue > threshold1) {
+                                return qgcPal.colorGreen 
+                            } else if (battery.percentRemaining.rawValue > threshold2) {
+                                return qgcPal.colorYellowGreen 
                             } else {
-                                return qgcPal.text
+                                return qgcPal.colorYellow 
                             }
                         } else {
-                            // For light theme, return a default color
                             return qgcPal.text
                         }
                     case MAVLink.MAV_BATTERY_CHARGE_STATE_LOW:
@@ -134,11 +128,11 @@ Item {
                     case MAVLink.MAV_BATTERY_CHARGE_STATE_LOW:
                         return "/qmlimages/BatteryOrange.svg" // Low with orange svg
                     case MAVLink.MAV_BATTERY_CHARGE_STATE_CRITICAL:
-                        return "/qmlimages/BatteryLow.svg" // Critical with red svg
+                        return "/qmlimages/BatteryCritical.svg" // Critical with red svg
                     case MAVLink.MAV_BATTERY_CHARGE_STATE_EMERGENCY:
                     case MAVLink.MAV_BATTERY_CHARGE_STATE_FAILED:
                     case MAVLink.MAV_BATTERY_CHARGE_STATE_UNHEALTHY:
-                        return "/qmlimages/BatteryCritical.svg" // Exclamation mark
+                        return "/qmlimages/BatteryEMERGENCY.svg" // Exclamation mark
                     default:
                         return "/qmlimages/Battery.svg" // Fallback if percentage is unavailable
                 }
@@ -187,7 +181,7 @@ Item {
                 QGCLabel {
                     Layout.alignment:       Qt.AlignHCenter
                     verticalAlignment:      Text.AlignVCenter
-                    color:                  getBatteryColor()
+                    color:                  qgcPal.text
                     text:                   getBatteryPercentageText()
                     font.pointSize:         _showBoth ? ScreenTools.defaultFontPointSize : ScreenTools.mediumFontPointSize
                     visible:                _showBoth || _showPercentage
@@ -196,7 +190,7 @@ Item {
                 QGCLabel {
                     Layout.alignment:       Qt.AlignHCenter
                     font.pointSize:         _showBoth ? ScreenTools.defaultFontPointSize : ScreenTools.mediumFontPointSize
-                    color:                  getBatteryColor()
+                    color:                  qgcPal.text
                     text:                   getBatteryVoltageText()
                     visible:                _showBoth || _showVoltage
                 }
@@ -332,144 +326,113 @@ Item {
             }
 
             SettingsGroupLayout {
+                heading:        qsTr("Battery State Display")
                 Layout.fillWidth: true
-
+                spacing: ScreenTools.defaultFontPixelWidth * 0.5
+                
                 RowLayout {
-                    Layout.fillWidth: true
-                    spacing: ScreenTools.defaultFontPixelWidth * 3 // Adjust this value for more space
-
-                    ColumnLayout {
-                    spacing: ScreenTools.defaultFontPixelWidth * 3 // Adjust this value for more space
-                        Layout.fillWidth: true
-
-                        LabelledLabel {
-                            labelText: "Light Theme                    "
-                            Layout.alignment: Qt.AlignHCenter // Center align the text
-                        }
-                    }
-
-                    ColumnLayout {
-                        spacing: ScreenTools.defaultFontPixelWidth / 2
-                        Layout.fillWidth: true
-
-                        LabelledLabel {
-                            labelText: "Dark Theme                    "
-                            Layout.alignment: Qt.AlignHCenter // Center align the text
-                        }
-                    }
-                }
-
-                RowLayout {
-                    spacing: ScreenTools.defaultFontPixelHeight / 2
-                    Layout.fillWidth: true
-
-                    // First ColumnLayout (Battery Image Display)
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        //spacing: ScreenTools.defaultFontPixelHeight / 2
-
-                        QGCColoredImage {
-                            source: "/qmlimages/BatteryConfLight.svg"
-                            height: ScreenTools.defaultFontPixelHeight * 5
-                            width: ScreenTools.defaultFontPixelWidth * 15
-                            fillMode: Image.PreserveAspectFit
-                            color: Qt.color("transparent") // Optional, if needed
-
-                        }
-                    }
+                    //Layout.fillWidth: true
                     
-                    // Second ColumnLayout (Thresholds and Labels)
-                    ColumnLayout {
-                        Layout.fillWidth: true
-
-                        LabelledLabel {
-                            label: "100%"
-                        }
-
-                        LabelledLabel {
-                            label: " 15%"
-                        }
-
-                        LabelledLabel {
-                            label: "  7%"
-                        }
+                    QGCColoredImage {
+                        source: "/qmlimages/BatteryGreen.svg"
+                        height: ScreenTools.defaultFontPixelHeight * 5
+                        width: ScreenTools.defaultFontPixelWidth * 7
+                        fillMode: Image.PreserveAspectFit
+                        color: qgcPal.colorGreen
                     }
-                        
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        //spacing: ScreenTools.defaultFontPixelHeight / 2
 
-                        QGCColoredImage {
-                            source: "/qmlimages/BatteryConf.svg"
-                            height: ScreenTools.defaultFontPixelHeight * 5
-                            width: ScreenTools.defaultFontPixelWidth * 15
-                            fillMode: Image.PreserveAspectFit
-                            color: Qt.color("transparent") // Optional, if needed
-                        }
+                    QGCLabel {
+                        Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 3.5 
+                        text: qsTr("100%")
+                        Layout.leftMargin: -13  
                     }
-                    // Second ColumnLayout (Thresholds and Labels)
-                    ColumnLayout {
-                        Layout.fillWidth: true
 
-                        LabelledLabel {
-                            label: " 100%"
-                        }
+                    QGCColoredImage {
+                        source: "/qmlimages/BatteryYellowGreen.svg"
+                        height: ScreenTools.defaultFontPixelHeight * 5
+                        width: ScreenTools.defaultFontPixelWidth * 7
+                        fillMode: Image.PreserveAspectFit
+                        color: qgcPal.colorYellowGreen
+                    }
 
-                        Row {
-                            //spacing: ScreenTools.defaultFontPixelHeight / 2
-                            Layout.fillWidth: true
-                        
-                            FactTextField {
-                                id: threshold1Field
-                                fact: batterySettings.threshold1
-                                validator: IntValidator { bottom: 16 } // Value is at least 16
-                                width: ScreenTools.defaultFontPixelWidth * 6
-                                height: ScreenTools.defaultFontPixelHeight * 1.5
-                                onEditingFinished: {
-                                    let newValue = parseInt(text);
-                                    if (newValue > batterySettings.threshold2.rawValue) {
-                                        batterySettings.threshold1.rawValue = newValue;
-                                    } else {
-                                        // Adjust value if invalid
-                                        batterySettings.threshold1.rawValue = batterySettings.threshold2.rawValue - 1;
-                                        text = batterySettings.threshold1.rawValue.toString(); // Update displayed text
-                                    }
-                                }                                
+                    FactTextField {
+                        id: threshold1Field
+                        fact: batterySettings.threshold1
+                        validator: IntValidator { bottom: 16 } // Value is at least 16
+                        implicitWidth: ScreenTools.defaultFontPixelWidth * 6  // Reduced width
+                        Layout.leftMargin: -10
+                        //Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 2  // Reduced width using Layout.preferredWidth
+                        height: ScreenTools.defaultFontPixelHeight * 1.5
+                        onEditingFinished: {
+                            let newValue = parseInt(text);
+                            if (newValue > batterySettings.threshold2.rawValue) {
+                                batterySettings.threshold1.rawValue = newValue;
+                            } else {
+                                // Adjust value if invalid
+                                batterySettings.threshold1.rawValue = batterySettings.threshold2.rawValue - 1;
+                                text = batterySettings.threshold1.rawValue.toString(); // Update displayed text
+                            }
+                        }                                
+                    }
+
+                    QGCColoredImage {
+                        source: "/qmlimages/BatteryYellow.svg"
+                        height: ScreenTools.defaultFontPixelHeight * 5
+                        width: ScreenTools.defaultFontPixelWidth * 7
+                        fillMode: Image.PreserveAspectFit
+                        color: qgcPal.colorYellow
+                    }
+
+                    FactTextField {
+                        id: threshold2Field
+                        fact: batterySettings.threshold2
+                        validator: IntValidator { bottom: 16 }
+                        implicitWidth: ScreenTools.defaultFontPixelWidth * 6
+                        Layout.leftMargin: -10
+                        height: ScreenTools.defaultFontPixelHeight * 1.5
+                        onEditingFinished: {
+                            let newValue = parseInt(text);
+                            if (newValue < batterySettings.threshold1.rawValue) {
+                                batterySettings.threshold2.rawValue = newValue;
+                            } else {
+                                batterySettings.threshold2.rawValue = batterySettings.threshold1.rawValue - 1;
+                                text = batterySettings.threshold2.rawValue.toString(); 
                             }
                         }
-
-                        Row {
-                            //spacing: ScreenTools.defaultFontPixelHeight / 2
-                            Layout.fillWidth: true
-                            spacing: ScreenTools.defaultFontPixelWidth * 5
-
-                            FactTextField {
-                                id: threshold2Field
-                                fact: batterySettings.threshold2
-                                validator: IntValidator { bottom: 16 }
-                                width: ScreenTools.defaultFontPixelWidth * 6
-                                height: ScreenTools.defaultFontPixelHeight * 1.5
-                                onEditingFinished: {
-                                    let newValue = parseInt(text);
-                                    if (newValue < batterySettings.threshold1.rawValue) {
-                                        batterySettings.threshold2.rawValue = newValue;
-                                    } else {
-                                        batterySettings.threshold2.rawValue = batterySettings.threshold1.rawValue - 1;
-                                        text = batterySettings.threshold2.rawValue.toString(); 
-                                    }
-                                }
-                            }
-                        }
-
-                        LabelledLabel {
-                            label: "  15%"
-                        }
-
-                        LabelledLabel {
-                            label: "    7%"
-                        }
                     }
+
+                    QGCColoredImage {
+                        source: "/qmlimages/BatteryOrange.svg"
+                        height: ScreenTools.defaultFontPixelHeight * 5
+                        width: ScreenTools.defaultFontPixelWidth * 7
+                        fillMode: Image.PreserveAspectFit
+                        color: qgcPal.colorOrange
+                    }
+
+                    QGCLabel {
+                        Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 2.5
+                        text: qsTr("Low")
+                        Layout.leftMargin: -13
+                    }
+
+                    QGCColoredImage {
+                        source: "/qmlimages/BatteryCritical.svg"
+                        height: ScreenTools.defaultFontPixelHeight * 5
+                        width: ScreenTools.defaultFontPixelWidth * 7
+                        fillMode: Image.PreserveAspectFit
+                        color: qgcPal.colorRed
+                    }
+
+                    QGCLabel {
+                        Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 3.5  
+                        text: qsTr("Critical")
+                        Layout.leftMargin: -13
+                    }
+
                 }
+                    
+                    
+            
             }
         }
     }
