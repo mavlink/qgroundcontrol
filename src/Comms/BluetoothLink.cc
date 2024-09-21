@@ -197,7 +197,7 @@ BluetoothConfiguration::BluetoothConfiguration(const QString& name)
 
 }
 
-BluetoothConfiguration::BluetoothConfiguration(BluetoothConfiguration* source)
+BluetoothConfiguration::BluetoothConfiguration(const BluetoothConfiguration* source)
     : LinkConfiguration(source)
     , _deviceDiscover(nullptr)
     , _device(source->device())
@@ -222,10 +222,10 @@ QString BluetoothConfiguration::settingsTitle()
     }
 }
 
-void BluetoothConfiguration::copyFrom(LinkConfiguration *source)
+void BluetoothConfiguration::copyFrom(const LinkConfiguration *source)
 {
     LinkConfiguration::copyFrom(source);
-    auto* usource = qobject_cast<BluetoothConfiguration*>(source);
+    const BluetoothConfiguration* const usource = qobject_cast<const BluetoothConfiguration*>(source);
     Q_ASSERT(usource != nullptr);
     _device = usource->device();
 }
@@ -338,7 +338,7 @@ void BluetoothConfiguration::setDevName(const QString &name)
     }
 }
 
-QString BluetoothConfiguration::address()
+QString BluetoothConfiguration::address() const
 {
 #ifdef Q_OS_IOS
     return {};

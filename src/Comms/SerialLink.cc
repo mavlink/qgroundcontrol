@@ -9,21 +9,22 @@
 
 #include "SerialLink.h"
 #include "QGC.h"
-#include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #ifdef Q_OS_ANDROID
+#include "QGCApplication.h"
 #include "LinkManager.h"
 #include "qserialportinfo.h"
 #else
 #include <QtSerialPort/QSerialPortInfo>
 #endif
+#include <QtCore/QCoreApplication>
 #include <QtCore/QSettings>
 
 QGC_LOGGING_CATEGORY(SerialLinkLog, "SerialLinkLog")
 
 SerialLink::SerialLink(SharedLinkConfigurationPtr& config, bool isPX4Flow)
     : LinkInterface(config, isPX4Flow)
-    , _serialConfig(qobject_cast<SerialConfiguration*>(config.get()))
+    , _serialConfig(qobject_cast<const SerialConfiguration*>(config.get()))
 {
     qRegisterMetaType<QSerialPort::SerialPortError>();
     qCDebug(SerialLinkLog) << "Create SerialLink portName:baud:flowControl:parity:dataButs:stopBits" << _serialConfig->portName() << _serialConfig->baud() << _serialConfig->flowControl()
@@ -293,7 +294,7 @@ SerialConfiguration::SerialConfiguration(const QString& name) : LinkConfiguratio
     _usbDirect  = false;
 }
 
-SerialConfiguration::SerialConfiguration(SerialConfiguration* copy) : LinkConfiguration(copy)
+SerialConfiguration::SerialConfiguration(const SerialConfiguration* copy) : LinkConfiguration(copy)
 {
     _baud               = copy->baud();
     _flowControl        = copy->flowControl();
@@ -305,10 +306,10 @@ SerialConfiguration::SerialConfiguration(SerialConfiguration* copy) : LinkConfig
     _usbDirect          = copy->_usbDirect;
 }
 
-void SerialConfiguration::copyFrom(LinkConfiguration *source)
+void SerialConfiguration::copyFrom(const LinkConfiguration *source)
 {
     LinkConfiguration::copyFrom(source);
-    auto* ssource = qobject_cast<SerialConfiguration*>(source);
+    const SerialConfiguration* ssource = qobject_cast<const SerialConfiguration*>(source);
     if (ssource) {
         _baud               = ssource->baud();
         _flowControl        = ssource->flowControl();

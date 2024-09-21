@@ -15,6 +15,7 @@
 #ifndef __mobile__
 #include "MAVLinkProtocol.h"
 #endif
+#include "MAVLinkLib.h"
 
 #include <QtCore/QFileInfo>
 #include <QtCore/QtEndian>
@@ -26,16 +27,16 @@ LogReplayLinkConfiguration::LogReplayLinkConfiguration(const QString& name)
     
 }
 
-LogReplayLinkConfiguration::LogReplayLinkConfiguration(LogReplayLinkConfiguration* copy)
+LogReplayLinkConfiguration::LogReplayLinkConfiguration(const LogReplayLinkConfiguration* copy)
     : LinkConfiguration(copy)
 {
     _logFilename = copy->logFilename();
 }
 
-void LogReplayLinkConfiguration::copyFrom(LinkConfiguration *source)
+void LogReplayLinkConfiguration::copyFrom(const LinkConfiguration *source)
 {
     LinkConfiguration::copyFrom(source);
-    auto* ssource = qobject_cast<LogReplayLinkConfiguration*>(source);
+    const LogReplayLinkConfiguration* ssource = qobject_cast<const LogReplayLinkConfiguration*>(source);
     if (ssource) {
         _logFilename = ssource->logFilename();
     } else {

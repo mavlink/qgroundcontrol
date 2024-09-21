@@ -96,7 +96,7 @@ void UnitTest::init(void)
         _linkManager = qgcApp()->toolbox()->linkManager();
     }
 
-    _linkManager->restart();
+    _linkManager->setConnectionsAllowed();
 
     // Force offline vehicle back to defaults
     AppSettings* appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();

@@ -35,7 +35,7 @@ public:
     Q_PROPERTY(QString host READ host WRITE setHost NOTIFY hostChanged)
 
     TCPConfiguration(const QString& name);
-    TCPConfiguration(TCPConfiguration* source);
+    TCPConfiguration(const TCPConfiguration* source);
 
     quint16             port        (void) const                         { return _port; }
     QString             host        (void) const                         { return _host; }
@@ -43,8 +43,8 @@ public:
     void                setHost     (const QString host);
 
     //LinkConfiguration overrides
-    LinkType    type                (void) override                                         { return LinkConfiguration::TypeTcp; }
-    void        copyFrom            (LinkConfiguration* source) override;
+    LinkType    type                (void) const override                                         { return LinkConfiguration::TypeTcp; }
+    void        copyFrom            (const LinkConfiguration* source) override;
     void        loadSettings        (QSettings& settings, const QString& root) override;
     void        saveSettings        (QSettings& settings, const QString& root) override;
     QString     settingsURL         (void) override                                         { return "TcpSettings.qml"; }
@@ -91,7 +91,7 @@ private:
     void _writeDebugBytes   (const QByteArray data);
 #endif
 
-    TCPConfiguration* _tcpConfig;
+    const TCPConfiguration* _tcpConfig;
     QTcpSocket*       _socket;
     bool              _socketIsConnected;
 
