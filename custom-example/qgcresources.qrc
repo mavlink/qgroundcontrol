@@ -45,6 +45,7 @@
 		<file alias="SplashScreen">../resources/SplashScreen.png</file>
 		<file alias="Stop">../resources/Stop.svg</file>
 		<file alias="takeoff.svg">../resources/takeoff.svg</file>
+        <file alias="terrain.svg">resources/terrain.svg</file>
 		<file alias="TrashDelete.svg">../resources/TrashDelete.svg</file>
 		<file alias="waves.svg">../resources/waves.svg</file>
 		<file alias="wind-guru.svg">../resources/wind-guru.svg</file>
