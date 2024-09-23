@@ -282,10 +282,10 @@ qt_add_executable(${PROJECT_NAME}
 if(Qt6LinguistTools_FOUND)
     # TODO: Update to new qt_add_translations form in Qt6.7
     file(GLOB TS_SOURCES ${CMAKE_SOURCE_DIR}/translations/qgc_*.ts)
-    set_source_files_properties(${TS_SOURCES} PROPERTIES OUTPUT_LOCATION "${CMAKE_BINARY_DIR}/translations")
+    set_source_files_properties(${TS_SOURCES} PROPERTIES OUTPUT_LOCATION "${CMAKE_BINARY_DIR}/i18n")
     qt_add_translations(${PROJECT_NAME}
         TS_FILES ${TS_SOURCES}
-        RESOURCE_PREFIX "/i18n"
+        RESOURCE_PREFIX "/"
         LUPDATE_OPTIONS -no-obsolete
     )
 endif()
