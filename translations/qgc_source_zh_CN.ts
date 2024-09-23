@@ -10435,7 +10435,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/PlanView/MissionItemEditor.qml" line="249"/>
       <source>Item #%1</source>
-      <translation>项目 1</translation>
+      <translation>项目 #%1</translation>
     </message>
   </context>
   <context>
