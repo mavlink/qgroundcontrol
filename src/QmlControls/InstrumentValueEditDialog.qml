@@ -55,10 +55,10 @@ QGCPopupDialog {
                     heading: qsTr("Telemetry")
 
                     LabelledComboBox {
-                        id:             factGroupCombo
-                        label:          qsTr("Group")
-                        model:          instrumentValueData.factGroupNames
-                        currentIndex:   comboBox.find(instrumentValueData.factGroupName)
+                        id:                     factGroupCombo
+                        label:                  qsTr("Group")
+                        model:                  instrumentValueData.factGroupNames
+                        Component.onCompleted:  currentIndex = comboBox.find(instrumentValueData.factGroupName)
                         onActivated: (index) => {
                             instrumentValueData.setFact(currentText, "")
                             instrumentValueData.icon = ""
@@ -74,7 +74,7 @@ QGCPopupDialog {
                         id:                     factNamesCombo
                         label:                  qsTr("Value")
                         model:                  instrumentValueData.factValueNames
-                        currentIndex:           comboBox.find(instrumentValueData.factName)
+                        Component.onCompleted:  currentIndex = comboBox.find(instrumentValueData.factName)
                         onActivated: (index) => {
                             instrumentValueData.setFact(instrumentValueData.factGroupName, currentText)
                             instrumentValueData.icon = ""
