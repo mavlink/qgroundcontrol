@@ -79,9 +79,9 @@ Rectangle {
                     lineVisible:                true
                     labelsFont.family:          ScreenTools.fixedFontFamily
                     labelsFont.pointSize:       ScreenTools.smallFontPointSize
-                    labelsColor:                "white"
+                    labelsColor:                qgcPal.text
                     tickCount:                  5
-                    gridLineColor:              "#44FFFFFF"
+                    gridLineColor:              applyOpacity(qgcPal.text, 0.25)
                 }
 
                 ValueAxis {
@@ -91,9 +91,9 @@ Rectangle {
                     lineVisible:                true
                     labelsFont.family:          ScreenTools.fixedFontFamily
                     labelsFont.pointSize:       ScreenTools.smallFontPointSize
-                    labelsColor:                "white"
+                    labelsColor:                qgcPal.text
                     tickCount:                  4
-                    gridLineColor:              "#44FFFFFF"
+                    gridLineColor:              applyOpacity(qgcPal.text, 0.25)
                 }
 
                 LineSeries {
@@ -127,7 +127,7 @@ Rectangle {
                             id:         simpleItem
                             height:     terrainProfile.height
                             width:      1
-                            color:      "white"
+                            color:      qgcPal.text
                             x:          (object.distanceFromStart * terrainProfile.pixelsPerMeter)
                             visible:    object.isSimpleItem || object.isSingleItem
 
@@ -146,7 +146,7 @@ Rectangle {
                             id:         complexItemEntry
                             height:     terrainProfile.height
                             width:      1
-                            color:      "white"
+                            color:      qgcPal.text
                             x:          (object.distanceFromStart * terrainProfile.pixelsPerMeter)
                             visible:    complexItem.visible
 
@@ -164,7 +164,7 @@ Rectangle {
                             id:         complexItemExit
                             height:     terrainProfile.height
                             width:      1
-                            color:      "white"
+                            color:      qgcPal.text
                             x:          ((object.distanceFromStart + object.complexDistance) * terrainProfile.pixelsPerMeter)
                             visible:    complexItem.visible
 
@@ -203,5 +203,9 @@ Rectangle {
                 }
             }
         }
+    }
+
+    function applyOpacity(colorIn, opacity){
+        return Qt.rgba(colorIn.r, colorIn.g, colorIn.b, opacity)
     }
 }
