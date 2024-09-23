@@ -1464,10 +1464,16 @@ bool FactMetaData::_parseEnum(const QJsonObject& jsonObject, DefineMap_t defineM
     QString jsonStrings = jsonObject.value(_enumStringsJsonKey).toString();
     QString defineMapStrings = defineMap.value(jsonStrings, jsonStrings);
     rgDescriptions = defineMapStrings.split(",", Qt::SkipEmptyParts);
+    for (auto& desc: rgDescriptions) {
+        desc = desc.trimmed();
+    }
 
     QString jsonValues = jsonObject.value(_enumValuesJsonKey).toString();
     QString defineMapValues = defineMap.value(jsonValues, jsonValues);
     rgValues = defineMapValues.split(",", Qt::SkipEmptyParts);
+    for (auto& value: rgValues) {
+        value = value.trimmed();
+    }
 
     if (rgDescriptions.count() != rgValues.count()) {
         errorString = QStringLiteral("Enum strings/values count mismatch - strings: '%1'[%2,%3] values: '%4'[%5,%6]").arg(defineMapStrings).arg(rgDescriptions.count()).arg(defineMapStrings.contains(",")).arg(defineMapValues).arg(rgValues.count()).arg(defineMapValues.contains(","));
