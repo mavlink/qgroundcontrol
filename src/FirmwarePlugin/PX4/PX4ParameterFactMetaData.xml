@@ -21973,7 +21973,7 @@
       <decimal>3</decimal>
       <reboot_required>True</reboot_required>
     </parameter>
-    <parameter name="SEP_PORT1_CFG" default="201" type="INT32">
+    <parameter name="SEP_PORT1_CFG" default="0" type="INT32">
       <short_desc>Serial Configuration for GPS Port</short_desc>
       <long_desc>Configure on which serial port to run GPS Port.</long_desc>
       <reboot_required>true</reboot_required>
