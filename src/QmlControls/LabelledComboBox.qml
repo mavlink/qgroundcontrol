@@ -17,6 +17,7 @@ RowLayout {
     property alias label:                   label.text
     property alias model:                   _comboBox.model
     property alias currentIndex:            _comboBox.currentIndex
+    property alias currentText:             _comboBox.currentText
     property var   comboBox:                _comboBox
     property real  comboBoxPreferredWidth:  -1
 
