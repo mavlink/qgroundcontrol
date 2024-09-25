@@ -288,6 +288,10 @@
       <type>Rover</type>
       <url>https://www.axialadventure.com/product/1-10-scx10-ii-trail-honcho-4wd-rock-crawler-brushed-rtr/AXID9059.html</url>
     </airframe>
+    <airframe name="Generic Rover Mecanum" id="52000" maintainer="John Doe &lt;john@example.com&gt;">
+      <class>Rover</class>
+      <type>Rover</type>
+    </airframe>
     <airframe name="Generic Ground Vehicle (Deprecated)" id="59000" maintainer="">
       <class>Rover</class>
       <maintainer />

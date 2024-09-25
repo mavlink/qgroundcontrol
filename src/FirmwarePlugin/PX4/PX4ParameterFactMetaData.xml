@@ -4709,6 +4709,18 @@
       <min>0</min>
       <max>200</max>
     </parameter>
+    <parameter name="SIM_GZ_WH_DIS3" default="100" type="INT32">
+      <short_desc>SIM_GZ Wheels 3 Disarmed Value</short_desc>
+      <long_desc>This is the output value that is set when not armed. Note that non-motor outputs might already be active in prearm state if COM_PREARM_MODE is set.</long_desc>
+      <min>0</min>
+      <max>200</max>
+    </parameter>
+    <parameter name="SIM_GZ_WH_DIS4" default="100" type="INT32">
+      <short_desc>SIM_GZ Wheels 4 Disarmed Value</short_desc>
+      <long_desc>This is the output value that is set when not armed. Note that non-motor outputs might already be active in prearm state if COM_PREARM_MODE is set.</long_desc>
+      <min>0</min>
+      <max>200</max>
+    </parameter>
     <parameter name="SIM_GZ_WH_FAIL1" default="-1" type="INT32">
       <short_desc>SIM_GZ Wheels 1 Failsafe Value</short_desc>
       <long_desc>This is the output value that is set when in failsafe mode. When set to -1 (default), the value depends on the function (see SIM_GZ_WH_FUNC1).</long_desc>
@@ -4718,6 +4730,18 @@
     <parameter name="SIM_GZ_WH_FAIL2" default="-1" type="INT32">
       <short_desc>SIM_GZ Wheels 2 Failsafe Value</short_desc>
       <long_desc>This is the output value that is set when in failsafe mode. When set to -1 (default), the value depends on the function (see SIM_GZ_WH_FUNC2).</long_desc>
+      <min>-1</min>
+      <max>200</max>
+    </parameter>
+    <parameter name="SIM_GZ_WH_FAIL3" default="-1" type="INT32">
+      <short_desc>SIM_GZ Wheels 3 Failsafe Value</short_desc>
+      <long_desc>This is the output value that is set when in failsafe mode. When set to -1 (default), the value depends on the function (see SIM_GZ_WH_FUNC3).</long_desc>
+      <min>-1</min>
+      <max>200</max>
+    </parameter>
+    <parameter name="SIM_GZ_WH_FAIL4" default="-1" type="INT32">
+      <short_desc>SIM_GZ Wheels 4 Failsafe Value</short_desc>
+      <long_desc>This is the output value that is set when in failsafe mode. When set to -1 (default), the value depends on the function (see SIM_GZ_WH_FUNC4).</long_desc>
       <min>-1</min>
       <max>200</max>
     </parameter>
@@ -4827,6 +4851,112 @@
         <value code="440">Landing Gear Wheel</value>
       </values>
     </parameter>
+    <parameter name="SIM_GZ_WH_FUNC3" default="0" type="INT32">
+      <short_desc>SIM_GZ Wheels 3 Output Function</short_desc>
+      <long_desc>Select what should be output on SIM_GZ Wheels 3. The default failsafe value is set according to the selected function: - 'Min' for ConstantMin - 'Max' for ConstantMax - 'Max' for Parachute - ('Max'+'Min')/2 for Servos - 'Disarmed' for the rest</long_desc>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Constant Min</value>
+        <value code="2">Constant Max</value>
+        <value code="101">Motor 1</value>
+        <value code="102">Motor 2</value>
+        <value code="103">Motor 3</value>
+        <value code="104">Motor 4</value>
+        <value code="105">Motor 5</value>
+        <value code="106">Motor 6</value>
+        <value code="107">Motor 7</value>
+        <value code="108">Motor 8</value>
+        <value code="109">Motor 9</value>
+        <value code="110">Motor 10</value>
+        <value code="111">Motor 11</value>
+        <value code="112">Motor 12</value>
+        <value code="201">Servo 1</value>
+        <value code="202">Servo 2</value>
+        <value code="203">Servo 3</value>
+        <value code="204">Servo 4</value>
+        <value code="205">Servo 5</value>
+        <value code="206">Servo 6</value>
+        <value code="207">Servo 7</value>
+        <value code="208">Servo 8</value>
+        <value code="301">Peripheral via Actuator Set 1</value>
+        <value code="302">Peripheral via Actuator Set 2</value>
+        <value code="303">Peripheral via Actuator Set 3</value>
+        <value code="304">Peripheral via Actuator Set 4</value>
+        <value code="305">Peripheral via Actuator Set 5</value>
+        <value code="306">Peripheral via Actuator Set 6</value>
+        <value code="400">Landing Gear</value>
+        <value code="401">Parachute</value>
+        <value code="402">RC Roll</value>
+        <value code="403">RC Pitch</value>
+        <value code="404">RC Throttle</value>
+        <value code="405">RC Yaw</value>
+        <value code="406">RC Flaps</value>
+        <value code="407">RC AUX 1</value>
+        <value code="408">RC AUX 2</value>
+        <value code="409">RC AUX 3</value>
+        <value code="410">RC AUX 4</value>
+        <value code="411">RC AUX 5</value>
+        <value code="412">RC AUX 6</value>
+        <value code="420">Gimbal Roll</value>
+        <value code="421">Gimbal Pitch</value>
+        <value code="422">Gimbal Yaw</value>
+        <value code="430">Gripper</value>
+        <value code="440">Landing Gear Wheel</value>
+      </values>
+    </parameter>
+    <parameter name="SIM_GZ_WH_FUNC4" default="0" type="INT32">
+      <short_desc>SIM_GZ Wheels 4 Output Function</short_desc>
+      <long_desc>Select what should be output on SIM_GZ Wheels 4. The default failsafe value is set according to the selected function: - 'Min' for ConstantMin - 'Max' for ConstantMax - 'Max' for Parachute - ('Max'+'Min')/2 for Servos - 'Disarmed' for the rest</long_desc>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Constant Min</value>
+        <value code="2">Constant Max</value>
+        <value code="101">Motor 1</value>
+        <value code="102">Motor 2</value>
+        <value code="103">Motor 3</value>
+        <value code="104">Motor 4</value>
+        <value code="105">Motor 5</value>
+        <value code="106">Motor 6</value>
+        <value code="107">Motor 7</value>
+        <value code="108">Motor 8</value>
+        <value code="109">Motor 9</value>
+        <value code="110">Motor 10</value>
+        <value code="111">Motor 11</value>
+        <value code="112">Motor 12</value>
+        <value code="201">Servo 1</value>
+        <value code="202">Servo 2</value>
+        <value code="203">Servo 3</value>
+        <value code="204">Servo 4</value>
+        <value code="205">Servo 5</value>
+        <value code="206">Servo 6</value>
+        <value code="207">Servo 7</value>
+        <value code="208">Servo 8</value>
+        <value code="301">Peripheral via Actuator Set 1</value>
+        <value code="302">Peripheral via Actuator Set 2</value>
+        <value code="303">Peripheral via Actuator Set 3</value>
+        <value code="304">Peripheral via Actuator Set 4</value>
+        <value code="305">Peripheral via Actuator Set 5</value>
+        <value code="306">Peripheral via Actuator Set 6</value>
+        <value code="400">Landing Gear</value>
+        <value code="401">Parachute</value>
+        <value code="402">RC Roll</value>
+        <value code="403">RC Pitch</value>
+        <value code="404">RC Throttle</value>
+        <value code="405">RC Yaw</value>
+        <value code="406">RC Flaps</value>
+        <value code="407">RC AUX 1</value>
+        <value code="408">RC AUX 2</value>
+        <value code="409">RC AUX 3</value>
+        <value code="410">RC AUX 4</value>
+        <value code="411">RC AUX 5</value>
+        <value code="412">RC AUX 6</value>
+        <value code="420">Gimbal Roll</value>
+        <value code="421">Gimbal Pitch</value>
+        <value code="422">Gimbal Yaw</value>
+        <value code="430">Gripper</value>
+        <value code="440">Landing Gear Wheel</value>
+      </values>
+    </parameter>
     <parameter name="SIM_GZ_WH_MAX1" default="200" type="INT32">
       <short_desc>SIM_GZ Wheels 1 Maximum Value</short_desc>
       <long_desc>Maxmimum output value (when not disarmed).</long_desc>
@@ -4835,6 +4965,18 @@
     </parameter>
     <parameter name="SIM_GZ_WH_MAX2" default="200" type="INT32">
       <short_desc>SIM_GZ Wheels 2 Maximum Value</short_desc>
+      <long_desc>Maxmimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>200</max>
+    </parameter>
+    <parameter name="SIM_GZ_WH_MAX3" default="200" type="INT32">
+      <short_desc>SIM_GZ Wheels 3 Maximum Value</short_desc>
+      <long_desc>Maxmimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>200</max>
+    </parameter>
+    <parameter name="SIM_GZ_WH_MAX4" default="200" type="INT32">
+      <short_desc>SIM_GZ Wheels 4 Maximum Value</short_desc>
       <long_desc>Maxmimum output value (when not disarmed).</long_desc>
       <min>0</min>
       <max>200</max>
@@ -4851,14 +4993,28 @@
       <min>0</min>
       <max>200</max>
     </parameter>
+    <parameter name="SIM_GZ_WH_MIN3" default="0" type="INT32">
+      <short_desc>SIM_GZ Wheels 3 Minimum Value</short_desc>
+      <long_desc>Minimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>200</max>
+    </parameter>
+    <parameter name="SIM_GZ_WH_MIN4" default="0" type="INT32">
+      <short_desc>SIM_GZ Wheels 4 Minimum Value</short_desc>
+      <long_desc>Minimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>200</max>
+    </parameter>
     <parameter name="SIM_GZ_WH_REV" default="0" type="INT32">
       <short_desc>Reverse Output Range for SIM_GZ</short_desc>
       <long_desc>Allows to reverse the output range for each channel. Note: this is only useful for servos.</long_desc>
       <min>0</min>
-      <max>3</max>
+      <max>15</max>
       <bitmask>
         <bit index="0">SIM_GZ Wheels 1</bit>
         <bit index="1">SIM_GZ Wheels 2</bit>
+        <bit index="2">SIM_GZ Wheels 3</bit>
+        <bit index="3">SIM_GZ Wheels 4</bit>
       </bitmask>
     </parameter>
     <parameter name="TAP_ESC_FUNC1" default="0" type="INT32">
@@ -8123,6 +8279,1262 @@
         <bit index="1">VOXL ESC Output ESC 2</bit>
         <bit index="2">VOXL ESC Output ESC 3</bit>
         <bit index="3">VOXL ESC Output ESC 4</bit>
+      </bitmask>
+    </parameter>
+    <parameter name="VTQ_IO_DIS0" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 0 Disarmed Value</short_desc>
+      <long_desc>This is the output value that is set when not armed. Note that non-motor outputs might already be active in prearm state if COM_PREARM_MODE is set.</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_DIS1" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 1 Disarmed Value</short_desc>
+      <long_desc>This is the output value that is set when not armed. Note that non-motor outputs might already be active in prearm state if COM_PREARM_MODE is set.</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_DIS10" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 10 Disarmed Value</short_desc>
+      <long_desc>This is the output value that is set when not armed. Note that non-motor outputs might already be active in prearm state if COM_PREARM_MODE is set.</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_DIS11" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 11 Disarmed Value</short_desc>
+      <long_desc>This is the output value that is set when not armed. Note that non-motor outputs might already be active in prearm state if COM_PREARM_MODE is set.</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_DIS12" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 12 Disarmed Value</short_desc>
+      <long_desc>This is the output value that is set when not armed. Note that non-motor outputs might already be active in prearm state if COM_PREARM_MODE is set.</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_DIS13" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 13 Disarmed Value</short_desc>
+      <long_desc>This is the output value that is set when not armed. Note that non-motor outputs might already be active in prearm state if COM_PREARM_MODE is set.</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_DIS14" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 14 Disarmed Value</short_desc>
+      <long_desc>This is the output value that is set when not armed. Note that non-motor outputs might already be active in prearm state if COM_PREARM_MODE is set.</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_DIS15" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 15 Disarmed Value</short_desc>
+      <long_desc>This is the output value that is set when not armed. Note that non-motor outputs might already be active in prearm state if COM_PREARM_MODE is set.</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_DIS2" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 2 Disarmed Value</short_desc>
+      <long_desc>This is the output value that is set when not armed. Note that non-motor outputs might already be active in prearm state if COM_PREARM_MODE is set.</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_DIS3" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 3 Disarmed Value</short_desc>
+      <long_desc>This is the output value that is set when not armed. Note that non-motor outputs might already be active in prearm state if COM_PREARM_MODE is set.</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_DIS4" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 4 Disarmed Value</short_desc>
+      <long_desc>This is the output value that is set when not armed. Note that non-motor outputs might already be active in prearm state if COM_PREARM_MODE is set.</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_DIS5" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 5 Disarmed Value</short_desc>
+      <long_desc>This is the output value that is set when not armed. Note that non-motor outputs might already be active in prearm state if COM_PREARM_MODE is set.</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_DIS6" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 6 Disarmed Value</short_desc>
+      <long_desc>This is the output value that is set when not armed. Note that non-motor outputs might already be active in prearm state if COM_PREARM_MODE is set.</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_DIS7" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 7 Disarmed Value</short_desc>
+      <long_desc>This is the output value that is set when not armed. Note that non-motor outputs might already be active in prearm state if COM_PREARM_MODE is set.</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_DIS8" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 8 Disarmed Value</short_desc>
+      <long_desc>This is the output value that is set when not armed. Note that non-motor outputs might already be active in prearm state if COM_PREARM_MODE is set.</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_DIS9" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 9 Disarmed Value</short_desc>
+      <long_desc>This is the output value that is set when not armed. Note that non-motor outputs might already be active in prearm state if COM_PREARM_MODE is set.</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_FAIL0" default="-1" type="INT32">
+      <short_desc>Vertiq IO CVI 0 Failsafe Value</short_desc>
+      <long_desc>This is the output value that is set when in failsafe mode. When set to -1 (default), the value depends on the function (see VTQ_IO_FUNC0).</long_desc>
+      <min>-1</min>
+      <max>500</max>
+    </parameter>
+    <parameter name="VTQ_IO_FAIL1" default="-1" type="INT32">
+      <short_desc>Vertiq IO CVI 1 Failsafe Value</short_desc>
+      <long_desc>This is the output value that is set when in failsafe mode. When set to -1 (default), the value depends on the function (see VTQ_IO_FUNC1).</long_desc>
+      <min>-1</min>
+      <max>500</max>
+    </parameter>
+    <parameter name="VTQ_IO_FAIL10" default="-1" type="INT32">
+      <short_desc>Vertiq IO CVI 10 Failsafe Value</short_desc>
+      <long_desc>This is the output value that is set when in failsafe mode. When set to -1 (default), the value depends on the function (see VTQ_IO_FUNC10).</long_desc>
+      <min>-1</min>
+      <max>500</max>
+    </parameter>
+    <parameter name="VTQ_IO_FAIL11" default="-1" type="INT32">
+      <short_desc>Vertiq IO CVI 11 Failsafe Value</short_desc>
+      <long_desc>This is the output value that is set when in failsafe mode. When set to -1 (default), the value depends on the function (see VTQ_IO_FUNC11).</long_desc>
+      <min>-1</min>
+      <max>500</max>
+    </parameter>
+    <parameter name="VTQ_IO_FAIL12" default="-1" type="INT32">
+      <short_desc>Vertiq IO CVI 12 Failsafe Value</short_desc>
+      <long_desc>This is the output value that is set when in failsafe mode. When set to -1 (default), the value depends on the function (see VTQ_IO_FUNC12).</long_desc>
+      <min>-1</min>
+      <max>500</max>
+    </parameter>
+    <parameter name="VTQ_IO_FAIL13" default="-1" type="INT32">
+      <short_desc>Vertiq IO CVI 13 Failsafe Value</short_desc>
+      <long_desc>This is the output value that is set when in failsafe mode. When set to -1 (default), the value depends on the function (see VTQ_IO_FUNC13).</long_desc>
+      <min>-1</min>
+      <max>500</max>
+    </parameter>
+    <parameter name="VTQ_IO_FAIL14" default="-1" type="INT32">
+      <short_desc>Vertiq IO CVI 14 Failsafe Value</short_desc>
+      <long_desc>This is the output value that is set when in failsafe mode. When set to -1 (default), the value depends on the function (see VTQ_IO_FUNC14).</long_desc>
+      <min>-1</min>
+      <max>500</max>
+    </parameter>
+    <parameter name="VTQ_IO_FAIL15" default="-1" type="INT32">
+      <short_desc>Vertiq IO CVI 15 Failsafe Value</short_desc>
+      <long_desc>This is the output value that is set when in failsafe mode. When set to -1 (default), the value depends on the function (see VTQ_IO_FUNC15).</long_desc>
+      <min>-1</min>
+      <max>500</max>
+    </parameter>
+    <parameter name="VTQ_IO_FAIL2" default="-1" type="INT32">
+      <short_desc>Vertiq IO CVI 2 Failsafe Value</short_desc>
+      <long_desc>This is the output value that is set when in failsafe mode. When set to -1 (default), the value depends on the function (see VTQ_IO_FUNC2).</long_desc>
+      <min>-1</min>
+      <max>500</max>
+    </parameter>
+    <parameter name="VTQ_IO_FAIL3" default="-1" type="INT32">
+      <short_desc>Vertiq IO CVI 3 Failsafe Value</short_desc>
+      <long_desc>This is the output value that is set when in failsafe mode. When set to -1 (default), the value depends on the function (see VTQ_IO_FUNC3).</long_desc>
+      <min>-1</min>
+      <max>500</max>
+    </parameter>
+    <parameter name="VTQ_IO_FAIL4" default="-1" type="INT32">
+      <short_desc>Vertiq IO CVI 4 Failsafe Value</short_desc>
+      <long_desc>This is the output value that is set when in failsafe mode. When set to -1 (default), the value depends on the function (see VTQ_IO_FUNC4).</long_desc>
+      <min>-1</min>
+      <max>500</max>
+    </parameter>
+    <parameter name="VTQ_IO_FAIL5" default="-1" type="INT32">
+      <short_desc>Vertiq IO CVI 5 Failsafe Value</short_desc>
+      <long_desc>This is the output value that is set when in failsafe mode. When set to -1 (default), the value depends on the function (see VTQ_IO_FUNC5).</long_desc>
+      <min>-1</min>
+      <max>500</max>
+    </parameter>
+    <parameter name="VTQ_IO_FAIL6" default="-1" type="INT32">
+      <short_desc>Vertiq IO CVI 6 Failsafe Value</short_desc>
+      <long_desc>This is the output value that is set when in failsafe mode. When set to -1 (default), the value depends on the function (see VTQ_IO_FUNC6).</long_desc>
+      <min>-1</min>
+      <max>500</max>
+    </parameter>
+    <parameter name="VTQ_IO_FAIL7" default="-1" type="INT32">
+      <short_desc>Vertiq IO CVI 7 Failsafe Value</short_desc>
+      <long_desc>This is the output value that is set when in failsafe mode. When set to -1 (default), the value depends on the function (see VTQ_IO_FUNC7).</long_desc>
+      <min>-1</min>
+      <max>500</max>
+    </parameter>
+    <parameter name="VTQ_IO_FAIL8" default="-1" type="INT32">
+      <short_desc>Vertiq IO CVI 8 Failsafe Value</short_desc>
+      <long_desc>This is the output value that is set when in failsafe mode. When set to -1 (default), the value depends on the function (see VTQ_IO_FUNC8).</long_desc>
+      <min>-1</min>
+      <max>500</max>
+    </parameter>
+    <parameter name="VTQ_IO_FAIL9" default="-1" type="INT32">
+      <short_desc>Vertiq IO CVI 9 Failsafe Value</short_desc>
+      <long_desc>This is the output value that is set when in failsafe mode. When set to -1 (default), the value depends on the function (see VTQ_IO_FUNC9).</long_desc>
+      <min>-1</min>
+      <max>500</max>
+    </parameter>
+    <parameter name="VTQ_IO_FUNC0" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 0 Output Function</short_desc>
+      <long_desc>Select what should be output on Vertiq IO CVI 0. The default failsafe value is set according to the selected function: - 'Min' for ConstantMin - 'Max' for ConstantMax - 'Max' for Parachute - ('Max'+'Min')/2 for Servos - 'Disarmed' for the rest</long_desc>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Constant Min</value>
+        <value code="2">Constant Max</value>
+        <value code="101">Motor 1</value>
+        <value code="102">Motor 2</value>
+        <value code="103">Motor 3</value>
+        <value code="104">Motor 4</value>
+        <value code="105">Motor 5</value>
+        <value code="106">Motor 6</value>
+        <value code="107">Motor 7</value>
+        <value code="108">Motor 8</value>
+        <value code="109">Motor 9</value>
+        <value code="110">Motor 10</value>
+        <value code="111">Motor 11</value>
+        <value code="112">Motor 12</value>
+        <value code="201">Servo 1</value>
+        <value code="202">Servo 2</value>
+        <value code="203">Servo 3</value>
+        <value code="204">Servo 4</value>
+        <value code="205">Servo 5</value>
+        <value code="206">Servo 6</value>
+        <value code="207">Servo 7</value>
+        <value code="208">Servo 8</value>
+        <value code="301">Peripheral via Actuator Set 1</value>
+        <value code="302">Peripheral via Actuator Set 2</value>
+        <value code="303">Peripheral via Actuator Set 3</value>
+        <value code="304">Peripheral via Actuator Set 4</value>
+        <value code="305">Peripheral via Actuator Set 5</value>
+        <value code="306">Peripheral via Actuator Set 6</value>
+        <value code="400">Landing Gear</value>
+        <value code="401">Parachute</value>
+        <value code="402">RC Roll</value>
+        <value code="403">RC Pitch</value>
+        <value code="404">RC Throttle</value>
+        <value code="405">RC Yaw</value>
+        <value code="406">RC Flaps</value>
+        <value code="407">RC AUX 1</value>
+        <value code="408">RC AUX 2</value>
+        <value code="409">RC AUX 3</value>
+        <value code="410">RC AUX 4</value>
+        <value code="411">RC AUX 5</value>
+        <value code="412">RC AUX 6</value>
+        <value code="420">Gimbal Roll</value>
+        <value code="421">Gimbal Pitch</value>
+        <value code="422">Gimbal Yaw</value>
+        <value code="430">Gripper</value>
+        <value code="440">Landing Gear Wheel</value>
+      </values>
+    </parameter>
+    <parameter name="VTQ_IO_FUNC1" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 1 Output Function</short_desc>
+      <long_desc>Select what should be output on Vertiq IO CVI 1. The default failsafe value is set according to the selected function: - 'Min' for ConstantMin - 'Max' for ConstantMax - 'Max' for Parachute - ('Max'+'Min')/2 for Servos - 'Disarmed' for the rest</long_desc>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Constant Min</value>
+        <value code="2">Constant Max</value>
+        <value code="101">Motor 1</value>
+        <value code="102">Motor 2</value>
+        <value code="103">Motor 3</value>
+        <value code="104">Motor 4</value>
+        <value code="105">Motor 5</value>
+        <value code="106">Motor 6</value>
+        <value code="107">Motor 7</value>
+        <value code="108">Motor 8</value>
+        <value code="109">Motor 9</value>
+        <value code="110">Motor 10</value>
+        <value code="111">Motor 11</value>
+        <value code="112">Motor 12</value>
+        <value code="201">Servo 1</value>
+        <value code="202">Servo 2</value>
+        <value code="203">Servo 3</value>
+        <value code="204">Servo 4</value>
+        <value code="205">Servo 5</value>
+        <value code="206">Servo 6</value>
+        <value code="207">Servo 7</value>
+        <value code="208">Servo 8</value>
+        <value code="301">Peripheral via Actuator Set 1</value>
+        <value code="302">Peripheral via Actuator Set 2</value>
+        <value code="303">Peripheral via Actuator Set 3</value>
+        <value code="304">Peripheral via Actuator Set 4</value>
+        <value code="305">Peripheral via Actuator Set 5</value>
+        <value code="306">Peripheral via Actuator Set 6</value>
+        <value code="400">Landing Gear</value>
+        <value code="401">Parachute</value>
+        <value code="402">RC Roll</value>
+        <value code="403">RC Pitch</value>
+        <value code="404">RC Throttle</value>
+        <value code="405">RC Yaw</value>
+        <value code="406">RC Flaps</value>
+        <value code="407">RC AUX 1</value>
+        <value code="408">RC AUX 2</value>
+        <value code="409">RC AUX 3</value>
+        <value code="410">RC AUX 4</value>
+        <value code="411">RC AUX 5</value>
+        <value code="412">RC AUX 6</value>
+        <value code="420">Gimbal Roll</value>
+        <value code="421">Gimbal Pitch</value>
+        <value code="422">Gimbal Yaw</value>
+        <value code="430">Gripper</value>
+        <value code="440">Landing Gear Wheel</value>
+      </values>
+    </parameter>
+    <parameter name="VTQ_IO_FUNC10" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 10 Output Function</short_desc>
+      <long_desc>Select what should be output on Vertiq IO CVI 10. The default failsafe value is set according to the selected function: - 'Min' for ConstantMin - 'Max' for ConstantMax - 'Max' for Parachute - ('Max'+'Min')/2 for Servos - 'Disarmed' for the rest</long_desc>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Constant Min</value>
+        <value code="2">Constant Max</value>
+        <value code="101">Motor 1</value>
+        <value code="102">Motor 2</value>
+        <value code="103">Motor 3</value>
+        <value code="104">Motor 4</value>
+        <value code="105">Motor 5</value>
+        <value code="106">Motor 6</value>
+        <value code="107">Motor 7</value>
+        <value code="108">Motor 8</value>
+        <value code="109">Motor 9</value>
+        <value code="110">Motor 10</value>
+        <value code="111">Motor 11</value>
+        <value code="112">Motor 12</value>
+        <value code="201">Servo 1</value>
+        <value code="202">Servo 2</value>
+        <value code="203">Servo 3</value>
+        <value code="204">Servo 4</value>
+        <value code="205">Servo 5</value>
+        <value code="206">Servo 6</value>
+        <value code="207">Servo 7</value>
+        <value code="208">Servo 8</value>
+        <value code="301">Peripheral via Actuator Set 1</value>
+        <value code="302">Peripheral via Actuator Set 2</value>
+        <value code="303">Peripheral via Actuator Set 3</value>
+        <value code="304">Peripheral via Actuator Set 4</value>
+        <value code="305">Peripheral via Actuator Set 5</value>
+        <value code="306">Peripheral via Actuator Set 6</value>
+        <value code="400">Landing Gear</value>
+        <value code="401">Parachute</value>
+        <value code="402">RC Roll</value>
+        <value code="403">RC Pitch</value>
+        <value code="404">RC Throttle</value>
+        <value code="405">RC Yaw</value>
+        <value code="406">RC Flaps</value>
+        <value code="407">RC AUX 1</value>
+        <value code="408">RC AUX 2</value>
+        <value code="409">RC AUX 3</value>
+        <value code="410">RC AUX 4</value>
+        <value code="411">RC AUX 5</value>
+        <value code="412">RC AUX 6</value>
+        <value code="420">Gimbal Roll</value>
+        <value code="421">Gimbal Pitch</value>
+        <value code="422">Gimbal Yaw</value>
+        <value code="430">Gripper</value>
+        <value code="440">Landing Gear Wheel</value>
+      </values>
+    </parameter>
+    <parameter name="VTQ_IO_FUNC11" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 11 Output Function</short_desc>
+      <long_desc>Select what should be output on Vertiq IO CVI 11. The default failsafe value is set according to the selected function: - 'Min' for ConstantMin - 'Max' for ConstantMax - 'Max' for Parachute - ('Max'+'Min')/2 for Servos - 'Disarmed' for the rest</long_desc>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Constant Min</value>
+        <value code="2">Constant Max</value>
+        <value code="101">Motor 1</value>
+        <value code="102">Motor 2</value>
+        <value code="103">Motor 3</value>
+        <value code="104">Motor 4</value>
+        <value code="105">Motor 5</value>
+        <value code="106">Motor 6</value>
+        <value code="107">Motor 7</value>
+        <value code="108">Motor 8</value>
+        <value code="109">Motor 9</value>
+        <value code="110">Motor 10</value>
+        <value code="111">Motor 11</value>
+        <value code="112">Motor 12</value>
+        <value code="201">Servo 1</value>
+        <value code="202">Servo 2</value>
+        <value code="203">Servo 3</value>
+        <value code="204">Servo 4</value>
+        <value code="205">Servo 5</value>
+        <value code="206">Servo 6</value>
+        <value code="207">Servo 7</value>
+        <value code="208">Servo 8</value>
+        <value code="301">Peripheral via Actuator Set 1</value>
+        <value code="302">Peripheral via Actuator Set 2</value>
+        <value code="303">Peripheral via Actuator Set 3</value>
+        <value code="304">Peripheral via Actuator Set 4</value>
+        <value code="305">Peripheral via Actuator Set 5</value>
+        <value code="306">Peripheral via Actuator Set 6</value>
+        <value code="400">Landing Gear</value>
+        <value code="401">Parachute</value>
+        <value code="402">RC Roll</value>
+        <value code="403">RC Pitch</value>
+        <value code="404">RC Throttle</value>
+        <value code="405">RC Yaw</value>
+        <value code="406">RC Flaps</value>
+        <value code="407">RC AUX 1</value>
+        <value code="408">RC AUX 2</value>
+        <value code="409">RC AUX 3</value>
+        <value code="410">RC AUX 4</value>
+        <value code="411">RC AUX 5</value>
+        <value code="412">RC AUX 6</value>
+        <value code="420">Gimbal Roll</value>
+        <value code="421">Gimbal Pitch</value>
+        <value code="422">Gimbal Yaw</value>
+        <value code="430">Gripper</value>
+        <value code="440">Landing Gear Wheel</value>
+      </values>
+    </parameter>
+    <parameter name="VTQ_IO_FUNC12" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 12 Output Function</short_desc>
+      <long_desc>Select what should be output on Vertiq IO CVI 12. The default failsafe value is set according to the selected function: - 'Min' for ConstantMin - 'Max' for ConstantMax - 'Max' for Parachute - ('Max'+'Min')/2 for Servos - 'Disarmed' for the rest</long_desc>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Constant Min</value>
+        <value code="2">Constant Max</value>
+        <value code="101">Motor 1</value>
+        <value code="102">Motor 2</value>
+        <value code="103">Motor 3</value>
+        <value code="104">Motor 4</value>
+        <value code="105">Motor 5</value>
+        <value code="106">Motor 6</value>
+        <value code="107">Motor 7</value>
+        <value code="108">Motor 8</value>
+        <value code="109">Motor 9</value>
+        <value code="110">Motor 10</value>
+        <value code="111">Motor 11</value>
+        <value code="112">Motor 12</value>
+        <value code="201">Servo 1</value>
+        <value code="202">Servo 2</value>
+        <value code="203">Servo 3</value>
+        <value code="204">Servo 4</value>
+        <value code="205">Servo 5</value>
+        <value code="206">Servo 6</value>
+        <value code="207">Servo 7</value>
+        <value code="208">Servo 8</value>
+        <value code="301">Peripheral via Actuator Set 1</value>
+        <value code="302">Peripheral via Actuator Set 2</value>
+        <value code="303">Peripheral via Actuator Set 3</value>
+        <value code="304">Peripheral via Actuator Set 4</value>
+        <value code="305">Peripheral via Actuator Set 5</value>
+        <value code="306">Peripheral via Actuator Set 6</value>
+        <value code="400">Landing Gear</value>
+        <value code="401">Parachute</value>
+        <value code="402">RC Roll</value>
+        <value code="403">RC Pitch</value>
+        <value code="404">RC Throttle</value>
+        <value code="405">RC Yaw</value>
+        <value code="406">RC Flaps</value>
+        <value code="407">RC AUX 1</value>
+        <value code="408">RC AUX 2</value>
+        <value code="409">RC AUX 3</value>
+        <value code="410">RC AUX 4</value>
+        <value code="411">RC AUX 5</value>
+        <value code="412">RC AUX 6</value>
+        <value code="420">Gimbal Roll</value>
+        <value code="421">Gimbal Pitch</value>
+        <value code="422">Gimbal Yaw</value>
+        <value code="430">Gripper</value>
+        <value code="440">Landing Gear Wheel</value>
+      </values>
+    </parameter>
+    <parameter name="VTQ_IO_FUNC13" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 13 Output Function</short_desc>
+      <long_desc>Select what should be output on Vertiq IO CVI 13. The default failsafe value is set according to the selected function: - 'Min' for ConstantMin - 'Max' for ConstantMax - 'Max' for Parachute - ('Max'+'Min')/2 for Servos - 'Disarmed' for the rest</long_desc>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Constant Min</value>
+        <value code="2">Constant Max</value>
+        <value code="101">Motor 1</value>
+        <value code="102">Motor 2</value>
+        <value code="103">Motor 3</value>
+        <value code="104">Motor 4</value>
+        <value code="105">Motor 5</value>
+        <value code="106">Motor 6</value>
+        <value code="107">Motor 7</value>
+        <value code="108">Motor 8</value>
+        <value code="109">Motor 9</value>
+        <value code="110">Motor 10</value>
+        <value code="111">Motor 11</value>
+        <value code="112">Motor 12</value>
+        <value code="201">Servo 1</value>
+        <value code="202">Servo 2</value>
+        <value code="203">Servo 3</value>
+        <value code="204">Servo 4</value>
+        <value code="205">Servo 5</value>
+        <value code="206">Servo 6</value>
+        <value code="207">Servo 7</value>
+        <value code="208">Servo 8</value>
+        <value code="301">Peripheral via Actuator Set 1</value>
+        <value code="302">Peripheral via Actuator Set 2</value>
+        <value code="303">Peripheral via Actuator Set 3</value>
+        <value code="304">Peripheral via Actuator Set 4</value>
+        <value code="305">Peripheral via Actuator Set 5</value>
+        <value code="306">Peripheral via Actuator Set 6</value>
+        <value code="400">Landing Gear</value>
+        <value code="401">Parachute</value>
+        <value code="402">RC Roll</value>
+        <value code="403">RC Pitch</value>
+        <value code="404">RC Throttle</value>
+        <value code="405">RC Yaw</value>
+        <value code="406">RC Flaps</value>
+        <value code="407">RC AUX 1</value>
+        <value code="408">RC AUX 2</value>
+        <value code="409">RC AUX 3</value>
+        <value code="410">RC AUX 4</value>
+        <value code="411">RC AUX 5</value>
+        <value code="412">RC AUX 6</value>
+        <value code="420">Gimbal Roll</value>
+        <value code="421">Gimbal Pitch</value>
+        <value code="422">Gimbal Yaw</value>
+        <value code="430">Gripper</value>
+        <value code="440">Landing Gear Wheel</value>
+      </values>
+    </parameter>
+    <parameter name="VTQ_IO_FUNC14" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 14 Output Function</short_desc>
+      <long_desc>Select what should be output on Vertiq IO CVI 14. The default failsafe value is set according to the selected function: - 'Min' for ConstantMin - 'Max' for ConstantMax - 'Max' for Parachute - ('Max'+'Min')/2 for Servos - 'Disarmed' for the rest</long_desc>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Constant Min</value>
+        <value code="2">Constant Max</value>
+        <value code="101">Motor 1</value>
+        <value code="102">Motor 2</value>
+        <value code="103">Motor 3</value>
+        <value code="104">Motor 4</value>
+        <value code="105">Motor 5</value>
+        <value code="106">Motor 6</value>
+        <value code="107">Motor 7</value>
+        <value code="108">Motor 8</value>
+        <value code="109">Motor 9</value>
+        <value code="110">Motor 10</value>
+        <value code="111">Motor 11</value>
+        <value code="112">Motor 12</value>
+        <value code="201">Servo 1</value>
+        <value code="202">Servo 2</value>
+        <value code="203">Servo 3</value>
+        <value code="204">Servo 4</value>
+        <value code="205">Servo 5</value>
+        <value code="206">Servo 6</value>
+        <value code="207">Servo 7</value>
+        <value code="208">Servo 8</value>
+        <value code="301">Peripheral via Actuator Set 1</value>
+        <value code="302">Peripheral via Actuator Set 2</value>
+        <value code="303">Peripheral via Actuator Set 3</value>
+        <value code="304">Peripheral via Actuator Set 4</value>
+        <value code="305">Peripheral via Actuator Set 5</value>
+        <value code="306">Peripheral via Actuator Set 6</value>
+        <value code="400">Landing Gear</value>
+        <value code="401">Parachute</value>
+        <value code="402">RC Roll</value>
+        <value code="403">RC Pitch</value>
+        <value code="404">RC Throttle</value>
+        <value code="405">RC Yaw</value>
+        <value code="406">RC Flaps</value>
+        <value code="407">RC AUX 1</value>
+        <value code="408">RC AUX 2</value>
+        <value code="409">RC AUX 3</value>
+        <value code="410">RC AUX 4</value>
+        <value code="411">RC AUX 5</value>
+        <value code="412">RC AUX 6</value>
+        <value code="420">Gimbal Roll</value>
+        <value code="421">Gimbal Pitch</value>
+        <value code="422">Gimbal Yaw</value>
+        <value code="430">Gripper</value>
+        <value code="440">Landing Gear Wheel</value>
+      </values>
+    </parameter>
+    <parameter name="VTQ_IO_FUNC15" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 15 Output Function</short_desc>
+      <long_desc>Select what should be output on Vertiq IO CVI 15. The default failsafe value is set according to the selected function: - 'Min' for ConstantMin - 'Max' for ConstantMax - 'Max' for Parachute - ('Max'+'Min')/2 for Servos - 'Disarmed' for the rest</long_desc>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Constant Min</value>
+        <value code="2">Constant Max</value>
+        <value code="101">Motor 1</value>
+        <value code="102">Motor 2</value>
+        <value code="103">Motor 3</value>
+        <value code="104">Motor 4</value>
+        <value code="105">Motor 5</value>
+        <value code="106">Motor 6</value>
+        <value code="107">Motor 7</value>
+        <value code="108">Motor 8</value>
+        <value code="109">Motor 9</value>
+        <value code="110">Motor 10</value>
+        <value code="111">Motor 11</value>
+        <value code="112">Motor 12</value>
+        <value code="201">Servo 1</value>
+        <value code="202">Servo 2</value>
+        <value code="203">Servo 3</value>
+        <value code="204">Servo 4</value>
+        <value code="205">Servo 5</value>
+        <value code="206">Servo 6</value>
+        <value code="207">Servo 7</value>
+        <value code="208">Servo 8</value>
+        <value code="301">Peripheral via Actuator Set 1</value>
+        <value code="302">Peripheral via Actuator Set 2</value>
+        <value code="303">Peripheral via Actuator Set 3</value>
+        <value code="304">Peripheral via Actuator Set 4</value>
+        <value code="305">Peripheral via Actuator Set 5</value>
+        <value code="306">Peripheral via Actuator Set 6</value>
+        <value code="400">Landing Gear</value>
+        <value code="401">Parachute</value>
+        <value code="402">RC Roll</value>
+        <value code="403">RC Pitch</value>
+        <value code="404">RC Throttle</value>
+        <value code="405">RC Yaw</value>
+        <value code="406">RC Flaps</value>
+        <value code="407">RC AUX 1</value>
+        <value code="408">RC AUX 2</value>
+        <value code="409">RC AUX 3</value>
+        <value code="410">RC AUX 4</value>
+        <value code="411">RC AUX 5</value>
+        <value code="412">RC AUX 6</value>
+        <value code="420">Gimbal Roll</value>
+        <value code="421">Gimbal Pitch</value>
+        <value code="422">Gimbal Yaw</value>
+        <value code="430">Gripper</value>
+        <value code="440">Landing Gear Wheel</value>
+      </values>
+    </parameter>
+    <parameter name="VTQ_IO_FUNC2" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 2 Output Function</short_desc>
+      <long_desc>Select what should be output on Vertiq IO CVI 2. The default failsafe value is set according to the selected function: - 'Min' for ConstantMin - 'Max' for ConstantMax - 'Max' for Parachute - ('Max'+'Min')/2 for Servos - 'Disarmed' for the rest</long_desc>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Constant Min</value>
+        <value code="2">Constant Max</value>
+        <value code="101">Motor 1</value>
+        <value code="102">Motor 2</value>
+        <value code="103">Motor 3</value>
+        <value code="104">Motor 4</value>
+        <value code="105">Motor 5</value>
+        <value code="106">Motor 6</value>
+        <value code="107">Motor 7</value>
+        <value code="108">Motor 8</value>
+        <value code="109">Motor 9</value>
+        <value code="110">Motor 10</value>
+        <value code="111">Motor 11</value>
+        <value code="112">Motor 12</value>
+        <value code="201">Servo 1</value>
+        <value code="202">Servo 2</value>
+        <value code="203">Servo 3</value>
+        <value code="204">Servo 4</value>
+        <value code="205">Servo 5</value>
+        <value code="206">Servo 6</value>
+        <value code="207">Servo 7</value>
+        <value code="208">Servo 8</value>
+        <value code="301">Peripheral via Actuator Set 1</value>
+        <value code="302">Peripheral via Actuator Set 2</value>
+        <value code="303">Peripheral via Actuator Set 3</value>
+        <value code="304">Peripheral via Actuator Set 4</value>
+        <value code="305">Peripheral via Actuator Set 5</value>
+        <value code="306">Peripheral via Actuator Set 6</value>
+        <value code="400">Landing Gear</value>
+        <value code="401">Parachute</value>
+        <value code="402">RC Roll</value>
+        <value code="403">RC Pitch</value>
+        <value code="404">RC Throttle</value>
+        <value code="405">RC Yaw</value>
+        <value code="406">RC Flaps</value>
+        <value code="407">RC AUX 1</value>
+        <value code="408">RC AUX 2</value>
+        <value code="409">RC AUX 3</value>
+        <value code="410">RC AUX 4</value>
+        <value code="411">RC AUX 5</value>
+        <value code="412">RC AUX 6</value>
+        <value code="420">Gimbal Roll</value>
+        <value code="421">Gimbal Pitch</value>
+        <value code="422">Gimbal Yaw</value>
+        <value code="430">Gripper</value>
+        <value code="440">Landing Gear Wheel</value>
+      </values>
+    </parameter>
+    <parameter name="VTQ_IO_FUNC3" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 3 Output Function</short_desc>
+      <long_desc>Select what should be output on Vertiq IO CVI 3. The default failsafe value is set according to the selected function: - 'Min' for ConstantMin - 'Max' for ConstantMax - 'Max' for Parachute - ('Max'+'Min')/2 for Servos - 'Disarmed' for the rest</long_desc>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Constant Min</value>
+        <value code="2">Constant Max</value>
+        <value code="101">Motor 1</value>
+        <value code="102">Motor 2</value>
+        <value code="103">Motor 3</value>
+        <value code="104">Motor 4</value>
+        <value code="105">Motor 5</value>
+        <value code="106">Motor 6</value>
+        <value code="107">Motor 7</value>
+        <value code="108">Motor 8</value>
+        <value code="109">Motor 9</value>
+        <value code="110">Motor 10</value>
+        <value code="111">Motor 11</value>
+        <value code="112">Motor 12</value>
+        <value code="201">Servo 1</value>
+        <value code="202">Servo 2</value>
+        <value code="203">Servo 3</value>
+        <value code="204">Servo 4</value>
+        <value code="205">Servo 5</value>
+        <value code="206">Servo 6</value>
+        <value code="207">Servo 7</value>
+        <value code="208">Servo 8</value>
+        <value code="301">Peripheral via Actuator Set 1</value>
+        <value code="302">Peripheral via Actuator Set 2</value>
+        <value code="303">Peripheral via Actuator Set 3</value>
+        <value code="304">Peripheral via Actuator Set 4</value>
+        <value code="305">Peripheral via Actuator Set 5</value>
+        <value code="306">Peripheral via Actuator Set 6</value>
+        <value code="400">Landing Gear</value>
+        <value code="401">Parachute</value>
+        <value code="402">RC Roll</value>
+        <value code="403">RC Pitch</value>
+        <value code="404">RC Throttle</value>
+        <value code="405">RC Yaw</value>
+        <value code="406">RC Flaps</value>
+        <value code="407">RC AUX 1</value>
+        <value code="408">RC AUX 2</value>
+        <value code="409">RC AUX 3</value>
+        <value code="410">RC AUX 4</value>
+        <value code="411">RC AUX 5</value>
+        <value code="412">RC AUX 6</value>
+        <value code="420">Gimbal Roll</value>
+        <value code="421">Gimbal Pitch</value>
+        <value code="422">Gimbal Yaw</value>
+        <value code="430">Gripper</value>
+        <value code="440">Landing Gear Wheel</value>
+      </values>
+    </parameter>
+    <parameter name="VTQ_IO_FUNC4" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 4 Output Function</short_desc>
+      <long_desc>Select what should be output on Vertiq IO CVI 4. The default failsafe value is set according to the selected function: - 'Min' for ConstantMin - 'Max' for ConstantMax - 'Max' for Parachute - ('Max'+'Min')/2 for Servos - 'Disarmed' for the rest</long_desc>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Constant Min</value>
+        <value code="2">Constant Max</value>
+        <value code="101">Motor 1</value>
+        <value code="102">Motor 2</value>
+        <value code="103">Motor 3</value>
+        <value code="104">Motor 4</value>
+        <value code="105">Motor 5</value>
+        <value code="106">Motor 6</value>
+        <value code="107">Motor 7</value>
+        <value code="108">Motor 8</value>
+        <value code="109">Motor 9</value>
+        <value code="110">Motor 10</value>
+        <value code="111">Motor 11</value>
+        <value code="112">Motor 12</value>
+        <value code="201">Servo 1</value>
+        <value code="202">Servo 2</value>
+        <value code="203">Servo 3</value>
+        <value code="204">Servo 4</value>
+        <value code="205">Servo 5</value>
+        <value code="206">Servo 6</value>
+        <value code="207">Servo 7</value>
+        <value code="208">Servo 8</value>
+        <value code="301">Peripheral via Actuator Set 1</value>
+        <value code="302">Peripheral via Actuator Set 2</value>
+        <value code="303">Peripheral via Actuator Set 3</value>
+        <value code="304">Peripheral via Actuator Set 4</value>
+        <value code="305">Peripheral via Actuator Set 5</value>
+        <value code="306">Peripheral via Actuator Set 6</value>
+        <value code="400">Landing Gear</value>
+        <value code="401">Parachute</value>
+        <value code="402">RC Roll</value>
+        <value code="403">RC Pitch</value>
+        <value code="404">RC Throttle</value>
+        <value code="405">RC Yaw</value>
+        <value code="406">RC Flaps</value>
+        <value code="407">RC AUX 1</value>
+        <value code="408">RC AUX 2</value>
+        <value code="409">RC AUX 3</value>
+        <value code="410">RC AUX 4</value>
+        <value code="411">RC AUX 5</value>
+        <value code="412">RC AUX 6</value>
+        <value code="420">Gimbal Roll</value>
+        <value code="421">Gimbal Pitch</value>
+        <value code="422">Gimbal Yaw</value>
+        <value code="430">Gripper</value>
+        <value code="440">Landing Gear Wheel</value>
+      </values>
+    </parameter>
+    <parameter name="VTQ_IO_FUNC5" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 5 Output Function</short_desc>
+      <long_desc>Select what should be output on Vertiq IO CVI 5. The default failsafe value is set according to the selected function: - 'Min' for ConstantMin - 'Max' for ConstantMax - 'Max' for Parachute - ('Max'+'Min')/2 for Servos - 'Disarmed' for the rest</long_desc>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Constant Min</value>
+        <value code="2">Constant Max</value>
+        <value code="101">Motor 1</value>
+        <value code="102">Motor 2</value>
+        <value code="103">Motor 3</value>
+        <value code="104">Motor 4</value>
+        <value code="105">Motor 5</value>
+        <value code="106">Motor 6</value>
+        <value code="107">Motor 7</value>
+        <value code="108">Motor 8</value>
+        <value code="109">Motor 9</value>
+        <value code="110">Motor 10</value>
+        <value code="111">Motor 11</value>
+        <value code="112">Motor 12</value>
+        <value code="201">Servo 1</value>
+        <value code="202">Servo 2</value>
+        <value code="203">Servo 3</value>
+        <value code="204">Servo 4</value>
+        <value code="205">Servo 5</value>
+        <value code="206">Servo 6</value>
+        <value code="207">Servo 7</value>
+        <value code="208">Servo 8</value>
+        <value code="301">Peripheral via Actuator Set 1</value>
+        <value code="302">Peripheral via Actuator Set 2</value>
+        <value code="303">Peripheral via Actuator Set 3</value>
+        <value code="304">Peripheral via Actuator Set 4</value>
+        <value code="305">Peripheral via Actuator Set 5</value>
+        <value code="306">Peripheral via Actuator Set 6</value>
+        <value code="400">Landing Gear</value>
+        <value code="401">Parachute</value>
+        <value code="402">RC Roll</value>
+        <value code="403">RC Pitch</value>
+        <value code="404">RC Throttle</value>
+        <value code="405">RC Yaw</value>
+        <value code="406">RC Flaps</value>
+        <value code="407">RC AUX 1</value>
+        <value code="408">RC AUX 2</value>
+        <value code="409">RC AUX 3</value>
+        <value code="410">RC AUX 4</value>
+        <value code="411">RC AUX 5</value>
+        <value code="412">RC AUX 6</value>
+        <value code="420">Gimbal Roll</value>
+        <value code="421">Gimbal Pitch</value>
+        <value code="422">Gimbal Yaw</value>
+        <value code="430">Gripper</value>
+        <value code="440">Landing Gear Wheel</value>
+      </values>
+    </parameter>
+    <parameter name="VTQ_IO_FUNC6" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 6 Output Function</short_desc>
+      <long_desc>Select what should be output on Vertiq IO CVI 6. The default failsafe value is set according to the selected function: - 'Min' for ConstantMin - 'Max' for ConstantMax - 'Max' for Parachute - ('Max'+'Min')/2 for Servos - 'Disarmed' for the rest</long_desc>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Constant Min</value>
+        <value code="2">Constant Max</value>
+        <value code="101">Motor 1</value>
+        <value code="102">Motor 2</value>
+        <value code="103">Motor 3</value>
+        <value code="104">Motor 4</value>
+        <value code="105">Motor 5</value>
+        <value code="106">Motor 6</value>
+        <value code="107">Motor 7</value>
+        <value code="108">Motor 8</value>
+        <value code="109">Motor 9</value>
+        <value code="110">Motor 10</value>
+        <value code="111">Motor 11</value>
+        <value code="112">Motor 12</value>
+        <value code="201">Servo 1</value>
+        <value code="202">Servo 2</value>
+        <value code="203">Servo 3</value>
+        <value code="204">Servo 4</value>
+        <value code="205">Servo 5</value>
+        <value code="206">Servo 6</value>
+        <value code="207">Servo 7</value>
+        <value code="208">Servo 8</value>
+        <value code="301">Peripheral via Actuator Set 1</value>
+        <value code="302">Peripheral via Actuator Set 2</value>
+        <value code="303">Peripheral via Actuator Set 3</value>
+        <value code="304">Peripheral via Actuator Set 4</value>
+        <value code="305">Peripheral via Actuator Set 5</value>
+        <value code="306">Peripheral via Actuator Set 6</value>
+        <value code="400">Landing Gear</value>
+        <value code="401">Parachute</value>
+        <value code="402">RC Roll</value>
+        <value code="403">RC Pitch</value>
+        <value code="404">RC Throttle</value>
+        <value code="405">RC Yaw</value>
+        <value code="406">RC Flaps</value>
+        <value code="407">RC AUX 1</value>
+        <value code="408">RC AUX 2</value>
+        <value code="409">RC AUX 3</value>
+        <value code="410">RC AUX 4</value>
+        <value code="411">RC AUX 5</value>
+        <value code="412">RC AUX 6</value>
+        <value code="420">Gimbal Roll</value>
+        <value code="421">Gimbal Pitch</value>
+        <value code="422">Gimbal Yaw</value>
+        <value code="430">Gripper</value>
+        <value code="440">Landing Gear Wheel</value>
+      </values>
+    </parameter>
+    <parameter name="VTQ_IO_FUNC7" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 7 Output Function</short_desc>
+      <long_desc>Select what should be output on Vertiq IO CVI 7. The default failsafe value is set according to the selected function: - 'Min' for ConstantMin - 'Max' for ConstantMax - 'Max' for Parachute - ('Max'+'Min')/2 for Servos - 'Disarmed' for the rest</long_desc>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Constant Min</value>
+        <value code="2">Constant Max</value>
+        <value code="101">Motor 1</value>
+        <value code="102">Motor 2</value>
+        <value code="103">Motor 3</value>
+        <value code="104">Motor 4</value>
+        <value code="105">Motor 5</value>
+        <value code="106">Motor 6</value>
+        <value code="107">Motor 7</value>
+        <value code="108">Motor 8</value>
+        <value code="109">Motor 9</value>
+        <value code="110">Motor 10</value>
+        <value code="111">Motor 11</value>
+        <value code="112">Motor 12</value>
+        <value code="201">Servo 1</value>
+        <value code="202">Servo 2</value>
+        <value code="203">Servo 3</value>
+        <value code="204">Servo 4</value>
+        <value code="205">Servo 5</value>
+        <value code="206">Servo 6</value>
+        <value code="207">Servo 7</value>
+        <value code="208">Servo 8</value>
+        <value code="301">Peripheral via Actuator Set 1</value>
+        <value code="302">Peripheral via Actuator Set 2</value>
+        <value code="303">Peripheral via Actuator Set 3</value>
+        <value code="304">Peripheral via Actuator Set 4</value>
+        <value code="305">Peripheral via Actuator Set 5</value>
+        <value code="306">Peripheral via Actuator Set 6</value>
+        <value code="400">Landing Gear</value>
+        <value code="401">Parachute</value>
+        <value code="402">RC Roll</value>
+        <value code="403">RC Pitch</value>
+        <value code="404">RC Throttle</value>
+        <value code="405">RC Yaw</value>
+        <value code="406">RC Flaps</value>
+        <value code="407">RC AUX 1</value>
+        <value code="408">RC AUX 2</value>
+        <value code="409">RC AUX 3</value>
+        <value code="410">RC AUX 4</value>
+        <value code="411">RC AUX 5</value>
+        <value code="412">RC AUX 6</value>
+        <value code="420">Gimbal Roll</value>
+        <value code="421">Gimbal Pitch</value>
+        <value code="422">Gimbal Yaw</value>
+        <value code="430">Gripper</value>
+        <value code="440">Landing Gear Wheel</value>
+      </values>
+    </parameter>
+    <parameter name="VTQ_IO_FUNC8" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 8 Output Function</short_desc>
+      <long_desc>Select what should be output on Vertiq IO CVI 8. The default failsafe value is set according to the selected function: - 'Min' for ConstantMin - 'Max' for ConstantMax - 'Max' for Parachute - ('Max'+'Min')/2 for Servos - 'Disarmed' for the rest</long_desc>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Constant Min</value>
+        <value code="2">Constant Max</value>
+        <value code="101">Motor 1</value>
+        <value code="102">Motor 2</value>
+        <value code="103">Motor 3</value>
+        <value code="104">Motor 4</value>
+        <value code="105">Motor 5</value>
+        <value code="106">Motor 6</value>
+        <value code="107">Motor 7</value>
+        <value code="108">Motor 8</value>
+        <value code="109">Motor 9</value>
+        <value code="110">Motor 10</value>
+        <value code="111">Motor 11</value>
+        <value code="112">Motor 12</value>
+        <value code="201">Servo 1</value>
+        <value code="202">Servo 2</value>
+        <value code="203">Servo 3</value>
+        <value code="204">Servo 4</value>
+        <value code="205">Servo 5</value>
+        <value code="206">Servo 6</value>
+        <value code="207">Servo 7</value>
+        <value code="208">Servo 8</value>
+        <value code="301">Peripheral via Actuator Set 1</value>
+        <value code="302">Peripheral via Actuator Set 2</value>
+        <value code="303">Peripheral via Actuator Set 3</value>
+        <value code="304">Peripheral via Actuator Set 4</value>
+        <value code="305">Peripheral via Actuator Set 5</value>
+        <value code="306">Peripheral via Actuator Set 6</value>
+        <value code="400">Landing Gear</value>
+        <value code="401">Parachute</value>
+        <value code="402">RC Roll</value>
+        <value code="403">RC Pitch</value>
+        <value code="404">RC Throttle</value>
+        <value code="405">RC Yaw</value>
+        <value code="406">RC Flaps</value>
+        <value code="407">RC AUX 1</value>
+        <value code="408">RC AUX 2</value>
+        <value code="409">RC AUX 3</value>
+        <value code="410">RC AUX 4</value>
+        <value code="411">RC AUX 5</value>
+        <value code="412">RC AUX 6</value>
+        <value code="420">Gimbal Roll</value>
+        <value code="421">Gimbal Pitch</value>
+        <value code="422">Gimbal Yaw</value>
+        <value code="430">Gripper</value>
+        <value code="440">Landing Gear Wheel</value>
+      </values>
+    </parameter>
+    <parameter name="VTQ_IO_FUNC9" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 9 Output Function</short_desc>
+      <long_desc>Select what should be output on Vertiq IO CVI 9. The default failsafe value is set according to the selected function: - 'Min' for ConstantMin - 'Max' for ConstantMax - 'Max' for Parachute - ('Max'+'Min')/2 for Servos - 'Disarmed' for the rest</long_desc>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Constant Min</value>
+        <value code="2">Constant Max</value>
+        <value code="101">Motor 1</value>
+        <value code="102">Motor 2</value>
+        <value code="103">Motor 3</value>
+        <value code="104">Motor 4</value>
+        <value code="105">Motor 5</value>
+        <value code="106">Motor 6</value>
+        <value code="107">Motor 7</value>
+        <value code="108">Motor 8</value>
+        <value code="109">Motor 9</value>
+        <value code="110">Motor 10</value>
+        <value code="111">Motor 11</value>
+        <value code="112">Motor 12</value>
+        <value code="201">Servo 1</value>
+        <value code="202">Servo 2</value>
+        <value code="203">Servo 3</value>
+        <value code="204">Servo 4</value>
+        <value code="205">Servo 5</value>
+        <value code="206">Servo 6</value>
+        <value code="207">Servo 7</value>
+        <value code="208">Servo 8</value>
+        <value code="301">Peripheral via Actuator Set 1</value>
+        <value code="302">Peripheral via Actuator Set 2</value>
+        <value code="303">Peripheral via Actuator Set 3</value>
+        <value code="304">Peripheral via Actuator Set 4</value>
+        <value code="305">Peripheral via Actuator Set 5</value>
+        <value code="306">Peripheral via Actuator Set 6</value>
+        <value code="400">Landing Gear</value>
+        <value code="401">Parachute</value>
+        <value code="402">RC Roll</value>
+        <value code="403">RC Pitch</value>
+        <value code="404">RC Throttle</value>
+        <value code="405">RC Yaw</value>
+        <value code="406">RC Flaps</value>
+        <value code="407">RC AUX 1</value>
+        <value code="408">RC AUX 2</value>
+        <value code="409">RC AUX 3</value>
+        <value code="410">RC AUX 4</value>
+        <value code="411">RC AUX 5</value>
+        <value code="412">RC AUX 6</value>
+        <value code="420">Gimbal Roll</value>
+        <value code="421">Gimbal Pitch</value>
+        <value code="422">Gimbal Yaw</value>
+        <value code="430">Gripper</value>
+        <value code="440">Landing Gear Wheel</value>
+      </values>
+    </parameter>
+    <parameter name="VTQ_IO_MAX0" default="65535" type="INT32">
+      <short_desc>Vertiq IO CVI 0 Maximum Value</short_desc>
+      <long_desc>Maxmimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_MAX1" default="65535" type="INT32">
+      <short_desc>Vertiq IO CVI 1 Maximum Value</short_desc>
+      <long_desc>Maxmimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_MAX10" default="65535" type="INT32">
+      <short_desc>Vertiq IO CVI 10 Maximum Value</short_desc>
+      <long_desc>Maxmimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_MAX11" default="65535" type="INT32">
+      <short_desc>Vertiq IO CVI 11 Maximum Value</short_desc>
+      <long_desc>Maxmimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_MAX12" default="65535" type="INT32">
+      <short_desc>Vertiq IO CVI 12 Maximum Value</short_desc>
+      <long_desc>Maxmimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_MAX13" default="65535" type="INT32">
+      <short_desc>Vertiq IO CVI 13 Maximum Value</short_desc>
+      <long_desc>Maxmimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_MAX14" default="65535" type="INT32">
+      <short_desc>Vertiq IO CVI 14 Maximum Value</short_desc>
+      <long_desc>Maxmimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_MAX15" default="65535" type="INT32">
+      <short_desc>Vertiq IO CVI 15 Maximum Value</short_desc>
+      <long_desc>Maxmimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_MAX2" default="65535" type="INT32">
+      <short_desc>Vertiq IO CVI 2 Maximum Value</short_desc>
+      <long_desc>Maxmimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_MAX3" default="65535" type="INT32">
+      <short_desc>Vertiq IO CVI 3 Maximum Value</short_desc>
+      <long_desc>Maxmimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_MAX4" default="65535" type="INT32">
+      <short_desc>Vertiq IO CVI 4 Maximum Value</short_desc>
+      <long_desc>Maxmimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_MAX5" default="65535" type="INT32">
+      <short_desc>Vertiq IO CVI 5 Maximum Value</short_desc>
+      <long_desc>Maxmimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_MAX6" default="65535" type="INT32">
+      <short_desc>Vertiq IO CVI 6 Maximum Value</short_desc>
+      <long_desc>Maxmimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_MAX7" default="65535" type="INT32">
+      <short_desc>Vertiq IO CVI 7 Maximum Value</short_desc>
+      <long_desc>Maxmimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_MAX8" default="65535" type="INT32">
+      <short_desc>Vertiq IO CVI 8 Maximum Value</short_desc>
+      <long_desc>Maxmimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_MAX9" default="65535" type="INT32">
+      <short_desc>Vertiq IO CVI 9 Maximum Value</short_desc>
+      <long_desc>Maxmimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_MIN0" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 0 Minimum Value</short_desc>
+      <long_desc>Minimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_MIN1" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 1 Minimum Value</short_desc>
+      <long_desc>Minimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_MIN10" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 10 Minimum Value</short_desc>
+      <long_desc>Minimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_MIN11" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 11 Minimum Value</short_desc>
+      <long_desc>Minimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_MIN12" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 12 Minimum Value</short_desc>
+      <long_desc>Minimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_MIN13" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 13 Minimum Value</short_desc>
+      <long_desc>Minimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_MIN14" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 14 Minimum Value</short_desc>
+      <long_desc>Minimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_MIN15" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 15 Minimum Value</short_desc>
+      <long_desc>Minimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_MIN2" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 2 Minimum Value</short_desc>
+      <long_desc>Minimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_MIN3" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 3 Minimum Value</short_desc>
+      <long_desc>Minimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_MIN4" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 4 Minimum Value</short_desc>
+      <long_desc>Minimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_MIN5" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 5 Minimum Value</short_desc>
+      <long_desc>Minimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_MIN6" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 6 Minimum Value</short_desc>
+      <long_desc>Minimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_MIN7" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 7 Minimum Value</short_desc>
+      <long_desc>Minimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_MIN8" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 8 Minimum Value</short_desc>
+      <long_desc>Minimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_MIN9" default="0" type="INT32">
+      <short_desc>Vertiq IO CVI 9 Minimum Value</short_desc>
+      <long_desc>Minimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>65535</max>
+    </parameter>
+    <parameter name="VTQ_IO_REV" default="0" type="INT32">
+      <short_desc>Reverse Output Range for Vertiq IO</short_desc>
+      <long_desc>Allows to reverse the output range for each channel. Note: this is only useful for servos.</long_desc>
+      <min>0</min>
+      <max>32767</max>
+      <bitmask>
+        <bit index="-1">Vertiq IO CVI 0</bit>
+        <bit index="0">Vertiq IO CVI 1</bit>
+        <bit index="1">Vertiq IO CVI 2</bit>
+        <bit index="2">Vertiq IO CVI 3</bit>
+        <bit index="3">Vertiq IO CVI 4</bit>
+        <bit index="4">Vertiq IO CVI 5</bit>
+        <bit index="5">Vertiq IO CVI 6</bit>
+        <bit index="6">Vertiq IO CVI 7</bit>
+        <bit index="7">Vertiq IO CVI 8</bit>
+        <bit index="8">Vertiq IO CVI 9</bit>
+        <bit index="9">Vertiq IO CVI 10</bit>
+        <bit index="10">Vertiq IO CVI 11</bit>
+        <bit index="11">Vertiq IO CVI 12</bit>
+        <bit index="12">Vertiq IO CVI 13</bit>
+        <bit index="13">Vertiq IO CVI 14</bit>
+        <bit index="14">Vertiq IO CVI 15</bit>
       </bitmask>
     </parameter>
   </group>
@@ -12290,6 +13702,7 @@
         <value code="10">Helicopter (tail ESC)</value>
         <value code="11">Helicopter (tail Servo)</value>
         <value code="12">Helicopter (Coaxial)</value>
+        <value code="13">Rover (Mecanum)</value>
       </values>
     </parameter>
     <parameter name="CA_FAILURE_MODE" default="0" type="INT32">
@@ -18590,6 +20003,137 @@
       <increment>0.01</increment>
     </parameter>
   </group>
+  <group name="Rover Mecanum">
+    <parameter name="RM_MAN_YAW_SCALE" default="1" type="FLOAT">
+      <short_desc>Manual yaw rate scale</short_desc>
+      <long_desc>In Manual mode the setpoint for the yaw rate received from the control stick is scaled by this value.</long_desc>
+      <min>0.01</min>
+      <max>1</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RM_MAX_ACCEL" default="0.5" type="FLOAT">
+      <short_desc>Maximum acceleration</short_desc>
+      <long_desc>Maximum acceleration is used to limit the acceleration of the rover</long_desc>
+      <min>0</min>
+      <max>100</max>
+      <unit>m/s^2</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RM_MAX_JERK" default="0.5" type="FLOAT">
+      <short_desc>Maximum jerk</short_desc>
+      <long_desc>Limit for forwards acc/deceleration change.</long_desc>
+      <min>0</min>
+      <max>100</max>
+      <unit>m/s^3</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RM_MAX_SPEED" default="7" type="FLOAT">
+      <short_desc>Maximum speed the rover is allowed to drive</short_desc>
+      <long_desc>This parameter is used cap the maximum speed the rover is allowed to drive and to map stick inputs to desired speeds in position mode.</long_desc>
+      <min>0</min>
+      <max>100</max>
+      <unit>m/s</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RM_MAX_THR_SPD" default="1" type="FLOAT">
+      <short_desc>Speed the rover drives at maximum throttle</short_desc>
+      <long_desc>This parameter is used to calculate the feedforward term of the closed loop speed control which linearly maps desired speeds to normalized motor commands [-1. 1]. A good starting point is the observed ground speed when the rover drives at maximum throttle in manual mode. Increase this parameter if the rover is faster than the setpoint, and decrease if the rover is slower.</long_desc>
+      <min>0</min>
+      <max>100</max>
+      <unit>m/s</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RM_MAX_THR_YAW_R" default="2" type="FLOAT">
+      <short_desc>Yaw rate turning left/right wheels at max speed in opposite directions</short_desc>
+      <long_desc>This parameter is used to calculate the feedforward term of the closed loop yaw rate control. The controller first calculates the required speed difference between the left and right motor to achieve the desired yaw rate. This desired speed difference is then linearly mapped to normalized motor commands. A good starting point is twice the speed the rover drives at maximum throttle (RM_MAX_THRTL_SPD)). Increase this parameter if the rover turns faster than the setpoint, and decrease if the rover turns slower.</long_desc>
+      <min>0</min>
+      <max>100</max>
+      <unit>m/s</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RM_MAX_YAW_RATE" default="90" type="FLOAT">
+      <short_desc>Maximum allowed yaw rate for the rover</short_desc>
+      <long_desc>This parameter is used to cap desired yaw rates and map controller inputs to desired yaw rates in acro mode.</long_desc>
+      <min>0.01</min>
+      <max>1000</max>
+      <unit>deg/s</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RM_MISS_SPD_DEF" default="1" type="FLOAT">
+      <short_desc>Default rover speed during a mission</short_desc>
+      <min>0</min>
+      <max>100</max>
+      <unit>m/s</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RM_MISS_VEL_GAIN" default="1" type="FLOAT">
+      <short_desc>Tuning parameter for the velocity reduction during waypoint transition</short_desc>
+      <long_desc>The waypoint transition speed is calculated as: Transition_speed = Maximum_speed * (1 - normalized_transition_angle * RM_MISS_VEL_GAIN) The normalized transition angle is the angle between the line segment from prev-curr WP and curr-next WP interpolated from [0, 180] -&gt; [0, 1]. Higher value -&gt; More velocity reduction during cornering.</long_desc>
+      <min>0.05</min>
+      <max>100</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RM_SPEED_I" default="0" type="FLOAT">
+      <short_desc>Integral gain for ground speed controller</short_desc>
+      <min>0</min>
+      <max>100</max>
+      <decimal>3</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RM_SPEED_P" default="1" type="FLOAT">
+      <short_desc>Proportional gain for speed controller</short_desc>
+      <min>0</min>
+      <max>100</max>
+      <decimal>3</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RM_WHEEL_TRACK" default="0.5" type="FLOAT">
+      <short_desc>Wheel track</short_desc>
+      <long_desc>Distance from the center of the right wheels to the center of the left wheels.</long_desc>
+      <min>0.001</min>
+      <max>100</max>
+      <unit>m</unit>
+      <decimal>3</decimal>
+      <increment>0.001</increment>
+    </parameter>
+    <parameter name="RM_YAW_I" default="0.1" type="FLOAT">
+      <short_desc>Integral gain for closed loop yaw controller</short_desc>
+      <min>0</min>
+      <max>100</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RM_YAW_P" default="1" type="FLOAT">
+      <short_desc>Proportional gain for closed loop yaw controller</short_desc>
+      <min>0</min>
+      <max>100</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RM_YAW_RATE_I" default="0" type="FLOAT">
+      <short_desc>Integral gain for the closed-loop yaw rate controller</short_desc>
+      <min>0</min>
+      <max>100</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RM_YAW_RATE_P" default="1" type="FLOAT">
+      <short_desc>Proportional gain for the closed-loop yaw rate controller</short_desc>
+      <min>0</min>
+      <max>100</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+  </group>
   <group name="Rover Position Control">
     <parameter name="GND_L1_DAMPING" default="0.75" type="FLOAT">
       <short_desc>L1 damping</short_desc>
@@ -21973,7 +23517,7 @@
       <decimal>3</decimal>
       <reboot_required>True</reboot_required>
     </parameter>
-    <parameter name="SEP_PORT1_CFG" default="201" type="INT32">
+    <parameter name="SEP_PORT1_CFG" default="0" type="INT32">
       <short_desc>Serial Configuration for GPS Port</short_desc>
       <long_desc>Configure on which serial port to run GPS Port.</long_desc>
       <reboot_required>true</reboot_required>
@@ -24634,6 +26178,229 @@
       <unit>m</unit>
       <decimal>1</decimal>
       <increment>1</increment>
+    </parameter>
+  </group>
+  <group name="Vertiq IO">
+    <parameter name="VERTIQ_IO_CFG" default="0" type="INT32">
+      <short_desc>Serial Configuration for Vertiq IO</short_desc>
+      <long_desc>Configure on which serial port to run Vertiq IO.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="6">UART 6</value>
+        <value code="101">TELEM 1</value>
+        <value code="102">TELEM 2</value>
+        <value code="103">TELEM 3</value>
+        <value code="104">TELEM/SERIAL 4</value>
+        <value code="201">GPS 1</value>
+        <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
+        <value code="300">Radio Controller</value>
+        <value code="301">Wifi Port</value>
+        <value code="401">EXT2</value>
+      </values>
+    </parameter>
+    <parameter name="VTQ_ARM_BEHAVE" default="0" type="INT32">
+      <short_desc>The triggered behavior on PX4 arm</short_desc>
+      <long_desc>The behavior triggered when the flight controller arms. You have the option to use your motors' arming behaviors, or to force all of your motors to arm</long_desc>
+      <values>
+        <value code="0">Use Motor Arm Behavior</value>
+        <value code="1">Send Explicit Arm Command</value>
+      </values>
+    </parameter>
+    <parameter name="VTQ_BAUD" default="115200" type="INT32">
+      <short_desc>The IQUART driver's baud rate</short_desc>
+      <long_desc>The baud rate (in bits per second) used by the serial port connected with IQUART communication</long_desc>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter name="VTQ_CONTROL_MODE" default="0" type="INT32">
+      <short_desc>Module Param - The module's control mechanism</short_desc>
+      <long_desc>PWM Mode: Commands a fraction of battery voltage. This changes as the battery voltage changes. This is the least safe mode because the upper throttle limit is determined by the battery voltage. Voltage Mode: Commands a voltage. The motor will behave the same way throughout the life of a battery, assuming the commanded voltage is less than the battery voltage. You must set the MAX_VOLTS parameter. Velocity Mode: Closed-loop, commands a velocity. The controller will adjust the applied voltage so that the motor spins at the commanded velocity. This mode has faster reaction times. Only use this if you know the properties of your propeller. You must set the MAX_VELOCITY parameter.</long_desc>
+      <values>
+        <value code="0">PWM</value>
+        <value code="1">Voltage</value>
+        <value code="2">Velocity</value>
+      </values>
+    </parameter>
+    <parameter name="VTQ_DISARM_TRIG" default="0" type="INT32">
+      <short_desc>The triggered behavior sent to the motors on PX4 disarm</short_desc>
+      <long_desc>The behavior triggered when the flight controller disarms. You have the option to trigger your motors' disarm behaviors, set all motors to coast, or set a predefined throttle setpoint</long_desc>
+      <values>
+        <value code="0">Send Explicit Disarm</value>
+        <value code="1">Coast Motors</value>
+        <value code="2">Set Predefined Velocity Setpoint</value>
+      </values>
+    </parameter>
+    <parameter name="VTQ_DISARM_VELO" default="0" type="INT32">
+      <short_desc>Velocity sent when DISARM_TRIGGER is Set Predefined Velocity Setpoint</short_desc>
+      <long_desc>This is the velocity that will be sent to all motors when PX4 is disarmed and DISARM_TRIGGER is Set Predefined Velocity Setpoint</long_desc>
+      <min>0</min>
+      <max>100</max>
+    </parameter>
+    <parameter name="VTQ_FC_DIR" default="0" type="INT32">
+      <short_desc>Module Param - If the flight controller uses 2D or 3D communication</short_desc>
+      <long_desc>The FC and the ESC must agree upon the meaning of the signal coming out of the ESC. When FCs are in 3D mode they re-map negative signals. This parameter keeps the FC and ESC in agreement.</long_desc>
+      <values>
+        <value code="0">2D</value>
+        <value code="1">3D</value>
+      </values>
+    </parameter>
+    <parameter name="VTQ_MAX_VELOCITY" default="0" type="FLOAT">
+      <short_desc>Module Param - Maximum velocity when CONTROL_MODE is set to Velocity</short_desc>
+      <long_desc>Only relevant in Velocity Mode. This is the velocity the controller will command at full throttle.</long_desc>
+    </parameter>
+    <parameter name="VTQ_MAX_VOLTS" default="0" type="FLOAT">
+      <short_desc>Module Param - Maximum voltage when CONTROL_MODE is set to Voltage</short_desc>
+      <long_desc>Only relevant in Voltage Mode. This is the voltage the controller will command at full throttle.</long_desc>
+    </parameter>
+    <parameter name="VTQ_MOTOR_DIR" default="0" type="INT32">
+      <short_desc>Module Param - The direction that the module should spin</short_desc>
+      <long_desc>Set the targeted motor's spinning direction (clockwise vs. counter clockwise) and flight mode (2D non-reversible vs. 3D reversible)</long_desc>
+      <values>
+        <value code="0">Unconfigured</value>
+        <value code="1">3D Counter Clockwise</value>
+        <value code="2">3D Clockwise</value>
+        <value code="3">2D Counter Clockwise</value>
+        <value code="4">2D Clockwise</value>
+      </values>
+    </parameter>
+    <parameter name="VTQ_NUM_CVS" default="0" type="INT32">
+      <short_desc>The number of Vertiq IFCI parameters to use</short_desc>
+      <long_desc>The total number of IFCI control variables being used across all connected modules</long_desc>
+      <min>0</min>
+      <max>16</max>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter name="VTQ_PULSE_V_LIM" default="0" type="FLOAT">
+      <short_desc>Module Param - Max pulsing voltage limit when in Voltage Limit Mode</short_desc>
+      <long_desc>This sets the max pulsing voltage limit when in Voltage Limit Mode.</long_desc>
+    </parameter>
+    <parameter name="VTQ_PULSE_V_MODE" default="0" type="INT32">
+      <short_desc>Module Param - 0 = Supply Voltage Mode, 1 = Voltage Limit Mode</short_desc>
+      <long_desc>Supply Voltage Mode means that the maximum voltage applied to pulsing is the supplied voltage. Voltage Limit Mode indicates that PULSE_VOLT_LIM is the maximum allowed voltage to apply towards pulsing.</long_desc>
+      <values>
+        <value code="0">Supply Voltage Mode</value>
+        <value code="1">Voltage Limit Mode</value>
+      </values>
+    </parameter>
+    <parameter name="VTQ_REDO_READ" default="0" type="INT32" boolean="true">
+      <short_desc>Reinitialize the target module's values into the PX4 parameters</short_desc>
+      <long_desc>Setting this value to true will reinitialize PX4's IQUART connected parameters to the value stored on the currently targeted motor. This is especially useful if your flight controller powered on before your connected modules</long_desc>
+    </parameter>
+    <parameter name="VTQ_TELEM_IDS_1" default="0" type="INT32">
+      <short_desc>Module IDs [0, 31] that you would like to request telemetry from</short_desc>
+      <long_desc>The module IDs [0, 31] that should be asked for telemetry. The data received from these IDs will be published via the esc_status topic.</long_desc>
+      <min>0</min>
+      <max>4294967295</max>
+      <reboot_required>True</reboot_required>
+      <bitmask>
+        <bit index="0">Module ID 0</bit>
+        <bit index="1">Module ID 1</bit>
+        <bit index="2">Module ID 2</bit>
+        <bit index="3">Module ID 3</bit>
+        <bit index="4">Module ID 4</bit>
+        <bit index="5">Module ID 5</bit>
+        <bit index="6">Module ID 6</bit>
+        <bit index="7">Module ID 7</bit>
+        <bit index="8">Module ID 8</bit>
+        <bit index="9">Module ID 9</bit>
+        <bit index="10">Module ID 10</bit>
+        <bit index="11">Module ID 11</bit>
+        <bit index="12">Module ID 12</bit>
+        <bit index="13">Module ID 13</bit>
+        <bit index="14">Module ID 14</bit>
+        <bit index="15">Module ID 15</bit>
+        <bit index="16">Module ID 16</bit>
+        <bit index="17">Module ID 17</bit>
+        <bit index="18">Module ID 18</bit>
+        <bit index="19">Module ID 19</bit>
+        <bit index="20">Module ID 20</bit>
+        <bit index="21">Module ID 21</bit>
+        <bit index="22">Module ID 22</bit>
+        <bit index="23">Module ID 23</bit>
+        <bit index="24">Module ID 24</bit>
+        <bit index="25">Module ID 25</bit>
+        <bit index="26">Module ID 26</bit>
+        <bit index="27">Module ID 27</bit>
+        <bit index="28">Module ID 28</bit>
+        <bit index="29">Module ID 29</bit>
+        <bit index="30">Module ID 30</bit>
+        <bit index="31">Module ID 31</bit>
+      </bitmask>
+    </parameter>
+    <parameter name="VTQ_TELEM_IDS_2" default="0" type="INT32">
+      <short_desc>Module IDs [32, 62] that you would like to request telemetry from</short_desc>
+      <long_desc>The module IDs [32, 62] that should be asked for telemetry. The data received from these IDs will be published via the esc_status topic.</long_desc>
+      <min>0</min>
+      <max>9223372036854775807</max>
+      <reboot_required>True</reboot_required>
+      <bitmask>
+        <bit index="32">Module ID 32</bit>
+        <bit index="33">Module ID 33</bit>
+        <bit index="34">Module ID 34</bit>
+        <bit index="35">Module ID 35</bit>
+        <bit index="36">Module ID 36</bit>
+        <bit index="37">Module ID 37</bit>
+        <bit index="38">Module ID 38</bit>
+        <bit index="39">Module ID 39</bit>
+        <bit index="40">Module ID 40</bit>
+        <bit index="41">Module ID 41</bit>
+        <bit index="42">Module ID 42</bit>
+        <bit index="43">Module ID 43</bit>
+        <bit index="44">Module ID 44</bit>
+        <bit index="45">Module ID 45</bit>
+        <bit index="46">Module ID 46</bit>
+        <bit index="47">Module ID 47</bit>
+        <bit index="48">Module ID 48</bit>
+        <bit index="49">Module ID 49</bit>
+        <bit index="50">Module ID 50</bit>
+        <bit index="51">Module ID 51</bit>
+        <bit index="52">Module ID 52</bit>
+        <bit index="53">Module ID 53</bit>
+        <bit index="54">Module ID 54</bit>
+        <bit index="55">Module ID 55</bit>
+        <bit index="56">Module ID 56</bit>
+        <bit index="57">Module ID 57</bit>
+        <bit index="58">Module ID 58</bit>
+        <bit index="59">Module ID 59</bit>
+        <bit index="60">Module ID 60</bit>
+        <bit index="61">Module ID 61</bit>
+        <bit index="62">Module ID 62</bit>
+      </bitmask>
+    </parameter>
+    <parameter name="VTQ_THROTTLE_CVI" default="0" type="INT32">
+      <short_desc>Module Param - The module's Throttle Control Value Index</short_desc>
+      <long_desc>This represents the Control Value Index where the targeted module will look for throttle commands</long_desc>
+      <min>0</min>
+      <max>255</max>
+    </parameter>
+    <parameter name="VTQ_TQUE_OFF_ANG" default="0" type="FLOAT">
+      <short_desc>Module Param - Offsets pulse angle to allow for mechanical properties</short_desc>
+      <long_desc>This offsets where the pulse starts around the motor to allow for propeller mechanical properties.</long_desc>
+    </parameter>
+    <parameter name="VTQ_TRGT_MOD_ID" default="0" type="INT32">
+      <short_desc>The Module ID of the module you would like to communicate with</short_desc>
+      <long_desc>This is the value used as the target module ID of all configuration parameters (not operational parameters). The Vertiq module with the module ID matching this value will react to all get and set requests from PX4. Any Vertiq client made with dynamic object IDs should use this value to instantiate itself.</long_desc>
+    </parameter>
+    <parameter name="VTQ_VELO_CUTOFF" default="0" type="FLOAT">
+      <short_desc>Module Param - The minimum velocity required to allow pulsing</short_desc>
+      <long_desc>This is the velocity at which pulsing is allowed. Any velocity between VELOCITY_CUTOFF and -VELOCITY_CUTOFF will not pulse.</long_desc>
+    </parameter>
+    <parameter name="VTQ_X_CVI" default="0" type="INT32">
+      <short_desc>Module Param - CVI for the X rectangular coordinate</short_desc>
+      <long_desc>This represents the Control Value Index where the targeted module will look for the X rectangular coordinate.</long_desc>
+      <min>0</min>
+      <max>255</max>
+    </parameter>
+    <parameter name="VTQ_Y_CVI" default="0" type="INT32">
+      <short_desc>Module Param - CVI for the Y rectangular coordinate</short_desc>
+      <long_desc>This represents the Control Value Index where the targeted module will look for the Y rectangular coordinate.</long_desc>
+      <min>0</min>
+      <max>255</max>
+    </parameter>
+    <parameter name="VTQ_ZERO_ANGLE" default="0" type="FLOAT">
+      <short_desc>Module Param - The encoder angle at which theta is zero</short_desc>
+      <long_desc>The encoder angle at which theta is zero. Adjust this number to change the location of 0 phase when pulsing.</long_desc>
     </parameter>
   </group>
   <group name="Zenoh">
