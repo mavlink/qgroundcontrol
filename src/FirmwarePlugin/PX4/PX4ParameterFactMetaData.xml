@@ -4709,6 +4709,18 @@
       <min>0</min>
       <max>200</max>
     </parameter>
+    <parameter name="SIM_GZ_WH_DIS3" default="100" type="INT32">
+      <short_desc>SIM_GZ Wheels 3 Disarmed Value</short_desc>
+      <long_desc>This is the output value that is set when not armed. Note that non-motor outputs might already be active in prearm state if COM_PREARM_MODE is set.</long_desc>
+      <min>0</min>
+      <max>200</max>
+    </parameter>
+    <parameter name="SIM_GZ_WH_DIS4" default="100" type="INT32">
+      <short_desc>SIM_GZ Wheels 4 Disarmed Value</short_desc>
+      <long_desc>This is the output value that is set when not armed. Note that non-motor outputs might already be active in prearm state if COM_PREARM_MODE is set.</long_desc>
+      <min>0</min>
+      <max>200</max>
+    </parameter>
     <parameter name="SIM_GZ_WH_FAIL1" default="-1" type="INT32">
       <short_desc>SIM_GZ Wheels 1 Failsafe Value</short_desc>
       <long_desc>This is the output value that is set when in failsafe mode. When set to -1 (default), the value depends on the function (see SIM_GZ_WH_FUNC1).</long_desc>
@@ -4718,6 +4730,18 @@
     <parameter name="SIM_GZ_WH_FAIL2" default="-1" type="INT32">
       <short_desc>SIM_GZ Wheels 2 Failsafe Value</short_desc>
       <long_desc>This is the output value that is set when in failsafe mode. When set to -1 (default), the value depends on the function (see SIM_GZ_WH_FUNC2).</long_desc>
+      <min>-1</min>
+      <max>200</max>
+    </parameter>
+    <parameter name="SIM_GZ_WH_FAIL3" default="-1" type="INT32">
+      <short_desc>SIM_GZ Wheels 3 Failsafe Value</short_desc>
+      <long_desc>This is the output value that is set when in failsafe mode. When set to -1 (default), the value depends on the function (see SIM_GZ_WH_FUNC3).</long_desc>
+      <min>-1</min>
+      <max>200</max>
+    </parameter>
+    <parameter name="SIM_GZ_WH_FAIL4" default="-1" type="INT32">
+      <short_desc>SIM_GZ Wheels 4 Failsafe Value</short_desc>
+      <long_desc>This is the output value that is set when in failsafe mode. When set to -1 (default), the value depends on the function (see SIM_GZ_WH_FUNC4).</long_desc>
       <min>-1</min>
       <max>200</max>
     </parameter>
@@ -4827,6 +4851,112 @@
         <value code="440">Landing Gear Wheel</value>
       </values>
     </parameter>
+    <parameter name="SIM_GZ_WH_FUNC3" default="0" type="INT32">
+      <short_desc>SIM_GZ Wheels 3 Output Function</short_desc>
+      <long_desc>Select what should be output on SIM_GZ Wheels 3. The default failsafe value is set according to the selected function: - 'Min' for ConstantMin - 'Max' for ConstantMax - 'Max' for Parachute - ('Max'+'Min')/2 for Servos - 'Disarmed' for the rest</long_desc>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Constant Min</value>
+        <value code="2">Constant Max</value>
+        <value code="101">Motor 1</value>
+        <value code="102">Motor 2</value>
+        <value code="103">Motor 3</value>
+        <value code="104">Motor 4</value>
+        <value code="105">Motor 5</value>
+        <value code="106">Motor 6</value>
+        <value code="107">Motor 7</value>
+        <value code="108">Motor 8</value>
+        <value code="109">Motor 9</value>
+        <value code="110">Motor 10</value>
+        <value code="111">Motor 11</value>
+        <value code="112">Motor 12</value>
+        <value code="201">Servo 1</value>
+        <value code="202">Servo 2</value>
+        <value code="203">Servo 3</value>
+        <value code="204">Servo 4</value>
+        <value code="205">Servo 5</value>
+        <value code="206">Servo 6</value>
+        <value code="207">Servo 7</value>
+        <value code="208">Servo 8</value>
+        <value code="301">Peripheral via Actuator Set 1</value>
+        <value code="302">Peripheral via Actuator Set 2</value>
+        <value code="303">Peripheral via Actuator Set 3</value>
+        <value code="304">Peripheral via Actuator Set 4</value>
+        <value code="305">Peripheral via Actuator Set 5</value>
+        <value code="306">Peripheral via Actuator Set 6</value>
+        <value code="400">Landing Gear</value>
+        <value code="401">Parachute</value>
+        <value code="402">RC Roll</value>
+        <value code="403">RC Pitch</value>
+        <value code="404">RC Throttle</value>
+        <value code="405">RC Yaw</value>
+        <value code="406">RC Flaps</value>
+        <value code="407">RC AUX 1</value>
+        <value code="408">RC AUX 2</value>
+        <value code="409">RC AUX 3</value>
+        <value code="410">RC AUX 4</value>
+        <value code="411">RC AUX 5</value>
+        <value code="412">RC AUX 6</value>
+        <value code="420">Gimbal Roll</value>
+        <value code="421">Gimbal Pitch</value>
+        <value code="422">Gimbal Yaw</value>
+        <value code="430">Gripper</value>
+        <value code="440">Landing Gear Wheel</value>
+      </values>
+    </parameter>
+    <parameter name="SIM_GZ_WH_FUNC4" default="0" type="INT32">
+      <short_desc>SIM_GZ Wheels 4 Output Function</short_desc>
+      <long_desc>Select what should be output on SIM_GZ Wheels 4. The default failsafe value is set according to the selected function: - 'Min' for ConstantMin - 'Max' for ConstantMax - 'Max' for Parachute - ('Max'+'Min')/2 for Servos - 'Disarmed' for the rest</long_desc>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Constant Min</value>
+        <value code="2">Constant Max</value>
+        <value code="101">Motor 1</value>
+        <value code="102">Motor 2</value>
+        <value code="103">Motor 3</value>
+        <value code="104">Motor 4</value>
+        <value code="105">Motor 5</value>
+        <value code="106">Motor 6</value>
+        <value code="107">Motor 7</value>
+        <value code="108">Motor 8</value>
+        <value code="109">Motor 9</value>
+        <value code="110">Motor 10</value>
+        <value code="111">Motor 11</value>
+        <value code="112">Motor 12</value>
+        <value code="201">Servo 1</value>
+        <value code="202">Servo 2</value>
+        <value code="203">Servo 3</value>
+        <value code="204">Servo 4</value>
+        <value code="205">Servo 5</value>
+        <value code="206">Servo 6</value>
+        <value code="207">Servo 7</value>
+        <value code="208">Servo 8</value>
+        <value code="301">Peripheral via Actuator Set 1</value>
+        <value code="302">Peripheral via Actuator Set 2</value>
+        <value code="303">Peripheral via Actuator Set 3</value>
+        <value code="304">Peripheral via Actuator Set 4</value>
+        <value code="305">Peripheral via Actuator Set 5</value>
+        <value code="306">Peripheral via Actuator Set 6</value>
+        <value code="400">Landing Gear</value>
+        <value code="401">Parachute</value>
+        <value code="402">RC Roll</value>
+        <value code="403">RC Pitch</value>
+        <value code="404">RC Throttle</value>
+        <value code="405">RC Yaw</value>
+        <value code="406">RC Flaps</value>
+        <value code="407">RC AUX 1</value>
+        <value code="408">RC AUX 2</value>
+        <value code="409">RC AUX 3</value>
+        <value code="410">RC AUX 4</value>
+        <value code="411">RC AUX 5</value>
+        <value code="412">RC AUX 6</value>
+        <value code="420">Gimbal Roll</value>
+        <value code="421">Gimbal Pitch</value>
+        <value code="422">Gimbal Yaw</value>
+        <value code="430">Gripper</value>
+        <value code="440">Landing Gear Wheel</value>
+      </values>
+    </parameter>
     <parameter name="SIM_GZ_WH_MAX1" default="200" type="INT32">
       <short_desc>SIM_GZ Wheels 1 Maximum Value</short_desc>
       <long_desc>Maxmimum output value (when not disarmed).</long_desc>
@@ -4835,6 +4965,18 @@
     </parameter>
     <parameter name="SIM_GZ_WH_MAX2" default="200" type="INT32">
       <short_desc>SIM_GZ Wheels 2 Maximum Value</short_desc>
+      <long_desc>Maxmimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>200</max>
+    </parameter>
+    <parameter name="SIM_GZ_WH_MAX3" default="200" type="INT32">
+      <short_desc>SIM_GZ Wheels 3 Maximum Value</short_desc>
+      <long_desc>Maxmimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>200</max>
+    </parameter>
+    <parameter name="SIM_GZ_WH_MAX4" default="200" type="INT32">
+      <short_desc>SIM_GZ Wheels 4 Maximum Value</short_desc>
       <long_desc>Maxmimum output value (when not disarmed).</long_desc>
       <min>0</min>
       <max>200</max>
@@ -4851,14 +4993,28 @@
       <min>0</min>
       <max>200</max>
     </parameter>
+    <parameter name="SIM_GZ_WH_MIN3" default="0" type="INT32">
+      <short_desc>SIM_GZ Wheels 3 Minimum Value</short_desc>
+      <long_desc>Minimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>200</max>
+    </parameter>
+    <parameter name="SIM_GZ_WH_MIN4" default="0" type="INT32">
+      <short_desc>SIM_GZ Wheels 4 Minimum Value</short_desc>
+      <long_desc>Minimum output value (when not disarmed).</long_desc>
+      <min>0</min>
+      <max>200</max>
+    </parameter>
     <parameter name="SIM_GZ_WH_REV" default="0" type="INT32">
       <short_desc>Reverse Output Range for SIM_GZ</short_desc>
       <long_desc>Allows to reverse the output range for each channel. Note: this is only useful for servos.</long_desc>
       <min>0</min>
-      <max>3</max>
+      <max>15</max>
       <bitmask>
         <bit index="0">SIM_GZ Wheels 1</bit>
         <bit index="1">SIM_GZ Wheels 2</bit>
+        <bit index="2">SIM_GZ Wheels 3</bit>
+        <bit index="3">SIM_GZ Wheels 4</bit>
       </bitmask>
     </parameter>
     <parameter name="TAP_ESC_FUNC1" default="0" type="INT32">
@@ -13546,6 +13702,7 @@
         <value code="10">Helicopter (tail ESC)</value>
         <value code="11">Helicopter (tail Servo)</value>
         <value code="12">Helicopter (Coaxial)</value>
+        <value code="13">Rover (Mecanum)</value>
       </values>
     </parameter>
     <parameter name="CA_FAILURE_MODE" default="0" type="INT32">
@@ -19843,6 +20000,137 @@
       <min>0</min>
       <max>100</max>
       <decimal>3</decimal>
+      <increment>0.01</increment>
+    </parameter>
+  </group>
+  <group name="Rover Mecanum">
+    <parameter name="RM_MAN_YAW_SCALE" default="1" type="FLOAT">
+      <short_desc>Manual yaw rate scale</short_desc>
+      <long_desc>In Manual mode the setpoint for the yaw rate received from the control stick is scaled by this value.</long_desc>
+      <min>0.01</min>
+      <max>1</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RM_MAX_ACCEL" default="0.5" type="FLOAT">
+      <short_desc>Maximum acceleration</short_desc>
+      <long_desc>Maximum acceleration is used to limit the acceleration of the rover</long_desc>
+      <min>0</min>
+      <max>100</max>
+      <unit>m/s^2</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RM_MAX_JERK" default="0.5" type="FLOAT">
+      <short_desc>Maximum jerk</short_desc>
+      <long_desc>Limit for forwards acc/deceleration change.</long_desc>
+      <min>0</min>
+      <max>100</max>
+      <unit>m/s^3</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RM_MAX_SPEED" default="7" type="FLOAT">
+      <short_desc>Maximum speed the rover is allowed to drive</short_desc>
+      <long_desc>This parameter is used cap the maximum speed the rover is allowed to drive and to map stick inputs to desired speeds in position mode.</long_desc>
+      <min>0</min>
+      <max>100</max>
+      <unit>m/s</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RM_MAX_THR_SPD" default="1" type="FLOAT">
+      <short_desc>Speed the rover drives at maximum throttle</short_desc>
+      <long_desc>This parameter is used to calculate the feedforward term of the closed loop speed control which linearly maps desired speeds to normalized motor commands [-1. 1]. A good starting point is the observed ground speed when the rover drives at maximum throttle in manual mode. Increase this parameter if the rover is faster than the setpoint, and decrease if the rover is slower.</long_desc>
+      <min>0</min>
+      <max>100</max>
+      <unit>m/s</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RM_MAX_THR_YAW_R" default="2" type="FLOAT">
+      <short_desc>Yaw rate turning left/right wheels at max speed in opposite directions</short_desc>
+      <long_desc>This parameter is used to calculate the feedforward term of the closed loop yaw rate control. The controller first calculates the required speed difference between the left and right motor to achieve the desired yaw rate. This desired speed difference is then linearly mapped to normalized motor commands. A good starting point is twice the speed the rover drives at maximum throttle (RM_MAX_THRTL_SPD)). Increase this parameter if the rover turns faster than the setpoint, and decrease if the rover turns slower.</long_desc>
+      <min>0</min>
+      <max>100</max>
+      <unit>m/s</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RM_MAX_YAW_RATE" default="90" type="FLOAT">
+      <short_desc>Maximum allowed yaw rate for the rover</short_desc>
+      <long_desc>This parameter is used to cap desired yaw rates and map controller inputs to desired yaw rates in acro mode.</long_desc>
+      <min>0.01</min>
+      <max>1000</max>
+      <unit>deg/s</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RM_MISS_SPD_DEF" default="1" type="FLOAT">
+      <short_desc>Default rover speed during a mission</short_desc>
+      <min>0</min>
+      <max>100</max>
+      <unit>m/s</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RM_MISS_VEL_GAIN" default="1" type="FLOAT">
+      <short_desc>Tuning parameter for the velocity reduction during waypoint transition</short_desc>
+      <long_desc>The waypoint transition speed is calculated as: Transition_speed = Maximum_speed * (1 - normalized_transition_angle * RM_MISS_VEL_GAIN) The normalized transition angle is the angle between the line segment from prev-curr WP and curr-next WP interpolated from [0, 180] -&gt; [0, 1]. Higher value -&gt; More velocity reduction during cornering.</long_desc>
+      <min>0.05</min>
+      <max>100</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RM_SPEED_I" default="0" type="FLOAT">
+      <short_desc>Integral gain for ground speed controller</short_desc>
+      <min>0</min>
+      <max>100</max>
+      <decimal>3</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RM_SPEED_P" default="1" type="FLOAT">
+      <short_desc>Proportional gain for speed controller</short_desc>
+      <min>0</min>
+      <max>100</max>
+      <decimal>3</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RM_WHEEL_TRACK" default="0.5" type="FLOAT">
+      <short_desc>Wheel track</short_desc>
+      <long_desc>Distance from the center of the right wheels to the center of the left wheels.</long_desc>
+      <min>0.001</min>
+      <max>100</max>
+      <unit>m</unit>
+      <decimal>3</decimal>
+      <increment>0.001</increment>
+    </parameter>
+    <parameter name="RM_YAW_I" default="0.1" type="FLOAT">
+      <short_desc>Integral gain for closed loop yaw controller</short_desc>
+      <min>0</min>
+      <max>100</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RM_YAW_P" default="1" type="FLOAT">
+      <short_desc>Proportional gain for closed loop yaw controller</short_desc>
+      <min>0</min>
+      <max>100</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RM_YAW_RATE_I" default="0" type="FLOAT">
+      <short_desc>Integral gain for the closed-loop yaw rate controller</short_desc>
+      <min>0</min>
+      <max>100</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RM_YAW_RATE_P" default="1" type="FLOAT">
+      <short_desc>Proportional gain for the closed-loop yaw rate controller</short_desc>
+      <min>0</min>
+      <max>100</max>
+      <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
   </group>
