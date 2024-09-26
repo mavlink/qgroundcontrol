@@ -29,6 +29,7 @@ target_link_libraries(AnalyzeViewTest
 
 target_include_directories(AnalyzeViewTest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
+# https://github.com/ianare/exif-samples
 qt_add_resources(AnalyzeViewTest "AnalyzeViewTest_res"
     PREFIX "/"
     FILES
