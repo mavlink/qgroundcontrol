@@ -24,7 +24,7 @@ The QGroundControl documentation, artwork and images are licensed under [CC BY 4
 
 ## See Also
 
-- [qgroundcontrol/COPYING.md](https://github.com/mavlink/qgroundcontrol/blob/master/COPYING.md)
-- [qgroundcontrol/CONTRIBUTING.md](https://github.com/mavlink/qgroundcontrol/blob/master/CONTRIBUTING.md)
+- [qgroundcontrol/COPYING.md](https://github.com/mavlink/qgroundcontrol/blob/master/.github/COPYING.md)
+- [qgroundcontrol/CONTRIBUTING.md](https://github.com/mavlink/qgroundcontrol/blob/master/.github/CONTRIBUTING.md)
 - [qgc-user-guide/LICENSE](https://github.com/mavlink/qgc-user-guide/blob/master/LICENSE)
 - [qgc-dev-guide/LICENSE](https://github.com/mavlink/qgc-dev-guide/blob/master/LICENSE)
