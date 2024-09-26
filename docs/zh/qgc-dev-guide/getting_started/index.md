@@ -15,7 +15,7 @@ Versions are provided for all platforms.
 ## 源代码
 
 _QGroundControl_ 的源代码保存在 github 上，下载地址为: https\://github.com/mavlink/qgroundcontrol。 QGroundControl源代码在Apache 2.0和GPLv3下是双许可的。 有关更多信息，请参阅：许可证。
-It is [dual-licensed under Apache 2.0 and GPLv3](https://github.com/mavlink/qgroundcontrol/blob/master/COPYING.md).
+It is [dual-licensed under Apache 2.0 and GPLv3](https://github.com/mavlink/qgroundcontrol/blob/master/.github/COPYING.md).
 
 要获取源文件, 请执行以下操作:
 
