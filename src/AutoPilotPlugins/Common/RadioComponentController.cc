@@ -180,6 +180,16 @@ void RadioComponentController::_setupCurrentState(void)
 /// Connected to Vehicle::rcChannelsChanged signal
 void RadioComponentController::_rcChannelsChanged(int channelCount, int pwmValues[QGCMAVLink::maxRcChannels])
 {
+    // Below is a hack that's needed by ELRS
+    // ELRS is not sending a full RC_CHANNELS packet, only channel update
+    // packets via RC_CHANNELS_RAW, to update the position of the values.
+    // Therefore, the number of channels is not set.
+    if (channelCount == 0) {
+        for (int channel=0; channel<16; channel++) {
+            if (pwmValues[channel] != INT16_MAX) channelCount++;
+        }
+    }
+
     for (int channel=0; channel<channelCount; channel++) {
         int channelValue = pwmValues[channel];
 
