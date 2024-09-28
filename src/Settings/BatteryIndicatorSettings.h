@@ -14,26 +14,31 @@
 class BatteryIndicatorSettings : public SettingsGroup
 {
     Q_OBJECT
+
 public:
     BatteryIndicatorSettings(QObject* parent = nullptr);
+
     DEFINE_SETTING_NAME_GROUP()
 
-    DEFINE_SETTINGFACT(display)
-    DEFINE_SETTINGFACT(threshold1)
-    DEFINE_SETTINGFACT(threshold2)
+    // Standard setting facts
+    DEFINE_SETTINGFACT(display)             // Visibility of battery indicator
+    DEFINE_SETTINGFACT(battery_state_display) // Battery state display mode
 
-    Q_PROPERTY(bool visible READ visible NOTIFY visibleChanged)
-    Q_PROPERTY(bool thresholdEditable READ thresholdEditable NOTIFY thresholdEditableChanged)
-    
-    // Setters for thresholds
-    // Expose setters to QML
-    Q_INVOKABLE void setThreshold1(int value);
-    Q_INVOKABLE void setThreshold2(int value);
-    
-    bool visible() const;  // Group visibility
-    bool thresholdEditable() const;  // Single editable property for both thresholds
+    // Define visibility settings for threshold editability
+    DEFINE_SETTINGFACT(threshold1visible)      // Determines if the FactTextField for threshold 1 is visible (editable)
+    DEFINE_SETTINGFACT(threshold2visible)      // Determines if the FactTextField for threshold 2 is visible (editable)
 
-signals:
-    void visibleChanged();
-    void thresholdEditableChanged();
+    // Define setting facts for thresholds
+    DEFINE_SETTINGFACT(threshold1)    // First threshold for battery level
+    DEFINE_SETTINGFACT(threshold2)    // Second threshold for battery level
+    Q_INVOKABLE void setThreshold1(int value);   // Set threshold1 with validation
+    Q_INVOKABLE void setThreshold2(int value);   // Set threshold2 with validation
+
+private:
+    void validateThreshold1();                  // Validate threshold1 value
+    void validateThreshold2();                  // Validate threshold2 value
+
+    // Change handlers for thresholds
+    void _threshold1Changed();
+    void _threshold2Changed();
 };

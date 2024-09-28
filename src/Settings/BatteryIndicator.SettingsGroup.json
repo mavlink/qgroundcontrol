@@ -23,6 +23,24 @@
             "type": "uint32",
             "default": 60,
             "units": "%"
+        },
+        {
+            "name": "threshold1visible",
+            "shortDesc": "Controls the visibility of the 'threshold1visible'",
+            "type": "bool",
+            "default": true
+        },
+        {
+            "name": "threshold2visible",
+            "shortDesc": "Controls the visibility of the 'threshold2visible'",
+            "type": "bool",
+            "default": true
+        },
+        {
+            "name": "battery_state_display",
+            "shortDesc": "Controls the visibility of the 'Battery State Display'",
+            "type": "bool",
+            "default": true
         }
     ]
 }
