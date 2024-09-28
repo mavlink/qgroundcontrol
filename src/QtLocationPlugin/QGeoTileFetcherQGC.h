@@ -19,7 +19,6 @@ class QGeoTiledMappingManagerEngineQGC;
 class QGeoTiledMapReplyQGC;
 class QGeoTileSpec;
 class QNetworkAccessManager;
-class QNetworkDiskCache;
 
 class QGeoTileFetcherQGC : public QGeoTileFetcher
 {
@@ -42,7 +41,6 @@ private:
     void handleReply(QGeoTiledMapReply *reply, const QGeoTileSpec &spec) final;
 
     QNetworkAccessManager *m_networkManager = nullptr;
-    // QNetworkDiskCache *m_diskCache = nullptr;
 
 #if defined Q_OS_MAC
     static constexpr const char* s_userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 14.5; rv:125.0) Gecko/20100101 Firefox/125.0";
