@@ -15,7 +15,9 @@ target_link_libraries(API
     PRIVATE
         Qt6::Qml
         FactSystem
+        GStreamerReceiver
         Joystick
+        QtMultimediaReceiver
         Settings
         Utilities
         VideoManager

@@ -1,5 +1,9 @@
 find_package(Qt6 REQUIRED COMPONENTS Concurrent Core Gui Location Positioning Qml QmlIntegration Quick Widgets)
 
+if(QGC_UTM_ADAPTER)
+    add_definitions(-DQGC_UTM_ADAPTER)
+endif()
+
 qt_add_library(QmlControls STATIC
     AppMessages.cc
     AppMessages.h

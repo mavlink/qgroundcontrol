@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -37,7 +37,7 @@ static QObject* mavlinkSingletonFactory(QQmlEngine*, QJSEngine*)
  */
 MAVLinkProtocol::MAVLinkProtocol(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
-    , m_enable_version_check(true)
+    , _enable_version_check(true)
     , _message({})
     , _status({})
     , versionMismatchIgnore(false)
@@ -105,7 +105,7 @@ void MAVLinkProtocol::setToolbox(QGCToolbox *toolbox)
    connect(_multiVehicleManager, &MultiVehicleManager::vehicleAdded, this, &MAVLinkProtocol::_vehicleCountChanged);
    connect(_multiVehicleManager, &MultiVehicleManager::vehicleRemoved, this, &MAVLinkProtocol::_vehicleCountChanged);
 
-   emit versionCheckChanged(m_enable_version_check);
+   emit versionCheckChanged(_enable_version_check);
 }
 
 void MAVLinkProtocol::loadSettings()
@@ -113,7 +113,7 @@ void MAVLinkProtocol::loadSettings()
     // Load defaults from settings
     QSettings settings;
     settings.beginGroup("QGC_MAVLINK_PROTOCOL");
-    enableVersionCheck(settings.value("VERSION_CHECK_ENABLED", m_enable_version_check).toBool());
+    enableVersionCheck(settings.value("VERSION_CHECK_ENABLED", _enable_version_check).toBool());
 
     // Only set system id if it was valid
     int temp = settings.value("GCS_SYSTEM_ID", systemId).toInt();
@@ -128,7 +128,7 @@ void MAVLinkProtocol::storeSettings()
     // Store settings
     QSettings settings;
     settings.beginGroup("QGC_MAVLINK_PROTOCOL");
-    settings.setValue("VERSION_CHECK_ENABLED", m_enable_version_check);
+    settings.setValue("VERSION_CHECK_ENABLED", _enable_version_check);
     settings.setValue("GCS_SYSTEM_ID", systemId);
     // Parameter interface settings
 }
@@ -190,7 +190,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
     // Since receiveBytes signals cross threads we can end up with signals in the queue
     // that come through after the link is disconnected. For these we just drop the data
     // since the link is closed.
-    SharedLinkInterfacePtr linkPtr = _linkMgr->sharedLinkInterfacePointerForLink(link, true);
+    SharedLinkInterfacePtr linkPtr = _linkMgr->sharedLinkInterfacePointerForLink(link);
     if (!linkPtr) {
         qCDebug(MAVLinkProtocolLog) << "receiveBytes: link gone!" << b.size() << " bytes arrived too late";
         return;
@@ -255,6 +255,9 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
             //-----------------------------------------------------------------
             // MAVLink forwarding
             bool forwardingEnabled = _app->toolbox()->settingsManager()->appSettings()->forwardMavlink()->rawValue().toBool();
+            if (_message.msgid == MAVLINK_MSG_ID_SETUP_SIGNING) {
+                forwardingEnabled = false;
+            }
             if (forwardingEnabled) {
                 SharedLinkInterfacePtr forwardingLink = _linkMgr->mavlinkForwardingLink();
 
@@ -267,6 +270,9 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 
             // MAVLink forwarding support
             bool forwardingSupportEnabled = _linkMgr->mavlinkSupportForwardingEnabled();
+            if (_message.msgid == MAVLINK_MSG_ID_SETUP_SIGNING) {
+                forwardingSupportEnabled = false;
+            }
             if (forwardingSupportEnabled) {
                 SharedLinkInterfacePtr forwardingSupportLink = _linkMgr->mavlinkForwardingSupportLink();
 
@@ -400,14 +406,14 @@ void MAVLinkProtocol::setSystemId(int id)
 }
 
 /** @return Component id of this application */
-int MAVLinkProtocol::getComponentId()
+int MAVLinkProtocol::getComponentId() const
 {
     return MAV_COMP_ID_MISSIONPLANNER;
 }
 
 void MAVLinkProtocol::enableVersionCheck(bool enabled)
 {
-    m_enable_version_check = enabled;
+    _enable_version_check = enabled;
     emit versionCheckChanged(enabled);
 }
 

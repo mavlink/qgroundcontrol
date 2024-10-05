@@ -1176,7 +1176,7 @@ Item {
             anchors.centerIn:   parent
             QGCLabel {
                 text:               QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionExporting ? qsTr("Tile Set Export Progress") : qsTr("Tile Set Export Completed")
-                font.family:        ScreenTools.demiboldFontFamily
+                font.bold:          true
                 font.pointSize:     ScreenTools.mediumFontPointSize
                 anchors.horizontalCenter: parent.horizontalCenter
             }
@@ -1238,7 +1238,7 @@ Item {
                         return qsTr("Map Tile Set import Completed");
                     }
                 }
-                font.family:        ScreenTools.demiboldFontFamily
+                font.bold:          true
                 font.pointSize:     ScreenTools.mediumFontPointSize
                 anchors.horizontalCenter: parent.horizontalCenter
             }

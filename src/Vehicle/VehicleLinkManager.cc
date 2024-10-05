@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -245,17 +245,11 @@ SharedLinkInterfacePtr VehicleLinkManager::_bestActivePrimaryLink(void)
     // Best choice is a USB connection
     for (const LinkInfo_t& linkInfo: _rgLinkInfo) {
         if (!linkInfo.commLost) {
-            SharedLinkInterfacePtr  link        = linkInfo.link;
-            SerialLink*             serialLink  = qobject_cast<SerialLink*>(link.get());
-            if (serialLink) {
-                SharedLinkConfigurationPtr config = serialLink->linkConfiguration();
-                if (config) {
-                    SerialConfiguration* serialConfig = qobject_cast<SerialConfiguration*>(config.get());
-                    if (serialConfig && serialConfig->usbDirect()) {
-                        return link;
-                    }
-                }
-            }
+            SharedLinkInterfacePtr link = linkInfo.link;
+            auto linkInterface = link.get();
+            if (linkInterface && LinkManager::isLinkUSBDirect(linkInterface)) {
+                return link;
+            } 
         }
     }
 #endif
@@ -396,14 +390,4 @@ QStringList VehicleLinkManager::linkStatuses(void) const
     }
 
     return rgStatuses;
-}
-
-bool VehicleLinkManager::primaryLinkIsPX4Flow(void) const
-{
-    SharedLinkInterfacePtr sharedLink = _primaryLink.lock();
-    if (!sharedLink) {
-        return false;
-    } else {
-        return sharedLink->isPX4Flow();
-    }
 }

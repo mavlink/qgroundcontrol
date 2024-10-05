@@ -1,10 +1,10 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Network Positioning)
+find_package(Qt6 REQUIRED COMPONENTS Core Network Positioning QmlIntegration)
 
 qt_add_library(ADSB STATIC
-    ADSBVehicle.cc
-    ADSBVehicle.h
     ADSBTCPLink.cc
     ADSBTCPLink.h
+    ADSBVehicle.cc
+    ADSBVehicle.h
     ADSBVehicleManager.cc
     ADSBVehicleManager.h
 )
@@ -12,12 +12,13 @@ qt_add_library(ADSB STATIC
 target_link_libraries(ADSB
     PRIVATE
         Qt6::Network
+        QGC
         Settings
         Utilities
     PUBLIC
         Qt6::Core
         Qt6::Positioning
-        QGC
+        Qt6::QmlIntegration
         QmlControls
 )
 

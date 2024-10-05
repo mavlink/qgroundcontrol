@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -31,7 +31,7 @@ class FactPanelController : public QObject
     Q_MOC_INCLUDE("Vehicle.h")
     Q_MOC_INCLUDE("Fact.h")
 public:
-    FactPanelController();
+    FactPanelController(QObject *parent = nullptr);
 
     Q_PROPERTY(Vehicle* vehicle MEMBER _vehicle CONSTANT)
 

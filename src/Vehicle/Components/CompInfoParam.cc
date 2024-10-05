@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -144,9 +144,15 @@ FactMetaData* CompInfoParam::factMetaDataForName(const QString& name, FactMetaDa
 
 FirmwarePlugin* CompInfoParam::_anyVehicleTypeFirmwarePlugin(MAV_AUTOPILOT firmwareType)
 {
-    FirmwarePluginManager*  pluginMgr               = qgcApp()->toolbox()->firmwarePluginManager();
-    MAV_TYPE                anySupportedVehicleType = QGCMAVLink::vehicleClassToMavType(pluginMgr->supportedVehicleClasses(QGCMAVLink::firmwareClass(firmwareType))[0]);
-
+    FirmwarePluginManager* const pluginMgr = qgcApp()->toolbox()->firmwarePluginManager();
+    const QGCMAVLink::FirmwareClass_t firmwareClass = QGCMAVLink::firmwareClass(firmwareType);
+    const QList<QGCMAVLink::VehicleClass_t> supportedClasses = pluginMgr->supportedVehicleClasses(firmwareClass);
+    MAV_TYPE anySupportedVehicleType;
+    if (!supportedClasses.isEmpty()) {
+        anySupportedVehicleType = QGCMAVLink::vehicleClassToMavType(supportedClasses[0]);
+    } else {
+        anySupportedVehicleType = MAV_TYPE_GENERIC;
+    }
     return pluginMgr->firmwarePluginForAutopilot(firmwareType, anySupportedVehicleType);
 }
 

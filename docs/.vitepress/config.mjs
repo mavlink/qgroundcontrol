@@ -159,8 +159,8 @@ export default defineConfig({
             link: "https://docs.qgroundcontrol.com/master/en/",
           },
           {
-            text: "v4.3",
-            link: "https://docs.qgroundcontrol.com/Stable_V4.3/en/",
+            text: "v4.4",
+            link: "https://docs.qgroundcontrol.com/Stable_V4.4/en/",
           },
         ],
       },

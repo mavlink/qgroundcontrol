@@ -1,6 +1,6 @@
 /***************_qgcTranslatorSourceCode***********************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -40,7 +40,6 @@ public:
     DEFINE_SETTINGFACT(virtualJoystickLeftHandedMode)
     DEFINE_SETTINGFACT(appFontPointSize)
     DEFINE_SETTINGFACT(indoorPalette)
-    DEFINE_SETTINGFACT(showLargeCompass)
     DEFINE_SETTINGFACT(savePath)
     DEFINE_SETTINGFACT(androidSaveToSDCard)
     DEFINE_SETTINGFACT(useChecklist)
@@ -51,12 +50,10 @@ public:
     DEFINE_SETTINGFACT(esriToken)
     DEFINE_SETTINGFACT(customURL)
     DEFINE_SETTINGFACT(vworldToken)
-    DEFINE_SETTINGFACT(defaultFirmwareType)
     DEFINE_SETTINGFACT(gstDebugLevel)
     DEFINE_SETTINGFACT(followTarget)
     DEFINE_SETTINGFACT(qLocaleLanguage)
     DEFINE_SETTINGFACT(disableAllPersistence)
-    DEFINE_SETTINGFACT(usePairing)
     DEFINE_SETTINGFACT(saveCsvTelemetry)
     DEFINE_SETTINGFACT(firstRunPromptIdsShown)
     DEFINE_SETTINGFACT(forwardMavlink)
@@ -64,7 +61,7 @@ public:
     DEFINE_SETTINGFACT(forwardMavlinkAPMSupportHostName)
     DEFINE_SETTINGFACT(loginAirLink)
     DEFINE_SETTINGFACT(passAirLink)
-
+    DEFINE_SETTINGFACT(mavlink2SigningKey)
 
     // Although this is a global setting it only affects ArduPilot vehicle since PX4 automatically starts the stream from the vehicle side
     DEFINE_SETTINGFACT(apmStartMavlinkStreams)
@@ -125,12 +122,6 @@ public:
     static constexpr const char* crashDirectory =           QT_TRANSLATE_NOOP("AppSettings", "CrashLogs");
     static constexpr const char* customActionsDirectory =   QT_TRANSLATE_NOOP("AppSettings", "CustomActions");
 
-    // Returns the current qLocaleLanguage setting bypassing the standard SettingsGroup path. This should only be used
-    // by QGCApplication::setLanguage to query the language setting as early in the boot process as possible.
-    // Specfically prior to any JSON files being loaded such that JSON file can be translated. Also since this
-    // is a one-off mechanism custom build overrides for language are not currently supported.
-    static QLocale::Language _qLocaleLanguageID(void);
-
 signals:
     void savePathsChanged();
 
@@ -138,8 +129,19 @@ private slots:
     void _indoorPaletteChanged();
     void _checkSavePathDirectories();
     void _qLocaleLanguageChanged();
+    void _mavlink2SigningKeyChanged();
 
 private:
-    static QList<int> _rgReleaseLanguages;
-    static QList<int> _rgPartialLanguages;
+    static QLocale::Language _qLocaleLanguageEarlyAccess(void);
+
+    static QList<QLocale::Language> _rgReleaseLanguages;
+    static QList<QLocale::Language> _rgPartialLanguages;
+
+    typedef struct {
+        QLocale::Language   languageId;
+        const char*         languageName;
+    } LanguageInfo_t;
+    static LanguageInfo_t _rgLanguageInfo[];
+    
+    friend class QGCApplication;
 };

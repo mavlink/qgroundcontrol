@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -62,9 +62,8 @@ public:
     /// Clears the interactive bit from all fence items
     Q_INVOKABLE void clearAllInteractive(void);
 
-#ifdef CONFIG_UTM_ADAPTER
+#ifdef QGC_UTM_ADAPTER
     Q_INVOKABLE void loadFlightPlanData(void);
-    Q_INVOKABLE bool loadUploadFlag(void);
 #endif
 
     double  paramCircularFence  (void);
@@ -98,7 +97,7 @@ signals:
     void loadComplete                   (void);
     void paramCircularFenceChanged      (void);
 
-#ifdef CONFIG_UTM_ADAPTER
+#ifdef QGC_UTM_ADAPTER
     void uploadFlagSent         (bool flag);
     void polygonBoundarySent    (QList<QGeoCoordinate> coords);
 #endif

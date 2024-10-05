@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -156,7 +156,7 @@ public:
     DEFINE_QGC_COLOR(toolStripHoverColor,           setToolStripHoverColor)
     DEFINE_QGC_COLOR(groupBorder,                   setGroupBorder)
 
-#ifdef CONFIG_UTM_ADAPTER
+#ifdef QGC_UTM_ADAPTER
     DEFINE_QGC_COLOR(switchUTMSP,                    setSwitchUTMSP)
     DEFINE_QGC_COLOR(sliderUTMSP,                    setSliderUTMSP)
     DEFINE_QGC_COLOR(successNotifyUTMSP,             setSuccessNotifyUTMSP)

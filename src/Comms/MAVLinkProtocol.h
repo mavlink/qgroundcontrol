@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -43,11 +43,11 @@ public:
     /** @brief Get the system id of this application */
     int getSystemId() const;
     /** @brief Get the component id of this application */
-    int getComponentId();
+    int getComponentId() const;
 
     /** @brief Get protocol version check state */
     bool versionCheckEnabled() const {
-        return m_enable_version_check;
+        return _enable_version_check;
     }
     /** @brief Get the protocol version */
     int getVersion() {
@@ -96,7 +96,7 @@ public slots:
     void checkForLostLogFiles(void);
 
 protected:
-    bool        m_enable_version_check;                         ///< Enable checking of version match of MAV and QGC
+    bool        _enable_version_check;                         ///< Enable checking of version match of MAV and QGC
     uint8_t     lastIndex[256][256];                            ///< Store the last received sequence ID for each system/componenet pair
     uint8_t     firstMessage[256][256];                         ///< First message flag
     uint64_t    totalReceiveCounter[MAVLINK_COMM_NUM_BUFFERS];  ///< The total number of successfully received messages

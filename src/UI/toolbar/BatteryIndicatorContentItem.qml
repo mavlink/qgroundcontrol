@@ -45,7 +45,7 @@ ColumnLayout {
     QGCLabel {
         Layout.alignment:   Qt.AlignCenter
         text:               qsTr("Battery Status")
-        font.family:        ScreenTools.demiboldFontFamily
+        font.bold:          true
     }
 
     RowLayout {

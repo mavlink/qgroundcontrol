@@ -13,7 +13,7 @@
     "name":         "px4HiddenFlightModesMultiRotor",
     "shortDesc":    "Comma separated list of hidden flight modes for MultiRotor",
     "type":         "string",
-    "default2":      "Manual,Offboard,Rattitude,Precision Land"
+    "default":      "Manual,Offboard,Rattitude,Precision Land"
 },
 {
     "name":         "px4HiddenFlightModesFixedWing",

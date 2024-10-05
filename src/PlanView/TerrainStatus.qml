@@ -42,7 +42,7 @@ Rectangle {
         anchors.top:            parent.bottom
         width:                  parent.height
         font.pointSize:         ScreenTools.smallFontPointSize
-        text:                   qsTr("Height AMSL (%1)").arg(_unitsConversion.appSettingsHorizontalDistanceUnitsString)
+        text:                   qsTr("Height AMSL (%1)").arg(_unitsConversion.appSettingsVerticalDistanceUnitsString)
         horizontalAlignment:    Text.AlignHCenter
         rotation:               -90
         transformOrigin:        Item.TopLeft
@@ -77,11 +77,11 @@ Rectangle {
                     min:                        0
                     max:                        _unitsConversion.metersToAppSettingsHorizontalDistanceUnits(missionController.missionDistance)
                     lineVisible:                true
-                    labelsFont.family:          "Fixed"
+                    labelsFont.family:          ScreenTools.fixedFontFamily
                     labelsFont.pointSize:       ScreenTools.smallFontPointSize
-                    labelsColor:                "white"
+                    labelsColor:                qgcPal.text
                     tickCount:                  5
-                    gridLineColor:              "#44FFFFFF"
+                    gridLineColor:              applyOpacity(qgcPal.text, 0.25)
                 }
 
                 ValueAxis {
@@ -89,11 +89,11 @@ Rectangle {
                     min:                        _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_minAMSLAltitude)
                     max:                        _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_maxAMSLAltitude)
                     lineVisible:                true
-                    labelsFont.family:          "Fixed"
+                    labelsFont.family:          ScreenTools.fixedFontFamily
                     labelsFont.pointSize:       ScreenTools.smallFontPointSize
-                    labelsColor:                "white"
+                    labelsColor:                qgcPal.text
                     tickCount:                  4
-                    gridLineColor:              "#44FFFFFF"
+                    gridLineColor:              applyOpacity(qgcPal.text, 0.25)
                 }
 
                 LineSeries {
@@ -127,7 +127,7 @@ Rectangle {
                             id:         simpleItem
                             height:     terrainProfile.height
                             width:      1
-                            color:      "white"
+                            color:      qgcPal.text
                             x:          (object.distanceFromStart * terrainProfile.pixelsPerMeter)
                             visible:    object.isSimpleItem || object.isSingleItem
 
@@ -146,7 +146,7 @@ Rectangle {
                             id:         complexItemEntry
                             height:     terrainProfile.height
                             width:      1
-                            color:      "white"
+                            color:      qgcPal.text
                             x:          (object.distanceFromStart * terrainProfile.pixelsPerMeter)
                             visible:    complexItem.visible
 
@@ -164,7 +164,7 @@ Rectangle {
                             id:         complexItemExit
                             height:     terrainProfile.height
                             width:      1
-                            color:      "white"
+                            color:      qgcPal.text
                             x:          ((object.distanceFromStart + object.complexDistance) * terrainProfile.pixelsPerMeter)
                             visible:    complexItem.visible
 
@@ -203,5 +203,9 @@ Rectangle {
                 }
             }
         }
+    }
+
+    function applyOpacity(colorIn, opacity){
+        return Qt.rgba(colorIn.r, colorIn.g, colorIn.b, opacity)
     }
 }

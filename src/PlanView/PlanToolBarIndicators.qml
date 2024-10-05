@@ -58,7 +58,7 @@ Item {
                                                   : NaN
 
     property string _distanceText:              isNaN(_distance) ?              "-.-" : QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(_distance).toFixed(1) + " " + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString
-    property string _altDifferenceText:         isNaN(_altDifference) ?         "-.-" : QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(_altDifference).toFixed(1) + " " + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString
+    property string _altDifferenceText:         isNaN(_altDifference) ?         "-.-" : QGroundControl.unitsConversion.metersToAppSettingsVerticalDistanceUnits(_altDifference).toFixed(1) + " " + QGroundControl.unitsConversion.appSettingsVerticalDistanceUnitsString
     property string _gradientText:              isNaN(_gradient) ?              "-.-" : _gradient.toFixed(0) + qsTr(" deg")
     property string _azimuthText:               isNaN(_azimuth) ?               "-.-" : Math.round(_azimuth) % 360
     property string _headingText:               isNaN(_azimuth) ?               "-.-" : Math.round(_heading) % 360
@@ -70,20 +70,7 @@ Item {
     readonly property real _margins: ScreenTools.defaultFontPixelWidth
 
     // Properties of UTM adapter
-    property var    _utmspController:                    _planMasterController.geoFenceController
     property bool   _utmspEnabled:                       QGroundControl.utmspSupported
-    property bool  responseFlag
-    // Dummy object when utm adapter flag is not enabled
-    QtObject {
-        id: dummyTarget
-        signal uploadFlagSent(bool flag)
-    }
-    Connections {
-        target: _utmspEnabled ? _utmspController: dummyTarget
-        onUploadFlagSent: function(flag) {
-            responseFlag = flag
-        }
-    }
 
     function getMissionTime() {
         if (!_missionTime) {
@@ -227,13 +214,14 @@ Item {
         QGCButton {
             id:          uploadButton
             text:        _controllerDirty ? qsTr("Upload Required") : qsTr("Upload")
-            enabled:     _utmspEnabled ? !_controllerSyncInProgress && responseFlag : !_controllerSyncInProgress
+            enabled:     _utmspEnabled ? !_controllerSyncInProgress && UTMSPStateStorage.enableMissionUploadButton : !_controllerSyncInProgress
             visible:     !_controllerOffline && !_controllerSyncInProgress
             primary:     _controllerDirty
             onClicked: {
                 if (_utmspEnabled) {
                     QGroundControl.utmspManager.utmspVehicle.triggerActivationStatusBar(true);
                     UTMSPStateStorage.removeFlightPlanState = true
+                    UTMSPStateStorage.indicatorDisplayStatus = true
                 }
                 _planMasterController.upload();
             }

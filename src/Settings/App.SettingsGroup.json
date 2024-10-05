@@ -165,13 +165,6 @@
     "default":     0
 },
 {
-    "name":             "showLargeCompass",
-    "shortDesc": "Show large compass",
-    "longDesc":  "Show large compass on instrument panel",
-    "type":             "bool",
-    "default":     false
-},
-{
     "name":             "savePath",
     "shortDesc": "Application save directory",
     "longDesc":  "Directory to which all data files are saved/loaded from",
@@ -185,20 +178,6 @@
     "type":                 "bool",
     "default":              false,
     "qgcRebootRequired":    true
-},
-{
-    "name":             "userBrandImageIndoor",
-    "shortDesc": "User-selected brand image",
-    "longDesc":  "Location in file system of user-selected brand image (indoor)",
-    "type":             "string",
-    "default":     ""
-},
-{
-    "name":             "userBrandImageOutdoor",
-    "shortDesc": "User-selected brand image",
-    "longDesc":  "Location in file system of user-selected brand image (outdoor)",
-    "type":             "string",
-    "default":     ""
 },
 {
     "name":             "mapboxToken",
@@ -243,12 +222,6 @@
     "default":     ""
 },
 {
-    "name":             "defaultFirmwareType",
-    "shortDesc": "Default firmware type for flashing",
-    "type":             "uint32",
-    "default":     12
-},
-{
     "name":             "followTarget",
     "shortDesc": "Stream GCS' coordinates to Autopilot",
     "type":             "uint32",
@@ -260,29 +233,21 @@
     "name":                 "apmStartMavlinkStreams",
     "shortDesc":     "Request start of MAVLink telemetry streams (ArduPilot only)",
     "type":                 "bool",
-    "default":         false,
+    "default":         true,
     "qgcRebootRequired":    true
 },
 {
-    "name":         "qLocaleLanguage",
-    "shortDesc":    "Language",
-    "type":         "uint32",
-    "enumStrings":  "System,Azerbaijani (Azerbaijani),български (Bulgarian),中文 (Chinese),Nederlands (Dutch),English,Suomi (Finnish),Français (French),Deutsche (German),Ελληνικά (Greek), עברית (Hebrew),Italiano (Italian),日本語 (Japanese),한국어 (Korean),Norsk (Norwegian),Polskie (Polish),Português (Portuguese),Pусский (Russian),Español (Spanish),Svenska (Swedish),Türk (Turkish)",
-    "enumValues":   "0,12,20,25,30,31,36,37,42,43,48,58,59,66,85,90,91,96,111,114,125",
-    "comment":      "enumValues uses Qt QLocale::Language values",
-    "default":      0
+    "name":                 "qLocaleLanguage",
+    "shortDesc":            "Language",
+    "type":                 "uint32",
+    "default":              0,
+    "qgcRebootRequired":    true,
+    "comment":              "QLocale::Language id. Fact enum metadata is setup in AppSettings code. QGC reboot required in order to load new json translations into FactMetaData."
 },
 {
     "name":             "disableAllPersistence",
     "shortDesc": "Disable all data persistence",
     "longDesc":  "If this option is set, nothing will be saved to disk.",
-    "type":             "bool",
-    "default":     false
-},
-{
-    "name":             "usePairing",
-    "shortDesc": "Use Pairing",
-    "longDesc":  "Use Link Pairing.",
     "type":             "bool",
     "default":     false
 },
@@ -332,6 +297,12 @@
     "shortDesc": "AirLink Password",
     "type": "string",
     "default": ""
+},
+{
+    "name":             "mavlink2SigningKey",
+    "shortDesc":        "MAVLink 2.0 signing key",
+    "type":             "string",
+    "default":          ""
 }
 ]
 }

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -25,7 +25,6 @@ DECLARE_SETTINGGROUP(Video, "Video")
 
     // Setup enum values for videoSource settings into meta data
     QVariantList videoSourceList;
-#ifdef QGC_GST_STREAMING
     videoSourceList.append(videoSourceRTSP);
     videoSourceList.append(videoSourceUDPH264);
     videoSourceList.append(videoSourceUDPH265);
@@ -36,7 +35,6 @@ DECLARE_SETTINGGROUP(Video, "Video")
     videoSourceList.append(videoSourceYuneecMantisG);
     videoSourceList.append(videoSourceHerelinkAirUnit);
     videoSourceList.append(videoSourceHerelinkHotspot);
-#endif
 #ifndef QGC_DISABLE_UVC
     QList<QCameraDevice> videoInputs = QMediaDevices::videoInputs();
     for (const auto& cameraDevice: videoInputs) {
@@ -59,19 +57,16 @@ DECLARE_SETTINGGROUP(Video, "Video")
     _nameToMetaDataMap[videoSourceName]->setEnumInfo(videoSourceCookedList, videoSourceList);
 
     const QVariantList removeForceVideoDecodeList{
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
         VideoDecoderOptions::ForceVideoDecoderDirectX3D,
         VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
-#endif
-#ifdef Q_OS_WIN
+#elif defined(Q_OS_WIN)
         VideoDecoderOptions::ForceVideoDecoderVAAPI,
         VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
-#endif
-#ifdef Q_OS_MAC
+#elif defined(Q_OS_MAC)
         VideoDecoderOptions::ForceVideoDecoderDirectX3D,
         VideoDecoderOptions::ForceVideoDecoderVAAPI,
-#endif
-#ifdef Q_OS_ANDROID
+#elif defined(Q_OS_ANDROID)
         VideoDecoderOptions::ForceVideoDecoderDirectX3D,
         VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
         VideoDecoderOptions::ForceVideoDecoderVAAPI,
@@ -131,10 +126,10 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, forceVideoDecoder)
         _forceVideoDecoderFact = _createSettingsFact(forceVideoDecoderName);
 
         _forceVideoDecoderFact->setVisible(
-#ifdef Q_OS_IOS
-            false
-#else
+#ifdef QGC_GST_STREAMING
             true
+#else
+            false
 #endif
         );
 

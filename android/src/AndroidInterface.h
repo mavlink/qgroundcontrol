@@ -16,7 +16,12 @@
 
 Q_DECLARE_LOGGING_CATEGORY(AndroidInterfaceLog)
 
-namespace AndroidInterface {
+namespace AndroidInterface
+{
+    bool cleanJavaException();
+    void setNativeMethods();
+    void jniLogDebug(JNIEnv *envA, jobject thizA, jstring messageA);
+    void jniLogWarning(JNIEnv *envA, jobject thizA, jstring messageA);
     bool checkStoragePermissions();
     QString getSDCardPath();
     jclass getActivityClass();

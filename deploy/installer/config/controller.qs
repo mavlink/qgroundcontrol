@@ -1,10 +1,4 @@
-function Controller() {
-    installer.unstableComponentFound.connect(unstableComponentFound)
-}
-
-unstableComponentFound = function(type, message, comp)
+function Controller()
 {
-    console.log("Unstable component, type: " + type)
-    console.log("Unstable component, message: " + message)
-    console.log("Unstable component, name: " + comp)
+
 }

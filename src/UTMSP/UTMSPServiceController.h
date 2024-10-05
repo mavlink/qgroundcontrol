@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2023 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -12,12 +12,11 @@
 #include "UTMSPAuthorization.h"
 #include "UTMSPFlightPlanManager.h"
 #include "UTMSPNetworkRemoteIDManager.h"
+#include "UTMSPAircraft.h"
 
 #include <QtCore/QElapsedTimer>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtCore/QObject>
-
-struct mavlink_message_t;
 
 class UTMSPServiceController : public QObject
 {
@@ -27,9 +26,7 @@ public:
     UTMSPServiceController(QObject *parent = nullptr);
     ~UTMSPServiceController();
 
-    Q_PROPERTY(bool                 responseFlag            READ responseFlag       NOTIFY responseFlagChanged)
     Q_PROPERTY(QString              responseFlightID        READ responseFlightID   NOTIFY responseFlightIDChanged)
-    Q_PROPERTY(QString              responseJson            READ responseJson       NOTIFY responseJsonChanged)
     Q_PROPERTY(bool                 activationFlag          READ activationFlag     NOTIFY activationFlagChanged)
 
     std::string flightPlanAuthorization();
@@ -38,15 +35,11 @@ public:
                          const std::string& operatorID,
                          const std::string& flightID);
 
-    bool                responseFlag    () const {return _responseFlag;};
     QString             responseFlightID() const {return _responseFlightID;};
-    QString             responseJson    () const {return _responseJson;};
     bool                activationFlag  () const {return _activationFlag;};
 
 signals:
-    void responseFlagChanged                     (void);
     void responseFlightIDChanged                 (void);
-    void responseJsonChanged                     (void);
     void activationFlagChanged                   (void);
     void stopTelemetryFlagChanged                (bool value);
 
@@ -80,9 +73,7 @@ private:
     std::string                           _endDateTime;
     int                                   _minAltitude;
     int                                   _maxAltitude;
-    bool                                  _responseFlag;
     QString                               _responseFlightID;
-    QString                               _responseJson;
     bool                                  _activationFlag;
     std::string                           _clientID;
     std::string                           _clientPassword;

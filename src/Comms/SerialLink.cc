@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -9,21 +9,22 @@
 
 #include "SerialLink.h"
 #include "QGC.h"
-#include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #ifdef Q_OS_ANDROID
+#include "QGCApplication.h"
 #include "LinkManager.h"
 #include "qserialportinfo.h"
 #else
 #include <QtSerialPort/QSerialPortInfo>
 #endif
+#include <QtCore/QCoreApplication>
 #include <QtCore/QSettings>
 
 QGC_LOGGING_CATEGORY(SerialLinkLog, "SerialLinkLog")
 
-SerialLink::SerialLink(SharedLinkConfigurationPtr& config, bool isPX4Flow)
-    : LinkInterface(config, isPX4Flow)
-    , _serialConfig(qobject_cast<SerialConfiguration*>(config.get()))
+SerialLink::SerialLink(SharedLinkConfigurationPtr& config)
+    : LinkInterface(config)
+    , _serialConfig(qobject_cast<const SerialConfiguration*>(config.get()))
 {
     qRegisterMetaType<QSerialPort::SerialPortError>();
     qCDebug(SerialLinkLog) << "Create SerialLink portName:baud:flowControl:parity:dataButs:stopBits" << _serialConfig->portName() << _serialConfig->baud() << _serialConfig->flowControl()
@@ -57,7 +58,7 @@ bool SerialLink::_isBootloader()
     return false;
 }
 
-void SerialLink::_writeBytes(const QByteArray data)
+void SerialLink::_writeBytes(const QByteArray &data)
 {
     if(_port && _port->isOpen()) {
         emit bytesSent(this, data);
@@ -275,6 +276,11 @@ void SerialLink::_emitLinkError(const QString& errorMsg)
     emit communicationError(tr("Link Error"), msg.arg(_config->name()).arg(errorMsg));
 }
 
+bool SerialLink::isSecureConnection()
+{
+    return _serialConfig && _serialConfig->usbDirect();
+}
+
 //--------------------------------------------------------------------------
 //-- SerialConfiguration
 
@@ -288,7 +294,7 @@ SerialConfiguration::SerialConfiguration(const QString& name) : LinkConfiguratio
     _usbDirect  = false;
 }
 
-SerialConfiguration::SerialConfiguration(SerialConfiguration* copy) : LinkConfiguration(copy)
+SerialConfiguration::SerialConfiguration(const SerialConfiguration* copy) : LinkConfiguration(copy)
 {
     _baud               = copy->baud();
     _flowControl        = copy->flowControl();
@@ -300,10 +306,10 @@ SerialConfiguration::SerialConfiguration(SerialConfiguration* copy) : LinkConfig
     _usbDirect          = copy->_usbDirect;
 }
 
-void SerialConfiguration::copyFrom(LinkConfiguration *source)
+void SerialConfiguration::copyFrom(const LinkConfiguration *source)
 {
     LinkConfiguration::copyFrom(source);
-    auto* ssource = qobject_cast<SerialConfiguration*>(source);
+    const SerialConfiguration* ssource = qobject_cast<const SerialConfiguration*>(source);
     if (ssource) {
         _baud               = ssource->baud();
         _flowControl        = ssource->flowControl();

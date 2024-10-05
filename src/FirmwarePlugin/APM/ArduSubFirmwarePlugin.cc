@@ -1,3 +1,12 @@
+/****************************************************************************
+ *
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 /*=====================================================================
 
  QGroundControl Open Source Ground Control Station
@@ -44,6 +53,7 @@ APMSubMode::APMSubMode(uint32_t mode, bool settable) :
         {SURFACE, "Surface"},
         {POSHOLD, "Position Hold"},
         {MOTORDETECTION, "Motor Detection"},
+        {SURFTRAK, "Surftrak"},
     });
 }
 
@@ -61,6 +71,7 @@ ArduSubFirmwarePlugin::ArduSubFirmwarePlugin(void):
         APMSubMode(APMSubMode::SURFACE ,false),
         APMSubMode(APMSubMode::POSHOLD ,true),
         APMSubMode(APMSubMode::MOTORDETECTION, false),
+        APMSubMode(APMSubMode::SURFTRAK, true),
     });
 
     if (!_remapParamNameIntialized) {
@@ -237,6 +248,8 @@ void ArduSubFirmwarePlugin::_handleNamedValueFloat(mavlink_message_t* message)
         _infoFactGroup.getFact("inputHold")->setRawValue(value.value);
     } else if (name == "RollPitch") {
         _infoFactGroup.getFact("rollPitchToggle")->setRawValue(value.value);
+    } else if (name == "RFTarget") {
+      _infoFactGroup.getFact("rangefinderTarget")->setRawValue(value.value);
     }
 }
 
@@ -274,6 +287,7 @@ const char* APMSubmarineFactGroup::_pilotGainFactName           = "pilotGain";
 const char* APMSubmarineFactGroup::_inputHoldFactName           = "inputHold";
 const char* APMSubmarineFactGroup::_rollPitchToggleFactName     = "rollPitchToggle";
 const char* APMSubmarineFactGroup::_rangefinderDistanceFactName = "rangefinderDistance";
+const char* APMSubmarineFactGroup::_rangefinderTargetFactName   = "rangefinderTarget";
 
 APMSubmarineFactGroup::APMSubmarineFactGroup(QObject* parent)
     : FactGroup(300, ":/json/Vehicle/SubmarineFact.json", parent)
@@ -285,6 +299,7 @@ APMSubmarineFactGroup::APMSubmarineFactGroup(QObject* parent)
     , _inputHoldFact           (0, _inputHoldFactName,           FactMetaData::valueTypeDouble)
     , _rollPitchToggleFact     (0, _rollPitchToggleFactName,     FactMetaData::valueTypeDouble)
     , _rangefinderDistanceFact (0, _rangefinderDistanceFactName, FactMetaData::valueTypeDouble)
+    , _rangefinderTargetFact   (0, _rangefinderTargetFactName,   FactMetaData::valueTypeDouble)
 {
     _addFact(&_camTiltFact,             _camTiltFactName);
     _addFact(&_tetherTurnsFact,         _tetherTurnsFactName);
@@ -294,6 +309,7 @@ APMSubmarineFactGroup::APMSubmarineFactGroup(QObject* parent)
     _addFact(&_inputHoldFact,           _inputHoldFactName);
     _addFact(&_rollPitchToggleFact    , _rollPitchToggleFactName);
     _addFact(&_rangefinderDistanceFact, _rangefinderDistanceFactName);
+    _addFact(&_rangefinderTargetFact,   _rangefinderTargetFactName);
 
     // Start out as not available "--.--"
     _camTiltFact.setRawValue             (std::numeric_limits<float>::quiet_NaN());
@@ -304,6 +320,7 @@ APMSubmarineFactGroup::APMSubmarineFactGroup(QObject* parent)
     _inputHoldFact.setRawValue           (std::numeric_limits<float>::quiet_NaN());
     _rollPitchToggleFact.setRawValue     (2); // 2 shows "Unavailable" in older firmwares
     _rangefinderDistanceFact.setRawValue (std::numeric_limits<float>::quiet_NaN());
+    _rangefinderTargetFact.setRawValue   (std::numeric_limits<float>::quiet_NaN());
 
 }
 

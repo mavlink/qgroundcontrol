@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -54,6 +54,7 @@ public:
     void                guidedModeChangeAltitude        (Vehicle* vehicle, double altitudeRel, bool pauseVehicle) override;
     void                guidedModeChangeGroundSpeedMetersSecond(Vehicle* vehicle, double groundspeed) override;
     void                guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle* vehicle, double airspeed_equiv) override;
+    void                guidedModeChangeHeading         (Vehicle* vehicle, const QGeoCoordinate &headingCoord) override;
     void                startMission                    (Vehicle* vehicle) override;
     bool                isGuidedMode                    (const Vehicle* vehicle) const override;
     void                initializeVehicle               (Vehicle* vehicle) override;

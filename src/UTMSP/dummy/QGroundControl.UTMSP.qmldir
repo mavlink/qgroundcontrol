@@ -1,0 +1,8 @@
+Module QGroundControl.UTMSP
+
+UTMSPAdapterEditor                       1.0 UTMSPAdapterEditor.qml
+UTMSPMapVisuals                          1.0 UTMSPMapVisuals.qml
+UTMSPActivationStatusBar                 1.0 UTMSPActivationStatusBar.qml
+UTMSPMapPolygonVisuals                   1.0 UTMSPMapPolygonVisuals.qml
+
+singleton UTMSPStateStorage 1.0 UTMSPStateStorage.qml

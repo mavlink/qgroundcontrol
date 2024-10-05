@@ -40,9 +40,18 @@ Item {
     property string timeDifference
     property bool   activationErrorFlag
 
+
     signal activationTriggered(bool value)
 
+    onActivationApprovalChanged: {
+        if(activationApproval === true){
+            activationTriggered(false)
+            displayActivationTabTimer.start()
+        }
+    }
+
     Timer {
+        id: displayActivationTabTimer
         interval: 1000
         running:  activationApproval
         repeat:   activationApproval
@@ -55,12 +64,13 @@ Item {
                 var activationErrorFlag = QGroundControl.utmspManager.utmspVehicle.activationFlag
                 if(activationErrorFlag === true){
                     QGroundControl.utmspManager.utmspVehicle.loadTelemetryFlag(true)
-                    approvetag.visible = false
-                    activatetag.visible = true
                     activationTriggered(true)
-                    hideTimer.start()
+                    UTMSPStateStorage.indicatorActivatedStatus = true
+                    displayActivationTabTimer.stop()
+                    UTMSPStateStorage.currentStateIndex = 2
+                    UTMSPStateStorage.currentNotificationIndex = 4
+                    UTMSPStateStorage.indicatorDisplayStatus = false
                 }else{
-                    approvetag.visible = false
                     failtag.visible = true
                 }
             } else {
@@ -68,130 +78,145 @@ Item {
                 var minutes = Math.floor((diff % 3600000) / 60000)
                 var seconds = Math.floor((diff % 60000) / 1000)
                 timeDifference = hours + " hours " + minutes + " minutes " + seconds + " seconds"
+                UTMSPStateStorage.indicatorActivationTime = timeDifference.toString()
+                UTMSPStateStorage.currentNotificationIndex = 3
             }
         }
     }
 
-    Timer {
-        id:          hideTimer
-        interval:    5000
-        running:     false
-        onTriggered: activationBar.visible = false
+    //TODO: Create a dynamic real time mission progress bar
+    Canvas {
+        anchors.fill: parent
+
+        onPaint: {
+            var centerX = ScreenTools.defaultFontPixelHeight * 7.5 /2 + ScreenTools.defaultFontPixelHeight * 1.25
+            var centerY = parent.height - ScreenTools.defaultFontPixelHeight * 7.5 /2 - ScreenTools.defaultFontPixelHeight * 0.3
+            var ctx = getContext("2d")
+            ctx.reset()
+            ctx.strokeStyle = qgcPal.window
+            ctx.lineWidth = ScreenTools.defaultFontPixelHeight * 0.75
+            ctx.beginPath()
+
+            var attitudeRadius = 78
+            var zeroAttitudeRadians = 2.18166
+            var maxRadians = 0
+
+            ctx.arc(centerX, centerY, attitudeRadius, zeroAttitudeRadians, maxRadians)
+            ctx.stroke()
+        }
     }
 
-    Rectangle {
-        id:             activationBar
-        color:          qgcPal.textFieldText
-        border.color:   qgcPal.textFieldText
-        width:          ScreenTools.defaultFontPixelWidth * 83.33
-        height:         ScreenTools.defaultFontPixelHeight * 8.33
-        anchors.right:  parent.right
+    //TODO: same as above
+    Canvas {
+        anchors.fill: parent
+
+        onPaint: {
+            var centerX = ScreenTools.defaultFontPixelHeight * 7.5 /2 + ScreenTools.defaultFontPixelHeight * 1.25
+            var centerY = parent.height - ScreenTools.defaultFontPixelHeight * 7.5 /2 - ScreenTools.defaultFontPixelHeight * 0.3
+            var ctx = getContext("2d")
+            ctx.reset()
+            ctx.strokeStyle = qgcPal.window
+            ctx.lineWidth = ScreenTools.defaultFontPixelHeight * 0.75
+            ctx.beginPath()
+
+            var attitudeRadius = 78
+            var zeroAttitudeRadians = 2.18166
+            var maxRadians = 0
+
+            ctx.arc(centerX, centerY, attitudeRadius, zeroAttitudeRadians, maxRadians)   // TODO: Create a variable values
+            ctx.stroke()
+        }
+    }
+
+    //TODO: Same as above
+    Canvas {
+        anchors.fill: parent
+
+        onPaint: {
+            var centerX = ScreenTools.defaultFontPixelHeight * 7.5 /2 + ScreenTools.defaultFontPixelHeight * 1.25
+            var centerY = parent.height - ScreenTools.defaultFontPixelHeight * 7.5 /2 - ScreenTools.defaultFontPixelHeight * 0.3
+            var ctx = getContext("2d")
+            ctx.reset()
+            ctx.strokeStyle = qgcPal.text
+            ctx.lineWidth = 2
+            ctx.beginPath()
+
+            var attitudeRadius = 84
+            var angleRadians = 2.18166
+
+            var outerX = centerX + attitudeRadius * Math.cos(angleRadians)
+            var outerY = centerY + attitudeRadius * Math.sin(angleRadians)
+
+            var tickMarkLength = 13
+            var innerX = centerX + (attitudeRadius - tickMarkLength) * Math.cos(angleRadians)
+            var innerY = centerY + (attitudeRadius - tickMarkLength) * Math.sin(angleRadians)
+
+            ctx.moveTo(outerX, outerY)
+            ctx.lineTo(innerX, innerY)
+            ctx.stroke()
+        }
+    }
+
+    UTMSPNotificationSlider{
+        id: notificationslider
+        overlay: overlayRect
+    }
+
+    Rectangle{
+        id: overlayRect
+        width: notificationslider.width + 20
+        height: 40
+        radius: 3
+        color:  qgcPal.window
+        opacity: 0.8
+        anchors.left:   parent.left
         anchors.bottom: parent.bottom
-        opacity:        0.7
-        visible:        activationApproval
-        radius:         ScreenTools.defaultFontPixelWidth * 0.833
+        anchors.leftMargin: ScreenTools.defaultFontPixelHeight * 3.75
+        anchors.bottomMargin: ScreenTools.defaultFontPixelHeight * 3.4
+        visible: false
 
-        QGCColoredImage {
-            id:         closeButton
-            width:      ScreenTools.defaultFontPixelWidth * 5
-            height:     ScreenTools.defaultFontPixelWidth * 5
-            x:          460
-            y:          5
-            source:     "/res/XDelete.svg"
-            fillMode:   Image.PreserveAspectFit
-            color:      qgcPal.text
-        }
-        QGCMouseArea {
-            fillItem:   closeButton
-            onClicked:  {
-                activationBar.visible = false
-                activationApproval = false
-            }
-        }
 
         Column{
-            spacing:          ScreenTools.defaultFontPixelWidth * 1.667
-            anchors.centerIn: parent
-            Text{
-                text:                    "Remaining time for activation!!!"
-                color:                    qgcPal.buttonText
-                font.pixelSize:           ScreenTools.defaultFontPixelWidth * 2.5
-                font.bold:                true
-                horizontalAlignment:      Text.AlignHCenter
-                anchors.horizontalCenter: parent.horizontalCenter
-                visible:                  true
-            }
-
-            Text {
-                text:                     timeDifference
-                color:                    qgcPal.buttonText
-                font.pixelSize:           ScreenTools.defaultFontPixelWidth * 3.667
-                font.bold:                true
-                horizontalAlignment:      Text.AlignHCenter
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
-
-            Row{
-                spacing:                  ScreenTools.defaultFontPixelWidth * 0.5
-                anchors.horizontalCenter: parent.horizontalCenter
-
-                Text {
-                    text:                "FLIGHT ID: "
-                    color:               qgcPal.buttonText
-                    font.pixelSize:      ScreenTools.defaultFontPixelWidth * 2.5
-                    font.bold:           true
-                    horizontalAlignment: Text.AlignHCenter
+            spacing: 5
+            anchors.verticalCenter: parent.verticalCenter
+            Row {
+                x: 100
+                Text{
+                    text: "Serial-Number: "
+                    color: "white"
+                    font.pointSize: 7
+                    font.bold: true
                 }
 
-                Text {
-                    text:                flightID
-                    color:               qgcPal.buttonText
-                    font.pixelSize:      ScreenTools.defaultFontPixelWidth * 2.5
-                    horizontalAlignment: Text.AlignHCenter
+                Text{
+                    text: UTMSPStateStorage.serialNumber
+                    color: "white"
+                    font.pointSize: 7
                 }
             }
 
-            Row{
-                spacing:                  ScreenTools.defaultFontPixelWidth * 0.5
-                anchors.horizontalCenter: parent.horizontalCenter
 
-                Text {
-                    text:                "STATUS: "
-                    color:               qgcPal.buttonText
-                    font.pixelSize:      ScreenTools.defaultFontPixelWidth * 2.5
-                    font.bold:           true
-                    horizontalAlignment: Text.AlignHCenter
+            Row {
+                x: 100
+                Text{
+                    text: "FlightID: "
+                    color: "white"
+                    font.pointSize: 7
+                    font.bold: true
                 }
 
-                Text {
-                    id:                  approvetag
-                    text:                "Approved"
-                    color:               qgcPal.colorOrange
-                    font.pixelSize:      ScreenTools.defaultFontPixelWidth * 3
-                    horizontalAlignment: Text.AlignHCenter
-                    visible:             true
-                    font.bold:           true
-                }
-
-                Text {
-                    id:                  activatetag
-                    text:                "Activated"
-                    color:               qgcPal.colorGreen
-                    font.pixelSize:      ScreenTools.defaultFontPixelWidth * 3
-                    horizontalAlignment: Text.AlignHCenter
-                    visible:             false
-                    font.bold:           true
-                }
-                Text {
-                    id:                  failtag
-                    text:                "Activation Failed"
-                    color:               qgcPal.colorRed
-                    font.pixelSize:      ScreenTools.defaultFontPixelWidth * 3
-                    horizontalAlignment: Text.AlignHCenter
-                    visible:             false
-                    font.bold:           true
+                Text{
+                    text: UTMSPStateStorage.flightID
+                    color: "white"
+                    font.pointSize: 7
                 }
             }
+
         }
     }
+
+    UTMSPFlightStatusIndicator {
+    //TODO: add conformance notification
+    }
+
 }

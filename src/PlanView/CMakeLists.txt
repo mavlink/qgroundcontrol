@@ -2,6 +2,10 @@ find_package(Qt6 REQUIRED COMPONENTS Core Qml)
 
 qt_add_library(PlanView STATIC)
 
+if(QGC_UTM_ADAPTER)
+    add_definitions(-DQGC_UTM_ADAPTER)
+endif()
+
 file(GLOB QML_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.qml)
 qt_add_qml_module(PlanView
     URI QGroundControl.PlanView

@@ -83,13 +83,15 @@ Rectangle {
                     Layout.fillWidth:   true
                     text:               name
                     padding:            ScreenTools.defaultFontPixelWidth / 2
+                    hoverEnabled:       !ScreenTools.isMobile
                     autoExclusive:      true
                     icon.source:        iconUrl
                     visible:            pageVisible()
 
                     background: Rectangle {
-                        color:  checked ? qgcPal.buttonHighlight : "transparent"
-                        radius: ScreenTools.defaultFontPixelWidth / 2
+                        color:      qgcPal.buttonHighlight
+                        opacity:    checked || pressed ? 1 : enabled && hovered ? .2 : 0
+                        radius:     ScreenTools.defaultFontPixelWidth / 2
                     }
 
                     contentItem: RowLayout {
@@ -97,15 +99,16 @@ Rectangle {
 
                         QGCColoredImage {
                             source: iconUrl
-                            color:  checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
+                            color:  displayText.color
                             width:  ScreenTools.defaultFontPixelHeight
                             height: ScreenTools.defaultFontPixelHeight
                         }
 
                         QGCLabel {
+                            id:                     displayText
                             Layout.fillWidth:       true
                             text:                   name
-                            color:                  checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
+                            color:                  checked || pressed ? qgcPal.buttonHighlightText : qgcPal.buttonText
                             horizontalAlignment:    QGCLabel.AlignLeft
                         }
                     }

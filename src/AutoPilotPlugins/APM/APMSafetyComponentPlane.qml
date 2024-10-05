@@ -50,7 +50,7 @@ SetupPage {
 
                 QGCLabel {
                     text:       qsTr("Failsafe Triggers")
-                    font.family: ScreenTools.demiboldFontFamily
+                    font.bold:   true
                 }
 
                 Rectangle {
@@ -139,7 +139,7 @@ SetupPage {
 
                 QGCLabel {
                     text:           qsTr("Return to Launch")
-                    font.family:    ScreenTools.demiboldFontFamily
+                    font.bold:      true
                 }
 
                 Rectangle {

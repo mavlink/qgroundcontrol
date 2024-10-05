@@ -1,13 +1,22 @@
+/****************************************************************************
+ *
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 #include "Viewer3DTileReply.h"
 
-#include "QGCMapEngine.h"
-#include "MapProvider.h"
-#include "QGCMapUrlEngine.h"
+#include <MapProvider.h>
+#include <QGCMapUrlEngine.h>
+#include <QGeoTileFetcherQGC.h>
 
 #include <QtCore/QFile>
+#include <QtCore/QTimer>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
-#include <QtCore/QTimer>
 
 QByteArray  Viewer3DTileReply::_bingNoTileImage;
 
@@ -47,7 +56,7 @@ Viewer3DTileReply::~Viewer3DTileReply()
 
 void Viewer3DTileReply::prepareDownload()
 {
-    QNetworkRequest request = UrlFactory::getTileURL(_mapId, _tile.x, _tile.y, _tile.zoomLevel);
+    const QNetworkRequest request = QGeoTileFetcherQGC::getNetworkRequest(_mapId, _tile.x, _tile.y, _tile.zoomLevel);
     _reply = _networkManager->get(request);
     connect(_reply, &QNetworkReply::finished, this, &Viewer3DTileReply::requestFinished);
     connect(_reply, &QNetworkReply::errorOccurred, this, &Viewer3DTileReply::requestError);

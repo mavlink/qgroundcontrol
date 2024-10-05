@@ -45,7 +45,7 @@ Item {
                 QGCLabel {
                     id:             joystickLabel
                     text:           qsTr("Joystick Status")
-                    font.family:    ScreenTools.demiboldFontFamily
+                    font.bold:      true
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
 

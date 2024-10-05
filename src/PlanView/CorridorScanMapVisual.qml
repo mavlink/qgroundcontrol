@@ -14,6 +14,7 @@ import QtPositioning
 
 import QGroundControl
 import QGroundControl.Controls
+import QGroundControl.FlightMap
 
 /// Corridor Scan Complex Mission Item visuals
 TransectStyleMapVisuals {

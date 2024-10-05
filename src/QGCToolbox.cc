@@ -1,6 +1,6 @@
  /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -17,15 +17,12 @@
 #include "MAVLinkProtocol.h"
 #include "MissionCommandTree.h"
 #include "MultiVehicleManager.h"
-#include "QGCMapEngineManager.h"
-#include "FollowMe.h"
 #include "PositionManager.h"
 #include "VideoManager.h"
 #include "MAVLinkLogManager.h"
 #include "QGCCorePlugin.h"
 #include "SettingsManager.h"
 #include "QGCApplication.h"
-#include "ADSBVehicleManager.h"
 #ifndef QGC_AIRLINK_DISABLED
 #include "AirLinkManager.h"
 #endif
@@ -34,7 +31,7 @@
 #include CUSTOMHEADER
 #endif
 
-#ifdef CONFIG_UTM_ADAPTER
+#ifdef QGC_UTM_ADAPTER
 #include "UTMSPManager.h"
 #endif
 
@@ -55,17 +52,14 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     _mavlinkProtocol        = new MAVLinkProtocol           (app, this);
     _missionCommandTree     = new MissionCommandTree        (app, this);
     _multiVehicleManager    = new MultiVehicleManager       (app, this);
-    _mapEngineManager       = new QGCMapEngineManager       (app, this);
     _qgcPositionManager     = new QGCPositionManager        (app, this);
-    _followMe               = new FollowMe                  (app, this);
     _videoManager           = new VideoManager              (app, this);
 
     _mavlinkLogManager      = new MAVLinkLogManager         (app, this);
-    _adsbVehicleManager     = new ADSBVehicleManager        (app, this);
 #ifndef QGC_AIRLINK_DISABLED
     _airlinkManager         = new AirLinkManager            (app, this);
 #endif
-#ifdef CONFIG_UTM_ADAPTER
+#ifdef QGC_UTM_ADAPTER
     _utmspManager            = new UTMSPManager               (app, this);
 #endif
 }
@@ -85,16 +79,13 @@ void QGCToolbox::setChildToolboxes(void)
     _mavlinkProtocol->setToolbox(this);
     _missionCommandTree->setToolbox(this);
     _multiVehicleManager->setToolbox(this);
-    _mapEngineManager->setToolbox(this);
-    _followMe->setToolbox(this);
     _qgcPositionManager->setToolbox(this);
     _videoManager->setToolbox(this);
     _mavlinkLogManager->setToolbox(this);
-    _adsbVehicleManager->setToolbox(this);
 #ifndef QGC_AIRLINK_DISABLED
     _airlinkManager->setToolbox(this);
 #endif
-#ifdef CONFIG_UTM_ADAPTER
+#ifdef QGC_UTM_ADAPTER
     _utmspManager->setToolbox(this);
 #endif
 }

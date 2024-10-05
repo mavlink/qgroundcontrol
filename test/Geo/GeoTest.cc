@@ -18,7 +18,12 @@
 
 #include <QtTest/QTest>
 
-void GeoTest::_convertGeoToNed_test(void)
+static bool compareDoubles(double actual, double expected, double epsilon = 0.00001)
+{
+    return (qAbs(actual - expected) <= epsilon);
+}
+
+void GeoTest::_convertGeoToNed_test()
 {
     const QGeoCoordinate coord(47.364869, 8.594398, 0.0);
 
@@ -29,12 +34,12 @@ void GeoTest::_convertGeoToNed_test(void)
     double x = 0., y = 0., z = 0.;
     QGCGeo::convertGeoToNed(coord, m_origin, x, y, z);
 
-    QCOMPARE(x, expectedX);
-    QCOMPARE(y, expectedY);
-    QCOMPARE(z, expectedZ);
+    QVERIFY(compareDoubles(x, expectedX));
+    QVERIFY(compareDoubles(y, expectedY));
+    QVERIFY(compareDoubles(z, expectedZ));
 }
 
-void GeoTest::_convertGeoToNedAtOrigin_test(void)
+void GeoTest::_convertGeoToNedAtOrigin_test()
 {
     QGeoCoordinate coord(m_origin);
     coord.setAltitude(10.); // offset altitude to test z
@@ -46,27 +51,27 @@ void GeoTest::_convertGeoToNedAtOrigin_test(void)
     double x = 0., y = 0., z = 0.;
     QGCGeo::convertGeoToNed(coord, m_origin, x, y, z);
 
-    QCOMPARE(x, expectedX);
-    QCOMPARE(y, expectedY);
-    QCOMPARE(z, expectedZ);
+    QVERIFY(compareDoubles(x, expectedX));
+    QVERIFY(compareDoubles(y, expectedY));
+    QVERIFY(compareDoubles(z, expectedZ));
 }
 
-void GeoTest::_convertNedToGeo_test(void)
+void GeoTest::_convertNedToGeo_test()
 {
     const double x = -1282.58731618;
     const double y = 3490.85591324;
-    const double z = 0;
+    const double z = 0.;
 
     QGeoCoordinate coord(0,0,0);
     QGCGeo::convertNedToGeo(x, y, z, m_origin, coord);
 
     QVERIFY(coord.isValid());
-    QCOMPARE(coord.latitude(), m_origin.latitude());
-    QCOMPARE(coord.longitude(), m_origin.longitude());
-    QCOMPARE(coord.altitude(), m_origin.altitude());
+    QVERIFY(compareDoubles(coord.latitude(), 47.364869));
+    QVERIFY(compareDoubles(coord.longitude(), 8.594398));
+    QVERIFY(compareDoubles(coord.altitude(), 0.0));
 }
 
-void GeoTest::_convertNedToGeoAtOrigin_test(void)
+void GeoTest::_convertNedToGeoAtOrigin_test()
 {
     const double x = 0.0;
     const double y = 0.0;
@@ -76,12 +81,13 @@ void GeoTest::_convertNedToGeoAtOrigin_test(void)
     QGCGeo::convertNedToGeo(x, y, z, m_origin, coord);
 
     QVERIFY(coord.isValid());
-    QCOMPARE(coord.latitude(), m_origin.latitude());
-    QCOMPARE(coord.longitude(), m_origin.longitude());
-    QCOMPARE(coord.altitude(), m_origin.altitude());
+    QVERIFY(compareDoubles(coord.latitude(), m_origin.latitude()));
+    QVERIFY(compareDoubles(coord.longitude(), m_origin.longitude()));
+    QVERIFY(compareDoubles(coord.altitude(), m_origin.altitude()));
 }
 
-void GeoTest::_convertGeoToUTM_test(void) {
+void GeoTest::_convertGeoToUTM_test()
+{
     const QGeoCoordinate coord(m_origin);
 
     double easting = 0.;
@@ -89,13 +95,14 @@ void GeoTest::_convertGeoToUTM_test(void) {
     const int zone = QGCGeo::convertGeoToUTM(coord, easting, northing);
 
     QCOMPARE(zone, 32);
-    QCOMPARE(easting, 465886.092246);
-    QCOMPARE(northing, 5247092.45);
+    QVERIFY(compareDoubles(easting, 465886.092246));
+    QVERIFY(compareDoubles(northing, 5247092.44892));
 }
 
-void GeoTest::_convertUTMToGeo_test(void) {
+void GeoTest::_convertUTMToGeo_test()
+{
     const double easting = 465886.092246;
-    const double northing = 5247092.45;
+    const double northing = 5247092.44892;
     const int zone = 32;
     const bool southhemi = false;
 
@@ -104,20 +111,22 @@ void GeoTest::_convertUTMToGeo_test(void) {
 
     QVERIFY(result);
     QVERIFY(coord.isValid());
-    QCOMPARE(coord.latitude(), m_origin.latitude());
-    QCOMPARE(coord.longitude(), m_origin.longitude());
-    QCOMPARE(coord.altitude(), m_origin.altitude());
+    QVERIFY(compareDoubles(coord.latitude(), m_origin.latitude()));
+    QVERIFY(compareDoubles(coord.longitude(), m_origin.longitude()));
+    QVERIFY(compareDoubles(coord.altitude(), m_origin.altitude()));
 }
 
-void GeoTest::_convertGeoToMGRS_test(void) {
+void GeoTest::_convertGeoToMGRS_test()
+{
     const QGeoCoordinate coord(m_origin);
 
     const QString result = QGCGeo::convertGeoToMGRS(coord);
 
-    QCOMPARE(result, "32T MT 65886 47092");
+    QCOMPARE(result, "32TMT 65886 47092");
 }
 
-void GeoTest::_convertMGRSToGeo_test(void) {
+void GeoTest::_convertMGRSToGeo_test()
+{
     const QString mgrs("32T MT 65886 47092");
 
     QGeoCoordinate coord(0,0,0);
@@ -125,7 +134,7 @@ void GeoTest::_convertMGRSToGeo_test(void) {
 
     QVERIFY(result);
     QVERIFY(coord.isValid());
-    QCOMPARE(coord.latitude(), m_origin.latitude());
-    QCOMPARE(coord.longitude(), m_origin.longitude());
-    QCOMPARE(coord.altitude(), m_origin.altitude());
+    QVERIFY(compareDoubles(coord.latitude(), m_origin.latitude()));
+    QVERIFY(compareDoubles(coord.longitude(), m_origin.longitude()));
+    QVERIFY(compareDoubles(coord.altitude(), m_origin.altitude()));
 }

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -730,13 +730,8 @@ void FTPManager::_sendRequestExpectAck(MavlinkFTP::Request* request)
 {
     _ackOrNakTimeoutTimer.start();
     
-    WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
-
-    if (weakLink.expired()) {
-        qCDebug(FTPManagerLog) << "_sendRequestExpectAck No primary link. Allowing timeout to fail sequence.";
-    } else {
-        SharedLinkInterfacePtr sharedLink = weakLink.lock();
-
+    SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
+    if (sharedLink) {
         request->hdr.seqNumber = _expectedIncomingSeqNumber + 1;    // Outgoing is 1 past last incoming
         _expectedIncomingSeqNumber += 2;
 
@@ -752,6 +747,8 @@ void FTPManager::_sendRequestExpectAck(MavlinkFTP::Request* request)
                                                      _ftpCompId,
                                                      (uint8_t*)request);                                    // Payload
         _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
+    } else {
+        qCDebug(FTPManagerLog) << "_sendRequestExpectAck No primary link. Allowing timeout to fail sequence.";
     }
 }
 

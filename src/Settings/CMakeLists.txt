@@ -23,6 +23,8 @@ qt_add_library(Settings STATIC
     FlightModeSettings.h
     FlyViewSettings.cc
     FlyViewSettings.h
+    GimbalControllerSettings.cc
+    GimbalControllerSettings.h
     OfflineMapsSettings.cc
     OfflineMapsSettings.h
     PlanViewSettings.cc

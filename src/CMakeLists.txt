@@ -18,6 +18,10 @@ qt_add_library(QGC STATIC
     QGCToolbox.h
 )
 
+if(QGC_UTM_ADAPTER)
+    add_definitions(-DQGC_UTM_ADAPTER)
+endif()
+
 add_subdirectory(ADSB)
 add_subdirectory(AirLink)
 add_subdirectory(AnalyzeView)
@@ -33,6 +37,7 @@ add_subdirectory(FirmwarePlugin)
 # add_subdirectory(FlightMap)
 add_subdirectory(FollowMe)
 add_subdirectory(Geo)
+add_subdirectory(Gimbal)
 add_subdirectory(GPS)
 add_subdirectory(Joystick)
 add_subdirectory(MAVLink)
@@ -76,6 +81,7 @@ target_link_libraries(QGC
         # FlightMap
         # FlightDisplay
         FollowMe
+        Gimbal
         GPS
         Joystick
         MAVLink
@@ -101,7 +107,7 @@ target_link_libraries(QGC
 )
 
 if(QGC_CUSTOM_BUILD)
-    target_link_libraries(QGC PRIVATE custom)
+    target_link_libraries(QGC PRIVATE CustomPlugin)
 endif()
 
 target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
@@ -125,17 +131,6 @@ if(ANDROID)
     )
 
     target_include_directories(QGC PUBLIC ${CMAKE_SOURCE_DIR}/android/src)
-
-    if(!QGC_NO_SERIAL_LINK)
-        find_package(Qt6 REQUIRED COMPONENTS SerialPort)
-
-        target_link_libraries(QGC
-            PRIVATE
-                Qt6::SerialPortPrivate
-            PUBLIC
-                Qt6::SerialPort
-        )
-    endif()
 else()
     target_sources(QGC
         PRIVATE

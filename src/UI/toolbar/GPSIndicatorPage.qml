@@ -18,6 +18,8 @@ import QGroundControl.Palette
 import QGroundControl.FactSystem
 import QGroundControl.FactControls
 
+// This indicator page is used both when showing RTK status only with no vehicle connect and when showing GPS/RTK status with a vehicle connected
+
 ToolIndicatorPage {
     showExpand: true
 
@@ -33,6 +35,7 @@ ToolIndicatorPage {
 
             SettingsGroupLayout {
                 heading: qsTr("Vehicle GPS Status")
+                visible: activeVehicle
 
                 LabelledLabel {
                     label:      qsTr("Satellites")

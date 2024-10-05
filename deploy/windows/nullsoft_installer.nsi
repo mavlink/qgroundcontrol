@@ -59,19 +59,20 @@ SetCompressor /SOLID /FINAL lzma
 !insertmacro MUI_LANGUAGE "English"
 
 Section
-  DetailPrint "Checking for 32 bit uninstaller"  
+  DetailPrint "Checking for 32 bit uninstaller"
   SetRegView 32
   ReadRegStr $R0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "UninstallString"
   StrCmp $R0 "" check64BitUninstall doUninstall
 
 check64BitUninstall:
-  DetailPrint "Checking for 64 bit  uninstaller"  
+  DetailPrint "Checking for 64 bit  uninstaller"
   SetRegView 64
   ReadRegStr $R0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "UninstallString"
   StrCmp $R0 "" doInstall
 
 doUninstall:
-  DetailPrint "Uninstalling previous version..."  ExecWait "$R0 /S -LEAVE_DATA=1 _?=$INSTDIR"
+  DetailPrint "Uninstalling previous version..."
+  ExecWait "$R0 /S -LEAVE_DATA=1 _?=$INSTDIR"
   IntCmp $0 0 doInstall
 
   MessageBox MB_OK|MB_ICONEXCLAMATION \
@@ -90,7 +91,7 @@ doInstall:
   WriteUninstaller $INSTDIR\${EXENAME}-Uninstall.exe
   WriteRegStr HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayName" "${APPNAME}"
   WriteRegStr HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "UninstallString" "$\"$INSTDIR\${EXENAME}-Uninstall.exe$\""
-  WriteRegDWORD HKLM "SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\${EXENAME}.exe" "DumpCount" 5 
+  WriteRegDWORD HKLM "SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\${EXENAME}.exe" "DumpCount" 5
   WriteRegDWORD HKLM "SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\${EXENAME}.exe" "DumpType" 1
   WriteRegExpandStr HKLM "SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\${EXENAME}.exe" "DumpFolder" "%LOCALAPPDATA%\QGCCrashDumps"
 
@@ -107,7 +108,7 @@ doInstall:
 
 driversInstalled:
   DetailPrint "UAV Drivers already installed. Checking version..."
-  ; Check if the installed drivers are out of date. 
+  ; Check if the installed drivers are out of date.
   ; Missing key also indicates out of date driver install.
   ReadRegDWORD $0 HKCU "${QGCDRIVERVERSIONKEY}" "version"
   IntCmp $0 ${QGCCURRENTDRIVERVERSION} done driversOutOfDate done
@@ -115,7 +116,7 @@ driversInstalled:
 driversOutOfDate:
   DetailPrint "UAV Drivers out of date."
   goto installDrivers
-  
+
 driversNotInstalled:
   DetailPrint "UAV Drivers not installed."
   ; Delete abandoned possibly out of date version key
@@ -130,7 +131,7 @@ installDrivers:
 
 done:
   SetRegView lastused
-SectionEnd 
+SectionEnd
 
 Section "Uninstall"
   SetRegView 64
@@ -153,10 +154,10 @@ Section "create Start Menu Shortcuts"
   SetRegView 64
   SetShellVarContext all
   CreateDirectory "$SMPROGRAMS\$StartMenuFolder"
-  CreateShortCut "$SMPROGRAMS\$StartMenuFolder\${APPNAME}.lnk" "$INSTDIR\${EXENAME}.exe" "" "$INSTDIR\${EXENAME}.exe" 0
-  CreateShortCut "$SMPROGRAMS\$StartMenuFolder\${APPNAME} (GPU Compatibility Mode).lnk" "$INSTDIR\${EXENAME}.exe" "-angle" "$INSTDIR\${EXENAME}.exe" 0
+  CreateShortCut "$SMPROGRAMS\$StartMenuFolder\${APPNAME}.lnk" "$INSTDIR\bin\${EXENAME}.exe" "" "$INSTDIR\bin\${EXENAME}.exe" 0
+  CreateShortCut "$SMPROGRAMS\$StartMenuFolder\${APPNAME} (GPU Compatibility Mode).lnk" "$INSTDIR\bin\${EXENAME}.exe" "-desktop" "$INSTDIR\bin\${EXENAME}.exe" 0
   !insertmacro DemoteShortCut "$SMPROGRAMS\$StartMenuFolder\${APPNAME} (GPU Compatibility Mode).lnk"
-  CreateShortCut "$SMPROGRAMS\$StartMenuFolder\${APPNAME} (GPU Safe Mode).lnk" "$INSTDIR\${EXENAME}.exe" "-swrast" "$INSTDIR\${EXENAME}.exe" 0
+  CreateShortCut "$SMPROGRAMS\$StartMenuFolder\${APPNAME} (GPU Safe Mode).lnk" "$INSTDIR\bin\${EXENAME}.exe" "-swrast" "$INSTDIR\bin\${EXENAME}.exe" 0
   !insertmacro DemoteShortCut "$SMPROGRAMS\$StartMenuFolder\${APPNAME} (GPU Safe Mode).lnk"
 SectionEnd
 

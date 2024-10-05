@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -133,9 +133,4 @@ bool ArduCopterFirmwarePlugin::multiRotorCoaxialMotors(Vehicle* vehicle)
 bool ArduCopterFirmwarePlugin::multiRotorXConfig(Vehicle* vehicle)
 {
     return vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, "FRAME")->rawValue().toInt() != 0;
-}
-
-void ArduCopterFirmwarePlugin::sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimatationCapabilities)
-{
-    _sendGCSMotionReport(vehicle, motionReport, estimatationCapabilities);
 }

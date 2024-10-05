@@ -125,6 +125,7 @@ Item {
             contentWidth:       sliderContainer.width
             contentHeight:      sliderContainer.height
             flickDeceleration:  0.5
+            flickableDirection: Flickable.VerticalFlick
 
             Item {
                 id:     sliderContainer

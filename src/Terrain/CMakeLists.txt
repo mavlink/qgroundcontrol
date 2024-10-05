@@ -5,8 +5,12 @@ qt_add_library(Terrain STATIC
     TerrainQuery.h
     TerrainQueryAirMap.cc
     TerrainQueryAirMap.h
+    TerrainQueryInterface.cc
+    TerrainQueryInterface.h
     TerrainTile.cc
     TerrainTile.h
+    TerrainTileCopernicus.cc
+    TerrainTileCopernicus.h
     TerrainTileManager.cc
     TerrainTileManager.h
 )

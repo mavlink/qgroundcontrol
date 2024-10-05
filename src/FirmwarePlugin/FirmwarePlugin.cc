@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -29,8 +29,6 @@ QGC_LOGGING_CATEGORY(FirmwarePluginLog, "FirmwarePluginLog")
 const QString guided_mode_not_supported_by_vehicle = QObject::tr("Guided mode not supported by Vehicle.");
 
 QVariantList FirmwarePlugin::_cameraList;
-
-const QString FirmwarePlugin::px4FollowMeFlightMode(QObject::tr("Follow Me"));
 
 FirmwarePlugin::FirmwarePlugin(void)
 {
@@ -270,6 +268,12 @@ FirmwarePlugin::guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle*, double)
     qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
+void FirmwarePlugin::guidedModeChangeHeading(Vehicle *vehicle, const QGeoCoordinate &headingCoord)
+{
+    Q_UNUSED(vehicle);
+    qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
+}
+
 void FirmwarePlugin::startMission(Vehicle*)
 {
     // Not supported by generic vehicle
@@ -310,11 +314,12 @@ const QVariantList& FirmwarePlugin::toolIndicators(const Vehicle*)
         _toolIndicatorList = QVariantList({
             QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Controls/FlightModeIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/MessageIndicator.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/GPSIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/VehicleGPSIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/TelemetryRSSIIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RCRSSIIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Controls/BatteryIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RemoteIDIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/GimbalIndicator.qml")),
         });
     }
     return _toolIndicatorList;
@@ -1111,32 +1116,37 @@ QString FirmwarePlugin::gotoFlightMode(void) const
     return QString();
 }
 
-void FirmwarePlugin::sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimationCapabilities)
+void FirmwarePlugin::sendGCSMotionReport(Vehicle *vehicle, FollowMe::GCSMotionReport &motionReport, uint8_t estimationCapabilities)
 {
-    WeakLinkInterfacePtr weakLink = vehicle->vehicleLinkManager()->primaryLink();
-    if (!weakLink.expired()) {
-        MAVLinkProtocol*        mavlinkProtocol = qgcApp()->toolbox()->mavlinkProtocol();
-        mavlink_follow_target_t follow_target   = {};
-        SharedLinkInterfacePtr  sharedLink      = weakLink.lock();
+    Q_CHECK_PTR(vehicle);
 
-        follow_target.timestamp =           qgcApp()->msecsSinceBoot();
-        follow_target.est_capabilities =    estimationCapabilities;
-        follow_target.position_cov[0] =     static_cast<float>(motionReport.pos_std_dev[0]);
-        follow_target.position_cov[2] =     static_cast<float>(motionReport.pos_std_dev[2]);
-        follow_target.alt =                 static_cast<float>(motionReport.altMetersAMSL);
-        follow_target.lat =                 motionReport.lat_int;
-        follow_target.lon =                 motionReport.lon_int;
-        follow_target.vel[0] =              static_cast<float>(motionReport.vxMetersPerSec);
-        follow_target.vel[1] =              static_cast<float>(motionReport.vyMetersPerSec);
-
-        mavlink_message_t message;
-        mavlink_msg_follow_target_encode_chan(static_cast<uint8_t>(mavlinkProtocol->getSystemId()),
-                                              static_cast<uint8_t>(mavlinkProtocol->getComponentId()),
-                                              sharedLink->mavlinkChannel(),
-                                              &message,
-                                              &follow_target);
-        vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
+    SharedLinkInterfacePtr sharedLink = vehicle->vehicleLinkManager()->primaryLink().lock();
+    if (!sharedLink) {
+        return;
     }
+
+    const MAVLinkProtocol* const mavlinkProtocol = qgcApp()->toolbox()->mavlinkProtocol();
+    mavlink_follow_target_t follow_target{0};
+
+    follow_target.timestamp = qgcApp()->msecsSinceBoot();
+    follow_target.est_capabilities = estimationCapabilities;
+    follow_target.position_cov[0] = static_cast<float>(motionReport.pos_std_dev[0]);
+    follow_target.position_cov[2] = static_cast<float>(motionReport.pos_std_dev[2]);
+    follow_target.alt = static_cast<float>(motionReport.altMetersAMSL);
+    follow_target.lat = motionReport.lat_int;
+    follow_target.lon = motionReport.lon_int;
+    follow_target.vel[0] = static_cast<float>(motionReport.vxMetersPerSec);
+    follow_target.vel[1] = static_cast<float>(motionReport.vyMetersPerSec);
+
+    mavlink_message_t message;
+    mavlink_msg_follow_target_encode_chan(
+        static_cast<uint8_t>(mavlinkProtocol->getSystemId()),
+        static_cast<uint8_t>(mavlinkProtocol->getComponentId()),
+        sharedLink->mavlinkChannel(),
+        &message,
+        &follow_target
+    );
+    vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
 }
 
 Autotune* FirmwarePlugin::createAutotune(Vehicle *vehicle)

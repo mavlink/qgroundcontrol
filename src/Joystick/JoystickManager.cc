@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -11,9 +11,8 @@
 #include "JoystickManager.h"
 #include "MultiVehicleManager.h"
 #include "Joystick.h"
-#if !defined(__mobile__) || defined(QGC_SDL_JOYSTICK)
+#if defined(QGC_SDL_JOYSTICK)
     #include "JoystickSDL.h"
-    #define __sdljoystick__
 #elif defined(Q_OS_ANDROID)
     #include "JoystickAndroid.h"
 #endif
@@ -57,7 +56,7 @@ void JoystickManager::setToolbox(QGCToolbox *toolbox)
 }
 
 void JoystickManager::init() {
-#ifdef __sdljoystick__
+#ifdef QGC_SDL_JOYSTICK
     if (!JoystickSDL::init()) {
         return;
     }
@@ -77,7 +76,7 @@ void JoystickManager::_setActiveJoystickFromSettings(void)
 {
     QMap<QString,Joystick*> newMap;
 
-#ifdef __sdljoystick__
+#ifdef QGC_SDL_JOYSTICK
     // Get the latest joystick mapping
     newMap = JoystickSDL::discover(_multiVehicleManager);
 #elif defined(Q_OS_ANDROID)
@@ -194,7 +193,7 @@ bool JoystickManager::setActiveJoystickName(const QString& name)
  */
 void JoystickManager::_updateAvailableJoysticks()
 {
-#ifdef __sdljoystick__
+#ifdef QGC_SDL_JOYSTICK
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
         switch(event.type) {

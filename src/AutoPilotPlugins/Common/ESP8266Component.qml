@@ -114,7 +114,7 @@ Item {
                 Item { width: 1; height: _margins * 0.5; }
                 QGCLabel {
                     text:                               qsTr("ESP WiFi Bridge Settings")
-                    font.family:                        ScreenTools.demiboldFontFamily
+                    font.bold:                          true
                 }
                 Rectangle {
                     color:                              qgcPal.windowShade
@@ -275,7 +275,7 @@ Item {
                 }
                 QGCLabel {
                     text:                               qsTr("ESP WiFi Bridge Status")
-                    font.family:                        ScreenTools.demiboldFontFamily
+                    font.bold:                          true
                 }
                 Rectangle {
                     color:                              qgcPal.windowShade

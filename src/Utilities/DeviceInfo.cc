@@ -1,3 +1,12 @@
+/****************************************************************************
+ *
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 #include "DeviceInfo.h"
 #include <QGCLoggingCategory.h>
 
@@ -9,13 +18,15 @@
 
 QGC_LOGGING_CATEGORY(QGCDeviceInfoLog, "qgc.utilities.deviceinfo")
 
-namespace QGCDeviceInfo {
+namespace QGCDeviceInfo
+{
 
 //  TODO:
 //    - reachabilityChanged()
 //    - Allow to select by transportMedium()
 
-bool isInternetAvailable() {
+bool isInternetAvailable()
+{
     if(QNetworkInformation::availableBackends().isEmpty()) return false;
 
     if(!QNetworkInformation::loadDefaultBackend()) return false;
@@ -31,7 +42,17 @@ bool isInternetAvailable() {
     return (reachability == QNetworkInformation::Reachability::Online);
 }
 
-bool isBluetoothAvailable() {
+bool isNetworkWired()
+{
+    if(QNetworkInformation::availableBackends().isEmpty()) return false;
+
+    if(!QNetworkInformation::loadDefaultBackend()) return false;
+
+    return (QNetworkInformation::instance()->transportMedium() == QNetworkInformation::TransportMedium::Ethernet);
+}
+
+bool isBluetoothAvailable()
+{
     #ifdef QGC_ENABLE_BLUETOOTH
         const QList<QBluetoothHostInfo> devices = QBluetoothLocalDevice::allDevices();
         return !devices.isEmpty();
@@ -397,4 +418,4 @@ bool QGCCompassFilter::filter(QCompassReading *reading)
 
 ////////////////////////////////////////////////////////////////////
 
-} /* namespace QGCDeviceInfo */
+} // namespace QGCDeviceInfo

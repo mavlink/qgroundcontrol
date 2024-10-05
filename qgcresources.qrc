@@ -46,6 +46,7 @@
         <file alias="SplashScreen">resources/SplashScreen.png</file>
         <file alias="Stop">resources/Stop.svg</file>
         <file alias="takeoff.svg">resources/takeoff.svg</file>
+        <file alias="terrain.svg">resources/terrain.svg</file>
         <file alias="TrashDelete.svg">resources/TrashDelete.svg</file>
         <file alias="waves.svg">resources/waves.svg</file>
         <file alias="wind-guru.svg">resources/wind-guru.svg</file>
@@ -58,7 +59,7 @@
         <file alias="Gripper.svg">resources/Gripper.svg</file>
         <file alias="GripperRelease.svg">resources/GripperRelease.svg</file>
         <file alias="GripperGrab.svg">resources/GripperGrab.svg</file>
-        <file>resources/icons/qgroundcontrol.ico</file>
+        <file alias="qgroundcontrol.ico">resources/icons/qgroundcontrol.ico</file>
     </qresource>
     <qresource prefix="/res/firmware">
         <file alias="3drradio.png">resources/firmware/3drradio.png</file>
@@ -107,5 +108,8 @@
     </qresource>
     <qresource prefix="/opengl">
         <file>resources/opengl/buglist.json</file>
+    </qresource>
+    <qresource prefix="/gimbal">
+        <file alias="payload.svg">resources/gimbal/payload.svg</file>
     </qresource>
 </RCC>

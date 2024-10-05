@@ -11,12 +11,19 @@ It pre-installs all the dependencies at build time, including Qt, thanks to a sc
 The main advantage of using the container is the usage of the `CMake` build system and its many improvements over `qmake`
 
 ## Building the Container
+### Script
 
-Before using the container, you have to build the image.
+To build the container using the script, run this command in the qgc root directory
+
+```
+./deploy/docker/run-docker.sh
+```
+### Manual
+if you want to Build using the container manually, then you first have to build the image.
 You can accomplish this using docker, running the following script from the root of the QGC source code directory.
 
 ```
-docker build --file ./deploy/docker/Dockerfile-build-linux -t qgc-linux-docker .
+docker build --file ./deploy/docker/Dockerfile-build-ubuntu -t qgc-linux-docker .
 ```
 
 ::: info
@@ -28,7 +35,7 @@ Keep in mind this is tagging the image for later reference since you can have mu
 If building on a Mac computer with an M1 chip you must also specify the build option `--platform linux/x86_64` as shown:
 
 ```
-docker build --platform linux/x86_64 --file ./deploy/docker/Dockerfile-build-linux -t qgc-linux-docker .
+docker build --platform linux/x86_64 --file ./deploy/docker/Dockerfile-build-ubuntu -t qgc-linux-docker .
 ```
 
 Otherwise you will get a build error like:

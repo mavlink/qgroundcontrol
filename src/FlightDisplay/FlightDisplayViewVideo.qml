@@ -27,7 +27,7 @@ Item {
     property bool useSmallFont: true
 
     property double _ar:                QGroundControl.videoManager.aspectRatio
-    property bool   _showGrid:          QGroundControl.settingsManager.videoSettings.gridLines.rawValue > 0
+    property bool   _showGrid:          QGroundControl.settingsManager.videoSettings.gridLines.rawValue
     property var    _dynamicCameras:    globals.activeVehicle ? globals.activeVehicle.cameraManager : null
     property bool   _connected:         globals.activeVehicle ? !globals.activeVehicle.communicationLost : false
     property int    _curCameraIndex:    _dynamicCameras ? _dynamicCameras.currentCamera : 0
@@ -64,7 +64,7 @@ Item {
             QGCLabel {
                 id:                 noVideoLabel
                 text:               QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue ? qsTr("WAITING FOR VIDEO") : qsTr("VIDEO DISABLED")
-                font.family:        ScreenTools.demiboldFontFamily
+                font.bold:          true
                 color:              "white"
                 font.pointSize:     useSmallFont ? ScreenTools.smallFontPointSize : ScreenTools.largeFontPointSize
                 anchors.centerIn:   parent

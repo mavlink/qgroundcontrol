@@ -2,8 +2,11 @@
     <qresource prefix="/qml">
         <file alias="QGroundControl/UTMSP/UTMSPMapVisuals.qml">UTMSPMapVisuals.qml</file>
         <file alias="QGroundControl/UTMSP/UTMSPAdapterEditor.qml">UTMSPAdapterEditor.qml</file>
-        <file alias="QGroundControl/UTMSP/qmldir">qmldir</file>
+        <file alias="QGroundControl/UTMSP/qmldir">QGroundControl.UTMSP.qmldir</file>
         <file alias="QGroundControl/UTMSP/UTMSPActivationStatusBar.qml">UTMSPActivationStatusBar.qml</file>
         <file alias="QGroundControl/UTMSP/UTMSPMapPolygonVisuals.qml">UTMSPMapPolygonVisuals.qml</file>
+        <file alias="QGroundControl/UTMSP/UTMSPStateStorage.qml">UTMSPStateStorage.qml</file>
+        <file alias="QGroundControl/UTMSP/UTMSPNotificationSlider.qml">UTMSPNotificationSlider.qml</file>
+        <file alias="QGroundControl/UTMSP/UTMSPFlightStatusIndicator.qml">UTMSPFlightStatusIndicator.qml</file>
     </qresource>
 </RCC>

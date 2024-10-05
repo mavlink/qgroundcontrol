@@ -22,9 +22,10 @@
 QGC_LOGGING_CATEGORY(CameraManagerLog, "CameraManagerLog")
 
 //-----------------------------------------------------------------------------
-QGCCameraManager::CameraStruct::CameraStruct(QObject* parent, uint8_t compID_)
+QGCCameraManager::CameraStruct::CameraStruct(QObject* parent, uint8_t compID_, Vehicle* vehicle_)
     : QObject   (parent)
     , compID    (compID_)
+    , vehicle   (vehicle_)
 {
 }
 
@@ -78,7 +79,8 @@ void QGCCameraManager::_vehicleReady(bool ready)
 void QGCCameraManager::_mavlinkMessageReceived(const mavlink_message_t& message)
 {
     //-- Only pay attention to camera components, as identified by their compId
-    if(message.sysid == _vehicle->id() && (message.compid >= MAV_COMP_ID_CAMERA && message.compid <= MAV_COMP_ID_CAMERA6)) {
+    if(message.sysid == _vehicle->id() && (message.compid == MAV_COMP_ID_AUTOPILOT1 ||
+        (message.compid >= MAV_COMP_ID_CAMERA && message.compid <= MAV_COMP_ID_CAMERA6))) {
         switch (message.msgid) {
             case MAVLINK_MSG_ID_CAMERA_CAPTURE_STATUS:
                 _handleCaptureStatus(message);
@@ -119,39 +121,25 @@ void QGCCameraManager::_mavlinkMessageReceived(const mavlink_message_t& message)
 
 void QGCCameraManager::_handleHeartbeat(const mavlink_message_t &message)
 {
-    //-- First time hearing from this one?
     QString sCompID = QString::number(message.compid);
-    if(!_cameraInfoRequest.contains(sCompID)) {
+
+    if (!_cameraInfoRequest.contains(sCompID)) {
+        // This is the first time we are heading from this camera
         qCDebug(CameraManagerLog) << "Hearbeat from " << message.compid;
-        CameraStruct* pInfo = new CameraStruct(this, message.compid);
+        CameraStruct* pInfo = new CameraStruct(this, message.compid, _vehicle);
         pInfo->lastHeartbeat.start();
         _cameraInfoRequest[sCompID] = pInfo;
-        //-- Request camera info
-        _requestCameraInfo(message.compid);
+        _requestCameraInfo(pInfo);
     } else {
-        if(_cameraInfoRequest[sCompID]) {
+        if (_cameraInfoRequest[sCompID]) {
             CameraStruct* pInfo = _cameraInfoRequest[sCompID];
             //-- Check if we have indeed received the camera info
-            if(pInfo->infoReceived) {
+            if (pInfo->infoReceived) {
                 //-- We have it. Just update the heartbeat timeout
                 pInfo->lastHeartbeat.start();
-            } else {
-                //-- Try again. Maybe.
-                if(pInfo->lastHeartbeat.elapsed() > 2000) {
-                    if(pInfo->tryCount > 10) {
-                        if(!pInfo->gaveUp) {
-                            pInfo->gaveUp = true;
-                            qWarning() << "Giving up requesting camera info from" << _vehicle->id() << message.compid;
-                        }
-                    } else {
-                        pInfo->tryCount++;
-                        //-- Request camera info again.
-                        _requestCameraInfo(message.compid);
-                    }
-                }
             }
         } else {
-            qWarning() << "_cameraInfoRequest[" << sCompID << "] is null";
+            qWarning() << Q_FUNC_INFO << "_cameraInfoRequest[" << sCompID << "] is null";
         }
     }
 }
@@ -396,18 +384,40 @@ QGCCameraManager::_handleTrackingImageStatus(const mavlink_message_t& message)
     }
 }
 
+static void _requestCameraInfoCommandResultHandler(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, Vehicle::MavCmdResultFailureCode_t failureCode)
+{
+    auto  cameraInfo = static_cast<QGCCameraManager::CameraStruct*>(resultHandlerData);
+
+    if (ack.result != MAV_RESULT_ACCEPTED) {
+        qCDebug(CameraManagerLog) << "MAV_CMD_REQUEST_CAMERA_INFORMATION failed. compId" << cameraInfo->compID << "Result:" << ack.result << "FailureCode:" << failureCode;
+    }
+}
+
+static void _requestCameraInfoMessageResultHandler(void* resultHandlerData, MAV_RESULT result, Vehicle::RequestMessageResultHandlerFailureCode_t failureCode, [[maybe_unused]] const mavlink_message_t& message)
+{
+    auto cameraInfo = static_cast<QGCCameraManager::CameraStruct*>(resultHandlerData);
+
+    if (result != MAV_RESULT_ACCEPTED) {
+        qCDebug(CameraManagerLog) << "MAV_CMD_REQUEST_MESSAGE:MAVLINK_MSG_ID_CAMERA_INFORMATION failed. Falling back to MAV_CMD_REQUEST_CAMERA_INFORMATION. compId" << cameraInfo->compID << "Result:" << result << "FailureCode:" << failureCode;
+
+        Vehicle::MavCmdAckHandlerInfo_t ackHandlerInfo;
+        ackHandlerInfo.resultHandler        = _requestCameraInfoCommandResultHandler;
+        ackHandlerInfo.resultHandlerData    = cameraInfo;
+        ackHandlerInfo.progressHandler      = nullptr;
+        ackHandlerInfo.progressHandlerData  = nullptr;
+
+        cameraInfo->vehicle->sendMavCommandWithHandler(&ackHandlerInfo, cameraInfo->compID, MAV_CMD_REQUEST_CAMERA_INFORMATION, 1 /* request camera capabilities */);
+    }
+}
+
 //-----------------------------------------------------------------------------
 void
-QGCCameraManager::_requestCameraInfo(int compID)
+QGCCameraManager::_requestCameraInfo(CameraStruct* pInfo)
 {
-    qCDebug(CameraManagerLog) << "_requestCameraInfo(" << compID << ")";
-    if(_vehicle) {
-        _vehicle->sendMavCommand(
-            compID,                                 // target component
-            MAV_CMD_REQUEST_CAMERA_INFORMATION,     // command id
-            false,                                  // showError
-            1);                                     // Do Request
-    }
+    qCDebug(CameraManagerLog) << Q_FUNC_INFO << pInfo->compID;
+
+    // We first try using the newish MAV_CMD_REQUEST_MESSAGE mechanism
+    _vehicle->requestMessage(_requestCameraInfoMessageResultHandler, pInfo, pInfo->compID, MAVLINK_MSG_ID_CAMERA_INFORMATION);
 }
 
 //----------------------------------------------------------------------------------------

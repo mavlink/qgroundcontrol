@@ -11,10 +11,10 @@
  */
 
 #include "CustomAutoPilotPlugin.h"
-
 #include "ParameterManager.h"
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
+#include "Vehicle.h"
 
 CustomAutoPilotPlugin::CustomAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     : PX4AutoPilotPlugin(vehicle, parent)

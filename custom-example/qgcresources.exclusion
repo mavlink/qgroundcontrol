@@ -1,2 +1,3 @@
 
 		<file alias="QGCLogoFull">resources/QGCLogoFull.svg</file>
+		<file alias="qgroundcontrol.ico">resources/icons/qgroundcontrol.ico</file>

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2023 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -9,34 +9,43 @@
 
 #include "UTMSPBlenderRestInterface.h"
 
-UTMSPBlenderRestInterface::UTMSPBlenderRestInterface():
-    UTMSPRestInterface("blender.utm.dev.airoplatform.com")
+UTMSPBlenderRestInterface::UTMSPBlenderRestInterface(QObject *parent):
+    UTMSPRestInterface(parent)
 {
-
+    setHost(HostTarget::BlenderClient);
 }
 
-std::pair<int, std::string> UTMSPBlenderRestInterface::setFlightPlan(const std::string& body)
+QPair<int, std::string> UTMSPBlenderRestInterface::setFlightPlan(const std::string& body)
 {
     // Post Flight plan
-    const std::string setFlightPlanTarget = "/flight_declaration_ops/set_flight_declaration";
-    modifyRequest(setFlightPlanTarget, http::verb::post, body);
+    QString setFlightPlanTarget = "/flight_declaration_ops/set_flight_declaration";
+    modifyRequest(setFlightPlanTarget, QNetworkAccessManager::PostOperation, QString::fromStdString(body));
 
     return executeRequest();
 }
 
-std::pair<int, std::string> UTMSPBlenderRestInterface::requestTelemetry(const std::string& body)
+QPair<int, std::string> UTMSPBlenderRestInterface::requestTelemetry(const std::string& body)
 {
     // Post RID data
-    const std::string target = "/flight_stream/set_telemetry";
-    modifyRequest(target, http::verb::put, body);
+    QString target = "/flight_stream/set_telemetry";
+    modifyRequest(target, QNetworkAccessManager::PutOperation, QString::fromStdString(body));
 
     return executeRequest();
 }
 
-std::pair<int, std::string> UTMSPBlenderRestInterface::ping()
+QPair<int, std::string> UTMSPBlenderRestInterface::updateFlightState(const std::string& body, const std::string &flightID)
 {
-    const std::string target = "/ping";
-    modifyRequest(target, http::verb::get);
+    // Post RID data
+    QString target = "/flight_declaration_ops/flight_declaration_state/" + QString::fromStdString(flightID);
+    modifyRequest(target, QNetworkAccessManager::PutOperation, QString::fromStdString(body));
+
+    return executeRequest();
+}
+
+QPair<int, std::string> UTMSPBlenderRestInterface::ping()
+{
+    QString target = "/ping";
+    modifyRequest(target, QNetworkAccessManager::GetOperation);
 
     return executeRequest();
 }

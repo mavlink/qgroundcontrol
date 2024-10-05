@@ -1,11 +1,10 @@
 package org.mavlink.qgroundcontrol;
 
-import com.hoho.android.usbserial.driver.ProbeTable;
-import com.hoho.android.usbserial.driver.UsbSerialProber;
-import com.hoho.android.usbserial.driver.CdcAcmSerialDriver;
 import org.mavlink.qgroundcontrol.QGCUsbId;
 
-// implements UsbSerialProber?
+import com.hoho.android.usbserial.driver.ProbeTable;
+import com.hoho.android.usbserial.driver.UsbSerialProber;
+
 class QGCProber
 {
     static UsbSerialProber getQGCProber()

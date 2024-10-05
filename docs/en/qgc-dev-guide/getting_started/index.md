@@ -15,7 +15,7 @@ Versions are provided for all platforms.
 ## Source Code
 
 Source code for _QGroundControl_ is kept on GitHub here: https://github.com/mavlink/qgroundcontrol.
-It is [dual-licensed under Apache 2.0 and GPLv3](https://github.com/mavlink/qgroundcontrol/blob/master/COPYING.md).
+It is [dual-licensed under Apache 2.0 and GPLv3](https://github.com/mavlink/qgroundcontrol/blob/master/.github/COPYING.md).
 
 To get the source files:
 
@@ -104,7 +104,7 @@ To see a complete list of all available components in the installer _Select Comp
 
 1. Install Additional Packages (Platform Specific)
 
-   - **Ubuntu:** `bash ./qgroundcontrol/tools/setup/install-dependencies-debian.sh
+   - **Ubuntu:** `sudo bash ./qgroundcontrol/tools/setup/install-dependencies-debian.sh`
    - **Fedora:** `sudo dnf install speech-dispatcher SDL2-devel SDL2 systemd-devel patchelf`
    - **Arch Linux:** `pacman -Sy speech-dispatcher patchelf`
    - **OSX** [Setup](https://doc.qt.io/qt-6/macos.html)
@@ -138,8 +138,9 @@ To see a complete list of all available components in the installer _Select Comp
    - **Ubuntu:** Desktop Qt {{ $frontmatter.qt_version }} GCC 64bit
    - **Windows:** Desktop Qt {{ $frontmatter.qt_version }} MSVC2019 **64bit**
    - **Android:** Android for armeabi-v7a (GCC 4.9, Qt {{ $frontmatter.qt_version }})
-     - JDK11 is required.
+     - JDK17 is required for the latest updated versions. NDK Version: 25.1.8937393
        You can confirm it is being used by reviewing the project setting: **Projects > Manage Kits > Devices > Android (tab) > Android Settings > _JDK location_**.
+	Note: Visit here for more detailed configurations [android.yml](.github/workflows/android.yml)
 
 1. Build using the "hammer" (or "play") icons:
 
@@ -170,7 +171,7 @@ Example commands to build a default QGC and run it afterwards:
 1. Configure:
 
    ```sh
-	cmake -B build -G Ninja CMAKE_BUILD_TYPE=Debug
+	cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
    ```
 
 1. Build

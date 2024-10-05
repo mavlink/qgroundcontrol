@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -8,6 +8,7 @@
  ****************************************************************************/
 
 #include "TCPLink.h"
+#include "DeviceInfo.h"
 
 #include <QtCore/QList>
 #include <QtNetwork/QTcpSocket>
@@ -15,7 +16,7 @@
 
 TCPLink::TCPLink(SharedLinkConfigurationPtr& config)
     : LinkInterface(config)
-    , _tcpConfig(qobject_cast<TCPConfiguration*>(config.get()))
+    , _tcpConfig(qobject_cast<const TCPConfiguration*>(config.get()))
     , _socket(nullptr)
     , _socketIsConnected(false)
 {
@@ -51,7 +52,7 @@ void TCPLink::_writeDebugBytes(const QByteArray data)
 }
 #endif
 
-void TCPLink::_writeBytes(const QByteArray data)
+void TCPLink::_writeBytes(const QByteArray &data)
 {
 #ifdef TCPLINK_READWRITE_DEBUG
     _writeDebugBytes(data);
@@ -147,6 +148,11 @@ bool TCPLink::isConnected() const
     return _socketIsConnected;
 }
 
+bool TCPLink::isSecureConnection()
+{
+    return QGCDeviceInfo::isNetworkWired();
+}
+
 //--------------------------------------------------------------------------
 //-- TCPConfiguration
 
@@ -156,16 +162,16 @@ TCPConfiguration::TCPConfiguration(const QString& name) : LinkConfiguration(name
     _host    = QLatin1String("0.0.0.0");
 }
 
-TCPConfiguration::TCPConfiguration(TCPConfiguration* source) : LinkConfiguration(source)
+TCPConfiguration::TCPConfiguration(const TCPConfiguration* source) : LinkConfiguration(source)
 {
     _port    = source->port();
     _host    = source->host();
 }
 
-void TCPConfiguration::copyFrom(LinkConfiguration *source)
+void TCPConfiguration::copyFrom(const LinkConfiguration *source)
 {
     LinkConfiguration::copyFrom(source);
-    auto* usource = qobject_cast<TCPConfiguration*>(source);
+    const TCPConfiguration* usource = qobject_cast<const TCPConfiguration*>(source);
     Q_ASSERT(usource != nullptr);
     _port    = usource->port();
     _host = usource->host();

@@ -1,27 +1,25 @@
 /****************************************************************************
  *
- * (c) 2023 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
  ****************************************************************************/
 
-#include <boost/beast/version.hpp>
 #include <nlohmann/json.hpp>
+#include <string>
+#include <QByteArray>
+#include <QBitArray>
+#include <QString>
 
 #include "UTMSPLogger.h"
 #include "UTMSPAuthorization.h"
 
 using json = nlohmann::ordered_json;
 
-UTMSPAuthorization::UTMSPAuthorization():
-    UTMSPRestInterface("passport.utm.dev.airoplatform.com")
-{
-
-}
-
-UTMSPAuthorization::~UTMSPAuthorization()
+UTMSPAuthorization::UTMSPAuthorization(QObject *parent):
+    QObject(parent)
 {
 
 }
@@ -30,37 +28,14 @@ thread_local std::string clientToken = "";
 
 bool UTMSPAuthorization::requestOAuth2Client(const QString &clientID, const QString &clientSecret)
 {
-    // Convert QString to std::string
-    _clientID = clientID.toStdString();
-    _clientSecret = clientSecret.toStdString();
-
-    // Generate the basic Token
-    std::string combinedCredential = _clientID + ":" + _clientSecret;
-    BIO *bio, *b64;
-    BUF_MEM *bufferPtr;
-
-    b64 = BIO_new(BIO_f_base64());
-    bio = BIO_new(BIO_s_mem());
-    bio = BIO_push(b64, bio);
-
-    BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
-    BIO_write(bio, combinedCredential.c_str(), combinedCredential.length());
-    BIO_flush(bio);
-    BIO_get_mem_ptr(bio, &bufferPtr);
-    BIO_set_close(bio, BIO_NOCLOSE);
-    BIO_free_all(bio);
-
-    std::string encodedBasicToken(bufferPtr->data, bufferPtr->length);
-    BUF_MEM_free(bufferPtr);
-    setBasicToken(encodedBasicToken);
-
-    // Get the Access Token
-    setHost("AuthClient");
-    connectNetwork();
-    const std::string target = "/oauth/token/";
-    std::string body = "grant_type=client_credentials&scope=blender.write blender.read&audience=blender.utm.dev.airoplatform.com&client_id=" + _clientID + "&client_secret=" + _clientSecret + "\r\n\r\n";
-    modifyRequest(target, http::verb::post, body);
-    auto [status, response] = executeRequest();
+    QString combinedCredential = clientID + ":" + clientSecret;
+    QString encodedBasicToken = combinedCredential.toUtf8().toBase64();
+    _utmspRestInterface.setBasicToken(encodedBasicToken);
+    _utmspRestInterface.setHost(UTMSPRestInterface::HostTarget::AuthClient);
+    const QString target = "/oauth/token/";
+    QString body = "grant_type=client_credentials&scope=blender.write blender.read&audience=testflight.flightblender.com&client_id=" + clientID + "&client_secret=" + clientSecret + "\r\n\r\n";
+    _utmspRestInterface.modifyRequest(target, QNetworkAccessManager::PostOperation, body);
+    auto [status, response] = _utmspRestInterface.executeRequest();
     UTMSP_LOG_INFO() << "UTMSPAuthorization: Authorization Response: " << response;
 
     if(status == 200)

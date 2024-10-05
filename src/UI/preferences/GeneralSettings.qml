@@ -97,7 +97,7 @@ SettingsPage {
                 spacing: ScreenTools.defaultFontPixelWidth * 2
 
                 QGCButton {
-                    width:                  height
+                    Layout.preferredWidth:  height
                     height:                 baseFontEdit.height * 1.5
                     text:                   "-"
                     onClicked: {
@@ -114,7 +114,7 @@ SettingsPage {
                 }
 
                 QGCButton {
-                    width:                  height
+                    Layout.preferredWidth:  height
                     height:                 baseFontEdit.height * 1.5
                     text:                   "+"
                     onClicked: {
@@ -188,14 +188,17 @@ SettingsPage {
                 Layout.fillWidth:   true
                 spacing:            0
 
-                QGCLabel { text: qsTr("Indoor Image") }
+                QGCLabel { 
+                    Layout.fillWidth:   true
+                    text:               qsTr("Indoor Image") 
+                }
                 QGCLabel { 
                     Layout.fillWidth:   true
                     font.pointSize:     ScreenTools.smallFontPointSize
                     text:               _userBrandImageIndoor.valueString.replace("file:///", "") 
                     elide:              Text.ElideMiddle
                     visible:            _userBrandImageIndoor.valueString.length > 0
-                    }
+                }
             }
 
             QGCButton {
@@ -221,14 +224,17 @@ SettingsPage {
                 Layout.fillWidth:   true
                 spacing:            0
 
-                QGCLabel { text: qsTr("Outdoor Image") }
+                QGCLabel { 
+                    Layout.fillWidth:   true
+                    text:               qsTr("Outdoor Image") 
+                }
                 QGCLabel { 
                     Layout.fillWidth:   true
                     font.pointSize:     ScreenTools.smallFontPointSize
                     text:               _userBrandImageOutdoor.valueString.replace("file:///", "") 
                     elide:              Text.ElideMiddle
                     visible:            _userBrandImageOutdoor.valueString.length > 0
-                    }
+                }
             }
 
             QGCButton {

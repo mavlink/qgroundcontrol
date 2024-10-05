@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -40,11 +40,8 @@ void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoC
 
     _connectToMavlink();
 
-    WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
-    if (!weakLink.expired()) {
-        SharedLinkInterfacePtr sharedLink = weakLink.lock();
-
-
+    SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
+    if (sharedLink) {
         mavlink_message_t       messageOut;
         mavlink_mission_item_t  missionItem;
 

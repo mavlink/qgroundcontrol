@@ -12,6 +12,8 @@ Rectangle {
     anchors.margins:    ScreenTools.defaultFontPixelWidth
     color:              "white"
 
+    QGCPalette { id: qgcPal }
+
     property var palette:           QGCPalette { colorGroupEnabled: true }
     property var enabledPalette:    QGCPalette { colorGroupEnabled: true }
     property var disabledPalette:   QGCPalette { colorGroupEnabled: false }
@@ -237,16 +239,16 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 QGCRadioButton {
                     text:       qsTr("Light")
-                    checked:    _root.qgcPal.globalTheme === QGCPalette.Light
+                    checked:    qgcPal.globalTheme === QGCPalette.Light
                     onClicked: {
-                        _root.qgcPal.globalTheme = QGCPalette.Light
+                        qgcPal.globalTheme = QGCPalette.Light
                     }
                 }
                 QGCRadioButton {
                     text:       qsTr("Dark")
-                    checked:    _root.qgcPal.globalTheme === QGCPalette.Dark
+                    checked:    qgcPal.globalTheme === QGCPalette.Dark
                     onClicked: {
-                        _root.qgcPal.globalTheme = QGCPalette.Dark
+                        qgcPal.globalTheme = QGCPalette.Dark
                     }
                 }
             }

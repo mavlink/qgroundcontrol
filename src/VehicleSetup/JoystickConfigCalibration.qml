@@ -104,7 +104,7 @@ Item {
                             axisMonitorRepeater.itemAt(axis).axis.axisValue = value
                         }
                     }
-                    onAxisDeadbandChanged: {
+                    onAxisDeadbandChanged: (axis, value) => {
                         if (axisMonitorRepeater.itemAt(axis)) {
                             axisMonitorRepeater.itemAt(axis).axis.deadbandValue = value
                         }

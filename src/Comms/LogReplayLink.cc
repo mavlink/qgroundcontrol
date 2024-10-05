@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -15,6 +15,7 @@
 #ifndef __mobile__
 #include "MAVLinkProtocol.h"
 #endif
+#include "MAVLinkLib.h"
 
 #include <QtCore/QFileInfo>
 #include <QtCore/QtEndian>
@@ -26,16 +27,16 @@ LogReplayLinkConfiguration::LogReplayLinkConfiguration(const QString& name)
     
 }
 
-LogReplayLinkConfiguration::LogReplayLinkConfiguration(LogReplayLinkConfiguration* copy)
+LogReplayLinkConfiguration::LogReplayLinkConfiguration(const LogReplayLinkConfiguration* copy)
     : LinkConfiguration(copy)
 {
     _logFilename = copy->logFilename();
 }
 
-void LogReplayLinkConfiguration::copyFrom(LinkConfiguration *source)
+void LogReplayLinkConfiguration::copyFrom(const LinkConfiguration *source)
 {
     LinkConfiguration::copyFrom(source);
-    auto* ssource = qobject_cast<LogReplayLinkConfiguration*>(source);
+    const LogReplayLinkConfiguration* ssource = qobject_cast<const LogReplayLinkConfiguration*>(source);
     if (ssource) {
         _logFilename = ssource->logFilename();
     } else {
@@ -151,7 +152,7 @@ void LogReplayLink::_replayError(const QString& errorMsg)
 }
 
 /// Since this is log replay, we just drops writes on the floor
-void LogReplayLink::_writeBytes(const QByteArray bytes)
+void LogReplayLink::_writeBytes(const QByteArray &bytes)
 {
     Q_UNUSED(bytes);
 }

@@ -15,7 +15,7 @@ Versions are provided for all platforms.
 ## Source Code
 
 Source code for _QGroundControl_ is kept on GitHub here: https\://github.com/mavlink/qgroundcontrol.
-It is [dual-licensed under Apache 2.0 and GPLv3](https://github.com/mavlink/qgroundcontrol/blob/master/COPYING.md).
+It is [dual-licensed under Apache 2.0 and GPLv3](https://github.com/mavlink/qgroundcontrol/blob/master/.github/COPYING.md).
 
 To get the source files:
 

@@ -30,9 +30,6 @@ ApplicationWindow {
     minimumHeight:  ScreenTools.isMobile ? ScreenTools.screenHeight : Math.min(ScreenTools.defaultFontPixelWidth * 50, Screen.height)
     visible:        true
 
-    property string _startTimeStamp
-    property bool   _showVisible
-    property string _flightID
     property bool   _utmspSendActTrigger
     property bool   _utmspStartTelemetry
 
@@ -202,8 +199,9 @@ ApplicationWindow {
                               qsTr("You have a mission edit in progress which has not been saved/sent. If you close you will lose changes. Are you sure you want to close?"),
                               Dialog.Yes | Dialog.No,
                               function() { checkForPendingParameterWrites() })
+            return false
         } else {
-            checkForPendingParameterWrites()
+            return checkForPendingParameterWrites()
         }
     }
 
@@ -214,10 +212,10 @@ ApplicationWindow {
                     qsTr("You have pending parameter updates to a vehicle. If you close you will lose changes. Are you sure you want to close?"),
                     Dialog.Yes | Dialog.No,
                     function() { checkForActiveConnections() })
-                return
+                return false
             }
         }
-        checkForActiveConnections()
+        return checkForActiveConnections()
     }
 
     function checkForActiveConnections() {
@@ -226,15 +224,16 @@ ApplicationWindow {
                 qsTr("There are still active connections to vehicles. Are you sure you want to exit?"),
                 Dialog.Yes | Dialog.No,
                 function() { finishCloseProcess() })
+            return false
         } else {
             finishCloseProcess()
+            return true
         }
     }
 
     onClosing: (close) => {
         if (!_forceClose) {
-            close.accepted = false
-            checkForUnsavedMission()
+            close.accepted = checkForUnsavedMission()
         }
     }
 
@@ -253,14 +252,6 @@ ApplicationWindow {
         id:             planView
         anchors.fill:   parent
         visible:        false
-
-        onActivationParamsSent:{
-            if(_utmspEnabled){
-                _startTimeStamp = startTime
-                _showVisible = activate
-                _flightID = flightID
-            }
-        }
     }
 
     footer: LogReplayStatusBar {
@@ -298,7 +289,6 @@ ApplicationWindow {
                             height:             toolSelectDialog._toolButtonHeight
                             Layout.fillWidth:   true
                             text:               qsTr("Vehicle Setup")
-                            imageColor:         qgcPal.text
                             imageResource:      "/qmlimages/Gears.svg"
                             onClicked: {
                                 if (!mainWindow.preventViewSwitch()) {
@@ -314,7 +304,6 @@ ApplicationWindow {
                             Layout.fillWidth:   true
                             text:               qsTr("Analyze Tools")
                             imageResource:      "/qmlimages/Analyze.svg"
-                            imageColor:         qgcPal.text
                             visible:            QGroundControl.corePlugin.showAdvancedUI
                             onClicked: {
                                 if (!mainWindow.preventViewSwitch()) {
@@ -637,9 +626,10 @@ ApplicationWindow {
     //-------------------------------------------------------------------------
     //-- Indicator Popups - deprecated, use Indicator Drawer instead
 
-    function showIndicatorPopup(item, dropItem) {
+    function showIndicatorPopup(item, dropItem, dim = true) {
         indicatorPopup.currentIndicator = dropItem
         indicatorPopup.currentItem = item
+        indicatorPopup.dim = dim
         indicatorPopup.open()
     }
 
@@ -654,9 +644,12 @@ ApplicationWindow {
         padding:        ScreenTools.defaultFontPixelWidth * 0.75
         modal:          true
         focus:          true
+        dim:            false
         closePolicy:    Popup.CloseOnEscape | Popup.CloseOnPressOutside
         property var    currentItem:        null
         property var    currentIndicator:   null
+        y:              ScreenTools.toolbarHeight
+        
         background: Rectangle {
             width:  loader.width
             height: loader.height
@@ -837,9 +830,9 @@ ApplicationWindow {
 
     UTMSPActivationStatusBar{
          id:                         activationbar
-         activationStartTimestamp:  _startTimeStamp
-         activationApproval:        _showVisible && QGroundControl.utmspManager.utmspVehicle.vehicleActivation
-         flightID:                  _flightID
-         anchors.fill:              parent
+         activationStartTimestamp:   UTMSPStateStorage.startTimeStamp
+         activationApproval:         UTMSPStateStorage.showActivationTab && QGroundControl.utmspManager.utmspVehicle.vehicleActivation
+         flightID:                   UTMSPStateStorage.flightID
+         anchors.fill:               parent
     }
 }

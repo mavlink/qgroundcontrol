@@ -7,7 +7,7 @@
       <extracomment>.QGC.MetaData.Facts[instrumentQmlFile].enumStrings, </extracomment>
       <location filename="../src/Settings/FlyView.SettingsGroup.json"/>
       <source>Integrated Compass/Attitude,Horizontal Compass/Atttitude,Large Vertical</source>
-      <translation type="unfinished">Integrated Compass/Attitude,Horizontal Compass/Atttitude,Large Vertical</translation>
+      <translation>一体型コンパス/姿勢計, 水平コンパス/姿勢計, 大型垂直コンパス</translation>
     </message>
   </context>
   <context>
@@ -16,13 +16,13 @@
       <extracomment>.QGC.MetaData.Facts[offlineEditingFirmwareClass].enumStrings, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>ArduPilot,PX4 Pro,Mavlink Generic</source>
-      <translation>ArduPilot,PX4 Pro,Mavlink 汎用</translation>
+      <translation>ArduPilot,PX4 Pro,MAVLink 汎用</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[offlineEditingVehicleClass].enumStrings, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>Fixed Wing,Multi-Rotor,VTOL,Rover,Sub,Mavlink Generic</source>
-      <translation>固定翼機,マルチコプター,VTOL機,ローバー,サブマリン,Mavlink 汎用</translation>
+      <translation>固定翼機,マルチコプター,VTOL機,ローバー,サブマリン,MAVLink 汎用</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[gstDebugLevel].enumStrings, </extracomment>
@@ -41,12 +41,6 @@
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>Never,Always,When in Follow Me Flight Mode</source>
       <translation>設定しない,常時設定,フォローミーモード時</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[qLocaleLanguage].enumStrings, </extracomment>
-      <location filename="../src/Settings/App.SettingsGroup.json"/>
-      <source>System,Azerbaijani (Azerbaijani),български (Bulgarian),中文 (Chinese),Nederlands (Dutch),English,Suomi (Finnish),Français (French),Deutsche (German),Ελληνικά (Greek), עברית (Hebrew),Italiano (Italian),日本語 (Japanese),한국어 (Korean),Norsk (Norwegian),Polskie (Polish),Português (Portuguese),Pусский (Russian),Español (Spanish),Svenska (Swedish),Türk (Turkish)</source>
-      <translation type="unfinished">System,Azerbaijani (Azerbaijani),български (Bulgarian),中文 (Chinese),Nederlands (Dutch),English,Suomi (Finnish),Français (French),Deutsche (German),Ελληνικά (Greek), עברית (Hebrew),Italiano (Italian),日本語 (Japanese),한국어 (Korean),Norsk (Norwegian),Polskie (Polish),Português (Portuguese),Pусский (Russian),Español (Spanish),Svenska (Swedish),Türk (Turkish)</translation>
     </message>
   </context>
   <context>
@@ -79,7 +73,7 @@
       <extracomment>.QGC.MetaData.Facts[display].enumStrings, </extracomment>
       <location filename="../src/Settings/BatteryIndicator.SettingsGroup.json"/>
       <source>Percentage,Voltage,Percentage and Voltage</source>
-      <translation type="unfinished">Percentage,Voltage,Percentage and Voltage</translation>
+      <translation>パーセント, 電圧, パーセント &amp; 電圧</translation>
     </message>
   </context>
   <context>
@@ -115,55 +109,64 @@
       <extracomment>.QGC.MetaData.Facts[operatorIDType].enumStrings, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>CAA</source>
-      <translation type="unfinished">CAA</translation>
+      <translation>CAA</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDType].enumStrings, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Free Text,Emergency,Extended Status</source>
-      <translation type="unfinished">Free Text,Emergency,Extended Status</translation>
+      <translation>フリーテキスト, 緊急性, 拡張ステータス</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[basicIDType].enumStrings, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>None, SerialNumber(ANSI/CTA-2063), CAA, UTM(RFC4122), Specific</source>
-      <translation type="unfinished">None, SerialNumber(ANSI/CTA-2063), CAA, UTM(RFC4122), Specific</translation>
+      <source>None,SerialNumber(ANSI/CTA-2063),CAA,UTM(RFC4122),Specific</source>
+      <translation>なし,シリアルナンバー(ANSI/CTA-2063),CAA,UTM(RFC4122),特定</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[basicIDUaType].enumStrings, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>Undefined,Airplane/FixedWing,Helicopter/Multirrotor, Gyroplane, VTOL, Ornithopter, Glider, Kite, Free Ballon, Captive Ballon, Airship, Parachute, Rocket, Tethered powered aircraft, Ground Obstacle, Other</source>
-      <translation type="unfinished">Undefined,Airplane/FixedWing,Helicopter/Multirrotor, Gyroplane, VTOL, Ornithopter, Glider, Kite, Free Ballon, Captive Ballon, Airship, Parachute, Rocket, Tethered powered aircraft, Ground Obstacle, Other</translation>
+      <source>Undefined,Airplane/FixedWing,Helicopter/Multirrotor,Gyroplane,VTOL,Ornithopter,Glider,Kite,Free Ballon,Captive Ballon,Airship,Parachute,Rocket,Tethered powered aircraft,Ground Obstacle,Other</source>
+      <translation>未定義,飛行機/固定翼機,ヘリコプター/マルチローター,ジャイロプレーン,VTOL,羽ばたき飛行船,グライダー,カイト,フリーバロン,キャプティブバロン,飛行船,パラシュート,ロケット,テザー動力機,地上障害物,その他</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[region].enumStrings, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>FAA,EU</source>
-      <translation type="unfinished">FAA,EU</translation>
+      <translation>FAA,EU</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[locationType].enumStrings, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>Takeoff(Not Supported),Live GNNS, Fixed</source>
-      <translation type="unfinished">Takeoff(Not Supported),Live GNNS, Fixed</translation>
+      <source>Takeoff(Not Supported),Live GNNS, Fixed (not for FAA)</source>
+      <translation>離陸(未サポート),リアルタイムGNNS,固定 (FAA対象外)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[classificationType].enumStrings, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Undefined,EU</source>
-      <translation type="unfinished">Undefined,EU</translation>
+      <translation>未定義, EU</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[categoryEU].enumStrings, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>Undeclared,Open, Specific, Certified</source>
-      <translation type="unfinished">Undeclared,Open, Specific, Certified</translation>
+      <source>Undeclared,Open,Specific,Certified</source>
+      <translation>未申請,公開,特定,認証済</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[classEU].enumStrings, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>Undeclared,Class 0, Class 1, Class 2, Class 3, Class 4, Class 5, Class 6</source>
-      <translation type="unfinished">Undeclared,Class 0, Class 1, Class 2, Class 3, Class 4, Class 5, Class 6</translation>
+      <source>Undeclared,Class 0,Class 1,Class 2,Class 3,Class 4,Class 5,Class 6</source>
+      <translation>未申請,クラス 0,クラス 1,クラス 2,クラス 3,クラス 4,クラス 5,クラス 6</translation>
+    </message>
+  </context>
+  <context>
+    <name>GimbalController.SettingsGroup.json</name>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[ControlType].enumStrings, </extracomment>
+      <location filename="../src/Settings/GimbalController.SettingsGroup.json"/>
+      <source>Click to point, click and drag</source>
+      <translation>クリックでポイント, クリックしてドラッグ</translation>
     </message>
   </context>
   <context>
@@ -658,7 +661,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_DELAY].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Delay until the specified time is reached.</source>
-      <translation type="unfinished">Delay until the specified time is reached.</translation>
+      <translation>指定時間に達するまで遅延させます。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_DELAY].param2.label, </extracomment>
@@ -760,7 +763,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_YAW].param3.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Clockwise,Shortest,Counter-Clockwise</source>
-      <translation type="unfinished">Clockwise,Shortest,Counter-Clockwise</translation>
+      <translation>時計回り, 反時計回り</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_YAW].param4.label, .mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].param4.label, </extracomment>
@@ -850,7 +853,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].param1.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Airspeed,Ground Speed,Ascend Speed,Descend Speed</source>
-      <translation type="unfinished">Airspeed,Ground Speed,Ascend Speed,Descend Speed</translation>
+      <translation>飛行速度, 地上速度, 昇降速度, 降下速度</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].param2.label, </extracomment>
@@ -970,37 +973,37 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ACTUATOR].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set actuator</source>
-      <translation type="unfinished">Set actuator</translation>
+      <translation>アクチュエータ 設定</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ACTUATOR].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set actuator to specified output value (range [-1, 1]).</source>
-      <translation type="unfinished">Set actuator to specified output value (range [-1, 1]).</translation>
+      <translation>アクチュエータを指定した出力値に設定します。(範囲 [-1, 1])</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ACTUATOR].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Actuator 1</source>
-      <translation type="unfinished">Actuator 1</translation>
+      <translation>アクチュエータ 1</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ACTUATOR].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Actuator 2</source>
-      <translation type="unfinished">Actuator 2</translation>
+      <translation>アクチュエータ 2</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ACTUATOR].param3.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Actuator 3</source>
-      <translation type="unfinished">Actuator 3</translation>
+      <translation>アクチュエータ 3</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ACTUATOR].param4.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Actuator 4</source>
-      <translation type="unfinished">Actuator 4</translation>
+      <translation>アクチュエータ 4</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_FLIGHTTERMINATION].friendlyName, </extracomment>
@@ -1108,7 +1111,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET].param7.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Yaw offset</source>
-      <translation>ヨーオフセット</translation>
+      <translation>ヨー オフセット</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_NONE].friendlyName, </extracomment>
@@ -1258,7 +1261,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param1.enumStrings, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param7.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Retract,Neutral,Mavlink Targeting,RC Targeting,GPS Point</source>
-      <translation>リトラクト,ニュートラル,Mavlinkターゲット,RCターゲット,GPSポイント</translation>
+      <translation>リトラクト,ニュートラル,MAVLinkターゲット,RCターゲット,GPSポイント</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param2.label, </extracomment>
@@ -1318,55 +1321,55 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Gimbal Manager PitchYaw</source>
-      <translation type="unfinished">Gimbal Manager PitchYaw</translation>
+      <translation>ジンバル管理 ピッチ ヨー</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Control the gimbal during the mission</source>
-      <translation type="unfinished">Control the gimbal during the mission</translation>
+      <translation>ミッション中のジンバル制御</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Pitch</source>
-      <translation type="unfinished">Pitch</translation>
+      <translation>ピッチ</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].param3.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Pitch rate</source>
-      <translation type="unfinished">Pitch rate</translation>
+      <translation>ピッチ レート</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].param4.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Yaw rate</source>
-      <translation type="unfinished">Yaw rate</translation>
+      <translation>ヨー レート</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].param5.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Follow yaw</source>
-      <translation type="unfinished">Follow yaw</translation>
+      <translation>ヨー フォロー</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].param5.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Follow yaw, Lock yaw</source>
-      <translation type="unfinished">Follow yaw, Lock yaw</translation>
+      <translation>ヨー フォロー, ヨー ロック</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].param7.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Gimbal</source>
-      <translation type="unfinished">Gimbal</translation>
+      <translation>ジンバル</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].param7.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Primary,first gimbal,second gimbal</source>
-      <translation type="unfinished">Primary,first gimbal,second gimbal</translation>
+      <translation>プライマリー, 第1ジンバル, 第2ジンバル</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_CAM_TRIGG_DIST].friendlyName, </extracomment>
@@ -1468,13 +1471,13 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GRIPPER].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Gripper Mechanism</source>
-      <translation type="unfinished">Gripper Mechanism</translation>
+      <translation>グリッパー機構</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GRIPPER].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Control a gripper mechanism.</source>
-      <translation type="unfinished">Control a gripper mechanism.</translation>
+      <translation>グリッパー機構を制御します。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GRIPPER].param1.label, </extracomment>
@@ -1594,7 +1597,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_COMPONENT_ARM_DISARM].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Arm/Disarm</source>
-      <translation type="unfinished">Arm/Disarm</translation>
+      <translation>アーム / ディスアーム</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_GET_HOME_POSITION].friendlyName, </extracomment>

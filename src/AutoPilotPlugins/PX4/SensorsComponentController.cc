@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -64,12 +64,11 @@ SensorsComponentController::SensorsComponentController(void)
 
 bool SensorsComponentController::usingUDPLink(void)
 {
-    WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
-    if (weakLink.expired()) {
-        return false;
-    } else {
-        SharedLinkInterfacePtr sharedLink = weakLink.lock();
+    SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
+    if (sharedLink) {
         return sharedLink->linkConfiguration()->type() == LinkConfiguration::TypeUdp;
+    } else {
+        return false;
     }
 }
 

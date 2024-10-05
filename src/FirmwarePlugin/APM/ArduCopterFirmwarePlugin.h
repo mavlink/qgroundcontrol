@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -73,7 +73,6 @@ public:
     QString followFlightMode                    (void) const override { return QStringLiteral("Follow"); }
     QString autoDisarmParameter                 (Vehicle* vehicle) override { Q_UNUSED(vehicle); return QStringLiteral("DISARM_DELAY"); }
     bool    supportsSmartRTL                    (void) const override { return true; }
-    void    sendGCSMotionReport                 (Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimatationCapabilities) override;
 
 private:
     static bool _remapParamNameIntialized;

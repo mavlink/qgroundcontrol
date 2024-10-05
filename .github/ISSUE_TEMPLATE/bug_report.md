@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-The following template is for Issue/Bug reporting only. https://docs.qgroundcontrol.com/en/Support/Support.html#github-issues
+The following template is for Issue/Bug reporting only. https://docs.qgroundcontrol.com/en/support/support.html#github-issues
 
 For questions about how to use or build QGC see: http://qgroundcontrol.com/#resources
 
@@ -39,6 +39,6 @@ When posting bug reports, include the following information
 Provide further details about your issue/bug.
 
 ## Log Files and Screenshots
-- [QGC Console Logs](https://docs.qgroundcontrol.com/en/Support/Support.html#reporting-bugs)
+- [QGC Console Logs](https://docs.qgroundcontrol.com/en/settings_view/console_logging.html)
 - Autopilot logs when available (post a link).
 - Screenshots of QGC to help identify the current issue/bug behavior.

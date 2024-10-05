@@ -41,7 +41,7 @@ SetupPage {
 
             QGCLabel {
                 text: qsTr("Radio Settings")
-                font.family: ScreenTools.demiboldFontFamily
+                font.bold:   true
             }
 
             Rectangle {

@@ -11,38 +11,38 @@
 LANGUAGE LANG_NEUTRAL, 0x8
 
 #ifdef APSTUDIO_INVOKED
-/////////////////////////////////////////////////////////////////////////////
-//
-// TEXTINCLUDE
-//
+    /////////////////////////////////////////////////////////////////////////////
+    //
+    // TEXTINCLUDE
+    //
 
-1 TEXTINCLUDE 
-BEGIN
+    1 TEXTINCLUDE
+    BEGIN
     "resource.h\0"
-END
+    END
 
-2 TEXTINCLUDE 
-BEGIN
+    2 TEXTINCLUDE
+    BEGIN
     "\0"
-END
+    END
 
-3 TEXTINCLUDE 
-BEGIN
+    3 TEXTINCLUDE
+    BEGIN
     "\r\n"
     "\0"
-END
+    END
 
 #endif    // APSTUDIO_INVOKED
 
 
-/////////////////////////////////////////////////////////////////////////////
-//
-// Icon
-//
+            /////////////////////////////////////////////////////////////////////////////
+            //
+            // Icon
+            //
 
-// Icon with lowest ID value placed first to ensure application icon
-// remains consistent on all systems.
-IDI_ICON1               ICON                    "./WindowsQGC.ico"
+                // Icon with lowest ID value placed first to ensure application icon
+                // remains consistent on all systems.
+                IDI_ICON1               ICON                    "./WindowsQGC.ico"
 
 #endif    // Neutral (Default) (unknown sub-lang: 0x8) resources
 /////////////////////////////////////////////////////////////////////////////

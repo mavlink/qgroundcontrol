@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -37,7 +37,7 @@ class SerialConfiguration : public LinkConfiguration
 public:
 
     SerialConfiguration(const QString& name);
-    SerialConfiguration(SerialConfiguration* copy);
+    SerialConfiguration(const SerialConfiguration* copy);
 
     Q_PROPERTY(int      baud            READ baud               WRITE setBaud               NOTIFY baudChanged)
     Q_PROPERTY(int      dataBits        READ dataBits           WRITE setDataBits           NOTIFY dataBitsChanged)
@@ -55,8 +55,8 @@ public:
     int  parity() const      { return _parity; }         ///< QSerialPort Enums
     bool usbDirect() const   { return _usbDirect; }
 
-    const QString portName          () { return _portName; }
-    const QString portDisplayName   () { return _portDisplayName; }
+    const QString portName          () const { return _portName; }
+    const QString portDisplayName   () const { return _portDisplayName; }
 
     void setBaud            (int baud);
     void setDataBits        (int databits);
@@ -70,13 +70,13 @@ public:
     static QString cleanPortDisplayname(const QString name);
 
     /// From LinkConfiguration
-    LinkType    type            () { return LinkConfiguration::TypeSerial; }
-    void        copyFrom        (LinkConfiguration* source);
-    void        loadSettings    (QSettings& settings, const QString& root);
-    void        saveSettings    (QSettings& settings, const QString& root);
+    LinkType    type            () const override { return LinkConfiguration::TypeSerial; }
+    void        copyFrom        (const LinkConfiguration* source) override;
+    void        loadSettings    (QSettings& settings, const QString& root) override;
+    void        saveSettings    (QSettings& settings, const QString& root) override;
     void        updateSettings  ();
-    QString     settingsURL     () { return "SerialSettings.qml"; }
-    QString     settingsTitle   () { return tr("Serial Link Settings"); }
+    QString     settingsURL     () override { return "SerialSettings.qml"; }
+    QString     settingsTitle   () override { return tr("Serial Link Settings"); }
 
 signals:
     void baudChanged            ();
@@ -104,18 +104,19 @@ class SerialLink : public LinkInterface
     Q_OBJECT
 
 public:
-    SerialLink(SharedLinkConfigurationPtr& config, bool isPX4Flow = false);
+    SerialLink(SharedLinkConfigurationPtr& config);
     virtual ~SerialLink();
 
     // LinkInterface overrides
-    bool isConnected(void) const override;
-    void disconnect (void) override;
+    bool isConnected        (void) const override;
+    void disconnect         (void) override;
+    bool isSecureConnection (void) override;
 
     /// Don't even think of calling this method!
     QSerialPort* _hackAccessToPort(void) { return _port; }
 
 private slots:
-    void _writeBytes(const QByteArray data) override;
+    void _writeBytes(const QByteArray &data) override;
 
 public slots:
     void linkError(QSerialPort::SerialPortError error);
@@ -124,7 +125,6 @@ private slots:
     void _readBytes     (void);
 
 private:
-
     // LinkInterface overrides
     bool _connect(void) override;
 
@@ -140,6 +140,5 @@ private:
     volatile bool           _stopp              = false;
     QMutex                  _stoppMutex;                    ///< Mutex for accessing _stopp
     QByteArray              _transmitBuffer;                ///< An internal buffer for receiving data from member functions and actually transmitting them via the serial port.
-    SerialConfiguration*    _serialConfig       = nullptr;
-
+    const SerialConfiguration*    _serialConfig       = nullptr;
 };

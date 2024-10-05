@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -37,13 +37,6 @@ SurveyComplexItem::SurveyComplexItem(PlanMasterController* masterController, boo
     , _entryPoint               (EntryLocationTopLeft)
 {
     _editorQml = "qrc:/qml/SurveyItemEditor.qml";
-
-    // If the user hasn't changed turnaround from the default (which is a fixed wing default) and we are multi-rotor set the multi-rotor default.
-    // NULL check since object creation during unit testing passes NULL for vehicle
-    if (_controllerVehicle && _controllerVehicle->multiRotor() && _turnAroundDistanceFact.rawValue().toDouble() == _turnAroundDistanceFact.rawDefaultValue().toDouble()) {
-        // Note this is set to 10 meters to work around a problem with PX4 Pro turnaround behavior. Don't change unless firmware gets better as well.
-        _turnAroundDistanceFact.setRawValue(10);
-    }
 
     if (_controllerVehicle && !(_controllerVehicle->fixedWing() || _controllerVehicle->vtol())) {
         // Only fixed wing flight paths support alternate transects

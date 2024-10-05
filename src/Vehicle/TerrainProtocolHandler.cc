@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -139,10 +139,9 @@ void TerrainProtocolHandler::_sendTerrainData(const QGeoCoordinate& swCorner, ui
                 terrainData[altIndex++] = static_cast<int16_t>(altitude);
             }
 
-            WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
-            if (!weakLink.expired()) {
+            SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
+            if (sharedLink) {
                 mavlink_message_t       msg;
-                SharedLinkInterfacePtr  sharedLink = weakLink.lock();
 
                 mavlink_msg_terrain_data_pack_chan(
                             qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),

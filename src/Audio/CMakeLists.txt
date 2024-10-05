@@ -1,4 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Qml TextToSpeech)
+find_package(Qt6 REQUIRED COMPONENTS Core TextToSpeech)
 
 qt_add_library(Audio STATIC
     AudioOutput.cc
@@ -7,11 +7,11 @@ qt_add_library(Audio STATIC
 
 target_link_libraries(Audio
     PRIVATE
+        Qt6::TextToSpeech
+        FactSystem
         Utilities
     PUBLIC
         Qt6::Core
-        Qt6::QmlIntegration
-        Qt6::TextToSpeech
 )
 
 target_include_directories(Audio PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

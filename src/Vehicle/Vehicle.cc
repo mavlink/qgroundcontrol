@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -50,8 +50,10 @@
 #include "VideoSettings.h"
 #include <DeviceInfo.h>
 #include <StatusTextHandler.h>
+#include <MAVLinkSigning.h>
+#include "GimbalController.h"
 
-#ifdef CONFIG_UTM_ADAPTER
+#ifdef QGC_UTM_ADAPTER
 #include "UTMSPVehicle.h"
 #include "UTMSPManager.h"
 #endif
@@ -146,7 +148,7 @@ Vehicle::Vehicle(LinkInterface*             link,
         _settingsManager->videoSettings()->lowLatencyMode()->setRawValue(true);
     }
 
-#ifdef CONFIG_UTM_ADAPTER
+#ifdef QGC_UTM_ADAPTER
     UTMSPManager* utmspManager = _toolbox->utmspManager();
     if (utmspManager) {
         _utmspVehicle = utmspManager->instantiateVehicle(*this);
@@ -291,7 +293,7 @@ void Vehicle::_commonInit()
     _componentInformationManager    = new ComponentInformationManager   (this);
     _initialConnectStateMachine     = new InitialConnectStateMachine    (this);
     _ftpManager                     = new FTPManager                    (this);
-    _imageProtocolManager           = new ImageProtocolManager          ();
+
     _vehicleLinkManager             = new VehicleLinkManager            (this);
 
     connect(_standardModes, &StandardModes::modesUpdated, this, &Vehicle::flightModesChanged);
@@ -323,8 +325,7 @@ void Vehicle::_commonInit()
     // Flight modes can differ based on advanced mode
     connect(_toolbox->corePlugin(), &QGCCorePlugin::showAdvancedUIChanged, this, &Vehicle::flightModesChanged);
 
-    connect(_imageProtocolManager, &ImageProtocolManager::imageReady, this, &Vehicle::_imageProtocolImageReady);
-
+    _createImageProtocolManager();
     _createStatusTextHandler();
 
     // _addFactGroup(_vehicleFactGroup,            _vehicleFactGroupName);
@@ -369,6 +370,8 @@ void Vehicle::_commonInit()
 
     // enable Joystick if appropriate
     _loadJoystickSettings();
+
+    _gimbalController = new GimbalController(_mavlink, this);
 }
 
 Vehicle::~Vehicle()
@@ -381,9 +384,11 @@ Vehicle::~Vehicle()
     delete _autopilotPlugin;
     _autopilotPlugin = nullptr;
 
-#ifdef CONFIG_UTM_ADAPTER
+#ifdef QGC_UTM_ADAPTER
     delete _utmspVehicle;
 #endif
+
+    deleteGimbalController();
 }
 
 void Vehicle::prepareDelete()
@@ -401,6 +406,22 @@ void Vehicle::prepareDelete()
         qApp->processEvents();
     }
 #endif
+}
+
+void Vehicle::deleteCameraManager()
+{
+    if(_cameraManager) {
+        delete _cameraManager;
+        _cameraManager = nullptr;
+    }
+}
+
+void Vehicle::deleteGimbalController()
+{
+    if (_gimbalController) {
+        delete _gimbalController;
+        _gimbalController = nullptr;
+    }
 }
 
 void Vehicle::_offlineFirmwareTypeSettingChanged(QVariant varFirmwareType)
@@ -508,10 +529,10 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     }
     _ftpManager->_mavlinkMessageReceived(message);
     _parameterManager->mavlinkMessageReceived(message);
-    _imageProtocolManager->mavlinkMessageReceived(message);
+    (void) QMetaObject::invokeMethod(_imageProtocolManager, "mavlinkMessageReceived", Qt::AutoConnection, message);
     _remoteIDManager->mavlinkMessageReceived(message);
 
-    _waitForMavlinkMessageMessageReceived(message);
+    _waitForMavlinkMessageMessageReceivedHandler(message);
 
     // Battery fact groups are created dynamically as new batteries are discovered
     VehicleBatteryFactGroup::handleMessageForFactGroupCreation(this, message);
@@ -580,9 +601,6 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         break;
     case MAVLINK_MSG_ID_PING:
         _handlePing(link, message);
-        break;
-    case MAVLINK_MSG_ID_MOUNT_ORIENTATION:
-        _handleGimbalOrientation(message);
         break;
     case MAVLINK_MSG_ID_OBSTACLE_DISTANCE:
         _handleObstacleDistance(message);
@@ -1860,14 +1878,6 @@ void Vehicle::_sendQGCTimeToVehicle()
     sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
 }
 
-void Vehicle::_imageProtocolImageReady(void)
-{
-    QImage img = _imageProtocolManager->getImage();
-    qgcApp()->qgcImageProvider()->setImage(&img, _id);
-    _flowImageIndex++;
-    emit flowImageIndexChanged();
-}
-
 void Vehicle::_remoteControlRSSIChanged(uint8_t rssi)
 {
     //-- 0 <= rssi <= 100 - 255 means "invalid/unknown"
@@ -1909,7 +1919,7 @@ void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, 
 
 void Vehicle::_say(const QString& text)
 {
-    AudioOutput::instance()->read(text.toLower());
+    AudioOutput::instance()->say(text.toLower());
 }
 
 bool Vehicle::airship() const
@@ -2049,6 +2059,11 @@ bool Vehicle::takeoffVehicleSupported() const
     return _firmwarePlugin->isCapable(this, FirmwarePlugin::TakeoffVehicleCapability);
 }
 
+bool Vehicle::changeHeadingSupported() const
+{
+    return _firmwarePlugin->isCapable(this, FirmwarePlugin::ChangeHeadingCapability);
+}
+
 QString Vehicle::gotoFlightMode() const
 {
     return _firmwarePlugin->gotoFlightMode();
@@ -2173,8 +2188,8 @@ void Vehicle::guidedModeOrbit(const QGeoCoordinate& centerCoord, double radius, 
                     true,                           // show error if fails
                     static_cast<float>(radius),
                     static_cast<float>(qQNaN()),    // Use default velocity
-                    0,                              // Vehicle points to center
-                    static_cast<float>(qQNaN()),    // reserved
+                    static_cast<float>(ORBIT_YAW_BEHAVIOUR_UNCHANGED),       // Use current or vehicle default yaw behavior
+                    static_cast<float>(qQNaN()),    // Use vehicle default num of orbits behavior
                     centerCoord.latitude(), centerCoord.longitude(), static_cast<float>(amslAltitude));
     } else {
         sendMavCommand(
@@ -2183,8 +2198,8 @@ void Vehicle::guidedModeOrbit(const QGeoCoordinate& centerCoord, double radius, 
                     true,                           // show error if fails
                     static_cast<float>(radius),
                     static_cast<float>(qQNaN()),    // Use default velocity
-                    0,                              // Vehicle points to center
-                    static_cast<float>(qQNaN()),    // reserved
+                    static_cast<float>(ORBIT_YAW_BEHAVIOUR_UNCHANGED),       // Use current or vehicle default yaw behavior
+                    static_cast<float>(qQNaN()),    // Use vehicle default num of orbits behavior
                     static_cast<float>(centerCoord.latitude()),
                     static_cast<float>(centerCoord.longitude()),
                     static_cast<float>(amslAltitude));
@@ -2193,6 +2208,15 @@ void Vehicle::guidedModeOrbit(const QGeoCoordinate& centerCoord, double radius, 
 
 void Vehicle::guidedModeROI(const QGeoCoordinate& centerCoord)
 {
+    if (!centerCoord.isValid()) {
+        return;
+    }
+    // Sanity check Ardupilot. Max altitude processed is 83000
+    if (apmFirmware()) {
+        if ((centerCoord.altitude() >= 83000) || (centerCoord.altitude() <= -83000  )) {
+            return;
+        }
+    }
     if (!roiModeSupported()) {
         qgcApp()->showAppMessage(QStringLiteral("ROI mode not supported by Vehicle."));
         return;
@@ -2201,7 +2225,7 @@ void Vehicle::guidedModeROI(const QGeoCoordinate& centerCoord)
         sendMavCommandInt(
                     defaultComponentId(),
                     MAV_CMD_DO_SET_ROI_LOCATION,
-                    MAV_FRAME_GLOBAL,
+                    apmFirmware() ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_GLOBAL,
                     true,                           // show error if fails
                     static_cast<float>(qQNaN()),    // Empty
                     static_cast<float>(qQNaN()),    // Empty
@@ -2223,6 +2247,8 @@ void Vehicle::guidedModeROI(const QGeoCoordinate& centerCoord)
                     static_cast<float>(centerCoord.longitude()),
                     static_cast<float>(centerCoord.altitude()));
     }
+    // This is picked by qml to display coordinate over map
+    emit roiCoordChanged(centerCoord);
 }
 
 void Vehicle::stopGuidedModeROI()
@@ -2257,6 +2283,16 @@ void Vehicle::stopGuidedModeROI()
                     static_cast<float>(qQNaN()),    // Empty
                     static_cast<float>(qQNaN()));   // Empty
     }
+}
+
+void Vehicle::guidedModeChangeHeading(const QGeoCoordinate &headingCoord)
+{
+    if (!changeHeadingSupported()) {
+        qgcApp()->showAppMessage(tr("Change Heading not supported by Vehicle."));
+        return;
+    }
+
+    _firmwarePlugin->guidedModeChangeHeading(this, headingCoord);
 }
 
 void Vehicle::pauseVehicle()
@@ -2406,7 +2442,9 @@ void Vehicle::sendMavCommandIntWithHandler(const MavCmdAckHandlerInfo_t* ackHand
 
 bool Vehicle::isMavCommandPending(int targetCompId, MAV_CMD command)
 {
-    return ((-1) < _findMavCommandListEntryIndex(targetCompId, command));
+    bool pending = ((-1) < _findMavCommandListEntryIndex(targetCompId, command));
+    // qDebug() << "Pending target: " << targetCompId << ", command: " << (int)command << ", pending: " << (pending ? "yes" : "no");
+    return pending;
 }
 
 int Vehicle::_findMavCommandListEntryIndex(int targetCompId, MAV_CMD command)
@@ -2483,7 +2521,7 @@ void Vehicle::_sendMavCommandWorker(
         bool    compIdAll       = targetCompId == MAV_COMP_ID_ALL;
         QString rawCommandName  = _toolbox->missionCommandTree()->rawName(command);
 
-        qCDebug(VehicleLog) << QStringLiteral("_sendMavCommandWorker failing %1").arg(compIdAll ? "MAV_COMP_ID_ALL not supportded" : "duplicate command") << rawCommandName;
+        qCDebug(VehicleLog) << QStringLiteral("_sendMavCommandWorker failing %1").arg(compIdAll ? "MAV_COMP_ID_ALL not supported" : "duplicate command") << rawCommandName << param1 << param2 << param3 << param4 << param5 << param6 << param7;
 
         MavCmdResultFailureCode_t failureCode = compIdAll ? MavCmdResultCommandResultOnly : MavCmdResultFailureDuplicateCommand;
         if (ackHandlerInfo && ackHandlerInfo->resultHandler) {
@@ -2528,6 +2566,8 @@ void Vehicle::_sendMavCommandWorker(
     entry.ackTimeoutMSecs   = sharedLink->linkConfiguration()->isHighLatency() ? _mavCommandAckTimeoutMSecsHighLatency : _mavCommandAckTimeoutMSecs;
     entry.elapsedTimer.start();
 
+    qCDebug(VehicleLog) << Q_FUNC_INFO << "command:param1-7" << command << param1 << param2 << param3 << param4 << param5 << param6 << param7;
+
     _mavCommandList.append(entry);
     _sendMavCommandFromList(_mavCommandList.count() - 1);
 }
@@ -2539,7 +2579,7 @@ void Vehicle::_sendMavCommandFromList(int index)
     QString rawCommandName  = _toolbox->missionCommandTree()->rawName(commandEntry.command);
 
     if (++_mavCommandList[index].tryCount > commandEntry.maxTries) {
-        qCDebug(VehicleLog) << "_sendMavCommandFromList giving up after max retries" << rawCommandName;
+        qCDebug(VehicleLog) << Q_FUNC_INFO << "giving up after max retries" << rawCommandName;
         _mavCommandList.removeAt(index);
         if (commandEntry.ackHandlerInfo.resultHandler) {
             mavlink_command_ack_t ack = {};
@@ -2560,7 +2600,7 @@ void Vehicle::_sendMavCommandFromList(int index)
         return;
     }
 
-    qCDebug(VehicleLog) << "_sendMavCommandFromList command:tryCount" << rawCommandName << commandEntry.tryCount;
+    qCDebug(VehicleLog) << Q_FUNC_INFO << "command:tryCount:param1-7" << rawCommandName << commandEntry.tryCount << commandEntry.rgParam1 << commandEntry.rgParam2 << commandEntry.rgParam3 << commandEntry.rgParam4 << commandEntry.rgParam5 << commandEntry.rgParam6 << commandEntry.rgParam7;
 
     SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
@@ -2720,80 +2760,70 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
     }
 }
 
-void Vehicle::_waitForMavlinkMessage(WaitForMavlinkMessageResultHandler resultHandler, void* resultHandlerData, int messageId, int timeoutMsecs)
+void Vehicle::_removeRequestMessageInfo(int compId, int msgId)
 {
-    qCDebug(VehicleLog) << "_waitForMavlinkMessage msg:timeout" << messageId << timeoutMsecs;
-    if (_waitForMavlinkMessageResultHandler) {
-        qCCritical(VehicleLog) << "_waitForMavlinkMessage: collision";
+    if (_requestMessageInfoMap.contains(compId) && _requestMessageInfoMap[compId].contains(msgId)) {
+        delete _requestMessageInfoMap[compId][msgId];
+        _requestMessageInfoMap[compId].remove(msgId);
+    } else {
+        qWarning() << Q_FUNC_INFO << "compId:msgId not found" << compId << msgId;
     }
-    _waitForMavlinkMessageResultHandler     = resultHandler;
-    _waitForMavlinkMessageResultHandlerData = resultHandlerData;
-    _waitForMavlinkMessageId                = messageId;
-    _waitForMavlinkMessageTimeoutActive     = false;                // Timer doesn't start until ack is received from command request
-    _waitForMavlinkMessageTimeoutMsecs      = timeoutMsecs;
 }
 
-void Vehicle::_waitForMavlinkMessageClear(void)
-{
-    qCDebug(VehicleLog) << "_waitForMavlinkMessageClear";
-    _waitForMavlinkMessageResultHandler     = nullptr;
-    _waitForMavlinkMessageResultHandlerData = nullptr;
-    _waitForMavlinkMessageId                = 0;
-    _waitForMavlinkMessageTimeoutActive     = false;
-}
 
-void Vehicle::_waitForMavlinkMessageMessageReceived(const mavlink_message_t& message)
+void Vehicle::_waitForMavlinkMessageMessageReceivedHandler(const mavlink_message_t& message)
 {
-    if (_waitForMavlinkMessageId != 0) {
-        if (_waitForMavlinkMessageId == message.msgid) {
-            WaitForMavlinkMessageResultHandler  resultHandler       = _waitForMavlinkMessageResultHandler;
-            void*                               resultHandlerData   = _waitForMavlinkMessageResultHandlerData;
-            qCDebug(VehicleLog) << "_waitForMavlinkMessageMessageReceived message received" << _waitForMavlinkMessageId;
-            _waitForMavlinkMessageClear();
-            (*resultHandler)(resultHandlerData, false /* noResponseFromVehicle */, message);
-        } else if (_waitForMavlinkMessageTimeoutActive && _waitForMavlinkMessageElapsed.elapsed() > _waitForMavlinkMessageTimeoutMsecs) {
-            WaitForMavlinkMessageResultHandler  resultHandler       = _waitForMavlinkMessageResultHandler;
-            void*                               resultHandlerData   = _waitForMavlinkMessageResultHandlerData;
-            qCDebug(VehicleLog) << "_waitForMavlinkMessageMessageReceived message timed out" << _waitForMavlinkMessageId;
-            _waitForMavlinkMessageClear();
-            (*resultHandler)(resultHandlerData, true /* noResponseFromVehicle */, message);
+    if (_requestMessageInfoMap.contains(message.compid) && _requestMessageInfoMap[message.compid].contains(message.msgid)) {
+        auto pInfo              = _requestMessageInfoMap[message.compid][message.msgid];
+        auto resultHandler      = pInfo->resultHandler;
+        auto resultHandlerData  = pInfo->resultHandlerData;
+
+        qCDebug(VehicleLog) << Q_FUNC_INFO << "message received - compId:msgId" << message.compid << message.msgid;
+
+        if (!pInfo->commandAckReceived) {
+            qCDebug(VehicleLog) << Q_FUNC_INFO << "message received before ack came back.";
+            int entryIndex = _findMavCommandListEntryIndex(message.compid, MAV_CMD_REQUEST_MESSAGE);
+            if (entryIndex != -1) {
+                _mavCommandList.takeAt(entryIndex);
+            } else {
+                qWarning() << Q_FUNC_INFO << "Removing request message command from list failed - not found in list";
+            }
+        }
+        _removeRequestMessageInfo(message.compid, message.msgid);
+
+        (*resultHandler)(resultHandlerData, MAV_RESULT_ACCEPTED, RequestMessageNoFailure, message);
+    } else {
+        // We use any incoming message as a trigger to check timeouts on message requests
+
+        for (auto& compIdEntry : _requestMessageInfoMap) {
+            for (auto requestMessageInfo : compIdEntry) {    
+                if (requestMessageInfo->messageWaitElapsedTimer.isValid() && requestMessageInfo->messageWaitElapsedTimer.elapsed() > (qgcApp()->runningUnitTests() ? 50 : 1000)) {
+                    auto resultHandler      = requestMessageInfo->resultHandler;
+                    auto resultHandlerData  = requestMessageInfo->resultHandlerData;
+
+                    qCDebug(VehicleLog) << Q_FUNC_INFO << "request message timed out - compId:msgId" << requestMessageInfo->compId << requestMessageInfo->msgId;
+
+                    _removeRequestMessageInfo(requestMessageInfo->compId, requestMessageInfo->msgId);
+
+                    mavlink_message_t message;
+                    (*resultHandler)(resultHandlerData, MAV_RESULT_FAILED, RequestMessageFailureMessageNotReceived, message);
+
+                    return; // We only handle one timeout at a time
+                }
+            }
         }
     }
 }
 
-void Vehicle::requestMessage(RequestMessageResultHandler resultHandler, void* resultHandlerData, int compId, int messageId, float param1, float param2, float param3, float param4, float param5)
+void Vehicle::_requestMessageCmdResultHandler(void* resultHandlerData_, [[maybe_unused]] int compId, const mavlink_command_ack_t& ack, MavCmdResultFailureCode_t failureCode)
 {
-    RequestMessageInfo_t* pInfo = new RequestMessageInfo_t;
+    auto requestMessageInfo = static_cast<RequestMessageInfo_t*>(resultHandlerData_);
+    auto resultHandler      = requestMessageInfo->resultHandler;
+    auto resultHandlerData  = requestMessageInfo->resultHandlerData;
+    auto vehicle            = requestMessageInfo->vehicle;
+    auto message            = requestMessageInfo->message;
 
-    *pInfo                      = { };
-    pInfo->vehicle              = this;
-    pInfo->msgId                = messageId;
-    pInfo->compId               = compId;
-    pInfo->resultHandler        = resultHandler;
-    pInfo->resultHandlerData    = resultHandlerData;
-
-    _waitForMavlinkMessage(_requestMessageWaitForMessageResultHandler, pInfo, pInfo->msgId, 1000);
-
-    Vehicle::MavCmdAckHandlerInfo_t handlerInfo = {};
-    handlerInfo.resultHandler       = _requestMessageCmdResultHandler;
-    handlerInfo.resultHandlerData   = pInfo;
-
-    _sendMavCommandWorker(false,                                    // commandInt
-                          false,                                    // showError
-                          &handlerInfo,
-                          compId,
-                          MAV_CMD_REQUEST_MESSAGE,
-                          MAV_FRAME_GLOBAL,
-                          messageId,
-                          param1, param2, param3, param4, param5, 0);
-}
-
-void Vehicle::_requestMessageCmdResultHandler(void* resultHandlerData, int /*compId*/, const mavlink_command_ack_t& ack, MavCmdResultFailureCode_t failureCode)
-{
-    RequestMessageInfo_t*   pInfo   = static_cast<RequestMessageInfo_t*>(resultHandlerData);
-    Vehicle*                vehicle = pInfo->vehicle;
-
-    pInfo->commandAckReceived = true;
+    requestMessageInfo->commandAckReceived = true;
     if (ack.result != MAV_RESULT_ACCEPTED) {
         mavlink_message_t                           message;
         RequestMessageResultHandlerFailureCode_t    requestMessageFailureCode;
@@ -2810,17 +2840,19 @@ void Vehicle::_requestMessageCmdResultHandler(void* resultHandlerData, int /*com
             break;
         }
 
-        vehicle->_waitForMavlinkMessageClear();
-        (*pInfo->resultHandler)(pInfo->resultHandlerData, static_cast<MAV_RESULT>(ack.result),  requestMessageFailureCode, message);
+        vehicle->_removeRequestMessageInfo(requestMessageInfo->compId, requestMessageInfo->msgId);
+
+        (*resultHandler)(resultHandlerData, static_cast<MAV_RESULT>(ack.result),  requestMessageFailureCode, message);
+
         return;
     }
 
-    if (pInfo->messageReceived) {
-        (*pInfo->resultHandler)(pInfo->resultHandlerData, static_cast<MAV_RESULT>(ack.result),  RequestMessageNoFailure, pInfo->message);
-        delete pInfo;
+    if (requestMessageInfo->messageReceived) {
+        // This should never happen. The command should have already been removed from the list when the message was received
+        qWarning() << Q_FUNC_INFO << "Command result handler should now have been called if message has already been received";
     } else {
-        vehicle->_waitForMavlinkMessageTimeoutActive = true;
-        vehicle->_waitForMavlinkMessageElapsed.restart();
+        // Now that the request has been acked we start the timer to wait for the message
+        requestMessageInfo->messageWaitElapsedTimer.start();
     }
 }
 
@@ -2835,6 +2867,31 @@ void Vehicle::_requestMessageWaitForMessageResultHandler(void* resultHandlerData
         // Result handler will be called when we get the Ack
         pInfo->message = message;
     }
+}
+
+void Vehicle::requestMessage(RequestMessageResultHandler resultHandler, void* resultHandlerData, int compId, int messageId, float param1, float param2, float param3, float param4, float param5)
+{
+    auto requestMessageInfo = new RequestMessageInfo_t;
+    requestMessageInfo->vehicle                 = this;
+    requestMessageInfo->compId                  = compId;
+    requestMessageInfo->msgId                   = messageId;
+    requestMessageInfo->resultHandler           = resultHandler;
+    requestMessageInfo->resultHandlerData       = resultHandlerData;
+
+    _requestMessageInfoMap[compId][messageId] = requestMessageInfo;
+
+    Vehicle::MavCmdAckHandlerInfo_t handlerInfo;
+    handlerInfo.resultHandler       = _requestMessageCmdResultHandler;
+    handlerInfo.resultHandlerData   = requestMessageInfo;
+
+    _sendMavCommandWorker(false,                                    // commandInt
+                          false,                                    // showError
+                          &handlerInfo,
+                          compId,
+                          MAV_CMD_REQUEST_MESSAGE,
+                          MAV_FRAME_GLOBAL,
+                          messageId,
+                          param1, param2, param3, param4, param5, 0);
 }
 
 void Vehicle::setPrearmError(const QString& prearmError)
@@ -3236,36 +3293,37 @@ bool Vehicle::autoDisarm()
     return false;
 }
 
-void Vehicle::_handleADSBVehicle(const mavlink_message_t& message)
+void Vehicle::_handleADSBVehicle(const mavlink_message_t &message)
 {
     mavlink_adsb_vehicle_t adsbVehicleMsg;
-    static const int maxTimeSinceLastSeen = 15;
-
     mavlink_msg_adsb_vehicle_decode(&message, &adsbVehicleMsg);
-    if ((adsbVehicleMsg.flags & ADSB_FLAGS_VALID_COORDS) && adsbVehicleMsg.tslc <= maxTimeSinceLastSeen) {
-        ADSBVehicle::ADSBVehicleInfo_t vehicleInfo;
 
-        vehicleInfo.availableFlags = 0;
+    static constexpr int maxTimeSinceLastSeen = 15;
+
+    if ((adsbVehicleMsg.flags & ADSB_FLAGS_VALID_COORDS) && (adsbVehicleMsg.tslc <= maxTimeSinceLastSeen)) {
+        ADSB::VehicleInfo_t vehicleInfo;
+
+        vehicleInfo.availableFlags = ADSB::AvailableInfoTypes::fromInt(0);
         vehicleInfo.icaoAddress = adsbVehicleMsg.ICAO_address;
 
         vehicleInfo.location.setLatitude(adsbVehicleMsg.lat / 1e7);
         vehicleInfo.location.setLongitude(adsbVehicleMsg.lon / 1e7);
-        vehicleInfo.availableFlags |= ADSBVehicle::LocationAvailable;
+        vehicleInfo.availableFlags |= ADSB::LocationAvailable;
 
         vehicleInfo.callsign = adsbVehicleMsg.callsign;
-        vehicleInfo.availableFlags |= ADSBVehicle::CallsignAvailable;
+        vehicleInfo.availableFlags |= ADSB::CallsignAvailable;
 
         if (adsbVehicleMsg.flags & ADSB_FLAGS_VALID_ALTITUDE) {
-            vehicleInfo.altitude = (double)adsbVehicleMsg.altitude / 1e3;
-            vehicleInfo.availableFlags |= ADSBVehicle::AltitudeAvailable;
+            vehicleInfo.altitude = adsbVehicleMsg.altitude / 1e3;
+            vehicleInfo.availableFlags |= ADSB::AltitudeAvailable;
         }
 
         if (adsbVehicleMsg.flags & ADSB_FLAGS_VALID_HEADING) {
-            vehicleInfo.heading = (double)adsbVehicleMsg.heading / 100.0;
-            vehicleInfo.availableFlags |= ADSBVehicle::HeadingAvailable;
+            vehicleInfo.heading = adsbVehicleMsg.heading / 1e2;
+            vehicleInfo.availableFlags |= ADSB::HeadingAvailable;
         }
 
-        _toolbox->adsbVehicleManager()->adsbVehicleUpdate(vehicleInfo);
+        (void) QMetaObject::invokeMethod(ADSBVehicleManager::instance(), "adsbVehicleUpdate", Qt::AutoConnection, vehicleInfo);
     }
 }
 
@@ -3616,69 +3674,6 @@ void Vehicle::_altitudeAboveTerrainReceived(bool success, QList<double> heights)
     _altitudeAboveTerrTerrainAtCoordinateQuery = nullptr;
 }
 
-void Vehicle::gimbalControlValue(double pitch, double yaw)
-{
-    //qDebug() << "Gimbal:" << pitch << yaw;
-    sendMavCommand(
-                _defaultComponentId,
-                MAV_CMD_DO_MOUNT_CONTROL,
-                false,                               // show errors
-                static_cast<float>(pitch),           // Pitch 0 - 90
-                0,                                   // Roll (not used)
-                static_cast<float>(yaw),             // Yaw -180 - 180
-                0,                                   // Altitude (not used)
-                0,                                   // Latitude (not used)
-                0,                                   // Longitude (not used)
-                MAV_MOUNT_MODE_MAVLINK_TARGETING);   // MAVLink Roll,Pitch,Yaw
-}
-
-void Vehicle::gimbalPitchStep(int direction)
-{
-    if(_haveGimbalData) {
-        //qDebug() << "Pitch:" << _curGimbalPitch << direction << (_curGimbalPitch + direction);
-        double p = static_cast<double>(_curGimbalPitch + direction);
-        gimbalControlValue(p, static_cast<double>(_curGimbalYaw));
-    }
-}
-
-void Vehicle::gimbalYawStep(int direction)
-{
-    if(_haveGimbalData) {
-        //qDebug() << "Yaw:" << _curGimbalYaw << direction << (_curGimbalYaw + direction);
-        double y = static_cast<double>(_curGimbalYaw + direction);
-        gimbalControlValue(static_cast<double>(_curGimbalPitch), y);
-    }
-}
-
-void Vehicle::centerGimbal()
-{
-    if(_haveGimbalData) {
-        gimbalControlValue(0.0, 0.0);
-    }
-}
-
-void Vehicle::_handleGimbalOrientation(const mavlink_message_t& message)
-{
-    mavlink_mount_orientation_t o;
-    mavlink_msg_mount_orientation_decode(&message, &o);
-    if(fabsf(_curGimbalRoll - o.roll) > 0.5f) {
-        _curGimbalRoll = o.roll;
-        emit gimbalRollChanged();
-    }
-    if(fabsf(_curGimbalPitch - o.pitch) > 0.5f) {
-        _curGimbalPitch = o.pitch;
-        emit gimbalPitchChanged();
-    }
-    if(fabsf(_curGimbalYaw - o.yaw) > 0.5f) {
-        _curGimbalYaw = o.yaw;
-        emit gimbalYawChanged();
-    }
-    if(!_haveGimbalData) {
-        _haveGimbalData = true;
-        emit gimbalDataChanged();
-    }
-}
-
 void Vehicle::_handleObstacleDistance(const mavlink_message_t& message)
 {
     mavlink_obstacle_distance_t o;
@@ -3722,6 +3717,7 @@ void Vehicle::_handleFenceStatus(const mavlink_message_t& message)
         lastUpdate = now;
     }
 }
+
 void Vehicle::updateFlightDistance(double distance)
 {
     _flightDistanceFact.setRawValue(_flightDistanceFact.rawValue().toDouble() + distance);
@@ -4059,6 +4055,57 @@ void Vehicle::_errorMessageReceived(QString message)
     if (_isActiveVehicle) {
         qgcApp()->showCriticalVehicleMessage(message);
     }
+}
+
+/*---------------------------------------------------------------------------*/
+/*===========================================================================*/
+/*                                 Signing                                   */
+/*===========================================================================*/
+
+void Vehicle::sendSetupSigning()
+{
+    SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
+    if (!sharedLink) {
+        qCDebug(VehicleLog) << Q_FUNC_INFO << "Primary Link Gone!";
+        return;
+    }
+
+    const mavlink_channel_t channel = static_cast<mavlink_channel_t>(sharedLink->mavlinkChannel());
+
+    mavlink_setup_signing_t setup_signing;
+
+    mavlink_system_t target_system;
+    target_system.sysid = id();
+    target_system.compid = defaultComponentId();
+
+    MAVLinkSigning::createSetupSigning(channel, target_system, setup_signing);
+
+    mavlink_message_t msg;
+    (void) mavlink_msg_setup_signing_encode_chan(_mavlink->getSystemId(), _mavlink->getComponentId(), channel, &msg, &setup_signing);
+
+    // Since we don't get an ack back that the message was received send twice to try to make sure it makes it to the vehicle
+    for (uint8_t i = 0; i < 2; ++i) {
+        sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+    }
+}
+
+/*---------------------------------------------------------------------------*/
+/*===========================================================================*/
+/*                        Image Protocol Manager                             */
+/*===========================================================================*/
+
+void Vehicle::_createImageProtocolManager()
+{
+    _imageProtocolManager = new ImageProtocolManager(this);
+    (void) connect(_imageProtocolManager, &ImageProtocolManager::flowImageIndexChanged, this, &Vehicle::flowImageIndexChanged);
+    (void) connect(_imageProtocolManager, &ImageProtocolManager::imageReady, this, [this](const QImage &image) {
+        qgcApp()->qgcImageProvider()->setImage(image, _id);
+    });
+}
+
+uint32_t Vehicle::flowImageIndex() const
+{
+    return (_imageProtocolManager ? _imageProtocolManager->flowImageIndex() : 0);
 }
 
 /*---------------------------------------------------------------------------*/

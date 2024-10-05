@@ -31,7 +31,7 @@ Development questions can be raised in the [QGroundControl Developer](http://dis
 Information about contributing, including coding styles, testing and licenses can be found in [Code Submissions](contribute/index.md).
 
 :::tip
-We expect all contributors to adhere to the [QGroundControl code of conduct](https://github.com/mavlink/qgroundcontrol/blob/master/CODE_OF_CONDUCT.md).
+We expect all contributors to adhere to the [QGroundControl code of conduct](https://github.com/mavlink/qgroundcontrol/blob/master/.github/CODE_OF_CONDUCT.md).
 This code aims to foster an open and welcoming environment.
 :::
 
@@ -56,7 +56,7 @@ The PX4 Developer Guide contains additional information about the (common) docs/
 
 ## License
 
-_QGroundControl_ source code is [dual-licensed under Apache 2.0 and GPLv3](https://github.com/mavlink/qgroundcontrol/blob/master/COPYING.md).
+_QGroundControl_ source code is [dual-licensed under Apache 2.0 and GPLv3](https://github.com/mavlink/qgroundcontrol/blob/master/.github/COPYING.md).
 For more information see: [Licenses](contribute/licences.md).
 
 ## Governance

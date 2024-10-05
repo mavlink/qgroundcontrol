@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -83,8 +83,11 @@ bool APMFirmwarePlugin::isCapable(const Vehicle* vehicle, FirmwareCapabilities c
     if (vehicle->multiRotor()) {
         available |= TakeoffVehicleCapability;
         available |= ROIModeCapability;
+        available |= ChangeHeadingCapability;
     } else if (vehicle->vtol()) {
         available |= TakeoffVehicleCapability;
+    } else if (vehicle->sub()) {
+        available |= ChangeHeadingCapability;
     }
 
     return (capabilities & available) == capabilities;
@@ -917,6 +920,43 @@ void APMFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
     _guidedModeTakeoff(vehicle, altitudeRel);
 }
 
+void APMFirmwarePlugin::guidedModeChangeHeading(Vehicle* vehicle, const QGeoCoordinate &headingCoord)
+{
+    if (!isCapable(vehicle, FirmwarePlugin::ChangeHeadingCapability)) {
+        qgcApp()->showAppMessage(tr("Vehicle does not support guided rotate"));
+        return;
+    }
+
+    const float degrees = vehicle->coordinate().azimuthTo(headingCoord);
+    const float currentHeading = vehicle->heading()->rawValue().toFloat();
+
+    float diff = degrees - currentHeading;
+    if (diff < -180) {
+        diff += 360;
+    } else if (diff > 180) {
+        diff -= 360;
+    }
+
+    const int8_t direction = (diff > 0) ? 1 : -1;
+    diff = qAbs(diff);
+
+    float maxYawRate = 0.f;
+    static const QString maxYawRateParam = QStringLiteral("ATC_RATE_Y_MAX");
+    if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, maxYawRateParam)) {
+        maxYawRate = vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, maxYawRateParam)->rawValue().toFloat();
+    }
+
+    vehicle->sendMavCommand(
+        vehicle->defaultComponentId(),
+        MAV_CMD_CONDITION_YAW,
+        true,
+        diff,
+        maxYawRate,
+        direction,
+        true
+    );
+}
+
 double APMFirmwarePlugin::minimumTakeoffAltitudeMeters(Vehicle* vehicle)
 {
     double minTakeoffAlt = 0;
@@ -1074,13 +1114,15 @@ void APMFirmwarePlugin::_handleRCChannelsRaw(Vehicle* vehicle, mavlink_message_t
     }
 }
 
-void APMFirmwarePlugin::_sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimationCapabilities)
+void APMFirmwarePlugin::sendGCSMotionReport(Vehicle *vehicle, FollowMe::GCSMotionReport &motionReport, uint8_t estimationCapabilities)
 {
+    Q_CHECK_PTR(vehicle);
+
     if (!vehicle->homePosition().isValid()) {
         static bool sentOnce = false;
         if (!sentOnce) {
             sentOnce = true;
-            qgcApp()->showAppMessage(tr("Follow failed: Home position not set."));
+            qgcApp()->showAppMessage(QStringLiteral("Follow failed: Home position not set."));
         }
         return;
     }
@@ -1089,38 +1131,39 @@ void APMFirmwarePlugin::_sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMoti
         static bool sentOnce = false;
         if (!sentOnce) {
             sentOnce = true;
-            qWarning() << "APMFirmwarePlugin::_sendGCSMotionReport estimateCapabilities" << estimationCapabilities;
-            qgcApp()->showAppMessage(tr("Follow failed: Ground station cannot provide required position information."));
+            qCWarning(APMFirmwarePluginLog) << Q_FUNC_INFO << "estimateCapabilities" << estimationCapabilities;
+            qgcApp()->showAppMessage(QStringLiteral("Follow failed: Ground station cannot provide required position information."));
         }
         return;
     }
 
     SharedLinkInterfacePtr sharedLink = vehicle->vehicleLinkManager()->primaryLink().lock();
-    if (sharedLink) {
-        MAVLinkProtocol*                mavlinkProtocol = qgcApp()->toolbox()->mavlinkProtocol();
-        mavlink_global_position_int_t   globalPositionInt;
-
-        memset(&globalPositionInt, 0, sizeof(globalPositionInt));
-
-        // Important note: QGC only supports sending the constant GCS home position altitude for follow me.
-        globalPositionInt.time_boot_ms =    static_cast<uint32_t>(qgcApp()->msecsSinceBoot());
-        globalPositionInt.lat =             motionReport.lat_int;
-        globalPositionInt.lon =             motionReport.lon_int;
-        globalPositionInt.alt =             static_cast<int32_t>(vehicle->homePosition().altitude() * 1000);    // mm
-        globalPositionInt.relative_alt =    static_cast<int32_t>(0);                                            // mm
-        globalPositionInt.vx =              static_cast<int16_t>(motionReport.vxMetersPerSec * 100);            // cm/sec
-        globalPositionInt.vy =              static_cast<int16_t>(motionReport.vyMetersPerSec * 100);            // cm/sec
-        globalPositionInt.vy =              static_cast<int16_t>(motionReport.vzMetersPerSec * 100);            // cm/sec
-        globalPositionInt.hdg =             static_cast<uint16_t>(motionReport.headingDegrees * 100.0);         // centi-degrees
-
-        mavlink_message_t message;
-        mavlink_msg_global_position_int_encode_chan(static_cast<uint8_t>(mavlinkProtocol->getSystemId()),
-                                                    static_cast<uint8_t>(mavlinkProtocol->getComponentId()),
-                                                    sharedLink->mavlinkChannel(),
-                                                    &message,
-                                                    &globalPositionInt);
-        vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
+    if (!sharedLink) {
+        return;
     }
+
+    const MAVLinkProtocol* const mavlinkProtocol = qgcApp()->toolbox()->mavlinkProtocol();
+    const mavlink_global_position_int_t globalPositionInt = {
+        static_cast<uint32_t>(qgcApp()->msecsSinceBoot()),                  /*< [ms] Timestamp (time since system boot).*/
+        motionReport.lat_int,                                               /*< [degE7] Latitude, expressed*/
+        motionReport.lon_int,                                               /*< [degE7] Longitude, expressed*/
+        static_cast<int32_t>(vehicle->homePosition().altitude() * 1000),    /*< [mm] Altitude (MSL).*/
+        static_cast<int32_t>(0),                                            /*< [mm] Altitude above home*/
+        static_cast<int16_t>(motionReport.vxMetersPerSec * 100),            /*< [cm/s] Ground X Speed (Latitude, positive north)*/
+        static_cast<int16_t>(motionReport.vyMetersPerSec * 100),            /*< [cm/s] Ground Y Speed (Longitude, positive east)*/
+        static_cast<int16_t>(motionReport.vzMetersPerSec * 100),            /*< [cm/s] Ground Z Speed (Altitude, positive down)*/
+        static_cast<uint16_t>(motionReport.headingDegrees * 100.0)          /*< [cdeg] Vehicle heading (yaw angle)*/
+    };
+
+    mavlink_message_t message;
+    (void) mavlink_msg_global_position_int_encode_chan(
+        static_cast<uint8_t>(mavlinkProtocol->getSystemId()),
+        static_cast<uint8_t>(mavlinkProtocol->getComponentId()),
+        sharedLink->mavlinkChannel(),
+        &message,
+        &globalPositionInt
+    );
+    vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
 }
 
 uint8_t APMFirmwarePlugin::_reencodeMavlinkChannel()

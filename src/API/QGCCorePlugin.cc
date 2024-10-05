@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -16,10 +16,12 @@
 #include "AppMessages.h"
 #include "QmlObjectListModel.h"
 #include "JoystickManager.h"
-#if defined(QGC_GST_STREAMING)
+#ifdef QGC_GST_STREAMING
 #include "GStreamer.h"
 #endif
-#include "VideoManager.h"
+#ifdef QGC_QT_STREAMING
+#include "QtMultimediaReceiver.h"
+#endif
 #include "VideoReceiver.h"
 #include "HorizontalFactValueGrid.h"
 #include "InstrumentValueData.h"
@@ -323,38 +325,34 @@ QmlObjectListModel* QGCCorePlugin::customMapItems()
     return &_p->_emptyCustomMapItems;
 }
 
-VideoManager* QGCCorePlugin::createVideoManager(QGCApplication *app, QGCToolbox *toolbox)
-{
-    return new VideoManager(app, toolbox);
-}
-
 VideoReceiver* QGCCorePlugin::createVideoReceiver(QObject* parent)
 {
-#if defined(QGC_GST_STREAMING)
+#ifdef QGC_GST_STREAMING
     return GStreamer::createVideoReceiver(parent);
+#elif defined(QGC_QT_STREAMING)
+    return QtMultimediaReceiver::createVideoReceiver(parent);
 #else
-    Q_UNUSED(parent)
     return nullptr;
 #endif
 }
 
 void* QGCCorePlugin::createVideoSink(QObject* parent, QQuickItem* widget)
 {
-#if defined(QGC_GST_STREAMING)
+#ifdef QGC_GST_STREAMING
     return GStreamer::createVideoSink(parent, widget);
+#elif defined(QGC_QT_STREAMING)
+    return QtMultimediaReceiver::createVideoSink(parent, widget);
 #else
-    Q_UNUSED(parent)
-    Q_UNUSED(widget)
     return nullptr;
 #endif
 }
 
 void QGCCorePlugin::releaseVideoSink(void* sink)
 {
-#if defined(QGC_GST_STREAMING)
+#ifdef QGC_GST_STREAMING
     GStreamer::releaseVideoSink(sink);
-#else
-    Q_UNUSED(sink)
+#elif defined(QGC_QT_STREAMING)
+    QtMultimediaReceiver::releaseVideoSink(sink);
 #endif
 }
 
@@ -378,7 +376,7 @@ const QVariantList& QGCCorePlugin::toolBarIndicators(void)
     //-- Default list of indicators for all vehicles.
     if(_toolBarIndicatorList.size() == 0) {
         _toolBarIndicatorList = QVariantList({
-                                                 QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/GPSRTKIndicator.qml")),
+                                                 QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RTKGPSIndicator.qml")),
                                              });
     }
     return _toolBarIndicatorList;

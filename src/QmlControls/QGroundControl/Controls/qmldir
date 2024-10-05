@@ -26,6 +26,7 @@ FlightModeDropdown                      1.0 FlightModeDropdown.qml
 FlightModeMenu                          1.0 FlightModeMenu.qml
 GeoFenceEditor                          1.0 GeoFenceEditor.qml
 GeoFenceMapVisuals                      1.0 GeoFenceMapVisuals.qml
+GPSIndicator                            1.0 GPSIndicator.qml
 GPSIndicatorPage                        1.0 GPSIndicatorPage.qml
 HackFileDialog                          1.0 HackFileDialog.qml
 HeightIndicator                         1.0 HeightIndicator.qml
