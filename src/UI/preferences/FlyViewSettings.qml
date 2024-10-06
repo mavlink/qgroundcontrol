@@ -184,7 +184,7 @@ SettingsPage {
 
         FactCheckBoxSlider {
             Layout.fillWidth:   true
-            text:               qsTr("Left-Handed Mode")
+            text:               qsTr("Left-Handed Mode (swap sticks)")
             visible:            _virtualJoystickLeftHandedMode.visible
             enabled:            _virtualJoystick.rawValue
             fact:               _virtualJoystickLeftHandedMode
