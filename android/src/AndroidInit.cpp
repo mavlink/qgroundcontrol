@@ -16,7 +16,7 @@ static jobject _class_loader = nullptr;
 #ifdef QGC_GST_STREAMING
 extern "C"
 {
-    void gst_amc_jni_set_java_vm(JavaVM *java_vm);
+    extern void gst_amc_jni_set_java_vm(JavaVM *java_vm);
 
     jobject gst_android_get_application_class_loader(void)
     {
