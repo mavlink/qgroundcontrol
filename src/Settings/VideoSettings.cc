@@ -14,6 +14,10 @@
 #include <QtQml/QQmlEngine>
 #include <QtCore/QVariantList>
 
+#ifdef QGC_GST_STREAMING
+#include "GStreamer.h"
+#endif
+
 #ifndef QGC_DISABLE_UVC
 #include <QtMultimedia/QMediaDevices>
 #include <QtMultimedia/QCameraDevice>
@@ -56,27 +60,29 @@ DECLARE_SETTINGGROUP(Video, "Video")
 
     _nameToMetaDataMap[videoSourceName]->setEnumInfo(videoSourceCookedList, videoSourceList);
 
+#ifdef QGC_GST_STREAMING
     const QVariantList removeForceVideoDecodeList{
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
-        VideoDecoderOptions::ForceVideoDecoderDirectX3D,
-        VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
+        GStreamer::VideoDecoderOptions::ForceVideoDecoderDirectX3D,
+        GStreamer::VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
 #elif defined(Q_OS_WIN)
-        VideoDecoderOptions::ForceVideoDecoderVAAPI,
-        VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
+        GStreamer::VideoDecoderOptions::ForceVideoDecoderVAAPI,
+        GStreamer::VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
 #elif defined(Q_OS_MAC)
-        VideoDecoderOptions::ForceVideoDecoderDirectX3D,
-        VideoDecoderOptions::ForceVideoDecoderVAAPI,
+        GStreamer::VideoDecoderOptions::ForceVideoDecoderDirectX3D,
+        GStreamer::VideoDecoderOptions::ForceVideoDecoderVAAPI,
 #elif defined(Q_OS_ANDROID)
-        VideoDecoderOptions::ForceVideoDecoderDirectX3D,
-        VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
-        VideoDecoderOptions::ForceVideoDecoderVAAPI,
-        VideoDecoderOptions::ForceVideoDecoderNVIDIA,
+        GStreamer::VideoDecoderOptions::ForceVideoDecoderDirectX3D,
+        GStreamer::VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
+        GStreamer::VideoDecoderOptions::ForceVideoDecoderVAAPI,
+        GStreamer::VideoDecoderOptions::ForceVideoDecoderNVIDIA,
 #endif
     };
 
-    for(const auto& value : removeForceVideoDecodeList) {
+    for (const auto &value : removeForceVideoDecodeList) {
         _nameToMetaDataMap[forceVideoDecoderName]->removeEnumInfo(value);
     }
+#endif
 
     // Set default value for videoSource
     _setDefaults();

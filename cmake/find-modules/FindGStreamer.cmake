@@ -1,12 +1,16 @@
 if(ANDROID OR IOS)
-    set(QGC_GST_STATIC_BUILD ON CACHE BOOL "Build GST Statically")
-
     if(DEFINED ENV{GST_VERSION})
         set(QGC_GST_TARGET_VERSION $ENV{GST_VERSION} CACHE STRING "Environment Provided GStreamer Version")
     else()
         set(QGC_GST_TARGET_VERSION 1.22.12 CACHE STRING "Requested GStreamer Version")
     endif()
 endif()
+
+if(ANDROID OR IOS)
+    set(QGC_GST_STATIC_BUILD ON CACHE BOOL "Build GST Statically")
+endif()
+
+find_package(PkgConfig QUIET)
 
 if(QGC_GST_STATIC_BUILD)
     list(APPEND PKG_CONFIG_ARGN --static)
@@ -40,11 +44,15 @@ if(WIN32)
     )
 elseif(MACOS)
     list(APPEND CMAKE_FRAMEWORK_PATH "/Library/Frameworks")
-    set(GSTREAMER_PREFIX "/Library/Frameworks/GStreamer.framework")
-    set(ENV{PKG_CONFIG_PATH} "${GSTREAMER_PREFIX}/Versions/Current/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}")
+    set(GSTREAMER_PREFIX "/Library/Frameworks/GStreamer.framework/Versions/1.0")
+    find_program(PKG_CONFIG_PROGRAM pkg-config PATHS ${GSTREAMER_PREFIX}/bin)
+    if(PKG_CONFIG_PROGRAM)
+        set(PKG_CONFIG_EXECUTABLE ${PKG_CONFIG_PROGRAM})
+    endif()
+    set(ENV{PKG_CONFIG_PATH} "${GSTREAMER_PREFIX}/lib/pkgconfig:${GSTREAMER_PREFIX}/lib/gstreamer-1.0/pkgconfig:$ENV{PKG_CONFIG_PATH}")
 elseif(LINUX)
     set(GSTREAMER_PREFIX "/usr")
-    set(ENV{PKG_CONFIG_PATH} "${GSTREAMER_PREFIX}/lib/pkgconfig:${GSTREAMER_PREFIX}/lib/x86_64-linux-gnu/pkgconfig:$ENV{PKG_CONFIG_PATH}")
+    set(ENV{PKG_CONFIG_PATH} "${GSTREAMER_PREFIX}/lib/x86_64-linux-gnu/pkgconfig:$ENV{PKG_CONFIG_PATH}")
 elseif(IOS)
     list(APPEND CMAKE_FRAMEWORK_PATH "~/Library/Developer/GStreamer/iPhone.sdk")
     if(DEFINED ENV{GSTREAMER_PREFIX_IOS} AND EXISTS $ENV{GSTREAMER_PREFIX_IOS})
@@ -60,7 +68,6 @@ elseif(IOS)
     endif()
     set(GSTREAMER_PREFIX ${GSTREAMER_PREFIX_IOS})
 elseif(ANDROID)
-    set(GSTREAMER_PREFIX_ANDROID)
     if(DEFINED ENV{GSTREAMER_PREFIX_ANDROID} AND EXISTS $ENV{GSTREAMER_PREFIX_ANDROID})
         set(GSTREAMER_PREFIX_ANDROID $ENV{GSTREAMER_PREFIX_ANDROID})
     else()
@@ -79,6 +86,7 @@ elseif(ANDROID)
         endif()
         set(GSTREAMER_PREFIX_ANDROID ${GSTREAMER_INSTALL_DIR})
     endif()
+
     if(${CMAKE_ANDROID_ARCH_ABI} STREQUAL armeabi-v7a)
         set(GSTREAMER_PREFIX ${GSTREAMER_PREFIX_ANDROID}/armv7)
     elseif(${CMAKE_ANDROID_ARCH_ABI} STREQUAL arm64-v8a)
@@ -88,24 +96,29 @@ elseif(ANDROID)
     elseif(${CMAKE_ANDROID_ARCH_ABI} STREQUAL x86_64)
         set(GSTREAMER_PREFIX ${GSTREAMER_PREFIX_ANDROID}/x86_64)
     endif()
+
     set(ENV{PKG_CONFIG_PATH} "")
-    set(ENV{PKG_CONFIG_LIBDIR} "${GSTREAMER_PREFIX}/lib/pkgconfig:${GSTREAMER_PREFIX}/lib/gstreamer-1.0/pkgconfig")
+    if(CMAKE_HOST_WIN32)
+        find_program(PKG_CONFIG_PROGRAM pkg-config PATHS ${GSTREAMER_PREFIX}/share/gst-android/ndk-build/tools/windows)
+        if(PKG_CONFIG_PROGRAM)
+            set(PKG_CONFIG_EXECUTABLE ${PKG_CONFIG_PROGRAM})
+            set(ENV{PKG_CONFIG_LIBDIR} "${GSTREAMER_PREFIX}/lib/pkgconfig;${GSTREAMER_PREFIX}/lib/gstreamer-1.0/pkgconfig")
+        endif()
+    elseif(CMAKE_HOST_LINUX)
+        if(PkgConfig_FOUND)
+            set(ENV{PKG_CONFIG_LIBDIR} "${GSTREAMER_PREFIX}/lib/pkgconfig:${GSTREAMER_PREFIX}/lib/gstreamer-1.0/pkgconfig")
+        endif()
+    endif()
+
     list(APPEND PKG_CONFIG_ARGN
         --dont-define-prefix
         --define-variable=prefix=${GSTREAMER_PREFIX}
         --define-variable=libdir=${GSTREAMER_PREFIX}/lib
         --define-variable=includedir=${GSTREAMER_PREFIX}/include
     )
-
-    if(CMAKE_HOST_WIN32)
-        find_program(PKG_CONFIG_PROGRAM pkg-config PATHS ${GSTREAMER_PREFIX}/share/gst-android/ndk-build/tools/windows)
-        if(PKG_CONFIG_PROGRAM)
-            set(PKG_CONFIG_EXECUTABLE ${PKG_CONFIG_PROGRAM})
-        endif()
-    endif()
 endif()
-cmake_print_variables(GSTREAMER_PREFIX)
 list(PREPEND CMAKE_PREFIX_PATH ${GSTREAMER_PREFIX})
+cmake_print_variables(GSTREAMER_PREFIX)
 
 ################################################################################
 
@@ -113,11 +126,9 @@ include(CMakeFindDependencyMacro)
 find_dependency(GObject)
 
 set(GStreamer_VERSION ${QGC_GST_TARGET_VERSION})
-find_package(PkgConfig QUIET)
 if(PkgConfig_FOUND)
     message(STATUS "PKG_CONFIG_PATH $ENV{PKG_CONFIG_PATH}")
     message(STATUS "PKG_CONFIG_LIBDIR $ENV{PKG_CONFIG_LIBDIR}")
-    # message(STATUS "PKG_CONFIG_SYSROOT_DIR $ENV{PKG_CONFIG_SYSROOT_DIR}")
     cmake_print_variables(PKG_CONFIG_EXECUTABLE PKG_CONFIG_ARGN)
     pkg_check_modules(GStreamer gstreamer-1.0)
 else()
@@ -151,31 +162,63 @@ else()
 endif()
 cmake_print_variables(GStreamer_VERSION)
 
+# Use Latest Revisions for each minor version: 1.16.3, 1.18.6, 1.20.7, 1.22.12, 1.24.8
+string(REPLACE "." ";" GST_VERSION_LIST ${GStreamer_VERSION})
+list(GET GST_VERSION_LIST 0 GST_VERSION_MAJOR)
+list(GET GST_VERSION_LIST 1 GST_VERSION_MINOR)
+list(GET GST_VERSION_LIST 2 GST_VERSION_PATCH)
+cmake_print_variables(GST_VERSION_MAJOR GST_VERSION_MINOR GST_VERSION_PATCH)
+
+if(GST_VERSION_MINOR EQUAL 16)
+    set(GST_VERSION_PATCH 3)
+elseif(GST_VERSION_MINOR EQUAL 18)
+    set(GST_VERSION_PATCH 6)
+elseif(GST_VERSION_MINOR EQUAL 20)
+    set(GST_VERSION_PATCH 7)
+elseif(GST_VERSION_MINOR EQUAL 22)
+    set(GST_VERSION_PATCH 12)
+elseif(GST_VERSION_MINOR EQUAL 24)
+    set(GST_VERSION_PATCH 8)
+endif()
+
+set(GST_PLUGINS_VERSION ${GST_VERSION_MAJOR}.${GST_VERSION_MINOR}.${GST_VERSION_PATCH})
+cmake_print_variables(GST_PLUGINS_VERSION)
+
 ################################################################################
 
-function(find_gstreamer_component component prefix header library)
-    if(NOT TARGET GStreamer::${component})
+function(find_gstreamer_component component)
+    cmake_parse_arguments(PARSE_ARGV 1 ARGS "" "PC_NAME;HEADER;LIBRARY" "DEPENDENCIES")
+
+    set(pkgconfig_name ${ARGS_PC_NAME})
+    set(header ${ARGS_HEADER})
+    set(library ${ARGS_LIBRARY})
+
+    set(target GStreamer::${component})
+
+    if(NOT TARGET ${target})
         string(TOUPPER ${component} upper)
-        if(PkgConfig_FOUND)
-            pkg_check_modules(PC_GSTREAMER_${upper} ${prefix} IMPORTED_TARGET)
-        endif()
+        pkg_check_modules(PC_GSTREAMER_${upper} IMPORTED_TARGET ${pkgconfig_name})
         if(TARGET PkgConfig::PC_GSTREAMER_${upper})
             add_library(GStreamer::${component} INTERFACE IMPORTED)
             target_link_libraries(GStreamer::${component} INTERFACE PkgConfig::PC_GSTREAMER_${upper})
             set_target_properties(GStreamer::${component} PROPERTIES VERSION ${PC_GSTREAMER_${upper}_VERSION})
         else()
+            foreach(dependency IN LISTS ARGS_DEPENDENCIES)
+                if (NOT TARGET ${dependency})
+                    set(GStreamer_${component}_FOUND FALSE PARENT_SCOPE)
+                    return()
+                endif()
+            endforeach()
+
             find_path(GStreamer_${component}_INCLUDE_DIR
                 NAMES ${header}
                 PATH_SUFFIXES gstreamer-1.0
-                PATHS ${GSTREAMER_PREFIX}/include
             )
             find_library(GStreamer_${component}_LIBRARY
                 NAMES ${library}
-                PATHS ${GSTREAMER_PREFIX}/lib
             )
             if(${component} STREQUAL "Gl")
                 # search the gstglconfig.h include dir under the same root where the library is found
-                # TODO: replace with cmake_path
                 get_filename_component(gstglLibDir "${GStreamer_Gl_LIBRARY}" PATH)
                 find_path(GStreamer_GlConfig_INCLUDE_DIR
                     NAMES gst/gl/gstglconfig.h
@@ -191,15 +234,18 @@ function(find_gstreamer_component component prefix header library)
                 add_library(GStreamer::${component} INTERFACE IMPORTED)
                 target_include_directories(GStreamer::${component} INTERFACE ${GStreamer_${component}_INCLUDE_DIR})
                 target_link_libraries(GStreamer::${component} INTERFACE ${GStreamer_${component}_LIBRARY})
+                if(ARGS_DEPENDENCIES)
+                    target_link_libraries(GStreamer::${component} INTERFACE ${ARGS_DEPENDENCIES})
+                endif()
                 set_target_properties(GStreamer::${component} PROPERTIES VERSION ${GStreamer_VERSION})
             endif()
             mark_as_advanced(GStreamer_${component}_INCLUDE_DIR GStreamer_${component}_LIBRARY)
         endif()
     endif()
 
-    if(TARGET GStreamer::${component})
-        # TODO; define_property
+    if(TARGET ${target})
         set(GStreamer_${component}_FOUND TRUE PARENT_SCOPE)
+        # TODO; define_property
         get_target_property(Component_VERSION GStreamer::${component} VERSION)
         set(GStreamer_${component}_VERSION ${Component_VERSION} PARENT_SCOPE)
     endif()
@@ -207,186 +253,223 @@ endfunction()
 
 ################################################################################
 
-# GStreamer required dependencies
-find_gstreamer_component(Core gstreamer-1.0 gst/gst.h gstreamer-1.0)
-find_gstreamer_component(Base gstreamer-base-1.0 gst/gst.h gstbase-1.0)
-find_gstreamer_component(Video gstreamer-video-1.0 gst/video/video.h gstvideo-1.0)
-find_gstreamer_component(Gl gstreamer-gl-1.0 gst/gl/gl.h gstgl-1.0)
-
-if(TARGET GStreamer::Core)
-    target_link_libraries(GStreamer::Core INTERFACE GObject::GObject)
-endif()
-if(TARGET GStreamer::Base AND TARGET GStreamer::Core)
-    target_link_libraries(GStreamer::Base INTERFACE GStreamer::Core)
-endif()
-if(TARGET GStreamer::Video AND TARGET GStreamer::Base)
-    target_link_libraries(GStreamer::Video INTERFACE GStreamer::Base)
-endif()
-if(TARGET GStreamer::Gl AND TARGET GStreamer::Video)
-    target_link_libraries(GStreamer::Gl INTERFACE GStreamer::Video)
-endif()
+find_gstreamer_component(Core
+    PC_NAME gstreamer-1.0
+    HEADER gst/gst.h
+    LIBRARY gstreamer-1.0
+    DEPENDENCIES GLIB2::GLIB2 GObject::GObject)
+find_gstreamer_component(Base
+    PC_NAME gstreamer-base-1.0
+    HEADER gst/gst.h
+    LIBRARY gstbase-1.0
+    DEPENDENCIES GStreamer::Core)
+find_gstreamer_component(Video
+    PC_NAME gstreamer-video-1.0
+    HEADER gst/video/video.h
+    LIBRARY gstvideo-1.0
+    DEPENDENCIES GStreamer::Core GStreamer::Base)
+find_gstreamer_component(Gl
+    PC_NAME gstreamer-gl-1.0
+    HEADER gst/gl/gl.h
+    LIBRARY gstgl-1.0
+    DEPENDENCIES GStreamer::Core GStreamer::Base GStreamer::Video)
 
 ################################################################################
 
-# GStreamer optional components
-foreach(component ${GStreamer_FIND_COMPONENTS})
-    if (${component} STREQUAL "Allocators")
-        find_gstreamer_component(Allocators gstreamer-allocators-1.0 gst/allocators/allocators.h gstallocators-1.0)
-        if(TARGET GStreamer::Allocators AND TARGET GStreamer::Core)
-            target_link_libraries(GStreamer::Allocators INTERFACE GStreamer::Core)
-        endif()
-    elseif (${component} STREQUAL "App")
-        find_gstreamer_component(App gstreamer-app-1.0 gst/app/gstappsink.h gstapp-1.0)
-        if(TARGET GStreamer::App AND TARGET GStreamer::Base)
-            target_link_libraries(GStreamer::App INTERFACE GStreamer::Base)
-        endif()
-    elseif (${component} STREQUAL "Audio")
-        find_gstreamer_component(Audio gstreamer-audio-1.0 gst/audio/audio.h gstaudio-1.0)
-        if(TARGET GStreamer::Audio AND TARGET GStreamer::Base)
-            target_link_libraries(GStreamer::Audio INTERFACE GStreamer::Base)
-        endif()
-    elseif (${component} STREQUAL "Controller")
-        find_gstreamer_component(Controller gstreamer-controller-1.0 gst/controller/controller.h gstcontroller-1.0)
-        if(TARGET GStreamer::Controller AND TARGET GStreamer::Core)
-            target_link_libraries(GStreamer::Controller INTERFACE GStreamer::Core)
-        endif()
-    elseif (${component} STREQUAL "Codecparsers")
-        find_gstreamer_component(Codecparsers gstreamer-codecparsers-1.0 gst/codecparsers/codecparsers-prelude.h gstcodecparsers-1.0)
-        if(TARGET GStreamer::Codecparsers AND TARGET GStreamer::Base)
-            target_link_libraries(GStreamer::Codecparsers INTERFACE GStreamer::Base)
-        endif()
-    elseif (${component} STREQUAL "Fft")
-        find_gstreamer_component(Fft gstreamer-fft-1.0 gst/fft/fft.h gstfft-1.0)
-        if(TARGET GStreamer::Fft AND TARGET GStreamer::Core)
-            target_link_libraries(GStreamer::Fft INTERFACE GStreamer::Core)
-        endif()
-    elseif (${component} STREQUAL "Mpegts")
-        find_gstreamer_component(Mpegts gstreamer-mpegts-1.0 gst/mpegts/mpegts.h gstmpegts-1.0)
-        if(TARGET GStreamer::Mpegts AND TARGET GStreamer::Base)
-            target_link_libraries(GStreamer::Mpegts INTERFACE GStreamer::Base)
-        endif()
-    elseif (${component} STREQUAL "Net")
-        find_gstreamer_component(Net gstreamer-net-1.0 gst/net/net.h gstnet-1.0)
-        if(TARGET GStreamer::Net AND TARGET GStreamer::Base)
-            target_link_libraries(GStreamer::Net INTERFACE GStreamer::Base)
-        endif()
-    elseif (${component} STREQUAL "Pbutils")
-        find_gstreamer_component(Pbutils gstreamer-pbutils-1.0 gst/pbutils/pbutils.h gstpbutils-1.0)
-        if(TARGET GStreamer::Pbutils AND TARGET GStreamer::Audio AND TARGET GStreamer::Video)
-            target_link_libraries(GStreamer::Pbutils INTERFACE GStreamer::Audio GStreamer::Video)
-        endif()
-    elseif (${component} STREQUAL "Photography")
-        find_gstreamer_component(Photography gstreamer-photography-1.0 gst/interfaces/photography.h gstphotography-1.0)
-        if(TARGET GStreamer::Photography AND TARGET GStreamer::Core)
-            target_link_libraries(GStreamer::Photography INTERFACE GStreamer::Core)
-        endif()
-    elseif (${component} STREQUAL "Riff")
-        find_gstreamer_component(Riff gstreamer-riff-1.0 gst/riff/riff.h gstriff-1.0)
-        if(TARGET GStreamer::Riff AND TARGET GStreamer::Base)
-            target_link_libraries(GStreamer::Riff INTERFACE GStreamer::Base)
-        endif()
-    elseif (${component} STREQUAL "Rtp")
-        find_gstreamer_component(Rtp gstreamer-rtp-1.0 gst/rtp/rtp.h gstrtp-1.0)
-        if(TARGET GStreamer::Rtp AND TARGET GStreamer::Base)
-            target_link_libraries(GStreamer::Rtp INTERFACE GStreamer::Base)
-        endif()
-    elseif (${component} STREQUAL "Rtsp")
-        find_gstreamer_component(Rtsp gstreamer-rtsp-1.0 gst/rtsp/rtsp.h gstrtsp-1.0)
-        if(TARGET GStreamer::Rtsp AND TARGET GStreamer::Rtp)
-            target_link_libraries(GStreamer::Rtsp INTERFACE GStreamer::Rtp)
-        endif()
-    elseif (${component} STREQUAL "Sdp")
-        find_gstreamer_component(Sdp gstreamer-sdp-1.0 gst/sdp/sdp.h gstsdp-1.0)
-        if(TARGET GStreamer::Sdp AND TARGET GStreamer::Rtp)
-            target_link_libraries(GStreamer::Sdp INTERFACE GStreamer::Rtp)
-        endif()
-    elseif (${component} STREQUAL "Tag")
-        find_gstreamer_component(Tag gstreamer-tag-1.0 gst/tag/tag.h gsttag-1.0)
-        if(TARGET GStreamer::Tag AND TARGET GStreamer::Base)
-            target_link_libraries(GStreamer::Tag INTERFACE GStreamer::Base)
-        endif()
-    elseif (${component} STREQUAL "Va")
-        find_gstreamer_component(Va gstreamer-va-1.0 gst/va/gstva.h gstva-1.0)
-        if(TARGET GStreamer::Va AND TARGET GStreamer::Base AND TARGET GStreamer::Allocators)
-            target_link_libraries(GStreamer::Va INTERFACE GStreamer::Base GStreamer::Allocators)
-        endif()
-    elseif (${component} STREQUAL "Prototypes")
-        find_gstreamer_component(Prototypes gstreamer-gl-prototypes-1.0 gst/gl/glprototypes/all_functions.h gstglproto-1.0)
-        if(TARGET GStreamer::Prototypes AND TARGET GStreamer::Gl)
-            target_link_libraries(GStreamer::Prototypes INTERFACE GStreamer::Gl)
-        endif()
-    elseif (${component} STREQUAL "X11")
-        find_gstreamer_component(X11 gstreamer-gl-x11-1.0 gst/gl/x11/x11.h x11-xcb)
-        if(TARGET GStreamer::X11)
-            if(GStreamer::Gl)
-                target_link_libraries(GStreamer::X11 INTERFACE GStreamer::Gl)
-            endif()
-            find_package(X11)
-            if(X11_FOUND)
-                target_link_libraries(GStreamer::X11 INTERFACE X11::X11)
-            endif()
-            find_package(XCB COMPONENTS XCB GLX)
-            if(XCB_FOUND)
-                target_link_libraries(GStreamer::X11 INTERFACE XCB::XCB XCB::GLX)
-            endif()
-            find_package(X11_XCB)
-            if(X11_XCB_FOUND)
-                target_link_libraries(GStreamer::X11 INTERFACE X11::XCB)
-            endif()
-        endif()
-    elseif (${component} STREQUAL "EGL")
-        find_gstreamer_component(EGL gstreamer-gl-egl-1.0 gst/gl/egl/egl.h egl)
-        if(TARGET GStreamer::EGL)
-            if(TARGET GStreamer::Gl)
-                target_link_libraries(GStreamer::EGL INTERFACE GStreamer::Gl)
-            endif()
-            find_package(EGL)
-            if(EGL_FOUND)
-                target_link_libraries(GStreamer::EGL INTERFACE EGL::EGL)
-            endif()
-        endif()
-    elseif (${component} STREQUAL "Wayland")
-        find_gstreamer_component(Wayland gstreamer-gl-wayland-1.0 gst/gl/wayland/wayland.h wayland-egl)
-        if(TARGET GStreamer::Wayland)
-            if(TARGET GStreamer::Gl)
-                target_link_libraries(GStreamer::Wayland INTERFACE GStreamer::Gl)
-            endif()
-            find_package(Wayland COMPONENTS Client Cursor Egl)
-            if(Wayland_FOUND)
-                target_link_libraries(GStreamer::Wayland INTERFACE Wayland::Client Wayland::Cursor Wayland::Egl)
-            endif()
-            find_package(WaylandProtocols)
-            if(WaylandProtocols_FOUND)
-                # WaylandProtocols_DATADIR
-            endif()
-            find_package(WaylandScanner)
-            if(WaylandScanner_FOUND)
-                # target_link_libraries(GStreamer::Wayland INTERFACE Wayland::Scanner)
-            endif()
-            find_package(Qt6 COMPONENTS WaylandClient)
-            if(Qt6WaylandClient_FOUND)
-                target_link_libraries(GStreamer::Wayland INTERFACE Qt6::WaylandClient)
-            endif()
-        endif()
-    elseif (${component} STREQUAL "PluginsBase")
-        find_gstreamer_component(PluginsBase gstreamer-plugins-base-1.0 gst/gst.h )
-        if(TARGET GStreamer::PluginsBase AND TARGET GStreamer::Core)
-            target_link_libraries(GStreamer::PluginsBase INTERFACE GStreamer::Core)
-        endif()
-    elseif (${component} STREQUAL "PluginsGood")
-        find_gstreamer_component(PluginsGood gstreamer-plugins-good-1.0 gst/gst.h )
-        if(TARGET GStreamer::PluginsGood AND TARGET GStreamer::Base)
-            target_link_libraries(GStreamer::PluginsGood INTERFACE GStreamer::Base)
-        endif()
-    elseif (${component} STREQUAL "PluginsBad")
-        find_gstreamer_component(PluginsBad gstreamer-plugins-bad-1.0 gst/gst.h )
-        if(TARGET GStreamer::PluginsBad AND TARGET GStreamer::PluginsGood)
-            target_link_libraries(GStreamer::PluginsBad INTERFACE GStreamer::PluginsGood)
-        endif()
-    else()
-        message(WARNING "FindGStreamer.cmake: Invalid Gstreamer component \"${component}\" requested")
-    endif()
-endforeach()
+if(Allocators IN_LIST GStreamer_FIND_COMPONENTS)
+    find_gstreamer_component(Allocators
+        PC_NAME gstreamer-allocators-1.0
+        HEADER gst/allocators/allocators.h
+        LIBRARY gstallocators-1.0
+        DEPENDENCIES GStreamer::Core)
+endif()
+
+if(App IN_LIST GStreamer_FIND_COMPONENTS)
+    find_gstreamer_component(App
+        PC_NAME gstreamer-app-1.0
+        HEADER gst/app/gstappsink.h
+        LIBRARY gstapp-1.0
+        DEPENDENCIES GStreamer::Core GStreamer::Base)
+endif()
+
+if(Audio IN_LIST GStreamer_FIND_COMPONENTS)
+    find_gstreamer_component(Audio
+        PC_NAME gstreamer-audio-1.0
+        HEADER gst/audio/audio.h
+        LIBRARY gstaudio-1.0
+        DEPENDENCIES GStreamer::Core GStreamer::Base)
+endif()
+
+if(Codecparsers IN_LIST GStreamer_FIND_COMPONENTS)
+    find_gstreamer_component(Codecparsers
+        PC_NAME gstreamer-codecparsers-1.0
+        HEADER gst/codecparsers/codecparsers-prelude.h
+        LIBRARY gstcodecparsers-1.0
+        DEPENDENCIES GStreamer::Core GStreamer::Base)
+endif()
+
+if(Controller IN_LIST GStreamer_FIND_COMPONENTS)
+    find_gstreamer_component(Controller
+        PC_NAME gstreamer-controller-1.0
+        HEADER gst/controller/controller.h
+        LIBRARY gstcontroller-1.0
+        DEPENDENCIES GStreamer::Core)
+endif()
+
+if(Fft IN_LIST GStreamer_FIND_COMPONENTS)
+    find_gstreamer_component(Fft
+        PC_NAME gstreamer-fft-1.0
+        HEADER gst/fft/cfft.h
+        LIBRARY gstfft-1.0
+        DEPENDENCIES GStreamer::Core)
+endif()
+
+if(GlEgl IN_LIST GStreamer_FIND_COMPONENTS)
+    # find_package(EGL)
+    find_gstreamer_component(GlEgl
+        PC_NAME gstreamer-gl-egl-1.0
+        HEADER gst/gl/egl/gstgldisplay_egl.h
+        LIBRARY gstgl-1.0
+        DEPENDENCIES GStreamer::Gl EGL::EGL)
+endif()
+
+if(GlPrototypes IN_LIST GStreamer_FIND_COMPONENTS)
+    # find_package(GLESv2)
+    # find_package(OpenGL OPTIONAL_COMPONENTS EGL GLX OpenGL) # GLES2 GLES3
+    find_gstreamer_component(GlPrototypes
+        PC_NAME gstreamer-gl-prototypes-1.0
+        HEADER gst/gl/glprototypes/all_functions.h
+        LIBRARY gstglproto-1.0
+        DEPENDENCIES GStreamer::Gl GLESv2::GLESv2 OpenGL::GL)
+endif()
+
+if(GlWayland IN_LIST GStreamer_FIND_COMPONENTS)
+    # find_package(Wayland COMPONENTS Client Cursor Egl)
+    # find_package(WaylandProtocols)
+    # find_package(WaylandScanner)
+    # find_package(Qt6 COMPONENTS WaylandClient)
+    find_gstreamer_component(GlWayland
+        PC_NAME gstreamer-gl-wayland-1.0
+        HEADER gst/gl/wayland/gstgldisplay_wayland.h
+        LIBRARY gstgl-1.0
+        DEPENDENCIES GStreamer::Gl Wayland::EGL Wayland::Client)
+endif()
+
+if(GlX11 IN_LIST GStreamer_FIND_COMPONENTS)
+    # find_package(X11)
+    # find_package(XCB COMPONENTS XCB GLX)
+    # find_package(X11_XCB)
+    find_gstreamer_component(GlX11
+        PC_NAME gstreamer-gl-x11-1.0
+        HEADER gst/gl/x11/gstgldisplay_x11.h
+        LIBRARY gstgl-1.0
+        DEPENDENCIES GStreamer::Gl X11::XCB)
+endif()
+
+if(Mpegts IN_LIST GStreamer_FIND_COMPONENTS)
+    find_gstreamer_component(Mpegts
+        PC_NAME gstreamer-mpegts-1.0
+        HEADER gst/mpegts/mpegts.h
+        LIBRARY gstmpegts-1.0
+        DEPENDENCIES GStreamer::Core GStreamer::Base)
+endif()
+
+if(Net IN_LIST GStreamer_FIND_COMPONENTS)
+    find_gstreamer_component(Net
+        PC_NAME gstreamer-net-1.0
+        HEADER gst/net/net.h
+        LIBRARY gstnet-1.0
+        DEPENDENCIES GStreamer::Core)
+endif()
+
+if(Pbutils IN_LIST GStreamer_FIND_COMPONENTS)
+    find_gstreamer_component(Pbutils
+        PC_NAME gstreamer-pbutils-1.0
+        HEADER gst/pbutils/pbutils.h
+        LIBRARY gstpbutils-1.0
+        DEPENDENCIES GStreamer::Video GStreamer::Audio GStreamer::Core GStreamer::Base)
+endif()
+
+if(Photography IN_LIST GStreamer_FIND_COMPONENTS)
+    find_gstreamer_component(Photography
+        PC_NAME gstreamer-photography-1.0
+        HEADER gst/interfaces/photography.h
+        LIBRARY gstphotography-1.0
+        DEPENDENCIES GStreamer::Core GStreamer::Base)
+endif()
+
+if(PluginsBad IN_LIST GStreamer_FIND_COMPONENTS)
+    find_gstreamer_component(PluginsBad
+        PC_NAME gstreamer-plugins-bad-1.0
+        HEADER gst/gst.h
+        LIBRARY gstreamer-1.0
+        DEPENDENCIES GStreamer::Core)
+endif()
+
+if(PluginsBase IN_LIST GStreamer_FIND_COMPONENTS)
+    find_gstreamer_component(PluginsBase
+        PC_NAME gstreamer-plugins-base-1.0
+        HEADER gst/gst.h
+        LIBRARY gstreamer-1.0
+        DEPENDENCIES GStreamer::Core)
+endif()
+
+if(PluginsGood IN_LIST GStreamer_FIND_COMPONENTS)
+    find_gstreamer_component(PluginsGood
+        PC_NAME gstreamer-plugins-good-1.0
+        HEADER gst/gst.h
+        LIBRARY gstphotography-1.0
+        DEPENDENCIES GStreamer::Core GStreamer::Base)
+endif()
+
+if(Riff IN_LIST GStreamer_FIND_COMPONENTS)
+    find_gstreamer_component(Riff
+        PC_NAME gstreamer-riff-1.0
+        HEADER gst/riff/riff.h
+        LIBRARY gstriff-1.0
+        DEPENDENCIES GStreamer::Core)
+endif()
+
+if(Rtp IN_LIST GStreamer_FIND_COMPONENTS)
+    find_gstreamer_component(Rtp
+        PC_NAME gstreamer-rtp-1.0
+        HEADER gst/rtp/rtp.h
+        LIBRARY gstrtp-1.0
+        DEPENDENCIES GStreamer::Core GStreamer::Base)
+endif()
+
+if(Sdp IN_LIST GStreamer_FIND_COMPONENTS)
+    find_gstreamer_component(Sdp
+        PC_NAME gstreamer-sdp-1.0
+        HEADER gst/sdp/sdp.h
+        LIBRARY gstsdp-1.0
+        DEPENDENCIES GStreamer::Core)
+endif()
+
+if(Rtsp IN_LIST GStreamer_FIND_COMPONENTS)
+    find_gstreamer_component(Rtsp
+        PC_NAME gstreamer-rtsp-1.0
+        HEADER gst/rtsp/rtsp.h
+        LIBRARY gstrtsp-1.0
+        DEPENDENCIES GStreamer::Sdp GStreamer::Core GLIB2::GIO)
+endif()
+
+if(Tag IN_LIST GStreamer_FIND_COMPONENTS)
+    find_gstreamer_component(Tag
+        PC_NAME gstreamer-tag-1.0
+        HEADER gst/tag/tag.h
+        LIBRARY gsttag-1.0
+        DEPENDENCIES GStreamer::Core)
+endif()
+
+if(Va IN_LIST GStreamer_FIND_COMPONENTS)
+    # find_package(VAAPI)
+    find_gstreamer_component(Va
+        PC_NAME gstreamer-va-1.0
+        HEADER gst/va/gstva.h
+        LIBRARY gstva-1.0
+        DEPENDENCIES GStreamer::Core GStreamer::Video)
+endif()
 
 ################################################################################
 
@@ -400,8 +483,6 @@ if(TARGET PkgConfig::PC_GSTREAMER_GL)
     endforeach()
     set_property(TARGET PkgConfig::PC_GSTREAMER_GL PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${__qt_fixed_incs}")
 endif()
-
-################################################################################
 
 # Create target GStreamer::GStreamer
 include(FindPackageHandleStandardArgs)
@@ -427,7 +508,48 @@ endif()
 
 ################################################################################
 
-set(GST_TARGET_PLUGINS
+if(ANDROID)
+    target_link_options(GStreamer::GStreamer INTERFACE "-Wl,-Bsymbolic")
+endif()
+
+if(QGC_GST_STATIC_BUILD)
+    target_compile_definitions(GStreamer::GStreamer INTERFACE QGC_GST_STATIC_BUILD)
+endif()
+
+# TODO: find_path
+if(LINUX)
+    set(GSTREAMER_LIB_PATH ${GSTREAMER_PREFIX}/lib/x86_64-linux-gnu)
+elseif(MACOS)
+    set(GSTREAMER_LIB_PATH ${GSTREAMER_PREFIX}/lib)
+elseif(ANDROID OR WIN32)
+    set(GSTREAMER_LIB_PATH ${GSTREAMER_PREFIX}/lib)
+elseif(IOS)
+
+endif()
+set(GSTREAMER_PLUGIN_PATH ${GSTREAMER_LIB_PATH}/gstreamer-1.0)
+
+target_include_directories(GStreamer::GStreamer
+    INTERFACE
+        ${GSTREAMER_PREFIX}/include
+        ${GSTREAMER_PREFIX}/include/glib-2.0
+        ${GSTREAMER_PREFIX}/include/graphene-1.0
+        ${GSTREAMER_PREFIX}/include/gstreamer-1.0
+        ${GSTREAMER_LIB_PATH}/glib-2.0/include
+        ${GSTREAMER_LIB_PATH}/graphene-1.0/include
+        ${GSTREAMER_PLUGIN_PATH}/include
+)
+
+target_link_directories(GStreamer::GStreamer
+    INTERFACE
+        ${GSTREAMER_LIB_PATH}
+        ${GSTREAMER_PLUGIN_PATH}
+)
+
+################################################################################
+
+add_library(GStreamer::Plugins INTERFACE IMPORTED)
+
+set(GST_PLUGINS
     gstcoreelements
     gstisomp4
     gstlibav
@@ -443,197 +565,61 @@ set(GST_TARGET_PLUGINS
     gstudp
     gstvideoparsersbad
     gstx264
-    # gstqml6
     gstasf
     gstva
+    # gstqml6
 )
 if(ANDROID)
-    list(APPEND GST_TARGET_PLUGINS gstandroidmedia)
+    list(APPEND GST_PLUGINS gstandroidmedia)
 elseif(IOS)
-    list(APPEND GST_TARGET_PLUGINS gstapplemedia)
+    list(APPEND GST_PLUGINS gstapplemedia)
 endif()
 
-find_package(PkgConfig QUIET)
-foreach(plugin IN LISTS GST_TARGET_PLUGINS)
+foreach(plugin IN LISTS GST_PLUGINS)
     if(PkgConfig_FOUND)
-        pkg_check_modules(GST_PLUGIN_${plugin} IMPORTED_TARGET GST_PLUGIN_${plugin} QUIET)
+        pkg_check_modules(GST_PLUGIN_${plugin} IMPORTED_TARGET ${plugin})
         if(GST_PLUGIN_${plugin}_FOUND)
-            cmake_print_variables(plugin)
-            target_link_libraries(GStreamer::GStreamer INTERFACE PkgConfig::GST_PLUGIN_${plugin})
+            target_link_libraries(GStreamer::Plugins INTERFACE PkgConfig::GST_PLUGIN_${plugin})
         endif()
     endif()
+
     if(NOT GST_PLUGIN_${plugin}_FOUND)
         find_library(GST_PLUGIN_${plugin}_LIBRARY
             NAMES ${plugin}
             PATHS
-                ${GSTREAMER_PREFIX}/lib
-                ${GSTREAMER_PREFIX}/lib/gstreamer-1.0
-                ${GSTREAMER_PREFIX}/lib/x86_64-linux-gnu
-                ${GSTREAMER_PREFIX}/lib/x86_64-linux-gnu/gstreamer-1.0
+                ${GSTREAMER_LIB_PATH}
+                ${GSTREAMER_PLUGIN_PATH}
         )
         if(GST_PLUGIN_${plugin}_LIBRARY)
             cmake_print_variables(plugin)
-            target_link_libraries(GStreamer::GStreamer INTERFACE ${GST_PLUGIN_${plugin}_LIBRARY})
+            target_link_libraries(GStreamer::Plugins INTERFACE ${GST_PLUGIN_${plugin}_LIBRARY})
+            set(GST_PLUGIN_${plugin}_FOUND TRUE)
         endif()
     endif()
 endforeach()
 
-# set(GST_DEPENDENCIES
-#     gstreamer-plugins-base-1.0
-#     gstreamer-plugins-good-1.0
-#     gstreamer-plugins-bad-1.0
-#     glib-2.0
-#     gio
-#     gobject-2.0
-#     gthread-2.0
-#     gmodule-2.0
-#     gmodule-no-export-2.0
-#     zlib
-#     drm
-#     graphene-1.0
-#     opus
-#     ffi
-#     egl
-#     dl
-#     m
-#     pcre2-8
-#     gudev-1.0
-#     avcodec
-#     avdevice
-#     avfilter
-#     avformat
-#     avutil
-#     postproc
-#     swscale
-#     va
-#     va-drm
-#     va-glx
-#     va-wayland
-#     va-x11
-#     orc
-#     pango
-#     vpl
-#     vdpau
-#     vpx
-#     x11
-#     x264
-#     x265
-#     x11-xcb
-#     drm
-#     png
-#     zlib
-# )
-
-pkg_check_modules(GRAPHENE IMPORTED_TARGET graphene-1.0)
-if(GRAPHENE_FOUND)
-    target_link_libraries(GStreamer::GStreamer INTERFACE PkgConfig::GRAPHENE)
-endif()
-
-pkg_check_modules(X264 IMPORTED_TARGET x264)
-if(X264_FOUND)
-    target_link_libraries(GStreamer::GStreamer INTERFACE PkgConfig::X264)
-endif()
-
-find_package(VAAPI)
-if(VAAPI_FOUND)
-    target_link_libraries(GStreamer::GStreamer INTERFACE VAAPI::VAAPI)
-endif()
-
-find_package(ZLIB)
-if(ZLIB_FOUND)
-    target_link_libraries(GStreamer::GStreamer INTERFACE ZLIB::ZLIB)
-endif()
-
-find_package(OpenGL)
-if(OpenGL_FOUND)
-    target_link_libraries(GStreamer::GStreamer INTERFACE OpenGL::GL)
-endif()
-
-find_package(GLESv2)
-if(GLESv2_FOUND)
-    target_link_libraries(GStreamer::GStreamer INTERFACE GLESv2::GLESv2)
-endif()
-
-find_package(FFmpeg COMPONENTS AVCODEC AVFORMAT AVUTIL AVFILTER SWRESAMPLE) # AVDEVICE POSTPROC SWSCALE
-if(FFMPEG_FOUND)
-    target_link_libraries(GStreamer::GStreamer INTERFACE FFmpeg::FFmpeg)
-endif()
-
-find_package(BZip2)
-if(BZIP2_FOUND)
-    target_link_libraries(GStreamer::GStreamer INTERFACE BZip2::BZip2)
-endif()
-
-find_package(JPEG)
-if(JPEG_FOUND)
-    target_link_libraries(GStreamer::GStreamer INTERFACE JPEG::JPEG)
-endif()
-
-find_package(PNG)
-if(PNG_FOUND)
-    target_link_libraries(GStreamer::GStreamer INTERFACE PNG::PNG)
-endif()
-
-find_package(Intl)
-if(Intl_FOUND)
-    target_link_libraries(GStreamer::GStreamer INTERFACE Intl::Intl)
-endif()
-
-find_package(Iconv)
-if(Iconv_FOUND)
-    target_link_libraries(GStreamer::GStreamer INTERFACE Iconv::Iconv)
-endif()
-
-find_package(Threads)
-if(Threads_FOUND)
-    target_link_libraries(GStreamer::GStreamer INTERFACE Threads::Threads)
-endif()
-
-if(ANDROID)
-    target_link_options(GStreamer::GStreamer INTERFACE "-Wl,-Bsymbolic")
-endif()
-
-if(QGC_GST_STATIC_BUILD)
-    target_compile_definitions(GStreamer::GStreamer INTERFACE QGC_GST_STATIC_BUILD)
-endif()
-
-if(ANDROID OR WIN32)
-    # find_path(GStreamer_INCLUDE_DIR
-    #     NAMES GStreamer
-    #     PATH_SUFFIXES gstreamer-1.0
-    #     PATHS ${GSTREAMER_PREFIX}/include
-    # )
-    # target_include_directories(GStreamer::GStreamer
-    #     INTERFACE
-    #         ${GSTREAMER_PREFIX}/include/gstreamer-1.0
-    #         ${GSTREAMER_PREFIX}/include/glib-2.0
-    #         ${GSTREAMER_PREFIX}/lib/glib-2.0/include
-    #         ${GSTREAMER_PREFIX}/lib/graphene-1.0/include
-    #         ${GSTREAMER_PREFIX}/lib/gstreamer-1.0/include
-    #         ${GSTREAMER_PREFIX}/include
-    # )
+if(NOT MACOS)
+    target_link_libraries(GStreamer::GStreamer INTERFACE GStreamer::Plugins)
 endif()
 
 ################################################################################
 
-# Use Latest Revisions for each minor version: 1.16.3, 1.18.6, 1.20.7, 1.22.12, 1.24.7
-string(REPLACE "." ";" GST_VERSION_LIST ${GStreamer_VERSION})
-list(GET GST_VERSION_LIST 0 GST_VERSION_MAJOR)
-list(GET GST_VERSION_LIST 1 GST_VERSION_MINOR)
-list(GET GST_VERSION_LIST 2 GST_VERSION_PATCH)
-cmake_print_variables(GST_VERSION_MAJOR GST_VERSION_MINOR GST_VERSION_PATCH)
+# set(PLUGINS_DECLARATION)
+# set(PLUGINS_REGISTRATION)
+# foreach(GST_P ${GST_PLUGINS})
+#     list(APPEND LINK_LIBS "gst${GST_P}")
+#     list(APPEND PLUGINS_DECLARATION "\nGST_PLUGIN_STATIC_DECLARE(${GST_P})")
+#     list(APPEND PLUGINS_REGISTRATION "\nGST_PLUGIN_STATIC_REGISTER(${GST_P})")
+# endforeach()
 
-if(GST_VERSION_MINOR EQUAL 16)
-    set(GST_VERSION_PATCH 3)
-elseif(GST_VERSION_MINOR EQUAL 18)
-    set(GST_VERSION_PATCH 6)
-elseif(GST_VERSION_MINOR EQUAL 20)
-    set(GST_VERSION_PATCH 7)
-elseif(GST_VERSION_MINOR EQUAL 22)
-    set(GST_VERSION_PATCH 12)
-elseif(GST_VERSION_MINOR EQUAL 24)
-    set(GST_VERSION_PATCH 7)
-endif()
-
-set(GST_PLUGINS_VERSION ${GST_VERSION_MAJOR}.${GST_VERSION_MINOR}.${GST_VERSION_PATCH})
-cmake_print_variables(GST_PLUGINS_VERSION)
+# if(ANDROID)
+#     if(EXISTS ${GSTREAMER_PREFIX}/share/gst-android/ndk-build/androidmedia)
+#         install(DIRECTORY ${GSTREAMER_PREFIX}/share/gst-android/ndk-build/androidmedia DESTINATION ${CMAKE_BINARY_DIR}/android-build/src/org/freedesktop/androidmedia)
+#     endif()
+#     if(EXISTS ${GSTREAMER_PREFIX}/share/gst-android/ndk-build/GStreamer.java)
+#         install(FILES ${GSTREAMER_PREFIX}/share/gst-android/ndk-build/GStreamer.java DESTINATION ${CMAKE_BINARY_DIR}/android-build/src/org/freedesktop/GStreamer.java)
+#     endif()
+#     if(EXISTS ${GSTREAMER_PREFIX}/share/gst-android/ndk-build/gstreamer_android-1.0.c.in)
+#         configure_file(${GSTREAMER_PREFIX}/share/gst-android/ndk-build/gstreamer_android-1.0.c.in ${CMAKE_CURRENT_BINARY_DIR}/gst_plugin_init_android.c)
+#     endif()
+# endif()

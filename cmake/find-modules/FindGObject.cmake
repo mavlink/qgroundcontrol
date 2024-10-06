@@ -23,7 +23,7 @@ qt_internal_disable_find_package_global_promotion(GLIB2::GLIB2)
 if(NOT TARGET GObject::GObject)
     find_package(PkgConfig QUIET)
     pkg_check_modules(PC_GOBJECT gobject-2.0 IMPORTED_TARGET)
-    if (TARGET PkgConfig::PC_GOBJECT)
+    if(TARGET PkgConfig::PC_GOBJECT)
         add_library(GObject::GObject INTERFACE IMPORTED)
         target_link_libraries(GObject::GObject INTERFACE
                             PkgConfig::PC_GOBJECT
@@ -35,7 +35,7 @@ if(NOT TARGET GObject::GObject)
             PATH_SUFFIXES glib-2.0/gobject/
         )
         find_library(GObject_LIBRARY NAMES gobject-2.0)
-        if (GObject_LIBRARY AND GObject_INCLUDE_DIR)
+        if(GObject_LIBRARY AND GObject_INCLUDE_DIR)
             add_library(GObject::GObject INTERFACE IMPORTED)
             target_include_directories(GObject::GObject INTERFACE
                                     ${GObject_INCLUDE_DIR}

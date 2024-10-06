@@ -1,42 +1,64 @@
-# SPDX-FileCopyrightText: 2014 Alex Merry <alex.merry@kde.org>
-# SPDX-FileCopyrightText: 2014 Martin Gräßlin <mgraesslin@kde.org>
+#.rst:
+# FindEGL
+# -------
 #
-# SPDX-License-Identifier: BSD-3-Clause
+# Try to find EGL.
+#
+# This will define the following variables:
+#
+# ``EGL_FOUND``
+#     True if (the requested version of) EGL is available
+# ``EGL_VERSION``
+#     The version of EGL; note that this is the API version defined in the
+#     headers, rather than the version of the implementation (eg: Mesa)
+# ``EGL_LIBRARIES``
+#     This can be passed to target_link_libraries() instead of the ``EGL::EGL``
+#     target
+# ``EGL_INCLUDE_DIRS``
+#     This should be passed to target_include_directories() if the target is not
+#     used for linking
+# ``EGL_DEFINITIONS``
+#     This should be passed to target_compile_options() if the target is not
+#     used for linking
+#
+# If ``EGL_FOUND`` is TRUE, it will also define the following imported target:
+#
+# ``EGL::EGL``
+#     The EGL library
+#
+# In general we recommend using the imported target, as it is easier to use.
+# Bear in mind, however, that if the target is in the link interface of an
+# exported library, it must be made available by the package config file.
+#
+# Since pre-1.0.0.
 
-#[=======================================================================[.rst:
-FindEGL
--------
-
-Try to find EGL.
-
-This will define the following variables:
-
-``EGL_FOUND``
-    True if (the requested version of) EGL is available
-``EGL_VERSION``
-    The version of EGL; note that this is the API version defined in the
-    headers, rather than the version of the implementation (eg: Mesa)
-``EGL_LIBRARIES``
-    This can be passed to target_link_libraries() instead of the ``EGL::EGL``
-    target
-``EGL_INCLUDE_DIRS``
-    This should be passed to target_include_directories() if the target is not
-    used for linking
-``EGL_DEFINITIONS``
-    This should be passed to target_compile_options() if the target is not
-    used for linking
-
-If ``EGL_FOUND`` is TRUE, it will also define the following imported target:
-
-``EGL::EGL``
-    The EGL library
-
-In general we recommend using the imported target, as it is easier to use.
-Bear in mind, however, that if the target is in the link interface of an
-exported library, it must be made available by the package config file.
-
-Since pre-1.0.0.
-#]=======================================================================]
+#=============================================================================
+# Copyright 2014 Alex Merry <alex.merry@kde.org>
+# Copyright 2014 Martin Gräßlin <mgraesslin@kde.org>
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. The name of the author may not be used to endorse or promote products
+#    derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#=============================================================================
 
 include(${CMAKE_CURRENT_LIST_DIR}/ECMFindModuleHelpersStub.cmake)
 include(CheckCXXSourceCompiles)
@@ -60,7 +82,6 @@ find_path(EGL_INCLUDE_DIR
 find_library(EGL_LIBRARY
     NAMES
         EGL
-        libEGL
     HINTS
         ${PKG_EGL_LIBRARY_DIRS}
 )
@@ -97,12 +118,18 @@ endif()
 cmake_push_check_state(RESET)
 list(APPEND CMAKE_REQUIRED_LIBRARIES "${EGL_LIBRARY}")
 list(APPEND CMAKE_REQUIRED_INCLUDES "${EGL_INCLUDE_DIR}")
+list(APPEND CMAKE_REQUIRED_DEFINITIONS "${EGL_DEFINITIONS}")
+
+if(_qt_igy_gui_libs)
+    list(APPEND CMAKE_REQUIRED_LIBRARIES "${_qt_igy_gui_libs}")
+endif()
 
 check_cxx_source_compiles("
 #include <EGL/egl.h>
 
-int main(int argc, char *argv[]) {
-    EGLint x = 0; EGLDisplay dpy = 0; EGLContext ctx = 0;
+int main(int, char **) {
+    [[maybe_unused]] EGLint x = 0;
+    EGLDisplay dpy = 0; EGLContext ctx = 0;
     eglDestroyContext(dpy, ctx);
 }" HAVE_EGL)
 
