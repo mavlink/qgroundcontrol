@@ -20,10 +20,7 @@
 # ::
 #
 #   FFMPEG_FOUND         - System has the all required components.
-#   FFMPEG_INCLUDE_DIRS  - Include directory necessary for using the required components headers.
-#   FFMPEG_LIBRARIES     - Link these to use the required FFmpeg components.
-#   FFMPEG_LIBRARY_DIRS  - Link directories
-#   FFMPEG_DEFINITIONS   - Compiler switches required for using the required FFmpeg components.
+#   FFMPEG_SHARED_LIBRARIES - Found FFmpeg shared libraries.
 #
 # For each of the components it will additionally set.
 #
@@ -203,11 +200,8 @@ endmacro()
 
 # Clear the previously cached variables, because they are recomputed every time
 # the Find script is included.
-unset(FFMPEG_INCLUDE_DIRS)
-unset(FFMPEG_LIBRARIES)
-unset(FFMPEG_SHARED_LIBRARIES)
-unset(FFMPEG_DEFINITIONS)
-unset(FFMPEG_LIBRARY_DIRS)
+unset(FFMPEG_SHARED_LIBRARIES CACHE)
+unset(FFMPEG_STUBS CACHE)
 
 # Check for components.
 foreach (_component ${FFmpeg_FIND_COMPONENTS})
@@ -232,33 +226,34 @@ foreach (_component ${FFmpeg_FIND_COMPONENTS})
   endif()
 endforeach()
 
-if (NOT FFMPEG_SHARED_COMPONENTS AND (ANDROID OR LINUX))
-  set(ENABLE_DYNAMIC_RESOLVE_OPENSSL_SYMBOLS TRUE CACHE INTERNAL "")
-endif()
 
-set(ENABLE_DYNAMIC_RESOLVE_VAAPI_SYMBOLS ${LINUX} CACHE INTERNAL "")
+function(qt_internal_multimedia_try_add_dynamic_resolve_dependency _component dep)
+  set(dynamic_resolve_added FALSE PARENT_SCOPE)
 
-function(__try_add_dynamic_resolve_dependency dep added)
-  set(added TRUE PARENT_SCOPE)
+  if (NOT ANDROID AND NOT LINUX)
+    return()
+  endif()
 
-  if(ENABLE_DYNAMIC_RESOLVE_OPENSSL_SYMBOLS AND
-      (${dep} STREQUAL "ssl" OR ${dep} STREQUAL "crypto"))
-    set(DYNAMIC_RESOLVE_OPENSSL_SYMBOLS TRUE CACHE INTERNAL "")
-  elseif(ENABLE_DYNAMIC_RESOLVE_VAAPI_SYMBOLS AND ${dep} STREQUAL "va")
-    set(DYNAMIC_RESOLVE_VAAPI_SYMBOLS TRUE CACHE INTERNAL "")
-  elseif(ENABLE_DYNAMIC_RESOLVE_VAAPI_SYMBOLS AND ${dep} STREQUAL "va-drm")
-    set(DYNAMIC_RESOLVE_VA_DRM_SYMBOLS TRUE CACHE INTERNAL "")
-  elseif(ENABLE_DYNAMIC_RESOLVE_VAAPI_SYMBOLS AND ${dep} STREQUAL "va-x11")
-    set(DYNAMIC_RESOLVE_VA_X11_SYMBOLS TRUE CACHE INTERNAL "")
-  else()
-    set(added FALSE PARENT_SCOPE)
+  set(supported_stubs "ssl|crypto|va|va-drm|va-x11")
+  if(${_component}_SHARED_LIBRARIES)
+    set(stub_prefix "Qt${PROJECT_VERSION_MAJOR}FFmpegStub-")
+    if (${dep} MATCHES "^${stub_prefix}(${supported_stubs})$")
+      string(REPLACE "${stub_prefix}" "" dep "${dep}")
+      set(FFMPEG_STUBS ${FFMPEG_STUBS} ${dep} CACHE INTERNAL "")
+
+      set(dynamic_resolve_added TRUE PARENT_SCOPE)
+    endif()
+  elseif (${dep} MATCHES "^(${supported_stubs})$")
+    set(FFMPEG_STUBS ${FFMPEG_STUBS} ${dep} CACHE INTERNAL "")
+    set(dynamic_resolve_added TRUE PARENT_SCOPE)
   endif()
 endfunction()
 
 # Function parses package config file to find the static library dependencies
 # and adds them to the target library.
-function(__ffmpeg_internal_set_dependencies lib)
-  set(PC_FILE ${FFMPEG_DIR}/lib/pkgconfig/lib${lib}.pc)
+function(__ffmpeg_internal_set_dependencies _component)
+  string(TOLOWER ${_component} lib)
+  set(PC_FILE ${${_component}_LIBRARY_DIR}/pkgconfig/lib${lib}.pc)
   if(EXISTS ${PC_FILE})
     file(READ ${PC_FILE} pcfile)
 
@@ -277,18 +272,22 @@ function(__ffmpeg_internal_set_dependencies lib)
     foreach(dependency ${deps_no_suffix})
       string(REGEX REPLACE ${prefix_l} "" dependency ${dependency})
       if(NOT ${lib} STREQUAL ${dependency})
-        __try_add_dynamic_resolve_dependency(${dependency} added)
-        if(NOT added)
+        qt_internal_multimedia_try_add_dynamic_resolve_dependency(${_component} ${dependency})
+        if(NOT dynamic_resolve_added AND NOT ${_component}_SHARED_LIBRARIES)
           target_link_libraries(FFmpeg::${lib} INTERFACE ${dependency})
         endif()
       endif()
     endforeach()
 
-    list(APPEND deps_lib_suffix ${libs_dependency_lib} ${libs_private_dependency_lib})
-    foreach(dependency ${deps_lib_suffix})
-      string(REGEX REPLACE ${suffix_lib} "" dependency ${dependency})
-      target_link_libraries(FFmpeg::${lib} INTERFACE ${dependency})
-    endforeach()
+    if(NOT ${_component}_SHARED_LIBRARIES)
+      list(APPEND deps_lib_suffix ${libs_dependency_lib} ${libs_private_dependency_lib})
+      foreach(dependency ${deps_lib_suffix})
+        string(REGEX REPLACE ${suffix_lib} "" dependency ${dependency})
+        target_link_libraries(FFmpeg::${lib} INTERFACE ${dependency})
+      endforeach()
+    endif()
+  else()
+    message(WARNING "FFmpeg pc file ${PC_FILE} is not found")
   endif()
 endfunction()
 
@@ -309,9 +308,8 @@ endfunction()
             INTERFACE_LINK_LIBRARIES "${${_component}_LIBRARY_NAME}"
             INTERFACE_LINK_DIRECTORIES "${${_component}_LIBRARY_DIR}"
         )
-        if(NOT ${_component}_SHARED_LIBRARIES)
-          __ffmpeg_internal_set_dependencies(${_lowerComponent})
-        endif()
+
+        __ffmpeg_internal_set_dependencies(${_component})
         target_link_libraries(FFmpeg::${_lowerComponent} INTERFACE "${${_component}_LIBRARY_NAME}")
         if (UNIX AND NOT APPLE)
           target_link_options(FFmpeg::${_lowerComponent} INTERFACE  "-Wl,--exclude-libs=lib${_lowerComponent}")
@@ -324,22 +322,17 @@ endfunction()
   list(REMOVE_DUPLICATES FFMPEG_INCLUDE_DIRS)
   list(REMOVE_DUPLICATES FFMPEG_LIBRARY_DIRS)
   list(REMOVE_DUPLICATES FFMPEG_SHARED_LIBRARIES)
+  list(REMOVE_DUPLICATES FFMPEG_STUBS)
 
   message(STATUS "FFmpeg shared libs: ${FFMPEG_SHARED_LIBRARIES}")
+  message(STATUS "FFmpeg stubs: ${FFMPEG_STUBS}")
 
   # cache the vars.
-  set(FFMPEG_INCLUDE_DIRS ${FFMPEG_INCLUDE_DIRS} CACHE STRING "The FFmpeg include directories." FORCE)
-  set(FFMPEG_LIBRARIES    ${FFMPEG_LIBRARIES}    CACHE STRING "The FFmpeg libraries." FORCE)
-  set(FFMPEG_DEFINITIONS  ${FFMPEG_DEFINITIONS}  CACHE STRING "The FFmpeg cflags." FORCE)
-  set(FFMPEG_LIBRARY_DIRS ${FFMPEG_LIBRARY_DIRS} CACHE STRING "The FFmpeg library dirs." FORCE)
   set(FFMPEG_SHARED_LIBRARIES ${FFMPEG_SHARED_LIBRARIES} CACHE STRING "The FFmpeg dynamic libraries." FORCE)
+  set(FFMPEG_STUBS ${FFMPEG_STUBS} CACHE STRING "The FFmpeg stubs." FORCE)
 
-  mark_as_advanced(FFMPEG_INCLUDE_DIRS
-                   FFMPEG_LIBRARIES
-                   FFMPEG_DEFINITIONS
-                   FFMPEG_LIBRARY_DIRS
-                   FFMPEG_SHARED_LIBRARIES
-               )
+  mark_as_advanced(FFMPEG_SHARED_LIBRARIES)
+  mark_as_advanced(FFMPEG_STUBS)
 # endif ()
 
 list(LENGTH FFMPEG_LIBRARY_DIRS DIRS_COUNT)
