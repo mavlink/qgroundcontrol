@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.22.1)
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+list(APPEND CMAKE_MODULE_PATH
+    ${CMAKE_SOURCE_DIR}/cmake
+    ${CMAKE_SOURCE_DIR}/cmake/modules
+    ${CMAKE_SOURCE_DIR}/cmake/find-modules
+)
 
 #######################################################
 #                Custom Build Configuration
@@ -105,6 +109,10 @@ if(CMAKE_CROSSCOMPILING AND ANDROID)
 endif()
 
 set(BUILD_SHARED_LIBS OFF)
+
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    add_compile_definitions(QGC_INSTALL_RELEASE)
+endif()
 
 #######################################################
 #               Qt6 Configuration

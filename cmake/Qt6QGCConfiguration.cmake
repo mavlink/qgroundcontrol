@@ -54,3 +54,7 @@ endif()
 
 include(CMakePrintHelpers)
 cmake_print_variables(QT_VERSION QT_MKSPEC QT_LIBRARY_HINTS)
+
+# if(ANDROID)
+    # set(ENV{PKG_CONFIG_SYSROOT_DIR} ${CMAKE_SYSROOT})
+# endif()

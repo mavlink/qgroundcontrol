@@ -78,9 +78,14 @@ DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
     gstreamer1.0-vaapi \
     gstreamer1.0-x
 
+if apt-cache show gstreamer1.0-qt6 >/dev/null 2>&1 && apt-cache show gstreamer1.0-qt6 2>/dev/null | grep -q "^Package: gstreamer1.0-qt6"; then
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --quiet gstreamer1.0-qt6
+fi
+
 # Additional
 DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
     flite1-dev \
+    intel-media-va-driver \
     libasound2-dev \
     libass-dev \
     libdrm-dev \
@@ -88,6 +93,8 @@ DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
     libexiv2-dev \
     libgbm-dev \
     libgl1-mesa-dev \
+    libgl-dev \
+    libglx-dev \
     libgles2-mesa-dev \
     libglu1-mesa-dev \
     libglfw3-dev \
@@ -97,8 +104,8 @@ DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
     libspeechd-dev \
     libunwind-dev \
     libva-dev \
-    libvpx-dev \
     libvdpau-dev \
+    libvpx-dev \
     libwayland-dev \
     libx11-dev \
     libzstd-dev \
@@ -112,6 +119,10 @@ DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
     speech-dispatcher-espeak-ng \
     speech-dispatcher-flite \
     vainfo
+
+if apt-cache show libvpl-dev >/dev/null 2>&1 && apt-cache show libvpl-dev 2>/dev/null | grep -q "^Package: libvpl-dev"; then
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --quiet libvpl-dev
+fi
 
 # Geo
 if apt-cache show libgeographic-dev >/dev/null 2>&1 && apt-cache show libgeographic-dev 2>/dev/null | grep -q "^Package: libgeographic-dev"; then
