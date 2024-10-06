@@ -1,114 +1,134 @@
-# SPDX-FileCopyrightText: 2014 Alex Merry <alex.merry@kde.org>
+#.rst:
+# ECMFindModuleHelpers
+# --------------------
 #
-# SPDX-License-Identifier: BSD-3-Clause
+# Helper macros for find modules: ecm_find_package_version_check(),
+# ecm_find_package_parse_components() and
+# ecm_find_package_handle_library_components().
+#
+# ::
+#
+#   ecm_find_package_version_check(<name>)
+#
+# Prints warnings if the CMake version or the project's required CMake version
+# is older than that required by extra-cmake-modules.
+#
+# ::
+#
+#   ecm_find_package_parse_components(<name>
+#       RESULT_VAR <variable>
+#       KNOWN_COMPONENTS <component1> [<component2> [...]]
+#       [SKIP_DEPENDENCY_HANDLING])
+#
+# This macro will populate <variable> with a list of components found in
+# <name>_FIND_COMPONENTS, after checking that all those components are in the
+# list of KNOWN_COMPONENTS; if there are any unknown components, it will print
+# an error or warning (depending on the value of <name>_FIND_REQUIRED) and call
+# return().
+#
+# The order of components in <variable> is guaranteed to match the order they
+# are listed in the KNOWN_COMPONENTS argument.
+#
+# If SKIP_DEPENDENCY_HANDLING is not set, for each component the variable
+# <name>_<component>_component_deps will be checked for dependent components.
+# If <component> is listed in <name>_FIND_COMPONENTS, then all its (transitive)
+# dependencies will also be added to <variable>.
+#
+# ::
+#
+#   ecm_find_package_handle_library_components(<name>
+#       COMPONENTS <component> [<component> [...]]
+#       [SKIP_DEPENDENCY_HANDLING])
+#       [SKIP_PKG_CONFIG])
+#
+# Creates an imported library target for each component.  The operation of this
+# macro depends on the presence of a number of CMake variables.
+#
+# The <name>_<component>_lib variable should contain the name of this library,
+# and <name>_<component>_header variable should contain the name of a header
+# file associated with it (whatever relative path is normally passed to
+# '#include'). <name>_<component>_header_subdir variable can be used to specify
+# which subdirectory of the include path the headers will be found in.
+# ecm_find_package_components() will then search for the library
+# and include directory (creating appropriate cache variables) and create an
+# imported library target named <name>::<component>.
+#
+# Additional variables can be used to provide additional information:
+#
+# If SKIP_PKG_CONFIG, the <name>_<component>_pkg_config variable is set, and
+# pkg-config is found, the pkg-config module given by
+# <name>_<component>_pkg_config will be searched for and used to help locate the
+# library and header file.  It will also be used to set
+# <name>_<component>_VERSION.
+#
+# Note that if version information is found via pkg-config,
+# <name>_<component>_FIND_VERSION can be set to require a particular version
+# for each component.
+#
+# If SKIP_DEPENDENCY_HANDLING is not set, the INTERFACE_LINK_LIBRARIES property
+# of the imported target for <component> will be set to contain the imported
+# targets for the components listed in <name>_<component>_component_deps.
+# <component>_FOUND will also be set to false if any of the components in
+# <name>_<component>_component_deps are not found.  This requires the components
+# in <name>_<component>_component_deps to be listed before <component> in the
+# COMPONENTS argument.
+#
+# The following variables will be set:
+#
+# ``<name>_TARGETS``
+#   the imported targets
+# ``<name>_LIBRARIES``
+#   the found libraries
+# ``<name>_INCLUDE_DIRS``
+#   the combined required include directories for the components
+# ``<name>_DEFINITIONS``
+#   the "other" CFLAGS provided by pkg-config, if any
+# ``<name>_VERSION``
+#   the value of ``<name>_<component>_VERSION`` for the first component that
+#   has this variable set (note that components are searched for in the order
+#   they are passed to the macro), although if it is already set, it will not
+#   be altered
+#
+# Note that these variables are never cleared, so if
+# ecm_find_package_handle_library_components() is called multiple times with
+# different components (typically because of multiple find_package() calls) then
+# ``<name>_TARGETS``, for example, will contain all the targets found in any
+# call (although no duplicates).
+#
+# Since pre-1.0.0.
 
-#[=======================================================================[.rst:
-ECMFindModuleHelpers
---------------------
-
-Helper macros for find modules: ``ecm_find_package_version_check()``,
-``ecm_find_package_parse_components()`` and
-``ecm_find_package_handle_library_components()``.
-
-::
-
-  ecm_find_package_version_check(<name>)
-
-Prints warnings if the CMake version or the project's required CMake version
-is older than that required by extra-cmake-modules.
-
-::
-
-  ecm_find_package_parse_components(<name>
-      RESULT_VAR <variable>
-      KNOWN_COMPONENTS <component1> [<component2> [...]]
-      [SKIP_DEPENDENCY_HANDLING])
-
-This macro will populate <variable> with a list of components found in
-<name>_FIND_COMPONENTS, after checking that all those components are in the
-list of ``KNOWN_COMPONENTS``; if there are any unknown components, it will print
-an error or warning (depending on the value of <name>_FIND_REQUIRED) and call
-``return()``.
-
-The order of components in <variable> is guaranteed to match the order they
-are listed in the ``KNOWN_COMPONENTS`` argument.
-
-If ``SKIP_DEPENDENCY_HANDLING`` is not set, for each component the variable
-<name>_<component>_component_deps will be checked for dependent components.
-If <component> is listed in <name>_FIND_COMPONENTS, then all its (transitive)
-dependencies will also be added to <variable>.
-
-::
-
-  ecm_find_package_handle_library_components(<name>
-      COMPONENTS <component> [<component> [...]]
-      [SKIP_DEPENDENCY_HANDLING])
-      [SKIP_PKG_CONFIG])
-
-Creates an imported library target for each component.  The operation of this
-macro depends on the presence of a number of CMake variables.
-
-The <name>_<component>_lib variable should contain the name of this library,
-and <name>_<component>_header variable should contain the name of a header
-file associated with it (whatever relative path is normally passed to
-'#include'). <name>_<component>_header_subdir variable can be used to specify
-which subdirectory of the include path the headers will be found in.
-``ecm_find_package_components()`` will then search for the library
-and include directory (creating appropriate cache variables) and create an
-imported library target named <name>::<component>.
-
-Additional variables can be used to provide additional information:
-
-If ``SKIP_PKG_CONFIG``, the <name>_<component>_pkg_config variable is set, and
-pkg-config is found, the pkg-config module given by
-<name>_<component>_pkg_config will be searched for and used to help locate the
-library and header file.  It will also be used to set
-<name>_<component>_VERSION.
-
-Note that if version information is found via pkg-config,
-<name>_<component>_FIND_VERSION can be set to require a particular version
-for each component.
-
-If ``SKIP_DEPENDENCY_HANDLING`` is not set, the ``INTERFACE_LINK_LIBRARIES`` property
-of the imported target for <component> will be set to contain the imported
-targets for the components listed in <name>_<component>_component_deps.
-<component>_FOUND will also be set to ``FALSE`` if any of the components in
-<name>_<component>_component_deps are not found.  This requires the components
-in <name>_<component>_component_deps to be listed before <component> in the
-``COMPONENTS`` argument.
-
-The following variables will be set:
-
-``<name>_TARGETS``
-  the imported targets
-``<name>_LIBRARIES``
-  the found libraries
-``<name>_INCLUDE_DIRS``
-  the combined required include directories for the components
-``<name>_DEFINITIONS``
-  the "other" CFLAGS provided by pkg-config, if any
-``<name>_VERSION``
-  the value of ``<name>_<component>_VERSION`` for the first component that
-  has this variable set (note that components are searched for in the order
-  they are passed to the macro), although if it is already set, it will not
-  be altered
-
-.. note::
-  These variables are never cleared, so if
-  ``ecm_find_package_handle_library_components()`` is called multiple times with
-  different components (typically because of multiple ``find_package()`` calls) then
-  ``<name>_TARGETS``, for example, will contain all the targets found in any
-  call (although no duplicates).
-
-Since pre-1.0.0.
-#]=======================================================================]
+#=============================================================================
+# Copyright 2014 Alex Merry <alex.merry@kde.org>
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. The name of the author may not be used to endorse or promote products
+#    derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 macro(ecm_find_package_version_check module_name)
-    if(CMAKE_VERSION VERSION_LESS 3.16.0)
-        message(FATAL_ERROR "CMake 3.16.0 is required by Find${module_name}.cmake")
+    if(CMAKE_VERSION VERSION_LESS 2.8.12)
+        message(FATAL_ERROR "CMake 2.8.12 is required by Find${module_name}.cmake")
     endif()
-    if(CMAKE_MINIMUM_REQUIRED_VERSION VERSION_LESS 3.16.0)
-        message(AUTHOR_WARNING "Your project should require at least CMake 3.16.0 to use Find${module_name}.cmake")
+    if(CMAKE_MINIMUM_REQUIRED_VERSION VERSION_LESS 2.8.12)
+        message(AUTHOR_WARNING "Your project should require at least CMake 2.8.12 to use Find${module_name}.cmake")
     endif()
 endmacro()
 
@@ -223,7 +243,10 @@ macro(ecm_find_package_handle_library_components module_name)
             set(${module_name}_VERSION ${${module_name}_${ecm_fpwc_comp}_VERSION})
         endif()
 
-        set(FPHSA_NAME_MISMATCHED 1)
+        set(_name_mismatched_arg)
+        if(NOT CMAKE_VERSION VERSION_LESS 3.17)
+            set(_name_mismatched_arg NAME_MISMATCHED)
+        endif()
         find_package_handle_standard_args(${module_name}_${ecm_fpwc_comp}
             FOUND_VAR
                 ${module_name}_${ecm_fpwc_comp}_FOUND
@@ -233,8 +256,8 @@ macro(ecm_find_package_handle_library_components module_name)
                 ${ecm_fpwc_dep_vars}
             VERSION_VAR
                 ${module_name}_${ecm_fpwc_comp}_VERSION
+            ${_name_mismatched_arg}
             )
-        unset(FPHSA_NAME_MISMATCHED)
 
         mark_as_advanced(
             ${module_name}_${ecm_fpwc_comp}_LIBRARY

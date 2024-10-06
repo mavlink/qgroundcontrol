@@ -65,7 +65,6 @@ jobs:
           for package in *.pkg ;
             do sudo installer -verbose -pkg "$package" -target /
           done
-          echo "PKG_CONFIG_PATH=/Library/Frameworks/GStreamer.framework/lib/pkgconfig:${{ env.PKG_CONFIG_PATH }}" >> "$GITHUB_ENV"
 
       - name: Set Up Cache
         uses: hendrikmuhs/ccache-action@v1.2
