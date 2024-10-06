@@ -31,7 +31,7 @@ public:
     Q_INVOKABLE virtual void disconnect() = 0;
 
     virtual bool isConnected() const = 0;
-    virtual bool isLogReplay() { return false; }
+    virtual bool isLogReplay() const { return false; }
     virtual bool isSecureConnection() { return false; } ///< Returns true if the connection is secure (e.g. USB, wired ethernet)
 
     SharedLinkConfigurationPtr linkConfiguration() { return _config; }
