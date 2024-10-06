@@ -25,6 +25,7 @@ runs:
       run: git clone --depth 1 --branch ${{ inputs.gst_version }} https://github.com/GStreamer/gstreamer.git
       shell: bash
 
+    # macos https://github.com/Homebrew/homebrew-core/blob/4e00e17ab49b90949c27cf43a873ca923f3735aa/Formula/g/gstreamer.rb
     - name: Configure GStreamer
       working-directory: ${{ inputs.working_directory }}/gstreamer
       run: meson setup

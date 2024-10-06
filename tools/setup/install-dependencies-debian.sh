@@ -109,6 +109,7 @@ DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
     libgles2-mesa-dev \
     libglu1-mesa-dev \
     libglfw3-dev \
+    libgraphene-1.0-dev \
     libopenal-dev \
     libpulse-dev \
     libsdl2-dev \
