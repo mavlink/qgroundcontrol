@@ -192,7 +192,7 @@ GStreamer::initialize(int argc, char* argv[], int debuglevel)
     // qgcputenv("GST_PLUGIN_SYSTEM_PATH", "C:/gstreamer/1.0/msvc_x86_64", "/lib/gstreamer-1.0");
     qgcputenv("GST_PLUGIN_PATH_1_0", currentDir, "");
     qgcputenv("GST_PLUGIN_PATH", currentDir, "");
-#elif defined(Q_OS_LINUX)
+#elif defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
     // const QString currentDir = QCoreApplication::applicationDirPath();
     // qgcputenv("GST_REGISTRY_REUSE_PLUGIN_SCANNER", "no", "");
     // qgcputenv("GST_PLUGIN_SCANNER", currentDir, "/../lib/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner");

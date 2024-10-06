@@ -47,6 +47,3 @@ target_link_libraries(GStreamerReceiver
 )
 
 target_compile_definitions(QGC PUBLIC QGC_GST_STREAMING)
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    target_compile_definitions(GStreamerReceiver PRIVATE QGC_INSTALL_RELEASE)
-endif()
