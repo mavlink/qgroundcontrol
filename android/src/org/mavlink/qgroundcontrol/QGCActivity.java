@@ -28,6 +28,8 @@ import android.os.storage.StorageVolume;
 import android.util.Log;
 import android.view.WindowManager;
 
+// import org.freedesktop.gstreamer.GStreamer;
+
 import com.hoho.android.usbserial.driver.*;
 import com.hoho.android.usbserial.util.*;
 
@@ -144,7 +146,7 @@ public class QGCActivity extends QtActivity
 
     public void onInit(int status)
     {
-
+        // System.loadLibrary("gstreamer_android");
     }
 
     @Override
@@ -160,6 +162,12 @@ public class QGCActivity extends QtActivity
         _setupUsbPermissionIntent();
 
         m_usbManager = (UsbManager) m_instance.getSystemService(Context.USB_SERVICE);
+
+        // try {
+        //    GStreamer.init(this);
+        // } catch (final Exception ex) {
+        //    Log.e(TAG, "Exception GStreamer.init(this)", ex);
+        // }
     }
 
     @Override

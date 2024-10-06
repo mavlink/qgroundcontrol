@@ -18,7 +18,5 @@ class GLVideoItemStub : public QQuickItem
 
 public:
     GLVideoItemStub(QQuickItem *parent = nullptr) :
-        QQuickItem(parent)
-    {}
-    ~GLVideoItemStub() = default;
+        QQuickItem(parent) {}
 };
