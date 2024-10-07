@@ -242,12 +242,8 @@ bool JoystickAndroid::_getHat(int hat,int i) {
     }
 }
 
-static JoystickManager *_manager = nullptr;
-
 //helper method
-bool JoystickAndroid::init(JoystickManager *manager) {
-    _manager = manager;
-
+bool JoystickAndroid::init() {
     //this gets list of all possible buttons - this is needed to check how many buttons our gamepad supports
     //instead of the whole logic below we could have just a simple array of hardcoded int values as these 'should' not change
 
@@ -296,10 +292,8 @@ static void jniUpdateAvailableJoysticks(JNIEnv *envA, jobject thizA)
     Q_UNUSED(envA);
     Q_UNUSED(thizA);
 
-    if (_manager != nullptr) {
-        qCDebug(JoystickLog) << "jniUpdateAvailableJoysticks triggered";
-        emit _manager->updateAvailableJoysticksSignal();
-    }
+    qCDebug(JoystickLog) << "jniUpdateAvailableJoysticks triggered";
+    emit JoystickManager::instance()->updateAvailableJoysticksSignal();
 }
 
 void JoystickAndroid::setNativeMethods()

@@ -21,8 +21,6 @@
 
 Q_DECLARE_LOGGING_CATEGORY(JoystickConfigControllerLog)
 
-class JoystickManager;
-
 class JoystickConfigController : public FactPanelController
 {
     Q_OBJECT
@@ -233,7 +231,6 @@ private:
     QElapsedTimer   _stickDetectSettleElapsed;
 
     QString             _statusText;
-    JoystickManager*    _joystickManager;
 
     static constexpr int _calCenterPoint =       0;
     static constexpr int _calValidMinValue =     -32768;     ///< Largest valid minimum axis value
