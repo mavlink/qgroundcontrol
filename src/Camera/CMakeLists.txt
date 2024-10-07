@@ -1,6 +1,8 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Network Qml Xml)
 
 qt_add_library(Camera STATIC
+    CameraMetaData.cc
+    CameraMetaData.h
     MavlinkCameraControl.cc
     MavlinkCameraControl.h
     QGCCameraIO.cc
@@ -24,6 +26,7 @@ target_link_libraries(Camera
         FirmwarePlugin
         Joystick
         Settings
+        Utilities
         Vehicle
         VideoManager
     PUBLIC
