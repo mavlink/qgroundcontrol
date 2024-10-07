@@ -301,7 +301,7 @@ QQmlApplicationEngine* QGCCorePlugin::createQmlApplicationEngine(QObject* parent
         { "eventMonitor", QVariant::fromValue(&eventMonitor) }
     }); */
     qmlEngine->addImportPath("qrc:/qml");
-    qmlEngine->rootContext()->setContextProperty("joystickManager", qgcApp()->toolbox()->joystickManager());
+    qmlEngine->rootContext()->setContextProperty("joystickManager", JoystickManager::instance());
     qmlEngine->rootContext()->setContextProperty("debugMessageModel", AppMessages::getModel());
     return qmlEngine;
 }

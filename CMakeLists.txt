@@ -156,6 +156,8 @@ if(ANDROID)
     endif()
 endif()
 
+set(QT_SILENCE_MISSING_DEPENDENCY_TARGET_WARNING ON)
+
 find_package(Qt6
     REQUIRED
     COMPONENTS
