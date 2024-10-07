@@ -28,6 +28,9 @@
 // AutoPilotPlugins
 // #include "RadioConfigTest.h"
 
+// Camera
+#include "QGCCameraManagerTest.h"
+
 // Comms
 #include "QGCSerialPortInfoTest.h"
 
@@ -129,6 +132,9 @@ int runTests(bool stress, QStringView unitTestOptions)
 
     // AutoPilotPlugins
     // UT_REGISTER_TEST(RadioConfigTest)
+
+    // Camera
+    UT_REGISTER_TEST(QGCCameraManagerTest)
 
     // Comms
     UT_REGISTER_TEST(QGCSerialPortInfoTest)

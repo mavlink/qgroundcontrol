@@ -41,6 +41,9 @@ add_qgc_test(AudioOutputTest)
 # add_subdirectory(AutoPilotPlugins)
 # add_qgc_test(RadioConfigTest)
 
+add_subdirectory(Camera)
+add_qgc_test(QGCCameraManagerTest)
+
 add_subdirectory(Comms)
 add_qgc_test(QGCSerialPortInfoTest)
 
@@ -133,6 +136,7 @@ target_link_libraries(qgctest
         ADSBTest
         AnalyzeViewTest
         AudioTest
+        CameraTest
         CommsTest
         CompressionTest
         FactSystemTest
