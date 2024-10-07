@@ -9,22 +9,18 @@
 
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.Palette
-import QGroundControl.FactSystem
-import QGroundControl.FactControls
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
 import QGroundControl.Controllers
 
 AnalyzePage {
-    id:                 mavlinkConsolePage
-    pageComponent:      pageComponent
-    pageDescription:    qsTr("Provides a connection to the vehicle's system shell.")
-    allowPopout:        true
+    id: root
+    pageComponent: pageComponent
+    pageDescription: qsTr("Provides a connection to the vehicle's system shell.")
+    allowPopout: true
 
     property bool isLoaded: false
 
@@ -32,40 +28,26 @@ AnalyzePage {
     // E.g. for android see https://bugreports.qt.io/browse/QTBUG-40803
     readonly property bool _separateCommandInput: ScreenTools.isMobile
 
-    MAVLinkConsoleController {
-        id: conController
-    }
+    MAVLinkConsoleController { id: conController }
 
     Component {
         id: pageComponent
 
         ColumnLayout {
-            id:     consoleColumn
             height: availableHeight
-            width:  availableWidth
-
-            Connections {
-                target: conController
-
-                onDataChanged: {
-                    if (isLoaded) {
-                        // rate-limit updates to reduce CPU load
-                        updateTimer.start();
-                    }
-                }
-            }
-
+            width: availableWidth
             property int _consoleOutputLen: 0
 
             function scrollToBottom() {
-                if (flickable.contentHeight > flickable.height)
-                    flickable.contentY = flickable.contentHeight-flickable.height
+                if (flickable.contentHeight > flickable.height) {
+                    flickable.contentY = flickable.contentHeight - flickable.height
+                }
             }
-            function getCommand() {
-                return textConsole.getText(_consoleOutputLen, textConsole.length)
-            }
+
+            function getCommand() { return textConsole.getText(_consoleOutputLen, textConsole.length) }
+
             function getCommandAndClear() {
-                var command = getCommand()
+                const command = getCommand()
                 textConsole.remove(_consoleOutputLen, textConsole.length)
                 return command
             }
@@ -74,7 +56,7 @@ AnalyzePage {
                 // we need to handle a few cases here:
                 // in the general form we have: <command_pre><cursor><command_post>
                 // and the clipboard may contain newlines
-                var cursor = textConsole.cursorPosition - _consoleOutputLen
+                const cursor = textConsole.cursorPosition - _consoleOutputLen
                 var command = getCommandAndClear()
                 var command_pre = ""
                 var command_post = command
@@ -87,6 +69,17 @@ AnalyzePage {
                 textConsole.cursorPosition = textConsole.length - command_post.length
             }
 
+            Connections {
+                target: conController
+
+                onDataChanged: {
+                    if (isLoaded) {
+                        // rate-limit updates to reduce CPU load
+                        updateTimer.start();
+                    }
+                }
+            }
+
             Timer {
                 id: updateTimer
                 interval: 30
@@ -96,8 +89,8 @@ AnalyzePage {
                     // only update if scroll bar is at the bottom
                     if (flickable.atYEnd) {
                         // backup & restore cursor & command
-                        var command = getCommand()
-                        var cursor = textConsole.cursorPosition - _consoleOutputLen
+                        const command = getCommand()
+                        const cursor = textConsole.cursorPosition - _consoleOutputLen
                         textConsole.text = conController.text
                         _consoleOutputLen = textConsole.length
                         textConsole.insert(textConsole.length, command)
@@ -114,29 +107,29 @@ AnalyzePage {
             }
 
             QGCFlickable {
-                id:                 flickable
-                Layout.fillWidth:   true
-                Layout.fillHeight:  true
-                contentWidth:       textConsole.width
-                contentHeight:      textConsole.height
+                id: flickable
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                contentWidth: textConsole.width
+                contentHeight: textConsole.height
 
                 TextArea.flickable: TextArea {
-                    id:                      textConsole
-                    width:                   availableWidth
-                    wrapMode:                Text.WordWrap
-                    readOnly:                _separateCommandInput
-                    textFormat:              TextEdit.RichText
-                    inputMethodHints:        Qt.ImhNoAutoUppercase | Qt.ImhMultiLine
-                    text:                    "> "
-                    focus:                   true
-                    color:                  qgcPal.text
-                    selectedTextColor:      qgcPal.windowShade
-                    selectionColor:         qgcPal.text
-                    font.pointSize:         ScreenTools.defaultFontPointSize
-                    font.family:            ScreenTools.fixedFontFamily
+                    id: textConsole
+                    width: availableWidth
+                    wrapMode: Text.WordWrap
+                    readOnly: _separateCommandInput
+                    textFormat: TextEdit.RichText
+                    inputMethodHints: Qt.ImhNoAutoUppercase | Qt.ImhMultiLine
+                    text: "> "
+                    focus: true
+                    color: qgcPal.text
+                    selectedTextColor: qgcPal.windowShade
+                    selectionColor: qgcPal.text
+                    font.pointSize: ScreenTools.defaultFontPointSize
+                    font.family: ScreenTools.fixedFontFamily
 
                     Component.onCompleted: {
-                        isLoaded = true
+                        root.isLoaded = true
                         _consoleOutputLen = textConsole.length
                         textConsole.cursorPosition = _consoleOutputLen
                         if (!_separateCommandInput) {
@@ -147,11 +140,13 @@ AnalyzePage {
                     background: Rectangle { color: qgcPal.windowShade }
 
                     Keys.onPressed: (event) => {
-                        if (event.key == Qt.Key_Tab) { // ignore tabs
+                        // ignore tabs
+                        if (event.key == Qt.Key_Tab) {
                             event.accepted = true
                         }
+
+                        // ignore for now
                         if (event.matches(StandardKey.Cut)) {
-                            // ignore for now
                             event.accepted = true
                         }
 
@@ -194,25 +189,31 @@ AnalyzePage {
                             if (textConsole.selectionStart < _consoleOutputLen) {
                                 textConsole.select(_consoleOutputLen, textConsole.selectionEnd)
                             }
+
                             if (textConsole.cursorPosition < _consoleOutputLen) {
                                 textConsole.cursorPosition = textConsole.length
                             }
                         }
 
-                        if (event.key == Qt.Key_Left) {
+                        switch (event.key) {
+                        case Qt.Key_Left:
                             // don't move beyond current command
                             if (textConsole.cursorPosition == _consoleOutputLen) {
                                 event.accepted = true
                             }
-                        }
-                        if (event.key == Qt.Key_Backspace) {
+                            break;
+                        case Qt.Key_Backspace:
                             if (textConsole.cursorPosition <= _consoleOutputLen) {
                                 event.accepted = true
                             }
-                        }
-                        if (event.key == Qt.Key_Enter || event.key == Qt.Key_Return) {
+                            break;
+                        case Qt.Key_Enter:
+                        case Qt.Key_Return:
                             conController.sendCommand(getCommandAndClear())
                             event.accepted = true
+                            break;
+                        default:
+                            break;
                         }
 
                         if (event.matches(StandardKey.Paste)) {
@@ -222,12 +223,12 @@ AnalyzePage {
 
                         // command history
                         if (event.key == Qt.Key_Up) {
-                            var command = conController.historyUp(getCommandAndClear())
+                            const command = conController.historyUp(getCommandAndClear())
                             textConsole.insert(textConsole.length, command)
                             textConsole.cursorPosition = textConsole.length
                             event.accepted = true
                         } else if (event.key == Qt.Key_Down) {
-                            var command = conController.historyDown(getCommandAndClear())
+                            const command = conController.historyDown(getCommandAndClear())
                             textConsole.insert(textConsole.length, command)
                             textConsole.cursorPosition = textConsole.length
                             event.accepted = true
@@ -237,25 +238,26 @@ AnalyzePage {
             }
 
             RowLayout {
-                Layout.fillWidth:   true
-                visible:            _separateCommandInput
+                Layout.fillWidth: true
+                visible: _separateCommandInput
+
                 QGCTextField {
-                    id:               commandInput
+                    id: commandInput
                     Layout.fillWidth: true
                     placeholderText:  qsTr("Enter Commands here...")
                     inputMethodHints: Qt.ImhNoAutoUppercase
+                    onAccepted: sendCommand()
 
                     function sendCommand() {
                         conController.sendCommand(text)
                         text = ""
                         scrollToBottom()
                     }
-                    onAccepted: sendCommand()
+
                 }
 
                 QGCButton {
-                    id:        sendButton
-                    text:      qsTr("Send")
+                    text: qsTr("Send")
                     onClicked: commandInput.sendCommand()
                 }
             }
