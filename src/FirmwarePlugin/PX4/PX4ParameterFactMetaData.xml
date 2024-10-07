@@ -12246,6 +12246,12 @@
       <unit>m/s</unit>
       <decimal>1</decimal>
     </parameter>
+    <parameter name="EKF2_VEL_LIM" default="100" type="FLOAT">
+      <short_desc>Velocity limit</short_desc>
+      <max>299792458</max>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+    </parameter>
     <parameter name="EKF2_WIND_NSD" default="0.05" type="FLOAT">
       <short_desc>Process noise spectral density for wind velocity prediction</short_desc>
       <long_desc>When unaided, the wind estimate uncertainty (1-sigma, in m/s) increases by this amount every second.</long_desc>
