@@ -17,7 +17,6 @@ ColumnLayout {
     property real   _margin:            ScreenTools.defaultFontPixelWidth / 2
     property real   _fieldWidth:        ScreenTools.defaultFontPixelWidth * 10.5
     property var    _vehicle:           QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
-    property var    _vehicleCameraList: _vehicle ? _vehicle.staticCameraList : []
 
     Component.onCompleted: {
         cameraBrandCombo.selectCurrentBrand()

@@ -12,21 +12,27 @@
 #include "QmlObjectListModel.h"
 #include "MavlinkCameraControl.h"
 
-#include <QtCore/QObject>
-#include <QtCore/QTimer>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QObject>
+#include <QtCore/QTimer>
+#include <QtCore/QVariantList>
 
 Q_DECLARE_LOGGING_CATEGORY(CameraManagerLog)
 
 class Joystick;
 class SimulatedCameraControl;
+class Vehicle;
+class CameraMetaData;
+class QGCCameraManagerTest;
 
 //-----------------------------------------------------------------------------
 /// Camera Manager
 class QGCCameraManager : public QObject
 {
     Q_OBJECT
+
+    friend class QGCCameraManagerTest;
 public:
     QGCCameraManager(Vehicle* vehicle);
     virtual ~QGCCameraManager();
@@ -36,7 +42,6 @@ public:
     Q_PROPERTY(MavlinkCameraControl*    currentCameraInstance   READ currentCameraInstance                          NOTIFY currentCameraChanged)
     Q_PROPERTY(int                      currentCamera           READ currentCamera      WRITE  setCurrentCamera     NOTIFY currentCameraChanged)
 
-    
     virtual QmlObjectListModel*     cameras             ()          { return &_cameras; }       ///< List of cameras provided by current vehicle
     virtual QStringList             cameraLabels        ()          { return _cameraLabels; }   ///< Camera names to show the user (for selection)
     virtual int                     currentCamera       ()          { return _currentCameraIndex; }  ///< Current selected camera
@@ -44,6 +49,9 @@ public:
     virtual void                    setCurrentCamera    (int sel);
     virtual QGCVideoStreamInfo*     currentStreamInstance();
     virtual QGCVideoStreamInfo*     thermalStreamInstance();
+
+    /// Returns a list of CameraMetaData objects for available cameras on the vehicle.
+    virtual const QVariantList &cameraList();
 
     // This is public to avoid some circular include problems caused by statics
     class CameraStruct : public QObject {
@@ -77,8 +85,6 @@ protected slots:
     virtual void    _toggleVideoRecording   ();
 
 protected:
-
-
     virtual MavlinkCameraControl* _findCamera(int id);
     virtual void    _requestCameraInfo      (CameraStruct* cameraInfo);
     virtual void    _handleHeartbeat        (const mavlink_message_t& message);
@@ -94,6 +100,8 @@ protected:
     virtual void    _handleTrackingImageStatus(const mavlink_message_t& message);
     virtual void    _addCameraControlToLists(MavlinkCameraControl* cameraControl);
 
+    static QList<CameraMetaData*> _parseCameraMetaData(const QString &jsonFilePath);
+
     Vehicle*            _vehicle            = nullptr;
     Joystick*           _activeJoystick     = nullptr;
     bool                _vehicleReadyState  = false;
@@ -106,4 +114,5 @@ protected:
     QTimer              _camerasLostHeartbeatTimer;
     QMap<QString, CameraStruct*> _cameraInfoRequest;
     SimulatedCameraControl* _simulatedCameraControl = nullptr;
+    static QVariantList _cameraList; ///< Standard QGC camera list
 };
