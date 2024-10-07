@@ -12,15 +12,17 @@
 #include "QmlObjectListModel.h"
 #include "MavlinkCameraControl.h"
 
-#include <QtCore/QObject>
-#include <QtCore/QTimer>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QObject>
+#include <QtCore/QTimer>
+#include <QtCore/QVariantList>
 
 Q_DECLARE_LOGGING_CATEGORY(CameraManagerLog)
 
 class Joystick;
 class SimulatedCameraControl;
+class Vehicle;
 
 //-----------------------------------------------------------------------------
 /// Camera Manager
@@ -36,7 +38,6 @@ public:
     Q_PROPERTY(MavlinkCameraControl*    currentCameraInstance   READ currentCameraInstance                          NOTIFY currentCameraChanged)
     Q_PROPERTY(int                      currentCamera           READ currentCamera      WRITE  setCurrentCamera     NOTIFY currentCameraChanged)
 
-    
     virtual QmlObjectListModel*     cameras             ()          { return &_cameras; }       ///< List of cameras provided by current vehicle
     virtual QStringList             cameraLabels        ()          { return _cameraLabels; }   ///< Camera names to show the user (for selection)
     virtual int                     currentCamera       ()          { return _currentCameraIndex; }  ///< Current selected camera
@@ -44,6 +45,9 @@ public:
     virtual void                    setCurrentCamera    (int sel);
     virtual QGCVideoStreamInfo*     currentStreamInstance();
     virtual QGCVideoStreamInfo*     thermalStreamInstance();
+
+    /// Returns a list of CameraMetaData objects for available cameras on the vehicle.
+    virtual const QVariantList &cameraList();
 
     // This is public to avoid some circular include problems caused by statics
     class CameraStruct : public QObject {
@@ -106,4 +110,5 @@ protected:
     QTimer              _camerasLostHeartbeatTimer;
     QMap<QString, CameraStruct*> _cameraInfoRequest;
     SimulatedCameraControl* _simulatedCameraControl = nullptr;
+    static QVariantList _cameraList; ///< Standard QGC camera list
 };
