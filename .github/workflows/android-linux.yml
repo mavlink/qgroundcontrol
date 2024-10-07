@@ -100,3 +100,10 @@ jobs:
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           source: ''
           github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      # - name: Deploy to Play Store
+      #   if: matrix.BuildType == 'Release'
+      #   uses: ./.github/actions/playstore
+      #   with:
+      #     artifact_name: ${{ runner.temp }}/shadow_build_dir/${{ env.ARTIFACT }}
+      #     service_account_json: ${{ secrets.SERVICE_ACCOUNT }}
