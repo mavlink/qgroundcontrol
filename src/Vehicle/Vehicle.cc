@@ -3257,8 +3257,8 @@ const QVariantList& Vehicle::modeIndicators()
 
 const QVariantList& Vehicle::staticCameraList() const
 {
-    if (_firmwarePlugin) {
-        return _firmwarePlugin->cameraList(this);
+    if (_cameraManager) {
+        return _cameraManager->cameraList();
     }
     static QVariantList emptyList;
     return emptyList;

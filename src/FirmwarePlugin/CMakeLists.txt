@@ -8,8 +8,6 @@ endif()
 find_package(Qt6 REQUIRED COMPONENTS Core Positioning)
 
 qt_add_library(FirmwarePlugin STATIC
-    CameraMetaData.cc
-    CameraMetaData.h
     FirmwarePlugin.cc
     FirmwarePlugin.h
     FirmwarePluginFactory.cc
