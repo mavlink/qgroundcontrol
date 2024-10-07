@@ -20,46 +20,48 @@ import QGroundControl.Controls
 import QGroundControl.Controllers
 import QGroundControl.ScreenTools
 
+import "."
+
 AnalyzePage {
     id: root
-    headerComponent:    headerComponent
-    pageComponent:      pageComponent
-    allowPopout:        true
+    headerComponent: headerComponent
+    pageComponent: pageComponent
+    allowPopout: true
 
-    property var    curSystem:          controller ? controller.activeSystem : null
-    property var    curMessage:         curSystem && curSystem.messages.count ? curSystem.messages.get(curSystem.selected) : null
-    property int    curCompID:          0
-    property real   maxButtonWidth:     0
+    property var curSystem: controller ? controller.activeSystem : null
+    property var curMessage: (curSystem && curSystem.messages.count) ? curSystem.messages.get(curSystem.selected) : null
+    property int curCompID: 0
+    property real maxButtonWidth: 0
 
-    MAVLinkInspectorController {
-        id: controller
-    }
+    MAVLinkInspectorController { id: controller }
+    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
     Component {
         id:  headerComponent
-        //-- Header
+
         RowLayout {
-            id:                 header
-            anchors.left:       parent.left
-            anchors.right:      parent.right
-            QGCLabel {
-                text:           qsTr("Inspect real time MAVLink messages.")
-            }
+            anchors.left: parent.left
+            anchors.right: parent.right
+
+            QGCLabel { text: qsTr("Inspect real time MAVLink messages.") }
+
             RowLayout {
-                Layout.alignment:   Qt.AlignRight
-                visible:            curSystem ? controller.systemNames.length > 1 || curSystem.compIDsStr.length > 2 : false
+                Layout.alignment: Qt.AlignRight
+                visible: curSystem ? ((controller.systemNames.length > 1) || (curSystem.compIDsStr.length > 2)) : false
+
                 QGCComboBox {
-                    id:             systemCombo
-                    model:          controller.systemNames
+                    id: systemCombo
+                    model: controller.systemNames
                     sizeToContents: true
-                    visible:        controller.systemNames.length > 1
-                    onActivated: (index) =>  { controller.setActiveSystem(controller.systems.get(index).id) }
+                    visible: controller.systemNames.length > 1
+
+                    onActivated: (index) => { controller.setActiveSystem(controller.systems.get(index).id) }
 
                     Connections {
                         target: controller
                         onActiveSystemChanged: {
-                            for (var systemIndex=0; systemIndex<controller.systems.count; systemIndex++) {
-                                if (controller.systems.get(systemIndex) == curSystem) {
+                            for (var systemIndex = 0; systemIndex < controller.systems.count; systemIndex++) {
+                                if (controller.systems.get(systemIndex) === curSystem) {
                                     systemCombo.currentIndex = systemIndex
                                     curCompID = 0
                                     cidCombo.currentIndex = 0
@@ -69,17 +71,16 @@ AnalyzePage {
                         }
                     }
                 }
+
                 QGCComboBox {
-                    id:             cidCombo
-                    model:          curSystem ? curSystem.compIDsStr : []
+                    id: cidCombo
+                    model: curSystem ? curSystem.compIDsStr : []
                     sizeToContents: true
-                    visible:        curSystem ? curSystem.compIDsStr.length > 2 : false
+                    visible: curSystem ? (curSystem.compIDsStr.length > 2) : false
+
                     onActivated: (index) => {
-                        if(curSystem && curSystem.compIDsStr.length > 1) {
-                            if(index < 1)
-                                curCompID = 0
-                            else
-                                curCompID = curSystem.compIDs[index - 1]
+                        if (curSystem && (curSystem.compIDsStr.length > 1)) {
+                            curCompID = (index < 1) ? 0 : curSystem.compIDs[index - 1]
                         }
                     }
                 }
@@ -88,64 +89,69 @@ AnalyzePage {
     }
 
     Component {
-        id:                         pageComponent
+        id: pageComponent
+
         Row {
-            width:                  availableWidth
-            height:                 availableHeight
-            spacing:                ScreenTools.defaultFontPixelWidth
-            //-- Messages (Buttons)
+            width: availableWidth
+            height: availableHeight
+            spacing: ScreenTools.defaultFontPixelWidth
+
             QGCFlickable {
-                id:                 buttonGrid
+                id: buttonGrid
                 flickableDirection: Flickable.VerticalFlick
-                width:              maxButtonWidth
-                height:             parent.height
-                contentWidth:       width
-                contentHeight:      buttonCol.height
+                width: maxButtonWidth
+                height: parent.height
+                contentWidth: width
+                contentHeight: buttonCol.height
+
                 ColumnLayout {
-                    id:             buttonCol
-                    anchors.left:   parent.left
-                    anchors.right:  parent.right
-                    spacing:        ScreenTools.defaultFontPixelHeight * 0.25
+                    id: buttonCol
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    spacing: ScreenTools.defaultFontPixelHeight * 0.25
+
                     Repeater {
-                        model:      curSystem ? curSystem.messages : []
-                        delegate:   MAVLinkMessageButton {
-                            text:       object.name + (object.fieldSelected ?  " *" : "")
-                            compID:     object.compId
-                            checked:    curSystem ? (curSystem.selected === index) : false
-                            messageHz:  object.actualRateHz
-                            visible:    curCompID === 0 || curCompID === compID
-                            onClicked: {
-                                curSystem.selected = index
-                            }
+                        model: curSystem ? curSystem.messages : []
+                        delegate: MAVLinkMessageButton {
+                            text: object.name + (object.fieldSelected ?  " *" : "")
+                            compID: object.compId
+                            checked: curSystem ? (curSystem.selected === index) : false
+                            messageHz: object.actualRateHz
+                            visible: ((curCompID === 0) || (curCompID === compID))
                             Layout.fillWidth: true
+
+                            onClicked: { curSystem.selected = index }
                         }
                     }
                 }
             }
-            //-- Message Data
+
             QGCFlickable {
-                id:                 messageGrid
-                visible:            curMessage !== null && (curCompID === 0 || curCompID === curMessage.compId)
+                visible: curMessage && ((curCompID === 0) || (curCompID === curMessage.compId))
                 flickableDirection: Flickable.VerticalFlick
-                width:              parent.width - buttonGrid.width - ScreenTools.defaultFontPixelWidth
-                height:             parent.height
-                contentWidth:       width
-                contentHeight:      messageCol.height
+                width: parent.width - buttonGrid.width - ScreenTools.defaultFontPixelWidth
+                height: parent.height
+                contentWidth: width
+                contentHeight: messageCol.height
+
                 Column {
-                    id:                 messageCol
-                    width:              parent.width
-                    spacing:            ScreenTools.defaultFontPixelHeight * 0.25
+                    id: messageCol
+                    width: parent.width
+                    spacing: ScreenTools.defaultFontPixelHeight * 0.25
+
                     GridLayout {
-                        columns:        2
-                        columnSpacing:  ScreenTools.defaultFontPixelWidth
-                        rowSpacing:     ScreenTools.defaultFontPixelHeight * 0.25
+                        columns: 2
+                        columnSpacing: ScreenTools.defaultFontPixelWidth
+                        rowSpacing: ScreenTools.defaultFontPixelHeight * 0.25
+
                         QGCLabel {
                             text: qsTr("Message:")
                             Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 20
                         }
+
                         QGCLabel {
                             color: qgcPal.buttonHighlight
-                            text: curMessage ? curMessage.name + ' (' + curMessage.id + ')' : ""
+                            text: curMessage ? (curMessage.name + ' (' + curMessage.id + ')') : ""
                         }
 
                         QGCLabel { text: qsTr("Component:") }
@@ -181,109 +187,111 @@ AnalyzePage {
                             ]
                             Layout.alignment: Qt.AlignLeft
                             sizeToContents: true
+
+                            onActivated: (index) => { controller.setMessageInterval(currentValue) }
+
                             Component.onCompleted: reset()
-                            onActivated: (index) => controller.setMessageInterval(currentValue)
+
                             function reset() { currentIndex = indexOfValue(0) }
+
                             Connections {
                                 target: root
                                 function onCurMessageChanged() { msgRateCombo.reset() }
                             }
+
                             Connections {
                                 target: curMessage
                                 function onTargetRateHzChanged() {
                                     const target_index = indexOfValue(curMessage.targetRateHz)
-                                    if(target_index != -1) {
+                                    if (target_index !== -1) {
                                         currentIndex = target_index
                                     }
                                 }
                             }
                         }
                     }
-                    Item { height: ScreenTools.defaultFontPixelHeight; width: 1 }
-                    //---------------------------------------------------------
-                    GridLayout {
-                        id:                 msgInfoGrid
-                        columns:            5
-                        columnSpacing:      ScreenTools.defaultFontPixelWidth  * 0.25
-                        rowSpacing:         ScreenTools.defaultFontPixelHeight * 0.25
-                        width:              parent.width
-                        QGCLabel {
-                            text:       qsTr("Name")
-                        }
-                        QGCLabel {
-                            text:       qsTr("Value")
-                        }
-                        QGCLabel {
-                            text:       qsTr("Type")
-                        }
-                        QGCLabel {
-                            text:       qsTr("Plot 1")
-                        }
-                        QGCLabel {
-                            text:       qsTr("Plot 2")
-                        }
 
-                        //---------------------------------------------------------
+                    Item { height: ScreenTools.defaultFontPixelHeight; width: 1 }
+
+                    GridLayout {
+                        id: msgInfoGrid
+                        columns: 5
+                        columnSpacing: ScreenTools.defaultFontPixelWidth  * 0.25
+                        rowSpacing: ScreenTools.defaultFontPixelHeight * 0.25
+                        width: parent.width
+
+                        QGCLabel { text: qsTr("Name") }
+                        QGCLabel { text: qsTr("Value") }
+                        QGCLabel { text: qsTr("Type") }
+                        QGCLabel { text: qsTr("Plot 1") }
+                        QGCLabel { text: qsTr("Plot 2") }
+
                         Rectangle {
-                            Layout.columnSpan:  5
-                            Layout.fillWidth:   true
-                            height:             1
-                            color:              qgcPal.text
+                            Layout.columnSpan: 5
+                            Layout.fillWidth: true
+                            height: 1
+                            color: qgcPal.text
                         }
-                        //---------------------------------------------------------
 
                         Repeater {
-                            model:      curMessage ? curMessage.fields : []
-                            delegate:   QGCLabel {
-                                Layout.row:         index + 2
-                                Layout.column:      0
+                            model: curMessage ? curMessage.fields : []
+                            delegate: QGCLabel {
+                                Layout.row: index + 2
+                                Layout.column: 0
                                 Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 20
-                                text:               object.name
+                                text: object.name
                             }
                         }
+
                         Repeater {
-                            model:      curMessage ? curMessage.fields : []
-                            delegate:   QGCLabel {
-                                Layout.row:         index + 2
-                                Layout.column:      1
+                            model: curMessage ? curMessage.fields : []
+                            delegate: QGCLabel {
+                                Layout.row: index + 2
+                                Layout.column: 1
                                 Layout.minimumWidth: msgInfoGrid.width * 0.25
                                 Layout.maximumWidth: msgInfoGrid.width * 0.25
-                                text:               object.value
-                                elide:              Text.ElideRight
+                                text: object.value
+                                elide: Text.ElideRight
                             }
                         }
+
                         Repeater {
-                            model:      curMessage ? curMessage.fields : []
-                            delegate:   QGCLabel {
-                                Layout.row:         index + 2
-                                Layout.column:      2
+                            model: curMessage ? curMessage.fields : []
+                            delegate: QGCLabel {
+                                Layout.row: index + 2
+                                Layout.column: 2
                                 Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 10
-                                text:               object.type
-                                elide:              Text.ElideRight
+                                text: object.type
+                                elide: Text.ElideRight
                             }
                         }
+
                         Repeater {
-                            model:      curMessage ? curMessage.fields : []
-                            delegate:   QGCCheckBox {
-                                Layout.row:         index + 2
-                                Layout.column:      3
-                                Layout.alignment:   Qt.AlignHCenter
+                            model: curMessage ? curMessage.fields : []
+                            delegate: QGCCheckBox {
+                                Layout.row: index + 2
+                                Layout.column: 3
+                                Layout.alignment: Qt.AlignHCenter
                                 enabled: {
-                                    if(checked)
+                                    if (checked) {
                                         return true
-                                    if(!object.selectable)
+                                    }
+                                    if (!object.selectable) {
                                         return false
-                                    if(object.series !== null)
+                                    }
+                                    if (object.series) {
                                         return false
-                                    if(chart1.chartController !== null) {
-                                        if(chart1.chartController.chartFields.length >= chart1.seriesColors.length)
+                                    }
+                                    if (chart1.chartController) {
+                                        if (chart1.chartController.chartFields.length >= chart1.seriesColors.length) {
                                             return false
+                                        }
                                     }
                                     return true;
                                 }
-                                checked:            object.series !== null && object.chartIndex === 0
+                                checked: object.series && (object.chartIndex === 0)
                                 onClicked: {
-                                    if(checked) {
+                                    if (checked) {
                                         chart1.addDimension(object)
                                     } else {
                                         chart1.delDimension(object)
@@ -291,28 +299,33 @@ AnalyzePage {
                                 }
                             }
                         }
+
                         Repeater {
-                            model:      curMessage ? curMessage.fields : []
-                            delegate:   QGCCheckBox {
+                            model: curMessage ? curMessage.fields : []
+                            delegate: QGCCheckBox {
                                 Layout.row:         index + 2
                                 Layout.column:      4
                                 Layout.alignment:   Qt.AlignHCenter
                                 enabled: {
-                                    if(checked)
+                                    if (checked) {
                                         return true
-                                    if(!object.selectable)
+                                    }
+                                    if (!object.selectable) {
                                         return false
-                                    if(object.series !== null)
+                                    }
+                                    if (object.series) {
                                         return false
-                                    if(chart2.chartController !== null) {
-                                        if(chart2.chartController.chartFields.length >= chart2.seriesColors.length)
+                                    }
+                                    if (chart2.chartController) {
+                                        if(chart2.chartController.chartFields.length >= chart2.seriesColors.length) {
                                             return false
+                                        }
                                     }
                                     return true;
                                 }
-                                checked:            object.series !== null && object.chartIndex === 1
+                                checked: object.series !== null && object.chartIndex === 1
                                 onClicked: {
-                                    if(checked) {
+                                    if (checked) {
                                         chart2.addDimension(object)
                                     } else {
                                         chart2.delDimension(object)
@@ -321,16 +334,19 @@ AnalyzePage {
                             }
                         }
                     }
+
                     Item { height: ScreenTools.defaultFontPixelHeight * 0.25; width: 1 }
+
                     MAVLinkChart {
-                        id:         chart1
-                        height:     ScreenTools.defaultFontPixelHeight * 20
-                        width:      parent.width
+                        id: chart1
+                        height: ScreenTools.defaultFontPixelHeight * 20
+                        width: parent.width
                     }
+
                     MAVLinkChart {
-                        id:         chart2
-                        height:     ScreenTools.defaultFontPixelHeight * 20
-                        width:      parent.width
+                        id: chart2
+                        height: ScreenTools.defaultFontPixelHeight * 20
+                        width: parent.width
                     }
                 }
             }

@@ -65,6 +65,8 @@
 		<file alias="MapSettings.qml">../src/UI/preferences/MapSettings.qml</file>
 		<file alias="MAVLinkConsolePage.qml">../src/AnalyzeView/MAVLinkConsolePage.qml</file>
 		<file alias="MAVLinkInspectorPage.qml">../src/AnalyzeView/MAVLinkInspectorPage.qml</file>
+		<file alias="MAVLinkChart.qml">../src/AnalyzeView/MAVLinkChart.qml</file>
+		<file alias="MAVLinkMessageButton.qml">../src/AnalyzeView/MAVLinkMessageButton.qml</file>
 		<file alias="PX4LogTransferSettings.qml">../src/UI/preferences/PX4LogTransferSettings.qml</file>
 		<file alias="MissionSettingsEditor.qml">../src/PlanView/MissionSettingsEditor.qml</file>
 		<file alias="MotorComponent.qml">../src/AutoPilotPlugins/Common/MotorComponent.qml</file>
@@ -123,8 +125,6 @@
 		<file alias="QGroundControl/Controls/FlightModeMenuIndicator.qml">../src/UI/toolbar/FlightModeMenuIndicator.qml</file>
 		<file alias="QGroundControl/Controls/MainStatusIndicatorOfflinePage.qml">../src/UI/toolbar/MainStatusIndicatorOfflinePage.qml</file>
 		<file alias="QGroundControl/Controls/MainWindowSavedState.qml">../src/QmlControls/MainWindowSavedState.qml</file>
-		<file alias="QGroundControl/Controls/MAVLinkChart.qml">../src/QmlControls/MAVLinkChart.qml</file>
-		<file alias="QGroundControl/Controls/MAVLinkMessageButton.qml">../src/QmlControls/MAVLinkMessageButton.qml</file>
 		<file alias="QGroundControl/Controls/MissionCommandDialog.qml">../src/QmlControls/MissionCommandDialog.qml</file>
 		<file alias="QGroundControl/Controls/MissionItemEditor.qml">../src/PlanView/MissionItemEditor.qml</file>
 		<file alias="QGroundControl/Controls/MissionItemIndexLabel.qml">../src/QmlControls/MissionItemIndexLabel.qml</file>
