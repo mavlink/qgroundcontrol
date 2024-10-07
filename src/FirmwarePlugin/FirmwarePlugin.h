@@ -307,10 +307,6 @@ public:
     /// @return A list of QUrl with the indicators
     virtual const QVariantList& modeIndicators(const Vehicle* vehicle);
 
-    /// Returns a list of CameraMetaData objects for available cameras on the vehicle.
-    /// TODO: This should go into QGCCameraManager
-    virtual const QVariantList& cameraList(const Vehicle* vehicle);
-
     /// Creates vehicle camera manager.
     virtual QGCCameraManager* createCameraManager(Vehicle *vehicle);
 
@@ -386,6 +382,4 @@ protected:
 protected:
     QVariantList _toolIndicatorList;
     QVariantList _modeIndicatorList;
-
-    static QVariantList _cameraList;    ///< Standard QGC camera list
 };
