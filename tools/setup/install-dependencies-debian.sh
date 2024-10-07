@@ -102,6 +102,7 @@ DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
     libpulse-dev \
     libsdl2-dev \
     libspeechd-dev \
+    libshp-dev \
     libunwind-dev \
     libva-dev \
     libvdpau-dev \
