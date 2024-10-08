@@ -98,6 +98,7 @@ add_subdirectory(UI)
 add_subdirectory(Utilities)
 # Compression
 add_qgc_test(DecompressionTest)
+add_qgc_test(UtilitiesTest)
 
 add_subdirectory(Vehicle)
 # Components
