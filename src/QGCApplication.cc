@@ -316,6 +316,8 @@ void QGCApplication::_initForNormalAppBoot()
     QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
 #endif
 
+    VideoManager::instance(); // GStreamer must be initialized before QmlEngine
+
     QQuickStyle::setStyle("Basic");
     _qmlAppEngine = _toolbox->corePlugin()->createQmlApplicationEngine(this);
     QObject::connect(_qmlAppEngine, &QQmlApplicationEngine::objectCreationFailed, this, QCoreApplication::quit, Qt::QueuedConnection);
@@ -328,11 +330,7 @@ void QGCApplication::_initForNormalAppBoot()
     // Image provider for Optical Flow
     _qmlAppEngine->addImageProvider(qgcImageProviderId, new QGCImageProvider());
 
-    QQuickWindow* rootWindow = mainRootWindow();
-    if (rootWindow) {
-        rootWindow->scheduleRenderJob(new FinishVideoInitialization(_toolbox->videoManager()),
-                QQuickWindow::BeforeSynchronizingStage);
-    }
+    VideoManager::instance()->init();
 
     // Safe to show popup error messages now that main window is created
     _showErrorsInToolbar = true;

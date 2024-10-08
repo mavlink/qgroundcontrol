@@ -40,7 +40,7 @@
 #include "TerrainProfile.h"
 #include "ToolStripAction.h"
 #include "ToolStripActionList.h"
-
+#include "VideoManager.h"
 #ifndef NO_SERIAL_LINK
 #include "GPSManager.h"
 #include "GPSRtk.h"
@@ -111,6 +111,7 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app, QGCToolbox
     , _adsbVehicleManager(ADSBVehicleManager::instance())
     , _qgcPositionManager(QGCPositionManager::instance())
     , _missionCommandTree(MissionCommandTree::instance())
+    , _videoManager(VideoManager::instance())
 #ifndef QGC_AIRLINK_DISABLED
     , _airlinkManager(AirLinkManager::instance())
 #endif
@@ -159,7 +160,6 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
 
     _linkManager            = toolbox->linkManager();
     _multiVehicleManager    = toolbox->multiVehicleManager();
-    _videoManager           = toolbox->videoManager();
     _corePlugin             = toolbox->corePlugin();
     _settingsManager        = toolbox->settingsManager();
 #ifndef NO_SERIAL_LINK

@@ -14,7 +14,6 @@
 #include <QtCore/QTimer>
 #include <QtCore/QElapsedTimer>
 
-class VideoManager;
 class Vehicle;
 
 /// Creates a simulated Camera Control which supports:
@@ -141,7 +140,6 @@ private:
     PhotoCaptureMode    _photoCaptureMode           = PHOTO_CAPTURE_SINGLE;
     qreal               _photoLapse                 = 1.0;
     int                 _photoLapseCount            = 0;
-    VideoManager*       _videoManager               = nullptr;
     QTimer              _videoRecordTimeUpdateTimer;
     QElapsedTimer       _videoRecordTimeElapsedTimer;
 };
