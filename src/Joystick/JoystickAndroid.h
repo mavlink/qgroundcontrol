@@ -31,11 +31,11 @@ private:
     void _close() final {}
     bool _update() final { return true; }
 
-    bool _getButton(int i) final { return btnValue[i]; }
-    int _getAxis(int i) final { return axisValue[i]; }
-    bool _getHat(int hat, int i) final;
+    bool _getButton(int i) const final { return btnValue[i]; }
+    int _getAxis(int i) const final { return axisValue[i]; }
+    bool _getHat(int hat, int i) const final;
 
-    int _getAndroidHatAxis(int axisHatCode);
+    int _getAndroidHatAxis(int axisHatCode) const;
 
     bool handleKeyEvent(jobject event);
     bool handleGenericMotionEvent(jobject event);
