@@ -19,11 +19,10 @@
 SimulatedCameraControl::SimulatedCameraControl(Vehicle* vehicle, QObject* parent)
     : MavlinkCameraControl  (parent)
     , _vehicle              (vehicle)
-    , _videoManager         (qgcApp()->toolbox()->videoManager())
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 
-    connect(_videoManager, &VideoManager::recordingChanged, this, &SimulatedCameraControl::videoCaptureStatusChanged);
+    connect(VideoManager::instance(), &VideoManager::recordingChanged, this, &SimulatedCameraControl::videoCaptureStatusChanged);
 
     auto flyViewSettings = qgcApp()->toolbox()->settingsManager()->flyViewSettings();
     connect(flyViewSettings->showSimpleCameraControl(), &Fact::rawValueChanged, this, &SimulatedCameraControl::infoChanged);
@@ -44,7 +43,7 @@ QString SimulatedCameraControl::recordTimeStr()
 
 SimulatedCameraControl::VideoCaptureStatus SimulatedCameraControl::videoCaptureStatus()
 {
-    return _videoCaptureStatus = _videoManager->recording() ? VIDEO_CAPTURE_STATUS_RUNNING : VIDEO_CAPTURE_STATUS_STOPPED;
+    return _videoCaptureStatus = VideoManager::instance()->recording() ? VIDEO_CAPTURE_STATUS_RUNNING : VIDEO_CAPTURE_STATUS_STOPPED;
 }
 
 void SimulatedCameraControl::setCameraMode(CameraMode mode)
@@ -163,7 +162,7 @@ bool SimulatedCameraControl::startVideoRecording()
 
     _videoRecordTimeUpdateTimer.start();
     _videoRecordTimeElapsedTimer.start();
-    _videoManager->startRecording();
+    VideoManager::instance()->startRecording();
     return false;
 }
 
@@ -177,7 +176,7 @@ bool SimulatedCameraControl::stopVideoRecording()
     }
 
     _videoRecordTimeUpdateTimer.stop();
-    _videoManager->stopRecording();
+    VideoManager::instance()->stopRecording();
     return true;
 }
 
@@ -192,7 +191,7 @@ quint32  SimulatedCameraControl::recordTime()
 
 bool SimulatedCameraControl::capturesVideo()
 {
-    return _videoManager->hasVideo();
+    return VideoManager::instance()->hasVideo();
 }
 
 void SimulatedCameraControl::setPhotoLapse(double)
@@ -207,7 +206,7 @@ bool SimulatedCameraControl::capturesPhotos()
 
 bool SimulatedCameraControl::hasVideoStream()
 {
-    return _videoManager->hasVideo();
+    return VideoManager::instance()->hasVideo();
 }
 
 void SimulatedCameraControl::setPhotoLapseCount(int)

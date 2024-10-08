@@ -1113,7 +1113,7 @@ void Vehicle::_updateArmed(bool armed)
             // Also handle Video Streaming
             if(_settingsManager->videoSettings()->disableWhenDisarmed()->rawValue().toBool()) {
                 _settingsManager->videoSettings()->streamEnabled()->setRawValue(false);
-                qgcApp()->toolbox()->videoManager()->stopVideo();
+                VideoManager::instance()->stopVideo();
             }
         }
     }
