@@ -38,6 +38,8 @@ QGCMAVLink::QGCMAVLink(QObject *parent)
     : QObject(parent)
 {
     // qCDebug(StatusTextHandlerLog) << Q_FUNC_INFO << this;
+
+    (void) qRegisterMetaType<GRIPPER_ACTIONS>("GRIPPER_ACTIONS");
 }
 
 QGCMAVLink::~QGCMAVLink()

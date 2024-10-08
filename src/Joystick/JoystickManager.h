@@ -20,7 +20,6 @@
 
 Q_DECLARE_LOGGING_CATEGORY(JoystickManagerLog)
 
-class MultiVehicleManager;
 class Joystick;
 
 /// Joystick Manager
@@ -75,7 +74,6 @@ private:
 private:
     Joystick*                   _activeJoystick;
     QMap<QString, Joystick*>    _name2JoystickMap;
-    MultiVehicleManager*        _multiVehicleManager;
 
     int _joystickCheckTimerCounter;
     QTimer _joystickCheckTimer;

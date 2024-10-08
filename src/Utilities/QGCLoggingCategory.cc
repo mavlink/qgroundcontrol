@@ -28,8 +28,6 @@ QGC_LOGGING_CATEGORY(RTKGPSLog,                     "RTKGPSLog")
 QGC_LOGGING_CATEGORY(GuidedActionsControllerLog,    "GuidedActionsControllerLog")
 QGC_LOGGING_CATEGORY(LocalizationLog,               "LocalizationLog")
 QGC_LOGGING_CATEGORY(VideoAllLog,                   kVideoAllLogCategory)
-QGC_LOGGING_CATEGORY(JoystickLog,                   "JoystickLog")
-
 
 QGCLoggingCategoryRegister* _instance = nullptr;
 

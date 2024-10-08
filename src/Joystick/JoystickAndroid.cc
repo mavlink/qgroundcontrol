@@ -9,7 +9,6 @@
 
 #include "JoystickAndroid.h"
 #include "JoystickManager.h"
-#include "MultiVehicleManager.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QJniEnvironment>
@@ -32,8 +31,8 @@ static void clear_jni_exception()
     }
 }
 
-JoystickAndroid::JoystickAndroid(const QString& name, int axisCount, int buttonCount, int id, MultiVehicleManager* multiVehicleManager)
-    : Joystick(name,axisCount,buttonCount,0,multiVehicleManager)
+JoystickAndroid::JoystickAndroid(const QString& name, int axisCount, int buttonCount, int id)
+    : Joystick(name,axisCount,buttonCount,0)
     , deviceId(id)
 {
     int i;
@@ -95,7 +94,7 @@ JoystickAndroid::~JoystickAndroid() {
 }
 
 
-QMap<QString, Joystick*> JoystickAndroid::discover(MultiVehicleManager* _multiVehicleManager) {
+QMap<QString, Joystick*> JoystickAndroid::discover() {
     static QMap<QString, Joystick*> ret;
 
     QMutexLocker lock(&m_mutex);
@@ -144,7 +143,7 @@ QMap<QString, Joystick*> JoystickAndroid::discover(MultiVehicleManager* _multiVe
 
         qCDebug(JoystickLog) << "\t" << name << "id:" << buff[i] << "axes:" << axisCount << "buttons:" << buttonCount;
 
-        ret[name] = new JoystickAndroid(name, axisCount, buttonCount, buff[i], _multiVehicleManager);
+        ret[name] = new JoystickAndroid(name, axisCount, buttonCount, buff[i]);
     }
 
     for (auto i = ret.begin(); i != ret.end();) {
@@ -205,15 +204,18 @@ bool JoystickAndroid::_update(void)
     return true;
 }
 
-bool JoystickAndroid::_getButton(int i) {
+bool JoystickAndroid::_getButton(int i) const
+{
     return btnValue[ i ];
 }
 
-int JoystickAndroid::_getAxis(int i) {
+int JoystickAndroid::_getAxis(int i) const
+{
     return axisValue[ i ];
 }
 
-int  JoystickAndroid::_getAndroidHatAxis(int axisHatCode) {
+int  JoystickAndroid::_getAndroidHatAxis(int axisHatCode) const
+{
     for(int i = 0; i < _axisCount; i++) {
         if (axisCode[i] == axisHatCode) {
             return _getAxis(i);
@@ -222,7 +224,8 @@ int  JoystickAndroid::_getAndroidHatAxis(int axisHatCode) {
     return 0;
 }
 
-bool JoystickAndroid::_getHat(int hat,int i) {
+bool JoystickAndroid::_getHat(int hat,int i) const
+{
     // Android supports only one hat button
     if (hat != 0) {
         return false;
