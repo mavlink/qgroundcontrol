@@ -1,0 +1,111 @@
+# Use an Ubuntu base image
+FROM ubuntu:22.04
+
+# Set environment variables for Android SDK, NDK, and paths
+ENV ANDROID_SDK_ROOT=/opt/android-sdk
+ENV ANDROID_NDK_ROOT=/opt/android-sdk/ndk-bundle
+ENV ANDROID_HOME=$ANDROID_SDK_ROOT
+ENV PATH=$PATH:$ANDROID_SDK_ROOT/tools:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/cmdline-tools/tools/bin:$ANDROID_NDK_ROOT
+
+# Set environment variables to make apt-get fully non-interactive
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=America/New_York
+
+# Preconfigure tzdata (time zone) before installing packages
+RUN apt-get update && apt-get install -y tzdata && \
+    ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && \
+    dpkg-reconfigure --frontend noninteractive tzdata
+
+# Install required packages
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libgl1-mesa-dev \
+    libgstreamer-gl1.0-0 \
+    libpulse-dev \
+    libxcb-glx0 \
+    libxcb-icccm4 \
+    libxcb-image0 \
+    libxcb-keysyms1 \
+    libxcb-randr0 \
+    libxcb-render-util0 \
+    libxcb-render0 \
+    libxcb-shape0 \
+    libxcb-shm0 \
+    libxcb-sync1 \
+    libxcb-util1 \
+    libxcb-xfixes0 \
+    libxcb-xinerama0 \
+    libxcb1 \
+    libxkbcommon-dev \
+    libxkbcommon-x11-0 \
+    libxcb-xkb-dev \
+    python3 \
+    python3-pip \
+    wget \
+    unzip \
+    git \
+    openjdk-11-jdk \
+    curl \
+    locales \
+    ninja-build
+
+# Ensure UTF-8 locale
+RUN locale-gen en_US.UTF-8 && dpkg-reconfigure --frontend noninteractive locales && \
+    export LANG=en_US.UTF-8 && export LC_ALL=en_US.UTF-8
+
+# Install Android SDK
+RUN mkdir -p $ANDROID_SDK_ROOT/cmdline-tools && \
+    wget https://dl.google.com/android/repository/commandlinetools-linux-6609375_latest.zip -O /opt/cmdline-tools.zip && \
+    unzip /opt/cmdline-tools.zip -d /opt/android-sdk/cmdline-tools && \
+    rm /opt/cmdline-tools.zip
+
+# Accept licenses and install Android SDK components
+RUN yes | sdkmanager --licenses && \
+    sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0" "ndk;23.1.7779620"
+
+COPY tools/setup/install-dependencies-debian.sh /tmp/qt/
+RUN /tmp/qt/install-dependencies-debian.sh
+
+# Install aqtinstall for downloading Qt
+RUN python3 -m pip install aqtinstall
+
+RUN mkdir -p /opt/Qt
+
+# Install Qt for Desktop (host) version
+RUN cd /opt/Qt && aqt install-qt linux desktop 6.6.3 gcc_64
+
+# Install Qt for Desktop (host) version with required modules
+RUN cd /opt/Qt && aqt install-qt linux desktop 6.6.3 gcc_64 --modules qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors 
+
+# Install Qt for Android with necessary modules
+RUN cd /opt/Qt && aqt install-qt linux android 6.6.3 android_arm64_v8a --modules qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors 
+
+# Set Qt-related environment variables
+ENV QT_ROOT_DIR=/opt/Qt/6.6.3/android_arm64_v8a
+ENV PATH=$PATH:$QT_ROOT_DIR/bin
+ENV LD_LIBRARY_PATH=$QT_ROOT_DIR/lib
+ENV PKG_CONFIG_PATH=$QT_ROOT_DIR/lib/pkgconfig
+ENV QT_PLUGIN_PATH=$QT_ROOT_DIR/plugins
+ENV QML2_IMPORT_PATH=$QT_ROOT_DIR/qml
+
+# Install Gradle
+RUN wget https://services.gradle.org/distributions/gradle-6.8.3-bin.zip -P /tmp && \
+    unzip -d /opt/gradle /tmp/gradle-6.8.3-bin.zip && \
+    rm /tmp/gradle-6.8.3-bin.zip
+ENV GRADLE_HOME=/opt/gradle/gradle-6.8.3
+ENV PATH=$PATH:$GRADLE_HOME/bin
+
+# Set Git configuration
+RUN git config --global --add safe.directory /workspace
+
+
+ENV PATH=$PATH:/opt/android-sdk/build-tools/31.0.0
+
+# Add safe directory to Git config for non-root ownership
+RUN git config --global --add safe.directory /project/source
+
+# Set working directory
+WORKDIR /workspace
+
+# Expose the Android SDK, NDK, and Qt to be used in the workspace
+CMD ["/bin/bash"]
