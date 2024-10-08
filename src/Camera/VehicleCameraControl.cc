@@ -360,9 +360,7 @@ VehicleCameraControl::takePhoto()
             _setPhotoStatus(PHOTO_CAPTURE_IN_PROGRESS);
             _captureInfoRetries = 0;
             //-- Capture local image as well
-            if(qgcApp()->toolbox()->videoManager()) {
-                qgcApp()->toolbox()->videoManager()->grabImage();
-            }
+            VideoManager::instance()->grabImage();
             return true;
         }
     }
@@ -1563,12 +1561,10 @@ VehicleCameraControl::handleCaptureStatus(const mavlink_camera_capture_status_t&
     //-- Time Lapse
     if(photoCaptureStatus() == PHOTO_CAPTURE_INTERVAL_IDLE || photoCaptureStatus() == PHOTO_CAPTURE_INTERVAL_IN_PROGRESS) {
         //-- Capture local image as well
-        if(qgcApp()->toolbox()->videoManager()) {
-            QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
-            QDir().mkpath(photoPath);
-            photoPath += + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz") + ".jpg";
-            qgcApp()->toolbox()->videoManager()->grabImage(photoPath);
-        }
+        QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
+        QDir().mkpath(photoPath);
+        photoPath += + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz") + ".jpg";
+        VideoManager::instance()->grabImage(photoPath);
     }
 }
 

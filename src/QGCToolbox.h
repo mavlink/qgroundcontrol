@@ -17,7 +17,6 @@ class LinkManager;
 class MAVLinkProtocol;
 class MultiVehicleManager;
 class QGCApplication;
-class VideoManager;
 class QGCCorePlugin;
 class SettingsManager;
 
@@ -31,7 +30,6 @@ public:
     LinkManager*                linkManager             () { return _linkManager; }
     MAVLinkProtocol*            mavlinkProtocol         () { return _mavlinkProtocol; }
     MultiVehicleManager*        multiVehicleManager     () { return _multiVehicleManager; }
-    VideoManager*               videoManager            () { return _videoManager; }
     QGCCorePlugin*              corePlugin              () { return _corePlugin; }
     SettingsManager*            settingsManager         () { return _settingsManager; }
 
@@ -42,7 +40,6 @@ private:
     LinkManager*                _linkManager            = nullptr;
     MAVLinkProtocol*            _mavlinkProtocol        = nullptr;
     MultiVehicleManager*        _multiVehicleManager    = nullptr;
-    VideoManager*               _videoManager           = nullptr;
     QGCCorePlugin*              _corePlugin             = nullptr;
     SettingsManager*            _settingsManager        = nullptr;
     friend class QGCApplication;
