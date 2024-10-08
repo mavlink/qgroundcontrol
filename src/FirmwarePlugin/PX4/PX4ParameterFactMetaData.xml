@@ -10401,10 +10401,10 @@
       <decimal>1</decimal>
       <increment>0.1</increment>
     </parameter>
-    <parameter name="COM_ARM_BAT_MIN" default="0." type="FLOAT">
+    <parameter name="COM_ARM_BAT_MIN" default="-1." type="FLOAT">
       <short_desc>Minimum battery level for arming</short_desc>
-      <long_desc>Additional battery level check that only allows arming if the state of charge of the emptiest connected battery is above this value. A value of 0 disables the check.</long_desc>
-      <min>0</min>
+      <long_desc>Threshold for battery percentage below arming is prohibited. A negative value means BAT_CRIT_THR is the threshold.</long_desc>
+      <min>-1</min>
       <max>0.9</max>
       <unit>norm</unit>
       <decimal>2</decimal>
