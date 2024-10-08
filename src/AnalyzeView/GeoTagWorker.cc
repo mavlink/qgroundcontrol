@@ -60,7 +60,7 @@ void GeoTagWorker::run()
         emit progressChanged((100/nSteps) + ((100/nSteps) / _imageList.size())*i);
 
         if (_cancel) {
-            qCDebug(GeotaggingLog) << "Tagging cancelled";
+            qCDebug(GeoTagWorkerLog) << "Tagging cancelled";
             emit error(tr("Tagging cancelled"));
             return;
         }
@@ -88,11 +88,11 @@ void GeoTagWorker::run()
 
     if (!parseComplete) {
         if (_cancel) {
-            qCDebug(GeotaggingLog) << "Tagging cancelled";
+            qCDebug(GeoTagWorkerLog) << "Tagging cancelled";
             emit error(tr("Tagging cancelled"));
             return;
         } else {
-            qCDebug(GeotaggingLog) << "Log parsing failed";
+            qCDebug(GeoTagWorkerLog) << "Log parsing failed";
             errorString = tr("%1 - tagging cancelled").arg(errorString.isEmpty() ? tr("Log parsing failed") : errorString);
             emit error(errorString);
             return;
@@ -100,24 +100,24 @@ void GeoTagWorker::run()
     }
     emit progressChanged(3*(100/nSteps));
 
-    qCDebug(GeotaggingLog) << "Found " << _triggerList.count() << " trigger logs.";
+    qCDebug(GeoTagWorkerLog) << "Found " << _triggerList.count() << " trigger logs.";
 
     if (_cancel) {
-        qCDebug(GeotaggingLog) << "Tagging cancelled";
+        qCDebug(GeoTagWorkerLog) << "Tagging cancelled";
         emit error(tr("Tagging cancelled"));
         return;
     }
 
     // Filter Trigger
     if (!triggerFiltering()) {
-        qCDebug(GeotaggingLog) << "Geotagging failed in trigger filtering";
+        qCDebug(GeoTagWorkerLog) << "Geotagging failed in trigger filtering";
         emit error(tr("Geotagging failed in trigger filtering"));
         return;
     }
     emit progressChanged(4*(100/nSteps));
 
     if (_cancel) {
-        qCDebug(GeotaggingLog) << "Tagging cancelled";
+        qCDebug(GeoTagWorkerLog) << "Tagging cancelled";
         emit error(tr("Tagging cancelled"));
         return;
     }
@@ -159,14 +159,14 @@ void GeoTagWorker::run()
         emit progressChanged(4*(100/nSteps) + ((100/nSteps) / maxIndex)*i);
 
         if (_cancel) {
-            qCDebug(GeotaggingLog) << "Tagging cancelled";
+            qCDebug(GeoTagWorkerLog) << "Tagging cancelled";
             emit error(tr("Tagging cancelled"));
             return;
         }
     }
 
     if (_cancel) {
-        qCDebug(GeotaggingLog) << "Tagging cancelled";
+        qCDebug(GeoTagWorkerLog) << "Tagging cancelled";
         emit error(tr("Tagging cancelled"));
         return;
     }
@@ -179,9 +179,9 @@ bool GeoTagWorker::triggerFiltering()
     _imageIndices.clear();
     _triggerIndices.clear();
     if(_imageList.count() > _triggerList.count()) {             // Logging dropouts
-        qCDebug(GeotaggingLog) << "Detected missing feedback packets.";
+        qCDebug(GeoTagWorkerLog) << "Detected missing feedback packets.";
     } else if (_imageList.count() < _triggerList.count()) {     // Camera skipped frames
-        qCDebug(GeotaggingLog) << "Detected missing image frames.";
+        qCDebug(GeoTagWorkerLog) << "Detected missing image frames.";
     }
     for(int i = 0; i < _imageList.count() && i < _triggerList.count(); i++) {
         _imageIndices.append(static_cast<int>(_triggerList[i].imageSequence));
