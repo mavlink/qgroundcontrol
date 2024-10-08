@@ -161,7 +161,7 @@ bool JoystickSDL::_update()
     return true;
 }
 
-bool JoystickSDL::_getButton(int i)
+bool JoystickSDL::_getButton(int i) const
 {
     int button = -1;
 
@@ -174,7 +174,7 @@ bool JoystickSDL::_getButton(int i)
     return (button == 1);
 }
 
-int JoystickSDL::_getAxis(int i)
+int JoystickSDL::_getAxis(int i) const
 {
     int axis = -1;
 
@@ -187,7 +187,7 @@ int JoystickSDL::_getAxis(int i)
     return axis;
 }
 
-bool JoystickSDL::_getHat(int hat, int i)
+bool JoystickSDL::_getHat(int hat, int i) const
 {
     static constexpr uint8_t hatButtons[] = {SDL_HAT_UP, SDL_HAT_DOWN, SDL_HAT_LEFT, SDL_HAT_RIGHT};
 
