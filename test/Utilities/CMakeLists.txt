@@ -3,6 +3,8 @@ add_subdirectory(Compression)
 find_package(Qt6 REQUIRED COMPONENTS Core)
 
 qt_add_library(UtilitiesTest STATIC
+    QGCFileDownloadTest.cc
+    QGCFileDownloadTest.h
 )
 
 target_link_libraries(UtilitiesTest
