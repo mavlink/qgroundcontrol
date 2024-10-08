@@ -11,9 +11,10 @@
 #include "QGCApplication.h"
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
-#include "ElevationMapProvider.h"
 #include "FirmwarePluginManager.h"
 #include "AppSettings.h"
+#include "FlightMapSettings.h"
+#include "SettingsManager.h"
 #include "PositionManager.h"
 #include "QGCMapEngineManager.h"
 #include "ADSBVehicleManager.h"
@@ -335,12 +336,12 @@ int QGroundControlQmlGlobal::mavlinkSystemID()
 
 QString QGroundControlQmlGlobal::elevationProviderName()
 {
-    return CopernicusElevationProvider::kProviderKey;
+    return _settingsManager->flightMapSettings()->elevationMapProvider()->rawValue().toString();
 }
 
 QString QGroundControlQmlGlobal::elevationProviderNotice()
 {
-    return CopernicusElevationProvider::kProviderNotice;
+    return _settingsManager->flightMapSettings()->elevationMapProvider()->rawValue().toString();
 }
 
 QString QGroundControlQmlGlobal::parameterFileExtension() const

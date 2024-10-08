@@ -14,27 +14,28 @@
 
 #include "ElevationMapProvider.h"
 #include "TerrainTileCopernicus.h"
+#include "TerrainTileArduPilot.h"
 
 int CopernicusElevationProvider::long2tileX(double lon, int z) const
 {
     Q_UNUSED(z)
-    return static_cast<int>(floor((lon + 180.0) / TerrainTileCopernicus::tileSizeDegrees));
+    return static_cast<int>(floor((lon + 180.0) / TerrainTileCopernicus::kTileSizeDegrees));
 }
 
 int CopernicusElevationProvider::lat2tileY(double lat, int z) const
 {
     Q_UNUSED(z)
-    return static_cast<int>(floor((lat + 90.0) / TerrainTileCopernicus::tileSizeDegrees));
+    return static_cast<int>(floor((lat + 90.0) / TerrainTileCopernicus::kTileSizeDegrees));
 }
 
 QString CopernicusElevationProvider::_getURL(int x, int y, int zoom) const
 {
     Q_UNUSED(zoom)
     return _mapUrl
-        .arg((static_cast<double>(y) * TerrainTileCopernicus::tileSizeDegrees) - 90.0)
-        .arg((static_cast<double>(x) * TerrainTileCopernicus::tileSizeDegrees) - 180.0)
-        .arg((static_cast<double>(y + 1) * TerrainTileCopernicus::tileSizeDegrees) - 90.0)
-        .arg((static_cast<double>(x + 1) * TerrainTileCopernicus::tileSizeDegrees) - 180.0);
+        .arg((static_cast<double>(y) * TerrainTileCopernicus::kTileSizeDegrees) - 90.0)
+        .arg((static_cast<double>(x) * TerrainTileCopernicus::kTileSizeDegrees) - 180.0)
+        .arg((static_cast<double>(y + 1) * TerrainTileCopernicus::kTileSizeDegrees) - 90.0)
+        .arg((static_cast<double>(x + 1) * TerrainTileCopernicus::kTileSizeDegrees) - 180.0);
 }
 
 QGCTileSet CopernicusElevationProvider::getTileCount(int zoom, double topleftLon,
@@ -59,5 +60,61 @@ QGCTileSet CopernicusElevationProvider::getTileCount(int zoom, double topleftLon
 
 QByteArray CopernicusElevationProvider::serialize(const QByteArray &image) const
 {
-    return TerrainTileCopernicus::serializeFromJson(image);
+    return TerrainTileCopernicus::serializeFromData(image);
+}
+
+/*===========================================================================*/
+
+int ArduPilotTerrainElevationProvider::long2tileX(double lon, int z) const
+{
+    Q_UNUSED(z)
+    return static_cast<int>(floor((lon + 180.0)));
+}
+
+int ArduPilotTerrainElevationProvider::lat2tileY(double lat, int z) const
+{
+    Q_UNUSED(z)
+    return static_cast<int>(floor((lat + 90.0)));
+}
+
+QString ArduPilotTerrainElevationProvider::_getURL(int x, int y, int zoom) const
+{
+    Q_UNUSED(zoom)
+
+    // For saving them internally we do 0-360 and 0-180 to avoid signs. Need to redo that to obtain proper format for call
+    int xForUrl = x - 180;
+    int yForUrl = y - 90;
+
+    const QString formattedStringYLat = (yForUrl > 0) ? QStringLiteral("N%1").arg(QString::number(yForUrl).rightJustified(2, '0')) :
+                                 QStringLiteral("S%1").arg(QString::number(-yForUrl).rightJustified(2, '0'));
+
+    const QString formattedStringXLong = (xForUrl > 0) ? QStringLiteral("E%1").arg(QString::number(xForUrl).rightJustified(3, '0')) :
+                                 QStringLiteral("W%1").arg(QString::number(-xForUrl).rightJustified(3, '0'));
+
+    return _mapUrl.arg(formattedStringYLat, formattedStringXLong);
+}
+
+QGCTileSet ArduPilotTerrainElevationProvider::getTileCount(int zoom, double topleftLon,
+                                                           double topleftLat, double bottomRightLon,
+                                                           double bottomRightLat) const
+{
+    QGCTileSet set;
+    set.tileX0 = long2tileX(topleftLon, zoom);
+    set.tileY0 = lat2tileY(bottomRightLat, zoom);
+    set.tileX1 = long2tileX(bottomRightLon, zoom);
+    set.tileY1 = lat2tileY(topleftLat, zoom);
+
+    set.tileCount = (static_cast<quint64>(set.tileX1) -
+                     static_cast<quint64>(set.tileX0) + 1) *
+                    (static_cast<quint64>(set.tileY1) -
+                     static_cast<quint64>(set.tileY0) + 1);
+
+    set.tileSize = getAverageSize() * set.tileCount;
+
+    return set;
+}
+
+QByteArray ArduPilotTerrainElevationProvider::serialize(const QByteArray &image) const
+{
+    return TerrainTileArduPilot::serializeFromData(image);
 }

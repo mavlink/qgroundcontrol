@@ -63,6 +63,7 @@ const QList<SharedMapProvider> UrlFactory::_providers = {
     std::make_shared<VWorldSatMapProvider>(),
 
     std::make_shared<CopernicusElevationProvider>(),
+    std::make_shared<ArduPilotTerrainElevationProvider>(),
 
     std::make_shared<JapanStdMapProvider>(),
     std::make_shared<JapanSeamlessMapProvider>(),
@@ -229,6 +230,18 @@ int UrlFactory::getQtMapIdFromProviderType(QStringView type)
     return -1;
 }
 
+QStringList UrlFactory::getElevationProviderTypes()
+{
+    QStringList types;
+    for (const SharedMapProvider &provider : _providers) {
+        if (provider->isElevationProvider()) {
+            (void) types.append(provider->getMapName());
+        }
+    }
+
+    return types;
+}
+
 QStringList UrlFactory::getProviderTypes()
 {
     QStringList types;
@@ -242,8 +255,9 @@ QStringList UrlFactory::getProviderTypes()
 QString UrlFactory::providerTypeFromHash(int hash)
 {
     for (const SharedMapProvider &provider : _providers) {
-        if (hashFromProviderType(provider->getMapName()) == hash) {
-            return provider->getMapName();
+        const QString mapName = provider->getMapName();
+        if (hashFromProviderType(mapName) == hash) {
+            return mapName;
         }
     }
 
@@ -251,9 +265,11 @@ QString UrlFactory::providerTypeFromHash(int hash)
     return QStringLiteral("");
 }
 
+// This seems to limit provider name length to less than ~25 chars due to downcasting to int
 int UrlFactory::hashFromProviderType(QStringView type)
 {
-    return static_cast<int>(qHash(type) >> 1);
+    const auto hash = qHash(type) >> 1;
+    return static_cast<int>(hash);
 }
 
 QString UrlFactory::tileHashToType(QStringView tileHash)
