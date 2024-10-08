@@ -1,16 +1,15 @@
 FROM ubuntu:22.04
 
 ARG QT_VERSION=6.6.3
-ARG QT_MODULES="qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors"
 
 ENV DEBIAN_FRONTEND noninteractive
 
 ENV DISPLAY :99
 
 ENV QT_PATH /opt/Qt
-ENV QT_DESKTOP $QT_PATH/${QT_VERSION}/gcc_64
+ENV QT_ROOT_DIR $QT_PATH/${QT_VERSION}/gcc_64
 
-ENV PATH /usr/lib/ccache:$QT_DESKTOP/bin:$PATH
+ENV PATH /usr/lib/ccache:$QT_ROOT_DIR/bin:$PATH
 
 COPY tools/setup/install-dependencies-debian.sh /tmp/qt/
 RUN /tmp/qt/install-dependencies-debian.sh
