@@ -13,23 +13,22 @@
 
 #pragma once
 
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QString>
-#include <QtCore/QTimer>
-#include <QtCore/QLoggingCategory>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "MAVLinkLib.h"
-#include "QmlObjectListModel.h"
 
 Q_DECLARE_LOGGING_CATEGORY(MAVLinkInspectorControllerLog)
 
-class MAVLinkChartController;
-class Vehicle;
 class LinkInterface;
+class MAVLinkChartController;
 class QGCMAVLinkSystem;
+class QmlObjectListModel;
+class QTimer;
+class Vehicle;
 
-//-----------------------------------------------------------------------------
 /// MAVLink message inspector controller (provides the logic for UI display)
 class MAVLinkInspectorController : public QObject
 {
@@ -39,77 +38,77 @@ class MAVLinkInspectorController : public QObject
     Q_MOC_INCLUDE("Vehicle.h")
     Q_MOC_INCLUDE("MAVLinkSystem.h")
     Q_MOC_INCLUDE("MAVLinkChartController.h")
-
-public:
-    MAVLinkInspectorController();
-    ~MAVLinkInspectorController();
-
-    Q_PROPERTY(QStringList          systemNames     READ systemNames    NOTIFY systemsChanged)
-    Q_PROPERTY(QmlObjectListModel*  systems         READ systems        NOTIFY systemsChanged)
-    Q_PROPERTY(QmlObjectListModel*  charts          READ charts         NOTIFY chartsChanged)
-    Q_PROPERTY(QGCMAVLinkSystem*    activeSystem    READ activeSystem   NOTIFY activeSystemChanged)
+    Q_MOC_INCLUDE("QmlObjectListModel.h")
+    Q_PROPERTY(QmlObjectListModel   *systems        READ systems        NOTIFY systemsChanged)
+    Q_PROPERTY(QmlObjectListModel   *charts         READ charts         NOTIFY chartsChanged)
+    Q_PROPERTY(QGCMAVLinkSystem     *activeSystem   READ activeSystem   NOTIFY activeSystemChanged)
     Q_PROPERTY(QStringList          timeScales      READ timeScales     NOTIFY timeScalesChanged)
     Q_PROPERTY(QStringList          rangeList       READ rangeList      NOTIFY rangeListChanged)
+    Q_PROPERTY(QStringList          systemNames     READ systemNames    NOTIFY systemsChanged)
 
-    Q_INVOKABLE MAVLinkChartController* createChart     ();
-    Q_INVOKABLE void                    deleteChart     (MAVLinkChartController* chart);
-    Q_INVOKABLE void                    setActiveSystem (int systemId);
-    Q_INVOKABLE void                    setMessageInterval(int32_t rate);
-
-    QmlObjectListModel* systems     () { return &_systems;     }
-    QmlObjectListModel* charts      () { return &_charts;       }
-    QGCMAVLinkSystem*   activeSystem() { return _activeSystem; }
-    QStringList         systemNames () { return _systemNames;  }
-    QStringList         timeScales  ();
-    QStringList         rangeList   ();
-
-    class TimeScale_st : public QObject {
+    class TimeScale_st
+    {
     public:
-        TimeScale_st(QObject* parent, const QString& l, uint32_t t);
-        QString     label;
-        uint32_t    timeScale;
+        TimeScale_st(const QString &label_, uint32_t timeScale_);
+
+        QString label;
+        uint32_t timeScale;
     };
 
-    class Range_st : public QObject {
+    class Range_st
+    {
     public:
-        Range_st(QObject* parent, const QString& l, qreal r);
-        QString     label;
-        qreal       range;
+        Range_st(const QString &label_, qreal range_);
+
+        QString label;
+        qreal range;
     };
 
-    const QList<TimeScale_st*>&     timeScaleSt         () { return _timeScaleSt; }
-    const QList<Range_st*>&         rangeSt             () { return _rangeSt; }
+public:
+    MAVLinkInspectorController(QObject *parent = nullptr);
+    ~MAVLinkInspectorController();
+
+    Q_INVOKABLE MAVLinkChartController *createChart();
+    Q_INVOKABLE void deleteChart(MAVLinkChartController *chart);
+    Q_INVOKABLE void setActiveSystem(int systemId);
+    Q_INVOKABLE void setMessageInterval(int32_t rate) const;
+
+    QmlObjectListModel *systems() { return _systems; }
+    QmlObjectListModel *charts() { return _charts; }
+    QGCMAVLinkSystem *activeSystem() { return _activeSystem; }
+    QStringList systemNames() const { return _systemNames; }
+    QStringList timeScales();
+    QStringList rangeList();
+
+    const QList<TimeScale_st*> &timeScaleSt() const { return _timeScaleSt; }
+    const QList<Range_st*> &rangeSt() const { return _rangeSt; }
 
 signals:
-    void systemsChanged     ();
-    void chartsChanged      ();
     void activeSystemChanged();
-    void timeScalesChanged  ();
-    void rangeListChanged   ();
+    void chartsChanged();
+    void rangeListChanged();
+    void systemsChanged();
+    void timeScalesChanged();
 
 private slots:
-    void _receiveMessage    (LinkInterface* link, mavlink_message_t message);
-    void _vehicleAdded      (Vehicle* vehicle);
-    void _vehicleRemoved    (Vehicle* vehicle);
-    void _setActiveVehicle  (Vehicle* vehicle);
-    void _refreshFrequency  ();
+    void _receiveMessage(LinkInterface *link, const mavlink_message_t &message);
+    void _refreshFrequency();
+    void _setActiveVehicle(Vehicle *vehicle);
+    void _vehicleAdded(Vehicle *vehicle);
+    void _vehicleRemoved(Vehicle *vehicle);
 
 private:
-    QGCMAVLinkSystem* _findVehicle (uint8_t id);
+    QGCMAVLinkSystem *_findVehicle(uint8_t id);
+    uint8_t _selectedSystemID() const;
+    uint8_t _selectedComponentID() const;
 
-private:
-
-    uint8_t             _selectedSystemID() const;
-    uint8_t             _selectedComponentID() const;
-
-    QStringList         _timeScales;
-    QStringList         _rangeList;
-    QGCMAVLinkSystem*   _activeSystem           = nullptr;
-    QTimer              _updateFrequencyTimer;
-    QStringList         _systemNames;
-    QmlObjectListModel  _systems;                           ///< List of QGCMAVLinkSystem
-    QmlObjectListModel  _charts;                            ///< List of MAVLinkCharts
+    QStringList _timeScales;
+    QStringList _rangeList;
+    QStringList _systemNames;
     QList<TimeScale_st*>_timeScaleSt;
-    QList<Range_st*>    _rangeSt;
-
+    QList<Range_st*> _rangeSt;
+    QGCMAVLinkSystem *_activeSystem = nullptr;
+    QTimer *_updateFrequencyTimer = nullptr;
+    QmlObjectListModel *_systems = nullptr;     ///< List of QGCMAVLinkSystem
+    QmlObjectListModel *_charts = nullptr;      ///< List of MAVLinkCharts
 };
