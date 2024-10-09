@@ -14,6 +14,9 @@ inputs:
     description: Source location
     required: false
     default: package
+  server_account:
+    description: The service account json private key file to authorize the upload request
+    required: false
 
 runs:
   using: "composite"
@@ -43,3 +46,10 @@ runs:
       working-directory: ${{ runner.temp }}/shadow_build_dir/${{ inputs.source }}
       run: aws s3 cp ${{ inputs.artifact_name }} s3://qgroundcontrol/latest/${{ inputs.artifact_name }} --acl public-read
       shell: bash
+
+    - name: Deploy to Play Store
+      if: ${{ inputs.server_account != '' }}
+      uses: ./.github/actions/playstore
+      with:
+        artifact_name: ${{ inputs.artifact_name }}
+        service_account_json: ${{ inputs.server_account }}
