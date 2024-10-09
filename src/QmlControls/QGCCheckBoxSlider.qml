@@ -20,6 +20,7 @@ AbstractButton   {
     padding:        0
 
     property bool   _showBorder: qgcPal.globalTheme === QGCPalette.Light
+    focusPolicy:    Qt.TabFocus
 
     QGCPalette { id: qgcPal; colorGroupEnabled: control.enabled }
 
@@ -42,8 +43,8 @@ AbstractButton   {
             width:                  height * 2
             radius:                 height / 2
             color:                  control.checked ? qgcPal.primaryButton : qgcPal.button
-            border.width:           _showBorder ? 1 : 0
-            border.color:           qgcPal.buttonBorder
+            border.width:           _showBorder || control.activeFocus ? 1 : 0
+            border.color:           control.activeFocus ? qgcPal.text : qgcPal.buttonBorder
 
             Rectangle {
                 anchors.verticalCenter: parent.verticalCenter

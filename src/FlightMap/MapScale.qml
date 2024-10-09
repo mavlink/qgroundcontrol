@@ -193,7 +193,7 @@ Item {
         leftPadding:        topPadding
         iconSource:         "/res/terrain.svg"
         width:              height
-        opacity:            0.75
+        fillOpacity:        0.75
         visible:            terrainButtonVisible
         onClicked:          terrainButtonClicked()
     }
@@ -206,7 +206,7 @@ Item {
         anchors.left:       terrainButton.visible ? terrainButton.right : terrainButton.left
         text:               qsTr("+")
         width:              height
-        opacity:            0.75
+        fillOpacity:        0.75
         visible:            _zoomButtonsVisible
         onClicked:          mapControl.zoomLevel += 0.5
     }
@@ -219,7 +219,7 @@ Item {
         anchors.left:       zoomUpButton.right
         text:               qsTr("-")
         width:              height
-        opacity:            0.75
+        fillOpacity:        0.75
         visible:            _zoomButtonsVisible
         onClicked:          mapControl.zoomLevel -= 0.5
     }

@@ -53,8 +53,8 @@ TextField {
     }
 
     background: Rectangle {
-        border.width:   qgcPal.globalTheme === QGCPalette.Light ? 1 : 0
-        border.color:   qgcPal.buttonBorder
+        border.width:   qgcPal.globalTheme === QGCPalette.Light || control.activeFocus ? 1 : 0
+        border.color:   control.activeFocus ? qgcPal.textFieldText : qgcPal.buttonBorder
         radius:         ScreenTools.buttonBorderRadius
         color:          qgcPal.textField
         implicitWidth:  ScreenTools.implicitTextFieldWidth
