@@ -221,7 +221,7 @@ void SensorsComponentController::calibrateAirspeed(void)
     _vehicle->startCalibration(QGCMAVLink::CalibrationPX4Airspeed);
 }
 
-void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, int severity, QString text)
+void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, int severity, QString text, QString description)
 {
     Q_UNUSED(compId);
     Q_UNUSED(severity);
@@ -230,8 +230,8 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
         return;
     }
     
-    if (text.contains("progress <")) {
-        QString percent = text.split("<").last().split(">").first();
+    if (text.contains("[cal] progress &lt;")) {
+        QString percent = text.split("&lt;").last().split("&gt;").first();
         bool ok;
         int p = percent.toInt(&ok);
         if (ok) {
