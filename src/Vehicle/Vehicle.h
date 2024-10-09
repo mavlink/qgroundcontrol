@@ -61,7 +61,6 @@ class Joystick;
 class JoystickManager;
 class LinkInterface;
 class LinkManager;
-class MAVLinkProtocol;
 class MissionManager;
 class ParameterManager;
 class QGCCameraManager;
@@ -585,7 +584,7 @@ public:
 
     /// Get the maximum MAVLink protocol version supported
     /// @return the maximum version
-    unsigned        maxProtoVersion         () const { return _maxProtoVersion; }
+    uint8_t         maxProtoVersion         () const { return _maxProtoVersion; }
 
     bool            mavlinkSigning          () const { return _mavlinkSigning; }
 
@@ -779,7 +778,7 @@ public:
     void _setFlying(bool flying);
     void _setLanding(bool landing);
     void _setHomePosition(QGeoCoordinate& homeCoord);
-    void _setMaxProtoVersion(unsigned version);
+    void _setMaxProtoVersion(uint8_t version);
     void _setMaxProtoVersionFromBothSources();
 
     /// Vehicle is about to be deleted
@@ -931,7 +930,7 @@ private slots:
     void _updateHobbsMeter                  ();
     void _vehicleParamLoaded                (bool ready);
     void _sendQGCTimeToVehicle              ();
-    void _mavlinkMessageStatus              (int uasId, uint64_t totalSent, uint64_t totalReceived, uint64_t totalLoss, float lossPercent);
+    void _mavlinkMessageStatus              (uint8_t sysid, uint64_t totalSent, uint64_t totalReceived, uint64_t totalLoss, float lossPercent);
     void _orbitTelemetryTimeout             ();
     void _updateFlightTime                  ();
     void _gotProgressUpdate                 (float progressValue);
@@ -1000,7 +999,6 @@ private:
     FirmwarePlugin*     _firmwarePlugin = nullptr;
     QObject*            _firmwarePluginInstanceData = nullptr;
     AutoPilotPlugin*    _autopilotPlugin = nullptr;
-    MAVLinkProtocol*    _mavlink = nullptr;
     bool                _soloFirmware = false;
     QGCToolbox*         _toolbox = nullptr;
     SettingsManager*    _settingsManager = nullptr;
@@ -1040,8 +1038,8 @@ private:
     int             _telemetryLNoise = 0;
     int             _telemetryRNoise = 0;
     bool            _mavlinkProtocolRequestComplete         = false;
-    unsigned        _mavlinkProtocolRequestMaxProtoVersion  = 0;
-    unsigned        _maxProtoVersion                        = 0;
+    uint8_t         _mavlinkProtocolRequestMaxProtoVersion  = 0;
+    uint8_t         _maxProtoVersion                        = 0;
     bool            _capabilityBitsKnown                    = false;
     uint64_t        _capabilityBits                         = 0;
     CheckList       _checkListState                         = CheckListNotSetup;
