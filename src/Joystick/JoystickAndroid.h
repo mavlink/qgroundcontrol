@@ -12,13 +12,12 @@
 #include "Joystick.h"
 #include <QtCore/private/qandroidextras_p.h>
 
-class MultiVehicleManager;
 class JoystickManager;
 
 class JoystickAndroid : public Joystick, public QtAndroidPrivate::GenericMotionEventListener, public QtAndroidPrivate::KeyEventListener
 {
 public:
-    JoystickAndroid(const QString& name, int axisCount, int buttonCount, int id, MultiVehicleManager* multiVehicleManager);
+    JoystickAndroid(const QString& name, int axisCount, int buttonCount, int id);
 
     ~JoystickAndroid();
 
@@ -26,20 +25,20 @@ public:
 
     static void setNativeMethods();
 
-    static QMap<QString, Joystick*> discover(MultiVehicleManager* _multiVehicleManager);
+    static QMap<QString, Joystick*> discover();
 
 private:
     bool handleKeyEvent(jobject event);
     bool handleGenericMotionEvent(jobject event);
-    int  _getAndroidHatAxis(int axisHatCode);
+    int  _getAndroidHatAxis(int axisHatCode) const;
 
-    virtual bool _open          ();
-    virtual void _close         ();
-    virtual bool _update        ();
+    bool _open          () final;
+    void _close         () final;
+    bool _update        () final;
 
-    virtual bool _getButton     (int i);
-    virtual int  _getAxis       (int i);
-    virtual bool _getHat        (int hat,int i);
+    bool _getButton     (int i) const final;
+    int  _getAxis       (int i) const final;
+    bool _getHat        (int hat,int i) const final;
 
     int *btnCode;
     int *axisCode;

@@ -8,15 +8,14 @@
  ****************************************************************************/
 
 #include "JoystickSDL.h"
-#include "MultiVehicleManager.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QTextStream>
 #include <QtCore/QFile>
 #include <QtCore/QIODevice>
 
-JoystickSDL::JoystickSDL(const QString& name, int axisCount, int buttonCount, int hatCount, int index, bool isGameController, MultiVehicleManager* multiVehicleManager)
-    : Joystick(name,axisCount,buttonCount,hatCount,multiVehicleManager)
+JoystickSDL::JoystickSDL(const QString& name, int axisCount, int buttonCount, int hatCount, int index, bool isGameController)
+    : Joystick(name,axisCount,buttonCount,hatCount)
     , _isGameController(isGameController)
     , _index(index)
 {
@@ -41,7 +40,7 @@ bool JoystickSDL::init(void) {
     return true;
 }
 
-QMap<QString, Joystick*> JoystickSDL::discover(MultiVehicleManager* _multiVehicleManager) {
+QMap<QString, Joystick*> JoystickSDL::discover() {
     static QMap<QString, Joystick*> ret;
 
     QMap<QString,Joystick*> newRet;
@@ -83,7 +82,7 @@ QMap<QString, Joystick*> JoystickSDL::discover(MultiVehicleManager* _multiVehicl
                 name = QString("%1 %2").arg(originalName).arg(duplicateIdx++);
             }
 
-            newRet[name] = new JoystickSDL(name, qMax(0,axisCount), qMax(0,buttonCount), qMax(0,hatCount), i, isGameController, _multiVehicleManager);
+            newRet[name] = new JoystickSDL(name, qMax(0,axisCount), qMax(0,buttonCount), qMax(0,hatCount), i, isGameController);
         } else {
             newRet[name] = ret[name];
             JoystickSDL *j = static_cast<JoystickSDL*>(newRet[name]);
@@ -166,7 +165,7 @@ bool JoystickSDL::_update(void)
     return true;
 }
 
-bool JoystickSDL::_getButton(int i) {
+bool JoystickSDL::_getButton(int i) const {
     if (_isGameController) {
         return SDL_GameControllerGetButton(sdlController, SDL_GameControllerButton(i)) == 1;
     } else {
@@ -174,7 +173,7 @@ bool JoystickSDL::_getButton(int i) {
     }
 }
 
-int JoystickSDL::_getAxis(int i) {
+int JoystickSDL::_getAxis(int i) const {
     if (_isGameController) {
         return SDL_GameControllerGetAxis(sdlController, SDL_GameControllerAxis(i));
     } else {
@@ -182,7 +181,7 @@ int JoystickSDL::_getAxis(int i) {
     }
 }
 
-bool JoystickSDL::_getHat(int hat, int i) {
+bool JoystickSDL::_getHat(int hat, int i) const {
     uint8_t hatButtons[] = {SDL_HAT_UP,SDL_HAT_DOWN,SDL_HAT_LEFT,SDL_HAT_RIGHT};
     if (i < int(sizeof(hatButtons))) {
         return (SDL_JoystickGetHat(sdlJoystick, hat) & hatButtons[i]) != 0;
