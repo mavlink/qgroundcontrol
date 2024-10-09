@@ -12,13 +12,13 @@ void ULogParserTest::_getTagsFromLogTest()
     const QByteArray logBuffer = file.readAll();
     file.close();
 
-    QList<GeoTagWorker::cameraFeedbackPacket> cameraFeedback;
+    QList<GeoTagWorker::CameraFeedbackPacket> cameraFeedback;
     QString errorMessage;
     QVERIFY(ULogParser::getTagsFromLog(logBuffer, cameraFeedback, errorMessage));
     QVERIFY(errorMessage.isEmpty());
     QVERIFY(!cameraFeedback.isEmpty());
 
-    const GeoTagWorker::cameraFeedbackPacket firstCameraFeedback = cameraFeedback.constFirst();
+    const GeoTagWorker::CameraFeedbackPacket firstCameraFeedback = cameraFeedback.constFirst();
     // QVERIFY(!qFuzzyIsNull(firstCameraFeedback.timestamp));
     QVERIFY(firstCameraFeedback.imageSequence != 0);
 }
