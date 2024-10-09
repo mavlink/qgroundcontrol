@@ -21,7 +21,6 @@
 #include "SubtitleWriter.h"
 #ifdef QGC_GST_STREAMING
 #include "GStreamer.h"
-#include "VideoDecoderOptions.h"
 #else
 #include "GLVideoItemStub.h"
 #endif
@@ -38,6 +37,7 @@
 
 #include <QtCore/QDir>
 #include <QtQml/QQmlEngine>
+#include <QtQuick/QQuickItem>
 
 QGC_LOGGING_CATEGORY(VideoManagerLog, "qgc.videomanager.videomanager")
 
@@ -53,20 +53,7 @@ VideoManager::VideoManager(QGCApplication* app, QGCToolbox* toolbox)
     , _subtitleWriter(new SubtitleWriter(this))
 {
 #ifdef QGC_GST_STREAMING
-    // Gstreamer debug settings
-    int gstDebugLevel = 0;
-    QSettings settings;
-    if (settings.contains(AppSettings::gstDebugLevelName)) {
-        gstDebugLevel = settings.value(AppSettings::gstDebugLevelName).toInt();
-    }
-    QStringList args = _app->arguments();
-    const qsizetype argc = args.size();
-    char** argv = new char*[argc];
-    for (qsizetype i = 0; i < argc; i++) {
-        argv[i] = args[i].toUtf8().data();
-    }
-    GStreamer::initialize(argc, argv, gstDebugLevel);
-    delete[] argv;
+    GStreamer::initialize();
 #else
     qmlRegisterType<GLVideoItemStub>("org.freedesktop.gstreamer.Qt6GLVideoItem", 1, 0, "GstGLQt6VideoItem");
 #endif
@@ -118,7 +105,7 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
    connect(pVehicleMgr, &MultiVehicleManager::activeVehicleChanged, this, &VideoManager::_setActiveVehicle);
 
 #ifdef QGC_GST_STREAMING
-    GStreamer::blacklist(static_cast<VideoDecoderOptions>(_videoSettings->forceVideoDecoder()->rawValue().toInt()));
+    GStreamer::blacklist(static_cast<GStreamer::VideoDecoderOptions>(_videoSettings->forceVideoDecoder()->rawValue().toInt()));
 #endif
 
     int index = 0;

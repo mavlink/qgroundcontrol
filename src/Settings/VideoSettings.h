@@ -10,7 +10,6 @@
 #pragma once
 
 #include "SettingsGroup.h"
-#include "VideoDecoderOptions.h"
 
 class VideoSettings : public SettingsGroup
 {
@@ -36,8 +35,6 @@ public:
     DEFINE_SETTINGFACT(disableWhenDisarmed)
     DEFINE_SETTINGFACT(lowLatencyMode)
     DEFINE_SETTINGFACT(forceVideoDecoder)
-
-    Q_ENUM(VideoDecoderOptions)
 
     Q_PROPERTY(bool     streamConfigured        READ streamConfigured       NOTIFY streamConfiguredChanged)
     Q_PROPERTY(QString  rtspVideoSource         READ rtspVideoSource        CONSTANT)

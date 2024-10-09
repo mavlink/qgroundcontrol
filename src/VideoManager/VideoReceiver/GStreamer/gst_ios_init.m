@@ -22,59 +22,61 @@ G_END_DECLS
 
 void gst_ios_pre_init(void)
 {
-  NSString *resources = [[NSBundle mainBundle] resourcePath];
-  NSString *tmp = NSTemporaryDirectory();
-  NSString *cache = [NSHomeDirectory() stringByAppendingPathComponent:@"Library/Caches"];
-  NSString *docs = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
-    
-  const gchar *resources_dir = [resources UTF8String];
-  const gchar *tmp_dir = [tmp UTF8String];
-  const gchar *cache_dir = [cache UTF8String];
-  const gchar *docs_dir = [docs UTF8String];
-  gchar *ca_certificates;
-    
-  g_setenv ("TMP", tmp_dir, TRUE);
-  g_setenv ("TEMP", tmp_dir, TRUE);
-  g_setenv ("TMPDIR", tmp_dir, TRUE);
-  g_setenv ("XDG_RUNTIME_DIR", resources_dir, TRUE);
-  g_setenv ("XDG_CACHE_HOME", cache_dir, TRUE);
-    
-  g_setenv ("HOME", docs_dir, TRUE);
-  g_setenv ("XDG_DATA_DIRS", resources_dir, TRUE);
-  g_setenv ("XDG_CONFIG_DIRS", resources_dir, TRUE);
-  g_setenv ("XDG_CONFIG_HOME", cache_dir, TRUE);
-  g_setenv ("XDG_DATA_HOME", resources_dir, TRUE);
-  g_setenv ("FONTCONFIG_PATH", resources_dir, TRUE);
+    const NSString *const resources = [[NSBundle mainBundle] resourcePath];
+    const NSString *const tmp = NSTemporaryDirectory();
+    const NSString *const cache = [NSHomeDirectory() stringByAppendingPathComponent:@"Library/Caches"];
+    const NSString *const docs = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
 
-  ca_certificates = g_build_filename (resources_dir, "ssl", "certs", "ca-certificates.crt", NULL);
-  g_setenv ("CA_CERTIFICATES", ca_certificates, TRUE);
-  g_free (ca_certificates);
+    const gchar *const resources_dir = [resources UTF8String];
+    const gchar *const tmp_dir = [tmp UTF8String];
+    const gchar *const cache_dir = [cache UTF8String];
+    const gchar *const docs_dir = [docs UTF8String];
+
+    g_setenv("TMP", tmp_dir, TRUE);
+    g_setenv("TEMP", tmp_dir, TRUE);
+    g_setenv("TMPDIR", tmp_dir, TRUE);
+    g_setenv("XDG_RUNTIME_DIR", resources_dir, TRUE);
+    g_setenv("XDG_CACHE_HOME", cache_dir, TRUE);
+
+    g_setenv("HOME", docs_dir, TRUE);
+    g_setenv("XDG_DATA_DIRS", resources_dir, TRUE);
+    g_setenv("XDG_CONFIG_DIRS", resources_dir, TRUE);
+    g_setenv("XDG_CONFIG_HOME", cache_dir, TRUE);
+    g_setenv("XDG_DATA_HOME", resources_dir, TRUE);
+    g_setenv("FONTCONFIG_PATH", resources_dir, TRUE);
+
+    gchar *const ca_certificates = g_build_filename(resources_dir, "ssl", "certs", "ca-certificates.crt", NULL);
+    g_setenv("CA_CERTIFICATES", ca_certificates, TRUE);
+    g_free(ca_certificates);
 }
 
-void gst_ios_post_init(void)
+void gst_ios_post_init()
 {
-  GstPluginFeature *plugin;
-  GstRegistry *reg;
-  /* Lower the ranks of filesrc and giosrc so iosavassetsrc is
-   * tried first in gst_element_make_from_uri() for file:// */
+    GstPluginFeature *plugin;
+    GstRegistry *reg;
+    /* Lower the ranks of filesrc and giosrc so iosavassetsrc is
+     * tried first in gst_element_make_from_uri() for file:// */
 
-#if defined(GST_IOS_GIO_MODULE_GNUTLS)
-    GST_G_IO_MODULE_LOAD(gnutls);
-#endif
+    #if defined(GST_IOS_GIO_MODULE_GNUTLS)
+        GST_G_IO_MODULE_LOAD(gnutls);
+    #endif
 
-  reg = gst_registry_get();
-  plugin = gst_registry_lookup_feature(reg, "filesrc");
-  if (plugin)
-    gst_plugin_feature_set_rank(plugin, GST_RANK_SECONDARY);
-  plugin = gst_registry_lookup_feature(reg, "giosrc");
-  if (plugin)
-    gst_plugin_feature_set_rank(plugin, GST_RANK_SECONDARY-1);
-  if (!gst_registry_lookup_feature(reg, "vtdec_hw")) {
-    /* Usually there is no vtdec_hw plugin on iOS - in that case
-     * we are increasing vtdec rank since VideoToolbox on iOS
-     * tries to use hardware implementation first */
-    plugin = gst_registry_lookup_feature(reg, "vtdec");
-    if (plugin)
-      gst_plugin_feature_set_rank(plugin, GST_RANK_PRIMARY + 1);
+    reg = gst_registry_get();
+    plugin = gst_registry_lookup_feature(reg, "filesrc");
+    if (plugin) {
+        gst_plugin_feature_set_rank(plugin, GST_RANK_SECONDARY);
+    }
+    plugin = gst_registry_lookup_feature(reg, "giosrc");
+    if (plugin) {
+        gst_plugin_feature_set_rank(plugin, GST_RANK_SECONDARY-1);
+    }
+    if (!gst_registry_lookup_feature(reg, "vtdec_hw")) {
+        /* Usually there is no vtdec_hw plugin on iOS - in that case
+        * we are increasing vtdec rank since VideoToolbox on iOS
+        * tries to use hardware implementation first */
+        plugin = gst_registry_lookup_feature(reg, "vtdec");
+        if (plugin) {
+            gst_plugin_feature_set_rank(plugin, GST_RANK_PRIMARY + 1);
+        }
     }
 }
