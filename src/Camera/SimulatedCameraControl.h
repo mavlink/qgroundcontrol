@@ -15,6 +15,7 @@
 #include <QtCore/QElapsedTimer>
 
 class VideoManager;
+#include "Vehicle.h"
 class Vehicle;
 
 /// Creates a simulated Camera Control which supports:
@@ -65,8 +66,43 @@ public:
     void                stopStream                  () override {}
     bool                stopTakePhoto               () override { return false;}
     void                resumeStream                () override {}
-    void                startTracking               (QRectF /*rec*/) override {}
-    void                startTracking               (QPointF /*point*/, double /*radius*/) override {}
+    void                startTracking               (QRectF rec) override {
+    // if(_trackingMarquee != rec) {
+    //     _trackingMarquee = rec;
+
+        qCDebug(CameraControlLog) << "Start Tracking (Rectangle: ["
+                                  << static_cast<float>(rec.x()) << ", "
+                                  << static_cast<float>(rec.y()) << "] - ["
+                                  << static_cast<float>(rec.x() + rec.width()) << ", "
+                                  << static_cast<float>(rec.y() + rec.height()) << "]";
+
+        _vehicle->sendMavCommand(1,
+                                 MAV_CMD_CAMERA_TRACK_RECTANGLE,
+                                 true,
+                                 static_cast<float>(rec.x()),
+                                 static_cast<float>(rec.y()),
+                                 static_cast<float>(rec.x() + rec.width()),
+                                 static_cast<float>(rec.y() + rec.height()));
+    // }
+    }
+    void                startTracking               (QPointF point, double radius) override {
+    // if(_trackingPoint != point || _trackingRadius != radius) {
+    //     _trackingPoint  = point;
+    //     _trackingRadius = radius;
+
+        qCDebug(CameraControlLog) << "Start Tracking (Point: ["
+                                  << static_cast<float>(point.x()) << ", "
+                                  << static_cast<float>(point.y()) << "], Radius:  "
+                                  << static_cast<float>(radius);
+
+        _vehicle->sendMavCommand(1,
+                                 MAV_CMD_CAMERA_TRACK_POINT,
+                                 true,
+                                 static_cast<float>(point.x()),
+                                 static_cast<float>(point.y()),
+                                 static_cast<float>(radius));
+    // }
+    }
     void                stopTracking                () override {}
     int                 version                     () override { return 0; }
     QString             modelName                   () override { return QStringLiteral("Simulated Camera"); }
