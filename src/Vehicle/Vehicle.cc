@@ -4012,6 +4012,7 @@ void Vehicle::_textMessageReceived(MAV_COMPONENT componentid, MAV_SEVERITY sever
         qCDebug(VehicleLog) << "Dropping message (expected as event):" << text;
         return;
     }
+    emit textMessageReceived(id(), static_cast<int>(componentid), static_cast<int>(componentid), text, description);
 
     bool skipSpoken = false;
     const bool ardupilotPrearm = text.startsWith(QStringLiteral("PreArm"));
