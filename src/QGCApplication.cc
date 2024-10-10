@@ -467,7 +467,7 @@ void QGCApplication::_initForNormalAppBoot()
     _toolbox->linkManager()->loadLinkConfigurationList();
 
     // Probe for joysticks
-    _toolbox->joystickManager()->init();
+    JoystickManager::instance()->init();
 
     if (_settingsUpgraded) {
         showAppMessage(QString(tr("The format for %1 saved settings has been modified. "
