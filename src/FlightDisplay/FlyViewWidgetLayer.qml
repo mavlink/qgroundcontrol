@@ -46,7 +46,7 @@ Item {
     property real   _margins:               ScreenTools.defaultFontPixelWidth / 2
     property real   _toolsMargin:           ScreenTools.defaultFontPixelWidth * 0.75
     property rect   _centerViewport:        Qt.rect(0, 0, width, height)
-    property real   _rightPanelWidth:       ScreenTools.defaultFontPixelWidth * 30
+    property real   _rightPanelWidth:       ScreenTools.defaultFontPixelWidth * 35
     property alias  _gripperMenu:           gripperOptions
     property real   _layoutMargin:          ScreenTools.defaultFontPixelWidth * 0.75
     property bool   _layoutSpacing:         ScreenTools.defaultFontPixelWidth
@@ -59,26 +59,26 @@ Item {
         leftEdgeTopInset:       toolStrip.leftEdgeTopInset
         leftEdgeCenterInset:    toolStrip.leftEdgeCenterInset
         leftEdgeBottomInset:    virtualJoystickMultiTouch.visible ? virtualJoystickMultiTouch.leftEdgeBottomInset : parentToolInsets.leftEdgeBottomInset
-        rightEdgeTopInset:      topRightColumnLayout.rightEdgeTopInset
-        rightEdgeCenterInset:   topRightColumnLayout.rightEdgeCenterInset
+        rightEdgeTopInset:      topRightPanel.rightEdgeTopInset
+        rightEdgeCenterInset:   topRightPanel.rightEdgeCenterInset
         rightEdgeBottomInset:   bottomRightRowLayout.rightEdgeBottomInset
         topEdgeLeftInset:       toolStrip.topEdgeLeftInset
         topEdgeCenterInset:     mapScale.topEdgeCenterInset
-        topEdgeRightInset:      topRightColumnLayout.topEdgeRightInset
+        topEdgeRightInset:      topRightPanel.topEdgeRightInset
         bottomEdgeLeftInset:    virtualJoystickMultiTouch.visible ? virtualJoystickMultiTouch.bottomEdgeLeftInset : parentToolInsets.bottomEdgeLeftInset
         bottomEdgeCenterInset:  bottomRightRowLayout.bottomEdgeCenterInset
         bottomEdgeRightInset:   virtualJoystickMultiTouch.visible ? virtualJoystickMultiTouch.bottomEdgeRightInset : bottomRightRowLayout.bottomEdgeRightInset
     }
 
-    FlyViewTopRightColumnLayout {
-        id:                 topRightColumnLayout
-        anchors.margins:    _layoutMargin
-        anchors.top:        parent.top
-        anchors.bottom:     bottomRightRowLayout.top
-        anchors.right:      parent.right
-        spacing:            _layoutSpacing
+    FlyViewTopRightPanel {
+        id:                     topRightPanel
+        anchors.top:            parent.top
+        anchors.right:          parent.right
+        anchors.rightMargin:    _layoutMargin
+        width:                  _rightPanelWidth
+        height:                 _rightPanelWidth * 2
 
-        property real topEdgeRightInset:    childrenRect.height + _layoutMargin
+        property real topEdgeRightInset:    height + _layoutMargin
         property real rightEdgeTopInset:    width + _layoutMargin
         property real rightEdgeCenterInset: rightEdgeTopInset
     }
