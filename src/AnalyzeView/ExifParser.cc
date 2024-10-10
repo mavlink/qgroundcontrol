@@ -13,66 +13,36 @@
 #include <QtCore/QByteArray>
 #include <QtCore/QDateTime>
 
-#include <exif.h>
 #include <exiv2/exiv2.hpp>
 
 QGC_LOGGING_CATEGORY(ExifParserLog, "qgc.analyzeview.exifparser")
 
-namespace ExifParser {
-
-double readTime(const QByteArray &buf)
+namespace ExifParser
 {
-    easyexif::EXIFInfo result;
-    if (result.parseFrom(reinterpret_cast<const unsigned char*>(buf.constData()), buf.size()) != PARSE_EXIF_SUCCESS) {
-        qCWarning(ExifParserLog) << "Could not parse buffer";
-        return -1.0;
-    }
 
-    const QString createDate = QString(result.DateTimeOriginal.c_str());
-
-    const QStringList createDateList = createDate.split(' ');
-    if (createDateList.count() < 2) {
-        qCWarning(ExifParserLog) << "Could not decode creation time and date: " << createDateList;
-        return -1.0;
-    }
-
-    const QStringList dateList = createDateList.at(0).split(':');
-    if (dateList.count() < 3) {
-        qCWarning(ExifParserLog) << "Could not decode creation date: " << dateList;
-        return -1.0;
-    }
-
-    const QStringList timeList = createDateList.at(1).split(':');
-    if (timeList.count() < 3) {
-        qCWarning(ExifParserLog) << "Could not decode creation time: " << timeList;
-        return -1.0;
-    }
-
-    const QDate date(dateList.at(0).toInt(), dateList.at(1).toInt(), dateList.at(2).toInt());
-    const QTime time(timeList.at(0).toInt(), timeList.at(1).toInt(), timeList.at(2).toInt());
-
-    const QDateTime tagTime(date, time);
-
-    return (tagTime.toMSecsSinceEpoch() / 1000.0);
+void init()
+{
+    Exiv2::XmpParser::initialize();
+    ::atexit(Exiv2::XmpParser::terminate);
 }
 
-double readTime2(const QByteArray &buf)
+double readTime(const QByteArray &buf)
 {
     try {
         // Convert QByteArray to std::string for Exiv2
         const Exiv2::Image::UniquePtr image = Exiv2::ImageFactory::open(reinterpret_cast<const Exiv2::byte*>(buf.constData()), buf.size());
         image->readMetadata();
 
-        Exiv2::ExifData &exifData = image->exifData();
+        const Exiv2::ExifData &exifData = image->exifData();
         if (exifData.empty()) {
             qCWarning(ExifParserLog) << "No EXIF data found in the image.";
             return -1.0;
         }
 
         // Read DateTimeOriginal
-        // Exiv2::ExifData::const_iterator it = dateTimeOriginal(exifData);
         const Exiv2::ExifKey key("Exif.Photo.DateTimeOriginal");
-        const Exiv2::ExifData::iterator pos = exifData.findKey(key);
+        // Exiv2::ExifData::const_iterator it = dateTimeOriginal(exifData);
+        const Exiv2::ExifData::const_iterator pos = exifData.findKey(key);
         if (pos == exifData.end()) {
             qCWarning(ExifParserLog) << "No DateTimeOriginal found.";
             return -1.0;
@@ -90,7 +60,7 @@ double readTime2(const QByteArray &buf)
         const QStringList dateList = createDateList[0].split(':');
         const QStringList timeList = createDateList[1].split(':');
 
-        if (dateList.size() < 3 || timeList.size() < 3) {
+        if ((dateList.size() < 3) || (timeList.size() < 3)) {
             qCWarning(ExifParserLog) << "Could not parse creation date/time: " << dateList << " " << timeList;
             return -1.0;
         }
@@ -101,7 +71,7 @@ double readTime2(const QByteArray &buf)
         const QDateTime tagTime(date, time);
 
         return (tagTime.toMSecsSinceEpoch() / 1000.0);
-    } catch (Exiv2::Error& e) {
+    } catch (const Exiv2::Error &e) {
         qCWarning(ExifParserLog) << "Error reading EXIF data:" << e.what();
         return -1.0;
     }

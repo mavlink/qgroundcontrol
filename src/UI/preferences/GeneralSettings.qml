@@ -48,12 +48,11 @@ SettingsPage {
             visible:    _appSettings.indoorPalette.visible
         }
 
-        FactCheckBoxSlider {
-            Layout.fillWidth: true
-            text:       qsTr("Stream GCS Position")
-            fact:       _followTarget
-            visible:    _followTarget.visible
-            property Fact   _followTarget:      QGroundControl.settingsManager.appSettings.followTarget
+        LabelledFactComboBox {
+            label:       qsTr("Stream GCS Position")
+            fact:       _appSettings.followTarget
+            indexModel: false
+            visible:    _appSettings.followTarget.visible
         }
 
         FactCheckBoxSlider {

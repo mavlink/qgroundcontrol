@@ -10255,7 +10255,7 @@
       <values>
         <value code="1">GPIO</value>
         <value code="2">Seagull MAP2 (over PWM)</value>
-        <value code="3">MAVLink (forward via MAV_CMD_IMAGE_START_CAPTURE)</value>
+        <value code="3">MAVLink (Camera Protocol v1)</value>
         <value code="4">Generic PWM (IR trigger, servo)</value>
       </values>
     </parameter>
@@ -10401,10 +10401,10 @@
       <decimal>1</decimal>
       <increment>0.1</increment>
     </parameter>
-    <parameter name="COM_ARM_BAT_MIN" default="0." type="FLOAT">
+    <parameter name="COM_ARM_BAT_MIN" default="-1." type="FLOAT">
       <short_desc>Minimum battery level for arming</short_desc>
-      <long_desc>Additional battery level check that only allows arming if the state of charge of the emptiest connected battery is above this value. A value of 0 disables the check.</long_desc>
-      <min>0</min>
+      <long_desc>Threshold for battery percentage below arming is prohibited. A negative value means BAT_CRIT_THR is the threshold.</long_desc>
+      <min>-1</min>
       <max>0.9</max>
       <unit>norm</unit>
       <decimal>2</decimal>
@@ -12243,6 +12243,12 @@
     <parameter name="EKF2_TERR_NOISE" default="5.0" type="FLOAT">
       <short_desc>Terrain altitude process noise</short_desc>
       <min>0.5</min>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+    </parameter>
+    <parameter name="EKF2_VEL_LIM" default="100" type="FLOAT">
+      <short_desc>Velocity limit</short_desc>
+      <max>299792458</max>
       <unit>m/s</unit>
       <decimal>1</decimal>
     </parameter>

@@ -82,6 +82,18 @@ if apt-cache show gstreamer1.0-qt6 >/dev/null 2>&1 && apt-cache show gstreamer1.
     DEBIAN_FRONTEND=noninteractive apt-get install -y --quiet gstreamer1.0-qt6
 fi
 
+# Exiv2
+DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
+    libbrotli-dev \
+    libcurl4-openssl-dev \
+    libexiv2-dev \
+    libexpat1-dev \
+    libinih-dev \
+    libssh-dev \
+    libxml2-utils \
+    libz-dev \
+    zlib1g-dev
+
 # Additional
 DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
     flite1-dev \
@@ -90,7 +102,6 @@ DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
     libass-dev \
     libdrm-dev \
     libegl1-mesa-dev \
-    libexiv2-dev \
     libgbm-dev \
     libgl1-mesa-dev \
     libgl-dev \
@@ -102,6 +113,7 @@ DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
     libpulse-dev \
     libsdl2-dev \
     libspeechd-dev \
+    libshp-dev \
     libunwind-dev \
     libva-dev \
     libvdpau-dev \
