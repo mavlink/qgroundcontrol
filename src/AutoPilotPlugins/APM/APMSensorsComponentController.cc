@@ -390,14 +390,12 @@ void APMSensorsComponentController::calibrateGyro(void)
     _vehicle->startCalibration(_calTypeInProgress);
 }
 
-void APMSensorsComponentController::_handleUASTextMessage(int uasId, int compId, int severity, QString text)
+void APMSensorsComponentController::_handleUASTextMessage(int compId, int severity, QString text, QString description)
 {
     Q_UNUSED(compId);
     Q_UNUSED(severity);
+    Q_UNUSED(description);
     
-    if (uasId != _vehicle->id()) {
-        return;
-    }
 
     QString originalMessageText = text;
     text = text.toLower();

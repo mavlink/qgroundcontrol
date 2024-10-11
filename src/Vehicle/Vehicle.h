@@ -1339,7 +1339,7 @@ public:
     // StatusTextHandler* statusTextHandler() { return m_statusTextHandler; }
 
 signals:
-    void textMessageReceived(int sysid, int componentid, int severity, QString text, QString description);
+    void textMessageReceived(MAV_COMPONENT componentid, MAV_SEVERITY severity, QString text, QString description);
 
     void messagesReceivedChanged();
     void messagesSentChanged();

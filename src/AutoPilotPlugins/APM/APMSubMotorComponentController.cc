@@ -17,11 +17,11 @@ APMSubMotorComponentController::APMSubMotorComponentController(void)
     connect(_vehicle, &Vehicle::textMessageReceived, this, &APMSubMotorComponentController::handleNewMessages);
 }
 
-void APMSubMotorComponentController::handleNewMessages(int uasid, int componentid, int severity, QString text)
+void APMSubMotorComponentController::handleNewMessages(int componentid, int severity, QString text, QString description)
 {
-    Q_UNUSED(uasid);
     Q_UNUSED(componentid);
     Q_UNUSED(severity);
+    Q_UNUSED(description);
     if (_vehicle->flightMode() == "Motor Detection"
         && (text.toLower().contains("thruster") || text.toLower().contains("motor"))) {
         _motorDetectionMessages += text + QStringLiteral("\n");
