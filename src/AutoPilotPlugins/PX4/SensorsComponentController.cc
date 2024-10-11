@@ -225,6 +225,7 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
 {
     Q_UNUSED(compId);
     Q_UNUSED(severity);
+    Q_UNUSED(description);
     
     if (uasId != _vehicle->id()) {
         return;
