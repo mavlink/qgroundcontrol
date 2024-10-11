@@ -54,58 +54,99 @@ RUN locale-gen en_US.UTF-8 && dpkg-reconfigure --frontend noninteractive locales
     export LANG=en_US.UTF-8 && export LC_ALL=en_US.UTF-8
 
 # Install Android SDK
-RUN mkdir -p $ANDROID_SDK_ROOT/cmdline-tools && \
-    wget https://dl.google.com/android/repository/commandlinetools-linux-6609375_latest.zip -O /opt/cmdline-tools.zip && \
+RUN mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest && \
+    wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip -O /opt/cmdline-tools.zip && \
     unzip /opt/cmdline-tools.zip -d /opt/android-sdk/cmdline-tools && \
+    mv /opt/android-sdk/cmdline-tools/cmdline-tools/* /opt/android-sdk/cmdline-tools/latest/ && \
+    rm -rf /opt/android-sdk/cmdline-tools/cmdline-tools && \
     rm /opt/cmdline-tools.zip
 
 # Accept licenses and install Android SDK components
-RUN yes | sdkmanager --licenses && \
-    sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0" "ndk;23.1.7779620"
+RUN yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses && \
+    $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "platforms;android-31" "build-tools;31.0.0" "ndk;25.2.9519653"
 
-COPY tools/setup/install-dependencies-debian.sh /tmp/qt/
-RUN /tmp/qt/install-dependencies-debian.sh
+# Copy dependency installation script and execute it
+# COPY tools/setup/install-dependencies-debian.sh /tmp/qt/
+# RUN /tmp/qt/install-dependencies-debian.sh
+
+# Qt Setup
+ENV QT_VERSION="6.6.3"
+ENV QT_PATH="/opt/Qt"
+ENV QT_HOST="linux"
+ENV QT_HOST_ARCH="gcc_64"
+ENV QT_TARGET="android"
+ENV QT_TARGET_ARCH="android_armv7"
+ENV QT_MODULES="${QT_MODULES:-qtcharts qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtlocation}"
 
 # Install aqtinstall for downloading Qt
-RUN python3 -m pip install aqtinstall
+RUN python3 -m pip install setuptools wheel py7zr aqtinstall 
 
+# Create Qt installation directory
 RUN mkdir -p /opt/Qt
 
-# Install Qt for Desktop (host) version
-RUN cd /opt/Qt && aqt install-qt linux desktop 6.6.3 gcc_64
-
-# Install Qt for Desktop (host) version with required modules
-RUN cd /opt/Qt && aqt install-qt linux desktop 6.6.3 gcc_64 --modules qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors 
-
-# Install Qt for Android with necessary modules
-RUN cd /opt/Qt && aqt install-qt linux android 6.6.3 android_arm64_v8a --modules qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors 
+# Install Qt for both host and target
+RUN aqt install-qt ${QT_HOST} desktop ${QT_VERSION} ${QT_HOST_ARCH} -O ${QT_PATH} -m ${QT_MODULES}
+RUN aqt install-qt ${QT_HOST} ${QT_TARGET} ${QT_VERSION} ${QT_TARGET_ARCH} -O ${QT_PATH} -m ${QT_MODULES} --autodesktop
 
 # Set Qt-related environment variables
-ENV QT_ROOT_DIR=/opt/Qt/6.6.3/android_arm64_v8a
-ENV PATH=$PATH:$QT_ROOT_DIR/bin
-ENV LD_LIBRARY_PATH=$QT_ROOT_DIR/lib
-ENV PKG_CONFIG_PATH=$QT_ROOT_DIR/lib/pkgconfig
-ENV QT_PLUGIN_PATH=$QT_ROOT_DIR/plugins
-ENV QML2_IMPORT_PATH=$QT_ROOT_DIR/qml
-
-# Install Gradle
-RUN wget https://services.gradle.org/distributions/gradle-6.8.3-bin.zip -P /tmp && \
-    unzip -d /opt/gradle /tmp/gradle-6.8.3-bin.zip && \
-    rm /tmp/gradle-6.8.3-bin.zip
-ENV GRADLE_HOME=/opt/gradle/gradle-6.8.3
-ENV PATH=$PATH:$GRADLE_HOME/bin
+ENV QT_ROOT_DIR=${QT_PATH}/${QT_VERSION}/${QT_TARGET_ARCH}
+ENV QT_HOST_PATH=${QT_PATH}/${QT_VERSION}/${QT_HOST_ARCH}
+ENV QT_PLUGIN_PATH=${QT_ROOT_DIR}/plugins 
+ENV QML2_IMPORT_PATH=${QT_ROOT_DIR}/qml
+ENV PATH=${QT_ROOT_DIR}/bin/:$PATH
+ENV PKG_CONFIG_PATH=${QT_ROOT_DIR}/lib/pkgconfig:$PKG_CONFIG_PATH
+ENV LD_LIBRARY_PATH=${QT_ROOT_DIR}/lib:$LD_LIBRARY_PATH
 
 # Set Git configuration
 RUN git config --global --add safe.directory /workspace
-
-
-ENV PATH=$PATH:/opt/android-sdk/build-tools/31.0.0
-
-# Add safe directory to Git config for non-root ownership
 RUN git config --global --add safe.directory /project/source
+
+RUN pip install cmake
 
 # Set working directory
 WORKDIR /workspace
+ENV PATH /usr/lib/ccache:$QT_ROOT_DIR/bin:$PATH
+ENV PATH /opt/Qt/${QT_VERSION}/gcc_64/:$PATH
 
-# Expose the Android SDK, NDK, and Qt to be used in the workspace
-CMD ["/bin/bash"]
+
+ENV ANDROID_SDK_ROOT=/opt/android-sdk
+ENV ANDROID_NDK_ROOT=/opt/android-sdk/ndk/25.2.9519653
+ENV ANDROID_HOME=$ANDROID_SDK_ROOT
+ENV ANDROID_SDK=$ANDROID_SDK_ROOT
+ENV ANDROID_NDK=$ANDROID_NDK_ROOT
+ENV PATH=$PATH:$ANDROID_SDK_ROOT/tools:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/cmdline-tools/tools/bin:$ANDROID_NDK_ROOT
+
+RUN apt-get update && apt-get install -y \
+    libgstreamer1.0-dev \
+    libgstreamer-plugins-base1.0-dev \
+    libgstreamer-plugins-good1.0-dev
+
+# Build the project
+CMD cmake -S /project/source -B /workspace -G Ninja \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DQT_HOST_PATH=$QT_HOST_PATH \
+    -DQT_ANDROID_BUILD_ALL_ABIS=OFF \
+    -DQT_ANDROID_ABIS="armeabi-v7a" \
+    -DANDROID_PLATFORM=android-31 \
+    -DANDROID_BUILD_TOOLS=$ANDROID_SDK_ROOT/build-tools/31.0.0 \
+    -DQT_ANDROID_SIGN_APK=OFF \
+    -DENABLE_GSTREAMER=OFF \
+    -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake \
+    -DQt6_DIR=$QT_ROOT_DIR/lib/cmake/Qt6 \
+    -DCMAKE_PREFIX_PATH=$QT_ROOT_DIR/lib/cmake \
+    -DANDROID_SDK_ROOT=$ANDROID_SDK_ROOT && \
+    cmake --build /workspace --target all --config Debug && \
+    cmake --install /workspace --config Debug
+    
+
+    # cmake -S /project/source -B /project/build \
+#     -G Ninja \
+#     -DCMAKE_BUILD_TYPE=Release \
+#     -DCMAKE_TOOLCHAIN_FILE=/opt/android-sdk/ndk/23.1.7779620/build/cmake/android.toolchain.cmake \
+#     -DANDROID_ABI=arm64-v8a \
+#     -DANDROID_PLATFORM=android-31 \
+#     -DANDROID_BUILD_TOOLS=/opt/android-sdk/build-tools/31.0.0 \
+#     -DCMAKE_CXX_STANDARD=17 \
+#     -DQT_HOST_PATH_CMAKE_DIR=/opt/Qt/6.6.3/gcc_64/lib/cmake \
+#     -DQT_HOST_PATH=/opt/Qt/6.6.3/gcc_64 \
+#     -DQt6_DIR=/opt/Qt/6.6.3/android_arm64_v8a/lib/cmake/Qt6
