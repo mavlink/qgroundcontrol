@@ -1,26 +1,24 @@
-# Use an Ubuntu base image
+# Use Ubuntu 22.04 as base image
 FROM ubuntu:22.04
 
 # Set environment variables for Android SDK, NDK, and paths
 ENV ANDROID_SDK_ROOT=/opt/android-sdk
 ENV ANDROID_NDK_ROOT=/opt/android-sdk/ndk-bundle
 ENV ANDROID_HOME=$ANDROID_SDK_ROOT
-ENV PATH=$PATH:$ANDROID_SDK_ROOT/tools:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/cmdline-tools/tools/bin:$ANDROID_NDK_ROOT
+ENV ANDROID_BUILD_TOOLS=$ANDROID_SDK_ROOT/build-tools/34.0.0
+ENV PATH=$PATH:$ANDROID_SDK_ROOT/tools:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_BUILD_TOOLS:$ANDROID_NDK_ROOT
 
-# Set environment variables to make apt-get fully non-interactive
+# Set apt-get to non-interactive and configure time zone
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=America/New_York
 
-# Preconfigure tzdata (time zone) before installing packages
-RUN apt-get update && apt-get install -y tzdata && \
+# Configure time zone and install dependencies
+RUN apt-get update && \
+    apt-get install -y tzdata && \
     ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && \
-    dpkg-reconfigure --frontend noninteractive tzdata
-
-# Install required packages
-RUN apt-get update && apt-get install -y \
+    dpkg-reconfigure --frontend noninteractive tzdata && \
+    apt-get install -y \
     build-essential \
-    libgl1-mesa-dev \
-    libgstreamer-gl1.0-0 \
     libpulse-dev \
     libxcb-glx0 \
     libxcb-icccm4 \
@@ -44,103 +42,86 @@ RUN apt-get update && apt-get install -y \
     wget \
     unzip \
     git \
-    openjdk-11-jdk \
+    openjdk-17-jdk \
     curl \
     locales \
     ninja-build
 
-# Ensure UTF-8 locale
-RUN locale-gen en_US.UTF-8 && dpkg-reconfigure --frontend noninteractive locales && \
-    export LANG=en_US.UTF-8 && export LC_ALL=en_US.UTF-8
+# Set JAVA_HOME and update PATH
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+ENV PATH=$JAVA_HOME/bin:$PATH
 
-# Install Android SDK
+# Ensure UTF-8 locale
+RUN locale-gen en_US.UTF-8 && \
+    dpkg-reconfigure --frontend noninteractive locales && \
+    export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+
+# Install Android SDK and NDK
 RUN mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest && \
     wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip -O /opt/cmdline-tools.zip && \
-    unzip /opt/cmdline-tools.zip -d /opt/android-sdk/cmdline-tools && \
-    mv /opt/android-sdk/cmdline-tools/cmdline-tools/* /opt/android-sdk/cmdline-tools/latest/ && \
-    rm -rf /opt/android-sdk/cmdline-tools/cmdline-tools && \
-    rm /opt/cmdline-tools.zip
-
-# Accept licenses and install Android SDK components
-RUN yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses && \
+    unzip /opt/cmdline-tools.zip -d $ANDROID_SDK_ROOT/cmdline-tools && \
+    mv $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools/* $ANDROID_SDK_ROOT/cmdline-tools/latest/ && \
+    rm -rf $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools && \
+    rm /opt/cmdline-tools.zip && \
+    yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses && \
     $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "platforms;android-34" "build-tools;34.0.0" "ndk;25.2.9519653"
 
-# Copy dependency installation script and execute it
-# COPY tools/setup/install-dependencies-debian.sh /tmp/qt/
-# RUN /tmp/qt/install-dependencies-debian.sh
-
-# Qt Setup
+# Qt setup and environment variables
 ENV QT_VERSION="6.6.3"
 ENV QT_PATH="/opt/Qt"
 ENV QT_HOST="linux"
 ENV QT_HOST_ARCH="gcc_64"
 ENV QT_TARGET="android"
-ENV QT_TARGET_ARCH="android_armv7"
-ENV QT_MODULES="${QT_MODULES:-qtcharts qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtlocation}"
+ENV QT_TARGET_ARCH_ARMV7="android_armv7"
+ENV QT_TARGET_ARCH_ARM64="android_arm64_v8a"
+ENV QT_MODULES="qtcharts qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtlocation"
 
-# Install aqtinstall for downloading Qt
-RUN python3 -m pip install setuptools wheel py7zr aqtinstall 
+# Install aqtinstall and download Qt for both host and target architectures
+RUN python3 -m pip install setuptools wheel py7zr aqtinstall && \
+    mkdir -p /opt/Qt && \
+    aqt install-qt ${QT_HOST} desktop ${QT_VERSION} ${QT_HOST_ARCH} -O ${QT_PATH} -m ${QT_MODULES} && \
+    aqt install-qt ${QT_HOST} ${QT_TARGET} ${QT_VERSION} ${QT_TARGET_ARCH_ARMV7} -O ${QT_PATH} -m ${QT_MODULES} --autodesktop && \
+    aqt install-qt ${QT_HOST} ${QT_TARGET} ${QT_VERSION} ${QT_TARGET_ARCH_ARM64} -O ${QT_PATH} -m ${QT_MODULES} --autodesktop
 
-# Create Qt installation directory
-RUN mkdir -p /opt/Qt
-
-# Install Qt for both host and target
-RUN aqt install-qt ${QT_HOST} desktop ${QT_VERSION} ${QT_HOST_ARCH} -O ${QT_PATH} -m ${QT_MODULES}
-RUN aqt install-qt ${QT_HOST} ${QT_TARGET} ${QT_VERSION} ${QT_TARGET_ARCH} -O ${QT_PATH} -m ${QT_MODULES} --autodesktop
-
-# Set Qt-related environment variables
-ENV QT_ROOT_DIR=${QT_PATH}/${QT_VERSION}/${QT_TARGET_ARCH}
+# Set Qt-related environment variables for ARMv7 and ARM64 architectures
+ENV QT_ROOT_DIR_ARMV7=${QT_PATH}/${QT_VERSION}/${QT_TARGET_ARCH_ARMV7}
+ENV QT_ROOT_DIR_ARM64=${QT_PATH}/${QT_VERSION}/${QT_TARGET_ARCH_ARM64}
 ENV QT_HOST_PATH=${QT_PATH}/${QT_VERSION}/${QT_HOST_ARCH}
-ENV QT_PLUGIN_PATH=${QT_ROOT_DIR}/plugins 
-ENV QML2_IMPORT_PATH=${QT_ROOT_DIR}/qml
-ENV PATH=${QT_ROOT_DIR}/bin/:$PATH
-ENV PKG_CONFIG_PATH=${QT_ROOT_DIR}/lib/pkgconfig:$PKG_CONFIG_PATH
-ENV LD_LIBRARY_PATH=${QT_ROOT_DIR}/lib:$LD_LIBRARY_PATH
+ENV QT_PLUGIN_PATH_ARMV7=${QT_ROOT_DIR_ARMV7}/plugins 
+ENV QT_PLUGIN_PATH_ARM64=${QT_ROOT_DIR_ARM64}/plugins
+ENV QML2_IMPORT_PATH_ARMV7=${QT_ROOT_DIR_ARMV7}/qml
+ENV QML2_IMPORT_PATH_ARM64=${QT_ROOT_DIR_ARM64}/qml
+ENV PATH=${QT_ROOT_DIR_ARMV7}/bin:${QT_ROOT_DIR_ARM64}/bin:$PATH
+ENV PKG_CONFIG_PATH_ARMV7=${QT_ROOT_DIR_ARMV7}/lib/pkgconfig:$PKG_CONFIG_PATH
+ENV PKG_CONFIG_PATH_ARM64=${QT_ROOT_DIR_ARM64}/lib/pkgconfig:$PKG_CONFIG_PATH
+ENV LD_LIBRARY_PATH_ARMV7=${QT_ROOT_DIR_ARMV7}/lib:$LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH_ARM64=${QT_ROOT_DIR_ARM64}/lib:$LD_LIBRARY_PATH
 
-# Set Git configuration
-RUN git config --global --add safe.directory /workspace
-RUN git config --global --add safe.directory /project/source
+# Set Git safe directories and install CMake
+RUN git config --global --add safe.directory /workspace && \
+    git config --global --add safe.directory /project/source && \
+    pip install cmake
 
-RUN pip install cmake
-
-# Set working directory
+# Set working directory and PATH
 WORKDIR /workspace
-ENV PATH /usr/lib/ccache:$QT_ROOT_DIR/bin:$PATH
-ENV PATH /opt/Qt/${QT_VERSION}/gcc_64/:$PATH
+ENV PATH=/usr/lib/ccache:$QT_ROOT_DIR_ARMV7/bin:$QT_ROOT_DIR_ARM64/bin:$PATH
+ENV PATH=/opt/Qt/${QT_VERSION}/gcc_64:$PATH
 
-
-ENV ANDROID_SDK_ROOT=/opt/android-sdk
+# Final environment variables for Android SDK and NDK
 ENV ANDROID_NDK_ROOT=/opt/android-sdk/ndk/25.2.9519653
-ENV ANDROID_HOME=$ANDROID_SDK_ROOT
-ENV ANDROID_SDK=$ANDROID_SDK_ROOT
-ENV ANDROID_NDK=$ANDROID_NDK_ROOT
-ENV PATH=$PATH:$ANDROID_SDK_ROOT/tools:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/cmdline-tools/tools/bin:$ANDROID_NDK_ROOT
+ENV PATH=$PATH:$ANDROID_SDK_ROOT/tools:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_BUILD_TOOLS:$ANDROID_NDK_ROOT
 
-RUN apt-get update && apt-get install -y \
-    libgstreamer1.0-dev \
-    libgstreamer-plugins-base1.0-dev \
-    libgstreamer-plugins-good1.0-dev \
-    openjdk-17-jdk
-
-ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-ENV PATH=$JAVA_HOME/bin:$PATH
-
-# Build the project
+# Build the project for both ARMv7 and ARM64
 CMD cmake -S /project/source -B /workspace -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
     -DQT_HOST_PATH=$QT_HOST_PATH \
     -DQT_ANDROID_BUILD_ALL_ABIS=OFF \
-    -DQT_ANDROID_ABIS="armeabi-v7a" \
-    -DANDROID_PLATFORM=android-31 \
-    -DANDROID_BUILD_TOOLS=$ANDROID_SDK_ROOT/build-tools/31.0.0 \
+    -DQT_ANDROID_ABIS="armeabi-v7a;arm64-v8a" \
+    -DANDROID_BUILD_TOOLS=$ANDROID_SDK_ROOT/build-tools/34.0.0 \
+    -DANDROID_SDK_ROOT=$ANDROID_SDK_ROOT \ 
     -DQT_ANDROID_SIGN_APK=OFF \
-    -DENABLE_GSTREAMER=OFF \
     -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake \
-    -DQt6_DIR=$QT_ROOT_DIR/lib/cmake/Qt6 \
-    -DCMAKE_PREFIX_PATH=$QT_ROOT_DIR/lib/cmake \
-    # -DQGC_ENABLE_GST_VIDEOSTREAMING=OFF \
-    -DQGC_GST_QT6_PLUGIN_PATH=${QT_ROOT_DIR}/include/QtQuick \
-    -DANDROID_SDK_ROOT=$ANDROID_SDK_ROOT && \
-    cmake --build /workspace --target all --config Debug 
-    # cmake --install /workspace --config Debug
-    
+    -DQt6_DIR=$QT_ROOT_DIR_ARMV7/lib/cmake/Qt6 \
+    -DQt6_DIR_ARM64=$QT_ROOT_DIR_ARM64/lib/cmake/Qt6 \
+    -DCMAKE_PREFIX_PATH=$QT_ROOT_DIR_ARMV7/lib/cmake:$QT_ROOT_DIR_ARM64/lib/cmake && \
+    cmake --build /workspace --target all --config Release
