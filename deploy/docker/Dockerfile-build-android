@@ -63,7 +63,7 @@ RUN mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest && \
 
 # Accept licenses and install Android SDK components
 RUN yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses && \
-    $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "platforms;android-31" "build-tools;31.0.0" "ndk;25.2.9519653"
+    $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "platforms;android-34" "build-tools;34.0.0" "ndk;25.2.9519653"
 
 # Copy dependency installation script and execute it
 # COPY tools/setup/install-dependencies-debian.sh /tmp/qt/
@@ -119,7 +119,11 @@ ENV PATH=$PATH:$ANDROID_SDK_ROOT/tools:$ANDROID_SDK_ROOT/platform-tools:$ANDROID
 RUN apt-get update && apt-get install -y \
     libgstreamer1.0-dev \
     libgstreamer-plugins-base1.0-dev \
-    libgstreamer-plugins-good1.0-dev
+    libgstreamer-plugins-good1.0-dev \
+    openjdk-17-jdk
+
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+ENV PATH=$JAVA_HOME/bin:$PATH
 
 # Build the project
 CMD cmake -S /project/source -B /workspace -G Ninja \
@@ -134,19 +138,9 @@ CMD cmake -S /project/source -B /workspace -G Ninja \
     -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake \
     -DQt6_DIR=$QT_ROOT_DIR/lib/cmake/Qt6 \
     -DCMAKE_PREFIX_PATH=$QT_ROOT_DIR/lib/cmake \
+    # -DQGC_ENABLE_GST_VIDEOSTREAMING=OFF \
+    -DQGC_GST_QT6_PLUGIN_PATH=${QT_ROOT_DIR}/include/QtQuick \
     -DANDROID_SDK_ROOT=$ANDROID_SDK_ROOT && \
-    cmake --build /workspace --target all --config Debug && \
-    cmake --install /workspace --config Debug
+    cmake --build /workspace --target all --config Debug 
+    # cmake --install /workspace --config Debug
     
-
-    # cmake -S /project/source -B /project/build \
-#     -G Ninja \
-#     -DCMAKE_BUILD_TYPE=Release \
-#     -DCMAKE_TOOLCHAIN_FILE=/opt/android-sdk/ndk/23.1.7779620/build/cmake/android.toolchain.cmake \
-#     -DANDROID_ABI=arm64-v8a \
-#     -DANDROID_PLATFORM=android-31 \
-#     -DANDROID_BUILD_TOOLS=/opt/android-sdk/build-tools/31.0.0 \
-#     -DCMAKE_CXX_STANDARD=17 \
-#     -DQT_HOST_PATH_CMAKE_DIR=/opt/Qt/6.6.3/gcc_64/lib/cmake \
-#     -DQT_HOST_PATH=/opt/Qt/6.6.3/gcc_64 \
-#     -DQt6_DIR=/opt/Qt/6.6.3/android_arm64_v8a/lib/cmake/Qt6

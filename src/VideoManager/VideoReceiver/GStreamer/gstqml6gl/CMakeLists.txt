@@ -42,31 +42,17 @@ endif()
 
 ################################################################################
 
-# Check if GStreamer Qt6 plugin is already available on the system
-find_package(GStreamer QUIET COMPONENTS Qt6)
-
-if(GStreamer_FOUND AND GStreamer_VERSION VERSION_GREATER_EQUAL 1.22)
-    # Use the found GStreamer version
-    message(STATUS "Found GStreamer Qt6 plugin: ${GStreamer_VERSION}")
-    set(QGC_GST_QT6_PLUGIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/qt6" CACHE PATH "Location of system GST plugin")
-else()
-    if(NOT DEFINED GST_PLUGINS_VERSION)
-        set(GST_PLUGINS_VERSION "1.22.12")
-    endif()
-
-    file(DOWNLOAD 
-        "https://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.22.12.tar.xz" 
-        "${CMAKE_BINARY_DIR}/gst-plugins-good-1.22.12.tar.xz"
-        STATUS download_status
+# TODO: Don't Download & Build if gstreamer1.0-qt6 was found
+if(GStreamer_VERSION VERSION_GREATER_EQUAL 1.22)
+    FetchContent_Declare(gstreamer_good_plugins
+        # URL https://gitlab.freedesktop.org/gstreamer/gstreamer/-/archive/${GStreamer_VERSION}/gstreamer-${GStreamer_VERSION}.zip?path=subprojects/gst-plugins-good/ext/qt6
+        URL https://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-${GST_PLUGINS_VERSION}.tar.xz
+        DOWNLOAD_EXTRACT_TIMESTAMP true
     )
-
-    list(GET download_status 0 status_code)
-    if(NOT status_code EQUAL 0)
-        message(FATAL_ERROR "Failed to download GStreamer plugin: ${download_status}")
-    endif()
-
-
+    FetchContent_MakeAvailable(gstreamer_good_plugins)
     set(QGC_GST_QT6_PLUGIN_PATH "${gstreamer_good_plugins_SOURCE_DIR}/ext/qt6" CACHE PATH "Location of downloaded GST Qt6 plugin sources")
+else()
+    set(QGC_GST_QT6_PLUGIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/qt6" CACHE PATH "Location of custom local GST plugin")
 endif()
 cmake_print_variables(QGC_GST_QT6_PLUGIN_PATH)
 
