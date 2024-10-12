@@ -1,15 +1,46 @@
 {
-    "version":      1,
-    "fileType":  "FactMetaData",
-    "QGC.MetaData.Facts":
-[
-{
-    "name":         "display",
-    "shortDesc":    "Select values to display in indicator",
-    "enumStrings":  "Percentage,Voltage,Percentage and Voltage",
-    "enumValues":   "0,1,2",
-    "type":         "uint32",
-    "default":      false
-}
-]
+    "version": 1,
+    "fileType": "FactMetaData",
+    "QGC.MetaData.Facts": [
+        {
+            "name": "display",
+            "shortDesc": "Select values to display in indicator",
+            "enumStrings": "Percentage,Voltage,Percentage and Voltage",
+            "enumValues": "0,1,2",
+            "type": "uint32",
+            "default": false
+        },
+        {
+            "name": "threshold1",
+            "shortDesc": "Battery level threshold 1",
+            "type": "uint32",
+            "default": 80,
+            "units": "%"
+        },
+        {
+            "name": "threshold2",
+            "shortDesc": "Battery level threshold 2",
+            "type": "uint32",
+            "default": 60,
+            "units": "%"
+        },
+        {
+            "name": "threshold1visible",
+            "shortDesc": "Controls the visibility of the 'threshold1visible'",
+            "type": "bool",
+            "default": true
+        },
+        {
+            "name": "threshold2visible",
+            "shortDesc": "Controls the visibility of the 'threshold2visible'",
+            "type": "bool",
+            "default": true
+        },
+        {
+            "name": "battery_state_display",
+            "shortDesc": "Controls the visibility of the 'Battery State Display'",
+            "type": "bool",
+            "default": true
+        }
+    ]
 }

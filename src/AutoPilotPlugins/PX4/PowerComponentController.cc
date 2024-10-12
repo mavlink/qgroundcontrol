@@ -99,12 +99,12 @@ void PowerComponentController::_handleVehicleTextMessage(int vehicleId, int /* c
     QString failedPrefix("calibration failed: ");
     if (text.startsWith(failedPrefix)) {
         QString failureText = text.right(text.length() - failedPrefix.length());
+        _stopCalibration();
         if (failureText.startsWith("Disconnect battery")) {
             emit disconnectBattery();
             return;
         }
         
-        _stopCalibration();
         emit calibrationFailed(text.right(text.length() - failedPrefix.length()));
         return;
     }

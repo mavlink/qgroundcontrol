@@ -56,7 +56,7 @@ jobs:
       - name: Install Dependencies
         run: |
           brew update
-          brew install cmake ninja ccache geographiclib SDL2 exiv2
+          brew install cmake ninja ccache geographiclib SDL2 exiv2 expat zlib shapelib
 
       - name: Install Gstreamer
         run: |

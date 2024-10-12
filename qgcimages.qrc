@@ -61,6 +61,12 @@
         <file alias="attitudePointer.svg">src/FlightMap/Images/attitudePointer.svg</file>
         <file alias="AwarenessAircraft.svg">src/FlightMap/Images/AwarenessAircraft.svg</file>
         <file alias="Battery.svg">src/UI/toolbar/Images/Battery.svg</file>
+        <file alias="BatteryGreen.svg">src/UI/toolbar/Images/BatteryGreen.svg</file>
+        <file alias="BatteryYellowGreen.svg">src/UI/toolbar/Images/BatteryYellowGreen.svg</file>
+        <file alias="BatteryYellow.svg">src/UI/toolbar/Images/BatteryYellow.svg</file>
+        <file alias="BatteryOrange.svg">src/UI/toolbar/Images/BatteryOrange.svg</file>
+        <file alias="BatteryCritical.svg">src/UI/toolbar/Images/BatteryCritical.svg</file>
+        <file alias="BatteryEMERGENCY.svg">src/UI/toolbar/Images/BatteryEMERGENCY.svg</file>
         <file alias="camera.svg">resources/camera.svg</file>
         <file alias="camera_photo.svg">src/Camera/images/camera_photo.svg</file>
         <file alias="camera_video.svg">src/Camera/images/camera_video.svg</file>

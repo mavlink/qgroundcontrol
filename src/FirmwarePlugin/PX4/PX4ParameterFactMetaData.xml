@@ -10255,7 +10255,7 @@
       <values>
         <value code="1">GPIO</value>
         <value code="2">Seagull MAP2 (over PWM)</value>
-        <value code="3">MAVLink (forward via MAV_CMD_IMAGE_START_CAPTURE)</value>
+        <value code="3">MAVLink (Camera Protocol v1)</value>
         <value code="4">Generic PWM (IR trigger, servo)</value>
       </values>
     </parameter>
@@ -10401,10 +10401,10 @@
       <decimal>1</decimal>
       <increment>0.1</increment>
     </parameter>
-    <parameter name="COM_ARM_BAT_MIN" default="0." type="FLOAT">
+    <parameter name="COM_ARM_BAT_MIN" default="-1." type="FLOAT">
       <short_desc>Minimum battery level for arming</short_desc>
-      <long_desc>Additional battery level check that only allows arming if the state of charge of the emptiest connected battery is above this value. A value of 0 disables the check.</long_desc>
-      <min>0</min>
+      <long_desc>Threshold for battery percentage below arming is prohibited. A negative value means BAT_CRIT_THR is the threshold.</long_desc>
+      <min>-1</min>
       <max>0.9</max>
       <unit>norm</unit>
       <decimal>2</decimal>
@@ -12243,6 +12243,12 @@
     <parameter name="EKF2_TERR_NOISE" default="5.0" type="FLOAT">
       <short_desc>Terrain altitude process noise</short_desc>
       <min>0.5</min>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+    </parameter>
+    <parameter name="EKF2_VEL_LIM" default="100" type="FLOAT">
+      <short_desc>Velocity limit</short_desc>
+      <max>299792458</max>
       <unit>m/s</unit>
       <decimal>1</decimal>
     </parameter>
@@ -26332,40 +26338,40 @@
       <short_desc>Module IDs [32, 62] that you would like to request telemetry from</short_desc>
       <long_desc>The module IDs [32, 62] that should be asked for telemetry. The data received from these IDs will be published via the esc_status topic.</long_desc>
       <min>0</min>
-      <max>9223372036854775807</max>
+      <max>2147483647</max>
       <reboot_required>True</reboot_required>
       <bitmask>
-        <bit index="32">Module ID 32</bit>
-        <bit index="33">Module ID 33</bit>
-        <bit index="34">Module ID 34</bit>
-        <bit index="35">Module ID 35</bit>
-        <bit index="36">Module ID 36</bit>
-        <bit index="37">Module ID 37</bit>
-        <bit index="38">Module ID 38</bit>
-        <bit index="39">Module ID 39</bit>
-        <bit index="40">Module ID 40</bit>
-        <bit index="41">Module ID 41</bit>
-        <bit index="42">Module ID 42</bit>
-        <bit index="43">Module ID 43</bit>
-        <bit index="44">Module ID 44</bit>
-        <bit index="45">Module ID 45</bit>
-        <bit index="46">Module ID 46</bit>
-        <bit index="47">Module ID 47</bit>
-        <bit index="48">Module ID 48</bit>
-        <bit index="49">Module ID 49</bit>
-        <bit index="50">Module ID 50</bit>
-        <bit index="51">Module ID 51</bit>
-        <bit index="52">Module ID 52</bit>
-        <bit index="53">Module ID 53</bit>
-        <bit index="54">Module ID 54</bit>
-        <bit index="55">Module ID 55</bit>
-        <bit index="56">Module ID 56</bit>
-        <bit index="57">Module ID 57</bit>
-        <bit index="58">Module ID 58</bit>
-        <bit index="59">Module ID 59</bit>
-        <bit index="60">Module ID 60</bit>
-        <bit index="61">Module ID 61</bit>
-        <bit index="62">Module ID 62</bit>
+        <bit index="0">Module ID 32</bit>
+        <bit index="1">Module ID 33</bit>
+        <bit index="2">Module ID 34</bit>
+        <bit index="3">Module ID 35</bit>
+        <bit index="4">Module ID 36</bit>
+        <bit index="5">Module ID 37</bit>
+        <bit index="6">Module ID 38</bit>
+        <bit index="7">Module ID 39</bit>
+        <bit index="8">Module ID 40</bit>
+        <bit index="9">Module ID 41</bit>
+        <bit index="10">Module ID 42</bit>
+        <bit index="11">Module ID 43</bit>
+        <bit index="12">Module ID 44</bit>
+        <bit index="13">Module ID 45</bit>
+        <bit index="14">Module ID 46</bit>
+        <bit index="15">Module ID 47</bit>
+        <bit index="16">Module ID 48</bit>
+        <bit index="17">Module ID 49</bit>
+        <bit index="18">Module ID 50</bit>
+        <bit index="19">Module ID 51</bit>
+        <bit index="20">Module ID 52</bit>
+        <bit index="21">Module ID 53</bit>
+        <bit index="22">Module ID 54</bit>
+        <bit index="23">Module ID 55</bit>
+        <bit index="24">Module ID 56</bit>
+        <bit index="25">Module ID 57</bit>
+        <bit index="26">Module ID 58</bit>
+        <bit index="27">Module ID 59</bit>
+        <bit index="28">Module ID 60</bit>
+        <bit index="29">Module ID 61</bit>
+        <bit index="30">Module ID 62</bit>
       </bitmask>
     </parameter>
     <parameter name="VTQ_THROTTLE_CVI" default="0" type="INT32">
