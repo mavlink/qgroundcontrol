@@ -68,9 +68,9 @@ jobs:
       - name: Install Compiler
         run: |
           sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-          sudo apt install gcc-13 g++-13
-          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100 --slave /usr/bin/g++ g++ /usr/bin/g++-13 --slave /usr/bin/gcov gcov /usr/bin/gcov-13
-          sudo update-alternatives --set gcc /usr/bin/gcc-13
+          sudo apt install gcc-11 g++-11
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 100 --slave /usr/bin/g++ g++ /usr/bin/g++-11 --slave /usr/bin/gcov gcov /usr/bin/gcov-11
+          sudo update-alternatives --set gcc /usr/bin/gcc-11
 
       - name: Install CCache
         run: |
