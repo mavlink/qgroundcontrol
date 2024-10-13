@@ -142,9 +142,9 @@ SettingsPage {
         id: linkDialogComponent
 
         QGCPopupDialog {
-            title:          originalConfig ? qsTr("Edit Link") : qsTr("Add New Link")
-            buttons:        Dialog.Save | Dialog.Cancel
-            acceptAllowed:  nameField.text !== ""
+            title:                  originalConfig ? qsTr("Edit Link") : qsTr("Add New Link")
+            buttons:                Dialog.Save | Dialog.Cancel
+            acceptButtonEnabled:    nameField.text !== ""
 
             property var originalConfig
             property var editingConfig
