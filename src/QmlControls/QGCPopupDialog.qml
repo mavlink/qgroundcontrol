@@ -50,8 +50,6 @@ Popup {
 
     property string title
     property var    buttons:                Dialog.Ok
-    property bool   acceptAllowed:          acceptButton.visible
-    property bool   rejectAllowed:          rejectButton.visible
     property alias  acceptButtonEnabled:    acceptButton.enabled
     property alias  rejectButtonEnabled:    rejectButton.enabled
     property var    dialogProperties
@@ -66,6 +64,8 @@ Popup {
     property var    _qgcPal:            QGroundControl.globalPalette
     property real   _frameSize:         ScreenTools.defaultFontPixelWidth
     property real   _contentMargin:     ScreenTools.defaultFontPixelHeight / 2
+    property bool   _acceptAllowed:     acceptButton.visible
+    property bool   _rejectAllowed:     rejectButton.visible
 
     background: QGCMouseArea {
         width:  mainWindow.width
@@ -73,13 +73,7 @@ Popup {
 
         onClicked: {
             if (closePolicy & Popup.CloseOnPressOutside) {
-                if (rejectAllowed) {
-                    focus = true    // Take focus to force FactTextFields to validate
-                    _reject()
-                } else if (acceptAllowed) {
-                    focus = true    // Take focus to force FactTextFields to validate
-                    _accept()
-                }
+                _reject()
             }
         }
     }
@@ -99,7 +93,7 @@ Popup {
     }
 
     function _accept() {
-        if (acceptAllowed && !globals.validationError) {
+        if (_acceptAllowed && mainWindow.allowViewSwitch()) {
             accepted()
             if (preventClose) {
                 preventClose = false
@@ -110,7 +104,8 @@ Popup {
     }
 
     function _reject() {
-        if (rejectAllowed && !globals.validationError) {
+        // Dialogs with cancel button are allowed to close with validation errors
+        if (_rejectAllowed && ((buttons & Dialog.Cancel) || mainWindow.allowViewSwitch())) {
             rejected()
             if (preventClose) {
                 preventClose = false
@@ -183,7 +178,7 @@ Popup {
         }
 
         closePolicy = Popup.NoAutoClose
-        if (rejectAllowed) {
+        if (buttons & Dialog.Cancel) {
             closePolicy |= Popup.CloseOnEscape
         }
     }
@@ -259,7 +254,7 @@ Popup {
                     focus:  true
 
                     Keys.onPressed: (event) => {
-                        if (event.key === Qt.Key_Escape && rejectAllowed) {
+                        if (event.key === Qt.Key_Escape && _rejectAllowed) {
                             _reject()
                             event.accepted = true
                         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {

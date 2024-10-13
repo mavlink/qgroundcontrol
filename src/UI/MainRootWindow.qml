@@ -87,9 +87,10 @@ ApplicationWindow {
         readonly property var       planMasterControllerFlyView:    flyView.planController
         readonly property var       guidedControllerFlyView:        flyView.guidedController
 
-        property bool               validationError:                false   // There is a FactTextField somewhere with a validation error
+        // Number of QGCTextField's with validation errors. Used to prevent closing panels with validation errors.
+        property int                validationErrorCount:           0 
 
-        // Property to manage RemoteID quick acces to settings page
+        // Property to manage RemoteID quick access to settings page
         property bool               commingFromRIDIndicator:        false
     }
 
@@ -109,9 +110,13 @@ ApplicationWindow {
     //-------------------------------------------------------------------------
     //-- Global Scope Functions
 
-    /// @return true: View switches are not currently allowed
-    function preventViewSwitch() {
-        return globals.validationError
+    // This function is used to prevent view switching if there are validation errors
+    function allowViewSwitch() {
+        // Run validation on active focus control to ensure it is valid before switching views
+        if (mainWindow.activeFocusControl instanceof QGCTextField) {
+            mainWindow.activeFocusControl.onEditingFinished()
+        }
+        return globals.validationErrorCount === 0
     }
 
     function showPlanView() {
@@ -259,7 +264,7 @@ ApplicationWindow {
     }
 
     function showToolSelectDialog() {
-        if (!mainWindow.preventViewSwitch()) {
+        if (mainWindow.allowViewSwitch()) {
             mainWindow.showIndicatorDrawer(toolSelectComponent, null)
         }
     }
@@ -291,7 +296,7 @@ ApplicationWindow {
                             text:               qsTr("Vehicle Setup")
                             imageResource:      "/qmlimages/Gears.svg"
                             onClicked: {
-                                if (!mainWindow.preventViewSwitch()) {
+                                if (mainWindow.allowViewSwitch()) {
                                     mainWindow.closeIndicatorDrawer()
                                     mainWindow.showVehicleSetupTool()
                                 }
@@ -306,7 +311,7 @@ ApplicationWindow {
                             imageResource:      "/qmlimages/Analyze.svg"
                             visible:            QGroundControl.corePlugin.showAdvancedUI
                             onClicked: {
-                                if (!mainWindow.preventViewSwitch()) {
+                                if (mainWindow.allowViewSwitch()) {
                                     mainWindow.closeIndicatorDrawer()
                                     mainWindow.showAnalyzeTool()
                                 }
@@ -322,7 +327,7 @@ ApplicationWindow {
                             imageColor:         "transparent"
                             visible:            !QGroundControl.corePlugin.options.combineSettingsAndSetup
                             onClicked: {
-                                if (!mainWindow.preventViewSwitch()) {
+                                if (mainWindow.allowViewSwitch()) {
                                     drawer.close()
                                     mainWindow.showSettingsTool()
                                 }
@@ -498,7 +503,9 @@ ApplicationWindow {
                 x:                  parent.mapFromItem(backIcon, backIcon.x, backIcon.y).x
                 width:              (backTextLabel.x + backTextLabel.width) - backIcon.x
                 onClicked: {
-                    toolDrawer.visible      = false
+                    if (mainWindow.allowViewSwitch()) {
+                        toolDrawer.visible = false
+                    }
                 }
             }
         }

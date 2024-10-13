@@ -90,7 +90,7 @@ Item {
     }
 
     function goToSettings() {
-        if (!mainWindow.preventViewSwitch()) {
+        if (mainWindow.allowViewSwitch()) {
             globals.commingFromRIDIndicator = true
             mainWindow.showSettingsTool()
         }
