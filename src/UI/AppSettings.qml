@@ -114,14 +114,12 @@ Rectangle {
                     }
 
                     onClicked: {
-                        focus = true
-                        if (mainWindow.preventViewSwitch()) {
-                            return
+                        if (mainWindow.allowViewSwitch()) {
+                            if (rightPanel.source !== url) {
+                                rightPanel.source = url
+                            }
+                            checked = true
                         }
-                        if (rightPanel.source !== url) {
-                            rightPanel.source = url
-                        }
-                        checked = true
                     }
 
                     Component.onCompleted: {
