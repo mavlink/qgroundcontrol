@@ -3,10 +3,9 @@ FROM ubuntu:22.04
 
 # Set environment variables for Android SDK, NDK, and paths
 ENV ANDROID_SDK_ROOT=/opt/android-sdk
-ENV ANDROID_NDK_ROOT=/opt/android-sdk/ndk-bundle
+ENV ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/25.2.9519653
 ENV ANDROID_HOME=$ANDROID_SDK_ROOT
 ENV ANDROID_BUILD_TOOLS=$ANDROID_SDK_ROOT/build-tools/34.0.0
-ENV PATH=$PATH:$ANDROID_SDK_ROOT/tools:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_BUILD_TOOLS:$ANDROID_NDK_ROOT
 
 # Set apt-get to non-interactive and configure time zone
 ENV DEBIAN_FRONTEND=noninteractive
@@ -49,7 +48,6 @@ RUN apt-get update && \
 
 # Set JAVA_HOME and update PATH
 ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-ENV PATH=$JAVA_HOME/bin:$PATH
 
 # Ensure UTF-8 locale
 RUN locale-gen en_US.UTF-8 && \
@@ -78,50 +76,46 @@ ENV QT_MODULES="qtcharts qtpositioning qtspeech qt5compat qtmultimedia qtserialp
 
 # Install aqtinstall and download Qt for both host and target architectures
 RUN python3 -m pip install setuptools wheel py7zr aqtinstall && \
-    mkdir -p /opt/Qt && \
-    aqt install-qt ${QT_HOST} desktop ${QT_VERSION} ${QT_HOST_ARCH} -O ${QT_PATH} -m ${QT_MODULES} && \
-    aqt install-qt ${QT_HOST} ${QT_TARGET} ${QT_VERSION} ${QT_TARGET_ARCH_ARMV7} -O ${QT_PATH} -m ${QT_MODULES} --autodesktop && \
-    aqt install-qt ${QT_HOST} ${QT_TARGET} ${QT_VERSION} ${QT_TARGET_ARCH_ARM64} -O ${QT_PATH} -m ${QT_MODULES} --autodesktop
+    mkdir -p $QT_PATH && \
+    aqt install-qt $QT_HOST desktop $QT_VERSION $QT_HOST_ARCH -O $QT_PATH -m $QT_MODULES && \
+    aqt install-qt $QT_HOST $QT_TARGET $QT_VERSION $QT_TARGET_ARCH_ARMV7 -O $QT_PATH -m $QT_MODULES --autodesktop && \
+    aqt install-qt $QT_HOST $QT_TARGET $QT_VERSION $QT_TARGET_ARCH_ARM64 -O $QT_PATH -m $QT_MODULES --autodesktop
 
 # Set Qt-related environment variables for ARMv7 and ARM64 architectures
-ENV QT_ROOT_DIR_ARMV7=${QT_PATH}/${QT_VERSION}/${QT_TARGET_ARCH_ARMV7}
-ENV QT_ROOT_DIR_ARM64=${QT_PATH}/${QT_VERSION}/${QT_TARGET_ARCH_ARM64}
-ENV QT_HOST_PATH=${QT_PATH}/${QT_VERSION}/${QT_HOST_ARCH}
-ENV QT_PLUGIN_PATH_ARMV7=${QT_ROOT_DIR_ARMV7}/plugins 
-ENV QT_PLUGIN_PATH_ARM64=${QT_ROOT_DIR_ARM64}/plugins
-ENV QML2_IMPORT_PATH_ARMV7=${QT_ROOT_DIR_ARMV7}/qml
-ENV QML2_IMPORT_PATH_ARM64=${QT_ROOT_DIR_ARM64}/qml
-ENV PATH=${QT_ROOT_DIR_ARMV7}/bin:${QT_ROOT_DIR_ARM64}/bin:$PATH
-ENV PKG_CONFIG_PATH_ARMV7=${QT_ROOT_DIR_ARMV7}/lib/pkgconfig:$PKG_CONFIG_PATH
-ENV PKG_CONFIG_PATH_ARM64=${QT_ROOT_DIR_ARM64}/lib/pkgconfig:$PKG_CONFIG_PATH
-ENV LD_LIBRARY_PATH_ARMV7=${QT_ROOT_DIR_ARMV7}/lib:$LD_LIBRARY_PATH
-ENV LD_LIBRARY_PATH_ARM64=${QT_ROOT_DIR_ARM64}/lib:$LD_LIBRARY_PATH
+ENV QT_ROOT_DIR_ARMV7=$QT_PATH/$QT_VERSION/$QT_TARGET_ARCH_ARMV7
+ENV QT_ROOT_DIR_ARM64=$QT_PATH/$QT_VERSION/$QT_TARGET_ARCH_ARM64
+ENV QT_HOST_PATH=$QT_PATH/$QT_VERSION/$QT_HOST_ARCH
+ENV QT_PLUGIN_PATH_ARMV7=$QT_ROOT_DIR_ARMV7/plugins 
+ENV QT_PLUGIN_PATH_ARM64=$QT_ROOT_DIR_ARM64/plugins
+ENV QML2_IMPORT_PATH_ARMV7=$QT_ROOT_DIR_ARMV7/qml
+ENV QML2_IMPORT_PATH_ARM64=$QT_ROOT_DIR_ARM64/qml
+ENV PKG_CONFIG_PATH_ARMV7=$QT_ROOT_DIR_ARMV7/lib/pkgconfig:$PKG_CONFIG_PATH
+ENV PKG_CONFIG_PATH_ARM64=$QT_ROOT_DIR_ARM64/lib/pkgconfig:$PKG_CONFIG_PATH
+ENV LD_LIBRARY_PATH_ARMV7=$QT_ROOT_DIR_ARMV7/lib:$LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH_ARM64=$QT_ROOT_DIR_ARM64/lib:$LD_LIBRARY_PATH
+
+# Consolidate PATH settings
+ENV PATH=$JAVA_HOME/bin:/usr/lib/ccache:$QT_HOST_PATH/bin:$QT_ROOT_DIR_ARMV7/bin:$QT_ROOT_DIR_ARM64/bin:$PATH:$ANDROID_SDK_ROOT/tools:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_BUILD_TOOLS:$ANDROID_NDK_ROOT
 
 # Set Git safe directories and install CMake
 RUN git config --global --add safe.directory /workspace && \
     git config --global --add safe.directory /project/source && \
     pip install cmake
 
-# Set working directory and PATH
+# Set working directory
 WORKDIR /workspace
-ENV PATH=/usr/lib/ccache:$QT_ROOT_DIR_ARMV7/bin:$QT_ROOT_DIR_ARM64/bin:$PATH
-ENV PATH=/opt/Qt/${QT_VERSION}/gcc_64:$PATH
 
-# Final environment variables for Android SDK and NDK
-ENV ANDROID_NDK_ROOT=/opt/android-sdk/ndk/25.2.9519653
-ENV PATH=$PATH:$ANDROID_SDK_ROOT/tools:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_BUILD_TOOLS:$ANDROID_NDK_ROOT
-
-# Build the project for both ARMv7 and ARM64
-CMD cmake -S /project/source -B /workspace -G Ninja \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DQT_HOST_PATH=$QT_HOST_PATH \
-    -DQT_ANDROID_BUILD_ALL_ABIS=OFF \
-    -DQT_ANDROID_ABIS="armeabi-v7a;arm64-v8a" \
-    -DANDROID_BUILD_TOOLS=$ANDROID_SDK_ROOT/build-tools/34.0.0 \
-    -DANDROID_SDK_ROOT=$ANDROID_SDK_ROOT \ 
-    -DQT_ANDROID_SIGN_APK=OFF \
-    -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake \
-    -DQt6_DIR=$QT_ROOT_DIR_ARMV7/lib/cmake/Qt6 \
-    -DQt6_DIR_ARM64=$QT_ROOT_DIR_ARM64/lib/cmake/Qt6 \
-    -DCMAKE_PREFIX_PATH=$QT_ROOT_DIR_ARMV7/lib/cmake:$QT_ROOT_DIR_ARM64/lib/cmake && \
-    cmake --build /workspace --target all --config Release
+# Build the project
+CMD mkdir -p /workspace/build/shadow_build_dir && \
+    cd /workspace/build/shadow_build_dir && \
+    qt-cmake -S /project/source -G Ninja \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DQT_HOST_PATH=$QT_HOST_PATH \
+        -DQT_ANDROID_BUILD_ALL_ABIS=OFF \
+        -DQT_ANDROID_ABIS="armeabi-v7a;arm64-v8a" \
+        -DQT_DEBUG_FIND_PACKAGE=ON \
+        -DANDROID_BUILD_TOOLS=$ANDROID_SDK_ROOT/build-tools/34.0.0 \
+        -DANDROID_SDK_ROOT=$ANDROID_SDK_ROOT \
+        -DQT_ANDROID_SIGN_APK=OFF \
+        -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake && \
+        cmake --build . --target all --config Release
