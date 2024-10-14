@@ -17979,12 +17979,6 @@
     </parameter>
   </group>
   <group name="PWM Outputs">
-    <parameter name="MOT_SLEW_MAX" default="0.0" type="FLOAT">
-      <short_desc>Minimum motor rise time (slew rate limit)</short_desc>
-      <long_desc>Minimum time allowed for the motor input signal to pass through a range of 1000 PWM units. A value x means that the motor signal can only go from 1000 to 2000 PWM in minimum x seconds. Zero means that slew rate limiting is disabled.</long_desc>
-      <min>0.0</min>
-      <unit>s/(1000*PWM)</unit>
-    </parameter>
     <parameter name="PWM_SBUS_MODE" default="0" type="INT32" boolean="true">
       <short_desc>S.BUS out</short_desc>
       <long_desc>Set to 1 to enable S.BUS version 1 output instead of RSSI.</long_desc>
