@@ -82,10 +82,6 @@ class GimbalController;
 #ifdef QGC_UTM_ADAPTER
 class UTMSPVehicle;
 #endif
-#ifndef OPAQUE_PTR_VEHICLE
-    #define OPAQUE_PTR_VEHICLE
-    Q_DECLARE_OPAQUE_POINTER(Actuators*)
-#endif
 
 namespace events {
 namespace parser {
@@ -105,6 +101,7 @@ class Vehicle : public VehicleFactGroup
     Q_MOC_INCLUDE("Autotune.h")
     Q_MOC_INCLUDE("RemoteIDManager.h")
     Q_MOC_INCLUDE("QGCCameraManager.h")
+    Q_MOC_INCLUDE("Actuators/Actuators.h")
 
     friend class InitialConnectStateMachine;
     friend class VehicleLinkManager;
