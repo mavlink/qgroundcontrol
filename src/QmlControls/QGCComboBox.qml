@@ -29,6 +29,7 @@ T.ComboBox {
     baselineOffset: contentItem.y + text.baselineOffset
     leftPadding:    padding + (!control.mirrored || !indicator || !indicator.visible ? 0 : indicator.width + spacing)
     rightPadding:   padding + (control.mirrored || !indicator || !indicator.visible ? 0 : indicator.width)
+    focusPolicy:    Qt.TabFocus
 
     property bool   centeredLabel:  false
     property bool   sizeToContents: false
@@ -121,8 +122,8 @@ T.ComboBox {
 
     background: Rectangle {
         color:          qgcPal.button
-        border.color:   qgcPal.buttonBorder
-        border.width:   _showBorder ? 1 : 0
+        border.color:   control.activeFocus ? qgcPal.buttonText : qgcPal.buttonBorder
+        border.width:   _showBorder || control.activeFocus ? 1 : 0
         radius:         ScreenTools.buttonBorderRadius
     }
 

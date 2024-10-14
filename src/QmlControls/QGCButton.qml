@@ -15,7 +15,7 @@ Button {
     bottomPadding:  _verticalPadding
     leftPadding:    _horizontalPadding
     rightPadding:   _horizontalPadding
-    focusPolicy:    Qt.ClickFocus
+    focusPolicy:    Qt.TabFocus
     font.family:    ScreenTools.normalFontFamily
     text:           ""
 
@@ -26,6 +26,7 @@ Button {
     property string iconSource:     ""
     property real   fontWeight:     Font.Normal // default for qml Text
     property real   pointSize:      ScreenTools.defaultFontPointSize
+    property real   fillOpacity:    1
 
     property alias wrapMode:            text.wrapMode
     property alias horizontalAlignment: text.horizontalAlignment
@@ -44,9 +45,9 @@ Button {
         radius:         backRadius
         implicitWidth:  ScreenTools.implicitButtonWidth
         implicitHeight: ScreenTools.implicitButtonHeight
-        border.width:   showBorder ? 1 : 0
-        border.color:   qgcPal.buttonBorder
-        color:          primary ? qgcPal.primaryButton : qgcPal.button
+        border.width:   showBorder  || control.activeFocus ? 1 : 0
+        border.color:   control.activeFocus ? qgcPal.text : qgcPal.buttonBorder
+        color:          applyOpacity(primary ? qgcPal.primaryButton : qgcPal.button, fillOpacity)
 
         Rectangle {
             anchors.fill:   parent
@@ -81,5 +82,9 @@ Button {
                 color:                  _showHighlight ? qgcPal.buttonHighlightText : (primary ? qgcPal.primaryButtonText : qgcPal.buttonText)
                 visible:                control.text !== "" 
             }
+    }
+
+    function applyOpacity(colorIn, opacity){
+        return Qt.rgba(colorIn.r, colorIn.g, colorIn.b, opacity)
     }
 }

@@ -80,6 +80,7 @@ Rectangle {
                 model:  settingsPagesModel
 
                 Button {
+                    id: control
                     Layout.fillWidth:   true
                     text:               name
                     padding:            ScreenTools.defaultFontPixelWidth / 2
@@ -88,10 +89,22 @@ Rectangle {
                     icon.source:        iconUrl
                     visible:            pageVisible()
 
-                    background: Rectangle {
-                        color:      qgcPal.buttonHighlight
-                        opacity:    checked || pressed ? 1 : enabled && hovered ? .2 : 0
-                        radius:     ScreenTools.defaultFontPixelWidth / 2
+                    background: Item {
+
+                        Rectangle {
+                            anchors.fill:   parent
+                            color:          qgcPal.buttonHighlight
+                            opacity:        checked || pressed ? 1 : enabled && hovered ? .2 : 0
+                            radius:         ScreenTools.defaultFontPixelWidth / 2
+                        }
+
+                        Rectangle {
+                            anchors.fill:   parent
+                            color:          "transparent"
+                            border.color:   qgcPal.buttonText
+                            border.width:   control.activeFocus ? 1 : 0
+                            radius:         ScreenTools.defaultFontPixelWidth / 2
+                        }
                     }
 
                     contentItem: RowLayout {

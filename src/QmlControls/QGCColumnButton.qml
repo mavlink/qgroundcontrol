@@ -13,8 +13,8 @@ QGCButton {
         width:          control.width
         height:         control.height
         radius:         backRadius
-        border.width:   showBorder ? 1 : 0
-        border.color:   qgcPal.buttonText
+        border.width:   showBorder  || control.activeFocus ? 1 : 0
+        border.color:   control.activeFocus ? qgcPal.text : qgcPal.buttonBorder
         color:          _showHighlight ?
                             qgcPal.buttonHighlight :
                             (primary ? qgcPal.primaryButton : qgcPal.button)
