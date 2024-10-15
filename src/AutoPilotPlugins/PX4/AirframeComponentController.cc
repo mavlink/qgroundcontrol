@@ -90,7 +90,7 @@ void AirframeComponentController::changeAutostart(void)
 		return;
 	}
 
-    QGuiApplication::overrideCursor()->setShape(Qt::WaitCursor);
+    QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     
     Fact* sysAutoStartFact  = getParameterFact(-1, "SYS_AUTOSTART");
     Fact* sysAutoConfigFact = getParameterFact(-1, "SYS_AUTOCONFIG");
@@ -100,7 +100,7 @@ void AirframeComponentController::changeAutostart(void)
     connect(sysAutoStartFact, &Fact::vehicleUpdated, this, &AirframeComponentController::_waitParamWriteSignal);
     connect(sysAutoConfigFact, &Fact::vehicleUpdated, this, &AirframeComponentController::_waitParamWriteSignal);
     
-    // We use forceSetValue to params are sent even if the previous value is that same as the new value
+    // We use forceSetValue to ensure params are sent even if the previous value is that same as the new value
     sysAutoStartFact->forceSetRawValue(_autostartId);
     sysAutoConfigFact->forceSetRawValue(1);
 }
