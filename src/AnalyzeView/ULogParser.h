@@ -22,5 +22,5 @@ Q_DECLARE_LOGGING_CATEGORY(ULogParserLog)
 namespace ULogParser {
     /// Get GeoTags from a ULog
     ///     @return true if failed, errorMessage set
-    bool getTagsFromLog(const QByteArray &log, QList<GeoTagWorker::cameraFeedbackPacket> &cameraFeedback, QString &errorMessage);
+    bool getTagsFromLog(const QByteArray &log, QList<GeoTagWorker::CameraFeedbackPacket> &cameraFeedback, QString &errorMessage);
 } // namespace ULogParser

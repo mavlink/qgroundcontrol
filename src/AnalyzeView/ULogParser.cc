@@ -22,7 +22,7 @@ QGC_LOGGING_CATEGORY(ULogParserLog, "qgc.analyzeview.ulogparser")
 
 namespace ULogParser {
 
-bool getTagsFromLog(const QByteArray &log, QList<GeoTagWorker::cameraFeedbackPacket> &cameraFeedback, QString &errorMessage)
+bool getTagsFromLog(const QByteArray &log, QList<GeoTagWorker::CameraFeedbackPacket> &cameraFeedback, QString &errorMessage)
 {
     errorMessage.clear();
 
@@ -51,7 +51,7 @@ bool getTagsFromLog(const QByteArray &log, QList<GeoTagWorker::cameraFeedbackPac
     if (subscription_names.find("camera_capture") != subscription_names.end()) {
         const std::shared_ptr<Subscription> subscription = data->subscription("camera_capture");
         for (const TypedDataView &sample : *subscription) {
-            GeoTagWorker::cameraFeedbackPacket feedback = {0};
+            GeoTagWorker::CameraFeedbackPacket feedback = {0};
 
             try {
                 feedback.timestamp = sample.at("timestamp").as<uint64_t>() / 1.0e6; // to seconds
