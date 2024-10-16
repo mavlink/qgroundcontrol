@@ -23,16 +23,9 @@
 #include "QGCCorePlugin.h"
 #include "SettingsManager.h"
 #include "QGCApplication.h"
-#ifndef QGC_AIRLINK_DISABLED
-#include "AirLinkManager.h"
-#endif
 
 #if defined(QGC_CUSTOM_BUILD)
 #include CUSTOMHEADER
-#endif
-
-#ifdef QGC_UTM_ADAPTER
-#include "UTMSPManager.h"
 #endif
 
 QGCToolbox::QGCToolbox(QGCApplication* app)
@@ -56,12 +49,6 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     _videoManager           = new VideoManager              (app, this);
 
     _mavlinkLogManager      = new MAVLinkLogManager         (app, this);
-#ifndef QGC_AIRLINK_DISABLED
-    _airlinkManager         = new AirLinkManager            (app, this);
-#endif
-#ifdef QGC_UTM_ADAPTER
-    _utmspManager            = new UTMSPManager               (app, this);
-#endif
 }
 
 void QGCToolbox::setChildToolboxes(void)
@@ -82,12 +69,6 @@ void QGCToolbox::setChildToolboxes(void)
     _qgcPositionManager->setToolbox(this);
     _videoManager->setToolbox(this);
     _mavlinkLogManager->setToolbox(this);
-#ifndef QGC_AIRLINK_DISABLED
-    _airlinkManager->setToolbox(this);
-#endif
-#ifdef QGC_UTM_ADAPTER
-    _utmspManager->setToolbox(this);
-#endif
 }
 
 void QGCToolbox::_scanAndLoadPlugins(QGCApplication* app)

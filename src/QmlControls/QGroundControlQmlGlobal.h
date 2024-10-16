@@ -185,15 +185,18 @@ public:
     static QGeoCoordinate   flightMapPosition   ()  { return _coord; }
     static double           flightMapZoom       ()  { return _zoom; }
 
-    AirLinkManager*         airlinkManager      ()  { return _airlinkManager; }
 #ifndef QGC_AIRLINK_DISABLED
+    AirLinkManager*         airlinkManager      ()  { return _airlinkManager; }
     bool                    airlinkSupported    ()  { return true; }
 #else
-    bool                    airlinkSupported    () { return false; }
+    bool                    airlinkSupported    ()  { return false; }
 #endif
 
 #ifdef QGC_UTM_ADAPTER
-    UTMSPManager*            utmspManager         ()  {return _utmspManager;}
+    UTMSPManager*           utmspManager        ()  { return _utmspManager; }
+    bool                    utmspSupported      ()  { return true; }
+#else
+    bool                    utmspSupported      ()  { return false; }
 #endif
 
     qreal zOrderTopMost             () { return 1000; }
@@ -239,12 +242,6 @@ public:
 
     QString qgcVersion              (void) const;
 
-#ifdef QGC_UTM_ADAPTER
-    bool    utmspSupported() { return true; }
-#else
-    bool    utmspSupported() { return false; }
-#endif
-
     // Overrides from QGCTool
     virtual void setToolbox(QGCToolbox* toolbox);
 
@@ -271,12 +268,14 @@ private:
 #ifndef NO_SERIAL_LINK
     FactGroup*              _gpsRtkFactGroup        = nullptr;
 #endif
-    AirLinkManager*         _airlinkManager         = nullptr;
     ADSBVehicleManager*     _adsbVehicleManager     = nullptr;
     QGCPalette*             _globalPalette          = nullptr;
     QmlUnitsConversion      _unitsConversion;
+#ifndef QGC_AIRLINK_DISABLED
+    AirLinkManager*         _airlinkManager         = nullptr;
+#endif
 #ifdef QGC_UTM_ADAPTER
-    UTMSPManager*            _utmspManager;
+    UTMSPManager*           _utmspManager           = nullptr;
 #endif
 
     bool                    _skipSetupPage          = false;

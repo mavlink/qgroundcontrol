@@ -54,7 +54,6 @@
 #include "GimbalController.h"
 
 #ifdef QGC_UTM_ADAPTER
-#include "UTMSPVehicle.h"
 #include "UTMSPManager.h"
 #endif
 #ifdef QT_DEBUG
@@ -149,10 +148,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     }
 
 #ifdef QGC_UTM_ADAPTER
-    UTMSPManager* utmspManager = _toolbox->utmspManager();
-    if (utmspManager) {
-        _utmspVehicle = utmspManager->instantiateVehicle(*this);
-    }
+    UTMSPManager::instance()->instantiateVehicle(this);
 #endif
 
     _autopilotPlugin = _firmwarePlugin->autopilotPlugin(this);
@@ -383,10 +379,6 @@ Vehicle::~Vehicle()
 
     delete _autopilotPlugin;
     _autopilotPlugin = nullptr;
-
-#ifdef QGC_UTM_ADAPTER
-    delete _utmspVehicle;
-#endif
 
     deleteGimbalController();
 }
