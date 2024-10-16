@@ -31,7 +31,7 @@ ColumnLayout {
         QGCLabel { text: qsTr("Device") }
         QGCLabel {
             Layout.preferredWidth:  _secondColumnWidth
-            text:                   subEditConfig.devName
+            text:                   subEditConfig.deviceName
         }
 
         QGCLabel { text: qsTr("Address") }
@@ -54,7 +54,7 @@ ColumnLayout {
             onClicked: {
                 checked = true
                 if (modelData !== "")
-                    subEditConfig.devName = modelData
+                    subEditConfig.setDevice(modelData)
             }
         }
     }
