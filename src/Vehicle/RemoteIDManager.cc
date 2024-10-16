@@ -31,7 +31,6 @@ const uint8_t* RemoteIDManager::_id_or_mac_unknown = new uint8_t[MAVLINK_MSG_OPE
 
 RemoteIDManager::RemoteIDManager(Vehicle* vehicle)
     : QObject               (vehicle)
-    , _mavlink              (nullptr)
     , _vehicle              (vehicle)
     , _settings             (nullptr)
     , _armStatusGood        (false)
@@ -45,7 +44,6 @@ RemoteIDManager::RemoteIDManager(Vehicle* vehicle)
     , _targetComponent      (0) // By default 0 means broadcast
     , _enforceSendingSelfID (false)
 {
-    _mavlink = qgcApp()->toolbox()->mavlinkProtocol();
     _settings = qgcApp()->toolbox()->settingsManager()->remoteIDSettings();
     _positionManager = qgcApp()->toolbox()->qgcPositionManager();
 
@@ -200,8 +198,8 @@ void RemoteIDManager::_sendSelfIDMsg()
     if (sharedLink) {
         mavlink_message_t msg;
 
-        mavlink_msg_open_drone_id_self_id_pack_chan(_mavlink->getSystemId(),
-                                                    _mavlink->getComponentId(),
+        mavlink_msg_open_drone_id_self_id_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                                    MAVLinkProtocol::instance()->getComponentId(),
                                                     sharedLink->mavlinkChannel(),
                                                     &msg,
                                                     _targetSystem,
@@ -254,8 +252,8 @@ void RemoteIDManager::_sendOperatorID()
         bytesOperatorID.resize(MAVLINK_MSG_OPEN_DRONE_ID_OPERATOR_ID_FIELD_OPERATOR_ID_LEN);
 
         mavlink_msg_open_drone_id_operator_id_pack_chan(
-                                                    _mavlink->getSystemId(),
-                                                    _mavlink->getComponentId(),
+                                                    MAVLinkProtocol::instance()->getSystemId(),
+                                                    MAVLinkProtocol::instance()->getComponentId(),
                                                     sharedLink->mavlinkChannel(),
                                                     &msg,
                                                     _targetSystem,
@@ -336,8 +334,8 @@ void RemoteIDManager::_sendSystem()
     if (sharedLink) {
         mavlink_message_t msg;
 
-        mavlink_msg_open_drone_id_system_pack_chan(_mavlink->getSystemId(),
-                                                    _mavlink->getComponentId(),
+        mavlink_msg_open_drone_id_system_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                                    MAVLinkProtocol::instance()->getComponentId(),
                                                     sharedLink->mavlinkChannel(),
                                                     &msg,
                                                     _targetSystem,
@@ -380,8 +378,8 @@ void RemoteIDManager::_sendBasicID()
         // To make sure the buffer is large enough to fit the message. It will add padding bytes if smaller, or exclude the extra ones if bigger
         ba.resize(MAVLINK_MSG_OPEN_DRONE_ID_BASIC_ID_FIELD_UAS_ID_LEN);
 
-        mavlink_msg_open_drone_id_basic_id_pack_chan(_mavlink->getSystemId(),
-                                                    _mavlink->getComponentId(),
+        mavlink_msg_open_drone_id_basic_id_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                                    MAVLinkProtocol::instance()->getComponentId(),
                                                     sharedLink->mavlinkChannel(),
                                                     &msg,
                                                     _targetSystem,

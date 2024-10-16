@@ -130,9 +130,8 @@ bool AirlinkLink::_connect()
             pendingTimer->deleteLater();
         }
     });
-    MAVLinkProtocol *mavlink = qgcApp()->toolbox()->mavlinkProtocol();
     auto conn = std::make_shared<QMetaObject::Connection>();
-    *conn = connect(mavlink, &MAVLinkProtocol::messageReceived, [this, conn] (LinkInterface* linkSrc, mavlink_message_t message) {
+    *conn = connect(MAVLinkProtocol::instance(), &MAVLinkProtocol::messageReceived, [this, conn] (LinkInterface* linkSrc, mavlink_message_t message) {
         if (this != linkSrc || message.msgid != MAVLINK_MSG_ID_AIRLINK_AUTH_RESPONSE) {
             return;
         }

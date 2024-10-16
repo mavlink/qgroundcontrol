@@ -22,7 +22,6 @@ Q_DECLARE_LOGGING_CATEGORY(RemoteIDManagerLog)
 class RemoteIDSettings;
 class QGCPositionManager;
 class Vehicle;
-class MAVLinkProtocol;
 
 // Supporting Open Drone ID protocol
 class RemoteIDManager : public QObject
@@ -106,7 +105,6 @@ private:
     bool _isEUOperatorIDValid(const QString& operatorID) const;
     QChar _calculateLuhnMod36(const QString& input) const;
 
-    MAVLinkProtocol*    _mavlink;
     Vehicle*            _vehicle;
     RemoteIDSettings*   _settings;
     QGCPositionManager* _positionManager;
