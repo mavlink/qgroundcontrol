@@ -9,9 +9,6 @@
 
 
 #include "FirmwarePluginManager.h"
-#ifndef NO_SERIAL_LINK
-#include "GPSManager.h"
-#endif
 #include "JoystickManager.h"
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
@@ -44,9 +41,6 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     //-- Scan and load plugins
     _scanAndLoadPlugins(app);
     _firmwarePluginManager  = new FirmwarePluginManager     (app, this);
-#ifndef NO_SERIAL_LINK
-    _gpsManager             = new GPSManager                (app, this);
-#endif
     _joystickManager        = new JoystickManager           (app, this);
     _linkManager            = new LinkManager               (app, this);
     _mavlinkProtocol        = new MAVLinkProtocol           (app, this);
@@ -71,9 +65,6 @@ void QGCToolbox::setChildToolboxes(void)
 
     _corePlugin->setToolbox(this);
     _firmwarePluginManager->setToolbox(this);
-#ifndef NO_SERIAL_LINK
-    _gpsManager->setToolbox(this);
-#endif
     _joystickManager->setToolbox(this);
     _linkManager->setToolbox(this);
     _mavlinkProtocol->setToolbox(this);
