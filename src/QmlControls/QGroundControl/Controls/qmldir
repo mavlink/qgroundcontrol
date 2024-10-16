@@ -47,7 +47,6 @@ MainStatusIndicator                     1.0 MainStatusIndicator.qml
 FlightModeMenuIndicator                 1.0 FlightModeMenuIndicator.qml
 MainStatusIndicatorOfflinePage          1.0 MainStatusIndicatorOfflinePage.qml
 MainWindowSavedState                    1.0 MainWindowSavedState.qml
-MAVLinkMessageButton                    1.0 MAVLinkMessageButton.qml
 MissionCommandDialog                    1.0 MissionCommandDialog.qml
 MissionItemEditor                       1.0 MissionItemEditor.qml
 MissionItemIndexLabel                   1.0 MissionItemIndexLabel.qml
@@ -124,4 +123,3 @@ ToolStrip                               1.0 ToolStrip.qml
 ToolStripHoverButton                    1.0 ToolStripHoverButton.qml
 VehicleRotationCal                      1.0 VehicleRotationCal.qml
 VehicleSummaryRow                       1.0 VehicleSummaryRow.qml
-MAVLinkChart                            1.0 MAVLinkChart.qml

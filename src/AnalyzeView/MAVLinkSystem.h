@@ -14,57 +14,55 @@
 #pragma once
 
 #include <QtCore/QObject>
-#include <QtCore/QStringList>
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QStringList>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-#include "QmlObjectListModel.h"
 
 Q_DECLARE_LOGGING_CATEGORY(MAVLinkSystemLog)
 
 class QGCMAVLinkMessage;
+class QmlObjectListModel;
 
-//-----------------------------------------------------------------------------
-/// Vehicle MAVLink message belongs to
 class QGCMAVLinkSystem : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
+    Q_MOC_INCLUDE("QmlObjectListModel.h")
+    Q_PROPERTY(quint8               id          READ id                             CONSTANT)
+    Q_PROPERTY(QmlObjectListModel   *messages   READ messages                       CONSTANT)
+    Q_PROPERTY(QList<int>           compIDs     READ compIDs                        NOTIFY compIDsChanged)
+    Q_PROPERTY(QStringList          compIDsStr  READ compIDsStr                     NOTIFY compIDsChanged)
+    Q_PROPERTY(int                  selected    READ selected   WRITE setSelected   NOTIFY selectedChanged)
 
 public:
-    Q_PROPERTY(quint8               id              READ id                                 CONSTANT)
-    Q_PROPERTY(QmlObjectListModel*  messages        READ messages                           CONSTANT)
-    Q_PROPERTY(QList<int>           compIDs         READ compIDs                            NOTIFY compIDsChanged)
-    Q_PROPERTY(QStringList          compIDsStr      READ compIDsStr                         NOTIFY compIDsChanged)
-    Q_PROPERTY(int                  selected        READ selected       WRITE setSelected   NOTIFY selectedChanged)
+    QGCMAVLinkSystem(quint8 id, QObject *parent = nullptr);
+    ~QGCMAVLinkSystem();
 
-    QGCMAVLinkSystem   (QObject* parent, quint8 id);
-    ~QGCMAVLinkSystem  ();
+    quint8 id() const { return _id; }
+    QmlObjectListModel *messages() { return _messages; }
+    QList<int> compIDs() const { return _compIDs; }
+    QStringList compIDsStr() const { return _compIDsStr; }
+    int selected() const { return _selected; }
 
-    quint8              id              () const{ return _id; }
-    QmlObjectListModel* messages        () { return &_messages; }
-    QList<int>          compIDs         () { return _compIDs; }
-    QStringList         compIDsStr      () { return _compIDsStr; }
-    int                 selected        () const{ return _selected; }
-
-    void                setSelected     (int sel);
-    QGCMAVLinkMessage*  findMessage     (uint32_t id, uint8_t compId);
-    int                 findMessage     (QGCMAVLinkMessage* message);
-    void                append          (QGCMAVLinkMessage* message);
-    QGCMAVLinkMessage*  selectedMsg     ();
+    void setSelected(int sel);
+    QGCMAVLinkMessage *findMessage(uint32_t id, uint8_t compId) const;
+    int findMessage(QGCMAVLinkMessage *message) const;
+    void append(QGCMAVLinkMessage *message);
+    QGCMAVLinkMessage *selectedMsg();
 
 signals:
-    void compIDsChanged                 ();
-    void selectedChanged                ();
+    void compIDsChanged();
+    void selectedChanged();
 
 private:
-    void _checkCompID                   (QGCMAVLinkMessage *message);
-    void _resetSelection                ();
+    void _checkCompID(QGCMAVLinkMessage *message);
+    void _resetSelection();
+    static bool _messagesSort(const QObject *a, const QObject *b);
 
-private:
-    quint8              _id;
-    QList<int>          _compIDs;
-    QStringList         _compIDsStr;
-    QmlObjectListModel  _messages;      //-- List of QGCMAVLinkMessage
-    int                 _selected = 0;
+    quint8 _id = 0;
+    QmlObjectListModel *_messages = nullptr;    ///< List of QGCMAVLinkMessage
+    QList<int> _compIDs;
+    QStringList _compIDsStr;
+    int _selected = 0;
 };
