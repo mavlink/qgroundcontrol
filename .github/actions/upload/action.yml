@@ -14,6 +14,9 @@ inputs:
     description: Source location
     required: false
     default: package
+  github_token:
+    description: GitHub Token
+    required: false
 
 runs:
   using: "composite"
@@ -45,9 +48,14 @@ runs:
       shell: bash
 
     - name: Create Continuous Release
-      if: ${{ github.event_name != 'pull_request' && github.ref_name == 'master' && !github.event.pull_request.head.repo.fork }}
+      if: ${{ github.event_name != 'pull_request' && github.ref_name == 'master' && inputs.github_token != '' }}
       uses: softprops/action-gh-release@v2
       with:
+        tag_name: latest
+        target_commitish: master
+        files: ${{ runner.temp }}/shadow_build_dir/${{ inputs.source }}/${{ inputs.artifact_name }}
+        name: "Continuous Release"
+        body: "This release is continuously updated with every commit to master."
+        draft: false
         prerelease: true
-        files: |
-          ${{ runner.temp }}/shadow_build_dir/${{ inputs.source }}/${{ inputs.artifact_name }}
+        token: ${{ inputs.github_token }}
