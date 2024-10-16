@@ -83,6 +83,7 @@ target_link_libraries(MissionManager
     PRIVATE
         Qt6::Qml
         API
+        Camera
         FirmwarePlugin
         Geo
     PUBLIC
