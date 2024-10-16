@@ -9,7 +9,6 @@
 
 
 #include "JoystickManager.h"
-#include "MultiVehicleManager.h"
 #include "Joystick.h"
 #if defined(QGC_SDL_JOYSTICK)
     #include "JoystickSDL.h"
@@ -27,7 +26,6 @@ QGC_LOGGING_CATEGORY(JoystickManagerLog, "JoystickManagerLog")
 JoystickManager::JoystickManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
     , _activeJoystick(nullptr)
-    , _multiVehicleManager(nullptr)
 {
     // qCDebug(JoystickManagerLog) << Q_FUNC_INFO << this;
 }
@@ -47,8 +45,6 @@ JoystickManager::~JoystickManager()
 void JoystickManager::setToolbox(QGCToolbox *toolbox)
 {
     QGCTool::setToolbox(toolbox);
-
-    _multiVehicleManager = _toolbox->multiVehicleManager();
 
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<JoystickManager>("QGroundControl.JoystickManager", 1, 0, "JoystickManager", "Reference only");
@@ -78,9 +74,9 @@ void JoystickManager::_setActiveJoystickFromSettings(void)
 
 #ifdef QGC_SDL_JOYSTICK
     // Get the latest joystick mapping
-    newMap = JoystickSDL::discover(_multiVehicleManager);
+    newMap = JoystickSDL::discover();
 #elif defined(Q_OS_ANDROID)
-    newMap = JoystickAndroid::discover(_multiVehicleManager);
+    newMap = JoystickAndroid::discover();
 #endif
 
     if (_activeJoystick && !newMap.contains(_activeJoystick->name())) {
