@@ -7,105 +7,93 @@
  *
  ****************************************************************************/
 
-
-
-// Allows QGlobalStatic to work on this translation unit
-#define _LOG_CTOR_ACCESS_ public
-
 #include "AppMessages.h"
 #include "QGCApplication.h"
+#include "QGCLoggingCategory.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
 
+#include <QtCore/QGlobalStatic>
 #include <QtCore/QStringListModel>
 #include <QtConcurrent/QtConcurrent>
 #include <QtCore/QTextStream>
 
-Q_GLOBAL_STATIC(AppLogModel, debug_model)
+QGC_LOGGING_CATEGORY(AppLogModelLog, "AppLogModelLog")
 
-static QtMessageHandler old_handler;
+Q_GLOBAL_STATIC(AppLogModel, _appLogModel)
 
 static void msgHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
-    const char symbols[] = { 'D', 'E', '!', 'X', 'I' };
-    QString output = QString("[%1] at %2:%3 - \"%4\"").arg(symbols[type]).arg(context.file).arg(context.line).arg(msg);
-
-    // Avoid recursion
-    if (!QString(context.category).startsWith("qt.quick")) {
-        debug_model->log(output);
-    }
-
-    if (old_handler != nullptr) {
-        old_handler(type, context, msg);
-    }
-    if( type == QtFatalMsg ) abort();
+    (void) fprintf(stderr, "%s", qPrintable(qFormatLogMessage(type, context, msg)));
 }
 
-void AppMessages::installHandler()
+AppLogModel::AppLogModel(QObject *parent)
+    : QStringListModel(parent)
 {
-    old_handler = qInstallMessageHandler(msgHandler);
+    // qCDebug(AppLogModelLog) << Q_FUNC_INFO << this;
 
-    // Force creation of debug model on installing thread
-    Q_UNUSED(*debug_model);
+    (void) connect(this, &AppLogModel::emitLog, this, &AppLogModel::threadsafeLog, Qt::AutoConnection);
 }
 
-AppLogModel *AppMessages::getModel()
+AppLogModel::~AppLogModel()
 {
-    return debug_model;
+    // qCDebug(AppLogModelLog) << Q_FUNC_INFO << this;
 }
 
-AppLogModel::AppLogModel() : QStringListModel()
+AppLogModel *AppLogModel::instance()
 {
-#ifdef __mobile__
-    Qt::ConnectionType contype = Qt::QueuedConnection;
-#else
-    Qt::ConnectionType contype = Qt::AutoConnection;
-#endif
-    connect(this, &AppLogModel::emitLog, this, &AppLogModel::threadsafeLog, contype);
+    return _appLogModel();
 }
 
-void AppLogModel::writeMessages(const QString dest_file)
+void AppLogModel::installHandler()
+{
+    qSetMessagePattern("%{category} %{type}: %{message} (%{file}:%{line})\n");
+    #ifndef Q_OS_ANDROID
+        (void) qInstallMessageHandler(msgHandler);
+    #endif
+}
+
+void AppLogModel::writeMessages(const QString &destinationFile)
 {
     const QString writebuffer(stringList().join('\n').append('\n'));
 
-    QFuture<void> future = QtConcurrent::run([dest_file, writebuffer] {
-        emit debug_model->writeStarted();
+    const QFuture<void> future = QtConcurrent::run([destinationFile, writebuffer] {
+        emit _appLogModel->writeStarted();
         bool success = false;
-        QFile file(dest_file);
+        QFile file(destinationFile);
         if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
             QTextStream out(&file);
             out << writebuffer;
-            success = out.status() == QTextStream::Ok;
+            success = (out.status() == QTextStream::Ok);
         } else {
-            qWarning() << "AppLogModel::writeMessages write failed:" << file.errorString();
+            qCWarning(AppLogModelLog) << "AppLogModel::writeMessages write failed:" << file.errorString();
         }
-        emit debug_model->writeFinished(success);
+        emit _appLogModel->writeFinished(success);
     });
 }
 
-void AppLogModel::log(const QString message)
+void AppLogModel::log(const QString &message)
 {
-    emit debug_model->emitLog(message);
+    emit _appLogModel->emitLog(message);
 }
 
-void AppLogModel::threadsafeLog(const QString message)
+void AppLogModel::threadsafeLog(const QString &message)
 {
     const int line = rowCount();
-    insertRows(line, 1);
-    setData(index(line), message, Qt::DisplayRole);
+    (void) insertRows(line, 1);
+    (void) setData(index(line), message, Qt::DisplayRole);
 
     if (qgcApp() && qgcApp()->logOutput() && _logFile.fileName().isEmpty()) {
-        qDebug() << _logFile.fileName().isEmpty() << qgcApp()->logOutput();
-        QGCToolbox* toolbox = qgcApp()->toolbox();
-        // Be careful of toolbox not being open yet
+        qCDebug(AppLogModelLog) << _logFile.fileName().isEmpty() << qgcApp()->logOutput();
+        QGCToolbox* const toolbox = qgcApp()->toolbox();
         if (toolbox) {
-            QString saveDirPath = qgcApp()->toolbox()->settingsManager()->appSettings()->crashSavePath();
-            QDir saveDir(saveDirPath);
-            QString saveFilePath = saveDir.absoluteFilePath(QStringLiteral("QGCConsole.log"));
+            const QString saveDirPath = toolbox->settingsManager()->appSettings()->crashSavePath();
+            const QDir saveDir(saveDirPath);
+            const QString saveFilePath = saveDir.absoluteFilePath(QStringLiteral("QGCConsole.log"));
 
             _logFile.setFileName(saveFilePath);
             if (!_logFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
-                qgcApp()->showAppMessage(tr("Open console log output file failed %1 : %2").arg(_logFile.fileName()).arg(_logFile.errorString()));
+                qgcApp()->showAppMessage(tr("Open console log output file failed %1 : %2").arg(_logFile.fileName(), _logFile.errorString()));
             }
         }
     }
