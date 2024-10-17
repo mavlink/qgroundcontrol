@@ -58,7 +58,6 @@ class ImageProtocolManager;
 class StatusTextHandler;
 class InitialConnectStateMachine;
 class Joystick;
-class JoystickManager;
 class LinkInterface;
 class LinkManager;
 class MAVLinkProtocol;
@@ -118,7 +117,6 @@ public:
             MAV_AUTOPILOT           firmwareType,
             MAV_TYPE                vehicleType,
             FirmwarePluginManager*  firmwarePluginManager,
-            JoystickManager*        joystickManager,
             QObject*                parent = nullptr);
 
     // Pass these into the offline constructor to create an offline vehicle which tracks the offline vehicle settings
@@ -1060,7 +1058,6 @@ private:
     LinkManager*                    _linkManager                    = nullptr;
     ParameterManager*               _parameterManager               = nullptr;
     FirmwarePluginManager*          _firmwarePluginManager          = nullptr;
-    JoystickManager*                _joystickManager                = nullptr;
     ComponentInformationManager*    _componentInformationManager    = nullptr;
     VehicleObjectAvoidance*         _objectAvoidance                = nullptr;
     Autotune*                       _autotune                       = nullptr;

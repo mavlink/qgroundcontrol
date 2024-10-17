@@ -80,7 +80,6 @@ Vehicle::Vehicle(LinkInterface*             link,
                  MAV_AUTOPILOT              firmwareType,
                  MAV_TYPE                   vehicleType,
                  FirmwarePluginManager*     firmwarePluginManager,
-                 JoystickManager*           joystickManager,
                  QObject*                   parent)
     : VehicleFactGroup              (parent)
     , _id                           (vehicleId)
@@ -92,7 +91,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _defaultCruiseSpeed           (_settingsManager->appSettings()->offlineEditingCruiseSpeed()->rawValue().toDouble())
     , _defaultHoverSpeed            (_settingsManager->appSettings()->offlineEditingHoverSpeed()->rawValue().toDouble())
     , _firmwarePluginManager        (firmwarePluginManager)
-    , _joystickManager              (joystickManager)
     , _trajectoryPoints             (new TrajectoryPoints(this, this))
     , _mavlinkStreamConfig          (std::bind(&Vehicle::_setMessageInterval, this, std::placeholders::_1, std::placeholders::_2))
     , _vehicleFactGroup             (this)
@@ -116,7 +114,7 @@ Vehicle::Vehicle(LinkInterface*             link,
 {
     _linkManager = _toolbox->linkManager();
 
-    connect(_joystickManager, &JoystickManager::activeJoystickChanged, this, &Vehicle::_loadJoystickSettings);
+    connect(JoystickManager::instance(), &JoystickManager::activeJoystickChanged, this, &Vehicle::_loadJoystickSettings);
     connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged, this, &Vehicle::_activeVehicleChanged);
 
     _mavlink = _toolbox->mavlinkProtocol();
@@ -1515,7 +1513,7 @@ void Vehicle::_loadJoystickSettings()
     QSettings settings;
     settings.beginGroup(QString(_settingsGroup).arg(_id));
 
-    if (_toolbox->joystickManager()->activeJoystick()) {
+    if (JoystickManager::instance()->activeJoystick()) {
         qCDebug(JoystickLog) << "Vehicle " << this->id() << " Notified of an active joystick. Loading setting joystickenabled: " << settings.value(_joystickEnabledSettingsKey, false).toBool();
         setJoystickEnabled(settings.value(_joystickEnabledSettingsKey, false).toBool());
     } else {
@@ -1533,7 +1531,7 @@ void Vehicle::saveJoystickSettings()
 
     // The joystick enabled setting should only be changed if a joystick is present
     // since the checkbox can only be clicked if one is present
-    if (_toolbox->joystickManager()->joysticks().count()) {
+    if (JoystickManager::instance()->joysticks().count()) {
         qCDebug(JoystickLog) << "Vehicle " << this->id() << " Saving setting joystickenabled: " << _joystickEnabled;
         settings.setValue(_joystickEnabledSettingsKey, _joystickEnabled);
     }
@@ -1582,7 +1580,7 @@ void Vehicle::_activeVehicleChanged(Vehicle *newActiveVehicle)
 // tells the active joystick where to send data
 void Vehicle::_captureJoystick()
 {
-    Joystick* joystick = _joystickManager->activeJoystick();
+    Joystick* joystick = JoystickManager::instance()->activeJoystick();
 
     if(joystick){
         qCDebug(JoystickLog) << "Vehicle " << this->id() << " Capture Joystick" << joystick->name();

@@ -19,6 +19,7 @@
 #include "FirmwarePlugin.h"
 #include "QGCLoggingCategory.h"
 #include "GimbalController.h"
+#include "QmlObjectListModel.h"
 
 #include <QtCore/QSettings>
 

@@ -18,11 +18,10 @@
 QGC_LOGGING_CATEGORY(JoystickConfigControllerLog, "JoystickConfigControllerLog")
 
 JoystickConfigController::JoystickConfigController(void)
-    : _joystickManager(qgcApp()->toolbox()->joystickManager())
 {
     
-    connect(_joystickManager, &JoystickManager::activeJoystickChanged, this, &JoystickConfigController::_activeJoystickChanged);
-    _activeJoystickChanged(_joystickManager->activeJoystick());
+    connect(JoystickManager::instance(), &JoystickManager::activeJoystickChanged, this, &JoystickConfigController::_activeJoystickChanged);
+    _activeJoystickChanged(JoystickManager::instance()->activeJoystick());
     _setStickPositions();
     _resetInternalCalibrationValues();
     _currentStickPositions  << _sticksCentered.leftX  << _sticksCentered.leftY  << _sticksCentered.rightX  << _sticksCentered.rightY;
@@ -36,7 +35,7 @@ void JoystickConfigController::start(void)
 void JoystickConfigController::setDeadbandValue(int axis, int value)
 {
     _axisDeadbandChanged(axis,value);
-    Joystick* joystick = _joystickManager->activeJoystick();
+    Joystick* joystick = JoystickManager::instance()->activeJoystick();
     Joystick::Calibration_t calibration = joystick->getCalibration(axis);
     calibration.deadband = value;
     joystick->setCalibration(axis,calibration);
@@ -394,7 +393,7 @@ void JoystickConfigController::_resetInternalCalibrationValues()
 /// @brief Sets internal calibration values from the stored settings
 void JoystickConfigController::_setInternalCalibrationValuesFromSettings()
 {
-    Joystick* joystick = _joystickManager->activeJoystick();
+    Joystick* joystick = JoystickManager::instance()->activeJoystick();
     // Initialize all function mappings to not set
     for (int i = 0; i < _axisCount; i++) {
         struct AxisInfo* info = &_rgAxisInfo[i];
@@ -468,7 +467,7 @@ void JoystickConfigController::_validateCalibration()
 /// @brief Saves the rc calibration values to the board parameters.
 void JoystickConfigController::_writeCalibration()
 {
-    Joystick* joystick = _joystickManager->activeJoystick();
+    Joystick* joystick = JoystickManager::instance()->activeJoystick();
     _validateCalibration();
     
     for (int axis = 0; axis < _axisCount; axis++) {
