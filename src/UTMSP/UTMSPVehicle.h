@@ -24,7 +24,7 @@ class UTMSPVehicle : public UTMSPServiceController
     Q_PROPERTY(bool                    vehicleActivation              READ vehicleActivation         NOTIFY vehicleActivationChanged)
 
 public:
-    UTMSPVehicle        (std::shared_ptr<Dispatcher> dispatcher,const Vehicle& vehicle);
+    UTMSPVehicle        (std::shared_ptr<Dispatcher> dispatcher, Vehicle *vehicle, QObject *parent = nullptr);
     ~UTMSPVehicle       () override = default;
 
     Q_INVOKABLE void loadTelemetryFlag(bool value);

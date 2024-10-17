@@ -12,7 +12,8 @@
 #include "services/dispatcher.h"
 #include "Vehicle.h"
 
-UTMSPVehicle::UTMSPVehicle(std::shared_ptr<Dispatcher> dispatcher, const Vehicle& vehicle):
+UTMSPVehicle::UTMSPVehicle(std::shared_ptr<Dispatcher> dispatcher, Vehicle *vehicle, QObject *parent)
+    : UTMSPServiceController(parent),
     _dispatcher(dispatcher),
     _remoteIDFlag(false),
     _stopFlag(false),
@@ -21,7 +22,7 @@ UTMSPVehicle::UTMSPVehicle(std::shared_ptr<Dispatcher> dispatcher, const Vehicle
     _vehicleActivation(false)
 {
     UTMSP_LOG_INFO() << "UTMSPManagerLog: UTMSPVehicle Contructor";
-    connect(&vehicle, &Vehicle::mavlinkMessageReceived, this, &UTMSPVehicle::triggerNetworkRemoteID);
+    connect(vehicle, &Vehicle::mavlinkMessageReceived, this, &UTMSPVehicle::triggerNetworkRemoteID);
     UTMSP_LOG_INFO() << "UTMSPManagerLog: UTMSPVehicle MAvlink msg slot connected";
     _aircraftModel = _utmspAircraft.aircraftModel();
     _aircraftClass = _utmspAircraft.aircraftClass();
