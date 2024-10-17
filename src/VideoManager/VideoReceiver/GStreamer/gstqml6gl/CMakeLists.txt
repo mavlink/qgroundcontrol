@@ -1,5 +1,7 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick)
-find_package(GStreamer REQUIRED COMPONENTS Allocators Audio Codecparsers Controller Fft Mpegts Net Pbutils Riff Rtp Rtsp Sdp Tag OPTIONAL_COMPONENTS Photography GlPrototypes Va GlX11 GlEGL GlWayland)
+
+set(GST_COMPONENTS Allocators Audio Codecparsers Controller Fft GlEGL GlPrototypes GlWayland GlX11 Mpegts Net Pbutils Photography Riff Rtp Rtsp Sdp Tag Va)
+find_package(GStreamer REQUIRED COMPONENTS OPTIONAL_COMPONENTS ${GST_COMPONENTS})
 
 qt_add_library(gstqml6gl STATIC)
 
@@ -12,33 +14,13 @@ target_link_libraries(gstqml6gl
         Qt6::Qml
         Qt6::Quick
         GStreamer::GStreamer
-        GStreamer::Allocators
-        GStreamer::Audio
-        GStreamer::Codecparsers
-        GStreamer::Controller
-        GStreamer::Fft
-        GStreamer::Mpegts
-        GStreamer::Net
-        GStreamer::Pbutils
-        GStreamer::Riff
-        GStreamer::Rtp
-        GStreamer::Rtsp
-        GStreamer::Sdp
-        GStreamer::Tag
 )
 
-# Photography not found on ubuntu 20.04?
-if(GStreamer_Photography_FOUND)
-    target_link_libraries(gstqml6gl PUBLIC GStreamer::Photography)
-endif()
-
-if(GStreamer_GlPrototypes_FOUND)
-    target_link_libraries(gstqml6gl PUBLIC GStreamer::GlPrototypes)
-endif()
-
-if(GStreamer_Va_FOUND)
-    target_link_libraries(gstqml6gl PUBLIC GStreamer::Va)
-endif()
+foreach(component IN LISTS GST_COMPONENTS)
+    if(GStreamer_${component}_FOUND)
+        target_link_libraries(gstqml6gl PUBLIC GStreamer::${component})
+    endif()
+endforeach()
 
 ################################################################################
 
@@ -55,6 +37,8 @@ else()
     set(QGC_GST_QT6_PLUGIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/qt6" CACHE PATH "Location of custom local GST plugin")
 endif()
 cmake_print_variables(QGC_GST_QT6_PLUGIN_PATH)
+
+# TODO: https://gstreamer.freedesktop.org/documentation/qt6d3d11/index.html#qml6d3d11sink-page
 
 ################################################################################
 
@@ -78,17 +62,14 @@ target_include_directories(gstqml6gl PUBLIC ${QGC_GST_QT6_PLUGIN_PATH})
 ################################################################################
 
 if(GStreamer_GlX11_FOUND)
-    target_link_libraries(gstqml6gl PUBLIC GStreamer::GlX11)
     target_compile_definitions(gstqml6gl PRIVATE HAVE_QT_X11)
 endif()
 
 if(GStreamer_GlEGL_FOUND)
-    target_link_libraries(gstqml6gl PUBLIC GStreamer::GlEGL)
     target_compile_definitions(gstqml6gl PRIVATE HAVE_QT_EGLFS)
 endif()
 
 if(GStreamer_GlWayland_FOUND)
-    target_link_libraries(gstqml6gl PUBLIC GStreamer::GlWayland)
     target_compile_definitions(gstqml6gl PRIVATE HAVE_QT_WAYLAND)
 endif()
 
@@ -167,10 +148,14 @@ endif()
 ################################################################################
 
 if(LINUX)
-    install(DIRECTORY ${GSTREAMER_LIB_PATH}/gstreamer1.0 DESTINATION ${CMAKE_INSTALL_LIBDIR})
-    install(DIRECTORY ${GSTREAMER_LIB_PATH}/gio DESTINATION ${CMAKE_INSTALL_LIBDIR})
-    get_target_property(LINKED_PLUGINS GStreamer::Plugins INTERFACE_LINK_LIBRARIES)
-    install(FILES ${LINKED_PLUGINS} DESTINATION ${CMAKE_INSTALL_LIBDIR}/gstreamer-1.0)
+    # if(NOT QGC_GST_STATIC_BUILD)
+        install(DIRECTORY ${GSTREAMER_LIB_PATH}/gstreamer1.0 DESTINATION ${CMAKE_INSTALL_LIBDIR})
+        install(CODE "execute_process(COMMAND chmod +x \"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner\")")
+        install(CODE "execute_process(COMMAND chmod +x \"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/gstreamer1.0/gstreamer-1.0/gst-ptp-helper\")")
+        install(DIRECTORY ${GSTREAMER_LIB_PATH}/gio DESTINATION ${CMAKE_INSTALL_LIBDIR})
+        get_target_property(LINKED_PLUGINS GStreamer::Plugins INTERFACE_LINK_LIBRARIES)
+        install(FILES ${LINKED_PLUGINS} DESTINATION ${CMAKE_INSTALL_LIBDIR}/gstreamer-1.0)
+    # endif()
 elseif(WIN32)
     cmake_path(CONVERT "${GSTREAMER_PREFIX}/bin/*.dll" TO_CMAKE_PATH_LIST GST_WIN_BINS_PATH)
     file(GLOB GST_WIN_BINS ${GST_WIN_BINS_PATH})
@@ -212,6 +197,8 @@ elseif(ANDROID)
 endif()
 
 ################################################################################
+
+# DYLD_LIBRARY_PATH
 
 # <key>LSEnvironment</key>
 # <dict>

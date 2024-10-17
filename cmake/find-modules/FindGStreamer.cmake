@@ -52,7 +52,15 @@ elseif(MACOS)
     set(ENV{PKG_CONFIG_PATH} "${GSTREAMER_PREFIX}/lib/pkgconfig:${GSTREAMER_PREFIX}/lib/gstreamer-1.0/pkgconfig:$ENV{PKG_CONFIG_PATH}")
 elseif(LINUX)
     set(GSTREAMER_PREFIX "/usr")
-    set(ENV{PKG_CONFIG_PATH} "${GSTREAMER_PREFIX}/lib/x86_64-linux-gnu/pkgconfig:$ENV{PKG_CONFIG_PATH}")
+    set(ENV{PKG_CONFIG_PATH} "${GSTREAMER_PREFIX}/lib/x86_64-linux-gnu/pkgconfig:${GSTREAMER_PREFIX}/lib/x86_64-linux-gnu/gstreamer-1.0/pkgconfig:$ENV{PKG_CONFIG_PATH}")
+    # if(QGC_GST_STATIC_BUILD)
+    #     list(APPEND PKG_CONFIG_ARGN
+    #         --dont-define-prefix
+    #         --define-variable=prefix=${GSTREAMER_PREFIX}
+    #         --define-variable=libdir=${GSTREAMER_PREFIX}/lib/x86_64-linux-gnu
+    #         --define-variable=includedir=${GSTREAMER_PREFIX}/include
+    #     )
+    # endif()
 elseif(IOS)
     list(APPEND CMAKE_FRAMEWORK_PATH "~/Library/Developer/GStreamer/iPhone.sdk")
     if(DEFINED ENV{GSTREAMER_PREFIX_IOS} AND EXISTS $ENV{GSTREAMER_PREFIX_IOS})
@@ -104,7 +112,7 @@ elseif(ANDROID)
             set(PKG_CONFIG_EXECUTABLE ${PKG_CONFIG_PROGRAM})
             set(ENV{PKG_CONFIG_LIBDIR} "${GSTREAMER_PREFIX}/lib/pkgconfig;${GSTREAMER_PREFIX}/lib/gstreamer-1.0/pkgconfig")
         endif()
-    elseif(CMAKE_HOST_LINUX)
+    elseif(CMAKE_HOST_LINUX OR CMAKE_HOST_APPLE)
         if(PkgConfig_FOUND)
             set(ENV{PKG_CONFIG_LIBDIR} "${GSTREAMER_PREFIX}/lib/pkgconfig:${GSTREAMER_PREFIX}/lib/gstreamer-1.0/pkgconfig")
         endif()
@@ -119,6 +127,16 @@ elseif(ANDROID)
 endif()
 list(PREPEND CMAKE_PREFIX_PATH ${GSTREAMER_PREFIX})
 cmake_print_variables(GSTREAMER_PREFIX)
+
+# TODO: find_path
+if(LINUX)
+    set(GSTREAMER_LIB_PATH ${GSTREAMER_PREFIX}/lib/x86_64-linux-gnu)
+elseif(MACOS OR ANDROID OR WIN32)
+    set(GSTREAMER_LIB_PATH ${GSTREAMER_PREFIX}/lib)
+elseif(IOS)
+
+endif()
+cmake_print_variables(GSTREAMER_LIB_PATH)
 
 ################################################################################
 
@@ -238,6 +256,7 @@ function(find_gstreamer_component component)
                     target_link_libraries(GStreamer::${component} INTERFACE ${ARGS_DEPENDENCIES})
                 endif()
                 set_target_properties(GStreamer::${component} PROPERTIES VERSION ${GStreamer_VERSION})
+                cmake_print_variables(component)
             endif()
             mark_as_advanced(GStreamer_${component}_INCLUDE_DIR GStreamer_${component}_LIBRARY)
         endif()
@@ -276,18 +295,42 @@ find_gstreamer_component(Gl
 
 ################################################################################
 
+set(GST_DEPENDENCIES)
+find_package(GLESv2 QUIET)
+list(APPEND GST_DEPENDENCIES GLESv2::GLESv2)
+find_package(OpenGL QUIET OPTIONAL_COMPONENTS EGL GLX OpenGL) # GLES2 GLES3
+list(APPEND GST_DEPENDENCIES OpenGL::GL OpenGL::EGL OpenGL::GLX OpenGL::OpenGL)
+find_package(X11_XCB QUIET)
+list(APPEND GST_DEPENDENCIES X11::XCB)
+find_package(EGL QUIET)
+list(APPEND GST_DEPENDENCIES EGL::EGL)
+pkg_check_modules(PC_libdrm IMPORTED_TARGET libdrm)
+list(APPEND GST_DEPENDENCIES PkgConfig::PC_libdrm)
+pkg_check_modules(PC_gudev IMPORTED_TARGET gudev-1.0)
+list(APPEND GST_DEPENDENCIES PkgConfig::PC_gudev)
+cmake_print_variables(GST_DEPENDENCIES)
+
+################################################################################
+
 if(Allocators IN_LIST GStreamer_FIND_COMPONENTS)
     find_gstreamer_component(Allocators
         PC_NAME gstreamer-allocators-1.0
         HEADER gst/allocators/allocators.h
         LIBRARY gstallocators-1.0
         DEPENDENCIES GStreamer::Core)
+
+    if(TARGET GStreamer::Allocators)
+        pkg_check_modules(PC_libdrm IMPORTED_TARGET libdrm)
+        if(TARGET PkgConfig::PC_libdrm)
+            target_link_libraries(GStreamer::Allocators INTERFACE PkgConfig::PC_libdrm)
+        endif()
+    endif()
 endif()
 
 if(App IN_LIST GStreamer_FIND_COMPONENTS)
     find_gstreamer_component(App
         PC_NAME gstreamer-app-1.0
-        HEADER gst/app/gstappsink.h
+        HEADER gst/app/app.h
         LIBRARY gstapp-1.0
         DEPENDENCIES GStreamer::Core GStreamer::Base)
 endif()
@@ -319,51 +362,84 @@ endif()
 if(Fft IN_LIST GStreamer_FIND_COMPONENTS)
     find_gstreamer_component(Fft
         PC_NAME gstreamer-fft-1.0
-        HEADER gst/fft/cfft.h
+        HEADER gst/fft/fft.h
         LIBRARY gstfft-1.0
         DEPENDENCIES GStreamer::Core)
 endif()
 
 if(GlEgl IN_LIST GStreamer_FIND_COMPONENTS)
-    # find_package(EGL)
     find_gstreamer_component(GlEgl
         PC_NAME gstreamer-gl-egl-1.0
-        HEADER gst/gl/egl/gstgldisplay_egl.h
+        HEADER gst/gl/egl/egl.h
         LIBRARY gstgl-1.0
-        DEPENDENCIES GStreamer::Gl EGL::EGL)
+        DEPENDENCIES GStreamer::Gl)
+
+    if(TARGET GStreamer::GlEgl)
+        find_package(EGL QUIET)
+        if(TARGET EGL::EGL)
+            target_link_libraries(GStreamer::GlEgl INTERFACE EGL::EGL)
+        endif()
+    endif()
 endif()
 
 if(GlPrototypes IN_LIST GStreamer_FIND_COMPONENTS)
-    # find_package(GLESv2)
-    # find_package(OpenGL OPTIONAL_COMPONENTS EGL GLX OpenGL) # GLES2 GLES3
     find_gstreamer_component(GlPrototypes
         PC_NAME gstreamer-gl-prototypes-1.0
         HEADER gst/gl/glprototypes/all_functions.h
         LIBRARY gstglproto-1.0
-        DEPENDENCIES GStreamer::Gl GLESv2::GLESv2 OpenGL::GL)
+        DEPENDENCIES GStreamer::Gl)
+
+    if(TARGET GStreamer::GlPrototypes)
+        find_package(GLESv2 QUIET)
+        find_package(OpenGL QUIET)
+        set(GlPrototypes_DEPENDENCIES GLESv2::GLESv2 OpenGL::GL)
+        foreach(dependency IN LISTS GlPrototypes_DEPENDENCIES)
+            if(TARGET ${dependency})
+                target_link_libraries(GStreamer::GlPrototypes INTERFACE ${dependency})
+            endif()
+        endforeach()
+    endif()
 endif()
 
 if(GlWayland IN_LIST GStreamer_FIND_COMPONENTS)
-    # find_package(Wayland COMPONENTS Client Cursor Egl)
-    # find_package(WaylandProtocols)
-    # find_package(WaylandScanner)
-    # find_package(Qt6 COMPONENTS WaylandClient)
     find_gstreamer_component(GlWayland
         PC_NAME gstreamer-gl-wayland-1.0
-        HEADER gst/gl/wayland/gstgldisplay_wayland.h
+        HEADER gst/gl/wayland/wayland.h
         LIBRARY gstgl-1.0
-        DEPENDENCIES GStreamer::Gl Wayland::EGL Wayland::Client)
+        DEPENDENCIES GStreamer::Gl)
+
+    if(TARGET GStreamer::GlWayland)
+        find_package(Wayland QUIET COMPONENTS Client Cursor Egl)
+        # find_package(WaylandProtocols QUIET)
+        # find_package(WaylandScanner QUIET)
+        # find_package(Qt6 QUIET COMPONENTS WaylandClient)
+        set(GlWayland_DEPENDENCIES Wayland::Client Wayland::Cursor Wayland::Egl)
+        foreach(dependency IN LISTS GlWayland_DEPENDENCIES)
+            if(TARGET ${dependency})
+                target_link_libraries(GStreamer::GlWayland INTERFACE ${dependency})
+            endif()
+        endforeach()
+    endif()
 endif()
 
 if(GlX11 IN_LIST GStreamer_FIND_COMPONENTS)
-    # find_package(X11)
-    # find_package(XCB COMPONENTS XCB GLX)
-    # find_package(X11_XCB)
     find_gstreamer_component(GlX11
         PC_NAME gstreamer-gl-x11-1.0
-        HEADER gst/gl/x11/gstgldisplay_x11.h
+        HEADER gst/gl/x11/x11.h
         LIBRARY gstgl-1.0
-        DEPENDENCIES GStreamer::Gl X11::XCB)
+        DEPENDENCIES GStreamer::Gl)
+
+    if(TARGET GStreamer::GlX11)
+        # find_package(X11 QUIET)
+        # find_package(XCB QUIET)
+        find_package(X11_XCB QUIET)
+        set(GlX11_DEPENDENCIES X11::XCB)
+        foreach(dependency IN LISTS GlX11_DEPENDENCIES)
+            if(TARGET ${dependency})
+                target_link_libraries(GStreamer::GlX11 INTERFACE ${dependency})
+            endif()
+        endforeach()
+    endif()
 endif()
 
 if(Mpegts IN_LIST GStreamer_FIND_COMPONENTS)
@@ -463,12 +539,15 @@ if(Tag IN_LIST GStreamer_FIND_COMPONENTS)
 endif()
 
 if(Va IN_LIST GStreamer_FIND_COMPONENTS)
-    # find_package(VAAPI)
     find_gstreamer_component(Va
         PC_NAME gstreamer-va-1.0
         HEADER gst/va/gstva.h
         LIBRARY gstva-1.0
         DEPENDENCIES GStreamer::Core GStreamer::Video)
+
+    if(TARGET GSreamer::Va)
+        find_package(VAAPI QUIET)
+    endif()
 endif()
 
 ################################################################################
@@ -516,38 +595,33 @@ if(QGC_GST_STATIC_BUILD)
     target_compile_definitions(GStreamer::GStreamer INTERFACE QGC_GST_STATIC_BUILD)
 endif()
 
-# TODO: find_path
-if(LINUX)
-    set(GSTREAMER_LIB_PATH ${GSTREAMER_PREFIX}/lib/x86_64-linux-gnu)
-elseif(MACOS)
-    set(GSTREAMER_LIB_PATH ${GSTREAMER_PREFIX}/lib)
-elseif(ANDROID OR WIN32)
-    set(GSTREAMER_LIB_PATH ${GSTREAMER_PREFIX}/lib)
-elseif(IOS)
-
-endif()
-set(GSTREAMER_PLUGIN_PATH ${GSTREAMER_LIB_PATH}/gstreamer-1.0)
+foreach(dependency IN LISTS GST_DEPENDENCIES)
+    if(TARGET ${dependency})
+        cmake_print_variables(dependency)
+        target_link_libraries(GStreamer::GStreamer INTERFACE ${dependency})
+    endif()
+endforeach()
 
 target_include_directories(GStreamer::GStreamer
     INTERFACE
         ${GSTREAMER_PREFIX}/include
         ${GSTREAMER_PREFIX}/include/glib-2.0
-        ${GSTREAMER_PREFIX}/include/graphene-1.0
         ${GSTREAMER_PREFIX}/include/gstreamer-1.0
         ${GSTREAMER_LIB_PATH}/glib-2.0/include
-        ${GSTREAMER_LIB_PATH}/graphene-1.0/include
-        ${GSTREAMER_PLUGIN_PATH}/include
+        # ${GSTREAMER_PREFIX}/include/graphene-1.0
+        # ${GSTREAMER_LIB_PATH}/graphene-1.0/include
 )
 
-target_link_directories(GStreamer::GStreamer
-    INTERFACE
-        ${GSTREAMER_LIB_PATH}
-        ${GSTREAMER_PLUGIN_PATH}
-)
+target_link_directories(GStreamer::GStreamer INTERFACE ${GSTREAMER_LIB_PATH})
 
 ################################################################################
 
 add_library(GStreamer::Plugins INTERFACE IMPORTED)
+
+set(GSTREAMER_PLUGIN_PATH ${GSTREAMER_LIB_PATH}/gstreamer-1.0)
+target_include_directories(GStreamer::GStreamer INTERFACE ${GSTREAMER_PLUGIN_PATH}/include)
+target_link_directories(GStreamer::GStreamer INTERFACE ${GSTREAMER_PLUGIN_PATH})
+cmake_print_variables(GSTREAMER_PLUGIN_PATH)
 
 set(GST_PLUGINS
     gstcoreelements
@@ -596,6 +670,10 @@ foreach(plugin IN LISTS GST_PLUGINS)
             set(GST_PLUGIN_${plugin}_FOUND TRUE)
         endif()
     endif()
+
+    # if(GST_PLUGIN_${plugin}_FOUND)
+    #     cmake_print_variables(plugin)
+    # endif()
 endforeach()
 
 if(NOT MACOS)
