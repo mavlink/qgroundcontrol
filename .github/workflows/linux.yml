@@ -41,6 +41,8 @@ jobs:
     steps:
       - name: Free Disk Space (Ubuntu)
         uses: jlumbroso/free-disk-space@main
+        with:
+          large-packages: false
         continue-on-error: true
 
       - name: Checkout repo
