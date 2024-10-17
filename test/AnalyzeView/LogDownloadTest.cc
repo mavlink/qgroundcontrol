@@ -12,26 +12,21 @@
 #include "LogEntry.h"
 #include "MockLink.h"
 #include "MultiSignalSpy.h"
+#include "QmlObjectListModel.h"
 
 #include <QtCore/QDir>
 
-LogDownloadTest::LogDownloadTest(void)
+void LogDownloadTest::_downloadTest()
 {
-
-}
-
-void LogDownloadTest::downloadTest(void)
-{
-
     _connectMockLink(MAV_AUTOPILOT_PX4);
 
-    LogDownloadController* controller = new LogDownloadController();
+    LogDownloadController* const controller = new LogDownloadController(this);
 
-    _rgLogDownloadControllerSignals[requestingListChangedSignalIndex] =     SIGNAL(requestingListChanged());
-    _rgLogDownloadControllerSignals[downloadingLogsChangedSignalIndex] =    SIGNAL(downloadingLogsChanged());
-    _rgLogDownloadControllerSignals[modelChangedSignalIndex] =              SIGNAL(modelChanged());
+    _rgLogDownloadControllerSignals[requestingListChangedSignalIndex] = SIGNAL(requestingListChanged());
+    _rgLogDownloadControllerSignals[downloadingLogsChangedSignalIndex] = SIGNAL(downloadingLogsChanged());
+    _rgLogDownloadControllerSignals[modelChangedSignalIndex] = SIGNAL(modelChanged());
 
-    _multiSpyLogDownloadController = new MultiSignalSpy();
+    _multiSpyLogDownloadController = new MultiSignalSpy(this);
     QVERIFY(_multiSpyLogDownloadController->init(controller, _rgLogDownloadControllerSignals, _cLogDownloadControllerSignals));
 
     controller->refresh();
@@ -43,13 +38,11 @@ void LogDownloadTest::downloadTest(void)
     }
     _multiSpyLogDownloadController->clearAllSignals();
 
-    auto model = controller->model();
+    QmlObjectListModel* const model = controller->model();
     QVERIFY(model);
-    qDebug() << model->count();
     model->value<QGCLogEntry*>(0)->setSelected(true);
 
-    QString downloadTo = QDir::currentPath();
-    qDebug() << "download to:" << downloadTo;
+    const QString downloadTo = QDir::currentPath();
     controller->downloadToDirectory(downloadTo);
     QVERIFY(_multiSpyLogDownloadController->waitForSignalByIndex(downloadingLogsChangedSignalIndex, 10000));
     _multiSpyLogDownloadController->clearAllSignals();
@@ -59,10 +52,8 @@ void LogDownloadTest::downloadTest(void)
     }
     _multiSpyLogDownloadController->clearAllSignals();
 
-    QString downloadFile = QDir(downloadTo).filePath("log_0_UnknownDate.ulg");
+    const QString downloadFile = QDir(downloadTo).filePath("log_0_UnknownDate.ulg");
     QVERIFY(UnitTest::fileCompare(downloadFile, _mockLink->logDownloadFile()));
 
     QFile::remove(downloadFile);
-
-    delete controller;
 }
