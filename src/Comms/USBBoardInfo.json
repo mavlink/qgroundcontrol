@@ -31,6 +31,7 @@
         { "vendorID": 12643, "productID": 76,       "boardClass": "Pixhawk",    "name": "CUAV Flight Controller" },
         { "vendorID": 1155, "productID": 55,        "boardClass": "Pixhawk",    "name": "PX4 FMU SmartAP AIRLink" },
         { "vendorID": 12677, "productID": 57,       "boardClass": "Pixhawk",    "name": "ARK FMU V6X" },
+        { "vendorID": 12677, "productID": 59,       "boardClass": "Pixhawk",    "name": "ARK FPV" },
 
         { "vendorID": 1155, "productID": 22336,     "boardClass": "Pixhawk",    "name": "ArduPilot ChibiOS" },
         { "vendorID": 4617, "productID": 22336,     "boardClass": "Pixhawk",    "name": "ArduPilot ChibiOS" },
