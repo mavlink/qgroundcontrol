@@ -1,28 +1,98 @@
 FROM ubuntu:22.04
 
+# Specify the Qt version and the modules to be installed
 ARG QT_VERSION=6.6.3
 ARG QT_MODULES="qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors"
 
+# Set non-interactive mode for Debian package installations
 ENV DEBIAN_FRONTEND noninteractive
 
+# Set display environment variable for GUI applications
 ENV DISPLAY :99
 
+# Define Qt installation paths
 ENV QT_PATH /opt/Qt
 ENV QT_DESKTOP $QT_PATH/${QT_VERSION}/gcc_64
 
+# Update PATH to include Qt binaries and ccache
 ENV PATH /usr/lib/ccache:$QT_DESKTOP/bin:$PATH
 
+# Copy and run script to install necessary dependencies
 COPY tools/setup/install-dependencies-debian.sh /tmp/qt/
 RUN /tmp/qt/install-dependencies-debian.sh
 
+# Copy and run script to install Qt
 COPY tools/setup/install-qt-debian.sh /tmp/qt/
 RUN /tmp/qt/install-qt-debian.sh
 
+# Generate and configure locales
 RUN locale-gen en_US.UTF-8 && dpkg-reconfigure locales
 
+# Configure Git to recognize the project directory as safe
 RUN git config --global --add safe.directory /project/source
 
+# Update package list and install additional libraries
+RUN apt-get update && apt-get install -y libinih-dev fuse
+
+# Create a directory for cloning GitHub repositories
+RUN mkdir -p /home/github
+
+# Set the working directory to /home/github
+WORKDIR /home/github
+
+# Clone the Exiv2 repository from GitHub
+RUN git clone https://github.com/Exiv2/exiv2.git
+
+# Change the working directory to the cloned Exiv2 repository
+WORKDIR /home/github/exiv2
+
+# Build the Exiv2 project using CMake
+RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && \
+    cmake --build build && \
+    ctest --test-dir build --verbose && \
+    cmake --install build
+
+# Switch to the downloads directory for additional dependencies
+WORKDIR /home/downloads
+
+# Install wget for downloading files
+RUN apt-get install -y wget
+
+# Download and extract GeographicLib source code
+RUN wget https://github.com/geographiclib/geographiclib/archive/refs/tags/v2.3.tar.gz && tar -xzf v2.3.tar.gz
+WORKDIR /home/downloads/geographiclib-2.3
+RUN mkdir build && cd build && cmake ..
+WORKDIR /home/downloads/geographiclib-2.3/build
+RUN make -j$(nproc) && make install && ldconfig
+
+# Download and extract zlib source code
+WORKDIR /home/downloads
+RUN wget https://github.com/madler/zlib/releases/download/v1.3.1/zlib-1.3.1.tar.gz && tar -xzf zlib-1.3.1.tar.gz
+WORKDIR /home/downloads/zlib-1.3.1
+RUN mkdir build && cd build && cmake .. && make -j$(nproc) && make install && ldconfig
+
+# Set the working directory for building the main project
 WORKDIR /project/build
+
+# Copy the project source code into the container
+COPY . /project/source
+
+# Clone ParameterRepository and move its contents to the appropriate directory
+RUN git clone https://github.com/ArduPilot/ParameterRepository.git && mv ./ParameterRepository/* /project/source/src/FirmwarePlugin/APM/ArduPilot-Parameter-Repository
+
+# Clone SDL_GameControllerDB and move its contents to the resources directory
+RUN git clone https://github.com/mdqinc/SDL_GameControllerDB.git && mv ./SDL_GameControllerDB/* /project/source/resources/SDL_GameControllerDB
+
+# Clone PX4-GPSDrivers directly into the Drivers directory within the project
+RUN git clone https://github.com/PX4/PX4-GPSDrivers.git /project/source/src/GPS/Drivers
+
+# Build PX4-GPSDrivers and run its test
+RUN cd /project/source/src/GPS/Drivers && \
+    cmake -Bbuild -H. && \
+    cmake --build build && \
+    build/gps-parser-test
+
+# Define the default command to build and install the project using CMake and Ninja
 CMD cmake -S /project/source -B . -G Ninja -DCMAKE_BUILD_TYPE=Release ; \
-	cmake --build . --target all --config Release ; \
-	cmake --install . --config Release
+    cmake --build . --target all --config Release ; \
+    cmake --install . --config Release
