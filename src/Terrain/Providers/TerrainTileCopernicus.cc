@@ -33,18 +33,18 @@ TerrainTileCopernicus::~TerrainTileCopernicus()
     // qCDebug(TerrainTileCopernicusLog) << Q_FUNC_INFO << this;
 }
 
-QByteArray TerrainTileCopernicus::serializeFromJson(const QByteArray &input)
+QJsonValue TerrainTileCopernicus::getJsonFromData(const QByteArray &input)
 {
     QJsonParseError parseError;
     const QJsonDocument document = QJsonDocument::fromJson(input, &parseError);
     if (parseError.error != QJsonParseError::NoError) {
         qCWarning(TerrainTileCopernicusLog) << Q_FUNC_INFO << "Terrain tile json doc parse error" << parseError.errorString();
-        return QByteArray();
+        return QJsonValue();
     }
 
     if (!document.isObject()) {
         qCWarning(TerrainTileCopernicusLog) << Q_FUNC_INFO << "Terrain tile json doc is no object";
-        return QByteArray();
+        return QJsonValue();
     }
 
     const QJsonObject rootObject = document.object();
@@ -56,30 +56,46 @@ QByteArray TerrainTileCopernicus::serializeFromJson(const QByteArray &input)
     QString errorString;
     if (!JsonHelper::validateKeys(rootObject, rootVersionKeyInfoList, errorString)) {
         qCWarning(TerrainTileCopernicusLog) << Q_FUNC_INFO << "Error in reading json: " << errorString;
-        return QByteArray();
+        return QJsonValue();
     }
 
     if (rootObject[_jsonStatusKey].toString() != "success") {
         qCWarning(TerrainTileCopernicusLog) << Q_FUNC_INFO << "Invalid terrain tile.";
-        return QByteArray();
+        return QJsonValue();
     }
 
-    const QJsonObject& dataObject = rootObject[_jsonDataKey].toObject();
+    const QJsonValue &jsonData = rootObject[_jsonDataKey];
+    const QJsonObject &dataObject = jsonData.toObject();
+
     QList<JsonHelper::KeyValidateInfo> dataVersionKeyInfoList = {
         { _jsonBoundsKey, QJsonValue::Object, true },
         { _jsonStatsKey,  QJsonValue::Object, true },
         { _jsonCarpetKey, QJsonValue::Array, true },
     };
+
     if (!JsonHelper::validateKeys(dataObject, dataVersionKeyInfoList, errorString)) {
         qCWarning(TerrainTileCopernicusLog) << Q_FUNC_INFO << "Error in reading json: " << errorString;
+        return QJsonValue();
+    }
+
+    return jsonData;
+}
+
+QByteArray TerrainTileCopernicus::serializeFromData(const QByteArray &input)
+{
+    const QJsonValue &jsonData = getJsonFromData(input);
+    if (jsonData.isNull()) {
         return QByteArray();
     }
+
+    const QJsonObject &dataObject = jsonData.toObject();
 
     const QJsonObject &boundsObject = dataObject[_jsonBoundsKey].toObject();
     static const QList<JsonHelper::KeyValidateInfo> boundsVersionKeyInfoList = {
         { _jsonSouthWestKey, QJsonValue::Array, true },
         { _jsonNorthEastKey, QJsonValue::Array, true },
     };
+    QString errorString;
     if (!JsonHelper::validateKeys(boundsObject, boundsVersionKeyInfoList, errorString)) {
         qCWarning(TerrainTileCopernicusLog) << Q_FUNC_INFO << "Error in reading json: " << errorString;
         return QByteArray();
@@ -91,14 +107,6 @@ QByteArray TerrainTileCopernicus::serializeFromJson(const QByteArray &input)
         qCWarning(TerrainTileCopernicusLog) << Q_FUNC_INFO << "Incomplete bounding location";
         return QByteArray();
     }
-
-    const double swLat = swArray[0].toDouble();
-    const double swLon = swArray[1].toDouble();
-    const double neLat = neArray[0].toDouble();
-    const double neLon = neArray[1].toDouble();
-
-    qCDebug(TerrainTileCopernicusLog) << "Serialize: swArray: south west:" << (40.42 - swLat) << (-3.23 - swLon);
-    qCDebug(TerrainTileCopernicusLog) << "Serialize: neArray: north east:" << neLat << neLon;
 
     const QJsonObject &statsObject = dataObject[_jsonStatsKey].toObject();
     static const QList<JsonHelper::KeyValidateInfo> statsVersionKeyInfoList = {
@@ -127,7 +135,7 @@ QByteArray TerrainTileCopernicus::serializeFromJson(const QByteArray &input)
     qCDebug(TerrainTileCopernicusLog) << "Serialize: TileInfo: south west:" << tileInfo.swLat << tileInfo.swLon;
     qCDebug(TerrainTileCopernicusLog) << "Serialize: TileInfo: north east:" << tileInfo.neLat << tileInfo.neLon;
 
-    const int cTileNumHeaderBytes = static_cast<int>(sizeof(TileInfo_t));
+    constexpr int cTileNumHeaderBytes = static_cast<int>(sizeof(TileInfo_t));
     const int cTileNumDataBytes = static_cast<int>(sizeof(int16_t)) * tileInfo.gridSizeLat * tileInfo.gridSizeLon;
 
     QByteArray result(cTileNumHeaderBytes + cTileNumDataBytes, Qt::Uninitialized);

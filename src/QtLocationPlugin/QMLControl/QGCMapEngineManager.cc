@@ -19,6 +19,8 @@
 #include "ElevationMapProvider.h"
 #include "QmlObjectListModel.h"
 #include "QGCApplication.h"
+#include "QGCToolbox.h"
+#include "SettingsManager.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/qapplicationstatic.h>
@@ -28,9 +30,6 @@
 #include <QtQml/QQmlEngine>
 
 QGC_LOGGING_CATEGORY(QGCMapEngineManagerLog, "qgc.qtlocation.qmlcontrol.qgcmapenginemanagerlog")
-
-static const QString kQmlOfflineMapKeyName = QStringLiteral("QGCOfflineMap");
-static const QString kElevationMapType = QString(CopernicusElevationProvider::kProviderKey); // TODO: Variable Elevation Provider Type
 
 Q_APPLICATION_STATIC(QGCMapEngineManager, _mapEngineManager);
 
@@ -75,7 +74,8 @@ void QGCMapEngineManager::updateForCurrentView(double lon0, double lat0, double 
     }
 
     if (_fetchElevation) {
-        const QGCTileSet set = UrlFactory::getTileCount(1, lon0, lat0, lon1, lat1, kElevationMapType);
+        const QString elevationProviderName = qgcApp()->toolbox()->settingsManager()->flightMapSettings()->elevationMapProvider()->rawValue().toString();
+        const QGCTileSet set = UrlFactory::getTileCount(1, lon0, lat0, lon1, lat1, elevationProviderName);
         _elevationSet += set;
     }
 
@@ -142,9 +142,11 @@ void QGCMapEngineManager::startDownload(const QString &name, const QString &mapT
         qCWarning(QGCMapEngineManagerLog) << Q_FUNC_INFO << "No Tiles to save";
     }
 
-    if ((mapType != kElevationMapType) && _fetchElevation) {
+    const int mapid = UrlFactory::getQtMapIdFromProviderType(mapType);
+    if (_fetchElevation && !UrlFactory::isElevation(mapid)) {
         QGCCachedTileSet* const set = new QGCCachedTileSet(name + QStringLiteral(" Elevation"));
-        set->setMapTypeStr(kElevationMapType);
+        const QString elevationProviderName = qgcApp()->toolbox()->settingsManager()->flightMapSettings()->elevationMapProvider()->rawValue().toString();
+        set->setMapTypeStr(elevationProviderName);
         set->setTopleftLat(_topleftLat);
         set->setTopleftLon(_topleftLon);
         set->setBottomRightLat(_bottomRightLat);
@@ -153,7 +155,7 @@ void QGCMapEngineManager::startDownload(const QString &name, const QString &mapT
         set->setMaxZoom(1);
         set->setTotalTileSize(_elevationSet.tileSize);
         set->setTotalTileCount(static_cast<quint32>(_elevationSet.tileCount));
-        set->setType(kElevationMapType);
+        set->setType(elevationProviderName);
 
         QGCCreateTileSetTask* const task = new QGCCreateTileSetTask(set);
         (void) connect(task, &QGCCreateTileSetTask::tileSetSaved, this, &QGCMapEngineManager::_tileSetSaved);
@@ -436,11 +438,19 @@ QStringList QGCMapEngineManager::mapList()
 QStringList QGCMapEngineManager::mapProviderList()
 {
     QStringList mapStringList = mapList();
-    (void) mapStringList.removeAll(CopernicusElevationProvider::kProviderKey);
+    const QStringList elevationStringList = elevationProviderList();
+    for (const QString &elevationProviderName : elevationStringList) {
+        (void) mapStringList.removeAll(elevationProviderName);
+    }
 
     static const QRegularExpression providerType = QRegularExpression(QStringLiteral("^([^\\ ]*) (.*)$"));
     (void) mapStringList.replaceInStrings(providerType,"\\1");
     (void) mapStringList.removeDuplicates();
 
     return mapStringList;
+}
+
+QStringList QGCMapEngineManager::elevationProviderList()
+{
+    return UrlFactory::getElevationProviderTypes();
 }
