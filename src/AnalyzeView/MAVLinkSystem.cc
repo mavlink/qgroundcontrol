@@ -10,141 +10,140 @@
 #include "MAVLinkSystem.h"
 #include "MAVLinkMessage.h"
 #include "QGCLoggingCategory.h"
+#include "QmlObjectListModel.h"
 
 QGC_LOGGING_CATEGORY(MAVLinkSystemLog, "qgc.analyzeview.mavlinksystem")
 
-//-----------------------------------------------------------------------------
-QGCMAVLinkSystem::QGCMAVLinkSystem(QObject* parent, quint8 id)
+QGCMAVLinkSystem::QGCMAVLinkSystem(quint8 id, QObject *parent)
     : QObject(parent)
     , _id(id)
+    , _messages(new QmlObjectListModel(this))
 {
+    // qCDebug(MAVLinkSystemLog) << Q_FUNC_INFO << this;
+
     qCDebug(MAVLinkSystemLog) << "New Vehicle:" << id;
 }
 
-//-----------------------------------------------------------------------------
 QGCMAVLinkSystem::~QGCMAVLinkSystem()
 {
-    _messages.clearAndDeleteContents();
+    _messages->clearAndDeleteContents();
+
+    // qCDebug(MAVLinkSystemLog) << Q_FUNC_INFO << this;
 }
 
-//-----------------------------------------------------------------------------
-QGCMAVLinkMessage*
-QGCMAVLinkSystem::findMessage(uint32_t id, uint8_t compId)
+QGCMAVLinkMessage *QGCMAVLinkSystem::findMessage(uint32_t id, uint8_t compId) const
 {
-    for(int i = 0; i < _messages.count(); i++) {
-        QGCMAVLinkMessage* m = qobject_cast<QGCMAVLinkMessage*>(_messages.get(i));
-        if(m) {
-            if(m->id() == id && m->compId() == compId) {
-                return m;
-            }
+    for (int i = 0; i < _messages->count(); i++) {
+        QGCMAVLinkMessage *const msg = qobject_cast<QGCMAVLinkMessage*>(_messages->get(i));
+        if (msg && (msg->id() == id) && (msg->compId() == compId)) {
+            return msg;
         }
     }
+
     return nullptr;
 }
 
-//-----------------------------------------------------------------------------
-int
-QGCMAVLinkSystem::findMessage(QGCMAVLinkMessage* message)
+int QGCMAVLinkSystem::findMessage(QGCMAVLinkMessage *message) const
 {
-    for(int i = 0; i < _messages.count(); i++) {
-        QGCMAVLinkMessage* m = qobject_cast<QGCMAVLinkMessage*>(_messages.get(i));
-        if(m && m == message) {
+    for (int i = 0; i < _messages->count(); i++) {
+        QGCMAVLinkMessage *const msg = qobject_cast<QGCMAVLinkMessage*>(_messages->get(i));
+        if(msg && (msg == message)) {
             return i;
         }
     }
+
     return -1;
 }
 
-//-----------------------------------------------------------------------------
-void
-QGCMAVLinkSystem::_resetSelection()
+void QGCMAVLinkSystem::_resetSelection()
 {
-    for(int i = 0; i < _messages.count(); i++) {
-        QGCMAVLinkMessage* m = qobject_cast<QGCMAVLinkMessage*>(_messages.get(i));
-        if(m && m->selected()) {
-            m->setSelected(false);
-            emit m->selectedChanged();
+    for (int i = 0; i < _messages->count(); i++) {
+        QGCMAVLinkMessage *const msg = qobject_cast<QGCMAVLinkMessage*>(_messages->get(i));
+        if (msg && msg->selected()) {
+            msg->setSelected(false);
+            emit msg->selectedChanged();
         }
     }
 }
 
-//-----------------------------------------------------------------------------
-void
-QGCMAVLinkSystem::setSelected(int sel)
+void QGCMAVLinkSystem::setSelected(int sel)
 {
-    if(sel < _messages.count()) {
-        _selected = sel;
-        emit selectedChanged();
-        _resetSelection();
-        QGCMAVLinkMessage* m = qobject_cast<QGCMAVLinkMessage*>(_messages.get(sel));
-        if(m && !m->selected()) {
-            m->setSelected(true);
-            emit m->selectedChanged();
-        }
+    if (sel >= _messages->count()) {
+        return;
+    }
+
+    _selected = sel;
+    emit selectedChanged();
+
+    _resetSelection();
+
+    QGCMAVLinkMessage *const msg = qobject_cast<QGCMAVLinkMessage*>(_messages->get(sel));
+    if (msg && !msg->selected()) {
+        msg->setSelected(true);
+        emit msg->selectedChanged();
     }
 }
 
-QGCMAVLinkMessage* QGCMAVLinkSystem::selectedMsg()
+QGCMAVLinkMessage *QGCMAVLinkSystem::selectedMsg()
 {
-    QGCMAVLinkMessage* selectedMsg = nullptr;
-    if(_messages.count())
-    {
-        selectedMsg = qobject_cast<QGCMAVLinkMessage*>(_messages.get(_selected));
+    return (_messages->count() ? qobject_cast<QGCMAVLinkMessage*>(_messages->get(_selected)) : nullptr);
+}
+
+bool QGCMAVLinkSystem::_messagesSort(const QObject *a, const QObject *b)
+{
+    const QGCMAVLinkMessage *const aa = qobject_cast<const QGCMAVLinkMessage*>(a);
+    const QGCMAVLinkMessage *const bb = qobject_cast<const QGCMAVLinkMessage*>(b);
+
+    if (!aa || !bb) {
+        return false;
     }
-    return selectedMsg;
+
+    if (aa->name() == bb->name()) {
+        return (aa->name() < bb->name());
+    }
+
+    return (aa->name() < bb->name());
 }
 
-//-----------------------------------------------------------------------------
-static bool
-messages_sort(QObject* a, QObject* b)
+void QGCMAVLinkSystem::append(QGCMAVLinkMessage *message)
 {
-    QGCMAVLinkMessage* aa = qobject_cast<QGCMAVLinkMessage*>(a);
-    QGCMAVLinkMessage* bb = qobject_cast<QGCMAVLinkMessage*>(b);
-    if(!aa || !bb) return false;
-    if(aa->name() == bb->name()) return aa->name() < bb->name();
-    return aa->name() < bb->name();
-}
+    QGCMAVLinkMessage *selectedMsg = nullptr;
 
-//-----------------------------------------------------------------------------
-void
-QGCMAVLinkSystem::append(QGCMAVLinkMessage* message)
-{
-    //-- Save selected message
-    QGCMAVLinkMessage* selectedMsg = nullptr;
-    if(_messages.count()) {
-        selectedMsg = qobject_cast<QGCMAVLinkMessage*>(_messages.get(_selected));
+    if(_messages->count()) {
+        selectedMsg = qobject_cast<QGCMAVLinkMessage*>(_messages->get(_selected));
     } else {
-        //-- First message
         message->setSelected(true);
     }
-    _messages.append(message);
+
+    (void) _messages->append(message);
+
     //-- Sort messages by id and then compId
-    if (_messages.count() > 0) {
-        _messages.beginReset();
-        std::sort(_messages.objectList()->begin(), _messages.objectList()->end(), messages_sort);
-        _messages.endReset();
+    if (_messages->count() > 0) {
+        _messages->beginReset();
+        std::sort(_messages->objectList()->begin(), _messages->objectList()->end(), _messagesSort);
+        _messages->endReset();
         _checkCompID(message);
     }
+
     //-- Remember selected message
-    if(selectedMsg) {
-        int idx = findMessage(selectedMsg);
-        if(idx >= 0) {
+    if (selectedMsg) {
+        const int idx = findMessage(selectedMsg);
+        if (idx >= 0) {
             _selected = idx;
             emit selectedChanged();
         }
     }
 }
 
-//-----------------------------------------------------------------------------
-void
-QGCMAVLinkSystem::_checkCompID(QGCMAVLinkMessage* message)
+void QGCMAVLinkSystem::_checkCompID(QGCMAVLinkMessage *message)
 {
-    if(_compIDsStr.isEmpty()) {
+    if (_compIDsStr.isEmpty()) {
         _compIDsStr << tr("Comp All");
     }
-    if(!_compIDs.contains(static_cast<int>(message->compId()))) {
-        int compId = static_cast<int>(message->compId());
-        _compIDs.append(compId);
+
+    if (!_compIDs.contains(static_cast<int>(message->compId()))) {
+        const int compId = static_cast<int>(message->compId());
+        (void) _compIDs.append(compId);
         _compIDsStr << tr("Comp %1").arg(compId);
         emit compIDsChanged();
     }
