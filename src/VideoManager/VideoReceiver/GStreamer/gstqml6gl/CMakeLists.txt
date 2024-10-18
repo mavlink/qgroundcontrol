@@ -1,6 +1,6 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick)
 
-set(GST_COMPONENTS Allocators Audio Codecparsers Controller Fft GlEGL GlPrototypes GlWayland GlX11 Mpegts Net Pbutils Photography Riff Rtp Rtsp Sdp Tag Va)
+set(GST_COMPONENTS Allocators App Audio Codecparsers Controller Fft GlEGL GlPrototypes GlWayland GlX11 Mpegts Net Pbutils Photography Riff Rtp Rtsp Sdp Tag Va)
 find_package(GStreamer REQUIRED COMPONENTS OPTIONAL_COMPONENTS ${GST_COMPONENTS})
 
 qt_add_library(gstqml6gl STATIC)
@@ -18,13 +18,94 @@ target_link_libraries(gstqml6gl
 
 foreach(component IN LISTS GST_COMPONENTS)
     if(GStreamer_${component}_FOUND)
-        target_link_libraries(gstqml6gl PUBLIC GStreamer::${component})
+        target_link_libraries(gstqml6gl INTERFACE GStreamer::${component})
     endif()
 endforeach()
 
 ################################################################################
 
-# TODO: Don't Download & Build if gstreamer1.0-qt6 was found
+if(LINUX)
+    # if(NOT QGC_GST_STATIC_BUILD)
+        install(DIRECTORY ${GSTREAMER_LIB_PATH}/gstreamer1.0 DESTINATION ${CMAKE_INSTALL_LIBDIR})
+        install(CODE "execute_process(COMMAND chmod +x \"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner\")")
+        install(CODE "execute_process(COMMAND chmod +x \"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/gstreamer1.0/gstreamer-1.0/gst-ptp-helper\")")
+        install(DIRECTORY ${GSTREAMER_LIB_PATH}/gio DESTINATION ${CMAKE_INSTALL_LIBDIR})
+        get_target_property(LINKED_PLUGINS GStreamer::Plugins INTERFACE_LINK_LIBRARIES)
+        install(FILES ${LINKED_PLUGINS} DESTINATION ${CMAKE_INSTALL_LIBDIR}/gstreamer-1.0)
+    # endif()
+elseif(WIN32)
+    cmake_path(CONVERT "${GSTREAMER_PREFIX}/bin/*.dll" TO_CMAKE_PATH_LIST GST_WIN_BINS_PATH)
+    file(GLOB GST_WIN_BINS ${GST_WIN_BINS_PATH})
+    install(FILES ${GST_WIN_BINS} DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+    cmake_path(CONVERT "${GSTREAMER_LIB_PATH}/gio/modules/*.dll" TO_CMAKE_PATH_LIST GST_GIO_MODULES_PATH)
+    file(GLOB GST_GIO_MODULES ${GST_GIO_MODULES_PATH})
+    install(FILES ${GST_GIO_MODULES} DESTINATION ${CMAKE_INSTALL_LIBDIR}/gio/modules)
+
+    cmake_path(CONVERT "${GSTREAMER_PLUGIN_PATH}/*.dll" TO_CMAKE_PATH_LIST GST_WIN_PLUGINS_PATH)
+    file(GLOB GST_WIN_PLUGINS ${GST_WIN_PLUGINS_PATH})
+    install(FILES ${GST_WIN_PLUGINS} DESTINATION ${CMAKE_INSTALL_LIBDIR}/gstreamer-1.0)
+
+    cmake_path(CONVERT "${GSTREAMER_PREFIX}/libexec/gstreamer-1.0/*.exe" TO_CMAKE_PATH_LIST GST_HELPER_BINS_PATH)
+    file(GLOB GST_HELPER_BINS ${GST_HELPER_BINS_PATH})
+    install(FILES ${GST_HELPER_BINS} DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/gstreamer-1.0)
+elseif(MACOS)
+    # cmake_path(CONVERT "${GSTREAMER_PREFIX}/bin/*.dylib" TO_CMAKE_PATH_LIST GST_MACOS_BINS_PATH)
+    # file(GLOB GST_MACOS_BINS ${GST_MACOS_BINS_PATH})
+    # install(FILES ${GST_MACOS_BINS} DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+    # cmake_path(CONVERT "${GSTREAMER_LIB_PATH}/gio/modules/*.dylib" TO_CMAKE_PATH_LIST GST_GIO_MODULES_PATH)
+    # file(GLOB GST_GIO_MODULES ${GST_GIO_MODULES_PATH})
+    # install(FILES ${GST_GIO_MODULES} DESTINATION ${CMAKE_INSTALL_LIBDIR}/gio/modules)
+
+    # cmake_path(CONVERT "${GSTREAMER_PLUGIN_PATH}/*.dylib" TO_CMAKE_PATH_LIST GST_MACOS_PLUGINS_PATH)
+    # file(GLOB GST_MACOS_PLUGINS ${GST_MACOS_PLUGINS_PATH})
+    # install(FILES ${GST_MACOS_PLUGINS} DESTINATION ${CMAKE_INSTALL_LIBDIR}/gstreamer-1.0)
+
+    # cmake_path(CONVERT "${GSTREAMER_PREFIX}/libexec/gstreamer-1.0/*" TO_CMAKE_PATH_LIST GST_HELPER_BINS_PATH)
+    # file(GLOB GST_HELPER_BINS ${GST_HELPER_BINS_PATH})
+    # install(FILES ${GST_HELPER_BINS} DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/gstreamer-1.0)
+elseif(ANDROID)
+    if(CMAKE_HOST_WIN32)
+        cmake_path(CONVERT "${GSTREAMER_PREFIX}/share/gst-android/ndk-build/tools/windows/*.dll" TO_CMAKE_PATH_LIST GST_WIN_TOOLS_PATH)
+        file(GLOB GST_WIN_TOOLS ${GST_WIN_TOOLS_PATH})
+        install(FILES ${GST_WIN_TOOLS} DESTINATION ${CMAKE_INSTALL_BINDIR})
+    endif()
+endif()
+
+################################################################################
+
+# DYLD_LIBRARY_PATH
+
+# <key>LSEnvironment</key>
+# <dict>
+#     <key>GST_REGISTRY_REUSE_PLUGIN_SCANNER</key>
+#     <string>no</string>
+#     <key>GST_PLUGIN_SCANNER</key>
+#     <string>@executable_path/../Frameworks/GStreamer.framework/Versions/1.0/libexec/gstreamer-1.0/gst-plugin-scanner</string>
+#     <key>GST_PTP_HELPER_1_0</key>
+#     <string>@executable_path/../Frameworks/GStreamer.framework/Versions/1.0/libexec/gstreamer-1.0/gst-ptp-helper</string>
+#     <key>GIO_EXTRA_MODULES</key>
+#     <string>@executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib/gio/modules</string>
+#     <key>GST_PLUGIN_SYSTEM_PATH_1_0</key>
+#     <string>@executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0</string>
+#     <key>GST_PLUGIN_SYSTEM_PATH</key>
+#     <string>@executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0</string>
+#     <key>GST_PLUGIN_PATH_1_0</key>
+#     <string>@executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0</string>
+#     <key>GST_PLUGIN_PATH</key>
+#     <string>@executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0</string>
+# </dict>
+
+################################################################################
+
+# Don't Download & Build if gstreamer1.0-qt6 was found
+if(GST_PLUGIN_gstqml6_FOUND)
+    return()
+endif()
+
+################################################################################
+
 if(GStreamer_VERSION VERSION_GREATER_EQUAL 1.22)
     FetchContent_Declare(gstreamer_good_plugins
         # URL https://gitlab.freedesktop.org/gstreamer/gstreamer/-/archive/${GST_PLUGINS_VERSION}/gstreamer-${GST_PLUGINS_VERSION}.zip?path=subprojects/gst-plugins-good/ext/qt6
@@ -37,8 +118,6 @@ else()
     set(QGC_GST_QT6_PLUGIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/qt6" CACHE PATH "Location of custom local GST plugin")
 endif()
 cmake_print_variables(QGC_GST_QT6_PLUGIN_PATH)
-
-# TODO: https://gstreamer.freedesktop.org/documentation/qt6d3d11/index.html#qml6d3d11sink-page
 
 ################################################################################
 
@@ -146,76 +225,3 @@ if(UNIX)
 endif()
 
 ################################################################################
-
-if(LINUX)
-    # if(NOT QGC_GST_STATIC_BUILD)
-        install(DIRECTORY ${GSTREAMER_LIB_PATH}/gstreamer1.0 DESTINATION ${CMAKE_INSTALL_LIBDIR})
-        install(CODE "execute_process(COMMAND chmod +x \"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner\")")
-        install(CODE "execute_process(COMMAND chmod +x \"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/gstreamer1.0/gstreamer-1.0/gst-ptp-helper\")")
-        install(DIRECTORY ${GSTREAMER_LIB_PATH}/gio DESTINATION ${CMAKE_INSTALL_LIBDIR})
-        get_target_property(LINKED_PLUGINS GStreamer::Plugins INTERFACE_LINK_LIBRARIES)
-        install(FILES ${LINKED_PLUGINS} DESTINATION ${CMAKE_INSTALL_LIBDIR}/gstreamer-1.0)
-    # endif()
-elseif(WIN32)
-    cmake_path(CONVERT "${GSTREAMER_PREFIX}/bin/*.dll" TO_CMAKE_PATH_LIST GST_WIN_BINS_PATH)
-    file(GLOB GST_WIN_BINS ${GST_WIN_BINS_PATH})
-    install(FILES ${GST_WIN_BINS} DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-    cmake_path(CONVERT "${GSTREAMER_LIB_PATH}/gio/modules/*.dll" TO_CMAKE_PATH_LIST GST_GIO_MODULES_PATH)
-    file(GLOB GST_GIO_MODULES ${GST_GIO_MODULES_PATH})
-    install(FILES ${GST_GIO_MODULES} DESTINATION ${CMAKE_INSTALL_LIBDIR}/gio/modules)
-
-    cmake_path(CONVERT "${GSTREAMER_PLUGIN_PATH}/*.dll" TO_CMAKE_PATH_LIST GST_WIN_PLUGINS_PATH)
-    file(GLOB GST_WIN_PLUGINS ${GST_WIN_PLUGINS_PATH})
-    install(FILES ${GST_WIN_PLUGINS} DESTINATION ${CMAKE_INSTALL_LIBDIR}/gstreamer-1.0)
-
-    cmake_path(CONVERT "${GSTREAMER_PREFIX}/libexec/gstreamer-1.0/*.exe" TO_CMAKE_PATH_LIST GST_HELPER_BINS_PATH)
-    file(GLOB GST_HELPER_BINS ${GST_HELPER_BINS_PATH})
-    install(FILES ${GST_HELPER_BINS} DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/gstreamer-1.0)
-elseif(MACOS)
-    # cmake_path(CONVERT "${GSTREAMER_PREFIX}/bin/*.dylib" TO_CMAKE_PATH_LIST GST_MACOS_BINS_PATH)
-    # file(GLOB GST_MACOS_BINS ${GST_MACOS_BINS_PATH})
-    # install(FILES ${GST_MACOS_BINS} DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-    # cmake_path(CONVERT "${GSTREAMER_LIB_PATH}/gio/modules/*.dylib" TO_CMAKE_PATH_LIST GST_GIO_MODULES_PATH)
-    # file(GLOB GST_GIO_MODULES ${GST_GIO_MODULES_PATH})
-    # install(FILES ${GST_GIO_MODULES} DESTINATION ${CMAKE_INSTALL_LIBDIR}/gio/modules)
-
-    # cmake_path(CONVERT "${GSTREAMER_PLUGIN_PATH}/*.dylib" TO_CMAKE_PATH_LIST GST_MACOS_PLUGINS_PATH)
-    # file(GLOB GST_MACOS_PLUGINS ${GST_MACOS_PLUGINS_PATH})
-    # install(FILES ${GST_MACOS_PLUGINS} DESTINATION ${CMAKE_INSTALL_LIBDIR}/gstreamer-1.0)
-
-    # cmake_path(CONVERT "${GSTREAMER_PREFIX}/libexec/gstreamer-1.0/*" TO_CMAKE_PATH_LIST GST_HELPER_BINS_PATH)
-    # file(GLOB GST_HELPER_BINS ${GST_HELPER_BINS_PATH})
-    # install(FILES ${GST_HELPER_BINS} DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/gstreamer-1.0)
-elseif(ANDROID)
-    if(CMAKE_HOST_WIN32)
-        cmake_path(CONVERT "${GSTREAMER_PREFIX}/share/gst-android/ndk-build/tools/windows/*.dll" TO_CMAKE_PATH_LIST GST_WIN_TOOLS_PATH)
-        file(GLOB GST_WIN_TOOLS ${GST_WIN_TOOLS_PATH})
-        install(FILES ${GST_WIN_TOOLS} DESTINATION ${CMAKE_INSTALL_BINDIR})
-    endif()
-endif()
-
-################################################################################
-
-# DYLD_LIBRARY_PATH
-
-# <key>LSEnvironment</key>
-# <dict>
-#     <key>GST_REGISTRY_REUSE_PLUGIN_SCANNER</key>
-#     <string>no</string>
-#     <key>GST_PLUGIN_SCANNER</key>
-#     <string>@executable_path/../Frameworks/GStreamer.framework/Versions/1.0/libexec/gstreamer-1.0/gst-plugin-scanner</string>
-#     <key>GST_PTP_HELPER_1_0</key>
-#     <string>@executable_path/../Frameworks/GStreamer.framework/Versions/1.0/libexec/gstreamer-1.0/gst-ptp-helper</string>
-#     <key>GIO_EXTRA_MODULES</key>
-#     <string>@executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib/gio/modules</string>
-#     <key>GST_PLUGIN_SYSTEM_PATH_1_0</key>
-#     <string>@executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0</string>
-#     <key>GST_PLUGIN_SYSTEM_PATH</key>
-#     <string>@executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0</string>
-#     <key>GST_PLUGIN_PATH_1_0</key>
-#     <string>@executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0</string>
-#     <key>GST_PLUGIN_PATH</key>
-#     <string>@executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0</string>
-# </dict>
