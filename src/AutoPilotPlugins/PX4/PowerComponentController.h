@@ -38,7 +38,7 @@ signals:
     void calibrationSuccess(const QStringList& warningMessages);
     
 private slots:
-    void _handleVehicleTextMessage(int vehicleId, int compId, int severity, QString text);
+    void _handleVehicleTextMessage(int compId, int severity, QString text, QString description);
     
 private:
     void _stopCalibration(void);
