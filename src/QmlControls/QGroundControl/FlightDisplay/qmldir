@@ -12,6 +12,7 @@ FlyViewToolBarIndicators        1.0 FlyViewToolBarIndicators.qml
 FlyViewToolStrip                1.0 FlyViewToolStrip.qml
 FlyViewToolStripActionList      1.0 FlyViewToolStripActionList.qml
 FlyViewTopRightColumnLayout     1.0 FlyViewTopRightColumnLayout.qml
+FlyViewTopRightPanel            1.0 FlyViewTopRightPanel.qml
 FlyViewVideo                    1.0 FlyViewVideo.qml
 FlyViewWidgetLayer              1.0 FlyViewWidgetLayer.qml
 FlyViewInsetViewer              1.0 FlyViewInsetViewer.qml

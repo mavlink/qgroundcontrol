@@ -21,12 +21,15 @@ Rectangle {
     height: size
     radius: width / 2
     color:  qgcPal.window
+    border.color:   qgcPal.text
+    border.width:   usedByMultipleVehicleList ? 1 : 0
+    opacity:        vehicle && usedByMultipleVehicleList && !vehicle.armed ? 0.5 : 1
 
     property real size:                         _defaultSize
     property var  vehicle:                      null
     property bool usedByMultipleVehicleList:    false
 
-    property real _defaultSize:                 ScreenTools.defaultFontPixelHeight * (10)
+    property real _defaultSize:                 usedByMultipleVehicleList ? ScreenTools.defaultFontPixelHeight * 3 : ScreenTools.defaultFontPixelHeight * 10
     property real _sizeRatio:                   ScreenTools.isTinyScreen ? (size / _defaultSize) * 0.5 : size / _defaultSize
     property int  _fontSize:                    ScreenTools.defaultFontPointSize * _sizeRatio < 8 ? 8 : ScreenTools.defaultFontPointSize * _sizeRatio
     property real _heading:                     vehicle ? vehicle.heading.rawValue : 0
@@ -75,12 +78,14 @@ Rectangle {
         }
 
         CompassDial {
-            anchors.fill: parent
+            anchors.fill:   parent
+            visible:        !usedByMultipleVehicleList
         }
 
         CompassHeadingIndicator {
             compassSize:    size
             heading:        _heading
+            simplified:     usedByMultipleVehicleList
         }
 
         Image {
@@ -144,7 +149,7 @@ Rectangle {
     QGCLabel {
         anchors.horizontalCenter:   parent.horizontalCenter
         y:                          size * 0.74
-        text:                       vehicle ? _heading.toFixed(0) + "°" : ""
+        text:                       vehicle && !usedByMultipleVehicleList ? _heading.toFixed(0) + "°" : ""
         horizontalAlignment:        Text.AlignHCenter
     }
 }

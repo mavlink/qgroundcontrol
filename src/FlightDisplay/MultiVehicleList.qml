@@ -19,66 +19,218 @@ import QGroundControl.Vehicle
 import QGroundControl.FlightMap
 
 Item {
-    property real   _margin:            ScreenTools.defaultFontPixelWidth / 2
-    property real   _widgetHeight:      ScreenTools.defaultFontPixelHeight * 3
-    property color  _textColor:         "black"
-    property real   _rectOpacity:       0.8
-    property var    _guidedController:  globals.guidedControllerFlyView
+    property real   _margin:              ScreenTools.defaultFontPixelWidth / 2
+    property real   _widgetHeight:        ScreenTools.defaultFontPixelHeight * 2
+    property var    _guidedController:    globals.guidedControllerFlyView
+    property var    _activeVehicleColor:  "green"
+    property var    _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
 
     QGCPalette { id: qgcPal }
 
-    Rectangle {
-        id:             mvCommands
-        anchors.left:   parent.left
-        anchors.right:  parent.right
-        height:         mvCommandsColumn.height + (_margin *2)
-        color:          qgcPal.missionItemEditor
-        opacity:        _rectOpacity
-        radius:         _margin
+    ListModel {
+        id: selectedVehiclesModel
+    }
 
-        DeadMouseArea {
-            anchors.fill: parent
+    function getSelectedVehicles() {
+        var selectedVehicles = [ ]
+        forEachSelectedVehicle(function(vehicle) {
+            selectedVehicles.push(vehicle)
+        })
+        return selectedVehicles
+    }
+
+    function getVehicleIndex(vehicleId) {
+        for (var i = 0; i < selectedVehiclesModel.count; i++) {
+            if (selectedVehiclesModel.get(i).id === vehicleId) {
+                return i
+            }
         }
+        return -1
+    }
 
-        Column {
-            id:                 mvCommandsColumn
-            anchors.margins:    _margin
-            anchors.top:        parent.top
-            anchors.left:       parent.left
-            anchors.right:      parent.right
-            spacing:            _margin
-
-            QGCLabel {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                text:           qsTr("The following commands will be applied to all vehicles")
-                color:          _textColor
-                wrapMode:       Text.WordWrap
-                font.pointSize: ScreenTools.smallFontPointSize
-            }
-
-            Row {
-                spacing:            _margin
-
-                QGCButton {
-                    text:       qsTr("Pause")
-                    onClicked:  _guidedController.confirmAction(_guidedController.actionMVPause)
-                }
-
-                QGCButton {
-                    text:       qsTr("Start Mission")
-                    onClicked:  _guidedController.confirmAction(_guidedController.actionMVStartMission)
-                }
-            }
+    function forEachSelectedVehicle(action) {
+        for (var i = 0; i < selectedVehiclesModel.count; i++) {
+            var vehicleId = selectedVehiclesModel.get(i).id
+            var vehicle = QGroundControl.multiVehicleManager.getVehicleById(vehicleId)
+            action(vehicle)
         }
     }
 
+    function armSelectedVehicles() {
+        forEachSelectedVehicle(function(vehicle) {
+            vehicle.armed = true
+            console.log("vehicle " + vehicle.id + " has been armed.")
+        })
+    }
+
+    function armAvailable() {
+        var available = false
+        forEachSelectedVehicle(function(vehicle) {
+            if(vehicle.armed === false){
+                available =  true
+            }
+        })
+        return available
+    }
+
+    function disarmSelectedVehicles() {
+        forEachSelectedVehicle(function(vehicle) {
+            vehicle.armed = false
+            console.log("vehicle " + vehicle.id + " has been disarmed.")
+        })
+    }
+
+    function disarmAvailable() {
+        var available = false
+        forEachSelectedVehicle(function(vehicle) {
+            if(vehicle.armed === true){
+                available = true
+            }
+        })
+        return available
+    }
+
+    function startSelectedVehicles() {
+        forEachSelectedVehicle(function(vehicle) {
+            if (vehicle.armed === true){
+                vehicle.startMission()
+                console.log("mission started for " + vehicle.id)
+            }
+
+        })
+    }
+
+    function startAvailable() {
+        var available = false
+        forEachSelectedVehicle(function(vehicle) {
+            if(vehicle.armed === true && vehicle.flightMode !== vehicle.missionFlightMode){
+                available = true
+            }
+        })
+        return available
+    }
+
+    function pauseSelectedVehicles() {
+        forEachSelectedVehicle(function(vehicle) {
+            if(vehicle.pauseVehicleSupported){
+                vehicle.pauseVehicle()
+                console.log("mission paused for " + vehicle.id)
+            }
+        })
+    }
+    function pauseAvailable() {
+        var available = false
+        forEachSelectedVehicle(function(vehicle) {
+            if(vehicle.armed === true && vehicle.pauseVehicleSupported){
+                available = true
+            }
+        })
+        return available
+    }
+
+    function rtlSelectedVehicles() {
+        forEachSelectedVehicle(function(vehicle) {
+            if (vehicle.armed === true){
+                vehicle.flightMode = vehicle.rtlFlightMode
+                console.log("vehicle " + vehicle.id + " returning to launch")
+            }
+        })
+    }
+
+    function rtlAvailable(){
+        var available = false
+        forEachSelectedVehicle(function(vehicle) {
+            if(vehicle.armed === true && vehicle.flightMode !== vehicle.rtlFlightMode){
+                available = true
+            }
+        })
+        return available
+    }
+
+    function takeControlSelectedVehicles() {
+        forEachSelectedVehicle(function(vehicle) {
+            vehicle.flightMode = vehicle.takeControlFlightMode
+            console.log("taking control for " + vehicle.id)
+        })
+    }
+
+    function takeControlAvailable(){
+        var available = false
+        forEachSelectedVehicle(function(vehicle) {
+            if(vehicle.armed === true && vehicle.flightMode !== vehicle.takeControlFlightMode){
+                available = true
+            }
+        })
+        return available
+    }
+
+    function activateVehicle() {
+        if (selectedVehiclesModel.count === 1){
+            var vehicle = getSelectedVehicles()[0]
+            QGroundControl.multiVehicleManager.activeVehicle = vehicle
+        }
+    }
+
+    function selectAll() {
+        var vehicles = QGroundControl.multiVehicleManager.vehicles
+        for (var i = 0; i < vehicles.count; i++) {
+            var vehicle = vehicles.get(i)
+            var vehicleId = vehicle.id
+            if (getVehicleIndex(vehicleId) === -1){
+                selectVehicle(vehicleId)
+            }
+        }
+        printSelectedVehicles()
+    }
+
+    function deselectAll() {
+        selectedVehiclesModel.clear()
+    }
+
+    function isSelected(vehicleId) {
+        for (var i = 0; i < selectedVehiclesModel.count; i++) {
+            if (selectedVehiclesModel.get(i).id === vehicleId) {
+                return true
+            }
+        }
+        return false
+    }
+
+
+    function selectVehicle(vehicleId) {
+        selectedVehiclesModel.append({ id: vehicleId })
+    }
+
+    function deselectVehicle(vehicleId) {
+        var index = getVehicleIndex(vehicleId)
+        if (index !== -1) {
+            selectedVehiclesModel.remove(index)
+        }
+    }
+
+    function toggleSelect(vehicleId) {
+        if (getVehicleIndex(vehicleId) !== -1) {
+            deselectVehicle(vehicleId)
+        } else {
+            selectVehicle(vehicleId)
+        }
+        printSelectedVehicles()
+    }
+
+    function printSelectedVehicles() {
+        var vehicles = [ ]
+        forEachSelectedVehicle(function(vehicle) {
+            vehicles.push(vehicle.id)
+        })
+        console.log(vehicles)
+    }
+
     QGCListView {
-        id:                 missionItemEditorListView
+        id:                 vehicleList
         anchors.left:       parent.left
         anchors.right:      parent.right
         anchors.topMargin:  _margin
-        anchors.top:        mvCommands.bottom
+        anchors.top:        parent.top
         anchors.bottom:     parent.bottom
         spacing:            ScreenTools.defaultFontPixelHeight / 2
         orientation:        ListView.Vertical
@@ -89,95 +241,72 @@ Item {
         property real _cacheBuffer:     height * 2
 
         delegate: Rectangle {
-            width:      missionItemEditorListView.width
-            height:     innerColumn.y + innerColumn.height + _margin
-            color:      qgcPal.missionItemEditor
-            opacity:    _rectOpacity
-            radius:     _margin
+            width:          vehicleList.width
+            height:         innerColumn.y + innerColumn.height + _margin
+            color:          QGroundControl.multiVehicleManager.activeVehicle == _vehicle ? _activeVehicleColor : qgcPal.button
+            radius:         _margin
+            border.width:   isSelected(_vehicle.id) ? 1 : 0
+            border.color:   qgcPal.text
 
             property var    _vehicle:   object
 
-            ColumnLayout {
+            RowLayout {
                 id:                 innerColumn
                 anchors.margins:    _margin
                 anchors.top:        parent.top
                 anchors.left:       parent.left
-                anchors.right:      parent.left
                 spacing:            _margin
+                Layout.fillWidth:   true
 
-                RowLayout {
-                    Layout.fillWidth:       true
+                QGCCompassWidget {
+                    size:                        _widgetHeight
+                    usedByMultipleVehicleList:   true
+                    vehicle:                     _vehicle
+                }
+
+                QGCLabel {
+                    text: " | "
+                    font.pointSize:     ScreenTools.largeFontPointSize
+                    color:              qgcPal.text
+                }
+
+                QGCLabel {
+                    text:               _vehicle ? _vehicle.id : ""
+                    font.pointSize:     ScreenTools.largeFontPointSize
+                    color:              qgcPal.text
+                }
+
+                QGCLabel {
+                    text: " | "
+                    font.pointSize:     ScreenTools.largeFontPointSize
+                    color:              qgcPal.text
+                }
+
+                ColumnLayout {
+                    Layout.alignment:   Qt.AlignCenter
+                    spacing:            _margin
+
+                    FlightModeMenu {
+                        Layout.alignment:           Qt.AlignHCenter
+                        font.pointSize:             ScreenTools.largeFontPointSize
+                        color:                      qgcPal.text
+                        currentVehicle:             _vehicle
+                    }
 
                     QGCLabel {
-                        Layout.alignment:   Qt.AlignTop
-                        text:               _vehicle ? _vehicle.id : ""
-                        color:              _textColor
+                        Layout.alignment:           Qt.AlignHCenter
+                        text:                       _vehicle && _vehicle.armed ? qsTr("Armed") : qsTr("Disarmed")
+                        color:                      qgcPal.text
                     }
+                }
 
-                    ColumnLayout {
-                        Layout.alignment:   Qt.AlignCenter
-                        spacing:            _margin
+            }
 
-                        FlightModeMenu {
-                            Layout.alignment:           Qt.AlignHCenter
-                            font.pointSize:             ScreenTools.largeFontPointSize
-                            color:                      _textColor
-                            currentVehicle:             _vehicle
-                        }
+            QGCMouseArea {
+                anchors.fill:   parent
+                onClicked:      multiVehicleList.toggleSelect(_vehicle.id)
+            }
 
-                        QGCLabel {
-                            Layout.alignment:           Qt.AlignHCenter
-                            text:                       _vehicle && _vehicle.armed ? qsTr("Armed") : qsTr("Disarmed")
-                            color:                      _textColor
-                        }
-                    }
-
-                    QGCCompassWidget {
-                        size:       _widgetHeight
-                        usedByMultipleVehicleList: true
-                        vehicle:    _vehicle
-                    }
-
-                    QGCAttitudeWidget {
-                        size:       _widgetHeight
-                        vehicle:    _vehicle
-                    }
-                } // RowLayout
-
-                Row {
-                    spacing: ScreenTools.defaultFontPixelWidth
-
-                    QGCButton {
-                        text:       qsTr("Arm")
-                        visible:    _vehicle && !_vehicle.armed
-                        onClicked:  _vehicle.armed = true
-                    }
-
-                    QGCButton {
-                        text:       qsTr("Start Mission")
-                        visible:    _vehicle && _vehicle.armed && _vehicle.flightMode !== _vehicle.missionFlightMode
-                        onClicked:  _vehicle.startMission()
-                    }
-
-                    QGCButton {
-                        text:       qsTr("Pause")
-                        visible:    _vehicle && _vehicle.armed && _vehicle.pauseVehicleSupported
-                        onClicked:  _vehicle.pauseVehicle()
-                    }
-
-                    QGCButton {
-                        text:       qsTr("RTL")
-                        visible:    _vehicle && _vehicle.armed && _vehicle.flightMode !== _vehicle.rtlFlightMode
-                        onClicked:  _vehicle.flightMode = _vehicle.rtlFlightMode
-                    }
-
-                    QGCButton {
-                        text:       qsTr("Take control")
-                        visible:    _vehicle && _vehicle.armed && _vehicle.flightMode !== _vehicle.takeControlFlightMode
-                        onClicked:  _vehicle.flightMode = _vehicle.takeControlFlightMode
-                    }
-                } // Row
-            } // ColumnLayout
-        } // delegate - Rectangle
-    } // QGCListView
-} // Item
+        }
+    }
+}
