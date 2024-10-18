@@ -115,6 +115,13 @@
     "default":     true
 },
 {
+    "name":             "virtualJoystickLeftHandedMode",
+    "shortDesc": "Left Handed Mode",
+    "longDesc":  "If this option is enabled the virtual joystick layout will be reversed",
+    "type":             "bool",
+    "default":     false
+},
+{
     "name":                 "gstDebugLevel",
     "shortDesc":            "Video streaming debug",
     "longDesc":             "Sets the environment variable GST_DEBUG for all pipeline elements on boot.",
