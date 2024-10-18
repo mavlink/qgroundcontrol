@@ -31,7 +31,7 @@ void ExifParserTest::_writeTest()
     QByteArray imageBuffer = file.readAll();
     file.close();
 
-    struct GeoTagWorker::cameraFeedbackPacket data;
+    struct GeoTagWorker::CameraFeedbackPacket data;
 
     data.latitude = 37.225;
     data.longitude = -80.425;
