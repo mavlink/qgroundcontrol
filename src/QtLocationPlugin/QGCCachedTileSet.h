@@ -74,7 +74,7 @@ public:
 
     Q_INVOKABLE void createDownloadTask();
     Q_INVOKABLE void resumeDownloadTask();
-    Q_INVOKABLE void cancelDownloadTask() { setDownloading(false); }
+    Q_INVOKABLE void cancelDownloadTask();
 
     const QString &name() const { return _name; }
     const QString &mapTypeStr() const { return _mapTypeStr; }
@@ -184,6 +184,7 @@ private:
     bool _noMoreTiles = false;
     bool _batchRequested = false;
     bool _selected = false;
+    bool _cancelPending = false;
     QDateTime _creationDate;
 
     QHash<QString, QNetworkReply*> _replies;
