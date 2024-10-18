@@ -39,9 +39,9 @@ GST_PLUGIN_STATIC_DECLARE(mpegtsdemux);
 GST_PLUGIN_STATIC_DECLARE(opengl);
 GST_PLUGIN_STATIC_DECLARE(tcp);
 GST_PLUGIN_STATIC_DECLARE(asf);
-#if !defined(Q_OS_ANDROID) && !defined(Q_OS_MAC)
-GST_PLUGIN_STATIC_DECLARE(va);
-#endif
+// #ifndef Q_OS_ANDROID
+// GST_PLUGIN_STATIC_DECLARE(va);
+// #endif
 #ifdef Q_OS_ANDROID
 GST_PLUGIN_STATIC_DECLARE(androidmedia);
 #elif defined(Q_OS_IOS)
@@ -115,6 +115,7 @@ static void _setGstEnvVars()
     _qgcputenv("GST_PLUGIN_SYSTEM_PATH", currentDir, "/../Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0");
     _qgcputenv("GST_PLUGIN_PATH_1_0", currentDir, "/../Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0");
     _qgcputenv("GST_PLUGIN_PATH", currentDir, "/../Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0");
+    _qgcputenv("GTK_PATH", currentDir, "/../Frameworks/GStreamer.framework/Versions/1.0");
 #elif defined(Q_OS_WIN)
     _qgcputenv("GST_REGISTRY_REUSE_PLUGIN_SCANNER", "no");
     _qgcputenv("GST_PLUGIN_SCANNER", currentDir, "/../libexec/gstreamer-1.0/gst-plugin-scanner");
@@ -145,9 +146,9 @@ static void _registerPlugins()
     GST_PLUGIN_STATIC_REGISTER(opengl);
     GST_PLUGIN_STATIC_REGISTER(tcp);
     GST_PLUGIN_STATIC_REGISTER(asf);
-#if !defined(Q_OS_ANDROID) && !defined(Q_OS_MAC)
-    GST_PLUGIN_STATIC_REGISTER(va);
-#endif
+// #ifndef Q_OS_ANDROID
+//     GST_PLUGIN_STATIC_REGISTER(va);
+// #endif
 #ifdef Q_OS_ANDROID
     GST_PLUGIN_STATIC_REGISTER(androidmedia);
 #elif defined(Q_OS_IOS)
