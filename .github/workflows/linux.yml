@@ -108,6 +108,56 @@ jobs:
         uses: blinemedical/setup-gstreamer@v1
         with:
           version: ${{ env.GST_VERSION }}
+          # gstreamerOptions: |
+          #   --buildtype=release
+          #   --wrap-mode=forcefallback
+          #   --strip
+          #   -Dauto_features=disabled
+          #   -Dbase=enabled
+          #   -Ddoc=disabled
+          #   -Dexamples=disabled
+          #   -Dges=disabled
+          #   -Dgpl=enabled
+          #   -Dgst-examples=disabled
+          #   -Dgtk_doc=disabled
+          #   -Dlibav=enabled
+          #   -Dlibnice=disabled
+          #   -Dnls=disabled
+          #   -Dorc=enabled
+          #   -Dpython=disabled
+          #   -Dqt5=disabled
+          #   -Drtsp_server=disabled
+          #   -Dtests=disabled
+          #   -Dgst-plugins-base:app=enabled
+          #   -Dgst-plugins-base:gl=enabled
+          #   -Dgst-plugins-base:gl_api=opengl,gles2
+          #   -Dgst-plugins-base:gl_platform=glx,egl
+          #   -Dgst-plugins-base:gl_winsys=x11,egl,wayland
+          #   -Dgst-plugins-base:playback=enabled
+          #   -Dgst-plugins-base:tcp=enabled
+          #   -Dgst-plugins-base:x11=enabled
+          #   -Dgood=enabled
+          #   -Dgst-plugins-good:isomp4=enabled
+          #   -Dgst-plugins-good:matroska=enabled
+          #   -Dgst-plugins-good:qt-egl=enabled
+          #   -Dgst-plugins-good:qt-method=auto
+          #   -Dgst-plugins-good:qt-wayland=enabled
+          #   -Dgst-plugins-good:qt-x11=enabled
+          #   -Dgst-plugins-good:rtp=enabled
+          #   -Dgst-plugins-good:rtpmanager=enabled
+          #   -Dgst-plugins-good:rtsp=enabled
+          #   -Dgst-plugins-good:udp=enabled
+          #   -Dbad=enabled
+          #   -Dgst-plugins-bad:gl=enabled
+          #   -Dgst-plugins-bad:mpegtsdemux=enabled
+          #   -Dgst-plugins-bad:rtp=enabled
+          #   -Dgst-plugins-bad:sdp=enabled
+          #   -Dgst-plugins-bad:videoparsers=enabled
+          #   -Dgst-plugins-bad:wayland=enabled
+          #   -Dgst-plugins-bad:x11=enabled
+          #   -Dgst-plugins-bad:x265=enabled
+          #   -Dugly=enabled
+          #   -Dgst-plugins-ugly:x264=enabled
 
       - uses: lukka/get-cmake@latest
 
