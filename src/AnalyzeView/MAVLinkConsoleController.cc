@@ -155,12 +155,11 @@ MAVLinkConsoleController::_sendSerialData(QByteArray data, bool close)
         chunk.append(MAVLINK_MSG_SERIAL_CONTROL_FIELD_DATA_LEN - chunk.size(), '\0');
         uint8_t flags = SERIAL_CONTROL_FLAG_EXCLUSIVE |  SERIAL_CONTROL_FLAG_RESPOND | SERIAL_CONTROL_FLAG_MULTI;
         if (close) flags = 0;
-        auto protocol = qgcApp()->toolbox()->mavlinkProtocol();
         auto link = _vehicle->vehicleLinkManager()->primaryLink();
         mavlink_message_t msg;
         mavlink_msg_serial_control_pack_chan(
-                    protocol->getSystemId(),
-                    protocol->getComponentId(),
+                    MAVLinkProtocol::instance()->getSystemId(),
+                    MAVLinkProtocol::instance()->getComponentId(),
                     sharedLink->mavlinkChannel(),
                     &msg,
                     SERIAL_CONTROL_DEV_SHELL,

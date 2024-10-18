@@ -8,8 +8,7 @@
  ****************************************************************************/
 
 #include "QGCMAVLink.h"
-#include "MAVLinkLib.h"
-#include <QGCLoggingCategory.h>
+#include "QGCLoggingCategory.h"
 
 #include <QtCore/QDebug>
 
@@ -38,6 +37,10 @@ QGCMAVLink::QGCMAVLink(QObject *parent)
     : QObject(parent)
 {
     // qCDebug(StatusTextHandlerLog) << Q_FUNC_INFO << this;
+
+   qRegisterMetaType<mavlink_message_t>("mavlink_message_t");
+   qRegisterMetaType<MAV_TYPE>("MAV_TYPE");
+   qRegisterMetaType<MAV_AUTOPILOT>("MAV_AUTOPILOT");
 }
 
 QGCMAVLink::~QGCMAVLink()

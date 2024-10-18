@@ -33,7 +33,6 @@ MultiVehicleManager::MultiVehicleManager(QGCApplication* app, QGCToolbox* toolbo
     , _offlineEditingVehicle(nullptr)
     , _firmwarePluginManager(nullptr)
     , _joystickManager(nullptr)
-    , _mavlinkProtocol(nullptr)
     , _gcsHeartbeatEnabled(true)
 {
     QSettings settings;
@@ -48,7 +47,6 @@ void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
 
     _firmwarePluginManager =     _toolbox->firmwarePluginManager();
     _joystickManager =           _toolbox->joystickManager();
-    _mavlinkProtocol =           _toolbox->mavlinkProtocol();
 
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<MultiVehicleManager>("QGroundControl.MultiVehicleManager", 1, 0, "MultiVehicleManager", "Reference only");
@@ -57,7 +55,7 @@ void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
 
     qRegisterMetaType<Vehicle::MavCmdResultFailureCode_t>("MavCmdResultFailureCode_t");
 
-    connect(_mavlinkProtocol, &MAVLinkProtocol::vehicleHeartbeatInfo, this, &MultiVehicleManager::_vehicleHeartbeatInfo);
+    connect(MAVLinkProtocol::instance(), &MAVLinkProtocol::vehicleHeartbeatInfo, this, &MultiVehicleManager::_vehicleHeartbeatInfo);
     connect(&_gcsHeartbeatTimer, &QTimer::timeout, this, &MultiVehicleManager::_sendGCSHeartbeat);
 
     if (_gcsHeartbeatEnabled) {
@@ -67,7 +65,7 @@ void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
     _offlineEditingVehicle = new Vehicle(Vehicle::MAV_AUTOPILOT_TRACK, Vehicle::MAV_TYPE_TRACK, _firmwarePluginManager, this);
 }
 
-void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int componentId, int vehicleFirmwareType, int vehicleType)
+void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, uint8_t vehicleId, uint8_t componentId, MAV_AUTOPILOT vehicleFirmwareType, MAV_TYPE vehicleType)
 {
     if (componentId != MAV_COMP_ID_AUTOPILOT1) {
         // Don't create vehicles for components other than the autopilot
@@ -84,7 +82,7 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
     // When you flash a new ArduCopter it does not set a FRAME_CLASS for some reason. This is the only ArduPilot variant which
     // works this way. Because of this the vehicle type is not known at first connection. In order to make QGC work reasonably
     // we assume ArduCopter for this case.
-    if (vehicleType == 0 && vehicleFirmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+    if ((vehicleType == MAV_TYPE_GENERIC) && (vehicleFirmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA)) {
         vehicleType = MAV_TYPE_QUADROTOR;
     }
 #endif
@@ -115,11 +113,11 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
                                       << vehicleFirmwareType
                                       << vehicleType;
 
-    if (vehicleId == _mavlinkProtocol->getSystemId()) {
+    if (vehicleId == MAVLinkProtocol::instance()->getSystemId()) {
         _app->showAppMessage(tr("Warning: A vehicle is using the same system id as %1: %2").arg(QCoreApplication::applicationName()).arg(vehicleId));
     }
 
-    Vehicle* vehicle = new Vehicle(link, vehicleId, componentId, (MAV_AUTOPILOT)vehicleFirmwareType, (MAV_TYPE)vehicleType, _firmwarePluginManager, _joystickManager, this);
+    Vehicle* vehicle = new Vehicle(link, vehicleId, componentId, vehicleFirmwareType, vehicleType, _firmwarePluginManager, _joystickManager, this);
     connect(vehicle,                        &Vehicle::requestProtocolVersion,           this, &MultiVehicleManager::_requestProtocolVersion);
     connect(vehicle->vehicleLinkManager(),  &VehicleLinkManager::allLinksRemoved,       this, &MultiVehicleManager::_deleteVehiclePhase1);
     connect(vehicle->parameterManager(),    &ParameterManager::parametersReadyChanged,  this, &MultiVehicleManager::_vehicleParametersReadyChanged);
@@ -151,12 +149,12 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
 
 /// This slot is connected to the Vehicle::requestProtocolVersion signal such that the vehicle manager
 /// tries to switch MAVLink to v2 if all vehicles support it
-void MultiVehicleManager::_requestProtocolVersion(unsigned version)
+void MultiVehicleManager::_requestProtocolVersion(uint8_t version)
 {
-    unsigned maxversion = 0;
+    uint8_t maxversion = 0;
 
     if (_vehicles.count() == 0) {
-        _mavlinkProtocol->setVersion(version);
+        MAVLinkProtocol::instance()->setVersion(version);
         return;
     }
 
@@ -168,8 +166,8 @@ void MultiVehicleManager::_requestProtocolVersion(unsigned version)
         }
     }
 
-    if (_mavlinkProtocol->getCurrentVersion() != maxversion) {
-        _mavlinkProtocol->setVersion(maxversion);
+    if (MAVLinkProtocol::instance()->getCurrentVersion() != maxversion) {
+        MAVLinkProtocol::instance()->setVersion(maxversion);
     }
 }
 
@@ -369,8 +367,8 @@ void MultiVehicleManager::_sendGCSHeartbeat(void)
         auto linkConfiguration = link->linkConfiguration();
         if (link->isConnected() && linkConfiguration && !linkConfiguration->isHighLatency()) {
             mavlink_message_t message;
-            mavlink_msg_heartbeat_pack_chan(_mavlinkProtocol->getSystemId(),
-                                            _mavlinkProtocol->getComponentId(),
+            mavlink_msg_heartbeat_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                            MAVLinkProtocol::instance()->getComponentId(),
                                             link->mavlinkChannel(),
                                             &message,
                                             MAV_TYPE_GCS,            // MAV_TYPE

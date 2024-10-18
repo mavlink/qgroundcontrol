@@ -108,8 +108,8 @@ void PlanManager::_writeMissionCount(void)
         mavlink_message_t       message;
 
         mavlink_msg_mission_count_pack_chan(
-            qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-            qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+            MAVLinkProtocol::instance()->getSystemId(),
+            MAVLinkProtocol::instance()->getComponentId(),
             sharedLink->mavlinkChannel(),
             &message,
             _vehicle->id(),
@@ -154,8 +154,8 @@ void PlanManager::_requestList(void)
     SharedLinkInterfacePtr  sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
     if (sharedLink){
         mavlink_message_t       message;
-        mavlink_msg_mission_request_list_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-                                                   qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+        mavlink_msg_mission_request_list_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                                   MAVLinkProtocol::instance()->getComponentId(),
                                                    sharedLink->mavlinkChannel(),
                                                    &message,
                                                    _vehicle->id(),
@@ -297,8 +297,8 @@ void PlanManager::_readTransactionComplete(void)
         mavlink_message_t       message;
 
         mavlink_msg_mission_ack_pack_chan(
-            qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-            qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+            MAVLinkProtocol::instance()->getSystemId(),
+            MAVLinkProtocol::instance()->getComponentId(),
             sharedLink->mavlinkChannel(),
             &message,
             _vehicle->id(),
@@ -360,8 +360,8 @@ void PlanManager::_requestNextMissionItem(void)
     if (sharedLink) {
         mavlink_message_t       message;
 
-        mavlink_msg_mission_request_int_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-                                                  qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+        mavlink_msg_mission_request_int_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                                  MAVLinkProtocol::instance()->getComponentId(),
                                                   sharedLink->mavlinkChannel(),
                                                   &message,
                                                   _vehicle->id(),
@@ -529,8 +529,8 @@ void PlanManager::_handleMissionRequest(const mavlink_message_t& message)
     if (sharedLink) {
         mavlink_message_t       messageOut;
 
-        mavlink_msg_mission_item_int_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-                                               qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+        mavlink_msg_mission_item_int_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                               MAVLinkProtocol::instance()->getComponentId(),
                                                sharedLink->mavlinkChannel(),
                                                &messageOut,
                                                _vehicle->id(),
@@ -879,8 +879,8 @@ void PlanManager::_removeAllWorker(void)
     if (sharedLink) {
         mavlink_message_t       message;
 
-        mavlink_msg_mission_clear_all_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-                                                qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+        mavlink_msg_mission_clear_all_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                                MAVLinkProtocol::instance()->getComponentId(),
                                                 sharedLink->mavlinkChannel(),
                                                 &message,
                                                 _vehicle->id(),

@@ -19,11 +19,11 @@
 
 #include "QGCToolbox.h"
 #include "QmlObjectListModel.h"
+#include "MAVLinkLib.h"
 
 class FirmwarePluginManager;
 class JoystickManager;
 class QGCApplication;
-class MAVLinkProtocol;
 class LinkInterface;
 class Vehicle;
 
@@ -91,8 +91,8 @@ private slots:
     void _setActiveVehiclePhase2        (void);
     void _vehicleParametersReadyChanged (bool parametersReady);
     void _sendGCSHeartbeat              (void);
-    void _vehicleHeartbeatInfo          (LinkInterface* link, int vehicleId, int componentId, int vehicleFirmwareType, int vehicleType);
-    void _requestProtocolVersion        (unsigned version);
+    void _vehicleHeartbeatInfo          (LinkInterface* link, uint8_t vehicleId, uint8_t componentId, MAV_AUTOPILOT vehicleFirmwareType, MAV_TYPE vehicleType);
+    void _requestProtocolVersion        (uint8_t version);
     void _coordinateChanged             (QGeoCoordinate coordinate);
 
 private:
@@ -112,7 +112,6 @@ private:
 
     FirmwarePluginManager*      _firmwarePluginManager;
     JoystickManager*            _joystickManager;
-    MAVLinkProtocol*            _mavlinkProtocol;
     QGeoCoordinate              _lastKnownLocation;
 
     QTimer              _gcsHeartbeatTimer;             ///< Timer to emit heartbeats

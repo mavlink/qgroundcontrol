@@ -61,7 +61,6 @@ void RTCMMavlink::RTCMDataUpdate(QByteArray message)
 void RTCMMavlink::sendMessageToVehicle(const mavlink_gps_rtcm_data_t& msg)
 {
     QmlObjectListModel& vehicles = *_toolbox.multiVehicleManager()->vehicles();
-    MAVLinkProtocol* mavlinkProtocol = _toolbox.mavlinkProtocol();
     for (int i = 0; i < vehicles.count(); i++) {
         Vehicle*                vehicle     = qobject_cast<Vehicle*>(vehicles[i]);
         SharedLinkInterfacePtr  sharedLink  = vehicle->vehicleLinkManager()->primaryLink().lock();
@@ -69,8 +68,8 @@ void RTCMMavlink::sendMessageToVehicle(const mavlink_gps_rtcm_data_t& msg)
         if (sharedLink) {
             mavlink_message_t       message;
 
-            mavlink_msg_gps_rtcm_data_encode_chan(mavlinkProtocol->getSystemId(),
-                                                  mavlinkProtocol->getComponentId(),
+            mavlink_msg_gps_rtcm_data_encode_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                                  MAVLinkProtocol::instance()->getComponentId(),
                                                   sharedLink->mavlinkChannel(),
                                                   &message,
                                                   &msg);
