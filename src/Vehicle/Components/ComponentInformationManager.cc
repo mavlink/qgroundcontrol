@@ -28,7 +28,7 @@ QGC_LOGGING_CATEGORY(ComponentInformationManagerLog, "ComponentInformationManage
 ComponentInformationManager::ComponentInformationManager(Vehicle* vehicle)
     : _vehicle                  (vehicle)
     , _requestTypeStateMachine  (this)
-    , _cachedFileDownload(new QGCCachedFileDownload(this, QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QLatin1String("/QGCCompInfoFileDownloadCache")))
+    , _cachedFileDownload(new QGCCachedFileDownload(QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QLatin1String("/QGCCompInfoFileDownloadCache"), this))
     , _fileCache(ComponentInformationCache::defaultInstance())
     , _translation(new ComponentInformationTranslation(this, _cachedFileDownload))
 {

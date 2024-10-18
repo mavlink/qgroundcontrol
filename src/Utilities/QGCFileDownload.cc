@@ -7,20 +7,45 @@
  *
  ****************************************************************************/
 
-
 #include "QGCFileDownload.h"
+#include "QGCLoggingCategory.h"
 
 #include <QtCore/QFileInfo>
 #include <QtCore/QStandardPaths>
 #include <QtNetwork/QNetworkProxy>
 
-QGCFileDownload::QGCFileDownload(QObject* parent)
-    : QNetworkAccessManager(parent)
-{
+QGC_LOGGING_CATEGORY(QGCFileDownloadLog, "qgc.utilities.qgcfiledownload");
 
+QGCFileDownload::QGCFileDownload(QObject *parent)
+    : QObject(parent)
+    , _networkManager(new QNetworkAccessManager(this))
+{
+    // qCDebug(QGCFileDownloadLog) << Q_FUNC_INFO << this;
 }
 
-bool QGCFileDownload::download(const QString& remoteFile, const QVector<QPair<QNetworkRequest::Attribute, QVariant>>& requestAttributes, bool redirect)
+QGCFileDownload::~QGCFileDownload()
+{
+    // qCDebug(QGCFileDownloadLog) << Q_FUNC_INFO << this;
+}
+
+void QGCFileDownload::setCache(QAbstractNetworkCache *cache)
+{
+    _networkManager->setCache(cache);
+}
+
+void QGCFileDownload::setIgnoreSSLErrorsIfNeeded(QNetworkReply &networkReply)
+{
+    const bool sslLibraryBuildIs1x = ((QSslSocket::sslLibraryBuildVersionNumber() & 0xf0000000) == 0x10000000);
+    const bool sslLibraryIs3x = ((QSslSocket::sslLibraryVersionNumber() & 0xf0000000) == 0x30000000);
+    if (sslLibraryBuildIs1x && sslLibraryIs3x) {
+        qCWarning(QGCFileDownloadLog) << "Ignoring ssl certificates due to OpenSSL version mismatch";
+        QList<QSslError> errorsThatCanBeIgnored;
+        errorsThatCanBeIgnored << QSslError(QSslError::NoPeerCertificate);
+        networkReply.ignoreSslErrors(errorsThatCanBeIgnored);
+    }
+}
+
+bool QGCFileDownload::download(const QString &remoteFile, const QList<QPair<QNetworkRequest::Attribute,QVariant>> &requestAttributes, bool redirect)
 {
     if (!redirect) {
         _requestAttributes = requestAttributes;
@@ -28,10 +53,9 @@ bool QGCFileDownload::download(const QString& remoteFile, const QVector<QPair<QN
     }
 
     if (remoteFile.isEmpty()) {
-        qWarning() << "downloadFile empty";
+        qCWarning(QGCFileDownloadLog) << "downloadFile empty";
         return false;
     }
-    
 
     QUrl remoteUrl;
     if (remoteFile.startsWith("http:") || remoteFile.startsWith("https:")) {
@@ -39,69 +63,79 @@ bool QGCFileDownload::download(const QString& remoteFile, const QVector<QPair<QN
     } else {
         remoteUrl = QUrl::fromLocalFile(remoteFile);
     }
+
     if (!remoteUrl.isValid()) {
-        qWarning() << "Remote URL is invalid" << remoteFile;
+        qCWarning(QGCFileDownloadLog) << "Remote URL is invalid" << remoteFile;
         return false;
     }
-    
-    QNetworkRequest networkRequest(remoteUrl);
 
-    for (const auto& attribute : requestAttributes) {
+    QNetworkRequest networkRequest(remoteUrl);
+    for (const QPair<QNetworkRequest::Attribute,QVariant> &attribute : requestAttributes) {
         networkRequest.setAttribute(attribute.first, attribute.second);
     }
 
-    QNetworkProxy tProxy;
+#if !defined(Q_OS_IOS) && !defined(Q_OS_ANDROID)
+    QNetworkProxy tProxy = _networkManager->proxy();
     tProxy.setType(QNetworkProxy::DefaultProxy);
-    setProxy(tProxy);
-    
-    QNetworkReply* networkReply = get(networkRequest);
+    _networkManager->setProxy(tProxy);
+#endif
+
+    QNetworkReply *const networkReply = _networkManager->get(networkRequest);
     if (!networkReply) {
-        qWarning() << "QNetworkAccessManager::get failed";
+        qCWarning(QGCFileDownloadLog) << "QNetworkAccessManager::get failed";
         return false;
     }
 
     setIgnoreSSLErrorsIfNeeded(*networkReply);
 
-    connect(networkReply, &QNetworkReply::downloadProgress, this, &QGCFileDownload::downloadProgress);
-    connect(networkReply, &QNetworkReply::finished, this, &QGCFileDownload::_downloadFinished);
-    connect(networkReply, &QNetworkReply::errorOccurred, this, &QGCFileDownload::_downloadError);
+    (void) connect(networkReply, &QNetworkReply::downloadProgress, this, &QGCFileDownload::downloadProgress);
+    (void) connect(networkReply, &QNetworkReply::finished, this, &QGCFileDownload::_downloadFinished);
+    (void) connect(networkReply, &QNetworkReply::errorOccurred, this, &QGCFileDownload::_downloadError);
+
     return true;
 }
 
-void QGCFileDownload::_downloadFinished(void)
+void QGCFileDownload::_downloadFinished()
 {
-    QNetworkReply* reply = qobject_cast<QNetworkReply*>(QObject::sender());
+    QNetworkReply *const reply = qobject_cast<QNetworkReply*>(QObject::sender());
+    if (!reply) {
+        return;
+    }
+    reply->deleteLater();
 
-    // When an error occurs or the user cancels the download, we still end up here. So bail out in
-    // those cases.
     if (reply->error() != QNetworkReply::NoError) {
-        reply->deleteLater();
         return;
     }
 
-    // Check for redirection
+    if (!reply->isOpen()) {
+        return;
+    }
+
+    const int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    if ((statusCode < HTTP_Response::SUCCESS_OK) || (statusCode >= HTTP_Response::REDIRECTION_MULTIPLE_CHOICES)) {
+        return;
+    }
+
     QVariant redirectionTarget = reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
     if (!redirectionTarget.isNull()) {
-        QUrl redirectUrl = reply->url().resolved(redirectionTarget.toUrl());
-        download(redirectUrl.toString(), _requestAttributes, true /* redirect */);
-        reply->deleteLater();
+        const QUrl redirectUrl = reply->url().resolved(redirectionTarget.toUrl());
+        (void) download(redirectUrl.toString(), _requestAttributes, true);
         return;
     }
 
     // Split out filename from path
     QString remoteFileName = QFileInfo(reply->url().toString()).fileName();
     if (remoteFileName.isEmpty()) {
-        qWarning() << "Unabled to parse filename from remote url" << reply->url().toString();
+        qCWarning(QGCFileDownloadLog) << "Unabled to parse filename from remote url" << reply->url().toString();
         remoteFileName = "DownloadedFile";
     }
 
     // Strip out http parameters from remote filename
-    int parameterIndex = remoteFileName.indexOf("?");
+    const int parameterIndex = remoteFileName.indexOf("?");
     if (parameterIndex != -1) {
-        remoteFileName  = remoteFileName.left(parameterIndex);
+        remoteFileName = remoteFileName.left(parameterIndex);
     }
 
-    // Determine location to download file to
     QString downloadFilename = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
     if (downloadFilename.isEmpty()) {
         downloadFilename = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
@@ -110,13 +144,13 @@ void QGCFileDownload::_downloadFinished(void)
             return;
         }
     }
-    downloadFilename += "/"  + remoteFileName;
+    downloadFilename += "/" + remoteFileName;
 
     if (!downloadFilename.isEmpty()) {
         // Store downloaded file in download location
         QFile file(downloadFilename);
         if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-            emit downloadComplete(_originalRemoteFile, downloadFilename, tr("Could not save downloaded file to %1. Error: %2").arg(downloadFilename).arg(file.errorString()));
+            emit downloadComplete(_originalRemoteFile, downloadFilename, tr("Could not save downloaded file to %1. Error: %2").arg(downloadFilename, file.errorString()));
             return;
         }
 
@@ -125,44 +159,27 @@ void QGCFileDownload::_downloadFinished(void)
 
         emit downloadComplete(_originalRemoteFile, downloadFilename, QString());
     } else {
-        QString errorMsg = "Internal error";
-        qWarning() << errorMsg;
+        const QString errorMsg = "Internal error";
+        qCWarning(QGCFileDownloadLog) << errorMsg;
         emit downloadComplete(_originalRemoteFile, downloadFilename, errorMsg);
     }
-
-    reply->deleteLater();
 }
 
-/// @brief Called when an error occurs during download
 void QGCFileDownload::_downloadError(QNetworkReply::NetworkError code)
 {
     QString errorMsg;
-    
-    if (code == QNetworkReply::OperationCanceledError) {
+
+    switch (code) {
+    case QNetworkReply::OperationCanceledError:
         errorMsg = tr("Download cancelled");
-
-    } else if (code == QNetworkReply::ContentNotFoundError) {
+        break;
+    case QNetworkReply::ContentNotFoundError:
         errorMsg = tr("Error: File Not Found");
-
-    } else {
+        break;
+    default:
         errorMsg = tr("Error during download. Error: %1").arg(code);
+        break;
     }
 
     emit downloadComplete(_originalRemoteFile, QString(), errorMsg);
-}
-
-void QGCFileDownload::setIgnoreSSLErrorsIfNeeded(QNetworkReply& networkReply)
-{
-    // Some systems (like Ubuntu 22.04) only ship with OpenSSL 3.x, however Qt 5.15.2 links against OpenSSL 1.x.
-    // This results in unresolved symbols for EVP_PKEY_base_id and SSL_get_peer_certificate.
-    // To still get a connection we have to ignore certificate verification (connection is still encrypted but open to MITM attacks)
-    // See https://bugreports.qt.io/browse/QTBUG-115146
-    const bool sslLibraryBuildIs1x = (QSslSocket::sslLibraryBuildVersionNumber() & 0xf0000000) == 0x10000000;
-    const bool sslLibraryIs3x = (QSslSocket::sslLibraryVersionNumber() & 0xf0000000) == 0x30000000;
-    if (sslLibraryBuildIs1x && sslLibraryIs3x) {
-        qWarning() << "Ignoring ssl certificates due to OpenSSL version mismatch";
-        QList<QSslError> errorsThatCanBeIgnored;
-        errorsThatCanBeIgnored << QSslError(QSslError::NoPeerCertificate);
-        networkReply.ignoreSslErrors(errorsThatCanBeIgnored);
-    }
 }
