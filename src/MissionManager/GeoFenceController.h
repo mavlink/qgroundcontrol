@@ -98,7 +98,6 @@ signals:
     void paramCircularFenceChanged      (void);
 
 #ifdef QGC_UTM_ADAPTER
-    void uploadFlagSent         (bool flag);
     void polygonBoundarySent    (QList<QGeoCoordinate> coords);
 #endif
 

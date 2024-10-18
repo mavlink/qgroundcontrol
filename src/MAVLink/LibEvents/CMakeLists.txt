@@ -31,4 +31,5 @@ target_include_directories(LibEventsWrapper
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${libevents_SOURCE_DIR}/libs/cpp
+        ${libevents_SOURCE_DIR}/libs/cpp/parse
 )

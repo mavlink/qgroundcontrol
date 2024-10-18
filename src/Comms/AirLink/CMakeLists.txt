@@ -4,29 +4,26 @@ qt_add_library(AirLink STATIC)
 
 option(QGC_AIRLINK_DISABLED "Enable airlink" ON)
 if(NOT QGC_AIRLINK_DISABLED)
-    find_package(Qt6 COMPONENTS Network REQUIRED)
+    find_package(Qt6 REQUIRED COMPONENTS Network QmlIntegration)
 
     target_sources(AirLink
         PRIVATE
-            AirlinkLink.cc
-            AirlinkLink.h
+            AirLinkLink.cc
+            AirLinkLink.h
             AirLinkManager.cc
             AirLinkManager.h
-    )
-
-    add_custom_target(AirLinkQml
-        SOURCES
-            AirLinkSettings.qml
     )
 
     target_link_libraries(AirLink
         PRIVATE
             Qt6::Network
+            QGC
             Settings
+            Utilities
         PUBLIC
             Qt6::Core
+            Qt6::QmlIntegration
             Comms
-            QGC
     )
 
     target_include_directories(AirLink PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
@@ -39,23 +36,21 @@ if(NOT QGC_AIRLINK_DISABLED)
     #     OUTPUT_TARGETS AirLink_targets
     #     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
     #     IMPORTS
-    #         QtMultimedia
     #         QtQuick
     #         QtQuick.Controls
-    #         QtQuick.Dialogs
     #         QtQuick.Layouts
-    #         QtLocation
-    #         QtPositioning
 
     #         QGroundControl
     #         QGroundControl.Controllers
     #         QGroundControl.Controls
     #         QGroundControl.FactControls
     #         QGroundControl.FactSystem
-    #         QGroundControl.Palette
     #         QGroundControl.ScreenTools
     #         QGroundControl.SettingsManager
     # )
+
+    # cmake_print_variables(AirLink_targets)
+    # target_link_libraries(AirLink PRIVATE AirLinkplugin)
 else()
     target_compile_definitions(AirLink PUBLIC QGC_AIRLINK_DISABLED)
 endif()
