@@ -14,12 +14,15 @@
 #include "services/dispatcher.h"
 #include "Vehicle.h"
 #include "qqml.h"
+#include <QtCore/qapplicationstatic.h>
 
-UTMSPManager::UTMSPManager(QGCApplication* app, QGCToolbox* toolbox) :
-    QGCTool(app, toolbox),
-    _dispatcher(std::make_shared<Dispatcher>())
+Q_APPLICATION_STATIC(UTMSPManager, _UTMSPManager);
+
+UTMSPManager::UTMSPManager(QObject *parent)
+    : QObject(parent)
+    , _dispatcher(std::make_shared<Dispatcher>())
+    , _utmspAuthorization(new UTMSPAuthorization(this))
 {
-    _utmspAuthorization = new UTMSPAuthorization();
     qmlRegisterUncreatableType<UTMSPManager>              ("QGroundControl.UTMSP",      1, 0, "UTMSPManager",                "Reference only");
     qmlRegisterUncreatableType<UTMSPVehicle>              ("QGroundControl.UTMSP",      1, 0, "UTMSPVehicle",                "Reference only");
     qmlRegisterUncreatableType<UTMSPAuthorization>        ("QGroundControl.UTMSP",      1, 0, "UTMSPAuthorization",          "Reference only");
@@ -28,25 +31,20 @@ UTMSPManager::UTMSPManager(QGCApplication* app, QGCToolbox* toolbox) :
 UTMSPManager::~UTMSPManager()
 {
     UTMSP_LOG_DEBUG() << "UTMSPManager: Destructor called";
-    delete _utmspAuthorization;
-    _utmspAuthorization = nullptr;
 }
 
-void UTMSPManager::setToolbox(QGCToolbox* toolbox)
+UTMSPManager *UTMSPManager::instance()
 {
-    UTMSP_LOG_INFO() << "UTMSPManager: ToolBox Set" ;
-    QGCTool::setToolbox(toolbox);
+    return _UTMSPManager();
 }
 
-UTMSPVehicle* UTMSPManager::instantiateVehicle(const Vehicle& vehicle)
+void UTMSPManager::instantiateVehicle(Vehicle *vehicle)
 {
     // TODO: Investigate safe deletion of pointer in this modification of having a member pointer
-    _vehicle = new UTMSPVehicle(_dispatcher,vehicle);
-
-    return _vehicle;
+    _vehicle = new UTMSPVehicle(_dispatcher, vehicle, vehicle);
 }
 
-UTMSPAuthorization* UTMSPManager::instantiateUTMSPAuthorization(){
-
+UTMSPAuthorization* UTMSPManager::instantiateUTMSPAuthorization()
+{
     return _utmspAuthorization;
 }

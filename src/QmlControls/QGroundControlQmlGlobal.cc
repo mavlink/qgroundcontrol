@@ -24,7 +24,12 @@
 #ifdef QT_DEBUG
 #include "MockLink.h"
 #endif
-
+#ifndef QGC_AIRLINK_DISABLED
+#include "AirLinkManager.h"
+#endif
+#ifdef QGC_UTM_ADAPTER
+#include "UTMSPManager.h"
+#endif
 #include <QtCore/QSettings>
 #include <QtCore/QLineF>
 
@@ -35,6 +40,12 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app, QGCToolbox
     : QGCTool(app, toolbox)
     , _mapEngineManager(QGCMapEngineManager::instance())
     , _adsbVehicleManager(ADSBVehicleManager::instance())
+#ifndef QGC_AIRLINK_DISABLED
+    , _airlinkManager(AirLinkManager::instance())
+#endif
+#ifdef QGC_UTM_ADAPTER
+    , _utmspManager(UTMSPManager::instance())
+#endif
 {
     // We clear the parent on this object since we run into shutdown problems caused by hybrid qml app. Instead we let it leak on shutdown.
     // setParent(nullptr);
@@ -88,12 +99,6 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
     _gpsRtkFactGroup        = toolbox->gpsManager()->gpsRtkFactGroup();
 #endif
     _globalPalette          = new QGCPalette(this);
-#ifndef QGC_AIRLINK_DISABLED
-    _airlinkManager         = toolbox->airlinkManager();
-#endif
-#ifdef QGC_UTM_ADAPTER
-    _utmspManager            = toolbox->utmspManager();
-#endif
 }
 
 void QGroundControlQmlGlobal::saveGlobalSetting (const QString& key, const QString& value)

@@ -6,9 +6,9 @@ qt_add_library(UTMSP STATIC)
 option(QGC_UTM_ADAPTER "Enable UTM Adapter" OFF)
 if(QGC_UTM_ADAPTER)
     message(STATUS "UTMSP is Initialized")
-    add_definitions(-DQGC_UTM_ADAPTER)
+    target_compile_definitions(UTMSP PUBLIC QGC_UTM_ADAPTER)
 
-    if(NOT nlohmann_json_FOUND)
+    if(NOT TARGET nlohmann_json)
         message(STATUS "UTMSP: Fetching nlohmann/json")
         include(FetchContent)
         FetchContent_Declare(json

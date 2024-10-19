@@ -9,8 +9,6 @@
 
 #pragma once
 
-#include "QGCToolbox.h"
-
 #include "UTMSPVehicle.h"
 
 class UTMSPVehicle;
@@ -18,27 +16,29 @@ class Vehicle;
 class Dispatcher;
 class UTMSPAuthorization;
 
-class UTMSPManager : public QGCTool
+class UTMSPManager : public QObject
 {
     Q_OBJECT
     Q_MOC_INCLUDE("UTMSPAuthorization.h")
 
+    Q_PROPERTY(UTMSPVehicle *utmspVehicle READ utmspVehicle CONSTANT)
+    Q_PROPERTY(UTMSPAuthorization *utmspAuthorization READ utmspAuthorization CONSTANT)
+
 public:
-    UTMSPManager(QGCApplication* app, QGCToolbox* toolbox);
-    virtual ~UTMSPManager();
+    explicit UTMSPManager(QObject *parent = nullptr);
+    ~UTMSPManager();
 
-    Q_PROPERTY(UTMSPVehicle*            utmspVehicle                    READ utmspVehicle                   CONSTANT)
-    Q_PROPERTY(UTMSPAuthorization*      utmspAuthorization              READ utmspAuthorization             CONSTANT)
+    /// Gets the singleton instance of UTMSPManager.
+    ///     @return The singleton instance.
+    static UTMSPManager *instance();
 
-    void setToolbox (QGCToolbox* toolbox);
-
-    UTMSPVehicle*               instantiateVehicle              (const Vehicle& vehicle);
-    UTMSPAuthorization*         instantiateUTMSPAuthorization   (void);
-    UTMSPAuthorization*         utmspAuthorization              (void)  { return _utmspAuthorization;}
-    UTMSPVehicle*               utmspVehicle                    (void ) {return _vehicle;};
+    void instantiateVehicle(Vehicle *vehicle);
+    UTMSPAuthorization *instantiateUTMSPAuthorization();
+    UTMSPAuthorization *utmspAuthorization() { return _utmspAuthorization; }
+    UTMSPVehicle *utmspVehicle() { return _vehicle; };
 
 private:
-    UTMSPVehicle*                        _vehicle                 = nullptr;
-    UTMSPAuthorization*                  _utmspAuthorization      = nullptr;
-    std::shared_ptr<Dispatcher>          _dispatcher;
+    UTMSPAuthorization *_utmspAuthorization = nullptr;
+    std::shared_ptr<Dispatcher> _dispatcher;
+    UTMSPVehicle *_vehicle = nullptr;
 };

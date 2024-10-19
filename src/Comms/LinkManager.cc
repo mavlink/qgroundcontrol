@@ -35,7 +35,7 @@
 #endif
 
 #ifndef QGC_AIRLINK_DISABLED
-#include "AirlinkLink.h"
+#include "AirLinkLink.h"
 #endif
 
 #ifdef QGC_ZEROCONF_ENABLED
@@ -139,8 +139,8 @@ bool LinkManager::createConnectedLink(SharedLinkConfigurationPtr &config)
         break;
 #endif
 #ifndef QGC_AIRLINK_DISABLED
-    case LinkConfiguration::Airlink:
-        link = std::make_shared<AirlinkLink>(config);
+    case LinkConfiguration::AirLink:
+        link = std::make_shared<AirLinkLink>(config);
         break;
 #endif
     case LinkConfiguration::TypeLast:
@@ -343,8 +343,8 @@ void LinkManager::loadLinkConfigurationList()
                 break;
 #endif
 #ifndef QGC_AIRLINK_DISABLED
-            case LinkConfiguration::Airlink:
-                link = new AirlinkConfiguration(name);
+            case LinkConfiguration::AirLink:
+                link = new AirLinkConfiguration(name);
                 break;
 #endif
             case LinkConfiguration::TypeLast:
