@@ -26,7 +26,7 @@ signals:
     void motorDetectionMessagesChanged();
 
 private slots:
-    void handleNewMessages(int uasid, int componentid, int severity, QString text);
+    void handleNewMessages(int compId, int severity, QString text, QString description);
 
 private:
     QString _motorDetectionMessages;
