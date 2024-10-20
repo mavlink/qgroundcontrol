@@ -34,30 +34,32 @@ runs:
       run: meson setup
         --prefix=${{ inputs.install_directory }}
         --buildtype=${{ inputs.build_type }}
-        --wrap_mode=forcefallback
-        -Dgst-full-libraries=base,video,gl
+        --wrap-mode=forcefallback
+        --strip
+        -Dauto_features=disabled
+        -Dgst-full-libraries=video,gl
         -Dgpl=enabled
         -Dlibav=enabled
         -Dorc=enabled
-        -Dbase=enabled
-        -Dvaapi=enabled
         -Dqt6=enabled
+        -Dvaapi=enabled
+        -Dbase=enabled
+        -Dgst-plugins-base:app=enabled
         -Dgst-plugins-base:gl=enabled
+        -Dgst-plugins-base:gl_api=opengl,gles2
         -Dgst-plugins-base:gl_platform=glx,egl
         -Dgst-plugins-base:gl_winsys=x11,egl,wayland
-        -Dgst-plugins-base:gl_api=opengl,gles2
-        -Dgst-plugins-base:x11=enabled
         -Dgst-plugins-base:playback=enabled
         -Dgst-plugins-base:tcp=enabled
-        -Dgst-plugins-base:app=enabled
+        -Dgst-plugins-base:x11=enabled
         -Dgood=enabled
-        -Dgst-plugins-good:qt6=enabled
-        -Dgst-plugins-good:qt-x11=enabled
-        -Dgst-plugins-good:qt-egl=enabled
-        -Dgst-plugins-good:qt-wayland=enabled
-        -Dgst-plugins-good:qt-method=auto
         -Dgst-plugins-good:isomp4=enabled
         -Dgst-plugins-good:matroska=enabled
+        -Dgst-plugins-good:qt-egl=enabled
+        -Dgst-plugins-good:qt-method=auto
+        -Dgst-plugins-good:qt-wayland=enabled
+        -Dgst-plugins-good:qt-x11=enabled
+        -Dgst-plugins-good:qt6=enabled
         -Dgst-plugins-good:rtp=enabled
         -Dgst-plugins-good:rtpmanager=enabled
         -Dgst-plugins-good:rtsp=enabled
@@ -66,19 +68,17 @@ runs:
         -Dgst-plugins-bad:gl=enabled
         -Dgst-plugins-bad:mpegtsdemux=enabled
         -Dgst-plugins-bad:rtp=enabled
-        -Dgst-plugins-bad:videoparsers=enabled
         -Dgst-plugins-bad:sdp=enabled
-        -Dgst-plugins-bad:x11=enabled
-        -Dgst-plugins-bad:wayland=enabled
         -Dgst-plugins-bad:va=enabled
+        -Dgst-plugins-bad:videoparsers=enabled
+        -Dgst-plugins-bad:wayland=enabled
+        -Dgst-plugins-bad:x11=enabled
         -Dgst-plugins-bad:x265=enabled
         -Dugly=enabled
         -Dgst-plugins-ugly:x264=enabled
         builddir
-        # --strip=true
         # --default-library=static
         # --prefer_static=true
-        # -Dauto_features=disabled
         # -Dgst-full-target-type=static_library
         # -Dgstreamer:gstreamer-static-full=true
       shell: bash
