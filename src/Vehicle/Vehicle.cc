@@ -1452,6 +1452,7 @@ void Vehicle::_handleRCChannels(mavlink_message_t& message)
     };
     int pwmValues[QGCMAVLink::maxRcChannels];
 
+    if (channels.chancount == 0) channels.chancount = 16;
     for (int i=0; i<QGCMAVLink::maxRcChannels; i++) {
         uint16_t channelValue = *_rgChannelvalues[i];
 

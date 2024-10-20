@@ -180,6 +180,7 @@ void RadioComponentController::_setupCurrentState(void)
 /// Connected to Vehicle::rcChannelsChanged signal
 void RadioComponentController::_rcChannelsChanged(int channelCount, int pwmValues[QGCMAVLink::maxRcChannels])
 {
+    if (channelCount == 0) channelCount = 16;
     for (int channel=0; channel<channelCount; channel++) {
         int channelValue = pwmValues[channel];
 
