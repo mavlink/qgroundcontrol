@@ -3,6 +3,8 @@ find_package(Qt6 REQUIRED COMPONENTS Core)
 qt_add_library(Compression STATIC
     QGCLZMA.cc
     QGCLZMA.h
+    QGCQuaZip.cc
+    QGCQuaZip.h
     QGCZip.cc
     QGCZip.h
     QGCZlib.cc
@@ -99,3 +101,16 @@ target_compile_definitions(xz
 )
 
 target_link_libraries(Compression PRIVATE xz)
+
+############### Quazip
+
+FetchContent_Declare(quazip
+    GIT_REPOSITORY https://github.com/stachenov/quazip.git
+    GIT_TAG v1.4
+    GIT_SHALLOW TRUE
+)
+set(QUAZIP_ENABLE_TESTS OFF CACHE INTERNAL "")
+set(QUAZIP_BZIP2 OFF CACHE INTERNAL "")
+FetchContent_MakeAvailable(quazip)
+
+target_link_libraries(Compression PRIVATE QuaZip::QuaZip)

@@ -103,7 +103,7 @@ void UnitTestTerrainQuery::requestCarpetHeights(const QGeoCoordinate &swCoord, c
 UnitTestTerrainQuery::PathHeightInfo_t UnitTestTerrainQuery::_requestPathHeights(const QGeoCoordinate &fromCoord, const QGeoCoordinate &toCoord)
 {
     PathHeightInfo_t pathHeights;
-    pathHeights.rgCoords = TerrainTileManager::pathQueryToCoords(fromCoord, toCoord, pathHeights.distanceBetween, pathHeights.finalDistanceBetween);
+    pathHeights.rgCoords = TerrainTileManager::_pathQueryToCoords(fromCoord, toCoord, pathHeights.distanceBetween, pathHeights.finalDistanceBetween);
     pathHeights.rgHeights = _requestCoordinateHeights(pathHeights.rgCoords);
     return pathHeights;
 }
