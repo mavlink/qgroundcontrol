@@ -9,7 +9,6 @@
 
 #include "UnitTestList.h"
 #include "UnitTest.h"
-#include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 
 // ADSB
@@ -88,6 +87,7 @@
 // Utilities
 // Compression
 #include "DecompressionTest.h"
+#include "QGCFileDownloadTest.h"
 
 // Vehicle
 // Components
@@ -183,6 +183,7 @@ int runTests(bool stress, QStringView unitTestOptions)
 	// Utilities
 	// Compression
 	UT_REGISTER_TEST(DecompressionTest)
+    UT_REGISTER_TEST(QGCFileDownloadTest)
 
 	// Vehicle
 	// Components
