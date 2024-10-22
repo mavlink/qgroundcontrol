@@ -4,7 +4,7 @@ inputs:
   gst_version:
     description: Version of GStreamer to Build
     required: true
-    default: 1.22.11
+    default: 1.24.8
   build_type:
     description: Build Type "release" or "debug"
     required: true
@@ -25,29 +25,36 @@ runs:
       run: git clone --depth 1 --branch ${{ inputs.gst_version }} https://github.com/GStreamer/gstreamer.git
       shell: bash
 
+    - name: Install Dependencies
+      run: python3 -m pip install --user ninja meson
+      shell: bash
+
     - name: Configure GStreamer
       working-directory: ${{ inputs.working_directory }}/gstreamer
       run: meson setup
         --prefix=${{ inputs.install_directory }}
         --buildtype=${{ inputs.build_type }}
-        --default-library=static
-        --wrap-mode=forcefallback
-        --strip
-        -Dauto_features=disabled
-        -Dgst-full-libraries=gstreamer,base,controller,net,app,audio,fft,pbutils,riff,rtp,rtsp,tag,video,gl,codecparsers,photography
+        --wrap_mode=forcefallback
+        -Dgst-full-libraries=base,video,gl
         -Dgpl=enabled
         -Dlibav=enabled
         -Dorc=enabled
         -Dbase=enabled
+        -Dvaapi=enabled
+        -Dqt6=enabled
         -Dgst-plugins-base:gl=enabled
-        -Dgst-plugins-base:gl_platform=glx
-        -Dgst-plugins-base:gl_winsys=x11
+        -Dgst-plugins-base:gl_platform=glx,egl
+        -Dgst-plugins-base:gl_winsys=x11,egl,wayland
+        -Dgst-plugins-base:gl_api=opengl,gles2
         -Dgst-plugins-base:x11=enabled
         -Dgst-plugins-base:playback=enabled
         -Dgst-plugins-base:tcp=enabled
+        -Dgst-plugins-base:app=enabled
         -Dgood=enabled
         -Dgst-plugins-good:qt6=enabled
         -Dgst-plugins-good:qt-x11=enabled
+        -Dgst-plugins-good:qt-egl=enabled
+        -Dgst-plugins-good:qt-wayland=enabled
         -Dgst-plugins-good:qt-method=auto
         -Dgst-plugins-good:isomp4=enabled
         -Dgst-plugins-good:matroska=enabled
@@ -62,17 +69,18 @@ runs:
         -Dgst-plugins-bad:videoparsers=enabled
         -Dgst-plugins-bad:sdp=enabled
         -Dgst-plugins-bad:x11=enabled
+        -Dgst-plugins-bad:wayland=enabled
+        -Dgst-plugins-bad:va=enabled
+        -Dgst-plugins-bad:x265=enabled
         -Dugly=enabled
         -Dgst-plugins-ugly:x264=enabled
         builddir
-        # -Dqt6=enabled
+        # --strip=true
+        # --default-library=static
+        # --prefer_static=true
+        # -Dauto_features=disabled
         # -Dgst-full-target-type=static_library
-        # -Dgst-plugins-base:gl_platform=glx,egl
-        # -Dgst-plugins-base:gl_winsys=x11,egl,wayland
-        # -Dgst-plugins-good:qt-wayland=enabled
-        # -Dgst-plugins-good:qt-egl=enabled
-        # -Dgst-plugins-bad:xshm=enabled
-        # -Dgst-plugins-bad:wayland=enabled
+        # -Dgstreamer:gstreamer-static-full=true
       shell: bash
 
     - name: Compile GStreamer
@@ -87,5 +95,11 @@ runs:
 
     - name: Setup Environment
       working-directory: ${{ runner.temp }}/gstreamer
-      run: echo "PKG_CONFIG_PATH=${{ runner.temp }}/gst/lib/x86_64-linux-gnu/pkgconfig:${{ env.PKG_CONFIG_PATH }}" >> "$GITHUB_ENV"
+      run: echo "PKG_CONFIG_PATH=${{ inputs.install_directory }}/lib/x86_64-linux-gnu/pkgconfig:${{ inputs.install_directory }}/lib/x86_64-linux-gnu/gstreamer-1.0/pkgconfig:${{ env.PKG_CONFIG_PATH }}" >> "$GITHUB_ENV"
       shell: bash
+
+    - name: Save artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: GStreamer-${{ inputs.build_type }}
+        path: ${{ inputs.install_directory }}

@@ -24,8 +24,7 @@ AnalyzePage {
     pageComponent:      pageComponent
     pageDescription:    qsTr("Log Download allows you to download binary log files from your vehicle. Click Refresh to get list of available logs.")
 
-    property real _margin:          ScreenTools.defaultFontPixelWidth
-    property real _butttonWidth:    ScreenTools.defaultFontPixelWidth * 10
+    property real _margin: ScreenTools.defaultFontPixelWidth
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
@@ -122,13 +121,16 @@ AnalyzePage {
                 }
             }
 
-            Column {
+            ColumnLayout {
                 spacing:            _margin
-                Layout.alignment:   Qt.AlignTop | Qt.AlignLeft
+                Layout.alignment:   Qt.AlignTop
+                Layout.fillWidth:   false
+
                 QGCButton {
-                    enabled:    !logController.requestingList && !logController.downloadingLogs
-                    text:       qsTr("Refresh")
-                    width:      _butttonWidth
+                    Layout.fillWidth:   true
+                    enabled:            !logController.requestingList && !logController.downloadingLogs
+                    text:               qsTr("Refresh")
+
                     onClicked: {
                         if (!QGroundControl.multiVehicleManager.activeVehicle || QGroundControl.multiVehicleManager.activeVehicle.isOfflineEditingVehicle) {
                             mainWindow.showMessageDialog(qsTr("Log Refresh"), qsTr("You must be connected to a vehicle in order to download logs."))
@@ -137,10 +139,11 @@ AnalyzePage {
                         }
                     }
                 }
+
                 QGCButton {
-                    enabled:    !logController.requestingList && !logController.downloadingLogs
-                    text:       qsTr("Download")
-                    width:      _butttonWidth
+                    Layout.fillWidth:   true
+                    enabled:            !logController.requestingList && !logController.downloadingLogs
+                    text:               qsTr("Download")
 
                     onClicked: {
                         var logsSelected = false
@@ -177,20 +180,20 @@ AnalyzePage {
                 }
 
                 QGCButton {
-                    enabled:    !logController.requestingList && !logController.downloadingLogs && logController.model.count > 0
-                    text:       qsTr("Erase All")
-                    width:      _butttonWidth
-                    onClicked:  mainWindow.showMessageDialog(qsTr("Delete All Log Files"),
+                    Layout.fillWidth:   true
+                    enabled:            !logController.requestingList && !logController.downloadingLogs && logController.model.count > 0
+                    text:               qsTr("Erase All")
+                    onClicked:          mainWindow.showMessageDialog(qsTr("Delete All Log Files"),
                                                              qsTr("All log files will be erased permanently. Is this really what you want?"),
                                                              Dialog.Yes | Dialog.No,
                                                              function() { logController.eraseAll() })
                 }
 
                 QGCButton {
-                    text:       qsTr("Cancel")
-                    width:      _butttonWidth
-                    enabled:    logController.requestingList || logController.downloadingLogs
-                    onClicked:  logController.cancel()
+                    Layout.fillWidth:   true
+                    text:               qsTr("Cancel")
+                    enabled:            logController.requestingList || logController.downloadingLogs
+                    onClicked:          logController.cancel()
                 }
             }
         }

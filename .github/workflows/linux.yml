@@ -36,11 +36,13 @@ jobs:
     env:
       ARTIFACT: QGroundControl-x86_64.AppImage
       QT_VERSION: 6.6.3
-      # GST_VERSION: 1.22.12
+      GST_VERSION: 1.22.12
 
     steps:
       - name: Free Disk Space (Ubuntu)
         uses: jlumbroso/free-disk-space@main
+        with:
+          large-packages: false
         continue-on-error: true
 
       - name: Checkout repo
@@ -56,8 +58,6 @@ jobs:
           sudo ./tools/setup/install-dependencies-debian.sh
           python3 -m pip install --user ninja cmake
 
-      - uses: lukka/get-cmake@latest
-
       - name: Install Vulkan
         run: |
           wget -qO - http://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo apt-key add -
@@ -68,9 +68,9 @@ jobs:
       - name: Install Compiler
         run: |
           sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-          sudo apt install gcc-13 g++-13
-          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100 --slave /usr/bin/g++ g++ /usr/bin/g++-13 --slave /usr/bin/gcov gcov /usr/bin/gcov-13
-          sudo update-alternatives --set gcc /usr/bin/gcc-13
+          sudo apt install gcc-11 g++-11
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 100 --slave /usr/bin/g++ g++ /usr/bin/g++-11 --slave /usr/bin/gcov gcov /usr/bin/gcov-11
+          sudo update-alternatives --set gcc /usr/bin/gcc-11
 
       - name: Install CCache
         run: |
@@ -78,8 +78,6 @@ jobs:
           tar -xvf ccache-*-linux-x86_64.tar.xz
           cd ccache-*-linux-x86_64
           sudo make install
-
-      - uses: seanmiddleditch/gha-setup-ninja@v5
 
       - name: Set Up Cache
         uses: hendrikmuhs/ccache-action@v1.2
@@ -105,6 +103,15 @@ jobs:
 
       # - name: Build GStreamer
       #   uses: ./.github/actions/gstreamer
+
+      - name: Install GStreamer
+        uses: blinemedical/setup-gstreamer@v1
+        with:
+          version: ${{ env.GST_VERSION }}
+
+      - uses: lukka/get-cmake@latest
+
+      - uses: seanmiddleditch/gha-setup-ninja@v5
 
       - run: mkdir ${{ runner.temp }}/shadow_build_dir
 
@@ -138,3 +145,4 @@ jobs:
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           source: ''
+          github_token: ${{ secrets.GITHUB_TOKEN }}

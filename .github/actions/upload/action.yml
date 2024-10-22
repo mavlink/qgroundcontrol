@@ -14,6 +14,9 @@ inputs:
     description: Source location
     required: false
     default: package
+  github_token:
+    description: GitHub Token
+    required: false
 
 runs:
   using: "composite"
@@ -43,3 +46,16 @@ runs:
       working-directory: ${{ runner.temp }}/shadow_build_dir/${{ inputs.source }}
       run: aws s3 cp ${{ inputs.artifact_name }} s3://qgroundcontrol/latest/${{ inputs.artifact_name }} --acl public-read
       shell: bash
+
+    - name: Create Continuous Release
+      if: ${{ github.event_name != 'pull_request' && github.ref_name == 'master' && inputs.github_token != '' }}
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: latest
+        target_commitish: master
+        files: ${{ runner.temp }}/shadow_build_dir/${{ inputs.source }}/${{ inputs.artifact_name }}
+        name: "Continuous Release"
+        body: "This release is continuously updated with every commit to master."
+        draft: false
+        prerelease: true
+        token: ${{ inputs.github_token }}

@@ -80,7 +80,9 @@ if(GLESv2_FOUND AND NOT TARGET GLESv2::GLESv2)
             IMPORTED_LOCATION "${GLESv2_LIBRARY}"
             INTERFACE_INCLUDE_DIRECTORIES "${GLESv2_INCLUDE_DIR}")
 
-        if(EGL_LIBRARY)
+        if(TARGET EGL::EGL)
+            target_link_libraries(GLESv2::GLESv2 INTERFACE "EGL::EGL")
+        elseif(EGL_LIBRARY)
             target_link_libraries(GLESv2::GLESv2 INTERFACE "${EGL_LIBRARY}")
         endif()
     endif()

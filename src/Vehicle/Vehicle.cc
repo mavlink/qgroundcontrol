@@ -1227,7 +1227,7 @@ void Vehicle::_handleEvent(uint8_t comp_id, std::unique_ptr<events::parser::Pars
                 return;
             }
 
-            m_statusTextHandler->handleTextMessage(static_cast<MAV_COMPONENT>(comp_id), static_cast<MAV_SEVERITY>(severity), text, QString::fromStdString(description));
+            m_statusTextHandler->handleHTMLEscapedTextMessage(static_cast<MAV_COMPONENT>(comp_id), static_cast<MAV_SEVERITY>(severity), text, QString::fromStdString(description));
         }
     }
 }
@@ -4047,7 +4047,8 @@ void Vehicle::_textMessageReceived(MAV_COMPONENT componentid, MAV_SEVERITY sever
         _say(text);
     }
 
-    m_statusTextHandler->handleTextMessage(componentid, severity, text.toHtmlEscaped(), description);
+    emit textMessageReceived(id(), componentid, severity, text, description);
+    m_statusTextHandler->handleHTMLEscapedTextMessage(componentid, severity, text.toHtmlEscaped(), description);
 }
 
 void Vehicle::_errorMessageReceived(QString message)

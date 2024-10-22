@@ -108,11 +108,7 @@ if(CMAKE_CROSSCOMPILING AND ANDROID)
     set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
 endif()
 
-set(BUILD_SHARED_LIBS OFF)
-
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    add_compile_definitions(QGC_INSTALL_RELEASE)
-endif()
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
 #######################################################
 #               Qt6 Configuration
@@ -519,6 +515,10 @@ if(LINUX)
     install(
         FILES ${CMAKE_BINARY_DIR}/metainfo/org.mavlink.qgroundcontrol.metainfo.xml
         DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo/
+    )
+    install(
+        FILES ${CMAKE_SOURCE_DIR}/deploy/linux/AppRun
+        DESTINATION ${CMAKE_BINARY_DIR}
     )
     install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/CreateAppImage.cmake")
 elseif(WIN32)

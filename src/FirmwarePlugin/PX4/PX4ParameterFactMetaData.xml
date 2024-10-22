@@ -17979,12 +17979,6 @@
     </parameter>
   </group>
   <group name="PWM Outputs">
-    <parameter name="MOT_SLEW_MAX" default="0.0" type="FLOAT">
-      <short_desc>Minimum motor rise time (slew rate limit)</short_desc>
-      <long_desc>Minimum time allowed for the motor input signal to pass through a range of 1000 PWM units. A value x means that the motor signal can only go from 1000 to 2000 PWM in minimum x seconds. Zero means that slew rate limiting is disabled.</long_desc>
-      <min>0.0</min>
-      <unit>s/(1000*PWM)</unit>
-    </parameter>
     <parameter name="PWM_SBUS_MODE" default="0" type="INT32" boolean="true">
       <short_desc>S.BUS out</short_desc>
       <long_desc>Set to 1 to enable S.BUS version 1 output instead of RSSI.</long_desc>
@@ -26338,40 +26332,40 @@
       <short_desc>Module IDs [32, 62] that you would like to request telemetry from</short_desc>
       <long_desc>The module IDs [32, 62] that should be asked for telemetry. The data received from these IDs will be published via the esc_status topic.</long_desc>
       <min>0</min>
-      <max>9223372036854775807</max>
+      <max>2147483647</max>
       <reboot_required>True</reboot_required>
       <bitmask>
-        <bit index="32">Module ID 32</bit>
-        <bit index="33">Module ID 33</bit>
-        <bit index="34">Module ID 34</bit>
-        <bit index="35">Module ID 35</bit>
-        <bit index="36">Module ID 36</bit>
-        <bit index="37">Module ID 37</bit>
-        <bit index="38">Module ID 38</bit>
-        <bit index="39">Module ID 39</bit>
-        <bit index="40">Module ID 40</bit>
-        <bit index="41">Module ID 41</bit>
-        <bit index="42">Module ID 42</bit>
-        <bit index="43">Module ID 43</bit>
-        <bit index="44">Module ID 44</bit>
-        <bit index="45">Module ID 45</bit>
-        <bit index="46">Module ID 46</bit>
-        <bit index="47">Module ID 47</bit>
-        <bit index="48">Module ID 48</bit>
-        <bit index="49">Module ID 49</bit>
-        <bit index="50">Module ID 50</bit>
-        <bit index="51">Module ID 51</bit>
-        <bit index="52">Module ID 52</bit>
-        <bit index="53">Module ID 53</bit>
-        <bit index="54">Module ID 54</bit>
-        <bit index="55">Module ID 55</bit>
-        <bit index="56">Module ID 56</bit>
-        <bit index="57">Module ID 57</bit>
-        <bit index="58">Module ID 58</bit>
-        <bit index="59">Module ID 59</bit>
-        <bit index="60">Module ID 60</bit>
-        <bit index="61">Module ID 61</bit>
-        <bit index="62">Module ID 62</bit>
+        <bit index="0">Module ID 32</bit>
+        <bit index="1">Module ID 33</bit>
+        <bit index="2">Module ID 34</bit>
+        <bit index="3">Module ID 35</bit>
+        <bit index="4">Module ID 36</bit>
+        <bit index="5">Module ID 37</bit>
+        <bit index="6">Module ID 38</bit>
+        <bit index="7">Module ID 39</bit>
+        <bit index="8">Module ID 40</bit>
+        <bit index="9">Module ID 41</bit>
+        <bit index="10">Module ID 42</bit>
+        <bit index="11">Module ID 43</bit>
+        <bit index="12">Module ID 44</bit>
+        <bit index="13">Module ID 45</bit>
+        <bit index="14">Module ID 46</bit>
+        <bit index="15">Module ID 47</bit>
+        <bit index="16">Module ID 48</bit>
+        <bit index="17">Module ID 49</bit>
+        <bit index="18">Module ID 50</bit>
+        <bit index="19">Module ID 51</bit>
+        <bit index="20">Module ID 52</bit>
+        <bit index="21">Module ID 53</bit>
+        <bit index="22">Module ID 54</bit>
+        <bit index="23">Module ID 55</bit>
+        <bit index="24">Module ID 56</bit>
+        <bit index="25">Module ID 57</bit>
+        <bit index="26">Module ID 58</bit>
+        <bit index="27">Module ID 59</bit>
+        <bit index="28">Module ID 60</bit>
+        <bit index="29">Module ID 61</bit>
+        <bit index="30">Module ID 62</bit>
       </bitmask>
     </parameter>
     <parameter name="VTQ_THROTTLE_CVI" default="0" type="INT32">

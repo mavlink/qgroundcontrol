@@ -58,7 +58,7 @@ QGCPopupDialog {
                         id:                     factGroupCombo
                         label:                  qsTr("Group")
                         model:                  instrumentValueData.factGroupNames
-                        Component.onCompleted:  currentIndex = comboBox.find(instrumentValueData.factGroupName)
+                        currentIndex:           instrumentValueData.factGroupNames.indexOf(instrumentValueData.factGroupName)
                         onActivated: (index) => {
                             instrumentValueData.setFact(currentText, "")
                             instrumentValueData.icon = ""
@@ -74,7 +74,7 @@ QGCPopupDialog {
                         id:                     factNamesCombo
                         label:                  qsTr("Value")
                         model:                  instrumentValueData.factValueNames
-                        Component.onCompleted:  currentIndex = comboBox.find(instrumentValueData.factName)
+                        currentIndex:           instrumentValueData.factValueNames.indexOf(instrumentValueData.factName)
                         onActivated: (index) => {
                             instrumentValueData.setFact(instrumentValueData.factGroupName, currentText)
                             instrumentValueData.icon = ""
