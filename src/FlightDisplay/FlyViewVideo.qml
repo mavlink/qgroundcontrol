@@ -160,7 +160,7 @@ Item {
 
 
             //use point message if rectangle is very small
-            if (targetCanvas.rectWidth < 10 && targetCanvas.rectHeight < 10) {
+            if (targetCanvas.rectWidth < 1 && targetCanvas.rectHeight < 1) {
                 let pt  = Qt.point(targetCanvas.rectCenterX, targetCanvas.rectCenterY)
                 videoStreaming._camera.startTracking(pt, targetCanvas.rectWidth / 2);
             } else {
