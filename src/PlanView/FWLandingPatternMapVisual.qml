@@ -86,7 +86,6 @@ Item {
     function showMouseArea() {
         if (!_mouseArea) {
             _mouseArea = mouseAreaComponent.createObject(map)
-            map.addMapItem(_mouseArea)
         }
     }
 
