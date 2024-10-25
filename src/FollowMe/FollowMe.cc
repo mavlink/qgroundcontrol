@@ -80,7 +80,7 @@ void FollowMe::_settingsChanged(QVariant value)
 void FollowMe::_enableFollowSend()
 {
     if (!_gcsMotionReportTimer->isActive()) {
-        _gcsMotionReportTimer->setInterval(qMin(qgcApp()->toolbox()->qgcPositionManager()->updateInterval(), kMotionUpdateInterval));
+        _gcsMotionReportTimer->setInterval(qMin(QGCPositionManager::instance()->updateInterval(), kMotionUpdateInterval));
         _gcsMotionReportTimer->start();
     }
 }
@@ -94,7 +94,7 @@ void FollowMe::_disableFollowSend()
 
 void FollowMe::_sendGCSMotionReport()
 {
-    const QGeoPositionInfo geoPositionInfo = qgcApp()->toolbox()->qgcPositionManager()->geoPositionInfo();
+    const QGeoPositionInfo geoPositionInfo = QGCPositionManager::instance()->geoPositionInfo();
     const QGeoCoordinate gcsCoordinate = geoPositionInfo.coordinate();
 
     if (!geoPositionInfo.isValid()) {

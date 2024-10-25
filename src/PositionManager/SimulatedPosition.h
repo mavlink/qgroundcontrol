@@ -25,10 +25,10 @@ public:
     SimulatedPosition(QObject* parent = nullptr);
     ~SimulatedPosition();
 
-    QGeoPositionInfo lastKnownPosition(bool /*fromSatellitePositioningMethodsOnly = false*/) const final { return m_lastPosition; }
+    QGeoPositionInfo lastKnownPosition(bool /*fromSatellitePositioningMethodsOnly = false*/) const final { return _lastPosition; }
 
     PositioningMethods supportedPositioningMethods() const final { return PositioningMethod::AllPositioningMethods; }
-    int minimumUpdateInterval() const final { return s_updateIntervalMsecs; }
+    int minimumUpdateInterval() const final { return kUpdateIntervalMsecs; }
     Error error() const final { return QGeoPositionInfoSource::NoError; }
 
 public slots:
@@ -42,12 +42,12 @@ private slots:
     void _vehicleHomePositionChanged(QGeoCoordinate homePosition);
 
 private:
-    QTimer *m_updateTimer = nullptr;
-    QGeoPositionInfo m_lastPosition;
-    QMetaObject::Connection m_homePositionChangedConnection;
+    QTimer *_updateTimer = nullptr;
+    QGeoPositionInfo _lastPosition;
+    QMetaObject::Connection _homePositionChangedConnection;
 
-    static constexpr int s_updateIntervalMsecs = 1000;
-    static constexpr qreal s_horizontalVelocityMetersPerSec = 0.5;
-    static constexpr qreal s_verticalVelocityMetersPerSec = 0.1;
-    static constexpr qreal s_heading = 45.;
+    static constexpr int kUpdateIntervalMsecs = 1000;
+    static constexpr qreal kHorizontalVelocityMetersPerSec = 0.5;
+    static constexpr qreal kVerticalVelocityMetersPerSec = 0.1;
+    static constexpr qreal kHeading = 45.;
 };

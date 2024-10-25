@@ -25,6 +25,7 @@ target_link_libraries(Comms
         Qt6::Test
         AirLink
         MockLink
+        PositionManager
         Settings
         Vehicle
     PUBLIC

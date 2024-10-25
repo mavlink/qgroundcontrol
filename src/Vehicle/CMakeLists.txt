@@ -48,6 +48,7 @@ target_link_libraries(Vehicle
         FirmwarePlugin
         Joystick
         MockLink
+        PositionManager
         Utilities
         UTMSP
         VideoManager
