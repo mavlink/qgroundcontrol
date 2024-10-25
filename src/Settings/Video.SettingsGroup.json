@@ -59,8 +59,8 @@
     "shortDesc": "Video Display Fit",
     "longDesc":  "Handle Video Aspect Ratio.",
     "type":             "uint32",
-    "enumStrings":      "Fit Width,Fit Height,Stretch",
-    "enumValues":       "0,1,2",
+    "enumStrings":      "Fit Width,Fit Height,Fill,No Crop",
+    "enumValues":       "0,1,2,3",
     "default":     1
 },
 {
