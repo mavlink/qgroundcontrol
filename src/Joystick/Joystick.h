@@ -14,6 +14,7 @@
 
 #include "QGCMAVLink.h"
 #include "CustomActionManager.h"
+#include "QmlObjectListModel.h"
 
 #include <QtCore/QObject>
 #include <QtCore/QThread>

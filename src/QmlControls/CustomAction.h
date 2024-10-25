@@ -11,49 +11,49 @@
 
 #include "MAVLinkLib.h"
 
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
+#include <QtQmlIntegration/QtQmlIntegration>
+
+Q_DECLARE_LOGGING_CATEGORY(CustomActionLog)
 
 class Vehicle;
 
 class CustomAction: public QObject
 {
     Q_OBJECT
-
-    Q_PROPERTY(QString label        READ label          CONSTANT)
-    Q_PROPERTY(QString description  READ description    CONSTANT)
+    QML_ELEMENT
+    Q_MOC_INCLUDE("Vehicle.h")
+    Q_PROPERTY(QString label READ label CONSTANT)
+    Q_PROPERTY(QString description READ description CONSTANT)
 
 public:
-    CustomAction() { CustomAction(QString(), QString(), MAV_CMD(0), MAV_COMPONENT(0), 0, 0, 0, 0, 0, 0, 0); } // this is required for QML reflection
+    explicit CustomAction(QObject *parent = nullptr);
     CustomAction(
-            QString         label,
-            QString         description,
-            MAV_CMD         mavCmd,
-            MAV_COMPONENT   compId,
-            float           param1,
-            float           param2,
-            float           param3,
-            float           param4,
-            float           param5,
-            float           param6,
-            float           param7,
-            QObject*        parent = nullptr)
-        : QObject       (parent)
-        , _label        (label)
-        , _description  (description)
-        , _mavCmd       (mavCmd)
-        , _compId       (compId)
-        , _params       { param1, param2, param3, param4, param5, param6, param7 }
-    {};
+        const QString &label,
+        const QString &description,
+        MAV_CMD mavCmd,
+        MAV_COMPONENT compId,
+        float param1,
+        float param2,
+        float param3,
+        float param4,
+        float param5,
+        float param6,
+        float param7,
+        QObject *parent = nullptr
+    );
+    ~CustomAction();
 
-    Q_INVOKABLE void sendTo(Vehicle* vehicle);
+    Q_INVOKABLE void sendTo(Vehicle *vehicle);
 
-    QString  label      () const { return _label; }
-    QString  description() const { return _description; }
+    const QString &label() const { return _label; }
+    const QString &description() const { return _description; }
 
 private:
-    QString         _label;
-    QString         _description;
-    MAV_CMD         _mavCmd;
-    MAV_COMPONENT   _compId;
-    float           _params[7];
+    const QString _label;
+    const QString _description;
+    const MAV_CMD _mavCmd = MAV_CMD_ENUM_END;
+    const MAV_COMPONENT _compId = MAV_COMPONENT_ENUM_END;
+    const float _params[7]{};
 };

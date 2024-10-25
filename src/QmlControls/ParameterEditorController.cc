@@ -12,10 +12,16 @@
 #include "ParameterManager.h"
 #include "AppSettings.h"
 #include "Vehicle.h"
+#include "QGCLoggingCategory.h"
 
-ParameterEditorController::ParameterEditorController(void)
-    : _parameterMgr(_vehicle->parameterManager())
+QGC_LOGGING_CATEGORY(ParameterEditorControllerLog, "qgc.qmlcontrols.parametereditorcontroller")
+
+ParameterEditorController::ParameterEditorController(QObject *parent)
+    : FactPanelController(parent)
+    , _parameterMgr(_vehicle->parameterManager())
 {
+    // qCDebug(ParameterEditorControllerLog) << Q_FUNC_INFO << this;
+
     _buildLists();
 
     connect(this, &ParameterEditorController::currentCategoryChanged,   this, &ParameterEditorController::_currentCategoryChanged);
@@ -31,7 +37,7 @@ ParameterEditorController::ParameterEditorController(void)
 
 ParameterEditorController::~ParameterEditorController()
 {
-
+    // qCDebug(ParameterEditorControllerLog) << Q_FUNC_INFO << this;
 }
 
 void ParameterEditorController::_buildListsForComponent(int compId)
