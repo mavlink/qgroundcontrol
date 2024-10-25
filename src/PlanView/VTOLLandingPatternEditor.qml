@@ -69,7 +69,6 @@ Rectangle {
             FactCheckBox {
                 text:       qsTr("Use loiter to altitude")
                 fact:       missionItem.useLoiterToAlt
-                visible:    missionItem.useLoiterToAlt.visible
             }
 
             GridLayout {
