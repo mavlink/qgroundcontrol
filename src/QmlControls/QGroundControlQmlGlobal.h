@@ -257,11 +257,13 @@ signals:
     void skipSetupPageChanged           ();
 
 private:
+    QGCMapEngineManager*    _mapEngineManager       = nullptr;
+    ADSBVehicleManager*     _adsbVehicleManager     = nullptr;
+    QGCPositionManager*     _qgcPositionManager     = nullptr;
+
     double                  _flightMapInitialZoom   = 17.0;
     LinkManager*            _linkManager            = nullptr;
     MultiVehicleManager*    _multiVehicleManager    = nullptr;
-    QGCMapEngineManager*    _mapEngineManager       = nullptr;
-    QGCPositionManager*     _qgcPositionManager     = nullptr;
     MissionCommandTree*     _missionCommandTree     = nullptr;
     VideoManager*           _videoManager           = nullptr;
     MAVLinkLogManager*      _mavlinkLogManager      = nullptr;
@@ -272,7 +274,6 @@ private:
     FactGroup*              _gpsRtkFactGroup        = nullptr;
 #endif
     AirLinkManager*         _airlinkManager         = nullptr;
-    ADSBVehicleManager*     _adsbVehicleManager     = nullptr;
     QGCPalette*             _globalPalette          = nullptr;
     QmlUnitsConversion      _unitsConversion;
 #ifdef QGC_UTM_ADAPTER

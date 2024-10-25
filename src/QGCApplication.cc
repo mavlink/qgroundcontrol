@@ -28,6 +28,7 @@
 #include <QtQml/QQmlApplicationEngine>
 
 #include "Audio/AudioOutput.h"
+#include "PositionManager.h"
 #include "QGCConfig.h"
 #include "QGCApplication.h"
 #include "CmdLineOptParser.h"
@@ -419,6 +420,7 @@ void QGCApplication::_initForNormalAppBoot()
 
     AudioOutput::instance()->init(_toolbox->settingsManager()->appSettings()->audioMuted());
     FollowMe::instance()->init();
+    QGCPositionManager::instance()->init();
 
     // Image provider for Optical Flow
     _qmlAppEngine->addImageProvider(qgcImageProviderId, new QGCImageProvider());
