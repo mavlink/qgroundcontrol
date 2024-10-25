@@ -33,17 +33,16 @@ GPSProvider::GPSProvider(const QString &device, GPSType type, const rtk_data_s &
     , _type(type)
     , _requestStop(requestStop)
     , _rtkData(rtkData)
-    , _serial(new QSerialPort(this))
 {
     // qCDebug(GPSProviderLog) << Q_FUNC_INFO << this;
 
     qCDebug(GPSProviderLog) << QString("Survey in accuracy: %1 | duration: %2").arg(_rtkData.surveyInAccMeters).arg(_rtkData.surveyInDurationSecs);
-
-    _serial->setPortName(_device);
 }
 
 GPSProvider::~GPSProvider()
 {
+    delete _serial;
+
     // qCDebug(GPSProviderLog) << Q_FUNC_INFO << this;
 }
 
@@ -169,11 +168,16 @@ void GPSProvider::run()
     delete gpsDriver;
     gpsDriver = nullptr;
 
+    delete _serial;
+    _serial = nullptr;
+
     qCDebug(GPSProviderLog) << Q_FUNC_INFO << "Exiting GPS thread";
 }
 
 bool GPSProvider::_connectSerial()
 {
+    _serial = new QSerialPort();
+    _serial->setPortName(_device);
     if (!_serial->open(QIODevice::ReadWrite)) {
         // Give the device some time to come up. In some cases the device is not
         // immediately accessible right after startup for some reason. This can take 10-20s.
