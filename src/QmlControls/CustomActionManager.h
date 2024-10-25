@@ -9,10 +9,14 @@
 
 #pragma once
 
-#include "Fact.h"
-#include "QmlObjectListModel.h"
-
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
+#include <QtQmlIntegration/QtQmlIntegration>
+
+Q_DECLARE_LOGGING_CATEGORY(CustomActionManagerLog)
+
+class Fact;
+class QmlObjectListModel;
 
 /// Loads the specified action file and provides access to the actions it contains.
 /// Action files are loaded from the default CustomActions directory.
@@ -20,25 +24,28 @@
 class CustomActionManager : public QObject
 {
     Q_OBJECT
-
-    Q_PROPERTY(Fact*                actionFileNameFact  READ  actionFileNameFact WRITE setActionFileNameFact    NOTIFY actionFileNameFactChanged)
-    Q_PROPERTY(QmlObjectListModel*  actions             READ  actions                                           CONSTANT)
+    QML_ELEMENT
+    Q_MOC_INCLUDE("Fact.h")
+    Q_MOC_INCLUDE("QmlObjectListModel.h")
+    Q_PROPERTY(Fact* actionFileNameFact READ actionFileNameFact WRITE setActionFileNameFact NOTIFY actionFileNameFactChanged)
+    Q_PROPERTY(QmlObjectListModel* actions READ actions CONSTANT)
 
 public:
-    CustomActionManager(QObject* parent = nullptr);
-    CustomActionManager(Fact* actionFileNameFact, QObject* parent = nullptr);
+    explicit CustomActionManager(QObject *parent = nullptr);
+    explicit CustomActionManager(Fact *actionFileNameFact, QObject *parent = nullptr);
+    ~CustomActionManager();
 
-    Fact*               actionFileNameFact      (void) { return _actionFileNameFact; }
-    void                setActionFileNameFact   (Fact* actionFileNameFact);
-    QmlObjectListModel* actions                 (void) { return &_actions; }
+    Fact *actionFileNameFact() { return _actionFileNameFact; }
+    void setActionFileNameFact(Fact *actionFileNameFact);
+    QmlObjectListModel *actions() { return _actions; }
 
 signals:
     void actionFileNameFactChanged();
 
 private slots:
-    void _loadActionsFile(void);
+    void _loadActionsFile();
 
 private:
-    Fact*               _actionFileNameFact;
-    QmlObjectListModel  _actions;
+    Fact *_actionFileNameFact = nullptr;
+    QmlObjectListModel *_actions = nullptr;
 };
