@@ -26,7 +26,7 @@ void init()
     ::atexit(Exiv2::XmpParser::terminate);
 }
 
-double readTime(const QByteArray &buf)
+QDateTime readTime(const QByteArray &buf)
 {
     try {
         // Convert QByteArray to std::string for Exiv2
@@ -36,7 +36,7 @@ double readTime(const QByteArray &buf)
         const Exiv2::ExifData &exifData = image->exifData();
         if (exifData.empty()) {
             qCWarning(ExifParserLog) << "No EXIF data found in the image.";
-            return -1.0;
+            return QDateTime();
         }
 
         // Read DateTimeOriginal
@@ -45,7 +45,7 @@ double readTime(const QByteArray &buf)
         const Exiv2::ExifData::const_iterator pos = exifData.findKey(key);
         if (pos == exifData.end()) {
             qCWarning(ExifParserLog) << "No DateTimeOriginal found.";
-            return -1.0;
+            return QDateTime();
         }
 
         const std::string dateTimeOriginal = pos->toString();
@@ -54,7 +54,7 @@ double readTime(const QByteArray &buf)
 
         if (createDateList.size() < 2) {
             qCWarning(ExifParserLog) << "Invalid date/time format: " << createDateList;
-            return -1.0;
+            return QDateTime();
         }
 
         const QStringList dateList = createDateList[0].split(':');
@@ -62,7 +62,7 @@ double readTime(const QByteArray &buf)
 
         if ((dateList.size() < 3) || (timeList.size() < 3)) {
             qCWarning(ExifParserLog) << "Could not parse creation date/time: " << dateList << " " << timeList;
-            return -1.0;
+            return QDateTime();
         }
 
         const QDate date(dateList[0].toInt(), dateList[1].toInt(), dateList[2].toInt());
@@ -70,14 +70,14 @@ double readTime(const QByteArray &buf)
 
         const QDateTime tagTime(date, time);
 
-        return (tagTime.toMSecsSinceEpoch() / 1000.0);
+        return tagTime;
     } catch (const Exiv2::Error &e) {
         qCWarning(ExifParserLog) << "Error reading EXIF data:" << e.what();
-        return -1.0;
+        return QDateTime();
     }
 }
 
-bool write(QByteArray &buf, const GeoTagWorker::cameraFeedbackPacket &geotag)
+bool write(QByteArray &buf, const GeoTagWorker::CameraFeedbackPacket &geotag)
 {
     try {
         // Convert QByteArray to std::string for Exiv2

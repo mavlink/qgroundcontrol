@@ -12,13 +12,13 @@ void ExifParserTest::_readTimeTest()
     const QByteArray imageBuffer = file.readAll();
     file.close();
 
-    const double imageTime = ExifParser::readTime(imageBuffer);
+    const qint64 imageTime = ExifParser::readTime(imageBuffer).toSecsSinceEpoch();
 
     const QDate date(2008, 10, 22);
     const QTime time(16, 28, 39);
 
     const QDateTime tagTime(date, time);
-    const double expectedTime = (tagTime.toMSecsSinceEpoch() / 1000.0);
+    const qint64 expectedTime = tagTime.toSecsSinceEpoch();
 
     QCOMPARE(imageTime, expectedTime);
 }
@@ -31,7 +31,7 @@ void ExifParserTest::_writeTest()
     QByteArray imageBuffer = file.readAll();
     file.close();
 
-    struct GeoTagWorker::cameraFeedbackPacket data;
+    struct GeoTagWorker::CameraFeedbackPacket data;
 
     data.latitude = 37.225;
     data.longitude = -80.425;

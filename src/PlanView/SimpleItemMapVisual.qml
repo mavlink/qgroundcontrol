@@ -97,14 +97,11 @@ Item {
         target: _missionItem.isSimpleItem ? _missionItem : null
 
         onLoiterRadiusChanged: {
-            _loiterVisual.blockSignals = true
-            _loiterVisual.clockwiseRotation = _missionItem.loiterRadius>= 0
-            _loiterVisual.blockSignals = false
-            _loiterVisual.radius.rawValue = Math.abs(_missionItem.loiterRadius)
+            _loiterVisual.handleLoiterRadiusChange()
         }
 
         onCoordinateChanged: {
-            _loiterVisual.coordinate = _missionItem.coordinate
+            _loiterVisual.handleCoordinateChange()
         }
     }
 
@@ -147,6 +144,17 @@ Item {
             property alias radius:            _mapCircle.radius
             property alias clockwiseRotation: _mapCircle.clockwiseRotation
 
+            function handleLoiterRadiusChange() {
+                blockSignals = true
+                clockwiseRotation = _missionItem.loiterRadius>= 0
+                blockSignals = false
+                radius.rawValue = Math.abs(_missionItem.loiterRadius)
+            }
+
+            function handleCoordinateChange() {
+                coordinate = _missionItem.coordinate
+            }
+
             onCoordinateChanged:              _mapCircle.center = coordinate
 
             sourceItem: QGCMapCircleVisuals {
@@ -176,6 +184,11 @@ Item {
                         if(!blockSignals) loiterMapCircleVisuals.updateMissionItem()
                     }
                 }
+            }
+
+            Component.onCompleted: {
+                handleLoiterRadiusChange()
+                handleCoordinateChange()
             }
         }
     }

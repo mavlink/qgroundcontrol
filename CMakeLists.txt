@@ -150,28 +150,26 @@ if(ANDROID)
         message(STATUS "QT_ANDROID_KEYSTORE_ALIAS $ENV{QT_ANDROID_KEYSTORE_ALIAS}")
         # QT_ANDROID_KEYSTORE_STORE_PASS, QT_ANDROID_KEYSTORE_KEY_PASS
     endif()
-
-    if(NOT Qt6LinguistTools_DIR)
-        set(Qt6LinguistTools_DIR ${QT_HOST_PATH}/lib/cmake/Qt6LinguistTools)
-    endif()
 endif()
+
+set(QT_SILENCE_MISSING_DEPENDENCY_TARGET_WARNING ON)
 
 find_package(Qt6
     REQUIRED
     COMPONENTS
-        Bluetooth
-        Charts
         Concurrent
         Core
         Core5Compat
         Location
         Multimedia
         Network
+        OpenGL
         Positioning
+        Qml
+        QmlIntegration
         Quick
         QuickControls2
         QuickWidgets
-        OpenGL
         Sensors
         Sql
         Svg
@@ -180,6 +178,8 @@ find_package(Qt6
         Widgets
         Xml
     OPTIONAL_COMPONENTS
+        Bluetooth
+        Charts
         LinguistTools
         MultimediaQuickPrivate
         Quick3D
@@ -188,6 +188,10 @@ find_package(Qt6
     HINTS
         ${QT_LIBRARY_HINTS}
 )
+
+if(NOT Qt6LinguistTools_DIR)
+    set(Qt6LinguistTools_DIR ${QT_HOST_PATH}/lib/cmake/Qt6LinguistTools)
+endif()
 
 # Require 6.6.3 because otherwise libQt6QuickControls2Basic.so.6 &
 # libQt6QuickControls2BasicStyleImpl.so.6 are missing.

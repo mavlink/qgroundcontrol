@@ -60,11 +60,20 @@ qt_add_resources(Joystick "gamecontrollerdb.txt"
     FILES ${sdl_gamecontrollerdb_SOURCE_DIR}/gamecontrollerdb.txt
 )
 
+qt_add_qml_module(Joystick
+    URI QGroundControl.JoystickManager
+    VERSION 1.0
+    OUTPUT_TARGETS Joystick_targets
+    IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
+)
+
+cmake_print_variables(Joystick_targets)
+
 set(MINIMUM_SDL2_VERSION 2.30.0)
 
 if(NOT QGC_BUILD_DEPENDENCIES)
     find_package(SDL2 ${MINIMUM_SDL2_VERSION})
-    if(SDL2_FOUND)
+    if(TARGET SDL2::SDL2)
         message(STATUS "Found JoystickSDL ${SDL2_VERSION_STRING}")
         target_link_libraries(Joystick PRIVATE SDL2::SDL2)
         return()
@@ -72,7 +81,7 @@ if(NOT QGC_BUILD_DEPENDENCIES)
         find_package(PkgConfig)
         if(PkgConfig_FOUND)
             pkg_check_modules(SDL2 IMPORTED_TARGET sdl2>=${MINIMUM_SDL2_VERSION})
-            if(SDL2_FOUND)
+            if(TARGET PkgConfig::SDL2)
                 message(STATUS "Found JoystickSDL ${SDL2_VERSION}")
                 target_link_libraries(Joystick PRIVATE PkgConfig::SDL2)
                 return()

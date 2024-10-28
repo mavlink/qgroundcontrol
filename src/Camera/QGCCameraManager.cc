@@ -69,9 +69,8 @@ void QGCCameraManager::_vehicleReady(bool ready)
     if(ready) {
         if(qgcApp()->toolbox()->multiVehicleManager()->activeVehicle() == _vehicle) {
             _vehicleReadyState = true;
-            JoystickManager *pJoyMgr = qgcApp()->toolbox()->joystickManager();
-            _activeJoystickChanged(pJoyMgr->activeJoystick());
-            connect(pJoyMgr, &JoystickManager::activeJoystickChanged, this, &QGCCameraManager::_activeJoystickChanged);
+            _activeJoystickChanged(JoystickManager::instance()->activeJoystick());
+            connect(JoystickManager::instance(), &JoystickManager::activeJoystickChanged, this, &QGCCameraManager::_activeJoystickChanged);
         }
     }
 }

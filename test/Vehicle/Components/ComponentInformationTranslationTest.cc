@@ -18,7 +18,7 @@ void ComponentInformationTranslationTest::_basic_test()
 {
     QString translationJson = ":/unittest/TranslationTest.json";
     QString translationTs = ":/unittest/TranslationTest_de_DE.ts";
-    ComponentInformationTranslation* translation = new ComponentInformationTranslation(this, new QGCCachedFileDownload(this, ""));
+    ComponentInformationTranslation* translation = new ComponentInformationTranslation(this, new QGCCachedFileDownload("", this));
     QString tempFilename = translation->translateJsonUsingTS(translationJson, translationTs);
 
     QVERIFY(!tempFilename.isEmpty());
