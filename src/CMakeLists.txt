@@ -23,7 +23,6 @@ if(QGC_UTM_ADAPTER)
 endif()
 
 add_subdirectory(ADSB)
-add_subdirectory(AirLink)
 add_subdirectory(AnalyzeView)
 add_subdirectory(API)
 add_subdirectory(Audio)
@@ -68,7 +67,6 @@ target_link_libraries(QGC
         Qt6::Bluetooth
         API
         ADSB
-        AirLink
         AnalyzeView
         Audio
         AutoPilotPlugins
