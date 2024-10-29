@@ -16,17 +16,11 @@
 
 QGC_LOGGING_CATEGORY(QGCZlibLog, "qgc.compression.qgczlib")
 
-namespace QGCZlib {
+namespace QGCZlib
+{
 
 bool inflateGzipFile(const QString &gzippedFileName, const QString &decompressedFilename)
 {
-    bool success = true;
-    int ret = 0;
-    constexpr int cBuffer = 1024 * 5;
-    unsigned char inputBuffer[cBuffer];
-    unsigned char outputBuffer[cBuffer];
-    z_stream strm;
-
     QFile inputFile(gzippedFileName);
     if (!inputFile.open(QIODevice::ReadOnly)) {
         qCWarning(QGCZlibLog) << "open input file failed" << gzippedFileName << inputFile.errorString();
@@ -35,22 +29,29 @@ bool inflateGzipFile(const QString &gzippedFileName, const QString &decompressed
 
     QFile outputFile(decompressedFilename);
     if (!outputFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-        qCWarning(QGCZlibLog) << "open input file failed" << outputFile.fileName() << outputFile.errorString();
+        qCWarning(QGCZlibLog) << "open output file failed" << outputFile.fileName() << outputFile.errorString();
+        inputFile.close();
         return false;
     }
 
+    z_stream strm;
     strm.zalloc = nullptr;
     strm.zfree = nullptr;
     strm.opaque = nullptr;
     strm.avail_in = 0;
     strm.next_in = nullptr;
 
-    ret = inflateInit2(&strm, 16 + MAX_WBITS);
+    int ret = inflateInit2(&strm, 16 + MAX_WBITS);
     if (ret != Z_OK) {
         qCWarning(QGCZlibLog) << "inflateInit2 failed:" << ret;
-        goto Error;
+        inputFile.close();
+        outputFile.close();
+        return false;
     }
 
+    constexpr int cBuffer = 1024 * 5;
+    unsigned char inputBuffer[cBuffer];
+    unsigned char outputBuffer[cBuffer];
     do {
         strm.avail_in = static_cast<unsigned>(inputFile.read(reinterpret_cast<char*>(inputBuffer), cBuffer));
         if (strm.avail_in == 0) {
@@ -63,28 +64,36 @@ bool inflateGzipFile(const QString &gzippedFileName, const QString &decompressed
             strm.next_out = outputBuffer;
 
             ret = inflate(&strm, Z_NO_FLUSH);
-            if ((ret != Z_OK) && (ret != Z_STREAM_END)) {
+            if (ret == Z_STREAM_ERROR || ret == Z_DATA_ERROR || ret == Z_MEM_ERROR) {
                 qCWarning(QGCZlibLog) << "inflate failed:" << ret;
-                goto Error;
+                inflateEnd(&strm);
+                inputFile.close();
+                outputFile.close();
+                return false;
             }
 
             const unsigned cBytesInflated = cBuffer - strm.avail_out;
-            const qint64 cBytesWritten = outputFile.write(reinterpret_cast<char*>(outputBuffer), static_cast<int>(cBytesInflated));
-            if (cBytesWritten != cBytesInflated) {
+            if (outputFile.write(reinterpret_cast<char*>(outputBuffer), cBytesInflated) != cBytesInflated) {
                 qCWarning(QGCZlibLog) << "output file write failed:" << outputFile.fileName() << outputFile.errorString();
-                goto Error;
-
+                inflateEnd(&strm);
+                inputFile.close();
+                outputFile.close();
+                return false;
             }
         } while (strm.avail_out == 0);
+
     } while (ret != Z_STREAM_END);
 
-Out:
     inflateEnd(&strm);
-    return success;
+    inputFile.close();
+    outputFile.close();
 
-Error:
-    success = false;
-    goto Out;
+    if (ret != Z_STREAM_END) {
+        qCWarning(QGCZlibLog) << "inflate did not reach stream end:" << ret;
+        return false;
+    }
+
+    return true;
 }
 
 } // namespace QGCZlib
