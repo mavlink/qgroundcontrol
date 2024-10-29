@@ -21,7 +21,7 @@
 #include "MockLink.h"
 #endif
 #ifndef QGC_AIRLINK_DISABLED
-#include "AirlinkLink.h"
+#include "AirLinkLink.h"
 #endif
 
 LinkConfiguration::LinkConfiguration(const QString &name, QObject *parent)
@@ -90,8 +90,8 @@ LinkConfiguration *LinkConfiguration::createSettings(int type, const QString &na
         break;
 #endif
 #ifndef QGC_AIRLINK_DISABLED
-    case Airlink:
-        config = new AirlinkConfiguration(name);
+    case AirLink:
+        config = new AirLinkConfiguration(name);
         break;
 #endif
     case TypeLast:
@@ -132,8 +132,8 @@ LinkConfiguration *LinkConfiguration::duplicateSettings(const LinkConfiguration 
         break;
 #endif
 #ifndef QGC_AIRLINK_DISABLED
-    case Airlink:
-        dupe = new AirlinkConfiguration(qobject_cast<const AirlinkConfiguration*>(source));
+    case AirLink:
+        dupe = new AirLinkConfiguration(qobject_cast<const AirLinkConfiguration*>(source));
         break;
 #endif
     case TypeLast:
