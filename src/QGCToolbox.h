@@ -20,9 +20,6 @@ class QGCApplication;
 class VideoManager;
 class QGCCorePlugin;
 class SettingsManager;
-#ifndef QGC_AIRLINK_DISABLED
-class AirLinkManager;
-#endif
 #ifdef QGC_UTM_ADAPTER
 class UTMSPManager;
 #endif
@@ -40,9 +37,6 @@ public:
     VideoManager*               videoManager            () { return _videoManager; }
     QGCCorePlugin*              corePlugin              () { return _corePlugin; }
     SettingsManager*            settingsManager         () { return _settingsManager; }
-#ifndef QGC_AIRLINK_DISABLED
-    AirLinkManager*              airlinkManager          () { return _airlinkManager; }
-#endif
 #ifdef QGC_UTM_ADAPTER
     UTMSPManager*                utmspManager             () { return _utmspManager; }
 #endif
@@ -57,12 +51,8 @@ private:
     VideoManager*               _videoManager           = nullptr;
     QGCCorePlugin*              _corePlugin             = nullptr;
     SettingsManager*            _settingsManager        = nullptr;
-#ifndef QGC_AIRLINK_DISABLED
-    AirLinkManager*             _airlinkManager         = nullptr;
-#endif
-
 #ifdef QGC_UTM_ADAPTER
-    UTMSPManager*                _utmspManager            = nullptr;
+    UTMSPManager*               _utmspManager           = nullptr;
 #endif
     friend class QGCApplication;
 };

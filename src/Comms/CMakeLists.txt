@@ -1,3 +1,4 @@
+add_subdirectory(AirLink)
 add_subdirectory(MockLink)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Network Qml Test Widgets)
@@ -23,7 +24,6 @@ target_link_libraries(Comms
     PRIVATE
         Qt6::Qml
         Qt6::Test
-        AirLink
         MockLink
         PositionManager
         Settings
@@ -31,6 +31,7 @@ target_link_libraries(Comms
     PUBLIC
         Qt6::Core
         Qt6::Network
+        AirLink
         MAVLink
         QGC
         QmlControls
