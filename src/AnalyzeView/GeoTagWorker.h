@@ -9,61 +9,66 @@
 
 #pragma once
 
-#include <QtCore/QObject>
-#include <QtCore/QString>
-#include <QtCore/QThread>
 #include <QtCore/QFileInfoList>
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QObject>
+#include <QtCore/QString>
 
 Q_DECLARE_LOGGING_CATEGORY(GeoTagWorkerLog)
 
-class GeoTagWorker : public QThread
+class GeoTagWorker : public QObject
 {
     Q_OBJECT
 
 public:
-    GeoTagWorker();
+    explicit GeoTagWorker(QObject *parent = nullptr);
+    ~GeoTagWorker();
 
-    void setLogFile         (const QString& logFile)        { _logFile = logFile; }
-    void setImageDirectory  (const QString& imageDirectory) { _imageDirectory = imageDirectory; }
-    void setSaveDirectory   (const QString& saveDirectory)  { _saveDirectory = saveDirectory; }
+    QString logFile() const { return _logFile; }
+    void setLogFile(const QString &logFile) { _logFile = logFile; }
+    QString imageDirectory() const { return _imageDirectory; }
+    void setImageDirectory(const QString &imageDirectory) { _imageDirectory = imageDirectory; }
+    QString saveDirectory() const { return _saveDirectory; }
+    void setSaveDirectory(const QString &saveDirectory) { _saveDirectory = saveDirectory; }
 
-    QString logFile         () const { return _logFile; }
-    QString imageDirectory  () const { return _imageDirectory; }
-    QString saveDirectory   () const { return _saveDirectory; }
-
-    void cancelTagging      () { _cancel = true; }
-
-    struct cameraFeedbackPacket {
-        double timestamp;
-        double timestampUTC;
-        uint32_t imageSequence;
-        double latitude;
-        double longitude;
-        float altitude;
-        float groundDistance;
-        float attitudeQuaternion[4];
-        uint8_t captureResult;
+    struct CameraFeedbackPacket {
+        double timestamp = 0.;
+        double timestampUTC = 0.;
+        uint32_t imageSequence = 0;
+        double latitude = 0.;
+        double longitude = 0.;
+        float altitude = 0.;
+        float groundDistance = 0.;
+        float attitudeQuaternion[4]{};
+        uint8_t captureResult = 0;
     };
 
-protected:
-    void run() final;
-
 signals:
-    void error              (QString errorMsg);
-    void taggingComplete    ();
-    void progressChanged    (double progress);
+    void error(const QString &errorMsg);
+    void progressChanged(double progress);
+    void taggingComplete();
+
+public slots:
+    bool process();
+    void cancelTagging() { _cancel = true; }
 
 private:
-    bool triggerFiltering();
+    bool _loadImages();
+    bool _parseExif();
+    bool _parseLogs();
+    bool _calibrate();
+    bool _tagImages();
 
-    bool                    _cancel;
-    QString                 _logFile;
-    QString                 _imageDirectory;
-    QString                 _saveDirectory;
-    QFileInfoList           _imageList;
-    QList<double>           _imageTime;
-    QList<cameraFeedbackPacket> _triggerList;
-    QList<int>              _imageIndices;
-    QList<int>              _triggerIndices;
+    bool _cancel = false;
+    QString _logFile;
+    QString _imageDirectory;
+    QString _saveDirectory;
+    QFileInfoList _imageList;
+    QList<double> _imageTimestamps;
+    QList<CameraFeedbackPacket> _triggerList;
+    QList<int> _imageIndices;
+    QList<int> _imageOffsets;
+    QList<int> _triggerIndices;
+
+    static constexpr double kSteps = 5.;
 };

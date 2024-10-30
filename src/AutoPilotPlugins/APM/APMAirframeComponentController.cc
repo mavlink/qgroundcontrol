@@ -213,7 +213,7 @@ void APMAirframeComponentController::_loadParametersFromDownloadFile(const QStri
 
 void APMAirframeComponentController::loadParameters(const QString& paramFile)
 {
-    QGuiApplication::overrideCursor()->setShape(Qt::WaitCursor);
+    QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 
     QString paramFileUrl = QStringLiteral("https://api.github.com/repos/ArduPilot/ardupilot/contents/Tools/Frame_params/%1?ref=master");
 

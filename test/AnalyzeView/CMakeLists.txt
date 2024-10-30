@@ -4,6 +4,8 @@ qt_add_library(AnalyzeViewTest
     STATIC
         ExifParserTest.cc
         ExifParserTest.h
+        GeoTagControllerTest.cc
+        GeoTagControllerTest.h
         LogDownloadTest.cc
         LogDownloadTest.h
         MavlinkLogTest.cc

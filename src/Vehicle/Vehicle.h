@@ -58,7 +58,6 @@ class ImageProtocolManager;
 class StatusTextHandler;
 class InitialConnectStateMachine;
 class Joystick;
-class JoystickManager;
 class LinkInterface;
 class LinkManager;
 class MAVLinkProtocol;
@@ -82,10 +81,6 @@ class GimbalController;
 #ifdef QGC_UTM_ADAPTER
 class UTMSPVehicle;
 #endif
-#ifndef OPAQUE_PTR_VEHICLE
-    #define OPAQUE_PTR_VEHICLE
-    Q_DECLARE_OPAQUE_POINTER(Actuators*)
-#endif
 
 namespace events {
 namespace parser {
@@ -105,6 +100,7 @@ class Vehicle : public VehicleFactGroup
     Q_MOC_INCLUDE("Autotune.h")
     Q_MOC_INCLUDE("RemoteIDManager.h")
     Q_MOC_INCLUDE("QGCCameraManager.h")
+    Q_MOC_INCLUDE("Actuators/Actuators.h")
 
     friend class InitialConnectStateMachine;
     friend class VehicleLinkManager;
@@ -121,7 +117,6 @@ public:
             MAV_AUTOPILOT           firmwareType,
             MAV_TYPE                vehicleType,
             FirmwarePluginManager*  firmwarePluginManager,
-            JoystickManager*        joystickManager,
             QObject*                parent = nullptr);
 
     // Pass these into the offline constructor to create an offline vehicle which tracks the offline vehicle settings
@@ -1063,7 +1058,6 @@ private:
     LinkManager*                    _linkManager                    = nullptr;
     ParameterManager*               _parameterManager               = nullptr;
     FirmwarePluginManager*          _firmwarePluginManager          = nullptr;
-    JoystickManager*                _joystickManager                = nullptr;
     ComponentInformationManager*    _componentInformationManager    = nullptr;
     VehicleObjectAvoidance*         _objectAvoidance                = nullptr;
     Autotune*                       _autotune                       = nullptr;

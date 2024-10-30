@@ -2,10 +2,10 @@
 
 set -e
 
-apt update -y --quiet
+apt-get update -y --quiet
 
 # Build Tools
-DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
+DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
     appstream \
     binutils \
     build-essential \
@@ -29,39 +29,47 @@ DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
     pkgconf \
     python3 \
     python3-pip \
-    rsync
+    rsync \
+    zsync
 
 # Qt Required - https://doc.qt.io/qt-6/linux-requirements.html
-DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
-    libfontconfig1 \
-    libfreetype6 \
-    libx11-6 \
-    libx11-xcb1 \
-    libxcb-cursor0 \
-    libxcb-glx0 \
-    libxcb-icccm4 \
-    libxcb-image0 \
-    libxcb-keysyms1 \
-    libxcb-randr0 \
-    libxcb-render-util0 \
-    libxcb-render0 \
-    libxcb-shape0 \
-    libxcb-shm0 \
-    libxcb-sync1 \
-    libxcb-util1 \
-    libxcb-xfixes0 \
-    libxcb-xinerama0 \
-    libxcb-xkb1 \
-    libxcb1 \
-    libxext6 \
-    libxfixes3 \
-    libxi6 \
-    libxkbcommon-x11-0 \
-    libxkbcommon0 \
-    libxrender1
+DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
+    libatspi2.0-dev \
+    libfontconfig1-dev \
+    libfreetype-dev \
+    libglib2.0-dev \
+    libsm-dev \
+    libx11-dev \
+    libx11-xcb-dev \
+    libxcb-cursor-dev \
+    libxcb-glx0-dev \
+    libxcb-icccm4-dev \
+    libxcb-image0-dev \
+    libxcb-keysyms1-dev \
+    libxcb-present-dev \
+    libxcb-randr0-dev \
+    libxcb-render-util0-dev \
+    libxcb-render0-dev \
+    libxcb-shape0-dev \
+    libxcb-shm0-dev \
+    libxcb-sync-dev \
+    libxcb-util-dev \
+    libxcb-xfixes0-dev \
+    libxcb-xinerama0-dev \
+    libxcb-xkb-dev \
+    libxcb1-dev \
+    libxext-dev \
+    libxfixes-dev \
+    libxi-dev \
+    libxkbcommon-dev \
+    libxkbcommon-x11-dev \
+    libxrender-dev
+
+DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
+    libunwind-dev
 
 # GStreamer
-DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
+DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
     libgstreamer1.0-dev \
     libgstreamer-plugins-bad1.0-dev \
     libgstreamer-plugins-base1.0-dev \
@@ -83,7 +91,7 @@ if apt-cache show gstreamer1.0-qt6 >/dev/null 2>&1 && apt-cache show gstreamer1.
 fi
 
 # Exiv2
-DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
+DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
     libbrotli-dev \
     libcurl4-openssl-dev \
     libexiv2-dev \
@@ -94,43 +102,86 @@ DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
     libz-dev \
     zlib1g-dev
 
-# Additional
-DEBIAN_FRONTEND=noninteractive apt -y --quiet install \
+# Speech
+DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
+    flite \
     flite1-dev \
+    libflite1 \
+    libspeechd-dev \
+    speech-dispatcher \
+    speech-dispatcher-audio-plugins \
+    speech-dispatcher-espeak \
+    speech-dispatcher-espeak-ng \
+    speech-dispatcher-flite \
+
+# Additional
+DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
+    bison \
+    flex \
+    gobject-introspection \
+    gvfs \
     intel-media-va-driver \
     libasound2-dev \
     libass-dev \
     libdrm-dev \
+    libcairo-dev \
+    libelf-dev \
     libegl1-mesa-dev \
     libgbm-dev \
-    libgl1-mesa-dev \
     libgl-dev \
-    libglx-dev \
+    libgl1-mesa-dev \
+    libgles-dev \
     libgles2-mesa-dev \
-    libglu1-mesa-dev \
+    libglew-dev \
     libglfw3-dev \
+    libglu1-mesa-dev \
+    libglvnd-dev \
+    libglx-dev \
+    libglx-mesa0 \
+    libgudev-1.0-dev \
+    libgraphene-1.0-dev \
+    libharfbuzz-dev \
+    libmp3lame-dev \
+    libmjpegtools-dev \
+    libjpeg-dev \
+    libjson-glib-1.0-0 \
+    libjson-glib-dev \
     libopenal-dev \
+    libopenjp2-7-dev \
+    libopus-dev \
+    liborc-0.4-dev \
+    libpng-dev \
     libpulse-dev \
     libsdl2-dev \
-    libspeechd-dev \
     libshp-dev \
-    libunwind-dev \
+    libsoup2.4-dev \
+    libssl-dev \
+    libtheora-dev \
     libva-dev \
     libvdpau-dev \
+    libvorbis-dev \
     libvpx-dev \
     libwayland-dev \
-    libx11-dev \
+    libwxgtk3.*-dev \
+    libx264-dev \
+    libx265-dev \
+    libxcb-dri2-0-dev \
+    libxcb-dri3-dev \
+    libxcb-xf86dri0-dev \
+    libxml2-dev \
     libzstd-dev \
     mesa-common-dev \
     mesa-utils \
     mesa-va-drivers \
     mesa-vdpau-drivers \
     mesa-vulkan-drivers \
-    speech-dispatcher \
-    speech-dispatcher-espeak \
-    speech-dispatcher-espeak-ng \
-    speech-dispatcher-flite \
-    vainfo
+    va-driver-all \
+    vainfo \
+    wayland-protocols
+
+if apt-cache show libdav1d-dev >/dev/null 2>&1 && apt-cache show libdav1d-dev 2>/dev/null | grep -q "^Package: libdav1d-dev"; then
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --quiet libdav1d-dev
+fi
 
 if apt-cache show libvpl-dev >/dev/null 2>&1 && apt-cache show libvpl-dev 2>/dev/null | grep -q "^Package: libvpl-dev"; then
     DEBIAN_FRONTEND=noninteractive apt-get install -y --quiet libvpl-dev

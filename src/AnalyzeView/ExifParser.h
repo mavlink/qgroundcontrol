@@ -17,8 +17,9 @@ class QByteArray;
 
 Q_DECLARE_LOGGING_CATEGORY(ExifParserLog)
 
-namespace ExifParser {
+namespace ExifParser
+{
     void init();
-    double readTime(const QByteArray &buf);
-    bool write(QByteArray &buf, const GeoTagWorker::cameraFeedbackPacket &geotag);
+    QDateTime readTime(const QByteArray &buf);
+    bool write(QByteArray &buf, const GeoTagWorker::CameraFeedbackPacket &geotag);
 }

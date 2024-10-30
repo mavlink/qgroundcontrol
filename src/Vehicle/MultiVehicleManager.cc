@@ -32,7 +32,6 @@ MultiVehicleManager::MultiVehicleManager(QGCApplication* app, QGCToolbox* toolbo
     , _activeVehicle(nullptr)
     , _offlineEditingVehicle(nullptr)
     , _firmwarePluginManager(nullptr)
-    , _joystickManager(nullptr)
     , _mavlinkProtocol(nullptr)
     , _gcsHeartbeatEnabled(true)
 {
@@ -47,7 +46,6 @@ void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
     QGCTool::setToolbox(toolbox);
 
     _firmwarePluginManager =     _toolbox->firmwarePluginManager();
-    _joystickManager =           _toolbox->joystickManager();
     _mavlinkProtocol =           _toolbox->mavlinkProtocol();
 
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
@@ -119,7 +117,7 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
         _app->showAppMessage(tr("Warning: A vehicle is using the same system id as %1: %2").arg(QCoreApplication::applicationName()).arg(vehicleId));
     }
 
-    Vehicle* vehicle = new Vehicle(link, vehicleId, componentId, (MAV_AUTOPILOT)vehicleFirmwareType, (MAV_TYPE)vehicleType, _firmwarePluginManager, _joystickManager, this);
+    Vehicle* vehicle = new Vehicle(link, vehicleId, componentId, (MAV_AUTOPILOT)vehicleFirmwareType, (MAV_TYPE)vehicleType, _firmwarePluginManager, this);
     connect(vehicle,                        &Vehicle::requestProtocolVersion,           this, &MultiVehicleManager::_requestProtocolVersion);
     connect(vehicle->vehicleLinkManager(),  &VehicleLinkManager::allLinksRemoved,       this, &MultiVehicleManager::_deleteVehiclePhase1);
     connect(vehicle->parameterManager(),    &ParameterManager::parametersReadyChanged,  this, &MultiVehicleManager::_vehicleParametersReadyChanged);

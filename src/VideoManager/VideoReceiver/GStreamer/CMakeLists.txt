@@ -20,8 +20,11 @@ endif()
 
 target_sources(GStreamerReceiver
     PRIVATE
-        gstqgc.c
-        gstqgcvideosinkbin.c
+        gstqgc.cc
+        gstqgcelement.cc
+        gstqgcelements.h
+        gstqgcvideosinkbin.cc
+        gstqgcvideosinkbin.h
         GStreamer.cc
         GStreamer.h
         GstVideoReceiver.cc
@@ -31,13 +34,14 @@ target_sources(GStreamerReceiver
 if(IOS)
     target_sources(GStreamerReceiver
         PRIVATE
-            gst_ios_init.h
             gst_ios_init.m
+            gst_ios_init.h
     )
 endif()
 
 target_link_libraries(GStreamerReceiver
     PRIVATE
+        QGC
         Utilities
     PUBLIC
         Qt6::Core
@@ -46,4 +50,4 @@ target_link_libraries(GStreamerReceiver
         VideoReceiver
 )
 
-target_compile_definitions(QGC PUBLIC QGC_GST_STREAMING)
+target_compile_definitions(GStreamerReceiver PUBLIC QGC_GST_STREAMING)

@@ -29,6 +29,7 @@ add_qgc_test(ADSBTest)
 
 add_subdirectory(AnalyzeView)
 add_qgc_test(ExifParserTest)
+add_qgc_test(GeoTagControllerTest)
 # add_qgc_test(LogDownloadTest)
 # add_qgc_test(MavlinkLogTest)
 add_qgc_test(PX4LogParserTest)
@@ -53,6 +54,9 @@ add_qgc_test(FollowMeTest)
 
 add_subdirectory(Geo)
 add_qgc_test(GeoTest)
+
+add_subdirectory(GPS)
+add_qgc_test(GpsTest)
 
 add_subdirectory(MAVLink)
 add_qgc_test(StatusTextHandlerTest)
@@ -97,6 +101,7 @@ add_subdirectory(UI)
 add_subdirectory(Utilities)
 # Compression
 add_qgc_test(DecompressionTest)
+add_qgc_test(UtilitiesTest)
 
 add_subdirectory(Vehicle)
 # Components
@@ -132,6 +137,7 @@ target_link_libraries(qgctest
         FactSystemTest
         FollowMeTest
         GeoTest
+        GpsTest
         MAVLinkTest
         MissionManagerTest
         QmlControlsTest

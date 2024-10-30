@@ -7,87 +7,91 @@
  *
  ****************************************************************************/
 
-
 #pragma once
 
-
-#include "GPSPositionMessage.h"
-#include "Drivers/src/gps_helper.h"
-
+#include <QtCore/QByteArray>
+#include <QtCore/QLoggingCategory>
+#include <QtCore/QMetaType>
+#include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QThread>
-#include <QtCore/QByteArray>
+
+#include <gps_helper.h>
+
+#include "satellite_info.h"
+#include "sensor_gnss_relative.h"
+#include "sensor_gps.h"
+
+Q_DECLARE_LOGGING_CATEGORY(GPSProviderLog)
 
 class QSerialPort;
+class GPSBaseStationSupport;
 
-
-/**
- ** class GPSProvider
- * opens a GPS device and handles the protocol
- */
 class GPSProvider : public QThread
 {
     Q_OBJECT
-public:
 
+public:
     enum class GPSType {
         u_blox,
         trimble,
-        septentrio
+        septentrio,
+        femto
     };
 
-    GPSProvider(const QString& device,
-                GPSType type,
-                bool    enableSatInfo,
-                double  surveyInAccMeters,
-                int     surveryInDurationSecs,
-                bool    useFixedBaseLocation,
-                double  fixedBaseLatitude,
-                double  fixedBaseLongitude,
-                float   fixedBaseAltitudeMeters,
-                float   fixedBaseAccuracyMeters,
-                const std::atomic_bool& requestStop);
+    struct rtk_data_s {
+        double surveyInAccMeters = 0;
+        int surveyInDurationSecs = 0;
+        bool useFixedBaseLoction = false;
+        double fixedBaseLatitude = 0.;
+        double fixedBaseLongitude = 0.;
+        float fixedBaseAltitudeMeters = 0.f;
+        float fixedBaseAccuracyMeters = 0.f;
+    };
+
+    GPSProvider(const QString &device, GPSType type, const rtk_data_s &rtkData, const std::atomic_bool &requestStop, QObject *parent = nullptr);
     ~GPSProvider();
 
-    /**
-     * this is called by the callback method
-     */
-    void gotRTCMData(uint8_t *data, size_t len);
+    int callback(GPSCallbackType type, void *data1, int data2);
 
 signals:
-    void positionUpdate(GPSPositionMessage message);
-    void satelliteInfoUpdate(GPSSatelliteMessage message);
-    void RTCMDataUpdate(QByteArray message);
+    void satelliteInfoUpdate(const satellite_info_s &message);
+    void sensorGnssRelativeUpdate(const sensor_gnss_relative_s &message);
+    void sensorGpsUpdate(const sensor_gps_s &message);
+    void RTCMDataUpdate(const QByteArray &message);
     void surveyInStatus(float duration, float accuracyMM, double latitude, double longitude, float altitude, bool valid, bool active);
 
-protected:
-    void run();
-
 private:
-    void publishGPSPosition();
-    void publishGPSSatellite();
+    void run() final;
 
-	/**
-	 * callback from the driver for the platform specific stuff
-	 */
-	static int callbackEntry(GPSCallbackType type, void *data1, int data2, void *user);
+    bool _connectSerial();
+    GPSBaseStationSupport *_connectGPS();
+    void _publishSensorGPS();
+    void _publishSatelliteInfo();
+    void _publishSensorGNSSRelative();
 
-	int callback(GPSCallbackType type, void *data1, int data2);
+    void _gotRTCMData(const uint8_t *data, size_t len);
+    void _sendRTCMData();
+
+    static int _callbackEntry(GPSCallbackType type, void *data1, int data2, void *user);
 
     QString _device;
     GPSType _type;
-    const std::atomic_bool& _requestStop;
-    double  _surveyInAccMeters;
-    int     _surveryInDurationSecs;
-    bool    _useFixedBaseLoction;
-    double  _fixedBaseLatitude;
-    double  _fixedBaseLongitude;
-    float   _fixedBaseAltitudeMeters;
-    float   _fixedBaseAccuracyMeters;
+    const std::atomic_bool &_requestStop;
+    rtk_data_s _rtkData{};
     GPSHelper::GPSConfig _gpsConfig{};
 
-	struct sensor_gps_s        _reportGpsPos;
-	struct satellite_info_s    *_pReportSatInfo = nullptr;
+    struct satellite_info_s _satelliteInfo{};
+    struct sensor_gnss_relative_s _sensorGnssRelative{};
+    struct sensor_gps_s _sensorGps{};
 
-	QSerialPort *_serial = nullptr;
+    QSerialPort *_serial = nullptr;
+
+    enum GPSReceiveType {
+        Position = 1,
+        Satellite = 2
+    };
+
+    static constexpr uint32_t kGPSReceiveTimeout = 1200;
+    static constexpr float kGPSHeadingOffset = 5.f;
 };

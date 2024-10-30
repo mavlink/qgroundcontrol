@@ -26,14 +26,14 @@ void StatusTextHandlerTest::_testHandleTextMessage()
 {
     StatusTextHandler* statusTextHandler = new StatusTextHandler(this);
 
-    statusTextHandler->handleTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_INFO, "StatusTextHandlerTestInfo", "This is the StatusTextHandlerTestInfo Test");
+    statusTextHandler->handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_INFO, "StatusTextHandlerTestInfo", "This is the StatusTextHandlerTestInfo Test");
     QString messages = statusTextHandler->formattedMessages();
     QVERIFY(!messages.isEmpty());
     QVERIFY(messages.contains("StatusTextHandlerTestInfo"));
     QCOMPARE(statusTextHandler->getNormalCount(), 1);
     QCOMPARE(statusTextHandler->messageCount(), 1);
 
-    statusTextHandler->handleTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_WARNING, "StatusTextHandlerTestWarning", "This is the StatusTextHandlerTestWarning Test");
+    statusTextHandler->handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_WARNING, "StatusTextHandlerTestWarning", "This is the StatusTextHandlerTestWarning Test");
     messages = statusTextHandler->formattedMessages();
     QVERIFY(messages.contains("StatusTextHandlerTestInfo"));
     QVERIFY(messages.contains("StatusTextHandlerTestWarning"));

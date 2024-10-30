@@ -1,6 +1,6 @@
 # include(BundleUtilities)
 
-message(STATUS "Copy GStreamer framework into bundle")
+# message(STATUS "Copy GStreamer framework into bundle")
 file(COPY /Library/Frameworks/GStreamer.framework DESTINATION staging/QGroundControl.app/Contents/Frameworks)
 file(REMOVE_RECURSE staging/QGroundControl.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/bin)
 file(REMOVE_RECURSE staging/QGroundControl.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/etc)
@@ -23,7 +23,7 @@ file(REMOVE ${REMOVE_LIB_FILES})
 file(REMOVE_RECURSE staging/QGroundControl.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0/include)
 file(REMOVE_RECURSE staging/QGroundControl.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0/pkgconfig)
 
-# Fix up library paths to point into bundle
+# # Fix up library paths to point into bundle
 execute_process(COMMAND install_name_tool -change @rpath/libgstgl-1.0.0.dylib @executable_path/../Frameworks/GStreamer.framework/Libraries/libgstgl-1.0.0.dylib staging/QGroundControl.app/Contents/MacOS/QGroundControl)
 execute_process(COMMAND install_name_tool -change @rpath/libgstvideo-1.0.0.dylib @executable_path/../Frameworks/GStreamer.framework/Libraries/libgstvideo-1.0.0.dylib staging/QGroundControl.app/Contents/MacOS/QGroundControl)
 execute_process(COMMAND install_name_tool -change @rpath/libgstbase-1.0.0.dylib @executable_path/../Frameworks/GStreamer.framework/Libraries/libgstbase-1.0.0.dylib staging/QGroundControl.app/Contents/MacOS/QGroundControl)
