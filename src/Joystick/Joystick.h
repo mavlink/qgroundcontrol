@@ -18,6 +18,7 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QThread>
+#include <QtCore/QTimer>
 #include <QtCore/QLoggingCategory>
 #include <QtQmlIntegration/QtQmlIntegration>
 
@@ -218,8 +219,10 @@ signals:
     void startVideoRecord           ();
     void stopVideoRecord            ();
     void toggleVideoRecord          ();
-    void gimbalPitchStep            (int direction);
-    void gimbalYawStep              (int direction);
+    void gimbalPitchStart           (int direction);
+    void gimbalYawStart             (int direction);
+    void gimbalPitchStop            ();
+    void gimbalYawStop              ();
     void centerGimbal               ();
     void gimbalYawLock              (bool lock);
     void setArmed                   (bool arm);
