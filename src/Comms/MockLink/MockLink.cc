@@ -65,10 +65,26 @@ MockLink::MockLink(SharedLinkConfigurationPtr& config)
     , _currentParamRequestListParamIndex    (-1)
     , _logDownloadCurrentOffset             (0)
     , _logDownloadBytesRemaining            (0)
-    , _adsbAngle                            (0)
+    , _adsbAngles                           {0}
 {
     qCDebug(MockLinkLog) << "MockLink" << this;
 
+    // Initialize 5 ADS-B vehicles with different starting conditions _numberOfVehicles
+    for (int i = 0; i < 5; ++i) {
+        ADSBVehicle vehicle;
+        vehicle.angle = i * 72; // Different starting directions (angles 0, 72, 144, 216, 288)
+        
+        // Set initial coordinates slightly offset from the default coordinates
+        double latOffset = 0.001 * i; // Adjust latitude slightly for each vehicle (close proximity)
+        double lonOffset = 0.001 * (i % 2 == 0 ? i : -i); // Adjust longitude with a pattern (close proximity)
+        vehicle.coordinate = QGeoCoordinate(_defaultVehicleLatitude + latOffset, _defaultVehicleLongitude + lonOffset);
+        
+        // Set a unique starting altitude for each vehicle near the home altitude
+        vehicle.altitude = _defaultVehicleHomeAltitude + (i * 5); // Altitudes: close to default, with slight variation
+        
+        _adsbVehicles.push_back(vehicle);
+    }
+    
     MockConfiguration* mockConfig = qobject_cast<MockConfiguration*>(_config.get());
     _firmwareType       = mockConfig->firmwareType();
     _vehicleType        = mockConfig->vehicleType();
@@ -92,9 +108,6 @@ MockLink::MockLink(SharedLinkConfigurationPtr& config)
     moveToThread(this);
 
     _loadParams();
-
-    _adsbVehicleCoordinate = QGeoCoordinate(_vehicleLatitude, _vehicleLongitude).atDistanceAndAzimuth(1000, _adsbAngle);
-    _adsbVehicleCoordinate.setAltitude(100);
     _runningTime.start();
 }
 
@@ -1709,29 +1722,48 @@ void MockLink::_logDownloadWorker(void)
 
 void MockLink::_sendADSBVehicles(void)
 {
-    _adsbAngle += 2;
-    _adsbVehicleCoordinate = QGeoCoordinate(_vehicleLatitude, _vehicleLongitude).atDistanceAndAzimuth(500, _adsbAngle);
-    _adsbVehicleCoordinate.setAltitude(100);
+    for (int i = 0; i < _adsbVehicles.size(); ++i) {
+        // Slightly change the direction to simulate different paths
+        _adsbVehicles[i].angle += (i + 1); // Vary the change to make each path unique
+        
+        // Move each vehicle by a smaller distance to simulate slower speed
+        _adsbVehicles[i].coordinate = _adsbVehicles[i].coordinate.atDistanceAndAzimuth(5, _adsbVehicles[i].angle); // 50 meters per update for slower speed
+        
+        // Simulate slight variations in altitude
+        _adsbVehicles[i].altitude += (i % 2 == 0 ? 0.5 : -0.5); // Increase or decrease altitude
 
-    mavlink_message_t responseMsg;
-    mavlink_msg_adsb_vehicle_pack_chan(_vehicleSystemId,
-                                       _vehicleComponentId,
-                                       mavlinkChannel(),
-                                       &responseMsg,
-                                       12345,                                       // ICAO address
-                                       _adsbVehicleCoordinate.latitude() * 1e7,
-                                       _adsbVehicleCoordinate.longitude() * 1e7,
-                                       ADSB_ALTITUDE_TYPE_GEOMETRIC,
-                                       _adsbVehicleCoordinate.altitude() * 1000,    // Altitude in millimeters
-                                       10 * 100,                                    // Heading in centidegress
-                                       0, 0,                                        // Horizontal/Vertical velocity
-                                       "N1234500",                                  // Callsign
-                                       ADSB_EMITTER_TYPE_ROTOCRAFT,
-                                       1,                                           // Seconds since last communication
-                                       ADSB_FLAGS_VALID_COORDS | ADSB_FLAGS_VALID_ALTITUDE | ADSB_FLAGS_VALID_HEADING | ADSB_FLAGS_VALID_CALLSIGN | ADSB_FLAGS_SIMULATED,
-                                       0);                                          // Squawk code
+        // Prepare and send MAVLink message for each vehicle
+        mavlink_message_t responseMsg;
+        mavlink_msg_adsb_vehicle_pack_chan(_vehicleSystemId,
+                                           _vehicleComponentId,
+                                           mavlinkChannel(),
+                                           &responseMsg,
+                                           12345 + i, // Unique ICAO address for each vehicle
+                                           _adsbVehicles[i].coordinate.latitude() * 1e7,
+                                           _adsbVehicles[i].coordinate.longitude() * 1e7,
+                                           ADSB_ALTITUDE_TYPE_GEOMETRIC,
+                                           _adsbVehicles[i].altitude * 1000, // Altitude in millimeters
+                                           // Use the current angle as heading
+                                           static_cast<uint16_t>(_adsbVehicles[i].angle * 100), // Heading in centidegrees
+                                           0, 0, // Horizontal/Vertical velocity
+                                           QString("N12345%1").arg(i, 2, 10, QChar('0')).toStdString().c_str(), // Unique callsign
+                                           ADSB_EMITTER_TYPE_ROTOCRAFT,
+                                           1, // Seconds since last communication
+                                           ADSB_FLAGS_VALID_COORDS | ADSB_FLAGS_VALID_ALTITUDE | ADSB_FLAGS_VALID_HEADING | ADSB_FLAGS_VALID_CALLSIGN | ADSB_FLAGS_SIMULATED,
+                                           0); // Squawk code
 
-    respondWithMavlinkMessage(responseMsg);
+        respondWithMavlinkMessage(responseMsg);
+    }
+}
+
+void MockLink::_moveADSBVehicle(int vehicleIndex) {
+    _adsbAngles[vehicleIndex] += 10; // Increment angle for smoother movement
+    QGeoCoordinate& coord = _adsbVehicleCoordinates[vehicleIndex];
+    
+    // Update the position based on the new angle
+    coord = QGeoCoordinate(coord.latitude(), coord.longitude())
+                .atDistanceAndAzimuth(500, _adsbAngles[vehicleIndex]);
+    coord.setAltitude(100); // Keeping altitude constant for simplicity
 }
 
 bool MockLink::_handleRequestMessage(const mavlink_command_long_t& request, bool& noAck)
