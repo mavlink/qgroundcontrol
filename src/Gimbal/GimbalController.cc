@@ -91,7 +91,8 @@ void Gimbal::_initFacts()
 }
 
 GimbalController::GimbalController(MAVLinkProtocol* mavlink, Vehicle* vehicle)
-    : _mavlink(mavlink)
+    : QObject(vehicle)
+    , _mavlink(mavlink)
     , _vehicle(vehicle)
     , _activeGimbal(nullptr)
 {
