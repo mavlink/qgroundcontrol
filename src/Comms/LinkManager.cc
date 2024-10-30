@@ -229,6 +229,8 @@ void LinkManager::_linkDisconnected()
     for (auto it = _rgLinks.begin(); it != _rgLinks.end(); ++it) {
         if (it->get() == link) {
             qCDebug(LinkManagerLog) << "LinkManager::_linkDisconnected" << it->get()->linkConfiguration()->name() << it->use_count();
+            SharedLinkConfigurationPtr config = it->get()->linkConfiguration();
+            config->setLink(nullptr);
             (void) _rgLinks.erase(it);
             return;
         }
