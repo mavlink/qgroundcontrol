@@ -21,6 +21,7 @@ Q_DECLARE_LOGGING_CATEGORY(GimbalLog)
 class MavlinkProtocol;
 class Vehicle;
 class MAVLinkProtocol;
+class GimbalController;
 
 class Gimbal : public FactGroup
 {
@@ -29,7 +30,7 @@ class Gimbal : public FactGroup
     friend class GimbalController; // so it can set private members of gimbal, it is the only class that will need to modify them
 
 public:
-    Gimbal();
+    Gimbal(GimbalController* parent);
     Gimbal(const Gimbal& other);
     const Gimbal& operator=(const Gimbal& other);
 
