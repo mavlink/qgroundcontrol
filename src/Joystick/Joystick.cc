@@ -662,8 +662,10 @@ void Joystick::startPolling(Vehicle* vehicle)
             disconnect(this, &Joystick::setFlightMode,      _activeVehicle, &Vehicle::setFlightMode);
             disconnect(this, &Joystick::gimbalYawLock,      _activeVehicle->gimbalController(), &GimbalController::gimbalYawLock);
             disconnect(this, &Joystick::centerGimbal,       _activeVehicle->gimbalController(), &GimbalController::centerGimbal);
-            disconnect(this, &Joystick::gimbalPitchStep,    _activeVehicle->gimbalController(), &GimbalController::gimbalPitchStep);
-            disconnect(this, &Joystick::gimbalYawStep,      _activeVehicle->gimbalController(), &GimbalController::gimbalYawStep);
+            disconnect(this, &Joystick::gimbalPitchStart,   _activeVehicle->gimbalController(), &GimbalController::gimbalPitchStart);
+            disconnect(this, &Joystick::gimbalYawStart,     _activeVehicle->gimbalController(), &GimbalController::gimbalYawStart);
+            disconnect(this, &Joystick::gimbalPitchStop,    _activeVehicle->gimbalController(), &GimbalController::gimbalPitchStop);
+            disconnect(this, &Joystick::gimbalYawStop,      _activeVehicle->gimbalController(), &GimbalController::gimbalYawStop);
             disconnect(this, &Joystick::emergencyStop,      _activeVehicle, &Vehicle::emergencyStop);
             disconnect(this, &Joystick::gripperAction,      _activeVehicle, &Vehicle::setGripperAction);
             disconnect(this, &Joystick::landingGearDeploy,  _activeVehicle, &Vehicle::landingGearDeploy);
@@ -688,8 +690,10 @@ void Joystick::startPolling(Vehicle* vehicle)
             connect(this, &Joystick::setFlightMode,      _activeVehicle, &Vehicle::setFlightMode);
             connect(this, &Joystick::gimbalYawLock,      _activeVehicle->gimbalController(), &GimbalController::gimbalYawLock);
             connect(this, &Joystick::centerGimbal,       _activeVehicle->gimbalController(), &GimbalController::centerGimbal);
-            connect(this, &Joystick::gimbalPitchStep,    _activeVehicle->gimbalController(), &GimbalController::gimbalPitchStep);
-            connect(this, &Joystick::gimbalYawStep,      _activeVehicle->gimbalController(), &GimbalController::gimbalYawStep);
+            connect(this, &Joystick::gimbalPitchStart,   _activeVehicle->gimbalController(), &GimbalController::gimbalPitchStart);
+            connect(this, &Joystick::gimbalYawStart,     _activeVehicle->gimbalController(), &GimbalController::gimbalYawStart);
+            connect(this, &Joystick::gimbalPitchStop,    _activeVehicle->gimbalController(), &GimbalController::gimbalPitchStop);
+            connect(this, &Joystick::gimbalYawStop,      _activeVehicle->gimbalController(), &GimbalController::gimbalYawStop);
             connect(this, &Joystick::emergencyStop,      _activeVehicle, &Vehicle::emergencyStop);
             connect(this, &Joystick::gripperAction,      _activeVehicle, &Vehicle::setGripperAction);
             connect(this, &Joystick::landingGearDeploy,  _activeVehicle, &Vehicle::landingGearDeploy);
@@ -712,8 +716,10 @@ void Joystick::stopPolling(void)
             disconnect(this, &Joystick::setFlightMode,      _activeVehicle, &Vehicle::setFlightMode);
             disconnect(this, &Joystick::gimbalYawLock,      _activeVehicle->gimbalController(), &GimbalController::gimbalYawLock);
             disconnect(this, &Joystick::centerGimbal,       _activeVehicle->gimbalController(), &GimbalController::centerGimbal);
-            disconnect(this, &Joystick::gimbalPitchStep,    _activeVehicle->gimbalController(), &GimbalController::gimbalPitchStep);
-            disconnect(this, &Joystick::gimbalYawStep,      _activeVehicle->gimbalController(), &GimbalController::gimbalYawStep);
+            disconnect(this, &Joystick::gimbalPitchStart,   _activeVehicle->gimbalController(), &GimbalController::gimbalPitchStart);
+            disconnect(this, &Joystick::gimbalYawStart,     _activeVehicle->gimbalController(), &GimbalController::gimbalYawStart);
+            disconnect(this, &Joystick::gimbalPitchStop,    _activeVehicle->gimbalController(), &GimbalController::gimbalPitchStop);
+            disconnect(this, &Joystick::gimbalYawStop,      _activeVehicle->gimbalController(), &GimbalController::gimbalYawStop);
             disconnect(this, &Joystick::gripperAction,      _activeVehicle, &Vehicle::setGripperAction);
             disconnect(this, &Joystick::landingGearDeploy,  _activeVehicle, &Vehicle::landingGearDeploy);
             disconnect(this, &Joystick::landingGearRetract, _activeVehicle, &Vehicle::landingGearRetract);
@@ -993,13 +999,29 @@ void Joystick::_executeButtonAction(const QString& action, bool buttonDown)
     } else if(action == _buttonActionToggleVideoRecord) {
         if (buttonDown) emit toggleVideoRecord();
     } else if(action == _buttonActionGimbalUp) {
-        if (buttonDown) emit gimbalPitchStep(1);
+        if (buttonDown) {
+            emit gimbalPitchStart(1);
+        } else {
+            emit gimbalPitchStop();
+        }
     } else if(action == _buttonActionGimbalDown) {
-        if (buttonDown) emit gimbalPitchStep(-1);
+        if (buttonDown) {
+            emit gimbalPitchStart(-1);
+        } else {
+            emit gimbalPitchStop();
+        }
     } else if(action == _buttonActionGimbalLeft) {
-        if (buttonDown) emit gimbalYawStep(-1);
+        if (buttonDown) {
+            emit gimbalYawStart(-1);
+        } else {
+            emit gimbalYawStop();
+        }
     } else if(action == _buttonActionGimbalRight) {
-        if (buttonDown) emit gimbalYawStep(1);
+        if (buttonDown) {
+            emit gimbalYawStart(1);
+        } else {
+            emit gimbalYawStop();
+        }
     } else if(action == _buttonActionGimbalCenter) {
         if (buttonDown) emit centerGimbal();
     } else if(action == _buttonActionGimbalYawLock) {
@@ -1090,10 +1112,10 @@ void Joystick::_buildActionList(Vehicle* activeVehicle)
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionStartVideoRecord));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionStopVideoRecord));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionToggleVideoRecord));
-    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalDown,    true));
-    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalUp,      true));
-    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalLeft,    true));
-    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalRight,   true));
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalDown));
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalUp));
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalLeft));
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalRight));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalCenter));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalYawLock));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalYawFollow));

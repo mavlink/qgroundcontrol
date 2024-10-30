@@ -97,6 +97,11 @@ GimbalController::GimbalController(MAVLinkProtocol* mavlink, Vehicle* vehicle)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &GimbalController::_mavlinkMessageReceived);
+
+    _rateSenderTimer = new QTimer(this);
+    _rateSenderTimer->setInterval(500);
+
+    connect(_rateSenderTimer, &QTimer::timeout, this, &GimbalController::_rateSenderTimeout);
 }
 
 GimbalController::~GimbalController()
@@ -435,32 +440,49 @@ bool GimbalController::_yawInVehicleFrame(uint32_t flags)
     }
 }
 
-void GimbalController::gimbalPitchStep(int direction)
+void GimbalController::gimbalPitchStart(int direction)
 {
     if (!_activeGimbal) {
-        qCDebug(GimbalLog) << "gimbalStepPitch: active gimbal is nullptr, returning";
+        qCDebug(GimbalLog) << "gimbalPitchStart: active gimbal is nullptr, returning";
         return;
     }
 
-    if (_activeGimbal->yawLock()) {
-        sendPitchAbsoluteYaw(_activeGimbal->absolutePitch()->rawValue().toFloat() + direction, _activeGimbal->absoluteYaw()->rawValue().toFloat(), false);
-    } else {
-        sendPitchBodyYaw(_activeGimbal->absolutePitch()->rawValue().toFloat() + direction, _activeGimbal->bodyYaw()->rawValue().toFloat(), false);
-    }
+    activeGimbal()->setPitchRate(direction * PITCH_RATE);
+
+    sendRate();
 }
 
-void GimbalController::gimbalYawStep(int direction)
+void GimbalController::gimbalYawStart(int direction)
 {
     if (!_activeGimbal) {
-        qCDebug(GimbalLog) << "gimbalStepPitch: active gimbal is nullptr, returning";
+        qCDebug(GimbalLog) << "gimbalYawStart: active gimbal is nullptr, returning";
         return;
     }
 
-    if (_activeGimbal->yawLock()) {
-        sendPitchAbsoluteYaw(_activeGimbal->absolutePitch()->rawValue().toFloat(), _activeGimbal->absoluteYaw()->rawValue().toFloat() + direction, false);
-    } else {
-        sendPitchBodyYaw(_activeGimbal->absolutePitch()->rawValue().toFloat(), _activeGimbal->bodyYaw()->rawValue().toFloat() + direction, false);
+    activeGimbal()->setYawRate(direction * YAW_RATE);
+    sendRate();
+}
+
+void GimbalController::gimbalPitchStop()
+{
+    if (!_activeGimbal) {
+        qCDebug(GimbalLog) << "gimbalPitchStop: active gimbal is nullptr, returning";
+        return;
     }
+
+    activeGimbal()->setPitchRate(0.0f);
+    sendRate();
+}
+
+void GimbalController::gimbalYawStop()
+{
+    if (!_activeGimbal) {
+        qCDebug(GimbalLog) << "gimbalYawStop: active gimbal is nullptr, returning";
+        return;
+    }
+
+    activeGimbal()->setYawRate(0.0f);
+    sendRate();
 }
 
 void GimbalController::centerGimbal()
@@ -522,6 +544,10 @@ void GimbalController::sendPitchBodyYaw(float pitch, float yaw, bool showError) 
         return;
     }
 
+    _rateSenderTimer->stop();
+    _activeGimbal->setAbsolutePitch(0.0f);
+    _activeGimbal->setYawRate(0.0f);
+
     // qDebug() << "sendPitch: " << pitch << " BodyYaw: " << yaw;
 
     unsigned flags = GIMBAL_MANAGER_FLAGS_ROLL_LOCK
@@ -545,6 +571,10 @@ void GimbalController::sendPitchAbsoluteYaw(float pitch, float yaw, bool showErr
     if (!_tryGetGimbalControl()) {
         return;
     }
+
+    _rateSenderTimer->stop();
+    _activeGimbal->setAbsolutePitch(0.0f);
+    _activeGimbal->setYawRate(0.0f);
 
     if (yaw > 180.0f) {
         yaw -= 360.0f;
@@ -588,6 +618,47 @@ void GimbalController::toggleGimbalRetracted(bool set)
     }
 
     sendPitchYawFlags(flags);
+}
+
+void GimbalController::sendRate()
+{
+    if (!_tryGetGimbalControl()) {
+        return;
+    }
+
+    unsigned flags = GIMBAL_MANAGER_FLAGS_ROLL_LOCK
+        | GIMBAL_MANAGER_FLAGS_PITCH_LOCK;
+
+    if (_activeGimbal->yawLock()) {
+        flags |= GIMBAL_MANAGER_FLAGS_YAW_LOCK;
+    }
+
+    _vehicle->sendMavCommand(
+                _activeGimbal->managerCompid()->rawValue().toUInt(),
+                MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW,
+                false,
+                NAN,
+                NAN,
+                _activeGimbal->pitchRate(),
+                _activeGimbal->yawRate(),
+                flags,
+                0,
+                _activeGimbal->deviceId()->rawValue().toUInt());
+
+    qCDebug(GimbalLog) << "Gimbal rate sent!";
+
+    // Stop timeout if both unset.
+    if (_activeGimbal->pitchRate() == 0.f && _activeGimbal->yawRate() == 0.f) {
+        _rateSenderTimer->stop();
+    } else {
+        _rateSenderTimer->start();
+    }
+}
+
+void GimbalController::_rateSenderTimeout()
+{
+    // Send rate again to avoid timeout on autopilot side.
+    sendRate();
 }
 
 void GimbalController::toggleGimbalYawLock(bool set)

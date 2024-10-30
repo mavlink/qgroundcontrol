@@ -14,6 +14,7 @@
 #include <QmlObjectListModel.h>
 #include <FactGroup.h>
 #include <MAVLinkLib.h>
+#include <qtimer.h>
 
 Q_DECLARE_LOGGING_CATEGORY(GimbalLog)
 
@@ -38,6 +39,8 @@ public:
     Q_PROPERTY(Fact* absoluteYaw                READ absoluteYaw                CONSTANT)
     Q_PROPERTY(Fact* deviceId                   READ deviceId                   CONSTANT)
     Q_PROPERTY(Fact* managerCompid              READ managerCompid              CONSTANT)
+    Q_PROPERTY(float pitchRate                  READ pitchRate                  CONSTANT)
+    Q_PROPERTY(float yawRate                    READ yawRate                    CONSTANT)
     Q_PROPERTY(bool  yawLock                    READ yawLock                    NOTIFY yawLockChanged)
     Q_PROPERTY(bool  retracted                  READ retracted                  NOTIFY retractedChanged)
     Q_PROPERTY(bool  gimbalHaveControl          READ gimbalHaveControl          NOTIFY gimbalHaveControlChanged)
@@ -49,6 +52,8 @@ public:
     Fact* absoluteYaw()                   { return &_absoluteYawFact;   }
     Fact* deviceId()                      { return &_deviceIdFact;      }
     Fact* managerCompid()                 { return &_managerCompidFact; }
+    float pitchRate()                     { return _pitchRate;          }
+    float yawRate()                       { return _yawRate;            }
     bool  yawLock() const                 { return _yawLock;            }
     bool  retracted() const               { return _retracted;          }
     bool  gimbalHaveControl() const       { return _haveControl;        }
@@ -60,6 +65,8 @@ public:
     void  setAbsoluteYaw(float absoluteYaw)     { _absoluteYawFact.setRawValue(absoluteYaw);                       }
     void  setDeviceId(uint id)                  { _deviceIdFact.setRawValue(id);                                   }
     void  setManagerCompid(uint id)             { _managerCompidFact.setRawValue(id);                              }
+    void  setPitchRate(float pitchRate)         { _pitchRate = pitchRate;                                          }
+    void  setYawRate(float yawRate)             { _yawRate = yawRate;                                              }
     void  setYawLock(bool yawLock)              { _yawLock = yawLock;       emit yawLockChanged();                 }
     void  setRetracted(bool retracted)          { _retracted = retracted;   emit retractedChanged();               }
     void  setGimbalHaveControl(bool set)        { _haveControl = set;       emit gimbalHaveControlChanged();       }
@@ -92,6 +99,8 @@ private:
     Fact _absoluteYawFact;
     Fact _deviceIdFact; // Component ID of gimbal device (or 1-6 for non-MAVLink gimbal)
     Fact _managerCompidFact;
+    float _pitchRate = 0.f;
+    float _yawRate = 0.f;
     bool _yawLock = false;
     bool _retracted = false;
     bool _haveControl = false;
@@ -150,6 +159,10 @@ public:
         }
     };
 
+    // Should we make this configurable somehow?
+    static constexpr float PITCH_RATE = 20.0f;
+    static constexpr float YAW_RATE = 20.0f;
+
     Q_PROPERTY(Gimbal*              activeGimbal    READ activeGimbal   WRITE setActiveGimbal   NOTIFY activeGimbalChanged)
     Q_PROPERTY(QmlObjectListModel*  gimbals         READ gimbals        CONSTANT)
 
@@ -166,13 +179,16 @@ public:
     Q_INVOKABLE void toggleGimbalYawLock    (bool set = false);
     Q_INVOKABLE void acquireGimbalControl   ();
     Q_INVOKABLE void releaseGimbalControl   ();
+    Q_INVOKABLE void sendRate               ();
 
 public slots:
     // These slots are conected with joysticks for button control
     void gimbalYawLock              (bool yawLock) { toggleGimbalYawLock(yawLock); }
     Q_INVOKABLE void centerGimbal   (); // Also used by qml
-    void gimbalPitchStep            (int direction);
-    void gimbalYawStep              (int direction);
+    void gimbalPitchStart           (int direction);
+    void gimbalYawStart             (int direction);
+    void gimbalPitchStop            ();
+    void gimbalYawStop              ();
 
 signals:
     void    activeGimbalChanged           ();
@@ -180,6 +196,7 @@ signals:
 
 private slots:
     void    _mavlinkMessageReceived(const mavlink_message_t& message);
+    void    _rateSenderTimeout();
 
 private:
     void    _requestGimbalInformation           (uint8_t compid);
@@ -194,6 +211,8 @@ private:
     MAVLinkProtocol*    _mavlink            = nullptr;
     Vehicle*            _vehicle            = nullptr;
     Gimbal*             _activeGimbal       = nullptr;
+
+    QTimer*             _rateSenderTimer    = nullptr;
 
     QMap<uint8_t, PotentialGimbalManager> _potentialGimbalManagers; // key is compid
 
