@@ -27,14 +27,14 @@ const char* Gimbal::_absoluteYawFactName =                  "gimbalAzimuth";
 const char* Gimbal::_deviceIdFactName =                     "deviceId";
 const char* Gimbal::_managerCompidFactName =                "managerCompid";
 
-Gimbal::Gimbal()
-    : FactGroup(100, ":/json/Vehicle/GimbalFact.json") // No need to set parent as this will be deleted by gimbalController destructor
+Gimbal::Gimbal(GimbalController* parent)
+    : FactGroup(100, parent, ":/json/Vehicle/GimbalFact.json")
 {
     _initFacts();
 }
 
 Gimbal::Gimbal(const Gimbal& other)
-    : FactGroup(100, ":/json/Vehicle/GimbalFact.json") // No need to set parent as this will be deleted by gimbalController destructor
+    : FactGroup(100, other.parent(), ":/json/Vehicle/GimbalFact.json")
 {
     _initFacts();
     *this = other;
@@ -182,22 +182,26 @@ GimbalController::_handleGimbalManagerInformation(const mavlink_message_t& messa
     qCDebug(GimbalLog) << "_handleGimbalManagerInformation for gimbal device: " << information.gimbal_device_id << ", component id: " << message.compid;
 
     GimbalPairId pairId{message.compid, information.gimbal_device_id};
-    auto& gimbal = _potentialGimbals[pairId];
 
-    gimbal.setManagerCompid(message.compid);
-    gimbal.setDeviceId(information.gimbal_device_id);
+    auto gimbal = _potentialGimbals.find(pairId);
+    if (gimbal == _potentialGimbals.end()) {
+        gimbal = _potentialGimbals.insert(pairId, this);
+    }
 
-    if (!gimbal._receivedInformation) {
+    gimbal->setManagerCompid(message.compid);
+    gimbal->setDeviceId(information.gimbal_device_id);
+
+    if (!gimbal->_receivedInformation) {
         qCDebug(GimbalLog) << "gimbal manager with compId: " << message.compid
             << " is responsible for gimbal device: " << information.gimbal_device_id;
     }
 
-    gimbal._receivedInformation = true;
+    gimbal->_receivedInformation = true;
     // It is important to flag our potential gimbal manager as well, so we stop requesting gimbal_manger_information message
     auto& gimbalManager = _potentialGimbalManagers[message.compid];
     gimbalManager.receivedInformation = true;
 
-    _checkComplete(gimbal, pairId);
+    _checkComplete(*gimbal, pairId);
 }
 
 void
@@ -215,27 +219,32 @@ GimbalController::_handleGimbalManagerStatus(const mavlink_message_t& message)
     }
 
     GimbalPairId pairId{message.compid, status.gimbal_device_id};
-    auto& gimbal = _potentialGimbals[pairId];
 
-    if (gimbal.deviceId()->rawValue().toUInt() == 0) {
-        gimbal.setDeviceId(status.gimbal_device_id);
-    } else if (gimbal.deviceId()->rawValue().toUInt() != status.gimbal_device_id) {
+    auto gimbal = _potentialGimbals.find(pairId);
+    if (gimbal == _potentialGimbals.end()) {
+        gimbal = _potentialGimbals.insert(pairId, this);
+    }
+
+
+    if (gimbal->deviceId()->rawValue().toUInt() == 0) {
+        gimbal->setDeviceId(status.gimbal_device_id);
+    } else if (gimbal->deviceId()->rawValue().toUInt() != status.gimbal_device_id) {
         qCWarning(GimbalLog) << "conflicting GIMBAL_MANAGER_STATUS.gimbal_device_id: " << status.gimbal_device_id;
     }
 
-    if (gimbal.managerCompid()->rawValue().toUInt() == 0) {
-        gimbal.setManagerCompid(message.compid);
-    } else if (gimbal.managerCompid()->rawValue().toUInt() != message.compid) {
+    if (gimbal->managerCompid()->rawValue().toUInt() == 0) {
+        gimbal->setManagerCompid(message.compid);
+    } else if (gimbal->managerCompid()->rawValue().toUInt() != message.compid) {
         qCWarning(GimbalLog) << "conflicting GIMBAL_MANAGER_STATUS compid: " << message.compid;
     }
 
     // Only log this message once
-    if (!gimbal._receivedStatus) {
+    if (!gimbal->_receivedStatus) {
         qCDebug(GimbalLog) << "_handleGimbalManagerStatus: gimbal manager with compId " << message.compid
             << " is responsible for gimbal device " << status.gimbal_device_id;
     }
 
-    gimbal._receivedStatus = true;
+    gimbal->_receivedStatus = true;
 
     const bool haveControl =
         (status.primary_control_sysid == _mavlink->getSystemId()) &&
@@ -244,15 +253,15 @@ GimbalController::_handleGimbalManagerStatus(const mavlink_message_t& message)
     const bool othersHaveControl = !haveControl &&
         (status.primary_control_sysid != 0 && status.primary_control_compid != 0);
 
-    if (gimbal.gimbalHaveControl() != haveControl) {
-        gimbal.setGimbalHaveControl(haveControl);
+    if (gimbal->gimbalHaveControl() != haveControl) {
+        gimbal->setGimbalHaveControl(haveControl);
     }
 
-    if (gimbal.gimbalOthersHaveControl() != othersHaveControl) {
-        gimbal.setGimbalOthersHaveControl(othersHaveControl);
+    if (gimbal->gimbalOthersHaveControl() != othersHaveControl) {
+        gimbal->setGimbalOthersHaveControl(othersHaveControl);
     }
 
-    _checkComplete(gimbal, pairId);
+    _checkComplete(*gimbal, pairId);
 }
 
 void
@@ -291,19 +300,22 @@ GimbalController::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t& mes
         return;
     }
 
-    auto& gimbal = _potentialGimbals[pairId];
+    auto gimbal = _potentialGimbals.find(pairId);
+    if (gimbal == _potentialGimbals.end()) {
+        gimbal = _potentialGimbals.insert(pairId, this);
+    }
 
     const bool yaw_in_vehicle_frame = _yawInVehicleFrame(attitude_status.flags);
 
-    gimbal.setRetracted((attitude_status.flags & GIMBAL_DEVICE_FLAGS_RETRACT) > 0);
-    gimbal.setYawLock((attitude_status.flags & GIMBAL_DEVICE_FLAGS_YAW_LOCK) > 0);
-    gimbal._neutral = (attitude_status.flags & GIMBAL_DEVICE_FLAGS_NEUTRAL) > 0;
+    gimbal->setRetracted((attitude_status.flags & GIMBAL_DEVICE_FLAGS_RETRACT) > 0);
+    gimbal->setYawLock((attitude_status.flags & GIMBAL_DEVICE_FLAGS_YAW_LOCK) > 0);
+    gimbal->_neutral = (attitude_status.flags & GIMBAL_DEVICE_FLAGS_NEUTRAL) > 0;
 
     float roll, pitch, yaw;
     mavlink_quaternion_to_euler(attitude_status.q, &roll, &pitch, &yaw);
 
-    gimbal.setAbsoluteRoll(qRadiansToDegrees(roll));
-    gimbal.setAbsolutePitch(qRadiansToDegrees(pitch));
+    gimbal->setAbsoluteRoll(qRadiansToDegrees(roll));
+    gimbal->setAbsolutePitch(qRadiansToDegrees(pitch));
 
     if (yaw_in_vehicle_frame) {
         float bodyYaw = qRadiansToDegrees(yaw);
@@ -312,8 +324,8 @@ GimbalController::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t& mes
             absoluteYaw -= 360.0f;
         }
 
-        gimbal.setBodyYaw(bodyYaw);
-        gimbal.setAbsoluteYaw(absoluteYaw);
+        gimbal->setBodyYaw(bodyYaw);
+        gimbal->setAbsoluteYaw(absoluteYaw);
 
     } else {
         float absoluteYaw = qRadiansToDegrees(yaw);
@@ -322,13 +334,13 @@ GimbalController::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t& mes
             bodyYaw += 360.0f;
         }
 
-        gimbal.setBodyYaw(bodyYaw);
-        gimbal.setAbsoluteYaw(absoluteYaw);
+        gimbal->setBodyYaw(bodyYaw);
+        gimbal->setAbsoluteYaw(absoluteYaw);
     }
 
-    gimbal._receivedAttitude = true;
+    gimbal->_receivedAttitude = true;
 
-    _checkComplete(gimbal, pairId);
+    _checkComplete(*gimbal, pairId);
 }
 
 void
