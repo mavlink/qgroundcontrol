@@ -19538,6 +19538,32 @@
         <value code="18">Channel 18</value>
       </values>
     </parameter>
+    <parameter name="RC_MAP_PAY_SW" default="0" type="INT32">
+      <short_desc>Payload Power Switch RC channel</short_desc>
+      <min>0</min>
+      <max>18</max>
+      <values>
+        <value code="0">Unassigned</value>
+        <value code="1">Channel 1</value>
+        <value code="2">Channel 2</value>
+        <value code="3">Channel 3</value>
+        <value code="4">Channel 4</value>
+        <value code="5">Channel 5</value>
+        <value code="6">Channel 6</value>
+        <value code="7">Channel 7</value>
+        <value code="8">Channel 8</value>
+        <value code="9">Channel 9</value>
+        <value code="10">Channel 10</value>
+        <value code="11">Channel 11</value>
+        <value code="12">Channel 12</value>
+        <value code="13">Channel 13</value>
+        <value code="14">Channel 14</value>
+        <value code="15">Channel 15</value>
+        <value code="16">Channel 16</value>
+        <value code="17">Channel 17</value>
+        <value code="18">Channel 18</value>
+      </values>
+    </parameter>
     <parameter name="RC_MAP_RETURN_SW" default="0" type="INT32">
       <short_desc>Return switch channel</short_desc>
       <min>0</min>
@@ -19592,6 +19618,12 @@
     </parameter>
     <parameter name="RC_OFFB_TH" default="0.75" type="FLOAT">
       <short_desc>Threshold for selecting offboard mode</short_desc>
+      <long_desc>0-1 indicate where in the full channel range the threshold sits 0 : min 1 : max sign indicates polarity of comparison positive : true when channel&gt;th negative : true when channel&lt;th</long_desc>
+      <min>-1</min>
+      <max>1</max>
+    </parameter>
+    <parameter name="RC_PAYLOAD_TH" default="0.75" type="FLOAT">
+      <short_desc>Threshold for selecting payload power switch</short_desc>
       <long_desc>0-1 indicate where in the full channel range the threshold sits 0 : min 1 : max sign indicates polarity of comparison positive : true when channel&gt;th negative : true when channel&lt;th</long_desc>
       <min>-1</min>
       <max>1</max>
