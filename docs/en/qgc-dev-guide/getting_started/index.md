@@ -118,6 +118,8 @@ To see a complete list of all available components in the installer _Select Comp
    :::
 
    - **Video Streaming/Gstreamer:** - see [Video Streaming](https://github.com/mavlink/qgroundcontrol/blob/master/VideoReceiverApp/README.md){:target="_blank" rel="noopener noreferrer"}
+   - <a href="https://github.com/mavlink/qgroundcontrol/blob/master/VideoReceiverApp/README.md" target="_blank" rel="noopener noreferrer">Video Streaming</a>
+
 
 
 #### Building using Qt Creator {#qt-creator}
