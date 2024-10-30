@@ -117,7 +117,8 @@ To see a complete list of all available components in the installer _Select Comp
    These features can be forcibly enabled/disabled by specifying additional values to qmake.
    :::
 
-   - **Video Streaming/Gstreamer:** - see [Video Streaming](https://github.com/mavlink/qgroundcontrol/blob/master/VideoReceiverApp/README.md).
+   - **Video Streaming/Gstreamer:** - see [Video Streaming](https://github.com/mavlink/qgroundcontrol/blob/master/VideoReceiverApp/README.md){:target="_blank" rel="noopener noreferrer"}
+
 
 #### Building using Qt Creator {#qt-creator}
 
