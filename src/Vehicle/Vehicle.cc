@@ -3183,7 +3183,7 @@ void Vehicle::_sendMavCommandWorker(
             emit mavCommandResult(_id, targetCompId, command, MAV_RESULT_FAILED, failureCode);
         }
         if (showError) {
-            qgcApp()->showAppMessage(tr("Unable to send command: %1.").arg(compIdAll ? tr("Internal error - MAV_COMP_ID_ALL not supported") : tr("Waiting on previous response to same command.")));
+            qCCritical(VehicleLog) << tr("Unable to send command: %1.").arg(compIdAll ? tr("Internal error - MAV_COMP_ID_ALL not supported") : tr("Waiting on previous response to same command."));
         }
 
         return;
@@ -3238,7 +3238,7 @@ void Vehicle::_sendMavCommandFromList(int index)
             emit mavCommandResult(_id, commandEntry.targetCompId, commandEntry.command, MAV_RESULT_FAILED, MavCmdResultFailureNoResponseToCommand);
         }
         if (commandEntry.showError) {
-            qgcApp()->showAppMessage(tr("Vehicle did not respond to command: %1").arg(rawCommandName));
+             qCCritical(VehicleLog) << tr("Vehicle did not respond to command: %1").arg(rawCommandName);
         }
         return;
     }
