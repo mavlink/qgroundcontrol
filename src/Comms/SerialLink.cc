@@ -253,7 +253,7 @@ void SerialLink::linkError(QSerialPort::SerialPortError error)
         // when you are done. The reason for this is that this signal is very noisy. For example if you try to
         // connect to a PixHawk before it is ready to accept the connection it will output a continuous stream
         // of errors until the Pixhawk responds.
-        //qCDebug(SerialLinkLog) << "SerialLink::linkError" << error;
+        // qCDebug(SerialLinkLog) << "SerialLink::linkError" << error;
         break;
     }
 }
