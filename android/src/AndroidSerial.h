@@ -53,9 +53,12 @@ namespace AndroidSerial
         XonXoffInlineFlowControl
     };
 
-    static constexpr char CHAR_XON = 17;
-    static constexpr char CHAR_XOFF = 19;
+    constexpr char CHAR_XON = 17;
+    constexpr char CHAR_XOFF = 19;
 
+    constexpr const char *kJniUsbSerialManagerClassName = "org/mavlink/qgroundcontrol/QGCUsbSerialManager";
+
+    jclass getSerialManagerClass();
     void setNativeMethods();
     void jniDeviceHasDisconnected(JNIEnv *env, jobject obj, jlong classPtr);
     void jniDeviceNewData(JNIEnv *env, jobject obj, jlong classPtr, jbyteArray data);
@@ -67,7 +70,7 @@ namespace AndroidSerial
     bool close(int deviceId);
     bool isOpen(const QString &portName);
     QByteArray read(int deviceId, int length, int timeout);
-    int write(int deviceId, QByteArrayView data, int length, int timeout, bool async);
+    int write(int deviceId, const char *data, int length, int timeout, bool async);
     bool setParameters(int deviceId, int baudRate, int dataBits, int stopBits, int parity);
     bool getCarrierDetect(int deviceId);
     bool getClearToSend(int deviceId);
@@ -85,5 +88,4 @@ namespace AndroidSerial
     bool startReadThread(int deviceId);
     bool stopReadThread(int deviceId);
     bool readThreadRunning(int deviceId);
-    int getReadBufferSize(int deviceId);
-}; // namespace AndroidSerial
+} // namespace AndroidSerial

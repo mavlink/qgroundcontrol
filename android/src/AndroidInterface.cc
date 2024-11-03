@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 #include "AndroidInterface.h"
-#include <QGCLoggingCategory.h>
+#include "QGCLoggingCategory.h"
 
 #include <QtCore/QJniObject>
 #include <QtCore/QJniEnvironment>
@@ -44,7 +44,7 @@ void setNativeMethods()
     }
 
     QJniEnvironment jniEnv;
-    jint val = jniEnv->RegisterNatives(objectClass, javaMethods, sizeof(javaMethods) / sizeof(javaMethods[0]));
+    jint val = jniEnv->RegisterNatives(objectClass, javaMethods, std::size(javaMethods));
 
     if (val < 0) {
         qCWarning(AndroidInterfaceLog) << "Error registering methods:" << val;

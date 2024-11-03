@@ -9,7 +9,8 @@
 #include <QtCore/QJniObject>
 #include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(AndroidInitLog, "qgc.android.init");
+QGC_LOGGING_CATEGORY(AndroidInitLog, "qgc.android.androidinit");
+
 static jobject _context = nullptr;
 static jobject _class_loader = nullptr;
 
@@ -25,27 +26,29 @@ extern "C"
 }
 #endif
 
-static void jniInit(JNIEnv *env, jobject context)
+static jboolean jniInit(JNIEnv *env, jobject context)
 {
     qCDebug(AndroidInitLog) << Q_FUNC_INFO;
 
     const jclass context_cls = env->GetObjectClass(context);
     if (!context_cls) {
-        return;
+        return JNI_FALSE;
     }
 
     const jmethodID get_class_loader_id = env->GetMethodID(context_cls, "getClassLoader", "()Ljava/lang/ClassLoader;");
     if (QJniEnvironment::checkAndClearExceptions(env)) {
-        return;
+        return JNI_FALSE;
     }
 
     const jobject class_loader = env->CallObjectMethod(context, get_class_loader_id);
     if (QJniEnvironment::checkAndClearExceptions(env)) {
-        return;
+        return JNI_FALSE;
     }
 
     _context = env->NewGlobalRef(context);
     _class_loader = env->NewGlobalRef(class_loader);
+
+    return JNI_TRUE;
 }
 
 static jint jniSetNativeMethods()
@@ -53,7 +56,7 @@ static jint jniSetNativeMethods()
     qCDebug(AndroidInitLog) << Q_FUNC_INFO;
 
     const JNINativeMethod javaMethods[] {
-        {"nativeInit", "()V", reinterpret_cast<void *>(jniInit)}
+        {"nativeInit", "()Z", reinterpret_cast<void *>(jniInit)}
     };
 
     QJniEnvironment jniEnv;
@@ -62,15 +65,18 @@ static jint jniSetNativeMethods()
     jclass objectClass = jniEnv->FindClass(AndroidInterface::kJniQGCActivityClassName);
     if (!objectClass) {
         qCWarning(AndroidInitLog) << "Couldn't find class:" << AndroidInterface::kJniQGCActivityClassName;
+        (void) jniEnv.checkAndClearExceptions();
         return JNI_ERR;
     }
 
-    const jint val = jniEnv->RegisterNatives(objectClass, javaMethods, sizeof(javaMethods) / sizeof(javaMethods[0]));
+    const jint val = jniEnv->RegisterNatives(objectClass, javaMethods, std::size(javaMethods));
     if (val < 0) {
         qCWarning(AndroidInitLog) << "Error registering methods:" << val;
-    } else {
-        qCDebug(AndroidInitLog) << "Main Native Functions Registered";
+        (void) jniEnv.checkAndClearExceptions();
+        return JNI_ERR;
     }
+
+    qCDebug(AndroidInitLog) << "Main Native Functions Registered";
 
     (void) jniEnv.checkAndClearExceptions();
 
