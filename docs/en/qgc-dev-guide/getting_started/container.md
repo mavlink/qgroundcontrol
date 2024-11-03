@@ -16,7 +16,7 @@ The main advantage of using the container is the usage of the `CMake` build syst
 To build the container using the script, run this command in the qgc root directory
 
 ```
-./deploy/docker/run-docker.sh
+./deploy/docker/run-docker-ubuntu.sh
 ```
 ### Manual
 if you want to Build using the container manually, then you first have to build the image.
