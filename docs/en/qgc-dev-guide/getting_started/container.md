@@ -23,7 +23,7 @@ if you want to Build using the container manually, then you first have to build 
 You can accomplish this using docker, running the following script from the root of the QGC source code directory.
 
 ```
-docker build --file ./deploy/docker/Dockerfile-build-ubuntu -t qgc-linux-docker .
+docker build --file ./deploy/docker/Dockerfile-build-ubuntu -t qgc-ubuntu-docker .
 ```
 
 ::: info
@@ -35,7 +35,7 @@ Keep in mind this is tagging the image for later reference since you can have mu
 If building on a Mac computer with an M1 chip you must also specify the build option `--platform linux/x86_64` as shown:
 
 ```
-docker build --platform linux/x86_64 --file ./deploy/docker/Dockerfile-build-ubuntu -t qgc-linux-docker .
+docker build --platform linux/x86_64 --file ./deploy/docker/Dockerfile-build-ubuntu -t qgc-ubuntu-docker .
 ```
 
 Otherwise you will get a build error like:
@@ -53,7 +53,7 @@ We recommend you create a `build` directory on the source tree and then run the 
 
 ```
 mkdir build
-docker run --rm -v ${PWD}:/project/source -v ${PWD}/build:/project/build qgc-linux-docker
+docker run --rm -v ${PWD}:/project/source -v ${PWD}/build:/project/build qgc-ubuntu-docker
 ```
 
 ::: info
@@ -61,7 +61,7 @@ If using the script to build the Linux image on a Windows host, you would need t
 On Windows the docker command is:
 
 ```
-docker run --rm -v %cd%:/project/source -v %cd%/build:/project/build qgc-linux-docker
+docker run --rm -v %cd%:/project/source -v %cd%/build:/project/build qgc-ubuntu-docker
 ```
 
 :::
