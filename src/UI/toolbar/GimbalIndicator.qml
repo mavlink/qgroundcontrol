@@ -34,6 +34,7 @@ Item {
     property var    margins:                    ScreenTools.defaultFontPixelWidth
     property var    panelRadius:                ScreenTools.defaultFontPixelWidth * 0.5
     property var    buttonHeight:               height * 1.6
+    property var    squareButtonPadding:        ScreenTools.defaultFontPixelWidth
     property var    separatorHeight:            buttonHeight * 0.9
     property var    settingsPanelVisible:       false
 
@@ -100,6 +101,8 @@ Item {
                         visible: modelData.visible
                         pointSize: ScreenTools.smallFontPointSize
                         backRadius: panelRadius * 0.5
+                        leftPadding: squareButtonPadding
+                        rightPadding: squareButtonPadding
                         onClicked: {
                             var callback = callbackList.find(function(item) {
                                 return item.hasOwnProperty(modelData.id);
@@ -226,6 +229,8 @@ Item {
                     backRadius:             panelRadius * 0.5
                     checkable:              true
                     checked:                _root.settingsPanelVisible
+                    leftPadding:            squareButtonPadding
+                    rightPadding:           squareButtonPadding
                     onCheckedChanged: {
                         if (checked !== _root.settingsPanelVisible) {
                             _root.settingsPanelVisible = checked
