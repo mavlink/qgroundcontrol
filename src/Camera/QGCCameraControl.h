@@ -138,6 +138,13 @@ public:
         THERMAL_PIP,
     };
 
+    enum ZoomStatus {
+        ZOOM_UNKNOWN        = 0,
+        ZOOM_SUPPORTED      = 1,
+        ZOOM_ENABLED        = 2,
+        ZOOM_SEL_ACTIVE     = 4,
+    };
+
     enum TrackingStatus {
         TRACKING_UNKNOWN        = 0,
         TRACKING_SUPPORTED      = 1,
@@ -153,6 +160,7 @@ public:
     Q_ENUM(StorageStatus)
     Q_ENUM(ThermalViewMode)
     Q_ENUM(TrackingStatus)
+    Q_ENUM(ZoomStatus)
 
     Q_PROPERTY(int          version             READ version            NOTIFY infoChanged)
     Q_PROPERTY(QString      modelName           READ modelName          NOTIFY infoChanged)
@@ -208,6 +216,8 @@ public:
     Q_PROPERTY(ThermalViewMode thermalMode      READ thermalMode        WRITE  setThermalMode       NOTIFY thermalModeChanged)
     Q_PROPERTY(double       thermalOpacity      READ thermalOpacity     WRITE  setThermalOpacity    NOTIFY thermalOpacityChanged)
     Q_PROPERTY(bool         trackingEnabled     READ trackingEnabled    WRITE setTrackingEnabled    NOTIFY trackingEnabledChanged)
+    Q_PROPERTY(ZoomStatus   zoomStatus    		READ zoomStatus                                 	CONSTANT)
+    Q_PROPERTY(bool         zoomEnabled         READ zoomEnabled        WRITE setZoomEnabled        NOTIFY zoomEnabledChanged)
     Q_PROPERTY(TrackingStatus trackingStatus    READ trackingStatus                                 CONSTANT)
     Q_PROPERTY(bool         trackingImageStatus READ trackingImageStatus                            NOTIFY trackingImageStatusChanged)
     Q_PROPERTY(QRectF       trackingImageRect   READ trackingImageRect                              NOTIFY trackingImageStatusChanged)
@@ -309,9 +319,12 @@ public:
     virtual void        handleVideoInfo     (const mavlink_video_stream_information_t *vi);
     virtual void        handleVideoStatus   (const mavlink_video_stream_status_t *vs);
 
+    virtual bool        zoomEnabled     () { return _zoomLevel != 1.0; }
     virtual bool        trackingEnabled     () { return _trackingStatus & TRACKING_ENABLED; }
     virtual void        setTrackingEnabled  (bool set);
+    virtual void        setZoomEnabled  (bool set);
 
+    virtual ZoomStatus zoomStatus   () { return _zoomStatus; }
     virtual TrackingStatus trackingStatus   () { return _trackingStatus; }
 
     virtual bool trackingImageStatus() { return _trackingImageStatus.tracking_status == 1; }
@@ -355,6 +368,7 @@ signals:
     void    autoStreamChanged               ();
     void    recordTimeChanged               ();
     void    streamLabelsChanged             ();
+    void    zoomEnabledChanged          ();
     void    trackingEnabledChanged          ();
     void    trackingImageStatusChanged      ();
     void    thermalModeChanged              ();
@@ -461,6 +475,7 @@ protected:
     ThermalViewMode                     _thermalMode        = THERMAL_BLEND;
     double                              _thermalOpacity     = 85.0;
     TrackingStatus                      _trackingStatus     = TRACKING_UNKNOWN;
+    ZoomStatus                          _zoomStatus         = ZOOM_UNKNOWN;
     QRectF                              _trackingMarquee;
     QPointF                             _trackingPoint;
     double                              _trackingRadius     = 0.0;

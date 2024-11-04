@@ -196,18 +196,16 @@ Item {
             id:             pinchZoom
             enabled:        _hasZoom
             anchors.fill:   parent
-            onPinchStarted: pinchZoom.zoom = 0
+            property real initZoom: 1.0
+            onPinchStarted: {
+                initZoom = _camera.zoomLevel
+                pinchZoom.zoom = 0
+            }
             onPinchUpdated: {
                 if(_hasZoom) {
                     var z = 0
-                    if(pinch.scale < 1) {
-                        z = Math.round(pinch.scale * -10)
-                    } else {
-                        z = Math.round(pinch.scale)
-                    }
-                    if(pinchZoom.zoom != z) {
-                        _camera.stepZoom(z)
-                    }
+                    z = Math.round(pinch.scale)
+                    _camera.zoomLevel = Math.max(Math.min(pinch.scale * initZoom, 32), 1)
                 }
             }
             property int zoom: 0

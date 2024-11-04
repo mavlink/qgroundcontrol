@@ -257,64 +257,97 @@ Rectangle {
             }
         }
 
-        // Take Photo, Start/Stop Video button
-        // IMPORTANT: This control supports both mavlink cameras and simple video streams. Do no reference anything here which is not
-        // using the unified properties/functions.
-        Rectangle {
+        RowLayout {
             Layout.alignment:   Qt.AlignHCenter
-            color:              Qt.rgba(0,0,0,0)
-            width:              ScreenTools.defaultFontPixelWidth * 6
-            height:             width
-            radius:             width * 0.5
-            border.color:       qgcPal.buttonText
-            border.width:       3
+            spacing:            5
 
+            // Take Photo, Start/Stop Video button
+            // IMPORTANT: This control supports both mavlink cameras and simple video streams. Do no reference anything here which is not
+            // using the unified properties/functions.
             Rectangle {
-                anchors.centerIn:   parent
-                width:              parent.width * (_isShootingInCurrentMode ? 0.5 : 0.75)
+                Layout.alignment:   Qt.AlignHCenter
+                color:              Qt.rgba(0,0,0,0)
+                width:              ScreenTools.defaultFontPixelWidth * 6
                 height:             width
-                radius:             _isShootingInCurrentMode ? 0 : width * 0.5
-                color:              _canShootInCurrentMode ? qgcPal.colorRed : qgcPal.colorGrey
-            }
+                radius:             width * 0.5
+                border.color:       qgcPal.buttonText
+                border.width:       3
 
-            MouseArea {
-                anchors.fill:   parent
-                enabled:        _canShootInCurrentMode
-                onClicked:      toggleShooting()
-            }
-        }
+                Rectangle {
+                    anchors.centerIn:   parent
+                    width:              parent.width * (_isShootingInCurrentMode ? 0.5 : 0.75)
+                    height:             width
+                    radius:             _isShootingInCurrentMode ? 0 : width * 0.5
+                    color:              _canShootInCurrentMode ? qgcPal.colorRed : qgcPal.colorGrey
+                }
 
-        // Tracking button
-        Rectangle {
-            Layout.alignment:   Qt.AlignHCenter
-            color:              _mavlinkCamera && _mavlinkCamera.trackingEnabled ? qgcPal.colorRed : qgcPal.windowShadeLight
-            width:              ScreenTools.defaultFontPixelWidth * 6
-            height:             width
-            radius:             width * 0.5
-            border.color:       qgcPal.buttonText
-            border.width:       3
-            visible:            _mavlinkCamera && _mavlinkCamera.hasTracking
-            QGCColoredImage {
-                height:             parent.height * 0.5
-                width:              height
-                anchors.centerIn:   parent
-                source:             "/qmlimages/TrackingIcon.svg"
-                fillMode:           Image.PreserveAspectFit
-                sourceSize.height:  height
-                color:              qgcPal.text
                 MouseArea {
                     anchors.fill:   parent
-                    onClicked: {
-                        _mavlinkCamera.trackingEnabled = !_mavlinkCamera.trackingEnabled;
-                        if(!_mavlinkCamera.trackingEnabled) {
-                            let latestFrameTimestamp = QGroundControl.videoManager.lastKlvTimestamp;
-                            console.log("Latest timestamp in js: " + latestFrameTimestamp);
-                            !_mavlinkCamera.stopTracking(latestFrameTimestamp);
+                    enabled:        _canShootInCurrentMode
+                    onClicked:      toggleShooting()
+                }
+            }
+
+            // Zoom button
+            Rectangle {
+                Layout.alignment:   Qt.AlignHCenter
+                color:              _mavlinkCamera && _mavlinkCamera.zoomEnabled ? qgcPal.colorRed : qgcPal.windowShadeLight
+                width:              ScreenTools.defaultFontPixelWidth * 6
+                height:             width
+                radius:             width * 0.5
+                border.color:       qgcPal.buttonText
+                border.width:       3
+                visible:            true //_mavlinkCamera && _mavlinkCamera.hasZoom
+                QGCColoredImage {
+                    height:             parent.height * 0.5
+                    width:              height
+                    anchors.centerIn:   parent
+                    source:             "/qmlimages/ZoomIcon.svg"
+                    fillMode:           Image.PreserveAspectFit
+                    sourceSize.height:  height
+                    color:              qgcPal.text
+                    MouseArea {
+                        anchors.fill:   parent
+                        onClicked: {
+                            _mavlinkCamera.zoomLevel = 1
+                        }
+                    }
+                }
+            }
+
+            // Tracking button
+            Rectangle {
+                Layout.alignment:   Qt.AlignHCenter
+                color:              _mavlinkCamera && _mavlinkCamera.trackingEnabled ? qgcPal.colorRed : qgcPal.windowShadeLight
+                width:              ScreenTools.defaultFontPixelWidth * 6
+                height:             width
+                radius:             width * 0.5
+                border.color:       qgcPal.buttonText
+                border.width:       3
+                visible:            true //_mavlinkCamera && _mavlinkCamera.hasTracking
+                QGCColoredImage {
+                    height:             parent.height * 0.5
+                    width:              height
+                    anchors.centerIn:   parent
+                    source:             "/qmlimages/TrackingIcon.svg"
+                    fillMode:           Image.PreserveAspectFit
+                    sourceSize.height:  height
+                    color:              qgcPal.text
+                    MouseArea {
+                        anchors.fill:   parent
+                        onClicked: {
+                            _mavlinkCamera.trackingEnabled = !_mavlinkCamera.trackingEnabled;
+                            if(!_mavlinkCamera.trackingEnabled) {
+                                let latestFrameTimestamp = QGroundControl.videoManager.lastKlvTimestamp;
+                                console.log("Latest timestamp in js: " + latestFrameTimestamp);
+                                !_mavlinkCamera.stopTracking(latestFrameTimestamp);
+                            }
                         }
                     }
                 }
             }
         }
+
         QGCLabel {
             Layout.alignment:   Qt.AlignHCenter
             text:               qsTr("Camera Tracking")

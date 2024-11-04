@@ -573,6 +573,7 @@ QGCCameraControl::setZoomLevel(qreal level)
 {
     qCDebug(CameraControlLog) << "setZoomLevel()" << level;
     if(hasZoom()) {
+        _zoomLevel = level;
         //-- Limit
         level = std::min(std::max(level, 0.0), 100.0);
         if(_vehicle) {
@@ -583,6 +584,7 @@ QGCCameraControl::setZoomLevel(qreal level)
                 ZOOM_TYPE_RANGE,                        // Zoom type
                 static_cast<float>(level));             // Level
         }
+        emit zoomEnabledChanged();
     }
 }
 
@@ -641,7 +643,7 @@ QGCCameraControl::formatCard(int id)
 void
 QGCCameraControl::stepZoom(int direction)
 {
-    qCDebug(CameraControlLog) << "stepZoom()" << direction;
+    qCCritical(CameraControlLog) << "stepZoom()" << direction;
     if(_vehicle && hasZoom()) {
         _vehicle->sendMavCommand(
             _compID,                                // Target component
@@ -1525,12 +1527,12 @@ QGCCameraControl::handleSettings(const mavlink_camera_settings_t& settings)
 {
     qCDebug(CameraControlLog) << "handleSettings() Mode:" << settings.mode_id;
     _setCameraMode(static_cast<CameraMode>(settings.mode_id));
-    qreal z = static_cast<qreal>(settings.zoomLevel);
+    //qreal z = static_cast<qreal>(settings.zoomLevel);
     qreal f = static_cast<qreal>(settings.focusLevel);
-    if(std::isfinite(z) && z != _zoomLevel) {
-        _zoomLevel = z;
-        emit zoomLevelChanged();
-    }
+    //if(std::isfinite(z) && z != _zoomLevel) {
+    //    _zoomLevel = z;
+    //    emit zoomLevelChanged();
+    //}
     if(std::isfinite(f) && f != _focusLevel) {
         _focusLevel = f;
         emit focusLevelChanged();
@@ -2386,6 +2388,17 @@ QGCVideoStreamInfo::update(const mavlink_video_stream_status_t* vs)
     return changed;
 }
 
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::setZoomEnabled(bool set)
+{
+    if(!set) {
+        _zoomLevel = 1.0;
+    } else {
+    }
+    emit zoomEnabledChanged();
+
+}
 //-----------------------------------------------------------------------------
 void
 QGCCameraControl::setTrackingEnabled(bool set)

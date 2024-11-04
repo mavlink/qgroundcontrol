@@ -96,6 +96,21 @@ Item {
         cameraTrackingEnabled:   videoStreaming._camera && videoStreaming._camera.trackingEnabled
     }
 
+    // Define the selectable rectangle (initially hidden)
+    Rectangle {
+                id: selectionRect
+                color: "transparent"
+                border.color: "blue"
+                border.width: 3
+                visible: false // Initially hidden
+
+                // Make sure selection rectangle doesn't go negative in size
+                x: Math.min(startX, mouseArea.mouseX)
+                y: Math.min(startY, mouseArea.mouseY)
+                width: Math.abs(mouseArea.mouseX - startX)
+                height: Math.abs(mouseArea.mouseY - startY)
+            }
+
     MouseArea {
         id:                         flyViewVideoMouseArea
         anchors.fill:               parent
@@ -111,6 +126,8 @@ Item {
         property double offset_x:   0
         property double offset_y:   0
         property double radius:     20
+        property real startX: 0
+        property real startY: 0
         property var trackingStatus: trackingStatusComponent.createObject(flyViewVideoMouseArea, {})
 
         // Define constants representing rectangle scaling modes
@@ -122,6 +139,50 @@ Item {
 
         property int currentScaleMode: scaleModeBoth
 
+        onPressed: {
+                        // Set starting point and make the selection rectangle visible
+                        startX = mouse.x
+                        startY = mouse.y
+                        selectionRect.visible = true
+                        selectionRect.x = Math.min(mouse.x, startX);
+                        selectionRect.y = Math.min(mouse.y, startY);
+                        selectionRect.width = Math.abs(mouse.x - startX)
+                        selectionRect.height = Math.abs(mouse.y - startY)
+                    }
+
+        onReleased: {
+            selectionRect.visible = false;
+
+            let x0 = Math.floor(Math.max(0, selectionRect.x));
+            let y0 = Math.floor(Math.max(0, selectionRect.y));
+            let x1 = Math.floor(Math.min(width, selectionRect.x + selectionRect.width));
+            let y1 = Math.floor(Math.min(height, selectionRect.y + selectionRect.height));
+
+            //calculate offset between video stream rect and background (black stripes)
+            let offset_x = (parent.width - videoStreaming.getWidth()) / 2
+            let offset_y = (parent.height - videoStreaming.getHeight()) / 2
+
+            //calculate offset between video stream rect and background (black stripes)
+            x0 -= offset_x
+            x1 -= offset_x
+            y0 -= offset_y
+            y1 -= offset_y
+
+            //convert absolute to relative coordinates and limit range to 0...1
+            x0 = Math.max(Math.min(x0 / videoStreaming.getWidth(), 1.0), 0.0)
+            x1 = Math.max(Math.min(x1 / videoStreaming.getWidth(), 1.0), 0.0)
+            y0 = Math.max(Math.min(y0 / videoStreaming.getHeight(), 1.0), 0.0)
+            y1 = Math.max(Math.min(y1 / videoStreaming.getHeight(), 1.0), 0.0)
+
+            let rec = Qt.rect(x0, y0, x1 - x0, y1 - y0);
+            if (rec.width === 0 || rec.height === 0) {
+                return;
+            }
+            console.log(videoStreaming._camera.zoomEnabled)
+            videoStreaming._camera.startTracking(rec, "300");
+            videoStreaming._camera._zoomLevel = Math.min(1.0/(x1-x0), 1.0/(y1-y0))
+            videoStreaming._camera.zoomEnabled = true
+        }
 
         onDoubleClicked: QGroundControl.videoManager.fullScreen = !QGroundControl.videoManager.fullScreen
 
@@ -129,7 +190,7 @@ Item {
             // If right button is clicked, change the selection mode
             if (mouse.button == Qt.RightButton) {
                 // If mode reached the highest value, put it back to zero
-                currentScaleMode = (currentScaleMode + 1) % numScaleModes;
+                // currentScaleMode = (currentScaleMode + 1) % numScaleModes;
                 return;
             }
 
@@ -192,6 +253,13 @@ Item {
             targetCanvas.rectCenterX = mouse.x;
             targetCanvas.rectCenterY = mouse.y;
             targetCanvas.requestPaint();
+            // Redraw selection rectangle as mouse moves
+            if (flyViewVideoMouseArea.pressed) {
+                selectionRect.x = Math.min(mouse.x, startX);
+                selectionRect.y = Math.min(mouse.y, startY);
+                selectionRect.width = Math.abs(mouse.x - startX)
+                selectionRect.height = Math.abs(mouse.y - startY)
+           }
         }
 
         Canvas {
