@@ -24,17 +24,18 @@ Item {
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
 
-    property var    activeVehicle:          QGroundControl.multiVehicleManager.activeVehicle
-    property var    gimbalController:       activeVehicle.gimbalController
-    property bool   showIndicator:          gimbalController && gimbalController.gimbals.count
-    property var    activeGimbal:           gimbalController.activeGimbal
-    property var    multiGimbalSetup:       gimbalController.gimbals.count > 1
+    property var    activeVehicle:              QGroundControl.multiVehicleManager.activeVehicle
+    property var    gimbalController:           activeVehicle.gimbalController
+    property bool   showIndicator:              gimbalController && gimbalController.gimbals.count
+    property var    activeGimbal:               gimbalController.activeGimbal
+    property var    multiGimbalSetup:           gimbalController.gimbals.count > 1
+    property bool   joystickButtonsAvailable:   activeVehicle.joystickEnabled
 
-    property var    margins:                ScreenTools.defaultFontPixelWidth
-    property var    panelRadius:            ScreenTools.defaultFontPixelWidth * 0.5
-    property var    buttonHeight:           height * 1.6
-    property var    separatorHeight:        buttonHeight * 0.9
-    property var    settingsPanelVisible:   false
+    property var    margins:                    ScreenTools.defaultFontPixelWidth
+    property var    panelRadius:                ScreenTools.defaultFontPixelWidth * 0.5
+    property var    buttonHeight:               height * 1.6
+    property var    separatorHeight:            buttonHeight * 0.9
+    property var    settingsPanelVisible:       false
 
     // Popup panel, appears when clicking top toolbar gimbal indicator
     Component {
@@ -295,8 +296,28 @@ Item {
                         Layout.columnSpan:       2
                         Layout.preferredHeight:  2
                         Layout.preferredWidth:   gimbalAzimuthMapCheckbox.width
-                        Layout.margins:          margins * 1.5
+                        Layout.margins:          margins
                         color:                   qgcPal.windowShade
+                    }
+
+                    QGCLabel {
+                        text:               qsTr("Joystick buttons speed:")
+                        visible:            joystickButtonsAvailable && QGroundControl.settingsManager.gimbalControllerSettings.visible
+                    }
+                    FactTextField {
+                        fact:               QGroundControl.settingsManager.gimbalControllerSettings.joystickButtonsSpeed
+                        visible:            joystickButtonsAvailable && QGroundControl.settingsManager.gimbalControllerSettings.visible
+                        showHelp:           true
+                    }
+
+                    // Separator
+                    Rectangle {
+                        Layout.columnSpan:       2
+                        Layout.preferredHeight:  2
+                        Layout.preferredWidth:   gimbalAzimuthMapCheckbox.width
+                        Layout.margins:          margins
+                        color:                   qgcPal.windowShade
+                        visible:                 joystickButtonsAvailable && QGroundControl.settingsManager.gimbalControllerSettings.visible
                     }
 
                     FactCheckBox {
