@@ -55,6 +55,14 @@
     "shortDesc":         "Show Azimuth Acquire/release buttons in the gimbal buttons panel",
     "type":              "bool",
     "default":           false
+},
+{
+    "name":              "joystickButtonsSpeed",
+    "shortDesc":         "Rate used for joystick button control (deg/sec)",
+    "longDesc":          "When a joystick button is set to gimbal left/right/up/down, it will send this rate when pressed, and it will stop moving when button is released",
+    "type":              "uint32",
+    "default":           20,
+    "units":             "deg/s"
 }
 ]
 }

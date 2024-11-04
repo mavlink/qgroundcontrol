@@ -26,4 +26,5 @@ public:
     DEFINE_SETTINGFACT(showAzimuthIndicatorOnMap)
     DEFINE_SETTINGFACT(toolbarIndicatorShowAzimuth)
     DEFINE_SETTINGFACT(toolbarIndicatorShowAcquireReleaseControl)
+    DEFINE_SETTINGFACT(joystickButtonsSpeed)
 };
