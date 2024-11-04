@@ -460,7 +460,8 @@ void GimbalController::gimbalPitchStart(int direction)
         return;
     }
 
-    activeGimbal()->setPitchRate(direction * PITCH_RATE);
+    float speed = qgcApp()->toolbox()->settingsManager()->gimbalControllerSettings()->joystickButtonsSpeed()->rawValue().toInt();
+    activeGimbal()->setPitchRate(direction * speed);
 
     sendRate();
 }
@@ -471,8 +472,9 @@ void GimbalController::gimbalYawStart(int direction)
         qCDebug(GimbalLog) << "gimbalYawStart: active gimbal is nullptr, returning";
         return;
     }
-
-    activeGimbal()->setYawRate(direction * YAW_RATE);
+    
+    float speed = qgcApp()->toolbox()->settingsManager()->gimbalControllerSettings()->joystickButtonsSpeed()->rawValue().toInt();
+    activeGimbal()->setYawRate(direction * speed);
     sendRate();
 }
 

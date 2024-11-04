@@ -160,10 +160,6 @@ public:
         }
     };
 
-    // Should we make this configurable somehow?
-    static constexpr float PITCH_RATE = 20.0f;
-    static constexpr float YAW_RATE = 20.0f;
-
     Q_PROPERTY(Gimbal*              activeGimbal    READ activeGimbal   WRITE setActiveGimbal   NOTIFY activeGimbalChanged)
     Q_PROPERTY(QmlObjectListModel*  gimbals         READ gimbals        CONSTANT)
 
