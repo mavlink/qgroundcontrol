@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -14,8 +14,6 @@
 #include "SettingsManager.h"
 #include "PositionManager.h"
 #include "NTRIPSettings.h"
-
-#include <QDebug>
 
 NTRIP::NTRIP(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
@@ -145,8 +143,14 @@ void NTRIPTCPLink::_hardwareConnect()
     // If mountpoint is specified, send an http get request for data
     if ( !_mountpoint.isEmpty()) {
         qCDebug(NTRIPLog) << "Sending HTTP request, using mount point: " << _mountpoint;
-        QString auth = QString(_username + ":"  + _password).toUtf8().toBase64();
-        QString query = "GET /%1 HTTP/1.0\r\nUser-Agent: NTRIP\r\nAuthorization: Basic %2\r\n\r\n";
+        // TODO(zdanek) Add support for NTRIP v2
+        QString digest = QString(_username + ":"  + _password).toUtf8().toBase64();
+        QString auth = QString("Authorization: Basic %1\r\n").arg(digest);
+        QString query = "GET /%1 HTTP/1.0\r\n"
+                        "User-Agent: NTRIP QGroundControl\r\n"
+                        "%2"
+                        "Connection: close\r\n\r\n";
+
         _socket->write(query.arg(_mountpoint).arg(auth).toUtf8());
         _state = NTRIPState::waiting_for_http_response;
     } else {
@@ -157,29 +161,47 @@ void NTRIPTCPLink::_hardwareConnect()
     qCDebug(NTRIPLog) << "NTRIP Socket connected";
 }
 
-void NTRIPTCPLink::_parse(const QByteArray &buffer)
-{
-    qCDebug(NTRIPLog) << "Parsing " << buffer.size() << " bytes";   for(const uint8_t byte : buffer) {
-        if(_state == NTRIPState::waiting_for_rtcm_header) {
-            if(byte != RTCM3_PREAMBLE)
-                continue;
-            _state = NTRIPState::accumulating_rtcm_packet;
-        }
-        if(_rtcm_parsing->addByte(byte)) {
-            _state = NTRIPState::waiting_for_rtcm_header;
-            QByteArray message((char*)_rtcm_parsing->message(), static_cast<int>(_rtcm_parsing->messageLength()));
-            //TODO: Restore the following when upstreamed in Driver repo
-            //uint16_t id = _rtcm_parsing->messageId();
-            uint16_t id = ((uint8_t)message[3] << 4) | ((uint8_t)message[4] >> 4);
-            if(_whitelist.empty() || _whitelist.contains(id)) {
-                emit RTCMDataUpdate(message);
-                qCDebug(NTRIPLog) << "Sending " << id << "of size " << message.length();
-            } else {
-                qCDebug(NTRIPLog) << "Ignoring " << id;
-            }
-            _rtcm_parsing->reset();
-        }
+void NTRIPTCPLink::_parse(const QByteArray &buffer) {
+  qCDebug(NTRIPLog) << "Parsing " << buffer.size() << " bytes";
+  for (const uint8_t byte : buffer) {
+    if (_state == NTRIPState::waiting_for_rtcm_header) {
+      if (byte != RTCM3_PREAMBLE && byte != RTCM2_PREAMBLE) {
+        qCDebug(NTRIPLog) << "NOT RTCM 2/3 preamble, ignoring byte " << byte;
+        continue;
+      }
+      _state = NTRIPState::accumulating_rtcm_packet;
     }
+
+    if (_rtcm_parsing->addByte(byte)) {
+      _state = NTRIPState::waiting_for_rtcm_header;
+      QByteArray message((char *)_rtcm_parsing->message(),
+                         static_cast<int>(_rtcm_parsing->messageLength()));
+      uint16_t id = _rtcm_parsing->messageId();
+      uint8_t version = _rtcm_parsing->rtcmVersion();
+      qCDebug(NTRIPLog) << "RTCM version " << version;
+      qCDebug(NTRIPLog) << "RTCM message ID " << id;
+      qCDebug(NTRIPLog) << "RTCM message size " << message.size();
+
+      if (version == 2) {
+        qCWarning(NTRIPLog) << "RTCM 2 not supported";
+        emit error("Server sent RTCM 2 message. Not supported!");
+        continue;
+      } else if (version != 3) {
+        qCWarning(NTRIPLog) << "Unknown RTCM version " << version;
+        emit error("Server sent unknown RTCM version");
+        continue;
+      }
+
+      //      uint16_t id = ((uint8_t)message[3] << 4) | ((uint8_t)message[4] >> 4);
+      if (_whitelist.empty() || _whitelist.contains(id)) {
+        qCDebug(NTRIPLog) << "Sending message ID [" << id << "] of size " << message.length();
+        emit RTCMDataUpdate(message);
+      } else {
+        qCDebug(NTRIPLog) << "Ignoring " << id;
+      }
+      _rtcm_parsing->reset();
+    }
+  }
 }
 
 void NTRIPTCPLink::_readBytes(void)
@@ -189,10 +211,21 @@ void NTRIPTCPLink::_readBytes(void)
         return;
     }
     if(_state == NTRIPState::waiting_for_http_response) {
-        QString line = _socket->readLine();
+
+      //Content-Type: gnss/sourcetable
+      // Content-Type: gnss/sourcetable
+
+      QString line = _socket->readLine();
+      qCDebug(NTRIPLog) << "Server responded with " << line;
         if (line.contains("200")){
             qCDebug(NTRIPLog) << "Server responded with " << line;
-            _state = NTRIPState::waiting_for_rtcm_header;
+            if (line.contains("SOURCETABLE")) {
+                qCDebug(NTRIPLog) << "Server responded with SOURCETABLE, not supported";
+                emit error("NTRIP Server responded with SOURCETABLE. Bad mountpoint?");
+                _state = NTRIPState::uninitialised;
+            } else {
+                _state = NTRIPState::waiting_for_rtcm_header;
+            }
         } else if (line.contains("401")) {
             qCWarning(NTRIPLog) << "Server responded with " << line;
             emit error("NTRIP Server responded with 401 Unauthorized");
@@ -204,20 +237,38 @@ void NTRIPTCPLink::_readBytes(void)
             _state = NTRIPState::waiting_for_rtcm_header;
         }
     }
+
+
+//    throw new Exception("Got SOURCETABLE - Bad ntrip mount point\n\n" + line);
+
+
     QByteArray bytes = _socket->readAll();
     _parse(bytes);
 }
 
 void NTRIPTCPLink::_sendNMEA() {
+  // TODO(zdanek) check if this is proper NMEA message
   qCDebug(NTRIPLog) << "Sending NMEA";
-    QGeoCoordinate gcsPosition = _toolbox->qgcPositionManager()->gcsPosition();
+  QGeoCoordinate gcsPosition = _toolbox->qgcPositionManager()->gcsPosition();
 
-    if(!gcsPosition.isValid()) {
-        qCDebug(NTRIPLog) << "GCS Position is not valid";
+  if (!gcsPosition.isValid()) {
+    qCDebug(NTRIPLog) << "GCS Position is not valid";
+    if (_takePosFromVehicle) {
+      Vehicle *vehicle = _toolbox->multiVehicleManager()->activeVehicle();
+      if (vehicle) {
+        qCDebug(NTRIPLog) << "Active vehicle found. Using vehicle position";
+        gcsPosition = vehicle->coordinate();
+      } else {
+        qCDebug(NTRIPLog) << "No active vehicle";
         return;
+      }
+    } else {
+      qCDebug(NTRIPLog) << "No valid GCS position";
+      return;
     }
+  }
 
-    double lat = gcsPosition.latitude();
+  double lat = gcsPosition.latitude();
     double lng = gcsPosition.longitude();
     double alt = gcsPosition.altitude();
 

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -15,6 +15,8 @@
 
 #include <cstdio>
 
+QGC_LOGGING_CATEGORY(RTCMMavlinkLog, "RTCMMavlinkLog")
+
 RTCMMavlink::RTCMMavlink(QGCToolbox& toolbox)
     : _toolbox(toolbox)
 {
@@ -23,13 +25,13 @@ RTCMMavlink::RTCMMavlink(QGCToolbox& toolbox)
 
 void RTCMMavlink::RTCMDataUpdate(QByteArray message)
 {
-    qCDebug(NTRIPLog) << "RTCMDataUpdate: " << message.size() << " bytes";   /* statistics */
+    qCDebug(RTCMMavlinkLog) << "RTCMDataUpdate: " << message.size() << " bytes";   /* statistics */
     _bandwidthByteCounter += message.size();
     qint64 elapsed = _bandwidthTimer.elapsed();
     if (elapsed > 1000) {
-        printf("RTCM bandwidth: %.2f kB/s\n", (float) _bandwidthByteCounter / elapsed * 1000.f / 1024.f);
-        _bandwidthTimer.restart();
-        _bandwidthByteCounter = 0;
+      qCDebug(RTCMMavlinkLog) << "RTCM bandwidth: " << ((float) _bandwidthByteCounter / elapsed * 1000.f / 1024.f) << " KB/s";
+      _bandwidthTimer.restart();
+      _bandwidthByteCounter = 0;
     }
 
     const int maxMessageLength = MAVLINK_MSG_GPS_RTCM_DATA_FIELD_DATA_LEN;
@@ -72,12 +74,14 @@ void RTCMMavlink::sendMessageToVehicle(const mavlink_gps_rtcm_data_t& msg)
             mavlink_message_t       message;
             SharedLinkInterfacePtr  sharedLink = weakLink.lock();
 
-            mavlink_msg_gps_rtcm_data_encode_chan(mavlinkProtocol->getSystemId(),
-                                                  mavlinkProtocol->getComponentId(),
-                                                  sharedLink->mavlinkChannel(),
-                                                  &message,
-                                                  &msg);
-            vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
+            if (sharedLink->isConnected()) {
+              mavlink_msg_gps_rtcm_data_encode_chan(mavlinkProtocol->getSystemId(),
+                                                    mavlinkProtocol->getComponentId(),
+                                                    sharedLink->mavlinkChannel(),
+                                                    &message,
+                                                    &msg);
+              vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
+              }
         }
     }
 }

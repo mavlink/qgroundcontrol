@@ -13,8 +13,11 @@
 #include <QObject>
 #include <QElapsedTimer>
 
-#include "QGCToolbox.h"
 #include "MAVLinkProtocol.h"
+#include "QGCLoggingCategory.h"
+#include "QGCToolbox.h"
+
+Q_DECLARE_LOGGING_CATEGORY(RTCMMavlinkLog)
 
 /**
  ** class RTCMMavlink
