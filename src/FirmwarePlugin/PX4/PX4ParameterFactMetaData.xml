@@ -20415,7 +20415,6 @@
       <values>
         <value code="0">Disabled</value>
         <value code="2">XChaCha20</value>
-        <value code="3">AES</value>
       </values>
     </parameter>
     <parameter name="SDLOG_BOOT_BAT" default="0" type="INT32" boolean="true">
