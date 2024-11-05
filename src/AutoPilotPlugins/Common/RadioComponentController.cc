@@ -608,6 +608,11 @@ void RadioComponentController::spektrumBindMode(int mode)
     _vehicle->pairRX(0, mode);
 }
 
+void RadioComponentController::crsfBindMode()
+{
+    _vehicle->pairRX(1, 0);
+}
+
 /// @brief Validates the current settings against the calibration rules resetting values as necessary.
 void RadioComponentController::_validateCalibration(void)
 {
