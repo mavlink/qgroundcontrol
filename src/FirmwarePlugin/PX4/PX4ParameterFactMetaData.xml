@@ -22423,8 +22423,8 @@
       <values>
         <value code="0">ROTATION_FORWARD_FACING</value>
         <value code="2">ROTATION_RIGHT_FACING</value>
+        <value code="4">ROTATION_BACKWARD_FACING</value>
         <value code="6">ROTATION_LEFT_FACING</value>
-        <value code="12">ROTATION_BACKWARD_FACING</value>
         <value code="24">ROTATION_UPWARD_FACING</value>
         <value code="25">ROTATION_DOWNWARD_FACING</value>
       </values>
