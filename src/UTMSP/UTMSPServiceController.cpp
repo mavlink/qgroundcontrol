@@ -72,60 +72,65 @@ std::string UTMSPServiceController::flightPlanAuthorization()
 
     return _responseFlightID.toStdString();
 }
-bool UTMSPServiceController::networkRemoteID(const mavlink_message_t& message,
+bool UTMSPServiceController::networkRemoteID(const mavlink_message_t &message,
                                              const std::string &serialNumber,
                                              const std::string &operatorID,
                                              const std::string &flightID)
 {
-    double vehicleLatitude;
-    double vehicleLongitude;
-    double lastLatitude;
-    double lastLongitude;
-
-    switch (message.msgid)
-    {
-    case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
-
-        // rate-limit updates to 3 Hz
+    static uint8_t lastVehicleState = MAV_STATE_UNINIT;
+    switch (message.msgid) {
+    case MAVLINK_MSG_ID_HEARTBEAT: {
+        mavlink_heartbeat_t heartbeat;
+        mavlink_msg_heartbeat_decode(&message, &heartbeat);
+        if (lastVehicleState == MAV_STATE_ACTIVE && heartbeat.system_status != MAV_STATE_ACTIVE) {
+            // State 4 --> Stop telemetry when transitioning out of ACTIVE state
+            bool stopFlag = _utmspNetworkRemoteIDManager.stopTelemetry();
+            emit stopTelemetryFlagChanged(stopFlag);
+            _streamingFlag = true;
+        }
+        lastVehicleState = heartbeat.system_status;
+        break;
+    }
+    case MAVLINK_MSG_ID_GLOBAL_POSITION_INT: {
+        // Only process if vehicle is in ACTIVE state
+        if (lastVehicleState != MAV_STATE_ACTIVE) {
+            return false;
+        }
+        // Rate-limit updates to 3 Hz
         if (!_timerLastSent.hasExpired(3000)) {
             return false;
         }
         _timerLastSent.restart();
-
         mavlink_global_position_int_t globalPosition;
         mavlink_msg_global_position_int_decode(&message, &globalPosition);
-        _vehicleLatitude         = (static_cast<double>(globalPosition.lat /1e7));
-        _vehicleLongitude        = (static_cast<double>(globalPosition.lon / 1e7));
-        _vehicleAltitude         = static_cast<double>(globalPosition.alt) / 1000;
-        _vehicleHeading          = static_cast<double>(globalPosition.hdg);
-        _vehicleVelocityX        = (globalPosition.vx / 100.f);
-        _vehicleVelocityY        = (globalPosition.vy / 100.f);
-        _vehicleVelocityZ        = (globalPosition.vz / 100.f);
-        _vehicleRelativeAltitude = static_cast<double>(globalPosition.relative_alt) / 1000.0;
-
-        vehicleLatitude = std::round(_vehicleLatitude* 1e4)/ 1e4;
-        vehicleLongitude = std::round(_vehicleLongitude* 1e4)/ 1e4;
-        lastLatitude = std::round(_lastLatitude* 1e4)/ 1e4;
-        lastLongitude = std::round(_lastLongitude* 1e4)/ 1e4;
-
-        if((std::abs(vehicleLatitude-lastLatitude) > 0.0001)  ||  (std::abs(vehicleLongitude-lastLongitude) > 0.0001))
-        {
-            // State 3 --> Start telemetry
-            _currentState = UTMSPFlightPlanManager::FlightState::StartTelemetryStreaming;
-            _utmspNetworkRemoteIDManager.startTelemetry(_vehicleLatitude, _vehicleLongitude, _vehicleAltitude, _vehicleHeading, _vehicleVelocityX, _vehicleVelocityY, _vehicleVelocityZ, _vehicleRelativeAltitude, serialNumber, operatorID, flightID);
-            _utmspFlightPlanManager.updateFlightPlanState(_currentState);
-            _streamingFlag = false;
-        }
-        else
-        {
-            // State 4 --> Stop telemetry
-            bool stopflag = _utmspNetworkRemoteIDManager.stopTelemetry();
-            emit stopTelemetryFlagChanged(stopflag);
-            _streamingFlag = true;
-        }
+        // Update vehicle state
+        vehicleLatitude = staticcast<double>(globalPosition.lat) / 1e7;
+        vehicleLongitude = staticcast<double>(globalPosition.lon) / 1e7;
+        vehicleAltitude = staticcast<double>(globalPosition.alt) / 1000;
+        vehicleHeading = staticcast<double>(globalPosition.hdg);
+        _vehicleVelocityX = globalPosition.vx / 100.f;
+        _vehicleVelocityY = globalPosition.vy / 100.f;
+        _vehicleVelocityZ = globalPosition.vz / 100.f;
+        vehicleRelativeAltitude = staticcast<double>(globalPosition.relative_alt) / 1000.0;
+        // State 3 --> Start telemetry
+        _currentState = UTMSPFlightPlanManager::FlightState::StartTelemetryStreaming;
+        utmspNetworkRemoteIDManager.startTelemetry(vehicleLatitude,
+                                                   _vehicleLongitude,
+                                                   _vehicleAltitude,
+                                                   _vehicleHeading,
+                                                   _vehicleVelocityX,
+                                                   _vehicleVelocityY,
+                                                   _vehicleVelocityZ,
+                                                   _vehicleRelativeAltitude,
+                                                   serialNumber,
+                                                   operatorID,
+                                                   flightID);
+        utmspFlightPlanManager.updateFlightPlanState(currentState);
+        _streamingFlag = false;
         break;
+    }
 
-    case MAVLINK_MSG_ID_GPS_RAW_INT:
+    case MAVLINK_MSG_ID_GPS_RAW_INT: {
         mavlink_gps_raw_int_t gps_raw;
         mavlink_msg_gps_raw_int_decode(&message, &gps_raw);
         if (gps_raw.eph == UINT16_MAX) {
@@ -134,6 +139,7 @@ bool UTMSPServiceController::networkRemoteID(const mavlink_message_t& message,
             _lastHdop = gps_raw.eph / 100.f;
         }
         break;
+    }
     }
 
     return _streamingFlag;
