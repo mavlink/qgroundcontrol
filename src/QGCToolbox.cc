@@ -10,7 +10,6 @@
 
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
-#include "MissionCommandTree.h"
 #include "MultiVehicleManager.h"
 #include "VideoManager.h"
 #include "MAVLinkLogManager.h"
@@ -39,7 +38,6 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     _scanAndLoadPlugins(app);
     _linkManager            = new LinkManager               (app, this);
     _mavlinkProtocol        = new MAVLinkProtocol           (app, this);
-    _missionCommandTree     = new MissionCommandTree        (app, this);
     _multiVehicleManager    = new MultiVehicleManager       (app, this);
     _videoManager           = new VideoManager              (app, this);
 
@@ -60,7 +58,6 @@ void QGCToolbox::setChildToolboxes(void)
     _corePlugin->setToolbox(this);
     _linkManager->setToolbox(this);
     _mavlinkProtocol->setToolbox(this);
-    _missionCommandTree->setToolbox(this);
     _multiVehicleManager->setToolbox(this);
     _videoManager->setToolbox(this);
     _mavlinkLogManager->setToolbox(this);

@@ -15,7 +15,6 @@
 
 class LinkManager;
 class MAVLinkProtocol;
-class MissionCommandTree;
 class MultiVehicleManager;
 class QGCApplication;
 class VideoManager;
@@ -38,7 +37,6 @@ public:
 
     LinkManager*                linkManager             () { return _linkManager; }
     MAVLinkProtocol*            mavlinkProtocol         () { return _mavlinkProtocol; }
-    MissionCommandTree*         missionCommandTree      () { return _missionCommandTree; }
     MultiVehicleManager*        multiVehicleManager     () { return _multiVehicleManager; }
     VideoManager*               videoManager            () { return _videoManager; }
     MAVLinkLogManager*          mavlinkLogManager       () { return _mavlinkLogManager; }
@@ -57,7 +55,6 @@ private:
 
     LinkManager*                _linkManager            = nullptr;
     MAVLinkProtocol*            _mavlinkProtocol        = nullptr;
-    MissionCommandTree*         _missionCommandTree     = nullptr;
     MultiVehicleManager*        _multiVehicleManager    = nullptr;
     VideoManager*               _videoManager           = nullptr;
     MAVLinkLogManager*          _mavlinkLogManager      = nullptr;

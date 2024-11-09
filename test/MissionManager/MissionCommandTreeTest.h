@@ -7,8 +7,7 @@
  *
  ****************************************************************************/
 
-#ifndef MissionCommandTreeTest_H
-#define MissionCommandTreeTest_H
+#pragma once
 
 #include "UnitTest.h"
 
@@ -20,27 +19,29 @@ class MissionCommandTreeTest : public UnitTest
 {
     Q_OBJECT
     
-public:
-    MissionCommandTreeTest(void);
-    
 private slots:
-    void init(void);
-    void cleanup(void);
+    void init();
 
-    void testJsonLoad(void);
-    void testOverride(void);
-    void testAllTrees(void);
+    void testJsonLoad();
+    void testOverride();
+    void testAllTrees();
 
 private:
-    QString _rawName(int id);
-    QString _friendlyName(int id);
-    QString _paramLabel(int index);
-    void _checkFullInfoMap(const MissionCommandUIInfo* uiInfo);
-    void _checkBaseValues(const MissionCommandUIInfo* uiInfo, int command);
-    void _checkOverrideValues(const MissionCommandUIInfo* uiInfo, int command);
-    void _checkOverrideParamValues(const MissionCommandUIInfo* uiInfo, int command, int paramIndex);
+    QString _rawName(int id) const;
+    QString _friendlyName(int id) const;
+    QString _paramLabel(int index) const;
 
-    MissionCommandTree* _commandTree;
+    /// Verifies that all values have been set
+    void _checkFullInfoMap(const MissionCommandUIInfo *uiInfo);
+
+    /// Verifies that values match settings for base tree
+    void _checkBaseValues(const MissionCommandUIInfo *uiInfo, int command);
+
+    /// Verifies that values match settings for an override
+    void _checkOverrideValues(const MissionCommandUIInfo *uiInfo, int command);
+
+    // Verifies that values match settings for an override
+    void _checkOverrideParamValues(const MissionCommandUIInfo *uiInfo, int command, int paramIndex);
+
+    MissionCommandTree *_commandTree = nullptr;
 };
-
-#endif

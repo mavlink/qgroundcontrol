@@ -306,7 +306,7 @@ VisualMissionItem* MissionController::_insertSimpleMissionItemWorker(QGeoCoordin
     _initVisualItem(newItem);
 
     if (newItem->specifiesAltitude()) {
-        if (!qgcApp()->toolbox()->missionCommandTree()->isLandCommand(command)) {
+        if (!MissionCommandTree::instance()->isLandCommand(command)) {
             double                              prevAltitude;
             QGroundControlQmlGlobal::AltMode    prevAltMode;
 

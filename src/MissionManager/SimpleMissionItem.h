@@ -14,7 +14,6 @@
 #include "MissionItem.h"
 #include "QGroundControlQmlGlobal.h"
 
-class MissionCommandTree;
 class SpeedSection;
 class CameraSection;
 
@@ -183,7 +182,6 @@ private:
     SpeedSection*   _speedSection =             nullptr;
     CameraSection*  _cameraSection =             nullptr;
 
-    MissionCommandTree* _commandTree = nullptr;
     bool _syncingHeadingDegreesAndParam4 = false;   ///< true: already in a sync signal, prevents signal loop
 
     Fact                _supportedCommandFact;
