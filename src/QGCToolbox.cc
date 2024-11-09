@@ -12,7 +12,6 @@
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
 #include "VideoManager.h"
-#include "MAVLinkLogManager.h"
 #include "QGCCorePlugin.h"
 #include "SettingsManager.h"
 #include "QGCApplication.h"
@@ -41,7 +40,6 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     _multiVehicleManager    = new MultiVehicleManager       (app, this);
     _videoManager           = new VideoManager              (app, this);
 
-    _mavlinkLogManager      = new MAVLinkLogManager         (app, this);
 #ifndef QGC_AIRLINK_DISABLED
     _airlinkManager         = new AirLinkManager            (app, this);
 #endif
@@ -60,7 +58,6 @@ void QGCToolbox::setChildToolboxes(void)
     _mavlinkProtocol->setToolbox(this);
     _multiVehicleManager->setToolbox(this);
     _videoManager->setToolbox(this);
-    _mavlinkLogManager->setToolbox(this);
 #ifndef QGC_AIRLINK_DISABLED
     _airlinkManager->setToolbox(this);
 #endif
