@@ -13,7 +13,6 @@
 
 #include <QtCore/QObject>
 
-class FirmwarePluginManager;
 class LinkManager;
 class MAVLinkProtocol;
 class MissionCommandTree;
@@ -37,7 +36,6 @@ class QGCToolbox : public QObject {
 public:
     QGCToolbox(QGCApplication* app);
 
-    FirmwarePluginManager*      firmwarePluginManager   () { return _firmwarePluginManager; }
     LinkManager*                linkManager             () { return _linkManager; }
     MAVLinkProtocol*            mavlinkProtocol         () { return _mavlinkProtocol; }
     MissionCommandTree*         missionCommandTree      () { return _missionCommandTree; }
@@ -57,7 +55,6 @@ private:
     void setChildToolboxes(void);
     void _scanAndLoadPlugins(QGCApplication *app);
 
-    FirmwarePluginManager*      _firmwarePluginManager  = nullptr;
     LinkManager*                _linkManager            = nullptr;
     MAVLinkProtocol*            _mavlinkProtocol        = nullptr;
     MissionCommandTree*         _missionCommandTree     = nullptr;
