@@ -43,8 +43,8 @@ void MissionCommandTree::setToolbox(QGCToolbox* toolbox)
     } else {
 #endif
         // Load all levels of hierarchy
-        for (const QGCMAVLink::FirmwareClass_t firmwareClass: _toolbox->firmwarePluginManager()->supportedFirmwareClasses()) {
-            FirmwarePlugin* plugin = _toolbox->firmwarePluginManager()->firmwarePluginForAutopilot(QGCMAVLink::firmwareClassToAutopilot(firmwareClass), MAV_TYPE_QUADROTOR);
+        for (const QGCMAVLink::FirmwareClass_t firmwareClass: FirmwarePluginManager::instance()->supportedFirmwareClasses()) {
+            FirmwarePlugin* plugin = FirmwarePluginManager::instance()->firmwarePluginForAutopilot(QGCMAVLink::firmwareClassToAutopilot(firmwareClass), MAV_TYPE_QUADROTOR);
 
             for (const QGCMAVLink::VehicleClass_t vehicleClass: QGCMAVLink::allVehicleClasses()) {
                 QString overrideFile = plugin->missionCommandOverrides(vehicleClass);
@@ -209,7 +209,7 @@ QVariantList MissionCommandTree::getCommandsForCategory(Vehicle* vehicle, const 
 
     // vehicle can be null in which case _firmwareAndVehicleClassInfo will tell of the firmware/vehicle type for the offline editing vehicle.
     // We then use that to get a firmware plugin so we can get the list of supported commands.
-    FirmwarePlugin* firmwarePlugin = qgcApp()->toolbox()->firmwarePluginManager()->firmwarePluginForAutopilot(QGCMAVLink::firmwareClassToAutopilot(firmwareClass), QGCMAVLink::vehicleClassToMavType(vehicleClass));
+    FirmwarePlugin* firmwarePlugin = FirmwarePluginManager::instance()->firmwarePluginForAutopilot(QGCMAVLink::firmwareClassToAutopilot(firmwareClass), QGCMAVLink::vehicleClassToMavType(vehicleClass));
     QList<MAV_CMD>  supportedCommands = firmwarePlugin->supportedMissionCommands(vehicleClass);
 
     QVariantList list;
