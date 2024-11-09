@@ -64,7 +64,6 @@
 #include "HorizontalFactValueGrid.h"
 #include "InstrumentValueData.h"
 #include "AppMessages.h"
-#include "MissionCommandTree.h"
 #include "QGCMapPolygon.h"
 #include "QGCMapCircle.h"
 #include "ParameterManager.h"

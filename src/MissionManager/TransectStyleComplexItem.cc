@@ -293,9 +293,8 @@ bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, bool forP
             // We have to grovel through mission items to determine min/max alt
             _minAMSLAltitude = qQNaN();
             _maxAMSLAltitude = qQNaN();
-            MissionCommandTree* commandTree = qgcApp()->toolbox()->missionCommandTree();
             for (const MissionItem* missionItem: _loadedMissionItems) {
-                const MissionCommandUIInfo* uiInfo = commandTree->getUIInfo(_controllerVehicle, QGCMAVLink::VehicleClassGeneric, missionItem->command());
+                const MissionCommandUIInfo* uiInfo = MissionCommandTree::instance()->getUIInfo(_controllerVehicle, QGCMAVLink::VehicleClassGeneric, missionItem->command());
                 if (uiInfo && uiInfo->specifiesCoordinate() && !uiInfo->isStandaloneCoordinate()) {
                     _minAMSLAltitude = std::fmin(_minAMSLAltitude, missionItem->param7());
                     _maxAMSLAltitude = std::fmax(_maxAMSLAltitude, missionItem->param7());
@@ -605,10 +604,9 @@ void TransectStyleComplexItem::_queryMissionItemCoordHeights(void)
     }
 
     // We need terrain heights below each mission item we fly through which is terrain frame
-    MissionCommandTree* commandTree = qgcApp()->toolbox()->missionCommandTree();
     for (const MissionItem* missionItem: _loadedMissionItems) {
         if (missionItem->frame() == MAV_FRAME_GLOBAL_TERRAIN_ALT) {
-            const MissionCommandUIInfo* uiInfo = commandTree->getUIInfo(_controllerVehicle, QGCMAVLink::VehicleClassGeneric, missionItem->command());
+            const MissionCommandUIInfo* uiInfo = MissionCommandTree::instance()->getUIInfo(_controllerVehicle, QGCMAVLink::VehicleClassGeneric, missionItem->command());
             if (uiInfo && uiInfo->specifiesCoordinate() && !uiInfo->isStandaloneCoordinate()) {
                 _rgFlyThroughMissionItemCoords.append(missionItem->coordinate());
             }
@@ -1346,10 +1344,9 @@ double TransectStyleComplexItem::amslEntryAlt(void) const
     case QGroundControlQmlGlobal::AltitudeModeTerrainFrame:
         if (_loadedMissionItems.count()) {
             // The first item might not be a waypoint we have to find it.
-            MissionCommandTree* commandTree = qgcApp()->toolbox()->missionCommandTree();
             for (int i=0; i<_loadedMissionItems.count(); i++) {
                 MissionItem* item = _loadedMissionItems[i];
-                const MissionCommandUIInfo* uiInfo = commandTree->getUIInfo(_controllerVehicle, QGCMAVLink::VehicleClassGeneric, item->command());
+                const MissionCommandUIInfo* uiInfo = MissionCommandTree::instance()->getUIInfo(_controllerVehicle, QGCMAVLink::VehicleClassGeneric, item->command());
                 if (uiInfo && uiInfo->specifiesCoordinate() && !uiInfo->isStandaloneCoordinate()) {
                     if (_cameraCalc.distanceMode() == QGroundControlQmlGlobal::AltitudeModeCalcAboveTerrain) {
                         // AltitudeModeCalcAboveTerrain has AMSL alt in param 7
@@ -1391,10 +1388,9 @@ double TransectStyleComplexItem::amslExitAlt(void) const
     case QGroundControlQmlGlobal::AltitudeModeTerrainFrame:
         if (_loadedMissionItems.count()) {
             // The last item might not be a waypoint we have to find it.
-            MissionCommandTree* commandTree = qgcApp()->toolbox()->missionCommandTree();
             for (int i=_loadedMissionItems.count()-1; i>0; i--) {
                 MissionItem* item = _loadedMissionItems[i];
-                const MissionCommandUIInfo* uiInfo = commandTree->getUIInfo(_controllerVehicle, QGCMAVLink::VehicleClassGeneric, item->command());
+                const MissionCommandUIInfo* uiInfo = MissionCommandTree::instance()->getUIInfo(_controllerVehicle, QGCMAVLink::VehicleClassGeneric, item->command());
                 if (uiInfo && uiInfo->specifiesCoordinate() && !uiInfo->isStandaloneCoordinate()) {
                     if (_cameraCalc.distanceMode() == QGroundControlQmlGlobal::AltitudeModeCalcAboveTerrain) {
                         // AltitudeModeCalcAboveTerrain has AMSL alt in param 7

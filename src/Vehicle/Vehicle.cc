@@ -2511,7 +2511,7 @@ void Vehicle::_sendMavCommandWorker(
     // which ack was associated with which command.
     if ((targetCompId == MAV_COMP_ID_ALL) || (isMavCommandPending(targetCompId, command) && !_commandCanBeDuplicated(command))) {
         bool    compIdAll       = targetCompId == MAV_COMP_ID_ALL;
-        QString rawCommandName  = _toolbox->missionCommandTree()->rawName(command);
+        QString rawCommandName  = MissionCommandTree::instance()->rawName(command);
 
         qCDebug(VehicleLog) << QStringLiteral("_sendMavCommandWorker failing %1").arg(compIdAll ? "MAV_COMP_ID_ALL not supported" : "duplicate command") << rawCommandName << param1 << param2 << param3 << param4 << param5 << param6 << param7;
 
@@ -2568,7 +2568,7 @@ void Vehicle::_sendMavCommandFromList(int index)
 {
     MavCommandListEntry_t commandEntry = _mavCommandList[index];
 
-    QString rawCommandName  = _toolbox->missionCommandTree()->rawName(commandEntry.command);
+    QString rawCommandName  = MissionCommandTree::instance()->rawName(commandEntry.command);
 
     if (++_mavCommandList[index].tryCount > commandEntry.maxTries) {
         qCDebug(VehicleLog) << Q_FUNC_INFO << "giving up after max retries" << rawCommandName;
@@ -2668,7 +2668,7 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
     mavlink_command_ack_t ack;
     mavlink_msg_command_ack_decode(&message, &ack);
 
-    QString rawCommandName  =_toolbox->missionCommandTree()->rawName(static_cast<MAV_CMD>(ack.command));
+    QString rawCommandName  = MissionCommandTree::instance()->rawName(static_cast<MAV_CMD>(ack.command));
     qCDebug(VehicleLog) << QStringLiteral("_handleCommandAck command(%1) result(%2)").arg(rawCommandName).arg(QGCMAVLink::mavResultToString(static_cast<MAV_RESULT>(ack.result)));
 
     if (ack.command == MAV_CMD_DO_SET_ROI_LOCATION) {
