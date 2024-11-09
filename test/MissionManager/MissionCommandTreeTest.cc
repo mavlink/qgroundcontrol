@@ -13,6 +13,7 @@
 #include "MissionCommandList.h"
 #include "MissionCommandTree.h"
 #include "Vehicle.h"
+#include "FirmwarePluginManager.h"
 
 #include <QtTest/QTest>
 
@@ -190,12 +191,12 @@ void MissionCommandTreeTest::testJsonLoad(void)
 void MissionCommandTreeTest::testOverride(void)
 {
     // Generic/Generic should not have any overrides
-    Vehicle* vehicle = new Vehicle(MAV_AUTOPILOT_GENERIC, MAV_TYPE_GENERIC, qgcApp()->toolbox()->firmwarePluginManager());
+    Vehicle* vehicle = new Vehicle(MAV_AUTOPILOT_GENERIC, MAV_TYPE_GENERIC, FirmwarePluginManager::instance());
     _checkBaseValues(_commandTree->getUIInfo(vehicle, QGCMAVLink::VehicleClassGeneric, (MAV_CMD)4), 4);
     delete vehicle;
 
     // Generic/FixedWing should have overrides
-    vehicle = new Vehicle(MAV_AUTOPILOT_GENERIC, MAV_TYPE_FIXED_WING, qgcApp()->toolbox()->firmwarePluginManager());
+    vehicle = new Vehicle(MAV_AUTOPILOT_GENERIC, MAV_TYPE_FIXED_WING, FirmwarePluginManager::instance());
     _checkOverrideValues(_commandTree->getUIInfo(vehicle, QGCMAVLink::VehicleClassGeneric, (MAV_CMD)4), 4);
     delete vehicle;
 }
@@ -216,7 +217,7 @@ void MissionCommandTreeTest::testAllTrees(void)
                 continue;
             }
             qDebug() << firmwareType << vehicleType;
-            Vehicle* vehicle = new Vehicle(firmwareType, vehicleType, qgcApp()->toolbox()->firmwarePluginManager());
+            Vehicle* vehicle = new Vehicle(firmwareType, vehicleType, FirmwarePluginManager::instance());
             QVERIFY(qgcApp()->toolbox()->missionCommandTree()->getUIInfo(vehicle, QGCMAVLink::VehicleClassMultiRotor, MAV_CMD_NAV_WAYPOINT) != nullptr);
             delete vehicle;
         }

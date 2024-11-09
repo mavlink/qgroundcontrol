@@ -79,7 +79,6 @@ Vehicle::Vehicle(LinkInterface*             link,
                  int                        defaultComponentId,
                  MAV_AUTOPILOT              firmwareType,
                  MAV_TYPE                   vehicleType,
-                 FirmwarePluginManager*     firmwarePluginManager,
                  QObject*                   parent)
     : VehicleFactGroup              (parent)
     , _id                           (vehicleId)
@@ -90,7 +89,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _settingsManager              (_toolbox->settingsManager())
     , _defaultCruiseSpeed           (_settingsManager->appSettings()->offlineEditingCruiseSpeed()->rawValue().toDouble())
     , _defaultHoverSpeed            (_settingsManager->appSettings()->offlineEditingHoverSpeed()->rawValue().toDouble())
-    , _firmwarePluginManager        (firmwarePluginManager)
     , _trajectoryPoints             (new TrajectoryPoints(this, this))
     , _mavlinkStreamConfig          (std::bind(&Vehicle::_setMessageInterval, this, std::placeholders::_1, std::placeholders::_2))
     , _vehicleFactGroup             (this)
@@ -198,7 +196,6 @@ Vehicle::Vehicle(LinkInterface*             link,
 // Disconnected Vehicle for offline editing
 Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
                  MAV_TYPE                   vehicleType,
-                 FirmwarePluginManager*     firmwarePluginManager,
                  QObject*                   parent)
     : VehicleFactGroup                  (parent)
     , _id                               (0)
@@ -214,7 +211,6 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _maxProtoVersion                  (200)
     , _capabilityBitsKnown              (true)
     , _capabilityBits                   (MAV_PROTOCOL_CAPABILITY_MISSION_FENCE | MAV_PROTOCOL_CAPABILITY_MISSION_RALLY)
-    , _firmwarePluginManager            (firmwarePluginManager)
     , _trajectoryPoints                 (new TrajectoryPoints(this, this))
     , _mavlinkStreamConfig              (std::bind(&Vehicle::_setMessageInterval, this, std::placeholders::_1, std::placeholders::_2))
     , _vehicleFactGroup                 (this)
@@ -260,7 +256,7 @@ void Vehicle::stopTrackingFirmwareVehicleTypeChanges(void)
 
 void Vehicle::_commonInit()
 {
-    _firmwarePlugin = _firmwarePluginManager->firmwarePluginForAutopilot(_firmwareType, _vehicleType);
+    _firmwarePlugin = FirmwarePluginManager::instance()->firmwarePluginForAutopilot(_firmwareType, _vehicleType);
 
     connect(_firmwarePlugin, &FirmwarePlugin::toolIndicatorsChanged, this, &Vehicle::toolIndicatorsChanged);
     connect(_firmwarePlugin, &FirmwarePlugin::modeIndicatorsChanged, this, &Vehicle::modeIndicatorsChanged);
@@ -423,7 +419,7 @@ void Vehicle::deleteGimbalController()
 void Vehicle::_offlineFirmwareTypeSettingChanged(QVariant varFirmwareType)
 {
     _firmwareType = static_cast<MAV_AUTOPILOT>(varFirmwareType.toInt());
-    _firmwarePlugin = _firmwarePluginManager->firmwarePluginForAutopilot(_firmwareType, _vehicleType);
+    _firmwarePlugin = FirmwarePluginManager::instance()->firmwarePluginForAutopilot(_firmwareType, _vehicleType);
     if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
         _capabilityBits |= MAV_PROTOCOL_CAPABILITY_TERRAIN;
     } else {

@@ -46,7 +46,6 @@
 #include "SyslinkComponentController.h"
 #include "AutoPilotPlugin.h"
 #include "VehicleComponent.h"
-#include "FirmwarePluginManager.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
 #include "JoystickConfigController.h"

@@ -83,7 +83,6 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
     _videoManager           = toolbox->videoManager();
     _mavlinkLogManager      = toolbox->mavlinkLogManager();
     _corePlugin             = toolbox->corePlugin();
-    _firmwarePluginManager  = toolbox->firmwarePluginManager();
     _settingsManager        = toolbox->settingsManager();
 #ifndef NO_SERIAL_LINK
     _gpsRtkFactGroup        = GPSManager::instance()->gpsRtk()->gpsRtkFactGroup();
@@ -209,13 +208,13 @@ void QGroundControlQmlGlobal::setMavlinkSystemID(int id)
 
 bool QGroundControlQmlGlobal::singleFirmwareSupport(void)
 {
-    return _firmwarePluginManager->supportedFirmwareClasses().count() == 1;
+    return FirmwarePluginManager::instance()->supportedFirmwareClasses().count() == 1;
 }
 
 bool QGroundControlQmlGlobal::singleVehicleSupport(void)
 {
     if (singleFirmwareSupport()) {
-        return _firmwarePluginManager->supportedVehicleClasses(_firmwarePluginManager->supportedFirmwareClasses()[0]).count() == 1;
+        return FirmwarePluginManager::instance()->supportedVehicleClasses(FirmwarePluginManager::instance()->supportedFirmwareClasses()[0]).count() == 1;
     }
 
     return false;
@@ -223,12 +222,12 @@ bool QGroundControlQmlGlobal::singleVehicleSupport(void)
 
 bool QGroundControlQmlGlobal::px4ProFirmwareSupported()
 {
-    return _firmwarePluginManager->supportedFirmwareClasses().contains(QGCMAVLink::FirmwareClassPX4);
+    return FirmwarePluginManager::instance()->supportedFirmwareClasses().contains(QGCMAVLink::FirmwareClassPX4);
 }
 
 bool QGroundControlQmlGlobal::apmFirmwareSupported()
 {
-    return _firmwarePluginManager->supportedFirmwareClasses().contains(QGCMAVLink::FirmwareClassArduPilot);
+    return FirmwarePluginManager::instance()->supportedFirmwareClasses().contains(QGCMAVLink::FirmwareClassArduPilot);
 }
 
 bool QGroundControlQmlGlobal::linesIntersect(QPointF line1A, QPointF line1B, QPointF line2A, QPointF line2B)

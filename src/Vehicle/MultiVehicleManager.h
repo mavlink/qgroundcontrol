@@ -20,7 +20,6 @@
 #include "QGCToolbox.h"
 #include "QmlObjectListModel.h"
 
-class FirmwarePluginManager;
 class QGCApplication;
 class MAVLinkProtocol;
 class LinkInterface;
@@ -109,7 +108,6 @@ private:
 
     QmlObjectListModel  _vehicles;
 
-    FirmwarePluginManager*      _firmwarePluginManager;
     MAVLinkProtocol*            _mavlinkProtocol;
     QGeoCoordinate              _lastKnownLocation;
 
