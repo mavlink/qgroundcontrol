@@ -23,6 +23,7 @@
 #include "Joystick.h"
 #include "JoystickManager.h"
 #include "LinkManager.h"
+#include "MAVLinkLogManager.h"
 #include "MAVLinkProtocol.h"
 #include "MissionCommandTree.h"
 #include "MissionManager.h"
@@ -321,6 +322,7 @@ void Vehicle::_commonInit()
 
     _createImageProtocolManager();
     _createStatusTextHandler();
+    _createMAVLinkLogManager();
 
     // _addFactGroup(_vehicleFactGroup,            _vehicleFactGroupName);
     _addFactGroup(&_gpsFactGroup,               _gpsFactGroupName);
@@ -3974,7 +3976,7 @@ void Vehicle::setMessageRate(uint8_t compId, uint16_t msgId, int32_t rate)
 }
 
 /*===========================================================================*/
-/*                         STATUS TEXT HANDLER                               */
+/*                         Status Text Handler                               */
 /*===========================================================================*/
 
 void Vehicle::resetAllMessages() { m_statusTextHandler->resetAllMessages(); }
@@ -4099,6 +4101,21 @@ void Vehicle::_createImageProtocolManager()
 uint32_t Vehicle::flowImageIndex() const
 {
     return (_imageProtocolManager ? _imageProtocolManager->flowImageIndex() : 0);
+}
+
+/*---------------------------------------------------------------------------*/
+/*===========================================================================*/
+/*                         MAVLink Log Manager                               */
+/*===========================================================================*/
+
+void Vehicle::_createMAVLinkLogManager()
+{
+    _mavlinkLogManager = new MAVLinkLogManager(this, this);
+}
+
+MAVLinkLogManager *Vehicle::mavlinkLogManager() const
+{
+    return _mavlinkLogManager;
 }
 
 /*---------------------------------------------------------------------------*/

@@ -82,7 +82,6 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
     _linkManager            = toolbox->linkManager();
     _multiVehicleManager    = toolbox->multiVehicleManager();
     _videoManager           = toolbox->videoManager();
-    _mavlinkLogManager      = toolbox->mavlinkLogManager();
     _corePlugin             = toolbox->corePlugin();
     _settingsManager        = toolbox->settingsManager();
 #ifndef NO_SERIAL_LINK
