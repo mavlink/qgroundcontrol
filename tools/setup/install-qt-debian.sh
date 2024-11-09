@@ -5,7 +5,7 @@ QT_PATH="${QT_PATH:-/opt/Qt}"
 QT_HOST="${QT_HOST:-linux}"
 QT_TARGET="${QT_TARGET:-desktop}"
 QT_ARCH="${QT_ARCH:-gcc_64}"
-QT_MODULES="${QT_MODULES:-qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors}"
+QT_MODULES="${QT_MODULES:-qtcharts qtlocation qtpositioning qtspeech qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors}"
 
 set -e
 

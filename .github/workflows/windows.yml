@@ -94,7 +94,7 @@ jobs:
           target: desktop
           arch: win64_msvc2019_64
           dir: ${{ runner.temp }}
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
+          modules: qtcharts qtlocation qtpositioning qtspeech qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
           cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
       - name: Install Qt for Windows (Arm64)
@@ -108,7 +108,7 @@ jobs:
           arch: win64_msvc2019_arm64
           dir: ${{ runner.temp }}
           extra: --autodesktop
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
+          modules: qtcharts qtlocation qtpositioning qtspeech qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
           cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
       - name: Set up Visual Studio shell

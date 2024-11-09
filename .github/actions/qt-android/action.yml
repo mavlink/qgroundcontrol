@@ -68,7 +68,7 @@ runs:
         target: desktop
         arch: ${{ inputs.arch }}
         dir: ${{ runner.temp }}
-        modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
+        modules: qtcharts qtlocation qtpositioning qtspeech qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
         cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
     - name: Install Qt for Android (armv7)
@@ -82,7 +82,7 @@ runs:
         arch: android_armv7
         dir: ${{ runner.temp }}
         extra: --autodesktop
-        modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
+        modules: qtcharts qtlocation qtpositioning qtspeech qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
         cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
     - name: Install Qt for Android (arm64_v8a)
@@ -96,7 +96,7 @@ runs:
         arch: android_arm64_v8a
         dir: ${{ runner.temp }}
         extra: --autodesktop
-        modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
+        modules: qtcharts qtlocation qtpositioning qtspeech qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
         cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
     - name: Install Qt for Android (x86)
@@ -110,7 +110,7 @@ runs:
         arch: android_x86
         dir: ${{ runner.temp }}
         extra: --autodesktop
-        modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
+        modules: qtcharts qtlocation qtpositioning qtspeech qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
         cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
     - name: Install Qt for Android (x86_64)
@@ -124,5 +124,5 @@ runs:
         arch: android_x86_64
         dir: ${{ runner.temp }}
         extra: --autodesktop
-        modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
+        modules: qtcharts qtlocation qtpositioning qtspeech qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
         cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
