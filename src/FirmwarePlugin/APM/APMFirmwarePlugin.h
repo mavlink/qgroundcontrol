@@ -45,7 +45,7 @@ public:
     // Overrides from FirmwarePlugin
 
     QList<VehicleComponent*> componentsForVehicle(AutoPilotPlugin* vehicle) override;
-    QList<MAV_CMD> supportedMissionCommands(QGCMAVLink::VehicleClass_t vehicleClass) override;
+    QList<MAV_CMD> supportedMissionCommands(QGCMAVLink::VehicleClass_t vehicleClass) const override;
 
     AutoPilotPlugin*    autopilotPlugin                 (Vehicle* vehicle) override;
     bool                isCapable                       (const Vehicle *vehicle, FirmwareCapabilities capabilities) override;

@@ -17,6 +17,7 @@
 #include "PositionManager.h"
 #include "QGCMapEngineManager.h"
 #include "ADSBVehicleManager.h"
+#include "MissionCommandTree.h"
 #ifndef NO_SERIAL_LINK
 #include "GPSManager.h"
 #include "GPSRtk.h"
@@ -37,6 +38,7 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app, QGCToolbox
     , _mapEngineManager(QGCMapEngineManager::instance())
     , _adsbVehicleManager(ADSBVehicleManager::instance())
     , _qgcPositionManager(QGCPositionManager::instance())
+    , _missionCommandTree(MissionCommandTree::instance())
 {
     // We clear the parent on this object since we run into shutdown problems caused by hybrid qml app. Instead we let it leak on shutdown.
     // setParent(nullptr);
@@ -79,7 +81,6 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
 
     _linkManager            = toolbox->linkManager();
     _multiVehicleManager    = toolbox->multiVehicleManager();
-    _missionCommandTree     = toolbox->missionCommandTree();
     _videoManager           = toolbox->videoManager();
     _mavlinkLogManager      = toolbox->mavlinkLogManager();
     _corePlugin             = toolbox->corePlugin();
