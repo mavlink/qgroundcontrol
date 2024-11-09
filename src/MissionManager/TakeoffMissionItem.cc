@@ -115,7 +115,7 @@ void TakeoffMissionItem::setCoordinate(const QGeoCoordinate& coordinate)
 
 bool TakeoffMissionItem::isTakeoffCommand(MAV_CMD command)
 {
-    return qgcApp()->toolbox()->missionCommandTree()->isTakeoffCommand(command);
+    return MissionCommandTree::instance()->isTakeoffCommand(command);
 }
 
 void TakeoffMissionItem::_initLaunchTakeoffAtSameLocation(void)
