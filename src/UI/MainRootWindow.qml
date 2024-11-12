@@ -334,6 +334,18 @@ ApplicationWindow {
                             }
                         }
 
+                        SubMenuButton {
+                            id:                 closeButton
+                            height:             toolSelectDialog._toolButtonHeight
+                            Layout.fillWidth:   true
+                            text:               qsTr("Close QGroundControl")
+                            onClicked: {
+                                if (mainWindow.allowViewSwitch()) {
+                                    mainWindow.finishCloseProcess()
+                                }
+                            }
+                        }
+
                         ColumnLayout {
                             width:                  innerLayout.width
                             spacing:                0
