@@ -15,6 +15,8 @@
 #include "PositionManager.h"
 #include "NTRIPSettings.h"
 
+QGC_LOGGING_CATEGORY(NTRIPLog, "NTRIP")
+
 NTRIP::NTRIP(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
 {
@@ -241,6 +243,11 @@ void NTRIPTCPLink::_readBytes(void)
 
 //    throw new Exception("Got SOURCETABLE - Bad ntrip mount point\n\n" + line);
 
+    if (_state == NTRIPState::uninitialised) {
+      qCDebug(NTRIPLog) << "NTRIP State is uninitialised. Discarding bytes";
+      _socket->readAll();
+      return;
+    }
 
     QByteArray bytes = _socket->readAll();
     _parse(bytes);

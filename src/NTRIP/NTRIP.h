@@ -17,6 +17,8 @@
 #include "Drivers/src/rtcm.h"
 #include "RTCM/RTCMMavlink.h"
 
+Q_DECLARE_LOGGING_CATEGORY(NTRIPLog)
+
 class NTRIPSettings;
 
 class NTRIPTCPLink : public QThread
