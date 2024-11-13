@@ -32,4 +32,5 @@ public:
     DEFINE_SETTINGFACT(showObstacleDistanceOverlay)
     DEFINE_SETTINGFACT(updateHomePosition)
     DEFINE_SETTINGFACT(instrumentQmlFile)
+    DEFINE_SETTINGFACT(requestControlAllowTakeover)
 };
