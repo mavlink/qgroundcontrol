@@ -110,4 +110,8 @@
     <qresource prefix="/gimbal">
         <file alias="payload.svg">resources/gimbal/payload.svg</file>
     </qresource>
+    <qresource prefix="/controlIndicator">
+        <file alias="gcscontrol_1.svg">resources/controlIndicator/gcscontrol_1.svg</file>
+        <file alias="gcscontrol_3.svg">resources/controlIndicator/gcscontrol_3.svg</file>
+    </qresource>
 </RCC>
