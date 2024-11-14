@@ -338,7 +338,7 @@ ApplicationWindow {
                             id:                 closeButton
                             height:             toolSelectDialog._toolButtonHeight
                             Layout.fillWidth:   true
-                            text:               qsTr("Close QGroundControl")
+                            text:               qsTr("Close %1").arg(QGroundControl.appName)
                             onClicked: {
                                 if (mainWindow.allowViewSwitch()) {
                                     mainWindow.finishCloseProcess()
