@@ -36,7 +36,7 @@ target_include_directories(MAVLink PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 include(FetchContent)
 FetchContent_Declare(mavlink
         GIT_REPOSITORY https://github.com/mavlink/c_library_v2.git
-        GIT_TAG 052b8579f8aeb941f34cc9896af22cf1f38939b9
+        GIT_TAG 4db2f67156d996eae90ef437a73353468d850407
 )
 FetchContent_MakeAvailable(mavlink)
 
