@@ -191,10 +191,25 @@ ApplicationWindow {
         mainWindow.close()
     }
 
-    // On attempting an application close we check for:
-    //  Unsaved missions - then
-    //  Pending parameter writes - then
-    //  Active connections
+    // Check for things which should prevent the app from closing
+    //  Returns true if it is OK to close
+    readonly property int _skipUnsavedMissionCheckMask: 0x01
+    readonly property int _skipPendingParameterWritesCheckMask: 0x02
+    readonly property int _skipActiveConnectionsCheckMask: 0x04
+    property int _closeChecksToSkip: 0
+    function performCloseChecks() {
+        if (!(_closeChecksToSkip & _skipUnsavedMissionCheckMask) && !checkForUnsavedMission()) {
+            return false
+        }
+        if (!(_closeChecksToSkip & _skipPendingParameterWritesCheckMask) && !checkForPendingParameterWrites()) {
+            return false
+        }
+        if (!(_closeChecksToSkip & _skipActiveConnectionsCheckMask) && !checkForActiveConnections()) {
+            return false
+        }
+        finishCloseProcess()
+        return true
+    }
 
     property string closeDialogTitle: qsTr("Close %1").arg(QGroundControl.appName)
 
@@ -203,10 +218,10 @@ ApplicationWindow {
             showMessageDialog(closeDialogTitle,
                               qsTr("You have a mission edit in progress which has not been saved/sent. If you close you will lose changes. Are you sure you want to close?"),
                               Dialog.Yes | Dialog.No,
-                              function() { checkForPendingParameterWrites() })
+                              function() { _closeChecksToSkip |= _skipUnsavedMissionCheckMask; performCloseChecks() })
             return false
         } else {
-            return checkForPendingParameterWrites()
+            return true
         }
     }
 
@@ -216,11 +231,11 @@ ApplicationWindow {
                 mainWindow.showMessageDialog(closeDialogTitle,
                     qsTr("You have pending parameter updates to a vehicle. If you close you will lose changes. Are you sure you want to close?"),
                     Dialog.Yes | Dialog.No,
-                    function() { checkForActiveConnections() })
+                    function() { _closeChecksToSkip |= _skipPendingParameterWritesCheckMask; performCloseChecks() })
                 return false
             }
         }
-        return checkForActiveConnections()
+        return true
     }
 
     function checkForActiveConnections() {
@@ -228,17 +243,17 @@ ApplicationWindow {
             mainWindow.showMessageDialog(closeDialogTitle,
                 qsTr("There are still active connections to vehicles. Are you sure you want to exit?"),
                 Dialog.Yes | Dialog.No,
-                function() { finishCloseProcess() })
+                function() { _closeChecksToSkip |= _skipActiveConnectionsCheckMask; performCloseChecks() })
             return false
         } else {
-            finishCloseProcess()
             return true
         }
     }
 
     onClosing: (close) => {
         if (!_forceClose) {
-            close.accepted = checkForUnsavedMission()
+            _closeChecksToSkip = 0
+            close.accepted = performCloseChecks()
         }
     }
 
