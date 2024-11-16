@@ -237,6 +237,7 @@ void MockLink::_run1HzTasks(void)
             _sendBatteryStatus();
             _sendSysStatus();
             _sendADSBVehicles();
+            _sendRemoteIDArmStatus();
             if (!qgcApp()->runningUnitTests()) {
                 // Sending RC Channels during unit test breaks RC tests which does it's own RC simulation
                 _sendRCChannels();
@@ -1866,6 +1867,18 @@ void MockLink::_sendGeneralMetaData(void)
                                              100,                        // general_metadata_file_crc
                                              metaDataURI);
     respondWithMavlinkMessage(responseMsg);
+}
+
+void MockLink::_sendRemoteIDArmStatus()
+{
+    mavlink_message_t   msg;
+    QString err = "No Error";
+    mavlink_msg_open_drone_id_arm_status_pack(_vehicleSystemId,
+                                              MAV_COMP_ID_ODID_TXRX_1,
+                                              &msg,
+                                              MAV_ODID_ARM_STATUS_GOOD_TO_ARM,
+                                              err.toStdString().c_str());
+    respondWithMavlinkMessage(msg);
 }
 
 void MockLink::simulateConnectionRemoved(void)
