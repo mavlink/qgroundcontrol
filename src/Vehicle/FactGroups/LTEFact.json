@@ -37,6 +37,11 @@
     "type":             "uint32"
 },
 {
+    "name":             "lteTx",
+    "shortDesc":        "LTE TX",
+    "type":             "uint32"
+},
+{
     "name":             "isRoutable",
     "shortDesc":        "LTE routable",
     "type":             "bool",

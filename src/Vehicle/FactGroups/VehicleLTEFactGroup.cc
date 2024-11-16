@@ -12,6 +12,7 @@ VehicleLTEFactGroup::VehicleLTEFactGroup(QObject* parent)
     , _rssiFact                   (0, _rssiFactName,                FactMetaData::valueTypeDouble)
     , _rssnrFact                  (0, _rssnrFactName,               FactMetaData::valueTypeDouble)
     , _earfcnFact                 (0, _earfcnFactName,              FactMetaData::valueTypeInt32)
+    , _lteTxFact                  (0, _lteTxFactName,               FactMetaData::valueTypeInt32)
     , _isRoutableFact             (0, _isRoutableFactName,          FactMetaData::valueTypeString)
     , _latencyMsFact              (0, _latencyMsFactName,           FactMetaData::valueTypeDouble)
     , _lossPercentFact            (0, _lossPercentFactName,         FactMetaData::valueTypeDouble)
@@ -21,6 +22,7 @@ VehicleLTEFactGroup::VehicleLTEFactGroup(QObject* parent)
     _addFact(&_rssiFact,                  _rssiFactName);
     _addFact(&_rssnrFact,                 _rssnrFactName);
     _addFact(&_earfcnFact,                _earfcnFactName);
+    _addFact(&_lteTxFact,                 _lteTxFactName);
     _addFact(&_isRoutableFact,            _isRoutableFactName);
     _addFact(&_latencyMsFact,             _latencyMsFactName);
     _addFact(&_lossPercentFact,           _lossPercentFactName);
@@ -30,6 +32,7 @@ VehicleLTEFactGroup::VehicleLTEFactGroup(QObject* parent)
     _rssiFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _rssnrFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _earfcnFact.setRawValue(std::numeric_limits<int32_t>::quiet_NaN());
+    _lteTxFact.setRawValue(std::numeric_limits<int32_t>::quiet_NaN());
     _isRoutableFact.setRawValue(QVariant(QString("Disconnected")));
     _latencyMsFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _lossPercentFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
@@ -69,6 +72,7 @@ void VehicleLTEFactGroup::_handleCommandLong(mavlink_message_t message)
             rsrp()->setRawValue(commandLong.param4);
             rssnr()->setRawValue(commandLong.param5);
             earfcn()->setRawValue(commandLong.param6);
+            lteTx()->setRawValue(commandLong.param7);
             break;
         case 31015:
             // LTE IP telemetry

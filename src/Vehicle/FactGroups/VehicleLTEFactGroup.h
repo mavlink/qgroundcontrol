@@ -18,6 +18,7 @@ public:
     Q_PROPERTY(Fact* rsrp               READ rsrp              CONSTANT)
     Q_PROPERTY(Fact* rssnr              READ rssnr             CONSTANT)
     Q_PROPERTY(Fact* earfcn             READ earfcn            CONSTANT)
+    Q_PROPERTY(Fact* lteTx              READ lteTx             CONSTANT)
     Q_PROPERTY(Fact* isRoutable         READ isRoutable        CONSTANT)
     Q_PROPERTY(Fact* latencyMs          READ latencyMs         CONSTANT)
     Q_PROPERTY(Fact* lossPercent        READ lossPercent       CONSTANT)
@@ -27,6 +28,7 @@ public:
     Fact* rsrp              () { return &_rsrpFact; }
     Fact* rssnr             () { return &_rssnrFact; }
     Fact* earfcn            () { return &_earfcnFact; }
+    Fact* lteTx             () { return &_lteTxFact; }
     Fact* isRoutable        () { return &_isRoutableFact; }
     Fact* latencyMs         () { return &_latencyMsFact; }
     Fact* lossPercent       () { return &_lossPercentFact; }
@@ -39,6 +41,7 @@ protected:
     const QString _rsrpFactName =                QStringLiteral("rsrp");
     const QString _rssnrFactName =               QStringLiteral("rssnr");
     const QString _earfcnFactName =              QStringLiteral("earfcn");
+    const QString _lteTxFactName =               QStringLiteral("ltetx");
     const QString _isRoutableFactName =          QStringLiteral("isRoutable");
     const QString _latencyMsFactName =           QStringLiteral("latencyMs");
     const QString _lossPercentFactName =         QStringLiteral("lossPercent");
@@ -48,6 +51,7 @@ protected:
     Fact _rssiFact;
     Fact _rssnrFact;
     Fact _earfcnFact;
+    Fact _lteTxFact;
     Fact _isRoutableFact;
     Fact _latencyMsFact;
     Fact _lossPercentFact;
