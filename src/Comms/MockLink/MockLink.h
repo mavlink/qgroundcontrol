@@ -257,6 +257,7 @@ private:
     void _sendADSBVehicles              (void);
     void _moveADSBVehicle               (int vehicleIndex);
     void _sendGeneralMetaData           (void);
+    void _sendRemoteIDArmStatus         (void);
 
     static MockLink* _startMockLinkWorker(QString configName, MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, bool sendStatusText, MockConfiguration::FailureMode_t failureMode);
     static MockLink* _startMockLink(MockConfiguration* mockConfig);
