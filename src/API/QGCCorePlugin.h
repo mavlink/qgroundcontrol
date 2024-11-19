@@ -175,6 +175,12 @@ public:
     /// Returns a true if xml definition file of a providen camera name exists, and loads it to file argument, to allow definition files to be loaded from resources
     virtual bool getOfflineCameraDefinitionFile(const QString &cameraName, QFile &file) const { Q_UNUSED(cameraName); Q_UNUSED(file); return false; }
 
+    struct JoystickAction {
+        QString name;
+        bool canRepeat = false;
+    };
+    virtual QList<JoystickAction> joystickActions() const { return {}; }
+
     /// Returns the list of first run prompt ids which need to be displayed according to current settings
     Q_INVOKABLE QVariantList firstRunPromptsToShow() const;
 

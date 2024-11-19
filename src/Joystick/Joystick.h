@@ -231,6 +231,7 @@ signals:
     void gripperAction              (GRIPPER_ACTIONS gripperAction);
     void landingGearDeploy          ();
     void landingGearRetract         ();
+    void unknownAction              (const QString &action);
 
 protected:
     void    _setDefaultCalibration  ();
