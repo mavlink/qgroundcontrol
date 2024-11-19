@@ -146,10 +146,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     }
 
 #ifdef QGC_UTM_ADAPTER
-    UTMSPManager* utmspManager = _toolbox->utmspManager();
-    if (utmspManager) {
-        _utmspVehicle = utmspManager->instantiateVehicle(*this);
-    }
+    _utmspVehicle = UTMSPManager::instance()->instantiateVehicle(this);
 #endif
 
     _autopilotPlugin = _firmwarePlugin->autopilotPlugin(this);
@@ -379,10 +376,6 @@ Vehicle::~Vehicle()
 
     delete _autopilotPlugin;
     _autopilotPlugin = nullptr;
-
-#ifdef QGC_UTM_ADAPTER
-    delete _utmspVehicle;
-#endif
 }
 
 void Vehicle::prepareDelete()
