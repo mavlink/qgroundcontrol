@@ -9,10 +9,11 @@
 
 #pragma once
 
-#include <nlohmann/json.hpp>
+// #include <nlohmann/json.hpp>
 #include "services/dispatcher.h"
 
 #include "UTMSPBlenderRestInterface.h"
+#include "parse/nlohmann/json.hpp"
 
 class Dispatcher;
 

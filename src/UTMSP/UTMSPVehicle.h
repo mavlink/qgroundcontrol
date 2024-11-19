@@ -24,8 +24,8 @@ class UTMSPVehicle : public UTMSPServiceController
     Q_PROPERTY(bool                    vehicleActivation              READ vehicleActivation         NOTIFY vehicleActivationChanged)
 
 public:
-    UTMSPVehicle        (std::shared_ptr<Dispatcher> dispatcher,const Vehicle& vehicle);
-    ~UTMSPVehicle       () override = default;
+    UTMSPVehicle(std::shared_ptr<Dispatcher> dispatcher, Vehicle *vehicle, QObject *parent = nullptr);
+    ~UTMSPVehicle();
 
     Q_INVOKABLE void loadTelemetryFlag(bool value);
 
@@ -53,9 +53,9 @@ private:
     std::string                   _operatorID;
     std::string                   _operatorClass;
     std::shared_ptr<Dispatcher>   _dispatcher;
-    bool                          _remoteIDFlag;
-    bool                          _stopFlag;
-    std::string                   _flightID;
-    QString                       _vehicleSerialNumber;
-    bool                          _vehicleActivation;
+    bool                          _remoteIDFlag = false;
+    bool                          _stopFlag = false;
+    std::string                   _flightID = "";
+    QString                       _vehicleSerialNumber = "";
+    bool                          _vehicleActivation = false;
 };

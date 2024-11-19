@@ -7,7 +7,7 @@
  *
  ****************************************************************************/
 
-#include <nlohmann/json.hpp>
+// #include <nlohmann/json.hpp>
 #include <string>
 #include <QByteArray>
 #include <QBitArray>
@@ -15,6 +15,7 @@
 
 #include "UTMSPLogger.h"
 #include "UTMSPAuthorization.h"
+#include "parse/nlohmann/json.hpp"
 
 using json = nlohmann::ordered_json;
 

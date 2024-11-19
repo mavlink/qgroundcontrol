@@ -270,7 +270,6 @@ list(APPEND QGC_RESOURCES
 )
 
 if(QGC_UTM_ADAPTER)
-    add_definitions(-DQGC_UTM_ADAPTER)
     list(APPEND QGC_RESOURCES ${CMAKE_SOURCE_DIR}/src/UTMSP/utmsp.qrc)
 else()
     list(APPEND QGC_RESOURCES ${CMAKE_SOURCE_DIR}/src/UTMSP/dummy/utmsp_dummy.qrc)
