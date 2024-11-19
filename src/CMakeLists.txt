@@ -18,10 +18,6 @@ qt_add_library(QGC STATIC
     QGCToolbox.h
 )
 
-if(QGC_UTM_ADAPTER)
-    add_definitions(-DQGC_UTM_ADAPTER)
-endif()
-
 add_subdirectory(ADSB)
 add_subdirectory(AnalyzeView)
 add_subdirectory(API)
