@@ -436,7 +436,7 @@ elseif(LINUX)
 endif()
 
 add_compile_definitions(
-    QGC_APP_NAME="${CMAKE_PROJECT_NAME}"
+    QGC_APP_NAME="${QGC_APP_NAME}"
     QGC_ORG_NAME="${QGC_ORG_NAME}"
     QGC_ORG_DOMAIN="${QGC_ORG_DOMAIN}"
     QGC_APP_VERSION_STR="${QGC_APP_VERSION_STR}"
