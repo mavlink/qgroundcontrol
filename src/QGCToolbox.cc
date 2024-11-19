@@ -15,9 +15,6 @@
 #include "QGCCorePlugin.h"
 #include "SettingsManager.h"
 #include "QGCApplication.h"
-#ifdef QGC_UTM_ADAPTER
-#include "UTMSPManager.h"
-#endif
 
 #if defined(QGC_CUSTOM_BUILD)
 #include CUSTOMHEADER
@@ -35,9 +32,6 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     _mavlinkProtocol        = new MAVLinkProtocol           (app, this);
     _multiVehicleManager    = new MultiVehicleManager       (app, this);
     _videoManager           = new VideoManager              (app, this);
-#ifdef QGC_UTM_ADAPTER
-    _utmspManager            = new UTMSPManager               (app, this);
-#endif
 }
 
 void QGCToolbox::setChildToolboxes(void)
@@ -50,9 +44,6 @@ void QGCToolbox::setChildToolboxes(void)
     _mavlinkProtocol->setToolbox(this);
     _multiVehicleManager->setToolbox(this);
     _videoManager->setToolbox(this);
-#ifdef QGC_UTM_ADAPTER
-    _utmspManager->setToolbox(this);
-#endif
 }
 
 void QGCToolbox::_scanAndLoadPlugins(QGCApplication* app)

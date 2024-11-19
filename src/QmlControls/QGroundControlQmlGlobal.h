@@ -188,10 +188,6 @@ public:
     bool                    airlinkSupported    ()  { return false; }
 #endif
 
-#ifdef QGC_UTM_ADAPTER
-    UTMSPManager*            utmspManager         ()  {return _utmspManager;}
-#endif
-
     qreal zOrderTopMost             () { return 1000; }
     qreal zOrderWidgets             () { return 100; }
     qreal zOrderMapItems            () { return 50; }
@@ -236,9 +232,10 @@ public:
     QString qgcVersion              (void) const;
 
 #ifdef QGC_UTM_ADAPTER
-    bool    utmspSupported() { return true; }
+    UTMSPManager* utmspManager() {return _utmspManager;}
+    bool utmspSupported() { return true; }
 #else
-    bool    utmspSupported() { return false; }
+    bool utmspSupported() { return false; }
 #endif
 
     // Overrides from QGCTool
@@ -262,6 +259,9 @@ private:
 #ifndef QGC_AIRLINK_DISABLED
     AirLinkManager*         _airlinkManager         = nullptr;
 #endif
+#ifdef QGC_UTM_ADAPTER
+    UTMSPManager*            _utmspManager;
+#endif
 
     double                  _flightMapInitialZoom   = 17.0;
     LinkManager*            _linkManager            = nullptr;
@@ -274,9 +274,6 @@ private:
 #endif
     QGCPalette*             _globalPalette          = nullptr;
     QmlUnitsConversion      _unitsConversion;
-#ifdef QGC_UTM_ADAPTER
-    UTMSPManager*            _utmspManager;
-#endif
 
     bool                    _skipSetupPage          = false;
     QStringList             _altitudeModeEnumString;
