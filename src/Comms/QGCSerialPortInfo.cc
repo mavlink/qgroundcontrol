@@ -20,6 +20,7 @@
 QGC_LOGGING_CATEGORY(QGCSerialPortInfoLog, "qgc.comms.qgcserialportinfo")
 
 bool QGCSerialPortInfo::_jsonLoaded = false;
+bool QGCSerialPortInfo::_jsonDataValid = false;
 QList<QGCSerialPortInfo::BoardInfo_t> QGCSerialPortInfo::_boardInfoList;
 QList<QGCSerialPortInfo::BoardRegExpFallback_t> QGCSerialPortInfo::_boardDescriptionFallbackList;
 QList<QGCSerialPortInfo::BoardRegExpFallback_t> QGCSerialPortInfo::_boardManufacturerFallbackList;
@@ -41,35 +42,20 @@ QGCSerialPortInfo::~QGCSerialPortInfo()
     // qCDebug(QGCSerialPortInfoLog) << Q_FUNC_INFO << this;
 }
 
-void QGCSerialPortInfo::_loadJsonData()
+bool QGCSerialPortInfo::_loadJsonData()
 {
     if (_jsonLoaded) {
-        return;
+        return _jsonDataValid;
     }
 
     _jsonLoaded = true;
 
-    QFile file(QStringLiteral(":/json/USBBoardInfo.json"));
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qCWarning(QGCSerialPortInfoLog) << "Unable to open board info json:" << file.errorString();
-        return;
-    }
-
-    const QByteArray data = file.readAll();
-    file.close();
-    QJsonParseError jsonParseError;
-    const QJsonDocument jsonDoc(QJsonDocument::fromJson(data, &jsonParseError));
-    if (jsonParseError.error != QJsonParseError::NoError) {
-        qCWarning(QGCSerialPortInfoLog) << "Unable to parse board info json:" << jsonParseError.errorString();
-        return;
-    }
-
-    const QJsonObject json = jsonDoc.object();
-    int fileVersion;
     QString errorString;
-    if (!JsonHelper::validateInternalQGCJsonFile(json, _jsonFileTypeValue, 1, 1, fileVersion, errorString)) {
-        qCWarning(QGCSerialPortInfoLog) << errorString;
-        return;
+    int version;
+    const QJsonObject json = JsonHelper::openInternalQGCJsonFile(":/json/USBBoardInfo.json", _jsonFileTypeValue, 1, 1, version, errorString);
+    if (!errorString.isEmpty()) {
+        qCWarning(QGCSerialPortInfoLog) << "Internal Error:" << errorString;
+        return false;
     }
 
     static const QList<JsonHelper::KeyValidateInfo> rootKeyInfoList = {
@@ -79,7 +65,7 @@ void QGCSerialPortInfo::_loadJsonData()
     };
     if (!JsonHelper::validateKeys(json, rootKeyInfoList, errorString)) {
         qCWarning(QGCSerialPortInfoLog) << errorString;
-        return;
+        return false;
     }
 
     static const QList<JsonHelper::KeyValidateInfo> boardKeyInfoList = {
@@ -92,13 +78,13 @@ void QGCSerialPortInfo::_loadJsonData()
     for (const QJsonValue &jsonValue : rgBoardInfo) {
         if (!jsonValue.isObject()) {
             qCWarning(QGCSerialPortInfoLog) << "Entry in boardInfo array is not object";
-            return;
+            return false;
         }
 
         const QJsonObject boardObject = jsonValue.toObject();
         if (!JsonHelper::validateKeys(boardObject, boardKeyInfoList, errorString)) {
             qCWarning(QGCSerialPortInfoLog) << errorString;
-            return;
+            return false;
         }
 
         const BoardInfo_t boardInfo = {
@@ -109,9 +95,10 @@ void QGCSerialPortInfo::_loadJsonData()
         };
         if (boardInfo.boardType == BoardTypeUnknown) {
             qCWarning(QGCSerialPortInfoLog) << "Bad board class" << boardObject[_jsonBoardClassKey].toString();
-            return;
+            return false;
         }
-        (void) _boardInfoList.append(boardInfo);
+
+        _boardInfoList.append(boardInfo);
     }
 
     static const QList<JsonHelper::KeyValidateInfo> fallbackKeyInfoList = {
@@ -123,13 +110,13 @@ void QGCSerialPortInfo::_loadJsonData()
     for (const QJsonValue &jsonValue : rgBoardDescriptionFallback) {
         if (!jsonValue.isObject()) {
             qCWarning(QGCSerialPortInfoLog) << "Entry in boardFallback array is not object";
-            return;
+            return false;
         }
 
         const QJsonObject fallbackObject = jsonValue.toObject();
         if (!JsonHelper::validateKeys(fallbackObject, fallbackKeyInfoList, errorString)) {
             qCWarning(QGCSerialPortInfoLog) << errorString;
-            return;
+            return false;
         }
 
         const BoardRegExpFallback_t boardFallback = {
@@ -139,22 +126,23 @@ void QGCSerialPortInfo::_loadJsonData()
         };
         if (boardFallback.boardType == BoardTypeUnknown) {
             qCWarning(QGCSerialPortInfoLog) << "Bad board class" << fallbackObject[_jsonBoardClassKey].toString();
-            return;
+            return false;
         }
-        (void) _boardDescriptionFallbackList.append(boardFallback);
+
+        _boardDescriptionFallbackList.append(boardFallback);
     }
 
     const QJsonArray rgBoardManufacturerFallback = json[_jsonBoardManufacturerFallbackKey].toArray();
     for (const QJsonValue &jsonValue : rgBoardManufacturerFallback) {
         if (!jsonValue.isObject()) {
             qCWarning(QGCSerialPortInfoLog) << "Entry in boardFallback array is not object";
-            return;
+            return false;
         }
 
         const QJsonObject fallbackObject = jsonValue.toObject();
         if (!JsonHelper::validateKeys(fallbackObject, fallbackKeyInfoList, errorString)) {
             qCWarning(QGCSerialPortInfoLog) << errorString;
-            return;
+            return false;
         }
 
         const BoardRegExpFallback_t boardFallback = {
@@ -164,10 +152,15 @@ void QGCSerialPortInfo::_loadJsonData()
         };
         if (boardFallback.boardType == BoardTypeUnknown) {
             qCWarning(QGCSerialPortInfoLog) << "Bad board class" << fallbackObject[_jsonBoardClassKey].toString();
-            return;
+            return false;
         }
-        (void) _boardManufacturerFallbackList.append(boardFallback);
+
+        _boardManufacturerFallbackList.append(boardFallback);
     }
+
+    _jsonDataValid = true;
+
+    return true;
 }
 
 QGCSerialPortInfo::BoardType_t QGCSerialPortInfo::_boardClassStringToType(const QString &boardClass)
@@ -185,7 +178,9 @@ bool QGCSerialPortInfo::getBoardInfo(QGCSerialPortInfo::BoardType_t &boardType, 
 {
     boardType = BoardTypeUnknown;
 
-    _loadJsonData();
+    if (!_loadJsonData()) {
+        return false;
+    }
 
     if (isNull()) {
         return false;
@@ -266,12 +261,11 @@ bool QGCSerialPortInfo::isBootloader() const
 {
     BoardType_t boardType;
     QString name;
-    if (getBoardInfo(boardType, name)) {
-        // TODO: bool SerialLink::_isBootloader()
-        return ((boardType == BoardTypePixhawk) && description().contains(QStringLiteral("BL")));
+    if (!getBoardInfo(boardType, name)) {
+        return false;
     }
 
-    return false;
+    return ((boardType == BoardTypePixhawk) && description().contains(QStringLiteral("BL")));
 }
 
 bool QGCSerialPortInfo::isSystemPort(const QSerialPortInfo &port)
@@ -300,15 +294,15 @@ bool QGCSerialPortInfo::canFlash() const
 {
     BoardType_t boardType;
     QString name;
-    if (getBoardInfo(boardType, name)) {
-        switch(boardType) {
-        case QGCSerialPortInfo::BoardTypePixhawk:
-        case QGCSerialPortInfo::BoardTypeSiKRadio:
-            return true;
-        default:
-            return false;
-        }
+    if (!getBoardInfo(boardType, name)) {
+        return false;
     }
 
-    return false;
+    switch(boardType) {
+    case QGCSerialPortInfo::BoardTypePixhawk:
+    case QGCSerialPortInfo::BoardTypeSiKRadio:
+        return true;
+    default:
+        return false;
+    }
 }
