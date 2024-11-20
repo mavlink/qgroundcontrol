@@ -63,9 +63,12 @@
         { "vendorID": 8352, "productID": 16733,     "boardClass": "OpenPilot",  "name": "OpenPilot CC3D" },
         { "vendorID": 8352, "productID": 16734,     "boardClass": "OpenPilot",  "name": "OpenPilot Revolution" },
         { "vendorID": 8352, "productID": 16848,     "boardClass": "OpenPilot",  "name": "Taulabs Sparky2" }
+        { "vendorID": 13891, "productID": 5600,     "boardClass": "Pixhawk",    "name": "ZeroOne X6" },
     ],
 
     "boardDescriptionFallback": [
+        { "regExp": "^ZeroOne x6.x$",       "boardClass": "Pixhawk" },
+        { "regExp": "^ZeroOne BL x6.x$",    "boardClass": "Pixhawk" },
         { "regExp": "^PX4 FMU v6U.x$",      "boardClass": "Pixhawk" },
         { "regExp": "^PX4 BL FMU v6U.x$",   "boardClass": "Pixhawk" },
         { "regExp": "^PX4 FMU v6X.x$",      "boardClass": "Pixhawk" },
