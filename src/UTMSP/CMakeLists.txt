@@ -3,7 +3,6 @@ find_package(Qt6 REQUIRED COMPONENTS Core)
 set(UTMSP_RESOURCES)
 qt_add_library(UTMSP STATIC)
 
-option(QGC_UTM_ADAPTER "Enable UTM Adapter" OFF)
 if(QGC_UTM_ADAPTER)
     message(STATUS "UTMSP is Initialized")
     add_definitions(-DQGC_UTM_ADAPTER)
