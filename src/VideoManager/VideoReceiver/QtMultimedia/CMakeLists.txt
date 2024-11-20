@@ -2,7 +2,6 @@ find_package(Qt6 REQUIRED COMPONENTS Core)
 
 qt_add_library(QtMultimediaReceiver STATIC)
 
-option(QGC_ENABLE_QT_VIDEOSTREAMING "Enable QtMultimedia Video Streaming Backend" OFF)
 cmake_print_variables(QGC_ENABLE_QT_VIDEOSTREAMING)
 if(NOT QGC_ENABLE_QT_VIDEOSTREAMING)
     return()
@@ -32,7 +31,6 @@ target_include_directories(QtMultimediaReceiver PUBLIC ${CMAKE_CURRENT_SOURCE_DI
 
 target_compile_definitions(QtMultimediaReceiver PUBLIC QGC_QT_STREAMING)
 
-option(QGC_ENABLE_UVC "Disable UVC Devices" ON)
 if(NOT QGC_ENABLE_UVC)
     target_compile_definitions(QtMultimediaReceiver PUBLIC QGC_DISABLE_UVC)
     return()
