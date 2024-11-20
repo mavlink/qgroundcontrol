@@ -55,11 +55,12 @@ public:
     static QList<QGCSerialPortInfo> availablePorts();
 
 private:
-    static void _loadJsonData();
+    static bool _loadJsonData();
     static BoardType_t _boardClassStringToType(const QString &boardClass);
     static QString _boardTypeToString(BoardType_t boardType);
 
     static bool _jsonLoaded;
+    static bool _jsonDataValid;
 
     struct BoardClassString2BoardType_t {
         const char *classString;
