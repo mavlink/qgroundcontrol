@@ -206,7 +206,6 @@ qt_policy(
 #                QGroundControl Options
 #######################################################
 
-option(QGC_STABLE_BUILD "Stable build option" OFF)
 if(NOT QGC_STABLE_BUILD)
     add_compile_definitions(DAILY_BUILD)
 endif()
@@ -225,8 +224,6 @@ if(QGC_DEBUG_QML)
     message(STATUS "To enable the QML debugger/profiler, run with: '-qmljsdebugger=port:1234'")
     add_compile_definitions(QT_QML_DEBUG)
 endif()
-
-cmake_dependent_option(QGC_NO_SERIAL_LINK "Build QGroundControl without Serial Support Support." OFF "NOT IOS" ON)
 
 if(QGC_DISABLE_APM_MAVLINK)
     add_compile_definitions(NO_ARDUPILOT_DIALECT)
