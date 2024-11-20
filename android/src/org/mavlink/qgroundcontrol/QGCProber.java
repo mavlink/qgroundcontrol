@@ -5,12 +5,15 @@ import org.mavlink.qgroundcontrol.QGCUsbId;
 import com.hoho.android.usbserial.driver.ProbeTable;
 import com.hoho.android.usbserial.driver.UsbSerialProber;
 
-class QGCProber
+public class QGCProber
 {
-    static UsbSerialProber getQGCProber()
-    {
-        final ProbeTable customTable = new ProbeTable();
+    public static UsbSerialProber getQGCProber() {
+        return new UsbSerialProber(getQGCProbeTable());
+    }
 
-        return new UsbSerialProber(customTable);
+    public static ProbeTable getQGCProbeTable() {
+        final ProbeTable probeTable = new ProbeTable();
+
+        return probeTable;
     }
 }

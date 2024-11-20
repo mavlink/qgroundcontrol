@@ -1,62 +1,105 @@
 #include "AndroidSerial.h"
-#include "AndroidInterface.h"
+#include "QGCLoggingCategory.h"
 
 #include <QtCore/QJniEnvironment>
 #include <QtCore/QJniObject>
-#include <QtCore/QDebug>
-#include <QtCore/QLoggingCategory>
-#include <QtCore/QCoreApplication>
 
 #include <qserialport_p.h>
 #include <qserialportinfo_p.h>
 
-#include <jni.h>
+QGC_LOGGING_CATEGORY(AndroidSerialLog, "qgc.android.androidserial");
 
-Q_LOGGING_CATEGORY(AndroidSerialLog, "qgc.android.serial");
+// TODO: Save Method Lookups
 
 namespace AndroidSerial
 {
+
+jclass getSerialManagerClass()
+{
+    static jclass javaClass = nullptr;
+
+    if (!javaClass) {
+        QJniEnvironment env;
+        if (!env.isValid()) {
+            qCWarning(AndroidSerialLog) << "Invalid QJniEnvironment";
+            return nullptr;
+        }
+
+        if (!QJniObject::isClassAvailable(kJniUsbSerialManagerClassName)) {
+            qCWarning(AndroidSerialLog) << "Class Not Available:" << kJniUsbSerialManagerClassName;
+            return nullptr;
+        }
+
+        javaClass = env.findClass(kJniUsbSerialManagerClassName);
+        if (!javaClass) {
+            qCWarning(AndroidSerialLog) << "Class Not Found:" << kJniUsbSerialManagerClassName;
+            return nullptr;
+        }
+
+        (void) env.checkAndClearExceptions();
+    }
+
+    return javaClass;
+}
 
 void setNativeMethods()
 {
     qCDebug(AndroidSerialLog) << "Registering Native Functions";
 
-    JNINativeMethod javaMethods[] {
+    const JNINativeMethod javaMethods[] {
         {"nativeDeviceHasDisconnected", "(J)V",                     reinterpret_cast<void*>(jniDeviceHasDisconnected)},
         {"nativeDeviceNewData",         "(J[B)V",                   reinterpret_cast<void*>(jniDeviceNewData)},
         {"nativeDeviceException",       "(JLjava/lang/String;)V",   reinterpret_cast<void*>(jniDeviceException)},
     };
 
-    (void) AndroidInterface::cleanJavaException();
-
-    jclass objectClass = AndroidInterface::getActivityClass();
-    if (!objectClass) {
-        qCWarning(AndroidSerialLog) << "Couldn't find class:" << objectClass;
+    QJniEnvironment jniEnv;
+    const jclass javaClass = getSerialManagerClass();
+    if (!javaClass) {
+        qCWarning(AndroidSerialLog) << "Couldn't find class for RegisterNatives:" << kJniUsbSerialManagerClassName;
+        (void) jniEnv.checkAndClearExceptions();
         return;
     }
 
-    QJniEnvironment jniEnv;
-    jint val = jniEnv->RegisterNatives(objectClass, javaMethods, sizeof(javaMethods) / sizeof(javaMethods[0]));
-
-    if (val < 0) {
-        qCWarning(AndroidSerialLog) << "Error registering methods: " << val;
-    } else {
-        qCDebug(AndroidSerialLog) << "Native Functions Registered";
+    const jint regResult = jniEnv->RegisterNatives(javaClass, javaMethods, std::size(javaMethods));
+    if (regResult != JNI_OK) {
+        qCWarning(AndroidSerialLog) << "Error registering native methods:" << regResult;
+        (void) jniEnv.checkAndClearExceptions();
+        return;
     }
+
+    qCDebug(AndroidSerialLog) << "Native Functions Registered Successfully";
 
     (void) jniEnv.checkAndClearExceptions();
 }
 
 void jniDeviceHasDisconnected(JNIEnv *env, jobject obj, jlong classPtr)
 {
-    Q_UNUSED(env);
-    Q_UNUSED(obj);
+    Q_UNUSED(env); Q_UNUSED(obj);
 
-    if (classPtr != 0) {
-        QSerialPortPrivate* const serialPortPrivate = reinterpret_cast<QSerialPortPrivate*>(classPtr);
-        qCDebug(AndroidSerialLog) << "Device disconnected" << serialPortPrivate->systemLocation.toLatin1().constData();
-        QSerialPort* const serialPort = static_cast<QSerialPort*>(serialPortPrivate->q_ptr);
+    if (classPtr == 0) {
+        qCWarning(AndroidSerialLog) << "nativeDeviceHasDisconnected called with classPtr=0";
+        return;
+    }
+
+    QSerialPortPrivate* const serialPortPrivate = reinterpret_cast<QSerialPortPrivate*>(classPtr);
+    if (!serialPortPrivate) {
+        qCWarning(AndroidSerialLog) << "serialPortPrivate is null in nativeDeviceHasDisconnected";
+        return;
+    }
+
+    QSerialPort* const serialPort = qobject_cast<QSerialPort*>(serialPortPrivate->q_ptr);
+    if (!serialPort) {
+        qCWarning(AndroidSerialLog) << "serialPort is null in nativeDeviceHasDisconnected";
+        return;
+    }
+
+    qCDebug(AndroidSerialLog) << "Device disconnected:" << serialPort->portName();
+
+    if (serialPort->isOpen()) {
         serialPort->close();
+        qCDebug(AndroidSerialLog) << "Serial port closed in nativeDeviceHasDisconnected";
+    } else {
+        qCWarning(AndroidSerialLog) << "Serial port was already closed in nativeDeviceHasDisconnected";
     }
 }
 
@@ -64,14 +107,41 @@ void jniDeviceNewData(JNIEnv *env, jobject obj, jlong classPtr, jbyteArray data)
 {
     Q_UNUSED(obj);
 
-    if (classPtr != 0) {
-        jbyte* const bytes = env->GetByteArrayElements(data, nullptr);
-        const jsize len = env->GetArrayLength(data);
-        // QByteArray data = QByteArray::fromRawData(reinterpret_cast<char*>(bytes), len);
-        QSerialPortPrivate* const serialPort = reinterpret_cast<QSerialPortPrivate*>(classPtr);
-        serialPort->newDataArrived(reinterpret_cast<char*>(bytes), len);
-        env->ReleaseByteArrayElements(data, bytes, JNI_ABORT);
-        (void) QJniEnvironment::checkAndClearExceptions(env);
+    if (classPtr == 0) {
+        qCWarning(AndroidSerialLog) << "nativeDeviceNewData called with classPtr=0";
+        return;
+    }
+
+    if (!data) {
+        qCWarning(AndroidSerialLog) << "nativeDeviceNewData called with null data";
+        return;
+    }
+
+    const jsize len = env->GetArrayLength(data);
+    if (len <= 0) {
+        qCWarning(AndroidSerialLog) << "nativeDeviceNewData received empty data array";
+        return;
+    }
+
+    jbyte* const bytes = env->GetByteArrayElements(data, nullptr);
+    if (!bytes) {
+        qCWarning(AndroidSerialLog) << "Failed to get byte array elements";
+        return;
+    }
+
+    const QByteArray byteArray(reinterpret_cast<char*>(bytes), len);
+    env->ReleaseByteArrayElements(data, bytes, JNI_ABORT);
+
+    QSerialPortPrivate* const serialPortPrivate = reinterpret_cast<QSerialPortPrivate*>(classPtr);
+    if (!serialPortPrivate) {
+        qCWarning(AndroidSerialLog) << "serialPortPrivate is null";
+        return;
+    }
+
+    serialPortPrivate->newDataArrived(byteArray.constData(), byteArray.size());
+
+    if (QJniEnvironment::checkAndClearExceptions(env)) {
+        qCWarning(AndroidSerialLog) << "Exception occurred in nativeDeviceNewData";
     }
 }
 
@@ -79,71 +149,115 @@ void jniDeviceException(JNIEnv *env, jobject obj, jlong classPtr, jstring messag
 {
     Q_UNUSED(obj);
 
-    if (classPtr != 0) {
-        const char* const string = env->GetStringUTFChars(message, nullptr);
-        const QString str = QString::fromUtf8(string);
-        QSerialPortPrivate* const serialPort = reinterpret_cast<QSerialPortPrivate*>(classPtr);
-        serialPort->exceptionArrived(str);
-        env->ReleaseStringUTFChars(message, string);
-        (void) QJniEnvironment::checkAndClearExceptions(env);
+    if (classPtr == 0) {
+        qCWarning(AndroidSerialLog) << "nativeDeviceException called with classPtr=0";
+        return;
+    }
+
+    if (!message) {
+        qCWarning(AndroidSerialLog) << "nativeDeviceException called with null message";
+        return;
+    }
+
+    const char *const rawMessage = env->GetStringUTFChars(message, nullptr);
+    if (!rawMessage) {
+        qCWarning(AndroidSerialLog) << "Failed to get UTF chars from jstring";
+        return;
+    }
+
+    const QString exceptionMessage = QString::fromUtf8(rawMessage);
+    env->ReleaseStringUTFChars(message, rawMessage);
+
+    QSerialPortPrivate* const serialPortPrivate = reinterpret_cast<QSerialPortPrivate*>(classPtr);
+    if (!serialPortPrivate) {
+        qCWarning(AndroidSerialLog) << "serialPortPrivate is null";
+        return;
+    }
+
+    serialPortPrivate->exceptionArrived(exceptionMessage);
+    qCWarning(AndroidSerialLog) << "Exception from Java:" << exceptionMessage;
+
+    if (QJniEnvironment::checkAndClearExceptions(env)) {
+        qCWarning(AndroidSerialLog) << "Exception occurred in nativeDeviceException";
     }
 }
 
 QList<QSerialPortInfo> availableDevices()
 {
-    jclass javaClass = AndroidInterface::getActivityClass();
+    QList<QSerialPortInfo> serialPortInfoList;
+
+    const jclass javaClass = getSerialManagerClass();
     if (!javaClass) {
-        qCWarning(AndroidSerialLog) << "Class Not Found";
-        return QList<QSerialPortInfo>();
+        qCWarning(AndroidSerialLog) << "getSerialManagerClass returned null in availableDevices";
+        return serialPortInfoList;
     }
 
     QJniEnvironment env;
-    const jmethodID methodId = env.findStaticMethod(javaClass, "availableDevicesInfo", "()[Ljava/lang/String;");
+    if (!env.isValid()) {
+        qCWarning(AndroidSerialLog) << "Invalid QJniEnvironment in availableDevices";
+        return serialPortInfoList;
+    }
+
+    const jmethodID methodId = env->GetStaticMethodID(javaClass, "availableDevicesInfo", "()[Ljava/lang/String;");
     if (!methodId) {
-        qCWarning(AndroidSerialLog) << "Method Not Found";
-        return QList<QSerialPortInfo>();
+        qCWarning(AndroidSerialLog) << "Method Not Found: availableDevicesInfo";
+        env.checkAndClearExceptions();
+        return serialPortInfoList;
     }
 
-    const QJniObject result = QJniObject::callStaticObjectMethod(javaClass, methodId);
-    if (!result.isValid()) {
-        qCDebug(AndroidSerialLog) << "Method Call Failed";
-        return QList<QSerialPortInfo>();
+    jobjectArray objArray = static_cast<jobjectArray>(env->CallStaticObjectMethod(javaClass, methodId));
+    if (!objArray) {
+        qCWarning(AndroidSerialLog) << "availableDevicesInfo returned null";
+        (void) env.checkAndClearExceptions();
+        return serialPortInfoList;
     }
 
-    QList<QSerialPortInfo> serialPortInfoList;
+    if (env.checkAndClearExceptions()) {
+        qCWarning(AndroidSerialLog) << "Exception occurred while calling availableDevicesInfo";
+        env->DeleteLocalRef(objArray);
+        return serialPortInfoList;
+    }
 
-    const jobjectArray objArray = result.object<jobjectArray>();
     const jsize count = env->GetArrayLength(objArray);
-
-    for (jsize i = 0; i < count; i++) {
-        jobject obj = env->GetObjectArrayElement(objArray, i);
-        jstring string = static_cast<jstring>(obj);
-        const char * const rawString = env->GetStringUTFChars(string, 0);
-        qCDebug(AndroidSerialLog) << "Adding device" << rawString;
-
-        const QStringList strList = QString::fromUtf8(rawString).split(QStringLiteral(":"));
-        env->ReleaseStringUTFChars(string, rawString);
-        env->DeleteLocalRef(string);
-
-        if (strList.size() < 6) {
-            qCWarning(AndroidSerialLog) << "Invalid device info";
+    for (jsize i = 0; i < count; ++i) {
+        jstring jstr = static_cast<jstring>(env->GetObjectArrayElement(objArray, i));
+        if (!jstr) {
+            qCWarning(AndroidSerialLog) << "Null string at index" << i;
             continue;
         }
 
-        QSerialPortInfoPrivate priv;
+        const char *const rawString = env->GetStringUTFChars(jstr, nullptr);
+        if (!rawString) {
+            qCWarning(AndroidSerialLog) << "Failed to get UTF chars from jstring at index" << i;
+            env->DeleteLocalRef(jstr);
+            continue;
+        }
 
-        priv.portName = QSerialPortInfoPrivate::portNameFromSystemLocation(strList.at(0));
-        priv.device = strList.at(0);
-        priv.description = strList.at(1);
-        priv.manufacturer = strList.at(2);
-        priv.serialNumber = strList.at(3);
-        priv.productIdentifier = strList.at(4).toInt();
-        priv.hasProductIdentifier = (priv.productIdentifier != BAD_PORT);
-        priv.vendorIdentifier = strList.at(5).toInt();
-        priv.hasVendorIdentifier = (priv.vendorIdentifier != BAD_PORT);
+        const QStringList strList = QString::fromUtf8(rawString).split(':');
+        env->ReleaseStringUTFChars(jstr, rawString);
+        env->DeleteLocalRef(jstr);
 
-        (void) serialPortInfoList.append(priv);
+        if (strList.size() < 6) {
+            qCWarning(AndroidSerialLog) << "Invalid device info at index" << i << ":" << strList;
+            continue;
+        }
+
+        bool pidOK, vidOK;
+        QSerialPortInfoPrivate info;
+        info.portName = QSerialPortInfoPrivate::portNameFromSystemLocation(strList[0]);
+        info.device = strList[0];
+        info.description = strList[1];
+        info.manufacturer = strList[2];
+        info.serialNumber = strList[3];
+        info.productIdentifier = strList[4].toInt(&pidOK);
+        info.hasProductIdentifier = (pidOK && (info.productIdentifier != INVALID_DEVICE_ID));
+        info.vendorIdentifier = strList[5].toInt(&vidOK);
+        info.hasVendorIdentifier = (vidOK && (info.vendorIdentifier != INVALID_DEVICE_ID));
+
+        serialPortInfoList.append(info);
     }
+
+    env->DeleteLocalRef(objArray);
     (void) env.checkAndClearExceptions();
 
     return serialPortInfoList;
@@ -151,440 +265,883 @@ QList<QSerialPortInfo> availableDevices()
 
 int getDeviceId(const QString &portName)
 {
-    QJniObject name = QJniObject::fromString(portName);
+    const QJniObject name = QJniObject::fromString(portName);
+    if (!name.isValid()) {
+        qCWarning(AndroidSerialLog) << "Invalid QJniObject for portName in getDeviceId";
+        return -1;
+    }
 
-    (void) AndroidInterface::cleanJavaException();
-    const int result = QJniObject::callStaticMethod<jint>(
-        AndroidInterface::getActivityClass(),
-        "getDeviceId",
-        "(Ljava/lang/String;)I",
-        name.object<jstring>()
-    );
-    (void) AndroidInterface::cleanJavaException();
+    const jclass javaClass = getSerialManagerClass();
+    if (!javaClass) {
+        qCWarning(AndroidSerialLog) << "getSerialManagerClass returned null in getDeviceId";
+        return -1;
+    }
 
-    return result;
+    QJniEnvironment env;
+    if (!env.isValid()) {
+        qCWarning(AndroidSerialLog) << "Invalid QJniEnvironment in getDeviceId";
+        return -1;
+    }
+
+    const jmethodID methodId = env->GetStaticMethodID(javaClass, "getDeviceId", "(Ljava/lang/String;)I");
+    if (!methodId) {
+        qCWarning(AndroidSerialLog) << "Method Not Found: getDeviceId";
+        env.checkAndClearExceptions();
+        return -1;
+    }
+
+    const jint result = env->CallStaticIntMethod(javaClass, methodId, name.object<jstring>());
+    if (env.checkAndClearExceptions()) {
+        qCWarning(AndroidSerialLog) << "Exception occurred while calling getDeviceId";
+        return -1;
+    }
+
+    return static_cast<int>(result);
 }
 
 int getDeviceHandle(int deviceId)
 {
-    (void) AndroidInterface::cleanJavaException();
-    const int result = QJniObject::callStaticMethod<jint>(
-        AndroidInterface::getActivityClass(),
-        "getDeviceHandle",
-        "(I)I",
-        deviceId
-    );
-    (void) AndroidInterface::cleanJavaException();
+    QJniEnvironment env;
+    if (!env.isValid()) {
+        qCWarning(AndroidSerialLog) << "Invalid QJniEnvironment in getDeviceHandle";
+        return -1;
+    }
 
-    return result;
+    const jclass javaClass = getSerialManagerClass();
+    if (!javaClass) {
+        qCWarning(AndroidSerialLog) << "getSerialManagerClass returned null in getDeviceHandle";
+        return -1;
+    }
+
+    const jmethodID methodId = env->GetStaticMethodID(javaClass, "getDeviceHandle", "(I)I");
+    if (!methodId) {
+        qCWarning(AndroidSerialLog) << "Method Not Found: getDeviceHandle";
+        env.checkAndClearExceptions();
+        return -1;
+    }
+
+    const jint result = env->CallStaticIntMethod(javaClass, methodId, static_cast<jint>(deviceId));
+    if (env.checkAndClearExceptions()) {
+        qCWarning(AndroidSerialLog) << "Exception occurred while calling getDeviceHandle";
+        return -1;
+    }
+
+    return static_cast<int>(result);
 }
 
 int open(const QString &portName, QSerialPortPrivate *classPtr)
 {
-    QJniObject name = QJniObject::fromString(portName);
+    if (!classPtr) {
+        qCWarning(AndroidSerialLog) << "open called with null serialPort";
+        return -1;
+    }
 
-    (void) AndroidInterface::cleanJavaException();
-    const int deviceId = QJniObject::callStaticMethod<jint>(
-        AndroidInterface::getActivityClass(),
-        "open",
-        "(Landroid/content/Context;Ljava/lang/String;J)I",
-        QNativeInterface::QAndroidApplication::context(),
-        name.object<jstring>(),
-        reinterpret_cast<jlong>(classPtr)
-    );
-    (void) AndroidInterface::cleanJavaException();
+    const QJniObject name = QJniObject::fromString(portName);
+    if (!name.isValid()) {
+        qCWarning(AndroidSerialLog) << "Invalid QJniObject for portName in open";
+        return -1;
+    }
 
-    return deviceId;
+    const jclass javaClass = getSerialManagerClass();
+    if (!javaClass) {
+        qCWarning(AndroidSerialLog) << "getSerialManagerClass returned null in open";
+        return -1;
+    }
+
+    QJniEnvironment env;
+    if (!env.isValid()) {
+        qCWarning(AndroidSerialLog) << "Invalid QJniEnvironment in open";
+        return -1;
+    }
+
+    const jmethodID methodId = env->GetStaticMethodID(javaClass, "open", "(Ljava/lang/String;J)I");
+    if (!methodId) {
+        qCWarning(AndroidSerialLog) << "Method Not Found: open";
+        env.checkAndClearExceptions();
+        return -1;
+    }
+
+    const jint deviceId = env->CallStaticIntMethod(javaClass, methodId, name.object<jstring>(), reinterpret_cast<jlong>(classPtr));
+    if (env.checkAndClearExceptions()) {
+        qCWarning(AndroidSerialLog) << "Exception occurred while calling open";
+        return -1;
+    }
+
+    return static_cast<int>(deviceId);
 }
 
 bool close(int deviceId)
 {
-    (void) AndroidInterface::cleanJavaException();
-    const bool result = QJniObject::callStaticMethod<jboolean>(
-        AndroidInterface::getActivityClass(),
-        "close",
-        "(I)Z",
-        deviceId
-    );
-    (void) AndroidInterface::cleanJavaException();
+    QJniEnvironment env;
+    if (!env.isValid()) {
+        qCWarning(AndroidSerialLog) << "Invalid QJniEnvironment in close";
+        return false;
+    }
 
-    return result;
+    const jclass javaClass = getSerialManagerClass();
+    if (!javaClass) {
+        qCWarning(AndroidSerialLog) << "getSerialManagerClass returned null in close";
+        return false;
+    }
+
+    const jmethodID methodId = env->GetStaticMethodID(javaClass, "close", "(I)Z");
+    if (!methodId) {
+        qCWarning(AndroidSerialLog) << "Method Not Found: close";
+        env.checkAndClearExceptions();
+        return false;
+    }
+
+    const jboolean result = env->CallStaticBooleanMethod(javaClass, methodId, static_cast<jint>(deviceId));
+    if (env.checkAndClearExceptions()) {
+        qCWarning(AndroidSerialLog) << "Exception occurred while calling close";
+        return false;
+    }
+
+    return (result == JNI_TRUE);
 }
 
 bool isOpen(const QString &portName)
 {
-    QJniObject name = QJniObject::fromString(portName);
+    const QJniObject name = QJniObject::fromString(portName);
+    if (!name.isValid()) {
+        qCWarning(AndroidSerialLog) << "Invalid QJniObject for portName in isOpen";
+        return false;
+    }
 
-    (void) AndroidInterface::cleanJavaException();
-    const bool result = QJniObject::callStaticMethod<jboolean>(
-        AndroidInterface::getActivityClass(),
-        "isDeviceNameOpen",
-        "(Ljava/lang/String;)Z",
-        name.object<jstring>()
-    );
-    (void) AndroidInterface::cleanJavaException();
+    const jclass javaClass = getSerialManagerClass();
+    if (!javaClass) {
+        qCWarning(AndroidSerialLog) << "getSerialManagerClass returned null in isOpen";
+        return false;
+    }
 
-    return result;
+    QJniEnvironment env;
+    if (!env.isValid()) {
+        qCWarning(AndroidSerialLog) << "Invalid QJniEnvironment in isOpen";
+        return false;
+    }
+
+    const jmethodID methodId = env->GetStaticMethodID(javaClass, "isDeviceNameOpen", "(Ljava/lang/String;)Z");
+    if (!methodId) {
+        qCWarning(AndroidSerialLog) << "Method Not Found: isDeviceNameOpen";
+        env.checkAndClearExceptions();
+        return false;
+    }
+
+    const jboolean result = env->CallStaticBooleanMethod(javaClass, methodId, name.object<jstring>());
+    if (env.checkAndClearExceptions()) {
+        qCWarning(AndroidSerialLog) << "Exception occurred while calling isDeviceNameOpen";
+        return false;
+    }
+
+    return (result == JNI_TRUE);
 }
 
 QByteArray read(int deviceId, int length, int timeout)
 {
-    (void) AndroidInterface::cleanJavaException();
-    const QJniObject result = QJniObject::callStaticMethod<jbyteArray>(
-        AndroidInterface::getActivityClass(),
-        "read",
-        "(II)[B",
-        deviceId,
-        length,
-        timeout
-    );
-    (void) AndroidInterface::cleanJavaException();
+    QJniEnvironment env;
+    if (!env.isValid()) {
+        qCWarning(AndroidSerialLog) << "Invalid QJniEnvironment in read";
+        return QByteArray();
+    }
 
-    jbyteArray jarray = result.object<jbyteArray>();
-    QJniEnvironment jniEnv;
-    jbyte* const bytes = jniEnv->GetByteArrayElements(jarray, nullptr);
-    const jsize len = jniEnv->GetArrayLength(jarray);
-    QByteArray data = QByteArray::fromRawData(reinterpret_cast<char*>(bytes), len);
-    jniEnv->ReleaseByteArrayElements(jarray, bytes, JNI_ABORT);
-    (void) jniEnv.checkAndClearExceptions();
+    const jclass javaClass = getSerialManagerClass();
+    if (!javaClass) {
+        qCWarning(AndroidSerialLog) << "getSerialManagerClass returned null in read";
+        return QByteArray();
+    }
+
+    const jmethodID methodId = env->GetStaticMethodID(javaClass, "read", "(III)[B");
+    if (!methodId) {
+        qCWarning(AndroidSerialLog) << "Method Not Found: read";
+        env.checkAndClearExceptions();
+        return QByteArray();
+    }
+
+    const jbyteArray jarray = static_cast<jbyteArray>(env->CallStaticObjectMethod(javaClass, methodId,
+                                                                                  static_cast<jint>(deviceId),
+                                                                                  static_cast<jint>(length),
+                                                                                  static_cast<jint>(timeout)));
+
+    if (!jarray) {
+        qCWarning(AndroidSerialLog) << "read method returned null";
+        (void) env.checkAndClearExceptions();
+        return QByteArray();
+    }
+
+    if (env.checkAndClearExceptions()) {
+        qCWarning(AndroidSerialLog) << "Exception occurred while calling read";
+        env->DeleteLocalRef(jarray);
+        return QByteArray();
+    }
+
+    const jsize len = env->GetArrayLength(jarray);
+    jbyte *const bytes = env->GetByteArrayElements(jarray, nullptr);
+    if (!bytes) {
+        qCWarning(AndroidSerialLog) << "Failed to get byte array elements in read";
+        env->DeleteLocalRef(jarray);
+        return QByteArray();
+    }
+
+    const QByteArray data(reinterpret_cast<char*>(bytes), len);
+    env->ReleaseByteArrayElements(jarray, bytes, JNI_ABORT);
+    env->DeleteLocalRef(jarray);
 
     return data;
 }
 
-int write(int deviceId, QByteArrayView data, int length, int timeout, bool async)
+int write(int deviceId, const char *data, int length, int timeout, bool async)
 {
-    QJniEnvironment jniEnv;
-    jbyteArray jarray = jniEnv->NewByteArray(static_cast<jsize>(length));
-    jniEnv->SetByteArrayRegion(jarray, 0, static_cast<jsize>(length), reinterpret_cast<const jbyte*>(data.constData()));
-
-    (void) jniEnv.checkAndClearExceptions();
-    timeout = qMax(0, timeout);
-    int result;
-    if (async) {
-        result = QJniObject::callStaticMethod<jint>(
-            AndroidInterface::getActivityClass(),
-            "writeAsync",
-            "(I[B)V",
-            deviceId,
-            jarray,
-            timeout
-        );
-    } else {
-        result = QJniObject::callStaticMethod<jint>(
-            AndroidInterface::getActivityClass(),
-            "write",
-            "(I[BII)I",
-            deviceId,
-            jarray,
-            length,
-            timeout
-        );
+    if (!data || length <= 0) {
+        qCWarning(AndroidSerialLog) << "Invalid data or length in write";
+        return -1;
     }
-    jniEnv->DeleteLocalRef(jarray);
-    (void) jniEnv.checkAndClearExceptions();
 
-    return result;
+    QJniEnvironment env;
+    if (!env.isValid()) {
+        qCWarning(AndroidSerialLog) << "Invalid QJniEnvironment in write";
+        return -1;
+    }
+
+    const jclass javaClass = getSerialManagerClass();
+    if (!javaClass) {
+        qCWarning(AndroidSerialLog) << "getSerialManagerClass returned null in write";
+        return -1;
+    }
+
+    const jbyteArray jarray = env->NewByteArray(static_cast<jsize>(length));
+    if (!jarray) {
+        qCWarning(AndroidSerialLog) << "Failed to create jbyteArray in write";
+        return -1;
+    }
+
+    env->SetByteArrayRegion(jarray, 0, static_cast<jsize>(length), reinterpret_cast<const jbyte*>(data));
+    if (env.checkAndClearExceptions()) {
+        qCWarning(AndroidSerialLog) << "Exception occurred while setting byte array region in write";
+        env->DeleteLocalRef(jarray);
+        return -1;
+    }
+
+    jint result;
+    if (async) {
+        const jmethodID methodId = env->GetStaticMethodID(javaClass, "writeAsync", "(I[BI)I");
+        if (!methodId) {
+            qCWarning(AndroidSerialLog) << "Method Not Found: writeAsync";
+            env.checkAndClearExceptions();
+            env->DeleteLocalRef(jarray);
+            return -1;
+        }
+
+        result = env->CallStaticIntMethod(javaClass, methodId,
+                                          static_cast<jint>(deviceId),
+                                          jarray,
+                                          static_cast<jint>(timeout));
+    } else {
+        const jmethodID methodId = env->GetStaticMethodID(javaClass, "write", "(I[BII)I");
+        if (!methodId) {
+            qCWarning(AndroidSerialLog) << "Method Not Found: write";
+            env.checkAndClearExceptions();
+            env->DeleteLocalRef(jarray);
+            return -1;
+        }
+
+        result = env->CallStaticIntMethod(javaClass, methodId,
+                                          static_cast<jint>(deviceId),
+                                          jarray,
+                                          static_cast<jint>(length),
+                                          static_cast<jint>(timeout));
+    }
+
+    if (env.checkAndClearExceptions()) {
+        qCWarning(AndroidSerialLog) << "Exception occurred while calling write/writeAsync";
+        env->DeleteLocalRef(jarray);
+        return -1;
+    }
+
+    env->DeleteLocalRef(jarray);
+
+    return static_cast<int>(result);
 }
 
 bool setParameters(int deviceId, int baudRate, int dataBits, int stopBits, int parity)
 {
-    (void) AndroidInterface::cleanJavaException();
-    const bool result = QJniObject::callStaticMethod<jboolean>(
-        AndroidInterface::getActivityClass(),
-        "setParameters",
-        "(IIIII)Z",
-        deviceId,
-        baudRate,
-        dataBits,
-        stopBits,
-        parity
-    );
-    (void) AndroidInterface::cleanJavaException();
+    QJniEnvironment env;
+    if (!env.isValid()) {
+        qCWarning(AndroidSerialLog) << "Invalid QJniEnvironment in setParameters";
+        return false;
+    }
 
-    return result;
+    const jclass javaClass = getSerialManagerClass();
+    if (!javaClass) {
+        qCWarning(AndroidSerialLog) << "getSerialManagerClass returned null in setParameters";
+        return false;
+    }
+
+    const jmethodID methodId = env->GetStaticMethodID(javaClass, "setParameters", "(IIIII)Z");
+    if (!methodId) {
+        qCWarning(AndroidSerialLog) << "Method Not Found: setParameters";
+        env.checkAndClearExceptions();
+        return false;
+    }
+
+    const jboolean result = env->CallStaticBooleanMethod(javaClass, methodId,
+                                                         static_cast<jint>(deviceId),
+                                                         static_cast<jint>(baudRate),
+                                                         static_cast<jint>(dataBits),
+                                                         static_cast<jint>(stopBits),
+                                                         static_cast<jint>(parity));
+
+    if (env.checkAndClearExceptions()) {
+        qCWarning(AndroidSerialLog) << "Exception occurred while calling setParameters";
+        return false;
+    }
+
+    return (result == JNI_TRUE);
 }
 
 bool getCarrierDetect(int deviceId)
 {
-    (void) AndroidInterface::cleanJavaException();
-    const bool result = QJniObject::callStaticMethod<jboolean>(
-        AndroidInterface::getActivityClass(),
-        "getCarrierDetect",
-        "(I)Z",
-        deviceId
-    );
-    (void) AndroidInterface::cleanJavaException();
+    QJniEnvironment env;
+    if (!env.isValid()) {
+        qCWarning(AndroidSerialLog) << "Invalid QJniEnvironment in getCarrierDetect";
+        return false;
+    }
 
-    return result;
+    const jclass javaClass = getSerialManagerClass();
+    if (!javaClass) {
+        qCWarning(AndroidSerialLog) << "getSerialManagerClass returned null in getCarrierDetect";
+        return false;
+    }
+
+    const jmethodID methodId = env->GetStaticMethodID(javaClass, "getCarrierDetect", "(I)Z");
+    if (!methodId) {
+        qCWarning(AndroidSerialLog) << "Method Not Found: getCarrierDetect";
+        env.checkAndClearExceptions();
+        return false;
+    }
+
+    const jboolean result = env->CallStaticBooleanMethod(javaClass, methodId, static_cast<jint>(deviceId));
+    if (env.checkAndClearExceptions()) {
+        qCWarning(AndroidSerialLog) << "Exception occurred while calling getCarrierDetect";
+        return false;
+    }
+
+    return (result == JNI_TRUE);
 }
 
 bool getClearToSend(int deviceId)
 {
-    (void) AndroidInterface::cleanJavaException();
-    const bool result = QJniObject::callStaticMethod<jboolean>(
-        AndroidInterface::getActivityClass(),
-        "getClearToSend",
-        "(I)Z",
-        deviceId
-    );
-    (void) AndroidInterface::cleanJavaException();
+    QJniEnvironment env;
+    if (!env.isValid()) {
+        qCWarning(AndroidSerialLog) << "Invalid QJniEnvironment in getClearToSend";
+        return false;
+    }
 
-    return result;
+    const jclass javaClass = getSerialManagerClass();
+    if (!javaClass) {
+        qCWarning(AndroidSerialLog) << "getSerialManagerClass returned null in getClearToSend";
+        return false;
+    }
+
+    const jmethodID methodId = env->GetStaticMethodID(javaClass, "getClearToSend", "(I)Z");
+    if (!methodId) {
+        qCWarning(AndroidSerialLog) << "Method Not Found: getClearToSend";
+        env.checkAndClearExceptions();
+        return false;
+    }
+
+    const jboolean result = env->CallStaticBooleanMethod(javaClass, methodId, static_cast<jint>(deviceId));
+    if (env.checkAndClearExceptions()) {
+        qCWarning(AndroidSerialLog) << "Exception occurred while calling getClearToSend";
+        return false;
+    }
+
+    return (result == JNI_TRUE);
 }
 
 bool getDataSetReady(int deviceId)
 {
-    (void) AndroidInterface::cleanJavaException();
-    const bool result = QJniObject::callStaticMethod<jboolean>(
-        AndroidInterface::getActivityClass(),
-        "getDataSetReady",
-        "(I)Z",
-        deviceId
-    );
-    (void) AndroidInterface::cleanJavaException();
+    QJniEnvironment env;
+    if (!env.isValid()) {
+        qCWarning(AndroidSerialLog) << "Invalid QJniEnvironment in getDataSetReady";
+        return false;
+    }
 
-    return result;
+    const jclass javaClass = getSerialManagerClass();
+    if (!javaClass) {
+        qCWarning(AndroidSerialLog) << "getSerialManagerClass returned null in getDataSetReady";
+        return false;
+    }
+
+    const jmethodID methodId = env->GetStaticMethodID(javaClass, "getDataSetReady", "(I)Z");
+    if (!methodId) {
+        qCWarning(AndroidSerialLog) << "Method Not Found: getDataSetReady";
+        env.checkAndClearExceptions();
+        return false;
+    }
+
+    const jboolean result = env->CallStaticBooleanMethod(javaClass, methodId, static_cast<jint>(deviceId));
+    if (env.checkAndClearExceptions()) {
+        qCWarning(AndroidSerialLog) << "Exception occurred while calling getDataSetReady";
+        return false;
+    }
+
+    return (result == JNI_TRUE);
 }
 
 bool getDataTerminalReady(int deviceId)
 {
-    (void) AndroidInterface::cleanJavaException();
-    const bool result = QJniObject::callStaticMethod<jboolean>(
-        AndroidInterface::getActivityClass(),
-        "getDataTerminalReady",
-        "(I)Z",
-        deviceId
-    );
-    (void) AndroidInterface::cleanJavaException();
+    QJniEnvironment env;
+    if (!env.isValid()) {
+        qCWarning(AndroidSerialLog) << "Invalid QJniEnvironment in getDataTerminalReady";
+        return false;
+    }
 
-    return result;
+    const jclass javaClass = getSerialManagerClass();
+    if (!javaClass) {
+        qCWarning(AndroidSerialLog) << "getSerialManagerClass returned null in getDataTerminalReady";
+        return false;
+    }
+
+    const jmethodID methodId = env->GetStaticMethodID(javaClass, "getDataTerminalReady", "(I)Z");
+    if (!methodId) {
+        qCWarning(AndroidSerialLog) << "Method Not Found: getDataTerminalReady";
+        env.checkAndClearExceptions();
+        return false;
+    }
+
+    const jboolean result = env->CallStaticBooleanMethod(javaClass, methodId, static_cast<jint>(deviceId));
+    if (env.checkAndClearExceptions()) {
+        qCWarning(AndroidSerialLog) << "Exception occurred while calling getDataTerminalReady";
+        return false;
+    }
+
+    return (result == JNI_TRUE);
 }
 
 bool setDataTerminalReady(int deviceId, bool set)
 {
-    (void) AndroidInterface::cleanJavaException();
-    const bool result = QJniObject::callStaticMethod<jboolean>(
-        AndroidInterface::getActivityClass(),
-        "setDataTerminalReady",
-        "(IZ)Z",
-        deviceId,
-        set
-    );
-    (void) AndroidInterface::cleanJavaException();
+    QJniEnvironment env;
+    if (!env.isValid()) {
+        qCWarning(AndroidSerialLog) << "Invalid QJniEnvironment in setDataTerminalReady";
+        return false;
+    }
 
-    return result;
+    const jclass javaClass = getSerialManagerClass();
+    if (!javaClass) {
+        qCWarning(AndroidSerialLog) << "getSerialManagerClass returned null in setDataTerminalReady";
+        return false;
+    }
+
+    const jmethodID methodId = env->GetStaticMethodID(javaClass, "setDataTerminalReady", "(IZ)Z");
+    if (!methodId) {
+        qCWarning(AndroidSerialLog) << "Method Not Found: setDataTerminalReady";
+        env.checkAndClearExceptions();
+        return false;
+    }
+
+    const jboolean jSet = set ? JNI_TRUE : JNI_FALSE;
+    const jboolean result = env->CallStaticBooleanMethod(javaClass, methodId, static_cast<jint>(deviceId), jSet);
+    if (env.checkAndClearExceptions()) {
+        qCWarning(AndroidSerialLog) << "Exception occurred while calling setDataTerminalReady";
+        return false;
+    }
+
+    return (result == JNI_TRUE);
 }
 
 bool getRingIndicator(int deviceId)
 {
-    (void) AndroidInterface::cleanJavaException();
-    const bool result = QJniObject::callStaticMethod<jboolean>(
-        AndroidInterface::getActivityClass(),
-        "getRingIndicator",
-        "(I)Z",
-        deviceId
-    );
-    (void) AndroidInterface::cleanJavaException();
+    QJniEnvironment env;
+    if (!env.isValid()) {
+        qCWarning(AndroidSerialLog) << "Invalid QJniEnvironment in getRingIndicator";
+        return false;
+    }
 
-    return result;
+    const jclass javaClass = getSerialManagerClass();
+    if (!javaClass) {
+        qCWarning(AndroidSerialLog) << "getSerialManagerClass returned null in getRingIndicator";
+        return false;
+    }
+
+    const jmethodID methodId = env->GetStaticMethodID(javaClass, "getRingIndicator", "(I)Z");
+    if (!methodId) {
+        qCWarning(AndroidSerialLog) << "Method Not Found: getRingIndicator";
+        env.checkAndClearExceptions();
+        return false;
+    }
+
+    const jboolean result = env->CallStaticBooleanMethod(javaClass, methodId, static_cast<jint>(deviceId));
+    if (env.checkAndClearExceptions()) {
+        qCWarning(AndroidSerialLog) << "Exception occurred while calling getRingIndicator";
+        return false;
+    }
+
+    return (result == JNI_TRUE);
 }
 
 bool getRequestToSend(int deviceId)
 {
-    (void) AndroidInterface::cleanJavaException();
-    const bool result = QJniObject::callStaticMethod<jboolean>(
-        AndroidInterface::getActivityClass(),
-        "getRequestToSend",
-        "(I)Z",
-        deviceId
-    );
-    (void) AndroidInterface::cleanJavaException();
+    QJniEnvironment env;
+    if (!env.isValid()) {
+        qCWarning(AndroidSerialLog) << "Invalid QJniEnvironment in getRequestToSend";
+        return false;
+    }
 
-    return result;
+    const jclass javaClass = getSerialManagerClass();
+    if (!javaClass) {
+        qCWarning(AndroidSerialLog) << "getSerialManagerClass returned null in getRequestToSend";
+        return false;
+    }
+
+    const jmethodID methodId = env->GetStaticMethodID(javaClass, "getRequestToSend", "(I)Z");
+    if (!methodId) {
+        qCWarning(AndroidSerialLog) << "Method Not Found: getRequestToSend";
+        env.checkAndClearExceptions();
+        return false;
+    }
+
+    const jboolean result = env->CallStaticBooleanMethod(javaClass, methodId, static_cast<jint>(deviceId));
+    if (env.checkAndClearExceptions()) {
+        qCWarning(AndroidSerialLog) << "Exception occurred while calling getRequestToSend";
+        return false;
+    }
+
+    return (result == JNI_TRUE);
 }
 
 bool setRequestToSend(int deviceId, bool set)
 {
-    (void) AndroidInterface::cleanJavaException();
-    const bool result = QJniObject::callStaticMethod<jboolean>(
-        AndroidInterface::getActivityClass(),
-        "setRequestToSend",
-        "(IZ)Z",
-        deviceId,
-        set
-    );
-    (void) AndroidInterface::cleanJavaException();
+    QJniEnvironment env;
+    if (!env.isValid()) {
+        qCWarning(AndroidSerialLog) << "Invalid QJniEnvironment in setRequestToSend";
+        return false;
+    }
 
-    return result;
+    const jclass javaClass = getSerialManagerClass();
+    if (!javaClass) {
+        qCWarning(AndroidSerialLog) << "getSerialManagerClass returned null in setRequestToSend";
+        return false;
+    }
+
+    const jmethodID methodId = env->GetStaticMethodID(javaClass, "setRequestToSend", "(IZ)Z");
+    if (!methodId) {
+        qCWarning(AndroidSerialLog) << "Method Not Found: setRequestToSend";
+        env.checkAndClearExceptions();
+        return false;
+    }
+
+    const jboolean jSet = set ? JNI_TRUE : JNI_FALSE;
+    const jboolean result = env->CallStaticBooleanMethod(javaClass, methodId, static_cast<jint>(deviceId), jSet);
+    if (env.checkAndClearExceptions()) {
+        qCWarning(AndroidSerialLog) << "Exception occurred while calling setRequestToSend";
+        return false;
+    }
+
+    return (result == JNI_TRUE);
 }
 
 QSerialPort::PinoutSignals getControlLines(int deviceId)
 {
-    (void) AndroidInterface::cleanJavaException();
-    const QJniObject result = QJniObject::callStaticMethod<jintArray>(
-        AndroidInterface::getActivityClass(),
-        "getControlLines",
-        "(I)[I",
-        deviceId
-    );
-    (void) AndroidInterface::cleanJavaException();
+    QJniEnvironment env;
+    if (!env.isValid()) {
+        qCWarning(AndroidSerialLog) << "Invalid QJniEnvironment in getControlLines";
+        return QSerialPort::PinoutSignals();
+    }
 
-    jintArray jarray = result.object<jintArray>();
-    QJniEnvironment jniEnv;
-    jint* const ints = jniEnv->GetIntArrayElements(jarray, nullptr);
-    const jsize len = jniEnv->GetArrayLength(jarray);
+    const jclass javaClass = getSerialManagerClass();
+    if (!javaClass) {
+        qCWarning(AndroidSerialLog) << "getSerialManagerClass returned null in getControlLines";
+        return QSerialPort::PinoutSignals();
+    }
 
-    QSerialPort::PinoutSignals data = QSerialPort::PinoutSignals::fromInt(0);
-    for (jsize i = 0; i < len; i++) {
+    const jmethodID methodId = env->GetStaticMethodID(javaClass, "getControlLines", "(I)[I");
+    if (!methodId) {
+        qCWarning(AndroidSerialLog) << "Method Not Found: getControlLines";
+        env.checkAndClearExceptions();
+        return QSerialPort::PinoutSignals();
+    }
+
+    const jintArray jarray = static_cast<jintArray>(env->CallStaticObjectMethod(javaClass, methodId, static_cast<jint>(deviceId)));
+    if (!jarray) {
+        qCWarning(AndroidSerialLog) << "getControlLines returned null";
+        (void) env.checkAndClearExceptions();
+        return QSerialPort::PinoutSignals();
+    }
+
+    if (env.checkAndClearExceptions()) {
+        qCWarning(AndroidSerialLog) << "Exception occurred while calling getControlLines";
+        env->DeleteLocalRef(jarray);
+        return QSerialPort::PinoutSignals();
+    }
+
+    jint *const ints = env->GetIntArrayElements(jarray, nullptr);
+    if (!ints) {
+        qCWarning(AndroidSerialLog) << "Failed to get int array elements in getControlLines";
+        env->DeleteLocalRef(jarray);
+        return QSerialPort::PinoutSignals();
+    }
+
+    const jsize len = env->GetArrayLength(jarray);
+    QSerialPort::PinoutSignals data = QSerialPort::PinoutSignals();
+
+    for (jsize i = 0; i < len; ++i) {
         const jint value = ints[i];
-        if ((value < ControlLine::RtsControlLine) || (value > ControlLine::RiControlLine)) {
-            continue;
-        }
-
-        const ControlLine line = static_cast<ControlLine>(value);
-        switch (line) {
-        case ControlLine::RtsControlLine:
-            (void) data.setFlag(QSerialPort::PinoutSignal::RequestToSendSignal, true);
-            break;
-        case ControlLine::CtsControlLine:
-            (void) data.setFlag(QSerialPort::PinoutSignal::ClearToSendSignal, true);
-            break;
-        case ControlLine::DtrControlLine:
-            (void) data.setFlag(QSerialPort::PinoutSignal::DataTerminalReadySignal, true);
-            break;
-        case ControlLine::DsrControlLine:
-            (void) data.setFlag(QSerialPort::PinoutSignal::DataSetReadySignal, true);
-            break;
-        case ControlLine::CdControlLine:
-            (void) data.setFlag(QSerialPort::PinoutSignal::DataCarrierDetectSignal, true);
-            break;
-        case ControlLine::RiControlLine:
-            (void) data.setFlag(QSerialPort::PinoutSignal::RingIndicatorSignal, true);
-            break;
-        default:
-            break;
+        switch (value) {
+            case 0:
+                data |= QSerialPort::RequestToSendSignal;
+                break;
+            case 1: // CTS
+                data |= QSerialPort::ClearToSendSignal;
+                break;
+            case 2: // DTR
+                data |= QSerialPort::DataTerminalReadySignal;
+                break;
+            case 3: // DSR
+                data |= QSerialPort::DataSetReadySignal;
+                break;
+            case 4: // CD
+                data |= QSerialPort::DataCarrierDetectSignal;
+                break;
+            case 5: // RI
+                data |= QSerialPort::RingIndicatorSignal;
+                break;
+            default:
+                qCWarning(AndroidSerialLog) << "Unknown ControlLine value:" << value;
+                break;
         }
     }
-    jniEnv->ReleaseIntArrayElements(jarray, ints, JNI_ABORT);
-    (void) jniEnv.checkAndClearExceptions();
+
+    env->ReleaseIntArrayElements(jarray, ints, JNI_ABORT);
+    env->DeleteLocalRef(jarray);
+    env.checkAndClearExceptions();
 
     return data;
 }
 
 int getFlowControl(int deviceId)
 {
-    (void) AndroidInterface::cleanJavaException();
-    const int result = QJniObject::callStaticMethod<jint>(
-        AndroidInterface::getActivityClass(),
-        "getFlowControl",
-        "(I)I",
-        deviceId
-    );
-    (void) AndroidInterface::cleanJavaException();
+    QJniEnvironment env;
+    if (!env.isValid()) {
+        qCWarning(AndroidSerialLog) << "Invalid QJniEnvironment in getFlowControl";
+        return QSerialPort::NoFlowControl;
+    }
 
-    return static_cast<QSerialPort::FlowControl>(result);
+    const jclass javaClass = getSerialManagerClass();
+    if (!javaClass) {
+        qCWarning(AndroidSerialLog) << "getSerialManagerClass returned null in getFlowControl";
+        return QSerialPort::NoFlowControl;
+    }
+
+    const jmethodID methodId = env->GetStaticMethodID(javaClass, "getFlowControl", "(I)I");
+    if (!methodId) {
+        qCWarning(AndroidSerialLog) << "Method Not Found: getFlowControl";
+        env.checkAndClearExceptions();
+        return QSerialPort::NoFlowControl;
+    }
+
+    const jint flowControl = env->CallStaticIntMethod(javaClass, methodId, static_cast<jint>(deviceId));
+    if (env.checkAndClearExceptions()) {
+        qCWarning(AndroidSerialLog) << "Exception occurred while calling getFlowControl";
+        return QSerialPort::NoFlowControl;
+    }
+
+    return static_cast<QSerialPort::FlowControl>(flowControl);
 }
 
 bool setFlowControl(int deviceId, int flowControl)
 {
-    (void) AndroidInterface::cleanJavaException();
-    const bool result = QJniObject::callStaticMethod<jboolean>(
-        AndroidInterface::getActivityClass(),
-        "setFlowControl",
-        "(II)Z",
-        deviceId,
-        flowControl
-    );
-    (void) AndroidInterface::cleanJavaException();
+    QJniEnvironment env;
+    if (!env.isValid()) {
+        qCWarning(AndroidSerialLog) << "Invalid QJniEnvironment in setFlowControl";
+        return false;
+    }
 
-    return result;
+    const jclass javaClass = getSerialManagerClass();
+    if (!javaClass) {
+        qCWarning(AndroidSerialLog) << "getSerialManagerClass returned null in setFlowControl";
+        return false;
+    }
+
+    const jmethodID methodId = env->GetStaticMethodID(javaClass, "setFlowControl", "(II)Z");
+    if (!methodId) {
+        qCWarning(AndroidSerialLog) << "Method Not Found: setFlowControl";
+        env.checkAndClearExceptions();
+        return false;
+    }
+
+    const jboolean result = env->CallStaticBooleanMethod(javaClass, methodId,
+                                                         static_cast<jint>(deviceId),
+                                                         static_cast<jint>(flowControl));
+
+    if (env.checkAndClearExceptions()) {
+        qCWarning(AndroidSerialLog) << "Exception occurred while calling setFlowControl";
+        return false;
+    }
+
+    return result == JNI_TRUE;
 }
 
 bool purgeBuffers(int deviceId, bool input, bool output)
 {
-    (void) AndroidInterface::cleanJavaException();
-    const bool result = QJniObject::callStaticMethod<jboolean>(
-        AndroidInterface::getActivityClass(),
-        "purgeBuffers",
-        "(IZZ)Z",
-        deviceId,
-        input,
-        output
-    );
-    (void) AndroidInterface::cleanJavaException();
+    QJniEnvironment env;
+    if (!env.isValid()) {
+        qCWarning(AndroidSerialLog) << "Invalid QJniEnvironment in purgeBuffers";
+        return false;
+    }
 
-    return result;
+    const jclass javaClass = getSerialManagerClass();
+    if (!javaClass) {
+        qCWarning(AndroidSerialLog) << "getSerialManagerClass returned null in purgeBuffers";
+        return false;
+    }
+
+    const jmethodID methodId = env->GetStaticMethodID(javaClass, "purgeBuffers", "(IZZ)Z");
+    if (!methodId) {
+        qCWarning(AndroidSerialLog) << "Method Not Found: purgeBuffers";
+        env.checkAndClearExceptions();
+        return false;
+    }
+
+    const jboolean jInput = input ? JNI_TRUE : JNI_FALSE;
+    const jboolean jOutput = output ? JNI_TRUE : JNI_FALSE;
+
+    const jboolean result = env->CallStaticBooleanMethod(javaClass, methodId,
+                                                         static_cast<jint>(deviceId),
+                                                         jInput,
+                                                         jOutput);
+
+    if (env.checkAndClearExceptions()) {
+        qCWarning(AndroidSerialLog) << "Exception occurred while calling purgeBuffers";
+        return false;
+    }
+
+    return (result == JNI_TRUE);
 }
 
 bool setBreak(int deviceId, bool set)
 {
-    (void) AndroidInterface::cleanJavaException();
-    const bool result = QJniObject::callStaticMethod<jboolean>(
-        AndroidInterface::getActivityClass(),
-        "setBreak",
-        "(IZ)Z",
-        deviceId,
-        set
-    );
-    (void) AndroidInterface::cleanJavaException();
+    QJniEnvironment env;
+    if (!env.isValid()) {
+        qCWarning(AndroidSerialLog) << "Invalid QJniEnvironment in setBreak";
+        return false;
+    }
 
-    return result;
+    const jclass javaClass = getSerialManagerClass();
+    if (!javaClass) {
+        qCWarning(AndroidSerialLog) << "getSerialManagerClass returned null in setBreak";
+        return false;
+    }
+
+    const jmethodID methodId = env->GetStaticMethodID(javaClass, "setBreak", "(IZ)Z");
+    if (!methodId) {
+        qCWarning(AndroidSerialLog) << "Method Not Found: setBreak";
+        env.checkAndClearExceptions();
+        return false;
+    }
+
+    const jboolean jSet = set ? JNI_TRUE : JNI_FALSE;
+    const jboolean result = env->CallStaticBooleanMethod(javaClass, methodId,
+                                                         static_cast<jint>(deviceId),
+                                                         jSet);
+    if (env.checkAndClearExceptions()) {
+        qCWarning(AndroidSerialLog) << "Exception occurred while calling setBreak";
+        return false;
+    }
+
+    return (result == JNI_TRUE);
 }
 
 bool startReadThread(int deviceId)
 {
-    (void) AndroidInterface::cleanJavaException();
-    const bool result = QJniObject::callStaticMethod<jboolean>(
-        AndroidInterface::getActivityClass(),
-        "startIoManager",
-        "(I)Z",
-        deviceId
-    );
-    (void) AndroidInterface::cleanJavaException();
+    QJniEnvironment env;
+    if (!env.isValid()) {
+        qCWarning(AndroidSerialLog) << "Invalid QJniEnvironment in startReadThread";
+        return false;
+    }
 
-    return result;
+    const jclass javaClass = getSerialManagerClass();
+    if (!javaClass) {
+        qCWarning(AndroidSerialLog) << "getSerialManagerClass returned null in startReadThread";
+        return false;
+    }
+
+    const jmethodID methodId = env->GetStaticMethodID(javaClass, "startIoManager", "(I)Z");
+    if (!methodId) {
+        qCWarning(AndroidSerialLog) << "Method Not Found: startIoManager";
+        env.checkAndClearExceptions();
+        return false;
+    }
+
+    const jboolean result = env->CallStaticBooleanMethod(javaClass, methodId,
+                                                         static_cast<jint>(deviceId));
+    if (env.checkAndClearExceptions()) {
+        qCWarning(AndroidSerialLog) << "Exception occurred while calling startIoManager";
+        return false;
+    }
+
+    return (result == JNI_TRUE);
 }
 
 bool stopReadThread(int deviceId)
 {
-    (void) AndroidInterface::cleanJavaException();
-    const bool result = QJniObject::callStaticMethod<jboolean>(
-        AndroidInterface::getActivityClass(),
-        "stopIoManager",
-        "(I)Z",
-        deviceId
-    );
-    (void) AndroidInterface::cleanJavaException();
+    QJniEnvironment env;
+    if (!env.isValid()) {
+        qCWarning(AndroidSerialLog) << "Invalid QJniEnvironment in stopReadThread";
+        return false;
+    }
 
-    return result;
+    const jclass javaClass = getSerialManagerClass();
+    if (!javaClass) {
+        qCWarning(AndroidSerialLog) << "getSerialManagerClass returned null in stopReadThread";
+        return false;
+    }
+
+    const jmethodID methodId = env->GetStaticMethodID(javaClass, "stopIoManager", "(I)Z");
+    if (!methodId) {
+        qCWarning(AndroidSerialLog) << "Method Not Found: stopIoManager";
+        env.checkAndClearExceptions();
+        return false;
+    }
+
+    const jboolean result = env->CallStaticBooleanMethod(javaClass, methodId,
+                                                         static_cast<jint>(deviceId));
+    if (env.checkAndClearExceptions()) {
+        qCWarning(AndroidSerialLog) << "Exception occurred while calling stopIoManager";
+        return false;
+    }
+
+    return (result == JNI_TRUE);
 }
 
 bool readThreadRunning(int deviceId)
 {
-    (void) AndroidInterface::cleanJavaException();
-    const bool result = QJniObject::callStaticMethod<jboolean>(
-        AndroidInterface::getActivityClass(),
-        "ioManagerRunning",
-        "(I)Z",
-        deviceId
-    );
-    (void) AndroidInterface::cleanJavaException();
+    QJniEnvironment env;
+    if (!env.isValid()) {
+        qCWarning(AndroidSerialLog) << "Invalid QJniEnvironment in readThreadRunning";
+        return false;
+    }
 
-    return result;
-}
+    const jclass javaClass = getSerialManagerClass();
+    if (!javaClass) {
+        qCWarning(AndroidSerialLog) << "getSerialManagerClass returned null in readThreadRunning";
+        return false;
+    }
 
-int getReadBufferSize(int deviceId)
-{
-    (void) AndroidInterface::cleanJavaException();
-    const int result = QJniObject::callStaticMethod<jint>(
-        AndroidInterface::getActivityClass(),
-        "ioManagerReadBufferSize",
-        "(I)I",
-        deviceId
-    );
-    (void) AndroidInterface::cleanJavaException();
+    const jmethodID methodId = env->GetStaticMethodID(javaClass, "ioManagerRunning", "(I)Z");
+    if (!methodId) {
+        qCWarning(AndroidSerialLog) << "Method Not Found: ioManagerRunning";
+        env.checkAndClearExceptions();
+        return false;
+    }
 
-    return result;
+    const jboolean result = env->CallStaticBooleanMethod(javaClass, methodId,
+                                                         static_cast<jint>(deviceId));
+    if (env.checkAndClearExceptions()) {
+        qCWarning(AndroidSerialLog) << "Exception occurred while calling ioManagerRunning";
+        return false;
+    }
+
+    return (result == JNI_TRUE);
 }
 
 } // namespace AndroidSerial

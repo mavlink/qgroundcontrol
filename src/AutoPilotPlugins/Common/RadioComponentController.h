@@ -76,6 +76,7 @@ public:
     Q_ENUM(BindModes)
 
     Q_INVOKABLE void spektrumBindMode(int mode);
+    Q_INVOKABLE void crsfBindMode(void);
     Q_INVOKABLE void cancelButtonClicked(void);
     Q_INVOKABLE void skipButtonClicked(void);
     Q_INVOKABLE void nextButtonClicked(void);

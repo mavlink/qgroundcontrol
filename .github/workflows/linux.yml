@@ -182,10 +182,8 @@ jobs:
 
       - name: Run unit tests
         if: matrix.BuildType == 'Debug'
-        uses: coactions/setup-xvfb@v1
-        with:
-          run: ./${{ env.ARTIFACT }} --unittest
-          working-directory: ${{ runner.temp }}/shadow_build_dir
+        working-directory: ${{ runner.temp }}/shadow_build_dir
+        run: xvfb-run -a ./${{ env.ARTIFACT }} --unittest
 
       - name: Upload Build File
         if: matrix.BuildType == 'Release'

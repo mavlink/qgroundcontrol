@@ -132,6 +132,13 @@ public:
     bool isConnected(void) const override { return _connected; }
     void disconnect (void) override;
 
+    struct ADSBVehicle {
+        QGeoCoordinate coordinate;
+        double angle;
+        double altitude; // Store unique altitude for each vehicle
+    };
+    std::vector<ADSBVehicle> _adsbVehicles; // Store data for multiple ADS-B vehicles
+    
     /// Sets a failure mode for unit testingqgcm
     ///     @param failureMode Type of failure to simulate
     ///     @param failureAckResult Error to send if one the ack error modes
@@ -248,8 +255,9 @@ private:
     void _paramRequestListWorker        (void);
     void _logDownloadWorker             (void);
     void _sendADSBVehicles              (void);
-    void _moveADSBVehicle               (void);
+    void _moveADSBVehicle               (int vehicleIndex);
     void _sendGeneralMetaData           (void);
+    void _sendRemoteIDArmStatus         (void);
 
     static MockLink* _startMockLinkWorker(QString configName, MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, bool sendStatusText, MockConfiguration::FailureMode_t failureMode);
     static MockLink* _startMockLink(MockConfiguration* mockConfig);
@@ -318,8 +326,9 @@ private:
     uint32_t    _logDownloadCurrentOffset;  ///< Current offset we are sending from
     uint32_t    _logDownloadBytesRemaining; ///< Number of bytes still to send, 0 = send inactive
 
-    QGeoCoordinate  _adsbVehicleCoordinate;
-    double          _adsbAngle;
+    QList<QGeoCoordinate> _adsbVehicleCoordinates;  // List for multiple vehicles
+    double _adsbAngles[5];                           // Array for angles of each vehicle
+    static constexpr int _numberOfVehicles = 5;      // Number of ADS-B vehicles
 
     RequestMessageFailureMode_t _requestMessageFailureMode = FailRequestMessageNone;
 

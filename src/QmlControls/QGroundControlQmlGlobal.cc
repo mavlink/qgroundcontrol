@@ -17,6 +17,7 @@
 #include "PositionManager.h"
 #include "QGCMapEngineManager.h"
 #include "ADSBVehicleManager.h"
+#include "MissionCommandTree.h"
 #ifndef NO_SERIAL_LINK
 #include "GPSManager.h"
 #include "GPSRtk.h"
@@ -24,6 +25,9 @@
 #include "QGCPalette.h"
 #ifdef QT_DEBUG
 #include "MockLink.h"
+#endif
+#ifndef QGC_AIRLINK_DISABLED
+#include "AirLinkManager.h"
 #endif
 
 #include <QtCore/QSettings>
@@ -36,6 +40,11 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app, QGCToolbox
     : QGCTool(app, toolbox)
     , _mapEngineManager(QGCMapEngineManager::instance())
     , _adsbVehicleManager(ADSBVehicleManager::instance())
+    , _qgcPositionManager(QGCPositionManager::instance())
+    , _missionCommandTree(MissionCommandTree::instance())
+#ifndef QGC_AIRLINK_DISABLED
+    , _airlinkManager(AirLinkManager::instance())
+#endif
 {
     // We clear the parent on this object since we run into shutdown problems caused by hybrid qml app. Instead we let it leak on shutdown.
     // setParent(nullptr);
@@ -78,20 +87,13 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
 
     _linkManager            = toolbox->linkManager();
     _multiVehicleManager    = toolbox->multiVehicleManager();
-    _qgcPositionManager     = toolbox->qgcPositionManager();
-    _missionCommandTree     = toolbox->missionCommandTree();
     _videoManager           = toolbox->videoManager();
-    _mavlinkLogManager      = toolbox->mavlinkLogManager();
     _corePlugin             = toolbox->corePlugin();
-    _firmwarePluginManager  = toolbox->firmwarePluginManager();
     _settingsManager        = toolbox->settingsManager();
 #ifndef NO_SERIAL_LINK
     _gpsRtkFactGroup        = GPSManager::instance()->gpsRtk()->gpsRtkFactGroup();
 #endif
     _globalPalette          = new QGCPalette(this);
-#ifndef QGC_AIRLINK_DISABLED
-    _airlinkManager         = toolbox->airlinkManager();
-#endif
 #ifdef QGC_UTM_ADAPTER
     _utmspManager            = toolbox->utmspManager();
 #endif
@@ -209,13 +211,13 @@ void QGroundControlQmlGlobal::setMavlinkSystemID(int id)
 
 bool QGroundControlQmlGlobal::singleFirmwareSupport(void)
 {
-    return _firmwarePluginManager->supportedFirmwareClasses().count() == 1;
+    return FirmwarePluginManager::instance()->supportedFirmwareClasses().count() == 1;
 }
 
 bool QGroundControlQmlGlobal::singleVehicleSupport(void)
 {
     if (singleFirmwareSupport()) {
-        return _firmwarePluginManager->supportedVehicleClasses(_firmwarePluginManager->supportedFirmwareClasses()[0]).count() == 1;
+        return FirmwarePluginManager::instance()->supportedVehicleClasses(FirmwarePluginManager::instance()->supportedFirmwareClasses()[0]).count() == 1;
     }
 
     return false;
@@ -223,12 +225,12 @@ bool QGroundControlQmlGlobal::singleVehicleSupport(void)
 
 bool QGroundControlQmlGlobal::px4ProFirmwareSupported()
 {
-    return _firmwarePluginManager->supportedFirmwareClasses().contains(QGCMAVLink::FirmwareClassPX4);
+    return FirmwarePluginManager::instance()->supportedFirmwareClasses().contains(QGCMAVLink::FirmwareClassPX4);
 }
 
 bool QGroundControlQmlGlobal::apmFirmwareSupported()
 {
-    return _firmwarePluginManager->supportedFirmwareClasses().contains(QGCMAVLink::FirmwareClassArduPilot);
+    return FirmwarePluginManager::instance()->supportedFirmwareClasses().contains(QGCMAVLink::FirmwareClassArduPilot);
 }
 
 bool QGroundControlQmlGlobal::linesIntersect(QPointF line1A, QPointF line1B, QPointF line2A, QPointF line2B)

@@ -20,15 +20,22 @@
 #include <QtCore/private/qiodevice_p.h>
 #include <QtCore/private/qproperty_p.h>
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QMutex>
+#include <QtCore/QWaitCondition>
 
 #include "qserialport.h"
-#include <AndroidSerial.h>
+#include "AndroidSerial.h"
 
-#define BAD_PORT 0
-#define MAX_READ_SIZE (16 * 1024);
+constexpr int INVALID_DEVICE_ID = 0;
+constexpr int MIN_READ_TIMEOUT = 500;
+constexpr qint64 MAX_READ_SIZE = 16 * 1024;
+constexpr qint64 DEFAULT_READ_BUFFER_SIZE = MAX_READ_SIZE;
+constexpr qint64 DEFAULT_WRITE_BUFFER_SIZE = 16 * 1024;
+constexpr int DEFAULT_WRITE_TIMEOUT = 0;
+constexpr int DEFAULT_READ_TIMEOUT = 0;
 
 #ifndef QSERIALPORT_BUFFERSIZE
-#define QSERIALPORT_BUFFERSIZE 32768
+#define QSERIALPORT_BUFFERSIZE DEFAULT_WRITE_BUFFER_SIZE
 #endif
 
 Q_DECLARE_LOGGING_CATEGORY(AndroidSerialPortLog)
@@ -110,7 +117,7 @@ public:
 
     qint64 writeData(const char *data, qint64 maxSize);
 
-    void newDataArrived(char *bytes, int length);
+    void newDataArrived(const char *bytes, int length);
     void exceptionArrived(const QString &ex);
 
     static QList<qint32> standardBaudRates();
@@ -118,23 +125,22 @@ public:
     QString systemLocation;
     qint32 inputBaudRate = QSerialPort::Baud9600;
     qint32 outputBaudRate = QSerialPort::Baud9600;
-    qint64 readBufferMaxSize = 0;
+    qint64 readBufferMaxSize = 0; // DEFAULT_READ_BUFFER_SIZE
     int descriptor = -1;
 
 private:
-    qint64 _writeToPort(const char *data, qint64 maxSize, int timeout = 0, bool async = false);
+    qint64 _writeToPort(const char *data, qint64 maxSize, int timeout = DEFAULT_WRITE_TIMEOUT, bool async = false);
     bool _stopAsyncRead();
-    bool _setParameters(int baudRate, int dataBits, int stopBits, int parity);
+    bool _setParameters(qint32 baudRate, QSerialPort::DataBits dataBits, QSerialPort::StopBits stopBits, QSerialPort::Parity parity);
     bool _writeDataOneShot(int msecs);
 
     static qint32 _settingFromBaudRate(qint32 baudRate);
+    static int _stopBitsToAndroidStopBits(QSerialPort::StopBits stopBits);
+    static int _dataBitsToAndroidDataBits(QSerialPort::DataBits dataBits);
+    static int _parityToAndroidParity(QSerialPort::Parity parity);
+    static int _flowControlToAndroidFlowControl(QSerialPort::FlowControl flowControl);
 
-    qint64 m_pendingBytesWritten = 0;
-
-    int m_deviceId = BAD_PORT;
-    int m_dataBits = AndroidSerial::Data8;
-    int m_stopBits = AndroidSerial::OneStop;
-    int m_parity = AndroidSerial::NoParity;
+    int m_deviceId = INVALID_DEVICE_ID;
 };
 
 QT_END_NAMESPACE

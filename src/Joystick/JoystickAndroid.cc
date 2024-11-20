@@ -285,7 +285,7 @@ bool JoystickAndroid::init() {
     return true;
 }
 
-static const char kJniClassName[] {"org/mavlink/qgroundcontrol/QGCActivity"};
+static const char kJniClassName[] {"org/mavlink/qgroundcontrol/QGCUsbSerialManager"};
 
 static void jniUpdateAvailableJoysticks(JNIEnv *envA, jobject thizA)
 {

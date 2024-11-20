@@ -20,7 +20,6 @@
 Q_DECLARE_LOGGING_CATEGORY(RemoteIDManagerLog)
 
 class RemoteIDSettings;
-class QGCPositionManager;
 class Vehicle;
 class MAVLinkProtocol;
 
@@ -109,7 +108,6 @@ private:
     MAVLinkProtocol*    _mavlink;
     Vehicle*            _vehicle;
     RemoteIDSettings*   _settings;
-    QGCPositionManager* _positionManager;
 
     // Flags ODID
     bool    _available = false;

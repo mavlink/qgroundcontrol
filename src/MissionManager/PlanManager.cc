@@ -20,7 +20,6 @@ QGC_LOGGING_CATEGORY(PlanManagerLog, "PlanManagerLog")
 PlanManager::PlanManager(Vehicle* vehicle, MAV_MISSION_TYPE planType)
     : QObject                   (vehicle)
     , _vehicle                  (vehicle)
-    , _missionCommandTree       (qgcApp()->toolbox()->missionCommandTree())
     , _planType                 (planType)
     , _ackTimeoutTimer          (nullptr)
     , _expectedAck              (AckNone)
@@ -282,7 +281,7 @@ bool PlanManager::_checkForExpectedAck(AckType_t receivedAck)
         } else {
             // We just warn in this case, this could be crap left over from a previous transaction or the vehicle going bonkers.
             // Whatever it is we let the ack timeout handle any error output to the user.
-            qCDebug(PlanManagerLog) << QString("Out of sequence ack %1 expected:received %2:%3").arg(_planTypeString().arg(_ackTypeToString(_expectedAck)).arg(_ackTypeToString(receivedAck)));
+            qCDebug(PlanManagerLog) << QString("Out of sequence ack %1 expected:received %2:%3").arg(_planTypeString()).arg(_ackTypeToString(_expectedAck)).arg(_ackTypeToString(receivedAck));
         }
         return false;
     }
@@ -697,7 +696,7 @@ QString PlanManager::_lastMissionReqestString(MAV_MISSION_RESULT result)
     if (_lastMissionRequest >= 0 && _lastMissionRequest < _writeMissionItems.count()) {
         MissionItem* item = _writeMissionItems[_lastMissionRequest];
 
-        prefix = tr("Item #%1 Command: %2").arg(_lastMissionRequest).arg(_missionCommandTree->friendlyName(item->command()));
+        prefix = tr("Item #%1 Command: %2").arg(_lastMissionRequest).arg(MissionCommandTree::instance()->friendlyName(item->command()));
 
         switch (result) {
         case MAV_MISSION_UNSUPPORTED_FRAME:
