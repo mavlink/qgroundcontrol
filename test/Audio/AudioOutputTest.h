@@ -15,9 +15,6 @@ class AudioOutputTest : public UnitTest
 {
     Q_OBJECT
 
-public:
-    AudioOutputTest(void);
-
 private slots:
-    void _testSpokenReplacements(void);
+    void _testSpokenReplacements();
 };
