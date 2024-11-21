@@ -400,7 +400,7 @@
 		<file alias="Vehicle/EscStatusFactGroup.json">../src/Vehicle/FactGroups/EscStatusFactGroup.json</file>
 		<file alias="Vehicle/EstimatorStatusFactGroup.json">../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json</file>
 		<file alias="Vehicle/GPSFact.json">../src/Vehicle/FactGroups/GPSFact.json</file>
-		<file alias="Vehicle/GPSRTKFact.json">../src/Vehicle/FactGroups/GPSRTKFact.json</file>
+		<file alias="Vehicle/GPSRTKFact.json">../src/GPS/GPSRTKFact.json</file>
 		<file alias="Vehicle/SetpointFact.json">../src/Vehicle/FactGroups/SetpointFact.json</file>
 		<file alias="Vehicle/LocalPositionFact.json">../src/Vehicle/FactGroups/LocalPositionFact.json</file>
 		<file alias="Vehicle/LocalPositionSetpointFact.json">../src/Vehicle/FactGroups/LocalPositionFact.json</file>
