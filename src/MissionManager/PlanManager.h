@@ -17,7 +17,6 @@
 #include "QGCMAVLink.h"
 
 class Vehicle;
-class MissionCommandTree;
 
 Q_DECLARE_LOGGING_CATEGORY(PlanManagerLog)
 
@@ -133,7 +132,6 @@ protected:
 
 protected:
     Vehicle*            _vehicle =              nullptr;
-    MissionCommandTree* _missionCommandTree =   nullptr;
     MAV_MISSION_TYPE    _planType;
 
     QTimer*             _ackTimeoutTimer =      nullptr;

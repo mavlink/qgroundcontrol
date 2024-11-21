@@ -261,7 +261,7 @@ public:
     virtual FactMetaData* _getMetaDataForFact(QObject* /*parameterMetaData*/, const QString& /*name*/, FactMetaData::ValueType_t /* type */, MAV_TYPE /*vehicleType*/) { return nullptr; }
 
     /// List of supported mission commands. Empty list for all commands supported.
-    virtual QList<MAV_CMD> supportedMissionCommands(QGCMAVLink::VehicleClass_t vehicleClass);
+    virtual QList<MAV_CMD> supportedMissionCommands(QGCMAVLink::VehicleClass_t vehicleClass) const;
 
     /// Returns the name of the mission command json override file for the specified vehicle type.
     ///     @param vehicleClass Vehicle class to return file for, VehicleClassGeneric is a request for overrides for all vehicle types
@@ -306,10 +306,6 @@ public:
     ///     signals modeIndicatorsChanged
     /// @return A list of QUrl with the indicators
     virtual const QVariantList& modeIndicators(const Vehicle* vehicle);
-
-    /// Returns a list of CameraMetaData objects for available cameras on the vehicle.
-    /// TODO: This should go into QGCCameraManager
-    virtual const QVariantList& cameraList(const Vehicle* vehicle);
 
     /// Creates vehicle camera manager.
     virtual QGCCameraManager* createCameraManager(Vehicle *vehicle);
@@ -386,6 +382,4 @@ protected:
 protected:
     QVariantList _toolIndicatorList;
     QVariantList _modeIndicatorList;
-
-    static QVariantList _cameraList;    ///< Standard QGC camera list
 };

@@ -144,16 +144,15 @@ FactMetaData* CompInfoParam::factMetaDataForName(const QString& name, FactMetaDa
 
 FirmwarePlugin* CompInfoParam::_anyVehicleTypeFirmwarePlugin(MAV_AUTOPILOT firmwareType)
 {
-    FirmwarePluginManager* const pluginMgr = qgcApp()->toolbox()->firmwarePluginManager();
     const QGCMAVLink::FirmwareClass_t firmwareClass = QGCMAVLink::firmwareClass(firmwareType);
-    const QList<QGCMAVLink::VehicleClass_t> supportedClasses = pluginMgr->supportedVehicleClasses(firmwareClass);
+    const QList<QGCMAVLink::VehicleClass_t> supportedClasses = FirmwarePluginManager::instance()->supportedVehicleClasses(firmwareClass);
     MAV_TYPE anySupportedVehicleType;
     if (!supportedClasses.isEmpty()) {
         anySupportedVehicleType = QGCMAVLink::vehicleClassToMavType(supportedClasses[0]);
     } else {
         anySupportedVehicleType = MAV_TYPE_GENERIC;
     }
-    return pluginMgr->firmwarePluginForAutopilot(firmwareType, anySupportedVehicleType);
+    return FirmwarePluginManager::instance()->firmwarePluginForAutopilot(firmwareType, anySupportedVehicleType);
 }
 
 QString CompInfoParam::_parameterMetaDataFile(Vehicle* vehicle, MAV_AUTOPILOT firmwareType, int& majorVersion, int& minorVersion)

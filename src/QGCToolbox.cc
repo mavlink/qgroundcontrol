@@ -8,27 +8,19 @@
  ****************************************************************************/
 
 
-#include "FirmwarePluginManager.h"
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
-#include "MissionCommandTree.h"
 #include "MultiVehicleManager.h"
-#include "PositionManager.h"
 #include "VideoManager.h"
-#include "MAVLinkLogManager.h"
 #include "QGCCorePlugin.h"
 #include "SettingsManager.h"
 #include "QGCApplication.h"
-#ifndef QGC_AIRLINK_DISABLED
-#include "AirLinkManager.h"
+#ifdef QGC_UTM_ADAPTER
+#include "UTMSPManager.h"
 #endif
 
 #if defined(QGC_CUSTOM_BUILD)
 #include CUSTOMHEADER
-#endif
-
-#ifdef QGC_UTM_ADAPTER
-#include "UTMSPManager.h"
 #endif
 
 QGCToolbox::QGCToolbox(QGCApplication* app)
@@ -39,18 +31,10 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
 
     //-- Scan and load plugins
     _scanAndLoadPlugins(app);
-    _firmwarePluginManager  = new FirmwarePluginManager     (app, this);
     _linkManager            = new LinkManager               (app, this);
     _mavlinkProtocol        = new MAVLinkProtocol           (app, this);
-    _missionCommandTree     = new MissionCommandTree        (app, this);
     _multiVehicleManager    = new MultiVehicleManager       (app, this);
-    _qgcPositionManager     = new QGCPositionManager        (app, this);
     _videoManager           = new VideoManager              (app, this);
-
-    _mavlinkLogManager      = new MAVLinkLogManager         (app, this);
-#ifndef QGC_AIRLINK_DISABLED
-    _airlinkManager         = new AirLinkManager            (app, this);
-#endif
 #ifdef QGC_UTM_ADAPTER
     _utmspManager            = new UTMSPManager               (app, this);
 #endif
@@ -62,17 +46,10 @@ void QGCToolbox::setChildToolboxes(void)
     _settingsManager->setToolbox(this);
 
     _corePlugin->setToolbox(this);
-    _firmwarePluginManager->setToolbox(this);
     _linkManager->setToolbox(this);
     _mavlinkProtocol->setToolbox(this);
-    _missionCommandTree->setToolbox(this);
     _multiVehicleManager->setToolbox(this);
-    _qgcPositionManager->setToolbox(this);
     _videoManager->setToolbox(this);
-    _mavlinkLogManager->setToolbox(this);
-#ifndef QGC_AIRLINK_DISABLED
-    _airlinkManager->setToolbox(this);
-#endif
 #ifdef QGC_UTM_ADAPTER
     _utmspManager->setToolbox(this);
 #endif

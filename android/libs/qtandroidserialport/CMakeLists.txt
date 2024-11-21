@@ -27,3 +27,5 @@ target_link_libraries(qtandroidserialport
 )
 
 target_include_directories(qtandroidserialport PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+# target_compile_definitions(qtandroidserialport PUBLIC QIODEVICE_DEBUG)

@@ -51,7 +51,6 @@ class Autotune;
 class ComponentInformationManager;
 class EventHandler;
 class FirmwarePlugin;
-class FirmwarePluginManager;
 class FTPManager;
 class GeoFenceManager;
 class ImageProtocolManager;
@@ -60,6 +59,7 @@ class InitialConnectStateMachine;
 class Joystick;
 class LinkInterface;
 class LinkManager;
+class MAVLinkLogManager;
 class MAVLinkProtocol;
 class MissionManager;
 class ParameterManager;
@@ -116,7 +116,6 @@ public:
             int                     defaultComponentId,
             MAV_AUTOPILOT           firmwareType,
             MAV_TYPE                vehicleType,
-            FirmwarePluginManager*  firmwarePluginManager,
             QObject*                parent = nullptr);
 
     // Pass these into the offline constructor to create an offline vehicle which tracks the offline vehicle settings
@@ -126,7 +125,6 @@ public:
     // The following is used to create a disconnected Vehicle for use while offline editing.
     Vehicle(MAV_AUTOPILOT           firmwareType,
             MAV_TYPE                vehicleType,
-            FirmwarePluginManager*  firmwarePluginManager,
             QObject*                parent = nullptr);
 
     ~Vehicle();
@@ -1057,7 +1055,6 @@ private:
 
     LinkManager*                    _linkManager                    = nullptr;
     ParameterManager*               _parameterManager               = nullptr;
-    FirmwarePluginManager*          _firmwarePluginManager          = nullptr;
     ComponentInformationManager*    _componentInformationManager    = nullptr;
     VehicleObjectAvoidance*         _objectAvoidance                = nullptr;
     Autotune*                       _autotune                       = nullptr;
@@ -1306,7 +1303,7 @@ private:
     uint16_t _lastSetMsgIntervalMsgId = 0;
 
 /*===========================================================================*/
-/*                         STATUS TEXT HANDLER                               */
+/*                         Status Text Handler                               */
 /*===========================================================================*/
 private:
     Q_PROPERTY(bool    messageTypeNone    READ messageTypeNone    NOTIFY messageTypeChanged)
@@ -1370,7 +1367,24 @@ private:
     void _createImageProtocolManager();
 
     ImageProtocolManager *_imageProtocolManager = nullptr;
-};
 /*---------------------------------------------------------------------------*/
+/*===========================================================================*/
+/*                         MAVLink Log Manager                               */
+/*===========================================================================*/
+private:
+    Q_PROPERTY(MAVLinkLogManager *mavlinkLogManager READ mavlinkLogManager NOTIFY mavlinkLogManagerChanged)
 
+public:
+    MAVLinkLogManager *mavlinkLogManager() const;
+
+signals:
+    void mavlinkLogManagerChanged();
+
+private:
+    void _createMAVLinkLogManager();
+
+    MAVLinkLogManager *_mavlinkLogManager = nullptr;
+
+/*---------------------------------------------------------------------------*/
+};
 Q_DECLARE_METATYPE(Vehicle::MavCmdResultFailureCode_t)

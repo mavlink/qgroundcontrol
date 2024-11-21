@@ -47,7 +47,6 @@ RemoteIDManager::RemoteIDManager(Vehicle* vehicle)
 {
     _mavlink = qgcApp()->toolbox()->mavlinkProtocol();
     _settings = qgcApp()->toolbox()->settingsManager()->remoteIDSettings();
-    _positionManager = qgcApp()->toolbox()->qgcPositionManager();
 
     // Timer to track a healthy RID device. When expired we let the operator know
     _odidTimeoutTimer.setSingleShot(true);
@@ -59,7 +58,7 @@ RemoteIDManager::RemoteIDManager(Vehicle* vehicle)
     connect(&_sendMessagesTimer, &QTimer::timeout, this, &RemoteIDManager::_sendMessages);
 
     // GCS GPS position updates to track the health of the GPS data
-    connect(_positionManager, &QGCPositionManager::positionInfoUpdated, this, &RemoteIDManager::_updateLastGCSPositionInfo);
+    connect(QGCPositionManager::instance(), &QGCPositionManager::positionInfoUpdated, this, &RemoteIDManager::_updateLastGCSPositionInfo);
 
     // Check changes in basic id settings as long as they are modified
     connect(_settings->basicID(), &Fact::rawValueChanged, this, &RemoteIDManager::_checkGCSBasicID);
@@ -296,8 +295,8 @@ void RemoteIDManager::_sendSystem()
         }
     } else {
         // For Live GNSS we take QGC GPS data
-        gcsPosition = _positionManager->gcsPosition();
-        geoPositionInfo = _positionManager->geoPositionInfo();
+        gcsPosition = QGCPositionManager::instance()->gcsPosition();
+        geoPositionInfo = QGCPositionManager::instance()->geoPositionInfo();
 
         // GPS position needs to be valid before checking other stuff
         if (geoPositionInfo.isValid()) {

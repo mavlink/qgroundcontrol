@@ -605,7 +605,12 @@ void RadioComponentController::_setInternalCalibrationValuesFromParameters(void)
 
 void RadioComponentController::spektrumBindMode(int mode)
 {
-    _vehicle->pairRX(0, mode);
+    _vehicle->pairRX(RC_TYPE_SPEKTRUM, mode);
+}
+
+void RadioComponentController::crsfBindMode()
+{
+    _vehicle->pairRX(RC_TYPE_CRSF, 0);
 }
 
 /// @brief Validates the current settings against the calibration rules resetting values as necessary.

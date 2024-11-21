@@ -10,10 +10,10 @@
 #pragma once
 
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QObject>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtPositioning/QGeoPositionInfo>
-
-#include "QGCToolbox.h"
+#include <QtQmlIntegration/QtQmlIntegration>
 
 Q_DECLARE_LOGGING_CATEGORY(QGCPositionManagerLog)
 
@@ -21,19 +21,23 @@ class QGeoPositionInfoSource;
 class QNmeaPositionInfoSource;
 class QGCCompass;
 
-class QGCPositionManager : public QGCTool
+class QGCPositionManager : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 
     Q_PROPERTY(QGeoCoordinate gcsPosition                   READ gcsPosition                    NOTIFY gcsPositionChanged)
     Q_PROPERTY(qreal          gcsHeading                    READ gcsHeading                     NOTIFY gcsHeadingChanged)
     Q_PROPERTY(qreal          gcsPositionHorizontalAccuracy READ gcsPositionHorizontalAccuracy  NOTIFY gcsPositionHorizontalAccuracyChanged)
 
 public:
-    QGCPositionManager(QGCApplication *app, QGCToolbox *toolbox);
+    QGCPositionManager(QObject *parent = nullptr);
     ~QGCPositionManager();
 
-    void setToolbox(QGCToolbox *toolbox) final;
+    /// Gets the singleton instance of AudioOutput.
+    ///     @return The singleton instance.
+    static QGCPositionManager *instance();
 
     enum QGCPositionSource {
         Simulated,
@@ -43,11 +47,12 @@ public:
         ExternalGPS
     };
 
-    QGeoCoordinate gcsPosition() const { return m_gcsPosition; }
-    qreal gcsHeading() const { return m_gcsHeading; }
-    qreal gcsPositionHorizontalAccuracy() const { return m_gcsPositionHorizontalAccuracy; }
-    QGeoPositionInfo geoPositionInfo() const { return m_geoPositionInfo; }
-    int updateInterval() const { return m_updateInterval; }
+    void init();
+    QGeoCoordinate gcsPosition() const { return _gcsPosition; }
+    qreal gcsHeading() const { return _gcsHeading; }
+    qreal gcsPositionHorizontalAccuracy() const { return _gcsPositionHorizontalAccuracy; }
+    QGeoPositionInfo geoPositionInfo() const { return _geoPositionInfo; }
+    int updateInterval() const { return _updateInterval; }
 
     void setNmeaSourceDevice(QIODevice *device);
 
@@ -68,25 +73,25 @@ private:
     void _setGCSHeading(qreal newGCSHeading);
     void _setGCSPosition(const QGeoCoordinate &newGCSPosition);
 
-    bool m_usingPluginSource = false;
-    int m_updateInterval = 0;
+    bool _usingPluginSource = false;
+    int _updateInterval = 0;
 
-    QGeoPositionInfo m_geoPositionInfo;
-    QGeoCoordinate m_gcsPosition;
-    qreal m_gcsHeading = qQNaN();
-    qreal m_gcsPositionHorizontalAccuracy = std::numeric_limits<qreal>::infinity();
-    qreal m_gcsPositionVerticalAccuracy = std::numeric_limits<qreal>::infinity();
-    qreal m_gcsPositionAccuracy = std::numeric_limits<qreal>::infinity();
-    qreal m_gcsDirectionAccuracy = std::numeric_limits<qreal>::infinity();
+    QGeoPositionInfo _geoPositionInfo;
+    QGeoCoordinate _gcsPosition;
+    qreal _gcsHeading = qQNaN();
+    qreal _gcsPositionHorizontalAccuracy = std::numeric_limits<qreal>::infinity();
+    qreal _gcsPositionVerticalAccuracy = std::numeric_limits<qreal>::infinity();
+    qreal _gcsPositionAccuracy = std::numeric_limits<qreal>::infinity();
+    qreal _gcsDirectionAccuracy = std::numeric_limits<qreal>::infinity();
 
-    QGeoPositionInfoSource *m_currentSource = nullptr;
-    QGeoPositionInfoSource *m_defaultSource = nullptr;
-    QNmeaPositionInfoSource *m_nmeaSource = nullptr;
-    QGeoPositionInfoSource *m_simulatedSource = nullptr;
+    QGeoPositionInfoSource *_currentSource = nullptr;
+    QGeoPositionInfoSource *_defaultSource = nullptr;
+    QNmeaPositionInfoSource *_nmeaSource = nullptr;
+    QGeoPositionInfoSource *_simulatedSource = nullptr;
 
-    QGCCompass *m_compass = nullptr;
+    QGCCompass *_compass = nullptr;
 
-    static constexpr qreal s_minHorizonalAccuracyMeters = 100.;
-    static constexpr qreal s_minVerticalAccuracyMeters = 10.;
-    static constexpr qreal s_minDirectionAccuracyDegrees = 30.;
+    static constexpr qreal kMinHorizonalAccuracyMeters = 100.;
+    static constexpr qreal kMinVerticalAccuracyMeters = 10.;
+    static constexpr qreal kMinDirectionAccuracyDegrees = 30.;
 };

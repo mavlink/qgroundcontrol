@@ -1,4 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Qml Positioning)
+find_package(Qt6 REQUIRED COMPONENTS Core Qml Positioning QmlIntegration)
 
 qt_add_library(PositionManager STATIC
     PositionManager.cpp
@@ -17,6 +17,7 @@ target_link_libraries(PositionManager
     PUBLIC
         Qt6::Core
         Qt6::Positioning
+        Qt6::QmlIntegration
         QGC
 )
 

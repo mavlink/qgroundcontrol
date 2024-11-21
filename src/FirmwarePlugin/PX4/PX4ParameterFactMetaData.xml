@@ -9886,6 +9886,12 @@
       <long_desc>This parameter specifies the ADC channel used to monitor current of main power battery. A value of -1 means to use the board default.</long_desc>
       <reboot_required>True</reboot_required>
     </parameter>
+    <parameter name="BAT1_I_OVERWRITE" default="0" type="FLOAT">
+      <short_desc>Battery 1 idle current overwrite</short_desc>
+      <long_desc>This parameter allows to overwrite the current measured during idle (unarmed) state with a user-defined constant value (expressed in amperes). When the system is armed, the measured current is used. This is useful because on certain ESCs current measurements are inaccurate in case of no load. Negative values are ignored and will cause the measured current to be used. The default value of 0 disables the overwrite, in which case the measured value is always used.</long_desc>
+      <decimal>8</decimal>
+      <reboot_required>True</reboot_required>
+    </parameter>
     <parameter name="BAT1_N_CELLS" default="0" type="INT32">
       <short_desc>Number of cells for battery 1</short_desc>
       <long_desc>Defines the number of cells the attached battery consists of.</long_desc>
@@ -9976,6 +9982,12 @@
     <parameter name="BAT2_I_CHANNEL" default="-1" type="INT32">
       <short_desc>Battery 2 Current ADC Channel</short_desc>
       <long_desc>This parameter specifies the ADC channel used to monitor current of main power battery. A value of -1 means to use the board default.</long_desc>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter name="BAT2_I_OVERWRITE" default="0" type="FLOAT">
+      <short_desc>Battery 2 idle current overwrite</short_desc>
+      <long_desc>This parameter allows to overwrite the current measured during idle (unarmed) state with a user-defined constant value (expressed in amperes). When the system is armed, the measured current is used. This is useful because on certain ESCs current measurements are inaccurate in case of no load. Negative values are ignored and will cause the measured current to be used. The default value of 0 disables the overwrite, in which case the measured value is always used.</long_desc>
+      <decimal>8</decimal>
       <reboot_required>True</reboot_required>
     </parameter>
     <parameter name="BAT2_N_CELLS" default="0" type="INT32">
@@ -10889,9 +10901,22 @@
       <unit>m</unit>
       <decimal>1</decimal>
     </parameter>
+    <parameter name="COM_POS_LOW_ACT" default="3" type="INT32">
+      <short_desc>Low position accuracy action</short_desc>
+      <long_desc>Action the system takes when the estimated position has an accuracy below the specified threshold. See COM_POS_LOW_EPH to set the failsafe threshold. The failsafe action is only executed if the vehicle is in auto mission or auto loiter mode, otherwise it is only a warning.</long_desc>
+      <increment>1</increment>
+      <values>
+        <value code="0">None</value>
+        <value code="1">Warning</value>
+        <value code="2">Hold</value>
+        <value code="3">Return</value>
+        <value code="4">Terminate</value>
+        <value code="5">Land</value>
+      </values>
+    </parameter>
     <parameter name="COM_POS_LOW_EPH" default="-1.0" type="FLOAT">
-      <short_desc>EPH threshold for RTL</short_desc>
-      <long_desc>Specify the threshold for triggering a warning for low local position accuracy. Additionally triggers a RTL if currently in Mission or Loiter mode. Local position has to be still declared valid, which is most of all depending on COM_POS_FS_EPH. Use this feature on systems with dead-reckoning capabilites (e.g. fixed-wing vehicles with airspeed sensor) to improve the user notification and failure mitigation when flying in GNSS-denied areas. Set to -1 to disable.</long_desc>
+      <short_desc>Low position accuracy failsafe threshold</short_desc>
+      <long_desc>This triggers the action specified in COM_POS_LOW_ACT if the estimated position accuracy is below this threshold. Local position has to be still declared valid, which requires some kind of velocity aiding or large dead-reckoning time (EKF2_NOAID_TOUT), and a high failsafe threshold (COM_POS_FS_EPH). Set to -1 to disable.</long_desc>
       <min>-1</min>
       <max>1000</max>
       <unit>m</unit>
@@ -11688,6 +11713,13 @@
       <max>5.0</max>
       <unit>m/s</unit>
       <decimal>2</decimal>
+    </parameter>
+    <parameter name="EKF2_GPS_YAW_OFF" default="0.0" type="FLOAT">
+      <short_desc>Heading/Yaw offset for dual antenna GPS</short_desc>
+      <min>0.0</min>
+      <max>360.0</max>
+      <unit>deg</unit>
+      <decimal>1</decimal>
     </parameter>
     <parameter name="EKF2_GRAV_NOISE" default="1.0" type="FLOAT">
       <short_desc>Accelerometer measurement noise for gravity based observations</short_desc>
@@ -19818,7 +19850,7 @@
     </parameter>
     <parameter name="RA_MAX_ACCEL" default="-1" type="FLOAT">
       <short_desc>Maximum acceleration for the rover</short_desc>
-      <long_desc>This is used for the acceleration slew rate, the feed-forward term for the speed controller during missions and the corner slow down effect. Note: For the corner slow down effect RA_MAX_JERK, RA_MISS_VEL_GAIN and RA_MISS_VEL_MIN also have to be set.</long_desc>
+      <long_desc>This is used for the acceleration slew rate.</long_desc>
       <min>-1</min>
       <max>100</max>
       <unit>m/s^2</unit>
@@ -19836,7 +19868,7 @@
     </parameter>
     <parameter name="RA_MAX_JERK" default="-1" type="FLOAT">
       <short_desc>Maximum jerk</short_desc>
-      <long_desc>Limit for forwards acc/deceleration change. This is used for the corner slow down effect. Note: RA_MAX_ACCEL also has to be set for this to be enabled.</long_desc>
+      <long_desc>Limit for forwards acc/deceleration change. This is used for the corner slow down effect. Note: RA_MAX_DECEL also has to be set for this to be enabled.</long_desc>
       <min>-1</min>
       <max>100</max>
       <unit>m/s^3</unit>
@@ -19887,14 +19919,6 @@
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter name="RA_MISS_SPD_DEF" default="2" type="FLOAT">
-      <short_desc>Default rover speed during a mission</short_desc>
-      <min>0</min>
-      <max>100</max>
-      <unit>m/s</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
     <parameter name="RA_SPEED_I" default="1" type="FLOAT">
       <short_desc>Integral gain for ground speed controller</short_desc>
       <min>0</min>
@@ -19920,18 +19944,19 @@
     </parameter>
   </group>
   <group name="Rover Differential">
-    <parameter name="RD_MAN_YAW_SCALE" default="1" type="FLOAT">
-      <short_desc>Manual yaw rate scale</short_desc>
-      <long_desc>In manual mode the setpoint for the yaw rate received from the yaw stick is scaled by this value.</long_desc>
-      <min>0.001</min>
-      <max>1</max>
-      <decimal>3</decimal>
-      <increment>0.01</increment>
-    </parameter>
     <parameter name="RD_MAX_ACCEL" default="0.5" type="FLOAT">
       <short_desc>Maximum acceleration</short_desc>
       <long_desc>Maximum acceleration is used to limit the acceleration of the rover</long_desc>
       <min>0</min>
+      <max>100</max>
+      <unit>m/s^2</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RD_MAX_DECEL" default="-1" type="FLOAT">
+      <short_desc>Maximum deceleration</short_desc>
+      <long_desc>Maximum decelaration is used to limit the deceleration of the rover. Set to -1 to disable, causing the rover to decelerate as fast as possible. Caution: This disables the slow down effect in auto modes.</long_desc>
+      <min>-1</min>
       <max>100</max>
       <unit>m/s^2</unit>
       <decimal>2</decimal>
@@ -19970,6 +19995,15 @@
       <min>0</min>
       <max>100</max>
       <unit>m/s</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RD_MAX_YAW_ACCEL" default="-1" type="FLOAT">
+      <short_desc>Maximum allowed yaw acceleration for the rover</short_desc>
+      <long_desc>This parameter is used to cap desired yaw acceleration. This is used to adjust incoming yaw rate setpoints to a feasible yaw rate setpoint based on the physical limitation on how fast the yaw rate can change. This leads to a smooth setpoint trajectory for the closed loop yaw rate controller to track. Set to -1 to disable.</long_desc>
+      <min>-1</min>
+      <max>1000</max>
+      <unit>deg/s^2</unit>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
@@ -22731,6 +22765,12 @@
         <value code="6">Yaw 270°</value>
         <value code="7">Yaw 315°</value>
       </values>
+    </parameter>
+    <parameter name="SENS_FLOW_SCALE" default="1." type="FLOAT">
+      <short_desc>Optical flow scale factor</short_desc>
+      <min>0.5</min>
+      <max>1.5</max>
+      <decimal>2</decimal>
     </parameter>
     <parameter name="SENS_FTX_CFG" default="0" type="INT32">
       <short_desc>Serial Configuration for FT Technologies Digital Wind Sensor (serial)</short_desc>
