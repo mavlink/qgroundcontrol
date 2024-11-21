@@ -39,6 +39,7 @@ jobs:
         run: |
           brew update
           brew install cmake ninja ccache
+        continue-on-error: true
 
       - name: Install Qt for Android
         uses: ./.github/actions/qt-android
