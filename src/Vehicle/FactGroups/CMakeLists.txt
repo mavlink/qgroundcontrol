@@ -1,8 +1,6 @@
 find_package(Qt6 REQUIRED COMPONENTS Core)
 
 qt_add_library(VehicleFactGroups STATIC
-    GPSRTKFactGroup.cc
-    GPSRTKFactGroup.h
     TerrainFactGroup.cc
     TerrainFactGroup.h
     VehicleBatteryFactGroup.cc
