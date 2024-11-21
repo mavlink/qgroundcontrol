@@ -104,28 +104,28 @@ bool UTMSPServiceController::networkRemoteID(const mavlink_message_t &message,
         mavlink_global_position_int_t globalPosition;
         mavlink_msg_global_position_int_decode(&message, &globalPosition);
         // Update vehicle state
-        vehicleLatitude = staticcast<double>(globalPosition.lat) / 1e7;
-        vehicleLongitude = staticcast<double>(globalPosition.lon) / 1e7;
-        vehicleAltitude = staticcast<double>(globalPosition.alt) / 1000;
-        vehicleHeading = staticcast<double>(globalPosition.hdg);
+        _vehicleLatitude = static_cast<double>(globalPosition.lat) / 1e7;
+        _vehicleLongitude = static_cast<double>(globalPosition.lon) / 1e7;
+        _vehicleAltitude = static_cast<double>(globalPosition.alt) / 1000;
+        _vehicleHeading = static_cast<double>(globalPosition.hdg);
         _vehicleVelocityX = globalPosition.vx / 100.f;
         _vehicleVelocityY = globalPosition.vy / 100.f;
         _vehicleVelocityZ = globalPosition.vz / 100.f;
-        vehicleRelativeAltitude = staticcast<double>(globalPosition.relative_alt) / 1000.0;
+        _vehicleRelativeAltitude = static_cast<double>(globalPosition.relative_alt) / 1000.0;
         // State 3 --> Start telemetry
         _currentState = UTMSPFlightPlanManager::FlightState::StartTelemetryStreaming;
-        utmspNetworkRemoteIDManager.startTelemetry(vehicleLatitude,
-                                                   _vehicleLongitude,
-                                                   _vehicleAltitude,
-                                                   _vehicleHeading,
-                                                   _vehicleVelocityX,
-                                                   _vehicleVelocityY,
-                                                   _vehicleVelocityZ,
-                                                   _vehicleRelativeAltitude,
-                                                   serialNumber,
-                                                   operatorID,
-                                                   flightID);
-        utmspFlightPlanManager.updateFlightPlanState(currentState);
+        _utmspNetworkRemoteIDManager.startTelemetry(_vehicleLatitude,
+                                                    _vehicleLongitude,
+                                                    _vehicleAltitude,
+                                                    _vehicleHeading,
+                                                    _vehicleVelocityX,
+                                                    _vehicleVelocityY,
+                                                    _vehicleVelocityZ,
+                                                    _vehicleRelativeAltitude,
+                                                    serialNumber,
+                                                    operatorID,
+                                                    flightID);
+        _utmspFlightPlanManager.updateFlightPlanState(_currentState);
         _streamingFlag = false;
         break;
     }
