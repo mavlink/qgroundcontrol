@@ -87,6 +87,7 @@
 
 // Terrain
 #include "TerrainQueryTest.h"
+#include "TerrainTileTest.h"
 
 // UI
 
@@ -190,6 +191,7 @@ int runTests(bool stress, QStringView unitTestOptions)
 
     // Terrain
     UT_REGISTER_TEST(TerrainQueryTest)
+    UT_REGISTER_TEST(TerrainTileTest)
 
     // UI
 
