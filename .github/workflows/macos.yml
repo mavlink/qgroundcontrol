@@ -56,8 +56,8 @@ jobs:
       - name: Install Dependencies
         run: |
           brew update
-          brew install cmake ninja ccache geographiclib SDL2 exiv2 expat zlib shapelib pkgconfig create-dmg
-        # pkgconf
+          brew install cmake ninja ccache geographiclib SDL2 exiv2 expat zlib shapelib pkgconf create-dmg
+        continue-on-error: true
 
       - name: Install Gstreamer
         run: |
