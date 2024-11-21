@@ -121,12 +121,10 @@ SettingsPage {
 
 
     Item {
-        id:                             flagsItem
-        anchors.top:                    parent.top
-        anchors.horizontalCenter:       parent.horizontalCenter
-        anchors.horizontalCenterOffset: ScreenTools.defaultFontPixelWidth // Need this to account for the slight offset in the flickable
-        width:                          parent.width
-        height:                         flagsColumn.height
+        id:                 flagsItem
+        width:              parent.width
+        height:             flagsColumn.height
+        Layout.alignment:   Qt.AlignHCenter
 
         ColumnLayout {
             id:                         flagsColumn
@@ -511,6 +509,80 @@ SettingsPage {
                     textFieldPreferredWidth:    textFieldWidth
 
                     property Fact _fact: remoteIDSettings.altitudeFixed
+                }
+
+                GridLayout {
+                    id:                         gpsGrid
+                    visible:                    !ScreenTools.isMobile
+                                                && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.visible
+                                                && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.visible
+                                                && _locationType !== RemoteIDIndicatorPage.LocationType.TAKEOFF
+                    anchors.margins:            _margins
+                    rowSpacing:                 _margins * 3
+                    columns:                    2
+                    columnSpacing:              _margins * 2
+                    Layout.alignment:           Qt.AlignHCenter
+
+                    QGCLabel {
+                        text: qsTr("NMEA External GPS Device")
+                    }
+                    QGCComboBox {
+                        id:                     nmeaPortCombo
+                        Layout.preferredWidth:  _comboFieldWidth
+
+                        model:  ListModel {
+                        }
+
+                        onActivated: (index) => {
+                                         if (index !== -1) {
+                                             QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.value = textAt(index);
+                                         }
+                                     }
+                        Component.onCompleted: {
+                            model.append({text: gpsDisabled})
+                            model.append({text: gpsUdpPort})
+
+                            for (var i in QGroundControl.linkManager.serialPorts) {
+                                nmeaPortCombo.model.append({text:QGroundControl.linkManager.serialPorts[i]})
+                            }
+                            var index = nmeaPortCombo.find(QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.valueString);
+                            nmeaPortCombo.currentIndex = index;
+                            if (QGroundControl.linkManager.serialPorts.length === 0) {
+                                nmeaPortCombo.model.append({text: "Serial <none available>"})
+                            }
+                        }
+                    }
+
+                    QGCLabel {
+                        visible:          nmeaPortCombo.currentText !== gpsUdpPort && nmeaPortCombo.currentText !== gpsDisabled
+                        text:             qsTr("NMEA GPS Baudrate")
+                    }
+                    QGCComboBox {
+                        visible:                nmeaPortCombo.currentText !== gpsUdpPort && nmeaPortCombo.currentText !== gpsDisabled
+                        id:                     nmeaBaudCombo
+                        Layout.preferredWidth:  _comboFieldWidth
+                        model:                  [1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600]
+
+                        onActivated: (index) => {
+                                         if (index !== -1) {
+                                             QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.value = textAt(index);
+                                         }
+                                     }
+                        Component.onCompleted: {
+                            var index = nmeaBaudCombo.find(QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.valueString);
+                            nmeaBaudCombo.currentIndex = index;
+                        }
+                    }
+
+                    QGCLabel {
+                        text:       qsTr("NMEA stream UDP port")
+                        visible:    nmeaPortCombo.currentText === gpsUdpPort
+                    }
+                    FactTextField {
+                        visible:                nmeaPortCombo.currentText === gpsUdpPort
+                        Layout.preferredWidth:  _valueFieldWidth
+                        fact:                   QGroundControl.settingsManager.autoConnectSettings.nmeaUdpPort
+                    }
                 }
             }
 
