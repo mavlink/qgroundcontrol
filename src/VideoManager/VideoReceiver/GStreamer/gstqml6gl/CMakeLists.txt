@@ -113,9 +113,9 @@ if(GStreamer_VERSION VERSION_GREATER_EQUAL 1.22)
         DOWNLOAD_EXTRACT_TIMESTAMP true
     )
     FetchContent_MakeAvailable(gstreamer_good_plugins)
-    set(QGC_GST_QT6_PLUGIN_PATH "${gstreamer_good_plugins_SOURCE_DIR}/ext/qt6" CACHE PATH "Location of downloaded GST Qt6 plugin sources")
+    set(QGC_GST_QT6_PLUGIN_PATH "${gstreamer_good_plugins_SOURCE_DIR}/ext/qt6")
 else()
-    set(QGC_GST_QT6_PLUGIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/qt6" CACHE PATH "Location of custom local GST plugin")
+    set(QGC_GST_QT6_PLUGIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/qt6")
 endif()
 cmake_print_variables(QGC_GST_QT6_PLUGIN_PATH)
 
