@@ -567,7 +567,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         _handleCameraImageCaptured(message);
         break;
     case MAVLINK_MSG_ID_ADSB_VEHICLE:
-        _handleADSBVehicle(message);
+        ADSBVehicleManager::instance()->mavlinkMessageReceived(message);
         break;
     case MAVLINK_MSG_ID_HIGH_LATENCY:
         _handleHighLatency(message);
@@ -3390,40 +3390,6 @@ bool Vehicle::autoDisarm()
     }
 
     return false;
-}
-
-void Vehicle::_handleADSBVehicle(const mavlink_message_t &message)
-{
-    mavlink_adsb_vehicle_t adsbVehicleMsg;
-    mavlink_msg_adsb_vehicle_decode(&message, &adsbVehicleMsg);
-
-    static constexpr int maxTimeSinceLastSeen = 15;
-
-    if ((adsbVehicleMsg.flags & ADSB_FLAGS_VALID_COORDS) && (adsbVehicleMsg.tslc <= maxTimeSinceLastSeen)) {
-        ADSB::VehicleInfo_t vehicleInfo;
-
-        vehicleInfo.availableFlags = ADSB::AvailableInfoTypes::fromInt(0);
-        vehicleInfo.icaoAddress = adsbVehicleMsg.ICAO_address;
-
-        vehicleInfo.location.setLatitude(adsbVehicleMsg.lat / 1e7);
-        vehicleInfo.location.setLongitude(adsbVehicleMsg.lon / 1e7);
-        vehicleInfo.availableFlags |= ADSB::LocationAvailable;
-
-        vehicleInfo.callsign = adsbVehicleMsg.callsign;
-        vehicleInfo.availableFlags |= ADSB::CallsignAvailable;
-
-        if (adsbVehicleMsg.flags & ADSB_FLAGS_VALID_ALTITUDE) {
-            vehicleInfo.altitude = adsbVehicleMsg.altitude / 1e3;
-            vehicleInfo.availableFlags |= ADSB::AltitudeAvailable;
-        }
-
-        if (adsbVehicleMsg.flags & ADSB_FLAGS_VALID_HEADING) {
-            vehicleInfo.heading = adsbVehicleMsg.heading / 1e2;
-            vehicleInfo.availableFlags |= ADSB::HeadingAvailable;
-        }
-
-        (void) QMetaObject::invokeMethod(ADSBVehicleManager::instance(), "adsbVehicleUpdate", Qt::AutoConnection, vehicleInfo);
-    }
 }
 
 void Vehicle::_updateDistanceHeadingToHome()

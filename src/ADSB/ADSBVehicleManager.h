@@ -13,6 +13,7 @@
 #include <QtCore/QObject>
 
 #include "ADSB.h"
+#include "MAVLinkLib.h"
 
 Q_DECLARE_LOGGING_CATEGORY(ADSBVehicleManagerLog)
 
@@ -30,12 +31,14 @@ class ADSBVehicleManager : public QObject
     Q_PROPERTY(const QmlObjectListModel *adsbVehicles READ adsbVehicles CONSTANT)
 
 public:
-    ADSBVehicleManager(ADSBVehicleManagerSettings *settings, QObject *parent = nullptr);
+    explicit ADSBVehicleManager(ADSBVehicleManagerSettings *settings, QObject *parent = nullptr);
     ~ADSBVehicleManager();
 
     static ADSBVehicleManager *instance();
 
     const QmlObjectListModel *adsbVehicles() const { return _adsbVehicles; }
+
+    void mavlinkMessageReceived(const mavlink_message_t &message);
 
 public slots:
     void adsbVehicleUpdate(const ADSB::VehicleInfo_t &vehicleInfo);
@@ -47,6 +50,7 @@ private slots:
 private:
     void _start(const QString &hostAddress, quint16 port);
     void _stop();
+    void _handleADSBVehicle(const mavlink_message_t &message);
 
     ADSBVehicleManagerSettings *_adsbSettings = nullptr;
     QTimer *_adsbVehicleCleanupTimer = nullptr;
@@ -54,4 +58,6 @@ private:
 
     QMap<uint32_t, ADSBVehicle*> _adsbICAOMap;
     ADSBTCPLink *_adsbTcpLink = nullptr;
+
+    static constexpr uint8_t kMaxTimeSinceLastSeen = 15;
 };
