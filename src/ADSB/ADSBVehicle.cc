@@ -18,15 +18,15 @@ QGC_LOGGING_CATEGORY(ADSBVehicleLog, "qgc.adsb.adsbvehicle")
 ADSBVehicle::ADSBVehicle(const ADSB::VehicleInfo_t &vehicleInfo, QObject *parent)
     : QObject(parent)
 {
+    // qCDebug(ADSBVehicleLog) << Q_FUNC_INFO << this;
+
     _info.icaoAddress = vehicleInfo.icaoAddress;
     update(vehicleInfo);
-
-    // qCDebug(ADSBTCPLinkLog) << Q_FUNC_INFO << this;
 }
 
 ADSBVehicle::~ADSBVehicle()
 {
-    // qCDebug(ADSBTCPLinkLog) << Q_FUNC_INFO << this;
+    // qCDebug(ADSBVehicleLog) << Q_FUNC_INFO << this;
 }
 
 void ADSBVehicle::update(const ADSB::VehicleInfo_t &vehicleInfo)
@@ -38,23 +38,17 @@ void ADSBVehicle::update(const ADSB::VehicleInfo_t &vehicleInfo)
 
     qCDebug(ADSBVehicleLog) << "Updating" << QStringLiteral("%1 Flags: %2").arg(vehicleInfo.icaoAddress, 0, 16).arg(vehicleInfo.availableFlags, 0, 2);
 
-    if (vehicleInfo.availableFlags & ADSB::CallsignAvailable) {
-        if (vehicleInfo.callsign != callsign()) {
-            _info.callsign = vehicleInfo.callsign;
-            emit callsignChanged();
-        }
-    }
-
     if (vehicleInfo.availableFlags & ADSB::LocationAvailable) {
-        if (vehicleInfo.location != coordinate()) {
-            _info.location = vehicleInfo.location;
+        if (!QGC::fuzzyCompare(vehicleInfo.location.latitude(), coordinate().latitude()) || !QGC::fuzzyCompare(vehicleInfo.location.longitude(), coordinate().longitude())) {
+            _info.location.setLatitude(vehicleInfo.location.latitude());
+            _info.location.setLongitude(vehicleInfo.location.longitude());
             emit coordinateChanged();
         }
     }
 
     if (vehicleInfo.availableFlags & ADSB::AltitudeAvailable) {
-        if (!QGC::fuzzyCompare(vehicleInfo.altitude, altitude())) {
-            _info.altitude = vehicleInfo.altitude;
+        if (!QGC::fuzzyCompare(vehicleInfo.location.altitude(), altitude())) {
+            _info.location.setAltitude(vehicleInfo.location.altitude());
             emit altitudeChanged();
         }
     }
@@ -66,6 +60,34 @@ void ADSBVehicle::update(const ADSB::VehicleInfo_t &vehicleInfo)
         }
     }
 
+    if (vehicleInfo.availableFlags & ADSB::VelocityAvailable) {
+        if (!QGC::fuzzyCompare(vehicleInfo.velocity, velocity())) {
+            _info.velocity = vehicleInfo.velocity;
+            emit velocityChanged();
+        }
+    }
+
+    if (vehicleInfo.availableFlags & ADSB::CallsignAvailable) {
+        if (vehicleInfo.callsign != callsign()) {
+            _info.callsign = vehicleInfo.callsign;
+            emit callsignChanged();
+        }
+    }
+
+    if (vehicleInfo.availableFlags & ADSB::SquawkAvailable) {
+        if (!QGC::fuzzyCompare(vehicleInfo.velocity, squawk())) {
+            _info.squawk = vehicleInfo.squawk;
+            emit squawkChanged();
+        }
+    }
+
+    if (vehicleInfo.availableFlags & ADSB::VerticalVelAvailable) {
+        if (!QGC::fuzzyCompare(vehicleInfo.verticalVel, verticalVel())) {
+            _info.verticalVel = vehicleInfo.verticalVel;
+            emit verticalVelChanged();
+        }
+    }
+
     if (vehicleInfo.availableFlags & ADSB::AlertAvailable) {
         if (vehicleInfo.alert != alert()) {
             _info.alert = vehicleInfo.alert;
@@ -73,5 +95,5 @@ void ADSBVehicle::update(const ADSB::VehicleInfo_t &vehicleInfo)
         }
     }
 
-    (void) _lastUpdateTimer.restart();
+    _lastUpdateTimer.start();
 }
