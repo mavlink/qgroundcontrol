@@ -61,6 +61,11 @@ QGCLabel {
         function onActiveVehicleChanged(activeVehicle) { _root.updateFlightModesMenu() }
     }
 
+    Connections {
+        target: currentVehicle
+        function onFlightModesChanged() { _root.updateFlightModesMenu() }
+    }
+
     MouseArea {
         id:                 mouseArea
         visible:            currentVehicle && currentVehicle.flightModeSetAvailable
