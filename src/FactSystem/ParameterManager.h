@@ -38,6 +38,8 @@ public:
     /// @param uas Uas which this set of facts is associated with
     ParameterManager(Vehicle* vehicle);
 
+    static void registerQmlTypes();
+
     Q_PROPERTY(bool     parametersReady     READ parametersReady    NOTIFY parametersReadyChanged)      ///< true: Parameters are ready for use
     Q_PROPERTY(bool     missingParameters   READ missingParameters  NOTIFY missingParametersChanged)    ///< true: Parameters are missing from firmware response, false: all parameters received from firmware
     Q_PROPERTY(double   loadProgress        READ loadProgress       NOTIFY loadProgressChanged)

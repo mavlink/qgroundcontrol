@@ -38,6 +38,8 @@ public:
     /// from mission start to resumeIndex in the generate mission.
     void generateResumeMission(int resumeIndex);
 
+    static void registerQmlTypes();
+
 private slots:
     void _mavlinkMessageReceived(const mavlink_message_t& message);
 
