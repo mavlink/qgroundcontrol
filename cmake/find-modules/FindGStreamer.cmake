@@ -7,7 +7,7 @@ if(ANDROID OR IOS)
 endif()
 
 if(ANDROID OR IOS)
-    set(QGC_GST_STATIC_BUILD ON CACHE BOOL "Build GST Statically")
+    set(QGC_GST_STATIC_BUILD ON)
 endif()
 
 find_package(PkgConfig QUIET)
@@ -654,10 +654,11 @@ target_include_directories(GStreamer::GStreamer
     INTERFACE
         ${GSTREAMER_PREFIX}/include
         ${GSTREAMER_PREFIX}/include/glib-2.0
+        ${GSTREAMER_PREFIX}/include/graphene-1.0
         ${GSTREAMER_PREFIX}/include/gstreamer-1.0
         ${GSTREAMER_LIB_PATH}/glib-2.0/include
-        # ${GSTREAMER_PREFIX}/include/graphene-1.0
-        # ${GSTREAMER_LIB_PATH}/graphene-1.0/include
+        ${GSTREAMER_LIB_PATH}/graphene-1.0/include
+        ${GSTREAMER_LIB_PATH}/gstreamer-1.0/include
 )
 
 target_link_directories(GStreamer::GStreamer INTERFACE ${GSTREAMER_LIB_PATH})
