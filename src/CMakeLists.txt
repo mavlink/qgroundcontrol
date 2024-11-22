@@ -66,7 +66,6 @@ target_link_libraries(QGC
         Qt6::Core5Compat
         Qt6::Bluetooth
         API
-        ADSB
         AnalyzeView
         Audio
         AutoPilotPlugins
@@ -80,7 +79,6 @@ target_link_libraries(QGC
         # FlightDisplay
         FollowMe
         Gimbal
-        GPS
         GStreamerReceiver
         Joystick
         MAVLink
@@ -90,15 +88,12 @@ target_link_libraries(QGC
         QGCLocation
         QmlControls
         Settings
-        Terrain
         # UI
         Utilities
-        UTMSP
         Vehicle
         VehicleSetup
         Viewer3D
         VideoManager
-        VideoReceiver
     PUBLIC
         Qt6::Core
         Qt6::CorePrivate

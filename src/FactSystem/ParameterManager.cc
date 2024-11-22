@@ -19,10 +19,15 @@
 #include "QGC.h"
 #include <QGCLoggingCategory.h>
 
+#include "FactPanelController.h"
+#include "FactValueSliderListModel.h"
+#include "FactGroup.h"
+
 #include <QtCore/QEasingCurve>
 #include <QtCore/QFile>
 #include <QtCore/QVariantAnimation>
 #include <QtCore/QStandardPaths>
+#include <QtQml/qqml.h>
 
 QGC_LOGGING_CATEGORY(ParameterManagerVerbose1Log,           "ParameterManagerVerbose1Log")
 QGC_LOGGING_CATEGORY(ParameterManagerVerbose2Log,           "ParameterManagerVerbose2Log")
@@ -103,6 +108,17 @@ ParameterManager::ParameterManager(Vehicle* vehicle)
 
     // Ensure the cache directory exists
     QFileInfo(QSettings().fileName()).dir().mkdir("ParamCache");
+}
+
+void ParameterManager::registerQmlTypes()
+{
+    qmlRegisterType<Fact>               ("QGroundControl.FactSystem", 1, 0, "Fact");
+    qmlRegisterType<FactMetaData>       ("QGroundControl.FactSystem", 1, 0, "FactMetaData");
+    qmlRegisterType<FactPanelController>("QGroundControl.FactSystem", 1, 0, "FactPanelController");
+
+    qmlRegisterUncreatableType<FactGroup>               ("QGroundControl.FactSystem",   1, 0, "FactGroup",                  "Reference only");
+    qmlRegisterUncreatableType<FactValueSliderListModel>("QGroundControl.FactControls", 1, 0, "FactValueSliderListModel",   "Reference only");
+    qmlRegisterUncreatableType<ParameterManager>        ("QGroundControl.Vehicle",      1, 0, "ParameterManager",           "Reference only");
 }
 
 void ParameterManager::_updateProgressBar(void)
