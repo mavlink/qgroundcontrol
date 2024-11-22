@@ -16,6 +16,15 @@
 #include "MissionCommandUIInfo.h"
 #include "QGCLoggingCategory.h"
 
+#include "CameraCalc.h"
+#include "GeoFenceController.h"
+#include "MissionController.h"
+#include "VisualMissionItem.h"
+#include "RallyPointController.h"
+#include "PlanMasterController.h"
+
+#include <QtQml/qqml.h>
+
 QGC_LOGGING_CATEGORY(MissionManagerLog, "MissionManagerLog")
 
 MissionManager::MissionManager(Vehicle* vehicle)
@@ -29,6 +38,19 @@ MissionManager::~MissionManager()
 {
 
 }
+
+void MissionManager::registerQmlTypes()
+{
+    qmlRegisterUncreatableType<CameraCalc>          ("QGroundControl",              1, 0, "CameraCalc",           "Reference only");
+    qmlRegisterUncreatableType<GeoFenceController>  ("QGroundControl.Controllers",  1, 0, "GeoFenceController",   "Reference only");
+    qmlRegisterUncreatableType<MissionController>   ("QGroundControl.Controllers",  1, 0, "MissionController",    "Reference only");
+    qmlRegisterUncreatableType<MissionItem>         ("QGroundControl",              1, 0, "MissionItem",          "Reference only");
+    qmlRegisterUncreatableType<MissionManager>      ("QGroundControl.Vehicle",      1, 0, "MissionManager",       "Reference only");
+    qmlRegisterUncreatableType<RallyPointController>("QGroundControl.Controllers",  1, 0, "RallyPointController", "Reference only");
+    qmlRegisterUncreatableType<VisualMissionItem>   ("QGroundControl",              1, 0, "VisualMissionItem",    "Reference only");
+    qmlRegisterType<PlanMasterController>           ("QGroundControl.Controllers",  1, 0, "PlanMasterController");
+}
+
 void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoCoord, bool altChangeOnly)
 {
     if (inProgress()) {

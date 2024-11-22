@@ -67,6 +67,13 @@ QGCCameraManager::~QGCCameraManager()
     }
 }
 
+void QGCCameraManager::registerQmlTypes()
+{
+    qmlRegisterUncreatableType<MavlinkCameraControl>("QGroundControl.Vehicle", 1, 0, "MavlinkCameraControl", "Reference only");
+    qmlRegisterUncreatableType<QGCCameraManager>    ("QGroundControl.Vehicle", 1, 0, "QGCCameraManager",     "Reference only");
+    qmlRegisterUncreatableType<QGCVideoStreamInfo>  ("QGroundControl.Vehicle", 1, 0, "QGCVideoStreamInfo",   "Reference only");
+}
+
 void QGCCameraManager::setCurrentCamera(int sel)
 {
     if(sel != _currentCameraIndex && sel >= 0 && sel < _cameras.count()) {

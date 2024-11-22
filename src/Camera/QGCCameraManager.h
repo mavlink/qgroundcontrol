@@ -37,6 +37,8 @@ public:
     QGCCameraManager(Vehicle* vehicle);
     virtual ~QGCCameraManager();
 
+    static void registerQmlTypes();
+
     Q_PROPERTY(QmlObjectListModel*      cameras                 READ cameras                                        NOTIFY camerasChanged)
     Q_PROPERTY(QStringList              cameraLabels            READ cameraLabels                                   NOTIFY cameraLabelsChanged)
     Q_PROPERTY(MavlinkCameraControl*    currentCameraInstance   READ currentCameraInstance                          NOTIFY currentCameraChanged)

@@ -244,6 +244,8 @@ public:
     // Overrides from QGCTool
     virtual void setToolbox(QGCToolbox* toolbox);
 
+    static void registerQmlTypes();
+
 signals:
     void isMultiplexingEnabledChanged   (bool enabled);
     void isVersionCheckEnabledChanged   (bool enabled);
