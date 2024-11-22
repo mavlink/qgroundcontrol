@@ -25,6 +25,7 @@ target_link_libraries(Camera
         Comms
         FirmwarePlugin
         Joystick
+        QGC
         Settings
         Utilities
         Vehicle
@@ -34,7 +35,6 @@ target_link_libraries(Camera
         FactSystem
         MAVLink
         QmlControls
-        QGC
 )
 
 target_include_directories(Camera PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

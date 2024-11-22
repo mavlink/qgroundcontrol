@@ -25,7 +25,7 @@ target_link_libraries(API
     PUBLIC
         Qt6::Core
         Qt6::Gui
-        Comms
+        MAVLink
         QGC
         QmlControls
 )
