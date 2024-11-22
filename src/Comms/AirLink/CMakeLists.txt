@@ -2,7 +2,6 @@ find_package(Qt6 REQUIRED COMPONENTS Core)
 
 qt_add_library(AirLink STATIC)
 
-option(QGC_AIRLINK_DISABLED "Enable airlink" ON)
 if(NOT QGC_AIRLINK_DISABLED)
     find_package(Qt6 REQUIRED COMPONENTS Network QmlIntegration)
 

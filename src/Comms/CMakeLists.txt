@@ -76,7 +76,6 @@ endif()
 
 ############# Bluetooth
 
-option(QGC_ENABLE_BLUETOOTH "Enable Bluetooth Links" ON)
 if(QGC_ENABLE_BLUETOOTH)
     find_package(Qt6 REQUIRED COMPONENTS Bluetooth)
     target_link_libraries(Comms PUBLIC Qt6::Bluetooth)
@@ -90,7 +89,6 @@ endif()
 
 ############# ZEROConf
 
-option(QGC_ZEROCONF_ENABLED "Enable ZeroConf Compatibility" OFF)
 if(QGC_ZEROCONF_ENABLED)
     set(BUILD_DOC OFF CACHE INTERNAL "")
     set(BUILD_EXAMPLES OFF CACHE INTERNAL "")

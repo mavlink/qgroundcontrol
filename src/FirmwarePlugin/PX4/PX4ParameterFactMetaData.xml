@@ -17198,7 +17198,7 @@
     </parameter>
     <parameter name="MPC_ACC_HOR_MAX" default="5." type="FLOAT">
       <short_desc>Maximum horizontal acceleration</short_desc>
-      <long_desc>MPC_POS_MODE 1 just deceleration 3 acceleration and deceleration 4 not used, use MPC_ACC_HOR instead</long_desc>
+      <long_desc>MPC_POS_MODE 1 just deceleration 4 not used, use MPC_ACC_HOR instead</long_desc>
       <min>2</min>
       <max>15</max>
       <unit>m/s^2</unit>
@@ -17259,7 +17259,7 @@
     </parameter>
     <parameter name="MPC_JERK_MAX" default="8." type="FLOAT">
       <short_desc>Maximum horizontal and vertical jerk in Position/Altitude mode</short_desc>
-      <long_desc>Limit the maximum jerk of the vehicle (how fast the acceleration can change). A lower value leads to smoother motions but limits agility (how fast it can change directions or break). Setting this to the maximum value essentially disables the limit. Only used with smooth MPC_POS_MODE Smoothed velocity and Acceleration based.</long_desc>
+      <long_desc>Limit the maximum jerk of the vehicle (how fast the acceleration can change). A lower value leads to smoother motions but limits agility (how fast it can change directions or break). Setting this to the maximum value essentially disables the limit. Only used with MPC_POS_MODE Acceleration based.</long_desc>
       <min>0.5</min>
       <max>500</max>
       <unit>m/s^3</unit>
@@ -17357,10 +17357,9 @@
     </parameter>
     <parameter name="MPC_POS_MODE" default="4" type="INT32">
       <short_desc>Position/Altitude mode variant</short_desc>
-      <long_desc>The supported sub-modes are: - "Direct velocity": Sticks directly map to velocity setpoints without smoothing. Also applies to vertical direction and Altitude mode. Useful for velocity control tuning. - "Smoothed velocity": Sticks map to velocity but with maximum acceleration and jerk limits based on jerk optimized trajectory generator (different algorithm than 1). - "Acceleration based": Sticks map to acceleration and there's a virtual brake drag</long_desc>
+      <long_desc>The supported sub-modes are: - "Direct velocity": Sticks directly map to velocity setpoints without smoothing. Also applies to vertical direction and Altitude mode. Useful for velocity control tuning. - "Acceleration based": Sticks map to acceleration and there's a virtual brake drag</long_desc>
       <values>
         <value code="0">Direct velocity</value>
-        <value code="3">Smoothed velocity</value>
         <value code="4">Acceleration based</value>
       </values>
     </parameter>
