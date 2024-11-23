@@ -82,9 +82,13 @@ VideoManager::~VideoManager()
         }
 
         if (videoReceiver.sink != nullptr) {
-            // TODO: How to detect video backend type?
+            // qgcApp()->toolbox()->corePlugin()->releaseVideoSink(videoReceiver.sink);
 #ifdef QGC_GST_STREAMING
-            qgcApp()->toolbox()->corePlugin()->releaseVideoSink(videoReceiver.sink);
+            // FIXME: AV: we need some interaface for video sink with .release() call
+            // Currently VideoManager is destroyed after corePlugin() and we are crashing on app exit
+            // calling _toolbox->corePlugin()->releaseVideoSink(_videoSink[i]);
+            // As for now let's call GStreamer::releaseVideoSink() directly
+            GStreamer::releaseVideoSink(videoReceiver.sink);
 #elif defined(QGC_QT_STREAMING)
             QtMultimediaReceiver::releaseVideoSink(videoReceiver.sink);
 #endif
