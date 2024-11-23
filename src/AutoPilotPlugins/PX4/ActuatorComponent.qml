@@ -257,6 +257,25 @@ SetupPage {
                                             }
                                         }
                                     }
+                                    WheelHandler {
+                                        onWheel: (event) => { // Capture the event object
+                                            let minimum = sliderRepeater.itemAt(0).channel.min;
+                                            let maximum = sliderRepeater.itemAt(0).channel.max;     
+                                            let stepSize = (maximum - minimum) * 0.01;
+
+                                            const NAN_THRESHOLD = -0.1;
+                                            if (value < NAN_THRESHOLD && event.angleDelta.y > 0) {
+                                                value = stepSize;
+                                            } else {
+                                                let newValue = value + event.angleDelta.y / 120 * stepSize;
+                                                if (newValue < 0) {
+                                                    value = NaN;
+                                                } else {
+                                                    value = Math.min(maximum, newValue);
+                                                }                                            
+                                            }
+                                        }
+                                    }                                    
                                 }
                             }
 
@@ -264,15 +283,33 @@ SetupPage {
                             Repeater {
                                 id:         sliderRepeater
                                 model:      actuators.actuatorTest.actuators
-
                                 ActuatorSlider {
                                     channel: object
-                                    onActuatorValueChanged: (value) =>{
+                                    onActuatorValueChanged: (value) => {
                                         if (isNaN(value)) {
                                             actuators.actuatorTest.stopControl(index);
                                             stop();
                                         } else {
                                             actuators.actuatorTest.setChannelTo(index, value);
+                                        }
+                                    }
+                                    WheelHandler {
+                                        onWheel: (event) => {
+                                            let minimum = channel.min;
+                                            let maximum = channel.max;       
+                                            let stepSize = (maximum - minimum) * 0.01;
+
+                                            const NAN_THRESHOLD = -0.1;
+                                            if (value < NAN_THRESHOLD && event.angleDelta.y > 0) {
+                                                value = stepSize;
+                                            } else {
+                                                let newValue = value + event.angleDelta.y / 120 * stepSize;
+                                                if (newValue < 0) {
+                                                    value = NaN;
+                                                } else {
+                                                    value = Math.min(maximum, newValue);
+                                                }                                            
+                                            }
                                         }
                                     }
                                 }
