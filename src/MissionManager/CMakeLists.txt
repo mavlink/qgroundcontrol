@@ -86,6 +86,7 @@ target_link_libraries(MissionManager
         Camera
         FirmwarePlugin
         Geo
+        QGC
     PUBLIC
         Qt6::Core
         Qt6::Gui
@@ -93,7 +94,6 @@ target_link_libraries(MissionManager
         Qt6::Xml
         Comms
         FactSystem
-        QGC
         QmlControls
         Settings
         Terrain

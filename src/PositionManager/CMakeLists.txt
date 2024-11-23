@@ -12,13 +12,13 @@ target_link_libraries(PositionManager
         Qt6::Qml
         Qt6::PositioningPrivate
         API
+        QGC
         Utilities
         Vehicle
     PUBLIC
         Qt6::Core
         Qt6::Positioning
         Qt6::QmlIntegration
-        QGC
 )
 
 target_include_directories(PositionManager PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

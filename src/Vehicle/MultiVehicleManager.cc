@@ -16,6 +16,11 @@
 #include "QGCOptions.h"
 #include "LinkManager.h"
 #include "Vehicle.h"
+#include "VehicleLinkManager.h"
+#include "Autotune.h"
+#include "RemoteIDManager.h"
+#include "VehicleObjectAvoidance.h"
+#include "TrajectoryPoints.h"
 #if defined (Q_OS_IOS) || defined(Q_OS_ANDROID)
 #include "MobileScreenMgr.h"
 #endif
@@ -47,9 +52,13 @@ void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
     _mavlinkProtocol =           _toolbox->mavlinkProtocol();
 
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
-    qmlRegisterUncreatableType<MultiVehicleManager>("QGroundControl.MultiVehicleManager", 1, 0, "MultiVehicleManager", "Reference only");
-    qmlRegisterUncreatableType<Vehicle>            ("QGroundControl.Vehicle",             1, 0, "Vehicle",             "Reference only");
-    qmlRegisterUncreatableType<VehicleLinkManager> ("QGroundControl.Vehicle",             1, 0, "VehicleLinkManager",  "Reference only");
+    qmlRegisterUncreatableType<MultiVehicleManager>     ("QGroundControl.MultiVehicleManager", 1, 0, "MultiVehicleManager", "Reference only");
+    qmlRegisterUncreatableType<Vehicle>                 ("QGroundControl.Vehicle",             1, 0, "Vehicle",             "Reference only");
+    qmlRegisterUncreatableType<VehicleLinkManager>      ("QGroundControl.Vehicle",             1, 0, "VehicleLinkManager",  "Reference only");
+    qmlRegisterUncreatableType<Autotune>                ("QGroundControl.Vehicle",   1, 0, "Autotune",               "Reference only");
+    qmlRegisterUncreatableType<RemoteIDManager>         ("QGroundControl.Vehicle",   1, 0, "RemoteIDManager",        "Reference only");
+    qmlRegisterUncreatableType<TrajectoryPoints>        ("QGroundControl.FlightMap", 1, 0, "TrajectoryPoints",       "Reference only");
+    qmlRegisterUncreatableType<VehicleObjectAvoidance>  ("QGroundControl.Vehicle",   1, 0, "VehicleObjectAvoidance", "Reference only");
 
     qRegisterMetaType<Vehicle::MavCmdResultFailureCode_t>("MavCmdResultFailureCode_t");
 
