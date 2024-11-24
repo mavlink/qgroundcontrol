@@ -11,7 +11,7 @@ import QGroundControl.FactControls
 
 Item {
     id:             _root
-    width:          controlIndicatorIcon.width * 1.1
+    width:          controlIndicatorIconGCS.width * 1.1
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
 
@@ -302,14 +302,35 @@ Item {
     }
 
     // Actual top toolbar indicator
-    Image {
-        id:                      controlIndicatorIcon
+    QGCColoredImage {
+        id:                      controlIndicatorIconLine
         width:                   height
         anchors.top:             parent.top
         anchors.bottom:          parent.bottom
-        source:                  sysidInControl == QGroundControl.mavlinkSystemID ? "/controlIndicator/gcscontrol_3.svg" : "/controlIndicator/gcscontrol_1.svg"
+        source:                  "/controlIndicator/gcscontrol_line.svg"
         fillMode:                Image.PreserveAspectFit
         sourceSize.height:       height
+        color:                   isThisGCSinControl ? qgcPal.colorGreen : qgcPal.text
+    }
+    QGCColoredImage {
+        id:                      controlIndicatorIconAircraft
+        width:                   height
+        anchors.top:             parent.top
+        anchors.bottom:          parent.bottom
+        source:                  "/controlIndicator/gcscontrol_device.svg"
+        fillMode:                Image.PreserveAspectFit
+        sourceSize.height:       height
+        color:                   isThisGCSinControl ? qgcPal.colorGreen : qgcPal.text
+    }
+    QGCColoredImage {
+        id:                      controlIndicatorIconGCS
+        width:                   height
+        anchors.top:             parent.top
+        anchors.bottom:          parent.bottom
+        source:                  "/controlIndicator/gcscontrol_gcs.svg"
+        fillMode:                Image.PreserveAspectFit
+        sourceSize.height:       height
+        color:                   qgcPal.text
 
         // Current GCS in control indicator
         QGCLabel {
@@ -319,9 +340,9 @@ Item {
             font.pointSize:         ScreenTools.smallFontPointSize * 1.1
             color:                  isThisGCSinControl ? qgcPal.colorGreen : qgcPal.text
             anchors.bottom:         parent.bottom
-            anchors.bottomMargin:   -margins * 1.5
+            anchors.bottomMargin:   -margins * 0.7
             anchors.right:          parent.right
-            anchors.rightMargin:    -margins
+            anchors.rightMargin:    -margins * 0.1
         }
     }
 
