@@ -1,7 +1,4 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Positioning Qml Xml)
-if(QGC_UTM_ADAPTER)
-    add_definitions(-DQGC_UTM_ADAPTER)
-endif()
 
 qt_add_library(MissionManager STATIC
     BlankPlanCreator.cc
@@ -98,6 +95,7 @@ target_link_libraries(MissionManager
         Settings
         Terrain
         Utilities
+        UTMSP
         Vehicle
 )
 

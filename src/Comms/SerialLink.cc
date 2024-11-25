@@ -171,8 +171,6 @@ bool SerialLink::_hardwareConnect(QSerialPort::SerialPortError& error, QString& 
 
     _port = new QSerialPort(_serialConfig->portName(), this);
 
-    QObject::connect(_port, &QSerialPort::errorOccurred, this, &SerialLink::linkError);
-    QObject::connect(_port, &QIODevice::readyRead, this, &SerialLink::_readBytes);
 
     // After the bootloader times out, it still can take a second or so for the Pixhawk USB driver to come up and make
     // the port available for open. So we retry a few times to wait for it.
@@ -215,6 +213,9 @@ bool SerialLink::_hardwareConnect(QSerialPort::SerialPortError& error, QString& 
     _port->setParity       (static_cast<QSerialPort::Parity>       (_serialConfig->parity()));
 
     emit connected();
+
+    QObject::connect(_port, &QSerialPort::errorOccurred, this, &SerialLink::linkError);
+    QObject::connect(_port, &QIODevice::readyRead, this, &SerialLink::_readBytes);
 
     qCDebug(SerialLinkLog) << "Connection SeriaLink: " << "with settings" << _serialConfig->portName()
                            << _serialConfig->baud() << _serialConfig->dataBits() << _serialConfig->parity() << _serialConfig->stopBits();

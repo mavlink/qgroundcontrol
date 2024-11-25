@@ -9,36 +9,34 @@
 
 #pragma once
 
-#include "QGCToolbox.h"
-
-#include "UTMSPVehicle.h"
+#include <QtCore/QObject>
 
 class UTMSPVehicle;
 class Vehicle;
 class Dispatcher;
 class UTMSPAuthorization;
 
-class UTMSPManager : public QGCTool
+class UTMSPManager : public QObject
 {
     Q_OBJECT
+    Q_MOC_INCLUDE("UTMSPVehicle.h")
     Q_MOC_INCLUDE("UTMSPAuthorization.h")
+    Q_PROPERTY(UTMSPVehicle *utmspVehicle READ utmspVehicle CONSTANT)
+    Q_PROPERTY(UTMSPAuthorization *utmspAuthorization READ utmspAuthorization CONSTANT)
 
 public:
-    UTMSPManager(QGCApplication* app, QGCToolbox* toolbox);
-    virtual ~UTMSPManager();
+    explicit UTMSPManager(QObject *parent = nullptr);
+    ~UTMSPManager();
 
-    Q_PROPERTY(UTMSPVehicle*            utmspVehicle                    READ utmspVehicle                   CONSTANT)
-    Q_PROPERTY(UTMSPAuthorization*      utmspAuthorization              READ utmspAuthorization             CONSTANT)
+    static UTMSPManager *instance();
 
-    void setToolbox (QGCToolbox* toolbox);
-
-    UTMSPVehicle*               instantiateVehicle              (const Vehicle& vehicle);
-    UTMSPAuthorization*         instantiateUTMSPAuthorization   (void);
-    UTMSPAuthorization*         utmspAuthorization              (void)  { return _utmspAuthorization;}
-    UTMSPVehicle*               utmspVehicle                    (void ) {return _vehicle;};
+    UTMSPVehicle *instantiateVehicle(Vehicle *vehicle);
+    UTMSPAuthorization *instantiateUTMSPAuthorization();
+    UTMSPAuthorization *utmspAuthorization();
+    UTMSPVehicle *utmspVehicle();
 
 private:
-    UTMSPVehicle*                        _vehicle                 = nullptr;
-    UTMSPAuthorization*                  _utmspAuthorization      = nullptr;
-    std::shared_ptr<Dispatcher>          _dispatcher;
+    UTMSPVehicle *_vehicle = nullptr;
+    UTMSPAuthorization *_utmspAuthorization = nullptr;
+    std::shared_ptr<Dispatcher> _dispatcher;
 };

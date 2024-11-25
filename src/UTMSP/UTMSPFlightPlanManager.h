@@ -10,9 +10,10 @@
 #pragma once
 
 #include <string>
-#include <nlohmann/json.hpp>
+// #include <nlohmann/json_fwd.hpp>
 
 #include "UTMSPBlenderRestInterface.h"
+#include "parse/nlohmann/json.hpp"
 
 using json = nlohmann::ordered_json;
 

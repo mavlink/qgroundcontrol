@@ -14,6 +14,7 @@
 
 class QTextToSpeech;
 class Fact;
+class AudioOutputTest;
 
 Q_DECLARE_LOGGING_CATEGORY(AudioOutputLog)
 
@@ -22,7 +23,7 @@ class AudioOutput : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(bool muted READ isMuted WRITE setMuted NOTIFY mutedChanged)
+    friend AudioOutputTest;
 
 public:
     /// Enumeration for text modification options.
@@ -53,39 +54,51 @@ public:
 
     /// Sets the mute state of the audio output.
     ///     @param enable True to mute, false to unmute.
-    void setMuted(bool muted) { if (muted != _muted) { _muted = muted; emit mutedChanged(_muted); } }
+    void setMuted(bool muted);
 
     /// Reads the specified text with optional text modifications.
     ///     @param text The text to be read.
     ///     @param textMods The text modifications to apply.
-    void say(const QString &text, AudioOutput::TextMods textMods = TextMod::None);
+    void say(const QString &text, TextMods textMods = TextMod::None);
+
+private:
+    QTextToSpeech *_engine = nullptr;
+    QAtomicInteger<qsizetype> _textQueueSize = 0;
+    bool _initialized = false;
+    std::atomic_bool _muted = false;
+
+    static const QHash<QString, QString> _textHash;
+
+    static constexpr qsizetype kMaxTextQueueSize = 20;
+
+    /// Fixes text messages for audio output.
+    ///     @param string The text message to fix.
+    ///     @return The fixed text message.
+    static QString _fixTextMessageForAudio(const QString &string);
+
+    /// Replaces predefined abbreviations with their corresponding full forms.
+    ///     @param input The input string containing abbreviations.
+    ///     @return A string with abbreviations replaced by their full forms.
+    static QString _replaceAbbreviations(const QString &input);
+
+    /// Replaces negative signs with the word "negative".
+    static QString _replaceNegativeSigns(const QString &input);
+
+    /// Replaces decimal points with the word "point".
+    static QString _replaceDecimalPoints(const QString &input);
+
+    /// Replaces "m" (meters) with the word "meters" following numbers.
+    static QString _replaceMeters(const QString &input);
+
+    /// Converts millisecond values to a more readable format (seconds and minutes).
+    static QString _convertMilliseconds(const QString &input);
 
     /// Extracts a millisecond value from the given string.
     ///     @param string The string to extract from.
     ///     @param match The extracted millisecond string.
     ///     @param number The extracted number.
     ///     @return True if extraction is successful, false otherwise.
-    static bool getMillisecondString(const QString &string, QString &match, int &number);
-
-    /// Fixes text messages for audio output.
-    ///     @param string The text message to fix.
-    ///     @return The fixed text message.
-    static QString fixTextMessageForAudio(const QString &string);
-
-signals:
-    /// Emitted when the mute state changes.
-    ///     @param muted The new mute state.
-    void mutedChanged(bool muted);
-
-private:
-    QTextToSpeech *_engine = nullptr;
-    qsizetype _textQueueSize = 0;
-    bool _muted = false;
-    Fact *_mutedFact = nullptr;
-
-    static const QHash<QString, QString> _textHash;
-
-    static constexpr qsizetype kMaxTextQueueSize = 20;
+    static bool _getMillisecondString(const QString &string, QString &match, int &number);
 
 };
 Q_DECLARE_OPERATORS_FOR_FLAGS(AudioOutput::TextMods)
