@@ -65,26 +65,23 @@ private:
     QString         _mountpoint;
     QSet<int>       _whitelist;
     bool            _isVRSEnable;
+    int             _vrsSendRateMSecs = 3000;
     bool            _ntripForceV1 = false;
 
     // QUrl
     QUrl            _ntripURL;
 
     // Send NMEA
-    void    _sendNMEA();
-    QString _getCheckSum(QString line);
+    void _sendNmeaGga();
 
     // VRS Timer
     QTimer*          _vrsSendTimer;
     // this is perfectly fine to send VRS data every 30 seconds
-    static const int _vrsSendRateMSecs = 30000;
 
     RTCMParsing *_rtcm_parsing{nullptr};
     NTRIPState _state;
 
     QGCToolbox*  _toolbox = nullptr;
-    // TODO(zdanek): take from settings
-    bool _takePosFromVehicle = true;
 };
 
 class NTRIP : public QGCTool {
