@@ -16,3 +16,9 @@ target_link_libraries(UtilitiesTest
 )
 
 target_include_directories(UtilitiesTest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+qt_add_resources(UtilitiesTest "UtilitiesTest_res"
+    PREFIX "/"
+    FILES
+        arducopter.apj
+)

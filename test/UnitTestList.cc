@@ -198,7 +198,7 @@ int runTests(bool stress, QStringView unitTestOptions)
     // Utilities
     // Compression
     UT_REGISTER_TEST(DecompressionTest)
-    // UT_REGISTER_TEST(QGCFileDownloadTest)
+    UT_REGISTER_TEST(QGCFileDownloadTest)
 
     // Vehicle
     // Components
