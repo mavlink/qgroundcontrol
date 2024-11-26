@@ -384,7 +384,7 @@ SettingsPage {
                             if (_activeVehicle) {
                                 _remoteIDManager.checkOperatorID(text)
                             } else {
-                                _remoteIDManager.checkOperatorID(text)
+                                _offlineVehicle.remoteIDManager.checkOperatorID(text)
                             }
                         }
 
