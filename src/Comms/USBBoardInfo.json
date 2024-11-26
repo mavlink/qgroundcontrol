@@ -32,6 +32,7 @@
         { "vendorID": 12643, "productID": 76,       "boardClass": "Pixhawk",    "name": "CUAV Flight Controller" },
         { "vendorID": 1155, "productID": 55,        "boardClass": "Pixhawk",    "name": "PX4 FMU SmartAP AIRLink" },
         { "vendorID": 12677, "productID": 57,       "boardClass": "Pixhawk",    "name": "ARK FMU V6X" },
+        { "vendorID": 12677, "productID": 58,       "boardClass": "Pixhawk",    "name": "ARK Pi6X" },
         { "vendorID": 12677, "productID": 59,       "boardClass": "Pixhawk",    "name": "ARK FPV" },
 
         { "vendorID": 1155, "productID": 22336,     "boardClass": "Pixhawk",    "name": "ArduPilot ChibiOS" },
@@ -104,6 +105,10 @@
         { "regExp": "^mRoControlZeroF7",    "boardClass": "Pixhawk" },
         { "regExp": "^ARK FMU v6X.x$",      "boardClass": "Pixhawk" },
         { "regExp": "^ARK BL FMU v6X.x$",   "boardClass": "Pixhawk" },
+        { "regExp": "^ARK FPV.x$",          "boardClass": "Pixhawk" },
+        { "regExp": "^ARK BL FPV.x$",       "boardClass": "Pixhawk" },
+        { "regExp": "^ARK Pi6X.x$",         "boardClass": "Pixhawk" },
+        { "regExp": "^ARK BL Pi6X.x$",      "boardClass": "Pixhawk" },
         { "regExp": "^PX4 TROPIC Community","boardClass": "Pixhawk" },
         { "regExp": "^FT231X USB UART$",    "boardClass": "SiK Radio" },
         { "regExp": "USB UART$",            "boardClass": "SiK Radio",  "androidOnly": true, "comment": "Very broad fallback, too dangerous for non-android" }
@@ -111,6 +116,7 @@
 
     "boardManufacturerFallback": [
         { "regExp": "^ArduPilot$",      "boardClass": "Pixhawk" },
+        { "regExp": "^ARK$",            "boardClass": "Pixhawk" },
         { "regExp": "^Hex/ProfiCNC$",   "boardClass": "Pixhawk" },
         { "regExp": "^Holybro$",        "boardClass": "Pixhawk" },
         { "regExp": "^mRo$",            "boardClass": "Pixhawk" },
