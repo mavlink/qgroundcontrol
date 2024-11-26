@@ -106,13 +106,15 @@ public class QGCUsbSerialManager {
         filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
         filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
 
-        int flags = 0;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            flags = Context.RECEIVER_NOT_EXPORTED;
-        }
-
         try {
-            context.registerReceiver(usbReceiver, filter, flags);
+            if (android.os.Build.VERSION.SDK_INT >=
+                android.os.Build.VERSION_CODES.TIRAMISU) {
+                int flags = Context.RECEIVER_NOT_EXPORTED;
+                context.registerReceiver(usbReceiver, filter, flags);
+            } else {
+                context.registerReceiver(usbReceiver, filter);
+            }
+
             QGCLogger.i(TAG, "BroadcastReceiver registered successfully.");
         } catch (Exception e) {
             QGCLogger.e(TAG, "Failed to register BroadcastReceiver", e);
