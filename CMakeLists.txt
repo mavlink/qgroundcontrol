@@ -193,13 +193,18 @@ if(NOT Qt6LinguistTools_DIR)
     set(Qt6LinguistTools_DIR ${QT_HOST_PATH}/lib/cmake/Qt6LinguistTools)
 endif()
 
-# Require 6.6.3 because otherwise libQt6QuickControls2Basic.so.6 &
-# libQt6QuickControls2BasicStyleImpl.so.6 are missing.
-qt_standard_project_setup(REQUIRES 6.6.3)
+qt_standard_project_setup(
+    REQUIRES 6.8.1
+    SUPPORTS_UP_TO 6.8.1
+    I18N_SOURCE_LANGUAGE en
+)
 
 qt_policy(
     SET QTP0001 NEW
     SET QTP0002 NEW
+    SET QTP0003 NEW
+    SET QTP0004 NEW
+    SET QTP0005 NEW
 )
 
 #######################################################
@@ -289,10 +294,9 @@ qt_add_executable(${PROJECT_NAME}
 )
 
 if(Qt6LinguistTools_FOUND)
-    # TODO: Update to new qt_add_translations form in Qt6.7
     file(GLOB TS_SOURCES ${CMAKE_SOURCE_DIR}/translations/qgc_*.ts)
     set_source_files_properties(${TS_SOURCES} PROPERTIES OUTPUT_LOCATION "${CMAKE_BINARY_DIR}/i18n")
-    qt_add_translations(${PROJECT_NAME}
+    qt_add_translations(${CMAKE_PROJECT_NAME}
         TS_FILES ${TS_SOURCES}
         RESOURCE_PREFIX "/"
         LUPDATE_OPTIONS -no-obsolete

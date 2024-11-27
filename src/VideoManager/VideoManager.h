@@ -69,6 +69,7 @@ public:
     Q_INVOKABLE void stopVideo();
 
     void init();
+    void cleanup();
     bool autoStreamConfigured() const;
     bool decoding() const { return _decoding; }
     bool fullScreen() const { return _fullScreen; }

@@ -9,8 +9,8 @@
 
 #pragma once
 
-#include "MAVLinkLib.h"
 #include "FirmwarePlugin.h"
+#include "MAVLinkLib.h"
 
 #include <QtCore/QObject>
 #include <QtCore/QString>

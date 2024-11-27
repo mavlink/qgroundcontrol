@@ -74,6 +74,7 @@ target_link_libraries(GPS
         Vehicle
     PUBLIC
         Qt6::Core
+        FactSystem
         GPSDrivers
 )
 
