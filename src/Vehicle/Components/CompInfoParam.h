@@ -10,7 +10,7 @@
 #pragma once
 
 #include "CompInfo.h"
-#include "QGCMAVLink.h"
+#include "MAVLinkLib.h"
 #include "FactMetaData.h"
 
 #include <QtCore/QLoggingCategory>

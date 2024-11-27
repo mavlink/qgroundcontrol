@@ -33,6 +33,8 @@ JoystickManager::JoystickManager(QObject *parent)
 {
     // qCDebug(JoystickManagerLog) << Q_FUNC_INFO << this;
 
+
+
     _joystickCheckTimer->setInterval(kTimerInterval);
     _joystickCheckTimer->setSingleShot(false);
 }
@@ -51,6 +53,12 @@ JoystickManager::~JoystickManager()
 JoystickManager *JoystickManager::instance()
 {
     return _joystickManager();
+}
+
+void JoystickManager::registerQmlTypes()
+{
+    (void) qmlRegisterUncreatableType<JoystickManager>("QGroundControl.JoystickManager", 1, 0, "JoystickManager", "Reference only");
+    (void) qmlRegisterUncreatableType<Joystick>("QGroundControl.JoystickManager", 1, 0, "Joystick", "Reference only");
 }
 
 void JoystickManager::init()

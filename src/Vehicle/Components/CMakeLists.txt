@@ -27,8 +27,8 @@ target_link_libraries(VehicleComponents
         Vehicle
     PUBLIC
         Qt6::Core
-        Comms
         FactSystem
+        MAVLink
         Utilities
 )
 

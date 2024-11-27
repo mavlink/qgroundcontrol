@@ -278,6 +278,7 @@ void QGCApplication::init()
     VideoManager::registerQmlTypes();
     QGCCorePlugin::registerQmlTypes();
     GPSRtk::registerQmlTypes();
+    JoystickManager::registerQmlTypes();
 #ifdef QGC_VIEWER3D
     Viewer3DManager::registerQmlTypes();
 #endif
@@ -745,6 +746,9 @@ QGCImageProvider* QGCApplication::qgcImageProvider()
 void QGCApplication::shutdown()
 {
     qCDebug(QGCApplicationLog) << "Exit";
+
+    VideoManager::instance()->cleanup();
+
     // This is bad, but currently qobject inheritances are incorrect and cause crashes on exit without
     delete _qmlAppEngine;
 }

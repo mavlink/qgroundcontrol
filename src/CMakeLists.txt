@@ -58,7 +58,6 @@ target_link_libraries(QGC
         Qt6::QuickControls2
         Qt6::QuickWidgets
         Qt6::Core5Compat
-        Qt6::Bluetooth
         API
         AnalyzeView
         Audio

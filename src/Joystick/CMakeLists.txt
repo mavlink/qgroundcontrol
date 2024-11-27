@@ -59,11 +59,11 @@ qt_add_resources(Joystick "gamecontrollerdb.txt"
     FILES ${sdl_gamecontrollerdb_SOURCE_DIR}/gamecontrollerdb.txt
 )
 
-qt_add_qml_module(Joystick
-    URI QGroundControl.JoystickManager
-    VERSION 1.0
-    IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
-)
+# qt_add_qml_module(Joystick
+#     URI QGroundControl.JoystickManager
+#     VERSION 1.0
+#     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
+# )
 
 set(MINIMUM_SDL2_VERSION 2.24.0)
 if(NOT QGC_BUILD_DEPENDENCIES)
