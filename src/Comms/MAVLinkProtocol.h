@@ -40,6 +40,8 @@ public:
     ///     @return The singleton instance.
     static MAVLinkProtocol *instance();
 
+    void init();
+
     /// Get the human-friendly name of this protocol
     static QString getName() { return QStringLiteral("MAVLink protocol"); }
 
@@ -143,6 +145,7 @@ private:
 
     int _systemId = kMaxSysId;
     unsigned _currentVersion = 100;
+    bool _initialized = false;
 
     static constexpr const char *_tempLogFileTemplate = "FlightDataXXXXXX"; ///< Template for temporary log file
     static constexpr const char *_logFileExtension = "mavlink";             ///< Extension for log files

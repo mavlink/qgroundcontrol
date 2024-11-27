@@ -26,7 +26,6 @@
 Q_DECLARE_LOGGING_CATEGORY(JoystickValuesLog)
 Q_DECLARE_METATYPE(GRIPPER_ACTIONS)
 
-class MultiVehicleManager;
 class Vehicle;
 class QmlObjectListModel;
 
@@ -63,7 +62,7 @@ class Joystick : public QThread
     Q_MOC_INCLUDE("QmlObjectListModel.h")
     Q_MOC_INCLUDE("Vehicle.h")
 public:
-    Joystick(const QString& name, int axisCount, int buttonCount, int hatCount, MultiVehicleManager* multiVehicleManager);
+    Joystick(const QString& name, int axisCount, int buttonCount, int hatCount);
 
     virtual ~Joystick();
 
@@ -307,7 +306,6 @@ protected:
     QmlObjectListModel              _assignableButtonActions;
     QList<AssignedButtonAction*>    _buttonActionArray;
     QStringList                     _availableActionTitles;
-    MultiVehicleManager*            _multiVehicleManager = nullptr;
 
     CustomActionManager _customActionManager;
 

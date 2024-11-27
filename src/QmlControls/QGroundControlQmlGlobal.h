@@ -257,6 +257,8 @@ private:
     QGCPositionManager*     _qgcPositionManager     = nullptr;
     MissionCommandTree*     _missionCommandTree     = nullptr;
     VideoManager*           _videoManager           = nullptr;
+    LinkManager*            _linkManager            = nullptr;
+    MultiVehicleManager*    _multiVehicleManager    = nullptr;
 #ifndef QGC_AIRLINK_DISABLED
     AirLinkManager*         _airlinkManager         = nullptr;
 #endif
@@ -265,8 +267,6 @@ private:
 #endif
 
     double                  _flightMapInitialZoom   = 17.0;
-    LinkManager*            _linkManager            = nullptr;
-    MultiVehicleManager*    _multiVehicleManager    = nullptr;
     QGCCorePlugin*          _corePlugin             = nullptr;
     SettingsManager*        _settingsManager        = nullptr;
 #ifndef NO_SERIAL_LINK

@@ -30,7 +30,7 @@ SimulatedPosition::SimulatedPosition(QObject* parent)
     _lastPosition.setAttribute(QGeoPositionInfo::Attribute::GroundSpeed, kHorizontalVelocityMetersPerSec);
     _lastPosition.setAttribute(QGeoPositionInfo::Attribute::VerticalSpeed, kVerticalVelocityMetersPerSec);
 
-    (void) connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this, &SimulatedPosition::_vehicleAdded);
+    (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleAdded, this, &SimulatedPosition::_vehicleAdded);
 
     _updateTimer->setSingleShot(false);
     (void) connect(_updateTimer, &QTimer::timeout, this, &SimulatedPosition::_updatePosition);

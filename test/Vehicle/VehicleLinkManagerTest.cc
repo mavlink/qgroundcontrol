@@ -35,7 +35,7 @@ void VehicleLinkManagerTest::init(void)
 {
     UnitTest::init();
 
-    _multiVehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
+    _multiVehicleMgr = MultiVehicleManager::instance();
 
     QCOMPARE(LinkManager::instance()->links().count(),         0);
     QCOMPARE(_multiVehicleMgr->vehicles()->count(), 0);

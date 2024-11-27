@@ -237,8 +237,6 @@ void LinkManager::_linkDisconnected()
     for (auto it = _rgLinks.begin(); it != _rgLinks.end(); ++it) {
         if (it->get() == link) {
             qCDebug(LinkManagerLog) << Q_FUNC_INFO << it->get()->linkConfiguration()->name() << it->use_count();
-            SharedLinkConfigurationPtr config = it->get()->linkConfiguration();
-            config->setLink(nullptr);
             (void) _rgLinks.erase(it);
             return;
         }
@@ -511,7 +509,7 @@ void LinkManager::shutdown()
     disconnectAll();
 
     // Wait for all the vehicles to go away to ensure an orderly shutdown and deletion of all objects
-    while (qgcApp()->toolbox()->multiVehicleManager()->vehicles()->count()) {
+    while (MultiVehicleManager::instance()->vehicles()->count()) {
         QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
     }
 }

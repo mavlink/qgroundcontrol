@@ -496,7 +496,7 @@ void SimpleMissionItem::_rebuildNaNFacts(void)
                 if (showUI && paramInfo && paramInfo->nanUnchanged()) {
                     // Show hide Heading field on waypoint based on vehicle yaw to next waypoint setting. This needs to come from the actual vehicle if it exists
                     // and not _controllerVehicle which is always offline.
-                    Vehicle* firmwareVehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
+                    Vehicle* firmwareVehicle = MultiVehicleManager::instance()->activeVehicle();
                     if (!firmwareVehicle) {
                         firmwareVehicle = _controllerVehicle;
                     }

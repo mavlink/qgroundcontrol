@@ -106,6 +106,6 @@ void EditPositionDialogController::setFromMGRS()
 
 void EditPositionDialogController::setFromVehicle()
 {
-    setCoordinate(qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->coordinate());
+    setCoordinate(MultiVehicleManager::instance()->activeVehicle()->coordinate());
 }
 

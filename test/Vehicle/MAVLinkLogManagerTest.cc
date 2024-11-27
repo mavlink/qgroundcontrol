@@ -22,7 +22,7 @@ void MAVLinkLogManagerTest::_testInitMAVLinkLogManager()
 {
     _connectMockLinkNoInitialConnectSequence();
 
-    MultiVehicleManager *const vehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
+    MultiVehicleManager *const vehicleMgr = MultiVehicleManager::instance();
     Vehicle *const vehicle = vehicleMgr->activeVehicle();
     MAVLinkLogManager *const mavlinkLogManager = new MAVLinkLogManager(vehicle, this);
     QVERIFY(mavlinkLogManager);

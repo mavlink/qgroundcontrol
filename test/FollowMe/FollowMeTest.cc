@@ -25,7 +25,7 @@ void FollowMeTest::_testFollowMe()
 
     _connectMockLinkNoInitialConnectSequence();
 
-    MultiVehicleManager *vehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
+    MultiVehicleManager *vehicleMgr = MultiVehicleManager::instance();
     Vehicle *vehicle = vehicleMgr->activeVehicle();
     vehicle->setFlightMode(vehicle->followFlightMode());
     qgcApp()->toolbox()->settingsManager()->appSettings()->followTarget()->setRawValue(1);

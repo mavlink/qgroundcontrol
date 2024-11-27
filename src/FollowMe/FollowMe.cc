@@ -60,18 +60,18 @@ void FollowMe::_settingsChanged(QVariant value)
 
     switch (_currentMode) {
     case MODE_NEVER:
-        (void) disconnect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this, &FollowMe::_vehicleAdded);
-        (void) disconnect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleRemoved, this, &FollowMe::_vehicleRemoved);
+        (void) disconnect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleAdded, this, &FollowMe::_vehicleAdded);
+        (void) disconnect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleRemoved, this, &FollowMe::_vehicleRemoved);
         _disableFollowSend();
         break;
     case MODE_ALWAYS:
-        (void) connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this, &FollowMe::_vehicleAdded);
-        (void) connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleRemoved, this, &FollowMe::_vehicleRemoved);
+        (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleAdded, this, &FollowMe::_vehicleAdded);
+        (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleRemoved, this, &FollowMe::_vehicleRemoved);
         _enableFollowSend();
         break;
     case MODE_FOLLOWME:
-        (void) connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this, &FollowMe::_vehicleAdded);
-        (void) connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleRemoved, this, &FollowMe::_vehicleRemoved);
+        (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleAdded, this, &FollowMe::_vehicleAdded);
+        (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleRemoved, this, &FollowMe::_vehicleRemoved);
         _enableIfVehicleInFollow();
         break;
     }
@@ -106,7 +106,7 @@ void FollowMe::_sendGCSMotionReport()
     if (_currentMode == MODE_ALWAYS) {
         needFollowMe = true;
     } else if (_currentMode == MODE_FOLLOWME) {
-        QmlObjectListModel* const vehicles = qgcApp()->toolbox()->multiVehicleManager()->vehicles();
+        QmlObjectListModel* const vehicles = MultiVehicleManager::instance()->vehicles();
         for (int i = 0; i < vehicles->count(); i++) {
             const Vehicle* const vehicle = vehicles->value<const Vehicle*>(i);
             if (_isFollowFlightMode(vehicle, vehicle->flightMode())) {
@@ -162,7 +162,7 @@ void FollowMe::_sendGCSMotionReport()
         motionReport.vyMetersPerSec = 0;
     }
 
-    QmlObjectListModel* const vehicles = qgcApp()->toolbox()->multiVehicleManager()->vehicles();
+    QmlObjectListModel* const vehicles = MultiVehicleManager::instance()->vehicles();
 
     for (int i = 0; i < vehicles->count(); i++) {
         Vehicle* const vehicle = vehicles->value<Vehicle*>(i);
@@ -192,7 +192,7 @@ void FollowMe::_enableIfVehicleInFollow()
     }
 
     // Any vehicle in follow mode will enable the system
-    QmlObjectListModel* const vehicles = qgcApp()->toolbox()->multiVehicleManager()->vehicles();
+    QmlObjectListModel* const vehicles = MultiVehicleManager::instance()->vehicles();
 
     for (int i = 0; i < vehicles->count(); i++) {
         const Vehicle* const vehicle = vehicles->value<const Vehicle*>(i);
