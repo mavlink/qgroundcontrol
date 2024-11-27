@@ -10,7 +10,7 @@
 #pragma once
 
 #include "Vehicle.h"
-#include "QGCMAVLink.h"
+#include "MAVLinkLib.h"
 
 #include <QtCore/QTimer>
 

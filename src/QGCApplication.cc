@@ -46,6 +46,7 @@
 #include "MAVLinkConsoleController.h"
 #include "MAVLinkProtocol.h"
 #include "MissionManager.h"
+#include "MultiVehicleManager.h"
 #include "ParameterManager.h"
 #include "PositionManager.h"
 #include "QGCCameraManager.h"
@@ -270,6 +271,8 @@ void QGCApplication::init()
     QGroundControlQmlGlobal::registerQmlTypes();
     MissionManager::registerQmlTypes();
     QGCCameraManager::registerQmlTypes();
+    MultiVehicleManager::registerQmlTypes();
+    QGCPositionManager::registerQmlTypes();
 #ifdef QGC_VIEWER3D
     Viewer3DManager::registerQmlTypes();
 #endif
@@ -335,6 +338,8 @@ void QGCApplication::_initForNormalAppBoot()
     FollowMe::instance()->init();
     QGCPositionManager::instance()->init();
     LinkManager::instance()->init();
+    MultiVehicleManager::instance()->init();
+    MAVLinkProtocol::instance()->init();
 
     // Image provider for Optical Flow
     _qmlAppEngine->addImageProvider(qgcImageProviderId, new QGCImageProvider());

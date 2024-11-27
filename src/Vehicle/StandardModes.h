@@ -9,8 +9,9 @@
 
 #pragma once
 
-#include "QGCMAVLink.h"
+#include "MAVLinkLib.h"
 
+#include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QMap>
 #include <QtCore/QLoggingCategory>

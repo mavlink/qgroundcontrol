@@ -13,7 +13,7 @@
 #include <QtCore/QObject>
 #include <QtPositioning/QGeoCoordinate>
 
-#include "QGCMAVLink.h"
+#include "MAVLinkLib.h"
 
 class QTimer;
 class TerrainFactGroup;

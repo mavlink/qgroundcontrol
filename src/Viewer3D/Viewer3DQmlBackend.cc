@@ -30,10 +30,10 @@ Viewer3DQmlBackend::Viewer3DQmlBackend(QObject *parent)
 void Viewer3DQmlBackend::init(OsmParser* osmThr)
 {
     _osmParserThread = osmThr;
-    _activeVehicleChangedEvent(qgcApp()->toolbox()->multiVehicleManager()->activeVehicle());
+    _activeVehicleChangedEvent(MultiVehicleManager::instance()->activeVehicle());
 
     connect(_osmParserThread, &OsmParser::gpsRefChanged, this, &Viewer3DQmlBackend::_gpsRefChangedEvent);
-    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged, this, &Viewer3DQmlBackend::_activeVehicleChangedEvent);
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &Viewer3DQmlBackend::_activeVehicleChangedEvent);
 }
 
 void Viewer3DQmlBackend::_activeVehicleChangedEvent(Vehicle *vehicle)

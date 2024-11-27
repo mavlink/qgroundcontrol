@@ -15,8 +15,8 @@
 #include <QtCore/QFile>
 #include <QtCore/QIODevice>
 
-JoystickSDL::JoystickSDL(const QString& name, int axisCount, int buttonCount, int hatCount, int index, bool isGameController, MultiVehicleManager* multiVehicleManager)
-    : Joystick(name,axisCount,buttonCount,hatCount,multiVehicleManager)
+JoystickSDL::JoystickSDL(const QString& name, int axisCount, int buttonCount, int hatCount, int index, bool isGameController)
+    : Joystick(name,axisCount,buttonCount,hatCount)
     , _isGameController(isGameController)
     , _index(index)
 {
@@ -41,7 +41,7 @@ bool JoystickSDL::init(void) {
     return true;
 }
 
-QMap<QString, Joystick*> JoystickSDL::discover(MultiVehicleManager* _multiVehicleManager) {
+QMap<QString, Joystick*> JoystickSDL::discover() {
     static QMap<QString, Joystick*> ret;
 
     QMap<QString,Joystick*> newRet;
@@ -83,7 +83,7 @@ QMap<QString, Joystick*> JoystickSDL::discover(MultiVehicleManager* _multiVehicl
                 name = QString("%1 %2").arg(originalName).arg(duplicateIdx++);
             }
 
-            newRet[name] = new JoystickSDL(name, qMax(0,axisCount), qMax(0,buttonCount), qMax(0,hatCount), i, isGameController, _multiVehicleManager);
+            newRet[name] = new JoystickSDL(name, qMax(0,axisCount), qMax(0,buttonCount), qMax(0,hatCount), i, isGameController);
         } else {
             newRet[name] = ret[name];
             JoystickSDL *j = static_cast<JoystickSDL*>(newRet[name]);

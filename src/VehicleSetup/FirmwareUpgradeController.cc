@@ -162,7 +162,7 @@ void FirmwareUpgradeController::startBoardSearch(void)
     LinkManager::instance()->setConnectionsSuspended(tr("Connect not allowed during Firmware Upgrade."));
 
     // FIXME: Why did we get here with active vehicle?
-    if (!qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()) {
+    if (!MultiVehicleManager::instance()->activeVehicle()) {
         // We have to disconnect any inactive links
         LinkManager::instance()->disconnectAll();
     }

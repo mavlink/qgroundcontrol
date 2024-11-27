@@ -115,7 +115,7 @@ void SubtitleWriter::_captureTelemetry()
     static const float nRows = 3; // number of rows used for displaying data
     static const int offsetFactor = 700; // Used to simulate a larger resolution and reduce the borders in the layout
 
-    auto *vehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
+    auto *vehicle = MultiVehicleManager::instance()->activeVehicle();
 
     if (!vehicle) {
         qCWarning(SubtitleWriterLog) << "Attempting to capture fact data with no active vehicle!";
