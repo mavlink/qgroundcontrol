@@ -1072,10 +1072,11 @@ SOURCES += \
     src/GPS/Drivers/src/sbf.cpp \
     src/GPS/GPSManager.cc \
     src/GPS/GPSProvider.cc \
-    src/GPS/NmeaMessage.cc \
     src/Joystick/JoystickSDL.cc \
     src/RunGuard.cc \
 }
+
+SOURCES += src/GPS/NmeaMessage.cc
 
 #
 # Firmware Plugin Support
