@@ -31,7 +31,6 @@ target_link_libraries(VideoManager
         VideoReceiver
     PUBLIC
         Qt6::Core
-        QGC
 )
 
 target_include_directories(VideoManager PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
