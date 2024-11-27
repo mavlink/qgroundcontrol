@@ -25,6 +25,9 @@ option(QGC_ENABLE_QT_VIDEOSTREAMING "Enable QtMultimedia Video Backend" OFF) # Q
 set(QGC_MAVLINK_GIT_REPO "https://github.com/mavlink/c_library_v2.git" CACHE STRING "URL to MAVLink Git Repo")
 set(QGC_MAVLINK_GIT_TAG "4db2f67156d996eae90ef437a73353468d850407" CACHE STRING "Tag of MAVLink Git Repo")
 
+set(QGC_QT_ANDROID_MIN_SDK_VERSION "26" CACHE STRING "Android Min SDK Version")
+set(QGC_QT_ANDROID_TARGET_SDK_VERSION "35" CACHE STRING "Android Target SDK Version")
+
 # MacOS
 set(QGC_BUNDLE_ID "org.qgroundcontrol.QGroundControl" CACHE STRING "MacOS Bundle ID") # MACOS
 set(QGC_MACOS_ICON_PATH "${CMAKE_SOURCE_DIR}/deploy/mac" CACHE PATH "MacOS Icon Path") # MACOS
