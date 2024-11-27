@@ -26,8 +26,8 @@ target_link_libraries(VehicleActuators
     PUBLIC
         Qt6::Core
         Qt6::Gui
-        Comms
         FactSystem
+        MAVLink
         QmlControls
         Vehicle
 )

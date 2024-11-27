@@ -35,6 +35,7 @@ public:
     ~JoystickManager();
 
     static JoystickManager *instance();
+    static void registerQmlTypes();
 
     QVariantList joysticks();
     QStringList joystickNames() const { return _name2JoystickMap.keys(); }

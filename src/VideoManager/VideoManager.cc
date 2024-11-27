@@ -65,12 +65,6 @@ VideoManager::VideoManager(QObject *parent)
 
 VideoManager::~VideoManager()
 {
-    for (VideoReceiverData &videoReceiver : _videoReceiverData) {
-        QGCCorePlugin::instance()->releaseVideoSink(videoReceiver.sink);
-        delete videoReceiver.receiver;
-        videoReceiver.receiver = nullptr;
-    }
-
     // qCDebug(VideoManagerLog) << Q_FUNC_INFO << this;
 }
 
@@ -204,6 +198,15 @@ void VideoManager::init()
     }
 
     _initialized = true;
+}
+
+void VideoManager::cleanup()
+{
+    for (VideoReceiverData &videoReceiver : _videoReceiverData) {
+        QGCCorePlugin::instance()->releaseVideoSink(videoReceiver.sink);
+        delete videoReceiver.receiver;
+        videoReceiver.receiver = nullptr;
+    }
 }
 
 void VideoManager::startVideo()
