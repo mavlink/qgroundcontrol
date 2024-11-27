@@ -13,105 +13,80 @@
 
 #pragma once
 
-#include <QtCore/QTimer>
-#include <QtPositioning/QGeoCoordinate>
+#include <QtCore/QObject>
 #include <QtCore/QLoggingCategory>
 
-#include "QGCToolbox.h"
-#include "QmlObjectListModel.h"
-#include "MAVLinkLib.h"
-
-class QGCApplication;
 class LinkInterface;
 class Vehicle;
+class QmlObjectListModel;
+class QTimer;
 
 Q_DECLARE_LOGGING_CATEGORY(MultiVehicleManagerLog)
 
-class MultiVehicleManager : public QGCTool
+class MultiVehicleManager : public QObject
 {
     Q_OBJECT
+    Q_MOC_INCLUDE("QmlObjectListModel.h")
+    Q_MOC_INCLUDE("LinkInterface.h")
     Q_MOC_INCLUDE("Vehicle.h")
+    Q_PROPERTY(bool                 activeVehicleAvailable          READ _getActiveVehicleAvailable                                         NOTIFY activeVehicleAvailableChanged)
+    Q_PROPERTY(bool                 parameterReadyVehicleAvailable  READ _getParameterReadyVehicleAvailable                                 NOTIFY parameterReadyVehicleAvailableChanged)
+    Q_PROPERTY(Vehicle              *activeVehicle                  READ activeVehicle                      WRITE setActiveVehicle          NOTIFY activeVehicleChanged)
+    Q_PROPERTY(QmlObjectListModel   *vehicles                       READ vehicles                                                           CONSTANT)
+    Q_PROPERTY(bool                 gcsHeartBeatEnabled             READ _getGcsHeartbeatEnabled            WRITE _setGcsHeartbeatEnabled   NOTIFY gcsHeartBeatEnabledChanged)
+    Q_PROPERTY(Vehicle              *offlineEditingVehicle          READ offlineEditingVehicle                                              CONSTANT)
 
 public:
-    MultiVehicleManager(QGCApplication* app, QGCToolbox* toolbox);
+    explicit MultiVehicleManager(QObject *parent = nullptr);
+    ~MultiVehicleManager();
 
-    Q_INVOKABLE void        saveSetting (const QString &key, const QString& value);
-    Q_INVOKABLE QString     loadSetting (const QString &key, const QString& defaultValue);
+    static MultiVehicleManager *instance();
+    static void registerQmlTypes();
 
-    Q_PROPERTY(bool                 activeVehicleAvailable          READ activeVehicleAvailable                                         NOTIFY activeVehicleAvailableChanged)
-    Q_PROPERTY(bool                 parameterReadyVehicleAvailable  READ parameterReadyVehicleAvailable                                 NOTIFY parameterReadyVehicleAvailableChanged)
-    Q_PROPERTY(Vehicle*             activeVehicle                   READ activeVehicle                  WRITE setActiveVehicle          NOTIFY activeVehicleChanged)
-    Q_PROPERTY(QmlObjectListModel*  vehicles                        READ vehicles                                                       CONSTANT)
-    Q_PROPERTY(bool                 gcsHeartBeatEnabled             READ gcsHeartbeatEnabled            WRITE setGcsHeartbeatEnabled    NOTIFY gcsHeartBeatEnabledChanged)
-    Q_PROPERTY(Vehicle*             offlineEditingVehicle           READ offlineEditingVehicle                                          CONSTANT)
-    Q_PROPERTY(QGeoCoordinate       lastKnownLocation               READ lastKnownLocation                                              NOTIFY lastKnownLocationChanged) //< Current vehicles last know location
-
-    // Methods
-
-    Q_INVOKABLE Vehicle* getVehicleById(int vehicleId);
-
-    // Property accessors
-
-    bool activeVehicleAvailable(void) const{ return _activeVehicleAvailable; }
-
-    bool parameterReadyVehicleAvailable(void) const{ return _parameterReadyVehicleAvailable; }
-
-    Vehicle* activeVehicle(void) { return _activeVehicle; }
-    void setActiveVehicle(Vehicle* vehicle);
-
-    QmlObjectListModel* vehicles(void) { return &_vehicles; }
-
-    bool gcsHeartbeatEnabled(void) const { return _gcsHeartbeatEnabled; }
-    void setGcsHeartbeatEnabled(bool gcsHeartBeatEnabled);
-
-    Vehicle* offlineEditingVehicle(void) { return _offlineEditingVehicle; }
-
-    // Override from QGCTool
-    virtual void setToolbox(QGCToolbox *toolbox);
-
-    QGeoCoordinate lastKnownLocation    () { return _lastKnownLocation; }
+    void init();
+    Q_INVOKABLE Vehicle *getVehicleById(int vehicleId) const;
+    QmlObjectListModel *vehicles() const { return _vehicles; }
+    Vehicle *offlineEditingVehicle() const { return _offlineEditingVehicle; }
+    Vehicle *activeVehicle() const { return _activeVehicle; }
+    void setActiveVehicle(Vehicle *vehicle);
 
 signals:
-    void vehicleAdded                   (Vehicle* vehicle);
-    void vehicleRemoved                 (Vehicle* vehicle);
-    void activeVehicleAvailableChanged  (bool activeVehicleAvailable);
+    void vehicleAdded(Vehicle *vehicle);
+    void vehicleRemoved(Vehicle *vehicle);
+    void activeVehicleAvailableChanged(bool activeVehicleAvailable);
     void parameterReadyVehicleAvailableChanged(bool parameterReadyVehicleAvailable);
-    void activeVehicleChanged           (Vehicle* activeVehicle);
-    void gcsHeartBeatEnabledChanged     (bool gcsHeartBeatEnabled);
-    void lastKnownLocationChanged       ();
-#ifndef DOXYGEN_SKIP
-    void _deleteVehiclePhase2Signal     (void);
-#endif
+    void activeVehicleChanged(Vehicle *activeVehicle);
+    void gcsHeartBeatEnabledChanged(bool gcsHeartBeatEnabled);
 
 private slots:
-    void _deleteVehiclePhase1           (Vehicle* vehicle);
-    void _deleteVehiclePhase2           (void);
-    void _setActiveVehiclePhase2        (void);
-    void _vehicleParametersReadyChanged (bool parametersReady);
-    void _sendGCSHeartbeat              (void);
-    void _vehicleHeartbeatInfo          (LinkInterface* link, int vehicleId, int componentId, int vehicleFirmwareType, int vehicleType);
-    void _requestProtocolVersion        (unsigned version);
-    void _coordinateChanged             (QGeoCoordinate coordinate);
+    void _deleteVehiclePhase1(Vehicle *vehicle); /// This slot is connected to the Vehicle::allLinksDestroyed signal such that the Vehicle is deleted and all other right things happen when the Vehicle goes away.
+    void _deleteVehiclePhase2(Vehicle *vehicle);
+    void _setActiveVehiclePhase2(Vehicle *vehicle);
+    void _vehicleParametersReadyChanged(bool parametersReady);
+    void _sendGCSHeartbeat();
+    void _vehicleHeartbeatInfo(LinkInterface *link, int vehicleId, int componentId, int vehicleFirmwareType, int vehicleType);
+    void _requestProtocolVersion(unsigned version) const; /// This slot is connected to the Vehicle::requestProtocolVersion signal such that the vehicle manager tries to switch MAVLink to v2 if all vehicles support it
 
 private:
     bool _vehicleExists(int vehicleId);
+    void _setActiveVehicle(Vehicle *vehicle);
+    bool _getGcsHeartbeatEnabled() const { return _gcsHeartbeatEnabled; }
+    void _setGcsHeartbeatEnabled(bool gcsHeartBeatEnabled);
+    bool _getActiveVehicleAvailable() const { return _activeVehicleAvailable; }
+    void _setActiveVehicleAvailable(bool activeVehicleAvailable);
+    bool _getParameterReadyVehicleAvailable() const { return _parameterReadyVehicleAvailable; }
+    void _setParameterReadyVehicleAvailable(bool parametersReady);
 
-    bool        _activeVehicleAvailable;            ///< true: An active vehicle is available
-    bool        _parameterReadyVehicleAvailable;    ///< true: An active vehicle with ready parameters is available
-    Vehicle*    _activeVehicle;                     ///< Currently active vehicle from a ui perspective
-    Vehicle*    _offlineEditingVehicle;             ///< Disconnected vechicle used for offline editing
+    QTimer *_gcsHeartbeatTimer = nullptr;           ///< Timer to emit heartbeats
+    Vehicle *_offlineEditingVehicle = nullptr;      ///< Disconnected vechicle used for offline editing
+    QmlObjectListModel *_vehicles = nullptr;
+    bool _activeVehicleAvailable = false;           ///< true: An active vehicle is available
+    bool _gcsHeartbeatEnabled = false;              ///< Enabled/disable heartbeat emission
+    bool _parameterReadyVehicleAvailable = false;   ///< true: An active vehicle with ready parameters is available
+    Vehicle *_activeVehicle = nullptr;              ///< Currently active vehicle from a ui perspective
+    QList<int> _ignoreVehicleIds;                   ///< List of vehicle id for which we ignore further communication
+    bool _initialized = false;
 
-    QList<Vehicle*> _vehiclesBeingDeleted;          ///< List of Vehicles being deleted in queued phases
-    Vehicle*        _vehicleBeingSetActive;         ///< Vehicle being set active in queued phases
-
-    QList<int>  _ignoreVehicleIds;          ///< List of vehicle id for which we ignore further communication
-
-    QmlObjectListModel  _vehicles;
-
-    QGeoCoordinate              _lastKnownLocation;
-
-    QTimer              _gcsHeartbeatTimer;             ///< Timer to emit heartbeats
-    bool                _gcsHeartbeatEnabled;           ///< Enabled/disable heartbeat emission
-    static constexpr int    _gcsHeartbeatRateMSecs = 1000;  ///< Heartbeat rate
-    static constexpr const char* _gcsHeartbeatEnabledKey = "gcsHeartbeatEnabled";
+    static constexpr int kGCSHeartbeatRateMSecs = 1000;  ///< Heartbeat rate
+    static constexpr const char *kGCSHeartbeatEnabledKey = "gcsHeartbeatEnabled";
 };

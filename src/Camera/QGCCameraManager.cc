@@ -50,7 +50,7 @@ QGCCameraManager::QGCCameraManager(Vehicle *vehicle)
 
     _addCameraControlToLists(_simulatedCameraControl);
 
-    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::parameterReadyVehicleAvailableChanged, this, &QGCCameraManager::_vehicleReady);
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::parameterReadyVehicleAvailableChanged, this, &QGCCameraManager::_vehicleReady);
     connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &QGCCameraManager::_mavlinkMessageReceived);
     connect(&_camerasLostHeartbeatTimer, &QTimer::timeout, this, &QGCCameraManager::_checkForLostCameras);
 
@@ -87,7 +87,7 @@ void QGCCameraManager::_vehicleReady(bool ready)
 {
     qCDebug(CameraManagerLog) << "_vehicleReady(" << ready << ")";
     if(ready) {
-        if(qgcApp()->toolbox()->multiVehicleManager()->activeVehicle() == _vehicle) {
+        if(MultiVehicleManager::instance()->activeVehicle() == _vehicle) {
             _vehicleReadyState = true;
             _activeJoystickChanged(JoystickManager::instance()->activeJoystick());
             connect(JoystickManager::instance(), &JoystickManager::activeJoystickChanged, this, &QGCCameraManager::_activeJoystickChanged);

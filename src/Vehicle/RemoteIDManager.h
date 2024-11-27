@@ -15,7 +15,7 @@
 #include <QtPositioning/QGeoPositionInfo>
 #include <QtCore/QLoggingCategory>
 
-#include "QGCMAVLink.h"
+#include "MAVLinkLib.h"
 
 Q_DECLARE_LOGGING_CATEGORY(RemoteIDManagerLog)
 

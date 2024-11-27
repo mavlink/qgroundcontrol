@@ -33,7 +33,7 @@ void MissionControllerManagerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareTy
     
     // Wait for the Mission Manager to finish it's initial load
     
-    _missionManager = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->missionManager();
+    _missionManager = MultiVehicleManager::instance()->activeVehicle()->missionManager();
     QVERIFY(_missionManager);
     
     _rgMissionManagerSignals[newMissionItemsAvailableSignalIndex] = SIGNAL(newMissionItemsAvailable(bool));

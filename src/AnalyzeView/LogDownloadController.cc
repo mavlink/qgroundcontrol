@@ -34,10 +34,9 @@ LogDownloadController::LogDownloadController(void)
     , _retries(0)
     , _apmOneBased(0)
 {
-    MultiVehicleManager *manager = qgcApp()->toolbox()->multiVehicleManager();
-    connect(manager, &MultiVehicleManager::activeVehicleChanged, this, &LogDownloadController::_setActiveVehicle);
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &LogDownloadController::_setActiveVehicle);
     connect(&_timer, &QTimer::timeout, this, &LogDownloadController::_processDownload);
-    _setActiveVehicle(manager->activeVehicle());
+    _setActiveVehicle(MultiVehicleManager::instance()->activeVehicle());
 }
 
 //----------------------------------------------------------------------------------------
@@ -600,7 +599,7 @@ LogDownloadController::eraseAll(void)
                         MAVLinkProtocol::getComponentId(),
                         sharedLink->mavlinkChannel(),
                         &msg,
-                        qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->id(), qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->defaultComponentId());
+                        MultiVehicleManager::instance()->activeVehicle()->id(), MultiVehicleManager::instance()->activeVehicle()->defaultComponentId());
             _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
         }
         refresh();

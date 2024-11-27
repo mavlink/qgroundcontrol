@@ -43,7 +43,7 @@ void SendMavCommandWithHandlerTest::_mavCmdResultHandler(void* resultHandlerData
 void SendMavCommandWithHandlerTest::_mavCmdProgressHandler(void* progressHandlerData, int compId, const mavlink_command_ack_t& ack)
 {
     TestCase_t*             testCase    = static_cast<TestCase_t*>(progressHandlerData);
-    MultiVehicleManager*    vehicleMgr  = qgcApp()->toolbox()->multiVehicleManager();
+    MultiVehicleManager*    vehicleMgr  = MultiVehicleManager::instance();
     Vehicle*                vehicle     = vehicleMgr->activeVehicle();
 
     _progressHandlerCalled = true;
@@ -60,7 +60,7 @@ void SendMavCommandWithHandlerTest::_testCaseWorker(TestCase_t& testCase)
 {
     _connectMockLinkNoInitialConnectSequence();
 
-    MultiVehicleManager*    vehicleMgr  = qgcApp()->toolbox()->multiVehicleManager();
+    MultiVehicleManager*    vehicleMgr  = MultiVehicleManager::instance();
     Vehicle*                vehicle     = vehicleMgr->activeVehicle();
 
     Vehicle::MavCmdAckHandlerInfo_t handlerInfo = {};
@@ -103,7 +103,7 @@ void SendMavCommandWithHandlerTest::_duplicateCommand(void)
         MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE, MAV_RESULT_FAILED, 0, Vehicle::MavCmdResultFailureDuplicateCommand, 1
     };
 
-    MultiVehicleManager*    vehicleMgr  = qgcApp()->toolbox()->multiVehicleManager();
+    MultiVehicleManager*    vehicleMgr  = MultiVehicleManager::instance();
     Vehicle*                vehicle     = vehicleMgr->activeVehicle();
 
     Vehicle::MavCmdAckHandlerInfo_t handlerInfo = {};
@@ -145,7 +145,7 @@ void SendMavCommandWithHandlerTest::_compIdAllFailure(void)
         MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE, MAV_RESULT_FAILED, 0, Vehicle::MavCmdResultFailureDuplicateCommand, 0
     };
 
-    MultiVehicleManager*    vehicleMgr  = qgcApp()->toolbox()->multiVehicleManager();
+    MultiVehicleManager*    vehicleMgr  = MultiVehicleManager::instance();
     Vehicle*                vehicle     = vehicleMgr->activeVehicle();
 
     Vehicle::MavCmdAckHandlerInfo_t handlerInfo = {};

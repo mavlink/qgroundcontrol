@@ -57,7 +57,7 @@ void TakeoffMissionItem::_init(bool forLoad)
 
     QGeoCoordinate homePosition = _settingsItem->coordinate();
     if (!homePosition.isValid()) {
-        Vehicle* activeVehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
+        Vehicle* activeVehicle = MultiVehicleManager::instance()->activeVehicle();
         if (activeVehicle) {
             homePosition = activeVehicle->homePosition();
             if (homePosition.isValid()) {

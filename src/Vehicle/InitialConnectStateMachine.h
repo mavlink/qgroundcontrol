@@ -10,7 +10,7 @@
 #pragma once
 
 #include "StateMachine.h"
-#include "QGCMAVLink.h"
+#include "MAVLinkLib.h"
 #include "Vehicle.h"
 
 #include <QtCore/QLoggingCategory>
