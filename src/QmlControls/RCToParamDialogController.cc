@@ -54,7 +54,7 @@ void RCToParamDialogController::setTuningFact(Fact *tuningFact)
     _maxFact->setRawValue(_tuningFact->rawMax().toDouble());
 
     (void) connect(_tuningFact, &Fact::vehicleUpdated, this, &RCToParamDialogController::_parameterUpdated);
-    qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->parameterManager()->refreshParameter(ParameterManager::defaultComponentId, _tuningFact->name());
+    MultiVehicleManager::instance()->activeVehicle()->parameterManager()->refreshParameter(ParameterManager::defaultComponentId, _tuningFact->name());
 }
 
 void RCToParamDialogController::_parameterUpdated()

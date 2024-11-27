@@ -27,10 +27,9 @@ MAVLinkConsoleController::MAVLinkConsoleController(QObject *parent)
 {
     // qCDebug(MAVLinkConsoleControllerLog) << Q_FUNC_INFO << this;
 
-    MultiVehicleManager *const manager = qgcApp()->toolbox()->multiVehicleManager();
-    (void) connect(manager, &MultiVehicleManager::activeVehicleChanged, this, &MAVLinkConsoleController::_setActiveVehicle);
+    (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &MAVLinkConsoleController::_setActiveVehicle);
 
-    _setActiveVehicle(manager->activeVehicle());
+    _setActiveVehicle(MultiVehicleManager::instance()->activeVehicle());
 }
 
 MAVLinkConsoleController::~MAVLinkConsoleController()

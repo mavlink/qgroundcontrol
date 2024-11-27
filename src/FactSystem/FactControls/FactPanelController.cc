@@ -25,11 +25,11 @@ QGC_LOGGING_CATEGORY(FactPanelControllerLog, "FactPanelControllerLog")
 FactPanelController::FactPanelController(QObject *parent)
     : QObject(parent)
 {
-    _vehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
+    _vehicle = MultiVehicleManager::instance()->activeVehicle();
     if (_vehicle) {
         _autopilot = _vehicle->autopilotPlugin();
     } else {
-        _vehicle = qgcApp()->toolbox()->multiVehicleManager()->offlineEditingVehicle();
+        _vehicle = MultiVehicleManager::instance()->offlineEditingVehicle();
     }
 
     _missingParametersTimer.setInterval(500);

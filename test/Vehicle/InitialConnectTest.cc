@@ -39,7 +39,7 @@ void InitialConnectTest::_performTestCases(void)
 
 void InitialConnectTest::_boardVendorProductId(void)
 {
-    auto *mvm = qgcApp()->toolbox()->multiVehicleManager();
+    auto *mvm = MultiVehicleManager::instance();
     QSignalSpy activeVehicleSpy{mvm, &MultiVehicleManager::activeVehicleChanged};
 
     auto mockConfig = std::make_shared<MockConfiguration>(QString{"MockLink"});

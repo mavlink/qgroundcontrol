@@ -13,7 +13,6 @@
 
 #include <QtCore/QObject>
 
-class MultiVehicleManager;
 class QGCApplication;
 class QGCCorePlugin;
 class SettingsManager;
@@ -25,7 +24,6 @@ class QGCToolbox : public QObject {
 public:
     QGCToolbox(QGCApplication* app);
 
-    MultiVehicleManager*        multiVehicleManager     () { return _multiVehicleManager; }
     QGCCorePlugin*              corePlugin              () { return _corePlugin; }
     SettingsManager*            settingsManager         () { return _settingsManager; }
 
@@ -33,7 +31,6 @@ private:
     void setChildToolboxes(void);
     void _scanAndLoadPlugins(QGCApplication *app);
 
-    MultiVehicleManager*        _multiVehicleManager    = nullptr;
     QGCCorePlugin*              _corePlugin             = nullptr;
     SettingsManager*            _settingsManager        = nullptr;
     friend class QGCApplication;
