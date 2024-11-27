@@ -71,6 +71,10 @@ else()
     else()
         find_package(Qt6 REQUIRED COMPONENTS SerialPort)
         target_link_libraries(Comms PUBLIC Qt6::SerialPort)
+        target_precompile_headers(Comms
+            PRIVATE
+                <QtSerialPort/QSerialPort>
+        )
     endif()
 endif()
 
@@ -85,6 +89,10 @@ if(QGC_ENABLE_BLUETOOTH)
             BluetoothLink.h
     )
     target_compile_definitions(Comms PUBLIC QGC_ENABLE_BLUETOOTH)
+    target_precompile_headers(Comms
+        PRIVATE
+            <QtBluetooth/QBluetoothSocket>
+    )
 endif()
 
 ############# ZEROConf

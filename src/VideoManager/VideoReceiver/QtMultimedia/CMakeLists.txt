@@ -41,3 +41,8 @@ target_sources(QtMultimediaReceiver
         UVCReceiver.cc
         UVCReceiver.h
 )
+
+target_precompile_headers(QtMultimediaReceiver
+    PRIVATE
+        <QtMultimedia/QMediaDevices>
+)
