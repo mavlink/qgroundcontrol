@@ -44,6 +44,11 @@ target_link_libraries(AnalyzeView
 
 target_include_directories(AnalyzeView PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
+target_precompile_headers(AnalyzeView
+    PRIVATE
+        <QtCharts/QAbstractSeries>
+)
+
 #===========================================================================#
 
 include(FetchContent)

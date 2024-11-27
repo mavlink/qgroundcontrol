@@ -27,3 +27,8 @@ if(LINUX)
         target_link_libraries(Audio PRIVATE Flite::Flite)
     endif()
 endif()
+
+target_precompile_headers(Audio
+    PRIVATE
+        <QtTextToSpeech/QTextToSpeech>
+)

@@ -121,6 +121,10 @@ if(ANDROID)
     )
 
     target_include_directories(QGC PUBLIC ${CMAKE_SOURCE_DIR}/android/src)
+    target_precompile_headers(QGC
+        PRIVATE
+            <QtCore/QJniEnvironment>
+    )
 else()
     target_sources(QGC
         PRIVATE
@@ -129,4 +133,8 @@ else()
     )
 endif()
 
-target_precompile_headers(QGC PRIVATE ${CMAKE_SOURCE_DIR}/src/pch.h)
+target_precompile_headers(QGC
+    PRIVATE
+        ${CMAKE_SOURCE_DIR}/src/pch.h
+        <QtWidgets/QApplication>
+)
