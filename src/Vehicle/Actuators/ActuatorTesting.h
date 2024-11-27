@@ -12,7 +12,7 @@
 
 #include "QmlObjectListModel.h"
 #include "Vehicle.h"
-#include "QGCMAVLink.h"
+#include "MAVLinkLib.h"
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QTimer>

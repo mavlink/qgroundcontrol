@@ -97,7 +97,7 @@ class Vehicle : public VehicleFactGroup
     Q_MOC_INCLUDE("Autotune.h")
     Q_MOC_INCLUDE("RemoteIDManager.h")
     Q_MOC_INCLUDE("QGCCameraManager.h")
-    Q_MOC_INCLUDE("Actuators/Actuators.h")
+    Q_MOC_INCLUDE("Actuators.h")
 
     friend class InitialConnectStateMachine;
     friend class VehicleLinkManager;
