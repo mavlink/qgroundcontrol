@@ -35,7 +35,7 @@ jobs:
 
     env:
       ARTIFACT: QGroundControl-x86_64.AppImage
-      QT_VERSION: 6.6.3
+      QT_VERSION: 6.7.3
       GST_VERSION: 1.22.12
 
     steps:
@@ -96,7 +96,7 @@ jobs:
           aqtversion: ==3.1.*
           host: linux
           target: desktop
-          arch: gcc_64
+          arch: linux_gcc_64
           dir: ${{ runner.temp }}
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
           cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}

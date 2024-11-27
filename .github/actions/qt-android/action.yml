@@ -10,7 +10,7 @@ inputs:
   version:
     description: Qt Version
     required: false
-    default: 6.6.3
+    default: 6.7.3
   abis:
     description: ABIs to Build
     required: false
@@ -27,15 +27,15 @@ runs:
     - name: Setup Android Environment
       uses: android-actions/setup-android@v3
       with:
-        cmdline-tools-version: 11076708
-        packages: 'platform-tools platforms;android-34 build-tools;34.0.0' # ndk;25.1.8937393'
+        cmdline-tools-version: 12266719
+        packages: 'platform-tools platforms;android-34 build-tools;34.0.0' # ndk;26.1.10909125'
         log-accepted-android-sdk-licenses: false
 
     - name: Install Android NDK
       uses: nttld/setup-ndk@v1
       id: setup-ndk
       with:
-        ndk-version: r25b
+        ndk-version: r26b
         add-to-path: false
 
     - run: |
