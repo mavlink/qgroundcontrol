@@ -112,6 +112,7 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app, QGCToolbox
     , _qgcPositionManager(QGCPositionManager::instance())
     , _missionCommandTree(MissionCommandTree::instance())
     , _videoManager(VideoManager::instance())
+    , _linkManager(LinkManager::instance())
 #ifndef QGC_AIRLINK_DISABLED
     , _airlinkManager(AirLinkManager::instance())
 #endif
@@ -158,7 +159,6 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
 {
     QGCTool::setToolbox(toolbox);
 
-    _linkManager            = toolbox->linkManager();
     _multiVehicleManager    = toolbox->multiVehicleManager();
     _corePlugin             = toolbox->corePlugin();
     _settingsManager        = toolbox->settingsManager();
@@ -253,7 +253,7 @@ void QGroundControlQmlGlobal::startAPMArduRoverMockLink(bool sendStatusText)
 void QGroundControlQmlGlobal::stopOneMockLink(void)
 {
 #ifdef QT_DEBUG
-    QList<SharedLinkInterfacePtr> sharedLinks = _toolbox->linkManager()->links();
+    QList<SharedLinkInterfacePtr> sharedLinks = LinkManager::instance()->links();
 
     for (int i=0; i<sharedLinks.count(); i++) {
         LinkInterface* link = sharedLinks[i].get();

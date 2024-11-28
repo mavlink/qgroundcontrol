@@ -82,7 +82,7 @@ void SerialLink::disconnect(void)
     }
 
 #ifdef Q_OS_ANDROID
-    qgcApp()->toolbox()->linkManager()->suspendConfigurationUpdates(false);
+    LinkManager::instance()->suspendConfigurationUpdates(false);
 #endif
 }
 
@@ -96,7 +96,7 @@ bool SerialLink::_connect(void)
     }
 
 #ifdef Q_OS_ANDROID
-    qgcApp()->toolbox()->linkManager()->suspendConfigurationUpdates(true);
+    LinkManager::instance()->suspendConfigurationUpdates(true);
 #endif
 
     QSerialPort::SerialPortError    error;

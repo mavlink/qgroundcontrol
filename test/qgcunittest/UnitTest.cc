@@ -92,11 +92,7 @@ void UnitTest::init(void)
 {
     _initCalled = true;
 
-    if (!_linkManager) {
-        _linkManager = qgcApp()->toolbox()->linkManager();
-    }
-
-    _linkManager->setConnectionsAllowed();
+    LinkManager::instance()->setConnectionsAllowed();
 
     // Force offline vehicle back to defaults
     AppSettings* appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
