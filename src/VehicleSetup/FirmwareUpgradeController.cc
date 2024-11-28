@@ -154,19 +154,17 @@ FirmwareUpgradeController::FirmwareUpgradeController(void)
 
 FirmwareUpgradeController::~FirmwareUpgradeController()
 {
-    qgcApp()->toolbox()->linkManager()->setConnectionsAllowed();
+    LinkManager::instance()->setConnectionsAllowed();
 }
 
 void FirmwareUpgradeController::startBoardSearch(void)
 {
-    LinkManager* linkMgr = qgcApp()->toolbox()->linkManager();
-
-    linkMgr->setConnectionsSuspended(tr("Connect not allowed during Firmware Upgrade."));
+    LinkManager::instance()->setConnectionsSuspended(tr("Connect not allowed during Firmware Upgrade."));
 
     // FIXME: Why did we get here with active vehicle?
     if (!qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()) {
         // We have to disconnect any inactive links
-        linkMgr->disconnectAll();
+        LinkManager::instance()->disconnectAll();
     }
 
     _bootloaderFound = false;
@@ -435,7 +433,7 @@ void FirmwareUpgradeController::_flashComplete(void)
     _appendStatusLog(tr("Upgrade complete"), true);
     _appendStatusLog("------------------------------------------", false);
     emit flashComplete();
-    qgcApp()->toolbox()->linkManager()->setConnectionsAllowed();
+    LinkManager::instance()->setConnectionsAllowed();
 }
 
 void FirmwareUpgradeController::_error(const QString& errorString)
@@ -492,7 +490,7 @@ void FirmwareUpgradeController::_errorCancel(const QString& msg)
     _appendStatusLog("------------------------------------------", false);
     emit error();
     cancel();
-    qgcApp()->toolbox()->linkManager()->setConnectionsAllowed();
+    LinkManager::instance()->setConnectionsAllowed();
 }
 
 void FirmwareUpgradeController::_eraseStarted(void)

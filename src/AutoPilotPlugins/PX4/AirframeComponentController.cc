@@ -127,7 +127,7 @@ void AirframeComponentController::_rebootAfterStackUnwind(void)
         QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
     }
     QGuiApplication::restoreOverrideCursor();
-    qgcApp()->toolbox()->linkManager()->disconnectAll();
+    LinkManager::instance()->disconnectAll();
 }
 
 AirframeType::AirframeType(const QString& name, const QString& imageResource, QObject* parent) :

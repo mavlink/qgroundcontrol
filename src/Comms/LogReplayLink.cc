@@ -358,7 +358,7 @@ void LogReplayLink::_readNextLogEntry(void)
 
 void LogReplayLink::_play(void)
 {
-    qgcApp()->toolbox()->linkManager()->setConnectionsSuspended(tr("Connect not allowed during Flight Data replay."));
+    LinkManager::instance()->setConnectionsSuspended(tr("Connect not allowed during Flight Data replay."));
 #ifndef __mobile__
     MAVLinkProtocol::instance()->suspendLogForReplay(true);
 #endif
@@ -377,7 +377,7 @@ void LogReplayLink::_play(void)
 
 void LogReplayLink::_pause(void)
 {
-    qgcApp()->toolbox()->linkManager()->setConnectionsAllowed();
+    LinkManager::instance()->setConnectionsAllowed();
 #ifndef __mobile__
     MAVLinkProtocol::instance()->suspendLogForReplay(false);
 #endif

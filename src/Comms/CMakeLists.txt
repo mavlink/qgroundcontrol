@@ -26,6 +26,7 @@ target_link_libraries(Comms
         Qt6::Test
         MockLink
         PositionManager
+        QGC
         Settings
         Vehicle
     PUBLIC
@@ -33,7 +34,6 @@ target_link_libraries(Comms
         Qt6::Network
         AirLink
         MAVLink
-        QGC
         QmlControls
         Utilities
 )
