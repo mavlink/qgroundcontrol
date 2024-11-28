@@ -7,8 +7,7 @@
  *
  ****************************************************************************/
 
-
-#include "LinkManager.h"
+#include "QGCToolbox.h"
 #include "MultiVehicleManager.h"
 #include "QGCCorePlugin.h"
 #include "SettingsManager.h"
@@ -26,7 +25,6 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
 
     //-- Scan and load plugins
     _scanAndLoadPlugins(app);
-    _linkManager            = new LinkManager               (app, this);
     _multiVehicleManager    = new MultiVehicleManager       (app, this);
 }
 
@@ -36,7 +34,6 @@ void QGCToolbox::setChildToolboxes(void)
     _settingsManager->setToolbox(this);
 
     _corePlugin->setToolbox(this);
-    _linkManager->setToolbox(this);
     _multiVehicleManager->setToolbox(this);
 }
 

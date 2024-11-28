@@ -362,8 +362,7 @@ void MultiVehicleManager::setGcsHeartbeatEnabled(bool gcsHeartBeatEnabled)
 
 void MultiVehicleManager::_sendGCSHeartbeat(void)
 {
-    LinkManager*                    linkManager = qgcApp()->toolbox()->linkManager();
-    QList<SharedLinkInterfacePtr>   sharedLinks = linkManager->links();
+    QList<SharedLinkInterfacePtr>   sharedLinks = LinkManager::instance()->links();
 
     // Send a heartbeat out on each link
     for (int i=0; i<sharedLinks.count(); i++) {

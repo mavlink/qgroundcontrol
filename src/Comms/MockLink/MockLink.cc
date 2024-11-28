@@ -148,8 +148,7 @@ bool MockLink::_allocateMavlinkChannel()
         return false;
     }
 
-    auto mgr = qgcApp()->toolbox()->linkManager();
-    _mavlinkAuxChannel = mgr->allocateMavlinkChannel();
+    _mavlinkAuxChannel = LinkManager::instance()->allocateMavlinkChannel();
     if (!mavlinkAuxChannelIsSet()) {
         qCWarning(MockLinkLog) << "_allocateMavlinkChannel failed";
         LinkInterface::_freeMavlinkChannel();
@@ -167,8 +166,7 @@ void MockLink::_freeMavlinkChannel()
         return;
     }
 
-    auto mgr = qgcApp()->toolbox()->linkManager();
-    mgr->freeMavlinkChannel(_mavlinkAuxChannel);
+    LinkManager::instance()->freeMavlinkChannel(_mavlinkAuxChannel);
     LinkInterface::_freeMavlinkChannel();
 }
 
@@ -1501,12 +1499,10 @@ void MockConfiguration::loadSettings(QSettings& settings, const QString& root)
 
 MockLink* MockLink::_startMockLink(MockConfiguration* mockConfig)
 {
-    LinkManager* linkMgr = qgcApp()->toolbox()->linkManager();
-
     mockConfig->setDynamic(true);
-    SharedLinkConfigurationPtr config = linkMgr->addConfiguration(mockConfig);
+    SharedLinkConfigurationPtr config = LinkManager::instance()->addConfiguration(mockConfig);
 
-    if (linkMgr->createConnectedLink(config)) {
+    if (LinkManager::instance()->createConnectedLink(config)) {
         return qobject_cast<MockLink*>(config->link());
     } else {
         return nullptr;
