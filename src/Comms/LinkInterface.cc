@@ -83,7 +83,7 @@ bool LinkInterface::_allocateMavlinkChannel()
         return true;
     }
 
-    _mavlinkChannel = qgcApp()->toolbox()->linkManager()->allocateMavlinkChannel();
+    _mavlinkChannel = LinkManager::instance()->allocateMavlinkChannel();
 
     if (!mavlinkChannelIsSet()) {
         qCWarning(LinkInterfaceLog) << Q_FUNC_INFO << "failed";
@@ -105,7 +105,7 @@ void LinkInterface::_freeMavlinkChannel()
         return;
     }
 
-    qgcApp()->toolbox()->linkManager()->freeMavlinkChannel(_mavlinkChannel);
+    LinkManager::instance()->freeMavlinkChannel(_mavlinkChannel);
     _mavlinkChannel = LinkManager::invalidMavlinkChannel();
 }
 

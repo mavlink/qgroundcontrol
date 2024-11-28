@@ -1174,7 +1174,7 @@ uint8_t APMFirmwarePlugin::_reencodeMavlinkChannel()
     _channelMutex.lock();
     static uint8_t channel{LinkManager::invalidMavlinkChannel()};
     if (LinkManager::invalidMavlinkChannel() == channel) {
-        channel = qgcApp()->toolbox()->linkManager()->allocateMavlinkChannel();
+        channel = LinkManager::instance()->allocateMavlinkChannel();
     }
     _channelMutex.unlock();
     return channel;
