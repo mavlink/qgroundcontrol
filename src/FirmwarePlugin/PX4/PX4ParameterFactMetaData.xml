@@ -16643,6 +16643,13 @@
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
+    <parameter name="MIS_COMMAND_TOUT" default="0." type="FLOAT">
+      <short_desc>Timeout to allow the payload to execute the mission command</short_desc>
+      <long_desc>Ensure: gripper: NAV_CMD_DO_GRIPPER has released before continuing mission. winch: CMD_DO_WINCH has delivered before continuing mission. gimbal: CMD_DO_GIMBAL_MANAGER_PITCHYAW has reached the commanded orientation before beginning to take pictures.</long_desc>
+      <min>0</min>
+      <unit>s</unit>
+      <decimal>1</decimal>
+    </parameter>
     <parameter name="MIS_DIST_1WP" default="10000" type="FLOAT">
       <short_desc>Maximal horizontal distance from Home to first waypoint</short_desc>
       <long_desc>There will be a warning message if the current waypoint is more distant than MIS_DIST_1WP from Home. Has no effect on mission validity. Set a value of zero or less to disable.</long_desc>
@@ -16667,13 +16674,6 @@
         <value code="0">Disable</value>
         <value code="1">Enable</value>
       </values>
-    </parameter>
-    <parameter name="MIS_PD_TO" default="5.0" type="FLOAT">
-      <short_desc>Timeout for a successful payload deployment acknowledgement</short_desc>
-      <min>0</min>
-      <unit>s</unit>
-      <decimal>1</decimal>
-      <increment>1</increment>
     </parameter>
     <parameter name="MIS_TAKEOFF_ALT" default="2.5" type="FLOAT">
       <short_desc>Default take-off altitude</short_desc>
