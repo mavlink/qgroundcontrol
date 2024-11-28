@@ -265,6 +265,7 @@ void QGCApplication::init()
 {
     // Register our Qml objects
 
+    LinkManager::registerQmlTypes();
     ParameterManager::registerQmlTypes();
     QGroundControlQmlGlobal::registerQmlTypes();
     MissionManager::registerQmlTypes();
@@ -333,6 +334,7 @@ void QGCApplication::_initForNormalAppBoot()
     AudioOutput::instance()->init(_toolbox->settingsManager()->appSettings()->audioMuted());
     FollowMe::instance()->init();
     QGCPositionManager::instance()->init();
+    LinkManager::instance()->init();
 
     // Image provider for Optical Flow
     _qmlAppEngine->addImageProvider(qgcImageProviderId, new QGCImageProvider());
@@ -373,7 +375,7 @@ void QGCApplication::_initForNormalAppBoot()
     MAVLinkProtocol::instance()->checkForLostLogFiles();
 
     // Load known link configurations
-    _toolbox->linkManager()->loadLinkConfigurationList();
+    LinkManager::instance()->loadLinkConfigurationList();
 
     // Probe for joysticks
     JoystickManager::instance()->init();
@@ -384,7 +386,7 @@ void QGCApplication::_initForNormalAppBoot()
     }
 
     // Connect links with flag AutoconnectLink
-    _toolbox->linkManager()->startAutoConnectedLinks();
+    LinkManager::instance()->startAutoConnectedLinks();
 }
 
 void QGCApplication::deleteAllSettingsNextBoot(void)
