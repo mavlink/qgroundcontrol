@@ -40,7 +40,6 @@ endif()
 
 target_link_libraries(GStreamerReceiver
     PRIVATE
-        QGC
         Utilities
     PUBLIC
         Qt6::Core

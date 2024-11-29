@@ -21,7 +21,6 @@ QGC_LOGGING_CATEGORY(VehicleLinkManagerLog, "VehicleLinkManagerLog")
 VehicleLinkManager::VehicleLinkManager(Vehicle* vehicle)
     : QObject   (vehicle)
     , _vehicle  (vehicle)
-    , _linkMgr  (qgcApp()->toolbox()->linkManager())
 {
     connect(this,                   &VehicleLinkManager::linkNamesChanged,  this, &VehicleLinkManager::linkStatusesChanged);
     connect(&_commLostCheckTimer,   &QTimer::timeout,                       this, &VehicleLinkManager::_commLostCheck);
@@ -170,7 +169,7 @@ void VehicleLinkManager::_addLink(LinkInterface* link)
         qCWarning(VehicleLinkManagerLog) << "_addLink call with link which is already in the list";
         return;
     } else {
-        SharedLinkInterfacePtr sharedLink = _linkMgr->sharedLinkInterfacePointerForLink(link);
+        SharedLinkInterfacePtr sharedLink = LinkManager::instance()->sharedLinkInterfacePointerForLink(link);
         if (!sharedLink) {
             qCDebug(VehicleLinkManagerLog) << "_addLink stale link" << (void*)link;
             return;

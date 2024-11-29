@@ -22,7 +22,6 @@
 
 class QGCMessageBox;
 class QGCQFileDialog;
-class LinkManager;
 class Vehicle;
 class Fact;
 class LinkInterface;
@@ -114,7 +113,6 @@ protected:
     void _disconnectMockLink(void);
     void _missionItemsEqual(MissionItem& actual, MissionItem& expected);
 
-    LinkManager*    _linkManager    = nullptr;
     MockLink*       _mockLink       = nullptr;
     Vehicle*        _vehicle        = nullptr;
 

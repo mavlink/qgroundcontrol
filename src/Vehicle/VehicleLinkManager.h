@@ -20,7 +20,6 @@
 Q_DECLARE_LOGGING_CATEGORY(VehicleLinkManagerLog)
 
 class Vehicle;
-class LinkManager;
 class VehicleLinkManagerTest;
 
 class VehicleLinkManager : public QObject
@@ -80,7 +79,6 @@ private:
     } LinkInfo_t;
 
     Vehicle*                _vehicle                    = nullptr;
-    LinkManager*            _linkMgr                    = nullptr;
     QTimer                  _commLostCheckTimer;
     QList<LinkInfo_t>       _rgLinkInfo;
     WeakLinkInterfacePtr    _primaryLink;

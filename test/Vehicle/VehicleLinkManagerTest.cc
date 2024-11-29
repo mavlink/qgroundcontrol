@@ -8,12 +8,10 @@
  ****************************************************************************/
 
 #include "VehicleLinkManagerTest.h"
-#include "QGCApplication.h"
 #include "MockLink.h"
 #include "LinkManager.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
-#include "QGCApplication.h"
 #include "MultiSignalSpyV2.h"
 
 #include <QtTest/QTest>
@@ -35,21 +33,21 @@ void VehicleLinkManagerTest::init(void)
 {
     UnitTest::init();
 
-    _multiVehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
+    _multiVehicleMgr = MultiVehicleManager::instance();
 
-    QCOMPARE(_linkManager->links().count(),         0);
+    QCOMPARE(LinkManager::instance()->links().count(),         0);
     QCOMPARE(_multiVehicleMgr->vehicles()->count(), 0);
 }
 
 void VehicleLinkManagerTest::cleanup(void)
 {
     // Disconnect all links
-    if (_linkManager->links().count()) {
+    if (LinkManager::instance()->links().count()) {
         QSignalSpy spyActiveVehicleChanged(_multiVehicleMgr, &MultiVehicleManager::activeVehicleChanged);
-        _linkManager->disconnectAll();
+        LinkManager::instance()->disconnectAll();
         QCOMPARE(spyActiveVehicleChanged.wait(1000),    true);
         QCOMPARE(_multiVehicleMgr->vehicles()->count(), 0);
-        QCOMPARE(_linkManager->links().count(),         0);
+        QCOMPARE(LinkManager::instance()->links().count(),         0);
     }
 
     _multiVehicleMgr = nullptr;
@@ -331,9 +329,9 @@ void VehicleLinkManagerTest::_startMockLink(int mockIndex, bool highLatency, boo
 
     SharedLinkConfigurationPtr sharedConfigmockConfig;
 
-    QVERIFY(_linkManager->createConnectedLink(mockConfig));
+    QVERIFY(LinkManager::instance()->createConnectedLink(mockConfig));
     QVERIFY(mockConfig->link());
 
-    mockLink = _linkManager->sharedLinkInterfacePointerForLink(mockConfig->link());
+    mockLink = LinkManager::instance()->sharedLinkInterfacePointerForLink(mockConfig->link());
     QVERIFY(mockLink);
 }

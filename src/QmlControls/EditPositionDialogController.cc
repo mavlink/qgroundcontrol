@@ -9,8 +9,6 @@
 
 #include "EditPositionDialogController.h"
 #include "QGCGeo.h"
-#include "QGCApplication.h"
-#include "QGCToolbox.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
@@ -106,6 +104,6 @@ void EditPositionDialogController::setFromMGRS()
 
 void EditPositionDialogController::setFromVehicle()
 {
-    setCoordinate(qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->coordinate());
+    setCoordinate(MultiVehicleManager::instance()->activeVehicle()->coordinate());
 }
 

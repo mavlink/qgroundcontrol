@@ -14,9 +14,9 @@
 #include "FactSystemTestBase.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
-#include "QGCApplication.h"
 #include "ParameterManager.h"
 #include "AutoPilotPlugin.h"
+#include "MAVLinkProtocol.h"
 
 #include <QtTest/QTest>
 #include <QtTest/QSignalSpy>
@@ -30,10 +30,11 @@ FactSystemTestBase::FactSystemTestBase(void)
 void FactSystemTestBase::_init(MAV_AUTOPILOT autopilot)
 {
     UnitTest::init();
+    MultiVehicleManager::instance()->init();
 
     _connectMockLink(autopilot);
 
-    _plugin = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->autopilotPlugin();
+    _plugin = MultiVehicleManager::instance()->activeVehicle()->autopilotPlugin();
     Q_ASSERT(_plugin);
 }
 
@@ -100,7 +101,7 @@ void FactSystemTestBase::_qmlUpdate_test(void)
     // Change the value
 
     QVariant paramValue = 12;
-    qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->parameterManager()->getParameter(ParameterManager::defaultComponentId, "RC_MAP_THROTTLE")->setRawValue(paramValue);
+    MultiVehicleManager::instance()->activeVehicle()->parameterManager()->getParameter(ParameterManager::defaultComponentId, "RC_MAP_THROTTLE")->setRawValue(paramValue);
 
     QTest::qWait(500); // Let the signals flow through
 

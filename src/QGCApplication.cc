@@ -37,6 +37,7 @@
 #include "FollowMe.h"
 #include "GeoTagController.h"
 #include "GimbalController.h"
+#include "GPSRtk.h"
 #include "JoystickConfigController.h"
 #include "JoystickManager.h"
 #include "JsonHelper.h"
@@ -46,6 +47,7 @@
 #include "MAVLinkConsoleController.h"
 #include "MAVLinkProtocol.h"
 #include "MissionManager.h"
+#include "MultiVehicleManager.h"
 #include "ParameterManager.h"
 #include "PositionManager.h"
 #include "QGCCameraManager.h"
@@ -56,6 +58,7 @@
 #include "QGCLoggingCategory.h"
 #include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
+#include "AppSettings.h"
 #include "ShapeFileHelper.h"
 #include "SyslinkComponentController.h"
 #include "UDPLink.h"
@@ -201,9 +204,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     // We need to set language as early as possible prior to loading on JSON files.
     setLanguage();
 
-    _toolbox = new QGCToolbox(this);
-    _toolbox->setChildToolboxes();
-
 #ifndef DAILY_BUILD
     _checkForNewVersion();
 #endif
@@ -263,12 +263,21 @@ QGCApplication::~QGCApplication()
 
 void QGCApplication::init()
 {
+    SettingsManager::instance()->init();
+
     // Register our Qml objects
 
+    LinkManager::registerQmlTypes();
     ParameterManager::registerQmlTypes();
     QGroundControlQmlGlobal::registerQmlTypes();
     MissionManager::registerQmlTypes();
     QGCCameraManager::registerQmlTypes();
+    MultiVehicleManager::registerQmlTypes();
+    QGCPositionManager::registerQmlTypes();
+    SettingsManager::registerQmlTypes();
+    VideoManager::registerQmlTypes();
+    QGCCorePlugin::registerQmlTypes();
+    GPSRtk::registerQmlTypes();
 #ifdef QGC_VIEWER3D
     Viewer3DManager::registerQmlTypes();
 #endif
@@ -326,13 +335,16 @@ void QGCApplication::_initForNormalAppBoot()
     VideoManager::instance(); // GStreamer must be initialized before QmlEngine
 
     QQuickStyle::setStyle("Basic");
-    _qmlAppEngine = _toolbox->corePlugin()->createQmlApplicationEngine(this);
+    _qmlAppEngine = QGCCorePlugin::instance()->createQmlApplicationEngine(this);
     QObject::connect(_qmlAppEngine, &QQmlApplicationEngine::objectCreationFailed, this, QCoreApplication::quit, Qt::QueuedConnection);
-    _toolbox->corePlugin()->createRootWindow(_qmlAppEngine);
+    QGCCorePlugin::instance()->createRootWindow(_qmlAppEngine);
 
-    AudioOutput::instance()->init(_toolbox->settingsManager()->appSettings()->audioMuted());
+    AudioOutput::instance()->init(SettingsManager::instance()->appSettings()->audioMuted());
     FollowMe::instance()->init();
     QGCPositionManager::instance()->init();
+    LinkManager::instance()->init();
+    MultiVehicleManager::instance()->init();
+    MAVLinkProtocol::instance()->init();
 
     // Image provider for Optical Flow
     _qmlAppEngine->addImageProvider(qgcImageProviderId, new QGCImageProvider());
@@ -373,7 +385,7 @@ void QGCApplication::_initForNormalAppBoot()
     MAVLinkProtocol::instance()->checkForLostLogFiles();
 
     // Load known link configurations
-    _toolbox->linkManager()->loadLinkConfigurationList();
+    LinkManager::instance()->loadLinkConfigurationList();
 
     // Probe for joysticks
     JoystickManager::instance()->init();
@@ -384,7 +396,7 @@ void QGCApplication::_initForNormalAppBoot()
     }
 
     // Connect links with flag AutoconnectLink
-    _toolbox->linkManager()->startAutoConnectedLinks();
+    LinkManager::instance()->startAutoConnectedLinks();
 }
 
 void QGCApplication::deleteAllSettingsNextBoot(void)
@@ -545,7 +557,7 @@ void QGCApplication::_checkForNewVersion()
 {
     if (!_runningUnitTests) {
         if (_parseVersionText(applicationVersion(), _majorVersion, _minorVersion, _buildVersion)) {
-            const QString versionCheckFile = _toolbox->corePlugin()->stableVersionCheckFileUrl();
+            const QString versionCheckFile = QGCCorePlugin::instance()->stableVersionCheckFileUrl();
             if (!versionCheckFile.isEmpty()) {
                 QGCFileDownload* download = new QGCFileDownload(this);
                 connect(download, &QGCFileDownload::downloadComplete, this, &QGCApplication::_qgcCurrentStableVersionDownloadComplete);
@@ -570,7 +582,7 @@ void QGCApplication::_qgcCurrentStableVersionDownloadComplete(QString /*remoteFi
                 if (_majorVersion < majorVersion ||
                         (_majorVersion == majorVersion && _minorVersion < minorVersion) ||
                         (_majorVersion == majorVersion && _minorVersion == minorVersion && _buildVersion < buildVersion)) {
-                    showAppMessage(tr("There is a newer version of %1 available. You can download it from %2.").arg(applicationName()).arg(_toolbox->corePlugin()->stableDownloadLocation()), tr("New Version Available"));
+                    showAppMessage(tr("There is a newer version of %1 available. You can download it from %2.").arg(applicationName()).arg(QGCCorePlugin::instance()->stableDownloadLocation()), tr("New Version Available"));
                 }
             }
         }

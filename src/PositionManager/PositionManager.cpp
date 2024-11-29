@@ -29,8 +29,6 @@ QGCPositionManager::QGCPositionManager(QObject *parent)
     : QObject(parent)
 {
     // qCDebug(QGCPositionManagerLog) << Q_FUNC_INFO << this;
-
-    (void) qmlRegisterUncreatableType<QGCPositionManager>("QGroundControl.QGCPositionManager", 1, 0, "QGCPositionManager", "Reference only");
 }
 
 QGCPositionManager::~QGCPositionManager()
@@ -41,6 +39,11 @@ QGCPositionManager::~QGCPositionManager()
 QGCPositionManager *QGCPositionManager::instance()
 {
     return _positionManager();
+}
+
+void QGCPositionManager::registerQmlTypes()
+{
+    (void) qmlRegisterUncreatableType<QGCPositionManager>("QGroundControl.QGCPositionManager", 1, 0, "QGCPositionManager", "Reference only");
 }
 
 void QGCPositionManager::init()
@@ -55,7 +58,7 @@ void QGCPositionManager::init()
 
 void QGCPositionManager::_setupPositionSources()
 {
-    _defaultSource = qgcApp()->toolbox()->corePlugin()->createPositionSource(this);
+    _defaultSource = QGCCorePlugin::instance()->createPositionSource(this);
     if (_defaultSource) {
         _usingPluginSource = true;
     } else {

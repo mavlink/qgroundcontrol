@@ -9,8 +9,8 @@
 
 
 #include "SettingsFact.h"
-#include "QGCCorePlugin.h"
 #include "QGCApplication.h"
+#include "QGCCorePlugin.h"
 
 #include <QtCore/QSettings>
 #include <QtQml/QQmlEngine>
@@ -33,7 +33,7 @@ SettingsFact::SettingsFact(QString settingsGroup, FactMetaData* metaData, QObjec
     }
 
     // Allow core plugin a chance to override the default value
-    _visible = qgcApp()->toolbox()->corePlugin()->adjustSettingMetaData(settingsGroup, *metaData);
+    _visible = QGCCorePlugin::instance()->adjustSettingMetaData(settingsGroup, *metaData);
     setMetaData(metaData);
 
     if (metaData->defaultValueAvailable()) {

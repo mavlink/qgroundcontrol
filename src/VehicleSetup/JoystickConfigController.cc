@@ -489,7 +489,7 @@ void JoystickConfigController::_writeCalibration()
     _stopCalibration();
     _setInternalCalibrationValuesFromSettings();
 
-    Vehicle* vehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
+    Vehicle* vehicle = MultiVehicleManager::instance()->activeVehicle();
     if (vehicle) {
         vehicle->setJoystickEnabled(true);
         vehicle->saveJoystickSettings();

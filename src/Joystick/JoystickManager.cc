@@ -14,7 +14,6 @@
 #elif defined(Q_OS_ANDROID)
     #include "JoystickAndroid.h"
 #endif
-#include "QGCApplication.h"
 #include "MultiVehicleManager.h"
 #include "QGCLoggingCategory.h"
 
@@ -80,9 +79,9 @@ void JoystickManager::_setActiveJoystickFromSettings()
     QMap<QString,Joystick*> newMap;
 
 #ifdef QGC_SDL_JOYSTICK
-    newMap = JoystickSDL::discover(qgcApp()->toolbox()->multiVehicleManager());
+    newMap = JoystickSDL::discover();
 #elif defined(Q_OS_ANDROID)
-    newMap = JoystickAndroid::discover(qgcApp()->toolbox()->multiVehicleManager());
+    newMap = JoystickAndroid::discover();
 #endif
 
     if (_activeJoystick && !newMap.contains(_activeJoystick->name())) {

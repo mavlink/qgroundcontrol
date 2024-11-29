@@ -69,7 +69,6 @@ target_link_libraries(GPS
     PRIVATE
         Comms
         MAVLink
-        QGC
         Settings
         Utilities
         Vehicle

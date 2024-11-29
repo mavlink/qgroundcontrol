@@ -13,9 +13,11 @@
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "QGCTemporaryFile.h"
-#include "QGCToolbox.h"
 #include "SettingsManager.h"
+#include "AppSettings.h"
+#include "QmlObjectListModel.h"
 
+#include <QtCore/qapplicationstatic.h>
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
 #include <QtCore/QMetaType>
@@ -24,19 +26,13 @@
 
 QGC_LOGGING_CATEGORY(MAVLinkProtocolLog, "qgc.comms.mavlinkprotocol")
 
-Q_APPLICATION_STATIC(MAVLinkProtocol, _mavlinkProtocol);
+Q_APPLICATION_STATIC(MAVLinkProtocol, _mavlinkProtocolInstance);
 
 MAVLinkProtocol::MAVLinkProtocol(QObject *parent)
     : QObject(parent)
     , _tempLogFile(new QGCTemporaryFile(QStringLiteral("%2.%3").arg(_tempLogFileTemplate, _logFileExtension), this))
 {
     // qCDebug(MAVLinkProtocolLog) << Q_FUNC_INFO << this;
-
-    (void) memset(_firstMessage, 1, sizeof(_firstMessage));
-
-    (void) connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleRemoved, this, &MAVLinkProtocol::_vehicleCountChanged);
-
-    _loadSettings();
 }
 
 MAVLinkProtocol::~MAVLinkProtocol()
@@ -49,12 +45,27 @@ MAVLinkProtocol::~MAVLinkProtocol()
 
 MAVLinkProtocol *MAVLinkProtocol::instance()
 {
-    return _mavlinkProtocol();
+    return _mavlinkProtocolInstance();
+}
+
+void MAVLinkProtocol::init()
+{
+    if (_initialized) {
+        return;
+    }
+
+    (void) memset(_firstMessage, 1, sizeof(_firstMessage));
+
+    (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleRemoved, this, &MAVLinkProtocol::_vehicleCountChanged);
+
+    _loadSettings();
+
+    _initialized = true;
 }
 
 void MAVLinkProtocol::setVersion(unsigned version)
 {
-    const QList<SharedLinkInterfacePtr> sharedLinks = qgcApp()->toolbox()->linkManager()->links();
+    const QList<SharedLinkInterfacePtr> sharedLinks = LinkManager::instance()->links();
     for (const SharedLinkInterfacePtr &interface : sharedLinks) {
         mavlink_set_proto_version(interface.get()->mavlinkChannel(), version / 100);
     }
@@ -127,7 +138,7 @@ void MAVLinkProtocol::logSentBytes(const LinkInterface *link, const QByteArray &
 
 void MAVLinkProtocol::receiveBytes(LinkInterface *link, const QByteArray &data)
 {
-    const SharedLinkInterfacePtr linkPtr = qgcApp()->toolbox()->linkManager()->sharedLinkInterfacePointerForLink(link);
+    const SharedLinkInterfacePtr linkPtr = LinkManager::instance()->sharedLinkInterfacePointerForLink(link);
     if (!linkPtr) {
         qCDebug(MAVLinkProtocolLog) << "receiveBytes: link gone!" << data.size() << "bytes arrived too late";
         return;
@@ -209,11 +220,11 @@ void MAVLinkProtocol::_forward(const mavlink_message_t &message)
         return;
     }
 
-    if (!qgcApp()->toolbox()->settingsManager()->appSettings()->forwardMavlink()->rawValue().toBool()) {
+    if (!SettingsManager::instance()->appSettings()->forwardMavlink()->rawValue().toBool()) {
         return;
     }
 
-    SharedLinkInterfacePtr forwardingLink = qgcApp()->toolbox()->linkManager()->mavlinkForwardingLink();
+    SharedLinkInterfacePtr forwardingLink = LinkManager::instance()->mavlinkForwardingLink();
     if (!forwardingLink) {
         return;
     }
@@ -229,11 +240,11 @@ void MAVLinkProtocol::_forwardSupport(const mavlink_message_t &message)
         return;
     }
 
-    if (!qgcApp()->toolbox()->linkManager()->mavlinkSupportForwardingEnabled()) {
+    if (!LinkManager::instance()->mavlinkSupportForwardingEnabled()) {
         return;
     }
 
-    SharedLinkInterfacePtr forwardingSupportLink = qgcApp()->toolbox()->linkManager()->mavlinkForwardingSupportLink();
+    SharedLinkInterfacePtr forwardingSupportLink = LinkManager::instance()->mavlinkForwardingSupportLink();
     if (!forwardingSupportLink) {
         return;
     }
@@ -332,7 +343,7 @@ void MAVLinkProtocol::_startLogging()
         return;
     }
 
-    AppSettings *const appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
+    AppSettings *const appSettings = SettingsManager::instance()->appSettings();
     if (appSettings->disableAllPersistence()->rawValue().toBool()) {
         return;
     }
@@ -368,7 +379,7 @@ void MAVLinkProtocol::_startLogging()
 void MAVLinkProtocol::_stopLogging()
 {
     if (_tempLogFile->isOpen() && _closeLogFile()) {
-        AppSettings *const appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
+        AppSettings *const appSettings = SettingsManager::instance()->appSettings();
         if ((_vehicleWasArmed || appSettings->telemetrySaveNotArmed()->rawValue().toBool()) && appSettings->telemetrySave()->rawValue().toBool() && !appSettings->disableAllPersistence()->rawValue().toBool()) {
             _saveTelemetryLog(_tempLogFile->fileName());
         } else {
@@ -415,7 +426,7 @@ void MAVLinkProtocol::deleteTempLogFiles()
 void MAVLinkProtocol::_saveTelemetryLog(const QString &tempLogfile)
 {
     if (_checkTelemetrySavePath()) {
-        const QString saveDirPath = qgcApp()->toolbox()->settingsManager()->appSettings()->telemetrySavePath();
+        const QString saveDirPath = SettingsManager::instance()->appSettings()->telemetrySavePath();
         const QDir saveDir(saveDirPath);
 
         const QString nameFormat("%1%2.%3");
@@ -440,7 +451,7 @@ void MAVLinkProtocol::_saveTelemetryLog(const QString &tempLogfile)
 
 bool MAVLinkProtocol::_checkTelemetrySavePath()
 {
-    const QString saveDirPath = qgcApp()->toolbox()->settingsManager()->appSettings()->telemetrySavePath();
+    const QString saveDirPath = SettingsManager::instance()->appSettings()->telemetrySavePath();
     if (saveDirPath.isEmpty()) {
         const QString error = tr("Unable to save telemetry log. Application save directory is not set.");
         qgcApp()->showAppMessage(error);
@@ -475,7 +486,7 @@ void MAVLinkProtocol::enableVersionCheck(bool enabled)
 
 void MAVLinkProtocol::_vehicleCountChanged()
 {
-    if (qgcApp()->toolbox()->multiVehicleManager()->vehicles()->count() == 0) {
+    if (MultiVehicleManager::instance()->vehicles()->count() == 0) {
         _stopLogging();
     }
 }

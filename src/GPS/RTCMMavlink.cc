@@ -10,7 +10,6 @@
 #include "RTCMMavlink.h"
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
-#include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 
@@ -66,7 +65,7 @@ void RTCMMavlink::RTCMDataUpdate(QByteArrayView data)
 
 void RTCMMavlink::_sendMessageToVehicle(const mavlink_gps_rtcm_data_t &data)
 {
-    QmlObjectListModel* const vehicles = qgcApp()->toolbox()->multiVehicleManager()->vehicles();
+    QmlObjectListModel* const vehicles = MultiVehicleManager::instance()->vehicles();
     for (qsizetype i = 0; i < vehicles->count(); i++) {
         Vehicle* const vehicle = qobject_cast<Vehicle*>(vehicles->get(i));
         const SharedLinkInterfacePtr sharedLink = vehicle->vehicleLinkManager()->primaryLink().lock();

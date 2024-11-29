@@ -9,7 +9,6 @@
 
 #include "SendMavCommandWithSignallingTest.h"
 #include "MultiVehicleManager.h"
-#include "QGCApplication.h"
 #include "MockLink.h"
 
 SendMavCommandWithSignallingTest::TestCase_t SendMavCommandWithSignallingTest::_rgTestCases[] = {
@@ -28,7 +27,7 @@ void SendMavCommandWithSignallingTest::_testCaseWorker(TestCase_t& testCase)
 {
     _connectMockLinkNoInitialConnectSequence();
 
-    MultiVehicleManager*    vehicleMgr  = qgcApp()->toolbox()->multiVehicleManager();
+    MultiVehicleManager*    vehicleMgr  = MultiVehicleManager::instance();
     Vehicle*                vehicle     = vehicleMgr->activeVehicle();
     QSignalSpy              spyResult(vehicle, &Vehicle::mavCommandResult);
 
@@ -75,7 +74,7 @@ void SendMavCommandWithSignallingTest::_duplicateCommand(void)
 {
     _connectMockLinkNoInitialConnectSequence();
 
-    MultiVehicleManager*    vehicleMgr  = qgcApp()->toolbox()->multiVehicleManager();
+    MultiVehicleManager*    vehicleMgr  = MultiVehicleManager::instance();
     Vehicle*                vehicle     = vehicleMgr->activeVehicle();
 
     vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE, true /* showError */);

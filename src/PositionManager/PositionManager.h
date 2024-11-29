@@ -38,14 +38,7 @@ public:
     /// Gets the singleton instance of AudioOutput.
     ///     @return The singleton instance.
     static QGCPositionManager *instance();
-
-    enum QGCPositionSource {
-        Simulated,
-        InternalGPS,
-        Log,
-        NmeaGPS,
-        ExternalGPS
-    };
+    static void registerQmlTypes();
 
     void init();
     QGeoCoordinate gcsPosition() const { return _gcsPosition; }
@@ -66,6 +59,14 @@ private slots:
     void _positionUpdated(const QGeoPositionInfo &update);
 
 private:
+    enum QGCPositionSource {
+        Simulated,
+        InternalGPS,
+        Log,
+        NmeaGPS,
+        ExternalGPS
+    };
+
     void _setPositionSource(QGCPositionSource source);
     void _setupPositionSources();
     void _handlePermissionStatus(Qt::PermissionStatus permissionStatus);

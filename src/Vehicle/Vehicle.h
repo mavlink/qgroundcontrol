@@ -58,7 +58,6 @@ class StatusTextHandler;
 class InitialConnectStateMachine;
 class Joystick;
 class LinkInterface;
-class LinkManager;
 class MAVLinkLogManager;
 class MissionManager;
 class ParameterManager;
@@ -68,14 +67,12 @@ class RemoteIDManager;
 class RequestMessageTest;
 class SendMavCommandWithHandlerTest;
 class SendMavCommandWithSignallingTest;
-class SettingsManager;
 class StandardModes;
 class TerrainAtCoordinateQuery;
 class TerrainProtocolHandler;
 class TrajectoryPoints;
 class VehicleBatteryFactGroup;
 class VehicleObjectAvoidance;
-class QGCToolbox;
 class GimbalController;
 #ifdef QGC_UTM_ADAPTER
 class UTMSPVehicle;
@@ -993,8 +990,6 @@ private:
     QObject*            _firmwarePluginInstanceData = nullptr;
     AutoPilotPlugin*    _autopilotPlugin = nullptr;
     bool                _soloFirmware = false;
-    QGCToolbox*         _toolbox = nullptr;
-    SettingsManager*    _settingsManager = nullptr;
 
     QTimer              _csvLogTimer;
     QFile               _csvLogFile;
@@ -1051,7 +1046,6 @@ private:
 
     bool                _initialPlanRequestComplete = false;
 
-    LinkManager*                    _linkManager                    = nullptr;
     ParameterManager*               _parameterManager               = nullptr;
     ComponentInformationManager*    _componentInformationManager    = nullptr;
     VehicleObjectAvoidance*         _objectAvoidance                = nullptr;
@@ -1087,8 +1081,6 @@ private:
     TrajectoryPoints*               _trajectoryPoints = nullptr;
     QmlObjectListModel              _cameraTriggerPoints;
     //QMap<QString, ADSBVehicle*>     _trafficVehicleMap;
-
-    // Toolbox references
 
     bool _allLinksRemovedSent = false; ///< true: allLinkRemoved signal already sent one time
 

@@ -151,7 +151,6 @@ target_link_libraries(qgctest
         UITest
         VehicleTest
         VehicleComponentsTest
-        QGC
         Utilities
         UtilitiesTest
     PUBLIC
