@@ -56,6 +56,8 @@ public:
     QGroundControlQmlGlobal(QObject *parent = nullptr);
     ~QGroundControlQmlGlobal();
 
+    static void registerQmlTypes();
+
     enum AltMode {
         AltitudeModeMixed,              // Used by global altitude mode for mission planning
         AltitudeModeRelative,           // MAV_FRAME_GLOBAL_RELATIVE_ALT
@@ -159,7 +161,7 @@ public:
     Q_INVOKABLE QString altitudeModeExtraUnits(AltMode altMode);        ///< String shown in the FactTextField.extraUnits ui
     Q_INVOKABLE QString altitudeModeShortDescription(AltMode altMode);  ///< String shown when a user needs to select an altitude mode
 
-    // Property accesors
+    // Property accessors
 
     QString                 appName             ();
     LinkManager*            linkManager         ()  { return _linkManager; }
@@ -234,8 +236,6 @@ public:
 #else
     bool utmspSupported() { return false; }
 #endif
-
-    static void registerQmlTypes();
 
 signals:
     void isMultiplexingEnabledChanged   (bool enabled);
