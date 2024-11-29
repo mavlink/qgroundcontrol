@@ -16,8 +16,6 @@
 class PlanMasterController;
 class MissionController;
 class KMLPlanDomDocument;
-class SettingsManager;
-class QGCToolbox;
 
 class ComplexMissionItem : public VisualMissionItem
 {
@@ -122,9 +120,6 @@ protected:
     QmlObjectListModel  _flightPathSegments;                // Contains FlightPathSegment items
 
     QMap<QString, FactMetaData*> _metaDataMap;
-
-    QGCToolbox* _toolbox;
-    SettingsManager* _settingsManager;
 
     static constexpr const char* _presetSettingsKey =        "_presets";
 };

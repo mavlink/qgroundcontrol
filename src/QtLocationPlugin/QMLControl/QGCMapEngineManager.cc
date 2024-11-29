@@ -19,8 +19,8 @@
 #include "ElevationMapProvider.h"
 #include "QmlObjectListModel.h"
 #include "QGCApplication.h"
-#include "QGCToolbox.h"
 #include "SettingsManager.h"
+#include "FlightMapSettings.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/qapplicationstatic.h>
@@ -74,7 +74,7 @@ void QGCMapEngineManager::updateForCurrentView(double lon0, double lat0, double 
     }
 
     if (_fetchElevation) {
-        const QString elevationProviderName = qgcApp()->toolbox()->settingsManager()->flightMapSettings()->elevationMapProvider()->rawValue().toString();
+        const QString elevationProviderName = SettingsManager::instance()->flightMapSettings()->elevationMapProvider()->rawValue().toString();
         const QGCTileSet set = UrlFactory::getTileCount(1, lon0, lat0, lon1, lat1, elevationProviderName);
         _elevationSet += set;
     }
@@ -145,7 +145,7 @@ void QGCMapEngineManager::startDownload(const QString &name, const QString &mapT
     const int mapid = UrlFactory::getQtMapIdFromProviderType(mapType);
     if (_fetchElevation && !UrlFactory::isElevation(mapid)) {
         QGCCachedTileSet* const set = new QGCCachedTileSet(name + QStringLiteral(" Elevation"));
-        const QString elevationProviderName = qgcApp()->toolbox()->settingsManager()->flightMapSettings()->elevationMapProvider()->rawValue().toString();
+        const QString elevationProviderName = SettingsManager::instance()->flightMapSettings()->elevationMapProvider()->rawValue().toString();
         set->setMapTypeStr(elevationProviderName);
         set->setTopleftLat(_topleftLat);
         set->setTopleftLon(_topleftLon);

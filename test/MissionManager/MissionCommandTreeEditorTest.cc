@@ -13,6 +13,7 @@
 #include "FirmwarePlugin.h"
 #include "FirmwarePluginManager.h"
 #include "SettingsManager.h"
+#include "AppSettings.h"
 #include "SimpleMissionItem.h"
 #include "PlanMasterController.h"
 
@@ -30,7 +31,7 @@ void MissionCommandTreeEditorTest::_testEditorsWorker(QGCMAVLink::FirmwareClass_
     QString firmwareClassString = QGCMAVLink::firmwareClassToString(firmwareClass).replace(" ", "");
     QString vehicleClassString  = QGCMAVLink::vehicleClassToUserVisibleString(vehicleClass).replace(" ", "");
 
-    AppSettings* appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
+    AppSettings* appSettings = SettingsManager::instance()->appSettings();
     appSettings->offlineEditingFirmwareClass()->setRawValue(firmwareClass);
     appSettings->offlineEditingVehicleClass()->setRawValue(vehicleClass);
     PlanMasterController masterController;

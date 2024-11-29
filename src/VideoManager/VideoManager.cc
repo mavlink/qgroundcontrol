@@ -15,6 +15,7 @@
 #include "QGCLoggingCategory.h"
 #include "QGCToolbox.h"
 #include "SettingsManager.h"
+#include "AppSettings.h"
 #include "SubtitleWriter.h"
 #include "Vehicle.h"
 #include "VideoReceiver.h"
@@ -54,23 +55,13 @@ Q_APPLICATION_STATIC(VideoManager, _videoManagerInstance);
 VideoManager::VideoManager(QObject *parent)
     : QObject(parent)
     , _subtitleWriter(new SubtitleWriter(this))
-    , _videoSettings(qgcApp()->toolbox()->settingsManager()->videoSettings())
+    , _videoSettings(SettingsManager::instance()->videoSettings())
 {
     // qCDebug(VideoManagerLog) << Q_FUNC_INFO << this;
 
     if (qgcApp()->runningUnitTests()) {
         return;
     }
-
-    (void) qmlRegisterUncreatableType<VideoManager> ("QGroundControl.VideoManager", 1, 0, "VideoManager", "Reference only");
-    (void) qmlRegisterUncreatableType<VideoReceiver>("QGroundControl", 1, 0, "VideoReceiver","Reference only");
-
-#ifdef QGC_GST_STREAMING
-    GStreamer::initialize();
-    GStreamer::blacklist(static_cast<GStreamer::VideoDecoderOptions>(_videoSettings->forceVideoDecoder()->rawValue().toInt()));
-#else
-    (void) qmlRegisterType<GLVideoItemStub>("org.freedesktop.gstreamer.Qt6GLVideoItem", 1, 0, "GstGLQt6VideoItem");
-#endif
 }
 
 VideoManager::~VideoManager()
@@ -103,11 +94,27 @@ VideoManager *VideoManager::instance()
     return _videoManagerInstance();
 }
 
+void VideoManager::registerQmlTypes()
+{
+    (void) qmlRegisterUncreatableType<VideoManager>("QGroundControl.VideoManager", 1, 0, "VideoManager", "Reference only");
+    (void) qmlRegisterUncreatableType<VideoReceiver>("QGroundControl", 1, 0, "VideoReceiver","Reference only");
+    #ifdef QGC_GST_STREAMING
+        GStreamer::initialize();
+        GStreamer::blacklist(static_cast<GStreamer::VideoDecoderOptions>(SettingsManager::instance()->videoSettings()->forceVideoDecoder()->rawValue().toInt()));
+    #else
+        (void) qmlRegisterType<GLVideoItemStub>("org.freedesktop.gstreamer.Qt6GLVideoItem", 1, 0, "GstGLQt6VideoItem");
+    #endif
+}
+
 void VideoManager::init()
 {
     if (_initialized) {
         return;
     }
+
+#ifdef QGC_GST_STREAMING
+    
+#endif
 
     // TODO: Those connections should be Per Video, not per VideoManager.
     (void) connect(_videoSettings->videoSource(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
@@ -247,7 +254,7 @@ void VideoManager::startRecording(const QString &videoFile)
 
     _cleanupOldVideos();
 
-    const QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
+    const QString savePath = SettingsManager::instance()->appSettings()->videoSavePath();
     if (savePath.isEmpty()) {
         qgcApp()->showAppMessage(tr("Unabled to record video. Video save path must be specified in Settings."));
         return;
@@ -281,7 +288,7 @@ void VideoManager::stopRecording()
 void VideoManager::grabImage(const QString &imageFile)
 {
     if (imageFile.isEmpty()) {
-        _imageFile = qgcApp()->toolbox()->settingsManager()->appSettings()->photoSavePath();
+        _imageFile = SettingsManager::instance()->appSettings()->photoSavePath();
         _imageFile += "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz") + ".jpg";
     } else {
         _imageFile = imageFile;
@@ -464,11 +471,11 @@ void VideoManager::_initVideo()
 
 void VideoManager::_cleanupOldVideos()
 {
-    if (!qgcApp()->toolbox()->settingsManager()->videoSettings()->enableStorageLimit()->rawValue().toBool()) {
+    if (!SettingsManager::instance()->videoSettings()->enableStorageLimit()->rawValue().toBool()) {
         return;
     }
 
-    const QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
+    const QString savePath = SettingsManager::instance()->appSettings()->videoSavePath();
     QDir videoDir = QDir(savePath);
     videoDir.setFilter(QDir::Files | QDir::Readable | QDir::NoSymLinks | QDir::Writable);
     videoDir.setSorting(QDir::Time);
@@ -486,7 +493,7 @@ void VideoManager::_cleanupOldVideos()
             total += vidList[i].size();
         }
 
-        const uint64_t maxSize = qgcApp()->toolbox()->settingsManager()->videoSettings()->maxVideoSize()->rawValue().toUInt() * qPow(1024, 2);
+        const uint64_t maxSize = SettingsManager::instance()->videoSettings()->maxVideoSize()->rawValue().toUInt() * qPow(1024, 2);
         while ((total >= maxSize) && !vidList.isEmpty()) {
             total -= vidList.last().size();
             qCDebug(VideoManagerLog) << "Removing old video file:" << vidList.last().filePath();
@@ -574,27 +581,27 @@ bool VideoManager::_updateAutoStream(unsigned id)
         case VIDEO_STREAM_TYPE_RTSP:
             settingsChanged = _updateVideoUri(id, pInfo->uri());
             if (settingsChanged) {
-                qgcApp()->toolbox()->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceRTSP);
+                SettingsManager::instance()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceRTSP);
             }
             break;
         case VIDEO_STREAM_TYPE_TCP_MPEG:
             settingsChanged = _updateVideoUri(id, pInfo->uri());
             if (settingsChanged) {
-                qgcApp()->toolbox()->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceTCP);
+                SettingsManager::instance()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceTCP);
             }
             break;
         case VIDEO_STREAM_TYPE_RTPUDP: {
             const QString url = pInfo->uri().contains("udp://") ? pInfo->uri() : QStringLiteral("udp://0.0.0.0:%1").arg(pInfo->uri());
             settingsChanged = _updateVideoUri(id, url);
             if (settingsChanged) {
-                qgcApp()->toolbox()->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceUDPH264);
+                SettingsManager::instance()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceUDPH264);
             }
             break;
         }
         case VIDEO_STREAM_TYPE_MPEG_TS:
             settingsChanged = _updateVideoUri(id, QStringLiteral("mpegts://0.0.0.0:%1").arg(pInfo->uri()));
             if (settingsChanged) {
-                qgcApp()->toolbox()->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceMPEGTS);
+                SettingsManager::instance()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceMPEGTS);
             }
             break;
         default:

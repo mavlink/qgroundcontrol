@@ -8,7 +8,6 @@ qt_add_library(Gimbal STATIC
 target_link_libraries(Gimbal
     PRIVATE
         Comms
-        QGC
         Settings
         Utilities
         Vehicle

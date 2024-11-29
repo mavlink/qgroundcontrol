@@ -183,7 +183,7 @@ void AirLinkConfiguration::setModemName(const QString &modemName)
 
 void AirLinkConfiguration::loadSettings(QSettings &settings, const QString &root)
 {
-    AppSettings *const appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
+    AppSettings *const appSettings = SettingsManager::instance()->appSettings();
 
     settings.beginGroup(root);
 

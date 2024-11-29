@@ -9,7 +9,6 @@
 
 #include "ADSBVehicleManager.h"
 #include "QGCApplication.h"
-#include "QGCToolbox.h"
 #include "SettingsManager.h"
 #include "ADSBVehicleManagerSettings.h"
 #include "ADSBTCPLink.h"
@@ -23,7 +22,7 @@
 
 QGC_LOGGING_CATEGORY(ADSBVehicleManagerLog, "qgc.adsb.adsbvehiclemanager")
 
-Q_APPLICATION_STATIC(ADSBVehicleManager, _adsbVehicleManager, qgcApp()->toolbox()->settingsManager()->adsbVehicleManagerSettings());
+Q_APPLICATION_STATIC(ADSBVehicleManager, _adsbVehicleManager, SettingsManager::instance()->adsbVehicleManagerSettings());
 
 ADSBVehicleManager::ADSBVehicleManager(ADSBVehicleManagerSettings *settings, QObject *parent)
     : QObject(parent)

@@ -9,7 +9,6 @@
 
 #include "QGCToolbox.h"
 #include "QGCCorePlugin.h"
-#include "SettingsManager.h"
 #include "QGCApplication.h"
 
 #if defined(QGC_CUSTOM_BUILD)
@@ -19,18 +18,12 @@
 QGCToolbox::QGCToolbox(QGCApplication* app)
     : QObject(app)
 {
-    // SettingsManager must be first so settings are available to any subsequent tools
-    _settingsManager        = new SettingsManager           (app, this);
-
     //-- Scan and load plugins
     _scanAndLoadPlugins(app);
 }
 
 void QGCToolbox::setChildToolboxes(void)
 {
-    // SettingsManager must be first so settings are available to any subsequent tools
-    _settingsManager->setToolbox(this);
-
     _corePlugin->setToolbox(this);
 }
 

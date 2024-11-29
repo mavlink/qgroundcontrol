@@ -8,7 +8,6 @@
  ****************************************************************************/
 
 #include "UnitTest.h"
-#include "QGCApplication.h"
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
@@ -95,7 +94,7 @@ void UnitTest::init(void)
     LinkManager::instance()->setConnectionsAllowed();
 
     // Force offline vehicle back to defaults
-    AppSettings* appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
+    AppSettings* appSettings = SettingsManager::instance()->appSettings();
     appSettings->offlineEditingFirmwareClass()->setRawValue(appSettings->offlineEditingFirmwareClass()->rawDefaultValue());
     appSettings->offlineEditingVehicleClass()->setRawValue(appSettings->offlineEditingVehicleClass()->rawDefaultValue());
 

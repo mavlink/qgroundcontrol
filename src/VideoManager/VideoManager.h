@@ -13,6 +13,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QRunnable>
 #include <QtCore/QSize>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 Q_DECLARE_LOGGING_CATEGORY(VideoManagerLog)
 
@@ -27,7 +28,9 @@ class VideoSettings;
 class VideoManager : public QObject
 {
     Q_OBJECT
-
+    QML_ELEMENT
+    QML_UNCREATABLE("")
+    Q_MOC_INCLUDE("Vehicle.h")
     Q_PROPERTY(bool     gstreamerEnabled        READ gstreamerEnabled                           CONSTANT)
     Q_PROPERTY(bool     qtmultimediaEnabled     READ qtmultimediaEnabled                        CONSTANT)
     Q_PROPERTY(bool     uvcEnabled              READ uvcEnabled                                 CONSTANT)
@@ -57,6 +60,7 @@ public:
     /// Gets the singleton instance of VideoManager.
     ///     @return The singleton instance.
     static VideoManager *instance();
+    static void registerQmlTypes();
 
     Q_INVOKABLE void grabImage(const QString &imageFile = QString());
     Q_INVOKABLE void startRecording(const QString &videoFile = QString());
