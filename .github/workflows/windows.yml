@@ -49,11 +49,7 @@ jobs:
           fetch-depth: 0
 
       - uses: seanmiddleditch/gha-setup-ninja@v5
-
-      - name: Install Dependencies
-        run: |
-          choco install --no-progress ninja pkgconfiglite -y
-          choco install --no-progress cmake --installargs 'ADD_CMAKE_TO_PATH=System' --apply-install-arguments-to-dependencies
+      - uses: lukka/get-cmake@latest
 
       - name: Install Vulkan
         working-directory: ${{ runner.temp }}
