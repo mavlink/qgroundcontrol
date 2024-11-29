@@ -11,7 +11,7 @@
 #include "SettingsManager.h"
 #include "UnitsSettings.h"
 #include "JsonHelper.h"
-#include <MAVLinkLib.h>
+#include "MAVLinkLib.h"
 
 #include <QtCore/QtMath>
 

@@ -58,7 +58,7 @@ void QGCPositionManager::init()
 
 void QGCPositionManager::_setupPositionSources()
 {
-    _defaultSource = qgcApp()->toolbox()->corePlugin()->createPositionSource(this);
+    _defaultSource = QGCCorePlugin::instance()->createPositionSource(this);
     if (_defaultSource) {
         _usingPluginSource = true;
     } else {

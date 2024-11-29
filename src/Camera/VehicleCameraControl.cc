@@ -2158,7 +2158,7 @@ VehicleCameraControl::_dataReady(QByteArray data)
     } else {
         qCDebug(CameraControlLog) << "No camera definition received, trying to search on our own...";
         QFile definitionFile;
-        if(qgcApp()->toolbox()->corePlugin()->getOfflineCameraDefinitionFile(_modelName, definitionFile)) {
+        if(QGCCorePlugin::instance()->getOfflineCameraDefinitionFile(_modelName, definitionFile)) {
             qCDebug(CameraControlLog) << "Found offline definition file for: " << _modelName << ", loading: " << definitionFile.fileName();
             if (definitionFile.open(QIODevice::ReadOnly)) {
                 QByteArray newData = definitionFile.readAll();

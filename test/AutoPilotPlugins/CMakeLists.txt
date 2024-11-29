@@ -11,7 +11,6 @@ target_link_libraries(AutoPilotPluginsTest
         APMAutoPilotPlugin
         AutoPilotPlugins
         PX4AutoPilotPlugin
-        QGC
         Vehicle
     PUBLIC
         Qt6::Core

@@ -9,7 +9,6 @@
 
 #include "InitialConnectTest.h"
 #include "MultiVehicleManager.h"
-#include "QGCApplication.h"
 #include "LinkManager.h"
 #include "MockLink.h"
 #include "Vehicle.h"

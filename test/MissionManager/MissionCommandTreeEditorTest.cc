@@ -8,7 +8,6 @@
  ****************************************************************************/
 
 #include "MissionCommandTreeEditorTest.h"
-#include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 #include "FirmwarePlugin.h"
 #include "FirmwarePluginManager.h"
@@ -49,7 +48,7 @@ void MissionCommandTreeEditorTest::_testEditorsWorker(QGCMAVLink::FirmwareClass_
         varSimpleItems.append(QVariant::fromValue(simpleItem));
     }
 
-    QQmlApplicationEngine* qmlAppEngine = qgcApp()->toolbox()->corePlugin()->createQmlApplicationEngine(this);
+    QQmlApplicationEngine* qmlAppEngine = QGCCorePlugin::instance()->createQmlApplicationEngine(this);
     qmlAppEngine->rootContext()->setContextProperty("planMasterController", &masterController);
     qmlAppEngine->rootContext()->setContextProperty("missionItems", varSimpleItems);
     qmlAppEngine->rootContext()->setContextProperty("cColumns", cColumns);

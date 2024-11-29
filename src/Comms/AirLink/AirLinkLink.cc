@@ -10,7 +10,6 @@
 #include "AirLinkLink.h"
 #include "AppSettings.h"
 #include "MAVLinkProtocol.h"
-#include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "SettingsManager.h"
 
