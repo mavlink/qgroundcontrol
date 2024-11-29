@@ -229,6 +229,10 @@ if(QGC_DISABLE_APM_MAVLINK)
     add_compile_definitions(NO_ARDUPILOT_DIALECT)
 endif()
 
+if(QGC_VIEWER3D)
+    add_compile_definitions(QGC_VIEWER3D)
+endif()
+
 if("${CMAKE_OSX_ARCHITECTURES}" MATCHES "arm64;x86_64" OR "${CMAKE_OSX_ARCHITECTURES}" MATCHES "x86_64;arm64")
     set(MACOS_UNIVERSAL_BUILD ON CACHE INTERNAL "" FORCE)
 endif()
@@ -244,10 +248,6 @@ cmake_dependent_option(QGC_BUILD_DEPENDENCIES "Force Building of Dependencies." 
 
 if(QGC_CUSTOM_BUILD)
     add_subdirectory(custom)
-endif()
-
-if(QGC_DISABLE_APM_MAVLINK)
-    add_compile_definitions(NO_ARDUPILOT_DIALECT)
 endif()
 
 #######################################################

@@ -10,7 +10,6 @@ target_link_libraries(FollowMeTest
     PRIVATE
         Qt6::Test
         FollowMe
-        QGC
         Vehicle
     PUBLIC
         qgcunittest

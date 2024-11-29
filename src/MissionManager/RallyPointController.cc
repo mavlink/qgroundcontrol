@@ -10,7 +10,6 @@
 #include "RallyPointController.h"
 #include "RallyPoint.h"
 #include "Vehicle.h"
-#include "QGCApplication.h"
 #include "JsonHelper.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
@@ -240,7 +239,7 @@ void RallyPointController::addPoint(QGeoCoordinate point)
         defaultAlt = qobject_cast<RallyPoint*>(_points[_points.count() - 1])->coordinate().altitude();
     } else {
         if(_masterController->controllerVehicle()->fixedWing()) {
-            defaultAlt = qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble();
+            defaultAlt = SettingsManager::instance()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble();
         }
         else {
             defaultAlt = RallyPoint::getDefaultFactAltitude();

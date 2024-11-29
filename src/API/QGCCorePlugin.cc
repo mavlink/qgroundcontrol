@@ -13,6 +13,7 @@
 #include "QmlComponentInfo.h"
 #include "FactMetaData.h"
 #include "SettingsManager.h"
+#include "AppSettings.h"
 #include "AppMessages.h"
 #include "QmlObjectListModel.h"
 #include "JoystickManager.h"
@@ -400,7 +401,7 @@ QVariantList QGCCorePlugin::firstRunPromptsToShow(void)
     rgIdsToShow.append(firstRunPromptStdIds());
     rgIdsToShow.append(firstRunPromptCustomIds());
 
-    QList<int> rgAlreadyShownIds = AppSettings::firstRunPromptsIdsVariantToList(_toolbox->settingsManager()->appSettings()->firstRunPromptIdsShown()->rawValue());
+    QList<int> rgAlreadyShownIds = AppSettings::firstRunPromptsIdsVariantToList(SettingsManager::instance()->appSettings()->firstRunPromptIdsShown()->rawValue());
 
     for (int idToRemove: rgAlreadyShownIds) {
         rgIdsToShow.removeOne(idToRemove);

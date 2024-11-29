@@ -8,10 +8,10 @@
  ****************************************************************************/
 
 #include "MAVLinkLogManager.h"
-#include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
+#include "AppSettings.h"
 #include "Vehicle.h"
 
 #include <QtCore/QDirIterator>
@@ -290,8 +290,8 @@ MAVLinkLogManager::MAVLinkLogManager(Vehicle *vehicle, QObject *parent)
     , _vehicle(vehicle)
     , _networkManager(new QNetworkAccessManager(this))
     , _logFiles(new QmlObjectListModel(this))
-    , _ulogExtension(QStringLiteral(".") + qgcApp()->toolbox()->settingsManager()->appSettings()->logFileExtension)
-    , _logPath(qgcApp()->toolbox()->settingsManager()->appSettings()->logSavePath())
+    , _ulogExtension(QStringLiteral(".") + SettingsManager::instance()->appSettings()->logFileExtension)
+    , _logPath(SettingsManager::instance()->appSettings()->logSavePath())
 {
     // qCDebug(MAVLinkLogManagerLog) << Q_FUNC_INFO << this;
 
@@ -595,7 +595,7 @@ void MAVLinkLogManager::cancelUpload()
 
 void MAVLinkLogManager::startLogging()
 {
-    AppSettings *const appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
+    AppSettings *const appSettings = SettingsManager::instance()->appSettings();
     if (appSettings->disableAllPersistence()->rawValue().toBool()) {
         return;
     }

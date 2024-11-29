@@ -16,6 +16,8 @@
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
+#include "AppSettings.h"
+#include "AutoConnectSettings.h"
 #include "TCPLink.h"
 #include "UDPLink.h"
 
@@ -96,7 +98,7 @@ void LinkManager::registerQmlTypes()
 
 void LinkManager::init()
 {
-    _autoConnectSettings = qgcApp()->toolbox()->settingsManager()->autoConnectSettings();
+    _autoConnectSettings = SettingsManager::instance()->autoConnectSettings();
 
     if (!qgcApp()->runningUnitTests()) {
         (void) connect(_portListTimer, &QTimer::timeout, this, &LinkManager::_updateAutoConnectLinks);
@@ -398,7 +400,7 @@ void LinkManager::_addUDPAutoConnectLink()
 
 void LinkManager::_addMAVLinkForwardingLink()
 {
-    if (!qgcApp()->toolbox()->settingsManager()->appSettings()->forwardMavlink()->rawValue().toBool()) {
+    if (!SettingsManager::instance()->appSettings()->forwardMavlink()->rawValue().toBool()) {
         return;
     }
 
@@ -410,7 +412,7 @@ void LinkManager::_addMAVLinkForwardingLink()
         }
     }
 
-    const QString hostName = qgcApp()->toolbox()->settingsManager()->appSettings()->forwardMavlinkHostName()->rawValue().toString();
+    const QString hostName = SettingsManager::instance()->appSettings()->forwardMavlinkHostName()->rawValue().toString();
     _createDynamicForwardLink(_mavlinkForwardingLinkName, hostName);
 }
 
@@ -615,7 +617,7 @@ void LinkManager::removeConfiguration(LinkConfiguration *config)
 
 void LinkManager::createMavlinkForwardingSupportLink()
 {
-    const QString hostName = qgcApp()->toolbox()->settingsManager()->appSettings()->forwardMavlinkAPMSupportHostName()->rawValue().toString();
+    const QString hostName = SettingsManager::instance()->appSettings()->forwardMavlinkAPMSupportHostName()->rawValue().toString();
     _createDynamicForwardLink(_mavlinkForwardingSupportLinkName, hostName);
     _mavlinkSupportForwardingEnabled = true;
     emit mavlinkSupportForwardingEnabledChanged();

@@ -14,7 +14,6 @@
 #elif defined(Q_OS_ANDROID)
     #include "JoystickAndroid.h"
 #endif
-#include "QGCApplication.h"
 #include "MultiVehicleManager.h"
 #include "QGCLoggingCategory.h"
 

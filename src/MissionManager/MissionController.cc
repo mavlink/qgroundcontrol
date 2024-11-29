@@ -46,8 +46,8 @@ MissionController::MissionController(PlanMasterController* masterController, QOb
     , _managerVehicle       (masterController->managerVehicle())
     , _missionManager       (masterController->managerVehicle()->missionManager())
     , _visualItems          (new QmlObjectListModel(this))
-    , _planViewSettings     (qgcApp()->toolbox()->settingsManager()->planViewSettings())
-    , _appSettings          (qgcApp()->toolbox()->settingsManager()->appSettings())
+    , _planViewSettings     (SettingsManager::instance()->planViewSettings())
+    , _appSettings          (SettingsManager::instance()->appSettings())
 {
     _resetMissionFlightStatus();
 
@@ -97,7 +97,7 @@ void MissionController::_resetMissionFlightStatus(void)
 
     _controllerVehicle->firmwarePlugin()->batteryConsumptionData(_controllerVehicle, _missionFlightStatus.mAhBattery, _missionFlightStatus.hoverAmps, _missionFlightStatus.cruiseAmps);
     if (_missionFlightStatus.mAhBattery != 0) {
-        double batteryPercentRemainingAnnounce = qgcApp()->toolbox()->settingsManager()->appSettings()->batteryPercentRemainingAnnounce()->rawValue().toDouble();
+        double batteryPercentRemainingAnnounce = SettingsManager::instance()->appSettings()->batteryPercentRemainingAnnounce()->rawValue().toDouble();
         _missionFlightStatus.ampMinutesAvailable = static_cast<double>(_missionFlightStatus.mAhBattery) / 1000.0 * 60.0 * ((100.0 - batteryPercentRemainingAnnounce) / 100.0);
     }
 
@@ -725,7 +725,7 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
 
     qCDebug(MissionControllerLog) << "MissionController::_loadJsonMissionFileV2 itemCount:" << json[_jsonItemsKey].toArray().count();
 
-    AppSettings* appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
+    AppSettings* appSettings = SettingsManager::instance()->appSettings();
 
     // Get the firmware/vehicle type from the plan file
     MAV_AUTOPILOT   planFileFirmwareType =  static_cast<MAV_AUTOPILOT>(json[_jsonFirmwareTypeKey].toInt());

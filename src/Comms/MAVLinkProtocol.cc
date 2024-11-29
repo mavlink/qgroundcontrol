@@ -13,8 +13,8 @@
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "QGCTemporaryFile.h"
-#include "QGCToolbox.h"
 #include "SettingsManager.h"
+#include "AppSettings.h"
 #include "QmlObjectListModel.h"
 
 #include <QtCore/qapplicationstatic.h>
@@ -220,7 +220,7 @@ void MAVLinkProtocol::_forward(const mavlink_message_t &message)
         return;
     }
 
-    if (!qgcApp()->toolbox()->settingsManager()->appSettings()->forwardMavlink()->rawValue().toBool()) {
+    if (!SettingsManager::instance()->appSettings()->forwardMavlink()->rawValue().toBool()) {
         return;
     }
 
@@ -343,7 +343,7 @@ void MAVLinkProtocol::_startLogging()
         return;
     }
 
-    AppSettings *const appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
+    AppSettings *const appSettings = SettingsManager::instance()->appSettings();
     if (appSettings->disableAllPersistence()->rawValue().toBool()) {
         return;
     }
@@ -379,7 +379,7 @@ void MAVLinkProtocol::_startLogging()
 void MAVLinkProtocol::_stopLogging()
 {
     if (_tempLogFile->isOpen() && _closeLogFile()) {
-        AppSettings *const appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
+        AppSettings *const appSettings = SettingsManager::instance()->appSettings();
         if ((_vehicleWasArmed || appSettings->telemetrySaveNotArmed()->rawValue().toBool()) && appSettings->telemetrySave()->rawValue().toBool() && !appSettings->disableAllPersistence()->rawValue().toBool()) {
             _saveTelemetryLog(_tempLogFile->fileName());
         } else {
@@ -426,7 +426,7 @@ void MAVLinkProtocol::deleteTempLogFiles()
 void MAVLinkProtocol::_saveTelemetryLog(const QString &tempLogfile)
 {
     if (_checkTelemetrySavePath()) {
-        const QString saveDirPath = qgcApp()->toolbox()->settingsManager()->appSettings()->telemetrySavePath();
+        const QString saveDirPath = SettingsManager::instance()->appSettings()->telemetrySavePath();
         const QDir saveDir(saveDirPath);
 
         const QString nameFormat("%1%2.%3");
@@ -451,7 +451,7 @@ void MAVLinkProtocol::_saveTelemetryLog(const QString &tempLogfile)
 
 bool MAVLinkProtocol::_checkTelemetrySavePath()
 {
-    const QString saveDirPath = qgcApp()->toolbox()->settingsManager()->appSettings()->telemetrySavePath();
+    const QString saveDirPath = SettingsManager::instance()->appSettings()->telemetrySavePath();
     if (saveDirPath.isEmpty()) {
         const QString error = tr("Unable to save telemetry log. Application save directory is not set.");
         qgcApp()->showAppMessage(error);

@@ -8,7 +8,6 @@
  ****************************************************************************/
 
 #include "FollowMe.h"
-#include "QGCApplication.h"
 #include "MultiVehicleManager.h"
 #include "FirmwarePlugin.h"
 #include "Vehicle.h"
@@ -47,9 +46,9 @@ void FollowMe::init()
     static bool once = false;
     if (!once) {
         (void) connect(_gcsMotionReportTimer, &QTimer::timeout, this, &FollowMe::_sendGCSMotionReport);
-        (void) connect(qgcApp()->toolbox()->settingsManager()->appSettings()->followTarget(), &Fact::rawValueChanged, this, &FollowMe::_settingsChanged);
+        (void) connect(SettingsManager::instance()->appSettings()->followTarget(), &Fact::rawValueChanged, this, &FollowMe::_settingsChanged);
 
-        _settingsChanged(qgcApp()->toolbox()->settingsManager()->appSettings()->followTarget()->rawValue());
+        _settingsChanged(SettingsManager::instance()->appSettings()->followTarget()->rawValue());
     }
     once = true;
 }

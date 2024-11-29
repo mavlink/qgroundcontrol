@@ -57,6 +57,7 @@
 #include "QGCLoggingCategory.h"
 #include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
+#include "AppSettings.h"
 #include "ShapeFileHelper.h"
 #include "SyslinkComponentController.h"
 #include "UDPLink.h"
@@ -264,6 +265,8 @@ QGCApplication::~QGCApplication()
 
 void QGCApplication::init()
 {
+    SettingsManager::instance()->init();
+
     // Register our Qml objects
 
     LinkManager::registerQmlTypes();
@@ -273,6 +276,8 @@ void QGCApplication::init()
     QGCCameraManager::registerQmlTypes();
     MultiVehicleManager::registerQmlTypes();
     QGCPositionManager::registerQmlTypes();
+    SettingsManager::registerQmlTypes();
+    VideoManager::registerQmlTypes();
 #ifdef QGC_VIEWER3D
     Viewer3DManager::registerQmlTypes();
 #endif
@@ -334,7 +339,7 @@ void QGCApplication::_initForNormalAppBoot()
     QObject::connect(_qmlAppEngine, &QQmlApplicationEngine::objectCreationFailed, this, QCoreApplication::quit, Qt::QueuedConnection);
     _toolbox->corePlugin()->createRootWindow(_qmlAppEngine);
 
-    AudioOutput::instance()->init(_toolbox->settingsManager()->appSettings()->audioMuted());
+    AudioOutput::instance()->init(SettingsManager::instance()->appSettings()->audioMuted());
     FollowMe::instance()->init();
     QGCPositionManager::instance()->init();
     LinkManager::instance()->init();

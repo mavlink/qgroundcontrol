@@ -20,6 +20,8 @@
 #include "ParameterManager.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
+#include "PlanViewSettings.h"
+#include "VideoSettings.h"
 #include "APMMavlinkStreamRateSettings.h"
 #include "ArduPlaneFirmwarePlugin.h"
 #include "ArduCopterFirmwarePlugin.h"
@@ -411,9 +413,9 @@ void APMFirmwarePlugin::initializeStreamRates(Vehicle* vehicle)
         vehicle->setFirmwarePluginInstanceData(instanceData);
     }
 
-    if (qgcApp()->toolbox()->settingsManager()->appSettings()->apmStartMavlinkStreams()->rawValue().toBool()) {
+    if (SettingsManager::instance()->appSettings()->apmStartMavlinkStreams()->rawValue().toBool()) {
 
-        APMMavlinkStreamRateSettings* streamRates = qgcApp()->toolbox()->settingsManager()->apmMavlinkStreamRateSettings();
+        APMMavlinkStreamRateSettings* streamRates = SettingsManager::instance()->apmMavlinkStreamRateSettings();
 
         struct StreamInfo_s {
             MAV_DATA_STREAM mavStream;
@@ -487,7 +489,7 @@ void APMFirmwarePlugin::initializeVehicle(Vehicle* vehicle)
         initializeStreamRates(vehicle);
     }
 
-    if (qgcApp()->toolbox()->settingsManager()->videoSettings()->videoSource()->rawValue() == VideoSettings::videoSource3DRSolo) {
+    if (SettingsManager::instance()->videoSettings()->videoSource()->rawValue() == VideoSettings::videoSource3DRSolo) {
         _soloVideoHandshake();
     }
 }
@@ -573,7 +575,7 @@ QList<MAV_CMD> APMFirmwarePlugin::supportedMissionCommands(QGCMAVLink::VehicleCl
         supportedCommands += flightCommands;
     }
 
-    if (qgcApp()->toolbox()->settingsManager()->planViewSettings()->useConditionGate()->rawValue().toBool()) {
+    if (SettingsManager::instance()->planViewSettings()->useConditionGate()->rawValue().toBool()) {
         supportedCommands.append(MAV_CMD_CONDITION_GATE);
     }
 
