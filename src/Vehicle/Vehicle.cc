@@ -88,7 +88,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _defaultComponentId           (defaultComponentId)
     , _firmwareType                 (firmwareType)
     , _vehicleType                  (vehicleType)
-    , _toolbox                      (qgcApp()->toolbox())
     , _defaultCruiseSpeed           (SettingsManager::instance()->appSettings()->offlineEditingCruiseSpeed()->rawValue().toDouble())
     , _defaultHoverSpeed            (SettingsManager::instance()->appSettings()->offlineEditingHoverSpeed()->rawValue().toDouble())
     , _trajectoryPoints             (new TrajectoryPoints(this, this))
@@ -199,7 +198,6 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _offlineEditingVehicle            (true)
     , _firmwareType                     (firmwareType)
     , _vehicleType                      (vehicleType)
-    , _toolbox                          (qgcApp()->toolbox())
     , _defaultCruiseSpeed               (SettingsManager::instance()->appSettings()->offlineEditingCruiseSpeed()->rawValue().toDouble())
     , _defaultHoverSpeed                (SettingsManager::instance()->appSettings()->offlineEditingHoverSpeed()->rawValue().toDouble())
     , _mavlinkProtocolRequestComplete   (true)
@@ -310,7 +308,7 @@ void Vehicle::_commonInit()
     _remoteIDManager = new RemoteIDManager(this);
 
     // Flight modes can differ based on advanced mode
-    connect(_toolbox->corePlugin(), &QGCCorePlugin::showAdvancedUIChanged, this, &Vehicle::flightModesChanged);
+    connect(QGCCorePlugin::instance(), &QGCCorePlugin::showAdvancedUIChanged, this, &Vehicle::flightModesChanged);
 
     _createImageProtocolManager();
     _createStatusTextHandler();
@@ -502,7 +500,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     }
 
     // Give the Core Plugin access to all mavlink traffic
-    if (!_toolbox->corePlugin()->mavlinkMessage(this, link, message)) {
+    if (!QGCCorePlugin::instance()->mavlinkMessage(this, link, message)) {
         return;
     }
 

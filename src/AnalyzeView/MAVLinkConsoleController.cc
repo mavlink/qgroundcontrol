@@ -10,10 +10,8 @@
 #include "MAVLinkConsoleController.h"
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
-#include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "QGCPalette.h"
-#include "QGCToolbox.h"
 #include "Vehicle.h"
 
 #include <QtGui/QGuiApplication>

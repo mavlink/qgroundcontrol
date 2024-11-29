@@ -9,7 +9,6 @@
 
 #include "SendMavCommandWithHandlerTest.h"
 #include "MultiVehicleManager.h"
-#include "QGCApplication.h"
 #include "MockLink.h"
 
 #include <QtTest/QTest>

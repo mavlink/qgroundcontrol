@@ -8,8 +8,6 @@
  ****************************************************************************/
 
 #include "AirLinkManager.h"
-#include "QGCApplication.h"
-#include "QGCToolbox.h"
 #include "SettingsManager.h"
 #include "QGCLoggingCategory.h"
 

@@ -9,8 +9,6 @@
 
 #include "InstrumentValueData.h"
 #include "FactValueGrid.h"
-#include "QGCApplication.h"
-#include "QGCCorePlugin.h"
 #include "QGC.h"
 #include "QmlObjectListModel.h"
 #include "MultiVehicleManager.h"

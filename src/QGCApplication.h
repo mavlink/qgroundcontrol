@@ -25,7 +25,6 @@
 
 // Work around circular header includes
 class QQmlApplicationEngine;
-class QGCToolbox;
 class QQuickWindow;
 class QGCImageProvider;
 class QGCApplication;
@@ -81,9 +80,6 @@ public:
 
     /// @return true: Fake ui into showing mobile interface
     bool fakeMobile(void) const { return _fakeMobile; }
-
-    // Still working on getting rid of this and using dependency injection instead for everything
-    QGCToolbox* toolbox(void) { return _toolbox; }
 
     void            setLanguage();
     QQuickWindow*   mainRootWindow();
@@ -170,7 +166,6 @@ private:
     int                 _majorVersion           = 0;
     int                 _minorVersion           = 0;
     int                 _buildVersion           = 0;
-    QGCToolbox*         _toolbox                = nullptr;
     QQuickWindow*       _mainRootWindow         = nullptr;
     QTranslator         _qgcTranslatorSourceCode;           ///< translations for source code C++/Qml
     QTranslator         _qgcTranslatorQtLibs;               ///< tranlsations for Qt libraries

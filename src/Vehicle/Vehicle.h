@@ -73,7 +73,6 @@ class TerrainProtocolHandler;
 class TrajectoryPoints;
 class VehicleBatteryFactGroup;
 class VehicleObjectAvoidance;
-class QGCToolbox;
 class GimbalController;
 #ifdef QGC_UTM_ADAPTER
 class UTMSPVehicle;
@@ -991,7 +990,6 @@ private:
     QObject*            _firmwarePluginInstanceData = nullptr;
     AutoPilotPlugin*    _autopilotPlugin = nullptr;
     bool                _soloFirmware = false;
-    QGCToolbox*         _toolbox = nullptr;
 
     QTimer              _csvLogTimer;
     QFile               _csvLogFile;
@@ -1083,8 +1081,6 @@ private:
     TrajectoryPoints*               _trajectoryPoints = nullptr;
     QmlObjectListModel              _cameraTriggerPoints;
     //QMap<QString, ADSBVehicle*>     _trafficVehicleMap;
-
-    // Toolbox references
 
     bool _allLinksRemovedSent = false; ///< true: allLinkRemoved signal already sent one time
 

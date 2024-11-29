@@ -10,6 +10,7 @@
 #include "QGroundControlQmlGlobal.h"
 
 #include "QGCApplication.h"
+#include "QGCCorePlugin.h"
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
 #include "FirmwarePluginManager.h"
@@ -64,16 +65,13 @@ double QGroundControlQmlGlobal::_zoom = 2;
 
 static QObject* screenToolsControllerSingletonFactory(QQmlEngine*, QJSEngine*)
 {
-    ScreenToolsController* screenToolsController = new ScreenToolsController;
+    ScreenToolsController* screenToolsController = new ScreenToolsController();
     return screenToolsController;
 }
 
 static QObject* qgroundcontrolQmlGlobalSingletonFactory(QQmlEngine*, QJSEngine*)
 {
-    // We create this object as a QGCTool even though it isn't in the toolbox
-    QGroundControlQmlGlobal* qmlGlobal = new QGroundControlQmlGlobal(qgcApp(), qgcApp()->toolbox());
-    qmlGlobal->setToolbox(qgcApp()->toolbox());
-
+    QGroundControlQmlGlobal *const qmlGlobal = new QGroundControlQmlGlobal();
     return qmlGlobal;
 }
 
@@ -106,8 +104,8 @@ void QGroundControlQmlGlobal::registerQmlTypes()
     qmlRegisterSingletonType<ScreenToolsController>     ("QGroundControl.ScreenToolsController", 1, 0, "ScreenToolsController",  screenToolsControllerSingletonFactory);
 }
 
-QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app, QGCToolbox* toolbox)
-    : QGCTool(app, toolbox)
+QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject *parent)
+    : QObject(parent)
     , _mapEngineManager(QGCMapEngineManager::instance())
     , _adsbVehicleManager(ADSBVehicleManager::instance())
     , _qgcPositionManager(QGCPositionManager::instance())
@@ -116,6 +114,11 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app, QGCToolbox
     , _linkManager(LinkManager::instance())
     , _multiVehicleManager(MultiVehicleManager::instance())
     , _settingsManager(SettingsManager::instance())
+    , _corePlugin(QGCCorePlugin::instance())
+    , _globalPalette(new QGCPalette(this))
+#ifndef NO_SERIAL_LINK
+    , _gpsRtkFactGroup(GPSManager::instance()->gpsRtk()->gpsRtkFactGroup())
+#endif
 #ifndef QGC_AIRLINK_DISABLED
     , _airlinkManager(AirLinkManager::instance())
 #endif
@@ -156,17 +159,6 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app, QGCToolbox
 
 QGroundControlQmlGlobal::~QGroundControlQmlGlobal()
 {
-}
-
-void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
-{
-    QGCTool::setToolbox(toolbox);
-
-    _corePlugin             = toolbox->corePlugin();
-#ifndef NO_SERIAL_LINK
-    _gpsRtkFactGroup        = GPSManager::instance()->gpsRtk()->gpsRtkFactGroup();
-#endif
-    _globalPalette          = new QGCPalette(this);
 }
 
 void QGroundControlQmlGlobal::saveGlobalSetting (const QString& key, const QString& value)
@@ -340,7 +332,7 @@ void QGroundControlQmlGlobal::setFlightMapZoom(double zoom)
 
 QString QGroundControlQmlGlobal::qgcVersion(void) const
 {
-    QString versionStr = _app->applicationVersion();
+    QString versionStr = qgcApp()->applicationVersion();
     if(QSysInfo::buildAbi().contains("32"))
     {
         versionStr += QStringLiteral(" %1").arg(tr("32 bit"));
@@ -433,15 +425,15 @@ QString QGroundControlQmlGlobal::telemetryFileExtension() const
 
 QString QGroundControlQmlGlobal::appName()
 {
-    return _app->applicationName();
+    return qgcApp()->applicationName();
 }
 
 void QGroundControlQmlGlobal::deleteAllSettingsNextBoot()
 {
-    _app->deleteAllSettingsNextBoot();
+    qgcApp()->deleteAllSettingsNextBoot();
 }
 
 void QGroundControlQmlGlobal::clearDeleteAllSettingsNextBoot()
 {
-    _app->clearDeleteAllSettingsNextBoot();
+    qgcApp()->clearDeleteAllSettingsNextBoot();
 }
