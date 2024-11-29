@@ -54,6 +54,9 @@ jobs:
           brew update
           brew install cmake ninja ccache
 
+      - uses: seanmiddleditch/gha-setup-ninja@v5
+      - uses: lukka/get-cmake@latest
+
       - name: Set Up Cache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
