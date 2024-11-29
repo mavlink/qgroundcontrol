@@ -11,7 +11,6 @@
 #include "QGCPalette.h"
 #include "QGCApplication.h"
 #include "QGCMAVLink.h"
-#include "QGCToolbox.h"
 #include "LinkManager.h"
 
 #ifdef Q_OS_ANDROID

@@ -8,7 +8,6 @@
  ****************************************************************************/
 
 #include "HorizontalFactValueGrid.h"
-#include "QGCCorePlugin.h"
 
 const QString HorizontalFactValueGrid::telemetryBarUserSettingsGroup    ("TelemetryBarUserSettings");
 const QString HorizontalFactValueGrid::telemetryBarDefaultSettingsGroup ("TelemetryBarDefaultSettings");

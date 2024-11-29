@@ -8,7 +8,6 @@
  ****************************************************************************/
 
 #include "GimbalControllerSettings.h"
-#include "QGCApplication.h"
 
 #include <QQmlEngine>
 #include <QtQml>

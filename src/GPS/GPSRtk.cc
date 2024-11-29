@@ -22,10 +22,6 @@ GPSRtk::GPSRtk(QObject *parent)
     , _gpsRtkFactGroup(new GPSRTKFactGroup(this))
 {
     // qCDebug(GPSRtkLog) << Q_FUNC_INFO << this;
-
-    qRegisterMetaType<satellite_info_s>("satellite_info_s");
-    qRegisterMetaType<sensor_gnss_relative_s>("sensor_gnss_relative_s");
-    qRegisterMetaType<sensor_gps_s>("sensor_gps_s");
 }
 
 GPSRtk::~GPSRtk()
@@ -33,6 +29,13 @@ GPSRtk::~GPSRtk()
     disconnectGPS();
 
     // qCDebug(GPSRtkLog) << Q_FUNC_INFO << this;
+}
+
+void GPSRtk::registerQmlTypes()
+{
+    (void) qRegisterMetaType<satellite_info_s>("satellite_info_s");
+    (void) qRegisterMetaType<sensor_gnss_relative_s>("sensor_gnss_relative_s");
+    (void) qRegisterMetaType<sensor_gps_s>("sensor_gps_s");
 }
 
 void GPSRtk::_onGPSConnect()

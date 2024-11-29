@@ -9,7 +9,6 @@
 
 #include "ComplexMissionItem.h"
 #include "QGCApplication.h"
-#include "QGCToolbox.h"
 #include "QGCCorePlugin.h"
 #include "QGCOptions.h"
 #include "PlanMasterController.h"
@@ -62,7 +61,7 @@ void ComplexMissionItem::savePreset(const QString& name)
 
 void ComplexMissionItem::deletePreset(const QString& name)
 {
-    if (qgcApp()->toolbox()->corePlugin()->options()->surveyBuiltInPresetNames().contains(name)) {
+    if (QGCCorePlugin::instance()->options()->surveyBuiltInPresetNames().contains(name)) {
         qgcApp()->showAppMessage(tr("'%1' is a built-in preset which cannot be deleted.").arg(name));
         return;
     }

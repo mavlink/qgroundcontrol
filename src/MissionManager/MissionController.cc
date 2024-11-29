@@ -2251,7 +2251,7 @@ QStringList MissionController::complexMissionItemNames(void) const
 
     // Note: The landing pattern items are not added here since they have there own button which adds them
 
-    return qgcApp()->toolbox()->corePlugin()->complexMissionItemNames(_controllerVehicle, complexItems);
+    return QGCCorePlugin::instance()->complexMissionItemNames(_controllerVehicle, complexItems);
 }
 
 void MissionController::resumeMission(int resumeIndex)

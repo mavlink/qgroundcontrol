@@ -61,7 +61,7 @@ Fact::Fact(const QString& settingsGroup, FactMetaData* metaData, QObject* parent
     , _valueSliderModel         (nullptr)
     , _ignoreQGCRebootRequired  (false)
 {
-    qgcApp()->toolbox()->corePlugin()->adjustSettingMetaData(settingsGroup, *metaData);
+    QGCCorePlugin::instance()->adjustSettingMetaData(settingsGroup, *metaData);
     setMetaData(metaData, true /* setDefaultFromMetaData */);
 
     _init();

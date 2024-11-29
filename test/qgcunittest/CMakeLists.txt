@@ -20,7 +20,6 @@ target_link_libraries(qgcunittest
     PRIVATE
         FactSystem
         MissionManager
-        QGC
         Settings
         Vehicle
         VehicleComponents

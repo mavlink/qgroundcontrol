@@ -122,7 +122,7 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
         break;
     }
 
-    if ((_vehicles->count() > 0) && !qgcApp()->toolbox()->corePlugin()->options()->multiVehicleEnabled()) {
+    if ((_vehicles->count() > 0) && !QGCCorePlugin::instance()->options()->multiVehicleEnabled()) {
         return;
     }
 

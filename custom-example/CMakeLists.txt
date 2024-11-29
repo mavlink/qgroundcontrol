@@ -56,7 +56,6 @@ target_link_libraries(CustomPlugin
     PUBLIC
         Qt6::Core
         MAVLink
-        QGC
         Settings
 )
 

@@ -9,7 +9,6 @@
 
 #include "SendMavCommandWithSignallingTest.h"
 #include "MultiVehicleManager.h"
-#include "QGCApplication.h"
 #include "MockLink.h"
 
 SendMavCommandWithSignallingTest::TestCase_t SendMavCommandWithSignallingTest::_rgTestCases[] = {

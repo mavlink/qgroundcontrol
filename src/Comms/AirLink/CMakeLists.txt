@@ -16,7 +16,6 @@ if(NOT QGC_AIRLINK_DISABLED)
     target_link_libraries(AirLink
         PRIVATE
             Qt6::Network
-            QGC
             Settings
             Utilities
         PUBLIC
