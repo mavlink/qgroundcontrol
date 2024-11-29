@@ -416,12 +416,38 @@ elseif(ANDROID)
     endif()
     set(ANDROID_VERSION_CODE "${ANDROID_PLATFORM_ARCHITECTURE_CODE}${PROJECT_VERSION_MAJOR}${PROJECT_VERSION_MINOR}")
 
+    if(NOT QGC_CUSTOM_BUILD)
+        set(QGC_ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_SOURCE_DIR}/android)
+    else()
+        set(CUSTOM_ANDROID_DIR "${CMAKE_SOURCE_DIR}/custom/android")
+        if(EXISTS "${CUSTOM_ANDROID_DIR}")
+            file(GLOB CUSTOM_ANDROID_FILES "${CUSTOM_ANDROID_DIR}/*")
+            if(CUSTOM_ANDROID_FILES)
+                message(STATUS "Custom Android package template found. Overlaying custom files...")
+                set(DEFAULT_ANDROID_DIR "${CMAKE_SOURCE_DIR}/android")
+                set(FINAL_ANDROID_DIR "${CMAKE_BINARY_DIR}/custom/android")
+                file(COPY "${DEFAULT_ANDROID_DIR}/." DESTINATION "${FINAL_ANDROID_DIR}")
+                file(COPY "${CUSTOM_ANDROID_DIR}/." DESTINATION "${FINAL_ANDROID_DIR}")
+                set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+                                "${DEFAULT_ANDROID_DIR}/"
+                                "${CUSTOM_ANDROID_DIR}/"
+                            )
+                set(QGC_ANDROID_PACKAGE_SOURCE_DIR "${FINAL_ANDROID_DIR}" CACHE STRING "Path to a custom Android package template" FORCE)
+                message(STATUS "Android package template path will be set to: ${QGC_ANDROID_PACKAGE_SOURCE_DIR}")
+            else()
+                message(STATUS "Custom Android package template empty. Using default.")
+            endif()
+        else()
+            message(STATUS "No custom Android package template found. Using default.")
+        endif()
+    endif()
+
     set_target_properties(${PROJECT_NAME}
         PROPERTIES
             # QT_ANDROID_ABIS ${ANDROID_ABI}
             QT_ANDROID_MIN_SDK_VERSION 25
             QT_ANDROID_TARGET_SDK_VERSION 35
-            QT_ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_SOURCE_DIR}/android
+            QT_ANDROID_PACKAGE_SOURCE_DIR "${QGC_ANDROID_PACKAGE_SOURCE_DIR}"
             QT_ANDROID_VERSION_NAME ${CMAKE_PROJECT_VERSION}
             QT_ANDROID_VERSION_CODE ${ANDROID_VERSION_CODE}
             # QT_QML_ROOT_PATH ${CMAKE_SOURCE_DIR}
