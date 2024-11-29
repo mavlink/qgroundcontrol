@@ -9,7 +9,6 @@
 
 #include "Viewer3DTerrainTexture.h"
 
-#include "QGCApplication.h"
 #include "SettingsManager.h"
 #include "QGCMapEngine.h"
 #include "QGCMapUrlEngine.h"
@@ -20,7 +19,7 @@
 Viewer3DTerrainTexture::Viewer3DTerrainTexture()
 {
     _terrainTileLoader = nullptr;
-    _flightMapSettings = qgcApp()->toolbox()->settingsManager()->flightMapSettings();
+    _flightMapSettings = SettingsManager::instance()->flightMapSettings();
     mapTypeChangedEvent();
 
     setTextureGeometryDone(false);

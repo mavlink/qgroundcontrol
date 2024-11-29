@@ -8,12 +8,12 @@
  ****************************************************************************/
 
 #include "SimpleMissionItem.h"
-#include "QGCApplication.h"
 #include "JsonHelper.h"
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
 #include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
+#include "AppSettings.h"
 #include "PlanMasterController.h"
 #include "SpeedSection.h"
 #include "MultiVehicleManager.h"
@@ -767,7 +767,7 @@ void SimpleMissionItem::_setDefaultsForCommand(void)
     emit altitudeModeChanged();
     _amslAltAboveTerrainFact.setRawValue(qQNaN());
     if (specifiesAltitude()) {
-        double defaultAlt = qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble();
+        double defaultAlt = SettingsManager::instance()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble();
         _altitudeFact.setRawValue(defaultAlt);
         _missionItem._param7Fact.setRawValue(defaultAlt);
         // Note that setAltitudeMode will also set MAV_FRAME correctly through signalling

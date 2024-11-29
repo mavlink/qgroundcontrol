@@ -110,8 +110,8 @@ FirmwareUpgradeController::FirmwareUpgradeController(void)
     , _selectedFirmwareBuildType        (StableFirmware)
     , _image                            (nullptr)
     , _apmBoardDescriptionReplaceText   ("<APMBoardDescription>")
-    , _apmChibiOSSetting                (qgcApp()->toolbox()->settingsManager()->firmwareUpgradeSettings()->apmChibiOS())
-    , _apmVehicleTypeSetting            (qgcApp()->toolbox()->settingsManager()->firmwareUpgradeSettings()->apmVehicleType())
+    , _apmChibiOSSetting                (SettingsManager::instance()->firmwareUpgradeSettings()->apmChibiOS())
+    , _apmVehicleTypeSetting            (SettingsManager::instance()->firmwareUpgradeSettings()->apmVehicleType())
 {
     _manifestMavFirmwareVersionTypeToFirmwareBuildTypeMap["OFFICIAL"] =  StableFirmware;
     _manifestMavFirmwareVersionTypeToFirmwareBuildTypeMap["BETA"] =      BetaFirmware;

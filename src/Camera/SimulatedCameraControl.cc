@@ -11,6 +11,7 @@
 #include "VideoManager.h"
 #include "QGCApplication.h"
 #include "SettingsManager.h"
+#include "FlyViewSettings.h"
 #include "Vehicle.h"
 
 #include <QtQml/QQmlEngine>
@@ -24,7 +25,7 @@ SimulatedCameraControl::SimulatedCameraControl(Vehicle* vehicle, QObject* parent
 
     connect(VideoManager::instance(), &VideoManager::recordingChanged, this, &SimulatedCameraControl::videoCaptureStatusChanged);
 
-    auto flyViewSettings = qgcApp()->toolbox()->settingsManager()->flyViewSettings();
+    auto flyViewSettings = SettingsManager::instance()->flyViewSettings();
     connect(flyViewSettings->showSimpleCameraControl(), &Fact::rawValueChanged, this, &SimulatedCameraControl::infoChanged);
 
     _videoRecordTimeUpdateTimer.setInterval(1000);
@@ -201,7 +202,7 @@ void SimulatedCameraControl::setPhotoLapse(double)
 
 bool SimulatedCameraControl::capturesPhotos()
 {
-    return qgcApp()->toolbox()->settingsManager()->flyViewSettings()->showSimpleCameraControl()->rawValue().toBool();
+    return SettingsManager::instance()->flyViewSettings()->showSimpleCameraControl()->rawValue().toBool();
 }
 
 bool SimulatedCameraControl::hasVideoStream()

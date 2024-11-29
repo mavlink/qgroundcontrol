@@ -13,7 +13,6 @@
 
 #include "GeoFenceController.h"
 #include "Vehicle.h"
-#include "QGCApplication.h"
 #include "ParameterManager.h"
 #include "JsonHelper.h"
 #include "PlanMasterController.h"
@@ -36,7 +35,7 @@ GeoFenceController::GeoFenceController(PlanMasterController* masterController, Q
     , _managerVehicle               (masterController->managerVehicle())
     , _geoFenceManager              (masterController->managerVehicle()->geoFenceManager())
     , _breachReturnAltitudeFact     (0, _breachReturnAltitudeFactName, FactMetaData::valueTypeDouble)
-    , _breachReturnDefaultAltitude  (qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble())
+    , _breachReturnDefaultAltitude  (SettingsManager::instance()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble())
 {
     if (_metaDataMap.isEmpty()) {
         _metaDataMap = FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/BreachReturn.FactMetaData.json"), nullptr /* metaDataParent */);

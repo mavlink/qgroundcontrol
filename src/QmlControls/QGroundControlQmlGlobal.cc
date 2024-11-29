@@ -115,6 +115,7 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app, QGCToolbox
     , _videoManager(VideoManager::instance())
     , _linkManager(LinkManager::instance())
     , _multiVehicleManager(MultiVehicleManager::instance())
+    , _settingsManager(SettingsManager::instance())
 #ifndef QGC_AIRLINK_DISABLED
     , _airlinkManager(AirLinkManager::instance())
 #endif
@@ -162,7 +163,6 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
     QGCTool::setToolbox(toolbox);
 
     _corePlugin             = toolbox->corePlugin();
-    _settingsManager        = toolbox->settingsManager();
 #ifndef NO_SERIAL_LINK
     _gpsRtkFactGroup        = GPSManager::instance()->gpsRtk()->gpsRtkFactGroup();
 #endif

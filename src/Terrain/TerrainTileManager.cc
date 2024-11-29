@@ -14,8 +14,8 @@
 #include "QGeoMapReplyQGC.h"
 #include "QGCMapUrlEngine.h"
 #include "ElevationMapProvider.h"
-#include "QGCApplication.h"
 #include "SettingsManager.h"
+#include "FlightMapSettings.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtLocation/private/qgeotilespec_p.h>
@@ -56,7 +56,7 @@ bool TerrainTileManager::getAltitudesForCoordinates(const QList<QGeoCoordinate> 
 {
     error = false;
 
-    const QString elevationProviderName = qgcApp()->toolbox()->settingsManager()->flightMapSettings()->elevationMapProvider()->rawValue().toString();
+    const QString elevationProviderName = SettingsManager::instance()->flightMapSettings()->elevationMapProvider()->rawValue().toString();
     const SharedMapProvider provider = UrlFactory::getMapProviderFromProviderType(elevationProviderName);
     for (const QGeoCoordinate &coordinate: coordinates) {
         const QString tileHash = UrlFactory::getTileHash(

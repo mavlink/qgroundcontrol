@@ -56,7 +56,7 @@ bool LinkInterface::mavlinkChannelIsSet() const
 bool LinkInterface::initMavlinkSigning(void)
 {
     if (!isSecureConnection()) {
-        auto appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
+        auto appSettings = SettingsManager::instance()->appSettings();
         QByteArray signingKeyBytes = appSettings->mavlink2SigningKey()->rawValue().toByteArray();
         if (MAVLinkSigning::initSigning(static_cast<mavlink_channel_t>(_mavlinkChannel), signingKeyBytes, MAVLinkSigning::insecureConnectionAccceptUnsignedCallback)) {
             if (signingKeyBytes.isEmpty()) {

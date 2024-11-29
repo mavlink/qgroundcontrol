@@ -8,10 +8,10 @@
  ****************************************************************************/
 
 #include "TakeoffMissionItem.h"
-#include "QGCApplication.h"
 #include "MissionCommandTree.h"
 #include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
+#include "PlanViewSettings.h"
 #include "PlanMasterController.h"
 #include "MissionSettingsItem.h"
 #include "MultiVehicleManager.h"
@@ -172,7 +172,7 @@ void TakeoffMissionItem::setLaunchCoordinate(const QGeoCoordinate& launchCoordin
         if (_launchTakeoffAtSameLocation) {
             takeoffCoordinate = launchCoordinate;
         } else {
-            double distance = qgcApp()->toolbox()->settingsManager()->planViewSettings()->vtolTransitionDistance()->rawValue().toDouble(); // Default distance is VTOL transition to takeoff point distance
+            double distance = SettingsManager::instance()->planViewSettings()->vtolTransitionDistance()->rawValue().toDouble(); // Default distance is VTOL transition to takeoff point distance
             if (_controllerVehicle->fixedWing()) {
                 double altitude = this->altitude()->rawValue().toDouble();
 

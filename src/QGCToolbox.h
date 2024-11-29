@@ -7,15 +7,12 @@
  *
  ****************************************************************************/
 
-
 #pragma once
-
 
 #include <QtCore/QObject>
 
 class QGCApplication;
 class QGCCorePlugin;
-class SettingsManager;
 
 /// This is used to manage all of our top level services/tools
 class QGCToolbox : public QObject {
@@ -25,14 +22,12 @@ public:
     QGCToolbox(QGCApplication* app);
 
     QGCCorePlugin*              corePlugin              () { return _corePlugin; }
-    SettingsManager*            settingsManager         () { return _settingsManager; }
 
 private:
     void setChildToolboxes(void);
     void _scanAndLoadPlugins(QGCApplication *app);
 
     QGCCorePlugin*              _corePlugin             = nullptr;
-    SettingsManager*            _settingsManager        = nullptr;
     friend class QGCApplication;
 };
 

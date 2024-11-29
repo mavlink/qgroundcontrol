@@ -10,10 +10,10 @@
 #include "LogDownloadController.h"
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
-#include "QGCToolbox.h"
 #include "ParameterManager.h"
 #include "Vehicle.h"
 #include "SettingsManager.h"
+#include "AppSettings.h"
 #include "MAVLinkProtocol.h"
 #include "LogEntry.h"
 #include "QGCLoggingCategory.h"
@@ -445,7 +445,7 @@ LogDownloadController::download(QString path)
 {
     QString dir = path;
     if (dir.isEmpty()) {
-        dir = qgcApp()->toolbox()->settingsManager()->appSettings()->logSavePath();
+        dir = SettingsManager::instance()->appSettings()->logSavePath();
     }
     downloadToDirectory(dir);
 }

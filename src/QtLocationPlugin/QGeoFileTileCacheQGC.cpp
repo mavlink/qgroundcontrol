@@ -10,8 +10,8 @@
 #include "QGeoFileTileCacheQGC.h"
 #include "QGCMapEngine.h"
 #include "QGCApplication.h"
-#include "QGCToolbox.h"
 #include "SettingsManager.h"
+#include "AppSettings.h"
 #include "MapsSettings.h"
 #include "QGCMapUrlEngine.h"
 #include "QGCMapTasks.h"
@@ -89,12 +89,12 @@ uint32_t QGeoFileTileCacheQGC::_getMemLimit(const QVariantMap &parameters)
 
 quint32 QGeoFileTileCacheQGC::_getMaxMemCacheSetting()
 {
-    return qgcApp()->toolbox()->settingsManager()->mapsSettings()->maxCacheMemorySize()->rawValue().toUInt();
+    return SettingsManager::instance()->mapsSettings()->maxCacheMemorySize()->rawValue().toUInt();
 }
 
 quint32 QGeoFileTileCacheQGC::getMaxDiskCacheSetting()
 {
-    return qgcApp()->toolbox()->settingsManager()->mapsSettings()->maxCacheDiskSize()->rawValue().toUInt();
+    return SettingsManager::instance()->mapsSettings()->maxCacheDiskSize()->rawValue().toUInt();
 }
 
 void QGeoFileTileCacheQGC::cacheTile(const QString &type, int x, int y, int z, const QByteArray &image, const QString &format, qulonglong set)
@@ -105,7 +105,7 @@ void QGeoFileTileCacheQGC::cacheTile(const QString &type, int x, int y, int z, c
 
 void QGeoFileTileCacheQGC::cacheTile(const QString &type, const QString &hash, const QByteArray &image, const QString &format, qulonglong set)
 {
-    AppSettings* const appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
+    AppSettings* const appSettings = SettingsManager::instance()->appSettings();
     if (!appSettings->disableAllPersistence()->rawValue().toBool()) {
         QGCCacheTile* const tile = new QGCCacheTile(hash, image, format, type, set);
         QGCSaveTileTask* const task = new QGCSaveTileTask(tile);

@@ -10,7 +10,6 @@
 #include "GPSRtk.h"
 #include "GPSProvider.h"
 #include "GPSRTKFactGroup.h"
-#include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "RTCMMavlink.h"
 #include "RTKSettings.h"
@@ -76,7 +75,7 @@ void GPSRtk::connectGPS(const QString &device, QStringView gps_type)
 
     disconnectGPS();
 
-    RTKSettings* const rtkSettings = qgcApp()->toolbox()->settingsManager()->rtkSettings();
+    RTKSettings* const rtkSettings = SettingsManager::instance()->rtkSettings();
     _requestGpsStop = false;
     const GPSProvider::rtk_data_s rtkData = {
         rtkSettings->surveyInAccuracyLimit()->rawValue().toDouble(),

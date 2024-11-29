@@ -8,7 +8,6 @@
  ****************************************************************************/
 
 #include "RemoteIDManager.h"
-#include "QGCApplication.h"
 #include "SettingsManager.h"
 #include "RemoteIDSettings.h"
 #include "PositionManager.h"
@@ -44,7 +43,7 @@ RemoteIDManager::RemoteIDManager(Vehicle* vehicle)
     , _targetComponent      (0) // By default 0 means broadcast
     , _enforceSendingSelfID (false)
 {
-    _settings = qgcApp()->toolbox()->settingsManager()->remoteIDSettings();
+    _settings = SettingsManager::instance()->remoteIDSettings();
 
     // Timer to track a healthy RID device. When expired we let the operator know
     _odidTimeoutTimer.setSingleShot(true);

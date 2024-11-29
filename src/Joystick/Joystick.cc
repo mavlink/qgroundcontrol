@@ -9,8 +9,6 @@
 
 
 #include "Joystick.h"
-#include "QGC.h"
-#include "QGCApplication.h"
 #include "CustomAction.h"
 #include "SettingsManager.h"
 #include "CustomMavlinkActionsSettings.h"
@@ -22,6 +20,7 @@
 #include "QmlObjectListModel.h"
 
 #include <QtCore/QSettings>
+#include <QtCore/QThread>
 
 // JoystickLog Category declaration moved to QGCLoggingCategory.cc to allow access in Vehicle
 QGC_LOGGING_CATEGORY(JoystickValuesLog, "JoystickValuesLog")
@@ -48,7 +47,7 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatC
     , _hatCount             (hatCount)
     , _hatButtonCount       (4 * hatCount)
     , _totalButtonCount     (_buttonCount+_hatButtonCount)
-    , _customActionManager  (qgcApp()->toolbox()->settingsManager()->customMavlinkActionsSettings()->joystickActionsFile())
+    , _customActionManager  (SettingsManager::instance()->customMavlinkActionsSettings()->joystickActionsFile())
 {
     // qCDebug(JoystickLog) << Q_FUNC_INFO << this;
 
@@ -451,7 +450,7 @@ void Joystick::run()
         if (axisCount() != 0) {
             _handleAxis();
         }
-        QGC::SLEEP::msleep(qMin(static_cast<int>(1000.0f / _maxAxisFrequencyHz), static_cast<int>(1000.0f / _maxButtonFrequencyHz)) / 2);
+        QThread::msleep(qMin(static_cast<int>(1000.0f / _maxAxisFrequencyHz), static_cast<int>(1000.0f / _maxButtonFrequencyHz)) / 2);
     }
     _close();
 }
