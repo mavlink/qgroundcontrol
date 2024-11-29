@@ -315,7 +315,7 @@ bool UDPLink::isSecureConnection()
 
 UDPConfiguration::UDPConfiguration(const QString& name) : LinkConfiguration(name)
 {
-    AutoConnectSettings* settings = qgcApp()->toolbox()->settingsManager()->autoConnectSettings();
+    AutoConnectSettings* settings = SettingsManager::instance()->autoConnectSettings();
     _localPort = settings->udpListenPort()->rawValue().toInt();
     QString targetHostIP = settings->udpTargetHostIP()->rawValue().toString();
     if (!targetHostIP.isEmpty()) {
@@ -434,7 +434,7 @@ void UDPConfiguration::saveSettings(QSettings& settings, const QString& root)
 
 void UDPConfiguration::loadSettings(QSettings& settings, const QString& root)
 {
-    AutoConnectSettings* acSettings = qgcApp()->toolbox()->settingsManager()->autoConnectSettings();
+    AutoConnectSettings* acSettings = SettingsManager::instance()->autoConnectSettings();
     _clearTargetHosts();
     settings.beginGroup(root);
     _localPort = (quint16)settings.value("port", acSettings->udpListenPort()->rawValue().toInt()).toUInt();

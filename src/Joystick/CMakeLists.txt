@@ -12,7 +12,6 @@ target_link_libraries(Joystick
         Qt6::Qml
         FirmwarePlugin
         Gimbal
-        QGC
         Settings
         Utilities
         Vehicle

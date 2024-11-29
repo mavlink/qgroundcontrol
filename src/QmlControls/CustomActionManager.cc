@@ -13,6 +13,7 @@
 #include "JsonHelper.h"
 #include "QGCApplication.h"
 #include "SettingsManager.h"
+#include "AppSettings.h"
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
 
@@ -59,7 +60,7 @@ void CustomActionManager::_loadActionsFile()
     }
 
     // Custom actions are always loaded from the custom actions save path
-    const QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->customActionsSavePath();
+    const QString savePath = SettingsManager::instance()->appSettings()->customActionsSavePath();
     const QDir saveDir = QDir(savePath);
     const QString fullPath = saveDir.absoluteFilePath(actionFileName);
 

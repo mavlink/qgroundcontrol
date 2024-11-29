@@ -42,7 +42,7 @@ StructureScanComplexItem::StructureScanComplexItem(PlanMasterController* masterC
 {
     _editorQml = "qrc:/qml/StructureScanEditor.qml";
 
-    _entranceAltFact.setRawValue(qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue());
+    _entranceAltFact.setRawValue(SettingsManager::instance()->appSettings()->defaultMissionItemAltitude()->rawValue());
 
     connect(&_entranceAltFact,      &Fact::valueChanged, this, &StructureScanComplexItem::_setDirty);
     connect(&_scanBottomAltFact,    &Fact::valueChanged, this, &StructureScanComplexItem::_setDirty);

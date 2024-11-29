@@ -12,6 +12,7 @@
 #include "QGCApplication.h"
 #include "ParameterManager.h"
 #include "SettingsManager.h"
+#include "FirmwareUpgradeSettings.h"
 #include "QGCCorePlugin.h"
 #include "QGCOptions.h"
 #include "LinkManager.h"
@@ -150,7 +151,7 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
     // Send QGC heartbeat ASAP, this allows PX4 to start accepting commands
     _sendGCSHeartbeat();
 
-    qgcApp()->toolbox()->settingsManager()->firmwareUpgradeSettings()->defaultFirmwareType()->setRawValue(vehicleFirmwareType);
+    SettingsManager::instance()->firmwareUpgradeSettings()->defaultFirmwareType()->setRawValue(vehicleFirmwareType);
 
     emit vehicleAdded(vehicle);
 

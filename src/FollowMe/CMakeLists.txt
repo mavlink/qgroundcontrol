@@ -10,7 +10,6 @@ target_link_libraries(FollowMe
         Qt6::Positioning
         FirmwarePlugin
         PositionManager
-        QGC
         Settings
         Utilities
         Vehicle

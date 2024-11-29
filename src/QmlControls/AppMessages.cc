@@ -96,17 +96,13 @@ void AppLogModel::threadsafeLog(const QString message)
 
     if (qgcApp() && qgcApp()->logOutput() && _logFile.fileName().isEmpty()) {
         qDebug() << _logFile.fileName().isEmpty() << qgcApp()->logOutput();
-        QGCToolbox* toolbox = qgcApp()->toolbox();
-        // Be careful of toolbox not being open yet
-        if (toolbox) {
-            QString saveDirPath = qgcApp()->toolbox()->settingsManager()->appSettings()->crashSavePath();
-            QDir saveDir(saveDirPath);
-            QString saveFilePath = saveDir.absoluteFilePath(QStringLiteral("QGCConsole.log"));
+        QString saveDirPath = SettingsManager::instance()->appSettings()->crashSavePath();
+        QDir saveDir(saveDirPath);
+        QString saveFilePath = saveDir.absoluteFilePath(QStringLiteral("QGCConsole.log"));
 
-            _logFile.setFileName(saveFilePath);
-            if (!_logFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
-                qgcApp()->showAppMessage(tr("Open console log output file failed %1 : %2").arg(_logFile.fileName()).arg(_logFile.errorString()));
-            }
+        _logFile.setFileName(saveFilePath);
+        if (!_logFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            qgcApp()->showAppMessage(tr("Open console log output file failed %1 : %2").arg(_logFile.fileName()).arg(_logFile.errorString()));
         }
     }
 

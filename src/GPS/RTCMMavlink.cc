@@ -10,7 +10,6 @@
 #include "RTCMMavlink.h"
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
-#include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 

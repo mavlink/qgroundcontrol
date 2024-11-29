@@ -8,13 +8,13 @@
  ****************************************************************************/
 
 #include "VTOLLandingComplexItem.h"
-#include "QGCApplication.h"
 #include "JsonHelper.h"
 #include "MissionController.h"
 #include "PlanMasterController.h"
 #include "FlightPathSegment.h"
 #include "MissionItem.h"
 #include "SettingsManager.h"
+#include "PlanViewSettings.h"
 #include "QGC.h"
 #include "QGCLoggingCategory.h"
 
@@ -44,7 +44,7 @@ VTOLLandingComplexItem::VTOLLandingComplexItem(PlanMasterController* masterContr
 
     // We adjust landing distance meta data to Plan View settings unless there was a custom build override
     if (QGC::fuzzyCompare(_landingDistanceFact.rawValue().toDouble(), _landingDistanceFact.rawDefaultValue().toDouble())) {
-        Fact* vtolTransitionDistanceFact = qgcApp()->toolbox()->settingsManager()->planViewSettings()->vtolTransitionDistance();
+        Fact* vtolTransitionDistanceFact = SettingsManager::instance()->planViewSettings()->vtolTransitionDistance();
         double vtolTransitionDistance = vtolTransitionDistanceFact->rawValue().toDouble();
         _landingDistanceFact.metaData()->setRawDefaultValue(vtolTransitionDistance);
         _landingDistanceFact.setRawValue(vtolTransitionDistance);

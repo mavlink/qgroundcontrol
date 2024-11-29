@@ -67,7 +67,6 @@ class RemoteIDManager;
 class RequestMessageTest;
 class SendMavCommandWithHandlerTest;
 class SendMavCommandWithSignallingTest;
-class SettingsManager;
 class StandardModes;
 class TerrainAtCoordinateQuery;
 class TerrainProtocolHandler;
@@ -993,7 +992,6 @@ private:
     AutoPilotPlugin*    _autopilotPlugin = nullptr;
     bool                _soloFirmware = false;
     QGCToolbox*         _toolbox = nullptr;
-    SettingsManager*    _settingsManager = nullptr;
 
     QTimer              _csvLogTimer;
     QFile               _csvLogFile;
