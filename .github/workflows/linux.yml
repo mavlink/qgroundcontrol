@@ -160,7 +160,6 @@ jobs:
           #   -Dgst-plugins-ugly:x264=enabled
 
       - uses: lukka/get-cmake@latest
-
       - uses: seanmiddleditch/gha-setup-ninja@v5
 
       - run: mkdir ${{ runner.temp }}/shadow_build_dir

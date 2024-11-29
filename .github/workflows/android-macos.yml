@@ -34,6 +34,7 @@ jobs:
           fetch-depth: 0
 
       - uses: seanmiddleditch/gha-setup-ninja@v5
+      - uses: lukka/get-cmake@latest
 
       - name: Install Dependencies
         run: |
