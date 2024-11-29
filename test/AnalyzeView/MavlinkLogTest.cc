@@ -15,7 +15,6 @@
 
 #include "MavlinkLogTest.h"
 #include "QGCTemporaryFile.h"
-#include "QGCApplication.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
 #include "MAVLinkProtocol.h"

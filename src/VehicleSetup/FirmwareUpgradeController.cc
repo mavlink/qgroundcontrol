@@ -103,7 +103,7 @@ uint qHash(const FirmwareUpgradeController::FirmwareIdentifier& firmwareId)
 
 /// @Brief Constructs a new FirmwareUpgradeController Widget. This widget is used within the PX4VehicleConfig set of screens.
 FirmwareUpgradeController::FirmwareUpgradeController(void)
-    : _singleFirmwareURL                (qgcApp()->toolbox()->corePlugin()->options()->firmwareUpgradeSingleURL())
+    : _singleFirmwareURL                (QGCCorePlugin::instance()->options()->firmwareUpgradeSingleURL())
     , _singleFirmwareMode               (!_singleFirmwareURL.isEmpty())
     , _downloadingFirmwareList          (false)
     , _statusLog                        (nullptr)

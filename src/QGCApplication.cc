@@ -37,6 +37,7 @@
 #include "FollowMe.h"
 #include "GeoTagController.h"
 #include "GimbalController.h"
+#include "GPSRtk.h"
 #include "JoystickConfigController.h"
 #include "JoystickManager.h"
 #include "JsonHelper.h"
@@ -203,9 +204,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     // We need to set language as early as possible prior to loading on JSON files.
     setLanguage();
 
-    _toolbox = new QGCToolbox(this);
-    _toolbox->setChildToolboxes();
-
 #ifndef DAILY_BUILD
     _checkForNewVersion();
 #endif
@@ -278,6 +276,8 @@ void QGCApplication::init()
     QGCPositionManager::registerQmlTypes();
     SettingsManager::registerQmlTypes();
     VideoManager::registerQmlTypes();
+    QGCCorePlugin::registerQmlTypes();
+    GPSRtk::registerQmlTypes();
 #ifdef QGC_VIEWER3D
     Viewer3DManager::registerQmlTypes();
 #endif
@@ -335,9 +335,9 @@ void QGCApplication::_initForNormalAppBoot()
     VideoManager::instance(); // GStreamer must be initialized before QmlEngine
 
     QQuickStyle::setStyle("Basic");
-    _qmlAppEngine = _toolbox->corePlugin()->createQmlApplicationEngine(this);
+    _qmlAppEngine = QGCCorePlugin::instance()->createQmlApplicationEngine(this);
     QObject::connect(_qmlAppEngine, &QQmlApplicationEngine::objectCreationFailed, this, QCoreApplication::quit, Qt::QueuedConnection);
-    _toolbox->corePlugin()->createRootWindow(_qmlAppEngine);
+    QGCCorePlugin::instance()->createRootWindow(_qmlAppEngine);
 
     AudioOutput::instance()->init(SettingsManager::instance()->appSettings()->audioMuted());
     FollowMe::instance()->init();
@@ -557,7 +557,7 @@ void QGCApplication::_checkForNewVersion()
 {
     if (!_runningUnitTests) {
         if (_parseVersionText(applicationVersion(), _majorVersion, _minorVersion, _buildVersion)) {
-            const QString versionCheckFile = _toolbox->corePlugin()->stableVersionCheckFileUrl();
+            const QString versionCheckFile = QGCCorePlugin::instance()->stableVersionCheckFileUrl();
             if (!versionCheckFile.isEmpty()) {
                 QGCFileDownload* download = new QGCFileDownload(this);
                 connect(download, &QGCFileDownload::downloadComplete, this, &QGCApplication::_qgcCurrentStableVersionDownloadComplete);
@@ -582,7 +582,7 @@ void QGCApplication::_qgcCurrentStableVersionDownloadComplete(QString /*remoteFi
                 if (_majorVersion < majorVersion ||
                         (_majorVersion == majorVersion && _minorVersion < minorVersion) ||
                         (_majorVersion == majorVersion && _minorVersion == minorVersion && _buildVersion < buildVersion)) {
-                    showAppMessage(tr("There is a newer version of %1 available. You can download it from %2.").arg(applicationName()).arg(_toolbox->corePlugin()->stableDownloadLocation()), tr("New Version Available"));
+                    showAppMessage(tr("There is a newer version of %1 available. You can download it from %2.").arg(applicationName()).arg(QGCCorePlugin::instance()->stableDownloadLocation()), tr("New Version Available"));
                 }
             }
         }

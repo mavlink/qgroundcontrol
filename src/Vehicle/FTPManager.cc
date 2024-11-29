@@ -11,7 +11,6 @@
 #include "MAVLinkProtocol.h"
 #include "Vehicle.h"
 #include "QGCApplication.h"
-#include "QGCToolbox.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QFile>

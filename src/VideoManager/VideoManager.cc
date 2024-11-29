@@ -13,7 +13,6 @@
 #include "QGCCameraManager.h"
 #include "QGCCorePlugin.h"
 #include "QGCLoggingCategory.h"
-#include "QGCToolbox.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
 #include "SubtitleWriter.h"
@@ -73,11 +72,11 @@ VideoManager::~VideoManager()
         }
 
         if (videoReceiver.sink != nullptr) {
-            // qgcApp()->toolbox()->corePlugin()->releaseVideoSink(videoReceiver.sink);
+            // QGCCorePlugin::instance()->releaseVideoSink(videoReceiver.sink);
 #ifdef QGC_GST_STREAMING
             // FIXME: AV: we need some interaface for video sink with .release() call
             // Currently VideoManager is destroyed after corePlugin() and we are crashing on app exit
-            // calling _toolbox->corePlugin()->releaseVideoSink(_videoSink[i]);
+            // calling QGCCorePlugin::instance()->releaseVideoSink(_videoSink[i]);
             // As for now let's call GStreamer::releaseVideoSink() directly
             GStreamer::releaseVideoSink(videoReceiver.sink);
 #elif defined(QGC_QT_STREAMING)
@@ -128,7 +127,7 @@ void VideoManager::init()
     int index = 0;
     for (VideoReceiverData &videoReceiver : _videoReceiverData) {
         videoReceiver.index = index++;
-        videoReceiver.receiver = qgcApp()->toolbox()->corePlugin()->createVideoReceiver(this);
+        videoReceiver.receiver = QGCCorePlugin::instance()->createVideoReceiver(this);
         if (!videoReceiver.receiver) {
             continue;
         }
@@ -455,7 +454,7 @@ void VideoManager::_initVideo()
     for (VideoReceiverData &videoReceiver : _videoReceiverData) {
         QQuickItem* const widget = root->findChild<QQuickItem*>(widgetTypes.at(videoReceiver.index));
         if ((widget != nullptr) && (videoReceiver.receiver != nullptr)) {
-            videoReceiver.sink = qgcApp()->toolbox()->corePlugin()->createVideoSink(this, widget);
+            videoReceiver.sink = QGCCorePlugin::instance()->createVideoSink(this, widget);
             if (videoReceiver.sink != nullptr) {
                 if (videoReceiver.started) {
                     videoReceiver.receiver->startDecoding(videoReceiver.sink);

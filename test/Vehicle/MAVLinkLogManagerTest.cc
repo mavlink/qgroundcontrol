@@ -11,8 +11,6 @@
 #include "MAVLinkLogManager.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
-#include "QGCApplication.h"
-#include "QGCToolbox.h"
 
 #include <QtCore/QStandardPaths>
 #include <QtTest/QTest>

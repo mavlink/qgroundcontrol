@@ -32,7 +32,6 @@ target_link_libraries(MissionManagerTest
         Qt6::Test
         API
         FirmwarePlugin
-        QGC
         Settings
         Utilities
         Vehicle

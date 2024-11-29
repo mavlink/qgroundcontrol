@@ -8,7 +8,6 @@
  ****************************************************************************/
 
 #include "QGCCameraManager.h"
-#include "QGCApplication.h"
 #include "JoystickManager.h"
 #include "SimulatedCameraControl.h"
 #include "MultiVehicleManager.h"

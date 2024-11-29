@@ -11,7 +11,6 @@
 #include "ParameterManagerTest.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
-#include "QGCApplication.h"
 #include "ParameterManager.h"
 
 #include <QtTest/QTest>
