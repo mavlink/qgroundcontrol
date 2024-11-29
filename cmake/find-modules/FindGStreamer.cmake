@@ -107,10 +107,14 @@ elseif(ANDROID)
 
     set(ENV{PKG_CONFIG_PATH} "")
     if(CMAKE_HOST_WIN32)
-        find_program(PKG_CONFIG_PROGRAM pkg-config PATHS ${GSTREAMER_PREFIX}/share/gst-android/ndk-build/tools/windows)
+        find_program(PKG_CONFIG_PROGRAM pkg-config
+            PATHS ${GSTREAMER_PREFIX}/share/gst-android/ndk-build/tools/windows
+            NO_DEFAULT_PATH
+        )
         if(PKG_CONFIG_PROGRAM)
             set(PKG_CONFIG_EXECUTABLE ${PKG_CONFIG_PROGRAM})
             set(ENV{PKG_CONFIG_LIBDIR} "${GSTREAMER_PREFIX}/lib/pkgconfig;${GSTREAMER_PREFIX}/lib/gstreamer-1.0/pkgconfig")
+            set(PkgConfig_FOUND TRUE)
         endif()
     elseif(CMAKE_HOST_LINUX OR CMAKE_HOST_APPLE)
         if(PkgConfig_FOUND)
