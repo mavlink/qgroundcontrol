@@ -204,15 +204,18 @@ bool JoystickAndroid::_update(void)
     return true;
 }
 
-bool JoystickAndroid::_getButton(int i) {
+bool JoystickAndroid::_getButton(int i) const
+{
     return btnValue[ i ];
 }
 
-int JoystickAndroid::_getAxis(int i) {
+int JoystickAndroid::_getAxis(int i) const
+{
     return axisValue[ i ];
 }
 
-int  JoystickAndroid::_getAndroidHatAxis(int axisHatCode) {
+int  JoystickAndroid::_getAndroidHatAxis(int axisHatCode) const
+{
     for(int i = 0; i < _axisCount; i++) {
         if (axisCode[i] == axisHatCode) {
             return _getAxis(i);
@@ -221,7 +224,8 @@ int  JoystickAndroid::_getAndroidHatAxis(int axisHatCode) {
     return 0;
 }
 
-bool JoystickAndroid::_getHat(int hat,int i) {
+bool JoystickAndroid::_getHat(int hat,int i) const
+{
     // Android supports only one hat button
     if (hat != 0) {
         return false;
