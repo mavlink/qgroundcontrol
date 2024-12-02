@@ -31,7 +31,7 @@ Rectangle {
     }
 
     Keys.onReleased: (event) => {
-        if (visible && event.key === Qt.Key_Space) {
+        if (visible && event.key === Qt.Key_Space && !event.isAutoRepeat) {
             event.accepted = true
             resetSpaceBarSliding()
         }
