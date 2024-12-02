@@ -20093,18 +20093,19 @@
     </parameter>
   </group>
   <group name="Rover Mecanum">
-    <parameter name="RM_MAN_YAW_SCALE" default="1" type="FLOAT">
-      <short_desc>Manual yaw rate scale</short_desc>
-      <long_desc>In Manual mode the setpoint for the yaw rate received from the control stick is scaled by this value.</long_desc>
-      <min>0.01</min>
-      <max>1</max>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
     <parameter name="RM_MAX_ACCEL" default="0.5" type="FLOAT">
       <short_desc>Maximum acceleration</short_desc>
       <long_desc>Maximum acceleration is used to limit the acceleration of the rover</long_desc>
       <min>0</min>
+      <max>100</max>
+      <unit>m/s^2</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RM_MAX_DECEL" default="-1" type="FLOAT">
+      <short_desc>Maximum deceleration</short_desc>
+      <long_desc>Maximum decelaration is used to limit the deceleration of the rover. Set to -1 to disable, causing the rover to decelerate as fast as possible. Caution: Disabling the deceleration limit also disables the slow down effect in auto modes.</long_desc>
+      <min>-1</min>
       <max>100</max>
       <unit>m/s^2</unit>
       <decimal>2</decimal>
@@ -20146,20 +20147,21 @@
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
+    <parameter name="RM_MAX_YAW_ACCEL" default="-1" type="FLOAT">
+      <short_desc>Maximum allowed yaw acceleration for the rover</short_desc>
+      <long_desc>This parameter is used to cap desired yaw acceleration. This is used to adjust incoming yaw rate setpoints to a feasible yaw rate setpoint based on the physical limitation on how fast the yaw rate can change. This leads to a smooth setpoint trajectory for the closed loop yaw rate controller to track. Set to -1 to disable.</long_desc>
+      <min>-1</min>
+      <max>1000</max>
+      <unit>deg/s^2</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
     <parameter name="RM_MAX_YAW_RATE" default="90" type="FLOAT">
       <short_desc>Maximum allowed yaw rate for the rover</short_desc>
       <long_desc>This parameter is used to cap desired yaw rates and map controller inputs to desired yaw rates in acro mode.</long_desc>
       <min>0.01</min>
       <max>1000</max>
       <unit>deg/s</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="RM_MISS_SPD_DEF" default="1" type="FLOAT">
-      <short_desc>Default rover speed during a mission</short_desc>
-      <min>0</min>
-      <max>100</max>
-      <unit>m/s</unit>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
