@@ -20015,11 +20015,11 @@
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter name="RD_MISS_SPD_DEF" default="1" type="FLOAT">
-      <short_desc>Default forward speed for the rover during auto modes</short_desc>
-      <min>0</min>
+    <parameter name="RD_MISS_SPD_GAIN" default="1" type="FLOAT">
+      <short_desc>Tuning parameter for the speed reduction during waypoint transition</short_desc>
+      <long_desc>The waypoint transition speed is calculated as: Transition_speed = Maximum_speed * (1 - normalized_transition_angle * RM_MISS_VEL_GAIN) The normalized transition angle is the angle between the line segment from prev-curr WP and curr-next WP interpolated from [0, 180] -&gt; [0, 1]. Higher value -&gt; More speed reduction during waypoint transitions.</long_desc>
+      <min>0.05</min>
       <max>100</max>
-      <unit>m/s</unit>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
