@@ -10,8 +10,8 @@
 
 #include "QGCFileDialogController.h"
 #include "QGCLoggingCategory.h"
-#include "QGCApplication.h"
 #include "SettingsManager.h"
+#include "AppSettings.h"
 
 #include <QtCore/QDir>
 
@@ -93,7 +93,7 @@ void QGCFileDialogController::deleteFile(const QString &filename)
 QString QGCFileDialogController::fullFolderPathToShortMobilePath(const QString &fullFolderPath)
 {
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
-    const QString defaultSavePath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValueString();
+    const QString defaultSavePath = SettingsManager::instance()->appSettings()->savePath()->rawValueString();
     if (fullFolderPath.startsWith(defaultSavePath)) {
         const int lastDirSepIndex = fullFolderPath.lastIndexOf(QStringLiteral("/"));
         return (QCoreApplication::applicationName() + QStringLiteral("/") + fullFolderPath.right(fullFolderPath.length() - lastDirSepIndex));

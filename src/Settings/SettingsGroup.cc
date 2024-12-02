@@ -9,13 +9,12 @@
 
 #include "SettingsGroup.h"
 #include "QGCCorePlugin.h"
-#include "QGCApplication.h"
 
 #include <QtQml/QQmlEngine>
 
 SettingsGroup::SettingsGroup(const QString& name, const QString& settingsGroup, QObject* parent)
     : QObject       (parent)
-    , _visible      (qgcApp()->toolbox()->corePlugin()->overrideSettingsGroupVisibility(name))
+    , _visible      (QGCCorePlugin::instance()->overrideSettingsGroupVisibility(name))
     , _name         (name)
     , _settingsGroup(settingsGroup)
 {

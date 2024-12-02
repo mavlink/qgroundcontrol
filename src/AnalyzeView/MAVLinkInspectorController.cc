@@ -24,12 +24,10 @@ QGC_LOGGING_CATEGORY(MAVLinkInspectorControllerLog, "qgc.analyzeview.mavlinkinsp
 //-----------------------------------------------------------------------------
 MAVLinkInspectorController::MAVLinkInspectorController()
 {
-    MultiVehicleManager* multiVehicleManager = qgcApp()->toolbox()->multiVehicleManager();
-    connect(multiVehicleManager, &MultiVehicleManager::vehicleAdded,   this, &MAVLinkInspectorController::_vehicleAdded);
-    connect(multiVehicleManager, &MultiVehicleManager::vehicleRemoved, this, &MAVLinkInspectorController::_vehicleRemoved);
-    connect(multiVehicleManager, &MultiVehicleManager::activeVehicleChanged, this, &MAVLinkInspectorController::_setActiveVehicle);
-    MAVLinkProtocol* mavlinkProtocol = qgcApp()->toolbox()->mavlinkProtocol();
-    connect(mavlinkProtocol, &MAVLinkProtocol::messageReceived, this, &MAVLinkInspectorController::_receiveMessage);
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleAdded,   this, &MAVLinkInspectorController::_vehicleAdded);
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleRemoved, this, &MAVLinkInspectorController::_vehicleRemoved);
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &MAVLinkInspectorController::_setActiveVehicle);
+    connect(MAVLinkProtocol::instance(), &MAVLinkProtocol::messageReceived, this, &MAVLinkInspectorController::_receiveMessage);
     connect(&_updateFrequencyTimer, &QTimer::timeout, this, &MAVLinkInspectorController::_refreshFrequency);
     _updateFrequencyTimer.start(1000);
     _timeScaleSt.append(new TimeScale_st(this, tr("5 Sec"),   5 * 1000));
@@ -257,13 +255,10 @@ void MAVLinkInspectorController::setMessageInterval(int32_t rate)
 {
     if(!_activeSystem) return;
 
-    MultiVehicleManager* multiVehicleManager = qgcApp()->toolbox()->multiVehicleManager();
-    if(!multiVehicleManager) return;
-
     const uint8_t sysId = _selectedSystemID();
     if(sysId == 0) return;
 
-    Vehicle* vehicle = multiVehicleManager->getVehicleById(sysId);
+    Vehicle* vehicle = MultiVehicleManager::instance()->getVehicleById(sysId);
     if(!vehicle) return;
 
     QGCMAVLinkMessage* msg = _activeSystem->selectedMsg();

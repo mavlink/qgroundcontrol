@@ -26,8 +26,11 @@ target_link_libraries(API
         Qt6::Core
         Qt6::Gui
         MAVLink
-        QGC
         QmlControls
 )
 
 target_include_directories(API PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+if(QGC_CUSTOM_BUILD)
+    target_link_libraries(API PRIVATE CustomPlugin)
+endif()

@@ -8,12 +8,12 @@
  ****************************************************************************/
 
 #include "GenericMapProvider.h"
-#include "QGCApplication.h"
 #include "SettingsManager.h"
+#include "AppSettings.h"
 
 QString CustomURLMapProvider::_getURL(int x, int y, int zoom) const
 {
-    QString url = qgcApp()->toolbox()->settingsManager()->appSettings()->customURL()->rawValue().toString();
+    QString url = SettingsManager::instance()->appSettings()->customURL()->rawValue().toString();
     (void) url.replace("{x}", QString::number(x));
     (void) url.replace("{y}", QString::number(y));
     static const QRegularExpression zoomRegExp("\\{(z|zoom)\\}");
@@ -66,6 +66,6 @@ QString VWorldMapProvider::_getURL(int x, int y, int zoom) const
         return QString();
     }
 
-    const QString VWorldMapToken = qgcApp()->toolbox()->settingsManager()->appSettings()->vworldToken()->rawValue().toString();
+    const QString VWorldMapToken = SettingsManager::instance()->appSettings()->vworldToken()->rawValue().toString();
     return _mapUrl.arg(VWorldMapToken, _mapName).arg(zoom).arg(y).arg(x).arg(_imageFormat);
 }

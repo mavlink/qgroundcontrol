@@ -11,7 +11,6 @@
 #include "ParameterManagerTest.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
-#include "QGCApplication.h"
 #include "ParameterManager.h"
 
 #include <QtTest/QTest>
@@ -23,7 +22,7 @@ void ParameterManagerTest::_noFailureWorker(MockConfiguration::FailureMode_t fai
     Q_ASSERT(!_mockLink);
     _mockLink = MockLink::startPX4MockLink(false, failureMode);
 
-    MultiVehicleManager* vehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
+    MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     QVERIFY(vehicleMgr);
 
     // Wait for the Vehicle to get created
@@ -77,7 +76,7 @@ void ParameterManagerTest::_requestListNoResponse(void)
     Q_ASSERT(!_mockLink);
     _mockLink = MockLink::startPX4MockLink(false, MockConfiguration::FailParamNoReponseToRequestList);
 
-    MultiVehicleManager* vehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
+    MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     QVERIFY(vehicleMgr);
 
     // Wait for the Vehicle to get created
@@ -112,7 +111,7 @@ void ParameterManagerTest::_requestListMissingParamFail(void)
     Q_ASSERT(!_mockLink);
     _mockLink = MockLink::startPX4MockLink(false, MockConfiguration::FailMissingParamOnAllRequests);
 
-    MultiVehicleManager* vehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
+    MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     QVERIFY(vehicleMgr);
 
     // Wait for the Vehicle to get created
@@ -148,7 +147,7 @@ void ParameterManagerTest::_FTPnoFailure()
     Q_ASSERT(!_mockLink);
     _mockLink = MockLink::startAPMArduPlaneMockLink(false, MockConfiguration::FailParamNoReponseToRequestList);
     _mockLink->mockLinkFTP()->enableBinParamFile(true);
-    MultiVehicleManager* vehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
+    MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     QVERIFY(vehicleMgr);
 
     // Wait for the Vehicle to get created
@@ -190,7 +189,7 @@ void ParameterManagerTest::_FTPChangeParam()
     Q_ASSERT(!_mockLink);
     _mockLink = MockLink::startAPMArduPlaneMockLink(false, MockConfiguration::FailParamNoReponseToRequestList);
     _mockLink->mockLinkFTP()->enableBinParamFile(true);
-    MultiVehicleManager* vehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
+    MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     QVERIFY(vehicleMgr);
 
     // Wait for the Vehicle to get created

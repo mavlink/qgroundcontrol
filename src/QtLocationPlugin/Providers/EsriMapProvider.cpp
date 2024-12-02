@@ -8,12 +8,12 @@
  ****************************************************************************/
 
 #include "EsriMapProvider.h"
-#include "QGCApplication.h"
 #include "SettingsManager.h"
+#include "AppSettings.h"
 
 QByteArray EsriMapProvider::getToken() const
 {
-    return qgcApp()->toolbox()->settingsManager()->appSettings()->esriToken()->rawValue().toString().toUtf8();
+    return SettingsManager::instance()->appSettings()->esriToken()->rawValue().toString().toUtf8();
 }
 
 QString EsriMapProvider::_getURL(int x, int y, int zoom) const

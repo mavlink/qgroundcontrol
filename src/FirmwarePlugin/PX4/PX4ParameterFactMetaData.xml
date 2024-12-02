@@ -16643,6 +16643,13 @@
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
+    <parameter name="MIS_COMMAND_TOUT" default="0." type="FLOAT">
+      <short_desc>Timeout to allow the payload to execute the mission command</short_desc>
+      <long_desc>Ensure: gripper: NAV_CMD_DO_GRIPPER has released before continuing mission. winch: CMD_DO_WINCH has delivered before continuing mission. gimbal: CMD_DO_GIMBAL_MANAGER_PITCHYAW has reached the commanded orientation before beginning to take pictures.</long_desc>
+      <min>0</min>
+      <unit>s</unit>
+      <decimal>1</decimal>
+    </parameter>
     <parameter name="MIS_DIST_1WP" default="10000" type="FLOAT">
       <short_desc>Maximal horizontal distance from Home to first waypoint</short_desc>
       <long_desc>There will be a warning message if the current waypoint is more distant than MIS_DIST_1WP from Home. Has no effect on mission validity. Set a value of zero or less to disable.</long_desc>
@@ -16667,13 +16674,6 @@
         <value code="0">Disable</value>
         <value code="1">Enable</value>
       </values>
-    </parameter>
-    <parameter name="MIS_PD_TO" default="5.0" type="FLOAT">
-      <short_desc>Timeout for a successful payload deployment acknowledgement</short_desc>
-      <min>0</min>
-      <unit>s</unit>
-      <decimal>1</decimal>
-      <increment>1</increment>
     </parameter>
     <parameter name="MIS_TAKEOFF_ALT" default="2.5" type="FLOAT">
       <short_desc>Default take-off altitude</short_desc>
@@ -20015,11 +20015,11 @@
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter name="RD_MISS_SPD_DEF" default="1" type="FLOAT">
-      <short_desc>Default forward speed for the rover during auto modes</short_desc>
-      <min>0</min>
+    <parameter name="RD_MISS_SPD_GAIN" default="1" type="FLOAT">
+      <short_desc>Tuning parameter for the speed reduction during waypoint transition</short_desc>
+      <long_desc>The waypoint transition speed is calculated as: Transition_speed = Maximum_speed * (1 - normalized_transition_angle * RM_MISS_VEL_GAIN) The normalized transition angle is the angle between the line segment from prev-curr WP and curr-next WP interpolated from [0, 180] -&gt; [0, 1]. Higher value -&gt; More speed reduction during waypoint transitions.</long_desc>
+      <min>0.05</min>
       <max>100</max>
-      <unit>m/s</unit>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
@@ -20093,18 +20093,19 @@
     </parameter>
   </group>
   <group name="Rover Mecanum">
-    <parameter name="RM_MAN_YAW_SCALE" default="1" type="FLOAT">
-      <short_desc>Manual yaw rate scale</short_desc>
-      <long_desc>In Manual mode the setpoint for the yaw rate received from the control stick is scaled by this value.</long_desc>
-      <min>0.01</min>
-      <max>1</max>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
     <parameter name="RM_MAX_ACCEL" default="0.5" type="FLOAT">
       <short_desc>Maximum acceleration</short_desc>
       <long_desc>Maximum acceleration is used to limit the acceleration of the rover</long_desc>
       <min>0</min>
+      <max>100</max>
+      <unit>m/s^2</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RM_MAX_DECEL" default="-1" type="FLOAT">
+      <short_desc>Maximum deceleration</short_desc>
+      <long_desc>Maximum decelaration is used to limit the deceleration of the rover. Set to -1 to disable, causing the rover to decelerate as fast as possible. Caution: Disabling the deceleration limit also disables the slow down effect in auto modes.</long_desc>
+      <min>-1</min>
       <max>100</max>
       <unit>m/s^2</unit>
       <decimal>2</decimal>
@@ -20146,20 +20147,21 @@
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
+    <parameter name="RM_MAX_YAW_ACCEL" default="-1" type="FLOAT">
+      <short_desc>Maximum allowed yaw acceleration for the rover</short_desc>
+      <long_desc>This parameter is used to cap desired yaw acceleration. This is used to adjust incoming yaw rate setpoints to a feasible yaw rate setpoint based on the physical limitation on how fast the yaw rate can change. This leads to a smooth setpoint trajectory for the closed loop yaw rate controller to track. Set to -1 to disable.</long_desc>
+      <min>-1</min>
+      <max>1000</max>
+      <unit>deg/s^2</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
     <parameter name="RM_MAX_YAW_RATE" default="90" type="FLOAT">
       <short_desc>Maximum allowed yaw rate for the rover</short_desc>
       <long_desc>This parameter is used to cap desired yaw rates and map controller inputs to desired yaw rates in acro mode.</long_desc>
       <min>0.01</min>
       <max>1000</max>
       <unit>deg/s</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="RM_MISS_SPD_DEF" default="1" type="FLOAT">
-      <short_desc>Default rover speed during a mission</short_desc>
-      <min>0</min>
-      <max>100</max>
-      <unit>m/s</unit>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
@@ -22695,6 +22697,10 @@
     </parameter>
     <parameter name="SENS_EN_SHT3X" default="0" type="INT32" boolean="true">
       <short_desc>SHT3x temperature and hygrometer</short_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="SENS_EN_SPA06" default="0" type="INT32" boolean="true">
+      <short_desc>Goertek SPA06 Barometer (external I2C)</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="SENS_EN_SPL06" default="0" type="INT32" boolean="true">

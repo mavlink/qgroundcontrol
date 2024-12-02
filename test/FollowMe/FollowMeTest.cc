@@ -9,11 +9,11 @@
 
 #include "FollowMeTest.h"
 #include "FollowMe.h"
-#include "QGCApplication.h"
 #include "MultiVehicleManager.h"
 #include "PositionManager.h"
 #include "Vehicle.h"
 #include "SettingsManager.h"
+#include "AppSettings.h"
 
 #include <QtTest/QTest>
 #include <QtTest/QSignalSpy>
@@ -25,10 +25,10 @@ void FollowMeTest::_testFollowMe()
 
     _connectMockLinkNoInitialConnectSequence();
 
-    MultiVehicleManager *vehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
+    MultiVehicleManager *vehicleMgr = MultiVehicleManager::instance();
     Vehicle *vehicle = vehicleMgr->activeVehicle();
     vehicle->setFlightMode(vehicle->followFlightMode());
-    qgcApp()->toolbox()->settingsManager()->appSettings()->followTarget()->setRawValue(1);
+    SettingsManager::instance()->appSettings()->followTarget()->setRawValue(1);
 
     QSignalSpy spyGCSMotionReport(vehicle, &Vehicle::messagesSentChanged);
 

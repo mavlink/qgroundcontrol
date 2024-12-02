@@ -8,7 +8,6 @@
  ****************************************************************************/
 
 #include "VideoSettings.h"
-#include "QGCApplication.h"
 #include "VideoManager.h"
 
 #include <QtQml/QQmlEngine>

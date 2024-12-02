@@ -11,7 +11,6 @@
 #include "QGCPalette.h"
 #include "QGCApplication.h"
 #include "QGCMAVLink.h"
-#include "QGCToolbox.h"
 #include "LinkManager.h"
 
 #ifdef Q_OS_ANDROID
@@ -268,7 +267,7 @@ void AppSettings::_indoorPaletteChanged(void)
 
 void AppSettings::_mavlink2SigningKeyChanged(void)
 {
-    qgcApp()->toolbox()->linkManager()->resetMavlinkSigning();
+    LinkManager::instance()->resetMavlinkSigning();
 }
 
 QString AppSettings::missionSavePath(void)

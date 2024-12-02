@@ -9,8 +9,6 @@
 
 
 #include "Joystick.h"
-#include "QGC.h"
-#include "QGCApplication.h"
 #include "CustomAction.h"
 #include "SettingsManager.h"
 #include "CustomMavlinkActionsSettings.h"
@@ -22,6 +20,7 @@
 #include "QmlObjectListModel.h"
 
 #include <QtCore/QSettings>
+#include <QtCore/QThread>
 
 // JoystickLog Category declaration moved to QGCLoggingCategory.cc to allow access in Vehicle
 QGC_LOGGING_CATEGORY(JoystickValuesLog, "JoystickValuesLog")
@@ -41,15 +40,14 @@ AssignableButtonAction::AssignableButtonAction(QObject* parent, QString action_,
 {
 }
 
-Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatCount, MultiVehicleManager* multiVehicleManager)
+Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatCount)
     : _name                 (name)
     , _axisCount            (axisCount)
     , _buttonCount          (buttonCount)
     , _hatCount             (hatCount)
     , _hatButtonCount       (4 * hatCount)
     , _totalButtonCount     (_buttonCount+_hatButtonCount)
-    , _multiVehicleManager  (multiVehicleManager)
-    , _customActionManager  (qgcApp()->toolbox()->settingsManager()->customMavlinkActionsSettings()->joystickActionsFile())
+    , _customActionManager  (SettingsManager::instance()->customMavlinkActionsSettings()->joystickActionsFile())
 {
     // qCDebug(JoystickLog) << Q_FUNC_INFO << this;
 
@@ -65,11 +63,11 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatC
         _rgButtonValues[i] = BUTTON_UP;
         _buttonActionArray.append(nullptr);
     }
-    _buildActionList(_multiVehicleManager->activeVehicle());
-    _updateTXModeSettingsKey(_multiVehicleManager->activeVehicle());
+    _buildActionList(MultiVehicleManager::instance()->activeVehicle());
+    _updateTXModeSettingsKey(MultiVehicleManager::instance()->activeVehicle());
     _loadSettings();
-    connect(_multiVehicleManager, &MultiVehicleManager::activeVehicleChanged, this, &Joystick::_activeVehicleChanged);
-    connect(qgcApp()->toolbox()->multiVehicleManager()->vehicles(), &QmlObjectListModel::countChanged, this, &Joystick::_vehicleCountChanged);
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &Joystick::_activeVehicleChanged);
+    connect(MultiVehicleManager::instance()->vehicles(), &QmlObjectListModel::countChanged, this, &Joystick::_vehicleCountChanged);
 }
 
 void Joystick::stop()
@@ -186,7 +184,7 @@ void Joystick::_loadSettings()
 {
     QSettings settings;
     settings.beginGroup(_settingsGroup);
-    Vehicle* activeVehicle = _multiVehicleManager->activeVehicle();
+    Vehicle* activeVehicle = MultiVehicleManager::instance()->activeVehicle();
 
     if(_txModeSettingsKey && activeVehicle)
         _transmitterMode = settings.value(_txModeSettingsKey, activeVehicle->firmwarePlugin()->defaultJoystickTXMode()).toInt();
@@ -452,7 +450,7 @@ void Joystick::run()
         if (axisCount() != 0) {
             _handleAxis();
         }
-        QGC::SLEEP::msleep(qMin(static_cast<int>(1000.0f / _maxAxisFrequencyHz), static_cast<int>(1000.0f / _maxButtonFrequencyHz)) / 2);
+        QThread::msleep(qMin(static_cast<int>(1000.0f / _maxAxisFrequencyHz), static_cast<int>(1000.0f / _maxButtonFrequencyHz)) / 2);
     }
     _close();
 }
@@ -953,7 +951,7 @@ void Joystick::setCalibrationMode(bool calibrating)
     _calibrationMode = calibrating;
     if (calibrating && !isRunning()) {
         _pollingStartedForCalibration = true;
-        startPolling(_multiVehicleManager->activeVehicle());
+        startPolling(MultiVehicleManager::instance()->activeVehicle());
     }
     else if (_pollingStartedForCalibration) {
         stopPolling();

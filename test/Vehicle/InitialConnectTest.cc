@@ -9,7 +9,6 @@
 
 #include "InitialConnectTest.h"
 #include "MultiVehicleManager.h"
-#include "QGCApplication.h"
 #include "LinkManager.h"
 #include "MockLink.h"
 #include "Vehicle.h"
@@ -39,7 +38,7 @@ void InitialConnectTest::_performTestCases(void)
 
 void InitialConnectTest::_boardVendorProductId(void)
 {
-    auto *mvm = qgcApp()->toolbox()->multiVehicleManager();
+    auto *mvm = MultiVehicleManager::instance();
     QSignalSpy activeVehicleSpy{mvm, &MultiVehicleManager::activeVehicleChanged};
 
     auto mockConfig = std::make_shared<MockConfiguration>(QString{"MockLink"});
@@ -48,7 +47,7 @@ void InitialConnectTest::_boardVendorProductId(void)
     mockConfig->setBoardVendorProduct(mockVendor, mockProduct);
 
     SharedLinkConfigurationPtr linkConfig = mockConfig;
-    _linkManager->createConnectedLink(linkConfig);
+    LinkManager::instance()->createConnectedLink(linkConfig);
 
     QVERIFY(activeVehicleSpy.wait());
     auto *vehicle = mvm->activeVehicle();
@@ -61,5 +60,5 @@ void InitialConnectTest::_boardVendorProductId(void)
     QCOMPARE(vehicle->firmwareBoardVendorId(), mockVendor);
     QCOMPARE(vehicle->firmwareBoardProductId(), mockProduct);
 
-    _linkManager->disconnectAll();
+    LinkManager::instance()->disconnectAll();
 }

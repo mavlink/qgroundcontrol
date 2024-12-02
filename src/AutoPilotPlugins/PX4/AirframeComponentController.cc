@@ -85,7 +85,7 @@ AirframeComponentController::~AirframeComponentController()
 
 void AirframeComponentController::changeAutostart(void)
 {
-    if (qgcApp()->toolbox()->multiVehicleManager()->vehicles()->count() > 1) {
+    if (MultiVehicleManager::instance()->vehicles()->count() > 1) {
         qgcApp()->showAppMessage(tr("You cannot change airframe configuration while connected to multiple vehicles."));
 		return;
 	}
@@ -127,7 +127,7 @@ void AirframeComponentController::_rebootAfterStackUnwind(void)
         QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
     }
     QGuiApplication::restoreOverrideCursor();
-    qgcApp()->toolbox()->linkManager()->disconnectAll();
+    LinkManager::instance()->disconnectAll();
 }
 
 AirframeType::AirframeType(const QString& name, const QString& imageResource, QObject* parent) :

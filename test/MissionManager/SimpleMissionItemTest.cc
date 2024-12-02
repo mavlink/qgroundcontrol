@@ -9,8 +9,8 @@
 
 #include "SimpleMissionItemTest.h"
 #include "SimpleMissionItem.h"
-#include "QGCApplication.h"
 #include "SettingsManager.h"
+#include "AppSettings.h"
 #include "PlanMasterController.h"
 #include "MultiSignalSpy.h"
 #include "CameraSection.h"
@@ -249,7 +249,7 @@ void SimpleMissionItemTest::_testDefaultValues(void)
 
     item.missionItem().setCommand(MAV_CMD_NAV_WAYPOINT);
     item.missionItem().setFrame(MAV_FRAME_GLOBAL_RELATIVE_ALT);
-    QCOMPARE(item.missionItem().param7(), qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble());
+    QCOMPARE(item.missionItem().param7(), SettingsManager::instance()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble());
 }
 
 void SimpleMissionItemTest::_testSignals(void)

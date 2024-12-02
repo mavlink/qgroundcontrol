@@ -15,7 +15,6 @@
 
 #include "MavlinkLogTest.h"
 #include "QGCTemporaryFile.h"
-#include "QGCApplication.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
 #include "MAVLinkProtocol.h"
@@ -78,7 +77,7 @@ void MavlinkLogTest::_bootLogDetectionCancel_test(void)
     setExpectedFileDialog(getSaveFileName, QStringList());
 
     // Kick the protocol to check for lost log files and wait for signals to move through
-    connect(this, &MavlinkLogTest::checkForLostLogFiles, qgcApp()->toolbox()->mavlinkProtocol(), &MAVLinkProtocol::checkForLostLogFiles);
+    connect(this, &MavlinkLogTest::checkForLostLogFiles, MAVLinkProtocol::instance(), &MAVLinkProtocol::checkForLostLogFiles);
     emit checkForLostLogFiles();
     QTest::qWait(1000);
     
@@ -98,7 +97,7 @@ void MavlinkLogTest::_bootLogDetectionSave_test(void)
     setExpectedFileDialog(getSaveFileName, QStringList(logSaveFile));
     
     // Kick the protocol to check for lost log files and wait for signals to move through
-    connect(this, &MavlinkLogTest::checkForLostLogFiles, qgcApp()->toolbox()->mavlinkProtocol(), &MAVLinkProtocol::checkForLostLogFiles);
+    connect(this, &MavlinkLogTest::checkForLostLogFiles, MAVLinkProtocol::instance(), &MAVLinkProtocol::checkForLostLogFiles);
     emit checkForLostLogFiles();
     QTest::qWait(1000);
     
@@ -115,7 +114,7 @@ void MavlinkLogTest::_bootLogDetectionZeroLength_test(void)
     _createTempLogFile(true);
     
     // Kick the protocol to check for lost log files and wait for signals to move through
-    connect(this, &MavlinkLogTest::checkForLostLogFiles, qgcApp()->toolbox()->mavlinkProtocol(), &MAVLinkProtocol::checkForLostLogFiles);
+    connect(this, &MavlinkLogTest::checkForLostLogFiles, MAVLinkProtocol::instance(), &MAVLinkProtocol::checkForLostLogFiles);
     emit checkForLostLogFiles();
     QTest::qWait(1000);
     
@@ -129,7 +128,7 @@ void MavlinkLogTest::_connectLogWorker(bool arm)
     QDir logSaveDir;
     
     if (arm) {
-        qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->setArmedShowError(true);
+        MultiVehicleManager::instance()->activeVehicle()->setArmedShowError(true);
         QTest::qWait(500); // Wait long enough for heartbeat to come through
         
         // On Disconnect: We should get a getSaveFileName dialog.

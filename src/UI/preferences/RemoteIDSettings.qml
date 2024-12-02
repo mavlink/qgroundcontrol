@@ -20,10 +20,7 @@ import QGroundControl.ScreenTools
 import QGroundControl.MultiVehicleManager
 import QGroundControl.Palette
 
-Rectangle {
-    id:             remoteIDRoot
-    color:          qgcPal.window
-    anchors.fill:   parent
+SettingsPage {
 
     // Visual properties
     property real _margins:             ScreenTools.defaultFontPixelWidth
@@ -50,6 +47,18 @@ Rectangle {
     property int  _regionOperation:     QGroundControl.settingsManager.remoteIDSettings.region.value
     property int  _locationType:        QGroundControl.settingsManager.remoteIDSettings.locationType.value
     property int  _classificationType:  QGroundControl.settingsManager.remoteIDSettings.classificationType.value
+    property var  _remoteIDManager:     _activeVehicle ? _activeVehicle.remoteIDManager : null
+
+
+    property var  remoteIDSettings:QGroundControl.settingsManager.remoteIDSettings
+    property Fact regionFact:           remoteIDSettings.region
+    property Fact sendOperatorIdFact:   remoteIDSettings.sendOperatorID
+    property Fact locationTypeFact:     remoteIDSettings.locationType
+    property Fact operatorIDFact:       remoteIDSettings.operatorID
+    property bool isEURegion:           regionFact.rawValue === RemoteIDSettings.RegionOperation.EU
+    property bool isFAARegion:          regionFact.rawValue === RemoteIDSettings.RegionOperation.FAA
+    property real textFieldWidth:       ScreenTools.defaultFontPixelWidth * 24
+    property real textLabelWidth:       ScreenTools.defaultFontPixelWidth * 30
 
     enum RegionOperation {
         FAA,
@@ -79,49 +88,43 @@ Rectangle {
     // Function to get the corresponding Self ID label depending on the Self ID Type selected
     function getSelfIdLabelText() {
         switch (selfIDComboBox.currentIndex) {
-            case 0:
-                return QGroundControl.settingsManager.remoteIDSettings.selfIDFree.shortDescription
-                break
-            case 1:
-                return QGroundControl.settingsManager.remoteIDSettings.selfIDEmergency.shortDescription
-                break
-            case 2:
-                return QGroundControl.settingsManager.remoteIDSettings.selfIDExtended.shortDescription
-                break
-            default:
-                return QGroundControl.settingsManager.remoteIDSettings.selfIDFree.shortDescription
+        case 0:
+            return QGroundControl.settingsManager.remoteIDSettings.selfIDFree.shortDescription
+            break
+        case 1:
+            return QGroundControl.settingsManager.remoteIDSettings.selfIDEmergency.shortDescription
+            break
+        case 2:
+            return QGroundControl.settingsManager.remoteIDSettings.selfIDExtended.shortDescription
+            break
+        default:
+            return QGroundControl.settingsManager.remoteIDSettings.selfIDFree.shortDescription
         }
     }
 
     // Function to get the corresponding Self ID fact depending on the Self ID Type selected
     function getSelfIDFact() {
         switch (selfIDComboBox.currentIndex) {
-            case 0:
-                return QGroundControl.settingsManager.remoteIDSettings.selfIDFree
-                break
-            case 1:
-                return QGroundControl.settingsManager.remoteIDSettings.selfIDEmergency
-                break
-            case 2:
-                return QGroundControl.settingsManager.remoteIDSettings.selfIDExtended
-                break
-            default:
-                return QGroundControl.settingsManager.remoteIDSettings.selfIDFree
+        case 0:
+            return QGroundControl.settingsManager.remoteIDSettings.selfIDFree
+            break
+        case 1:
+            return QGroundControl.settingsManager.remoteIDSettings.selfIDEmergency
+            break
+        case 2:
+            return QGroundControl.settingsManager.remoteIDSettings.selfIDExtended
+            break
+        default:
+            return QGroundControl.settingsManager.remoteIDSettings.selfIDFree
         }
     }
 
-    // Function to move flickable to desire position
-    function getFlickableToPosition(y) {
-        flicakbleRID.contentY = y
-    }
 
     Item {
-        id:                             flagsItem
-        anchors.top:                    parent.top
-        anchors.horizontalCenter:       parent.horizontalCenter
-        anchors.horizontalCenterOffset: ScreenTools.defaultFontPixelWidth // Need this to account for the slight offset in the flickable
-        width:                          flicakbleRID.innerWidth
-        height:                         flagsColumn.height
+        id:                 flagsItem
+        width:              parent.width
+        height:             flagsColumn.height
+        Layout.alignment:   Qt.AlignHCenter
 
         ColumnLayout {
             id:                         flagsColumn
@@ -152,7 +155,7 @@ Rectangle {
                         id:                     armFlag
                         Layout.preferredHeight: flagsHeight
                         Layout.preferredWidth:  flagsWidth
-                        color:                  _activeRID ? (_activeVehicle.remoteIDManager.armStatusGood ? qgcPal.colorGreen : qgcPal.colorRed) : qgcPal.colorGrey
+                        color:                  _activeRID ? (_remoteIDManager.armStatusGood ? qgcPal.colorGreen : qgcPal.colorRed) : qgcPal.colorGrey
                         radius:                 radiusFlags
                         visible:                commsGood
 
@@ -164,25 +167,18 @@ Rectangle {
                             verticalAlignment:      Text.AlignVCenter
                             font.bold:              true
                         }
-
-                        // On clikced we go to the corresponding settings
-                        MouseArea {
-                            anchors.fill:   parent
-                            onClicked:      getFlickableToPosition(flicakbleRID.armstatusY)
-                        }
-
                     }
 
                     Rectangle {
                         id:                     commsFlag
                         Layout.preferredHeight: flagsHeight
                         Layout.preferredWidth:  flagsWidth
-                        color:                  _activeRID ? (_activeVehicle.remoteIDManager.commsGood ? qgcPal.colorGreen : qgcPal.colorRed) : qgcPal.colorGrey
+                        color:                  _activeRID ? (_remoteIDManager.commsGood ? qgcPal.colorGreen : qgcPal.colorRed) : qgcPal.colorGrey
                         radius:                 radiusFlags
 
                         QGCLabel {
                             anchors.fill:           parent
-                            text:                   _activeRID && _activeVehicle.remoteIDManager.commsGood ? qsTr("RID COMMS") : qsTr("NOT CONNECTED")
+                            text:                   _activeRID && _remoteIDManager.commsGood ? qsTr("RID COMMS") : qsTr("NOT CONNECTED")
                             wrapMode:               Text.WordWrap
                             horizontalAlignment:    Text.AlignHCenter
                             verticalAlignment:      Text.AlignVCenter
@@ -194,7 +190,7 @@ Rectangle {
                         id:                     gpsFlag
                         Layout.preferredHeight: flagsHeight
                         Layout.preferredWidth:  flagsWidth
-                        color:                  _activeRID ? (_activeVehicle.remoteIDManager.gcsGPSGood ? qgcPal.colorGreen : qgcPal.colorRed) : qgcPal.colorGrey
+                        color:                  _activeRID ? (_remoteIDManager.gcsGPSGood ? qgcPal.colorGreen : qgcPal.colorRed) : qgcPal.colorGrey
                         radius:                 radiusFlags
                         visible:                commsGood
 
@@ -206,19 +202,13 @@ Rectangle {
                             verticalAlignment:      Text.AlignVCenter
                             font.bold:              true
                         }
-
-                        // On clikced we go to the corresponding settings
-                        MouseArea {
-                            anchors.fill:   parent
-                            onClicked:      getFlickableToPosition(flicakbleRID.gpsY)
-                        }
                     }
 
                     Rectangle {
                         id:                     basicIDFlag
                         Layout.preferredHeight: flagsHeight
                         Layout.preferredWidth:  flagsWidth
-                        color:                  _activeRID ? (_activeVehicle.remoteIDManager.basicIDGood ? qgcPal.colorGreen : qgcPal.colorRed) : qgcPal.colorGrey
+                        color:                  _activeRID ? (_remoteIDManager.basicIDGood ? qgcPal.colorGreen : qgcPal.colorRed) : qgcPal.colorGrey
                         radius:                 radiusFlags
                         visible:                commsGood
 
@@ -230,21 +220,15 @@ Rectangle {
                             verticalAlignment:      Text.AlignVCenter
                             font.bold:              true
                         }
-
-                        // On clikced we go to the corresponding settings
-                        MouseArea {
-                            anchors.fill:   parent
-                            onClicked:      getFlickableToPosition(flicakbleRID.basicIDY)
-                        }
                     }
 
                     Rectangle {
                         id:                     operatorIDFlag
                         Layout.preferredHeight: flagsHeight
                         Layout.preferredWidth:  flagsWidth
-                        color:                  _activeRID ? (_activeVehicle.remoteIDManager.operatorIDGood ? qgcPal.colorGreen : qgcPal.colorRed) : qgcPal.colorGrey
+                        color:                  _activeRID ? (_remoteIDManager.operatorIDGood ? qgcPal.colorGreen : qgcPal.colorRed) : qgcPal.colorGrey
                         radius:                 radiusFlags
-                        visible:                commsGood && _activeRID ? (QGroundControl.settingsManager.remoteIDSettings.sendOperatorID.value || _regionOperation == RemoteIDIndicatorPage.RegionOperation.EU) : false
+                        visible:                commsGood && _activeRID ? (QGroundControl.settingsManager.remoteIDSettings.sendOperatorID.value || _regionOperation == RemoteIDSettings.RegionOperation.EU) : false
 
                         QGCLabel {
                             anchors.fill:           parent
@@ -254,692 +238,395 @@ Rectangle {
                             verticalAlignment:      Text.AlignVCenter
                             font.bold:              true
                         }
-
-                        // On clicked we go to the corresponding settings
-                        MouseArea {
-                            anchors.fill:   parent
-                            onClicked:      getFlickableToPosition(flicakbleRID.operatorIDY)
-                        }
                     }
                 }
             }
         }
     }
 
-    QGCFlickable {
-        id:                 flicakbleRID
-        clip:               true
-        anchors.top:        flagsItem.visible ? flagsItem.bottom : parent.top
-        anchors.left:       parent.left
-        anchors.right:      parent.right
-        anchors.bottom:     parent.bottom
-        anchors.margins:    ScreenTools.defaultFontPixelWidth
-        contentHeight:      outerItem.height
-        contentWidth:       outerItem.width
-        flickableDirection: Flickable.VerticalFlick
+    RowLayout {
+        spacing: ScreenTools.defaultFontPixelWidth
 
-        property var innerWidth:   settingsItem.width
+        Connections {
+            target: regionFact
+            onRawValueChanged: {
+                if (regionFact.rawValue === RemoteIDSettings.EU) {
+                    sendOperatorIdFact.rawValue = true
+                }
+                if (regionFact.rawValue === RemoteIDSettings.FAA) {
+                    locationTypeFact.value = RemoteIDSettings.LocationType.LIVE
+                }
+            }
+        }
 
-        // Properties to position flickable
-        property var armstatusY:    armStatusLabel.y
-        property var gpsY:          gpsLabel.y
-        property var basicIDY:      basicIDLabel.y
-        property var operatorIDY:   operatorIDLabel.y
+        ColumnLayout {
+            spacing:            ScreenTools.defaultFontPixelHeight / 2
+            Layout.alignment:   Qt.AlignTop
 
-        Item {
-            id:     outerItem
-            width:  Math.max(remoteIDRoot.width, settingsItem.width)
-            height: settingsItem.height
+            SettingsGroupLayout {
+                Layout.fillWidth:   true
 
-            ColumnLayout {
-                id:                         settingsItem
-                anchors.horizontalCenter:   parent.horizontalCenter
-                spacing:                    _margins
+                LabelledFactComboBox {
+                    label:              fact.shortDescription
+                    fact:               QGroundControl.settingsManager.remoteIDSettings.region
+                    visible:            QGroundControl.settingsManager.remoteIDSettings.region.visible
+                    Layout.fillWidth:   true
+                }
+            }
+            SettingsGroupLayout {
+                outerBorderColor: _activeRID ? (_remoteIDManager.armStatusGood ? defaultBorderColor : qgcPal.colorRed) : defaultBorderColor
+                LabelledLabel {
+                    label:              qsTr("Arm Status Error")
+                    labelText:          _remoteIDManager?_remoteIDManager.armStatusError:"Vehicle Not Connected"
+                    visible:            labelText !== ""
+                    Layout.fillWidth:   true
+                }
+            }
 
-                // -----------------------------------------------------------------------------------------
-                // ---------------------------------------- ARM STATUS -----------------------------------------
-                // Arm status error
-                QGCLabel {
-                    id:                 armStatusLabel
-                    text:               qsTr("ARM STATUS")
-                    Layout.alignment:   Qt.AlignHCenter
-                    font.pointSize:     ScreenTools.mediumFontPointSize
-                    visible:            _activeVehicle && !_activeVehicle.remoteIDManager.armStatusGood
+            SettingsGroupLayout {
+                heading:                qsTr("Basic ID")
+                headingDescription:     qsTr("If Basic ID is already set on the RID device, this will be registered as Basic ID 2")
+                Layout.fillWidth:       true
+                Layout.preferredWidth:  textLabelWidth
+                outerBorderColor:       _activeRID ? (_remoteIDManager.basicIDGood ? defaultBorderColor : qgcPal.colorRed) : defaultBorderColor
+
+
+                FactCheckBoxSlider {
+                    id:                 sendBasicIDSlider
+                    text:               qsTr("Broadcast")
+                    fact:               _fact
+                    visible:            _fact.visible
+                    Layout.fillWidth:   true
+
+                    property Fact _fact: remoteIDSettings.sendBasicID
                 }
 
-                Rectangle {
-                    id:                     armStatusRectangle
-                    Layout.preferredHeight: armStatusGrid.height + (_margins * 2)
-                    Layout.preferredWidth:  armStatusGrid.width + (_margins * 2)
-                    color:                  qgcPal.windowShade
-                    Layout.fillWidth:       true
-                    border.width:           _borderWidth
-                    border.color:           _activeRID ? (_activeVehicle.remoteIDManager.armStatusGood ? color : qgcPal.colorRed) : color
+                LabelledFactComboBox {
+                    id:                 basicIDTypeCombo
+                    label:              _fact.shortDescription
+                    fact:               _fact
+                    indexModel:         false
+                    visible:            _fact.visible
+                    enabled:            sendBasicIDSlider._fact.rawValue
+                    Layout.fillWidth:   true
 
-                    visible:                _activeVehicle && !_activeVehicle.remoteIDManager.armStatusGood
-
-                    GridLayout {
-                        id:                         armStatusGrid
-                        anchors.margins:            _margins
-                        anchors.top:                parent.top
-                        anchors.horizontalCenter:   parent.horizontalCenter
-                        columns:                    2
-                        rowSpacing:                 _margins * 3
-                        columnSpacing:              _margins * 2
-
-                        QGCLabel {
-                            text:               qsTr("Arm status error: ")
-                            Layout.fillWidth:   true
-                        }
-                        QGCLabel {
-                            text:               _activeVehicle ? _activeVehicle.remoteIDManager.armStatusError : ""
-                            Layout.fillWidth:   true
-                        }
-                    }
-                }
-                // -----------------------------------------------------------------------------------------
-
-                // ---------------------------------------- REGION -----------------------------------------
-                // Region of operation to accomodate for different requirements
-                QGCLabel {
-                    id:                 regionLabel
-                    text:               qsTr("Region")
-                    Layout.alignment:   Qt.AlignHCenter
-                    font.pointSize:     ScreenTools.mediumFontPointSize
+                    property Fact _fact: remoteIDSettings.basicIDType
                 }
 
-                Rectangle {
-                    id:                     regionRectangle
-                    Layout.preferredHeight: regionGrid.height + (_margins * 2)
-                    Layout.preferredWidth:  regionGrid.width + (_margins * 2)
-                    color:                  qgcPal.windowShade
-                    visible:                true
-                    Layout.fillWidth:       true
+                LabelledFactComboBox {
+                    label:              _fact.shortDescription
+                    fact:               _fact
+                    indexModel:         false
+                    visible:            _fact.visible
+                    enabled:            sendBasicIDSlider._fact.rawValue
+                    Layout.fillWidth:   true
 
-                    GridLayout {
-                        id:                         regionGrid
-                        anchors.margins:            _margins
-                        anchors.top:                parent.top
-                        anchors.horizontalCenter:   parent.horizontalCenter
-                        columns:                    2
-                        rowSpacing:                 _margins * 3
-                        columnSpacing:              _margins * 2
-
-                        QGCLabel {
-                            text:               QGroundControl.settingsManager.remoteIDSettings.region.shortDescription
-                            visible:            QGroundControl.settingsManager.remoteIDSettings.region.visible
-                            Layout.fillWidth:   true
-                        }
-                        FactComboBox {
-                            fact:               QGroundControl.settingsManager.remoteIDSettings.region
-                            visible:            QGroundControl.settingsManager.remoteIDSettings.region.visible
-                            Layout.fillWidth:   true
-                            sizeToContents:     true
-                            // In case we change from EU to FAA having the location Type to FIXED, since its not supported in FAA
-                            // we need to change it to Live GNSS
-                            onActivated: (index) => {
-                                if (currentIndex == RemoteIDIndicatorPage.RegionOperation.FAA && QGroundControl.settingsManager.remoteIDSettings.locationType.value != RemoteIDIndicatorPage.LocationType.LIVE)
-                                QGroundControl.settingsManager.remoteIDSettings.locationType.value = RemoteIDIndicatorPage.LocationType.LIVE
-                            }
-                        }
-
-                        QGCLabel {
-                            text:               QGroundControl.settingsManager.remoteIDSettings.classificationType.shortDescription
-                            visible:            _regionOperation == RemoteIDIndicatorPage.RegionOperation.EU
-                            Layout.fillWidth:   true
-                        }
-                        FactComboBox {
-                            fact:               QGroundControl.settingsManager.remoteIDSettings.classificationType
-                            visible:            _regionOperation == RemoteIDIndicatorPage.RegionOperation.EU
-                            Layout.fillWidth:   true
-                            sizeToContents:     true
-                        }
-
-                        QGCLabel {
-                            text:               QGroundControl.settingsManager.remoteIDSettings.categoryEU.shortDescription
-                            visible:            (_classificationType == RemoteIDIndicatorPage.ClassificationType.EU) && (_regionOperation == RemoteIDIndicatorPage.RegionOperation.EU)
-                            Layout.fillWidth:   true
-                        }
-                        FactComboBox {
-                            fact:               QGroundControl.settingsManager.remoteIDSettings.categoryEU
-                            visible:            (_classificationType == RemoteIDIndicatorPage.ClassificationType.EU) && (_regionOperation == RemoteIDIndicatorPage.RegionOperation.EU)
-                            Layout.fillWidth:   true
-                            sizeToContents:     true
-                        }
-
-                        QGCLabel {
-                            text:               QGroundControl.settingsManager.remoteIDSettings.classEU.shortDescription
-                            visible:            (_classificationType == RemoteIDIndicatorPage.ClassificationType.EU) && (_regionOperation == RemoteIDIndicatorPage.RegionOperation.EU)
-                            Layout.fillWidth:   true
-                        }
-                        FactComboBox {
-                            fact:               QGroundControl.settingsManager.remoteIDSettings.classEU
-                            visible:            (_classificationType == RemoteIDIndicatorPage.ClassificationType.EU) && (_regionOperation == RemoteIDIndicatorPage.RegionOperation.EU)
-                            Layout.fillWidth:   true
-                            sizeToContents:     true
-                        }
-                    }
-                }
-                // -----------------------------------------------------------------------------------------
-
-                // ----------------------------------------- GPS -------------------------------------------
-                // Data representation and connection options for GCS GPS.
-                QGCLabel {
-                    id:                 gpsLabel
-                    text:               qsTr("GPS GCS")
-                    Layout.alignment:   Qt.AlignHCenter
-                    font.pointSize:     ScreenTools.mediumFontPointSize
+                    property Fact _fact: remoteIDSettings.basicIDUaType
                 }
 
-                Rectangle {
-                    id:                     gpsRectangle
-                    Layout.preferredHeight: gpsGrid.height + gpsGridData.height + (_margins * 3)
-                    Layout.preferredWidth:  gpsGrid.width + (_margins * 2)
-                    color:                  qgcPal.windowShade
-                    visible:                true
-                    Layout.fillWidth:       true
+                LabelledFactTextField {
+                    label:                      _fact.shortDescription
+                    fact:                       _fact
+                    visible:                    _fact.visible
+                    enabled:            sendBasicIDSlider._fact.rawValue
+                    textField.maximumLength:    20
+                    Layout.fillWidth:           true
+                    textFieldPreferredWidth:    textFieldWidth
 
-                    border.width:   _borderWidth
-                    border.color:   _activeRID ? (_activeVehicle.remoteIDManager.gcsGPSGood ? color : qgcPal.colorRed) : color
-
-                    property var locationTypeValue: QGroundControl.settingsManager.remoteIDSettings.locationType.value
-
-                    // In case we change from FAA to EU region, having selected Location Type FIXED,
-                    // We have to change the currentindex to the locationType forced when we change region
-                    onLocationTypeValueChanged: {
-                        if (locationTypeComboBox.currentIndex != locationTypeValue) {
-                            locationTypeComboBox.currentIndex = locationTypeValue
-                        }
-                    }
-
-                    GridLayout {
-                        id:                         gpsGridData
-                        anchors.margins:            _margins
-                        anchors.top:                parent.top
-                        anchors.horizontalCenter:   parent.horizontalCenter
-                        rowSpacing:                 _margins
-                        columns:                    2
-                        columnSpacing:              _margins * 2
-
-                        QGCLabel {
-                            text:               QGroundControl.settingsManager.remoteIDSettings.locationType.shortDescription
-                            visible:            QGroundControl.settingsManager.remoteIDSettings.locationType.visible
-                            Layout.fillWidth:   true
-                        }
-                        FactComboBox {
-                            id:                 locationTypeComboBox
-                            fact:               QGroundControl.settingsManager.remoteIDSettings.locationType
-                            visible:            QGroundControl.settingsManager.remoteIDSettings.locationType.visible
-                            Layout.fillWidth:   true
-                            sizeToContents:     true
-
-                            onActivated: (index) => {
-                                // FAA doesnt allow to set a Fixed position. Is either Live GNSS or Takeoff
-                                if (_regionOperation == RemoteIDIndicatorPage.RegionOperation.FAA) {
-                                    if (currentIndex != 1) {
-                                       QGroundControl.settingsManager.remoteIDSettings.locationType.value = 1
-                                        currentIndex = 1
-                                    }
-                                } else {
-                                    // TODO: this lines below efectively disable TAKEOFF option. Uncoment when we add support for it
-                                    if (currentIndex == 0) {
-                                        QGroundControl.settingsManager.remoteIDSettings.locationType.value = 1
-                                        currentIndex = 1
-                                    } else {
-                                        QGroundControl.settingsManager.remoteIDSettings.locationType.value = index
-                                        currentIndex = index
-                                    }
-                                    // --------------------------------------------------------------------------------------------------
-                                }
-                            }
-                        }
-
-                        QGCLabel {
-                            text:               qsTr("Latitude Fixed(-90 to 90)")
-                            visible:            _locationType == RemoteIDIndicatorPage.LocationType.FIXED
-                            Layout.fillWidth:   true
-                        }
-                        FactTextField {
-                            visible:            _locationType == RemoteIDIndicatorPage.LocationType.FIXED
-                            Layout.fillWidth:   true
-                            fact:               QGroundControl.settingsManager.remoteIDSettings.latitudeFixed
-                        }
-
-                        QGCLabel {
-                            text:               qsTr("Longitude Fixed(-180 to 180)")
-                            visible:            _locationType == RemoteIDIndicatorPage.LocationType.FIXED
-                            Layout.fillWidth:   true
-                        }
-                        FactTextField {
-                            visible:            _locationType == RemoteIDIndicatorPage.LocationType.FIXED
-                            Layout.fillWidth:   true
-                            fact:               QGroundControl.settingsManager.remoteIDSettings.longitudeFixed
-                        }
-
-                        QGCLabel {
-                            text:               qsTr("Altitude Fixed")
-                            visible:            _locationType == RemoteIDIndicatorPage.LocationType.FIXED
-                            Layout.fillWidth:   true
-                        }
-                        FactTextField {
-                            visible:            _locationType == RemoteIDIndicatorPage.LocationType.FIXED
-                            Layout.fillWidth:   true
-                            fact:               QGroundControl.settingsManager.remoteIDSettings.altitudeFixed
-                        }
-
-                        QGCLabel {
-                            text:               qsTr("Latitude")
-                            Layout.fillWidth:   true
-                            visible:            _locationType != RemoteIDIndicatorPage.LocationType.TAKEOFF
-                        }
-                        QGCLabel {
-                            text:               gcsPosition.isValid ? gcsPosition.latitude : "N/A"
-                            Layout.fillWidth:   true
-                            visible:            _locationType != RemoteIDIndicatorPage.LocationType.TAKEOFF
-                        }
-
-                        QGCLabel {
-                            text:               qsTr("Longitude")
-                            Layout.fillWidth:   true
-                            visible:            _locationType != RemoteIDIndicatorPage.LocationType.TAKEOFF
-                        }
-                        QGCLabel {
-                            text:               gcsPosition.isValid ? gcsPosition.longitude : "N/A"
-                            Layout.fillWidth:   true
-                            visible:            _locationType != RemoteIDIndicatorPage.LocationType.TAKEOFF
-                        }
-
-                        QGCLabel {
-                            text:               _regionOperation == RemoteIDIndicatorPage.RegionOperation.FAA ?
-                                                qsTr("Altitude") + qsTr(" (Mandatory)") :
-                                                qsTr("Altitude")
-                            Layout.fillWidth:   true
-                            visible:            _locationType != RemoteIDIndicatorPage.LocationType.TAKEOFF
-                        }
-                        QGCLabel {
-                            text:               gcsPosition.isValid && !isNaN(gcsPosition.altitude) ? gcsPosition.altitude : "N/A"
-                            Layout.fillWidth:   true
-                            visible:            _locationType != RemoteIDIndicatorPage.LocationType.TAKEOFF
-                        }
-
-                        QGCLabel {
-                            text:               qsTr("Heading")
-                            Layout.fillWidth:   true
-                            visible:            _locationType != RemoteIDIndicatorPage.LocationType.TAKEOFF
-                        }
-                        QGCLabel {
-                            text:               gcsPosition.isValid && !isNaN(gcsHeading) ? gcsHeading : "N/A"
-                            Layout.fillWidth:   true
-                            visible:            _locationType != RemoteIDIndicatorPage.LocationType.TAKEOFF
-                        }
-
-                        QGCLabel {
-                            text:               qsTr("Hor. Accuracy")
-                            Layout.fillWidth:   true
-                            visible:            _locationType != RemoteIDIndicatorPage.LocationType.TAKEOFF
-                        }
-                        QGCLabel {
-                            text:               gcsPosition.isValid && gcsHDOP ? ( gcsHDOP + " m" ) : "N/A"
-                            Layout.fillWidth:   true
-                            visible:            _locationType != RemoteIDIndicatorPage.LocationType.TAKEOFF
-                        }
-                    }
-
-                    GridLayout {
-                        id:                         gpsGrid
-                        visible:                    !ScreenTools.isMobile
-                                                    && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.visible
-                                                    && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.visible
-                                                    && _locationType != RemoteIDIndicatorPage.LocationType.TAKEOFF
-                        anchors.margins:            _margins
-                        anchors.top:                gpsGridData.bottom
-                        anchors.horizontalCenter:   parent.horizontalCenter
-                        rowSpacing:                 _margins * 3
-                        columns:                    2
-                        columnSpacing:              _margins * 2
-
-                        QGCLabel {
-                            text: qsTr("NMEA External GPS Device")
-                        }
-                        QGCComboBox {
-                            id:                     nmeaPortCombo
-                            Layout.preferredWidth:  _comboFieldWidth
-
-                            model:  ListModel {
-                            }
-
-                            onActivated: (index) => {
-                                if (index != -1) {
-                                    QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.value = textAt(index);
-                                }
-                            }
-                            Component.onCompleted: {
-                                model.append({text: gpsDisabled})
-                                model.append({text: gpsUdpPort})
-
-                                for (var i in QGroundControl.linkManager.serialPorts) {
-                                    nmeaPortCombo.model.append({text:QGroundControl.linkManager.serialPorts[i]})
-                                }
-                                var index = nmeaPortCombo.find(QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.valueString);
-                                nmeaPortCombo.currentIndex = index;
-                                if (QGroundControl.linkManager.serialPorts.length === 0) {
-                                    nmeaPortCombo.model.append({text: "Serial <none available>"})
-                                }
-                            }
-                        }
-
-                        QGCLabel {
-                            visible:          nmeaPortCombo.currentText !== gpsUdpPort && nmeaPortCombo.currentText !== gpsDisabled
-                            text:             qsTr("NMEA GPS Baudrate")
-                        }
-                        QGCComboBox {
-                            visible:                nmeaPortCombo.currentText !== gpsUdpPort && nmeaPortCombo.currentText !== gpsDisabled
-                            id:                     nmeaBaudCombo
-                            Layout.preferredWidth:  _comboFieldWidth
-                            model:                  [1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600]
-
-                            onActivated: (index) => {
-                                if (index != -1) {
-                                    QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.value = textAt(index);
-                                }
-                            }
-                            Component.onCompleted: {
-                                var index = nmeaBaudCombo.find(QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.valueString);
-                                nmeaBaudCombo.currentIndex = index;
-                            }
-                        }
-
-                        QGCLabel {
-                            text:       qsTr("NMEA stream UDP port")
-                            visible:    nmeaPortCombo.currentText === gpsUdpPort
-                        }
-                        FactTextField {
-                            visible:                nmeaPortCombo.currentText === gpsUdpPort
-                            Layout.preferredWidth:  _valueFieldWidth
-                            fact:                   QGroundControl.settingsManager.autoConnectSettings.nmeaUdpPort
-                        }
-                    }
+                    property Fact _fact: remoteIDSettings.basicID
                 }
-                // -----------------------------------------------------------------------------------------
+            }
 
-                // -------------------------------------- BASIC ID -------------------------------------------
-                QGCLabel {
-                    id:                 basicIDLabel
-                    text:               qsTr("BASIC ID")
-                    Layout.alignment:   Qt.AlignHCenter
-                    font.pointSize:     ScreenTools.mediumFontPointSize
+            SettingsGroupLayout {
+                heading:            qsTr("Operator ID")
+                Layout.fillWidth:   true
+                outerBorderColor: (_regionOperation === RemoteIDSettings.RegionOperation.EU || remoteIDSettings.sendOperatorID.value) ?
+                                      (_activeRID && !_remoteIDManager.operatorIDGood ? qgcPal.colorRed : defaultBorderColor) : defaultBorderColor
+
+                FactCheckBoxSlider {
+                    text:               qsTr("Broadcast%1").arg(isEURegion ? " (EU Required)" : "")
+                    fact:               sendOperatorIdFact
+                    visible:            sendOperatorIdFact.visible
+                    enabled:            isFAARegion
+                    Layout.fillWidth:   true
+
+                    property Fact _fact: remoteIDSettings.sendOperatorID
                 }
 
-                Rectangle {
-                    id:                     basicIDRectangle
-                    Layout.preferredHeight: basicIDGrid.height + basicIDnote.height + (_margins * 4)
-                    Layout.preferredWidth:  basicIDGrid.width  + basicIDnote.width  + (_margins * 2)
-                    color:                  qgcPal.windowShade
-                    Layout.fillWidth:       true
+                LabelledFactComboBox {
+                    id:                 regionOperationCombo
+                    label:              _fact.shortDescription
+                    fact:               _fact
+                    indexModel:         false
+                    visible:            _fact.visible && (_fact.enumValues.length > 1)
+                    Layout.fillWidth:   true
 
-                    border.width:   _borderWidth
-                    border.color:   _activeRID ? (_activeVehicle.remoteIDManager.basicIDGood ? color : qgcPal.colorRed) : color
+                    property Fact _fact: remoteIDSettings.operatorIDType
+                }
+
+                RowLayout {
+                    spacing: ScreenTools.defaultFontPixelWidth * 2
 
                     QGCLabel {
-                        id:                         basicIDnote
-                        anchors.margins:            _margins
-                        anchors.top:                parent.top
-                        anchors.horizontalCenter:   parent.horizontalCenter
-                        anchors.bottomMargin:       _margins * 2
-                        width:                      basicIDGrid.width
-                        text:                       qsTr("Note: This parameter is optional if Basic ID is already set on RID device. " +
-                                                         "On that case, this one will be registered as Basic ID 2")
-                        wrapMode:                   Text.Wrap
-                        visible:                    QGroundControl.settingsManager.remoteIDSettings.basicIDType.visible
-
+                        Layout.fillWidth:   true
+                        text:               operatorIDFact.shortDescription + (regionOperationCombo.visible ? "" :  qsTr(" (%1)").arg(regionOperationCombo.comboBox.currentText))
                     }
 
-                    GridLayout {
-                        id:                         basicIDGrid
-                        anchors.margins:            _margins
-                        anchors.top:                basicIDnote.bottom
-                        anchors.horizontalCenter:   parent.horizontalCenter
-                        columns:                    2
-                        rowSpacing:                 _margins * 3
-                        columnSpacing:              _margins * 2
+                    QGCTextField {
+                        Layout.preferredWidth:  textFieldWidth
+                        Layout.fillWidth:       true
+                        text:                   operatorIDFact.valueString
+                        visible:                operatorIDFact.visible
+                        maximumLength:          20                  // Maximum defined by Mavlink definition of OPEN_DRONE_ID_OPERATOR_ID message
 
-                        QGCLabel {
-                            text:               QGroundControl.settingsManager.remoteIDSettings.basicIDType.shortDescription
-                            visible:            QGroundControl.settingsManager.remoteIDSettings.basicIDType.visible
-                            Layout.fillWidth:   true
-                        }
-                        FactComboBox {
-                            fact:               QGroundControl.settingsManager.remoteIDSettings.basicIDType
-                            visible:            QGroundControl.settingsManager.remoteIDSettings.basicIDType.visible
-                            Layout.fillWidth:   true
-                            sizeToContents:     true
-                        }
-
-                        QGCLabel {
-                            text:               QGroundControl.settingsManager.remoteIDSettings.basicIDUaType.shortDescription
-                            visible:            QGroundControl.settingsManager.remoteIDSettings.basicIDUaType.visible
-                            Layout.fillWidth:   true
-                        }
-                        FactComboBox {
-                            fact:               QGroundControl.settingsManager.remoteIDSettings.basicIDUaType
-                            visible:            QGroundControl.settingsManager.remoteIDSettings.basicIDUaType.visible
-                            Layout.fillWidth:   true
-                            sizeToContents:     true
-                        }
-
-                        QGCLabel {
-                            text:               _activeRID && _activeVehicle.remoteIDManager.basicIDGood ?
-                                                QGroundControl.settingsManager.remoteIDSettings.basicID.shortDescription :
-                                                QGroundControl.settingsManager.remoteIDSettings.basicID.shortDescription + qsTr(" (Mandatory)")
-                            visible:            QGroundControl.settingsManager.remoteIDSettings.basicID.visible
-                            Layout.alignment:   Qt.AlignHCenter
-                            Layout.fillWidth:   true
-                        }
-                        FactTextField {
-                            fact:               QGroundControl.settingsManager.remoteIDSettings.basicID
-                            visible:            QGroundControl.settingsManager.remoteIDSettings.basicID.visible
-                            Layout.fillWidth:   true
-                        }
-
-                        QGCLabel {
-                            text:               QGroundControl.settingsManager.remoteIDSettings.sendBasicID.shortDescription
-                            Layout.fillWidth:   true
-                            visible:            QGroundControl.settingsManager.remoteIDSettings.basicID.visible
-                        }
-                        FactCheckBox {
-                            fact:       QGroundControl.settingsManager.remoteIDSettings.sendBasicID
-                            visible:    QGroundControl.settingsManager.remoteIDSettings.basicID.visible
-                        }
-                    }
-                }
-                // ------------------------------------------------------------------------------------------
-
-                // ------------------------------------ OPERATOR ID ----------------------------------------
-                QGCLabel {
-                    id:                 operatorIDLabel
-                    text:               qsTr("Operator ID")
-                    Layout.alignment:   Qt.AlignHCenter
-                    font.pointSize:     ScreenTools.mediumFontPointSize
-                }
-
-                Rectangle {
-                    id:                     operatorIDRectangle
-                    Layout.preferredHeight: operatorIDGrid.height + (_margins * 3)
-                    Layout.preferredWidth:  operatorIDGrid.width + (_margins * 2)
-                    color:                  qgcPal.windowShade
-                    Layout.fillWidth:       true
-
-                    border.width:   _borderWidth
-                    border.color:   (_regionOperation == RemoteIDIndicatorPage.RegionOperation.EU || QGroundControl.settingsManager.remoteIDSettings.sendOperatorID.value) ?
-                                    (_activeRID && !_activeVehicle.remoteIDManager.operatorIDGood ? qgcPal.colorRed : color) : color
-
-                    GridLayout {
-                        id:                         operatorIDGrid
-                        anchors.margins:            _margins
-                        anchors.top:                parent.top
-                        anchors.horizontalCenter:   parent.horizontalCenter
-                        columns:                    2
-                        rowSpacing:                 _margins * 3
-                        columnSpacing:              _margins * 2
-
-                        QGCLabel {
-                            text:               QGroundControl.settingsManager.remoteIDSettings.operatorIDType.shortDescription
-                            visible:            QGroundControl.settingsManager.remoteIDSettings.operatorIDType.visible
-                            Layout.fillWidth:   true
-                        }
-                        FactComboBox {
-                            id:                 operatorIDFactComboBox
-                            fact:               QGroundControl.settingsManager.remoteIDSettings.operatorIDType
-                            visible:            QGroundControl.settingsManager.remoteIDSettings.operatorIDType.visible && (QGroundControl.settingsManager.remoteIDSettings.operatorIDType.enumValues.length > 1)
-                            Layout.fillWidth:   true
-                            sizeToContents:     true
-                        }
-                        QGCLabel{
-                            text:               QGroundControl.settingsManager.remoteIDSettings.operatorIDType.enumStringValue
-                            visible:            !operatorIDFactComboBox.visible
-                            Layout.fillWidth:   true
-                        }
-
-                        QGCLabel {
-                            text:               _regionOperation == RemoteIDIndicatorPage.RegionOperation.FAA ?
-                                                QGroundControl.settingsManager.remoteIDSettings.operatorID.shortDescription :
-                                                QGroundControl.settingsManager.remoteIDSettings.operatorID.shortDescription + qsTr(" (Mandatory)")
-                            visible:            QGroundControl.settingsManager.remoteIDSettings.operatorID.visible
-                            Layout.alignment:   Qt.AlignHCenter
-                            Layout.fillWidth:   true
-                        }
-                        FactTextField {
-                            id:                 operatorIDTextField
-                            fact:               QGroundControl.settingsManager.remoteIDSettings.operatorID
-                            visible:            QGroundControl.settingsManager.remoteIDSettings.operatorID.visible
-                            Layout.fillWidth:   true
-                            maximumLength:      20 // Maximum defined by Mavlink definition of OPEN_DRONE_ID_OPERATOR_ID message
-	                    onTextChanged: {
-                                if (_activeVehicle) {
-                                    _activeVehicle.remoteIDManager.checkOperatorID(text)
-                                } else {
-                                    _offlineVehicle.remoteIDManager.checkOperatorID(text)
-                                }
-                            }
-                            onEditingFinished: {
-                                if (_activeVehicle) {
-                                    _activeVehicle.remoteIDManager.setOperatorID()
-                                } else {
-                                    _offlineVehicle.remoteIDManager.setOperatorID()
-                                }
+                        onTextChanged: {
+                            operatorIDFact.value = text
+                            if (_activeVehicle) {
+                                _remoteIDManager.checkOperatorID(text)
+                            } else {
+                                _offlineVehicle.remoteIDManager.checkOperatorID(text)
                             }
                         }
 
-                        // Spacer
-                        QGCLabel {
-                            text:               ""
-                            visible:            _regionOperation == RemoteIDIndicatorPage.RegionOperation.EU
-                            Layout.alignment:   Qt.AlignHCenter
-                            Layout.fillWidth:   true
-                        }
-
-                        QGCLabel {
-                            text:               QGroundControl.settingsManager.remoteIDSettings.operatorID.shortDescription + qsTr(QGroundControl.settingsManager.remoteIDSettings.operatorIDValid.rawValue == true ? " valid" : " invalid")
-                            visible:            _regionOperation == RemoteIDIndicatorPage.RegionOperation.EU
-                            Layout.alignment:   Qt.AlignHCenter
-                            Layout.fillWidth:   true
-                        }
-
-                        QGCLabel {
-                            text:               QGroundControl.settingsManager.remoteIDSettings.sendOperatorID.shortDescription
-                            Layout.fillWidth:   true
-                            visible:            _regionOperation == RemoteIDIndicatorPage.RegionOperation.FAA
-                        }
-                        FactCheckBox {
-                            fact:       QGroundControl.settingsManager.remoteIDSettings.sendOperatorID
-                            visible:    _regionOperation == RemoteIDIndicatorPage.RegionOperation.FAA
-                            onClicked: {
-                                if (checked) {
-                                    if (_activeVehicle) {
-                                        _activeVehicle.remoteIDManager.setOperatorID()
-                                    }
-                                }
+                        onEditingFinished: {
+                            if (_activeVehicle) {
+                                _remoteIDManager.setOperatorID()
+                            } else {
+                                _offlineVehicle.remoteIDManager.setOperatorID()
                             }
                         }
                     }
                 }
-                // -----------------------------------------------------------------------------------------
+            }
 
-                // -------------------------------------- SELF ID ------------------------------------------
-                QGCLabel {
-                    id:                 selfIDLabel
-                    text:               qsTr("Self ID")
-                    Layout.alignment:   Qt.AlignHCenter
-                    font.pointSize:     ScreenTools.mediumFontPointSize
+            SettingsGroupLayout {
+                heading:                qsTr("Self ID")
+                headingDescription:     qsTr("If an emergency is declared, Emergency Text will be broadcast even if Broadcast setting is not enabled.")
+                Layout.fillWidth:       true
+                Layout.preferredWidth:  textLabelWidth
+
+                FactCheckBoxSlider {
+                    id:                 sendSelfIDSlider
+                    text:               qsTr("Broadcast")
+                    fact:               _fact
+                    visible:            _fact.visible
+                    Layout.fillWidth:   true
+
+                    property Fact _fact: remoteIDSettings.sendSelfID
                 }
 
-                Rectangle {
-                    id:                     selfIDRectangle
-                    Layout.preferredHeight: selfIDGrid.height + selfIDnote.height + (_margins * 3)
-                    Layout.preferredWidth:  selfIDGrid.width + (_margins * 2)
-                    color:                  qgcPal.windowShade
-                    visible:                true
-                    Layout.fillWidth:       true
+                LabelledFactComboBox {
+                    id:                 selfIDTypeCombo
+                    label:              qsTr("Broadcast Message")
+                    fact:               _fact
+                    indexModel:         false
+                    visible:            _fact.visible
+                    enabled:            sendSelfIDSlider._fact.rawValue
+                    Layout.fillWidth:   true
 
-                    GridLayout {
-                        id:                         selfIDGrid
-                        anchors.margins:            _margins
-                        anchors.top:                parent.top
-                        anchors.horizontalCenter:   parent.horizontalCenter
-                        columns:                    2
-                        rowSpacing:                 _margins * 3
-                        columnSpacing:              _margins * 2
+                    property Fact _fact: remoteIDSettings.selfIDType
+                }
 
-                        QGCLabel {
-                            text:               QGroundControl.settingsManager.remoteIDSettings.selfIDType.shortDescription
-                            visible:            QGroundControl.settingsManager.remoteIDSettings.selfIDType.visible
-                            Layout.fillWidth:   true
-                        }
-                        FactComboBox {
-                            id:                 selfIDComboBox
-                            fact:               QGroundControl.settingsManager.remoteIDSettings.selfIDType
-                            visible:            QGroundControl.settingsManager.remoteIDSettings.selfIDType.visible
-                            Layout.fillWidth:   true
-                            sizeToContents:     true
+                LabelledFactTextField {
+                    label:                      _fact.shortDescription
+                    fact:                       _fact
+                    visible:                    _fact.visible
+                    enabled:                     sendSelfIDSlider._fact.rawValue
+                    textField.maximumLength:    23
+                    Layout.fillWidth:           true
+                    textFieldPreferredWidth:    textFieldWidth
+
+                    property Fact _fact: remoteIDSettings.selfIDFree
+                }
+
+                LabelledFactTextField {
+                    label:                      _fact.shortDescription
+                    fact:                       _fact
+                    visible:                    _fact.visible
+                    enabled:                    sendSelfIDSlider._fact.rawValue
+                    textField.maximumLength:    23
+                    Layout.fillWidth:           true
+                    textFieldPreferredWidth:    textFieldWidth
+
+                    property Fact _fact: remoteIDSettings.selfIDExtended
+                }
+
+                LabelledFactTextField {
+                    label:                      _fact.shortDescription
+                    fact:                       _fact
+                    visible:                    _fact.visible
+                    textField.maximumLength:    23
+                    Layout.fillWidth:           true
+                    textFieldPreferredWidth:    textFieldWidth
+
+                    property Fact _fact: remoteIDSettings.selfIDEmergency
+                }
+            }
+        }
+
+        ColumnLayout {
+            spacing:            ScreenTools.defaultFontPixelHeight / 2
+            Layout.alignment:   Qt.AlignTop
+            SettingsGroupLayout {
+                heading:            qsTr("GroundStation Location")
+                Layout.fillWidth:   true
+                outerBorderColor : _activeRID ? (_remoteIDManager.gcsGPSGood ? defaultBorderColor : qgcPal.colorRed) : defaultBorderColor
+                LabelledFactComboBox {
+                    label:              locationTypeFact.shortDescription
+                    fact:               locationTypeFact
+                    indexModel:         false
+                    Layout.fillWidth:   true
+                }
+
+                LabelledFactTextField {
+                    label:                      _fact.shortDescription
+                    fact:                       _fact
+                    textField.maximumLength:    20
+                    enabled:                    locationTypeFact.rawValue === RemoteIDSettings.LocationType.FIXED
+                    Layout.fillWidth:           true
+                    textFieldPreferredWidth:    textFieldWidth
+
+                    property Fact _fact: remoteIDSettings.latitudeFixed
+                }
+
+                LabelledFactTextField {
+                    label:                      _fact.shortDescription
+                    fact:                       _fact
+                    textField.maximumLength:    20
+                    enabled:                    locationTypeFact.rawValue === RemoteIDSettings.LocationType.FIXED
+                    Layout.fillWidth:           true
+                    textFieldPreferredWidth:    textFieldWidth
+
+                    property Fact _fact: remoteIDSettings.longitudeFixed
+                }
+
+                LabelledFactTextField {
+                    label:                      _fact.shortDescription
+                    fact:                       _fact
+                    textField.maximumLength:    20
+                    enabled:                    locationTypeFact.rawValue === RemoteIDSettings.LocationType.FIXED
+                    Layout.fillWidth:           true
+                    textFieldPreferredWidth:    textFieldWidth
+
+                    property Fact _fact: remoteIDSettings.altitudeFixed
+                }
+
+                GridLayout {
+                    id:                         gpsGrid
+                    visible:                    !ScreenTools.isMobile
+                                                && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.visible
+                                                && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.visible
+                                                && _locationType !== RemoteIDIndicatorPage.LocationType.TAKEOFF
+                    anchors.margins:            _margins
+                    rowSpacing:                 _margins * 3
+                    columns:                    2
+                    columnSpacing:              _margins * 2
+                    Layout.alignment:           Qt.AlignHCenter
+
+                    QGCLabel {
+                        text: qsTr("NMEA External GPS Device")
+                    }
+                    QGCComboBox {
+                        id:                     nmeaPortCombo
+                        Layout.preferredWidth:  _comboFieldWidth
+
+                        model:  ListModel {
                         }
 
-                        QGCLabel {
-                            text:               getSelfIdLabelText()
-                            Layout.fillWidth:   true
-                        }
-                        FactTextField {
-                            fact:               getSelfIDFact()
-                            Layout.fillWidth:   true
-                            maximumLength:      23 // Maximum defined by Mavlink definition of OPEN_DRONE_ID_SELF_ID message
-                        }
+                        onActivated: (index) => {
+                                         if (index !== -1) {
+                                             QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.value = textAt(index);
+                                         }
+                                     }
+                        Component.onCompleted: {
+                            model.append({text: gpsDisabled})
+                            model.append({text: gpsUdpPort})
 
-                        QGCLabel {
-                            text:               QGroundControl.settingsManager.remoteIDSettings.sendSelfID.shortDescription
-                            Layout.fillWidth:   true
-                        }
-                        FactCheckBox {
-                            fact:       QGroundControl.settingsManager.remoteIDSettings.sendSelfID
-                            visible:    QGroundControl.settingsManager.remoteIDSettings.sendSelfID.visible
+                            for (var i in QGroundControl.linkManager.serialPorts) {
+                                nmeaPortCombo.model.append({text:QGroundControl.linkManager.serialPorts[i]})
+                            }
+                            var index = nmeaPortCombo.find(QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.valueString);
+                            nmeaPortCombo.currentIndex = index;
+                            if (QGroundControl.linkManager.serialPorts.length === 0) {
+                                nmeaPortCombo.model.append({text: "Serial <none available>"})
+                            }
                         }
                     }
 
                     QGCLabel {
-                        id:                         selfIDnote
-                        width:                      selfIDGrid.width
-                        anchors.margins:            _margins
-                        anchors.top:                selfIDGrid.bottom
-                        anchors.horizontalCenter:   parent.horizontalCenter
-                        anchors.bottomMargin:       _margins * 2
-                        text:                       qsTr("Note: Even if this box is unset, QGroundControl will send self ID message " +
-                                                         "if an emergency is set, or after it has been cleared. \
-                                                         The message for each kind of selfID is saved and preserves reboots. Select " +
-                                                         "each type on the Self ID type dropdown to configure the message to be sent")
-                        wrapMode:                   Text.Wrap
-                        visible:                    QGroundControl.settingsManager.remoteIDSettings.selfIDType.visible
+                        visible:          nmeaPortCombo.currentText !== gpsUdpPort && nmeaPortCombo.currentText !== gpsDisabled
+                        text:             qsTr("NMEA GPS Baudrate")
+                    }
+                    QGCComboBox {
+                        visible:                nmeaPortCombo.currentText !== gpsUdpPort && nmeaPortCombo.currentText !== gpsDisabled
+                        id:                     nmeaBaudCombo
+                        Layout.preferredWidth:  _comboFieldWidth
+                        model:                  [1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600]
+
+                        onActivated: (index) => {
+                                         if (index !== -1) {
+                                             QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.value = textAt(index);
+                                         }
+                                     }
+                        Component.onCompleted: {
+                            var index = nmeaBaudCombo.find(QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.valueString);
+                            nmeaBaudCombo.currentIndex = index;
+                        }
+                    }
+
+                    QGCLabel {
+                        text:       qsTr("NMEA stream UDP port")
+                        visible:    nmeaPortCombo.currentText === gpsUdpPort
+                    }
+                    FactTextField {
+                        visible:                nmeaPortCombo.currentText === gpsUdpPort
+                        Layout.preferredWidth:  _valueFieldWidth
+                        fact:                   QGroundControl.settingsManager.autoConnectSettings.nmeaUdpPort
                     }
                 }
-                // -----------------------------------------------------------------------------------------
+            }
+
+
+            SettingsGroupLayout {
+                heading:            qsTr("EU Vehicle Info")
+                visible:            isEURegion
+                Layout.fillWidth:   true
+
+                QGCCheckBoxSlider {
+                    id:                 euProvideInfoSlider
+                    text:               qsTr("Provide Information")
+                    checked:            _fact.rawValue === RemoteIDSettings.ClassificationType.EU
+                    visible:            _fact.visible
+                    Layout.fillWidth:   true
+                    onClicked:          _fact.rawValue = !_fact.rawValue
+
+                    property Fact _fact: remoteIDSettings.classificationType
+                }
+
+                LabelledFactComboBox {
+                    id:                 euCategoryCombo
+                    label:              _fact.shortDescription
+                    fact:               _fact
+                    indexModel:         false
+                    visible:            _fact.visible
+                    enabled:            euProvideInfoSlider.checked
+                    Layout.fillWidth:   true
+
+                    property Fact _fact: remoteIDSettings.categoryEU
+                }
+
+                LabelledFactComboBox {
+                    label:              _fact.shortDescription
+                    fact:               _fact
+                    indexModel:         false
+                    visible:            _fact.visible
+                    enabled:            euCategoryCombo.enabled
+                    Layout.fillWidth:   true
+
+                    property Fact _fact: remoteIDSettings.classEU
+                }
             }
         }
     }
+
 }

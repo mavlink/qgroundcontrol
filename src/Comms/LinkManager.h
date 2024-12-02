@@ -15,7 +15,6 @@
 
 #include <limits>
 
-#include "QGCToolbox.h"
 #include "LinkConfiguration.h"
 #include "LinkInterface.h"
 #ifndef NO_SERIAL_LINK
@@ -28,7 +27,6 @@ Q_DECLARE_LOGGING_CATEGORY(LinkManagerVerboseLog)
 class AutoConnectSettings;
 class LogReplayLink;
 class MAVLinkProtocol;
-class QGCApplication;
 class QmlObjectListModel;
 class QTimer;
 class SerialLink;
@@ -39,7 +37,7 @@ class UdpIODevice;
 ///        The Link Manager organizes the physical Links. It can manage arbitrary
 ///        links and takes care of connecting them as well assigning the correct
 ///        protocol instance to transport the link data into the application.
-class LinkManager : public QGCTool
+class LinkManager : public QObject
 {
     Q_OBJECT
     Q_MOC_INCLUDE("QmlObjectListModel.h")
@@ -49,11 +47,13 @@ class LinkManager : public QGCTool
     Q_PROPERTY(bool mavlinkSupportForwardingEnabled READ mavlinkSupportForwardingEnabled NOTIFY mavlinkSupportForwardingEnabledChanged)
 
 public:
-    LinkManager(QGCApplication *app, QGCToolbox *toolbox);
+    LinkManager(QObject *parent = nullptr);
     ~LinkManager();
 
-    // Override from QGCTool
-    void setToolbox(QGCToolbox *toolbox) final;
+    static LinkManager *instance();
+    static void registerQmlTypes();
+
+    void init();
 
     /// Create/Edit Link Configuration
     Q_INVOKABLE LinkConfiguration *createConfiguration(int type, const QString &name);
@@ -141,6 +141,10 @@ private:
     void _addZeroConfAutoConnectLink();
 #endif
 
+    QTimer *_portListTimer = nullptr;
+    QmlObjectListModel *_qmlConfigurations = nullptr;
+    AutoConnectSettings *_autoConnectSettings = nullptr;
+
     bool _configUpdateSuspended = false;            ///< true: stop updating configuration list
     bool _configurationsLoaded = false;             ///< true: Link configurations have been loaded
     bool _connectionsSuspended = false;             ///< true: all new connections should not be allowed
@@ -148,17 +152,12 @@ private:
     uint32_t _mavlinkChannelsUsedBitMask = 1;
     QString _connectionsSuspendedReason;            ///< User visible reason for suspension
 
-    AutoConnectSettings *_autoConnectSettings = nullptr;
-    MAVLinkProtocol *_mavlinkProtocol = nullptr;
-    QTimer *_portListTimer = nullptr;
-    QmlObjectListModel *_qmlConfigurations = nullptr;
-
     QList<SharedLinkInterfacePtr> _rgLinks;
     QList<SharedLinkConfigurationPtr> _rgLinkConfigs;
 
-    static constexpr const char* _defaultUDPLinkName = "UDP Link (AutoConnect)";
-    static constexpr const char* _mavlinkForwardingLinkName = "MAVLink Forwarding Link";
-    static constexpr const char* _mavlinkForwardingSupportLinkName = "MAVLink Support Forwarding Link";
+    static constexpr const char *_defaultUDPLinkName = "UDP Link (AutoConnect)";
+    static constexpr const char *_mavlinkForwardingLinkName = "MAVLink Forwarding Link";
+    static constexpr const char *_mavlinkForwardingSupportLinkName = "MAVLink Support Forwarding Link";
 
     static constexpr int _autoconnectUpdateTimerMSecs = 1000;
 #ifdef Q_OS_WIN
@@ -169,11 +168,12 @@ private:
 #endif
 
 #ifndef NO_SERIAL_LINK
-public:
+private:
     Q_PROPERTY(QStringList serialBaudRates   READ serialBaudRates   CONSTANT)
     Q_PROPERTY(QStringList serialPortStrings READ serialPortStrings NOTIFY commPortStringsChanged)
     Q_PROPERTY(QStringList serialPorts       READ serialPorts       NOTIFY commPortsChanged)
 
+public:
     static QStringList serialBaudRates();
     QStringList serialPortStrings();
     QStringList serialPorts();
@@ -189,6 +189,7 @@ private:
     void _addSerialAutoConnectLink();
     bool _portAlreadyConnected(const QString &portName) const;
 
+    UdpIODevice *_nmeaSocket = nullptr;
     QMap<QString, int> _autoconnectPortWaitList;   ///< key: QGCSerialPortInfo::systemLocation, value: wait count
     QList<SerialLink*> _activeLinkCheckList;       ///< List of links we are waiting for a vehicle to show up on
     QStringList _commPortList;
@@ -197,6 +198,5 @@ private:
     QString _nmeaDeviceName;
     uint32_t _nmeaBaud = 0;
     QSerialPort *_nmeaPort = nullptr;
-    UdpIODevice *_nmeaSocket = nullptr;
 #endif // NO_SERIAL_LINK
 };

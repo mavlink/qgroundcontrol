@@ -10,10 +10,10 @@
 #include "LogDownloadController.h"
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
-#include "QGCToolbox.h"
 #include "ParameterManager.h"
 #include "Vehicle.h"
 #include "SettingsManager.h"
+#include "AppSettings.h"
 #include "MAVLinkProtocol.h"
 #include "LogEntry.h"
 #include "QGCLoggingCategory.h"
@@ -34,10 +34,9 @@ LogDownloadController::LogDownloadController(void)
     , _retries(0)
     , _apmOneBased(0)
 {
-    MultiVehicleManager *manager = qgcApp()->toolbox()->multiVehicleManager();
-    connect(manager, &MultiVehicleManager::activeVehicleChanged, this, &LogDownloadController::_setActiveVehicle);
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &LogDownloadController::_setActiveVehicle);
     connect(&_timer, &QTimer::timeout, this, &LogDownloadController::_processDownload);
-    _setActiveVehicle(manager->activeVehicle());
+    _setActiveVehicle(MultiVehicleManager::instance()->activeVehicle());
 }
 
 //----------------------------------------------------------------------------------------
@@ -394,8 +393,8 @@ LogDownloadController::_requestLogData(uint16_t id, uint32_t offset, uint32_t co
             qCDebug(LogDownloadControllerLog) << "Request log data (id:" << id << "offset:" << offset << "size:" << count << "retryCount" << retryCount << ")";
             mavlink_message_t msg;
             mavlink_msg_log_request_data_pack_chan(
-                        qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-                        qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                        MAVLinkProtocol::instance()->getSystemId(),
+                        MAVLinkProtocol::getComponentId(),
                         sharedLink->mavlinkChannel(),
                         &msg,
                         _vehicle->id(), _vehicle->defaultComponentId(),
@@ -425,8 +424,8 @@ LogDownloadController::_requestLogList(uint32_t start, uint32_t end)
         if (sharedLink) {
             mavlink_message_t msg;
             mavlink_msg_log_request_list_pack_chan(
-                        qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-                        qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                        MAVLinkProtocol::instance()->getSystemId(),
+                        MAVLinkProtocol::getComponentId(),
                         sharedLink->mavlinkChannel(),
                         &msg,
                         _vehicle->id(),
@@ -446,7 +445,7 @@ LogDownloadController::download(QString path)
 {
     QString dir = path;
     if (dir.isEmpty()) {
-        dir = qgcApp()->toolbox()->settingsManager()->appSettings()->logSavePath();
+        dir = SettingsManager::instance()->appSettings()->logSavePath();
     }
     downloadToDirectory(dir);
 }
@@ -596,11 +595,11 @@ LogDownloadController::eraseAll(void)
         if (sharedLink) {
             mavlink_message_t msg;
             mavlink_msg_log_erase_pack_chan(
-                        qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-                        qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                        MAVLinkProtocol::instance()->getSystemId(),
+                        MAVLinkProtocol::getComponentId(),
                         sharedLink->mavlinkChannel(),
                         &msg,
-                        qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->id(), qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->defaultComponentId());
+                        MultiVehicleManager::instance()->activeVehicle()->id(), MultiVehicleManager::instance()->activeVehicle()->defaultComponentId());
             _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
         }
         refresh();

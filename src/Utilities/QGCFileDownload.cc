@@ -61,6 +61,7 @@ bool QGCFileDownload::download(const QString &remoteFile, const QList<QPair<QNet
     if (remoteFile.startsWith("http:") || remoteFile.startsWith("https:")) {
         remoteUrl.setUrl(remoteFile);
     } else {
+        // QNetworkRequest is used for local files too to use the same code path
         remoteUrl = QUrl::fromLocalFile(remoteFile);
     }
 
@@ -111,9 +112,11 @@ void QGCFileDownload::_downloadFinished()
         return;
     }
 
-    const int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-    if ((statusCode < HTTP_Response::SUCCESS_OK) || (statusCode >= HTTP_Response::REDIRECTION_MULTIPLE_CHOICES)) {
-        return;
+    if (!reply->url().isLocalFile()) {
+        const int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        if ((statusCode < HTTP_Response::SUCCESS_OK) || (statusCode >= HTTP_Response::REDIRECTION_MULTIPLE_CHOICES)) {
+            return;
+        }
     }
 
     QVariant redirectionTarget = reply->attribute(QNetworkRequest::RedirectionTargetAttribute);

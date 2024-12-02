@@ -9,9 +9,9 @@
 
 #include "FactMetaData.h"
 #include "SettingsManager.h"
+#include "UnitsSettings.h"
 #include "JsonHelper.h"
-#include "QGCApplication.h"
-#include <MAVLinkLib.h>
+#include "MAVLinkLib.h"
 
 #include <QtCore/QtMath>
 
@@ -908,7 +908,7 @@ void FactMetaData::_setAppSettingsTranslators(void)
                 continue;
             }
 
-            UnitsSettings* settings = qgcApp()->toolbox()->settingsManager()->unitsSettings();
+            UnitsSettings* settings = SettingsManager::instance()->unitsSettings();
             uint settingsUnits = 0;
 
             switch (pAppSettingsTranslation->unitType) {
@@ -953,7 +953,7 @@ const FactMetaData::AppSettingsTranslation_s* FactMetaData::_findAppSettingsUnit
         }
 
         uint unitOption = 0;
-        auto unitsSettings = qgcApp()->toolbox()->settingsManager()->unitsSettings();
+        auto unitsSettings = SettingsManager::instance()->unitsSettings();
         switch (type) {
         case UnitHorizontalDistance:
             unitOption = unitsSettings->horizontalDistanceUnits()->rawValue().toUInt();

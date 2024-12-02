@@ -16,6 +16,8 @@
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
+#include "AppSettings.h"
+#include "AutoConnectSettings.h"
 #include "TCPLink.h"
 #include "UDPLink.h"
 
@@ -47,14 +49,17 @@
 #include <qmdnsengine/service.h>
 #endif
 
+#include <QtCore/qapplicationstatic.h>
 #include <QtCore/QTimer>
 #include <QtQml/qqml.h>
 
 QGC_LOGGING_CATEGORY(LinkManagerLog, "qgc.comms.linkmanager")
 QGC_LOGGING_CATEGORY(LinkManagerVerboseLog, "qgc.comms.linkmanager:verbose")
 
-LinkManager::LinkManager(QGCApplication *app, QGCToolbox *toolbox)
-    : QGCTool(app, toolbox)
+Q_APPLICATION_STATIC(LinkManager, _linkManagerInstance);
+
+LinkManager::LinkManager(QObject *parent)
+    : QObject(parent)
     , _portListTimer(new QTimer(this))
     , _qmlConfigurations(new QmlObjectListModel(this))
 #ifndef NO_SERIAL_LINK
@@ -62,7 +67,20 @@ LinkManager::LinkManager(QGCApplication *app, QGCToolbox *toolbox)
 #endif
 {
     // qCDebug(LinkManagerLog) << Q_FUNC_INFO << this;
+}
 
+LinkManager::~LinkManager()
+{
+    // qCDebug(LinkManagerLog) << Q_FUNC_INFO << this;
+}
+
+LinkManager *LinkManager::instance()
+{
+    return _linkManagerInstance();
+}
+
+void LinkManager::registerQmlTypes()
+{
     (void) qmlRegisterUncreatableType<LinkManager>("QGroundControl",       1, 0, "LinkManager",         "Reference only");
     (void) qmlRegisterUncreatableType<LinkConfiguration>("QGroundControl", 1, 0, "LinkConfiguration",   "Reference only");
     (void) qmlRegisterUncreatableType<LinkInterface>("QGroundControl",     1, 0, "LinkInterface",       "Reference only");
@@ -78,17 +96,9 @@ LinkManager::LinkManager(QGCApplication *app, QGCToolbox *toolbox)
 #endif
 }
 
-LinkManager::~LinkManager()
+void LinkManager::init()
 {
-    // qCDebug(LinkManagerLog) << Q_FUNC_INFO << this;
-}
-
-void LinkManager::setToolbox(QGCToolbox *toolbox)
-{
-    QGCTool::setToolbox(toolbox);
-
-    _autoConnectSettings = toolbox->settingsManager()->autoConnectSettings();
-    _mavlinkProtocol = _toolbox->mavlinkProtocol();
+    _autoConnectSettings = SettingsManager::instance()->autoConnectSettings();
 
     if (!qgcApp()->runningUnitTests()) {
         (void) connect(_portListTimer, &QTimer::timeout, this, &LinkManager::_updateAutoConnectLinks);
@@ -161,13 +171,13 @@ bool LinkManager::createConnectedLink(SharedLinkConfigurationPtr &config)
     (void) _rgLinks.append(link);
     config->setLink(link);
 
-    (void) connect(link.get(), &LinkInterface::communicationError, _app, &QGCApplication::criticalMessageBoxOnMainThread);
-    (void) connect(link.get(), &LinkInterface::bytesReceived, _mavlinkProtocol, &MAVLinkProtocol::receiveBytes);
-    (void) connect(link.get(), &LinkInterface::bytesSent, _mavlinkProtocol, &MAVLinkProtocol::logSentBytes);
+    (void) connect(link.get(), &LinkInterface::communicationError, qgcApp(), &QGCApplication::showAppMessage);
+    (void) connect(link.get(), &LinkInterface::bytesReceived, MAVLinkProtocol::instance(), &MAVLinkProtocol::receiveBytes);
+    (void) connect(link.get(), &LinkInterface::bytesSent, MAVLinkProtocol::instance(), &MAVLinkProtocol::logSentBytes);
     (void) connect(link.get(), &LinkInterface::disconnected, this, &LinkManager::_linkDisconnected);
 
-    _mavlinkProtocol->resetMetadataForLink(link.get());
-    _mavlinkProtocol->setVersion(_mavlinkProtocol->getCurrentVersion());
+    MAVLinkProtocol::instance()->resetMetadataForLink(link.get());
+    MAVLinkProtocol::instance()->setVersion(MAVLinkProtocol::instance()->getCurrentVersion());
 
     if (!link->_connect()) {
         link->_freeMavlinkChannel();
@@ -219,18 +229,16 @@ void LinkManager::_linkDisconnected()
         return;
     }
 
-    (void) disconnect(link, &LinkInterface::communicationError, _app, &QGCApplication::criticalMessageBoxOnMainThread);
-    (void) disconnect(link, &LinkInterface::bytesReceived, _mavlinkProtocol, &MAVLinkProtocol::receiveBytes);
-    (void) disconnect(link, &LinkInterface::bytesSent, _mavlinkProtocol, &MAVLinkProtocol::logSentBytes);
+    (void) disconnect(link, &LinkInterface::communicationError, qgcApp(), &QGCApplication::showAppMessage);
+    (void) disconnect(link, &LinkInterface::bytesReceived, MAVLinkProtocol::instance(), &MAVLinkProtocol::receiveBytes);
+    (void) disconnect(link, &LinkInterface::bytesSent, MAVLinkProtocol::instance(), &MAVLinkProtocol::logSentBytes);
     (void) disconnect(link, &LinkInterface::disconnected, this, &LinkManager::_linkDisconnected);
 
     link->_freeMavlinkChannel();
 
     for (auto it = _rgLinks.begin(); it != _rgLinks.end(); ++it) {
         if (it->get() == link) {
-            qCDebug(LinkManagerLog) << "LinkManager::_linkDisconnected" << it->get()->linkConfiguration()->name() << it->use_count();
-            SharedLinkConfigurationPtr config = it->get()->linkConfiguration();
-            config->setLink(nullptr);
+            qCDebug(LinkManagerLog) << Q_FUNC_INFO << it->get()->linkConfiguration()->name() << it->use_count();
             (void) _rgLinks.erase(it);
             return;
         }
@@ -392,7 +400,7 @@ void LinkManager::_addUDPAutoConnectLink()
 
 void LinkManager::_addMAVLinkForwardingLink()
 {
-    if (!_toolbox->settingsManager()->appSettings()->forwardMavlink()->rawValue().toBool()) {
+    if (!SettingsManager::instance()->appSettings()->forwardMavlink()->rawValue().toBool()) {
         return;
     }
 
@@ -404,7 +412,7 @@ void LinkManager::_addMAVLinkForwardingLink()
         }
     }
 
-    const QString hostName = _toolbox->settingsManager()->appSettings()->forwardMavlinkHostName()->rawValue().toString();
+    const QString hostName = SettingsManager::instance()->appSettings()->forwardMavlinkHostName()->rawValue().toString();
     _createDynamicForwardLink(_mavlinkForwardingLinkName, hostName);
 }
 
@@ -503,7 +511,7 @@ void LinkManager::shutdown()
     disconnectAll();
 
     // Wait for all the vehicles to go away to ensure an orderly shutdown and deletion of all objects
-    while (_toolbox->multiVehicleManager()->vehicles()->count()) {
+    while (MultiVehicleManager::instance()->vehicles()->count()) {
         QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
     }
 }
@@ -609,7 +617,7 @@ void LinkManager::removeConfiguration(LinkConfiguration *config)
 
 void LinkManager::createMavlinkForwardingSupportLink()
 {
-    const QString hostName = _toolbox->settingsManager()->appSettings()->forwardMavlinkAPMSupportHostName()->rawValue().toString();
+    const QString hostName = SettingsManager::instance()->appSettings()->forwardMavlinkAPMSupportHostName()->rawValue().toString();
     _createDynamicForwardLink(_mavlinkForwardingSupportLinkName, hostName);
     _mavlinkSupportForwardingEnabled = true;
     emit mavlinkSupportForwardingEnabledChanged();

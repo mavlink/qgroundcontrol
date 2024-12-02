@@ -11,7 +11,6 @@
 #include "RadioConfigTest.h"
 #include "RadioComponentController.h"
 #include "MultiVehicleManager.h"
-#include "QGCApplication.h"
 #include "PX4/PX4AutoPilotPlugin.h"
 #include "APM/APMAutoPilotPlugin.h"
 #include "APM/APMRadioComponent.h"
@@ -194,7 +193,7 @@ void RadioConfigTest::_init(MAV_AUTOPILOT firmwareType)
 {
     _connectMockLink(firmwareType);
     
-    _autopilot = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->autopilotPlugin();
+    _autopilot = MultiVehicleManager::instance()->activeVehicle()->autopilotPlugin();
     Q_ASSERT(_autopilot);
 
     // This test is so quick that it tends to finish before the mission item protocol completes. This causes an error to pop up.

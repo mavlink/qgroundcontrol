@@ -25,7 +25,6 @@
 
 // Work around circular header includes
 class QQmlApplicationEngine;
-class QGCToolbox;
 class QQuickWindow;
 class QGCImageProvider;
 class QGCApplication;
@@ -82,9 +81,6 @@ public:
     /// @return true: Fake ui into showing mobile interface
     bool fakeMobile(void) const { return _fakeMobile; }
 
-    // Still working on getting rid of this and using dependency injection instead for everything
-    QGCToolbox* toolbox(void) { return _toolbox; }
-
     void            setLanguage();
     QQuickWindow*   mainRootWindow();
     uint64_t        msecsSinceBoot(void) { return _msecsElapsedTime.elapsed(); }
@@ -116,12 +112,6 @@ public slots:
 
     void qmlAttemptWindowClose();
 
-    /// Save the specified telemetry Log
-    void saveTelemetryLogOnMainThread(const QString &tempLogfile);
-
-    /// Check that the telemetry save path is set correctly
-    void checkTelemetrySavePathOnMainThread();
-
     /// Get current language
     const QLocale getCurrentLanguage() { return _locale; }
 
@@ -138,11 +128,7 @@ public slots:
     QGCImageProvider* qgcImageProvider();
 
 signals:
-    /// This is connected to MAVLinkProtocol::checkForLostLogFiles. We signal this to ourselves to call the slot
-    /// on the MAVLinkProtocol thread;
-    void checkForLostLogFiles   ();
-
-    void languageChanged        (const QLocale locale);
+    void languageChanged(const QLocale locale);
 
 public:
     /// @brief Perform initialize which is common to both normal application running and unit tests.
@@ -164,7 +150,6 @@ private:
 
     QObject* _rootQmlObject();
     void _checkForNewVersion();
-    bool _checkTelemetrySavePath(bool useMessageBox);
 
     // Overrides from QApplication
     bool compressEvent(QEvent *event, QObject *receiver, QPostEventList *postedEvents) override;
@@ -181,7 +166,6 @@ private:
     int                 _majorVersion           = 0;
     int                 _minorVersion           = 0;
     int                 _buildVersion           = 0;
-    QGCToolbox*         _toolbox                = nullptr;
     QQuickWindow*       _mainRootWindow         = nullptr;
     QTranslator         _qgcTranslatorSourceCode;           ///< translations for source code C++/Qml
     QTranslator         _qgcTranslatorQtLibs;               ///< tranlsations for Qt libraries

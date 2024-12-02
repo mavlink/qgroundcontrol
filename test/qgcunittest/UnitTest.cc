@@ -8,7 +8,6 @@
  ****************************************************************************/
 
 #include "UnitTest.h"
-#include "QGCApplication.h"
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
@@ -92,14 +91,10 @@ void UnitTest::init(void)
 {
     _initCalled = true;
 
-    if (!_linkManager) {
-        _linkManager = qgcApp()->toolbox()->linkManager();
-    }
-
-    _linkManager->setConnectionsAllowed();
+    LinkManager::instance()->setConnectionsAllowed();
 
     // Force offline vehicle back to defaults
-    AppSettings* appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
+    AppSettings* appSettings = SettingsManager::instance()->appSettings();
     appSettings->offlineEditingFirmwareClass()->setRawValue(appSettings->offlineEditingFirmwareClass()->rawDefaultValue());
     appSettings->offlineEditingVehicleClass()->setRawValue(appSettings->offlineEditingVehicleClass()->rawDefaultValue());
 
@@ -375,7 +370,7 @@ void UnitTest::_connectMockLink(MAV_AUTOPILOT autopilot, MockConfiguration::Fail
 {
     Q_ASSERT(!_mockLink);
 
-    QSignalSpy spyVehicle(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged);
+    QSignalSpy spyVehicle(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged);
 
     switch (autopilot) {
     case MAV_AUTOPILOT_PX4:
@@ -397,7 +392,7 @@ void UnitTest::_connectMockLink(MAV_AUTOPILOT autopilot, MockConfiguration::Fail
 
     // Wait for the Vehicle to get created
     QCOMPARE(spyVehicle.wait(10000), true);
-    _vehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
+    _vehicle = MultiVehicleManager::instance()->activeVehicle();
     QVERIFY(_vehicle);
 
     if (autopilot != MAV_AUTOPILOT_INVALID) {
@@ -410,14 +405,14 @@ void UnitTest::_connectMockLink(MAV_AUTOPILOT autopilot, MockConfiguration::Fail
 void UnitTest::_disconnectMockLink(void)
 {
     if (_mockLink) {
-        QSignalSpy spyVehicle(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged);
+        QSignalSpy spyVehicle(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged);
 
         _mockLink->disconnect();
         _mockLink = nullptr;
 
         // Wait for all the vehicle to go away
         QCOMPARE(spyVehicle.wait(10000), true);
-        _vehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
+        _vehicle = MultiVehicleManager::instance()->activeVehicle();
         QVERIFY(!_vehicle);
     }
 }

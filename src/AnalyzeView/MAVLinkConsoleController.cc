@@ -10,10 +10,8 @@
 #include "MAVLinkConsoleController.h"
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
-#include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "QGCPalette.h"
-#include "QGCToolbox.h"
 #include "Vehicle.h"
 
 #include <QtGui/QGuiApplication>
@@ -27,10 +25,9 @@ MAVLinkConsoleController::MAVLinkConsoleController(QObject *parent)
 {
     // qCDebug(MAVLinkConsoleControllerLog) << Q_FUNC_INFO << this;
 
-    MultiVehicleManager *const manager = qgcApp()->toolbox()->multiVehicleManager();
-    (void) connect(manager, &MultiVehicleManager::activeVehicleChanged, this, &MAVLinkConsoleController::_setActiveVehicle);
+    (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &MAVLinkConsoleController::_setActiveVehicle);
 
-    _setActiveVehicle(manager->activeVehicle());
+    _setActiveVehicle(MultiVehicleManager::instance()->activeVehicle());
 }
 
 MAVLinkConsoleController::~MAVLinkConsoleController()
@@ -159,12 +156,10 @@ void MAVLinkConsoleController::_sendSerialData(const QByteArray &data, bool clos
 
         const uint8_t flags = close ? 0 : SERIAL_CONTROL_FLAG_EXCLUSIVE |  SERIAL_CONTROL_FLAG_RESPOND | SERIAL_CONTROL_FLAG_MULTI;
 
-        MAVLinkProtocol *const protocol = qgcApp()->toolbox()->mavlinkProtocol();
-
         mavlink_message_t msg;
         (void) mavlink_msg_serial_control_pack_chan(
-            protocol->getSystemId(),
-            protocol->getComponentId(),
+            MAVLinkProtocol::instance()->getSystemId(),
+            MAVLinkProtocol::getComponentId(),
             sharedLink->mavlinkChannel(),
             &msg,
             SERIAL_CONTROL_DEV_SHELL,

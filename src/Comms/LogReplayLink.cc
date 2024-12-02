@@ -103,7 +103,7 @@ LogReplayLink::~LogReplayLink(void)
 bool LogReplayLink::_connect(void)
 {
     // Disallow replay when any links are connected
-    if (qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()) {
+    if (MultiVehicleManager::instance()->activeVehicle()) {
         emit communicationError(_errorTitle, tr("You must close all connections prior to replaying a log."));
         return false;
     }
@@ -358,9 +358,9 @@ void LogReplayLink::_readNextLogEntry(void)
 
 void LogReplayLink::_play(void)
 {
-    qgcApp()->toolbox()->linkManager()->setConnectionsSuspended(tr("Connect not allowed during Flight Data replay."));
+    LinkManager::instance()->setConnectionsSuspended(tr("Connect not allowed during Flight Data replay."));
 #ifndef __mobile__
-    qgcApp()->toolbox()->mavlinkProtocol()->suspendLogForReplay(true);
+    MAVLinkProtocol::instance()->suspendLogForReplay(true);
 #endif
     
     // Make sure we aren't at the end of the file, if we are, reset to the beginning and play from there.
@@ -377,9 +377,9 @@ void LogReplayLink::_play(void)
 
 void LogReplayLink::_pause(void)
 {
-    qgcApp()->toolbox()->linkManager()->setConnectionsAllowed();
+    LinkManager::instance()->setConnectionsAllowed();
 #ifndef __mobile__
-    qgcApp()->toolbox()->mavlinkProtocol()->suspendLogForReplay(false);
+    MAVLinkProtocol::instance()->suspendLogForReplay(false);
 #endif
     
     _readTickTimer.stop();

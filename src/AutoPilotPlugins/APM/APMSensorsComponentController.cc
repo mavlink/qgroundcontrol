@@ -103,7 +103,7 @@ void APMSensorsComponentController::_startLogCalibration(void)
     }
     _cancelButton->setEnabled(_calTypeInProgress == QGCMAVLink::CalibrationMag);
 
-    connect(qgcApp()->toolbox()->mavlinkProtocol(), &MAVLinkProtocol::messageReceived, this, &APMSensorsComponentController::_mavlinkMessageReceived);
+    connect(MAVLinkProtocol::instance(), &MAVLinkProtocol::messageReceived, this, &APMSensorsComponentController::_mavlinkMessageReceived);
 }
 
 void APMSensorsComponentController::_startVisualCalibration(void)
@@ -116,7 +116,7 @@ void APMSensorsComponentController::_startVisualCalibration(void)
     
     _progressBar->setProperty("value", 0);
 
-    connect(qgcApp()->toolbox()->mavlinkProtocol(), &MAVLinkProtocol::messageReceived, this, &APMSensorsComponentController::_mavlinkMessageReceived);
+    connect(MAVLinkProtocol::instance(), &MAVLinkProtocol::messageReceived, this, &APMSensorsComponentController::_mavlinkMessageReceived);
 }
 
 void APMSensorsComponentController::_resetInternalState(void)
@@ -147,7 +147,7 @@ void APMSensorsComponentController::_resetInternalState(void)
 
 void APMSensorsComponentController::_stopCalibration(APMSensorsComponentController::StopCalibrationCode code)
 {
-    disconnect(qgcApp()->toolbox()->mavlinkProtocol(), &MAVLinkProtocol::messageReceived, this, &APMSensorsComponentController::_mavlinkMessageReceived);
+    disconnect(MAVLinkProtocol::instance(), &MAVLinkProtocol::messageReceived, this, &APMSensorsComponentController::_mavlinkMessageReceived);
     _vehicle->vehicleLinkManager()->setCommunicationLostEnabled(true);
 
     disconnect(_vehicle, &Vehicle::textMessageReceived, this, &APMSensorsComponentController::_handleUASTextMessage);
@@ -462,8 +462,8 @@ void APMSensorsComponentController::nextClicked(void)
     if (sharedLink) {
         mavlink_message_t       msg;
 
-        mavlink_msg_command_ack_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-                                          qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+        mavlink_msg_command_ack_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                          MAVLinkProtocol::getComponentId(),
                                           sharedLink->mavlinkChannel(),
                                           &msg,
                                           0,    // command

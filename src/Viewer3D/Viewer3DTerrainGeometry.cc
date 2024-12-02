@@ -9,7 +9,6 @@
 
 #include "Viewer3DTerrainGeometry.h"
 #include "Viewer3DUtils.h"
-#include "QGCApplication.h"
 #include "SettingsManager.h"
 #include "Viewer3DSettings.h"
 
@@ -21,7 +20,7 @@
 
 Viewer3DTerrainGeometry::Viewer3DTerrainGeometry()
 {
-    _viewer3DSettings = qgcApp()->toolbox()->settingsManager()->viewer3DSettings();
+    _viewer3DSettings = SettingsManager::instance()->viewer3DSettings();
     setSectorCount(0);
     setStackCount(0);
     setRadius(EarthRadius);
