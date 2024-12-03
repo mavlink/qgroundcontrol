@@ -27,6 +27,8 @@ qt_add_library(VehicleFactGroups STATIC
     VehicleLocalPositionFactGroup.h
     VehicleLocalPositionSetpointFactGroup.cc
     VehicleLocalPositionSetpointFactGroup.h
+    VehicleRPMFactGroup.cc
+    VehicleRPMFactGroup.h
     VehicleSetpointFactGroup.cc
     VehicleSetpointFactGroup.h
     VehicleTemperatureFactGroup.cc
