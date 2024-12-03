@@ -39,6 +39,7 @@
 #include "VehicleHygrometerFactGroup.h"
 #include "VehicleLocalPositionFactGroup.h"
 #include "VehicleLocalPositionSetpointFactGroup.h"
+#include "VehicleRPMFactGroup.h"
 #include "VehicleSetpointFactGroup.h"
 #include "VehicleTemperatureFactGroup.h"
 #include "VehicleVibrationFactGroup.h"
@@ -601,6 +602,7 @@ public:
     FactGroup* hygrometerFactGroup          () { return &_hygrometerFactGroup; }
     FactGroup* generatorFactGroup           () { return &_generatorFactGroup; }
     FactGroup* efiFactGroup                 () { return &_efiFactGroup; }
+    FactGroup* rpmFactGroup                 () { return &_rpmFactGroup; }
     QmlObjectListModel* batteries           () { return &_batteryFactGroupListModel; }
 
     MissionManager*                 missionManager      () { return _missionManager; }
@@ -1229,6 +1231,7 @@ private:
     const QString _hygrometerFactGroupName =         QStringLiteral("hygrometer");
     const QString _generatorFactGroupName =          QStringLiteral("generator");
     const QString _efiFactGroupName =                QStringLiteral("efi");
+    const QString _rpmFactGroupName =                QStringLiteral("rpm");
 
     VehicleFactGroup*               _vehicleFactGroup;
     VehicleGPSFactGroup             _gpsFactGroup;
@@ -1246,6 +1249,7 @@ private:
     VehicleHygrometerFactGroup      _hygrometerFactGroup;
     VehicleGeneratorFactGroup       _generatorFactGroup;
     VehicleEFIFactGroup             _efiFactGroup;
+    VehicleRPMFactGroup             _rpmFactGroup;
     TerrainFactGroup                _terrainFactGroup;
     QmlObjectListModel              _batteryFactGroupListModel;
 
