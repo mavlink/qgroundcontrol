@@ -63,6 +63,8 @@ public:
     static QGCCorePlugin *instance();
     static void registerQmlTypes();
 
+    virtual void init() { };
+
     Q_INVOKABLE bool guidedActionsControllerLogging() const;
 
     /// The list of pages/buttons under the Analyze Menu
