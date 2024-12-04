@@ -3997,7 +3997,7 @@ void Vehicle::_textMessageReceived(MAV_COMPONENT componentid, MAV_SEVERITY sever
 
     bool skipSpoken = false;
     const bool ardupilotPrearm = text.startsWith(QStringLiteral("PreArm"));
-    const bool px4Prearm = text.startsWith(QStringLiteral("preflight"), Qt::CaseInsensitive) && (severity >= MAV_SEVERITY::MAV_SEVERITY_CRITICAL);
+    const bool px4Prearm = text.startsWith(QStringLiteral("preflight"), Qt::CaseInsensitive);
     if (ardupilotPrearm || px4Prearm) {
         auto eventData = _events.find(componentid);
         if (eventData != _events.end()) {
