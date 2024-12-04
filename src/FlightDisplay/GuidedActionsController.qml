@@ -194,8 +194,12 @@ Item {
     property bool __orbitSupported:         _activeVehicle ? !_hideOrbit && _activeVehicle.orbitModeSupported : false
     property bool __flightMode:             _flightMode
 
+    function _isGuidedActionsControllerLogEnabled() {
+        return QGroundControl.categoryLoggingOn("GuidedActionsControllerLog")
+    }
+
     function _outputState() {
-        if (_corePlugin.guidedActionsControllerLogging()) {
+        if (_isGuidedActionsControllerLogEnabled()) {
             console.log(qsTr("_activeVehicle(%1) _vehicleArmed(%2) guidedModeSupported(%3) _vehicleFlying(%4) _vehicleWasFlying(%5) _vehicleInRTLMode(%6) pauseVehicleSupported(%7) _vehiclePaused(%8) _flightMode(%9) _missionItemCount(%10) roiSupported(%11) orbitSupported(%12) _missionActive(%13) _hideROI(%14) _hideOrbit(%15)").arg(_activeVehicle ? 1 : 0).arg(_vehicleArmed ? 1 : 0).arg(__guidedModeSupported ? 1 : 0).arg(_vehicleFlying ? 1 : 0).arg(_vehicleWasFlying ? 1 : 0).arg(_vehicleInRTLMode ? 1 : 0).arg(__pauseVehicleSupported ? 1 : 0).arg(_vehiclePaused ? 1 : 0).arg(_flightMode).arg(_missionItemCount).arg(__roiSupported).arg(__orbitSupported).arg(_missionActive).arg(_hideROI).arg(_hideOrbit))
         }
     }
@@ -251,23 +255,23 @@ Item {
     on_MissionActiveChanged:            _outputState()
 
     on_CurrentMissionIndexChanged: {
-        if (_corePlugin.guidedActionsControllerLogging()) {
+        if (_isGuidedActionsControllerLogEnabled()) {
             console.log("_currentMissionIndex", _currentMissionIndex)
         }
     }
     on_ResumeMissionIndexChanged: {
-        if (_corePlugin.guidedActionsControllerLogging()) {
+        if (_isGuidedActionsControllerLogEnabled()) {
             console.log("_resumeMissionIndex", _resumeMissionIndex)
         }
     }
     onShowResumeMissionChanged: {
-        if (_corePlugin.guidedActionsControllerLogging()) {
+        if (_isGuidedActionsControllerLogEnabled()) {
             console.log("showResumeMission", showResumeMission)
         }
         _outputState()
     }
     onShowStartMissionChanged: {
-        if (_corePlugin.guidedActionsControllerLogging()) {
+        if (_isGuidedActionsControllerLogEnabled()) {
             console.log("showStartMission", showStartMission)
         }
         _outputState()
@@ -276,7 +280,7 @@ Item {
         }
     }
     onShowContinueMissionChanged: {
-        if (_corePlugin.guidedActionsControllerLogging()) {
+        if (_isGuidedActionsControllerLogEnabled()) {
             console.log("showContinueMission", showContinueMission)
         }
         _outputState()
@@ -285,31 +289,31 @@ Item {
         }
     }
     onShowRTLChanged: {
-        if (_corePlugin.guidedActionsControllerLogging()) {
+        if (_isGuidedActionsControllerLogEnabled()) {
             console.log("showRTL", showRTL)
         }
         _outputState()
     }
     onShowChangeAltChanged: {
-        if (_corePlugin.guidedActionsControllerLogging()) {
+        if (_isGuidedActionsControllerLogEnabled()) {
             console.log("showChangeAlt", showChangeAlt)
         }
         _outputState()
     }
     onShowROIChanged: {
-        if (_corePlugin.guidedActionsControllerLogging()) {
+        if (_isGuidedActionsControllerLogEnabled()) {
             console.log("showROI", showROI)
         }
         _outputState()
     }
     onShowOrbitChanged: {
-        if (_corePlugin.guidedActionsControllerLogging()) {
+        if (_isGuidedActionsControllerLogEnabled()) {
             console.log("showOrbit", showOrbit)
         }
         _outputState()
     }
     onShowGotoLocationChanged: {
-        if (_corePlugin.guidedActionsControllerLogging()) {
+        if (_isGuidedActionsControllerLogEnabled()) {
             console.log("showGotoLocation", showGotoLocation)
         }
         _outputState()

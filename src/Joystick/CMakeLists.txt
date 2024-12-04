@@ -1,4 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Qml)
+find_package(Qt6 REQUIRED COMPONENTS Core Qml QmlIntegration)
 
 qt_add_library(Joystick STATIC
     Joystick.cc
@@ -17,6 +17,7 @@ target_link_libraries(Joystick
         Vehicle
     PUBLIC
         Qt6::Core
+        Qt6::QmlIntegration
         QmlControls
 )
 

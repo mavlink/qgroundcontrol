@@ -8,32 +8,35 @@
  ****************************************************************************/
 
 #include "QGCCorePlugin.h"
-#include "QGCOptions.h"
-#include "QmlComponentInfo.h"
-#include "FactMetaData.h"
-#include "SettingsManager.h"
-#include "AppSettings.h"
 #include "AppMessages.h"
-#include "QmlObjectListModel.h"
-#include "JoystickManager.h"
+#include "AppSettings.h"
+#include "FactMetaData.h"
 #ifdef QGC_GST_STREAMING
 #include "GStreamer.h"
 #endif
+#include "HorizontalFactValueGrid.h"
+#include "InstrumentValueData.h"
+#include "JoystickManager.h"
+#include "MAVLinkLib.h"
+#include "QGCLoggingCategory.h"
+#include "QGCOptions.h"
+#include "QmlComponentInfo.h"
+#include "QmlObjectListModel.h"
 #ifdef QGC_QT_STREAMING
 #include "QtMultimediaReceiver.h"
 #endif
+#include "SettingsManager.h"
 #include "VideoReceiver.h"
-#include "HorizontalFactValueGrid.h"
-#include "InstrumentValueData.h"
-#include "QGCLoggingCategory.h"
+
 #ifdef QGC_CUSTOM_BUILD
 #include CUSTOMHEADER
 #endif
 
 #include <QtCore/qapplicationstatic.h>
+#include <QtCore/QFile>
+#include <QtQml/qqml.h>
 #include <QtQml/QQmlApplicationEngine>
 #include <QtQml/QQmlContext>
-#include <QtQml/QQmlEngine>
 
 QGC_LOGGING_CATEGORY(QGCCorePluginLog, "qgc.api.qgccoreplugin");
 
@@ -41,67 +44,10 @@ QGC_LOGGING_CATEGORY(QGCCorePluginLog, "qgc.api.qgccoreplugin");
 Q_APPLICATION_STATIC(QGCCorePlugin, _qgcCorePluginInstance);
 #endif
 
-struct QGCCorePlugin_p
-{
-    ~QGCCorePlugin_p()
-    {
-        if (pGeneral) {
-            delete pGeneral;
-        }
-        if (pCommLinks) {
-            delete pCommLinks;
-        }
-        if (pOfflineMaps) {
-            delete pOfflineMaps;
-        }
-        if (pMAVLink) {
-            delete pMAVLink;
-        }
-        if (pConsole) {
-            delete pConsole;
-        }
-#ifdef QT_DEBUG
-        if (pMockLink) {
-            delete pMockLink;
-        }
-        if (pDebug) {
-            delete pDebug;
-        }
-        if (pQmlTest) {
-            delete pQmlTest;
-        }
-#endif
-        if (pRemoteID) {
-            delete pRemoteID;
-        }
-        if (defaultOptions) {
-            delete defaultOptions;
-        }
-    }
-
-    QmlComponentInfo *pGeneral = nullptr;
-    QmlComponentInfo *pCommLinks = nullptr;
-    QmlComponentInfo *pOfflineMaps = nullptr;
-    QmlComponentInfo *pMAVLink = nullptr;
-    QmlComponentInfo *pConsole = nullptr;
-    QmlComponentInfo *pHelp = nullptr;
-#ifdef QT_DEBUG
-    QmlComponentInfo *pMockLink = nullptr;
-    QmlComponentInfo *pDebug = nullptr;
-    QmlComponentInfo *pQmlTest = nullptr;
-#endif
-    QmlComponentInfo *pRemoteID = nullptr;
-
-    QGCOptions *defaultOptions = nullptr;
-    QVariantList settingsList;
-    QVariantList analyzeList;
-
-    QmlObjectListModel _emptyCustomMapItems;
-};
-
 QGCCorePlugin::QGCCorePlugin(QObject *parent)
     : QObject(parent)
-    , _p(new QGCCorePlugin_p())
+    , _defaultOptions(new QGCOptions(this))
+    , _emptyCustomMapItems(new QmlObjectListModel(this))
 {
     // qCDebug(QGCCorePluginLog) << Q_FUNC_INFO << this;
 }
@@ -109,10 +55,6 @@ QGCCorePlugin::QGCCorePlugin(QObject *parent)
 QGCCorePlugin::~QGCCorePlugin()
 {
     // qCDebug(QGCCorePluginLog) << Q_FUNC_INFO << this;
-
-    if (_p) {
-        delete _p;
-    }
 }
 
 QGCCorePlugin *QGCCorePlugin::instance()
@@ -126,38 +68,54 @@ QGCCorePlugin *QGCCorePlugin::instance()
 
 void QGCCorePlugin::registerQmlTypes()
 {
-    (void) qmlRegisterUncreatableType<QGCCorePlugin>    ("QGroundControl", 1, 0, "QGCCorePlugin",       QStringLiteral("Reference only"));
-    (void) qmlRegisterUncreatableType<QGCOptions>       ("QGroundControl", 1, 0, "QGCOptions",          QStringLiteral("Reference only"));
-    (void) qmlRegisterUncreatableType<QGCFlyViewOptions>("QGroundControl", 1, 0, "QGCFlyViewOptions",   QStringLiteral("Reference only"));
+    (void) qmlRegisterUncreatableType<QGCCorePlugin>("QGroundControl", 1, 0, "QGCCorePlugin", QStringLiteral("Reference only"));
+    (void) qmlRegisterUncreatableType<QGCOptions>("QGroundControl", 1, 0, "QGCOptions", QStringLiteral("Reference only"));
+    (void) qmlRegisterUncreatableType<QGCFlyViewOptions>("QGroundControl", 1, 0, "QGCFlyViewOptions", QStringLiteral("Reference only"));
 }
 
-QVariantList &QGCCorePlugin::analyzePages()
+const QVariantList &QGCCorePlugin::analyzePages() const
 {
-    if (_p->analyzeList.isEmpty()) {
-        _p->analyzeList.append(QVariant::fromValue(new QmlComponentInfo(tr("Log Download"),         QUrl::fromUserInput(QStringLiteral("qrc:/qml/LogDownloadPage.qml")),        QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/LogDownloadIcon")))));
+    static const QVariantList analyzeList = {
+        QVariant::fromValue(new QmlComponentInfo(
+            tr("Log Download"),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qml/LogDownloadPage.qml")),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/LogDownloadIcon")))),
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
-        _p->analyzeList.append(QVariant::fromValue(new QmlComponentInfo(tr("GeoTag Images"),        QUrl::fromUserInput(QStringLiteral("qrc:/qml/GeoTagPage.qml")),             QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/GeoTagIcon")))));
+        QVariant::fromValue(new QmlComponentInfo(
+            tr("GeoTag Images"),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qml/GeoTagPage.qml")),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/GeoTagIcon")))),
 #endif
-        _p->analyzeList.append(QVariant::fromValue(new QmlComponentInfo(tr("MAVLink Console"),      QUrl::fromUserInput(QStringLiteral("qrc:/qml/MAVLinkConsolePage.qml")),     QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/MAVLinkConsoleIcon")))));
+        QVariant::fromValue(new QmlComponentInfo(
+            tr("MAVLink Console"),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qml/MAVLinkConsolePage.qml")),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/MAVLinkConsoleIcon")))),
 #ifndef QGC_DISABLE_MAVLINK_INSPECTOR
-        _p->analyzeList.append(QVariant::fromValue(new QmlComponentInfo(tr("MAVLink Inspector"),    QUrl::fromUserInput(QStringLiteral("qrc:/qml/MAVLinkInspectorPage.qml")),   QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/MAVLinkInspector")))));
+        QVariant::fromValue(new QmlComponentInfo(
+            tr("MAVLink Inspector"),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qml/MAVLinkInspectorPage.qml")),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/MAVLinkInspector")))),
 #endif
-        _p->analyzeList.append(QVariant::fromValue(new QmlComponentInfo(tr("Vibration"),            QUrl::fromUserInput(QStringLiteral("qrc:/qml/VibrationPage.qml")),          QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/VibrationPageIcon")))));
-    }
+        QVariant::fromValue(new QmlComponentInfo(
+            tr("Vibration"),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qml/VibrationPage.qml")),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/VibrationPageIcon")))),
+    };
 
-    return _p->analyzeList;
+    return analyzeList;
 }
 
-QGCOptions *QGCCorePlugin::options()
+const QGCOptions *QGCCorePlugin::options() const
 {
-    if (!_p->defaultOptions) {
-        _p->defaultOptions = new QGCOptions(this);
-    }
-
-    return _p->defaultOptions;
+    return _defaultOptions;
 }
 
-bool QGCCorePlugin::adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData)
+const QmlObjectListModel *QGCCorePlugin::customMapItems() const
+{
+    return _emptyCustomMapItems;
+}
+
+bool QGCCorePlugin::adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData) const
 {
     if (settingsGroup == AppSettings::settingsGroup) {
         if (metaData.name() == AppSettings::indoorPaletteName) {
@@ -194,24 +152,24 @@ QString QGCCorePlugin::showAdvancedUIMessage() const
               "Are you sure you want to enable Advanced Mode?");
 }
 
-void QGCCorePlugin::factValueGridCreateDefaultSettings(const QString &defaultSettingsGroup)
+void QGCCorePlugin::factValueGridCreateDefaultSettings(const QString &defaultSettingsGroup) const
 {
-    HorizontalFactValueGrid factValueGrid(defaultSettingsGroup);
+    HorizontalFactValueGrid *const factValueGrid = new HorizontalFactValueGrid(defaultSettingsGroup);
 
-    const bool includeFWValues = ((factValueGrid.vehicleClass() == QGCMAVLink::VehicleClassFixedWing) || (factValueGrid.vehicleClass() == QGCMAVLink::VehicleClassVTOL) || (factValueGrid.vehicleClass() == QGCMAVLink::VehicleClassAirship));
+    const bool includeFWValues = ((factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassFixedWing) || (factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassVTOL) || (factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassAirship));
 
-    factValueGrid.setFontSize(FactValueGrid::LargeFontSize);
+    factValueGrid->setFontSize(FactValueGrid::LargeFontSize);
 
-    (void) factValueGrid.appendColumn();
-    (void) factValueGrid.appendColumn();
-    (void) factValueGrid.appendColumn();
+    (void) factValueGrid->appendColumn();
+    (void) factValueGrid->appendColumn();
+    (void) factValueGrid->appendColumn();
     if (includeFWValues) {
-        (void) factValueGrid.appendColumn();
+        (void) factValueGrid->appendColumn();
     }
-    factValueGrid.appendRow();
+    factValueGrid->appendRow();
 
     int rowIndex = 0;
-    QmlObjectListModel *column = factValueGrid.columns()->value<QmlObjectListModel*>(0);
+    QmlObjectListModel *column = factValueGrid->columns()->value<QmlObjectListModel*>(0);
 
     InstrumentValueData *value = column->value<InstrumentValueData*>(rowIndex++);
     value->setFact(QStringLiteral("Vehicle"), QStringLiteral("AltitudeRelative"));
@@ -226,7 +184,7 @@ void QGCCorePlugin::factValueGridCreateDefaultSettings(const QString &defaultSet
     value->setShowUnits(true);
 
     rowIndex = 0;
-    column = factValueGrid.columns()->value<QmlObjectListModel*>(1);
+    column = factValueGrid->columns()->value<QmlObjectListModel*>(1);
 
     value = column->value<InstrumentValueData*>(rowIndex++);
     value->setFact(QStringLiteral("Vehicle"), QStringLiteral("ClimbRate"));
@@ -242,7 +200,7 @@ void QGCCorePlugin::factValueGridCreateDefaultSettings(const QString &defaultSet
 
     if (includeFWValues) {
         rowIndex = 0;
-        column = factValueGrid.columns()->value<QmlObjectListModel*>(2);
+        column = factValueGrid->columns()->value<QmlObjectListModel*>(2);
 
         value = column->value<InstrumentValueData*>(rowIndex++);
         value->setFact(QStringLiteral("Vehicle"), QStringLiteral("AirSpeed"));
@@ -256,7 +214,7 @@ void QGCCorePlugin::factValueGridCreateDefaultSettings(const QString &defaultSet
     }
 
     rowIndex = 0;
-    column = factValueGrid.columns()->value<QmlObjectListModel*>(includeFWValues ? 3 : 2);
+    column = factValueGrid->columns()->value<QmlObjectListModel*>(includeFWValues ? 3 : 2);
 
     value = column->value<InstrumentValueData*>(rowIndex++);
     value->setFact(QStringLiteral("Vehicle"), QStringLiteral("FlightTime"));
@@ -269,9 +227,11 @@ void QGCCorePlugin::factValueGridCreateDefaultSettings(const QString &defaultSet
     value->setIcon(QStringLiteral("travel-walk.svg"));
     value->setText(value->fact()->shortDescription());
     value->setShowUnits(true);
+
+    factValueGrid->deleteLater();
 }
 
-QQmlApplicationEngine *QGCCorePlugin::createQmlApplicationEngine(QObject *parent)
+QQmlApplicationEngine *QGCCorePlugin::createQmlApplicationEngine(QObject *parent) const
 {
     QQmlApplicationEngine *const qmlEngine = new QQmlApplicationEngine(parent);
     qmlEngine->addImportPath(QStringLiteral("qrc:/qml"));
@@ -280,17 +240,12 @@ QQmlApplicationEngine *QGCCorePlugin::createQmlApplicationEngine(QObject *parent
     return qmlEngine;
 }
 
-void QGCCorePlugin::createRootWindow(QQmlApplicationEngine* qmlEngine)
+void QGCCorePlugin::createRootWindow(QQmlApplicationEngine *qmlEngine) const
 {
     qmlEngine->load(QUrl(QStringLiteral("qrc:/qml/MainRootWindow.qml")));
 }
 
-QmlObjectListModel *QGCCorePlugin::customMapItems() const
-{
-    return &_p->_emptyCustomMapItems;
-}
-
-VideoReceiver* QGCCorePlugin::createVideoReceiver(QObject *parent)
+VideoReceiver *QGCCorePlugin::createVideoReceiver(QObject *parent) const
 {
 #ifdef QGC_GST_STREAMING
     return GStreamer::createVideoReceiver(parent);
@@ -301,7 +256,7 @@ VideoReceiver* QGCCorePlugin::createVideoReceiver(QObject *parent)
 #endif
 }
 
-void *QGCCorePlugin::createVideoSink(QObject *parent, QQuickItem *widget)
+void *QGCCorePlugin::createVideoSink(QObject *parent, QQuickItem *widget) const
 {
 #ifdef QGC_GST_STREAMING
     return GStreamer::createVideoSink(parent, widget);
@@ -314,7 +269,7 @@ void *QGCCorePlugin::createVideoSink(QObject *parent, QQuickItem *widget)
 #endif
 }
 
-void QGCCorePlugin::releaseVideoSink(void *sink)
+void QGCCorePlugin::releaseVideoSink(void *sink) const
 {
 #ifdef QGC_GST_STREAMING
     GStreamer::releaseVideoSink(sink);
@@ -325,41 +280,25 @@ void QGCCorePlugin::releaseVideoSink(void *sink)
 #endif
 }
 
-bool QGCCorePlugin::guidedActionsControllerLogging() const
+const QVariantList &QGCCorePlugin::toolBarIndicators() const
 {
-    return GuidedActionsControllerLog().isDebugEnabled();
+    static const QVariantList toolBarIndicatorList = QVariantList(
+        {
+            QVariant::fromValue(QUrl::fromUserInput(QStringLiteral("qrc:/toolbar/RTKGPSIndicator.qml"))),
+        }
+    );
+
+    return toolBarIndicatorList;
 }
 
-QString QGCCorePlugin::stableVersionCheckFileUrl() const
-{
-#ifdef QGC_CUSTOM_BUILD
-    return QString();
-#else
-    return QStringLiteral("https://s3-us-west-2.amazonaws.com/qgroundcontrol/latest/QGC.version.txt");
-#endif
-}
-
-const QVariantList &QGCCorePlugin::toolBarIndicators()
-{
-    if (_toolBarIndicatorList.isEmpty()) {
-        _toolBarIndicatorList = QVariantList(
-            {
-                QVariant::fromValue(QUrl::fromUserInput(QStringLiteral("qrc:/toolbar/RTKGPSIndicator.qml"))),
-            }
-        );
-    }
-
-    return _toolBarIndicatorList;
-}
-
-QVariantList QGCCorePlugin::firstRunPromptsToShow()
+QVariantList QGCCorePlugin::firstRunPromptsToShow() const
 {
     QList<int> rgIdsToShow;
 
     rgIdsToShow.append(firstRunPromptStdIds());
     rgIdsToShow.append(firstRunPromptCustomIds());
 
-    QList<int> rgAlreadyShownIds = AppSettings::firstRunPromptsIdsVariantToList(SettingsManager::instance()->appSettings()->firstRunPromptIdsShown()->rawValue());
+    const QList<int> rgAlreadyShownIds = AppSettings::firstRunPromptsIdsVariantToList(SettingsManager::instance()->appSettings()->firstRunPromptIdsShown()->rawValue());
     for (int idToRemove: rgAlreadyShownIds) {
         (void) rgIdsToShow.removeOne(idToRemove);
     }
@@ -372,7 +311,7 @@ QVariantList QGCCorePlugin::firstRunPromptsToShow()
     return rgVarIdsToShow;
 }
 
-QString QGCCorePlugin::firstRunPromptResource(int id)
+QString QGCCorePlugin::firstRunPromptResource(int id) const
 {
     switch (id) {
     case kUnitsFirstRunPromptId:
