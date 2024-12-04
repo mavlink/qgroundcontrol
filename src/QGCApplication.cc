@@ -335,6 +335,7 @@ void QGCApplication::_initForNormalAppBoot()
     VideoManager::instance(); // GStreamer must be initialized before QmlEngine
 
     QQuickStyle::setStyle("Basic");
+    QGCCorePlugin::instance()->init();
     _qmlAppEngine = QGCCorePlugin::instance()->createQmlApplicationEngine(this);
     QObject::connect(_qmlAppEngine, &QQmlApplicationEngine::objectCreationFailed, this, QCoreApplication::quit, Qt::QueuedConnection);
     QGCCorePlugin::instance()->createRootWindow(_qmlAppEngine);
