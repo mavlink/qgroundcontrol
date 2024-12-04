@@ -24,24 +24,26 @@ ADSBTCPLink::ADSBTCPLink(const QHostAddress &hostAddress, quint16 port, QObject 
     , _processTimer(new QTimer(this))
 {
 #ifdef QT_DEBUG
-    (void) connect(_socket, &QTcpSocket::stateChanged, this, [](QTcpSocket::SocketState state) {
-        switch (state) {
-        case QTcpSocket::UnconnectedState:
-            qCDebug(ADSBTCPLinkLog) << "ADSB Socket disconnected";
-            break;
-        case QTcpSocket::SocketState::ConnectingState:
-            qCDebug(ADSBTCPLinkLog) << "ADSB Socket connecting...";
-            break;
-        case QTcpSocket::SocketState::ConnectedState:
-            qCDebug(ADSBTCPLinkLog) << "ADSB Socket connected";
-            break;
-        case QTcpSocket::SocketState::ClosingState:
-            qCDebug(ADSBTCPLinkLog) << "ADSB Socket closing...";
-            break;
-        default:
-            break;
-        }
-    }, Qt::AutoConnection);
+    if (ADSBTCPLinkLog().isDebugEnabled()) {
+        (void) connect(_socket, &QTcpSocket::stateChanged, this, [](QTcpSocket::SocketState state) {
+            switch (state) {
+            case QTcpSocket::UnconnectedState:
+                qCDebug(ADSBTCPLinkLog) << "ADSB Socket disconnected";
+                break;
+            case QTcpSocket::SocketState::ConnectingState:
+                qCDebug(ADSBTCPLinkLog) << "ADSB Socket connecting...";
+                break;
+            case QTcpSocket::SocketState::ConnectedState:
+                qCDebug(ADSBTCPLinkLog) << "ADSB Socket connected";
+                break;
+            case QTcpSocket::SocketState::ClosingState:
+                qCDebug(ADSBTCPLinkLog) << "ADSB Socket closing...";
+                break;
+            default:
+                break;
+            }
+        }, Qt::AutoConnection);
+    }
 #endif
 
     (void) QObject::connect(_socket, &QTcpSocket::errorOccurred, this, [this](QTcpSocket::SocketError error) {
@@ -54,8 +56,6 @@ ADSBTCPLink::ADSBTCPLink(const QHostAddress &hostAddress, quint16 port, QObject 
 
     _processTimer->setInterval(_processInterval); // Set an interval for processing lines
     (void) connect(_processTimer, &QTimer::timeout, this, &ADSBTCPLink::_processLines);
-
-    init();
 
     // qCDebug(ADSBTCPLinkLog) << Q_FUNC_INFO << this;
 }
@@ -209,10 +209,9 @@ void ADSBTCPLink::_parseAndEmitLocation(ADSB::VehicleInfo_t &adsbInfo, const QSt
     }
 
     const double altitude = modeCAltitude * 0.3048;
-    const QGeoCoordinate location(lat, lon);
+    const QGeoCoordinate location(lat, lon, altitude);
 
     adsbInfo.location = location;
-    adsbInfo.altitude = altitude;
     adsbInfo.alert = (alert == 1);
     adsbInfo.availableFlags = ADSB::LocationAvailable | ADSB::AltitudeAvailable | ADSB::AlertAvailable;
 

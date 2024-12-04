@@ -30,6 +30,8 @@ ADSBVehicleManager::ADSBVehicleManager(ADSBVehicleManagerSettings *settings, QOb
     , _adsbVehicleCleanupTimer(new QTimer(this))
     , _adsbVehicles(new QmlObjectListModel(this))
 {
+    // qCDebug(ADSBVehicleManagerLog) << Q_FUNC_INFO << this;
+
     (void) qRegisterMetaType<ADSB::VehicleInfo_t>("ADSB::VehicleInfo_t");
 
     _adsbVehicleCleanupTimer->setSingleShot(false);
@@ -51,18 +53,118 @@ ADSBVehicleManager::ADSBVehicleManager(ADSBVehicleManagerSettings *settings, QOb
     if (adsbEnabled->rawValue().toBool()) {
         _start(hostAddress->rawValue().toString(), port->rawValue().toUInt());
     }
-
-    // qCDebug(ADSBTCPLinkLog) << Q_FUNC_INFO << this;
 }
 
 ADSBVehicleManager::~ADSBVehicleManager()
 {
-    // qCDebug(ADSBTCPLinkLog) << Q_FUNC_INFO << this;
+    // qCDebug(ADSBVehicleManagerLog) << Q_FUNC_INFO << this;
 }
 
 ADSBVehicleManager *ADSBVehicleManager::instance()
 {
     return _adsbVehicleManager();
+}
+
+void ADSBVehicleManager::mavlinkMessageReceived(const mavlink_message_t &message)
+{
+    if (message.msgid != MAVLINK_MSG_ID_ADSB_VEHICLE) {
+        return;
+    }
+
+    _handleADSBVehicle(message);
+}
+
+void ADSBVehicleManager::_handleADSBVehicle(const mavlink_message_t &message)
+{
+    mavlink_adsb_vehicle_t adsbVehicleMsg{};
+    mavlink_msg_adsb_vehicle_decode(&message, &adsbVehicleMsg);
+
+    if (adsbVehicleMsg.tslc > kMaxTimeSinceLastSeen) {
+        return;
+    }
+
+    ADSB::VehicleInfo_t vehicleInfo{};
+
+    vehicleInfo.availableFlags = ADSB::AvailableInfoTypes::fromInt(0);
+
+    vehicleInfo.icaoAddress = adsbVehicleMsg.ICAO_address;
+    vehicleInfo.lastContact = adsbVehicleMsg.tslc;
+
+    if (adsbVehicleMsg.flags & ADSB_FLAGS_VALID_COORDS) {
+        vehicleInfo.availableFlags |= ADSB::LocationAvailable;
+        vehicleInfo.location.setLatitude(adsbVehicleMsg.lat / 1e7);
+        vehicleInfo.location.setLongitude(adsbVehicleMsg.lon / 1e7);
+    }
+
+    if (adsbVehicleMsg.flags & ADSB_FLAGS_VALID_ALTITUDE) {
+        vehicleInfo.availableFlags |= ADSB::AltitudeAvailable;
+        vehicleInfo.location.setAltitude(adsbVehicleMsg.altitude / 1e3);
+    }
+
+    if (adsbVehicleMsg.flags & ADSB_FLAGS_VALID_HEADING) {
+        vehicleInfo.availableFlags |= ADSB::HeadingAvailable;
+        vehicleInfo.heading = adsbVehicleMsg.heading / 1e2;
+    }
+
+    if (adsbVehicleMsg.flags & ADSB_FLAGS_VALID_VELOCITY) {
+        vehicleInfo.availableFlags |= ADSB::VelocityAvailable;
+        vehicleInfo.velocity = adsbVehicleMsg.hor_velocity / 1e2;
+    }
+
+    if (adsbVehicleMsg.flags & ADSB_FLAGS_VALID_CALLSIGN) {
+        vehicleInfo.availableFlags |= ADSB::CallsignAvailable;
+        vehicleInfo.callsign = QString::fromLatin1(adsbVehicleMsg.callsign, sizeof(adsbVehicleMsg.callsign));
+    }
+
+    if (adsbVehicleMsg.flags & ADSB_FLAGS_VALID_SQUAWK) {
+        vehicleInfo.availableFlags |= ADSB::SquawkAvailable;
+        vehicleInfo.squawk = adsbVehicleMsg.squawk;
+    }
+
+    if (adsbVehicleMsg.flags & ADSB_FLAGS_SIMULATED) {
+        vehicleInfo.simulated = true;
+    }
+
+    if (adsbVehicleMsg.flags & ADSB_FLAGS_VERTICAL_VELOCITY_VALID) {
+        vehicleInfo.availableFlags |= ADSB::VerticalVelAvailable;
+        vehicleInfo.verticalVel = adsbVehicleMsg.ver_velocity;
+    }
+
+    if (adsbVehicleMsg.flags & ADSB_FLAGS_BARO_VALID) {
+        vehicleInfo.baro = true;
+    }
+
+    if (adsbVehicleMsg.flags & ADSB_FLAGS_SOURCE_UAT) {
+
+    }
+
+    /*adsbVehicleMsg.altitude_type
+    ADSB_ALTITUDE_TYPE_PRESSURE_QNH
+    ADSB_ALTITUDE_TYPE_GEOMETRIC
+
+    adsbVehicleMsg.emitter_type
+    ADSB_EMITTER_TYPE_NO_INFO
+    ADSB_EMITTER_TYPE_LIGHT
+    ADSB_EMITTER_TYPE_SMALL
+    ADSB_EMITTER_TYPE_LARGE
+    ADSB_EMITTER_TYPE_HIGH_VORTEX_LARGE
+    ADSB_EMITTER_TYPE_HEAVY
+    ADSB_EMITTER_TYPE_HIGHLY_MANUV
+    ADSB_EMITTER_TYPE_ROTOCRAFT
+    ADSB_EMITTER_TYPE_UNASSIGNED
+    ADSB_EMITTER_TYPE_GLIDER
+    ADSB_EMITTER_TYPE_LIGHTER_AIR
+    ADSB_EMITTER_TYPE_PARACHUTE
+    ADSB_EMITTER_TYPE_ULTRA_LIGHT
+    ADSB_EMITTER_TYPE_UNASSIGNED2
+    ADSB_EMITTER_TYPE_UAV
+    ADSB_EMITTER_TYPE_SPACE
+    ADSB_EMITTER_TYPE_UNASSGINED3
+    ADSB_EMITTER_TYPE_EMERGENCY_SURFACE
+    ADSB_EMITTER_TYPE_SERVICE_SURFACE
+    ADSB_EMITTER_TYPE_POINT_OBSTACLE*/
+
+    (void) QMetaObject::invokeMethod(this, [this, &vehicleInfo] { adsbVehicleUpdate(vehicleInfo); }, Qt::AutoConnection);
 }
 
 void ADSBVehicleManager::adsbVehicleUpdate(const ADSB::VehicleInfo_t &vehicleInfo)
@@ -76,7 +178,7 @@ void ADSBVehicleManager::adsbVehicleUpdate(const ADSB::VehicleInfo_t &vehicleInf
     if (vehicleInfo.availableFlags & ADSB::LocationAvailable) {
         ADSBVehicle* const adsbVehicle = new ADSBVehicle(vehicleInfo, this);
         _adsbICAOMap[icaoAddress] = adsbVehicle;
-        (void) _adsbVehicles->append(adsbVehicle);
+        _adsbVehicles->append(adsbVehicle);
         qCDebug(ADSBVehicleManagerLog) << "Added" << QString::number(adsbVehicle->icaoAddress());
     }
 }
@@ -84,7 +186,16 @@ void ADSBVehicleManager::adsbVehicleUpdate(const ADSB::VehicleInfo_t &vehicleInf
 void ADSBVehicleManager::_start(const QString &hostAddress, quint16 port)
 {
     Q_ASSERT(!_adsbTcpLink);
-    _adsbTcpLink = new ADSBTCPLink(QHostAddress(hostAddress), port, this);
+
+    ADSBTCPLink *adsbTcpLink = new ADSBTCPLink(QHostAddress(hostAddress), port, this);
+    if (!adsbTcpLink->init()) {
+        delete adsbTcpLink;
+        adsbTcpLink = nullptr;
+        qCWarning(ADSBVehicleManagerLog) << "Failed to Initialize TCP Link at:" << hostAddress << port;
+        return;
+    }
+
+    _adsbTcpLink = adsbTcpLink;
     (void) connect(_adsbTcpLink, &ADSBTCPLink::adsbVehicleUpdate, this, &ADSBVehicleManager::adsbVehicleUpdate, Qt::AutoConnection);
     (void) connect(_adsbTcpLink, &ADSBTCPLink::errorOccurred, this, &ADSBVehicleManager::_linkError, Qt::AutoConnection);
 
