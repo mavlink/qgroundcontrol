@@ -7,8 +7,8 @@
 	</qresource>
 	<qresource prefix="/res">
 		<file alias="action.svg">../resources/action.svg</file>
-		<file alias="AntennaRC">../resources/Antenna_RC.svg</file>
-		<file alias="AntennaT">../resources/Antenna_T.svg</file>
+		<file alias="AntennaRC.svg">../resources/Antenna_RC.svg</file>
+		<file alias="AntennaT.svg">../resources/Antenna_T.svg</file>
 		<file alias="ArrowDown.svg">../resources/ArrowDown.svg</file>
 		<file alias="ArrowRight.svg">../resources/ArrowRight.svg</file>
 		<file alias="buttonLeft.svg">../resources/buttonLeft.svg</file>
@@ -35,15 +35,15 @@
 		<file alias="Pause.svg">../resources/Pause.svg</file>
 		<file alias="pause-mission.svg">../resources/pause-mission.svg</file>
 		<file alias="pencil.svg">../resources/pencil.svg</file>
-		<file alias="Play">../resources/Play.svg</file>
-		<file alias="PowerButton">../resources/PowerButton.svg</file>
-		<file alias="QGCLogoBlack">../resources/QGCLogoBlack.svg</file>
-		<file alias="QGCLogoWhite">../resources/QGCLogoWhite.svg</file>
-		<file alias="QGCLogoArrow">../resources/QGCLogoArrow.svg</file>
-		<file alias="QGroundControlConnect">../resources/QGroundControlConnect.svg</file>
+		<file alias="Play.svg">../resources/Play.svg</file>
+		<file alias="PowerButton.svg">../resources/PowerButton.svg</file>
+		<file alias="QGCLogoBlack.svg">../resources/QGCLogoBlack.svg</file>
+		<file alias="QGCLogoWhite.svg">../resources/QGCLogoWhite.svg</file>
+		<file alias="QGCLogoArrow.svg">../resources/QGCLogoArrow.svg</file>
+		<file alias="QGroundControlConnect.svg">../resources/QGroundControlConnect.svg</file>
 		<file alias="rtl.svg">../resources/rtl.svg</file>
 		<file alias="SplashScreen">../resources/SplashScreen.png</file>
-		<file alias="Stop">../resources/Stop.svg</file>
+		<file alias="Stop.svg">../resources/Stop.svg</file>
 		<file alias="takeoff.svg">../resources/takeoff.svg</file>
 		<file alias="terrain.svg">../resources/terrain.svg</file>
 		<file alias="TrashDelete.svg">../resources/TrashDelete.svg</file>

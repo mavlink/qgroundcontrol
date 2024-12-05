@@ -350,7 +350,7 @@ SetupPage {
                     Image {
                         id:                 gcsIcon
                         anchors.centerIn:   parent
-                        source:             "/res/QGCLogoArrow"
+                        source:             "/res/QGCLogoArrow.svg"
                         mipmap:             true
                         antialiasing:       true
                         fillMode:           Image.PreserveAspectFit
