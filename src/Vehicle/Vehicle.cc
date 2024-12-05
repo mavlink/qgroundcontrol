@@ -3988,7 +3988,7 @@ void Vehicle::_handleMessageInterval(const mavlink_message_t& message)
 void Vehicle::requestOperatorControl(bool allowOverride)
 {
     sendMavCommand(_defaultComponentId,
-                   MAV_CMD(43005),          // MAV_CMD_REQUEST_OPERATOR_CONTROL
+                   MAV_CMD(32100),          // MAV_CMD_REQUEST_OPERATOR_CONTROL
                    true,                    // show errors
                    0,                       // System ID of GCS requesting control, 0 if it is this GCS
                    1,                       // Action - 0: Release control, 1: Request control.
