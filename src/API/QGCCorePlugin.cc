@@ -134,13 +134,13 @@ void QGCCorePlugin::registerQmlTypes()
 QVariantList &QGCCorePlugin::analyzePages()
 {
     if (_p->analyzeList.isEmpty()) {
-        _p->analyzeList.append(QVariant::fromValue(new QmlComponentInfo(tr("Log Download"),         QUrl::fromUserInput(QStringLiteral("qrc:/qml/LogDownloadPage.qml")),        QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/LogDownloadIcon")))));
+        _p->analyzeList.append(QVariant::fromValue(new QmlComponentInfo(tr("Log Download"),         QUrl::fromUserInput(QStringLiteral("qrc:/qml/LogDownloadPage.qml")),        QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/LogDownloadIcon.svg")))));
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
-        _p->analyzeList.append(QVariant::fromValue(new QmlComponentInfo(tr("GeoTag Images"),        QUrl::fromUserInput(QStringLiteral("qrc:/qml/GeoTagPage.qml")),             QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/GeoTagIcon")))));
+        _p->analyzeList.append(QVariant::fromValue(new QmlComponentInfo(tr("GeoTag Images"),        QUrl::fromUserInput(QStringLiteral("qrc:/qml/GeoTagPage.qml")),             QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/GeoTagIcon.svg")))));
 #endif
-        _p->analyzeList.append(QVariant::fromValue(new QmlComponentInfo(tr("MAVLink Console"),      QUrl::fromUserInput(QStringLiteral("qrc:/qml/MAVLinkConsolePage.qml")),     QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/MAVLinkConsoleIcon")))));
+        _p->analyzeList.append(QVariant::fromValue(new QmlComponentInfo(tr("MAVLink Console"),      QUrl::fromUserInput(QStringLiteral("qrc:/qml/MAVLinkConsolePage.qml")),     QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/MAVLinkConsoleIcon.svg")))));
 #ifndef QGC_DISABLE_MAVLINK_INSPECTOR
-        _p->analyzeList.append(QVariant::fromValue(new QmlComponentInfo(tr("MAVLink Inspector"),    QUrl::fromUserInput(QStringLiteral("qrc:/qml/MAVLinkInspectorPage.qml")),   QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/MAVLinkInspector")))));
+        _p->analyzeList.append(QVariant::fromValue(new QmlComponentInfo(tr("MAVLink Inspector"),    QUrl::fromUserInput(QStringLiteral("qrc:/qml/MAVLinkInspectorPage.qml")),   QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/MAVLinkInspector.svg")))));
 #endif
         _p->analyzeList.append(QVariant::fromValue(new QmlComponentInfo(tr("Vibration"),            QUrl::fromUserInput(QStringLiteral("qrc:/qml/VibrationPage.qml")),          QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/VibrationPageIcon")))));
     }
