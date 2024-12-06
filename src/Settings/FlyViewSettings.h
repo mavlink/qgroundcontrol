@@ -33,4 +33,5 @@ public:
     DEFINE_SETTINGFACT(updateHomePosition)
     DEFINE_SETTINGFACT(instrumentQmlFile)
     DEFINE_SETTINGFACT(requestControlAllowTakeover)
+    DEFINE_SETTINGFACT(requestControlTimeout)
 };
