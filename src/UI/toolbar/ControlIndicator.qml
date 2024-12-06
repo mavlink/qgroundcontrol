@@ -33,7 +33,7 @@ Item {
     property bool   outdoorPalette:                         qgcPal.globalTheme === QGCPalette.Light
     
     // Used by control request popup, when other GCS ask us for control
-    property var    receivedRequestTimeoutMs:               QGroundControl.settingsManager.flyViewSettings.requestControlTimeout.defaultValue // Use this as default in case something goes wrong
+    property var    receivedRequestTimeoutMs:               QGroundControl.settingsManager.flyViewSettings.requestControlTimeout.defaultValue // Use this as default in case something goes wrong. Usually it will be overriden on onRequestOperatorControlReceived 
     property var    requestSysIdRequestingControl:          0
     property var    requestAllowTakeover:                   false
 
@@ -120,12 +120,12 @@ Item {
             }
 
             Component.onCompleted: {
-                requestTimer.restart()
+                requestReceivedTimer.restart()
                 progressAnimation.restart()
             }
 
             Timer {
-                id:                     requestTimer
+                id:                     requestReceivedTimer
                 interval:               receivedRequestTimeoutMs
                 repeat:                 false
                 running:                false
@@ -211,6 +211,48 @@ Item {
                 PropertyAnimation { to: qgcPal.window;      duration: 200 }
             }
 
+            // Indicator for sending control request
+            property var progressTimeLabelSendRequest: ""
+            property double lastUpdateTimeSendRequest: 0
+            onProgressSentRequestChanged: {
+                // Only update each 0.2 seconds
+                const currentTime = Date.now() * 0.001;
+                if (currentTime - lastUpdateTimeSendRequest < 0.1) {
+                    return
+                }
+                var currentCount = (progressSentRequest * QGroundControl.settingsManager.flyViewSettings.requestControlTimeout.rawValue)
+                progressTimeLabelSendRequest = (QGroundControl.settingsManager.flyViewSettings.requestControlTimeout.rawValue - currentCount).toFixed(1)
+                lastUpdateTimeSendRequest = currentTime;
+            }
+            property var progressSentRequest: 0
+            SequentialAnimation on progressSentRequest { 
+                id:         progressSentRequestAnimation
+                running:    false
+                loops:      1
+                NumberAnimation { target: popupBackground; property: "progressSentRequest"; to: 1; duration: QGroundControl.settingsManager.flyViewSettings.requestControlTimeout.rawValue * 1000 }
+            }
+            Timer {
+                id:                     requestSentTimer
+                interval:               QGroundControl.settingsManager.flyViewSettings.requestControlTimeout.rawValue * 1000
+                repeat:                 false
+                running:                false
+                onTriggered: {
+                    progressTimeLabelSendRequest = ""
+                    progressSentRequest = 0
+                }
+            }
+
+            property var takeoverAllowedLocal: _root.gcsControlStatusFlags_TakeoverAllowed
+            onTakeoverAllowedLocalChanged: {
+                if (takeoverAllowedLocal && requestSentTimer.running) {
+                    requestSentTimer.stop()
+                    progressSentRequestAnimation.stop()
+                    progressTimeLabelSendRequest = ""
+                    progressSentRequest = 0
+                }
+            }
+            // end Indicator for sending control request
+
             GridLayout {
                 id:                 mainLayout
                 anchors.margins:    ScreenTools.defaultFontPixelWidth
@@ -236,6 +278,7 @@ Item {
                     Layout.alignment:       Qt.AlignRight
                     Layout.fillWidth:       true
                     horizontalAlignment:    Text.AlignRight
+                    color:                  gcsControlStatusFlags_TakeoverAllowed ? qgcPal.colorGreen : qgcPal.text
                 }
                 // Separator
                 Rectangle {
@@ -255,6 +298,12 @@ Item {
                     Layout.columnSpan:      2
                     visible:                isThisGCSinControl
                 }
+                QGCLabel {
+                    id:                     requestSentTimeoutLabel
+                    text:                   qsTr("Request sent: ") + progressTimeLabelSendRequest
+                    Layout.columnSpan:      2
+                    visible:                progressTimeLabelSendRequest != ""
+                }
                 FactCheckBox {
                     text:                   qsTr("Allow takeover")
                     fact:                   requestControlAllowTakeoverFact
@@ -265,10 +314,15 @@ Item {
                     onClicked:              requestControl()
                     Layout.alignment:       Qt.AlignRight
                     visible:                !isThisGCSinControl
+                    enabled:                !requestSentTimeoutLabel.visible
                     // If requesting control, we need to take care of sending the timeout, so the progress bar is on sync in requestor and GCS in control. Only needed if takeover isn't allowed
                     function requestControl() {
                         var timeout = gcsControlStatusFlags_TakeoverAllowed ? 0 : QGroundControl.settingsManager.flyViewSettings.requestControlTimeout.rawValue
                         activeVehicle.requestOperatorControl(requestControlAllowTakeoverFact.rawValue, timeout)
+                        if (timeout > 0) {
+                            requestSentTimer.restart()
+                            progressSentRequestAnimation.restart()
+                        }
                     }
                 }
                 QGCLabel {
