@@ -3976,14 +3976,24 @@ void Vehicle::_handleMessageInterval(const mavlink_message_t& message)
     }
 }
 
-void Vehicle::requestOperatorControl(bool allowOverride)
+void Vehicle::requestOperatorControl(bool allowOverride, int requestTimeoutSecs)
 {
+    int safeRequestTimeoutSecs;
+    int requestTimeoutSecsMin = _settingsManager->flyViewSettings()->requestControlTimeout()->cookedMin().toInt();
+    int requestTimeoutSecsMax = _settingsManager->flyViewSettings()->requestControlTimeout()->cookedMax().toInt();
+    if (requestTimeoutSecs > requestTimeoutSecsMin && requestTimeoutSecs < requestTimeoutSecsMax) {
+        safeRequestTimeoutSecs = requestTimeoutSecs;
+    } else {
+        // If out of limits use default value
+        safeRequestTimeoutSecs = _settingsManager->flyViewSettings()->requestControlTimeout()->cookedDefaultValue().toInt();
+    }
     sendMavCommand(_defaultComponentId,
                    MAV_CMD(32100),          // MAV_CMD_REQUEST_OPERATOR_CONTROL
-                   true,                    // show errors
+                   false,                   // Don't show errors, as per Mavlink control protocol Autopilot will report result failed prior to forwarding the request to the GCS in control.
                    0,                       // System ID of GCS requesting control, 0 if it is this GCS
                    1,                       // Action - 0: Release control, 1: Request control.
-                   allowOverride ? 1 : 0);  // Allow takeover - Enable automatic granting of ownership on request. 0: Ask current owner and reject request, 1: Allow automatic takeover.
+                   allowOverride ? 1 : 0,   // Allow takeover - Enable automatic granting of ownership on request. 0: Ask current owner and reject request, 1: Allow automatic takeover.
+                   safeRequestTimeoutSecs); // Timeout in seconds before a request to a GCS to allow takeover is assumed to be rejected. This is used to display the timeout graphically on requestor and GCS in control.
 }
 
 void Vehicle::_handleControlStatus(const mavlink_message_t& message)
@@ -4016,7 +4026,7 @@ void Vehicle::_handleControlStatus(const mavlink_message_t& message)
 
 void Vehicle::_handleCommandRequestOperatorControl(const mavlink_command_long_t commandLong)
 {
-    emit requestOperatorControlReceived(commandLong.param1, commandLong.param3);
+    emit requestOperatorControlReceived(commandLong.param1, commandLong.param3, commandLong.param4);
 }
 
 void Vehicle::_handleCommandLong(const mavlink_message_t& message)

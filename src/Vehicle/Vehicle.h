@@ -1326,7 +1326,7 @@ public:
 /*                         CONTROL STATUS HANDLER                            */
 /*===========================================================================*/
 public:
-    Q_INVOKABLE void requestOperatorControl(bool allowOverride);
+    Q_INVOKABLE void requestOperatorControl(bool allowOverride, int requestTimeoutSecs = 0);
 
 private:
     void _handleControlStatus(const mavlink_message_t& message);
@@ -1350,7 +1350,7 @@ private:
 
 signals:
     void gcsControlStatusChanged();
-    void requestOperatorControlReceived(int sysIdRequestingControl, int allowTakeover);
+    void requestOperatorControlReceived(int sysIdRequestingControl, int allowTakeover, int requestTimeoutSecs);
 
 /*===========================================================================*/
 /*                         STATUS TEXT HANDLER                               */
