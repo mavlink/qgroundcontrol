@@ -53,6 +53,7 @@ Item {
             receivedRequestTimeoutMs = requestTimeoutSecs !== 0 ? requestTimeoutSecs * 1000 : QGroundControl.settingsManager.flyViewSettings.requestControlTimeout.defaultValue
             // First hide current popup, in case the normal control panel is visible
             mainWindow.hideIndicatorPopup()
+            // When showing the popup, the component will automatically start the count down in controlRequestPopup
             mainWindow.showIndicatorPopup(_root, controlRequestPopup, false)
         }
         // Animation to blink indicator when any related info changes
@@ -98,44 +99,14 @@ Item {
                 opacity:                0.7
             }
 
-            property var progress:      0
-            SequentialAnimation on progress { 
-                id:         progressAnimation
-                running:    false
-                loops:      1
-                NumberAnimation { target: controlRequestRectangle; property: "progress"; to: 1; duration: receivedRequestTimeoutMs }
-            }
-
-            property var progresTimeLabel
-            property double lastUpdateTime: 0
-            onProgressChanged: {
-                // Only update each 0.2 seconds
-                const currentTime = Date.now() * 0.001;
-                if (currentTime - lastUpdateTime < 0.1) {
-                    return
-                }
-                var currentCount = (progress * receivedRequestTimeoutMs * 0.001)
-                progresTimeLabel = (receivedRequestTimeoutMs * 0.001 - currentCount).toFixed(1)
-                lastUpdateTime = currentTime;
+            ProgressTracker {
+                id:                     requestProgressTracker
+                timeoutSeconds:         receivedRequestTimeoutMs * 0.001
+                onTimeout:              mainWindow.hideIndicatorPopup()
             }
 
             Component.onCompleted: {
-                requestReceivedTimer.restart()
-                progressAnimation.restart()
-            }
-
-            Timer {
-                id:                     requestReceivedTimer
-                interval:               receivedRequestTimeoutMs
-                repeat:                 false
-                running:                false
-                onTriggered: {
-                    // Sanity check, only hide if this panel is visible
-                    if (!controlRequestRectangle.visible) {
-                        return
-                    }
-                    mainWindow.hideIndicatorPopup()
-                }
+                requestProgressTracker.start()
             }
 
             GridLayout {
@@ -166,7 +137,7 @@ Item {
                 // Action label
                 QGCLabel {
                     font.pointSize:         ScreenTools.defaultFontPointSize * 1.1
-                    text:                   qsTr("Ignoring automatically in ") + progresTimeLabel + qsTr(" seconds")
+                    text:                   qsTr("Ignoring automatically in ") + requestProgressTracker.progressLabel + qsTr(" seconds")
                 }
                 QGCButton {
                     id:                     ignoreButton
@@ -178,7 +149,7 @@ Item {
                 Rectangle {
                     id:                     overlayRectangle
                     height:                 ScreenTools.defaultFontPixelWidth
-                    width:                  parent.width * controlRequestRectangle.progress
+                    width:                  parent.width * requestProgressTracker.progress
                     color:                  qgcPal.buttonHighlight
                     Layout.columnSpan:      2
                 }
@@ -210,47 +181,17 @@ Item {
                 PropertyAnimation { to: qgcPal.window;      duration: 200 }
             }
 
-            // Indicator for visual feedback of sending control request timeout
-            property var progressTimeLabelSendRequest: ""
-            property double lastUpdateTimeSendRequest: 0
-            onProgressSentRequestChanged: {
-                // Only update each 0.2 seconds
-                const currentTime = Date.now() * 0.001;
-                if (currentTime - lastUpdateTimeSendRequest < 0.1) {
-                    return
-                }
-                var currentCount = (progressSentRequest * QGroundControl.settingsManager.flyViewSettings.requestControlTimeout.rawValue)
-                progressTimeLabelSendRequest = (QGroundControl.settingsManager.flyViewSettings.requestControlTimeout.rawValue - currentCount).toFixed(1)
-                lastUpdateTimeSendRequest = currentTime;
+            ProgressTracker {
+                id:                     sendRequestProgressTracker
+                timeoutSeconds:         QGroundControl.settingsManager.flyViewSettings.requestControlTimeout.rawValue
             }
-            property var progressSentRequest: 0
-            SequentialAnimation on progressSentRequest { 
-                id:         progressSentRequestAnimation
-                running:    false
-                loops:      1
-                NumberAnimation { target: popupBackground; property: "progressSentRequest"; to: 1; duration: QGroundControl.settingsManager.flyViewSettings.requestControlTimeout.rawValue * 1000 }
-            }
-            Timer {
-                id:                     requestSentTimer
-                interval:               QGroundControl.settingsManager.flyViewSettings.requestControlTimeout.rawValue * 1000
-                repeat:                 false
-                running:                false
-                onTriggered: {
-                    progressTimeLabelSendRequest = ""
-                    progressSentRequest = 0
-                }
-            }
-
+            // If a request was sent, and we get feedback that takeover has been allowed, stop the progress tracker as the request has been granted
             property var takeoverAllowedLocal: _root.gcsControlStatusFlags_TakeoverAllowed
             onTakeoverAllowedLocalChanged: {
-                if (takeoverAllowedLocal && requestSentTimer.running) {
-                    requestSentTimer.stop()
-                    progressSentRequestAnimation.stop()
-                    progressTimeLabelSendRequest = ""
-                    progressSentRequest = 0
+                if (takeoverAllowedLocal && sendRequestProgressTracker.running) {
+                    sendRequestProgressTracker.stop()
                 }
             }
-            // end Indicator for visual feedback of sending control request timeout
 
             GridLayout {
                 id:                 mainLayout
@@ -299,9 +240,9 @@ Item {
                 }
                 QGCLabel {
                     id:                     requestSentTimeoutLabel
-                    text:                   qsTr("Request sent: ") + progressTimeLabelSendRequest
+                    text:                   qsTr("Request sent: ") + sendRequestProgressTracker.progressLabel
                     Layout.columnSpan:      2
-                    visible:                progressTimeLabelSendRequest != ""
+                    visible:                sendRequestProgressTracker.running
                 }
                 FactCheckBox {
                     text:                   qsTr("Allow takeover")
@@ -310,19 +251,17 @@ Item {
                 }
                 QGCButton {
                     text:                   gcsControlStatusFlags_TakeoverAllowed ? qsTr("Adquire Control") : qsTr("Send Request")
-                    onClicked:              requestControl()
-                    Layout.alignment:       Qt.AlignRight
-                    visible:                !isThisGCSinControl
-                    enabled:                !requestSentTimeoutLabel.visible
-                    // If requesting control, we need to take care of sending the timeout, so the progress bar is on sync in requestor and GCS in control. Only needed if takeover isn't allowed
-                    function requestControl() {
+                    onClicked: {
                         var timeout = gcsControlStatusFlags_TakeoverAllowed ? 0 : QGroundControl.settingsManager.flyViewSettings.requestControlTimeout.rawValue
                         activeVehicle.requestOperatorControl(requestControlAllowTakeoverFact.rawValue, timeout)
                         if (timeout > 0) {
-                            requestSentTimer.restart()
-                            progressSentRequestAnimation.restart()
+                            // Start UI timeout animation
+                            sendRequestProgressTracker.start()
                         }
                     }
+                    Layout.alignment:       Qt.AlignRight
+                    visible:                !isThisGCSinControl
+                    enabled:                !sendRequestProgressTracker.running
                 }
                 QGCLabel {
                     text:                   qsTr("Request Timeout (sec):")
