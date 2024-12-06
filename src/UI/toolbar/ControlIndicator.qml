@@ -160,7 +160,6 @@ Item {
                     Layout.fillHeight:      true
                     onClicked: {
                         activeVehicle.requestOperatorControl(true) // Allow takeover
-                        requestControlAllowTakeoverFact.rawValue = true
                         mainWindow.hideIndicatorPopup()
                     }
                 }
@@ -211,7 +210,7 @@ Item {
                 PropertyAnimation { to: qgcPal.window;      duration: 200 }
             }
 
-            // Indicator for sending control request
+            // Indicator for visual feedback of sending control request timeout
             property var progressTimeLabelSendRequest: ""
             property double lastUpdateTimeSendRequest: 0
             onProgressSentRequestChanged: {
@@ -251,7 +250,7 @@ Item {
                     progressSentRequest = 0
                 }
             }
-            // end Indicator for sending control request
+            // end Indicator for visual feedback of sending control request timeout
 
             GridLayout {
                 id:                 mainLayout
