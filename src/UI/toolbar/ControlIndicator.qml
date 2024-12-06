@@ -33,7 +33,7 @@ Item {
     property bool   outdoorPalette:                         qgcPal.globalTheme === QGCPalette.Light
     
     // Used by control request popup, when other GCS ask us for control
-    property var    receivedRequestTimeoutMs:               6000
+    property var    receivedRequestTimeoutMs:               QGroundControl.settingsManager.flyViewSettings.requestControlTimeout.defaultValue // Use this as default in case something goes wrong
     property var    requestSysIdRequestingControl:          0
     property var    requestAllowTakeover:                   false
 
@@ -42,13 +42,15 @@ Item {
     Connections {
         target: activeVehicle
         // Popup prompting user to accept control from other GCS
-        onRequestOperatorControlReceived: (sysIdRequestingControl, allowTakeover) => {
+        onRequestOperatorControlReceived: (sysIdRequestingControl, allowTakeover, requestTimeoutSecs) => {
             // If we don't have the indicator visible ( not receiving CONTROL_STATUS ) don't proceed
             if (!_root.showIndicator) {
                 return
             }
             requestSysIdRequestingControl = sysIdRequestingControl
             requestAllowTakeover = allowTakeover
+            // If request came without request timeout, use our default one
+            receivedRequestTimeoutMs = requestTimeoutSecs !== 0 ? requestTimeoutSecs * 1000 : QGroundControl.settingsManager.flyViewSettings.requestControlTimeout.defaultValue
             // First hide current popup, in case the normal control panel is visible
             mainWindow.hideIndicatorPopup()
             mainWindow.showIndicatorPopup(_root, controlRequestPopup, false)
@@ -260,9 +262,24 @@ Item {
                 }
                 QGCButton {
                     text:                   gcsControlStatusFlags_TakeoverAllowed ? qsTr("Adquire Control") : qsTr("Send Request")
-                    onClicked:              activeVehicle.requestOperatorControl(requestControlAllowTakeoverFact.rawValue)
+                    onClicked:              requestControl()
                     Layout.alignment:       Qt.AlignRight
                     visible:                !isThisGCSinControl
+                    // If requesting control, we need to take care of sending the timeout, so the progress bar is on sync in requestor and GCS in control. Only needed if takeover isn't allowed
+                    function requestControl() {
+                        var timeout = gcsControlStatusFlags_TakeoverAllowed ? 0 : QGroundControl.settingsManager.flyViewSettings.requestControlTimeout.rawValue
+                        activeVehicle.requestOperatorControl(requestControlAllowTakeoverFact.rawValue, timeout)
+                    }
+                }
+                QGCLabel {
+                    text:                   qsTr("Request Timeout (sec):")
+                    visible:                !isThisGCSinControl && !gcsControlStatusFlags_TakeoverAllowed
+                }
+                FactTextField {
+                    fact:                   QGroundControl.settingsManager.flyViewSettings.requestControlTimeout
+                    visible:                !isThisGCSinControl && !gcsControlStatusFlags_TakeoverAllowed
+                    Layout.alignment:       Qt.AlignRight
+                    Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 7
                 }
                 QGCButton {
                     text:                   qsTr("Change")
