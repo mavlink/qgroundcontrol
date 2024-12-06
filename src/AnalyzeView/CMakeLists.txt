@@ -104,7 +104,7 @@ if(NOT exiv2_FOUND AND NOT LibExiv2_FOUND)
 
     FetchContent_Declare(EXIV2
         GIT_REPOSITORY https://github.com/Exiv2/exiv2.git
-        GIT_TAG v0.28.3
+        GIT_TAG main # v0.28.3
         GIT_SHALLOW TRUE
     )
     set(EXIV2_ENABLE_XMP OFF CACHE INTERNAL "" FORCE)
