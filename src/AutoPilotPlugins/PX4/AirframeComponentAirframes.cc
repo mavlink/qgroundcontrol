@@ -24,7 +24,7 @@ QMap<QString, AirframeComponentAirframes::AirframeType_t*>& AirframeComponentAir
         // Standard planes
         AirframeType_t *standardPlane = new AirframeType_t;
         standardPlane->name = "Standard Airplane";
-        standardPlane->imageResource = "qrc:/qmlimages/AirframeStandardPlane.png";
+        standardPlane->imageResource = "qrc:/qmlimages/AirframeStandardPlane.svg";
         AirframeInfo_t *easystar = new AirframeInfo_t;
         easystar->name = "Multiplex Easystar 1/2";
         easystar->autostartId = 2100;
@@ -56,7 +56,7 @@ void AirframeComponentAirframes::insert(QString& group, QString& image, QString&
         }
 
         if (g->imageResource.isEmpty()) {
-            g->imageResource = QString("qrc:/qmlimages/Airframe/AirframeUnknown");
+            g->imageResource = QString("qrc:/qmlimages/Airframe/AirframeUnknown.svg");
         }
 
         rgAirframeTypes.insert(group, g);
