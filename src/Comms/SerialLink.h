@@ -9,136 +9,160 @@
 
 #pragma once
 
-#include "LinkConfiguration.h"
-#include "LinkInterface.h"
-
-#include <QtCore/QMutex>
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QString>
-#include <QtCore/QMetaType>
+
 #ifdef Q_OS_ANDROID
 #include "qserialport.h"
 #else
 #include <QtSerialPort/QSerialPort>
 #endif
-#include <QtCore/QLoggingCategory>
+
+#include "LinkConfiguration.h"
+#include "LinkInterface.h"
 
 Q_DECLARE_LOGGING_CATEGORY(SerialLinkLog)
 
-// We use QSerialPort::SerialPortError in a signal so we must declare it as a meta type
-Q_DECLARE_METATYPE(QSerialPort::SerialPortError)
+/*===========================================================================*/
 
-class LinkManager;
-
-/// SerialLink configuration
 class SerialConfiguration : public LinkConfiguration
+{
+    Q_OBJECT
+    Q_PROPERTY(qint32                   baud            READ baud            WRITE setBaud        NOTIFY baudChanged)
+    Q_PROPERTY(QSerialPort::DataBits    dataBits        READ dataBits        WRITE setDataBits    NOTIFY dataBitsChanged)
+    Q_PROPERTY(QSerialPort::FlowControl flowControl     READ flowControl     WRITE setFlowControl NOTIFY flowControlChanged)
+    Q_PROPERTY(QSerialPort::StopBits    stopBits        READ stopBits        WRITE setStopBits    NOTIFY stopBitsChanged)
+    Q_PROPERTY(QSerialPort::Parity      parity          READ parity          WRITE setParity      NOTIFY parityChanged)
+    Q_PROPERTY(QString                  portName        READ portName        WRITE setPortName    NOTIFY portNameChanged)
+    Q_PROPERTY(QString                  portDisplayName READ portDisplayName                      NOTIFY portDisplayNameChanged)
+    Q_PROPERTY(bool                     usbDirect       READ usbDirect       WRITE setUsbDirect   NOTIFY usbDirectChanged)
+
+public:
+    explicit SerialConfiguration(const QString &name, QObject *parent = nullptr);
+    explicit SerialConfiguration(const SerialConfiguration *copy, QObject *parent = nullptr);
+    virtual ~SerialConfiguration();
+
+    qint32 baud() const { return _baud; }
+    void setBaud(qint32 baud) { if (baud != _baud) { _baud = baud; emit baudChanged(); } }
+
+    QSerialPort::DataBits dataBits() const { return _dataBits; }
+    void setDataBits(QSerialPort::DataBits databits) { if (databits != _dataBits) { _dataBits = databits; emit dataBitsChanged(); } }
+
+    QSerialPort::FlowControl flowControl() const { return _flowControl; }
+    void setFlowControl(QSerialPort::FlowControl flowControl) { if (flowControl != _flowControl) { _flowControl = flowControl; emit flowControlChanged(); } }
+
+    QSerialPort::StopBits stopBits() const { return _stopBits; }
+    void setStopBits(QSerialPort::StopBits stopBits) { if (stopBits != _stopBits) { _stopBits = stopBits; emit stopBitsChanged(); } }
+
+    QSerialPort::Parity parity() const { return _parity; }
+    void setParity(QSerialPort::Parity parity) { if (parity != _parity) { _parity = parity; emit parityChanged(); } }
+
+    QString portName() const { return _portName; }
+    void setPortName(const QString &name);
+
+    QString portDisplayName() const { return _portDisplayName; }
+    void setPortDisplayName(const QString &portDisplayName) { if (portDisplayName != _portDisplayName) { _portDisplayName = portDisplayName; emit portDisplayNameChanged(); } }
+
+    bool usbDirect() const { return _usbDirect; }
+    void setUsbDirect(bool usbDirect) { if (usbDirect != _usbDirect) { _usbDirect = usbDirect; emit usbDirectChanged(); } }
+
+    LinkType type() const override { return LinkConfiguration::TypeSerial; }
+    void copyFrom(const LinkConfiguration *source) override;
+    void loadSettings(QSettings &settings, const QString &root) override;
+    void saveSettings(QSettings &settings, const QString &root) override;
+    QString settingsURL() override { return QStringLiteral("SerialSettings.qml"); }
+    QString settingsTitle() override { return tr("Serial Link Settings"); }
+
+    static QStringList supportedBaudRates();
+    static QString cleanPortDisplayName(const QString &name);
+
+signals:
+    void baudChanged();
+    void dataBitsChanged();
+    void flowControlChanged();
+    void stopBitsChanged();
+    void parityChanged();
+    void portNameChanged();
+    void portDisplayNameChanged();
+    void usbDirectChanged();
+
+private:
+    qint32 _baud = QSerialPort::Baud57600;
+    QSerialPort::DataBits _dataBits = QSerialPort::Data8;
+    QSerialPort::FlowControl _flowControl = QSerialPort::NoFlowControl;
+    QSerialPort::StopBits _stopBits = QSerialPort::OneStop;
+    QSerialPort::Parity _parity = QSerialPort::NoParity;
+    QString _portName;
+    QString _portDisplayName;
+    bool _usbDirect = false;
+};
+
+/*===========================================================================*/
+
+class SerialWorker : public QObject
 {
     Q_OBJECT
 
 public:
+    explicit SerialWorker(const SerialConfiguration *config, QObject *parent = nullptr);
+    ~SerialWorker();
 
-    SerialConfiguration(const QString& name);
-    SerialConfiguration(const SerialConfiguration* copy);
-
-    Q_PROPERTY(int      baud            READ baud               WRITE setBaud               NOTIFY baudChanged)
-    Q_PROPERTY(int      dataBits        READ dataBits           WRITE setDataBits           NOTIFY dataBitsChanged)
-    Q_PROPERTY(int      flowControl     READ flowControl        WRITE setFlowControl        NOTIFY flowControlChanged)
-    Q_PROPERTY(int      stopBits        READ stopBits           WRITE setStopBits           NOTIFY stopBitsChanged)
-    Q_PROPERTY(int      parity          READ parity             WRITE setParity             NOTIFY parityChanged)
-    Q_PROPERTY(QString  portName        READ portName           WRITE setPortName           NOTIFY portNameChanged)
-    Q_PROPERTY(QString  portDisplayName READ portDisplayName                                NOTIFY portDisplayNameChanged)
-    Q_PROPERTY(bool     usbDirect       READ usbDirect          WRITE setUsbDirect          NOTIFY usbDirectChanged)        ///< true: direct usb connection to board
-
-    int  baud() const        { return _baud; }
-    int  dataBits() const    { return _dataBits; }
-    int  flowControl() const { return _flowControl; }    ///< QSerialPort Enums
-    int  stopBits() const    { return _stopBits; }
-    int  parity() const      { return _parity; }         ///< QSerialPort Enums
-    bool usbDirect() const   { return _usbDirect; }
-
-    const QString portName          () const { return _portName; }
-    const QString portDisplayName   () const { return _portDisplayName; }
-
-    void setBaud            (int baud);
-    void setDataBits        (int databits);
-    void setFlowControl     (int flowControl);          ///< QSerialPort Enums
-    void setStopBits        (int stopBits);
-    void setParity          (int parity);               ///< QSerialPort Enums
-    void setPortName        (const QString& portName);
-    void setUsbDirect       (bool usbDirect);
-
-    static QStringList supportedBaudRates();
-    static QString cleanPortDisplayname(const QString name);
-
-    /// From LinkConfiguration
-    LinkType    type            () const override { return LinkConfiguration::TypeSerial; }
-    void        copyFrom        (const LinkConfiguration* source) override;
-    void        loadSettings    (QSettings& settings, const QString& root) override;
-    void        saveSettings    (QSettings& settings, const QString& root) override;
-    void        updateSettings  ();
-    QString     settingsURL     () override { return "SerialSettings.qml"; }
-    QString     settingsTitle   () override { return tr("Serial Link Settings"); }
+    bool isConnected() const;
+    const QSerialPort *port() const { return _port; }
 
 signals:
-    void baudChanged            ();
-    void dataBitsChanged        ();
-    void flowControlChanged     ();
-    void stopBitsChanged        ();
-    void parityChanged          ();
-    void portNameChanged        ();
-    void portDisplayNameChanged ();
-    void usbDirectChanged       (bool usbDirect);
+    void connected();
+    void disconnected();
+    void dataReceived(const QByteArray &data);
+    void dataSent(const QByteArray &data);
+    void errorOccurred(const QString &errorString);
+
+public slots:
+    void connectToPort();
+    void disconnectFromPort();
+    void writeData(const QByteArray &data);
+
+private slots:
+    void _onDisconnected();
+    void _onReadyRead();
+    void _onBytesWritten(qint64 bytes) const;
+    void _onErrorOccurred(QSerialPort::SerialPortError error);
 
 private:
-    int _baud;
-    int _dataBits;
-    int _flowControl;
-    int _stopBits;
-    int _parity;
-    QString _portName;
-    QString _portDisplayName;
-    bool _usbDirect;
+    const SerialConfiguration *_config = nullptr;
+    QSerialPort *_port = nullptr;
 };
+
+/*===========================================================================*/
 
 class SerialLink : public LinkInterface
 {
     Q_OBJECT
 
 public:
-    SerialLink(SharedLinkConfigurationPtr& config);
+    explicit SerialLink(SharedLinkConfigurationPtr &config, QObject *parent = nullptr);
     virtual ~SerialLink();
 
-    // LinkInterface overrides
-    bool isConnected        (void) const override;
-    void disconnect         (void) override;
-    bool isSecureConnection (void) override;
+    bool isConnected() const override;
+    bool isSecureConnection() override { return _serialConfig->usbDirect(); }
 
-    /// Don't even think of calling this method!
-    QSerialPort* _hackAccessToPort(void) { return _port; }
-
-private slots:
-    void _writeBytes(const QByteArray &data) override;
+    const QSerialPort *port() const { return _worker->port(); }
 
 public slots:
-    void linkError(QSerialPort::SerialPortError error);
+    void disconnect() override;
 
 private slots:
-    void _readBytes     (void);
+    void _onConnected();
+    void _onDisconnected();
+    void _onDataReceived(const QByteArray &data);
+    void _onDataSent(const QByteArray &data);
+    void _onErrorOccurred(const QString &errorString);
 
 private:
-    // LinkInterface overrides
-    bool _connect(void) override;
+    bool _connect() override;
+    void _writeBytes(const QByteArray &data) override;
 
-    void _emitLinkError     (const QString& errorMsg);
-    bool _hardwareConnect   (QSerialPort::SerialPortError& error, QString& errorString);
-    bool _isBootloader      (void);
-
-    QSerialPort*            _port               = nullptr;
-    quint64                 _bytesRead          = 0;
-    int                     _timeout;
-    QMutex                  _dataMutex;                     ///< Mutex for reading data from _port
-    QMutex                  _writeMutex;                    ///< Mutex for accessing the _transmitBuffer.
-    volatile bool           _stopp              = false;
-    QMutex                  _stoppMutex;                    ///< Mutex for accessing _stopp
-    QByteArray              _transmitBuffer;                ///< An internal buffer for receiving data from member functions and actually transmitting them via the serial port.
-    const SerialConfiguration*    _serialConfig       = nullptr;
+    const SerialConfiguration *_serialConfig = nullptr;
+    SerialWorker *_worker = nullptr;
+    QThread *_workerThread = nullptr;
 };
