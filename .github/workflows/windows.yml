@@ -54,6 +54,7 @@ jobs:
         run: |
           choco install --no-progress ninja pkgconfiglite -y
           choco install --no-progress cmake --installargs 'ADD_CMAKE_TO_PATH=System' --apply-install-arguments-to-dependencies
+        continue-on-error: true
 
       - name: Install Vulkan
         working-directory: ${{ runner.temp }}
