@@ -72,7 +72,7 @@ jobs:
           target: desktop
           arch: clang_64
           dir: ${{ runner.temp }}
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
+          modules: qtcharts qtlocation qtpositioning qtspeech qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
           cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
       - name: Install Qt for iOS
@@ -85,7 +85,7 @@ jobs:
           arch: ios
           dir: ${{ runner.temp }}
           extra: --autodesktop
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
+          modules: qtcharts qtlocation qtpositioning qtspeech qtmultimedia qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
           cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
       - run: mkdir ${{ runner.temp }}/shadow_build_dir
