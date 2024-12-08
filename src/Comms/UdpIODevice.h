@@ -6,27 +6,30 @@
  * COPYING.md in the root of the source code directory.
  *
  ****************************************************************************/
+
 #pragma once
 
 #include <QtCore/QByteArray>
+#include <QtCore/QLoggingCategory>
 #include <QtNetwork/QUdpSocket>
 
-/**
- * @brief QUdpSocket implementation of canReadLine() readLineData() in server mode.
- * The UdpIODevice class works almost exactly as a QUdpSocket, but
- * also implements canReadLine() and readLineData() while in the bound state.
- * Regular QUdpSocket only allows to use these QIODevice interfaces when using
- * connectToHost(), which means it is working as a client instead of server.
- *
- **/
+Q_DECLARE_LOGGING_CATEGORY(UdpIODeviceLog)
 
+/// UdpIODevice provides a QIODevice interface over a QUdpSocket in server mode.
+/// It allows line-based reading using canReadLine() and readLineData() even when the socket is in bound mode.
 class UdpIODevice: public QUdpSocket
 {
     Q_OBJECT
+
 public:
     UdpIODevice(QObject *parent = nullptr);
-    bool     canReadLine() const;
-    qint64   readLineData(char *data, qint64 maxSize);
+    ~UdpIODevice();
+
+    bool canReadLine() const override;
+    qint64 readLineData(char* data, qint64 maxSize) override;
+    qint64 readData(char* data, qint64 maxSize) override;
+    qint64 bytesAvailable() const override;
+    bool isSequential() const override { return true; }
 
 private slots:
     void _readAvailableData();
