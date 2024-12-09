@@ -159,7 +159,6 @@ find_package(Qt6
     COMPONENTS
         Concurrent
         Core
-        Core5Compat
         Location
         Multimedia
         Network
