@@ -72,7 +72,7 @@ protected:
     static const size_t _cMissionManagerSignals = maxSignalIndex;
     const char*         _rgMissionManagerSignals[_cMissionManagerSignals];
 
-    static const int _missionManagerSignalWaitTime = MissionManager::_ackTimeoutMilliseconds * MissionManager::_maxRetryCount * 2;
+    static const int _missionManagerSignalWaitTime = MissionManager::_ackTimeoutDefaultMilliseconds * MissionManager::_maxRetryCount * 2;
 };
 
 #endif

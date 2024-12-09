@@ -247,18 +247,19 @@ void PlanManager::_startAckTimeout(AckType_t ack)
     switch (ack) {
     case AckMissionItem:
         // We are actively trying to get the mission item, so we don't want to wait as long.
-        _ackTimeoutTimer->setInterval(_retryTimeoutMilliseconds);
+        _ackTimeoutTimer->setInterval(_retryTimeoutDefaultMilliseconds);
+        break;
+    case AckMissionRequest:
+        _ackTimeoutTimer->setInterval(_ackTimeoutMissionRequestMilliseconds);
         break;
     case AckNone:
         // FALLTHROUGH
     case AckMissionCount:
         // FALLTHROUGH
-    case AckMissionRequest:
-        // FALLTHROUGH
     case AckMissionClearAll:
         // FALLTHROUGH
     case AckGuidedItem:
-        _ackTimeoutTimer->setInterval(_ackTimeoutMilliseconds);
+        _ackTimeoutTimer->setInterval(_ackTimeoutDefaultMilliseconds);
         break;
     }
 
