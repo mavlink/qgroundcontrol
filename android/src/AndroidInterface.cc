@@ -107,7 +107,7 @@ QString getSDCardPath()
 
     const QJniObject result = QJniObject::callStaticObjectMethod(kJniQGCActivityClassName, "getSDCardPath", "()Ljava/lang/String;");
     if (!result.isValid()) {
-        qCWarning(AndroidInterfaceLog) << "Invalid Result";
+        qCWarning(AndroidInterfaceLog) << "Call to java getSDCardPath failed: Invalid Result";
         return QString();
     }
 
