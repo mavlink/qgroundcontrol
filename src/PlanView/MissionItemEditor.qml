@@ -227,6 +227,7 @@ Rectangle {
 
                 QGCMenuItem {
                     text:       qsTr("Show all values")
+                    visible:    QGroundControl.corePlugin.showAdvancedUI
                     checkable:  true
                     checked:    missionItem.isSimpleItem ? missionItem.rawEdit : false
                     enabled:    missionItem.isSimpleItem && !_waypointsOnlyMode
