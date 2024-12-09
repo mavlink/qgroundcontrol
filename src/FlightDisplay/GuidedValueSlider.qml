@@ -124,8 +124,9 @@ Item {
             Layout.fillHeight:  true
             contentWidth:       sliderContainer.width
             contentHeight:      sliderContainer.height
-            flickDeceleration:  0.5
+            flickDeceleration:  2000
             flickableDirection: Flickable.VerticalFlick
+            Layout.rightMargin: -2                          // Vertical Flickable width
 
             Item {
                 id:     sliderContainer
@@ -145,16 +146,23 @@ Item {
                         property real tickValue: _majorTickMaxValue - (_majorTickValueStep * index)
 
                         Rectangle {
-                            width:  _majorTickWidth
+                            id:     majorTick
+                            width:  _majorTickWidth * 0.9
                             height: 1
                             color:  _qgcPal.text
                         }
 
                         QGCLabel {
                             anchors.right:          parent.right
+                            anchors.rightMargin:    ScreenTools.defaultFontPixelWidth / 1.2
+                            anchors.left:           majorTick.right
+                            anchors.leftMargin:     ScreenTools.defaultFontPixelWidth / 1.5
                             anchors.verticalCenter: parent.verticalCenter
                             text:                   parent.tickValue
-                            font.pointSize:         ScreenTools.largeFontPointSize
+                            font.pointSize:         1.25 * ScreenTools.largeFontPointSize
+                            fontSizeMode:           Text.HorizontalFit
+                            horizontalAlignment:    Text.AlignRight
+                            verticalAlignment:      Text.AlignVCenter
                         }
                     }
                 }
@@ -182,13 +190,13 @@ Item {
     Canvas {
         id:     indicatorCanvas
         y:      sliderFlickable.y + _indicatorCenterPos - height / 2
-        width:  Math.max(minIndicatorWidth, minTickDisplayWidth)
+        width:  indicatorWidth < pointerWidth * 12 ? pointerWidth * 12 : indicatorWidth
         height: indicatorHeight
         clip:   false
 
         property real indicatorHeight:      valueLabel.contentHeight
         property real pointerWidth:         ScreenTools.defaultFontPixelWidth
-        property real minIndicatorWidth:    pointerWidth + (_margins * 2) + valueLabel.contentWidth
+        property real indicatorWidth:       pointerWidth + (_margins * 2) + valueLabel.contentWidth + ( _clampedSliderValue(_sliderValue) >= 0 ? pointerWidth / 2.2 : pointerWidth / 10 )
         property real minTickDisplayWidth:  _majorTickWidth + ScreenTools.defaultFontPixelWidth + ScreenTools.defaultFontPixelWidth * 3
 
         onPaint: {
@@ -199,19 +207,20 @@ Item {
             ctx.beginPath()
             ctx.moveTo(0, indicatorHeight / 2)
             ctx.lineTo(pointerWidth, indicatorHeight / 4)
-            ctx.lineTo(pointerWidth, 0)
-            ctx.lineTo(width - 1, 0)
-            ctx.lineTo(width - 1, indicatorHeight)
-            ctx.lineTo(pointerWidth, indicatorHeight)
+            ctx.lineTo(pointerWidth, 1)
+            ctx.lineTo(width - 1, 1)
+            ctx.lineTo(width - 1, indicatorHeight - 1)
+            ctx.lineTo(pointerWidth, indicatorHeight - 1)
             ctx.lineTo(pointerWidth, indicatorHeight / 4 * 3)
-            ctx.lineTo(0, indicatorHeight / 2)
+            ctx.closePath()
             ctx.fill()
             ctx.stroke()
         }
 
         QGCLabel {
             id:                     valueLabel
-            anchors.margins:        _margins
+            anchors.fill:           parent
+            anchors.margins:        _margins * 1.1
             anchors.right:          parent.right
             anchors.verticalCenter: parent.verticalCenter
             horizontalAlignment:    Text.AlignRight
