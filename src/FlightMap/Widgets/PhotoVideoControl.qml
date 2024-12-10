@@ -166,7 +166,8 @@ Rectangle {
 
                     Rectangle {
                         anchors.centerIn:   parent
-                        width:              parent.width * (_isShootingInCurrentMode ? 0.5 : 0.75)
+                        // ensure width has the same parity as parent.width so that it gets properly centered
+                        width:              Math.floor(parent.width * (_isShootingInCurrentMode ? 0.5 : 0.75) / 2) * 2 + parent.width % 2
                         height:             width
                         radius:             _isShootingInCurrentMode ? 0 : width * 0.5
                         color:              _isShootingInCurrentMode || _canShootInCurrentMode ? qgcPal.colorRed : qgcPal.colorGrey
