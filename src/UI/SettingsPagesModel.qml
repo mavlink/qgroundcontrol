@@ -16,7 +16,7 @@ ListModel {
     ListElement {
         name: qsTr("General")
         url: "/qml/GeneralSettings.qml"
-        iconUrl: "qrc:/res/QGCLogoWhite"
+        iconUrl: "qrc:/res/QGCLogoWhite.svg"
         pageVisible: function() { return true }
     }
 

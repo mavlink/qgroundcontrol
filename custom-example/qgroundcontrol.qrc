@@ -405,6 +405,7 @@
 		<file alias="Vehicle/SetpointFact.json">../src/Vehicle/FactGroups/SetpointFact.json</file>
 		<file alias="Vehicle/LocalPositionFact.json">../src/Vehicle/FactGroups/LocalPositionFact.json</file>
 		<file alias="Vehicle/LocalPositionSetpointFact.json">../src/Vehicle/FactGroups/LocalPositionFact.json</file>
+		<file alias="Vehicle/RPMFact.json">../src/Vehicle/FactGroups/RPMFact.json</file>
 		<file alias="Vehicle/SubmarineFact.json">../src/Vehicle/FactGroups/SubmarineFact.json</file>
 		<file alias="Vehicle/TemperatureFact.json">../src/Vehicle/FactGroups/TemperatureFact.json</file>
 		<file alias="Vehicle/TerrainFactGroup.json">../src/Vehicle/FactGroups/TerrainFactGroup.json</file>

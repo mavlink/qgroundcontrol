@@ -296,7 +296,7 @@ APMFrameClass::APMFrameClass(const QString& name, bool copter, int frameClass, F
             }
         }
         if (_imageResourceDefault.isEmpty()) {
-            _imageResourceDefault = QStringLiteral("/qmlimages/Airframe/AirframeUnknown");
+            _imageResourceDefault = QStringLiteral("/qmlimages/Airframe/AirframeUnknown.svg");
         }
 
         // Filter the enums
