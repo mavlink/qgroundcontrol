@@ -229,7 +229,7 @@ Rectangle {
                     text:       qsTr("Show all values")
                     checkable:  true
                     checked:    missionItem.isSimpleItem ? missionItem.rawEdit : false
-                    enabled:    missionItem.isSimpleItem && !_waypointsOnlyMode
+                    enabled:    QGroundControl.corePlugin.showAdvancedUI && missionItem.isSimpleItem && !_waypointsOnlyMode
 
                     onTriggered:    {
                         if (missionItem.rawEdit) {
