@@ -275,7 +275,9 @@ SettingsPage {
             }
             SettingsGroupLayout {
                 outerBorderColor: _activeRID ? (_remoteIDManager.armStatusGood ? defaultBorderColor : qgcPal.colorRed) : defaultBorderColor
+                visible:            armStatusLabel.labelText !== ""
                 LabelledLabel {
+                    id :                armStatusLabel
                     label:              qsTr("Arm Status Error")
                     labelText:          _remoteIDManager?_remoteIDManager.armStatusError:"Vehicle Not Connected"
                     visible:            labelText !== ""

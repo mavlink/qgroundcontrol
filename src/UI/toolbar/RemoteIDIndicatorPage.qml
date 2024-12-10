@@ -329,14 +329,14 @@ ToolIndicatorPage {
 
 
                 SettingsGroupLayout {
+                    visible:            armStatusLabel.labelText !== ""
                     LabelledLabel {
+                        id :                armStatusLabel
                         label:              qsTr("Arm Status Error")
                         labelText:          remoteIDManager.armStatusError
-                        visible:            labelText !== ""
                         Layout.fillWidth:   true
                     }
                 }
-
 
                 SettingsGroupLayout {
                     heading:                qsTr("Self ID")
@@ -399,6 +399,22 @@ ToolIndicatorPage {
                         textFieldPreferredWidth:    textFieldWidth
 
                         property Fact _fact: remoteIDSettings.selfIDEmergency
+                    }
+                }
+
+                SettingsGroupLayout {
+                    Layout.fillWidth: true
+
+                    RowLayout {
+                        Layout.fillWidth: true
+
+                        QGCLabel { Layout.fillWidth: true; text: qsTr("Remote ID") }
+                        QGCButton {
+                            text: qsTr("Configure")
+                            onClicked: {
+                                goToSettings()
+                            }
+                        }
                     }
                 }
             }
