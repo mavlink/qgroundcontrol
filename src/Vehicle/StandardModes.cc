@@ -175,7 +175,7 @@ QString StandardModes::flightMode(uint32_t custom_mode) const
 bool StandardModes::setFlightMode(const QString &flightMode, uint32_t *custom_mode)
 {
     for (auto iter = _modes.constBegin(); iter != _modes.constEnd(); ++iter) {
-        if (iter->name == flightMode) {
+        if (QString::compare(iter->name, flightMode, Qt::CaseInsensitive) == 0) {
             *custom_mode = iter.key();
             return true;
         }
