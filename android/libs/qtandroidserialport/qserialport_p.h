@@ -140,7 +140,11 @@ private:
     static int _parityToAndroidParity(QSerialPort::Parity parity);
     static int _flowControlToAndroidFlowControl(QSerialPort::FlowControl flowControl);
 
-    int m_deviceId = INVALID_DEVICE_ID;
+    int _deviceId = INVALID_DEVICE_ID;
+    // QString _serialNumber;
+
+    QMutex _readMutex;
+    QWaitCondition _readWaitCondition;
 };
 
 QT_END_NAMESPACE
