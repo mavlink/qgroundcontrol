@@ -18,6 +18,10 @@ Item {
     property var showText: obstacleDistance._showText
 
     function drawSegment(ctx, range, centerX, centerY, lengthFrom, lengthTo, radFrom, radTo, grad) {
+        // Qt expects the angles to be in respect of the X axis, The Incoming Angles are in FRD From Front goind Clockwise
+        // Transform coordinates to Qt XY
+        radFrom -= Math.PI / 2
+        radTo -= Math.PI / 2
         const topSrcX = centerX + lengthFrom * Math.cos(radFrom)
         const topSrcY = centerY + lengthFrom * Math.sin(radFrom)
         const topDstX = centerX + lengthFrom * Math.cos(radTo)
