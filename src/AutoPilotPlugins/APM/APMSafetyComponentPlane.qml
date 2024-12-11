@@ -39,7 +39,13 @@ SetupPage {
             property Fact _failsafeThrValue:    controller.getParameterFact(-1, "THR_FS_VALUE")
             property Fact _failsafeGCSEnable:   controller.getParameterFact(-1, "FS_GCS_ENABL")
 
-            property Fact _rtlAltFact: controller.getParameterFact(-1, "ALT_HOLD_RTL")
+            property Fact _rtlAltFact: {
+                if (controller.firmwareMajorVersion < 4 || (controller.firmwareMajorVersion === 4 && controller.firmwareMinorVersion < 5)) {
+                    return controller.getParameterFact(-1, "ALT_HOLD_RTL")
+                } else {
+                    return controller.getParameterFact(-1, "RTL_ALTITUDE")
+                }
+            }
 
             property real _margins: ScreenTools.defaultFontPixelHeight
 
