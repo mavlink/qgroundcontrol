@@ -1,3 +1,5 @@
+add_subdirectory(GraphicalEffects)
+
 find_package(Qt6 REQUIRED COMPONENTS Concurrent Core Gui Location Positioning Qml QmlIntegration Quick Widgets)
 
 qt_add_library(QmlControls STATIC
@@ -68,6 +70,7 @@ target_link_libraries(QmlControls
         Geo
         GPS
         MockLink
+        qgcgraphicaleffectsplugin
     PUBLIC
         Qt6::Core
         Qt6::Gui
