@@ -37,7 +37,7 @@ public:
     QString name() const { return _name; }
     void setName(const QString &name);
 
-    LinkInterface *link() { return _link.lock().get(); }
+    LinkInterface *link() const { return _link.lock().get(); }
     void setLink(const std::shared_ptr<LinkInterface> link);
 
     /// Is this a dynamic configuration?
