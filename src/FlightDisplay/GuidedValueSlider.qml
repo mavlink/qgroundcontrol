@@ -35,7 +35,6 @@ Item {
     property string _displayText:           ""
 
     property var    _unitsSettings:         QGroundControl.settingsManager.unitsSettings
-    property real   _margins:               ScreenTools.defaultFontPixelWidth / 2
     property real   _indicatorCenterPos:    sliderFlickable.height / 2
 
     property int    _fullSliderRangeIndex:  2
@@ -44,9 +43,10 @@ Item {
     property int    _fullSliderValueRange:  _rgValueRanges[_fullSliderRangeIndex]
     property int    _halfSliderValueRange:  _fullSliderValueRange / 2
 
-    property real   _majorTickWidth:        ScreenTools.largeFontPixelWidth * 3
-    property real   _minorTickWidth:        _majorTickWidth / 2
+    property real   _majorTickWidth:        ScreenTools.largeFontPixelWidth * 2
     property real   _majorTickPixelHeight:  ScreenTools.largeFontPixelHeight * 2
+    property real   _majorTickValueMargin:  ScreenTools.defaultFontPixelWidth / 2
+    property real   _minorTickWidth:        _majorTickWidth / 2
     property real   _sliderValuePerPixel:   _majorTickValueStep / _majorTickPixelHeight
 
     property int    _majorTickValueStep:    10
@@ -101,6 +101,10 @@ Item {
         return _clampedSliderValue(_sliderValue)
     }
 
+    DeadMouseArea {
+        anchors.fill:   parent
+    }
+
     Rectangle {
         anchors.fill:   parent
         color:          _qgcPal.window
@@ -145,14 +149,16 @@ Item {
                         property real tickValue: _majorTickMaxValue - (_majorTickValueStep * index)
 
                         Rectangle {
+                            id:     majorTick
                             width:  _majorTickWidth
                             height: 1
                             color:  _qgcPal.text
                         }
 
                         QGCLabel {
+                            anchors.margins:        _majorTickValueMargin
                             anchors.right:          parent.right
-                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.verticalCenter: majorTick.verticalCenter
                             text:                   parent.tickValue
                             font.pointSize:         ScreenTools.largeFontPointSize
                         }
@@ -182,14 +188,19 @@ Item {
     Canvas {
         id:     indicatorCanvas
         y:      sliderFlickable.y + _indicatorCenterPos - height / 2
-        width:  Math.max(minIndicatorWidth, minTickDisplayWidth)
+        width:  Math.max(minIndicatorWidth, maxMajorTickDisplayWidth)
         height: indicatorHeight
         clip:   false
 
-        property real indicatorHeight:      valueLabel.contentHeight
-        property real pointerWidth:         ScreenTools.defaultFontPixelWidth
-        property real minIndicatorWidth:    pointerWidth + (_margins * 2) + valueLabel.contentWidth
-        property real minTickDisplayWidth:  _majorTickWidth + ScreenTools.defaultFontPixelWidth + ScreenTools.defaultFontPixelWidth * 3
+        readonly property int maxDigits:    3
+
+        property real indicatorValueMargins:    ScreenTools.defaultFontPixelWidth / 2
+        property real indicatorHeight:          valueLabel.contentHeight
+        property real pointerWidth:             ScreenTools.defaultFontPixelWidth
+        property real minIndicatorWidth:        pointerWidth + (indicatorValueMargins * 2) + valueLabel.contentWidth
+        property real maxDigitsWidth:           ScreenTools.largeFontPixelWidth * maxDigits
+        property real intraTickDigitSpacing:    ScreenTools.defaultFontPixelWidth
+        property real maxMajorTickDisplayWidth: _majorTickWidth + intraTickDigitSpacing + maxDigitsWidth + _majorTickValueMargin
 
         onPaint: {
             var ctx = getContext("2d")
@@ -199,19 +210,19 @@ Item {
             ctx.beginPath()
             ctx.moveTo(0, indicatorHeight / 2)
             ctx.lineTo(pointerWidth, indicatorHeight / 4)
-            ctx.lineTo(pointerWidth, 0)
-            ctx.lineTo(width - 1, 0)
-            ctx.lineTo(width - 1, indicatorHeight)
-            ctx.lineTo(pointerWidth, indicatorHeight)
+            ctx.lineTo(pointerWidth, 1)
+            ctx.lineTo(width - 1, 1)
+            ctx.lineTo(width - 1, indicatorHeight - 1)
+            ctx.lineTo(pointerWidth, indicatorHeight - 1)
             ctx.lineTo(pointerWidth, indicatorHeight / 4 * 3)
-            ctx.lineTo(0, indicatorHeight / 2)
+            ctx.closePath()
             ctx.fill()
             ctx.stroke()
         }
 
         QGCLabel {
             id:                     valueLabel
-            anchors.margins:        _margins
+            anchors.margins:        indicatorCanvas.indicatorValueMargins
             anchors.right:          parent.right
             anchors.verticalCenter: parent.verticalCenter
             horizontalAlignment:    Text.AlignRight
