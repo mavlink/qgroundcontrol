@@ -44,15 +44,13 @@ bool CustomFlyViewOptions::showInstrumentPanel(void) const
 CustomOptions::CustomOptions(CustomPlugin *plugin, QObject *parent)
     : QGCOptions(parent)
     , _plugin(plugin)
+    , _flyViewOptions(new CustomFlyViewOptions(this, this))
 {
     Q_CHECK_PTR(_plugin);
 }
 
-QGCFlyViewOptions* CustomOptions::flyViewOptions(void)
+QGCFlyViewOptions* CustomOptions::flyViewOptions(void) const
 {
-    if (!_flyViewOptions) {
-        _flyViewOptions = new CustomFlyViewOptions(this, this);
-    }
     return _flyViewOptions;
 }
 
@@ -105,7 +103,7 @@ void CustomPlugin::_addSettingsEntry(const QString& title, const char* qmlFile, 
                 this)));
 }
 
-QGCOptions* CustomPlugin::options()
+QGCOptions* CustomPlugin::options() const
 {
     return _options;
 }
@@ -120,7 +118,7 @@ QString CustomPlugin::brandImageOutdoor(void) const
     return QStringLiteral("/custom/img/dronecode-black.svg");
 }
 
-bool CustomPlugin::overrideSettingsGroupVisibility(const QString &name)
+bool CustomPlugin::overrideSettingsGroupVisibility(const QString &name) const
 {
     // We have set up our own specific brand imaging. Hide the brand image settings such that the end user
     // can't change it.
@@ -131,7 +129,7 @@ bool CustomPlugin::overrideSettingsGroupVisibility(const QString &name)
 }
 
 // This allows you to override/hide QGC Application settings
-bool CustomPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData& metaData)
+bool CustomPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData& metaData) const
 {
     bool parentResult = QGCCorePlugin::adjustSettingMetaData(settingsGroup, metaData);
 
@@ -151,7 +149,7 @@ bool CustomPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaD
 }
 
 // This modifies QGC colors palette to match possible custom corporate branding
-void CustomPlugin::paletteOverride(const QString &colorName, QGCPalette::PaletteColorInfo_t& colorInfo)
+void CustomPlugin::paletteOverride(const QString &colorName, QGCPalette::PaletteColorInfo_t& colorInfo) const
 {
     if (colorName == QStringLiteral("window")) {
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = QColor("#212529");
@@ -342,7 +340,7 @@ void CustomPlugin::paletteOverride(const QString &colorName, QGCPalette::Palette
 }
 
 // We override this so we can get access to QQmlApplicationEngine and use it to register our qml module
-QQmlApplicationEngine* CustomPlugin::createQmlApplicationEngine(QObject* parent)
+QQmlApplicationEngine* CustomPlugin::createQmlApplicationEngine(QObject* parent) const
 {
     QQmlApplicationEngine* qmlEngine = QGCCorePlugin::createQmlApplicationEngine(parent);
     qmlEngine->addImportPath("qrc:/Custom/Widgets");
