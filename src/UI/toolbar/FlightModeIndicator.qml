@@ -178,7 +178,7 @@ RowLayout {
                 visible:                false
 
                 function calcVisible() {
-                    hiddenModesLabel.visible = hiddenFlightModesList.length > 0
+                    hiddenModesLabel.visible = (hiddenFlightModesList.length > 0) && QGroundControl.corePlugin.showAdvancedUI
                 }
             }
         }
@@ -199,10 +199,11 @@ RowLayout {
             }
 
             SettingsGroupLayout {
-                Layout.fillWidth:  true
+                Layout.fillWidth:   true
 
                 RowLayout {
                     Layout.fillWidth:   true
+                    visible:            QGroundControl.corePlugin.showAdvancedUI
                     enabled:            control.allowEditMode
 
                     QGCLabel {
