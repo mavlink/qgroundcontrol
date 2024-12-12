@@ -22,7 +22,7 @@ void APMSubMotorComponentController::handleNewMessages(int uasid, int componenti
     Q_UNUSED(uasid);
     Q_UNUSED(componentid);
     Q_UNUSED(severity);
-    if (_vehicle->flightMode() == "Motor Detection"
+    if (QString::compare(_vehicle->flightMode(), "Motor Detection", Qt::CaseInsensitive) == 0
         && (text.toLower().contains("thruster") || text.toLower().contains("motor"))) {
         _motorDetectionMessages += text + QStringLiteral("\n");
         emit motorDetectionMessagesChanged();
