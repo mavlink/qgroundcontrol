@@ -327,135 +327,14 @@ ToolIndicatorPage {
                 spacing:            ScreenTools.defaultFontPixelHeight / 2
                 Layout.alignment:   Qt.AlignTop
 
-                SettingsGroupLayout {
-                    Layout.fillWidth:   true
-
-                    LabelledFactComboBox {
-                        label:              fact.shortDescription
-                        fact:               QGroundControl.settingsManager.remoteIDSettings.region
-                        visible:            QGroundControl.settingsManager.remoteIDSettings.region.visible
-                        Layout.fillWidth:   true
-                    }
-                }
 
                 SettingsGroupLayout {
+                    visible:            armStatusLabel.labelText !== ""
                     LabelledLabel {
+                        id :                armStatusLabel
                         label:              qsTr("Arm Status Error")
                         labelText:          remoteIDManager.armStatusError
-                        visible:            labelText !== ""
                         Layout.fillWidth:   true
-                    }
-                }
-
-                SettingsGroupLayout {
-                    heading:                qsTr("Basic ID")
-                    headingDescription:     qsTr("If Basic ID is already set on the RID device, this will be registered as Basic ID 2")
-                    Layout.fillWidth:       true
-                    Layout.preferredWidth:  textLabelWidth
-
-                    FactCheckBoxSlider {
-                        id:                 sendBasicIDSlider
-                        text:               qsTr("Broadcast")
-                        fact:               _fact
-                        visible:            _fact.visible
-                        Layout.fillWidth:   true
-
-                        property Fact _fact: remoteIDSettings.sendBasicID
-                    }
-
-                    LabelledFactComboBox {
-                        id:                 basicIDTypeCombo
-                        label:              _fact.shortDescription
-                        fact:               _fact
-                        indexModel:         false
-                        visible:            _fact.visible
-                        enabled:            sendBasicIDSlider._fact.rawValue
-                        Layout.fillWidth:   true
-
-                        property Fact _fact: remoteIDSettings.basicIDType
-                    }
-
-                    LabelledFactComboBox {
-                        label:              _fact.shortDescription
-                        fact:               _fact
-                        indexModel:         false
-                        visible:            _fact.visible
-                        enabled:            sendBasicIDSlider._fact.rawValue
-                        Layout.fillWidth:   true
-
-                        property Fact _fact: remoteIDSettings.basicIDUaType
-                    }
-
-                    LabelledFactTextField {
-                        label:                      _fact.shortDescription
-                        fact:                       _fact
-                        visible:                    _fact.visible
-                        enabled:            sendBasicIDSlider._fact.rawValue
-                        textField.maximumLength:    20
-                        Layout.fillWidth:           true
-                        textFieldPreferredWidth:    textFieldWidth
-
-                        property Fact _fact: remoteIDSettings.basicID
-                    }
-                }
-
-                SettingsGroupLayout {
-                    heading:            qsTr("Operator ID")
-                    Layout.fillWidth:   true
-
-                    FactCheckBoxSlider {
-                        text:               qsTr("Broadcast%1").arg(isEURegion ? " (EU Required)" : "")
-                        fact:               sendOperatorIdFact
-                        visible:            sendOperatorIdFact.visible
-                        enabled:            isFAARegion
-                        Layout.fillWidth:   true
-
-                        property Fact _fact: remoteIDSettings.sendOperatorID
-                    }
-
-                    LabelledFactComboBox {
-                        id:                 regionOperationCombo
-                        label:              _fact.shortDescription
-                        fact:               _fact
-                        indexModel:         false
-                        visible:            _fact.visible && (_fact.enumValues.length > 1)
-                        Layout.fillWidth:   true
-
-                        property Fact _fact: remoteIDSettings.operatorIDType
-                    }
-
-                    RowLayout {
-                        spacing: ScreenTools.defaultFontPixelWidth * 2
-
-                        QGCLabel {
-                            Layout.fillWidth:   true
-                            text:               operatorIDFact.shortDescription + (regionOperationCombo.visible ? "" :  qsTr(" (%1)").arg(regionOperationCombo.comboBox.currentText))
-                        }
-
-                        QGCTextField {
-                            Layout.preferredWidth:  textFieldWidth
-                            Layout.fillWidth:       true
-                            text:                   operatorIDFact.valueString
-                            visible:                operatorIDFact.visible
-                            maximumLength:          20                  // Maximum defined by Mavlink definition of OPEN_DRONE_ID_OPERATOR_ID message
-
-                            onTextChanged: {
-                                operatorIDFact.value = text
-                                if (_activeVehicle) {
-                                    _activeVehicle.remoteIDManager.checkOperatorID(text)
-                                } else {
-                                    _offlineVehicle.remoteIDManager.checkOperatorID(text)
-                                }
-                            }
-
-                            onEditingFinished: {
-                                if (_activeVehicle) {
-                                    _activeVehicle.remoteIDManager.setOperatorID()
-                                } else {
-                                    _offlineVehicle.remoteIDManager.setOperatorID()
-                                }
-                            }
-                        }
                     }
                 }
 
@@ -463,7 +342,7 @@ ToolIndicatorPage {
                     heading:                qsTr("Self ID")
                     headingDescription:     qsTr("If an emergency is declared, Emergency Text will be broadcast even if Broadcast setting is not enabled.")
                     Layout.fillWidth:       true
-                    Layout.preferredWidth:  textLabelWidth
+                    Layout.preferredWidth:  textLabelWidth + textFieldWidth
 
                     FactCheckBoxSlider {
                         id:                 sendSelfIDSlider
@@ -522,97 +401,24 @@ ToolIndicatorPage {
                         property Fact _fact: remoteIDSettings.selfIDEmergency
                     }
                 }
-            }
-
-            ColumnLayout {
-                spacing:            ScreenTools.defaultFontPixelHeight / 2
-                Layout.alignment:   Qt.AlignTop
 
                 SettingsGroupLayout {
-                    heading:            qsTr("GroundStation Location")
-                    Layout.fillWidth:   true
+                    Layout.fillWidth: true
 
-                    LabelledFactComboBox {
-                        label:              locationTypeFact.shortDescription
-                        fact:               locationTypeFact
-                        indexModel:         false
-                        Layout.fillWidth:   true
-                    }
+                    RowLayout {
+                        Layout.fillWidth: true
 
-                    LabelledFactTextField {
-                        label:                      _fact.shortDescription
-                        fact:                       _fact
-                        textField.maximumLength:    20
-                        enabled:                    locationTypeFact.rawValue === RemoteIDIndicatorPage.LocationType.FIXED
-                        Layout.fillWidth:           true
-                        textFieldPreferredWidth:    textFieldWidth
-
-                        property Fact _fact: remoteIDSettings.latitudeFixed
-                    }
-
-                    LabelledFactTextField {
-                        label:                      _fact.shortDescription
-                        fact:                       _fact
-                        textField.maximumLength:    20
-                        enabled:                    locationTypeFact.rawValue === RemoteIDIndicatorPage.LocationType.FIXED
-                        Layout.fillWidth:           true
-                        textFieldPreferredWidth:    textFieldWidth
-
-                        property Fact _fact: remoteIDSettings.longitudeFixed
-                    }
-
-                    LabelledFactTextField {
-                        label:                      _fact.shortDescription
-                        fact:                       _fact
-                        textField.maximumLength:    20
-                        enabled:                    locationTypeFact.rawValue === RemoteIDIndicatorPage.LocationType.FIXED
-                        Layout.fillWidth:           true
-                        textFieldPreferredWidth:    textFieldWidth
-
-                        property Fact _fact: remoteIDSettings.altitudeFixed
-                    }
-                }
-
-                SettingsGroupLayout {
-                    heading:            qsTr("EU Vehicle Info")
-                    visible:            isEURegion
-                    Layout.fillWidth:   true
-
-                    QGCCheckBoxSlider {
-                        id:                 euProvideInfoSlider
-                        text:               qsTr("Provide Information")
-                        checked:            _fact.rawValue === RemoteIDIndicatorPage.ClassificationType.EU
-                        visible:            _fact.visible
-                        Layout.fillWidth:   true
-                        onClicked:          _fact.rawValue = !_fact.rawValue
-
-                        property Fact _fact: remoteIDSettings.classificationType
-                    }
-
-                    LabelledFactComboBox {
-                        id:                 euCategoryCombo
-                        label:              _fact.shortDescription
-                        fact:               _fact
-                        indexModel:         false
-                        visible:            _fact.visible
-                        enabled:            euProvideInfoSlider.checked
-                        Layout.fillWidth:   true
-
-                        property Fact _fact: remoteIDSettings.categoryEU
-                    }
-
-                    LabelledFactComboBox {
-                        label:              _fact.shortDescription
-                        fact:               _fact
-                        indexModel:         false
-                        visible:            _fact.visible
-                        enabled:            euCategoryCombo.enabled
-                        Layout.fillWidth:   true
-
-                        property Fact _fact: remoteIDSettings.classEU
+                        QGCLabel { Layout.fillWidth: true; text: qsTr("Remote ID") }
+                        QGCButton {
+                            text: qsTr("Configure")
+                            onClicked: {
+                                goToSettings()
+                            }
+                        }
                     }
                 }
             }
+
         }
     }
 }
