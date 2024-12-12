@@ -52,7 +52,7 @@ bool QGCSerialPortInfo::_loadJsonData()
 
     QString errorString;
     int version;
-    const QJsonObject json = JsonHelper::openInternalQGCJsonFile(":/json/USBBoardInfo.json", _jsonFileTypeValue, 1, 1, version, errorString);
+    const QJsonObject json = JsonHelper::openInternalQGCJsonFile(QStringLiteral(":/json/USBBoardInfo.json"), QString(_jsonFileTypeValue), 1, 1, version, errorString);
     if (!errorString.isEmpty()) {
         qCWarning(QGCSerialPortInfoLog) << "Internal Error:" << errorString;
         return false;
@@ -165,7 +165,14 @@ bool QGCSerialPortInfo::_loadJsonData()
 
 QGCSerialPortInfo::BoardType_t QGCSerialPortInfo::_boardClassStringToType(const QString &boardClass)
 {
-    for (const BoardClassString2BoardType_t &board : _rgBoardClass2BoardType) {
+    static const BoardClassString2BoardType_t rgBoardClass2BoardType[BoardTypeUnknown] = {
+        { _boardTypeToString(BoardTypePixhawk), BoardTypePixhawk },
+        { _boardTypeToString(BoardTypeRTKGPS), BoardTypeRTKGPS },
+        { _boardTypeToString(BoardTypeSiKRadio), BoardTypeSiKRadio },
+        { _boardTypeToString(BoardTypeOpenPilot), BoardTypeOpenPilot },
+    };
+
+    for (const BoardClassString2BoardType_t &board : rgBoardClass2BoardType) {
         if (boardClass == board.classString) {
             return board.boardType;
         }
@@ -245,12 +252,14 @@ QString QGCSerialPortInfo::_boardTypeToString(BoardType_t boardType)
 QList<QGCSerialPortInfo> QGCSerialPortInfo::availablePorts()
 {
     QList<QGCSerialPortInfo> list;
-    for (const QSerialPortInfo &portInfo : QSerialPortInfo::availablePorts()) {
+
+    const QList<QSerialPortInfo> availablePorts = QSerialPortInfo::availablePorts();
+    for (const QSerialPortInfo &portInfo : availablePorts) {
         if (isSystemPort(portInfo)) {
             continue;
         }
 
-        const QGCSerialPortInfo* const qgcPortInfo = reinterpret_cast<const QGCSerialPortInfo*>(&portInfo);
+        const QGCSerialPortInfo *const qgcPortInfo = reinterpret_cast<const QGCSerialPortInfo*>(&portInfo);
         list << *qgcPortInfo;
     }
 
@@ -298,11 +307,10 @@ bool QGCSerialPortInfo::canFlash() const
         return false;
     }
 
-    switch(boardType) {
-    case QGCSerialPortInfo::BoardTypePixhawk:
-    case QGCSerialPortInfo::BoardTypeSiKRadio:
-        return true;
-    default:
-        return false;
-    }
+    static const QList<BoardType_t> flashable = {
+        BoardTypePixhawk,
+        BoardTypeSiKRadio
+    };
+
+    return flashable.contains(boardType);
 }

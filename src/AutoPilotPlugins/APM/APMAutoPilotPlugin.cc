@@ -204,7 +204,7 @@ void APMAutoPilotPlugin::_checkForBadCubeBlack(void)
     // FIXME: Put back
     for (const QVariant& varLink: _vehicle->links()) {
         SerialLink* serialLink = varLink.value<SerialLink*>();
-        if (serialLink && QSerialPortInfo(*serialLink->_hackAccessToPort()).description().contains(QStringLiteral("CubeBlack"))) {
+        if (serialLink && QSerialPortInfo(*serialLink->port()).description().contains(QStringLiteral("CubeBlack"))) {
             cubeBlackFound = true;
         }
 
