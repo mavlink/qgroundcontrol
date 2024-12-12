@@ -47,7 +47,7 @@ jobs:
           submodules: recursive
           fetch-tags: true
           fetch-depth: 0
-          
+
       - name: Enable custom build
         run: |
           if not exist ".\custom-example" (
@@ -58,13 +58,13 @@ jobs:
       - uses: seanmiddleditch/gha-setup-ninja@v5
       - uses: lukka/get-cmake@latest
 
-      - name: Install Vulkan
-        working-directory: ${{ runner.temp }}
-        shell: pwsh
-        run: |
-          Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe" -OutFile vulkan-sdk.exe
-          .\vulkan-sdk.exe --root C:\VulkanSDK\latest --accept-licenses --default-answer --confirm-command install com.lunarg.vulkan.glm com.lunarg.vulkan.volk com.lunarg.vulkan.vma com.lunarg.vulkan.debug
-          echo "VULKAN_SDK=C:\VulkanSDK\latest" >> $env:GITHUB_ENV
+      # - name: Install Vulkan
+      #   working-directory: ${{ runner.temp }}
+      #   shell: pwsh
+      #   run: |
+      #     Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe" -OutFile vulkan-sdk.exe
+      #     .\vulkan-sdk.exe --root C:\VulkanSDK\latest --accept-licenses --default-answer --confirm-command install com.lunarg.vulkan.glm com.lunarg.vulkan.volk com.lunarg.vulkan.vma com.lunarg.vulkan.debug
+      #     echo "VULKAN_SDK=C:\VulkanSDK\latest" >> $env:GITHUB_ENV
 
       - name: Install GStreamer
         uses: blinemedical/setup-gstreamer@v1
@@ -131,16 +131,16 @@ jobs:
         working-directory: ${{ runner.temp }}\shadow_build_dir
         run: cmake --build . --target all --config ${{ matrix.BuildType }}
 
-      - name: Install
-        working-directory: ${{ runner.temp }}\shadow_build_dir
-        run: cmake --install . --config ${{ matrix.BuildType }}
+      # - name: Install
+      #   working-directory: ${{ runner.temp }}\shadow_build_dir
+      #   run: cmake --install . --config ${{ matrix.BuildType }}
 
-      - name: Upload Build File
-        if: matrix.BuildType == 'Release'
-        uses: ./.github/actions/upload
-        with:
-          artifact_name: ${{ env.ARTIFACT }}
-          aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          source: ''
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Upload Build File
+      #   if: matrix.BuildType == 'Release'
+      #   uses: ./.github/actions/upload
+      #   with:
+      #     artifact_name: ${{ env.ARTIFACT }}
+      #     aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     source: ''
+      #     github_token: ${{ secrets.GITHUB_TOKEN }}
