@@ -38,24 +38,33 @@ Q_ENUM_NS(MessageType)
 
 /// Enum for ADSB Info Types Available.
 enum AvailableInfoType {
-    CallsignAvailable = 1 << 0,
-    LocationAvailable = 1 << 1,
-    AltitudeAvailable = 1 << 2,
-    HeadingAvailable = 1 << 3,
-    AlertAvailable = 1 << 4,
+    LocationAvailable = 1 << 0,
+    AltitudeAvailable = 1 << 1,
+    HeadingAvailable = 1 << 2,
+    VelocityAvailable = 1 << 3,
+    CallsignAvailable = 1 << 4,
+    SquawkAvailable = 1 << 5,
+    VerticalVelAvailable = 1 << 6,
+    AlertAvailable = 1 << 7
 };
 Q_FLAG_NS(AvailableInfoType)
 Q_DECLARE_FLAGS(AvailableInfoTypes, AvailableInfoType)
 Q_DECLARE_OPERATORS_FOR_FLAGS(AvailableInfoTypes)
 
 struct VehicleInfo_t {
-    uint32_t icaoAddress;
+    AvailableInfoTypes availableFlags;
+    uint32_t icaoAddress = 0;
     QString callsign;
     QGeoCoordinate location;
-    double altitude; // TODO: Use Altitude in QGeoCoordinate?
-    double heading;
-    bool alert;
-    AvailableInfoTypes availableFlags;
+    double heading = 0.0;
+    uint16_t squawk = 0;
+    double velocity = 0.0;
+    double verticalVel = 0.0;
+    uint32_t lastContact = 0;
+    bool simulated = false;
+    bool baro = false;
+    bool alert = false;
+    // TODO: Use QGeoPositionInfo, QGeoPositionInfoSource, QGeoPositionInfoSourceFactory
 };
 } // namespace ADSB
 
