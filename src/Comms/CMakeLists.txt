@@ -112,3 +112,5 @@ if(QGC_ZEROCONF_ENABLED)
     target_link_libraries(Comms PRIVATE qmdnsengine)
     target_compile_definitions(Comms PUBLIC QGC_ZEROCONF_ENABLED)
 endif()
+
+# target_compile_definitions(Comms PUBLIC QABSTRACTSOCKET_DEBUG)
