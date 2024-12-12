@@ -12,47 +12,16 @@
 #include <QtCore/QByteArray>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QString>
+#include <QtNetwork/QAbstractSocket>
 #include <QtNetwork/QHostAddress>
 
 #include "LinkConfiguration.h"
 #include "LinkInterface.h"
 
 class QTcpSocket;
+class QThread;
 
 Q_DECLARE_LOGGING_CATEGORY(TCPLinkLog)
-
-class TCPWorker : public QObject
-{
-    Q_OBJECT
-
-public:
-    TCPWorker(const QString &host, quint16 port, QObject *parent = nullptr);
-    ~TCPWorker();
-
-    bool isConnected() const;
-
-public slots:
-    void connectToHost();
-    void disconnectFromHost();
-    void writeData(const QByteArray &data);
-
-signals:
-    void connected();
-    void disconnected();
-    void errorOccurred(const QString &errorString);
-    void dataReceived(const QByteArray &data);
-
-private slots:
-    void _onSocketConnected();
-    void _onSocketDisconnected();
-    void _onSocketReadyRead();
-    void _onSocketErrorOccurred(QAbstractSocket::SocketError socketError);
-
-private:
-    QTcpSocket *_socket = nullptr;
-    QHostAddress _host;
-    quint16 _port = 0;
-};
 
 /*===========================================================================*/
 
@@ -92,6 +61,43 @@ private:
 
 /*===========================================================================*/
 
+class TCPWorker : public QObject
+{
+    Q_OBJECT
+
+public:
+    explicit TCPWorker(const TCPConfiguration *config, QObject *parent = nullptr);
+    ~TCPWorker();
+
+    bool isConnected() const;
+
+public slots:
+    void setupSocket();
+    void connectToHost();
+    void disconnectFromHost();
+    void writeData(const QByteArray &data);
+
+signals:
+    void connected();
+    void disconnected();
+    void errorOccurred(const QString &errorString);
+    void dataReceived(const QByteArray &data);
+
+private slots:
+    void _onSocketConnected();
+    void _onSocketDisconnected();
+    void _onSocketReadyRead();
+    void _onSocketBytesWritten();
+    void _onSocketErrorOccurred(QAbstractSocket::SocketError socketError);
+
+private:
+    const TCPConfiguration *_config = nullptr;
+    QTcpSocket *_socket = nullptr;
+    bool _errorEmitted = false;
+};
+
+/*===========================================================================*/
+
 class TCPLink : public LinkInterface
 {
     Q_OBJECT
@@ -105,18 +111,16 @@ public:
     bool isSecureConnection() override;
 
 private slots:
-    bool _connect() override;
+    void _writeBytes(const QByteArray &bytes) override;
     void _onConnected();
     void _onDisconnected();
     void _onErrorOccurred(const QString &errorString);
     void _onDataReceived(const QByteArray &data);
 
 private:
-    void _writeBytes(const QByteArray &bytes) override;
-    void _setupSocket();
-    void _attemptReconnection();
+    bool _connect() override;
 
+    const TCPConfiguration *_tcpConfig = nullptr;
     TCPWorker *_worker = nullptr;
     QThread *_workerThread = nullptr;
-    const TCPConfiguration *_tcpConfig = nullptr;
 };
