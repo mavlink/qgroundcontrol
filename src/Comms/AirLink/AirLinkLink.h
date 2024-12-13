@@ -24,26 +24,25 @@ class AirLinkConfiguration : public UDPConfiguration
     Q_PROPERTY(QString password     READ password   WRITE setPassword   NOTIFY passwordChanged)
     Q_PROPERTY(QString modemName    READ modemName  WRITE setModemName  NOTIFY modemNameChanged)
 public:
-    AirLinkConfiguration(const QString &name, QObject *parent = nullptr);
-    AirLinkConfiguration(const AirLinkConfiguration *copy, QObject *parent = nullptr);
+    explicit AirLinkConfiguration(const QString &name, QObject *parent = nullptr);
+    explicit AirLinkConfiguration(const AirLinkConfiguration *copy, QObject *parent = nullptr);
     ~AirLinkConfiguration();
-
-    QString username() const { return _username; }
-    QString password() const { return _password; }
-    QString modemName() const { return _modemName; }
-
-    void setUsername(const QString &username);
-    void setPassword(const QString &password);
-    void setModemName(const QString &modemName);
 
     LinkType type() const final { return LinkConfiguration::AirLink; }
     void copyFrom(const LinkConfiguration *source) final;
-
     void loadSettings(QSettings &settings, const QString &root) final;
     void saveSettings(QSettings &settings, const QString &root) final;
-    QString settingsURL() final { return "AirLinkSettings.qml"; }
+    QString settingsURL() final { return QStringLiteral("AirLinkSettings.qml"); }
     QString settingsTitle() final { return tr("AirLink Link Settings"); }
 
+    QString username() const { return _username; }
+    void setUsername(const QString &username);
+
+    QString password() const { return _password; }
+    void setPassword(const QString &password);
+
+    QString modemName() const { return _modemName; }
+    void setModemName(const QString &modemName);
 
 signals:
     void usernameChanged();
@@ -67,7 +66,7 @@ class AirLinkLink : public UDPLink
     Q_OBJECT
 
 public:
-    AirLinkLink(SharedLinkConfigurationPtr &config, QObject *parent = nullptr);
+    explicit AirLinkLink(SharedLinkConfigurationPtr &config, QObject *parent = nullptr);
     ~AirLinkLink();
 
     void disconnect() final;
@@ -81,7 +80,7 @@ private:
     bool _stillConnecting();
     void _setConnectFlag(bool connect);
 
-    const AirLinkConfiguration *_AirLinkConfig = nullptr;
+    const AirLinkConfiguration *_airLinkConfig = nullptr;
     QMutex _mutex;
     bool _needToConnect = false;
 
