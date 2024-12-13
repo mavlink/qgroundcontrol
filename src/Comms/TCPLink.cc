@@ -149,7 +149,7 @@ void TCPWorker::connectToHost()
 void TCPWorker::disconnectFromHost()
 {
     if (!isConnected()) {
-        qCWarning(TCPLinkLog) << "Already disconnected from host:" << _config->host() << "port:" << _config->port();
+        qCDebug(TCPLinkLog) << "Already disconnected from host:" << _config->host() << "port:" << _config->port();
         return;
     }
 
@@ -160,6 +160,11 @@ void TCPWorker::disconnectFromHost()
 
 void TCPWorker::writeData(const QByteArray &data)
 {
+    if (data.isEmpty()) {
+        emit errorOccurred(tr("Data to Send is Empty"));
+        return;
+    }
+
     if (!isConnected()) {
         emit errorOccurred(tr("Socket is not connected"));
         return;
@@ -177,6 +182,8 @@ void TCPWorker::writeData(const QByteArray &data)
         }
         totalBytesWritten += bytesWritten;
     }
+
+    emit dataSent(data.first(totalBytesWritten));
 }
 
 void TCPWorker::_onSocketConnected()
@@ -199,9 +206,9 @@ void TCPWorker::_onSocketReadyRead()
     emit dataReceived(data);
 }
 
-void TCPWorker::_onSocketBytesWritten()
+void TCPWorker::_onSocketBytesWritten(qint64 bytes)
 {
-
+    qCDebug(TCPLinkLog) << _config->host() << "Wrote" << bytes << "bytes";
 }
 
 void TCPWorker::_onSocketErrorOccurred(QAbstractSocket::SocketError socketError)
@@ -238,6 +245,7 @@ TCPLink::TCPLink(SharedLinkConfigurationPtr &config, QObject *parent)
     (void) connect(_worker, &TCPWorker::disconnected, this, &TCPLink::_onDisconnected, Qt::QueuedConnection);
     (void) connect(_worker, &TCPWorker::errorOccurred, this, &TCPLink::_onErrorOccurred, Qt::QueuedConnection);
     (void) connect(_worker, &TCPWorker::dataReceived, this, &TCPLink::_onDataReceived, Qt::QueuedConnection);
+    (void) connect(_worker, &TCPWorker::dataSent, this, &TCPLink::_onDataSent, Qt::QueuedConnection);
 
     _workerThread->start();
 }
@@ -282,12 +290,17 @@ void TCPLink::_onDisconnected()
 void TCPLink::_onErrorOccurred(const QString &errorString)
 {
     qCWarning(TCPLinkLog) << "Communication error:" << errorString;
-    emit communicationError(tr("TCP Link Error"), tr("Link %1: %2").arg(_tcpConfig->name(), errorString));
+    emit communicationError(tr("TCP Link Error"), tr("Link %1: (Host: %2 Port: %3) %4").arg(_tcpConfig->name(), _tcpConfig->host()).arg(_tcpConfig->port()).arg(errorString));
 }
 
 void TCPLink::_onDataReceived(const QByteArray &data)
 {
     emit bytesReceived(this, data);
+}
+
+void TCPLink::_onDataSent(const QByteArray &data)
+{
+    emit bytesSent(this, data);
 }
 
 void TCPLink::_writeBytes(const QByteArray& bytes)
