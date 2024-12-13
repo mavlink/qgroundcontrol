@@ -39,16 +39,15 @@ public:
 
     LinkType type() const override { return LinkConfiguration::TypeTcp; }
     void copyFrom(const LinkConfiguration *source) override;
+    void loadSettings(QSettings &settings, const QString &root) override;
+    void saveSettings(QSettings &settings, const QString &root) override;
+    QString settingsURL() override { return QStringLiteral("TcpSettings.qml"); }
+    QString settingsTitle() override { return tr("TCP Link Settings"); }
 
     QString host() const { return _host.toString(); }
     void setHost(const QString &host) { if (host != _host.toString()) { _host.setAddress(host); emit hostChanged(); } }
     quint16 port() const { return _port; }
     void setPort(quint16 port) { if (port != _port) { _port = port; emit portChanged(); } }
-
-    void loadSettings(QSettings &settings, const QString &root) override;
-    void saveSettings(QSettings &settings, const QString &root) override;
-    QString settingsURL() override { return QStringLiteral("TcpSettings.qml"); }
-    QString settingsTitle() override { return tr("TCP Link Settings"); }
 
 signals:
     void hostChanged();
@@ -71,23 +70,24 @@ public:
 
     bool isConnected() const;
 
+signals:
+    void connected();
+    void disconnected();
+    void errorOccurred(const QString &errorString);
+    void dataReceived(const QByteArray &data);
+    void dataSent(const QByteArray &data);
+
 public slots:
     void setupSocket();
     void connectToHost();
     void disconnectFromHost();
     void writeData(const QByteArray &data);
 
-signals:
-    void connected();
-    void disconnected();
-    void errorOccurred(const QString &errorString);
-    void dataReceived(const QByteArray &data);
-
 private slots:
     void _onSocketConnected();
     void _onSocketDisconnected();
     void _onSocketReadyRead();
-    void _onSocketBytesWritten();
+    void _onSocketBytesWritten(qint64 bytes);
     void _onSocketErrorOccurred(QAbstractSocket::SocketError socketError);
 
 private:
@@ -116,6 +116,7 @@ private slots:
     void _onDisconnected();
     void _onErrorOccurred(const QString &errorString);
     void _onDataReceived(const QByteArray &data);
+    void _onDataSent(const QByteArray &data);
 
 private:
     bool _connect() override;
