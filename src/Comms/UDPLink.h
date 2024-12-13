@@ -174,6 +174,9 @@ public:
     void disconnect() override;
     bool isSecureConnection() const override;
 
+protected:
+    bool _connect() override;
+
 private slots:
     void _writeBytes(const QByteArray &data) override;
     void _onConnected();
@@ -183,8 +186,6 @@ private slots:
     void _onDataSent(const QByteArray &data);
 
 private:
-    bool _connect() override;
-
     const UDPConfiguration *_udpConfig = nullptr;
     UDPWorker *_worker = nullptr;
     QThread *_workerThread = nullptr;
