@@ -24,7 +24,7 @@ option(QGC_VIEWER3D "Enable Viewer3D" ON) # Qt6Quick3D_FOUND
 # Comms
 option(QGC_ENABLE_BLUETOOTH "Enable Bluetooth Links" ON) # Qt6Bluetooth_FOUND
 option(QGC_ZEROCONF_ENABLED "Enable ZeroConf Compatibility" OFF)
-option(QGC_AIRLINK_DISABLED "Disable AIRLink" ON)
+option(QGC_AIRLINK_DISABLED "Disable AIRLink" OFF)
 option(QGC_NO_SERIAL_LINK "Disable Serial Links" OFF) # NOT IOS AND Qt6SerialPort_FOUND
 
 # Video
