@@ -117,7 +117,7 @@ public:
     virtual bool mavlinkMessage(Vehicle *vehicle, LinkInterface *link, const mavlink_message_t &message) const { Q_UNUSED(vehicle); Q_UNUSED(link); Q_UNUSED(message); return true; }
 
     /// Allows custom builds to add custom items to the FlightMap. Objects put into QmlObjectListModel should derive from QmlComponentInfo and set the url property.
-    virtual const QmlObjectListModel *customMapItems() const;
+    virtual const QmlObjectListModel *customMapItems();
 
     /// Allows custom builds to add custom items to the plan file before the document is created.
     virtual void preSaveToJson(PlanMasterController *pController, QJsonObject &json) const { Q_UNUSED(pController); Q_UNUSED(json); }
