@@ -110,7 +110,7 @@ const QGCOptions *QGCCorePlugin::options() const
     return _defaultOptions;
 }
 
-const QmlObjectListModel *QGCCorePlugin::customMapItems() const
+const QmlObjectListModel *QGCCorePlugin::customMapItems()
 {
     return _emptyCustomMapItems;
 }
