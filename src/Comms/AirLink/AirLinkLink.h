@@ -29,21 +29,21 @@ public:
     explicit AirLinkConfiguration(const AirLinkConfiguration *copy, QObject *parent = nullptr);
     ~AirLinkConfiguration();
 
-    QString username() const { return _username; }
-    QString password() const { return _password; }
-    QString modemName() const { return _modemName; }
-
-    void setUsername(const QString &username);
-    void setPassword(const QString &password);
-    void setModemName(const QString &modemName);
-
     LinkType type() const final { return LinkConfiguration::AirLink; }
     void copyFrom(const LinkConfiguration *source) final;
-
     void loadSettings(QSettings &settings, const QString &root) final;
     void saveSettings(QSettings &settings, const QString &root) const final;
-    QString settingsURL() const final { return "AirLinkSettings.qml"; }
+    QString settingsURL() const final { return QStringLiteral("AirLinkSettings.qml"); }
     QString settingsTitle() const final { return tr("AirLink Link Settings"); }
+
+    QString username() const { return _username; }
+    void setUsername(const QString &username);
+
+    QString password() const { return _password; }
+    void setPassword(const QString &password);
+
+    QString modemName() const { return _modemName; }
+    void setModemName(const QString &modemName);
 
 signals:
     void usernameChanged();
@@ -67,21 +67,19 @@ class AirLinkLink : public UDPLink
     Q_OBJECT
 
 public:
-    AirLinkLink(SharedLinkConfigurationPtr &config, QObject *parent = nullptr);
+    explicit AirLinkLink(SharedLinkConfigurationPtr &config, QObject *parent = nullptr);
     ~AirLinkLink();
 
     void disconnect() final;
 
-private slots:
-    bool _connect() final;
-
 private:
+    bool _connect() final;
     void _configureUdpSettings();
     void _sendLoginMsgToAirLink();
     bool _stillConnecting();
     void _setConnectFlag(bool connect);
 
-    const AirLinkConfiguration *_AirLinkConfig = nullptr;
+    const AirLinkConfiguration *_airLinkConfig = nullptr;
     QMutex _mutex;
     bool _needToConnect = false;
 
