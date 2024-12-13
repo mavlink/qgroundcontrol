@@ -9,6 +9,7 @@
 
 #include "AirLinkManager.h"
 #include "SettingsManager.h"
+#include "AppSettings.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/qapplicationstatic.h>
