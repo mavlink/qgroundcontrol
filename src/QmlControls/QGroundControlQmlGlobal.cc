@@ -305,14 +305,6 @@ bool QGroundControlQmlGlobal::linesIntersect(QPointF line1A, QPointF line1B, QPo
             intersectPoint != line1A && intersectPoint != line1B;
 }
 
-void QGroundControlQmlGlobal::setSkipSetupPage(bool skip)
-{
-    if(_skipSetupPage != skip) {
-        _skipSetupPage = skip;
-        emit skipSetupPageChanged();
-    }
-}
-
 void QGroundControlQmlGlobal::setFlightMapPosition(QGeoCoordinate& coordinate)
 {
     if (coordinate != flightMapPosition()) {
