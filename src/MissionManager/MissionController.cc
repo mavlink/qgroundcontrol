@@ -1370,7 +1370,6 @@ void MissionController::_recalcFlightPathSegments(void)
                             _splitSegment = segment;
                             _delayedSplitSegmentUpdate = false;
                             signalSplitSegmentChanged = true;
-                            qDebug() << "Update delayed split segment";
                         }
                         lastFlyThroughVI->setSimpleFlighPathSegment(segment);
                     }
@@ -2461,7 +2460,6 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
                                 } else {
                                     // The recalc of flight path segments hasn't happened yet since it is delayed and compressed.
                                     // So we need to register the fact that we need a split segment update and it will happen in the recalc instead.
-                                    qDebug() << "Delayed split";
                                     _delayedSplitSegmentUpdate = true;
                                 }
                                 break;
