@@ -199,7 +199,7 @@ Item {
         property real pointerWidth:             ScreenTools.defaultFontPixelWidth
         property real minIndicatorWidth:        pointerWidth + (indicatorValueMargins * 2) + valueLabel.contentWidth
         property real maxDigitsWidth:           ScreenTools.largeFontPixelWidth * maxDigits
-        property real intraTickDigitSpacing:    ScreenTools.defaultFontPixelWidth
+        property real intraTickDigitSpacing:    ScreenTools.largeFontPixelWidth
         property real maxMajorTickDisplayWidth: _majorTickWidth + intraTickDigitSpacing + maxDigitsWidth + _majorTickValueMargin
 
         onPaint: {
