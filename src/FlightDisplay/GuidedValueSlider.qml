@@ -45,7 +45,7 @@ Item {
 
     property real   _majorTickWidth:        ScreenTools.largeFontPixelWidth * 2
     property real   _majorTickPixelHeight:  ScreenTools.largeFontPixelHeight * 2
-    property real   _majorTickValueMargin:  ScreenTools.defaultFontPixelWidth / 2
+    property real   _tickValueRightMargin:  ScreenTools.defaultFontPixelWidth / 2
     property real   _minorTickWidth:        _majorTickWidth / 2
     property real   _sliderValuePerPixel:   _majorTickValueStep / _majorTickPixelHeight
 
@@ -156,7 +156,7 @@ Item {
                         }
 
                         QGCLabel {
-                            anchors.margins:        _majorTickValueMargin
+                            anchors.margins:        _tickValueRightMargin
                             anchors.right:          parent.right
                             anchors.verticalCenter: majorTick.verticalCenter
                             text:                   parent.tickValue
@@ -192,15 +192,20 @@ Item {
         height: indicatorHeight
         clip:   false
 
-        readonly property int maxDigits:    3
+        QGCLabel {
+            id:             maxDigitsTextMeasure
+            text:           "-100"
+            font.pointSize: ScreenTools.largeFontPointSize
+            visible:        false
+        }
 
         property real indicatorValueMargins:    ScreenTools.defaultFontPixelWidth / 2
         property real indicatorHeight:          valueLabel.contentHeight
         property real pointerWidth:             ScreenTools.defaultFontPixelWidth
         property real minIndicatorWidth:        pointerWidth + (indicatorValueMargins * 2) + valueLabel.contentWidth
-        property real maxDigitsWidth:           ScreenTools.largeFontPixelWidth * maxDigits
-        property real intraTickDigitSpacing:    ScreenTools.largeFontPixelWidth
-        property real maxMajorTickDisplayWidth: _majorTickWidth + intraTickDigitSpacing + maxDigitsWidth + _majorTickValueMargin
+        property real maxDigitsWidth:           maxDigitsTextMeasure.contentWidth
+        property real intraTickDigitSpacing:    ScreenTools.defaultFontPixelWidth
+        property real maxMajorTickDisplayWidth: _majorTickWidth + intraTickDigitSpacing + maxDigitsWidth + _tickValueRightMargin
 
         onPaint: {
             var ctx = getContext("2d")
