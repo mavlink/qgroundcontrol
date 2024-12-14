@@ -100,7 +100,6 @@ public:
     Q_PROPERTY(QString  telemetryFileExtension  READ telemetryFileExtension CONSTANT)
 
     Q_PROPERTY(QString qgcVersion       READ qgcVersion         CONSTANT)
-    Q_PROPERTY(bool    skipSetupPage    READ skipSetupPage      WRITE setSkipSetupPage NOTIFY skipSetupPageChanged)
 
     Q_PROPERTY(qreal zOrderTopMost              READ zOrderTopMost              CONSTANT) ///< z order for top most items, toolbar, main window sub view
     Q_PROPERTY(qreal zOrderWidgets              READ zOrderWidgets              CONSTANT) ///< z order value to widgets, for example: zoom controls, hud widgetss
@@ -216,8 +215,6 @@ public:
     bool    singleVehicleSupport    ();
     bool    px4ProFirmwareSupported ();
     bool    apmFirmwareSupported    ();
-    bool    skipSetupPage           () const{ return _skipSetupPage; }
-    void    setSkipSetupPage        (bool skip);
 
     void    setIsVersionCheckEnabled    (bool enable);
     void    setMavlinkSystemID          (int  id);
@@ -243,7 +240,6 @@ signals:
     void mavlinkSystemIDChanged         (int id);
     void flightMapPositionChanged       (QGeoCoordinate flightMapPosition);
     void flightMapZoomChanged           (double flightMapZoom);
-    void skipSetupPageChanged           ();
 
 private:
     QGCMapEngineManager*    _mapEngineManager       = nullptr;
@@ -269,7 +265,6 @@ private:
     double                  _flightMapInitialZoom   = 17.0;
     QmlUnitsConversion      _unitsConversion;
 
-    bool                    _skipSetupPage          = false;
     QStringList             _altitudeModeEnumString;
 
     static QGeoCoordinate   _coord;
