@@ -24,6 +24,7 @@ import QGroundControl.QGCPositionManager
 
 Map {
     id: _map
+    color: indoorPalette ? qgcPal.windowShadeDark : "white"
 
     plugin:     Plugin { name: "QGroundControl" }
     opacity:    0.99 // https://bugreports.qt.io/browse/QTBUG-82185
@@ -37,6 +38,7 @@ Map {
     property bool   firstGCSPositionReceived:       false   ///< true: first gcs position update was responded to
     property bool   firstVehiclePositionReceived:   false   ///< true: first vehicle position update was responded to
     property bool   planView:                       false   ///< true: map being using for Plan view, items should be draggable
+    property bool   indoorPalette:                  QGroundControl.settingsManager.appSettings.indoorPalette.rawValue == 1
 
     readonly property real  maxZoomLevel: 20
 
