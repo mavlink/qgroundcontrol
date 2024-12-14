@@ -117,15 +117,13 @@ Rectangle {
     Connections {
         target: QGroundControl.multiVehicleManager
         onParameterReadyVehicleAvailableChanged: {
-            if(!QGroundControl.skipSetupPage) {
-                if (QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable || summaryButton.checked || setupButtonGroup.current != firmwareButton) {
-                    // Show/Reload the Summary panel when:
-                    //      A new vehicle shows up
-                    //      The summary panel is already showing and the active vehicle goes away
-                    //      The active vehicle goes away and we are not on the Firmware panel.
-                    summaryButton.checked = true
-                    _showSummaryPanel()
-                }
+            if (QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable || summaryButton.checked || setupButtonGroup.current != firmwareButton) {
+                // Show/Reload the Summary panel when:
+                //      A new vehicle shows up
+                //      The summary panel is already showing and the active vehicle goes away
+                //      The active vehicle goes away and we are not on the Firmware panel.
+                summaryButton.checked = true
+                _showSummaryPanel()
             }
         }
     }
