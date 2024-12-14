@@ -76,6 +76,7 @@ QGCComboBox                             1.0 QGCComboBox.qml
 QGCDynamicObjectManager                 1.0 QGCDynamicObjectManager.qml
 QGCFileDialog                           1.0 QGCFileDialog.qml
 QGCFlickable                            1.0 QGCFlickable.qml
+QGCFlickableScrollIndicator             1.0 QGCFlickableScrollIndicator.qml
 QGCGroupBox                             1.0 QGCGroupBox.qml
 QGCLabel                                1.0 QGCLabel.qml
 QGCListView                             1.0 QGCListView.qml
