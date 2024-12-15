@@ -22,7 +22,7 @@
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickItemGrabResult>
 
-QGC_LOGGING_CATEGORY(QtMultimediaReceiverLog, "READY.video.qtmultimedia.qtmultimediareceiver")
+QGC_LOGGING_CATEGORY(QtMultimediaReceiverLog, "qgc.video.qtmultimedia.qtmultimediareceiver")
 
 QtMultimediaReceiver::QtMultimediaReceiver(QObject *parent)
     : VideoReceiver(parent)
@@ -35,14 +35,14 @@ QtMultimediaReceiver::QtMultimediaReceiver(QObject *parent)
 
     (void) connect(_mediaPlayer, &QMediaPlayer::playingChanged, this, &QtMultimediaReceiver::streamingChanged);
     (void) connect(_mediaPlayer, &QMediaPlayer::hasVideoChanged, this, &QtMultimediaReceiver::decodingChanged);
-    (void) connect(_mediaPlayer, &QMediaPlayer::playbackStateChanged, this, [this](QMediaPlayer::PlaybackState newState){
+    (void) connect(_mediaPlayer, &QMediaPlayer::playbackStateChanged, this, [this](QMediaPlayer::PlaybackState newState) {
         if (newState == QMediaPlayer::PlaybackState::PlayingState) {
             _frameTimer->start();
         } else if (newState == QMediaPlayer::PlaybackState::StoppedState) {
             _frameTimer->stop();
         }
     });
-    (void) connect(_mediaPlayer, &QMediaPlayer::mediaStatusChanged, this, [this](QMediaPlayer::MediaStatus status){
+    (void) connect(_mediaPlayer, &QMediaPlayer::mediaStatusChanged, this, [this](QMediaPlayer::MediaStatus status) {
         switch (status) {
         case QMediaPlayer::MediaStatus::LoadingMedia:
             _streamDevice = _mediaPlayer->sourceDevice();
@@ -110,7 +110,7 @@ void *QtMultimediaReceiver::createVideoSink(QObject *parent, QQuickItem *widget)
 
     QVideoSink *videoSink = nullptr;
     if (widget) {
-        QQuickVideoOutput* const videoOutput = reinterpret_cast<QQuickVideoOutput*>(widget);
+        QQuickVideoOutput *const videoOutput = reinterpret_cast<QQuickVideoOutput*>(widget);
         videoSink = videoOutput->videoSink();
     }
 
@@ -119,12 +119,12 @@ void *QtMultimediaReceiver::createVideoSink(QObject *parent, QQuickItem *widget)
 
 void QtMultimediaReceiver::releaseVideoSink(void *sink)
 {
-    if (!sink) {
+    /*if (!sink) {
         return;
     }
 
     QVideoSink* const videoSink = reinterpret_cast<QVideoSink*>(sink);
-    videoSink->deleteLater();
+    videoSink->deleteLater();*/
 }
 
 VideoReceiver *QtMultimediaReceiver::createVideoReceiver(QObject *parent)
@@ -173,7 +173,7 @@ void QtMultimediaReceiver::stop()
 
     if (!_mediaPlayer->isPlaying()) {
         qCDebug(QtMultimediaReceiverLog) << "Already stopped!";
-        emit onStartComplete(STATUS_INVALID_STATE);
+        emit onStopComplete(STATUS_INVALID_STATE);
         return;
     }
 
@@ -194,7 +194,7 @@ void QtMultimediaReceiver::startDecoding(void *sink)
 {
     qCDebug(QtMultimediaReceiverLog) << Q_FUNC_INFO;
 
-    if (sink == nullptr) {
+    if (!sink) {
         qCCritical(QtMultimediaReceiverLog) << "VideoSink is NULL";
         emit onStartDecodingComplete(STATUS_FAIL);
         return;
@@ -231,7 +231,7 @@ void QtMultimediaReceiver::stopDecoding()
 {
     qCDebug(QtMultimediaReceiverLog) << Q_FUNC_INFO;
 
-    if (_videoSink == nullptr) {
+    if (!_videoSink) {
         qCWarning(QtMultimediaReceiverLog) << "VideoSink is NULL";
         emit onStartDecodingComplete(STATUS_INVALID_STATE);
         return;
@@ -299,17 +299,18 @@ void QtMultimediaReceiver::takeScreenshot(const QString &imageFile)
     if (!_videoSink) {
         qCWarning(QtMultimediaReceiverLog) << "Video Sink is NULL";
         emit onTakeScreenshotComplete(STATUS_FAIL);
+        return;
     }
 
     const QVideoFrame frame = _videoSink->videoFrame();
-    if (frame.isValid() && frame.isReadable()) {
-        const QVideoFrameFormat frameFormat = frame.surfaceFormat();
-        const QImage frameImage = frame.toImage();
-        Q_UNUSED(frameImage);
-    } else {
+    if (!frame.isValid() || !frame.isReadable()) {
         qCWarning(QtMultimediaReceiverLog) << "Screenshot Frame is Invalid";
         emit onTakeScreenshotComplete(STATUS_FAIL);
+        return;
     }
+
+    // const QVideoFrameFormat frameFormat = frame.surfaceFormat();
+    // const QImage frameImage = frame.toImage();
 
     _videoOutput = reinterpret_cast<QQuickVideoOutput*>(_mediaPlayer->videoOutput());
     const QSize targetSize = _mediaRecorder->videoResolution();
