@@ -23,7 +23,7 @@
 #include <QtCore/QSettings>
 #include <QtCore/QThread>
 
-// JoystickLog Category declaration moved to QGCLoggingCategory.cc to allow access in Vehicle
+QGC_LOGGING_CATEGORY(JoystickLog, "Joystick")
 QGC_LOGGING_CATEGORY(JoystickValuesLog, "JoystickValuesLog")
 
 int Joystick::_transmitterMode = 2;
@@ -41,8 +41,9 @@ AssignableButtonAction::AssignableButtonAction(QObject* parent, QString action_,
 {
 }
 
-Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatCount)
-    : _name                 (name)
+Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatCount, QObject *parent)
+    : QThread(parent)
+    , _name                 (name)
     , _axisCount            (axisCount)
     , _buttonCount          (buttonCount)
     , _hatCount             (hatCount)
