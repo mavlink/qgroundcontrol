@@ -23,6 +23,9 @@
 QGC_LOGGING_CATEGORY(UDPLinkLog, "qgc.comms.udplink")
 
 namespace {
+    constexpr int BUFFER_TRIGGER_SIZE = 10 * 1024;
+    constexpr int RECEIVE_TIME_LIMIT_MS = 50;
+
     bool containsTarget(const QList<std::shared_ptr<UDPClient>> &list, const QHostAddress &address, quint16 port)
     {
         for (const std::shared_ptr<UDPClient> &target : list) {
@@ -273,6 +276,9 @@ bool UDPWorker::isConnected() const
 
 void UDPWorker::setupSocket()
 {
+    const QList<QHostAddress> localAddresses = QNetworkInterface::allAddresses();
+    _localAddresses = QSet(localAddresses.constBegin(), localAddresses.constEnd());
+
     _socket->setProxy(QNetworkProxy::NoProxy);
 
     (void) connect(_socket, &QUdpSocket::connected, this, &UDPWorker::_onSocketConnected);
@@ -352,11 +358,6 @@ void UDPWorker::disconnectLink()
 
 void UDPWorker::writeData(const QByteArray &data)
 {
-    if (!_socket->isValid()) {
-        emit errorOccurred(tr("Could Not Send Data - Socket is Invalid!"));
-        return;
-    }
-
     if (!isConnected()) {
         emit errorOccurred(tr("Could Not Send Data - Link is Disconnected!"));
         return;
@@ -401,11 +402,6 @@ void UDPWorker::_onSocketDisconnected()
 
 void UDPWorker::_onSocketReadyRead()
 {
-    if (!_socket->isValid()) {
-        emit errorOccurred(tr("Socket is Invalid!"));
-        return;
-    }
-
     if (!isConnected()) {
         emit errorOccurred(tr("Could Not Read Data - Link is Disconnected!"));
         return;
@@ -418,6 +414,7 @@ void UDPWorker::_onSocketReadyRead()
     }
 
     QByteArray buffer;
+    buffer.reserve(BUFFER_TRIGGER_SIZE);
     QElapsedTimer timer;
     timer.start();
     while (_socket->hasPendingDatagrams()) {
@@ -428,20 +425,19 @@ void UDPWorker::_onSocketReadyRead()
 
         (void) buffer.append(datagramIn.data());
 
-        if (buffer.size() > (10 * 1024) || (timer.elapsed() > 50)) {
+        if ((buffer.size() > BUFFER_TRIGGER_SIZE) || (timer.elapsed() > RECEIVE_TIME_LIMIT_MS)) {
             emit dataReceived(buffer);
             buffer.clear();
             (void) timer.restart();
         }
 
-        const QList<QHostAddress> localAddresses = QNetworkInterface::allAddresses();
-        const bool ipLocal = datagramIn.senderAddress().isLoopback() || localAddresses.contains(datagramIn.senderAddress());
+        const bool ipLocal = datagramIn.senderAddress().isLoopback() || _localAddresses.contains(datagramIn.senderAddress());
         const QHostAddress senderAddress = ipLocal ? QHostAddress(QHostAddress::SpecialAddress::LocalHost) : datagramIn.senderAddress();
 
         QMutexLocker locker(&_sessionTargetsMutex);
         if (!containsTarget(_sessionTargets, senderAddress, datagramIn.senderPort())) {
             qCDebug(UDPLinkLog) << "UDP Adding target:" << senderAddress << datagramIn.senderPort();
-            (void) _sessionTargets.append(std::make_shared<UDPClient>(senderAddress, datagramIn.senderPort()));
+            _sessionTargets.append(std::make_shared<UDPClient>(senderAddress, datagramIn.senderPort()));
         }
         locker.unlock();
     }
