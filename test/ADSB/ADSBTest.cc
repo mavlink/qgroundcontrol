@@ -13,8 +13,7 @@ void ADSBTest::_adsbVehicleTest()
     ADSB::VehicleInfo_t vehicleInfo;
     vehicleInfo.icaoAddress = 1;
     vehicleInfo.callsign = QStringLiteral("1");
-    vehicleInfo.location = QGeoCoordinate(1., 1.);
-    vehicleInfo.altitude = 1.;
+    vehicleInfo.location = QGeoCoordinate(1., 1., 1.);
     vehicleInfo.heading = 1.;
     vehicleInfo.alert = false;
     vehicleInfo.availableFlags = ADSB::CallsignAvailable;
@@ -79,8 +78,7 @@ void ADSBTest::_adsbVehicleManagerTest()
     ADSB::VehicleInfo_t vehicleInfo;
     vehicleInfo.icaoAddress = 1;
     vehicleInfo.callsign = QStringLiteral("1");
-    vehicleInfo.location = QGeoCoordinate(1., 1.);
-    vehicleInfo.altitude = 1.;
+    vehicleInfo.location = QGeoCoordinate(1., 1., 1.);
     vehicleInfo.heading = 1.;
     vehicleInfo.alert = false;
     vehicleInfo.availableFlags = ADSB::LocationAvailable;
