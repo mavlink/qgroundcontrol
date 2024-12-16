@@ -31,6 +31,7 @@ SettingsPage {
     property bool   _isTCP:                     _isStreamSource && (_videoSource === _videoSettings.tcpVideoSource)
     property bool   _isMPEGTS:                  _isStreamSource && (_videoSource === _videoSettings.mpegtsVideoSource)
     property bool   _videoAutoStreamConfig:     _videoManager.autoStreamConfigured
+    property bool   _videoSourceDisabled:       _videoSource === _videoSettings.disabledVideoSource
     property real   _urlFieldWidth:             ScreenTools.defaultFontPixelWidth * 25
     property bool   _requiresUDPPort:           _isUDP264 || _isUDP265 || _isMPEGTS
 
@@ -52,7 +53,7 @@ SettingsPage {
     SettingsGroupLayout {
         Layout.fillWidth:   true
         heading:            qsTr("Connection")
-        visible:            !_videoAutoStreamConfig && (_isTCP || _isRTSP | _requiresUDPPort)
+        visible:            !_videoSourceDisabled && !_videoAutoStreamConfig && (_isTCP || _isRTSP | _requiresUDPPort)
 
         LabelledFactTextField {
             Layout.fillWidth:           true
@@ -81,6 +82,7 @@ SettingsPage {
     SettingsGroupLayout {
         Layout.fillWidth:   true
         heading:            qsTr("Settings")
+        visible:            !_videoSourceDisabled
 
         LabelledFactTextField {
             Layout.fillWidth:   true
