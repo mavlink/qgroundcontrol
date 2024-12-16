@@ -23443,16 +23443,16 @@
         <value code="401">EXT2</value>
       </values>
     </parameter>
-    <parameter name="SF45_ORIENT_CFG" default="0" type="INT32">
+    <parameter name="SF45_ORIENT_CFG" default="24" type="INT32">
       <short_desc>Orientation upright or facing downward</short_desc>
       <long_desc>The SF45 mounted facing upward or downward on the frame</long_desc>
       <reboot_required>True</reboot_required>
       <values>
-        <value code="0">Rotation upward</value>
-        <value code="1">Rotation downward</value>
+        <value code="24">Rotation upward</value>
+        <value code="25">Rotation downward</value>
       </values>
     </parameter>
-    <parameter name="SF45_UPDATE_CFG" default="1" type="INT32">
+    <parameter name="SF45_UPDATE_CFG" default="5" type="INT32">
       <short_desc>Update rate in Hz</short_desc>
       <long_desc>The SF45 sets the update rate in Hz to allow greater resolution</long_desc>
       <reboot_required>True</reboot_required>
@@ -23477,9 +23477,9 @@
       <reboot_required>True</reboot_required>
       <values>
         <value code="0">Rotation forward</value>
-        <value code="1">Rotation backward</value>
         <value code="2">Rotation right</value>
-        <value code="3">Rotation left</value>
+        <value code="4">Rotation backward</value>
+        <value code="6">Rotation left</value>
       </values>
     </parameter>
     <parameter name="SIM_ARSPD_FAIL" default="0" type="INT32">
