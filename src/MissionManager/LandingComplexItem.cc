@@ -388,13 +388,15 @@ bool LandingComplexItem::_scanForItem(QmlObjectListModel* visualItems, bool flyV
     MissionItem& missionItemFinalApproach = item->missionItem();
     if (missionItemFinalApproach.command() == MAV_CMD_NAV_LOITER_TO_ALT) {
         if (missionItemFinalApproach.frame() != landPointFrame ||
-                missionItemFinalApproach.param1() != 1.0 || missionItemFinalApproach.param3() != 0 || missionItemFinalApproach.param4() != 1.0) {
+            (masterController->managerVehicle()->firmwareType() == MAV_AUTOPILOT_ARDUPILOTMEGA ?
+                missionItemFinalApproach.param1() != 0.0 : missionItemFinalApproach.param1() != 1.0) ||
+            missionItemFinalApproach.param3() != 0 || missionItemFinalApproach.param4() != 1.0) {
             return false;
         }
     } else if (missionItemFinalApproach.command() == MAV_CMD_NAV_WAYPOINT) {
         if (missionItemFinalApproach.frame() != landPointFrame ||
                 missionItemFinalApproach.param1() != 0 || missionItemFinalApproach.param2() != 0 || missionItemFinalApproach.param3() != 0 ||
-                !qIsNaN(missionItemFinalApproach.param4()) ||
+                (masterController->managerVehicle()->firmwareType() != MAV_AUTOPILOT_ARDUPILOTMEGA && !qIsNaN(missionItemFinalApproach.param4())) ||
                 qIsNaN(missionItemFinalApproach.param5()) || qIsNaN(missionItemFinalApproach.param6()) || qIsNaN(missionItemFinalApproach.param6())) {
             return false;
         }
@@ -425,7 +427,9 @@ bool LandingComplexItem::_scanForItem(QmlObjectListModel* visualItems, bool flyV
     }
     MissionItem& missionItemDoLandStart = item->missionItem();
     if (missionItemDoLandStart.command() != MAV_CMD_DO_LAND_START ||
-            missionItemDoLandStart.frame() != MAV_FRAME_MISSION ||
+            (masterController->managerVehicle()->firmwareType() == MAV_AUTOPILOT_ARDUPILOTMEGA ?
+                 missionItemDoLandStart.frame() != MAV_FRAME_GLOBAL :
+                 missionItemDoLandStart.frame() != MAV_FRAME_MISSION) ||
             missionItemDoLandStart.param1() != 0 || missionItemDoLandStart.param2() != 0 || missionItemDoLandStart.param3() != 0 || missionItemDoLandStart.param4() != 0 ||
             missionItemDoLandStart.param5() != 0 || missionItemDoLandStart.param6() != 0 || missionItemDoLandStart.param7() != 0) {
         return false;

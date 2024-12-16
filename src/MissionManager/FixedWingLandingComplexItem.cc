@@ -139,7 +139,8 @@ bool FixedWingLandingComplexItem::_isValidLandItem(const MissionItem& missionIte
 {
     if (missionItem.command() != MAV_CMD_NAV_LAND ||
             !(missionItem.frame() == MAV_FRAME_GLOBAL_RELATIVE_ALT || missionItem.frame() == MAV_FRAME_GLOBAL) ||
-            missionItem.param1() != 0 || missionItem.param2() != 0 || missionItem.param3() != 0 || missionItem.param4() != 0) {
+            // ArduPilot automatically sets param4 to 1, so we have to allow for it.
+            missionItem.param1() != 0 || missionItem.param2() != 0 || missionItem.param3() != 0 || (missionItem.param4() != 0 && missionItem.param4() != 1)) {
         return false;
     } else {
         return true;
