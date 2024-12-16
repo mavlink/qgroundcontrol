@@ -328,10 +328,7 @@ void UDPWorker::connectLink()
     qCDebug(UDPLinkLog) << "Attempting to join multicast group:" << _multicastGroup.toString();
     const bool joinSuccess = _socket->joinMulticastGroup(_multicastGroup);
     if (!joinSuccess) {
-        emit errorOccurred(tr("Failed to join multicast group"));
         qCWarning(UDPLinkLog) << "Failed to join multicast group" << _multicastGroup.toString();
-        _onSocketDisconnected();
-        return;
     }
 
 #ifdef QGC_ZEROCONF_ENABLED
