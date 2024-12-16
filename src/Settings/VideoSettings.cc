@@ -53,6 +53,7 @@ DECLARE_SETTINGGROUP(Video, "Video")
     if (videoSourceList.count() == 0) {
         _noVideo = true;
         videoSourceList.append(videoSourceNoVideo);
+        setVisible(false);
     } else {
         videoSourceList.insert(0, videoDisabled);
     }
