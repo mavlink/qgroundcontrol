@@ -12571,7 +12571,7 @@
     </parameter>
     <parameter name="FW_LND_USETER" default="1" type="INT32">
       <short_desc>Use terrain estimation during landing</short_desc>
-      <long_desc>This is critical for detecting when to flare, and should be enabled if possible. NOTE: terrain estimate is currently solely derived from a distance sensor. If enabled and no measurement is found within a given timeout, the landing waypoint altitude will be used OR the landing will be aborted, depending on the criteria set in FW_LND_ABORT. If disabled, FW_LND_ABORT terrain based criteria are ignored.</long_desc>
+      <long_desc>This is critical for detecting when to flare, and should be enabled if possible. If enabled and no measurement is found within a given timeout, the landing waypoint altitude will be used OR the landing will be aborted, depending on the criteria set in FW_LND_ABORT. If disabled, FW_LND_ABORT terrain based criteria are ignored.</long_desc>
       <min>0</min>
       <max>2</max>
       <values>
@@ -12634,7 +12634,7 @@
   <group name="FW NPFG Control">
     <parameter name="NPFG_DAMPING" default="0.7" type="FLOAT">
       <short_desc>NPFG damping ratio</short_desc>
-      <long_desc>Damping ratio of the NPFG control law.</long_desc>
+      <long_desc>Damping ratio of NPFG control law.</long_desc>
       <min>0.10</min>
       <max>1.00</max>
       <decimal>2</decimal>
@@ -12654,11 +12654,11 @@
     </parameter>
     <parameter name="NPFG_LB_PERIOD" default="1" type="INT32" boolean="true">
       <short_desc>Enable automatic lower bound on the NPFG period</short_desc>
-      <long_desc>Avoids limit cycling from a too aggressively tuned period/damping combination. If set to false, also disables the upper bound NPFG_PERIOD_UB.</long_desc>
+      <long_desc>Avoids limit cycling from a too aggressively tuned period/damping combination. If false, also disables upper bound NPFG_PERIOD_UB.</long_desc>
     </parameter>
     <parameter name="NPFG_PERIOD" default="10.0" type="FLOAT">
       <short_desc>NPFG period</short_desc>
-      <long_desc>Period of the NPFG control law.</long_desc>
+      <long_desc>Period of NPFG control law.</long_desc>
       <min>1.0</min>
       <max>100.0</max>
       <unit>s</unit>
@@ -12705,7 +12705,7 @@
   <group name="FW Path Control">
     <parameter name="FW_PN_R_SLEW_MAX" default="90.0" type="FLOAT">
       <short_desc>Path navigation roll slew rate limit</short_desc>
-      <long_desc>The maximum change in roll angle setpoint per second. This limit is applied in all Auto modes, plus manual Position and Altitude modes.</long_desc>
+      <long_desc>Maximum change in roll angle setpoint per second. Applied in all Auto modes, plus manual Position &amp; Altitude modes.</long_desc>
       <min>0</min>
       <unit>deg/s</unit>
       <decimal>0</decimal>
@@ -13233,7 +13233,6 @@
     </parameter>
     <parameter name="FW_T_SINK_MAX" default="5.0" type="FLOAT">
       <short_desc>Maximum descent rate</short_desc>
-      <long_desc>This sets the maximum descent rate that the controller will use.</long_desc>
       <min>1.0</min>
       <max>15.0</max>
       <unit>m/s</unit>
@@ -13250,8 +13249,8 @@
       <increment>0.01</increment>
     </parameter>
     <parameter name="FW_T_SPDWEIGHT" default="1.0" type="FLOAT">
-      <short_desc>Speed &lt;--&gt; Altitude priority</short_desc>
-      <long_desc>Adjusts the amount of weighting that the pitch control applies to speed vs height errors. Setting it to 0.0 will cause the pitch control to control height and ignore speed errors. Setting it to 2.0 will cause the pitch control loop to control speed and ignore height errors. The default value of 1.0 allows the pitch control to simultaneously control height and speed. Set to 2 for gliders.</long_desc>
+      <short_desc>Speed &lt;--&gt; Altitude weight</short_desc>
+      <long_desc>Adjusts the amount of weighting that the pitch control applies to speed vs height errors. 0 -&gt; control height only 2 -&gt; control speed only (gliders)</long_desc>
       <min>0.0</min>
       <max>2.0</max>
       <decimal>1</decimal>
@@ -13316,7 +13315,7 @@
     </parameter>
     <parameter name="FW_T_THR_LOW_HGT" default="-1." type="FLOAT">
       <short_desc>Low-height threshold for tighter altitude tracking</short_desc>
-      <long_desc>Defines the height (distance to bottom) threshold below which tighter altitude tracking gets enabled (see FW_LND_THRTC_SC). Below this height, TECS smoothly (1 sec / sec) transitions the altitude tracking time constant from FW_T_ALT_TC to FW_LND_THRTC_SC*FW_T_ALT_TC. If equal to -1, low-height traking is disabled.</long_desc>
+      <long_desc>Height above ground threshold below which tighter altitude tracking gets enabled (see FW_LND_THRTC_SC). Below this height, TECS smoothly (1 sec / sec) transitions the altitude tracking time constant from FW_T_ALT_TC to FW_LND_THRTC_SC*FW_T_ALT_TC. -1 to disable.</long_desc>
       <min>-1</min>
       <unit>m</unit>
       <decimal>0</decimal>
