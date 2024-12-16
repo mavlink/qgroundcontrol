@@ -28,6 +28,7 @@ DECLARE_SETTINGGROUP(Video, "Video")
 
     // Setup enum values for videoSource settings into meta data
     QVariantList videoSourceList;
+#if defined(QGC_GST_STREAMING) || defined(QGC_QT_STREAMING)
     videoSourceList.append(videoSourceRTSP);
     videoSourceList.append(videoSourceUDPH264);
     videoSourceList.append(videoSourceUDPH265);
@@ -36,8 +37,13 @@ DECLARE_SETTINGGROUP(Video, "Video")
     videoSourceList.append(videoSource3DRSolo);
     videoSourceList.append(videoSourceParrotDiscovery);
     videoSourceList.append(videoSourceYuneecMantisG);
-    videoSourceList.append(videoSourceHerelinkAirUnit);
-    videoSourceList.append(videoSourceHerelinkHotspot);
+
+    #ifdef QGC_HERELINK_AIRUNIT_VIDEO
+        videoSourceList.append(videoSourceHerelinkAirUnit);
+    #else
+        videoSourceList.append(videoSourceHerelinkHotspot);
+    #endif
+#endif
 #ifndef QGC_DISABLE_UVC
     QList<QCameraDevice> videoInputs = QMediaDevices::videoInputs();
     for (const auto& cameraDevice: videoInputs) {
