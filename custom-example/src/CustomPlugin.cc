@@ -103,7 +103,7 @@ void CustomPlugin::_addSettingsEntry(const QString& title, const char* qmlFile, 
                 this)));
 }
 
-QGCOptions* CustomPlugin::options() const
+QGCOptions* CustomPlugin::options()
 {
     return _options;
 }
@@ -118,7 +118,7 @@ QString CustomPlugin::brandImageOutdoor(void) const
     return QStringLiteral("/custom/img/dronecode-black.svg");
 }
 
-bool CustomPlugin::overrideSettingsGroupVisibility(const QString &name) const
+bool CustomPlugin::overrideSettingsGroupVisibility(const QString &name)
 {
     // We have set up our own specific brand imaging. Hide the brand image settings such that the end user
     // can't change it.
@@ -129,7 +129,7 @@ bool CustomPlugin::overrideSettingsGroupVisibility(const QString &name) const
 }
 
 // This allows you to override/hide QGC Application settings
-bool CustomPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData& metaData) const
+bool CustomPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData& metaData)
 {
     bool parentResult = QGCCorePlugin::adjustSettingMetaData(settingsGroup, metaData);
 
@@ -149,7 +149,7 @@ bool CustomPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaD
 }
 
 // This modifies QGC colors palette to match possible custom corporate branding
-void CustomPlugin::paletteOverride(const QString &colorName, QGCPalette::PaletteColorInfo_t& colorInfo) const
+void CustomPlugin::paletteOverride(const QString &colorName, QGCPalette::PaletteColorInfo_t& colorInfo)
 {
     if (colorName == QStringLiteral("window")) {
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = QColor("#212529");
@@ -340,7 +340,7 @@ void CustomPlugin::paletteOverride(const QString &colorName, QGCPalette::Palette
 }
 
 // We override this so we can get access to QQmlApplicationEngine and use it to register our qml module
-QQmlApplicationEngine* CustomPlugin::createQmlApplicationEngine(QObject* parent) const
+QQmlApplicationEngine* CustomPlugin::createQmlApplicationEngine(QObject* parent)
 {
     QQmlApplicationEngine* qmlEngine = QGCCorePlugin::createQmlApplicationEngine(parent);
     qmlEngine->addImportPath("qrc:/Custom/Widgets");
