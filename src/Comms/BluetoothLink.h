@@ -10,22 +10,21 @@
 #pragma once
 
 #include <QtBluetooth/QBluetoothAddress>
+#include <QtBluetooth/QBluetoothDeviceDiscoveryAgent>
 #include <QtBluetooth/QBluetoothDeviceInfo>
+#ifdef Q_OS_IOS
+#include <QtBluetooth/QBluetoothServiceDiscoveryAgent>
+#endif
+#include <QtBluetooth/QBluetoothServiceInfo>
 #include <QtBluetooth/QBluetoothSocket>
 #include <QtBluetooth/QBluetoothUuid>
 #include <QtCore/QList>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QString>
-#include <QtNetwork/QAbstractSocket>
 
 #include "LinkConfiguration.h"
 #include "LinkInterface.h"
 
-#ifdef Q_OS_IOS
-    class QBluetoothServiceInfo;
-    class QBluetoothServiceDiscoveryAgent;
-#endif
-class QBluetoothDeviceDiscoveryAgent;
 class QThread;
 
 Q_DECLARE_LOGGING_CATEGORY(BluetoothLinkLog)
@@ -119,9 +118,11 @@ signals:
     void deviceChanged();
     void nameListChanged();
     void scanningChanged();
+    void errorOccurred(const QString &errorString);
 
 private slots:
     void _deviceDiscovered(const QBluetoothDeviceInfo &info);
+    void _onSocketErrorOccurred(QBluetoothDeviceDiscoveryAgent::Error error);
 
 private:
     void _initDeviceDiscoveryAgent();
@@ -164,8 +165,9 @@ private slots:
     void _onSocketBytesWritten(qint64 bytes);
     void _onSocketErrorOccurred(QBluetoothSocket::SocketError socketError);
 #ifdef Q_OS_IOS
-    void _discoveryFinished();
+    void _onServiceErrorOccurred(QBluetoothServiceDiscoveryAgent::Error error);
     void _serviceDiscovered(const QBluetoothServiceInfo &info);
+    void _discoveryFinished();
 #endif
 
 private:

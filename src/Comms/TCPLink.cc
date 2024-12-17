@@ -80,7 +80,6 @@ void TCPConfiguration::saveSettings(QSettings &settings, const QString &root)
 TCPWorker::TCPWorker(const TCPConfiguration *config, QObject *parent)
     : QObject(parent)
     , _config(config)
-    , _socket(new QTcpSocket(this))
 {
     // qCDebug(TCPLinkLog) << Q_FUNC_INFO << this;
 }
@@ -94,11 +93,14 @@ TCPWorker::~TCPWorker()
 
 bool TCPWorker::isConnected() const
 {
-    return (_socket->isOpen() && (_socket->state() == QAbstractSocket::ConnectedState));
+    return (_socket && _socket->isOpen() && (_socket->state() == QAbstractSocket::ConnectedState));
 }
 
 void TCPWorker::setupSocket()
 {
+    Q_ASSERT(!_socket);
+    _socket = new QTcpSocket(this);
+
     _socket->setSocketOption(QAbstractSocket::LowDelayOption, 1);
     _socket->setSocketOption(QAbstractSocket::KeepAliveOption, 1);
     _socket->setSocketOption(QAbstractSocket::TypeOfServiceOption, TYPE_OF_SERVICE);
@@ -106,15 +108,16 @@ void TCPWorker::setupSocket()
     (void) connect(_socket, &QTcpSocket::connected, this, &TCPWorker::_onSocketConnected);
     (void) connect(_socket, &QTcpSocket::disconnected, this, &TCPWorker::_onSocketDisconnected);
     (void) connect(_socket, &QTcpSocket::readyRead, this, &TCPWorker::_onSocketReadyRead);
-    // (void) connect(_socket, &QTcpSocket::bytesWritten, this, &TCPWorker::_onSocketBytesWritten);
     (void) connect(_socket, &QTcpSocket::errorOccurred, this, &TCPWorker::_onSocketErrorOccurred);
 
     if (TCPLinkLog().isDebugEnabled()) {
-        (void) QObject::connect(_socket, &QTcpSocket::stateChanged, this, [](QTcpSocket::SocketState state) {
+        // (void) connect(_socket, &QTcpSocket::bytesWritten, this, &TCPWorker::_onSocketBytesWritten);
+
+        (void) connect(_socket, &QTcpSocket::stateChanged, this, [](QTcpSocket::SocketState state) {
             qCDebug(TCPLinkLog) << "TCP State Changed:" << state;
         });
 
-        (void) QObject::connect(_socket, &QTcpSocket::hostFound, this, []() {
+        (void) connect(_socket, &QTcpSocket::hostFound, this, []() {
             qCDebug(TCPLinkLog) << "TCP Host Found";
         });
     }
