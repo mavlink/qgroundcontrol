@@ -280,7 +280,7 @@ void LinkManager::saveLinkConfigurationList()
             continue;
         }
 
-        if (!linkConfig->isDynamic()) {
+        if (linkConfig->isDynamic()) {
             continue;
         }
 
