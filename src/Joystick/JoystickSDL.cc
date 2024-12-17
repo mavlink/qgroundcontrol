@@ -8,7 +8,6 @@
  ****************************************************************************/
 
 #include "JoystickSDL.h"
-#include "MultiVehicleManager.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QTextStream>
@@ -166,7 +165,7 @@ bool JoystickSDL::_update(void)
     return true;
 }
 
-bool JoystickSDL::_getButton(int i) {
+bool JoystickSDL::_getButton(int i) const {
     if (_isGameController) {
         return SDL_GameControllerGetButton(sdlController, SDL_GameControllerButton(i)) == 1;
     } else {
@@ -174,7 +173,7 @@ bool JoystickSDL::_getButton(int i) {
     }
 }
 
-int JoystickSDL::_getAxis(int i) {
+int JoystickSDL::_getAxis(int i) const {
     if (_isGameController) {
         return SDL_GameControllerGetAxis(sdlController, SDL_GameControllerAxis(i));
     } else {
@@ -182,7 +181,7 @@ int JoystickSDL::_getAxis(int i) {
     }
 }
 
-bool JoystickSDL::_getHat(int hat, int i) {
+bool JoystickSDL::_getHat(int hat, int i) const {
     uint8_t hatButtons[] = {SDL_HAT_UP,SDL_HAT_DOWN,SDL_HAT_LEFT,SDL_HAT_RIGHT};
     if (i < int(sizeof(hatButtons))) {
         return (SDL_JoystickGetHat(sdlJoystick, hat) & hatButtons[i]) != 0;
