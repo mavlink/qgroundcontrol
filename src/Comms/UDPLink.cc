@@ -257,7 +257,6 @@ const QHostAddress UDPWorker::_multicastGroup = QHostAddress(QStringLiteral("224
 UDPWorker::UDPWorker(const UDPConfiguration *config, QObject *parent)
     : QObject(parent)
     , _udpConfig(config)
-    , _socket(new QUdpSocket(this))
 {
     // qCDebug(UDPLinkLog) << Q_FUNC_INFO << this;
 }
@@ -271,11 +270,14 @@ UDPWorker::~UDPWorker()
 
 bool UDPWorker::isConnected() const
 {
-    return (_socket->isValid() && _isConnected);
+    return (_socket && _socket->isValid() && _isConnected);
 }
 
 void UDPWorker::setupSocket()
 {
+    Q_ASSERT(!_socket);
+    _socket = new QUdpSocket(this);
+
     const QList<QHostAddress> localAddresses = QNetworkInterface::allAddresses();
     _localAddresses = QSet(localAddresses.constBegin(), localAddresses.constEnd());
 
