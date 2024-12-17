@@ -311,7 +311,6 @@ if(WIN32)
         "${CMAKE_SOURCE_DIR}/deploy/windows/driver.msi"
         "${CMAKE_SOURCE_DIR}/deploy/windows/nullsoft_installer.nsi"
         "${CMAKE_SOURCE_DIR}/deploy/windows/QGroundControl.rc"
-        "${CMAKE_SOURCE_DIR}/deploy/windows/resource.h"
     )
     # windows installer files different for core and custom
     if(EXISTS ${CMAKE_SOURCE_DIR}/custom/deploy/windows/installheader.bmp)
