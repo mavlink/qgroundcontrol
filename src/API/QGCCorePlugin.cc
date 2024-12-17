@@ -106,7 +106,7 @@ const QVariantList &QGCCorePlugin::analyzePages() const
     return analyzeList;
 }
 
-const QGCOptions *QGCCorePlugin::options() const
+QGCOptions *QGCCorePlugin::options()
 {
     return _defaultOptions;
 }
