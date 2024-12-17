@@ -670,7 +670,7 @@ const QVariantList& APMFirmwarePlugin::toolIndicators(const Vehicle* vehicle)
 
 bool APMFirmwarePlugin::isGuidedMode(const Vehicle* vehicle) const
 {
-    return vehicle->flightMode() == "Guided";
+    return QString::compare(vehicle->flightMode(), "Guided", Qt::CaseInsensitive) == 0;
 }
 
 void APMFirmwarePlugin::_soloVideoHandshake(void)
