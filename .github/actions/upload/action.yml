@@ -22,10 +22,12 @@ runs:
   using: "composite"
   steps:
     - name: Save artifact
-      uses: actions/upload-artifact@v4
+      uses: Wandalen/wretry.action@master
       with:
-        name: ${{ inputs.artifact_name }}
-        path: ${{ runner.temp }}/shadow_build_dir/${{ inputs.source }}/${{ inputs.artifact_name }}
+        action: actions/upload-artifact@v4
+        with: |
+          name: ${{ inputs.artifact_name }}
+          path: ${{ runner.temp }}/shadow_build_dir/${{ inputs.source }}/${{ inputs.artifact_name }}
 
     - name: Configure AWS Credentials
       if: ${{ github.event_name == 'push' && !github.event.pull_request.head.repo.fork && inputs.aws_key_id != '' && inputs.aws_secret_access_key != '' }}
