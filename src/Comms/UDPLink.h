@@ -145,6 +145,7 @@ private:
     QMutex _sessionTargetsMutex;
     QList<std::shared_ptr<UDPClient>> _sessionTargets;
     bool _isConnected = false;
+    bool _errorEmitted = false;
     QSet<QHostAddress> _localAddresses;
 
     static const QHostAddress _multicastGroup;

@@ -135,7 +135,7 @@ private slots:
     void _checkPortAvailability();
 
 private:
-    const SerialConfiguration *_config = nullptr;
+    const SerialConfiguration *_serialConfig = nullptr;
     QSerialPort *_port = nullptr;
     QTimer *_timer = nullptr;
     bool _errorEmitted = false;
