@@ -27,6 +27,7 @@ SettingsManager::SettingsManager(QGCApplication* app, QGCToolbox* toolbox)
     , _firmwareUpgradeSettings      (nullptr)
     , _adsbVehicleManagerSettings   (nullptr)
     , _gimbalControllerSettings     (nullptr)
+    , _ntripSettings                (nullptr)
 #if !defined(NO_ARDUPILOT_DIALECT)
     , _apmMavlinkStreamRateSettings (nullptr)
 #endif
@@ -54,8 +55,9 @@ void SettingsManager::setToolbox(QGCToolbox *toolbox)
     _firmwareUpgradeSettings =      new FirmwareUpgradeSettings     (this);
     _adsbVehicleManagerSettings =   new ADSBVehicleManagerSettings  (this);
     _gimbalControllerSettings =     new GimbalControllerSettings       (this);
+    _ntripSettings =                new NTRIPSettings               (this);
 #if !defined(NO_ARDUPILOT_DIALECT)
     _apmMavlinkStreamRateSettings = new APMMavlinkStreamRateSettings(this);
 #endif
-    _remoteIDSettings =             new RemoteIDSettings            (this); 
+    _remoteIDSettings =             new RemoteIDSettings            (this);
 }
