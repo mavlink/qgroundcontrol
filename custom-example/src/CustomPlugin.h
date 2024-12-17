@@ -59,13 +59,13 @@ public:
     static QGCCorePlugin *instance();
 
     // Overrides from QGCCorePlugin
-    QGCOptions*             options                         (void) const final;
+    QGCOptions*             options                         (void) final;
     QString                 brandImageIndoor                (void) const final;
     QString                 brandImageOutdoor               (void) const final;
-    bool                    overrideSettingsGroupVisibility (const QString &name) const final;
-    bool                    adjustSettingMetaData           (const QString& settingsGroup, FactMetaData& metaData) const final;
-    void                    paletteOverride                 (const QString &colorName, QGCPalette::PaletteColorInfo_t& colorInfo) const final;
-    QQmlApplicationEngine*  createQmlApplicationEngine      (QObject* parent) const final;
+    bool                    overrideSettingsGroupVisibility (const QString &name) final;
+    bool                    adjustSettingMetaData           (const QString& settingsGroup, FactMetaData& metaData) final;
+    void                    paletteOverride                 (const QString &colorName, QGCPalette::PaletteColorInfo_t& colorInfo) final;
+    QQmlApplicationEngine*  createQmlApplicationEngine      (QObject* parent) final;
 
 private slots:
     void _advancedChanged(bool advanced);
