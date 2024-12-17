@@ -166,8 +166,12 @@ Item {
         maxHeight:              parent.height - y - parentToolInsets.bottomEdgeLeftInset - _toolsMargin
         visible:                !QGroundControl.videoManager.fullScreen
 
-        onDisplayPreFlightChecklist: preFlightChecklistPopup.createObject(mainWindow).open()
-
+        onDisplayPreFlightChecklist: {
+            if (!preFlightChecklistLoader.active) {
+                preFlightChecklistLoader.active = true
+            }
+            preFlightChecklistLoader.item.open()
+        }
 
         property real topEdgeLeftInset:     visible ? y + height : 0
         property real leftEdgeTopInset:     visible ? x + width : 0
@@ -193,6 +197,12 @@ Item {
         visible:            !ScreenTools.isTinyScreen && QGroundControl.corePlugin.options.flyView.showMapScale && !isViewer3DOpen && mapControl.pipState.state === mapControl.pipState.fullState
 
         property real topEdgeCenterInset: visible ? y + height : 0
+    }
+
+    Loader {
+        id: preFlightChecklistLoader
+        sourceComponent: preFlightChecklistPopup
+        active: false
     }
 
     Component {
