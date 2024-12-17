@@ -68,7 +68,7 @@ public:
 
     /// Global options
     /// @return An instance of QGCOptions
-    virtual const QGCOptions *options() const;
+    virtual QGCOptions *options();
 
     /// Allows the core plugin to override the visibility for a settings group
     ///     @param name - SettingsGroup name
