@@ -139,8 +139,6 @@ QString SerialConfiguration::cleanPortDisplayName(const QString &name)
 SerialWorker::SerialWorker(const SerialConfiguration *config, QObject *parent)
     : QObject(parent)
     , _config(config)
-    , _port(new QSerialPort(this))
-    , _timer(new QTimer(this))
 {
     // qCDebug(SerialLinkLog) << Q_FUNC_INFO << this;
 
@@ -156,15 +154,24 @@ SerialWorker::~SerialWorker()
 
 bool SerialWorker::isConnected() const
 {
-    return _port->isOpen();
+    return (_port && _port->isOpen());
 }
 
 void SerialWorker::setupPort()
 {
+    Q_ASSERT(!_port);
+    _port = new QSerialPort(this);
+
+    Q_ASSERT(!_timer);
+    _timer = new QTimer(this);
+
     (void) connect(_port, &QSerialPort::aboutToClose, this, &SerialWorker::_onPortDisconnected);
     (void) connect(_port, &QSerialPort::readyRead, this, &SerialWorker::_onPortReadyRead);
-    // (void) connect(_port, &QSerialPort::bytesWritten, this, &SerialWorker::_onPortBytesWritten);
     (void) connect(_port, &QSerialPort::errorOccurred, this, &SerialWorker::_onPortErrorOccurred);
+
+    /* if (SerialLinkLog().isDebugEnabled()) {
+        (void) connect(_port, &QSerialPort::bytesWritten, this, &SerialWorker::_onPortBytesWritten);
+    } */
 
     (void) connect(_timer, &QTimer::timeout, this, &SerialWorker::_checkPortAvailability);
     _timer->start(CONNECT_TIMEOUT_MS);
