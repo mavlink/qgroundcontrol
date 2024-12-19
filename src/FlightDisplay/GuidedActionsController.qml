@@ -120,6 +120,8 @@ Item {
     readonly property int actionSetFlightMode:              29
     readonly property int actionChangeHeading:              30
 
+    readonly property int customActionStart:                10000 // Custom actions ids should start here so that they don't collide with the built in actions
+
     property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
     property var    _flyViewSettings:           QGroundControl.settingsManager.flyViewSettings
     property var    _unitsConversion:           QGroundControl.unitsConversion
@@ -193,6 +195,12 @@ Item {
     property bool __roiSupported:           _activeVehicle ? !_hideROI && _activeVehicle.roiModeSupported : false
     property bool __orbitSupported:         _activeVehicle ? !_hideOrbit && _activeVehicle.orbitModeSupported : false
     property bool __flightMode:             _flightMode
+
+    // Allow custom builds to add custom actions by overriding CustomGuidedActionsController.qml
+    CustomGuidedActionsController {
+        id: customController
+    }
+    property var _customController: customController
 
     function _isGuidedActionsControllerLogEnabled() {
         return QGroundControl.categoryLoggingOn("GuidedActionsControllerLog")
@@ -557,8 +565,10 @@ Item {
             confirmDialog.message = changeHeadingMessage
             break
         default:
-            console.warn("Unknown actionCode", actionCode)
-            return
+            if (!customController.customConfirmAction(actionCode, actionData, mapIndicator, confirmDialog)) {
+                console.warn("Unknown actionCode", actionCode)
+                return
+            }
         }
         confirmDialog.show(showImmediate)
     }
@@ -669,7 +679,10 @@ Item {
             _activeVehicle.guidedModeChangeHeading(actionData)
             break
         default:
-            console.warn(qsTr("Internal error: unknown actionCode"), actionCode)
+            if (!customController.customExecuteAction(actionCode, actionData, sliderOutputValue, optionChecked)) {
+                console.warn(qsTr("Internal error: unknown actionCode"), actionCode)
+                return
+            }
             break
         }
     }
