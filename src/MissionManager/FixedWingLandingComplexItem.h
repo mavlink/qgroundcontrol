@@ -65,6 +65,8 @@ private:
 
     // Overrides from LandingComplexItem
     const Fact*     _finalApproachAltitude  (void) const final { return &_finalApproachAltitudeFact; }
+    const Fact*     _useDoChangeSpeed       (void) const final { return &_useDoChangeSpeedFact; }
+    const Fact*     _finalApproachSpeed     (void) const final { return &_finalApproachSpeedFact; }
     const Fact*     _loiterRadius           (void) const final { return &_loiterRadiusFact; }
     const Fact*     _loiterClockwise        (void) const final { return &_loiterClockwiseFact; }
     const Fact*     _landingAltitude        (void) const final { return &_landingAltitudeFact; }
@@ -80,6 +82,8 @@ private:
 
     Fact            _landingDistanceFact;
     Fact            _finalApproachAltitudeFact;
+    Fact            _useDoChangeSpeedFact;
+    Fact            _finalApproachSpeedFact;
     Fact            _loiterRadiusFact;
     Fact            _loiterClockwiseFact;
     Fact            _landingHeadingFact;
