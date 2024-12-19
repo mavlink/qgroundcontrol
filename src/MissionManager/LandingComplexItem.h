@@ -31,6 +31,8 @@ public:
     LandingComplexItem(PlanMasterController* masterController, bool flyView);
 
     Q_PROPERTY(Fact*            finalApproachAltitude   READ    finalApproachAltitude                                           CONSTANT)
+    Q_PROPERTY(Fact*            useDoChangeSpeed        READ    useDoChangeSpeed                                                CONSTANT)
+    Q_PROPERTY(Fact*            finalApproachSpeed      READ    finalApproachSpeed                                              CONSTANT)
     Q_PROPERTY(Fact*            loiterRadius            READ    loiterRadius                                                    CONSTANT)
     Q_PROPERTY(Fact*            landingAltitude         READ    landingAltitude                                                 CONSTANT)
     Q_PROPERTY(Fact*            landingHeading          READ    landingHeading                                                  CONSTANT)
@@ -48,6 +50,8 @@ public:
     Q_INVOKABLE void setLandingHeadingToTakeoffHeading();
 
     const Fact* finalApproachAltitude   (void) const { return _finalApproachAltitude(); }
+    const Fact* useDoChangeSpeed        (void) const { return _useDoChangeSpeed(); }
+    const Fact* finalApproachSpeed      (void) const { return _finalApproachSpeed(); }
     const Fact* loiterRadius            (void) const { return _loiterRadius(); }
     const Fact* loiterClockwise         (void) const { return _loiterClockwise(); }
     const Fact* landingAltitude         (void) const { return _landingAltitude(); }
@@ -58,6 +62,8 @@ public:
     const Fact* stopTakingVideo         (void) const { return _stopTakingVideo(); }
 
     Fact* finalApproachAltitude (void) { return const_cast<Fact*>(const_cast<const LandingComplexItem*>(this)->_finalApproachAltitude()); };
+    Fact* useDoChangeSpeed      (void) { return const_cast<Fact*>(const_cast<const LandingComplexItem*>(this)->_useDoChangeSpeed()); };
+    Fact* finalApproachSpeed    (void) { return const_cast<Fact*>(const_cast<const LandingComplexItem*>(this)->_finalApproachSpeed()); };
     Fact* loiterRadius          (void) { return const_cast<Fact*>(const_cast<const LandingComplexItem*>(this)->_loiterRadius()); };
     Fact* loiterClockwise       (void) { return const_cast<Fact*>(const_cast<const LandingComplexItem*>(this)->_loiterClockwise()); };
     Fact* landingAltitude       (void) { return const_cast<Fact*>(const_cast<const LandingComplexItem*>(this)->_landingAltitude()); };
@@ -110,15 +116,17 @@ public:
     double              minAMSLAltitude             (void) const final { return amslExitAlt(); }
     double              maxAMSLAltitude             (void) const final { return amslEntryAlt(); }
 
-    static constexpr const char* finalApproachToLandDistanceName = "LandingDistance";
-    static constexpr const char* landingHeadingName              = "LandingHeading";
-    static constexpr const char* finalApproachAltitudeName       = "FinalApproachAltitude";
-    static constexpr const char* loiterRadiusName                = "LoiterRadius";
-    static constexpr const char* loiterClockwiseName             = "LoiterClockwise";
-    static constexpr const char* landingAltitudeName             = "LandingAltitude";
-    static constexpr const char* useLoiterToAltName              = "UseLoiterToAlt";
-    static constexpr const char* stopTakingPhotosName            = "StopTakingPhotos";
-    static constexpr const char* stopTakingVideoName             = "StopTakingVideo";
+    static constexpr const char* finalApproachToLandDistanceName    = "LandingDistance";
+    static constexpr const char* landingHeadingName                 = "LandingHeading";
+    static constexpr const char* finalApproachAltitudeName          = "FinalApproachAltitude";
+    static constexpr const char* useDoChangeSpeedName               = "UseDoChangeSpeed";
+    static constexpr const char* finalApproachSpeedName             = "FinalApproachSpeed";
+    static constexpr const char* loiterRadiusName                   = "LoiterRadius";
+    static constexpr const char* loiterClockwiseName                = "LoiterClockwise";
+    static constexpr const char* landingAltitudeName                = "LandingAltitude";
+    static constexpr const char* useLoiterToAltName                 = "UseLoiterToAlt";
+    static constexpr const char* stopTakingPhotosName               = "StopTakingPhotos";
+    static constexpr const char* stopTakingVideoName                = "StopTakingVideo";
 
 signals:
     void finalApproachCoordinateChanged (QGeoCoordinate coordinate);
@@ -137,6 +145,8 @@ protected slots:
 
 protected:
     virtual const Fact*     _finalApproachAltitude  (void) const = 0;
+    virtual const Fact*     _useDoChangeSpeed       (void) const = 0;
+    virtual const Fact*     _finalApproachSpeed     (void) const = 0;
     virtual const Fact*     _loiterRadius           (void) const = 0;
     virtual const Fact*     _loiterClockwise        (void) const = 0;
     virtual const Fact*     _landingAltitude        (void) const = 0;
@@ -151,6 +161,7 @@ protected:
     void            _init                   (void);
     QPointF         _rotatePoint            (const QPointF& point, const QPointF& origin, double angle);
     MissionItem*    _createDoLandStartItem  (int seqNum, QObject* parent);
+    MissionItem*    _createDoChangeSpeedItem(int speedType, int speedValue, int throttlePercentage, int seqNum, QObject* parent);
     MissionItem*    _createFinalApproachItem(int seqNum, QObject* parent);
     QJsonObject     _save                   (void);
     bool            _load                   (const QJsonObject& complexObject, int sequenceNumber, const QString& jsonComplexItemTypeValue, bool useDeprecatedRelAltKeys, QString& errorString);
@@ -178,14 +189,16 @@ protected:
     // the new support for using either a loiter or just a waypoint as the approach entry point.
     static constexpr const char* _jsonDeprecatedLoiterCoordinateKey          = "loiterCoordinate";
 
-    static constexpr const char* _jsonFinalApproachCoordinateKey = "landingApproachCoordinate";
-    static constexpr const char* _jsonLoiterRadiusKey            = "loiterRadius";
-    static constexpr const char* _jsonLoiterClockwiseKey         = "loiterClockwise";
-    static constexpr const char* _jsonLandingCoordinateKey       = "landCoordinate";
-    static constexpr const char* _jsonAltitudesAreRelativeKey    = "altitudesAreRelative";
-    static constexpr const char* _jsonUseLoiterToAltKey          = "useLoiterToAlt";
-    static constexpr const char* _jsonStopTakingPhotosKey        = "stopTakingPhotos";
-    static constexpr const char* _jsonStopTakingVideoKey         = "stopVideoPhotos";
+    static constexpr const char* _jsonFinalApproachCoordinateKey    = "landingApproachCoordinate";
+    static constexpr const char* _jsonUseDoChangeSpeedKey           = "useDoChangeSpeed";
+    static constexpr const char* _jsonFinalApproachSpeedKey         = "finalApproachSpeed";
+    static constexpr const char* _jsonLoiterRadiusKey               = "loiterRadius";
+    static constexpr const char* _jsonLoiterClockwiseKey            = "loiterClockwise";
+    static constexpr const char* _jsonLandingCoordinateKey          = "landCoordinate";
+    static constexpr const char* _jsonAltitudesAreRelativeKey       = "altitudesAreRelative";
+    static constexpr const char* _jsonUseLoiterToAltKey             = "useLoiterToAlt";
+    static constexpr const char* _jsonStopTakingPhotosKey           = "stopTakingPhotos";
+    static constexpr const char* _jsonStopTakingVideoKey            = "stopVideoPhotos";
 
 private slots:
     void    _recalcFromRadiusChange                         (void);
