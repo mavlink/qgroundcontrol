@@ -112,7 +112,7 @@ void ParameterEditorController::_buildLists(void)
             if (group->name == FactMetaData::kDefaultGroup) {
                 if (j != _categories.count() - 1) {
                     category->groups.removeAt(j);
-                    category->groups.append(category);
+                    category->groups.append(group);
                 }
                 break;
             }
