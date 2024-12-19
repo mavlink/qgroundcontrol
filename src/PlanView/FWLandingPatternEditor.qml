@@ -100,6 +100,18 @@ Rectangle {
                     altitudeMode:       _altitudeMode
                 }
 
+                FactCheckBox {
+                    id:         flightSpeedCheckbox
+                    text:       qsTr("Flight Speed")
+                    fact:       missionItem.useDoChangeSpeed
+                }
+
+                FactTextField {
+                    Layout.fillWidth:   true
+                    fact:               missionItem.finalApproachSpeed
+                    enabled:            flightSpeedCheckbox.checked
+                }
+
                 QGCLabel {
                     text:       qsTr("Radius")
                     visible:    missionItem.useLoiterToAlt.rawValue
