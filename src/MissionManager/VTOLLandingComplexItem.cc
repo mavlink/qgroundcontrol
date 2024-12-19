@@ -29,6 +29,8 @@ VTOLLandingComplexItem::VTOLLandingComplexItem(PlanMasterController* masterContr
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/VTOLLandingPattern.FactMetaData.json"), this))
     , _landingDistanceFact      (settingsGroup, _metaDataMap[finalApproachToLandDistanceName])
     , _finalApproachAltitudeFact(settingsGroup, _metaDataMap[finalApproachAltitudeName])
+    , _useDoChangeSpeedFact     (settingsGroup, _metaDataMap[useDoChangeSpeedName])
+    , _finalApproachSpeedFact   (settingsGroup, _metaDataMap[finalApproachSpeedName])
     , _loiterRadiusFact         (settingsGroup, _metaDataMap[loiterRadiusName])
     , _loiterClockwiseFact      (settingsGroup, _metaDataMap[loiterClockwiseName])
     , _landingHeadingFact       (settingsGroup, _metaDataMap[landingHeadingName])
