@@ -232,7 +232,6 @@
 		<file alias="QGroundControl/FlightDisplay/FlyViewToolBar.qml">../src/UI/toolbar/FlyViewToolBar.qml</file>
 		<file alias="QGroundControl/FlightDisplay/FlyViewToolBarIndicators.qml">../src/UI/toolbar/FlyViewToolBarIndicators.qml</file>
 		<file alias="QGroundControl/FlightDisplay/FlyViewToolStrip.qml">../src/FlightDisplay/FlyViewToolStrip.qml</file>
-		<file alias="QGroundControl/FlightDisplay/FlyViewToolStripActionList.qml">../src/FlightDisplay/FlyViewToolStripActionList.qml</file>
 		<file alias="QGroundControl/FlightDisplay/FlyViewTopRightColumnLayout.qml">../src/FlightDisplay/FlyViewTopRightColumnLayout.qml</file>
 		<file alias="QGroundControl/FlightDisplay/FlyViewVideo.qml">../src/FlightDisplay/FlyViewVideo.qml</file>
 		<file alias="QGroundControl/FlightDisplay/OnScreenGimbalController.qml">../src/FlightDisplay/OnScreenGimbalController.qml</file>

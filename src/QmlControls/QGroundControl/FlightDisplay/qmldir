@@ -1,5 +1,6 @@
 Module QGroundControl.FlightDisplay
 
+CustomGuidedActionsController   1.0 CustomGuidedActionsController.qml
 FlyView                         1.0 FlyView.qml
 FlyViewBottomRightRowLayout     1.0 FlyViewBottomRightRowLayout.qml
 FlyViewCustomLayer              1.0 FlyViewCustomLayer.qml

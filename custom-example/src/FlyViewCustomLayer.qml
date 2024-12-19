@@ -95,11 +95,11 @@ Item {
         id:                         compassBar
         height:                     ScreenTools.defaultFontPixelHeight * 1.5
         width:                      ScreenTools.defaultFontPixelWidth  * 50
+        anchors.bottom:             parent.bottom
+        anchors.bottomMargin:       _toolsMargin
         color:                      "#DEDEDE"
         radius:                     2
         clip:                       true
-        anchors.top:                headingIndicator.bottom
-        anchors.topMargin:          -headingIndicator.height / 2
         anchors.horizontalCenter:   parent.horizontalCenter
         Repeater {
             model: 720
@@ -137,8 +137,8 @@ Item {
         height:                     ScreenTools.defaultFontPixelHeight
         width:                      ScreenTools.defaultFontPixelWidth * 4
         color:                      qgcPal.windowShadeDark
-        anchors.top:                parent.top
-        anchors.topMargin:          _toolsMargin
+        anchors.top:                compassBar.top
+        anchors.topMargin:          -headingIndicator.height / 2
         anchors.horizontalCenter:   parent.horizontalCenter
         QGCLabel {
             text:                   _heading

@@ -30,7 +30,9 @@
         <file alias="Custom/Widgets/qmldir">res/Custom/Widgets/qmldir</file>
     </qresource>
     <qresource prefix="/qml">
-        <file alias="QGroundControl/FlightDisplay/FlyViewCustomLayer.qml">res/CustomFlyViewOverlay.qml</file>
+        <file alias="QGroundControl/FlightDisplay/CustomGuidedActionsController.qml">src/CustomGuidedActionsController.qml</file>
+        <file alias="QGroundControl/FlightDisplay/FlyViewCustomLayer.qml">src/FlyViewCustomLayer.qml</file>
+        <file alias="QGroundControl/FlightDisplay/FlyViewToolStripActionList.qml">src/FlyViewToolStripActionList.qml</file>
     </qresource>
     <qresource prefix="/res">
         <file alias="QGCLogoFull.svg">res/QGCLogoFull.svg</file>

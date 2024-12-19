@@ -222,6 +222,7 @@
         <file alias="QGroundControl/FactControls/LabelledFactTextField.qml">src/FactSystem/FactControls/LabelledFactTextField.qml</file>
         <file alias="QGroundControl/FactControls/LabelledFactSlider.qml">src/FactSystem/FactControls/LabelledFactSlider.qml</file>
         <file alias="QGroundControl/FactControls/qmldir">src/QmlControls/QGroundControl/FactControls/qmldir</file>
+        <file alias="QGroundControl/FlightDisplay/CustomGuidedActionsController.qml">src/FlightDisplay/CustomGuidedActionsController.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlightDisplayViewVideo.qml">src/FlightDisplay/FlightDisplayViewVideo.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlyView.qml">src/FlightDisplay/FlyView.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlyViewBottomRightRowLayout.qml">src/FlightDisplay/FlyViewBottomRightRowLayout.qml</file>
