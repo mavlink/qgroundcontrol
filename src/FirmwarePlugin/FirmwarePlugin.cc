@@ -365,7 +365,7 @@ bool FirmwarePlugin::_armVehicleAndValidate(Vehicle* vehicle)
 
 bool FirmwarePlugin::_setFlightModeAndValidate(Vehicle* vehicle, const QString& flightMode)
 {
-    if (vehicle->flightMode() == flightMode) {
+    if (QString::compare(vehicle->flightMode(), flightMode, Qt::CaseInsensitive) == 0) {
         return true;
     }
 
@@ -377,7 +377,7 @@ bool FirmwarePlugin::_setFlightModeAndValidate(Vehicle* vehicle, const QString& 
 
         // Wait for vehicle to return flight mode
         for (int i=0; i<13; i++) {
-            if (vehicle->flightMode() == flightMode) {
+            if (QString::compare(vehicle->flightMode(), flightMode, Qt::CaseInsensitive) == 0) {
                 flightModeChanged = true;
                 break;
             }
