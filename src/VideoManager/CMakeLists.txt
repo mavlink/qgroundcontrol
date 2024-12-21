@@ -7,14 +7,6 @@ qt_add_library(VideoManager STATIC
     VideoManager.h
 )
 
-# option(QGC_ENABLE_VIDEOSTREAMING "Enable video streaming" ON)
-# cmake_print_variables(QGC_ENABLE_VIDEOSTREAMING)
-# if(NOT QGC_ENABLE_VIDEOSTREAMING)
-#     message(STATUS "Video streaming support disabled")
-#     return()
-# endif()
-# message(STATUS "Video streaming support enabled")
-
 add_subdirectory(VideoReceiver)
 
 target_link_libraries(VideoManager

@@ -54,6 +54,7 @@ target_link_libraries(Settings
         GStreamerReceiver
         QGC
         QmlControls
+        QtMultimediaReceiver
         Vehicle
         VideoManager
         VideoReceiver
