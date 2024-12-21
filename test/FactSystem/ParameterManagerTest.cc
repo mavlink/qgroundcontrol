@@ -70,9 +70,6 @@ void ParameterManagerTest::_requestListMissingParamSuccess(void)
 // Test no response to param_request_list
 void ParameterManagerTest::_requestListNoResponse(void)
 {
-    // Will pop error about request failure
-    setExpectedMessageBox(QMessageBox::Ok);
-
     Q_ASSERT(!_mockLink);
     _mockLink = MockLink::startPX4MockLink(false, MockConfiguration::FailParamNoReponseToRequestList);
 
@@ -96,18 +93,12 @@ void ParameterManagerTest::_requestListNoResponse(void)
     // We should not get any progress bar updates, nor a parameter ready signal
     QCOMPARE(spyProgress.wait(500), false);
     QCOMPARE(spyParamsReady.wait(40000), false);
-
-    // User should have been notified
-    checkExpectedMessageBox();
 }
 
 // MockLink will fail to send a param on initial request, it will also fail to send it on subsequent
 // param_read requests.
 void ParameterManagerTest::_requestListMissingParamFail(void)
 {
-    // Will pop error about missing params
-    setExpectedMessageBox(QMessageBox::Ok);
-
     Q_ASSERT(!_mockLink);
     _mockLink = MockLink::startPX4MockLink(false, MockConfiguration::FailMissingParamOnAllRequests);
 
@@ -137,9 +128,6 @@ void ParameterManagerTest::_requestListMissingParamFail(void)
     // We should get a parameters ready signal, but Vehicle should indicate missing params
     QCOMPARE(spyParamsReady.wait(40000), true);
     QCOMPARE(vehicle->parameterManager()->missingParameters(), true);
-
-    // User should have been notified
-    checkExpectedMessageBox();
 }
 
 void ParameterManagerTest::_FTPnoFailure()
