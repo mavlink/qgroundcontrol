@@ -185,7 +185,7 @@ void VideoManager::init()
             }
         });
 
-        (void) connect(videoReceiver.receiver, &VideoReceiver::onTakeScreenshotComplete, this, [this, &videoReceiver](VideoReceiver::STATUS status) {
+        (void) connect(videoReceiver.receiver, &VideoReceiver::onTakeScreenshotComplete, this, [&videoReceiver](VideoReceiver::STATUS status) {
             if (status == VideoReceiver::STATUS_OK) {
                 qCDebug(VideoManagerLog) << "Video" << videoReceiver.index << "screenshot taken";
             } else {
