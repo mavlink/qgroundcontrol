@@ -8,38 +8,57 @@
  ****************************************************************************/
 
 #include "UdpIODevice.h"
+#include "QGCLoggingCategory.h"
 
+QGC_LOGGING_CATEGORY(UdpIODeviceLog, "qgc.comms.udpiodevice")
 
-UdpIODevice::UdpIODevice(QObject *parent) : QUdpSocket(parent)
+UdpIODevice::UdpIODevice(QObject *parent)
+    : QUdpSocket(parent)
 {
-    // this might cause data to be available only after a second readyRead() signal
-    connect(this, &QUdpSocket::readyRead, this, &UdpIODevice::_readAvailableData);
+    // qCDebug(UdpIODeviceLog) << Q_FUNC_INFO << this;
+
+    (void) connect(this, &QUdpSocket::readyRead, this, &UdpIODevice::_readAvailableData);
+}
+
+UdpIODevice::~UdpIODevice()
+{
+    // qCDebug(UdpIODeviceLog) << Q_FUNC_INFO << this;
 }
 
 bool UdpIODevice::canReadLine() const
 {
-    return _buffer.indexOf('\n') > -1;
+    return _buffer.contains('\n');
 }
 
 qint64 UdpIODevice::readLineData(char *data, qint64 maxSize)
 {
-    int length = _buffer.indexOf('\n') + 1; // add 1 to include the '\n'
-    if (length == 0) {
+    const qint64 newlinePos = _buffer.indexOf('\n');
+    if (newlinePos < 0) {
         return 0;
     }
-    length = std::min(length, static_cast<int>(maxSize));
-    // copy lines to output
-    std::copy(_buffer.data(), _buffer.data() + length, data);
-    // trim buffer to remove consumed line
-    _buffer = _buffer.right(_buffer.size() - length);
-    // return number of bytes read
+
+    const qint64 length = std::min(newlinePos + 1, maxSize);
+    (void) std::copy_n(_buffer.constData(), length, data);
+
+    (void) _buffer.remove(0, length);
     return length;
 }
 
-void UdpIODevice::_readAvailableData() {
+qint64 UdpIODevice::readData(char *data, qint64 maxSize)
+{
+    const qint64 length = std::min<qint64>(_buffer.size(), maxSize);
+    (void) std::copy_n(_buffer.constData(), length, data);
+
+    (void) _buffer.remove(0, length);
+    return length;
+}
+
+void UdpIODevice::_readAvailableData()
+{
     while (hasPendingDatagrams()) {
-        int previousSize = _buffer.size();
-        _buffer.resize(static_cast<int>(_buffer.size() + pendingDatagramSize()));
-        readDatagram((_buffer.data() + previousSize), pendingDatagramSize());
+        const qint64 size = pendingDatagramSize();
+        const int oldSize = _buffer.size();
+        _buffer.resize(oldSize + static_cast<int>(size));
+        (void) readDatagram(_buffer.data() + oldSize, size);
     }
 }

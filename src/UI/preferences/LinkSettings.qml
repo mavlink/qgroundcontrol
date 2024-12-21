@@ -50,11 +50,69 @@ SettingsPage {
     }
 
     SettingsGroupLayout {
+        heading: qsTr("NMEA GPS")
+        visible: QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.visible && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.visible
+
+        LabelledComboBox {
+            id: nmeaPortCombo
+            label: qsTr("Device")
+
+            model: ListModel {}
+
+            onActivated: (index) => {
+                if (index !== -1) {
+                    QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.value = comboBox.textAt(index);
+                }
+            }
+
+            Component.onCompleted: {
+                model.append({text: "Disabled"})
+                model.append({text: "UDP Port"})
+
+                for (var i in QGroundControl.linkManager.serialPorts) {
+                    nmeaPortCombo.model.append({text:QGroundControl.linkManager.serialPorts[i]})
+                }
+
+                const index = nmeaPortCombo.comboBox.find(QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.valueString);
+                nmeaPortCombo.currentIndex = index;
+
+                if (QGroundControl.linkManager.serialPorts.length === 0) {
+                    nmeaPortCombo.model.append({text: "Serial <none available>"})
+                }
+            }
+        }
+
+        LabelledComboBox {
+            id: nmeaBaudCombo
+            visible: (nmeaPortCombo.currentText !== "UDP Port") && (nmeaPortCombo.currentText !== "Disabled")
+            label: qsTr("Baudrate")
+            model: QGroundControl.linkManager.serialBaudRates
+
+            onActivated: (index) => {
+                if (index !== -1) {
+                    QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.value = parseInt(comboBox.textAt(index));
+                }
+            }
+
+            Component.onCompleted: {
+                const index = nmeaBaudCombo.comboBox.find(QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.valueString);
+                nmeaBaudCombo.currentIndex = index;
+            }
+        }
+
+        LabelledFactTextField {
+            visible: nmeaPortCombo.currentText === "UDP Port"
+            label: qsTr("NMEA stream UDP port")
+            fact: QGroundControl.settingsManager.autoConnectSettings.nmeaUdpPort
+        }
+    }
+
+    SettingsGroupLayout {
         heading: qsTr("Links")
 
         Repeater {
             model: _linkManager.linkConfigurations
-            
+
             RowLayout {
                 Layout.fillWidth:   true
                 visible:            !object.dynamic
