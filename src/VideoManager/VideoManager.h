@@ -131,6 +131,7 @@ private:
         bool started = false;
         bool lowLatencyStreaming = false;
         size_t index = 0;
+        QString name;
     };
     QList<VideoReceiverData> _videoReceiverData = QList<VideoReceiverData>(MAX_VIDEO_RECEIVERS);
 

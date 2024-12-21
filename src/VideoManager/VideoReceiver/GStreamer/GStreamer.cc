@@ -9,7 +9,9 @@
 
 #include "GStreamer.h"
 #include "GstVideoReceiver.h"
+#include "SettingsManager.h"
 #include "AppSettings.h"
+#include "VideoSettings.h"
 #include "QGCLoggingCategory.h"
 #ifdef Q_OS_IOS
 #include "gst_ios_init.h"
@@ -207,6 +209,8 @@ void initialize()
 
     GST_PLUGIN_STATIC_REGISTER(qml6);
     GST_PLUGIN_STATIC_REGISTER(qgc);
+
+    blacklist(static_cast<GStreamer::VideoDecoderOptions>(SettingsManager::instance()->videoSettings()->forceVideoDecoder()->rawValue().toInt()));
 }
 
 void blacklist(VideoDecoderOptions option)
