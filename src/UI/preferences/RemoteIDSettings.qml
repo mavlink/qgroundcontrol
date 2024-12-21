@@ -342,8 +342,6 @@ SettingsPage {
             SettingsGroupLayout {
                 heading:            qsTr("Operator ID")
                 Layout.fillWidth:   true
-                outerBorderColor: (_regionOperation === RemoteIDSettings.RegionOperation.EU || remoteIDSettings.sendOperatorID.value) ?
-                                      (_activeRID && !_remoteIDManager.operatorIDGood ? qgcPal.colorRed : defaultBorderColor) : defaultBorderColor
 
                 FactCheckBoxSlider {
                     text:               qsTr("Broadcast%1").arg(isEURegion ? " (EU Required)" : "")
@@ -375,12 +373,24 @@ SettingsPage {
                     }
 
                     QGCTextField {
+                        id:                     operatorIDTextField
                         Layout.preferredWidth:  textFieldWidth
                         Layout.fillWidth:       true
                         text:                   operatorIDFact.valueString
                         visible:                operatorIDFact.visible
                         maximumLength:          20                  // Maximum defined by Mavlink definition of OPEN_DRONE_ID_OPERATOR_ID message
 
+                        property bool operatorIDInvalid: ((_regionOperation === RemoteIDSettings.RegionOperation.EU || remoteIDSettings.sendOperatorID.value) &&
+                                                            _activeRID && !_remoteIDManager.operatorIDGood)
+
+                        onOperatorIDInvalidChanged: {
+                            if (operatorIDInvalid) {
+                                operatorIDTextField.showValidationError(qsTr("Invalid Operator ID"), operatorIDFact.valueString, false /* preventViewSwitch */)
+                            } else {
+                                operatorIDTextField.clearValidationError(false /* preventViewSwitch */)
+                            }
+                        }
+                        
                         onTextChanged: {
                             operatorIDFact.value = text
                             if (_activeVehicle) {
