@@ -247,9 +247,6 @@ void RadioConfigTest::cleanup(void)
     Q_ASSERT(_calWidget);
     delete _calWidget;
     
-    // Disconnecting the link will prompt for log file save
-    setExpectedFileDialog(getSaveFileName, QStringList());
-    
     UnitTest::cleanup();
 }
 
