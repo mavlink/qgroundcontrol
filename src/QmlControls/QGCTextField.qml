@@ -53,25 +53,31 @@ TextField {
             if (validationError) {
                 validationToolTip.visible = true
             }
+        } else {
+            validationToolTip.visible = false
         }
     }
 
-    function showValidationError(errorString, originalValidValue = undefined) {
+    function showValidationError(errorString, originalValidValue = undefined, preventViewSiwtch = true) {
         validationToolTip.text = errorString
         validationToolTip.originalValidValue = originalValidValue
         validationToolTip.visible = true
         if (!validationError) {
             validationError = true
-            globals.validationErrorCount++
+            if (preventViewSiwtch) {
+                globals.validationErrorCount++
+            }
         }
     }
 
-    function clearValidationError() {
+    function clearValidationError(preventViewSiwtch = true) {
         validationToolTip.visible = false
         validationToolTip.originalValidValue = undefined
         if (validationError) {
             validationError = false
-            globals.validationErrorCount--
+            if (preventViewSiwtch) {
+                globals.validationErrorCount--
+            }
         }
     }
 
