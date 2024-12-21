@@ -73,6 +73,9 @@ private slots:
 
 private:
     void _setDefaults               ();
+#ifdef QGC_GST_STREAMING
+    void _setForceVideoDecodeList();
+#endif
 
 private:
     bool _noVideo = false;
