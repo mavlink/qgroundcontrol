@@ -1,13 +1,7 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Positioning Test Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Core Positioning Test)
 
 qt_add_library(qgcunittest
     STATIC
-        # FileDialogTest.cc
-        # FileDialogTest.h
-        # MainWindowTest.cc
-        # MainWindowTest.h
-        # MessageBoxTest.cc
-        # MessageBoxTest.h
         MultiSignalSpy.cc
         MultiSignalSpy.h
         MultiSignalSpyV2.cc
@@ -27,7 +21,6 @@ target_link_libraries(qgcunittest
         Qt6::Core
         Qt6::Positioning
         Qt6::Test
-        Qt6::Widgets
         MAVLink
         MockLink
 )

@@ -74,8 +74,6 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
     if (shouldFail) {
         // This should be a failed run
 
-        setExpectedMessageBox(QMessageBox::Ok);
-
         // Wait for write sequence to complete. We should get:
         //      inProgressChanged(false) signal
         //      error(errorCode, QString) signal
@@ -89,9 +87,7 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
         QSignalSpy* spy = _multiSpyMissionManager->getSpyByIndex(errorSignalIndex);
         QList<QVariant> signalArgs = spy->takeFirst();
         QCOMPARE(signalArgs.count(), 2);
-        qDebug() << signalArgs[1].toString();
-
-        checkExpectedMessageBox();
+        qCDebug(UnitTestLog) << signalArgs[1].toString();
     } else {
         // This should be clean run
 
@@ -137,8 +133,6 @@ void MissionManagerTest::_roundTripItems(MockLinkMissionItemHandler::FailureMode
     if (shouldFail) {
         // This should be a failed run
 
-        setExpectedMessageBox(QMessageBox::Ok);
-
         // Wait for read sequence to complete. We should get:
         //      inProgressChanged(false) signal to signal completion
         //      error(errorCode, QString) signal
@@ -153,9 +147,7 @@ void MissionManagerTest::_roundTripItems(MockLinkMissionItemHandler::FailureMode
         QSignalSpy* spy = _multiSpyMissionManager->getSpyByIndex(errorSignalIndex);
         QList<QVariant> signalArgs = spy->takeFirst();
         QCOMPARE(signalArgs.count(), 2);
-        qDebug() << signalArgs[1].toString();
-
-        checkExpectedMessageBox();
+        qCDebug(UnitTestLog) << signalArgs[1].toString();
     } else {
         // This should be clean run
 
@@ -203,7 +195,7 @@ void MissionManagerTest::_roundTripItems(MockLinkMissionItemHandler::FailureMode
 
         MissionItem* actual = _missionManager->missionItems()[actualItemIndex];
         
-        qDebug() << "Test case" << testCaseIndex;
+        qCDebug(UnitTestLog) << "Test case" << testCaseIndex;
         QCOMPARE(actual->sequenceNumber(),          expectedSequenceNumber);
         QCOMPARE(actual->coordinate().latitude(),   testCase->expectedItem.coordinate.latitude());
         QCOMPARE(actual->coordinate().longitude(),  testCase->expectedItem.coordinate.longitude());
@@ -256,7 +248,7 @@ void MissionManagerTest::_testWriteFailureHandlingWorker(void)
 
     for (size_t i=0; i<sizeof(rgTestCases)/sizeof(rgTestCases[0]); i++) {
         const WriteTestCase_t* pCase = &rgTestCases[i];
-        qDebug() << "TEST CASE _testWriteFailureHandlingWorker" << pCase->failureText;
+        qCDebug(UnitTestLog) << "TEST CASE _testWriteFailureHandlingWorker" << pCase->failureText;
         _writeItems(pCase->failureMode, MAV_MISSION_ERROR, pCase->shouldFail);
         _mockLink->resetMissionItemHandler();
     }
@@ -301,7 +293,7 @@ void MissionManagerTest::_testReadFailureHandlingWorker(void)
 
     for (size_t i=0; i<sizeof(rgTestCases)/sizeof(rgTestCases[0]); i++) {
         const ReadTestCase_t* pCase = &rgTestCases[i];
-        qDebug() << "TEST CASE _testReadFailureHandlingWorker" << pCase->failureText;
+        qCDebug(UnitTestLog) << "TEST CASE _testReadFailureHandlingWorker" << pCase->failureText;
         _roundTripItems(pCase->failureMode, MAV_MISSION_ERROR, pCase->shouldFail);
         _mockLink->resetMissionItemHandler();
         _multiSpyMissionManager->clearAllSignals();
@@ -357,7 +349,7 @@ void MissionManagerTest::_testErrorAckFailureStrings(void)
 
     for (size_t i=0; i<sizeof(rgTestCases)/sizeof(rgTestCases[0]); i++) {
         const ErrorStringTestCase_t* pCase = &rgTestCases[i];
-        qDebug() << "TEST CASE _testErrorAckFailureStrings" << pCase->ackResultStr;
+        qCDebug(UnitTestLog) << "TEST CASE _testErrorAckFailureStrings" << pCase->ackResultStr;
         _writeItems(MockLinkMissionItemHandler::FailWriteRequest1ErrorAck, pCase->ackResult, true /* shouldFail */);
         _mockLink->resetMissionItemHandler();
     }
