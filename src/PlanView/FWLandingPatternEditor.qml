@@ -32,16 +32,16 @@ Rectangle {
     //property real   availableWidth    ///< Width for control
     //property var    missionItem       ///< Mission Item for editor
 
-    property var    _masterControler:               masterController
-    property var    _missionController:             _masterControler.missionController
-    property var    _missionVehicle:                _masterControler.controllerVehicle
+    property var    _masterControler:           masterController
+    property var    _missionController:         _masterControler.missionController
+    property var    _missionVehicle:            _masterControler.controllerVehicle
     property real   _margin:                    ScreenTools.defaultFontPixelWidth / 2
     property real   _spacer:                    ScreenTools.defaultFontPixelWidth / 2
     property string _setToVehicleHeadingStr:    qsTr("Set to vehicle heading")
     property string _setToVehicleLocationStr:   qsTr("Set to vehicle location")
     property bool   _showCameraSection:         !_missionVehicle.apmFirmware
     property int    _altitudeMode:              missionItem.altitudesAreRelative ? QGroundControl.AltitudeModeRelative : QGroundControl.AltitudeModeAbsolute
-
+    property real   _previousLoiterRadius:      0
 
     Column {
         id:                 editorColumn
@@ -69,6 +69,22 @@ Rectangle {
             FactCheckBox {
                 text:       qsTr("Use loiter to altitude")
                 fact:       missionItem.useLoiterToAlt
+
+                // When not using loiter to altitude, set radius to 0 to set the
+                // glide slope heading correctly
+                onCheckedChanged: {
+                    if (checked) {
+                        // Restore the previous loiter radius or set the default value
+                        if (_previousLoiterRadius > 0) {
+                            missionItem.loiterRadius.rawValue = _previousLoiterRadius
+                        } else {
+                            missionItem.loiterRadius.rawValue = missionItem.loiterRadius.defaultValue
+                        }
+                    } else {
+                        _previousLoiterRadius = missionItem.loiterRadius.rawValue
+                        missionItem.loiterRadius.rawValue = 0
+                    }
+                }
             }
 
             GridLayout {
@@ -82,6 +98,18 @@ Rectangle {
                     Layout.fillWidth:   true
                     fact:               missionItem.finalApproachAltitude
                     altitudeMode:       _altitudeMode
+                }
+
+                FactCheckBox {
+                    id:         flightSpeedCheckbox
+                    text:       qsTr("Flight Speed")
+                    fact:       missionItem.useDoChangeSpeed
+                }
+
+                FactTextField {
+                    Layout.fillWidth:   true
+                    fact:               missionItem.finalApproachSpeed
+                    enabled:            flightSpeedCheckbox.checked
                 }
 
                 QGCLabel {
