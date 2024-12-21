@@ -107,9 +107,9 @@ QGCButton {
             _telemetryState = _statePassed
             return
         }
-        if (manualText !== "" && _manualState !== _statePassed) {
+        if (manualText !== "") {
             // User is confirming a manual check
-            _manualState = _statePassed
+            _manualState = (_manualState === _statePassed) ? _statePending : _statePassed
         }
     }
 
