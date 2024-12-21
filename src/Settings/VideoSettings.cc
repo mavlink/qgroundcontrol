@@ -66,9 +66,7 @@ DECLARE_SETTINGGROUP(Video, "Video")
 
     _nameToMetaDataMap[videoSourceName]->setEnumInfo(videoSourceCookedList, videoSourceList);
 
-#ifdef QGC_GST_STREAMING
     _setForceVideoDecodeList();
-#endif
 
     // Set default value for videoSource
     _setDefaults();
@@ -250,9 +248,9 @@ void VideoSettings::_configChanged(QVariant)
     emit streamConfiguredChanged(streamConfigured());
 }
 
-#ifdef QGC_GST_STREAMING
 void VideoSettings::_setForceVideoDecodeList()
 {
+#ifdef QGC_GST_STREAMING
     const QVariantList removeForceVideoDecodeList{
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
         GStreamer::VideoDecoderOptions::ForceVideoDecoderDirectX3D,
@@ -274,5 +272,5 @@ void VideoSettings::_setForceVideoDecodeList()
     for (const auto &value : removeForceVideoDecodeList) {
         _nameToMetaDataMap[forceVideoDecoderName]->removeEnumInfo(value);
     }
-}
 #endif
+}
