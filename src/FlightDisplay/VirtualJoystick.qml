@@ -19,6 +19,7 @@ import QGroundControl.Vehicle
 Item {
     // The following properties must be passed in from the Loader
     // property bool autoCenterThrottle - true: throttle will snap back to center when released
+    // property bool leftHandedMode - true: virtual joystick layout will be reversed
 
     id: virtualJoysticks
 
@@ -35,7 +36,7 @@ Item {
         repeat:     true
         onTriggered: {
             if (_activeVehicle && _initialConnectComplete) {
-                _activeVehicle.virtualTabletJoystickValue(rightStick.xAxis, rightStick.yAxis, leftStick.xAxis, leftStick.yAxis)
+                leftHandedMode ? _activeVehicle.virtualTabletJoystickValue(leftStick.xAxis, leftStick.yAxis, rightStick.xAxis, rightStick.yAxis) : _activeVehicle.virtualTabletJoystickValue(rightStick.xAxis, rightStick.yAxis, leftStick.xAxis, leftStick.yAxis)
             }
             leftYAxisValue = leftStick.yAxis // We keep Y axis value from the throttle stick for using it while there is a resize
         }
@@ -74,7 +75,7 @@ Item {
         anchors.bottom:         parent.bottom
         width:                  parent.height
         height:                 parent.height
-        yAxisPositiveRangeOnly: _activeVehicle && !_activeVehicle.rover
+        yAxisPositiveRangeOnly: _activeVehicle && !_activeVehicle.rover && !leftHandedMode
         yAxisReCenter:          autoCenterThrottle
     }
 
@@ -86,6 +87,7 @@ Item {
         anchors.bottom:         parent.bottom
         width:                  parent.height
         height:                 parent.height
+        yAxisPositiveRangeOnly: _activeVehicle && !_activeVehicle.rover && leftHandedMode
         yAxisReCenter:          true
     }
 }
