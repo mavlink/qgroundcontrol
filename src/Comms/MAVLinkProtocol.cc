@@ -12,7 +12,6 @@
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
-#include "QGCTemporaryFile.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
 #include "QmlObjectListModel.h"
@@ -21,6 +20,7 @@
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
 #include <QtCore/QMetaType>
+#include <QtCore/QTemporaryFile>
 #include <QtCore/QSettings>
 #include <QtCore/QStandardPaths>
 
@@ -30,7 +30,7 @@ Q_APPLICATION_STATIC(MAVLinkProtocol, _mavlinkProtocolInstance);
 
 MAVLinkProtocol::MAVLinkProtocol(QObject *parent)
     : QObject(parent)
-    , _tempLogFile(new QGCTemporaryFile(QStringLiteral("%2.%3").arg(_tempLogFileTemplate, _logFileExtension), this))
+    , _tempLogFile(new QTemporaryFile(QStringLiteral("%2.%3").arg(_tempLogFileTemplate, _logFileExtension), this))
 {
     // qCDebug(MAVLinkProtocolLog) << Q_FUNC_INFO << this;
 }

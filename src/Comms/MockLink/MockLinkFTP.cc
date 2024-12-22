@@ -10,7 +10,8 @@
 
 #include "MockLinkFTP.h"
 #include "MockLink.h"
-#include "QGCTemporaryFile.h"
+
+#include <QtCore/QTemporaryFile>
 
 MockLinkFTP::MockLinkFTP(uint8_t systemIdServer, uint8_t componentIdServer, MockLink* mockLink)
     : _systemIdServer   (systemIdServer)
@@ -426,11 +427,12 @@ uint16_t MockLinkFTP::_nextSeqNumber(uint16_t seqNumber)
 
 QString MockLinkFTP::_createTestTempFile(int size)
 {
-    QGCTemporaryFile tmpFile("MockLinkFTPTestCase");
-    tmpFile.open(QIODevice::WriteOnly | QIODevice::Truncate);
-    for (int i=0; i<size; i++) {
-        tmpFile.write(QByteArray(1, i % 255));
+    QTemporaryFile tmpFile("MockLinkFTPTestCase");
+    if (tmpFile.open()) {
+        for (int i=0; i<size; i++) {
+            (void) tmpFile.write(QByteArray(1, i % 255));
+        }
+        tmpFile.close();
     }
-    tmpFile.close();
     return tmpFile.fileName();
 }

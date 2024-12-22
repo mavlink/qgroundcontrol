@@ -13,11 +13,10 @@
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QString>
+#include <QtCore/QTemporaryFile>
 
 #include "LinkInterface.h"
 #include "MAVLinkLib.h"
-
-class QGCTemporaryFile;
 
 Q_DECLARE_LOGGING_CATEGORY(MAVLinkProtocolLog)
 
@@ -130,7 +129,7 @@ private:
     void _storeSettings() const;
     void _loadSettings();
 
-    QGCTemporaryFile * const _tempLogFile = nullptr;
+    QTemporaryFile *_tempLogFile = nullptr;
 
     bool _logSuspendError = false;  ///< true: Logging suspended due to error
     bool _logSuspendReplay = false; ///< true: Logging suspended due to replay

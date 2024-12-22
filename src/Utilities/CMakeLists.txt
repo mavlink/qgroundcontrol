@@ -19,8 +19,6 @@ qt_add_library(Utilities STATIC
     QGCFileDownload.h
     QGCLoggingCategory.cc
     QGCLoggingCategory.h
-    QGCTemporaryFile.cc
-    QGCTemporaryFile.h
     ShapeFileHelper.cc
     ShapeFileHelper.h
     SHPFileHelper.cc
