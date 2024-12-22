@@ -9,11 +9,14 @@
 
 #pragma once
 
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QString>
 
 class QGCFileDownload;
 class QNetworkDiskCache;
+
+Q_DECLARE_LOGGING_CATEGORY(QGCCachedFileDownloadLog)
 
 class QGCCachedFileDownload : public QObject
 {
@@ -21,6 +24,7 @@ class QGCCachedFileDownload : public QObject
 
 public:
     QGCCachedFileDownload(const QString &cacheDirectory, QObject *parent = nullptr);
+    ~QGCCachedFileDownload();
 
     /// Download the specified remote file.
     ///     @param url   File to download
@@ -36,7 +40,7 @@ private slots:
     void _onDownloadCompleted(const QString &remoteFile, const QString &localFile, const QString &errorMsg);
 
 private:
-    QGCFileDownload* _fileDownload = nullptr;
-    QNetworkDiskCache* _diskCache = nullptr;
+    QGCFileDownload *_fileDownload = nullptr;
+    QNetworkDiskCache *_diskCache = nullptr;
     bool _downloadFromNetwork = false;
 };

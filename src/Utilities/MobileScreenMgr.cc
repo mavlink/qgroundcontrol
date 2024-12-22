@@ -9,8 +9,6 @@
 
 #include "MobileScreenMgr.h"
 
-// static const char* kJniClassName = "org/mavlink/qgroundcontrol/QGCActivity";
-
 void MobileScreenMgr::setKeepScreenOn(bool /*keepScreenOn*/)
 {
     //-- Screen is locked on while QGC is running on Android

@@ -15,7 +15,7 @@
 #include "MapsSettings.h"
 #include "QGCMapUrlEngine.h"
 #include "QGCMapTasks.h"
-#include <QGCLoggingCategory.h>
+#include "QGCLoggingCategory.h"
 
 #include <QtCore/QStandardPaths>
 #include <QtCore/QLoggingCategory>

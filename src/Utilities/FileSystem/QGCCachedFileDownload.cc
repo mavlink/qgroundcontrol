@@ -9,20 +9,30 @@
 
 #include "QGCCachedFileDownload.h"
 #include "QGCFileDownload.h"
+#include "QGCLoggingCategory.h"
 
 #include <QtCore/QDateTime>
 #include <QtNetwork/QNetworkDiskCache>
+
+QGC_LOGGING_CATEGORY(QGCCachedFileDownloadLog, "qgc.utilities.qgccachedfiledownload");
 
 QGCCachedFileDownload::QGCCachedFileDownload(const QString &cacheDirectory, QObject *parent)
     : QObject(parent)
     , _fileDownload(new QGCFileDownload(this))
     , _diskCache(new QNetworkDiskCache(this))
 {
+    // qCDebug(QGCCachedFileDownloadLog) << Q_FUNC_INFO << this;
+
     _diskCache->setCacheDirectory(cacheDirectory);
     _fileDownload->setCache(_diskCache);
 
     (void) connect(_fileDownload, &QGCFileDownload::downloadProgress, this, &QGCCachedFileDownload::downloadProgress);
     (void) connect(_fileDownload, &QGCFileDownload::downloadComplete, this, &QGCCachedFileDownload::_onDownloadCompleted);
+}
+
+QGCCachedFileDownload::~QGCCachedFileDownload()
+{
+    // qCDebug(QGCCachedFileDownloadLog) << Q_FUNC_INFO << this;
 }
 
 bool QGCCachedFileDownload::download(const QString &url, int maxCacheAgeSec)

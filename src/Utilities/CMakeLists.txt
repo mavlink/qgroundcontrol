@@ -6,10 +6,10 @@ target_sources(QGC
         DeviceInfo.h
         JsonHelper.cc
         JsonHelper.h
-        KMLDomDocument.cc
-        KMLDomDocument.h
-        KMLHelper.cc
-        KMLHelper.h
+        KML/KMLDomDocument.cc
+        KML/KMLDomDocument.h
+        KML/KMLHelper.cc
+        KML/KMLHelper.h
         QGC.cc
         QGC.h
         FileSystem/QGCCachedFileDownload.cc
@@ -20,10 +20,10 @@ target_sources(QGC
         QGCLoggingCategory.h
         FileSystem/QGCTemporaryFile.cc
         FileSystem/QGCTemporaryFile.h
-        ShapeFileHelper.cc
-        ShapeFileHelper.h
-        SHPFileHelper.cc
-        SHPFileHelper.h
+        Shape/ShapeFileHelper.cc
+        Shape/ShapeFileHelper.h
+        Shape/SHPFileHelper.cc
+        Shape/SHPFileHelper.h
         StateMachine.cc
         StateMachine.h
 )
@@ -37,7 +37,14 @@ if(ANDROID OR IOS)
     endif()
 endif()
 
-target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} FileSystem)
+target_include_directories(QGC
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        FileSystem
+    PRIVATE
+        KML
+        Shape
+)
 
 target_link_libraries(QGC
     PRIVATE
