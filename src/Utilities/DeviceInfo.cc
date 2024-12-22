@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 #include "DeviceInfo.h"
-#include <QGCLoggingCategory.h>
+#include "QGCLoggingCategory.h"
 
 #include <QtCore/qapplicationstatic.h>
 #include <QtNetwork/QNetworkInformation>
@@ -27,26 +27,22 @@ namespace QGCDeviceInfo
 
 bool isInternetAvailable()
 {
-    if(QNetworkInformation::availableBackends().isEmpty()) return false;
+    if (QNetworkInformation::availableBackends().isEmpty()) return false;
 
-    if(!QNetworkInformation::loadDefaultBackend()) return false;
+    if (!QNetworkInformation::loadDefaultBackend()) return false;
 
-    // Note: Qt6.7 will do this automatically
-    if(!QNetworkInformation::instance()->supports(QNetworkInformation::Feature::Reachability))
-    {
-        if(!QNetworkInformation::loadBackendByFeatures(QNetworkInformation::Feature::Reachability)) return false;
-    }
+    if (!QNetworkInformation::loadBackendByFeatures(QNetworkInformation::Feature::Reachability)) return false;
 
     const QNetworkInformation::Reachability reachability = QNetworkInformation::instance()->reachability();
 
     return (reachability == QNetworkInformation::Reachability::Online);
 }
 
-bool isNetworkWired()
+bool isNetworkEthernet()
 {
-    if(QNetworkInformation::availableBackends().isEmpty()) return false;
+    if (QNetworkInformation::availableBackends().isEmpty()) return false;
 
-    if(!QNetworkInformation::loadDefaultBackend()) return false;
+    if (!QNetworkInformation::loadDefaultBackend()) return false;
 
     return (QNetworkInformation::instance()->transportMedium() == QNetworkInformation::TransportMedium::Ethernet);
 }

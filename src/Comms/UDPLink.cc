@@ -646,5 +646,5 @@ void UDPLink::_writeBytes(const QByteArray& bytes)
 
 bool UDPLink::isSecureConnection() const
 {
-    return QGCDeviceInfo::isNetworkWired();
+    return QGCDeviceInfo::isNetworkEthernet();
 }

@@ -7,25 +7,20 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @brief This class mimics QTemporaryFile. We have our own implementation due to the fact that
-///				QTemporaryFile implemenation differs cross platform making it unusable for our use-case.
-///				Look for bug reports on QTemporaryFile keeping the file locked for details.
-///
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "QGCTemporaryFile.h"
+#include "QGCLoggingCategory.h"
 
 #include <QtCore/QDir>
 #include <QtCore/QRandomGenerator>
 #include <QtCore/QStandardPaths>
 
-QGCTemporaryFile::QGCTemporaryFile(const QString& fileTemplate, QObject* parent) :
-    QFile(parent),
-    _template(fileTemplate)
-{
+QGC_LOGGING_CATEGORY(QGCTemporaryFileLog, "qgc.utilities.qgctemporaryfile");
 
+QGCTemporaryFile::QGCTemporaryFile(const QString &fileTemplate, QObject *parent)
+    : QFile(parent)
+    , _template(fileTemplate)
+{
+    // qCDebug(QGCTemporaryFileLog) << Q_FUNC_INFO << this;
 }
 
 QGCTemporaryFile::~QGCTemporaryFile()
@@ -33,29 +28,28 @@ QGCTemporaryFile::~QGCTemporaryFile()
     if (_autoRemove) {
         remove();
     }
+
+    // qCDebug(QGCTemporaryFileLog) << Q_FUNC_INFO << this;
 }
 
 bool QGCTemporaryFile::open(QFile::OpenMode openMode)
 {
     setFileName(_newTempFileFullyQualifiedName(_template));
-    
+
     return QFile::open(openMode);
 }
 
-QString QGCTemporaryFile::_newTempFileFullyQualifiedName(const QString& fileTemplate)
+QString QGCTemporaryFile::_newTempFileFullyQualifiedName(const QString &fileTemplate)
 {
     QString nameTemplate = fileTemplate;
-    QDir tempDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
+    const QDir tempDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
 
-    // Generate unique, non-existing filename
-
-    static const char rgDigits[] = "0123456789";
+    static constexpr const char rgDigits[] = "0123456789";
 
     QString tempFilename;
-
     do {
         QString uniqueStr;
-        for (int i=0; i<6; i++) {
+        for (int i = 0; i < 6; i++) {
             uniqueStr += rgDigits[QRandomGenerator::global()->generate() % 10];
         }
 
