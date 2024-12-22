@@ -17,14 +17,13 @@
 
 Q_DECLARE_LOGGING_CATEGORY(InitialConnectStateMachineLog)
 
-class Vehicle;
-
 class InitialConnectStateMachine : public StateMachine
 {
     Q_OBJECT
 
 public:
-    InitialConnectStateMachine(Vehicle* vehicle);
+    InitialConnectStateMachine(Vehicle *vehicle, QObject *parent = nullptr);
+    ~InitialConnectStateMachine();
 
     // Overrides from StateMachine
     int             stateCount      (void) const final;

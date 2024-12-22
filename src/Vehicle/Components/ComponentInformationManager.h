@@ -15,6 +15,7 @@
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
 
+Q_DECLARE_LOGGING_CATEGORY(RequestMetaDataTypeStateMachineLog)
 Q_DECLARE_LOGGING_CATEGORY(ComponentInformationManagerLog)
 
 class Vehicle;
@@ -31,7 +32,8 @@ class RequestMetaDataTypeStateMachine : public StateMachine
     Q_OBJECT
 
 public:
-    RequestMetaDataTypeStateMachine(ComponentInformationManager* compMgr);
+    RequestMetaDataTypeStateMachine(ComponentInformationManager *compMgr, QObject *parent = nullptr);
+    ~RequestMetaDataTypeStateMachine();
 
     void        request     (CompInfo* compInfo);
     QString     typeToString(void);
@@ -93,27 +95,28 @@ class ComponentInformationManager : public StateMachine
     Q_OBJECT
 
 public:
-    static constexpr int cachedFileMaxAgeSec = 3 * 24 * 3600; ///< 3 days
+    ComponentInformationManager(Vehicle *vehicle, QObject *parent = nullptr);
+    ~ComponentInformationManager();
 
-    ComponentInformationManager(Vehicle* vehicle);
+    typedef void (*RequestAllCompleteFn)(void *requestAllCompleteFnData);
 
-    typedef void (*RequestAllCompleteFn)(void* requestAllCompleteFnData);
-
-    void                requestAllComponentInformation  (RequestAllCompleteFn requestAllCompletFn, void * requestAllCompleteFnData);
-    Vehicle*            vehicle                         (void) { return _vehicle; }
-    CompInfoParam*      compInfoParam                   (uint8_t compId);
-    CompInfoGeneral*    compInfoGeneral                 (uint8_t compId);
+    void requestAllComponentInformation(RequestAllCompleteFn requestAllCompletFn, void * requestAllCompleteFnData);
+    Vehicle *vehicle() { return _vehicle; }
+    CompInfoParam *compInfoParam(uint8_t compId);
+    CompInfoGeneral *compInfoGeneral(uint8_t compId);
 
     // Overrides from StateMachine
-    int             stateCount  (void) const final;
-    const StateFn*  rgStates    (void) const final;
+    int stateCount() const final;
+    const StateFn *rgStates() const final;
 
-    ComponentInformationCache& fileCache() { return _fileCache; }
-    ComponentInformationTranslation* translation() { return _translation; }
+    ComponentInformationCache &fileCache() { return _fileCache; }
+    ComponentInformationTranslation *translation() { return _translation; }
 
     float progress() const;
 
     void advance() override;
+
+    static constexpr int cachedFileMaxAgeSec = 3 * 24 * 3600; ///< 3 days
 
 signals:
     void progressUpdate(float progress);
