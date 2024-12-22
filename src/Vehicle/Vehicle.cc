@@ -276,8 +276,8 @@ void Vehicle::_commonInit()
     connect(_missionManager, &MissionManager::newMissionItemsAvailable, _trajectoryPoints, &TrajectoryPoints::clear);
 
     _standardModes                  = new StandardModes                 (this, this);
-    _componentInformationManager    = new ComponentInformationManager   (this);
-    _initialConnectStateMachine     = new InitialConnectStateMachine    (this);
+    _componentInformationManager    = new ComponentInformationManager   (this, this);
+    _initialConnectStateMachine     = new InitialConnectStateMachine    (this, this);
     _ftpManager                     = new FTPManager                    (this);
 
     _vehicleLinkManager             = new VehicleLinkManager            (this);
