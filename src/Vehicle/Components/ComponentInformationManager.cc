@@ -23,19 +23,27 @@
 
 #include <QtCore/QStandardPaths>
 
-QGC_LOGGING_CATEGORY(ComponentInformationManagerLog, "ComponentInformationManagerLog")
+QGC_LOGGING_CATEGORY(ComponentInformationManagerLog, "qgc.vehicle.components.componentinformationmanager")
 
-ComponentInformationManager::ComponentInformationManager(Vehicle* vehicle)
-    : _vehicle                  (vehicle)
-    , _requestTypeStateMachine  (this)
+ComponentInformationManager::ComponentInformationManager(Vehicle *vehicle, QObject *parent)
+    : StateMachine(parent)
+    , _vehicle(vehicle)
+    , _requestTypeStateMachine(this, this)
     , _cachedFileDownload(new QGCCachedFileDownload(QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QLatin1String("/QGCCompInfoFileDownloadCache"), this))
     , _fileCache(ComponentInformationCache::defaultInstance())
     , _translation(new ComponentInformationTranslation(this, _cachedFileDownload))
 {
+    // qCDebug(ComponentInformationManagerLog) << Q_FUNC_INFO << this;
+
     _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_GENERAL]    = new CompInfoGeneral   (MAV_COMP_ID_AUTOPILOT1, vehicle, this);
     _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_PARAMETER]  = new CompInfoParam     (MAV_COMP_ID_AUTOPILOT1, vehicle, this);
     _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_EVENTS]     = new CompInfoEvents    (MAV_COMP_ID_AUTOPILOT1, vehicle, this);
     _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_ACTUATORS]  = new CompInfoActuators (MAV_COMP_ID_AUTOPILOT1, vehicle, this);
+}
+
+ComponentInformationManager::~ComponentInformationManager()
+{
+    // qCDebug(ComponentInformationManagerLog) << Q_FUNC_INFO << this;
 }
 
 int ComponentInformationManager::stateCount(void) const
@@ -165,10 +173,16 @@ QString ComponentInformationManager::_getFileCacheTag(int compInfoType, uint32_t
 }
 
 
-RequestMetaDataTypeStateMachine::RequestMetaDataTypeStateMachine(ComponentInformationManager* compMgr)
-    : _compMgr(compMgr)
+RequestMetaDataTypeStateMachine::RequestMetaDataTypeStateMachine(ComponentInformationManager *compMgr, QObject *parent)
+    : StateMachine(parent)
+    , _compMgr(compMgr)
 {
+    // qCDebug(RequestMetaDataTypeStateMachineLog) << Q_FUNC_INFO << this;
+}
 
+RequestMetaDataTypeStateMachine::~RequestMetaDataTypeStateMachine()
+{
+    // qCDebug(RequestMetaDataTypeStateMachineLog) << Q_FUNC_INFO << this;
 }
 
 void RequestMetaDataTypeStateMachine::request(CompInfo* compInfo)

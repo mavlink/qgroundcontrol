@@ -20,18 +20,25 @@
 #include "RallyPointManager.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(InitialConnectStateMachineLog, "InitialConnectStateMachineLog")
+QGC_LOGGING_CATEGORY(InitialConnectStateMachineLog, "qgc.vehicle.initialconnectstatemachine")
 
-InitialConnectStateMachine::InitialConnectStateMachine(Vehicle* vehicle)
-    : _vehicle(vehicle)
+InitialConnectStateMachine::InitialConnectStateMachine(Vehicle *vehicle, QObject *parent)
+    : StateMachine(parent)
+    , _vehicle(vehicle)
 {
-    static_assert(sizeof(_rgStates)/sizeof(_rgStates[0]) == sizeof(_rgProgressWeights)/sizeof(_rgProgressWeights[0]),
-            "array size mismatch");
+    static_assert(std::size(_rgStates) == std::size(_rgProgressWeights), "array size mismatch");
 
     _progressWeightTotal = 0;
     for (int i = 0; i < _cStates; ++i) {
         _progressWeightTotal += _rgProgressWeights[i];
     }
+
+    // qCDebug(InitialConnectStateMachineLog) << Q_FUNC_INFO << this;
+}
+
+InitialConnectStateMachine::~InitialConnectStateMachine()
+{
+    // qCDebug(InitialConnectStateMachineLog) << Q_FUNC_INFO << this;
 }
 
 int InitialConnectStateMachine::stateCount(void) const
