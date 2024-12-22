@@ -78,6 +78,7 @@ void UnitTest::init()
 {
     _initCalled = true;
 
+    MultiVehicleManager::instance()->init();
     LinkManager::instance()->setConnectionsAllowed();
 
     // Force offline vehicle back to defaults

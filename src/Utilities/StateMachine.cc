@@ -8,54 +8,58 @@
  ****************************************************************************/
 
 #include "StateMachine.h"
+#include "QGCLoggingCategory.h"
 
-StateMachine::StateMachine(void)
+QGC_LOGGING_CATEGORY(StateMachineLog, "qgc.utilities.statemachine");
+
+StateMachine::StateMachine(QObject *parent)
+    : QObject(parent)
 {
-
+    // qCDebug(StateMachineLog) << Q_FUNC_INFO << this;
 }
 
-void StateMachine::start(void)
+StateMachine::~StateMachine()
+{
+    // qCDebug(StateMachineLog) << Q_FUNC_INFO << this;
+}
+
+void StateMachine::start()
 {
     _active = true;
     advance();
 }
 
-void StateMachine::advance(void)
+void StateMachine::advance()
 {
-    if (_active) {
-        _stateIndex++;
-        if (_stateIndex < stateCount()) {
-            (*rgStates()[_stateIndex])(this);
-        } else {
-            _active = false;
-            statesCompleted();
-        }
+    if (!_active) {
+        return;
+    }
+
+    _stateIndex++;
+    if (_stateIndex < stateCount()) {
+        (*rgStates()[_stateIndex])(this);
+    } else {
+        _active = false;
+        statesCompleted();
     }
 }
 
 void StateMachine::move(StateFn stateFn)
 {
-    if (_active) {
-        for (int i=0; i<stateCount(); i++) {
-            if (rgStates()[i] == stateFn) {
-                _stateIndex = i;
-                (*rgStates()[_stateIndex])(this);
-                break;
-            }
+    if (!_active) {
+        return;
+    }
+
+    for (int i = 0; i < stateCount(); i++) {
+        if (rgStates()[i] == stateFn) {
+            _stateIndex = i;
+            (*rgStates()[_stateIndex])(this);
+            break;
         }
     }
 }
 
-void StateMachine::statesCompleted(void) const
+StateMachine::StateFn StateMachine::currentState() const
 {
-
-}
-
-StateMachine::StateFn StateMachine::currentState(void) const
-{
-    if (_active) {
-        return rgStates()[_stateIndex];
-    } else {
-        return nullptr;
-    }
+    return (_active ? rgStates()[_stateIndex] : nullptr);
 }
