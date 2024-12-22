@@ -37,7 +37,7 @@ public:
     ///     @param requestAttributes Optional request attributes to set
     ///     @param redirect true: call is internal due to redirect
     ///     @return true: Asynchronous download has started, false: Download initialization failed
-    bool download(const QString& remoteFile, const QList<QPair<QNetworkRequest::Attribute,QVariant>> &requestAttributes = {}, bool redirect = false);
+    bool download(const QString &remoteFile, const QList<QPair<QNetworkRequest::Attribute,QVariant>> &requestAttributes = {}, bool redirect = false);
 
     void setCache(QAbstractNetworkCache *cache);
 

@@ -313,5 +313,5 @@ void TCPLink::_writeBytes(const QByteArray& bytes)
 
 bool TCPLink::isSecureConnection() const
 {
-    return QGCDeviceInfo::isNetworkWired();
+    return QGCDeviceInfo::isNetworkEthernet();
 }
