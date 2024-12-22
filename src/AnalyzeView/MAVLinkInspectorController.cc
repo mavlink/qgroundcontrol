@@ -139,7 +139,7 @@ MAVLinkInspectorController::_vehicleAdded(Vehicle* vehicle)
     }
     else
     {
-        sys = new QGCMAVLinkSystem(this, static_cast<uint8_t>(vehicle->id()));
+        sys = new QGCMAVLinkSystem(static_cast<uint8_t>(vehicle->id()), this);
         _systems.append(sys);
         _systemNames.append(tr("System %1").arg(vehicle->id()));
         connect(vehicle, &Vehicle::mavlinkMsgIntervalsChanged, sys, [sys](uint8_t compid, uint16_t msgId, int32_t rate)
@@ -179,7 +179,7 @@ MAVLinkInspectorController::_receiveMessage(LinkInterface*, mavlink_message_t me
     QGCMAVLinkMessage* m = nullptr;
     QGCMAVLinkSystem* v = _findVehicle(message.sysid);
     if(!v) {
-        v = new QGCMAVLinkSystem(this, message.sysid);
+        v = new QGCMAVLinkSystem(message.sysid, this);
         _systems.append(v);
         _systemNames.append(tr("System %1").arg(message.sysid));
         emit systemsChanged();
@@ -191,10 +191,10 @@ MAVLinkInspectorController::_receiveMessage(LinkInterface*, mavlink_message_t me
         m = v->findMessage(message.msgid, message.compid);
     }
     if(!m) {
-        m = new QGCMAVLinkMessage(this, &message);
+        m = new QGCMAVLinkMessage(message, this);
         v->append(m);
     } else {
-        m->update(&message);
+        m->update(message);
     }
 }
 
