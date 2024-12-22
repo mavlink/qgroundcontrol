@@ -11,15 +11,13 @@
 
 #include <QtCore/QtTypes>
 
-namespace QGC {
+namespace QGC
+{
+    float limitAngleToPMPIf(double angle);
+    double limitAngleToPMPId(double angle);
 
-float limitAngleToPMPIf(double angle);
+    /// Returns true if the two values are equal or close. Correctly handles 0 and NaN values.
+    bool fuzzyCompare(double value1, double value2);
 
-double limitAngleToPMPId(double angle);
-
-/// Returns true if the two values are equal or close. Correctly handles 0 and NaN values.
-bool fuzzyCompare(double value1, double value2);
-
-quint32 crc32(const quint8 *src, unsigned len, unsigned state);
-
+    quint32 crc32(const quint8 *src, unsigned len, unsigned state);
 }

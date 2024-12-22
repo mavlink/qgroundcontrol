@@ -224,15 +224,15 @@ void QGCApplication::setLanguage()
     }
     //-- We have specific fonts for Korean
     if (_locale == QLocale::Korean) {
-        qCDebug(LocalizationLog) << "Loading Korean fonts" << _locale.name();
+        qCDebug(QGCApplicationLog) << "Loading Korean fonts" << _locale.name();
         if(QFontDatabase::addApplicationFont(":/fonts/NanumGothic-Regular") < 0) {
-            qCWarning(LocalizationLog) << "Could not load /fonts/NanumGothic-Regular font";
+            qCWarning(QGCApplicationLog) << "Could not load /fonts/NanumGothic-Regular font";
         }
         if(QFontDatabase::addApplicationFont(":/fonts/NanumGothic-Bold") < 0) {
-            qCWarning(LocalizationLog) << "Could not load /fonts/NanumGothic-Bold font";
+            qCWarning(QGCApplicationLog) << "Could not load /fonts/NanumGothic-Bold font";
         }
     }
-    qCDebug(LocalizationLog) << "Loading localizations for" << _locale.name();
+    qCDebug(QGCApplicationLog) << "Loading localizations for" << _locale.name();
     removeTranslator(JsonHelper::translator());
     removeTranslator(&_qgcTranslatorSourceCode);
     removeTranslator(&_qgcTranslatorQtLibs);
@@ -241,17 +241,17 @@ void QGCApplication::setLanguage()
         if (_qgcTranslatorQtLibs.load("qt_" + _locale.name(), QLibraryInfo::path(QLibraryInfo::TranslationsPath))) {
             installTranslator(&_qgcTranslatorQtLibs);
         } else {
-            qCWarning(LocalizationLog) << "Qt lib localization for" << _locale.name() << "is not present";
+            qCWarning(QGCApplicationLog) << "Qt lib localization for" << _locale.name() << "is not present";
         }
         if (_qgcTranslatorSourceCode.load(_locale, QLatin1String("qgc_source_"), "", ":/i18n")) {
             installTranslator(&_qgcTranslatorSourceCode);
         } else {
-            qCWarning(LocalizationLog) << "Error loading source localization for" << _locale.name();
+            qCWarning(QGCApplicationLog) << "Error loading source localization for" << _locale.name();
         }
         if (JsonHelper::translator()->load(_locale, QLatin1String("qgc_json_"), "", ":/i18n")) {
             installTranslator(JsonHelper::translator());
         } else {
-            qCWarning(LocalizationLog) << "Error loading json localization for" << _locale.name();
+            qCWarning(QGCApplicationLog) << "Error loading json localization for" << _locale.name();
         }
     }
 
