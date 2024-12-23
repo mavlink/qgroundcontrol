@@ -15,10 +15,9 @@
 
 #include "APMFirmwarePlugin.h"
 
-class APMRoverMode : public APMCustomMode
+struct APMRoverMode
 {
-public:
-    enum Mode {
+    enum Mode : uint32_t{
         MANUAL          = 0,
         ACRO            = 1,
         LEARNING        = 2, // Deprecated
@@ -33,10 +32,8 @@ public:
         RTL             = 11,
         SMART_RTL       = 12,
         GUIDED          = 15,
-        INITIALIZING    = 16,
+        INITIALIZING    = 16
     };
-
-    APMRoverMode(uint32_t mode, bool settable);
 };
 
 class ArduRoverFirmwarePlugin : public APMFirmwarePlugin
@@ -55,6 +52,28 @@ public:
     bool    supportsNegativeThrust                  (Vehicle *) final;
     bool    supportsSmartRTL                        (void) const override { return true; }
     QString offlineEditingParamFile                 (Vehicle* vehicle) override { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Rover.OfflineEditing.params"); }
+
+    void    updateAvailableFlightModes              (FlightModeList modeList) final;
+
+protected:
+    uint32_t    _convertToCustomFlightModeEnum(uint32_t val) const override;
+
+
+    QString     _manualFlightMode       ;
+    QString     _acroFlightMode         ;
+    QString     _learningFlightMode     ;
+    QString     _steeringFlightMode     ;
+    QString     _holdFlightMode         ;
+    QString     _loiterFlightMode       ;
+    QString     _followFlightMode       ;
+    QString     _simpleFlightMode       ;
+    QString     _dockFlightMode         ;
+    QString     _circleFlightMode       ;
+    QString     _autoFlightMode         ;
+    QString     _rtlFlightMode          ;
+    QString     _smartRtlFlightMode     ;
+    QString     _guidedFlightMode       ;
+    QString     _initializingFlightMode ;
 
 private:
     static bool _remapParamNameIntialized;

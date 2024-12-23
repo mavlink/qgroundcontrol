@@ -56,73 +56,48 @@ PX4FirmwarePlugin::PX4FirmwarePlugin()
     qmlRegisterType<SensorsComponentController>         ("QGroundControl.Controllers", 1, 0, "SensorsComponentController");
     qmlRegisterType<PowerComponentController>           ("QGroundControl.Controllers", 1, 0, "PowerComponentController");
 
-    struct Modes2Name {
-        uint8_t     main_mode;
-        uint8_t     sub_mode;
-        bool        canBeSet;   ///< true: Vehicle can be set to this flight mode
-        bool        fixedWing;  /// fixed wing compatible
-        bool        multiRotor;  /// multi rotor compatible
-    };
+    _setModeEnumToModeStringMapping({
+        { PX4CustomMode::MANUAL             ,    _manualFlightMode      },
+        { PX4CustomMode::STABILIZED         ,    _stabilizedFlightMode  },
+        { PX4CustomMode::ACRO               ,    _acroFlightMode        },
+        { PX4CustomMode::RATTITUDE          ,    _rattitudeFlightMode   },
+        { PX4CustomMode::ALTCTL             ,    _altCtlFlightMode      },
+        { PX4CustomMode::OFFBOARD           ,    _offboardFlightMode    },
+        { PX4CustomMode::SIMPLE             ,    _simpleFlightMode      },
+        { PX4CustomMode::POSCTL_POSCTL      ,    _posCtlFlightMode      },
+        { PX4CustomMode::POSCTL_ORBIT       ,    _orbitFlightMode       },
+        { PX4CustomMode::AUTO_LOITER        ,    _holdFlightMode        },
+        { PX4CustomMode::AUTO_MISSION       ,    _missionFlightMode     },
+        { PX4CustomMode::AUTO_RTL           ,    _rtlFlightMode         },
+        { PX4CustomMode::AUTO_FOLLOW_TARGET ,    _followMeFlightMode    },
+        { PX4CustomMode::AUTO_LAND          ,    _landingFlightMode     },
+        { PX4CustomMode::AUTO_PRECLAND      ,    _preclandFlightMode    },
+        { PX4CustomMode::AUTO_READY         ,    _readyFlightMode       },
+        { PX4CustomMode::AUTO_RTGS          ,    _rtgsFlightMode        },
+        { PX4CustomMode::AUTO_TAKEOFF       ,    _takeoffFlightMode     },
+    });
 
-    static const struct Modes2Name rgModes2Name[] = {
-        //main_mode                         sub_mode                                canBeSet  FW      MC
-        { PX4_CUSTOM_MAIN_MODE_MANUAL,      0,                                      true,   true,   true },
-        { PX4_CUSTOM_MAIN_MODE_STABILIZED,  0,                                      true,   true,   true },
-        { PX4_CUSTOM_MAIN_MODE_ACRO,        0,                                      true,   true,   true },
-        { PX4_CUSTOM_MAIN_MODE_RATTITUDE,   0,                                      true,   true,   true },
-        { PX4_CUSTOM_MAIN_MODE_ALTCTL,      0,                                      true,   true,   true },
-        { PX4_CUSTOM_MAIN_MODE_OFFBOARD,    0,                                      true,   false,  true },
-        { PX4_CUSTOM_MAIN_MODE_SIMPLE,      0,                                      false,  false,  true },
-        { PX4_CUSTOM_MAIN_MODE_POSCTL,      PX4_CUSTOM_SUB_MODE_POSCTL_POSCTL,      true,   true,   true },
-        { PX4_CUSTOM_MAIN_MODE_POSCTL,      PX4_CUSTOM_SUB_MODE_POSCTL_ORBIT,       false,  false,   false },
-        { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_LOITER,        true,   true,   true },
-        { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_MISSION,       true,   true,   true },
-        { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_RTL,           true,   true,   true },
-        { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_FOLLOW_TARGET, true,   false,  true },
-        { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_LAND,          false,  true,   true },
-        { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_PRECLAND,      true,  false,  true },
-        { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_READY,         false,  true,   true },
-        { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_RTGS,          false,  true,   true },
-        { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_TAKEOFF,       false,  true,   true },
-    };
-
-    // Must be in same order as above structure
-    const QString* rgModeNames[] = {
-        &_manualFlightMode,
-        &_stabilizedFlightMode,
-        &_acroFlightMode,
-        &_rattitudeFlightMode,
-        &_altCtlFlightMode,
-        &_offboardFlightMode,
-        &_simpleFlightMode,
-        &_posCtlFlightMode,
-        &_orbitFlightMode,
-        &_holdFlightMode,
-        &_missionFlightMode,
-        &_rtlFlightMode,
-        &_followMeFlightMode,
-        &_landingFlightMode,
-        &_preclandFlightMode,
-        &_readyFlightMode,
-        &_rtgsFlightMode,
-        &_takeoffFlightMode,
-    };
-
-    // Convert static information to dynamic list. This allows for plugin override class to manipulate list.
-    for (size_t i=0; i<sizeof(rgModes2Name)/sizeof(rgModes2Name[0]); i++) {
-        const struct Modes2Name* pModes2Name = &rgModes2Name[i];
-
-        FlightModeInfo_t info;
-
-        info.main_mode =    pModes2Name->main_mode;
-        info.sub_mode =     pModes2Name->sub_mode;
-        info.name =         rgModeNames[i];
-        info.canBeSet =     pModes2Name->canBeSet;
-        info.fixedWing =    pModes2Name->fixedWing;
-        info.multiRotor =   pModes2Name->multiRotor;
-
-        _flightModeInfoList.append(info);
-    }
+    updateAvailableFlightModes({
+        // Mode Name            ,SM, Custom Mode                      CanBeSet  adv    FW      MR
+        { _manualFlightMode     , 0, PX4CustomMode::MANUAL            , true ,  true , true  , true  },
+        { _stabilizedFlightMode , 0, PX4CustomMode::STABILIZED        , true ,  true , true  , true  },
+        { _acroFlightMode       , 0, PX4CustomMode::ACRO              , true ,  true , true  , true  },
+        { _rattitudeFlightMode  , 0, PX4CustomMode::RATTITUDE         , true ,  false, true  , true  },
+        { _altCtlFlightMode     , 0, PX4CustomMode::ALTCTL            , true ,  false, true  , true  },
+        { _offboardFlightMode   , 0, PX4CustomMode::OFFBOARD          , true ,  true , false , true  },
+        { _simpleFlightMode     , 0, PX4CustomMode::SIMPLE            , false,  false, false , true  },
+        { _posCtlFlightMode     , 0, PX4CustomMode::POSCTL_POSCTL     , true ,  false, true  , true  },
+        { _orbitFlightMode      , 0, PX4CustomMode::POSCTL_ORBIT      , false,  true , false , false },
+        { _holdFlightMode       , 0, PX4CustomMode::AUTO_LOITER       , true ,  true , true  , true  },
+        { _missionFlightMode    , 0, PX4CustomMode::AUTO_MISSION      , true ,  true , true  , true  },
+        { _rtlFlightMode        , 0, PX4CustomMode::AUTO_RTL          , true ,  true , true  , true  },
+        { _followMeFlightMode   , 0, PX4CustomMode::AUTO_FOLLOW_TARGET, true ,  false, false , true  },
+        { _landingFlightMode    , 0, PX4CustomMode::AUTO_LAND         , false,  true , true  , true  },
+        { _preclandFlightMode   , 0, PX4CustomMode::AUTO_PRECLAND     , true ,  true , false , true  },
+        { _readyFlightMode      , 0, PX4CustomMode::AUTO_READY        , false,  false, true  , true  },
+        { _rtgsFlightMode       , 0, PX4CustomMode::AUTO_RTGS         , false,  false, true  , true  },
+        { _takeoffFlightMode    , 0, PX4CustomMode::AUTO_TAKEOFF      , false,  false, true  , true  },
+    });
 }
 
 PX4FirmwarePlugin::~PX4FirmwarePlugin()
@@ -143,23 +118,22 @@ QList<VehicleComponent*> PX4FirmwarePlugin::componentsForVehicle(AutoPilotPlugin
 
 QStringList PX4FirmwarePlugin::flightModes(Vehicle* vehicle)
 {
-    QStringList flightModes;
+    QStringList flightModesList;
 
-    foreach (const FlightModeInfo_t& info, _flightModeInfoList) {
-        if (info.canBeSet) {
-            bool fw = (vehicle->fixedWing() && info.fixedWing);
-            bool mc = (vehicle->multiRotor() && info.multiRotor);
+    for (auto mode : _availableFlightModeList) {
+        if (mode.canBeSet){
+            bool fw = (vehicle->fixedWing() && mode.fixedWing);
+            bool mc = (vehicle->multiRotor() && mode.multiRotor);
 
             // show all modes for generic, vtol, etc
             bool other = !vehicle->fixedWing() && !vehicle->multiRotor();
-
             if (fw || mc || other) {
-                flightModes += *info.name;
+                flightModesList += mode.mode_name;
             }
         }
     }
 
-    return flightModes;
+    return flightModesList;
 }
 
 QString PX4FirmwarePlugin::flightMode(uint8_t base_mode, uint32_t custom_mode) const
@@ -167,22 +141,7 @@ QString PX4FirmwarePlugin::flightMode(uint8_t base_mode, uint32_t custom_mode) c
     QString flightMode = "Unknown";
 
     if (base_mode & MAV_MODE_FLAG_CUSTOM_MODE_ENABLED) {
-        union px4_custom_mode px4_mode;
-        px4_mode.data = custom_mode;
-
-        bool found = false;
-        foreach (const FlightModeInfo_t& info, _flightModeInfoList) {
-            if (info.main_mode == px4_mode.main_mode && info.sub_mode == px4_mode.sub_mode) {
-                flightMode = *info.name;
-                found = true;
-                break;
-            }
-        }
-
-        if (!found) {
-            qWarning() << "Unknown flight mode" << custom_mode;
-            return tr("Unknown %1:%2").arg(base_mode).arg(custom_mode);
-        }
+        return _modeEnumToString.value(custom_mode, tr("Unknown %1:%2").arg(base_mode).arg(custom_mode));
     }
 
     return flightMode;
@@ -194,17 +153,11 @@ bool PX4FirmwarePlugin::setFlightMode(const QString& flightMode, uint8_t* base_m
     *custom_mode = 0;
 
     bool found = false;
-    foreach (const FlightModeInfo_t& info, _flightModeInfoList) {
-        if (flightMode.compare(*info.name, Qt::CaseInsensitive) == 0) {
-            union px4_custom_mode px4_mode;
 
-            px4_mode.data = 0;
-            px4_mode.main_mode = info.main_mode;
-            px4_mode.sub_mode = info.sub_mode;
-
+    for (auto &mode: _availableFlightModeList){
+        if(flightMode.compare(mode.mode_name, Qt::CaseInsensitive) == 0){
             *base_mode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
-            *custom_mode = px4_mode.data;
-
+            *custom_mode = mode.custom_mode;
             found = true;
             break;
         }
@@ -788,4 +741,36 @@ const QVariantList& PX4FirmwarePlugin::toolIndicators(const Vehicle* vehicle)
     }
 
     return _toolIndicatorList;
+}
+
+void PX4FirmwarePlugin::updateAvailableFlightModes(FlightModeList modeList)
+{
+    _availableFlightModeList.clear();
+    for(auto mode: modeList){
+
+        // Update Multi Rotor
+        switch (mode.custom_mode) {
+        case PX4CustomMode::POSCTL_ORBIT:
+            mode.multiRotor = false;
+            break;
+        default:
+            mode.multiRotor = true;
+            break;
+        }
+
+        // Update Fixed Wing
+        switch (mode.custom_mode){
+        case PX4CustomMode::OFFBOARD:
+        case PX4CustomMode::SIMPLE:
+        case PX4CustomMode::POSCTL_ORBIT:
+        case PX4CustomMode::AUTO_FOLLOW_TARGET:
+        case PX4CustomMode::AUTO_PRECLAND:
+            mode.fixedWing = false;
+            break;
+        default:
+            mode.fixedWing = true;
+        }
+
+        _updateModeMappings(mode);
+    }
 }

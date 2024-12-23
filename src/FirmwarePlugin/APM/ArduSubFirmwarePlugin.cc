@@ -39,39 +39,47 @@
 bool ArduSubFirmwarePlugin::_remapParamNameIntialized = false;
 FirmwarePlugin::remapParamNameMajorVersionMap_t ArduSubFirmwarePlugin::_remapParamName;
 
-APMSubMode::APMSubMode(uint32_t mode, bool settable) :
-    APMCustomMode(mode, settable)
+ArduSubFirmwarePlugin::ArduSubFirmwarePlugin(void)
+    : _infoFactGroup(this)
+    , _manualFlightMode         (tr("Manual"))
+    , _stabilizeFlightMode      (tr("Stabilize"))
+    , _acroFlightMode           (tr("Acro"))
+    , _altHoldFlightMode        (tr("Depth Hold"))
+    , _autoFlightMode           (tr("Auto"))
+    , _guidedFlightMode         (tr("Guided"))
+    , _circleFlightMode         (tr("Circle"))
+    , _surfaceFlightMode        (tr("Surface"))
+    , _posHoldFlightMode        (tr("Position Hold"))
+    , _motorDetectionFlightMode (tr("Motor Detection"))
+    , _surftrakFlightMode       (tr("Surftrak"))
 {
-    setEnumToStringMapping({
-        {MANUAL, "Manual"},
-        {STABILIZE, "Stabilize"},
-        {ACRO, "Acro"},
-        {ALT_HOLD,  "Depth Hold"},
-        {AUTO, "Auto"},
-        {GUIDED, "Guided"},
-        {CIRCLE, "Circle"},
-        {SURFACE, "Surface"},
-        {POSHOLD, "Position Hold"},
-        {MOTORDETECTION, "Motor Detection"},
-        {SURFTRAK, "Surftrak"},
+    _setModeEnumToModeStringMapping({
+        { APMSubMode::MANUAL            , _manualFlightMode        },
+        { APMSubMode::STABILIZE         , _stabilizeFlightMode     },
+        { APMSubMode::ACRO              , _acroFlightMode          },
+        { APMSubMode::ALT_HOLD          , _altHoldFlightMode       },
+        { APMSubMode::AUTO              , _autoFlightMode          },
+        { APMSubMode::GUIDED            , _guidedFlightMode        },
+        { APMSubMode::CIRCLE            , _circleFlightMode        },
+        { APMSubMode::SURFACE           , _surfaceFlightMode       },
+        { APMSubMode::POSHOLD           , _posHoldFlightMode       },
+        { APMSubMode::MOTORDETECTION    , _motorDetectionFlightMode},
+        { APMSubMode::SURFTRAK          , _surftrakFlightMode      },
     });
-}
 
-ArduSubFirmwarePlugin::ArduSubFirmwarePlugin(void):
-    _infoFactGroup(this)
-{
-    setSupportedModes({
-        APMSubMode(APMSubMode::MANUAL ,true),
-        APMSubMode(APMSubMode::STABILIZE ,true),
-        APMSubMode(APMSubMode::ACRO ,true),
-        APMSubMode(APMSubMode::ALT_HOLD  ,true),
-        APMSubMode(APMSubMode::AUTO ,true),
-        APMSubMode(APMSubMode::GUIDED ,true),
-        APMSubMode(APMSubMode::CIRCLE ,true),
-        APMSubMode(APMSubMode::SURFACE ,false),
-        APMSubMode(APMSubMode::POSHOLD ,true),
-        APMSubMode(APMSubMode::MOTORDETECTION, false),
-        APMSubMode(APMSubMode::SURFTRAK, true),
+    updateAvailableFlightModes({
+        // Mode Name                , SM, Custom Mode                  CanBeSet  adv    FW      MR
+        { _manualFlightMode         , 0 , APMSubMode::MANUAL            , true , true , false , true},
+        { _stabilizeFlightMode      , 0 , APMSubMode::STABILIZE         , true , true , false , true},
+        { _acroFlightMode           , 0 , APMSubMode::ACRO              , true , true , false , true},
+        { _altHoldFlightMode        , 0 , APMSubMode::ALT_HOLD          , true , true , false , true},
+        { _autoFlightMode           , 0 , APMSubMode::AUTO              , true , true , false , true},
+        { _guidedFlightMode         , 0 , APMSubMode::GUIDED            , true , true , false , true},
+        { _circleFlightMode         , 0 , APMSubMode::CIRCLE            , true , true , false , true},
+        { _surfaceFlightMode        , 0 , APMSubMode::SURFACE           , true , true , false , true},
+        { _posHoldFlightMode        , 0 , APMSubMode::POSHOLD           , true , true , false , true},
+        { _motorDetectionFlightMode , 0 , APMSubMode::MOTORDETECTION    , true , true , false , true},
+        { _surftrakFlightMode       , 0 , APMSubMode::SURFTRAK          , true , true , false , true},
     });
 
     if (!_remapParamNameIntialized) {
@@ -344,4 +352,25 @@ void ArduSubFirmwarePlugin::adjustMetaData(MAV_TYPE vehicleType, FactMetaData* m
     if (_factRenameMap.contains(metaData->name())) {
         metaData->setShortDescription(QString(_factRenameMap[metaData->name()]));
     }
+}
+
+void ArduSubFirmwarePlugin::updateAvailableFlightModes(FlightModeList modeList)
+{
+    _availableFlightModeList.clear();
+    for(auto mode: modeList){
+        mode.fixedWing = false;
+        mode.multiRotor = true;
+        _updateModeMappings(mode);
+    }
+}
+
+uint32_t ArduSubFirmwarePlugin::_convertToCustomFlightModeEnum(uint32_t val) const
+{
+    switch (val) {
+    case APMCustomMode::AUTO:
+        return APMSubMode::AUTO;
+    case APMCustomMode::GUIDED:
+        return APMSubMode::GUIDED;
+    }
+    return UINT32_MAX;
 }
