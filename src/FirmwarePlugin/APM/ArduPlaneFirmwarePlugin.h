@@ -15,10 +15,9 @@
 
 #include "APMFirmwarePlugin.h"
 
-class APMPlaneMode: public APMCustomMode
+struct APMPlaneMode
 {
-public:
-    enum Mode {
+    enum Mode : uint32_t {
         MANUAL        = 0,
         CIRCLE        = 1,
         STABILIZE     = 2,
@@ -45,8 +44,6 @@ public:
         QACRO         = 23,
         THERMAL       = 24,
     };
-
-    APMPlaneMode(uint32_t mode, bool settable);
 };
 
 class ArduPlaneFirmwarePlugin : public APMFirmwarePlugin
@@ -63,6 +60,36 @@ public:
     int     remapParamNameHigestMinorVersionNumber  (int majorVersionNumber) const final;    
     const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
 
+    void    updateAvailableFlightModes              (FlightModeList modeList) final;
+
+protected:
+    uint32_t    _convertToCustomFlightModeEnum(uint32_t val) const override;
+
+
+    QString     _manualFlightMode       ;
+    QString     _circleFlightMode       ;
+    QString     _stabilizeFlightMode    ;
+    QString     _trainingFlightMode     ;
+    QString     _acroFlightMode         ;
+    QString     _flyByWireAFlightMode   ;
+    QString     _flyByWireBFlightMode   ;
+    QString     _cruiseFlightMode       ;
+    QString     _autoTuneFlightMode     ;
+    QString     _autoFlightMode         ;
+    QString     _rtlFlightMode          ;
+    QString     _loiterFlightMode       ;
+    QString     _takeoffFlightMode      ;
+    QString     _avoidADSBFlightMode    ;
+    QString     _guidedFlightMode       ;
+    QString     _initializingFlightMode ;
+    QString     _qStabilizeFlightMode   ;
+    QString     _qHoverFlightMode       ;
+    QString     _qLoiterFlightMode      ;
+    QString     _qLandFlightMode        ;
+    QString     _qRTLFlightMode         ;
+    QString     _qAutotuneFlightMode    ;
+    QString     _qAcroFlightMode        ;
+    QString     _thermalFlightMode      ;
 private:
     static bool _remapParamNameIntialized;
     static FirmwarePlugin::remapParamNameMajorVersionMap_t  _remapParamName;

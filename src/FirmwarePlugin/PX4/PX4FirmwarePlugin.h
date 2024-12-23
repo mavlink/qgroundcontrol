@@ -76,20 +76,9 @@ public:
     QVariant            mainStatusIndicatorContentItem  (const Vehicle* vehicle) const override;
     const QVariantList& toolIndicators                  (const Vehicle* vehicle) override;
 
+    void                updateAvailableFlightModes      (FlightModeList modeList) override;
+
 protected:
-    typedef struct {
-        uint8_t         main_mode;
-        uint8_t         sub_mode;
-        const QString*  name;       ///< Name for flight mode
-        bool            canBeSet;   ///< true: Vehicle can be set to this flight mode
-        bool            fixedWing;  /// fixed wing compatible
-        bool            multiRotor; /// multi rotor compatible
-    } FlightModeInfo_t;
-
-    QList<FlightModeInfo_t> _flightModeInfoList;
-
-    // Use these constants to set flight modes using setFlightMode method. Don't use hardcoded string names since the
-    // names may change.
 
     // If plugin superclass wants to change a mode name, then set a new name for the flight mode in the superclass constructor
     QString _manualFlightMode;

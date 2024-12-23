@@ -19,21 +19,14 @@
 
 Q_DECLARE_LOGGING_CATEGORY(APMFirmwarePluginLog)
 
-class APMCustomMode
+struct APMCustomMode
 {
-public:
-    APMCustomMode(uint32_t mode, bool settable);
-    uint32_t modeAsInt() const { return _mode; }
-    bool canBeSet() const { return _settable; }
-    QString modeString() const;
-
-protected:
-    void setEnumToStringMapping(const QMap<uint32_t,QString>& enumToString);
-
-private:
-    uint32_t               _mode;
-    bool                   _settable;
-    QMap<uint32_t,QString> _enumToString;
+    enum Mode : uint32_t {
+        AUTO        = 3,
+        GUIDED      = 4,
+        RTL         = 6,
+        SMART_RTL   = 21
+    };
 };
 
 /// This is the base class for all stack specific APM firmware plugins
@@ -59,10 +52,11 @@ public:
     bool                setFlightMode                   (const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode) override;
     bool MAV_CMD_DO_SET_MODE_is_supported() const override { return true; }
     bool                isGuidedMode                    (const Vehicle* vehicle) const override;
-    QString             gotoFlightMode                  (void) const override { return QStringLiteral("Guided"); }
-    QString             rtlFlightMode                   (void) const override { return QString("RTL"); }
-    QString             smartRTLFlightMode              (void) const override { return QString("Smart RTL"); }
-    QString             missionFlightMode               (void) const override { return QString("Auto"); }
+    QString             gotoFlightMode                  (void) const override;
+    QString             rtlFlightMode                   (void) const override;
+    QString             smartRTLFlightMode              (void) const override;
+    QString             missionFlightMode               (void) const override;
+    virtual QString     guidedFlightMode                (void) const;
     void                pauseVehicle                    (Vehicle* vehicle) override;
     void                guidedModeRTL                   (Vehicle* vehicle, bool smartRTL) override;
     void                guidedModeChangeAltitude        (Vehicle* vehicle, double altitudeChange, bool pauseVehicle) override;
@@ -109,6 +103,12 @@ protected:
     static void _setBaroAltOffset(Vehicle* vehicle, qreal offset);
 
     bool                _coaxialMotors;
+
+
+    QString     _guidedFlightMode  ;
+    QString     _rtlFlightMode     ;
+    QString     _smartRtlFlightMode;
+    QString     _autoFlightMode    ;
 
 private slots:
     void _artooSocketError(QAbstractSocket::SocketError socketError);
