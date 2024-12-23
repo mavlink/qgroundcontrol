@@ -29,6 +29,7 @@ public:
     AutoPilotPlugin*    autopilotPlugin (Vehicle* vehicle) final;
     const QVariantList& toolIndicators  (const Vehicle* vehicle) final;
     bool                hasGimbal       (Vehicle* vehicle, bool& rollSupported, bool& pitchSupported, bool& yawSupported) final;
+    void                updateAvailableFlightModes      (FlightModeList modeList) override;
 
 private:
     QVariantList _toolIndicatorList;

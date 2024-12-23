@@ -99,10 +99,7 @@ MockLink::MockLink(SharedLinkConfigurationPtr& config)
 
     QObject::connect(this, &MockLink::writeBytesQueuedSignal, this, &MockLink::_writeBytesQueued, Qt::QueuedConnection);
 
-    union px4_custom_mode   px4_cm;
-    px4_cm.data = 0;
-    px4_cm.main_mode = PX4_CUSTOM_MAIN_MODE_MANUAL;
-    _mavCustomMode = px4_cm.data;
+    _mavCustomMode = PX4CustomMode::MANUAL;
 
     _mockLinkFTP = new MockLinkFTP(_vehicleSystemId, _vehicleComponentId, this);
 

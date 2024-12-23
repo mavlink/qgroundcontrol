@@ -15,10 +15,9 @@
 
 #include "APMFirmwarePlugin.h"
 
-class APMCopterMode : public APMCustomMode
+struct APMCopterMode
 {
-public:
-    enum Mode {
+    enum Mode : uint32_t{
         STABILIZE   = 0,   // hold level position
         ACRO        = 1,   // rate control
         ALT_HOLD    = 2,   // AUTO control
@@ -49,8 +48,6 @@ public:
         AUTO_RTL    = 27,
         TURTLE      = 28,
     };
-
-    APMCopterMode(uint32_t mode, bool settable);
 };
 
 class ArduCopterFirmwarePlugin : public APMFirmwarePlugin
@@ -67,12 +64,45 @@ public:
     bool    multiRotorCoaxialMotors             (Vehicle* vehicle) final;
     bool    multiRotorXConfig                   (Vehicle* vehicle) final;
     QString offlineEditingParamFile             (Vehicle* vehicle) final { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Copter.OfflineEditing.params"); }
-    QString pauseFlightMode                     (void) const override { return QStringLiteral("Brake"); }
-    QString landFlightMode                      (void) const override { return QStringLiteral("Land"); }
-    QString takeControlFlightMode               (void) const override { return QStringLiteral("Loiter"); }
-    QString followFlightMode                    (void) const override { return QStringLiteral("Follow"); }
+    QString pauseFlightMode                     (void) const override;
+    QString landFlightMode                      (void) const override;
+    QString takeControlFlightMode               (void) const override;
+    QString followFlightMode                    (void) const override;
+    QString gotoFlightMode                      (void) const override;
     QString autoDisarmParameter                 (Vehicle* vehicle) override { Q_UNUSED(vehicle); return QStringLiteral("DISARM_DELAY"); }
     bool    supportsSmartRTL                    (void) const override { return true; }
+
+    void    updateAvailableFlightModes          (FlightModeList modeList) final;
+protected:
+    uint32_t    _convertToCustomFlightModeEnum(uint32_t val) const override;
+
+
+    QString     _stabilizeFlightMode;
+    QString     _acroFlightMode;
+    QString     _altHoldFlightMode;
+    QString     _autoFlightMode;
+    QString     _guidedFlightMode;
+    QString     _loiterFlightMode;
+    QString     _rtlFlightMode;
+    QString     _circleFlightMode;
+    QString     _landFlightMode;
+    QString     _driftFlightMode;
+    QString     _sportFlightMode;
+    QString     _flipFlightMode;
+    QString     _autotuneFlightMode;
+    QString     _posHoldFlightMode;
+    QString     _brakeFlightMode;
+    QString     _throwFlightMode;
+    QString     _avoidADSBFlightMode;
+    QString     _guidedNoGPSFlightMode;
+    QString     _smartRtlFlightMode;
+    QString     _flowHoldFlightMode;
+    QString     _followFlightMode;
+    QString     _zigzagFlightMode;
+    QString     _systemIDFlightMode;
+    QString     _autoRotateFlightMode;
+    QString     _autoRTLFlightMode;
+    QString     _turtleFlightMode;
 
 private:
     static bool _remapParamNameIntialized;

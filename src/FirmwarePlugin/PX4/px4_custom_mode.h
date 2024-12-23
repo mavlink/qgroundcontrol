@@ -81,17 +81,40 @@ enum PX4_CUSTOM_SUB_MODE_POSCTL {
 };
 
 union px4_custom_mode {
-	struct {
-		uint16_t reserved;
-		uint8_t main_mode;
-		uint8_t sub_mode;
-	};
-	uint32_t data;
-	float data_float;
-	struct {
-		uint16_t reserved_hl;
-		uint16_t custom_mode_hl;
-	};
+    struct {
+        uint16_t reserved;
+        uint8_t main_mode;
+        uint8_t sub_mode;
+    };
+    uint32_t data;
+    float data_float;
+    struct {
+        uint16_t reserved_hl;
+        uint16_t custom_mode_hl;
+    };
+};
+
+struct PX4CustomMode{
+    enum Mode : uint32_t{
+        MANUAL              = PX4_CUSTOM_MAIN_MODE_MANUAL       <<16,
+        STABILIZED          = PX4_CUSTOM_MAIN_MODE_STABILIZED   <<16,
+        ACRO                = PX4_CUSTOM_MAIN_MODE_ACRO         <<16,
+        RATTITUDE           = PX4_CUSTOM_MAIN_MODE_RATTITUDE    <<16,
+        ALTCTL              = PX4_CUSTOM_MAIN_MODE_ALTCTL       <<16,
+        OFFBOARD            = PX4_CUSTOM_MAIN_MODE_OFFBOARD     <<16,
+        SIMPLE              = PX4_CUSTOM_MAIN_MODE_SIMPLE       <<16,
+        POSCTL_POSCTL       = PX4_CUSTOM_MAIN_MODE_POSCTL       <<16 | (PX4_CUSTOM_SUB_MODE_POSCTL_POSCTL      << 24 ),
+        POSCTL_ORBIT        = PX4_CUSTOM_MAIN_MODE_POSCTL       <<16 | (PX4_CUSTOM_SUB_MODE_POSCTL_ORBIT       << 24 ),
+        AUTO_LOITER         = PX4_CUSTOM_MAIN_MODE_AUTO         <<16 | (PX4_CUSTOM_SUB_MODE_AUTO_LOITER        << 24 ),
+        AUTO_MISSION        = PX4_CUSTOM_MAIN_MODE_AUTO         <<16 | (PX4_CUSTOM_SUB_MODE_AUTO_MISSION       << 24 ),
+        AUTO_RTL            = PX4_CUSTOM_MAIN_MODE_AUTO         <<16 | (PX4_CUSTOM_SUB_MODE_AUTO_RTL           << 24 ),
+        AUTO_FOLLOW_TARGET  = PX4_CUSTOM_MAIN_MODE_AUTO         <<16 | (PX4_CUSTOM_SUB_MODE_AUTO_FOLLOW_TARGET << 24 ),
+        AUTO_LAND           = PX4_CUSTOM_MAIN_MODE_AUTO         <<16 | (PX4_CUSTOM_SUB_MODE_AUTO_LAND          << 24 ),
+        AUTO_PRECLAND       = PX4_CUSTOM_MAIN_MODE_AUTO         <<16 | (PX4_CUSTOM_SUB_MODE_AUTO_PRECLAND      << 24 ),
+        AUTO_READY          = PX4_CUSTOM_MAIN_MODE_AUTO         <<16 | (PX4_CUSTOM_SUB_MODE_AUTO_READY         << 24 ),
+        AUTO_RTGS           = PX4_CUSTOM_MAIN_MODE_AUTO         <<16 | (PX4_CUSTOM_SUB_MODE_AUTO_RTGS          << 24 ),
+        AUTO_TAKEOFF        = PX4_CUSTOM_MAIN_MODE_AUTO         <<16 | (PX4_CUSTOM_SUB_MODE_AUTO_TAKEOFF       << 24 ),
+    };
 };
 
 #endif /* PX4_CUSTOM_MODE_H_ */

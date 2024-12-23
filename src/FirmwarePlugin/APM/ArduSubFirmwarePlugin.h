@@ -87,10 +87,9 @@ private:
     Fact            _rangefinderTargetFact;
 };
 
-class APMSubMode : public APMCustomMode
+struct APMSubMode
 {
-public:
-    enum Mode {
+    enum Mode : uint32_t{
         STABILIZE         = 0,   // Hold level position
         ACRO              = 1,   // Manual angular rate, throttle
         ALT_HOLD          = 2,   // Depth hold
@@ -114,8 +113,6 @@ public:
         MOTORDETECTION    = 20,
         SURFTRAK          = 21,  // Surface (seafloor) tracking, aka hold range
     };
-
-    APMSubMode(uint32_t mode, bool settable);
 };
 
 class ArduSubFirmwarePlugin : public APMFirmwarePlugin
@@ -155,6 +152,23 @@ public:
     virtual QMap<QString, FactGroup*>* factGroups(void) final;
     void adjustMetaData(MAV_TYPE vehicleType, FactMetaData* metaData) override final;
 
+    void updateAvailableFlightModes(FlightModeList modeList) final;
+
+protected:
+    uint32_t    _convertToCustomFlightModeEnum(uint32_t val) const override;
+
+
+    QString     _manualFlightMode           ;
+    QString     _stabilizeFlightMode        ;
+    QString     _acroFlightMode             ;
+    QString     _altHoldFlightMode          ;
+    QString     _autoFlightMode             ;
+    QString     _guidedFlightMode           ;
+    QString     _circleFlightMode           ;
+    QString     _surfaceFlightMode          ;
+    QString     _posHoldFlightMode          ;
+    QString     _motorDetectionFlightMode   ;
+    QString     _surftrakFlightMode         ;
 
 private:
     QVariantList _toolIndicators;
