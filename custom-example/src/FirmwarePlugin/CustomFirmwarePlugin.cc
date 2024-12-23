@@ -14,16 +14,16 @@
 #include "CustomFirmwarePlugin.h"
 #include "CustomAutoPilotPlugin.h"
 #include "Vehicle.h"
+#include "px4_custom_mode.h"
 
 //-----------------------------------------------------------------------------
 CustomFirmwarePlugin::CustomFirmwarePlugin()
 {
-    for (int i = 0; i < _flightModeInfoList.count(); i++) {
-        FlightModeInfo_t& info = _flightModeInfoList[i];
+    for (auto &mode: _availableFlightModeList){
         //-- Narrow the flight mode options to only these
-        if (*info.name != _holdFlightMode && *info.name != _rtlFlightMode && *info.name != _missionFlightMode) {
+        if(mode.mode_name != _holdFlightMode && mode.mode_name != _rtlFlightMode && mode.mode_name != _missionFlightMode){
             // No other flight modes can be set
-            info.canBeSet = false;
+            mode.canBeSet = false;
         }
     }
 }
@@ -55,4 +55,47 @@ bool CustomFirmwarePlugin::hasGimbal(Vehicle* /*vehicle*/, bool& rollSupported, 
     yawSupported = true;
 
     return true;
+}
+
+void CustomFirmwarePlugin::updateAvailableFlightModes(FlightModeList modeList)
+{
+    _availableFlightModeList.clear();
+    for(auto mode: modeList){
+
+        // Update Multi Rotor
+        switch (mode.custom_mode) {
+        case PX4CustomMode::POSCTL_ORBIT:
+            mode.multiRotor = false;
+            break;
+        default:
+            mode.multiRotor = true;
+            break;
+        }
+
+        // Update Fixed Wing
+        switch (mode.custom_mode){
+        case PX4CustomMode::OFFBOARD:
+        case PX4CustomMode::SIMPLE:
+        case PX4CustomMode::POSCTL_ORBIT:
+        case PX4CustomMode::AUTO_FOLLOW_TARGET:
+        case PX4CustomMode::AUTO_PRECLAND:
+            mode.fixedWing = false;
+            break;
+        default:
+            mode.fixedWing = true;
+        }
+
+        // Update CanBeSet
+        switch (mode.custom_mode){
+        case PX4CustomMode::AUTO_LOITER:
+        case PX4CustomMode::AUTO_RTL:
+        case PX4CustomMode::AUTO_MISSION:
+            mode.canBeSet = true;
+            break;
+        default:
+            mode.canBeSet = false;
+        }
+
+        _updateModeMappings(mode);
+    }
 }
