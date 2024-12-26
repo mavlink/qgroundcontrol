@@ -15,7 +15,7 @@ import QGroundControl.Palette
 /// Mission item edit control
 Rectangle {
     id:             _root
-    height:         editorLoader.visible ? (editorLoader.y + editorLoader.height + _innerMargin) : (topRowLayout.y + topRowLayout.height + _margin)
+    height:         _currentItem ? (editorLoader.y + editorLoader.height + _innerMargin) : (topRowLayout.y + topRowLayout.height + _margin)
     color:          _currentItem ? qgcPal.missionItemEditor : qgcPal.windowShade
     radius:         _radius
     opacity:        _currentItem ? 1.0 : 0.7
@@ -277,8 +277,7 @@ Rectangle {
         anchors.margins:    _innerMargin
         anchors.left:       parent.left
         anchors.top:        topRowLayout.bottom
-        source:             missionItem.editorQml
-        visible:            _currentItem
+        source:             _currentItem ? missionItem.editorQml : ""
 
         property var    masterController:   _masterController
         property real   availableWidth:     _root.width - (anchors.margins * 2) ///< How wide the editor should be
