@@ -38,6 +38,31 @@ struct FirmwareFlightMode
     bool        advanced        = false;
     bool        fixedWing       = false;
     bool        multiRotor      = true;
+
+    FirmwareFlightMode(QString mName, uint32_t cMode, bool cbs = false, bool adv = false)
+        : mode_name     (mName)
+        , standard_mode (0)
+        , custom_mode   (cMode)
+        , canBeSet      (cbs)
+        , advanced      (adv)
+        , fixedWing     (false)
+        , multiRotor    (true)
+    {
+    }
+
+    FirmwareFlightMode(QString mName, uint8_t sMode, uint32_t cMode,
+                       bool cbs = false, bool adv = false,
+                       bool fWing = false, bool mRotor = true
+    )
+        : mode_name     (mName)
+        , standard_mode (sMode)
+        , custom_mode   (cMode)
+        , canBeSet      (cbs)
+        , advanced      (adv)
+        , fixedWing     (fWing)
+        , multiRotor    (mRotor)
+    {
+    }
 };
 
 typedef QList<FirmwareFlightMode>         FlightModeList;
@@ -130,6 +155,15 @@ public:
 
     /// Returns the flight mode for Land
     virtual QString landFlightMode(void) const { return QString(); }
+
+    /// Returns the flight mode for TakeOff
+    virtual QString takeOffFlightMode(void) const { return QString(); }
+
+    /// Returns the flight mode for Motor Detection
+    virtual QString motorDetectionFlightMode(void) const { return QString(); }
+
+    /// Returns the flight mode for Stabilized
+    virtual QString stabilizedFlightMode(void) const { return QString(); }
 
     /// Returns the flight mode to use when the operator wants to take back control from autonomouse flight.
     virtual QString takeControlFlightMode(void) const { return QString(); }
@@ -402,8 +436,8 @@ protected:
     // Convert Base enum to Derived class Enums
     virtual uint32_t _convertToCustomFlightModeEnum(uint32_t val) const { return val;}
 
-    // Update internal mappings for a specific mode
-    void             _updateModeMappings(FirmwareFlightMode &mode);
+    // Update internal mappings for a list of flight modes
+    void             _updateModeMappings(FlightModeList &modeList);
 
     FlightModeList              _availableFlightModeList;
     FlightModeCustomModeMap     _modeEnumToString;
