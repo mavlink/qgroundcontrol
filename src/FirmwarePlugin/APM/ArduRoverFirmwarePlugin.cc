@@ -50,22 +50,22 @@ ArduRoverFirmwarePlugin::ArduRoverFirmwarePlugin(void)
     });
 
     updateAvailableFlightModes({
-        // Mode Name              , SM, Custom Mode                CanBeSet  adv    FW      MR
-        { _manualFlightMode       , 0 , APMRoverMode::MANUAL       , true , true , false , true},
-        { _acroFlightMode         , 0 , APMRoverMode::ACRO         , true , true , false , true},
-        { _learningFlightMode     , 0 , APMRoverMode::LEARNING     , true , true , false , true},
-        { _steeringFlightMode     , 0 , APMRoverMode::STEERING     , true , true , false , true},
-        { _holdFlightMode         , 0 , APMRoverMode::HOLD         , true , true , false , true},
-        { _loiterFlightMode       , 0 , APMRoverMode::LOITER       , true , true , false , true},
-        { _followFlightMode       , 0 , APMRoverMode::FOLLOW       , true , true , false , true},
-        { _simpleFlightMode       , 0 , APMRoverMode::SIMPLE       , true , true , false , true},
-        { _dockFlightMode         , 0 , APMRoverMode::DOCK         , true , true , false , true},
-        { _circleFlightMode       , 0 , APMRoverMode::CIRCLE       , true , true , false , true},
-        { _autoFlightMode         , 0 , APMRoverMode::AUTO         , true , true , false , true},
-        { _rtlFlightMode          , 0 , APMRoverMode::RTL          , true , true , false , true},
-        { _smartRtlFlightMode     , 0 , APMRoverMode::SMART_RTL    , true , true , false , true},
-        { _guidedFlightMode       , 0 , APMRoverMode::GUIDED       , true , true , false , true},
-        { _initializingFlightMode , 0 , APMRoverMode::INITIALIZING , true , true , false , true},
+        // Mode Name              , Custom Mode                CanBeSet  adv
+        { _manualFlightMode       , APMRoverMode::MANUAL       , true , true},
+        { _acroFlightMode         , APMRoverMode::ACRO         , true , true},
+        { _learningFlightMode     , APMRoverMode::LEARNING     , true , true},
+        { _steeringFlightMode     , APMRoverMode::STEERING     , true , true},
+        { _holdFlightMode         , APMRoverMode::HOLD         , true , true},
+        { _loiterFlightMode       , APMRoverMode::LOITER       , true , true},
+        { _followFlightMode       , APMRoverMode::FOLLOW       , true , true},
+        { _simpleFlightMode       , APMRoverMode::SIMPLE       , true , true},
+        { _dockFlightMode         , APMRoverMode::DOCK         , true , true},
+        { _circleFlightMode       , APMRoverMode::CIRCLE       , true , true},
+        { _autoFlightMode         , APMRoverMode::AUTO         , true , true},
+        { _rtlFlightMode          , APMRoverMode::RTL          , true , true},
+        { _smartRtlFlightMode     , APMRoverMode::SMART_RTL    , true , true},
+        { _guidedFlightMode       , APMRoverMode::GUIDED       , true , true},
+        { _initializingFlightMode , APMRoverMode::INITIALIZING , true , true},
     });
 
     if (!_remapParamNameIntialized) {
@@ -94,14 +94,19 @@ bool ArduRoverFirmwarePlugin::supportsNegativeThrust(Vehicle* /*vehicle*/)
     return true;
 }
 
+QString ArduRoverFirmwarePlugin::stabilizedFlightMode() const
+{
+    return _modeEnumToString.value(APMRoverMode::MANUAL, _manualFlightMode);
+}
+
 void ArduRoverFirmwarePlugin::updateAvailableFlightModes(FlightModeList modeList)
 {
-    _availableFlightModeList.clear();
-    for(auto mode: modeList){
+    for(auto &mode: modeList){
         mode.fixedWing = false;
         mode.multiRotor = true;
-        _updateModeMappings(mode);
     }
+
+    _updateModeMappings(modeList);
 }
 
 uint32_t ArduRoverFirmwarePlugin::_convertToCustomFlightModeEnum(uint32_t val) const

@@ -53,6 +53,7 @@ public:
     bool    supportsSmartRTL                        (void) const override { return true; }
     QString offlineEditingParamFile                 (Vehicle* vehicle) override { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Rover.OfflineEditing.params"); }
 
+    QString stabilizedFlightMode                    (void) const override;
     void    updateAvailableFlightModes              (FlightModeList modeList) final;
 
 protected:

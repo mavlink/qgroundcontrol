@@ -28,7 +28,7 @@ SetupPage {
 
     property int neutralValue: 50;
     property int _lastIndex: 0;
-    property bool canRunManualTest: controller.vehicle.flightMode !== 'Motor Detection' && controller.vehicle.armed && motorPage.visible && setupView.visible
+    property bool canRunManualTest: controller.vehicle.flightMode !== controller.vehicle.motorDetectionFlightMode && controller.vehicle.armed && motorPage.visible && setupView.visible
     property var shouldRunManualTest: false // Does the operator intend to run the motor test?
 
     APMSubMotorComponentController {
@@ -237,10 +237,10 @@ SetupPage {
                     QGCButton {
                         id: startAutoDetection
                         text: "Auto-Detect Directions"
-                        enabled: controller.vehicle.flightMode !== 'Motor Detection'
+                        enabled: controller.vehicle.flightMode !== controller.vehicle.motorDetectionFlightMode
 
                         onClicked: function() {
-                            controller.vehicle.flightMode = "Motor Detection"
+                            controller.vehicle.flightMode = controller.vehicle.motorDetectionFlightMode
                             controller.vehicle.armed = true
                         }
                     }

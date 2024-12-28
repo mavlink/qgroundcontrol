@@ -69,6 +69,8 @@ public:
     QString takeControlFlightMode               (void) const override;
     QString followFlightMode                    (void) const override;
     QString gotoFlightMode                      (void) const override;
+    QString takeOffFlightMode                   (void) const override;
+    QString stabilizedFlightMode                (void) const override;
     QString autoDisarmParameter                 (Vehicle* vehicle) override { Q_UNUSED(vehicle); return QStringLiteral("DISARM_DELAY"); }
     bool    supportsSmartRTL                    (void) const override { return true; }
 

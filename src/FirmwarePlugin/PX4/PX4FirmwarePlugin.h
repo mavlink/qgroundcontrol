@@ -34,13 +34,15 @@ public:
     QString             flightMode                      (uint8_t base_mode, uint32_t custom_mode) const override;
     bool                setFlightMode                   (const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode) override;
     void                setGuidedMode                   (Vehicle* vehicle, bool guidedMode) override;
-    QString             pauseFlightMode                 (void) const override { return _holdFlightMode; }
-    QString             missionFlightMode               (void) const override { return _missionFlightMode; }
-    QString             rtlFlightMode                   (void) const override { return _rtlFlightMode; }
-    QString             landFlightMode                  (void) const override { return _landingFlightMode; }
-    QString             takeControlFlightMode           (void) const override { return _manualFlightMode; }
-    QString             gotoFlightMode                  (void) const override { return _holdFlightMode; }
-    QString             followFlightMode                (void) const override { return _followMeFlightMode; };
+    QString             pauseFlightMode                 (void) const override;
+    QString             missionFlightMode               (void) const override;
+    QString             rtlFlightMode                   (void) const override;
+    QString             landFlightMode                  (void) const override;
+    QString             takeControlFlightMode           (void) const override;
+    QString             gotoFlightMode                  (void) const override;
+    QString             followFlightMode                (void) const override;
+    QString             takeOffFlightMode               (void) const override;
+    QString             stabilizedFlightMode            (void) const override;
     void                pauseVehicle                    (Vehicle* vehicle) override;
     void                guidedModeRTL                   (Vehicle* vehicle, bool smartRTL) override;
     void                guidedModeLand                  (Vehicle* vehicle) override;
