@@ -98,7 +98,7 @@ Item {
     }
 
     function getOutputValue() {
-        return _clampedSliderValue(_sliderValue)
+        return _sliderValue
     }
 
     DeadMouseArea {
