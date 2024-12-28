@@ -57,11 +57,11 @@ APMFirmwarePlugin::APMFirmwarePlugin(void)
     });
 
     updateAvailableFlightModes({
-        // Mode Name          , SM, Custom Mode           CanBeSet  adv    FW      MR
-        { _guidedFlightMode   , 0, APMCustomMode::GUIDED,    true , true , false , true },
-        { _rtlFlightMode      , 0, APMCustomMode::RTL,       true , true , false , true },
-        { _smartRtlFlightMode , 0, APMCustomMode::SMART_RTL, true , true , false , true },
-        { _autoFlightMode     , 0, APMCustomMode::AUTO,      true , true , false , true },
+        // Mode Name          , Custom Mode            CanBeSet  adv
+        { _guidedFlightMode   , APMCustomMode::GUIDED,    true , true },
+        { _rtlFlightMode      , APMCustomMode::RTL,       true , true },
+        { _smartRtlFlightMode , APMCustomMode::SMART_RTL, true , true },
+        { _autoFlightMode     , APMCustomMode::AUTO,      true , true },
     });
 
     qmlRegisterType<APMFlightModesComponentController>  ("QGroundControl.Controllers", 1, 0, "APMFlightModesComponentController");
