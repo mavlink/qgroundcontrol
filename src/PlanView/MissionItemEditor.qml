@@ -60,8 +60,10 @@ Rectangle {
         MouseArea {
             anchors.fill:   parent
             onClicked: {
-                currentItemScope.focus = true
-                _root.clicked()
+                if (mainWindow.allowViewSwitch()) {
+                    currentItemScope.focus = true
+                    _root.clicked()
+                }
             }
         }
     }
