@@ -371,6 +371,9 @@ Item {
             onMapClicked: (mouse) => {
                 // Take focus to close any previous editing
                 editorMap.focus = true
+                if (!mainWindow.allowViewSwitch()) {
+                    return
+                }
                 var coordinate = editorMap.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
                 coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
                 coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
