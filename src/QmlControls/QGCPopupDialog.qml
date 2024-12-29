@@ -66,6 +66,7 @@ Popup {
     property real   _contentMargin:     ScreenTools.defaultFontPixelHeight / 2
     property bool   _acceptAllowed:     acceptButton.visible
     property bool   _rejectAllowed:     rejectButton.visible
+    property int    _previousValidationErrorCount: 0
 
     background: QGCMouseArea {
         width:  mainWindow.width
@@ -84,8 +85,13 @@ Popup {
         contentChildren[contentChildren.length - 1].parent = dialogContentParent
     }
 
-    onAboutToShow: setupDialogButtons(buttons)
+    onAboutToShow: {
+        _previousValidationErrorCount = globals.validationErrorCount
+        setupDialogButtons(buttons)
+    }
+
     onClosed: {
+        globals.validationErrorCount = _previousValidationErrorCount
         Qt.inputMethod.hide()
         if (destroyOnClose) {
             root.destroy()
@@ -93,7 +99,7 @@ Popup {
     }
 
     function _accept() {
-        if (_acceptAllowed && mainWindow.allowViewSwitch()) {
+        if (_acceptAllowed && mainWindow.allowViewSwitch(_previousValidationErrorCount)) {
             accepted()
             if (preventClose) {
                 preventClose = false
@@ -105,7 +111,7 @@ Popup {
 
     function _reject() {
         // Dialogs with cancel button are allowed to close with validation errors
-        if (_rejectAllowed && ((buttons & Dialog.Cancel) || mainWindow.allowViewSwitch())) {
+        if (_rejectAllowed && ((buttons & Dialog.Cancel) || mainWindow.allowViewSwitch(_previousValidationErrorCount))) {
             rejected()
             if (preventClose) {
                 preventClose = false
