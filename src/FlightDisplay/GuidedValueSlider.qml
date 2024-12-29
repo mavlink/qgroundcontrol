@@ -77,16 +77,26 @@ Item {
 
     property var _qgcPal: QGroundControl.globalPalette
 
+    function setCurrentValue(currentValue, animate = true) {
+        // Position the slider such that the indicator is pointing to the current value
+        var contentY = (_firstPixelValue - currentValue) / _sliderValuePerPixel - _indicatorCenterPos
+        if (animate) {
+            flickableAnimation.from = sliderFlickable.contentY
+            flickableAnimation.to = contentY
+            flickableAnimation.start()
+        } else {
+            sliderFlickable.contentY = contentY
+        }
+    }
+
     /// Slider values should be in converted app units.
     function setupSlider(sliderType, minValue, maxValue, currentValue, displayText) {
-        console.log("setupSlider: sliderType: ", sliderType, " minValue: ", minValue, " maxValue: ", maxValue, " currentValue: ", currentValue, " displayText: ", displayText)
+        //console.log("setupSlider: sliderType: ", sliderType, " minValue: ", minValue, " maxValue: ", maxValue, " currentValue: ", currentValue, " displayText: ", displayText)
         _sliderType = sliderType
         _sliderMinVal = minValue
         _sliderMaxVal = maxValue
         _displayText = displayText
-
-        // Position the slider such that the indicator is pointing to the current value
-        sliderFlickable.contentY = (_firstPixelValue - currentValue) / _sliderValuePerPixel - _indicatorCenterPos
+        setCurrentValue(currentValue, false)
     }
 
     function _clampedSliderValue(value) {
@@ -94,7 +104,7 @@ Item {
         if (_unitsSettings.verticalDistanceUnits.rawValue === UnitsSettings.VerticalDistanceUnitsMeters) {
             decimalPlaces = 1
         }
-        return value.toFixed(decimalPlaces)
+        return Math.min(Math.max(value.toFixed(decimalPlaces), _sliderMinVal), _sliderMaxVal)
     }
 
     function getOutputValue() {
@@ -130,6 +140,18 @@ Item {
             contentHeight:      sliderContainer.height
             flickDeceleration:  0.5
             flickableDirection: Flickable.VerticalFlick
+
+            PropertyAnimation on contentY {
+                id:             flickableAnimation
+                duration:       500
+                from:           fromValue
+                to:             toValue
+                easing.type:    Easing.OutCubic
+                running:        false
+
+                property real fromValue
+                property real toValue
+            }
 
             Item {
                 id:     sliderContainer
@@ -238,6 +260,30 @@ Item {
             property var unitsString: _sliderType === GuidedValueSlider.Speed ? 
                                         QGroundControl.unitsConversion.appSettingsSpeedUnitsString : 
                                             QGroundControl.unitsConversion.appSettingsVerticalDistanceUnitsString
+        }
+
+        QGCMouseArea {
+            anchors.fill: parent
+            onClicked: {
+                sliderValueTextField.text = _clampedSliderValue(_sliderValue)
+                sliderValueTextField.visible = true
+                sliderValueTextField.forceActiveFocus()
+            }
+        }
+
+        QGCTextField {
+            id:                 sliderValueTextField
+            anchors.leftMargin: indicatorCanvas.pointerWidth
+            anchors.fill:       parent
+            showUnits:          true
+            unitsLabel:         valueLabel.unitsString
+            visible:            false
+
+            onEditingFinished: {
+                visible = false
+                focus = false
+                setCurrentValue(_clampedSliderValue(parseFloat(text)))
+            }
         }
     }
 
