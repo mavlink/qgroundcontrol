@@ -44,14 +44,18 @@ Button {
     onCheckedChanged: toolStripAction.checked = checked
 
     onClicked: {
-        dropPanel.hide()
-        if (!toolStripAction.dropPanelComponent) {
-            toolStripAction.triggered(this)
-        } else if (checked) {
-            var panelEdgeTopPoint = mapToItem(_root, width, 0)
-            dropPanel.show(panelEdgeTopPoint, toolStripAction.dropPanelComponent, this)
-            checked = true
-            control.dropped(index)
+        if (mainWindow.allowViewSwitch()) {
+            dropPanel.hide()
+            if (!toolStripAction.dropPanelComponent) {
+                toolStripAction.triggered(this)
+            } else if (checked) {
+                var panelEdgeTopPoint = mapToItem(_root, width, 0)
+                dropPanel.show(panelEdgeTopPoint, toolStripAction.dropPanelComponent, this)
+                checked = true
+                control.dropped(index)
+            }
+        } else if (checkable) {
+            checked = !checked
         }
     }
 
