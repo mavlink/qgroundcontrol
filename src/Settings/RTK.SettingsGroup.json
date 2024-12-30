@@ -18,7 +18,7 @@
 },
 {
     "name":                 "surveyInMinObservationDuration",
-    "shortDesc":            "Minimum observation time",
+    "shortDesc":            "Min observation time",
     "longDesc":             "Defines the minimum amount of observation time for the position calculation.",
     "type":                 "Uint32",
     "default":              180,

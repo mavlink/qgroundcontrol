@@ -25,7 +25,7 @@ ColumnLayout {
     FactPanelController { id: controller }
 
     SettingsGroupLayout {
-        heading:            qsTr("Ground Control Data Link Loss")
+        heading:            qsTr("Ground Control Data Link Failsafe")
         Layout.fillWidth:   true
 
         RowLayout {
@@ -34,7 +34,7 @@ ColumnLayout {
 
             QGCLabel {
                 Layout.fillWidth:   true;
-                text:               qsTr("Failsafe Action")
+                text:               qsTr("Action")
             }
             FactComboBox {
                 id:                     failsafeActionCombo
@@ -43,11 +43,12 @@ ColumnLayout {
             }
         }
 
-        LabelledFactSlider {
+        FactSlider {
             Layout.fillWidth:       true
-            label:                  qsTr("Data Link Loss Timeout")
+            Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 40
+            label:                  qsTr("Loss Timeout")
             fact:                   controller.getParameterFact(-1, "COM_DL_LOSS_T")
-            sliderPreferredWidth:   ScreenTools.defaultFontPixelWidth * 20
+            majorTickStepSize:      5
         }
     }
 }

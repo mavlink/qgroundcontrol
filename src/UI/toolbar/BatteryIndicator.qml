@@ -297,6 +297,7 @@ Item {
             FactPanelController { id: controller }
 
             Loader {
+                Layout.fillWidth: true
                 sourceComponent: expandedPageComponent
             }
 
