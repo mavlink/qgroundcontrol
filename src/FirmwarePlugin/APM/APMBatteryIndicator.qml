@@ -27,6 +27,7 @@ BatteryIndicator {
             FactPanelController { id: controller }
 
             property Fact batt1Monitor: controller.getParameterFact(-1, "BATT_MONITOR")
+            property string disabledString: qsTr("- disabled")
 
             SettingsGroupLayout {
                 Layout.fillWidth:   true
@@ -39,16 +40,22 @@ BatteryIndicator {
                     indexModel:         false
                 }
 
-                LabelledFactTextField {
+                FactSlider {
                     Layout.fillWidth:   true
-                    label:              qsTr("Voltage Trigger")
+                    label:              qsTr("Voltage Trigger") + (value == 0 ? disabledString : "")
                     fact:               controller.getParameterFact(-1, "BATT_LOW_VOLT")
+                    from:               0
+                    to:                 100
+                    majorTickStepSize:  5
                 }
 
-                LabelledFactTextField {
+                FactSlider {
                     Layout.fillWidth:   true
-                    label:              qsTr("mAh Trigger")
+                    label:              qsTr("mAh Trigger") + (value == 0 ? disabledString : "")
                     fact:               controller.getParameterFact(-1, "BATT_LOW_MAH")
+                    from:               0
+                    to:                 30000
+                    majorTickStepSize:  1000
                 }
             }
 
@@ -63,16 +70,22 @@ BatteryIndicator {
                     indexModel:         false
                 }
 
-                LabelledFactTextField {
+                FactSlider {
                     Layout.fillWidth:   true
-                    label:              qsTr("Voltage Trigger")
+                    label:              qsTr("Voltage Trigger") + (value == 0 ? disabledString : "")
                     fact:               controller.getParameterFact(-1, "BATT_CRT_VOLT")
+                    from:               0
+                    to:                 100
+                    majorTickStepSize:  5
                 }
 
-                LabelledFactTextField {
+                FactSlider {
                     Layout.fillWidth:   true
-                    label:              qsTr("mAh Trigger")
+                    label:              qsTr("mAh Trigger") + (value == 0 ? disabledString : "")
                     fact:               controller.getParameterFact(-1, "BATT_CRT_MAH")
+                    from:               0
+                    to:                 30000
+                    majorTickStepSize:  1000
                 }
             }
         }

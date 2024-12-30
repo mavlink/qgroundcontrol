@@ -287,7 +287,7 @@ Item {
 
             Connections {
                 target: control
-                on_sliderValueChanged: sliderValueTextField.visible = false
+                on_SliderValueChanged: sliderValueTextField.visible = false
             }
         }
     }

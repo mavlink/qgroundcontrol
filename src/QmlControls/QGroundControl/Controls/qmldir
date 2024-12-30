@@ -123,6 +123,7 @@ TransectStyleComplexItemTerrainFollow   1.0 TransectStyleComplexItemTerrainFollo
 TransectStyleMapVisuals                 1.0 TransectStyleMapVisuals.qml
 ToolStrip                               1.0 ToolStrip.qml
 ToolStripHoverButton                    1.0 ToolStripHoverButton.qml
+ValueSlider                             1.0 ValueSlider.qml
 VehicleRotationCal                      1.0 VehicleRotationCal.qml
 VehicleSummaryRow                       1.0 VehicleSummaryRow.qml
 MAVLinkChart                            1.0 MAVLinkChart.qml

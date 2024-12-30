@@ -18,7 +18,7 @@ import QGroundControl.ScreenTools
 
 RowLayout {
     id:         control
-    spacing:    _margins
+    spacing:    ScreenTools.defaultFontPixelWidth
 
     property bool       showExpand:         false   // Controls whether the expand widget is shown or not
     property bool       waitForParameters:  false   // UI won't show until parameters are ready
@@ -30,12 +30,10 @@ RowLayout {
     property bool expanded: false
     property var  drawer
 
-
     property var    activeVehicle:      QGroundControl.multiVehicleManager.vehicle
     property bool   parametersReady:    QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable
 
-    property real _margins:     ScreenTools.defaultFontPixelHeight
-    property bool _loadPages:   !waitForParameters || parametersReady
+    property bool _loadPages: !waitForParameters || parametersReady
 
     QGCLabel {
         text:       qsTr("Waiting for parameters...")
@@ -48,14 +46,6 @@ RowLayout {
         sourceComponent:    _loadPages ? contentComponent : undefined
 
         property var pageProperties: control.pageProperties
-    }
-
-    Rectangle {
-        id:                     divider
-        Layout.preferredWidth:  visible ? 1 : -1
-        Layout.fillHeight:      true
-        border.color:           Qt.darker(QGroundControl.globalPalette.text, 4)
-        visible:                expanded
     }
 
     Loader {

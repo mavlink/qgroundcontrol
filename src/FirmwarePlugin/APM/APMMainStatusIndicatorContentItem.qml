@@ -25,7 +25,7 @@ ColumnLayout {
     FactPanelController { id: controller }
 
     SettingsGroupLayout {
-        heading:            qsTr("GCS Failsafe")
+        heading:            qsTr("Ground Control Data Link Failsafe")
         Layout.fillWidth:   true
 
         LabelledFactComboBox {
@@ -34,11 +34,12 @@ ColumnLayout {
             indexModel: false
         }
 
-        LabelledFactSlider {
+        FactSlider {
             Layout.fillWidth:       true
-            label:                  qsTr("Timeout")
+            Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 20
+            label:                  qsTr("Loss Timeout")
             fact:                   controller.getParameterFact(-1, "FS_GCS_TIMEOUT")
-            sliderPreferredWidth:   ScreenTools.defaultFontPixelWidth * 20
+            majorTickStepSize:      5
         }
     }
 
