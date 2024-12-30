@@ -104,7 +104,7 @@ Item {
         if (_unitsSettings.verticalDistanceUnits.rawValue === UnitsSettings.VerticalDistanceUnitsMeters) {
             decimalPlaces = 1
         }
-        return Math.min(Math.max(value.toFixed(decimalPlaces), _sliderMinVal), _sliderMaxVal)
+        return Math.min(Math.max(value.toFixed(decimalPlaces), _sliderMinVal), _sliderMaxVal).toFixed(decimalPlaces)
     }
 
     function getOutputValue() {
@@ -278,11 +278,22 @@ Item {
             showUnits:          true
             unitsLabel:         valueLabel.unitsString
             visible:            false
+            validator:          RegularExpressionValidator { regularExpression: /^-?(\d{1,3})([.]\d{1})?$/ }
 
             onEditingFinished: {
                 visible = false
                 focus = false
                 setCurrentValue(_clampedSliderValue(parseFloat(text)))
+            }
+
+            Connections {
+                target: control
+                on_sliderValueChanged: sliderValueTextField.visible = false
+            }
+
+            Connections {
+                target: sliderFlickable
+                onDragEnded : sliderValueTextField.text = _clampedSliderValue(_sliderValue)
             }
         }
     }
