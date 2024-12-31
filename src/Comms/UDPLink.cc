@@ -376,7 +376,7 @@ void UDPWorker::writeData(const QByteArray &data)
     for (const std::shared_ptr<UDPClient> &target : _udpConfig->targetHosts()) {
         if (!_sessionTargets.contains(target)) {
             if (_socket->writeDatagram(data, target->address, target->port) < 0) {
-                emit errorOccurred(tr("Could Not Send Data - Write Failed!"));
+                qCWarning(UDPLinkLog) << "Could Not Send Data - Write Failed!";
             }
         }
     }
@@ -384,7 +384,7 @@ void UDPWorker::writeData(const QByteArray &data)
     // Send to all connected systems
     for (const std::shared_ptr<UDPClient> &target: _sessionTargets) {
         if (_socket->writeDatagram(data, target->address, target->port) < 0) {
-            emit errorOccurred(tr("Could Not Send Data - Write Failed!"));
+            qCWarning(UDPLinkLog) << "Could Not Send Data - Write Failed!";
         }
     }
 
@@ -426,6 +426,7 @@ void UDPWorker::_onSocketReadyRead()
     buffer.reserve(BUFFER_TRIGGER_SIZE);
     QElapsedTimer timer;
     timer.start();
+    bool received = false;
     while (_socket->hasPendingDatagrams()) {
         const QNetworkDatagram datagramIn = _socket->receiveDatagram();
         if (datagramIn.isNull() || datagramIn.data().isEmpty()) {
@@ -435,6 +436,7 @@ void UDPWorker::_onSocketReadyRead()
         (void) buffer.append(datagramIn.data());
 
         if ((buffer.size() > BUFFER_TRIGGER_SIZE) || (timer.elapsed() > RECEIVE_TIME_LIMIT_MS)) {
+            received = true;
             emit dataReceived(buffer);
             buffer.clear();
             (void) timer.restart();
@@ -451,8 +453,8 @@ void UDPWorker::_onSocketReadyRead()
         locker.unlock();
     }
 
-    if (buffer.isEmpty()) {
-        emit errorOccurred(tr("No Data Available to Read!"));
+    if (!received && buffer.isEmpty()) {
+        qCWarning(UDPLinkLog) << "No Data Available to Read!";
         return;
     }
 
