@@ -44,6 +44,8 @@ public:
         QAUTOTUNE     = 22,
         QACRO         = 23,
         THERMAL       = 24,
+        LOITER2QLAND  = 25,
+        AUTOLAND      = 26,
     };
 
     APMPlaneMode(uint32_t mode, bool settable);

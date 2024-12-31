@@ -41,6 +41,8 @@ APMPlaneMode::APMPlaneMode(uint32_t mode, bool settable)
         { QAUTOTUNE,        "QuadPlane AutoTune" },
         { QACRO,            "QuadPlane Acro" },
         { THERMAL,          "Thermal"},
+        { LOITER2QLAND,     "QuadPlane LoitertoQLand"},
+        { AUTOLAND,         "AutoLand"},
     });
 }
 
@@ -71,6 +73,8 @@ ArduPlaneFirmwarePlugin::ArduPlaneFirmwarePlugin(void)
         APMPlaneMode(APMPlaneMode::QAUTOTUNE,       true),
         APMPlaneMode(APMPlaneMode::QACRO,           true),
         APMPlaneMode(APMPlaneMode::THERMAL,         true),
+        APMPlaneMode(APMPlaneMode::LOITER2QLAND,    true),
+        APMPlaneMode(APMPlaneMode::AUTOLAND,        true),
     });
 
     if (!_remapParamNameIntialized) {
