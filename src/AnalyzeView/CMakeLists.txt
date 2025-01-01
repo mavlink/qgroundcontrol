@@ -65,6 +65,8 @@ endif()
 
 #===========================================================================#
 
+set(CMAKE_COMPILE_WARNING_AS_ERROR OFF)
+
 set(MINIMUM_EXIV2_VERSION 0.28.2)
 
 if(NOT QGC_BUILD_DEPENDENCIES)
@@ -138,6 +140,8 @@ if(NOT exiv2_FOUND AND NOT LibExiv2_FOUND)
 endif()
 
 target_sources(AnalyzeView PRIVATE ExifParser.cc ExifParser.h)
+
+set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
 
 #===========================================================================#
 
