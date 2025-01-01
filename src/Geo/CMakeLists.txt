@@ -43,7 +43,7 @@ message(STATUS "Building GeographicLib")
 include(FetchContent)
 FetchContent_Declare(GeographicLib
     GIT_REPOSITORY https://github.com/geographiclib/geographiclib.git
-    GIT_TAG r2.4
+    GIT_TAG r2.5
     GIT_SHALLOW TRUE
 )
 set(BUILD_BOTH_LIBS OFF CACHE INTERNAL "" FORCE)
