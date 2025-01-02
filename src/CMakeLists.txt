@@ -2,7 +2,6 @@ find_package(Qt6
     REQUIRED
     COMPONENTS
         Core
-        Core5Compat
         QuickControls2
         QuickWidgets
         Widgets
@@ -57,7 +56,6 @@ target_link_libraries(QGC
         Qt6::Quick
         Qt6::QuickControls2
         Qt6::QuickWidgets
-        Qt6::Core5Compat
         Qt6::Bluetooth
         API
         AnalyzeView
