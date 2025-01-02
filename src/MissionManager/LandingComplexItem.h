@@ -170,7 +170,8 @@ protected:
     typedef bool                (*IsLandItemFunc)(const MissionItem& missionItem);
     typedef LandingComplexItem* (*CreateItemFunc)(PlanMasterController* masterController, bool flyView);
 
-    static bool _scanForItem(QmlObjectListModel* visualItems, bool flyView, PlanMasterController* masterController, IsLandItemFunc isLandItemFunc, CreateItemFunc createItemFunc);
+    static bool _scanForItems(QmlObjectListModel* visualItems, bool flyView, PlanMasterController* masterController, IsLandItemFunc isLandItemFunc, CreateItemFunc createItemFunc);
+    static bool _scanForItem(QmlObjectListModel* visualItems, int& startIndex, bool flyView, PlanMasterController* masterController, IsLandItemFunc isLandItemFunc, CreateItemFunc createItemFunc);
 
     int             _sequenceNumber             = 0;
     bool            _dirty                      = false;
