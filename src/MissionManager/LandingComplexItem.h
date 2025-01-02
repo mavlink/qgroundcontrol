@@ -91,6 +91,7 @@ public:
     // Overrides from VisualMissionItem
     bool                dirty                       (void) const final { return _dirty; }
     bool                isSimpleItem                (void) const final { return false; }
+    bool                isLandCommand               (void) const final { return true; }
     bool                isStandaloneCoordinate      (void) const final { return false; }
     bool                specifiesCoordinate         (void) const final { return true; }
     bool                specifiesAltitudeOnly       (void) const final { return false; }
