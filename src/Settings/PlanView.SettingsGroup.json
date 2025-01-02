@@ -22,6 +22,12 @@
     "default":      false
 },
 {
+    "name":         "allowMultipleLandingPatterns",
+    "shortDesc":    "Allow configuring multiple landing sequences if the firmware supports it. The first one will be used for the mission, but in the event of an RTL, the one that is closest will be used instead.",
+    "type":         "bool",
+    "default":      true
+},
+{
     "name":         "useConditionGate",
     "shortDesc":    "Use MAV_CMD_CONDITION_GATE for pattern generation",
     "type":         "bool",
