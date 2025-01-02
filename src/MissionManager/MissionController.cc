@@ -1260,7 +1260,6 @@ void MissionController::_recalcFlightPathSegments(void)
 
     _missionContainsVTOLTakeoff = false;
     _flightPathSegmentHashTable.clear();
-    _waypointPath.clear();
 
     // Note: Although visual support for _incompleteComplexItemLines is still in the codebase. The support for populating the list is not.
     // This is due to the initial implementation being buggy and incomplete with respect to correctly generating the line set.
@@ -1358,38 +1357,28 @@ void MissionController::_recalcFlightPathSegments(void)
                     }
 
                     lastSegmentVisualItemPair =  VisualItemPair(lastFlyThroughVI, visualItem);
-                    if (!_flyView || addDirectionArrow) {
-                        SimpleMissionItem* simpleItem = qobject_cast<SimpleMissionItem*>(lastFlyThroughVI);
-                        bool mavlinkTerrainFrame = simpleItem ? simpleItem->missionItem().frame() == MAV_FRAME_GLOBAL_TERRAIN_ALT : false;
-                        FlightPathSegment* segment = _addFlightPathSegment(oldSegmentTable, lastSegmentVisualItemPair, mavlinkTerrainFrame);
-                        segment->setSpecialVisual(roiActive);
-                        if (addDirectionArrow) {
-                            _directionArrows.append(segment);
-                        }
-                        if (visualItem->isCurrentItem() && _delayedSplitSegmentUpdate) {
-                            _splitSegment = segment;
-                            _delayedSplitSegmentUpdate = false;
-                            signalSplitSegmentChanged = true;
-                        }
-                        lastFlyThroughVI->setSimpleFlighPathSegment(segment);
+                    SimpleMissionItem* simpleItem = qobject_cast<SimpleMissionItem*>(lastFlyThroughVI);
+                    bool mavlinkTerrainFrame = simpleItem ? simpleItem->missionItem().frame() == MAV_FRAME_GLOBAL_TERRAIN_ALT : false;
+                    FlightPathSegment* segment = _addFlightPathSegment(oldSegmentTable, lastSegmentVisualItemPair, mavlinkTerrainFrame);
+                    segment->setSpecialVisual(roiActive);
+                    if (addDirectionArrow) {
+                        _directionArrows.append(segment);
                     }
+                    if (visualItem->isCurrentItem() && _delayedSplitSegmentUpdate) {
+                        _splitSegment = segment;
+                        _delayedSplitSegmentUpdate = false;
+                        signalSplitSegmentChanged = true;
+                    }
+                    lastFlyThroughVI->setSimpleFlighPathSegment(segment);
                 }
                 firstCoordinateNotFound = false;
-                _waypointPath.append(QVariant::fromValue(visualItem->coordinate()));
                 lastFlyThroughVI = visualItem;
             }
         }
     }
 
-    if (linkStartToHome && homePositionValid) {
-        _waypointPath.prepend(QVariant::fromValue(_settingsItem->coordinate()));
-    }
-
     if (linkEndToHome && lastFlyThroughVI != _settingsItem && homePositionValid) {
         lastSegmentVisualItemPair = VisualItemPair(lastFlyThroughVI, _settingsItem);
-        if (_flyView) {
-            _waypointPath.append(QVariant::fromValue(_settingsItem->coordinate()));
-        }
         FlightPathSegment* segment = _addFlightPathSegment(oldSegmentTable, lastSegmentVisualItemPair, false /* mavlinkTerrainFrame */);
         segment->setSpecialVisual(roiActive);
         lastFlyThroughVI->setSimpleFlighPathSegment(segment);
@@ -1433,15 +1422,6 @@ void MissionController::_recalcFlightPathSegments(void)
 
     emit _recalcMissionFlightStatusSignal();
 
-    if (_waypointPath.count() == 0) {
-        // MapPolyLine has a bug where if you change from a path which has elements to an empty path the line drawn
-        // is not cleared from the map. This hack works around that since it causes the previous lines to be remove
-        // as then doesn't draw anything on the map.
-        _waypointPath.append(QVariant::fromValue(QGeoCoordinate(0, 0)));
-        _waypointPath.append(QVariant::fromValue(QGeoCoordinate(0, 0)));
-    }
-
-    emit waypointPathChanged();
     emit recalcTerrainProfile();
     if (signalSplitSegmentChanged) {
         emit splitSegmentChanged();
