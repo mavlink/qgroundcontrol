@@ -58,6 +58,15 @@ VTOLLandingComplexItem::VTOLLandingComplexItem(PlanMasterController* masterContr
     setDirty(false);
 }
 
+QString VTOLLandingComplexItem::patternName() const {
+    if (_masterController->missionController()->isFirstLandingComplexItem(this)) {
+        return name;
+    } else {
+        return "Alternate Landing";
+    }
+}
+
+
 void VTOLLandingComplexItem::save(QJsonArray&  missionItems)
 {
     QJsonObject saveObject = _save();
@@ -118,9 +127,9 @@ bool VTOLLandingComplexItem::_isValidLandItem(const MissionItem& missionItem)
     }
 }
 
-bool VTOLLandingComplexItem::scanForItem(QmlObjectListModel* visualItems, bool flyView, PlanMasterController* masterController)
+bool VTOLLandingComplexItem::scanForItems(QmlObjectListModel* visualItems, bool flyView, PlanMasterController* masterController)
 {
-    return _scanForItem(visualItems, flyView, masterController, _isValidLandItem, _createItem);
+    return _scanForItems(visualItems, flyView, masterController, _isValidLandItem, _createItem);
 }
 
 // Never call this method directly. If you want to update the flight segments you emit _updateFlightPathSegmentsSignal()
