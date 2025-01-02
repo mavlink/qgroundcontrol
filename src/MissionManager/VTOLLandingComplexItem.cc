@@ -109,7 +109,7 @@ void VTOLLandingComplexItem::_calcGlideSlope(void)
 
 bool VTOLLandingComplexItem::_isValidLandItem(const MissionItem& missionItem)
 {
-    if (missionItem.command() != MAV_CMD_NAV_LAND ||
+    if (missionItem.command() != MAV_CMD_NAV_VTOL_LAND ||
             !(missionItem.frame() == MAV_FRAME_GLOBAL_RELATIVE_ALT || missionItem.frame() == MAV_FRAME_GLOBAL) ||
             missionItem.param1() != 0 || missionItem.param2() != 0 || missionItem.param3() != 0 || !qIsNaN(missionItem.param4())) {
         return false;
