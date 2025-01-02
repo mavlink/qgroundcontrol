@@ -1,8 +1,12 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Location Network Positioning)
 
 qt_add_library(Terrain STATIC
+    Providers/TerrainQueryArduPilot.cc
+    Providers/TerrainQueryArduPilot.h
     Providers/TerrainQueryCopernicus.cc
     Providers/TerrainQueryCopernicus.h
+    Providers/TerrainTileArduPilot.cc
+    Providers/TerrainTileArduPilot.h
     Providers/TerrainTileCopernicus.cc
     Providers/TerrainTileCopernicus.h
     TerrainQuery.cc
@@ -18,6 +22,7 @@ qt_add_library(Terrain STATIC
 target_link_libraries(Terrain
     PRIVATE
         Qt6::LocationPrivate
+        Compression
         QGCLocation
         Utilities
     PUBLIC
