@@ -53,9 +53,12 @@ MissionController::MissionController(PlanMasterController* masterController, QOb
 
     _updateTimer.setSingleShot(true);
 
-    connect(&_updateTimer,                                  &QTimer::timeout,                           this, &MissionController::_updateTimeout);
-    connect(_planViewSettings->takeoffItemNotRequired(),    &Fact::rawValueChanged,                     this, &MissionController::_takeoffItemNotRequiredChanged);
-    connect(this,                                           &MissionController::missionDistanceChanged, this, &MissionController::recalcTerrainProfile);
+    connect(&_updateTimer,                                      &QTimer::timeout,                                       this, &MissionController::_updateTimeout);
+    connect(_planViewSettings->takeoffItemNotRequired(),        &Fact::rawValueChanged,                                 this, &MissionController::_forceRecalcOfAllowedBits);
+    connect(_planViewSettings->allowMultipleLandingPatterns(),  &Fact::rawValueChanged,                                 this, &MissionController::multipleLandPatternsAllowedChanged);
+    connect(_masterController,                                  &PlanMasterController::managerVehicleChanged,           this, &MissionController::multipleLandPatternsAllowedChanged);
+    connect(this,                                               &MissionController::multipleLandPatternsAllowedChanged, this, &MissionController::_forceRecalcOfAllowedBits);
+    connect(this,                                               &MissionController::missionPlannedDistanceChanged,      this, &MissionController::recalcTerrainProfile);
 
     // The follow is used to compress multiple recalc calls in a row to into a single call.
     connect(this, &MissionController::_recalcMissionFlightStatusSignal, this, &MissionController::_recalcMissionFlightStatus,   Qt::QueuedConnection);
@@ -73,6 +76,7 @@ MissionController::~MissionController()
 void MissionController::_resetMissionFlightStatus(void)
 {
     _missionFlightStatus.totalDistance =        0.0;
+    _missionFlightStatus.plannedDistance =      0.0;
     _missionFlightStatus.maxTelemetryDistance = 0.0;
     _missionFlightStatus.totalTime =            0.0;
     _missionFlightStatus.hoverTime =            0.0;
@@ -101,7 +105,7 @@ void MissionController::_resetMissionFlightStatus(void)
         _missionFlightStatus.ampMinutesAvailable = static_cast<double>(_missionFlightStatus.mAhBattery) / 1000.0 * 60.0 * ((100.0 - batteryPercentRemainingAnnounce) / 100.0);
     }
 
-    emit missionDistanceChanged(_missionFlightStatus.totalDistance);
+    emit missionPlannedDistanceChanged(_missionFlightStatus.plannedDistance);
     emit missionTimeChanged();
     emit missionHoverDistanceChanged(_missionFlightStatus.hoverDistance);
     emit missionCruiseDistanceChanged(_missionFlightStatus.cruiseDistance);
@@ -374,6 +378,14 @@ VisualMissionItem* MissionController::insertTakeoffItem(QGeoCoordinate /*coordin
     _firstItemAdded();
 
     return _takeoffMissionItem;
+}
+
+bool MissionController::multipleLandPatternsAllowed(void) const {
+    // Can't have more than one land sequence unless allowed in settings and
+    // supported by the firmware
+    return _planViewSettings->allowMultipleLandingPatterns()
+               ->rawValue().toBool() &&
+           !_masterController->managerVehicle()->px4Firmware();
 }
 
 VisualMissionItem* MissionController::insertLandItem(QGeoCoordinate coordinate, int visualItemIndex, bool makeCurrentItem)
@@ -1328,6 +1340,12 @@ void MissionController::_recalcFlightPathSegments(void)
             break;
         }
 
+        // Don't draw segments immediately after a landing item
+        if (lastFlyThroughVI->isLandCommand()) {
+            lastFlyThroughVI = visualItem;
+            continue;
+        }
+
         if (visualItem->specifiesCoordinate() && !visualItem->isStandaloneCoordinate()) {
             // Incomplete items are complex items which are waiting for the user to complete setup before there visuals can become valid.
             // They may not yet have valid entry/exit coordinates associated with them while in the incomplete state.
@@ -1448,7 +1466,7 @@ void MissionController::_addHoverTime(double hoverTime, double hoverDistance, in
     _missionFlightStatus.totalTime += hoverTime;
     _missionFlightStatus.hoverTime += hoverTime;
     _missionFlightStatus.hoverDistance += hoverDistance;
-    _missionFlightStatus.totalDistance += hoverDistance;
+    _missionFlightStatus.plannedDistance += hoverDistance;
     _updateBatteryInfo(waypointIndex);
 }
 
@@ -1457,7 +1475,7 @@ void MissionController::_addCruiseTime(double cruiseTime, double cruiseDistance,
     _missionFlightStatus.totalTime += cruiseTime;
     _missionFlightStatus.cruiseTime += cruiseTime;
     _missionFlightStatus.cruiseDistance += cruiseDistance;
-    _missionFlightStatus.totalDistance += cruiseDistance;
+    _missionFlightStatus.plannedDistance += cruiseDistance;
     _updateBatteryInfo(waypointIndex);
 }
 
@@ -1517,6 +1535,7 @@ void MissionController::_recalcMissionFlightStatus()
 
     bool   linkStartToHome =            false;
     bool   foundRTL =                   false;
+    bool   pastLandCommand =            false;
     double totalHorizontalDistance =    0;
 
     for (int i=0; i<_visualItems->count(); i++) {
@@ -1582,7 +1601,8 @@ void MissionController::_recalcMissionFlightStatus()
                 }
             }
 
-            _addTimeDistance(_missionFlightStatus.vtolMode == QGCMAVLink::VehicleClassMultiRotor, 0, 0, item->additionalTimeDelay(), 0, -1);
+            if (!pastLandCommand)
+                _addTimeDistance(_missionFlightStatus.vtolMode == QGCMAVLink::VehicleClassMultiRotor, 0, 0, item->additionalTimeDelay(), 0, -1);
 
             if (item->specifiesCoordinate()) {
 
@@ -1621,18 +1641,25 @@ void MissionController::_recalcMissionFlightStatus()
                         double azimuth, distance, altDifference;
 
                         _calcPrevWaypointValues(item, lastFlyThroughVI, &azimuth, &distance, &altDifference);
-                        totalHorizontalDistance += distance;
+
+                        // If the last waypoint was a land command, there's a discontinuity at this point
+                        if (!lastFlyThroughVI->isLandCommand()) {
+                            totalHorizontalDistance += distance;
+                            item->setDistance(distance);
+
+                            if (!pastLandCommand) {
+                                // Calculate time/distance
+                                double hoverTime = distance / _missionFlightStatus.hoverSpeed;
+                                double cruiseTime = distance / _missionFlightStatus.cruiseSpeed;
+                                _addTimeDistance(_missionFlightStatus.vtolMode == QGCMAVLink::VehicleClassMultiRotor, hoverTime, cruiseTime, 0, distance, item->sequenceNumber());
+                            }
+                        }
+
                         item->setAltDifference(altDifference);
                         item->setAzimuth(azimuth);
-                        item->setDistance(distance);
                         item->setDistanceFromStart(totalHorizontalDistance);
 
                         _missionFlightStatus.maxTelemetryDistance = qMax(_missionFlightStatus.maxTelemetryDistance, _calcDistanceToHome(item, _settingsItem));
-
-                        // Calculate time/distance
-                        double hoverTime = distance / _missionFlightStatus.hoverSpeed;
-                        double cruiseTime = distance / _missionFlightStatus.cruiseSpeed;
-                        _addTimeDistance(_missionFlightStatus.vtolMode == QGCMAVLink::VehicleClassMultiRotor, hoverTime, cruiseTime, 0, distance, item->sequenceNumber());
                     }
 
                     if (complexItem) {
@@ -1640,9 +1667,11 @@ void MissionController::_recalcMissionFlightStatus()
                         double distance = complexItem->complexDistance();
                         _missionFlightStatus.maxTelemetryDistance = qMax(_missionFlightStatus.maxTelemetryDistance, complexItem->greatestDistanceTo(complexItem->exitCoordinate()));
 
-                        double hoverTime = distance / _missionFlightStatus.hoverSpeed;
-                        double cruiseTime = distance / _missionFlightStatus.cruiseSpeed;
-                        _addTimeDistance(_missionFlightStatus.vtolMode == QGCMAVLink::VehicleClassMultiRotor, hoverTime, cruiseTime, 0, distance, item->sequenceNumber());
+                        if (!pastLandCommand) {
+                            double hoverTime = distance / _missionFlightStatus.hoverSpeed;
+                            double cruiseTime = distance / _missionFlightStatus.cruiseSpeed;
+                            _addTimeDistance(_missionFlightStatus.vtolMode == QGCMAVLink::VehicleClassMultiRotor, hoverTime, cruiseTime, 0, distance, item->sequenceNumber());
+                        }
 
                         totalHorizontalDistance += distance;
                     }
@@ -1696,6 +1725,10 @@ void MissionController::_recalcMissionFlightStatus()
                 break;
             }
         }
+
+        if (item->isLandCommand()) {
+            pastLandCommand = true;
+        }
     }
     lastFlyThroughVI->setMissionVehicleYaw(_missionFlightStatus.vehicleYaw);
 
@@ -1704,12 +1737,16 @@ void MissionController::_recalcMissionFlightStatus()
         double azimuth, distance, altDifference;
         _calcPrevWaypointValues(lastFlyThroughVI, _settingsItem, &azimuth, &distance, &altDifference);
 
-        // Calculate time/distance
-        double hoverTime = distance / _missionFlightStatus.hoverSpeed;
-        double cruiseTime = distance / _missionFlightStatus.cruiseSpeed;
-        double landTime = qAbs(altDifference) / _appSettings->offlineEditingDescentSpeed()->rawValue().toDouble();
-        _addTimeDistance(_missionFlightStatus.vtolMode == QGCMAVLink::VehicleClassMultiRotor, hoverTime, cruiseTime, distance, landTime, -1);
+        if (!pastLandCommand) {
+            // Calculate time/distance
+            double hoverTime = distance / _missionFlightStatus.hoverSpeed;
+            double cruiseTime = distance / _missionFlightStatus.cruiseSpeed;
+            double landTime = qAbs(altDifference) / _appSettings->offlineEditingDescentSpeed()->rawValue().toDouble();
+            _addTimeDistance(_missionFlightStatus.vtolMode == QGCMAVLink::VehicleClassMultiRotor, hoverTime, cruiseTime, distance, landTime, -1);
+        }
     }
+
+    _missionFlightStatus.totalDistance = totalHorizontalDistance;
 
     if (_missionFlightStatus.mAhBattery != 0 && _missionFlightStatus.batteryChangePoint == -1) {
         _missionFlightStatus.batteryChangePoint = 0;
@@ -1722,7 +1759,8 @@ void MissionController::_recalcMissionFlightStatus()
     }
 
     emit missionMaxTelemetryChanged     (_missionFlightStatus.maxTelemetryDistance);
-    emit missionDistanceChanged         (_missionFlightStatus.totalDistance);
+    emit missionTotalDistanceChanged    (_missionFlightStatus.totalDistance);
+    emit missionPlannedDistanceChanged  (_missionFlightStatus.plannedDistance);
     emit missionHoverDistanceChanged    (_missionFlightStatus.hoverDistance);
     emit missionCruiseDistanceChanged   (_missionFlightStatus.cruiseDistance);
     emit missionTimeChanged             ();
@@ -2165,9 +2203,9 @@ void MissionController::setDirty(bool dirty)
 
 void MissionController::_scanForAdditionalSettings(QmlObjectListModel* visualItems, PlanMasterController* masterController)
 {
-    // First we look for a Landing Patterns which are at the end
-    if (!FixedWingLandingComplexItem::scanForItem(visualItems, _flyView, masterController)) {
-        VTOLLandingComplexItem::scanForItem(visualItems, _flyView, masterController);
+    // First we look for Landing Patterns which are at the end
+    if (!FixedWingLandingComplexItem::scanForItems(visualItems, _flyView, masterController)) {
+        VTOLLandingComplexItem::scanForItems(visualItems, _flyView, masterController);
     }
 
     int scanIndex = 0;
@@ -2473,13 +2511,18 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
             }
         }
 
-        if (foundLand) {
-            // Can't have more than one land sequence
+        if (foundLand && !multipleLandPatternsAllowed()) {
             _isInsertLandValid = false;
             if (sequenceNumber >= landSeqNum) {
                 // Can't have fly through commands after a land item
                 _flyThroughCommandsAllowed = false;
             }
+        }
+
+        if (_hasLandItem != foundLand) {
+            // Update hasLandItem if the presence of a landing item has changed
+            _hasLandItem = foundLand;
+            emit hasLandItemChanged();
         }
 
         // These are not valid when only takeoff is allowed
@@ -2589,12 +2632,27 @@ void MissionController::_complexBoundingBoxChanged()
     _updateTimer.start(UPDATE_TIMEOUT);
 }
 
+bool MissionController::isFirstLandingComplexItem(const LandingComplexItem *item) const {
+    const int count = _visualItems->count();
+
+    for (int i = 0; i < count; i++) {
+        QObject *obj = _visualItems->get(i);
+
+        LandingComplexItem *landingItem = qobject_cast<LandingComplexItem *>(obj);
+        if (landingItem) {
+            return landingItem == item;
+        }
+    }
+
+    return false;
+}
+
 bool MissionController::isEmpty(void) const
 {
     return _visualItems->count() <= 1;
 }
 
-void MissionController::_takeoffItemNotRequiredChanged(void)
+void MissionController::_forceRecalcOfAllowedBits(void)
 {
     // Force a recalc of allowed bits
     setCurrentPlanViewSeqNum(_currentPlanViewSeqNum, true /* force */);

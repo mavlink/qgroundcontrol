@@ -24,6 +24,7 @@ public:
     DEFINE_SETTINGFACT(showMissionItemStatus)
     DEFINE_SETTINGFACT(useConditionGate)
     DEFINE_SETTINGFACT(takeoffItemNotRequired)
+    DEFINE_SETTINGFACT(allowMultipleLandingPatterns)
     DEFINE_SETTINGFACT(showGimbalOnlyWhenSet)
     DEFINE_SETTINGFACT(vtolTransitionDistance)
 };

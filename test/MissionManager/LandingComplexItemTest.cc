@@ -249,7 +249,7 @@ void LandingComplexItemTest::_testScanForItems(void)
             visualItems->append(simpleItem);
         }
 
-        QVERIFY(LandingComplexItem::_scanForItem(visualItems, false /* flyView */, _masterController, &SimpleLandingComplexItem::_isValidLandItem, &SimpleLandingComplexItem::_createItem));
+        QVERIFY(LandingComplexItem::_scanForItems(visualItems, false /* flyView */, _masterController, &SimpleLandingComplexItem::_isValidLandItem, &SimpleLandingComplexItem::_createItem));
         QCOMPARE(visualItems->count(), 1);
         SimpleLandingComplexItem* scannedItem = visualItems->value<SimpleLandingComplexItem*>(0);
         QVERIFY(scannedItem);
