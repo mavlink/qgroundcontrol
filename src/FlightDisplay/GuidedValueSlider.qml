@@ -99,7 +99,7 @@ Item {
         setCurrentValue(currentValue, false)
     }
 
-    function _clampedSliderValue(value) {
+    function _clampedSliderValueString(value) {
         var decimalPlaces = 0
         if (_unitsSettings.verticalDistanceUnits.rawValue === UnitsSettings.VerticalDistanceUnitsMeters) {
             decimalPlaces = 1
@@ -108,7 +108,7 @@ Item {
     }
 
     function getOutputValue() {
-        return _clampedSliderValue(_sliderValue)
+        return parseFloat(_clampedSliderValueString(_sliderValue))
     }
 
     DeadMouseArea {
@@ -254,7 +254,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             horizontalAlignment:    Text.AlignRight
             verticalAlignment:      Text.AlignVCenter
-            text:                   _clampedSliderValue(_sliderValue) + " " + unitsString
+            text:                   _clampedSliderValueString(_sliderValue) + " " + unitsString
             font.pointSize:         ScreenTools.largeFontPointSize
 
             property var unitsString: _sliderType === GuidedValueSlider.Speed ? 
@@ -265,7 +265,7 @@ Item {
         QGCMouseArea {
             anchors.fill: parent
             onClicked: {
-                sliderValueTextField.text = _clampedSliderValue(_sliderValue)
+                sliderValueTextField.text = _clampedSliderValueString(_sliderValue)
                 sliderValueTextField.visible = true
                 sliderValueTextField.forceActiveFocus()
             }
@@ -282,7 +282,7 @@ Item {
             onEditingFinished: {
                 visible = false
                 focus = false
-                setCurrentValue(_clampedSliderValue(parseFloat(text)))
+                setCurrentValue(parseFloat(_clampedSliderValueString(parseFloat(text))))
             }
 
             Connections {
