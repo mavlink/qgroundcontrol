@@ -42,7 +42,7 @@ You can select additional options from the **Tools** menu on the top right hand 
 <br>Load parameters from an existing file or save your current parameter settings to a file.
 
 **Clear RC to Param**
-<br>This clears all associations between RC transmitter controls and parameters. For more information see: [Radio Setup > Param Tuning Channels](../setup_view/Radio.md#param-tuning-channels-px4).
+<br>This clears all associations between RC transmitter controls and parameters. For more information see: [Radio Setup > Param Tuning Channels](../setup_view/radio.md#param-tuning-channels-px4).
 
 **Reboot Vehicle**
 <br>Reboot the vehicle (required after changing some parameters).
