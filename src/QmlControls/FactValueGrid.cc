@@ -49,7 +49,7 @@ FactValueGrid::FactValueGrid(const QString& defaultSettingsGroup)
 
 void FactValueGrid::_init(void)
 {
-    Vehicle* offlineVehicle  = qgcApp()->toolbox()->multiVehicleManager()->offlineEditingVehicle();
+    Vehicle* offlineVehicle  = MultiVehicleManager::instance()->offlineEditingVehicle();
 
     connect(offlineVehicle, &Vehicle::vehicleTypeChanged,       this, &FactValueGrid::_offlineVehicleTypeChanged);
     connect(this,           &FactValueGrid::fontSizeChanged,    this, &FactValueGrid::_saveSettings);
@@ -59,7 +59,7 @@ void FactValueGrid::_init(void)
 
 void FactValueGrid::_offlineVehicleTypeChanged(void)
 {
-    Vehicle*                    offlineVehicle  = qgcApp()->toolbox()->multiVehicleManager()->offlineEditingVehicle();
+    Vehicle*                    offlineVehicle  = MultiVehicleManager::instance()->offlineEditingVehicle();
     QGCMAVLink::VehicleClass_t  newVehicleClass = QGCMAVLink::vehicleClass(offlineVehicle->vehicleType());
 
     if (newVehicleClass != _vehicleClass) {
@@ -288,7 +288,7 @@ void FactValueGrid::_loadSettings(void)
     QString     groupNameFormat("%1-%2");
 
     if (!settings.childGroups().contains(groupNameFormat.arg(_userSettingsGroup).arg(_vehicleClass))) {
-        qgcApp()->toolbox()->corePlugin()->factValueGridCreateDefaultSettings(_defaultSettingsGroup);
+        QGCCorePlugin::instance()->factValueGridCreateDefaultSettings(_defaultSettingsGroup);
     }
 
 
@@ -302,7 +302,7 @@ void FactValueGrid::_loadSettings(void)
     if (version != 1) {
         qgcApp()->showAppMessage(tr("Settings version %1 for %2 is not supported. Setup will be reset to defaults.").arg(version).arg(_userSettingsGroup), tr("Load Settings"));
         settings.remove("");
-        qgcApp()->toolbox()->corePlugin()->factValueGridCreateDefaultSettings(_defaultSettingsGroup);
+        QGCCorePlugin::instance()->factValueGridCreateDefaultSettings(_defaultSettingsGroup);
     }
     _fontSize = settings.value(_fontSizeKey, DefaultFontSize).value<FontSize>();
 

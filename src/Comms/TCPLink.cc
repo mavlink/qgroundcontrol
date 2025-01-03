@@ -11,24 +11,96 @@
 #include "DeviceInfo.h"
 #include "QGCLoggingCategory.h"
 
+#include <QtCore/QThread>
 #include <QtCore/QTimer>
 #include <QtNetwork/QTcpSocket>
-#include <QtTest/QSignalSpy>
 
 QGC_LOGGING_CATEGORY(TCPLinkLog, "qgc.comms.tcplink")
 
 namespace {
     constexpr int CONNECT_TIMEOUT_MS = 1000;
     constexpr int TYPE_OF_SERVICE = 32; // Set ToS for low delay
-    constexpr int MAX_RECONNECTION_ATTEMPTS = 3;
 }
 
-TCPWorker::TCPWorker(const QString &host, quint16 port, QObject *parent)
-    : QObject(parent)
-    , _socket(new QTcpSocket(this))
-    , _host(host)
-    , _port(port)
+/*===========================================================================*/
+
+TCPConfiguration::TCPConfiguration(const QString &name, QObject *parent)
+    : LinkConfiguration(name, parent)
 {
+    // qCDebug(TCPLinkLog) << Q_FUNC_INFO << this;
+}
+
+TCPConfiguration::TCPConfiguration(const TCPConfiguration *copy, QObject *parent)
+    : LinkConfiguration(copy, parent)
+    , _host(copy->host())
+    , _port(copy->port())
+{
+    // qCDebug(TCPLinkLog) << Q_FUNC_INFO << this;
+}
+
+TCPConfiguration::~TCPConfiguration()
+{
+    // qCDebug(TCPLinkLog) << Q_FUNC_INFO << this;
+}
+
+void TCPConfiguration::copyFrom(const LinkConfiguration *source)
+{
+    Q_ASSERT(source);
+    LinkConfiguration::copyFrom(source);
+
+    const TCPConfiguration* const tcpSource = qobject_cast<const TCPConfiguration*>(source);
+    Q_ASSERT(tcpSource);
+
+    setHost(tcpSource->host());
+    setPort(tcpSource->port());
+}
+
+void TCPConfiguration::loadSettings(QSettings &settings, const QString &root)
+{
+    settings.beginGroup(root);
+
+    setHost(settings.value(QStringLiteral("host"), host()).toString());
+    setPort(static_cast<quint16>(settings.value(QStringLiteral("port"), port()).toUInt()));
+
+    settings.endGroup();
+}
+
+void TCPConfiguration::saveSettings(QSettings &settings, const QString &root)
+{
+    settings.beginGroup(root);
+
+    settings.setValue(QStringLiteral("host"), host());
+    settings.setValue(QStringLiteral("port"), port());
+
+    settings.endGroup();
+}
+
+/*===========================================================================*/
+
+TCPWorker::TCPWorker(const TCPConfiguration *config, QObject *parent)
+    : QObject(parent)
+    , _config(config)
+{
+    // qCDebug(TCPLinkLog) << Q_FUNC_INFO << this;
+}
+
+TCPWorker::~TCPWorker()
+{
+    disconnectFromHost();
+
+    // qCDebug(TCPLinkLog) << Q_FUNC_INFO << this;
+}
+
+bool TCPWorker::isConnected() const
+{
+    return (_socket && _socket->isOpen() && (_socket->state() == QAbstractSocket::ConnectedState));
+}
+
+void TCPWorker::setupSocket()
+{
+    Q_ASSERT(!_socket);
+    _socket = new QTcpSocket(this);
+
     _socket->setSocketOption(QAbstractSocket::LowDelayOption, 1);
     _socket->setSocketOption(QAbstractSocket::KeepAliveOption, 1);
     _socket->setSocketOption(QAbstractSocket::TypeOfServiceOption, TYPE_OF_SERVICE);
@@ -38,85 +110,96 @@ TCPWorker::TCPWorker(const QString &host, quint16 port, QObject *parent)
     (void) connect(_socket, &QTcpSocket::readyRead, this, &TCPWorker::_onSocketReadyRead);
     (void) connect(_socket, &QTcpSocket::errorOccurred, this, &TCPWorker::_onSocketErrorOccurred);
 
-#ifdef QT_DEBUG
-    (void) QObject::connect(_socket, &QTcpSocket::stateChanged, this, [](QTcpSocket::SocketState state) {
-        qCDebug(TCPLinkLog) << "TCP State Changed:" << state;
-    }, Qt::AutoConnection);
+    if (TCPLinkLog().isDebugEnabled()) {
+        // (void) connect(_socket, &QTcpSocket::bytesWritten, this, &TCPWorker::_onSocketBytesWritten);
 
-    (void) QObject::connect(_socket, &QTcpSocket::hostFound, this, []() {
-        qCDebug(TCPLinkLog) << "TCP Host Found";
-    }, Qt::AutoConnection);
-#endif
-}
+        (void) connect(_socket, &QTcpSocket::stateChanged, this, [](QTcpSocket::SocketState state) {
+            qCDebug(TCPLinkLog) << "TCP State Changed:" << state;
+        });
 
-TCPWorker::~TCPWorker()
-{
-    disconnectFromHost();
-}
-
-bool TCPWorker::isConnected() const
-{
-    return (_socket->isOpen() && (_socket->state() == QAbstractSocket::ConnectedState));
+        (void) connect(_socket, &QTcpSocket::hostFound, this, []() {
+            qCDebug(TCPLinkLog) << "TCP Host Found";
+        });
+    }
 }
 
 void TCPWorker::connectToHost()
 {
     if (isConnected()) {
-        qCWarning(TCPLinkLog) << "Already connected to" << _host << ":" << _port;
+        qCWarning(TCPLinkLog) << "Already connected to" << _config->host() << ":" << _config->port();
         return;
     }
 
-    QSignalSpy errorSpy(_socket, &QTcpSocket::errorOccurred);
+    _errorEmitted = false;
 
-    qCDebug(TCPLinkLog) << "Attempting to connect to host:" << _host << "port:" << _port;
-    _socket->connectToHost(_host, _port);
+    qCDebug(TCPLinkLog) << "Attempting to connect to host:" << _config->host() << "port:" << _config->port();
+    _socket->connectToHost(_config->host(), _config->port());
 
     if (!_socket->waitForConnected(CONNECT_TIMEOUT_MS)) {
-        qCWarning(TCPLinkLog) << "Connection to" << _host << ":" << _port << "failed:" << _socket->errorString();
-        if (errorSpy.count() == 0) {
-            emit errorOccurred(tr("Connection Failed: %1").arg(_socket->errorString()));
-        }
-        _onSocketDisconnected();
-    }
+        qCWarning(TCPLinkLog) << "Connection to" << _config->host() << ":" << _config->port() << "failed:" << _socket->errorString();
 
-    qCDebug(TCPLinkLog) << "Successfully connected to" << _host.toString() << ":" << _port;
+        if (!_errorEmitted) {
+            emit errorOccurred(tr("Connection Failed: %1").arg(_socket->errorString()));
+            _errorEmitted = true;
+        }
+
+        _onSocketDisconnected();
+    } else {
+        qCDebug(TCPLinkLog) << "Successfully connected to host:" << _config->host() << "port:" << _config->port();
+    }
 }
 
 void TCPWorker::disconnectFromHost()
 {
-    if (isConnected()) {
-        _socket->disconnectFromHost();
+    if (!isConnected()) {
+        qCDebug(TCPLinkLog) << "Already disconnected from host:" << _config->host() << "port:" << _config->port();
+        return;
     }
+
+    qCDebug(TCPLinkLog) << "Attempting to disconnect from host:" << _config->host() << "port:" << _config->port();
+
+    _socket->disconnectFromHost();
 }
 
 void TCPWorker::writeData(const QByteArray &data)
 {
-    if (isConnected()) {
-        qint64 totalBytesWritten = 0;
-        while (totalBytesWritten < data.size()) {
-            const qint64 bytesWritten = _socket->write(data.constData() + totalBytesWritten, data.size() - totalBytesWritten);
-            if (bytesWritten <= 0) {
-                break;
-            }
-
-            totalBytesWritten += bytesWritten;
-        }
-
-        if (totalBytesWritten < 0) {
-            emit errorOccurred(tr("Could Not Send Data - Write Failed: %1").arg(_socket->errorString()));
-        }
-    } else {
-        emit errorOccurred(tr("Socket is not connected"));
+    if (data.isEmpty()) {
+        emit errorOccurred(tr("Data to Send is Empty"));
+        return;
     }
+
+    if (!isConnected()) {
+        emit errorOccurred(tr("Socket is not connected"));
+        return;
+    }
+
+    qint64 totalBytesWritten = 0;
+    while (totalBytesWritten < data.size()) {
+        const qint64 bytesWritten = _socket->write(data.constData() + totalBytesWritten, data.size() - totalBytesWritten);
+        if (bytesWritten == -1) {
+            emit errorOccurred(tr("Could Not Send Data - Write Failed: %1").arg(_socket->errorString()));
+            return;
+        } else if (bytesWritten == 0) {
+            emit errorOccurred(tr("Could Not Send Data - Write Returned 0 Bytes"));
+            return;
+        }
+        totalBytesWritten += bytesWritten;
+    }
+
+    emit dataSent(data.first(totalBytesWritten));
 }
 
 void TCPWorker::_onSocketConnected()
 {
+    qCDebug(TCPLinkLog) << "Socket connected:" << _config->host() << _config->port();
+    _errorEmitted = false;
     emit connected();
 }
 
 void TCPWorker::_onSocketDisconnected()
 {
+    qCDebug(TCPLinkLog) << "Socket disconnected:" << _config->host() << _config->port();
+    _errorEmitted = false;
     emit disconnected();
 }
 
@@ -126,10 +209,22 @@ void TCPWorker::_onSocketReadyRead()
     emit dataReceived(data);
 }
 
+void TCPWorker::_onSocketBytesWritten(qint64 bytes)
+{
+    qCDebug(TCPLinkLog) << _config->host() << "Wrote" << bytes << "bytes";
+}
+
 void TCPWorker::_onSocketErrorOccurred(QAbstractSocket::SocketError socketError)
 {
     Q_UNUSED(socketError);
-    emit errorOccurred(_socket->errorString());
+    const QString errorString = _socket->errorString();
+
+    qCWarning(TCPLinkLog) << "Socket error:" << errorString;
+
+    if (!_errorEmitted) {
+        emit errorOccurred(errorString);
+        _errorEmitted = true;
+    }
 }
 
 /*===========================================================================*/
@@ -137,48 +232,42 @@ void TCPWorker::_onSocketErrorOccurred(QAbstractSocket::SocketError socketError)
 TCPLink::TCPLink(SharedLinkConfigurationPtr &config, QObject *parent)
     : LinkInterface(config, parent)
     , _tcpConfig(qobject_cast<const TCPConfiguration*>(config.get()))
-    , _worker(nullptr)
+    , _worker(new TCPWorker(_tcpConfig))
     , _workerThread(new QThread(this))
 {
-    Q_CHECK_PTR(_tcpConfig);
-    if (!_tcpConfig) {
-        qCWarning(TCPLinkLog) << "Invalid TCPConfiguration provided.";
-        emit communicationError(
-            tr("Configuration Error"),
-            tr("Link %1: Invalid TCP configuration.").arg(config->name())
-        );
-        return;
-    }
+    // qCDebug(TCPLinkLog) << Q_FUNC_INFO << this;
 
-    _worker = new TCPWorker(_tcpConfig->host(), _tcpConfig->port());
+    _workerThread->setObjectName(QStringLiteral("TCP_%1").arg(_tcpConfig->name()));
 
     _worker->moveToThread(_workerThread);
 
+    (void) connect(_workerThread, &QThread::started, _worker, &TCPWorker::setupSocket);
     (void) connect(_workerThread, &QThread::finished, _worker, &QObject::deleteLater);
 
-    (void) connect(_worker, &TCPWorker::connected, this, &TCPLink::_onConnected);
-    (void) connect(_worker, &TCPWorker::disconnected, this, &TCPLink::_onDisconnected);
-    (void) connect(_worker, &TCPWorker::errorOccurred, this, &TCPLink::_onErrorOccurred);
-    (void) connect(_worker, &TCPWorker::dataReceived, this, &TCPLink::_onDataReceived);
-
-#ifdef QT_DEBUG
-    _workerThread->setObjectName(QString("TCP_%1").arg(config->name()));
-#endif
+    (void) connect(_worker, &TCPWorker::connected, this, &TCPLink::_onConnected, Qt::QueuedConnection);
+    (void) connect(_worker, &TCPWorker::disconnected, this, &TCPLink::_onDisconnected, Qt::QueuedConnection);
+    (void) connect(_worker, &TCPWorker::errorOccurred, this, &TCPLink::_onErrorOccurred, Qt::QueuedConnection);
+    (void) connect(_worker, &TCPWorker::dataReceived, this, &TCPLink::_onDataReceived, Qt::QueuedConnection);
+    (void) connect(_worker, &TCPWorker::dataSent, this, &TCPLink::_onDataSent, Qt::QueuedConnection);
 
     _workerThread->start();
 }
 
 TCPLink::~TCPLink()
 {
-    disconnect();
+    TCPLink::disconnect();
 
     _workerThread->quit();
-    _workerThread->wait();
+    if (!_workerThread->wait()) {
+        qCWarning(TCPLinkLog) << "Failed to wait for TCP Thread to close";
+    }
+
+    // qCDebug(TCPLinkLog) << Q_FUNC_INFO << this;
 }
 
 bool TCPLink::isConnected() const
 {
-    return (_worker && _worker->isConnected());
+    return _worker->isConnected();
 }
 
 bool TCPLink::_connect()
@@ -203,13 +292,18 @@ void TCPLink::_onDisconnected()
 
 void TCPLink::_onErrorOccurred(const QString &errorString)
 {
-    emit communicationError(tr("TCP Link Error"), tr("Link %1: %2").arg(_tcpConfig->name(), errorString));
+    qCWarning(TCPLinkLog) << "Communication error:" << errorString;
+    emit communicationError(tr("TCP Link Error"), tr("Link %1: (Host: %2 Port: %3) %4").arg(_tcpConfig->name(), _tcpConfig->host()).arg(_tcpConfig->port()).arg(errorString));
 }
 
 void TCPLink::_onDataReceived(const QByteArray &data)
 {
-    // Process data or emit signal
     emit bytesReceived(this, data);
+}
+
+void TCPLink::_onDataSent(const QByteArray &data)
+{
+    emit bytesSent(this, data);
 }
 
 void TCPLink::_writeBytes(const QByteArray& bytes)
@@ -220,61 +314,4 @@ void TCPLink::_writeBytes(const QByteArray& bytes)
 bool TCPLink::isSecureConnection()
 {
     return QGCDeviceInfo::isNetworkWired();
-}
-
-/*===========================================================================*/
-
-TCPConfiguration::TCPConfiguration(const QString &name, QObject *parent)
-    : LinkConfiguration(name, parent)
-{
-    // qCDebug(TCPLinkLog) << Q_FUNC_INFO << this;
-}
-
-TCPConfiguration::TCPConfiguration(const TCPConfiguration *copy, QObject *parent)
-    : LinkConfiguration(copy, parent)
-    , _host(copy->host())
-    , _port(copy->port())
-{
-    // qCDebug(TCPLinkLog) << Q_FUNC_INFO << this;
-
-    Q_CHECK_PTR(copy);
-
-    LinkConfiguration::copyFrom(copy);
-}
-
-TCPConfiguration::~TCPConfiguration()
-{
-    // qCDebug(TCPLinkLog) << Q_FUNC_INFO << this;
-}
-
-void TCPConfiguration::copyFrom(const LinkConfiguration *source)
-{
-    Q_CHECK_PTR(source);
-    LinkConfiguration::copyFrom(source);
-
-    const TCPConfiguration* const tcpSource = qobject_cast<const TCPConfiguration*>(source);
-    Q_CHECK_PTR(tcpSource);
-
-    setHost(tcpSource->host());
-    setPort(tcpSource->port());
-}
-
-void TCPConfiguration::loadSettings(QSettings &settings, const QString &root)
-{
-    settings.beginGroup(root);
-
-    setHost(settings.value(QStringLiteral("host"), host()).toString());
-    setPort(static_cast<quint16>(settings.value(QStringLiteral("port"), port()).toUInt()));
-
-    settings.endGroup();
-}
-
-void TCPConfiguration::saveSettings(QSettings &settings, const QString &root)
-{
-    settings.beginGroup(root);
-
-    settings.setValue(QStringLiteral("host"), host());
-    settings.setValue(QStringLiteral("port"), port());
-
-    settings.endGroup();
 }

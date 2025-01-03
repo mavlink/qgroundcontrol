@@ -9,15 +9,12 @@
 
 #pragma once
 
-#include "QGCToolbox.h"
 #include "QmlUnitsConversion.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QTimer>
 #include <QtCore/QPointF>
 #include <QtPositioning/QGeoCoordinate>
-
-class QGCApplication;
 
 class ADSBVehicleManager;
 class FactGroup;
@@ -51,13 +48,15 @@ Q_MOC_INCLUDE("UTMSPManager.h")
 Q_MOC_INCLUDE("AirLinkManager.h")
 #endif
 
-class QGroundControlQmlGlobal : public QGCTool
+class QGroundControlQmlGlobal : public QObject
 {
     Q_OBJECT
 
 public:
-    QGroundControlQmlGlobal(QGCApplication* app, QGCToolbox* toolbox);
+    QGroundControlQmlGlobal(QObject *parent = nullptr);
     ~QGroundControlQmlGlobal();
+
+    static void registerQmlTypes();
 
     enum AltMode {
         AltitudeModeMixed,              // Used by global altitude mode for mission planning
@@ -101,7 +100,6 @@ public:
     Q_PROPERTY(QString  telemetryFileExtension  READ telemetryFileExtension CONSTANT)
 
     Q_PROPERTY(QString qgcVersion       READ qgcVersion         CONSTANT)
-    Q_PROPERTY(bool    skipSetupPage    READ skipSetupPage      WRITE setSkipSetupPage NOTIFY skipSetupPageChanged)
 
     Q_PROPERTY(qreal zOrderTopMost              READ zOrderTopMost              CONSTANT) ///< z order for top most items, toolbar, main window sub view
     Q_PROPERTY(qreal zOrderWidgets              READ zOrderWidgets              CONSTANT) ///< z order value to widgets, for example: zoom controls, hud widgetss
@@ -162,7 +160,7 @@ public:
     Q_INVOKABLE QString altitudeModeExtraUnits(AltMode altMode);        ///< String shown in the FactTextField.extraUnits ui
     Q_INVOKABLE QString altitudeModeShortDescription(AltMode altMode);  ///< String shown when a user needs to select an altitude mode
 
-    // Property accesors
+    // Property accessors
 
     QString                 appName             ();
     LinkManager*            linkManager         ()  { return _linkManager; }
@@ -217,8 +215,6 @@ public:
     bool    singleVehicleSupport    ();
     bool    px4ProFirmwareSupported ();
     bool    apmFirmwareSupported    ();
-    bool    skipSetupPage           () const{ return _skipSetupPage; }
-    void    setSkipSetupPage        (bool skip);
 
     void    setIsVersionCheckEnabled    (bool enable);
     void    setMavlinkSystemID          (int  id);
@@ -238,18 +234,12 @@ public:
     bool utmspSupported() { return false; }
 #endif
 
-    // Overrides from QGCTool
-    virtual void setToolbox(QGCToolbox* toolbox);
-
-    static void registerQmlTypes();
-
 signals:
     void isMultiplexingEnabledChanged   (bool enabled);
     void isVersionCheckEnabledChanged   (bool enabled);
     void mavlinkSystemIDChanged         (int id);
     void flightMapPositionChanged       (QGeoCoordinate flightMapPosition);
     void flightMapZoomChanged           (double flightMapZoom);
-    void skipSetupPageChanged           ();
 
 private:
     QGCMapEngineManager*    _mapEngineManager       = nullptr;
@@ -257,25 +247,24 @@ private:
     QGCPositionManager*     _qgcPositionManager     = nullptr;
     MissionCommandTree*     _missionCommandTree     = nullptr;
     VideoManager*           _videoManager           = nullptr;
+    LinkManager*            _linkManager            = nullptr;
+    MultiVehicleManager*    _multiVehicleManager    = nullptr;
+    SettingsManager*        _settingsManager        = nullptr;
+    QGCCorePlugin*          _corePlugin             = nullptr;
+    QGCPalette*             _globalPalette          = nullptr;
+#ifndef NO_SERIAL_LINK
+    FactGroup*              _gpsRtkFactGroup        = nullptr;
+#endif
 #ifndef QGC_AIRLINK_DISABLED
     AirLinkManager*         _airlinkManager         = nullptr;
 #endif
 #ifdef QGC_UTM_ADAPTER
-    UTMSPManager*            _utmspManager;
+    UTMSPManager*           _utmspManager           = nullptr;
 #endif
 
     double                  _flightMapInitialZoom   = 17.0;
-    LinkManager*            _linkManager            = nullptr;
-    MultiVehicleManager*    _multiVehicleManager    = nullptr;
-    QGCCorePlugin*          _corePlugin             = nullptr;
-    SettingsManager*        _settingsManager        = nullptr;
-#ifndef NO_SERIAL_LINK
-    FactGroup*              _gpsRtkFactGroup        = nullptr;
-#endif
-    QGCPalette*             _globalPalette          = nullptr;
     QmlUnitsConversion      _unitsConversion;
 
-    bool                    _skipSetupPage          = false;
     QStringList             _altitudeModeEnumString;
 
     static QGeoCoordinate   _coord;

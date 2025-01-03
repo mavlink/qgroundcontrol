@@ -7,7 +7,7 @@ if(ANDROID OR IOS)
 endif()
 
 if(ANDROID OR IOS)
-    set(QGC_GST_STATIC_BUILD ON CACHE BOOL "Build GST Statically")
+    set(QGC_GST_STATIC_BUILD ON)
 endif()
 
 find_package(PkgConfig QUIET)
@@ -45,7 +45,7 @@ if(WIN32)
 elseif(MACOS)
     list(APPEND CMAKE_FRAMEWORK_PATH "/Library/Frameworks")
     set(GSTREAMER_PREFIX "/Library/Frameworks/GStreamer.framework/Versions/1.0")
-    find_program(PKG_CONFIG_PROGRAM pkg-config PATHS ${GSTREAMER_PREFIX}/bin)
+    find_program(PKG_CONFIG_PROGRAM pkg-config PATHS ${GSTREAMER_PREFIX}/bin NO_DEFAULT_PATH)
     if(PKG_CONFIG_PROGRAM)
         set(PKG_CONFIG_EXECUTABLE ${PKG_CONFIG_PROGRAM})
     endif()
@@ -107,10 +107,14 @@ elseif(ANDROID)
 
     set(ENV{PKG_CONFIG_PATH} "")
     if(CMAKE_HOST_WIN32)
-        find_program(PKG_CONFIG_PROGRAM pkg-config PATHS ${GSTREAMER_PREFIX}/share/gst-android/ndk-build/tools/windows)
+        find_program(PKG_CONFIG_PROGRAM pkg-config
+            PATHS ${GSTREAMER_PREFIX}/share/gst-android/ndk-build/tools/windows
+            NO_DEFAULT_PATH
+        )
         if(PKG_CONFIG_PROGRAM)
             set(PKG_CONFIG_EXECUTABLE ${PKG_CONFIG_PROGRAM})
             set(ENV{PKG_CONFIG_LIBDIR} "${GSTREAMER_PREFIX}/lib/pkgconfig;${GSTREAMER_PREFIX}/lib/gstreamer-1.0/pkgconfig")
+            set(PkgConfig_FOUND TRUE)
         endif()
     elseif(CMAKE_HOST_LINUX OR CMAKE_HOST_APPLE)
         if(PkgConfig_FOUND)
@@ -654,10 +658,11 @@ target_include_directories(GStreamer::GStreamer
     INTERFACE
         ${GSTREAMER_PREFIX}/include
         ${GSTREAMER_PREFIX}/include/glib-2.0
+        # ${GSTREAMER_PREFIX}/include/graphene-1.0
         ${GSTREAMER_PREFIX}/include/gstreamer-1.0
         ${GSTREAMER_LIB_PATH}/glib-2.0/include
-        # ${GSTREAMER_PREFIX}/include/graphene-1.0
         # ${GSTREAMER_LIB_PATH}/graphene-1.0/include
+        ${GSTREAMER_LIB_PATH}/gstreamer-1.0/include
 )
 
 target_link_directories(GStreamer::GStreamer INTERFACE ${GSTREAMER_LIB_PATH})

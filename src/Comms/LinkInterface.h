@@ -28,7 +28,7 @@ class LinkInterface : public QThread
 public:
     virtual ~LinkInterface();
 
-    Q_INVOKABLE virtual void disconnect() = 0;
+    Q_INVOKABLE virtual void disconnect() = 0; // FIXME: This gets called 3x when closing link
 
     virtual bool isConnected() const = 0;
     virtual bool isLogReplay() { return false; }

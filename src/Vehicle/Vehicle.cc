@@ -40,6 +40,8 @@
 #include "RallyPointManager.h"
 #include "RemoteIDManager.h"
 #include "SettingsManager.h"
+#include "AppSettings.h"
+#include "FlyViewSettings.h"
 #include "StandardModes.h"
 #include "TerrainProtocolHandler.h"
 #include "TerrainQuery.h"
@@ -86,10 +88,8 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _defaultComponentId           (defaultComponentId)
     , _firmwareType                 (firmwareType)
     , _vehicleType                  (vehicleType)
-    , _toolbox                      (qgcApp()->toolbox())
-    , _settingsManager              (_toolbox->settingsManager())
-    , _defaultCruiseSpeed           (_settingsManager->appSettings()->offlineEditingCruiseSpeed()->rawValue().toDouble())
-    , _defaultHoverSpeed            (_settingsManager->appSettings()->offlineEditingHoverSpeed()->rawValue().toDouble())
+    , _defaultCruiseSpeed           (SettingsManager::instance()->appSettings()->offlineEditingCruiseSpeed()->rawValue().toDouble())
+    , _defaultHoverSpeed            (SettingsManager::instance()->appSettings()->offlineEditingHoverSpeed()->rawValue().toDouble())
     , _trajectoryPoints             (new TrajectoryPoints(this, this))
     , _mavlinkStreamConfig          (std::bind(&Vehicle::_setMessageInterval, this, std::placeholders::_1, std::placeholders::_2))
     , _vehicleFactGroup             (this)
@@ -108,13 +108,12 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _hygrometerFactGroup          (this)
     , _generatorFactGroup           (this)
     , _efiFactGroup                 (this)
+    , _rpmFactGroup                 (this)
     , _terrainFactGroup             (this)
     , _terrainProtocolHandler       (new TerrainProtocolHandler(this, &_terrainFactGroup, this))
 {
-    _linkManager = _toolbox->linkManager();
-
     connect(JoystickManager::instance(), &JoystickManager::activeJoystickChanged, this, &Vehicle::_loadJoystickSettings);
-    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged, this, &Vehicle::_activeVehicleChanged);
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &Vehicle::_activeVehicleChanged);
 
     qCDebug(VehicleLog) << "Link started with Mavlink " << (MAVLinkProtocol::instance()->getCurrentVersion() >= 200 ? "V2" : "V1");
 
@@ -130,7 +129,7 @@ Vehicle::Vehicle(LinkInterface*             link,
         }
     });
 
-    connect(_toolbox->multiVehicleManager(), &MultiVehicleManager::parameterReadyVehicleAvailableChanged, this, &Vehicle::_vehicleParamLoaded);
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::parameterReadyVehicleAvailableChanged, this, &Vehicle::_vehicleParamLoaded);
 
     connect(this, &Vehicle::remoteControlRSSIChanged,   this, &Vehicle::_remoteControlRSSIChanged);
 
@@ -139,9 +138,9 @@ Vehicle::Vehicle(LinkInterface*             link,
     _vehicleLinkManager->_addLink(link);
 
     // Set video stream to udp if running ArduSub and Video is disabled
-    if (sub() && _settingsManager->videoSettings()->videoSource()->rawValue() == VideoSettings::videoDisabled) {
-        _settingsManager->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceUDPH264);
-        _settingsManager->videoSettings()->lowLatencyMode()->setRawValue(true);
+    if (sub() && SettingsManager::instance()->videoSettings()->videoSource()->rawValue() == VideoSettings::videoDisabled) {
+        SettingsManager::instance()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceUDPH264);
+        SettingsManager::instance()->videoSettings()->lowLatencyMode()->setRawValue(true);
     }
 
 #ifdef QGC_UTM_ADAPTER
@@ -200,10 +199,8 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _offlineEditingVehicle            (true)
     , _firmwareType                     (firmwareType)
     , _vehicleType                      (vehicleType)
-    , _toolbox                          (qgcApp()->toolbox())
-    , _settingsManager                  (_toolbox->settingsManager())
-    , _defaultCruiseSpeed               (_settingsManager->appSettings()->offlineEditingCruiseSpeed()->rawValue().toDouble())
-    , _defaultHoverSpeed                (_settingsManager->appSettings()->offlineEditingHoverSpeed()->rawValue().toDouble())
+    , _defaultCruiseSpeed               (SettingsManager::instance()->appSettings()->offlineEditingCruiseSpeed()->rawValue().toDouble())
+    , _defaultHoverSpeed                (SettingsManager::instance()->appSettings()->offlineEditingHoverSpeed()->rawValue().toDouble())
     , _mavlinkProtocolRequestComplete   (true)
     , _maxProtoVersion                  (200)
     , _capabilityBitsKnown              (true)
@@ -220,8 +217,6 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _localPositionFactGroup           (this)
     , _localPositionSetpointFactGroup   (this)
 {
-    _linkManager = _toolbox->linkManager();
-
     // This will also set the settings based firmware/vehicle types. So it needs to happen first.
     if (_firmwareType == MAV_AUTOPILOT_TRACK) {
         trackFirmwareVehicleTypeChanges();
@@ -229,8 +224,8 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
 
     _commonInit();
 
-    connect(_settingsManager->appSettings()->offlineEditingCruiseSpeed(),   &Fact::rawValueChanged, this, &Vehicle::_offlineCruiseSpeedSettingChanged);
-    connect(_settingsManager->appSettings()->offlineEditingHoverSpeed(),    &Fact::rawValueChanged, this, &Vehicle::_offlineHoverSpeedSettingChanged);
+    connect(SettingsManager::instance()->appSettings()->offlineEditingCruiseSpeed(),   &Fact::rawValueChanged, this, &Vehicle::_offlineCruiseSpeedSettingChanged);
+    connect(SettingsManager::instance()->appSettings()->offlineEditingHoverSpeed(),    &Fact::rawValueChanged, this, &Vehicle::_offlineHoverSpeedSettingChanged);
 
     _offlineFirmwareTypeSettingChanged(_firmwareType);  // This adds correct terrain capability bit
     _firmwarePlugin->initializeVehicle(this);
@@ -238,17 +233,17 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
 
 void Vehicle::trackFirmwareVehicleTypeChanges(void)
 {
-    connect(_settingsManager->appSettings()->offlineEditingFirmwareClass(), &Fact::rawValueChanged, this, &Vehicle::_offlineFirmwareTypeSettingChanged);
-    connect(_settingsManager->appSettings()->offlineEditingVehicleClass(),  &Fact::rawValueChanged, this, &Vehicle::_offlineVehicleTypeSettingChanged);
+    connect(SettingsManager::instance()->appSettings()->offlineEditingFirmwareClass(), &Fact::rawValueChanged, this, &Vehicle::_offlineFirmwareTypeSettingChanged);
+    connect(SettingsManager::instance()->appSettings()->offlineEditingVehicleClass(),  &Fact::rawValueChanged, this, &Vehicle::_offlineVehicleTypeSettingChanged);
 
-    _offlineFirmwareTypeSettingChanged(_settingsManager->appSettings()->offlineEditingFirmwareClass()->rawValue());
-    _offlineVehicleTypeSettingChanged(_settingsManager->appSettings()->offlineEditingVehicleClass()->rawValue());
+    _offlineFirmwareTypeSettingChanged(SettingsManager::instance()->appSettings()->offlineEditingFirmwareClass()->rawValue());
+    _offlineVehicleTypeSettingChanged(SettingsManager::instance()->appSettings()->offlineEditingVehicleClass()->rawValue());
 }
 
 void Vehicle::stopTrackingFirmwareVehicleTypeChanges(void)
 {
-    disconnect(_settingsManager->appSettings()->offlineEditingFirmwareClass(),  &Fact::rawValueChanged, this, &Vehicle::_offlineFirmwareTypeSettingChanged);
-    disconnect(_settingsManager->appSettings()->offlineEditingVehicleClass(),  &Fact::rawValueChanged, this, &Vehicle::_offlineVehicleTypeSettingChanged);
+    disconnect(SettingsManager::instance()->appSettings()->offlineEditingFirmwareClass(),  &Fact::rawValueChanged, this, &Vehicle::_offlineFirmwareTypeSettingChanged);
+    disconnect(SettingsManager::instance()->appSettings()->offlineEditingVehicleClass(),  &Fact::rawValueChanged, this, &Vehicle::_offlineVehicleTypeSettingChanged);
 }
 
 void Vehicle::_commonInit()
@@ -281,8 +276,8 @@ void Vehicle::_commonInit()
     connect(_missionManager, &MissionManager::newMissionItemsAvailable, _trajectoryPoints, &TrajectoryPoints::clear);
 
     _standardModes                  = new StandardModes                 (this, this);
-    _componentInformationManager    = new ComponentInformationManager   (this);
-    _initialConnectStateMachine     = new InitialConnectStateMachine    (this);
+    _componentInformationManager    = new ComponentInformationManager   (this, this);
+    _initialConnectStateMachine     = new InitialConnectStateMachine    (this, this);
     _ftpManager                     = new FTPManager                    (this);
 
     _vehicleLinkManager             = new VehicleLinkManager            (this);
@@ -314,7 +309,7 @@ void Vehicle::_commonInit()
     _remoteIDManager = new RemoteIDManager(this);
 
     // Flight modes can differ based on advanced mode
-    connect(_toolbox->corePlugin(), &QGCCorePlugin::showAdvancedUIChanged, this, &Vehicle::flightModesChanged);
+    connect(QGCCorePlugin::instance(), &QGCCorePlugin::showAdvancedUIChanged, this, &Vehicle::flightModesChanged);
 
     _createImageProtocolManager();
     _createStatusTextHandler();
@@ -336,6 +331,7 @@ void Vehicle::_commonInit()
     _addFactGroup(&_hygrometerFactGroup,        _hygrometerFactGroupName);
     _addFactGroup(&_generatorFactGroup,         _generatorFactGroupName);
     _addFactGroup(&_efiFactGroup,               _efiFactGroupName);
+    _addFactGroup(&_rpmFactGroup,               _rpmFactGroupName);
     _addFactGroup(&_terrainFactGroup,           _terrainFactGroupName);
 
     // Add firmware-specific fact groups, if provided
@@ -355,9 +351,9 @@ void Vehicle::_commonInit()
     connect(&_flightTimeUpdater, &QTimer::timeout, this, &Vehicle::_updateFlightTime);
 
     // Set video stream to udp if running ArduSub and Video is disabled
-    if (sub() && _settingsManager->videoSettings()->videoSource()->rawValue() == VideoSettings::videoDisabled) {
-        _settingsManager->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceUDPH264);
-        _settingsManager->videoSettings()->lowLatencyMode()->setRawValue(true);
+    if (sub() && SettingsManager::instance()->videoSettings()->videoSource()->rawValue() == VideoSettings::videoDisabled) {
+        SettingsManager::instance()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceUDPH264);
+        SettingsManager::instance()->videoSettings()->lowLatencyMode()->setRawValue(true);
     }
 
     // enable Joystick if appropriate
@@ -506,7 +502,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     }
 
     // Give the Core Plugin access to all mavlink traffic
-    if (!_toolbox->corePlugin()->mavlinkMessage(this, link, message)) {
+    if (!QGCCorePlugin::instance()->mavlinkMessage(this, link, message)) {
         return;
     }
 
@@ -637,14 +633,14 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
 #endif
     case MAVLINK_MSG_ID_LOG_ENTRY:
     {
-        mavlink_log_entry_t log;
+        mavlink_log_entry_t log{};
         mavlink_msg_log_entry_decode(&message, &log);
         emit logEntry(log.time_utc, log.size, log.id, log.num_logs, log.last_log_num);
         break;
     }
     case MAVLINK_MSG_ID_LOG_DATA:
     {
-        mavlink_log_data_t log;
+        mavlink_log_data_t log{};
         mavlink_msg_log_data_decode(&message, &log);
         emit logData(log.ofs, log.id, log.count, log.data);
         break;
@@ -1110,8 +1106,8 @@ void Vehicle::_updateArmed(bool armed)
             _trajectoryPoints->stop();
             _flightTimerStop();
             // Also handle Video Streaming
-            if(_settingsManager->videoSettings()->disableWhenDisarmed()->rawValue().toBool()) {
-                _settingsManager->videoSettings()->streamEnabled()->setRawValue(false);
+            if(SettingsManager::instance()->videoSettings()->disableWhenDisarmed()->rawValue().toBool()) {
+                SettingsManager::instance()->videoSettings()->streamEnabled()->setRawValue(false);
                 VideoManager::instance()->stopVideo();
             }
         }
@@ -1438,6 +1434,16 @@ void Vehicle::_handleRCChannels(mavlink_message_t& message)
     };
     int pwmValues[QGCMAVLink::maxRcChannels];
 
+    // Below is a hack that's needed by ELRS
+    // ELRS is not sending a full RC_CHANNELS packet, only channel update
+    // packets via RC_CHANNELS_RAW, to update the position of the values.
+    // Therefore, the number of channels is not set.
+    if (channels.chancount == 0) {
+        for(const auto& channelValue : _rgChannelvalues) {
+            if (*channelValue != UINT16_MAX) channels.chancount++;
+        }
+    }
+
     for (int i=0; i<QGCMAVLink::maxRcChannels; i++) {
         uint16_t channelValue = *_rgChannelvalues[i];
 
@@ -1544,7 +1550,7 @@ void Vehicle::setJoystickEnabled(bool enabled)
 
     // if we are the active vehicle, call start polling on the active joystick
     // This routes the joystick signals to this vehicle
-    if (enabled && _toolbox->multiVehicleManager()->activeVehicle() == this){
+    if (enabled && MultiVehicleManager::instance()->activeVehicle() == this){
         _captureJoystick();
     }
 
@@ -1981,7 +1987,7 @@ QString Vehicle::vehicleClassInternalName() const
 /// Returns the string to speak to identify the vehicle
 QString Vehicle::_vehicleIdSpeech()
 {
-    if (_toolbox->multiVehicleManager()->vehicles()->count() > 1) {
+    if (MultiVehicleManager::instance()->vehicles()->count() > 1) {
         return tr("Vehicle %1 ").arg(id());
     } else {
         return QString();
@@ -2123,7 +2129,7 @@ void Vehicle::guidedModeGotoLocation(const QGeoCoordinate& gotoCoord)
     if (!coordinate().isValid()) {
         return;
     }
-    double maxDistance = _settingsManager->flyViewSettings()->maxGoToLocationDistance()->rawValue().toDouble();
+    double maxDistance = SettingsManager::instance()->flyViewSettings()->maxGoToLocationDistance()->rawValue().toDouble();
     if (coordinate().distanceTo(gotoCoord) > maxDistance) {
         qgcApp()->showAppMessage(QString("New location is too far. Must be less than %1 %2.").arg(qRound(FactMetaData::metersToAppSettingsHorizontalDistanceUnits(maxDistance).toDouble())).arg(FactMetaData::appSettingsHorizontalDistanceUnitsString()));
         return;
@@ -3369,7 +3375,7 @@ void Vehicle::_updateDistanceToGCS()
 void Vehicle::_updateHomepoint()
 {
     const bool setHomeCmdSupported = firmwarePlugin()->supportedMissionCommands(vehicleClass()).contains(MAV_CMD_DO_SET_HOME);
-    const bool updateHomeActivated = _toolbox->settingsManager()->flyViewSettings()->updateHomePosition()->rawValue().toBool();
+    const bool updateHomeActivated = SettingsManager::instance()->flyViewSettings()->updateHomePosition()->rawValue().toBool();
     if(setHomeCmdSupported && updateHomeActivated){
         QGeoCoordinate gcsPosition = QGCPositionManager::instance()->gcsPosition();
         if (coordinate().isValid() && gcsPosition.isValid()) {
@@ -3481,12 +3487,12 @@ bool Vehicle::isInitialConnectComplete() const
 
 void Vehicle::_initializeCsv()
 {
-    if(!_toolbox->settingsManager()->appSettings()->saveCsvTelemetry()->rawValue().toBool()){
+    if(!SettingsManager::instance()->appSettings()->saveCsvTelemetry()->rawValue().toBool()){
         return;
     }
     QString now = QDateTime::currentDateTime().toString("yyyy-MM-dd hh-mm-ss");
     QString fileName = QString("%1 vehicle%2.csv").arg(now).arg(_id);
-    QDir saveDir(_toolbox->settingsManager()->appSettings()->telemetrySavePath());
+    QDir saveDir(SettingsManager::instance()->appSettings()->telemetrySavePath());
     _csvLogFile.setFileName(saveDir.absoluteFilePath(fileName));
 
     if (!_csvLogFile.open(QIODevice::Append)) {
@@ -3510,7 +3516,7 @@ void Vehicle::_writeCsvLine()
 {
     // Only save the logs after the the vehicle gets armed, unless "Save logs even if vehicle was not armed" is checked
     if(!_csvLogFile.isOpen() &&
-            (_armed || _toolbox->settingsManager()->appSettings()->telemetrySaveNotArmed()->rawValue().toBool())){
+            (_armed || SettingsManager::instance()->appSettings()->telemetrySaveNotArmed()->rawValue().toBool())){
         _initializeCsv();
     }
 

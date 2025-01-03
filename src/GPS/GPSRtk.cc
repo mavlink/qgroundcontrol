@@ -10,7 +10,6 @@
 #include "GPSRtk.h"
 #include "GPSProvider.h"
 #include "GPSRTKFactGroup.h"
-#include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "RTCMMavlink.h"
 #include "RTKSettings.h"
@@ -23,10 +22,6 @@ GPSRtk::GPSRtk(QObject *parent)
     , _gpsRtkFactGroup(new GPSRTKFactGroup(this))
 {
     // qCDebug(GPSRtkLog) << Q_FUNC_INFO << this;
-
-    qRegisterMetaType<satellite_info_s>("satellite_info_s");
-    qRegisterMetaType<sensor_gnss_relative_s>("sensor_gnss_relative_s");
-    qRegisterMetaType<sensor_gps_s>("sensor_gps_s");
 }
 
 GPSRtk::~GPSRtk()
@@ -34,6 +29,13 @@ GPSRtk::~GPSRtk()
     disconnectGPS();
 
     // qCDebug(GPSRtkLog) << Q_FUNC_INFO << this;
+}
+
+void GPSRtk::registerQmlTypes()
+{
+    (void) qRegisterMetaType<satellite_info_s>("satellite_info_s");
+    (void) qRegisterMetaType<sensor_gnss_relative_s>("sensor_gnss_relative_s");
+    (void) qRegisterMetaType<sensor_gps_s>("sensor_gps_s");
 }
 
 void GPSRtk::_onGPSConnect()
@@ -76,7 +78,7 @@ void GPSRtk::connectGPS(const QString &device, QStringView gps_type)
 
     disconnectGPS();
 
-    RTKSettings* const rtkSettings = qgcApp()->toolbox()->settingsManager()->rtkSettings();
+    RTKSettings* const rtkSettings = SettingsManager::instance()->rtkSettings();
     _requestGpsStop = false;
     const GPSProvider::rtk_data_s rtkData = {
         rtkSettings->surveyInAccuracyLimit()->rawValue().toDouble(),

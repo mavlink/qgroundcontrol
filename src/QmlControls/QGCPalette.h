@@ -20,7 +20,7 @@
             { QColor(lightDisabled), QColor(lightEnabled) }, \
             { QColor(darkDisabled), QColor(darkEnabled) } \
         }; \
-        qgcApp()->toolbox()->corePlugin()->paletteOverride(#name, colorInfo); \
+        QGCCorePlugin::instance()->paletteOverride(#name, colorInfo); \
         _colorInfoMap[Light][ColorGroupEnabled][QStringLiteral(#name)] = colorInfo[Light][ColorGroupEnabled]; \
         _colorInfoMap[Light][ColorGroupDisabled][QStringLiteral(#name)] = colorInfo[Light][ColorGroupDisabled]; \
         _colorInfoMap[Dark][ColorGroupEnabled][QStringLiteral(#name)] = colorInfo[Dark][ColorGroupEnabled]; \
@@ -34,7 +34,7 @@
             { QColor(disabledColor), QColor(enabledColor) }, \
             { QColor(disabledColor), QColor(enabledColor) } \
         }; \
-        qgcApp()->toolbox()->corePlugin()->paletteOverride(#name, colorInfo); \
+        QGCCorePlugin::instance()->paletteOverride(#name, colorInfo); \
         _colorInfoMap[Light][ColorGroupEnabled][QStringLiteral(#name)] = colorInfo[Light][ColorGroupEnabled]; \
         _colorInfoMap[Light][ColorGroupDisabled][QStringLiteral(#name)] = colorInfo[Light][ColorGroupDisabled]; \
         _colorInfoMap[Dark][ColorGroupEnabled][QStringLiteral(#name)] = colorInfo[Dark][ColorGroupEnabled]; \
@@ -48,7 +48,7 @@
             { QColor(color), QColor(color) }, \
             { QColor(color), QColor(color) } \
         }; \
-        qgcApp()->toolbox()->corePlugin()->paletteOverride(#name, colorInfo); \
+        QGCCorePlugin::instance()->paletteOverride(#name, colorInfo); \
         _colorInfoMap[Light][ColorGroupEnabled][QStringLiteral(#name)] = colorInfo[Light][ColorGroupEnabled]; \
         _colorInfoMap[Light][ColorGroupDisabled][QStringLiteral(#name)] = colorInfo[Light][ColorGroupDisabled]; \
         _colorInfoMap[Dark][ColorGroupEnabled][QStringLiteral(#name)] = colorInfo[Dark][ColorGroupEnabled]; \

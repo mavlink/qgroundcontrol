@@ -9,7 +9,7 @@
 #pragma once
 
 #include "SettingsGroup.h"
-#include "QGCMAVLink.h"
+#include "MAVLinkLib.h"
 
 class APMMavlinkStreamRateSettings : public SettingsGroup
 {

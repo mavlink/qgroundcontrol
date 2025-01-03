@@ -36,7 +36,6 @@ if(QGC_VIEWER3D)
     target_link_libraries(Viewer3D
         PRIVATE
             Qt6::Network
-            QGC
             QGCLocation
             Settings
             Vehicle

@@ -34,10 +34,6 @@ Rectangle {
         id: geoController
     }
 
-    LogDownloadController {
-        id: logController
-    }
-
     QGCFlickable {
         id:                 buttonScroll
         width:              buttonColumn.width

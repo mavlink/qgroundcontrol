@@ -304,7 +304,7 @@ QList<MAV_CMD> PX4FirmwarePlugin::supportedMissionCommands(QGCMAVLink::VehicleCl
         supportedCommands += flightCommands;
     }
 
-    if (qgcApp()->toolbox()->settingsManager()->planViewSettings()->useConditionGate()->rawValue().toBool()) {
+    if (SettingsManager::instance()->planViewSettings()->useConditionGate()->rawValue().toBool()) {
         supportedCommands.append(MAV_CMD_CONDITION_GATE);
     }
 

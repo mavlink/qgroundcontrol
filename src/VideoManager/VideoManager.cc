@@ -13,8 +13,8 @@
 #include "QGCCameraManager.h"
 #include "QGCCorePlugin.h"
 #include "QGCLoggingCategory.h"
-#include "QGCToolbox.h"
 #include "SettingsManager.h"
+#include "AppSettings.h"
 #include "SubtitleWriter.h"
 #include "Vehicle.h"
 #include "VideoReceiver.h"
@@ -54,45 +54,21 @@ Q_APPLICATION_STATIC(VideoManager, _videoManagerInstance);
 VideoManager::VideoManager(QObject *parent)
     : QObject(parent)
     , _subtitleWriter(new SubtitleWriter(this))
-    , _videoSettings(qgcApp()->toolbox()->settingsManager()->videoSettings())
+    , _videoSettings(SettingsManager::instance()->videoSettings())
 {
     // qCDebug(VideoManagerLog) << Q_FUNC_INFO << this;
 
-    if (qgcApp()->runningUnitTests()) {
-        return;
-    }
-
-    (void) qmlRegisterUncreatableType<VideoManager> ("QGroundControl.VideoManager", 1, 0, "VideoManager", "Reference only");
-    (void) qmlRegisterUncreatableType<VideoReceiver>("QGroundControl", 1, 0, "VideoReceiver","Reference only");
-
 #ifdef QGC_GST_STREAMING
     GStreamer::initialize();
-    GStreamer::blacklist(static_cast<GStreamer::VideoDecoderOptions>(_videoSettings->forceVideoDecoder()->rawValue().toInt()));
-#else
-    (void) qmlRegisterType<GLVideoItemStub>("org.freedesktop.gstreamer.Qt6GLVideoItem", 1, 0, "GstGLQt6VideoItem");
 #endif
 }
 
 VideoManager::~VideoManager()
 {
     for (VideoReceiverData &videoReceiver : _videoReceiverData) {
-        if (videoReceiver.receiver != nullptr) {
-            delete videoReceiver.receiver;
-            videoReceiver.receiver = nullptr;
-        }
-
-        if (videoReceiver.sink != nullptr) {
-            // qgcApp()->toolbox()->corePlugin()->releaseVideoSink(videoReceiver.sink);
-#ifdef QGC_GST_STREAMING
-            // FIXME: AV: we need some interaface for video sink with .release() call
-            // Currently VideoManager is destroyed after corePlugin() and we are crashing on app exit
-            // calling _toolbox->corePlugin()->releaseVideoSink(_videoSink[i]);
-            // As for now let's call GStreamer::releaseVideoSink() directly
-            GStreamer::releaseVideoSink(videoReceiver.sink);
-#elif defined(QGC_QT_STREAMING)
-            QtMultimediaReceiver::releaseVideoSink(videoReceiver.sink);
-#endif
-        }
+        QGCCorePlugin::instance()->releaseVideoSink(videoReceiver.sink);
+        delete videoReceiver.receiver;
+        videoReceiver.receiver = nullptr;
     }
 
     // qCDebug(VideoManagerLog) << Q_FUNC_INFO << this;
@@ -101,6 +77,15 @@ VideoManager::~VideoManager()
 VideoManager *VideoManager::instance()
 {
     return _videoManagerInstance();
+}
+
+void VideoManager::registerQmlTypes()
+{
+    (void) qmlRegisterUncreatableType<VideoManager>("QGroundControl.VideoManager", 1, 0, "VideoManager", "Reference only");
+    (void) qmlRegisterUncreatableType<VideoReceiver>("QGroundControl", 1, 0, "VideoReceiver","Reference only");
+    #ifndef QGC_GST_STREAMING
+        (void) qmlRegisterType<GLVideoItemStub>("org.freedesktop.gstreamer.Qt6GLVideoItem", 1, 0, "GstGLQt6VideoItem");
+    #endif
 }
 
 void VideoManager::init()
@@ -116,22 +101,25 @@ void VideoManager::init()
     (void) connect(_videoSettings->tcpUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
     (void) connect(_videoSettings->aspectRatio(), &Fact::rawValueChanged, this, &VideoManager::aspectRatioChanged);
     (void) connect(_videoSettings->lowLatencyMode(), &Fact::rawValueChanged, this, &VideoManager::_lowLatencyModeChanged);
-    (void) connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged, this, &VideoManager::_setActiveVehicle);
+    (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &VideoManager::_setActiveVehicle);
 
     int index = 0;
+    const QStringList widgetTypes = {"videoContent", "thermalVideo"};
+    Q_ASSERT(widgetTypes.length() <= _videoReceiverData.length());
     for (VideoReceiverData &videoReceiver : _videoReceiverData) {
         videoReceiver.index = index++;
-        videoReceiver.receiver = qgcApp()->toolbox()->corePlugin()->createVideoReceiver(this);
+        videoReceiver.receiver = QGCCorePlugin::instance()->createVideoReceiver(this);
         if (!videoReceiver.receiver) {
             continue;
         }
+        videoReceiver.name = widgetTypes[videoReceiver.index];
 
         (void) connect(videoReceiver.receiver, &VideoReceiver::onStartComplete, this, [this, &videoReceiver](VideoReceiver::STATUS status) {
             qCDebug(VideoManagerLog) << "Video" << videoReceiver.index << "Start complete, status:" << status;
             switch (status) {
             case VideoReceiver::STATUS_OK:
                 videoReceiver.started = true;
-                if (videoReceiver.sink != nullptr) {
+                if (videoReceiver.sink) {
                     videoReceiver.receiver->startDecoding(videoReceiver.sink);
                 }
                 break;
@@ -197,7 +185,7 @@ void VideoManager::init()
             }
         });
 
-        (void) connect(videoReceiver.receiver, &VideoReceiver::onTakeScreenshotComplete, this, [this, &videoReceiver](VideoReceiver::STATUS status) {
+        (void) connect(videoReceiver.receiver, &VideoReceiver::onTakeScreenshotComplete, this, [&videoReceiver](VideoReceiver::STATUS status) {
             if (status == VideoReceiver::STATUS_OK) {
                 qCDebug(VideoManagerLog) << "Video" << videoReceiver.index << "screenshot taken";
             } else {
@@ -225,14 +213,14 @@ void VideoManager::startVideo()
         return;
     }
 
-    for (VideoReceiverData &videoReceiver : _videoReceiverData) {
+    for (const VideoReceiverData &videoReceiver : _videoReceiverData) {
         _startReceiver(videoReceiver.index);
     }
 }
 
 void VideoManager::stopVideo()
 {
-    for (VideoReceiverData &videoReceiver : _videoReceiverData) {
+    for (const VideoReceiverData &videoReceiver : _videoReceiverData) {
         _stopReceiver(videoReceiver.index);
     }
 }
@@ -240,14 +228,14 @@ void VideoManager::stopVideo()
 void VideoManager::startRecording(const QString &videoFile)
 {
     const VideoReceiver::FILE_FORMAT fileFormat = static_cast<VideoReceiver::FILE_FORMAT>(_videoSettings->recordingFormat()->rawValue().toInt());
-    if (fileFormat < VideoReceiver::FILE_FORMAT_MIN || fileFormat >= VideoReceiver::FILE_FORMAT_MAX) {
+    if ((fileFormat < VideoReceiver::FILE_FORMAT_MIN) || (fileFormat >= VideoReceiver::FILE_FORMAT_MAX)) {
         qgcApp()->showAppMessage(tr("Invalid video format defined."));
         return;
     }
 
     _cleanupOldVideos();
 
-    const QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
+    const QString savePath = SettingsManager::instance()->appSettings()->videoSavePath();
     if (savePath.isEmpty()) {
         qgcApp()->showAppMessage(tr("Unabled to record video. Video save path must be specified in Settings."));
         return;
@@ -281,7 +269,7 @@ void VideoManager::stopRecording()
 void VideoManager::grabImage(const QString &imageFile)
 {
     if (imageFile.isEmpty()) {
-        _imageFile = qgcApp()->toolbox()->settingsManager()->appSettings()->photoSavePath();
+        _imageFile = SettingsManager::instance()->appSettings()->photoSavePath();
         _imageFile += "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz") + ".jpg";
     } else {
         _imageFile = imageFile;
@@ -387,7 +375,7 @@ bool VideoManager::isStreamSource() const
         VideoSettings::videoSourceHerelinkHotspot,
     };
     const QString videoSource = _videoSettings->videoSource()->rawValue().toString();
-    return videoSourceList.contains(videoSource) || autoStreamConfigured();
+    return (videoSourceList.contains(videoSource) || autoStreamConfigured());
 }
 
 bool VideoManager::isUvc() const
@@ -439,36 +427,38 @@ void VideoManager::setfullScreen(bool on)
 void VideoManager::_initVideo()
 {
     QQuickWindow *const root = qgcApp()->mainRootWindow();
-    if (root == nullptr) {
+    if (!root) {
         qCDebug(VideoManagerLog) << "mainRootWindow() failed. No root window";
         return;
     }
 
-    const QStringList widgetTypes = {"videoContent", "thermalVideo"};
     for (VideoReceiverData &videoReceiver : _videoReceiverData) {
-        QQuickItem* const widget = root->findChild<QQuickItem*>(widgetTypes.at(videoReceiver.index));
-        if ((widget != nullptr) && (videoReceiver.receiver != nullptr)) {
-            videoReceiver.sink = qgcApp()->toolbox()->corePlugin()->createVideoSink(this, widget);
-            if (videoReceiver.sink != nullptr) {
-                if (videoReceiver.started) {
-                    videoReceiver.receiver->startDecoding(videoReceiver.sink);
-                }
-            } else {
-                qCDebug(VideoManagerLog) << "createVideoSink() failed" << videoReceiver.index;
-            }
-        } else {
-            qCDebug(VideoManagerLog) << widgetTypes.at(videoReceiver.index) << "receiver disabled";
+        QQuickItem* const widget = root->findChild<QQuickItem*>(videoReceiver.name);
+        if (!widget || !videoReceiver.receiver) {
+            qCDebug(VideoManagerLog) << videoReceiver.name << "receiver disabled";
+            continue;
+        }
+
+        videoReceiver.sink = QGCCorePlugin::instance()->createVideoSink(this, widget);
+        if (!videoReceiver.sink) {
+            qCDebug(VideoManagerLog) << "createVideoSink() failed" << videoReceiver.index;
+            continue;
+        }
+
+        if (videoReceiver.started) {
+            qCDebug(VideoManagerLog) << videoReceiver.name << "receiver start decoding";
+            videoReceiver.receiver->startDecoding(videoReceiver.sink);
         }
     }
 }
 
 void VideoManager::_cleanupOldVideos()
 {
-    if (!qgcApp()->toolbox()->settingsManager()->videoSettings()->enableStorageLimit()->rawValue().toBool()) {
+    if (!SettingsManager::instance()->videoSettings()->enableStorageLimit()->rawValue().toBool()) {
         return;
     }
 
-    const QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
+    const QString savePath = SettingsManager::instance()->appSettings()->videoSavePath();
     QDir videoDir = QDir(savePath);
     videoDir.setFilter(QDir::Files | QDir::Readable | QDir::NoSymLinks | QDir::Writable);
     videoDir.setSorting(QDir::Time);
@@ -480,20 +470,22 @@ void VideoManager::_cleanupOldVideos()
 
     videoDir.setNameFilters(nameFilters);
     QFileInfoList vidList = videoDir.entryInfoList();
-    if (!vidList.isEmpty()) {
-        uint64_t total = 0;
-        for (int i = 0; i < vidList.size(); i++) {
-            total += vidList[i].size();
-        }
+    if (vidList.isEmpty()) {
+        return;
+    }
 
-        const uint64_t maxSize = qgcApp()->toolbox()->settingsManager()->videoSettings()->maxVideoSize()->rawValue().toUInt() * qPow(1024, 2);
-        while ((total >= maxSize) && !vidList.isEmpty()) {
-            total -= vidList.last().size();
-            qCDebug(VideoManagerLog) << "Removing old video file:" << vidList.last().filePath();
-            QFile file(vidList.last().filePath());
-            (void) file.remove();
-            vidList.removeLast();
-        }
+    uint64_t total = 0;
+    for (const QFileInfo &video : vidList) {
+        total += video.size();
+    }
+
+    const uint64_t maxSize = SettingsManager::instance()->videoSettings()->maxVideoSize()->rawValue().toUInt() * qPow(1024, 2);
+    while ((total >= maxSize) && !vidList.isEmpty()) {
+        total -= vidList.last().size();
+        qCDebug(VideoManagerLog) << "Removing old video file:" << vidList.last().filePath();
+        QFile file(vidList.last().filePath());
+        (void) file.remove();
+        vidList.removeLast();
     }
 }
 
@@ -528,7 +520,7 @@ bool VideoManager::_updateUVC()
     } else {
         const QString videoSource = _videoSettings->videoSource()->rawValue().toString();
         const QList<QCameraDevice> videoInputs = QMediaDevices::videoInputs();
-        for (const auto& cameraDevice: videoInputs) {
+        for (const QCameraDevice &cameraDevice: videoInputs) {
             if (cameraDevice.description() == videoSource) {
                 _uvcVideoSourceID = cameraDevice.description();
                 qCDebug(VideoManagerLog) << "Found USB source:" << _uvcVideoSourceID << " Name:" << videoSource;
@@ -541,7 +533,7 @@ bool VideoManager::_updateUVC()
         qCDebug(VideoManagerLog) << "UVC changed from [" << oldUvcVideoSrcID << "] to [" << _uvcVideoSourceID << "]";
         const QCameraPermission cameraPermission;
         if (qgcApp()->checkPermission(cameraPermission) == Qt::PermissionStatus::Undetermined) {
-            qgcApp()->requestPermission(cameraPermission, [this](const QPermission &permission) {
+            qgcApp()->requestPermission(cameraPermission, [](const QPermission &permission) {
                 if (permission.status() == Qt::PermissionStatus::Granted) {
                     qgcApp()->showRebootAppMessage(tr("Restart application for changes to take effect."));
                 }
@@ -574,27 +566,27 @@ bool VideoManager::_updateAutoStream(unsigned id)
         case VIDEO_STREAM_TYPE_RTSP:
             settingsChanged = _updateVideoUri(id, pInfo->uri());
             if (settingsChanged) {
-                qgcApp()->toolbox()->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceRTSP);
+                SettingsManager::instance()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceRTSP);
             }
             break;
         case VIDEO_STREAM_TYPE_TCP_MPEG:
             settingsChanged = _updateVideoUri(id, pInfo->uri());
             if (settingsChanged) {
-                qgcApp()->toolbox()->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceTCP);
+                SettingsManager::instance()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceTCP);
             }
             break;
         case VIDEO_STREAM_TYPE_RTPUDP: {
             const QString url = pInfo->uri().contains("udp://") ? pInfo->uri() : QStringLiteral("udp://0.0.0.0:%1").arg(pInfo->uri());
             settingsChanged = _updateVideoUri(id, url);
             if (settingsChanged) {
-                qgcApp()->toolbox()->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceUDPH264);
+                SettingsManager::instance()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceUDPH264);
             }
             break;
         }
         case VIDEO_STREAM_TYPE_MPEG_TS:
             settingsChanged = _updateVideoUri(id, QStringLiteral("mpegts://0.0.0.0:%1").arg(pInfo->uri()));
             if (settingsChanged) {
-                qgcApp()->toolbox()->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceMPEGTS);
+                SettingsManager::instance()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceMPEGTS);
             }
             break;
         default:
@@ -738,7 +730,7 @@ void VideoManager::_startReceiver(unsigned id)
         return;
     }
 
-    if (_videoReceiverData[id].receiver == nullptr) {
+    if (!_videoReceiverData[id].receiver) {
         qCDebug(VideoManagerLog) << "VideoReceiver is NULL" << id;
         return;
     }
@@ -752,7 +744,7 @@ void VideoManager::_startReceiver(unsigned id)
     const unsigned rtsptimeout = _videoSettings->rtspTimeout()->rawValue().toUInt();
     /* The gstreamer rtsp source will switch to tcp if udp is not available after 5 seconds.
        So we should allow for some negotiation time for rtsp */
-    const unsigned timeout = (source == VideoSettings::videoSourceRTSP ? rtsptimeout : 2);
+    const unsigned timeout = (source == VideoSettings::videoSourceRTSP ? rtsptimeout : 3);
 
     _videoReceiverData[id].receiver->start(_videoReceiverData[id].uri, timeout, _videoReceiverData[id].lowLatencyStreaming ? -1 : 0);
 }

@@ -26,6 +26,7 @@ target_link_libraries(Comms
         Qt6::Test
         MockLink
         PositionManager
+        QGC
         Settings
         Vehicle
     PUBLIC
@@ -33,7 +34,6 @@ target_link_libraries(Comms
         Qt6::Network
         AirLink
         MAVLink
-        QGC
         QmlControls
         Utilities
 )
@@ -109,6 +109,8 @@ if(QGC_ZEROCONF_ENABLED)
     )
     FetchContent_MakeAvailable(qmdnsengine)
 
-    target_link_libraries(Comms PRIVATE qmdnsengine)
+    target_link_libraries(Comms PUBLIC qmdnsengine)
     target_compile_definitions(Comms PUBLIC QGC_ZEROCONF_ENABLED)
 endif()
+
+# target_compile_definitions(Comms PUBLIC QABSTRACTSOCKET_DEBUG)

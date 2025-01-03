@@ -9,39 +9,56 @@
 
 #pragma once
 
-#include <QtCore/QString>
-#include <QtCore/QList>
+#include <QtBluetooth/QBluetoothAddress>
+#include <QtBluetooth/QBluetoothDeviceDiscoveryAgent>
 #include <QtBluetooth/QBluetoothDeviceInfo>
+#ifdef Q_OS_IOS
+#include <QtBluetooth/QBluetoothServiceDiscoveryAgent>
+#endif
+#include <QtBluetooth/QBluetoothServiceInfo>
 #include <QtBluetooth/QBluetoothSocket>
+#include <QtBluetooth/QBluetoothUuid>
+#include <QtCore/QList>
+#include <QtCore/QLoggingCategory>
+#include <QtCore/QString>
 
 #include "LinkConfiguration.h"
 #include "LinkInterface.h"
 
-#ifdef Q_OS_IOS
-    class QBluetoothServiceInfo;
-    class QBluetoothServiceDiscoveryAgent;
-#endif
-class QBluetoothDeviceDiscoveryAgent;
+class QThread;
 
-class BluetoothData
+Q_DECLARE_LOGGING_CATEGORY(BluetoothLinkLog)
+
+/*===========================================================================*/
+
+struct BluetoothData
 {
-public:
-    BluetoothData()
-    {
-    }
-    BluetoothData(const BluetoothData& other)
+    BluetoothData() = default;
+#ifdef Q_OS_IOS
+    BluetoothData(const QString &name_, QBluetoothUuid uuid_)
+        : uuid(uuid_)
+#else
+    BluetoothData(const QString &name_, QBluetoothAddress address_)
+        : address(address_)
+#endif
+        , name(name_)
+    {}
+
+    BluetoothData(const BluetoothData &other)
     {
         *this = other;
     }
-    bool operator==(const BluetoothData& other) const
+
+    bool operator==(const BluetoothData &other) const
     {
 #ifdef Q_OS_IOS
-        return uuid == other.uuid && name == other.name;
+        return ((name == other.name) && (uuid == other.uuid));
 #else
-        return name == other.name && address == other.address;
+        return ((name == other.name) && (address == other.address));
 #endif
     }
-    BluetoothData& operator=(const BluetoothData& other)
+
+    BluetoothData &operator=(const BluetoothData &other)
     {
         name = other.name;
 #ifdef Q_OS_IOS
@@ -51,108 +68,141 @@ public:
 #endif
         return *this;
     }
+
     QString name;
 #ifdef Q_OS_IOS
     QBluetoothUuid uuid;
 #else
-    QString address;
+    QBluetoothAddress address;
 #endif
 };
+
+/*===========================================================================*/
 
 class BluetoothConfiguration : public LinkConfiguration
 {
     Q_OBJECT
 
+    Q_PROPERTY(QString     deviceName READ deviceName NOTIFY deviceChanged)
+    Q_PROPERTY(QString     address    READ address    NOTIFY deviceChanged)
+    Q_PROPERTY(QStringList nameList   READ nameList   NOTIFY nameListChanged)
+    Q_PROPERTY(bool        scanning   READ scanning   NOTIFY scanningChanged)
+
 public:
+    explicit BluetoothConfiguration(const QString &name, QObject *parent = nullptr);
+    explicit BluetoothConfiguration(const BluetoothConfiguration *copy, QObject *parent = nullptr);
+    virtual ~BluetoothConfiguration();
 
-    BluetoothConfiguration(const QString& name);
-    BluetoothConfiguration(const BluetoothConfiguration* source);
-    ~BluetoothConfiguration();
+    Q_INVOKABLE void startScan();
+    Q_INVOKABLE void stopScan() const;
+    Q_INVOKABLE void setDevice(const QString &name);
 
-    Q_PROPERTY(QString      devName     READ devName    WRITE setDevName  NOTIFY devNameChanged)
-    Q_PROPERTY(QString      address     READ address                      NOTIFY addressChanged)
-    Q_PROPERTY(QStringList  nameList    READ nameList                     NOTIFY nameListChanged)
-    Q_PROPERTY(bool         scanning    READ scanning                     NOTIFY scanningChanged)
+    LinkType type() const override { return LinkConfiguration::TypeBluetooth; }
+    void copyFrom(const LinkConfiguration *source) override;
+    void loadSettings(QSettings &settings, const QString &root) override;
+    void saveSettings(QSettings &settings, const QString &root) override;
+    QString settingsURL() override { return QStringLiteral("BluetoothSettings.qml"); }
+    QString settingsTitle() override;
 
-    Q_INVOKABLE void startScan  (void);
-    Q_INVOKABLE void stopScan   (void);
-
-    QString         devName     (void) const                 { return _device.name; }
-    QString         address     (void) const;
-    QStringList     nameList    (void) const                  { return _nameList; }
-    bool            scanning    (void) const                 { return _deviceDiscover != nullptr; }
-    BluetoothData   device      (void) const                  { return _device; }
-    void            setDevName  (const QString& name);
-
-    /// LinkConfiguration overrides
-    LinkType    type            (void) const override                                         { return LinkConfiguration::TypeBluetooth; }
-    void        copyFrom        (const LinkConfiguration* source) override;
-    void        loadSettings    (QSettings& settings, const QString& root) override;
-    void        saveSettings    (QSettings& settings, const QString& root) override;
-    QString     settingsURL     (void) override                                         { return "BluetoothSettings.qml"; }
-    QString     settingsTitle   (void) override;
-
-public slots:
-    void deviceDiscovered   (QBluetoothDeviceInfo info);
-    void doneScanning       (void);
+    BluetoothData device() const { return _device; }
+    QString deviceName() const { return _device.name; }
+#ifdef Q_OS_IOS
+    QString address() const { return QString(); };
+#else
+    QString address() const { return _device.address.toString(); };
+#endif
+    QStringList nameList() const { return _nameList; }
+    bool scanning() const;
 
 signals:
-    void newDevice      (QBluetoothDeviceInfo info);
-    void devNameChanged (void);
-    void addressChanged (void);
-    void nameListChanged(void);
-    void scanningChanged(void);
+    void deviceChanged();
+    void nameListChanged();
+    void scanningChanged();
+    void errorOccurred(const QString &errorString);
+
+private slots:
+    void _deviceDiscovered(const QBluetoothDeviceInfo &info);
+    void _onSocketErrorOccurred(QBluetoothDeviceDiscoveryAgent::Error error);
 
 private:
-    QBluetoothDeviceDiscoveryAgent* _deviceDiscover = nullptr;
-    BluetoothData                   _device;
-    QStringList                     _nameList;
-    QList<BluetoothData>            _deviceList;
+    void _initDeviceDiscoveryAgent();
+
+    QList<BluetoothData> _deviceList;
+    BluetoothData _device{};
+    QStringList _nameList;
+    QBluetoothDeviceDiscoveryAgent *_deviceDiscoveryAgent = nullptr;
 };
+
+/*===========================================================================*/
+
+class BluetoothWorker : public QObject
+{
+    Q_OBJECT
+
+public:
+    explicit BluetoothWorker(const BluetoothConfiguration *config, QObject *parent = nullptr);
+    ~BluetoothWorker();
+
+    bool isConnected() const;
+
+signals:
+    void connected();
+    void disconnected();
+    void errorOccurred(const QString &errorString);
+    void dataReceived(const QByteArray &data);
+    void dataSent(const QByteArray &data);
+
+public slots:
+    void setupSocket();
+    void connectLink();
+    void disconnectLink();
+    void writeData(const QByteArray &data);
+
+private slots:
+    void _onSocketConnected();
+    void _onSocketDisconnected();
+    void _onSocketReadyRead();
+    void _onSocketBytesWritten(qint64 bytes);
+    void _onSocketErrorOccurred(QBluetoothSocket::SocketError socketError);
+#ifdef Q_OS_IOS
+    void _onServiceErrorOccurred(QBluetoothServiceDiscoveryAgent::Error error);
+    void _serviceDiscovered(const QBluetoothServiceInfo &info);
+    void _discoveryFinished();
+#endif
+
+private:
+    const BluetoothConfiguration *_config = nullptr;
+    QBluetoothSocket *_socket = nullptr;
+#ifdef Q_OS_IOS
+    QBluetoothServiceDiscoveryAgent *_serviceDiscoveryAgent = nullptr;
+#endif
+};
+
+/*===========================================================================*/
 
 class BluetoothLink : public LinkInterface
 {
     Q_OBJECT
 
 public:
-    BluetoothLink(SharedLinkConfigurationPtr& config);
+    explicit BluetoothLink(SharedLinkConfigurationPtr &config, QObject *parent = nullptr);
     virtual ~BluetoothLink();
 
-    // Overrides from QThread
-    void run(void) override;
-
-    // LinkConfiguration overrides
-    bool isConnected(void) const override;
-    void disconnect (void) override;
-
-public slots:
-    void    readBytes           (void);
-    void    deviceConnected     (void);
-    void    deviceDisconnected  (void);
-    void    deviceError         (QBluetoothSocket::SocketError error);
-#ifdef Q_OS_IOS
-    void    serviceDiscovered   (const QBluetoothServiceInfo &info);
-    void    discoveryFinished   (void);
-#endif
+    bool isConnected() const override;
+    void disconnect() override;
 
 private slots:
-    // LinkInterface overrides
     void _writeBytes(const QByteArray &bytes) override;
+    void _onConnected();
+    void _onDisconnected();
+    void _onErrorOccurred(const QString &errorString);
+    void _onDataReceived(const QByteArray &data);
+    void _onDataSent(const QByteArray &data);
 
 private:
+    bool _connect() override;
 
-    // LinkInterface overrides
-    bool _connect(void) override;
-
-    bool _hardwareConnect   (void);
-    void _createSocket      (void);
-
-    BluetoothConfiguration*             _bluetoothConfig;
-    QBluetoothSocket*                   _targetSocket    = nullptr;
-#ifdef Q_OS_IOS
-    QBluetoothServiceDiscoveryAgent*    _discoveryAgent = nullptr;
-#endif
-    bool                                _shutDown       = false;
-    bool                                _connectState   = false;
+    const BluetoothConfiguration *_bluetoothConfig = nullptr;
+    BluetoothWorker *_worker = nullptr;
+    QThread *_workerThread = nullptr;
 };
-

@@ -18,6 +18,7 @@
 #include "QGCCameraIO.h"
 #include "QGCApplication.h"
 #include "SettingsManager.h"
+#include "AppSettings.h"
 #include "VideoManager.h"
 #include "QGCCameraManager.h"
 #include "FTPManager.h"
@@ -130,7 +131,7 @@ VehicleCameraControl::VehicleCameraControl(const mavlink_camera_information_t *i
     _modelName = QString(reinterpret_cast<const char*>(info->model_name));
     int ver = static_cast<int>(_info.cam_definition_version);
     _cacheFile = QString::asprintf("%s/%s_%s_%03d.xml",
-        qgcApp()->toolbox()->settingsManager()->appSettings()->parameterSavePath().toStdString().c_str(),
+        SettingsManager::instance()->appSettings()->parameterSavePath().toStdString().c_str(),
         _vendor.toStdString().c_str(),
         _modelName.toStdString().c_str(),
         ver);
@@ -1560,7 +1561,7 @@ VehicleCameraControl::handleCaptureStatus(const mavlink_camera_capture_status_t&
     //-- Time Lapse
     if(photoCaptureStatus() == PHOTO_CAPTURE_INTERVAL_IDLE || photoCaptureStatus() == PHOTO_CAPTURE_INTERVAL_IN_PROGRESS) {
         //-- Capture local image as well
-        QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
+        QString photoPath = SettingsManager::instance()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
         QDir().mkpath(photoPath);
         photoPath += + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz") + ".jpg";
         VideoManager::instance()->grabImage(photoPath);
@@ -2038,7 +2039,7 @@ VehicleCameraControl::_handleDefinitionFile(const QString &url)
             ext.toStdString().c_str());
         connect(_vehicle->ftpManager(), &FTPManager::downloadComplete, this, &VehicleCameraControl::_ftpDownloadComplete);
         _vehicle->ftpManager()->download(_compID, url,
-            qgcApp()->toolbox()->settingsManager()->appSettings()->parameterSavePath().toStdString().c_str(),
+            SettingsManager::instance()->appSettings()->parameterSavePath().toStdString().c_str(),
             fileName);
         return;
     }
@@ -2157,7 +2158,7 @@ VehicleCameraControl::_dataReady(QByteArray data)
     } else {
         qCDebug(CameraControlLog) << "No camera definition received, trying to search on our own...";
         QFile definitionFile;
-        if(qgcApp()->toolbox()->corePlugin()->getOfflineCameraDefinitionFile(_modelName, definitionFile)) {
+        if(QGCCorePlugin::instance()->getOfflineCameraDefinitionFile(_modelName, definitionFile)) {
             qCDebug(CameraControlLog) << "Found offline definition file for: " << _modelName << ", loading: " << definitionFile.fileName();
             if (definitionFile.open(QIODevice::ReadOnly)) {
                 QByteArray newData = definitionFile.readAll();

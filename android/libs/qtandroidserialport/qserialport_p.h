@@ -33,10 +33,14 @@ constexpr qint64 DEFAULT_READ_BUFFER_SIZE = MAX_READ_SIZE;
 constexpr qint64 DEFAULT_WRITE_BUFFER_SIZE = 16 * 1024;
 constexpr int DEFAULT_WRITE_TIMEOUT = 0;
 constexpr int DEFAULT_READ_TIMEOUT = 0;
+constexpr int EMIT_THRESHOLD = 64;
+constexpr int EMIT_INTERVAL_MS = 10;
 
 #ifndef QSERIALPORT_BUFFERSIZE
 #define QSERIALPORT_BUFFERSIZE DEFAULT_WRITE_BUFFER_SIZE
 #endif
+
+class QTimer;
 
 Q_DECLARE_LOGGING_CATEGORY(AndroidSerialPortLog)
 
@@ -132,7 +136,7 @@ private:
     qint64 _writeToPort(const char *data, qint64 maxSize, int timeout = DEFAULT_WRITE_TIMEOUT, bool async = false);
     bool _stopAsyncRead();
     bool _setParameters(qint32 baudRate, QSerialPort::DataBits dataBits, QSerialPort::StopBits stopBits, QSerialPort::Parity parity);
-    bool _writeDataOneShot(int msecs);
+    bool _writeDataOneShot(int msecs = DEFAULT_WRITE_TIMEOUT);
 
     static qint32 _settingFromBaudRate(qint32 baudRate);
     static int _stopBitsToAndroidStopBits(QSerialPort::StopBits stopBits);
@@ -140,7 +144,12 @@ private:
     static int _parityToAndroidParity(QSerialPort::Parity parity);
     static int _flowControlToAndroidFlowControl(QSerialPort::FlowControl flowControl);
 
-    int m_deviceId = INVALID_DEVICE_ID;
+    int _deviceId = INVALID_DEVICE_ID;
+    // QString _serialNumber;
+
+    QTimer *_readTimer = nullptr;
+    QMutex _readMutex;
+    QWaitCondition _readWaitCondition;
 };
 
 QT_END_NAMESPACE

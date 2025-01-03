@@ -39,6 +39,7 @@
 #include "VehicleHygrometerFactGroup.h"
 #include "VehicleLocalPositionFactGroup.h"
 #include "VehicleLocalPositionSetpointFactGroup.h"
+#include "VehicleRPMFactGroup.h"
 #include "VehicleSetpointFactGroup.h"
 #include "VehicleTemperatureFactGroup.h"
 #include "VehicleVibrationFactGroup.h"
@@ -58,7 +59,6 @@ class StatusTextHandler;
 class InitialConnectStateMachine;
 class Joystick;
 class LinkInterface;
-class LinkManager;
 class MAVLinkLogManager;
 class MissionManager;
 class ParameterManager;
@@ -68,14 +68,12 @@ class RemoteIDManager;
 class RequestMessageTest;
 class SendMavCommandWithHandlerTest;
 class SendMavCommandWithSignallingTest;
-class SettingsManager;
 class StandardModes;
 class TerrainAtCoordinateQuery;
 class TerrainProtocolHandler;
 class TrajectoryPoints;
 class VehicleBatteryFactGroup;
 class VehicleObjectAvoidance;
-class QGCToolbox;
 class GimbalController;
 #ifdef QGC_UTM_ADAPTER
 class UTMSPVehicle;
@@ -604,6 +602,7 @@ public:
     FactGroup* hygrometerFactGroup          () { return &_hygrometerFactGroup; }
     FactGroup* generatorFactGroup           () { return &_generatorFactGroup; }
     FactGroup* efiFactGroup                 () { return &_efiFactGroup; }
+    FactGroup* rpmFactGroup                 () { return &_rpmFactGroup; }
     QmlObjectListModel* batteries           () { return &_batteryFactGroupListModel; }
 
     MissionManager*                 missionManager      () { return _missionManager; }
@@ -993,8 +992,6 @@ private:
     QObject*            _firmwarePluginInstanceData = nullptr;
     AutoPilotPlugin*    _autopilotPlugin = nullptr;
     bool                _soloFirmware = false;
-    QGCToolbox*         _toolbox = nullptr;
-    SettingsManager*    _settingsManager = nullptr;
 
     QTimer              _csvLogTimer;
     QFile               _csvLogFile;
@@ -1051,7 +1048,6 @@ private:
 
     bool                _initialPlanRequestComplete = false;
 
-    LinkManager*                    _linkManager                    = nullptr;
     ParameterManager*               _parameterManager               = nullptr;
     ComponentInformationManager*    _componentInformationManager    = nullptr;
     VehicleObjectAvoidance*         _objectAvoidance                = nullptr;
@@ -1087,8 +1083,6 @@ private:
     TrajectoryPoints*               _trajectoryPoints = nullptr;
     QmlObjectListModel              _cameraTriggerPoints;
     //QMap<QString, ADSBVehicle*>     _trafficVehicleMap;
-
-    // Toolbox references
 
     bool _allLinksRemovedSent = false; ///< true: allLinkRemoved signal already sent one time
 
@@ -1237,6 +1231,7 @@ private:
     const QString _hygrometerFactGroupName =         QStringLiteral("hygrometer");
     const QString _generatorFactGroupName =          QStringLiteral("generator");
     const QString _efiFactGroupName =                QStringLiteral("efi");
+    const QString _rpmFactGroupName =                QStringLiteral("rpm");
 
     VehicleFactGroup*               _vehicleFactGroup;
     VehicleGPSFactGroup             _gpsFactGroup;
@@ -1254,6 +1249,7 @@ private:
     VehicleHygrometerFactGroup      _hygrometerFactGroup;
     VehicleGeneratorFactGroup       _generatorFactGroup;
     VehicleEFIFactGroup             _efiFactGroup;
+    VehicleRPMFactGroup             _rpmFactGroup;
     TerrainFactGroup                _terrainFactGroup;
     QmlObjectListModel              _batteryFactGroupListModel;
 

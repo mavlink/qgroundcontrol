@@ -9,8 +9,6 @@
 
 #include "InstrumentValueData.h"
 #include "FactValueGrid.h"
-#include "QGCApplication.h"
-#include "QGCCorePlugin.h"
 #include "QGC.h"
 #include "QmlObjectListModel.h"
 #include "MultiVehicleManager.h"
@@ -29,9 +27,8 @@ InstrumentValueData::InstrumentValueData(FactValueGrid* factValueGrid, QObject* 
     : QObject       (parent)
     , _factValueGrid(factValueGrid)
 {
-    MultiVehicleManager* multiVehicleManager = qgcApp()->toolbox()->multiVehicleManager();
-    connect(multiVehicleManager, &MultiVehicleManager::activeVehicleChanged, this, &InstrumentValueData::_activeVehicleChanged);
-    _activeVehicleChanged(multiVehicleManager->activeVehicle());
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &InstrumentValueData::_activeVehicleChanged);
+    _activeVehicleChanged(MultiVehicleManager::instance()->activeVehicle());
 
     connect(this, &InstrumentValueData::rangeTypeChanged,       this, &InstrumentValueData::_resetRangeInfo);
     connect(this, &InstrumentValueData::rangeTypeChanged,       this, &InstrumentValueData::_updateRanges);
@@ -48,7 +45,7 @@ void InstrumentValueData::_activeVehicleChanged(Vehicle* activeVehicle)
     }
 
     if (!activeVehicle) {
-        activeVehicle = qgcApp()->toolbox()->multiVehicleManager()->offlineEditingVehicle();
+        activeVehicle = MultiVehicleManager::instance()->offlineEditingVehicle();
     }
 
     _activeVehicle = activeVehicle;

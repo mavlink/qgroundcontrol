@@ -10886,13 +10886,6 @@
         <value code="1">Land mode (descend)</value>
       </values>
     </parameter>
-    <parameter name="COM_POS_FS_DELAY" default="1" type="INT32">
-      <short_desc>Loss of position failsafe activation delay</short_desc>
-      <long_desc>This sets number of seconds that the position checks need to be failed before the failsafe will activate. The default value has been optimised for rotary wing applications. For fixed wing applications, a larger value between 5 and 10 should be used.</long_desc>
-      <min>1</min>
-      <max>100</max>
-      <unit>s</unit>
-    </parameter>
     <parameter name="COM_POS_FS_EPH" default="5." type="FLOAT">
       <short_desc>Horizontal position error threshold</short_desc>
       <long_desc>This is the horizontal position error (EPH) threshold that will trigger a failsafe. The default is appropriate for a multicopter. Can be increased for a fixed-wing. If the previous position error was below this threshold, there is an additional factor of 2.5 applied (threshold for invalidation 2.5 times the one for validation). Set to -1 to disable.</long_desc>
@@ -11774,7 +11767,7 @@
     </parameter>
     <parameter name="EKF2_HGT_REF" default="1" type="INT32">
       <short_desc>Determines the reference source of height data used by the EKF</short_desc>
-      <long_desc>When multiple height sources are enabled at the same time, the height estimate will always converge towards the reference height source selected by this parameter. The range sensor and vision options should only be used when for operation over a flat surface as the local NED origin will move up and down with ground level.</long_desc>
+      <long_desc>When multiple height sources are enabled at the same time, the height estimate will always converge towards the reference height source selected by this parameter. The range sensor and vision options should only be used when for operation over a flat surface as the local NED origin will move up and down with ground level. If GPS is set as reference but altitude fusion is disabled in EKF2_GPS_CTRL, the GPS altitude is still used to initiaize the bias of the other height sensors.</long_desc>
       <reboot_required>True</reboot_required>
       <values>
         <value code="0">Barometric pressure</value>
@@ -12578,7 +12571,7 @@
     </parameter>
     <parameter name="FW_LND_USETER" default="1" type="INT32">
       <short_desc>Use terrain estimation during landing</short_desc>
-      <long_desc>This is critical for detecting when to flare, and should be enabled if possible. NOTE: terrain estimate is currently solely derived from a distance sensor. If enabled and no measurement is found within a given timeout, the landing waypoint altitude will be used OR the landing will be aborted, depending on the criteria set in FW_LND_ABORT. If disabled, FW_LND_ABORT terrain based criteria are ignored.</long_desc>
+      <long_desc>This is critical for detecting when to flare, and should be enabled if possible. If enabled and no measurement is found within a given timeout, the landing waypoint altitude will be used OR the landing will be aborted, depending on the criteria set in FW_LND_ABORT. If disabled, FW_LND_ABORT terrain based criteria are ignored.</long_desc>
       <min>0</min>
       <max>2</max>
       <values>
@@ -12641,7 +12634,7 @@
   <group name="FW NPFG Control">
     <parameter name="NPFG_DAMPING" default="0.7" type="FLOAT">
       <short_desc>NPFG damping ratio</short_desc>
-      <long_desc>Damping ratio of the NPFG control law.</long_desc>
+      <long_desc>Damping ratio of NPFG control law.</long_desc>
       <min>0.10</min>
       <max>1.00</max>
       <decimal>2</decimal>
@@ -12661,11 +12654,11 @@
     </parameter>
     <parameter name="NPFG_LB_PERIOD" default="1" type="INT32" boolean="true">
       <short_desc>Enable automatic lower bound on the NPFG period</short_desc>
-      <long_desc>Avoids limit cycling from a too aggressively tuned period/damping combination. If set to false, also disables the upper bound NPFG_PERIOD_UB.</long_desc>
+      <long_desc>Avoids limit cycling from a too aggressively tuned period/damping combination. If false, also disables upper bound NPFG_PERIOD_UB.</long_desc>
     </parameter>
     <parameter name="NPFG_PERIOD" default="10.0" type="FLOAT">
       <short_desc>NPFG period</short_desc>
-      <long_desc>Period of the NPFG control law.</long_desc>
+      <long_desc>Period of NPFG control law.</long_desc>
       <min>1.0</min>
       <max>100.0</max>
       <unit>s</unit>
@@ -12712,7 +12705,7 @@
   <group name="FW Path Control">
     <parameter name="FW_PN_R_SLEW_MAX" default="90.0" type="FLOAT">
       <short_desc>Path navigation roll slew rate limit</short_desc>
-      <long_desc>The maximum change in roll angle setpoint per second. This limit is applied in all Auto modes, plus manual Position and Altitude modes.</long_desc>
+      <long_desc>Maximum change in roll angle setpoint per second. Applied in all Auto modes, plus manual Position &amp; Altitude modes.</long_desc>
       <min>0</min>
       <unit>deg/s</unit>
       <decimal>0</decimal>
@@ -13240,7 +13233,6 @@
     </parameter>
     <parameter name="FW_T_SINK_MAX" default="5.0" type="FLOAT">
       <short_desc>Maximum descent rate</short_desc>
-      <long_desc>This sets the maximum descent rate that the controller will use.</long_desc>
       <min>1.0</min>
       <max>15.0</max>
       <unit>m/s</unit>
@@ -13257,8 +13249,8 @@
       <increment>0.01</increment>
     </parameter>
     <parameter name="FW_T_SPDWEIGHT" default="1.0" type="FLOAT">
-      <short_desc>Speed &lt;--&gt; Altitude priority</short_desc>
-      <long_desc>Adjusts the amount of weighting that the pitch control applies to speed vs height errors. Setting it to 0.0 will cause the pitch control to control height and ignore speed errors. Setting it to 2.0 will cause the pitch control loop to control speed and ignore height errors. The default value of 1.0 allows the pitch control to simultaneously control height and speed. Set to 2 for gliders.</long_desc>
+      <short_desc>Speed &lt;--&gt; Altitude weight</short_desc>
+      <long_desc>Adjusts the amount of weighting that the pitch control applies to speed vs height errors. 0 -&gt; control height only 2 -&gt; control speed only (gliders)</long_desc>
       <min>0.0</min>
       <max>2.0</max>
       <decimal>1</decimal>
@@ -13323,7 +13315,7 @@
     </parameter>
     <parameter name="FW_T_THR_LOW_HGT" default="-1." type="FLOAT">
       <short_desc>Low-height threshold for tighter altitude tracking</short_desc>
-      <long_desc>Defines the height (distance to bottom) threshold below which tighter altitude tracking gets enabled (see FW_LND_THRTC_SC). Below this height, TECS smoothly (1 sec / sec) transitions the altitude tracking time constant from FW_T_ALT_TC to FW_LND_THRTC_SC*FW_T_ALT_TC. If equal to -1, low-height traking is disabled.</long_desc>
+      <long_desc>Height above ground threshold below which tighter altitude tracking gets enabled (see FW_LND_THRTC_SC). Below this height, TECS smoothly (1 sec / sec) transitions the altitude tracking time constant from FW_T_ALT_TC to FW_LND_THRTC_SC*FW_T_ALT_TC. -1 to disable.</long_desc>
       <min>-1</min>
       <unit>m</unit>
       <decimal>0</decimal>
@@ -16643,6 +16635,13 @@
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
+    <parameter name="MIS_COMMAND_TOUT" default="0." type="FLOAT">
+      <short_desc>Timeout to allow the payload to execute the mission command</short_desc>
+      <long_desc>Ensure: gripper: NAV_CMD_DO_GRIPPER has released before continuing mission. winch: CMD_DO_WINCH has delivered before continuing mission. gimbal: CMD_DO_GIMBAL_MANAGER_PITCHYAW has reached the commanded orientation before beginning to take pictures.</long_desc>
+      <min>0</min>
+      <unit>s</unit>
+      <decimal>1</decimal>
+    </parameter>
     <parameter name="MIS_DIST_1WP" default="10000" type="FLOAT">
       <short_desc>Maximal horizontal distance from Home to first waypoint</short_desc>
       <long_desc>There will be a warning message if the current waypoint is more distant than MIS_DIST_1WP from Home. Has no effect on mission validity. Set a value of zero or less to disable.</long_desc>
@@ -16667,13 +16666,6 @@
         <value code="0">Disable</value>
         <value code="1">Enable</value>
       </values>
-    </parameter>
-    <parameter name="MIS_PD_TO" default="5.0" type="FLOAT">
-      <short_desc>Timeout for a successful payload deployment acknowledgement</short_desc>
-      <min>0</min>
-      <unit>s</unit>
-      <decimal>1</decimal>
-      <increment>1</increment>
     </parameter>
     <parameter name="MIS_TAKEOFF_ALT" default="2.5" type="FLOAT">
       <short_desc>Default take-off altitude</short_desc>
@@ -20015,11 +20007,11 @@
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter name="RD_MISS_SPD_DEF" default="1" type="FLOAT">
-      <short_desc>Default forward speed for the rover during auto modes</short_desc>
-      <min>0</min>
+    <parameter name="RD_MISS_SPD_GAIN" default="1" type="FLOAT">
+      <short_desc>Tuning parameter for the speed reduction during waypoint transition</short_desc>
+      <long_desc>The waypoint transition speed is calculated as: Transition_speed = Maximum_speed * (1 - normalized_transition_angle * RM_MISS_VEL_GAIN) The normalized transition angle is the angle between the line segment from prev-curr WP and curr-next WP interpolated from [0, 180] -&gt; [0, 1]. Higher value -&gt; More speed reduction during waypoint transitions.</long_desc>
+      <min>0.05</min>
       <max>100</max>
-      <unit>m/s</unit>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
@@ -20093,18 +20085,19 @@
     </parameter>
   </group>
   <group name="Rover Mecanum">
-    <parameter name="RM_MAN_YAW_SCALE" default="1" type="FLOAT">
-      <short_desc>Manual yaw rate scale</short_desc>
-      <long_desc>In Manual mode the setpoint for the yaw rate received from the control stick is scaled by this value.</long_desc>
-      <min>0.01</min>
-      <max>1</max>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
     <parameter name="RM_MAX_ACCEL" default="0.5" type="FLOAT">
       <short_desc>Maximum acceleration</short_desc>
       <long_desc>Maximum acceleration is used to limit the acceleration of the rover</long_desc>
       <min>0</min>
+      <max>100</max>
+      <unit>m/s^2</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="RM_MAX_DECEL" default="-1" type="FLOAT">
+      <short_desc>Maximum deceleration</short_desc>
+      <long_desc>Maximum decelaration is used to limit the deceleration of the rover. Set to -1 to disable, causing the rover to decelerate as fast as possible. Caution: Disabling the deceleration limit also disables the slow down effect in auto modes.</long_desc>
+      <min>-1</min>
       <max>100</max>
       <unit>m/s^2</unit>
       <decimal>2</decimal>
@@ -20146,20 +20139,21 @@
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
+    <parameter name="RM_MAX_YAW_ACCEL" default="-1" type="FLOAT">
+      <short_desc>Maximum allowed yaw acceleration for the rover</short_desc>
+      <long_desc>This parameter is used to cap desired yaw acceleration. This is used to adjust incoming yaw rate setpoints to a feasible yaw rate setpoint based on the physical limitation on how fast the yaw rate can change. This leads to a smooth setpoint trajectory for the closed loop yaw rate controller to track. Set to -1 to disable.</long_desc>
+      <min>-1</min>
+      <max>1000</max>
+      <unit>deg/s^2</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
     <parameter name="RM_MAX_YAW_RATE" default="90" type="FLOAT">
       <short_desc>Maximum allowed yaw rate for the rover</short_desc>
       <long_desc>This parameter is used to cap desired yaw rates and map controller inputs to desired yaw rates in acro mode.</long_desc>
       <min>0.01</min>
       <max>1000</max>
       <unit>deg/s</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="RM_MISS_SPD_DEF" default="1" type="FLOAT">
-      <short_desc>Default rover speed during a mission</short_desc>
-      <min>0</min>
-      <max>100</max>
-      <unit>m/s</unit>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
@@ -22476,6 +22470,16 @@
       <short_desc>Analog Devices ADIS16507 IMU (external SPI)</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter name="SENS_EN_AGPSIM" default="0" type="INT32">
+      <short_desc>Simulate Aux Global Position (AGP)</short_desc>
+      <min>0</min>
+      <max>1</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Enabled</value>
+      </values>
+    </parameter>
     <parameter name="SENS_EN_ARSPDSIM" default="0" type="INT32">
       <short_desc>Enable simulated airspeed sensor instance</short_desc>
       <min>0</min>
@@ -23438,16 +23442,16 @@
         <value code="401">EXT2</value>
       </values>
     </parameter>
-    <parameter name="SF45_ORIENT_CFG" default="0" type="INT32">
+    <parameter name="SF45_ORIENT_CFG" default="24" type="INT32">
       <short_desc>Orientation upright or facing downward</short_desc>
       <long_desc>The SF45 mounted facing upward or downward on the frame</long_desc>
       <reboot_required>True</reboot_required>
       <values>
-        <value code="0">Rotation upward</value>
-        <value code="1">Rotation downward</value>
+        <value code="24">Rotation upward</value>
+        <value code="25">Rotation downward</value>
       </values>
     </parameter>
-    <parameter name="SF45_UPDATE_CFG" default="1" type="INT32">
+    <parameter name="SF45_UPDATE_CFG" default="5" type="INT32">
       <short_desc>Update rate in Hz</short_desc>
       <long_desc>The SF45 sets the update rate in Hz to allow greater resolution</long_desc>
       <reboot_required>True</reboot_required>
@@ -23472,9 +23476,9 @@
       <reboot_required>True</reboot_required>
       <values>
         <value code="0">Rotation forward</value>
-        <value code="1">Rotation backward</value>
         <value code="2">Rotation right</value>
-        <value code="3">Rotation left</value>
+        <value code="4">Rotation backward</value>
+        <value code="6">Rotation left</value>
       </values>
     </parameter>
     <parameter name="SIM_ARSPD_FAIL" default="0" type="INT32">
@@ -24324,6 +24328,16 @@
     </parameter>
   </group>
   <group name="Simulator">
+    <parameter name="SIM_AGP_FAIL" default="0" type="INT32">
+      <short_desc>AGP failure mode</short_desc>
+      <long_desc>Stuck: freeze the measurement to the current location Drift: add a linearly growing bias to the sensor data</long_desc>
+      <min>0</min>
+      <max>3</max>
+      <bitmask>
+        <bit index="0">Stuck</bit>
+        <bit index="1">Drift</bit>
+      </bitmask>
+    </parameter>
     <parameter name="SIM_BARO_OFF_P" default="0.0" type="FLOAT">
       <short_desc>simulated barometer pressure offset</short_desc>
     </parameter>

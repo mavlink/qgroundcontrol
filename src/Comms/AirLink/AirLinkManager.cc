@@ -8,9 +8,8 @@
  ****************************************************************************/
 
 #include "AirLinkManager.h"
-#include "QGCApplication.h"
-#include "QGCToolbox.h"
 #include "SettingsManager.h"
+#include "AppSettings.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/qapplicationstatic.h>
@@ -47,8 +46,8 @@ bool AirLinkManager::isOnline(const QString &drone)
 
 void AirLinkManager::updateCredentials(const QString &login, const QString &pass)
 {
-    qgcApp()->toolbox()->settingsManager()->appSettings()->loginAirLink()->setRawValue(login);
-    qgcApp()->toolbox()->settingsManager()->appSettings()->passAirLink()->setRawValue(pass);
+    SettingsManager::instance()->appSettings()->loginAirLink()->setRawValue(login);
+    SettingsManager::instance()->appSettings()->passAirLink()->setRawValue(pass);
 }
 
 void AirLinkManager::_connectToAirLinkServer(const QString &login, const QString &pass)

@@ -12,7 +12,6 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "QGCPalette.h"
-#include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 
 #include <QtCore/QDebug>

@@ -51,20 +51,20 @@ LinkConfiguration::~LinkConfiguration()
 
 void LinkConfiguration::copyFrom(const LinkConfiguration *source)
 {
-    Q_CHECK_PTR(source);
+    Q_ASSERT(source);
 
-    _link = source->_link;
-    _name = source->name();
-    _dynamic = source->isDynamic();
-    _autoConnect = source->isAutoConnect();
-    _highLatency = source->isHighLatency();
+    setLink(source->_link.lock());
+    setName(source->name());
+    setDynamic(source->isDynamic());
+    setAutoConnect(source->isAutoConnect());
+    setHighLatency(source->isHighLatency());
 }
 
 LinkConfiguration *LinkConfiguration::createSettings(int type, const QString &name)
 {
     LinkConfiguration *config = nullptr;
 
-    switch(static_cast<LinkType>(type)) {
+    switch (static_cast<LinkType>(type)) {
 #ifndef NO_SERIAL_LINK
     case TypeSerial:
         config = new SerialConfiguration(name);
@@ -157,6 +157,8 @@ void LinkConfiguration::setLink(const SharedLinkInterfacePtr link)
     if (link.get() != this->link()) {
         _link = link;
         emit linkChanged();
+
+        (void) connect(link.get(), &LinkInterface::disconnected, this, &LinkConfiguration::linkChanged, Qt::QueuedConnection);
     }
 }
 

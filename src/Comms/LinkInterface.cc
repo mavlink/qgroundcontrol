@@ -56,7 +56,7 @@ bool LinkInterface::mavlinkChannelIsSet() const
 bool LinkInterface::initMavlinkSigning(void)
 {
     if (!isSecureConnection()) {
-        auto appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
+        auto appSettings = SettingsManager::instance()->appSettings();
         QByteArray signingKeyBytes = appSettings->mavlink2SigningKey()->rawValue().toByteArray();
         if (MAVLinkSigning::initSigning(static_cast<mavlink_channel_t>(_mavlinkChannel), signingKeyBytes, MAVLinkSigning::insecureConnectionAccceptUnsignedCallback)) {
             if (signingKeyBytes.isEmpty()) {
@@ -83,7 +83,7 @@ bool LinkInterface::_allocateMavlinkChannel()
         return true;
     }
 
-    _mavlinkChannel = qgcApp()->toolbox()->linkManager()->allocateMavlinkChannel();
+    _mavlinkChannel = LinkManager::instance()->allocateMavlinkChannel();
 
     if (!mavlinkChannelIsSet()) {
         qCWarning(LinkInterfaceLog) << Q_FUNC_INFO << "failed";
@@ -105,7 +105,7 @@ void LinkInterface::_freeMavlinkChannel()
         return;
     }
 
-    qgcApp()->toolbox()->linkManager()->freeMavlinkChannel(_mavlinkChannel);
+    LinkManager::instance()->freeMavlinkChannel(_mavlinkChannel);
     _mavlinkChannel = LinkManager::invalidMavlinkChannel();
 }
 

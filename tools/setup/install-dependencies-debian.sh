@@ -112,7 +112,10 @@ DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
     speech-dispatcher-audio-plugins \
     speech-dispatcher-espeak \
     speech-dispatcher-espeak-ng \
-    speech-dispatcher-flite \
+    speech-dispatcher-flite
+
+# DNS
+# DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install libavahi-compat-libdnssd-dev
 
 # Additional
 DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
@@ -193,3 +196,12 @@ if apt-cache show libgeographic-dev >/dev/null 2>&1 && apt-cache show libgeograp
 elif apt-cache show libgeographiclib-dev >/dev/null 2>&1 && apt-cache show libgeographiclib-dev 2>/dev/null | grep -q "^Package: libgeographiclib-dev"; then
     DEBIAN_FRONTEND=noninteractive apt-get install -y --quiet libgeographiclib-dev
 fi
+
+# Vulkan
+# Ubuntu 20.04
+# wget -qO - http://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo apt-key add -
+# wget -qO /etc/apt/sources.list.d/lunarg-vulkan-1.3.283-focal.list https://packages.lunarg.com/vulkan/1.3.283/lunarg-vulkan-1.3.283-focal.list
+
+# Ubuntu 22.04
+# wget -qO- https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo tee /etc/apt/trusted.gpg.d/lunarg.asc
+# wget -qO /etc/apt/sources.list.d/lunarg-vulkan-jammy.list http://packages.lunarg.com/vulkan/lunarg-vulkan-jammy.list

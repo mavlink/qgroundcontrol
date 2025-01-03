@@ -13,9 +13,9 @@
 #include "PlanMasterController.h"
 #include "SimpleMissionItem.h"
 #include "MissionSettingsItem.h"
-#include "QGCApplication.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
+#include "PlanViewSettings.h"
 #include "MultiSignalSpy.h"
 
 #include <QtTest/QTest>
@@ -50,7 +50,7 @@ void MissionControllerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareType)
     _rgMissionControllerSignals[visualItemsChangedSignalIndex] =    SIGNAL(visualItemsChanged());
 
     // Master controller pulls offline vehicle info from settings
-    qgcApp()->toolbox()->settingsManager()->appSettings()->offlineEditingFirmwareClass()->setRawValue(QGCMAVLink::firmwareClass(firmwareType));
+    SettingsManager::instance()->appSettings()->offlineEditingFirmwareClass()->setRawValue(QGCMAVLink::firmwareClass(firmwareType));
     _masterController = new PlanMasterController(this);
     _masterController->setFlyView(false);
     _missionController = _masterController->missionController();
@@ -172,7 +172,7 @@ void MissionControllerTest::_testGimbalRecalc(void)
     SimpleMissionItem* item = _missionController->visualItems()->value<SimpleMissionItem*>(yawIndex);
     item->cameraSection()->setSpecifyGimbal(true);
     item->cameraSection()->gimbalYaw()->setRawValue(0.0);
-    qgcApp()->toolbox()->settingsManager()->planViewSettings()->showGimbalOnlyWhenSet()->setRawValue(false);
+    SettingsManager::instance()->planViewSettings()->showGimbalOnlyWhenSet()->setRawValue(false);
     QTest::qWait(100); // Recalcs in MissionController are queued to remove dups. Allow return to main message loop.
     for (int i=1; i<_missionController->visualItems()->count(); i++) {
         //qDebug() << i;

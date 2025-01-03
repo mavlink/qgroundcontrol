@@ -111,12 +111,12 @@ ApplicationWindow {
     //-- Global Scope Functions
 
     // This function is used to prevent view switching if there are validation errors
-    function allowViewSwitch() {
+    function allowViewSwitch(previousValidationErrorCount = 0) {
         // Run validation on active focus control to ensure it is valid before switching views
         if (mainWindow.activeFocusControl instanceof QGCTextField) {
             mainWindow.activeFocusControl.onEditingFinished()
         }
-        return globals.validationErrorCount === 0
+        return globals.validationErrorCount <= previousValidationErrorCount
     }
 
     function showPlanView() {
@@ -338,7 +338,7 @@ ApplicationWindow {
                             height:             toolSelectDialog._toolButtonHeight
                             Layout.fillWidth:   true
                             text:               qsTr("Application Settings")
-                            imageResource:      "/res/QGCLogoFull"
+                            imageResource:      "/res/QGCLogoFull.svg"
                             imageColor:         "transparent"
                             visible:            !QGroundControl.corePlugin.options.combineSettingsAndSetup
                             onClicked: {
@@ -354,6 +354,7 @@ ApplicationWindow {
                             height:             toolSelectDialog._toolButtonHeight
                             Layout.fillWidth:   true
                             text:               qsTr("Close %1").arg(QGroundControl.appName)
+                            imageResource:      "/res/cancel.svg"
                             visible:            mainWindow.visibility === Window.FullScreen
                             onClicked: {
                                 if (mainWindow.allowViewSwitch()) {

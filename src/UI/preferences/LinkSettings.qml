@@ -118,7 +118,6 @@ SettingsPage {
                     onClicked: {
                         if (object.link) {
                             object.link.disconnect()
-                            object.linkChanged()
                         } else {
                             _linkManager.createConnectedLink(object)
                         }

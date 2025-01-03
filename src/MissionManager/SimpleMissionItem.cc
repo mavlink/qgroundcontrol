@@ -8,12 +8,12 @@
  ****************************************************************************/
 
 #include "SimpleMissionItem.h"
-#include "QGCApplication.h"
 #include "JsonHelper.h"
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
 #include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
+#include "AppSettings.h"
 #include "PlanMasterController.h"
 #include "SpeedSection.h"
 #include "MultiVehicleManager.h"
@@ -496,7 +496,7 @@ void SimpleMissionItem::_rebuildNaNFacts(void)
                 if (showUI && paramInfo && paramInfo->nanUnchanged()) {
                     // Show hide Heading field on waypoint based on vehicle yaw to next waypoint setting. This needs to come from the actual vehicle if it exists
                     // and not _controllerVehicle which is always offline.
-                    Vehicle* firmwareVehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
+                    Vehicle* firmwareVehicle = MultiVehicleManager::instance()->activeVehicle();
                     if (!firmwareVehicle) {
                         firmwareVehicle = _controllerVehicle;
                     }
@@ -767,7 +767,7 @@ void SimpleMissionItem::_setDefaultsForCommand(void)
     emit altitudeModeChanged();
     _amslAltAboveTerrainFact.setRawValue(qQNaN());
     if (specifiesAltitude()) {
-        double defaultAlt = qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble();
+        double defaultAlt = SettingsManager::instance()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble();
         _altitudeFact.setRawValue(defaultAlt);
         _missionItem._param7Fact.setRawValue(defaultAlt);
         // Note that setAltitudeMode will also set MAV_FRAME correctly through signalling

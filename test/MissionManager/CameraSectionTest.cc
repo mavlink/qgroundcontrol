@@ -12,7 +12,6 @@
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
 #include "PlanMasterController.h"
-#include "QGCApplication.h"
 #include "SimpleMissionItem.h"
 #include "MultiSignalSpy.h"
 

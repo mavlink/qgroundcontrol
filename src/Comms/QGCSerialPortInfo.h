@@ -33,12 +33,13 @@ public:
     ~QGCSerialPortInfo();
 
     enum BoardType_t {
-        BoardTypePixhawk,
+        BoardTypePixhawk = 0,
         BoardTypeSiKRadio,
         BoardTypeOpenPilot,
         BoardTypeRTKGPS,
         BoardTypeUnknown
     };
+
     bool getBoardInfo(BoardType_t &boardType, QString &name) const;
 
     /// @return true: we can flash this board type
@@ -55,23 +56,17 @@ public:
     static QList<QGCSerialPortInfo> availablePorts();
 
 private:
+    struct BoardClassString2BoardType_t {
+        const QString classString;
+        const BoardType_t boardType = BoardTypeUnknown;
+    };
+
     static bool _loadJsonData();
     static BoardType_t _boardClassStringToType(const QString &boardClass);
     static QString _boardTypeToString(BoardType_t boardType);
 
     static bool _jsonLoaded;
     static bool _jsonDataValid;
-
-    struct BoardClassString2BoardType_t {
-        const char *classString;
-        BoardType_t boardType;
-    };
-    static constexpr const BoardClassString2BoardType_t _rgBoardClass2BoardType[BoardTypeUnknown] = {
-        { "Pixhawk", QGCSerialPortInfo::BoardTypePixhawk },
-        { "RTK GPS", QGCSerialPortInfo::BoardTypeRTKGPS },
-        { "SiK Radio", QGCSerialPortInfo::BoardTypeSiKRadio },
-        { "OpenPilot", QGCSerialPortInfo::BoardTypeOpenPilot },
-    };
 
     struct BoardInfo_t {
         int vendorId;

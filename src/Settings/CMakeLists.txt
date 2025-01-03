@@ -1,4 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Multimedia Qml)
+find_package(Qt6 REQUIRED COMPONENTS Core Multimedia Qml QmlIntegration)
 
 qt_add_library(Settings STATIC
     ADSBVehicleManagerSettings.cc
@@ -52,16 +52,18 @@ target_link_libraries(Settings
         Qt6::Multimedia
         API
         GStreamerReceiver
+        QGC
         QmlControls
+        QtMultimediaReceiver
         Vehicle
         VideoManager
         VideoReceiver
     PUBLIC
         Qt6::Core
         Qt6::Qml
+        Qt6::QmlIntegration
         Comms
         FactSystem
-        QGC
 )
 
 target_include_directories(Settings PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

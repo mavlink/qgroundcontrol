@@ -9,8 +9,8 @@
 
 #include "GimbalController.h"
 #include "Vehicle.h"
-#include "QGCApplication.h"
 #include "SettingsManager.h"
+#include "GimbalControllerSettings.h"
 #include "QGCLoggingCategory.h"
 #include "ParameterManager.h"
 #include "MAVLinkProtocol.h"
@@ -460,7 +460,7 @@ void GimbalController::gimbalPitchStart(int direction)
         return;
     }
 
-    float speed = qgcApp()->toolbox()->settingsManager()->gimbalControllerSettings()->joystickButtonsSpeed()->rawValue().toInt();
+    float speed = SettingsManager::instance()->gimbalControllerSettings()->joystickButtonsSpeed()->rawValue().toInt();
     activeGimbal()->setPitchRate(direction * speed);
 
     sendRate();
@@ -473,7 +473,7 @@ void GimbalController::gimbalYawStart(int direction)
         return;
     }
     
-    float speed = qgcApp()->toolbox()->settingsManager()->gimbalControllerSettings()->joystickButtonsSpeed()->rawValue().toInt();
+    float speed = SettingsManager::instance()->gimbalControllerSettings()->joystickButtonsSpeed()->rawValue().toInt();
     activeGimbal()->setYawRate(direction * speed);
     sendRate();
 }
@@ -518,8 +518,8 @@ void GimbalController::gimbalOnScreenControl(float panPct, float tiltPct, bool c
     }
     // click and point, based on FOV
     if (clickAndPoint) {
-        float hFov = qgcApp()->toolbox()->settingsManager()->gimbalControllerSettings()->CameraHFov()->rawValue().toFloat();
-        float vFov = qgcApp()->toolbox()->settingsManager()->gimbalControllerSettings()->CameraVFov()->rawValue().toFloat();
+        float hFov = SettingsManager::instance()->gimbalControllerSettings()->CameraHFov()->rawValue().toFloat();
+        float vFov = SettingsManager::instance()->gimbalControllerSettings()->CameraVFov()->rawValue().toFloat();
 
         float panIncDesired =  panPct  * hFov * 0.5f;
         float tiltIncDesired = tiltPct * vFov * 0.5f;
@@ -538,7 +538,7 @@ void GimbalController::gimbalOnScreenControl(float panPct, float tiltPct, bool c
         // Should send rate commands, but it seems for some reason it is not working on AP side.
         // Pitch works ok but yaw doesn't stop, it keeps like inertia, like if it was buffering the messages.
         // So we do a workaround with angle targets
-        float maxSpeed = qgcApp()->toolbox()->settingsManager()->gimbalControllerSettings()->CameraSlideSpeed()->rawValue().toFloat();
+        float maxSpeed = SettingsManager::instance()->gimbalControllerSettings()->CameraSlideSpeed()->rawValue().toFloat();
 
         float panIncDesired  = panPct * maxSpeed  * 0.1f;
         float tiltIncDesired = tiltPct * maxSpeed * 0.1f;

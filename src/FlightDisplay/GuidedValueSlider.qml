@@ -35,7 +35,6 @@ Item {
     property string _displayText:           ""
 
     property var    _unitsSettings:         QGroundControl.settingsManager.unitsSettings
-    property real   _margins:               ScreenTools.defaultFontPixelWidth / 2
     property real   _indicatorCenterPos:    sliderFlickable.height / 2
 
     property int    _fullSliderRangeIndex:  2
@@ -44,9 +43,10 @@ Item {
     property int    _fullSliderValueRange:  _rgValueRanges[_fullSliderRangeIndex]
     property int    _halfSliderValueRange:  _fullSliderValueRange / 2
 
-    property real   _majorTickWidth:        ScreenTools.largeFontPixelWidth * 3
-    property real   _minorTickWidth:        _majorTickWidth / 2
+    property real   _majorTickWidth:        ScreenTools.largeFontPixelWidth * 2
     property real   _majorTickPixelHeight:  ScreenTools.largeFontPixelHeight * 2
+    property real   _tickValueRightMargin:  ScreenTools.defaultFontPixelWidth / 2
+    property real   _minorTickWidth:        _majorTickWidth / 2
     property real   _sliderValuePerPixel:   _majorTickValueStep / _majorTickPixelHeight
 
     property int    _majorTickValueStep:    10
@@ -77,16 +77,26 @@ Item {
 
     property var _qgcPal: QGroundControl.globalPalette
 
+    function setCurrentValue(currentValue, animate = true) {
+        // Position the slider such that the indicator is pointing to the current value
+        var contentY = (_firstPixelValue - currentValue) / _sliderValuePerPixel - _indicatorCenterPos
+        if (animate) {
+            flickableAnimation.from = sliderFlickable.contentY
+            flickableAnimation.to = contentY
+            flickableAnimation.start()
+        } else {
+            sliderFlickable.contentY = contentY
+        }
+    }
+
     /// Slider values should be in converted app units.
     function setupSlider(sliderType, minValue, maxValue, currentValue, displayText) {
-        console.log("setupSlider: sliderType: ", sliderType, " minValue: ", minValue, " maxValue: ", maxValue, " currentValue: ", currentValue, " displayText: ", displayText)
+        //console.log("setupSlider: sliderType: ", sliderType, " minValue: ", minValue, " maxValue: ", maxValue, " currentValue: ", currentValue, " displayText: ", displayText)
         _sliderType = sliderType
         _sliderMinVal = minValue
         _sliderMaxVal = maxValue
         _displayText = displayText
-
-        // Position the slider such that the indicator is pointing to the current value
-        sliderFlickable.contentY = (_firstPixelValue - currentValue) / _sliderValuePerPixel - _indicatorCenterPos
+        setCurrentValue(currentValue, false)
     }
 
     function _clampedSliderValue(value) {
@@ -94,11 +104,15 @@ Item {
         if (_unitsSettings.verticalDistanceUnits.rawValue === UnitsSettings.VerticalDistanceUnitsMeters) {
             decimalPlaces = 1
         }
-        return value.toFixed(decimalPlaces)
+        return Math.min(Math.max(value  , _sliderMinVal), _sliderMaxVal).toFixed(decimalPlaces)
     }
 
     function getOutputValue() {
         return _clampedSliderValue(_sliderValue)
+    }
+
+    DeadMouseArea {
+        anchors.fill:   parent
     }
 
     Rectangle {
@@ -127,6 +141,18 @@ Item {
             flickDeceleration:  0.5
             flickableDirection: Flickable.VerticalFlick
 
+            PropertyAnimation on contentY {
+                id:             flickableAnimation
+                duration:       500
+                from:           fromValue
+                to:             toValue
+                easing.type:    Easing.OutCubic
+                running:        false
+
+                property real fromValue
+                property real toValue
+            }
+
             Item {
                 id:     sliderContainer
                 width:  control.width
@@ -145,14 +171,16 @@ Item {
                         property real tickValue: _majorTickMaxValue - (_majorTickValueStep * index)
 
                         Rectangle {
+                            id:     majorTick
                             width:  _majorTickWidth
                             height: 1
                             color:  _qgcPal.text
                         }
 
                         QGCLabel {
+                            anchors.margins:        _tickValueRightMargin
                             anchors.right:          parent.right
-                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.verticalCenter: majorTick.verticalCenter
                             text:                   parent.tickValue
                             font.pointSize:         ScreenTools.largeFontPointSize
                         }
@@ -182,14 +210,24 @@ Item {
     Canvas {
         id:     indicatorCanvas
         y:      sliderFlickable.y + _indicatorCenterPos - height / 2
-        width:  Math.max(minIndicatorWidth, minTickDisplayWidth)
+        width:  Math.max(minIndicatorWidth, maxMajorTickDisplayWidth)
         height: indicatorHeight
         clip:   false
 
-        property real indicatorHeight:      valueLabel.contentHeight
-        property real pointerWidth:         ScreenTools.defaultFontPixelWidth
-        property real minIndicatorWidth:    pointerWidth + (_margins * 2) + valueLabel.contentWidth
-        property real minTickDisplayWidth:  _majorTickWidth + ScreenTools.defaultFontPixelWidth + ScreenTools.defaultFontPixelWidth * 3
+        QGCLabel {
+            id:             maxDigitsTextMeasure
+            text:           "-100"
+            font.pointSize: ScreenTools.largeFontPointSize
+            visible:        false
+        }
+
+        property real indicatorValueMargins:    ScreenTools.defaultFontPixelWidth / 2
+        property real indicatorHeight:          valueLabel.contentHeight
+        property real pointerWidth:             ScreenTools.defaultFontPixelWidth
+        property real minIndicatorWidth:        pointerWidth + (indicatorValueMargins * 2) + valueLabel.contentWidth
+        property real maxDigitsWidth:           maxDigitsTextMeasure.contentWidth
+        property real intraTickDigitSpacing:    ScreenTools.defaultFontPixelWidth
+        property real maxMajorTickDisplayWidth: _majorTickWidth + intraTickDigitSpacing + maxDigitsWidth + _tickValueRightMargin
 
         onPaint: {
             var ctx = getContext("2d")
@@ -199,19 +237,19 @@ Item {
             ctx.beginPath()
             ctx.moveTo(0, indicatorHeight / 2)
             ctx.lineTo(pointerWidth, indicatorHeight / 4)
-            ctx.lineTo(pointerWidth, 0)
-            ctx.lineTo(width - 1, 0)
-            ctx.lineTo(width - 1, indicatorHeight)
-            ctx.lineTo(pointerWidth, indicatorHeight)
+            ctx.lineTo(pointerWidth, 1)
+            ctx.lineTo(width - 1, 1)
+            ctx.lineTo(width - 1, indicatorHeight - 1)
+            ctx.lineTo(pointerWidth, indicatorHeight - 1)
             ctx.lineTo(pointerWidth, indicatorHeight / 4 * 3)
-            ctx.lineTo(0, indicatorHeight / 2)
+            ctx.closePath()
             ctx.fill()
             ctx.stroke()
         }
 
         QGCLabel {
             id:                     valueLabel
-            anchors.margins:        _margins
+            anchors.margins:        indicatorCanvas.indicatorValueMargins
             anchors.right:          parent.right
             anchors.verticalCenter: parent.verticalCenter
             horizontalAlignment:    Text.AlignRight
@@ -222,6 +260,35 @@ Item {
             property var unitsString: _sliderType === GuidedValueSlider.Speed ? 
                                         QGroundControl.unitsConversion.appSettingsSpeedUnitsString : 
                                             QGroundControl.unitsConversion.appSettingsVerticalDistanceUnitsString
+        }
+
+        QGCMouseArea {
+            anchors.fill: parent
+            onClicked: {
+                sliderValueTextField.text = _clampedSliderValue(_sliderValue)
+                sliderValueTextField.visible = true
+                sliderValueTextField.forceActiveFocus()
+            }
+        }
+
+        QGCTextField {
+            id:                 sliderValueTextField
+            anchors.leftMargin: indicatorCanvas.pointerWidth
+            anchors.fill:       parent
+            showUnits:          true
+            unitsLabel:         valueLabel.unitsString
+            visible:            false
+
+            onEditingFinished: {
+                visible = false
+                focus = false
+                setCurrentValue(_clampedSliderValue(parseFloat(text)))
+            }
+
+            Connections {
+                target: control
+                on_sliderValueChanged: sliderValueTextField.visible = false
+            }
         }
     }
 

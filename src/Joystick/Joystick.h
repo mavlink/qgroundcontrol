@@ -22,11 +22,10 @@
 #include <QtCore/QLoggingCategory>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-// JoystickLog Category declaration moved to QGCLoggingCategory.cc to allow access in Vehicle
+Q_DECLARE_LOGGING_CATEGORY(JoystickLog)
 Q_DECLARE_LOGGING_CATEGORY(JoystickValuesLog)
 Q_DECLARE_METATYPE(GRIPPER_ACTIONS)
 
-class MultiVehicleManager;
 class Vehicle;
 class QmlObjectListModel;
 
@@ -63,7 +62,7 @@ class Joystick : public QThread
     Q_MOC_INCLUDE("QmlObjectListModel.h")
     Q_MOC_INCLUDE("Vehicle.h")
 public:
-    Joystick(const QString& name, int axisCount, int buttonCount, int hatCount, MultiVehicleManager* multiVehicleManager);
+    Joystick(const QString& name, int axisCount, int buttonCount, int hatCount, QObject *parent = nullptr);
 
     virtual ~Joystick();
 
@@ -232,6 +231,7 @@ signals:
     void gripperAction              (GRIPPER_ACTIONS gripperAction);
     void landingGearDeploy          ();
     void landingGearRetract         ();
+    void unknownAction              (const QString &action);
 
 protected:
     void    _setDefaultCalibration  ();
@@ -307,7 +307,6 @@ protected:
     QmlObjectListModel              _assignableButtonActions;
     QList<AssignedButtonAction*>    _buttonActionArray;
     QStringList                     _availableActionTitles;
-    MultiVehicleManager*            _multiVehicleManager = nullptr;
 
     CustomActionManager _customActionManager;
 

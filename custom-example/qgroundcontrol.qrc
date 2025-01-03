@@ -1,8 +1,8 @@
 <RCC>
 	<qresource prefix="/toolbar">
 		<file alias="ArmedIndicator.qml">../src/UI/toolbar/ArmedIndicator.qml</file>
-		<file alias="GPSIndicator.qml">../src/UI/toolbar/GPSIndicator.qml</file>
-		<file alias="GPSRTKIndicator.qml">../src/UI/toolbar/GPSRTKIndicator.qml</file>
+		<file alias="RTKGPSIndicator.qml">../src/UI/toolbar/RTKGPSIndicator.qml</file>
+		<file alias="VehicleGPSIndicator.qml">../src/UI/toolbar/VehicleGPSIndicator.qml</file>
 		<file alias="JoystickIndicator.qml">../src/UI/toolbar/JoystickIndicator.qml</file>
 		<file alias="LinkIndicator.qml">../src/UI/toolbar/LinkIndicator.qml</file>
 		<file alias="MessageIndicator.qml">../src/UI/toolbar/MessageIndicator.qml</file>
@@ -103,6 +103,7 @@
 		<file alias="QGroundControl/Controls/FlightModeDropdown.qml">../src/QmlControls/FlightModeDropdown.qml</file>
 		<file alias="QGroundControl/Controls/FlightModeMenu.qml">../src/QmlControls/FlightModeMenu.qml</file>
 		<file alias="QGroundControl/Controls/FWLandingPatternMapVisual.qml">../src/PlanView/FWLandingPatternMapVisual.qml</file>
+		<file alias="QGroundControl/Controls/GPSIndicator.qml">../src/UI/toolbar/GPSIndicator.qml</file>
 		<file alias="QGroundControl/Controls/GPSIndicatorPage.qml">../src/UI/toolbar/GPSIndicatorPage.qml</file>
 		<file alias="QGroundControl/Controls/GeoFenceEditor.qml">../src/PlanView/GeoFenceEditor.qml</file>
 		<file alias="QGroundControl/Controls/GeoFenceMapVisuals.qml">../src/PlanView/GeoFenceMapVisuals.qml</file>
@@ -152,8 +153,7 @@
 		<file alias="QGroundControl/Controls/QGCComboBox.qml">../src/QmlControls/QGCComboBox.qml</file>
 		<file alias="QGroundControl/Controls/QGCFileDialog.qml">../src/QmlControls/QGCFileDialog.qml</file>
 		<file alias="QGroundControl/Controls/QGCFlickable.qml">../src/QmlControls/QGCFlickable.qml</file>
-		<file alias="QGroundControl/Controls/QGCFlickableHorizontalIndicator.qml">../src/QmlControls/QGCFlickableHorizontalIndicator.qml</file>
-		<file alias="QGroundControl/Controls/QGCFlickableVerticalIndicator.qml">../src/QmlControls/QGCFlickableVerticalIndicator.qml</file>
+		<file alias="QGroundControl/Controls/QGCFlickableScrollIndicator.qml">../src/QmlControls/QGCFlickableScrollIndicator.qml</file>
 		<file alias="QGroundControl/Controls/QGCGroupBox.qml">../src/QmlControls/QGCGroupBox.qml</file>
 		<file alias="QGroundControl/Controls/QGCLabel.qml">../src/QmlControls/QGCLabel.qml</file>
 		<file alias="QGroundControl/Controls/QGCListView.qml">../src/QmlControls/QGCListView.qml</file>
@@ -232,7 +232,6 @@
 		<file alias="QGroundControl/FlightDisplay/FlyViewToolBar.qml">../src/UI/toolbar/FlyViewToolBar.qml</file>
 		<file alias="QGroundControl/FlightDisplay/FlyViewToolBarIndicators.qml">../src/UI/toolbar/FlyViewToolBarIndicators.qml</file>
 		<file alias="QGroundControl/FlightDisplay/FlyViewToolStrip.qml">../src/FlightDisplay/FlyViewToolStrip.qml</file>
-		<file alias="QGroundControl/FlightDisplay/FlyViewToolStripActionList.qml">../src/FlightDisplay/FlyViewToolStripActionList.qml</file>
 		<file alias="QGroundControl/FlightDisplay/FlyViewTopRightColumnLayout.qml">../src/FlightDisplay/FlyViewTopRightColumnLayout.qml</file>
 		<file alias="QGroundControl/FlightDisplay/FlyViewVideo.qml">../src/FlightDisplay/FlyViewVideo.qml</file>
 		<file alias="QGroundControl/FlightDisplay/OnScreenGimbalController.qml">../src/FlightDisplay/OnScreenGimbalController.qml</file>
@@ -404,6 +403,7 @@
 		<file alias="Vehicle/SetpointFact.json">../src/Vehicle/FactGroups/SetpointFact.json</file>
 		<file alias="Vehicle/LocalPositionFact.json">../src/Vehicle/FactGroups/LocalPositionFact.json</file>
 		<file alias="Vehicle/LocalPositionSetpointFact.json">../src/Vehicle/FactGroups/LocalPositionFact.json</file>
+		<file alias="Vehicle/RPMFact.json">../src/Vehicle/FactGroups/RPMFact.json</file>
 		<file alias="Vehicle/SubmarineFact.json">../src/Vehicle/FactGroups/SubmarineFact.json</file>
 		<file alias="Vehicle/TemperatureFact.json">../src/Vehicle/FactGroups/TemperatureFact.json</file>
 		<file alias="Vehicle/TerrainFactGroup.json">../src/Vehicle/FactGroups/TerrainFactGroup.json</file>
@@ -418,6 +418,7 @@
 		<file alias="VTOLLandingPattern.FactMetaData.json">../src/MissionManager/VTOLLandingPattern.FactMetaData.json</file>
 		<file alias="Viewer3D.SettingsGroup.json">../src/Settings/Viewer3D.SettingsGroup.json</file>
 		<file alias="GimbalController.SettingsGroup.json">../src/Settings/GimbalController.SettingsGroup.json</file>
+		<file alias="CameraMetaData.json">../src/Camera/CameraMetaData.json</file>
 	</qresource>
 	<qresource prefix="/MockLink">
 		<file alias="APMArduSubMockLink.params">../src/Comms/MockLink/APMArduSubMockLink.params</file>

@@ -18,7 +18,7 @@
 #include "ExifParserTest.h"
 #include "GeoTagControllerTest.h"
 // #include "MavlinkLogTest.h"
-// #include "LogDownloadTest.h"
+#include "LogDownloadTest.h"
 #include "PX4LogParserTest.h"
 #include "ULogParserTest.h"
 
@@ -79,9 +79,6 @@
 // qgcunittest
 #include "ComponentInformationCacheTest.h"
 #include "ComponentInformationTranslationTest.h"
-// #include "FileDialogTest.h"
-// #include "MainWindowTest.h"
-// #include "MessageBoxTest.h"
 
 // QmlControls
 
@@ -124,7 +121,7 @@ int runTests(bool stress, QStringView unitTestOptions)
     UT_REGISTER_TEST(ExifParserTest)
     UT_REGISTER_TEST(GeoTagControllerTest)
     // UT_REGISTER_TEST(MavlinkLogTest)
-    // UT_REGISTER_TEST(LogDownloadTest)
+    UT_REGISTER_TEST(LogDownloadTest)
     UT_REGISTER_TEST(PX4LogParserTest)
     UT_REGISTER_TEST(ULogParserTest)
 
@@ -183,9 +180,6 @@ int runTests(bool stress, QStringView unitTestOptions)
     // UT_REGISTER_TEST(VisualMissionItemTest)
 
     // qgcunittest
-    // UT_REGISTER_TEST(FileDialogTest)
-    // UT_REGISTER_TEST(MainWindowTest)
-    // UT_REGISTER_TEST(MessageBoxTest)
 
     // QmlControls
 
