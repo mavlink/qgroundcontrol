@@ -19,9 +19,96 @@
 
 QGC_LOGGING_CATEGORY(AirLinkLinkLog, "qgc.AirLink.AirLinklink");
 
+/*===========================================================================*/
+
+AirLinkConfiguration::AirLinkConfiguration(const QString &name, QObject *parent)
+    : UDPConfiguration(name)
+{
+    // qCDebug(AirLinkLinkLog) << Q_FUNC_INFO << this;
+}
+
+AirLinkConfiguration::AirLinkConfiguration(const AirLinkConfiguration *copy, QObject *parent)
+    : UDPConfiguration(copy)
+{
+    // qCDebug(AirLinkLinkLog) << Q_FUNC_INFO << this;
+
+    AirLinkConfiguration::copyFrom(copy);
+}
+
+AirLinkConfiguration::~AirLinkConfiguration()
+{
+    // qCDebug(AirLinkLinkLog) << Q_FUNC_INFO << this;
+}
+
+void AirLinkConfiguration::copyFrom(const LinkConfiguration *source)
+{
+    Q_ASSERT(source);
+
+    const UDPConfiguration *const udpSource = qobject_cast<const UDPConfiguration*>(source);
+    Q_ASSERT(udpSource);
+    UDPConfiguration::copyFrom(udpSource);
+
+    const AirLinkConfiguration *const airLinkSource = qobject_cast<const AirLinkConfiguration*>(source);
+    Q_ASSERT(airLinkSource);
+
+    setUsername(airLinkSource->username());
+    setPassword(airLinkSource->password());
+    setModemName(airLinkSource->modemName());
+}
+
+void AirLinkConfiguration::loadSettings(QSettings &settings, const QString &root)
+{
+    AppSettings *const appSettings = SettingsManager::instance()->appSettings();
+
+    settings.beginGroup(root);
+
+    setUsername(settings.value(_usernameSettingsKey, appSettings->loginAirLink()->rawValueString()).toString());
+    setPassword(settings.value(_passwordSettingsKey, appSettings->passAirLink()->rawValueString()).toString());
+    setModemName(settings.value(_modemNameSettingsKey).toString());
+
+    settings.endGroup();
+}
+
+void AirLinkConfiguration::saveSettings(QSettings &settings, const QString &root)
+{
+    settings.beginGroup(root);
+
+    settings.setValue(_usernameSettingsKey, _username);
+    settings.setValue(_passwordSettingsKey, _password);
+    settings.setValue(_modemNameSettingsKey, _modemName);
+
+    settings.endGroup();
+}
+
+void AirLinkConfiguration::setUsername(const QString &username)
+{
+    if (username != _username) {
+        _username = username;
+        emit usernameChanged();
+    }
+}
+
+void AirLinkConfiguration::setPassword(const QString &password)
+{
+    if (password != _password) {
+        _password = password;
+        emit passwordChanged();
+    }
+}
+
+void AirLinkConfiguration::setModemName(const QString &modemName)
+{
+    if (modemName != _modemName) {
+        _modemName = modemName;
+        emit modemNameChanged();
+    }
+}
+
+/*===========================================================================*/
+
 AirLinkLink::AirLinkLink(SharedLinkConfigurationPtr &config, QObject *parent)
     : UDPLink(config)
-    , _AirLinkConfig(qobject_cast<const AirLinkConfiguration*>(config.get()))
+    , _airLinkConfig(qobject_cast<const AirLinkConfiguration*>(config.get()))
 {
     // qCDebug(AirLinkLinkLog) << Q_FUNC_INFO << this;
 
@@ -51,12 +138,6 @@ AirLinkLink::~AirLinkLink()
     // qCDebug(AirLinkLinkLog) << Q_FUNC_INFO << this;
 }
 
-void AirLinkLink::disconnect()
-{
-    _setConnectFlag(false);
-    (void) UDPLink::disconnect();
-}
-
 bool AirLinkLink::_connect()
 {
     std::shared_ptr<QMetaObject::Connection> conn = std::make_shared<QMetaObject::Connection>();
@@ -65,7 +146,7 @@ bool AirLinkLink::_connect()
             return;
         }
 
-        mavlink_airlink_auth_response_t responseMsg;
+        mavlink_airlink_auth_response_t responseMsg{};
         mavlink_msg_airlink_auth_response_decode(&message, &responseMsg);
         const int answer = responseMsg.resp_type;
         if (answer != AIRLINK_AUTH_RESPONSE_TYPE::AIRLINK_AUTH_OK) {
@@ -83,6 +164,12 @@ bool AirLinkLink::_connect()
     start(NormalPriority);
 
     return true;
+}
+
+void AirLinkLink::disconnect()
+{
+    _setConnectFlag(false);
+    (void) UDPLink::disconnect();
 }
 
 void AirLinkLink::_configureUdpSettings()
@@ -103,12 +190,12 @@ void AirLinkLink::_sendLoginMsgToAirLink()
 {
     mavlink_airlink_auth_t auth{};
 
-    const QString login = _AirLinkConfig->modemName(); ///< Connect not to account but to specific modem
-    const QString pass = _AirLinkConfig->password();
+    const QString login = _airLinkConfig->modemName(); ///< Connect not to account but to specific modem
+    const QString pass = _airLinkConfig->password();
     (void) strcpy(auth.login, login.toUtf8().constData());
     (void) strcpy(auth.password, pass.toUtf8().constData());
 
-    mavlink_message_t mavmsg;
+    mavlink_message_t mavmsg{};
     (void) mavlink_msg_airlink_auth_pack(0, 0, &mavmsg, auth.login, auth.password);
 
     uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
@@ -131,94 +218,4 @@ void AirLinkLink::_setConnectFlag(bool connect)
 {
     QMutexLocker locker(&_mutex);
     _needToConnect = connect;
-}
-
-/*===========================================================================*/
-
-AirLinkConfiguration::AirLinkConfiguration(const QString &name, QObject *parent)
-    : UDPConfiguration(name)
-{
-    // qCDebug(AirLinkLinkLog) << Q_FUNC_INFO << this;
-}
-
-AirLinkConfiguration::AirLinkConfiguration(const AirLinkConfiguration *copy, QObject *parent)
-    : UDPConfiguration(copy)
-{
-    // qCDebug(AirLinkLinkLog) << Q_FUNC_INFO << this;
-
-    Q_CHECK_PTR(copy);
-
-    copyFrom(copy);
-}
-
-AirLinkConfiguration::~AirLinkConfiguration()
-{
-    // qCDebug(AirLinkLinkLog) << Q_FUNC_INFO << this;
-}
-
-void AirLinkConfiguration::setUsername(const QString &username)
-{
-    if (username != _username) {
-        _username = username;
-        emit usernameChanged();
-    }
-}
-
-void AirLinkConfiguration::setPassword(const QString &password)
-{
-    if (password != _password) {
-        _password = password;
-        emit passwordChanged();
-    }
-}
-
-void AirLinkConfiguration::setModemName(const QString &modemName)
-{
-    if (modemName != _modemName) {
-        _modemName = modemName;
-        emit modemNameChanged();
-    }
-}
-
-void AirLinkConfiguration::loadSettings(QSettings &settings, const QString &root)
-{
-    AppSettings *const appSettings = SettingsManager::instance()->appSettings();
-
-    settings.beginGroup(root);
-
-    setUsername(settings.value(_usernameSettingsKey, appSettings->loginAirLink()->rawValueString()).toString());
-    setPassword(settings.value(_passwordSettingsKey, appSettings->passAirLink()->rawValueString()).toString());
-    setModemName(settings.value(_modemNameSettingsKey).toString());
-
-    settings.endGroup();
-}
-
-void AirLinkConfiguration::saveSettings(QSettings &settings, const QString &root)
-{
-    settings.beginGroup(root);
-
-    settings.setValue(_usernameSettingsKey, _username);
-    settings.setValue(_passwordSettingsKey, _password);
-    settings.setValue(_modemNameSettingsKey, _modemName);
-
-    settings.endGroup();
-}
-
-void AirLinkConfiguration::copyFrom(const LinkConfiguration *source)
-{
-    Q_CHECK_PTR(source);
-
-    const AirLinkConfiguration *const AirLinkSource = qobject_cast<const AirLinkConfiguration*>(source);
-    if (AirLinkSource) {
-        setUsername(AirLinkSource->username());
-        setPassword(AirLinkSource->password());
-        setModemName(AirLinkSource->modemName());
-    } else {
-        qCWarning(AirLinkLinkLog) << "Internal error: cannot read AirLinkConfiguration from given source";
-    }
-
-    const UDPConfiguration *const udpSource = qobject_cast<const UDPConfiguration*>(source);
-    if (udpSource) {
-        UDPConfiguration::copyFrom(udpSource);
-    }
 }
