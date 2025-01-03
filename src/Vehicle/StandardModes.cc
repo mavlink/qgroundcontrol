@@ -55,9 +55,6 @@ void StandardModes::gotMessage(MAV_RESULT result, const mavlink_message_t &messa
             case MAV_STANDARD_MODE_ALTITUDE_HOLD:
                 name = "Altitude";
                 break;
-            case MAV_STANDARD_MODE_RETURN_HOME:
-                name = "Return";
-                break;
             case MAV_STANDARD_MODE_SAFE_RECOVERY:
                 name = "Safe Recovery";
                 break;
