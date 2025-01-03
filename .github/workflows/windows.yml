@@ -36,7 +36,7 @@ jobs:
 
     env:
       ARTIFACT: QGroundControl-installer.exe
-      QT_VERSION: 6.6.3
+      QT_VERSION: 6.7.3
       GST_VERSION: 1.22.12
       SCCACHE_GHA_ENABLED: "true"
 
