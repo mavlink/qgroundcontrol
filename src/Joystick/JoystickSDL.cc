@@ -208,7 +208,11 @@ void JoystickSDL::_loadGameControllerMappings()
 
     QTextStream stream(&file);
     while (!stream.atEnd()) {
-        if (SDL_GameControllerAddMapping(stream.readLine().toStdString().c_str()) == -1) {
+        auto line = stream.readLine();
+        if (line.startsWith('#') || line.isEmpty()) {
+            continue;
+        }
+        if (SDL_GameControllerAddMapping(line.toStdString().c_str()) == -1) {
             qCWarning(JoystickSDLLog) << "Couldn't add GameController mapping:" << SDL_GetError();
         }
     }
