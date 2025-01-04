@@ -37,63 +37,15 @@ Item {
         id: controller
     }
 
-    //---------------------------------------------
-    //-- Header
-    Row {
-        id:             header
-        anchors.left:   parent.left
-        anchors.right:  parent.right
-        spacing:        ScreenTools.defaultFontPixelWidth
-
-        Timer {
-            id:         clearTimer
-            interval:   100;
-            running:    false;
-            repeat:     false
-            onTriggered: {
-                searchText.text = ""
-                controller.searchText = ""
-            }
+    Timer {
+        id:         clearTimer
+        interval:   100;
+        running:    false;
+        repeat:     false
+        onTriggered: {
+            searchText.text = ""
+            controller.searchText = ""
         }
-
-        QGCLabel {
-            anchors.verticalCenter: parent.verticalCenter
-            text: qsTr("Search:")
-        }
-
-        QGCTextField {
-            id:                 searchText
-            text:               controller.searchText
-            onDisplayTextChanged: controller.searchText = displayText
-            anchors.verticalCenter: parent.verticalCenter
-        }
-
-        QGCButton {
-            text: qsTr("Clear")
-            onClicked: {
-                if(ScreenTools.isMobile) {
-                    Qt.inputMethod.hide();
-                }
-                clearTimer.start()
-            }
-            anchors.verticalCenter: parent.verticalCenter
-        }
-
-        QGCCheckBox {
-            text:                   qsTr("Show modified only")
-            anchors.verticalCenter: parent.verticalCenter
-            checked:                controller.showModifiedOnly
-            onClicked:              controller.showModifiedOnly = checked
-            visible:                QGroundControl.multiVehicleManager.activeVehicle.px4Firmware
-        }
-    } // Row - Header
-
-    QGCButton {
-        anchors.top:    header.top
-        anchors.bottom: header.bottom
-        anchors.right:  parent.right
-        text:           qsTr("Tools")
-        onClicked:      toolsMenu.popup()
     }
 
     QGCMenu {
@@ -145,6 +97,82 @@ Item {
                                                          qsTr("Select Ok to reboot vehicle."),
                                                          Dialog.Cancel | Dialog.Ok,
                                                          function() { _activeVehicle.rebootVehicle() })
+        }
+    }
+
+
+    QGCFileDialog {
+        id:             fileDialog
+        folder:         _appSettings.parameterSavePath
+        nameFilters:    [ qsTr("Parameter Files (*.%1)").arg(_appSettings.parameterFileExtension) , qsTr("All Files (*)") ]
+
+        onAcceptedForSave: (file) => {
+            controller.saveToFile(file)
+            close()
+        }
+
+        onAcceptedForLoad: (file) => {
+            close()
+            if (controller.buildDiffFromFile(file)) {
+                parameterDiffDialog.createObject(mainWindow).open()
+            }
+        }
+    }
+
+    Component {
+        id: editorDialogComponent
+
+        ParameterEditorDialog {
+            fact:           _editorDialogFact
+            showRCToParam:  _showRCToParam
+        }
+    }
+
+    Component {
+        id: parameterDiffDialog
+
+        ParameterDiffDialog {
+            paramController: _controller
+        }
+    }
+
+    RowLayout {
+        id:             header
+        anchors.left:   parent.left
+        anchors.right:  parent.right
+
+        RowLayout {
+            Layout.alignment:   Qt.AlignLeft
+            spacing:            ScreenTools.defaultFontPixelWidth
+
+            QGCTextField {
+                id:                     searchText
+                placeholderText:        qsTr("Search")
+                onDisplayTextChanged:   controller.searchText = displayText
+            }
+
+            QGCButton {
+                text: qsTr("Clear")
+                onClicked: {
+                    if(ScreenTools.isMobile) {
+                        Qt.inputMethod.hide();
+                    }
+                    clearTimer.start()
+                }
+            }
+
+            QGCCheckBox {
+                text:       qsTr("Show modified only")
+                checked:    controller.showModifiedOnly
+                onClicked:  controller.showModifiedOnly = checked
+                visible:    QGroundControl.multiVehicleManager.activeVehicle.px4Firmware
+            }
+        }
+
+        QGCButton {
+            Layout.alignment:   Qt.AlignRight
+            text:               qsTr("Tools")
+            onClicked:          toolsMenu.popup()
         }
     }
 
@@ -210,6 +238,83 @@ Item {
         }
     }
 
+    QGCFlickable {
+        id:                 parameterScroll
+        anchors.leftMargin: ScreenTools.defaultFontPixelWidth
+        anchors.top:        header.bottom
+        anchors.bottom:     parent.bottom
+        anchors.left:       _searchFilter ? parent.left : groupScroll.right
+        anchors.right:      parent.right
+        clip:               true
+        contentHeight:      parameterListGridLayout.height
+        contentWidth:       parameterListGridLayout.width
+
+        Item {
+            width:  parameterListGridLayout.width
+            height: parameterListGridLayout.height
+
+            GridLayout {
+                id:             parameterListGridLayout
+                rows:           controller.parameters.count
+                columnSpacing:  ScreenTools.defaultFontPixelWidth
+                flow:           GridLayout.TopToBottom
+
+                Repeater {
+                    model: controller.parameters
+
+                    QGCLabel { 
+                        text: object.name 
+                        property Fact fact: object
+                    }
+                }
+
+                Repeater {
+                    model: controller.parameters
+
+                    QGCLabel {
+                        Layout.alignment:       Qt.AlignRight
+                        Layout.maximumWidth:    ScreenTools.defaultFontPixelWidth * 15
+                        color:                  object.defaultValueAvailable ? 
+                                                    (object.valueEqualsDefault ? qgcPal.text : qgcPal.warningText) : 
+                                                    qgcPal.text
+                        elide:                  Text.ElideRight
+                        clip:                   true
+
+                        text: {
+                            if (object.enumStrings.length === 0) {
+                                return object.valueString + " " + object.units
+                            }
+                            if (object.bitmaskStrings.length != 0) {
+                                return object.selectedBitmaskStrings.join(',')
+                            }
+                            return object.enumStringValue
+                        }
+                    }
+                }
+
+                Repeater {
+                    model: controller.parameters
+
+                    QGCLabel { 
+                        text:                   object.shortDescription 
+                        maximumLineCount:       1
+                        elide:                  Text.ElideRight
+                    }
+                }
+            }
+
+            QGCMouseArea {
+                anchors.fill: parent
+                onClicked: mouse => {
+                    let control = parameterListGridLayout.childAt(3, mouse.y)
+                    _editorDialogFact = control.fact
+                    editorDialogComponent.createObject(mainWindow).open()
+                }
+            }
+        }
+    }
+
+/*
     /// Parameter list
     QGCListView {
         id:                 editorListView
@@ -290,39 +395,5 @@ Item {
             }
         }
     }
-
-    QGCFileDialog {
-        id:             fileDialog
-        folder:         _appSettings.parameterSavePath
-        nameFilters:    [ qsTr("Parameter Files (*.%1)").arg(_appSettings.parameterFileExtension) , qsTr("All Files (*)") ]
-
-        onAcceptedForSave: (file) => {
-            controller.saveToFile(file)
-            close()
-        }
-
-        onAcceptedForLoad: (file) => {
-            close()
-            if (controller.buildDiffFromFile(file)) {
-                parameterDiffDialog.createObject(mainWindow).open()
-            }
-        }
-    }
-
-    Component {
-        id: editorDialogComponent
-
-        ParameterEditorDialog {
-            fact:           _editorDialogFact
-            showRCToParam:  _showRCToParam
-        }
-    }
-
-    Component {
-        id: parameterDiffDialog
-
-        ParameterDiffDialog {
-            paramController: _controller
-        }
-    }
+*/
 }
