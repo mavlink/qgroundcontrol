@@ -107,7 +107,7 @@ To see a complete list of all available components in the installer _Select Comp
    - **Ubuntu:** `sudo bash ./qgroundcontrol/tools/setup/install-dependencies-debian.sh`
    - **Fedora:** `sudo dnf install speech-dispatcher SDL2-devel SDL2 systemd-devel patchelf`
    - **Arch Linux:** `pacman -Sy speech-dispatcher patchelf`
-   - **OSX** [Setup](https://doc.qt.io/qt-6/macos.html)
+   - **OSX** `sh qgroundcontrol/tools/setup/macos-dependencies.sh`
    - **Android** [Setup](https://doc.qt.io/qt-6/android-getting-started.html)
 
 1. Install Optional/OS-Specific Functionality

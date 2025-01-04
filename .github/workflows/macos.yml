@@ -54,10 +54,8 @@ jobs:
       - uses: seanmiddleditch/gha-setup-ninja@v5
 
       - name: Install Dependencies
-        run: |
-          brew update
-          brew install cmake ninja ccache geographiclib SDL2 exiv2 expat zlib shapelib pkgconf create-dmg
-        continue-on-error: true
+        working-directory: ${{ github.workspace }}/tools/setup
+        run: sh macos-dependencies.sh
 
       - uses: lukka/get-cmake@latest
       - uses: seanmiddleditch/gha-setup-ninja@v5
