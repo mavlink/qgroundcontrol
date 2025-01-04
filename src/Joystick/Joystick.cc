@@ -23,7 +23,7 @@
 #include <QtCore/QSettings>
 #include <QtCore/QThread>
 
-QGC_LOGGING_CATEGORY(JoystickLog, "Joystick")
+QGC_LOGGING_CATEGORY(JoystickLog, "JoystickLog")
 QGC_LOGGING_CATEGORY(JoystickValuesLog, "JoystickValuesLog")
 
 int Joystick::_transmitterMode = 2;
