@@ -2422,6 +2422,87 @@ void Vehicle::sendMavCommandIntWithHandler(const MavCmdAckHandlerInfo_t* ackHand
                           param1, param2, param3, param4, param5, param6, param7);
 }
 
+typedef struct {
+    Vehicle*            vehicle;
+    std::function<void()> unsupported_lambda;
+} _sendMavCommandWithLambdaFallbackHandlerData;
+
+static void _sendMavCommandWithLambdaFallbackHandler(void* resultHandlerData, int /*compId*/, const mavlink_command_ack_t& ack, Vehicle::MavCmdResultFailureCode_t /*failureCode*/)
+{
+    auto* data = (_sendMavCommandWithLambdaFallbackHandlerData*)resultHandlerData;
+    auto* vehicle = data->vehicle;
+    auto* instanceData = vehicle->firmwarePluginInstanceData();
+
+    switch (ack.result) {
+    case MAV_RESULT_ACCEPTED:
+        instanceData->setCommandSupported(MAV_CMD(ack.command), FirmwarePluginInstanceData::CommandSupportedResult::SUPPORTED);
+        break;
+    case MAV_RESULT_UNSUPPORTED:
+        instanceData->setCommandSupported(MAV_CMD(ack.command), FirmwarePluginInstanceData::CommandSupportedResult::UNSUPPORTED);
+        // call the "unsupported" lambda:
+        data->unsupported_lambda();
+        break;
+    };
+
+out:
+    delete data;
+}
+
+void Vehicle::sendMavCommandWithLambdaFallback(std::function<void()> lambda, int compId, MAV_CMD command, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
+{
+
+    auto* instanceData = firmwarePluginInstanceData();
+
+    switch (instanceData->getCommandSupported(command)) {
+    case FirmwarePluginInstanceData::CommandSupportedResult::UNSUPPORTED:
+        // command is defintely unsupported, so call the lambda function:
+        lambda();
+        break;
+    case FirmwarePluginInstanceData::CommandSupportedResult::SUPPORTED:
+        // command is definitely supported; just send the command normally:
+        sendMavCommand(
+            compId,
+            command,
+            param1,
+            param2,
+            param3,
+            param4,
+            param5,
+            param6,
+            param7
+            );
+        break;
+    case FirmwarePluginInstanceData::CommandSupportedResult::UNKNOWN: {
+        // unknown whether the command is supported; send the command
+        // and let the callback handler call the lambda function if
+        // the command is not supported:
+        auto *data = new _sendMavCommandWithLambdaFallbackHandlerData();
+        data->vehicle = this;
+        data->unsupported_lambda = lambda;
+
+        const MavCmdAckHandlerInfo_t handlerInfo {
+            /* .resultHandler = */ &_sendMavCommandWithLambdaFallbackHandler,
+            /* .resultHandlerData =  */ data,
+            /* .progressHandler =  */ nullptr,
+            /* .progressHandlerData =  */ nullptr
+        };
+        sendMavCommandWithHandler(
+            &handlerInfo,
+            compId,
+            command,
+            param1,
+            param2,
+            param3,
+            param4,
+            param5,
+            param6,
+            param7
+            );
+        break;
+    }
+    }
+}
+
 bool Vehicle::isMavCommandPending(int targetCompId, MAV_CMD command)
 {
     bool pending = ((-1) < _findMavCommandListEntryIndex(targetCompId, command));
