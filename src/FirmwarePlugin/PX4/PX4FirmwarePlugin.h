@@ -115,7 +115,7 @@ private:
     // Vehicle specific data should go into PX4FirmwarePluginInstanceData
 };
 
-class PX4FirmwarePluginInstanceData : public QObject
+class PX4FirmwarePluginInstanceData : public FirmwarePluginInstanceData
 {
     Q_OBJECT
 

@@ -446,3 +446,13 @@ protected:
     QVariantList _toolIndicatorList;
     QVariantList _modeIndicatorList;
 };
+
+class FirmwarePluginInstanceData : public QObject
+{
+    Q_OBJECT
+
+public:
+
+    using QObject::QObject;
+
+};
