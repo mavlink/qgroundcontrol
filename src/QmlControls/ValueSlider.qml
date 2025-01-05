@@ -71,6 +71,14 @@ Control {
 
     property var qgcPal: QGroundControl.globalPalette
 
+    function setValue(value) {
+        value = _clampedSliderValue(value)
+        if (value !== control.value) {
+            control.value = value
+            _recalcSliderPos(false)
+        }
+    }    
+
     Component.onCompleted: {
         _recalcSliderPos(false)
         _loadComplete = true
