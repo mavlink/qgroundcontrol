@@ -144,16 +144,13 @@ private:
     static QMutex&          _reencodeMavlinkChannelMutex();
 };
 
-class APMFirmwarePluginInstanceData : public QObject
+class APMFirmwarePluginInstanceData : public FirmwarePluginInstanceData
 {
     Q_OBJECT
 
-public:
-    APMFirmwarePluginInstanceData(QObject* parent = nullptr)
-        : QObject(parent)
-    {
+    using FirmwarePluginInstanceData::FirmwarePluginInstanceData;
 
-    }
+public:
 
     QTime lastBatteryStatusTime;
     QTime lastHomePositionTime;

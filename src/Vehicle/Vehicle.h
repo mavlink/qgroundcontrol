@@ -745,11 +745,11 @@ public:
     bool xConfigMotors();
 
     /// @return Firmware plugin instance data associated with this Vehicle
-    QObject* firmwarePluginInstanceData() { return _firmwarePluginInstanceData; }
+    class FirmwarePluginInstanceData* firmwarePluginInstanceData() { return _firmwarePluginInstanceData; }
 
     /// Sets the firmware plugin instance data associated with this Vehicle. This object will be parented to the Vehicle
     /// and destroyed when the vehicle goes away.
-    void setFirmwarePluginInstanceData(QObject* firmwarePluginInstanceData);
+    void setFirmwarePluginInstanceData(FirmwarePluginInstanceData* firmwarePluginInstanceData);
 
     QString vehicleImageOpaque  () const;
     QString vehicleImageOutline () const;
@@ -993,7 +993,7 @@ private:
     MAV_AUTOPILOT       _firmwareType;
     MAV_TYPE            _vehicleType;
     FirmwarePlugin*     _firmwarePlugin = nullptr;
-    QObject*            _firmwarePluginInstanceData = nullptr;
+    class FirmwarePluginInstanceData*            _firmwarePluginInstanceData = nullptr;
     AutoPilotPlugin*    _autopilotPlugin = nullptr;
     bool                _soloFirmware = false;
 
