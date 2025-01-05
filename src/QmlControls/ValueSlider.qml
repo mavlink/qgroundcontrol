@@ -10,6 +10,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Qt.labs.animation
 
 import QGroundControl
 import QGroundControl.Controls
@@ -30,7 +31,7 @@ Control {
     required property int   decimalPlaces
     required property real  majorTickStepSize
 
-    property int _tickValueDecimalPlaces: countDecimalPlaces(majorTickStepSize)
+    property int _tickValueDecimalPlaces: _countDecimalPlaces(majorTickStepSize)
 
     property real   _indicatorCenterPos:    width / 2
 
@@ -64,7 +65,7 @@ Control {
     property int     _cMajorTicks: (_majorTickMaxValue - _majorTickMinValue) / majorTickStepSize + 1
 
     // Calculate the slider width such that we can flick through the full range of the slider
-    property real   _sliderContentSize: ((to - _firstPixelValue) / _sliderValuePerPixel) + (sliderFlickable.width - _indicatorCenterPos)
+    property real   _sliderContentSize: ((to - _firstPixelValue) / _sliderValuePerPixel) + (background.width - _indicatorCenterPos)
 
     property bool    _loadComplete: false
 
@@ -81,7 +82,7 @@ Control {
         }
     }
 
-    function countDecimalPlaces(number) {
+    function _countDecimalPlaces(number) {
         const numberString = number.toString()
         if (numberString.includes('.')) {
             return numberString.split('.')[1].length
@@ -90,15 +91,23 @@ Control {
         }
     }
 
+    function _sliderXPosToValue(xPos) {
+        return _firstPixelValue + ((-xPos + _indicatorCenterPos) * _sliderValuePerPixel)
+    }
+
+    function _valueToSliderXPos(value) {
+        return -((value - _firstPixelValue) / _sliderValuePerPixel) + _indicatorCenterPos
+    }
+
     function _recalcSliderPos(animate = true) {
         // Position the slider such that the indicator is pointing to the current value
-        var contentX = ((value - _firstPixelValue) / _sliderValuePerPixel) - _indicatorCenterPos
+        let sliderXPos = _valueToSliderXPos(value)
         if (animate) {
-            flickableAnimation.from = sliderFlickable.contentX
-            flickableAnimation.to = contentX
+            flickableAnimation.from = sliderContainer.x
+            flickableAnimation.to = sliderXPos
             flickableAnimation.start()
         } else {
-            sliderFlickable.contentX = contentX
+            sliderContainer.x = sliderXPos
         }
     }
 
@@ -112,86 +121,82 @@ Control {
     }
 
     background: Item {
-        implicitHeight: _majorTickSize + tickValueMargin + ScreenTools.defaultFontPixelHeight
+        implicitHeight: _majorTickSize + tickValueMargin + ScreenTools.defaultFontPixelHeight + labelOffset
+        clip:           true
 
-        property real tickValueMargin: ScreenTools.defaultFontPixelHeight / 3
+        property real tickValueMargin:  ScreenTools.defaultFontPixelHeight / 3
+        property real labelOffset:      labelItem.visible ? labelItem.contentHeight / 2 : 0
 
-        DeadMouseArea {
-            anchors.fill: parent
-        }
+        Item {
+            id:     sliderContainer
+            y:      background.labelOffset
+            width:  _sliderContentSize
+            height: background.height - y
 
-        QGCFlickable {
-            id:                 sliderFlickable
-            anchors.fill:       parent
-            contentWidth:       sliderContainer.width
-            contentHeight:      sliderContainer.height
-            flickableDirection: Flickable.HorizontalFlick
-
-            onContentXChanged: {
-                if (dragging) {
-                    value = _firstPixelValue + ((sliderFlickable.contentX + _indicatorCenterPos) * _sliderValuePerPixel)
+            onXChanged: {
+                if (dragHandler.active) {
+                    value = _sliderXPosToValue(x)
                 }
             }
 
-            PropertyAnimation on contentX {
+            DragHandler {
+                id:             dragHandler
+                yAxis.enabled:  false
+            }
+
+            BoundaryRule on x {
+                minimum: _valueToSliderXPos(to)
+                maximum: 0
+            }
+
+            PropertyAnimation on x {
                 id:             flickableAnimation
                 duration:       500
-                from:           fromValue
-                to:             toValue
                 easing.type:    Easing.OutCubic
                 running:        false
-
-                property real fromValue
-                property real toValue
             }
 
-            Item {
-                id:     sliderContainer
-                width:  _sliderContentSize
-                height: sliderFlickable.height
+            // Major tick marks
+            Repeater {
+                model: _cMajorTicks
 
-                // Major tick marks
-                Repeater {
-                    model: _cMajorTicks
+                Item {
+                    width:      1
+                    height:     sliderContainer.height
+                    x:          _majorTickSpacing * index + _firstTickPixelOffset
+                    opacity:    tickValue < from || tickValue > to ? 0.5 : 1
 
-                    Item {
-                        width:      1
-                        height:     sliderContainer.height
-                        x:          _majorTickSpacing * index + _firstTickPixelOffset
-                        opacity:    tickValue < from || tickValue > to ? 0.5 : 1
-
-                        property real tickValue: _majorTickMinValue + (majorTickStepSize * index)
-
-                        Rectangle {
-                            id:     majorTickMark
-                            width:  1
-                            height: _majorTickSize
-                            color:  qgcPal.text
-                        }
-
-                        QGCLabel {
-                            anchors.bottomMargin:       _tickValueEdgeMargin
-                            anchors.bottom:             parent.bottom
-                            anchors.horizontalCenter:   majorTickMark.horizontalCenter
-                            text:                       parent.tickValue.toFixed(_tickValueDecimalPlaces)
-                        }
-                    }
-                }
-
-                // Minor tick marks
-                Repeater {
-                    model: _cMajorTicks * 2
+                    property real tickValue: _majorTickMinValue + (majorTickStepSize * index)
 
                     Rectangle {
-                        x:          _majorTickSpacing / 2 * index +  + _firstTickPixelOffset
-                        width:      1
-                        height:     _minorTickSize
-                        color:      qgcPal.text
-                        opacity:    tickValue < from || tickValue > to ? 0.5 : 1
-                        visible:    index % 2 === 1
-
-                        property real tickValue: _majorTickMaxValue - ((majorTickStepSize  / 2) * index)
+                        id:     majorTickMark
+                        width:  1
+                        height: _majorTickSize
+                        color:  qgcPal.text
                     }
+
+                    QGCLabel {
+                        anchors.bottomMargin:       _tickValueEdgeMargin
+                        anchors.bottom:             parent.bottom
+                        anchors.horizontalCenter:   majorTickMark.horizontalCenter
+                        text:                       parent.tickValue.toFixed(_tickValueDecimalPlaces)
+                    }
+                }
+            }
+
+            // Minor tick marks
+            Repeater {
+                model: _cMajorTicks * 2
+
+                Rectangle {
+                    x:          _majorTickSpacing / 2 * index +  + _firstTickPixelOffset
+                    width:      1
+                    height:     _minorTickSize
+                    color:      qgcPal.text
+                    opacity:    tickValue < from || tickValue > to ? 0.5 : 1
+                    visible:    index % 2 === 1
+
+                    property real tickValue: _majorTickMaxValue - ((majorTickStepSize  / 2) * index)
                 }
             }
         }
@@ -202,6 +207,7 @@ Control {
             height:     labelItem.contentHeight
             color:      qgcPal.window
             opacity:    0.8
+            visible:    labelItem.visible
         }
 
         QGCLabel {
@@ -209,6 +215,7 @@ Control {
             anchors.left:       labelItemBackground.left
             anchors.top:        labelItemBackground.top
             text:               label
+            visible:            label !== ""
         }
     }
 
@@ -217,6 +224,7 @@ Control {
 
         Canvas {
             id:                         valueIndicator
+            anchors.bottom:             parent.bottom
             anchors.horizontalCenter:   parent.horizontalCenter
             width:                      Math.max(valueLabel.contentWidth + (indicatorValueMargins * 2), pointerSize * 2 + 2)
             height:                     valueLabel.contentHeight + (indicatorValueMargins * 2) + pointerSize
