@@ -2337,6 +2337,26 @@ void Vehicle::landingGearRetract()
 
 void Vehicle::setCurrentMissionSequence(int seq)
 {
+    if (!_firmwarePlugin->sendHomePositionToVehicle()) {
+        seq--;
+    }
+
+    // send the mavlink command (created in Jan 2019)
+    sendMavCommandWithLambdaFallback(
+        [this,seq]() {
+            setCurrentMissionSequenceWithMissionSetCurrent(seq);
+        },
+        static_cast<uint8_t>(defaultComponentId()),
+        MAV_CMD_DO_SET_MISSION_CURRENT,
+        static_cast<uint16_t>(seq)
+    );
+}
+
+// send mavlink message (deprecated since Aug 2022).  Note that this
+// is called with seq already adjusted as to whether the flight stack
+// is assuming slot-0 is home.
+void Vehicle::setCurrentMissionSequenceWithMissionSetCurrent(int seq)
+{
     SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
         qCDebug(VehicleLog) << "setCurrentMissionSequence: primary link gone!";
@@ -2345,9 +2365,6 @@ void Vehicle::setCurrentMissionSequence(int seq)
 
     mavlink_message_t       msg;
 
-    if (!_firmwarePlugin->sendHomePositionToVehicle()) {
-        seq--;
-    }
     mavlink_msg_mission_set_current_pack_chan(
                 static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
                 static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
