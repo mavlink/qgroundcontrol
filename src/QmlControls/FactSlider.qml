@@ -39,18 +39,23 @@ ValueSlider {
         }
     }
 
+    Component.onDestruction: {
+        if (updateTimer.running) {
+            updateTimer.stop()
+            _fact.value = control.value
+        }
+    }
+
     Timer {
         id:             updateTimer
-        interval:       1000
+        interval:       500
         repeat:         false
         running:        false
         onTriggered:    _fact.value = control.value
     }
 
     onValueChanged: {
-        if (enabled) {
-            // We don't want to spam the vehicle with parameter updates
-            updateTimer.restart()
-        }
+        // We don't want to spam the vehicle with parameter updates
+        updateTimer.restart()
     }
 }
