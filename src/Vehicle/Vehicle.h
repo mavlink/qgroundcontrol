@@ -689,6 +689,14 @@ public:
         int compId, MAV_CMD command, MAV_FRAME frame, 
         float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, double param5 = 0.0f, double param6 = 0.0f, float param7 = 0.0f);
 
+    /// Sends the command and calls the fallback lambda function in
+    /// case the command is MAV_RESULT_UNSUPPORTED
+    void sendMavCommandWithLambdaFallback(
+        std::function<void()> lambda,
+        int compId, MAV_CMD command,
+        float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, float param5 = 0.0f, float param6 = 0.0f, float param7 = 0.0f);
+
+
     typedef enum {
         RequestMessageNoFailure,
         RequestMessageFailureCommandError,
