@@ -122,5 +122,19 @@ class PX4FirmwarePluginInstanceData : public FirmwarePluginInstanceData
 public:
     PX4FirmwarePluginInstanceData(QObject* parent = nullptr);
 
+    // anyVersionSupportsCommand returns
+    // CommandSupportedResult::SUPPORTED if any version of the
+    // firmware has supported cmd.  It return UNSUPPORTED if no
+    // version ever has.  It returns UNKNOWN if that information is
+    // not known.
+    CommandSupportedResult anyVersionSupportsCommand(MAV_CMD cmd) const override {
+        switch (cmd) {
+        case MAV_CMD_DO_SET_MISSION_CURRENT:
+            return CommandSupportedResult::UNSUPPORTED;
+        default:
+            return CommandSupportedResult::UNKNOWN;
+        }
+    }
+
     bool versionNotified;  ///< true: user notified over version issue
 };
