@@ -994,6 +994,9 @@ private:
 
     static void _rebootCommandResultHandler(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, MavCmdResultFailureCode_t failureCode);
 
+    // send mavlink command (deprecated since Aug 2022)
+    Q_INVOKABLE void setCurrentMissionSequenceWithMissionSetCurrent(int seq);
+
     int     _id;                    ///< Mavlink system id
     int     _defaultComponentId;
     bool    _offlineEditingVehicle = false; ///< true: This Vehicle is a "disconnected" vehicle for ui use while offline editing
