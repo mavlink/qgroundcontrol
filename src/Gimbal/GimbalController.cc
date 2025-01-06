@@ -331,7 +331,7 @@ GimbalController::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t& mes
     } else {
         float absoluteYaw = qRadiansToDegrees(yaw);
         float bodyYaw = absoluteYaw - _vehicle->heading()->rawValue().toFloat();
-        if (bodyYaw < 180.0f) {
+        if (bodyYaw < -180.0f) {
             bodyYaw += 360.0f;
         }
 
