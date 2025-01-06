@@ -18,7 +18,7 @@ import QGroundControl.Palette
 //-------------------------------------------------------------------------
 //-- Telemetry RSSI
 Item {
-    id:             _root
+    id:             control
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
     width:          forwardingSupportIcon.width * 1.1
@@ -26,31 +26,15 @@ Item {
     property bool showIndicator: QGroundControl.linkManager.mavlinkSupportForwardingEnabled
 
     Component {
-        id: forwardingSupportInfo
+        id: forwardingSupportInfoPage
         
-        Rectangle {
-            width:  telemGrid.width  + ScreenTools.defaultFontPixelWidth  * 3
-            height: telemGrid.height + ScreenTools.defaultFontPixelHeight * 2
-            radius: ScreenTools.defaultFontPixelHeight * 0.5
-            color:  qgcPal.window
+        ToolIndicatorPage {
+            contentComponent: SettingsGroupLayout {
+                QGCLabel { text: qsTr("Mavlink traffic is being forwarded to a support server") }
 
-            GridLayout {
-                id:                 telemGrid
-                anchors.margins:    ScreenTools.defaultFontPixelHeight
-                columnSpacing:      ScreenTools.defaultFontPixelWidth
-                columns:            2
-                anchors.centerIn:   parent
-
-                QGCLabel { 
-                    Layout.columnSpan: 2
-                    text: qsTr("Mavlink traffic is being forwarded to a support server") 
-                }
-
-                QGCLabel { 
-                    text: qsTr("Server name:")
-                }
-                QGCLabel { 
-                    text: QGroundControl.settingsManager.appSettings.forwardMavlinkAPMSupportHostName.value
+                LabelledLabel { 
+                    label:      qsTr("Server name:")
+                    labelText:  QGroundControl.settingsManager.appSettings.forwardMavlinkAPMSupportHostName.value
                 }
             }
         }
@@ -68,8 +52,6 @@ Item {
     
     MouseArea {
         anchors.fill: parent
-        onClicked: {
-            mainWindow.showIndicatorPopup(_root, forwardingSupportInfo)
-        }
+        onClicked:      mainWindow.showIndicatorDrawer(forwardingSupportInfoPage, control)
     }
 }

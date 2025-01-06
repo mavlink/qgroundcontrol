@@ -19,7 +19,7 @@ import QGroundControl.Palette
 //-------------------------------------------------------------------------
 //-- RC RSSI Indicator
 Item {
-    id:             _root
+    id:             control
     width:          rssiRow.width * 1.1
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
@@ -27,42 +27,20 @@ Item {
     property bool showIndicator: _activeVehicle.supportsRadio && _rcRSSIAvailable
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
-    property bool   _rcRSSIAvailable:   _activeVehicle ? _activeVehicle.rcRSSI > 0 && _activeVehicle.rcRSSI <= 100 : false
+    property bool   _rcRSSIAvailable:   _activeVehicle.rcRSSI > 0 && _activeVehicle.rcRSSI <= 100
 
     Component {
-        id: rcRSSIInfo
+        id: rcRSSIInfoPage
 
-        Rectangle {
-            width:  rcrssiCol.width   + ScreenTools.defaultFontPixelWidth  * 3
-            height: rcrssiCol.height  + ScreenTools.defaultFontPixelHeight * 2
-            radius: ScreenTools.defaultFontPixelHeight * 0.5
-            color:  qgcPal.window
-            border.color:   qgcPal.text
+        ToolIndicatorPage {
+            showExpand: false
 
-            Column {
-                id:                 rcrssiCol
-                spacing:            ScreenTools.defaultFontPixelHeight * 0.5
-                width:              Math.max(rcrssiGrid.width, rssiLabel.width)
-                anchors.margins:    ScreenTools.defaultFontPixelHeight
-                anchors.centerIn:   parent
+            contentComponent: SettingsGroupLayout {
+                heading: qsTr("RC RSSI Status")
 
-                QGCLabel {
-                    id:             rssiLabel
-                    text:           _activeVehicle ? (_activeVehicle.rcRSSI !== 255 ? qsTr("RC RSSI Status") : qsTr("RC RSSI Data Unavailable")) : qsTr("N/A", "No data available")
-                    font.bold:      true
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-
-                GridLayout {
-                    id:                 rcrssiGrid
-                    visible:            _rcRSSIAvailable
-                    anchors.margins:    ScreenTools.defaultFontPixelHeight
-                    columnSpacing:      ScreenTools.defaultFontPixelWidth
-                    columns:            2
-                    anchors.horizontalCenter: parent.horizontalCenter
-
-                    QGCLabel { text: qsTr("RSSI:") }
-                    QGCLabel { text: _activeVehicle ? (_activeVehicle.rcRSSI + "%") : 0 }
+                LabelledLabel {
+                    label:      qsTr("RSSI")
+                    labelText:  _activeVehicle.rcRSSI + "%"
                 }
             }
         }
@@ -94,8 +72,6 @@ Item {
 
     MouseArea {
         anchors.fill:   parent
-        onClicked: {
-            mainWindow.showIndicatorPopup(_root, rcRSSIInfo)
-        }
+        onClicked:      mainWindow.showIndicatorDrawer(rcRSSIInfoPage, control)
     }
 }
