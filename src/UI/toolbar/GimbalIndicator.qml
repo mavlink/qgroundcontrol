@@ -19,7 +19,7 @@ import QGroundControl.FactSystem
 import QGroundControl.FactControls
 
 Item {
-    id:             _root
+    id:             control
     width:          gimbalIndicatorIcon.width * 1.1 + gimbalTelemetryLayout.childrenRect.width + margins
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
@@ -40,20 +40,10 @@ Item {
 
     // Popup panel, appears when clicking top toolbar gimbal indicator
     Component {
-        id: gimbalControlsPopup
+        id: gimbalControlsPage
 
-        Rectangle {
-            width:          mainLayout.width   + mainLayout.anchors.margins * 2          
-            height:         mainLayout.height  + mainLayout.anchors.margins * 2
-            color:          qgcPal.window
-            radius:         panelRadius
-
-            GridLayout {
-                id:                 mainLayout
-                anchors.margins:    ScreenTools.defaultFontPixelWidth
-                anchors.top:        parent.top
-                anchors.right:      parent.right
-
+        ToolIndicatorPage {
+            contentComponent: GridLayout {
                 // Label indicating the purpose of the panel and active gimbal instance
                 QGCLabel {
                     text:                   qsTr("Gimbal ") + 
@@ -215,7 +205,7 @@ Item {
                 }
 
                 // Show settings button. It is thought for persisting popup close actions, hence the visibility
-                // based on a _root.settingsPanelVisible It is interesting as users calibrating onscreen controls 
+                // based on a control.settingsPanelVisible It is interesting as users calibrating onscreen controls 
                 // will be testing and adjusting these frequently, so this way it is handier for them
                 QGCButton {
                     id:                     extendedOptionsButton
@@ -228,12 +218,12 @@ Item {
                     pointSize:              ScreenTools.smallFontPointSize
                     backRadius:             panelRadius * 0.5
                     checkable:              true
-                    checked:                _root.settingsPanelVisible
+                    checked:                control.settingsPanelVisible
                     leftPadding:            squareButtonPadding
                     rightPadding:           squareButtonPadding
                     onCheckedChanged: {
-                        if (checked !== _root.settingsPanelVisible) {
-                            _root.settingsPanelVisible = checked
+                        if (checked !== control.settingsPanelVisible) {
+                            control.settingsPanelVisible = checked
                         }
                     }
                 }
@@ -413,9 +403,7 @@ Item {
     }
 
     MouseArea {
-        anchors.fill: parent
-        onClicked: {
-            mainWindow.showIndicatorPopup(_root, gimbalControlsPopup, false)
-        }
+        anchors.fill:   parent
+        onClicked:      mainWindow.showIndicatorDrawer(gimbalControlsPage, control)
     }
 }
