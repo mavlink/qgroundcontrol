@@ -27,7 +27,7 @@ Item {
     property bool showIndicator: _hasTelemetry
 
     property var  _activeVehicle:   QGroundControl.multiVehicleManager.activeVehicle
-    property bool _hasTelemetry:    _activeVehicle ? _activeVehicle.telemetryLRSSI !== 0 : false
+    property bool _hasTelemetry:    _activeVehicle.telemetryLRSSI !== 0
 
     QGCColoredImage {
         id:                 telemIcon
@@ -51,48 +51,42 @@ Item {
         ToolIndicatorPage {
             showExpand: false
 
-            contentComponent: Component {
-                ColumnLayout {
-                    spacing: ScreenTools.defaultFontPixelHeight / 2
+            contentComponent: SettingsGroupLayout {
+                heading: qsTr("Telemetry RSSI Status")
 
-                    SettingsGroupLayout {
-                        heading: qsTr("Telemetry RSSI Status")
+                LabelledLabel {
+                    label:      qsTr("Local RSSI:")
+                    labelText:  _activeVehicle.telemetryLRSSI + " " + qsTr("dBm")
+                }
 
-                        LabelledLabel {
-                            label:      qsTr("Local RSSI:")
-                            labelText:  _activeVehicle.telemetryLRSSI + " " + qsTr("dBm")
-                        }
+                LabelledLabel {
+                    label:      qsTr("Remote RSSI:")
+                    labelText:  _activeVehicle.telemetryRRSSI + " " + qsTr("dBm")
+                }
 
-                        LabelledLabel {
-                            label:      qsTr("Remote RSSI:")
-                            labelText:  _activeVehicle.telemetryRRSSI + " " + qsTr("dBm")
-                        }
+                LabelledLabel {
+                    label:      qsTr("RX Errors:")
+                    labelText:  _activeVehicle.telemetryRXErrors
+                }
 
-                        LabelledLabel {
-                            label:      qsTr("RX Errors:")
-                            labelText:  _activeVehicle.telemetryRXErrors
-                        }
+                LabelledLabel {
+                    label:      qsTr("Errors Fixed:")
+                    labelText:  _activeVehicle.telemetryFixed
+                }
 
-                        LabelledLabel {
-                            label:      qsTr("Errors Fixed:")
-                            labelText:  _activeVehicle.telemetryFixed
-                        }
+                LabelledLabel {
+                    label:      qsTr("TX Buffer:")
+                    labelText:  _activeVehicle.telemetryTXBuffer
+                }
 
-                        LabelledLabel {
-                            label:      qsTr("TX Buffer:")
-                            labelText:  _activeVehicle.telemetryTXBuffer
-                        }
+                LabelledLabel {
+                    label:      qsTr("Local Noise:")
+                    labelText:  _activeVehicle.telemetryLNoise
+                }
 
-                        LabelledLabel {
-                            label:      qsTr("Local Noise:")
-                            labelText:  _activeVehicle.telemetryLNoise
-                        }
-
-                        LabelledLabel {
-                            label:      qsTr("Remote Noise:")
-                            labelText:  _activeVehicle.telemetryRNoise
-                        }
-                    }
+                LabelledLabel {
+                    label:      qsTr("Remote Noise:")
+                    labelText:  _activeVehicle.telemetryRNoise
                 }
             }
         }
