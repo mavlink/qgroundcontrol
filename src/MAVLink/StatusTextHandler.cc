@@ -314,7 +314,8 @@ void StatusTextHandler::_handleStatusText(const mavlink_message_t &message)
 
 void StatusTextHandler::_chunkedStatusTextTimeout()
 {
-    for (auto [compId, chunkedInfo] : m_chunkedStatusTextInfoMap.asKeyValueRange()) {
+    for (auto compId : m_chunkedStatusTextInfoMap.keys()) {
+        auto& chunkedInfo = m_chunkedStatusTextInfoMap[compId];
         (void) chunkedInfo.rgMessageChunks.append(QString());
         _chunkedStatusTextCompleted(compId);
     }
