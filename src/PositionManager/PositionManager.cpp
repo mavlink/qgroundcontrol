@@ -88,9 +88,9 @@ void QGCPositionManager::_checkPermission()
     QLocationPermission locationPermission;
     locationPermission.setAccuracy(QLocationPermission::Precise);
 
-    const Qt::PermissionStatus permissionStatus = qgcApp()->checkPermission(locationPermission);
+    const Qt::PermissionStatus permissionStatus = QCoreApplication::instance()->checkPermission(locationPermission);
     if (permissionStatus == Qt::PermissionStatus::Undetermined) {
-        qgcApp()->requestPermission(locationPermission, this, [this](const QPermission &permission) {
+        QCoreApplication::instance()->requestPermission(locationPermission, this, [this](const QPermission &permission) {
             _handlePermissionStatus(permission.status());
         });
     } else {
