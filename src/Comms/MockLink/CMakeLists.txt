@@ -7,6 +7,8 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
     target_sources(MockLink
         PRIVATE
+            MockConfiguration.cc
+            MockConfiguration.h
             MockLink.cc
             MockLink.h
             MockLinkFTP.cc

@@ -168,7 +168,7 @@ bool LinkManager::createConnectedLink(SharedLinkConfigurationPtr &config)
         return false;
     }
 
-    (void) _rgLinks.append(link);
+    _rgLinks.append(link);
     config->setLink(link);
 
     (void) connect(link.get(), &LinkInterface::communicationError, qgcApp(), &QGCApplication::showAppMessage);
