@@ -12,6 +12,9 @@
 #include "DeviceInfo.h"
 #include "QGCLoggingCategory.h"
 
+#include <QtCore/QCoreApplication>
+#include <QtCore/QPermissions>
+
 QGC_LOGGING_CATEGORY(BluetoothLinkLog, "qgc.comms.bluetoothlink")
 
 /*===========================================================================*/
@@ -364,6 +367,8 @@ BluetoothLink::BluetoothLink(SharedLinkConfigurationPtr &config, QObject *parent
 {
     // qCDebug(BluetoothLinkLog) << Q_FUNC_INFO << this;
 
+    _checkPermission();
+
     _workerThread->setObjectName(QStringLiteral("Bluetooth_%1").arg(_bluetoothConfig->name()));
 
     _worker->moveToThread(_workerThread);
@@ -438,4 +443,30 @@ void BluetoothLink::_onDataSent(const QByteArray &data)
 void BluetoothLink::_writeBytes(const QByteArray& bytes)
 {
     (void) QMetaObject::invokeMethod(_worker, "writeData", Qt::QueuedConnection, Q_ARG(QByteArray, bytes));
+}
+
+void BluetoothLink::_checkPermission()
+{
+    QBluetoothPermission permission;
+    permission.setCommunicationModes(QBluetoothPermission::Access);
+
+    const Qt::PermissionStatus permissionStatus = QCoreApplication::instance()->checkPermission(permission);
+    if (permissionStatus == Qt::PermissionStatus::Undetermined) {
+        QCoreApplication::instance()->requestPermission(permission, this, [this](const QPermission &permission) {
+            _handlePermissionStatus(permission.status());
+        });
+    } else {
+        _handlePermissionStatus(permissionStatus);
+    }
+}
+
+void BluetoothLink::_handlePermissionStatus(Qt::PermissionStatus permissionStatus)
+{
+    if (permissionStatus != Qt::PermissionStatus::Granted) {
+        qCWarning(BluetoothLinkLog) << "Bluetooth Permission Denied";
+        _onErrorOccurred("Bluetooth Permission Denied");
+        _onDisconnected();
+    } else {
+        qCDebug(BluetoothLinkLog) << "Bluetooth Permission Granted";
+    }
 }
