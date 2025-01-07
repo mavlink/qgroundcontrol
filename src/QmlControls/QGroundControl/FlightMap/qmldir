@@ -1,7 +1,7 @@
 Module QGroundControl.FlightMap
 
 # Main view controls
-FlightMap           1.0 FlightMap.qml
+FlightMap                   1.0 FlightMap.qml
 
 # Widgets
 CenterMapDropButton         1.0 CenterMapDropButton.qml
@@ -13,7 +13,6 @@ MapLineArrow                1.0 MapLineArrow.qml
 MapScale                    1.0 MapScale.qml
 PhotoVideoControl           1.0 PhotoVideoControl.qml
 QGCArtificialHorizon        1.0 QGCArtificialHorizon.qml
-QGCAttitudeHUD              1.0 QGCAttitudeHUD.qml
 QGCAttitudeWidget           1.0 QGCAttitudeWidget.qml
 QGCCompassWidget            1.0 QGCCompassWidget.qml
 QGCPitchIndicator           1.0 QGCPitchIndicator.qml
@@ -23,10 +22,8 @@ CameraTriggerIndicator      1.0 CameraTriggerIndicator.qml
 CustomMapItems              1.0 CustomMapItems.qml
 MissionItemIndicator        1.0 MissionItemIndicator.qml
 MissionItemIndicatorDrag    1.0 MissionItemIndicatorDrag.qml
-MissionItemView             1.0 MissionItemView.qml
 MissionLineView             1.0 MissionLineView.qml
 PlanMapItems                1.0 PlanMapItems.qml
-PolygonEditor               1.0 PolygonEditor.qml
 ProximityRadarMapView       1.0 ProximityRadarMapView.qml
 QGCMapCircleVisuals         1.0 QGCMapCircleVisuals.qml
 QGCMapPolygonVisuals        1.0 QGCMapPolygonVisuals.qml
