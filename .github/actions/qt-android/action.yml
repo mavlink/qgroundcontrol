@@ -27,8 +27,8 @@ runs:
     - name: Setup Android Environment
       uses: android-actions/setup-android@v3
       with:
-        cmdline-tools-version: 11076708
-        packages: 'platform-tools platforms;android-34 build-tools;34.0.0' # ndk;25.1.8937393'
+        cmdline-tools-version: 12266719
+        packages: 'platform-tools platforms;android-35 build-tools;35.0.0' # ndk;25.1.8937393'
         log-accepted-android-sdk-licenses: false
 
     - name: Install Android NDK
@@ -50,14 +50,13 @@ runs:
       shell: bash
 
     - name: Set Up Cache
-      uses: hendrikmuhs/ccache-action@v1.2
+      uses: hendrikmuhs/ccache-action@main
       with:
         create-symlink: ${{ runner.os != 'Windows' }}
         key: ${{ runner.os }}-Android-${{ matrix.BuildType }}
-        restore-keys: ${{ runner.os }}-Android-${{ matrix.BuildType }}
         max-size: 1G
-        append-timestamp: false
         save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+        evict-old-files: 'job'
 
     - name: Install Qt for ${{ runner.os }}
       uses: jurplel/install-qt-action@v4

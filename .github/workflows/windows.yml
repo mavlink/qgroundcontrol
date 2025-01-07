@@ -71,14 +71,13 @@ jobs:
       #   uses: mozilla-actions/sccache-action@v0.0.5
 
       - name: Set Up Cache
-        uses: hendrikmuhs/ccache-action@v1.2
+        uses: hendrikmuhs/ccache-action@main
         with:
           key: ${{ runner.os }}-${{ matrix.Arch }}-${{ matrix.BuildType }}
-          restore-keys: ${{ runner.os }}-${{ matrix.Arch }}-${{ matrix.BuildType }}
           max-size: 1G
-          append-timestamp: false
           variant: sccache
           save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+          evict-old-files: 'job'
 
       - name: Install Qt for Windows (x64)
         if: matrix.Arch == 'x64'

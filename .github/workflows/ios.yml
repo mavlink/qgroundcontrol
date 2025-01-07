@@ -58,13 +58,12 @@ jobs:
       - uses: lukka/get-cmake@latest
 
       - name: Set Up Cache
-        uses: hendrikmuhs/ccache-action@v1.2
+        uses: hendrikmuhs/ccache-action@main
         with:
           key: ${{ runner.os }}-iOS-${{ matrix.BuildType }}
-          restore-keys: ${{ runner.os }}-iOS-${{ matrix.BuildType }}
           max-size: 1G
-          append-timestamp: false
           save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+          evict-old-files: 'job'
 
       - name: Install Qt for MacOS
         uses: jurplel/install-qt-action@v4
