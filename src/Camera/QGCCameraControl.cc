@@ -2412,7 +2412,7 @@ QGCCameraControl::setTrackingEnabled(bool set)
 }
 
 //-----------------------------------------------------------------------------
-void QGCCameraControl::startTracking(QRectF rec, QString timestamp)
+void QGCCameraControl::startTracking(QRectF rec, QString timestamp, bool is_zoom)
 {
     if(_trackingMarquee != rec) {
         _trackingMarquee = rec;
@@ -2425,6 +2425,9 @@ void QGCCameraControl::startTracking(QRectF rec, QString timestamp)
                                   << "Timestamp: " << timestamp;
 
         uint64_t uint_timestamp = timestamp.toULongLong();
+        if (is_zoom) {
+            uint_timestamp = uint_timestamp | (1 << 63);
+        }
         // FIXME: we put the 64-bit timestamp into fifth and sixth parameters here which is not a good practice in MavLink
         uint32_t timestampLow = static_cast<uint32_t>(uint_timestamp);
         uint32_t timestampHigh = static_cast<uint32_t>(uint_timestamp >> 32);

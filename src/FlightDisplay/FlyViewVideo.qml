@@ -179,7 +179,8 @@ Item {
                 return;
             }
             console.log(videoStreaming._camera.zoomEnabled)
-            videoStreaming._camera.startTracking(rec, "300");
+            let latestFrameTimestamp = QGroundControl.videoManager.lastKlvTimestamp;
+            videoStreaming._camera.startTracking(rec, latestFrameTimestamp, true);
             videoStreaming._camera._zoomLevel = Math.min(1.0/(x1-x0), 1.0/(y1-y0))
             videoStreaming._camera.zoomEnabled = true
         }
