@@ -2343,29 +2343,17 @@ void Vehicle::setCurrentMissionSequence(int seq)
 
     // send the mavlink command (created in Jan 2019)
     sendMavCommandWithLambdaFallback(
-        [this,seq]() {
-            setCurrentMissionSequenceWithMissionSetCurrent(seq);
-        },
-        static_cast<uint8_t>(defaultComponentId()),
-        MAV_CMD_DO_SET_MISSION_CURRENT,
-        static_cast<uint16_t>(seq)
-    );
-}
+        [this,seq]() {  // lambda function which uses the deprecated mission_set_current
+            SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
+            if (!sharedLink) {
+                qCDebug(VehicleLog) << "setCurrentMissionSequence: primary link gone!";
+                return;
+            }
 
-// send mavlink message (deprecated since Aug 2022).  Note that this
-// is called with seq already adjusted as to whether the flight stack
-// is assuming slot-0 is home.
-void Vehicle::setCurrentMissionSequenceWithMissionSetCurrent(int seq)
-{
-    SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
-    if (!sharedLink) {
-        qCDebug(VehicleLog) << "setCurrentMissionSequence: primary link gone!";
-        return;
-    }
+            mavlink_message_t       msg;
 
-    mavlink_message_t       msg;
-
-    mavlink_msg_mission_set_current_pack_chan(
+            // send mavlink message (deprecated since Aug 2022).
+            mavlink_msg_mission_set_current_pack_chan(
                 static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
                 static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
                 sharedLink->mavlinkChannel(),
@@ -2373,7 +2361,12 @@ void Vehicle::setCurrentMissionSequenceWithMissionSetCurrent(int seq)
                 static_cast<uint8_t>(id()),
                 _compID,
                 static_cast<uint16_t>(seq));
-    sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+            sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+        },
+        static_cast<uint8_t>(defaultComponentId()),
+        MAV_CMD_DO_SET_MISSION_CURRENT,
+        static_cast<uint16_t>(seq)
+    );
 }
 
 void Vehicle::sendMavCommand(int compId, MAV_CMD command, bool showError, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
