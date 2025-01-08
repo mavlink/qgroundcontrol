@@ -25,7 +25,7 @@
 #include "px4_custom_mode.h"
 
 PX4FirmwarePluginInstanceData::PX4FirmwarePluginInstanceData(QObject* parent)
-    : QObject(parent)
+    : FirmwarePluginInstanceData(parent)
     , versionNotified(false)
 {
 

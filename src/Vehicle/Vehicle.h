@@ -689,6 +689,14 @@ public:
         int compId, MAV_CMD command, MAV_FRAME frame, 
         float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, double param5 = 0.0f, double param6 = 0.0f, float param7 = 0.0f);
 
+    /// Sends the command and calls the fallback lambda function in
+    /// case the command is MAV_RESULT_UNSUPPORTED
+    void sendMavCommandWithLambdaFallback(
+        std::function<void()> lambda,
+        int compId, MAV_CMD command,
+        float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, float param5 = 0.0f, float param6 = 0.0f, float param7 = 0.0f);
+
+
     typedef enum {
         RequestMessageNoFailure,
         RequestMessageFailureCommandError,
@@ -745,11 +753,11 @@ public:
     bool xConfigMotors();
 
     /// @return Firmware plugin instance data associated with this Vehicle
-    QObject* firmwarePluginInstanceData() { return _firmwarePluginInstanceData; }
+    class FirmwarePluginInstanceData* firmwarePluginInstanceData() { return _firmwarePluginInstanceData; }
 
     /// Sets the firmware plugin instance data associated with this Vehicle. This object will be parented to the Vehicle
     /// and destroyed when the vehicle goes away.
-    void setFirmwarePluginInstanceData(QObject* firmwarePluginInstanceData);
+    void setFirmwarePluginInstanceData(FirmwarePluginInstanceData* firmwarePluginInstanceData);
 
     QString vehicleImageOpaque  () const;
     QString vehicleImageOutline () const;
@@ -993,7 +1001,7 @@ private:
     MAV_AUTOPILOT       _firmwareType;
     MAV_TYPE            _vehicleType;
     FirmwarePlugin*     _firmwarePlugin = nullptr;
-    QObject*            _firmwarePluginInstanceData = nullptr;
+    class FirmwarePluginInstanceData*            _firmwarePluginInstanceData = nullptr;
     AutoPilotPlugin*    _autopilotPlugin = nullptr;
     bool                _soloFirmware = false;
 

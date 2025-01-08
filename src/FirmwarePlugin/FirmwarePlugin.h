@@ -446,3 +446,41 @@ protected:
     QVariantList _toolIndicatorList;
     QVariantList _modeIndicatorList;
 };
+
+class FirmwarePluginInstanceData : public QObject
+{
+    Q_OBJECT
+
+public:
+
+    using QObject::QObject;
+
+    // support for detecting whether the firmware a vehicle is running
+    // supports a given MAV_CMD:
+    enum class CommandSupportedResult : uint8_t {
+        SUPPORTED = 23,
+        UNSUPPORTED = 24,
+        UNKNOWN = 25,
+    };
+    // anyVersionSupportsCommand returns true if any version of the
+    // firmware has supported cmd.  Used so that extra round-trips to
+    // the autopilot to probe for command support are not required.
+    virtual CommandSupportedResult anyVersionSupportsCommand(MAV_CMD cmd) const {
+        return CommandSupportedResult::UNKNOWN;
+    }
+
+    // support for detecting whether the firmware a vehicle is running
+    // supports a given MAV_CMD:
+    void setCommandSupported(MAV_CMD cmd, CommandSupportedResult status) {
+        MAV_CMD_supported[cmd] = status;
+    }
+    CommandSupportedResult getCommandSupported(MAV_CMD cmd) const {
+        if (anyVersionSupportsCommand(cmd) == CommandSupportedResult::UNSUPPORTED) {
+            return CommandSupportedResult::UNSUPPORTED;
+        }
+        return MAV_CMD_supported.value(cmd, CommandSupportedResult::UNKNOWN);
+    }
+
+private:
+    QMap<MAV_CMD, CommandSupportedResult> MAV_CMD_supported;
+};
