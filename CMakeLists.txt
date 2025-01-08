@@ -197,10 +197,13 @@ find_package(Qt6
         Quick3D
         Quick3DTools
         SerialPort
-        WaylandClient
     HINTS
         ${QT_LIBRARY_HINTS}
 )
+
+if(LINUX)
+    find_package(Qt6::WaylandClient ${QT_MINIMUM_VERSION})
+endif()
 
 if(NOT Qt6LinguistTools_DIR)
     set(Qt6LinguistTools_DIR ${QT_HOST_PATH}/lib/cmake/Qt6LinguistTools)
