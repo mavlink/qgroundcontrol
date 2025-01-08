@@ -5,21 +5,22 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.7.2'
+        classpath 'com.android.tools.build:gradle:8.7.3'
     }
 }
 
 repositories {
     google()
     mavenCentral()
-    maven { url 'https://jitpack.io' }
+    maven { url = 'https://jitpack.io' }
 }
 
-apply plugin: 'com.android.application'
+apply plugin: qtGradlePluginType
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
-    implementation 'androidx.core:core:1.12.0'
+    //noinspection GradleDependency
+    implementation 'androidx.core:core:1.13.1'
     implementation 'com.github.mik3y:usb-serial-for-android:3.8.1'
 }
 
@@ -40,12 +41,14 @@ android {
      * Changing them manually might break the compilation!
      *******************************************************/
 
+    // namespace = androidPackageName
+    namespace = "org.mavlink.qgroundcontrol"
     compileSdkVersion androidCompileSdkVersion
     buildToolsVersion androidBuildToolsVersion
-    ndkVersion androidNdkVersion
+    ndkVersion = androidNdkVersion
 
     // Extract native libraries from the APK
-    packagingOptions.jniLibs.useLegacyPackaging true
+    packagingOptions.jniLibs.useLegacyPackaging = true
 
     sourceSets {
         main {
@@ -74,7 +77,7 @@ android {
     }
 
     lintOptions {
-        abortOnError false
+        abortOnError = false
     }
 
     // Do not compress Qt binary resources file
@@ -88,7 +91,7 @@ android {
         targetSdkVersion qtTargetSdkVersion
         ndk.abiFilters = qtTargetAbiList.split(",")
 
-        namespace "org.mavlink.qgroundcontrol"
+        // namespace "org.mavlink.qgroundcontrol"
         // versionName "5.0"
         // versionCode timestampInt
 
@@ -101,6 +104,7 @@ android {
     }
 
     println "timestamp: " + getTimestampStr()
+    println "androidPackageName: ${namespace}"
     println "androidCompileSdkVersion: ${compileSdkVersion}"
     println "androidBuildToolsVersion: ${buildToolsVersion}"
     println "androidNdkVersion: ${ndkVersion}"

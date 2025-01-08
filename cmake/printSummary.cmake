@@ -63,6 +63,11 @@ message( STATUS "MacOS Bundle ID:             ${QGC_BUNDLE_ID}" )
 message( STATUS "MacOS Icon Path:             ${QGC_MACOS_ICON_PATH}" )
 endif()
 
+if(ANDROID)
+message( STATUS "Android NDK Host System      ${ANDROID_NDK_HOST_SYSTEM_NAME}" )
+message( STATUS "Android SDK Root             ${ANDROID_SDK_ROOT}" )
+endif()
+
 OptionOutput( "Stable Build:                " QGC_STABLE_BUILD )
 OptionOutput( "Building Tests:              " QGC_BUILD_TESTING AND BUILD_TESTING )
 OptionOutput( "Debug QML:                   " QGC_DEBUG_QML )
