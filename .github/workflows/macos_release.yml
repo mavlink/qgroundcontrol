@@ -59,6 +59,23 @@ jobs:
               do sudo installer -verbose -pkg "$package" -target /
             done
 
+            # Create proper framework structure with symlinks
+            sudo rm -rf /Library/lib/GStreamer.framework  # Clean up any existing framework
+            sudo mkdir -p /Library/lib
+            sudo mkdir -p /Library/lib/GStreamer.framework/Versions/1.0
+            cd /Library/lib/GStreamer.framework/Versions
+            sudo ln -sf 1.0 Current
+            cd /Library/lib/GStreamer.framework
+            sudo ln -sf Versions/Current/lib lib
+            sudo ln -sf Versions/Current/Headers Headers
+            sudo ln -sf Versions/Current/Resources Resources
+
+            # Create the main symlink for the whole framework
+            sudo ln -sf /Library/Frameworks/GStreamer.framework /Library/lib/GStreamer.framework
+
+            # Verify the links
+            ls -la /Library/lib/GStreamer.framework/Versions/1.0/
+
       - name: Install ccache
         run:  brew install ccache
 
@@ -85,12 +102,32 @@ jobs:
       - name: Create build directory
         run:  mkdir ${{ runner.temp }}/shadow_build_dir
 
+      - name: Setup Xcode
+        run: |
+          sudo xcode-select --reset
+          sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
+          clang --version  # To verify compiler is available
+
       - name: Build
         working-directory: ${{ runner.temp }}/shadow_build_dir
-        run:  |
-              export JOBS=$((`sysctl -n hw.ncpu`+1))
-              qmake -r ${SOURCE_DIR}/qgroundcontrol.pro CONFIG+=installer CONFIG+=${BUILD_TYPE}
-              make -j$JOBS
+        run: |
+          export JOBS=$((`sysctl -n hw.ncpu`+1))
+          # Get SDK path
+          export SDKROOT=$(xcrun --show-sdk-path)
+          export MACOSX_DEPLOYMENT_TARGET=10.14
+          # Set compiler paths explicitly
+          export QMAKE_MAC_SDK=macosx
+          export QMAKE_APPLE_DEVICE_ARCHS=x86_64
+          export CPATH="$SDKROOT/usr/include"
+          export LIBRARY_PATH="$SDKROOT/usr/lib"
+          export QMAKE_DEFAULT_LIBDIRS="$SDKROOT/usr/lib"
+          export QMAKE_DEFAULT_INCDIRS="$SDKROOT/usr/include"
+          qmake -r ${SOURCE_DIR}/qgroundcontrol.pro \
+            CONFIG+=installer \
+            CONFIG+=${BUILD_TYPE} \
+            -spec macx-clang \
+            QMAKE_APPLE_DEVICE_ARCHS=x86_64
+          make -j$JOBS
 
       - name: ccache post-run
         run:  ccache -s
