@@ -1,0 +1,15 @@
+# Ignore Git repository files
+.git
+.gitignore
+
+# Ignore node_modules or other build artifacts
+node_modules
+build
+
+# Ignore Docker-related files
+Dockerfile*
+docker-compose.yml
+
+# Ignore OS-specific files
+.DS_Store
+*.swp

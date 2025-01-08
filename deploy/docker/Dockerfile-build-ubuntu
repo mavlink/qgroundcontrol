@@ -24,5 +24,5 @@ RUN git config --global --add safe.directory /project/source
 
 WORKDIR /project/build
 CMD cmake -S /project/source -B . -G Ninja -DCMAKE_BUILD_TYPE=Release ; \
-	cmake --build . --target all --config Release ; \
-	cmake --install . --config Release
+    cmake --build . --target all --config Release ; \
+    cmake --install . --config Release
