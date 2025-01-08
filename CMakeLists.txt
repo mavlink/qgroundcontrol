@@ -64,6 +64,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+# set(CMAKE_AUTOGEN_BETTER_GRAPH_MULTI_CONFIG ON)
 
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug;Release")
 if(NOT CMAKE_BUILD_TYPE)
@@ -137,13 +138,15 @@ endif()
 if(ANDROID)
     cmake_print_variables(QT_ANDROID_APPLICATION_ARGUMENTS QT_HOST_PATH)
 
-    # QT_USE_TARGET_ANDROID_BUILD_DIR
+    # set(QT_USE_TARGET_ANDROID_BUILD_DIR ON CACHE BOOL "Use Target Android Build Dir" FORCE)
+
     list(APPEND QT_ANDROID_MULTI_ABI_FORWARD_VARS QGC_STABLE_BUILD)
     list(APPEND QT_ANDROID_MULTI_ABI_FORWARD_VARS QT_HOST_PATH)
     cmake_print_variables(QT_ANDROID_MULTI_ABI_FORWARD_VARS)
     # QT_ANDROID_DEPLOY_RELEASE
     # set(QT_ANDROID_DEPLOYMENT_TYPE ON CACHE BOOL "Deployment Type")
     cmake_dependent_option(QT_ANDROID_SIGN_APK "Enable Signing APK" ON "CMAKE_BUILD_TYPE STREQUAL Release" OFF)
+    # QT_ANDROID_SIGN_AAB
     if(QT_ANDROID_SIGN_APK)
         message(STATUS "Signing APK")
         message(STATUS "QT_ANDROID_KEYSTORE_PATH $ENV{QT_ANDROID_KEYSTORE_PATH}")
@@ -206,6 +209,8 @@ qt_policy(
     SET QTP0004 NEW
     SET QTP0005 NEW
 )
+
+# QT_TARGETS_FOLDER
 
 #######################################################
 #                QGroundControl Options
@@ -384,7 +389,7 @@ elseif(IOS)
     set(CMAKE_XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2") # iPhone,iPad
     set(CMAKE_XCODE_ATTRIBUTE_INFOPLIST_FILE "${CMAKE_CURRENT_SOURCE_DIR}/deploy/ios/iOS-Info.plist")
 
-    set_target_properties(${PROJECT_NAME}
+    set_target_properties(${CMAKE_PROJECT_NAME}
         PROPERTIES
             QT_IOS_LAUNCH_SCREEN ${CMAKE_SOURCE_DIR}/deploy/ios/QGCLaunchScreen.xib
             XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "org.mavlink.qgroundcontrol"
@@ -398,6 +403,9 @@ elseif(IOS)
             XCODE_ATTRIBUTE_INFOPLIST_KEY_LSApplicationCategoryType "public.app-category.mycategory"
             XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS "YES"
     )
+
+    # set(QT_NO_FFMPEG_XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY ON)
+    # qt_add_ios_ffmpeg_libraries(CMAKE_PROJECT_NAME)
 elseif(ANDROID)
     FetchContent_Declare(android_openssl
         DOWNLOAD_EXTRACT_TIMESTAMP true
@@ -445,17 +453,23 @@ elseif(ANDROID)
         endif()
     endif()
 
-    set_target_properties(${PROJECT_NAME}
+    set_target_properties(${CMAKE_PROJECT_NAME}
         PROPERTIES
             # QT_ANDROID_ABIS ${ANDROID_ABI}
             QT_ANDROID_MIN_SDK_VERSION ${QGC_QT_ANDROID_MIN_SDK_VERSION}
             QT_ANDROID_TARGET_SDK_VERSION ${QGC_QT_ANDROID_TARGET_SDK_VERSION}
+            QT_ANDROID_PACKAGE_NAME "${QGC_ANDROID_PACKAGE_NAME}"
             QT_ANDROID_PACKAGE_SOURCE_DIR "${QGC_ANDROID_PACKAGE_SOURCE_DIR}"
             QT_ANDROID_VERSION_NAME ${CMAKE_PROJECT_VERSION}
             QT_ANDROID_VERSION_CODE ${ANDROID_VERSION_CODE}
             # QT_QML_ROOT_PATH ${CMAKE_SOURCE_DIR}
+            # QT_ANDROID_SDK_BUILD_TOOLS_REVISION
+            # QT_ANDROID_SYSTEM_LIBS_PREFIX
     )
     # get_target_property(QGC_ANDROID_DEPLOY_FILE ${PROJECT_NAME} QT_ANDROID_DEPLOYMENT_SETTINGS_FILE)
+    # QT_ANDROID_DEPLOYMENT_DEPENDENCIES
+
+    cmake_print_variables(QGC_ANDROID_PACKAGE_NAME)
 elseif(LINUX)
 
 endif()
