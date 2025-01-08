@@ -1214,19 +1214,19 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="122"/>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="122"/>
-      <source>Moving the sliders will causes the motors to spin. Make sure you remove all props.</source>
+      <source>Make sure you remove all props.</source>
       <translation>Sürgüləri hərəkət etdirmək, mühərriklərin fırlanmasına səbəb olacaqdır. Bütün pərvanələri çıxartdığınızdan əmin olun.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="142"/>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="142"/>
-      <source>Careful: Motor sliders are enabled</source>
+      <source>Careful : Motors are enabled</source>
       <translation>Diqqət yetirin: Motor sürgüləri aktivdir</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="142"/>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="142"/>
-      <source>Propellers are removed - Enable motor sliders</source>
+      <source>Propellers are removed - Enable slider and motors</source>
       <translation>Pərvanələr çıxarıldı - Motor sürgülərini aktiv edin</translation>
     </message>
   </context>
@@ -10680,17 +10680,17 @@ Do you wish to proceed?</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/MotorComponent.qml" line="122"/>
-      <source>Moving the sliders will causes the motors to spin. Make sure you remove all props.</source>
+      <source>Make sure you remove all props.</source>
       <translation>Kaydırıcıları hərəkət etdirmək, mühərriklərin fırlanmasına səbəb olacaqdır. Bütün pərvanələri çıxartdığınızdan əmin olun.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/MotorComponent.qml" line="142"/>
-      <source>Propellers are removed - Enable motor sliders</source>
+      <source>Propellers are removed - Enable slider and motors</source>
       <translation>Pervaneler çıxarıldı - Motor sürgülərini aktivləşdirin</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/MotorComponent.qml" line="142"/>
-      <source>Careful: Motor sliders are enabled</source>
+      <source>Careful : Motors are enabled</source>
       <translation>Diqqət yetirin: Motor sürgüləri aktivdir</translation>
     </message>
     <message>

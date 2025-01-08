@@ -1215,19 +1215,19 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="122"/>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="122"/>
-      <source>Moving the sliders will causes the motors to spin. Make sure you remove all props.</source>
+      <source>Make sure you remove all props.</source>
       <translation>移动滑杆会导致马达旋转，请先确保你已经卸下所有的螺旋桨。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="142"/>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="142"/>
-      <source>Careful: Motor sliders are enabled</source>
+      <source>Careful : Motors are enabled</source>
       <translation>注意：电机滑块已启用</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="142"/>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="142"/>
-      <source>Propellers are removed - Enable motor sliders</source>
+      <source>Propellers are removed - Enable slider and motors</source>
       <translation>螺旋桨已经卸下—可启动电机滑杆</translation>
     </message>
   </context>
@@ -10681,17 +10681,17 @@ Do you wish to proceed?</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/MotorComponent.qml" line="122"/>
-      <source>Moving the sliders will causes the motors to spin. Make sure you remove all props.</source>
+      <source>Make sure you remove all props.</source>
       <translation>拖动滑块会导致电机旋转。请确保已卸下所有螺旋桨。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/MotorComponent.qml" line="142"/>
-      <source>Propellers are removed - Enable motor sliders</source>
+      <source>Propellers are removed - Enable slider and motors</source>
       <translation>螺旋桨已卸下 - 启用电机滑块</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/MotorComponent.qml" line="142"/>
-      <source>Careful: Motor sliders are enabled</source>
+      <source>Careful : Motors are enabled</source>
       <translation>注意：电机滑块已启用</translation>
     </message>
     <message>

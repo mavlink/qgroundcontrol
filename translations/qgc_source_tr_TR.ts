@@ -1214,20 +1214,20 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="122"/>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="122"/>
-      <source>Moving the sliders will causes the motors to spin. Make sure you remove all props.</source>
-      <translation>Moving the sliders will causes the motors to spin. Make sure you remove all props.</translation>
+      <source>Make sure you remove all props.</source>
+      <translation>Make sure you remove all props.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="142"/>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="142"/>
-      <source>Careful: Motor sliders are enabled</source>
-      <translation>Careful: Motor sliders are enabled</translation>
+      <source>Careful : Motors are enabled</source>
+      <translation>Careful : Motors are enabled</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="142"/>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="142"/>
-      <source>Propellers are removed - Enable motor sliders</source>
-      <translation>Propellers are removed - Enable motor sliders</translation>
+      <source>Propellers are removed - Enable slider and motors</source>
+      <translation>Propellers are removed - Enable slider and motors</translation>
     </message>
   </context>
   <context>
@@ -10679,18 +10679,18 @@ Do you wish to proceed?</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/MotorComponent.qml" line="122"/>
-      <source>Moving the sliders will causes the motors to spin. Make sure you remove all props.</source>
-      <translation>Moving the sliders will causes the motors to spin. Make sure you remove all props.</translation>
+      <source>Make sure you remove all props.</source>
+      <translation>Make sure you remove all props.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/MotorComponent.qml" line="142"/>
-      <source>Propellers are removed - Enable motor sliders</source>
-      <translation>Propellers are removed - Enable motor sliders</translation>
+      <source>Propellers are removed - Enable slider and motors</source>
+      <translation>Propellers are removed - Enable slider and motors</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/MotorComponent.qml" line="142"/>
-      <source>Careful: Motor sliders are enabled</source>
-      <translation>Careful: Motor sliders are enabled</translation>
+      <source>Careful : Motors are enabled</source>
+      <translation>Careful : Motors are enabled</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/MotorComponent.cc" line="15"/>

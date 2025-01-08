@@ -1216,19 +1216,19 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="122"/>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="122"/>
-      <source>Moving the sliders will causes the motors to spin. Make sure you remove all props.</source>
+      <source>Make sure you remove all props.</source>
       <translation>슬라이더를 움직이면 모터가 움직입니다. 프로펠러를 모두 제거하였는지 확인해주십시오</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="142"/>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="142"/>
-      <source>Careful: Motor sliders are enabled</source>
+      <source>Careful : Motors are enabled</source>
       <translation>주의 : 모터 슬라이더가 활성화 됨</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="142"/>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="142"/>
-      <source>Propellers are removed - Enable motor sliders</source>
+      <source>Propellers are removed - Enable slider and motors</source>
       <translation>프로펠러를 제거하였습니다 - 모터 슬라이더를 활성화합니다</translation>
     </message>
   </context>
@@ -10685,17 +10685,17 @@ Do you wish to proceed?</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/MotorComponent.qml" line="122"/>
-      <source>Moving the sliders will causes the motors to spin. Make sure you remove all props.</source>
+      <source>Make sure you remove all props.</source>
       <translation>슬라이더를 움직이면 모터가 움직입니다. 프로펠러를 모두 제거하였는지 확인해주십시오</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/MotorComponent.qml" line="142"/>
-      <source>Propellers are removed - Enable motor sliders</source>
+      <source>Propellers are removed - Enable slider and motors</source>
       <translation>프로펠러를 제거하였습니다 - 모터슬라이더를 활성화합니다</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/MotorComponent.qml" line="142"/>
-      <source>Careful: Motor sliders are enabled</source>
+      <source>Careful : Motors are enabled</source>
       <translation>주의 : 모터 슬라이더가 활성화 됨</translation>
     </message>
     <message>

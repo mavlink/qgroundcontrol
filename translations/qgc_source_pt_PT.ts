@@ -1215,19 +1215,19 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="122"/>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="122"/>
-      <source>Moving the sliders will causes the motors to spin. Make sure you remove all props.</source>
+      <source>Make sure you remove all props.</source>
       <translation>Mover os controles deslizantes fará com que os motores girem. Certifique-se de antes remover as hélices.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="142"/>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="142"/>
-      <source>Careful: Motor sliders are enabled</source>
+      <source>Careful : Motors are enabled</source>
       <translation>Cuidado: Os controles deslizantes do motor estão ativados</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="142"/>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="142"/>
-      <source>Propellers are removed - Enable motor sliders</source>
+      <source>Propellers are removed - Enable slider and motors</source>
       <translation>Hélices foram removidos - Habilitar controles deslizantes dos motores</translation>
     </message>
   </context>
@@ -10678,17 +10678,17 @@ Do you wish to proceed?</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/MotorComponent.qml" line="122"/>
-      <source>Moving the sliders will causes the motors to spin. Make sure you remove all props.</source>
+      <source>Make sure you remove all props.</source>
       <translation>Mover os controles deslizantes fará com que os motores girem. Certifique-se de antes remover as hélices.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/MotorComponent.qml" line="142"/>
-      <source>Propellers are removed - Enable motor sliders</source>
+      <source>Propellers are removed - Enable slider and motors</source>
       <translation>Hélices foram removidas - Habilitar controles deslizantes dos motores</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/MotorComponent.qml" line="142"/>
-      <source>Careful: Motor sliders are enabled</source>
+      <source>Careful : Motors are enabled</source>
       <translation>Cuidado: Os controles deslizantes do motor estão ativados</translation>
     </message>
     <message>
