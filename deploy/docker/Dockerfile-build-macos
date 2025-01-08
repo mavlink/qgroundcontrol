@@ -1,0 +1,36 @@
+# Use a lightweight base image; Docker-OSX handles the macOS environment
+FROM sickcodes/docker-osx:latest
+
+# Set environment variables
+ENV QT_VERSION=6.8.1
+ENV QT_PATH=/opt/Qt
+ENV QT_DESKTOP=$QT_PATH/${QT_VERSION}/clang_64
+
+ENV PATH=$QT_DESKTOP/bin:/usr/local/bin:$PATH
+
+# Install Homebrew (if not already installed)
+RUN /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" \
+    && eval "$(/usr/local/bin/brew shellenv)" \
+    && brew update
+
+# Install necessary dependencies via Homebrew
+RUN brew install cmake ninja git
+
+# Install Qt using Homebrew
+RUN brew install qt@${QT_VERSION} \
+    && brew link --force qt@${QT_VERSION}
+
+# Set up Qt environment
+RUN mkdir -p $QT_PATH \
+    && ln -s /usr/local/opt/qt@${QT_VERSION} $QT_PATH/Qt
+
+# Configure Git to trust the project directory
+RUN git config --global --add safe.directory /project/source
+
+# Set the working directory
+WORKDIR /project/build
+
+# Define the build command
+CMD cmake -S /project/source -B . -G Ninja -DCMAKE_BUILD_TYPE=Release && \
+    cmake --build . --target all --config Release && \
+    cmake --install . --config Release

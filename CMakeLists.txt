@@ -118,8 +118,8 @@ set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 include(Qt6QGCConfiguration)
 
 set(QT_QML_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/qml" CACHE PATH "Install path for QML" FORCE)
-# set(QML_IMPORT_PATH ${CMAKE_SOURCE_DIR}/qml ${CMAKE_BINARY_DIR}/imports CACHE STRING "Extra QML Import Paths" FORCE)
-add_compile_definitions(QT_DISABLE_DEPRECATED_UP_TO=0x060600)
+set(QML_IMPORT_PATH ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/qml ${CMAKE_BINARY_DIR}/imports CACHE STRING "Extra QML Import Paths" FORCE)
+add_compile_definitions(QT_DISABLE_DEPRECATED_UP_TO=0x060700)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
     add_compile_definitions(
@@ -156,8 +156,17 @@ if(ANDROID)
 endif()
 
 set(QT_SILENCE_MISSING_DEPENDENCY_TARGET_WARNING ON)
+set(QT_MINIMUM_VERSION 6.8.1)
+
+find_program(QMAKE_EXECUTABLE NAMES qmake HINTS ${QTDIR} ENV QTDIR PATH_SUFFIXES bin)
+execute_process(COMMAND ${QMAKE_EXECUTABLE} -query QT_VERSION OUTPUT_VARIABLE QT_VERSION)
+if(QT_VERSION LESS QT_MINIMUM_VERSION)
+    MESSAGE(FATAL_ERROR "Minimum supported Qt version: ${QT_MINIMUM_VERSION}.
+    Installed version: ${QT_VERSION}")
+endif()
 
 find_package(Qt6
+    ${QT_MINIMUM_VERSION}
     REQUIRED
     COMPONENTS
         Concurrent
@@ -186,6 +195,7 @@ find_package(Qt6
         LinguistTools
         MultimediaQuickPrivate
         Quick3D
+        Quick3DTools
         SerialPort
         WaylandClient
     HINTS
@@ -197,8 +207,8 @@ if(NOT Qt6LinguistTools_DIR)
 endif()
 
 qt_standard_project_setup(
-    REQUIRES 6.8.1
-    SUPPORTS_UP_TO 6.8.1
+    REQUIRES ${QT_MINIMUM_VERSION}
+    SUPPORTS_UP_TO ${QT_MINIMUM_VERSION}
     I18N_SOURCE_LANGUAGE en
 )
 
@@ -302,6 +312,8 @@ if(Qt6LinguistTools_FOUND)
     file(GLOB TS_SOURCES ${CMAKE_SOURCE_DIR}/translations/qgc_*.ts)
     set_source_files_properties(${TS_SOURCES} PROPERTIES OUTPUT_LOCATION "${CMAKE_BINARY_DIR}/i18n")
     qt_add_translations(${CMAKE_PROJECT_NAME}
+        # TS_FILE_BASE ${CMAKE_PROJECT_NAME}
+        # TS_FILE_DIR ${CMAKE_SOURCE_DIR}/translations/
         TS_FILES ${TS_SOURCES}
         RESOURCE_PREFIX "/"
         LUPDATE_OPTIONS -no-obsolete
@@ -413,7 +425,7 @@ elseif(ANDROID)
     )
     FetchContent_MakeAvailable(android_openssl)
     include(${android_openssl_SOURCE_DIR}/android_openssl.cmake)
-    add_android_openssl_libraries(${PROJECT_NAME})
+    add_android_openssl_libraries(${CMAKE_PROJECT_NAME})
 
     set(ANDROID_PLATFORM_ARCHITECTURE_CODE)
     if(${ANDROID_ABI} STREQUAL "armeabi-v7a")
@@ -462,14 +474,12 @@ elseif(ANDROID)
             QT_ANDROID_PACKAGE_SOURCE_DIR "${QGC_ANDROID_PACKAGE_SOURCE_DIR}"
             QT_ANDROID_VERSION_NAME ${CMAKE_PROJECT_VERSION}
             QT_ANDROID_VERSION_CODE ${ANDROID_VERSION_CODE}
-            # QT_QML_ROOT_PATH ${CMAKE_SOURCE_DIR}
+            QT_QML_ROOT_PATH ${CMAKE_SOURCE_DIR}/src
             # QT_ANDROID_SDK_BUILD_TOOLS_REVISION
             # QT_ANDROID_SYSTEM_LIBS_PREFIX
     )
-    # get_target_property(QGC_ANDROID_DEPLOY_FILE ${PROJECT_NAME} QT_ANDROID_DEPLOYMENT_SETTINGS_FILE)
-    # QT_ANDROID_DEPLOYMENT_DEPENDENCIES
-
-    cmake_print_variables(QGC_ANDROID_PACKAGE_NAME)
+    get_target_property(QGC_ANDROID_DEPLOY_FILE ${CMAKE_PROJECT_NAME} QT_ANDROID_DEPLOYMENT_SETTINGS_FILE)
+    cmake_print_variables(QGC_ANDROID_DEPLOY_FILE)
 elseif(LINUX)
 
 endif()
@@ -517,10 +527,15 @@ install(
     BUNDLE  DESTINATION .
 )
 
+set(deploy_tool_options_arg "")
+if(APPLE)
+    set(deploy_tool_options_arg -qmldir=${CMAKE_SOURCE_DIR}/src -hardened-runtime -timestamp -appstore-compliant)
+endif()
+
 qt_generate_deploy_qml_app_script(
     TARGET ${PROJECT_NAME}
     OUTPUT_SCRIPT deploy_script
-    # DEPLOY_TOOL_OPTIONS
+    DEPLOY_TOOL_OPTIONS ${deploy_tool_options_arg}
     MACOS_BUNDLE_POST_BUILD
     NO_UNSUPPORTED_PLATFORM_ERROR
     DEPLOY_USER_QML_MODULES_ON_UNSUPPORTED_PLATFORM
