@@ -51,9 +51,7 @@ jobs:
 
       - uses: seanmiddleditch/gha-setup-ninja@v5
       - uses: lukka/get-cmake@latest
-
-      # - name: Set Up sccache
-      #   uses: mozilla-actions/sccache-action@v0.0.5
+      - uses: mozilla-actions/sccache-action@v0.0.7
 
       - name: Install Qt for Android
         uses: ./.github/actions/qt-android
