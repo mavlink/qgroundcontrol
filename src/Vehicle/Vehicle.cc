@@ -283,7 +283,6 @@ void Vehicle::_commonInit()
     _vehicleLinkManager             = new VehicleLinkManager            (this);
 
     connect(_standardModes, &StandardModes::modesUpdated, this, &Vehicle::flightModesChanged);
-    connect(_standardModes, &StandardModes::modesUpdated, this, [this](){ Vehicle::flightModeChanged(flightMode()); });
 
     _parameterManager = new ParameterManager(this);
     connect(_parameterManager, &ParameterManager::parametersReadyChanged, this, &Vehicle::_parametersReady);
@@ -1338,9 +1337,10 @@ void Vehicle::_handleCurrentMode(mavlink_message_t& message)
     mavlink_msg_current_mode_decode(&message, &currentMode);
     if (currentMode.intended_custom_mode != 0) { // 0 == unknown/not supplied
         _has_custom_mode_user_intention = true;
+        QString previousFlightMode = flightMode();
         bool changed = _custom_mode_user_intention != currentMode.intended_custom_mode;
         _custom_mode_user_intention = currentMode.intended_custom_mode;
-        if (changed) {
+        if (changed && previousFlightMode != flightMode()) {
             emit flightModeChanged(flightMode());
         }
     }
