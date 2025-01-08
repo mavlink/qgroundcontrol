@@ -16,6 +16,7 @@ import QtQuick.Window
 import QGroundControl
 import QGroundControl.Palette
 import QGroundControl.Controls
+import QGroundControl.FactControls
 import QGroundControl.ScreenTools
 import QGroundControl.FlightDisplay
 import QGroundControl.FlightMap
@@ -113,8 +114,8 @@ ApplicationWindow {
     // This function is used to prevent view switching if there are validation errors
     function allowViewSwitch(previousValidationErrorCount = 0) {
         // Run validation on active focus control to ensure it is valid before switching views
-        if (mainWindow.activeFocusControl instanceof QGCTextField) {
-            mainWindow.activeFocusControl.onEditingFinished()
+        if (mainWindow.activeFocusControl instanceof FactTextField) {
+            mainWindow.activeFocusControl._onEditingFinished()
         }
         return globals.validationErrorCount <= previousValidationErrorCount
     }
