@@ -22,12 +22,10 @@ runs:
   using: "composite"
   steps:
     - name: Save artifact
-      uses: Wandalen/wretry.action@master
+      uses: actions/upload-artifact@v4
       with:
-        action: actions/upload-artifact@v4
-        with: |
-          name: ${{ inputs.artifact_name }}
-          path: ${{ runner.temp }}/shadow_build_dir/${{ inputs.source }}/${{ inputs.artifact_name }}
+        name: ${{ inputs.artifact_name }}
+        path: ${{ runner.temp }}/shadow_build_dir/${{ inputs.source }}/${{ inputs.artifact_name }}
 
     - name: Configure AWS Credentials
       if: ${{ github.event_name == 'push' && !github.event.pull_request.head.repo.fork && inputs.aws_key_id != '' && inputs.aws_secret_access_key != '' }}
@@ -51,13 +49,15 @@ runs:
 
     - name: Create Continuous Release
       if: ${{ github.event_name != 'pull_request' && github.ref_name == 'master' && inputs.github_token != '' }}
-      uses: softprops/action-gh-release@v2
+      uses: Wandalen/wretry.action@master
       with:
-        tag_name: latest
-        target_commitish: master
-        files: ${{ runner.temp }}/shadow_build_dir/${{ inputs.source }}/${{ inputs.artifact_name }}
-        name: "Continuous Release"
-        body: "This release is continuously updated with every commit to master."
-        draft: false
-        prerelease: true
-        token: ${{ inputs.github_token }}
+        action: softprops/action-gh-release@v2
+        with: |
+          tag_name: latest
+          target_commitish: master
+          files: ${{ runner.temp }}/shadow_build_dir/${{ inputs.source }}/${{ inputs.artifact_name }}
+          name: "Continuous Release"
+          body: "This release is continuously updated with every commit to master."
+          draft: false
+          prerelease: true
+          token: ${{ inputs.github_token }}
