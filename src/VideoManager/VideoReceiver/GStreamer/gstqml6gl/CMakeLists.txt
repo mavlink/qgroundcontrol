@@ -106,7 +106,10 @@ endif()
 
 ################################################################################
 
-if(GStreamer_VERSION VERSION_GREATER_EQUAL 1.22)
+if(GStreamer_VERSION VERSION_GREATER_EQUAL 1.20)
+    if(GStreamer_VERSION VERSION_LESS 1.24)
+        set(GST_PLUGINS_VERSION 1.22.12)
+    endif()
     FetchContent_Declare(gstreamer_good_plugins
         # URL https://gitlab.freedesktop.org/gstreamer/gstreamer/-/archive/${GST_PLUGINS_VERSION}/gstreamer-${GST_PLUGINS_VERSION}.zip?path=subprojects/gst-plugins-good/ext/qt6
         URL https://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-${GST_PLUGINS_VERSION}.tar.xz
@@ -114,10 +117,10 @@ if(GStreamer_VERSION VERSION_GREATER_EQUAL 1.22)
     )
     FetchContent_MakeAvailable(gstreamer_good_plugins)
     set(QGC_GST_QT6_PLUGIN_PATH "${gstreamer_good_plugins_SOURCE_DIR}/ext/qt6")
+    cmake_print_variables(QGC_GST_QT6_PLUGIN_PATH)
 else()
-    set(QGC_GST_QT6_PLUGIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/qt6")
+    return()
 endif()
-cmake_print_variables(QGC_GST_QT6_PLUGIN_PATH)
 
 ################################################################################
 
