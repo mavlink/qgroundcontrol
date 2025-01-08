@@ -80,7 +80,6 @@ jobs:
           evict-old-files: 'job'
 
       - name: Install Qt for Windows (x64)
-        if: matrix.Arch == 'x64'
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
@@ -92,6 +91,7 @@ jobs:
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
           cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
+      # Note: Must Use QtMultimedia VideoReceiver or build GStreamer manually
       - name: Install Qt for Windows (Arm64)
         if: matrix.Arch == 'Arm64'
         uses: jurplel/install-qt-action@v4
@@ -100,7 +100,7 @@ jobs:
           aqtversion: ==3.1.*
           host: windows
           target: desktop
-          arch: win64_msvc2022_arm64 # _cross_compiled
+          arch: win64_msvc2022_arm64_cross_compiled
           dir: ${{ runner.temp }}
           extra: --autodesktop
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
@@ -109,14 +109,16 @@ jobs:
       - name: Set up Visual Studio shell
         uses: ilammy/msvc-dev-cmd@v1
         with:
-          arch: x64
+          arch: ${{ matrix.Arch == 'Arm64' && 'amd64_arm64' || 'x64' }}
 
       - run: mkdir ${{ runner.temp }}\shadow_build_dir
 
       - name: Configure
         working-directory: ${{ runner.temp }}\shadow_build_dir
-        run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja ^
-              -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }} ^
+        run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
+              -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }}
+              -DQT_HOST_PATH="${{ env.QT_ROOT_DIR }}/../msvc2022_64"
+              -DQT_DEBUG_FIND_PACKAGE=ON
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
 
       - name: Build
