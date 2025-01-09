@@ -69,6 +69,7 @@ elseif(IOS)
         set(GSTREAMER_PREFIX_IOS "~/Library/Developer/GStreamer/iPhone.sdk/GStreamer.framework")
     else()
         FetchContent_Declare(gstreamer
+            DOWNLOAD_EXTRACT_TIMESTAMP true
             URL "https://gstreamer.freedesktop.org/data/pkg/ios/${QGC_GST_TARGET_VERSION}/gstreamer-1.0-devel-${QGC_GST_TARGET_VERSION}-ios-universal.pkg"
         )
         FetchContent_MakeAvailable(gstreamer)

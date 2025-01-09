@@ -6,7 +6,7 @@ if(QGC_NO_SERIAL_LINK)
     return()
 endif()
 
-include(FetchContent)
+message(STATUS "Building GPS Drivers")
 FetchContent_Declare(PX4-GPSDrivers
     GIT_REPOSITORY https://github.com/PX4/PX4-GPSDrivers.git
     GIT_TAG main
