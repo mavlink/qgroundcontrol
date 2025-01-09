@@ -99,15 +99,15 @@ endif()
 ############# ZEROConf
 
 if(QGC_ZEROCONF_ENABLED)
+    message(STATUS "Building QMDNSEngine")
+    FetchContent_Declare(qmdnsengine
+        GIT_REPOSITORY https://github.com/nitroshare/qmdnsengine.git
+        GIT_TAG master
+        GIT_SHALLOW TRUE
+    )
     set(BUILD_DOC OFF CACHE INTERNAL "")
     set(BUILD_EXAMPLES OFF CACHE INTERNAL "")
     set(BUILD_TESTS OFF CACHE INTERNAL "")
-
-    include(FetchContent)
-    FetchContent_Declare(qmdnsengine
-        GIT_REPOSITORY https://github.com/nitroshare/qmdnsengine.git
-        GIT_TAG 4e54bc86c8ed2d4fa2e7449d4ba6a6a2742d9eb1
-    )
     FetchContent_MakeAvailable(qmdnsengine)
 
     target_link_libraries(Comms PUBLIC qmdnsengine)

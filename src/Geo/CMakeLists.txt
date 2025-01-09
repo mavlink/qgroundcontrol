@@ -15,40 +15,38 @@ target_link_libraries(Geo
 
 target_include_directories(Geo PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
+#===========================================================================#
+
 set(MINIMUM_GEOGRAPHICLIB_VERSION 2.3)
+set(TARGET_GEOGRAPHICLIB_VERSION 2.5)
 
 if(NOT QGC_BUILD_DEPENDENCIES)
+    if(LINUX)
+        list(APPEND CMAKE_MODULE_PATH "/usr/share/cmake/geographiclib")
+    endif()
     find_package(GeographicLib ${MINIMUM_GEOGRAPHICLIB_VERSION} COMPONENTS STATIC)
-    if(GeographicLib_FOUND)
-        message(STATUS "Found GeographicLib")
+    if(TARGET GeographicLib::GeographicLib)
+        target_link_libraries(Geo PRIVATE GeographicLib::GeographicLib)
+        return()
+    elseif(GeographicLib_FOUND)
         target_link_libraries(Geo PRIVATE ${GeographicLib_LIBRARIES})
         target_include_directories(Geo PRIVATE ${GeographicLib_INCLUDE_DIRS})
         target_link_directories(Geo PRIVATE ${GeographicLib_LIBRARY_DIRS})
-        cmake_print_variables(GeographicLib_LIBRARIES GeographicLib_INCLUDE_DIRS GeographicLib_LIBRARY_DIRS)
         return()
-    else()
-        find_package(PkgConfig)
-        if(PkgConfig_FOUND)
-            pkg_check_modules(GeographicLib IMPORTED_TARGET GeographicLib>=${MINIMUM_GEOGRAPHICLIB_VERSION})
-            if(GeographicLib_FOUND)
-                message(STATUS "Found GeographicLib ${GeographicLib_VERSION}")
-                target_link_libraries(Geo PRIVATE PkgConfig::GeographicLib)
-                return()
-            endif()
-        endif()
     endif()
 endif()
 
 message(STATUS "Building GeographicLib")
-include(FetchContent)
 FetchContent_Declare(GeographicLib
     GIT_REPOSITORY https://github.com/geographiclib/geographiclib.git
-    GIT_TAG r2.5
+    GIT_TAG "r${TARGET_GEOGRAPHICLIB_VERSION}"
     GIT_SHALLOW TRUE
 )
 set(BUILD_BOTH_LIBS OFF CACHE INTERNAL "" FORCE)
 set(BUILD_DOCUMENTATION OFF CACHE INTERNAL "" FORCE)
 set(BUILD_MANPAGES OFF CACHE INTERNAL "" FORCE)
+set(PACKAGE_DEBUG_LIBS OFF CACHE INTERNAL "" FORCE)
+set(APPLE_MULTIPLE_ARCHITECTURES OFF CACHE INTERNAL "" FORCE)
 set(INCDIR "" CACHE INTERNAL "" FORCE)
 set(BINDIR "" CACHE INTERNAL "" FORCE)
 set(SBINDIR "" CACHE INTERNAL "" FORCE)
@@ -60,4 +58,8 @@ set(PKGDIR "" CACHE INTERNAL "" FORCE)
 set(DOCDIR "" CACHE INTERNAL "" FORCE)
 set(EXAMPLEDIR "" CACHE INTERNAL "" FORCE)
 FetchContent_MakeAvailable(GeographicLib)
-target_link_libraries(Geo PRIVATE GeographicLib::GeographicLib)
+
+if(TARGET GeographicLib::GeographicLib)
+    target_link_libraries(Geo PRIVATE GeographicLib::GeographicLib)
+    return()
+endif()

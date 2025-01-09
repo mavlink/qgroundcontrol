@@ -96,6 +96,7 @@ DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
     libcurl4-openssl-dev \
     libexiv2-dev \
     libexpat1-dev \
+    libfmt-dev \
     libinih-dev \
     libssh-dev \
     libxml2-utils \
@@ -113,6 +114,14 @@ DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
     speech-dispatcher-espeak \
     speech-dispatcher-espeak-ng \
     speech-dispatcher-flite
+
+# Joystick
+DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
+    libsdl2-dev
+
+# Shapelib
+DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
+    libshp-dev
 
 # DNS
 # DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install libavahi-compat-libdnssd-dev
@@ -155,8 +164,6 @@ DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
     liborc-0.4-dev \
     libpng-dev \
     libpulse-dev \
-    libsdl2-dev \
-    libshp-dev \
     libsoup2.4-dev \
     libssl-dev \
     libtheora-dev \
