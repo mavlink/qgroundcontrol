@@ -54,7 +54,7 @@ public:
     QString offlineEditingParamFile                 (Vehicle* vehicle) override { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Rover.OfflineEditing.params"); }
 
     QString stabilizedFlightMode                    (void) const override;
-    void    updateAvailableFlightModes              (FlightModeList modeList) final;
+    void    updateAvailableFlightModes              (FlightModeList modeList) override;
 
 protected:
     uint32_t    _convertToCustomFlightModeEnum(uint32_t val) const override;
