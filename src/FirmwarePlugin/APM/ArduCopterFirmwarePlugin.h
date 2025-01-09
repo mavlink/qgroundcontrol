@@ -74,7 +74,7 @@ public:
     QString autoDisarmParameter                 (Vehicle* vehicle) override { Q_UNUSED(vehicle); return QStringLiteral("DISARM_DELAY"); }
     bool    supportsSmartRTL                    (void) const override { return true; }
 
-    void    updateAvailableFlightModes          (FlightModeList modeList) final;
+    void    updateAvailableFlightModes          (FlightModeList modeList) override;
 protected:
     uint32_t    _convertToCustomFlightModeEnum(uint32_t val) const override;
 
