@@ -1,6 +1,8 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Charts Gui Qml QmlIntegration)
 
 qt_add_library(AnalyzeView STATIC
+    ExifParser.cc
+    ExifParser.h
     GeoTagController.cc
     GeoTagController.h
     GeoTagWorker.cc
@@ -23,6 +25,8 @@ qt_add_library(AnalyzeView STATIC
     MAVLinkSystem.h
     PX4LogParser.cc
     PX4LogParser.h
+    ULogParser.cc
+    ULogParser.h
 )
 
 target_link_libraries(AnalyzeView
@@ -48,98 +52,6 @@ target_precompile_headers(AnalyzeView
     PRIVATE
         <QtCharts/QAbstractSeries>
 )
-
-#===========================================================================#
-
-include(FetchContent)
-FetchContent_Declare(ulogparser
-    GIT_REPOSITORY https://github.com/PX4/ulog_cpp.git
-    GIT_TAG main
-    GIT_SHALLOW TRUE
-)
-FetchContent_MakeAvailable(ulogparser)
-if(TARGET ulog_cpp::ulog_cpp)
-    target_link_libraries(AnalyzeView PRIVATE ulog_cpp::ulog_cpp)
-    target_sources(AnalyzeView PRIVATE ULogParser.cc ULogParser.h)
-endif()
-
-#===========================================================================#
-
-set(MINIMUM_EXIV2_VERSION 0.28.2)
-
-if(NOT QGC_BUILD_DEPENDENCIES)
-    find_package(LibExiv2 ${MINIMUM_EXIV2_VERSION})
-    if(LibExiv2_FOUND AND TARGET LibExiv2::LibExiv2)
-        target_link_libraries(AnalyzeView PRIVATE LibExiv2::LibExiv2)
-    else()
-        find_package(exiv2 ${MINIMUM_EXIV2_VERSION} CONFIG NAMES exiv2)
-        if(exiv2_FOUND)
-            target_link_libraries(AnalyzeView PRIVATE Exiv2::exiv2lib)
-        endif()
-    endif()
-endif()
-
-if(NOT exiv2_FOUND AND NOT LibExiv2_FOUND)
-    message(STATUS "Building Exiv2")
-
-    include(FetchContent)
-
-    # TODO: XMP Compatibility
-    # FetchContent_Declare(EXPAT
-    #     GIT_REPOSITORY https://github.com/libexpat/libexpat.git
-    #     GIT_TAG R_2_6_3
-    #     GIT_SHALLOW TRUE
-    #     GIT_PROGRESS TRUE
-    #     SOURCE_SUBDIR expat
-    # )
-    # set(EXPAT_BUILD_EXAMPLES OFF CACHE INTERNAL "" FORCE)
-    # set(EXPAT_BUILD_TESTS OFF CACHE INTERNAL "" FORCE)
-    # set(EXPAT_BUILD_TOOLS OFF CACHE INTERNAL "" FORCE)
-    # FetchContent_MakeAvailable(EXPAT)
-
-    # find_package(Iconv)
-    # if(ICONV_FOUND)
-    #     target_link_libraries(AnalyzeView PRIVATE Iconv::Iconv)
-    # endif()
-
-    FetchContent_Declare(EXIV2
-        GIT_REPOSITORY https://github.com/Exiv2/exiv2.git
-        GIT_TAG v0.28.3
-        GIT_SHALLOW TRUE
-    )
-    set(EXIV2_ENABLE_XMP OFF CACHE INTERNAL "" FORCE)
-    set(EXIV2_ENABLE_EXTERNAL_XMP OFF CACHE INTERNAL "" FORCE)
-    set(EXIV2_ENABLE_PNG OFF CACHE INTERNAL "" FORCE)
-    set(EXIV2_ENABLE_NLS OFF CACHE INTERNAL "" FORCE)
-    set(EXIV2_ENABLE_LENSDATA OFF CACHE INTERNAL "" FORCE)
-    set(EXIV2_ENABLE_DYNAMIC_RUNTIME OFF CACHE INTERNAL "" FORCE)
-    set(EXIV2_ENABLE_WEBREADY OFF CACHE INTERNAL "" FORCE)
-    set(EXIV2_ENABLE_CURL OFF CACHE INTERNAL "" FORCE)
-    set(EXIV2_ENABLE_BMFF OFF CACHE INTERNAL "" FORCE)
-    set(EXIV2_ENABLE_BROTLI OFF CACHE INTERNAL "" FORCE)
-    set(EXIV2_ENABLE_VIDEO OFF CACHE INTERNAL "" FORCE)
-    set(EXIV2_ENABLE_INIH OFF CACHE INTERNAL "" FORCE)
-    set(EXIV2_ENABLE_FILESYSTEM_ACCESS ON CACHE INTERNAL "" FORCE)
-    set(EXIV2_BUILD_SAMPLES OFF CACHE INTERNAL "" FORCE)
-    set(EXIV2_BUILD_EXIV2_COMMAND OFF CACHE INTERNAL "" FORCE)
-    set(EXIV2_BUILD_UNIT_TESTS OFF CACHE INTERNAL "" FORCE)
-    set(EXIV2_BUILD_FUZZ_TESTS OFF CACHE INTERNAL "" FORCE)
-    set(EXIV2_BUILD_DOC OFF CACHE INTERNAL "" FORCE)
-    set(BUILD_WITH_CCACHE ON CACHE INTERNAL "" FORCE)
-    FetchContent_MakeAvailable(EXIV2)
-
-    target_link_libraries(AnalyzeView PRIVATE Exiv2::exiv2lib)
-    target_include_directories(AnalyzeView
-        PRIVATE
-            ${CMAKE_BINARY_DIR}
-            ${exiv2_SOURCE_DIR}/include
-            ${exiv2_SOURCE_DIR}/include/exiv2
-    )
-endif()
-
-target_sources(AnalyzeView PRIVATE ExifParser.cc ExifParser.h)
-
-#===========================================================================#
 
 # qt_add_qml_module(AnalyzeView
 #     URI QGroundControl.AnalyzeView
@@ -179,3 +91,114 @@ target_sources(AnalyzeView PRIVATE ExifParser.cc ExifParser.h)
 #     DEPENDENCIES
 #         QtCore
 # )
+
+#===========================================================================#
+
+message(STATUS "Building ULogParser")
+FetchContent_Declare(ulogparser
+    GIT_REPOSITORY https://github.com/PX4/ulog_cpp.git
+    GIT_TAG main
+    GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(ulogparser)
+if(TARGET ulog_cpp::ulog_cpp)
+    target_link_libraries(AnalyzeView PRIVATE ulog_cpp::ulog_cpp)
+endif()
+
+#===========================================================================#
+
+set(MINIMUM_EXIV2_VERSION 0.28.0)
+set(TARGET_EXIV2_VERSION 0.28.3)
+
+set(MINIMUM_EXPAT_VERSION 2.2.6)
+set(TARGET_EXPAT_VERSION 2.6.4)
+
+# if(QGC_DOWNLOAD_DEPENDENCIES)
+#     set(EXIV2_URL)
+#     if(MSVC)
+#         set(EXIV2_URL "https://github.com/Exiv2/exiv2/releases/download/v${TARGET_EXIV2_VERSION}/exiv2-${TARGET_EXIV2_VERSION}-2019msvc64.zip")
+#     elseif(LINUX)
+#         set(EXIV2_URL "https://github.com/Exiv2/exiv2/releases/download/v${TARGET_EXIV2_VERSION}/exiv2-${TARGET_EXIV2_VERSION}-Linux64.tar.gz")
+#     elseif(MACOS)
+#         set(EXIV2_URL "https://github.com/Exiv2/exiv2/releases/download/v${TARGET_EXIV2_VERSION}/exiv2-${TARGET_EXIV2_VERSION}-Darwin.tar.gz")
+#     endif()
+
+#     if(EXIV2_URL)
+#         FetchContent_Declare(exiv2
+#            DOWNLOAD_EXTRACT_TIMESTAMP true
+#            URL ${EXIV2_URL}
+#         )
+#         FetchContent_MakeAvailable(exiv2)
+
+#         # exiv2_SOURCE_DIR
+#         # target_link_libraries(AnalyzeView PRIVATE Exiv2::exiv2lib)
+#         return()
+#     endif()
+# endif()
+
+if(NOT QGC_BUILD_DEPENDENCIES)
+    find_package(exiv2 ${MINIMUM_EXIV2_VERSION})
+    if(TARGET Exiv2::exiv2lib)
+        target_link_libraries(AnalyzeView PRIVATE Exiv2::exiv2lib)
+        return()
+    endif()
+endif()
+
+if(NOT QGC_BUILD_DEPENDENCIES)
+    find_package(EXPAT ${MINIMUM_EXPAT_VERSION})
+endif()
+if(NOT TARGET EXPAT::EXPAT)
+    message(STATUS "Building Expat")
+    FetchContent_Declare(expat
+        GIT_REPOSITORY https://github.com/libexpat/libexpat.git
+        GIT_TAG R_2_6_4
+        GIT_SHALLOW TRUE
+        SOURCE_SUBDIR expat
+    )
+    set(EXPAT_BUILD_DOCS OFF CACHE INTERNAL "" FORCE)
+    set(EXPAT_BUILD_EXAMPLES OFF CACHE INTERNAL "" FORCE)
+    set(EXPAT_BUILD_FUZZERS OFF CACHE INTERNAL "" FORCE)
+    set(EXPAT_BUILD_PKGCONFIG OFF CACHE INTERNAL "" FORCE)
+    set(EXPAT_BUILD_TESTS OFF CACHE INTERNAL "" FORCE)
+    set(EXPAT_BUILD_TOOLS OFF CACHE INTERNAL "" FORCE)
+    set(EXPAT_ENABLE_INSTALL OFF CACHE INTERNAL "" FORCE)
+    set(EXPAT_SHARED_LIBS OFF CACHE INTERNAL "" FORCE)
+    FetchContent_MakeAvailable(expat)
+endif()
+
+message(STATUS "Building Exiv2")
+FetchContent_Declare(exiv2
+    GIT_REPOSITORY https://github.com/Exiv2/exiv2.git
+    GIT_TAG "v${TARGET_EXIV2_VERSION}"
+    GIT_SHALLOW TRUE
+)
+if(TARGET EXPAT::EXPAT)
+    set(EXIV2_ENABLE_XMP ON CACHE INTERNAL "" FORCE)
+else()
+    set(EXIV2_ENABLE_XMP OFF CACHE INTERNAL "" FORCE)
+endif()
+set(EXIV2_ENABLE_EXTERNAL_XMP OFF CACHE INTERNAL "" FORCE)
+set(EXIV2_ENABLE_PNG OFF CACHE INTERNAL "" FORCE)
+set(EXIV2_ENABLE_NLS OFF CACHE INTERNAL "" FORCE)
+set(EXIV2_ENABLE_LENSDATA OFF CACHE INTERNAL "" FORCE)
+set(EXIV2_ENABLE_DYNAMIC_RUNTIME OFF CACHE INTERNAL "" FORCE)
+set(EXIV2_ENABLE_WEBREADY OFF CACHE INTERNAL "" FORCE)
+set(EXIV2_ENABLE_CURL OFF CACHE INTERNAL "" FORCE)
+set(EXIV2_ENABLE_BMFF OFF CACHE INTERNAL "" FORCE)
+set(EXIV2_ENABLE_BROTLI OFF CACHE INTERNAL "" FORCE)
+set(EXIV2_ENABLE_VIDEO OFF CACHE INTERNAL "" FORCE)
+set(EXIV2_ENABLE_INIH OFF CACHE INTERNAL "" FORCE)
+set(EXIV2_ENABLE_FILESYSTEM_ACCESS ON CACHE INTERNAL "" FORCE)
+set(EXIV2_BUILD_SAMPLES OFF CACHE INTERNAL "" FORCE)
+set(EXIV2_BUILD_EXIV2_COMMAND OFF CACHE INTERNAL "" FORCE)
+set(EXIV2_BUILD_UNIT_TESTS OFF CACHE INTERNAL "" FORCE)
+set(EXIV2_BUILD_FUZZ_TESTS OFF CACHE INTERNAL "" FORCE)
+set(EXIV2_BUILD_DOC OFF CACHE INTERNAL "" FORCE)
+set(BUILD_WITH_CCACHE ON CACHE INTERNAL "" FORCE)
+FetchContent_MakeAvailable(exiv2)
+
+if(TARGET Exiv2::exiv2lib)
+    target_link_libraries(AnalyzeView PRIVATE Exiv2::exiv2lib)
+    target_include_directories(AnalyzeView PRIVATE ${CMAKE_BINARY_DIR})
+    return()
+endif()

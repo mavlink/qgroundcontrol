@@ -108,9 +108,9 @@ endif()
 
 if(GStreamer_VERSION VERSION_GREATER_EQUAL 1.22)
     FetchContent_Declare(gstreamer_good_plugins
+        DOWNLOAD_EXTRACT_TIMESTAMP true
         # URL https://gitlab.freedesktop.org/gstreamer/gstreamer/-/archive/${GST_PLUGINS_VERSION}/gstreamer-${GST_PLUGINS_VERSION}.zip?path=subprojects/gst-plugins-good/ext/qt6
         URL https://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-${GST_PLUGINS_VERSION}.tar.xz
-        DOWNLOAD_EXTRACT_TIMESTAMP true
     )
     FetchContent_MakeAvailable(gstreamer_good_plugins)
     set(QGC_GST_QT6_PLUGIN_PATH "${gstreamer_good_plugins_SOURCE_DIR}/ext/qt6")

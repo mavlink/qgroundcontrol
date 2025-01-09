@@ -42,6 +42,14 @@ target_sources(Joystick
 
 target_compile_definitions(Joystick PRIVATE QGC_SDL_JOYSTICK SDL_MAIN_HANDLED)
 
+# qt_add_qml_module(Joystick
+#     URI QGroundControl.JoystickManager
+#     VERSION 1.0
+#     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
+# )
+
+#===========================================================================#
+
 FetchContent_Declare(SDL_GameControllerDB
     GIT_REPOSITORY https://github.com/mdqinc/SDL_GameControllerDB.git
     GIT_TAG master
@@ -59,39 +67,24 @@ qt_add_resources(Joystick "gamecontrollerdb.txt"
     FILES ${sdl_gamecontrollerdb_SOURCE_DIR}/gamecontrollerdb.txt
 )
 
-# qt_add_qml_module(Joystick
-#     URI QGroundControl.JoystickManager
-#     VERSION 1.0
-#     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
-# )
+#===========================================================================#
 
 set(MINIMUM_SDL2_VERSION 2.24.0)
+set(TARGET_SDL2_VERSION 2.30.11)
+
 if(NOT QGC_BUILD_DEPENDENCIES)
     find_package(SDL2 ${MINIMUM_SDL2_VERSION})
     if(TARGET SDL2::SDL2)
-        message(STATUS "Found JoystickSDL ${SDL2_VERSION_STRING}")
-        target_link_libraries(Joystick PRIVATE SDL2::Core)
+        target_link_libraries(Joystick PRIVATE SDL2::SDL2)
         return()
-    else()
-        find_package(PkgConfig)
-        if(PkgConfig_FOUND)
-            pkg_check_modules(SDL2 IMPORTED_TARGET sdl2>=${MINIMUM_SDL2_VERSION})
-            if(TARGET PkgConfig::SDL2)
-                message(STATUS "Found JoystickSDL ${SDL2_VERSION}")
-                target_link_libraries(Joystick PRIVATE PkgConfig::SDL2)
-                return()
-            endif()
-        endif()
     endif()
 endif()
 
-message(STATUS "Building JoystickSDL")
-include(FetchContent)
+message(STATUS "Building SDL")
 FetchContent_Declare(SDL
     GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-    GIT_TAG release-2.30.10
+    GIT_TAG "release-${TARGET_SDL2_VERSION}"
     GIT_SHALLOW TRUE
-    GIT_PROGRESS TRUE
 )
 set(SDL2_DISABLE_INSTALL ON CACHE INTERNAL "" FORCE)
 set(SDL2_DISABLE_UNINSTALL ON CACHE INTERNAL "" FORCE)
@@ -127,7 +120,11 @@ set(SDL_VIRTUAL_JOYSTICK ON CACHE INTERNAL "" FORCE)
 
 if(WIN32)
     set(SDL_DIRECTX OFF CACHE INTERNAL "" FORCE)
+    set(SDL_XINPUT ON CACHE INTERNAL "" FORCE)
 endif()
 FetchContent_MakeAvailable(SDL)
 
-target_link_libraries(Joystick PRIVATE SDL2::SDL2-static)
+if(TARGET SDL2::SDL2-static)
+    target_link_libraries(Joystick PRIVATE SDL2::SDL2-static)
+    return()
+endif()

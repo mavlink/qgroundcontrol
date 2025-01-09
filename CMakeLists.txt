@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.22.1)
+cmake_minimum_required(VERSION 3.24)
 
 list(APPEND CMAKE_MODULE_PATH
     ${CMAKE_SOURCE_DIR}/cmake
@@ -202,7 +202,7 @@ find_package(Qt6
 )
 
 if(LINUX)
-    find_package(Qt6::WaylandClient ${QT_MINIMUM_VERSION})
+    find_package(Qt6 ${QT_MINIMUM_VERSION} COMPONENTS WaylandClient)
 endif()
 
 if(NOT Qt6LinguistTools_DIR)
@@ -222,8 +222,6 @@ qt_policy(
     SET QTP0004 NEW
     SET QTP0005 NEW
 )
-
-# QT_TARGETS_FOLDER
 
 #######################################################
 #                QGroundControl Options

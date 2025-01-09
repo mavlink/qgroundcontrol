@@ -60,29 +60,33 @@ if(QGC_ENABLE_BLUETOOTH)
     target_link_libraries(Utilities PRIVATE Qt6::Bluetooth)
 endif()
 
+#===========================================================================#
+
 set(MINIMUM_SHAPELIB_VERSION 1.6.0)
+set(TARGET_SHAPELIB_VERSION 1.6.1)
 
 if(NOT QGC_BUILD_DEPENDENCIES)
     find_package(Shapelib ${MINIMUM_SHAPELIB_VERSION})
-    if(Shapelib_FOUND)
-        message(STATUS "Found Shapelib ${Shapelib_VERSION}")
+    if(TARGET SHAPELIB::shp)
         target_link_libraries(Utilities PRIVATE SHAPELIB::shp)
+        return()
     endif()
 endif()
 
-if(NOT Shapelib_FOUND)
-    message(STATUS "Building Shapelib")
-    include(FetchContent)
-    FetchContent_Declare(shapelib
-        GIT_REPOSITORY https://github.com/OSGeo/shapelib.git
-        GIT_TAG master
-        GIT_SHALLOW TRUE
-    )
-    set(BUILD_SHAPELIB_CONTRIB OFF CACHE INTERNAL "")
-    set(BUILD_APPS OFF CACHE INTERNAL "")
-    set(saved_BUILD_TESTING ${BUILD_TESTING})
-    set(BUILD_TESTING OFF CACHE INTERNAL "Disable testing for Shapelib")
-    FetchContent_MakeAvailable(shapelib)
-    set(BUILD_TESTING ${saved_BUILD_TESTING} CACHE INTERNAL "Restore BUILD_TESTING")
+message(STATUS "Building Shapelib")
+FetchContent_Declare(shapelib
+    GIT_REPOSITORY https://github.com/OSGeo/shapelib.git
+    GIT_TAG "v${TARGET_SHAPELIB_VERSION}"
+    GIT_SHALLOW TRUE
+)
+set(BUILD_SHAPELIB_CONTRIB OFF CACHE INTERNAL "" FORCE)
+set(BUILD_APPS OFF CACHE INTERNAL "" FORCE)
+set(saved_BUILD_TESTING ${BUILD_TESTING})
+set(BUILD_TESTING OFF CACHE INTERNAL "Disable Testing for Shapelib" FORCE)
+FetchContent_MakeAvailable(shapelib)
+set(BUILD_TESTING ${saved_BUILD_TESTING} CACHE INTERNAL "Restore BUILD_TESTING from Shapelib" FORCE)
+
+if(TARGET shp)
     target_link_libraries(Utilities PRIVATE shp)
+    return()
 endif()
