@@ -42,6 +42,14 @@ target_sources(Joystick
 
 target_compile_definitions(Joystick PRIVATE QGC_SDL_JOYSTICK SDL_MAIN_HANDLED)
 
+# qt_add_qml_module(Joystick
+#     URI QGroundControl.JoystickManager
+#     VERSION 1.0
+#     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
+# )
+
+#===========================================================================#
+
 FetchContent_Declare(SDL_GameControllerDB
     GIT_REPOSITORY https://github.com/mdqinc/SDL_GameControllerDB.git
     GIT_TAG master
@@ -59,75 +67,77 @@ qt_add_resources(Joystick "gamecontrollerdb.txt"
     FILES ${sdl_gamecontrollerdb_SOURCE_DIR}/gamecontrollerdb.txt
 )
 
-# qt_add_qml_module(Joystick
-#     URI QGroundControl.JoystickManager
-#     VERSION 1.0
-#     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
-# )
+#===========================================================================#
 
 set(MINIMUM_SDL2_VERSION 2.24.0)
-if(NOT QGC_BUILD_DEPENDENCIES)
-    find_package(SDL2 ${MINIMUM_SDL2_VERSION})
-    if(TARGET SDL2::SDL2)
-        message(STATUS "Found JoystickSDL ${SDL2_VERSION_STRING}")
-        target_link_libraries(Joystick PRIVATE SDL2::Core)
+set(TARGET_SDL2_VERSION 2.30.11)
+
+if(QGC_DOWNLOAD_DEPENDENCIES)
+    if(MSVC)
+        set(SDL2_URL "https://github.com/libsdl-org/SDL/releases/download/release-${TARGET_SDL2_VERSION}/SDL2-${TARGET_SDL2_VERSION}-win32-x64.zip")
+        FetchContent_Declare(SDL2
+            URL ${SDL2_URL}
+            DOWNLOAD_EXTRACT_TIMESTAMP
+        )
+        FetchContent_MakeAvailable(SDL2)
+        target_link_libraries(Joystick PRIVATE ${sdl2_SOURCE_DIR}/SDL2.dll)
         return()
-    else()
-        find_package(PkgConfig)
-        if(PkgConfig_FOUND)
-            pkg_check_modules(SDL2 IMPORTED_TARGET sdl2>=${MINIMUM_SDL2_VERSION})
-            if(TARGET PkgConfig::SDL2)
-                message(STATUS "Found JoystickSDL ${SDL2_VERSION}")
-                target_link_libraries(Joystick PRIVATE PkgConfig::SDL2)
-                return()
-            endif()
-        endif()
     endif()
 endif()
 
-message(STATUS "Building JoystickSDL")
-include(FetchContent)
-FetchContent_Declare(SDL
-    GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-    GIT_TAG release-2.30.10
-    GIT_SHALLOW TRUE
-    GIT_PROGRESS TRUE
-)
-set(SDL2_DISABLE_INSTALL ON CACHE INTERNAL "" FORCE)
-set(SDL2_DISABLE_UNINSTALL ON CACHE INTERNAL "" FORCE)
-set(SDL2_DISABLE_SDL2MAIN ON CACHE INTERNAL "" FORCE)
-set(SDL_SHARED OFF CACHE INTERNAL "" FORCE)
-set(SDL_STATIC ON CACHE INTERNAL "" FORCE)
-set(SDL_TEST OFF CACHE INTERNAL "" FORCE)
+if(QGC_BUILD_DEPENDENCIES)
+    message(STATUS "Building JoystickSDL")
+    include(FetchContent)
+    FetchContent_Declare(SDL
+        GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+        GIT_TAG "release-${TARGET_SDL2_VERSION}"
+        GIT_SHALLOW TRUE
+        GIT_PROGRESS TRUE
+    )
+    set(SDL2_DISABLE_INSTALL ON CACHE INTERNAL "" FORCE)
+    set(SDL2_DISABLE_UNINSTALL ON CACHE INTERNAL "" FORCE)
+    set(SDL2_DISABLE_SDL2MAIN ON CACHE INTERNAL "" FORCE)
+    set(SDL_SHARED OFF CACHE INTERNAL "" FORCE)
+    set(SDL_STATIC ON CACHE INTERNAL "" FORCE)
+    set(SDL_TEST OFF CACHE INTERNAL "" FORCE)
 
-set(SDL_ATOMIC ON CACHE INTERNAL "" FORCE)
-set(SDL_AUDIO OFF CACHE INTERNAL "" FORCE)
-set(SDL_CPUINFO ON CACHE INTERNAL "" FORCE)
-set(SDL_EVENTS ON CACHE INTERNAL "" FORCE)
-set(SDL_FILE OFF CACHE INTERNAL "" FORCE)
-set(SDL_FILESYSTEM OFF CACHE INTERNAL "" FORCE)
-set(SDL_HAPTIC ON CACHE INTERNAL "" FORCE)
-set(SDL_HIDAPI ON CACHE INTERNAL "" FORCE)
-set(SDL_JOYSTICK ON CACHE INTERNAL "" FORCE)
-set(SDL_LOADSO ON CACHE INTERNAL "" FORCE)
-set(SDL_LOCALE OFF CACHE INTERNAL "" FORCE)
-set(SDL_MISC OFF CACHE INTERNAL "" FORCE)
-set(SDL_POWER ON CACHE INTERNAL "" FORCE)
-set(SDL_RENDER OFF CACHE INTERNAL "" FORCE)
-set(SDL_SENSOR OFF CACHE INTERNAL "" FORCE)
-set(SDL_THREADS ON CACHE INTERNAL "" FORCE)
-set(SDL_TIMERS OFF CACHE INTERNAL "" FORCE)
-set(SDL_VIDEO OFF CACHE INTERNAL "" FORCE)
+    set(SDL_ATOMIC ON CACHE INTERNAL "" FORCE)
+    set(SDL_AUDIO OFF CACHE INTERNAL "" FORCE)
+    set(SDL_CPUINFO ON CACHE INTERNAL "" FORCE)
+    set(SDL_EVENTS ON CACHE INTERNAL "" FORCE)
+    set(SDL_FILE OFF CACHE INTERNAL "" FORCE)
+    set(SDL_FILESYSTEM OFF CACHE INTERNAL "" FORCE)
+    set(SDL_HAPTIC ON CACHE INTERNAL "" FORCE)
+    set(SDL_HIDAPI ON CACHE INTERNAL "" FORCE)
+    set(SDL_JOYSTICK ON CACHE INTERNAL "" FORCE)
+    set(SDL_LOADSO ON CACHE INTERNAL "" FORCE)
+    set(SDL_LOCALE OFF CACHE INTERNAL "" FORCE)
+    set(SDL_MISC OFF CACHE INTERNAL "" FORCE)
+    set(SDL_POWER ON CACHE INTERNAL "" FORCE)
+    set(SDL_RENDER OFF CACHE INTERNAL "" FORCE)
+    set(SDL_SENSOR OFF CACHE INTERNAL "" FORCE)
+    set(SDL_THREADS ON CACHE INTERNAL "" FORCE)
+    set(SDL_TIMERS OFF CACHE INTERNAL "" FORCE)
+    set(SDL_VIDEO OFF CACHE INTERNAL "" FORCE)
 
-set(SDL_3DNOW OFF CACHE INTERNAL "" FORCE)
-set(SDL_DBUS OFF CACHE INTERNAL "" FORCE)
-set(SDL_IBUS OFF CACHE INTERNAL "" FORCE)
-set(SDL_MMX OFF CACHE INTERNAL "" FORCE)
-set(SDL_VIRTUAL_JOYSTICK ON CACHE INTERNAL "" FORCE)
+    set(SDL_3DNOW OFF CACHE INTERNAL "" FORCE)
+    set(SDL_DBUS OFF CACHE INTERNAL "" FORCE)
+    set(SDL_IBUS OFF CACHE INTERNAL "" FORCE)
+    set(SDL_MMX OFF CACHE INTERNAL "" FORCE)
+    set(SDL_VIRTUAL_JOYSTICK ON CACHE INTERNAL "" FORCE)
 
-if(WIN32)
-    set(SDL_DIRECTX OFF CACHE INTERNAL "" FORCE)
+    if(WIN32)
+        set(SDL_DIRECTX OFF CACHE INTERNAL "" FORCE)
+    endif()
+    FetchContent_MakeAvailable(SDL)
+
+    target_link_libraries(Joystick PRIVATE SDL2::SDL2-static)
+    return()
 endif()
-FetchContent_MakeAvailable(SDL)
 
-target_link_libraries(Joystick PRIVATE SDL2::SDL2-static)
+find_package(SDL2 ${MINIMUM_SDL2_VERSION} CONFIG)
+if(TARGET SDL2::SDL2)
+    message(STATUS "Found JoystickSDL ${SDL2_VERSION_STRING}")
+    target_link_libraries(Joystick PRIVATE SDL2::SDL2)
+    return()
+endif()
