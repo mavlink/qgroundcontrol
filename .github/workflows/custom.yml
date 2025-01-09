@@ -80,7 +80,7 @@ jobs:
       - name: Set Up Cache
         uses: hendrikmuhs/ccache-action@main
         with:
-          key: ${{ runner.os }}-${{ matrix.Arch }}-${{ matrix.BuildType }}
+          key: ${{ runner.os }}-${{ matrix.Arch }}-${{ matrix.BuildType }}-custom
           max-size: 1G
           variant: sccache
           save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
