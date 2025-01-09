@@ -9,6 +9,7 @@ set(QGC_ORG_NAME "QGroundControl.org" CACHE STRING "Org Name")
 set(QGC_ORG_DOMAIN "org.qgroundcontrol" CACHE STRING "Domain")
 
 option(QGC_STABLE_BUILD "Stable Build" OFF)
+option(QGC_DOWNLOAD_DEPENDENCIES "Download Dependencies if Possible" ON)
 
 option(QGC_ENABLE_BLUETOOTH "Enable Bluetooth Links" ON) # Qt6Bluetooth_FOUND
 option(QGC_ZEROCONF_ENABLED "Enable ZeroConf Compatibility" OFF)

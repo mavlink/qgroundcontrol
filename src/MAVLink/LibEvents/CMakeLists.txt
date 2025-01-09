@@ -1,6 +1,6 @@
 find_package(Qt6 REQUIRED COMPONENTS Core)
 
-include(FetchContent)
+message(STATUS "Building libevents")
 FetchContent_Declare(libevents
     GIT_REPOSITORY https://github.com/mavlink/libevents.git
     GIT_TAG main
