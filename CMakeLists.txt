@@ -23,6 +23,10 @@ endif()
 #                   Project Info
 #######################################################
 
+# set(CMAKE_OSX_ARCHITECTURES "arm64")
+# set(CMAKE_OSX_SYSROOT "iphoneos")
+# set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0")
+
 include(Git)
 
 project(QGroundControl
@@ -54,7 +58,7 @@ include(CMakeDependentOption)
 include(FetchContent)
 include(CMakePrintHelpers)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_AUTOMOC ON)
@@ -111,6 +115,12 @@ endif()
 
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
+# https://cmake.org/cmake/help/latest/policy/CMP0168.html#policy:CMP0168
+if(POLICY CMP0168)
+    cmake_policy(SET CMP0168 NEW)
+    set(CMAKE_POLICY_DEFAULT_CMP0168 NEW)
+endif()
+
 #######################################################
 #               Qt6 Configuration
 #######################################################
@@ -146,13 +156,15 @@ if(ANDROID)
     # QT_ANDROID_DEPLOY_RELEASE
     # set(QT_ANDROID_DEPLOYMENT_TYPE ON CACHE BOOL "Deployment Type")
     cmake_dependent_option(QT_ANDROID_SIGN_APK "Enable Signing APK" ON "CMAKE_BUILD_TYPE STREQUAL Release" OFF)
-    # QT_ANDROID_SIGN_AAB
+    if(QT_ANDROID_SIGN_AAB)
+        message(STATUS "Signing AAB")
+    endif()
     if(QT_ANDROID_SIGN_APK)
         message(STATUS "Signing APK")
-        message(STATUS "QT_ANDROID_KEYSTORE_PATH $ENV{QT_ANDROID_KEYSTORE_PATH}")
-        message(STATUS "QT_ANDROID_KEYSTORE_ALIAS $ENV{QT_ANDROID_KEYSTORE_ALIAS}")
-        # QT_ANDROID_KEYSTORE_STORE_PASS, QT_ANDROID_KEYSTORE_KEY_PASS
     endif()
+    # message(STATUS "QT_ANDROID_KEYSTORE_PATH $ENV{QT_ANDROID_KEYSTORE_PATH}")
+    # message(STATUS "QT_ANDROID_KEYSTORE_ALIAS $ENV{QT_ANDROID_KEYSTORE_ALIAS}")
+    # QT_ANDROID_KEYSTORE_STORE_PASS, QT_ANDROID_KEYSTORE_KEY_PASS
 endif()
 
 set(QT_SILENCE_MISSING_DEPENDENCY_TARGET_WARNING ON)
@@ -395,9 +407,6 @@ elseif(MACOS)
 elseif(IOS)
     enable_language(OBJC)
 
-    set(CMAKE_OSX_ARCHITECTURES "arm64")
-    set(CMAKE_OSX_SYSROOT "iphoneos")
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "14.0")
     set(CMAKE_XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "14.0")
     set(CMAKE_XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2") # iPhone,iPad
     set(CMAKE_XCODE_ATTRIBUTE_INFOPLIST_FILE "${CMAKE_CURRENT_SOURCE_DIR}/deploy/ios/iOS-Info.plist")

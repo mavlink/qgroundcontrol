@@ -14,6 +14,8 @@
 	<string></string>
 	<key>NSCameraUsageDescription</key>
 	<string>QGC uses UVC devices for video streaming.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Qt Multimedia for iOS uses the camera and microphone.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>We do not access it. Apple thinks we do.</string>
 	<key>UILaunchStoryboardName</key>

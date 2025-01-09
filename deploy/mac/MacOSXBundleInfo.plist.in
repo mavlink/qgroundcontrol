@@ -36,6 +36,8 @@
     <string>NSApplication</string>
     <key>NSCameraUsageDescription</key>
     <string>Camera devices used for FPV</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Qt Multimedia for MacOS uses the camera and microphone.</string>
     <key>NSLocationUsageDescription</key>
     <string>Location used for ground control station position</string>
     <key>NSBluetoothAlwaysUsageDescription</key>
