@@ -438,6 +438,7 @@ protected:
 
     // Update internal mappings for a list of flight modes
     void             _updateModeMappings(FlightModeList &modeList);
+    void             _addNewFlightMode  (FirmwareFlightMode &mode);
 
     FlightModeList              _availableFlightModeList;
     FlightModeCustomModeMap     _modeEnumToString;

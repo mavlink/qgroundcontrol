@@ -61,7 +61,7 @@ public:
     const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
 
     QString stabilizedFlightMode                    (void) const override;
-    void    updateAvailableFlightModes              (FlightModeList modeList) final;
+    void    updateAvailableFlightModes              (FlightModeList modeList) override;
 
 protected:
     uint32_t    _convertToCustomFlightModeEnum(uint32_t val) const override;

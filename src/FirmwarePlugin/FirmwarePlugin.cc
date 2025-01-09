@@ -594,6 +594,17 @@ void FirmwarePlugin::_updateModeMappings(FlightModeList &modeList){
             _modeEnumToString[mode.custom_mode] = nModeName;
         }
         mode.mode_name = nModeName;
-        _availableFlightModeList += mode;
+        _addNewFlightMode(mode);
     }
+}
+
+void FirmwarePlugin::_addNewFlightMode(FirmwareFlightMode &mode)
+{
+    for(auto &m:_availableFlightModeList){
+        if(m.custom_mode == mode.custom_mode){
+            // Already Exist
+            return;
+        }
+    }
+    _availableFlightModeList += mode;
 }
