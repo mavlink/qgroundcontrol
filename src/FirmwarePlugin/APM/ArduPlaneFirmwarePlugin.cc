@@ -38,6 +38,8 @@ ArduPlaneFirmwarePlugin::ArduPlaneFirmwarePlugin(void)
     , _qAutotuneFlightMode   (tr("QuadPlane AutoTune"))
     , _qAcroFlightMode       (tr("QuadPlane Acro"))
     , _thermalFlightMode     (tr("Thermal"))
+    , _loiter2qlandFlightMode(tr("Loiter to QLand"))
+    , _autolandFlightMode    (tr("Autoland"))
 {
     _setModeEnumToModeStringMapping({
         {APMPlaneMode::MANUAL        , _manualFlightMode      },
@@ -64,6 +66,9 @@ ArduPlaneFirmwarePlugin::ArduPlaneFirmwarePlugin(void)
         {APMPlaneMode::QAUTOTUNE     , _qAutotuneFlightMode   },
         {APMPlaneMode::QACRO         , _qAcroFlightMode       },
         {APMPlaneMode::THERMAL       , _thermalFlightMode     },
+        {APMPlaneMode::LOITER2QLAND  , _loiter2qlandFlightMode},
+        {APMPlaneMode::AUTOLAND      , _autolandFlightMode    },
+        
     });
 
     updateAvailableFlightModes({
@@ -92,6 +97,8 @@ ArduPlaneFirmwarePlugin::ArduPlaneFirmwarePlugin(void)
         { _qAutotuneFlightMode    , APMPlaneMode::QAUTOTUNE     , true , true },
         { _qAcroFlightMode        , APMPlaneMode::QACRO         , true , true },
         { _thermalFlightMode      , APMPlaneMode::THERMAL       , true , true },
+        { _loiter2qlandFlightMode , APMPlaneMode::LOITER2QLAND  , true , true },
+        { _autolandFlightMode     , APMPlaneMode::AUTOLAND      , true , true },
     });
 
     if (!_remapParamNameIntialized) {
