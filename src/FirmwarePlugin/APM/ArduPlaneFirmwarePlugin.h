@@ -43,6 +43,8 @@ struct APMPlaneMode
         QAUTOTUNE     = 22,
         QACRO         = 23,
         THERMAL       = 24,
+        LOITER2QLAND  = 25,
+        AUTOLAND      = 26,
     };
 };
 
@@ -91,6 +93,8 @@ protected:
     QString     _qAutotuneFlightMode    ;
     QString     _qAcroFlightMode        ;
     QString     _thermalFlightMode      ;
+    QString     _loiter2qlandFlightMode ;
+    QString     _autolandFlightMode     ;
 private:
     static bool _remapParamNameIntialized;
     static FirmwarePlugin::remapParamNameMajorVersionMap_t  _remapParamName;
