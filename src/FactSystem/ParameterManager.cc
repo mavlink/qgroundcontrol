@@ -254,13 +254,14 @@ void ParameterManager::_handleParamValue(int componentId, QString parameterName,
     }
 #endif
 
-    if (_vehicle->px4Firmware() && parameterName == "_HASH_CHECK") {
-        if (!_initialLoadComplete && !_logReplay) {
-            /* we received a cache hash, potentially load from cache */
-            _tryCacheHashLoad(_vehicle->id(), componentId, parameterValue);
-        }
-        return;
-    }
+    // Disable cache load from QGC, as PX4 Parameters can be different from QGC
+    // if (_vehicle->px4Firmware() && parameterName == "_HASH_CHECK") {
+    //     if (!_initialLoadComplete && !_logReplay) {
+    //         /* we received a cache hash, potentially load from cache */
+    //         _tryCacheHashLoad(_vehicle->id(), componentId, parameterValue);
+    //     }
+    //     return;
+    // }
 
     // Used to debug cache crc misses (turn on ParameterManagerDebugCacheFailureLog)
     if (!_initialLoadComplete && !_logReplay && _debugCacheCRC.contains(componentId) && _debugCacheCRC[componentId]) {
