@@ -2,246 +2,6 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="ja" sourcelanguage="en">
   <context>
-    <name>FlyView.SettingsGroup.json</name>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[instrumentQmlFile].enumStrings, </extracomment>
-      <location filename="../src/Settings/FlyView.SettingsGroup.json"/>
-      <source>Integrated Compass/Attitude,Horizontal Compass/Atttitude,Large Vertical</source>
-      <translation>一体型コンパス/姿勢計, 水平コンパス/姿勢計, 大型垂直コンパス</translation>
-    </message>
-  </context>
-  <context>
-    <name>App.SettingsGroup.json</name>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[offlineEditingFirmwareClass].enumStrings, </extracomment>
-      <location filename="../src/Settings/App.SettingsGroup.json"/>
-      <source>ArduPilot,PX4 Pro,Mavlink Generic</source>
-      <translation>ArduPilot,PX4 Pro,MAVLink 汎用</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[offlineEditingVehicleClass].enumStrings, </extracomment>
-      <location filename="../src/Settings/App.SettingsGroup.json"/>
-      <source>Fixed Wing,Multi-Rotor,VTOL,Rover,Sub,Mavlink Generic</source>
-      <translation>固定翼機,マルチコプター,VTOL機,ローバー,サブマリン,MAVLink 汎用</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[gstDebugLevel].enumStrings, </extracomment>
-      <location filename="../src/Settings/App.SettingsGroup.json"/>
-      <source>Disabled,Error,Warning,FixMe,Info,Debug,Log,Trace</source>
-      <translation>無効,エラー,警告,FixMe,情報,デバッグ,ログ,トレース</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[indoorPalette].enumStrings, </extracomment>
-      <location filename="../src/Settings/App.SettingsGroup.json"/>
-      <source>Indoor,Outdoor</source>
-      <translation>屋内,屋外</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[followTarget].enumStrings, </extracomment>
-      <location filename="../src/Settings/App.SettingsGroup.json"/>
-      <source>Never,Always,When in Follow Me Flight Mode</source>
-      <translation>設定しない,常時設定,フォローミーモード時</translation>
-    </message>
-  </context>
-  <context>
-    <name>FirmwareUpgrade.SettingsGroup.json</name>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[apmChibiOS].enumStrings, </extracomment>
-      <location filename="../src/Settings/FirmwareUpgrade.SettingsGroup.json"/>
-      <source>ChibiOS,NuttX</source>
-      <translation>ChibiOS,NuttX</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[apmVehicleType].enumStrings, </extracomment>
-      <location filename="../src/Settings/FirmwareUpgrade.SettingsGroup.json"/>
-      <source>Multi-Rotor,Helicopter,Plane,Rover,Sub</source>
-      <translation>マルチローター,ヘリコプター,飛行機,ローバー,サブマリン</translation>
-    </message>
-  </context>
-  <context>
-    <name>APMMavlinkStreamRate.SettingsGroup.json</name>
-    <message>
-      <extracomment>.QGC.MetaData.Defines.StreamRateEnumStrings, </extracomment>
-      <location filename="../src/Settings/APMMavlinkStreamRate.SettingsGroup.json"/>
-      <source>Controlled By Vehicle,0 hz,1 hz,2 hz,3 hz,4 hz,5 hz,6 hz,7 hz,8 hz,9 hz,10 hz,50 hz,100 hz</source>
-      <translation>機体による制御,0 hz,1 hz,2 hz,3 hz,4 hz,5 hz,6 hz,7 hz,8 hz,9 hz,10 hz,50 hz,100 hz</translation>
-    </message>
-  </context>
-  <context>
-    <name>BatteryIndicator.SettingsGroup.json</name>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[display].enumStrings, </extracomment>
-      <location filename="../src/Settings/BatteryIndicator.SettingsGroup.json"/>
-      <source>Percentage,Voltage,Percentage and Voltage</source>
-      <translation>パーセント, 電圧, パーセント &amp; 電圧</translation>
-    </message>
-  </context>
-  <context>
-    <name>Video.SettingsGroup.json</name>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[gridLines].enumStrings, </extracomment>
-      <location filename="../src/Settings/Video.SettingsGroup.json"/>
-      <source>Hide,Show</source>
-      <translation>非表示,表示</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[videoFit].enumStrings, </extracomment>
-      <location filename="../src/Settings/Video.SettingsGroup.json"/>
-      <source>Fit Width,Fit Height,Stretch</source>
-      <translation>フィット幅,フィット高,ストレッチ</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[recordingFormat].enumStrings, </extracomment>
-      <location filename="../src/Settings/Video.SettingsGroup.json"/>
-      <source>mkv,mov,mp4</source>
-      <translation>mkv,mov,mp4</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[forceVideoDecoder].enumStrings, </extracomment>
-      <location filename="../src/Settings/Video.SettingsGroup.json"/>
-      <source>Default,Force software decoder,Force NVIDIA decoder,Force VA-API decoder,Force DirectX3D 11 decoder,Force VideoToolbox decoder</source>
-      <translation>デフォルト,ソフトウェア デコーダー,NVIDIA デコーダー,VA-API デコーダー,DirectX 3D 11 デコーダー,VideoToolbox デコーダー</translation>
-    </message>
-  </context>
-  <context>
-    <name>RemoteID.SettingsGroup.json</name>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[operatorIDType].enumStrings, </extracomment>
-      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>CAA</source>
-      <translation>CAA</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[selfIDType].enumStrings, </extracomment>
-      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>Free Text,Emergency,Extended Status</source>
-      <translation>フリーテキスト, 緊急性, 拡張ステータス</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[basicIDType].enumStrings, </extracomment>
-      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>None,SerialNumber(ANSI/CTA-2063),CAA,UTM(RFC4122),Specific</source>
-      <translation>なし,シリアルナンバー(ANSI/CTA-2063),CAA,UTM(RFC4122),特定</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[basicIDUaType].enumStrings, </extracomment>
-      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>Undefined,Airplane/FixedWing,Helicopter/Multirrotor,Gyroplane,VTOL,Ornithopter,Glider,Kite,Free Ballon,Captive Ballon,Airship,Parachute,Rocket,Tethered powered aircraft,Ground Obstacle,Other</source>
-      <translation>未定義,飛行機/固定翼機,ヘリコプター/マルチローター,ジャイロプレーン,VTOL,羽ばたき飛行船,グライダー,カイト,フリーバロン,キャプティブバロン,飛行船,パラシュート,ロケット,テザー動力機,地上障害物,その他</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[region].enumStrings, </extracomment>
-      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>FAA,EU</source>
-      <translation>FAA,EU</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[locationType].enumStrings, </extracomment>
-      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>Takeoff(Not Supported),Live GNNS, Fixed (not for FAA)</source>
-      <translation>離陸(未サポート),リアルタイムGNNS,固定 (FAA対象外)</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[classificationType].enumStrings, </extracomment>
-      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>Undefined,EU</source>
-      <translation>未定義, EU</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[categoryEU].enumStrings, </extracomment>
-      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>Undeclared,Open,Specific,Certified</source>
-      <translation>未申請,公開,特定,認証済</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[classEU].enumStrings, </extracomment>
-      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>Undeclared,Class 0,Class 1,Class 2,Class 3,Class 4,Class 5,Class 6</source>
-      <translation>未申請,クラス 0,クラス 1,クラス 2,クラス 3,クラス 4,クラス 5,クラス 6</translation>
-    </message>
-  </context>
-  <context>
-    <name>GimbalController.SettingsGroup.json</name>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[ControlType].enumStrings, </extracomment>
-      <location filename="../src/Settings/GimbalController.SettingsGroup.json"/>
-      <source>Click to point, click and drag</source>
-      <translation>クリックでポイント, クリックしてドラッグ</translation>
-    </message>
-  </context>
-  <context>
-    <name>BatteryFact.json</name>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[batteryFunction].enumStrings, </extracomment>
-      <location filename="../src/Vehicle/FactGroups/BatteryFact.json"/>
-      <source>n/a,All Flight Systems,Propulsion,Avionics,Payload</source>
-      <translation>該当なし,全フライトシステム,推進力,アビオニクス,ペイロード</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[batteryType].enumStrings, </extracomment>
-      <location filename="../src/Vehicle/FactGroups/BatteryFact.json"/>
-      <source>n/a,LIPO,LIFE,LION,NIMH</source>
-      <translation>n/a,LIPO,LIFE,LION,NIMH</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[chargeState].enumStrings, </extracomment>
-      <location filename="../src/Vehicle/FactGroups/BatteryFact.json"/>
-      <source>n/a,Ok,Low,Critical,Emergency,Failed,Unhealthy,Charging</source>
-      <translation>n/a,OK,Low,Critical,Emergency,Failed,Unhealthy,Charging</translation>
-    </message>
-  </context>
-  <context>
-    <name>GPSFact.json</name>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[lock].enumStrings, </extracomment>
-      <location filename="../src/Vehicle/FactGroups/GPSFact.json"/>
-      <source>None,None,2D Lock,3D Lock,3D DGPS Lock,3D RTK GPS Lock (float),3D RTK GPS Lock (fixed),Static (fixed)</source>
-      <translation>None,None,2D Lock,3D Lock,3D DGPS Lock,3D RTK GPS Lock (float),3D RTK GPS Lock (fixed),Static (fixed)</translation>
-    </message>
-  </context>
-  <context>
-    <name>SubmarineFact.json</name>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[inputHold].enumStrings, </extracomment>
-      <location filename="../src/Vehicle/FactGroups/SubmarineFact.json"/>
-      <source>Disabled,Enabled</source>
-      <translation>無効,有効</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[rollPitchToggle].enumStrings, </extracomment>
-      <location filename="../src/Vehicle/FactGroups/SubmarineFact.json"/>
-      <source>Disabled,Enabled,Unavailable</source>
-      <translation>無効,有効,利用不可</translation>
-    </message>
-  </context>
-  <context>
-    <name>EditPositionDialog.FactMetaData.json</name>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[Hemisphere].enumStrings, </extracomment>
-      <location filename="../src/QmlControls/EditPositionDialog.FactMetaData.json"/>
-      <source>North,South</source>
-      <translation>北,南</translation>
-    </message>
-  </context>
-  <context>
-    <name>MavCmdInfoMultiRotor.json</name>
-    <message>
-      <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].param4.label, </extracomment>
-      <location filename="../src/MissionManager/MavCmdInfoMultiRotor.json"/>
-      <source>Yaw</source>
-      <translation>ヨー</translation>
-    </message>
-  </context>
-  <context>
-    <name>MavCmdInfoFixedWing.json</name>
-    <message>
-      <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].param1.label, </extracomment>
-      <location filename="../src/MissionManager/MavCmdInfoFixedWing.json"/>
-      <source>Pitch</source>
-      <translation>ピッチ</translation>
-    </message>
-  </context>
-  <context>
     <name>MavCmdInfoCommon.json</name>
     <message>
       <extracomment>.mavCmdInfo[HomeRaw].friendlyName, </extracomment>
@@ -1793,6 +1553,24 @@
     </message>
   </context>
   <context>
+    <name>MavCmdInfoMultiRotor.json</name>
+    <message>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].param4.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoMultiRotor.json"/>
+      <source>Yaw</source>
+      <translation>ヨー</translation>
+    </message>
+  </context>
+  <context>
+    <name>MavCmdInfoFixedWing.json</name>
+    <message>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].param1.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoFixedWing.json"/>
+      <source>Pitch</source>
+      <translation>ピッチ</translation>
+    </message>
+  </context>
+  <context>
     <name>CameraSection.FactMetaData.json</name>
     <message>
       <extracomment>.QGC.MetaData.Facts[CameraAction].enumStrings, </extracomment>
@@ -1805,6 +1583,222 @@
       <location filename="../src/MissionManager/CameraSection.FactMetaData.json"/>
       <source>Photo,Video,Survey</source>
       <translation>写真,ビデオ,調査</translation>
+    </message>
+  </context>
+  <context>
+    <name>EditPositionDialog.FactMetaData.json</name>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[Hemisphere].enumStrings, </extracomment>
+      <location filename="../src/QmlControls/EditPositionDialog.FactMetaData.json"/>
+      <source>North,South</source>
+      <translation>北,南</translation>
+    </message>
+  </context>
+  <context>
+    <name>BatteryFact.json</name>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[batteryFunction].enumStrings, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/BatteryFact.json"/>
+      <source>n/a,All Flight Systems,Propulsion,Avionics,Payload</source>
+      <translation>該当なし,全フライトシステム,推進力,アビオニクス,ペイロード</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[batteryType].enumStrings, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/BatteryFact.json"/>
+      <source>n/a,LIPO,LIFE,LION,NIMH</source>
+      <translation>n/a,LIPO,LIFE,LION,NIMH</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[chargeState].enumStrings, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/BatteryFact.json"/>
+      <source>n/a,Ok,Low,Critical,Emergency,Failed,Unhealthy,Charging</source>
+      <translation>n/a,OK,Low,Critical,Emergency,Failed,Unhealthy,Charging</translation>
+    </message>
+  </context>
+  <context>
+    <name>GPSFact.json</name>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[lock].enumStrings, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/GPSFact.json"/>
+      <source>None,None,2D Lock,3D Lock,3D DGPS Lock,3D RTK GPS Lock (float),3D RTK GPS Lock (fixed),Static (fixed)</source>
+      <translation>None,None,2D Lock,3D Lock,3D DGPS Lock,3D RTK GPS Lock (float),3D RTK GPS Lock (fixed),Static (fixed)</translation>
+    </message>
+  </context>
+  <context>
+    <name>SubmarineFact.json</name>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[inputHold].enumStrings, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/SubmarineFact.json"/>
+      <source>Disabled,Enabled</source>
+      <translation>無効,有効</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[rollPitchToggle].enumStrings, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/SubmarineFact.json"/>
+      <source>Disabled,Enabled,Unavailable</source>
+      <translation>無効,有効,利用不可</translation>
+    </message>
+  </context>
+  <context>
+    <name>FlyView.SettingsGroup.json</name>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[instrumentQmlFile].enumStrings, </extracomment>
+      <location filename="../src/Settings/FlyView.SettingsGroup.json"/>
+      <source>Integrated Compass/Attitude,Horizontal Compass/Attitude,Large Vertical</source>
+      <translation type="unfinished">Integrated Compass/Attitude,Horizontal Compass/Attitude,Large Vertical</translation>
+    </message>
+  </context>
+  <context>
+    <name>RemoteID.SettingsGroup.json</name>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[operatorIDType].enumStrings, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>CAA</source>
+      <translation>CAA</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[selfIDType].enumStrings, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Flight Purpose,Emergency,Extended Status</source>
+      <translation type="unfinished">Flight Purpose,Emergency,Extended Status</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[basicIDType].enumStrings, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>None,SerialNumber (ANSI/CTA-2063),CAA,UTM (RFC4122),Specific</source>
+      <translation type="unfinished">None,SerialNumber (ANSI/CTA-2063),CAA,UTM (RFC4122),Specific</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[basicIDUaType].enumStrings, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Undefined,Airplane/FixedWing,Helicopter/Multirrotor,Gyroplane,VTOL,Ornithopter,Glider,Kite,Free Ballon,Captive Ballon,Airship,Parachute,Rocket,Tethered powered aircraft,Ground Obstacle,Other</source>
+      <translation>未定義,飛行機/固定翼機,ヘリコプター/マルチローター,ジャイロプレーン,VTOL,羽ばたき飛行船,グライダー,カイト,フリーバロン,キャプティブバロン,飛行船,パラシュート,ロケット,テザー動力機,地上障害物,その他</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[region].enumStrings, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>FAA,EU</source>
+      <translation>FAA,EU</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[locationType].enumStrings, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Takeoff(Not Supported),Live GNNS, Fixed (not for FAA)</source>
+      <translation>離陸(未サポート),リアルタイムGNNS,固定 (FAA対象外)</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[classificationType].enumStrings, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Undeclared,EU</source>
+      <translation type="unfinished">Undeclared,EU</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[categoryEU].enumStrings, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Undeclared,Open,Specific,Certified</source>
+      <translation>未申請,公開,特定,認証済</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[classEU].enumStrings, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Undeclared,Class 0,Class 1,Class 2,Class 3,Class 4,Class 5,Class 6</source>
+      <translation>未申請,クラス 0,クラス 1,クラス 2,クラス 3,クラス 4,クラス 5,クラス 6</translation>
+    </message>
+  </context>
+  <context>
+    <name>FirmwareUpgrade.SettingsGroup.json</name>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[apmChibiOS].enumStrings, </extracomment>
+      <location filename="../src/Settings/FirmwareUpgrade.SettingsGroup.json"/>
+      <source>ChibiOS,NuttX</source>
+      <translation>ChibiOS,NuttX</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[apmVehicleType].enumStrings, </extracomment>
+      <location filename="../src/Settings/FirmwareUpgrade.SettingsGroup.json"/>
+      <source>Multi-Rotor,Helicopter,Plane,Rover,Sub</source>
+      <translation>マルチローター,ヘリコプター,飛行機,ローバー,サブマリン</translation>
+    </message>
+  </context>
+  <context>
+    <name>App.SettingsGroup.json</name>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[offlineEditingFirmwareClass].enumStrings, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>ArduPilot,PX4 Pro,Mavlink Generic</source>
+      <translation>ArduPilot,PX4 Pro,MAVLink 汎用</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[offlineEditingVehicleClass].enumStrings, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Fixed Wing,Multi-Rotor,VTOL,Rover,Sub,Mavlink Generic</source>
+      <translation>固定翼機,マルチコプター,VTOL機,ローバー,サブマリン,MAVLink 汎用</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[gstDebugLevel].enumStrings, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Disabled,Error,Warning,FixMe,Info,Debug,Log,Trace</source>
+      <translation>無効,エラー,警告,FixMe,情報,デバッグ,ログ,トレース</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[indoorPalette].enumStrings, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Indoor,Outdoor</source>
+      <translation>屋内,屋外</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[followTarget].enumStrings, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Never,Always,When in Follow Me Flight Mode</source>
+      <translation>設定しない,常時設定,フォローミーモード時</translation>
+    </message>
+  </context>
+  <context>
+    <name>BatteryIndicator.SettingsGroup.json</name>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[valueDisplay].enumStrings, </extracomment>
+      <location filename="../src/Settings/BatteryIndicator.SettingsGroup.json"/>
+      <source>Percentage,Voltage,Percentage and Voltage</source>
+      <translation>パーセント, 電圧, パーセント &amp; 電圧</translation>
+    </message>
+  </context>
+  <context>
+    <name>GimbalController.SettingsGroup.json</name>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[ControlType].enumStrings, </extracomment>
+      <location filename="../src/Settings/GimbalController.SettingsGroup.json"/>
+      <source>Click to point, click and drag</source>
+      <translation>クリックでポイント, クリックしてドラッグ</translation>
+    </message>
+  </context>
+  <context>
+    <name>Video.SettingsGroup.json</name>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[videoFit].enumStrings, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Fit Width,Fit Height,Fill,No Crop</source>
+      <translation type="unfinished">Fit Width,Fit Height,Fill,No Crop</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[recordingFormat].enumStrings, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>mkv,mov,mp4</source>
+      <translation>mkv,mov,mp4</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[forceVideoDecoder].enumStrings, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Default,Force software decoder,Force NVIDIA decoder,Force VA-API decoder,Force DirectX3D 11 decoder,Force VideoToolbox decoder</source>
+      <translation>デフォルト,ソフトウェア デコーダー,NVIDIA デコーダー,VA-API デコーダー,DirectX 3D 11 デコーダー,VideoToolbox デコーダー</translation>
+    </message>
+  </context>
+  <context>
+    <name>APMMavlinkStreamRate.SettingsGroup.json</name>
+    <message>
+      <extracomment>.QGC.MetaData.Defines.StreamRateEnumStrings, </extracomment>
+      <location filename="../src/Settings/APMMavlinkStreamRate.SettingsGroup.json"/>
+      <source>Controlled By Vehicle,0 hz,1 hz,2 hz,3 hz,4 hz,5 hz,6 hz,7 hz,8 hz,9 hz,10 hz,50 hz,100 hz</source>
+      <translation>機体による制御,0 hz,1 hz,2 hz,3 hz,4 hz,5 hz,6 hz,7 hz,8 hz,9 hz,10 hz,50 hz,100 hz</translation>
     </message>
   </context>
   <context>
