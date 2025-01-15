@@ -1,7 +1,6 @@
 # The following options can be overriden by custom builds using the CustomOverrides.cmake file
 
 # General
-
 set(QGC_APP_NAME "QGroundControl" CACHE STRING "App Name")
 set(QGC_APP_COPYRIGHT "Copyright (c) 2024 QGroundControl. All rights reserved." CACHE STRING "Copyright")
 set(QGC_APP_DESCRIPTION "Open Source Ground Control App" CACHE STRING "Description")
@@ -20,13 +19,8 @@ option(QGC_UTM_ADAPTER "Enable UTM Adapter" OFF)
 option(QGC_VIEWER3D "Enable Viewer3D" ON) # Qt6Quick3D_FOUND
 
 option(QGC_ENABLE_UVC "Enable UVC Devices" ON) # Qt6Multimedia_FOUND
-if(APPLE AND NOT IOS)
-    # Still haven't figured out how to package GStreamer with the app.
-    option(QGC_ENABLE_GST_VIDEOSTREAMING "Enable GStreamer Video Backend" OFF)
-else()
-    option(QGC_ENABLE_GST_VIDEOSTREAMING "Enable GStreamer Video Backend" ON)
-endif()
-option(QGC_ENABLE_QT_VIDEOSTREAMING "Enable QtMultimedia Video Backend" OFF) # Qt6Multimedia_FOUND
+option(QGC_ENABLE_GST_VIDEOSTREAMING "Enable GStreamer Video Backend" OFF)
+option(QGC_ENABLE_QT_VIDEOSTREAMING "Enable QtMultimedia Video Backend" ON) # Qt6Multimedia_FOUND
 
 set(QGC_MAVLINK_GIT_REPO "https://github.com/mavlink/c_library_v2.git" CACHE STRING "URL to MAVLink Git Repo")
 set(QGC_MAVLINK_GIT_TAG "b71f061a53941637cbcfc5bcf860f96bc82e0892" CACHE STRING "Tag of MAVLink Git Repo")
