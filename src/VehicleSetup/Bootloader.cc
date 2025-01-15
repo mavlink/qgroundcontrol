@@ -11,8 +11,10 @@
 #include "QGCLoggingCategory.h"
 #include "FirmwareImage.h"
 #include "QGC.h"
-#include <QtCore/QFile>
+
 #include <QtCore/QElapsedTimer>
+#include <QtCore/QFile>
+#include <QtCore/QThread>
 
 /// This class manages interactions with the bootloader
 Bootloader::Bootloader(bool sikRadio, QObject *parent)
@@ -40,7 +42,7 @@ bool Bootloader::open(const QString portName)
 
     if (_sikRadio) {
         // Radios are slow to start up
-        QGC::SLEEP::msleep(1000);
+        QThread::msleep(1000);
     }
     return true;
 }
@@ -204,7 +206,7 @@ bool Bootloader::reboot(void)
     }
     _port.flush();
     if (success) {
-        QGC::SLEEP::msleep(1000);
+        QThread::msleep(1000);
     }
     return success;
 }

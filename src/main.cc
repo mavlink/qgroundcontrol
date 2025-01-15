@@ -114,9 +114,6 @@ int main(int argc, char *argv[])
 #endif
 #endif
 
-    //-- Record boot time
-    QGC::initTimer();
-
 #ifdef Q_OS_UNIX
     //Force writing to the console on UNIX/BSD devices
     if (!qEnvironmentVariableIsSet("QT_LOGGING_TO_CONSOLE")) {
@@ -197,10 +194,10 @@ int main(int argc, char *argv[])
 
     QGCApplication app(argc, argv, runUnitTests);
 
-    #ifdef Q_OS_LINUX
-        std::signal(SIGINT, sigHandler);
-        std::signal(SIGTERM, sigHandler);
-    #endif
+#ifdef Q_OS_LINUX
+    std::signal(SIGINT, sigHandler);
+    std::signal(SIGTERM, sigHandler);
+#endif
 
     app.init();
 

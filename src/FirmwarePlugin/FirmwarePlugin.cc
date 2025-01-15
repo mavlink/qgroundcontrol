@@ -18,10 +18,10 @@
 #include "VehicleCameraControl.h"
 #include "VehicleComponent.h"
 #include "MAVLinkProtocol.h"
-#include "QGC.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QRegularExpression>
+#include <QtCore/QThread>
 
 QGC_LOGGING_CATEGORY(FirmwarePluginLog, "FirmwarePluginLog")
 
@@ -356,7 +356,7 @@ bool FirmwarePlugin::_armVehicleAndValidate(Vehicle* vehicle)
             vehicleArmed = true;
             break;
         }
-        QGC::SLEEP::msleep(100);
+        QThread::msleep(100);
         QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
     }
 
@@ -381,7 +381,7 @@ bool FirmwarePlugin::_setFlightModeAndValidate(Vehicle* vehicle, const QString& 
                 flightModeChanged = true;
                 break;
             }
-            QGC::SLEEP::msleep(100);
+            QThread::msleep(100);
             QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
         }
         if (flightModeChanged) {

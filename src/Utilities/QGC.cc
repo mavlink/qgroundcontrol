@@ -15,39 +15,11 @@
 
 #include <float.h>
 
-namespace QGC
-{
-
-static quint64 gBootTime = 0;
-
-void initTimer()
-{
-    gBootTime = groundTimeMilliseconds();
-}
-
-quint64 bootTimeMilliseconds()
-{
-    return groundTimeMilliseconds() - gBootTime;
-}
-
-quint64 groundTimeUsecs()
-{
-    return groundTimeMilliseconds() * 1000;
-}
-
-quint64 groundTimeMilliseconds()
-{
-    return static_cast<quint64>(QDateTime::currentMSecsSinceEpoch());
-}
-
-qreal groundTimeSeconds()
-{
-    return static_cast<qreal>(groundTimeMilliseconds()) / 1000.0f;
-}
+namespace QGC {
 
 float limitAngleToPMPIf(double angle)
 {
-    if (angle > -20*M_PI && angle < 20*M_PI)
+    if ((angle > (-20*M_PI)) && (angle < (20*M_PI)))
     {
         while (angle > ((float)M_PI+FLT_EPSILON))
         {
@@ -70,7 +42,7 @@ float limitAngleToPMPIf(double angle)
 
 double limitAngleToPMPId(double angle)
 {
-    if (angle > -20*M_PI && angle < 20*M_PI)
+    if ((angle > (-20*M_PI)) && (angle < (20*M_PI)))
     {
         if (angle < -M_PI)
         {
@@ -137,6 +109,7 @@ quint32 crc32(const quint8 *src, unsigned len, unsigned state)
     for (unsigned i = 0; i < len; i++) {
         state = crctab[(state ^ src[i]) & 0xff] ^ (state >> 8);
     }
+
     return state;
 }
 

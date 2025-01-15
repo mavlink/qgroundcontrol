@@ -10,7 +10,7 @@
 #include "MAVLinkMessageField.h"
 #include "MAVLinkChartController.h"
 #include "MAVLinkMessage.h"
-#include "QGC.h"
+#include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCharts/QLineSeries>
@@ -98,13 +98,13 @@ void QGCMAVLinkMessageField::updateValue(const QString &newValue, qreal v)
 
     const int count = _values.count();
     if (count < (50 * 60)) { ///< Arbitrary limit of 1 minute of data at 50Hz for now
-        const QPointF p(QGC::bootTimeMilliseconds(), v);
+        const QPointF p(qgcApp()->msecsSinceBoot(), v);
         _values.append(p);
     } else {
         if (_dataIndex >= count) {
             _dataIndex = 0;
         }
-        _values[_dataIndex].setX(QGC::bootTimeMilliseconds());
+        _values[_dataIndex].setX(qgcApp()->msecsSinceBoot());
         _values[_dataIndex].setY(v);
         _dataIndex++;
     }
