@@ -12,11 +12,11 @@
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
 #include "LinkManager.h"
-#include "QGC.h"
 #include "Fact.h"
 #include "Vehicle.h"
 #include "ParameterManager.h"
 
+#include <QtCore/QThread>
 #include <QtCore/QVariant>
 #include <QtQml/QtQml>
 #include <QtGui/QCursor>
@@ -123,7 +123,7 @@ void AirframeComponentController::_rebootAfterStackUnwind(void)
     _vehicle->sendMavCommand(_vehicle->defaultComponentId(), MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, true /* showError */, 1.0f);
     QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
     for (unsigned i = 0; i < 2000; i++) {
-        QGC::SLEEP::usleep(500);
+        QThread::usleep(500);
         QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
     }
     QGuiApplication::restoreOverrideCursor();
