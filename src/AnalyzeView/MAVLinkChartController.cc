@@ -10,7 +10,7 @@
 #include "MAVLinkChartController.h"
 #include "MAVLinkInspectorController.h"
 #include "MAVLinkMessageField.h"
-#include "QGC.h"
+#include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCharts/QAbstractSeries>
@@ -82,7 +82,7 @@ void MAVLinkChartController::updateXRange()
         return;
     }
 
-    const qint64 bootTime = static_cast<qint64>(QGC::bootTimeMilliseconds());
+    const qint64 bootTime = static_cast<qint64>(qgcApp()->msecsSinceBoot());
     _rangeXMax = QDateTime::fromMSecsSinceEpoch(bootTime);
     emit rangeXMaxChanged();
 
