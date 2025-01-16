@@ -140,7 +140,7 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
     enable_testing()
     include(CTest)
 
-    set(QT_ENABLE_VERBOSE_DEPLOYMENT ON CACHE BOOL "Verbose Deployment")
+    # set(QT_ENABLE_VERBOSE_DEPLOYMENT ON CACHE BOOL "Verbose Deployment")
 endif()
 
 if(ANDROID)
@@ -375,7 +375,7 @@ elseif(MACOS)
     set_target_properties(${PROJECT_NAME}
         PROPERTIES
             MACOSX_BUNDLE TRUE
-            MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/deploy/mac/MacOSXBundleInfo.plist.in"
+            MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/deploy/macos/MacOSXBundleInfo.plist.in"
             MACOSX_BUNDLE_BUNDLE_NAME "${CMAKE_PROJECT_NAME}"
             MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
             MACOSX_BUNDLE_COPYRIGHT "${QGC_APP_COPYRIGHT}"
@@ -492,8 +492,8 @@ install(
 )
 
 set(deploy_tool_options_arg "")
-if(APPLE)
-    set(deploy_tool_options_arg -qmldir=${CMAKE_SOURCE_DIR}/src -hardened-runtime -timestamp -appstore-compliant)
+if(MACOS)
+    # set(deploy_tool_options_arg -qmldir=${CMAKE_SOURCE_DIR}/src -verbose=2 -appstore-compliant) # -dmg -hardened-runtime -timestamp
 endif()
 
 qt_generate_deploy_qml_app_script(
@@ -538,6 +538,8 @@ if(LINUX)
 elseif(WIN32)
     install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/CreateWinInstaller.cmake")
 elseif(MACOS)
+    install(CODE "set(OSXRELOCATOR ${CMAKE_SOURCE_DIR}/deploy/macos/osxrelocator.py)")
+    install(CODE "set(TARGET_NAME ${QGC_APP_NAME})")
     install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/CreateMacDMG.cmake")
 endif()
 

@@ -60,7 +60,7 @@ jobs:
       - uses: lukka/get-cmake@latest
       - uses: seanmiddleditch/gha-setup-ninja@v5
 
-      - name: Install Gstreamer
+      - name: Install GStreamer
         run: |
           wget --quiet https://gstreamer.freedesktop.org/data/pkg/osx/${{ env.GST_VERSION }}/gstreamer-1.0-devel-${{ env.GST_VERSION }}-universal.pkg
           wget --quiet https://gstreamer.freedesktop.org/data/pkg/osx/${{ env.GST_VERSION }}/gstreamer-1.0-${{ env.GST_VERSION }}-universal.pkg
@@ -88,6 +88,12 @@ jobs:
           dir: ${{ runner.temp }}
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
           cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+
+      # - name: Import Code Signing Certificate
+      #   uses: apple-actions/import-codesign-certs@v3
+      #   with:
+      #     p12-file-base64: ${{ secrets.MACOS_SIGNING_CERTS_P12 }}
+      #     p12-password: ${{ secrets.MACOS_SIGNING_CERTS_PASS }}
 
       - run: mkdir ${{ runner.temp }}/shadow_build_dir
 
