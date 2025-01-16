@@ -42,13 +42,13 @@ target_link_libraries(APMFirmwarePlugin
 
 target_include_directories(APMFirmwarePlugin PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-message(STATUS "Fetching ArduPilot Parameters")
-FetchContent_Declare(ArduPilotParams
+include(CPM)
+CPMAddPackage(
+    NAME ArduPilotParams
     GIT_REPOSITORY https://github.com/ArduPilot/ParameterRepository.git
     GIT_TAG main
     GIT_SHALLOW TRUE
 )
-FetchContent_MakeAvailable(ArduPilotParams)
 
 # file(GLOB QML_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.qml)
 # # file(GLOB QML_RESOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/res/*/*.*)
