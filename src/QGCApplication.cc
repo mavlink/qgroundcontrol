@@ -51,7 +51,6 @@
 #include "ParameterManager.h"
 #include "PositionManager.h"
 #include "QGCCameraManager.h"
-#include "QGCConfig.h"
 #include "QGCCorePlugin.h"
 #include "QGCFileDownload.h"
 #include "QGCImageProvider.h"
@@ -148,9 +147,9 @@ QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting)
     setOrganizationName(QGC_ORG_NAME);
     setOrganizationDomain(QGC_ORG_DOMAIN);
     setApplicationVersion(QString(QGC_APP_VERSION_STR));
-    #ifdef Q_OS_LINUX
-        setWindowIcon(QIcon(":/res/qgroundcontrol.ico"));
-    #endif
+#ifdef Q_OS_LINUX
+    setWindowIcon(QIcon(":/res/qgroundcontrol.ico"));
+#endif
 
     // Set settings format
     QSettings::setDefaultFormat(QSettings::IniFormat);

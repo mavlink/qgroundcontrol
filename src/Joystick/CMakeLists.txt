@@ -69,7 +69,7 @@ qt_add_resources(Joystick "gamecontrollerdb.txt"
 
 #===========================================================================#
 
-set(MINIMUM_SDL2_VERSION 2.24.0)
+set(MINIMUM_SDL2_VERSION 2.0.20)
 set(TARGET_SDL2_VERSION 2.30.11)
 
 if(NOT QGC_BUILD_DEPENDENCIES)

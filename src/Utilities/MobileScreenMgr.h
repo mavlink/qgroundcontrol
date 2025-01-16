@@ -7,16 +7,15 @@
  *
  ****************************************************************************/
 
-
 #pragma once
 
-#ifdef __mobile__
+#include <QtCore/QtSystemDetection>
 
-class MobileScreenMgr {
-    
-public:
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
+
+namespace MobileScreenMgr {
     /// Turns on/off screen sleep on mobile devices
-    static void setKeepScreenOn(bool keepScreenOn);
+    void setKeepScreenOn(bool keepScreenOn);
 };
 
 #endif

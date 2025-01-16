@@ -107,7 +107,7 @@ endif()
 
 #===========================================================================#
 
-set(MINIMUM_EXIV2_VERSION 0.28.0)
+set(MINIMUM_EXIV2_VERSION 0.28)
 set(TARGET_EXIV2_VERSION 0.28.3)
 
 set(MINIMUM_EXPAT_VERSION 2.2.6)
@@ -138,7 +138,7 @@ set(TARGET_EXPAT_VERSION 2.6.4)
 
 if(NOT QGC_BUILD_DEPENDENCIES)
     find_package(exiv2 ${MINIMUM_EXIV2_VERSION})
-    if(TARGET Exiv2::exiv2lib)
+    if(TARGET Exiv2::exiv2lib) # AND exiv2_VERSION VERSION_GREATER_EQUAL ${MINIMUM_EXIV2_VERSION})
         target_link_libraries(AnalyzeView PRIVATE Exiv2::exiv2lib)
         return()
     endif()
