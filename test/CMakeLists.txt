@@ -45,8 +45,9 @@ add_subdirectory(Camera)
 add_qgc_test(QGCCameraManagerTest)
 
 add_subdirectory(Comms)
-add_qgc_test(QGCSerialPortInfoTest)
-
+if(NOT QGC_NO_SERIAL_LINK)
+    add_qgc_test(QGCSerialPortInfoTest)
+endif()
 add_subdirectory(FactSystem)
 add_qgc_test(FactSystemTestGeneric)
 add_qgc_test(FactSystemTestPX4)
