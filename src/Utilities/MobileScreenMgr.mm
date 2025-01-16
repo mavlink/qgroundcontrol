@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 #include "MobileScreenMgr.h"
 
 #import <Foundation/Foundation.h>

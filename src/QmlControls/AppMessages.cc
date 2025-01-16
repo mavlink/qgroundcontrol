@@ -56,7 +56,7 @@ AppLogModel *AppMessages::getModel()
 
 AppLogModel::AppLogModel() : QStringListModel()
 {
-#ifdef __mobile__
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     Qt::ConnectionType contype = Qt::QueuedConnection;
 #else
     Qt::ConnectionType contype = Qt::AutoConnection;

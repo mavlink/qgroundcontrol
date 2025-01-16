@@ -93,7 +93,7 @@ DECLARE_SETTINGGROUP(App, "")
 
     SettingsFact* savePathFact = qobject_cast<SettingsFact*>(savePath());
     QString appName = QCoreApplication::applicationName();
-#ifdef __mobile__
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     // Mobile builds always use the runtime generated location for savePath.
     bool userHasModifiedSavePath = false;
 #else
@@ -101,7 +101,7 @@ DECLARE_SETTINGGROUP(App, "")
 #endif
 
     if (!userHasModifiedSavePath) {
-#ifdef __mobile__
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     #ifdef Q_OS_IOS
         // This will expose the directories directly to the File iOs app
         QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));

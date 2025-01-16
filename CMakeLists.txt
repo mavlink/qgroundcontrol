@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 3.22.1)
 
 list(APPEND CMAKE_MODULE_PATH
     ${CMAKE_SOURCE_DIR}/cmake
@@ -29,7 +29,7 @@ endif()
 
 include(Git)
 
-project(QGroundControl
+project(${QGC_APP_NAME}
     VERSION ${QGC_APP_VERSION}
     DESCRIPTION ${QGC_APP_DESCRIPTION}
     HOMEPAGE_URL "https://qgroundcontrol.com/"
@@ -42,11 +42,6 @@ endif()
 
 if(APPLE AND NOT IOS)
     set(MACOS TRUE)
-endif()
-
-if(IOS OR ANDROID)
-    set(MOBILE TRUE)
-    add_compile_definitions(__mobile__)
 endif()
 
 #######################################################
@@ -220,10 +215,6 @@ if(LINUX)
     find_package(Qt6 ${QT_MINIMUM_VERSION} COMPONENTS WaylandClient)
 endif()
 
-if(NOT Qt6LinguistTools_DIR)
-    set(Qt6LinguistTools_DIR ${QT_HOST_PATH}/lib/cmake/Qt6LinguistTools)
-endif()
-
 qt_standard_project_setup(
     REQUIRES ${QT_MINIMUM_VERSION}
     SUPPORTS_UP_TO ${QT_MINIMUM_VERSION}
@@ -290,6 +281,8 @@ endif()
 #                QGroundControl Resources
 #######################################################
 
+# Note: Adding Resources to Library instead requires using Q_INIT_RESOURCE(qgcresources)
+
 if(NOT QGC_CUSTOM_BUILD)
     # Custom builds can override the resources
     list(APPEND QGC_RESOURCES
@@ -319,7 +312,7 @@ endif()
 #               QGroundControl Target
 #######################################################
 
-qt_add_executable(${PROJECT_NAME}
+qt_add_executable(${CMAKE_PROJECT_NAME}
     src/main.cc
     ${QGC_RESOURCES}
 )
@@ -336,7 +329,7 @@ if(Qt6LinguistTools_FOUND)
     )
 endif()
 
-set_target_properties(${PROJECT_NAME}
+set_target_properties(${CMAKE_PROJECT_NAME}
     PROPERTIES
         QT_RESOURCE_PREFIX "/qgc"
         OUTPUT_NAME ${CMAKE_PROJECT_NAME}
@@ -348,18 +341,9 @@ if(WIN32)
         "${CMAKE_SOURCE_DIR}/deploy/windows/driver.msi"
         "${CMAKE_SOURCE_DIR}/deploy/windows/nullsoft_installer.nsi"
         "${CMAKE_SOURCE_DIR}/deploy/windows/QGroundControl.rc"
+        "${QGC_WINDOWS_INSTALL_HEADER_PATH}"
+        "${QGC_WINDOWS_ICON_PATH}"
     )
-    # windows installer files different for core and custom
-    if(EXISTS ${CMAKE_SOURCE_DIR}/custom/deploy/windows/installheader.bmp)
-        list(APPEND DEPLOY_WIN_FILES ${CMAKE_SOURCE_DIR}/custom/deploy/windows/installheader.bmp)
-    else()
-        list(APPEND DEPLOY_WIN_FILES ${CMAKE_SOURCE_DIR}/deploy/windows/installheader.bmp)
-    endif()
-    if(EXISTS ${CMAKE_SOURCE_DIR}/custom/deploy/windows/WindowsQGC.ico)
-        list(APPEND DEPLOY_WIN_FILES ${CMAKE_SOURCE_DIR}/custom/deploy/windows/WindowsQGC.ico)
-    else()
-        list(APPEND DEPLOY_WIN_FILES ${CMAKE_SOURCE_DIR}/deploy/windows/WindowsQGC.ico)
-    endif()
 
     # Destination directory where files will be copied
     set(QGC_INSTALLER_SOURCE_WIN "${CMAKE_BINARY_DIR}/deploy/windows")
@@ -376,23 +360,17 @@ if(WIN32)
         list(APPEND QGC_INSTALLER_SOURCE_WIN_FILES "${QGC_INSTALLER_SOURCE_WIN}/${FILE_NAME}")
     endforeach()
 
-    target_sources(${PROJECT_NAME}
-        PRIVATE
-            ${QGC_INSTALLER_SOURCE_WIN_FILES}
-    )
-    set_target_properties(${PROJECT_NAME}
+    target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${QGC_INSTALLER_SOURCE_WIN_FILES})
+    set_target_properties(${CMAKE_PROJECT_NAME}
         PROPERTIES
             WIN32_EXECUTABLE TRUE
-            QT_TARGET_RC_ICONS "${CMAKE_BINARY_DIR}/deploy/windows/WindowsQGC.ico"
+            QT_TARGET_RC_ICONS "${QGC_WINDOWS_ICON_PATH}"
     )
     add_compile_definitions(_USE_MATH_DEFINES)
 elseif(MACOS)
     set(MACOSX_BUNDLE_ICON_FILE "macx.icns")
     set(app_icon_macos "${QGC_MACOS_ICON_PATH}/macx.icns")
-    set_source_files_properties(${app_icon_macos}
-        PROPERTIES
-            MACOSX_PACKAGE_LOCATION "Resources"
-    )
+    set_source_files_properties(${app_icon_macos} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
     target_sources(${PROJECT_NAME} PRIVATE ${app_icon_macos})
     set_target_properties(${PROJECT_NAME}
         PROPERTIES
@@ -452,32 +430,6 @@ elseif(ANDROID)
     endif()
     set(ANDROID_VERSION_CODE "${ANDROID_PLATFORM_ARCHITECTURE_CODE}${PROJECT_VERSION_MAJOR}${PROJECT_VERSION_MINOR}")
 
-    if(NOT QGC_CUSTOM_BUILD)
-        set(QGC_ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_SOURCE_DIR}/android)
-    else()
-        set(CUSTOM_ANDROID_DIR "${CMAKE_SOURCE_DIR}/custom/android")
-        if(EXISTS "${CUSTOM_ANDROID_DIR}")
-            file(GLOB CUSTOM_ANDROID_FILES "${CUSTOM_ANDROID_DIR}/*")
-            if(CUSTOM_ANDROID_FILES)
-                message(STATUS "Custom Android package template found. Overlaying custom files...")
-                set(DEFAULT_ANDROID_DIR "${CMAKE_SOURCE_DIR}/android")
-                set(FINAL_ANDROID_DIR "${CMAKE_BINARY_DIR}/custom/android")
-                file(COPY "${DEFAULT_ANDROID_DIR}/." DESTINATION "${FINAL_ANDROID_DIR}")
-                file(COPY "${CUSTOM_ANDROID_DIR}/." DESTINATION "${FINAL_ANDROID_DIR}")
-                set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
-                                "${DEFAULT_ANDROID_DIR}/"
-                                "${CUSTOM_ANDROID_DIR}/"
-                            )
-                set(QGC_ANDROID_PACKAGE_SOURCE_DIR "${FINAL_ANDROID_DIR}" CACHE STRING "Path to a custom Android package template" FORCE)
-                message(STATUS "Android package template path will be set to: ${QGC_ANDROID_PACKAGE_SOURCE_DIR}")
-            else()
-                message(STATUS "Custom Android package template empty. Using default.")
-            endif()
-        else()
-            message(STATUS "No custom Android package template found. Using default.")
-        endif()
-    endif()
-
     set_target_properties(${CMAKE_PROJECT_NAME}
         PROPERTIES
             # QT_ANDROID_ABIS ${ANDROID_ABI}
@@ -502,25 +454,24 @@ add_compile_definitions(
     QGC_ORG_NAME="${QGC_ORG_NAME}"
     QGC_ORG_DOMAIN="${QGC_ORG_DOMAIN}"
     QGC_APP_VERSION_STR="${QGC_APP_VERSION_STR}"
+    QGC_SETTINGS_VERSION=${QGC_SETTINGS_VERSION}
 )
 
 add_subdirectory(src)
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(${CMAKE_PROJECT_NAME}
     PRIVATE
         Qt6::Core
         Qt6::Quick
         Qt6::Widgets
-        Qt6::Svg # Used to import QSvgPlugin
         QGC
         QmlControls
-        Utilities
 )
 if(QGC_BUILD_TESTING)
     add_subdirectory(test)
-    target_link_libraries(${PROJECT_NAME} PRIVATE qgctest)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE qgctest)
 endif()
 
-qt_import_plugins(${PROJECT_NAME}
+qt_import_plugins(${CMAKE_PROJECT_NAME}
     INCLUDE Qt6::QSvgPlugin
     EXCLUDE_BY_TYPE geoservices
     INCLUDE_BY_TYPE sqldrivers Qt6::QSQLiteDriverPlugin
@@ -533,7 +484,7 @@ qt_import_plugins(${PROJECT_NAME}
 include(InstallRequiredSystemLibraries)
 
 install(
-    TARGETS ${PROJECT_NAME}
+    TARGETS ${CMAKE_PROJECT_NAME}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -546,7 +497,7 @@ if(APPLE)
 endif()
 
 qt_generate_deploy_qml_app_script(
-    TARGET ${PROJECT_NAME}
+    TARGET ${CMAKE_PROJECT_NAME}
     OUTPUT_SCRIPT deploy_script
     DEPLOY_TOOL_OPTIONS ${deploy_tool_options_arg}
     MACOS_BUNDLE_POST_BUILD
@@ -565,19 +516,11 @@ if(LINUX)
         FILES ${CMAKE_BINARY_DIR}/org.mavlink.qgroundcontrol.desktop
         DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
     )
-    if(QGC_CUSTOM_BUILD)
-        install(
-            FILES ${CMAKE_SOURCE_DIR}/custom/res/icons/custom_qgroundcontrol.png
-            DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/128x128/apps/
-            RENAME org.mavlink.qgroundcontrol.png
-        )
-    else()
-        install(
-            FILES ${CMAKE_SOURCE_DIR}/resources/icons/qgroundcontrol.png
-            DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/128x128/apps/
-            RENAME org.mavlink.qgroundcontrol.png
-        )
-    endif()
+    install(
+        FILES ${QGC_APPIMAGE_ICON_PATH}
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/128x128/apps/
+        RENAME org.mavlink.qgroundcontrol.png
+    )
     configure_file(
         ${CMAKE_SOURCE_DIR}/deploy/linux/org.mavlink.qgroundcontrol.metainfo.xml.in
         ${CMAKE_BINARY_DIR}/metainfo/org.mavlink.qgroundcontrol.metainfo.xml
