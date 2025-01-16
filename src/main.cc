@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
     // install the message handler
     AppMessages::installHandler();
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
 #ifndef Q_OS_IOS
     // Prevent Apple's app nap from screwing us over
     // tip: the domain can be cross-checked on the command line with <defaults domains>
