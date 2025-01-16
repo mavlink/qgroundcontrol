@@ -258,7 +258,7 @@ void VideoSettings::_setForceVideoDecodeList()
 #elif defined(Q_OS_WIN)
         GStreamer::VideoDecoderOptions::ForceVideoDecoderVAAPI,
         GStreamer::VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
-#elif defined(Q_OS_MAC)
+#elif defined(Q_OS_MACOS)
         GStreamer::VideoDecoderOptions::ForceVideoDecoderDirectX3D,
         GStreamer::VideoDecoderOptions::ForceVideoDecoderVAAPI,
 #elif defined(Q_OS_ANDROID)

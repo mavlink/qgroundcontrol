@@ -44,7 +44,8 @@ if(WIN32)
     )
 elseif(MACOS)
     list(APPEND CMAKE_FRAMEWORK_PATH "/Library/Frameworks")
-    set(GSTREAMER_PREFIX "/Library/Frameworks/GStreamer.framework/Versions/1.0")
+    set(GSTREAMER_FRAMEWORK_PATH "/Library/Frameworks/GStreamer.framework" CACHE PATH "GStreamer Framework Path")
+    set(GSTREAMER_PREFIX "${GSTREAMER_FRAMEWORK_PATH}/Versions/1.0")
     find_program(PKG_CONFIG_PROGRAM pkg-config PATHS ${GSTREAMER_PREFIX}/bin NO_DEFAULT_PATH)
     if(PKG_CONFIG_PROGRAM)
         set(PKG_CONFIG_EXECUTABLE ${PKG_CONFIG_PROGRAM})
@@ -667,6 +668,10 @@ target_include_directories(GStreamer::GStreamer
 )
 
 target_link_directories(GStreamer::GStreamer INTERFACE ${GSTREAMER_LIB_PATH})
+
+if(MACOS AND EXISTS ${GSTREAMER_FRAMEWORK_PATH})
+    target_link_libraries(GStreamer::GStreamer INTERFACE "-F /Library/Frameworks -framework GStreamer")
+endif()
 
 ################################################################################
 
