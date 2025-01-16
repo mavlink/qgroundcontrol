@@ -56,6 +56,7 @@ runs:
         key: ${{ runner.os }}-Android-${{ matrix.BuildType }}
         max-size: 1G
         save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+        verbose: 1
         evict-old-files: 'job'
 
     - name: Install Qt for ${{ runner.os }}

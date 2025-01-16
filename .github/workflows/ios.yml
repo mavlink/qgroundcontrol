@@ -3,6 +3,11 @@ name: iOS
 on:
   workflow_dispatch:
 
+concurrency:
+  # cancel jobs on PRs only
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
   build:
     runs-on: macos-latest
@@ -17,6 +22,7 @@ jobs:
 
     env:
       ARTIFACT: QGroundControl.app
+      PACKAGE: QGroundControl
       QT_VERSION: 6.8.1
       GST_VERSION: 1.22.12
 
@@ -28,10 +34,7 @@ jobs:
           brew uninstall google-chrome
           sudo rm -rf /Users/runner/Library/Android
           sudo rm -rf /Applications/Xcode_14*
-          sudo rm -rf /Applications/Xcode_15.0*
-          sudo rm -rf /Applications/Xcode_15.1*
-          sudo rm -rf /Applications/Xcode_15.2*
-          sudo rm -rf /Applications/Xcode_15.3*
+          sudo rm -rf /Applications/Xcode_15*
           ls /Applications
           df -h
 
@@ -60,9 +63,11 @@ jobs:
       - name: Set Up Cache
         uses: hendrikmuhs/ccache-action@main
         with:
+          create-symlink: true
           key: ${{ runner.os }}-iOS-${{ matrix.BuildType }}
           max-size: 1G
           save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+          verbose: 1
           evict-old-files: 'job'
 
       - name: Install Qt for MacOS
@@ -106,5 +111,5 @@ jobs:
       - name: Save App
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.ARTIFACT }}
+          name: ${{ env.PACKAGE }}
           path: ${{ runner.temp }}/shadow_build_dir/*.app

@@ -3,7 +3,7 @@ import datetime
 import re
 
 # Define the file extensions you want to target
-TARGET_EXTENSIONS = ['.cpp', '.cc', '.h']  # Add other extensions as needed
+TARGET_EXTENSIONS = ['.cpp', '.cc', '.h', '.qml']  # Add other extensions as needed
 
 # Define the new header with a placeholder for the updated year
 HEADER_TEMPLATE = '''/****************************************************************************

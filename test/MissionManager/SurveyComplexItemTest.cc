@@ -12,6 +12,8 @@
 #include "PlanViewSettings.h"
 #include "MultiSignalSpy.h"
 
+#include <QtTest/QTest>
+
 SurveyComplexItemTest::SurveyComplexItemTest(void)
 {
     _rgSurveySignals[surveyVisualTransectPointsChangedIndex] =    SIGNAL(visualTransectPointsChanged());
