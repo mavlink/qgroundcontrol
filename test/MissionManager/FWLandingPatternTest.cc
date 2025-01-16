@@ -12,6 +12,7 @@
 #include "MultiSignalSpy.h"
 #include "FixedWingLandingComplexItem.h"
 
+#include <QtTest/QTest>
 #include <QtCore/QJsonArray>
 
 FWLandingPatternTest::FWLandingPatternTest(void)

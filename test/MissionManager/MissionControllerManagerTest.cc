@@ -13,6 +13,8 @@
 #include "Vehicle.h"
 #include "MultiSignalSpy.h"
 
+#include <QtTest/QTest>
+
 MissionControllerManagerTest::MissionControllerManagerTest(void)
 {
     

@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: "💬 Developer Chat"
+    url: https://discord.gg/dronecode
+    about: "QGroundControl developers (and many regular/deeply-involved users) can be found on the #QGroundControl channel on the Dronecode Discord."

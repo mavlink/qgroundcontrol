@@ -19,7 +19,6 @@
 #include "MAVLinkProtocol.h"
 
 #include <QtTest/QTest>
-#include <QtTest/QSignalSpy>
 
 /// FactSystem Unit Test
 FactSystemTestBase::FactSystemTestBase(void)

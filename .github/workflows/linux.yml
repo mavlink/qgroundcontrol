@@ -7,19 +7,16 @@ on:
       - 'Stable*'
     tags:
       - 'v*'
-    paths-ignore:
-      - 'android/**'
-      - 'deploy/**'
-      - 'docs/**'
   pull_request:
-    paths-ignore:
-      - 'android/**'
-      - 'deploy/**'
-      - 'docs/**'
-      - '.github/workflows/docs_deploy.yml'
-      - '.github/workflows/android.yml'
-      - '.github/workflows/macos.yml'
-      - '.github/workflows/windows.yml'
+    paths:
+      - '.github/workflows/linux.yml'
+      - 'deploy/linux/**'
+      - 'src/**'
+
+concurrency:
+  # cancel jobs on PRs only
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   build:
@@ -28,6 +25,7 @@ jobs:
     strategy:
       matrix:
         BuildType: [Debug, Release]
+        # Arch: [x64] # Arm64
 
     defaults:
       run:
@@ -35,16 +33,11 @@ jobs:
 
     env:
       ARTIFACT: QGroundControl-x86_64.AppImage
+      PACKAGE: QGroundControl-x86_64
       QT_VERSION: 6.8.1
       GST_VERSION: 1.22.12
 
     steps:
-      - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@main
-        with:
-          large-packages: false
-        continue-on-error: true
-
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
@@ -86,6 +79,7 @@ jobs:
           key: ${{ runner.os }}-${{ matrix.BuildType }}
           max-size: 1G
           save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+          verbose: 1
           evict-old-files: 'job'
 
       - name: Install Qt for Linux (x64)
@@ -133,7 +127,7 @@ jobs:
         uses: ./.github/actions/upload
         with:
           artifact_name: ${{ env.ARTIFACT }}
+          package_name: ${{ env.PACKAGE }}
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          source: ''
           github_token: ${{ secrets.GITHUB_TOKEN }}

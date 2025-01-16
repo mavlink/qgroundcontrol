@@ -8,6 +8,7 @@ qt_add_library(AutoPilotPluginsTest
 
 target_link_libraries(AutoPilotPluginsTest
     PRIVATE
+        Qt6::Test
         APMAutoPilotPlugin
         AutoPilotPlugins
         PX4AutoPilotPlugin

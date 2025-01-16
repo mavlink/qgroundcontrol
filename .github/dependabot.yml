@@ -1,4 +1,3 @@
----
 version: 2
 
 updates:
@@ -8,7 +7,6 @@ updates:
       interval: daily
     groups:
       github-actions:
-        update-types:
-          - patch
-          - minor
+        patterns:
+          - '*'
     open-pull-requests-limit: 5

@@ -13,3 +13,5 @@ docker-compose.yml
 # Ignore OS-specific files
 .DS_Store
 *.swp
+
+CMakeLists.txt.user*
