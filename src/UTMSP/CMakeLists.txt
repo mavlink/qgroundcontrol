@@ -18,7 +18,8 @@ if(QGC_UTM_ADAPTER)
     find_package(Qt6 REQUIRED COMPONENTS Network Positioning Qml)
     find_package(Threads REQUIRED)
 
-    qt_add_resources(UTMSP_RESOURCES utmsp.qrc)
+    # qt_add_resources(UTMSP_RESOURCES utmsp.qrc)
+
     target_sources(UTMSP
         PRIVATE
             UTMSPAircraft.cpp
@@ -111,8 +112,8 @@ if(QGC_UTM_ADAPTER)
 else()
     message(STATUS "UTMSP: Dummy is Initialized")
 
-    qt_add_resources(UTMSP_RESOURCES dummy/utmsp_dummy.qrc)
-    target_sources(UTMSP PRIVATE ${UTMSP_RESOURCES})
+    # qt_add_resources(UTMSP_RESOURCES dummy/utmsp_dummy.qrc)
+    # target_sources(UTMSP PRIVATE ${UTMSP_RESOURCES})
 
     # qt_add_qml_module(UTMSP
     #     URI QGroundControl.UTMSP

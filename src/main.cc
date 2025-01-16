@@ -14,10 +14,9 @@
 #include <QtQuick/QQuickWindow>
 
 #include "QGCApplication.h"
-#include "QGC.h"
 #include "AppMessages.h"
 
-#ifndef __mobile__
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
     #include "RunGuard.h"
 #endif
 
@@ -82,12 +81,12 @@ void sigHandler(int s)
 
 int main(int argc, char *argv[])
 {
-#ifndef __mobile__
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
     // We make the runguard key different for custom and non custom
     // builds, so they can be executed together in the same device.
     // Stable and Daily have same QGC_APP_NAME so they would
     // not be able to run at the same time
-    const QString runguardString = QString("%1 RunGuardKey").arg(QGC_APP_NAME);
+    const QString runguardString = QStringLiteral("%1 RunGuardKey").arg(QGC_APP_NAME);
 
     RunGuard guard(runguardString);
     if (!guard.tryToRun()) {
