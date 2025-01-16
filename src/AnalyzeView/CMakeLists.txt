@@ -95,12 +95,15 @@ target_precompile_headers(AnalyzeView
 #===========================================================================#
 
 message(STATUS "Building ULogParser")
-FetchContent_Declare(ulogparser
+
+include(CPM)
+CPMAddPackage(
+    NAME ulog_cpp
     GIT_REPOSITORY https://github.com/PX4/ulog_cpp.git
     GIT_TAG main
     GIT_SHALLOW TRUE
 )
-FetchContent_MakeAvailable(ulogparser)
+
 if(TARGET ulog_cpp::ulog_cpp)
     target_link_libraries(AnalyzeView PRIVATE ulog_cpp::ulog_cpp)
 endif()

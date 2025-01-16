@@ -1,14 +1,5 @@
 find_package(Qt6 REQUIRED COMPONENTS Core)
 
-message(STATUS "Building libevents")
-FetchContent_Declare(libevents
-    GIT_REPOSITORY https://github.com/mavlink/libevents.git
-    GIT_TAG main
-    GIT_SHALLOW TRUE
-    SOURCE_SUBDIR libs/cpp
-)
-FetchContent_MakeAvailable(libevents)
-
 qt_add_library(LibEventsWrapper STATIC
     EventHandler.cc
     EventHandler.h
@@ -23,7 +14,6 @@ target_link_libraries(LibEventsWrapper
         Utilities
     PUBLIC
         Qt6::Core
-        libevents
         MAVLink
 )
 
@@ -32,3 +22,21 @@ target_include_directories(LibEventsWrapper
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${libevents_SOURCE_DIR}/libs/cpp
 )
+
+#===========================================================================#
+
+message(STATUS "Building libevents")
+
+include(CPM)
+CPMAddPackage(
+    NAME libevents
+    GIT_REPOSITORY https://github.com/mavlink/libevents.git
+    GIT_TAG main
+    GIT_SHALLOW TRUE
+    SOURCE_SUBDIR libs/cpp
+)
+
+if(TARGET libevents)
+    target_link_libraries(LibEventsWrapper PUBLIC libevents)
+    target_include_directories(LibEventsWrapper PUBLIC ${libevents_SOURCE_DIR}/libs/cpp)
+endif()
