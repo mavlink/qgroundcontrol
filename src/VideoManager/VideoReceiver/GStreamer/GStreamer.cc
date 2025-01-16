@@ -107,8 +107,9 @@ static void _qgcputenv(const QString &key, const QString &root, const QString &p
 static void _setGstEnvVars()
 {
     const QString currentDir = QCoreApplication::applicationDirPath();
+    qCDebug(GStreamerLog) << "App Directory:" << currentDir;
 
-#if defined(Q_OS_MAC)
+#if defined(Q_OS_MACOS) && defined(QGC_GST_MACOS_FRAMEWORK)
     _qgcputenv("GST_REGISTRY_REUSE_PLUGIN_SCANNER", "no");
     _qgcputenv("GST_PLUGIN_SCANNER", currentDir, "/../Frameworks/GStreamer.framework/Versions/1.0/libexec/gstreamer-1.0/gst-plugin-scanner");
     _qgcputenv("GST_PTP_HELPER_1_0", currentDir, "/../Frameworks/GStreamer.framework/Versions/1.0/libexec/gstreamer-1.0/gst-ptp-helper");

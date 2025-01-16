@@ -1070,7 +1070,7 @@ VehicleCameraControl::_handleLocalization(QByteArray& bytes)
     }
     //-- Find out where we are
     QLocale locale = QLocale::system();
-#if defined (Q_OS_MAC)
+#if defined (Q_OS_MACOS)
     locale = QLocale(locale.name());
 #endif
     QString localeName = locale.name().toLower().replace("-", "_");
