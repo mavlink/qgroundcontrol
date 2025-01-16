@@ -13,6 +13,8 @@
 #include "MultiSignalSpy.h"
 #include "Section.h"
 
+#include <QtTest/QTest>
+
 SectionTest::SectionTest(void)
     : _simpleItem(nullptr)
 {

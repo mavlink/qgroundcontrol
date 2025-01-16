@@ -10,7 +10,6 @@
 #pragma once
 
 #include <QtCore/QObject>
-#include <QtTest/QSignalSpy>
 #include <QtPositioning/QGeoCoordinate>
 
 class QSignalSpy;

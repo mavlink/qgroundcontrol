@@ -15,6 +15,7 @@
 #include "SimpleMissionItem.h"
 #include "MultiSignalSpy.h"
 
+#include <QtTest/QTest>
 #include <functional>
 
 CameraSectionTest::CameraSectionTest(void)

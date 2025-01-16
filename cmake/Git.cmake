@@ -62,7 +62,6 @@ execute_process(
 cmake_print_variables(QGC_APP_DATE)
 
 string(FIND ${QGC_APP_VERSION} "v" QGC_APP_VERSION_VALID)
-cmake_print_variables(QGC_APP_VERSION_VALID)
 if(QGC_APP_VERSION_VALID GREATER -1)
     string(REPLACE "v" "" QGC_APP_VERSION ${QGC_APP_VERSION})
 else()

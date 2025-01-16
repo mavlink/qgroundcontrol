@@ -15,6 +15,8 @@
 #include "CameraSection.h"
 #include "SimpleMissionItem.h"
 
+#include <QtTest/QTest>
+
 const char* SimpleLandingComplexItem::settingsGroup             = "SimpleLandingComplexItemUnitTest";
 const char* SimpleLandingComplexItem::jsonComplexItemTypeValue  = "utSimpleLandingPattern";
 

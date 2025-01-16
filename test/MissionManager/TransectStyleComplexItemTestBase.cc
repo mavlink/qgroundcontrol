@@ -13,6 +13,8 @@
 #include "PlanViewSettings.h"
 #include "MissionItem.h"
 
+#include <QtTest/QTest>
+
 TransectStyleComplexItemTestBase::TransectStyleComplexItemTestBase(void)
 {
 }

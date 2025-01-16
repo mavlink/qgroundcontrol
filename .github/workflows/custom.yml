@@ -7,19 +7,16 @@ on:
       - 'Stable*'
     tags:
       - 'v*'
-    paths-ignore:
-      - 'android/**'
-      - 'deploy/**'
-      - 'docs/**'
   pull_request:
-    paths-ignore:
-      - 'android/**'
-      - 'deploy/**'
-      - 'docs/**'
-      - '.github/workflows/docs_deploy.yml'
-      - '.github/workflows/android.yml'
-      - '.github/workflows/linux.yml'
-      - '.github/workflows/macos.yml'
+    paths:
+      - 'src/**'
+      - 'custom-example/**'
+      - 'deploy/windows/**'
+
+concurrency:
+  # cancel jobs on PRs only
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   build:
@@ -84,6 +81,7 @@ jobs:
           max-size: 1G
           variant: sccache
           save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+          verbose: 1
           evict-old-files: 'job'
 
       - name: Install Qt for Windows (x64)

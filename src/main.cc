@@ -55,6 +55,7 @@ int WindowsCrtReportHook(int reportType, char* message, int* returnValue)
 
 // To shut down QGC on Ctrl+C on Linux
 #ifdef Q_OS_LINUX
+#ifndef Q_OS_ANDROID
 
 #include <csignal>
 
@@ -68,6 +69,7 @@ void sigHandler(int s)
     }
 }
 
+#endif /* Q_OS_ANDROID */
 #endif /* Q_OS_LINUX */
 
 //-----------------------------------------------------------------------------
@@ -124,11 +126,9 @@ int main(int argc, char *argv[])
     AppMessages::installHandler();
 
 #ifdef Q_OS_MACOS
-#ifndef Q_OS_IOS
     // Prevent Apple's app nap from screwing us over
     // tip: the domain can be cross-checked on the command line with <defaults domains>
     QProcess::execute("defaults", {"write org.qgroundcontrol.qgroundcontrol NSAppSleepDisabled -bool YES"});
-#endif
 #endif
 
 #ifdef Q_OS_WIN
@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
         // Add additional command line option flags here
     };
 
-    ParseCmdLineOptions(argc, argv, rgCmdLineOptions, sizeof(rgCmdLineOptions)/sizeof(rgCmdLineOptions[0]), false);
+    ParseCmdLineOptions(argc, argv, rgCmdLineOptions, std::size(rgCmdLineOptions), false);
     if (stressUnitTests) {
         runUnitTests = true;
     }
@@ -194,8 +194,10 @@ int main(int argc, char *argv[])
     QGCApplication app(argc, argv, runUnitTests);
 
 #ifdef Q_OS_LINUX
+#ifndef Q_OS_ANDROID
     std::signal(SIGINT, sigHandler);
     std::signal(SIGTERM, sigHandler);
+#endif
 #endif
 
     app.init();

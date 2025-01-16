@@ -14,7 +14,6 @@
 
 #include <QtCore/QStandardPaths>
 #include <QtTest/QTest>
-#include <QtTest/QSignalSpy>
 
 void MAVLinkLogManagerTest::_testInitMAVLinkLogManager()
 {
