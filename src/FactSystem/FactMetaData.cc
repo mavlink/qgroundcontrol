@@ -1268,7 +1268,7 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QMap<Q
     }
 
     QString defaultValueJsonKey = _defaultValueJsonKey;
-#ifdef __mobile__
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     if (json.contains(_mobileDefaultValueJsonKey)) {
         defaultValueJsonKey = _mobileDefaultValueJsonKey;
     }

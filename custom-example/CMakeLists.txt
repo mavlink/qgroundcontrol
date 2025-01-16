@@ -9,6 +9,30 @@ set_property(DIRECTORY ${CMAKE_SOURCE_DIR}
     CUSTOMCLASS=CustomPlugin
 )
 
+if(ANDROID)
+    set(CUSTOM_ANDROID_DIR "${CMAKE_SOURCE_DIR}/custom/android")
+    if(EXISTS "${CUSTOM_ANDROID_DIR}")
+        file(GLOB CUSTOM_ANDROID_FILES "${CUSTOM_ANDROID_DIR}/*")
+        if(CUSTOM_ANDROID_FILES)
+            message(STATUS "Custom Android package template found. Overlaying custom files...")
+            set(DEFAULT_ANDROID_DIR "${CMAKE_SOURCE_DIR}/android")
+            set(FINAL_ANDROID_DIR "${CMAKE_BINARY_DIR}/custom/android")
+            file(COPY "${DEFAULT_ANDROID_DIR}/." DESTINATION "${FINAL_ANDROID_DIR}")
+            file(COPY "${CUSTOM_ANDROID_DIR}/." DESTINATION "${FINAL_ANDROID_DIR}")
+            set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+                            "${DEFAULT_ANDROID_DIR}/"
+                            "${CUSTOM_ANDROID_DIR}/"
+                        )
+            set(QGC_ANDROID_PACKAGE_SOURCE_DIR "${FINAL_ANDROID_DIR}" CACHE STRING "Path to a custom Android package template" FORCE)
+            message(STATUS "Android package template path will be set to: ${QGC_ANDROID_PACKAGE_SOURCE_DIR}")
+        else()
+            message(STATUS "Custom Android package template empty. Using default.")
+        endif()
+    else()
+        message(STATUS "No custom Android package template found. Using default.")
+    endif()
+endif()
+
 find_package(Python3)
 if(Python3_FOUND)
     execute_process(

@@ -125,6 +125,7 @@ add_qgc_test(MAVLinkLogManagerTest)
 
 # set(UNIT_TESTING_RESOURCES)
 # qt_add_resources(UNIT_TESTING_RESOURCES UnitTest.qrc)
+
 qt_add_library(qgctest
     STATIC
         UnitTestList.cc
