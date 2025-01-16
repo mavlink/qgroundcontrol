@@ -8,13 +8,8 @@ ENV QT_DESKTOP=$QT_PATH/${QT_VERSION}/clang_64
 
 ENV PATH=$QT_DESKTOP/bin:/usr/local/bin:$PATH
 
-# Install Homebrew (if not already installed)
-RUN /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" \
-    && eval "$(/usr/local/bin/brew shellenv)" \
-    && brew update
-
-# Install necessary dependencies via Homebrew
-RUN brew install cmake ninja git
+COPY tools/setup/macos-dependencies.sh /tmp/qt/
+RUN /tmp/qt/macos-dependencies.sh
 
 # Install Qt using Homebrew
 RUN brew install qt@${QT_VERSION} \

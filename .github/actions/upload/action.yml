@@ -4,16 +4,15 @@ inputs:
   artifact_name:
     description: Artifact name
     required: true
+  package_name:
+    description: Package name
+    required: true
   aws_key_id:
     description: AWS access key ID
     required: false
   aws_secret_access_key:
     description: AWS secret access key
     required: false
-  source:
-    description: Source location
-    required: false
-    default: package
   github_token:
     description: GitHub Token
     required: false
@@ -24,8 +23,8 @@ runs:
     - name: Save artifact
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ inputs.artifact_name }}
-        path: ${{ runner.temp }}/shadow_build_dir/${{ inputs.source }}/${{ inputs.artifact_name }}
+        name: ${{ inputs.package_name }}
+        path: ${{ runner.temp }}/shadow_build_dir/${{ inputs.artifact_name }}
 
     - name: Configure AWS Credentials
       if: ${{ github.event_name == 'push' && !github.event.pull_request.head.repo.fork && inputs.aws_key_id != '' && inputs.aws_secret_access_key != '' }}

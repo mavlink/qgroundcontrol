@@ -17,10 +17,10 @@ target_link_libraries(qgcunittest
         Settings
         Vehicle
         VehicleComponents
+        Qt6::Test
     PUBLIC
         Qt6::Core
         Qt6::Positioning
-        Qt6::Test
         MAVLink
         MockLink
 )

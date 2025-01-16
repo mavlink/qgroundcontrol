@@ -18,6 +18,8 @@
 #include "AutoPilotPlugin.h"
 #include "MultiSignalSpy.h"
 
+#include <QtTest/QTest>
+
 /// @file
 ///     @brief QRadioComponentController Widget unit test
 ///

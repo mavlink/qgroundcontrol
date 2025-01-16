@@ -13,6 +13,9 @@
 #include "QGCMapPolyline.h"
 #include "QmlObjectListModel.h"
 
+#include <QtTest/QTest>
+#include <QtTest/QSignalSpy>
+
 QGCMapPolylineTest::QGCMapPolylineTest(void)
 {
     _linePoints << QGeoCoordinate(47.635638361473475, -122.09269407980834 ) <<

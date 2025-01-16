@@ -123,6 +123,16 @@ endif()
 #               Qt6 Configuration
 #######################################################
 
+set(QT_SILENCE_MISSING_DEPENDENCY_TARGET_WARNING ON)
+set(QT_MINIMUM_VERSION 6.8.1)
+
+find_program(QMAKE_EXECUTABLE NAMES qmake HINTS ${QT_ROOT_DIR} ${QTDIR} ENV QTDIR PATH_SUFFIXES bin)
+execute_process(COMMAND ${QMAKE_EXECUTABLE} -query QT_VERSION OUTPUT_VARIABLE QT_VERSION)
+if(QT_VERSION LESS QT_MINIMUM_VERSION)
+    MESSAGE(FATAL_ERROR "Minimum supported Qt version: ${QT_MINIMUM_VERSION}.
+    Installed version: ${QT_VERSION}")
+endif()
+
 include(Qt6QGCConfiguration)
 
 set(QT_QML_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/qml" CACHE PATH "Install path for QML" FORCE)
@@ -165,16 +175,6 @@ if(ANDROID)
     # QT_ANDROID_KEYSTORE_STORE_PASS, QT_ANDROID_KEYSTORE_KEY_PASS
 endif()
 
-set(QT_SILENCE_MISSING_DEPENDENCY_TARGET_WARNING ON)
-set(QT_MINIMUM_VERSION 6.8.1)
-
-find_program(QMAKE_EXECUTABLE NAMES qmake HINTS ${QTDIR} ENV QTDIR PATH_SUFFIXES bin)
-execute_process(COMMAND ${QMAKE_EXECUTABLE} -query QT_VERSION OUTPUT_VARIABLE QT_VERSION)
-if(QT_VERSION LESS QT_MINIMUM_VERSION)
-    MESSAGE(FATAL_ERROR "Minimum supported Qt version: ${QT_MINIMUM_VERSION}.
-    Installed version: ${QT_VERSION}")
-endif()
-
 find_package(Qt6
     ${QT_MINIMUM_VERSION}
     REQUIRED
@@ -195,7 +195,6 @@ find_package(Qt6
         Sensors
         Sql
         Svg
-        Test
         TextToSpeech
         Widgets
         Xml
@@ -207,6 +206,7 @@ find_package(Qt6
         Quick3D
         Quick3DTools
         SerialPort
+        Test
     HINTS
         ${QT_LIBRARY_HINTS}
 )
@@ -466,10 +466,18 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         QGC
         QmlControls
 )
+
 if(QGC_BUILD_TESTING)
     add_subdirectory(test)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE qgctest)
 endif()
+
+target_precompile_headers(${CMAKE_PROJECT_NAME}
+    PRIVATE
+        <QtCore/QtPlugin>
+        <QtQuick/QQuickWindow>
+        <QtWidgets/QApplication>
+)
 
 qt_import_plugins(${CMAKE_PROJECT_NAME}
     INCLUDE Qt6::QSvgPlugin
