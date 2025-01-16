@@ -59,21 +59,28 @@ jobs:
               do sudo installer -verbose -pkg "$package" -target /
             done
 
-            # Create proper framework structure with symlinks
-            sudo rm -rf /Library/lib/GStreamer.framework  # Clean up any existing framework
-            sudo mkdir -p /Library/lib
+            # Clean up and recreate directory structure
+            sudo rm -rf /Library/lib/GStreamer.framework
             sudo mkdir -p /Library/lib/GStreamer.framework/Versions/1.0
-            cd /Library/lib/GStreamer.framework/Versions
-            sudo ln -sf 1.0 Current
+
+            # Create all necessary symlinks
+            sudo ln -sf /Library/Frameworks/GStreamer.framework/Versions/1.0/lib /Library/lib/GStreamer.framework/Versions/1.0/lib
+            sudo ln -sf /Library/Frameworks/GStreamer.framework/Versions/1.0/Headers /Library/lib/GStreamer.framework/Versions/1.0/Headers
+            sudo ln -sf /Library/Frameworks/GStreamer.framework/Versions/1.0/Resources /Library/lib/GStreamer.framework/Versions/1.0/Resources
+            sudo ln -sf /Library/Frameworks/GStreamer.framework/Versions/1.0/GStreamer /Library/lib/GStreamer.framework/Versions/1.0/GStreamer
+
+            # Set Current version symlink
+            sudo ln -sf 1.0 /Library/lib/GStreamer.framework/Versions/Current
+
+            # Create top-level symlinks
             cd /Library/lib/GStreamer.framework
             sudo ln -sf Versions/Current/lib lib
             sudo ln -sf Versions/Current/Headers Headers
             sudo ln -sf Versions/Current/Resources Resources
+            sudo ln -sf Versions/Current/GStreamer GStreamer
 
-            # Create the main symlink for the whole framework
-            sudo ln -sf /Library/Frameworks/GStreamer.framework /Library/lib/GStreamer.framework
-
-            # Verify the links
+            # Verify the structure
+            echo "Verifying framework structure:"
             ls -la /Library/lib/GStreamer.framework/Versions/1.0/
 
       - name: Install ccache
