@@ -49,6 +49,7 @@ MissionItemEditor                       1.0 MissionItemEditor.qml
 MissionItemIndexLabel                   1.0 MissionItemIndexLabel.qml
 MissionItemMapVisual                    1.0 MissionItemMapVisual.qml
 MissionItemStatus                       1.0 MissionItemStatus.qml
+MvPanelPage                             1.0 MvPanelPage.qml
 OfflineMapButton                        1.0 OfflineMapButton.qml
 OfflineMapEditor                        1.0 OfflineMapEditor.qml
 OfflineMapInfo                          1.0 OfflineMapInfo.qml
@@ -84,11 +85,13 @@ QGCMenuSeparator                        1.0 QGCMenuSeparator.qml
 QGCMouseArea                            1.0 QGCMouseArea.qml
 QGCMovableItem                          1.0 QGCMovableItem.qml
 QGCOptionsComboBox                      1.0 QGCOptionsComboBox.qml
+QGCPageIndicator                        1.0 QGCPageIndicator.qml
 QGCPopupDialog                          1.0 QGCPopupDialog.qml
 QGCRadioButton                          1.0 QGCRadioButton.qml
 QGCRoundButton                          1.0 QGCRoundButton.qml
 QGCSimpleMessageDialog                  1.0 QGCSimpleMessageDialog.qml
 QGCSlider                               1.0 QGCSlider.qml
+QGCSwipeView                            1.0 QGCSwipeView.qml
 QGCSwitch                               1.0 QGCSwitch.qml
 QGCTabBar                               1.0 QGCTabBar.qml
 QGCTabButton                            1.0 QGCTabButton.qml

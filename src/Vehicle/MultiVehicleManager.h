@@ -33,6 +33,7 @@ class MultiVehicleManager : public QObject
     Q_PROPERTY(bool                 parameterReadyVehicleAvailable  READ _getParameterReadyVehicleAvailable                                 NOTIFY parameterReadyVehicleAvailableChanged)
     Q_PROPERTY(Vehicle              *activeVehicle                  READ activeVehicle                      WRITE setActiveVehicle          NOTIFY activeVehicleChanged)
     Q_PROPERTY(QmlObjectListModel   *vehicles                       READ vehicles                                                           CONSTANT)
+    Q_PROPERTY(QmlObjectListModel   *selectedVehicles               READ selectedVehicles                                                   CONSTANT)
     Q_PROPERTY(bool                 gcsHeartBeatEnabled             READ _getGcsHeartbeatEnabled            WRITE _setGcsHeartbeatEnabled   NOTIFY gcsHeartBeatEnabledChanged)
     Q_PROPERTY(Vehicle              *offlineEditingVehicle          READ offlineEditingVehicle                                              CONSTANT)
 
@@ -45,7 +46,11 @@ public:
 
     void init();
     Q_INVOKABLE Vehicle *getVehicleById(int vehicleId) const;
+    Q_INVOKABLE void      selectVehicle(int vehicleId);
+    Q_INVOKABLE void    deselectVehicle(int vehicleId);
+    Q_INVOKABLE void    deselectAllVehicles();
     QmlObjectListModel *vehicles() const { return _vehicles; }
+    QmlObjectListModel *selectedVehicles() const { return _selectedVehicles; }
     Vehicle *offlineEditingVehicle() const { return _offlineEditingVehicle; }
     Vehicle *activeVehicle() const { return _activeVehicle; }
     void setActiveVehicle(Vehicle *vehicle);
@@ -69,6 +74,7 @@ private slots:
 
 private:
     bool _vehicleExists(int vehicleId);
+    bool _vehicleSelected(int vehicleId);
     void _setActiveVehicle(Vehicle *vehicle);
     bool _getGcsHeartbeatEnabled() const { return _gcsHeartbeatEnabled; }
     void _setGcsHeartbeatEnabled(bool gcsHeartBeatEnabled);
@@ -80,6 +86,7 @@ private:
     QTimer *_gcsHeartbeatTimer = nullptr;           ///< Timer to emit heartbeats
     Vehicle *_offlineEditingVehicle = nullptr;      ///< Disconnected vechicle used for offline editing
     QmlObjectListModel *_vehicles = nullptr;
+    QmlObjectListModel *_selectedVehicles = nullptr;
     bool _activeVehicleAvailable = false;           ///< true: An active vehicle is available
     bool _gcsHeartbeatEnabled = false;              ///< Enabled/disable heartbeat emission
     bool _parameterReadyVehicleAvailable = false;   ///< true: An active vehicle with ready parameters is available
