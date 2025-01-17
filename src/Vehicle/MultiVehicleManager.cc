@@ -42,6 +42,7 @@ MultiVehicleManager::MultiVehicleManager(QObject *parent)
     , _gcsHeartbeatTimer(new QTimer(this))
     , _offlineEditingVehicle(new Vehicle(Vehicle::MAV_AUTOPILOT_TRACK, Vehicle::MAV_TYPE_TRACK, this))
     , _vehicles(new QmlObjectListModel(this))
+    , _selectedVehicles(new QmlObjectListModel(this))
 {
     // qCDebug(MultiVehicleManagerLog) << Q_FUNC_INFO << this;
 }
@@ -206,6 +207,8 @@ void MultiVehicleManager::_deleteVehiclePhase1(Vehicle *vehicle)
         qCWarning(MultiVehicleManagerLog) << "Vehicle not found in map!";
     }
 
+    deselectVehicle(vehicle->id());
+
     _setActiveVehicleAvailable(false);
     _setParameterReadyVehicleAvailable(false);
     emit vehicleRemoved(vehicle);
@@ -331,6 +334,42 @@ void MultiVehicleManager::_sendGCSHeartbeat()
         const uint16_t len = mavlink_msg_to_send_buffer(buffer, &message);
         (void) link->writeBytesThreadSafe(reinterpret_cast<const char*>(buffer), len);
     }
+}
+
+void MultiVehicleManager::selectVehicle(int vehicleId)
+{
+    if(!_vehicleSelected(vehicleId)) {
+        Vehicle *const vehicle = getVehicleById(vehicleId);
+        _selectedVehicles->append(vehicle);
+        return;
+    }
+}
+
+void MultiVehicleManager::deselectVehicle(int vehicleId)
+{
+    for (int i = 0; i < _selectedVehicles->count(); i++) {
+        Vehicle *const vehicle = qobject_cast<Vehicle*>(_selectedVehicles->get(i));
+        if (vehicle->id() == vehicleId) {
+            _selectedVehicles->removeAt(i);
+            return;
+        }
+    }
+}
+
+void MultiVehicleManager::deselectAllVehicles()
+{
+    _selectedVehicles->clear();
+}
+
+bool MultiVehicleManager::_vehicleSelected(int vehicleId)
+{
+    for (int i = 0; i < _selectedVehicles->count(); i++) {
+        Vehicle *const vehicle = qobject_cast<Vehicle*>(_selectedVehicles->get(i));
+        if (vehicle->id() == vehicleId) {
+            return true;
+        }
+    }
+    return false;
 }
 
 Vehicle *MultiVehicleManager::getVehicleById(int vehicleId) const

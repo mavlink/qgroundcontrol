@@ -59,15 +59,28 @@ Item {
         leftEdgeTopInset:       toolStrip.leftEdgeTopInset
         leftEdgeCenterInset:    toolStrip.leftEdgeCenterInset
         leftEdgeBottomInset:    virtualJoystickMultiTouch.visible ? virtualJoystickMultiTouch.leftEdgeBottomInset : parentToolInsets.leftEdgeBottomInset
-        rightEdgeTopInset:      topRightColumnLayout.rightEdgeTopInset
-        rightEdgeCenterInset:   topRightColumnLayout.rightEdgeCenterInset
+        rightEdgeTopInset:      topRightPanel.rightEdgeTopInset
+        rightEdgeCenterInset:   topRightPanel.rightEdgeCenterInset
         rightEdgeBottomInset:   bottomRightRowLayout.rightEdgeBottomInset
         topEdgeLeftInset:       toolStrip.topEdgeLeftInset
         topEdgeCenterInset:     mapScale.topEdgeCenterInset
-        topEdgeRightInset:      topRightColumnLayout.topEdgeRightInset
+        topEdgeRightInset:      topRightPanel.topEdgeRightInset
         bottomEdgeLeftInset:    virtualJoystickMultiTouch.visible ? virtualJoystickMultiTouch.bottomEdgeLeftInset : parentToolInsets.bottomEdgeLeftInset
         bottomEdgeCenterInset:  bottomRightRowLayout.bottomEdgeCenterInset
         bottomEdgeRightInset:   virtualJoystickMultiTouch.visible ? virtualJoystickMultiTouch.bottomEdgeRightInset : bottomRightRowLayout.bottomEdgeRightInset
+    }
+
+    FlyViewTopRightPanel {
+        id:                     topRightPanel
+        anchors.top:            parent.top
+        anchors.right:          parent.right
+        anchors.topMargin:      _layoutMargin
+        anchors.rightMargin:    _layoutMargin
+        maximumHeight:          parent.height - (bottomRightRowLayout.height + _margins * 5)
+
+        property real topEdgeRightInset:    height + _layoutMargin
+        property real rightEdgeTopInset:    width + _layoutMargin
+        property real rightEdgeCenterInset: rightEdgeTopInset
     }
 
     FlyViewTopRightColumnLayout {
@@ -77,6 +90,7 @@ Item {
         anchors.bottom:     bottomRightRowLayout.top
         anchors.right:      parent.right
         spacing:            _layoutSpacing
+        visible:           !topRightPanel.visible
 
         property real topEdgeRightInset:    childrenRect.height + _layoutMargin
         property real rightEdgeTopInset:    width + _layoutMargin

@@ -139,6 +139,13 @@
     "default":     false
 },
 {
+    "name":                 "enableMultiVehiclePanel",
+    "shortDesc":            "Enable Multi-Vehicle Panel",
+    "longDesc":             "Enable Multi-Vehicle Panel when multiple vehicles are connected.",
+    "type":                 "bool",
+    "default":              true
+},
+{
     "name":                 "appFontPointSize",
     "shortDesc":     "Application font size",
     "longDesc":      "The point size for the default font used.",
