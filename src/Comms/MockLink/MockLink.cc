@@ -1062,6 +1062,9 @@ void MockLink::_handleCommandLong(const mavlink_message_t &msg)
         _handlePreFlightCalibration(request);
         commandResult = MAV_RESULT_ACCEPTED;
         break;
+    case MAV_CMD_DO_MOTOR_TEST:
+        commandResult = MAV_RESULT_ACCEPTED;
+        break;
     case MAV_CMD_CONTROL_HIGH_LATENCY:
         if (linkConfiguration()->isHighLatency()) {
             _highLatencyTransmissionEnabled = static_cast<int>(request.param1) != 0;
