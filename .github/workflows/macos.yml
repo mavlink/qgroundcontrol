@@ -88,11 +88,11 @@ jobs:
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
           cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
-      # - name: Import Code Signing Certificate
-      #   uses: apple-actions/import-codesign-certs@v3
-      #   with:
-      #     p12-file-base64: ${{ secrets.MACOS_SIGNING_CERTS_P12 }}
-      #     p12-password: ${{ secrets.MACOS_SIGNING_CERTS_PASS }}
+      - name: Import Code Signing Certificate
+        uses: apple-actions/import-codesign-certs@v3
+        with:
+          p12-file-base64: ${{ secrets.MACOS_SIGNING_CERTS_P12 }}
+          p12-password: ${{ secrets.MACOS_SIGNING_CERTS_PASS }}
 
       - run: mkdir ${{ runner.temp }}/shadow_build_dir
 
