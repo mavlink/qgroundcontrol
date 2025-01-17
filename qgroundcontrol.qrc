@@ -127,6 +127,7 @@
         <file alias="QGroundControl/Controls/MissionItemIndexLabel.qml">src/QmlControls/MissionItemIndexLabel.qml</file>
         <file alias="QGroundControl/Controls/MissionItemMapVisual.qml">src/PlanView/MissionItemMapVisual.qml</file>
         <file alias="QGroundControl/Controls/MissionItemStatus.qml">src/PlanView/MissionItemStatus.qml</file>
+        <file alias="QGroundControl/Controls/MvPanelPage.qml">src/QmlControls/MvPanelPage.qml</file>
         <file alias="QGroundControl/Controls/OfflineMapButton.qml">src/QmlControls/OfflineMapButton.qml</file>
         <file alias="QGroundControl/Controls/OfflineMapEditor.qml">src/QtLocationPlugin/QMLControl/OfflineMapEditor.qml</file>
         <file alias="QGroundControl/Controls/OfflineMapInfo.qml">src/UI/preferences/OfflineMapInfo.qml</file>
@@ -161,12 +162,14 @@
         <file alias="QGroundControl/Controls/QGCMenuSeparator.qml">src/QmlControls/QGCMenuSeparator.qml</file>
         <file alias="QGroundControl/Controls/QGCMouseArea.qml">src/QmlControls/QGCMouseArea.qml</file>
         <file alias="QGroundControl/Controls/QGCMovableItem.qml">src/QmlControls/QGCMovableItem.qml</file>
+        <file alias="QGroundControl/Controls/QGCPageIndicator.qml">src/QmlControls/QGCPageIndicator.qml</file>
         <file alias="QGroundControl/Controls/QGCPopupDialog.qml">src/QmlControls/QGCPopupDialog.qml</file>
         <file alias="QGroundControl/Controls/PipView.qml">src/QmlControls/PipView.qml</file>
         <file alias="QGroundControl/Controls/PipState.qml">src/QmlControls/PipState.qml</file>
         <file alias="QGroundControl/Controls/QGCRadioButton.qml">src/QmlControls/QGCRadioButton.qml</file>
         <file alias="QGroundControl/Controls/QGCSimpleMessageDialog.qml">src/QmlControls/QGCSimpleMessageDialog.qml</file>
         <file alias="QGroundControl/Controls/QGCSlider.qml">src/QmlControls/QGCSlider.qml</file>
+        <file alias="QGroundControl/Controls/QGCSwipeView.qml">src/QmlControls/QGCSwipeView.qml</file>
         <file alias="QGroundControl/Controls/QGCSwitch.qml">src/QmlControls/QGCSwitch.qml</file>
         <file alias="QGroundControl/Controls/QGCTabBar.qml">src/QmlControls/QGCTabBar.qml</file>
         <file alias="QGroundControl/Controls/QGCTabButton.qml">src/QmlControls/QGCTabButton.qml</file>
@@ -342,6 +345,7 @@
         <file alias="Viewer3D/Models3D/Line3D.qml">src/Viewer3D/Viewer3DQml/Models3D/Line3D.qml</file>
         <file alias="Viewer3D/Models3D/Viewer3DVehicleItems.qml">src/Viewer3D/Viewer3DQml/Models3D/Viewer3DVehicleItems.qml</file>
         <file alias="Viewer3D/Viewer3DProgressBar.qml">src/Viewer3D/Viewer3DQml/Viewer3DProgressBar.qml</file>
+        <file alias="QGroundControl/FlightDisplay/FlyViewTopRightPanel.qml">src/FlightDisplay/FlyViewTopRightPanel.qml</file>
     </qresource>
     <qresource prefix="/FirstRunPromptDialogs">
         <file alias="UnitsFirstRunPrompt.qml">src/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml</file>

@@ -19,66 +19,102 @@ import QGroundControl.Vehicle
 import QGroundControl.FlightMap
 
 Item {
-    property real   _margin:            ScreenTools.defaultFontPixelWidth / 2
-    property real   _widgetHeight:      ScreenTools.defaultFontPixelHeight * 3
-    property color  _textColor:         "black"
-    property real   _rectOpacity:       0.8
-    property var    _guidedController:  globals.guidedControllerFlyView
+    property real   _margin:              ScreenTools.defaultFontPixelWidth / 2
+    property real   _widgetHeight:        ScreenTools.defaultFontPixelHeight * 2
+    property var    _guidedController:    globals.guidedControllerFlyView
+    property var    _activeVehicleColor:  "green"
+    property var    _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
+    property var    selectedVehicles:     QGroundControl.multiVehicleManager.selectedVehicles
 
-    QGCPalette { id: qgcPal }
+    property real   innerColumnHeight
 
-    Rectangle {
-        id:             mvCommands
-        anchors.left:   parent.left
-        anchors.right:  parent.right
-        height:         mvCommandsColumn.height + (_margin *2)
-        color:          qgcPal.missionItemEditor
-        opacity:        _rectOpacity
-        radius:         _margin
-
-        DeadMouseArea {
-            anchors.fill: parent
-        }
-
-        Column {
-            id:                 mvCommandsColumn
-            anchors.margins:    _margin
-            anchors.top:        parent.top
-            anchors.left:       parent.left
-            anchors.right:      parent.right
-            spacing:            _margin
-
-            QGCLabel {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                text:           qsTr("The following commands will be applied to all vehicles")
-                color:          _textColor
-                wrapMode:       Text.WordWrap
-                font.pointSize: ScreenTools.smallFontPointSize
+    function armAvailable() {
+        for (var i = 0; i < selectedVehicles.count; i++) {
+            var vehicle = selectedVehicles.get(i)
+            if (vehicle.armed === false) {
+                return true
             }
+        }
+        return false
+    }
 
-            Row {
-                spacing:            _margin
 
-                QGCButton {
-                    text:       qsTr("Pause")
-                    onClicked:  _guidedController.confirmAction(_guidedController.actionMVPause)
-                }
+    function disarmAvailable() {
+        for (var i = 0; i < selectedVehicles.count; i++) {
+            var vehicle = selectedVehicles.get(i)
+            if (vehicle.armed === true) {
+                return true
+            }
+        }
+        return false
+    }
 
-                QGCButton {
-                    text:       qsTr("Start Mission")
-                    onClicked:  _guidedController.confirmAction(_guidedController.actionMVStartMission)
-                }
+    function startAvailable() {
+        for (var i = 0; i < selectedVehicles.count; i++) {
+            var vehicle = selectedVehicles.get(i)
+            if (vehicle.armed === true && vehicle.flightMode !== vehicle.missionFlightMode){
+                return true
+            }
+        }
+        return false
+    }
+
+    function pauseAvailable() {
+        for (var i = 0; i < selectedVehicles.count; i++) {
+            var vehicle = selectedVehicles.get(i)
+            if (vehicle.armed === true && vehicle.pauseVehicleSupported) {
+                return true
+            }
+        }
+        return false
+    }
+
+    function selectVehicle(vehicleId) {
+        QGroundControl.multiVehicleManager.selectVehicle(vehicleId)
+    }
+
+    function deselectVehicle(vehicleId) {
+        QGroundControl.multiVehicleManager.deselectVehicle(vehicleId)
+    }
+
+    function toggleSelect(vehicleId) {
+        if (!vehicleSelected(vehicleId)) {
+            selectVehicle(vehicleId)
+        } else {
+            deselectVehicle(vehicleId)
+        }
+    }
+
+    function selectAll() {
+        var vehicles = QGroundControl.multiVehicleManager.vehicles
+        for (var i = 0; i < vehicles.count; i++) {
+            var vehicle = vehicles.get(i)
+            var vehicleId = vehicle.id
+            if (!vehicleSelected(vehicleId)) {
+                selectVehicle(vehicleId)
             }
         }
     }
 
+    function deselectAll() {
+        QGroundControl.multiVehicleManager.deselectAllVehicles()
+    }
+
+    function vehicleSelected(vehicleId) {
+        for (var i = 0; i < selectedVehicles.count; i++ ) {
+            var currentId = selectedVehicles.get(i).id
+            if (vehicleId === currentId) {
+                return true
+            }
+        }
+        return false
+    }
+
     QGCListView {
-        id:                 missionItemEditorListView
+        id:                 vehicleList
         anchors.left:       parent.left
         anchors.right:      parent.right
-        anchors.topMargin:  _margin
-        anchors.top:        mvCommands.bottom
+        anchors.top:        parent.top
         anchors.bottom:     parent.bottom
         spacing:            ScreenTools.defaultFontPixelHeight / 2
         orientation:        ListView.Vertical
@@ -89,95 +125,80 @@ Item {
         property real _cacheBuffer:     height * 2
 
         delegate: Rectangle {
-            width:      missionItemEditorListView.width
-            height:     innerColumn.y + innerColumn.height + _margin
-            color:      qgcPal.missionItemEditor
-            opacity:    _rectOpacity
-            radius:     _margin
+            width:          vehicleList.width
+            height:         innerColumn.y + innerColumn.height + _margin
+            color:          QGroundControl.multiVehicleManager.activeVehicle == _vehicle ? _activeVehicleColor : qgcPal.button
+            radius:         _margin
+            border.width:   _vehicle && vehicleSelected(_vehicle.id) ? 2 : 0
+            border.color:   qgcPal.text
 
             property var    _vehicle:   object
 
-            ColumnLayout {
-                id:                 innerColumn
-                anchors.margins:    _margin
-                anchors.top:        parent.top
-                anchors.left:       parent.left
-                anchors.right:      parent.left
-                spacing:            _margin
+            Rectangle {
+                height:                     parent.height
+                width:                      innerColumn.width
+                anchors.horizontalCenter:   parent.horizontalCenter
+                color:                      "transparent"
 
                 RowLayout {
-                    Layout.fillWidth:       true
+                    id:                 innerColumn
+                    anchors.margins:    _margin
+                    spacing:            _margin
+                    onHeightChanged: {  innerColumnHeight = height + _margin * 2 + spacing * 2  }
+
+                    QGCCompassWidget {
+                        id: compassWidget
+                        size:                        _widgetHeight
+                        usedByMultipleVehicleList:   true
+                        vehicle:                     _vehicle
+                    }
 
                     QGCLabel {
-                        Layout.alignment:   Qt.AlignTop
-                        text:               _vehicle ? _vehicle.id : ""
-                        color:              _textColor
+                        text: " | "
+                        font.pointSize:       ScreenTools.largeFontPointSize
+                        color:                qgcPal.text
+                        Layout.alignment:     Qt.AlignHCenter
+                    }
+
+                    QGCLabel {
+                        text:                 _vehicle ? _vehicle.id : ""
+                        font.pointSize:       ScreenTools.largeFontPointSize
+                        color:                qgcPal.text
+                        Layout.alignment:     Qt.AlignHCenter
+                    }
+
+                    QGCLabel {
+                        text: " | "
+                        font.pointSize:       ScreenTools.largeFontPointSize
+                        color:                qgcPal.text
+                        Layout.alignment:     Qt.AlignHCenter
                     }
 
                     ColumnLayout {
-                        Layout.alignment:   Qt.AlignCenter
-                        spacing:            _margin
+                        spacing:              _margin
+                        Layout.rightMargin:   compassWidget.width / 4
+                        Layout.alignment:     Qt.AlignCenter
 
                         FlightModeMenu {
-                            Layout.alignment:           Qt.AlignHCenter
-                            font.pointSize:             ScreenTools.largeFontPointSize
-                            color:                      _textColor
-                            currentVehicle:             _vehicle
+                            Layout.alignment:     Qt.AlignHCenter
+                            font.pointSize:       ScreenTools.largeFontPointSize
+                            color:                qgcPal.text
+                            currentVehicle:       _vehicle
                         }
 
                         QGCLabel {
-                            Layout.alignment:           Qt.AlignHCenter
-                            text:                       _vehicle && _vehicle.armed ? qsTr("Armed") : qsTr("Disarmed")
-                            color:                      _textColor
+                            Layout.alignment:     Qt.AlignHCenter
+                            text:                 _vehicle && _vehicle.armed ? qsTr("Armed") : qsTr("Disarmed")
+                            color:                qgcPal.text
                         }
                     }
+                }
+            }
 
-                    QGCCompassWidget {
-                        size:       _widgetHeight
-                        usedByMultipleVehicleList: true
-                        vehicle:    _vehicle
-                    }
-
-                    QGCAttitudeWidget {
-                        size:       _widgetHeight
-                        vehicle:    _vehicle
-                    }
-                } // RowLayout
-
-                Row {
-                    spacing: ScreenTools.defaultFontPixelWidth
-
-                    QGCButton {
-                        text:       qsTr("Arm")
-                        visible:    _vehicle && !_vehicle.armed
-                        onClicked:  _vehicle.armed = true
-                    }
-
-                    QGCButton {
-                        text:       qsTr("Start Mission")
-                        visible:    _vehicle && _vehicle.armed && _vehicle.flightMode !== _vehicle.missionFlightMode
-                        onClicked:  _vehicle.startMission()
-                    }
-
-                    QGCButton {
-                        text:       qsTr("Pause")
-                        visible:    _vehicle && _vehicle.armed && _vehicle.pauseVehicleSupported
-                        onClicked:  _vehicle.pauseVehicle()
-                    }
-
-                    QGCButton {
-                        text:       qsTr("RTL")
-                        visible:    _vehicle && _vehicle.armed && _vehicle.flightMode !== _vehicle.rtlFlightMode
-                        onClicked:  _vehicle.flightMode = _vehicle.rtlFlightMode
-                    }
-
-                    QGCButton {
-                        text:       qsTr("Take control")
-                        visible:    _vehicle && _vehicle.armed && _vehicle.flightMode !== _vehicle.takeControlFlightMode
-                        onClicked:  _vehicle.flightMode = _vehicle.takeControlFlightMode
-                    }
-                } // Row
-            } // ColumnLayout
-        } // delegate - Rectangle
-    } // QGCListView
-} // Item
+            QGCMouseArea {
+                anchors.fill:       parent
+                onClicked:          toggleSelect(_vehicle.id)
+            }
+        }
+    }
+}
