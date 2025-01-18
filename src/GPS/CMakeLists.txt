@@ -45,7 +45,7 @@ message(STATUS "Building GPS Drivers")
 include(CPM)
 CPMAddPackage(
     NAME px4-gpsdrivers
-    GIT_REPOSITORY https://github.com/PX4/PX4-GPSDrivers.git
+    GITHUB_REPOSITORY PX4/PX4-GPSDrivers
     GIT_TAG main
     GIT_SHALLOW TRUE
     SOURCE_SUBDIR src

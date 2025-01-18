@@ -46,7 +46,7 @@ target_include_directories(APMFirmwarePlugin PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 include(CPM)
 CPMAddPackage(
     NAME ArduPilotParams
-    GIT_REPOSITORY https://github.com/ArduPilot/ParameterRepository.git
+    GITHUB_REPOSITORY ArduPilot/ParameterRepository
     GIT_TAG main
     GIT_SHALLOW TRUE
 )

@@ -12,6 +12,7 @@ on:
       - 'src/**'
       - 'deploy/docker/**'
       - 'deploy/linux/**'
+      - 'CMakeLists.txt'
 
 concurrency:
   # cancel jobs on PRs only

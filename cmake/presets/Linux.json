@@ -1,0 +1,124 @@
+{
+  "version": 6,
+  "include": ["common.json"],
+  "configurePresets": [
+    {
+      "name": "Linux",
+      "displayName": "Linux configuration using Qt6",
+      "generator": "Ninja",
+      "binaryDir": "${sourceParentDir}/build/qt6-Linux",
+      "toolchainFile": "$penv{QT_ROOT_DIR}/lib/cmake/Qt6/qt.toolchain.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "QT_VERSION_MAJOR": "6"
+      }
+    },
+    {
+      "name": "Linux-ccache",
+      "displayName": "Linux configuration using Qt6 and ccache",
+      "inherits": ["dev", "ccache", "Linux"]
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "Linux",
+      "displayName": "Linux build using Qt6",
+      "configurePreset": "Linux"
+    },
+    {
+      "name": "Linux-ccache",
+      "displayName": "Linux build using Qt6 and ccache",
+      "configurePreset": "Linux-ccache"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "Linux",
+      "displayName": "Linux tests using Qt6",
+      "configurePreset": "Linux",
+      "inherits": ["default"]
+    },
+    {
+      "name": "Linux-ccache",
+      "displayName": "Linux tests using Qt6 and ccache",
+      "configurePreset": "Linux-ccache",
+      "inherits": ["default"]
+    }
+  ],
+  "packagePresets": [
+    {
+      "name": "Linux",
+      "displayName": "Linux package using Qt6",
+      "configurePreset": "Linux"
+    },
+    {
+      "name": "Linux-ccache",
+      "displayName": "Linux package using Qt6 and ccache",
+      "configurePreset": "Linux-ccache"
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "Linux",
+      "displayName": "Linux workflow using Qt6",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "Linux"
+        },
+        {
+          "type": "build",
+          "name": "Linux"
+        },
+        {
+          "type": "test",
+          "name": "Linux"
+        },
+        {
+          "type": "package",
+          "name": "Linux"
+        }
+      ]
+    },
+    {
+      "name": "Linux-ccache",
+      "displayName": "Linux workflow using Qt6 and ccache",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "Linux-ccache"
+        },
+        {
+          "type": "build",
+          "name": "Linux-ccache"
+        },
+        {
+          "type": "test",
+          "name": "Linux-ccache"
+        },
+        {
+          "type": "package",
+          "name": "Linux-ccache"
+        }
+      ]
+    },
+    {
+      "name": "Linux-CI",
+      "displayName": "Linux workflow using Qt6 and ccache for CI",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "Linux-ccache"
+        },
+        {
+          "type": "build",
+          "name": "Linux-ccache"
+        },
+        {
+          "type": "package",
+          "name": "Linux-ccache"
+        }
+      ]
+    }
+  ]
+}
