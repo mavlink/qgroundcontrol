@@ -100,7 +100,7 @@ void VehicleFactGroup::handleMessage(Vehicle* vehicle, mavlink_message_t& messag
     case MAVLINK_MSG_ID_RAW_IMU:
         _handleRawImuTemp(message);
         break;
-#ifndef NO_ARDUPILOT_DIALECT
+#ifndef QGC_NO_ARDUPILOT_DIALECT
     case MAVLINK_MSG_ID_RANGEFINDER:
         _handleRangefinder(message);
         break;
@@ -229,7 +229,7 @@ void VehicleFactGroup::_handleRawImuTemp(const mavlink_message_t &message)
     _imuTempFact.setRawValue(imuRaw.temperature == 0 ? 0 : imuRaw.temperature * 0.01);
 }
 
-#ifndef NO_ARDUPILOT_DIALECT
+#ifndef QGC_NO_ARDUPILOT_DIALECT
 void VehicleFactGroup::_handleRangefinder(const mavlink_message_t &message)
 {
 

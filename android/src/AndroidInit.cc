@@ -1,5 +1,5 @@
 #include "AndroidInterface.h"
-#ifndef NO_SERIAL_LINK
+#ifndef QGC_NO_SERIAL_LINK
     #include "AndroidSerial.h"
 #endif
 #include "JoystickAndroid.h"
@@ -104,7 +104,7 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved)
 
     AndroidInterface::setNativeMethods();
 
-    #ifndef NO_SERIAL_LINK
+    #ifndef QGC_NO_SERIAL_LINK
         AndroidSerial::setNativeMethods();
     #endif
 

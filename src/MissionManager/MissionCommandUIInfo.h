@@ -16,7 +16,7 @@
 
 class MissionCommandTree;
 class MissionCommandUIInfo;
-#ifdef UNITTEST_BUILD
+#ifdef QGC_UNITTEST_BUILD
 class MissionCommandTreeTest;
 #endif
 
@@ -212,7 +212,7 @@ private:
     static constexpr const char* _advancedCategory             = "Advanced";
 
     friend class MissionCommandTree;    
-#ifdef UNITTEST_BUILD
+#ifdef QGC_UNITTEST_BUILD
     friend class MissionCommandTreeTest;
 #endif
 };

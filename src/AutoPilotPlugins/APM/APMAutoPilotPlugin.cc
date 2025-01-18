@@ -33,7 +33,7 @@
 #include "QGCApplication.h"
 #include "ParameterManager.h"
 
-// #if !defined(NO_SERIAL_LINK) && !defined(Q_OS_ANDROID)
+// #if !defined(QGC_NO_SERIAL_LINK) && !defined(Q_OS_ANDROID)
 // #include <QSerialPortInfo>
 // #endif
 
@@ -56,7 +56,7 @@ APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     , _heliComponent            (nullptr)
     , _apmRemoteSupportComponent(nullptr)
 {
-#if !defined(NO_SERIAL_LINK) && !defined(Q_OS_ANDROID)
+#if !defined(QGC_NO_SERIAL_LINK) && !defined(Q_OS_ANDROID)
     connect(vehicle->parameterManager(), &ParameterManager::parametersReadyChanged, this, &APMAutoPilotPlugin::_checkForBadCubeBlack);
 #endif
 }
@@ -195,7 +195,7 @@ QString APMAutoPilotPlugin::prerequisiteSetup(VehicleComponent* component) const
     return QString();
 }
 
-#if !defined(NO_SERIAL_LINK) && !defined(Q_OS_ANDROID)
+#if !defined(QGC_NO_SERIAL_LINK) && !defined(Q_OS_ANDROID)
 /// The following code is executed when the Vehicle is parameter ready. It checks for the service bulletin against Cube Blacks.
 void APMAutoPilotPlugin::_checkForBadCubeBlack(void)
 {

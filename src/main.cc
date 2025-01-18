@@ -31,7 +31,7 @@
 
 #include "CmdLineOptParser.h"
 
-#ifdef UNITTEST_BUILD
+#ifdef QGC_UNITTEST_BUILD
     #include "UnitTestList.h"
 #endif
 
@@ -199,7 +199,7 @@ int main(int argc, char *argv[])
 
     int exitCode = 0;
 
-#ifdef UNITTEST_BUILD
+#ifdef QGC_UNITTEST_BUILD
     if (runUnitTests) {
         exitCode = runTests(stressUnitTests, unitTestOptions);
     } else
