@@ -447,7 +447,7 @@ bool LandingComplexItem::_scanForItem(QmlObjectListModel* visualItems, bool flyV
         if (item) {
             MissionItem& missionItemChangeSpeed = item->missionItem();
             if (missionItemChangeSpeed.command() == MAV_CMD_DO_CHANGE_SPEED &&
-                missionItemChangeSpeed.param1() == SPEED_TYPE_AIRSPEED &&
+                missionItemChangeSpeed.param1() == static_cast<double>(SPEED_TYPE_AIRSPEED) &&
                 missionItemChangeSpeed.param2() >= -2 &&
                 missionItemChangeSpeed.param3() == -1 &&
                 missionItemChangeSpeed.param4() == 0) {
