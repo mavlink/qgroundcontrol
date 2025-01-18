@@ -17,7 +17,7 @@
 
 #include "LinkConfiguration.h"
 #include "LinkInterface.h"
-#ifndef NO_SERIAL_LINK
+#ifndef QGC_NO_SERIAL_LINK
     #include "QGCSerialPortInfo.h"
 #endif
 
@@ -164,7 +164,7 @@ private:
     static constexpr int _autoconnectConnectDelayMSecs = 1000;
 #endif
 
-#ifndef NO_SERIAL_LINK
+#ifndef QGC_NO_SERIAL_LINK
 private:
     Q_PROPERTY(QStringList serialBaudRates   READ serialBaudRates   CONSTANT)
     Q_PROPERTY(QStringList serialPortStrings READ serialPortStrings NOTIFY commPortStringsChanged)
@@ -195,5 +195,5 @@ private:
     QString _nmeaDeviceName;
     uint32_t _nmeaBaud = 0;
     QSerialPort *_nmeaPort = nullptr;
-#endif // NO_SERIAL_LINK
+#endif // QGC_NO_SERIAL_LINK
 };

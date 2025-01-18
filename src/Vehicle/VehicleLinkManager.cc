@@ -11,7 +11,7 @@
 #include "Vehicle.h"
 #include "LinkManager.h"
 #include "QGCApplication.h"
-#ifndef NO_SERIAL_LINK
+#ifndef QGC_NO_SERIAL_LINK
     #include "SerialLink.h"
 #endif
 #include "QGCLoggingCategory.h"
@@ -240,7 +240,7 @@ void VehicleLinkManager::_linkDisconnected(void)
 
 SharedLinkInterfacePtr VehicleLinkManager::_bestActivePrimaryLink(void)
 {
-#ifndef NO_SERIAL_LINK
+#ifndef QGC_NO_SERIAL_LINK
     // Best choice is a USB connection
     for (const LinkInfo_t& linkInfo: _rgLinkInfo) {
         if (!linkInfo.commLost) {

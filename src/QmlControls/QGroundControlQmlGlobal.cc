@@ -43,7 +43,7 @@
 #include "ToolStripActionList.h"
 #include "VideoManager.h"
 #include "MultiVehicleManager.h"
-#ifndef NO_SERIAL_LINK
+#ifndef QGC_NO_SERIAL_LINK
 #include "GPSManager.h"
 #include "GPSRtk.h"
 #endif
@@ -116,7 +116,7 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject *parent)
     , _settingsManager(SettingsManager::instance())
     , _corePlugin(QGCCorePlugin::instance())
     , _globalPalette(new QGCPalette(this))
-#ifndef NO_SERIAL_LINK
+#ifndef QGC_NO_SERIAL_LINK
     , _gpsRtkFactGroup(GPSManager::instance()->gpsRtk()->gpsRtkFactGroup())
 #endif
 #ifndef QGC_AIRLINK_DISABLED

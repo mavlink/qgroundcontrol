@@ -60,7 +60,7 @@ protected:
     APMRemoteSupportComponent*  _apmRemoteSupportComponent;
     APMFollowComponent *_followComponent = nullptr;
 
-#if !defined(NO_SERIAL_LINK) && !defined(Q_OS_ANDROID)
+#if !defined(QGC_NO_SERIAL_LINK) && !defined(Q_OS_ANDROID)
 private slots:
     void _checkForBadCubeBlack(void);
 #endif

@@ -96,7 +96,7 @@ public:
     static bool isWindows() { return false; }
 #endif
 
-#if defined(NO_SERIAL_LINK)
+#if defined(QGC_NO_SERIAL_LINK)
     static bool isSerialAvailable() { return false; }
 #else
     static bool isSerialAvailable() { return true; }

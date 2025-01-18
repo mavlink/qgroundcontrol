@@ -403,7 +403,7 @@ public:
     /// Trigger camera using MAV_CMD_DO_DIGICAM_CONTROL command
     Q_INVOKABLE void triggerSimpleCamera(void);
 
-#if !defined(NO_ARDUPILOT_DIALECT)
+#if !defined(QGC_NO_ARDUPILOT_DIALECT)
     Q_INVOKABLE void flashBootloader();
 #endif
     /// Set home from flight map coordinate
@@ -966,7 +966,7 @@ private:
     void _handleFenceStatus             (const mavlink_message_t& message);
     void _handleEvent(uint8_t comp_id, std::unique_ptr<events::parser::ParsedEvent> event);
     // ArduPilot dialect messages
-#if !defined(NO_ARDUPILOT_DIALECT)
+#if !defined(QGC_NO_ARDUPILOT_DIALECT)
     void _handleCameraFeedback          (const mavlink_message_t& message);
 #endif
     void _handleCameraImageCaptured     (const mavlink_message_t& message);

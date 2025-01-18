@@ -42,5 +42,5 @@ target_link_libraries(FirmwarePlugin
 target_include_directories(FirmwarePlugin PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 # if(QGC_DISABLE_APM_MAVLINK)
-#     target_compile_definitions(FirmwarePlugin PUBLIC NO_ARDUPILOT_DIALECT)
+#     target_compile_definitions(FirmwarePlugin PUBLIC QGC_NO_ARDUPILOT_DIALECT)
 # endif()

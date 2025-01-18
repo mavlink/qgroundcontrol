@@ -44,7 +44,7 @@ target_include_directories(Comms PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 #===========================================================================#
 
 if(QGC_NO_SERIAL_LINK)
-    target_compile_definitions(Comms PUBLIC NO_SERIAL_LINK)
+    target_compile_definitions(Comms PUBLIC QGC_NO_SERIAL_LINK)
 else()
     target_sources(Comms
         PRIVATE

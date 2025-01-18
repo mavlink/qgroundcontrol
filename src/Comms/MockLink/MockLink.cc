@@ -1178,7 +1178,7 @@ void MockLink::_respondWithAutopilotVersion()
     uint8_t customVersion[8]{};
     uint32_t flightVersion = 0;
 
-#ifndef NO_ARDUPILOT_DIALECT
+#ifndef QGC_NO_ARDUPILOT_DIALECT
     if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
         if (_vehicleType == MAV_TYPE_FIXED_WING) {
             flightVersion |= 9 << (8*2);
@@ -1198,7 +1198,7 @@ void MockLink::_respondWithAutopilotVersion()
         flightVersion |= 4 << (8*2);
         flightVersion |= 1 << (8*1);
         flightVersion |= FIRMWARE_VERSION_TYPE_DEV << (8*0);
-#ifndef NO_ARDUPILOT_DIALECT
+#ifndef QGC_NO_ARDUPILOT_DIALECT
     }
 #endif
     const uint64_t capabilities = MAV_PROTOCOL_CAPABILITY_MAVLINK2 | MAV_PROTOCOL_CAPABILITY_MISSION_FENCE | MAV_PROTOCOL_CAPABILITY_MISSION_RALLY | MAV_PROTOCOL_CAPABILITY_MISSION_INT | (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA ? MAV_PROTOCOL_CAPABILITY_TERRAIN : 0);
@@ -1558,7 +1558,7 @@ void MockLink::_handleLogRequestData(const mavlink_message_t &msg)
     mavlink_log_request_data_t request{};
     mavlink_msg_log_request_data_decode(&msg, &request);
 
-#ifdef UNITTEST_BUILD
+#ifdef QGC_UNITTEST_BUILD
     if (_logDownloadFilename.isEmpty()) {
         _logDownloadFilename = _createRandomFile(_logDownloadFileSize);
     }

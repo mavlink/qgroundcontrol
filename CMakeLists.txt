@@ -253,12 +253,12 @@ qt_policy(
 #######################################################
 
 if(NOT QGC_STABLE_BUILD)
-    add_compile_definitions(DAILY_BUILD)
+    add_compile_definitions(QGC_DAILY_BUILD)
 endif()
 
 cmake_dependent_option(QGC_BUILD_TESTING "Enable testing" ON "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
 if(QGC_BUILD_TESTING)
-    add_compile_definitions(UNITTEST_BUILD) # TODO: QGC_UNITTEST_BUILD
+    add_compile_definitions(QGC_UNITTEST_BUILD)
 else()
     set(BUILD_TESTING OFF CACHE INTERNAL "")
 endif()
@@ -272,7 +272,7 @@ if(QGC_DEBUG_QML)
 endif()
 
 if(QGC_DISABLE_APM_MAVLINK)
-    add_compile_definitions(NO_ARDUPILOT_DIALECT)
+    add_compile_definitions(QGC_NO_ARDUPILOT_DIALECT)
 endif()
 
 if(QGC_VIEWER3D)

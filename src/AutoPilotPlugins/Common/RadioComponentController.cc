@@ -24,7 +24,7 @@
 QGC_LOGGING_CATEGORY(RadioComponentControllerLog, "RadioComponentControllerLog")
 QGC_LOGGING_CATEGORY(RadioComponentControllerVerboseLog, "RadioComponentControllerVerboseLog")
 
-#ifdef UNITTEST_BUILD
+#ifdef QGC_UNITTEST_BUILD
 // Nasty hack to expose controller to unit test code
 RadioComponentController* RadioComponentController::_unitTestController = nullptr;
 #endif
@@ -35,7 +35,7 @@ RadioComponentController::RadioComponentController(void)
     , _chanCount(0)
     , _rcCalState(rcCalStateChannelWait)
 {
-#ifdef UNITTEST_BUILD
+#ifdef QGC_UNITTEST_BUILD
     // Nasty hack to expose controller to unit test code
     _unitTestController = this;
 #endif
