@@ -43,7 +43,7 @@ class SettingsManager : public QObject
     QML_ELEMENT
     QML_UNCREATABLE("")
     Q_MOC_INCLUDE("ADSBVehicleManagerSettings.h")
-#ifndef NO_ARDUPILOT_DIALECT
+#ifndef QGC_NO_ARDUPILOT_DIALECT
     Q_MOC_INCLUDE("APMMavlinkStreamRateSettings.h")
 #endif
     Q_MOC_INCLUDE("AppSettings.h")
@@ -67,7 +67,7 @@ class SettingsManager : public QObject
     Q_MOC_INCLUDE("Viewer3DSettings.h")
 #endif
     Q_PROPERTY(QObject *adsbVehicleManagerSettings      READ adsbVehicleManagerSettings     CONSTANT)
-#ifndef NO_ARDUPILOT_DIALECT
+#ifndef QGC_NO_ARDUPILOT_DIALECT
     Q_PROPERTY(QObject *apmMavlinkStreamRateSettings    READ apmMavlinkStreamRateSettings   CONSTANT)
 #endif
     Q_PROPERTY(QObject *appSettings                     READ appSettings                    CONSTANT)
@@ -100,7 +100,7 @@ public:
     void init();
 
     ADSBVehicleManagerSettings *adsbVehicleManagerSettings() const;
-#ifndef NO_ARDUPILOT_DIALECT
+#ifndef QGC_NO_ARDUPILOT_DIALECT
     APMMavlinkStreamRateSettings *apmMavlinkStreamRateSettings() const;
 #endif
     AppSettings *appSettings() const;
@@ -126,7 +126,7 @@ public:
 
 private:
     ADSBVehicleManagerSettings *_adsbVehicleManagerSettings = nullptr;
-#ifndef NO_ARDUPILOT_DIALECT
+#ifndef QGC_NO_ARDUPILOT_DIALECT
     APMMavlinkStreamRateSettings *_apmMavlinkStreamRateSettings = nullptr;
 #endif
     AppSettings *_appSettings = nullptr;

@@ -34,7 +34,7 @@ void VehicleWindFactGroup::handleMessage(Vehicle* /* vehicle */, mavlink_message
     case MAVLINK_MSG_ID_WIND_COV:
         _handleWindCov(message);
         break;
-#if !defined(NO_ARDUPILOT_DIALECT)
+#if !defined(QGC_NO_ARDUPILOT_DIALECT)
     case MAVLINK_MSG_ID_WIND:
         _handleWind(message);
         break;
@@ -85,7 +85,7 @@ void VehicleWindFactGroup::_handleWindCov(mavlink_message_t& message)
     _setTelemetryAvailable(true);
 }
 
-#if !defined(NO_ARDUPILOT_DIALECT)
+#if !defined(QGC_NO_ARDUPILOT_DIALECT)
 void VehicleWindFactGroup::_handleWind(mavlink_message_t& message)
 {
     mavlink_wind_t wind;

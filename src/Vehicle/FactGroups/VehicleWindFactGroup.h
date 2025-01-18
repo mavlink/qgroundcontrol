@@ -34,7 +34,7 @@ private:
     void _handleHighLatency (mavlink_message_t& message);
     void _handleHighLatency2(mavlink_message_t& message);
     void _handleWindCov     (mavlink_message_t& message);
-#if !defined(NO_ARDUPILOT_DIALECT)
+#if !defined(QGC_NO_ARDUPILOT_DIALECT)
     void _handleWind        (mavlink_message_t& message);
 #endif
 

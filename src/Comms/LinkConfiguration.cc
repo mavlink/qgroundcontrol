@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 #include "LinkConfiguration.h"
-#ifndef NO_SERIAL_LINK
+#ifndef QGC_NO_SERIAL_LINK
 #include "SerialLink.h"
 #endif
 #include "UDPLink.h"
@@ -65,7 +65,7 @@ LinkConfiguration *LinkConfiguration::createSettings(int type, const QString &na
     LinkConfiguration *config = nullptr;
 
     switch (static_cast<LinkType>(type)) {
-#ifndef NO_SERIAL_LINK
+#ifndef QGC_NO_SERIAL_LINK
     case TypeSerial:
         config = new SerialConfiguration(name);
         break;
@@ -107,7 +107,7 @@ LinkConfiguration *LinkConfiguration::duplicateSettings(const LinkConfiguration 
     LinkConfiguration *dupe = nullptr;
 
     switch(source->type()) {
-#ifndef NO_SERIAL_LINK
+#ifndef QGC_NO_SERIAL_LINK
     case TypeSerial:
         dupe = new SerialConfiguration(qobject_cast<const SerialConfiguration*>(source));
         break;

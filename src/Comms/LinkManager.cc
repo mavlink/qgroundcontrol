@@ -25,7 +25,7 @@
 #include "BluetoothLink.h"
 #endif
 
-#ifndef NO_SERIAL_LINK
+#ifndef QGC_NO_SERIAL_LINK
 #include "SerialLink.h"
 #include "GPSManager.h"
 #include "PositionManager.h"
@@ -62,7 +62,7 @@ LinkManager::LinkManager(QObject *parent)
     : QObject(parent)
     , _portListTimer(new QTimer(this))
     , _qmlConfigurations(new QmlObjectListModel(this))
-#ifndef NO_SERIAL_LINK
+#ifndef QGC_NO_SERIAL_LINK
     , _nmeaSocket(new UdpIODevice(this))
 #endif
 {
@@ -91,7 +91,7 @@ void LinkManager::registerQmlTypes()
 
     (void) qRegisterMetaType<QAbstractSocket::SocketError>("QAbstractSocket::SocketError");
     (void) qRegisterMetaType<LinkInterface*>("LinkInterface*");
-#ifndef NO_SERIAL_LINK
+#ifndef QGC_NO_SERIAL_LINK
     (void) qRegisterMetaType<QGCSerialPortInfo>("QGCSerialPortInfo");
 #endif
 }
@@ -125,7 +125,7 @@ bool LinkManager::createConnectedLink(SharedLinkConfigurationPtr &config)
     SharedLinkInterfacePtr link = nullptr;
 
     switch(config->type()) {
-#ifndef NO_SERIAL_LINK
+#ifndef QGC_NO_SERIAL_LINK
     case LinkConfiguration::TypeSerial:
         link = std::make_shared<SerialLink>(config);
         break;
@@ -329,7 +329,7 @@ void LinkManager::loadLinkConfigurationList()
 
             LinkConfiguration* link = nullptr;
             switch(type) {
-#ifndef NO_SERIAL_LINK
+#ifndef QGC_NO_SERIAL_LINK
             case LinkConfiguration::TypeSerial:
                 link = new SerialConfiguration(name);
                 break;
@@ -512,7 +512,7 @@ void LinkManager::_updateAutoConnectLinks()
             _nmeaSocket->bind(QHostAddress::AnyIPv4, _autoConnectSettings->nmeaUdpPort()->rawValue().toUInt());
             QGCPositionManager::instance()->setNmeaSourceDevice(_nmeaSocket);
         }
-#ifndef NO_SERIAL_LINK
+#ifndef QGC_NO_SERIAL_LINK
         if (_nmeaPort) {
             _nmeaPort->close();
             delete _nmeaPort;
@@ -524,7 +524,7 @@ void LinkManager::_updateAutoConnectLinks()
         _nmeaSocket->close();
     }
 
-#ifndef NO_SERIAL_LINK
+#ifndef QGC_NO_SERIAL_LINK
     _addSerialAutoConnectLink();
 #endif
 }
@@ -548,7 +548,7 @@ QStringList LinkManager::linkTypeStrings() const
         return list;
     }
 
-#ifndef NO_SERIAL_LINK
+#ifndef QGC_NO_SERIAL_LINK
     list += tr("Serial");
 #endif
     list += tr("UDP");
@@ -598,7 +598,7 @@ void LinkManager::endCreateConfiguration(LinkConfiguration *config)
 
 LinkConfiguration *LinkManager::createConfiguration(int type, const QString &name)
 {
-#ifndef NO_SERIAL_LINK
+#ifndef QGC_NO_SERIAL_LINK
     if (static_cast<LinkConfiguration::LinkType>(type) == LinkConfiguration::TypeSerial) {
         _updateSerialPorts();
     }
@@ -614,7 +614,7 @@ LinkConfiguration *LinkManager::startConfigurationEditing(LinkConfiguration *con
         return nullptr;
     }
 
-#ifndef NO_SERIAL_LINK
+#ifndef QGC_NO_SERIAL_LINK
     if (config->type() == LinkConfiguration::TypeSerial) {
         _updateSerialPorts();
     }
@@ -753,7 +753,7 @@ void LinkManager::_createDynamicForwardLink(const char *linkName, const QString 
 
 bool LinkManager::isLinkUSBDirect(const LinkInterface *link)
 {
-#ifndef NO_SERIAL_LINK
+#ifndef QGC_NO_SERIAL_LINK
     const SerialLink* const serialLink = qobject_cast<const SerialLink*>(link);
     if (!serialLink) {
         return false;
@@ -780,7 +780,7 @@ void LinkManager::resetMavlinkSigning()
     }
 }
 
-#ifndef NO_SERIAL_LINK // Serial Only Functions
+#ifndef QGC_NO_SERIAL_LINK // Serial Only Functions
 
 void LinkManager::_addSerialAutoConnectLink()
 {
@@ -988,4 +988,4 @@ bool LinkManager::_isSerialPortConnected() const
     return false;
 }
 
-#endif // NO_SERIAL_LINK
+#endif // QGC_NO_SERIAL_LINK

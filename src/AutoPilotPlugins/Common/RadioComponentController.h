@@ -279,7 +279,7 @@ private:
 
     QString _imageHelp;
 
-#ifdef UNITTEST_BUILD
+#ifdef QGC_UNITTEST_BUILD
     // Nasty hack to expose controller to unit test code
     static RadioComponentController*    _unitTestController;
 #endif
