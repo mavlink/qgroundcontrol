@@ -26,5 +26,5 @@ namespace AndroidInterface
     QString getSDCardPath();
     jclass getActivityClass();
 
-    constexpr const char* kJniQGCActivityClassName = "org/mavlink/qgroundcontrol/QGCActivity";
+    constexpr const char *kJniQGCActivityClassName = "org/mavlink/qgroundcontrol/QGCActivity";
 };

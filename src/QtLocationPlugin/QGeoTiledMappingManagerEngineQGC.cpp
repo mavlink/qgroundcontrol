@@ -16,7 +16,9 @@
 #include "QGCMapUrlEngine.h"
 #include "MapProvider.h"
 #include "QGCMapEngineManager.h"
-#include <QGCLoggingCategory.h>
+#include "QGCLoggingCategory.h"
+
+#include <mutex>
 
 #include <QtCore/QDir>
 #include <QtNetwork/QNetworkAccessManager>

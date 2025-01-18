@@ -2,7 +2,6 @@ find_package(Qt6 REQUIRED COMPONENTS Core)
 
 qt_add_library(QtMultimediaReceiver STATIC)
 
-cmake_print_variables(QGC_ENABLE_QT_VIDEOSTREAMING)
 if(NOT QGC_ENABLE_QT_VIDEOSTREAMING)
     return()
 endif()
@@ -40,9 +39,4 @@ target_sources(QtMultimediaReceiver
     PRIVATE
         UVCReceiver.cc
         UVCReceiver.h
-)
-
-target_precompile_headers(QtMultimediaReceiver
-    PRIVATE
-        <QtMultimedia/QMediaDevices>
 )

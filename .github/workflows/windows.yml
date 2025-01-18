@@ -12,9 +12,9 @@ on:
       - '.github/workflows/windows.yml'
       - 'deploy/windows/**'
       - 'src/**'
+      - 'CMakeLists.txt'
 
 concurrency:
-  # cancel jobs on PRs only
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
@@ -62,9 +62,6 @@ jobs:
         with:
           version: ${{ env.GST_VERSION }}
 
-      # - name: Install Gstreamer
-      #   run: choco install --no-progress gstreamer gstreamer-devel --version=${{ env.GST_VERSION }}
-
       - name: Set Up sccache
         uses: mozilla-actions/sccache-action@v0.0.7
 
@@ -75,7 +72,6 @@ jobs:
           max-size: 1G
           variant: sccache
           save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
-          evict-old-files: 'job'
 
       - name: Install Qt for Windows (x64)
         uses: jurplel/install-qt-action@v4
@@ -95,12 +91,11 @@ jobs:
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
-          aqtversion: ==3.1.*
+          aqtversion: ==3.1.19
           host: windows
           target: desktop
           arch: win64_msvc2022_arm64_cross_compiled
           dir: ${{ runner.temp }}
-          extra: --autodesktop
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
           cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 

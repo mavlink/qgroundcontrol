@@ -72,12 +72,6 @@ target_include_directories(QGCLocation
         QMLControl
 )
 
-target_precompile_headers(QGCLocation
-    PRIVATE
-        <QtLocation/QGeoServiceProvider>
-        <QtSql/QSqlDatabase>
-)
-
 set_source_files_properties(QMLControl/OfflineMapEditor.qml PROPERTIES QT_RESOURCE_ALIAS OfflineMapEditor.qml)
 
 # qt_add_qml_module(QGCLocation

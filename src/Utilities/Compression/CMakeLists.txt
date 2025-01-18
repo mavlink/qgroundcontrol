@@ -34,17 +34,19 @@ endif()
 
 if(NOT TARGET ZLIB::ZLIB)
     message(STATUS "Building ZLIB")
-    FetchContent_Declare(zlib
-        GIT_REPOSITORY https://github.com/madler/zlib.git
-        GIT_TAG "v${TARGET_ZLIB_VERSION}"
-        GIT_SHALLOW TRUE
+
+    include(CPM)
+    CPMAddPackage(
+        NAME zlib
+        VERSION ${TARGET_ZLIB_VERSION}
+        GITHUB_REPOSITORY madler/zlib
+        OPTIONS
+            "ZLIB_BUILD_EXAMPLES OFF"
+            "SKIP_INSTALL_FILES ON"
+            "SKIP_INSTALL_LIBRARIES ON"
+            "SKIP_INSTALL_HEADERS ON"
+            "SKIP_INSTALL_ALL ON"
     )
-    set(ZLIB_BUILD_EXAMPLES OFF CACHE INTERNAL "" FORCE)
-    set(SKIP_INSTALL_FILES ON CACHE INTERNAL "" FORCE)
-    set(SKIP_INSTALL_LIBRARIES ON CACHE INTERNAL "" FORCE)
-    set(SKIP_INSTALL_HEADERS ON CACHE INTERNAL "" FORCE)
-    set(SKIP_INSTALL_ALL ON CACHE INTERNAL "" FORCE)
-    FetchContent_MakeAvailable(zlib)
 
     if(TARGET zlibstatic)
         target_link_libraries(Compression PRIVATE zlibstatic)
@@ -54,12 +56,18 @@ endif()
 #===========================================================================#
 
 message(STATUS "Building XZ")
-FetchContent_Declare(xz-embedded
-    GIT_REPOSITORY https://github.com/tukaani-project/xz-embedded.git
-    GIT_TAG v2024-12-30
+
+include(CPM)
+CPMAddPackage(
+    NAME xz-embedded
+    GITHUB_REPOSITORY tukaani-project/xz-embedded
+    GIT_TAG "v2024-12-30"
     GIT_SHALLOW TRUE
+    OPTIONS
+        "BUILD_SHAPELIB_CONTRIB OFF"
+        "BUILD_APPS OFF"
+        "BUILD_TESTING OFF"
 )
-FetchContent_MakeAvailable(xz-embedded)
 
 qt_add_library(xz STATIC
     ${xz-embedded_SOURCE_DIR}/linux/include/linux/xz.h

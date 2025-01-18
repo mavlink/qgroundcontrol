@@ -4,7 +4,6 @@ on:
   workflow_dispatch:
 
 concurrency:
-  # cancel jobs on PRs only
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
@@ -44,7 +43,7 @@ jobs:
       - name: Install Dependencies
         run: |
           brew update
-          brew install cmake ninja ccache
+          brew install ccache
         continue-on-error: true
 
       - name: Install Qt for Android
