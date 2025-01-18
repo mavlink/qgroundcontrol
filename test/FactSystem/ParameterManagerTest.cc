@@ -12,6 +12,7 @@
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
 #include "ParameterManager.h"
+#include "MockLinkFTP.h"
 
 #include <QtTest/QTest>
 #include <QtTest/QSignalSpy>

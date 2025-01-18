@@ -39,7 +39,7 @@ void MockConfiguration::copyFrom(const LinkConfiguration *source)
     Q_ASSERT(source);
     LinkConfiguration::copyFrom(source);
 
-    const MockConfiguration* const mockLinkSource = qobject_cast<const MockConfiguration*>(source);
+    const MockConfiguration *const mockLinkSource = qobject_cast<const MockConfiguration*>(source);
     Q_ASSERT(mockLinkSource);
 
     setFirmwareType(mockLinkSource->firmwareType());

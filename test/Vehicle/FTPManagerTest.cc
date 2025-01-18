@@ -12,6 +12,7 @@
 #include "Vehicle.h"
 #include "MockLink.h"
 #include "FTPManager.h"
+#include "MockLinkFTP.h"
 
 #include <QtCore/QStandardPaths>
 #include <QtTest/QTest>
