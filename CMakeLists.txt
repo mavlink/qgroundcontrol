@@ -25,7 +25,9 @@ endif()
 
 # set(CMAKE_OSX_ARCHITECTURES "arm64")
 # set(CMAKE_OSX_SYSROOT "iphoneos")
-# set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0")
+if(APPLE AND NOT IOS)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0")
+endif()
 
 include(Git)
 
@@ -538,7 +540,10 @@ install(
 
 set(deploy_tool_options_arg "")
 if(MACOS)
-    # set(deploy_tool_options_arg -qmldir=${CMAKE_SOURCE_DIR}/src -verbose=2 -appstore-compliant) # -dmg -hardened-runtime -timestamp
+    if(MACOS_SIGNING_IDENTITY)
+        message(STATUS "Signing MacOS Bundle")
+        set(deploy_tool_options_arg -qmldir=${CMAKE_SOURCE_DIR} -verbose=2 -sign-for-notarization=${MACOS_SIGNING_IDENTITY}) # -dmg
+    endif()
 endif()
 
 qt_generate_deploy_qml_app_script(

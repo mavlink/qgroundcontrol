@@ -14,9 +14,9 @@ on:
       - 'src/**'
       - 'CMakeLists.txt'
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+# concurrency:
+#   group: ${{ github.workflow }}-${{ github.ref }}
+#   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   build:
@@ -89,6 +89,7 @@ jobs:
           cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
       - name: Import Code Signing Certificate
+        if: github.event_name != 'pull_request'
         uses: apple-actions/import-codesign-certs@v3
         with:
           p12-file-base64: ${{ secrets.MACOS_SIGNING_CERTS_P12 }}
@@ -101,6 +102,7 @@ jobs:
         run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
               -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }}
               -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64"
+              -DMACOS_SIGNING_IDENTITY=${{ secrets.MACOS_SIGNING_IDENTITY }}
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
 
       - name: Build
