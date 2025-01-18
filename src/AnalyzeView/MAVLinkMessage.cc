@@ -12,6 +12,8 @@
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
 
+#include <QtCore/QTimeZone>
+
 QGC_LOGGING_CATEGORY(MAVLinkMessageLog, "qgc.analyzeview.mavlinkmessage")
 
 QGCMAVLinkMessage::QGCMAVLinkMessage(const mavlink_message_t &message, QObject *parent)
@@ -232,7 +234,7 @@ void QGCMAVLinkMessage::_updateFields()
                 uint32_t n;
                 (void) memcpy(&n, msg + offset, sizeof(uint32_t));
                 if (_message.msgid == MAVLINK_MSG_ID_SYSTEM_TIME) {
-                    const QDateTime d = QDateTime::fromMSecsSinceEpoch(static_cast<qint64>(n), Qt::UTC,0);
+                    const QDateTime d = QDateTime::fromMSecsSinceEpoch(static_cast<qint64>(n), QTimeZone::utc());
                     field->updateValue(d.toString("HH:mm:ss"), static_cast<qreal>(n));
                 } else {
                     field->updateValue(QString::number(n), static_cast<qreal>(n));
@@ -305,7 +307,7 @@ void QGCMAVLinkMessage::_updateFields()
                 uint64_t n;
                 (void) memcpy(&n, msg + offset, sizeof(uint64_t));
                 if(_message.msgid == MAVLINK_MSG_ID_SYSTEM_TIME) {
-                    const QDateTime d = QDateTime::fromMSecsSinceEpoch(n / 1000, Qt::UTC, 0);
+                    const QDateTime d = QDateTime::fromMSecsSinceEpoch(n / 1000, QTimeZone::utc());
                     field->updateValue(d.toString("yyyy MM dd HH:mm:ss"), static_cast<qreal>(n));
                 } else {
                     field->updateValue(QString::number(n), static_cast<qreal>(n));
