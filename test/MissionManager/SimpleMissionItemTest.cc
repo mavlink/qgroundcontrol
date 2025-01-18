@@ -304,7 +304,7 @@ void SimpleMissionItemTest::_testSignals(void)
     _spyVisualItem->clearAllSignals();
 
     _simpleItem->setAltitudeMode(_simpleItem->altitudeMode() == QGroundControlQmlGlobal::AltitudeModeRelative ? QGroundControlQmlGlobal::AltitudeModeAbsolute : QGroundControlQmlGlobal::AltitudeModeRelative);
-    QVERIFY(_spySimpleItem->checkOnlySignalByMask(dirtyChangedMask | friendlyEditAllowedChangedMask | altitudeModeChangedMask));
+    QVERIFY(_spySimpleItem->checkOnlySignalByMask(dirtyChangedMask | static_cast<int>(friendlyEditAllowedChangedMask | altitudeModeChangedMask)));
     _spySimpleItem->clearAllSignals();
     _spyVisualItem->clearAllSignals();
 
