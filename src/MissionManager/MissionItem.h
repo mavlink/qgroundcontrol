@@ -22,7 +22,7 @@
 class SurveyComplexItem;
 class SimpleMissionItem;
 class MissionController;
-#ifdef UNITTEST_BUILD
+#ifdef QGC_UNITTEST_BUILD
     class MissionItemTest;
 #endif
 
@@ -147,7 +147,7 @@ private:
     friend class SurveyComplexItem;
     friend class SimpleMissionItem;
     friend class MissionController;
-#ifdef UNITTEST_BUILD
+#ifdef QGC_UNITTEST_BUILD
     friend class MissionItemTest;
 #endif
 };

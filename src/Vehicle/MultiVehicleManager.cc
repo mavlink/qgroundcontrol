@@ -103,7 +103,7 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
         return;
     }
 
-#ifndef NO_ARDUPILOT_DIALECT
+#ifndef QGC_NO_ARDUPILOT_DIALECT
     // When you flash a new ArduCopter it does not set a FRAME_CLASS for some reason. This is the only ArduPilot variant which
     // works this way. Because of this the vehicle type is not known at first connection. In order to make QGC work reasonably
     // we assume ArduCopter for this case.

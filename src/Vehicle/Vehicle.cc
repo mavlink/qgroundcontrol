@@ -608,7 +608,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         }
     }
         break;
-#ifdef DAILY_BUILD // Disable use of development/WIP MAVLink messages for release builds
+#ifdef QGC_DAILY_BUILD // Disable use of development/WIP MAVLink messages for release builds
         case MAVLINK_MSG_ID_AVAILABLE_MODES_MONITOR:
     {
         // Avoid duplicate requests during initial connection setup
@@ -622,10 +622,10 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_CURRENT_MODE:
         _handleCurrentMode(message);
         break;
-#endif // DAILY_BUILD
+#endif // QGC_DAILY_BUILD
 
         // Following are ArduPilot dialect messages
-#if !defined(NO_ARDUPILOT_DIALECT)
+#if !defined(QGC_NO_ARDUPILOT_DIALECT)
     case MAVLINK_MSG_ID_CAMERA_FEEDBACK:
         _handleCameraFeedback(message);
         break;
@@ -656,7 +656,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     emit mavlinkMessageReceived(message);
 }
 
-#if !defined(NO_ARDUPILOT_DIALECT)
+#if !defined(QGC_NO_ARDUPILOT_DIALECT)
 void Vehicle::_handleCameraFeedback(const mavlink_message_t& message)
 {
     mavlink_camera_feedback_t feedback;
@@ -2771,7 +2771,7 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
         emit sensorsParametersResetAck(result);
     }
 
-#if !defined(NO_ARDUPILOT_DIALECT)
+#if !defined(QGC_NO_ARDUPILOT_DIALECT)
     if (ack.command == MAV_CMD_FLASH_BOOTLOADER && ack.result == MAV_RESULT_ACCEPTED) {
         qgcApp()->showAppMessage(tr("Bootloader flash succeeded"));
     }
@@ -3634,7 +3634,7 @@ void Vehicle::_writeCsvLine()
     stream << allFactValues.join(",") << "\n";
 }
 
-#if !defined(NO_ARDUPILOT_DIALECT)
+#if !defined(QGC_NO_ARDUPILOT_DIALECT)
 void Vehicle::flashBootloader()
 {
     sendMavCommand(defaultComponentId(),
