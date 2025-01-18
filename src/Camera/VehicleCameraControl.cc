@@ -780,12 +780,12 @@ VehicleCameraControl::_loadCameraDefinitionFile(QByteArray& bytes)
     if(!_handleLocalization(bytes)) {
         return false;
     }
-    int errorLine;
-    QString errorMsg;
+
     QDomDocument doc;
-    if(!doc.setContent(bytes, false, &errorMsg, &errorLine)) {
-        qCCritical(CameraControlLog) << "Unable to parse camera definition file on line:" << errorLine;
-        qCCritical(CameraControlLog) << errorMsg;
+    const QDomDocument::ParseResult result = doc.setContent(bytes, QDomDocument::ParseOption::Default);
+    if (!result) {
+        qCCritical(CameraControlLog) << "Unable to parse camera definition file on line:" << result.errorLine;
+        qCCritical(CameraControlLog) << result.errorMessage;
         return false;
     }
     //-- Load camera constants
@@ -1059,13 +1059,12 @@ VehicleCameraControl::_loadSettings(const QDomNodeList nodeList)
 //-----------------------------------------------------------------------------
 bool
 VehicleCameraControl::_handleLocalization(QByteArray& bytes)
-{
-    QString errorMsg;
-    int errorLine;
+{    
     QDomDocument doc;
-    if(!doc.setContent(bytes, false, &errorMsg, &errorLine)) {
-        qCritical() << "Unable to parse camera definition file on line:" << errorLine;
-        qCritical() << errorMsg;
+    const QDomDocument::ParseResult result = doc.setContent(bytes, QDomDocument::ParseOption::Default);
+    if (!result) {
+        qCritical() << "Unable to parse camera definition file on line:" << result.errorLine;
+        qCritical() << result.errorMessage;
         return false;
     }
     //-- Find out where we are
@@ -1657,34 +1656,32 @@ VehicleCameraControl::handleTrackingImageStatus(const mavlink_camera_tracking_im
 void
 VehicleCameraControl::setCurrentStream(int stream)
 {
-    if(stream != _currentStream && stream >= 0 && stream < _streamLabels.count()) {
-        if(_currentStream != stream) {
-            QGCVideoStreamInfo* pInfo = currentStreamInstance();
-            if(pInfo) {
-                qCDebug(CameraControlLog) << "Stopping stream:" << pInfo->uri();
-                //-- Stop current stream
-                _vehicle->sendMavCommand(
-                    _compID,                                // Target component
-                    MAV_CMD_VIDEO_STOP_STREAMING,           // Command id
-                    false,                                  // ShowError
-                    pInfo->streamID());                     // Stream ID
-            }
-            _currentStream = stream;
-            pInfo = currentStreamInstance();
-            if(pInfo) {
-                //-- Start new stream
-                qCDebug(CameraControlLog) << "Starting stream:" << pInfo->uri();
-                _vehicle->sendMavCommand(
-                    _compID,                                // Target component
-                    MAV_CMD_VIDEO_START_STREAMING,          // Command id
-                    false,                                  // ShowError
-                    pInfo->streamID());                     // Stream ID
-                //-- Update stream status
-                _requestStreamStatus(static_cast<uint8_t>(pInfo->streamID()));
-            }
-            emit currentStreamChanged();
-            emit _vehicle->cameraManager()->streamChanged();
+    if (stream != _currentStream && stream >= 0 && stream < _streamLabels.count()) {
+        QGCVideoStreamInfo* pInfo = currentStreamInstance();
+        if(pInfo) {
+            qCDebug(CameraControlLog) << "Stopping stream:" << pInfo->uri();
+            //-- Stop current stream
+            _vehicle->sendMavCommand(
+                _compID,                                // Target component
+                MAV_CMD_VIDEO_STOP_STREAMING,           // Command id
+                false,                                  // ShowError
+                pInfo->streamID());                     // Stream ID
         }
+        _currentStream = stream;
+        pInfo = currentStreamInstance();
+        if(pInfo) {
+            //-- Start new stream
+            qCDebug(CameraControlLog) << "Starting stream:" << pInfo->uri();
+            _vehicle->sendMavCommand(
+                _compID,                                // Target component
+                MAV_CMD_VIDEO_START_STREAMING,          // Command id
+                false,                                  // ShowError
+                pInfo->streamID());                     // Stream ID
+            //-- Update stream status
+            _requestStreamStatus(static_cast<uint8_t>(pInfo->streamID()));
+        }
+        emit currentStreamChanged();
+        emit _vehicle->cameraManager()->streamChanged();
     }
 }
 
@@ -2056,7 +2053,8 @@ VehicleCameraControl::_handleDefinitionFile(const QString &url)
     }
     QByteArray bytes = xmlFile.readAll();
     QDomDocument doc;
-    if(!doc.setContent(bytes, false)) {
+    const QDomDocument::ParseResult result = doc.setContent(bytes, QDomDocument::ParseOption::Default);
+    if (!result) {
         qWarning() << "Could not parse cached camera definition file:" << _cacheFile;
         _httpRequest(url);
         return;

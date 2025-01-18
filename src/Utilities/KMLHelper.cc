@@ -28,10 +28,9 @@ QDomDocument KMLHelper::_loadFile(const QString& kmlFile, QString& errorString)
     }
 
     QDomDocument doc;
-    QString errorMessage;
-    int errorLine;
-    if (!doc.setContent(&file, &errorMessage, &errorLine)) {
-        errorString = QString(_errorPrefix).arg(tr("Unable to parse KML file: %1 error: %2 line: %3").arg(kmlFile).arg(errorMessage).arg(errorLine));
+    const QDomDocument::ParseResult result = doc.setContent(&file, QDomDocument::ParseOption::Default);
+    if (!result) {
+        errorString = QString(_errorPrefix).arg(tr("Unable to parse KML file: %1 error: %2 line: %3").arg(kmlFile).arg(result.errorMessage).arg(result.errorLine));
         return QDomDocument();
     }
 
