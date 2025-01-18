@@ -9,15 +9,15 @@ on:
       - 'v*'
   pull_request:
     paths:
-      - 'src/**'
+      - '.github/workflows/docker-linux.yml'
       - 'deploy/docker/**'
       - 'deploy/linux/**'
+      - 'src/**'
       - 'CMakeLists.txt'
 
-concurrency:
-  # cancel jobs on PRs only
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+# concurrency:
+#   group: ${{ github.workflow }}-${{ github.ref }}
+#   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   build:
