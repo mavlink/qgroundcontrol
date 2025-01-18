@@ -12,9 +12,9 @@ on:
       - '.github/workflows/android-windows.yml'
       - 'deploy/android/**'
       - 'src/**'
+      - 'CMakeLists.txt'
 
 concurrency:
-  # cancel jobs on PRs only
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
@@ -32,6 +32,7 @@ jobs:
 
     env:
       ARTIFACT: QGroundControl.apk
+      PACKAGE: QGroundControl
       QT_VERSION: 6.8.1
       GST_VERSION: 1.22.12
       QT_ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/deploy/android/android_release.keystore
@@ -50,7 +51,9 @@ jobs:
 
       - uses: seanmiddleditch/gha-setup-ninja@v5
       - uses: lukka/get-cmake@latest
-      - uses: mozilla-actions/sccache-action@v0.0.7
+
+      - name: Update ccache
+        run: choco install ccache
 
       - name: Install Qt for Android
         uses: ./.github/actions/qt-android
@@ -85,5 +88,5 @@ jobs:
       - name: Save APK
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.ARTIFACT }}
+          name: ${{ env.PACKAGE }}
           path: ${{ runner.temp }}/shadow_build_dir/android-build/*.apk

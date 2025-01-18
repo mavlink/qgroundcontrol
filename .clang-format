@@ -1,0 +1,17 @@
+---
+BasedOnStyle: Google
+AccessModifierOffset: -4
+AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortLambdasOnASingleLine: Inline
+BinPackArguments: false
+BinPackParameters: false
+ColumnLimit: 120
+IncludeBlocks: Preserve
+IndentWidth: 4
+Language: Cpp
+PackConstructorInitializers: Never
+PenaltyBreakAssignment: 80
+SortIncludes: true
+SpacesBeforeTrailingComments: 1
+Standard: c++17

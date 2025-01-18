@@ -1,12 +1,4 @@
-find_package(Qt6
-    REQUIRED
-    COMPONENTS
-        Core
-        Core5Compat
-        QuickControls2
-        QuickWidgets
-        Widgets
-)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Network Qml QuickControls2 Widgets)
 
 qt_add_library(QGC STATIC
     CmdLineOptParser.cc
@@ -53,10 +45,12 @@ add_subdirectory(Viewer3D)
 #######################################################
 target_link_libraries(QGC
     PRIVATE
+        Qt6::CorePrivate
+        Qt6::Gui
+        Qt6::Network
+        Qt6::Qml
         Qt6::Quick
         Qt6::QuickControls2
-        Qt6::QuickWidgets
-        Qt6::Core5Compat
         API
         AnalyzeView
         Audio
@@ -89,45 +83,31 @@ target_link_libraries(QGC
         VideoManager
     PUBLIC
         Qt6::Core
-        Qt6::CorePrivate
         Qt6::Widgets
 )
 
 target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+target_precompile_headers(QGC
+    PUBLIC
+        <QtCore/QObject>
+        <QtCore/QString>
+)
 
 if(ANDROID)
     target_sources(QGC
         PRIVATE
             ${CMAKE_SOURCE_DIR}/android/src/AndroidInterface.cc
             ${CMAKE_SOURCE_DIR}/android/src/AndroidInterface.h
-        PUBLIC
-            ${CMAKE_SOURCE_DIR}/android/src/AndroidInit.cpp
     )
 
     target_link_libraries(QGC
         PRIVATE
             Qt6::CorePrivate
+            Utilities
         PUBLIC
             Qt6::Core
-            Comms
-            Joystick
     )
 
     target_include_directories(QGC PUBLIC ${CMAKE_SOURCE_DIR}/android/src)
-    target_precompile_headers(QGC
-        PRIVATE
-            <QtCore/QJniEnvironment>
-    )
-else()
-    target_sources(QGC
-        PRIVATE
-            RunGuard.cc
-            RunGuard.h
-    )
 endif()
-
-target_precompile_headers(QGC
-    PRIVATE
-        ${CMAKE_SOURCE_DIR}/src/pch.h
-        <QtWidgets/QApplication>
-)

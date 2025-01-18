@@ -41,7 +41,7 @@ target_link_libraries(Comms
 
 target_include_directories(Comms PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-############# Serial
+#===========================================================================#
 
 if(QGC_NO_SERIAL_LINK)
     target_compile_definitions(Comms PUBLIC NO_SERIAL_LINK)
@@ -55,11 +55,13 @@ else()
             UdpIODevice.cc
             UdpIODevice.h
     )
+
     target_link_libraries(Comms
         PRIVATE
             GPS
             PositionManager
     )
+
     if(ANDROID)
         add_subdirectory(${CMAKE_SOURCE_DIR}/android/libs/qtandroidserialport qtandroidserialport.build)
         target_sources(qtandroidserialport
@@ -72,14 +74,10 @@ else()
     else()
         find_package(Qt6 REQUIRED COMPONENTS SerialPort)
         target_link_libraries(Comms PUBLIC Qt6::SerialPort)
-        target_precompile_headers(Comms
-            PRIVATE
-                <QtSerialPort/QSerialPort>
-        )
     endif()
 endif()
 
-############# Bluetooth
+#===========================================================================#
 
 if(QGC_ENABLE_BLUETOOTH)
     find_package(Qt6 REQUIRED COMPONENTS Bluetooth)
@@ -90,28 +88,29 @@ if(QGC_ENABLE_BLUETOOTH)
             BluetoothLink.h
     )
     target_compile_definitions(Comms PUBLIC QGC_ENABLE_BLUETOOTH)
-    target_precompile_headers(Comms
-        PRIVATE
-            <QtBluetooth/QBluetoothSocket>
-    )
 endif()
 
-############# ZEROConf
+#===========================================================================#
 
 if(QGC_ZEROCONF_ENABLED)
     message(STATUS "Building QMDNSEngine")
-    FetchContent_Declare(qmdnsengine
-        GIT_REPOSITORY https://github.com/nitroshare/qmdnsengine.git
+
+    include(CPM)
+    CPMAddPackage(
+        NAME qmdnsengine
+        GITHUB_REPOSITORY nitroshare/qmdnsengine
         GIT_TAG master
         GIT_SHALLOW TRUE
+        OPTIONS
+            "BUILD_DOC OFF"
+            "BUILD_EXAMPLES OFF"
+            "BUILD_TESTS OFF"
     )
-    set(BUILD_DOC OFF CACHE INTERNAL "")
-    set(BUILD_EXAMPLES OFF CACHE INTERNAL "")
-    set(BUILD_TESTS OFF CACHE INTERNAL "")
-    FetchContent_MakeAvailable(qmdnsengine)
 
-    target_link_libraries(Comms PUBLIC qmdnsengine)
-    target_compile_definitions(Comms PUBLIC QGC_ZEROCONF_ENABLED)
+    if(TARGET qmdnsengine)
+        target_link_libraries(Comms PUBLIC qmdnsengine)
+        target_compile_definitions(Comms PUBLIC QGC_ZEROCONF_ENABLED)
+    endif()
 endif()
 
 # target_compile_definitions(Comms PUBLIC QABSTRACTSOCKET_DEBUG)

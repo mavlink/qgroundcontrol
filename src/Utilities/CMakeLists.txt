@@ -74,19 +74,18 @@ if(NOT QGC_BUILD_DEPENDENCIES)
 endif()
 
 message(STATUS "Building Shapelib")
-FetchContent_Declare(shapelib
-    GIT_REPOSITORY https://github.com/OSGeo/shapelib.git
-    GIT_TAG "v${TARGET_SHAPELIB_VERSION}"
-    GIT_SHALLOW TRUE
+
+include(CPM)
+CPMAddPackage(
+    NAME shapelib
+    VERSION ${TARGET_SHAPELIB_VERSION}
+    GITHUB_REPOSITORY OSGeo/shapelib
+    OPTIONS
+        "BUILD_SHAPELIB_CONTRIB OFF"
+        "BUILD_APPS OFF"
+        "BUILD_TESTING OFF"
 )
-set(BUILD_SHAPELIB_CONTRIB OFF CACHE INTERNAL "" FORCE)
-set(BUILD_APPS OFF CACHE INTERNAL "" FORCE)
-set(saved_BUILD_TESTING ${BUILD_TESTING})
-set(BUILD_TESTING OFF CACHE INTERNAL "Disable Testing for Shapelib" FORCE)
-FetchContent_MakeAvailable(shapelib)
-set(BUILD_TESTING ${saved_BUILD_TESTING} CACHE INTERNAL "Restore BUILD_TESTING from Shapelib" FORCE)
 
 if(TARGET shp)
     target_link_libraries(Utilities PRIVATE shp)
-    return()
 endif()

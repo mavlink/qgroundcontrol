@@ -3,7 +3,7 @@
     #include "AndroidSerial.h"
 #endif
 #include "JoystickAndroid.h"
-#include <QGCLoggingCategory.h>
+#include "QGCLoggingCategory.h"
 
 #include <QtCore/QJniEnvironment>
 #include <QtCore/QJniObject>
