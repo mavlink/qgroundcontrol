@@ -11,6 +11,7 @@
 
 #include "VisualMissionItemTest.h"
 #include "QGroundControlQmlGlobal.h"
+#include "QGCMAVLink.h"
 
 class SimpleMissionItem;
 
@@ -84,6 +85,6 @@ private:
     bool _classMatch            (QGCMAVLink::VehicleClass_t vehicleClass, QGCMAVLink::VehicleClass_t testClass);
 
     SimpleMissionItem*  _simpleItem;
-    MultiSignalSpy*     _spySimpleItem;
-    MultiSignalSpy*     _spyVisualItem;
+    MultiSignalSpy*     _spySimpleItem = nullptr;
+    MultiSignalSpy*     _spyVisualItem = nullptr;
 };
