@@ -2,7 +2,6 @@
     <qresource prefix="/qml">
         <file alias="MockLink.qml">UI/preferences/MockLink.qml</file>
         <file alias="MockLinkSettings.qml">UI/preferences/MockLinkSettings.qml</file>
-        <file alias="QGroundControl/Controls/MockLinkOptionsDlg.qml">Comms/MockLinkOptionsDlg.qml</file>
         <file alias="QGroundControl/Controls/QGCControlDebug.qml">QmlControls/QGCControlDebug.qml</file>
         <file alias="DebugWindow.qml">UI/preferences/DebugWindow.qml</file>
         <file alias="QmlTest.qml">QmlControls/QmlTest.qml</file>
@@ -18,7 +17,6 @@
         <file alias="TranslationTest_de_DE.ts">Vehicle/Components/TranslationTest_de_DE.ts</file>
         <file alias="FactSystemTest.qml">FactSystem/FactSystemTest.qml</file>
         <file alias="MissionPlanner.waypoints">MissionManager/MissionPlanner.waypoints</file>
-        <file alias="MockLinkOptionsDlg.qml">Comms/MockLinkOptionsDlg.qml</file>
         <file alias="OldFileFormat.mission">MissionManager/OldFileFormat.mission</file>
         <file alias="UT-MavCmdInfoCommon.json">MissionManager/UT-MavCmdInfoCommon.json</file>
         <file alias="UT-MavCmdInfoFixedWing.json">MissionManager/UT-MavCmdInfoFixedWing.json</file>
