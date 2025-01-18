@@ -93,7 +93,12 @@ android {
         targetSdkVersion qtTargetSdkVersion
         ndk.abiFilters = qtTargetAbiList.split(",")
 
-        // println "applicationId: ${applicationId}"
+        namespace1 = androidPackageName
+        namespace2 = "org.mavlink.qgroundcontrol"
+
+        println "applicationId: ${applicationId}"
+        println "namespace1: ${namespace2}"
+        println "namespace1: ${namespace2}"
         println "minSdkVersion: ${minSdkVersion}"
         println "targetSdkVersion: ${targetSdkVersion}"
         println "ndk.abiFilters: ${ndk.abiFilters}"

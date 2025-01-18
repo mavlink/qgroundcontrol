@@ -151,7 +151,12 @@ QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting)
     setApplicationName(applicationName);
     setOrganizationName(QGC_ORG_NAME);
     setOrganizationDomain(QGC_ORG_DOMAIN);
-    setApplicationVersion(QString(QGC_APP_VERSION_STR));
+#ifdef QGC_DAILY_BUILD
+    setApplicationVersion(QGC_APP_TAG);
+#else
+    setApplicationVersion(QGC_APP_VERSION);
+#endif
+
 #ifdef Q_OS_LINUX
     setWindowIcon(QIcon(":/res/qgroundcontrol.ico"));
 #endif

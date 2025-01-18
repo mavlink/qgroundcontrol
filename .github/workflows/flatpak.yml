@@ -1,0 +1,31 @@
+name: flatpak
+on: [workflow_dispatch]
+jobs:
+  flatpak-builder:
+    name: Flatpak
+    runs-on: ubuntu-latest
+    container:
+      image: bilelmoussaoui/flatpak-github-actions:gnome-47
+      options: --privileged
+    strategy:
+      matrix:
+        arch: [x86_64, aarch64]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install deps
+        if: ${{ matrix.arch != 'x86_64' }}
+        run: |
+          dnf -y install docker
+      - name: Set up QEMU
+        if: ${{ matrix.arch != 'x86_64' }}
+        id: qemu
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          bundle: org.mavlink.qgroundcontrol.flatpak
+          manifest-path: ./deploy/flatpak/org.mavlink.qgroundcontrol.yml
+          cache-key: flatpak-builder-${{ github.sha }}
+          arch: ${{ matrix.arch }}

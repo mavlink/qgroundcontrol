@@ -1,4 +1,5 @@
 message(STATUS "Adding Custom Plugin")
+
 find_package(Qt6 REQUIRED COMPONENTS Core)
 
 # Enable custom build
@@ -54,9 +55,9 @@ list(APPEND CUSTOM_RESOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/qgroundcontrol.qrc
     ${CMAKE_CURRENT_SOURCE_DIR}/custom.qrc
 )
-set(QGC_RESOURCES ${CUSTOM_RESOURCES} PARENT_SCOPE)
+set(QGC_RESOURCES ${QGC_RESOURCES} ${CUSTOM_RESOURCES} CACHE STRING "Target Deployable Resources" FORCE)
 
-set(QML_IMPORT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/res" CACHE STRING "Extra qml import paths" PARENT_SCOPE)
+set(QML_IMPORT_PATH ${QML_IMPORT_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/qml ${CMAKE_CURRENT_SOURCE_DIR}/res CACHE STRING "Extra qml import paths" FORCE)
 
 qt_add_library(CustomPlugin STATIC
     src/CustomPlugin.cc
