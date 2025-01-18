@@ -89,7 +89,7 @@ target_link_libraries(QGC
 target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_precompile_headers(QGC
-    PUBLIC
+    PRIVATE
         <QtCore/QObject>
         <QtCore/QString>
 )
