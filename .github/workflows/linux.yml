@@ -12,9 +12,9 @@ on:
       - '.github/workflows/linux.yml'
       - 'deploy/linux/**'
       - 'src/**'
+      - 'CMakeLists.txt'
 
 concurrency:
-  # cancel jobs on PRs only
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
@@ -49,7 +49,9 @@ jobs:
         run: |
           chmod a+x ./tools/setup/install-dependencies-debian.sh
           sudo ./tools/setup/install-dependencies-debian.sh
-          python3 -m pip install --user ninja cmake
+
+      - uses: lukka/get-cmake@latest
+      - uses: seanmiddleditch/gha-setup-ninja@v5
 
       - name: Install Vulkan
         run: |
@@ -86,7 +88,6 @@ jobs:
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
-          aqtversion: ==3.1.*
           host: linux
           target: desktop
           arch: linux_gcc_64
@@ -96,9 +97,6 @@ jobs:
 
       # - name: Build GStreamer
       #   uses: ./.github/actions/gstreamer
-
-      - uses: lukka/get-cmake@latest
-      - uses: seanmiddleditch/gha-setup-ninja@v5
 
       - run: mkdir ${{ runner.temp }}/shadow_build_dir
 

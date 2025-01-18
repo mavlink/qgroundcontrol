@@ -6,7 +6,8 @@ set(QTIFWDIR "${Qt6_ROOT_DIR}/../../Tools/QtInstallerFramework/*")
 
 include(CPackIFW)
 
-set(CPACK_GENERATOR "IFW")
+list(APPEND CPACK_GENERATOR "IFW")
+set(CPACK_BINARY_IFW ON)
 
 # Debug
 set(CPACK_IFW_VERBOSE ON)

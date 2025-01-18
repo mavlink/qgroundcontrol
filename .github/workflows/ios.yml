@@ -4,7 +4,6 @@ on:
   workflow_dispatch:
 
 concurrency:
-  # cancel jobs on PRs only
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
@@ -27,17 +26,6 @@ jobs:
       GST_VERSION: 1.22.12
 
     steps:
-      - name: Recover disk space
-        run: |
-          df -h
-          ls /Applications
-          brew uninstall google-chrome
-          sudo rm -rf /Users/runner/Library/Android
-          sudo rm -rf /Applications/Xcode_14*
-          sudo rm -rf /Applications/Xcode_15*
-          ls /Applications
-          df -h
-
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
@@ -51,14 +39,12 @@ jobs:
           xcode-version: latest-stable
 
       - uses: seanmiddleditch/gha-setup-ninja@v5
+      - uses: lukka/get-cmake@latest
 
       - name: Install Dependencies
         run: |
           brew update
-          brew install cmake ninja ccache
-
-      - uses: seanmiddleditch/gha-setup-ninja@v5
-      - uses: lukka/get-cmake@latest
+          brew install ccache
 
       - name: Set Up Cache
         uses: hendrikmuhs/ccache-action@main
@@ -74,7 +60,6 @@ jobs:
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
-          aqtversion: ==3.1.*
           host: mac
           target: desktop
           arch: clang_64
@@ -86,12 +71,10 @@ jobs:
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
-          aqtversion: ==3.1.*
           host: mac
           target: ios
           arch: ios
           dir: ${{ runner.temp }}
-          extra: --autodesktop
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
           cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 

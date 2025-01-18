@@ -1,6 +1,7 @@
 include(CreateCPackCommon)
 
-set(CPACK_GENERATOR "DEB")
+list(APPEND CPACK_GENERATOR "DEB")
+set(CPACK_BINARY_DEB ON)
 
 set(QGC_INSTALLER_SOURCE "${CMAKE_SOURCE_DIR}/deploy/linux")
 

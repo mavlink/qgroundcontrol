@@ -12,9 +12,9 @@ on:
       - '.github/workflows/macos.yml'
       - 'deploy/macos/**'
       - 'src/**'
+      - 'CMakeLists.txt'
 
 concurrency:
-  # cancel jobs on PRs only
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
@@ -70,6 +70,7 @@ jobs:
       - name: Set Up Cache
         uses: hendrikmuhs/ccache-action@main
         with:
+          create-symlink: true
           key: ${{ runner.os }}-${{ matrix.BuildType }}
           max-size: 1G
           save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
@@ -80,7 +81,6 @@ jobs:
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
-          aqtversion: ==3.1.*
           host: mac
           target: desktop
           arch: clang_64

@@ -9,52 +9,38 @@
 
 #pragma once
 
-#include <QtWidgets/QApplication>
-#include <QtCore/QTimer>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QMap>
 #include <QtCore/QSet>
-#include <QtCore/QEvent>
-#include <QtCore/QMetaMethod>
-#include <QtCore/QMetaObject>
+#include <QtCore/QTimer>
 #include <QtCore/QTranslator>
 
-// These private headers are require to implement the signal compress support below
-#include <QtCore/private/qthread_p.h>
-#include <QtCore/private/qobject_p.h>
+#include <QtWidgets/QApplication>
 
-// Work around circular header includes
 class QQmlApplicationEngine;
 class QQuickWindow;
 class QGCImageProvider;
 class QGCApplication;
+class QEvent;
+class QPostEventList;
+class QMetaMethod;
+class QMetaObject;
 
 #if defined(qApp)
 #undef qApp
 #endif
-#define qApp (static_cast<QGCApplication *>(QApplication::instance()))
+#define qApp (static_cast<QGCApplication*>(QApplication::instance()))
 
 #if defined(qGuiApp)
 #undef qGuiApp
 #endif
-#define qGuiApp (static_cast<QGCApplication *>(QGuiApplication::instance()))
+#define qGuiApp (static_cast<QGCApplication*>(QGuiApplication::instance()))
 
 #define qgcApp() qApp
 
-/**
- * @brief The main application and management class.
- *
- * This class is started by the main method and provides
- * the central management unit of the groundstation application.
- *
- * Needs QApplication base to support QtCharts module. This way
- * we avoid application crashing on 5.12 when using the module.
- *
- * Note: `lastWindowClosed` will be sent by MessageBox popups and other
- * dialogs, that are spawned in QML, when they are closed
-**/
-
-// TODO: Use QtGraphs to convert to QGuiApplication
+/// The main application and management class.
+/// Needs QApplication base to support QtCharts module.
+/// TODO: Use QtGraphs to convert to QGuiApplication
 class QGCApplication : public QApplication
 {
     Q_OBJECT
@@ -65,16 +51,16 @@ public:
     QGCApplication(int &argc, char *argv[], bool unitTesting);
     ~QGCApplication();
 
-    /// @brief Sets the persistent flag to delete all settings the next time QGroundControl is started.
+    /// Sets the persistent flag to delete all settings the next time QGroundControl is started.
     void deleteAllSettingsNextBoot();
 
-    /// @brief Clears the persistent flag to delete all settings the next time QGroundControl is started.
+    /// Clears the persistent flag to delete all settings the next time QGroundControl is started.
     void clearDeleteAllSettingsNextBoot();
 
-    /// @brief Returns true if unit tests are being run
+    /// Returns true if unit tests are being run
     bool runningUnitTests() const { return _runningUnitTests; }
 
-    /// @brief Returns true if Qt debug output should be logged to a file
+    /// Returns true if Qt debug output should be logged to a file
     bool logOutput() const { return _logOutput; }
 
     /// Used to report a missing Parameter. Warning will be displayed to user. Method may be called
@@ -102,11 +88,11 @@ public:
     static QString cachedAirframeMetaDataFile();
 
 public:
-    /// @brief Perform initialize which is common to both normal application running and unit tests.
+    /// Perform initialize which is common to both normal application running and unit tests.
     void init();
     void shutdown();
 
-    // Although public, these methods are internal and should only be called by UnitTest code
+    /// Although public, these methods are internal and should only be called by UnitTest code
     QQmlApplicationEngine *qmlAppEngine() const { return _qmlAppEngine; }
 
 signals:
@@ -140,14 +126,13 @@ private slots:
     void _showDelayedAppMessages();
 
 private:
-    /// @brief Initialize the application for normal application boot. Or in other words we are not going to run unit tests.
+    bool compressEvent(QEvent *event, QObject *receiver, QPostEventList *postedEvents) final;
+
+    /// Initialize the application for normal application boot. Or in other words we are not going to run unit tests.
     void _initForNormalAppBoot();
 
     QObject *_rootQmlObject();
     void _checkForNewVersion();
-
-    // Overrides from QApplication
-    bool compressEvent(QEvent *event, QObject *receiver, QPostEventList *postedEvents) final;
 
     bool _runningUnitTests = false;                                         ///< true: running unit tests, false: normal app
     static constexpr int _missingParamsDelayedDisplayTimerTimeout = 1000;   ///< Timeout to wait for next missing fact to come in before display
@@ -171,12 +156,10 @@ private:
 
     QList<QPair<QString /* title */, QString /* message */>> _delayedAppMessages;
 
-    class CompressedSignalList {
-        Q_DISABLE_COPY(CompressedSignalList)
-
+    class CompressedSignalList
+    {
     public:
         CompressedSignalList() {}
-
         void add(const QMetaMethod &method);
         void remove(const QMetaMethod &method);
         bool contains(const QMetaObject *metaObject, int signalIndex);
@@ -185,7 +168,9 @@ private:
         /// Returns a signal index that is can be compared to QMetaCallEvent.signalId
         static int _signalIndex(const QMetaMethod &method);
 
-        QMap<const QMetaObject*, QSet<int> > _signalMap;
+        QMap<const QMetaObject*, QSet<int>> _signalMap;
+
+        Q_DISABLE_COPY(CompressedSignalList)
     };
 
     CompressedSignalList _compressedSignals;
