@@ -20,11 +20,13 @@ FlyViewTopRightPanel            1.0 FlyViewTopRightPanel.qml
 FlyViewVideo                    1.0 FlyViewVideo.qml
 FlyViewWidgetLayer              1.0 FlyViewWidgetLayer.qml
 GripperMenu                     1.0 GripperMenu.qml
-GuidedActionActionList          1.0 GuidedActionActionList.qml
+FlyViewAdditionalActionsButton  1.0 FlyViewAdditionalActionsButton.qml
 GuidedActionConfirm             1.0 GuidedActionConfirm.qml
 GuidedActionGripper             1.0 GuidedActionGripper.qml
 GuidedActionLand                1.0 GuidedActionLand.qml
-GuidedActionList                1.0 GuidedActionList.qml
+FlyViewAdditionalActionsList    1.0 FlyViewAdditionalActionsList.qml
+FlyViewAdditionalActionsPanel   1.0 FlyViewAdditionalActionsPanel.qml
+FlyViewAdditionalCustomActionsList 1.0 FlyViewAdditionalCustomActionsList.qml
 GuidedActionPause               1.0 GuidedActionPause.qml
 GuidedActionRTL                 1.0 GuidedActionRTL.qml
 GuidedActionsController         1.0 GuidedActionsController.qml

@@ -31,7 +31,7 @@ ToolStripActionList {
         GuidedActionLand { },
         GuidedActionRTL { },
         GuidedActionPause { },
-        GuidedActionActionList { },
+        FlyViewAdditionalActionsButton { },
         GuidedToolStripAction {
             text:       _guidedController._customController.customButtonTitle
             iconSource: "/res/gear-white.svg"
