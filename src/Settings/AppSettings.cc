@@ -257,7 +257,7 @@ void AppSettings::_checkSavePathDirectories(void)
         savePathDir.mkdir(videoDirectory);
         savePathDir.mkdir(photoDirectory);
         savePathDir.mkdir(crashDirectory);
-        savePathDir.mkdir(customActionsDirectory);
+        savePathDir.mkdir(mavlinkActionsDirectory);
     }
 }
 
@@ -341,12 +341,12 @@ QString AppSettings::crashSavePath(void)
     return QString();
 }
 
-QString AppSettings::customActionsSavePath(void)
+QString AppSettings::mavlinkActionsSavePath(void)
 {
     QString path = savePath()->rawValue().toString();
     if (!path.isEmpty() && QDir(path).exists()) {
         QDir dir(path);
-        return dir.filePath(customActionsDirectory);
+        return dir.filePath(mavlinkActionsDirectory);
     }
     return QString();
 }

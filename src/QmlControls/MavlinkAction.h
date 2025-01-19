@@ -15,11 +15,11 @@
 #include <QtCore/QObject>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-Q_DECLARE_LOGGING_CATEGORY(CustomActionLog)
+Q_DECLARE_LOGGING_CATEGORY(MavlinkActionLog)
 
 class Vehicle;
 
-class CustomAction: public QObject
+class MavlinkAction: public QObject
 {
     Q_OBJECT
     QML_ELEMENT
@@ -28,8 +28,8 @@ class CustomAction: public QObject
     Q_PROPERTY(QString description READ description CONSTANT)
 
 public:
-    explicit CustomAction(QObject *parent = nullptr);
-    CustomAction(
+    explicit MavlinkAction(QObject *parent = nullptr);
+    MavlinkAction(
         const QString &label,
         const QString &description,
         MAV_CMD mavCmd,
@@ -43,7 +43,7 @@ public:
         float param7,
         QObject *parent = nullptr
     );
-    ~CustomAction();
+    ~MavlinkAction();
 
     Q_INVOKABLE void sendTo(Vehicle *vehicle);
 

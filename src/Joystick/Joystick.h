@@ -19,7 +19,7 @@
 Q_DECLARE_LOGGING_CATEGORY(JoystickLog)
 Q_DECLARE_LOGGING_CATEGORY(JoystickValuesLog)
 
-class CustomActionManager;
+class MavlinkActionManager;
 class QmlObjectListModel;
 class Vehicle;
 
@@ -274,7 +274,7 @@ private:
     int *_rgAxisValues = nullptr;
     Calibration_t *_rgCalibration = nullptr;
     uint8_t *_rgButtonValues = nullptr;
-    CustomActionManager *_customActionManager = nullptr;
+    MavlinkActionManager *_mavlinkActionManager = nullptr;
     QmlObjectListModel *_assignableButtonActions = nullptr;
 
     bool _accumulator = false;
