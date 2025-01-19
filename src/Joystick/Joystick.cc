@@ -9,9 +9,9 @@
 
 
 #include "Joystick.h"
-#include "CustomAction.h"
-#include "CustomActionManager.h"
-#include "CustomMavlinkActionsSettings.h"
+#include "MavlinkAction.h"
+#include "MavlinkActionManager.h"
+#include "MavlinkActionsSettings.h"
 #include "FirmwarePlugin.h"
 #include "GimbalController.h"
 #include "MultiVehicleManager.h"
@@ -58,7 +58,7 @@ Joystick::Joystick(const QString &name, int axisCount, int buttonCount, int hatC
     , _rgAxisValues(new int[static_cast<size_t>(_axisCount)])
     , _rgCalibration(new Calibration_t[static_cast<size_t>(_axisCount)])
     , _rgButtonValues(new uint8_t[static_cast<size_t>(_totalButtonCount)])
-    , _customActionManager(new CustomActionManager(SettingsManager::instance()->customMavlinkActionsSettings()->joystickActionsFile(), this))
+    , _mavlinkActionManager(new MavlinkActionManager(SettingsManager::instance()->mavlinkActionsSettings()->joystickActionsFile(), this))
     , _assignableButtonActions(new QmlObjectListModel(this))
 {
     // qCDebug(JoystickLog) << Q_FUNC_INFO << this;
@@ -1101,10 +1101,10 @@ void Joystick::_executeButtonAction(const QString &action, bool buttonDown)
     } else {
         if (buttonDown && _activeVehicle) {
             emit unknownAction(action);
-            for (int i = 0; i<_customActionManager->actions()->count(); i++) {
-                CustomAction *const customAction = _customActionManager->actions()->value<CustomAction*>(i);
-                if (action == customAction->label()) {
-                    customAction->sendTo(_activeVehicle);
+            for (int i = 0; i<_mavlinkActionManager->actions()->count(); i++) {
+                MavlinkAction *const mavlinkAction = _mavlinkActionManager->actions()->value<MavlinkAction*>(i);
+                if (action == mavlinkAction->label()) {
+                    mavlinkAction->sendTo(_activeVehicle);
                     return;
                 }
             }
@@ -1194,9 +1194,9 @@ void Joystick::_buildActionList(Vehicle *activeVehicle)
         _assignableButtonActions->append(new AssignableButtonAction(action.name, action.canRepeat));
     }
 
-    for (int i = 0; i < _customActionManager->actions()->count(); i++) {
-        const CustomAction *const customAction = _customActionManager->actions()->value<const CustomAction*>(i);
-        _assignableButtonActions->append(new AssignableButtonAction(customAction->label()));
+    for (int i = 0; i < _mavlinkActionManager->actions()->count(); i++) {
+        const MavlinkAction *const mavlinkAction = _mavlinkActionManager->actions()->value<const MavlinkAction*>(i);
+        _assignableButtonActions->append(new AssignableButtonAction(mavlinkAction->label()));
     }
 
     for (int i = 0; i < _assignableButtonActions->count(); i++) {

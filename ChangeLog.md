@@ -10,6 +10,7 @@ Note: This file only contains high level features or important fixes.
 * Added functionality for setting individual MAVLink message rates in the MAVLink Inspector.
 * Enabled support for MAVLink 2 signing.
 * Dynamic battery display that reduces the number of bars based on battery percentage, with configurable states (100%, Config 1, Config 2, Low, Critical) for clearer status indication.
+* Custom Actions changed to Mavlink Actions. The location of the actions json files has changes to the "Mavlink Actions" directory. If you were using the previous "Custom Actions" directory, move you json files to the new location.
 
 
 ## 4.1

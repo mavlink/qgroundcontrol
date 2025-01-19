@@ -27,8 +27,8 @@
 #include "QGCGeoBoundingCube.h"
 #include "QGCMapPolygon.h"
 #include "QGCMapCircle.h"
-#include "CustomAction.h"
-#include "CustomActionManager.h"
+#include "MavlinkAction.h"
+#include "MavlinkActionManager.h"
 #include "EditPositionDialogController.h"
 #include "ParameterEditorController.h"
 #include "QGCFileDialogController.h"
@@ -84,8 +84,8 @@ void QGroundControlQmlGlobal::registerQmlTypes()
     qmlRegisterUncreatableType<QGCMapPolygon>           ("QGroundControl.FlightMap",             1, 0, "QGCMapPolygon",       "Reference only");
     qmlRegisterUncreatableType<QmlObjectListModel>      ("QGroundControl",                       1, 0, "QmlObjectListModel",  "Reference only");
 
-    qmlRegisterType<CustomAction>                       ("QGroundControl.Controllers",           1, 0, "CustomAction");
-    qmlRegisterType<CustomActionManager>                ("QGroundControl.Controllers",           1, 0, "CustomActionManager");
+    qmlRegisterType<MavlinkAction>                       ("QGroundControl.Controllers",           1, 0, "MavlinkAction");
+    qmlRegisterType<MavlinkActionManager>                ("QGroundControl.Controllers",           1, 0, "MavlinkActionManager");
     qmlRegisterType<EditPositionDialogController>       ("QGroundControl.Controllers",           1, 0, "EditPositionDialogController");
     qmlRegisterType<HorizontalFactValueGrid>            ("QGroundControl.Templates",             1, 0, "HorizontalFactValueGrid");
     qmlRegisterType<ParameterEditorController>          ("QGroundControl.Controllers",           1, 0, "ParameterEditorController");

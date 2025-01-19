@@ -7,19 +7,19 @@
  *
  ****************************************************************************/
 
-#include "CustomAction.h"
+#include "MavlinkAction.h"
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(CustomActionLog, "qgc.qmlcontrols.customaction")
+QGC_LOGGING_CATEGORY(MavlinkActionLog, "qgc.qmlcontrols.mavlinkaction")
 
-CustomAction::CustomAction(QObject *parent)
+MavlinkAction::MavlinkAction(QObject *parent)
     : QObject(parent)
 {
-    // qCDebug(CustomActionLog) << Q_FUNC_INFO << this;
+    // qCDebug(MavlinkActionLog) << Q_FUNC_INFO << this;
 }
 
-CustomAction::CustomAction(
+MavlinkAction::MavlinkAction(
     const QString &label,
     const QString &description,
     MAV_CMD mavCmd,
@@ -39,15 +39,15 @@ CustomAction::CustomAction(
     , _compId(compId)
     , _params{ param1, param2, param3, param4, param5, param6, param7 }
 {
-    // qCDebug(CustomActionLog) << Q_FUNC_INFO << this;
+    // qCDebug(MavlinkActionLog) << Q_FUNC_INFO << this;
 };
 
-CustomAction::~CustomAction()
+MavlinkAction::~MavlinkAction()
 {
-    // qCDebug(CustomActionLog) << Q_FUNC_INFO << this;
+    // qCDebug(MavlinkActionLog) << Q_FUNC_INFO << this;
 }
 
-void CustomAction::sendTo(Vehicle *vehicle)
+void MavlinkAction::sendTo(Vehicle *vehicle)
 {
     if (vehicle) {
         const bool showError = true;
