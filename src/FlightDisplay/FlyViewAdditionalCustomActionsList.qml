@@ -7,12 +7,12 @@
  *
  ****************************************************************************/
 
-import QGroundControl.FlightDisplay
+import QtQml
 
-GuidedToolStripAction {
-    text:               _guidedController.actionListTitle
-    iconSource:         "/res/action.svg"
-    visible:            _guidedController.showActionList
-    enabled:            true
-    actionID:           _guidedController.actionActionList
+// Custom builds can override this resource to add additional custom actions
+QtObject {
+    property var guidedController
+
+    property bool anyActionAvailable: false
+    property var model: [ ]
 }

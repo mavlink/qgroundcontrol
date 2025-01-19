@@ -28,7 +28,6 @@ Item {
 
     property var missionController
     property var confirmDialog
-    property var actionList
     property var guidedValueSlider
     property var orbitMapCircle
 
@@ -58,7 +57,6 @@ Item {
     readonly property string vtolTransitionTitle:           qsTr("VTOL Transition")
     readonly property string roiTitle:                      qsTr("ROI")
     readonly property string setHomeTitle:                  qsTr("Set Home")
-    readonly property string actionListTitle:               qsTr("Action")
     readonly property string setEstimatorOriginTitle:       qsTr("Set Estimator origin")
     readonly property string setFlightMode:                 qsTr("Set Flight Mode")
     readonly property string changeHeadingTitle:            qsTr("Change Heading")
@@ -116,7 +114,6 @@ Item {
     readonly property int actionVtolTransitionToFwdFlight:  20
     readonly property int actionVtolTransitionToMRFlight:   21
     readonly property int actionROI:                        22
-    readonly property int actionActionList:                 23
     readonly property int actionForceArm:                   24
     readonly property int actionChangeSpeed:                25
     readonly property int actionGripper:                    26
@@ -159,7 +156,6 @@ Item {
     property bool showLandAbort:            _guidedActionsEnabled && _vehicleFlying && _fixedWingOnApproach
     property bool showGotoLocation:         _guidedActionsEnabled && _vehicleFlying
     property bool showSetHome:              _guidedActionsEnabled
-    property bool showActionList:           _guidedActionsEnabled && (showStartMission || showResumeMission || showChangeAlt || showLandAbort || actionList.hasMavlinkActions)
     property bool showGripper:              _initialConnectComplete ? _activeVehicle.hasGripper : false
     property bool showSetEstimatorOrigin:   _activeVehicle && !(_activeVehicle.sensorsPresentBits & Vehicle.SysStatusSensorGPS)
     property bool showChangeHeading:        _guidedActionsEnabled && _vehicleFlying
@@ -170,7 +166,7 @@ Item {
     // Note: The '_missionItemCount - 2' is a hack to not trigger resume mission when a mission ends with an RTL item
     property bool showResumeMission:    _activeVehicle && !_vehicleArmed && _vehicleWasFlying && _missionAvailable && _resumeMissionIndex > 0 && (_resumeMissionIndex < _missionItemCount - 2)
 
-    property bool guidedUIVisible:      confirmDialog.visible || actionList.visible
+    property bool guidedUIVisible:          confirmDialog.visible
 
     property var    _corePlugin:            QGroundControl.corePlugin
     property var    _corePluginOptions:     QGroundControl.corePlugin.options
@@ -399,9 +395,8 @@ Item {
     }
 
     function closeAll() {
-        confirmDialog.visible =     false
-        actionList.visible =        false
-        guidedValueSlider.visible =    false
+        confirmDialog.visible = false
+        guidedValueSlider.visible = false
     }
 
     // Called when an action is about to be executed in order to confirm
@@ -551,9 +546,6 @@ Item {
             confirmDialog.message = roiMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showROI })
             break;
-        case actionActionList:
-            actionList.show()
-            return
         case actionChangeSpeed:
             confirmDialog.hideTrigger = true
             confirmDialog.title = changeSpeedTitle

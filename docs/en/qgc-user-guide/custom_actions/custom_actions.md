@@ -10,28 +10,28 @@ The actions available are defined in a JSON file. The format of that file is as 
 {
     "version":    1,
     "fileType":   "MavlinkActions",
-    "actions":
-[
-{
-    "label":        "First Command",
-    "description":  "This is the first command",
-    "mavCmd":       10,
-    "compId":       100,
-    "param1":       1,
-    "param2":       2,
-    ...
-},
-{
-    "label":        "Second Command",
-    "description":  "This is the second command",
-    "mavCmd":       20,
-    ...
-}
-]
+    "actions": [
+        {
+            "label":        "First Mavlink Command",
+            "description":  "This is the first command",
+            "mavCmd":       10,
+            "compId":       100,
+            "param1":       1,
+            "param2":       2,
+            ...
+        },
+        {
+            "label":        "Second Mavlink Command",
+            "description":  "This is the second command",
+            "mavCmd":       20,
+            ...
+        }
+    ]
 }
 ```
 
 Fields:
+
 * actions (required) - An array of json objects, one for each command
 * label (required) - The user visible short description for the command. This is used as the button text for the Fly View - Actions command list. For Joysticks, this is the command you select from the dropdown. For Joysticks, make sure your name doesn't conflict with the built in names.
 * description (required) - This is a longer description of the command used in the Fly View - Action list. This is not used by joysticks.
