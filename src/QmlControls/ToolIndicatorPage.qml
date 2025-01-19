@@ -48,6 +48,14 @@ RowLayout {
         property var pageProperties: control.pageProperties
     }
 
+    Rectangle {
+        id:                     divider
+        Layout.preferredWidth:  visible ? 1 : -1
+        Layout.fillHeight:      true
+        color:                  QGroundControl.globalPalette.groupBorder
+        visible:                expanded
+    }
+    
     Loader {
         id:                     expandedItemLoader
         Layout.alignment:       Qt.AlignTop
