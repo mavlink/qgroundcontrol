@@ -13,15 +13,15 @@
 #include <QtCore/QObject>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-Q_DECLARE_LOGGING_CATEGORY(CustomActionManagerLog)
+Q_DECLARE_LOGGING_CATEGORY(MavlinkActionManagerLog)
 
 class Fact;
 class QmlObjectListModel;
 
 /// Loads the specified action file and provides access to the actions it contains.
-/// Action files are loaded from the default CustomActions directory.
+/// Action files are loaded from the default MavlinkActions directory.
 /// The actions file name is filename only, no path.
-class CustomActionManager : public QObject
+class MavlinkActionManager : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
@@ -31,9 +31,9 @@ class CustomActionManager : public QObject
     Q_PROPERTY(QmlObjectListModel* actions READ actions CONSTANT)
 
 public:
-    explicit CustomActionManager(QObject *parent = nullptr);
-    explicit CustomActionManager(Fact *actionFileNameFact, QObject *parent = nullptr);
-    ~CustomActionManager();
+    explicit MavlinkActionManager(QObject *parent = nullptr);
+    explicit MavlinkActionManager(Fact *actionFileNameFact, QObject *parent = nullptr);
+    ~MavlinkActionManager();
 
     Fact *actionFileNameFact() { return _actionFileNameFact; }
     void setActionFileNameFact(Fact *actionFileNameFact);

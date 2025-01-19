@@ -159,7 +159,7 @@ Item {
     property bool showLandAbort:            _guidedActionsEnabled && _vehicleFlying && _fixedWingOnApproach
     property bool showGotoLocation:         _guidedActionsEnabled && _vehicleFlying
     property bool showSetHome:              _guidedActionsEnabled
-    property bool showActionList:           _guidedActionsEnabled && (showStartMission || showResumeMission || showChangeAlt || showLandAbort || actionList.hasCustomActions)
+    property bool showActionList:           _guidedActionsEnabled && (showStartMission || showResumeMission || showChangeAlt || showLandAbort || actionList.hasMavlinkActions)
     property bool showGripper:              _initialConnectComplete ? _activeVehicle.hasGripper : false
     property bool showSetEstimatorOrigin:   _activeVehicle && !(_activeVehicle.sensorsPresentBits & Vehicle.SysStatusSensorGPS)
     property bool showChangeHeading:        _guidedActionsEnabled && _vehicleFlying

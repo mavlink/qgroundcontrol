@@ -11,11 +11,11 @@
 
 #include "SettingsGroup.h"
 
-class CustomMavlinkActionsSettings : public SettingsGroup
+class MavlinkActionsSettings : public SettingsGroup
 {
     Q_OBJECT
 public:
-    CustomMavlinkActionsSettings(QObject* parent = nullptr);
+    MavlinkActionsSettings(QObject* parent = nullptr);
 
     DEFINE_SETTING_NAME_GROUP()
 
