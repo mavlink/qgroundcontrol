@@ -54,7 +54,6 @@ Item {
     property var    _rallyPointController:  _planController.rallyPointController
     property real   _margins:               ScreenTools.defaultFontPixelWidth / 2
     property var    _guidedController:      guidedActionsController
-    property var    _guidedActionList:      guidedActionList
     property var    _guidedValueSlider:     guidedValueSlider
     property var    _widgetLayer:           widgetLayer
     property real   _toolsMargin:           ScreenTools.defaultFontPixelWidth * 0.75
@@ -162,17 +161,7 @@ Item {
         GuidedActionsController {
             id:                 guidedActionsController
             missionController:  _missionController
-            actionList:         _guidedActionList
             guidedValueSlider:     _guidedValueSlider
-        }
-
-        GuidedActionList {
-            id:                         guidedActionList
-            anchors.margins:            _margins
-            anchors.bottom:             parent.bottom
-            anchors.horizontalCenter:   parent.horizontalCenter
-            z:                          QGroundControl.zOrderTopMost
-            guidedController:           _guidedController
         }
 
         //-- Guided value slider (e.g. altitude)
