@@ -2,14 +2,14 @@
 
 Both the Fly View and Joysticks support the ability execute arbitrary mavlink commands to the active vehicle. In the Fly View these will show up in the Toolstrip Action list. With Joysticks you can assign then to button presses.
 
-## Custom Actions File
+## Mavlink Actions File
 
-The custom actions available are defined in a JSON file. The format of that file is as follows:
+The actions available are defined in a JSON file. The format of that file is as follows:
 
 ```
 {
     "version":    1,
-    "fileType":   "CustomActions",
+    "fileType":   "MavlinkActions",
     "actions":
 [
 {
@@ -39,8 +39,6 @@ Fields:
 * compId (options) - The component id for where you want to send the command to. If not specified `MAV_COMP_ID_AUTOPILOT1` is used.
 * param1 thru param7 (optional) - The parameters for the command. Parameters which are not specified will default to 0.0
 
-Custom action files should be located in the CustomActions directory of the QGC save location. For example on Linux that would be `~/Documents/QGroundControl/CustomActions` or `~/Documents/QGroundControl Daily/CustomActions`. The Fly View and Joysticks each have there own custom actions files:
-* Fly View - FlyViewCustomActions.json
-* Joystick - JoystickCustomActions.json
+Mavlink action files should be located in the MavlinkActions directory of the QGC save location. For example on Linux that would be `~/Documents/QGroundControl/MavlinkActions` or `~/Documents/QGroundControl Daily/MavlinkActions`. The Fly View and Joysticks can each have there own custom actions file.
 
 When you start up QGC it will load these files if they exist and make the commands available for use.

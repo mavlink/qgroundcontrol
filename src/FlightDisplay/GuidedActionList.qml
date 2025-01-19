@@ -79,11 +79,11 @@ Rectangle {
         }
     ]
 
-    property var _customManager: CustomActionManager {
+    MavlinkActionManager {
         id:                 customManager
-        actionFileNameFact: QGroundControl.settingsManager.customMavlinkActionsSettings.flyViewActionsFile
+        actionFileNameFact: QGroundControl.settingsManager.mavlinkActionsSettings.flyViewActionsFile
     }
-    readonly property bool hasCustomActions: customManager.actions.count > 0
+    readonly property bool hasMavlinkActions: customManager.actions.count > 0
 
     QGCPalette { id: qgcPal }
 

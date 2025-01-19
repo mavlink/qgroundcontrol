@@ -7,8 +7,8 @@
  *
  ****************************************************************************/
 
-#include "CustomActionManager.h"
-#include "CustomAction.h"
+#include "MavlinkActionManager.h"
+#include "MavlinkAction.h"
 #include "Fact.h"
 #include "JsonHelper.h"
 #include "QGCApplication.h"
@@ -21,37 +21,37 @@
 #include <QtCore/QJsonArray>
 #include <QtQml/QQmlEngine>
 
-QGC_LOGGING_CATEGORY(CustomActionManagerLog, "qgc.qmlcontrols.customactionmanager")
+QGC_LOGGING_CATEGORY(MavlinkActionManagerLog, "qgc.qmlcontrols.mavlinkactionmanager")
 
-CustomActionManager::CustomActionManager(QObject *parent)
+MavlinkActionManager::MavlinkActionManager(QObject *parent)
     : QObject(parent)
     , _actions(new QmlObjectListModel(this))
 {
-    // qCDebug(CustomActionManagerLog) << Q_FUNC_INFO << this;
+    // qCDebug(MavlinkActionManagerLog) << Q_FUNC_INFO << this;
 }
 
-CustomActionManager::CustomActionManager(Fact *actionFileNameFact, QObject *parent)
+MavlinkActionManager::MavlinkActionManager(Fact *actionFileNameFact, QObject *parent)
     : QObject(parent)
     , _actions(new QmlObjectListModel(this))
 {
     setActionFileNameFact(actionFileNameFact);
 }
 
-CustomActionManager::~CustomActionManager()
+MavlinkActionManager::~MavlinkActionManager()
 {
-    // qCDebug(CustomActionManagerLog) << Q_FUNC_INFO << this;
+    // qCDebug(MavlinkActionManagerLog) << Q_FUNC_INFO << this;
 }
 
-void CustomActionManager::setActionFileNameFact(Fact *actionFileNameFact)
+void MavlinkActionManager::setActionFileNameFact(Fact *actionFileNameFact)
 {
     _actionFileNameFact = actionFileNameFact;
     emit actionFileNameFactChanged();
-    (void) connect(_actionFileNameFact, &Fact::rawValueChanged, this, &CustomActionManager::_loadActionsFile);
+    (void) connect(_actionFileNameFact, &Fact::rawValueChanged, this, &MavlinkActionManager::_loadActionsFile);
 
     _loadActionsFile();
 }
 
-void CustomActionManager::_loadActionsFile()
+void MavlinkActionManager::_loadActionsFile()
 {
     _actions->clearAndDeleteContents();
     const QString actionFileName = _actionFileNameFact->rawValue().toString();
@@ -60,7 +60,7 @@ void CustomActionManager::_loadActionsFile()
     }
 
     // Custom actions are always loaded from the custom actions save path
-    const QString savePath = SettingsManager::instance()->appSettings()->customActionsSavePath();
+    const QString savePath = SettingsManager::instance()->appSettings()->mavlinkActionsSavePath();
     const QDir saveDir = QDir(savePath);
     const QString fullPath = saveDir.absoluteFilePath(actionFileName);
 
@@ -70,7 +70,7 @@ void CustomActionManager::_loadActionsFile()
         return;
     }
 
-    constexpr const char *kQgcFileType = "CustomActions";
+    constexpr const char *kQgcFileType = "MavlinkActions";
     constexpr const char *kActionListKey = "actions";
 
     _actions->clearAndDeleteContents();
@@ -133,7 +133,7 @@ void CustomActionManager::_loadActionsFile()
         const auto param6 = actionObj["param6"].toDouble(0.0);
         const auto param7 = actionObj["param7"].toDouble(0.0);
 
-        CustomAction *const action = new CustomAction(label, description, mavCmd, compId, param1, param2, param3, param4, param5, param6, param7, this);
+        MavlinkAction *const action = new MavlinkAction(label, description, mavCmd, compId, param1, param2, param3, param4, param5, param6, param7, this);
         QQmlEngine::setObjectOwnership(action, QQmlEngine::CppOwnership);
         (void) _actions->append(action);
     }

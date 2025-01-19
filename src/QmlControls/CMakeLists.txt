@@ -3,10 +3,10 @@ find_package(Qt6 REQUIRED COMPONENTS Concurrent Core Gui Location Positioning Qm
 qt_add_library(QmlControls STATIC
     AppMessages.cc
     AppMessages.h
-    CustomAction.cc
-    CustomAction.h
-    CustomActionManager.cc
-    CustomActionManager.h
+    MavlinkAction.cc
+    MavlinkAction.h
+    MavlinkActionManager.cc
+    MavlinkActionManager.h
     EditPositionDialogController.cc
     EditPositionDialogController.h
     FactValueGrid.cc
