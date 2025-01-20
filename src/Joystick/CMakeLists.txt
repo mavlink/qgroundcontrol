@@ -55,7 +55,6 @@ CPMAddPackage(
     NAME sdl_gamecontrollerdb
     GITHUB_REPOSITORY mdqinc/SDL_GameControllerDB
     GIT_TAG master
-    GIT_SHALLOW TRUE
 )
 
 set_source_files_properties(${sdl_gamecontrollerdb_SOURCE_DIR}/gamecontrollerdb.txt PROPERTIES QT_RESOURCE_ALIAS gamecontrollerdb.txt)
@@ -67,18 +66,9 @@ qt_add_resources(Joystick "gamecontrollerdb.txt"
 
 #===========================================================================#
 
-set(MINIMUM_SDL2_VERSION 2.0.20)
-set(TARGET_SDL2_VERSION 2.30.11)
-
-if(NOT QGC_BUILD_DEPENDENCIES)
-    find_package(SDL2 ${MINIMUM_SDL2_VERSION})
-    if(TARGET SDL2::SDL2)
-        target_link_libraries(Joystick PRIVATE SDL2::SDL2)
-        return()
-    endif()
-endif()
-
-message(STATUS "Building SDL2")
+# https://github.com/libsdl-org/SDL/releases/download/prerelease-3.1.10/SDL3-3.1.10-win32-x64.zip
+# https://github.com/libsdl-org/SDL/releases/download/prerelease-3.1.10/SDL3-devel-3.1.10-android.zip
+# https://github.com/libsdl-org/SDL/releases/download/prerelease-3.1.10/SDL3-3.1.10.dmg
 
 if(WIN32)
     set(SDL2_EXTRA_OPTIONS
@@ -87,13 +77,11 @@ if(WIN32)
     )
 endif()
 
-include(CPM)
-CPMAddPackage(
+CPMFindPackage(
     NAME sdl2
-    VERSION ${TARGET_SDL2_VERSION}
+    VERSION 2.0.20
     GITHUB_REPOSITORY libsdl-org/SDL
-    GIT_TAG "release-${TARGET_SDL2_VERSION}"
-    GIT_SHALLOW TRUE
+    GIT_TAG release-2.30.11
     OPTIONS
         "SDL2_DISABLE_INSTALL ON"
         "SDL2_DISABLE_INSTALL ON"

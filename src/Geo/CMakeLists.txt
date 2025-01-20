@@ -17,34 +17,16 @@ target_include_directories(Geo PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 #===========================================================================#
 
-set(MINIMUM_GEOGRAPHICLIB_VERSION 2.3)
-set(TARGET_GEOGRAPHICLIB_VERSION 2.5)
-
-if(NOT QGC_BUILD_DEPENDENCIES)
-    if(LINUX)
-        list(APPEND CMAKE_MODULE_PATH "/usr/share/cmake/geographiclib")
-    endif()
-    find_package(GeographicLib ${MINIMUM_GEOGRAPHICLIB_VERSION} COMPONENTS STATIC)
-    if(TARGET GeographicLib::GeographicLib)
-        target_link_libraries(Geo PRIVATE GeographicLib::GeographicLib)
-        return()
-    elseif(GeographicLib_FOUND)
-        target_link_libraries(Geo PRIVATE ${GeographicLib_LIBRARIES})
-        target_include_directories(Geo PRIVATE ${GeographicLib_INCLUDE_DIRS})
-        target_link_directories(Geo PRIVATE ${GeographicLib_LIBRARY_DIRS})
-        return()
-    endif()
+if(LINUX AND EXISTS "/usr/share/cmake/geographiclib")
+    list(APPEND CMAKE_MODULE_PATH "/usr/share/cmake/geographiclib")
 endif()
-
-message(STATUS "Building GeographicLib")
 
 include(CPM)
 CPMAddPackage(
     NAME geographiclib
-    VERSION ${TARGET_GEOGRAPHICLIB_VERSION}
+    VERSION 2.3
     GITHUB_REPOSITORY geographiclib/geographiclib
-    GIT_TAG "r${TARGET_GEOGRAPHICLIB_VERSION}"
-    GIT_SHALLOW TRUE
+    GIT_TAG r2.5
     OPTIONS
         "BUILD_BOTH_LIBS OFF"
         "BUILD_DOCUMENTATION OFF"

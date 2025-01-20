@@ -48,7 +48,6 @@ CPMAddPackage(
     NAME ArduPilotParams
     GITHUB_REPOSITORY ArduPilot/ParameterRepository
     GIT_TAG main
-    GIT_SHALLOW TRUE
 )
 
 # file(GLOB QML_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.qml)

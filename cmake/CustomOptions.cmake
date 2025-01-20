@@ -54,3 +54,5 @@ option(QGC_DISABLE_PX4_PLUGIN_FACTORY "Disable PX4 Plugin Factory" OFF)
 # If you need to make an incompatible changes to stored settings, bump this version number
 # up by 1. This will caused store settings to be cleared on next boot.
 set(QGC_SETTINGS_VERSION "9" CACHE STRING "Settings Version")
+
+set(CPM_SOURCE_CACHE ${CMAKE_BINARY_DIR}/cpm_modules CACHE PATH "Directory to download CPM dependencies")

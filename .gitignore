@@ -92,3 +92,4 @@ docs/.vitepress/cache/
 docs/.vitepress/dist/
 
 CMakeUserPresets.json
+cpm_modules
