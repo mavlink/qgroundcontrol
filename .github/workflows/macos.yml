@@ -35,6 +35,7 @@ jobs:
       PACKAGE: QGroundControl
       QT_VERSION: 6.8.1
       GST_VERSION: 1.22.12
+      CPM_SOURCE_CACHE: ${{ github.workspace }}/cpm_modules
 
     steps:
       - name: Checkout repo
@@ -77,6 +78,11 @@ jobs:
           verbose: 1
           evict-old-files: 'job'
 
+      - uses: actions/cache@v4
+        with:
+          path: ${{ env.CPM_SOURCE_CACHE }}
+          key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
+
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
@@ -104,6 +110,7 @@ jobs:
               -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64"
               -DMACOS_SIGNING_IDENTITY=${{ secrets.MACOS_SIGNING_IDENTITY }}
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
+              -DCPM_SOURCE_CACHE=${{ env.CPM_SOURCE_CACHE }}
 
       - name: Build
         working-directory: ${{ runner.temp }}/shadow_build_dir

@@ -15,6 +15,10 @@ inputs:
     description: ABIs to Build
     required: false
     default: 'armeabi-v7a;arm64-v8a'
+  cpm-cache:
+    description: CPM Cache Path
+    required: false
+    default: ${{ github.workspace }}/cpm_modules
 runs:
   using: "composite"
   steps:
@@ -58,6 +62,11 @@ runs:
         save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
         verbose: 1
         evict-old-files: 'job'
+
+    - uses: actions/cache@v4
+      with:
+        path: ${{ inputs.cpm-cache }}
+        key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
 
     - name: Install Qt for ${{ runner.os }}
       uses: jurplel/install-qt-action@v4

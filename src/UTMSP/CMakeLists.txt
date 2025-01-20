@@ -6,9 +6,8 @@ qt_add_library(UTMSP STATIC)
 if(QGC_UTM_ADAPTER)
     message(STATUS "UTMSP is Initialized")
 
-    # message(STATUS "Building nlohmann_json")
     # include(CPM)
-    # CPMAddPackage(
+    # CPMFindPackage(
     #     NAME nlohmann_json
     #     VERSION 3.11.3
     #     GITHUB_REPOSITORY nlohmann/json

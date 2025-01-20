@@ -62,30 +62,16 @@ endif()
 
 #===========================================================================#
 
-set(MINIMUM_SHAPELIB_VERSION 1.6.0)
-set(TARGET_SHAPELIB_VERSION 1.6.1)
-
-if(NOT QGC_BUILD_DEPENDENCIES)
-    find_package(Shapelib ${MINIMUM_SHAPELIB_VERSION})
-    if(TARGET SHAPELIB::shp)
-        target_link_libraries(Utilities PRIVATE SHAPELIB::shp)
-        return()
-    endif()
-endif()
-
-message(STATUS "Building Shapelib")
-
 include(CPM)
-CPMAddPackage(
+CPMFindPackage(
     NAME shapelib
-    VERSION ${TARGET_SHAPELIB_VERSION}
+    VERSION 1.6.0
     GITHUB_REPOSITORY OSGeo/shapelib
+    GIT_TAG v1.6.1
     OPTIONS
         "BUILD_SHAPELIB_CONTRIB OFF"
         "BUILD_APPS OFF"
         "BUILD_TESTING OFF"
 )
 
-if(TARGET shp)
-    target_link_libraries(Utilities PRIVATE shp)
-endif()
+target_link_libraries(Utilities PRIVATE shp)

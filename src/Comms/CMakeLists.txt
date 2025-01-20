@@ -100,7 +100,6 @@ if(QGC_ZEROCONF_ENABLED)
         NAME qmdnsengine
         GITHUB_REPOSITORY nitroshare/qmdnsengine
         GIT_TAG master
-        GIT_SHALLOW TRUE
         OPTIONS
             "BUILD_DOC OFF"
             "BUILD_EXAMPLES OFF"
