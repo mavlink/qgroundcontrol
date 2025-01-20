@@ -32,7 +32,6 @@ CPMAddPackage(
     NAME libevents
     GITHUB_REPOSITORY mavlink/libevents
     GIT_TAG main
-    GIT_SHALLOW TRUE
     SOURCE_SUBDIR libs/cpp
 )
 
