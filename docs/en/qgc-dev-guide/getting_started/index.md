@@ -59,10 +59,6 @@ The required version of Qt is {{ $frontmatter.qt_version }} **(only)**.
 
 For more information see: [Qt 6 supported platform list](https://doc.qt.io/qt-6/supported-platforms.html).
 
-::: info
-Native [CentOS Builds](../getting_started/cent_os.md) are also supported, but are documented separately (as the tested environment is different).
-:::
-
 #### Install Qt
 
 You **must install Qt as described below** instead of using pre-built packages from say, a Linux distribution.
@@ -74,41 +70,26 @@ To install Qt:
      - Set the downloaded file to executable using: `chmod +x`.
      - You may also need to install libxcb-cursor.
 
-1. In the installer _Select Components_ dialog choose: Qt {{ $frontmatter.qt_version }}.
+1. On the _Installation Folder_ page select "Custom Installation"    
 
-   Then install the following components:
+1. One the _Select Components_ page:
 
-::: info
-To see a complete list of all available components in the installer _Select Components_ dialog, you might need to check the **"Archive"** box in the right column under the **"Categories"** tab, then click on **"Filter"**.
-:::
-
-   - Under _Qt _{{ $frontmatter.qt_version }}_ select:
-       - Depending on the OS you want to build for:
-			- **Windows**: _MSVC 2019 64 bit_
-			- **MacOS**: _macOS_
-			- **Linux**: _Desktop gcc 64-bit_
-			- **Android**: _Android_
-		- _Qt 5 Compatibility Module_
-		- _Qt Shader Tools_
-		- _Qt Quick 3D_
-
-   - Under _Additional Libraries_ select:
-     - _Qt Charts_
-     - _Qt Connectivity_
-     - _Qt Location (TP)_
-     - _Qt Multimedia_
-     - _Qt Positioning_
-     - _Qt Sensors_
-     - _Qt Serial Port_
-     - _Qt Speech_
+- Under _Qt {{ $frontmatter.qt_version }}_ select:
+   - **Windows**: MSVC 2022 _arch_ - where _arch_ is the architecture of your machine
+   - **Mac**: Desktop
+   - **Linux**: Desktop gcc 64-bit
+   - **Android**: Android
+- Select all _Additional Libraries_
 
 1. Install Additional Packages (Platform Specific)
 
    - **Ubuntu:** `sudo bash ./qgroundcontrol/tools/setup/install-dependencies-debian.sh`
    - **Fedora:** `sudo dnf install speech-dispatcher SDL2-devel SDL2 systemd-devel patchelf`
    - **Arch Linux:** `pacman -Sy speech-dispatcher patchelf`
-   - **OSX** `sh qgroundcontrol/tools/setup/macos-dependencies.sh`
-   - **Android** [Setup](https://doc.qt.io/qt-6/android-getting-started.html)
+   - **Mac** `sh qgroundcontrol/tools/setup/macos-dependencies.sh`
+   - **Android** [Setup](https://doc.qt.io/qt-6/android-getting-started.html). JDK17 is required for the latest updated versions. NDK Version: 25.1.8937393
+       You can confirm it is being used by reviewing the project setting: **Projects > Manage Kits > Devices > Android (tab) > Android Settings > _JDK location_**.
+	Note: Visit here for more detailed configurations [android.yml](.github/workflows/android.yml)
 
 1. Install Optional/OS-Specific Functionality
 
@@ -120,44 +101,26 @@ To see a complete list of all available components in the installer _Select Comp
    - **Video Streaming/Gstreamer:** - see [Video Streaming](https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoManager/VideoReceiver/GStreamer/README.md)
 
 
-#### Building using Qt Creator {#qt-creator}
+#### Install Visual Studio (Windows Only) {#vs}
 
- ::: info
- QGC has switched to using cmake for builds. Qmake builds are currently deprecated and support will eventually be removed.
- Only custom builds continue to use qmake at this time, since they have not yet been converted to cmake.
- :::
-
-1. Launch _Qt Creator_, select Open Project and select the **CMakeLists.txt** file.
-1. In the **Projects** section, select the appropriate kit for your needs:
-
-   - **OSX:** Desktop Qt {{ $frontmatter.qt_version }} clang 64 bit
-
-     ::: info
-     iOS builds must be built using [XCode](http://doc.qt.io/qt-5/ios-support.html).
-     :::
-
-   - **Ubuntu:** Desktop Qt {{ $frontmatter.qt_version }} GCC 64bit
-   - **Windows:** Desktop Qt {{ $frontmatter.qt_version }} MSVC2019 **64bit**
-   - **Android:** Android for armeabi-v7a (GCC 4.9, Qt {{ $frontmatter.qt_version }})
-     - JDK17 is required for the latest updated versions. NDK Version: 25.1.8937393
-       You can confirm it is being used by reviewing the project setting: **Projects > Manage Kits > Devices > Android (tab) > Android Settings > _JDK location_**.
-	Note: Visit here for more detailed configurations [android.yml](.github/workflows/android.yml)
-
-1. Build using the "hammer" (or "play") icons:
-
-   ![QtCreator Build Button](../../../assets/dev_getting_started/qt_creator_build_qgc.png)
-
-#### Install Visual Studio 2019 (Windows Only) {#vs}
-
-The Windows compiler can be found here: [Visual Studio 2019 compiler](https://visualstudio.microsoft.com/vs/older-downloads/) (64 bit)
+Install [Visual Studio 2022 Community Edition](https://visualstudio.microsoft.com/downloads/).
 
 When installing, select _Desktop development with C++_ as shown:
 
 ![Visual Studio 2019 - Select Desktop Environment with C++](../../../assets/dev_getting_started/visual_studio_select_features.png)
 
 ::: info
-Visual Studio is ONLY used to get the compiler. Actually building _QGroundControl_ should be done using [Qt Creator](#qt-creator) or [cmake](#cmake) as outlined below.
+Visual Studio is ONLY used to get the compiler. Building _QGroundControl_ is done using [Qt Creator](#qt-creator) or [cmake](#cmake) directly as outlined below.
 :::
+
+#### Building using Qt Creator {#qt-creator}
+
+1. Launch _Qt Creator_, select Open Project and select the **CMakeLists.txt** file.
+1. On the _Configure Project_ page it should default to the version of Qt you just installed using the instruction above. If not select that kit from the list and click _Configure Project_.
+
+1. Build using the "hammer" (or "play") icons or the menus:
+
+   ![QtCreator Build Button](../../../assets/dev_getting_started/qt_creator_build_qgc.png)
 
 #### Build using cmake on CLI {#cmake}
 
