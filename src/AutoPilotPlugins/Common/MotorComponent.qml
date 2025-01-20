@@ -20,13 +20,24 @@ SetupPage {
     id:             motorPage
     pageComponent:  pageComponent
 
+    property bool userLetterMotorIndices: false
+
     readonly property int _barHeight:           10
     readonly property int _barWidth:            5
     readonly property int _sliderWidth:         15
     readonly property int _motorTimeoutSecs:    3
 
+    function motorIndexToString(motorIndex) {
+        let asciiA = 65;
+        if (userLetterMotorIndices) {
+            return String.fromCharCode(asciiA + motorIndex);
+        } else {
+            return motorIndex + 1;
+        }
+    }
+
     FactPanelController {
-        id:             controller
+        id: controller
     }
 
     Component {
@@ -77,7 +88,7 @@ SetupPage {
                     QGCButton {
                         id:         button
                         anchors.verticalCenter:     parent.verticalCenter
-                        text:       index + 1
+                        text:       motorIndexToString(index)
                         onClicked:  {
                             controller.vehicle.motorTest(index + 1, sliderThrottle.value, sliderThrottle.value === 0 ? 0 : _motorTimeoutSecs, true)
                         }
