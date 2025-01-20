@@ -49,7 +49,7 @@ QStringList MotorComponent::setupCompleteChangedTriggerList(void) const
 
 QUrl MotorComponent::setupSource(void) const
 {
-    return QUrl::fromUserInput(QStringLiteral("qrc:/qml/MotorComponent.qml"));
+    return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/Controls/MotorComponent.qml"));
 }
 
 QUrl MotorComponent::summaryQmlSource(void) const

@@ -27,10 +27,3 @@ QUrl APMMotorComponent::setupSource(void) const
         return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMMotorComponent.qml"));
     }
 }
-
-QString APMMotorComponent::motorIndexToLetter(int index)
-{
-    char letter = 'A';
-
-    return QString(char(letter + index));
-}
