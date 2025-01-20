@@ -41,7 +41,6 @@ message(STATUS "Building MAVLink")
 #     NAME mavlink
 #     GITHUB_REPOSITORY mavlink/mavlink
 #     GIT_TAG master
-#     GIT_SHALLOW TRUE
 #     OPTIONS
 #         "MAVLINK_DIALECT all"
 #         "MAVLINK_VERSION 2.0"

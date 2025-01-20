@@ -21,48 +21,28 @@ target_include_directories(Compression PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 #===========================================================================#
 
-set(MINIMUM_ZLIB_VERSION 1.2.13)
-set(TARGET_ZLIB_VERSION 1.3.1)
+include(CPM)
+CPMFindPackage(
+    NAME zlib
+    VERSION 1.3.1
+    GITHUB_REPOSITORY madler/zlib
+    OPTIONS
+        "ZLIB_BUILD_EXAMPLES OFF"
+        "SKIP_INSTALL_FILES ON"
+        "SKIP_INSTALL_LIBRARIES ON"
+        "SKIP_INSTALL_HEADERS ON"
+        "SKIP_INSTALL_ALL ON"
+        "ZLIB_USE_STATIC_LIBS ON"
+)
 
-if(NOT QGC_BUILD_DEPENDENCIES)
-    set(ZLIB_USE_STATIC_LIBS ON)
-    find_package(ZLIB ${MINIMUM_ZLIB_VERSION})
-    if(TARGET ZLIB::ZLIB)
-        target_link_libraries(Compression PRIVATE ZLIB::ZLIB)
-    endif()
-endif()
-
-if(NOT TARGET ZLIB::ZLIB)
-    message(STATUS "Building ZLIB")
-
-    include(CPM)
-    CPMAddPackage(
-        NAME zlib
-        VERSION ${TARGET_ZLIB_VERSION}
-        GITHUB_REPOSITORY madler/zlib
-        OPTIONS
-            "ZLIB_BUILD_EXAMPLES OFF"
-            "SKIP_INSTALL_FILES ON"
-            "SKIP_INSTALL_LIBRARIES ON"
-            "SKIP_INSTALL_HEADERS ON"
-            "SKIP_INSTALL_ALL ON"
-    )
-
-    if(TARGET zlibstatic)
-        target_link_libraries(Compression PRIVATE zlibstatic)
-    endif()
-endif()
+target_link_libraries(Compression PRIVATE zlibstatic)
 
 #===========================================================================#
 
-message(STATUS "Building XZ")
-
-include(CPM)
 CPMAddPackage(
     NAME xz-embedded
+    VERSION 2024-12-30
     GITHUB_REPOSITORY tukaani-project/xz-embedded
-    GIT_TAG "v2024-12-30"
-    GIT_SHALLOW TRUE
     OPTIONS
         "BUILD_SHAPELIB_CONTRIB OFF"
         "BUILD_APPS OFF"

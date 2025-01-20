@@ -89,14 +89,11 @@ target_include_directories(AnalyzeView PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 #===========================================================================#
 
-message(STATUS "Building ULogParser")
-
 include(CPM)
 CPMAddPackage(
     NAME ulog_cpp
     GITHUB_REPOSITORY PX4/ulog_cpp
     GIT_TAG main
-    GIT_SHALLOW TRUE
 )
 
 if(TARGET ulog_cpp::ulog_cpp)
@@ -105,70 +102,34 @@ endif()
 
 #===========================================================================#
 
-set(MINIMUM_EXIV2_VERSION 0.28)
-set(TARGET_EXIV2_VERSION 0.28.3)
+include(CPM)
 
-set(MINIMUM_EXPAT_VERSION 2.2.6)
-set(TARGET_EXPAT_VERSION 2.6.4)
+# https://github.com/libexpat/libexpat/releases/download/R_2_6_4/expat-win32bin-2.6.4.zip
 
-# if(QGC_DOWNLOAD_DEPENDENCIES)
-#     set(EXIV2_URL)
-#     if(MSVC)
-#         set(EXIV2_URL "https://github.com/Exiv2/exiv2/releases/download/v${TARGET_EXIV2_VERSION}/exiv2-${TARGET_EXIV2_VERSION}-2019msvc64.zip")
-#     elseif(LINUX)
-#         set(EXIV2_URL "https://github.com/Exiv2/exiv2/releases/download/v${TARGET_EXIV2_VERSION}/exiv2-${TARGET_EXIV2_VERSION}-Linux64.tar.gz")
-#     elseif(MACOS)
-#         set(EXIV2_URL "https://github.com/Exiv2/exiv2/releases/download/v${TARGET_EXIV2_VERSION}/exiv2-${TARGET_EXIV2_VERSION}-Darwin.tar.gz")
-#     endif()
-#
-#     if(EXIV2_URL)
-#         include(CPM)
-#         CPMAddPackage(
-#             NAME exiv2
-#             URL ${EXIV2_URL}
-#         )
-#         exiv2_SOURCE_DIR
-#         target_link_libraries(AnalyzeView PRIVATE Exiv2::exiv2lib)
-#         return()
-#     endif()
+CPMFindPackage(
+    NAME expat
+    VERSION 2.2.6
+    GITHUB_REPOSITORY libexpat/libexpat
+    GIT_TAG "R_2_6_4"
+    SOURCE_SUBDIR expat
+    OPTIONS
+        "EXPAT_BUILD_DOCS OFF"
+        "EXPAT_BUILD_EXAMPLES OFF"
+        "EXPAT_BUILD_FUZZERS OFF"
+        "EXPAT_BUILD_PKGCONFIG OFF"
+        "EXPAT_BUILD_TESTS OFF"
+        "EXPAT_BUILD_TOOLS OFF"
+        "EXPAT_ENABLE_INSTALL OFF"
+        "EXPAT_SHARED_LIBS OFF"
+)
+
+# if(MSVC)
+#     set(EXIV2_URL "https://github.com/Exiv2/exiv2/releases/download/v${EXIV2_VERSION}/exiv2-${EXIV2_VERSION}-2019msvc64.zip")
+# elseif(LINUX)
+#     set(EXIV2_URL "https://github.com/Exiv2/exiv2/releases/download/v${EXIV2_VERSION}/exiv2-${EXIV2_VERSION}-Linux64.tar.gz")
+# elseif(MACOS)
+#     set(EXIV2_URL "https://github.com/Exiv2/exiv2/releases/download/v${EXIV2_VERSION}/exiv2-${EXIV2_VERSION}-Darwin.tar.gz")
 # endif()
-
-if(NOT QGC_BUILD_DEPENDENCIES)
-    find_package(exiv2 ${MINIMUM_EXIV2_VERSION})
-    if(TARGET Exiv2::exiv2lib) # AND exiv2_VERSION VERSION_GREATER_EQUAL ${MINIMUM_EXIV2_VERSION})
-        target_link_libraries(AnalyzeView PRIVATE Exiv2::exiv2lib)
-        return()
-    endif()
-endif()
-
-if(NOT QGC_BUILD_DEPENDENCIES)
-    find_package(EXPAT ${MINIMUM_EXPAT_VERSION})
-endif()
-
-if(NOT TARGET EXPAT::EXPAT)
-    message(STATUS "Building Expat")
-
-    include(CPM)
-    CPMAddPackage(
-        NAME expat
-        VERSION ${TARGET_EXPAT_VERSION}
-        GITHUB_REPOSITORY libexpat/libexpat
-        GIT_TAG "R_2_6_4"
-        GIT_SHALLOW TRUE
-        SOURCE_SUBDIR expat
-        OPTIONS
-            "EXPAT_BUILD_DOCS OFF"
-            "EXPAT_BUILD_EXAMPLES OFF"
-            "EXPAT_BUILD_FUZZERS OFF"
-            "EXPAT_BUILD_PKGCONFIG OFF"
-            "EXPAT_BUILD_TESTS OFF"
-            "EXPAT_BUILD_TOOLS OFF"
-            "EXPAT_ENABLE_INSTALL OFF"
-            "EXPAT_SHARED_LIBS OFF"
-    )
-endif()
-
-message(STATUS "Building Exiv2")
 
 if(TARGET EXPAT::EXPAT)
     set(_EXIV2_ENABLE_XMP ON)
@@ -176,11 +137,11 @@ else()
     set(_EXIV2_ENABLE_XMP OFF)
 endif()
 
-include(CPM)
 CPMAddPackage(
     NAME exiv2
-    VERSION ${TARGET_EXIV2_VERSION}
+    VERSION 0.28
     GITHUB_REPOSITORY Exiv2/exiv2
+    GIT_TAG v0.28.3
     OPTIONS
         "EXIV2_ENABLE_XMP ${_EXIV2_ENABLE_XMP}"
         "EXIV2_ENABLE_EXTERNAL_XMP OFF"
