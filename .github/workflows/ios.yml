@@ -32,35 +32,22 @@ jobs:
         with:
           submodules: recursive
           fetch-tags: true
-          fetch-depth: 0
+
+      - name: Initial Setup
+        uses: ./.github/actions/common
 
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
 
-      - uses: seanmiddleditch/gha-setup-ninja@v5
-      - uses: lukka/get-cmake@latest
-
-      - name: Install Dependencies
-        run: |
-          brew update
-          brew install ccache
-
-      - name: Set Up Cache
-        uses: hendrikmuhs/ccache-action@main
+      - name: Setup Caching
+        uses: ./.github/actions/cache
         with:
-          create-symlink: true
-          key: ${{ runner.os }}-iOS-${{ matrix.BuildType }}
-          max-size: 1G
-          save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
-          verbose: 1
-          evict-old-files: 'job'
-
-      - uses: actions/cache@v4
-        with:
-          path: ${{ env.CPM_SOURCE_CACHE }}
-          key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
+          host: mac
+          target: ios
+          build-type: ${{ matrix.BuildType }}
+          cpm-modules: ${{ env.CPM_SOURCE_CACHE }}
 
       - name: Install Qt for MacOS
         uses: jurplel/install-qt-action@v4
@@ -71,7 +58,6 @@ jobs:
           arch: clang_64
           dir: ${{ runner.temp }}
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
-          cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
       - name: Install Qt for iOS
         uses: jurplel/install-qt-action@v4
@@ -82,9 +68,6 @@ jobs:
           arch: ios
           dir: ${{ runner.temp }}
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
-          cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
-
-      - run: mkdir ${{ runner.temp }}/shadow_build_dir
 
       - name: Configure
         working-directory: ${{ runner.temp }}/shadow_build_dir
@@ -92,7 +75,6 @@ jobs:
               -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }}
               -DQT_HOST_PATH="${{ env.QT_ROOT_DIR }}/../macos"
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
-              -DCPM_SOURCE_CACHE=${{ env.CPM_SOURCE_CACHE }}
 
       - name: Build
         working-directory: ${{ runner.temp }}/shadow_build_dir
