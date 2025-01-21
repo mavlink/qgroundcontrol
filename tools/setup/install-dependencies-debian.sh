@@ -30,6 +30,7 @@ DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
     python3 \
     python3-pip \
     rsync \
+    wget2 \
     zsync
 
 # Qt Required - https://doc.qt.io/qt-6/linux-requirements.html

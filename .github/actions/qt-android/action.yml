@@ -18,7 +18,7 @@ inputs:
   cpm-cache:
     description: CPM Cache Path
     required: false
-    default: ${{ github.workspace }}/cpm_modules
+    default: $GITHUB_WORKSPACE/cpm_modules
 runs:
   using: "composite"
   steps:
@@ -27,6 +27,10 @@ runs:
       with:
         distribution: temurin
         java-version: 17
+        cache: 'gradle'
+        cache-dependency-path: |
+          **/*.gradle*
+          **/gradle-wrapper.properties
 
     - name: Setup Android Environment
       uses: android-actions/setup-android@v3
@@ -53,20 +57,13 @@ runs:
       run: sdkmanager --update
       shell: bash
 
-    - name: Set Up Cache
-      uses: hendrikmuhs/ccache-action@main
+    - name: Setup Caching
+      uses: ./.github/actions/cache
       with:
-        create-symlink: ${{ runner.os != 'Windows' }}
-        key: ${{ runner.os }}-Android-${{ matrix.BuildType }}
-        max-size: 1G
-        save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
-        verbose: 1
-        evict-old-files: 'job'
-
-    - uses: actions/cache@v4
-      with:
-        path: ${{ inputs.cpm-cache }}
-        key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
+        host: ${{ inputs.host }}
+        target: ${{ inputs.arch }}
+        build-type: ${{ matrix.BuildType }}
+        cpm-modules: ${{ inputs.cpm-cache }}
 
     - name: Install Qt for ${{ runner.os }}
       uses: jurplel/install-qt-action@v4
@@ -77,7 +74,7 @@ runs:
         arch: ${{ inputs.arch }}
         dir: ${{ runner.temp }}
         modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
-        cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+        setup-python: false
 
     - name: Install Qt for Android (armv7)
       if: contains( inputs.abis, 'armeabi-v7a')
@@ -89,7 +86,7 @@ runs:
         arch: android_armv7
         dir: ${{ runner.temp }}
         modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
-        cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+        setup-python: false
 
     - name: Install Qt for Android (arm64_v8a)
       if: contains( inputs.abis, 'arm64-v8a')
@@ -101,7 +98,7 @@ runs:
         arch: android_arm64_v8a
         dir: ${{ runner.temp }}
         modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
-        cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+        setup-python: false
 
     - name: Install Qt for Android (x86)
       if: contains( inputs.abis, 'x86')
@@ -113,7 +110,7 @@ runs:
         arch: android_x86
         dir: ${{ runner.temp }}
         modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
-        cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+        setup-python: false
 
     - name: Install Qt for Android (x86_64)
       if: contains( inputs.abis, 'x86_64')
@@ -125,4 +122,4 @@ runs:
         arch: android_x86_64
         dir: ${{ runner.temp }}
         modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
-        cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+        setup-python: false

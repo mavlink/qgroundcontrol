@@ -44,15 +44,14 @@ jobs:
         with:
           submodules: recursive
           fetch-tags: true
-          fetch-depth: 0
+
+      - name: Initial Setup
+        uses: ./.github/actions/common
 
       - name: Install Dependencies
         run: |
           chmod a+x ./tools/setup/install-dependencies-debian.sh
           sudo ./tools/setup/install-dependencies-debian.sh
-
-      - uses: lukka/get-cmake@latest
-      - uses: seanmiddleditch/gha-setup-ninja@v5
 
       - name: Install Vulkan
         run: |
@@ -68,27 +67,13 @@ jobs:
           sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 100 --slave /usr/bin/g++ g++ /usr/bin/g++-11 --slave /usr/bin/gcov gcov /usr/bin/gcov-11
           sudo update-alternatives --set gcc /usr/bin/gcc-11
 
-      - name: Install CCache
-        run: |
-          wget --quiet https://github.com/ccache/ccache/releases/download/v4.10.2/ccache-4.10.2-linux-x86_64.tar.xz
-          tar -xvf ccache-*-linux-x86_64.tar.xz
-          cd ccache-*-linux-x86_64
-          sudo make install
-
-      - name: Set Up Cache
-        uses: hendrikmuhs/ccache-action@main
+      - name: Setup Caching
+        uses: ./.github/actions/cache
         with:
-          create-symlink: true
-          key: ${{ runner.os }}-${{ matrix.BuildType }}
-          max-size: 1G
-          save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
-          verbose: 1
-          evict-old-files: 'job'
-
-      - uses: actions/cache@v4
-        with:
-          path: ${{ env.CPM_SOURCE_CACHE }}
-          key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
+          host: linux
+          target: linux_gcc_64
+          build-type: ${{ matrix.BuildType }}
+          cpm-modules: ${{ env.CPM_SOURCE_CACHE }}
 
       - name: Install Qt for Linux (x64)
         uses: jurplel/install-qt-action@v4
@@ -99,12 +84,9 @@ jobs:
           arch: linux_gcc_64
           dir: ${{ runner.temp }}
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
-          cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
       # - name: Build GStreamer
       #   uses: ./.github/actions/gstreamer
-
-      - run: mkdir ${{ runner.temp }}/shadow_build_dir
 
       - name: Configure
         working-directory: ${{ runner.temp }}/shadow_build_dir
@@ -112,7 +94,6 @@ jobs:
               -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }}
               -DQGC_BUILD_TESTING=${{ matrix.BuildType == 'Debug' && 'ON' || 'OFF' }}
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
-              -DCPM_SOURCE_CACHE=${{ env.CPM_SOURCE_CACHE }}
 
       - name: Build
         working-directory: ${{ runner.temp }}/shadow_build_dir

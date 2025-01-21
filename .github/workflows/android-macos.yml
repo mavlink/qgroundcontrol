@@ -36,16 +36,9 @@ jobs:
         with:
           submodules: recursive
           fetch-tags: true
-          fetch-depth: 0
 
-      - uses: seanmiddleditch/gha-setup-ninja@v5
-      - uses: lukka/get-cmake@latest
-
-      - name: Install Dependencies
-        run: |
-          brew update
-          brew install ccache
-        continue-on-error: true
+      - name: Initial Setup
+        uses: ./.github/actions/common
 
       - name: Install Qt for Android
         uses: ./.github/actions/qt-android
@@ -55,8 +48,6 @@ jobs:
           version: ${{ env.QT_VERSION }}
           abis: ${{ env.QT_ANDROID_ABIS }}
           cpm-cache: ${{ env.CPM_SOURCE_CACHE }}
-
-      - run: mkdir ${{ runner.temp }}/shadow_build_dir
 
       - name: Configure
         working-directory: ${{ runner.temp }}/shadow_build_dir
@@ -68,7 +59,6 @@ jobs:
               -DQT_ANDROID_SIGN_APK=${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && 'ON' || 'OFF' }}
               -DQT_DEBUG_FIND_PACKAGE=ON
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
-              -DCPM_SOURCE_CACHE=${{ env.CPM_SOURCE_CACHE }}
 
       - name: Build
         working-directory: ${{ runner.temp }}/shadow_build_dir
