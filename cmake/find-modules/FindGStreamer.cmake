@@ -670,7 +670,7 @@ target_include_directories(GStreamer::GStreamer
 target_link_directories(GStreamer::GStreamer INTERFACE ${GSTREAMER_LIB_PATH})
 
 if(MACOS AND EXISTS ${GSTREAMER_FRAMEWORK_PATH})
-    target_link_libraries(GStreamer::GStreamer INTERFACE "-F /Library/Frameworks -framework GStreamer")
+    #target_link_libraries(GStreamer::GStreamer INTERFACE "-F /Library/Frameworks -framework GStreamer")
 endif()
 
 ################################################################################
