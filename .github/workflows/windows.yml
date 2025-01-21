@@ -125,6 +125,10 @@ jobs:
         working-directory: ${{ runner.temp }}\shadow_build_dir
         run: cmake --build . --target all --config ${{ matrix.BuildType }}
 
+      - name: Run unit tests
+        working-directory: ${{ runner.temp }}/shadow_build_dir
+        run: .\QGroundControl.exe --unittest:FactSystemTestGeneric
+
       - name: Install
         working-directory: ${{ runner.temp }}\shadow_build_dir
         run: cmake --install . --config ${{ matrix.BuildType }}
