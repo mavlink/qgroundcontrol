@@ -333,7 +333,7 @@ RowLayout {
                         }
                     }
 
-                    QGCLabel { Layout.fillWidth: true; text: qsTr("Initial Vehicle Setup") }
+                    QGCLabel { Layout.fillWidth: true; text: qsTr("Vehicle Configuration") }
                     QGCButton {
                         text: qsTr("Configure")
                         onClicked: {                            
