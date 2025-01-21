@@ -89,20 +89,44 @@ Item {
         return complete
     }
 
-    GridLayout {
+    RowLayout {
         id:                     missionStats
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
         anchors.leftMargin:     _margins
         anchors.left:           parent.left
-        columnSpacing:          0
-        columns:                4
+        spacing:                ScreenTools.defaultFontPixelWidth * 2
+
+        QGCButton {
+            id:          uploadButton
+            text:        _controllerDirty ? qsTr("Upload Required") : qsTr("Upload")
+            enabled:     _utmspEnabled ? !_controllerSyncInProgress && UTMSPStateStorage.enableMissionUploadButton : !_controllerSyncInProgress
+            visible:     !_controllerOffline && !_controllerSyncInProgress
+            primary:     _controllerDirty
+            onClicked: {
+                if (_utmspEnabled) {
+                    QGroundControl.utmspManager.utmspVehicle.triggerActivationStatusBar(true);
+                    UTMSPStateStorage.removeFlightPlanState = true
+                    UTMSPStateStorage.indicatorDisplayStatus = true
+                }
+                _planMasterController.upload();
+            }
+
+            PropertyAnimation on opacity {
+                easing.type:    Easing.OutQuart
+                from:           0.5
+                to:             1
+                loops:          Animation.Infinite
+                running:        _controllerDirty && !_controllerSyncInProgress
+                alwaysRunToEnd: true
+                duration:       2000
+            }
+        }
 
         GridLayout {
             columns:                8
             rowSpacing:             _rowSpacing
             columnSpacing:          _labelToValueSpacing
-            Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
 
             QGCLabel {
                 text:               qsTr("Selected Waypoint")
@@ -156,7 +180,6 @@ Item {
             columns:                5
             rowSpacing:             _rowSpacing
             columnSpacing:          _labelToValueSpacing
-            Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
 
             QGCLabel {
                 text:               qsTr("Total Mission")
@@ -192,7 +215,6 @@ Item {
             columns:                3
             rowSpacing:             _rowSpacing
             columnSpacing:          _labelToValueSpacing
-            Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
             visible:                _batteryInfoAvailable
 
             QGCLabel {
@@ -206,34 +228,6 @@ Item {
                 text:                   _batteriesRequiredText
                 font.pointSize:         _dataFontSize
                 Layout.minimumWidth:    _mediumValueWidth
-            }
-
-            Item { width: 1; height: 1 }
-        }
-
-        QGCButton {
-            id:          uploadButton
-            text:        _controllerDirty ? qsTr("Upload Required") : qsTr("Upload")
-            enabled:     _utmspEnabled ? !_controllerSyncInProgress && UTMSPStateStorage.enableMissionUploadButton : !_controllerSyncInProgress
-            visible:     !_controllerOffline && !_controllerSyncInProgress
-            primary:     _controllerDirty
-            onClicked: {
-                if (_utmspEnabled) {
-                    QGroundControl.utmspManager.utmspVehicle.triggerActivationStatusBar(true);
-                    UTMSPStateStorage.removeFlightPlanState = true
-                    UTMSPStateStorage.indicatorDisplayStatus = true
-                }
-                _planMasterController.upload();
-            }
-
-            PropertyAnimation on opacity {
-                easing.type:    Easing.OutQuart
-                from:           0.5
-                to:             1
-                loops:          Animation.Infinite
-                running:        _controllerDirty && !_controllerSyncInProgress
-                alwaysRunToEnd: true
-                duration:       2000
             }
         }
     }
