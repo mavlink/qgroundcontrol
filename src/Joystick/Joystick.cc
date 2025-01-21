@@ -1053,18 +1053,26 @@ void Joystick::_executeButtonAction(const QString &action, bool buttonDown)
     } else if (action == _buttonActionGimbalUp) {
         if (buttonDown) {
             emit gimbalPitchStart(1);
+        } else {
+            emit gimbalPitchStop();
         }
     } else if (action == _buttonActionGimbalDown) {
         if (buttonDown) {
             emit gimbalPitchStart(-1);
+        } else {
+            emit gimbalPitchStop();
         }
     } else if (action == _buttonActionGimbalLeft) {
         if (buttonDown) {
             emit gimbalYawStart(-1);
+        } else {
+            emit gimbalYawStop();
         }
     } else if (action == _buttonActionGimbalRight) {
         if (buttonDown) {
             emit gimbalYawStart(1);
+        } else {
+            emit gimbalYawStop();
         }
     } else if (action == _buttonActionGimbalCenter) {
         if (buttonDown) {
