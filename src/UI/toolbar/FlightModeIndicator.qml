@@ -217,7 +217,7 @@ RowLayout {
 
                 LabelledButton {
                     Layout.fillWidth:   true
-                    label:              qsTr("RC Transmitter Flight Modes")
+                    label:              qsTr("RC Transmitter")
                     buttonText:         qsTr("Configure")
 
                     onClicked: {
