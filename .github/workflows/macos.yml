@@ -43,21 +43,18 @@ jobs:
         with:
           submodules: recursive
           fetch-tags: true
-          fetch-depth: 0
+
+      - name: Initial Setup
+        uses: ./.github/actions/common
 
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
 
-      - uses: seanmiddleditch/gha-setup-ninja@v5
-
       - name: Install Dependencies
         working-directory: ${{ github.workspace }}/tools/setup
         run: sh macos-dependencies.sh
-
-      - uses: lukka/get-cmake@latest
-      - uses: seanmiddleditch/gha-setup-ninja@v5
 
       - name: Install GStreamer
         run: |
@@ -68,20 +65,13 @@ jobs:
           done
           echo "PKG_CONFIG_PATH=/Library/Frameworks/GStreamer.framework/lib/pkgconfig:/Library/Frameworks/GStreamer.framework/lib/gstreamer-1.0/pkgconfig:${{ env.PKG_CONFIG_PATH }}" >> "$GITHUB_ENV"
 
-      - name: Set Up Cache
-        uses: hendrikmuhs/ccache-action@main
+      - name: Setup Caching
+        uses: ./.github/actions/cache
         with:
-          create-symlink: true
-          key: ${{ runner.os }}-${{ matrix.BuildType }}
-          max-size: 1G
-          save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
-          verbose: 1
-          evict-old-files: 'job'
-
-      - uses: actions/cache@v4
-        with:
-          path: ${{ env.CPM_SOURCE_CACHE }}
-          key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
+          host: mac
+          target: clang_64
+          build-type: ${{ matrix.BuildType }}
+          cpm-modules: ${{ env.CPM_SOURCE_CACHE }}
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
@@ -92,7 +82,6 @@ jobs:
           arch: clang_64
           dir: ${{ runner.temp }}
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
-          cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
       - name: Import Code Signing Certificate
         if: github.event_name != 'pull_request'
@@ -101,8 +90,6 @@ jobs:
           p12-file-base64: ${{ secrets.MACOS_SIGNING_CERTS_P12 }}
           p12-password: ${{ secrets.MACOS_SIGNING_CERTS_PASS }}
 
-      - run: mkdir ${{ runner.temp }}/shadow_build_dir
-
       - name: Configure
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
@@ -110,7 +97,6 @@ jobs:
               -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64"
               -DMACOS_SIGNING_IDENTITY=${{ secrets.MACOS_SIGNING_IDENTITY }}
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
-              -DCPM_SOURCE_CACHE=${{ env.CPM_SOURCE_CACHE }}
 
       - name: Build
         working-directory: ${{ runner.temp }}/shadow_build_dir
