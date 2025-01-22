@@ -102,12 +102,39 @@ endif()
 
 #===========================================================================#
 
-include(CPM)
+set(EXIV2_VERSION 0.28.3)
+
+if(NOT QGC_BUILD_DEPENDENCIES)
+    if(MSVC)
+        set(EXIV2_RELEASE_URL "https://github.com/Exiv2/exiv2/releases/download/v${EXIV2_VERSION}/exiv2-${EXIV2_VERSION}-2019msvc64.zip")
+    elseif(LINUX)
+        set(EXIV2_RELEASE_URL "https://github.com/Exiv2/exiv2/releases/download/v${EXIV2_VERSION}/exiv2-${EXIV2_VERSION}-Linux64.tar.gz")
+    elseif(MACOS)
+        set(EXIV2_RELEASE_URL "https://github.com/Exiv2/exiv2/releases/download/v${EXIV2_VERSION}/exiv2-${EXIV2_VERSION}-Darwin.tar.gz")
+    endif()
+endif()
+
+if(EXIV2_RELEASE_URL)
+    include(CPM)
+    CPMAddPackage(
+        NAME exiv2
+        URL ${EXIV2_RELEASE_URL}
+        VERSION ${EXIV2_VERSION}
+        DOWNLOAD_ONLY
+    )
+
+    if(exiv2_ADDED)
+        target_include_directories(AnalyzeView PRIVATE ${exiv2_SOURCE_DIR}/include)
+        target_link_directories(AnalyzeView PUBLIC ${exiv2_SOURCE_DIR}/lib)
+        target_link_libraries(AnalyzeView PRIVATE exiv2)
+        return()
+    endif()
+endif()
 
 # https://github.com/libexpat/libexpat/releases/download/R_2_6_4/expat-win32bin-2.6.4.zip
 
 CPMFindPackage(
-    NAME expat
+    NAME EXPAT
     VERSION 2.2.6
     GITHUB_REPOSITORY libexpat/libexpat
     GIT_TAG "R_2_6_4"
@@ -123,25 +150,16 @@ CPMFindPackage(
         "EXPAT_SHARED_LIBS OFF"
 )
 
-# if(MSVC)
-#     set(EXIV2_URL "https://github.com/Exiv2/exiv2/releases/download/v${EXIV2_VERSION}/exiv2-${EXIV2_VERSION}-2019msvc64.zip")
-# elseif(LINUX)
-#     set(EXIV2_URL "https://github.com/Exiv2/exiv2/releases/download/v${EXIV2_VERSION}/exiv2-${EXIV2_VERSION}-Linux64.tar.gz")
-# elseif(MACOS)
-#     set(EXIV2_URL "https://github.com/Exiv2/exiv2/releases/download/v${EXIV2_VERSION}/exiv2-${EXIV2_VERSION}-Darwin.tar.gz")
-# endif()
-
 if(TARGET EXPAT::EXPAT)
     set(_EXIV2_ENABLE_XMP ON)
 else()
     set(_EXIV2_ENABLE_XMP OFF)
 endif()
 
-CPMAddPackage(
+CPMFindPackage(
     NAME exiv2
-    VERSION 0.28
+    VERSION ${EXIV2_VERSION}
     GITHUB_REPOSITORY Exiv2/exiv2
-    GIT_TAG v0.28.3
     OPTIONS
         "EXIV2_ENABLE_XMP ${_EXIV2_ENABLE_XMP}"
         "EXIV2_ENABLE_EXTERNAL_XMP OFF"
@@ -161,7 +179,7 @@ CPMAddPackage(
         "EXIV2_BUILD_UNIT_TESTS OFF"
         "EXIV2_BUILD_FUZZ_TESTS OFF"
         "EXIV2_BUILD_DOC OFF"
-        "BUILD_WITH_CCACHE ON"
+        "BUILD_WITH_CCACHE OFF"
 )
 
 if(TARGET Exiv2::exiv2lib)

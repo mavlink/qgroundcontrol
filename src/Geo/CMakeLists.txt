@@ -22,9 +22,17 @@ if(LINUX AND EXISTS "/usr/share/cmake/geographiclib")
 endif()
 
 include(CPM)
-CPMAddPackage(
+# CPMAddPackage(
+#     NAME geographiclib
+#     VERSION 2.5
+#     URL https://sourceforge.net/projects/geographiclib/files/distrib-C%2B%2B/GeographicLib-2.5.tar.gz/download
+#     DOWNLOAD_ONLY
+#     SOURCE_SUBDIR src
+# )
+
+CPMFindPackage(
     NAME geographiclib
-    VERSION 2.3
+    VERSION 2.5
     GITHUB_REPOSITORY geographiclib/geographiclib
     GIT_TAG r2.5
     OPTIONS
@@ -43,6 +51,8 @@ CPMAddPackage(
         "PKGDIR OFF"
         "DOCDIR OFF"
         "EXAMPLEDIR OFF"
+    EXCLUDE_FROM_ALL
+    SYSTEM
 )
 
 if(TARGET GeographicLib::GeographicLib)
