@@ -59,9 +59,9 @@ mark_as_advanced(Shapelib_INCLUDE_DIR Shapelib_LIBRARY)
 if(Shapelib_FOUND)
     set(Shapelib_INCLUDE_DIRS "${Shapelib_INCLUDE_DIR}")
     set(Shapelib_LIBRARIES "${Shapelib_LIBRARY}")
-    if(NOT TARGET SHAPELIB::shp)
-        add_library(SHAPELIB::shp UNKNOWN IMPORTED)
-        set_target_properties(SHAPELIB::shp PROPERTIES
+    if(NOT TARGET shapelib::shp)
+        add_library(shapelib::shp UNKNOWN IMPORTED)
+        set_target_properties(shapelib::shp PROPERTIES
                               INTERFACE_INCLUDE_DIRECTORIES "${Shapelib_INCLUDE_DIR}"
                               IMPORTED_LINK_INTERFACE_LANGUAGES C
                               IMPORTED_LOCATION "${Shapelib_LIBRARY}")
