@@ -61,7 +61,7 @@ runs:
       uses: ./.github/actions/cache
       with:
         host: ${{ inputs.host }}
-        target: ${{ inputs.arch }}
+        target: android
         build-type: ${{ matrix.BuildType }}
         cpm-modules: ${{ inputs.cpm-cache }}
 
