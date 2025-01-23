@@ -50,6 +50,7 @@
         { "vendorID": 9900, "productID": 4130,      "boardClass": "Pixhawk",    "name": "mRo Control Zero Classic" },
         { "vendorID": 9900, "productID": 4131,      "boardClass": "Pixhawk",    "name": "mRo Control Zero H7" },
         { "vendorID": 9900, "productID": 4132,      "boardClass": "Pixhawk",    "name": "mRo Control Zero H7 OEM" },
+        { "vendorID": 9900, "productID": 4388,      "boardClass": "Pixhawk",    "name": "3DR Control Zero H7 OEM Rev G" },
 
         { "vendorID": 1027, "productID": 24597,     "boardClass": "SiK Radio",  "name": "SiK Radio",            "comment": "3DR Radio" },
         { "vendorID": 1027, "productID": 24577,     "boardClass": "SiK Radio",  "name": "SiK Radio",            "comment": "3DR Radio on FTDI" },
