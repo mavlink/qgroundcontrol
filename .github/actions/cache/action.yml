@@ -37,22 +37,22 @@ runs:
         sudo make install
 
     - name: Setup sccache (Windows)
-      if: runner.os == 'Windows'
+      if: runner.os == 'Windows' && inputs.target != 'android'
       uses: mozilla-actions/sccache-action@v0.0.7
 
     - run: echo "SCCACHE_GHA_ENABLED=true" >> "$GITHUB_ENV"
-      if: runner.os == 'Windows'
+      if: runner.os == 'Windows' && inputs.target != 'android'
       shell: bash
 
     - name: Setup Build Cache
       uses: hendrikmuhs/ccache-action@main
       with:
         create-symlink: ${{ runner.os != 'Windows' }}
-        variant: ${{ runner.os == 'Windows' && 'sccache' || 'ccache' }}
-        key: ${{ inputs.host }}-ccache-${{ inputs.target }}-${{ inputs.build-type }}
+        variant: ${{ runner.os == 'Windows' && inputs.target != 'android' && 'sccache' || 'ccache' }}
+        key: ${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}
         restore-keys: |
-          ${{ inputs.host }}-ccache-${{ inputs.target }}
-          ${{ inputs.host }}-ccache-
+          ${{ inputs.host }}-${{ inputs.target }}
+          ${{ inputs.host }}-
         max-size: 1G
         verbose: 1
         evict-old-files: job
@@ -62,7 +62,7 @@ runs:
       shell: bash
 
     - name: Cache CPM Modules
-      if: (inputs.cpm-modules != '')
+      if: inputs.cpm-modules != ''
       uses: actions/cache@v4
       with:
         path: ${{ inputs.cpm-modules }}
