@@ -65,7 +65,7 @@ You **must install Qt as described below** instead of using pre-built packages f
 
 To install Qt:
 
-1. Download and run the [Qt Online Installer](http://www.qt.io/download-open-source)
+1. Download and run the [Qt Online Installer](https://www.qt.io/download-qt-installer-oss)
    - **Ubuntu:**
      - Set the downloaded file to executable using: `chmod +x`.
      - You may also need to install libxcb-cursor0
@@ -75,12 +75,13 @@ To install Qt:
 1. On the _Select Components_ page:
 
    - I you don't see _Qt {{ $frontmatter.qt_version }}_ listed check the _Archive_ checkbox and click _Filter_.
-	- Under _Qt {{ $frontmatter.qt_version }}_ select:
-	   - **Windows**: MSVC 2022 _arch_ - where _arch_ is the architecture of your machine
-	   - **Mac**: Desktop
-	   - **Linux**: Desktop gcc 64-bit
-	   - **Android**: Android
-	- Select all _Additional Libraries_
+- Under Qt -> _Qt {{ $frontmatter.qt_version }}_ select:
+   - **Windows**: MSVC 2022 _arch_ - where _arch_ is the architecture of your machine
+   - **Mac**: Desktop
+   - **Linux**: Desktop gcc 64-bit
+   - **Android**: Android
+- Select all _Additional Libraries_
+- Deselect QT Design Studio
 
 1. Install Additional Packages (Platform Specific)
 
@@ -123,7 +124,7 @@ Visual Studio is ONLY used to get the compiler. Building _QGroundControl_ is don
 
    ![QtCreator Build Button](../../../assets/dev_getting_started/qt_creator_build_qgc.png)
 
-#### Build using cmake on CLI {#cmake}
+#### Build using CMake on CLI {#cmake}
 
 Example commands to build a default QGC and run it afterwards:
 
@@ -148,7 +149,7 @@ Example commands to build a default QGC and run it afterwards:
 1. Run the QGroundcontrol binary that was just built:
 
    ```sh
-   ./build/QGroundControl
+   ./build/Debug/QGroundControl
    ```
 
 ### Vagrant
