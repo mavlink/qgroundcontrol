@@ -8,6 +8,7 @@
  ****************************************************************************/
 
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 
 import QGroundControl
@@ -405,5 +406,23 @@ Item {
     MouseArea {
         anchors.fill:   parent
         onClicked:      mainWindow.showIndicatorDrawer(gimbalControlsPage, control)
+    }
+
+    Connections {
+        id:                         acquirePopupConnection
+        property bool isPopupOpen:  false
+        target:                     gimbalController
+        onShowAcquireGimbalControlPopup: {
+            if(!acquirePopupConnection.isPopupOpen){
+                acquirePopupConnection.isPopupOpen = true;
+                mainWindow.showMessageDialog(
+                    "Request Gimbal Control?",
+                    "Command not sent. Another user has control of the gimbal.",
+                    Dialog.Yes | Dialog.No,
+                    gimbalController.acquireGimbalControl,
+                    function() { acquirePopupConnection.isPopupOpen = false }
+                )
+            }
+        }
     }
 }
