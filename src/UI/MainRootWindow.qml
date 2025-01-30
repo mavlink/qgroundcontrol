@@ -45,6 +45,16 @@ ApplicationWindow {
 
         // Start the sequence of first run prompt(s)
         firstRunPromptManager.nextPrompt()
+
+        if (QGroundControl.runBootTest) {
+            bootTestTimer.start()
+        }
+    }
+
+    Timer {
+        id:             bootTestTimer
+        interval:       1000
+        onTriggered:    mainWindow.finishCloseProcess()
     }
 
     QtObject {

@@ -60,6 +60,9 @@ public:
     /// Returns true if unit tests are being run
     bool runningUnitTests() const { return _runningUnitTests; }
 
+    /// Returns true if the application is running a release build boot test
+    bool runReleaseBuildBootTest() const { return _runReleaseBuildBootTest; }
+
     /// Returns true if Qt debug output should be logged to a file
     bool logOutput() const { return _logOutput; }
 
@@ -135,6 +138,7 @@ private:
     void _checkForNewVersion();
 
     bool _runningUnitTests = false;                                         ///< true: running unit tests, false: normal app
+    bool _runReleaseBuildBootTest = false;                                  ///< true: Run simple boot test to verify release builds aren't hosed in CI
     static constexpr int _missingParamsDelayedDisplayTimerTimeout = 1000;   ///< Timeout to wait for next missing fact to come in before display
     QTimer _missingParamsDelayedDisplayTimer;                               ///< Timer use to delay missing fact display
     QList<QPair<int,QString>> _missingParams;                               ///< List of missing parameter component id:name

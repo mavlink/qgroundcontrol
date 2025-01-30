@@ -112,18 +112,18 @@ QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting)
     QNetworkProxyFactory::setUseSystemConfiguration(true);
 
     // Parse command line options
-    bool fClearSettingsOptions = false; // Clear stored settings
-    bool fClearCache = false;           // Clear parameter/airframe caches
-    bool logging = false;               // Turn on logging
+    bool fClearSettingsOptions = false;     // Clear stored settings
+    bool fClearCache = false;               // Clear parameter/airframe caches
+    bool logging = false;                   // Turn on logging
     QString loggingOptions;
 
     CmdLineOpt_t rgCmdLineOptions[] = {
-        { "--clear-settings",   &fClearSettingsOptions, nullptr },
-        { "--clear-cache",      &fClearCache,           nullptr },
-        { "--logging",          &logging,               &loggingOptions },
-        { "--fake-mobile",      &_fakeMobile,           nullptr },
-        { "--log-output",       &_logOutput,            nullptr },
-        // Add additional command line option flags here
+        { "--clear-settings",       &fClearSettingsOptions,     nullptr },
+        { "--clear-cache",          &fClearCache,               nullptr },
+        { "--logging",              &logging,                   &loggingOptions },
+        { "--fake-mobile",          &_fakeMobile,               nullptr },
+        { "--log-output",           &_logOutput,                nullptr },
+        { "--release-boot-test",    &_runReleaseBuildBootTest,  nullptr },
     };
 
     ParseCmdLineOptions(argc, argv, rgCmdLineOptions, std::size(rgCmdLineOptions), false);

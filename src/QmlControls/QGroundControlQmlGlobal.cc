@@ -429,3 +429,8 @@ void QGroundControlQmlGlobal::clearDeleteAllSettingsNextBoot()
 {
     qgcApp()->clearDeleteAllSettingsNextBoot();
 }
+
+bool QGroundControlQmlGlobal::runBootTest() 
+{ 
+    return qgcApp()->runReleaseBuildBootTest(); 
+}
