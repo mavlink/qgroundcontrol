@@ -112,8 +112,8 @@ jobs:
 
       - name: Sanity check release builds
         if: matrix.BuildType == 'Release'
-        working-directory: ${{ runner.temp }}/shadow_build_dir
-        run: Release/QGroundControl.exe --release-boot-test
+        working-directory: ${{ runner.temp }}/shadow_build_dir/Release
+        run: QGroundControl.exe --release-boot-test
 
       - name: Install
         working-directory: ${{ runner.temp }}\shadow_build_dir
