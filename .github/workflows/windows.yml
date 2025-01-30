@@ -115,7 +115,7 @@ jobs:
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run: .\QGroundControl.exe --release-boot-test
 
-        - name: Install
+      - name: Install
         working-directory: ${{ runner.temp }}\shadow_build_dir
         run: cmake --install . --config ${{ matrix.BuildType }}
 
