@@ -113,6 +113,9 @@ jobs:
       - name: Sanity check release builds
         if: matrix.BuildType == 'Release'
         working-directory: ${{ runner.temp }}/shadow_build_dir/Release
+        env:
+          QT_QUICK_BACKEND: "software"
+          QT_QPA_PLATFORM: "offscreen"
         run: QGroundControl.exe --release-boot-test
 
       - name: Install
