@@ -537,33 +537,38 @@ qt_import_plugins(${CMAKE_PROJECT_NAME}
 #		Install Configuration
 #######################################################
 
-include(InstallRequiredSystemLibraries)
-
 install(
     TARGETS ${CMAKE_PROJECT_NAME}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     BUNDLE  DESTINATION .
 )
 
-set(deploy_tool_options_arg "")
-if(MACOS)
-    if(MACOS_SIGNING_IDENTITY)
-        message(STATUS "Signing MacOS Bundle")
-        set(deploy_tool_options_arg -qmldir=${CMAKE_SOURCE_DIR} -verbose=2 -sign-for-notarization=${MACOS_SIGNING_IDENTITY}) # -dmg
-    endif()
-endif()
+if(NOT MACOS)
+    include(InstallRequiredSystemLibraries)
 
-qt_generate_deploy_qml_app_script(
-    TARGET ${CMAKE_PROJECT_NAME}
-    OUTPUT_SCRIPT deploy_script
-    DEPLOY_TOOL_OPTIONS ${deploy_tool_options_arg}
-    MACOS_BUNDLE_POST_BUILD
-    NO_UNSUPPORTED_PLATFORM_ERROR
-    DEPLOY_USER_QML_MODULES_ON_UNSUPPORTED_PLATFORM
-)
-install(SCRIPT ${deploy_script})
+    install(
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    )
+    
+    set(deploy_tool_options_arg "")
+    if(MACOS)
+        if(MACOS_SIGNING_IDENTITY)
+            message(STATUS "Signing MacOS Bundle")
+            set(deploy_tool_options_arg -qmldir=${CMAKE_SOURCE_DIR} -verbose=2 -sign-for-notarization=${MACOS_SIGNING_IDENTITY}) # -dmg
+        endif()
+    endif()
+
+    qt_generate_deploy_qml_app_script(
+        TARGET ${CMAKE_PROJECT_NAME}
+        OUTPUT_SCRIPT deploy_script
+        DEPLOY_TOOL_OPTIONS ${deploy_tool_options_arg}
+        MACOS_BUNDLE_POST_BUILD
+        NO_UNSUPPORTED_PLATFORM_ERROR
+        DEPLOY_USER_QML_MODULES_ON_UNSUPPORTED_PLATFORM
+    )
+    install(SCRIPT ${deploy_script})
+endif()
 
 if(ANDROID)
     # get_target_property(QGC_ANDROID_DEPLOY_FILE ${CMAKE_PROJECT_NAME} QT_ANDROID_DEPLOYMENT_SETTINGS_FILE)
@@ -600,8 +605,8 @@ elseif(LINUX)
 elseif(WIN32)
     install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/CreateWinInstaller.cmake")
 elseif(MACOS)
-    install(CODE "set(OSXRELOCATOR ${CMAKE_SOURCE_DIR}/deploy/macos/osxrelocator.py)")
-    install(CODE "set(TARGET_NAME ${QGC_APP_NAME})")
+    install(CODE "set(TARGET_APP_NAME ${QGC_APP_NAME})")
+    install(CODE "set(MACDEPLOYQT ${Qt6_DIR}/../../../bin/macdeployqt)")
     install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/CreateMacDMG.cmake")
 endif()
 

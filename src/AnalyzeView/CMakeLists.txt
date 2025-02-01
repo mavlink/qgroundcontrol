@@ -107,8 +107,6 @@ set(EXIV2_VERSION 0.28.3)
 if(NOT QGC_BUILD_DEPENDENCIES)
     if(LINUX)
         set(EXIV2_RELEASE_URL "https://github.com/Exiv2/exiv2/releases/download/v${EXIV2_VERSION}/exiv2-${EXIV2_VERSION}-Linux64.tar.gz")
-    elseif(MACOS)
-        set(EXIV2_RELEASE_URL "https://github.com/Exiv2/exiv2/releases/download/v${EXIV2_VERSION}/exiv2-${EXIV2_VERSION}-Darwin.tar.gz")
     endif()
 endif()
 
