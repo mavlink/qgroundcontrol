@@ -27,7 +27,7 @@ CorridorScanComplexItem::CorridorScanComplexItem(PlanMasterController* masterCon
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/CorridorScan.SettingsGroup.json"), this))
     , _corridorWidthFact        (settingsGroup, _metaDataMap[corridorWidthName])
 {
-    _editorQml = "qrc:/qml/CorridorScanEditor.qml";
+    _editorQml = "qrc:/qml/QGroundControl/PlanView/CorridorScanEditor.qml";
 
     // We override the altitude to the mission default
     if (_cameraCalc.isManualCamera() || !_cameraCalc.valueSetIsDistance()->rawValue().toBool()) {

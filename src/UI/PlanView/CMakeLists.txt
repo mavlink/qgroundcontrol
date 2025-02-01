@@ -1,0 +1,11 @@
+project(PlanViewplugin)
+
+file(GLOB_RECURSE MODULE_QML_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.qml)
+
+qt_add_qml_module(${PROJECT_NAME}
+    URI QGroundControl.PlanView
+    VERSION 1.0
+    STATIC
+    RESOURCE_PREFIX /qml
+    QML_FILES ${MODULE_QML_FILES}
+)

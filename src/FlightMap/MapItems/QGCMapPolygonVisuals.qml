@@ -20,6 +20,7 @@ import QGroundControl.Palette
 import QGroundControl.Controls
 import QGroundControl.FlightMap
 import QGroundControl.ShapeFileHelper
+import QGroundControl.PlanView
 
 /// QGCMapPolygon map visuals
 Item {
