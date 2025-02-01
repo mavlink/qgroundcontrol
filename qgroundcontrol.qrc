@@ -32,7 +32,6 @@
         <file alias="ADSBServerSettings.qml">src/UI/preferences/ADSBServerSettings.qml</file>
         <file alias="AirLinkSettings.qml">src/Comms/AirLink/AirLinkSettings.qml</file>
         <file alias="AnalyzeView.qml">src/AnalyzeView/AnalyzeView.qml</file>
-        <file alias="AppSettings.qml">src/UI/AppSettings.qml</file>
         <file alias="BluetoothSettings.qml">src/UI/preferences/BluetoothSettings.qml</file>
         <file alias="CorridorScanEditor.qml">src/PlanView/CorridorScanEditor.qml</file>
         <file alias="RemoteIDSettings.qml">src/UI/preferences/RemoteIDSettings.qml</file>
@@ -59,7 +58,6 @@
         <file alias="LinkSettings.qml">src/UI/preferences/LinkSettings.qml</file>
         <file alias="LogDownloadPage.qml">src/AnalyzeView/LogDownloadPage.qml</file>
         <file alias="LogReplaySettings.qml">src/UI/preferences/LogReplaySettings.qml</file>
-        <file alias="MainRootWindow.qml">src/UI/MainRootWindow.qml</file>
         <file alias="MapSettings.qml">src/UI/preferences/MapSettings.qml</file>
         <file alias="MAVLinkConsolePage.qml">src/AnalyzeView/MAVLinkConsolePage.qml</file>
         <file alias="MAVLinkInspectorPage.qml">src/AnalyzeView/MAVLinkInspectorPage.qml</file>
@@ -273,14 +271,11 @@
         <file alias="QGroundControl/FlightMap/QGCPitchIndicator.qml">src/FlightMap/Widgets/QGCPitchIndicator.qml</file>
         <file alias="QGroundControl/FlightMap/qmldir">src/QmlControls/QGroundControl/FlightMap/qmldir</file>
         <file alias="QGroundControl/FlightMap/VehicleMapItem.qml">src/FlightMap/MapItems/VehicleMapItem.qml</file>
-        <file alias="QGroundControl/ScreenTools/qmldir">src/QmlControls/QGroundControl/ScreenTools/qmldir</file>
-        <file alias="QGroundControl/ScreenTools/ScreenTools.qml">src/QmlControls/ScreenTools.qml</file>
         <file alias="RadioComponent.qml">src/AutoPilotPlugins/Common/RadioComponent.qml</file>
         <file alias="SerialSettings.qml">src/UI/preferences/SerialSettings.qml</file>
         <file alias="SetupParameterEditor.qml">src/VehicleSetup/SetupParameterEditor.qml</file>
         <file alias="SetupView.qml">src/VehicleSetup/SetupView.qml</file>
         <file alias="SettingsPage.qml">src/UI/preferences/SettingsPage.qml</file>
-        <file alias="SettingsPagesModel.qml">src/UI/SettingsPagesModel.qml</file>
         <file alias="SimpleItemEditor.qml">src/PlanView/SimpleItemEditor.qml</file>
         <file alias="StructureScanEditor.qml">src/PlanView/StructureScanEditor.qml</file>
         <file alias="SurveyItemEditor.qml">src/PlanView/SurveyItemEditor.qml</file>

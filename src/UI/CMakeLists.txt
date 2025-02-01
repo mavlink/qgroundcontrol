@@ -1,27 +1,16 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Qml)
+project(UIplugin)
 
-qt_add_library(UI STATIC)
+add_subdirectory(ScreenTools)
 
-file(GLOB_RECURSE QML_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.qml)
-file(GLOB QML_RESOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/toolbar/Images/*.*)
-qt_add_qml_module(UI
-    URI QGroundControl.UI
+qt_add_qml_module(${PROJECT_NAME}
+    URI QGroundControl
     VERSION 1.0
-    QML_FILES ${QML_SOURCES}
-    RESOURCES ${QML_RESOURCES}
-    OUTPUT_TARGETS UI_targets
-    IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
-    IMPORTS
-        QtQuick
-        QtQuick.Controls
-        QtQuick.Dialogs
-        QtQuick.Layouts
-        QtQuick.Window
-
-        QGroundControl
-        QGroundControl.Palette
-        QGroundControl.Controls
-        QGroundControl.ScreenTools
-        QGroundControl.FlightDisplay
-        QGroundControl.FlightMap
+    STATIC
+    RESOURCE_PREFIX /qml
+    QML_FILES
+        AppSettings.qml
+        MainRootWindow.qml
+        SettingsPagesModel.qml
 )
+
+target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Quick)
