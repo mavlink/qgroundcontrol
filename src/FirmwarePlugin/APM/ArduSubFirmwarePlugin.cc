@@ -213,9 +213,9 @@ const QVariantList& ArduSubFirmwarePlugin::toolIndicators(const Vehicle* vehicle
     //-- Sub specific list of indicators (Enter your modified list here)
     if(_toolIndicators.size() == 0) {
         _toolIndicators = QVariantList({
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/MessageIndicator.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/BatteryIndicator.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/JoystickIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/MessageIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/BatteryIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/JoystickIndicator.qml")),
         });
     }
     return _toolIndicators;
@@ -227,9 +227,9 @@ const QVariantList& ArduSubFirmwarePlugin::modeIndicators(const Vehicle* vehicle
     //-- Sub specific list of indicators (Enter your modified list here)
     if(_modeIndicators.size() == 0) {
         _modeIndicators = QVariantList({
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ModeIndicator.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ArmedIndicator.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/MultiVehicleSelector.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/ModeIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/ArmedIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/MultiVehicleSelector.qml")),
         });
     }
     return _modeIndicators;

@@ -655,7 +655,7 @@ const QVariantList& APMFirmwarePlugin::toolIndicators(const Vehicle* vehicle)
         }
 
         // Then add the forwarding support indicator
-        _toolIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/APMSupportForwardingIndicator.qml")));
+        _toolIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/APMSupportForwardingIndicator.qml")));
     }
 
     return _toolIndicatorList;

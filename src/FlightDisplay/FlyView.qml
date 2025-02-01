@@ -26,6 +26,7 @@ import QGroundControl.FlightMap
 import QGroundControl.Palette
 import QGroundControl.ScreenTools
 import QGroundControl.Vehicle
+import QGroundControl.Toolbar
 
 // 3D Viewer modules
 import Viewer3D

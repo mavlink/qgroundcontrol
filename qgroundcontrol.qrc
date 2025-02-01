@@ -1,19 +1,4 @@
 <RCC>
-    <qresource prefix="/toolbar">
-        <file alias="ArmedIndicator.qml">src/UI/toolbar/ArmedIndicator.qml</file>
-        <file alias="RTKGPSIndicator.qml">src/UI/toolbar/RTKGPSIndicator.qml</file>
-        <file alias="VehicleGPSIndicator.qml">src/UI/toolbar/VehicleGPSIndicator.qml</file>
-        <file alias="JoystickIndicator.qml">src/UI/toolbar/JoystickIndicator.qml</file>
-        <file alias="LinkIndicator.qml">src/UI/toolbar/LinkIndicator.qml</file>
-        <file alias="MessageIndicator.qml">src/UI/toolbar/MessageIndicator.qml</file>
-        <file alias="ModeIndicator.qml">src/UI/toolbar/ModeIndicator.qml</file>
-        <file alias="MultiVehicleSelector.qml">src/UI/toolbar/MultiVehicleSelector.qml</file>
-        <file alias="RCRSSIIndicator.qml">src/UI/toolbar/RCRSSIIndicator.qml</file>
-        <file alias="RemoteIDIndicator.qml">src/UI/toolbar/RemoteIDIndicator.qml</file>
-        <file alias="TelemetryRSSIIndicator.qml">src/UI/toolbar/TelemetryRSSIIndicator.qml</file>
-        <file alias="APMSupportForwardingIndicator.qml">src/UI/toolbar/APMSupportForwardingIndicator.qml</file>
-        <file alias="GimbalIndicator.qml">src/UI/toolbar/GimbalIndicator.qml</file>
-    </qresource>
     <qresource prefix="/checklists">
         <file alias="DefaultChecklist.qml">src/FlightDisplay/DefaultChecklist.qml</file>
         <file alias="MultiRotorChecklist.qml">src/FlightDisplay/MultiRotorChecklist.qml</file>
@@ -63,7 +48,6 @@
         <file alias="ActuatorFact.qml">src/AutoPilotPlugins/PX4/ActuatorFact.qml</file>
         <file alias="ActuatorSlider.qml">src/AutoPilotPlugins/PX4/ActuatorSlider.qml</file>
         <file alias="PlanViewSettings.qml">src/UI/preferences/PlanViewSettings.qml</file>
-        <file alias="PlanViewToolBar.qml">src/UI/toolbar/PlanViewToolBar.qml</file>
         <file alias="PreFlightCheckList.qml">src/FlightDisplay/PreFlightCheckList.qml</file>
         <file alias="OpticalFlowSensor.qml">src/VehicleSetup/OpticalFlowSensor.qml</file>
         <file alias="VerticalCompassAttitude.qml">src/FlightMap/Widgets/VerticalCompassAttitude.qml</file>
@@ -72,7 +56,6 @@
         <file alias="QGroundControl/Controls/AppMessages.qml">src/QmlControls/AppMessages.qml</file>
         <file alias="QGroundControl/Controls/AltModeDialog.qml">src/QmlControls/AltModeDialog.qml</file>
         <file alias="QGroundControl/Controls/AxisMonitor.qml">src/QmlControls/AxisMonitor.qml</file>
-        <file alias="QGroundControl/Controls/BatteryIndicator.qml">src/UI/toolbar/BatteryIndicator.qml</file>
         <file alias="QGroundControl/Controls/ClickableColor.qml">src/QmlControls/ClickableColor.qml</file>
         <file alias="QGroundControl/Controls/DeadMouseArea.qml">src/QmlControls/DeadMouseArea.qml</file>
         <file alias="QGroundControl/Controls/DropButton.qml">src/QmlControls/DropButton.qml</file>
@@ -83,17 +66,13 @@
         <file alias="QGroundControl/Controls/FactSliderPanel.qml">src/QmlControls/FactSliderPanel.qml</file>
         <file alias="QGroundControl/Controls/FirstRunPrompt.qml">src/FirstRunPromptDialogs/FirstRunPrompt.qml</file>
         <file alias="QGroundControl/Controls/FileButton.qml">src/QmlControls/FileButton.qml</file>
-        <file alias="QGroundControl/Controls/FlightModeIndicator.qml">src/UI/toolbar/FlightModeIndicator.qml</file>
         <file alias="QGroundControl/Controls/FlightModeMenu.qml">src/QmlControls/FlightModeMenu.qml</file>
-        <file alias="QGroundControl/Controls/GPSIndicator.qml">src/UI/toolbar/GPSIndicator.qml</file>
-        <file alias="QGroundControl/Controls/GPSIndicatorPage.qml">src/UI/toolbar/GPSIndicatorPage.qml</file>
         <file alias="QGroundControl/Controls/HorizontalFactValueGrid.qml">src/QmlControls/HorizontalFactValueGrid.qml</file>
         <file alias="QGroundControl/Controls/IndicatorButton.qml">src/QmlControls/IndicatorButton.qml</file>
         <file alias="QGroundControl/Controls/LabelledButton.qml">src/QmlControls/LabelledButton.qml</file>
         <file alias="QGroundControl/Controls/LabelledComboBox.qml">src/QmlControls/LabelledComboBox.qml</file>
         <file alias="QGroundControl/Controls/LabelledLabel.qml">src/QmlControls/LabelledLabel.qml</file>
         <file alias="QGroundControl/Controls/MotorComponent.qml">src/AutoPilotPlugins/Common/MotorComponent.qml</file>
-        <file alias="QGroundControl/Controls/RemoteIDIndicatorPage.qml">src/UI/toolbar/RemoteIDIndicatorPage.qml</file>
         <file alias="QGroundControl/Controls/SettingsGroupLayout.qml">src/QmlControls/SettingsGroupLayout.qml</file>
         <file alias="QGroundControl/Controls/InstrumentValueLabel.qml">src/QmlControls/InstrumentValueLabel.qml</file>
         <file alias="QGroundControl/Controls/InstrumentValueValue.qml">src/QmlControls/InstrumentValueValue.qml</file>
@@ -101,9 +80,6 @@
         <file alias="QGroundControl/Controls/JoystickThumbPad.qml">src/QmlControls/JoystickThumbPad.qml</file>
         <file alias="QGroundControl/Controls/KMLOrSHPFileDialog.qml">src/QmlControls/KMLOrSHPFileDialog.qml</file>
         <file alias="QGroundControl/Controls/LogReplayStatusBar.qml">src/QmlControls/LogReplayStatusBar.qml</file>
-        <file alias="QGroundControl/Controls/MainStatusIndicator.qml">src/UI/toolbar/MainStatusIndicator.qml</file>
-        <file alias="QGroundControl/Controls/FlightModeMenuIndicator.qml">src/UI/toolbar/FlightModeMenuIndicator.qml</file>
-        <file alias="QGroundControl/Controls/MainStatusIndicatorOfflinePage.qml">src/UI/toolbar/MainStatusIndicatorOfflinePage.qml</file>
         <file alias="QGroundControl/Controls/MainWindowSavedState.qml">src/QmlControls/MainWindowSavedState.qml</file>
         <file alias="QGroundControl/Controls/MAVLinkChart.qml">src/QmlControls/MAVLinkChart.qml</file>
         <file alias="QGroundControl/Controls/MAVLinkMessageButton.qml">src/QmlControls/MAVLinkMessageButton.qml</file>
@@ -164,7 +140,6 @@
         <file alias="QGroundControl/Controls/SectionHeader.qml">src/QmlControls/SectionHeader.qml</file>
         <file alias="QGroundControl/Controls/SelectableControl.qml">src/QmlControls/SelectableControl.qml</file>
         <file alias="QGroundControl/Controls/SetupPage.qml">src/AutoPilotPlugins/Common/SetupPage.qml</file>
-        <file alias="QGroundControl/Controls/SignalStrength.qml">src/UI/toolbar/SignalStrength.qml</file>
         <file alias="QGroundControl/Controls/SliderSwitch.qml">src/QmlControls/SliderSwitch.qml</file>
         <file alias="QGroundControl/Controls/SubMenuButton.qml">src/QmlControls/SubMenuButton.qml</file>
         <file alias="QGroundControl/Controls/ToolIndicatorPage.qml">src/QmlControls/ToolIndicatorPage.qml</file>
@@ -182,8 +157,6 @@
         <file alias="QGroundControl/FlightDisplay/FlyViewMap.qml">src/FlightDisplay/FlyViewMap.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlyViewMissionCompleteDialog.qml">src/FlightDisplay/FlyViewMissionCompleteDialog.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlyViewPreFlightChecklistPopup.qml">src/FlightDisplay/FlyViewPreFlightChecklistPopup.qml</file>
-        <file alias="QGroundControl/FlightDisplay/FlyViewToolBar.qml">src/UI/toolbar/FlyViewToolBar.qml</file>
-        <file alias="QGroundControl/FlightDisplay/FlyViewToolBarIndicators.qml">src/UI/toolbar/FlyViewToolBarIndicators.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlyViewToolStrip.qml">src/FlightDisplay/FlyViewToolStrip.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlyViewToolStripActionList.qml">src/FlightDisplay/FlyViewToolStripActionList.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlyViewTopRightColumnLayout.qml">src/FlightDisplay/FlyViewTopRightColumnLayout.qml</file>
