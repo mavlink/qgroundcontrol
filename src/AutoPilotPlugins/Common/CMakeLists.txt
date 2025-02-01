@@ -26,7 +26,6 @@ target_link_libraries(CommonAutoPilotPlugin
         Qt6::Core
         Qt6::Network
         Qt6::Quick
-        FactControls
         MAVLink
         VehicleSetup
 )

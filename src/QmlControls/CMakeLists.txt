@@ -78,7 +78,6 @@ target_link_libraries(QmlControls
         AirLink
         API
         Comms
-        FactControls
         FactSystem
         MAVLink
         MissionManager
