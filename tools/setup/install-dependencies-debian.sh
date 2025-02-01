@@ -133,7 +133,6 @@ DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
     flex \
     gobject-introspection \
     gvfs \
-    intel-media-va-driver \
     libasound2-dev \
     libass-dev \
     libdrm-dev \
@@ -189,6 +188,10 @@ DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
     va-driver-all \
     vainfo \
     wayland-protocols
+
+if apt-cache show intel-media-va-driver >/dev/null 2>&1 && apt-cache show intel-media-va-driver 2>/dev/null | grep -q "^Package: intel-media-va-driver"; then
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --quiet intel-media-va-driver
+fi
 
 if apt-cache show libdav1d-dev >/dev/null 2>&1 && apt-cache show libdav1d-dev 2>/dev/null | grep -q "^Package: libdav1d-dev"; then
     DEBIAN_FRONTEND=noninteractive apt-get install -y --quiet libdav1d-dev
