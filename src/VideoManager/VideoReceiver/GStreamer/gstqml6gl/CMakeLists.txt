@@ -7,6 +7,7 @@ if(MACOS)
     # So for now we hack in a simple hardwired setup which does work
     find_library(GSTREAMER_FRAMEWORK GStreamer)
     set(GST_PLUGINS_VERSION 1.24.12)
+    set(GSTREAMER_FRAMEWORK_PATH "/Library/Frameworks/GStreamer.framework")
     target_link_libraries(gstqml6gl
         PUBLIC
             "$<LINK_LIBRARY:FRAMEWORK,/Library/Frameworks/GStreamer.framework>"
@@ -68,26 +69,23 @@ elseif(WIN32)
     file(GLOB GST_HELPER_BINS ${GST_HELPER_BINS_PATH})
     install(FILES ${GST_HELPER_BINS} DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/gstreamer-1.0)
 elseif(MACOS)
-    if(EXISTS "${GSTREAMER_FRAMEWORK_PATH}")
-        # install(
-        #     IMPORTED_RUNTIME_ARTIFACTS GStreamer::GStreamer
-        #     FRAMEWORK DESTINATION "${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}.app/Contents/Frameworks/GStreamer.framework"
-        # )
-        install(
-            DIRECTORY "${GSTREAMER_FRAMEWORK_PATH}"
-            DESTINATION "${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}.app/Contents/Frameworks"
-            PATTERN "*.la" EXCLUDE
-            PATTERN "*.a" EXCLUDE
-            PATTERN "*/bin" EXCLUDE
-            PATTERN "*/etc" EXCLUDE
-            PATTERN "*/gst-validate-launcher" EXCLUDE
-            PATTERN "*/Headers" EXCLUDE
-            PATTERN "*/include" EXCLUDE
-            PATTERN "*/pkgconfig" EXCLUDE
-            PATTERN "*/share" EXCLUDE
-        )
-        target_compile_definitions(gstqml6gl PUBLIC QGC_GST_MACOS_FRAMEWORK)
+    if(NOT EXISTS "${GSTREAMER_FRAMEWORK_PATH}")
+        message(FATAL_ERROR "GStreamer.framework not found at ${GSTREAMER_FRAMEWORK_PATH}")
     endif()
+    install(
+        DIRECTORY "${GSTREAMER_FRAMEWORK_PATH}"
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}.app/Contents/Frameworks"
+        PATTERN "*.la" EXCLUDE
+        PATTERN "*.a" EXCLUDE
+        PATTERN "*/bin" EXCLUDE
+        PATTERN "*/etc" EXCLUDE
+        PATTERN "*/gst-validate-launcher" EXCLUDE
+        PATTERN "*/Headers" EXCLUDE
+        PATTERN "*/include" EXCLUDE
+        PATTERN "*/pkgconfig" EXCLUDE
+        PATTERN "*/share" EXCLUDE
+    )
+    target_compile_definitions(gstqml6gl PUBLIC QGC_GST_MACOS_FRAMEWORK)
 elseif(ANDROID)
     if(CMAKE_HOST_WIN32)
         cmake_path(CONVERT "${GSTREAMER_PREFIX}/share/gst-android/ndk-build/tools/windows/*.dll" TO_CMAKE_PATH_LIST GST_WIN_TOOLS_PATH)
