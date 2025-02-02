@@ -103,6 +103,11 @@ jobs:
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run: cmake --install . --config ${{ matrix.BuildType }}
 
+      - name: Sanity check release excecutable
+        if: matrix.BuildType == 'Release'
+        working-directory: ${{ runner.temp }}/shadow_build_dir
+        run: xvfb-run -a ./${{ env.ARTIFACT }} --simple-boot-test
+
       - name: Run unit tests
         if: matrix.BuildType == 'Debug'
         working-directory: ${{ runner.temp }}/shadow_build_dir

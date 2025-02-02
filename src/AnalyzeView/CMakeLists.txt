@@ -105,9 +105,7 @@ endif()
 set(EXIV2_VERSION 0.28.3)
 
 if(NOT QGC_BUILD_DEPENDENCIES)
-    if(MSVC)
-        set(EXIV2_RELEASE_URL "https://github.com/Exiv2/exiv2/releases/download/v${EXIV2_VERSION}/exiv2-${EXIV2_VERSION}-2019msvc64.zip")
-    elseif(LINUX)
+    if(LINUX)
         set(EXIV2_RELEASE_URL "https://github.com/Exiv2/exiv2/releases/download/v${EXIV2_VERSION}/exiv2-${EXIV2_VERSION}-Linux64.tar.gz")
     elseif(MACOS)
         set(EXIV2_RELEASE_URL "https://github.com/Exiv2/exiv2/releases/download/v${EXIV2_VERSION}/exiv2-${EXIV2_VERSION}-Darwin.tar.gz")
@@ -156,7 +154,7 @@ else()
     set(_EXIV2_ENABLE_XMP OFF)
 endif()
 
-CPMFindPackage(
+CPMAddPackage(
     NAME exiv2
     VERSION ${EXIV2_VERSION}
     GITHUB_REPOSITORY Exiv2/exiv2
@@ -180,6 +178,7 @@ CPMFindPackage(
         "EXIV2_BUILD_FUZZ_TESTS OFF"
         "EXIV2_BUILD_DOC OFF"
         "BUILD_WITH_CCACHE OFF"
+        "BUILD_SHARED_LIBS OFF"
 )
 
 if(TARGET Exiv2::exiv2lib)

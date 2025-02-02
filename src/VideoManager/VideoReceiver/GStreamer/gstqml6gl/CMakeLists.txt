@@ -1,9 +1,28 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick)
 
-set(GST_COMPONENTS Allocators App Audio Codecparsers Controller Fft GlEGL GlPrototypes GlWayland GlX11 Mpegts Net Pbutils Photography Riff Rtp Rtsp Sdp Tag Va)
-find_package(GStreamer REQUIRED COMPONENTS OPTIONAL_COMPONENTS ${GST_COMPONENTS})
-
 qt_add_library(gstqml6gl STATIC)
+
+if(MACOS)
+    # Using FindGStreamer.cmake is currently bypassed on MACOS since it doesn't work
+    # So for now we hack in a simple hardwired setup which does work
+    find_library(GSTREAMER_FRAMEWORK GStreamer)
+    set(GST_PLUGINS_VERSION 1.24.12)
+    target_link_libraries(gstqml6gl
+        PUBLIC
+            "$<LINK_LIBRARY:FRAMEWORK,/Library/Frameworks/GStreamer.framework>"
+    )
+    target_include_directories(gstqml6gl
+        PUBLIC
+            /Library/Frameworks/GStreamer.framework/Headers
+    )
+else()
+    set(GST_COMPONENTS Allocators App Audio Codecparsers Controller Fft GlEGL GlPrototypes GlWayland GlX11 Mpegts Net Pbutils Photography Riff Rtp Rtsp Sdp Tag Va)
+    find_package(GStreamer REQUIRED COMPONENTS OPTIONAL_COMPONENTS ${GST_COMPONENTS})
+    target_link_libraries(gstqml6gl
+        PUBLIC
+            GStreamer::GStreamer
+    )
+endif()
 
 target_link_libraries(gstqml6gl
     PRIVATE
@@ -13,7 +32,6 @@ target_link_libraries(gstqml6gl
         Qt6::Gui
         Qt6::Qml
         Qt6::Quick
-        GStreamer::GStreamer
 )
 
 foreach(component IN LISTS GST_COMPONENTS)
