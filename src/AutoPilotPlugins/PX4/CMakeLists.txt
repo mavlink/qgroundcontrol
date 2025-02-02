@@ -50,7 +50,6 @@ target_link_libraries(PX4AutoPilotPlugin
         Qt6::Quick
         AutoPilotPlugins
         CommonAutoPilotPlugin
-        FactControls
         MAVLink
         VehicleSetup
 )

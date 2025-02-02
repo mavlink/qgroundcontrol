@@ -44,7 +44,7 @@ SimpleMissionItem::SimpleMissionItem(PlanMasterController* masterController, boo
     , _param6MetaData                   (FactMetaData::valueTypeDouble)
     , _param7MetaData                   (FactMetaData::valueTypeDouble)
 {
-    _editorQml = QStringLiteral("qrc:/qml/SimpleItemEditor.qml");
+    _editorQml = QStringLiteral("qrc:/qml/QGroundControl/PlanView/SimpleItemEditor.qml");
 
     _setupMetaData();
 
@@ -72,7 +72,7 @@ SimpleMissionItem::SimpleMissionItem(PlanMasterController* masterController, boo
     , _param6MetaData           (FactMetaData::valueTypeDouble)
     , _param7MetaData           (FactMetaData::valueTypeDouble)
 {
-    _editorQml = QStringLiteral("qrc:/qml/SimpleItemEditor.qml");
+    _editorQml = QStringLiteral("qrc:/qml/QGroundControl/PlanView/SimpleItemEditor.qml");
 
     struct MavFrame2AltMode_s {
         MAV_FRAME                               mavFrame;

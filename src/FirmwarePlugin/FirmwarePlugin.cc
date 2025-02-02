@@ -310,13 +310,13 @@ const QVariantList& FirmwarePlugin::toolIndicators(const Vehicle*)
     if(_toolIndicatorList.size() == 0) {
         _toolIndicatorList = QVariantList({
             QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Controls/FlightModeIndicator.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/MessageIndicator.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/VehicleGPSIndicator.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/TelemetryRSSIIndicator.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RCRSSIIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/MessageIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/VehicleGPSIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/TelemetryRSSIIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/RCRSSIIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Controls/BatteryIndicator.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RemoteIDIndicator.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/GimbalIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/RemoteIDIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/GimbalIndicator.qml")),
         });
     }
     return _toolIndicatorList;
@@ -327,8 +327,8 @@ const QVariantList& FirmwarePlugin::modeIndicators(const Vehicle*)
     //-- Default list of indicators for all vehicles.
     if(_modeIndicatorList.size() == 0) {
         _modeIndicatorList = QVariantList({
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/MultiVehicleSelector.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/LinkIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/MultiVehicleSelector.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/LinkIndicator.qml")),
         });
     }
     return _modeIndicatorList;

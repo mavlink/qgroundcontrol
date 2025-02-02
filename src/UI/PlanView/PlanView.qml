@@ -25,8 +25,8 @@ import QGroundControl.Palette
 import QGroundControl.Controllers
 import QGroundControl.ShapeFileHelper
 import QGroundControl.FlightDisplay
+import QGroundControl.Toolbar
 import QGroundControl.UTMSP
-
 
 Item {
     id: _root

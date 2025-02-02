@@ -32,7 +32,7 @@ add_subdirectory(QmlControls)
 add_subdirectory(QtLocationPlugin)
 add_subdirectory(Settings)
 add_subdirectory(Terrain)
-# add_subdirectory(UI)
+add_subdirectory(UI)
 add_subdirectory(Utilities)
 add_subdirectory(UTMSP)
 add_subdirectory(Vehicle)
@@ -75,7 +75,6 @@ target_link_libraries(QGC
         QGCLocation
         QmlControls
         Settings
-        # UI
         Utilities
         Vehicle
         VehicleSetup

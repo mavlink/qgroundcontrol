@@ -1,7 +1,5 @@
 add_subdirectory(FactControls)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Qml)
-
 qt_add_library(FactSystem STATIC
     Fact.cc
     Fact.h
@@ -9,6 +7,8 @@ qt_add_library(FactSystem STATIC
     FactGroup.h
     FactMetaData.cc
     FactMetaData.h
+    FactPanelController.h
+    FactPanelController.cc
     FactValueSliderListModel.cc
     FactValueSliderListModel.h
     ParameterManager.cc
@@ -22,7 +22,6 @@ target_link_libraries(FactSystem
         Qt6::Qml
         API
         AutoPilotPlugins
-        FactControls
         FirmwarePlugin
         QGC
         Settings

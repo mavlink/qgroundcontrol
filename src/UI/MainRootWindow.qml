@@ -20,6 +20,7 @@ import QGroundControl.FactControls
 import QGroundControl.ScreenTools
 import QGroundControl.FlightDisplay
 import QGroundControl.FlightMap
+import QGroundControl.PlanView
 
 import QGroundControl.UTMSP
 

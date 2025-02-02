@@ -22,6 +22,7 @@ import QGroundControl.FlightMap
 import QGroundControl.Palette
 import QGroundControl.ScreenTools
 import QGroundControl.Vehicle
+import QGroundControl.PlanView
 
 FlightMap {
     id:                         _root

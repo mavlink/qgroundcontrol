@@ -17,6 +17,7 @@ import QGroundControl.ScreenTools
 import QGroundControl.Palette
 import QGroundControl.FactSystem
 import QGroundControl.FactControls
+import QGroundControl.Toolbar
 import MAVLink
 
 BatteryIndicator {

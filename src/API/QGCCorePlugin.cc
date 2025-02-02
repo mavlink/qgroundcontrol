@@ -244,7 +244,7 @@ QQmlApplicationEngine *QGCCorePlugin::createQmlApplicationEngine(QObject *parent
 
 void QGCCorePlugin::createRootWindow(QQmlApplicationEngine *qmlEngine)
 {
-    qmlEngine->load(QUrl(QStringLiteral("qrc:/qml/MainRootWindow.qml")));
+    qmlEngine->load(QUrl(QStringLiteral("qrc:/qml/QGroundControl/MainRootWindow.qml")));
 }
 
 VideoReceiver *QGCCorePlugin::createVideoReceiver(QObject *parent)
@@ -286,7 +286,7 @@ const QVariantList &QGCCorePlugin::toolBarIndicators()
 {
     static const QVariantList toolBarIndicatorList = QVariantList(
         {
-            QVariant::fromValue(QUrl::fromUserInput(QStringLiteral("qrc:/toolbar/RTKGPSIndicator.qml"))),
+            QVariant::fromValue(QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/Toolbar/RTKGPSIndicator.qml"))),
         }
     );
 

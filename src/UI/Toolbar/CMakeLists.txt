@@ -1,9 +1,9 @@
-project(FactControlsplugin)
+project(Toolbarplugin)
 
 file(GLOB_RECURSE MODULE_QML_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.qml)
 
 qt_add_qml_module(${PROJECT_NAME}
-    URI QGroundControl.FactControls
+    URI QGroundControl.Toolbar
     VERSION 1.0
     STATIC
     RESOURCE_PREFIX /qml
