@@ -538,7 +538,6 @@ qt_import_plugins(${CMAKE_PROJECT_NAME}
 #######################################################
 
 if(MACOS)
-    # This is just creates an install target for use in build systems.
     install(
         TARGETS ${CMAKE_PROJECT_NAME}
         BUNDLE  DESTINATION .
