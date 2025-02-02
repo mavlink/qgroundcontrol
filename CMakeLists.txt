@@ -537,16 +537,16 @@ qt_import_plugins(${CMAKE_PROJECT_NAME}
 #		Install Configuration
 #######################################################
 
-if(MACOS)
+if(FALSE AND MACOS)
     install(
         TARGETS ${CMAKE_PROJECT_NAME}
-        BUNDLE  DESTINATION .
     )
 else()
     include(InstallRequiredSystemLibraries)
 
     install(
         TARGETS ${CMAKE_PROJECT_NAME}
+        BUNDLE  DESTINATION .
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -554,9 +554,10 @@ else()
     
     set(deploy_tool_options_arg "")
     if(MACOS)
+        set(deploy_tool_options_arg "-qmldir=${CMAKE_SOURCE_DIR} -verbose=1")
         if(MACOS_SIGNING_IDENTITY)
             message(STATUS "Signing MacOS Bundle")
-            set(deploy_tool_options_arg -qmldir=${CMAKE_SOURCE_DIR} -verbose=2 -sign-for-notarization=${MACOS_SIGNING_IDENTITY}) # -dmg
+            set(deploy_tool_options_arg "${deplay_tool_options_arg} -sign-for-notarization=${MACOS_SIGNING_IDENTITY}")
         endif()
     endif()
 

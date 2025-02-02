@@ -3,10 +3,6 @@ message(STATUS "Creating Mac DMG")
 set(STAGING_BUNDLE_PATH ${CMAKE_BINARY_DIR}/staging/${TARGET_APP_NAME}.app)
 
 execute_process(
-    COMMAND ${MACDEPLOYQT} "${STAGING_BUNDLE_PATH}" -appstore-compliant -verbose=1 -qmldir=${CMAKE_SOURCE_DIR}/../src
-    COMMAND_ERROR_IS_FATAL ANY
-)
-execute_process(
     COMMAND codesign --force --deep -s - "${STAGING_BUNDLE_PATH}"
     COMMAND_ERROR_IS_FATAL ANY
 )
