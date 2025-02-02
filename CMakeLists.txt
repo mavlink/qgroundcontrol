@@ -548,10 +548,11 @@ install(
 )
 
 set(deploy_tool_options_arg "")
-if(MACOS)
+if(MACOS OR WIN32)
+    set(deploy_tool_options_arg "-qmldir=${CMAKE_SOURCE_DIR}")
     if(MACOS_SIGNING_IDENTITY)
         message(STATUS "Signing MacOS Bundle")
-        set(deploy_tool_options_arg -qmldir=${CMAKE_SOURCE_DIR} -verbose=2 -sign-for-notarization=${MACOS_SIGNING_IDENTITY}) # -dmg
+        set(deploy_tool_options_arg "${deplay_tool_options_arg} -sign-for-notarization=${MACOS_SIGNING_IDENTITY}")
     endif()
 endif()
 
@@ -600,8 +601,8 @@ elseif(LINUX)
 elseif(WIN32)
     install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/CreateWinInstaller.cmake")
 elseif(MACOS)
-    install(CODE "set(OSXRELOCATOR ${CMAKE_SOURCE_DIR}/deploy/macos/osxrelocator.py)")
-    install(CODE "set(TARGET_NAME ${QGC_APP_NAME})")
+    install(CODE "set(TARGET_APP_NAME ${QGC_APP_NAME})")
+    install(CODE "set(MACDEPLOYQT ${Qt6_DIR}/../../../bin/macdeployqt)")
     install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/CreateMacDMG.cmake")
 endif()
 
