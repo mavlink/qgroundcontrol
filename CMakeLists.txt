@@ -537,15 +537,17 @@ qt_import_plugins(${CMAKE_PROJECT_NAME}
 #		Install Configuration
 #######################################################
 
-install(
-    TARGETS ${CMAKE_PROJECT_NAME}
-    BUNDLE  DESTINATION .
-)
-
-if(NOT MACOS)
+if(MACOS)
+    # This is just creates an install target for use in build systems.
+    install(
+        TARGETS ${CMAKE_PROJECT_NAME}
+        BUNDLE  DESTINATION .
+    )
+else()
     include(InstallRequiredSystemLibraries)
 
     install(
+        TARGETS ${CMAKE_PROJECT_NAME}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
