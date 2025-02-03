@@ -100,35 +100,6 @@ if(TARGET ulog_cpp::ulog_cpp)
     target_link_libraries(AnalyzeView PRIVATE ulog_cpp::ulog_cpp)
 endif()
 
-#===========================================================================#
-
-set(EXIV2_VERSION 0.28.3)
-
-if(NOT QGC_BUILD_DEPENDENCIES)
-    if(LINUX)
-        set(EXIV2_RELEASE_URL "https://github.com/Exiv2/exiv2/releases/download/v${EXIV2_VERSION}/exiv2-${EXIV2_VERSION}-Linux64.tar.gz")
-    endif()
-endif()
-
-if(EXIV2_RELEASE_URL)
-    include(CPM)
-    CPMAddPackage(
-        NAME exiv2
-        URL ${EXIV2_RELEASE_URL}
-        VERSION ${EXIV2_VERSION}
-        DOWNLOAD_ONLY
-    )
-
-    if(exiv2_ADDED)
-        target_include_directories(AnalyzeView PRIVATE ${exiv2_SOURCE_DIR}/include)
-        target_link_directories(AnalyzeView PUBLIC ${exiv2_SOURCE_DIR}/lib)
-        target_link_libraries(AnalyzeView PRIVATE exiv2)
-        return()
-    endif()
-endif()
-
-# https://github.com/libexpat/libexpat/releases/download/R_2_6_4/expat-win32bin-2.6.4.zip
-
 CPMFindPackage(
     NAME EXPAT
     VERSION 2.2.6
@@ -154,7 +125,7 @@ endif()
 
 CPMAddPackage(
     NAME exiv2
-    VERSION ${EXIV2_VERSION}
+    VERSION 0.28.3
     GITHUB_REPOSITORY Exiv2/exiv2
     OPTIONS
         "EXIV2_ENABLE_XMP ${_EXIV2_ENABLE_XMP}"
