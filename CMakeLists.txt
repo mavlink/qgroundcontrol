@@ -499,6 +499,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         Qt6::Core5Compat
         Qt6::Quick
         Qt6::Widgets
+        Qt6::Svg
         QGC
         QmlControls
 )
