@@ -72,14 +72,15 @@ To install Qt:
 
 1. On the _Installation Folder_ page select "Custom Installation"    
 
-1. One the _Select Components_ page:
+1. On the _Select Components_ page:
 
-- Under _Qt {{ $frontmatter.qt_version }}_ select:
-   - **Windows**: MSVC 2022 _arch_ - where _arch_ is the architecture of your machine
-   - **Mac**: Desktop
-   - **Linux**: Desktop gcc 64-bit
-   - **Android**: Android
-- Select all _Additional Libraries_
+   - I you don't see _Qt {{ $frontmatter.qt_version }}_ listed check the _Archive_ checkbox and click _Filter_.
+	- Under _Qt {{ $frontmatter.qt_version }}_ select:
+	   - **Windows**: MSVC 2022 _arch_ - where _arch_ is the architecture of your machine
+	   - **Mac**: Desktop
+	   - **Linux**: Desktop gcc 64-bit
+	   - **Android**: Android
+	- Select all _Additional Libraries_
 
 1. Install Additional Packages (Platform Specific)
 
