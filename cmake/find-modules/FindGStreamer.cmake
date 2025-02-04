@@ -645,6 +645,11 @@ if(ANDROID)
     target_link_options(GStreamer::GStreamer INTERFACE "-Wl,-Bsymbolic")
 endif()
 
+if(WIN32)
+    find_package(OpenGL REQUIRED)
+    target_link_libraries(GStreamer::GStreamer INTERFACE user32.lib OpenGL::GL)
+endif()
+
 if(QGC_GST_STATIC_BUILD)
     target_compile_definitions(GStreamer::GStreamer INTERFACE QGC_GST_STATIC_BUILD)
 endif()
