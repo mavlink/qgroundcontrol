@@ -133,6 +133,11 @@ Example commands to build a default QGC and run it afterwards:
    cd qgroundcontrol
    ```
 
+1. If you have multiple versions of Qt installed, make sure you select Qt6
+   ```sh
+   export QT_SELECT=qt6
+   ```
+
 1. Configure:
 
    ```sh
