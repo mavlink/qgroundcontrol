@@ -34,7 +34,6 @@ jobs:
       ARTIFACT: QGroundControl.dmg
       PACKAGE: QGroundControl
       QT_VERSION: 6.8.1
-      GST_VERSION: 1.24.12
       CPM_SOURCE_CACHE: ${{ github.workspace }}/cpm_modules
 
     steps:
@@ -52,17 +51,9 @@ jobs:
         with:
           xcode-version: latest-stable
 
-      - name: Install Dependencies
+      - name: Install Dependencies (include GStreamer)
         working-directory: ${{ github.workspace }}/tools/setup
-        run: sh macos-dependencies.sh
-
-      - name: Install GStreamer
-        run: |
-          wget --quiet https://gstreamer.freedesktop.org/data/pkg/osx/${{ env.GST_VERSION }}/gstreamer-1.0-devel-${{ env.GST_VERSION }}-universal.pkg
-          wget --quiet https://gstreamer.freedesktop.org/data/pkg/osx/${{ env.GST_VERSION }}/gstreamer-1.0-${{ env.GST_VERSION }}-universal.pkg
-          for package in *.pkg ;
-            do sudo installer -verbose -pkg "$package" -target /
-          done
+        run: sh install-dependencies-osx.sh
 
       - name: Setup Caching
         uses: ./.github/actions/cache
