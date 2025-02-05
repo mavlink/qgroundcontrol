@@ -19,17 +19,21 @@ QGC_LOGGING_CATEGORY(ParameterEditorControllerLog, "qgc.qmlcontrols.parameteredi
 ParameterEditorController::ParameterEditorController(QObject *parent)
     : FactPanelController(parent)
     , _parameterMgr(_vehicle->parameterManager())
+    , _searchTimer(new QTimer(this))
 {
     // qCDebug(ParameterEditorControllerLog) << Q_FUNC_INFO << this;
 
     _buildLists();
 
+    _searchTimer->setSingleShot(true);
+    _searchTimer->setInterval(300);
+
     connect(this, &ParameterEditorController::currentCategoryChanged,   this, &ParameterEditorController::_currentCategoryChanged);
     connect(this, &ParameterEditorController::currentGroupChanged,      this, &ParameterEditorController::_currentGroupChanged);
     connect(this, &ParameterEditorController::searchTextChanged,        this, &ParameterEditorController::_searchTextChanged);
     connect(this, &ParameterEditorController::showModifiedOnlyChanged,  this, &ParameterEditorController::_searchTextChanged);
-
-    connect(_parameterMgr, &ParameterManager::factAdded, this, &ParameterEditorController::_factAdded);
+    connect(_searchTimer, &QTimer::timeout,                             this, &ParameterEditorController::_performSearch);
+    connect(_parameterMgr, &ParameterManager::factAdded,                this, &ParameterEditorController::_factAdded);
 
     ParameterEditorCategory* category = _categories.count() ? _categories.value<ParameterEditorCategory*>(0) : nullptr;
     setCurrentCategory(category);
@@ -370,6 +374,13 @@ bool ParameterEditorController::_shouldShow(Fact* fact) const
 }
 
 void ParameterEditorController::_searchTextChanged(void)
+{
+    if (!_searchTimer->isActive()) {
+        _searchTimer->start();
+    }
+}
+
+void ParameterEditorController::_performSearch(void)
 {
     QObjectList newParameterList;
 
