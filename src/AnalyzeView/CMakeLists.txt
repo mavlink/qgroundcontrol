@@ -100,9 +100,9 @@ if(TARGET ulog_cpp::ulog_cpp)
     target_link_libraries(AnalyzeView PRIVATE ulog_cpp::ulog_cpp)
 endif()
 
-CPMFindPackage(
+CPMAddPackage(
     NAME EXPAT
-    VERSION 2.2.6
+    VERSION 2.6.4
     GITHUB_REPOSITORY libexpat/libexpat
     GIT_TAG "R_2_6_4"
     SOURCE_SUBDIR expat

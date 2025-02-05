@@ -22,7 +22,7 @@ target_include_directories(Compression PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 #===========================================================================#
 
 include(CPM)
-CPMFindPackage(
+CPMAddPackage(
     NAME ZLIB
     VERSION 1.3.1
     GITHUB_REPOSITORY madler/zlib
