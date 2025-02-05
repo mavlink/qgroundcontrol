@@ -30,7 +30,7 @@ include(CPM)
 #     SOURCE_SUBDIR src
 # )
 
-CPMFindPackage(
+CPMAddPackage(
     NAME geographiclib
     VERSION 2.5
     GITHUB_REPOSITORY geographiclib/geographiclib
@@ -51,8 +51,6 @@ CPMFindPackage(
         "PKGDIR OFF"
         "DOCDIR OFF"
         "EXAMPLEDIR OFF"
-    EXCLUDE_FROM_ALL
-    SYSTEM
 )
 
 if(TARGET GeographicLib::GeographicLib)
