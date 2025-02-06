@@ -481,8 +481,6 @@ elseif(ANDROID)
             # QT_ANDROID_SDK_BUILD_TOOLS_REVISION
             # QT_ANDROID_SYSTEM_LIBS_PREFIX
     )
-elseif(LINUX)
-
 endif()
 
 add_compile_definitions(
