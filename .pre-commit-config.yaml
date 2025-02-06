@@ -4,3 +4,4 @@ repos:
     hooks:
     -   id: check-yaml
         args: [--allow-multiple-documents, --unsafe]
+    -   id: check-json
