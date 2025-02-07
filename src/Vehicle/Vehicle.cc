@@ -3990,7 +3990,7 @@ void Vehicle::requestOperatorControl(bool allowOverride, int requestTimeoutSecs)
     int safeRequestTimeoutSecs;
     int requestTimeoutSecsMin = SettingsManager::instance()->flyViewSettings()->requestControlTimeout()->cookedMin().toInt();
     int requestTimeoutSecsMax = SettingsManager::instance()->flyViewSettings()->requestControlTimeout()->cookedMax().toInt();
-    if (requestTimeoutSecs > requestTimeoutSecsMin && requestTimeoutSecs < requestTimeoutSecsMax) {
+    if (requestTimeoutSecs >= requestTimeoutSecsMin && requestTimeoutSecs <= requestTimeoutSecsMax) {
         safeRequestTimeoutSecs = requestTimeoutSecs;
     } else {
         // If out of limits use default value
