@@ -146,7 +146,7 @@ private:
 private:
     ParameterManager*           _parameterMgr           = nullptr;
     QString                     _searchText;
-    QTimer*                     _searchTimer;
+    QTimer                      _searchTimer;
     ParameterEditorCategory*    _currentCategory        = nullptr;
     ParameterEditorGroup*       _currentGroup           = nullptr;
     bool                        _showModifiedOnly       = false;
