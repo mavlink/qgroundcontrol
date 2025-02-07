@@ -10,7 +10,7 @@ import QGroundControl.FactSystem
 import QGroundControl.FactControls
 
 Item {
-    id:             _root
+    id:             control
     width:          controlIndicatorIconGCS.width * 1.1
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
@@ -44,7 +44,7 @@ Item {
         // Popup prompting user to accept control from other GCS
         onRequestOperatorControlReceived: (sysIdRequestingControl, allowTakeover, requestTimeoutSecs) => {
             // If we don't have the indicator visible ( not receiving CONTROL_STATUS ) don't proceed
-            if (!_root.showIndicator) {
+            if (!control.showIndicator) {
                 return
             }
             requestSysIdRequestingControl = sysIdRequestingControl
@@ -52,9 +52,9 @@ Item {
             // If request came without request timeout, use our default one
             receivedRequestTimeoutMs = requestTimeoutSecs !== 0 ? requestTimeoutSecs * 1000 : QGroundControl.settingsManager.flyViewSettings.requestControlTimeout.defaultValue
             // First hide current popup, in case the normal control panel is visible
-            mainWindow.hideIndicatorPopup()
+            mainWindow.closeIndicatorDrawer()
             // When showing the popup, the component will automatically start the count down in controlRequestPopup
-            mainWindow.showIndicatorPopup(_root, controlRequestPopup, false)
+            mainWindow.showIndicatorDrawer(controlRequestPopup, control, false)
         }
         // Animation to blink indicator when any related info changes
         onGcsControlStatusChanged: {
@@ -87,33 +87,20 @@ Item {
     // Control request popup. Appears when other GCS requests control, so operator on this one can accept or deny it
     Component {
         id: controlRequestPopup
-        Item {
-            id:                         controlRequestRectangle
-            width:                      mainLayout.width + margins * 4
-            height:                     mainLayout.height + margins * 4
-
-            Rectangle {
-                anchors.fill:           parent
-                radius:                 ScreenTools.defaultFontPixelWidth / 2
-                color:                  qgcPal.window
-                opacity:                0.7
-            }
+        ToolIndicatorPage {
 
             ProgressTracker {
                 id:                     requestProgressTracker
                 timeoutSeconds:         receivedRequestTimeoutMs * 0.001
-                onTimeout:              mainWindow.hideIndicatorPopup()
+                onTimeout:              mainWindow.closeIndicatorDrawer()
             }
 
             Component.onCompleted: {
                 requestProgressTracker.start()
             }
 
-            GridLayout {
+            contentComponent: GridLayout {
                 id:                 mainLayout
-                anchors.margins:    margins * 2
-                anchors.top:        parent.top
-                anchors.right:      parent.right
                 columns:            3
 
                 // Action label
@@ -130,11 +117,11 @@ Item {
                     Layout.alignment:       Qt.AlignBottom
                     Layout.fillHeight:      true
                     onClicked: {
-                        activeVehicle.requestOperatorControl(true) // Allow takeover
-                        mainWindow.hideIndicatorPopup()
+                        control.activeVehicle.requestOperatorControl(true) // Allow takeover
+                        mainWindow.closeIndicatorDrawer()
                         // After allowing takeover, if other GCS does not take control within 10 seconds
                         // takeover will be set to not allowed again. Notify user about this
-                        mainWindow.showIndicatorPopup(_root, allowTakeoverExpirationPopup, false)
+                        mainWindow.showIndicatorDrawer(allowTakeoverExpirationPopup, control, false)
                     }
                 }
                 // Action label
@@ -145,7 +132,7 @@ Item {
                 QGCButton {
                     id:                     ignoreButton
                     text:                   qsTr("Ignore")
-                    onClicked:              mainWindow.hideIndicatorPopup()
+                    onClicked:              mainWindow.closeIndicatorDrawer()
                     Layout.alignment:       Qt.AlignHCenter
                 }
                 // Actual progress bar
@@ -160,65 +147,50 @@ Item {
         }
     }
 
-    // WE probably need to move this to backend, otherwise if panel dissapears countdown stops
-
-    // Allow takeover expiration time popup. When a request is received and takeover was allowed, this popup alerts that after 10 seconds, this GCS will change back to takeover not allowed, as per mavlink specs
-    ProgressTracker {
-        id:                     revertTakeoverProgressTracker
-        timeoutSeconds:         10
-        onTimeout:              {
-            mainWindow.hideIndicatorPopup()
-            if (isThisGCSinControl) {
-                activeVehicle.requestOperatorControl(false)
-            }
-        }
-    }
     Component {
         id: allowTakeoverExpirationPopup
-        Item {
-            id:                         allowTakeoverExpirationRectangle
-            width:                      mainLayout.width + margins * 4
-            height:                     mainLayout.height + margins * 4
 
-            Rectangle {
-                anchors.fill:           parent
-                radius:                 ScreenTools.defaultFontPixelWidth / 2
-                color:                  qgcPal.window
-                opacity:                0.7
+            ToolIndicatorPage {
+            // WE probably need to move this to backend, otherwise if panel dissapears countdown stops
+            // Allow takeover expiration time popup. When a request is received and takeover was allowed, this popup alerts that after 10 seconds, this GCS will change back to takeover not allowed, as per mavlink specs
+            ProgressTracker {
+                id:                     revertTakeoverProgressTracker
+                timeoutSeconds:         10
+                onTimeout:              {
+                    mainWindow.closeIndicatorDrawer()
+                    if (isThisGCSinControl) {
+                        control.activeVehicle.requestOperatorControl(false)
+                    }
+                }
             }
-
             // After accepting allow takeover after a request, we show the 10 seconds countdown after which takeover will be set again to not allowed.
             // If during this time another GCS takes control, which is what we are expecting, remove this popup
-            property var isThisGCSinControlLocal: _root.isThisGCSinControl
+            property var isThisGCSinControlLocal: control.isThisGCSinControl
             onIsThisGCSinControlLocalChanged: {
                 if (visible && !isThisGCSinControlLocal) {
-                    visible = false
+                    mainWindow.closeIndicatorDrawer()
                 }
             }
 
-
             Component.onCompleted: {
-                _root.revertTakeoverProgressTracker.start()
+                revertTakeoverProgressTracker.start()
             }
 
-            GridLayout {
+            contentComponent: GridLayout {
                 id:                 mainLayout
-                anchors.margins:    margins * 2
-                anchors.top:        parent.top
-                anchors.right:      parent.right
                 columns:            3
 
                 // Action label
                 QGCLabel {
                     font.pointSize:         ScreenTools.defaultFontPointSize * 1.1
                     text:                   qsTr("Reverting back to takeover not allowed if GCS ") + requestSysIdRequestingControl + 
-                                            qsTr(" doesn't take control in ") + _root.revertTakeoverProgressTracker.progressLabel + 
+                                            qsTr(" doesn't take control in ") + revertTakeoverProgressTracker.progressLabel + 
                                             qsTr(" seconds ...")
                 }
                 QGCButton {
                     id:                     ignoreButton
                     text:                   qsTr("Ignore")
-                    onClicked:              mainWindow.hideIndicatorPopup()
+                    onClicked:              mainWindow.closeIndicatorDrawer()
                     Layout.alignment:       Qt.AlignHCenter
                 }
             }
@@ -229,43 +201,41 @@ Item {
     Component {
         id: controlPopup
 
-        Rectangle {
-            id:             popupBackground
-            width:          mainLayout.width   + mainLayout.anchors.margins * 2          
-            height:         mainLayout.height  + mainLayout.anchors.margins * 2
-            color:          qgcPal.window
-            radius:         panelRadius
+        ToolIndicatorPage {
+            // Rectangle {
+            //     id:             popupBackground
+            //     anchors.fill:   parent
+            //     color:          qgcPal.window
+            //     radius:         panelRadius
 
-            Connections {
-                target:              _root
-                onTriggerAnimations: doColorAnimation()
-            }
-            function doColorAnimation() { colorAnimation.restart() }
-            SequentialAnimation on color { 
-                id:         colorAnimation
-                running:    false
-                loops:      1
-                PropertyAnimation { to: qgcPal.windowShade; duration: 200 }
-                PropertyAnimation { to: qgcPal.window;      duration: 200 }
-            }
+            //     Connections {
+            //         target:              control
+            //         onTriggerAnimations: doColorAnimation()
+            //     }
+            //     function doColorAnimation() { colorAnimation.restart() }
+            //     SequentialAnimation on color { 
+            //         id:         colorAnimation
+            //         running:    false
+            //         loops:      1
+            //         PropertyAnimation { to: qgcPal.windowShade; duration: 200 }
+            //         PropertyAnimation { to: qgcPal.window;      duration: 200 }
+            //     }
+            // }
 
             ProgressTracker {
                 id:                     sendRequestProgressTracker
                 timeoutSeconds:         QGroundControl.settingsManager.flyViewSettings.requestControlTimeout.rawValue
             }
             // If a request was sent, and we get feedback that takeover has been allowed, stop the progress tracker as the request has been granted
-            property var takeoverAllowedLocal: _root.gcsControlStatusFlags_TakeoverAllowed
+            property var takeoverAllowedLocal: control.gcsControlStatusFlags_TakeoverAllowed
             onTakeoverAllowedLocalChanged: {
                 if (takeoverAllowedLocal && sendRequestProgressTracker.running) {
                     sendRequestProgressTracker.stop()
                 }
             }
 
-            GridLayout {
+            contentComponent: GridLayout {
                 id:                 mainLayout
-                anchors.margins:    ScreenTools.defaultFontPixelWidth
-                anchors.top:        parent.top
-                anchors.right:      parent.right
                 columns:            2
 
                 QGCLabel {
@@ -321,7 +291,7 @@ Item {
                     text:                   gcsControlStatusFlags_TakeoverAllowed ? qsTr("Adquire Control") : qsTr("Send Request")
                     onClicked: {
                         var timeout = gcsControlStatusFlags_TakeoverAllowed ? 0 : QGroundControl.settingsManager.flyViewSettings.requestControlTimeout.rawValue
-                        activeVehicle.requestOperatorControl(requestControlAllowTakeoverFact.rawValue, timeout)
+                        control.activeVehicle.requestOperatorControl(requestControlAllowTakeoverFact.rawValue, timeout)
                         if (timeout > 0) {
                             // Start UI timeout animation
                             sendRequestProgressTracker.start()
@@ -343,7 +313,7 @@ Item {
                 }
                 QGCButton {
                     text:                   qsTr("Change")
-                    onClicked:              activeVehicle.requestOperatorControl(requestControlAllowTakeoverFact.rawValue)
+                    onClicked:              control.activeVehicle.requestOperatorControl(requestControlAllowTakeoverFact.rawValue)
                     visible:                isThisGCSinControl
                     Layout.alignment:       Qt.AlignRight
                     enabled:                gcsControlStatusFlags_TakeoverAllowed != requestControlAllowTakeoverFact.rawValue
@@ -426,7 +396,7 @@ Item {
     MouseArea {
         anchors.fill: parent
         onClicked: {
-            mainWindow.showIndicatorPopup(_root, controlPopup, false)
+            mainWindow.showIndicatorDrawer(controlPopup, control, false)
         }
     }
 }
