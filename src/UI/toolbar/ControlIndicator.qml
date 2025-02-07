@@ -132,6 +132,9 @@ Item {
                     onClicked: {
                         activeVehicle.requestOperatorControl(true) // Allow takeover
                         mainWindow.hideIndicatorPopup()
+                        // After allowing takeover, if other GCS does not take control within 10 seconds
+                        // takeover will be set to not allowed again. Notify user about this
+                        mainWindow.showIndicatorPopup(_root, allowTakeoverExpirationPopup, false)
                     }
                 }
                 // Action label
@@ -152,6 +155,71 @@ Item {
                     width:                  parent.width * requestProgressTracker.progress
                     color:                  qgcPal.buttonHighlight
                     Layout.columnSpan:      2
+                }
+            }
+        }
+    }
+
+    // WE probably need to move this to backend, otherwise if panel dissapears countdown stops
+
+    // Allow takeover expiration time popup. When a request is received and takeover was allowed, this popup alerts that after 10 seconds, this GCS will change back to takeover not allowed, as per mavlink specs
+    ProgressTracker {
+        id:                     revertTakeoverProgressTracker
+        timeoutSeconds:         10
+        onTimeout:              {
+            mainWindow.hideIndicatorPopup()
+            if (isThisGCSinControl) {
+                activeVehicle.requestOperatorControl(false)
+            }
+        }
+    }
+    Component {
+        id: allowTakeoverExpirationPopup
+        Item {
+            id:                         allowTakeoverExpirationRectangle
+            width:                      mainLayout.width + margins * 4
+            height:                     mainLayout.height + margins * 4
+
+            Rectangle {
+                anchors.fill:           parent
+                radius:                 ScreenTools.defaultFontPixelWidth / 2
+                color:                  qgcPal.window
+                opacity:                0.7
+            }
+
+            // After accepting allow takeover after a request, we show the 10 seconds countdown after which takeover will be set again to not allowed.
+            // If during this time another GCS takes control, which is what we are expecting, remove this popup
+            property var isThisGCSinControlLocal: _root.isThisGCSinControl
+            onIsThisGCSinControlLocalChanged: {
+                if (visible && !isThisGCSinControlLocal) {
+                    visible = false
+                }
+            }
+
+
+            Component.onCompleted: {
+                _root.revertTakeoverProgressTracker.start()
+            }
+
+            GridLayout {
+                id:                 mainLayout
+                anchors.margins:    margins * 2
+                anchors.top:        parent.top
+                anchors.right:      parent.right
+                columns:            3
+
+                // Action label
+                QGCLabel {
+                    font.pointSize:         ScreenTools.defaultFontPointSize * 1.1
+                    text:                   qsTr("Reverting back to takeover not allowed if GCS ") + requestSysIdRequestingControl + 
+                                            qsTr(" doesn't take control in ") + _root.revertTakeoverProgressTracker.progressLabel + 
+                                            qsTr(" seconds ...")
+                }
+                QGCButton {
+                    id:                     ignoreButton
+                    text:                   qsTr("Ignore")
+                    onClicked:              mainWindow.hideIndicatorPopup()
+                    Layout.alignment:       Qt.AlignHCenter
                 }
             }
         }
