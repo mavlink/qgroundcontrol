@@ -149,6 +149,8 @@ Item {
         }
     }
 
+    // Allow takeover expiration time popup. When a request is received and takeover was allowed, this popup alerts 
+    // that after vehicle::REQUEST_OPERATOR_CONTROL_ALLOW_TAKEOVER_TIMEOUT_MSECS seconds, this GCS will change back to takeover not allowed, as per mavlink specs
     Component {
         id: allowTakeoverExpirationPopup
 
@@ -201,25 +203,6 @@ Item {
         id: controlPopup
 
         ToolIndicatorPage {
-            // Rectangle {
-            //     id:             popupBackground
-            //     anchors.fill:   parent
-            //     color:          qgcPal.window
-            //     radius:         panelRadius
-
-            //     Connections {
-            //         target:              control
-            //         onTriggerAnimations: doColorAnimation()
-            //     }
-            //     function doColorAnimation() { colorAnimation.restart() }
-            //     SequentialAnimation on color { 
-            //         id:         colorAnimation
-            //         running:    false
-            //         loops:      1
-            //         PropertyAnimation { to: qgcPal.windowShade; duration: 200 }
-            //         PropertyAnimation { to: qgcPal.window;      duration: 200 }
-            //     }
-            // }
 
             ProgressTracker {
                 id:                     sendRequestProgressTracker
