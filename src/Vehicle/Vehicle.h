@@ -1326,6 +1326,7 @@ public:
 /*                         CONTROL STATUS HANDLER                            */
 /*===========================================================================*/
 public:
+    Q_INVOKABLE void startTimerRevertAllowTakeover();
     Q_INVOKABLE void requestOperatorControl(bool allowOverride, int requestTimeoutSecs = 0);
 
 private:
@@ -1336,17 +1337,20 @@ private:
     Q_PROPERTY(bool    gcsControlStatusFlags_SystemManager   READ gcsControlStatusFlags_SystemManager   NOTIFY gcsControlStatusChanged)
     Q_PROPERTY(bool    gcsControlStatusFlags_TakeoverAllowed READ gcsControlStatusFlags_TakeoverAllowed NOTIFY gcsControlStatusChanged)
     Q_PROPERTY(bool    firstControlStatusReceived            READ firstControlStatusReceived            NOTIFY gcsControlStatusChanged)
+    Q_PROPERTY(int     operatorControlTakeoverTimeoutMsecs   READ operatorControlTakeoverTimeoutMsecs   CONSTANT)
 
     uint8_t sysidInControl() const { return _sysid_in_control; }
     bool    gcsControlStatusFlags_SystemManager() const { return _gcsControlStatusFlags_SystemManager; }
     bool    gcsControlStatusFlags_TakeoverAllowed() const { return _gcsControlStatusFlags_TakeoverAllowed; }
     bool    firstControlStatusReceived() const { return _firstControlStatusReceived; }
+    int     operatorControlTakeoverTimeoutMsecs() const;
     
     uint8_t _sysid_in_control = 0;
     uint8_t _gcsControlStatusFlags = 0;
     bool    _gcsControlStatusFlags_SystemManager = 0;
     bool    _gcsControlStatusFlags_TakeoverAllowed = 0;
     bool    _firstControlStatusReceived = false;
+    QTimer  _timerRevertAllowTakeover;
 
 signals:
     void gcsControlStatusChanged();

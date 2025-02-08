@@ -77,6 +77,10 @@ QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 #define SET_HOME_TERRAIN_ALT_MAX 10000
 #define SET_HOME_TERRAIN_ALT_MIN -500
 
+// After a second GCS has requested control and we have given it permission to takeover, we will remove takeover permission automatically after this timeout
+// If the second GCS didn't get control 
+#define REQUEST_OPERATOR_CONTROL_ALLOW_TAKEOVER_TIMEOUT_MSECS 10000
+
 const QString guided_mode_not_supported_by_vehicle = QObject::tr("Guided mode not supported by Vehicle.");
 
 // Standard connected vehicle
@@ -3976,6 +3980,22 @@ void Vehicle::_handleMessageInterval(const mavlink_message_t& message)
     }
 }
 
+void Vehicle::startTimerRevertAllowTakeover()
+{
+    _timerRevertAllowTakeover.stop();
+    _timerRevertAllowTakeover.setSingleShot(true);
+    _timerRevertAllowTakeover.setInterval(operatorControlTakeoverTimeoutMsecs());
+    // Disconnect any previous connections to avoid multiple handlers
+    disconnect(&_timerRevertAllowTakeover, &QTimer::timeout, nullptr, nullptr);
+    
+    connect(&_timerRevertAllowTakeover, &QTimer::timeout, [this](){
+        if (MAVLinkProtocol::instance()->getSystemId() == _sysid_in_control) {
+            this->requestOperatorControl(false);
+        }
+    });
+    _timerRevertAllowTakeover.start();
+}
+
 void Vehicle::requestOperatorControl(bool allowOverride, int requestTimeoutSecs)
 {
     int safeRequestTimeoutSecs;
@@ -4040,6 +4060,11 @@ void Vehicle::_handleCommandLong(const mavlink_message_t& message)
     if (commandLong.command == MAV_CMD(32100)) { // MAV_CMD_REQUEST_OPERATOR_CONTROL
         _handleCommandRequestOperatorControl(commandLong);
     }
+}
+
+int Vehicle::operatorControlTakeoverTimeoutMsecs() const
+{
+    return REQUEST_OPERATOR_CONTROL_ALLOW_TAKEOVER_TIMEOUT_MSECS;
 }
 
 void Vehicle::_requestMessageMessageIntervalResultHandler(void* resultHandlerData, MAV_RESULT result, RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message)
