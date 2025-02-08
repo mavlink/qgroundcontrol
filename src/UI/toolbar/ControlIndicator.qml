@@ -23,6 +23,7 @@ Item {
     property Fact   requestControlAllowTakeoverFact:        QGroundControl.settingsManager.flyViewSettings.requestControlAllowTakeover
     property bool   requestControlAllowTakeover:            requestControlAllowTakeoverFact.rawValue
     property bool   isThisGCSinControl:                     sysidInControl == QGroundControl.mavlinkSystemID
+    property bool   sendControlRequestAllowed:              activeVehicle ? activeVehicle.sendControlRequestAllowed : false
 
     property var    margins:                                ScreenTools.defaultFontPixelWidth
     property var    panelRadius:                            ScreenTools.defaultFontPixelWidth * 0.5
@@ -232,6 +233,20 @@ Item {
                 }
             }
 
+            Component.onCompleted: {
+                // If send control request is not allowed it means we recently sent a request, closed the popup, and opened again
+                // before the other request timeout expired. This way we can keep track of the time remaining and update UI accordingly
+                if (!sendControlRequestAllowed) {
+                    // vehicle.requestOperatorControlRemainingMsecs holds the time remaining for the current request
+                    startProgressTracker(control.activeVehicle.requestOperatorControlRemainingMsecs * 0.001)
+                }
+            }
+
+            function startProgressTracker(timeoutSeconds) {
+                sendRequestProgressTracker.timeoutSeconds = timeoutSeconds
+                sendRequestProgressTracker.start()
+            }
+
             contentComponent: GridLayout {
                 id:                 mainLayout
                 columns:            2
@@ -292,7 +307,7 @@ Item {
                         control.activeVehicle.requestOperatorControl(requestControlAllowTakeoverFact.rawValue, timeout)
                         if (timeout > 0) {
                             // Start UI timeout animation
-                            sendRequestProgressTracker.start()
+                            startProgressTracker(timeout)
                         }
                     }
                     Layout.alignment:       Qt.AlignRight
