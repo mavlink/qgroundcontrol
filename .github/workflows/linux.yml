@@ -14,6 +14,7 @@ on:
       - 'src/**'
       - 'test/**'
       - 'CMakeLists.txt'
+      - 'cmake/**'
 
 # concurrency:
 #   group: ${{ github.workflow }}-${{ github.ref }}

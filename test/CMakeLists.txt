@@ -4,9 +4,6 @@ endif()
 
 find_package(Qt6 REQUIRED COMPONENTS Core Test)
 
-include(CTest)
-enable_testing()
-
 # if(ANDROID)
     # include(AndroidTestUtilities)
 # endif()
