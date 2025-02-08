@@ -17,6 +17,7 @@
 #include "QGCApplication.h"
 #include "QGCLogging.h"
 #include "CmdLineOptParser.h"
+#include "MAVLinkProtocol.h"
 
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
     #include <QtWidgets/QMessageBox>
@@ -134,6 +135,8 @@ int main(int argc, char *argv[])
 
     bool runUnitTests = false;
     bool simpleBootTest = false;
+    QString systemIdStr = QString();
+    bool hasSystemId = false;
 
 #ifdef QT_DEBUG
     // We parse a small set of command line options here prior to QGCApplication in order to handle the ones
@@ -147,6 +150,7 @@ int main(int argc, char *argv[])
         { "--unittest",             &runUnitTests,          &unitTestOptions },
         { "--unittest-stress",      &stressUnitTests,       &unitTestOptions },
         { "--no-windows-assert-ui", &quietWindowsAsserts,   nullptr },
+        { "--system-id",            &hasSystemId,           &systemIdStr },
         // Add additional command line option flags here
     };
 
@@ -188,6 +192,18 @@ int main(int argc, char *argv[])
 #endif
 
     app.init();
+
+    // Set system ID if specified via command line, for example --system-id:255
+    if (hasSystemId) {
+        bool ok;
+        int systemId = systemIdStr.toInt(&ok);
+        if (ok && systemId >= 0 && systemId <= 255) {  // MAVLink system IDs are 8-bit
+            qDebug() << "Setting MAVLink System ID to:" << systemId;
+            MAVLinkProtocol::instance()->setSystemId(systemId);
+        } else {
+            qDebug() << "Not setting MAVLink System ID. It must be between 0 and 255. Invalid system ID value:" << systemIdStr;
+        }
+    }
 
     int exitCode = 0;
 
