@@ -74,7 +74,6 @@ endif()
 OptionOutput( "Stable Build:                " QGC_STABLE_BUILD )
 OptionOutput( "Building Tests:              " QGC_BUILD_TESTING AND BUILD_TESTING )
 OptionOutput( "Debug QML:                   " QGC_DEBUG_QML )
-OptionOutput( "Build Dependencies:          " QGC_BUILD_DEPENDENCIES )
 OptionOutput( "Disable APM Dialect:         " QGC_DISABLE_APM_MAVLINK )
 OptionOutput( "Disable APM Plugin:          " QGC_DISABLE_APM_PLUGIN )
 OptionOutput( "Disable APM Plugin Factory:  " QGC_DISABLE_APM_PLUGIN_FACTORY )
@@ -94,3 +93,20 @@ message( STATUS "MAVLink Git Tag:             ${QGC_MAVLINK_GIT_TAG}" )
 message( STATUS "" )
 message( STATUS "------------------------------------------------------------------" )
 message( STATUS "" )
+
+# QT_ANDROID_MULTI_ABI_FORWARD_VARS
+# QT_ANDROID_APPLICATION_ARGUMENTS
+# QT_HOST_PATH
+# QT_ANDROID_SIGN_AAB
+# QT_ANDROID_SIGN_APK
+# message(STATUS "QT_ANDROID_KEYSTORE_PATH $ENV{QT_ANDROID_KEYSTORE_PATH}")
+# message(STATUS "QT_ANDROID_KEYSTORE_ALIAS $ENV{QT_ANDROID_KEYSTORE_ALIAS}")
+# QT_ANDROID_KEYSTORE_STORE_PASS, QT_ANDROID_KEYSTORE_KEY_PASS
+# QT_ANDROID_DEPLOY_RELEASE
+# QT_USE_TARGET_ANDROID_BUILD_DIR
+# QT_ANDROID_DEPLOYMENT_TYPE
+# QT_ENABLE_VERBOSE_DEPLOYMENT
+
+# QGC_QT_MINIMUM_VERSION
+# QGC_QT_MAXIMUM_VERSION
+# QT_SILENCE_MISSING_DEPENDENCY_TARGET_WARNING
