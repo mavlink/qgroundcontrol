@@ -4023,6 +4023,29 @@ void Vehicle::requestOperatorControl(bool allowOverride, int requestTimeoutSecs)
                    1,                       // Action - 0: Release control, 1: Request control.
                    allowOverride ? 1 : 0,   // Allow takeover - Enable automatic granting of ownership on request. 0: Ask current owner and reject request, 1: Allow automatic takeover.
                    safeRequestTimeoutSecs); // Timeout in seconds before a request to a GCS to allow takeover is assumed to be rejected. This is used to display the timeout graphically on requestor and GCS in control.
+
+    // If this is a request we sent to other GCS, start timer so User can not keep sending requests until the current timeout expires
+    if (requestTimeoutSecs > 0) {
+        requestOperatorControlStartTimer(requestTimeoutSecs * 1000);
+    }
+}
+
+void Vehicle::requestOperatorControlStartTimer(int requestTimeoutMsecs)
+{
+    // First flag requests not allowed
+    _sendControlRequestAllowed = false;
+    emit sendControlRequestAllowedChanged(false);
+    // Setup timer to re enable it again after timeout
+    _timerRequestOperatorControl.stop();
+    _timerRequestOperatorControl.setSingleShot(true);
+    _timerRequestOperatorControl.setInterval(requestTimeoutMsecs);
+    // Disconnect any previous connections to avoid multiple handlers
+    disconnect(&_timerRequestOperatorControl, &QTimer::timeout, nullptr, nullptr);
+    connect(&_timerRequestOperatorControl, &QTimer::timeout, [this](){
+        _sendControlRequestAllowed = true;
+        emit sendControlRequestAllowedChanged(true);
+    });
+    _timerRequestOperatorControl.start();
 }
 
 void Vehicle::_handleControlStatus(const mavlink_message_t& message)
@@ -4050,6 +4073,14 @@ void Vehicle::_handleControlStatus(const mavlink_message_t& message)
 
     if (updateControlStatusSignals) {
         emit gcsControlStatusChanged();
+    }
+
+    // If we were waiting for a request to be accepted and now it was accepted, adjust flags accordingly so
+    // UI unlocks the request/take control button
+    if (!sendControlRequestAllowed() && _gcsControlStatusFlags_TakeoverAllowed) {
+        disconnect(&_timerRequestOperatorControl, &QTimer::timeout, nullptr, nullptr);
+        _sendControlRequestAllowed = true;
+        emit sendControlRequestAllowedChanged(true);
     }
 }
 
