@@ -121,6 +121,7 @@ Item {
                         mainWindow.closeIndicatorDrawer()
                         // After allowing takeover, if other GCS does not take control within 10 seconds
                         // takeover will be set to not allowed again. Notify user about this
+                        control.activeVehicle.startTimerRevertAllowTakeover()
                         mainWindow.showIndicatorDrawer(allowTakeoverExpirationPopup, control, false)
                     }
                 }
@@ -151,16 +152,13 @@ Item {
         id: allowTakeoverExpirationPopup
 
             ToolIndicatorPage {
-            // WE probably need to move this to backend, otherwise if panel dissapears countdown stops
-            // Allow takeover expiration time popup. When a request is received and takeover was allowed, this popup alerts that after 10 seconds, this GCS will change back to takeover not allowed, as per mavlink specs
+            // Allow takeover expiration time popup. When a request is received and takeover was allowed, this popup alerts 
+            // that after vehicle::REQUEST_OPERATOR_CONTROL_ALLOW_TAKEOVER_TIMEOUT_MSECS seconds, this GCS will change back to takeover not allowed, as per mavlink specs
             ProgressTracker {
                 id:                     revertTakeoverProgressTracker
-                timeoutSeconds:         10
+                timeoutSeconds:         control.activeVehicle.operatorControlTakeoverTimeoutMsecs * 0.001
                 onTimeout:              {
                     mainWindow.closeIndicatorDrawer()
-                    if (isThisGCSinControl) {
-                        control.activeVehicle.requestOperatorControl(false)
-                    }
                 }
             }
             // After accepting allow takeover after a request, we show the 10 seconds countdown after which takeover will be set again to not allowed.
