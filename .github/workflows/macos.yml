@@ -34,7 +34,7 @@ jobs:
       ARTIFACT: QGroundControl.dmg
       PACKAGE: QGroundControl
       QT_VERSION: 6.8.1
-      CPM_SOURCE_CACHE: ${{ github.workspace }}/cpm_modules
+      CPM_SOURCE_CACHE: ${{ runner.temp }}/shadow_build_dir/cpm_modules
 
     steps:
       - name: Checkout repo

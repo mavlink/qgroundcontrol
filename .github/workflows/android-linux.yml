@@ -41,7 +41,7 @@ jobs:
       QT_ANDROID_KEYSTORE_STORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       QT_ANDROID_KEYSTORE_KEY_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       QT_ANDROID_ABIS: ${{ matrix.BuildType == 'Release' && 'armeabi-v7a;arm64-v8a' || 'arm64-v8a' }}
-      CPM_SOURCE_CACHE: ${{ github.workspace }}/cpm_modules
+      CPM_SOURCE_CACHE: ${{ runner.temp }}/shadow_build_dir/cpm_modules
 
     steps:
       - name: Checkout repo
