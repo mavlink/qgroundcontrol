@@ -29,18 +29,19 @@ qt_add_library(MissionManagerTest
 
 target_link_libraries(MissionManagerTest
     PRIVATE
+        Qt6::Positioning
         Qt6::Test
         API
+        FactSystem
         FirmwarePlugin
+        MissionManager
+        QmlControls
         Settings
+        TerrainTest
         Utilities
         Vehicle
-        TerrainTest
     PUBLIC
-        Qt6::Positioning
-        MissionManager
         qgcunittest
-        QmlControls
 )
 
 target_include_directories(MissionManagerTest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
