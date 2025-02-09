@@ -10,6 +10,7 @@
 #include "MAVLinkSystem.h"
 #include "MAVLinkMessage.h"
 #include "QGCLoggingCategory.h"
+#include "QmlObjectListModel.h"
 
 QGC_LOGGING_CATEGORY(MAVLinkSystemLog, "qgc.analyzeview.mavlinksystem")
 
@@ -25,6 +26,8 @@ QGCMAVLinkSystem::~QGCMAVLinkSystem()
 {
     _messages->clearAndDeleteContents();
 }
+
+QmlObjectListModel *QGCMAVLinkSystem::messages() const { return _messages; }
 
 QGCMAVLinkMessage *QGCMAVLinkSystem::findMessage(uint32_t id, uint8_t compId)
 {

@@ -283,6 +283,22 @@ if(QGC_VIEWER3D)
     add_compile_definitions(QGC_VIEWER3D)
 endif()
 
+if(QGC_AIRLINK_DISABLED)
+    add_compile_definitions(QGC_AIRLINK_DISABLED)
+endif()
+
+if(QGC_NO_SERIAL_LINK)
+    add_compile_definitions(QGC_NO_SERIAL_LINK)
+endif()
+
+if(QGC_ENABLE_BLUETOOTH)
+    add_compile_definitions(QGC_ENABLE_BLUETOOTH)
+endif()
+
+if(QGC_ZEROCONF_ENABLED)
+    add_compile_definitions(QGC_ZEROCONF_ENABLED)
+endif()
+
 if("${CMAKE_OSX_ARCHITECTURES}" MATCHES "arm64;x86_64" OR "${CMAKE_OSX_ARCHITECTURES}" MATCHES "x86_64;arm64")
     set(MACOS_UNIVERSAL_BUILD ON CACHE INTERNAL "" FORCE)
 endif()

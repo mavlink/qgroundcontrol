@@ -142,7 +142,7 @@ public:
     QString     px4StableVersion    (void) { return _px4StableVersion; }
     QString     px4BetaVersion  (void) { return _px4BetaVersion; }
 
-    bool pixhawkBoard(void) const { return _boardType == QGCSerialPortInfo::BoardTypePixhawk; }
+    bool pixhawkBoard(void) const;
 
     /**
      * @brief Return a human friendly string of available boards

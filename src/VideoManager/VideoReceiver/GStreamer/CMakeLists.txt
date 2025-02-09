@@ -39,12 +39,12 @@ endif()
 
 target_link_libraries(GStreamerReceiver
     PRIVATE
-        Utilities
-    PUBLIC
-        Qt6::Core
         gstqml6gl
         Settings
+        Utilities
         VideoReceiver
+    PUBLIC
+        Qt6::Core
 )
 
 target_compile_definitions(GStreamerReceiver PUBLIC QGC_GST_STREAMING)

@@ -25,6 +25,7 @@ qt_add_library(Comms STATIC
 target_link_libraries(Comms
     PRIVATE
         Qt6::Qml
+        AirLink
         MockLink
         PositionManager
         QGC
@@ -33,7 +34,6 @@ target_link_libraries(Comms
     PUBLIC
         Qt6::Core
         Qt6::Network
-        AirLink
         MAVLink
         QmlControls
         Utilities
@@ -43,9 +43,7 @@ target_include_directories(Comms PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 #===========================================================================#
 
-if(QGC_NO_SERIAL_LINK)
-    target_compile_definitions(Comms PUBLIC QGC_NO_SERIAL_LINK)
-else()
+if(NOT QGC_NO_SERIAL_LINK)
     target_sources(Comms
         PRIVATE
             QGCSerialPortInfo.cc
@@ -87,7 +85,7 @@ if(QGC_ENABLE_BLUETOOTH)
             BluetoothLink.cc
             BluetoothLink.h
     )
-    target_compile_definitions(Comms PUBLIC QGC_ENABLE_BLUETOOTH)
+    
 endif()
 
 #===========================================================================#
@@ -108,7 +106,6 @@ if(QGC_ZEROCONF_ENABLED)
 
     if(TARGET qmdnsengine)
         target_link_libraries(Comms PUBLIC qmdnsengine)
-        target_compile_definitions(Comms PUBLIC QGC_ZEROCONF_ENABLED)
     endif()
 endif()
 

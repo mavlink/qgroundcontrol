@@ -51,6 +51,7 @@ target_link_libraries(Settings
     PRIVATE
         Qt6::Multimedia
         API
+        Comms
         GStreamerReceiver
         QGC
         QmlControls
@@ -62,8 +63,8 @@ target_link_libraries(Settings
         Qt6::Core
         Qt6::Qml
         Qt6::QmlIntegration
-        Comms
         FactSystem
+        MAVLink
 )
 
 target_include_directories(Settings PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

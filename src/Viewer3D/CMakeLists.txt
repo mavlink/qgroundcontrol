@@ -36,6 +36,8 @@ if(QGC_VIEWER3D)
     target_link_libraries(Viewer3D
         PRIVATE
             Qt6::Network
+            Qt6::Quick3D
+            Qt6::Xml
             QGCLocation
             Settings
             Vehicle
@@ -43,8 +45,6 @@ if(QGC_VIEWER3D)
             Qt6::Core
             Qt6::Gui
             Qt6::Positioning
-            Qt6::Quick3D
-            Qt6::Xml
     )
 
     target_include_directories(Viewer3D PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

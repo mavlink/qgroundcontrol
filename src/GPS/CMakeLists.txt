@@ -26,6 +26,7 @@ target_sources(GPS
 target_link_libraries(GPS
     PRIVATE
         Comms
+        GPSDrivers
         MAVLink
         Settings
         Utilities
@@ -33,7 +34,6 @@ target_link_libraries(GPS
     PUBLIC
         Qt6::Core
         FactSystem
-        GPSDrivers
 )
 
 target_include_directories(GPS PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

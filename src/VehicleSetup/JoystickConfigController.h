@@ -60,10 +60,10 @@ public:
 
     QString statusText                      () { return _statusText; }
 
-    bool rollAxisMapped                     () { return _rgFunctionAxisMapping[Joystick::rollFunction]          != _axisNoAxis; }
-    bool pitchAxisMapped                    () { return _rgFunctionAxisMapping[Joystick::pitchFunction]         != _axisNoAxis; }
-    bool yawAxisMapped                      () { return _rgFunctionAxisMapping[Joystick::yawFunction]           != _axisNoAxis; }
-    bool throttleAxisMapped                 () { return _rgFunctionAxisMapping[Joystick::throttleFunction]      != _axisNoAxis; }
+    bool rollAxisMapped                     ();
+    bool pitchAxisMapped                    ();
+    bool yawAxisMapped                      ();
+    bool throttleAxisMapped                 ();
 
     bool rollAxisReversed                   ();
     bool pitchAxisReversed                  ();

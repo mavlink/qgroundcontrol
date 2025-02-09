@@ -11,7 +11,9 @@ target_link_libraries(VehicleSetup
     PRIVATE
         Qt6::Qml
         Compression
+        Comms
         FactSystem
+        Joystick
         QGC
         Settings
         Utilities
@@ -22,7 +24,6 @@ target_link_libraries(VehicleSetup
         Qt6::Gui
         Qt6::Quick
         FactControls
-        Joystick
 )
 
 target_include_directories(VehicleSetup PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

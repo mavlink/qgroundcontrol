@@ -14,16 +14,16 @@
 #include <QtCore/QStringList>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-#include "QmlObjectListModel.h"
-
 Q_DECLARE_LOGGING_CATEGORY(MAVLinkSystemLog)
 
 class QGCMAVLinkMessage;
+class QmlObjectListModel;
 
 class QGCMAVLinkSystem : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
+    Q_MOC_INCLUDE("QmlObjectListModel.h")
     Q_PROPERTY(quint8               id          READ id                             CONSTANT)
     Q_PROPERTY(QmlObjectListModel   *messages   READ messages                       CONSTANT)
     Q_PROPERTY(QList<int>           compIDs     READ compIDs                        NOTIFY compIDsChanged)
@@ -34,7 +34,7 @@ public:
     ~QGCMAVLinkSystem();
 
     quint8 id() const { return _id; }
-    QmlObjectListModel *messages() const { return _messages; }
+    QmlObjectListModel *messages() const;
     QList<int> compIDs() const { return _compIDs; }
     QStringList compIDsStr() const { return _compIDsStr; }
     int selected() const { return _selected; }

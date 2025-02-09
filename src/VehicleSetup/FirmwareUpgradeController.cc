@@ -424,6 +424,8 @@ QString FirmwareUpgradeController::firmwareTypeAsString(FirmwareBuildType_t type
     }
 }
 
+bool FirmwareUpgradeController::pixhawkBoard(void) const { return _boardType == QGCSerialPortInfo::BoardTypePixhawk; }
+
 /// @brief Signals completion of one of the specified bootloader commands. Moves the state machine to the
 ///         appropriate next step.
 void FirmwareUpgradeController::_flashComplete(void)

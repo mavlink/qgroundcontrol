@@ -577,6 +577,11 @@ void JoystickConfigController::_setStickPositions()
     }
 }
 
+bool JoystickConfigController::rollAxisMapped() { return _rgFunctionAxisMapping[Joystick::rollFunction] != _axisNoAxis; }
+bool JoystickConfigController::pitchAxisMapped() { return _rgFunctionAxisMapping[Joystick::pitchFunction] != _axisNoAxis; }
+bool JoystickConfigController::yawAxisMapped() { return _rgFunctionAxisMapping[Joystick::yawFunction] != _axisNoAxis; }
+bool JoystickConfigController::throttleAxisMapped() { return _rgFunctionAxisMapping[Joystick::throttleFunction] != _axisNoAxis; }
+
 bool JoystickConfigController::rollAxisReversed()
 {
     if (_rgFunctionAxisMapping[Joystick::rollFunction] != _axisNoAxis) {
