@@ -53,14 +53,21 @@ elseif(IOS)
     elseif(EXISTS "~/Library/Developer/GStreamer/iPhone.sdk/GStreamer.framework")
         set(GSTREAMER_PREFIX_IOS "~/Library/Developer/GStreamer/iPhone.sdk/GStreamer.framework")
     else()
-        FetchContent_Declare(gstreamer
-            DOWNLOAD_EXTRACT_TIMESTAMP true
+        include(CPM)
+        CPMAddPackage(
+            NAME gstreamer
             URL "https://gstreamer.freedesktop.org/data/pkg/ios/${QGC_GST_TARGET_VERSION}/gstreamer-1.0-devel-${QGC_GST_TARGET_VERSION}-ios-universal.pkg"
         )
-        FetchContent_MakeAvailable(gstreamer)
         set(GSTREAMER_PREFIX_IOS ${gstreamer_SOURCE_DIR})
     endif()
     set(GSTREAMER_PREFIX ${GSTREAMER_PREFIX_IOS})
+    set(ENV{PKG_CONFIG_LIBDIR} "${GSTREAMER_PREFIX}/lib/pkgconfig:${GSTREAMER_PREFIX}/lib/gstreamer-1.0/pkgconfig")
+    list(APPEND PKG_CONFIG_ARGN
+        --dont-define-prefix
+        --define-variable=prefix=${GSTREAMER_PREFIX}
+        --define-variable=libdir=${GSTREAMER_PREFIX}/lib
+        --define-variable=includedir=${GSTREAMER_PREFIX}/include
+    )
 elseif(ANDROID)
     set(GSTREAMER_ARCHIVE "gstreamer-1.0-android-universal-${QGC_GST_TARGET_VERSION}.tar.xz")
     include(CPM)

@@ -32,7 +32,9 @@
 #include "QGCCameraManagerTest.h"
 
 // Comms
+#ifndef NO_SERIAL_LINK
 #include "QGCSerialPortInfoTest.h"
+#endif
 
 // FactSystem
 #include "FactSystemTestGeneric.h"
@@ -134,8 +136,10 @@ int runTests(bool stress, QStringView unitTestOptions)
     // Camera
     UT_REGISTER_TEST(QGCCameraManagerTest)
 
-    // Comms
-    UT_REGISTER_TEST(QGCSerialPortInfoTest)
+	// Comms
+#ifndef NO_SERIAL_LINK
+	UT_REGISTER_TEST(QGCSerialPortInfoTest)
+#endif
 
     // FactSystem
     UT_REGISTER_TEST(FactSystemTestGeneric)
