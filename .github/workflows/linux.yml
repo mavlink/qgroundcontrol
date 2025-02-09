@@ -12,6 +12,7 @@ on:
       - '.github/workflows/linux.yml'
       - 'deploy/linux/**'
       - 'src/**'
+      - 'test/**'
       - 'CMakeLists.txt'
 
 # concurrency:
