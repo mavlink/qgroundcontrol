@@ -34,7 +34,6 @@ jobs:
       ARTIFACT: QGroundControl.dmg
       PACKAGE: QGroundControl
       QT_VERSION: 6.8.1
-      CPM_SOURCE_CACHE: ${{ runner.temp }}/shadow_build_dir/cpm_modules
 
     steps:
       - name: Checkout repo
@@ -61,7 +60,7 @@ jobs:
           host: mac
           target: clang_64
           build-type: ${{ matrix.BuildType }}
-          cpm-modules: ${{ env.CPM_SOURCE_CACHE }}
+          cpm-modules: ${{ runner.temp }}/shadow_build_dir/cpm_modules
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
