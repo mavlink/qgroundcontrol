@@ -102,7 +102,7 @@ Rectangle {
         }
     }
 
-    DropPanel {
+    ToolStripDropPanel {
         id:         dropPanel
         toolStrip:  _root
     }

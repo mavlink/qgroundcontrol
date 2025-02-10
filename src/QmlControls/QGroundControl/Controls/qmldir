@@ -117,6 +117,7 @@ SurveyMapVisuals                        1.0 SurveyMapVisuals.qml
 TerrainStatus                           1.0 TerrainStatus.qml
 ToolIndicatorPage                       1.0 ToolIndicatorPage.qml
 ToolStrip                               1.0 ToolStrip.qml
+ToolStripDropPanel                      1.0 ToolStripDropPanel.qml
 ToolStripHoverButton                    1.0 ToolStripHoverButton.qml
 TransectStyleComplexItemEditor          1.0 TransectStyleComplexItemEditor.qml
 TransectStyleComplexItemStats           1.0 TransectStyleComplexItemStats.qml
