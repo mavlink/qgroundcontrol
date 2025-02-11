@@ -41,6 +41,11 @@ QString EniroMapProvider::_getURL(int x, int y, int zoom) const
     return _mapUrl.arg(zoom).arg(x).arg((1 << zoom) - 1 - y).arg(_imageFormat);
 }
 
+QString SvalbardMapProvider::_getURL(int x, int y, int zoom) const
+{
+    return _mapUrl.arg(zoom).arg(y).arg(x);
+}
+
 QString MapQuestMapProvider::_getURL(int x, int y, int zoom) const
 {
     return _mapUrl.arg(_getServerNum(x, y, 4)).arg(_mapName).arg(zoom).arg(x).arg(y).arg(_imageFormat);
