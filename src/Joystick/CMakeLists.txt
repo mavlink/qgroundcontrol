@@ -79,9 +79,9 @@ endif()
 
 CPMAddPackage(
     NAME SDL2
-    VERSION 2.30.11
+    VERSION 2.32.0
     GITHUB_REPOSITORY libsdl-org/SDL
-    GIT_TAG release-2.30.11
+    GIT_TAG release-2.32.0
     OPTIONS
         "SDL2_DISABLE_INSTALL ON"
         "SDL2_DISABLE_INSTALL ON"
