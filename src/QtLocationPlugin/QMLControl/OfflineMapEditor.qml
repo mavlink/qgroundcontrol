@@ -76,7 +76,10 @@ FlightMap {
         resetMapToDefaults()
         updateMap()
         savedCenter = _map.toCoordinate(Qt.point(_map.width / 2, _map.height / 2), false /* clipToViewPort */)
+        settingsPage.enabled = false // Prevent mouse events from bleeding through to the settings page which is below this in hierarchy
     }
+
+    Component.onDestruction: settingsPage.enabled = true
 
     Connections {
         target:                 QGroundControl.mapEngineManager
