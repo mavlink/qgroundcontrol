@@ -43,7 +43,7 @@ CheckBox {
                 height:                 width
                 source:                 "/qmlimages/arrow-down.png"
                 color:                  qgcPal.text
-                visible:                !control.checked
+                visible:                true
             }
         }
 
