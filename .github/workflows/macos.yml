@@ -34,7 +34,7 @@ jobs:
     env:
       ARTIFACT: QGroundControl.dmg
       PACKAGE: QGroundControl
-      QT_VERSION: 6.8.1
+      QT_VERSION: 6.8.2
 
     steps:
       - name: Checkout repo

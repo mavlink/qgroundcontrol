@@ -1,5 +1,5 @@
 ---
-qt_version: 6.8.1
+qt_version: 6.8.2
 ---
 
 # Getting Started with Source and Builds
