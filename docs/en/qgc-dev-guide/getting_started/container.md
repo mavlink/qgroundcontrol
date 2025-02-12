@@ -57,6 +57,15 @@ docker run --rm -v ${PWD}:/project/source -v ${PWD}/build:/project/build qgc-ubu
 ```
 
 ::: info
+If you get fuse-related errors, you might need to add `--cap-add SYS_ADMIN --device /dev/fuse --security-opt apparmor:unconfined` options to the docker invocation command. Like this:
+
+```
+docker run --rm -v ${PWD}:/project/source -v ${PWD}/build:/project/build --cap-add SYS_ADMIN --device /dev/fuse --security-opt apparmor:unconfined qgc-ubuntu-docker
+```
+
+:::
+
+::: info
 If using the script to build the Linux image on a Windows host, you would need to reference the PWD differently.
 On Windows the docker command is:
 
