@@ -2363,6 +2363,7 @@ void Vehicle::setCurrentMissionSequence(int seq)
         },
         static_cast<uint8_t>(defaultComponentId()),
         MAV_CMD_DO_SET_MISSION_CURRENT,
+        true,
         static_cast<uint16_t>(seq)
     );
 }
@@ -2456,9 +2457,8 @@ out:
     delete data;
 }
 
-void Vehicle::sendMavCommandWithLambdaFallback(std::function<void()> lambda, int compId, MAV_CMD command, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
+void Vehicle::sendMavCommandWithLambdaFallback(std::function<void()> lambda, int compId, MAV_CMD command, bool showError, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
 {
-
     auto* instanceData = firmwarePluginInstanceData();
 
     switch (instanceData->getCommandSupported(command)) {
@@ -2471,6 +2471,7 @@ void Vehicle::sendMavCommandWithLambdaFallback(std::function<void()> lambda, int
         sendMavCommand(
             compId,
             command,
+            showError,
             param1,
             param2,
             param3,

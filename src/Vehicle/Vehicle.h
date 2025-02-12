@@ -694,6 +694,7 @@ public:
     void sendMavCommandWithLambdaFallback(
         std::function<void()> lambda,
         int compId, MAV_CMD command,
+        bool showError,
         float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, float param5 = 0.0f, float param6 = 0.0f, float param7 = 0.0f);
 
 
