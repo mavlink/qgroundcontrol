@@ -68,7 +68,7 @@ To install Qt:
 1. Download and run the [Qt Online Installer](http://www.qt.io/download-open-source)
    - **Ubuntu:**
      - Set the downloaded file to executable using: `chmod +x`.
-     - You may also need to install libxcb-cursor.
+     - You may also need to install libxcb-cursor0
 
 1. On the _Installation Folder_ page select "Custom Installation"    
 
