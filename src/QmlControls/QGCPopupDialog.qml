@@ -263,9 +263,6 @@ Popup {
                         if (event.key === Qt.Key_Escape && _rejectAllowed) {
                             _reject()
                             event.accepted = true
-                        } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                            _accept()
-                            event.accepted = true
                         }
                     }
                 }
