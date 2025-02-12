@@ -621,6 +621,8 @@ public:
     Autotune*                       autotune            () const { return _autotune; }
     RemoteIDManager*                remoteIDManager     () { return _remoteIDManager; }
 
+    static void showCommandAckError(const mavlink_command_ack_t& ack);
+
     /// Sends the specified MAV_CMD to the vehicle. If no Ack is received command will be retried. If a sendMavCommand is already in progress
     /// the command will be queued and sent when the previous command completes.
     ///     @param compId Component to send to.
@@ -694,6 +696,7 @@ public:
     void sendMavCommandWithLambdaFallback(
         std::function<void()> lambda,
         int compId, MAV_CMD command,
+        bool showError,
         float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, float param5 = 0.0f, float param6 = 0.0f, float param7 = 0.0f);
 
 
