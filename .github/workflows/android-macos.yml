@@ -1,7 +1,19 @@
 name: Android-MacOS
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - 'Stable*'
+    tags:
+      - 'v*'
+  pull_request:
+    paths:
+      - '.github/workflows/android-macos.yml'
+      - 'deploy/android/**'
+      - 'src/**'
+      - 'android/**'
+      - 'CMakeLists.txt'
 
 # concurrency:
 #   group: ${{ github.workflow }}-${{ github.ref }}
@@ -21,6 +33,7 @@ jobs:
 
     env:
       ARTIFACT: QGroundControl.apk
+      PACKAGE: QGroundControl
       QT_VERSION: 6.8.1
       GST_VERSION: 1.22.12
       QT_ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/deploy/android/android_release.keystore
@@ -66,5 +79,5 @@ jobs:
       - name: Save APK
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.ARTIFACT }}
+          name: ${{ env.PACKAGE }}
           path: ${{ runner.temp }}/shadow_build_dir/android-build/*.apk
