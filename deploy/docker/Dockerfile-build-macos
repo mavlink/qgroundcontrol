@@ -2,7 +2,7 @@
 FROM sickcodes/docker-osx:latest
 
 # Set environment variables
-ENV QT_VERSION=6.8.1
+ENV QT_VERSION=6.8.2
 ENV QT_PATH=/opt/Qt
 ENV QT_DESKTOP=$QT_PATH/${QT_VERSION}/clang_64
 
