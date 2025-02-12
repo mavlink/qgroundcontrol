@@ -41,9 +41,6 @@ GST_PLUGIN_STATIC_DECLARE(mpegtsdemux);
 GST_PLUGIN_STATIC_DECLARE(opengl);
 GST_PLUGIN_STATIC_DECLARE(tcp);
 GST_PLUGIN_STATIC_DECLARE(app);
-// #ifndef Q_OS_ANDROID
-// GST_PLUGIN_STATIC_DECLARE(va);
-// #endif
 #ifdef Q_OS_ANDROID
 GST_PLUGIN_STATIC_DECLARE(androidmedia);
 #elif defined(Q_OS_IOS)
@@ -149,9 +146,6 @@ static void _registerPlugins()
     GST_PLUGIN_STATIC_REGISTER(opengl);
     GST_PLUGIN_STATIC_REGISTER(tcp);
     GST_PLUGIN_STATIC_REGISTER(app);
-// #ifndef Q_OS_ANDROID
-//     GST_PLUGIN_STATIC_REGISTER(va);
-// #endif
 #ifdef Q_OS_ANDROID
     GST_PLUGIN_STATIC_REGISTER(androidmedia);
 #elif defined(Q_OS_IOS)

@@ -23,7 +23,6 @@ jobs:
       ARTIFACT: QGroundControl.app
       PACKAGE: QGroundControl
       QT_VERSION: 6.8.2
-      GST_VERSION: 1.22.12
 
     steps:
       - name: Checkout repo
