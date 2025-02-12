@@ -37,7 +37,6 @@ jobs:
       ARTIFACT: QGroundControl-x86_64.AppImage
       PACKAGE: QGroundControl-x86_64
       QT_VERSION: 6.8.2
-      GST_VERSION: 1.22.12
 
     steps:
       - name: Checkout repo
