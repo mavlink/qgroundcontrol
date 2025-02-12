@@ -31,19 +31,37 @@ CheckBox {
             visible:                control.showSpacer
         }
 
-        QGCLabel {
-            text:               control.text
-            color:              control.color
-            Layout.fillWidth:   true
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: ScreenTools.defaultFontPixelWidth
+
+            QGCLabel {
+                text:               control.text
+                color:              control.color
+                Layout.fillWidth:   true
+            }
 
             QGCColoredImage {
-                anchors.right:          parent.right
+                id: arrowIcon
                 anchors.verticalCenter: parent.verticalCenter
-                width:                  parent.height / 2
+                width:                  ScreenTools.defaultFontPixelHeight / 2
                 height:                 width
                 source:                 "/qmlimages/arrow-down.png"
                 color:                  qgcPal.text
-                visible:                true
+                rotation:               control.checked ? 0 : -90
+
+                smooth: false  // Prevents unwanted blurring
+                antialiasing: false  // Ensures sharp edges
+                layer.enabled: true  // Helps avoid transparency artifacts
+                layer.smooth: false
+                layer.textureSize: Qt.size(width, height)
+
+                Behavior on rotation {
+                    NumberAnimation {
+                        duration: 120
+                        easing.type: Easing.InOutQuad
+                    }
+                }
             }
         }
 
@@ -55,4 +73,4 @@ CheckBox {
     }
 
     indicator: Item {}
-}
+} 
