@@ -57,11 +57,7 @@ docker run --rm -v ${PWD}:/project/source -v ${PWD}/build:/project/build qgc-ubu
 ```
 
 ::: info
-If you get fuse-related errors, you might need to add `--cap-add SYS_ADMIN --device /dev/fuse --security-opt apparmor:unconfined` options to the docker invocation command. Like this:
-
-```
-docker run --rm -v ${PWD}:/project/source -v ${PWD}/build:/project/build --cap-add SYS_ADMIN --device /dev/fuse --security-opt apparmor:unconfined qgc-ubuntu-docker
-```
+For up to date docker command and options reference relevant run-script in `deploy/docker`, for example [run-docker-ubuntu.sh](https://github.com/mavlink/qgroundcontrol/blob/master/deploy/docker/run-docker-ubuntu.sh#L16).
 
 :::
 
