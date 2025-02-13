@@ -11,6 +11,7 @@ CameraCalcCamera                        1.0 CameraCalcCamera.qml
 CameraCalcGrid                          1.0 CameraCalcGrid.qml
 CameraSection                           1.0 CameraSection.qml
 ClickableColor                          1.0 ClickableColor.qml
+ConfigButton                            1.0 ConfigButton.qml
 DeadMouseArea                           1.0 DeadMouseArea.qml
 DropButton                              1.0 DropButton.qml
 DropPanel                               1.0 DropPanel.qml
@@ -107,6 +108,7 @@ RCToParamDialog                         1.0 RCToParamDialog.qml
 RemoteIDIndicatorPage                   1.0 RemoteIDIndicatorPage.qml
 SectionHeader                           1.0 SectionHeader.qml
 SelectableControl                       1.0 SelectableControl.qml
+SettingsButton                          1.0 SettingsButton.qml
 SettingsGroupLayout                     1.0 SettingsGroupLayout.qml
 SetupPage                               1.0 SetupPage.qml
 SignalStrength                          1.0 SignalStrength.qml
