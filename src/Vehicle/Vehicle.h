@@ -422,6 +422,9 @@ public:
     /// Reboot vehicle
     Q_INVOKABLE void rebootVehicle();
 
+    /// Reboot all onboard computers
+    Q_INVOKABLE void rebootOnboardComputers();
+
     /// Clear Messages
     Q_INVOKABLE void clearMessages();
 
