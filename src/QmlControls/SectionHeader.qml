@@ -43,7 +43,8 @@ CheckBox {
                 height:                 width
                 source:                 "/qmlimages/arrow-down.png"
                 color:                  qgcPal.text
-                visible:                !control.checked
+                rotation:               control.checked ? 0 : 90
+                Behavior on rotation { NumberAnimation { duration: 200 } }
             }
         }
 
