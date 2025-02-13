@@ -73,7 +73,6 @@ jobs:
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
-          aqtversion: ==3.1.19
           host: windows
           target: desktop
           arch: win64_msvc2022_64
