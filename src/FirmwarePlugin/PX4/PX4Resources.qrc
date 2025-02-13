@@ -2,8 +2,6 @@
     <qresource prefix="/qml">
         <file alias="AirframeComponent.qml">../../AutoPilotPlugins/PX4/AirframeComponent.qml</file>
         <file alias="AirframeComponentSummary.qml">../../AutoPilotPlugins/PX4/AirframeComponentSummary.qml</file>
-        <file alias="CameraComponent.qml">../../AutoPilotPlugins/PX4/CameraComponent.qml</file>
-        <file alias="CameraComponentSummary.qml">../../AutoPilotPlugins/PX4/CameraComponentSummary.qml</file>
         <file alias="FlightModesComponentSummary.qml">../../AutoPilotPlugins/PX4/FlightModesComponentSummary.qml</file>
         <file alias="PowerComponent.qml">../../AutoPilotPlugins/PX4/PowerComponent.qml</file>
         <file alias="PowerComponentSummary.qml">../../AutoPilotPlugins/PX4/PowerComponentSummary.qml</file>
