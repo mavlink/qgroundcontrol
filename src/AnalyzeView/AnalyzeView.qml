@@ -80,7 +80,6 @@ Rectangle {
                 SubMenuButton {
                     id:                 subMenu
                     imageResource:      modelData.icon
-                    setupIndicator:     false
                     autoExclusive:      true
                     text:               modelData.title
 
