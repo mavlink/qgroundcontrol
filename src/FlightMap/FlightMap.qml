@@ -120,20 +120,19 @@ Map {
     signal mapClicked(var position)
     
     PinchHandler {
-        id:                 pinch
-        target:             null
-        grabPermissions:    PointerHandler.TakeOverForbidden
+        id:     pinchHandler
+        target: null
 
         property var pinchStartCentroid
 
         onActiveChanged: {
             if (active) {
-                pinchStartCentroid = _map.toCoordinate(pinch.centroid.position, false)
+                pinchStartCentroid = _map.toCoordinate(pinchHandler.centroid.position, false)
             }
         }
         onScaleChanged: (delta) => {
             _map.zoomLevel += Math.log2(delta)
-            _map.alignCoordinateToPoint(pinchStartCentroid, pinch.centroid.position)
+            _map.alignCoordinateToPoint(pinchStartCentroid, pinchHandler.centroid.position)
         }
     }
 
@@ -149,7 +148,6 @@ Map {
 
     DragHandler {
         target: null
-        grabPermissions: PointerHandler.TakeOverForbidden
 
         onActiveChanged: {
             if (active) {
@@ -159,7 +157,10 @@ Map {
             }
         }
 
-        onActiveTranslationChanged: (delta) => _map.pan(-delta.x, -delta.y)
+        onActiveTranslationChanged: (delta) => {
+            console.log("onActiveTranslationChanged", delta)
+            _map.pan(-delta.x, -delta.y)
+        }
     }
 
     TapHandler {
