@@ -13,6 +13,8 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
             MockLink.h
             MockLinkFTP.cc
             MockLinkFTP.h
+            MockLinkWorker.cc
+            MockLinkWorker.h
             MockLinkMissionItemHandler.cc
             MockLinkMissionItemHandler.h
     )
