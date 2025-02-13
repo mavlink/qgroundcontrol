@@ -396,7 +396,8 @@ elseif(ANDROID)
     include(CPM)
     CPMAddPackage(
         NAME android_openssl
-        URL https://github.com/KDAB/android_openssl/archive/refs/heads/master.zip
+        GITHUB_REPOSITORY KDAB/android_openssl
+        GIT_TAG master
     )
     include(${android_openssl_SOURCE_DIR}/android_openssl.cmake)
     add_android_openssl_libraries(${CMAKE_PROJECT_NAME})
