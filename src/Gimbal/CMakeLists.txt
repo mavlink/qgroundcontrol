@@ -1,6 +1,8 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Positioning)
+find_package(Qt6 REQUIRED COMPONENTS Core)
 
 qt_add_library(Gimbal STATIC
+    Gimbal.cc
+    Gimbal.h
     GimbalController.cc
     GimbalController.h
 )
