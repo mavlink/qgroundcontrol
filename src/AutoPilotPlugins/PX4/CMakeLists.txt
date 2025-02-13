@@ -9,8 +9,6 @@ qt_add_library(PX4AutoPilotPlugin STATIC
     AirframeComponentAirframes.h
     AirframeComponentController.cc
     AirframeComponentController.h
-    CameraComponent.cc
-    CameraComponent.h
     FlightModesComponent.cc
     FlightModesComponent.h
     PowerComponent.cc

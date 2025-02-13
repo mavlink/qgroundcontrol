@@ -35,7 +35,6 @@ PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     , _flightModesComponent(nullptr)
     , _sensorsComponent(nullptr)
     , _safetyComponent(nullptr)
-    , _cameraComponent(nullptr)
     , _powerComponent(nullptr)
     , _motorComponent(nullptr)
     , _actuatorComponent(nullptr)
@@ -112,13 +111,6 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
                     _flightBehavior = new PX4FlightBehavior(_vehicle, this, this);
                     _flightBehavior->setupTriggerSignals();
                     _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_flightBehavior)));
-                }
-
-                //-- Is there support for cameras?
-                if(_vehicle->parameterManager()->parameterExists(_vehicle->id(), "TRIG_MODE")) {
-                    _cameraComponent = new CameraComponent(_vehicle, this, this);
-                    _cameraComponent->setupTriggerSignals();
-                    _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_cameraComponent)));
                 }
 
                 //-- Is there an ESP8266 Connected?
