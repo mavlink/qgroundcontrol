@@ -359,7 +359,7 @@ void Vehicle::_commonInit()
     // enable Joystick if appropriate
     _loadJoystickSettings();
 
-    _gimbalController = new GimbalController(MAVLinkProtocol::instance(), this);
+    _gimbalController = new GimbalController(this);
 }
 
 Vehicle::~Vehicle()
