@@ -86,9 +86,9 @@ int main(int argc, char *argv[])
         { "--unittest",             &runUnitTests,          &unitTestOptions },
         { "--unittest-stress",      &stressUnitTests,       &unitTestOptions },
         { "--no-windows-assert-ui", &quietWindowsAsserts,   nullptr },
+        { "--allow-multiple",       &bypassRunGuard,        nullptr },
 #endif
         { "--system-id",            &hasSystemId,           &systemIdStr },
-        { "--allow-multiple",       &bypassRunGuard,        nullptr },
         { "--simple-boot-test",     &simpleBootTest,        nullptr },
         // Add additional command line option flags here
     };
