@@ -1,6 +1,6 @@
 find_package(Qt6 REQUIRED COMPONENTS Core)
 
-qt_add_library(VehicleComponents STATIC
+qt_add_library(ComponentInformation STATIC
     CompInfo.cc
     CompInfo.h
     CompInfoActuators.cc
@@ -19,7 +19,7 @@ qt_add_library(VehicleComponents STATIC
     ComponentInformationTranslation.h
 )
 
-target_link_libraries(VehicleComponents
+target_link_libraries(ComponentInformation
     PRIVATE
         Compression
         FirmwarePlugin
@@ -32,4 +32,4 @@ target_link_libraries(VehicleComponents
         Utilities
 )
 
-target_include_directories(VehicleComponents PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(ComponentInformation PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
