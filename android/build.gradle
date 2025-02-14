@@ -15,7 +15,13 @@ repositories {
     maven { url = 'https://jitpack.io' }
 }
 
-apply plugin: qtGradlePluginType
+if (qtGradlePluginType) {
+    apply plugin: qtGradlePluginType
+} else {
+    // Fall back to the default Android application plugin if qtGradlePluginType
+    // is not available
+    apply plugin: 'com.android.application'
+}
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
