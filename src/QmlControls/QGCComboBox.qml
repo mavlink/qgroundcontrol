@@ -34,7 +34,7 @@ T.ComboBox {
     property bool   sizeToContents: false
     property string alternateText:  ""
 
-    property real   _popupWidth
+    property real   _popupWidth:    width
     property bool   _onCompleted:   false
     property bool   _showBorder:    qgcPal.globalTheme === QGCPalette.Light
 
@@ -54,7 +54,6 @@ T.ComboBox {
     }
 
     function _calcPopupWidth() {
-        _popupWidth = control.width
         if (_onCompleted && sizeToContents && model) {
             var largestTextWidth = 0
             for (var i = 0; i < model.length; i++){
