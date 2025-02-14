@@ -12,7 +12,7 @@ target_link_libraries(VehicleComponentsTest
     PRIVATE
         Qt6::Test
         Utilities
-        VehicleComponents
+        ComponentInformation
     PUBLIC
         Qt6::Core
         qgcunittest
