@@ -99,7 +99,7 @@ signals:
     void languageChanged(const QLocale locale);
 
 public slots:
-    void showSetupView();
+    void showVehicleConfig();
 
     void qmlAttemptWindowClose();
 
