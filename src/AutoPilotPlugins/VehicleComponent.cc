@@ -18,10 +18,11 @@
 #include <QtQml/QQmlContext>
 #include <QtQuick/QQuickItem>
 
-VehicleComponent::VehicleComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
-    QObject(parent),
-    _vehicle(vehicle),
-    _autopilot(autopilot)
+VehicleComponent::VehicleComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, AutoPilotPlugin::KnownVehicleComponent KnownVehicleComponent, QObject* parent) 
+    : QObject           (parent)
+    , _vehicle          (vehicle)
+    , _autopilot        (autopilot)
+    , _KnownVehicleComponent  (KnownVehicleComponent)
 {
     if (!vehicle || !autopilot) {
         qWarning() << "Internal error";

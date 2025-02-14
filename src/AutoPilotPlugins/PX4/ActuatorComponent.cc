@@ -16,9 +16,10 @@
 
 static bool imageProviderAdded{false};
 
-ActuatorComponent::ActuatorComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
-    VehicleComponent(vehicle, autopilot, parent),
-    _name(tr("Actuators")), _actuators(*vehicle->actuators())
+ActuatorComponent::ActuatorComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) 
+    : VehicleComponent(vehicle, autopilot, AutoPilotPlugin::UnknownVehicleComponent, parent)
+    , _name(tr("Actuators"))
+    , _actuators(*vehicle->actuators())
 {
     if (!imageProviderAdded) {
         // TODO: qmlAppEngine should not be accessed inside app

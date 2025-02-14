@@ -47,7 +47,7 @@ Rectangle {
 
     function _showSummaryPanel() {
         if (_fullParameterVehicleAvailable) {
-            if (QGroundControl.multiVehicleManager.activeVehicle.autopilot.vehicleComponents.length === 0) {
+            if (QGroundControl.multiVehicleManager.activeVehicle.autopilotPlugin.vehicleComponents.length === 0) {
                 panelLoader.setSourceComponent(noComponentsVehicleSummaryComponent)
             } else {
                 panelLoader.setSource("VehicleSummary.qml")
@@ -70,7 +70,7 @@ Rectangle {
     function showVehicleComponentPanel(vehicleComponent)
     {
         if (mainWindow.allowViewSwitch()) {
-            var autopilotPlugin = QGroundControl.multiVehicleManager.activeVehicle.autopilot
+            var autopilotPlugin = QGroundControl.multiVehicleManager.activeVehicle.autopilotPlugin
             var prereq = autopilotPlugin.prerequisiteSetup(vehicleComponent)
             if (prereq !== "") {
                 _messagePanelText = qsTr("%1 setup must be completed prior to %2 setup.").arg(prereq).arg(vehicleComponent.name)
@@ -88,18 +88,10 @@ Rectangle {
         }
     }
 
-    function showNamedComponentPanel(panelButtonName) {
+    function showParametersPanel() {
         if (mainWindow.allowViewSwitch()) {
-            for (var i=0; i<componentRepeater.count; i++) {
-                var panelButton = componentRepeater.itemAt(i)
-                if (panelButton.text === panelButtonName) {
-                    showVehicleComponentPanel(panelButton.componentUrl)
-                    break;
-                }
-            }
-            if (panelButtonName === parametersButton.text) {
-                parametersButton.clicked()
-            }
+            parametersButton.checked = true
+            panelLoader.setSource("SetupParameterEditor.qml")
         }
     }
 
@@ -251,7 +243,7 @@ Rectangle {
 
             Repeater {
                 id:     componentRepeater
-                model:  _fullParameterVehicleAvailable ? QGroundControl.multiVehicleManager.activeVehicle.autopilot.vehicleComponents : 0
+                model:  _fullParameterVehicleAvailable ? QGroundControl.multiVehicleManager.activeVehicle.autopilotPlugin.vehicleComponents : 0
 
                 ConfigButton {
                     icon.source:      modelData.iconResource
