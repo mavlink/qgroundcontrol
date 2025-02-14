@@ -84,7 +84,7 @@ ListModel {
     ListElement {
         name: qsTr("Remote ID")
         url: "/qml/RemoteIDSettings.qml"
-        iconUrl: "qrc:/qmlimages/RidIconGrey.svg"
+        iconUrl: "qrc:/qmlimages/RidIconManNoID.svg"
         pageVisible: function() { return true }
     }
 
