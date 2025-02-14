@@ -116,9 +116,9 @@ public:
     /// @return true: Firmware supports all specified capabilites
     virtual bool isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities);
 
-    /// Returns VehicleComponents for specified Vehicle
+    /// Returns ComponentInformation for specified Vehicle
     ///     @param vehicle Vehicle  to associate with components
-    /// @return List of VehicleComponents for the specified vehicle. Caller owns returned objects and must
+    /// @return List of ComponentInformation for the specified vehicle. Caller owns returned objects and must
     ///         free when no longer needed.
     virtual QList<VehicleComponent*> componentsForVehicle(AutoPilotPlugin* vehicle);
 

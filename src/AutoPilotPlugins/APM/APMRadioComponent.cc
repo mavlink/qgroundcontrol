@@ -13,9 +13,9 @@
 #include "Fact.h"
 #include "Vehicle.h"
 
-APMRadioComponent::APMRadioComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
-    VehicleComponent(vehicle, autopilot, parent),
-    _name(tr("Radio"))
+APMRadioComponent::APMRadioComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
+    : VehicleComponent(vehicle, autopilot, AutoPilotPlugin::KnownRadioVehicleComponent, parent)
+    , _name(tr("Radio"))
 {
     _mapParams << QStringLiteral("RCMAP_ROLL") << QStringLiteral("RCMAP_PITCH") << QStringLiteral("RCMAP_YAW") << QStringLiteral("RCMAP_THROTTLE");
 

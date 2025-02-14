@@ -12,7 +12,7 @@
 #include "Vehicle.h"
 
 APMAirframeComponent::APMAirframeComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
-    : VehicleComponent      (vehicle, autopilot, parent)
+    : VehicleComponent      (vehicle, autopilot, AutoPilotPlugin::UnknownVehicleComponent, parent)
     , _requiresFrameSetup   (false)
     , _name                 (tr("Frame"))
 {

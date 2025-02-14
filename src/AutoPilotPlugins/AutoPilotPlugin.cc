@@ -76,8 +76,22 @@ void AutoPilotPlugin::parametersReadyPreChecks(void)
     if (!_setupComplete) {
         qgcApp()->showAppMessage(tr("One or more vehicle components require setup prior to flight."));
 
-        // Take the user to Vehicle Summary
-        qgcApp()->showSetupView();
+        // Take the user to Vehicle Config Summary
+        qgcApp()->showVehicleConfig();
         QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
     }
+}
+
+VehicleComponent* AutoPilotPlugin::findKnownVehicleComponent(KnownVehicleComponent knownVehicleComponent)
+{
+    if (knownVehicleComponent != UnknownVehicleComponent) {
+        for(const QVariant& componentVariant: vehicleComponents()) {
+            VehicleComponent* component = qobject_cast<VehicleComponent*>(qvariant_cast<QObject *>(componentVariant));
+            if (component && component->KnownVehicleComponent() == knownVehicleComponent) {
+                return component;
+            }
+        }
+    }
+
+    return nullptr;
 }

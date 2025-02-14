@@ -3,8 +3,6 @@ find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick)
 qt_add_library(VehicleSetup STATIC
     JoystickConfigController.cc
     JoystickConfigController.h
-    VehicleComponent.cc
-    VehicleComponent.h
 )
 
 target_link_libraries(VehicleSetup

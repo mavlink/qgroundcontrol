@@ -17,6 +17,7 @@ import QGroundControl.ScreenTools
 import QGroundControl.Palette
 import QGroundControl.FactSystem
 import QGroundControl.FactControls
+import QGroundControl.AutoPilotPlugin
 import MAVLink
 
 //-------------------------------------------------------------------------
@@ -398,12 +399,14 @@ Item {
             }
 
             SettingsGroupLayout {
+                visible: _activeVehicle.autopilotPlugin.knownVehicleComponentAvailable(AutoPilotPlugin.KnownPowerVehicleComponent)
+
                 LabelledButton {
                     label:      qsTr("Vehicle Power")
                     buttonText: qsTr("Configure")
 
                     onClicked: {
-                        mainWindow.showVehicleSetupTool(qsTr("Power"))
+                        mainWindow.showKnownVehicleComponentConfigPage(AutoPilotPlugin.KnownPowerVehicleComponent)
                         mainWindow.closeIndicatorDrawer()
                     }
                 }                
