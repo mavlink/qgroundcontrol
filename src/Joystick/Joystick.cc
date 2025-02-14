@@ -448,6 +448,18 @@ float Joystick::_adjustRange(int value, const Calibration_t &calibration, bool w
         correctedValue *= -1.0f;
     }
 
+    qCDebug(JoystickLog) << "_adjustRange corrected:value:min:max:center:reversed:deadband:basis:normalized:length"
+                            << correctedValue
+                            << value
+                            << calibration.min
+                            << calibration.max
+                            << calibration.center
+                            << calibration.reversed
+                            << calibration.deadband
+                            << axisBasis
+                            << valueNormalized
+                            << axisLength;
+
     return std::max(-1.0f, std::min(correctedValue, 1.0f));
 }
 
@@ -681,7 +693,7 @@ void Joystick::_handleAxis()
         }
     }
 
-    emit axisValues(roll, pitch, yaw, throttle);
+    emit axisValues(roll, pitch, yaw, throttle, gimbalPitch, gimbalYaw);
 
     const uint16_t lowButtons = static_cast<uint16_t>(buttonPressedBits & 0xFFFF);
     const uint16_t highButtons = static_cast<uint16_t>((buttonPressedBits >> 16) & 0xFFFF);

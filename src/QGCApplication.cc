@@ -496,7 +496,7 @@ void QGCApplication::_qgcCurrentStableVersionDownloadComplete(const QString &rem
             qCDebug(QGCApplicationLog) << version;
 
             int majorVersion, minorVersion, buildVersion;
-            if (_parseVersionText(version, majorVersion, minorVersion, buildVersion)) {
+            if (false && _parseVersionText(version, majorVersion, minorVersion, buildVersion)) {
                 if (_majorVersion < majorVersion ||
                         ((_majorVersion == majorVersion) && (_minorVersion < minorVersion)) ||
                         ((_majorVersion == majorVersion) && (_minorVersion == minorVersion) && (_buildVersion < buildVersion))) {

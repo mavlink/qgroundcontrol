@@ -1912,7 +1912,7 @@ void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, 
                     static_cast<float>(pitch),
                     static_cast<float>(yaw),
                     static_cast<float>(thrust),
-                    0, 0, NAN, NAN);
+                    0, 0, 0, 0);
     }
 }
 

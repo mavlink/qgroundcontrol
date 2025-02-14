@@ -80,11 +80,9 @@ Item {
     }
 
     // Axis value debugger
-    /*
     QGCLabel {
         anchors.fill: parent
         text: axisValue
     }
-    */
 
 }

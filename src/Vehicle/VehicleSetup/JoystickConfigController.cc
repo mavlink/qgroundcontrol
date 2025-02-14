@@ -24,7 +24,8 @@ JoystickConfigController::JoystickConfigController(void)
     _activeJoystickChanged(JoystickManager::instance()->activeJoystick());
     _setStickPositions();
     _resetInternalCalibrationValues();
-    _currentStickPositions  << _sticksCentered.leftX  << _sticksCentered.leftY  << _sticksCentered.rightX  << _sticksCentered.rightY;
+    _currentStickPositions  << _sticksCentered.leftX  << _sticksCentered.leftY  << _sticksCentered.rightX  << _sticksCentered.rightY
+        << _sticksCentered.bLeftX << _sticksCentered.bLeftY << _sticksCentered.bRightX << _sticksCentered.bRightY;
 }
 
 void JoystickConfigController::start(void)
@@ -134,7 +135,8 @@ void JoystickConfigController::_setupCurrentState()
     _loggingLastValuesMap.clear();
     _saveCurrentAxisValues();
     _currentStickPositions.clear();
-    _currentStickPositions << state->stickPositions.leftX << state->stickPositions.leftY << state->stickPositions.rightX << state->stickPositions.rightY;
+    _currentStickPositions << state->stickPositions.leftX << state->stickPositions.leftY << state->stickPositions.rightX << state->stickPositions.rightY
+        << state->stickPositions.bLeftX << state->stickPositions.bLeftY << state->stickPositions.bRightX << state->stickPositions.bRightY;
     emit stickPositionsChanged();
     emit nextEnabledChanged();
     emit skipEnabledChanged();
@@ -279,7 +281,7 @@ void JoystickConfigController::_logJoystickInfo(const QString &methodName, Joyst
 }
 
 void JoystickConfigController::_inputStickDetect(Joystick::AxisFunction_t function, int axis, int value)
-{    
+{
     if (!_validAxis(axis)) {
         qCWarning(JoystickConfigControllerLog) << "Invalid axis axis:_axisCount" << axis << _axisCount;
         return;
@@ -548,7 +550,8 @@ void JoystickConfigController::_stopCalibration()
     _setStatusText("");
     emit calibratingChanged();
     _currentStickPositions.clear();
-    _currentStickPositions  << _sticksCentered.leftX  << _sticksCentered.leftY  << _sticksCentered.rightX  << _sticksCentered.rightY;
+    _currentStickPositions  << _sticksCentered.leftX  << _sticksCentered.leftY  << _sticksCentered.rightX  << _sticksCentered.rightY
+        << _sticksCentered.bLeftX << _sticksCentered.bLeftY << _sticksCentered.bRightX << _sticksCentered.bRightY;
     emit stickPositionsChanged();
 }
 
@@ -574,6 +577,10 @@ void JoystickConfigController::_setStickPositions()
         _sticksRollRight    = stRightStickRight;
         _sticksPitchUp      = stLeftStickUp;
         _sticksPitchDown    = stLeftStickDown;
+        _sticksGimbalPitchUp   = stSticksCenteredGimbalPitchUp;
+        _sticksGimbalPitchDown = stSticksCenteredGimbalPitchDown;
+        _sticksGimbalYawLeft   = stSticksCenteredGimbalYawLeft;
+        _sticksGimbalYawRight  = stSticksCenteredGimbalYawRight;
         break;
     case 2:
         _sticksThrottleUp   = stLeftStickUp;
@@ -584,6 +591,10 @@ void JoystickConfigController::_setStickPositions()
         _sticksRollRight    = stRightStickRight;
         _sticksPitchUp      = stRightStickUp;
         _sticksPitchDown    = stRightStickDown;
+        _sticksGimbalPitchUp   = stSticksCenteredGimbalPitchUp;
+        _sticksGimbalPitchDown = stSticksCenteredGimbalPitchDown;
+        _sticksGimbalYawLeft   = stSticksCenteredGimbalYawLeft;
+        _sticksGimbalYawRight  = stSticksCenteredGimbalYawRight;
         break;
     case 3:
         _sticksThrottleUp   = stRightStickUp;
@@ -594,6 +605,10 @@ void JoystickConfigController::_setStickPositions()
         _sticksRollRight    = stLeftStickRight;
         _sticksPitchUp      = stLeftStickUp;
         _sticksPitchDown    = stLeftStickDown;
+        _sticksGimbalPitchUp   = stSticksCenteredGimbalPitchUp;
+        _sticksGimbalPitchDown = stSticksCenteredGimbalPitchDown;
+        _sticksGimbalYawLeft   = stSticksCenteredGimbalYawLeft;
+        _sticksGimbalYawRight  = stSticksCenteredGimbalYawRight;
         break;
     case 4:
         _sticksThrottleUp   = stLeftStickUp;
@@ -604,6 +619,10 @@ void JoystickConfigController::_setStickPositions()
         _sticksRollRight    = stLeftStickRight;
         _sticksPitchUp      = stRightStickUp;
         _sticksPitchDown    = stRightStickDown;
+        _sticksGimbalPitchUp   = stSticksCenteredGimbalPitchUp;
+        _sticksGimbalPitchDown = stSticksCenteredGimbalPitchDown;
+        _sticksGimbalYawLeft   = stSticksCenteredGimbalYawLeft;
+        _sticksGimbalYawRight  = stSticksCenteredGimbalYawRight;
         break;
     default:
         Q_ASSERT(false);
@@ -646,6 +665,24 @@ bool JoystickConfigController::throttleAxisReversed()
     }
 }
 
+bool JoystickConfigController::gimbalYawAxisReversed()
+{
+    if (_rgFunctionAxisMapping[Joystick::gimbalYawFunction] != _axisNoAxis) {
+        return _rgAxisInfo[_rgFunctionAxisMapping[Joystick::gimbalYawFunction]].reversed;
+    } else {
+        return false;
+    }
+}
+
+bool JoystickConfigController::gimbalPitchAxisReversed()
+{
+    if (_rgFunctionAxisMapping[Joystick::gimbalPitchFunction] != _axisNoAxis) {
+        return _rgAxisInfo[_rgFunctionAxisMapping[Joystick::gimbalPitchFunction]].reversed;
+    } else {
+        return false;
+    }
+}
+
 void JoystickConfigController::setTransmitterMode(int mode)
 {
     // Mode selection is disabled during calibration
@@ -663,11 +700,15 @@ void JoystickConfigController::_signalAllAttitudeValueChanges()
     emit pitchAxisMappedChanged(pitchAxisMapped());
     emit yawAxisMappedChanged(yawAxisMapped());
     emit throttleAxisMappedChanged(throttleAxisMapped());
+    emit gimbalYawAxisMappedChanged(gimbalYawAxisMapped());
+    emit gimbalPitchAxisMappedChanged(gimbalPitchAxisMapped());
 
     emit rollAxisReversedChanged(rollAxisReversed());
     emit pitchAxisReversedChanged(pitchAxisReversed());
     emit yawAxisReversedChanged(yawAxisReversed());
     emit throttleAxisReversedChanged(throttleAxisReversed());
+    emit gimbalYawAxisReversedChanged(gimbalYawAxisReversed());
+    emit gimbalPitchAxisReversedChanged(gimbalPitchAxisReversed());
 
     emit transmitterModeChanged(_transmitterMode);
 }

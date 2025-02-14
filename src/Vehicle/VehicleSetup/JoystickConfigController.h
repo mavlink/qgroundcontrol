@@ -38,11 +38,15 @@ public:
     Q_PROPERTY(bool pitchAxisMapped             READ pitchAxisMapped            NOTIFY pitchAxisMappedChanged)
     Q_PROPERTY(bool yawAxisMapped               READ yawAxisMapped              NOTIFY yawAxisMappedChanged)
     Q_PROPERTY(bool throttleAxisMapped          READ throttleAxisMapped         NOTIFY throttleAxisMappedChanged)
+    Q_PROPERTY(bool gimbalPitchAxisMapped       READ gimbalPitchAxisMapped      NOTIFY gimbalPitchAxisMappedChanged)
+    Q_PROPERTY(bool gimbalYawAxisMapped         READ gimbalYawAxisMapped        NOTIFY gimbalYawAxisMappedChanged)
 
     Q_PROPERTY(int  rollAxisReversed            READ rollAxisReversed           NOTIFY rollAxisReversedChanged)
     Q_PROPERTY(int  pitchAxisReversed           READ pitchAxisReversed          NOTIFY pitchAxisReversedChanged)
     Q_PROPERTY(int  yawAxisReversed             READ yawAxisReversed            NOTIFY yawAxisReversedChanged)
     Q_PROPERTY(int  throttleAxisReversed        READ throttleAxisReversed       NOTIFY throttleAxisReversedChanged)
+    Q_PROPERTY(bool gimbalPitchAxisReversed     READ gimbalPitchAxisReversed    NOTIFY gimbalPitchAxisReversedChanged)
+    Q_PROPERTY(bool gimbalYawAxisReversed       READ gimbalYawAxisReversed      NOTIFY gimbalYawAxisReversedChanged)
 
     Q_PROPERTY(bool deadbandToggle              READ getDeadbandToggle          WRITE setDeadbandToggle    NOTIFY deadbandToggled)
 
@@ -65,11 +69,15 @@ public:
     bool pitchAxisMapped                    () { return _rgFunctionAxisMapping[Joystick::pitchFunction]         != _axisNoAxis; }
     bool yawAxisMapped                      () { return _rgFunctionAxisMapping[Joystick::yawFunction]           != _axisNoAxis; }
     bool throttleAxisMapped                 () { return _rgFunctionAxisMapping[Joystick::throttleFunction]      != _axisNoAxis; }
+    bool gimbalYawAxisMapped                () { return _rgFunctionAxisMapping[Joystick::gimbalYawFunction]     != _axisNoAxis; }
+    bool gimbalPitchAxisMapped              () { return _rgFunctionAxisMapping[Joystick::gimbalPitchFunction]   != _axisNoAxis; }
 
     bool rollAxisReversed                   ();
     bool pitchAxisReversed                  ();
     bool yawAxisReversed                    ();
     bool throttleAxisReversed               ();
+    bool gimbalYawAxisReversed              ();
+    bool gimbalPitchAxisReversed            ();
 
     bool getDeadbandToggle                  ();
     void setDeadbandToggle                  (bool);
@@ -90,6 +98,10 @@ public:
         qreal   leftY;
         qreal   rightX;
         qreal   rightY;
+        qreal   bLeftX;
+        qreal   bLeftY;
+        qreal   bRightX;
+        qreal   bRightY;
     };
 
 signals:
@@ -99,10 +111,14 @@ signals:
     void pitchAxisMappedChanged             (bool mapped);
     void yawAxisMappedChanged               (bool mapped);
     void throttleAxisMappedChanged          (bool mapped);
+    void gimbalPitchAxisMappedChanged       (bool mapped);
+    void gimbalYawAxisMappedChanged         (bool mapped);
     void rollAxisReversedChanged            (bool reversed);
     void pitchAxisReversedChanged           (bool reversed);
     void yawAxisReversedChanged             (bool reversed);
     void throttleAxisReversedChanged        (bool reversed);
+    void gimbalPitchAxisReversedChanged     (bool reversed);
+    void gimbalYawAxisReversedChanged       (bool reversed);
     void deadbandToggled                    (bool value);
     void transmitterModeChanged             (int mode);
     void calibratingChanged                 ();
@@ -194,6 +210,10 @@ private:
     void _signalAllAttitudeValueChanges();
 
     void _setStatusText         (const QString& text);
+    int _centerPointForAxis		(int axis) const;
+    int _validMinValueForAxis	(int axis) const;
+    int _defaultMinValueForAxis (int axis) const;
+    int _moveDeltaForAxis		(int axis) const;
 
     void _logJoystickInfo(const QString &methodName, Joystick::AxisFunction_t function, int axis, int value);
 
@@ -206,6 +226,11 @@ private:
     stateStickPositions _sticksRollRight;
     stateStickPositions _sticksPitchUp;
     stateStickPositions _sticksPitchDown;
+
+    stateStickPositions _sticksGimbalPitchUp;
+    stateStickPositions _sticksGimbalPitchDown;
+    stateStickPositions _sticksGimbalYawLeft;
+    stateStickPositions _sticksGimbalYawRight;
 
     QList<qreal> _currentStickPositions;
 
@@ -248,40 +273,56 @@ private:
 
     static constexpr int _stickDetectSettleMSecs = 500;
 
-    static constexpr const stateStickPositions stSticksCentered {
-        0.25, 0.5, 0.75, 0.5
+    static constexpr const JoystickConfigController::stateStickPositions stSticksCentered {
+        0.25, 0.5, 0.75, 0.5, 0.25, 0.85, 0.75, 0.85
     };
 
-    static constexpr const stateStickPositions stLeftStickUp {
-        0.25, 0.3084, 0.75, 0.5
+    static constexpr const JoystickConfigController::stateStickPositions stLeftStickUp {
+        0.25, 0.3084, 0.75, 0.5, 0.25, 0.85, 0.75, 0.85
     };
 
-    static constexpr const stateStickPositions stLeftStickDown {
-        0.25, 0.6916, 0.75, 0.5
+    static constexpr const JoystickConfigController::stateStickPositions stLeftStickDown {
+        0.25, 0.6916, 0.75, 0.5, 0.25, 0.85, 0.75, 0.85
     };
 
-    static constexpr const stateStickPositions stLeftStickLeft {
-        0.1542, 0.5, 0.75, 0.5
+    static constexpr const JoystickConfigController::stateStickPositions stLeftStickLeft {
+        0.1542, 0.5, 0.75, 0.5, 0.25, 0.85, 0.75, 0.85
     };
 
-    static constexpr const stateStickPositions stLeftStickRight {
-        0.3458, 0.5, 0.75, 0.5
+    static constexpr const JoystickConfigController::stateStickPositions stLeftStickRight {
+        0.3458, 0.5, 0.75, 0.5, 0.25, 0.85, 0.75, 0.85
     };
 
-    static constexpr const stateStickPositions stRightStickUp {
-        0.25, 0.5, 0.75, 0.3084
+    static constexpr const JoystickConfigController::stateStickPositions stRightStickUp {
+        0.25, 0.5, 0.75, 0.3084, 0.25, 0.85, 0.75, 0.85
     };
 
-    static constexpr const stateStickPositions stRightStickDown {
-        0.25, 0.5, 0.75, 0.6916
+    static constexpr const JoystickConfigController::stateStickPositions stRightStickDown {
+        0.25, 0.5, 0.75, 0.6916, 0.25, 0.85, 0.75, 0.85
     };
 
-    static constexpr const stateStickPositions stRightStickLeft {
-        0.25, 0.5, 0.6542, 0.5
+    static constexpr const JoystickConfigController::stateStickPositions stRightStickLeft {
+        0.25, 0.5, 0.6542, 0.5, 0.25, 0.85, 0.75, 0.85
     };
 
-    static constexpr const stateStickPositions stRightStickRight {
-        0.25, 0.5, 0.8423, 0.5
+    static constexpr const JoystickConfigController::stateStickPositions stRightStickRight {
+        0.25, 0.5, 0.8423, 0.5, 0.25, 0.85, 0.75, 0.85
+    };
+
+    static constexpr const JoystickConfigController::stateStickPositions stSticksCenteredGimbalPitchUp {
+        0.25, 0.5, 0.75, 0.5, 0.3458, 0.85, 0.75, 0.85
+    };
+
+    static constexpr const JoystickConfigController::stateStickPositions stSticksCenteredGimbalPitchDown {
+        0.25, 0.5, 0.75, 0.5, 0.1542, 0.85, 0.75, 0.85
+    };
+
+    static constexpr const JoystickConfigController::stateStickPositions stSticksCenteredGimbalYawLeft {
+        0.25, 0.5, 0.75, 0.5, 0.25, 0.85, 0.6542, 0.85
+    };
+
+    static constexpr const JoystickConfigController::stateStickPositions stSticksCenteredGimbalYawRight {
+        0.25, 0.5, 0.75, 0.5, 0.25, 0.85, 0.8423, 0.85
     };
 
 };

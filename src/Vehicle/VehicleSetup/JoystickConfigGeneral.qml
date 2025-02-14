@@ -209,13 +209,41 @@ Item {
                         reversed:           controller.throttleAxisReversed
                     }
 
+                    QGCLabel {
+                        id:                 gimbalPitchLabel
+                        width:              _attitudeLabelWidth
+                        text:               qsTr("Gimbal Pitch")
+                    }
+                    AxisMonitor {
+                        id:                 gimbalPitchAxis
+                        height:             ScreenTools.defaultFontPixelHeight
+                        width:              axisMonitorWidth
+                        mapped:             controller.gimbalPitchAxisMapped
+                        reversed:           controller.gimbalPitchAxisReversed
+                    }
+
+                    QGCLabel {
+                        id:                 gimbalYawLabel
+                        width:              _attitudeLabelWidth
+                        text:               qsTr("Gimbal Yaw")
+                    }
+                    AxisMonitor {
+                        id:                 gimbalYawAxis
+                        height:             ScreenTools.defaultFontPixelHeight
+                        width:              axisMonitorWidth
+                        mapped:             controller.gimbalYawAxisMapped
+                        reversed:           controller.gimbalYawAxisReversed
+                    }
+
                     Connections {
                         target:             _activeJoystick
-                        onAxisValues: (roll, pitch, yaw, throttle) => {
+                        onAxisValues: (roll, pitch, yaw, throttle, gimbalPitch, gimbalYaw) => {
                             rollAxis.axisValue      = roll  * 32768.0
                             pitchAxis.axisValue     = pitch * 32768.0
                             yawAxis.axisValue       = yaw   * 32768.0
                             throttleAxis.axisValue  = _activeJoystick.negativeThrust ? throttle * -32768.0 : (-2 * throttle + 1) * 32768.0
+                            gimbalPitchAxis.axisValue     = gimbalPitch * 32768.0
+                            gimbalYawAxis.axisValue       = gimbalYaw   * 32768.0
                         }
                     }
                 }

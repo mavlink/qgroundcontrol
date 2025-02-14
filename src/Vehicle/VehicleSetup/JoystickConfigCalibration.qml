@@ -47,7 +47,7 @@ Item {
                     border.color:   qgcPal.text
                     border.width:   ScreenTools.defaultFontPixelWidth * 0.25
                     anchors.horizontalCenter: parent.horizontalCenter
-                    property bool hasStickPositions: controller.stickPositions.length === 4
+                    property bool hasStickPositions: controller.stickPositions.length >= 4
                     //---------------------------------------------------------
                     //-- Left Stick
                     Rectangle {
@@ -89,6 +89,48 @@ Item {
                         visible: parent.hasStickPositions
                         x:      (parent.width  * controller.stickPositions[2]) - (width  * 0.5)
                         y:      (parent.height * controller.stickPositions[3]) - (height * 0.5)
+                    }
+
+                    //-- Gimbal pitch
+                    Rectangle {
+                        width:      parent.width * 0.25
+                        height:     parent.width * 0.025
+                        radius:     0
+                        color:      qgcPal.window
+                        border.color: qgcPal.text
+                        border.width: ScreenTools.defaultFontPixelWidth * 0.125
+                        x:          (parent.width  * 0.25) - (width  * 0.5)
+                        y:          (parent.height * 0.85)  - (height * 0.5)
+                    }
+                    Rectangle {
+                        color:  qgcPal.colorGreen
+                        width:  parent.width * 0.035
+                        height: width
+                        radius: width * 0.5
+                        visible: parent.hasStickPositions
+                        x:      (parent.width  * controller.stickPositions[4]) - (width  * 0.5)
+                        y:      (parent.height * controller.stickPositions[5]) - (height * 0.5)
+                    }
+
+                    //-- Gimbal yaw
+                    Rectangle {
+                        width:      parent.width * 0.25
+                        height:     parent.width * 0.025
+                        radius:     0
+                        color:      qgcPal.window
+                        border.color: qgcPal.text
+                        border.width: ScreenTools.defaultFontPixelWidth * 0.125
+                        x:          (parent.width  * 0.75) - (width  * 0.5)
+                        y:          (parent.height * 0.85)  - (height * 0.5)
+                    }
+                    Rectangle {
+                        color:  qgcPal.colorGreen
+                        width:  parent.width * 0.035
+                        height: width
+                        radius: width * 0.5
+                        visible: parent.hasStickPositions
+                        x:      (parent.width  * controller.stickPositions[6]) - (width  * 0.5)
+                        y:      (parent.height * controller.stickPositions[7]) - (height * 0.5)
                     }
                 }
             }
