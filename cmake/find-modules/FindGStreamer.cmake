@@ -233,6 +233,9 @@ endif()
 
 if(ANDROID)
     target_link_options(GStreamer::GStreamer INTERFACE "-Wl,-Bsymbolic")
+    if(${ANDROID_ABI} STREQUAL "armeabi-v7a" OR ${ANDROID_ABI} STREQUAL "x86")
+        target_link_options(GStreamer::GStreamer INTERFACE "-Wl,-z,notext")
+    endif()
 endif()
 
 if(QGC_GST_STATIC_BUILD)
