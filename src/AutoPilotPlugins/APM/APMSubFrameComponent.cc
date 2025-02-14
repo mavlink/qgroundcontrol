@@ -15,7 +15,7 @@
 #include "APMSubFrameComponent.h"
 
 APMSubFrameComponent::APMSubFrameComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
-    : VehicleComponent(vehicle, autopilot, parent)
+    : VehicleComponent(vehicle, autopilot, AutoPilotPlugin::UnknownVehicleComponent, parent)
     , _name(tr("Frame"))
 {
 }

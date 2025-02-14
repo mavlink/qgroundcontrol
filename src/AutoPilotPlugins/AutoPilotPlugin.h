@@ -32,6 +32,17 @@ public:
     AutoPilotPlugin(Vehicle* vehicle, QObject* parent);
     ~AutoPilotPlugin();
 
+    // Vehicle Components which are available for firmware types
+    enum KnownVehicleComponent {
+        KnownRadioVehicleComponent,
+        KnownFlightModesVehicleComponent,
+        KnownSensorsVehicleComponent,
+        KnownSafetyVehicleComponent,
+        KnownPowerVehicleComponent,
+        UnknownVehicleComponent // Firmware specific vehicle components
+    };
+    Q_ENUM(KnownVehicleComponent)
+
     Q_PROPERTY(QVariantList vehicleComponents   READ vehicleComponents  NOTIFY vehicleComponentsChanged)    ///< List of VehicleComponent objects
     Q_PROPERTY(bool         setupComplete       READ setupComplete      NOTIFY setupCompleteChanged)        ///< false: One or more vehicle components require setup
 
@@ -45,6 +56,10 @@ public:
     /// Returns the name of the vehicle component which must complete setup prior to this one. Empty string for none.
     Q_INVOKABLE virtual QString prerequisiteSetup(VehicleComponent* component) const = 0;
 
+    Q_INVOKABLE VehicleComponent* findKnownVehicleComponent(KnownVehicleComponent knownVehicleComponent);
+
+    Q_INVOKABLE bool knownVehicleComponentAvailable(KnownVehicleComponent knownVehicleComponent) { return findKnownVehicleComponent(knownVehicleComponent) != nullptr; }
+
     // Property accessors
     bool setupComplete(void) const;
 
@@ -53,9 +68,6 @@ signals:
     void vehicleComponentsChanged   (void);
 
 protected:
-    /// All access to AutoPilotPugin objects is through getInstanceForAutoPilotPlugin
-    AutoPilotPlugin(QObject* parent = nullptr) : QObject(parent) { }
-
     Vehicle*        _vehicle;
     FirmwarePlugin* _firmwarePlugin;
     bool            _setupComplete;
