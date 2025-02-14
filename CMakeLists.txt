@@ -198,10 +198,16 @@ if(LINUX)
     find_package(Qt6 ${QT_MINIMUM_VERSION} COMPONENTS WaylandClient)
 endif()
 
+# Set extra standard project setup options for Qt 6.7.0 and above
+set(EXTRA_STANDARD_PROJECT_SETUP_OPTIONS)
+if(QT_VERSION VERSION_GREATER_EQUAL 6.7.0)
+    list(APPEND EXTRA_STANDARD_PROJECT_SETUP_OPTIONS I18N_SOURCE_LANGUAGE en)
+endif()
+
 qt_standard_project_setup(
     REQUIRES ${QGC_QT_MINIMUM_VERSION}
     SUPPORTS_UP_TO ${QGC_QT_MAXIMUM_VERSION}
-    I18N_SOURCE_LANGUAGE en
+    ${EXTRA_STANDARD_PROJECT_SETUP_OPTIONS}
 )
 
 qt_policy(

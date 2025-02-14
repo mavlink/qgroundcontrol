@@ -46,7 +46,11 @@ option(QGC_DISABLE_PX4_PLUGIN "Disable PX4 Plugin" OFF)
 option(QGC_DISABLE_PX4_PLUGIN_FACTORY "Disable PX4 Plugin Factory" OFF)
 
 # Android
-set(QGC_QT_ANDROID_MIN_SDK_VERSION "28" CACHE STRING "Android Min SDK Version")
+if(QT_VERSION VERSION_GREATER_EQUAL 6.7.0)
+    set(QGC_QT_ANDROID_MIN_SDK_VERSION "28" CACHE STRING "Android Min SDK Version")
+else() # Allow building for Android 7.1 if supported
+    set(QGC_QT_ANDROID_MIN_SDK_VERSION "25" CACHE STRING "Android Min SDK Version")
+endif()
 set(QGC_QT_ANDROID_TARGET_SDK_VERSION "35" CACHE STRING "Android Target SDK Version")
 set(QGC_ANDROID_PACKAGE_NAME "org.mavlink.qgroundcontrol" CACHE STRING "Android Package Name")
 set(QGC_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_SOURCE_DIR}/android" CACHE PATH "Android Package Path")
@@ -70,7 +74,7 @@ set(QGC_WINDOWS_ICON_PATH "${CMAKE_SOURCE_DIR}/deploy/windows/WindowsQGC.ico" CA
 set(CPM_SOURCE_CACHE ${CMAKE_BINARY_DIR}/cpm_modules CACHE PATH "Directory to download CPM dependencies")
 
 # Qt
-set(QGC_QT_MINIMUM_VERSION "6.8.1" CACHE STRING "Minimum Supported Qt Version")
+set(QGC_QT_MINIMUM_VERSION "6.6.3" CACHE STRING "Minimum Supported Qt Version")
 set(QGC_QT_MAXIMUM_VERSION "6.8.2" CACHE STRING "Maximum Supported Qt Version")
 set(QT_QML_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/qml" CACHE PATH "Install path for QML")
 set(QML_IMPORT_PATH "${QT_QML_OUTPUT_DIRECTORY}" CACHE STRING "Extra QML Import Paths")

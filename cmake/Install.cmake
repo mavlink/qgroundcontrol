@@ -17,10 +17,16 @@ if(MACOS OR WIN32)
     endif()
 endif()
 
+# Set extra deploy QML app script options for Qt 6.7.0 and above
+set(EXTRA_DEPLOY_QML_APP_SCRIPT_OPTIONS)
+if(QT_VERSION VERSION_GREATER_EQUAL 6.7.0)
+    list(APPEND EXTRA_DEPLOY_QML_APP_SCRIPT_OPTIONS DEPLOY_TOOL_OPTIONS ${deploy_tool_options_arg})
+endif()
+
 qt_generate_deploy_qml_app_script(
     TARGET ${CMAKE_PROJECT_NAME}
     OUTPUT_SCRIPT deploy_script
-    DEPLOY_TOOL_OPTIONS ${deploy_tool_options_arg}
+    ${EXTRA_DEPLOY_QML_APP_SCRIPT_OPTIONS}
     MACOS_BUNDLE_POST_BUILD
     NO_UNSUPPORTED_PLATFORM_ERROR
     DEPLOY_USER_QML_MODULES_ON_UNSUPPORTED_PLATFORM
