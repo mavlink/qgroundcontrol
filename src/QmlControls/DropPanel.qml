@@ -27,6 +27,7 @@ Popup {
     focus:          true
     closePolicy:    Popup.CloseOnEscape | Popup.CloseOnPressOutside
     clip:           false
+    dim:            false
 
     property var  sourceComponent                                               // Component to display within the popup
     property var  clickRect:        Qt.rect(0, 0, 0, 0)                         // Rectangle of clicked item - used to position drop down
