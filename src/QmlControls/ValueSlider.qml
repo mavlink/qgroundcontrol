@@ -148,8 +148,9 @@ Control {
             }
 
             DragHandler {
-                id:             dragHandler
-                yAxis.enabled:  false
+                id:                 dragHandler
+                grabPermissions:    PointerHandler.TakeOverForbidden
+                yAxis.enabled:      false
             }
 
             BoundaryRule on x {
