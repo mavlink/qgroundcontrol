@@ -128,6 +128,14 @@ Control {
         colorGroupEnabled:  control.enabled
     }
 
+    // This TapHandler ensures that the slider captures touch and click events,
+    // preventing them from passing through to the underlying map.
+    TapHandler {
+        acceptedButtons: Qt.AllButtons
+        onTapped: control.forceActiveFocus()
+        grabPermissions: PointerHandler.CanTakeOverFromAnything
+    }
+
     background: Item {
         implicitHeight: _majorTickSize + tickValueMargin + ScreenTools.defaultFontPixelHeight + labelOffset
         clip:           true
