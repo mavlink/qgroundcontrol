@@ -55,7 +55,7 @@ Item {
             // First hide current popup, in case the normal control panel is visible
             mainWindow.closeIndicatorDrawer()
             // When showing the popup, the component will automatically start the count down in controlRequestPopup
-            mainWindow.showIndicatorDrawer(controlRequestPopup, control, false)
+            mainWindow.showIndicatorDrawer(controlRequestPopup, control)
         }
         // Animation to blink indicator when any related info changes
         onGcsControlStatusChanged: {
@@ -123,7 +123,7 @@ Item {
                         // After allowing takeover, if other GCS does not take control within 10 seconds
                         // takeover will be set to not allowed again. Notify user about this
                         control.activeVehicle.startTimerRevertAllowTakeover()
-                        mainWindow.showIndicatorDrawer(allowTakeoverExpirationPopup, control, false)
+                        mainWindow.showIndicatorDrawer(allowTakeoverExpirationPopup, control)
                     }
                 }
                 // Action label
@@ -392,7 +392,7 @@ Item {
     MouseArea {
         anchors.fill: parent
         onClicked: {
-            mainWindow.showIndicatorDrawer(controlPopup, control, false)
+            mainWindow.showIndicatorDrawer(controlPopup, control)
         }
     }
 }
