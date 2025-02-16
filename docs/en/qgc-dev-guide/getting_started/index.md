@@ -1,5 +1,5 @@
 ---
-qt_version: 6.8.1
+qt_version: 6.8.2
 ---
 
 # Getting Started with Source and Builds
@@ -68,7 +68,7 @@ To install Qt:
 1. Download and run the [Qt Online Installer](https://www.qt.io/download-qt-installer-oss)
    - **Ubuntu:**
      - Set the downloaded file to executable using: `chmod +x`.
-     - You may also need to install libxcb-cursor.
+     - You may also need to install libxcb-cursor0
 
 1. On the _Installation Folder_ page select "Custom Installation"    
 

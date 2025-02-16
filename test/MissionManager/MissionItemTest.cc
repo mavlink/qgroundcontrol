@@ -11,6 +11,7 @@
 #include "MissionItemTest.h"
 #include "SimpleMissionItem.h"
 #include "PlanMasterController.h"
+#include "MissionItem.h"
 #include "MultiSignalSpy.h"
 
 #include <QtTest/QTest>

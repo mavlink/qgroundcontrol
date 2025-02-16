@@ -42,15 +42,15 @@ Control {
             spacing:        ScreenTools.defaultFontPixelWidth
             visible:        _showSelectionUI
 
+            QGCButton {
+                onClicked:  _showSelectionUI = false
+                iconSource: "qrc:/InstrumentValueIcons/lock-open.svg"
+            }
+
             FactComboBox {
                 fact:           selectedControl
                 indexModel:     false
                 sizeToContents: true
-            }
-
-            QGCButton {
-                text:       qsTr("X")
-                onClicked:  _showSelectionUI = false
             }
         }
     }
@@ -74,11 +74,7 @@ Control {
                 }
             }
 
-            onPressAndHold: {
-                if (ScreenTools.isMobile) {
-                    _showSelectionUI = true
-                }
-            }
+            onPressAndHold: _showSelectionUI = true
         }
     }
 }

@@ -12,7 +12,9 @@ on:
       - '.github/workflows/linux.yml'
       - 'deploy/linux/**'
       - 'src/**'
+      - 'test/**'
       - 'CMakeLists.txt'
+      - 'cmake/**'
 
 # concurrency:
 #   group: ${{ github.workflow }}-${{ github.ref }}
@@ -34,9 +36,7 @@ jobs:
     env:
       ARTIFACT: QGroundControl-x86_64.AppImage
       PACKAGE: QGroundControl-x86_64
-      QT_VERSION: 6.8.1
-      GST_VERSION: 1.22.12
-      CPM_SOURCE_CACHE: ${{ github.workspace }}/cpm_modules
+      QT_VERSION: 6.8.2
 
     steps:
       - name: Checkout repo
@@ -63,9 +63,9 @@ jobs:
       - name: Install Compiler
         run: |
           sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-          sudo apt install gcc-11 g++-11
-          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 100 --slave /usr/bin/g++ g++ /usr/bin/g++-11 --slave /usr/bin/gcov gcov /usr/bin/gcov-11
-          sudo update-alternatives --set gcc /usr/bin/gcc-11
+          sudo apt install gcc-13 g++-13
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100 --slave /usr/bin/g++ g++ /usr/bin/g++-13 --slave /usr/bin/gcov gcov /usr/bin/gcov-13
+          sudo update-alternatives --set gcc /usr/bin/gcc-13
 
       - name: Setup Caching
         uses: ./.github/actions/cache
@@ -73,7 +73,7 @@ jobs:
           host: linux
           target: linux_gcc_64
           build-type: ${{ matrix.BuildType }}
-          cpm-modules: ${{ env.CPM_SOURCE_CACHE }}
+          cpm-modules: ${{ runner.temp }}/shadow_build_dir/cpm_modules
 
       - name: Install Qt for Linux (x64)
         uses: jurplel/install-qt-action@v4
@@ -102,6 +102,11 @@ jobs:
       - name: Create AppImage
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run: cmake --install . --config ${{ matrix.BuildType }}
+
+      - name: Sanity check release excecutable
+        if: matrix.BuildType == 'Release'
+        working-directory: ${{ runner.temp }}/shadow_build_dir
+        run: xvfb-run -a ./${{ env.ARTIFACT }} --simple-boot-test
 
       - name: Run unit tests
         if: matrix.BuildType == 'Debug'

@@ -57,6 +57,11 @@ docker run --rm -v ${PWD}:/project/source -v ${PWD}/build:/project/build qgc-ubu
 ```
 
 ::: info
+For up to date docker command and options reference relevant run-script in `deploy/docker`, for example [run-docker-ubuntu.sh](https://github.com/mavlink/qgroundcontrol/blob/master/deploy/docker/run-docker-ubuntu.sh#L16).
+
+:::
+
+::: info
 If using the script to build the Linux image on a Windows host, you would need to reference the PWD differently.
 On Windows the docker command is:
 

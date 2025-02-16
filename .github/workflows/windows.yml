@@ -13,6 +13,7 @@ on:
       - 'deploy/windows/**'
       - 'src/**'
       - 'CMakeLists.txt'
+      - 'cmake/**'
 
 # concurrency:
 #   group: ${{ github.workflow }}-${{ github.ref }}
@@ -34,9 +35,8 @@ jobs:
     env:
       ARTIFACT: QGroundControl-installer.exe
       PACKAGE: QGroundControl-installer
-      QT_VERSION: 6.8.1
-      GST_VERSION: 1.22.12
-      CPM_SOURCE_CACHE: ${{ github.workspace }}\cpm_modules
+      QT_VERSION: 6.8.2
+      GST_VERSION: 1.24.12
 
     steps:
       - name: Checkout repo
@@ -67,13 +67,12 @@ jobs:
           host: windows
           target: win64_msvc2022_64
           build-type: ${{ matrix.BuildType }}
-          cpm-modules: ${{ env.CPM_SOURCE_CACHE }}
+          cpm-modules: ${{ runner.temp }}\shadow_build_dir\cpm_modules
 
       - name: Install Qt for Windows (x64)
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
-          aqtversion: ==3.1.19
           host: windows
           target: desktop
           arch: win64_msvc2022_64
@@ -109,6 +108,11 @@ jobs:
       - name: Build
         working-directory: ${{ runner.temp }}\shadow_build_dir
         run: cmake --build . --target all --config ${{ matrix.BuildType }}
+
+      - name: Sanity check release excecutable
+        if: matrix.BuildType == 'Release'
+        working-directory: ${{ runner.temp }}\shadow_build_dir\Release
+        run: QGroundControl.exe --simple-boot-test
 
       - name: Install
         working-directory: ${{ runner.temp }}\shadow_build_dir

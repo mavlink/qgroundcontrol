@@ -32,8 +32,6 @@ Item {
         opacity:    0.75
     }
 
-    //DeadMouseArea { anchors.fill: parent }
-
     ColumnLayout {
         id:                 mainLayout
         anchors.margins:    _toolsMargin
@@ -41,10 +39,10 @@ Item {
         anchors.left:       parent.left
 
         RowLayout {
-            visible: mouseArea.containsMouse || valueArea.settingsUnlocked
+            visible: valueArea.settingsUnlocked
 
             QGCColoredImage {
-                source:             valueArea.settingsUnlocked ? "/res/LockOpen.svg" : "/res/pencil.svg"
+                source:             "qrc:/InstrumentValueIcons/lock-open.svg"
                 mipmap:             true
                 width:              ScreenTools.minTouchPixels * 0.75
                 height:             width
@@ -54,9 +52,7 @@ Item {
 
                 QGCMouseArea {
                     anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape:  Qt.PointingHandCursor
-                    onClicked:    valueArea.settingsUnlocked = !valueArea.settingsUnlocked
+                    onClicked:    valueArea.settingsUnlocked = false
                 }
             }
         }
@@ -74,17 +70,20 @@ Item {
         y:                          mainLayout.y
         width:                      mainLayout.width
         height:                     mainLayout.height
-        hoverEnabled:               !ScreenTools.isMobile
+        acceptedButtons:            Qt.LeftButton | Qt.RightButton
         propagateComposedEvents:    true
         visible:                    !valueArea.settingsUnlocked
 
         onClicked: (mouse) => {
-            if (ScreenTools.isMobile) {
+            if (!ScreenTools.isMobile && mouse.button === Qt.RightButton) {
                 valueArea.settingsUnlocked = true
                 mouse.accepted = true
-            } else {
-                mouse.accepted = false
             }
+        }
+
+        onPressAndHold: {
+            valueArea.settingsUnlocked = true
+            mouse.accepted = true
         }
     }
 }

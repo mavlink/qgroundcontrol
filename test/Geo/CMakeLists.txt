@@ -8,10 +8,10 @@ qt_add_library(GeoTest
 
 target_link_libraries(GeoTest
     PRIVATE
+        Qt6::Positioning
         Qt6::Test
         Geo
     PUBLIC
-        Qt6::Positioning
         qgcunittest
 )
 

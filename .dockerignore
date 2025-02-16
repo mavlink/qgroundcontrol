@@ -1,6 +1,7 @@
 # Ignore Git repository files
 .git
 .gitignore
+.gitattributes
 
 # Ignore node_modules or other build artifacts
 node_modules
@@ -10,8 +11,5 @@ build
 Dockerfile*
 docker-compose.yml
 
-# Ignore OS-specific files
-.DS_Store
-*.swp
-
+README.md
 CMakeLists.txt.user*

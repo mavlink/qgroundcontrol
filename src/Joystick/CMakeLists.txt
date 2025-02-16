@@ -77,11 +77,11 @@ if(WIN32)
     )
 endif()
 
-CPMFindPackage(
+CPMAddPackage(
     NAME SDL2
-    VERSION 2.0.20
+    VERSION 2.32.0
     GITHUB_REPOSITORY libsdl-org/SDL
-    GIT_TAG release-2.30.11
+    GIT_TAG release-2.32.0
     OPTIONS
         "SDL2_DISABLE_INSTALL ON"
         "SDL2_DISABLE_INSTALL ON"

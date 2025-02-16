@@ -65,7 +65,6 @@
         <file alias="MAVLinkInspectorPage.qml">src/AnalyzeView/MAVLinkInspectorPage.qml</file>
         <file alias="PX4LogTransferSettings.qml">src/UI/preferences/PX4LogTransferSettings.qml</file>
         <file alias="MissionSettingsEditor.qml">src/PlanView/MissionSettingsEditor.qml</file>
-        <file alias="MotorComponent.qml">src/AutoPilotPlugins/Common/MotorComponent.qml</file>
         <file alias="ActuatorComponent.qml">src/AutoPilotPlugins/PX4/ActuatorComponent.qml</file>
         <file alias="ActuatorFact.qml">src/AutoPilotPlugins/PX4/ActuatorFact.qml</file>
         <file alias="ActuatorSlider.qml">src/AutoPilotPlugins/PX4/ActuatorSlider.qml</file>
@@ -86,6 +85,7 @@
         <file alias="QGroundControl/Controls/CameraCalcGrid.qml">src/PlanView/CameraCalcGrid.qml</file>
         <file alias="QGroundControl/Controls/CameraSection.qml">src/PlanView/CameraSection.qml</file>
         <file alias="QGroundControl/Controls/ClickableColor.qml">src/QmlControls/ClickableColor.qml</file>
+        <file alias="QGroundControl/Controls/ConfigButton.qml">src/QmlControls/ConfigButton.qml</file>
         <file alias="QGroundControl/Controls/CorridorScanMapVisual.qml">src/PlanView/CorridorScanMapVisual.qml</file>
         <file alias="QGroundControl/Controls/DeadMouseArea.qml">src/QmlControls/DeadMouseArea.qml</file>
         <file alias="QGroundControl/Controls/DropButton.qml">src/QmlControls/DropButton.qml</file>
@@ -108,6 +108,7 @@
         <file alias="QGroundControl/Controls/LabelledButton.qml">src/QmlControls/LabelledButton.qml</file>
         <file alias="QGroundControl/Controls/LabelledComboBox.qml">src/QmlControls/LabelledComboBox.qml</file>
         <file alias="QGroundControl/Controls/LabelledLabel.qml">src/QmlControls/LabelledLabel.qml</file>
+        <file alias="QGroundControl/Controls/MotorComponent.qml">src/AutoPilotPlugins/Common/MotorComponent.qml</file>
         <file alias="QGroundControl/Controls/RemoteIDIndicatorPage.qml">src/UI/toolbar/RemoteIDIndicatorPage.qml</file>
         <file alias="QGroundControl/Controls/SettingsGroupLayout.qml">src/QmlControls/SettingsGroupLayout.qml</file>
         <file alias="QGroundControl/Controls/InstrumentValueLabel.qml">src/QmlControls/InstrumentValueLabel.qml</file>
@@ -185,6 +186,7 @@
         <file alias="QGroundControl/Controls/QGCRoundButton.qml">src/QmlControls/QGCRoundButton.qml</file>
         <file alias="QGroundControl/Controls/SectionHeader.qml">src/QmlControls/SectionHeader.qml</file>
         <file alias="QGroundControl/Controls/SelectableControl.qml">src/QmlControls/SelectableControl.qml</file>
+        <file alias="QGroundControl/Controls/SettingsButton.qml">src/QmlControls/SettingsButton.qml</file>
         <file alias="QGroundControl/Controls/SetupPage.qml">src/AutoPilotPlugins/Common/SetupPage.qml</file>
         <file alias="QGroundControl/Controls/SignalStrength.qml">src/UI/toolbar/SignalStrength.qml</file>
         <file alias="QGroundControl/Controls/SimpleItemMapVisual.qml">src/PlanView/SimpleItemMapVisual.qml</file>
@@ -196,6 +198,7 @@
         <file alias="QGroundControl/Controls/TakeoffItemMapVisual.qml">src/PlanView/TakeoffItemMapVisual.qml</file>
         <file alias="QGroundControl/Controls/ToolIndicatorPage.qml">src/QmlControls/ToolIndicatorPage.qml</file>
         <file alias="QGroundControl/Controls/ToolStrip.qml">src/QmlControls/ToolStrip.qml</file>
+        <file alias="QGroundControl/Controls/ToolStripDropPanel.qml">src/QmlControls/ToolStripDropPanel.qml</file>
         <file alias="QGroundControl/Controls/ToolStripHoverButton.qml">src/QmlControls/ToolStripHoverButton.qml</file>
         <file alias="QGroundControl/Controls/TransectStyleComplexItemEditor.qml">src/PlanView/TransectStyleComplexItemEditor.qml</file>
         <file alias="QGroundControl/Controls/TransectStyleComplexItemStats.qml">src/PlanView/TransectStyleComplexItemStats.qml</file>

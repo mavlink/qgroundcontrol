@@ -9,154 +9,95 @@
 
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.ScreenTools
 import QGroundControl.Palette
 
-Item {
-    id:         _root
-    visible:    false
+/// Drop panel that displays positioned next to the specified click position.
+/// By default the panel drops to the right of the click position. If there isn't
+/// enough room to the right then the panel will drop to the left.
+Popup {
+    id:             _root
+    padding:        _innerMargin
+    leftPadding:    _dropRight ? _innerMargin + _arrowPointWidth : _innerMargin
+    rightPadding:   _dropRight ? _innerMargin : _innerMargin + _arrowPointWidth
+    modal:          true
+    focus:          true
+    closePolicy:    Popup.CloseOnEscape | Popup.CloseOnPressOutside
+    clip:           false
+    dim:            false
 
-    signal          clicked()
-    property real   radius:             ScreenTools.isMobile ? ScreenTools.defaultFontPixelHeight * 1.75 : ScreenTools.defaultFontPixelHeight * 1.25
-    property real   viewportMargins:    0
-    property var    toolStrip
+    property var  sourceComponent                                               // Component to display within the popup
+    property var  clickRect:        Qt.rect(0, 0, 0, 0)                         // Rectangle of clicked item - used to position drop down
+    property var  dropViewPort:     Qt.rect(0, 0, parent.width, parent.height)  // Available viewport for dropdown
 
-    // Should be an enum but that get's into the whole problem of creating a singleton which isn't worth the effort
-    readonly property int dropLeft:     1
-    readonly property int dropRight:    2
-    readonly property int dropUp:       3
-    readonly property int dropDown:     4
+    property var  _qgcPal:              QGroundControl.globalPalette
+    property real _innerMargin:         ScreenTools.defaultFontPixelWidth * 0.5 // Margin between content and rectanglular portion of background
+    property real _arrowPointWidth:     ScreenTools.defaultFontPixelWidth * 2   // Distance from vertical side to point
+    property real _arrowPointPositionY: height / 2
+    property bool _dropRight:           true
 
-    readonly property real _arrowBaseHeight:    radius             // Height of vertical side of arrow
-    readonly property real _arrowPointWidth:    radius * 0.666     // Distance from vertical side to point
-    readonly property real _dropMargin:         ScreenTools.defaultFontPixelWidth
+    onAboutToShow: {
+        // Panel defaults to dropping to the right of click position
+        _root.x = clickRect.x + clickRect.width
 
-    property var    _dropEdgeTopPoint
-    property alias  _dropDownComponent: panelLoader.sourceComponent
-    property real   _viewportMaxTop:    0
-    property real   _viewportMaxBottom: parent.parent.height - parent.y
-    property real   _viewportMaxHeight: _viewportMaxBottom - _viewportMaxTop
-    property var    _dropPanelCancel
-    property var    _parentButton
-
-    function show(panelEdgeTopPoint, panelComponent, parentButton) {
-        _parentButton = parentButton
-        _dropEdgeTopPoint = panelEdgeTopPoint
-        _dropDownComponent = panelComponent
-        _calcPositions()
-        visible = true
-        _dropPanelCancel = dropPanelCancelComponent.createObject(toolStrip.parent)
-    }
-
-    function hide() {
-        if (_dropPanelCancel) {
-            _dropPanelCancel.destroy()
-            _parentButton.checked = false
-            visible = false
-            _dropDownComponent = undefined
-        }
-    }
-
-    function _calcPositions() {
-        var panelComponentWidth  = panelLoader.item.width
-        var panelComponentHeight = panelLoader.item.height
-
-        dropDownItem.width  = panelComponentWidth  + (_dropMargin * 2) + _arrowPointWidth
-        dropDownItem.height = panelComponentHeight + (_dropMargin * 2)
-
-        dropDownItem.x = _dropEdgeTopPoint.x + _dropMargin
-        dropDownItem.y = _dropEdgeTopPoint.y -(dropDownItem.height / 2) + radius
-
-        // Validate that dropdown is within viewport
-        dropDownItem.y = Math.min(dropDownItem.y + dropDownItem.height, _viewportMaxBottom) - dropDownItem.height
-        dropDownItem.y = Math.max(dropDownItem.y, _viewportMaxTop)
-
-        // Adjust height to not exceed viewport bounds
-        dropDownItem.height = Math.min(dropDownItem.height, _viewportMaxHeight - dropDownItem.y)
-
-        // Arrow points
-        arrowCanvas.arrowPoint.y = (_dropEdgeTopPoint.y + radius) - dropDownItem.y
-        arrowCanvas.arrowPoint.x = 0
-        arrowCanvas.arrowBase1.x = _arrowPointWidth
-        arrowCanvas.arrowBase1.y = arrowCanvas.arrowPoint.y - (_arrowBaseHeight / 2)
-        arrowCanvas.arrowBase2.x = arrowCanvas.arrowBase1.x
-        arrowCanvas.arrowBase2.y = arrowCanvas.arrowBase1.y + _arrowBaseHeight
-        arrowCanvas.requestPaint()
-    } // function - _calcPositions
-
-    QGCPalette { id: qgcPal }
-
-    Component {
-        // Overlay which is used to cancel the panel when the user clicks away
-        id: dropPanelCancelComponent
-
-        MouseArea {
-            anchors.fill:   parent
-            z:              toolStrip.z - 1
-            onClicked:      dropPanel.hide()
-        }
-    }
-
-    // This item is sized to hold the entirety of the drop panel including the arrow point
-    Item {
-        id: dropDownItem
-
-        DeadMouseArea {
-            anchors.fill: parent
+        // If there isn't room to the right then we switch to drop to the left
+        if (_root.x + _root.width > dropViewPort.x + dropViewPort.width) {
+            _dropRight = false
+            _root.x = clickRect.x - _root.width
         }
 
+        // Default position of panel is vertically centered on click position
+        _root.y = clickRect.y + (clickRect.height / 2)
+        _root.y -= _root.height / 2
+
+        // Make sure panel is within viewport
+        let originRootY = _root.y
+        _root.y = Math.max(_root.y, dropViewPort.y)
+        _root.y = Math.min(_root.y, dropViewPort.y + dropViewPort.height - _root.height)
+
+        // Adjust arrow position back to point at click position
+        _arrowPointPositionY += originRootY - _root.y
+    }
+
+    background: Item {
+        implicitWidth:  contentItem.implicitWidth + _innerMargin * 2 + _arrowPointWidth
+        implicitHeight: contentItem.implicitHeight + _innerMargin * 2
+
+        Rectangle {
+            x:      _dropRight ? _arrowPointWidth : 0
+            radius: ScreenTools.defaultFontPixelHeight / 2
+            width:  parent.implicitWidth - _arrowPointWidth
+            height: parent.implicitHeight
+            color:  _qgcPal.window
+        }
+
+        // Arrowhead
         Canvas {
-            id:             arrowCanvas
-            anchors.fill:   parent
-
-            property point arrowPoint: Qt.point(0, 0)
-            property point arrowBase1: Qt.point(0, 0)
-            property point arrowBase2: Qt.point(0, 0)
-
+            x:      _dropRight ? 0 : parent.width - _arrowPointWidth
+            y:      _arrowPointPositionY - _arrowPointWidth
+            width:  _arrowPointWidth
+            height: _arrowPointWidth * 2
+            
             onPaint: {
-                var panelX = _arrowPointWidth
-                var panelY = 0
-                var panelWidth = parent.width - _arrowPointWidth
-                var panelHeight = parent.height
-
                 var context = getContext("2d")
                 context.reset()
                 context.beginPath()
-
-                context.moveTo(panelX, panelY)                              // top left
-                context.lineTo(panelX + panelWidth, panelY)                 // top right
-                context.lineTo(panelX + panelWidth, panelX + panelHeight)   // bottom right
-                context.lineTo(panelX, panelY + panelHeight)                // bottom left
-                context.lineTo(arrowBase2.x, arrowBase2.y)
-                context.lineTo(arrowPoint.x, arrowPoint.y)
-                context.lineTo(arrowBase1.x, arrowBase1.y)
-                context.lineTo(panelX, panelY)                              // top left
-
+                context.moveTo(_dropRight ? 0 : _arrowPointWidth, _arrowPointWidth)
+                context.lineTo(_dropRight ? _arrowPointWidth : 0, 0)
+                context.lineTo(_dropRight ? _arrowPointWidth : 0, _arrowPointWidth * 2)
                 context.closePath()
-                context.fillStyle = qgcPal.windowShade
+                context.fillStyle = _qgcPal.window
                 context.fill()
             }
-        } // Canvas - arrowCanvas
-
-        QGCFlickable {
-            id:                 panelItemFlickable
-            anchors.margins:    _dropMargin
-            anchors.leftMargin: _dropMargin + _arrowPointWidth
-            anchors.fill:       parent
-            flickableDirection: Flickable.VerticalFlick
-            contentWidth:       panelLoader.width
-            contentHeight:      panelLoader.height
-
-            Loader {
-                id: panelLoader
-
-                onHeightChanged:    _calcPositions()
-                onWidthChanged:     _calcPositions()
-
-                property var dropPanel: _root
-            }
         }
-    } // Item - dropDownItem
+    }
+
+    contentItem: SettingsGroupLayout {
+        Loader {
+            sourceComponent: _root.sourceComponent
+        }
+    }
 }

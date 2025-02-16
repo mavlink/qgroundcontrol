@@ -216,47 +216,29 @@ Rectangle {
 
         ColumnLayout {
             id:         buttonColumn
-            spacing:    _defaultTextHeight / 2
+            spacing:    ScreenTools.defaultFontPixelHeight / 4
 
-            SubMenuButton {
+            ConfigButton {
                 id:                 summaryButton
-                imageResource:      "/qmlimages/VehicleSummaryIcon.png"
-                setupIndicator:     false
+                icon.source:        "/qmlimages/VehicleSummaryIcon.png"
                 checked:            true
-                buttonGroup:     setupButtonGroup
                 text:               qsTr("Summary")
                 Layout.fillWidth:   true
 
                 onClicked: showSummaryPanel()
             }
 
-            SubMenuButton {
-                id:                 firmwareButton
-                imageResource:      "/qmlimages/FirmwareUpgradeIcon.png"
-                setupIndicator:     false
-                buttonGroup:     setupButtonGroup
-                visible:            !ScreenTools.isMobile && _corePlugin.options.showFirmwareUpgrade
-                text:               qsTr("Firmware")
-                Layout.fillWidth:   true
-
-                onClicked: showPanel(this, "FirmwareUpgrade.qml")
-            }
-
-            SubMenuButton {
-                buttonGroup:        setupButtonGroup
+            ConfigButton {
                 visible:            QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle.flowImageIndex > 0 : false
-                setupIndicator:     false
                 text:               qsTr("Optical Flow")
                 Layout.fillWidth:   true
                 onClicked:          showPanel(this, "OpticalFlowSensor.qml")
             }
 
-            SubMenuButton {
+            ConfigButton {
                 id:                 joystickButton
-                imageResource:      "/qmlimages/Joystick.png"
-                setupIndicator:     true
+                icon.source:      "/qmlimages/Joystick.png"
                 setupComplete:      _activeJoystick ? _activeJoystick.calibrated || _buttonsOnly : false
-                buttonGroup:     setupButtonGroup
                 visible:            _fullParameterVehicleAvailable && joystickManager.joysticks.length !== 0
                 text:               _forcedToButtonsOnly ? qsTr("Buttons") : qsTr("Joystick")
                 Layout.fillWidth:   true
@@ -271,11 +253,9 @@ Rectangle {
                 id:     componentRepeater
                 model:  _fullParameterVehicleAvailable ? QGroundControl.multiVehicleManager.activeVehicle.autopilot.vehicleComponents : 0
 
-                SubMenuButton {
-                    imageResource:      modelData.iconResource
-                    setupIndicator:     modelData.requiresSetup
+                ConfigButton {
+                    icon.source:      modelData.iconResource
                     setupComplete:      modelData.setupComplete
-                    buttonGroup:     setupButtonGroup
                     text:               modelData.name
                     visible:            modelData.setupSource.toString() !== ""
                     Layout.fillWidth:   true
@@ -285,18 +265,26 @@ Rectangle {
                 }
             }
 
-            SubMenuButton {
+            ConfigButton {
                 id:                 parametersButton
-                setupIndicator:     false
-                buttonGroup:     setupButtonGroup
                 visible:            QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable &&
                                     !QGroundControl.multiVehicleManager.activeVehicle.usingHighLatencyLink &&
                                     _corePlugin.showAdvancedUI
                 text:               qsTr("Parameters")
                 Layout.fillWidth:   true
+                icon.source:        "/qmlimages/subMenuButtonImage.png"
                 onClicked:          showPanel(this, "SetupParameterEditor.qml")
             }
 
+            ConfigButton {
+                id:                 firmwareButton
+                icon.source:      "/qmlimages/FirmwareUpgradeIcon.png"
+                visible:            !ScreenTools.isMobile && _corePlugin.options.showFirmwareUpgrade
+                text:               qsTr("Firmware")
+                Layout.fillWidth:   true
+
+                onClicked: showPanel(this, "FirmwareUpgrade.qml")
+            }
         }
     }
 

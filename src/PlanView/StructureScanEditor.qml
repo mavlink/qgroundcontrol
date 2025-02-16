@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
-import QtQuick.Extras
 import QtQuick.Layouts
 
 import QGroundControl

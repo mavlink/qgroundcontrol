@@ -6,7 +6,6 @@ target_link_libraries(GStreamerReceiver PUBLIC Qt6::Quick)
 
 target_include_directories(GStreamerReceiver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-cmake_print_variables(QGC_ENABLE_GST_VIDEOSTREAMING)
 if(NOT QGC_ENABLE_GST_VIDEOSTREAMING)
     return()
 endif()
@@ -40,12 +39,12 @@ endif()
 
 target_link_libraries(GStreamerReceiver
     PRIVATE
-        Utilities
-    PUBLIC
-        Qt6::Core
         gstqml6gl
         Settings
+        Utilities
         VideoReceiver
+    PUBLIC
+        Qt6::Core
 )
 
 target_compile_definitions(GStreamerReceiver PUBLIC QGC_GST_STREAMING)

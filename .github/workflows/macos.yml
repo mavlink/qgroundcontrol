@@ -13,6 +13,7 @@ on:
       - 'deploy/macos/**'
       - 'src/**'
       - 'CMakeLists.txt'
+      - 'cmake/**'
 
 # concurrency:
 #   group: ${{ github.workflow }}-${{ github.ref }}
@@ -33,9 +34,7 @@ jobs:
     env:
       ARTIFACT: QGroundControl.dmg
       PACKAGE: QGroundControl
-      QT_VERSION: 6.8.1
-      GST_VERSION: 1.22.12
-      CPM_SOURCE_CACHE: ${{ github.workspace }}/cpm_modules
+      QT_VERSION: 6.8.2
 
     steps:
       - name: Checkout repo
@@ -52,18 +51,9 @@ jobs:
         with:
           xcode-version: latest-stable
 
-      - name: Install Dependencies
+      - name: Install Dependencies (include GStreamer)
         working-directory: ${{ github.workspace }}/tools/setup
-        run: sh macos-dependencies.sh
-
-      - name: Install GStreamer
-        run: |
-          wget --quiet https://gstreamer.freedesktop.org/data/pkg/osx/${{ env.GST_VERSION }}/gstreamer-1.0-devel-${{ env.GST_VERSION }}-universal.pkg
-          wget --quiet https://gstreamer.freedesktop.org/data/pkg/osx/${{ env.GST_VERSION }}/gstreamer-1.0-${{ env.GST_VERSION }}-universal.pkg
-          for package in *.pkg ;
-            do sudo installer -verbose -pkg "$package" -target /
-          done
-          echo "PKG_CONFIG_PATH=/Library/Frameworks/GStreamer.framework/lib/pkgconfig:/Library/Frameworks/GStreamer.framework/lib/gstreamer-1.0/pkgconfig:${{ env.PKG_CONFIG_PATH }}" >> "$GITHUB_ENV"
+        run: sh install-dependencies-osx.sh
 
       - name: Setup Caching
         uses: ./.github/actions/cache
@@ -71,7 +61,7 @@ jobs:
           host: mac
           target: clang_64
           build-type: ${{ matrix.BuildType }}
-          cpm-modules: ${{ env.CPM_SOURCE_CACHE }}
+          cpm-modules: ${{ runner.temp }}/shadow_build_dir/cpm_modules
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
@@ -95,12 +85,16 @@ jobs:
         run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
               -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }}
               -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64"
-              -DMACOS_SIGNING_IDENTITY=${{ secrets.MACOS_SIGNING_IDENTITY }}
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
 
       - name: Build
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run: cmake --build . --target all --config ${{ matrix.BuildType }}
+
+      - name: Sanity check release excecutable
+        if: matrix.BuildType == 'Release'
+        working-directory: ${{ runner.temp }}/shadow_build_dir/Release/QGroundControl.app/Contents/MacOS
+        run: ./QGroundControl --simple-boot-test
 
       - name: Create DMG
         working-directory: ${{ runner.temp }}/shadow_build_dir

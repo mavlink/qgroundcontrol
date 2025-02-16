@@ -23,7 +23,7 @@ if(ANDROID)
                             "${DEFAULT_ANDROID_DIR}/"
                             "${CUSTOM_ANDROID_DIR}/"
                         )
-            set(QGC_ANDROID_PACKAGE_SOURCE_DIR "${FINAL_ANDROID_DIR}" CACHE STRING "Path to a custom Android package template" FORCE)
+            set(QGC_ANDROID_PACKAGE_SOURCE_DIR "${FINAL_ANDROID_DIR}" CACHE PATH "Path to a custom Android package template" FORCE)
             message(STATUS "Android package template path will be set to: ${QGC_ANDROID_PACKAGE_SOURCE_DIR}")
         else()
             message(STATUS "Custom Android package template empty. Using default.")
@@ -54,9 +54,9 @@ list(APPEND CUSTOM_RESOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/qgroundcontrol.qrc
     ${CMAKE_CURRENT_SOURCE_DIR}/custom.qrc
 )
-set(QGC_RESOURCES ${CUSTOM_RESOURCES} PARENT_SCOPE)
+set(QGC_RESOURCES ${QGC_RESOURCES} ${CUSTOM_RESOURCES} CACHE STRING "Paths to .qrc Resources" FORCE)
 
-set(QML_IMPORT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/res" CACHE STRING "Extra qml import paths" PARENT_SCOPE)
+set(QML_IMPORT_PATH ${QML_IMPORT_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/res" CACHE STRING "Extra qml import paths" FORCE)
 
 qt_add_library(CustomPlugin STATIC
     src/CustomPlugin.cc

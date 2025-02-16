@@ -25,8 +25,6 @@ public:
     QUrl setupSource            (void) const override;
     bool allowSetupWhileArmed   (void) const override { return true; }
 
-    Q_INVOKABLE QString motorIndexToLetter(int index);
-
 private:
     const QString   _name;
 };

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-QT_VERSION="${QT_VERSION:-6.8.1}"
+QT_VERSION="${QT_VERSION:-6.8.2}"
 QT_PATH="${QT_PATH:-/opt/Qt}"
 QT_HOST="${QT_HOST:-linux}"
 QT_TARGET="${QT_TARGET:-desktop}"

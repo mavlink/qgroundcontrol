@@ -1,38 +1,45 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick)
 
-set(GST_COMPONENTS Allocators App Audio Codecparsers Controller Fft GlEGL GlPrototypes GlWayland GlX11 Mpegts Net Pbutils Photography Riff Rtp Rtsp Sdp Tag Va)
-find_package(GStreamer REQUIRED COMPONENTS OPTIONAL_COMPONENTS ${GST_COMPONENTS})
-
 qt_add_library(gstqml6gl STATIC)
+
+if(MACOS)
+    # Using FindGStreamer.cmake is currently bypassed on MACOS since it doesn't work
+    # So for now we hack in a simple hardwired setup which does work
+    find_library(GSTREAMER_FRAMEWORK GStreamer)
+    set(GST_PLUGINS_VERSION 1.24.12)
+    set(GSTREAMER_FRAMEWORK_PATH "/Library/Frameworks/GStreamer.framework")
+    target_link_libraries(gstqml6gl PUBLIC "$<LINK_LIBRARY:FRAMEWORK,${GSTREAMER_FRAMEWORK_PATH}>")
+    target_include_directories(gstqml6gl PUBLIC "${GSTREAMER_FRAMEWORK_PATH}/Headers")
+else()
+    set(GST_COMPONENTS GlEgl GlPrototypes GlWayland GlX11)
+    find_package(GStreamer REQUIRED COMPONENTS OPTIONAL_COMPONENTS ${GST_COMPONENTS})
+    target_link_libraries(gstqml6gl PUBLIC GStreamer::GStreamer)
+endif()
 
 target_link_libraries(gstqml6gl
     PRIVATE
-        Qt6::GuiPrivate
-    PUBLIC
         Qt6::Core
         Qt6::Gui
+        Qt6::GuiPrivate
         Qt6::Qml
         Qt6::Quick
-        GStreamer::GStreamer
 )
 
 foreach(component IN LISTS GST_COMPONENTS)
     if(GStreamer_${component}_FOUND)
-        target_link_libraries(gstqml6gl INTERFACE GStreamer::${component})
+        target_link_libraries(gstqml6gl PUBLIC GStreamer::${component})
     endif()
 endforeach()
 
 ################################################################################
 
 if(LINUX)
-    # if(NOT QGC_GST_STATIC_BUILD)
-        install(DIRECTORY ${GSTREAMER_LIB_PATH}/gstreamer1.0 DESTINATION ${CMAKE_INSTALL_LIBDIR})
-        install(CODE "execute_process(COMMAND chmod +x \"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner\")")
-        install(CODE "execute_process(COMMAND chmod +x \"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/gstreamer1.0/gstreamer-1.0/gst-ptp-helper\")")
-        install(DIRECTORY ${GSTREAMER_LIB_PATH}/gio DESTINATION ${CMAKE_INSTALL_LIBDIR})
-        get_target_property(LINKED_PLUGINS GStreamer::Plugins INTERFACE_LINK_LIBRARIES)
-        install(FILES ${LINKED_PLUGINS} DESTINATION ${CMAKE_INSTALL_LIBDIR}/gstreamer-1.0)
-    # endif()
+    install(DIRECTORY ${GSTREAMER_LIB_PATH}/gstreamer1.0 DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    install(CODE "execute_process(COMMAND chmod +x \"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner\")")
+    install(CODE "execute_process(COMMAND chmod +x \"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/gstreamer1.0/gstreamer-1.0/gst-ptp-helper\")")
+    install(DIRECTORY ${GSTREAMER_LIB_PATH}/gio DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    get_target_property(LINKED_PLUGINS GStreamer::Plugins INTERFACE_LINK_LIBRARIES)
+    install(FILES ${LINKED_PLUGINS} DESTINATION ${CMAKE_INSTALL_LIBDIR}/gstreamer-1.0)
 elseif(WIN32)
     cmake_path(CONVERT "${GSTREAMER_PREFIX}/bin/*.dll" TO_CMAKE_PATH_LIST GST_WIN_BINS_PATH)
     file(GLOB GST_WIN_BINS ${GST_WIN_BINS_PATH})
@@ -50,32 +57,23 @@ elseif(WIN32)
     file(GLOB GST_HELPER_BINS ${GST_HELPER_BINS_PATH})
     install(FILES ${GST_HELPER_BINS} DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/gstreamer-1.0)
 elseif(MACOS)
-    if(EXISTS "${GSTREAMER_FRAMEWORK_PATH}")
-        # install(
-        #     IMPORTED_RUNTIME_ARTIFACTS GStreamer::GStreamer
-        #     FRAMEWORK DESTINATION "${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}.app/Contents/Frameworks/GStreamer.framework"
-        # )
-        install(
-            DIRECTORY "${GSTREAMER_FRAMEWORK_PATH}"
-            DESTINATION "${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}.app/Contents/Frameworks"
-            PATTERN "*.la" EXCLUDE
-            PATTERN "*.a" EXCLUDE
-            PATTERN "*/bin" EXCLUDE
-            PATTERN "*/etc" EXCLUDE
-            PATTERN "*/gst-validate-launcher" EXCLUDE
-            PATTERN "*/Headers" EXCLUDE
-            PATTERN "*/include" EXCLUDE
-            PATTERN "*/pkgconfig" EXCLUDE
-            PATTERN "*/share" EXCLUDE
-        )
-        target_compile_definitions(gstqml6gl PUBLIC QGC_GST_MACOS_FRAMEWORK)
+    if(NOT EXISTS "${GSTREAMER_FRAMEWORK_PATH}")
+        message(FATAL_ERROR "GStreamer.framework not found at ${GSTREAMER_FRAMEWORK_PATH}")
     endif()
-elseif(ANDROID)
-    if(CMAKE_HOST_WIN32)
-        cmake_path(CONVERT "${GSTREAMER_PREFIX}/share/gst-android/ndk-build/tools/windows/*.dll" TO_CMAKE_PATH_LIST GST_WIN_TOOLS_PATH)
-        file(GLOB GST_WIN_TOOLS ${GST_WIN_TOOLS_PATH})
-        install(FILES ${GST_WIN_TOOLS} DESTINATION ${CMAKE_INSTALL_BINDIR})
-    endif()
+    install(
+        DIRECTORY "${GSTREAMER_FRAMEWORK_PATH}"
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}.app/Contents/Frameworks"
+        PATTERN "*.la" EXCLUDE
+        PATTERN "*.a" EXCLUDE
+        PATTERN "*/bin" EXCLUDE
+        PATTERN "*/etc" EXCLUDE
+        PATTERN "*/gst-validate-launcher" EXCLUDE
+        PATTERN "*/Headers" EXCLUDE
+        PATTERN "*/include" EXCLUDE
+        PATTERN "*/pkgconfig" EXCLUDE
+        PATTERN "*/share" EXCLUDE
+    )
+    target_compile_definitions(gstqml6gl INTERFACE QGC_GST_MACOS_FRAMEWORK)
 endif()
 
 ################################################################################
@@ -115,6 +113,7 @@ if(GStreamer_VERSION VERSION_GREATER_EQUAL 1.22)
     include(CPM)
     CPMAddPackage(
         NAME gstreamer_good_plugins
+        VERSION ${GST_PLUGINS_VERSION}
         # URL https://gitlab.freedesktop.org/gstreamer/gstreamer/-/archive/${GST_PLUGINS_VERSION}/gstreamer-${GST_PLUGINS_VERSION}.zip?path=subprojects/gst-plugins-good/ext/qt6
         URL https://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-${GST_PLUGINS_VERSION}.tar.xz
     )
@@ -162,13 +161,8 @@ if(ANDROID)
 elseif(WIN32)
     target_compile_definitions(gstqml6gl PRIVATE HAVE_QT_WIN32)
 elseif(MACOS)
-    # appleframeworks
-    # Foundation, QuartzCore, CoreFoundation
-    # Cocoa
     target_compile_definitions(gstqml6gl PRIVATE HAVE_QT_MAC)
 elseif(IOS)
-    # appleframeworks
-    # Foundation, CoreFoundation, CoreGraphics, QuartzCore, UIkit
     target_compile_definitions(gstqml6gl PRIVATE HAVE_QT_IOS)
 endif()
 
