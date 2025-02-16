@@ -405,7 +405,7 @@ Item {
 
     MouseArea {
         anchors.fill:   parent
-        onClicked:      mainWindow.showIndicatorDrawer(gimbalControlsPage, control, false)
+        onClicked:      mainWindow.showIndicatorDrawer(gimbalControlsPage, control)
     }
 
     Connections {
