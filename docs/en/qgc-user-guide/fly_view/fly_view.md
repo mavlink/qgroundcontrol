@@ -11,7 +11,7 @@ You can use it to:
 - Switch between a map view and a video view (if available)
 - Display video, mission, telemetry, and other information for the current vehicle, and also switch between connected vehicles.
 
-![Fly View](../../../assets/fly/fly_view_overview.jpg)
+![Fly View](../../../assets/fly/fly_view_overview.png)
 
 ## UI Overview
 
@@ -35,7 +35,7 @@ The screenshot above shows the main elements of the fly view:
     Actions include changing the altitude or continuing a mission.
   - Enable the [preflight checklist](#preflight_checklist) (tool option disabled by default).
 - **[Instrument Panel](#instrument_panel):** A widget that displays vehicle telemetry.
-- **Attitude/Compass**: A widget that provides virtual horizon and heading information.
+- **[Attitude/Compass](#hud):** A widget that provides virtual horizon and heading information.
 - **Camera Tools**: A widget for switching between still and video modes, starting/stopping capture, and controlling camera settings.
 - **[Video/Switcher](#video_switcher):** Toggle between video or map in a window.
   - Press the element to switch _Video_ and _Map_ to foreground.
@@ -57,15 +57,16 @@ The instrument panel displays telemetry information about the current vehicle.
 
 The default values include altitude (relative to the home location), horizontal and vertical speed, total flight time, and distance between vehicle and ground station.
 
-You can configure where the information is displayed by hovering over the panel and selecting the left-side square tool.
-This toggles the position of the panel between bottom centre and right-centre.
+You can configure where the information is displayed by:
 
-![Instrument Panel - hover for move/edit tools](../../../assets/fly/instrument_panel/instrument_panel_tools_move_edit.png)
+* Tablets: Press and hold over control
+* Desktop: Right click control
+* Click to Lock icon to close and save changes
+
+![Instrument Panel - edit tools](../../../assets/fly/instrument_panel/instrument_panel_tools_edit.png)
 
 You configure what information is display by selecting the edit/pencil icon.
 The grid will then display "+" and "-" icons that you can use to add or remove rows and columns (and the pencil icon is replaced by a "lock" icon that you can use to save the settings).
-
-![Instrument Panel - add rows/columns](../../../assets/fly/instrument_panel/instrument_panel_tools_edit_on.png)
 
 Select a value to launch its "Value Display" editor.
 This allows you to change the icon, text, size, units and so on of the current telemetry value.
@@ -80,6 +81,16 @@ By default this is the vehicle, but you can use the selector to choose a particu
 The selection list on the top right is used to select a particular telemetry value for the vehicle or sensor.
 
 ![Instrument Panel - value options](../../../assets/fly/instrument_panel/instrument_panel_edit_value_options.png)
+
+## Attitude /Compass {#hud}
+
+You can select from multiple types of instruments by:
+
+* Tablets: Press and hold over control
+* Desktop: Right click over control
+* Click to Lock icon to close and save changes
+
+![Instrument Panel - hover for move/edit tools](../../../assets/fly/hud_select_variant.png)
 
 ### Camera {#camera_instrument_page}
 
