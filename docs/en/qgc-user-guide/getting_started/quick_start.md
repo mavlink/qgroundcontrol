@@ -12,17 +12,15 @@ That's it! If the vehicle is ready to fly, _QGroundControl_ should display [Fly 
 
 A good way to become familiar with _QGroundControl_ is to start experimenting:
 
-- Use the [toolbar](../toolbar/toolbar.md) to switch between the main views:
-  - [Settings](../settings_view/settings_view.md): Configure the _QGroundControl_ application.
-  - [Setup](../setup_view/setup_view.md): Configure and tune your vehicle.
-  - [Plan](../plan_view/plan_view.md): Create autonomous missions.
-  - [Fly](../fly_view/fly_view.md): Monitor your vehicle(s) while flying, including streaming video.
-   - [3D View](../viewer_3d/viewer_3d.md): A 3D visualization and monitoring of the vehicle, the 3D map of the environment, and the mission while flying.
-  - [Analyze] ** Description of Analyze view is missing **
-- Click the _Status icons_ on the toolbar to find out the status of the connected vehicle.
+- Use the View Selector to switch between main views:
+  - Plan Flight
+  - Analyze Tools
+  - Vehicle Configuration
+  - Application Settings
+- Click the _Status Indicators_ on the toolbar to find out the status of the connected vehicle.
 
 While the UI is fairly intuitive, this documentation can also be referenced to find out more.
 
 ::: info
-Make sure QGC has an internet connection when you connect a new vehicle. This will allow it to get the latest parameter and other metadata for the vehicle, along with [translations](../settings_view/general.md#miscellaneous).
+Make sure QGC has an internet connection when you connect a new vehicle in order to display map content.
 :::
