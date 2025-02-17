@@ -1,50 +1,23 @@
 # Fly View
 
-The Fly View is used to command and monitor the vehicle when flying.
+The Fly View is used to command and monitor the vehicle.
 
-You can use it to:
+## Overview
 
-- Run an automated [pre-flight checklist](#preflight_checklist).
-- Arm the vehicle (or check why it won't arm).
-- Control missions: [start](#start_mission), [continue](#continue_mission), [pause](#pause), and [resume](#resume_mission).
-- Guide the vehicle to [arm](#arm)/[disarm](#disarm)/[emergency stop](#emergency_stop), [takeoff](#takeoff)/[land](#land), [change altitude](#change_altitude), [go to](#map_actions) or [orbit](#map_actions) a particular location, and [return/RTL](#rtl).
-- Switch between a map view and a video view (if available)
-- Display video, mission, telemetry, and other information for the current vehicle, and also switch between connected vehicles.
+![Fly View](../../../assets/fly/fly_view_overview.jpg)
 
-![Fly View](../../../assets/fly/fly_view_overview.png)
-
-## UI Overview
-
-The screenshot above shows the main elements of the fly view:
-
-- **[Fly Toolbar](fly_view_toolbar.md):** Key status information for vehicle components (GPS, battery, RC control), and vehicle state (Flight mode, Armed/Disarmed status).
-  - Select the [toolbar indicator](#toolbar_indicator) to view more detail.
-  - Press the _Flight mode_ text (e.g. "Hold") to select a new mode.
-    Not every mode may be available.
-  - The text next to the **Q** icon indicates the flight readiness using text: "Not Ready", "Ready to Fly", "Flying", and status using colour: "green" (all good!), amber (a warning), red (serious problem). You can also select the text to reach a button to arm/disarm/emergency-stop the vehicle.
-- **[Fly tools](fly_tools.md):** You can use these to:
-  - Select the [preflight checklist](#preflight_checklist) (tool option disabled by default).
-  - Toggle between takeoff/land.
-  - Pause/restart the current operation (e.g. landing, or the mission).
-  - Safety return (also known as RTL or Return).
-  - The _Actions_ button offers other appropriate options for the current state. Actions include changing the altitude or continuing a mission.
+- **[Toolbar](fly_view_toolbar.md):** The toolbar is at the top of the screen. It provides controls to select views, show flight status and mode as well as the status of the main components of the vehicle.
+- **[Vehicle Actions](fly_tools.md):** Allows you command the vehicle to take a specific action.
+- **[Instrument Panel](instrument_panel.md):** A widget that displays vehicle telemetry.
+- **[Attitude/Compass](hud.md):** A widget that provides virtual horizon and heading information.
+- **[Camera Tools](camera_tools.md)**: A widget for switching between still and video modes, starting/stopping capture, and controlling camera settings.
+- **[Video](video.md):** Display the video from the vehicle. Allows you to toggle between video or map as the main display.
 - **Map:** Displays the positions of all connected vehicles and the mission for the current vehicle.
   - You can drag the map to move it around (the map automatically re-centres on the vehicle after a certain amount of time).
   - You can zoom the map in and out using the zoom buttons, mouse wheel, track pad or pinch on a tablet.
   - Once flying, you can click on the map to set a [Go to](#goto) or [Orbit at](#orbit) location.
-- **[Instrument Panel](instrument_panel.md):** A widget that displays vehicle telemetry.
-- **[Attitude/Compass](hud.md):** A widget that provides virtual horizon and heading information.
-- **[Camera Tools](camera_tools.md)**: A widget for switching between still and video modes, starting/stopping capture, and controlling camera settings.
-- **[Video/Switcher](video.md):** Toggle between video or map in a window.
-  - Press the element to switch _Video_ and _Map_ to foreground.
-  - _QGroundControl_ supports RTP and RTSP video streaming over your vehicles UDP connection.
-    It also supports directly connected UVC devices.
-    QGC video support is further discussed in the [Video README](https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoStreaming/README.md).
-  - A [Telemetry Overlay](../fly_view/video_overlay.md) is automatically generated as a subtitle file
-- **Confirmation Slider:** Context sensitive slider to confirm requested actions. Slide to confirm operation. You can also hold the spacebar to confirm. Press **X** to cancel.
 
-There are a number of other elements that are not displayed by default/are only displayed in certain conditions.
-For example, the multi-vehicle selector is only displayed if you have multiple vehicles, and the preflight checklist tool button is only displayed if the appropriate setting is enabled.
+There are a number of other elements that are not displayed by default and are only displayed in certain conditions or for certain vehicle types.
 
 ## Actions/Tasks
 
