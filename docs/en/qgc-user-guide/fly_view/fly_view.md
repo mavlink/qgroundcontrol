@@ -7,7 +7,7 @@ You can use it to:
 - Run an automated [pre-flight checklist](#preflight_checklist).
 - Arm the vehicle (or check why it won't arm).
 - Control missions: [start](#start_mission), [continue](#continue_mission), [pause](#pause), and [resume](#resume_mission).
-- Guide the vehicle to [arm](#arm)/[disarm](#disarm)/[emergency stop](#emergency_stop), [takeoff](#takeoff)/[land](#land), [change altitude](#change_altitude), [go to](#goto) or [orbit](#orbit) a particular location, and [return/RTL](#rtl).
+- Guide the vehicle to [arm](#arm)/[disarm](#disarm)/[emergency stop](#emergency_stop), [takeoff](#takeoff)/[land](#land), [change altitude](#change_altitude), [go to](#map_actions) or [orbit](#map_actions) a particular location, and [return/RTL](#rtl).
 - Switch between a map view and a video view (if available)
 - Display video, mission, telemetry, and other information for the current vehicle, and also switch between connected vehicles.
 
@@ -17,23 +17,21 @@ You can use it to:
 
 The screenshot above shows the main elements of the fly view:
 
-- **Map:** Displays the positions of all connected vehicles and the mission for the current vehicle.
-  - You can drag the map to move it around (the map automatically re-centres after a certain amount of time).
-  - Once flying, you can click on the map to set a [Go to](#goto) or [Orbit at](#orbit) location.
-- **Fly Toolbar:** Key status information for sensors (GPS, battery, RC control), and vehicle state (Flight mode, Armed/Disarmed status).
-  - Select the sensor indicators to view more detail.
+- **Fly Toolbar:** Key status information for vehicle components (GPS, battery, RC control), and vehicle state (Flight mode, Armed/Disarmed status).
+  - Select the [toolbar indicator](#toolbar_indicator) to view more detail.
   - Press the _Flight mode_ text (e.g. "Hold") to select a new mode.
     Not every mode may be available.
-  - The text next to the **Q** icon indicates the flight readiness using text: "Not Ready", "Ready to Fly", "Flying", and status using colour: "green" (all good!), amber (a warning), red (serious problem).
-    Select the text when the background is amber or red to find out the cause of any preflight issues (QGC 4.2.0 and later).
-    You can also select the text to reach a button to arm/disarm/emergency-stop the vehicle.
+  - The text next to the **Q** icon indicates the flight readiness using text: "Not Ready", "Ready to Fly", "Flying", and status using colour: "green" (all good!), amber (a warning), red (serious problem). You can also select the text to reach a button to arm/disarm/emergency-stop the vehicle.
 - **Fly tools:** You can use these to:
+  - Select the [preflight checklist](#preflight_checklist) (tool option disabled by default).
   - Toggle between takeoff/land.
   - Pause/restart the current operation (e.g. landing, or the mission).
   - Safety return (also known as RTL or Return).
-  - The _Action_ button offers other appropriate options for the current state (these overlay the _Confirmation Slider_).
-    Actions include changing the altitude or continuing a mission.
-  - Enable the [preflight checklist](#preflight_checklist) (tool option disabled by default).
+  - The _Actions_ button offers other appropriate options for the current state. Actions include changing the altitude or continuing a mission.
+- **Map:** Displays the positions of all connected vehicles and the mission for the current vehicle.
+  - You can drag the map to move it around (the map automatically re-centres on the vehicle after a certain amount of time).
+  - You can zoom the map in and out using the zoom buttons, mouse wheel, track pad or pinch on a tablet.
+  - Once flying, you can click on the map to set a [Go to](#goto) or [Orbit at](#orbit) location.
 - **[Instrument Panel](#instrument_panel):** A widget that displays vehicle telemetry.
 - **[Attitude/Compass](#hud):** A widget that provides virtual horizon and heading information.
 - **Camera Tools**: A widget for switching between still and video modes, starting/stopping capture, and controlling camera settings.
@@ -43,11 +41,93 @@ The screenshot above shows the main elements of the fly view:
     It also supports directly connected UVC devices.
     QGC video support is further discussed in the [Video README](https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoStreaming/README.md).
   - A [Telemetry Overlay](../fly_view/video_overlay.md) is automatically generated as a subtitle file
-- **Confirmation Slider:** Context sensitive slider to confirm requested actions.
-  Slide to start operation. Press **X** to cancel.
+- **Confirmation Slider:** Context sensitive slider to confirm requested actions. Slide to confirm operation. You can also hold the spacebar to confirm. Press **X** to cancel.
 
 There are a number of other elements that are not displayed by default/are only displayed in certain conditions.
 For example, the multi-vehicle selector is only displayed if you have multiple vehicles, and the preflight checklist tool button is only displayed if the appropriate setting is enabled.
+
+## Fly Toolbar
+
+### View Selector
+
+The ![View Selector](../../../assets/fly/q_view_selector.png) icon on the left of the toolbar allows you to select between additional top level views:
+
+- **Plan Flight:** Used to create missions, geo-fences and rally points
+- **Analyze Tools:** A set of tools for things like log download, geo-tagging images, or viewing telemetry.
+- **Vehicle Configuration:** The various options for the initial configuration of a new vehicle.
+- **Application Settings:** Settings for the QGroundControl application itself.
+
+### Toolbar Indicators {#toolbar_indicators}
+
+Next are a setup tool toolbar indicators for vehicle states and components. The dropdowns for each toolbar indicator provide additional detail on status. You can also expand the indicators to show additional application and vehicle settings associated with the indicator. Press the ">" button to expand.
+
+![Toolbar Indicator - expand button](../../../assets/fly/toolbar_indicator_expand.png)
+
+Here is an example expanded toolbar indicator for flight modes on a vehicle running PX4 firmware. The settings in this indicator provide access to things which may be relevant to change from flight to flight.
+
+![Toolbar Indicator - expanded](../../../assets/fly/toolbar_indicator_expanded.png)
+
+They also provide access to the Vehicle Configuration associated with the indicator. In this example: _Flight Modes_ - _Configure_.
+
+### Ready/Not Ready Indicator
+
+![Vehicle state - ready to fly green/ready background](../../../assets/fly/vehicle_states/ready_to_fly_ok.png)
+
+Next in the toolbar is the indicator which shows you whether the vehicle is ready to fly or not.
+
+It can be in one of the following states:
+
+- **Ready To Fly** (_green background_) - Vehicle is ready to fly
+- **Ready To Fly** (_yellow background_) - Vehicle is ready to fly in the current flight mode. But there are warnings which may cause problems.
+- **Not Ready** - Vehicle is not ready to fly and will not takeoff.
+- **Armed** - Vehicle is armed and ready to Takeoff.
+- **Flying** - Vehicle is in the air and flying.
+- **Landing** - Vehicle is in the process of landing.
+- **Communication Lost** - QGroundControl has lost communication with the vehicle.
+
+The Ready Indicator dropdown also gives you acess to:
+
+- **Arming** - Arming a vehicle starts the motors in preparation for takeoff. You will only be able to arm the vehicle if it is safe and ready to fly. Generally you do not need to manually arm the vehicle. You can simply takeoff or start a mission and the vehicle will arm itself.
+- **Disarm** - Disarming a vehicle is only availble when the vehicle is on the ground. It will stop the motors. Generally you do not need to explicitly disarm as vehicles will disarm automatically after landing, or shortly after arming if you do not take off.
+- **Emergency Stop** - Emergency stop is effectively the same as disarming the vehicle while it is flying. For emergency use only, your vehicle will crash!
+
+In the cases of warnings or not ready state you can click the indicator to display the dropdown which will show the reason(s) why. The toggle on the right expands each error with additional information and possible solutions.
+
+![UI To check arming warnings](../../../assets/fly/vehicle_states/arming_preflight_check_ui.png)
+
+Once each issue is resolved it will disappear from the UI.
+When all issues blocking arming have been removed you should now be ready to fly.
+
+### Flight Mode Indicator
+
+![Vehicle state - ready to fly green/ready background](../../../assets/fly/toolbar/flight_modes_indicator.png)
+
+The Flight Mode Indicator dropdown allows you to switch between flight modes. The expanded page allows you to:
+
+- Configure vehicle land settings
+- Set global geo-fence settings
+- Add/Remove flight modes from the displayed list
+
+### Vehicle Messages Indicator
+
+![Vehicle state - ready to fly green/ready background](../../../assets/fly/toolbar/messages_indicator.png)
+
+The Vehicle Messages Indicator dropdown shows you messages which come from the vehicle. The indicator will turn red if there are important messages available.
+
+### GPS Indicator
+
+![Vehicle state - ready to fly green/ready background](../../../assets/fly/toolbar/gps_indicator.png)
+
+The GPS Indicator shows you the satellite count and the HDOP in the toolbar icon. The dropdown shows you additional GPS status. The expanded page give you access to RTK settings. 
+### Battery Indicator
+
+![Vehicle state - ready to fly green/ready background](../../../assets/fly/toolbar/battery_indicator.png)
+
+The Battery Indicator shows you a configurable colored battery icon for remaining charge. It can also be configured to show percent remaining, voltage or both. The expanded page allows you to:
+
+- Set what value(s) you want displayed in the battery icon
+- Configure the icon coloring
+- Set up the low battery failsafe
 
 ## Instrument Panel (Telemetry) {#instrument_panel}
 
@@ -88,7 +168,7 @@ You can select from multiple types of instruments by:
 
 * Tablets: Press and hold over control
 * Desktop: Right click over control
-* Click to Lock icon to close and save changes
+* Click the Lock icon to close and save changes
 
 ![Instrument Panel - hover for move/edit tools](../../../assets/fly/hud_select_variant.png)
 
@@ -130,6 +210,8 @@ The following sections describe how to perform common operations/tasks in the Fl
 Many of the available options depend on both the vehicle type and its current state.
 :::
 
+## Fly Tools
+
 ### Pre Flight Checklist {#preflight_checklist}
 
 An automated preflight checklist can be used to run through standard checks that the vehicle is configured correctly and it is safe to fly.
@@ -142,76 +224,6 @@ Press it to open the checklist:
 
 Once you have performed each test, select it on the UI to mark it as complete.
 
-### Arming and Preflight Checks {#arm}
-
-Arming a vehicle starts the motors in preparation for takeoff.
-You will only be able to arm the vehicle if it is safe and ready to fly.
-
-:::tip
-Generally, if the vehicle is ready to arm, _QGroundControl_ will arm the vehicle for you if you start a mission or takeoff.
-:::
-
-The vehicle is ready to fly in all modes if the status text says "Ready to Fly" and the background is green.
-
-![Vehicle state - ready to fly green/ready background](../../../assets/fly/vehicle_states/ready_to_fly_ok.png)
-
-If the background is amber then it is ready to take off in the current mode, but may not be able to switch to other modes.
-If the background is red and the text is "Not Ready" then you will not be able to arm in the current mode.
-
-![Vehicle state - ready to fly amber/warning background](../../../assets/fly/vehicle_states/ready_to_fly_warning.png)
-![Vehicle state - not ready](../../../assets/fly/vehicle_states/not_ready.png)
-
-From QGC 4.2.0 (at time of writing, a daily build) you can find out the exact cause of the warning or error, and possible solutions, by pushing the status text.
-
-This launches the preflight arming checks popup with a list of all preflight warnings.
-The toggle on the right expands each error with additional information and possible solutions.
-
-![UI To check arming warnings](../../../assets/fly/vehicle_states/arming_preflight_check_ui.png)
-
-Once each issue is resolved it will disappear from the UI.
-When all issues blocking arming have been removed you can use the arm button to display the arming confirmation slider, and arm the vehicle (or you can just take off - note that the vehicles will (by default) disarm automatically if you do not take off after a few seconds.
-
-![Arm confirmation slider](../../../assets/fly/vehicle_states/arming_slider.png)
-
-::: info
-The status text also displays when flying.
-
-> ![Vehicle state - armed](../../../assets/fly/vehicle_states/armed.png) > ![Vehicle state - flying](../../../assets/fly/vehicle_states/flying.png)
->
-> The arming checks UI will open even when flying, allowing you to emergency disarm.
-> :::
-
-### Disarm {#disarm}
-
-Disarming the vehicle when landed stops the motors (making the vehicle safe).
-
-Generally you do not need to explicitly disarm as vehicles will disarm automatically after landing, or shortly after arming if you do not take off.
-
-If needed, you can do so from the Arming Preflight Checks UI.
-
-![Disarming](../../../assets/fly/vehicle_states/arming_ui_landed_disarm.png)
-
-You will then need to use the disarming slider.
-
-![disarm slider](../../../assets/fly/vehicle_states/disarm_slider.png)
-
-::: info
-Disarming the vehicle while it is flying is called an [Emergency Stop](#emergency_stop)
-:::
-
-### Emergency Stop {#emergency_stop}
-
-Emergency stop is effectively the same as disarming the vehicle while it is flying.
-Your vehicle will crash!
-
-If needed, you can do so from the Arming Preflight Checks UI.
-
-![Disarming when flying](../../../assets/fly/vehicle_states/arming_ui_flying_disarm.png)
-
-You will then need to use the emergency disarming slider.
-
-![Emergency disarm slider](../../../assets/fly/vehicle_states/emergency_disarm_slider.png)
-
 ### Takeoff {#takeoff}
 
 :::tip
@@ -222,9 +234,11 @@ To takeoff (when landed):
 
 1. Press the **Takeoff** button in the _Fly Tools_ (this will toggle to a **Land** button after taking off).
 1. Optionally set the takeoff altitude in the right-side vertical slider.
+  - You can slide up/down to change the altitude
+  - You can also click on the specified altitude (10 ft in example) and then type in a specific altitude.
 1. Confirm takeoff using the slider.
 
-![takeoff](../../../assets/fly/takeoff.jpg)
+![takeoff](../../../assets/fly/takeoff.png)
 
 ### Land {#land}
 
@@ -233,16 +247,12 @@ You can land at the current position at any time while flying:
 1. Press the **Land** button in the _Fly Tools_ (this will toggle to a **Takeoff** button when landed).
 1. Confirm landing using the slider.
 
-![land](../../../assets/fly/land.jpg)
-
 ### RTL/Return
 
 Return to a "safe point" at any time while flying:
 
 1. Press the **RTL** button in the _Fly Tools_.
 1. Confirm RTL using the slider.
-
-![rtl](../../../assets/fly/rtl.jpg)
 
 ::: info
 Vehicles commonly return to the "home" (takeoff) location and land.
@@ -254,54 +264,25 @@ For example, rally points or mission landings may be used as alternative return 
 
 You can change altitude while flying, except when in a mission:
 
-1. Press the **Action** button on the _Fly Tools_
-1. Select the _Change Altitude_ action from the dialog.
+1. Press the **Actions** button on the _Fly Tools_
+1. Select the _Change Altitude_ button
+2. Select the new altitude from the vertical slider
+3. Confirm the action
 
-   ![Continue Mission/Change Altitude action](../../../assets/fly/continue_mission_change_altitude_action.jpg)
+### Actions associated with a map position (#map_actions)
 
-1. Move the vertical slider to the desired altitude, then drag the confirmation slider to start the action.
+There are a number of actions which can be taken which are associated with a specific position on the map. To use these actions:
 
-   ![Change altitude](../../../assets/fly/change_altitude.jpg)
+1. Click on the map at a specific position
+2. A popup will display showing you the list of available actions
+3. Select the action you want
+4. Confirm the action
 
-### Goto Location {#goto}
-
-After taking off you can specify that you want to fly to a particular location.
-
-1. Left click/Press on the map where you want the vehicle to move and select **Go to location** on the popup.
-
-![Goto or orbit](../../../assets/fly/goto_or_orbit.jpg)
-
-1. The location will be displayed on the map, along with a confirmation slider.
-
-   ![Goto confirmation](../../../assets/fly/goto.jpg)
-
-1. When you're ready, drag the slider to start the operation (or press the **X** icon to cancel it).
-
-::: info
-Goto points must be set within 1 km of the vehicle (hard-coded in QGC).
-:::
-
-### Orbit Location {#orbit}
-
-After taking off you can specify that you want to orbit a particular location.
-
-1. Left click/Press on the map (near the centre of your desired orbit) and select **Orbit at location** on the popup.
-
-![Goto or orbit](../../../assets/fly/goto_or_orbit.jpg)
-
-1. The proposed orbit will be displayed on the map, along with a confirmation sider.
-
-   ![Orbit confirmation](../../../assets/fly/orbit.jpg)
-
-   - Select and drag the central marker to move the orbit location.
-   - Select and drag the dot on the outer circle to change the orbit radius
-
-1. When you're ready, drag the slider to start the operation (or press the **X** icon to cancel it).
+Examples of map position actions are Go To Location, Orbit and so forth.
 
 ### Pause
 
-You can pause most operations, including taking off, landing, RTL, mission execution, orbit at location.
-The vehicle behaviour when paused depends on the vehicle type; typically a multicopter will hover, and a fixed wing vehicle will circle.
+You can pause most operations, including taking off, landing, RTL, mission execution, orbit at location. The vehicle behaviour when paused depends on the vehicle type; typically a multicopter will hover, and a fixed wing vehicle will circle.
 
 ::: info
 You cannot pause a _Goto location_ operation.
@@ -312,8 +293,6 @@ To pause:
 1. Press the **Pause** button in the _Fly Tools_.
 1. Optionally set a new altitude using the right-side vertical slider.
 1. Confirm the pause using the slider.
-
-![pause](../../../assets/fly/pause.jpg)
 
 ### Missions
 
