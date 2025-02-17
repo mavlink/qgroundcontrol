@@ -11,7 +11,7 @@
 - 在地图视图和视频视图之间切换(如果可用)
 - Display video, mission, telemetry, and other information for the current vehicle, and also switch between connected vehicles.
 
-![Fly View](../../../assets/fly/fly_view_overview.png)
+![Fly View](../../../assets/fly/fly_view_overview.jpg)
 
 ## 界面概述
 

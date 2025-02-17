@@ -11,7 +11,7 @@ You can use it to:
 - Switch between a map view and a video view (if available)
 - Display video, mission, telemetry, and other information for the current vehicle, and also switch between connected vehicles.
 
-![Fly View](../../../assets/fly/fly_view_overview.png)
+![Fly View](../../../assets/fly/fly_view_overview.jpg)
 
 ## UI Overview
 
