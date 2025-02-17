@@ -210,7 +210,7 @@ You will then need to use the emergency disarming slider.
 2. 오른쪽 수직 슬라이더에서 이륙 고도를 설정할 수 있습니다.
 3. 슬라이더를 사용하여 이륙 실행을 확인합니다.
 
-![이륙](../../../assets/fly/takeoff.jpg)
+![이륙](../../../assets/fly/takeoff.png)
 
 ### 착륙 {#land}
 
