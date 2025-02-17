@@ -17,12 +17,12 @@ You can use it to:
 
 The screenshot above shows the main elements of the fly view:
 
-- **Fly Toolbar:** Key status information for vehicle components (GPS, battery, RC control), and vehicle state (Flight mode, Armed/Disarmed status).
+- **[Fly Toolbar](fly_view_toolbar.md):** Key status information for vehicle components (GPS, battery, RC control), and vehicle state (Flight mode, Armed/Disarmed status).
   - Select the [toolbar indicator](#toolbar_indicator) to view more detail.
   - Press the _Flight mode_ text (e.g. "Hold") to select a new mode.
     Not every mode may be available.
   - The text next to the **Q** icon indicates the flight readiness using text: "Not Ready", "Ready to Fly", "Flying", and status using colour: "green" (all good!), amber (a warning), red (serious problem). You can also select the text to reach a button to arm/disarm/emergency-stop the vehicle.
-- **Fly tools:** You can use these to:
+- **[Fly tools](fly_tools.md):** You can use these to:
   - Select the [preflight checklist](#preflight_checklist) (tool option disabled by default).
   - Toggle between takeoff/land.
   - Pause/restart the current operation (e.g. landing, or the mission).
@@ -32,10 +32,10 @@ The screenshot above shows the main elements of the fly view:
   - You can drag the map to move it around (the map automatically re-centres on the vehicle after a certain amount of time).
   - You can zoom the map in and out using the zoom buttons, mouse wheel, track pad or pinch on a tablet.
   - Once flying, you can click on the map to set a [Go to](#goto) or [Orbit at](#orbit) location.
-- **[Instrument Panel](#instrument_panel):** A widget that displays vehicle telemetry.
-- **[Attitude/Compass](#hud):** A widget that provides virtual horizon and heading information.
-- **Camera Tools**: A widget for switching between still and video modes, starting/stopping capture, and controlling camera settings.
-- **[Video/Switcher](#video_switcher):** Toggle between video or map in a window.
+- **[Instrument Panel](instrument_panel.md):** A widget that displays vehicle telemetry.
+- **[Attitude/Compass](hud.md):** A widget that provides virtual horizon and heading information.
+- **[Camera Tools](camera_tools.md)**: A widget for switching between still and video modes, starting/stopping capture, and controlling camera settings.
+- **[Video/Switcher](video.md):** Toggle between video or map in a window.
   - Press the element to switch _Video_ and _Map_ to foreground.
   - _QGroundControl_ supports RTP and RTSP video streaming over your vehicles UDP connection.
     It also supports directly connected UVC devices.
@@ -46,162 +46,6 @@ The screenshot above shows the main elements of the fly view:
 There are a number of other elements that are not displayed by default/are only displayed in certain conditions.
 For example, the multi-vehicle selector is only displayed if you have multiple vehicles, and the preflight checklist tool button is only displayed if the appropriate setting is enabled.
 
-## Fly Toolbar
-
-### View Selector
-
-The ![View Selector](../../../assets/fly/q_view_selector.png) icon on the left of the toolbar allows you to select between additional top level views:
-
-- **Plan Flight:** Used to create missions, geo-fences and rally points
-- **Analyze Tools:** A set of tools for things like log download, geo-tagging images, or viewing telemetry.
-- **Vehicle Configuration:** The various options for the initial configuration of a new vehicle.
-- **Application Settings:** Settings for the QGroundControl application itself.
-
-### Toolbar Indicators {#toolbar_indicators}
-
-Next are a setup tool toolbar indicators for vehicle states and components. The dropdowns for each toolbar indicator provide additional detail on status. You can also expand the indicators to show additional application and vehicle settings associated with the indicator. Press the ">" button to expand.
-
-![Toolbar Indicator - expand button](../../../assets/fly/toolbar_indicator_expand.png)
-
-Here is an example expanded toolbar indicator for flight modes on a vehicle running PX4 firmware. The settings in this indicator provide access to things which may be relevant to change from flight to flight.
-
-![Toolbar Indicator - expanded](../../../assets/fly/toolbar_indicator_expanded.png)
-
-They also provide access to the Vehicle Configuration associated with the indicator. In this example: _Flight Modes_ - _Configure_.
-
-### Ready/Not Ready Indicator
-
-![Vehicle state - ready to fly green/ready background](../../../assets/fly/vehicle_states/ready_to_fly_ok.png)
-
-Next in the toolbar is the indicator which shows you whether the vehicle is ready to fly or not.
-
-It can be in one of the following states:
-
-- **Ready To Fly** (_green background_) - Vehicle is ready to fly
-- **Ready To Fly** (_yellow background_) - Vehicle is ready to fly in the current flight mode. But there are warnings which may cause problems.
-- **Not Ready** - Vehicle is not ready to fly and will not takeoff.
-- **Armed** - Vehicle is armed and ready to Takeoff.
-- **Flying** - Vehicle is in the air and flying.
-- **Landing** - Vehicle is in the process of landing.
-- **Communication Lost** - QGroundControl has lost communication with the vehicle.
-
-The Ready Indicator dropdown also gives you acess to:
-
-- **Arming** - Arming a vehicle starts the motors in preparation for takeoff. You will only be able to arm the vehicle if it is safe and ready to fly. Generally you do not need to manually arm the vehicle. You can simply takeoff or start a mission and the vehicle will arm itself.
-- **Disarm** - Disarming a vehicle is only availble when the vehicle is on the ground. It will stop the motors. Generally you do not need to explicitly disarm as vehicles will disarm automatically after landing, or shortly after arming if you do not take off.
-- **Emergency Stop** - Emergency stop is effectively the same as disarming the vehicle while it is flying. For emergency use only, your vehicle will crash!
-
-In the cases of warnings or not ready state you can click the indicator to display the dropdown which will show the reason(s) why. The toggle on the right expands each error with additional information and possible solutions.
-
-![UI To check arming warnings](../../../assets/fly/vehicle_states/arming_preflight_check_ui.png)
-
-Once each issue is resolved it will disappear from the UI.
-When all issues blocking arming have been removed you should now be ready to fly.
-
-### Flight Mode Indicator
-
-![Vehicle state - ready to fly green/ready background](../../../assets/fly/toolbar/flight_modes_indicator.png)
-
-The Flight Mode Indicator dropdown allows you to switch between flight modes. The expanded page allows you to:
-
-- Configure vehicle land settings
-- Set global geo-fence settings
-- Add/Remove flight modes from the displayed list
-
-### Vehicle Messages Indicator
-
-![Vehicle state - ready to fly green/ready background](../../../assets/fly/toolbar/messages_indicator.png)
-
-The Vehicle Messages Indicator dropdown shows you messages which come from the vehicle. The indicator will turn red if there are important messages available.
-
-### GPS Indicator
-
-![Vehicle state - ready to fly green/ready background](../../../assets/fly/toolbar/gps_indicator.png)
-
-The GPS Indicator shows you the satellite count and the HDOP in the toolbar icon. The dropdown shows you additional GPS status. The expanded page give you access to RTK settings. 
-### Battery Indicator
-
-![Vehicle state - ready to fly green/ready background](../../../assets/fly/toolbar/battery_indicator.png)
-
-The Battery Indicator shows you a configurable colored battery icon for remaining charge. It can also be configured to show percent remaining, voltage or both. The expanded page allows you to:
-
-- Set what value(s) you want displayed in the battery icon
-- Configure the icon coloring
-- Set up the low battery failsafe
-
-## Instrument Panel (Telemetry) {#instrument_panel}
-
-The instrument panel displays telemetry information about the current vehicle.
-
-![Instrument Panel - for values/telemetry](../../../assets/fly/instrument_panel/instrument_panel_default_values.png)
-
-The default values include altitude (relative to the home location), horizontal and vertical speed, total flight time, and distance between vehicle and ground station.
-
-You can configure where the information is displayed by:
-
-* Tablets: Press and hold over control
-* Desktop: Right click control
-* Click to Lock icon to close and save changes
-
-![Instrument Panel - edit tools](../../../assets/fly/instrument_panel/instrument_panel_tools_edit.png)
-
-You configure what information is display by selecting the edit/pencil icon.
-The grid will then display "+" and "-" icons that you can use to add or remove rows and columns (and the pencil icon is replaced by a "lock" icon that you can use to save the settings).
-
-Select a value to launch its "Value Display" editor.
-This allows you to change the icon, text, size, units and so on of the current telemetry value.
-
-![Instrument Panel - edit a value](../../../assets/fly/instrument_panel/instrument_panel_tools_edit_value.png)
-
-The selection list on the top left is used to change the source of the telemetry.
-By default this is the vehicle, but you can use the selector to choose a particular sensor type.
-
-![Instrument Panel - value type](../../../assets/fly/instrument_panel/instrument_panel_edit_value_type.png)
-
-The selection list on the top right is used to select a particular telemetry value for the vehicle or sensor.
-
-![Instrument Panel - value options](../../../assets/fly/instrument_panel/instrument_panel_edit_value_options.png)
-
-## Attitude /Compass {#hud}
-
-You can select from multiple types of instruments by:
-
-* Tablets: Press and hold over control
-* Desktop: Right click over control
-* Click the Lock icon to close and save changes
-
-![Instrument Panel - hover for move/edit tools](../../../assets/fly/hud_select_variant.png)
-
-### Camera {#camera_instrument_page}
-
-The camera panel is used to capture still images and video, and to configure the camera.
-
-![Camera Panel](../../../assets/fly/camera_panel/camera_mavlink.png)
-
-The camera capture and configuration options depend on the connected camera.
-The configuration options are selected using the panel gear icon.
-The configuration for a simple autopilot-connected camera are shown below.
-
-![Camera Panel - minimal settings](../../../assets/fly/camera_panel/camera_settings_minimal.png)
-
-When connected to camera that supports the [MAVLink Camera Protocol](https://mavlink.io/en/services/camera.html) you can additionally configure and use other camera services that it makes available.
-For example, if your camera supports video mode you will be able to switch between still image capture and video mode, and start/stop recording.
-
-![Camera Panel - MAVLink settings](../../../assets/fly/camera_panel/camera_settings_mavlink.png)
-
-::: info
-Most of the settings that are displayed depend on the camera (they are defined in its [MAVLink Camera Definition File](https://mavlink.io/en/services/camera_def.html)).
-
-> A few common settings at the end are hard-coded: Photo Mode (Single/Time Lapse), Photo Interval (if Time Lapse), Reset Camera Defaults (sends a reset command to the camera), Format (storage)
-> :::
-
-### Video Stream {#video_instrument_page}
-
-The video page is used to enable/disable video streaming.
-When enabled, you can start/stop the video stream, enable a grid overlay, change how the image fits the screen, and record the video locally with QGC.
-
-![Instrument Page - Video Stream](../../../assets/fly/instrument_page_video_stream.jpg)
-
 ## Actions/Tasks
 
 The following sections describe how to perform common operations/tasks in the Fly View.
@@ -209,65 +53,6 @@ The following sections describe how to perform common operations/tasks in the Fl
 ::: info
 Many of the available options depend on both the vehicle type and its current state.
 :::
-
-## Fly Tools
-
-### Pre Flight Checklist {#preflight_checklist}
-
-An automated preflight checklist can be used to run through standard checks that the vehicle is configured correctly and it is safe to fly.
-
-To view the checklist, first enable the tool by navigating to [Application Settings > General > Fly View](../settings_view/general.md) and selecting the **Use preflight checklist** checkbox.
-The tool will then be added to the _Flight Tools_.
-Press it to open the checklist:
-
-![Pre Flight Checklist](../../../assets/fly/pre_flight_checklist.jpg)
-
-Once you have performed each test, select it on the UI to mark it as complete.
-
-### Takeoff {#takeoff}
-
-:::tip
-If you are starting a mission for a multicopter, _QGroundControl_ will automatically perform the takeoff step.
-:::
-
-To takeoff (when landed):
-
-1. Press the **Takeoff** button in the _Fly Tools_ (this will toggle to a **Land** button after taking off).
-1. Optionally set the takeoff altitude in the right-side vertical slider.
-  - You can slide up/down to change the altitude
-  - You can also click on the specified altitude (10 ft in example) and then type in a specific altitude.
-1. Confirm takeoff using the slider.
-
-![takeoff](../../../assets/fly/takeoff.png)
-
-### Land {#land}
-
-You can land at the current position at any time while flying:
-
-1. Press the **Land** button in the _Fly Tools_ (this will toggle to a **Takeoff** button when landed).
-1. Confirm landing using the slider.
-
-### RTL/Return
-
-Return to a "safe point" at any time while flying:
-
-1. Press the **RTL** button in the _Fly Tools_.
-1. Confirm RTL using the slider.
-
-::: info
-Vehicles commonly return to the "home" (takeoff) location and land.
-This behaviour depends on the vehicle type and configuration.
-For example, rally points or mission landings may be used as alternative return targets.
-:::
-
-### Change Altitude {#change_altitude}
-
-You can change altitude while flying, except when in a mission:
-
-1. Press the **Actions** button on the _Fly Tools_
-1. Select the _Change Altitude_ button
-2. Select the new altitude from the vertical slider
-3. Confirm the action
 
 ### Actions associated with a map position (#map_actions)
 
