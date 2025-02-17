@@ -11,7 +11,7 @@ Uçuş Ekranı, aracı uçarken izlemek ve araca komut vermek için kullanılır
 - Harita görünümü ile video görünümü (eğer varsa) arasında geçiş yapın
 - Mevcut araç için video, görev, telemetri ve diğer bilgileri görüntüleyin ve ayrıca bağlı araçlar arasında geçiş yapın.
 
-![Uçuş Ekranı](../../../assets/fly/fly_view_overview.jpg)
+![Uçuş Ekranı](../../../assets/fly/fly_view_overview.png)
 
 ## UI Overview
 
@@ -209,7 +209,7 @@ Kalkmak için (iniş yapıldığında):
 2. İsterseniz kalkış yüksekliğini sağda bulunan dikey kaydırıcıyla ayarlayabilirsiniz.
 3. Confirm takeoff using the slider.
 
-![kalkış](../../../assets/fly/takeoff.jpg)
+![kalkış](../../../assets/fly/takeoff.png)
 
 ### İniş {#land}
 

@@ -1,4 +1,4 @@
-add_subdirectory(Components)
+add_subdirectory(ComponentInformation)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Test)
 
@@ -23,12 +23,11 @@ qt_add_library(VehicleTest
 target_link_libraries(VehicleTest
     PRIVATE
         Qt6::Test
-    PUBLIC
         Comms
-        qgcunittest
         Vehicle
-    INTERFACE
         VehicleComponentsTest
+    PUBLIC
+        qgcunittest
 )
 
 target_include_directories(VehicleTest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

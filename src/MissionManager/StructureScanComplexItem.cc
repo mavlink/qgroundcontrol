@@ -241,7 +241,7 @@ bool StructureScanComplexItem::load(const QJsonObject& complexObject, int sequen
     _layersFact.setRawValue             (complexObject[layersName].toDouble());
     _structureHeightFact.setRawValue    (complexObject[structureHeightName].toDouble());
     _startFromTopFact.setRawValue       (complexObject[startFromTopName].toBool());
-    _entranceAltFact.setRawValue        (complexObject[startFromTopName].toDouble());
+    _entranceAltFact.setRawValue        (complexObject[_entranceAltName].toDouble());
     _gimbalPitchFact.setRawValue        (complexObject[gimbalPitchName].toDouble());
 
     if (!_structurePolygon.loadFromJson(complexObject, true /* required */, errorString)) {

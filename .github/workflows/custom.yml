@@ -14,6 +14,7 @@ on:
       - 'src/**'
       - 'custom-example/**'
       - 'CMakeLists.txt'
+      - 'cmake/**'
 
 # concurrency:
 #   group: ${{ github.workflow }}-${{ github.ref }}
@@ -34,9 +35,8 @@ jobs:
 
     env:
       ARTIFACT: QGroundControl-installer.exe
-      QT_VERSION: 6.8.1
-      GST_VERSION: 1.22.12
-      CPM_SOURCE_CACHE: ${{ github.workspace }}\cpm_modules
+      QT_VERSION: 6.8.2
+      GST_VERSION: 1.24.12
 
     steps:
       - name: Checkout repo
@@ -66,14 +66,13 @@ jobs:
           host: windows
           target: win64_msvc2022_64
           build-type: ${{ matrix.BuildType }}
-          cpm-modules: ${{ env.CPM_SOURCE_CACHE }}
+          cpm-modules: ${{ runner.temp }}/shadow_build_dir/cpm_modules
 
       - name: Install Qt for Windows (x64)
         if: matrix.Arch == 'x64'
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
-          aqtversion: ==3.1.19
           host: windows
           target: desktop
           arch: win64_msvc2022_64

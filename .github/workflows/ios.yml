@@ -22,9 +22,7 @@ jobs:
     env:
       ARTIFACT: QGroundControl.app
       PACKAGE: QGroundControl
-      QT_VERSION: 6.8.1
-      GST_VERSION: 1.22.12
-      CPM_SOURCE_CACHE: ${{ github.workspace }}/cpm_modules
+      QT_VERSION: 6.8.2
 
     steps:
       - name: Checkout repo
@@ -47,7 +45,7 @@ jobs:
           host: mac
           target: ios
           build-type: ${{ matrix.BuildType }}
-          cpm-modules: ${{ env.CPM_SOURCE_CACHE }}
+          cpm-modules: ${{ runner.temp }}/shadow_build_dir/cpm_modules
 
       - name: Install Qt for MacOS
         uses: jurplel/install-qt-action@v4

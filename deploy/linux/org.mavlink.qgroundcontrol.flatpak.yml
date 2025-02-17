@@ -1,0 +1,39 @@
+app-id: org.mavlink.qgroundcontrol
+runtime: org.gnome.Platform
+runtime-version: 47
+sdk: org.gnome.Sdk
+command: QGroundControl
+rename-appdata-file: org.mavlink.qgroundcontrol.metainfo.xml
+
+finish-args:
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --socket=pulseaudio
+  - --device=all # allow access USB Serial
+  - --share=ipc
+  - --share=network
+  - --filesystem=home
+  - --filesystem=xdg-run/gvfs # GVfs
+  - --filesystem=/media # automount via udisks
+  - --filesystem=/run/udev:ro # enables firmware upload & auto connecting
+
+modules:
+  - name: QGroundControl
+    sources:
+      - type: git
+        url: https://github.com/mavlink/qgroundcontrol.git
+        tag: master
+        commit: 35f7efd36e0d14e39378cc3acdbcb003b8c57921
+    buildsystem: cmake-ninja
+    builddir: true
+    config-opts:
+      - -D BUILD_SHARED_LIBS=OFF
+      - -D BUILD_TESTING=OFF
+    cleanup:
+      - /include
+      - /bin/dbf*
+      - /bin/shp*
+      - /lib/cmake
+      - /share/shapelib
+      - '*.a'
+      - '*.cmake'

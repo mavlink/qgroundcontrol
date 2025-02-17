@@ -16,7 +16,7 @@
 #include "QGCMAVLink.h"
 
 APMSafetyComponent::APMSafetyComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
-    : VehicleComponent(vehicle, autopilot, parent)
+    : VehicleComponent(vehicle, autopilot, AutoPilotPlugin::KnownSafetyVehicleComponent, parent)
     , _name(tr("Safety"))
 {
 }

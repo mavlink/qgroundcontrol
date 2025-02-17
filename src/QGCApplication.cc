@@ -532,11 +532,11 @@ QQuickWindow *QGCApplication::mainRootWindow()
     return _mainRootWindow;
 }
 
-void QGCApplication::showSetupView()
+void QGCApplication::showVehicleConfig()
 {
     if (_rootQmlObject()) {
       QVariant arg = "";
-      QMetaObject::invokeMethod(_rootQmlObject(), "showVehicleSetupTool", Q_ARG(QVariant, arg));
+      QMetaObject::invokeMethod(_rootQmlObject(), "showVehicleConfig", Q_ARG(QVariant, arg));
     }
 }
 

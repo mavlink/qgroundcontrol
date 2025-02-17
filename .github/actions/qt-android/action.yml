@@ -10,15 +10,14 @@ inputs:
   version:
     description: Qt Version
     required: false
-    default: 6.8.1
+    default: 6.8.2
   abis:
     description: ABIs to Build
     required: false
     default: 'armeabi-v7a;arm64-v8a'
-  cpm-cache:
+  cpm-modules:
     description: CPM Cache Path
     required: false
-    default: $GITHUB_WORKSPACE/cpm_modules
 runs:
   using: "composite"
   steps:
@@ -43,7 +42,7 @@ runs:
       uses: nttld/setup-ndk@v1
       id: setup-ndk
       with:
-        ndk-version: r26b
+        ndk-version: r26d
         add-to-path: false
 
     - run: |
@@ -63,7 +62,7 @@ runs:
         host: ${{ inputs.host }}
         target: android
         build-type: ${{ matrix.BuildType }}
-        cpm-modules: ${{ inputs.cpm-cache }}
+        cpm-modules: ${{ inputs.cpm-modules }}
 
     - name: Install Qt for ${{ runner.os }}
       uses: jurplel/install-qt-action@v4

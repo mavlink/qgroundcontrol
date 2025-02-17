@@ -51,22 +51,22 @@ Item {
         EU
     }
 
-    function getRIDIcon() {
+    function getRidColor() {
         switch (remoteIDState) {
             case RemoteIDIndicator.RIDState.HEALTHY: 
-                return "/qmlimages/RidIconGreen.svg"
+                return qgcPal.colorGreen
                 break
             case RemoteIDIndicator.RIDState.WARNING: 
-                return "/qmlimages/RidIconYellow.svg"
+                return qgcPal.colorYellow
                 break
             case RemoteIDIndicator.RIDState.ERROR: 
-                return "/qmlimages/RidIconRed.svg"
+                return qgcPal.colorRed
                 break
             case RemoteIDIndicator.RIDState.UNAVAILABLE: 
-                return "/qmlimages/RidIconGrey.svg"
+                return qgcPal.colorGrey
                 break
             default:
-                return "/qmlimages/RidIconGrey.svg"
+                return qgcPal.colorGrey
         }
     }
 
@@ -96,14 +96,24 @@ Item {
         }
     }
 
-    Image {
+    QGCColoredImage {
         id:                 remoteIDIcon
         width:              height
         anchors.top:        parent.top
         anchors.bottom:     parent.bottom
-        source:             getRIDIcon()
+        source:             "/qmlimages/RidIconMan.svg"
+        color:              getRidColor()
         fillMode:           Image.PreserveAspectFit
         sourceSize.height:  height
+
+        QGCColoredImage {
+            width:              height
+            anchors.fill:       parent
+            sourceSize.height:  height
+            source:             "/qmlimages/RidIconText.svg"
+            fillMode:           Image.PreserveAspectFit
+            color:              qgcPal.text
+        }
     }
 
     MouseArea {

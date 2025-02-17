@@ -160,10 +160,9 @@
         <file alias="RidEmergencyBackground.svg">src/UI/toolbar/Images/RidEmergencyBackground.svg</file>
         <file alias="RidFlagBackgroundGreen.svg">src/UI/toolbar/Images/RidFlagBackgroundGreen.svg</file>
         <file alias="RidFlagBackgroundRed.svg">src/UI/toolbar/Images/RidFlagBackgroundRed.svg</file>
-        <file alias="RidIconGreen.svg">src/UI/toolbar/Images/RidIconGreen.svg</file>
-        <file alias="RidIconGrey.svg">src/UI/toolbar/Images/RidIconGrey.svg</file>
-        <file alias="RidIconRed.svg">src/UI/toolbar/Images/RidIconRed.svg</file>
-        <file alias="RidIconYellow.svg">src/UI/toolbar/Images/RidIconYellow.svg</file>
+        <file alias="RidIconManNoID.svg">src/UI/toolbar/Images/RidIconManNoID.svg</file>
+        <file alias="RidIconMan.svg">src/UI/toolbar/Images/RidIconMan.svg</file>
+        <file alias="RidIconText.svg">src/UI/toolbar/Images/RidIconText.svg</file>
         <file alias="RC.svg">src/UI/toolbar/Images/RC.svg</file>
         <file alias="RCLoss.svg">src/AutoPilotPlugins/PX4/Images/RCLoss.svg</file>
         <file alias="RCLossLight.svg">src/AutoPilotPlugins/PX4/Images/RCLossLight.svg</file>

@@ -1,5 +1,5 @@
 add_subdirectory(Actuators)
-add_subdirectory(Components)
+add_subdirectory(ComponentInformation)
 add_subdirectory(FactGroups)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Positioning Qml)
@@ -35,7 +35,7 @@ target_link_libraries(Vehicle
     PRIVATE
         Qt6::Qml
         VehicleActuators
-        VehicleComponents
+        ComponentInformation
         ADSB
         API
         Audio
