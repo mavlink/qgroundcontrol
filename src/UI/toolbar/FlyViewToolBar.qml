@@ -86,6 +86,7 @@ Rectangle {
     QGCFlickable {
         id:                     toolsFlickable
         anchors.leftMargin:     ScreenTools.defaultFontPixelWidth * ScreenTools.largeFontPointRatio * 1.5
+        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth / 2
         anchors.left:           viewButtonRow.right
         anchors.bottomMargin:   1
         anchors.top:            parent.top
