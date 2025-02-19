@@ -2,7 +2,7 @@
 
 Getting _QGroundControl_ up and running is quick and easy:
 
-1. [Download and install](../getting_started/download_and_install.md) the application.
+1. [Download and install (Daily 5.0)](../releases/daily_builds.md) the application.
 1. Start _QGroundControl_.
 1. Attach your vehicle to the ground station device via USB, through a telemetry radio, or over WiFi. _QGroundControl_ should detect your vehicle and connect to it automatically.
 
