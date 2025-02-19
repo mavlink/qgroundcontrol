@@ -1,4 +1,4 @@
-name: Android-Linux
+name: Android-Linux-6.6.3
 
 on:
   push:
