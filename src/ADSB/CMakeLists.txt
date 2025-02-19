@@ -19,6 +19,7 @@ target_link_libraries(ADSB
         Qt6::Core
         Qt6::Positioning
         Qt6::QmlIntegration
+        MAVLink
         QmlControls
 )
 
