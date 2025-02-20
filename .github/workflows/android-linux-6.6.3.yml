@@ -60,18 +60,18 @@ jobs:
       - name: Setup android signing for master release
         if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
         run: |
-          echo "QT_ANDROID_KEYSTORE_STORE_PASS=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
-          echo "QT_ANDROID_KEYSTORE_KEY_PASS=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
-          echo "QT_ANDROID_KEYSTORE_PATH=${{ github.workspace }}/deploy/android/android_release.keystore" >> $GITHUB_ENV
-          echo "QT_ANDROID_KEYSTORE_ALIAS=QGCAndroidKeyStore" >> $GITHUB_ENV
+          echo "QGC_ANDROID_KEYSTORE_STORE_PASS=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
+          echo "QGC_ANDROID_KEYSTORE_KEY_PASS=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
+          echo "QGC_ANDROID_KEYSTORE_PATH=${{ github.workspace }}/deploy/android/android_release.keystore" >> $GITHUB_ENV
+          echo "QGC_ANDROID_KEYSTORE_ALIAS=QGCAndroidKeyStore" >> $GITHUB_ENV
 
       - name: Setup android signing for pull request
         if: github.event_name == 'pull_request'
         run:
-          echo "QT_ANDROID_KEYSTORE_STORE_PASS=android" >> $GITHUB_ENV
-          echo "QT_ANDROID_KEYSTORE_KEY_PASS=android" >>  $GITHUB_ENV
-          echo "QT_ANDROID_KEYSTORE_PATH=${{ github.workspace }}/deploy/android/debug.keystore" >> $GITHUB_ENV
-          echo "QT_ANDROID_KEYSTORE_ALIAS=androiddebugkey" >> $GITHUB_ENV
+          echo "QGC_ANDROID_KEYSTORE_STORE_PASS=android" >> $GITHUB_ENV
+          echo "QGC_ANDROID_KEYSTORE_KEY_PASS=android" >>  $GITHUB_ENV
+          echo "QGC_ANDROID_KEYSTORE_PATH=${{ github.workspace }}/deploy/android/debug.keystore" >> $GITHUB_ENV
+          echo "QGC_ANDROID_KEYSTORE_ALIAS=androiddebugkey" >> $GITHUB_ENV
 
       - name: Configure
         working-directory: ${{ runner.temp }}/shadow_build_dir
@@ -81,6 +81,10 @@ jobs:
               -DQT_ANDROID_BUILD_ALL_ABIS=OFF
               -DQT_HOST_PATH="${{ env.QT_ROOT_DIR }}/../gcc_64"
               -DQT_ANDROID_SIGN_APK=ON
+              -DQT_ANDROID_KEYSTORE_STORE_PASS=$QGC_ANDROID_KEYSTORE_STORE_PASS
+              -DQT_ANDROID_KEYSTORE_KEY_PASS=$QGC_ANDROID_KEYSTORE_KEY_PASS
+              -DQT_ANDROID_KEYSTORE_PATH=$QGC_ANDROID_KEYSTORE_PATH
+              -DQT_ANDROID_KEYSTORE_ALIAS=$QGC_ANDROID_KEYSTORE_ALIAS
               -DQT_DEBUG_FIND_PACKAGE=ON
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
 
