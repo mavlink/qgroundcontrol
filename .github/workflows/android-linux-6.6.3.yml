@@ -36,11 +36,11 @@ jobs:
       ARTIFACT: QGroundControl.apk
       PACKAGE: QGroundControl
       QT_VERSION: 6.6.3
-      QT_ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/deploy/android/android_release.keystore
-      QT_ANDROID_KEYSTORE_ALIAS: QGCAndroidKeyStore
-      QT_ANDROID_KEYSTORE_STORE_PASS: "android"
-      QT_ANDROID_KEYSTORE_KEY_PASS: "android"
       QT_ANDROID_ABIS: ${{ matrix.BuildType == 'Release' && 'armeabi-v7a;arm64-v8a' || 'arm64-v8a' }}
+      QT_ANDROID_KEYSTORE_STORE_PASS: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' &&  '${{ secrets.ANDROID_KEYSTORE_PASSWORD }}' || 'android' }}
+      QT_ANDROID_KEYSTORE_KEY_PASS: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' &&  '${{ secrets.ANDROID_KEYSTORE_PASSWORD }}' || 'android' }}
+      QT_ANDROID_KEYSTORE_PATH: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && '${{ github.workspace }}/deploy/android/android_release.keystore' || '${{ github.workspace }}/deploy/android/debug.keystore' }}
+      QT_ANDROID_KEYSTORE_ALIAS: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && 'QGCAndroidKeyStore' || 'androiddebugkey' }}
 
     steps:
       - name: Checkout repo
