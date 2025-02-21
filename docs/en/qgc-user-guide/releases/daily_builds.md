@@ -11,15 +11,13 @@ These can be downloaded from the links below (install as described in [Download 
 
 - [Windows](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl-installer.exe)
 - [OS X](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl.dmg)
-
-  ::: info
-  QGroundControl continues to not be signed which causes problem on Catalina. To open QGC app for the first time:
-
-  - Right-click the QGC app icon, select Open from the menu. You will only be presented with an option to Cancel. Select Cancel.
-  - Right-click the QGC app icon again, Open from the menu. This time you will be presented with the option to Open.
-
-  :::
-
-- [Linux](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl-x86_64.AppImage)
+- [Linux](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl-x86_64.AppImage) - Before running do the following:
+  - On the command prompt enter (one time only):
+   ```sh
+   sudo usermod -a -G dialout $USER
+   sudo apt-get remove modemmanager -y
+   ```
+   Logout and login again to enable the change to user permissions.
+  - `chmod +x QGroundControl.AppImage`
 - [Android](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl.apk)
 - iOS currently unavailable
