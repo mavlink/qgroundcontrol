@@ -15,7 +15,7 @@ repositories {
     maven { url = 'https://jitpack.io' }
 }
 
-if (qtGradlePluginType) {
+if (project.plugins.findPlugin("qtGradlePluginType") != null) {
     apply plugin: qtGradlePluginType
 } else {
     // Fall back to the default Android application plugin if qtGradlePluginType
