@@ -7,10 +7,6 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "ArduCopterFirmwarePlugin.h"
 #include "ParameterManager.h"
 #include "Vehicle.h"
@@ -18,34 +14,8 @@
 bool ArduCopterFirmwarePlugin::_remapParamNameIntialized = false;
 FirmwarePlugin::remapParamNameMajorVersionMap_t ArduCopterFirmwarePlugin::_remapParamName;
 
-
-ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(void)
-    : _stabilizeFlightMode      (tr("Stabilize"))
-    , _acroFlightMode           (tr("Acro"))
-    , _altHoldFlightMode        (tr("Altitude Hold"))
-    , _autoFlightMode           (tr("Auto"))
-    , _guidedFlightMode         (tr("Guided"))
-    , _loiterFlightMode         (tr("Loiter"))
-    , _rtlFlightMode            (tr("RTL"))
-    , _circleFlightMode         (tr("Circle"))
-    , _landFlightMode           (tr("Land"))
-    , _driftFlightMode          (tr("Drift"))
-    , _sportFlightMode          (tr("Sport"))
-    , _flipFlightMode           (tr("Flip"))
-    , _autotuneFlightMode       (tr("Autotune"))
-    , _posHoldFlightMode        (tr("Position Hold"))
-    , _brakeFlightMode          (tr("Brake"))
-    , _throwFlightMode          (tr("Throw"))
-    , _avoidADSBFlightMode      (tr("Avoid ADSB"))
-    , _guidedNoGPSFlightMode    (tr("Guided No GPS"))
-    , _smartRtlFlightMode       (tr("Smart RTL"))
-    , _flowHoldFlightMode       (tr("Flow Hold"))
-    , _followFlightMode         (tr("Follow"))
-    , _zigzagFlightMode         (tr("ZigZag"))
-    , _systemIDFlightMode       (tr("SystemID"))
-    , _autoRotateFlightMode     (tr("AutoRotate"))
-    , _autoRTLFlightMode        (tr("AutoRTL"))
-    , _turtleFlightMode         (tr("Turtle"))
+ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(QObject *parent)
+    : APMFirmwarePlugin(parent)
 {
     _setModeEnumToModeStringMapping({
         { APMCopterMode::STABILIZE,    _stabilizeFlightMode     },
@@ -76,7 +46,7 @@ ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(void)
         { APMCopterMode::TURTLE,       _turtleFlightMode        },
     });
 
-    updateAvailableFlightModes({
+    static FlightModeList availableFlightModes = {
         // Mode Name             , Custom Mode                CanBeSet  adv
         { _stabilizeFlightMode   , APMCopterMode::STABILIZE,     true , true },
         { _acroFlightMode        , APMCopterMode::ACRO,          true , true },
@@ -104,10 +74,11 @@ ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(void)
         { _autoRotateFlightMode  , APMCopterMode::AUTOROTATE,    true , true },
         { _autoRTLFlightMode     , APMCopterMode::AUTO_RTL,      true , true },
         { _turtleFlightMode      , APMCopterMode::TURTLE,        true , true },
-    });
+    };
+    updateAvailableFlightModes(availableFlightModes);
 
     if (!_remapParamNameIntialized) {
-        FirmwarePlugin::remapParamNameMap_t& remapV3_6 = _remapParamName[3][6];
+        FirmwarePlugin::remapParamNameMap_t &remapV3_6 = _remapParamName[3][6];
 
         remapV3_6["BATT_AMP_PERVLT"] =  QStringLiteral("BATT_AMP_PERVOL");
         remapV3_6["BATT2_AMP_PERVLT"] = QStringLiteral("BATT2_AMP_PERVOL");
@@ -117,7 +88,7 @@ ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(void)
         remapV3_6["PSC_ACCZ_P"] =       QStringLiteral("ACCEL_Z_P");
         remapV3_6["PSC_ACCZ_I"] =       QStringLiteral("ACCEL_Z_I");
 
-        FirmwarePlugin::remapParamNameMap_t& remapV3_7 = _remapParamName[3][7];
+        FirmwarePlugin::remapParamNameMap_t &remapV3_7 = _remapParamName[3][7];
 
         remapV3_7["BATT_ARM_VOLT"] =    QStringLiteral("ARMING_VOLT_MIN");
         remapV3_7["BATT2_ARM_VOLT"] =   QStringLiteral("ARMING_VOLT2_MIN");
@@ -128,7 +99,7 @@ ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(void)
         remapV3_7["RC11_OPTION"] =      QStringLiteral("CH11_OPT");
         remapV3_7["RC12_OPTION"] =      QStringLiteral("CH12_OPT");
 
-        FirmwarePlugin::remapParamNameMap_t& remapV4_0 = _remapParamName[4][0];
+        FirmwarePlugin::remapParamNameMap_t &remapV4_0 = _remapParamName[4][0];
 
         remapV4_0["TUNE_MIN"] = QStringLiteral("TUNE_HIGH");
         remapV3_7["TUNE_MAX"] = QStringLiteral("TUNE_LOW");
@@ -137,26 +108,19 @@ ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(void)
     }
 }
 
+ArduCopterFirmwarePlugin::~ArduCopterFirmwarePlugin()
+{
+
+}
+
 int ArduCopterFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const
 {
-    // Remapping supports up to 3.7
-    return majorVersionNumber == 3 ? 7 : Vehicle::versionNotSetValue;
+    return ((majorVersionNumber == 3) ? 7 : Vehicle::versionNotSetValue);
 }
 
-void ArduCopterFirmwarePlugin::guidedModeLand(Vehicle* vehicle)
+bool ArduCopterFirmwarePlugin::multiRotorXConfig(Vehicle *vehicle) const
 {
-    _setFlightModeAndValidate(vehicle, landFlightMode());
-}
-
-bool ArduCopterFirmwarePlugin::multiRotorCoaxialMotors(Vehicle* vehicle)
-{
-    Q_UNUSED(vehicle);
-    return _coaxialMotors;
-}
-
-bool ArduCopterFirmwarePlugin::multiRotorXConfig(Vehicle* vehicle)
-{
-    return vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, "FRAME")->rawValue().toInt() != 0;
+    return (vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, "FRAME")->rawValue().toInt() != 0);
 }
 
 QString ArduCopterFirmwarePlugin::pauseFlightMode() const
@@ -179,24 +143,14 @@ QString ArduCopterFirmwarePlugin::followFlightMode() const
     return _modeEnumToString.value(APMCopterMode::FOLLOW, _followFlightMode);
 }
 
-QString ArduCopterFirmwarePlugin::gotoFlightMode() const
-{
-    return guidedFlightMode();
-}
-
-QString ArduCopterFirmwarePlugin::takeOffFlightMode() const
-{
-    return guidedFlightMode();
-}
-
 QString ArduCopterFirmwarePlugin::stabilizedFlightMode() const
 {
     return _modeEnumToString.value(APMCopterMode::STABILIZE, _stabilizeFlightMode);
 }
 
-void ArduCopterFirmwarePlugin::updateAvailableFlightModes(FlightModeList modeList)
+void ArduCopterFirmwarePlugin::updateAvailableFlightModes(FlightModeList &modeList)
 {
-    for(auto &mode: modeList){
+    for (FirmwareFlightMode &mode: modeList) {
         mode.fixedWing = false;
         mode.multiRotor = true;
     }
@@ -216,6 +170,7 @@ uint32_t ArduCopterFirmwarePlugin::_convertToCustomFlightModeEnum(uint32_t val) 
         return APMCopterMode::RTL;
     case APMCustomMode::SMART_RTL:
         return APMCopterMode::SMART_RTL;
+    default:
+        return UINT32_MAX;
     }
-    return UINT32_MAX;
 }
