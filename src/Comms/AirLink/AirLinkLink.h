@@ -23,9 +23,10 @@ class AirLinkConfiguration : public UDPConfiguration
     Q_PROPERTY(QString username     READ username   WRITE setUsername   NOTIFY usernameChanged)
     Q_PROPERTY(QString password     READ password   WRITE setPassword   NOTIFY passwordChanged)
     Q_PROPERTY(QString modemName    READ modemName  WRITE setModemName  NOTIFY modemNameChanged)
+
 public:
-    AirLinkConfiguration(const QString &name, QObject *parent = nullptr);
-    AirLinkConfiguration(const AirLinkConfiguration *copy, QObject *parent = nullptr);
+    explicit AirLinkConfiguration(const QString &name, QObject *parent = nullptr);
+    explicit AirLinkConfiguration(const AirLinkConfiguration *copy, QObject *parent = nullptr);
     ~AirLinkConfiguration();
 
     QString username() const { return _username; }
@@ -40,10 +41,9 @@ public:
     void copyFrom(const LinkConfiguration *source) final;
 
     void loadSettings(QSettings &settings, const QString &root) final;
-    void saveSettings(QSettings &settings, const QString &root) final;
-    QString settingsURL() final { return "AirLinkSettings.qml"; }
-    QString settingsTitle() final { return tr("AirLink Link Settings"); }
-
+    void saveSettings(QSettings &settings, const QString &root) const final;
+    QString settingsURL() const final { return "AirLinkSettings.qml"; }
+    QString settingsTitle() const final { return tr("AirLink Link Settings"); }
 
 signals:
     void usernameChanged();

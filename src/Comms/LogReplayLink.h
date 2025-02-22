@@ -37,9 +37,9 @@ public:
     LinkType type() const override { return LinkConfiguration::TypeLogReplay; }
     void copyFrom(const LinkConfiguration *source) override;
     void loadSettings(QSettings &settings, const QString &root) override;
-    void saveSettings(QSettings &settings, const QString &root) override;
-    QString settingsURL() override { return QStringLiteral("LogReplaySettings.qml"); }
-    QString settingsTitle() override { return tr("Log Replay Link Settings"); }
+    void saveSettings(QSettings &settings, const QString &root) const override;
+    QString settingsURL() const override { return QStringLiteral("LogReplaySettings.qml"); }
+    QString settingsTitle() const override { return tr("Log Replay Link Settings"); }
 
     QString logFilenameShort() const;
     QString logFilename() const { return _logFilename; }

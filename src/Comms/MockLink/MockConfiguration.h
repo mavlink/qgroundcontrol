@@ -14,7 +14,6 @@
 #include <QtCore/QLoggingCategory>
 #include "MAVLinkLib.h"
 
-
 Q_DECLARE_LOGGING_CATEGORY(MockConfigurationLog)
 
 class MockConfiguration : public LinkConfiguration
@@ -33,9 +32,9 @@ public:
     LinkType type() const final { return LinkConfiguration::TypeMock; }
     void copyFrom(const LinkConfiguration *source) final;
     void loadSettings(QSettings &settings, const QString &root) final;
-    void saveSettings(QSettings &settings, const QString &root) final;
-    QString settingsURL() final { return QStringLiteral("MockLinkSettings.qml"); }
-    QString settingsTitle() final { return tr("Mock Link Settings"); }
+    void saveSettings(QSettings &settings, const QString &root) const final;
+    QString settingsURL() const final { return QStringLiteral("MockLinkSettings.qml"); }
+    QString settingsTitle() const final { return tr("Mock Link Settings"); }
 
     int firmware() const { return static_cast<int>(_firmwareType); }
     void setFirmware(int type) { _firmwareType = static_cast<MAV_AUTOPILOT>(type); emit firmwareChanged(); }
