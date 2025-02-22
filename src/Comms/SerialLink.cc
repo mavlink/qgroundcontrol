@@ -16,6 +16,7 @@
 #include <QtSerialPort/QSerialPortInfo>
 #endif
 #include <QtCore/QSettings>
+#include <QtCore/QThread>
 #include <QtCore/QTimer>
 
 QGC_LOGGING_CATEGORY(SerialLinkLog, "qgc.comms.seriallink")
@@ -96,7 +97,7 @@ void SerialConfiguration::loadSettings(QSettings &settings, const QString &root)
     settings.endGroup();
 }
 
-void SerialConfiguration::saveSettings(QSettings &settings, const QString &root)
+void SerialConfiguration::saveSettings(QSettings &settings, const QString &root) const
 {
     settings.beginGroup(root);
 

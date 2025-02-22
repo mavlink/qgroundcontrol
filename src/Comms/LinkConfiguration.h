@@ -21,7 +21,7 @@ class LinkConfiguration : public QObject
     Q_MOC_INCLUDE("LinkInterface.h")
 
     Q_PROPERTY(QString          name            READ name           WRITE setName           NOTIFY nameChanged)
-    Q_PROPERTY(LinkInterface*   link            READ link                                   NOTIFY linkChanged)
+    Q_PROPERTY(LinkInterface    *link           READ link                                   NOTIFY linkChanged)
     Q_PROPERTY(LinkType         linkType        READ type                                   CONSTANT)
     Q_PROPERTY(bool             dynamic         READ isDynamic      WRITE setDynamic        NOTIFY dynamicChanged)
     Q_PROPERTY(bool             autoConnect     READ isAutoConnect  WRITE setAutoConnect    NOTIFY autoConnectChanged)
@@ -54,7 +54,7 @@ public:
 
     /// Is this a High Latency configuration?
     ///     @return True if this is an High Latency configuration (link with large delays).
-    bool isHighLatency() const{ return _highLatency; }
+    bool isHighLatency() const { return _highLatency; }
 
     /// Set if this is this an High Latency configuration.
     void setHighLatency(bool hl = false);
@@ -98,13 +98,13 @@ public:
     /// Save settings, Pure virtual method telling the instance to save its configuration.
     ///     @param[in] settings The QSettings instance to use
     ///     @param[in] root The root path of the setting.
-    virtual void saveSettings(QSettings &settings, const QString &root) = 0;
+    virtual void saveSettings(QSettings &settings, const QString &root) const = 0;
 
     /// Settings URL, Pure virtual method providing the URL for the (QML) settings dialog
-    virtual QString settingsURL() = 0;
+    virtual QString settingsURL() const = 0;
 
     /// Settings Title, Pure virtual method providing the Title for the (QML) settings dialog
-    virtual QString settingsTitle() = 0;
+    virtual QString settingsTitle() const = 0;
 
     /// Configuration Factory to create new link configuration instance based on the given type.
     ///     @return A new instance of the given type

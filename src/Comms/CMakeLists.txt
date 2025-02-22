@@ -28,15 +28,15 @@ target_link_libraries(Comms
         MockLink
         PositionManager
         QGC
+        QmlControls
         Settings
+        Utilities
         Vehicle
     PUBLIC
         Qt6::Core
         Qt6::Network
         AirLink
         MAVLink
-        QmlControls
-        Utilities
 )
 
 target_include_directories(Comms PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

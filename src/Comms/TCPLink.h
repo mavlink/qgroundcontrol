@@ -40,9 +40,9 @@ public:
     LinkType type() const override { return LinkConfiguration::TypeTcp; }
     void copyFrom(const LinkConfiguration *source) override;
     void loadSettings(QSettings &settings, const QString &root) override;
-    void saveSettings(QSettings &settings, const QString &root) override;
-    QString settingsURL() override { return QStringLiteral("TcpSettings.qml"); }
-    QString settingsTitle() override { return tr("TCP Link Settings"); }
+    void saveSettings(QSettings &settings, const QString &root) const override;
+    QString settingsURL() const override { return QStringLiteral("TcpSettings.qml"); }
+    QString settingsTitle() const override { return tr("TCP Link Settings"); }
 
     QString host() const { return _host.toString(); }
     void setHost(const QString &host) { if (host != _host.toString()) { _host.setAddress(host); emit hostChanged(); } }
@@ -108,7 +108,7 @@ public:
 
     bool isConnected() const override;
     void disconnect() override;
-    bool isSecureConnection() override;
+    bool isSecureConnection() const override;
 
 private slots:
     void _writeBytes(const QByteArray &bytes) override;

@@ -15,16 +15,12 @@
 #include "SettingsManager.h"
 #include "AppSettings.h"
 
-#ifdef QT_DEBUG
-#include "MockLink.h"
-#endif
-
 #include <QtQml/QQmlEngine>
 
-QGC_LOGGING_CATEGORY(LinkInterfaceLog, "LinkInterfaceLog")
+QGC_LOGGING_CATEGORY(LinkInterfaceLog, "qgc.comms.linkinterface")
 
 LinkInterface::LinkInterface(SharedLinkConfigurationPtr &config, QObject *parent)
-    : QThread(parent)
+    : QObject(parent)
     , _config(config)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
@@ -53,11 +49,11 @@ bool LinkInterface::mavlinkChannelIsSet() const
     return (LinkManager::invalidMavlinkChannel() != _mavlinkChannel);
 }
 
-bool LinkInterface::initMavlinkSigning(void)
+bool LinkInterface::initMavlinkSigning()
 {
     if (!isSecureConnection()) {
         auto appSettings = SettingsManager::instance()->appSettings();
-        QByteArray signingKeyBytes = appSettings->mavlink2SigningKey()->rawValue().toByteArray();
+        const QByteArray signingKeyBytes = appSettings->mavlink2SigningKey()->rawValue().toByteArray();
         if (MAVLinkSigning::initSigning(static_cast<mavlink_channel_t>(_mavlinkChannel), signingKeyBytes, MAVLinkSigning::insecureConnectionAccceptUnsignedCallback)) {
             if (signingKeyBytes.isEmpty()) {
                 qCDebug(LinkInterfaceLog) << "Signing disabled on channel" << _mavlinkChannel;
@@ -65,7 +61,7 @@ bool LinkInterface::initMavlinkSigning(void)
                 qCDebug(LinkInterfaceLog) << "Signing enabled on channel" << _mavlinkChannel;
             }
         } else {
-            qWarning() << Q_FUNC_INFO << "Failed To enable Signing on channel" << _mavlinkChannel;
+            qCWarning(LinkInterfaceLog) << Q_FUNC_INFO << "Failed To enable Signing on channel" << _mavlinkChannel;
             // FIXME: What should we do here?
             return false;
         }
