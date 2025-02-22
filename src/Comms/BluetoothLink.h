@@ -100,9 +100,9 @@ public:
     LinkType type() const override { return LinkConfiguration::TypeBluetooth; }
     void copyFrom(const LinkConfiguration *source) override;
     void loadSettings(QSettings &settings, const QString &root) override;
-    void saveSettings(QSettings &settings, const QString &root) override;
-    QString settingsURL() override { return QStringLiteral("BluetoothSettings.qml"); }
-    QString settingsTitle() override;
+    void saveSettings(QSettings &settings, const QString &root) const override;
+    QString settingsURL() const override { return QStringLiteral("BluetoothSettings.qml"); }
+    QString settingsTitle() const override;
 
     BluetoothData device() const { return _device; }
     QString deviceName() const { return _device.name; }

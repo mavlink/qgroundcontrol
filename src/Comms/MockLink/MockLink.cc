@@ -18,6 +18,7 @@
 #include <QtCore/QMutexLocker>
 #include <QtCore/QRandomGenerator>
 #include <QtCore/QTemporaryFile>
+#include <QtCore/QThread>
 #include <QtCore/QTimer>
 
 QGC_LOGGING_CATEGORY(MockLinkLog, "qgc.comms.mocklink.mocklink")

@@ -14,6 +14,7 @@
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QPermissions>
+#include <QtCore/QThread>
 
 QGC_LOGGING_CATEGORY(BluetoothLinkLog, "qgc.comms.bluetoothlink")
 
@@ -87,7 +88,7 @@ void BluetoothConfiguration::loadSettings(QSettings &settings, const QString &ro
     settings.endGroup();
 }
 
-void BluetoothConfiguration::saveSettings(QSettings &settings, const QString &root)
+void BluetoothConfiguration::saveSettings(QSettings &settings, const QString &root) const
 {
     settings.beginGroup(root);
 
@@ -101,7 +102,7 @@ void BluetoothConfiguration::saveSettings(QSettings &settings, const QString &ro
     settings.endGroup();
 }
 
-QString BluetoothConfiguration::settingsTitle()
+QString BluetoothConfiguration::settingsTitle() const
 {
     if (QGCDeviceInfo::isBluetoothAvailable()) {
         return tr("Bluetooth Link Settings");
