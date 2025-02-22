@@ -74,6 +74,7 @@ runs:
         dir: ${{ runner.temp }}
         modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
         setup-python: false
+        cache: true
 
     - name: Install Qt for Android (armv7)
       if: contains( inputs.abis, 'armeabi-v7a')
@@ -86,6 +87,7 @@ runs:
         dir: ${{ runner.temp }}
         modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
         setup-python: false
+        cache: true
 
     - name: Install Qt for Android (arm64_v8a)
       if: contains( inputs.abis, 'arm64-v8a')
@@ -98,6 +100,7 @@ runs:
         dir: ${{ runner.temp }}
         modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
         setup-python: false
+        cache: true
 
     - name: Install Qt for Android (x86)
       if: contains( inputs.abis, 'x86')
@@ -110,6 +113,7 @@ runs:
         dir: ${{ runner.temp }}
         modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
         setup-python: false
+        cache: true
 
     - name: Install Qt for Android (x86_64)
       if: contains( inputs.abis, 'x86_64')
@@ -122,3 +126,4 @@ runs:
         dir: ${{ runner.temp }}
         modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
         setup-python: false
+        cache: true
