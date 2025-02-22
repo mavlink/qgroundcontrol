@@ -477,6 +477,9 @@ if(ANDROID)
     endif()
 endif()
 
+set_source_files_properties(resources/qtquickcontrols2.conf PROPERTIES QT_RESOURCE_ALIAS qtquickcontrols2.conf)
+qt_add_resources(${CMAKE_PROJECT_NAME} "app_res" FILES resources/qtquickcontrols2.conf)
+
 qt_import_plugins(${CMAKE_PROJECT_NAME}
     INCLUDE Qt6::QSvgPlugin
     EXCLUDE_BY_TYPE geoservices
