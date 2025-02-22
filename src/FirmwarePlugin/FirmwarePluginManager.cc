@@ -7,20 +7,16 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "FirmwarePluginManager.h"
 #include "FirmwarePlugin.h"
 #include "FirmwarePluginFactory.h"
 #include "QGCLoggingCategory.h"
 
-#include <QtCore/qapplicationstatic.h>
+#include <QtCore/QGlobalStatic>
 
 QGC_LOGGING_CATEGORY(FirmwarePluginManagerLog, "qgc.firmwareplugin.firmwarepluginmanager");
 
-Q_APPLICATION_STATIC(FirmwarePluginManager, _firmwarePluginManagerInstance);
+Q_GLOBAL_STATIC(FirmwarePluginManager, _firmwarePluginManagerInstance);
 
 FirmwarePluginManager::FirmwarePluginManager(QObject *parent)
     : QObject(parent)
@@ -31,8 +27,6 @@ FirmwarePluginManager::FirmwarePluginManager(QObject *parent)
 FirmwarePluginManager::~FirmwarePluginManager()
 {
     // qCDebug(FirmwarePluginManagerLog) << Q_FUNC_INFO << this;
-
-    delete _genericFirmwarePlugin;
 }
 
 FirmwarePluginManager *FirmwarePluginManager::instance()
@@ -81,9 +75,8 @@ FirmwarePlugin *FirmwarePluginManager::firmwarePluginForAutopilot(MAV_AUTOPILOT 
     }
 
     if (!plugin) {
-        // Default plugin fallback
         if (!_genericFirmwarePlugin) {
-            _genericFirmwarePlugin = new FirmwarePlugin();
+            _genericFirmwarePlugin = new FirmwarePlugin(this);
         }
         plugin = _genericFirmwarePlugin;
     }
@@ -95,7 +88,6 @@ FirmwarePluginFactory *FirmwarePluginManager::_findPluginFactory(QGCMAVLink::Fir
 {
     const QList<FirmwarePluginFactory*> factoryList = FirmwarePluginFactoryRegister::instance()->pluginFactories();
 
-    // Find the plugin which supports this vehicle
     for (FirmwarePluginFactory *factory: factoryList) {
         if (factory->supportedFirmwareClasses().contains(firmwareClass)) {
             return factory;
