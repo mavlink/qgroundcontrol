@@ -51,13 +51,10 @@ target_link_libraries(Settings
     PRIVATE
         Qt6::Multimedia
         API
-        GStreamerReceiver
         QGC
         QmlControls
-        QtMultimediaReceiver
         Vehicle
         VideoManager
-        VideoReceiver
     PUBLIC
         Qt6::Core
         Qt6::Qml

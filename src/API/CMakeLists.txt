@@ -14,14 +14,11 @@ target_link_libraries(API
         Qt6::Qml
         AnalyzeView
         FactSystem
-        GStreamerReceiver
         Joystick
         MAVLink
-        QtMultimediaReceiver
         Settings
         Utilities
         VideoManager
-        VideoReceiver
     PUBLIC
         Qt6::Core
         Qt6::Gui
