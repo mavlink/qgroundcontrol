@@ -40,6 +40,6 @@ private:
     const QString m_hash;
     const QByteArray m_img;
     const QString m_format;
-    const QString m_type;
+    const QString m_type; // TODO: type should be int?
 };
 Q_DECLARE_METATYPE(QGCCacheTile)

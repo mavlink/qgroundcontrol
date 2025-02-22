@@ -66,28 +66,25 @@ private:
     void _resetCacheDatabase(QGCMapTask *task);
     void _importSets(QGCMapTask *task);
     void _exportSets(QGCMapTask *task);
-    bool _testTask(QGCMapTask *task);
 
     bool _connectDB();
     void _disconnectDB();
-    bool _createDB(QSqlDatabase &db, bool createDefault = true);
+    bool _createDB(std::shared_ptr<QSqlDatabase> db, bool createDefault = true);
     bool _findTileSetID(const QString &name, quint64 &setID);
     bool _init();
     quint64 _findTile(const QString &hash);
     quint64 _getDefaultTileSet();
-    void _deleteBingNoTileTiles();
     void _deleteTileSet(quint64 id);
     void _updateSetTotals(QGCCachedTileSet *set);
     void _updateTotals();
 
-    std::shared_ptr<QSqlDatabase> _db = nullptr;
+    std::shared_ptr<QSqlDatabase> _db;
     QMutex _taskQueueMutex;
     QQueue<QGCMapTask*> _taskQueue;
     QWaitCondition _waitc;
     QString _databasePath;
     quint32 _defaultCount = 0;
     quint32 _totalCount = 0;
-    quint64 _defaultSet = UINT64_MAX;
     quint64 _defaultSize = 0;
     quint64 _totalSize = 0;
     QElapsedTimer _updateTimer;
@@ -95,7 +92,6 @@ private:
     std::atomic_bool _failed = false;
     std::atomic_bool _valid = false;
 
-    static QByteArray _bingNoTileImage;
     static constexpr const char *kSession = "QGeoTileWorkerSession";
     static constexpr const char *kExportSession = "QGeoTileExportSession";
     static constexpr int kShortTimeout = 2;
