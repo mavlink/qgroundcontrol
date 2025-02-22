@@ -34,13 +34,13 @@ target_link_libraries(MissionManagerTest
         API
         FactSystem
         FirmwarePlugin
-        MissionManager
         QmlControls
         Settings
         TerrainTest
         Utilities
         Vehicle
     PUBLIC
+        MissionManager
         qgcunittest
 )
 

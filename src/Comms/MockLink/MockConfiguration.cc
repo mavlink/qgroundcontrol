@@ -62,7 +62,7 @@ void MockConfiguration::loadSettings(QSettings &settings, const QString &root)
     settings.endGroup();
 }
 
-void MockConfiguration::saveSettings(QSettings &settings, const QString &root)
+void MockConfiguration::saveSettings(QSettings &settings, const QString &root) const
 {
     settings.beginGroup(root);
 

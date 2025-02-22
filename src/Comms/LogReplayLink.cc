@@ -15,6 +15,7 @@
 
 #include <QtCore/QFileInfo>
 #include <QtCore/QtEndian>
+#include <QtCore/QThread>
 #include <QtCore/QTimer>
 
 QGC_LOGGING_CATEGORY(LogReplayLinkLog, "qgc.comms.logreplaylink")
@@ -59,7 +60,7 @@ void LogReplayConfiguration::loadSettings(QSettings &settings, const QString &ro
     settings.endGroup();
 }
 
-void LogReplayConfiguration::saveSettings(QSettings &settings, const QString &root)
+void LogReplayConfiguration::saveSettings(QSettings &settings, const QString &root) const
 {
     settings.beginGroup(root);
 

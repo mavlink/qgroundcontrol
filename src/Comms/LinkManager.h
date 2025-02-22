@@ -47,7 +47,7 @@ class LinkManager : public QObject
     Q_PROPERTY(bool mavlinkSupportForwardingEnabled READ mavlinkSupportForwardingEnabled NOTIFY mavlinkSupportForwardingEnabledChanged)
 
 public:
-    LinkManager(QObject *parent = nullptr);
+    explicit LinkManager(QObject *parent = nullptr);
     ~LinkManager();
 
     static LinkManager *instance();

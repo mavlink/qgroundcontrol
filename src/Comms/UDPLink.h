@@ -84,9 +84,9 @@ public:
     LinkType type() const override { return LinkConfiguration::TypeUdp; }
     void copyFrom(const LinkConfiguration *source) override;
     void loadSettings(QSettings &settings, const QString &root) override;
-    void saveSettings(QSettings &settings, const QString &root) override;
-    QString settingsURL() override { return QStringLiteral("UdpSettings.qml"); }
-    QString settingsTitle() override { return tr("UDP Link Settings"); }
+    void saveSettings(QSettings &settings, const QString &root) const override;
+    QString settingsURL() const override { return QStringLiteral("UdpSettings.qml"); }
+    QString settingsTitle() const override { return tr("UDP Link Settings"); }
 
     QStringList hostList() const { return _hostList; }
     QList<std::shared_ptr<UDPClient>> targetHosts() const { return _targetHosts; }
@@ -171,7 +171,7 @@ public:
 
     bool isConnected() const override;
     void disconnect() override;
-    bool isSecureConnection() override;
+    bool isSecureConnection() const override;
 
 private slots:
     void _writeBytes(const QByteArray &data) override;

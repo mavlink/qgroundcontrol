@@ -9,7 +9,6 @@
 
 #pragma once
 
-#include <QtCore/QThread>
 #include <QtCore/QLoggingCategory>
 
 #include "LinkConfiguration.h"
@@ -19,7 +18,7 @@ class LinkManager;
 Q_DECLARE_LOGGING_CATEGORY(LinkInterfaceLog)
 
 /// The link interface defines the interface for all links used to communicate with the ground station application.
-class LinkInterface : public QThread
+class LinkInterface : public QObject
 {
     Q_OBJECT
 
@@ -32,13 +31,13 @@ public:
 
     virtual bool isConnected() const = 0;
     virtual bool isLogReplay() const { return false; }
-    virtual bool isSecureConnection() { return false; } ///< Returns true if the connection is secure (e.g. USB, wired ethernet)
+    virtual bool isSecureConnection() const { return false; } ///< Returns true if the connection is secure (e.g. USB, wired ethernet)
 
     SharedLinkConfigurationPtr linkConfiguration() { return _config; }
     const SharedLinkConfigurationPtr linkConfiguration() const { return _config; }
     uint8_t mavlinkChannel() const;
     bool mavlinkChannelIsSet() const;
-    bool decodedFirstMavlinkPacket(void) const { return _decodedFirstMavlinkPacket; }
+    bool decodedFirstMavlinkPacket() const { return _decodedFirstMavlinkPacket; }
     void setDecodedFirstMavlinkPacket(bool decodedFirstMavlinkPacket) { _decodedFirstMavlinkPacket = decodedFirstMavlinkPacket; }
     void writeBytesThreadSafe(const char *bytes, int length);
     void addVehicleReference() { ++_vehicleReferenceCount; }
@@ -55,7 +54,7 @@ signals:
 
 protected:
     /// Links are only created by LinkManager so constructor is not public
-    LinkInterface(SharedLinkConfigurationPtr &config, QObject *parent = nullptr);
+    explicit LinkInterface(SharedLinkConfigurationPtr &config, QObject *parent = nullptr);
 
     /// Called by the LinkManager during LinkInterface construction instructing the link to setup channels.
     /// Default implementation allocates a single channel. But some link types (such as MockLink) need more than one.
