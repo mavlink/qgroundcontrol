@@ -30,9 +30,6 @@
 
  ======================================================================*/
 
-/// @file
-///     @author Rustom Jehangir <rusty@bluerobotics.com>
-
 #pragma once
 
 #include "APMFirmwarePlugin.h"
@@ -41,51 +38,53 @@
 class APMSubmarineFactGroup : public FactGroup
 {
     Q_OBJECT
+    Q_PROPERTY(Fact *camTilt             READ camTilt               CONSTANT)
+    Q_PROPERTY(Fact *tetherTurns         READ tetherTurns           CONSTANT)
+    Q_PROPERTY(Fact *lightsLevel1        READ lightsLevel1          CONSTANT)
+    Q_PROPERTY(Fact *lightsLevel2        READ lightsLevel2          CONSTANT)
+    Q_PROPERTY(Fact *pilotGain           READ pilotGain             CONSTANT)
+    Q_PROPERTY(Fact *inputHold           READ inputHold             CONSTANT)
+    Q_PROPERTY(Fact *rangefinderDistance READ rangefinderDistance   CONSTANT)
+    Q_PROPERTY(Fact *rangefinderTarget   READ rangefinderTarget     CONSTANT)
 
 public:
-    APMSubmarineFactGroup(QObject* parent = nullptr);
+    explicit APMSubmarineFactGroup(QObject *parent = nullptr);
+    ~APMSubmarineFactGroup();
 
-    Q_PROPERTY(Fact* camTilt             READ camTilt             CONSTANT)
-    Q_PROPERTY(Fact* tetherTurns         READ tetherTurns         CONSTANT)
-    Q_PROPERTY(Fact* lightsLevel1        READ lightsLevel1        CONSTANT)
-    Q_PROPERTY(Fact* lightsLevel2        READ lightsLevel2        CONSTANT)
-    Q_PROPERTY(Fact* pilotGain           READ pilotGain           CONSTANT)
-    Q_PROPERTY(Fact* inputHold           READ inputHold     CONSTANT)
-    Q_PROPERTY(Fact* rangefinderDistance READ rangefinderDistance CONSTANT)
-    Q_PROPERTY(Fact* rangefinderTarget   READ rangefinderTarget CONSTANT)
-
-    Fact* camTilt             (void) { return &_camTiltFact; }
-    Fact* tetherTurns         (void) { return &_tetherTurnsFact; }
-    Fact* lightsLevel1        (void) { return &_lightsLevel1Fact; }
-    Fact* lightsLevel2        (void) { return &_lightsLevel2Fact; }
-    Fact* pilotGain           (void) { return &_pilotGainFact; }
-    Fact* inputHold           (void) { return &_inputHoldFact; }
-    Fact* rangefinderDistance (void) { return &_rangefinderDistanceFact; }
-    Fact* rangefinderTarget   (void) { return &_rangefinderTargetFact; }
-
-    static const char* _camTiltFactName;
-    static const char* _tetherTurnsFactName;
-    static const char* _lightsLevel1FactName;
-    static const char* _lightsLevel2FactName;
-    static const char* _pilotGainFactName;
-    static const char* _inputHoldFactName;
-    static const char* _rollPitchToggleFactName;
-    static const char* _rangefinderDistanceFactName;
-    static const char* _rangefinderTargetFactName;
-
-    static const char* _settingsGroup;
+    Fact *camTilt() { return &_camTiltFact; }
+    Fact *tetherTurns() { return &_tetherTurnsFact; }
+    Fact *lightsLevel1() { return &_lightsLevel1Fact; }
+    Fact *lightsLevel2() { return &_lightsLevel2Fact; }
+    Fact *pilotGain() { return &_pilotGainFact; }
+    Fact *inputHold() { return &_inputHoldFact; }
+    Fact *rangefinderDistance() { return &_rangefinderDistanceFact; }
+    Fact *rangefinderTarget() { return &_rangefinderTargetFact; }
 
 private:
-    Fact            _camTiltFact;
-    Fact            _tetherTurnsFact;
-    Fact            _lightsLevel1Fact;
-    Fact            _lightsLevel2Fact;
-    Fact            _pilotGainFact;
-    Fact            _inputHoldFact;
-    Fact            _rollPitchToggleFact;
-    Fact            _rangefinderDistanceFact;
-    Fact            _rangefinderTargetFact;
+    Fact _camTiltFact = Fact(0, _camTiltFactName, FactMetaData::valueTypeDouble);
+    Fact _tetherTurnsFact = Fact(0, _tetherTurnsFactName, FactMetaData::valueTypeDouble);
+    Fact _lightsLevel1Fact = Fact(0, _lightsLevel1FactName, FactMetaData::valueTypeDouble);
+    Fact _lightsLevel2Fact = Fact(0, _lightsLevel2FactName, FactMetaData::valueTypeDouble);
+    Fact _pilotGainFact = Fact(0, _pilotGainFactName, FactMetaData::valueTypeDouble);
+    Fact _inputHoldFact = Fact(0, _inputHoldFactName, FactMetaData::valueTypeDouble);
+    Fact _rollPitchToggleFact = Fact(0, _rollPitchToggleFactName, FactMetaData::valueTypeDouble);
+    Fact _rangefinderDistanceFact = Fact(0, _rangefinderDistanceFactName, FactMetaData::valueTypeDouble);
+    Fact _rangefinderTargetFact = Fact(0, _rangefinderTargetFactName, FactMetaData::valueTypeDouble);
+
+    static constexpr const char *_camTiltFactName = "cameraTilt";
+    static constexpr const char *_tetherTurnsFactName = "tetherTurns";
+    static constexpr const char *_lightsLevel1FactName = "lights1";
+    static constexpr const char *_lightsLevel2FactName = "lights2";
+    static constexpr const char *_pilotGainFactName = "pilotGain";
+    static constexpr const char *_inputHoldFactName = "inputHold";
+    static constexpr const char *_rollPitchToggleFactName = "rollPitchToggle";
+    static constexpr const char *_rangefinderDistanceFactName = "rangefinderDistance";
+    static constexpr const char *_rangefinderTargetFactName = "rangefinderTarget";
+
+    static const char *_settingsGroup;
 };
+
+/*===========================================================================*/
 
 struct APMSubMode
 {
@@ -120,66 +119,60 @@ class ArduSubFirmwarePlugin : public APMFirmwarePlugin
     Q_OBJECT
 
 public:
-    ArduSubFirmwarePlugin(void);
+    explicit ArduSubFirmwarePlugin(QObject *parent = nullptr);
+    ~ArduSubFirmwarePlugin();
 
-    int defaultJoystickTXMode(void) final { return 3; }
-
-    void initializeStreamRates(Vehicle* vehicle) override final;
-
-    bool isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities) final;
-
-    bool supportsThrottleModeCenterZero(void) final;
-
-    bool supportsRadio(void) final;
-
-    bool supportsJSButton(void) final;
-
-    bool supportsMotorInterference(void) final;
+    int defaultJoystickTXMode() const final { return 3; }
+    void initializeStreamRates(Vehicle *vehicle) final;
+    bool isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities) const final;
+    bool supportsThrottleModeCenterZero() const final { return false; }
+    bool supportsRadio() const final { return false; }
+    bool supportsJSButton() const final { return true; }
+    bool supportsMotorInterference() const final { return false; }
 
     /// Return the resource file which contains the vehicle icon used in the flight view when the view is dark (Satellite for instance)
-    virtual QString vehicleImageOpaque(const Vehicle* vehicle) const final;
+    QString vehicleImageOpaque(const Vehicle* vehicle) const final { return QStringLiteral("/qmlimages/subVehicleArrowOpaque.png"); }
 
     /// Return the resource file which contains the vehicle icon used in the flight view when the view is light (Map for instance)
-    virtual QString vehicleImageOutline(const Vehicle* vehicle) const final;
+    QString vehicleImageOutline(const Vehicle* vehicle) const final;
 
-    QString brandImageIndoor(const Vehicle* vehicle) const final{ Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImageSub"); }
-    QString brandImageOutdoor(const Vehicle* vehicle) const final { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImageSub"); }
-    const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
+    QString brandImageIndoor(const Vehicle *vehicle) const final { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImageSub"); }
+    QString brandImageOutdoor(const Vehicle *vehicle) const final { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImageSub"); }
+    const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap() const final { return _remapParamName; }
     int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const final;
-    const QVariantList& toolIndicators(const Vehicle* vehicle) final;
-    const QVariantList& modeIndicators(const Vehicle* vehicle) final;
-    bool  adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message) final;
-    virtual QMap<QString, FactGroup*>* factGroups(void) final;
-    void adjustMetaData(MAV_TYPE vehicleType, FactMetaData* metaData) override final;
+    const QVariantList &toolIndicators(const Vehicle *vehicle) final;
+    const QVariantList &modeIndicators(const Vehicle *vehicle) final;
+    bool adjustIncomingMavlinkMessage(Vehicle *vehicle, mavlink_message_t *message) final;
+    QMap<QString, FactGroup*> *factGroups() final;
+    void adjustMetaData(MAV_TYPE vehicleType, FactMetaData *metaData) final;
 
-    QString stabilizedFlightMode                (void) const override;
-    QString motorDetectionFlightMode            (void) const override;
-    void    updateAvailableFlightModes          (FlightModeList modeList) override;
+    QString stabilizedFlightMode() const final;
+    QString motorDetectionFlightMode() const final;
+    void updateAvailableFlightModes(FlightModeList &modeList) final;
 
 protected:
-    uint32_t    _convertToCustomFlightModeEnum(uint32_t val) const override;
+    uint32_t _convertToCustomFlightModeEnum(uint32_t val) const final;
 
-
-    QString     _manualFlightMode           ;
-    QString     _stabilizeFlightMode        ;
-    QString     _acroFlightMode             ;
-    QString     _altHoldFlightMode          ;
-    QString     _autoFlightMode             ;
-    QString     _guidedFlightMode           ;
-    QString     _circleFlightMode           ;
-    QString     _surfaceFlightMode          ;
-    QString     _posHoldFlightMode          ;
-    QString     _motorDetectionFlightMode   ;
-    QString     _surftrakFlightMode         ;
+    const QString _manualFlightMode = tr("Manual");
+    const QString _stabilizeFlightMode = tr("Stabilize");
+    const QString _acroFlightMode = tr("Acro");
+    const QString _altHoldFlightMode = tr("Depth Hold");
+    const QString _autoFlightMode = tr("Auto");
+    const QString _guidedFlightMode = tr("Guided");
+    const QString _circleFlightMode = tr("Circle");
+    const QString _surfaceFlightMode = tr("Surface");
+    const QString _posHoldFlightMode =tr("Position Hold");
+    const QString _motorDetectionFlightMode = tr("Motor Detection");
+    const QString _surftrakFlightMode = tr("Surftrak");
 
 private:
     QVariantList _toolIndicators;
     QVariantList _modeIndicators;
     static bool _remapParamNameIntialized;
     QMap<QString, QString> _factRenameMap;
-    static FirmwarePlugin::remapParamNameMajorVersionMap_t  _remapParamName;
-    void _handleNamedValueFloat(mavlink_message_t* message);
-    void _handleMavlinkMessage(mavlink_message_t* message);
+    static FirmwarePlugin::remapParamNameMajorVersionMap_t _remapParamName;
+    void _handleNamedValueFloat(mavlink_message_t *message);
+    void _handleMavlinkMessage(mavlink_message_t *message);
 
     QMap<QString, FactGroup*> _nameToFactGroupMap;
     APMSubmarineFactGroup _infoFactGroup;

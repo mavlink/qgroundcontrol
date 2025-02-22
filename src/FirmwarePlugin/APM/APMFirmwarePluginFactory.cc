@@ -12,27 +12,30 @@
 #include "ArduPlaneFirmwarePlugin.h"
 #include "ArduRoverFirmwarePlugin.h"
 #include "ArduSubFirmwarePlugin.h"
+#include "QGCLoggingCategory.h"
 
-APMFirmwarePluginFactory APMFirmwarePluginFactory;
+QGC_LOGGING_CATEGORY(APMFirmwarePluginFactoryLog, "qgc.firmwareplugin.apmfirmwarepluginfactory");
 
-APMFirmwarePluginFactory::APMFirmwarePluginFactory(void)
-    : _arduCopterPluginInstance(nullptr)
-    , _arduPlanePluginInstance(nullptr)
-    , _arduRoverPluginInstance(nullptr)
-    , _arduSubPluginInstance(nullptr)
+APMFirmwarePluginFactory APMFirmwarePluginFactory(nullptr);
+
+APMFirmwarePluginFactory::APMFirmwarePluginFactory(QObject *parent)
 {
-
+    // qCDebug(FirmwarePluginFactoryLog) << Q_FUNC_INFO << this;
 }
 
-QList<QGCMAVLink::FirmwareClass_t> APMFirmwarePluginFactory::supportedFirmwareClasses(void) const
+APMFirmwarePluginFactory::~APMFirmwarePluginFactory()
+{
+    // qCDebug(FirmwarePluginFactoryLog) << Q_FUNC_INFO << this;
+}
+
+QList<QGCMAVLink::FirmwareClass_t> APMFirmwarePluginFactory::supportedFirmwareClasses() const
 {
     QList<QGCMAVLink::FirmwareClass_t> list;
-
     list.append(QGCMAVLink::FirmwareClassArduPilot);
     return list;
 }
 
-FirmwarePlugin* APMFirmwarePluginFactory::firmwarePluginForAutopilot(MAV_AUTOPILOT autopilotType, MAV_TYPE vehicleType)
+FirmwarePlugin *APMFirmwarePluginFactory::firmwarePluginForAutopilot(MAV_AUTOPILOT autopilotType, MAV_TYPE vehicleType)
 {
     if (autopilotType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
         switch (vehicleType) {
@@ -43,7 +46,7 @@ FirmwarePlugin* APMFirmwarePluginFactory::firmwarePluginForAutopilot(MAV_AUTOPIL
         case MAV_TYPE_COAXIAL:
         case MAV_TYPE_HELICOPTER:
             if (!_arduCopterPluginInstance) {
-                _arduCopterPluginInstance = new ArduCopterFirmwarePlugin;
+                _arduCopterPluginInstance = new ArduCopterFirmwarePlugin(this);
             }
             return _arduCopterPluginInstance;
         case MAV_TYPE_VTOL_TAILSITTER_DUOROTOR:
