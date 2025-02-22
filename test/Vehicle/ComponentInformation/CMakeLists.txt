@@ -1,28 +1,27 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Test)
 
-qt_add_library(VehicleComponentsTest
-    STATIC
+target_sources(VehicleTest
+    PRIVATE
         ComponentInformationCacheTest.cc
         ComponentInformationCacheTest.h
         ComponentInformationTranslationTest.cc
         ComponentInformationTranslationTest.h
 )
 
-target_link_libraries(VehicleComponentsTest
+target_link_libraries(VehicleTest
     PRIVATE
         Qt6::Test
         Utilities
-        ComponentInformation
     PUBLIC
         Qt6::Core
         qgcunittest
 )
 
-qt_add_resources(VehicleComponentsTest
-    "VehicleComponentsTest_res"
+qt_add_resources(VehicleTest
+    "VehicleTest_ComponentInformation_res"
     FILES
         TranslationTest.json
         TranslationTest_de_DE.ts
 )
 
-target_include_directories(VehicleComponentsTest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(VehicleTest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

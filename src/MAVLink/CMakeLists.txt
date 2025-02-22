@@ -1,5 +1,3 @@
-add_subdirectory(LibEvents)
-
 find_package(Qt6 REQUIRED COMPONENTS Core Gui QmlIntegration)
 
 qt_add_library(MAVLink STATIC
@@ -63,3 +61,5 @@ target_include_directories(MAVLink
 # if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 #   target_compile_options(comm PRIVATE -Wno-address-of-packed-member)
 # endif()
+
+add_subdirectory(LibEvents)
