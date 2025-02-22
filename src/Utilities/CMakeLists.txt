@@ -11,14 +11,14 @@ qt_add_library(Utilities STATIC
     KMLHelper.h
     QGC.cc
     QGC.h
-    QGCCachedFileDownload.cc
-    QGCCachedFileDownload.h
-    QGCFileDownload.cc
-    QGCFileDownload.h
+    FileSystem/QGCCachedFileDownload.cc
+    FileSystem/QGCCachedFileDownload.h
+    FileSystem/QGCFileDownload.cc
+    FileSystem/QGCFileDownload.h
     QGCLoggingCategory.cc
     QGCLoggingCategory.h
-    QGCTemporaryFile.cc
-    QGCTemporaryFile.h
+    FileSystem/QGCTemporaryFile.cc
+    FileSystem/QGCTemporaryFile.h
     ShapeFileHelper.cc
     ShapeFileHelper.h
     SHPFileHelper.cc
@@ -36,13 +36,12 @@ if(ANDROID OR IOS)
     endif()
 endif()
 
-target_include_directories(Utilities PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(Utilities PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} FileSystem)
 
 target_link_libraries(Utilities
     PRIVATE
         Qt6::Qml
         FactSystem
-        Geo
         QmlControls
         Settings
     PUBLIC
@@ -81,4 +80,6 @@ endif()
 
 #===========================================================================#
 
+add_subdirectory(Audio)
 add_subdirectory(Compression)
+add_subdirectory(Geo)
