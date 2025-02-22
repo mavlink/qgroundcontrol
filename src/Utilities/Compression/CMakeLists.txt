@@ -1,23 +1,23 @@
 find_package(Qt6 REQUIRED COMPONENTS Core)
 
-qt_add_library(Compression STATIC
-    QGCLZMA.cc
-    QGCLZMA.h
-    QGCZip.cc
-    QGCZip.h
-    QGCZlib.cc
-    QGCZlib.h
+target_sources(Utilities
+    PRIVATE
+        QGCLZMA.cc
+        QGCLZMA.h
+        QGCZip.cc
+        QGCZip.h
+        QGCZlib.cc
+        QGCZlib.h
 )
 
-target_link_libraries(Compression
+target_link_libraries(Utilities
     PRIVATE
         Qt6::CorePrivate
-        Utilities
     PUBLIC
         Qt6::Core
 )
 
-target_include_directories(Compression PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(Utilities PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 #===========================================================================#
 
@@ -36,10 +36,10 @@ CPMAddPackage(
 )
 
 if(ZLIB_ADDED)
-    target_link_libraries(Compression PRIVATE zlibstatic)
+    target_link_libraries(Utilities PRIVATE zlibstatic)
 else()
     find_package(Qt6ZlibPrivate REQUIRED)
-    target_link_libraries(Compression PRIVATE Qt6::ZlibPrivate)
+    target_link_libraries(Utilities PRIVATE Qt6::ZlibPrivate)
 endif()
 
 #===========================================================================#
@@ -81,4 +81,4 @@ target_compile_definitions(xz
         XZ_USE_CRC64
 )
 
-target_link_libraries(Compression PRIVATE xz)
+target_link_libraries(Utilities PRIVATE xz)

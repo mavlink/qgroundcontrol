@@ -21,7 +21,6 @@ target_link_libraries(Camera
         Qt6::Qml
         Qt6::Xml
         API
-        Compression
         Comms
         FirmwarePlugin
         Joystick

@@ -28,7 +28,6 @@ target_link_libraries(FactSystem
         Settings
         Utilities
         Vehicle
-        ComponentInformation
     PUBLIC
         Qt6::Core
         MAVLink

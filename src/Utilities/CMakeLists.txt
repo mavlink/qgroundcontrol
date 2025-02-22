@@ -1,5 +1,3 @@
-add_subdirectory(Compression)
-
 find_package(Qt6 REQUIRED COMPONENTS Bluetooth Core Gui Network Positioning Sensors Qml Xml)
 
 qt_add_library(Utilities STATIC
@@ -80,3 +78,7 @@ if(Shapelib_ADDED)
         target_link_libraries(Utilities PRIVATE shapelib::shp)
     endif()
 endif()
+
+#===========================================================================#
+
+add_subdirectory(Compression)
