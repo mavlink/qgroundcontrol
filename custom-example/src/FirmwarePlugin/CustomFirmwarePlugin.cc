@@ -29,7 +29,7 @@ CustomFirmwarePlugin::CustomFirmwarePlugin()
 }
 
 //-----------------------------------------------------------------------------
-AutoPilotPlugin* CustomFirmwarePlugin::autopilotPlugin(Vehicle* vehicle)
+AutoPilotPlugin* CustomFirmwarePlugin::autopilotPlugin(Vehicle* vehicle) const
 {
     return new CustomAutoPilotPlugin(vehicle, vehicle);
 }
@@ -48,7 +48,7 @@ const QVariantList& CustomFirmwarePlugin::toolIndicators(const Vehicle* vehicle)
 
 // Tells QGC that your vehicle has a gimbal on it. This will in turn cause thing like gimbal commands to point
 // the camera straight down for surveys to be automatically added to Plans.
-bool CustomFirmwarePlugin::hasGimbal(Vehicle* /*vehicle*/, bool& rollSupported, bool& pitchSupported, bool& yawSupported)
+bool CustomFirmwarePlugin::hasGimbal(Vehicle* /*vehicle*/, bool& rollSupported, bool& pitchSupported, bool& yawSupported) const
 {
     rollSupported = false;
     pitchSupported = true;
@@ -57,7 +57,7 @@ bool CustomFirmwarePlugin::hasGimbal(Vehicle* /*vehicle*/, bool& rollSupported, 
     return true;
 }
 
-void CustomFirmwarePlugin::updateAvailableFlightModes(FlightModeList modeList)
+void CustomFirmwarePlugin::updateAvailableFlightModes(FlightModeList &modeList)
 {
 
     for(auto &mode: modeList){

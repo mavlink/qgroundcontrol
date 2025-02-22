@@ -9,24 +9,32 @@
 
 #include "FirmwarePluginFactory.h"
 #include "FirmwarePlugin.h"
+#include "QGCLoggingCategory.h"
 
-FirmwarePluginFactory::FirmwarePluginFactory(void)
+#include <QtCore/QGlobalStatic>
+
+QGC_LOGGING_CATEGORY(FirmwarePluginFactoryLog, "qgc.firmwareplugin.firmwarepluginfactory");
+
+/*===========================================================================*/
+
+FirmwarePluginFactory::FirmwarePluginFactory(QObject *parent)
+    : QObject(parent)
 {
+    // qCDebug(FirmwarePluginFactoryLog) << Q_FUNC_INFO << this;
+
     FirmwarePluginFactoryRegister::instance()->registerPluginFactory(this);
 }
 
-QList<QGCMAVLink::VehicleClass_t> FirmwarePluginFactory::supportedVehicleClasses(void) const
+FirmwarePluginFactory::~FirmwarePluginFactory()
 {
-    return QGCMAVLink::allVehicleClasses();
+    // qCDebug(FirmwarePluginFactoryLog) << Q_FUNC_INFO << this;
 }
 
-FirmwarePluginFactoryRegister* FirmwarePluginFactoryRegister::instance(void)
+/*===========================================================================*/
+
+Q_GLOBAL_STATIC(FirmwarePluginFactoryRegister, _firmwarePluginFactoryRegisterInstance);
+
+FirmwarePluginFactoryRegister *FirmwarePluginFactoryRegister::instance()
 {
-    static FirmwarePluginFactoryRegister* _instance = nullptr;
-
-    if (!_instance) {
-        _instance = new FirmwarePluginFactoryRegister;
-    }
-
-    return _instance;
+    return _firmwarePluginFactoryRegisterInstance();
 }

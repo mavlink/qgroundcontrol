@@ -7,10 +7,6 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Pritam Ghanghas <pritam.ghanghas@gmail.com>
-
 #pragma once
 
 #include "APMFirmwarePlugin.h"
@@ -51,50 +47,50 @@ struct APMPlaneMode
 class ArduPlaneFirmwarePlugin : public APMFirmwarePlugin
 {
     Q_OBJECT
-    
+
 public:
-    ArduPlaneFirmwarePlugin(void);
+    explicit ArduPlaneFirmwarePlugin(QObject *parent = nullptr);
+    ~ArduPlaneFirmwarePlugin();
 
-    // Overrides from FirmwarePlugin
-    QString pauseFlightMode                         (void) const override { return QString("Loiter"); }
-    QString offlineEditingParamFile                 (Vehicle* vehicle) final { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Plane.OfflineEditing.params"); }
-    QString autoDisarmParameter                     (Vehicle* vehicle) final { Q_UNUSED(vehicle); return QStringLiteral("LAND_DISARMDELAY"); }
-    int     remapParamNameHigestMinorVersionNumber  (int majorVersionNumber) const final;    
-    const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
+    QString pauseFlightMode() const final { return QString("Loiter"); }
+    QString offlineEditingParamFile(Vehicle *vehicle) const final { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Plane.OfflineEditing.params"); }
+    QString autoDisarmParameter(Vehicle *vehicle) const final { Q_UNUSED(vehicle); return QStringLiteral("LAND_DISARMDELAY"); }
+    int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const final;
+    const FirmwarePlugin::remapParamNameMajorVersionMap_t &paramNameRemapMajorVersionMap() const final { return _remapParamName; }
 
-    QString stabilizedFlightMode                    (void) const override;
-    void    updateAvailableFlightModes              (FlightModeList modeList) override;
+    QString stabilizedFlightMode() const final;
+    void updateAvailableFlightModes(FlightModeList &modeList) final;
 
 protected:
-    uint32_t    _convertToCustomFlightModeEnum(uint32_t val) const override;
+    uint32_t _convertToCustomFlightModeEnum(uint32_t val) const final;
 
+    const QString _manualFlightMode = tr("Manual");
+    const QString _circleFlightMode = tr("Circle");
+    const QString _stabilizeFlightMode = tr("Stabilize");
+    const QString _trainingFlightMode = tr("Training");
+    const QString _acroFlightMode = tr("Acro");
+    const QString _flyByWireAFlightMode = tr("FBW A");
+    const QString _flyByWireBFlightMode = tr("FBW B");
+    const QString _cruiseFlightMode = tr("Cruise");
+    const QString _autoTuneFlightMode = tr("Autotune");
+    const QString _autoFlightMode = tr("Auto");
+    const QString _rtlFlightMode = tr("RTL");
+    const QString _loiterFlightMode = tr("Loiter");
+    const QString _takeoffFlightMode = tr("Takeoff");
+    const QString _avoidADSBFlightMode = tr("Avoid ADSB");
+    const QString _guidedFlightMode = tr("Guided");
+    const QString _initializingFlightMode = tr("Initializing");
+    const QString _qStabilizeFlightMode = tr("QuadPlane Stabilize");
+    const QString _qHoverFlightMode = tr("QuadPlane Hover");
+    const QString _qLoiterFlightMode = tr("QuadPlane Loiter");
+    const QString _qLandFlightMode = tr("QuadPlane Land");
+    const QString _qRTLFlightMode = tr("QuadPlane RTL");
+    const QString _qAutotuneFlightMode = tr("QuadPlane AutoTune");
+    const QString _qAcroFlightMode = tr("QuadPlane Acro");
+    const QString _thermalFlightMode = tr("Thermal");
+    const QString _loiter2qlandFlightMode = tr("Loiter to QLand");
+    const QString _autolandFlightMode = tr("Autoland");
 
-    QString     _manualFlightMode       ;
-    QString     _circleFlightMode       ;
-    QString     _stabilizeFlightMode    ;
-    QString     _trainingFlightMode     ;
-    QString     _acroFlightMode         ;
-    QString     _flyByWireAFlightMode   ;
-    QString     _flyByWireBFlightMode   ;
-    QString     _cruiseFlightMode       ;
-    QString     _autoTuneFlightMode     ;
-    QString     _autoFlightMode         ;
-    QString     _rtlFlightMode          ;
-    QString     _loiterFlightMode       ;
-    QString     _takeoffFlightMode      ;
-    QString     _avoidADSBFlightMode    ;
-    QString     _guidedFlightMode       ;
-    QString     _initializingFlightMode ;
-    QString     _qStabilizeFlightMode   ;
-    QString     _qHoverFlightMode       ;
-    QString     _qLoiterFlightMode      ;
-    QString     _qLandFlightMode        ;
-    QString     _qRTLFlightMode         ;
-    QString     _qAutotuneFlightMode    ;
-    QString     _qAcroFlightMode        ;
-    QString     _thermalFlightMode      ;
-    QString     _loiter2qlandFlightMode ;
-    QString     _autolandFlightMode     ;
 private:
     static bool _remapParamNameIntialized;
     static FirmwarePlugin::remapParamNameMajorVersionMap_t  _remapParamName;

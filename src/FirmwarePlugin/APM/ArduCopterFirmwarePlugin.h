@@ -7,10 +7,6 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
 #pragma once
 
 #include "APMFirmwarePlugin.h"
@@ -55,58 +51,58 @@ class ArduCopterFirmwarePlugin : public APMFirmwarePlugin
     Q_OBJECT
 
 public:
-    ArduCopterFirmwarePlugin(void);
+    explicit ArduCopterFirmwarePlugin(QObject *parent = nullptr);
+    ~ArduCopterFirmwarePlugin();
 
-    // Overrides from FirmwarePlugin
-    void    guidedModeLand                      (Vehicle* vehicle) final;
-    const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
-    int     remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const final;
-    bool    multiRotorCoaxialMotors             (Vehicle* vehicle) final;
-    bool    multiRotorXConfig                   (Vehicle* vehicle) final;
-    QString offlineEditingParamFile             (Vehicle* vehicle) final { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Copter.OfflineEditing.params"); }
-    QString pauseFlightMode                     (void) const override;
-    QString landFlightMode                      (void) const override;
-    QString takeControlFlightMode               (void) const override;
-    QString followFlightMode                    (void) const override;
-    QString gotoFlightMode                      (void) const override;
-    QString takeOffFlightMode                   (void) const override;
-    QString stabilizedFlightMode                (void) const override;
-    QString autoDisarmParameter                 (Vehicle* vehicle) override { Q_UNUSED(vehicle); return QStringLiteral("DISARM_DELAY"); }
-    bool    supportsSmartRTL                    (void) const override { return true; }
+    void guidedModeLand(Vehicle *vehicle) const final { _setFlightModeAndValidate(vehicle, landFlightMode()); }
+    const FirmwarePlugin::remapParamNameMajorVersionMap_t &paramNameRemapMajorVersionMap() const final { return _remapParamName; }
+    int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const final;
+    bool multiRotorCoaxialMotors(Vehicle* /*vehicle*/) const final { return _coaxialMotors; }
+    bool multiRotorXConfig(Vehicle *vehicle) const final;
+    QString offlineEditingParamFile(Vehicle *vehicle) const final { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Copter.OfflineEditing.params"); }
+    QString pauseFlightMode() const final;
+    QString landFlightMode() const final;
+    QString takeControlFlightMode() const final;
+    QString followFlightMode() const final;
+    QString gotoFlightMode() const final { return guidedFlightMode(); }
+    QString takeOffFlightMode() const final { return guidedFlightMode(); }
+    QString stabilizedFlightMode() const final;
+    QString autoDisarmParameter(Vehicle *vehicle) const final { Q_UNUSED(vehicle); return QStringLiteral("DISARM_DELAY"); }
+    bool supportsSmartRTL() const final { return true; }
 
-    void    updateAvailableFlightModes          (FlightModeList modeList) override;
+    void updateAvailableFlightModes(FlightModeList &modeList) final;
+
 protected:
-    uint32_t    _convertToCustomFlightModeEnum(uint32_t val) const override;
-
-
-    QString     _stabilizeFlightMode;
-    QString     _acroFlightMode;
-    QString     _altHoldFlightMode;
-    QString     _autoFlightMode;
-    QString     _guidedFlightMode;
-    QString     _loiterFlightMode;
-    QString     _rtlFlightMode;
-    QString     _circleFlightMode;
-    QString     _landFlightMode;
-    QString     _driftFlightMode;
-    QString     _sportFlightMode;
-    QString     _flipFlightMode;
-    QString     _autotuneFlightMode;
-    QString     _posHoldFlightMode;
-    QString     _brakeFlightMode;
-    QString     _throwFlightMode;
-    QString     _avoidADSBFlightMode;
-    QString     _guidedNoGPSFlightMode;
-    QString     _smartRtlFlightMode;
-    QString     _flowHoldFlightMode;
-    QString     _followFlightMode;
-    QString     _zigzagFlightMode;
-    QString     _systemIDFlightMode;
-    QString     _autoRotateFlightMode;
-    QString     _autoRTLFlightMode;
-    QString     _turtleFlightMode;
+    uint32_t _convertToCustomFlightModeEnum(uint32_t val) const final;
 
 private:
+    const QString _stabilizeFlightMode = tr("Stabilize");
+    const QString _acroFlightMode = tr("Acro");
+    const QString _altHoldFlightMode = tr("Altitude Hold");
+    const QString _autoFlightMode = tr("Auto");
+    const QString _guidedFlightMode = tr("Guided");
+    const QString _loiterFlightMode = tr("Loiter");
+    const QString _rtlFlightMode = tr("RTL");
+    const QString _circleFlightMode = tr("Circle");
+    const QString _landFlightMode = tr("Land");
+    const QString _driftFlightMode = tr("Drift");
+    const QString _sportFlightMode = tr("Sport");
+    const QString _flipFlightMode = tr("Flip");
+    const QString _autotuneFlightMode = tr("Autotune");
+    const QString _posHoldFlightMode = tr("Position Hold");
+    const QString _brakeFlightMode = tr("Brake");
+    const QString _throwFlightMode = tr("Throw");
+    const QString _avoidADSBFlightMode = tr("Avoid ADSB");
+    const QString _guidedNoGPSFlightMode = tr("Guided No GPS");
+    const QString _smartRtlFlightMode = tr("Smart RTL");
+    const QString _flowHoldFlightMode = tr("Flow Hold");
+    const QString _followFlightMode = tr("Follow");
+    const QString _zigzagFlightMode = tr("ZigZag");
+    const QString _systemIDFlightMode = tr("SystemID");
+    const QString _autoRotateFlightMode = tr("AutoRotate");
+    const QString _autoRTLFlightMode = tr("AutoRTL");
+    const QString _turtleFlightMode = tr("Turtle");
+
     static bool _remapParamNameIntialized;
-    static FirmwarePlugin::remapParamNameMajorVersionMap_t  _remapParamName;
+    static FirmwarePlugin::remapParamNameMajorVersionMap_t _remapParamName;
 };
