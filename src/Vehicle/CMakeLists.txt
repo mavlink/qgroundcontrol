@@ -1,7 +1,3 @@
-add_subdirectory(Actuators)
-add_subdirectory(ComponentInformation)
-add_subdirectory(FactGroups)
-
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Positioning Qml)
 
 qt_add_library(Vehicle STATIC
@@ -34,8 +30,6 @@ qt_add_library(Vehicle STATIC
 target_link_libraries(Vehicle
     PRIVATE
         Qt6::Qml
-        VehicleActuators
-        ComponentInformation
         ADSB
         API
         Audio
@@ -54,11 +48,13 @@ target_link_libraries(Vehicle
         FactSystem
         FirmwarePlugin
         Gimbal
-        LibEventsWrapper
         MAVLink
         MissionManager
         Utilities
-        VehicleFactGroups
 )
 
 target_include_directories(Vehicle PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+add_subdirectory(Actuators)
+add_subdirectory(ComponentInformation)
+add_subdirectory(FactGroups)

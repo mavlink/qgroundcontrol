@@ -137,7 +137,6 @@ target_link_libraries(qgctest
         AudioTest
         CameraTest
         CommsTest
-        CompressionTest
         FactSystemTest
         FollowMeTest
         GeoTest
@@ -148,7 +147,6 @@ target_link_libraries(qgctest
         TerrainTest
         UITest
         VehicleTest
-        VehicleComponentsTest
         Utilities
         UtilitiesTest
     PUBLIC

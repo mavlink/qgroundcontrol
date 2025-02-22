@@ -1,22 +1,22 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Test)
 
-qt_add_library(CompressionTest
-    STATIC
+target_sources(UtilitiesTest
+    PRIVATE
         DecompressionTest.cc
         DecompressionTest.h
 )
 
-target_link_libraries(CompressionTest
+target_link_libraries(UtilitiesTest
     PRIVATE
         Qt6::Test
-        Compression
+        Utilities
     PUBLIC
         qgcunittest
 )
 
-target_include_directories(CompressionTest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(UtilitiesTest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-qt_add_resources(CompressionTest "CompressionTest"
+qt_add_resources(UtilitiesTest "UtilitiesTest_CompressionTest_res"
     PREFIX "/"
     FILES
         manifest.json.gz

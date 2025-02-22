@@ -1,5 +1,3 @@
-add_subdirectory(Compression)
-
 find_package(Qt6 REQUIRED COMPONENTS Core)
 
 qt_add_library(UtilitiesTest STATIC
@@ -22,3 +20,5 @@ qt_add_resources(UtilitiesTest "UtilitiesTest_res"
     FILES
         arducopter.apj
 )
+
+add_subdirectory(Compression)
