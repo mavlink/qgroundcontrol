@@ -8,13 +8,11 @@ qt_add_library(VehicleSetup STATIC
 target_link_libraries(VehicleSetup
     PRIVATE
         Qt6::Qml
-        Compression
         FactSystem
         QGC
         Settings
         Utilities
         Vehicle
-        ComponentInformation
     PUBLIC
         Qt6::Core
         Qt6::Gui

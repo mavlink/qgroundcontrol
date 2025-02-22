@@ -42,7 +42,6 @@ target_link_libraries(PX4AutoPilotPlugin
         QGC
         Utilities
         Vehicle
-        VehicleActuators
     PUBLIC
         Qt6::Core
         Qt6::Quick
