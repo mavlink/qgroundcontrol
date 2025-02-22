@@ -10,7 +10,6 @@ qt_add_library(QGC STATIC
 add_subdirectory(ADSB)
 add_subdirectory(AnalyzeView)
 add_subdirectory(API)
-add_subdirectory(Audio)
 add_subdirectory(AutoPilotPlugins)
 add_subdirectory(Camera)
 add_subdirectory(Comms)
@@ -20,7 +19,6 @@ add_subdirectory(FirmwarePlugin)
 # add_subdirectory(FlightDisplay)
 # add_subdirectory(FlightMap)
 add_subdirectory(FollowMe)
-add_subdirectory(Geo)
 add_subdirectory(Gimbal)
 add_subdirectory(GPS)
 add_subdirectory(Joystick)
@@ -53,7 +51,6 @@ target_link_libraries(QGC
         Qt6::QuickControls2
         API
         AnalyzeView
-        Audio
         AutoPilotPlugins
         Camera
         Comms

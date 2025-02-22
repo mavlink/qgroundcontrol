@@ -65,7 +65,6 @@ target_link_libraries(QmlControls
         Qt6::Concurrent
         Qt6::Location
         FirmwarePlugin
-        Geo
         GPS
         MockLink
     PUBLIC

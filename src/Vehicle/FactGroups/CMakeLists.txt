@@ -43,11 +43,10 @@ target_sources(Vehicle
 )
 
 target_link_libraries(Vehicle
-    PRIVATE
-        Geo
     PUBLIC
         Comms
         FactSystem
+        Utilities
 )
 
 target_include_directories(Vehicle PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
