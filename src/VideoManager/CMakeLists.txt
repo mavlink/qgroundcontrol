@@ -14,13 +14,10 @@ target_link_libraries(VideoManager
         API
         Camera
         FactSystem
-        GStreamerReceiver
         QmlControls
-        QtMultimediaReceiver
         Settings
         Utilities
         Vehicle
-        VideoReceiver
     PUBLIC
         Qt6::Core
         Qt6::QmlIntegration
