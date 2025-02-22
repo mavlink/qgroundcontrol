@@ -117,17 +117,22 @@ CPMAddPackage(
         "EXPAT_SHARED_LIBS OFF"
 )
 
-if(TARGET EXPAT::EXPAT)
+if(TARGET expat::expat)
     set(_EXIV2_ENABLE_XMP ON)
+    add_library(EXPAT::EXPAT INTERFACE IMPORTED)
+    set_target_properties(EXPAT::EXPAT PROPERTIES INTERFACE_LINK_LIBRARIES expat::expat)
 else()
     set(_EXIV2_ENABLE_XMP OFF)
 endif()
 
+message(STATUS "_EXIV2_ENABLE_XMP ${_EXIV2_ENABLE_XMP}")
+
 CPMAddPackage(
     NAME exiv2
-    VERSION 0.28.4
+    VERSION 0.28.5
     GITHUB_REPOSITORY Exiv2/exiv2
     OPTIONS
+        "BUILD_SHARED_LIBS OFF"
         "EXIV2_ENABLE_XMP ${_EXIV2_ENABLE_XMP}"
         "EXIV2_ENABLE_EXTERNAL_XMP OFF"
         "EXIV2_ENABLE_PNG OFF"
@@ -147,7 +152,6 @@ CPMAddPackage(
         "EXIV2_BUILD_FUZZ_TESTS OFF"
         "EXIV2_BUILD_DOC OFF"
         "BUILD_WITH_CCACHE OFF"
-        "BUILD_SHARED_LIBS OFF"
 )
 
 if(TARGET Exiv2::exiv2lib)
