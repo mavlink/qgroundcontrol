@@ -1,17 +1,16 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Test)
 
-qt_add_library(AudioTest
-    STATIC
+target_sources(UtilitiesTest
+    PRIVATE
         AudioOutputTest.cc
         AudioOutputTest.h
 )
 
-target_link_libraries(AudioTest
+target_link_libraries(UtilitiesTest
     PRIVATE
         Qt6::Test
-        Audio
     PUBLIC
         qgcunittest
 )
 
-target_include_directories(AudioTest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(UtilitiesTest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

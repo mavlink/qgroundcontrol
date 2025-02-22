@@ -32,7 +32,6 @@ target_link_libraries(Vehicle
         Qt6::Qml
         ADSB
         API
-        Audio
         AutoPilotPlugins
         Camera
         Joystick
