@@ -1203,10 +1203,13 @@ QMutex& APMFirmwarePlugin::_reencodeMavlinkChannelMutex()
 
 double APMFirmwarePlugin::maximumEquivalentAirspeed(Vehicle* vehicle)
 {
-    QString airspeedMax("ARSPD_FBW_MAX");
+    QString airspeedMaxNewName("AIRSPEED_MAX");
+    QString airspeedMaxOldName("ARSPD_FBW_MAX");
 
-    if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, airspeedMax)) {
-        return vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, airspeedMax)->rawValue().toDouble();
+    if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, airspeedMaxNewName)) {
+        return vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, airspeedMaxNewName)->rawValue().toDouble();
+    } else if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, airspeedMaxOldName)) {
+        return vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, airspeedMaxOldName)->rawValue().toDouble();
     }
 
     return FirmwarePlugin::maximumEquivalentAirspeed(vehicle);
@@ -1214,10 +1217,13 @@ double APMFirmwarePlugin::maximumEquivalentAirspeed(Vehicle* vehicle)
 
 double APMFirmwarePlugin::minimumEquivalentAirspeed(Vehicle* vehicle)
 {
-    QString airspeedMin("ARSPD_FBW_MIN");
+    QString airspeedMinNewName("AIRSPEED_MIN");
+    QString airspeedMinOldName("ARSPD_FBW_MIN");
 
-    if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, airspeedMin)) {
-        return vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, airspeedMin)->rawValue().toDouble();
+    if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, airspeedMinNewName)) {
+        return vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, airspeedMinNewName)->rawValue().toDouble();
+    } else if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, airspeedMinOldName)) {
+        return vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, airspeedMinOldName)->rawValue().toDouble();
     }
 
     return FirmwarePlugin::minimumEquivalentAirspeed(vehicle);
@@ -1225,8 +1231,10 @@ double APMFirmwarePlugin::minimumEquivalentAirspeed(Vehicle* vehicle)
 
 bool APMFirmwarePlugin::fixedWingAirSpeedLimitsAvailable(Vehicle* vehicle)
 {
-    return vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "ARSPD_FBW_MIN") &&
-           vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "ARSPD_FBW_MAX");
+    return (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "AIRSPEED_MIN") ||
+            vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "ARSPD_FBW_MIN")) &&
+           (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "AIRSPEED_MAX") ||
+            vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "ARSPD_FBW_MAX"));
 }
 
 void APMFirmwarePlugin::guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle* vehicle, double airspeed_equiv)
