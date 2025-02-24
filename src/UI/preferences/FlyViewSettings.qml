@@ -36,6 +36,7 @@ SettingsPage {
     property Fact   _guidedMaximumAltitude:                 _flyViewSettings.guidedMaximumAltitude
     property Fact   _maxGoToLocationDistance:               _flyViewSettings.maxGoToLocationDistance
     property Fact   _forwardFlightGoToLocationLoiterRad:    _flyViewSettings.forwardFlightGoToLocationLoiterRad
+    property Fact   _goToLocationRequiresConfirmInGuided:   _flyViewSettings.goToLocationRequiresConfirmInGuided
     property var    _viewer3DSettings:                      _settingsManager.viewer3DSettings
     property Fact   _viewer3DEnabled:                       _viewer3DSettings.enabled
     property Fact   _viewer3DOsmFilePath:                   _viewer3DSettings.osmFilePath
@@ -117,7 +118,8 @@ SettingsPage {
         Layout.fillWidth:   true
         heading:            qsTr("Guided Commands")
         visible:            _guidedMinimumAltitude.visible || _guidedMaximumAltitude.visible ||
-                            _maxGoToLocationDistance.visible || _forwardFlightGoToLocationLoiterRad.visible
+                            _maxGoToLocationDistance.visible || _forwardFlightGoToLocationLoiterRad.visible ||
+                            _goToLocationRequiresConfirmInGuided.visible
 
         LabelledFactTextField {
             Layout.fillWidth:   true
