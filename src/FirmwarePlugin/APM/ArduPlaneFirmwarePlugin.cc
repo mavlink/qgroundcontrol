@@ -104,8 +104,13 @@ ArduPlaneFirmwarePlugin::ArduPlaneFirmwarePlugin(void)
     if (!_remapParamNameIntialized) {
         FirmwarePlugin::remapParamNameMap_t& remapV3_10 = _remapParamName[3][10];
 
-        remapV3_10["BATT_ARM_VOLT"] =    QStringLiteral("ARMING_VOLT_MIN");
-        remapV3_10["BATT2_ARM_VOLT"] =   QStringLiteral("ARMING_VOLT2_MIN");
+        remapV3_10["BATT_ARM_VOLT"] =   QStringLiteral("ARMING_VOLT_MIN");
+        remapV3_10["BATT2_ARM_VOLT"] =  QStringLiteral("ARMING_VOLT2_MIN");
+
+        FirmwarePlugin::remapParamNameMap_t& remapV4_5 = _remapParamName[4][5];
+
+        remapV4_5["AIRSPEED_MIN"] =     QStringLiteral("ARSPD_FBW_MIN");
+        remapV4_5["AIRSPEED_MAX"] =     QStringLiteral("ARSPD_FBW_MAX");
 
         _remapParamNameIntialized = true;
     }
@@ -113,8 +118,8 @@ ArduPlaneFirmwarePlugin::ArduPlaneFirmwarePlugin(void)
 
 int ArduPlaneFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const
 {
-    // Remapping supports up to 3.10
-    return majorVersionNumber == 3 ? 10 : Vehicle::versionNotSetValue;
+    // Remapping supports up to 4.5
+    return majorVersionNumber == 4 ? 5 : Vehicle::versionNotSetValue;
 }
 
 QString ArduPlaneFirmwarePlugin::stabilizedFlightMode() const
