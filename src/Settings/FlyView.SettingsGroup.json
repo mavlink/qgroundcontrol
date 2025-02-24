@@ -70,6 +70,12 @@
     "min":          25
 },
 {
+    "name":         "goToLocationRequiresConfirmInGuided",
+    "shortDesc":    "Require slide confirmation for Go To Location when the vehicle is already in Guided mode.",
+    "type":         "bool",
+    "default":      true
+},
+{
     "name":             "updateHomePosition",
     "shortDesc": "Send updated GCS' home position to autopilot in case of change of the home position",
     "type":                 "bool",
