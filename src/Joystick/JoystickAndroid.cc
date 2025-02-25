@@ -224,9 +224,7 @@ bool JoystickAndroid::_getHat(int hat, int i) const
 
 bool JoystickAndroid::init()
 {
-    static QList<int> ret(_androidBtnListCount);
-
-    _androidBtnList = ret;
+    QList<int> ret(_androidBtnListCount);
 
     (void) AndroidInterface::cleanJavaException();
 
@@ -257,6 +255,8 @@ bool JoystickAndroid::init()
     ACTION_UP = QJniObject::getStaticField<jint>("android/view/KeyEvent", "ACTION_UP");
     AXIS_HAT_X = QJniObject::getStaticField<jint>("android/view/MotionEvent", "AXIS_HAT_X");
     AXIS_HAT_Y = QJniObject::getStaticField<jint>("android/view/MotionEvent", "AXIS_HAT_Y");
+
+    _androidBtnList = ret;
 
     return true;
 }
