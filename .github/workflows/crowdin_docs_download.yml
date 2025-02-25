@@ -3,6 +3,8 @@ name: Crowdin - Download Guide Translations
 # https://github.com/crowdin/github-action/tree/master
 
 on:
+  schedule:
+    - cron: '0 0 * * 0' # Runs every Sunday at 00:00 UTC
   workflow_dispatch:
 
 permissions:
