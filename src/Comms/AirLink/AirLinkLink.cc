@@ -193,7 +193,7 @@ void AirLinkConfiguration::loadSettings(QSettings &settings, const QString &root
     settings.endGroup();
 }
 
-void AirLinkConfiguration::saveSettings(QSettings &settings, const QString &root)
+void AirLinkConfiguration::saveSettings(QSettings &settings, const QString &root) const
 {
     settings.beginGroup(root);
 

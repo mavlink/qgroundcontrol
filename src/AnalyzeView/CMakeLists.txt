@@ -125,7 +125,7 @@ endif()
 
 CPMAddPackage(
     NAME exiv2
-    VERSION 0.28.3
+    VERSION 0.28.4
     GITHUB_REPOSITORY Exiv2/exiv2
     OPTIONS
         "EXIV2_ENABLE_XMP ${_EXIV2_ENABLE_XMP}"

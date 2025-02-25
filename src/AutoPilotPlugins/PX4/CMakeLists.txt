@@ -9,8 +9,6 @@ qt_add_library(PX4AutoPilotPlugin STATIC
     AirframeComponentAirframes.h
     AirframeComponentController.cc
     AirframeComponentController.h
-    CameraComponent.cc
-    CameraComponent.h
     FlightModesComponent.cc
     FlightModesComponent.h
     PowerComponent.cc
@@ -44,7 +42,6 @@ target_link_libraries(PX4AutoPilotPlugin
         QGC
         Utilities
         Vehicle
-        VehicleActuators
     PUBLIC
         Qt6::Core
         Qt6::Quick

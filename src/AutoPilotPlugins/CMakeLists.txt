@@ -13,6 +13,8 @@ qt_add_library(AutoPilotPlugins STATIC
     AutoPilotPlugin.h
     Generic/GenericAutoPilotPlugin.cc
     Generic/GenericAutoPilotPlugin.h
+    VehicleComponent.cc
+    VehicleComponent.h
 )
 
 target_link_libraries(AutoPilotPlugins

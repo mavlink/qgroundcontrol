@@ -13,19 +13,21 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
             MockLink.h
             MockLinkFTP.cc
             MockLinkFTP.h
+            MockLinkWorker.cc
+            MockLinkWorker.h
             MockLinkMissionItemHandler.cc
             MockLinkMissionItemHandler.h
     )
 
     target_link_libraries(MockLink
         PRIVATE
-            FirmwarePlugin
             QGC
             Utilities
         PUBLIC
             Qt6::Core
             Qt6::Positioning
             Comms
+            PX4FirmwarePlugin
             MAVLink
     )
 

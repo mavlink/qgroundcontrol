@@ -34,7 +34,7 @@ T.ComboBox {
     property bool   sizeToContents: false
     property string alternateText:  ""
 
-    property real   _popupWidth
+    property real   _popupWidth:    width
     property bool   _onCompleted:   false
     property bool   _showBorder:    qgcPal.globalTheme === QGCPalette.Light
 
@@ -54,11 +54,10 @@ T.ComboBox {
     }
 
     function _calcPopupWidth() {
-        _popupWidth = control.width
         if (_onCompleted && sizeToContents && model) {
             var largestTextWidth = 0
             for (var i = 0; i < model.length; i++){
-                textMetrics.text = control.textRole ? (Array.isArray(control.model) ? model[i][control.textRole] : model[control.textRole]) : model[i]
+                textMetrics.text = control.textRole ? model[i][control.textRole] : model[i]
                 largestTextWidth = Math.max(textMetrics.width, largestTextWidth)
             }
             _popupWidth = largestTextWidth + itemDelegateMetrics.leftPadding + itemDelegateMetrics.rightPadding
@@ -77,7 +76,9 @@ T.ComboBox {
         width:  _popupWidth
         height: Math.round(popupItemMetrics.height * 1.75)
 
-        property string _text: control.textRole ? (Array.isArray(control.model) ? modelData[control.textRole] : model[control.textRole]) : modelData
+        property string _text: control.textRole ? 
+                                    (model.hasOwnProperty(control.textRole) ? model[control.textRole] : modelData[control.textRole]) :
+                                    modelData
 
         TextMetrics {
             id:             popupItemMetrics

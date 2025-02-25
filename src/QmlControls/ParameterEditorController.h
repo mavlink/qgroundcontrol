@@ -141,9 +141,12 @@ private slots:
 private:
     bool _shouldShow(Fact *fact) const;
 
+    void _performSearch();
+
 private:
     ParameterManager*           _parameterMgr           = nullptr;
     QString                     _searchText;
+    QTimer                      _searchTimer;
     ParameterEditorCategory*    _currentCategory        = nullptr;
     ParameterEditorGroup*       _currentGroup           = nullptr;
     bool                        _showModifiedOnly       = false;

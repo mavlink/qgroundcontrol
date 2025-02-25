@@ -4,9 +4,6 @@ endif()
 
 find_package(Qt6 REQUIRED COMPONENTS Core Test)
 
-include(CTest)
-enable_testing()
-
 # if(ANDROID)
     # include(AndroidTestUtilities)
 # endif()
@@ -35,9 +32,6 @@ add_qgc_test(LogDownloadTest)
 add_qgc_test(PX4LogParserTest)
 add_qgc_test(ULogParserTest)
 
-add_subdirectory(Audio)
-add_qgc_test(AudioOutputTest)
-
 # add_subdirectory(AutoPilotPlugins)
 # add_qgc_test(RadioConfigTest)
 
@@ -54,9 +48,6 @@ add_qgc_test(ParameterManagerTest)
 
 add_subdirectory(FollowMe)
 add_qgc_test(FollowMeTest)
-
-add_subdirectory(Geo)
-add_qgc_test(GeoTest)
 
 add_subdirectory(GPS)
 add_qgc_test(GpsTest)
@@ -103,9 +94,13 @@ add_qgc_test(TerrainTileTest)
 add_subdirectory(UI)
 
 add_subdirectory(Utilities)
+# Audio
+add_qgc_test(AudioOutputTest)
 # Compression
 add_qgc_test(DecompressionTest)
 add_qgc_test(UtilitiesTest)
+# Geo
+add_qgc_test(GeoTest)
 
 add_subdirectory(Vehicle)
 # Components
@@ -117,6 +112,7 @@ add_qgc_test(MAVLinkLogManagerTest)
 # add_qgc_test(RequestMessageTest)
 # add_qgc_test(SendMavCommandWithHandlerTest)
 # add_qgc_test(SendMavCommandWithSignalingTest)
+add_qgc_test(VehicleLinkManagerTest)
 
 # add_qgc_test(FlightGearUnitTest)
 # add_qgc_test(LinkManagerTest)
@@ -137,13 +133,10 @@ target_link_libraries(qgctest
     PRIVATE
         ADSBTest
         AnalyzeViewTest
-        AudioTest
         CameraTest
         CommsTest
-        CompressionTest
         FactSystemTest
         FollowMeTest
-        GeoTest
         GpsTest
         MAVLinkTest
         MissionManagerTest
@@ -151,7 +144,6 @@ target_link_libraries(qgctest
         TerrainTest
         UITest
         VehicleTest
-        VehicleComponentsTest
         Utilities
         UtilitiesTest
     PUBLIC

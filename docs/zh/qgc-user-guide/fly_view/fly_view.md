@@ -209,7 +209,7 @@ To takeoff (when landed):
 2. Optionally set the takeoff altitude in the right-side vertical slider.
 3. Confirm takeoff using the slider.
 
-![takeoff](../../../assets/fly/takeoff.jpg)
+![takeoff](../../../assets/fly/takeoff.png)
 
 ### Land {#land}
 

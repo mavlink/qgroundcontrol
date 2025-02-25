@@ -209,7 +209,7 @@ Kalkmak için (iniş yapıldığında):
 2. İsterseniz kalkış yüksekliğini sağda bulunan dikey kaydırıcıyla ayarlayabilirsiniz.
 3. Confirm takeoff using the slider.
 
-![kalkış](../../../assets/fly/takeoff.jpg)
+![kalkış](../../../assets/fly/takeoff.png)
 
 ### İniş {#land}
 

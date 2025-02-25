@@ -9,11 +9,11 @@
 
 #pragma once
 
-#include "FirmwarePlugin/PX4/px4_custom_mode.h"
 #include "LinkInterface.h"
 #include "MAVLinkLib.h"
 #include "MockConfiguration.h"
 #include "MockLinkMissionItemHandler.h"
+#include "px4_custom_mode.h"
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
@@ -22,6 +22,8 @@
 #include <QtPositioning/QGeoCoordinate>
 
 class MockLinkFTP;
+class MockLinkWorker;
+class QThread;
 
 Q_DECLARE_LOGGING_CATEGORY(MockLinkLog)
 Q_DECLARE_LOGGING_CATEGORY(MockLinkVerboseLog)
@@ -33,6 +35,13 @@ class MockLink : public LinkInterface
 public:
     explicit MockLink(SharedLinkConfigurationPtr &config, QObject *parent = nullptr);
     virtual ~MockLink();
+
+    void run1HzTasks();
+    void run10HzTasks();
+    void run500HzTasks();
+    void sendStatusTextMessages();
+
+    bool shouldSendStatusText() const { return _sendStatusText; }
 
     bool isConnected() const final { return _connected; }
     void disconnect() final;
@@ -109,19 +118,12 @@ signals:
 private slots:
     /// Called when QGC wants to write bytes to the MAV
     void _writeBytes(const QByteArray &bytes) final;
-
     void _writeBytesQueued(const QByteArray &bytes);
-    void _run1HzTasks();
-    void _run10HzTasks();
-    void _run500HzTasks();
-    void _sendStatusTextMessages();
 
 private:
     bool _connect() final;
     bool _allocateMavlinkChannel() final;
     void _freeMavlinkChannel() final;
-
-    void run() final;
 
     uint8_t _getMavlinkAuxChannel() const { return _mavlinkAuxChannel; }
     bool _mavlinkAuxChannelIsSet() const;
@@ -163,6 +165,7 @@ private:
     void _sendSysStatus();
     void _sendBatteryStatus();
     void _sendChunkedStatusText(uint16_t chunkId, bool missingChunks);
+    void _sendStatusTextMessages();
     void _respondWithAutopilotVersion();
     void _sendRCChannels();
     /// Sends the next parameter to the vehicle
@@ -180,6 +183,9 @@ private:
     /// Creates a file with random contents of the specified size.
     /// @return Fully qualified path to created file
     static QString _createRandomFile(uint32_t byteCount);
+
+    QThread *_workerThread = nullptr;
+    MockLinkWorker *_worker = nullptr;
 
     const MockConfiguration *_mockConfig = nullptr;
     const MAV_AUTOPILOT _firmwareType = MAV_AUTOPILOT_PX4;
@@ -263,4 +269,3 @@ private:
 
     static constexpr bool _mavlinkStarted = true;
 };
-

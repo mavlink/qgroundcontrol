@@ -11,8 +11,8 @@
 #include "APMPowerComponent.h"
 
 APMPowerComponent::APMPowerComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
-    : VehicleComponent(vehicle, autopilot, parent),
-    _name(tr("Power"))
+    : VehicleComponent(vehicle, autopilot, AutoPilotPlugin::KnownPowerVehicleComponent, parent)
+    , _name(tr("Power"))
 {
 }
 

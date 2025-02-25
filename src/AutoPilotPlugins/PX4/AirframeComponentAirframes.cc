@@ -47,7 +47,7 @@ void AirframeComponentAirframes::insert(QString& group, QString& image, QString&
         g->name = group;
 
         if (image.length() > 0) {
-            g->imageResource = QString(":/qmlimages/Airframe/").append(image);
+            g->imageResource = QString(":/qmlimages/Airframe/%1.svg").arg(image);
             if (!QFile::exists(g->imageResource)) {
                 g->imageResource.clear();
             } else {

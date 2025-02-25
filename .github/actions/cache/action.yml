@@ -13,7 +13,6 @@ inputs:
   cpm-modules:
     description: Path to CPM Modules
     required: false
-    default: $GITHUB_WORKSPACE/cpm-modules
   ccache-version:
     description: ccache Version to Install
     required: false

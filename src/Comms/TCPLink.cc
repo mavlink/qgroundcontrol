@@ -65,7 +65,7 @@ void TCPConfiguration::loadSettings(QSettings &settings, const QString &root)
     settings.endGroup();
 }
 
-void TCPConfiguration::saveSettings(QSettings &settings, const QString &root)
+void TCPConfiguration::saveSettings(QSettings &settings, const QString &root) const
 {
     settings.beginGroup(root);
 
@@ -311,7 +311,7 @@ void TCPLink::_writeBytes(const QByteArray& bytes)
     (void) QMetaObject::invokeMethod(_worker, "writeData", Qt::QueuedConnection, Q_ARG(QByteArray, bytes));
 }
 
-bool TCPLink::isSecureConnection()
+bool TCPLink::isSecureConnection() const
 {
     return QGCDeviceInfo::isNetworkWired();
 }

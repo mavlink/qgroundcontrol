@@ -10,11 +10,11 @@ qt_add_library(TerrainTest
 
 target_link_libraries(TerrainTest
     PRIVATE
-        Qt6::Test
-    PUBLIC
         Qt6::Positioning
-        qgcunittest
+        Qt6::Test
         Terrain
+    PUBLIC
+        qgcunittest
 )
 
 target_include_directories(TerrainTest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

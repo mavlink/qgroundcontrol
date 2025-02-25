@@ -1,10 +1,8 @@
-add_subdirectory(Compression)
-
 find_package(Qt6 REQUIRED COMPONENTS Core)
 
 qt_add_library(UtilitiesTest STATIC
-    QGCFileDownloadTest.cc
-    QGCFileDownloadTest.h
+    FileSystem/QGCFileDownloadTest.cc
+    FileSystem/QGCFileDownloadTest.h
 )
 
 target_link_libraries(UtilitiesTest
@@ -15,10 +13,14 @@ target_link_libraries(UtilitiesTest
         qgcunittest
 )
 
-target_include_directories(UtilitiesTest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(UtilitiesTest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} FileSystem)
 
 qt_add_resources(UtilitiesTest "UtilitiesTest_res"
     PREFIX "/"
     FILES
         arducopter.apj
 )
+
+add_subdirectory(Audio)
+add_subdirectory(Compression)
+add_subdirectory(Geo)

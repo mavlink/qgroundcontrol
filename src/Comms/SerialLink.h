@@ -48,9 +48,9 @@ public:
     LinkType type() const override { return LinkConfiguration::TypeSerial; }
     void copyFrom(const LinkConfiguration *source) override;
     void loadSettings(QSettings &settings, const QString &root) override;
-    void saveSettings(QSettings &settings, const QString &root) override;
-    QString settingsURL() override { return QStringLiteral("SerialSettings.qml"); }
-    QString settingsTitle() override { return tr("Serial Link Settings"); }
+    void saveSettings(QSettings &settings, const QString &root) const override;
+    QString settingsURL() const override { return QStringLiteral("SerialSettings.qml"); }
+    QString settingsTitle() const override { return tr("Serial Link Settings"); }
 
     qint32 baud() const { return _baud; }
     void setBaud(qint32 baud) { if (baud != _baud) { _baud = baud; emit baudChanged(); } }
@@ -152,7 +152,7 @@ public:
     virtual ~SerialLink();
 
     bool isConnected() const override;
-    bool isSecureConnection() override { return _serialConfig->usbDirect(); }
+    bool isSecureConnection() const override { return _serialConfig->usbDirect(); }
 
     const QSerialPort *port() const { return _worker->port(); }
 

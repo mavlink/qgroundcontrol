@@ -144,7 +144,7 @@ void PX4AirframeLoader::loadAirframeMetaData(void)
                 }
                 airframeGroup = xml.attributes().value("name").toString();
                 image = xml.attributes().value("image").toString();
-                qCDebug(PX4AirframeLoaderLog) << "Found group: " << airframeGroup;
+                qCDebug(PX4AirframeLoaderLog) << "Found group: " << airframeGroup << " image:" << image;
 
             } else if (elementName == "airframe") {
                 if (xmlState != XmlStateFoundGroup) {

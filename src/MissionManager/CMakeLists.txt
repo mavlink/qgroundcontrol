@@ -82,7 +82,6 @@ target_link_libraries(MissionManager
         API
         Camera
         FirmwarePlugin
-        Geo
         QGC
     PUBLIC
         Qt6::Core

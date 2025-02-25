@@ -1,5 +1,3 @@
-add_subdirectory(Compression)
-
 find_package(Qt6 REQUIRED COMPONENTS Bluetooth Core Gui Network Positioning Sensors Qml Xml)
 
 qt_add_library(Utilities STATIC
@@ -13,14 +11,14 @@ qt_add_library(Utilities STATIC
     KMLHelper.h
     QGC.cc
     QGC.h
-    QGCCachedFileDownload.cc
-    QGCCachedFileDownload.h
-    QGCFileDownload.cc
-    QGCFileDownload.h
+    FileSystem/QGCCachedFileDownload.cc
+    FileSystem/QGCCachedFileDownload.h
+    FileSystem/QGCFileDownload.cc
+    FileSystem/QGCFileDownload.h
     QGCLoggingCategory.cc
     QGCLoggingCategory.h
-    QGCTemporaryFile.cc
-    QGCTemporaryFile.h
+    FileSystem/QGCTemporaryFile.cc
+    FileSystem/QGCTemporaryFile.h
     ShapeFileHelper.cc
     ShapeFileHelper.h
     SHPFileHelper.cc
@@ -38,13 +36,12 @@ if(ANDROID OR IOS)
     endif()
 endif()
 
-target_include_directories(Utilities PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(Utilities PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} FileSystem)
 
 target_link_libraries(Utilities
     PRIVATE
         Qt6::Qml
         FactSystem
-        Geo
         QmlControls
         Settings
     PUBLIC
@@ -80,3 +77,9 @@ if(Shapelib_ADDED)
         target_link_libraries(Utilities PRIVATE shapelib::shp)
     endif()
 endif()
+
+#===========================================================================#
+
+add_subdirectory(Audio)
+add_subdirectory(Compression)
+add_subdirectory(Geo)
