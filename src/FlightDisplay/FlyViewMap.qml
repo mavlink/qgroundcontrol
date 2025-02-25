@@ -523,7 +523,7 @@ FlightMap {
         anchorPoint.x:  sourceItem.anchorPointX
         anchorPoint.y:  sourceItem.anchorPointY
         coordinate:     _activeVehicle ? _activeVehicle.orbitMapCircle.center : QtPositioning.coordinate()
-        visible:        orbitTelemetryCircle.visible
+        visible:        orbitTelemetryCircle.visible && !gotoLocationItem.visible
 
         sourceItem: MissionItemIndexLabel {
             checked:    true
