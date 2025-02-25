@@ -7,6 +7,8 @@ on:
       - 'Stable*'
     tags:
       - 'v*'
+    paths-ignore:
+      - 'docs/**' # Do not trigger for any changes under docs
   pull_request:
     paths:
       - '.github/workflows/android-linux-qt6.6.3.yml'
