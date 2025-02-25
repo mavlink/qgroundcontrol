@@ -166,7 +166,7 @@ void MAVLinkChartController::delSeries(QGCMAVLinkMessageField *field)
 
     const QVariant f = QVariant::fromValue(field);
     const QList<QVariant>::const_iterator it = std::find(_chartFields.constBegin(), _chartFields.constEnd(), f);
-    if (it != _chartFields.end()) {
+    if (it != _chartFields.constEnd()) {
         (void) _chartFields.erase(it);
         emit chartFieldsChanged();
 
