@@ -42,8 +42,9 @@ ArduPilot에서 최대 6개의 다른 비행 모드를 송신기의 단일 채�
 
 모든 값은 변경시에 자동으로 저장됩니다.
 
-위의 ArduCopter 스크린샷은 채널 7 스위치에 RTL의 추가 옵션이 있는 3위치 비행 모드 스위치의 일반적인 설정을 보여줍니다.
-또한 2개의 스위치와 송신기의 믹싱을 사용하여 6가지 비행 모드를 설정할 수 있습니다. 방법에 대한 자습서를 보려면 이 [페이지](http://ardupilot.org/copter/docs/common-rc-transmitter-flight-mode-configuration.html#common-rc-transmitter-flight-mode-configuration)의 중앙 섹션으로 스크롤하십시오.
+:::info
+The ArduCopter screenshot above shows a typical setup for a three position flight mode switch with an additional option of RTL being on a channel 7 switch.
+You can also setup 6 flight modes using two switches plus mixing on your transmitter. Scroll down to the center section of this [page](http://ardupilot.org/copter/docs/common-rc-transmitter-flight-mode-configuration.html#common-rc-transmitter-flight-mode-configuration) for tutorials on how to do that.
 :::
 
 ## See Also

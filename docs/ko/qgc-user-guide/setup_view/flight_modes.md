@@ -56,6 +56,6 @@ That's it!
 FrSky Taranis에서 이 프로세스는 두 개의 실제 스위치 위치의 각 조합에 "논리적 스위치"를 할당하는 것을 포함합니다.
 그런 다음 각 논리적 스위치는 동일한 채널에서 다른 PWM 값에 할당됩니다.
 
-이 비디오는 _FrSky Taranis_ 송신기를 사용한 수행과정을 나타냅니다: https\://youtu.be/TFEjEQZqdVA
+이 비디오는 _FrSky Taranis_ 송신기를 사용한 수행과정을 나타냅니다: https://youtu.be/TFEjEQZqdVA
 
 <!-- @[youtube](https://youtu.be/BNzeVGD8IZI?t=427) - video showing how to set the QGC side - at about 7mins and 3 secs -->

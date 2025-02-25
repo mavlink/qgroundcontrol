@@ -20,13 +20,19 @@ Motorları test etmek için:
 
 2. (_ yalnızca PX4 _) güvenlik anahtarını etkinleştirin - varsa.
 
-3. Motor kaydırıcılarını etkinleştirmek için onaylayıcıyı (_ Pervaneler çıkarıldı - Motor kaydırıcılarını etkinleştirin _) kaydırın.
+3. Slide the switch to enable motor slider and buttons (labeled: _Propellers are removed - Enable slider and motors_).
 
-4. Motorları döndürmek ve doğru yönde döndüklerini doğrulamak için tek tek kaydırıcıları ayarlayın.
+4. Adjust the slider to select the power for the motors.
 
-   > \*\* Not \*\* Motorlar yalnızca kaydırıcıyı bıraktıktan sonra döner ve 3 saniye sonra otomatik olarak dönmeyi durdurur.
-   > :::
+5. Press the button corresponding to the motor and confirm it spin in the correct direction.
+
+   ::: info
+   The motors will automatically stop spinning after 3 seconds.
+   You can also stop the motor by pressing the 'Stop' button.
+   If no motors turn, raise the “Throttle %” and try again.
+   :::
 
 ## Ek Bilgi
 
 - [Basic Configuration > Motor Setup](http://docs.px4.io/master/en/config/motors.html) (_PX4 User Guide_) -Buradan, PX4 için ek bilgiler bulabilirsiniz.
+- [ESCS and Motors](https://ardupilot.org/copter/docs/connect-escs-and-motors.html#motor-order-diagrams) - This is the Motor order diagrams for all frames

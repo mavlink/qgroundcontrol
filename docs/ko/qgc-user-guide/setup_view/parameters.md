@@ -38,6 +38,6 @@ _검색_ 필드에 용어를 입력하여 매개변수를 _검색_합니다. 그
 
 **파일에서 불러오기 / 파일에 저장** <br />기존 파일에서 매개변수를 불러오거나 현재 매개변수 설정을 파일에 저장합니다.
 
-**RC를 Param으로 지우기** <br />이것은 RC 송신기 제어와 매개변수간의 연관성을 모두 삭제합니다. 자세한 내용은 [라디오 설정 > 매개변수 튜닝 채널](../setup_view/Radio.md#param-tuning-channels-px4)를 참고하십시오.
+**RC를 Param으로 지우기** <br />이것은 RC 송신기 제어와 매개변수간의 연관성을 모두 삭제합니다. For more information see: [Radio Setup > Param Tuning Channels](../setup_view/radio.md#param-tuning-channels-px4).
 
 **기체 재부팅** <br />기체을 재부팅합니다 (일부 매개변수를 변경후에 요구됩니다).
