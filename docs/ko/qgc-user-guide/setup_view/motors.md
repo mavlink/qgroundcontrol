@@ -20,14 +20,19 @@
 
 2. (_PX4 전용_) 안전 스위치 활성화(장착된 경우)
 
-3. 스위치를 밀어 모터 슬라이더를 활성화합니다(레이블: _프로펠러 제거 - 모터 슬라이더 활성화_).
+3. Slide the switch to enable motor slider and buttons (labeled: _Propellers are removed - Enable slider and motors_).
 
-4. 개별 슬라이더를 조정하여 모터를 회전시키고, 올바른 방향으로 회전하는 지 확인합니다.
+4. Adjust the slider to select the power for the motors.
+
+5. Press the button corresponding to the motor and confirm it spin in the correct direction.
 
    ::: info
-   모터는 슬라이더를 놓은 후에만 회전하며 3초 후에 자동으로 회전을 멈춥니다.
+   The motors will automatically stop spinning after 3 seconds.
+   You can also stop the motor by pressing the 'Stop' button.
+   If no motors turn, raise the “Throttle %” and try again.
    :::
 
 ## 추가 정보
 
 - [기본 설정 > 모터 설정](http://docs.px4.io/master/en/config/motors.html) (_PX4 사용자 가이드_) - 여기에는 추가 PX4 관련 정보를 설명합니다.
+- [ESCS and Motors](https://ardupilot.org/copter/docs/connect-escs-and-motors.html#motor-order-diagrams) - This is the Motor order diagrams for all frames
