@@ -82,8 +82,7 @@ QGroundControl \* 'ı ilk kez kurmadan önce:
       ./QGroundControl.AppImage (or double click)
    ```
 
-There are known [video steaming issues](../troubleshooting/qgc_setup.md#dual_vga) on Ubuntu 18.04 systems with dual adaptors.
-:::
+:::info:::
 
 :::info
 4.0'dan itibaren önceki _QGroundControl_ sürümleri Ubuntu 16.04'te çalıştırılamaz.

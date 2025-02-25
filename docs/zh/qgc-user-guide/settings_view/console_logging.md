@@ -10,15 +10,15 @@ Click the **Set Logging** button to enable/disable logging information displayed
 
 The most commmonly used logging options are listed below.
 
-| Option(s)                                                        | Description                                                                                    |
-| ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `LinkManagerLog`, `MultiVehicleManagerLog`                                          | Debug connection problems.                                                                     |
+| Option(s)                                                        | Description                                                                                                                    |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `LinkManagerLog`, `MultiVehicleManagerLog`                                          | Debug connection problems.                                                                                     |
 | `LinkManagerVerboseLog`                                                             | Debug serial ports not being detected. Very noisy continuous output of available serial ports. |
-| `FirmwareUpgradeLog`                                                                | Debug firmware flash issues.                                                                   |
-| `ParameterManagerLog`                                                               | Debug parameter load problems.                                                                 |
-| `ParameterManagerDebugCacheFailureLog`                                              | Debug parameter cache crc misses.                                                              |
-| `PlanManagerLog`, `MissionManagerLog`, `GeoFenceManagerLog`, `RallyPointManagerLog` | Debug Plan upload/download issues.                                                             |
-| `RadioComponentControllerLog`                                                       | Debug Radio calibration issues.                                                                |
+| `FirmwareUpgradeLog`                                                                | Debug firmware flash issues.                                                                                   |
+| `ParameterManagerLog`                                                               | Debug parameter load problems.                                                                                 |
+| `ParameterManagerDebugCacheFailureLog`                                              | Debug parameter cache crc misses.                                                                              |
+| `PlanManagerLog`, `MissionManagerLog`, `GeoFenceManagerLog`, `RallyPointManagerLog` | Debug Plan upload/download issues.                                                                             |
+| `RadioComponentControllerLog`                                                       | Debug Radio calibration issues.                                                                                |
 
 ## Logging from the Command Line
 
