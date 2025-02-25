@@ -36,7 +36,7 @@ To make sure the vehicle is stable enough for auto-tuning:
 3. Use the RC transmitter roll stick to perform the following maneuver, tilting the vehicle just a few degrees: _roll left > roll right > center_ (The whole maneuver should take about 3 seconds).
    The vehicle should stabilise itself within 2 oscillations.
 4. Repeat the maneuver, tilting with larger amplitudes at each attempt.
-   If the vehicle can stabilise itself within 2 oscillations at \~20 degrees move to the next step.
+   If the vehicle can stabilise itself within 2 oscillations at ~20 degrees move to the next step.
 5. Repeat the same maneuvers but on the pitch axis.
    As above, start with small angles and confirm that the vehicle can itself within 2 oscillations before increasing the tilt.
 
