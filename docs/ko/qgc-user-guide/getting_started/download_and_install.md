@@ -82,8 +82,7 @@ _QGroundControl_을 처음 설치하기 전에:
       ./QGroundControl.AppImage (or double click)
    ```
 
-듀얼 어댑터가 있는 Ubuntu 18.04 시스템에는 [동영상 스트리밍 문제](../troubleshooting/qgc_setup.md#dual_vga)가 있습니다.
-:::
+:::info:::
 
 :::info
 _QGroundControl_ 4.0의 사전 빌드된 버전은 Ubuntu 16.04에서 실행 불가능합니다.

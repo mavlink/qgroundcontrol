@@ -82,8 +82,7 @@ Before installing _QGroundControl_ for the first time:
    **注意** QGroundControlControl在Catalina系统上如果没有被签名认证，会有些问题发生。 当您首次打开 QGC 应用：
    ```
 
-There are known [video steaming issues](../troubleshooting/qgc_setup.md#dual_vga) on Ubuntu 18.04 systems with dual adaptors.
-:::
+:::info:::
 
 :::info
 Prebuilt _QGroundControl_ versions from 4.0 cannot run on Ubuntu 16.04.
