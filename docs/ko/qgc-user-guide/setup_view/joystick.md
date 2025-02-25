@@ -18,8 +18,8 @@ _QGroundControl_은 RC 송신기 대신 조이스틱이나 게임패드로 기�
 
 ## PX4 조이스틱 활성화
 
-PX4에서 조이스틱 지원을 활성화하려면 매개변수 [`COM_RC_IN_MODE`](h[ttp://localhost:8080/px4_user_guide/en](https://docs.px4.io/en/main/advanced_config/parameter_reference.html#COM_RC_IN_MODE)을 `1</0)로 설정합니다.
-이 매개변수가 <code>0`이면 _조이스틱_이 설정 옵션으로 제공되지 않습니다.
+To enable Joystick support in PX4 you need to set the parameter [`COM_RC_IN_MODE`](https://docs.px4.io/en/main/advanced_config/parameter_reference.html#COM_RC_IN_MODE) to `1` - _Joystick_.
+이 매개변수가 `0`이면 _조이스틱_이 설정 옵션으로 제공되지 않습니다.
 
 This is enabled by default for PX4 SITL builds (see the [Parameters](../setup_view/parameters.md) topic for information on how to find and set a particular parameter).
 

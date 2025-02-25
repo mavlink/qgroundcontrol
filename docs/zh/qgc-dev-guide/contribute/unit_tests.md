@@ -6,7 +6,7 @@ _QGroundControl_ (QGC) contains a set of unit tests that must pass before a pull
 
 要运行单元测试：
 
-1. 使用QGC_UNITTEST_BUILD定义在调试模式下构建。
+1. Build in `debug` mode with `QGC_UNITTEST_BUILD` definition.
 2. 复制debug目录中的deploy / qgroundcontrol-start.sh脚本
 3. Run _all_ unit tests from the command line using the `--unittest` command line option.
    For Linux this is done as shown:

@@ -38,6 +38,6 @@ Ekranın sağ üstündeki **Tools** menüsünden ek seçenekler seçebilirsiniz.
 
 **Load from file / Save to file** <br />Parametreleri var olan bir dosyadan yükleyin veya mevcut parametre ayarlarınızı bir dosyaya kaydedin.
 
-**Clear RC to Param** <br />Bu, RC verici kontrolleri ve parametreleri arasındaki tüm ilişkileri siler. Daha fazla bilgi için göz atın: [Radio Setup > Param Tuning Channels](../setup_view/Radio.md#param-tuning-channels-px4).
+**Clear RC to Param** <br />Bu, RC verici kontrolleri ve parametreleri arasındaki tüm ilişkileri siler. For more information see: [Radio Setup > Param Tuning Channels](../setup_view/radio.md#param-tuning-channels-px4).
 
 **Reboot Vehicle** <br />Aracı yeniden başlatın (bazı parametre değişimlerinden sonra gereklidir).
