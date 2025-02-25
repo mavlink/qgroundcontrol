@@ -14,13 +14,6 @@ if(QGC_GST_STATIC_BUILD)
     list(APPEND PKG_CONFIG_ARGN --static)
 endif()
 
-# Detect Linux Distribution
-execute_process(
-    COMMAND bash -c "source /etc/os-release && echo $ID"
-    OUTPUT_VARIABLE DISTRO_ID
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-
 ################################################################################
 
 # NOTE: CMP0144 in regards to GSTREAMER_ROOT
@@ -50,13 +43,27 @@ elseif(MACOS)
     set(GSTREAMER_PREFIX "${GSTREAMER_FRAMEWORK_PATH}/Versions/1.0")
     set(ENV{PKG_CONFIG} "${GSTREAMER_PREFIX}/bin")
     set(ENV{PKG_CONFIG_PATH} "${GSTREAMER_PREFIX}/lib/pkgconfig:${GSTREAMER_PREFIX}/lib/gstreamer-1.0/pkgconfig:$ENV{PKG_CONFIG_PATH}")
-elseif(LINUX)
+elseif(UNIX AND NOT APPLE) # Covers Linux but not macOS
     set(GSTREAMER_PREFIX "/usr")
 
-    if(DISTRO_ID STREQUAL "arch")
-        set(ENV{PKG_CONFIG_PATH} "${GSTREAMER_PREFIX}/lib/pkgconfig:${GSTREAMER_PREFIX}/lib/gstreamer-1.0/pkgconfig:$ENV{PKG_CONFIG_PATH}")
+    # Dynamically find library path
+    find_library(GSTREAMER_LIBRARY
+        NAMES gstreamer-1.0
+        PATHS ${GSTREAMER_PREFIX}/lib ${GSTREAMER_PREFIX}/lib/*-linux-gnu
+        NO_DEFAULT_PATH
+    )
+
+    if(GSTREAMER_LIBRARY)
+        get_filename_component(GSTREAMER_LIB_PATH ${GSTREAMER_LIBRARY} DIRECTORY)
     else()
-        set(ENV{PKG_CONFIG_PATH} "${GSTREAMER_PREFIX}/lib/x86_64-linux-gnu/pkgconfig:${GSTREAMER_PREFIX}/lib/x86_64-linux-gnu/gstreamer-1.0/pkgconfig:$ENV{PKG_CONFIG_PATH}")
+        message(FATAL_ERROR "Could not find GStreamer library")
+    endif()
+
+    
+    if(NOT DEFINED ENV{PKG_CONFIG_PATH})
+        set(ENV{PKG_CONFIG_PATH} "${GSTREAMER_LIB_PATH}/pkgconfig:${GSTREAMER_LIB_PATH}/gstreamer-1.0/pkgconfig")
+    else()
+        set(ENV{PKG_CONFIG_PATH} "${GSTREAMER_LIB_PATH}/pkgconfig:${GSTREAMER_LIB_PATH}/gstreamer-1.0/pkgconfig:$ENV{PKG_CONFIG_PATH}")
     endif()
 elseif(IOS)
     list(APPEND CMAKE_FRAMEWORK_PATH "~/Library/Developer/GStreamer/iPhone.sdk")
@@ -112,20 +119,32 @@ endif()
 list(PREPEND CMAKE_PREFIX_PATH ${GSTREAMER_PREFIX})
 cmake_print_variables(GSTREAMER_PREFIX)
 
-# TODO: find_path, Change x86_64-linux-gnu based on host
-if(LINUX)
-    if(DISTRO_ID STREQUAL "arch")
-        set(GSTREAMER_LIB_PATH ${GSTREAMER_PREFIX}/lib)
-    else()
-        set(GSTREAMER_LIB_PATH ${GSTREAMER_PREFIX}/lib/x86_64-linux-gnu)
-    endif()
-elseif(MACOS OR ANDROID OR WIN32)
-    set(GSTREAMER_LIB_PATH ${GSTREAMER_PREFIX}/lib)
-elseif(IOS)
+if(UNIX AND NOT APPLE)
+    set(GSTREAMER_PREFIX "/usr")
 
+    # Dynamically find library path
+    find_library(GSTREAMER_LIBRARY
+        NAMES gstreamer-1.0
+        PATHS ${GSTREAMER_PREFIX}/lib ${GSTREAMER_PREFIX}/lib/*-linux-gnu ${GSTREAMER_PREFIX}/lib64
+        NO_DEFAULT_PATH
+    )
+
+    if(GSTREAMER_LIBRARY)
+        get_filename_component(GSTREAMER_LIB_PATH ${GSTREAMER_LIBRARY} DIRECTORY)
+    else()
+        message(FATAL_ERROR "Could not find GStreamer library")
+    endif()
+elseif(APPLE OR ANDROID OR WIN32)
+    set(GSTREAMER_LIB_PATH "${GSTREAMER_PREFIX}/lib")
+elseif(IOS)
+    # Handle iOS separately if needed
 endif()
-set(GSTREAMER_PLUGIN_PATH ${GSTREAMER_LIB_PATH}/gstreamer-1.0)
+
+# Define the plugin path dynamically
+set(GSTREAMER_PLUGIN_PATH "${GSTREAMER_LIB_PATH}/gstreamer-1.0")
+
 cmake_print_variables(GSTREAMER_LIB_PATH)
+
 
 ################################################################################
 
