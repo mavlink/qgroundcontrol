@@ -150,13 +150,18 @@ Item {
                         selectionRect.height = Math.abs(mouse.y - startY)
                     }
 
-        onReleased: {
+        onReleased: (mouse) => {
             selectionRect.visible = false;
 
             let x0 = Math.floor(Math.max(0, selectionRect.x));
             let y0 = Math.floor(Math.max(0, selectionRect.y));
             let x1 = Math.floor(Math.min(width, selectionRect.x + selectionRect.width));
             let y1 = Math.floor(Math.min(height, selectionRect.y + selectionRect.height));
+
+            if (selectionRect.width < 15 || selectionRect.height < 15) {
+                onClicked(mouse);
+                return;
+            }
 
             //calculate offset between video stream rect and background (black stripes)
             let offset_x = (parent.width - videoStreaming.getWidth()) / 2
