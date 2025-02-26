@@ -17,6 +17,7 @@ add_library(Joystick
 
 target_link_libraries(Joystick
         PRIVATE
+			Gimbal
             ui
 	PUBLIC
 		qgc

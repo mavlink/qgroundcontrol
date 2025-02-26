@@ -12,6 +12,8 @@ add_library(Settings
 	BrandImageSettings.h
 	FirmwareUpgradeSettings.cc
 	FirmwareUpgradeSettings.h
+	GimbalControllerSettings.cc
+	GimbalControllerSettings.h
 	FlightMapSettings.cc
 	FlightMapSettings.h
 	FlyViewSettings.cc

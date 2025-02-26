@@ -62,6 +62,7 @@ static QMap<int, QString> px4_board_name_map {
     {54, "px4_fmu-v6u_default"},
     {56, "px4_fmu-v6c_default"},
     {57, "ark_fmu-v6x_default"},
+    {59, "ark_fpv_default"},
     {35, "px4_fmu-v6xrt_default"},
     {55, "sky-drones_smartap-airlink_default"},
     {88, "airmind_mindpx-v2_default"},
@@ -97,7 +98,8 @@ static QMap<int, QString> px4_board_name_map {
     {1048, "holybro_kakuteh7_default"},
     {1053, "holybro_kakuteh7v2_default"},
     {1054, "holybro_kakuteh7mini_default"},
-    {1123, "siyi_n7_default"},
+    {1123, "siyi_n7_default"},    
+    {1124, "3dr_ctrl-zero-h7-oem-revg_default"},
 };
 
 uint qHash(const FirmwareUpgradeController::FirmwareIdentifier& firmwareId)
