@@ -3604,6 +3604,20 @@ void Vehicle::rebootVehicle()
     sendMavCommandWithHandler(&handlerInfo, _defaultComponentId, MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 1);
 }
 
+void Vehicle::rebootOnboardComputers()
+{
+    // There can be four different onboard computers on the vehicle, so sending the reboot command to all of them
+    for (int i = 0; i < 4; ++i)
+    {
+        sendMavCommand(MAV_COMP_ID_ONBOARD_COMPUTER + i,
+                       MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN,
+                       false,                                                   // do not show errors
+                       0,                                                       // do nothing to autopilot
+                       3,                                                       // reboot onboard computer
+                       0, 0, 0, 0, 0);                                          // param 3-7 unused
+    }
+}
+
 void Vehicle::startCalibration(Vehicle::CalibrationType calType)
 {
     SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();

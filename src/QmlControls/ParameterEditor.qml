@@ -150,6 +150,14 @@ Item {
                                                          StandardButton.Cancel | StandardButton.Ok,
                                                          function() { _activeVehicle.rebootVehicle() })
         }
+        QGCMenuSeparator { }
+        QGCMenuItem {
+            text:           qsTr("Reboot Onboard Computers")
+            onTriggered:    mainWindow.showMessageDialog(qsTr("Reboot Onboard Computers"),
+                                                         qsTr("Select Ok to reboot all the onboard computers"),
+                                                         StandardButton.Cancel | StandardButton.Ok,
+                                                         function() { _activeVehicle.rebootOnboardComputers() })
+        }
     }
 
     /// Group buttons
