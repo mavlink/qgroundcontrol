@@ -90,7 +90,7 @@ Item {
         id: controlRequestPopup
         ToolIndicatorPage {
 
-            ProgressTracker {
+            TimedProgressTracker {
                 id:                     requestProgressTracker
                 timeoutSeconds:         receivedRequestTimeoutMs * 0.001
                 onTimeout:              mainWindow.closeIndicatorDrawer()
@@ -157,7 +157,7 @@ Item {
             ToolIndicatorPage {
             // Allow takeover expiration time popup. When a request is received and takeover was allowed, this popup alerts 
             // that after vehicle::REQUEST_OPERATOR_CONTROL_ALLOW_TAKEOVER_TIMEOUT_MSECS seconds, this GCS will change back to takeover not allowed, as per mavlink specs
-            ProgressTracker {
+            TimedProgressTracker {
                 id:                     revertTakeoverProgressTracker
                 timeoutSeconds:         control.activeVehicle.operatorControlTakeoverTimeoutMsecs * 0.001
                 onTimeout:              {
@@ -204,7 +204,7 @@ Item {
 
         ToolIndicatorPage {
 
-            ProgressTracker {
+            TimedProgressTracker {
                 id:                     sendRequestProgressTracker
                 timeoutSeconds:         QGroundControl.settingsManager.flyViewSettings.requestControlTimeout.rawValue
             }
