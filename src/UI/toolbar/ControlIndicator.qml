@@ -350,7 +350,7 @@ Item {
         width:                   height
         anchors.top:             parent.top
         anchors.bottom:          parent.bottom
-        source:                  "/controlIndicator/gcscontrol_line.svg"
+        source:                  "/gcscontrolIndicator/gcscontrol_line.svg"
         fillMode:                Image.PreserveAspectFit
         sourceSize.height:       height
         color:                   isThisGCSinControl ? qgcPal.colorGreen : qgcPal.text
@@ -360,7 +360,7 @@ Item {
         width:                   height
         anchors.top:             parent.top
         anchors.bottom:          parent.bottom
-        source:                  "/controlIndicator/gcscontrol_device.svg"
+        source:                  "/gcscontrolIndicator/gcscontrol_device.svg"
         fillMode:                Image.PreserveAspectFit
         sourceSize.height:       height
         color:                   (isThisGCSinControl || gcsControlStatusFlags_TakeoverAllowed) ? qgcPal.colorGreen : qgcPal.text
@@ -370,7 +370,7 @@ Item {
         width:                   height
         anchors.top:             parent.top
         anchors.bottom:          parent.bottom
-        source:                  "/controlIndicator/gcscontrol_gcs.svg"
+        source:                  "/gcscontrolIndicator/gcscontrol_gcs.svg"
         fillMode:                Image.PreserveAspectFit
         sourceSize.height:       height
         color:                   qgcPal.text
