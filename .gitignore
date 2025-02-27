@@ -71,6 +71,7 @@ ui_*
 *.o
 *.moc
 *.prl
+.qmlls.ini
 
 # android
 android/local.properties
