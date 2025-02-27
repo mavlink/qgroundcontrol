@@ -407,17 +407,36 @@ elseif(ANDROID)
     include(${android_openssl_SOURCE_DIR}/android_openssl.cmake)
     add_android_openssl_libraries(${CMAKE_PROJECT_NAME})
 
-    set(ANDROID_PLATFORM_ARCHITECTURE_CODE)
-    if(${ANDROID_ABI} STREQUAL "armeabi-v7a")
-        set(ANDROID_PLATFORM_ARCHITECTURE_CODE "032")
-    elseif(${ANDROID_ABI} STREQUAL "arm64-v8a")
-        set(ANDROID_PLATFORM_ARCHITECTURE_CODE "064")
-    elseif(${ANDROID_ABI} STREQUAL "x86")
-        set(ANDROID_PLATFORM_ARCHITECTURE_CODE "132")
-    elseif(${ANDROID_ABI} STREQUAL "x86_64")
-        set(ANDROID_PLATFORM_ARCHITECTURE_CODE "164")
+    # Generation of android version numbers must be consistent release to release such that they are always increasing
+
+    if(${PROJECT_VERSION_MAJOR} GREATER 9)
+        message(FATAL_ERROR "Major version larger than 1 digit: ${PROJECT_VERSION_MAJOR}")
     endif()
-    set(ANDROID_VERSION_CODE "${ANDROID_PLATFORM_ARCHITECTURE_CODE}${PROJECT_VERSION_MAJOR}${PROJECT_VERSION_MINOR}")
+    if(${PROJECT_VERSION_MINOR} GREATER 9)
+        message(FATAL_ERROR "Minor version larger than 1 digit: ${PROJECT_VERSION_MINOR}")
+    endif()
+    if(${PROJECT_VERSION_PATCH} GREATER 99)
+        message(FATAL_ERROR "Patch version larger than 2 digits: ${PROJECT_VERSION_PATCH}")
+    endif()
+
+    # Bitness for android version number is 66/34 instead of 64/32 in because of a required version number bump screw-up ages ago
+    set(ANDROID_BITNESS_CODE)
+    if(${ANDROID_ABI} STREQUAL "armeabi-v7a" OR ${ANDROID_ABI} STREQUAL "x86")
+        set(ANDROID_BITNESS_CODE 34)
+    elseif(${ANDROID_ABI} STREQUAL "arm64-v8a" OR ${ANDROID_ABI} STREQUAL "x86_64")
+        set(ANDROID_BITNESS_CODE 66)
+    else()
+        message(FATAL_ERROR "Unsupported Android ABI: ${ANDROID_ABI}")
+    endif()
+
+    set(ANDROID_PATCH_VERSION ${PROJECT_VERSION_PATCH})
+    if(${PROJECT_VERSION_PATCH} LESS 10)
+        set(ANDROID_PATCH_VERSION "0${PROJECT_VERSION_PATCH}")
+    endif()
+
+    # Version code format: BBMIPPDDD (B=Bitness, M=Major, I=Minor, P=Patch, D=Dev) - Dev not currently supported and always 000
+    set(ANDROID_VERSION_CODE "${ANDROID_BITNESS_CODE}${PROJECT_VERSION_MAJOR}${PROJECT_VERSION_MINOR}${ANDROID_PATCH_VERSION}000")
+    message("Android version code: ${ANDROID_VERSION_CODE}")
 
     set_target_properties(${CMAKE_PROJECT_NAME}
         PROPERTIES
