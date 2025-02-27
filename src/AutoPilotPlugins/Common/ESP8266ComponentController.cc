@@ -86,6 +86,9 @@ ESP8266ComponentController::wifiIPAddress()
 QString
 ESP8266ComponentController::wifiSSID()
 {
+    if (!parameterExists(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_SSID1"))) {
+        return QString();
+    }
     uint32_t s1 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_SSID1"))->rawValue().toUInt();
     uint32_t s2 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_SSID2"))->rawValue().toUInt();
     uint32_t s3 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_SSID3"))->rawValue().toUInt();
@@ -125,6 +128,9 @@ ESP8266ComponentController::setWifiSSID(QString ssid)
 QString
 ESP8266ComponentController::wifiPassword()
 {
+    if (!parameterExists(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_PASSWORD1"))) {
+        return QString();
+    }
     uint32_t s1 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_PASSWORD1"))->rawValue().toUInt();
     uint32_t s2 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_PASSWORD2"))->rawValue().toUInt();
     uint32_t s3 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_PASSWORD3"))->rawValue().toUInt();
