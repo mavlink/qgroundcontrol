@@ -12,11 +12,21 @@ The main advantage of using the container is the usage of the `CMake` build syst
 
 ## Building the Container
 
-Before using the container, you have to build the image.
+### Script
+
+To build the container using the script, run this command in the qgc root directory
+
+```
+./deploy/docker/run-docker-ubuntu.sh
+```
+
+### Manual
+
+if you want to Build using the container manually, then you first have to build the image.
 You can accomplish this using docker, running the following script from the root of the QGC source code directory.
 
 ```
-docker build --file ./deploy/docker/Dockerfile-build-linux -t qgc-linux-docker .
+docker build --file ./deploy/docker/Dockerfile-build-ubuntu -t qgc-ubuntu-docker .
 ```
 
 :::info
@@ -28,7 +38,7 @@ Keep in mind this is tagging the image for later reference since you can have mu
 If building on a Mac computer with an M1 chip you must also specify the build option `--platform linux/x86_64` as shown:
 
 ```
-docker build --platform linux/x86_64 --file ./deploy/docker/Dockerfile-build-linux -t qgc-linux-docker .
+docker build --platform linux/x86_64 --file ./deploy/docker/Dockerfile-build-ubuntu -t qgc-ubuntu-docker .
 ```
 
 Otherwise you will get a build error like:
@@ -46,15 +56,20 @@ We recommend you create a `build` directory on the source tree and then run the 
 
 ```
 mkdir build
-docker run --rm -v ${PWD}:/project/source -v ${PWD}/build:/project/build qgc-linux-docker
+docker run --rm -v ${PWD}:/project/source -v ${PWD}/build:/project/build qgc-ubuntu-docker
 ```
+
+::: info
+For up to date docker command and options reference relevant run-script in `deploy/docker`, for example [run-docker-ubuntu.sh](https://github.com/mavlink/qgroundcontrol/blob/master/deploy/docker/run-docker-ubuntu.sh#L16).
+
+:::
 
 ::: info
 If using the script to build the Linux image on a Windows host, you would need to reference the PWD differently.
 On Windows the docker command is:
 
 ```
-docker run --rm -v %cd%:/project/source -v %cd%/build:/project/build qgc-linux-docker
+docker run --rm -v %cd%:/project/source -v %cd%/build:/project/build qgc-ubuntu-docker
 ```
 
 :::

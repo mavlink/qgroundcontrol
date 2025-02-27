@@ -1,16 +1,16 @@
-# QGroundControl Quick Start
+# QGroundControl için Hızlı Başlangıç
 
-Getting _QGroundControl_ up and running is quick and easy:
+_QGroundControl_'ü kurmak ve çalıştırmak, hızlı ve kolaydır:
 
-1. [Download and install](../getting_started/download_and_install.md) the application.
-1. Start _QGroundControl_.
-1. Attach your vehicle to the ground station device via USB, through a telemetry radio, or over WiFi. _QGroundControl_ should detect your vehicle and connect to it automatically.
+1. [Download and install (Daily 5.0)](../releases/daily_builds.md) the application.
+2. _QGroundControl_'ü başlatın.
+3. Aracınızı yer istasyonu cihazına USB, telemetri veya WIFI ile bağlayın. _QGroundControl_ aracınızı otomatik olarak tespit edip bağlanacaktır.
 
-That's it! If the vehicle is ready to fly, _QGroundControl_ should display [Fly View](../fly_view/fly_view.md) as shown below (otherwise it will open [Setup View](../setup_view/setup_view.md)).
+İşte bu kadar! Eğer aracınız uçuşa hazırsa, aşağıda görebileceğiniz üzere _QGroundControl_ [Fly View](../fly_view/fly_view.md) 'i görüntüleyecektir (aksi halde [Setup View](../setup_view/setup_view.md)'i açacaktır).
 
 ![](../../../assets/quickstart/fly_view_connected_vehicle.jpg)
 
-A good way to become familiar with _QGroundControl_ is to start experimenting:
+_QGroundControl_'e alışmanın iyi bir yolu denemeye başlamaktır:
 
 - Use the View Selector to switch between main views:
   - Plan Flight
@@ -19,8 +19,8 @@ A good way to become familiar with _QGroundControl_ is to start experimenting:
   - Application Settings
 - Click the _Status Indicators_ on the toolbar to find out the status of the connected vehicle.
 
-While the UI is fairly intuitive, this documentation can also be referenced to find out more.
+Kullanıcı arayüzü gayet açık olsa da, daha fazlasını öğrenmek için bu dokümantasyona başvurulabilir.
 
-::: info
+:::info
 Make sure QGC has an internet connection when you connect a new vehicle in order to display map content.
 :::

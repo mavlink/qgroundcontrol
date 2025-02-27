@@ -65,8 +65,8 @@ _QGroundControl_을 처음 설치하기 전에:
    sudo usermod -a -G dialout $USER
    sudo apt-get remove modemmanager -y
    sudo apt install gstreamer1.0-plugins-bad gstreamer1.0-libav gstreamer1.0-gl -y
-   sudo apt install libqt5gui5 -y
    sudo apt install libfuse2 -y
+   sudo apt install libxcb-xinerama0 libxkbcommon-x11-0 libxcb-cursor-dev -y
    ```
    <!-- Note, remove install of libqt5gui5 https://github.com/mavlink/qgroundcontrol/issues/10176 fixed -->
 2. 사용자 권한을 변경하려면 로그아웃 후 다시 로그인하여야 합니다.
@@ -82,7 +82,8 @@ _QGroundControl_을 처음 설치하기 전에:
       ./QGroundControl.AppImage (or double click)
    ```
 
-듀얼 어댑터가 있는 Ubuntu 18.04 시스템에는 [동영상 스트리밍 문제](../troubleshooting/qgc_setup.md#dual_vga)가 있습니다.
+:::info
+There are known [video steaming issues](../troubleshooting/qgc_setup.md#dual_vga) on Ubuntu 18.04 systems with dual adaptors.
 :::
 
 :::info
@@ -91,8 +92,6 @@ Ubuntu 16.04에서 이 버전을 실행하려면, [소스에서 비디오 라이
 :::
 
 ## 안드로이드 {#android}
-
-Google Play 스토어에서 _QGroundControl_을 일시적으로 사용할 수 없습니다. 아래의 링크들에서 수동으로 설치할 수 있습니다.
 
 - [Android 32 비트 APK](https://qgroundcontrol.s3-us-west-2.amazonaws.com/latest/QGroundControl32.apk)
 - [Android 64 비트 APK](https://qgroundcontrol.s3-us-west-2.amazonaws.com/latest/QGroundControl64.apk)
