@@ -13,11 +13,11 @@
 
 #pragma once
 
-#include "FactPanelController.h"
-#include "Joystick.h"
-
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
+
+#include "FactPanelController.h"
+#include "Joystick.h"
 
 Q_DECLARE_LOGGING_CATEGORY(JoystickConfigControllerLog)
 

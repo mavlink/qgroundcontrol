@@ -34,7 +34,6 @@ add_subdirectory(Terrain)
 add_subdirectory(Utilities)
 add_subdirectory(UTMSP)
 add_subdirectory(Vehicle)
-add_subdirectory(VehicleSetup)
 add_subdirectory(VideoManager)
 add_subdirectory(Viewer3D)
 
@@ -54,7 +53,6 @@ target_link_libraries(QGC
         AutoPilotPlugins
         Camera
         Comms
-        CommonAutoPilotPlugin
         FactSystem
         FirmwarePlugin
         # FirstRunPromptDialogs
@@ -74,7 +72,6 @@ target_link_libraries(QGC
         # UI
         Utilities
         Vehicle
-        VehicleSetup
         Viewer3D
         VideoManager
     PUBLIC

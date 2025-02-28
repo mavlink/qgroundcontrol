@@ -9,17 +9,12 @@
 
 #pragma once
 
-#include "QGCSerialPortInfo.h"
-
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
 #include <QtGui/QPixmap>
 #include <QtQuick/QQuickItem>
-#ifdef Q_OS_ANDROID
-#include "qserialportinfo.h"
-#else
-#include <QtSerialPort/QSerialPortInfo>
-#endif
+
+#include "QGCSerialPortInfo.h"
 
 class PX4FirmwareUpgradeThread;
 class PX4FirmwareUpgradeThreadController;

@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <QtCore/QObject>
+
 #ifdef Q_OS_ANDROID
 #include "qserialport.h"
 #else

@@ -7,9 +7,7 @@
  *
  ****************************************************************************/
 
-
-#ifndef MissionControllerTest_H
-#define MissionControllerTest_H
+#pragma once
 
 #include "MissionControllerManagerTest.h"
 
@@ -84,5 +82,3 @@ private:
     const char*         _rgMissionControllerSignals[_cMissionControllerSignals];
     const char*         _rgVisualItemSignals[_cVisualItemSignals];
 };
-
-#endif

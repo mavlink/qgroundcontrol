@@ -21,10 +21,12 @@ qt_add_library(VehicleTest
 target_link_libraries(VehicleTest
     PRIVATE
         Qt6::Test
-        Comms
-        Vehicle
     PUBLIC
+        Comms
+        MAVLink
+        MockLink
         qgcunittest
+        Vehicle
 )
 
 target_include_directories(VehicleTest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

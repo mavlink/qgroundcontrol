@@ -30,7 +30,6 @@ target_link_libraries(APMFirmwarePlugin
         Settings
         Utilities
         Vehicle
-        VehicleSetup
     PUBLIC
         Qt6::Core
         Qt6::Network

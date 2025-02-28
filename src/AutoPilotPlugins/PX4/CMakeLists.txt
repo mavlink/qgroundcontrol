@@ -46,10 +46,8 @@ target_link_libraries(PX4AutoPilotPlugin
         Qt6::Core
         Qt6::Quick
         AutoPilotPlugins
-        CommonAutoPilotPlugin
         FactControls
         MAVLink
-        VehicleSetup
 )
 
 target_include_directories(PX4AutoPilotPlugin PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
