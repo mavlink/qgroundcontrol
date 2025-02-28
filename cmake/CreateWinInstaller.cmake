@@ -24,7 +24,7 @@ set(QGC_NSIS_INSTALLER_PARAMETERS
     /DAPPNAME=QGroundControl
     /DEXENAME=QGroundControl
     /DORGNAME=org.mavlink.qgroundcontrol
-    /DDESTDIR=${CMAKE_BINARY_DIR}/staging
+    /DDESTDIR=${CMAKE_INSTALL_PREFIX}
     /NOCD
     "/XOutFile ${QGC_INSTALLER_OUT}"
     ${QGC_NSIS_INSTALLER_SCRIPT}

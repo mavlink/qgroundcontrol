@@ -1,23 +1,23 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Network Quick)
 
-qt_add_library(CommonAutoPilotPlugin STATIC
-    ESP8266Component.cc
-    ESP8266Component.h
-    ESP8266ComponentController.cc
-    ESP8266ComponentController.h
-    MotorComponent.cc
-    MotorComponent.h
-    RadioComponentController.cc
-    RadioComponentController.h
-    SyslinkComponent.cc
-    SyslinkComponent.h
-    SyslinkComponentController.cc
-    SyslinkComponentController.h
+target_sources(AutoPilotPlugins
+    PRIVATE
+        ESP8266Component.cc
+        ESP8266Component.h
+        ESP8266ComponentController.cc
+        ESP8266ComponentController.h
+        MotorComponent.cc
+        MotorComponent.h
+        RadioComponentController.cc
+        RadioComponentController.h
+        SyslinkComponent.cc
+        SyslinkComponent.h
+        SyslinkComponentController.cc
+        SyslinkComponentController.h
 )
 
-target_link_libraries(CommonAutoPilotPlugin
+target_link_libraries(AutoPilotPlugins
     PRIVATE
-        AutoPilotPlugins
         FactSystem
         QGC
         Utilities
@@ -28,10 +28,9 @@ target_link_libraries(CommonAutoPilotPlugin
         Qt6::Quick
         FactControls
         MAVLink
-        VehicleSetup
 )
 
-target_include_directories(CommonAutoPilotPlugin PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(AutoPilotPlugins PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 # file(GLOB QML_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.qml)
 # file(GLOB QML_RESOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/Images/*.*)

@@ -1,4 +1,3 @@
-add_subdirectory(Common)
 if(NOT QGC_DISABLE_APM_PLUGIN)
     add_subdirectory(APM)
 endif()
@@ -22,7 +21,6 @@ target_link_libraries(AutoPilotPlugins
         FirmwarePlugin
         QGC
         Vehicle
-        VehicleSetup
     PUBLIC
         Qt6::Core
 )
@@ -32,3 +30,5 @@ target_include_directories(AutoPilotPlugins
         ${CMAKE_CURRENT_SOURCE_DIR}
         Generic
 )
+
+add_subdirectory(Common)

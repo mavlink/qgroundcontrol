@@ -22,6 +22,7 @@ target_link_libraries(AnalyzeViewTest
         Qt6::Test
         AnalyzeView
         MAVLink
+        MockLink
         Utilities
         Vehicle
     PUBLIC

@@ -86,7 +86,7 @@
 		<file alias="DatalinkLossLight.svg">../src/AutoPilotPlugins/PX4/Images/DatalinkLossLight.svg</file>
 		<file alias="Disarmed.svg">../src/UI/toolbar/Images/Disarmed.svg</file>
 		<file alias="Disconnect.svg">../src/UI/toolbar/Images/Disconnect.svg</file>
-		<file alias="FirmwareUpgradeIcon.png">../src/VehicleSetup/FirmwareUpgradeIcon.png</file>
+		<file alias="FirmwareUpgradeIcon.png">../src/Vehicle/VehicleSetup/FirmwareUpgradeIcon.png</file>
 		<file alias="FollowComponentIcon.png">../src/AutoPilotPlugins/Common/Images/FlightModesComponentIcon.png</file>
 		<file alias="FlightModesComponentIcon.png">../src/AutoPilotPlugins/Common/Images/FlightModesComponentIcon.png</file>
 		<file alias="FloatingWindow.svg">../src/AnalyzeView/FloatingWindow.svg</file>
@@ -202,7 +202,7 @@
 		<file alias="VehicleNoseDownRotate.png">../src/AutoPilotPlugins/PX4/Images/VehicleNoseDownRotate.png</file>
 		<file alias="VehicleRight.png">../src/AutoPilotPlugins/PX4/Images/VehicleRight.png</file>
 		<file alias="VehicleRightRotate.png">../src/AutoPilotPlugins/PX4/Images/VehicleRightRotate.png</file>
-		<file alias="VehicleSummaryIcon.png">../src/VehicleSetup/VehicleSummaryIcon.png</file>
+		<file alias="VehicleSummaryIcon.png">../src/Vehicle/VehicleSetup/VehicleSummaryIcon.png</file>
 		<file alias="VehicleTailDown.png">../src/AutoPilotPlugins/PX4/Images/VehicleTailDown.png</file>
 		<file alias="VehicleTailDownRotate.png">../src/AutoPilotPlugins/PX4/Images/VehicleTailDownRotate.png</file>
 		<file alias="VehicleUpsideDown.png">../src/AutoPilotPlugins/PX4/Images/VehicleUpsideDown.png</file>
