@@ -77,6 +77,11 @@ void PlanManager::writeMissionItems(const QList<MissionItem*>& missionItems)
 
     bool skipFirstItem = _planType == MAV_MISSION_TYPE_MISSION && !_vehicle->firmwarePlugin()->sendHomePositionToVehicle();
 
+    if (skipFirstItem) {
+        // First item is not going to be moved to _writeMissionItems, free it now.
+        delete missionItems[0];
+    }
+
     int firstIndex = skipFirstItem ? 1 : 0;
 
     for (int i=firstIndex; i<missionItems.count(); i++) {
@@ -290,7 +295,7 @@ bool PlanManager::_checkForExpectedAck(AckType_t receivedAck)
 void PlanManager::_readTransactionComplete(void)
 {
     qCDebug(PlanManagerLog) << "_readTransactionComplete read sequence complete";
-    
+
     SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
     if (sharedLink) {
         mavlink_message_t       message;
@@ -436,7 +441,7 @@ void PlanManager::_handleMissionItem(const mavlink_message_t& message)
         _vehicle->_setHomePosition(newHomePosition);
         return;
     }
-    
+
     if (_itemIndicesToRead.contains(seq)) {
         _itemIndicesToRead.removeOne(seq);
 
@@ -468,7 +473,7 @@ void PlanManager::_handleMissionItem(const mavlink_message_t& message)
     }
 
     emit progressPctChanged((double)seq / (double)_missionItemCountToRead);
-    
+
     _retryCount = 0;
     if (_itemIndicesToRead.count() == 0) {
         _readTransactionComplete();
@@ -499,7 +504,7 @@ void PlanManager::_handleMissionRequest(const mavlink_message_t& message)
         qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionRequest %1 Incorrect mission_type received expected:actual").arg(_planTypeString()) << _planType << missionRequestMissionType;
         return;
     }
-    
+
     if (!_checkForExpectedAck(AckMissionRequest)) {
         return;
     }
@@ -520,7 +525,7 @@ void PlanManager::_handleMissionRequest(const mavlink_message_t& message)
     } else {
         _itemIndicesToWrite.removeOne(missionRequestSeq);
     }
-    
+
     MissionItem* item = _writeMissionItems[missionRequestSeq];
     qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionRequest %1 sequenceNumber:command").arg(_planTypeString()) << missionRequestSeq << item->command();
 
@@ -555,7 +560,7 @@ void PlanManager::_handleMissionRequest(const mavlink_message_t& message)
 void PlanManager::_handleMissionAck(const mavlink_message_t& message)
 {
     mavlink_mission_ack_t missionAck;
-    
+
     mavlink_msg_mission_ack_decode(&message, &missionAck);
     if (missionAck.mission_type != _planType) {
         // if there was a previous transaction with a different mission_type, it can happen that we receive
@@ -575,7 +580,7 @@ void PlanManager::_handleMissionAck(const mavlink_message_t& message)
     // Save the retry ack before calling _checkForExpectedAck since we'll need it to determine what
     // type of a protocol sequence we are in.
     AckType_t savedExpectedAck = _expectedAck;
-    
+
     // We can get a MISSION_ACK with an error at any time, so if the Acks don't match it is not
     // a protocol sequence error. Call _checkForExpectedAck with _retryAck so it will succeed no
     // matter what.
