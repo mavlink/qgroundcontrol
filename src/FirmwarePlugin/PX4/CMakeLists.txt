@@ -21,8 +21,8 @@ target_link_libraries(PX4FirmwarePlugin
         PX4AutoPilotPlugin
         QGC
         Settings
-        VehicleSetup
         Utilities
+        Vehicle
     PUBLIC
         Qt6::Core
         FactSystem

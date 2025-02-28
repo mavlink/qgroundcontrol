@@ -7,9 +7,7 @@
  *
  ****************************************************************************/
 
-
-#ifndef MissionManagerTest_H
-#define MissionManagerTest_H
+#pragma once
 
 #include "MissionControllerManagerTest.h"
 
@@ -41,5 +39,3 @@ private:
     static const TestCase_t _rgTestCases[];
     static const size_t     _cTestCases;
 };
-
-#endif

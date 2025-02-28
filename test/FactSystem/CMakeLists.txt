@@ -18,9 +18,11 @@ target_link_libraries(FactSystemTest
         Qt6::Test
         AutoPilotPlugins
         FactSystem
+        MAVLink
         Settings
         Vehicle
     PUBLIC
+        MockLink
         qgcunittest
 )
 

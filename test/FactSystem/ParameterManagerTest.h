@@ -7,9 +7,7 @@
  *
  ****************************************************************************/
 
-
-#ifndef ParameterManagerTest_H
-#define ParameterManagerTest_H
+#pragma once
 
 #include "UnitTest.h"
 #include "MockConfiguration.h"
@@ -30,5 +28,3 @@ private slots:
 private:
     void _noFailureWorker(MockConfiguration::FailureMode_t failureMode);
 };
-
-#endif
