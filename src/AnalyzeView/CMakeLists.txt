@@ -100,6 +100,12 @@ if(TARGET ulog_cpp::ulog_cpp)
     target_link_libraries(AnalyzeView PRIVATE ulog_cpp::ulog_cpp)
 endif()
 
+if(WIN32)
+  set(_EXPAT_INSTALL_OPTION ON)
+else()
+  set(_EXPAT_INSTALL_OPTION OFF)
+endif()
+
 CPMAddPackage(
     NAME EXPAT
     VERSION 2.6.4
@@ -113,20 +119,24 @@ CPMAddPackage(
         "EXPAT_BUILD_PKGCONFIG OFF"
         "EXPAT_BUILD_TESTS OFF"
         "EXPAT_BUILD_TOOLS OFF"
-        "EXPAT_ENABLE_INSTALL OFF"
+        "EXPAT_ENABLE_INSTALL ${_EXPAT_INSTALL_OPTION}"
         "EXPAT_SHARED_LIBS OFF"
 )
 
 set(_EXIV2_ENABLE_XMP OFF)
 if(EXPAT_ADDED)
     find_package(expat CONFIG QUIET)
-    if(NOT TARGET expat::expat)
+    if(TARGET expat::expat)
+        add_library(EXPAT::EXPAT INTERFACE IMPORTED)
+        target_link_libraries(EXPAT::EXPAT INTERFACE expat::expat)
+        get_target_property(EXPAT_INCLUDES expat::expat INTERFACE_INCLUDE_DIRECTORIES)
+        if(EXPAT_INCLUDES)
+            target_include_directories(EXPAT::EXPAT INTERFACE ${EXPAT_INCLUDES})
+            set(_EXIV2_ENABLE_XMP ON)
+        endif()
+    else()
         find_package(EXPAT MODULE)
         if(EXPAT_FOUND)
-            if(NOT TARGET expat::expat)
-                add_library(expat::expat INTERFACE IMPORTED)
-                target_link_libraries(expat::expat INTERFACE EXPAT::EXPAT)
-            endif()
             set(_EXIV2_ENABLE_XMP ON)
         endif()
     endif()
