@@ -7,12 +7,7 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
-#ifndef FactSystemTestPX4_H
-#define FactSystemTestPX4_H
+#pragma once
 
 #include "FactSystemTestBase.h"
 
@@ -33,5 +28,3 @@ private slots:
     void qml_test(void) { _qml_test(); }
     void qmlUpdate_test(void) { _qmlUpdate_test(); }
 };
-
-#endif

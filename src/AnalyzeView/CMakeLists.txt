@@ -117,15 +117,24 @@ CPMAddPackage(
         "EXPAT_SHARED_LIBS OFF"
 )
 
-if(TARGET EXPAT::EXPAT)
-    set(_EXIV2_ENABLE_XMP ON)
-else()
-    set(_EXIV2_ENABLE_XMP OFF)
+set(_EXIV2_ENABLE_XMP OFF)
+if(EXPAT_ADDED)
+    find_package(expat CONFIG QUIET)
+    if(NOT TARGET expat::expat)
+        find_package(EXPAT MODULE)
+        if(EXPAT_FOUND)
+            if(NOT TARGET expat::expat)
+                add_library(expat::expat INTERFACE IMPORTED)
+                target_link_libraries(expat::expat INTERFACE EXPAT::EXPAT)
+            endif()
+            set(_EXIV2_ENABLE_XMP ON)
+        endif()
+    endif()
 endif()
 
 CPMAddPackage(
     NAME exiv2
-    VERSION 0.28.4
+    VERSION 0.28.5
     GITHUB_REPOSITORY Exiv2/exiv2
     OPTIONS
         "EXIV2_ENABLE_XMP ${_EXIV2_ENABLE_XMP}"

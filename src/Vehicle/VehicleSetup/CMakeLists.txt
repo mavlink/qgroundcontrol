@@ -1,18 +1,18 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick)
 
-qt_add_library(VehicleSetup STATIC
-    JoystickConfigController.cc
-    JoystickConfigController.h
+target_sources(Vehicle
+    PRIVATE
+        JoystickConfigController.cc
+        JoystickConfigController.h
 )
 
-target_link_libraries(VehicleSetup
+target_link_libraries(Vehicle
     PRIVATE
         Qt6::Qml
         FactSystem
         QGC
         Settings
         Utilities
-        Vehicle
     PUBLIC
         Qt6::Core
         Qt6::Gui
@@ -21,10 +21,10 @@ target_link_libraries(VehicleSetup
         Joystick
 )
 
-target_include_directories(VehicleSetup PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(Vehicle PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(NOT QGC_NO_SERIAL_LINK)
-    target_sources(VehicleSetup
+    target_sources(Vehicle
         PRIVATE
             Bootloader.cc
             Bootloader.h
@@ -36,7 +36,7 @@ if(NOT QGC_NO_SERIAL_LINK)
             PX4FirmwareUpgradeThread.h
     )
 
-    target_link_libraries(VehicleSetup
+    target_link_libraries(Vehicle
         PRIVATE
             API
         PUBLIC
