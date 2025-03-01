@@ -10,6 +10,7 @@
 #pragma once
 
 #include "UnitTest.h"
+#include "MAVLinkLib.h"
 #include "MockLink.h"
 #include "Vehicle.h"
 

@@ -24,11 +24,10 @@ target_link_libraries(FirmwarePlugin
     PRIVATE
         AutoPilotPlugins
         Camera
-        CommonAutoPilotPlugin
         MissionManager
         QGC
         Utilities
-        VehicleSetup
+        Vehicle
         $<$<NOT:$<BOOL:${QGC_DISABLE_APM_PLUGIN}>>:APMFirmwarePlugin>
         $<$<NOT:$<BOOL:${QGC_DISABLE_PX4_PLUGIN}>>:PX4FirmwarePlugin>
     PUBLIC

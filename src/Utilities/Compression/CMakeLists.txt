@@ -23,7 +23,7 @@ target_include_directories(Utilities PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 include(CPM)
 CPMAddPackage(
-    NAME ZLIB
+    NAME zlib
     VERSION 1.3.1
     GITHUB_REPOSITORY madler/zlib
     OPTIONS
@@ -32,10 +32,9 @@ CPMAddPackage(
         "SKIP_INSTALL_LIBRARIES ON"
         "SKIP_INSTALL_HEADERS ON"
         "SKIP_INSTALL_ALL ON"
-        "ZLIB_USE_STATIC_LIBS ON"
 )
 
-if(ZLIB_ADDED)
+if(zlib_ADDED)
     target_link_libraries(Utilities PRIVATE zlibstatic)
 else()
     find_package(Qt6ZlibPrivate REQUIRED)
