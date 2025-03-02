@@ -1,4 +1,4 @@
-name: Docker-Linux
+name: Docker-MacOS
 
 on:
   push:
@@ -7,13 +7,11 @@ on:
       - 'Stable*'
     tags:
       - 'v*'
-    paths-ignore:
-      - 'docs/**' # Do not trigger for any changes under docs
   pull_request:
     paths:
-      - '.github/workflows/docker-linux.yml'
+      - '.github/workflows/docker-macos.yml'
       - 'deploy/docker/**'
-      - 'deploy/linux/**'
+      - 'deploy/macos/**'
       - 'src/**'
       - 'CMakeLists.txt'
       - 'cmake/**'
@@ -37,7 +35,7 @@ jobs:
           submodules: recursive
           fetch-tags: true
 
-      - run: chmod a+x ./deploy/docker/run-docker-ubuntu.sh
+      - run: chmod a+x ./deploy/docker/run-docker-macos.sh
 
       - name: Run Docker Build
-        run: ./deploy/docker/run-docker-ubuntu.sh
+        run: ./deploy/docker/run-docker-macos.sh
