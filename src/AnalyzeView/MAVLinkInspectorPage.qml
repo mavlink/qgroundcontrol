@@ -35,8 +35,7 @@ AnalyzePage {
         id: controller
     }
 
-        function updateEnabledStatus(repeater, message, chart) {
-
+    function updateEnabledStatus(repeater, message, chart) {
         if(!message) {
             return;
         }
