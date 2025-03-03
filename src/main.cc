@@ -18,6 +18,7 @@
 #include "QGCApplication.h"
 #include "AppMessages.h"
 #include "CmdLineOptParser.h"
+#include "MAVLinkProtocol.h"
 
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
     #include <QtWidgets/QMessageBox>
@@ -83,6 +84,30 @@ void sigHandler(int s)
 
 int main(int argc, char *argv[])
 {
+    bool runUnitTests = false;
+    bool simpleBootTest = false;
+    QString systemIdStr = QString();
+    bool hasSystemId = false;
+    bool bypassRunGuard = false;
+
+    bool stressUnitTests = false;       // Stress test unit tests
+    bool quietWindowsAsserts = false;   // Don't let asserts pop dialog boxes
+    QString unitTestOptions;
+
+    CmdLineOpt_t rgCmdLineOptions[] = {
+#ifdef QT_DEBUG
+        { "--unittest",             &runUnitTests,          &unitTestOptions },
+        { "--unittest-stress",      &stressUnitTests,       &unitTestOptions },
+        { "--no-windows-assert-ui", &quietWindowsAsserts,   nullptr },
+        { "--allow-multiple",       &bypassRunGuard,        nullptr },
+#endif
+        { "--system-id",            &hasSystemId,           &systemIdStr },
+        { "--simple-boot-test",     &simpleBootTest,        nullptr },
+        // Add additional command line option flags here
+    };
+
+    ParseCmdLineOptions(argc, argv, rgCmdLineOptions, std::size(rgCmdLineOptions), false);
+
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
     // We make the runguard key different for custom and non custom
     // builds, so they can be executed together in the same device.
@@ -91,7 +116,7 @@ int main(int argc, char *argv[])
     const QString runguardString = QStringLiteral("%1 RunGuardKey").arg(QGC_APP_NAME);
 
     RunGuard guard(runguardString);
-    if (!guard.tryToRun()) {
+    if (!bypassRunGuard && !guard.tryToRun()) {
         QApplication errorApp(argc, argv);
         QMessageBox::critical(nullptr, QObject::tr("Error"),
             QObject::tr("A second instance of %1 is already running. Please close the other instance and try again.").arg(QGC_APP_NAME)
@@ -148,25 +173,7 @@ int main(int argc, char *argv[])
     // We statically link our own QtLocation plugin
     Q_IMPORT_PLUGIN(QGeoServiceProviderFactoryQGC)
 
-    bool runUnitTests = false;
-    bool simpleBootTest = false;
-
 #ifdef QT_DEBUG
-    // We parse a small set of command line options here prior to QGCApplication in order to handle the ones
-    // which need to be handled before a QApplication object is started.
-
-    bool stressUnitTests = false;       // Stress test unit tests
-    bool quietWindowsAsserts = false;   // Don't let asserts pop dialog boxes
-
-    QString unitTestOptions;
-    CmdLineOpt_t rgCmdLineOptions[] = {
-        { "--unittest",             &runUnitTests,          &unitTestOptions },
-        { "--unittest-stress",      &stressUnitTests,       &unitTestOptions },
-        { "--no-windows-assert-ui", &quietWindowsAsserts,   nullptr },
-        // Add additional command line option flags here
-    };
-
-    ParseCmdLineOptions(argc, argv, rgCmdLineOptions, std::size(rgCmdLineOptions), false);
     if (stressUnitTests) {
         runUnitTests = true;
     }
@@ -183,11 +190,6 @@ int main(int argc, char *argv[])
         SetErrorMode(dwMode | SEM_NOGPFAULTERRORBOX);
     }
 #endif // Q_OS_WIN
-#else
-    CmdLineOpt_t rgCmdLineOptions[] = {
-        { "--simple-boot-test", &simpleBootTest, nullptr },
-    };
-    ParseCmdLineOptions(argc, argv, rgCmdLineOptions, std::size(rgCmdLineOptions), false);
 #endif // QT_DEBUG
 
     QGCApplication app(argc, argv, runUnitTests || simpleBootTest);
@@ -200,6 +202,18 @@ int main(int argc, char *argv[])
 #endif
 
     app.init();
+
+    // Set system ID if specified via command line, for example --system-id:255
+    if (hasSystemId) {
+        bool ok;
+        int systemId = systemIdStr.toInt(&ok);
+        if (ok && systemId >= 0 && systemId <= 255) {  // MAVLink system IDs are 8-bit
+            qDebug() << "Setting MAVLink System ID to:" << systemId;
+            MAVLinkProtocol::instance()->setSystemId(systemId);
+        } else {
+            qDebug() << "Not setting MAVLink System ID. It must be between 0 and 255. Invalid system ID value:" << systemIdStr;
+        }
+    }
 
     int exitCode = 0;
 

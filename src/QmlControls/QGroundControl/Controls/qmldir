@@ -129,3 +129,5 @@ TransectStyleMapVisuals                 1.0 TransectStyleMapVisuals.qml
 ValueSlider                             1.0 ValueSlider.qml
 VehicleRotationCal                      1.0 VehicleRotationCal.qml
 VehicleSummaryRow                       1.0 VehicleSummaryRow.qml
+MAVLinkChart                            1.0 MAVLinkChart.qml
+ProgressTracker                         1.0 ProgressTracker.qml
