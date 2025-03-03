@@ -118,9 +118,9 @@ bool VTOLLandingComplexItem::_isValidLandItem(const MissionItem& missionItem)
     }
 }
 
-bool VTOLLandingComplexItem::scanForItem(QmlObjectListModel* visualItems, bool flyView, PlanMasterController* masterController)
+bool VTOLLandingComplexItem::scanForItems(QmlObjectListModel* visualItems, bool flyView, PlanMasterController* masterController)
 {
-    return _scanForItem(visualItems, flyView, masterController, _isValidLandItem, _createItem);
+    return _scanForItems(visualItems, flyView, masterController, _isValidLandItem, _createItem);
 }
 
 // Never call this method directly. If you want to update the flight segments you emit _updateFlightPathSegmentsSignal()

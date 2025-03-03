@@ -695,6 +695,8 @@
             "rawName":              "MAV_CMD_DO_LAND_START",
             "friendlyName":         "Land start",
             "description":          "Marker to indicate start of landing sequence.",
+            "specifiesCoordinate":  true,
+            "standaloneCoordinate": true,
             "friendlyEdit":         true,
             "category":             "Flight control"
         },

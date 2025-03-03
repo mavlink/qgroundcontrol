@@ -47,8 +47,15 @@ SettingsPage {
 
         FactCheckBoxSlider {
             Layout.fillWidth:   true
-            text:               qsTr("Missions Do Not Require Takeoff Item")
+            text:               qsTr("Missions do not require takeoff item")
             fact:               _planViewSettings.takeoffItemNotRequired
+            visible:            fact.visible
+        }
+
+        FactCheckBoxSlider {
+            Layout.fillWidth:   true
+            text:               qsTr("Allow configuring multiple landing sequences")
+            fact:               _planViewSettings.allowMultipleLandingPatterns
             visible:            fact.visible
         }
     }
