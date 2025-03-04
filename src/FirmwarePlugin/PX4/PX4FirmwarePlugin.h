@@ -52,7 +52,7 @@ public:
     double              minimumEquivalentAirspeed(Vehicle* vehicle) override;
     bool                mulirotorSpeedLimitsAvailable(Vehicle* vehicle) override;
     bool                fixedWingAirSpeedLimitsAvailable(Vehicle* vehicle) override;
-    void                guidedModeGotoLocation          (Vehicle* vehicle, const QGeoCoordinate& gotoCoord) override;
+    void                guidedModeGotoLocation          (Vehicle* vehicle, const QGeoCoordinate& gotoCoord, double forwardFlightLoiterRadius) override;
     void                guidedModeChangeAltitude        (Vehicle* vehicle, double altitudeRel, bool pauseVehicle) override;
     void                guidedModeChangeGroundSpeedMetersSecond(Vehicle* vehicle, double groundspeed) override;
     void                guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle* vehicle, double airspeed_equiv) override;

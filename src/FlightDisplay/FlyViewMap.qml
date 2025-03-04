@@ -379,6 +379,85 @@ FlightMap {
         }
     }
 
+    // GoTo Location forward flight circle visuals
+    QGCMapCircleVisuals {
+        id:             fwdFlightGotoMapCircle
+        mapControl:     parent
+        mapCircle:      _fwdFlightGotoMapCircle
+        visible:        gotoLocationItem.visible && _activeVehicle &&
+                        _activeVehicle.inFwdFlight &&
+                        !_activeVehicle.orbitActive
+
+        property alias coordinate: _fwdFlightGotoMapCircle.center
+        property alias radius: _fwdFlightGotoMapCircle.radius
+
+        Component.onCompleted: {
+            // Only allow editing the radius, not the position
+            centerDragHandleVisible = false
+
+            globals.guidedControllerFlyView.fwdFlightGotoMapCircle = this
+        }
+
+        Connections {
+            target: QGroundControl.multiVehicleManager
+            function onActiveVehicleChanged(activeVehicle) {
+                if (!activeVehicle) {
+                    visible = false
+                }
+            }
+        }
+
+        Binding {
+            target: _fwdFlightGotoMapCircle
+            property: "center"
+            value: gotoLocationItem.coordinate
+        }
+
+        function startLoiterRadiusEdit() {
+            _fwdFlightGotoMapCircle.interactive = true
+        }
+
+        // Called when loiter edit is confirmed
+        function actionConfirmed() {
+            _fwdFlightGotoMapCircle.interactive = false
+            _fwdFlightGotoMapCircle._commitRadius()
+        }
+
+        // Called when loiter edit is cancelled
+        function actionCancelled() {
+            _fwdFlightGotoMapCircle.interactive = false
+            _fwdFlightGotoMapCircle._restoreRadius()
+        }
+
+        QGCMapCircle {
+            id:                 _fwdFlightGotoMapCircle
+            interactive:        false
+            showRotation:       true
+            clockwiseRotation:  true
+
+            property real _defaultLoiterRadius: _flyViewSettings.forwardFlightGoToLocationLoiterRad.value
+            property real _committedRadius;
+
+            onCenterChanged: {
+                radius.rawValue = _defaultLoiterRadius
+                // Don't commit the radius in case this operation is undone
+            }
+
+            Component.onCompleted: {
+                radius.rawValue = _defaultLoiterRadius
+                _commitRadius()
+            }
+
+            function _commitRadius() {
+                _committedRadius = radius.rawValue
+            }
+
+            function _restoreRadius() {
+                radius.rawValue = _committedRadius
+            }
+        }
+    }
+
     // GoTo Location visuals
     MapQuickItem {
         id:             gotoLocationItem
@@ -394,10 +473,12 @@ FlightMap {
 
         property bool inGotoFlightMode: _activeVehicle ? _activeVehicle.flightMode === _activeVehicle.gotoFlightMode : false
 
+        property var _committedCoordinate: null
+
         onInGotoFlightModeChanged: {
             if (!inGotoFlightMode && gotoLocationItem.visible) {
                 // Hide goto indicator when vehicle falls out of guided mode
-                gotoLocationItem.visible = false
+                hide()
             }
         }
 
@@ -405,7 +486,7 @@ FlightMap {
             target: QGroundControl.multiVehicleManager
             function onActiveVehicleChanged(activeVehicle) {
                 if (!activeVehicle) {
-                    gotoLocationItem.visible = false
+                    hide()
                 }
             }
         }
@@ -420,11 +501,35 @@ FlightMap {
         }
 
         function actionConfirmed() {
+            _commitCoordinate()
+
+            // Commit the new radius which possibly changed
+            fwdFlightGotoMapCircle.actionConfirmed()
+
             // We leave the indicator visible. The handling for onInGuidedModeChanged will hide it.
         }
 
         function actionCancelled() {
-            hide()
+            _restoreCoordinate()
+
+            // Also restore the loiter radius
+            fwdFlightGotoMapCircle.actionCancelled()
+        }
+
+        function _commitCoordinate() {
+            // Must deep copy
+            _committedCoordinate = QtPositioning.coordinate(
+                coordinate.latitude,
+                coordinate.longitude
+            );
+        }
+
+        function _restoreCoordinate() {
+            if (_committedCoordinate) {
+                coordinate = _committedCoordinate
+            } else {
+                hide()
+            }
         }
     }
 
@@ -534,7 +639,7 @@ FlightMap {
         anchorPoint.x:  sourceItem.anchorPointX
         anchorPoint.y:  sourceItem.anchorPointY
         coordinate:     _activeVehicle ? _activeVehicle.orbitMapCircle.center : QtPositioning.coordinate()
-        visible:        orbitTelemetryCircle.visible
+        visible:        orbitTelemetryCircle.visible && !gotoLocationItem.visible
 
         sourceItem: MissionItemIndexLabel {
             checked:    true
@@ -607,7 +712,13 @@ FlightMap {
                         onClicked: {
                             mapClickDropPanel.close()
                             gotoLocationItem.show(mapClickCoord)
-                            globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionGoto, mapClickCoord, gotoLocationItem)
+
+                            if ((_activeVehicle.flightMode == _activeVehicle.gotoFlightMode) && !_flyViewSettings.goToLocationRequiresConfirmInGuided.value) {
+                                globals.guidedControllerFlyView.executeAction(globals.guidedControllerFlyView.actionGoto, mapClickCoord, gotoLocationItem)
+                                gotoLocationItem.actionConfirmed() // Still need to call this to commit the new coordinate and radius
+                            } else {
+                                globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionGoto, mapClickCoord, gotoLocationItem)
+                            }
                         }
                     }
 
@@ -674,9 +785,9 @@ FlightMap {
 
     onMapClicked: (position) => {
         if (!globals.guidedControllerFlyView.guidedUIVisible && 
-                (globals.guidedControllerFlyView.showGotoLocation || globals.guidedControllerFlyView.showOrbit || globals.guidedControllerFlyView.showROI || globals.guidedControllerFlyView.showSetHome || globals.guidedControllerFlyView.showSetEstimatorOrigin)) {
-            orbitMapCircle.hide()
-            gotoLocationItem.hide()
+            (globals.guidedControllerFlyView.showGotoLocation || globals.guidedControllerFlyView.showOrbit ||
+             globals.guidedControllerFlyView.showROI || globals.guidedControllerFlyView.showSetHome ||
+             globals.guidedControllerFlyView.showSetEstimatorOrigin)) {
 
             position = Qt.point(position.x, position.y)
             var clickCoord = _root.toCoordinate(position, false /* clipToViewPort */)
