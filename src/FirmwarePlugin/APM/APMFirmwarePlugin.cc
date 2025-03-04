@@ -798,7 +798,7 @@ out:
     delete data;
 }
 
-void APMFirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord)
+void APMFirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord, double forwardFlightLoiterRadius)
 {
     if (qIsNaN(vehicle->altitudeRelative()->rawValue().toDouble())) {
         qgcApp()->showAppMessage(QStringLiteral("Unable to go to location, vehicle position not known."));
@@ -830,7 +830,7 @@ void APMFirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoord
                 MAV_FRAME_GLOBAL,
                 -1.0f,
                 MAV_DO_REPOSITION_FLAGS_CHANGE_MODE,
-                0.0f,
+                static_cast<float>(forwardFlightLoiterRadius),
                 NAN,
                 gotoCoord.latitude(),
                 gotoCoord.longitude(),
