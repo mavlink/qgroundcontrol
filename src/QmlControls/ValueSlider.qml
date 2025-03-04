@@ -293,6 +293,7 @@ Control {
                 showUnits:          true
                 unitsLabel:         unitsString
                 visible:            false
+                numericValuesOnly:  true
 
                 onEditingFinished: {
                     visible = false

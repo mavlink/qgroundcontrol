@@ -278,6 +278,7 @@ Item {
             showUnits:          true
             unitsLabel:         valueLabel.unitsString
             visible:            false
+            numericValuesOnly:  true
 
             onEditingFinished: {
                 visible = false
