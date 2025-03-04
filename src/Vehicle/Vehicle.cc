@@ -260,6 +260,9 @@ void Vehicle::_commonInit()
     // Initialize alt above terrain to Nan so frontend can display it correctly in case the terrain query had no response
     _altitudeAboveTerrFact.setRawValue(qQNaN());
 
+    connect(this, &Vehicle::vehicleTypeChanged,     this, &Vehicle::inFwdFlightChanged);
+    connect(this, &Vehicle::vtolInFwdFlightChanged, this, &Vehicle::inFwdFlightChanged);
+
     connect(QGCPositionManager::instance(), &QGCPositionManager::gcsPositionChanged, this, &Vehicle::_updateDistanceToGCS);
     connect(QGCPositionManager::instance(), &QGCPositionManager::gcsPositionChanged, this, &Vehicle::_updateHomepoint);
 
@@ -2314,6 +2317,12 @@ void Vehicle::setGuidedMode(bool guidedMode)
 {
     return _firmwarePlugin->setGuidedMode(this, guidedMode);
 }
+
+bool Vehicle::inFwdFlight() const
+{
+    return fixedWing() || _vtolInFwdFlight;
+}
+
 
 void Vehicle::emergencyStop()
 {
