@@ -29,6 +29,7 @@ Item {
     property var missionController
     property var confirmDialog
     property var guidedValueSlider
+    property var fwdFlightGotoMapCircle
     property var orbitMapCircle
 
     readonly property string emergencyStopTitle:            qsTr("EMERGENCY STOP")
@@ -48,6 +49,7 @@ Item {
     readonly property string pauseTitle:                    qsTr("Pause")
     readonly property string mvPauseTitle:                  qsTr("Pause (MV)")
     readonly property string changeAltTitle:                qsTr("Change Altitude")
+    readonly property string changeLoiterRadiusTitle:       qsTr("Change Loiter Radius")
     readonly property string changeCruiseSpeedTitle:        qsTr("Change Max Ground Speed")
     readonly property string changeAirspeedTitle:           qsTr("Change Airspeed")
     readonly property string orbitTitle:                    qsTr("Orbit")
@@ -76,8 +78,9 @@ Item {
     readonly property string landMessage:                       qsTr("Land the vehicle at the current position.")
     readonly property string rtlMessage:                        qsTr("Return to the launch position of the vehicle.")
     readonly property string changeAltMessage:                  qsTr("Change the altitude of the vehicle up or down.")
+    readonly property string changeLoiterRadiusMessage:         qsTr("Change the forward flight loiter radius.")
     readonly property string changeCruiseSpeedMessage:          qsTr("Change the maximum horizontal cruise speed.")
-    readonly property string changeAirspeedMessage:             qsTr("Change the equivalent airspeed setpoint")
+    readonly property string changeAirspeedMessage:             qsTr("Change the equivalent airspeed setpoint.")
     readonly property string gotoMessage:                       qsTr("Move the vehicle to the specified location.")
              property string setWaypointMessage:                qsTr("Adjust current waypoint to %1.").arg(_actionData)
     readonly property string orbitMessage:                      qsTr("Orbit the vehicle around the specified location.")
@@ -123,6 +126,7 @@ Item {
     readonly property int actionChangeHeading:              30
     readonly property int actionMVArm:                      31
     readonly property int actionMVDisarm:                   32
+    readonly property int actionChangeLoiterRadius:         33
 
 
 
@@ -150,6 +154,7 @@ Item {
     property bool showContinueMission:      _guidedActionsEnabled && _missionAvailable && !_missionActive && _vehicleArmed && _vehicleFlying && (_currentMissionIndex < _missionItemCount - 1)
     property bool showPause:                _guidedActionsEnabled && _vehicleArmed && _activeVehicle.pauseVehicleSupported && _vehicleFlying && !_vehiclePaused && !_fixedWingOnApproach
     property bool showChangeAlt:            _guidedActionsEnabled && _vehicleFlying && _activeVehicle.guidedModeSupported && _vehicleArmed && !_missionActive
+    property bool showChangeLoiterRadius:   _guidedActionsEnabled && _vehicleFlying && _activeVehicle.guidedModeSupported && _vehicleArmed && !_missionActive && _vehicleInFwdFlight && fwdFlightGotoMapCircle.visible
     property bool showChangeSpeed:          _guidedActionsEnabled && _vehicleFlying && _activeVehicle.guidedModeSupported && _vehicleArmed && !_missionActive && _speedLimitsAvailable
     property bool showOrbit:                _guidedActionsEnabled && _vehicleFlying && __orbitSupported && !_missionActive && _activeVehicle.homePosition.isValid && !isNaN(_activeVehicle.homePosition.altitude)
     property bool showROI:                  _guidedActionsEnabled && _vehicleFlying && __roiSupported
@@ -500,6 +505,13 @@ Item {
             confirmDialog.hideTrigger = Qt.binding(function() { return !showChangeAlt })
             guidedValueSlider.visible = true
             break;
+        case actionChangeLoiterRadius:
+            confirmDialog.title = changeLoiterRadiusTitle
+            confirmDialog.message = changeLoiterRadiusMessage
+            confirmDialog.hideTrigger = Qt.binding(function() { return !showChangeLoiterRadius })
+            confirmDialog.mapIndicator = fwdFlightGotoMapCircle
+            fwdFlightGotoMapCircle.startLoiterRadiusEdit()
+            break
         case actionGoto:
             confirmDialog.title = gotoTitle
             confirmDialog.message = gotoMessage
@@ -648,6 +660,12 @@ Item {
             var valueInMeters = _unitsConversion.appSettingsVerticalDistanceUnitsToMeters(sliderOutputValue)
             var altitudeChangeInMeters = valueInMeters - _activeVehicle.altitudeRelative.rawValue
             _activeVehicle.guidedModeChangeAltitude(altitudeChangeInMeters, false /* pauseVehicle */)
+            break
+        case actionChangeLoiterRadius:
+            _activeVehicle.guidedModeGotoLocation(
+                fwdFlightGotoMapCircle.coordinate,
+                fwdFlightGotoMapCircle.radius.rawValue
+            )
             break
         case actionGoto:
             _activeVehicle.guidedModeGotoLocation(

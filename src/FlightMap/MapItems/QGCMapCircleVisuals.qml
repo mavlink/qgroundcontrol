@@ -31,6 +31,7 @@ Item {
     property int    borderWidth:              3
     property color  borderColor:              QGroundControl.globalPalette.mapMissionTrajectory
     property bool   centerDragHandleVisible:  true
+    property bool   radiusLabelVisible:       false
     property real   _radius:                  mapCircle ? mapCircle.radius.rawValue : 0
 
     property var    _circleComponent
@@ -178,13 +179,48 @@ Item {
             anchorPoint.y:  dragHandle.height / 2
             z:              QGroundControl.zOrderMapItems + 2
 
-            sourceItem: Rectangle {
-                id:         dragHandle
-                width:      ScreenTools.defaultFontPixelHeight * 1.5
-                height:     width
-                radius:     width / 2
-                color:      "white"
-                opacity:    .90
+            sourceItem: Item {
+                id:     handleContainer
+                width:  dragHandle.width + labelControl.width
+                height: dragHandle.height
+
+                Rectangle {
+                    id:         dragHandle
+                    width:      ScreenTools.defaultFontPixelHeight * 1.5
+                    height:     width
+                    radius:     width / 2
+                    color:      "white"
+                    opacity:    .90
+                }
+
+                Rectangle {
+                    id:                     labelControl
+
+                    anchors {
+                        bottom:             dragHandle.top
+                        bottomMargin:       ScreenTools.defaultFontPixelHeight * 0.25
+                        horizontalCenter:   dragHandle.horizontalCenter
+                    }
+                    height:                 dragHandle.height
+                    width:                  labelText.width + (ScreenTools.defaultFontPixelHeight * 0.25 * 2)
+                    radius:                 height / 2
+
+                    color:                  "white"
+                    opacity:                0.5
+                    visible:                _root.radiusLabelVisible
+                }
+
+                QGCLabel {
+                    id:                     labelText
+
+                    anchors.centerIn:       labelControl
+
+                    color:                  "black"
+                    text:                   QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(_radius).toFixed(0) +
+                                            " " + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString
+                    verticalAlignment:      Text.AlignVCenter
+                    visible:                labelControl.visible
+                }
             }
         }
     }
