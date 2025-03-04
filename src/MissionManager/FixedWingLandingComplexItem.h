@@ -37,7 +37,7 @@ public:
     Fact*           valueSetIsDistance      (void) { return &_valueSetIsDistanceFact; }
 
     /// Scans the loaded items for a landing pattern complex item
-    static bool scanForItem(QmlObjectListModel* visualItems, bool flyView, PlanMasterController* masterController);
+    static bool scanForItems(QmlObjectListModel* visualItems, bool flyView, PlanMasterController* masterController);
 
     // Overrides from ComplexMissionItem
     QString patternName         (void) const final { return name; }

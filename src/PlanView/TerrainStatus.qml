@@ -26,14 +26,14 @@ Rectangle {
 
     signal setCurrentSeqNum(int seqNum)
 
-    property real _margins:             ScreenTools.defaultFontPixelWidth / 2
-    property var  _visualItems:         missionController.visualItems
-    property real _altRange:            _maxAMSLAltitude - _minAMSLAltitude
-    property real _indicatorSpacing:    5
-    property real _minAMSLAltitude:     isNaN(terrainProfile.minAMSLAlt) ? 0 : terrainProfile.minAMSLAlt
-    property real _maxAMSLAltitude:     isNaN(terrainProfile.maxAMSLAlt) ? 100 : terrainProfile.maxAMSLAlt
-    property real _missionDistance:     isNaN(missionController.missionDistance) ? 100 : missionController.missionDistance
-    property var  _unitsConversion:     QGroundControl.unitsConversion
+    property real _margins:                 ScreenTools.defaultFontPixelWidth / 2
+    property var  _visualItems:             missionController.visualItems
+    property real _altRange:                _maxAMSLAltitude - _minAMSLAltitude
+    property real _indicatorSpacing:        5
+    property real _minAMSLAltitude:         isNaN(terrainProfile.minAMSLAlt) ? 0 : terrainProfile.minAMSLAlt
+    property real _maxAMSLAltitude:         isNaN(terrainProfile.maxAMSLAlt) ? 100 : terrainProfile.maxAMSLAlt
+    property real _missionTotalDistance:    isNaN(missionController.missionTotalDistance) ? 100 : missionController.missionTotalDistance
+    property var  _unitsConversion:         QGroundControl.unitsConversion
 
     QGCPalette { id: qgcPal }
 
@@ -75,7 +75,7 @@ Rectangle {
                 ValueAxis {
                     id:                         axisX
                     min:                        0
-                    max:                        _unitsConversion.metersToAppSettingsHorizontalDistanceUnits(missionController.missionDistance)
+                    max:                        _unitsConversion.metersToAppSettingsHorizontalDistanceUnits(missionController.missionTotalDistance)
                     lineVisible:                true
                     labelsFont.family:          ScreenTools.fixedFontFamily
                     labelsFont.pointSize:       ScreenTools.smallFontPointSize
@@ -103,7 +103,7 @@ Rectangle {
                     visible:    true
 
                     XYPoint { x: 0; y: _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_minAMSLAltitude) }
-                    XYPoint { x: _unitsConversion.metersToAppSettingsHorizontalDistanceUnits(_missionDistance); y: _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_maxAMSLAltitude) }
+                    XYPoint { x: _unitsConversion.metersToAppSettingsHorizontalDistanceUnits(_missionTotalDistance); y: _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_maxAMSLAltitude) }
                 }
             }
 
