@@ -368,6 +368,44 @@ FlightMap {
         }
     }
 
+    // GoTo Location forward flight circle visuals
+    QGCMapCircleVisuals {
+        id:             fwdFlightGotoMapCircle
+        mapControl:     parent
+        mapCircle:      _fwdFlightGotoMapCircle
+        visible:        gotoLocationItem.visible && _activeVehicle &&
+                        _activeVehicle.inFwdFlight &&
+                        !_activeVehicle.orbitActive
+
+        Connections {
+            target: QGroundControl.multiVehicleManager
+            function onActiveVehicleChanged(activeVehicle) {
+                if (!activeVehicle) {
+                    visible = false
+                }
+            }
+        }
+
+        Binding {
+            target: _fwdFlightGotoMapCircle
+            property: "center"
+            value: gotoLocationItem.coordinate
+        }
+
+        QGCMapCircle {
+            id:                 _fwdFlightGotoMapCircle
+            interactive:        false
+            showRotation:       true
+            clockwiseRotation:  true
+
+            property real _defaultLoiterRadius: _flyViewSettings.forwardFlightGoToLocationLoiterRad.value
+
+            onCenterChanged: {
+                radius.rawValue = _defaultLoiterRadius
+            }
+        }
+    }
+
     // GoTo Location visuals
     MapQuickItem {
         id:             gotoLocationItem
