@@ -62,6 +62,14 @@
     "min":              1
 },
 {
+    "name":         "forwardFlightGoToLocationLoiterRad",
+    "shortDesc":    "Loiter radius for orbiting the Go To Location during forward flight. This only applies if the firmware supports a radius in MAV_CMD_DO_REPOSITION commands.",
+    "type":         "double",
+    "units":        "m",
+    "default":      80,
+    "min":          25
+},
+{
     "name":             "updateHomePosition",
     "shortDesc": "Send updated GCS' home position to autopilot in case of change of the home position",
     "type":                 "bool",
