@@ -663,9 +663,9 @@ FlightMap {
 
     onMapClicked: (position) => {
         if (!globals.guidedControllerFlyView.guidedUIVisible && 
-                (globals.guidedControllerFlyView.showGotoLocation || globals.guidedControllerFlyView.showOrbit || globals.guidedControllerFlyView.showROI || globals.guidedControllerFlyView.showSetHome || globals.guidedControllerFlyView.showSetEstimatorOrigin)) {
-            orbitMapCircle.hide()
-            gotoLocationItem.hide()
+            (globals.guidedControllerFlyView.showGotoLocation || globals.guidedControllerFlyView.showOrbit ||
+             globals.guidedControllerFlyView.showROI || globals.guidedControllerFlyView.showSetHome ||
+             globals.guidedControllerFlyView.showSetEstimatorOrigin)) {
 
             position = Qt.point(position.x, position.y)
             var clickCoord = _root.toCoordinate(position, false /* clipToViewPort */)
