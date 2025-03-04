@@ -383,10 +383,12 @@ FlightMap {
 
         property bool inGotoFlightMode: _activeVehicle ? _activeVehicle.flightMode === _activeVehicle.gotoFlightMode : false
 
+        property var _committedCoordinate: null
+
         onInGotoFlightModeChanged: {
             if (!inGotoFlightMode && gotoLocationItem.visible) {
                 // Hide goto indicator when vehicle falls out of guided mode
-                gotoLocationItem.visible = false
+                hide()
             }
         }
 
@@ -394,7 +396,7 @@ FlightMap {
             target: QGroundControl.multiVehicleManager
             function onActiveVehicleChanged(activeVehicle) {
                 if (!activeVehicle) {
-                    gotoLocationItem.visible = false
+                    hide()
                 }
             }
         }
@@ -409,11 +411,29 @@ FlightMap {
         }
 
         function actionConfirmed() {
+            _commitCoordinate()
+
             // We leave the indicator visible. The handling for onInGuidedModeChanged will hide it.
         }
 
         function actionCancelled() {
-            hide()
+            _restoreCoordinate()
+        }
+
+        function _commitCoordinate() {
+            // Must deep copy
+            _committedCoordinate = QtPositioning.coordinate(
+                coordinate.latitude,
+                coordinate.longitude
+            );
+        }
+
+        function _restoreCoordinate() {
+            if (_committedCoordinate) {
+                coordinate = _committedCoordinate
+            } else {
+                hide()
+            }
         }
     }
 
