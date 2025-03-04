@@ -561,28 +561,27 @@ ApplicationWindow {
     function showCriticalVehicleMessage(message) {
         closeIndicatorDrawer()
         if (criticalVehicleMessagePopup.visible || QGroundControl.videoManager.fullScreen) {
-            // We received additional wanring message while an older warning message was still displayed.
+            // We received additional warning message while an older warning message was still displayed.
             // When the user close the older one drop the message indicator tool so they can see the rest of them.
-            criticalVehicleMessagePopup.dropMessageIndicatorOnClose = true
+            criticalVehicleMessagePopup.additionalCriticalMessagesReceived = true
         } else {
             criticalVehicleMessagePopup.criticalVehicleMessage      = message
-            criticalVehicleMessagePopup.dropMessageIndicatorOnClose = false
+            criticalVehicleMessagePopup.additionalCriticalMessagesReceived = false
             criticalVehicleMessagePopup.open()
         }
     }
 
     Popup {
         id:                 criticalVehicleMessagePopup
-        y:                  ScreenTools.defaultFontPixelHeight
+        y:                  ScreenTools.toolbarHeight + ScreenTools.defaultFontPixelHeight
         x:                  Math.round((mainWindow.width - width) * 0.5)
         width:              mainWindow.width  * 0.55
         height:             criticalVehicleMessageText.contentHeight + ScreenTools.defaultFontPixelHeight * 2
         modal:              false
         focus:              true
-        closePolicy:        Popup.CloseOnEscape
 
-        property alias  criticalVehicleMessage:        criticalVehicleMessageText.text
-        property bool   dropMessageIndicatorOnClose:   false
+        property alias  criticalVehicleMessage:             criticalVehicleMessageText.text
+        property bool   additionalCriticalMessagesReceived: false
 
         background: Rectangle {
             anchors.fill:   parent
@@ -624,7 +623,7 @@ ApplicationWindow {
                 border.width:               1
                 width:                      additionalErrorsLabel.contentWidth + _margins
                 height:                     additionalErrorsLabel.contentHeight + _margins
-                visible:                    criticalVehicleMessagePopup.dropMessageIndicatorOnClose
+                visible:                    criticalVehicleMessagePopup.additionalCriticalMessagesReceived
 
                 property real _margins: ScreenTools.defaultFontPixelHeight * 0.25
 
@@ -651,10 +650,11 @@ ApplicationWindow {
             anchors.fill: parent
             onClicked: {
                 criticalVehicleMessagePopup.close()
-                if (criticalVehicleMessagePopup.dropMessageIndicatorOnClose) {
-                    criticalVehicleMessagePopup.dropMessageIndicatorOnClose = false;
+                if (criticalVehicleMessagePopup.additionalCriticalMessagesReceived) {
+                    criticalVehicleMessagePopup.additionalCriticalMessagesReceived = false;
+                    flyView.dropMainStatusIndicatorTool();
+                } else {
                     QGroundControl.multiVehicleManager.activeVehicle.resetErrorLevelMessages();
-                    flyView.dropMessageIndicatorTool();
                 }
             }
         }

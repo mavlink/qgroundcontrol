@@ -29,8 +29,8 @@ Rectangle {
     property bool   _communicationLost: _activeVehicle ? _activeVehicle.vehicleLinkManager.communicationLost : false
     property color  _mainStatusBGColor: qgcPal.brandingPurple
 
-    function dropMessageIndicatorTool() {
-        toolIndicators.dropMessageIndicatorTool();
+    function dropMainStatusIndicatorTool() {
+        mainStatusIndicator.dropMainStatusIndicator();
     }
 
     QGCPalette { id: qgcPal }
@@ -72,6 +72,7 @@ Rectangle {
         }
 
         MainStatusIndicator {
+            id: mainStatusIndicator
             Layout.preferredHeight: viewButtonRow.height
         }
 

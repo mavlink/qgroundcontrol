@@ -5,7 +5,6 @@
 		<file alias="VehicleGPSIndicator.qml">../src/UI/toolbar/VehicleGPSIndicator.qml</file>
 		<file alias="JoystickIndicator.qml">../src/UI/toolbar/JoystickIndicator.qml</file>
 		<file alias="LinkIndicator.qml">../src/UI/toolbar/LinkIndicator.qml</file>
-		<file alias="MessageIndicator.qml">../src/UI/toolbar/MessageIndicator.qml</file>
 		<file alias="ModeIndicator.qml">../src/UI/toolbar/ModeIndicator.qml</file>
 		<file alias="MultiVehicleSelector.qml">../src/UI/toolbar/MultiVehicleSelector.qml</file>
 		<file alias="RCRSSIIndicator.qml">../src/UI/toolbar/RCRSSIIndicator.qml</file>
