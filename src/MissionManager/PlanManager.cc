@@ -77,7 +77,7 @@ void PlanManager::writeMissionItems(const QList<MissionItem*>& missionItems)
 
     bool skipFirstItem = _planType == MAV_MISSION_TYPE_MISSION && !_vehicle->firmwarePlugin()->sendHomePositionToVehicle();
 
-    if (skipFirstItem) {
+    if (skipFirstItem && missionItems.count() > 0) {
         // First item is not going to be moved to _writeMissionItems, free it now.
         delete missionItems[0];
     }
