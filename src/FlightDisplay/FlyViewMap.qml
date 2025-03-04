@@ -370,12 +370,23 @@ FlightMap {
 
     // GoTo Location forward flight circle visuals
     QGCMapCircleVisuals {
-        id:             fwdFlightGotoMapCircle
-        mapControl:     parent
-        mapCircle:      _fwdFlightGotoMapCircle
-        visible:        gotoLocationItem.visible && _activeVehicle &&
-                        _activeVehicle.inFwdFlight &&
-                        !_activeVehicle.orbitActive
+        id:                 fwdFlightGotoMapCircle
+        mapControl:         parent
+        mapCircle:          _fwdFlightGotoMapCircle
+        radiusLabelVisible: true
+        visible:            gotoLocationItem.visible && _activeVehicle &&
+                            _activeVehicle.inFwdFlight &&
+                            !_activeVehicle.orbitActive
+
+        property alias coordinate: _fwdFlightGotoMapCircle.center
+        property alias radius: _fwdFlightGotoMapCircle.radius
+
+        Component.onCompleted: {
+            // Only allow editing the radius, not the position
+            centerDragHandleVisible = false
+
+            globals.guidedControllerFlyView.fwdFlightGotoMapCircle = this
+        }
 
         Connections {
             target: QGroundControl.multiVehicleManager
@@ -392,6 +403,22 @@ FlightMap {
             value: gotoLocationItem.coordinate
         }
 
+        function startLoiterRadiusEdit() {
+            _fwdFlightGotoMapCircle.interactive = true
+        }
+
+        // Called when loiter edit is confirmed
+        function actionConfirmed() {
+            _fwdFlightGotoMapCircle.interactive = false
+            _fwdFlightGotoMapCircle._commitRadius()
+        }
+
+        // Called when loiter edit is cancelled
+        function actionCancelled() {
+            _fwdFlightGotoMapCircle.interactive = false
+            _fwdFlightGotoMapCircle._restoreRadius()
+        }
+
         QGCMapCircle {
             id:                 _fwdFlightGotoMapCircle
             interactive:        false
@@ -399,9 +426,24 @@ FlightMap {
             clockwiseRotation:  true
 
             property real _defaultLoiterRadius: _flyViewSettings.forwardFlightGoToLocationLoiterRad.value
+            property real _committedRadius;
 
             onCenterChanged: {
                 radius.rawValue = _defaultLoiterRadius
+                // Don't commit the radius in case this operation is undone
+            }
+
+            Component.onCompleted: {
+                radius.rawValue = _defaultLoiterRadius
+                _commitRadius()
+            }
+
+            function _commitRadius() {
+                _committedRadius = radius.rawValue
+            }
+
+            function _restoreRadius() {
+                radius.rawValue = _committedRadius
             }
         }
     }
@@ -451,11 +493,17 @@ FlightMap {
         function actionConfirmed() {
             _commitCoordinate()
 
+            // Commit the new radius which possibly changed
+            fwdFlightGotoMapCircle.actionConfirmed()
+
             // We leave the indicator visible. The handling for onInGuidedModeChanged will hide it.
         }
 
         function actionCancelled() {
             _restoreCoordinate()
+
+            // Also restore the loiter radius
+            fwdFlightGotoMapCircle.actionCancelled()
         }
 
         function _commitCoordinate() {
