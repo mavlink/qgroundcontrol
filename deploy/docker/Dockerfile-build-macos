@@ -8,12 +8,11 @@ ENV QT_DESKTOP=$QT_PATH/${QT_VERSION}/clang_64
 
 ENV PATH=$QT_DESKTOP/bin:/usr/local/bin:$PATH
 
-COPY tools/setup/macos-dependencies.sh /tmp/qt/
-RUN /tmp/qt/macos-dependencies.sh
+COPY tools/setup/install-dependencies-osx.sh /tmp/qt/
+RUN /tmp/qt/install-dependencies-osx.sh
 
-# Install Qt using Homebrew
-RUN brew install qt@${QT_VERSION} \
-    && brew link --force qt@${QT_VERSION}
+COPY tools/setup/install-qt-macos.sh /tmp/qt/
+RUN /tmp/qt/install-qt-macos.sh
 
 # Set up Qt environment
 RUN mkdir -p $QT_PATH \
