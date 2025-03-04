@@ -23,17 +23,15 @@ class FlightModesComponent : public VehicleComponent
 public:
     FlightModesComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
     
-    // Virtuals from VehicleComponent
-    virtual QStringList setupCompleteChangedTriggerList(void) const;
-    
-    // Virtuals from VehicleComponent
-    virtual QString name(void) const;
-    virtual QString description(void) const;
-    virtual QString iconResource(void) const;
-    virtual bool requiresSetup(void) const;
-    virtual bool setupComplete(void) const;
-    virtual QUrl setupSource(void) const;
-    virtual QUrl summaryQmlSource(void) const;
+    // Overrides from VehicleComponent
+    QString name(void) const final;
+    QString description(void) const final;
+    QString iconResource(void) const final;
+    QUrl setupSource(void) const final;
+    QUrl summaryQmlSource(void) const final;
+    bool requiresSetup() const final { return false; }
+    bool setupComplete() const final { return true; }
+    QStringList setupCompleteChangedTriggerList() const final { return QStringList(); }
     
 private:
     const QString   _name;
