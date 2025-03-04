@@ -41,33 +41,6 @@ QString FlightModesComponent::iconResource(void) const
     return "/qmlimages/FlightModesComponentIcon.png";
 }
 
-bool FlightModesComponent::requiresSetup(void) const
-{
-    return _vehicle->parameterManager()->getParameter(-1, "COM_RC_IN_MODE")->rawValue().toInt() == 1 ? false : true;
-}
-
-bool FlightModesComponent::setupComplete(void) const
-{
-    if (_vehicle->parameterManager()->getParameter(-1, "COM_RC_IN_MODE")->rawValue().toInt() == 1) {
-        return true;
-    }
-
-    if (_vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "RC_MAP_FLTMODE") && _vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, "RC_MAP_FLTMODE")->rawValue().toInt() != 0) {
-        return true;
-    }
-
-    return false;
-}
-
-QStringList FlightModesComponent::setupCompleteChangedTriggerList(void) const
-{
-    QStringList list;
-
-    list << QStringLiteral("RC_MAP_MODE_SW") << QStringLiteral("RC_MAP_FLTMODE");
-
-    return list;
-}
-
 QUrl FlightModesComponent::setupSource(void) const
 {
     return QUrl::fromUserInput("qrc:/qml/PX4FlightModes.qml");
