@@ -373,8 +373,18 @@ void StatusTextHandler::_handleTextMessage(uint32_t newCount, MessageType messag
         emit messageCountChanged(messageCount());
     }
 
-    if (messageType != m_messageType) {
-        m_messageType = messageType;
+    // messageType represents the worst message which hasn't been viewed yet
+    MessageType newMessageType = MessageType::MessageNone;
+    if (getErrorCount() > 0) {
+        newMessageType = MessageType::MessageError;
+    } else if (getWarningCount() > 0) {
+        newMessageType = MessageType::MessageWarning;
+    } else if (getNormalCount() > 0) {
+        newMessageType = MessageType::MessageNormal;
+    }
+
+    if (newMessageType != m_messageType) {
+        m_messageType = newMessageType;
         emit messageTypeChanged();
     }
 }
