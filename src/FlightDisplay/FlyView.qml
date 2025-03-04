@@ -69,8 +69,8 @@ Item {
         toolstrip.adjustToolInset(newToolInset)
     }
 
-    function dropMessageIndicatorTool() {
-        toolbar.dropMessageIndicatorTool();
+    function dropMainStatusIndicatorTool() {
+        toolbar.dropMainStatusIndicatorTool();
     }
 
     QGCToolInsets {
