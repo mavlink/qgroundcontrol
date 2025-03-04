@@ -650,7 +650,12 @@ Item {
             _activeVehicle.guidedModeChangeAltitude(altitudeChangeInMeters, false /* pauseVehicle */)
             break
         case actionGoto:
-            _activeVehicle.guidedModeGotoLocation(actionData)
+            _activeVehicle.guidedModeGotoLocation(
+                actionData,
+                _vehicleInFwdFlight /* forwardFlightLoiterRadius */
+                    ? _flyViewSettings.forwardFlightGoToLocationLoiterRad.value
+                    : 0
+            )
             break
         case actionSetWaypoint:
             _activeVehicle.setCurrentMissionSequence(actionData)
