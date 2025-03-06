@@ -154,7 +154,7 @@ void GeoFenceManager::_planManagerLoadComplete(bool removeAllRequested)
                 // In the middle of a polygon, but count suddenly changed
                 emit error(BadPolygonItemFormat, tr("GeoFence load: Vertex count change mid-polygon - actual:expected").arg(item->param1()).arg(expectedVertexCount));
                 break;
-            } if (expectedCommand != command) {
+            } else if (expectedCommand != command) {
                 // Command changed before last polygon was completely loaded
                 emit error(BadPolygonItemFormat, tr("GeoFence load: Polygon type changed before last load complete - actual:expected").arg(command).arg(expectedCommand));
                 break;
