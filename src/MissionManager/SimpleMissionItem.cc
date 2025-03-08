@@ -537,6 +537,18 @@ bool SimpleMissionItem::isLoiterItem() const
 
 bool SimpleMissionItem::showLoiterRadius() const
 {
+    const MissionCommandUIInfo *uiInfo =
+        MissionCommandTree::instance()->getUIInfo(
+            _controllerVehicle, _previousVTOLMode, MAV_CMD_NAV_LOITER_TIME);
+    bool showUI;
+    uiInfo->getParamInfo(3, showUI);
+
+    if (isLoiterItem() && command() == MAV_CMD_NAV_LOITER_TIME && !showUI) {
+        // Don't show the radius of MAV_CMD_NAV_LOITER_TIME items if the
+        // firmware doesn't support specifying it
+        return false;
+    }
+
     return specifiesCoordinate() && (_controllerVehicle->fixedWing() || _controllerVehicle->vtol()) && isLoiterItem();
 }
 
