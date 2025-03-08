@@ -537,6 +537,14 @@ bool SimpleMissionItem::isLoiterItem() const
 
 bool SimpleMissionItem::showLoiterRadius() const
 {
+    // Special case: APM fixed-wing doesn't support specifying a radius with Loiter (time)
+    if (_controllerVehicle->apmFirmware() &&
+        _controllerVehicle->fixedWing() &&
+        isLoiterItem() &&
+        command() == MAV_CMD_NAV_LOITER_TIME) {
+        return false;
+    }
+
     return specifiesCoordinate() && (_controllerVehicle->fixedWing() || _controllerVehicle->vtol()) && isLoiterItem();
 }
 
