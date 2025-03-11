@@ -38,7 +38,7 @@ VehicleLTEFactGroup::VehicleLTEFactGroup(QObject* parent)
     _lossPercentFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
 }
 
-void VehicleLTEFactGroup::handleMessage(Vehicle*  vehicle, const mavlink_message_t message)
+void VehicleLTEFactGroup::handleMessage(Vehicle*  vehicle, const mavlink_message_t &message)
 {
     if (message.sysid != vehicle->id() || message.compid != 10) {
         return;
@@ -54,7 +54,7 @@ void VehicleLTEFactGroup::handleMessage(Vehicle*  vehicle, const mavlink_message
     }
 }
 
-void VehicleLTEFactGroup::_handleCommandLong(mavlink_message_t message)
+void VehicleLTEFactGroup::_handleCommandLong(const mavlink_message_t &message)
 {
     mavlink_command_long_t commandLong;
     mavlink_msg_command_long_decode(&message, &commandLong);
@@ -66,7 +66,7 @@ void VehicleLTEFactGroup::_handleCommandLong(mavlink_message_t message)
     switch (static_cast<int>(commandLong.param1)) {
         case 31014:
             // LTE radio telemetry
-//            qCWarning(VehicleLTEFactGroupLog) << "Received COMMAND_LONG 31014 (LTE radio telemetry)";
+            // qCWarning(VehicleLTEFactGroupLog) << "Received COMMAND_LONG 31014 (LTE radio telemetry)";
             rssi()->setRawValue(commandLong.param2);
             rsrq()->setRawValue(commandLong.param3);
             rsrp()->setRawValue(commandLong.param4);
@@ -76,7 +76,7 @@ void VehicleLTEFactGroup::_handleCommandLong(mavlink_message_t message)
             break;
         case 31015:
             // LTE IP telemetry
-//            qCWarning(VehicleLTEFactGroupLog) << "Received COMMAND_LONG 31015 (LTE IP telemetry)";
+            // qCWarning(VehicleLTEFactGroupLog) << "Received COMMAND_LONG 31015 (LTE IP telemetry)";
             isRoutable()->setRawValue(commandLong.param2 > 0);
             latencyMs()->setRawValue(commandLong.param3);
             lossPercent()->setRawValue(commandLong.param4);

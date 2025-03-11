@@ -131,7 +131,7 @@ public:
     /// @return false: custom build has automatically enabled a specific joystick
     virtual bool allowJoystickSelection() const { return true; }
 
-    virtual bool checkFirmwareVersion() const { return true; }
+    virtual bool checkFirmwareVersion() const { return false; }
 
     /// @return true: vehicle connection is disabled
     virtual bool disableVehicleConnection() const { return false; }

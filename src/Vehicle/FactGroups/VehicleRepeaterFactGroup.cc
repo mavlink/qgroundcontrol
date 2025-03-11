@@ -41,7 +41,7 @@ VehicleRepeaterFactGroup::VehicleRepeaterFactGroup(QObject* parent)
     _lossPercentFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
 }
 
-void VehicleRepeaterFactGroup::handleMessage(Vehicle* vehicle , const mavlink_message_t message)
+void VehicleRepeaterFactGroup::handleMessage(Vehicle*  vehicle, const mavlink_message_t &message)
 {
     if (message.sysid != vehicle->id() || message.compid != 10) {
         return;
@@ -57,7 +57,7 @@ void VehicleRepeaterFactGroup::handleMessage(Vehicle* vehicle , const mavlink_me
     }
 }
 
-void VehicleRepeaterFactGroup::_handleCommandLong(mavlink_message_t message)
+void VehicleRepeaterFactGroup::_handleCommandLong(const mavlink_message_t &message)
 {
     mavlink_command_long_t commandLong;
     mavlink_msg_command_long_decode(&message, &commandLong);

@@ -33,7 +33,7 @@ public:
     Fact* latencyMs         () { return &_latencyMsFact; }
     Fact* lossPercent       () { return &_lossPercentFact; }
 
-    void handleMessage(Vehicle* vehicle, const mavlink_message_t message);
+    void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) override;
 
 protected:
     const QString _rssiFactName =                QStringLiteral("rssi");
@@ -57,5 +57,5 @@ protected:
     Fact _lossPercentFact;
 
 private:
-    void _handleCommandLong                 (mavlink_message_t message);
+    void _handleCommandLong                 (const mavlink_message_t &message);
 };

@@ -80,10 +80,10 @@ const JoystickConfigController::stateMachineEntry* JoystickConfigController::_ge
         { Joystick::pitchFunction,          msgPitchUp,         _sticksPitchUp,         &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 3 },
         { Joystick::pitchFunction,          msgPitchDown,       _sticksPitchDown,       &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 3 },
         { Joystick::pitchFunction,          msgPitchCenter,     _sticksCentered,        &JoystickConfigController::_inputCenterWait,        nullptr,                                         nullptr, 3 },
-        { Joystick::gimbalPitchFunction,    msgGimbalPitchUp,   _sticksCentered,        &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 4 },
-        { Joystick::gimbalPitchFunction,    msgGimbalPitchDown, _sticksCentered,        &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 4 },
-        { Joystick::gimbalYawFunction,      msgGimbalYawUp,     _sticksCentered,        &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 5 },
-        { Joystick::gimbalYawFunction,      msgGimbalYawDown,   _sticksCentered,        &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 5 },
+        { Joystick::gimbalPitchFunction,    msgGimbalPitchUp,   _sticksGimbalPitchUp,   &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 4 },
+        { Joystick::gimbalPitchFunction,    msgGimbalPitchDown, _sticksGimbalPitchDown, &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 4 },
+        { Joystick::gimbalYawFunction,      msgGimbalYawUp,     _sticksGimbalYawRight,  &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 5 },
+        { Joystick::gimbalYawFunction,      msgGimbalYawDown,   _sticksGimbalYawLeft,   &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 5 },
         { Joystick::maxAxisFunction,        msgComplete,        _sticksCentered,        nullptr,                                            &JoystickConfigController::_writeCalibration,    nullptr, -1 },
     };
 

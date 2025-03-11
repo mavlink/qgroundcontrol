@@ -8,7 +8,7 @@
 
 message(STATUS "QGC: Creating AppImage...")
 
-set(APPDIR_PATH "${CMAKE_BINARY_DIR}/AppDir")
+set(APPDIR_PATH "${CMAKE_BINARY_DIR}/build/AppDir")
 set(APPIMAGE_PATH "${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${CMAKE_SYSTEM_PROCESSOR}.AppImage")
 
 # ============================================================================
@@ -57,7 +57,7 @@ execute_process(
             --appdir "${APPDIR_PATH}"
             --executable "${APPDIR_PATH}/usr/bin/${CMAKE_PROJECT_NAME}"
             --desktop-file "${APPDIR_PATH}/usr/share/applications/${QGC_PACKAGE_NAME}.desktop"
-            --custom-apprun "${CMAKE_BINARY_DIR}/AppRun"
+            --custom-apprun "${CMAKE_BINARY_DIR}/build/AppRun"
             --icon-file "${APPDIR_PATH}/usr/share/icons/hicolor/256x256/apps/${CMAKE_PROJECT_NAME}.png"
     COMMAND_ECHO STDOUT
     COMMAND_ERROR_IS_FATAL ANY
