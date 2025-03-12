@@ -195,7 +195,7 @@ int main(int argc, char *argv[])
     if (hasSystemId) {
         bool ok;
         int systemId = systemIdStr.toInt(&ok);
-        if (ok && systemId >= 0 && systemId <= 255) {  // MAVLink system IDs are 8-bit
+        if (ok && systemId >= 1 && systemId <= 255) {  // MAVLink system IDs are 8-bit
             qDebug() << "Setting MAVLink System ID to:" << systemId;
             MAVLinkProtocol::instance()->setSystemId(systemId);
         } else {
