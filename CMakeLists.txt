@@ -148,7 +148,6 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
     add_compile_definitions(
         NDEBUG
         QT_NO_DEBUG
-        QT_NO_DEBUG_OUTPUT
     )
 elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
     include(CTest)
