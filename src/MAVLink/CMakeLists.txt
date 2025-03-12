@@ -51,11 +51,13 @@ CPMAddPackage(
     GIT_TAG ${QGC_MAVLINK_GIT_TAG}
 )
 
+# For QGC all dialects means common and development. Though use of development mavlink code should be restricted to debug builds only.
 target_include_directories(MAVLink
     PUBLIC
         ${mavlink_SOURCE_DIR}
         ${mavlink_SOURCE_DIR}/all
         ${mavlink_SOURCE_DIR}/common
+        ${mavlink_SOURCE_DIR}/development
 )
 
 # if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
