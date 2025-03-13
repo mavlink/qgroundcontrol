@@ -35,7 +35,7 @@ BatteryIndicator {
                 visible:            batt1Monitor.rawValue !== 0
 
                 LabelledFactComboBox {
-                    label:              qsTr("Action")
+                    label:              qsTr("Vehicle Action")
                     fact:               controller.getParameterFact(-1, "BATT_FS_LOW_ACT")
                     indexModel:         false
                 }
@@ -65,7 +65,7 @@ BatteryIndicator {
                 visible:            batt1Monitor.rawValue !== 0
 
                 LabelledFactComboBox {
-                    label:              qsTr("Action")
+                    label:              qsTr("Vehicle Action")
                     fact:               controller.getParameterFact(-1, "BATT_FS_CRT_ACT")
                     indexModel:         false
                 }
