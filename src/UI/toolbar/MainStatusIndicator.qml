@@ -346,7 +346,8 @@ RowLayout {
             }
 
             SettingsGroupLayout {
-                Layout.fillWidth: true
+                Layout.fillWidth:   true
+                visible:            QGroundControl.corePlugin.showAdvancedUI
 
                 GridLayout {
                     columns:            2
