@@ -25,7 +25,7 @@ ColumnLayout {
     FactPanelController { id: controller }
 
     SettingsGroupLayout {
-        heading:            qsTr("Ground Control Data Link Failsafe")
+        heading:            qsTr("Ground Control Comm Loss Failsafe")
         Layout.fillWidth:   true
 
         RowLayout {
@@ -34,7 +34,7 @@ ColumnLayout {
 
             QGCLabel {
                 Layout.fillWidth:   true;
-                text:               qsTr("Action")
+                text:               qsTr("Vehicle Action")
             }
             FactComboBox {
                 id:                     failsafeActionCombo
