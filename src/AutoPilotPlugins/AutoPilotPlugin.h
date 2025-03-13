@@ -55,8 +55,11 @@ public:
     /// Returns the name of the vehicle component which must complete setup prior to this one. Empty string for none.
     Q_INVOKABLE virtual QString prerequisiteSetup(VehicleComponent *component) const = 0;
 
-    Q_INVOKABLE VehicleComponent *findKnownVehicleComponent(KnownVehicleComponent knownVehicleComponent);
+    /// Returns true if the vehicle component is available for the vehicle. Customs build have different components.
     Q_INVOKABLE bool knownVehicleComponentAvailable(KnownVehicleComponent knownVehicleComponent) { return (findKnownVehicleComponent(knownVehicleComponent) != nullptr); }
+
+    /// Returns the VehicleComponent for the knownVehicleComponent. Returns nullptr if not available.
+    Q_INVOKABLE VehicleComponent *findKnownVehicleComponent(KnownVehicleComponent knownVehicleComponent);
 
     bool setupComplete() const { return _setupComplete; }
 
