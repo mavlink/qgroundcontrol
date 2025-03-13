@@ -30,7 +30,7 @@ BatteryIndicator {
             FactPanelController { id: controller }
 
             LabelledFactComboBox {
-                label:              qsTr("Action")
+                label:              qsTr("Vehicle Action")
                 fact:               controller.getParameterFact(-1, "COM_LOW_BAT_ACT")
                 indexModel:         false
             }
