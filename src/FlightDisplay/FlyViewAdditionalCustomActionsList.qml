@@ -7,10 +7,12 @@
  *
  ****************************************************************************/
 
-import QtQml
+import QtQuick
 
 // Custom builds can override this resource to add additional custom actions
-QtObject {
+Item {
+    visible: false
+
     property var guidedController
 
     property bool anyActionAvailable: false
