@@ -403,7 +403,8 @@ ToolIndicatorPage {
                 }
 
                 SettingsGroupLayout {
-                    Layout.fillWidth: true
+                    Layout.fillWidth:   true
+                    visible:            QGroundControl.corePlugin.showAdvancedUI
 
                     RowLayout {
                         Layout.fillWidth: true
