@@ -14,6 +14,7 @@
 #include "QGCLoggingCategory.h"
 #include "QGCTemporaryFile.h"
 #include "SettingsManager.h"
+#include "MavlinkSettings.h"
 #include "AppSettings.h"
 #include "QmlObjectListModel.h"
 
@@ -37,7 +38,6 @@ MAVLinkProtocol::MAVLinkProtocol(QObject *parent)
 
 MAVLinkProtocol::~MAVLinkProtocol()
 {
-    _storeSettings();
     _closeLogFile();
 
     // qCDebug(MAVLinkProtocolLog) << Q_FUNC_INFO << this;
@@ -58,8 +58,6 @@ void MAVLinkProtocol::init()
 
     (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleRemoved, this, &MAVLinkProtocol::_vehicleCountChanged);
 
-    _loadSettings();
-
     _initialized = true;
 }
 
@@ -71,33 +69,6 @@ void MAVLinkProtocol::setVersion(unsigned version)
     }
 
     _currentVersion = version;
-}
-
-void MAVLinkProtocol::_loadSettings()
-{
-    QSettings settings;
-    settings.beginGroup("QGC_MAVLINK_PROTOCOL");
-
-    enableVersionCheck(settings.value("VERSION_CHECK_ENABLED", versionCheckEnabled()).toBool());
-
-    bool ok = false;
-    const uint temp = settings.value("GCS_SYSTEM_ID", getSystemId()).toUInt(&ok);
-    if (ok && (temp > 0) && (temp < 256)) {
-        setSystemId(temp);
-    }
-
-    settings.endGroup();
-}
-
-void MAVLinkProtocol::_storeSettings() const
-{
-    QSettings settings;
-    settings.beginGroup("QGC_MAVLINK_PROTOCOL");
-
-    settings.setValue("VERSION_CHECK_ENABLED", versionCheckEnabled());
-    settings.setValue("GCS_SYSTEM_ID", getSystemId());
-
-    settings.endGroup();
 }
 
 void MAVLinkProtocol::resetMetadataForLink(LinkInterface *link)
@@ -220,7 +191,7 @@ void MAVLinkProtocol::_forward(const mavlink_message_t &message)
         return;
     }
 
-    if (!SettingsManager::instance()->appSettings()->forwardMavlink()->rawValue().toBool()) {
+    if (!SettingsManager::instance()->mavlinkSettings()->forwardMavlink()->rawValue().toBool()) {
         return;
     }
 
@@ -349,7 +320,7 @@ void MAVLinkProtocol::_startLogging()
     }
 
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
-    if (!appSettings->telemetrySave()->rawValue().toBool()) {
+    if (!SettingsManager::instance()->mavlinkSettings()->telemetrySave()->rawValue().toBool()) {
         return;
     }
 #endif
@@ -379,8 +350,11 @@ void MAVLinkProtocol::_startLogging()
 void MAVLinkProtocol::_stopLogging()
 {
     if (_tempLogFile->isOpen() && _closeLogFile()) {
-        AppSettings *const appSettings = SettingsManager::instance()->appSettings();
-        if ((_vehicleWasArmed || appSettings->telemetrySaveNotArmed()->rawValue().toBool()) && appSettings->telemetrySave()->rawValue().toBool() && !appSettings->disableAllPersistence()->rawValue().toBool()) {
+        auto appSettings = SettingsManager::instance()->appSettings();
+        auto mavlinkSettings = SettingsManager::instance()->mavlinkSettings();
+        if ((_vehicleWasArmed || mavlinkSettings->telemetrySaveNotArmed()->rawValue().toBool()) && 
+                mavlinkSettings->telemetrySave()->rawValue().toBool() && 
+                !appSettings->disableAllPersistence()->rawValue().toBool()) {
             _saveTelemetryLog(_tempLogFile->fileName());
         } else {
             (void) QFile::remove(_tempLogFile->fileName());
@@ -468,25 +442,14 @@ bool MAVLinkProtocol::_checkTelemetrySavePath()
     return true;
 }
 
-void MAVLinkProtocol::setSystemId(int id)
-{
-    if (id != _systemId) {
-        _systemId = id;
-        emit systemIdChanged(_systemId);
-    }
-}
-
-void MAVLinkProtocol::enableVersionCheck(bool enabled)
-{
-    if (enabled != _enableVersionCheck) {
-        _enableVersionCheck = enabled;
-        emit versionCheckChanged(enabled);
-    }
-}
-
 void MAVLinkProtocol::_vehicleCountChanged()
 {
     if (MultiVehicleManager::instance()->vehicles()->count() == 0) {
         _stopLogging();
     }
+}
+
+int MAVLinkProtocol::getSystemId() const 
+{ 
+    return SettingsManager::instance()->mavlinkSettings()->gcsMavlinkSystemID()->rawValue().toInt(); 
 }

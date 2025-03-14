@@ -12,6 +12,7 @@
 #include "QGCApplication.h"
 #include "ParameterManager.h"
 #include "SettingsManager.h"
+#include "MavlinkSettings.h"
 #include "FirmwareUpgradeSettings.h"
 #include "QGCCorePlugin.h"
 #include "QGCOptions.h"
@@ -80,12 +81,7 @@ void MultiVehicleManager::init()
     _gcsHeartbeatTimer->setInterval(kGCSHeartbeatRateMSecs);
     _gcsHeartbeatTimer->setSingleShot(false);
     (void) connect(_gcsHeartbeatTimer, &QTimer::timeout, this, &MultiVehicleManager::_sendGCSHeartbeat);
-
-    QSettings settings;
-    _gcsHeartbeatEnabled = settings.value(kGCSHeartbeatEnabledKey, true).toBool();
-    if (_gcsHeartbeatEnabled) {
-        _gcsHeartbeatTimer->start();
-    }
+    _gcsHeartbeatTimer->start();
 
     _initialized = true;
 }
@@ -306,6 +302,10 @@ void MultiVehicleManager::_vehicleParametersReadyChanged(bool parametersReady)
 
 void MultiVehicleManager::_sendGCSHeartbeat()
 {
+    if (!SettingsManager::instance()->mavlinkSettings()->sendGCSHeartbeat()->rawValue().toBool()) {
+        return;
+    }
+
     const QList<SharedLinkInterfacePtr> sharedLinks = LinkManager::instance()->links();
     for (const SharedLinkInterfacePtr link: sharedLinks) {
         if (!link->isConnected()) {
@@ -382,23 +382,6 @@ Vehicle *MultiVehicleManager::getVehicleById(int vehicleId) const
     }
 
     return nullptr;
-}
-
-void MultiVehicleManager::_setGcsHeartbeatEnabled(bool gcsHeartBeatEnabled)
-{
-    if (gcsHeartBeatEnabled != _gcsHeartbeatEnabled) {
-        _gcsHeartbeatEnabled = gcsHeartBeatEnabled;
-        emit gcsHeartBeatEnabledChanged(gcsHeartBeatEnabled);
-
-        QSettings settings;
-        settings.setValue(kGCSHeartbeatEnabledKey, gcsHeartBeatEnabled);
-
-        if (gcsHeartBeatEnabled) {
-            _gcsHeartbeatTimer->start();
-        } else {
-            _gcsHeartbeatTimer->stop();
-        }
-    }
 }
 
 void MultiVehicleManager::_setActiveVehicle(Vehicle *vehicle)
