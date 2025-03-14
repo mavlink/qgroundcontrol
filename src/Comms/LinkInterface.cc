@@ -13,7 +13,7 @@
 #include "QGCLoggingCategory.h"
 #include "MAVLinkSigning.h"
 #include "SettingsManager.h"
-#include "AppSettings.h"
+#include "MavlinkSettings.h"
 
 #include <QtQml/QQmlEngine>
 
@@ -52,8 +52,8 @@ bool LinkInterface::mavlinkChannelIsSet() const
 bool LinkInterface::initMavlinkSigning()
 {
     if (!isSecureConnection()) {
-        auto appSettings = SettingsManager::instance()->appSettings();
-        const QByteArray signingKeyBytes = appSettings->mavlink2SigningKey()->rawValue().toByteArray();
+        auto mavlinkSettings = SettingsManager::instance()->mavlinkSettings();
+        const QByteArray signingKeyBytes = mavlinkSettings->mavlink2SigningKey()->rawValue().toByteArray();
         if (MAVLinkSigning::initSigning(static_cast<mavlink_channel_t>(_mavlinkChannel), signingKeyBytes, MAVLinkSigning::insecureConnectionAccceptUnsignedCallback)) {
             if (signingKeyBytes.isEmpty()) {
                 qCDebug(LinkInterfaceLog) << "Signing disabled on channel" << _mavlinkChannel;
