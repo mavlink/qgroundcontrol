@@ -535,8 +535,7 @@ QQuickWindow *QGCApplication::mainRootWindow()
 void QGCApplication::showVehicleConfig()
 {
     if (_rootQmlObject()) {
-      QVariant arg = "";
-      QMetaObject::invokeMethod(_rootQmlObject(), "showVehicleConfig", Q_ARG(QVariant, arg));
+      QMetaObject::invokeMethod(_rootQmlObject(), "showVehicleConfig");
     }
 }
 
