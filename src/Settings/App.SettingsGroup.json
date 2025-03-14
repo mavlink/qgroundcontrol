@@ -80,20 +80,6 @@
     "decimalPlaces":    1
 },
 {
-    "name":             "telemetrySave",
-    "shortDesc": "Save telemetry Log after each flight",
-    "longDesc":  "If this option is enabled a telemetry will be saved after each flight completes.",
-    "type":             "bool",
-    "default":     true
-},
-{
-    "name":             "telemetrySaveNotArmed",
-    "shortDesc": "Save telemetry log even if vehicle was not armed",
-    "longDesc":  "If this option is enabled a telemtry log will be saved even if vehicle was never armed.",
-    "type":             "bool",
-    "default":     false
-},
-{
     "name":             "audioMuted",
     "shortDesc": "Mute audio output",
     "longDesc":  "If this option is enabled all audio output will be muted.",
@@ -230,13 +216,6 @@
     "default":     2
 },
 {
-    "name":                 "apmStartMavlinkStreams",
-    "shortDesc":     "Request start of MAVLink telemetry streams (ArduPilot only)",
-    "type":                 "bool",
-    "default":         true,
-    "qgcRebootRequired":    true
-},
-{
     "name":                 "qLocaleLanguage",
     "shortDesc":            "Language",
     "type":                 "uint32",
@@ -252,39 +231,10 @@
     "default":     false
 },
 {
-    "name":             "saveCsvTelemetry",
-    "shortDesc": "Save CSV Telementry Logs",
-    "longDesc":  "If this option is enabled, all Facts will be written to a CSV file with a 1 Hertz frequency.",
-    "type":             "bool",
-    "default":     false
-},
-{
     "name":             "firstRunPromptIdsShown",
     "shortDesc": "Comma separated list of first run prompt ids which have already been shown.",
     "type":             "string",
     "default":     ""
-},
-{
-    "name":             "forwardMavlink",
-    "shortDesc": "Enable mavlink forwarding",
-    "longDesc":  "Enable mavlink forwarding",
-    "type":             "bool",
-    "default":     false
-},
-{
-    "name":             "forwardMavlinkHostName",
-    "shortDesc": "Host name",
-    "longDesc":  "Host name to forward mavlink to. i.e: localhost:14445",
-    "type":             "string",
-    "default":     "localhost:14445",
-    "qgcRebootRequired":    true
-},
-{
-    "name":      "forwardMavlinkAPMSupportHostName",
-    "shortDesc": "Ardupilot Support Host name",
-    "longDesc":  "Ardupilot Support server to forward mavlink to. i.e: support.ardupilot.org:xxxx",
-    "type":      "string",
-    "default":   "support.ardupilot.org:xxxx"
 },
 {
     "name": "loginAirLink",
@@ -297,12 +247,6 @@
     "shortDesc": "AirLink Password",
     "type": "string",
     "default": ""
-},
-{
-    "name":             "mavlink2SigningKey",
-    "shortDesc":        "MAVLink 2.0 signing key",
-    "type":             "string",
-    "default":          ""
 }
 ]
 }
