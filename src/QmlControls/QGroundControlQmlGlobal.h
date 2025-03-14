@@ -108,10 +108,6 @@ public:
     Q_PROPERTY(qreal zOrderWaypointIndicators   READ zOrderWaypointIndicators   CONSTANT)
     Q_PROPERTY(qreal zOrderTrajectoryLines      READ zOrderTrajectoryLines      CONSTANT)
     Q_PROPERTY(qreal zOrderWaypointLines        READ zOrderWaypointLines        CONSTANT)
-    //-------------------------------------------------------------------------
-    // MavLink Protocol
-    Q_PROPERTY(bool     isVersionCheckEnabled   READ isVersionCheckEnabled      WRITE setIsVersionCheckEnabled      NOTIFY isVersionCheckEnabledChanged)
-    Q_PROPERTY(int      mavlinkSystemID         READ mavlinkSystemID            WRITE setMavlinkSystemID            NOTIFY mavlinkSystemIDChanged)
     Q_PROPERTY(bool     hasAPMSupport           READ hasAPMSupport              CONSTANT)
     Q_PROPERTY(bool     hasMAVLinkInspector     READ hasMAVLinkInspector        CONSTANT)
 
@@ -194,8 +190,6 @@ public:
     qreal zOrderTrajectoryLines     () { return 48; }
     qreal zOrderWaypointLines       () { return 47; }
 
-    bool    isVersionCheckEnabled   ();
-    int     mavlinkSystemID         ();
 #if defined(QGC_NO_ARDUPILOT_DIALECT)
     bool    hasAPMSupport           () { return false; }
 #else
@@ -216,8 +210,6 @@ public:
     bool    px4ProFirmwareSupported ();
     bool    apmFirmwareSupported    ();
 
-    void    setIsVersionCheckEnabled    (bool enable);
-    void    setMavlinkSystemID          (int  id);
     void    setFlightMapPosition        (QGeoCoordinate& coordinate);
     void    setFlightMapZoom            (double zoom);
 
@@ -236,7 +228,6 @@ public:
 
 signals:
     void isMultiplexingEnabledChanged   (bool enabled);
-    void isVersionCheckEnabledChanged   (bool enabled);
     void mavlinkSystemIDChanged         (int id);
     void flightMapPositionChanged       (QGeoCoordinate flightMapPosition);
     void flightMapZoomChanged           (double flightMapZoom);
