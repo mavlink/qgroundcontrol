@@ -85,9 +85,10 @@ public:
         PauseVehicleCapability =    1 << 1, ///< Vehicle supports pausing at current location
         GuidedModeCapability =      1 << 2, ///< Vehicle supports guided mode commands
         OrbitModeCapability =       1 << 3, ///< Vehicle supports orbit mode
-        TakeoffVehicleCapability =  1 << 4, ///< Vehicle supports guided takeoff
+        TakeoffVehicleCapability =  1 << 4, ///< Vehicle supports taking off
         ROIModeCapability =         1 << 5, ///< Vehicle supports ROI (both in Fly guided mode and from Plan creation)
         ChangeHeadingCapability =   1 << 6, ///< Vehicle supports changing heading at current location
+        GuidedTakeoffCapability =   1 << 7, ///< Vehicle supports guided takeoff
     };
 
     /// Maps from on parameter name to another
@@ -182,7 +183,7 @@ public:
     /// Command vehicle to land at current location
     virtual void guidedModeLand(Vehicle *vehicle) const;
 
-    /// Command vehicle to takeoff from current location to a firmware specific height.
+    /// Command vehicle to takeoff from current location to the specified height.
     virtual void guidedModeTakeoff(Vehicle *vehicle, double takeoffAltRel) const;
 
     /// Command vehicle to rotate towards specified location.
@@ -208,6 +209,9 @@ public:
 
     /// @return Return true if we have received the airspeed limits for fixed wing.
     virtual bool fixedWingAirSpeedLimitsAvailable(Vehicle* /*vehicle*/) const { return false; }
+
+    /// Command the vehicle to start a takeoff
+    virtual void startTakeoff(Vehicle *vehicle) const;
 
     /// Command the vehicle to start the mission
     virtual void startMission(Vehicle *vehicle) const;
