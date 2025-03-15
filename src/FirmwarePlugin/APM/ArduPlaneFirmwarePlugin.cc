@@ -103,6 +103,11 @@ int ArduPlaneFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVer
     return ((majorVersionNumber == 4) ? 5 : Vehicle::versionNotSetValue);
 }
 
+QString ArduPlaneFirmwarePlugin::takeOffFlightMode() const
+{
+    return _modeEnumToString.value(APMPlaneMode::TAKEOFF, _takeoffFlightMode);
+}
+
 QString ArduPlaneFirmwarePlugin::stabilizedFlightMode() const
 {
     return _modeEnumToString.value(APMPlaneMode::STABILIZE, _stabilizeFlightMode);

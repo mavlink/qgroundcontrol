@@ -88,6 +88,7 @@ public:
         TakeoffVehicleCapability =  1 << 4, ///< Vehicle supports guided takeoff
         ROIModeCapability =         1 << 5, ///< Vehicle supports ROI (both in Fly guided mode and from Plan creation)
         ChangeHeadingCapability =   1 << 6, ///< Vehicle supports changing heading at current location
+        GuidedTakeoffCapability =   1 << 7, ///< Vehicle supports guided takeoff
     };
 
     /// Maps from on parameter name to another
@@ -208,6 +209,9 @@ public:
 
     /// @return Return true if we have received the airspeed limits for fixed wing.
     virtual bool fixedWingAirSpeedLimitsAvailable(Vehicle* /*vehicle*/) const { return false; }
+
+    /// Command the vehicle to start a takeoff
+    virtual void startTakeoff(Vehicle* vehicle) const;
 
     /// Command the vehicle to start the mission
     virtual void startMission(Vehicle *vehicle) const;
