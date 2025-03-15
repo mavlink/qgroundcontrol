@@ -33,6 +33,7 @@ class RTKSettings;
 class UnitsSettings;
 class VideoSettings;
 class Viewer3DSettings;
+class MavlinkSettings;
 
 Q_DECLARE_LOGGING_CATEGORY(SettingsManagerLog)
 
@@ -63,6 +64,7 @@ class SettingsManager : public QObject
     Q_MOC_INCLUDE("RTKSettings.h")
     Q_MOC_INCLUDE("UnitsSettings.h")
     Q_MOC_INCLUDE("VideoSettings.h")
+    Q_MOC_INCLUDE("MavlinkSettings.h")
 #ifdef QGC_VIEWER3D
     Q_MOC_INCLUDE("Viewer3DSettings.h")
 #endif
@@ -87,6 +89,7 @@ class SettingsManager : public QObject
     Q_PROPERTY(QObject *rtkSettings                     READ rtkSettings                    CONSTANT)
     Q_PROPERTY(QObject *unitsSettings                   READ unitsSettings                  CONSTANT)
     Q_PROPERTY(QObject *videoSettings                   READ videoSettings                  CONSTANT)
+    Q_PROPERTY(QObject *mavlinkSettings                 READ mavlinkSettings                CONSTANT)
 #ifdef QGC_VIEWER3D
     Q_PROPERTY(QObject *viewer3DSettings                READ viewer3DSettings               CONSTANT)
 #endif
@@ -120,6 +123,7 @@ public:
     RTKSettings *rtkSettings() const;
     UnitsSettings *unitsSettings() const;
     VideoSettings *videoSettings() const;
+    MavlinkSettings *mavlinkSettings() const;
 #ifdef QGC_VIEWER3D
     Viewer3DSettings *viewer3DSettings() const;
 #endif
@@ -146,6 +150,7 @@ private:
     RTKSettings *_rtkSettings = nullptr;
     UnitsSettings *_unitsSettings = nullptr;
     VideoSettings *_videoSettings = nullptr;
+    MavlinkSettings *_mavlinkSettings = nullptr;
 #ifdef QGC_VIEWER3D
     Viewer3DSettings *_viewer3DSettings = nullptr;
 #endif

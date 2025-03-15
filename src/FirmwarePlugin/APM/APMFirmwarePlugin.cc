@@ -19,7 +19,7 @@
 #include "MissionManager.h"
 #include "ParameterManager.h"
 #include "SettingsManager.h"
-#include "AppSettings.h"
+#include "MavlinkSettings.h"
 #include "PlanViewSettings.h"
 #include "VideoSettings.h"
 #include "APMMavlinkStreamRateSettings.h"
@@ -401,7 +401,7 @@ void APMFirmwarePlugin::initializeStreamRates(Vehicle* vehicle)
         vehicle->setFirmwarePluginInstanceData(instanceData);
     }
 
-    if (SettingsManager::instance()->appSettings()->apmStartMavlinkStreams()->rawValue().toBool()) {
+    if (SettingsManager::instance()->mavlinkSettings()->apmStartMavlinkStreams()->rawValue().toBool()) {
 
         APMMavlinkStreamRateSettings* streamRates = SettingsManager::instance()->apmMavlinkStreamRateSettings();
 

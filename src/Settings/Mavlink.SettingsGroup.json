@@ -1,0 +1,77 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":             "telemetrySave",
+    "shortDesc": "Save telemetry Log after each flight",
+    "longDesc":  "If this option is enabled a telemetry will be saved after each flight completes.",
+    "type":             "bool",
+    "default":     true
+},
+{
+    "name":             "telemetrySaveNotArmed",
+    "shortDesc": "Save telemetry log even if vehicle was not armed",
+    "longDesc":  "If this option is enabled a telemtry log will be saved even if vehicle was never armed.",
+    "type":             "bool",
+    "default":     false
+},
+{
+    "name":                 "apmStartMavlinkStreams",
+    "shortDesc":     "Request start of MAVLink telemetry streams (ArduPilot only)",
+    "type":                 "bool",
+    "default":         true,
+    "qgcRebootRequired":    true
+},
+{
+    "name":             "saveCsvTelemetry",
+    "shortDesc": "Save CSV Telementry Logs",
+    "longDesc":  "If this option is enabled, all Facts will be written to a CSV file with a 1 Hertz frequency.",
+    "type":             "bool",
+    "default":     false
+},
+{
+    "name":             "forwardMavlink",
+    "shortDesc": "Enable mavlink forwarding",
+    "longDesc":  "Enable mavlink forwarding",
+    "type":             "bool",
+    "default":     false
+},
+{
+    "name":             "forwardMavlinkHostName",
+    "shortDesc": "Host name",
+    "longDesc":  "Host name to forward mavlink to. i.e: localhost:14445",
+    "type":             "string",
+    "default":     "localhost:14445",
+    "qgcRebootRequired":    true
+},
+{
+    "name":      "forwardMavlinkAPMSupportHostName",
+    "shortDesc": "Ardupilot Support Host name",
+    "longDesc":  "Ardupilot Support server to forward mavlink to. i.e: support.ardupilot.org:xxxx",
+    "type":      "string",
+    "default":   "support.ardupilot.org:xxxx"
+},
+{
+    "name":         "mavlink2SigningKey",
+    "shortDesc":    "MAVLink 2.0 signing key",
+    "type":         "string",
+    "default":      ""
+},
+{
+    "name":         "sendGCSHeartbeat",
+    "shortDesc":    "Send GCS Heartbeat",
+    "type":         "bool",
+    "default":      true
+},
+{
+    "name":         "gcsMavlinkSystemID",
+    "shortDesc":    "GCS MAVLink System ID",
+    "type":         "uint32",
+    "default":      255,
+    "min":          1,
+    "max":          255
+}
+]
+}

@@ -10,6 +10,7 @@
 #include "QGCCorePlugin.h"
 #include "AppMessages.h"
 #include "AppSettings.h"
+#include "MavlinkSettings.h"
 #include "FactMetaData.h"
 #ifdef QGC_GST_STREAMING
 #include "GStreamer.h"
@@ -130,7 +131,7 @@ bool QGCCorePlugin::adjustSettingMetaData(const QString &settingsGroup, FactMeta
             return true;
         }
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
-        else if (metaData.name() == AppSettings::telemetrySaveName) {
+        else if (metaData.name() == MavlinkSettings::telemetrySaveName) {
             metaData.setRawDefaultValue(false);
             return true;
         }

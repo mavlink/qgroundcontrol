@@ -46,13 +46,10 @@ public:
     static QString getName() { return QStringLiteral("MAVLink protocol"); }
 
     /// Get the system id of this application
-    int getSystemId() const { return _systemId; }
+    int getSystemId() const;
 
     /// Get the component id of this application
     static int getComponentId() { return MAV_COMP_ID_MISSIONPLANNER; }
-
-    /// Get protocol version check state
-    bool versionCheckEnabled() const { return _enableVersionCheck; }
 
     /// Get the protocol version
     static int getVersion() { return MAVLINK_VERSION; }
@@ -81,12 +78,6 @@ signals:
     /// Message received and directly copied via signal
     void messageReceived(LinkInterface *link, const mavlink_message_t &message);
 
-    /// Emitted if version check is enabled/disabled
-    void versionCheckChanged(bool enabled);
-
-    /// Emitted if a new system ID was set
-    void systemIdChanged(int systemId);
-
     void mavlinkMessageStatus(int sysid, uint64_t totalSent, uint64_t totalReceived, uint64_t totalLoss, float lossPercent);
 
 public slots:
@@ -98,12 +89,6 @@ public slots:
     /// It can handle multiple links in parallel, as each link has it's own buffer/parsing state machine.
     ///     @param link The interface to read from
     void logSentBytes(const LinkInterface *link, const QByteArray &data);
-
-    /// Set the system id of this application
-    void setSystemId(int id);
-
-    /// Enable/Disable version check
-    void enableVersionCheck(bool enabled);
 
     /// Deletes any log files which are in the temp directory
     static void deleteTempLogFiles();
@@ -127,29 +112,23 @@ private:
     void _saveTelemetryLog(const QString &tempLogfile);
     bool _checkTelemetrySavePath();
 
-    void _storeSettings() const;
-    void _loadSettings();
-
     QGCTemporaryFile * const _tempLogFile = nullptr;
 
     bool _logSuspendError = false;  ///< true: Logging suspended due to error
     bool _logSuspendReplay = false; ///< true: Logging suspended due to replay
     bool _vehicleWasArmed = false;  ///< true: Vehicle was armed during log sequence
 
-    bool _enableVersionCheck = true;                            ///< Enable checking of version match of MAV and QGC
     uint8_t _lastIndex[256][256]{};                             ///< Store the last received sequence ID for each system/component pair
     uint8_t _firstMessage[256][256]{};                          ///< First message flag
     uint64_t _totalReceiveCounter[MAVLINK_COMM_NUM_BUFFERS]{};  ///< The total number of successfully received messages
     uint64_t _totalLossCounter[MAVLINK_COMM_NUM_BUFFERS]{};     ///< Total messages lost during transmission.
     float _runningLossPercent[MAVLINK_COMM_NUM_BUFFERS]{};      ///< Loss rate
 
-    int _systemId = kMaxSysId;
     unsigned _currentVersion = 100;
     bool _initialized = false;
 
     static constexpr const char *_tempLogFileTemplate = "FlightDataXXXXXX"; ///< Template for temporary log file
     static constexpr const char *_logFileExtension = "mavlink";             ///< Extension for log files
 
-    static constexpr uint8_t kMaxSysId = 255;
     static constexpr uint8_t kMaxCompId = MAV_COMPONENT_ENUM_END - 1;
 };

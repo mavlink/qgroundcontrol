@@ -65,7 +65,7 @@ SetupPage {
             Component.onCompleted: _setUIFromParams()
 
             function validateSupportedParamSetup() {
-                var followSysIdOk = _followSysId.rawValue == QGroundControl.mavlinkSystemID
+                var followSysIdOk = _followSysId.rawValue == QGroundControl.settingsManager.mavlinkSettings.gcsMavlinkSystemID.rawValue
                 var followOffsetOk = _followOffsetType.rawValue == _followOffsetTypeRelative
                 var followAltOk = true
                 var followYawOk = true
@@ -113,7 +113,7 @@ SetupPage {
             }
 
             function _setFollowMeParamDefaults() {
-                _followSysId.rawValue = QGroundControl.mavlinkSystemID
+                _followSysId.rawValue = QGroundControl.settingsManager.mavlinkSettings.gcsMavlinkSystemID.rawValue
                 _followOffsetType.rawValue = _followOffsetTypeRelative
                 if (!_roverFirmware) {
                     _followAltitudeType.rawValue = _followAltitudeTypeRelative
