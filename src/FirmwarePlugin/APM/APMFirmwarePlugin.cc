@@ -429,12 +429,17 @@ void APMFirmwarePlugin::initializeStreamRates(Vehicle* vehicle)
         }
     }
 
+    // The MAV_CMD_SET_MESSAGE_INTERVAL command is only supported on newer firmwares. So we set showError=false.
+    // Which also means than on older firmwares you may be left with some missing features.
+
     // ArduPilot only sends home position on first boot and then when it arms. It does not stream the position.
     // This means that depending on when QGC connects to the vehicle it may not have home position.
     // This can cause various features to not be available. So we request home position streaming ourselves.
-    // The MAV_CMD_SET_MESSAGE_INTERVAL command is only supported on newer firmwares. So we set showError=false.
-    // Which also means than on older firmwares you may be left with some missing features.
     vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_SET_MESSAGE_INTERVAL, false /* showError */, MAVLINK_MSG_ID_HOME_POSITION, 1000000 /* 1 second interval in usec */);
+
+    // ArduPilot doesn't send MAVLINK_MSG_ID_EXTENDED_SYS_STATE messages unless requested, so we request it to
+    // make the LandAbort action available.
+    vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_SET_MESSAGE_INTERVAL, false /* showError */, MAVLINK_MSG_ID_EXTENDED_SYS_STATE, 1000000 /* 1 second interval in usec */);
 
     instanceData->lastBatteryStatusTime = instanceData->lastHomePositionTime = QTime::currentTime();
 }
