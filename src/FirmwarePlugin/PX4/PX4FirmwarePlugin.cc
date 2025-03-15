@@ -181,7 +181,7 @@ bool PX4FirmwarePlugin::isCapable(const Vehicle *vehicle, FirmwareCapabilities c
         available |= TakeoffVehicleCapability | GuidedTakeoffCapability | OrbitModeCapability;
     }
     if (vehicle->fixedWing()) {
-        available |= TakeoffVehicleCapability;
+        available |= TakeoffVehicleCapability | OrbitModeCapability;
     }
     return (capabilities & available) == capabilities;
 }
