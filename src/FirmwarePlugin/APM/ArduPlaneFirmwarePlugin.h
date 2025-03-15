@@ -61,7 +61,7 @@ public:
     QString autoDisarmParameter                     (Vehicle* vehicle) final { Q_UNUSED(vehicle); return QStringLiteral("LAND_DISARMDELAY"); }
     int     remapParamNameHigestMinorVersionNumber  (int majorVersionNumber) const final;    
     const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
-
+    QString takeOffFlightMode                       (void) const override;
     QString stabilizedFlightMode                    (void) const override;
     void    updateAvailableFlightModes              (FlightModeList modeList) override;
 
