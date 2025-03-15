@@ -42,6 +42,7 @@ public:
     void guidedModeTakeoff(Vehicle *vehicle, double altitudeRel) const override;
     void guidedModeGotoLocation(Vehicle *vehicle, const QGeoCoordinate& gotoCoord) const override;
     double minimumTakeoffAltitudeMeters(Vehicle *vehicle) const override;
+    void startTakeoff(Vehicle *vehicle) const override;
     void startMission(Vehicle *vehicle) const override;
     QStringList flightModes(Vehicle *vehicle) const override;
     QString flightMode(uint8_t base_mode, uint32_t custom_mode) const override;

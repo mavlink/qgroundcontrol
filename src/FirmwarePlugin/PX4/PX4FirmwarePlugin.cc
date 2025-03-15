@@ -170,7 +170,10 @@ bool PX4FirmwarePlugin::isCapable(const Vehicle *vehicle, FirmwareCapabilities c
         available |= ROIModeCapability | ChangeHeadingCapability;
     }
     if (vehicle->multiRotor() || vehicle->vtol()) {
-        available |= TakeoffVehicleCapability | OrbitModeCapability;
+        available |= TakeoffVehicleCapability | GuidedTakeoffCapability | OrbitModeCapability;
+    }
+    if (vehicle->fixedWing()) {
+        available |= TakeoffVehicleCapability;
     }
     return (capabilities & available) == capabilities;
 }
@@ -561,6 +564,18 @@ void PX4FirmwarePlugin::guidedModeChangeHeading(Vehicle* vehicle, const QGeoCoor
         radians,                                // change heading
         NAN, NAN, NAN                           // no change lat, lon, alt
     );
+}
+
+void PX4FirmwarePlugin::startTakeoff(Vehicle* vehicle) const
+{
+    if (_setFlightModeAndValidate(vehicle, takeOffFlightMode())) {
+        if (!_armVehicleAndValidate(vehicle)) {
+            qgcApp()->showAppMessage(tr("Unable to start takeoff: Vehicle rejected arming."));
+            return;
+        }
+    } else {
+        qgcApp()->showAppMessage(tr("Unable to start takeoff: Vehicle not changing to %1 flight mode.").arg(takeOffFlightMode()));
+    }
 }
 
 void PX4FirmwarePlugin::startMission(Vehicle* vehicle) const
