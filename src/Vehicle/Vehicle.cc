@@ -2578,6 +2578,8 @@ bool Vehicle::_commandCanBeDuplicated(MAV_CMD command)
     switch (command) {
     case MAV_CMD_DO_MOTOR_TEST:
         return true;
+    case MAV_CMD_SET_MESSAGE_INTERVAL:
+        return true;
     default:
         return false;
     }
