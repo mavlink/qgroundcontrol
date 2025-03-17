@@ -1142,12 +1142,13 @@ void TransectStyleComplexItem::_appendSinglePhotoCapture(QList<MissionItem*>& it
     MissionItem* item = new MissionItem(seqNum++,
                                         MAV_CMD_IMAGE_START_CAPTURE,
                                         MAV_FRAME_MISSION,
-                                        0,                                   // Reserved (Set to 0)
-                                        0,                                   // Interval (none)
-                                        1,                                   // Take 1 photo
-                                        qQNaN(), qQNaN(), qQNaN(), qQNaN(),  // param 4-7 reserved
-                                        true,                                // autoContinue
-                                        false,                               // isCurrentItem
+                                        0,                              // Reserved (Set to 0)
+                                        0,                              // Interval (none)
+                                        1,                              // Take 1 photo
+                                        0,                              // No sequence number specified
+                                        qQNaN(), qQNaN(), qQNaN(),      // param 5-7 reserved
+                                        true,                           // autoContinue
+                                        false,                          // isCurrentItem
                                         missionItemParent);
     items.append(item);
 }
