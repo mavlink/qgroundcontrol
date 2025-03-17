@@ -7,26 +7,19 @@
  *
  ****************************************************************************/
 
-
-/**
- * @file
- *   @brief Map Tile Cache
- *
- *   @author Gus Grubba <gus@auterion.com>
- *
- */
-
 #include "QGCMapEngine.h"
 #include "QGCCachedTileSet.h"
-#include "QGCTileCacheWorker.h"
-#include "QGeoFileTileCacheQGC.h"
-#include "QGCMapTasks.h"
-#include "QGCTileSet.h"
-#include "QGCTile.h"
 #include "QGCCacheTile.h"
-#include <QGCLoggingCategory.h>
+#include "QGCLoggingCategory.h"
+#include "QGCMapTasks.h"
+#include "QGCTile.h"
+#include "QGCTileCacheWorker.h"
+#include "QGCTileSet.h"
+#include "QGeoFileTileCacheQGC.h"
 
 #include <QtCore/qapplicationstatic.h>
+#include <QtCore/QThread>
+#include <QtCore/QtMath>
 
 QGC_LOGGING_CATEGORY(QGCMapEngineLog, "qgc.qtlocationplugin.qgcmapengine")
 
@@ -41,7 +34,8 @@ QGCMapEngine *getQGCMapEngine()
 
 QGCMapEngine::QGCMapEngine(QObject *parent)
     : QObject(parent)
-    , m_worker(new QGCCacheWorker(this))
+    , _worker(new QGCCacheWorker(nullptr))
+    , _workerThread(new QThread(this))
 {
     // qCDebug(QGCMapEngineLog) << Q_FUNC_INFO << this;
 
@@ -51,14 +45,24 @@ QGCMapEngine::QGCMapEngine(QObject *parent)
     (void) qRegisterMetaType<QGCTileSet>("QGCTileSet");
     (void) qRegisterMetaType<QGCCacheTile>("QGCCacheTile");
 
-    (void) connect(m_worker, &QGCCacheWorker::updateTotals, this, &QGCMapEngine::_updateTotals);
+    _workerThread->setObjectName(QStringLiteral("QGCTileCacheWorker"));
+
+    (void) _worker->moveToThread(_workerThread);
+
+    (void) connect(_worker, &QGCCacheWorker::updateTotals, this, &QGCMapEngine::_updateTotals);
+
+    _workerThread->start();
 }
 
 QGCMapEngine::~QGCMapEngine()
 {
-    (void) disconnect(m_worker);
-    m_worker->stop();
-    m_worker->wait();
+    (void) disconnect(_worker);
+    _worker->stop();
+
+    _workerThread->quit();
+    (void) _workerThread->wait();
+
+    delete _worker;
 
     // qCDebug(QGCMapEngineLog) << Q_FUNC_INFO << this;
 }
@@ -70,27 +74,28 @@ QGCMapEngine *QGCMapEngine::instance()
 
 void QGCMapEngine::init(const QString &databasePath)
 {
-    m_worker->setDatabaseFile(databasePath);
+    _worker->setDatabaseFile(databasePath);
 
-    QGCMapTask* const task = new QGCMapTask(QGCMapTask::taskInit);
+    QGCMapTask *const task = new QGCMapTask(QGCMapTask::taskInit);
     (void) addTask(task);
 }
 
 bool QGCMapEngine::addTask(QGCMapTask *task)
 {
-    return m_worker->enqueueTask(task);
+    _worker->enqueueTask(task);
+    return true;
 }
 
 void QGCMapEngine::_updateTotals(quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize)
 {
     emit updateTotals(totaltiles, totalsize, defaulttiles, defaultsize);
 
-    const quint64 maxSize = static_cast<quint64>(QGeoFileTileCacheQGC::getMaxDiskCacheSetting()) * pow(1024, 2);
-    if (!m_prunning && (defaultsize > maxSize)) {
-        m_prunning = true;
+    const quint64 maxSize = static_cast<quint64>(QGeoFileTileCacheQGC::getMaxDiskCacheSetting()) * qPow(1024, 2);
+    if (!_prunning && (defaultsize > maxSize)) {
+        _prunning = true;
 
         const quint64 amountToPrune = defaultsize - maxSize;
-        QGCPruneCacheTask* const task = new QGCPruneCacheTask(amountToPrune);
+        QGCPruneCacheTask *const task = new QGCPruneCacheTask(amountToPrune);
         (void) connect(task, &QGCPruneCacheTask::pruned, this, &QGCMapEngine::_pruned);
         (void) addTask(task);
     }
