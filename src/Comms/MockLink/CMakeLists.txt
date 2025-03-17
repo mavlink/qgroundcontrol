@@ -27,7 +27,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
             Qt6::Core
             Qt6::Positioning
             Comms
-            PX4FirmwarePlugin
+            FirmwarePlugin
             MAVLink
     )
 
