@@ -9,11 +9,11 @@
 
 #pragma once
 
+#include "PX4/px4_custom_mode.h"
 #include "LinkInterface.h"
 #include "MAVLinkLib.h"
 #include "MockConfiguration.h"
 #include "MockLinkMissionItemHandler.h"
-#include "px4_custom_mode.h"
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
