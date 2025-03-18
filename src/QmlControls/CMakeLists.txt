@@ -71,7 +71,6 @@ target_link_libraries(QGC
         Qt6::Positioning
         Qt6::QmlIntegration
         Qt6::Quick
-        QGCLocation
 )
 
 target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
