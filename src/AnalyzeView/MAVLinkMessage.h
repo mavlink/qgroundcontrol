@@ -23,7 +23,7 @@ Q_DECLARE_LOGGING_CATEGORY(MAVLinkMessageLog)
 class QGCMAVLinkMessage : public QObject
 {
     Q_OBJECT
-    QML_ELEMENT
+    // QML_ELEMENT
     Q_MOC_INCLUDE("QmlObjectListModel.h")
     Q_PROPERTY(quint32              id              READ id             CONSTANT)
     Q_PROPERTY(quint32              sysId           READ sysId          CONSTANT)

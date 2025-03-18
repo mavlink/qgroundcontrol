@@ -24,8 +24,8 @@ class QGCCompass;
 class QGCPositionManager : public QObject
 {
     Q_OBJECT
-    QML_ELEMENT
-    QML_UNCREATABLE("")
+    // QML_ELEMENT
+    // QML_UNCREATABLE("")
 
     Q_PROPERTY(QGeoCoordinate gcsPosition                   READ gcsPosition                    NOTIFY gcsPositionChanged)
     Q_PROPERTY(qreal          gcsHeading                    READ gcsHeading                     NOTIFY gcsHeadingChanged)

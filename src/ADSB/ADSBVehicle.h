@@ -23,7 +23,7 @@ Q_DECLARE_LOGGING_CATEGORY(ADSBVehicleLog)
 class ADSBVehicle : public QObject
 {
     Q_OBJECT
-    QML_ELEMENT
+    // QML_ELEMENT
 
     Q_PROPERTY(uint           icaoAddress READ icaoAddress CONSTANT)
     Q_PROPERTY(QString        callsign    READ callsign    NOTIFY callsignChanged)
