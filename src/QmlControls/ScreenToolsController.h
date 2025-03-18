@@ -23,7 +23,7 @@ Q_DECLARE_LOGGING_CATEGORY(ScreenToolsControllerLog)
 class ScreenToolsController : public QObject
 {
     Q_OBJECT
-    QML_ELEMENT
+    // QML_ELEMENT
     // TODO: Q_NAMESPACE
     Q_PROPERTY(bool     isAndroid           READ isAndroid          CONSTANT)
     Q_PROPERTY(bool     isiOS               READ isiOS              CONSTANT)

@@ -29,7 +29,7 @@ class QTimer;
 class MAVLinkChartController : public QObject
 {
     Q_OBJECT
-    QML_ELEMENT
+    // QML_ELEMENT
     Q_MOC_INCLUDE("MAVLinkInspectorController.h")
     Q_MOC_INCLUDE("MAVLinkMessageField.h")
     Q_MOC_INCLUDE("QtCharts/qabstractseries.h")

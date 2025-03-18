@@ -39,7 +39,7 @@
 class QGCMapPalette : public QObject
 {
     Q_OBJECT
-    QML_ELEMENT
+    // QML_ELEMENT
     
     Q_PROPERTY(bool lightColors READ lightColors WRITE setLightColors NOTIFY paletteChanged)
 
