@@ -91,7 +91,7 @@
 class QGCPalette : public QObject
 {
     Q_OBJECT
-    QML_ELEMENT
+    // QML_ELEMENT
 
 public:
     enum ColorGroup {

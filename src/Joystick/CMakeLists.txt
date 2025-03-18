@@ -37,12 +37,6 @@ target_sources(QGC
 
 target_compile_definitions(QGC PRIVATE QGC_SDL_JOYSTICK SDL_MAIN_HANDLED)
 
-# qt_add_qml_module(QGC
-#     URI QGroundControl.JoystickManager
-#     VERSION 1.0
-#     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
-# )
-
 #===========================================================================#
 
 include(CPM)

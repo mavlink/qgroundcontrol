@@ -26,7 +26,7 @@ class LogDownloadTest;
 class LogDownloadController : public QObject
 {
     Q_OBJECT
-    QML_ELEMENT
+    // QML_ELEMENT
     // QML_SINGLETON
     Q_MOC_INCLUDE("Vehicle.h")
     Q_MOC_INCLUDE("QmlObjectListModel.h")
