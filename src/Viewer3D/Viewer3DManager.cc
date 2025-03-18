@@ -15,7 +15,7 @@
 #include "CityMapGeometry.h"
 #include "Viewer3DQmlVariableTypes.h"
 
-#include <QtQml/QtQml>
+#include <QtQml/qqml.h>
 
 Viewer3DManager::Viewer3DManager()
 {
