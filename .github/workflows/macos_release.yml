@@ -76,29 +76,6 @@ jobs:
             # Verify the links
             ls -la /Library/lib/GStreamer.framework/Versions/1.0/
 
-      - name: Install ccache
-        run:  brew install ccache
-
-      - name: Prepare ccache timestamp
-        id: ccache_cache_timestamp
-        run: echo "name=timestamp::$(date --utc +'%Y-%m-%d-%H\;%M\;%S')" >> $GITHUB_OUTPUT
-
-      - name: ccache cache files
-        uses: actions/cache@v3
-        with:
-          path:         ~/.ccache
-          key:          ${{ runner.os }}-ccache-${{steps.ccache_cache_timestamp.outputs.timestamp}}
-          restore-keys: ${{ runner.os }}-ccache-
-
-      - name: Setup ccache
-        run: |
-            mkdir -p ~/.ccache
-            echo "base_dir = ${GITHUB_WORKSPACE}" > ~/.ccache/ccache.conf
-            echo "compression = true" >> ~/.ccache/ccache.conf
-            echo "compression_level = 5" >> ~/.ccache/ccache.conf
-            ccache -s
-            ccache -z
-
       - name: Create build directory
         run:  mkdir ${{ runner.temp }}/shadow_build_dir
 
@@ -128,9 +105,6 @@ jobs:
             -spec macx-clang \
             QMAKE_APPLE_DEVICE_ARCHS=x86_64
           make -j$JOBS
-
-      - name: ccache post-run
-        run:  ccache -s
 
       - name: Save artifact
         uses: actions/upload-artifact@master
