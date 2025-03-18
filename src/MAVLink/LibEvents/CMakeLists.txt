@@ -1,6 +1,6 @@
 find_package(Qt6 REQUIRED COMPONENTS Core)
 
-target_sources(MAVLink
+target_sources(QGC
     PRIVATE
         EventHandler.cc
         EventHandler.h
@@ -9,18 +9,12 @@ target_sources(MAVLink
         logging.cpp
 )
 
-target_link_libraries(MAVLink
-    PRIVATE
-        QmlControls
-        Utilities
+target_link_libraries(QGC
     PUBLIC
         Qt6::Core
 )
 
-target_include_directories(MAVLink
-    PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}
-)
+target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 #===========================================================================#
 
@@ -35,6 +29,6 @@ CPMAddPackage(
 )
 
 if(TARGET libevents)
-    target_link_libraries(MAVLink PUBLIC libevents)
-    target_include_directories(MAVLink PUBLIC ${libevents_SOURCE_DIR}/libs/cpp)
+    target_link_libraries(QGC PUBLIC libevents)
+    target_include_directories(QGC PUBLIC ${libevents_SOURCE_DIR}/libs/cpp)
 endif()

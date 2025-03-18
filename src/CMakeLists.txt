@@ -7,6 +7,48 @@ qt_add_library(QGC STATIC
     QGCApplication.h
 )
 
+#######################################################
+#               Linking Libraries
+#######################################################
+
+target_link_libraries(QGC
+    PRIVATE
+        Qt6::CorePrivate
+        Qt6::Gui
+        Qt6::Network
+        Qt6::Qml
+        Qt6::Quick
+        Qt6::QuickControls2
+    PUBLIC
+        Qt6::Core
+        Qt6::Widgets
+)
+
+target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+target_precompile_headers(QGC
+    PRIVATE
+        <QtCore/QObject>
+        <QtCore/QString>
+)
+
+if(ANDROID)
+    target_sources(QGC
+        PRIVATE
+            ${CMAKE_SOURCE_DIR}/android/src/AndroidInterface.cc
+            ${CMAKE_SOURCE_DIR}/android/src/AndroidInterface.h
+    )
+
+    target_link_libraries(QGC
+        PRIVATE
+            Qt6::CorePrivate
+        PUBLIC
+            Qt6::Core
+    )
+
+    target_include_directories(QGC PUBLIC ${CMAKE_SOURCE_DIR}/android/src)
+endif()
+
 add_subdirectory(ADSB)
 add_subdirectory(AnalyzeView)
 add_subdirectory(API)
@@ -36,71 +78,3 @@ add_subdirectory(UTMSP)
 add_subdirectory(Vehicle)
 add_subdirectory(VideoManager)
 add_subdirectory(Viewer3D)
-
-#######################################################
-#               Linking Libraries
-#######################################################
-target_link_libraries(QGC
-    PRIVATE
-        Qt6::CorePrivate
-        Qt6::Gui
-        Qt6::Network
-        Qt6::Qml
-        Qt6::Quick
-        Qt6::QuickControls2
-        API
-        AnalyzeView
-        AutoPilotPlugins
-        Camera
-        Comms
-        FactSystem
-        FirmwarePlugin
-        # FirstRunPromptDialogs
-        # FlightMap
-        # FlightDisplay
-        FollowMe
-        Gimbal
-        GPS
-        Joystick
-        MAVLink
-        MissionManager
-        # PlanView
-        PositionManager
-        QGCLocation
-        QmlControls
-        Settings
-        # UI
-        Utilities
-        Vehicle
-        Viewer3D
-        VideoManager
-    PUBLIC
-        Qt6::Core
-        Qt6::Widgets
-)
-
-target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-
-target_precompile_headers(QGC
-    PRIVATE
-        <QtCore/QObject>
-        <QtCore/QString>
-)
-
-if(ANDROID)
-    target_sources(QGC
-        PRIVATE
-            ${CMAKE_SOURCE_DIR}/android/src/AndroidInterface.cc
-            ${CMAKE_SOURCE_DIR}/android/src/AndroidInterface.h
-    )
-
-    target_link_libraries(QGC
-        PRIVATE
-            Qt6::CorePrivate
-            Utilities
-        PUBLIC
-            Qt6::Core
-    )
-
-    target_include_directories(QGC PUBLIC ${CMAKE_SOURCE_DIR}/android/src)
-endif()

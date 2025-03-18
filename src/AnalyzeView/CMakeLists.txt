@@ -1,54 +1,48 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Charts Gui Qml QmlIntegration)
 
-qt_add_library(AnalyzeView STATIC
-    ExifParser.cc
-    ExifParser.h
-    GeoTagController.cc
-    GeoTagController.h
-    GeoTagWorker.cc
-    GeoTagWorker.h
-    LogDownloadController.cc
-    LogDownloadController.h
-    LogEntry.cc
-    LogEntry.h
-    MAVLinkChartController.cc
-    MAVLinkChartController.h
-    MAVLinkConsoleController.cc
-    MAVLinkConsoleController.h
-    MAVLinkInspectorController.cc
-    MAVLinkInspectorController.h
-    MAVLinkMessage.cc
-    MAVLinkMessage.h
-    MAVLinkMessageField.cc
-    MAVLinkMessageField.h
-    MAVLinkSystem.cc
-    MAVLinkSystem.h
-    PX4LogParser.cc
-    PX4LogParser.h
-    ULogParser.cc
-    ULogParser.h
+target_sources(QGC
+    PRIVATE
+        ExifParser.cc
+        ExifParser.h
+        GeoTagController.cc
+        GeoTagController.h
+        GeoTagWorker.cc
+        GeoTagWorker.h
+        LogDownloadController.cc
+        LogDownloadController.h
+        LogEntry.cc
+        LogEntry.h
+        MAVLinkChartController.cc
+        MAVLinkChartController.h
+        MAVLinkConsoleController.cc
+        MAVLinkConsoleController.h
+        MAVLinkInspectorController.cc
+        MAVLinkInspectorController.h
+        MAVLinkMessage.cc
+        MAVLinkMessage.h
+        MAVLinkMessageField.cc
+        MAVLinkMessageField.h
+        MAVLinkSystem.cc
+        MAVLinkSystem.h
+        PX4LogParser.cc
+        PX4LogParser.h
+        ULogParser.cc
+        ULogParser.h
 )
 
-target_link_libraries(AnalyzeView
+target_link_libraries(QGC
     PRIVATE
         Qt6::Charts
         Qt6::Gui
         Qt6::Qml
-        FactSystem
-        QGC
-        Settings
-        Utilities
-        Vehicle
     PUBLIC
         Qt6::Core
         Qt6::QmlIntegration
-        MAVLink
-        QmlControls
 )
 
-target_include_directories(AnalyzeView PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-# qt_add_qml_module(AnalyzeView
+# qt_add_qml_module(QGC
 #     URI QGroundControl.AnalyzeView
 #     VERSION 1.0
 #     QML_FILES
@@ -97,7 +91,7 @@ CPMAddPackage(
 )
 
 if(TARGET ulog_cpp::ulog_cpp)
-    target_link_libraries(AnalyzeView PRIVATE ulog_cpp::ulog_cpp)
+    target_link_libraries(QGC PRIVATE ulog_cpp::ulog_cpp)
 endif()
 
 CPMAddPackage(
@@ -160,6 +154,6 @@ CPMAddPackage(
 )
 
 if(TARGET Exiv2::exiv2lib)
-    target_link_libraries(AnalyzeView PRIVATE Exiv2::exiv2lib)
-    target_include_directories(AnalyzeView PRIVATE ${CMAKE_BINARY_DIR})
+    target_link_libraries(QGC PRIVATE Exiv2::exiv2lib)
+    target_include_directories(QGC PRIVATE ${CMAKE_BINARY_DIR})
 endif()

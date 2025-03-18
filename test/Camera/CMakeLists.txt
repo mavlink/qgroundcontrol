@@ -9,7 +9,7 @@ qt_add_library(CameraTest
 target_link_libraries(CameraTest
     PRIVATE
         Qt6::Test
-        Camera
+        QGC
     PUBLIC
         qgcunittest
 )

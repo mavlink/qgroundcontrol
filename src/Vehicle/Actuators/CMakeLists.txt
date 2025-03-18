@@ -1,6 +1,6 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Gui)
 
-target_sources(Vehicle
+target_sources(QGC
     PRIVATE
         ActuatorActions.cc
         ActuatorActions.h
@@ -20,16 +20,10 @@ target_sources(Vehicle
         MotorAssignment.h
 )
 
-target_link_libraries(Vehicle
-    PRIVATE
-        QGC
-        Utilities
+target_link_libraries(QGC
     PUBLIC
         Qt6::Core
         Qt6::Gui
-        FactSystem
-        MAVLink
-        QmlControls
 )
 
-target_include_directories(Vehicle PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

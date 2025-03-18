@@ -12,7 +12,7 @@ target_link_libraries(TerrainTest
     PRIVATE
         Qt6::Positioning
         Qt6::Test
-        Terrain
+        QGC
     PUBLIC
         qgcunittest
 )

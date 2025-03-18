@@ -1,7 +1,6 @@
 find_package(Qt6 REQUIRED COMPONENTS Core)
 
 set(UTMSP_RESOURCES)
-qt_add_library(UTMSP STATIC)
 
 if(QGC_UTM_ADAPTER)
     message(STATUS "UTMSP is Initialized")
@@ -18,7 +17,7 @@ if(QGC_UTM_ADAPTER)
 
     # qt_add_resources(UTMSP_RESOURCES utmsp.qrc)
 
-    target_sources(UTMSP
+    target_sources(QGC
         PRIVATE
             UTMSPAircraft.cpp
             UTMSPAircraft.h
@@ -46,28 +45,26 @@ if(QGC_UTM_ADAPTER)
             # ${UTMSP_RESOURCES}
     )
 
-    target_link_libraries(UTMSP
+    target_link_libraries(QGC
         PRIVATE
             Threads::Threads
             Qt6::Network
-            Comms
-            Vehicle
         PUBLIC
             # nlohmann_json
             Qt6::Core
             Qt6::Positioning
     )
 
-    target_include_directories(UTMSP
+    target_include_directories(QGC
         PRIVATE
             services
         PUBLIC
             ${CMAKE_CURRENT_SOURCE_DIR}
     )
 
-    target_compile_definitions(UTMSP PUBLIC QGC_UTM_ADAPTER)
+    target_compile_definitions(QGC PUBLIC QGC_UTM_ADAPTER)
 
-    # qt_add_qml_module(UTMSP
+    # qt_add_qml_module(QGC
     #     URI QGroundControl.UTMSP
     #     VERSION 1.0
     #     QML_FILES

@@ -140,11 +140,11 @@ target_link_libraries(qgctest
         GpsTest
         MAVLinkTest
         MissionManagerTest
+        QGC
         QmlControlsTest
         TerrainTest
         UITest
         VehicleTest
-        Utilities
         UtilitiesTest
     PUBLIC
         Qt6::Core
