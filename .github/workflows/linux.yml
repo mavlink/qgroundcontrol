@@ -102,6 +102,8 @@ jobs:
       - name: Build
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run: cmake --build . --target all --config ${{ matrix.BuildType }}
+        env:
+          CCACHE_SLOPPINESS: pch_defines,time_macros
 
       - name: Create AppImage
         working-directory: ${{ runner.temp }}/shadow_build_dir

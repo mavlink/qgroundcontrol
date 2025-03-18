@@ -18,7 +18,7 @@
 
 #include <QtCore/QThread>
 #include <QtCore/QVariant>
-#include <QtQml/QtQml>
+#include <QtQml/qqml.h>
 #include <QtGui/QCursor>
 
 bool AirframeComponentController::_typesRegistered = false;

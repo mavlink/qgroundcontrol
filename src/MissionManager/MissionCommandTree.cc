@@ -16,7 +16,7 @@
 #include "Vehicle.h"
 
 #include <QtCore/qapplicationstatic.h>
-#include <QtQml/QtQml>
+#include <QtQml/qqml.h>
 
 QGC_LOGGING_CATEGORY(MissionCommandTreeLog, "qgc.missionmanager.missioncommandtree");
 

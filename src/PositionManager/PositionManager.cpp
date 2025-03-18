@@ -19,7 +19,7 @@
 #include <QtPositioning/QGeoPositionInfoSource>
 #include <QtPositioning/private/qgeopositioninfosource_p.h>
 #include <QtPositioning/QNmeaPositionInfoSource>
-#include <QtQml/QtQml>
+#include <QtQml/qqml.h>
 
 QGC_LOGGING_CATEGORY(QGCPositionManagerLog, "qgc.positionmanager.positionmanager")
 

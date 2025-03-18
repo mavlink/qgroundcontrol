@@ -1,6 +1,15 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Location Network Positioning Qml Sql)
 
-qt_add_plugin(QGCLocation STATIC
+target_sources(QGC
+    PRIVATE
+        QMLControl/QGCMapEngineManager.cc
+        QMLControl/QGCMapEngineManager.h
+)
+
+target_include_directories(QGC PUBLIC QMLControl)
+
+qt_add_plugin(QGCLocation
+    STATIC
     CLASS_NAME QGeoServiceProviderFactoryQGC
     OUTPUT_TARGETS QGCLocation_targets
     Providers/BingMapProvider.cpp
@@ -41,8 +50,6 @@ qt_add_plugin(QGCLocation STATIC
     QGeoTiledMapQGC.h
     QGeoTileFetcherQGC.cpp
     QGeoTileFetcherQGC.h
-    QMLControl/QGCMapEngineManager.cc
-    QMLControl/QGCMapEngineManager.h
 )
 
 if(IOS)
@@ -65,7 +72,6 @@ target_include_directories(QGCLocation
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
         Providers
-        QMLControl
 )
 
 set_source_files_properties(QMLControl/OfflineMapEditor.qml PROPERTIES QT_RESOURCE_ALIAS OfflineMapEditor.qml)

@@ -28,6 +28,7 @@ target_link_libraries(QGC
     PUBLIC
         Qt6::Core
         Qt6::Widgets
+        QGCLocation
 )
 
 target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
@@ -35,7 +36,8 @@ target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_precompile_headers(QGC
     PRIVATE
         <QtCore/QObject>
-        <QtCore/QString>
+        <QtNetwork/QNetworkReply>
+        <QtPositioning/QGeoCoordinate>
 )
 
 if(ANDROID)

@@ -470,7 +470,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         Qt6::Svg
         Qt6::Widgets
         QGC
-        QGCLocation
 )
 
 if(QGC_BUILD_TESTING)
