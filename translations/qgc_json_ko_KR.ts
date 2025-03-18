@@ -13,7 +13,7 @@
       <extracomment>.mavCmdInfo[HomeRaw].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Planned home position for mission.</source>
-      <translation type="unfinished">Planned home position for mission.</translation>
+      <translation>Planned home position for mission.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[HomeRaw].category, .mavCmdInfo[MAV_CMD_NAV_WAYPOINT].category, .mavCmdInfo[MAV_CMD_NAV_RETURN_TO_LAUNCH].category, .mavCmdInfo[MAV_CMD_NAV_LAND].category, .mavCmdInfo[MAV_CMD_NAV_TAKEOFF].category, .mavCmdInfo[MAV_CMD_NAV_SPLINE_WAYPOINT].category, .mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].category, .mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].category, .mavCmdInfo[MAV_CMD_CONDITION_DELAY].category, </extracomment>
@@ -43,7 +43,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Travel to a position in 3D space.</source>
-      <translation type="unfinished">Travel to a position in 3D space.</translation>
+      <translation>Travel to a position in 3D space.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].param1.label, .mavCmdInfo[MAV_CMD_NAV_SPLINE_WAYPOINT].param1.label, .mavCmdInfo[MAV_CMD_NAV_DELAY].param1.label, </extracomment>
@@ -55,13 +55,13 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Acceptance</source>
-      <translation type="unfinished">Acceptance</translation>
+      <translation>Acceptance</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].param3.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Pass Radius</source>
-      <translation type="unfinished">Pass Radius</translation>
+      <translation>Pass Radius</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].param4.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].param4.label, .mavCmdInfo[MAV_CMD_NAV_LAND].param4.label, .mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].param4.label, .mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].param4.label, .mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].param2.label, </extracomment>
@@ -79,7 +79,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Travel to a position and Loiter around the specified position indefinitely.</source>
-      <translation type="unfinished">Travel to a position and Loiter around the specified position indefinitely.</translation>
+      <translation>Travel to a position and Loiter around the specified position indefinitely.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].param3.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param3.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param3.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param2.label, </extracomment>
@@ -91,55 +91,55 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Loiter (turns)</source>
-      <translation type="unfinished">Loiter (turns)</translation>
+      <translation>Loiter (turns)</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Travel to a position and Loiter around the specified position for a number of turns.</source>
-      <translation type="unfinished">Travel to a position and Loiter around the specified position for a number of turns.</translation>
+      <translation>Travel to a position and Loiter around the specified position for a number of turns.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Turns</source>
-      <translation type="unfinished">Turns</translation>
+      <translation>Turns</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param2.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param2.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Leave Loiter</source>
-      <translation type="unfinished">Leave Loiter</translation>
+      <translation>Leave Loiter</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param2.enumStrings, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param1.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Direction of next waypoint,Any direction</source>
-      <translation type="unfinished">Direction of next waypoint,Any direction</translation>
+      <translation>Direction of next waypoint,Any direction</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param4.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param4.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param4.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Exit loiter from</source>
-      <translation type="unfinished">Exit loiter from</translation>
+      <translation>Exit loiter from</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param4.enumStrings, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param4.enumStrings, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param4.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Center,Tangent</source>
-      <translation type="unfinished">Center,Tangent</translation>
+      <translation>Center,Tangent</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Loiter (time)</source>
-      <translation type="unfinished">Loiter (time)</translation>
+      <translation>Loiter (time)</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Travel to a position and Loiter around the specified position for an amount of time.</source>
-      <translation type="unfinished">Travel to a position and Loiter around the specified position for an amount of time.</translation>
+      <translation>Travel to a position and Loiter around the specified position for an amount of time.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param1.label, </extracomment>
@@ -151,7 +151,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param2.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Direction of next waypoint,Current direction</source>
-      <translation type="unfinished">Direction of next waypoint,Current direction</translation>
+      <translation>Direction of next waypoint,Current direction</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_RETURN_TO_LAUNCH].friendlyName, </extracomment>
@@ -163,7 +163,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_RETURN_TO_LAUNCH].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Send the vehicle back to the launch position.</source>
-      <translation type="unfinished">Send the vehicle back to the launch position.</translation>
+      <translation>Send the vehicle back to the launch position.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].friendlyName, </extracomment>
@@ -175,13 +175,13 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Land vehicle at the specified location.</source>
-      <translation type="unfinished">Land vehicle at the specified location.</translation>
+      <translation>Land vehicle at the specified location.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Abort Alt</source>
-      <translation type="unfinished">Abort Alt</translation>
+      <translation>Abort Alt</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].param2.label, </extracomment>
@@ -193,7 +193,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].param2.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Disabled,Opportunistic,Required</source>
-      <translation type="unfinished">Disabled,Opportunistic,Required</translation>
+      <translation>Disabled,Opportunistic,Required</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].friendlyName, </extracomment>
@@ -205,25 +205,25 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Launch from the ground and travel towards the specified takeoff position.</source>
-      <translation type="unfinished">Launch from the ground and travel towards the specified takeoff position.</translation>
+      <translation>Launch from the ground and travel towards the specified takeoff position.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND_LOCAL].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Land local</source>
-      <translation type="unfinished">Land local</translation>
+      <translation>Land local</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF_LOCAL].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Takeoff local</source>
-      <translation type="unfinished">Takeoff local</translation>
+      <translation>Takeoff local</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_FOLLOW].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Nav follow</source>
-      <translation type="unfinished">Nav follow</translation>
+      <translation>Nav follow</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT].friendlyName, </extracomment>
@@ -235,13 +235,13 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Continue on the current course and climb/descend to specified altitude. When the altitude is reached continue to the next command.</source>
-      <translation type="unfinished">Continue on the current course and climb/descend to specified altitude. When the altitude is reached continue to the next command.</translation>
+      <translation>Continue on the current course and climb/descend to specified altitude. When the altitude is reached continue to the next command.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT].category, .mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].category, .mavCmdInfo[MAV_CMD_DO_LAND_START].category, .mavCmdInfo[MAV_CMD_DO_INVERTED_FLIGHT].category, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Flight control</source>
-      <translation type="unfinished">Flight control</translation>
+      <translation>Flight control</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT].param1.label, .mavCmdInfo[MAV_CMD_DO_SET_MODE].param1.label, .mavCmdInfo[MAV_CMD_DO_SET_HOME].param1.label, .mavCmdInfo[MAV_CMD_DO_SET_ROI].param1.label, .mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].param1.label, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param1.label, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param7.label, .mavCmdInfo[MAV_CMD_SET_CAMERA_MODE].param2.label, .mavCmdInfo[MAV_CMD_DO_VTOL_TRANSITION].param1.label, </extracomment>
@@ -253,7 +253,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT].param1.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Climb,Neutral,Descend</source>
-      <translation type="unfinished">Climb,Neutral,Descend</translation>
+      <translation>Climb,Neutral,Descend</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].friendlyName, </extracomment>
@@ -265,7 +265,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Loiter at specified position until altitude reached.</source>
-      <translation type="unfinished">Loiter at specified position until altitude reached.</translation>
+      <translation>Loiter at specified position until altitude reached.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_FOLLOW].friendlyName, </extracomment>
@@ -277,7 +277,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_FOLLOW_REPOSITION].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Vehicle reposition</source>
-      <translation type="unfinished">Vehicle reposition</translation>
+      <translation>Vehicle reposition</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].friendlyName, </extracomment>
@@ -289,7 +289,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Control autonomous path planning.</source>
-      <translation type="unfinished">Control autonomous path planning.</translation>
+      <translation>Control autonomous path planning.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].category, .mavCmdInfo[MAV_CMD_DO_SET_MODE].category, .mavCmdInfo[MAV_CMD_DO_JUMP].category, .mavCmdInfo[MAV_CMD_DO_SET_HOME].category, .mavCmdInfo[MAV_CMD_DO_SET_REVERSE].category, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].category, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].category, .mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].category, .mavCmdInfo[MAV_CMD_DO_GRIPPER].category, .mavCmdInfo[MAV_CMD_DO_AUTOTUNE_ENABLE].category, </extracomment>
@@ -301,49 +301,49 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Local planning</source>
-      <translation type="unfinished">Local planning</translation>
+      <translation>Local planning</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].param1.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Disable,Enable,Enable+reset</source>
-      <translation type="unfinished">Disable,Enable,Enable+reset</translation>
+      <translation>Disable,Enable,Enable+reset</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Full planning</source>
-      <translation type="unfinished">Full planning</translation>
+      <translation>Full planning</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].param2.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Disable,Enable,Enable+reset,Enable+reset route only</source>
-      <translation type="unfinished">Disable,Enable,Enable+reset,Enable+reset route only</translation>
+      <translation>Disable,Enable,Enable+reset,Enable+reset route only</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].param4.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Heading goal</source>
-      <translation type="unfinished">Heading goal</translation>
+      <translation>Heading goal</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_SPLINE_WAYPOINT].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Spline waypoint</source>
-      <translation type="unfinished">Spline waypoint</translation>
+      <translation>Spline waypoint</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_SPLINE_WAYPOINT].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Travel to a position in 3D space using spline path.</source>
-      <translation type="unfinished">Travel to a position in 3D space using spline path.</translation>
+      <translation>Travel to a position in 3D space using spline path.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_ALTITUDE_WAIT].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Altitude wait</source>
-      <translation type="unfinished">Altitude wait</translation>
+      <translation>Altitude wait</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].friendlyName, </extracomment>
@@ -355,19 +355,19 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Hover straight up to specified altitude, transition to fixed-wing and fly to the specified takeoff location.</source>
-      <translation type="unfinished">Hover straight up to specified altitude, transition to fixed-wing and fly to the specified takeoff location.</translation>
+      <translation>Hover straight up to specified altitude, transition to fixed-wing and fly to the specified takeoff location.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Transition Heading</source>
-      <translation type="unfinished">Transition Heading</translation>
+      <translation>Transition Heading</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].param2.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Default,Next waypoint,Takeoff,Specified,Any</source>
-      <translation type="unfinished">Default,Next waypoint,Takeoff,Specified,Any</translation>
+      <translation>Default,Next waypoint,Takeoff,Specified,Any</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].friendlyName, </extracomment>
@@ -379,25 +379,25 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Fly to specified location at current altitude, transition to multi-rotor and land.</source>
-      <translation type="unfinished">Fly to specified location at current altitude, transition to multi-rotor and land.</translation>
+      <translation>Fly to specified location at current altitude, transition to multi-rotor and land.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].param3.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Approach Alt</source>
-      <translation type="unfinished">Approach Alt</translation>
+      <translation>Approach Alt</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_GUIDED_ENABLE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Guided enable</source>
-      <translation type="unfinished">Guided enable</translation>
+      <translation>Guided enable</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_GUIDED_ENABLE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Enable/Disabled guided mode.</source>
-      <translation type="unfinished">Enable/Disabled guided mode.</translation>
+      <translation>Enable/Disabled guided mode.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_GUIDED_ENABLE].param1.label, .mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].param1.label, .mavCmdInfo[MAV_CMD_DO_AUTOTUNE_ENABLE].param2.label, </extracomment>
@@ -451,43 +451,43 @@
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_DELAY].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Delay the mission for the number of seconds.</source>
-      <translation type="unfinished">Delay the mission for the number of seconds.</translation>
+      <translation>Delay the mission for the number of seconds.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_CHANGE_ALT].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Wait for altitude</source>
-      <translation type="unfinished">Wait for altitude</translation>
+      <translation>Wait for altitude</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_CHANGE_ALT].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Delay the mission until the specified altitide is reached.</source>
-      <translation type="unfinished">Delay the mission until the specified altitide is reached.</translation>
+      <translation>Delay the mission until the specified altitide is reached.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_CHANGE_ALT].category, .mavCmdInfo[MAV_CMD_CONDITION_DISTANCE].category, .mavCmdInfo[MAV_CMD_CONDITION_YAW].category, .mavCmdInfo[MAV_CMD_CONDITION_GATE].category, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Conditionals</source>
-      <translation type="unfinished">Conditionals</translation>
+      <translation>Conditionals</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_CHANGE_ALT].param1.label, .mavCmdInfo[MAV_CMD_CONDITION_YAW].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Rate</source>
-      <translation type="unfinished">Rate</translation>
+      <translation>Rate</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_DISTANCE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Wait for distance</source>
-      <translation type="unfinished">Wait for distance</translation>
+      <translation>Wait for distance</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_DISTANCE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Delay the mission until within the specified distance of the next waypoint.</source>
-      <translation type="unfinished">Delay the mission until within the specified distance of the next waypoint.</translation>
+      <translation>Delay the mission until within the specified distance of the next waypoint.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_DISTANCE].param1.label, .mavCmdInfo[MAV_CMD_DO_SET_CAM_TRIGG_DIST].param1.label, </extracomment>
@@ -499,13 +499,13 @@
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_YAW].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Wait for Yaw</source>
-      <translation type="unfinished">Wait for Yaw</translation>
+      <translation>Wait for Yaw</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_YAW].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Delay the mission until the specified heading is reached.</source>
-      <translation type="unfinished">Delay the mission until the specified heading is reached.</translation>
+      <translation>Delay the mission until the specified heading is reached.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_YAW].param1.label, </extracomment>
@@ -535,7 +535,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_YAW].param4.enumStrings, .mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].param4.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Relative,Absolute</source>
-      <translation type="unfinished">Relative,Absolute</translation>
+      <translation>Relative,Absolute</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].friendlyName, </extracomment>
@@ -547,13 +547,13 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set flight mode</source>
-      <translation type="unfinished">Set flight mode</translation>
+      <translation>Set flight mode</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set flight mode.</source>
-      <translation type="unfinished">Set flight mode.</translation>
+      <translation>Set flight mode.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].param2.label, </extracomment>
@@ -565,25 +565,25 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].param3.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Sub Mode</source>
-      <translation type="unfinished">Sub Mode</translation>
+      <translation>Sub Mode</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_JUMP].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Jump to item</source>
-      <translation type="unfinished">Jump to item</translation>
+      <translation>Jump to item</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_JUMP].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Mission will continue at the specified item.</source>
-      <translation type="unfinished">Mission will continue at the specified item.</translation>
+      <translation>Mission will continue at the specified item.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_JUMP].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Item #</source>
-      <translation type="unfinished">Item #</translation>
+      <translation>Item #</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_JUMP].param2.label, </extracomment>
@@ -601,7 +601,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Change speed and/or throttle set points.</source>
-      <translation type="unfinished">Change speed and/or throttle set points.</translation>
+      <translation>Change speed and/or throttle set points.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].param1.label, </extracomment>
@@ -631,43 +631,43 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_HOME].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set launch location</source>
-      <translation type="unfinished">Set launch location</translation>
+      <translation>Set launch location</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_HOME].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Changes the launch location either to the current location or a specified location.</source>
-      <translation type="unfinished">Changes the launch location either to the current location or a specified location.</translation>
+      <translation>Changes the launch location either to the current location or a specified location.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_HOME].param1.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Vehicle position,Specified position</source>
-      <translation type="unfinished">Vehicle position,Specified position</translation>
+      <translation>Vehicle position,Specified position</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_PARAMETER].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set Parameter</source>
-      <translation type="unfinished">Set Parameter</translation>
+      <translation>Set Parameter</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_RELAY].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set relay</source>
-      <translation type="unfinished">Set relay</translation>
+      <translation>Set relay</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_RELAY].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set relay to a condition.</source>
-      <translation type="unfinished">Set relay to a condition.</translation>
+      <translation>Set relay to a condition.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_RELAY].param1.label, .mavCmdInfo[MAV_CMD_DO_REPEAT_RELAY].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Relay #</source>
-      <translation type="unfinished">Relay #</translation>
+      <translation>Relay #</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_RELAY].param2.label, </extracomment>
@@ -679,19 +679,19 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_REPEAT_RELAY].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Cycle relay</source>
-      <translation type="unfinished">Cycle relay</translation>
+      <translation>Cycle relay</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_REPEAT_RELAY].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Cycle relay on/off for desired cycles/time.</source>
-      <translation type="unfinished">Cycle relay on/off for desired cycles/time.</translation>
+      <translation>Cycle relay on/off for desired cycles/time.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_REPEAT_RELAY].param2.label, .mavCmdInfo[MAV_CMD_DO_REPEAT_SERVO].param3.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Cycles</source>
-      <translation type="unfinished">Cycles</translation>
+      <translation>Cycles</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_REPEAT_RELAY].param3.label, .mavCmdInfo[MAV_CMD_DO_REPEAT_SERVO].param4.label, </extracomment>
@@ -703,13 +703,13 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_SERVO].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set servo</source>
-      <translation type="unfinished">Set servo</translation>
+      <translation>Set servo</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_SERVO].description, .mavCmdInfo[MAV_CMD_DO_REPEAT_SERVO].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set servo to specified PWM value.</source>
-      <translation type="unfinished">Set servo to specified PWM value.</translation>
+      <translation>Set servo to specified PWM value.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_SERVO].param1.label, .mavCmdInfo[MAV_CMD_DO_REPEAT_SERVO].param1.label, </extracomment>
@@ -727,7 +727,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_REPEAT_SERVO].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Cycle servo</source>
-      <translation type="unfinished">Cycle servo</translation>
+      <translation>Cycle servo</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ACTUATOR].friendlyName, </extracomment>
@@ -769,7 +769,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_FLIGHTTERMINATION].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Flight termination</source>
-      <translation type="unfinished">Flight termination</translation>
+      <translation>Flight termination</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_LAND_START].friendlyName, </extracomment>
@@ -781,49 +781,49 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_LAND_START].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Marker to indicate start of landing sequence.</source>
-      <translation type="unfinished">Marker to indicate start of landing sequence.</translation>
+      <translation>Marker to indicate start of landing sequence.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_RALLY_LAND].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Rally land</source>
-      <translation type="unfinished">Rally land</translation>
+      <translation>Rally land</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GO_AROUND].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Go around</source>
-      <translation type="unfinished">Go around</translation>
+      <translation>Go around</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_REPOSITION].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Reposition</source>
-      <translation type="unfinished">Reposition</translation>
+      <translation>Reposition</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_PAUSE_CONTINUE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Pause/Continue</source>
-      <translation type="unfinished">Pause/Continue</translation>
+      <translation>Pause/Continue</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_REVERSE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set moving direction</source>
-      <translation type="unfinished">Set moving direction</translation>
+      <translation>Set moving direction</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_REVERSE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set moving direction to forward or reverse.</source>
-      <translation type="unfinished">Set moving direction to forward or reverse.</translation>
+      <translation>Set moving direction to forward or reverse.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_REVERSE].param1.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Forward,Reverse</source>
-      <translation type="unfinished">Forward,Reverse</translation>
+      <translation>Forward,Reverse</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_LOCATION].friendlyName, </extracomment>
@@ -835,7 +835,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_LOCATION].description, .mavCmdInfo[MAV_CMD_DO_SET_ROI].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Sets the region of interest for cameras.</source>
-      <translation type="unfinished">Sets the region of interest for cameras.</translation>
+      <translation>Sets the region of interest for cameras.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_LOCATION].category, .mavCmdInfo[MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET].category, .mavCmdInfo[MAV_CMD_DO_SET_ROI_NONE].category, .mavCmdInfo[MAV_CMD_DO_SET_ROI].category, .mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].category, .mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].category, .mavCmdInfo[MAV_CMD_DO_SET_CAM_TRIGG_DIST].category, .mavCmdInfo[MAV_CMD_SET_CAMERA_MODE].category, .mavCmdInfo[MAV_CMD_IMAGE_START_CAPTURE].category, .mavCmdInfo[MAV_CMD_IMAGE_STOP_CAPTURE].category, .mavCmdInfo[MAV_CMD_VIDEO_START_CAPTURE].category, .mavCmdInfo[MAV_CMD_VIDEO_STOP_CAPTURE].category, </extracomment>
@@ -853,7 +853,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Sets the region of interest to point towards the next waypoint with optional offsets.</source>
-      <translation type="unfinished">Sets the region of interest to point towards the next waypoint with optional offsets.</translation>
+      <translation>Sets the region of interest to point towards the next waypoint with optional offsets.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET].param5.label, </extracomment>
@@ -883,25 +883,25 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_NONE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Cancels the region of interest.</source>
-      <translation type="unfinished">Cancels the region of interest.</translation>
+      <translation>Cancels the region of interest.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_CONTROL_VIDEO].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Control video</source>
-      <translation type="unfinished">Control video</translation>
+      <translation>Control video</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Region of interest</source>
-      <translation type="unfinished">Region of interest</translation>
+      <translation>Region of interest</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI].param1.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>None,Next waypoint,Mission item,Location,ROI item</source>
-      <translation type="unfinished">None,Next waypoint,Mission item,Location,ROI item</translation>
+      <translation>None,Next waypoint,Mission item,Location,ROI item</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI].param2.label, </extracomment>
@@ -913,7 +913,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI].param3.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>ROI Index</source>
-      <translation type="unfinished">ROI Index</translation>
+      <translation>ROI Index</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].friendlyName, </extracomment>
@@ -925,7 +925,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Configure onboard camera controller.</source>
-      <translation type="unfinished">Configure onboard camera controller.</translation>
+      <translation>Configure onboard camera controller.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].param2.label, </extracomment>
@@ -937,7 +937,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].param3.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Aperture</source>
-      <translation type="unfinished">Aperture</translation>
+      <translation>Aperture</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].param4.label, </extracomment>
@@ -949,7 +949,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].param5.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Exposure</source>
-      <translation type="unfinished">Exposure</translation>
+      <translation>Exposure</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].param6.label, .mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].param5.label, </extracomment>
@@ -961,19 +961,19 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].param7.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Cut off</source>
-      <translation type="unfinished">Cut off</translation>
+      <translation>Cut off</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Camera control</source>
-      <translation type="unfinished">Camera control</translation>
+      <translation>Camera control</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Control onboard camera.</source>
-      <translation type="unfinished">Control onboard camera.</translation>
+      <translation>Control onboard camera.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].param1.label, </extracomment>
@@ -997,7 +997,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].param4.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Focus lock</source>
-      <translation type="unfinished">Focus lock</translation>
+      <translation>Focus lock</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].param6.label, </extracomment>
@@ -1009,25 +1009,25 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Configure Mount</source>
-      <translation type="unfinished">Configure Mount</translation>
+      <translation>Configure Mount</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Configure the vehicle mount (e.g. gimbal).</source>
-      <translation type="unfinished">Configure the vehicle mount (e.g. gimbal).</translation>
+      <translation>Configure the vehicle mount (e.g. gimbal).</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param1.enumStrings, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param7.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Retract,Neutral,Mavlink Targeting,RC Targeting,GPS Point</source>
-      <translation type="unfinished">Retract,Neutral,Mavlink Targeting,RC Targeting,GPS Point</translation>
+      <translation>Retract,Neutral,Mavlink Targeting,RC Targeting,GPS Point</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Stabilize Roll</source>
-      <translation type="unfinished">Stabilize Roll</translation>
+      <translation>Stabilize Roll</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param2.enumStrings, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param3.enumStrings, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param4.enumStrings, </extracomment>
@@ -1039,43 +1039,43 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param3.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Stabilize Pitch</source>
-      <translation type="unfinished">Stabilize Pitch</translation>
+      <translation>Stabilize Pitch</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param4.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Stabilize Yaw</source>
-      <translation type="unfinished">Stabilize Yaw</translation>
+      <translation>Stabilize Yaw</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Control Mount</source>
-      <translation type="unfinished">Control Mount</translation>
+      <translation>Control Mount</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Control the vehicle mount (e.g. gimbal).</source>
-      <translation type="unfinished">Control the vehicle mount (e.g. gimbal).</translation>
+      <translation>Control the vehicle mount (e.g. gimbal).</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Lat/Pitch</source>
-      <translation type="unfinished">Lat/Pitch</translation>
+      <translation>Lat/Pitch</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Lon/Roll</source>
-      <translation type="unfinished">Lon/Roll</translation>
+      <translation>Lon/Roll</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param3.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Alt/Yaw</source>
-      <translation type="unfinished">Alt/Yaw</translation>
+      <translation>Alt/Yaw</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].friendlyName, </extracomment>
@@ -1135,13 +1135,13 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_CAM_TRIGG_DIST].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Camera trigger distance</source>
-      <translation type="unfinished">Camera trigger distance</translation>
+      <translation>Camera trigger distance</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_CAM_TRIGG_DIST].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set camera trigger distance.</source>
-      <translation type="unfinished">Set camera trigger distance.</translation>
+      <translation>Set camera trigger distance.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_CAM_TRIGG_DIST].param2.label, </extracomment>
@@ -1159,19 +1159,19 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_CAM_TRIGG_DIST].param3.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>No Trigger,Once Immediately</source>
-      <translation type="unfinished">No Trigger,Once Immediately</translation>
+      <translation>No Trigger,Once Immediately</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Enable geofence</source>
-      <translation type="unfinished">Enable geofence</translation>
+      <translation>Enable geofence</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].description, .mavCmdInfo[MAV_CMD_DO_PARACHUTE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Enable/Disable geofence.</source>
-      <translation type="unfinished">Enable/Disable geofence.</translation>
+      <translation>Enable/Disable geofence.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].category, .mavCmdInfo[MAV_CMD_DO_PARACHUTE].category, </extracomment>
@@ -1183,19 +1183,19 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].param1.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Disable,Disable floor only,Enable</source>
-      <translation type="unfinished">Disable,Disable floor only,Enable</translation>
+      <translation>Disable,Disable floor only,Enable</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_PARACHUTE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Trigger parachute</source>
-      <translation type="unfinished">Trigger parachute</translation>
+      <translation>Trigger parachute</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_PARACHUTE].param1.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Disable,Enable,Release</source>
-      <translation type="unfinished">Disable,Enable,Release</translation>
+      <translation>Disable,Enable,Release</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOTOR_TEST].friendlyName, </extracomment>
@@ -1207,13 +1207,13 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_INVERTED_FLIGHT].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Inverted flight</source>
-      <translation type="unfinished">Inverted flight</translation>
+      <translation>Inverted flight</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_INVERTED_FLIGHT].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Change to/from inverted flight.</source>
-      <translation type="unfinished">Change to/from inverted flight.</translation>
+      <translation>Change to/from inverted flight.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_INVERTED_FLIGHT].param1.label, </extracomment>
@@ -1225,7 +1225,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_INVERTED_FLIGHT].param1.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Normal,Inverted</source>
-      <translation type="unfinished">Normal,Inverted</translation>
+      <translation>Normal,Inverted</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GRIPPER].friendlyName, </extracomment>
@@ -1243,73 +1243,73 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GRIPPER].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Gripper id</source>
-      <translation type="unfinished">Gripper id</translation>
+      <translation>Gripper id</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GRIPPER].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Action</source>
-      <translation type="unfinished">Action</translation>
+      <translation>Action</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GRIPPER].param2.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Release,Grab</source>
-      <translation type="unfinished">Release,Grab</translation>
+      <translation>Release,Grab</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_AUTOTUNE_ENABLE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>AutoTune Enable</source>
-      <translation type="unfinished">AutoTune Enable</translation>
+      <translation>AutoTune Enable</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_AUTOTUNE_ENABLE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>AutoTune Enable.</source>
-      <translation type="unfinished">AutoTune Enable.</translation>
+      <translation>AutoTune Enable.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_AUTOTUNE_ENABLE].param2.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Enable,Disable</source>
-      <translation type="unfinished">Enable,Disable</translation>
+      <translation>Enable,Disable</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GUIDED_LIMITS].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Guided limits</source>
-      <translation type="unfinished">Guided limits</translation>
+      <translation>Guided limits</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GUIDED_LIMITS].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set limits for external control</source>
-      <translation type="unfinished">Set limits for external control</translation>
+      <translation>Set limits for external control</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GUIDED_LIMITS].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Timeout</source>
-      <translation type="unfinished">Timeout</translation>
+      <translation>Timeout</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GUIDED_LIMITS].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Min Alt</source>
-      <translation type="unfinished">Min Alt</translation>
+      <translation>Min Alt</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GUIDED_LIMITS].param3.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Max Alt</source>
-      <translation type="unfinished">Max Alt</translation>
+      <translation>Max Alt</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GUIDED_LIMITS].param4.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>H Limit</source>
-      <translation type="unfinished">H Limit</translation>
+      <translation>H Limit</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_PREFLIGHT_CALIBRATION].friendlyName, </extracomment>
@@ -1321,7 +1321,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_PREFLIGHT_SET_SENSOR_OFFSETS].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set sensor offsets</source>
-      <translation type="unfinished">Set sensor offsets</translation>
+      <translation>Set sensor offsets</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_PREFLIGHT_UAVCAN].friendlyName, </extracomment>
@@ -1333,19 +1333,19 @@
       <extracomment>.mavCmdInfo[MAV_CMD_PREFLIGHT_STORAGE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Store parameters</source>
-      <translation type="unfinished">Store parameters</translation>
+      <translation>Store parameters</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Reboot/Shutdown vehicle</source>
-      <translation type="unfinished">Reboot/Shutdown vehicle</translation>
+      <translation>Reboot/Shutdown vehicle</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_OVERRIDE_GOTO].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Override goto</source>
-      <translation type="unfinished">Override goto</translation>
+      <translation>Override goto</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_MISSION_START].friendlyName, </extracomment>
@@ -1363,67 +1363,67 @@
       <extracomment>.mavCmdInfo[MAV_CMD_GET_HOME_POSITION].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Get launch position</source>
-      <translation type="unfinished">Get launch position</translation>
+      <translation>Get launch position</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_START_RX_PAIR].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Bind Spektrum receiver</source>
-      <translation type="unfinished">Bind Spektrum receiver</translation>
+      <translation>Bind Spektrum receiver</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_GET_MESSAGE_INTERVAL].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Get message interval</source>
-      <translation type="unfinished">Get message interval</translation>
+      <translation>Get message interval</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_SET_MESSAGE_INTERVAL].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set message interval</source>
-      <translation type="unfinished">Set message interval</translation>
+      <translation>Set message interval</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Get capabilities</source>
-      <translation type="unfinished">Get capabilities</translation>
+      <translation>Get capabilities</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_SET_CAMERA_MODE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set camera modes</source>
-      <translation type="unfinished">Set camera modes</translation>
+      <translation>Set camera modes</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_SET_CAMERA_MODE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set camera photo, video modes.</source>
-      <translation type="unfinished">Set camera photo, video modes.</translation>
+      <translation>Set camera photo, video modes.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_SET_CAMERA_MODE].param2.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Take photos,Record video,Survey photo mode</source>
-      <translation type="unfinished">Take photos,Record video,Survey photo mode</translation>
+      <translation>Take photos,Record video,Survey photo mode</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_IMAGE_START_CAPTURE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Start image capture</source>
-      <translation type="unfinished">Start image capture</translation>
+      <translation>Start image capture</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_IMAGE_START_CAPTURE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Start taking one or more photos.</source>
-      <translation type="unfinished">Start taking one or more photos.</translation>
+      <translation>Start taking one or more photos.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_IMAGE_START_CAPTURE].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Interval</source>
-      <translation type="unfinished">Interval</translation>
+      <translation>Interval</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_IMAGE_START_CAPTURE].param3.label, </extracomment>
@@ -1435,7 +1435,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_IMAGE_STOP_CAPTURE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Stop image capture</source>
-      <translation type="unfinished">Stop image capture</translation>
+      <translation>Stop image capture</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_IMAGE_STOP_CAPTURE].description, </extracomment>
@@ -1447,7 +1447,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_TRIGGER_CONTROL].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Trigger control</source>
-      <translation type="unfinished">Trigger control</translation>
+      <translation>Trigger control</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_VIDEO_START_CAPTURE].friendlyName, </extracomment>
@@ -1465,7 +1465,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_VIDEO_START_CAPTURE].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Status Frequency</source>
-      <translation type="unfinished">Status Frequency</translation>
+      <translation>Status Frequency</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_VIDEO_STOP_CAPTURE].friendlyName, </extracomment>
@@ -1483,7 +1483,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_CONTROL_HIGH_LATENCY].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Control high latency link</source>
-      <translation type="unfinished">Control high latency link</translation>
+      <translation>Control high latency link</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_PANORAMA_CREATE].friendlyName, </extracomment>
@@ -1501,7 +1501,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_VTOL_TRANSITION].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Perform flight mode transition.</source>
-      <translation type="unfinished">Perform flight mode transition.</translation>
+      <translation>Perform flight mode transition.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_VTOL_TRANSITION].category, </extracomment>
@@ -1513,61 +1513,43 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_VTOL_TRANSITION].param1.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Multi Rotor,Fixed Wing</source>
-      <translation type="unfinished">Multi Rotor,Fixed Wing</translation>
+      <translation>Multi Rotor,Fixed Wing</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_GATE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Condition Gate</source>
-      <translation type="unfinished">Condition Gate</translation>
+      <translation>Condition Gate</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_GATE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Delay mission state machine until gate has been reached.</source>
-      <translation type="unfinished">Delay mission state machine until gate has been reached.</translation>
+      <translation>Delay mission state machine until gate has been reached.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_GATE].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Ignore Alt</source>
-      <translation type="unfinished">Ignore Alt</translation>
+      <translation>Ignore Alt</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_GATE].param2.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>False,True</source>
-      <translation type="unfinished">False,True</translation>
+      <translation>False,True</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_PAYLOAD_PREPARE_DEPLOY].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Payload prepare deploy</source>
-      <translation type="unfinished">Payload prepare deploy</translation>
+      <translation>Payload prepare deploy</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_PAYLOAD_CONTROL_DEPLOY].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Payload control deploy</source>
-      <translation type="unfinished">Payload control deploy</translation>
-    </message>
-  </context>
-  <context>
-    <name>MavCmdInfoMultiRotor.json</name>
-    <message>
-      <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].param4.label, </extracomment>
-      <location filename="../src/MissionManager/MavCmdInfoMultiRotor.json"/>
-      <source>Yaw</source>
-      <translation>요</translation>
-    </message>
-  </context>
-  <context>
-    <name>MavCmdInfoFixedWing.json</name>
-    <message>
-      <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].param1.label, </extracomment>
-      <location filename="../src/MissionManager/MavCmdInfoFixedWing.json"/>
-      <source>Pitch</source>
-      <translation>피치</translation>
+      <translation>Payload control deploy</translation>
     </message>
   </context>
   <context>
@@ -1594,230 +1576,13 @@
       <extracomment>.QGC.MetaData.Facts[CameraAction].enumStrings, </extracomment>
       <location filename="../src/MissionManager/CameraSection.FactMetaData.json"/>
       <source>No change,Take photo,Take photos (time),Take photos (distance),Stop taking photos,Start recording video,Stop recording video</source>
-      <translation type="unfinished">No change,Take photo,Take photos (time),Take photos (distance),Stop taking photos,Start recording video,Stop recording video</translation>
+      <translation>No change,Take photo,Take photos (time),Take photos (distance),Stop taking photos,Start recording video,Stop recording video</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[CameraMode].enumStrings, </extracomment>
       <location filename="../src/MissionManager/CameraSection.FactMetaData.json"/>
       <source>Photo,Video,Survey</source>
-      <translation type="unfinished">Photo,Video,Survey</translation>
-    </message>
-  </context>
-  <context>
-    <name>EditPositionDialog.FactMetaData.json</name>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[Hemisphere].enumStrings, </extracomment>
-      <location filename="../src/QmlControls/EditPositionDialog.FactMetaData.json"/>
-      <source>North,South</source>
-      <translation>북쪽,남쪽</translation>
-    </message>
-  </context>
-  <context>
-    <name>BatteryFact.json</name>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[batteryFunction].enumStrings, </extracomment>
-      <location filename="../src/Vehicle/FactGroups/BatteryFact.json"/>
-      <source>n/a,All Flight Systems,Propulsion,Avionics,Payload</source>
-      <translation>N/A,모든 비행 시스템,추진체,전자,임무장비
-</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[batteryType].enumStrings, </extracomment>
-      <location filename="../src/Vehicle/FactGroups/BatteryFact.json"/>
-      <source>n/a,LIPO,LIFE,LION,NIMH</source>
-      <translation>N/A,리포,리페,리온,니켈수소</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[chargeState].enumStrings, </extracomment>
-      <location filename="../src/Vehicle/FactGroups/BatteryFact.json"/>
-      <source>n/a,Ok,Low,Critical,Emergency,Failed,Unhealthy,Charging</source>
-      <translation>N/A,확인,부족,심각,비상,실패,위험,충전중</translation>
-    </message>
-  </context>
-  <context>
-    <name>GPSFact.json</name>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[lock].enumStrings, </extracomment>
-      <location filename="../src/Vehicle/FactGroups/GPSFact.json"/>
-      <source>None,None,2D Lock,3D Lock,3D DGPS Lock,3D RTK GPS Lock (float),3D RTK GPS Lock (fixed),Static (fixed)</source>
-      <translation type="unfinished">None,None,2D Lock,3D Lock,3D DGPS Lock,3D RTK GPS Lock (float),3D RTK GPS Lock (fixed),Static (fixed)</translation>
-    </message>
-  </context>
-  <context>
-    <name>SubmarineFact.json</name>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[inputHold].enumStrings, </extracomment>
-      <location filename="../src/Vehicle/FactGroups/SubmarineFact.json"/>
-      <source>Disabled,Enabled</source>
-      <translation>사용 안 함,사용</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[rollPitchToggle].enumStrings, </extracomment>
-      <location filename="../src/Vehicle/FactGroups/SubmarineFact.json"/>
-      <source>Disabled,Enabled,Unavailable</source>
-      <translation>사용 안 함,사용,사용 불가</translation>
-    </message>
-  </context>
-  <context>
-    <name>FlyView.SettingsGroup.json</name>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[instrumentQmlFile].enumStrings, </extracomment>
-      <location filename="../src/Settings/FlyView.SettingsGroup.json"/>
-      <source>Integrated Compass/Attitude,Horizontal Compass/Attitude,Large Vertical</source>
-      <translation type="unfinished">Integrated Compass/Attitude,Horizontal Compass/Attitude,Large Vertical</translation>
-    </message>
-  </context>
-  <context>
-    <name>RemoteID.SettingsGroup.json</name>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[operatorIDType].enumStrings, </extracomment>
-      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>CAA</source>
-      <translation type="unfinished">CAA</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[selfIDType].enumStrings, </extracomment>
-      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>Flight Purpose,Emergency,Extended Status</source>
-      <translation type="unfinished">Flight Purpose,Emergency,Extended Status</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[basicIDType].enumStrings, </extracomment>
-      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>None,SerialNumber (ANSI/CTA-2063),CAA,UTM (RFC4122),Specific</source>
-      <translation type="unfinished">None,SerialNumber (ANSI/CTA-2063),CAA,UTM (RFC4122),Specific</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[basicIDUaType].enumStrings, </extracomment>
-      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>Undefined,Airplane/FixedWing,Helicopter/Multirrotor,Gyroplane,VTOL,Ornithopter,Glider,Kite,Free Ballon,Captive Ballon,Airship,Parachute,Rocket,Tethered powered aircraft,Ground Obstacle,Other</source>
-      <translation type="unfinished">Undefined,Airplane/FixedWing,Helicopter/Multirrotor,Gyroplane,VTOL,Ornithopter,Glider,Kite,Free Ballon,Captive Ballon,Airship,Parachute,Rocket,Tethered powered aircraft,Ground Obstacle,Other</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[region].enumStrings, </extracomment>
-      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>FAA,EU</source>
-      <translation type="unfinished">FAA,EU</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[locationType].enumStrings, </extracomment>
-      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>Takeoff(Not Supported),Live GNNS, Fixed (not for FAA)</source>
-      <translation type="unfinished">Takeoff(Not Supported),Live GNNS, Fixed (not for FAA)</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[classificationType].enumStrings, </extracomment>
-      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>Undeclared,EU</source>
-      <translation type="unfinished">Undeclared,EU</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[categoryEU].enumStrings, </extracomment>
-      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>Undeclared,Open,Specific,Certified</source>
-      <translation type="unfinished">Undeclared,Open,Specific,Certified</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[classEU].enumStrings, </extracomment>
-      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
-      <source>Undeclared,Class 0,Class 1,Class 2,Class 3,Class 4,Class 5,Class 6</source>
-      <translation type="unfinished">Undeclared,Class 0,Class 1,Class 2,Class 3,Class 4,Class 5,Class 6</translation>
-    </message>
-  </context>
-  <context>
-    <name>FirmwareUpgrade.SettingsGroup.json</name>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[apmChibiOS].enumStrings, </extracomment>
-      <location filename="../src/Settings/FirmwareUpgrade.SettingsGroup.json"/>
-      <source>ChibiOS,NuttX</source>
-      <translation>ChibiOS,NuttX</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[apmVehicleType].enumStrings, </extracomment>
-      <location filename="../src/Settings/FirmwareUpgrade.SettingsGroup.json"/>
-      <source>Multi-Rotor,Helicopter,Plane,Rover,Sub</source>
-      <translation>Multi-Rotor,Helicopter,Plane,Rover,Sub</translation>
-    </message>
-  </context>
-  <context>
-    <name>App.SettingsGroup.json</name>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[offlineEditingFirmwareClass].enumStrings, </extracomment>
-      <location filename="../src/Settings/App.SettingsGroup.json"/>
-      <source>ArduPilot,PX4 Pro,Mavlink Generic</source>
-      <translation>아두파일럿,PX4 프로,일반 Mavlink 장치</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[offlineEditingVehicleClass].enumStrings, </extracomment>
-      <location filename="../src/Settings/App.SettingsGroup.json"/>
-      <source>Fixed Wing,Multi-Rotor,VTOL,Rover,Sub,Mavlink Generic</source>
-      <translation type="unfinished">Fixed Wing,Multi-Rotor,VTOL,Rover,Sub,Mavlink Generic</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[gstDebugLevel].enumStrings, </extracomment>
-      <location filename="../src/Settings/App.SettingsGroup.json"/>
-      <source>Disabled,Error,Warning,FixMe,Info,Debug,Log,Trace</source>
-      <translation type="unfinished">Disabled,Error,Warning,FixMe,Info,Debug,Log,Trace</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[indoorPalette].enumStrings, </extracomment>
-      <location filename="../src/Settings/App.SettingsGroup.json"/>
-      <source>Indoor,Outdoor</source>
-      <translation>실내,실외</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[followTarget].enumStrings, </extracomment>
-      <location filename="../src/Settings/App.SettingsGroup.json"/>
-      <source>Never,Always,When in Follow Me Flight Mode</source>
-      <translation>하지 않음,항상 실행,Follow Me 모드에서만 실행</translation>
-    </message>
-  </context>
-  <context>
-    <name>BatteryIndicator.SettingsGroup.json</name>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[valueDisplay].enumStrings, </extracomment>
-      <location filename="../src/Settings/BatteryIndicator.SettingsGroup.json"/>
-      <source>Percentage,Voltage,Percentage and Voltage</source>
-      <translation type="unfinished">Percentage,Voltage,Percentage and Voltage</translation>
-    </message>
-  </context>
-  <context>
-    <name>GimbalController.SettingsGroup.json</name>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[ControlType].enumStrings, </extracomment>
-      <location filename="../src/Settings/GimbalController.SettingsGroup.json"/>
-      <source>Click to point, click and drag</source>
-      <translation type="unfinished">Click to point, click and drag</translation>
-    </message>
-  </context>
-  <context>
-    <name>Video.SettingsGroup.json</name>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[videoFit].enumStrings, </extracomment>
-      <location filename="../src/Settings/Video.SettingsGroup.json"/>
-      <source>Fit Width,Fit Height,Fill,No Crop</source>
-      <translation type="unfinished">Fit Width,Fit Height,Fill,No Crop</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[recordingFormat].enumStrings, </extracomment>
-      <location filename="../src/Settings/Video.SettingsGroup.json"/>
-      <source>mkv,mov,mp4</source>
-      <translation>mkv,mov,mp4</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[forceVideoDecoder].enumStrings, </extracomment>
-      <location filename="../src/Settings/Video.SettingsGroup.json"/>
-      <source>Default,Force software decoder,Force NVIDIA decoder,Force VA-API decoder,Force DirectX3D 11 decoder,Force VideoToolbox decoder</source>
-      <translation>기본,소프트웨어 디코더 강제,NVIDIA 디코더 강제,VA-API 디코더 강제,DirectX3D 11 디코더 강제,VideoToolbox 디코더 강제</translation>
-    </message>
-  </context>
-  <context>
-    <name>APMMavlinkStreamRate.SettingsGroup.json</name>
-    <message>
-      <extracomment>.QGC.MetaData.Defines.StreamRateEnumStrings, </extracomment>
-      <location filename="../src/Settings/APMMavlinkStreamRate.SettingsGroup.json"/>
-      <source>Controlled By Vehicle,0 hz,1 hz,2 hz,3 hz,4 hz,5 hz,6 hz,7 hz,8 hz,9 hz,10 hz,50 hz,100 hz</source>
-      <translation type="unfinished">Controlled By Vehicle,0 hz,1 hz,2 hz,3 hz,4 hz,5 hz,6 hz,7 hz,8 hz,9 hz,10 hz,50 hz,100 hz</translation>
+      <translation>Photo,Video,Survey</translation>
     </message>
   </context>
   <context>
@@ -2043,13 +1808,13 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].description, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>Take off from the ground and ascend to specified altitude.</source>
-      <translation type="unfinished">Take off from the ground and ascend to specified altitude.</translation>
+      <translation>Take off from the ground and ascend to specified altitude.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].description, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>Takeoff to specified altitude.</source>
-      <translation type="unfinished">Takeoff to specified altitude.</translation>
+      <translation>Takeoff to specified altitude.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].category, .mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].category, </extracomment>
@@ -2061,7 +1826,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].description, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>Land using VTOL mode.</source>
-      <translation type="unfinished">Land using VTOL mode.</translation>
+      <translation>Land using VTOL mode.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_RELAY].param2.label, </extracomment>
