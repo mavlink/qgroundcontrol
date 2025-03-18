@@ -60,7 +60,7 @@ struct LogDownloadData
 class QGCLogEntry : public QObject
 {
     Q_OBJECT
-    QML_ELEMENT
+    // QML_ELEMENT
 
     Q_PROPERTY(uint         id          READ id                             NOTIFY idChanged)
     Q_PROPERTY(QDateTime    time        READ time                           NOTIFY timeChanged)

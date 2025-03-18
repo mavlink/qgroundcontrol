@@ -22,8 +22,8 @@ class QTimer;
 class JoystickManager : public QObject
 {
     Q_OBJECT
-    QML_ELEMENT
-    QML_UNCREATABLE("")
+    // QML_ELEMENT
+    // QML_UNCREATABLE("")
     Q_MOC_INCLUDE("Joystick.h")
     Q_PROPERTY(QVariantList joysticks READ joysticks NOTIFY availableJoysticksChanged)
     Q_PROPERTY(QStringList joystickNames READ joystickNames NOTIFY availableJoysticksChanged)

@@ -23,7 +23,7 @@ class QGCMAVLinkMessage;
 class QGCMAVLinkSystem : public QObject
 {
     Q_OBJECT
-    QML_ELEMENT
+    // QML_ELEMENT
     Q_PROPERTY(quint8               id          READ id                             CONSTANT)
     Q_PROPERTY(QmlObjectListModel   *messages   READ messages                       CONSTANT)
     Q_PROPERTY(QList<int>           compIDs     READ compIDs                        NOTIFY compIDsChanged)

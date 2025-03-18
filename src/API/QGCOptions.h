@@ -23,8 +23,8 @@ Q_DECLARE_LOGGING_CATEGORY(QGCFlyViewOptionsLog)
 class QGCFlyViewOptions : public QObject
 {
     Q_OBJECT
-    QML_ELEMENT
-    QML_UNCREATABLE("")
+    // QML_ELEMENT
+    // QML_UNCREATABLE("")
     Q_PROPERTY(bool showMultiVehicleList        READ showMultiVehicleList       CONSTANT)
     Q_PROPERTY(bool showInstrumentPanel         READ showInstrumentPanel        CONSTANT)
     Q_PROPERTY(bool showMapScale                READ showMapScale               CONSTANT)
@@ -59,8 +59,8 @@ Q_DECLARE_LOGGING_CATEGORY(QGCOptionsLog)
 class QGCOptions : public QObject
 {
     Q_OBJECT
-    QML_ELEMENT
-    QML_UNCREATABLE("")
+    // QML_ELEMENT
+    // QML_UNCREATABLE("")
     Q_PROPERTY(bool allowJoystickSelection          READ allowJoystickSelection         NOTIFY allowJoystickSelectionChanged)
     Q_PROPERTY(bool checkFirmwareVersion            READ checkFirmwareVersion           CONSTANT)
     Q_PROPERTY(bool combineSettingsAndSetup         READ combineSettingsAndSetup        CONSTANT)

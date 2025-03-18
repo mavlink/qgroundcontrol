@@ -7,6 +7,12 @@ qt_add_library(QGC STATIC
     QGCApplication.h
 )
 
+# qt_add_qml_module(QGC
+#     URI QGroundControl
+#     VERSION 1.0
+#     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
+# )
+
 #######################################################
 #               Linking Libraries
 #######################################################

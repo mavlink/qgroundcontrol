@@ -24,7 +24,7 @@ class QAbstractSeries;
 class QGCMAVLinkMessageField : public QObject
 {
     Q_OBJECT
-    QML_ELEMENT
+    // QML_ELEMENT
     Q_MOC_INCLUDE(<QtCharts/QAbstractSeries>)
     Q_PROPERTY(QString                  name        READ name       CONSTANT)
     Q_PROPERTY(QString                  label       READ label      CONSTANT)
