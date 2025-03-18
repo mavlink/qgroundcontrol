@@ -16,7 +16,7 @@ inputs:
   ccache-version:
     description: ccache Version to Install
     required: false
-    default: 4.10.2
+    default: 4.11.1
     # windows-x86_64.zip, darwin.tar.gz, linux-x86_64.tar.xz
     # https://github.com/ccache/ccache/releases/download/${version}/ccache-${version}-${host}.${zip}
 runs:
