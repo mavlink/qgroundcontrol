@@ -153,6 +153,7 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
         //      - The initial automatic load from a vehicle completed and the current editor is empty
 
         _deinitAllVisualItems();
+        _visualItems->clearAndDeleteContents();
         _visualItems->deleteLater();
         _visualItems  = nullptr;
         _settingsItem = nullptr;
