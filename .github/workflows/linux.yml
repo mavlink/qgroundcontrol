@@ -12,6 +12,7 @@ on:
   pull_request:
     paths:
       - '.github/workflows/linux.yml'
+      - '.github/actions/**'
       - 'deploy/linux/**'
       - 'src/**'
       - 'test/**'
