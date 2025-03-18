@@ -21,7 +21,7 @@
 #include <QtCore/QSettings>
 #include <QtCore/QTimer>
 #include <QtQml/QQmlEngine>
-#include <QtQml/QtQml>
+#include <QtQml/qqml.h>
 
 QGC_LOGGING_CATEGORY(JoystickManagerLog, "qgc.joystick.joystickmanager")
 
