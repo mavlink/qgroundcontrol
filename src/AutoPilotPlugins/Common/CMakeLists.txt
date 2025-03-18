@@ -1,6 +1,6 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Network Quick)
 
-target_sources(AutoPilotPlugins
+target_sources(QGC
     PRIVATE
         ESP8266Component.cc
         ESP8266Component.h
@@ -16,25 +16,18 @@ target_sources(AutoPilotPlugins
         SyslinkComponentController.h
 )
 
-target_link_libraries(AutoPilotPlugins
-    PRIVATE
-        FactSystem
-        QGC
-        Utilities
-        Vehicle
+target_link_libraries(QGC
     PUBLIC
         Qt6::Core
         Qt6::Network
         Qt6::Quick
-        FactControls
-        MAVLink
 )
 
-target_include_directories(AutoPilotPlugins PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 # file(GLOB QML_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.qml)
 # file(GLOB QML_RESOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/Images/*.*)
-# qt_add_qml_module(CommonAutoPilotPlugin
+# qt_add_qml_module(QGC
 #     URI QGroundControl.CommonAutoPilotPlugin
 #     VERSION 1.0
 #     QML_FILES ${QML_SOURCES}

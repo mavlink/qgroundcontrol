@@ -1,21 +1,14 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Positioning)
 
-qt_add_library(Gimbal STATIC
-    GimbalController.cc
-    GimbalController.h
+target_sources(QGC
+    PRIVATE
+        GimbalController.cc
+        GimbalController.h
 )
 
-target_link_libraries(Gimbal
-    PRIVATE
-        Comms
-        Settings
-        Utilities
-        Vehicle
+target_link_libraries(QGC
     PUBLIC
         Qt6::Core
-        FactSystem
-        MAVLink
-        QmlControls
 )
 
-target_include_directories(Gimbal PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

@@ -1,48 +1,43 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Qml QmlIntegration)
 
-qt_add_library(Joystick STATIC
-    Joystick.cc
-    Joystick.h
-    JoystickManager.cc
-    JoystickManager.h
+target_sources(QGC
+    PRIVATE
+        Joystick.cc
+        Joystick.h
+        JoystickManager.cc
+        JoystickManager.h
 )
 
-target_link_libraries(Joystick
+target_link_libraries(QGC
     PRIVATE
         Qt6::Qml
-        FirmwarePlugin
-        Gimbal
-        Settings
-        Utilities
-        Vehicle
     PUBLIC
         Qt6::Core
         Qt6::QmlIntegration
-        QmlControls
 )
 
-target_include_directories(Joystick PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(ANDROID)
-    target_sources(Joystick
+    target_sources(QGC
         PRIVATE
             JoystickAndroid.cc
             JoystickAndroid.h
     )
 
-    target_link_libraries(Joystick PRIVATE Qt6::CorePrivate)
+    target_link_libraries(QGC PRIVATE Qt6::CorePrivate)
     return()
 endif()
 
-target_sources(Joystick
+target_sources(QGC
     PRIVATE
         JoystickSDL.cc
         JoystickSDL.h
 )
 
-target_compile_definitions(Joystick PRIVATE QGC_SDL_JOYSTICK SDL_MAIN_HANDLED)
+target_compile_definitions(QGC PRIVATE QGC_SDL_JOYSTICK SDL_MAIN_HANDLED)
 
-# qt_add_qml_module(Joystick
+# qt_add_qml_module(QGC
 #     URI QGroundControl.JoystickManager
 #     VERSION 1.0
 #     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
@@ -59,7 +54,7 @@ CPMAddPackage(
 
 set_source_files_properties(${sdl_gamecontrollerdb_SOURCE_DIR}/gamecontrollerdb.txt PROPERTIES QT_RESOURCE_ALIAS gamecontrollerdb.txt)
 
-qt_add_resources(Joystick "gamecontrollerdb.txt"
+qt_add_resources(QGC "gamecontrollerdb.txt"
     PREFIX "/db/mapping/joystick"
     FILES ${sdl_gamecontrollerdb_SOURCE_DIR}/gamecontrollerdb.txt
 )
@@ -117,7 +112,7 @@ CPMAddPackage(
 )
 
 if(TARGET SDL2::SDL2-static)
-    target_link_libraries(Joystick PRIVATE SDL2::SDL2-static)
+    target_link_libraries(QGC PRIVATE SDL2::SDL2-static)
 elseif(TARGET SDL2::SDL2)
-    target_link_libraries(Joystick PRIVATE SDL2::SDL2)
+    target_link_libraries(QGC PRIVATE SDL2::SDL2)
 endif()

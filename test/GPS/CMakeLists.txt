@@ -9,7 +9,7 @@ qt_add_library(GpsTest
 target_link_libraries(GpsTest
     PRIVATE
         Qt6::Test
-        GPS
+        QGC
     PUBLIC
         qgcunittest
 )

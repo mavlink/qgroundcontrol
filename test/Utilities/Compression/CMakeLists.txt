@@ -9,7 +9,7 @@ target_sources(UtilitiesTest
 target_link_libraries(UtilitiesTest
     PRIVATE
         Qt6::Test
-        Utilities
+        QGC
     PUBLIC
         qgcunittest
 )

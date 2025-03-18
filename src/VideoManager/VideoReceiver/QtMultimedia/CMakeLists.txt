@@ -6,33 +6,31 @@ endif()
 
 find_package(Qt6 REQUIRED COMPONENTS Multimedia MultimediaQuickPrivate Quick)
 
-target_sources(VideoManager
+target_sources(QGC
     PRIVATE
         QtMultimediaReceiver.cc
         QtMultimediaReceiver.h
 )
 
-target_link_libraries(VideoManager
+target_link_libraries(QGC
     PRIVATE
         Qt6::MultimediaQuickPrivate
         Qt6::Quick
-        QGC
-        Utilities
     PUBLIC
         Qt6::Core
         Qt6::Multimedia
 )
 
-target_include_directories(VideoManager PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_compile_definitions(VideoManager PUBLIC QGC_QT_STREAMING)
+target_compile_definitions(QGC PUBLIC QGC_QT_STREAMING)
 
 if(NOT QGC_ENABLE_UVC)
-    target_compile_definitions(VideoManager PUBLIC QGC_DISABLE_UVC)
+    target_compile_definitions(QGC PUBLIC QGC_DISABLE_UVC)
     return()
 endif()
 
-target_sources(VideoManager
+target_sources(QGC
     PRIVATE
         UVCReceiver.cc
         UVCReceiver.h

@@ -1,26 +1,19 @@
 find_package(Qt6 REQUIRED COMPONENTS Core QmlIntegration)
 
-qt_add_library(VideoManager STATIC
-    SubtitleWriter.cc
-    SubtitleWriter.h
-    VideoManager.cc
-    VideoManager.h
+target_sources(QGC
+    PRIVATE
+        SubtitleWriter.cc
+        SubtitleWriter.h
+        VideoManager.cc
+        VideoManager.h
 )
 
 add_subdirectory(VideoReceiver)
 
-target_link_libraries(VideoManager
-    PRIVATE
-        API
-        Camera
-        FactSystem
-        QmlControls
-        Settings
-        Utilities
-        Vehicle
+target_link_libraries(QGC
     PUBLIC
         Qt6::Core
         Qt6::QmlIntegration
 )
 
-target_include_directories(VideoManager PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

@@ -8,7 +8,7 @@ qt_add_library(CommsTest STATIC
 target_link_libraries(CommsTest
     PRIVATE
         Qt6::Test
-        Comms
+        QGC
     PUBLIC
         qgcunittest
 )

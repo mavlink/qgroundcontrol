@@ -1,13 +1,11 @@
 find_package(Qt6 REQUIRED COMPONENTS Core)
 
-qt_add_library(Viewer3D STATIC)
-
 if(QGC_VIEWER3D)
     message(STATUS "Viewer3D is Initialized")
 
     find_package(Qt6 REQUIRED COMPONENTS Core Gui Network Positioning Qml Quick3D Xml)
 
-    target_sources(Viewer3D
+    target_sources(QGC
         PRIVATE
             CityMapGeometry.cc
             CityMapGeometry.h
@@ -33,12 +31,10 @@ if(QGC_VIEWER3D)
             Viewer3DUtils.h
     )
 
-    target_link_libraries(Viewer3D
+    target_link_libraries(QGC
         PRIVATE
             Qt6::Network
             QGCLocation
-            Settings
-            Vehicle
         PUBLIC
             Qt6::Core
             Qt6::Gui
@@ -47,13 +43,13 @@ if(QGC_VIEWER3D)
             Qt6::Xml
     )
 
-    target_include_directories(Viewer3D PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+    target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-    target_compile_definitions(Viewer3D PUBLIC QGC_VIEWER3D)
+    target_compile_definitions(QGC PUBLIC QGC_VIEWER3D)
 
     # file(GLOB_RECURSE QML_SOURCES RELATIVE Viewer3DQml Viewer3DQml/*.qml)
     # file(GLOB_RECURSE QML_RESOURCES RELATIVE Viewer3DQml Viewer3DQml/*.mesh)
-    # qt_add_qml_module(Viewer3D
+    # qt_add_qml_module(QGC
     #     URI QGroundControl.Viewer3D
     #     VERSION 1.0
     #     QML_FILES ${QML_SOURCES}
