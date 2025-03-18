@@ -1,11 +1,9 @@
 find_package(Qt6 REQUIRED COMPONENTS Core)
 
-qt_add_library(MockLink STATIC)
-
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     find_package(Qt6 REQUIRED COMPONENTS Positioning)
 
-    target_sources(MockLink
+    target_sources(QGC
         PRIVATE
             MockConfiguration.cc
             MockConfiguration.h
@@ -19,17 +17,11 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
             MockLinkMissionItemHandler.h
     )
 
-    target_link_libraries(MockLink
-        PRIVATE
-            QGC
-            Utilities
+    target_link_libraries(QGC
         PUBLIC
             Qt6::Core
             Qt6::Positioning
-            Comms
-            FirmwarePlugin
-            MAVLink
     )
 
-    target_include_directories(MockLink PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+    target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 endif()

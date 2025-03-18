@@ -11,7 +11,7 @@ target_sources(VehicleTest
 target_link_libraries(VehicleTest
     PRIVATE
         Qt6::Test
-        Utilities
+        QGC
     PUBLIC
         Qt6::Core
         qgcunittest

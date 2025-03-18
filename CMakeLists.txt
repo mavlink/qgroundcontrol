@@ -470,7 +470,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         Qt6::Svg
         Qt6::Widgets
         QGC
-        QmlControls
+        QGCLocation
 )
 
 if(QGC_BUILD_TESTING)
@@ -481,18 +481,7 @@ endif()
 if(ANDROID)
     target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/android/src/AndroidInit.cc)
 
-    target_link_libraries(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            Qt6::Core
-            Joystick
-            Utilities
-    )
-
     target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/android/src)
-
-    if(NOT QGC_NO_SERIAL_LINK)
-        target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Comms)
-    endif()
 endif()
 
 set_source_files_properties(resources/qtquickcontrols2.conf PROPERTIES QT_RESOURCE_ALIAS qtquickcontrols2.conf)

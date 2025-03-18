@@ -22,11 +22,8 @@ target_link_libraries(VehicleTest
     PRIVATE
         Qt6::Test
     PUBLIC
-        Comms
-        MAVLink
-        MockLink
+        QGC
         qgcunittest
-        Vehicle
 )
 
 target_include_directories(VehicleTest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

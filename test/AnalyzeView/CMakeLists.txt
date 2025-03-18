@@ -20,11 +20,7 @@ target_link_libraries(AnalyzeViewTest
     PRIVATE
         Qt6::Core
         Qt6::Test
-        AnalyzeView
-        MAVLink
-        MockLink
-        Utilities
-        Vehicle
+        QGC
     PUBLIC
         qgcunittest
 )

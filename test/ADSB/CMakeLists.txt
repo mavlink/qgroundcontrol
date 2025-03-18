@@ -10,8 +10,7 @@ target_link_libraries(ADSBTest
     PRIVATE
         Qt6::Core
         Qt6::Test
-        ADSB
-        QmlControls
+        QGC
     PUBLIC
         qgcunittest
 )

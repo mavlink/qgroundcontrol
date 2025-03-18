@@ -10,7 +10,7 @@ qt_add_library(MAVLinkTest STATIC
 target_link_libraries(MAVLinkTest
     PRIVATE
         Qt6::Test
-        MAVLink
+        QGC
     PUBLIC
         qgcunittest
 )
