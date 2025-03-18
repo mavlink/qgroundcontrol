@@ -134,7 +134,7 @@ void ArduPlaneFirmwarePlugin::updateAvailableFlightModes(FlightModeList modeList
         mode.multiRotor = true;
     }
 
-    _updateModeMappings(modeList);
+    _updateFlightModeList(modeList);
 }
 
 uint32_t ArduPlaneFirmwarePlugin::_convertToCustomFlightModeEnum(uint32_t val) const

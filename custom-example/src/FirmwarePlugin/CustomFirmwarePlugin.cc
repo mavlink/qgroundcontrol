@@ -19,7 +19,7 @@
 //-----------------------------------------------------------------------------
 CustomFirmwarePlugin::CustomFirmwarePlugin()
 {
-    for (auto &mode: _availableFlightModeList){
+    for (auto &mode: _flightModeList){
         //-- Narrow the flight mode options to only these
         if(mode.mode_name != _holdFlightMode && mode.mode_name != _rtlFlightMode && mode.mode_name != _missionFlightMode){
             // No other flight modes can be set
@@ -140,5 +140,5 @@ void CustomFirmwarePlugin::updateAvailableFlightModes(FlightModeList modeList)
             break;
         }
     }
-    _updateModeMappings(modeList);
+    _updateFlightModeList(modeList);
 }
