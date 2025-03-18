@@ -8,7 +8,7 @@ qt_add_library(UtilitiesTest STATIC
 target_link_libraries(UtilitiesTest
     PRIVATE
         Qt6::Test
-        Utilities
+        QGC
     PUBLIC
         qgcunittest
 )

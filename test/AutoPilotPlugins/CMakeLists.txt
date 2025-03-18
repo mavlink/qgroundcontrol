@@ -9,12 +9,9 @@ qt_add_library(AutoPilotPluginsTest
 target_link_libraries(AutoPilotPluginsTest
     PRIVATE
         Qt6::Test
-        APMAutoPilotPlugin
-        PX4AutoPilotPlugin
-        Vehicle
     PUBLIC
         Qt6::Core
-        AutoPilotPlugins
+        QGC
         qgcunittest
 )
 

@@ -12,16 +12,11 @@ qt_add_library(qgcunittest
 
 target_link_libraries(qgcunittest
     PRIVATE
-        FactSystem
-        MissionManager
-        Settings
-        Vehicle
         Qt6::Test
     PUBLIC
         Qt6::Core
         Qt6::Positioning
-        MAVLink
-        MockLink
+        QGC
 )
 
 target_include_directories(qgcunittest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

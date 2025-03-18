@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-#include <QtCore/QtPlugin>
 #include <QtQuick/QQuickWindow>
 #include <QtWidgets/QApplication>
 
@@ -144,9 +143,6 @@ int main(int argc, char *argv[])
         }
     }
 #endif
-
-    // We statically link our own QtLocation plugin
-    Q_IMPORT_PLUGIN(QGeoServiceProviderFactoryQGC)
 
     bool runUnitTests = false;
     bool simpleBootTest = false;

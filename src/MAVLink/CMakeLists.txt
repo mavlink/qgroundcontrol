@@ -1,33 +1,32 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Gui QmlIntegration)
 
-qt_add_library(MAVLink STATIC
-    ImageProtocolManager.cc
-    ImageProtocolManager.h
-    MAVLinkFTP.cc
-    MAVLinkFTP.h
-    MAVLinkLib.h
-    MAVLinkSigning.cc
-    MAVLinkSigning.h
-    MAVLinkStreamConfig.cc
-    MAVLinkStreamConfig.h
-    QGCMAVLink.cc
-    QGCMAVLink.h
-    StatusTextHandler.cc
-    StatusTextHandler.h
-    SysStatusSensorInfo.cc
-    SysStatusSensorInfo.h
+target_sources(QGC
+    PRIVATE
+        ImageProtocolManager.cc
+        ImageProtocolManager.h
+        MAVLinkFTP.cc
+        MAVLinkFTP.h
+        MAVLinkLib.h
+        MAVLinkSigning.cc
+        MAVLinkSigning.h
+        MAVLinkStreamConfig.cc
+        MAVLinkStreamConfig.h
+        QGCMAVLink.cc
+        QGCMAVLink.h
+        StatusTextHandler.cc
+        StatusTextHandler.h
+        SysStatusSensorInfo.cc
+        SysStatusSensorInfo.h
 )
 
-target_link_libraries(MAVLink
-    PRIVATE
-        Utilities
+target_link_libraries(QGC
     PUBLIC
         Qt6::Core
         Qt6::Gui
         Qt6::QmlIntegration
 )
 
-target_include_directories(MAVLink PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 #===========================================================================#
 
@@ -52,7 +51,7 @@ CPMAddPackage(
 )
 
 # For QGC all dialects means common and development. Though use of development mavlink code should be restricted to debug builds only.
-target_include_directories(MAVLink
+target_include_directories(QGC
     PUBLIC
         ${mavlink_SOURCE_DIR}
         ${mavlink_SOURCE_DIR}/all

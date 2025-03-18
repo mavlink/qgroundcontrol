@@ -1,18 +1,18 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Positioning)
 
-target_sources(Utilities
+target_sources(QGC
     PRIVATE
         QGCGeo.cc
         QGCGeo.h
 )
 
-target_link_libraries(Utilities
+target_link_libraries(QGC
     PUBLIC
         Qt6::Core
         Qt6::Positioning
 )
 
-target_include_directories(Utilities PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 #===========================================================================#
 
@@ -53,5 +53,5 @@ CPMAddPackage(
 )
 
 if(TARGET GeographicLib::GeographicLib)
-    target_link_libraries(Utilities PRIVATE GeographicLib::GeographicLib)
+    target_link_libraries(QGC PRIVATE GeographicLib::GeographicLib)
 endif()

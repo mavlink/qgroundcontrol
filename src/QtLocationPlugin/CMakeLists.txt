@@ -53,15 +53,12 @@ target_link_libraries(QGCLocation
     PRIVATE
         Qt6::Positioning
         Qt6::Sql
-        QGC
-        Settings
-        Utilities
     PUBLIC
         Qt6::Core
         Qt6::Location
         Qt6::LocationPrivate
         Qt6::Network
-        QmlControls
+        QGC
 )
 
 target_include_directories(QGCLocation

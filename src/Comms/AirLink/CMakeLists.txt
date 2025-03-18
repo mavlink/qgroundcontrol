@@ -1,11 +1,9 @@
 find_package(Qt6 REQUIRED COMPONENTS Core)
 
-qt_add_library(AirLink STATIC)
-
 if(NOT QGC_AIRLINK_DISABLED)
     find_package(Qt6 REQUIRED COMPONENTS Network QmlIntegration)
 
-    target_sources(AirLink
+    target_sources(QGC
         PRIVATE
             AirLinkLink.cc
             AirLinkLink.h
@@ -13,20 +11,17 @@ if(NOT QGC_AIRLINK_DISABLED)
             AirLinkManager.h
     )
 
-    target_link_libraries(AirLink
+    target_link_libraries(QGC
         PRIVATE
             Qt6::Network
-            Settings
-            Utilities
         PUBLIC
             Qt6::Core
             Qt6::QmlIntegration
-            Comms
     )
 
-    target_include_directories(AirLink PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+    target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-    # qt_add_qml_module(AirLink
+    # qt_add_qml_module(QGC
     #     URI QGroundControl.AirLink
     #     VERSION 1.0
     #     QML_FILES
@@ -48,7 +43,7 @@ if(NOT QGC_AIRLINK_DISABLED)
     # )
 
     # cmake_print_variables(AirLink_targets)
-    # target_link_libraries(AirLink PRIVATE AirLinkplugin)
+    # target_link_libraries(QGC PRIVATE AirLinkplugin)
 else()
-    target_compile_definitions(AirLink PUBLIC QGC_AIRLINK_DISABLED)
+    target_compile_definitions(QGC PUBLIC QGC_AIRLINK_DISABLED)
 endif()

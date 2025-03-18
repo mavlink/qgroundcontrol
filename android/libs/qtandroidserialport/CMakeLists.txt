@@ -20,7 +20,7 @@ qt_add_library(qtandroidserialport STATIC
 
 target_link_libraries(qtandroidserialport
 	PRIVATE
-		Utilities
+		QGC
 	PUBLIC
 		Qt6::Core
 		Qt6::CorePrivate

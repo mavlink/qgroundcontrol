@@ -70,17 +70,9 @@ qt_add_library(CustomPlugin STATIC
 )
 
 target_link_libraries(CustomPlugin
-    PRIVATE
-        FactSystem
-        FirmwarePlugin
-        PX4AutoPilotPlugin
-        PX4FirmwarePlugin
-        QmlControls
-        Vehicle
     PUBLIC
         Qt6::Core
-        MAVLink
-        Settings
+        QGC
 )
 
 target_include_directories(CustomPlugin
