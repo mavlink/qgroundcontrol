@@ -201,7 +201,7 @@ void ArduCopterFirmwarePlugin::updateAvailableFlightModes(FlightModeList modeLis
         mode.multiRotor = true;
     }
 
-    _updateModeMappings(modeList);
+    _updateFlightModeList(modeList);
 
 }
 
