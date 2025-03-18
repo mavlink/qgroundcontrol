@@ -69,7 +69,6 @@ PX4FirmwarePlugin::PX4FirmwarePlugin()
         { PX4CustomMode::AUTO_LOITER        ,    _holdFlightMode        },
         { PX4CustomMode::AUTO_MISSION       ,    _missionFlightMode     },
         { PX4CustomMode::AUTO_RTL           ,    _rtlFlightMode         },
-        { PX4CustomMode::AUTO_FOLLOW_TARGET ,    _followMeFlightMode    },
         { PX4CustomMode::AUTO_LAND          ,    _landingFlightMode     },
         { PX4CustomMode::AUTO_PRECLAND      ,    _preclandFlightMode    },
         { PX4CustomMode::AUTO_READY         ,    _readyFlightMode       },
@@ -91,7 +90,6 @@ PX4FirmwarePlugin::PX4FirmwarePlugin()
         { _holdFlightMode       , PX4CustomMode::AUTO_LOITER       , true ,  true },
         { _missionFlightMode    , PX4CustomMode::AUTO_MISSION      , true ,  true },
         { _rtlFlightMode        , PX4CustomMode::AUTO_RTL          , true ,  true },
-        { _followMeFlightMode   , PX4CustomMode::AUTO_FOLLOW_TARGET, true ,  false},
         { _landingFlightMode    , PX4CustomMode::AUTO_LAND         , false,  true },
         { _preclandFlightMode   , PX4CustomMode::AUTO_PRECLAND     , true ,  true },
         { _readyFlightMode      , PX4CustomMode::AUTO_READY        , false,  false},
@@ -120,7 +118,7 @@ QStringList PX4FirmwarePlugin::flightModes(Vehicle* vehicle)
 {
     QStringList flightModesList;
 
-    for (auto &mode : _availableFlightModeList) {
+    for (auto &mode : _flightModeList) {
         if (mode.canBeSet){
             bool fw = (vehicle->fixedWing() && mode.fixedWing);
             bool mc = (vehicle->multiRotor() && mode.multiRotor);
@@ -154,7 +152,7 @@ bool PX4FirmwarePlugin::setFlightMode(const QString& flightMode, uint8_t* base_m
 
     bool found = false;
 
-    for (auto &mode: _availableFlightModeList){
+    for (auto &mode: _flightModeList){
         if(flightMode.compare(mode.mode_name, Qt::CaseInsensitive) == 0){
             *base_mode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
             *custom_mode = mode.custom_mode;
@@ -845,5 +843,5 @@ void PX4FirmwarePlugin::updateAvailableFlightModes(FlightModeList modeList)
             break;
         }
     }
-    _updateModeMappings(modeList);
+    _updateFlightModeList(modeList);
 }

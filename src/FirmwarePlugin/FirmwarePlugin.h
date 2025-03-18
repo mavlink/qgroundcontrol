@@ -431,17 +431,17 @@ protected:
     virtual QString _versionRegex() { return QString(); }
 
     // Set Custom Mode mapping to Flight Mode String
-    void             _setModeEnumToModeStringMapping(FlightModeCustomModeMap enumToString);
+    void _setModeEnumToModeStringMapping(FlightModeCustomModeMap enumToString);
 
     // Convert Base enum to Derived class Enums
-    virtual uint32_t _convertToCustomFlightModeEnum(uint32_t val) const { return val;}
+    virtual uint32_t _convertToCustomFlightModeEnum(uint32_t val) const { return val; }
 
     // Update internal mappings for a list of flight modes
-    void             _updateModeMappings(FlightModeList &modeList);
-    void             _addNewFlightMode  (FirmwareFlightMode &mode);
+    void _updateFlightModeList(FlightModeList &flightModeList);
+    void _addNewFlightMode  (FirmwareFlightMode &flightMode);
 
-    FlightModeList              _availableFlightModeList;
-    FlightModeCustomModeMap     _modeEnumToString;
+    FlightModeList          _flightModeList;
+    FlightModeCustomModeMap _modeEnumToString;
 
 protected:
     QVariantList _toolIndicatorList;
