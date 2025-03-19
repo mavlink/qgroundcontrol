@@ -7,15 +7,6 @@
  *
  ****************************************************************************/
 
-
-/**
- * @file
- *   @brief Map Tile Cache
- *
- *   @author Gus Grubba <gus@auterion.com>
- *
- */
-
 #pragma once
 
 #include <QtCore/QString>
@@ -25,14 +16,13 @@
 Q_DECLARE_LOGGING_CATEGORY(QGCMapEngineLog)
 
 class QGCMapTask;
-class QGCCacheWorker;
 
 class QGCMapEngine : public QObject
 {
     Q_OBJECT
 
 public:
-    QGCMapEngine(QObject *parent = nullptr);
+    explicit QGCMapEngine(QObject *parent = nullptr);
     ~QGCMapEngine();
 
     void init(const QString &databasePath);
@@ -45,11 +35,11 @@ signals:
 
 private slots:
     void _updateTotals(quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize);
-    void _pruned() { m_prunning = false; }
+    void _pruned() { _prunning = false; }
 
 private:
-    QGCCacheWorker *m_worker = nullptr;
-    bool m_prunning = false;
+    class QGCTileCacheWorker *_worker = nullptr;
+    bool _prunning = false;
 };
 
 extern QGCMapEngine *getQGCMapEngine();

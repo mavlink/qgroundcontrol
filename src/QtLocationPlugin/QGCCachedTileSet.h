@@ -153,7 +153,7 @@ signals:
     void nameChanged();
 
 private slots:
-    void _tileListFetched(const QQueue<QGCTile*> &tiles);
+    void _tileListFetched(const QList<QGCTile*> &tiles);
     void _networkReplyFinished();
     void _networkReplyError(QNetworkReply::NetworkError error);
 
