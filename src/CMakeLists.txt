@@ -33,12 +33,12 @@ target_link_libraries(QGC
 
 target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_precompile_headers(QGC
-    PRIVATE
-        <QtCore/QObject>
-        <QtNetwork/QNetworkReply>
-        <QtPositioning/QGeoCoordinate>
-)
+# target_precompile_headers(QGC
+#     PRIVATE
+#         <QtCore/QObject>
+#         <QtNetwork/QNetworkReply>
+#         <QtPositioning/QGeoCoordinate>
+# )
 
 if(ANDROID)
     target_sources(QGC
