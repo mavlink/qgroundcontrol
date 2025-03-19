@@ -59,9 +59,10 @@ PlanMasterController::PlanMasterController(MAV_AUTOPILOT firmwareType, MAV_TYPE 
 
 void PlanMasterController::_commonInit(void)
 {
-    connect(&_missionController,    &MissionController::dirtyChanged,               this, &PlanMasterController::dirtyChanged);
-    connect(&_geoFenceController,   &GeoFenceController::dirtyChanged,              this, &PlanMasterController::dirtyChanged);
-    connect(&_rallyPointController, &RallyPointController::dirtyChanged,            this, &PlanMasterController::dirtyChanged);
+    _previousDirty = dirty();
+    connect(&_missionController,    &MissionController::dirtyChanged,               this, &PlanMasterController::_updateDirty);
+    connect(&_geoFenceController,   &GeoFenceController::dirtyChanged,              this, &PlanMasterController::_updateDirty);
+    connect(&_rallyPointController, &RallyPointController::dirtyChanged,            this, &PlanMasterController::_updateDirty);
 
     connect(&_missionController,    &MissionController::containsItemsChanged,       this, &PlanMasterController::containsItemsChanged);
     connect(&_geoFenceController,   &GeoFenceController::containsItemsChanged,      this, &PlanMasterController::containsItemsChanged);
@@ -607,6 +608,14 @@ bool PlanMasterController::isEmpty(void) const
     return _missionController.isEmpty() &&
             _geoFenceController.isEmpty() &&
             _rallyPointController.isEmpty();
+}
+
+void PlanMasterController::_updateDirty(void)
+{
+    if(_previousDirty != dirty()){
+        _previousDirty = dirty();
+        emit dirtyChanged(_previousDirty);
+    }    
 }
 
 void PlanMasterController::_updatePlanCreatorsList(void)
