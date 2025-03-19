@@ -97,7 +97,7 @@ void QGCCachedTileSet::cancelDownloadTask()
     _cancelPending = true;
 }
 
-void QGCCachedTileSet::_tileListFetched(const QQueue<QGCTile*> &tiles)
+void QGCCachedTileSet::_tileListFetched(const QList<QGCTile*> &tiles)
 {
     _batchRequested = false;
     if (tiles.size() < kTileBatchSize) {

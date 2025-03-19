@@ -1,21 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
-
-/**
- * @file
- *   @brief Map Tile Cache Worker Thread
- *
- *   @author Gus Grubba <gus@auterion.com>
- *
- */
-
 #pragma once
 
 #include <QtCore/QLoggingCategory>
@@ -28,76 +10,42 @@
 Q_DECLARE_LOGGING_CATEGORY(QGCTileCacheWorkerLog)
 
 class QGCMapTask;
-class QGCCachedTileSet;
-class QSqlDatabase;
 
-class QGCCacheWorker : public QThread
+class QGCTileCacheWorker : public QThread
 {
     Q_OBJECT
 
 public:
-    explicit QGCCacheWorker(QObject *parent = nullptr);
-    ~QGCCacheWorker();
+    explicit QGCTileCacheWorker(QObject *parent = nullptr);
+    ~QGCTileCacheWorker();
 
     void setDatabaseFile(const QString &path) { _databasePath = path; }
-
-public slots:
     bool enqueueTask(QGCMapTask *task);
     void stop();
 
 signals:
-    void updateTotals(quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize);
-
-protected:
-    void run() final;
+    void updateTotals(quint32 totalTiles, quint64 totalSize, quint32 defaultTiles, quint64 defaultSize);
 
 private:
-    void _runTask(QGCMapTask *task);
+    void run() final;
 
-    void _saveTile(QGCMapTask *task);
-    void _getTile(QGCMapTask *task);
-    void _getTileSets(QGCMapTask *task);
-    void _createTileSet(QGCMapTask *task);
-    void _getTileDownloadList(QGCMapTask *task);
-    void _updateTileDownloadState(QGCMapTask *task);
-    void _pruneCache(QGCMapTask *task);
-    void _deleteTileSet(QGCMapTask *task);
-    void _renameTileSet(QGCMapTask *task);
-    void _resetCacheDatabase(QGCMapTask *task);
-    void _importSets(QGCMapTask *task);
-    void _exportSets(QGCMapTask *task);
-    bool _testTask(QGCMapTask *task);
+    void _processTask(QGCMapTask *task) const;
+    void _handleSaveTileTask(QGCMapTask *task) const;
+    void _handleFetchTileTask(QGCMapTask *task) const;
+    void _handleFetchTileSetsTask(QGCMapTask *task) const;
+    void _handleCreateTileSetTask(QGCMapTask *task) const;
+    void _handleGetTileDownloadListTask(QGCMapTask *task) const;
+    void _handleUpdateTileDownloadStateTask(QGCMapTask *task) const;
+    void _handlePruneCacheTask(QGCMapTask *task) const;
+    void _handleDeleteTileSetTask(QGCMapTask *task) const;
+    void _handleRenameTileSetTask(QGCMapTask *task) const;
+    void _handleResetCacheDatabaseTask(QGCMapTask *task) const;
+    void _handleImportSetsTask(QGCMapTask *task) const;
+    void _handleExportSetsTask(QGCMapTask *task) const;
 
-    bool _connectDB();
-    void _disconnectDB();
-    bool _createDB(QSqlDatabase &db, bool createDefault = true);
-    bool _findTileSetID(const QString &name, quint64 &setID);
-    bool _init();
-    quint64 _findTile(const QString &hash);
-    quint64 _getDefaultTileSet();
-    void _deleteBingNoTileTiles();
-    void _deleteTileSet(quint64 id);
-    void _updateSetTotals(QGCCachedTileSet *set);
-    void _updateTotals();
-
-    std::shared_ptr<QSqlDatabase> _db = nullptr;
     QMutex _taskQueueMutex;
     QQueue<QGCMapTask*> _taskQueue;
     QWaitCondition _waitc;
     QString _databasePath;
-    quint32 _defaultCount = 0;
-    quint32 _totalCount = 0;
-    quint64 _defaultSet = UINT64_MAX;
-    quint64 _defaultSize = 0;
-    quint64 _totalSize = 0;
-    QElapsedTimer _updateTimer;
-    int _updateTimeout = kShortTimeout;
-    std::atomic_bool _failed = false;
-    std::atomic_bool _valid = false;
-
-    static QByteArray _bingNoTileImage;
-    static constexpr const char *kSession = "QGeoTileWorkerSession";
-    static constexpr const char *kExportSession = "QGeoTileExportSession";
-    static constexpr int kShortTimeout = 2;
-    static constexpr int kLongTimeout = 5;
+    class QGCTileCacheDatabase *_dbManager = nullptr;
 };
