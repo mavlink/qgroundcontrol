@@ -569,6 +569,8 @@ void SimpleMissionItem::_rebuildComboBoxFacts(void)
         _comboboxFacts.append(&_missionItem._commandFact);
         _comboboxFacts.append(&_missionItem._frameFact);
     } else {
+        _ignoreDirtyChangeSignals = true;
+
         Fact*           rgParamFacts[7] =       { &_missionItem._param1Fact, &_missionItem._param2Fact, &_missionItem._param3Fact, &_missionItem._param4Fact, &_missionItem._param5Fact, &_missionItem._param6Fact, &_missionItem._param7Fact };
         FactMetaData*   rgParamMetaData[7] =    { &_param1MetaData, &_param2MetaData, &_param3MetaData, &_param4MetaData, &_param5MetaData, &_param6MetaData, &_param7MetaData };
 
@@ -598,6 +600,8 @@ void SimpleMissionItem::_rebuildComboBoxFacts(void)
                 _comboboxFacts.append(paramFact);
             }
         }
+
+        _ignoreDirtyChangeSignals = false;
     }
 }
 
