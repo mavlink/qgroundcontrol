@@ -1,5 +1,5 @@
 if(ANDROID OR IOS)
-    set(QGC_GST_TARGET_VERSION 1.22.12)
+    set(QGC_GST_TARGET_VERSION 1.26.0)
     set(QGC_GST_STATIC_BUILD ON)
 endif()
 
@@ -128,7 +128,7 @@ find_dependency(GObject)
 pkg_check_modules(GStreamer gstreamer-1.0)
 cmake_print_variables(GStreamer_VERSION)
 
-# Use Latest Revisions for each minor version: 1.16.3, 1.18.6, 1.20.7, 1.22.12, 1.24.12
+# Use Latest Revisions for each minor version: 1.16.3, 1.18.6, 1.20.7, 1.22.12, 1.24.12, 1.26.0
 string(REPLACE "." ";" GST_VERSION_LIST ${GStreamer_VERSION})
 list(GET GST_VERSION_LIST 0 GST_VERSION_MAJOR)
 list(GET GST_VERSION_LIST 1 GST_VERSION_MINOR)
@@ -144,6 +144,8 @@ elseif(GST_VERSION_MINOR EQUAL 22)
     set(GST_VERSION_PATCH 12)
 elseif(GST_VERSION_MINOR EQUAL 24)
     set(GST_VERSION_PATCH 12)
+elseif(GST_VERSION_MINOR EQUAL 26)
+    set(GST_VERSION_PATCH 0)
 endif()
 
 set(GST_PLUGINS_VERSION ${GST_VERSION_MAJOR}.${GST_VERSION_MINOR}.${GST_VERSION_PATCH})
@@ -280,6 +282,7 @@ set(GST_PLUGINS
     gstvaapi
     gstvideoparsersbad
     gstx264
+    gstx265
     # gstqml6
 )
 if(ANDROID)
