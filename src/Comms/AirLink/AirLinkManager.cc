@@ -52,7 +52,7 @@ void AirLinkManager::updateCredentials(const QString &login, const QString &pass
 
 void AirLinkManager::_connectToAirLinkServer(const QString &login, const QString &pass)
 {
-    const QUrl url("https://air-link.space/api/gs/getModems");
+    const QUrl url(QStringLiteral("https://air-link.space/api/gs/getModems"));
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
