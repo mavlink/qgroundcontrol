@@ -126,8 +126,10 @@ void MAVLinkProtocol::receiveBytes(LinkInterface *link, const QByteArray &data)
 
         _updateVersion(link, mavlinkChannel);
         _updateCounters(mavlinkChannel, message);
-        _forward(message);
-        _forwardSupport(message);
+        if (!linkPtr->linkConfiguration()->isForwarding()) {
+            _forward(message);
+            _forwardSupport(message);
+        }
         _logData(link, message);
 
         if (!_updateStatus(link, linkPtr, mavlinkChannel, message)) {
