@@ -567,9 +567,9 @@ Autotune* FirmwarePlugin::createAutotune(Vehicle *vehicle)
     return new Autotune(vehicle);
 }
 
-void FirmwarePlugin::updateAvailableFlightModes(FlightModeList modeList)
+void FirmwarePlugin::updateAvailableFlightModes(FlightModeList flightModeList)
 {
-    _updateModeMappings(modeList);
+    _updateFlightModeList(flightModeList);
 }
 
 void FirmwarePlugin::_setModeEnumToModeStringMapping(FlightModeCustomModeMap enumToString)
@@ -577,33 +577,35 @@ void FirmwarePlugin::_setModeEnumToModeStringMapping(FlightModeCustomModeMap enu
     _modeEnumToString = enumToString;
 }
 
-void FirmwarePlugin::_updateModeMappings(FlightModeList &modeList){
+void FirmwarePlugin::_updateFlightModeList(FlightModeList &flightModeList){
 
-    _availableFlightModeList.clear();
+    _flightModeList.clear();
 
-    for(auto &mode:modeList){
-        // Get Presaved Mode String, if mode is not present then take Custom Mode Name
-
-        QString nModeName = mode.mode_name;
-        if(_modeEnumToString.contains(mode.custom_mode)){
-            nModeName = _modeEnumToString[mode.custom_mode];
+    for (FirmwareFlightMode &flightMode : flightModeList){
+        if(_modeEnumToString.contains(flightMode.custom_mode)) {
+            // Flight mode already exists in initial mapping, use that name which provides for localizations
+            flightMode.mode_name = _modeEnumToString[flightMode.custom_mode];
+        } else{
+            // This is a custom flight mode that is not already known. Best we can do is used the provided name
+            _modeEnumToString[flightMode.custom_mode] = flightMode.mode_name;
         }
-        else{
-            // Mode Is New for QGC
-            _modeEnumToString[mode.custom_mode] = nModeName;
-        }
-        mode.mode_name = nModeName;
-        _addNewFlightMode(mode);
+        qDebug() << Q_FUNC_INFO << "Flight Mode: " << flightMode.mode_name << " Custom Mode: " << flightMode.custom_mode;
+        _addNewFlightMode(flightMode);
+    }
+
+    for (auto &flightMode : _flightModeList){
+        qDebug() << Q_FUNC_INFO << "Flight Mode: " << flightMode.mode_name << " Custom Mode: " << flightMode.custom_mode;
     }
 }
 
-void FirmwarePlugin::_addNewFlightMode(FirmwareFlightMode &mode)
+void FirmwarePlugin::_addNewFlightMode(FirmwareFlightMode &newFlightMode)
 {
-    for(auto &m:_availableFlightModeList){
-        if(m.custom_mode == mode.custom_mode){
-            // Already Exist
+    for (auto &existingFlightMode : _flightModeList){
+        if (existingFlightMode.custom_mode == newFlightMode.custom_mode) {
+            qDebug() << Q_FUNC_INFO << "Skipping duplicate flight mode: " << newFlightMode.mode_name << " Custom Mode: " << newFlightMode.custom_mode;
+            // Already exists
             return;
         }
     }
-    _availableFlightModeList += mode;
+    _flightModeList += newFlightMode;
 }
