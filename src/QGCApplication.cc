@@ -81,6 +81,13 @@
 #include "SerialLink.h"
 #endif
 
+#ifdef Q_OS_LINUX
+#ifndef Q_OS_ANDROID
+#include <unistd.h>
+#include <sys/types.h>
+#endif
+#endif
+
 QGC_LOGGING_CATEGORY(QGCApplicationLog, "qgc.qgcapplication")
 
 // Qml Singleton factories
