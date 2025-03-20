@@ -63,15 +63,24 @@ UDPConfiguration::~UDPConfiguration()
 
 void UDPConfiguration::setAutoConnect(bool autoc)
 {
-    AutoConnectSettings *const settings = SettingsManager::instance()->autoConnectSettings();
-    setLocalPort(settings->udpListenPort()->rawValue().toInt());
-
-    const QString targetHostIP = settings->udpTargetHostIP()->rawValue().toString();
-    if (!targetHostIP.isEmpty()) {
+    if (isAutoConnect() != autoc) {
+        AutoConnectSettings *const settings = SettingsManager::instance()->autoConnectSettings();
+        const QString targetHostIP = settings->udpTargetHostIP()->rawValue().toString();
         const quint16 targetHostPort = settings->udpTargetHostPort()->rawValue().toUInt();
-        addHost(targetHostIP, targetHostPort);
+        if (autoc) {
+            setLocalPort(settings->udpListenPort()->rawValue().toInt());    
+            if (!targetHostIP.isEmpty()) {
+                addHost(targetHostIP, targetHostPort);
+            }
+        }
+        else {
+            setLocalPort(0);
+            if (!targetHostIP.isEmpty()) {
+                removeHost(targetHostIP, targetHostPort);
+            }
+        }
+        LinkConfiguration::setAutoConnect(autoc);
     }
-    LinkConfiguration::setAutoConnect(autoc);
 }
 
 void UDPConfiguration::copyFrom(const LinkConfiguration *source)
