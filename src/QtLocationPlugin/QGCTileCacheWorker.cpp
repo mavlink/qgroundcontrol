@@ -7,130 +7,104 @@
  *
  ****************************************************************************/
 
-
-/**
- * @file
- *   @brief Map Tile Cache Worker Thread
- *
- *   @author Gus Grubba <gus@auterion.com>
- *
- */
-
 #include "QGCTileCacheWorker.h"
 #include "QGCCachedTileSet.h"
 #include "QGCMapTasks.h"
 #include "QGCMapUrlEngine.h"
 #include "QGCLoggingCategory.h"
 
-#include <QtCore/QDateTime>
 #include <QtCore/QCoreApplication>
+#include <QtCore/QDateTime>
 #include <QtCore/QFile>
 #include <QtCore/QSettings>
 #include <QtSql/QSqlDatabase>
-#include <QtSql/QSqlQuery>
 #include <QtSql/QSqlError>
+#include <QtSql/QSqlQuery>
 
 QByteArray QGCCacheWorker::_bingNoTileImage;
 
 QGC_LOGGING_CATEGORY(QGCTileCacheWorkerLog, "qgc.qtlocationplugin.qgctilecacheworker")
 
 QGCCacheWorker::QGCCacheWorker(QObject* parent)
-    : QThread(parent)
+    : QObject(parent)
 {
     // qCDebug(QGCTileCacheWorkerLog) << Q_FUNC_INFO << this;
 }
 
 QGCCacheWorker::~QGCCacheWorker()
 {
+    stop();
+    _disconnectDB();
     // qCDebug(QGCTileCacheWorkerLog) << Q_FUNC_INFO << this;
+}
+
+void QGCCacheWorker::enqueueTask(QGCMapTask *task)
+{
+    if (!_valid && (task->type() != QGCMapTask::taskInit)) {
+        task->setError(tr("Database Not Initialized"));
+        task->deleteLater();
+        return;
+    }
+
+    {
+        QMutexLocker lock(&_taskQueueMutex);
+        _taskQueue.enqueue(task);
+    }
+
+    if (_taskQueue.size() == 1) {
+        QMetaObject::invokeMethod(this, "_processNextTask", Qt::QueuedConnection);
+    }
 }
 
 void QGCCacheWorker::stop()
 {
     QMutexLocker lock(&_taskQueueMutex);
     qDeleteAll(_taskQueue);
-    lock.unlock();
-
-    if(this->isRunning()) {
-        _waitc.wakeAll();
-    }
-}
-
-bool QGCCacheWorker::enqueueTask(QGCMapTask *task)
-{
-    if (!_valid && (task->type() != QGCMapTask::taskInit)) {
-        task->setError(tr("Database Not Initialized"));
-        task->deleteLater();
-        return false;
-    }
-
-    // TODO: Prepend Stop Task Instead?
-    QMutexLocker lock(&_taskQueueMutex);
-    _taskQueue.enqueue(task);
-    lock.unlock();
-
-    if (isRunning()) {
-        _waitc.wakeAll();
-    } else {
-        start(QThread::HighPriority);
-    }
-
-    return true;
-}
-
-//-----------------------------------------------------------------------------
-void
-QGCCacheWorker::run()
-{
-    if (!_valid && !_failed) {
-        if (!_init()) {
-            qCWarning(QGCTileCacheWorkerLog) << Q_FUNC_INFO << "Failed To Init Database";
-            return;
-        }
-    }
-
-    if (_valid) {
-        if (_connectDB()) {
-            _deleteBingNoTileTiles();
-        }
-    }
-
-    QMutexLocker lock(&_taskQueueMutex);
-    while (true) {
-        if (!_taskQueue.isEmpty()) {
-            QGCMapTask* const task = _taskQueue.dequeue();
-            lock.unlock();
-            _runTask(task);
-            lock.relock();
-            task->deleteLater();
-
-            const qsizetype count = _taskQueue.count();
-            if (count > 100) {
-                _updateTimeout = kLongTimeout;
-            } else if (count < 25) {
-                _updateTimeout = kShortTimeout;
-            }
-
-            if ((count == 0) || _updateTimer.hasExpired(_updateTimeout)) {
-                if (_valid) {
-                    lock.unlock();
-                    _updateTotals();
-                    lock.relock();
-                }
-            }
-        } else {
-            (void) _waitc.wait(lock.mutex(), 5000);
-            if (_taskQueue.isEmpty()) {
-                break;
-            }
-        }
-    }
-    lock.unlock();
-
+    _taskQueue.clear();
     _disconnectDB();
 }
 
-void QGCCacheWorker::_runTask(QGCMapTask *task)
+void QGCCacheWorker::_processNextTask()
+{
+    if (!_valid && !_failed) {
+        if (!_init()) {
+            qCWarning(QGCTileCacheWorkerLog) << "Failed To Init Database";
+            return;
+        }
+    }
+    if (_valid && !_db) {
+        if (!_connectDB()) {
+            qCWarning(QGCTileCacheWorkerLog) << "Failed to connect to database";
+            return;
+        }
+        _deleteBingNoTileTiles();
+    }
+
+    QGCMapTask* task = nullptr;
+    {
+        QMutexLocker lock(&_taskQueueMutex);
+        if (_taskQueue.isEmpty()) {
+            return;
+        }
+        task = _taskQueue.dequeue();
+    }
+
+    _processTask(task);
+    task->deleteLater();
+
+    if (_valid) {
+        _updateTotals();
+    }
+
+    {
+        QMutexLocker lock(&_taskQueueMutex);
+        if (!_taskQueue.isEmpty()) {
+            QMetaObject::invokeMethod(this, "_processNextTask", Qt::QueuedConnection);
+        }
+    }
+}
+
+void QGCCacheWorker::_processTask(QGCMapTask *task)
 {
     switch (task->type()) {
     case QGCMapTask::taskInit:
@@ -172,7 +146,7 @@ void QGCCacheWorker::_runTask(QGCMapTask *task)
         _importSets(task);
         break;
     default:
-        qCWarning(QGCTileCacheWorkerLog) << Q_FUNC_INFO << "given unhandled task type" << task->type();
+        qCWarning(QGCTileCacheWorkerLog) << "Unhandled task type" << task->type();
         break;
     }
 }
@@ -427,11 +401,6 @@ QGCCacheWorker::_updateTotals()
         }
     }
     emit updateTotals(_totalCount, _totalSize, _defaultCount, _defaultSize);
-    if (!_updateTimer.isValid()) {
-        _updateTimer.start();
-    } else {
-        (void) _updateTimer.restart();
-    }
 }
 
 //-----------------------------------------------------------------------------

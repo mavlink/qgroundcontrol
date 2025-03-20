@@ -76,7 +76,7 @@ void QGCCachedTileSet::createDownloadTask()
     if (_manager) {
         (void) connect(task, &QGCMapTask::error, _manager, &QGCMapEngineManager::taskError);
     }
-    getQGCMapEngine()->addTask(task);
+    (void) getQGCMapEngine()->addTask(task);
 
     emit totalTileCountChanged();
     emit totalTilesSizeChanged();
@@ -88,7 +88,7 @@ void QGCCachedTileSet::resumeDownloadTask()
 {
     _cancelPending = false;
     QGCUpdateTileDownloadStateTask* const task = new QGCUpdateTileDownloadStateTask(_id, QGCTile::StatePending, "*");
-    getQGCMapEngine()->addTask(task);
+    (void) getQGCMapEngine()->addTask(task);
     createDownloadTask();
 }
 
@@ -238,7 +238,7 @@ void QGCCachedTileSet::_networkReplyFinished()
     QGeoFileTileCacheQGC::cacheTile(type, hash, image, format, _id);
 
     QGCUpdateTileDownloadStateTask* const task = new QGCUpdateTileDownloadStateTask(_id, QGCTile::StateComplete, hash);
-    getQGCMapEngine()->addTask(task);
+    (void) getQGCMapEngine()->addTask(task);
 
     setSavedTileSize(_savedTileSize + image.size());
     setSavedTileCount(_savedTileCount + 1);
@@ -279,7 +279,7 @@ void QGCCachedTileSet::_networkReplyError(QNetworkReply::NetworkError error)
     }
 
     QGCUpdateTileDownloadStateTask* const task = new QGCUpdateTileDownloadStateTask(_id, QGCTile::StateError, hash);
-    getQGCMapEngine()->addTask(task);
+    (void) getQGCMapEngine()->addTask(task);
 
     _prepareDownload();
 }

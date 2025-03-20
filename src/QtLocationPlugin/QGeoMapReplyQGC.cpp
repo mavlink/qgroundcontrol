@@ -48,7 +48,7 @@ QGeoTiledMapReplyQGC::QGeoTiledMapReplyQGC(QNetworkAccessManager *networkManager
     QGCFetchTileTask* const task = QGeoFileTileCacheQGC::createFetchTileTask(UrlFactory::getProviderTypeFromQtMapId(spec.mapId()), spec.x(), spec.y(), spec.zoom());
     (void) connect(task, &QGCFetchTileTask::tileFetched, this, &QGeoTiledMapReplyQGC::_cacheReply);
     (void) connect(task, &QGCMapTask::error, this, &QGeoTiledMapReplyQGC::_cacheError);
-    getQGCMapEngine()->addTask(task);
+    (void) getQGCMapEngine()->addTask(task);
 }
 
 QGeoTiledMapReplyQGC::~QGeoTiledMapReplyQGC()
