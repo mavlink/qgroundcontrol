@@ -47,10 +47,17 @@ public:
     /// Set if this is this a dynamic configuration. (decided at runtime)
     void setDynamic(bool dynamic = true);
 
+    /// Is this a forwarding link configuration?
+    ///     @return True if forwarding
+    bool isForwarding() const { return _forwarding; }
+
+    /// Set if this is this a forwarding link configuration. (decided at runtime)
+    void setForwarding(bool forwarding = true) { _forwarding = forwarding; };
+
     bool isAutoConnect() const { return _autoConnect; }
 
     /// Set if this is this an Auto Connect configuration.
-    void setAutoConnect(bool autoc = true);
+    virtual void setAutoConnect(bool autoc = true);
 
     /// Is this a High Latency configuration?
     ///     @return True if this is an High Latency configuration (link with large delays).
@@ -131,6 +138,7 @@ protected:
 private:
     QString _name;
     bool _dynamic = false;     ///< A connection added automatically and not persistent (unless it's edited).
+    bool _forwarding = false;  ///< Automatically added Mavlink forwarding connection
     bool _autoConnect = false; ///< This connection is started automatically at boot
     bool _highLatency = false;
 };
