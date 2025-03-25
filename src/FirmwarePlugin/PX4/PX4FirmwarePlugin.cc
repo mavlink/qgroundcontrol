@@ -405,8 +405,12 @@ bool PX4FirmwarePlugin::fixedWingAirSpeedLimitsAvailable(Vehicle* vehicle)
             vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "FW_AIRSPD_MAX");
 }
 
-void PX4FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord)
+void PX4FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord, double forwardFlightLoiterRadius)
 {
+    // PX4 doesn't support setting the forward flight loiter radius of
+    // MAV_CMD_DO_REPOSITION
+    Q_UNUSED(forwardFlightLoiterRadius)
+
     if (qIsNaN(vehicle->altitudeAMSL()->rawValue().toDouble())) {
         qgcApp()->showAppMessage(tr("Unable to go to location, vehicle position not known."));
         return;

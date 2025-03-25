@@ -29,6 +29,7 @@ Item {
     property var missionController
     property var confirmDialog
     property var guidedValueSlider
+    property var fwdFlightGotoMapCircle
     property var orbitMapCircle
 
     readonly property string emergencyStopTitle:            qsTr("EMERGENCY STOP")
@@ -48,6 +49,7 @@ Item {
     readonly property string pauseTitle:                    qsTr("Pause")
     readonly property string mvPauseTitle:                  qsTr("Pause (MV)")
     readonly property string changeAltTitle:                qsTr("Change Altitude")
+    readonly property string changeLoiterRadiusTitle:       qsTr("Change Loiter Radius")
     readonly property string changeCruiseSpeedTitle:        qsTr("Change Max Ground Speed")
     readonly property string changeAirspeedTitle:           qsTr("Change Airspeed")
     readonly property string orbitTitle:                    qsTr("Orbit")
@@ -76,8 +78,9 @@ Item {
     readonly property string landMessage:                       qsTr("Land the vehicle at the current position.")
     readonly property string rtlMessage:                        qsTr("Return to the launch position of the vehicle.")
     readonly property string changeAltMessage:                  qsTr("Change the altitude of the vehicle up or down.")
+    readonly property string changeLoiterRadiusMessage:         qsTr("Change the forward flight loiter radius.")
     readonly property string changeCruiseSpeedMessage:          qsTr("Change the maximum horizontal cruise speed.")
-    readonly property string changeAirspeedMessage:             qsTr("Change the equivalent airspeed setpoint")
+    readonly property string changeAirspeedMessage:             qsTr("Change the equivalent airspeed setpoint.")
     readonly property string gotoMessage:                       qsTr("Move the vehicle to the specified location.")
              property string setWaypointMessage:                qsTr("Adjust current waypoint to %1.").arg(_actionData)
     readonly property string orbitMessage:                      qsTr("Orbit the vehicle around the specified location.")
@@ -123,6 +126,7 @@ Item {
     readonly property int actionChangeHeading:              30
     readonly property int actionMVArm:                      31
     readonly property int actionMVDisarm:                   32
+    readonly property int actionChangeLoiterRadius:         33
 
 
 
@@ -150,6 +154,7 @@ Item {
     property bool showContinueMission:      _guidedActionsEnabled && _missionAvailable && !_missionActive && _vehicleArmed && _vehicleFlying && (_currentMissionIndex < _missionItemCount - 1)
     property bool showPause:                _guidedActionsEnabled && _vehicleArmed && _activeVehicle.pauseVehicleSupported && _vehicleFlying && !_vehiclePaused && !_fixedWingOnApproach
     property bool showChangeAlt:            _guidedActionsEnabled && _vehicleFlying && _activeVehicle.guidedModeSupported && _vehicleArmed && !_missionActive
+    property bool showChangeLoiterRadius:   _guidedActionsEnabled && _vehicleFlying && _activeVehicle.guidedModeSupported && _vehicleArmed && !_missionActive && _vehicleInFwdFlight && fwdFlightGotoMapCircle.visible
     property bool showChangeSpeed:          _guidedActionsEnabled && _vehicleFlying && _activeVehicle.guidedModeSupported && _vehicleArmed && !_missionActive && _speedLimitsAvailable
     property bool showOrbit:                _guidedActionsEnabled && _vehicleFlying && __orbitSupported && !_missionActive && _activeVehicle.homePosition.isValid && !isNaN(_activeVehicle.homePosition.altitude)
     property bool showROI:                  _guidedActionsEnabled && _vehicleFlying && __roiSupported
@@ -160,8 +165,8 @@ Item {
     property bool showSetEstimatorOrigin:   _activeVehicle && !(_activeVehicle.sensorsPresentBits & Vehicle.SysStatusSensorGPS)
     property bool showChangeHeading:        _guidedActionsEnabled && _vehicleFlying
 
-    property string changeSpeedTitle:   _fixedWing ? changeAirspeedTitle : changeCruiseSpeedTitle
-    property string changeSpeedMessage: _fixedWing ? changeAirspeedMessage : changeCruiseSpeedMessage
+    property string changeSpeedTitle:   _vehicleInFwdFlight ? changeAirspeedTitle : changeCruiseSpeedTitle
+    property string changeSpeedMessage: _vehicleInFwdFlight ? changeAirspeedMessage : changeCruiseSpeedMessage
 
     // Note: The '_missionItemCount - 2' is a hack to not trigger resume mission when a mission ends with an RTL item
     property bool showResumeMission:    _activeVehicle && !_vehicleArmed && _vehicleWasFlying && _missionAvailable && _resumeMissionIndex > 0 && (_resumeMissionIndex < _missionItemCount - 2)
@@ -190,8 +195,8 @@ Item {
     property bool   _vehicleWasFlying:      false
     property bool   _rcRSSIAvailable:       _activeVehicle ? _activeVehicle.rcRSSI > 0 && _activeVehicle.rcRSSI <= 100 : false
     property bool   _fixedWingOnApproach:   _activeVehicle ? _activeVehicle.fixedWing && _vehicleLanding : false
-    property bool   _fixedWing:             _activeVehicle ? _activeVehicle.fixedWing || _activeVehicle.vtolInFwdFlight : false
-    property bool  _speedLimitsAvailable:   _activeVehicle && ((_fixedWing && _activeVehicle.haveFWSpeedLimits) || (!_fixedWing && _activeVehicle.haveMRSpeedLimits))
+    property bool   _vehicleInFwdFlight:    _activeVehicle ? _activeVehicle.inFwdFlight : false
+    property bool  _speedLimitsAvailable:   _activeVehicle && ((_vehicleInFwdFlight && _activeVehicle.haveFWSpeedLimits) || (!_vehicleInFwdFlight && _activeVehicle.haveMRSpeedLimits))
     property var   _gripperFunction:        undefined
 
     // You can turn on log output for GuidedActionsController by turning on GuidedActionsControllerLog category
@@ -226,14 +231,14 @@ Item {
                 _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_activeVehicle.minimumTakeoffAltitudeMeters()),
                 qsTr("Height (rel)"))
         } else if (actionCode === actionChangeSpeed) {
-            if (_fixedWing) {
+            if (_vehicleInFwdFlight) {
                 guidedValueSlider.setupSlider(
                     GuidedValueSlider.SliderType.Speed,
                     _unitsConversion.metersSecondToAppSettingsSpeedUnits(_activeVehicle.minimumEquivalentAirspeed()).toFixed(1),
                     _unitsConversion.metersSecondToAppSettingsSpeedUnits(_activeVehicle.maximumEquivalentAirspeed()).toFixed(1),
                     _unitsConversion.metersSecondToAppSettingsSpeedUnits(_activeVehicle.airSpeed.rawValue),
                     qsTr("Airspeed"))
-            } else if (!_fixedWing && _activeVehicle.haveMRSpeedLimits) {
+            } else if (!_vehicleInFwdFlight && _activeVehicle.haveMRSpeedLimits) {
                 guidedValueSlider.setupSlider(
                     GuidedValueSlider.SliderType.Speed,
                     _unitsConversion.metersSecondToAppSettingsSpeedUnits(0.1).toFixed(1),
@@ -241,7 +246,7 @@ Item {
                     _unitsConversion.metersSecondToAppSettingsSpeedUnits(_activeVehicle.maximumHorizontalSpeedMultirotor()/2).toFixed(1),
                     qsTr("Speed"))
             } else {
-                console.error("setupSlider called for inapproproate change speed action", _fixedWing, _activeVehicle.haveMRSpeedLimits)
+                console.error("setupSlider called for inapproproate change speed action", _vehicleInFwdFlight, _activeVehicle.haveMRSpeedLimits)
             }
         } else if (actionCode === actionChangeAlt || actionCode === actionOrbit || actionCode === actionGoto || actionCode === actionPause) {
             guidedValueSlider.setupSlider(
@@ -500,6 +505,13 @@ Item {
             confirmDialog.hideTrigger = Qt.binding(function() { return !showChangeAlt })
             guidedValueSlider.visible = true
             break;
+        case actionChangeLoiterRadius:
+            confirmDialog.title = changeLoiterRadiusTitle
+            confirmDialog.message = changeLoiterRadiusMessage
+            confirmDialog.hideTrigger = Qt.binding(function() { return !showChangeLoiterRadius })
+            confirmDialog.mapIndicator = fwdFlightGotoMapCircle
+            fwdFlightGotoMapCircle.startLoiterRadiusEdit()
+            break
         case actionGoto:
             confirmDialog.title = gotoTitle
             confirmDialog.message = gotoMessage
@@ -645,8 +657,19 @@ Item {
             var altitudeChangeInMeters = valueInMeters - _activeVehicle.altitudeRelative.rawValue
             _activeVehicle.guidedModeChangeAltitude(altitudeChangeInMeters, false /* pauseVehicle */)
             break
+        case actionChangeLoiterRadius:
+            _activeVehicle.guidedModeGotoLocation(
+                fwdFlightGotoMapCircle.coordinate,
+                fwdFlightGotoMapCircle.radius.rawValue
+            )
+            break
         case actionGoto:
-            _activeVehicle.guidedModeGotoLocation(actionData)
+            _activeVehicle.guidedModeGotoLocation(
+                actionData,
+                _vehicleInFwdFlight /* forwardFlightLoiterRadius */
+                    ? _flyViewSettings.forwardFlightGoToLocationLoiterRad.value
+                    : 0
+            )
             break
         case actionSetWaypoint:
             _activeVehicle.setCurrentMissionSequence(actionData)
@@ -682,7 +705,7 @@ Item {
             if (_activeVehicle) {
                 // We need to convert back to m/s as that is what mavlink standard uses for MAV_CMD_DO_CHANGE_SPEED
                 var metersSecondSpeed = _unitsConversion.appSettingsSpeedUnitsToMetersSecond(sliderOutputValue)
-                if (_activeVehicle.vtolInFwdFlight || _activeVehicle.fixedWing) {
+                if (_vehicleInFwdFlight) {
                    _activeVehicle.guidedModeChangeEquivalentAirspeedMetersSecond(metersSecondSpeed)
                 } else {
                     _activeVehicle.guidedModeChangeGroundSpeedMetersSecond(metersSecondSpeed)
