@@ -44,14 +44,6 @@ namespace {
 UDPConfiguration::UDPConfiguration(const QString &name, QObject *parent)
     : LinkConfiguration(name, parent)
 {
-    AutoConnectSettings *const settings = SettingsManager::instance()->autoConnectSettings();
-    setLocalPort(settings->udpListenPort()->rawValue().toInt());
-
-    const QString targetHostIP = settings->udpTargetHostIP()->rawValue().toString();
-    if (!targetHostIP.isEmpty()) {
-        const quint16 targetHostPort = settings->udpTargetHostPort()->rawValue().toUInt();
-        addHost(targetHostIP, targetHostPort);
-    }
 }
 
 UDPConfiguration::UDPConfiguration(const UDPConfiguration *source, QObject *parent)
@@ -67,6 +59,28 @@ UDPConfiguration::~UDPConfiguration()
     _targetHosts.clear();
 
     // qCDebug(UDPLinkLog) << Q_FUNC_INFO << this;
+}
+
+void UDPConfiguration::setAutoConnect(bool autoc)
+{
+    if (isAutoConnect() != autoc) {
+        AutoConnectSettings *const settings = SettingsManager::instance()->autoConnectSettings();
+        const QString targetHostIP = settings->udpTargetHostIP()->rawValue().toString();
+        const quint16 targetHostPort = settings->udpTargetHostPort()->rawValue().toUInt();
+        if (autoc) {
+            setLocalPort(settings->udpListenPort()->rawValue().toInt());    
+            if (!targetHostIP.isEmpty()) {
+                addHost(targetHostIP, targetHostPort);
+            }
+        }
+        else {
+            setLocalPort(0);
+            if (!targetHostIP.isEmpty()) {
+                removeHost(targetHostIP, targetHostPort);
+            }
+        }
+        LinkConfiguration::setAutoConnect(autoc);
+    }
 }
 
 void UDPConfiguration::copyFrom(const LinkConfiguration *source)
