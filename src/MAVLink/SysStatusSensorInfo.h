@@ -9,11 +9,11 @@
 
 #pragma once
 
-#include "MAVLinkLib.h"
-
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QMap>
 #include <QtCore/QObject>
-#include <QtCore/QLoggingCategory>
+
+#include "MAVLinkLib.h"
 
 Q_DECLARE_LOGGING_CATEGORY(SysStatusSensorInfoLog)
 
@@ -21,25 +21,25 @@ Q_DECLARE_LOGGING_CATEGORY(SysStatusSensorInfoLog)
 class SysStatusSensorInfo : public QObject
 {
     Q_OBJECT
-
-public:
-    SysStatusSensorInfo(QObject* parent = nullptr);
-
     Q_PROPERTY(QStringList sensorNames  READ sensorNames    NOTIFY sensorInfoChanged)
     Q_PROPERTY(QStringList sensorStatus READ sensorStatus   NOTIFY sensorInfoChanged)
 
-    void        update      (const mavlink_sys_status_t& sysStatus);
-    QStringList sensorNames (void) const;
-    QStringList sensorStatus(void) const;
+public:
+    explicit SysStatusSensorInfo(QObject *parent = nullptr);
+    ~SysStatusSensorInfo();
+
+    void update(const mavlink_sys_status_t &sysStatus);
+    QStringList sensorNames() const;
+    QStringList sensorStatus() const;
 
 signals:
-    void sensorInfoChanged(void);
+    void sensorInfoChanged();
 
 private:
-    typedef struct {
-        bool enabled;
-        bool healthy;
-    } SensorInfo_t;
+    struct SensorInfo {
+        bool enabled = false;
+        bool healthy = false;
+    };
 
-    QMap<MAV_SYS_STATUS_SENSOR, SensorInfo_t> _sensorInfoMap;
+    QMap<MAV_SYS_STATUS_SENSOR, SensorInfo> _sensorInfoMap;
 };

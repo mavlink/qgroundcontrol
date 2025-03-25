@@ -9,18 +9,27 @@
 
 #include "MAVLinkStreamConfig.h"
 #include "MAVLinkLib.h"
+#include "QGCLoggingCategory.h"
+
+QGC_LOGGING_CATEGORY(MAVLinkStreamConfigLog, "qgc.mavlink.mavlinkstreamconfig")
 
 MAVLinkStreamConfig::MAVLinkStreamConfig(const SetMessageIntervalCb &messageIntervalCb)
     : _messageIntervalCb(messageIntervalCb)
 {
+    // qCDebug(MAVLinkStreamConfigLog) << Q_FUNC_INFO << this;
+}
+
+MAVLinkStreamConfig::~MAVLinkStreamConfig()
+{
+    // qCDebug(MAVLinkStreamConfigLog) << Q_FUNC_INFO << this;
 }
 
 void MAVLinkStreamConfig::setHighRateRateAndAttitude()
 {
-    int requestedRate = (int)(1000000.0 / 100.0); // 100 Hz in usecs (better set this a bit higher than actually needed,
+    static constexpr int requestedRate = static_cast<int>(1000000.0 / 100.0); // 100 Hz in usecs (better set this a bit higher than actually needed,
     // to give it more priority in case of exceeding link bandwidth)
 
-    _nextDesiredRates = QVector<DesiredStreamRate>{{
+    _nextDesiredRates = QList<DesiredStreamRate>{{
         {MAVLINK_MSG_ID_ATTITUDE_QUATERNION, requestedRate},
         {MAVLINK_MSG_ID_ATTITUDE_TARGET, requestedRate},
     }};
@@ -31,8 +40,8 @@ void MAVLinkStreamConfig::setHighRateRateAndAttitude()
 
 void MAVLinkStreamConfig::setHighRateVelAndPos()
 {
-    int requestedRate = (int)(1000000.0 / 100.0);
-    _nextDesiredRates = QVector<DesiredStreamRate>{{
+    static constexpr int requestedRate = static_cast<int>(1000000.0 / 100.0);
+    _nextDesiredRates = QList<DesiredStreamRate>{{
         {MAVLINK_MSG_ID_LOCAL_POSITION_NED, requestedRate},
         {MAVLINK_MSG_ID_POSITION_TARGET_LOCAL_NED, requestedRate},
     }};
@@ -41,8 +50,8 @@ void MAVLinkStreamConfig::setHighRateVelAndPos()
 
 void MAVLinkStreamConfig::setHighRateAltAirspeed()
 {
-    int requestedRate = (int)(1000000.0 / 100.0);
-    _nextDesiredRates = QVector<DesiredStreamRate>{{
+    static constexpr int requestedRate = static_cast<int>(1000000.0 / 100.0);
+    _nextDesiredRates = QList<DesiredStreamRate>{{
         {MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT, requestedRate},
         {MAVLINK_MSG_ID_VFR_HUD, requestedRate},
     }};
@@ -52,14 +61,14 @@ void MAVLinkStreamConfig::setHighRateAltAirspeed()
 void MAVLinkStreamConfig::gotSetMessageIntervalAck()
 {
     switch (_state) {
-        case State::Configuring:
-            nextDesiredRate();
-            break;
-        case State::RestoringDefaults:
-            restoreNextDefault();
-            break;
-        default:
-            break;
+    case State::Configuring:
+        nextDesiredRate();
+        break;
+    case State::RestoringDefaults:
+        restoreNextDefault();
+        break;
+    default:
+        break;
     }
 }
 
@@ -86,7 +95,8 @@ void MAVLinkStreamConfig::nextDesiredRate()
         _state = State::Idle;
         return;
     }
-    const DesiredStreamRate& rate = _desiredRates.last();
+
+    const DesiredStreamRate &rate = _desiredRates.last();
     _changedIds.push_back(rate.messageId);
     _messageIntervalCb(rate.messageId, rate.rate);
     _desiredRates.pop_back();
@@ -102,23 +112,23 @@ void MAVLinkStreamConfig::restoreNextDefault()
     if (_changedIds.empty()) {
         // do we have a pending request?
         switch (_nextState) {
-            case State::Configuring:
-                _state = _nextState;
-                _desiredRates = _nextDesiredRates;
-                _nextDesiredRates.clear();
-                _nextState = State::Idle;
-                nextDesiredRate();
-                break;
-            case State::RestoringDefaults:
-            case State::Idle:
-                _nextState = State::Idle; // nothing to do, we just finished restoring
-                _state = State::Idle;
-                break;
+        case State::Configuring:
+            _state = _nextState;
+            _desiredRates = _nextDesiredRates;
+            _nextDesiredRates.clear();
+            _nextState = State::Idle;
+            nextDesiredRate();
+            break;
+        case State::RestoringDefaults:
+        case State::Idle:
+            _nextState = State::Idle; // nothing to do, we just finished restoring
+            _state = State::Idle;
+            break;
         }
         return;
     }
 
-    int id = _changedIds.last();
+    const int id = _changedIds.last();
     _messageIntervalCb(id, 0); // restore the default rate
     _changedIds.pop_back();
 }
