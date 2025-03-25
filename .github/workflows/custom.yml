@@ -36,7 +36,7 @@ jobs:
     env:
       ARTIFACT: QGroundControl-installer.exe
       QT_VERSION: 6.8.2
-      GST_VERSION: 1.22.12
+      GST_VERSION: 1.26.0
 
     steps:
       - name: Checkout repo

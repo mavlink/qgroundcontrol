@@ -1,5 +1,8 @@
 if(ANDROID OR IOS)
     set(QGC_GST_TARGET_VERSION 1.22.12)
+endif()
+
+if(ANDROID OR IOS OR WIN32)
     set(QGC_GST_STATIC_BUILD ON)
 endif()
 
