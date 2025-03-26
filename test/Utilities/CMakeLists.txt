@@ -1,21 +1,16 @@
 find_package(Qt6 REQUIRED COMPONENTS Core)
 
-qt_add_library(UtilitiesTest STATIC
-    FileSystem/QGCFileDownloadTest.cc
-    FileSystem/QGCFileDownloadTest.h
-)
-
-target_link_libraries(UtilitiesTest
+target_sources(qgctest
     PRIVATE
-        Qt6::Test
-        QGC
-    PUBLIC
-        qgcunittest
+        FileSystem/QGCFileDownloadTest.cc
+        FileSystem/QGCFileDownloadTest.h
 )
 
-target_include_directories(UtilitiesTest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} FileSystem)
+target_link_libraries(qgctest PRIVATE Qt6::Test)
 
-qt_add_resources(UtilitiesTest "UtilitiesTest_res"
+target_include_directories(qgctest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} FileSystem)
+
+qt_add_resources(qgctest "UtilitiesTest_res"
     PREFIX "/"
     FILES
         arducopter.apj
