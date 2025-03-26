@@ -1,6 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Test)
-
-target_sources(qgctest
+target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         ExifParserTest.cc
         ExifParserTest.h
@@ -16,16 +14,10 @@ target_sources(qgctest
         ULogParserTest.h
 )
 
-target_link_libraries(qgctest
-    PRIVATE
-        Qt6::Core
-        Qt6::Test
-)
-
-target_include_directories(qgctest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # https://github.com/ianare/exif-samples
-qt_add_resources(qgctest "AnalyzeViewTest_res"
+qt_add_resources(${CMAKE_PROJECT_NAME} "AnalyzeViewTest_res"
     PREFIX "/"
     FILES
         DSCN0010.jpg

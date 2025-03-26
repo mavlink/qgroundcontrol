@@ -1,6 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Positioning Qml Test)
-
-target_sources(qgctest
+target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         CameraCalcTest.cc CameraCalcTest.h
         CameraSectionTest.cc CameraSectionTest.h
@@ -27,16 +25,9 @@ target_sources(qgctest
         VisualMissionItemTest.cc VisualMissionItemTest.h
 )
 
-target_link_libraries(qgctest
-    PRIVATE
-        Qt6::Test
-    PUBLIC
-        Qt6::Positioning
-)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_include_directories(qgctest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-
-# qt_add_qml_module(qgctest
+# qt_add_qml_module(${CMAKE_PROJECT_NAME}
 #     URI missionmanagertest
 #     VERSION 1.0
 #     QML_FILES

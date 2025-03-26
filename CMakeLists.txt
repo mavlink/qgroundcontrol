@@ -157,8 +157,6 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
         NDEBUG
         QT_NO_DEBUG
     )
-elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    include(CTest)
 endif()
 
 if(ANDROID)
@@ -482,7 +480,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 
 if(QGC_BUILD_TESTING)
     add_subdirectory(test)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE qgctest)
 endif()
 
 if(ANDROID)
