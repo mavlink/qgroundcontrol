@@ -1,5 +1,5 @@
 ---
-qt_version: 6.8.2
+qt_version: 6.8.3
 ---
 
 # Getting Started with Source and Builds
@@ -137,7 +137,7 @@ Example commands to build a default QGC and run it afterwards:
 1. Configure:
 
    ```sh
-   ~/Qt/6.8.2/gcc_64/bin/qt-cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+   ~/Qt/6.8.3/gcc_64/bin/qt-cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
    ```
 
    Change the directory for qt-cmake to match your install location for Qt and the kit you want to use.
