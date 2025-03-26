@@ -1,7 +1,7 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Positioning Qml Test)
 
-qt_add_library(MissionManagerTest
-    STATIC
+target_sources(qgctest
+    PRIVATE
         CameraCalcTest.cc CameraCalcTest.h
         CameraSectionTest.cc CameraSectionTest.h
         CorridorScanComplexItemTest.cc CorridorScanComplexItemTest.h
@@ -27,22 +27,19 @@ qt_add_library(MissionManagerTest
         VisualMissionItemTest.cc VisualMissionItemTest.h
 )
 
-target_link_libraries(MissionManagerTest
+target_link_libraries(qgctest
     PRIVATE
         Qt6::Test
-        TerrainTest
     PUBLIC
         Qt6::Positioning
-        QGC
-        qgcunittest
 )
 
-target_include_directories(MissionManagerTest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(qgctest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-qt_add_qml_module(MissionManagerTest
-    URI missionmanagertest
-    VERSION 1.0
-    QML_FILES
-        MissionCommandTreeEditorTestWindow.qml
-    IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
-)
+# qt_add_qml_module(qgctest
+#     URI missionmanagertest
+#     VERSION 1.0
+#     QML_FILES
+#         MissionCommandTreeEditorTestWindow.qml
+#     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
+# )
