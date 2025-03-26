@@ -1,6 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Qml Quick Test)
-
-target_sources(qgctest
+target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         FactSystemTestBase.cc
         FactSystemTestBase.h
@@ -12,15 +10,9 @@ target_sources(qgctest
         ParameterManagerTest.h
 )
 
-target_link_libraries(qgctest
-    PRIVATE
-        Qt6::Quick
-        Qt6::Test
-)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_include_directories(qgctest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-
-# qt_add_qml_module(qgctest
+# qt_add_qml_module(${CMAKE_PROJECT_NAME}
 #     URI factsystemtest
 #     VERSION 1.0
 #     QML_FILES
