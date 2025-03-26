@@ -1,6 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Positioning Test)
-
-target_sources(qgctest
+target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         TerrainQueryTest.cc
         TerrainQueryTest.h
@@ -8,10 +6,4 @@ target_sources(qgctest
         TerrainTileTest.h
 )
 
-target_link_libraries(qgctest
-    PRIVATE
-        Qt6::Positioning
-        Qt6::Test
-)
-
-target_include_directories(qgctest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
