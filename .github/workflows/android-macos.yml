@@ -12,6 +12,7 @@ on:
   pull_request:
     paths:
       - '.github/workflows/android-macos.yml'
+      - '.github/actions/**'
       - 'deploy/android/**'
       - 'src/**'
       - 'android/**'
