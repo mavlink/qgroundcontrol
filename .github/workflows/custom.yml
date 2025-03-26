@@ -35,7 +35,7 @@ jobs:
 
     env:
       ARTIFACT: QGroundControl-installer.exe
-      QT_VERSION: 6.8.2
+      QT_VERSION: 6.8.3
       GST_VERSION: 1.22.12
 
     steps:

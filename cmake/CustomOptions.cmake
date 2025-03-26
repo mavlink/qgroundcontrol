@@ -75,7 +75,7 @@ set(CPM_SOURCE_CACHE ${CMAKE_BINARY_DIR}/cpm_modules CACHE PATH "Directory to do
 
 # Qt
 set(QGC_QT_MINIMUM_VERSION "6.6.3" CACHE STRING "Minimum Supported Qt Version")
-set(QGC_QT_MAXIMUM_VERSION "6.8.2" CACHE STRING "Maximum Supported Qt Version")
+set(QGC_QT_MAXIMUM_VERSION "6.8.3" CACHE STRING "Maximum Supported Qt Version")
 set(QT_QML_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/qml" CACHE PATH "Install path for QML")
 set(QML_IMPORT_PATH "${QT_QML_OUTPUT_DIRECTORY}" CACHE STRING "Extra QML Import Paths")
 option(QML_IMPORT_TRACE "Debug QML Imports" OFF)
