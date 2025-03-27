@@ -94,11 +94,18 @@ if(TARGET ulog_cpp::ulog_cpp)
     target_link_libraries(QGC PRIVATE ulog_cpp::ulog_cpp)
 endif()
 
+#===========================================================================#
+
+set(EXPAT_EXTRA_OPTIONS)
+if(WIN32)
+    list(APPEND EXPAT_EXTRA_OPTIONS "EXPAT_MSVC_STATIC_CRT ON")
+endif()
+
 CPMAddPackage(
     NAME EXPAT
-    VERSION 2.6.4
+    VERSION 2.7.0
     GITHUB_REPOSITORY libexpat/libexpat
-    GIT_TAG "R_2_6_4"
+    GIT_TAG "R_2_7_0"
     SOURCE_SUBDIR expat
     OPTIONS
         "EXPAT_BUILD_DOCS OFF"
@@ -109,22 +116,27 @@ CPMAddPackage(
         "EXPAT_BUILD_TOOLS OFF"
         "EXPAT_ENABLE_INSTALL OFF"
         "EXPAT_SHARED_LIBS OFF"
+        "${EXPAT_EXTRA_OPTIONS}"
 )
 
 set(_EXIV2_ENABLE_XMP OFF)
 if(EXPAT_ADDED)
-    find_package(expat CONFIG QUIET)
-    if(NOT TARGET expat::expat)
-        find_package(EXPAT MODULE)
-        if(EXPAT_FOUND)
-            if(NOT TARGET expat::expat)
-                add_library(expat::expat INTERFACE IMPORTED)
-                target_link_libraries(expat::expat INTERFACE EXPAT::EXPAT)
-            endif()
-            set(_EXIV2_ENABLE_XMP ON)
+    set(EXPAT_USE_STATIC_LIBS ON)
+    find_package(EXPAT MODULE)
+    if(NOT TARGET EXPAT::EXPAT)
+        find_package(expat CONFIG)
+        if(TARGET expat::expat)
+            add_library(EXPAT::EXPAT INTERFACE IMPORTED)
+            target_link_libraries(EXPAT::EXPAT INTERFACE expat::expat)
         endif()
     endif()
+
+    if(TARGET EXPAT::EXPAT)
+        set(_EXIV2_ENABLE_XMP ON)
+    endif()
 endif()
+
+#===========================================================================#
 
 CPMAddPackage(
     NAME exiv2
@@ -154,6 +166,9 @@ CPMAddPackage(
 )
 
 if(TARGET Exiv2::exiv2lib)
+    if(_EXIV2_ENABLE_XMP AND TARGET exiv2-xmp)
+        target_link_libraries(exiv2-xmp PRIVATE EXPAT::EXPAT)
+    endif()
     target_link_libraries(QGC PRIVATE Exiv2::exiv2lib)
     target_include_directories(QGC PRIVATE ${CMAKE_BINARY_DIR})
 endif()
