@@ -1039,7 +1039,7 @@ VehicleCameraControl::_loadSettings(const QDomNodeList nodeList)
             Fact* pFact = new Fact(_compID, factName, factType, this);
             QQmlEngine::setObjectOwnership(pFact, QQmlEngine::CppOwnership);
             pFact->setMetaData(metaData);
-            pFact->_containerSetRawValue(metaData->rawDefaultValue());
+            pFact->containerSetRawValue(metaData->rawDefaultValue());
             QGCCameraParamIO* pIO = new QGCCameraParamIO(this, pFact, _vehicle);
             QQmlEngine::setObjectOwnership(pIO, QQmlEngine::CppOwnership);
             _paramIO[factName] = pIO;

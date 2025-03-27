@@ -162,5 +162,7 @@ public:
     static bool isValidChannel(mavlink_channel_t channel) { return isValidChannel(static_cast<uint8_t>(channel)); }
 
     static mavlink_status_t* getChannelStatus(mavlink_channel_t channel) { return mavlink_get_channel_status(static_cast<uint8_t>(channel)); }
+
+    static const QHash<int, QString> mavlinkCompIdHash;
 };
 Q_DECLARE_METATYPE(GRIPPER_ACTIONS)

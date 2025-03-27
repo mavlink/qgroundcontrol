@@ -12,50 +12,51 @@
 #include <QtCore/QAbstractListModel>
 #include <QtCore/QByteArray>
 #include <QtCore/QHash>
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 
 class Fact;
+
+Q_DECLARE_LOGGING_CATEGORY(FactValueSliderListModelLog)
 
 /// Provides a list model of values for incrementing/decrementing the value of a Fact
 class FactValueSliderListModel : public QAbstractListModel
 {
     Q_OBJECT
-    
-public:
-    FactValueSliderListModel(Fact& fact, QObject* parent = nullptr);
-    ~FactValueSliderListModel();
-
     /// The initial value of the Fact at the meta data specified decimal place precision
     Q_PROPERTY(double initialValueAtPrecision READ initialValueAtPrecision NOTIFY initialValueAtPrecisionChanged)
 
-    double initialValueAtPrecision(void) const { return _initialValueAtPrecision; }
+public:
+    explicit FactValueSliderListModel(const Fact &fact, QObject *parent = nullptr);
+    ~FactValueSliderListModel();
+
+    double initialValueAtPrecision() const { return _initialValueAtPrecision; }
 
     Q_INVOKABLE int resetInitialValue(void);
-    Q_INVOKABLE double valueAtModelIndex(int index);
-    Q_INVOKABLE int valueIndexAtModelIndex(int index);
+    Q_INVOKABLE double valueAtModelIndex(int index) const;
+    Q_INVOKABLE int valueIndexAtModelIndex(int index) const;
 
 signals:
-    void initialValueAtPrecisionChanged(void);
+    void initialValueAtPrecisionChanged();
 
 private:
     double _valueAtPrecision(double value) const;
 
-    // Overrides from QAbstractListModel
-    int	rowCount(const QModelIndex & parent = QModelIndex()) const override;
-    QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
-    QHash<int, QByteArray> roleNames(void) const override;
+    int	rowCount(const QModelIndex &parent = QModelIndex()) const final { Q_UNUSED(parent); return _cValues; }
+    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const final;
+    QHash<int, QByteArray> roleNames() const final;
 
-    Fact&   _fact;
-    int     _cValues;
-    int     _firstValueIndexInWindow;
-    int     _initialValueIndex;
-    int     _cPrevValues;
-    int     _cNextValues;
-    int     _windowSize;
-    double  _initialValue;
-    double  _initialValueAtPrecision;
-    double  _increment;
+    const Fact &_fact;
+    int _cValues = 0;
+    int _firstValueIndexInWindow = 0;
+    int _initialValueIndex = 0;
+    int _cPrevValues = 0;
+    int _cNextValues = 0;
+    int _windowSize = 0;
+    double _initialValue = 0;
+    double _initialValueAtPrecision = 0;
+    double _increment = 0;
 
-    static constexpr int _valueRole =        Qt::UserRole;
-    static constexpr int _valueIndexRole =   Qt::UserRole + 1;
+    static constexpr int _valueRole = Qt::UserRole;
+    static constexpr int _valueIndexRole = Qt::UserRole + 1;
 };
