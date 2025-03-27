@@ -408,25 +408,25 @@ void SimpleMissionItem::_rebuildTextFieldFacts(void)
     _textFieldFacts.clear();
     
     if (rawEdit()) {
-        _missionItem._param1Fact._setName("Param1");
+        _missionItem._param1Fact.setName("Param1");
         _missionItem._param1Fact.setMetaData(_defaultParamMetaData);
         _textFieldFacts.append(&_missionItem._param1Fact);
-        _missionItem._param2Fact._setName("Param2");
+        _missionItem._param2Fact.setName("Param2");
         _missionItem._param2Fact.setMetaData(_defaultParamMetaData);
         _textFieldFacts.append(&_missionItem._param2Fact);
-        _missionItem._param3Fact._setName("Param3");
+        _missionItem._param3Fact.setName("Param3");
         _missionItem._param3Fact.setMetaData(_defaultParamMetaData);
         _textFieldFacts.append(&_missionItem._param3Fact);
-        _missionItem._param4Fact._setName("Param4");
+        _missionItem._param4Fact.setName("Param4");
         _missionItem._param4Fact.setMetaData(_defaultParamMetaData);
         _textFieldFacts.append(&_missionItem._param4Fact);
-        _missionItem._param5Fact._setName("Lat/X");
+        _missionItem._param5Fact.setName("Lat/X");
         _missionItem._param5Fact.setMetaData(_defaultParamMetaData);
         _textFieldFacts.append(&_missionItem._param5Fact);
-        _missionItem._param6Fact._setName("Lon/Y");
+        _missionItem._param6Fact.setName("Lon/Y");
         _missionItem._param6Fact.setMetaData(_defaultParamMetaData);
         _textFieldFacts.append(&_missionItem._param6Fact);
-        _missionItem._param7Fact._setName("Alt/Z");
+        _missionItem._param7Fact.setName("Alt/Z");
         _missionItem._param7Fact.setMetaData(_defaultParamMetaData);
         _textFieldFacts.append(&_missionItem._param7Fact);
     } else {
@@ -453,7 +453,7 @@ void SimpleMissionItem::_rebuildTextFieldFacts(void)
                     Fact*               paramFact =     rgParamFacts[i-1];
                     FactMetaData*       paramMetaData = rgParamMetaData[i-1];
 
-                    paramFact->_setName(paramInfo->label());
+                    paramFact->setName(paramInfo->label());
                     paramMetaData->setDecimalPlaces(paramInfo->decimalPlaces());
                     paramMetaData->setRawUnits(paramInfo->units());
                     paramMetaData->setRawDefaultValue(paramInfo->defaultValue());
@@ -504,7 +504,7 @@ void SimpleMissionItem::_rebuildNaNFacts(void)
                     Fact*               paramFact =     rgParamFacts[i-1];
                     FactMetaData*       paramMetaData = rgParamMetaData[i-1];
 
-                    paramFact->_setName(paramInfo->label());
+                    paramFact->setName(paramInfo->label());
                     paramMetaData->setDecimalPlaces(paramInfo->decimalPlaces());
                     paramMetaData->setRawUnits(paramInfo->units());
                     paramMetaData->setRawDefaultValue(paramInfo->defaultValue());
@@ -589,7 +589,7 @@ void SimpleMissionItem::_rebuildComboBoxFacts(void)
                 Fact*               paramFact =     rgParamFacts[i-1];
                 FactMetaData*       paramMetaData = rgParamMetaData[i-1];
 
-                paramFact->_setName(paramInfo->label());
+                paramFact->setName(paramInfo->label());
                 paramMetaData->setDecimalPlaces(paramInfo->decimalPlaces());
                 paramMetaData->setEnumInfo(paramInfo->enumStrings(), paramInfo->enumValues());
                 paramMetaData->setRawUnits(paramInfo->units());

@@ -16,7 +16,6 @@
 
 Q_DECLARE_LOGGING_CATEGORY(FactPanelControllerLog)
 
-class AutoPilotPlugin;
 class Vehicle;
 class Fact;
 
@@ -29,8 +28,8 @@ class FactPanelController : public QObject
     Q_PROPERTY(Vehicle *vehicle MEMBER _vehicle CONSTANT)
 
 public:
-    FactPanelController(QObject *parent = nullptr);
-    ~FactPanelController();
+    explicit FactPanelController(QObject *parent = nullptr);
+    virtual ~FactPanelController();
 
     Q_INVOKABLE Fact *getParameterFact(int componentId, const QString &name, bool reportMissing = true) const;
     Q_INVOKABLE bool parameterExists(int componentId, const QString &name) const;
@@ -51,7 +50,6 @@ protected:
     void _reportMissingParameter(int componentId, const QString &name) const;
 
     Vehicle *_vehicle = nullptr;
-    AutoPilotPlugin *_autopilot = nullptr;
 
 private slots:
     void _checkForMissingParameters();

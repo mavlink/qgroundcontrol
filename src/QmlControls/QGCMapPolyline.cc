@@ -448,9 +448,8 @@ void QGCMapPolyline::selectVertex(int index)
         _selectedVertexIndex = index;
     } else {
         if (!qgcApp()->runningUnitTests()) {
-            qCWarning(ParameterManagerLog)
-                    << QString("QGCMapPolyline: Selected vertex index (%1) is out of bounds! "
-                               "Polyline vertices indexes range is [%2..%3].").arg(index).arg(0).arg(count()-1);
+            qWarning() << QStringLiteral("QGCMapPolyline: Selected vertex index (%1) is out of bounds! "
+                                         "Polyline vertices indexes range is [%2..%3].").arg(index).arg(0).arg(count()-1);
         }
         _selectedVertexIndex = -1;   // deselect vertex
     }

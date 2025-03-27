@@ -18,7 +18,6 @@ static constexpr const char* kVideoAllLogCategory = "VideoAllLog";
 QGC_LOGGING_CATEGORY(FirmwareUpgradeLog, "FirmwareUpgradeLog")
 QGC_LOGGING_CATEGORY(FirmwareUpgradeVerboseLog, "FirmwareUpgradeVerboseLog")
 QGC_LOGGING_CATEGORY(MissionCommandsLog, "MissionCommandsLog")
-QGC_LOGGING_CATEGORY(ParameterManagerLog, "ParameterManagerLog")
 QGC_LOGGING_CATEGORY(GuidedActionsControllerLog, "GuidedActionsControllerLog")
 QGC_LOGGING_CATEGORY(VideoAllLog, kVideoAllLogCategory)
 

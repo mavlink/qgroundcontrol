@@ -17,7 +17,7 @@
 
 #include <QtQml/QQmlEngine>
 
-QGC_LOGGING_CATEGORY(FactPanelControllerLog, "qgc.factsystem.factcontrols.factpanelcontroller")
+QGC_LOGGING_CATEGORY(FactPanelControllerLog, "test.factsystem.factcontrols.factpanelcontroller")
 
 FactPanelController::FactPanelController(QObject *parent)
     : QObject(parent)
@@ -25,9 +25,7 @@ FactPanelController::FactPanelController(QObject *parent)
 {
     // qCDebug(FactPanelControllerLog) << Q_FUNC_INFO << this;
 
-    if (_vehicle) {
-        _autopilot = _vehicle->autopilotPlugin();
-    } else {
+    if (!_vehicle) {
         _vehicle = MultiVehicleManager::instance()->offlineEditingVehicle();
     }
 
@@ -48,7 +46,7 @@ void FactPanelController::_reportMissingParameter(int componentId, const QString
     }
 
     qgcApp()->reportMissingParameter(componentId, name);
-    qCWarning(FactPanelControllerLog) << "Missing parameter:" << QStringLiteral("%1:%2").arg(componentId).arg(name);
+    qCWarning(FactPanelControllerLog) << "Missing parameter:" << componentId << name;
 }
 
 bool FactPanelController::_allParametersExists(int componentId, const QStringList &names) const
