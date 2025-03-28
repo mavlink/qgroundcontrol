@@ -61,7 +61,7 @@ gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, cl
 
 ### Additional Protocols
 
-QGC also supports RTSP, TCP-MPEG2 and MPEG-TS (h.264) pipelines.
+QGC also supports RTSP, TCP-MPEG2 and MPEG-TS pipelines.
 
 ### Linux
 

@@ -90,7 +90,7 @@ void VideoManager::init()
 
     // TODO: Those connections should be Per Video, not per VideoManager.
     (void) connect(_videoSettings->videoSource(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
-    (void) connect(_videoSettings->udpPort(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
+    (void) connect(_videoSettings->udpUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
     (void) connect(_videoSettings->rtspUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
     (void) connect(_videoSettings->tcpUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
     (void) connect(_videoSettings->aspectRatio(), &Fact::rawValueChanged, this, &VideoManager::aspectRatioChanged);
@@ -653,11 +653,11 @@ bool VideoManager::_updateSettings(unsigned id)
     if (id == 0) {
         const QString source = _videoSettings->videoSource()->rawValue().toString();
         if (source == VideoSettings::videoSourceUDPH264) {
-            settingsChanged |= _updateVideoUri(id, QStringLiteral("udp://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
+            settingsChanged |= _updateVideoUri(id, QStringLiteral("udp://%1").arg(_videoSettings->udpUrl()->rawValue().toString()));
         } else if (source == VideoSettings::videoSourceUDPH265) {
-            settingsChanged |= _updateVideoUri(id, QStringLiteral("udp265://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
+            settingsChanged |= _updateVideoUri(id, QStringLiteral("udp265://%1").arg(_videoSettings->udpUrl()->rawValue().toString()));
         } else if (source == VideoSettings::videoSourceMPEGTS) {
-            settingsChanged |= _updateVideoUri(id, QStringLiteral("mpegts://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
+            settingsChanged |= _updateVideoUri(id, QStringLiteral("mpegts://%1").arg(_videoSettings->udpUrl()->rawValue().toString()));
         } else if (source == VideoSettings::videoSourceRTSP) {
             settingsChanged |= _updateVideoUri(id, _videoSettings->rtspUrl()->rawValue().toString());
         } else if (source == VideoSettings::videoSourceTCP) {
