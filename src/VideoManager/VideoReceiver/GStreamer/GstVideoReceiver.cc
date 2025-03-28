@@ -782,7 +782,7 @@ GstVideoReceiver::_makeSource(const QString& uri)
             }
         } else if(isUdp264 || isUdp265 || isUdpMPEGTS) {
             if ((source = gst_element_factory_make("udpsrc", "source")) != nullptr) {
-                g_object_set(static_cast<gpointer>(source), "uri", QString("udp://%1:%2").arg(qPrintable(url.host()), QString::number(url.port())).toUtf8().data(), nullptr);
+                g_object_set(static_cast<gpointer>(source), "uri", QStringLiteral("udp://%1:%2").arg(qPrintable(url.host()), QString::number(url.port())).toUtf8().constData(), nullptr);
 
                 GstCaps* caps = nullptr;
 
