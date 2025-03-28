@@ -52,17 +52,17 @@ public:
     explicit ArduPlaneFirmwarePlugin(QObject *parent = nullptr);
     ~ArduPlaneFirmwarePlugin();
 
-    QString pauseFlightMode() const final { return QString("Loiter"); }
-    QString offlineEditingParamFile(Vehicle *vehicle) const final { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Plane.OfflineEditing.params"); }
-    QString autoDisarmParameter(Vehicle *vehicle) const final { Q_UNUSED(vehicle); return QStringLiteral("LAND_DISARMDELAY"); }
-    int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const final;
-    const FirmwarePlugin::remapParamNameMajorVersionMap_t &paramNameRemapMajorVersionMap() const final { return _remapParamName; }
+    QString pauseFlightMode() const override { return QString("Loiter"); }
+    QString offlineEditingParamFile(Vehicle *vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Plane.OfflineEditing.params"); }
+    QString autoDisarmParameter(Vehicle *vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("LAND_DISARMDELAY"); }
+    int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const override;
+    const FirmwarePlugin::remapParamNameMajorVersionMap_t &paramNameRemapMajorVersionMap() const override { return _remapParamName; }
 
-    QString stabilizedFlightMode() const final;
-    void updateAvailableFlightModes(FlightModeList &modeList) final;
+    QString stabilizedFlightMode() const override;
+    void updateAvailableFlightModes(FlightModeList &modeList) override;
 
 protected:
-    uint32_t _convertToCustomFlightModeEnum(uint32_t val) const final;
+    uint32_t _convertToCustomFlightModeEnum(uint32_t val) const override;
 
     const QString _manualFlightMode = tr("Manual");
     const QString _circleFlightMode = tr("Circle");

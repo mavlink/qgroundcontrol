@@ -40,20 +40,20 @@ public:
     explicit ArduRoverFirmwarePlugin(QObject *parent = nullptr);
     ~ArduRoverFirmwarePlugin();
 
-    QString pauseFlightMode() const final { return QStringLiteral("Hold"); }
-    QString followFlightMode() const final { return QStringLiteral("Follow"); }
-    void guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange, bool pauseVehicle) final;
-    int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const final;
-    const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap() const final { return _remapParamName; }
-    bool supportsNegativeThrust(Vehicle*) const final { return true; }
-    bool supportsSmartRTL() const final { return true; }
-    QString offlineEditingParamFile(Vehicle *vehicle) const final { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Rover.OfflineEditing.params"); }
+    QString pauseFlightMode() const override { return QStringLiteral("Hold"); }
+    QString followFlightMode() const override { return QStringLiteral("Follow"); }
+    void guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange, bool pauseVehicle) override;
+    int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const override;
+    const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap() const override { return _remapParamName; }
+    bool supportsNegativeThrust(Vehicle*) const override { return true; }
+    bool supportsSmartRTL() const override { return true; }
+    QString offlineEditingParamFile(Vehicle *vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Rover.OfflineEditing.params"); }
 
-    QString stabilizedFlightMode() const final;
-    void updateAvailableFlightModes(FlightModeList &modeList) final;
+    QString stabilizedFlightMode() const override;
+    void updateAvailableFlightModes(FlightModeList &modeList) override;
 
 protected:
-    uint32_t _convertToCustomFlightModeEnum(uint32_t val) const final;
+    uint32_t _convertToCustomFlightModeEnum(uint32_t val) const override;
 
     const QString _manualFlightMode = tr("Manual");
     const QString _acroFlightMode = tr("Acro");
