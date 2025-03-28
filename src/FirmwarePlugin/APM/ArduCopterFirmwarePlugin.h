@@ -54,26 +54,26 @@ public:
     explicit ArduCopterFirmwarePlugin(QObject *parent = nullptr);
     ~ArduCopterFirmwarePlugin();
 
-    void guidedModeLand(Vehicle *vehicle) const final { _setFlightModeAndValidate(vehicle, landFlightMode()); }
-    const FirmwarePlugin::remapParamNameMajorVersionMap_t &paramNameRemapMajorVersionMap() const final { return _remapParamName; }
-    int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const final;
-    bool multiRotorCoaxialMotors(Vehicle* /*vehicle*/) const final { return _coaxialMotors; }
-    bool multiRotorXConfig(Vehicle *vehicle) const final;
-    QString offlineEditingParamFile(Vehicle *vehicle) const final { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Copter.OfflineEditing.params"); }
-    QString pauseFlightMode() const final;
-    QString landFlightMode() const final;
-    QString takeControlFlightMode() const final;
-    QString followFlightMode() const final;
-    QString gotoFlightMode() const final { return guidedFlightMode(); }
-    QString takeOffFlightMode() const final { return guidedFlightMode(); }
-    QString stabilizedFlightMode() const final;
-    QString autoDisarmParameter(Vehicle *vehicle) const final { Q_UNUSED(vehicle); return QStringLiteral("DISARM_DELAY"); }
-    bool supportsSmartRTL() const final { return true; }
+    void guidedModeLand(Vehicle *vehicle) const override { _setFlightModeAndValidate(vehicle, landFlightMode()); }
+    const FirmwarePlugin::remapParamNameMajorVersionMap_t &paramNameRemapMajorVersionMap() const override { return _remapParamName; }
+    int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const override;
+    bool multiRotorCoaxialMotors(Vehicle* /*vehicle*/) const override { return _coaxialMotors; }
+    bool multiRotorXConfig(Vehicle *vehicle) const override;
+    QString offlineEditingParamFile(Vehicle *vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Copter.OfflineEditing.params"); }
+    QString pauseFlightMode() const override;
+    QString landFlightMode() const override;
+    QString takeControlFlightMode() const override;
+    QString followFlightMode() const override;
+    QString gotoFlightMode() const override { return guidedFlightMode(); }
+    QString takeOffFlightMode() const override { return guidedFlightMode(); }
+    QString stabilizedFlightMode() const override;
+    QString autoDisarmParameter(Vehicle *vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("DISARM_DELAY"); }
+    bool supportsSmartRTL() const override { return true; }
 
-    void updateAvailableFlightModes(FlightModeList &modeList) final;
+    void updateAvailableFlightModes(FlightModeList &modeList) override;
 
 protected:
-    uint32_t _convertToCustomFlightModeEnum(uint32_t val) const final;
+    uint32_t _convertToCustomFlightModeEnum(uint32_t val) const override;
 
 private:
     const QString _stabilizeFlightMode = tr("Stabilize");
