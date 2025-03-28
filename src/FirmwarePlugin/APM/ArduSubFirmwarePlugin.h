@@ -122,36 +122,36 @@ public:
     explicit ArduSubFirmwarePlugin(QObject *parent = nullptr);
     ~ArduSubFirmwarePlugin();
 
-    int defaultJoystickTXMode() const final { return 3; }
-    void initializeStreamRates(Vehicle *vehicle) final;
-    bool isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities) const final;
-    bool supportsThrottleModeCenterZero() const final { return false; }
-    bool supportsRadio() const final { return false; }
-    bool supportsJSButton() const final { return true; }
-    bool supportsMotorInterference() const final { return false; }
+    int defaultJoystickTXMode() const override { return 3; }
+    void initializeStreamRates(Vehicle *vehicle) override;
+    bool isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities) const override;
+    bool supportsThrottleModeCenterZero() const override { return false; }
+    bool supportsRadio() const override { return false; }
+    bool supportsJSButton() const override { return true; }
+    bool supportsMotorInterference() const override { return false; }
 
     /// Return the resource file which contains the vehicle icon used in the flight view when the view is dark (Satellite for instance)
-    QString vehicleImageOpaque(const Vehicle* vehicle) const final { return QStringLiteral("/qmlimages/subVehicleArrowOpaque.png"); }
+    QString vehicleImageOpaque(const Vehicle* vehicle) const override { return QStringLiteral("/qmlimages/subVehicleArrowOpaque.png"); }
 
     /// Return the resource file which contains the vehicle icon used in the flight view when the view is light (Map for instance)
-    QString vehicleImageOutline(const Vehicle* vehicle) const final;
+    QString vehicleImageOutline(const Vehicle* vehicle) const override;
 
-    QString brandImageIndoor(const Vehicle *vehicle) const final { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImageSub"); }
-    QString brandImageOutdoor(const Vehicle *vehicle) const final { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImageSub"); }
-    const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap() const final { return _remapParamName; }
-    int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const final;
-    const QVariantList &toolIndicators(const Vehicle *vehicle) final;
-    const QVariantList &modeIndicators(const Vehicle *vehicle) final;
-    bool adjustIncomingMavlinkMessage(Vehicle *vehicle, mavlink_message_t *message) final;
-    QMap<QString, FactGroup*> *factGroups() final;
-    void adjustMetaData(MAV_TYPE vehicleType, FactMetaData *metaData) final;
+    QString brandImageIndoor(const Vehicle *vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImageSub"); }
+    QString brandImageOutdoor(const Vehicle *vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImageSub"); }
+    const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap() const override { return _remapParamName; }
+    int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const override;
+    const QVariantList &toolIndicators(const Vehicle *vehicle) override;
+    const QVariantList &modeIndicators(const Vehicle *vehicle) override;
+    bool adjustIncomingMavlinkMessage(Vehicle *vehicle, mavlink_message_t *message) override;
+    QMap<QString, FactGroup*> *factGroups() override;
+    void adjustMetaData(MAV_TYPE vehicleType, FactMetaData *metaData) override;
 
-    QString stabilizedFlightMode() const final;
-    QString motorDetectionFlightMode() const final;
-    void updateAvailableFlightModes(FlightModeList &modeList) final;
+    QString stabilizedFlightMode() const override;
+    QString motorDetectionFlightMode() const override;
+    void updateAvailableFlightModes(FlightModeList &modeList) override;
 
 protected:
-    uint32_t _convertToCustomFlightModeEnum(uint32_t val) const final;
+    uint32_t _convertToCustomFlightModeEnum(uint32_t val) const override;
 
     const QString _manualFlightMode = tr("Manual");
     const QString _stabilizeFlightMode = tr("Stabilize");
