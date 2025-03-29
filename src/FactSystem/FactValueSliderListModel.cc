@@ -13,7 +13,7 @@
 
 #include <QtCore/QtMath>
 
-QGC_LOGGING_CATEGORY(FactValueSliderListModelLog, "test.factsystem.factvaluesliderlistmodel")
+QGC_LOGGING_CATEGORY(FactValueSliderListModelLog, "qgc.factsystem.factvaluesliderlistmodel")
 
 FactValueSliderListModel::FactValueSliderListModel(const Fact &fact, QObject *parent)
     : QAbstractListModel(parent)
