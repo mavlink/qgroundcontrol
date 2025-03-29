@@ -28,10 +28,10 @@
 #include <QtCore/QVariantAnimation>
 #include <QtQml/qqml.h>
 
-QGC_LOGGING_CATEGORY(ParameterManagerLog, "test.factsystem.parametermanager")
-QGC_LOGGING_CATEGORY(ParameterManagerVerbose1Log, "test.factsystem.parametermanager1:verbose")
-QGC_LOGGING_CATEGORY(ParameterManagerVerbose2Log, "test.factsystem.parametermanager2:verbose")
-QGC_LOGGING_CATEGORY(ParameterManagerDebugCacheFailureLog, "test.factsystem.parametermanager.debugcachefailure") // Turn on to debug parameter cache crc misses
+QGC_LOGGING_CATEGORY(ParameterManagerLog, "qgc.factsystem.parametermanager")
+QGC_LOGGING_CATEGORY(ParameterManagerVerbose1Log, "qgc.factsystem.parametermanager1:verbose")
+QGC_LOGGING_CATEGORY(ParameterManagerVerbose2Log, "qgc.factsystem.parametermanager2:verbose")
+QGC_LOGGING_CATEGORY(ParameterManagerDebugCacheFailureLog, "qgc.factsystem.parametermanager.debugcachefailure") // Turn on to debug parameter cache crc misses
 
 ParameterManager::ParameterManager(Vehicle *vehicle)
     : QObject(vehicle)

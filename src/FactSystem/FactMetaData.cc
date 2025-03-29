@@ -16,7 +16,7 @@
 
 #include <QtCore/QtMath>
 
-QGC_LOGGING_CATEGORY(FactMetaDataLog, "test.factsystem.factmetadata")
+QGC_LOGGING_CATEGORY(FactMetaDataLog, "qgc.factsystem.factmetadata")
 
 // Built in translations for all Facts
 const FactMetaData::BuiltInTranslation_s FactMetaData::_rgBuiltInTranslations[] = {
