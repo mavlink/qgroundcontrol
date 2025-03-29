@@ -27,7 +27,11 @@ env:
 
 jobs:
   build:
-    runs-on:  macos-13
+    strategy:
+      matrix:
+        os: [macos-latest, macos-13]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout repo
@@ -76,6 +80,14 @@ jobs:
             # Verify the links
             ls -la /Library/lib/GStreamer.framework/Versions/1.0/
 
+      - name: Detect Architecture
+        run: |
+          ARCH=$(uname -m)
+          if [ "$ARCH" = "arm64" ]; then
+            ARCH="silicon"
+          fi
+          echo "ARCH=$ARCH" >> $GITHUB_ENV
+
       - name: Create build directory
         run:  mkdir ${{ runner.temp }}/shadow_build_dir
 
@@ -109,7 +121,7 @@ jobs:
       - name: Save artifact
         uses: actions/upload-artifact@master
         with:
-          name: ${{ env.ARTIFACT }}
+          name: QGroundControl-${{ env.ARCH }}.dmg
           path: ${{ runner.temp }}/shadow_build_dir/package/${{ env.ARTIFACT }}
 
       - name: Publish artifact to GitHub release
@@ -118,7 +130,7 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: ${{ runner.temp }}/shadow_build_dir/package/${{ env.ARTIFACT }}
-          asset_name: ${{ env.ARTIFACT }}
+          asset_name: QGroundControl-${{ env.ARCH }}.dmg
           tag: ${{ github.ref }}
           overwrite: true
 
@@ -128,7 +140,7 @@ jobs:
         run: |
               aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
               aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-              aws s3 cp ${ARTIFACT} s3://qgroundcontrol/builds/${{ github.ref_name }}/${ARTIFACT} --region us-west-2 --acl public-read
+              aws s3 cp ${ARTIFACT} s3://qgroundcontrol/builds/${{ github.ref_name }}/QGroundControl-${{ env.ARCH }}.dmg --region us-west-2 --acl public-read
 
       - name: Upload tagged stable build to S3 latest Bucket
         if:                 github.event_name == 'push' && github.ref_type == 'tag'
@@ -136,4 +148,4 @@ jobs:
         run: |
               aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
               aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-              aws s3 cp ${ARTIFACT} s3://qgroundcontrol/latest/${ARTIFACT} --region us-west-2 --acl public-read
+              aws s3 cp ${ARTIFACT} s3://qgroundcontrol/latest/QGroundControl-${{ env.ARCH }}.dmg --region us-west-2 --acl public-read
