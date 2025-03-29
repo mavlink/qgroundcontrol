@@ -14,7 +14,7 @@
 
 #include <QtCore/QSettings>
 
-QGC_LOGGING_CATEGORY(SettingsFactLog, "test.factsystem.settingsfact")
+QGC_LOGGING_CATEGORY(SettingsFactLog, "qgc.factsystem.settingsfact")
 
 SettingsFact::SettingsFact(QObject *parent)
     : Fact(parent)
