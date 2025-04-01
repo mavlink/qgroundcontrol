@@ -39,6 +39,7 @@ SettingsPage {
     property Fact   _viewer3DOsmFilePath:                   _viewer3DSettings.osmFilePath
     property Fact   _viewer3DBuildingLevelHeight:           _viewer3DSettings.buildingLevelHeight
     property Fact   _viewer3DAltitudeBias:                  _viewer3DSettings.altitudeBias
+    property Fact   _enableAutomaticMissionPopups:          _flyViewSettings.enableAutomaticMissionPopups
 
     function mavlinkActionList() {
         var fileModel = QGCFileDialogController.getFiles(_settingsManager.appSettings.mavlinkActionsSavePath, "*.json")
@@ -113,6 +114,14 @@ SettingsPage {
             text:               qsTr("Show Joystick Status in Toolbar")
             fact:               _flyViewSettings.showJoystickIndicatorInToolbar
             visible:            fact.visible
+        }
+
+        FactCheckBoxSlider {
+            Layout.fillWidth:   true
+            text:               qsTr("Enable Automatic Mission Start/Resume Popups")
+            fact:               _enableAutomaticMissionPopups
+            visible:            _enableAutomaticMissionPopups.visible
+            property Fact _enableAutomaticMissionPopups: _flyViewSettings.enableAutomaticMissionPopups
         }
     }
 
