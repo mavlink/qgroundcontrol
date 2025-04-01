@@ -634,11 +634,20 @@ void
 VehicleCameraControl::_requestCaptureStatus()
 {
     qCDebug(CameraControlLog) << "_requestCaptureStatus()";
-    _vehicle->sendMavCommand(
-        _compID,                                // target component
-        MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS,  // command id
-        false,                                  // showError
-        1);                                     // Do Request
+
+    if(_cameraCaptureStatusRetries++ % 2 == 0) {
+        _vehicle->sendMavCommand(
+            _compID,                                // target component
+            MAV_CMD_REQUEST_MESSAGE,                // command id
+            false,                                  // showError
+            MAVLINK_MSG_ID_CAMERA_CAPTURE_STATUS);  // msgid
+    } else {
+        _vehicle->sendMavCommand(
+            _compID,                                // target component
+            MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS,  // command id
+            false,                                  // showError
+            1);                                     // Do Request
+    }
 }
 
 //-----------------------------------------------------------------------------
