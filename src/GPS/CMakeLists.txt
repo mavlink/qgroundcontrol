@@ -9,6 +9,7 @@ add_library(gps
 	Drivers/src/ubx.cpp
 	GPSManager.cc
 	GPSProvider.cc
+	NmeaMessage.cc
 	RTCM/RTCMMavlink.cc
 )
 
