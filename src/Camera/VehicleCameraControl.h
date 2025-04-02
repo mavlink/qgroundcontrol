@@ -152,7 +152,7 @@ public:
     virtual Fact*   shutterSpeed        ();
     virtual Fact*   aperture            ();
     virtual Fact*   wb                  ();
-    virtual Fact*   mode                ();   
+    virtual Fact*   mode                ();
     virtual void    factChanged         (Fact* pFact);
     virtual bool    incomingParameter   (Fact* pFact, QVariant& newValue);
     virtual bool    validateParameter   (Fact* pFact, QVariant& newValue);
@@ -287,6 +287,7 @@ protected:
     QMap<QString, QVariantList>         _originalOptValues;
     QMap<QString, QGCCameraParamIO*>    _paramIO;
     int                                 _cameraSettingsRetries = 0;
+    int                                 _cameraCaptureStatusRetries = 0;
     int                                 _storageInfoRetries = 0;
     int                                 _captureInfoRetries = 0;
     bool                                _resetting          = false;
