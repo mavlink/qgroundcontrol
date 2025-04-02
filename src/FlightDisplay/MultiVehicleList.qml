@@ -26,7 +26,7 @@ Item {
     property var    _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
     property var    selectedVehicles:     QGroundControl.multiVehicleManager.selectedVehicles
 
-    property real   innerColumnHeight
+    implicitHeight: vehicleList.contentHeight
 
     function armAvailable() {
         for (var i = 0; i < selectedVehicles.count; i++) {
@@ -126,7 +126,7 @@ Item {
 
         delegate: Rectangle {
             width:          vehicleList.width
-            height:         innerColumn.y + innerColumn.height + _margin
+            height:         innerColumn.height + _margin * 2
             color:          QGroundControl.multiVehicleManager.activeVehicle == _vehicle ? _activeVehicleColor : qgcPal.button
             radius:         _margin
             border.width:   _vehicle && vehicleSelected(_vehicle.id) ? 2 : 0
@@ -134,17 +134,13 @@ Item {
 
             property var    _vehicle:   object
 
-            Rectangle {
-                height:                     parent.height
-                width:                      innerColumn.width
+            Column {
+                id:                         innerColumn
                 anchors.horizontalCenter:   parent.horizontalCenter
-                color:                      "transparent"
 
                 RowLayout {
-                    id:                 innerColumn
                     anchors.margins:    _margin
                     spacing:            _margin
-                    onHeightChanged: {  innerColumnHeight = height + _margin * 2 + spacing * 2  }
 
                     QGCCompassWidget {
                         id: compassWidget
