@@ -16,6 +16,7 @@
 #include "GStreamer.h"
 #endif
 #include "HorizontalFactValueGrid.h"
+#include "MultiVehicleFactValueGrid.h"
 #include "InstrumentValueData.h"
 #include "JoystickManager.h"
 #include "LogDownloadController.h"
@@ -156,6 +157,43 @@ QString QGCCorePlugin::showAdvancedUIMessage() const
 
 void QGCCorePlugin::factValueGridCreateDefaultSettings(const QString &defaultSettingsGroup)
 {
+    if(defaultSettingsGroup.contains(MultiVehicleFactValueGrid::vehicleCardDefaultSettingsGroup)){
+        MultiVehicleFactValueGrid factValueGrid(defaultSettingsGroup);
+
+        bool includeFWValues = factValueGrid.vehicleClass() == QGCMAVLink::VehicleClassFixedWing || factValueGrid.vehicleClass() == QGCMAVLink::VehicleClassVTOL || factValueGrid.vehicleClass() == QGCMAVLink::VehicleClassAirship;
+
+        factValueGrid.setFontSize(FactValueGrid::LargeFontSize);
+        factValueGrid.appendColumn();
+        factValueGrid.appendColumn();
+
+        int rowIndex = 0;
+        int colIndex = 0;
+
+        // first cell
+        QmlObjectListModel* column      = factValueGrid.columns()->value<QmlObjectListModel*>(colIndex++);
+        InstrumentValueData* value = column->value<InstrumentValueData*>(rowIndex);
+        value->setFact("Vehicle", "AltitudeRelative");
+        value->setIcon("arrow-thick-up.svg");
+        value->setText(value->fact()->shortDescription());
+        value->setShowUnits(true);
+
+        // second cell
+        column = factValueGrid.columns()->value<QmlObjectListModel*>(colIndex++);
+        value = column->value<InstrumentValueData*>(rowIndex);
+        if (includeFWValues) {
+            value->setFact("Vehicle", "AirSpeed");
+            value->setText("AirSpd");
+            value->setShowUnits(true);
+        }
+        else {
+            value->setFact("Vehicle", "GroundSpeed");
+            value->setIcon("arrow-simple-right.svg");
+            value->setText(value->fact()->shortDescription());
+            value->setShowUnits(true);
+        }
+        return;
+    }
+
     HorizontalFactValueGrid *const factValueGrid = new HorizontalFactValueGrid(defaultSettingsGroup);
 
     const bool includeFWValues = ((factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassFixedWing) || (factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassVTOL) || (factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassAirship));

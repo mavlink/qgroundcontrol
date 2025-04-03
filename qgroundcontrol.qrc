@@ -108,6 +108,7 @@
         <file alias="QGroundControl/Controls/LabelledComboBox.qml">src/QmlControls/LabelledComboBox.qml</file>
         <file alias="QGroundControl/Controls/LabelledLabel.qml">src/QmlControls/LabelledLabel.qml</file>
         <file alias="QGroundControl/Controls/MotorComponent.qml">src/AutoPilotPlugins/Common/MotorComponent.qml</file>
+        <file alias="QGroundControl/Controls/MultiVehicleFactValueGrid.qml">src/QmlControls/MultiVehicleFactValueGrid.qml</file>
         <file alias="QGroundControl/Controls/RemoteIDIndicatorPage.qml">src/UI/toolbar/RemoteIDIndicatorPage.qml</file>
         <file alias="QGroundControl/Controls/SettingsGroupLayout.qml">src/QmlControls/SettingsGroupLayout.qml</file>
         <file alias="QGroundControl/Controls/InstrumentValueLabel.qml">src/QmlControls/InstrumentValueLabel.qml</file>

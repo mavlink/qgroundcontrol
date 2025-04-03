@@ -134,11 +134,17 @@ Item {
 
             property var    _vehicle:   object
 
+            QGCMouseArea {
+                anchors.fill:       parent
+                onClicked:          toggleSelect(_vehicle.id)
+            }
+
             Column {
                 id:                         innerColumn
                 anchors.horizontalCenter:   parent.horizontalCenter
 
                 RowLayout {
+                    anchors.horizontalCenter:   parent.horizontalCenter
                     anchors.margins:    _margin
                     spacing:            _margin
 
@@ -189,11 +195,85 @@ Item {
                         }
                     }
                 }
-            }
 
-            QGCMouseArea {
-                anchors.fill:       parent
-                onClicked:          toggleSelect(_vehicle.id)
+                QGCFlickable {
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    width:          Math.min(contentWidth, vehicleList.width)
+                    height:         control.height
+                    contentWidth:   control.width
+                    contentHeight:  control.height
+
+                    Item {
+                        id:                         control
+                        implicitWidth:              mainLayout.width + (_toolsMargin * 2)
+                        implicitHeight:             mainLayout.height + (_toolsMargin * 2)
+
+                        Rectangle {
+                            id:         backgroundRect
+                            width:      control.width
+                            height:     control.height
+                            color:      qgcPal.window
+                            radius:     ScreenTools.defaultFontPixelWidth / 2
+                            opacity:    0.75
+                        }
+
+                        ColumnLayout {
+                            id:                 mainLayout
+                            anchors.margins:    _toolsMargin
+                            anchors.bottom:     parent.bottom
+                            anchors.left:       parent.left
+
+                            RowLayout {
+                                visible: valueGrid.settingsUnlocked
+
+                                QGCColoredImage {
+                                    source:             "qrc:/InstrumentValueIcons/lock-open.svg"
+                                    mipmap:             true
+                                    width:              ScreenTools.minTouchPixels * 0.75
+                                    height:             width
+                                    sourceSize.width:   width
+                                    color:              qgcPal.text
+                                    fillMode:           Image.PreserveAspectFit
+
+                                    QGCMouseArea {
+                                        anchors.fill: parent
+                                        onClicked:    valueGrid.settingsUnlocked = false
+                                    }
+                                }
+                            }
+
+                            MultiVehicleFactValueGrid {
+                                id:                     valueGrid
+                                userSettingsGroup:      vehicleCardUserSettingsGroup
+                                defaultSettingsGroup:   vehicleCardDefaultSettingsGroup
+                                vehicle:                _vehicle
+                            }
+                        }
+
+                        QGCMouseArea {
+                            id:                         mouseArea
+                            x:                          mainLayout.x
+                            y:                          mainLayout.y
+                            width:                      mainLayout.width
+                            height:                     mainLayout.height
+                            acceptedButtons:            Qt.LeftButton | Qt.RightButton
+                            propagateComposedEvents:    true
+                            visible:                    !valueGrid.settingsUnlocked
+
+                            onClicked: (mouse) => {
+                                if (!ScreenTools.isMobile && mouse.button === Qt.RightButton) {
+                                    valueGrid.settingsUnlocked = true
+                                    mouse.accepted = true
+                                }
+                            }
+
+                            onPressAndHold: {
+                                valueGrid.settingsUnlocked = true
+                                mouse.accepted = true
+                            }
+                        }
+                    }
+                }
             }
         }
     }

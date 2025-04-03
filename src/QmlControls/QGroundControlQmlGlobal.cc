@@ -29,6 +29,7 @@
 #include "QGCMapCircle.h"
 #include "MavlinkAction.h"
 #include "MavlinkActionManager.h"
+#include "MultiVehicleFactValueGrid.h"
 #include "EditPositionDialogController.h"
 #include "ParameterEditorController.h"
 #include "QGCFileDialogController.h"
@@ -88,6 +89,7 @@ void QGroundControlQmlGlobal::registerQmlTypes()
     qmlRegisterType<MavlinkActionManager>               ("QGroundControl.Controllers",           1, 0, "MavlinkActionManager");
     qmlRegisterType<EditPositionDialogController>       ("QGroundControl.Controllers",           1, 0, "EditPositionDialogController");
     qmlRegisterType<HorizontalFactValueGrid>            ("QGroundControl.Templates",             1, 0, "HorizontalFactValueGrid");
+    qmlRegisterType<MultiVehicleFactValueGrid>          ("QGroundControl.Templates",             1, 0, "MultiVehicleFactValueGrid");
     qmlRegisterType<ParameterEditorController>          ("QGroundControl.Controllers",           1, 0, "ParameterEditorController");
     qmlRegisterType<QGCFileDialogController>            ("QGroundControl.Controllers",           1, 0, "QGCFileDialogController");
     qmlRegisterType<QGCMapCircle>                       ("QGroundControl.FlightMap",             1, 0, "QGCMapCircle");

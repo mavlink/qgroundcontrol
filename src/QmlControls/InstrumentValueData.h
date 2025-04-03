@@ -31,6 +31,7 @@ public:
     Q_ENUMS(RangeType)
 
     explicit InstrumentValueData(FactValueGrid* factValueGrid, QObject* parent);
+    InstrumentValueData(FactValueGrid* factValueGrid, QObject* parent, Vehicle* vehicle);
 
     Q_PROPERTY(FactValueGrid*       factValueGrid       MEMBER _factValueGrid                               CONSTANT)
     Q_PROPERTY(QStringList          factGroupNames      READ    factGroupNames                              NOTIFY factGroupNamesChanged)
@@ -112,9 +113,10 @@ private:
     void _updateIcon            (void);
     void _updateOpacity         (void);
     void _setFactWorker         (void);
+    void _commonInit            (void);
 
     FactValueGrid*          _factValueGrid =        nullptr;
-    Vehicle*                _activeVehicle =        nullptr;
+    Vehicle*                _vehicle =              nullptr;
     QmlObjectListModel*     _rowModel =             nullptr;
     Fact*                   _fact =                 nullptr;
     QString                 _factName;

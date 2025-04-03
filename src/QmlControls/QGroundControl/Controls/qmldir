@@ -51,6 +51,7 @@ MissionItemIndexLabel                   1.0 MissionItemIndexLabel.qml
 MissionItemMapVisual                    1.0 MissionItemMapVisual.qml
 MissionItemStatus                       1.0 MissionItemStatus.qml
 MotorComponent                          1.0 MotorComponent.qml
+MultiVehicleFactValueGrid               1.0 MultiVehicleFactValueGrid.qml
 MvPanelPage                             1.0 MvPanelPage.qml
 OfflineMapButton                        1.0 OfflineMapButton.qml
 OfflineMapEditor                        1.0 OfflineMapEditor.qml

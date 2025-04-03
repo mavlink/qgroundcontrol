@@ -18,6 +18,8 @@ target_sources(QGC
         HorizontalFactValueGrid.h
         InstrumentValueData.cc
         InstrumentValueData.h
+        MultiVehicleFactValueGrid.cc
+        MultiVehicleFactValueGrid.h
         ParameterEditorController.cc
         ParameterEditorController.h
         QGCFileDialogController.cc

@@ -23,9 +23,22 @@ const QStringList InstrumentValueData::_rangeTypeNames = {
     QT_TRANSLATE_NOOP("InstrumentValue", "Icon"),
 };
 
+InstrumentValueData::InstrumentValueData(FactValueGrid* factValueGrid, QObject* parent, Vehicle* vehicle)
+    : QObject       (parent)
+    , _factValueGrid(factValueGrid)
+    , _vehicle      (vehicle)
+{
+    _commonInit();
+}
+
 InstrumentValueData::InstrumentValueData(FactValueGrid* factValueGrid, QObject* parent)
     : QObject       (parent)
     , _factValueGrid(factValueGrid)
+{
+    _commonInit();
+}
+
+void InstrumentValueData::_commonInit()
 {
     connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &InstrumentValueData::_activeVehicleChanged);
     _activeVehicleChanged(MultiVehicleManager::instance()->activeVehicle());
@@ -40,16 +53,16 @@ InstrumentValueData::InstrumentValueData(FactValueGrid* factValueGrid, QObject* 
 
 void InstrumentValueData::_activeVehicleChanged(Vehicle* activeVehicle)
 {
-    if (_activeVehicle) {
-        disconnect(_activeVehicle, &Vehicle::factGroupNamesChanged, this, &InstrumentValueData::_lookForMissingFact);
+    if (_vehicle) {
+        disconnect(_vehicle, &Vehicle::factGroupNamesChanged, this, &InstrumentValueData::_lookForMissingFact);
     }
 
     if (!activeVehicle) {
         activeVehicle = MultiVehicleManager::instance()->offlineEditingVehicle();
     }
 
-    _activeVehicle = activeVehicle;
-    connect(_activeVehicle, &Vehicle::factGroupNamesChanged, this, &InstrumentValueData::_lookForMissingFact);
+    _vehicle = activeVehicle;
+    connect(_vehicle, &Vehicle::factGroupNamesChanged, this, &InstrumentValueData::_lookForMissingFact);
 
     emit factGroupNamesChanged();
 
@@ -93,9 +106,9 @@ void InstrumentValueData::_setFactWorker(void)
 
     FactGroup* factGroup = nullptr;
     if (_factGroupName == vehicleFactGroupName) {
-        factGroup = _activeVehicle;
+        factGroup = _vehicle;
     } else {
-        factGroup = _activeVehicle->getFactGroup(_factGroupName);
+        factGroup = _vehicle->getFactGroup(_factGroupName);
     }
 
     QString nonEmptyFactName;
@@ -347,7 +360,7 @@ int InstrumentValueData::_currentRangeIndex(const QVariant& value)
 
 QStringList InstrumentValueData::factGroupNames(void) const
 {
-    QStringList groupNames = _activeVehicle->factGroupNames();
+    QStringList groupNames = _vehicle->factGroupNames();
 
     for (QString& name: groupNames) {
         name[0] = name[0].toUpper();
@@ -363,9 +376,9 @@ QStringList InstrumentValueData::factValueNames(void) const
 
     FactGroup* factGroup = nullptr;
     if (_factGroupName == vehicleFactGroupName) {
-        factGroup = _activeVehicle;
+        factGroup = _vehicle;
     } else {
-        factGroup = _activeVehicle->getFactGroup(_factGroupName);
+        factGroup = _vehicle->getFactGroup(_factGroupName);
     }
 
     if (factGroup) {
