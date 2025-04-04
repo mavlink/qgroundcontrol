@@ -26,7 +26,17 @@ Item {
 
             PreFlightCheckButton {
                 name:           qsTr("Hardware")
-                manualText:     qsTr("Props mounted and secured?")
+                manualText:     globals.activeVehicle ? (globals.activeVehicle.checkListItem1 ? "" :  qsTr("Props mounted and secured?")) : qsTr("Props mounted and secured?")
+                telemetryFailure: globals.activeVehicle ? (globals.activeVehicle.checkListItem1 ? false : true) : true
+                telemetryTextFailure: qsTr("Props mounted and secured?")
+                allowTelemetryFailureOverride: true
+                onClicked: {
+                    if (manualText !== "") {
+                        // User is confirming a manual check
+                        _manualState = (_manualState === _statePassed) ? _statePending : _statePassed
+                        globals.activeVehicle.checkListItem1 = true
+                    }
+                }
             }
 
             PreFlightBatteryCheck {
@@ -51,12 +61,32 @@ Item {
 
             PreFlightCheckButton {
                 name:            qsTr("Motors")
-                manualText:      qsTr("Propellers free? Then throttle up gently. Working properly?")
+                manualText:      globals.activeVehicle ? (globals.activeVehicle.checkListItem2 ? "" :  qsTr("Propellers free? Then throttle up gently. Working properly?")) : qsTr("Propellers free? Then throttle up gently. Working properly?")
+                telemetryFailure: globals.activeVehicle ? (globals.activeVehicle.checkListItem2 ? false : true) : true
+                telemetryTextFailure: qsTr("Propellers free? Then throttle up gently. Working properly?")
+                allowTelemetryFailureOverride: true
+                onClicked: {
+                    if (manualText !== "") {
+                        // User is confirming a manual check
+                        _manualState = (_manualState === _statePassed) ? _statePending : _statePassed
+                        globals.activeVehicle.checkListItem2 = true
+                    }
+                }
             }
 
             PreFlightCheckButton {
                 name:           qsTr("Mission")
-                manualText:     qsTr("Please confirm mission is valid (waypoints valid, no terrain collision).")
+                manualText:     globals.activeVehicle ? (globals.activeVehicle.checkListItem3 ? "" :  qsTr("Please confirm mission is valid (waypoints valid, no terrain collision).")) : qsTr("Please confirm mission is valid (waypoints valid, no terrain collision).")
+                telemetryFailure: globals.activeVehicle ? (globals.activeVehicle.checkListItem3 ? false : true) : true
+                telemetryTextFailure: qsTr("Please confirm mission is valid (waypoints valid, no terrain collision).")
+                allowTelemetryFailureOverride: true
+                onClicked: {
+                    if (manualText !== "") {
+                        // User is confirming a manual check
+                        _manualState = (_manualState === _statePassed) ? _statePending : _statePassed
+                        globals.activeVehicle.checkListItem3 = true
+                    }
+                }
             }
 
             PreFlightSoundCheck {
@@ -69,17 +99,47 @@ Item {
             // Check list item group 2 - Final checks before launch
             PreFlightCheckButton {
                 name:           qsTr("Payload")
-                manualText:     qsTr("Configured and started? Payload lid closed?")
+                manualText:     globals.activeVehicle ? (globals.activeVehicle.checkListItem4 ? "" :  qsTr("Configured and started? Payload lid closed?")) : qsTr("Configured and started? Payload lid closed?")
+                telemetryFailure: globals.activeVehicle ? (globals.activeVehicle.checkListItem4 ? false : true) : true
+                telemetryTextFailure: qsTr("Configured and started? Payload lid closed?")
+                allowTelemetryFailureOverride: true
+                onClicked: {
+                    if (manualText !== "") {
+                        // User is confirming a manual check
+                        _manualState = (_manualState === _statePassed) ? _statePending : _statePassed
+                        globals.activeVehicle.checkListItem4 = true
+                    }
+                }
             }
 
             PreFlightCheckButton {
                 name:           qsTr("Wind & weather")
-                manualText:     qsTr("OK for your platform?")
+                manualText:     globals.activeVehicle ? (globals.activeVehicle.checkListItem5 ? "" :  qsTr("OK for your platform?")) : qsTr("OK for your platform?")
+                telemetryFailure: globals.activeVehicle ? (globals.activeVehicle.checkListItem5 ? false : true) : true
+                telemetryTextFailure: qsTr("OK for your platform?")
+                allowTelemetryFailureOverride: true
+                onClicked: {
+                    if (manualText !== "") {
+                        // User is confirming a manual check
+                        _manualState = (_manualState === _statePassed) ? _statePending : _statePassed
+                        globals.activeVehicle.checkListItem5 = true
+                    }
+                }
             }
 
             PreFlightCheckButton {
                 name:           qsTr("Flight area")
-                manualText:     qsTr("Launch area and path free of obstacles/people?")
+                manualText:      globals.activeVehicle ? (globals.activeVehicle.checkListItem6 ? "" :  qsTr("Launch area and path free of obstacles/people?")) : qsTr("Launch area and path free of obstacles/people?")
+                telemetryFailure: globals.activeVehicle ? (globals.activeVehicle.checkListItem6 ? false : true) : true
+                telemetryTextFailure: qsTr("Launch area and path free of obstacles/people?")
+                allowTelemetryFailureOverride: true
+                onClicked: {
+                    if (manualText !== "") {
+                        // User is confirming a manual check
+                        _manualState = (_manualState === _statePassed) ? _statePending : _statePassed
+                        globals.activeVehicle.checkListItem6 = true
+                    }
+                }
             }
         }
     }
