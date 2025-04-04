@@ -223,6 +223,27 @@ public:
     Q_PROPERTY(bool                 requiresGpsFix              READ requiresGpsFix                                                 NOTIFY requiresGpsFixChanged)
     Q_PROPERTY(double               loadProgress                READ loadProgress                                                   NOTIFY loadProgressChanged)
     Q_PROPERTY(bool                 initialConnectComplete      READ isInitialConnectComplete                                       NOTIFY initialConnectComplete)
+    Q_PROPERTY(bool                 checkListItem1              READ checkListItem1             WRITE setCheckListItem1)
+    Q_PROPERTY(bool                 checkListItem2              READ checkListItem2             WRITE setCheckListItem2)
+    Q_PROPERTY(bool                 checkListItem3              READ checkListItem3             WRITE setCheckListItem3)
+    Q_PROPERTY(bool                 checkListItem4              READ checkListItem4             WRITE setCheckListItem4)
+    Q_PROPERTY(bool                 checkListItem5              READ checkListItem5             WRITE setCheckListItem5)
+    Q_PROPERTY(bool                 checkListItem6              READ checkListItem6             WRITE setCheckListItem6)
+    Q_PROPERTY(bool                 checkListItem7              READ checkListItem7             WRITE setCheckListItem7)
+    Q_PROPERTY(bool                 checkListItem8              READ checkListItem8             WRITE setCheckListItem8)
+    Q_PROPERTY(bool                 checkListItem9              READ checkListItem9             WRITE setCheckListItem9)
+    Q_PROPERTY(bool                 checkListItem10             READ checkListItem10            WRITE setCheckListItem10)
+    Q_PROPERTY(bool                 checkListItem11             READ checkListItem11            WRITE setCheckListItem11)
+    Q_PROPERTY(bool                 checkListItem12             READ checkListItem12            WRITE setCheckListItem12)
+    Q_PROPERTY(bool                 checkListItem13             READ checkListItem13            WRITE setCheckListItem13)
+    Q_PROPERTY(bool                 checkListItem14             READ checkListItem14            WRITE setCheckListItem14)
+    Q_PROPERTY(bool                 checkListItem15             READ checkListItem15            WRITE setCheckListItem15)
+    Q_PROPERTY(bool                 checkListItem16             READ checkListItem16            WRITE setCheckListItem16)
+    Q_PROPERTY(bool                 checkListItem17             READ checkListItem17            WRITE setCheckListItem17)
+    Q_PROPERTY(bool                 checkListItem18             READ checkListItem18            WRITE setCheckListItem18)
+    Q_PROPERTY(bool                 checkListItem19             READ checkListItem19            WRITE setCheckListItem19)
+    Q_PROPERTY(bool                 checkListItem20             READ checkListItem20            WRITE setCheckListItem20)
+    Q_PROPERTY(bool                 checkListItem21             READ checkListItem21            WRITE setCheckListItem21)
 
     // The following properties relate to Orbit status
     Q_PROPERTY(bool             orbitActive     READ orbitActive        NOTIFY orbitActiveChanged)
@@ -807,6 +828,50 @@ public:
     CheckList   checkListState          () { return _checkListState; }
     void        setCheckListState       (CheckList cl)  { _checkListState = cl; emit checkListStateChanged(); }
 
+    bool checkListItem1                 () { return _checkListItem1; }
+    bool checkListItem2                 () { return _checkListItem2; }
+    bool checkListItem3                 () { return _checkListItem3; }
+    bool checkListItem4                 () { return _checkListItem4; }
+    bool checkListItem5                 () { return _checkListItem5; }
+    bool checkListItem6                 () { return _checkListItem6; }
+    bool checkListItem7                 () { return _checkListItem7; }
+    bool checkListItem8                 () { return _checkListItem8; }
+    bool checkListItem9                 () { return _checkListItem9; }
+    bool checkListItem10                () { return _checkListItem10; }
+    bool checkListItem11                () { return _checkListItem11; }
+    bool checkListItem12                () { return _checkListItem12; }
+    bool checkListItem13                () { return _checkListItem13; }
+    bool checkListItem14                () { return _checkListItem14; }
+    bool checkListItem15                () { return _checkListItem15; }
+    bool checkListItem16                () { return _checkListItem16; }
+    bool checkListItem17                () { return _checkListItem17; }
+    bool checkListItem18                () { return _checkListItem18; }
+    bool checkListItem19                () { return _checkListItem19; }
+    bool checkListItem20                () { return _checkListItem20; }
+    bool checkListItem21                () { return _checkListItem21; }
+
+    void setCheckListItem1              (bool value){ _checkListItem1 = value; }
+    void setCheckListItem2              (bool value){ _checkListItem2 = value; }
+    void setCheckListItem3              (bool value){ _checkListItem3 = value; }
+    void setCheckListItem4              (bool value){ _checkListItem4 = value; }
+    void setCheckListItem5              (bool value){ _checkListItem5 = value; }
+    void setCheckListItem6              (bool value){ _checkListItem6 = value; }
+    void setCheckListItem7              (bool value){ _checkListItem7 = value; }
+    void setCheckListItem8              (bool value){ _checkListItem8 = value; }
+    void setCheckListItem9              (bool value){ _checkListItem9 = value; }
+    void setCheckListItem10             (bool value){ _checkListItem10 = value; }
+    void setCheckListItem11             (bool value){ _checkListItem11 = value; }
+    void setCheckListItem12             (bool value){ _checkListItem12 = value; }
+    void setCheckListItem13             (bool value){ _checkListItem13 = value; }
+    void setCheckListItem14             (bool value){ _checkListItem14 = value; }
+    void setCheckListItem15             (bool value){ _checkListItem15 = value; }
+    void setCheckListItem16             (bool value){ _checkListItem16 = value; }
+    void setCheckListItem17             (bool value){ _checkListItem17 = value; }
+    void setCheckListItem18             (bool value){ _checkListItem18 = value; }
+    void setCheckListItem19             (bool value){ _checkListItem19 = value; }
+    void setCheckListItem20             (bool value){ _checkListItem20 = value; }
+    void setCheckListItem21             (bool value){ _checkListItem21 = value; }
+
     double loadProgress                 () const { return _loadProgress; }
 
     void setEventsMetadata(uint8_t compid, const QString& metadataJsonFileName);
@@ -1052,6 +1117,28 @@ private:
     bool            _readyToFly                             = false;
     bool            _allSensorsHealthy                      = true;
     bool            _mavlinkSigning                         = false;
+
+    bool _checkListItem1   = false;
+    bool _checkListItem2   = false;
+    bool _checkListItem3   = false;
+    bool _checkListItem4   = false;
+    bool _checkListItem5   = false;
+    bool _checkListItem6   = false;
+    bool _checkListItem7   = false;
+    bool _checkListItem8   = false;
+    bool _checkListItem9   = false;
+    bool _checkListItem10  = false;
+    bool _checkListItem11  = false;
+    bool _checkListItem12  = false;
+    bool _checkListItem13  = false;
+    bool _checkListItem14  = false;
+    bool _checkListItem15  = false;
+    bool _checkListItem16  = false;
+    bool _checkListItem17  = false;
+    bool _checkListItem18  = false;
+    bool _checkListItem19  = false;
+    bool _checkListItem20  = false;
+    bool _checkListItem21  = false;
 
     SysStatusSensorInfo _sysStatusSensorInfo;
 
