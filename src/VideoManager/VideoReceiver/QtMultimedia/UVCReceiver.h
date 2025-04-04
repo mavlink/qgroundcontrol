@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include <QtMultimedia/QCameraDevice>
@@ -22,20 +13,30 @@ class QQuickItem;
 class UVCReceiver : public QtMultimediaReceiver
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 
 public:
-    explicit UVCReceiver(QObject *parent = nullptr);
+    explicit UVCReceiver(QObject* parent = nullptr);
     ~UVCReceiver();
 
     bool enabled();
     QCameraDevice findCameraDevice(const QString &cameraId);
 
 public slots:
-    Q_INVOKABLE void adjustAspectRatio();
+    void start(const QString& uri, unsigned timeout, int buffer = 0) final;
+    void stop() final;
+    void startDecoding(void* sink) final;
+    void stopDecoding() final;
+    void startRecording(const QString& videoFile, FILE_FORMAT format) final;
+    void stopRecording() final;
+    void takeScreenshot(const QString& imageFile) final;
+
+    Q_INVOKABLE void adjustAspectRatio(qreal height);
 
 private:
     void _checkPermission();
 
-    QCamera *_camera = nullptr;
-    QImageCapture *_imageCapture = nullptr;
+    QCamera* m_camera = nullptr;
+	QImageCapture* m_imageCapture = nullptr;
 };

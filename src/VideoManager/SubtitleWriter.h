@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -17,12 +17,12 @@
 #pragma once
 
 #include <QtCore/QObject>
+#include <QtCore/QTimer>
 #include <QtCore/QTime>
 #include <QtCore/QFile>
 #include <QtCore/QLoggingCategory>
 
 class Fact;
-class QTimer;
 
 Q_DECLARE_LOGGING_CATEGORY(SubtitleWriterLog)
 
@@ -32,10 +32,10 @@ class SubtitleWriter : public QObject
 
 public:
     explicit SubtitleWriter(QObject* parent = nullptr);
-    ~SubtitleWriter();
+    ~SubtitleWriter() = default;
 
     // starts capturing vehicle telemetry.
-    void startCapturingTelemetry(const QString &videoFile);
+    void startCapturingTelemetry(const QString& videoFile);
     void stopCapturingTelemetry();
 
 private slots:
@@ -43,7 +43,7 @@ private slots:
     void _captureTelemetry();
 
 private:
-    QTimer* _timer = nullptr;
+    QTimer _timer;
     QList<Fact*> _facts;
     QTime _lastEndTime;
     QFile _file;
