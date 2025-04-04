@@ -37,6 +37,18 @@ ObjectModel {
         return true
     }
 
-    Component.onCompleted: reset()
-
+    Component.onCompleted: {
+        reset()
+        for (var i = 0; i < _root.count; i++) {
+            var group = _root.get(i)
+            if (group.passed) {
+                group._checked = false
+                group.enabled = true
+            } else {
+                group._checked = true
+                group.enabled = true
+                return
+            }            
+        }
+    }
 }
