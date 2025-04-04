@@ -126,6 +126,7 @@
 		<file alias="QGroundControl/Controls/MissionItemIndexLabel.qml">../src/QmlControls/MissionItemIndexLabel.qml</file>
 		<file alias="QGroundControl/Controls/MissionItemMapVisual.qml">../src/PlanView/MissionItemMapVisual.qml</file>
 		<file alias="QGroundControl/Controls/MissionItemStatus.qml">../src/PlanView/MissionItemStatus.qml</file>
+		<file alias="QGroundControl/Controls/MultiVehicleFactValueGrid.qml">../src/QmlControls/MultiVehicleFactValueGrid.qml</file>
 		<file alias="QGroundControl/Controls/OfflineMapButton.qml">../src/QmlControls/OfflineMapButton.qml</file>
 		<file alias="QGroundControl/Controls/OfflineMapEditor.qml">../src/QtLocationPlugin/QMLControl/OfflineMapEditor.qml</file>
 		<file alias="QGroundControl/Controls/OfflineMapInfo.qml">../src/UI/preferences/OfflineMapInfo.qml</file>

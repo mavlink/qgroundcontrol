@@ -67,7 +67,6 @@ Rectangle {
             id:                    multiVehicleList
             Layout.fillWidth:      true
             Layout.fillHeight:     true
-            implicitHeight:        multiVehicleList.innerColumnHeight * vehicles.count - _margins * 3
 
             Rectangle {
                 anchors.fill: parent
