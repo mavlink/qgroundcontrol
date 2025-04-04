@@ -1,47 +1,46 @@
+add_subdirectory(${CMAKE_SOURCE_DIR}/libs/qmlglsink qmlglsink.build)
+
+if(NOT GST_QT6_PLUGIN_FOUND)
+    return()
+endif()
+
+message(STATUS "Building GStreamer VideoReceiver")
+
 find_package(Qt6 REQUIRED COMPONENTS Core Quick)
 
-target_sources(QGC PRIVATE GLVideoItemStub.h)
-
-target_link_libraries(QGC PUBLIC Qt6::Quick)
-
-target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-
-if(NOT QGC_ENABLE_GST_VIDEOSTREAMING)
-    return()
-endif()
-
-add_subdirectory(gstqml6gl)
-
-if(NOT TARGET gstqml6gl)
-    return()
-endif()
-
-target_sources(QGC
-    PRIVATE
-        gstqgc.cc
-        gstqgcelement.cc
-        gstqgcelements.h
-        gstqgcvideosinkbin.cc
-        gstqgcvideosinkbin.h
-        GStreamer.cc
-        GStreamer.h
-        GstVideoReceiver.cc
-        GstVideoReceiver.h
+qt_add_library(GStreamerReceiver STATIC
+    GLVideoItemStub.cc
+    GLVideoItemStub.h
+    gstqgc.c
+    gstqgcvideosinkbin.c
+    GStreamer.cc
+    GStreamer.h
+    GstVideoReceiver.cc
+    GstVideoReceiver.h
 )
 
 if(IOS)
-    target_sources(QGC
+    target_sources(GStreamerReceiver
         PRIVATE
-            gst_ios_init.m
             gst_ios_init.h
+            gst_ios_init.m
     )
 endif()
 
-target_link_libraries(QGC
+target_link_libraries(GStreamerReceiver
     PRIVATE
-        gstqml6gl
+        Qt6::Quick
+        Utilities
     PUBLIC
         Qt6::Core
+        qmlglsink
+        Settings
+        VideoReceiver
 )
 
-target_compile_definitions(QGC PUBLIC QGC_GST_STREAMING)
+target_include_directories(GStreamerReceiver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+target_compile_definitions(GStreamerReceiver PUBLIC QGC_GST_STREAMING)
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    target_compile_definitions(GStreamerReceiver PRIVATE QGC_INSTALL_RELEASE)
+endif()
