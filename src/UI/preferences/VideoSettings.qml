@@ -63,6 +63,7 @@ SettingsPage {
             visible:                    _isRTSP && _videoSettings.rtspUrl.visible
         }
 
+
         LabelledFactTextField {
             Layout.fillWidth:           true
             label:                      qsTr("TCP URL")

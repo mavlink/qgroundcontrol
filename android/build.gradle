@@ -50,10 +50,13 @@ android {
 
     // namespace = androidPackageName
     namespace = "org.mavlink.qgroundcontrol"
-    compileSdkVersion androidCompileSdkVersion
-    buildToolsVersion androidBuildToolsVersion
-    ndkVersion = androidNdkVersion
-
+    //compileSdkVersion androidCompileSdkVersion
+    //buildToolsVersion androidBuildToolsVersion
+    compileSdkVersion 35
+    buildToolsVersion "35.0.0"
+    //ndkVersion = androidNdkVersion
+   ndkVersion = "23.1.7779620"
+   
     // Extract native libraries from the APK
     packagingOptions.jniLibs.useLegacyPackaging = true
 
@@ -95,8 +98,10 @@ android {
 
     defaultConfig {
         resConfig "en"
-        minSdkVersion qtMinSdkVersion
-        targetSdkVersion qtTargetSdkVersion
+        //minSdkVersion qtMinSdkVersion
+        minSdkVersion 23
+        //targetSdkVersion qtTargetSdkVersion
+        targetSdkVersion 35
         ndk.abiFilters = qtTargetAbiList.split(",")
 
         // println "applicationId: ${applicationId}"

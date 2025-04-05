@@ -116,6 +116,9 @@ private:
     static const char* _managerCompidFactName;
 };
 
+
+
+
 class GimbalController : public QObject
 {
     Q_OBJECT
@@ -218,3 +221,4 @@ private:
 
     static const char* _gimbalFactGroupNamePrefix;
 };
+

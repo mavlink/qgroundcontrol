@@ -56,6 +56,60 @@
 #include <MAVLinkSigning.h>
 #include "GimbalController.h"
 #include "MavlinkSettings.h"
+#include <QTcpSocket>
+#include <QHostAddress>
+#include <cmath>
+
+// my code
+namespace {
+QString calculateCRC(const QString& cmd)
+{
+    quint32 sum = 0;
+    QByteArray bytes = cmd.toUtf8();
+    for (int i = 0; i < bytes.size(); i++) {
+        sum += static_cast<unsigned char>(bytes.at(i));
+    }
+    quint8 crc = sum & 0xFF;
+    return QString("%1").arg(crc, 2, 16, QLatin1Char('0')).toUpper();
+}
+
+QString buildAngleCommand(const QString& axis, double angle, double speed)
+{
+    // Eksen adlarının karşılık geldiği id bitleri
+    QMap<QString, QString> axisMap {
+        {"yaw",   "GAY"},
+        {"pitch", "GAP"},
+        {"roll",  "GAR"}
+    };
+
+    QString axisLower = axis.toLower();
+    if (!axisMap.contains(axisLower)) {
+        qWarning() << "Geçersiz eksen:" << axis;
+        return QString();
+    }
+    QString idBit = axisMap.value(axisLower);
+
+            // Açı: 0.01° hassasiyetinde, 16-bit signed (iki kompleman) format
+    int angleVal = static_cast<int>(angle * 100);
+    if (angleVal < 0) {
+        angleVal = (1 << 16) + angleVal; // iki kompleman dönüşümü
+    }
+    QString angleHex = QString("%1").arg(angleVal, 4, 16, QLatin1Char('0')).toUpper();
+
+            // Hız: 0.1°/s hassasiyetinde, 2 haneli HEX
+    int speedVal = static_cast<int>(speed * 10);
+    QString speedHex = QString("%1").arg(speedVal, 2, 16, QLatin1Char('0')).toUpper();
+
+            // Komutun temel kısmı: sabit "#TPUG6w", ardından eksen id'si, açı ve hız
+    QString baseCmd = "#TPUG6w" + idBit + angleHex + speedHex;
+
+            // CRC hesaplama ve ekleme
+    QString crc = calculateCRC(baseCmd);
+    QString fullCmd = baseCmd + crc;
+    return fullCmd;
+}
+}
+
 
 #ifdef QGC_UTM_ADAPTER
 #include "UTMSPVehicle.h"
@@ -113,6 +167,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _terrainFactGroup             (this)
     , _terrainProtocolHandler       (new TerrainProtocolHandler(this, &_terrainFactGroup, this))
 {
+
     connect(JoystickManager::instance(), &JoystickManager::activeJoystickChanged, this, &Vehicle::_loadJoystickSettings);
     connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &Vehicle::_activeVehicleChanged);
 
@@ -135,6 +190,8 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(this, &Vehicle::remoteControlRSSIChanged,   this, &Vehicle::_remoteControlRSSIChanged);
 
     _commonInit();
+
+    _udpSocket = new QUdpSocket(this);
 
     _vehicleLinkManager->_addLink(link);
 
@@ -1405,6 +1462,119 @@ void Vehicle::_handleRadioStatus(mavlink_message_t& message)
     }
 }
 
+
+
+void Vehicle::_handleRCChannels(mavlink_message_t& message)
+{
+
+    mavlink_rc_channels_t channels;
+    mavlink_msg_rc_channels_decode(&message, &channels);
+
+    uint16_t* _rgChannelvalues[QGCMAVLink::maxRcChannels] = {
+        &channels.chan1_raw,
+        &channels.chan2_raw,
+        &channels.chan3_raw,
+        &channels.chan4_raw,
+        &channels.chan5_raw,
+        &channels.chan6_raw,
+        &channels.chan7_raw,
+        &channels.chan8_raw,
+        &channels.chan9_raw,
+        &channels.chan10_raw,
+        &channels.chan11_raw,
+        &channels.chan12_raw,
+        &channels.chan13_raw,
+        &channels.chan14_raw,
+        &channels.chan15_raw,
+        &channels.chan16_raw,
+        &channels.chan17_raw,
+        &channels.chan18_raw,
+    };
+    int pwmValues[QGCMAVLink::maxRcChannels];
+
+            // ELRS hack - Eğer tam paket değilse kanal sayısını hesapla
+    if (channels.chancount == 0) {
+        for(const auto& channelValue : _rgChannelvalues) {
+            if (*channelValue != UINT16_MAX) channels.chancount++;
+        }
+    }
+
+    for (int i = 0; i < QGCMAVLink::maxRcChannels; i++) {
+        uint16_t channelValue = *_rgChannelvalues[i];
+        if (i < channels.chancount) {
+            pwmValues[i] = channelValue == UINT16_MAX ? -1 : channelValue;
+        } else {
+            pwmValues[i] = -1;
+        }
+    }
+
+    // 16. Kanal Değerini Al, gimbal YAW ekseni pitch
+    int channel16Yaw = pwmValues[15];
+    static double angleYaw = 0;
+    if (std::abs(channel16Yaw - 1500) > 10) {
+        if (angleYaw >= -90.0 && angleYaw <= 90.0) {
+            angleYaw += (channel16Yaw - 1500) / 20;
+        }
+        if(angleYaw <= -90.0 ) {
+            angleYaw = -90.0;
+        }else if(angleYaw >= 90.0){
+            angleYaw = 90.0;
+        }
+        //qDebug() << "yaw Kanal Yeni Değer:" << angleYaw;
+        // "yaw" ekseni için komut oluşturuluyor.
+        QString command = buildAngleCommand("yaw", angleYaw, 4.5);
+        if (!command.isEmpty()) {
+            //qDebug() << "Gönderilen komut:" << command;
+            // UDP gönderimi için hedef IP ve port ayarları:
+            QHostAddress targetAddress("192.168.144.108");  // Hedef IP (örnekte Python kodundakine uyarlanmış)
+            quint16 targetPort = 5000;                        // Hedef port (varsayılan 5000)
+            _udpSocket->writeDatagram(command.toUtf8(), targetAddress, targetPort);
+        }
+    }
+
+    // 15. Kanal Değerini Al, gimbal PITCH ekseni
+    int channel16Pitch = pwmValues[14];
+    static double anglePitch = 0;
+    if (std::abs(channel16Pitch - 1500) > 10) {
+        if (anglePitch >= -90.0 && anglePitch <= 90.0) {
+            anglePitch += (channel16Pitch - 1500) / 20;
+        }
+        if(anglePitch <= -90.0 ) {
+            anglePitch = -90.0;
+        }else if(anglePitch >= 90.0){
+            anglePitch = 90.0;
+        }
+        //qDebug() << "pitch Kanal Yeni Değer:" << anglePitch;
+        // "Pitch" ekseni için komut oluşturuluyor.
+        QString command = buildAngleCommand("pitch", anglePitch, 4.5);
+        if (!command.isEmpty()) {
+            //qDebug() << "Gönderilen komut:" << command;
+            // UDP gönderimi için hedef IP ve port ayarları:
+            QHostAddress targetAddress("192.168.144.108");  // Hedef IP (örnekte Python kodundakine uyarlanmış)
+            quint16 targetPort = 5000;                        // Hedef port (varsayılan 5000)
+            _udpSocket->writeDatagram(command.toUtf8(), targetAddress, targetPort);
+        }
+    }
+
+    // kanal 14
+    if(pwmValues[13] > 1500){
+        QString command1 = buildAngleCommand("yaw", 0, 5.5);
+        QString command2 = buildAngleCommand("pitch", 0, 5.5);
+        if (!command1.isEmpty()) {
+            QHostAddress targetAddress("192.168.144.108");  // Hedef IP (örnekte Python kodundakine uyarlanmış)
+            quint16 targetPort = 5000;                        // Hedef port (varsayılan 5000)
+            _udpSocket->writeDatagram(command1.toUtf8(), targetAddress, targetPort);
+            _udpSocket->writeDatagram(command2.toUtf8(), targetAddress, targetPort);
+        }
+
+    }
+    emit remoteControlRSSIChanged(channels.rssi);
+    emit rcChannelsChanged(channels.chancount, pwmValues);
+}
+
+
+
+/*
 void Vehicle::_handleRCChannels(mavlink_message_t& message)
 {
     mavlink_rc_channels_t channels;
@@ -1456,6 +1626,7 @@ void Vehicle::_handleRCChannels(mavlink_message_t& message)
     emit remoteControlRSSIChanged(channels.rssi);
     emit rcChannelsChanged(channels.chancount, pwmValues);
 }
+*/
 
 bool Vehicle::sendMessageOnLinkThreadSafe(LinkInterface* link, mavlink_message_t message)
 {

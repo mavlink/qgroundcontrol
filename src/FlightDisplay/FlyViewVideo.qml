@@ -23,6 +23,17 @@ Item {
     property int    _track_rec_x:       0
     property int    _track_rec_y:       0
 
+    property var    _activeVehicle:             globals.activeVehicle
+
+    Connections {
+            target: _activeVehicle
+            onRcChannelsChanged: {
+                // Varsayılan olarak rcChannels dizisinin 16. elemanını (indeks 15) kontrol ediyoruz.
+                //var channel16Value = _activeVehicle._handleRCChannels();
+                //console.log("Kanal 16 değeri: " + channel16Value);
+                //myCustomFunction(channel16Value);
+            }
+        }
     PipState {
         id:         videoPipState
         pipView:    _root.pipView

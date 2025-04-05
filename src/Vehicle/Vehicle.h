@@ -46,6 +46,9 @@
 #include "VehicleWindFactGroup.h"
 #include "GimbalController.h"
 
+#include <QUdpSocket>
+
+
 class Actuators;
 class AutoPilotPlugin;
 class Autotune;
@@ -946,6 +949,7 @@ private slots:
     void _altitudeAboveTerrainReceived      (bool sucess, QList<double> heights);
 
 private:
+    QUdpSocket* _udpSocket;
     void _loadJoystickSettings          ();
     void _activeVehicleChanged          (Vehicle* newActiveVehicle);
     void _captureJoystick               ();
@@ -1000,6 +1004,7 @@ private:
     int     _id;                    ///< Mavlink system id
     int     _defaultComponentId;
     bool    _offlineEditingVehicle = false; ///< true: This Vehicle is a "disconnected" vehicle for ui use while offline editing
+
 
     MAV_AUTOPILOT       _firmwareType;
     MAV_TYPE            _vehicleType;

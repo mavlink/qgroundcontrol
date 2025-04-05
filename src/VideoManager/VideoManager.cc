@@ -681,7 +681,41 @@ bool VideoManager::_updateSettings(unsigned id)
             }
         }
     }
-
+    /*
+    if (id == 1) {
+        // İkinci bir RTSP URL'si için VideoSettings'e rtspUrl2() ekleyerek kullanın
+        // Örnek olarak sabit kodlanmış bir URL kullanıyorum, siz VideoSettings'ten alabilirsiniz
+        const QString source2 = _videoSettings->videoSource()->rawValue().toString();
+        if (source2 == VideoSettings::videoSourceUDPH264) {
+            settingsChanged |= _updateVideoUri(id, QStringLiteral("udp://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
+        } else if (source2 == VideoSettings::videoSourceUDPH265) {
+            settingsChanged |= _updateVideoUri(id, QStringLiteral("udp265://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
+        } else if (source2 == VideoSettings::videoSourceMPEGTS) {
+            settingsChanged |= _updateVideoUri(id, QStringLiteral("mpegts://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
+        } else if (source2 == VideoSettings::videoSourceRTSP) {
+            settingsChanged |= _updateVideoUri(id, _videoSettings->rtspUrl()->rawValue().toString());
+        } else if (source2 == VideoSettings::videoSourceTCP) {
+            settingsChanged |= _updateVideoUri(id, QStringLiteral("tcp://%1").arg(_videoSettings->tcpUrl()->rawValue().toString()));
+        } else if (source2 == VideoSettings::videoSource3DRSolo) {
+            settingsChanged |= _updateVideoUri(id, QStringLiteral("udp://0.0.0.0:5600"));
+        } else if (source2 == VideoSettings::videoSourceParrotDiscovery) {
+            settingsChanged |= _updateVideoUri(id, QStringLiteral("udp://0.0.0.0:8888"));
+        } else if (source2 == VideoSettings::videoSourceYuneecMantisG) {
+            settingsChanged |= _updateVideoUri(id, QStringLiteral("rtsp://192.168.42.1:554/live"));
+        } else if (source2 == VideoSettings::videoSourceHerelinkAirUnit) {
+            settingsChanged |= _updateVideoUri(id, QStringLiteral("rtsp://192.168.0.10:8554/H264Video"));
+        } else if (source2 == VideoSettings::videoSourceHerelinkHotspot) {
+            settingsChanged |= _updateVideoUri(id, QStringLiteral("rtsp://192.168.43.1:8554/fpv_stream"));
+        } else if (source2 == VideoSettings::videoDisabled || source2 == VideoSettings::videoSourceNoVideo) {
+            settingsChanged |= _updateVideoUri(id, "");
+        } else {
+            settingsChanged |= _updateVideoUri(id, "");
+            if (!isUvc()) {
+                qCCritical(VideoManagerLog) << "Video source2 URI \"" << source2 << "\" is not supported. Please add support!";
+            }
+        }
+    }
+*/
     return settingsChanged;
 }
 

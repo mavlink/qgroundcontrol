@@ -74,7 +74,7 @@ Rectangle {
                 onValueChanged:     _camera.zoomLevel = value
             }
         }
-        
+
         ColumnLayout {
             spacing: _margins * 2
 
@@ -124,7 +124,7 @@ Rectangle {
                             }
                         }
                     }
-                    
+
                     //-- Photo Mode
                     Rectangle {
                         anchors.verticalCenter: parent.verticalCenter
@@ -175,7 +175,7 @@ Rectangle {
                         property bool _isShootingInVideoMode:   (!_cameraInPhotoMode && _camera.videoCaptureStatus === MavlinkCameraControl.VIDEO_CAPTURE_STATUS_RUNNING)
                         property bool _isShootingInCurrentMode: _cameraInPhotoMode ? _isShootingInPhotoMode : _isShootingInVideoMode
                         property bool _isShootingInOtherMode:   _cameraInPhotoMode ? _isShootingInVideoMode : _isShootingInPhotoMode
-                        property bool _canShootInCurrentMode:   _isShootingInOtherMode ? 
+                        property bool _canShootInCurrentMode:   _isShootingInOtherMode ?
                                                                     (_cameraInPhotoMode ? _camera.photosInVideoMode : _camera.videoInPhotoMode) :
                                                                     true
                     }
@@ -185,13 +185,18 @@ Rectangle {
                         onClicked:      toggleShooting()
 
                         function toggleShooting() {
+                            console.log("birinci")
                             if (_cameraInPhotoMode) {
+
                                 if (_camera.photoCaptureStatus === MavlinkCameraControl.PHOTO_CAPTURE_INTERVAL_IN_PROGRESS) {
                                     _camera.stopTakePhoto()
+                                    console.log("dördüncü")
                                 } else if (_camera.photoCaptureStatus === MavlinkCameraControl.PHOTO_CAPTURE_IDLE || _camera.photoCaptureStatus === MavlinkCameraControl.PHOTO_CAPTURE_INTERVAL_IDLE) {
                                     _camera.takePhoto()
+                                    console.log("üçüncü")
                                 }
                             } else {
+                                console.log("ikinci")
                                 _camera.toggleVideoRecording()
                             }
                         }
@@ -263,7 +268,7 @@ Rectangle {
                     Layout.preferredHeight: Layout.preferredWidth
                     border.color:           qgcPal.buttonText
                     border.width:           3
-                    
+
                     QGCColoredImage {
                         height:             parent.height * 0.5
                         width:              height

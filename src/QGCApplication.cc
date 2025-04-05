@@ -143,11 +143,12 @@ QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting)
 #ifdef QGC_DAILY_BUILD
         // This gives daily builds their own separate settings space. Allowing you to use daily and stable builds
         // side by side without daily screwing up your stable settings.
-        applicationName = QStringLiteral("%1 Daily").arg(QGC_APP_NAME);
+        applicationName = QStringLiteral("%1").arg(QGC_APP_NAME);
 #else
         applicationName = QGC_APP_NAME;
 #endif
     }
+    applicationName = "Y&O Control Station";
     setApplicationName(applicationName);
     setOrganizationName(QGC_ORG_NAME);
     setOrganizationDomain(QGC_ORG_DOMAIN);

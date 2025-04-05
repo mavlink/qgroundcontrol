@@ -15,6 +15,7 @@
 #include "ParameterManager.h"
 #include "MAVLinkProtocol.h"
 
+
 #include <QtQml/QQmlEngine>
 
 QGC_LOGGING_CATEGORY(GimbalLog, "GimbalLog")
@@ -89,6 +90,9 @@ void Gimbal::_initFacts()
     _deviceIdFact.setRawValue       (0);
     _managerCompidFact.setRawValue  (0);
 }
+
+
+
 
 GimbalController::GimbalController(MAVLinkProtocol* mavlink, Vehicle* vehicle)
     : QObject(vehicle)
