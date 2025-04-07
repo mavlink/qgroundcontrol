@@ -1,6 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Quick)
-
-target_sources(QGC
+target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         ActuatorComponent.cc
         ActuatorComponent.h
@@ -36,19 +34,17 @@ target_sources(QGC
         SensorsComponentController.h
 )
 
-target_link_libraries(QGC
-    PUBLIC
-        Qt6::Core
-        Qt6::Quick
-)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-
-qt_add_resources(QGC "PX4AutoPilotPlugin_res" FILES AirframeFactMetaData.xml)
+# qt_add_resources(${CMAKE_PROJECT_NAME} "PX4AutoPilotPlugin_res"
+#     PREFIX "/"
+#     FILES
+#         AirframeFactMetaData.xml
+# )
 
 # file(GLOB QML_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.qml)
 # file(GLOB QML_RESOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/Images/*.*)
-# qt_add_qml_module(QGC
+# qt_add_qml_module(${CMAKE_PROJECT_NAME}
 #     URI QGroundControl.PX4AutoPilotPlugin
 #     VERSION 1.0
 #     QML_FILES ${QML_SOURCES}

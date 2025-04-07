@@ -1,9 +1,5 @@
-find_package(Qt6 REQUIRED COMPONENTS Core)
-
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    find_package(Qt6 REQUIRED COMPONENTS Positioning)
-
-    target_sources(QGC
+    target_sources(${CMAKE_PROJECT_NAME}
         PRIVATE
             MockConfiguration.cc
             MockConfiguration.h
@@ -17,11 +13,11 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
             MockLinkMissionItemHandler.h
     )
 
-    target_link_libraries(QGC
-        PUBLIC
+    target_link_libraries(${CMAKE_PROJECT_NAME}
+        PRIVATE
             Qt6::Core
             Qt6::Positioning
     )
 
-    target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 endif()

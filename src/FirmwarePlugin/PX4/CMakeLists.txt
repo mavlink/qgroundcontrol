@@ -1,7 +1,5 @@
-find_package(Qt6 REQUIRED COMPONENTS Core)
-
 if(NOT QGC_DISABLE_PX4_PLUGIN_FACTORY)
-    target_sources(QGC
+    target_sources(${CMAKE_PROJECT_NAME}
         PRIVATE
             PX4FirmwarePluginFactory.cc
             PX4FirmwarePluginFactory.h
@@ -12,7 +10,7 @@ if(NOT QGC_DISABLE_PX4_PLUGIN)
     # set(PX4_RESOURCES)
     # qt_add_resources(PX4_RESOURCES PX4Resources.qrc)
 
-    target_sources(QGC
+    target_sources(${CMAKE_PROJECT_NAME}
         PRIVATE
             px4_custom_mode.h
             PX4FirmwarePlugin.cc
@@ -23,12 +21,7 @@ if(NOT QGC_DISABLE_PX4_PLUGIN)
     )
 endif()
 
-target_link_libraries(QGC
-    PUBLIC
-        Qt6::Core
-)
-
-target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # file(GLOB QML_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.qml)
 # # file(GLOB QML_RESOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/res/*/*.*)

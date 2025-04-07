@@ -87,13 +87,13 @@ if(QGC_USE_CACHE)
             if(APPLE)
                 set(CMAKE_OBJC_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
             endif()
-            set(ENV{CCACHE_SLOPPINESS} pch_defines,time_macros,include_file_mtime,include_file_ctime)
-            set(ENV{CCACHE_BASEDIR} ${CMAKE_SOURCE_DIR})
-            if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-                add_compile_options(-Xclang -fno-pch-timestamp)
-            elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-                add_compile_options(-fpch-preprocess)
-            endif()
+            # set(ENV{CCACHE_SLOPPINESS} pch_defines,time_macros,include_file_mtime,include_file_ctime)
+            # set(ENV{CCACHE_BASEDIR} ${CMAKE_SOURCE_DIR})
+            # if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+            #     add_compile_options(-Xclang -fno-pch-timestamp)
+            # elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+            #     add_compile_options(-fpch-preprocess)
+            # endif()
         endif()
     elseif(CMAKE_HOST_WIN32)
         find_program(SCCACHE_PROGRAM sccache)
@@ -143,7 +143,7 @@ if(CMAKE_CROSSCOMPILING AND NOT IS_DIRECTORY ${QT_HOST_PATH})
     message(FATAL_ERROR "You need to set QT_HOST_PATH to cross compile Qt.")
 endif()
 
-find_program(QMAKE_EXECUTABLE NAMES qmake HINTS ${QT_ROOT_DIR} ${QTDIR} ENV QTDIR PATH_SUFFIXES bin)
+find_program(QMAKE_EXECUTABLE NAMES qmake6 HINTS ${QT_ROOT_DIR} ${QTDIR} ENV QTDIR PATH_SUFFIXES bin)
 execute_process(COMMAND ${QMAKE_EXECUTABLE} -query QT_VERSION OUTPUT_VARIABLE QT_VERSION)
 if(QT_VERSION LESS QT_MINIMUM_VERSION)
     MESSAGE(FATAL_ERROR "Minimum supported Qt version: ${QT_MINIMUM_VERSION}.
@@ -170,6 +170,7 @@ find_package(Qt6
         Concurrent
         Core
         Core5Compat
+        Gui
         Location
         Multimedia
         Network
@@ -195,8 +196,6 @@ find_package(Qt6
         Quick3DTools
         SerialPort
         Test
-    HINTS
-        ${QT_LIBRARY_HINTS}
 )
 
 if(LINUX)
@@ -297,31 +296,36 @@ endif()
 qt_add_executable(${CMAKE_PROJECT_NAME}
     WIN32
     MACOSX_BUNDLE
-    src/main.cc
     ${QGC_RESOURCES}
 )
 
-if(NOT ANDROID AND NOT IOS)
-    target_sources(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            src/RunGuard.cc
-            src/RunGuard.h
-    )
-endif()
+target_compile_definitions(${CMAKE_PROJECT_NAME}
+    PRIVATE
+        QGC_APP_NAME="${QGC_APP_NAME}"
+        QGC_ORG_NAME="${QGC_ORG_NAME}"
+        QGC_ORG_DOMAIN="${QGC_ORG_DOMAIN}"
+        QGC_APP_VERSION_STR="${QGC_APP_VERSION_STR}"
+        QGC_SETTINGS_VERSION=${QGC_SETTINGS_VERSION}
+)
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src)
+file(GLOB TS_SOURCES ${CMAKE_SOURCE_DIR}/translations/qgc_*.ts)
+set_source_files_properties(${TS_SOURCES} PROPERTIES OUTPUT_LOCATION "${CMAKE_BINARY_DIR}/i18n")
+qt_add_translations(${CMAKE_PROJECT_NAME}
+    # TS_FILE_BASE ${CMAKE_PROJECT_NAME}
+    # TS_FILE_DIR ${CMAKE_SOURCE_DIR}/translations/
+    TS_FILES ${TS_SOURCES}
+    RESOURCE_PREFIX "/"
+    LUPDATE_OPTIONS -no-obsolete
+)
 
-if(Qt6LinguistTools_FOUND)
-    file(GLOB TS_SOURCES ${CMAKE_SOURCE_DIR}/translations/qgc_*.ts)
-    set_source_files_properties(${TS_SOURCES} PROPERTIES OUTPUT_LOCATION "${CMAKE_BINARY_DIR}/i18n")
-    qt_add_translations(${CMAKE_PROJECT_NAME}
-        # TS_FILE_BASE ${CMAKE_PROJECT_NAME}
-        # TS_FILE_DIR ${CMAKE_SOURCE_DIR}/translations/
-        TS_FILES ${TS_SOURCES}
-        RESOURCE_PREFIX "/"
-        LUPDATE_OPTIONS -no-obsolete
-    )
-endif()
+set_source_files_properties(resources/qtquickcontrols2.conf PROPERTIES QT_RESOURCE_ALIAS qtquickcontrols2.conf)
+qt_add_resources(${CMAKE_PROJECT_NAME} "app_res" FILES resources/qtquickcontrols2.conf)
+
+qt_import_plugins(${CMAKE_PROJECT_NAME}
+    INCLUDE Qt6::QSvgPlugin
+    EXCLUDE_BY_TYPE geoservices
+    INCLUDE_BY_TYPE sqldrivers Qt6::QSQLiteDriverPlugin
+)
 
 set_target_properties(${CMAKE_PROJECT_NAME}
     PROPERTIES
@@ -404,7 +408,6 @@ elseif(IOS)
     # set(QT_NO_FFMPEG_XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY ON)
     qt_add_ios_ffmpeg_libraries(${CMAKE_PROJECT_NAME})
 elseif(ANDROID)
-    include(CPM)
     CPMAddPackage(
         NAME android_openssl
         URL https://github.com/KDAB/android_openssl/archive/refs/heads/master.zip
@@ -458,44 +461,17 @@ elseif(ANDROID)
     )
 endif()
 
-add_compile_definitions(
-    QGC_APP_NAME="${QGC_APP_NAME}"
-    QGC_ORG_NAME="${QGC_ORG_NAME}"
-    QGC_ORG_DOMAIN="${QGC_ORG_DOMAIN}"
-    QGC_APP_VERSION_STR="${QGC_APP_VERSION_STR}"
-    QGC_SETTINGS_VERSION=${QGC_SETTINGS_VERSION}
-)
-
 add_subdirectory(src)
-
-target_link_libraries(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        Qt6::Core
-        Qt6::Core5Compat
-        Qt6::Quick
-        Qt6::Svg
-        Qt6::Widgets
-        QGC
-)
 
 if(QGC_BUILD_TESTING)
     add_subdirectory(test)
 endif()
 
-if(ANDROID)
-    target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/android/src/AndroidInit.cc)
-
-    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/android/src)
+if(QGC_CUSTOM_BUILD)
+    target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_SOURCES})
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_LIBRARIES})
+    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_DIRECTORIES})
 endif()
-
-set_source_files_properties(resources/qtquickcontrols2.conf PROPERTIES QT_RESOURCE_ALIAS qtquickcontrols2.conf)
-qt_add_resources(${CMAKE_PROJECT_NAME} "app_res" FILES resources/qtquickcontrols2.conf)
-
-qt_import_plugins(${CMAKE_PROJECT_NAME}
-    INCLUDE Qt6::QSvgPlugin
-    EXCLUDE_BY_TYPE geoservices
-    INCLUDE_BY_TYPE sqldrivers Qt6::QSQLiteDriverPlugin
-)
 
 include(Install)
 
