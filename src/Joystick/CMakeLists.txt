@@ -42,10 +42,6 @@ qt_add_resources(${CMAKE_PROJECT_NAME} "gamecontrollerdb.txt"
 
 #===========================================================================#
 
-# https://github.com/libsdl-org/SDL/releases/download/prerelease-3.1.10/SDL3-3.1.10-win32-x64.zip
-# https://github.com/libsdl-org/SDL/releases/download/prerelease-3.1.10/SDL3-devel-3.1.10-android.zip
-# https://github.com/libsdl-org/SDL/releases/download/prerelease-3.1.10/SDL3-3.1.10.dmg
-
 if(WIN32)
     set(SDL2_EXTRA_OPTIONS
         "SDL_DIRECTX OFF"
@@ -55,9 +51,9 @@ endif()
 
 CPMAddPackage(
     NAME SDL2
-    VERSION 2.32.0
+    VERSION 2.32.4
     GITHUB_REPOSITORY libsdl-org/SDL
-    GIT_TAG release-2.32.0
+    GIT_TAG release-2.32.4
     OPTIONS
         "SDL2_DISABLE_INSTALL ON"
         "SDL2_DISABLE_INSTALL ON"
@@ -92,8 +88,10 @@ CPMAddPackage(
         "${SDL2_EXTRA_OPTIONS}"
 )
 
-if(TARGET SDL2::SDL2-static)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE SDL2::SDL2-static)
-elseif(TARGET SDL2::SDL2)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE SDL2::SDL2)
-endif()
+target_compile_definitions(SDL2-static PRIVATE SDL_MAIN_HANDLED)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE SDL2::SDL2-static)
+
+# Default list of config overrides - TODO: Add to Custom Build Options
+# set(ENV{SDL_GAMECONTROLLERCONFIG}
+
+# )
