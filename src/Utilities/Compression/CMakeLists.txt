@@ -1,6 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core)
-
-target_sources(QGC
+target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         QGCLZMA.cc
         QGCLZMA.h
@@ -10,18 +8,10 @@ target_sources(QGC
         QGCZlib.h
 )
 
-target_link_libraries(QGC
-    PRIVATE
-        Qt6::CorePrivate
-    PUBLIC
-        Qt6::Core
-)
-
-target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 #===========================================================================#
 
-include(CPM)
 CPMAddPackage(
     NAME zlib
     VERSION 1.3.1
@@ -35,10 +25,10 @@ CPMAddPackage(
 )
 
 if(zlib_ADDED)
-    target_link_libraries(QGC PRIVATE zlibstatic)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE zlibstatic)
 else()
     find_package(Qt6ZlibPrivate REQUIRED)
-    target_link_libraries(QGC PRIVATE Qt6::ZlibPrivate)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::ZlibPrivate)
 endif()
 
 #===========================================================================#
@@ -80,4 +70,4 @@ target_compile_definitions(xz
         XZ_USE_CRC64
 )
 
-target_link_libraries(QGC PRIVATE xz)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE xz)

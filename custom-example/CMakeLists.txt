@@ -1,5 +1,4 @@
 message(STATUS "Adding Custom Plugin")
-find_package(Qt6 REQUIRED COMPONENTS Core)
 
 # Enable custom build
 set_property(DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -33,19 +32,17 @@ if(ANDROID)
     endif()
 endif()
 
-find_package(Python3)
-if(Python3_FOUND)
-    execute_process(
-        COMMAND ${Python3_EXECUTABLE}
-        RESULT_VARIABLE PYTHON_RESULT
-        OUTPUT_VARIABLE PYTHON_OUTPUT
-        ERROR_VARIABLE PYTHON_ERROR
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        INPUT_FILE updateqrc.py
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-    cmake_print_variables(PYTHON_RESULT PYTHON_OUTPUT PYTHON_ERROR)
-endif()
+find_package(Python3 REQUIRED)
+execute_process(
+    COMMAND ${Python3_EXECUTABLE}
+    RESULT_VARIABLE PYTHON_RESULT
+    OUTPUT_VARIABLE PYTHON_OUTPUT
+    ERROR_VARIABLE PYTHON_ERROR
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    INPUT_FILE updateqrc.py
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+cmake_print_variables(PYTHON_RESULT PYTHON_OUTPUT PYTHON_ERROR)
 
 # Our own, custom resources
 list(APPEND CUSTOM_RESOURCES
@@ -58,28 +55,28 @@ set(QGC_RESOURCES ${QGC_RESOURCES} ${CUSTOM_RESOURCES} CACHE STRING "Paths to .q
 
 set(QML_IMPORT_PATH ${QML_IMPORT_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/res" CACHE STRING "Extra qml import paths" FORCE)
 
-qt_add_library(CustomPlugin STATIC
-    src/CustomPlugin.cc
-    src/CustomPlugin.h
-    src/AutoPilotPlugin/CustomAutoPilotPlugin.cc
-    src/AutoPilotPlugin/CustomAutoPilotPlugin.h
-    src/FirmwarePlugin/CustomFirmwarePlugin.cc
-    src/FirmwarePlugin/CustomFirmwarePlugin.h
-    src/FirmwarePlugin/CustomFirmwarePluginFactory.cc
-    src/FirmwarePlugin/CustomFirmwarePluginFactory.h
+set(CUSTOM_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/CustomPlugin.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/CustomPlugin.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/AutoPilotPlugin/CustomAutoPilotPlugin.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/AutoPilotPlugin/CustomAutoPilotPlugin.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/FirmwarePlugin/CustomFirmwarePlugin.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/FirmwarePlugin/CustomFirmwarePlugin.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/FirmwarePlugin/CustomFirmwarePluginFactory.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/FirmwarePlugin/CustomFirmwarePluginFactory.h
+    CACHE INTERNAL "" FORCE
 )
 
-target_link_libraries(CustomPlugin
-    PUBLIC
-        Qt6::Core
-        QGC
+set(CUSTOM_LIBRARIES
+    Qt6::Core
+    CACHE INTERNAL "" FORCE
 )
 
-target_include_directories(CustomPlugin
-    PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/AutoPilotPlugin
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/FirmwarePlugin
+set(CUSTOM_DIRECTORIES
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/AutoPilotPlugin
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/FirmwarePlugin
+    CACHE INTERNAL "" FORCE
 )
 
 # file(GLOB_RECURSE QML_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/res/*.qml)

@@ -1,6 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Multimedia Qml QmlIntegration)
-
-target_sources(QGC
+target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         ADSBVehicleManagerSettings.cc
         ADSBVehicleManagerSettings.h
@@ -49,20 +47,11 @@ target_sources(QGC
 )
 
 if(NOT QGC_DISABLE_APM_MAVLINK)
-    target_sources(QGC
+    target_sources(${CMAKE_PROJECT_NAME}
         PRIVATE
             APMMavlinkStreamRateSettings.cc
             APMMavlinkStreamRateSettings.h
     )
 endif()
 
-target_link_libraries(QGC
-    PRIVATE
-        Qt6::Multimedia
-    PUBLIC
-        Qt6::Core
-        Qt6::Qml
-        Qt6::QmlIntegration
-)
-
-target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

@@ -1,5 +1,3 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick)
-
 qt_add_library(gstqml6gl STATIC)
 
 if(MACOS)
@@ -110,7 +108,6 @@ endif()
 ################################################################################
 
 if(GStreamer_VERSION VERSION_GREATER_EQUAL 1.22)
-    include(CPM)
     CPMAddPackage(
         NAME gstreamer_good_plugins
         VERSION ${GST_PLUGINS_VERSION}

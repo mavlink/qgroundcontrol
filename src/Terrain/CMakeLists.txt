@@ -1,6 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Location Network Positioning)
-
-target_sources(QGC
+target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         Providers/TerrainQueryCopernicus.cc
         Providers/TerrainQueryCopernicus.h
@@ -16,18 +14,8 @@ target_sources(QGC
         TerrainTileManager.h
 )
 
-target_link_libraries(QGC
+target_include_directories(${CMAKE_PROJECT_NAME}
     PRIVATE
-        Qt6::LocationPrivate
-        QGCLocation
-    PUBLIC
-        Qt6::Core
-        Qt6::Network
-        Qt6::Positioning
-)
-
-target_include_directories(QGC
-    PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/Providers
 )

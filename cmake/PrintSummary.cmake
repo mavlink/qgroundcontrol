@@ -12,10 +12,10 @@ include(CMakePrintHelpers)
 # cmake_print_properties
 # cmake_host_system_information
 
-message( STATUS "------------------------------------------------------------------" )
-message( STATUS "" )
-include(CMakePrintSystemInformation)
-message( STATUS "" )
+# message( STATUS "------------------------------------------------------------------" )
+# message( STATUS "" )
+# include(CMakePrintSystemInformation)
+# message( STATUS "" )
 message( STATUS "------------------------------------------------------------------" )
 message( STATUS "" )
 message( STATUS "CMAKE_INSTALL_PREFIX:        ${CMAKE_INSTALL_PREFIX}" )

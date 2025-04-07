@@ -5,9 +5,7 @@ if(NOT QGC_DISABLE_PX4_PLUGIN)
     add_subdirectory(PX4)
 endif()
 
-find_package(Qt6 REQUIRED COMPONENTS Core)
-
-target_sources(QGC
+target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         AutoPilotPlugin.cc
         AutoPilotPlugin.h
@@ -17,13 +15,8 @@ target_sources(QGC
         VehicleComponent.h
 )
 
-target_link_libraries(QGC
-    PUBLIC
-        Qt6::Core
-)
-
-target_include_directories(QGC
-    PUBLIC
+target_include_directories(${CMAKE_PROJECT_NAME}
+    PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
         Generic
 )

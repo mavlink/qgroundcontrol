@@ -1,6 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core QmlIntegration)
-
-target_sources(QGC
+target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         SubtitleWriter.cc
         SubtitleWriter.h
@@ -10,10 +8,4 @@ target_sources(QGC
 
 add_subdirectory(VideoReceiver)
 
-target_link_libraries(QGC
-    PUBLIC
-        Qt6::Core
-        Qt6::QmlIntegration
-)
-
-target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

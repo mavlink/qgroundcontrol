@@ -1,5 +1,3 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Qml)
-
 qt_add_library(FirstRunPromptDialogs STATIC)
 
 qt_add_qml_module(FirstRunPromptDialogs
