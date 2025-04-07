@@ -60,7 +60,6 @@ elseif(IOS)
     if(EXISTS "${GSTREAMER_FRAMEWORK_PATH}")
         set(GSTREAMER_INCLUDE_PATH "${GSTREAMER_FRAMEWORK_PATH}/Headers")
     else()
-        include(CPM)
         CPMAddPackage(
             NAME gstreamer
             VERSION ${QGC_GST_TARGET_VERSION}
@@ -71,7 +70,6 @@ elseif(IOS)
     endif()
 elseif(ANDROID)
     set(GSTREAMER_ARCHIVE "gstreamer-1.0-android-universal-${QGC_GST_TARGET_VERSION}.tar.xz")
-    include(CPM)
     CPMAddPackage(
         NAME gstreamer
         VERSION ${QGC_GST_TARGET_VERSION}

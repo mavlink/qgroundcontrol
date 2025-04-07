@@ -1,8 +1,6 @@
 add_subdirectory(FactControls)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Qml)
-
-target_sources(QGC
+target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         Fact.cc
         Fact.h
@@ -18,11 +16,4 @@ target_sources(QGC
         SettingsFact.h
 )
 
-target_link_libraries(QGC
-    PRIVATE
-        Qt6::Qml
-    PUBLIC
-        Qt6::Core
-)
-
-target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

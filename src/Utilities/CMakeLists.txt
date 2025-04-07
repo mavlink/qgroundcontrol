@@ -1,6 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Bluetooth Core Gui Network Positioning Sensors Qml Xml)
-
-target_sources(QGC
+target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         DeviceInfo.cc
         DeviceInfo.h
@@ -29,42 +27,28 @@ target_sources(QGC
 )
 
 if(ANDROID OR IOS)
-    target_sources(QGC PRIVATE MobileScreenMgr.h)
+    target_sources(${CMAKE_PROJECT_NAME} PRIVATE MobileScreenMgr.h)
     if(ANDROID)
-        target_sources(QGC PRIVATE MobileScreenMgr.cc)
+        target_sources(${CMAKE_PROJECT_NAME} PRIVATE MobileScreenMgr.cc)
     elseif(IOS)
-        target_sources(QGC PRIVATE MobileScreenMgr.mm)
+        target_sources(${CMAKE_PROJECT_NAME} PRIVATE MobileScreenMgr.mm)
     endif()
 endif()
 
-target_include_directories(QGC
-    PUBLIC
+target_include_directories(${CMAKE_PROJECT_NAME}
+    PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
         FileSystem
-    PRIVATE
         KML
         Shape
 )
 
-target_link_libraries(QGC
-    PRIVATE
-        Qt6::Qml
-    PUBLIC
-        Qt6::Core
-        Qt6::Gui
-        Qt6::Network
-        Qt6::Positioning
-        Qt6::Sensors
-        Qt6::Xml
-)
-
 if(QGC_ENABLE_BLUETOOTH)
-    target_link_libraries(QGC PRIVATE Qt6::Bluetooth)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Bluetooth)
 endif()
 
 #===========================================================================#
 
-include(CPM)
 CPMAddPackage(
     NAME Shapelib
     VERSION 1.6.1
@@ -77,9 +61,9 @@ CPMAddPackage(
 
 if(Shapelib_ADDED)
     if(TARGET shp)
-        target_link_libraries(QGC PRIVATE shp)
+        target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE shp)
     elseif(TARGET shapelib::shp)
-        target_link_libraries(QGC PRIVATE shapelib::shp)
+        target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE shapelib::shp)
     endif()
 endif()
 

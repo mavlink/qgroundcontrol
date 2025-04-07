@@ -1,6 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Concurrent Core Gui Location Positioning Qml QmlIntegration Quick Widgets)
-
-target_sources(QGC
+target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         AppMessages.cc
         AppMessages.h
@@ -61,19 +59,7 @@ target_sources(QGC
         ToolStripActionList.h
 )
 
-target_link_libraries(QGC
-    PRIVATE
-        Qt6::Concurrent
-        Qt6::Location
-    PUBLIC
-        Qt6::Core
-        Qt6::Gui
-        Qt6::Positioning
-        Qt6::QmlIntegration
-        Qt6::Quick
-)
-
-target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # file(GLOB_RECURSE QML_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.qml)
 # qt_add_qml_module(QmlControls

@@ -1,13 +1,3 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Location Network Positioning Qml Sql)
-
-target_sources(QGC
-    PRIVATE
-        QMLControl/QGCMapEngineManager.cc
-        QMLControl/QGCMapEngineManager.h
-)
-
-target_include_directories(QGC PUBLIC QMLControl)
-
 qt_add_plugin(QGCLocation
     STATIC
     CLASS_NAME QGeoServiceProviderFactoryQGC
@@ -26,6 +16,8 @@ qt_add_plugin(QGCLocation
     Providers/MapboxMapProvider.h
     Providers/MapProvider.cpp
     Providers/MapProvider.h
+    QMLControl/QGCMapEngineManager.cc
+    QMLControl/QGCMapEngineManager.h
     QGCCachedTileSet.cpp
     QGCCachedTileSet.h
     QGCCacheTile.h
@@ -65,13 +57,21 @@ target_link_libraries(QGCLocation
         Qt6::Location
         Qt6::LocationPrivate
         Qt6::Network
-        QGC
 )
 
 target_include_directories(QGCLocation
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/..
+        ${CMAKE_CURRENT_SOURCE_DIR}/../FactSystem
+        ${CMAKE_CURRENT_SOURCE_DIR}/../QmlControls
+        ${CMAKE_CURRENT_SOURCE_DIR}/../Terrain
+        ${CMAKE_CURRENT_SOURCE_DIR}/../Terrain/Providers
+        ${CMAKE_CURRENT_SOURCE_DIR}/../Settings
+        ${CMAKE_CURRENT_SOURCE_DIR}/../Utilities
+        ${CMAKE_CURRENT_SOURCE_DIR}/../Utilities/FileSystem
         Providers
+        QMLControl
 )
 
 set_source_files_properties(QMLControl/OfflineMapEditor.qml PROPERTIES QT_RESOURCE_ALIAS OfflineMapEditor.qml)

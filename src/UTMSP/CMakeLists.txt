@@ -1,23 +1,17 @@
-find_package(Qt6 REQUIRED COMPONENTS Core)
-
 set(UTMSP_RESOURCES)
 
 if(QGC_UTM_ADAPTER)
     message(STATUS "UTMSP is Initialized")
 
-    # include(CPM)
     # CPMFindPackage(
     #     NAME nlohmann_json
     #     VERSION 3.11.3
     #     GITHUB_REPOSITORY nlohmann/json
     # )
 
-    find_package(Qt6 REQUIRED COMPONENTS Network Positioning Qml)
-    find_package(Threads REQUIRED)
-
     # qt_add_resources(UTMSP_RESOURCES utmsp.qrc)
 
-    target_sources(QGC
+    target_sources(${CMAKE_PROJECT_NAME}
         PRIVATE
             UTMSPAircraft.cpp
             UTMSPAircraft.h
@@ -45,24 +39,20 @@ if(QGC_UTM_ADAPTER)
             # ${UTMSP_RESOURCES}
     )
 
-    target_link_libraries(QGC
+    find_package(Threads REQUIRED)
+    target_link_libraries(${CMAKE_PROJECT_NAME}
         PRIVATE
-            Threads::Threads
-            Qt6::Network
-        PUBLIC
             # nlohmann_json
-            Qt6::Core
-            Qt6::Positioning
+            Threads::Threads
     )
 
-    target_include_directories(QGC
+    target_include_directories(${CMAKE_PROJECT_NAME}
         PRIVATE
-            services
-        PUBLIC
             ${CMAKE_CURRENT_SOURCE_DIR}
+            services
     )
 
-    target_compile_definitions(QGC PUBLIC QGC_UTM_ADAPTER)
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_UTM_ADAPTER)
 
     # qt_add_qml_module(QGC
     #     URI QGroundControl.UTMSP
@@ -108,9 +98,9 @@ else()
     message(STATUS "UTMSP: Dummy is Initialized")
 
     # qt_add_resources(UTMSP_RESOURCES dummy/utmsp_dummy.qrc)
-    # target_sources(UTMSP PRIVATE ${UTMSP_RESOURCES})
+    # target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${UTMSP_RESOURCES})
 
-    # qt_add_qml_module(UTMSP
+    # qt_add_qml_module(QGC
     #     URI QGroundControl.UTMSP
     #     VERSION 1.0
     #     QML_FILES
