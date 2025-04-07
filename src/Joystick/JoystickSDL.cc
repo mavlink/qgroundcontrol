@@ -208,12 +208,22 @@ void JoystickSDL::_loadGameControllerMappings()
 
     QTextStream stream(&file);
     while (!stream.atEnd()) {
-        auto line = stream.readLine();
+        const QString line = stream.readLine();
         if (line.startsWith('#') || line.isEmpty()) {
             continue;
         }
         if (SDL_GameControllerAddMapping(line.toStdString().c_str()) == -1) {
             qCWarning(JoystickSDLLog) << "Couldn't add GameController mapping:" << SDL_GetError();
+        }
+    }
+
+    if (qEnvironmentVariableIsSet("SDL_GAMECONTROLLERCONFIG")) {
+        const QString mappingsStr = qEnvironmentVariable("SDL_GAMECONTROLLERCONFIG");
+        const QStringList mappingList = mappingsStr.split("\n", Qt::SkipEmptyParts);
+        for (const QString &mapping : mappingList) {
+            if (SDL_GameControllerAddMapping(qPrintable(mapping)) == -1) {
+                qCWarning(JoystickSDLLog) << "Couldn't add GameController mapping:" << mapping << "Error:" << SDL_GetError();
+            }
         }
     }
 }
