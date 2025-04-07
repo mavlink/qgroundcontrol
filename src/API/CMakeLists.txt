@@ -1,6 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml QmlIntegration)
-
-target_sources(QGC
+target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         QGCCorePlugin.cc
         QGCCorePlugin.h
@@ -10,17 +8,4 @@ target_sources(QGC
         QmlComponentInfo.h
 )
 
-target_link_libraries(QGC
-    PRIVATE
-        Qt6::Qml
-    PUBLIC
-        Qt6::Core
-        Qt6::Gui
-        Qt6::QmlIntegration
-)
-
-target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-
-if(QGC_CUSTOM_BUILD)
-    target_link_libraries(QGC PRIVATE CustomPlugin)
-endif()
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

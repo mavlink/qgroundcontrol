@@ -1,6 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core)
-
-target_sources(QGC
+target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         EventHandler.cc
         EventHandler.h
@@ -9,18 +7,12 @@ target_sources(QGC
         logging.cpp
 )
 
-target_link_libraries(QGC
-    PUBLIC
-        Qt6::Core
-)
-
-target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 #===========================================================================#
 
 message(STATUS "Building libevents")
 
-include(CPM)
 CPMAddPackage(
     NAME libevents
     GITHUB_REPOSITORY mavlink/libevents
@@ -29,6 +21,6 @@ CPMAddPackage(
 )
 
 if(TARGET libevents)
-    target_link_libraries(QGC PUBLIC libevents)
-    target_include_directories(QGC PUBLIC ${libevents_SOURCE_DIR}/libs/cpp)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE libevents)
+    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${libevents_SOURCE_DIR}/libs/cpp)
 endif()

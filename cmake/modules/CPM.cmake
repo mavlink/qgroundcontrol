@@ -42,7 +42,11 @@ if(NOT COMMAND cpm_message)
   endfunction()
 endif()
 
-set(CURRENT_CPM_VERSION 0.40.5)
+if(DEFINED EXTRACTED_CPM_VERSION)
+  set(CURRENT_CPM_VERSION "${EXTRACTED_CPM_VERSION}${CPM_DEVELOPMENT}")
+else()
+  set(CURRENT_CPM_VERSION 0.40.8)
+endif()
 
 get_filename_component(CPM_CURRENT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}" REALPATH)
 if(CPM_DIRECTORY)
@@ -277,10 +281,10 @@ function(cpm_create_module_file Name)
       # https://cmake.org/cmake/help/latest/module/FetchContent.html#fetchcontent-find-package-integration-examples
       string(TOLOWER ${Name} NameLower)
       file(WRITE ${CMAKE_FIND_PACKAGE_REDIRECTS_DIR}/${NameLower}-config.cmake
-           "include(\"${CMAKE_CURRENT_LIST_DIR}/${NameLower}-extra.cmake\" OPTIONAL)\n"
-           "include(\"${CMAKE_CURRENT_LIST_DIR}/${Name}Extra.cmake\" OPTIONAL)\n"
+           "include(\"\${CMAKE_CURRENT_LIST_DIR}/${NameLower}-extra.cmake\" OPTIONAL)\n"
+           "include(\"\${CMAKE_CURRENT_LIST_DIR}/${Name}Extra.cmake\" OPTIONAL)\n"
       )
-      file(WRITE ${CMAKE_FIND_PACKAGE_REDIRECTS_DIR}/${NameLower}-version.cmake
+      file(WRITE ${CMAKE_FIND_PACKAGE_REDIRECTS_DIR}/${NameLower}-config-version.cmake
            "set(PACKAGE_VERSION_COMPATIBLE TRUE)\n" "set(PACKAGE_VERSION_EXACT TRUE)\n"
       )
     else()
@@ -525,16 +529,16 @@ function(cpm_add_patches)
     # Convert to absolute path for use with patch file command.
     get_filename_component(PATCH_FILE "${PATCH_FILE}" ABSOLUTE)
 
-    # The first patch entry must be preceded by "PATCH_COMMAND" while the following items are
-    # preceded by "&&".
+    # The first patch entry must be preceded by "PATCH_COMMAND". Subsequent
+    # commands are preceeded by "COMMAND".
     if(first_item)
       set(first_item False)
       list(APPEND temp_list "PATCH_COMMAND")
     else()
-      list(APPEND temp_list "&&")
+      list(APPEND temp_list "COMMAND")
     endif()
     # Add the patch command to the list
-    list(APPEND temp_list "${PATCH_EXECUTABLE}" "-p1" "<" "${PATCH_FILE}")
+    list(APPEND temp_list "${PATCH_EXECUTABLE}" "-p1" "-i" "${PATCH_FILE}")
   endforeach()
 
   # Move temp out into parent scope.
@@ -863,7 +867,9 @@ function(CPMAddPackage)
     endif()
   endif()
 
-  cpm_create_module_file(${CPM_ARGS_NAME} "CPMAddPackage(\"${ARGN}\")")
+  if(NOT "${DOWNLOAD_ONLY}")
+    cpm_create_module_file(${CPM_ARGS_NAME} "CPMAddPackage(\"${ARGN}\")")
+  endif()
 
   if(CPM_PACKAGE_LOCK_ENABLED)
     if((CPM_ARGS_VERSION AND NOT CPM_ARGS_SOURCE_DIR) OR CPM_INCLUDE_ALL_IN_PACKAGE_LOCK)

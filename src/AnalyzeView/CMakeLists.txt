@@ -1,6 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Charts Gui Qml QmlIntegration)
-
-target_sources(QGC
+target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         ExifParser.cc
         ExifParser.h
@@ -30,17 +28,7 @@ target_sources(QGC
         ULogParser.h
 )
 
-target_link_libraries(QGC
-    PRIVATE
-        Qt6::Charts
-        Qt6::Gui
-        Qt6::Qml
-    PUBLIC
-        Qt6::Core
-        Qt6::QmlIntegration
-)
-
-target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # qt_add_qml_module(QGC
 #     URI QGroundControl.AnalyzeView
@@ -83,7 +71,6 @@ target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 #===========================================================================#
 
-include(CPM)
 CPMAddPackage(
     NAME ulog_cpp
     GITHUB_REPOSITORY PX4/ulog_cpp
@@ -91,7 +78,7 @@ CPMAddPackage(
 )
 
 if(TARGET ulog_cpp::ulog_cpp)
-    target_link_libraries(QGC PRIVATE ulog_cpp::ulog_cpp)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ulog_cpp::ulog_cpp)
 endif()
 
 #===========================================================================#
@@ -162,13 +149,19 @@ CPMAddPackage(
         "EXIV2_BUILD_FUZZ_TESTS OFF"
         "EXIV2_BUILD_DOC OFF"
         "BUILD_WITH_CCACHE OFF"
-        "BUILD_SHARED_LIBS OFF"
 )
 
 if(TARGET Exiv2::exiv2lib)
     if(_EXIV2_ENABLE_XMP AND TARGET exiv2-xmp)
         target_link_libraries(exiv2-xmp PRIVATE EXPAT::EXPAT)
+        if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+            target_compile_options(exiv2-xmp PRIVATE -Wno-unused-command-line-argument -Wno-unused-but-set-variable -Wno-format)
+        endif()
     endif()
-    target_link_libraries(QGC PRIVATE Exiv2::exiv2lib)
-    target_include_directories(QGC PRIVATE ${CMAKE_BINARY_DIR})
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Exiv2::exiv2lib)
+    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_BINARY_DIR})
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        target_compile_options(exiv2lib PRIVATE -Wno-unused-command-line-argument -Wno-unused-variable)
+        target_compile_options(exiv2lib_int PRIVATE -Wno-unused-command-line-argument -Wno-unused-parameter)
+    endif()
 endif()

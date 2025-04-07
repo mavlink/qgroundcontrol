@@ -1,6 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Qml QmlIntegration)
-
-target_sources(QGC
+target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         Joystick.cc
         Joystick.h
@@ -8,38 +6,27 @@ target_sources(QGC
         JoystickManager.h
 )
 
-target_link_libraries(QGC
-    PRIVATE
-        Qt6::Qml
-    PUBLIC
-        Qt6::Core
-        Qt6::QmlIntegration
-)
-
-target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(ANDROID)
-    target_sources(QGC
+    target_sources(${CMAKE_PROJECT_NAME}
         PRIVATE
             JoystickAndroid.cc
             JoystickAndroid.h
     )
-
-    target_link_libraries(QGC PRIVATE Qt6::CorePrivate)
     return()
 endif()
 
-target_sources(QGC
+target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         JoystickSDL.cc
         JoystickSDL.h
 )
 
-target_compile_definitions(QGC PRIVATE QGC_SDL_JOYSTICK SDL_MAIN_HANDLED)
+target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_SDL_JOYSTICK SDL_MAIN_HANDLED)
 
 #===========================================================================#
 
-include(CPM)
 CPMAddPackage(
     NAME sdl_gamecontrollerdb
     GITHUB_REPOSITORY mdqinc/SDL_GameControllerDB
@@ -48,7 +35,7 @@ CPMAddPackage(
 
 set_source_files_properties(${sdl_gamecontrollerdb_SOURCE_DIR}/gamecontrollerdb.txt PROPERTIES QT_RESOURCE_ALIAS gamecontrollerdb.txt)
 
-qt_add_resources(QGC "gamecontrollerdb.txt"
+qt_add_resources(${CMAKE_PROJECT_NAME} "gamecontrollerdb.txt"
     PREFIX "/db/mapping/joystick"
     FILES ${sdl_gamecontrollerdb_SOURCE_DIR}/gamecontrollerdb.txt
 )
@@ -106,7 +93,7 @@ CPMAddPackage(
 )
 
 if(TARGET SDL2::SDL2-static)
-    target_link_libraries(QGC PRIVATE SDL2::SDL2-static)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE SDL2::SDL2-static)
 elseif(TARGET SDL2::SDL2)
-    target_link_libraries(QGC PRIVATE SDL2::SDL2)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE SDL2::SDL2)
 endif()

@@ -1,6 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Positioning Qml Xml)
-
-target_sources(QGC
+target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         BlankPlanCreator.cc
         BlankPlanCreator.h
@@ -77,17 +75,7 @@ target_sources(QGC
         VTOLLandingComplexItem.h
 )
 
-target_link_libraries(QGC
-    PRIVATE
-        Qt6::Qml
-    PUBLIC
-        Qt6::Core
-        Qt6::Gui
-        Qt6::Positioning
-        Qt6::Xml
-)
-
-target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # qt_add_qml_module(QGC
 #     URI QGroundControl.MissionManager

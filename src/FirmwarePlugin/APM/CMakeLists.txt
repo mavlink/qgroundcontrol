@@ -1,7 +1,5 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Network)
-
 if(NOT QGC_DISABLE_APM_PLUGIN_FACTORY)
-    target_sources(QGC
+    target_sources(${CMAKE_PROJECT_NAME}
         PRIVATE
             APMFirmwarePluginFactory.cc
             APMFirmwarePluginFactory.h
@@ -12,7 +10,7 @@ if(NOT QGC_DISABLE_APM_PLUGIN)
     # set(APM_RESOURCES)
     # qt_add_resources(APM_RESOURCES APMResources.qrc)
 
-    target_sources(QGC
+    target_sources(${CMAKE_PROJECT_NAME}
         PRIVATE
             APMFirmwarePlugin.cc
             APMFirmwarePlugin.h
@@ -30,15 +28,8 @@ if(NOT QGC_DISABLE_APM_PLUGIN)
     )
 endif()
 
-target_link_libraries(QGC
-    PUBLIC
-        Qt6::Core
-        Qt6::Network
-)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-
-# include(CPM)
 # CPMAddPackage(
 #     NAME ArduPilotParams
 #     GITHUB_REPOSITORY ArduPilot/ParameterRepository

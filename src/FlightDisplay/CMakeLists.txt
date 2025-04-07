@@ -1,5 +1,3 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Qml)
-
 qt_add_library(FlightDisplay STATIC)
 
 file(GLOB QML_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.qml)

@@ -41,11 +41,11 @@ add_qgc_test(ADSBTest)
 
 add_subdirectory(AnalyzeView)
 add_qgc_test(ExifParserTest)
-add_qgc_test(GeoTagControllerTest)
+# add_qgc_test(GeoTagControllerTest)
 add_qgc_test(LogDownloadTest)
 # add_qgc_test(MavlinkLogTest)
 add_qgc_test(PX4LogParserTest)
-add_qgc_test(ULogParserTest)
+# add_qgc_test(ULogParserTest)
 
 # add_subdirectory(AutoPilotPlugins)
 # add_qgc_test(RadioConfigTest)

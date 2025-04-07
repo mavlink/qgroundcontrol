@@ -1,24 +1,13 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick)
-
-target_sources(QGC
+target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         JoystickConfigController.cc
         JoystickConfigController.h
 )
 
-target_link_libraries(QGC
-    PRIVATE
-        Qt6::Qml
-    PUBLIC
-        Qt6::Core
-        Qt6::Gui
-        Qt6::Quick
-)
-
-target_include_directories(QGC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(NOT QGC_NO_SERIAL_LINK)
-    target_sources(QGC
+    target_sources(${CMAKE_PROJECT_NAME}
         PRIVATE
             Bootloader.cc
             Bootloader.h
