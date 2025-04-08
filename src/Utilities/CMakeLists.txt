@@ -1,5 +1,7 @@
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
+        AppMessages.cc
+        AppMessages.h
         DeviceInfo.cc
         DeviceInfo.h
         JsonHelper.cc

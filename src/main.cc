@@ -168,6 +168,10 @@ int main(int argc, char *argv[])
     }
 
 #ifdef Q_OS_WIN
+    if (!qEnvironmentVariableIsSet("QT_WIN_DEBUG_CONSOLE")) {
+        qputenv("QT_WIN_DEBUG_CONSOLE", "attach"); // new
+    }
+
     if (quietWindowsAsserts) {
         _CrtSetReportHook(WindowsCrtReportHook);
     }
