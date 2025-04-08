@@ -34,7 +34,7 @@ Item {
 
                 LabelledLabel { 
                     label:      qsTr("Server name:")
-                    labelText:  QGroundControl.settingsManager.appSettings.forwardMavlinkAPMSupportHostName.value
+                    labelText:  QGroundControl.settingsManager.mavlinkSettings.forwardMavlinkAPMSupportHostName.value
                 }
             }
         }

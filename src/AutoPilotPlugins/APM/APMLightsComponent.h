@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 #pragma once
 
 #include "VehicleComponent.h"
@@ -15,22 +14,20 @@
 class APMLightsComponent : public VehicleComponent
 {
     Q_OBJECT
-    
+
 public:
-    APMLightsComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
-    
-    // Virtuals from VehicleComponent
-    QStringList setupCompleteChangedTriggerList(void) const final;
-    
-    // Virtuals from VehicleComponent
-    QString name(void) const final;
-    QString description(void) const final;
-    QString iconResource(void) const final;
-    bool requiresSetup(void) const final;
-    bool setupComplete(void) const final;
-    QUrl setupSource(void) const final;
-    QUrl summaryQmlSource(void) const final;
-    
+    explicit APMLightsComponent(Vehicle *vehicle, AutoPilotPlugin *autopilot, QObject *parent = nullptr);
+
+    QStringList setupCompleteChangedTriggerList() const final { return QStringList(); }
+
+    QString name() const final { return _name; }
+    QString description() const final { return tr("Lights setup is used to adjust light output channels."); }
+    QString iconResource() const final { return QStringLiteral("/qmlimages/LightsComponentIcon.png"); }
+    bool requiresSetup() const final { return false; }
+    bool setupComplete() const final { return true; }
+    QUrl setupSource() const final { return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMLightsComponent.qml")); }
+    QUrl summaryQmlSource() const final { return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMLightsComponentSummary.qml")); }
+
 private:
-    const QString   _name;
+    const QString _name = tr("Lights");
 };

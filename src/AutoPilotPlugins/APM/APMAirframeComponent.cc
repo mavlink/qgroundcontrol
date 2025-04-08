@@ -11,12 +11,10 @@
 #include "ParameterManager.h"
 #include "Vehicle.h"
 
-APMAirframeComponent::APMAirframeComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
-    : VehicleComponent      (vehicle, autopilot, AutoPilotPlugin::UnknownVehicleComponent, parent)
-    , _requiresFrameSetup   (false)
-    , _name                 (tr("Frame"))
+APMAirframeComponent::APMAirframeComponent(Vehicle *vehicle, AutoPilotPlugin *autopilot, QObject *parent)
+    : VehicleComponent(vehicle, autopilot, AutoPilotPlugin::UnknownVehicleComponent, parent)
 {
-    ParameterManager* paramMgr = vehicle->parameterManager();
+    ParameterManager *const paramMgr = vehicle->parameterManager();
 
     if (paramMgr->parameterExists(ParameterManager::defaultComponentId, _frameClassParam)) {
         _frameClassFact = paramMgr->getParameter(ParameterManager::defaultComponentId, _frameClassParam);
@@ -28,36 +26,7 @@ APMAirframeComponent::APMAirframeComponent(Vehicle* vehicle, AutoPilotPlugin* au
     }
 }
 
-QString APMAirframeComponent::name(void) const
-{
-    return _name;
-}
-
-QString APMAirframeComponent::description(void) const
-{
-    return tr("Frame Setup is used to select the airframe which matches your vehicle.");
-}
-
-QString APMAirframeComponent::iconResource(void) const
-{
-    return QStringLiteral("/qmlimages/AirframeComponentIcon.png");
-}
-
-bool APMAirframeComponent::requiresSetup(void) const
-{
-    return _requiresFrameSetup;
-}
-
-bool APMAirframeComponent::setupComplete(void) const
-{
-    if (_requiresFrameSetup) {
-        return _frameClassFact->rawValue().toInt() != 0;
-    } else {
-        return true;
-    }
-}
-
-QStringList APMAirframeComponent::setupCompleteChangedTriggerList(void) const
+QStringList APMAirframeComponent::setupCompleteChangedTriggerList() const
 {
     QStringList list;
 
@@ -68,20 +37,7 @@ QStringList APMAirframeComponent::setupCompleteChangedTriggerList(void) const
     return list;
 }
 
-QUrl APMAirframeComponent::setupSource(void) const
+bool APMAirframeComponent::setupComplete() const
 {
-    if (_requiresFrameSetup) {
-        return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMAirframeComponent.qml"));
-    } else {
-        return QUrl();
-    }
-}
-
-QUrl APMAirframeComponent::summaryQmlSource(void) const
-{
-    if (_requiresFrameSetup) {
-        return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMAirframeComponentSummary.qml"));
-    } else {
-        return QUrl();
-    }
+    return (_requiresFrameSetup ? (_frameClassFact->rawValue().toInt() != 0) : true);
 }

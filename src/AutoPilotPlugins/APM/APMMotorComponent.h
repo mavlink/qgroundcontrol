@@ -7,24 +7,20 @@
  *
  ****************************************************************************/
 
-
 #pragma once
 
 #include "MotorComponent.h"
-
-class AutoPilotPlugin;
 
 class APMMotorComponent : public MotorComponent
 {
     Q_OBJECT
 
 public:
-    APMMotorComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
+    explicit APMMotorComponent(Vehicle *vehicle, AutoPilotPlugin *autopilot, QObject *parent = nullptr);
 
-    // VehicleComponent overrides
-    QUrl setupSource            (void) const override;
-    bool allowSetupWhileArmed   (void) const override { return true; }
+    QUrl setupSource() const final;
+    bool allowSetupWhileArmed() const final { return true; }
 
 private:
-    const QString   _name;
+    const QString _name = tr("Motors");
 };
