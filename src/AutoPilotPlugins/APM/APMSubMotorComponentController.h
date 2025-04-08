@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 #pragma once
 
 #include "FactPanelController.h"
@@ -16,18 +15,20 @@
 class APMSubMotorComponentController : public FactPanelController
 {
     Q_OBJECT
+    Q_PROPERTY(QString motorDetectionMessages READ motorDetectionMessages NOTIFY motorDetectionMessagesChanged)
 
 public:
-    APMSubMotorComponentController(void);
-    Q_PROPERTY(QString motorDetectionMessages READ motorDetectionMessages NOTIFY motorDetectionMessagesChanged);
-    QString motorDetectionMessages() const {return _motorDetectionMessages;};
+    explicit APMSubMotorComponentController(QObject *parent = nullptr);
+
+    QString motorDetectionMessages() const { return _motorDetectionMessages; };
 
 signals:
     void motorDetectionMessagesChanged();
 
 private slots:
-    void handleNewMessages(int uasid, int componentid, int severity, QString text);
+    void _handleNewMessages(int sysid, int componentid, int severity, const QString &text, const QString &description);
 
 private:
     QString _motorDetectionMessages;
 };
+
