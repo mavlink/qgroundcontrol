@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 #pragma once
 
 #include "VehicleComponent.h"
@@ -17,29 +16,34 @@ class Fact;
 class APMRadioComponent : public VehicleComponent
 {
     Q_OBJECT
-    
+
 public:
-    APMRadioComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
-    
-    // Virtuals from VehicleComponent
-    QStringList setupCompleteChangedTriggerList(void) const final;
-    
-    // Virtuals from VehicleComponent
-    QString name(void) const final;
-    QString description(void) const final;
-    QString iconResource(void) const final;
-    bool requiresSetup(void) const final;
-    bool setupComplete(void) const final;
-    QUrl setupSource(void) const final;
-    QUrl summaryQmlSource(void) const final;
+    explicit APMRadioComponent(Vehicle *vehicle, AutoPilotPlugin *autopilot, QObject *parent = nullptr);
+
+    QStringList setupCompleteChangedTriggerList() const final { return QStringList(); }
+
+    QString name() const final { return _name; }
+    QString description() const final { return tr("The Radio Component is used to setup which channels on your RC Transmitter you will use for each vehicle control such as Roll, Pitch, Yaw and Throttle. "
+                                                  "It also allows you to assign switches and dials to the various flight modes. "
+                                                  "Prior to flight you must also calibrate the extents for all of your channels."); }
+    QString iconResource() const final { return QStringLiteral("/qmlimages/RadioComponentIcon.png"); }
+    bool requiresSetup() const final { return true; }
+    bool setupComplete() const final;
+    QUrl setupSource() const final { return QUrl::fromUserInput(QStringLiteral("qrc:/qml/RadioComponent.qml")); }
+    QUrl summaryQmlSource() const final { return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMRadioComponentSummary.qml")); }
 
 private slots:
-    void _triggerChanged(void);
-    
-private:
-    void _connectSetupTriggers(void);
+    void _triggerChanged();
 
-    const QString   _name;
-    QStringList     _mapParams;
-    QList<Fact*>    _triggerFacts;
+private:
+    void _connectSetupTriggers();
+
+    const QString _name = tr("Radio");
+    const QStringList _mapParams = {
+        QStringLiteral("RCMAP_ROLL"),
+        QStringLiteral("RCMAP_PITCH"),
+        QStringLiteral("RCMAP_YAW"),
+        QStringLiteral("RCMAP_THROTTLE")
+    };
+    QList<Fact*> _triggerFacts;
 };

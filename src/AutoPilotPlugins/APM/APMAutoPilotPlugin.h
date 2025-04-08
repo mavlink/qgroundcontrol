@@ -7,9 +7,9 @@
  *
  ****************************************************************************/
 
-
 #pragma once
 
+#include <QtCore/QLoggingCategory>
 #include "AutoPilotPlugin.h"
 
 class APMAirframeComponent;
@@ -29,42 +29,44 @@ class APMRemoteSupportComponent;
 class APMFollowComponent;
 class Vehicle;
 
-/// This is the APM specific implementation of the AutoPilot class.
+Q_DECLARE_LOGGING_CATEGORY(APMAutoPilotPluginLog)
+
+/// This is the AutoPilotPlugin implementation for the MAV_AUTOPILOT_ARDUPILOT type.
 class APMAutoPilotPlugin : public AutoPilotPlugin
 {
     Q_OBJECT
 
 public:
-    APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent);
+    explicit APMAutoPilotPlugin(Vehicle *vehicle, QObject *parent = nullptr);
     ~APMAutoPilotPlugin();
 
-    // Overrides from AutoPilotPlugin
-    const QVariantList& vehicleComponents(void) override;
-    QString prerequisiteSetup(VehicleComponent* component) const override;
+    const QVariantList &vehicleComponents() override;
+    QString prerequisiteSetup(VehicleComponent *component) const override;
 
 protected:
-    bool                        _incorrectParameterVersion; ///< true: parameter version incorrect, setup not allowed
-    APMAirframeComponent*       _airframeComponent;
-    APMCameraComponent*         _cameraComponent;
-    APMLightsComponent*         _lightsComponent;
-    APMSubFrameComponent*       _subFrameComponent;
-    APMFlightModesComponent*    _flightModesComponent;
-    APMPowerComponent*          _powerComponent;
-    APMMotorComponent*          _motorComponent;
-    APMRadioComponent*          _radioComponent;
-    APMSafetyComponent*         _safetyComponent;
-    APMSensorsComponent*        _sensorsComponent;
-    APMTuningComponent*         _tuningComponent;
-    ESP8266Component*           _esp8266Component;
-    APMHeliComponent*           _heliComponent;
-    APMRemoteSupportComponent*  _apmRemoteSupportComponent;
+    bool _incorrectParameterVersion = false; ///< true: parameter version incorrect, setup not allowed
+    APMAirframeComponent *_airframeComponent = nullptr;
+    APMCameraComponent *_cameraComponent = nullptr;
+    APMLightsComponent *_lightsComponent = nullptr;
+    APMSubFrameComponent *_subFrameComponent = nullptr;
+    APMFlightModesComponent *_flightModesComponent = nullptr;
+    APMPowerComponent *_powerComponent = nullptr;
+    APMMotorComponent *_motorComponent = nullptr;
+    APMRadioComponent *_radioComponent = nullptr;
+    APMSafetyComponent *_safetyComponent = nullptr;
+    APMSensorsComponent *_sensorsComponent = nullptr;
+    APMTuningComponent *_tuningComponent = nullptr;
+    ESP8266Component *_esp8266Component = nullptr;
+    APMHeliComponent *_heliComponent = nullptr;
+    APMRemoteSupportComponent *_apmRemoteSupportComponent = nullptr;
     APMFollowComponent *_followComponent = nullptr;
 
-#if !defined(QGC_NO_SERIAL_LINK) && !defined(Q_OS_ANDROID)
+#ifndef QGC_NO_SERIAL_LINK
 private slots:
-    void _checkForBadCubeBlack(void);
+    /// Executed when the Vehicle is parameter ready. It checks for the service bulletin against Cube Blacks.
+    void _checkForBadCubeBlack(bool parametersReady);
 #endif
 
 private:
-    QVariantList                _components;
+    QVariantList _components;
 };

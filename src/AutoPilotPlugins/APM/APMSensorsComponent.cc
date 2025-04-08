@@ -7,91 +7,55 @@
  *
  ****************************************************************************/
 
-
 #include "APMSensorsComponent.h"
 #include "ParameterManager.h"
 #include "Vehicle.h"
 
-// These two list must be kept in sync
-
-APMSensorsComponent::APMSensorsComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
+APMSensorsComponent::APMSensorsComponent(Vehicle *vehicle, AutoPilotPlugin *autopilot, QObject *parent)
     : VehicleComponent(vehicle, autopilot, AutoPilotPlugin::KnownSensorsVehicleComponent, parent)
-    , _name(tr("Sensors"))
 {
 
 }
 
-QString APMSensorsComponent::name(void) const
+QStringList APMSensorsComponent::setupCompleteChangedTriggerList() const
 {
-    return _name;
-}
-
-QString APMSensorsComponent::description(void) const
-{
-    return tr("Sensors Setup is used to calibrate the sensors within your vehicle.");
-}
-
-QString APMSensorsComponent::iconResource(void) const
-{
-    return "/qmlimages/SensorsComponentIcon.png";
-}
-
-bool APMSensorsComponent::requiresSetup(void) const
-{
-    return true;
-}
-
-bool APMSensorsComponent::setupComplete(void) const
-{
-    return !compassSetupNeeded() && !accelSetupNeeded();
-}
-
-QStringList APMSensorsComponent::setupCompleteChangedTriggerList(void) const
-{
-    QStringList triggers;
-    
-    // Compass triggers
-    triggers << QStringLiteral("COMPASS_DEV_ID") << QStringLiteral("COMPASS_DEV_ID2") << QStringLiteral("COMPASS_DEV_ID3")
-             << QStringLiteral("COMPASS_USE") << QStringLiteral("COMPASS_USE2") << QStringLiteral("COMPASS_USE3")
-             << QStringLiteral("COMPASS_OFS_X") << QStringLiteral("COMPASS_OFS_Y") << QStringLiteral("COMPASS_OFS_Z")
-             << QStringLiteral("COMPASS_OFS2_X") << QStringLiteral("COMPASS_OFS2_Y") << QStringLiteral("COMPASS_OFS2_Z")
-             << QStringLiteral("COMPASS_OFS3_X") << QStringLiteral("COMPASS_OFS3_Y") << QStringLiteral("COMPASS_OFS3_Z");
-
-    // Accelerometer triggers
-    triggers << QStringLiteral("INS_ACCOFFS_X") << QStringLiteral("INS_ACCOFFS_Y") << QStringLiteral("INS_ACCOFFS_Z");
+    static const QStringList triggers = {
+        QStringLiteral("COMPASS_DEV_ID"), QStringLiteral("COMPASS_DEV_ID2"), QStringLiteral("COMPASS_DEV_ID3"),
+        QStringLiteral("COMPASS_USE"), QStringLiteral("COMPASS_USE2"), QStringLiteral("COMPASS_USE3"),
+        QStringLiteral("COMPASS_OFS_X"), QStringLiteral("COMPASS_OFS_Y"), QStringLiteral("COMPASS_OFS_Z"),
+        QStringLiteral("COMPASS_OFS2_X"), QStringLiteral("COMPASS_OFS2_Y"), QStringLiteral("COMPASS_OFS2_Z"),
+        QStringLiteral("COMPASS_OFS3_X"), QStringLiteral("COMPASS_OFS3_Y"), QStringLiteral("COMPASS_OFS3_Z"),
+        QStringLiteral("INS_ACCOFFS_X"), QStringLiteral("INS_ACCOFFS_Y"), QStringLiteral("INS_ACCOFFS_Z")
+    };
 
     return triggers;
 }
 
-QUrl APMSensorsComponent::setupSource(void) const
+bool APMSensorsComponent::compassSetupNeeded() const
 {
-    return QUrl::fromUserInput("qrc:/qml/APMSensorsComponent.qml");
-}
+    static const QStringList rgDevicesIds = {
+        QStringLiteral("COMPASS_DEV_ID"),
+        QStringLiteral("COMPASS_DEV_ID2"),
+        QStringLiteral("COMPASS_DEV_ID3")
+    };
 
-QUrl APMSensorsComponent::summaryQmlSource(void) const
-{
-    return QUrl::fromUserInput("qrc:/qml/APMSensorsComponentSummary.qml");
-}
+    static const QStringList rgCompassUse = {
+        QStringLiteral("COMPASS_USE"),
+        QStringLiteral("COMPASS_USE2"),
+        QStringLiteral("COMPASS_USE3")
+    };
 
-bool APMSensorsComponent::compassSetupNeeded(void) const
-{
-    const size_t cCompass = 3;
-    const size_t cOffset = 3;
-    QStringList rgDevicesIds;
-    QStringList rgCompassUse;
-    QStringList rgOffsets[cCompass];
+    static const QList<QStringList> rgOffsets = {
+        { QStringLiteral("COMPASS_OFS_X"), QStringLiteral("COMPASS_OFS_Y"), QStringLiteral("COMPASS_OFS_Z") },
+        { QStringLiteral("COMPASS_OFS2_X"), QStringLiteral("COMPASS_OFS2_Y"), QStringLiteral("COMPASS_OFS2_Z") },
+        { QStringLiteral("COMPASS_OFS3_X"), QStringLiteral("COMPASS_OFS3_Y"), QStringLiteral("COMPASS_OFS3_Z") }
+    };
 
-    rgDevicesIds << QStringLiteral("COMPASS_DEV_ID") << QStringLiteral("COMPASS_DEV_ID2") << QStringLiteral("COMPASS_DEV_ID3");
-    rgCompassUse << QStringLiteral("COMPASS_USE") << QStringLiteral("COMPASS_USE2") << QStringLiteral("COMPASS_USE3");
-    rgOffsets[0] << QStringLiteral("COMPASS_OFS_X") << QStringLiteral("COMPASS_OFS_Y") << QStringLiteral("COMPASS_OFS_Z");
-    rgOffsets[1] << QStringLiteral("COMPASS_OFS2_X") << QStringLiteral("COMPASS_OFS2_Y") << QStringLiteral("COMPASS_OFS2_Z");
-    rgOffsets[2] << QStringLiteral("COMPASS_OFS3_X") << QStringLiteral("COMPASS_OFS3_Y") << QStringLiteral("COMPASS_OFS3_Z");
-
-    for (size_t i=0; i<cCompass; i++) {
-        if (_vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, rgDevicesIds[i])->rawValue().toInt() != 0 &&
-            _vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, rgCompassUse[i])->rawValue().toInt() != 0) {
-            for (size_t j=0; j<cOffset; j++) {
-                if (_vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, rgOffsets[i][j])->rawValue().toFloat() == 0.0f) {
+    for (qsizetype i = 0; i < rgDevicesIds.length(); i++) {
+        if ((_vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, rgDevicesIds[i])->rawValue().toInt() != 0) &&
+            (_vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, rgCompassUse[i])->rawValue().toInt() != 0)) {
+            for (const QStringList &offsets : rgOffsets) {
+                if (_vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, offsets[i])->rawValue().toFloat() == 0.0f) {
                     return true;
                 }
             }
@@ -101,20 +65,22 @@ bool APMSensorsComponent::compassSetupNeeded(void) const
     return false;
 }
 
-bool APMSensorsComponent::accelSetupNeeded(void) const
+bool APMSensorsComponent::accelSetupNeeded() const
 {
-    QStringList rgOffsets;
-
     // The best we can do is test the first accel which will always be there. We don't have enough information to know
     // whether any of the other accels are available.
-    rgOffsets << QStringLiteral("INS_ACCOFFS_X") << QStringLiteral("INS_ACCOFFS_Y") << QStringLiteral("INS_ACCOFFS_Z");
+    static const QStringList rgOffsets = {
+        QStringLiteral("INS_ACCOFFS_X"),
+        QStringLiteral("INS_ACCOFFS_Y"),
+        QStringLiteral("INS_ACCOFFS_Z")
+    };
 
     int zeroCount = 0;
-    for (int i=0; i<rgOffsets.count(); i++) {
-        if (_vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, rgOffsets[i])->rawValue().toFloat() == 0.0f) {
+    for (const QString &offset: rgOffsets) {
+        if (_vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, offset)->rawValue().toFloat() == 0.0f) {
             zeroCount++;
         }
     }
 
-    return zeroCount == rgOffsets.count();
+    return (zeroCount == rgOffsets.count());
 }

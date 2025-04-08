@@ -277,6 +277,11 @@ bool QGCSerialPortInfo::isBootloader() const
     return ((boardType == BoardTypePixhawk) && description().contains(QStringLiteral("BL")));
 }
 
+bool QGCSerialPortInfo::isBlackCube() const
+{
+    return description().contains(QStringLiteral("CubeBlack"));
+}
+
 bool QGCSerialPortInfo::isSystemPort(const QSerialPortInfo &port)
 {
 #ifdef Q_OS_MACOS

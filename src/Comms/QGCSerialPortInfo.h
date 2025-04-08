@@ -48,6 +48,9 @@ public:
     /// @return true: Board is currently in bootloader
     bool isBootloader() const;
 
+    /// @return true: Board is BlackCube
+    bool isBlackCube() const;
+
     /// Known operating system peripherals that are NEVER a peripheral that we should connect to.
     ///     @return true: Port is a system port and not an autopilot
     static bool isSystemPort(const QSerialPortInfo &port);

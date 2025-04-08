@@ -16,8 +16,7 @@ class APMFollowComponent : public VehicleComponent
     Q_OBJECT
 
 public:
-    APMFollowComponent(Vehicle *vehicle, AutoPilotPlugin *autopilot, QObject *parent = nullptr);
-    ~APMFollowComponent();
+    explicit APMFollowComponent(Vehicle *vehicle, AutoPilotPlugin *autopilot, QObject *parent = nullptr);
 
     QString name() const final { return _name; }
     QString description() const final { return QStringLiteral("Follow Me Setup is used to configure support for the vehicle following the ground station location."); }
@@ -32,5 +31,5 @@ public:
     QStringList setupCompleteChangedTriggerList() const final { return QStringList(); }
 
 private:
-    const QString _name;
+    const QString _name = tr("Follow Me");
 };
