@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 #pragma once
 
 #include "VehicleComponent.h"
@@ -15,25 +14,22 @@
 class APMSafetyComponent : public VehicleComponent
 {
     Q_OBJECT
-    
+
 public:
-    APMSafetyComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
-    
-    // Virtuals from VehicleComponent
-    QStringList setupCompleteChangedTriggerList(void) const override;
-    
-    // Virtuals from VehicleComponent
-    QString name                (void) const override;
-    QString description         (void) const override;
-    QString iconResource        (void) const override;
-    bool requiresSetup          (void) const override;
-    bool setupComplete          (void) const override;
-    QUrl setupSource            (void) const override;
-    QUrl summaryQmlSource       (void) const override;
-    bool allowSetupWhileArmed   (void) const override { return true; }
-    bool allowSetupWhileFlying  (void) const override { return true; }
+    explicit APMSafetyComponent(Vehicle *vehicle, AutoPilotPlugin *autopilot, QObject *parent = nullptr);
+
+    QStringList setupCompleteChangedTriggerList() const final { return QStringList(); }
+
+    QString name() const final { return _name; }
+    QString description() const final;
+    QString iconResource() const final { return QStringLiteral("/qmlimages/SafetyComponentIcon.png"); }
+    bool requiresSetup() const final { return false; }
+    bool setupComplete() const final { return true; } // FIXME: What aboout invalid settings?
+    QUrl setupSource() const final;
+    QUrl summaryQmlSource() const final;
+    bool allowSetupWhileArmed() const final { return true; }
+    bool allowSetupWhileFlying() const final { return true; }
 
 private:
-    const QString   _name;
-    QVariantList    _summaryItems;
+    const QString _name = tr("Safety");
 };

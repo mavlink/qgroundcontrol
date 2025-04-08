@@ -7,37 +7,33 @@
  *
  ****************************************************************************/
 
-
 #pragma once
 
 #include "VehicleComponent.h"
 
-class AutoPilotPlugin;
 class Fact;
 
 class APMAirframeComponent : public VehicleComponent
 {
     Q_OBJECT
-    
-public:
-    APMAirframeComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
-    
-    // Virtuals from VehicleComponent
-    QStringList setupCompleteChangedTriggerList(void) const override;
 
-    // Virtuals from VehicleComponent
-    QString name(void) const override;
-    QString description(void) const override;
-    QString iconResource(void) const override;
-    bool requiresSetup(void) const override;
-    bool setupComplete(void) const override;
-    QUrl setupSource(void) const override;
-    QUrl summaryQmlSource(void) const override;
+public:
+    explicit APMAirframeComponent(Vehicle *vehicle, AutoPilotPlugin *autopilot, QObject *parent = nullptr);
+
+    QStringList setupCompleteChangedTriggerList() const final;
+
+    QString name() const final { return _name; }
+    QString description() const final { return tr("Frame Setup is used to select the airframe which matches your vehicle."); }
+    QString iconResource() const final { return QStringLiteral("/qmlimages/AirframeComponentIcon.png"); }
+    bool requiresSetup() const final { return _requiresFrameSetup; }
+    bool setupComplete() const final;
+    QUrl setupSource() const final { return (_requiresFrameSetup ? QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMAirframeComponent.qml")) : QUrl()); }
+    QUrl summaryQmlSource() const final { return (_requiresFrameSetup ? QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMAirframeComponentSummary.qml")) : QUrl()); }
 
 private:
-    bool            _requiresFrameSetup; ///< true: FRAME parameter must be set
-    const QString   _name;
-    Fact*           _frameClassFact;
+    bool _requiresFrameSetup = false; ///< true: FRAME parameter must be set
+    const QString _name = tr("Frame");
+    Fact *_frameClassFact = nullptr;
 
-    static constexpr const char* _frameClassParam = "FRAME_CLASS";
+    static constexpr const char *_frameClassParam = "FRAME_CLASS";
 };
