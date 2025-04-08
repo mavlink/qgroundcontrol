@@ -95,13 +95,16 @@ void QGCLoggingCategoryRegister::setFilterRulesFromSettings(const QString &comma
     }
 
     if (videoAllLogSet) {
-        filterRules += filterRuleFormat.arg("VideoManagerLog");
-        filterRules += filterRuleFormat.arg("VideoReceiverLog");
-        filterRules += filterRuleFormat.arg("GStreamerLog");
+        filterRules += filterRuleFormat.arg("qgc.videomanager.videomanager");
+        filterRules += filterRuleFormat.arg("qgc.videomanager.subtitlewriter");
+        filterRules += filterRuleFormat.arg("qgc.videomanager.videoreceiver.gstreamer");
+        filterRules += filterRuleFormat.arg("qgc.videomanager.videoreceiver.gstreamer.gstvideoreceiver");
+        filterRules += filterRuleFormat.arg("qgc.videomanager.videoreceiver.qtmultimedia.qtmultimediareceiver");
+        filterRules += filterRuleFormat.arg("qgc.videomanager.videoreceiver.qtmultimedia.uvcreceiver");
     }
 
     // Logging from GStreamer library itself controlled by gstreamer debug levels is always turned on
-    filterRules += filterRuleFormat.arg("GStreamerAPILog");
+    filterRules += filterRuleFormat.arg("qgc.videomanager.videoreceiver.gstreamer.api");
 
     filterRules += QStringLiteral("qt.qml.connections=false");
 

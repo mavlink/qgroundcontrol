@@ -27,15 +27,15 @@ public:
     explicit UVCReceiver(QObject *parent = nullptr);
     ~UVCReceiver();
 
-    bool enabled();
-    QCameraDevice findCameraDevice(const QString &cameraId);
+    static QCameraDevice findCameraDevice(const QString &cameraId);
+    static bool enabled();
+    static void checkPermission();
+    static QString getSourceId();
 
 public slots:
     Q_INVOKABLE void adjustAspectRatio();
 
 private:
-    void _checkPermission();
-
     QCamera *_camera = nullptr;
     QImageCapture *_imageCapture = nullptr;
 };

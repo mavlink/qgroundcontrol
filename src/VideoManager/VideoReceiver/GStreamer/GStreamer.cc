@@ -8,11 +8,11 @@
  ****************************************************************************/
 
 #include "GStreamer.h"
-#include "GstVideoReceiver.h"
-#include "SettingsManager.h"
 #include "AppSettings.h"
-#include "VideoSettings.h"
+#include "GstVideoReceiver.h"
 #include "QGCLoggingCategory.h"
+#include "SettingsManager.h"
+#include "VideoSettings.h"
 #ifdef Q_OS_IOS
 #include "gst_ios_init.h"
 #endif
@@ -180,12 +180,12 @@ void initialize()
 
     const QStringList args = QCoreApplication::arguments();
     int argc = args.size();
-    QList<QByteArray> argList;
+    QByteArrayList argList;
     argList.reserve(argc);
 
     char **argv = new char*[argc];
     for (int i = 0; i < argc; i++) {
-        (void) argList.append(args[i].toUtf8());
+        argList.append(args[i].toUtf8());
         argv[i] = argList[i].data();
     }
 

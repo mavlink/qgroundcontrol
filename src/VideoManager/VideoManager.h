@@ -13,7 +13,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QRunnable>
 #include <QtCore/QSize>
-#include <QtQmlIntegration/QtQmlIntegration>
+// #include <QtQmlIntegration/QtQmlIntegration>
 
 Q_DECLARE_LOGGING_CATEGORY(VideoManagerLog)
 
@@ -57,8 +57,6 @@ public:
     explicit VideoManager(QObject *parent = nullptr);
     ~VideoManager();
 
-    /// Gets the singleton instance of VideoManager.
-    ///     @return The singleton instance.
     static VideoManager *instance();
     static void registerQmlTypes();
 
@@ -73,15 +71,12 @@ public:
     bool autoStreamConfigured() const;
     bool decoding() const { return _decoding; }
     bool fullScreen() const { return _fullScreen; }
-    bool gstreamerEnabled() const;
     bool hasThermal() const;
     bool hasVideo() const;
     bool isStreamSource() const;
     bool isUvc() const;
-    bool qtmultimediaEnabled() const;
     bool recording() const { return _recording; }
     bool streaming() const { return _streaming; }
-    bool uvcEnabled() const;
     double aspectRatio() const;
     double hfov() const;
     double thermalAspectRatio() const;
@@ -90,6 +85,9 @@ public:
     QString imageFile() const { return _imageFile; }
     QString uvcVideoSourceID() const { return _uvcVideoSourceID; }
     void setfullScreen(bool on);
+    static bool gstreamerEnabled();
+    static bool qtmultimediaEnabled();
+    static bool uvcEnabled();
 
 signals:
     void aspectRatioChanged();
