@@ -77,13 +77,13 @@ elseif(ANDROID)
     )
     set(GSTREAMER_PREFIX_ANDROID "${gstreamer_SOURCE_DIR}")
 
-    if(${CMAKE_ANDROID_ARCH_ABI} STREQUAL armeabi-v7a)
+    if(${CMAKE_ANDROID_ARCH_ABI} STREQUAL "armeabi-v7a")
         set(GSTREAMER_PREFIX "${GSTREAMER_PREFIX_ANDROID}/armv7")
-    elseif(${CMAKE_ANDROID_ARCH_ABI} STREQUAL arm64-v8a)
+    elseif(${CMAKE_ANDROID_ARCH_ABI} STREQUAL "arm64-v8a")
         set(GSTREAMER_PREFIX "${GSTREAMER_PREFIX_ANDROID}/arm64")
-    elseif(${CMAKE_ANDROID_ARCH_ABI} STREQUAL x86)
+    elseif(${CMAKE_ANDROID_ARCH_ABI} STREQUAL "x86")
         set(GSTREAMER_PREFIX "${GSTREAMER_PREFIX_ANDROID}/x86")
-    elseif(${CMAKE_ANDROID_ARCH_ABI} STREQUAL x86_64)
+    elseif(${CMAKE_ANDROID_ARCH_ABI} STREQUAL "x86_64")
         set(GSTREAMER_PREFIX "${GSTREAMER_PREFIX_ANDROID}/x86_64")
     endif()
     set(GSTREAMER_LIB_PATH "${GSTREAMER_PREFIX}/lib")
@@ -126,7 +126,7 @@ find_dependency(GObject)
 pkg_check_modules(GStreamer gstreamer-1.0)
 cmake_print_variables(GStreamer_VERSION)
 
-# Use Latest Revisions for each minor version: 1.16.3, 1.18.6, 1.20.7, 1.22.12, 1.24.12
+# Use Latest Revisions for each minor version: 1.16.3, 1.18.6, 1.20.7, 1.22.12, 1.24.12, 1.26.0
 string(REPLACE "." ";" GST_VERSION_LIST ${GStreamer_VERSION})
 list(GET GST_VERSION_LIST 0 GST_VERSION_MAJOR)
 list(GET GST_VERSION_LIST 1 GST_VERSION_MINOR)
@@ -142,6 +142,8 @@ elseif(GST_VERSION_MINOR EQUAL 22)
     set(GST_VERSION_PATCH 12)
 elseif(GST_VERSION_MINOR EQUAL 24)
     set(GST_VERSION_PATCH 12)
+elseif(GST_VERSION_MINOR EQUAL 26)
+    set(GST_VERSION_PATCH 0)
 endif()
 
 set(GST_PLUGINS_VERSION ${GST_VERSION_MAJOR}.${GST_VERSION_MINOR}.${GST_VERSION_PATCH})
@@ -165,7 +167,7 @@ function(find_gstreamer_component component pkgconfig_name)
 
     if(TARGET ${target})
         set(GStreamer_${component}_FOUND TRUE PARENT_SCOPE)
-        # TODO; define_property
+        # TODO: define_property
         get_target_property(Component_VERSION GStreamer::${component} VERSION)
         set(GStreamer_${component}_VERSION ${Component_VERSION} PARENT_SCOPE)
     endif()
@@ -217,6 +219,21 @@ find_package_handle_standard_args(GStreamer
 
 if(GStreamer_FOUND AND NOT TARGET GStreamer::GStreamer)
     add_library(GStreamer::GStreamer INTERFACE IMPORTED)
+    set_target_properties(GStreamer::GStreamer PROPERTIES VERSION ${GStreamer_VERSION})
+    if(APPLE)
+        find_library(GSTREAMER_FRAMEWORK GStreamer PATHS ${GSTREAMER_FRAMEWORK_PATH})
+        if(GSTREAMER_FRAMEWORK)
+            if(MACOS)
+                target_link_libraries(GStreamer::GStreamer INTERFACE ${GSTREAMER_FRAMEWORK})
+                target_compile_definitions(GStreamer::GStreamer INTERFACE QGC_GST_MACOS_FRAMEWORK)
+            elseif(IOS)
+                target_link_libraries(GStreamer::GStreamer INTERFACE "-F ~/Library/Developer/GStreamer/iPhone.sdk -framework GStreamer -framework AVFoundation -framework CoreMedia -framework CoreVideo -framework VideoToolbox -liconv -lresolv")
+            endif()
+            target_include_directories(GStreamer::GStreamer INTERFACE "${GSTREAMER_INCLUDE_PATH}")
+            return()
+        endif()
+    endif()
+
     target_link_libraries(GStreamer::GStreamer
         INTERFACE
             GStreamer::Core
@@ -224,33 +241,26 @@ if(GStreamer_FOUND AND NOT TARGET GStreamer::GStreamer)
             GStreamer::Video
             GStreamer::Gl
     )
-    set_target_properties(GStreamer::GStreamer PROPERTIES VERSION ${GStreamer_VERSION})
-endif()
 
-################################################################################
+    foreach(component IN LISTS GStreamer_FIND_COMPONENTS)
+        if(GStreamer_${component}_FOUND)
+            target_link_libraries(GStreamer::GStreamer INTERFACE GStreamer::${component})
+        endif()
+    endforeach()
 
-if(ANDROID)
-    target_link_options(GStreamer::GStreamer INTERFACE "-Wl,-Bsymbolic")
-    if(${ANDROID_ABI} STREQUAL "armeabi-v7a" OR ${ANDROID_ABI} STREQUAL "x86")
-        target_link_options(GStreamer::GStreamer INTERFACE "-Wl,-z,notext")
+    target_link_directories(GStreamer::GStreamer INTERFACE ${GSTREAMER_LIB_PATH})
+
+    if(QGC_GST_STATIC_BUILD)
+        target_compile_definitions(GStreamer::GStreamer INTERFACE QGC_GST_STATIC_BUILD)
+    endif()
+
+    if(ANDROID)
+        target_link_options(GStreamer::GStreamer INTERFACE "-Wl,-Bsymbolic")
+        if(${CMAKE_ANDROID_ARCH_ABI} STREQUAL "armeabi-v7a" OR ${CMAKE_ANDROID_ARCH_ABI} STREQUAL "x86")
+            target_link_options(GStreamer::GStreamer INTERFACE "-Wl,-z,notext")
+        endif()
     endif()
 endif()
-
-if(QGC_GST_STATIC_BUILD)
-    target_compile_definitions(GStreamer::GStreamer INTERFACE QGC_GST_STATIC_BUILD)
-endif()
-
-if(EXISTS ${GSTREAMER_FRAMEWORK_PATH})
-    if(MACOS)
-        target_link_libraries(GStreamer::GStreamer INTERFACE "-F /Library/Frameworks -framework GStreamer")
-    elseif(IOS)
-        target_link_libraries(GStreamer::GStreamer INTERFACE "-F ~/Library/Developer/GStreamer/iPhone.sdk -framework GStreamer -framework AVFoundation -framework CoreMedia -framework CoreVideo -framework VideoToolbox -liconv -lresolv")
-    endif()
-    target_include_directories(GStreamer::GStreamer INTERFACE "${GSTREAMER_INCLUDE_PATH}/Headers")
-    return()
-endif()
-
-target_link_directories(GStreamer::GStreamer INTERFACE ${GSTREAMER_LIB_PATH})
 
 ################################################################################
 

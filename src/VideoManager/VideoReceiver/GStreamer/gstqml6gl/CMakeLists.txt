@@ -1,18 +1,6 @@
-qt_add_library(gstqml6gl STATIC)
+find_package(GStreamer REQUIRED COMPONENTS OPTIONAL_COMPONENTS GlEgl GlPrototypes GlWayland GlX11)
 
-if(MACOS)
-    # Using FindGStreamer.cmake is currently bypassed on MACOS since it doesn't work
-    # So for now we hack in a simple hardwired setup which does work
-    find_library(GSTREAMER_FRAMEWORK GStreamer)
-    set(GST_PLUGINS_VERSION 1.24.12)
-    set(GSTREAMER_FRAMEWORK_PATH "/Library/Frameworks/GStreamer.framework")
-    target_link_libraries(gstqml6gl PUBLIC "$<LINK_LIBRARY:FRAMEWORK,${GSTREAMER_FRAMEWORK_PATH}>")
-    target_include_directories(gstqml6gl PUBLIC "${GSTREAMER_FRAMEWORK_PATH}/Headers")
-else()
-    set(GST_COMPONENTS GlEgl GlPrototypes GlWayland GlX11)
-    find_package(GStreamer REQUIRED COMPONENTS OPTIONAL_COMPONENTS ${GST_COMPONENTS})
-    target_link_libraries(gstqml6gl PUBLIC GStreamer::GStreamer)
-endif()
+qt_add_library(gstqml6gl STATIC)
 
 target_link_libraries(gstqml6gl
     PRIVATE
@@ -21,13 +9,9 @@ target_link_libraries(gstqml6gl
         Qt6::GuiPrivate
         Qt6::Qml
         Qt6::Quick
+    PUBLIC
+        GStreamer::GStreamer
 )
-
-foreach(component IN LISTS GST_COMPONENTS)
-    if(GStreamer_${component}_FOUND)
-        target_link_libraries(gstqml6gl PUBLIC GStreamer::${component})
-    endif()
-endforeach()
 
 ################################################################################
 
@@ -71,7 +55,6 @@ elseif(MACOS)
         PATTERN "*/pkgconfig" EXCLUDE
         PATTERN "*/share" EXCLUDE
     )
-    target_compile_definitions(gstqml6gl INTERFACE QGC_GST_MACOS_FRAMEWORK)
 endif()
 
 ################################################################################
@@ -173,45 +156,43 @@ target_compile_definitions(gstqml6gl
 
 if(EXISTS "${QGC_GST_QT6_PLUGIN_PATH}/resources.qrc")
     find_package(Qt6 REQUIRED COMPONENTS ShaderTools)
-    if(Qt6ShaderTools_FOUND)
-        set(SHADERS
-            ${QGC_GST_QT6_PLUGIN_PATH}/vertex.vert
-            ${QGC_GST_QT6_PLUGIN_PATH}/YUV_TRIPLANAR.frag
-            ${QGC_GST_QT6_PLUGIN_PATH}/RGBA.frag
-        )
-        set(OUTPUTS
-            vertex.vert.qsb
-            YUV_TRIPLANAR.frag.qsb
-            RGBA.frag.qsb
-        )
-        if(EXISTS "${QGC_GST_QT6_PLUGIN_PATH}/YUV_BIPLANAR.frag")
-            LIST(APPEND SHADERS ${QGC_GST_QT6_PLUGIN_PATH}/YUV_BIPLANAR.frag)
-            LIST(APPEND OUTPUTS YUV_BIPLANAR.frag.qsb)
-        endif()
-        qt6_add_shaders(gstqml6gl "gstqml6gl_shaders"
-            PREFIX "/org/freedesktop/gstreamer/qml6"
-            GLSL "100 es,120,330"
-            OUTPUT_TARGETS gstqml6gl_shaders
-            FILES ${SHADERS}
-            OUTPUTS ${OUTPUTS}
-            BATCHABLE
-        )
+    set(SHADERS
+        ${QGC_GST_QT6_PLUGIN_PATH}/vertex.vert
+        ${QGC_GST_QT6_PLUGIN_PATH}/YUV_TRIPLANAR.frag
+        ${QGC_GST_QT6_PLUGIN_PATH}/RGBA.frag
+    )
+    set(OUTPUTS
+        vertex.vert.qsb
+        YUV_TRIPLANAR.frag.qsb
+        RGBA.frag.qsb
+    )
+    if(EXISTS "${QGC_GST_QT6_PLUGIN_PATH}/YUV_BIPLANAR.frag")
+        LIST(APPEND SHADERS ${QGC_GST_QT6_PLUGIN_PATH}/YUV_BIPLANAR.frag)
+        LIST(APPEND OUTPUTS YUV_BIPLANAR.frag.qsb)
+    endif()
+    qt6_add_shaders(gstqml6gl "gstqml6gl_shaders"
+        PREFIX "/org/freedesktop/gstreamer/qml6"
+        GLSL "100 es,120,330"
+        OUTPUT_TARGETS gstqml6gl_shaders
+        FILES ${SHADERS}
+        OUTPUTS ${OUTPUTS}
+        BATCHABLE
+    )
 
-        if(EXISTS "${QGC_GST_QT6_PLUGIN_PATH}/RGBA_gles.frag")
-            file(COPY_FILE "${CMAKE_CURRENT_BINARY_DIR}/.qsb/RGBA.frag.qsb" "${CMAKE_CURRENT_BINARY_DIR}/.qsb/RGBA.frag.qsb.external")
-            qt6_add_shaders(gstqml6gl "gstqml6gl_shaders1"
-                PREFIX "/org/freedesktop/gstreamer/qml6"
-                OUTPUT_TARGETS gstqml6gl_shaders1
-                FILES "${CMAKE_CURRENT_BINARY_DIR}/.qsb/RGBA.frag.qsb.external@glsl,100es,${QGC_GST_QT6_PLUGIN_PATH}/RGBA_gles.frag"
-                OUTPUTS "RGBA.frag.qsb.external"
-            )
-        endif()
+    if(EXISTS "${QGC_GST_QT6_PLUGIN_PATH}/RGBA_gles.frag")
+        file(COPY_FILE "${CMAKE_CURRENT_BINARY_DIR}/.qsb/RGBA.frag.qsb" "${CMAKE_CURRENT_BINARY_DIR}/.qsb/RGBA.frag.qsb.external")
+        qt6_add_shaders(gstqml6gl "gstqml6gl_shaders1"
+            PREFIX "/org/freedesktop/gstreamer/qml6"
+            OUTPUT_TARGETS gstqml6gl_shaders1
+            FILES "${CMAKE_CURRENT_BINARY_DIR}/.qsb/RGBA.frag.qsb.external@glsl,100es,${QGC_GST_QT6_PLUGIN_PATH}/RGBA_gles.frag"
+            OUTPUTS "RGBA.frag.qsb.external"
+        )
     endif()
 endif()
 
 ################################################################################
 
-if(UNIX)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_compile_options(gstqml6gl
         PRIVATE
             -Wno-unused-parameter
