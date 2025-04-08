@@ -17,6 +17,6 @@ class GLVideoItemStub : public QQuickItem
     // QML_NAMED_ELEMENT(GstGLQt6VideoItem)
 
 public:
-    GLVideoItemStub(QQuickItem *parent = nullptr) :
-        QQuickItem(parent) {}
+    explicit GLVideoItemStub(QQuickItem *parent = nullptr)
+        : QQuickItem(parent) {}
 };

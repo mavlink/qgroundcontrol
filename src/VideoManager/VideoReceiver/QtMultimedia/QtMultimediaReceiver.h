@@ -9,9 +9,10 @@
 
 #pragma once
 
-#include <QtCore/QString>
-#include <QtCore/QMetaObject>
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QMetaObject>
+#include <QtCore/QString>
+#include <QtCore/QTimer>
 
 #include "VideoReceiver.h"
 
@@ -22,7 +23,6 @@ class QVideoSink;
 class QMediaCaptureSession;
 class QMediaRecorder;
 class QRhi;
-class QTimer;
 class QQuickItem;
 class QQuickVideoOutput;
 
@@ -48,13 +48,13 @@ public slots:
     void takeScreenshot(const QString &imageFile) override;
 
 protected:
+    QTimer _frameTimer;
     QMediaPlayer *_mediaPlayer = nullptr;
     QVideoSink *_videoSink = nullptr;
     QMediaCaptureSession *_captureSession = nullptr;
     QMediaRecorder *_mediaRecorder = nullptr;
     QMetaObject::Connection _videoSizeUpdater;
     QMetaObject::Connection _videoFrameUpdater;
-    QTimer *_frameTimer = nullptr;
     QRhi *_rhi = nullptr;
     const QIODevice *_streamDevice;
     QQuickVideoOutput *_videoOutput = nullptr;
