@@ -99,7 +99,7 @@ QString UVCReceiver::getSourceId()
         return QString();
     }
 
-    const QString videoSourceID = cameraDevice.description();;
+    const QString videoSourceID = cameraDevice.description();
     qCDebug(UVCReceiverLog) << "Found USB source:" << videoSourceID << "Name:" << videoSource;
     return videoSourceID;
 }
