@@ -62,7 +62,7 @@ public:
     QStringList     factValueNames          (void) const;
     QString         factGroupName           (void) const { return _factGroupName; }
     QString         factName                (void) const { return _factName; }
-    Fact*           fact                    (void) { return _fact; }
+    Fact*           fact                    (void) const { return _fact; }
     QString         text                    (void) const { return _text; }
     bool            showUnits               (void) const { return _showUnits; }
     QString         icon                    (void) const { return _icon; }

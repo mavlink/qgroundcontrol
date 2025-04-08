@@ -7,22 +7,16 @@
  *
  ****************************************************************************/
 
-
-/**
- * @file
- *   @brief QGC Video Subtitle Writer
- *   @author Willian Galvani <williangalvani@gmail.com>
- */
-
 #pragma once
 
-#include <QtCore/QObject>
-#include <QtCore/QTime>
 #include <QtCore/QFile>
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QObject>
+#include <QtCore/QSize>
+#include <QtCore/QTime>
+#include <QtCore/QTimer>
 
 class Fact;
-class QTimer;
 
 Q_DECLARE_LOGGING_CATEGORY(SubtitleWriterLog)
 
@@ -31,22 +25,21 @@ class SubtitleWriter : public QObject
     Q_OBJECT
 
 public:
-    explicit SubtitleWriter(QObject* parent = nullptr);
+    explicit SubtitleWriter(QObject *parent = nullptr);
     ~SubtitleWriter();
 
-    // starts capturing vehicle telemetry.
-    void startCapturingTelemetry(const QString &videoFile);
+    void startCapturingTelemetry(const QString &videoFile, QSize size);
     void stopCapturingTelemetry();
 
 private slots:
-    // Captures a snapshot of telemetry data from vehicle into the subtitles file.
     void _captureTelemetry();
 
 private:
-    QTimer* _timer = nullptr;
-    QList<Fact*> _facts;
-    QTime _lastEndTime;
     QFile _file;
+    QList<Fact*> _facts;
+    QSize _size;
+    QTime _lastEndTime;
+    QTimer _timer;
 
-    static constexpr int _sampleRate = 1; // Sample rate in Hz for getting telemetry data, most players do weird stuff when > 1Hz
+    static constexpr int _kSampleRate = 1; ///< Sample rate in Hz for getting telemetry data, most players do weird stuff when > 1Hz
 };
