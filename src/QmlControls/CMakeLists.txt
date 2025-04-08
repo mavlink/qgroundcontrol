@@ -1,7 +1,5 @@
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
-        AppMessages.cc
-        AppMessages.h
         MavlinkAction.cc
         MavlinkAction.h
         MavlinkActionManager.cc
