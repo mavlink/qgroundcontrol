@@ -167,7 +167,7 @@ void VideoManager::init()
         (void) connect(videoReceiver.receiver, &VideoReceiver::recordingStarted, this, [this, &videoReceiver]() {
             qCDebug(VideoManagerLog) << "Video" << videoReceiver.index << "recording started";
             if (videoReceiver.index == 0) {
-                _subtitleWriter->startCapturingTelemetry(_videoFile);
+                _subtitleWriter->startCapturingTelemetry(_videoFile, videoSize());
             }
         });
 
