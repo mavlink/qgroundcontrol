@@ -12,93 +12,97 @@
 
 #include <QtMath>
 
-VehicleWindFactGroup::VehicleWindFactGroup(QObject* parent)
-    : FactGroup(1000, ":/json/Vehicle/WindFact.json", parent)
-    , _directionFact    (0, _directionFactName,     FactMetaData::valueTypeDouble)
-    , _speedFact        (0, _speedFactName,         FactMetaData::valueTypeDouble)
-    , _verticalSpeedFact(0, _verticalSpeedFactName, FactMetaData::valueTypeDouble)
+VehicleWindFactGroup::VehicleWindFactGroup(QObject *parent)
+    : FactGroup(1000, QStringLiteral(":/json/Vehicle/WindFact.json"), parent)
 {
-    _addFact(&_directionFact,       _directionFactName);
-    _addFact(&_speedFact,           _speedFactName);
-    _addFact(&_verticalSpeedFact,   _verticalSpeedFactName);
+    _addFact(&_directionFact);
+    _addFact(&_speedFact);
+    _addFact(&_verticalSpeedFact);
 
-    // Start out as not available "--.--"
-    _directionFact.setRawValue      (qQNaN());
-    _speedFact.setRawValue          (qQNaN());
-    _verticalSpeedFact.setRawValue  (qQNaN());
+    _directionFact.setRawValue(qQNaN());
+    _speedFact.setRawValue(qQNaN());
+    _verticalSpeedFact.setRawValue(qQNaN());
 }
 
-void VehicleWindFactGroup::handleMessage(Vehicle* /* vehicle */, mavlink_message_t& message)
+void VehicleWindFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)
 {
+    Q_UNUSED(vehicle);
+
     switch (message.msgid) {
     case MAVLINK_MSG_ID_WIND_COV:
         _handleWindCov(message);
         break;
-#if !defined(QGC_NO_ARDUPILOT_DIALECT)
-    case MAVLINK_MSG_ID_WIND:
-        _handleWind(message);
-        break;
-#endif
     case MAVLINK_MSG_ID_HIGH_LATENCY:
         _handleHighLatency(message);
         break;
     case MAVLINK_MSG_ID_HIGH_LATENCY2:
         _handleHighLatency2(message);
         break;
+#ifndef QGC_NO_ARDUPILOT_DIALECT
+    case MAVLINK_MSG_ID_WIND:
+        _handleWind(message);
+        break;
+#endif
     default:
         break;
     }
 }
 
-void VehicleWindFactGroup::_handleHighLatency(mavlink_message_t& message)
+void VehicleWindFactGroup::_handleHighLatency(const mavlink_message_t &message)
 {
-    mavlink_high_latency_t highLatency;
+    mavlink_high_latency_t highLatency{};
     mavlink_msg_high_latency_decode(&message, &highLatency);
-    speed()->setRawValue((double)highLatency.airspeed / 5.0);
+
+    speed()->setRawValue(static_cast<double>(highLatency.airspeed) / 5.0);
+
     _setTelemetryAvailable(true);
 }
 
-void VehicleWindFactGroup::_handleHighLatency2(mavlink_message_t& message)
+void VehicleWindFactGroup::_handleHighLatency2(const mavlink_message_t &message)
 {
-    mavlink_high_latency2_t highLatency2;
+    mavlink_high_latency2_t highLatency2{};
     mavlink_msg_high_latency2_decode(&message, &highLatency2);
-    direction()->setRawValue((double)highLatency2.wind_heading * 2.0);
-    speed()->setRawValue((double)highLatency2.windspeed / 5.0);
+
+    direction()->setRawValue(static_cast<double>(highLatency2.wind_heading) * 2.0);
+    speed()->setRawValue(static_cast<double>(highLatency2.windspeed) / 5.0);
+
     _setTelemetryAvailable(true);
 }
 
-void VehicleWindFactGroup::_handleWindCov(mavlink_message_t& message)
+void VehicleWindFactGroup::_handleWindCov(const mavlink_message_t &message)
 {
-    mavlink_wind_cov_t wind;
+    mavlink_wind_cov_t wind{};
     mavlink_msg_wind_cov_decode(&message, &wind);
 
-    float direction = qRadiansToDegrees(qAtan2(wind.wind_y, wind.wind_x));
-    float speed = qSqrt(qPow(wind.wind_x, 2) + qPow(wind.wind_y, 2));
-
-    if (direction < 0) {
-        direction += 360;
+    float windDirection = qRadiansToDegrees(qAtan2(wind.wind_y, wind.wind_x));
+    if (windDirection < 0) {
+        windDirection += 360;
     }
+    direction()->setRawValue(windDirection);
 
-    this->direction()->setRawValue(direction);
-    this->speed()->setRawValue(speed);
-    verticalSpeed()->setRawValue(0);
+    const float windSpeed = qSqrt(qPow(wind.wind_x, 2) + qPow(wind.wind_y, 2));
+    speed()->setRawValue(windSpeed);
+
+    verticalSpeed()->setRawValue(wind.wind_z);
+
     _setTelemetryAvailable(true);
 }
 
-#if !defined(QGC_NO_ARDUPILOT_DIALECT)
-void VehicleWindFactGroup::_handleWind(mavlink_message_t& message)
+#ifndef QGC_NO_ARDUPILOT_DIALECT
+void VehicleWindFactGroup::_handleWind(const mavlink_message_t &message)
 {
-    mavlink_wind_t wind;
+    mavlink_wind_t wind{};
     mavlink_msg_wind_decode(&message, &wind);
 
     // We don't want negative wind angles
-    float direction = wind.direction;
-    if (direction < 0) {
-        direction += 360;
+    float windDirection = wind.direction;
+    if (windDirection < 0) {
+        windDirection += 360;
     }
-    this->direction()->setRawValue(direction);
+    direction()->setRawValue(windDirection);
     speed()->setRawValue(wind.speed);
     verticalSpeed()->setRawValue(wind.speed_z);
+
     _setTelemetryAvailable(true);
 }
 #endif

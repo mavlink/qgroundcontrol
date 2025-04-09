@@ -14,20 +14,16 @@
 class TerrainFactGroup : public FactGroup
 {
     Q_OBJECT
+    Q_PROPERTY(Fact *blocksPending  READ blocksPending  CONSTANT)
+    Q_PROPERTY(Fact *blocksLoaded   READ blocksLoaded   CONSTANT)
 
 public:
-    TerrainFactGroup(QObject* parent = nullptr);
+    explicit TerrainFactGroup(QObject *parent = nullptr);
 
-    Q_PROPERTY(Fact* blocksPending  READ blocksPending  CONSTANT)
-    Q_PROPERTY(Fact* blocksLoaded   READ blocksLoaded   CONSTANT)
-
-    Fact* blocksPending () { return &_blocksPendingFact; }
-    Fact* blocksLoaded  () { return &_blocksLoadedFact; }
+    Fact *blocksPending() { return &_blocksPendingFact; }
+    Fact *blocksLoaded() { return &_blocksLoadedFact; }
 
 private:
-    const QString _blocksPendingFactName =  QStringLiteral("blocksPending");
-    const QString _blocksLoadedFactName =   QStringLiteral("blocksLoaded");
-
-    Fact _blocksPendingFact;
-    Fact _blocksLoadedFact;
+    Fact _blocksPendingFact = Fact(0, QStringLiteral("blocksPending"), FactMetaData::valueTypeDouble);
+    Fact _blocksLoadedFact = Fact(0, QStringLiteral("blocksLoaded"), FactMetaData::valueTypeDouble);
 };

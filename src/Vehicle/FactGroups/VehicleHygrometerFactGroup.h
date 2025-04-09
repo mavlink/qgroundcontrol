@@ -10,34 +10,28 @@
 #pragma once
 
 #include "FactGroup.h"
-#include "QGCMAVLink.h"
 
 class VehicleHygrometerFactGroup : public FactGroup
 {
     Q_OBJECT
+    Q_PROPERTY(Fact *hygroID    READ hygroID    CONSTANT)
+    Q_PROPERTY(Fact *hygroTemp  READ hygroTemp  CONSTANT)
+    Q_PROPERTY(Fact *hygroHumi  READ hygroHumi  CONSTANT)
 
 public:
-    VehicleHygrometerFactGroup(QObject* parent = nullptr);
+    explicit VehicleHygrometerFactGroup(QObject *parent = nullptr);
 
-    Q_PROPERTY(Fact* hygroID            READ hygroID            CONSTANT)
-    Q_PROPERTY(Fact* hygroTemp          READ hygroTemp          CONSTANT)
-    Q_PROPERTY(Fact* hygroHumi          READ hygroHumi          CONSTANT)
-
-    Fact* hygroID                           () { return &_hygroIDFact; }
-    Fact* hygroTemp                         () { return &_hygroTempFact; }
-    Fact* hygroHumi                         () { return &_hygroHumiFact; }
+    Fact *hygroID() { return &_hygroIDFact; }
+    Fact *hygroTemp() { return &_hygroTempFact; }
+    Fact *hygroHumi() { return &_hygroHumiFact; }
 
     // Overrides from FactGroup
-    virtual void handleMessage(Vehicle* vehicle, mavlink_message_t& message) override;
+    void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) final;
 
 protected:
-    void _handleHygrometerSensor        (mavlink_message_t& message);
+    void _handleHygrometerSensor(const mavlink_message_t &message);
 
-    const QString _hygroHumiFactName =      QStringLiteral("humidity");
-    const QString _hygroTempFactName =    QStringLiteral("temperature");
-    const QString _hygroIDFactName =    QStringLiteral("hygrometerid");
-
-    Fact _hygroTempFact;
-    Fact _hygroHumiFact;
-    Fact _hygroIDFact;
+    Fact _hygroTempFact = Fact(0, QStringLiteral("temperature"), FactMetaData::valueTypeDouble);
+    Fact _hygroHumiFact = Fact(0, QStringLiteral("humidity"), FactMetaData::valueTypeDouble);
+    Fact _hygroIDFact = Fact(0, QStringLiteral("hygrometerid"), FactMetaData::valueTypeUint16);
 };

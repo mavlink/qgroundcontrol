@@ -7,45 +7,26 @@
  *
  ****************************************************************************/
 
-/*=====================================================================
-
- QGroundControl Open Source Ground Control Station
-
- (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
- This file is part of the QGROUNDCONTROL project
-
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
- ======================================================================*/
-
 #pragma once
 
-#include "APMFirmwarePlugin.h"
+#include <QtCore/QLoggingCategory>
+
 #include "FactGroup.h"
+#include "APMFirmwarePlugin.h"
+
+Q_DECLARE_LOGGING_CATEGORY(APMSubmarineFactGroupLog)
 
 class APMSubmarineFactGroup : public FactGroup
 {
     Q_OBJECT
-    Q_PROPERTY(Fact *camTilt             READ camTilt               CONSTANT)
-    Q_PROPERTY(Fact *tetherTurns         READ tetherTurns           CONSTANT)
-    Q_PROPERTY(Fact *lightsLevel1        READ lightsLevel1          CONSTANT)
-    Q_PROPERTY(Fact *lightsLevel2        READ lightsLevel2          CONSTANT)
-    Q_PROPERTY(Fact *pilotGain           READ pilotGain             CONSTANT)
-    Q_PROPERTY(Fact *inputHold           READ inputHold             CONSTANT)
-    Q_PROPERTY(Fact *rangefinderDistance READ rangefinderDistance   CONSTANT)
-    Q_PROPERTY(Fact *rangefinderTarget   READ rangefinderTarget     CONSTANT)
+    Q_PROPERTY(Fact *camTilt                READ camTilt                CONSTANT)
+    Q_PROPERTY(Fact *tetherTurns            READ tetherTurns            CONSTANT)
+    Q_PROPERTY(Fact *lightsLevel1           READ lightsLevel1           CONSTANT)
+    Q_PROPERTY(Fact *lightsLevel2           READ lightsLevel2           CONSTANT)
+    Q_PROPERTY(Fact *pilotGain              READ pilotGain              CONSTANT)
+    Q_PROPERTY(Fact *inputHold              READ inputHold              CONSTANT)
+    Q_PROPERTY(Fact *rangefinderDistance    READ rangefinderDistance    CONSTANT)
+    Q_PROPERTY(Fact *rangefinderTarget      READ rangefinderTarget      CONSTANT)
 
 public:
     explicit APMSubmarineFactGroup(QObject *parent = nullptr);
@@ -61,34 +42,22 @@ public:
     Fact *rangefinderTarget() { return &_rangefinderTargetFact; }
 
 private:
-    Fact _camTiltFact = Fact(0, _camTiltFactName, FactMetaData::valueTypeDouble);
-    Fact _tetherTurnsFact = Fact(0, _tetherTurnsFactName, FactMetaData::valueTypeDouble);
-    Fact _lightsLevel1Fact = Fact(0, _lightsLevel1FactName, FactMetaData::valueTypeDouble);
-    Fact _lightsLevel2Fact = Fact(0, _lightsLevel2FactName, FactMetaData::valueTypeDouble);
-    Fact _pilotGainFact = Fact(0, _pilotGainFactName, FactMetaData::valueTypeDouble);
-    Fact _inputHoldFact = Fact(0, _inputHoldFactName, FactMetaData::valueTypeDouble);
-    Fact _rollPitchToggleFact = Fact(0, _rollPitchToggleFactName, FactMetaData::valueTypeDouble);
-    Fact _rangefinderDistanceFact = Fact(0, _rangefinderDistanceFactName, FactMetaData::valueTypeDouble);
-    Fact _rangefinderTargetFact = Fact(0, _rangefinderTargetFactName, FactMetaData::valueTypeDouble);
-
-    static constexpr const char *_camTiltFactName = "cameraTilt";
-    static constexpr const char *_tetherTurnsFactName = "tetherTurns";
-    static constexpr const char *_lightsLevel1FactName = "lights1";
-    static constexpr const char *_lightsLevel2FactName = "lights2";
-    static constexpr const char *_pilotGainFactName = "pilotGain";
-    static constexpr const char *_inputHoldFactName = "inputHold";
-    static constexpr const char *_rollPitchToggleFactName = "rollPitchToggle";
-    static constexpr const char *_rangefinderDistanceFactName = "rangefinderDistance";
-    static constexpr const char *_rangefinderTargetFactName = "rangefinderTarget";
-
-    static const char *_settingsGroup;
+    Fact _camTiltFact = Fact(0, QStringLiteral("cameraTilt"), FactMetaData::valueTypeDouble);
+    Fact _tetherTurnsFact = Fact(0, QStringLiteral("tetherTurns"), FactMetaData::valueTypeDouble);
+    Fact _lightsLevel1Fact = Fact(0, QStringLiteral("lights1"), FactMetaData::valueTypeDouble);
+    Fact _lightsLevel2Fact = Fact(0, QStringLiteral("lights2"), FactMetaData::valueTypeDouble);
+    Fact _pilotGainFact = Fact(0, QStringLiteral("pilotGain"), FactMetaData::valueTypeDouble);
+    Fact _inputHoldFact = Fact(0, QStringLiteral("inputHold"), FactMetaData::valueTypeDouble);
+    Fact _rollPitchToggleFact = Fact(0, QStringLiteral("rollPitchToggle"), FactMetaData::valueTypeDouble);
+    Fact _rangefinderDistanceFact = Fact(0, QStringLiteral("rangefinderDistance"), FactMetaData::valueTypeDouble);
+    Fact _rangefinderTargetFact = Fact(0, QStringLiteral("rangefinderTarget"), FactMetaData::valueTypeDouble);
 };
 
 /*===========================================================================*/
 
 struct APMSubMode
 {
-    enum Mode : uint32_t{
+    enum Mode : uint32_t {
         STABILIZE         = 0,   // Hold level position
         ACRO              = 1,   // Manual angular rate, throttle
         ALT_HOLD          = 2,   // Depth hold

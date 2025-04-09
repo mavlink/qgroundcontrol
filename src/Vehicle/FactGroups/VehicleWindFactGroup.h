@@ -10,39 +10,33 @@
 #pragma once
 
 #include "FactGroup.h"
-#include "QGCMAVLink.h"
 
 class VehicleWindFactGroup : public FactGroup
 {
     Q_OBJECT
+    Q_PROPERTY(Fact *direction      READ direction      CONSTANT)
+    Q_PROPERTY(Fact *speed          READ speed          CONSTANT)
+    Q_PROPERTY(Fact *verticalSpeed  READ verticalSpeed  CONSTANT)
 
 public:
-    VehicleWindFactGroup(QObject* parent = nullptr);
+    explicit VehicleWindFactGroup(QObject *parent = nullptr);
 
-    Q_PROPERTY(Fact* direction      READ direction      CONSTANT)
-    Q_PROPERTY(Fact* speed          READ speed          CONSTANT)
-    Q_PROPERTY(Fact* verticalSpeed  READ verticalSpeed  CONSTANT)
-
-    Fact* direction     () { return &_directionFact; }
-    Fact* speed         () { return &_speedFact; }
-    Fact* verticalSpeed () { return &_verticalSpeedFact; }
+    Fact *direction() { return &_directionFact; }
+    Fact *speed() { return &_speedFact; }
+    Fact *verticalSpeed() { return &_verticalSpeedFact; }
 
     // Overrides from FactGroup
-    void handleMessage(Vehicle* vehicle, mavlink_message_t& message) override;
+    void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) final;
 
 private:
-    void _handleHighLatency (mavlink_message_t& message);
-    void _handleHighLatency2(mavlink_message_t& message);
-    void _handleWindCov     (mavlink_message_t& message);
-#if !defined(QGC_NO_ARDUPILOT_DIALECT)
-    void _handleWind        (mavlink_message_t& message);
+    void _handleHighLatency(const mavlink_message_t &message);
+    void _handleHighLatency2(const mavlink_message_t &message);
+    void _handleWindCov(const mavlink_message_t &message);
+#ifndef QGC_NO_ARDUPILOT_DIALECT
+    void _handleWind(const mavlink_message_t &message);
 #endif
 
-    const QString _directionFactName =      QStringLiteral("direction");
-    const QString _speedFactName =          QStringLiteral("speed");
-    const QString _verticalSpeedFactName =  QStringLiteral("verticalSpeed");
-
-    Fact        _directionFact;
-    Fact        _speedFact;
-    Fact        _verticalSpeedFact;
+    Fact _directionFact = Fact(0, QStringLiteral("direction"), FactMetaData::valueTypeDouble);
+    Fact _speedFact = Fact(0, QStringLiteral("speed"), FactMetaData::valueTypeDouble);
+    Fact _verticalSpeedFact = Fact(0, QStringLiteral("verticalSpeed"), FactMetaData::valueTypeDouble);
 };

@@ -10,44 +10,35 @@
 #pragma once
 
 #include "FactGroup.h"
-#include "QGCMAVLink.h"
 
 class VehicleLocalPositionFactGroup : public FactGroup
 {
     Q_OBJECT
+    Q_PROPERTY(Fact *x  READ x  CONSTANT)
+    Q_PROPERTY(Fact *y  READ y  CONSTANT)
+    Q_PROPERTY(Fact *z  READ z  CONSTANT)
+    Q_PROPERTY(Fact *vx READ vx CONSTANT)
+    Q_PROPERTY(Fact *vy READ vy CONSTANT)
+    Q_PROPERTY(Fact *vz READ vz CONSTANT)
 
 public:
-    VehicleLocalPositionFactGroup(QObject* parent = nullptr);
+    explicit VehicleLocalPositionFactGroup(QObject *parent = nullptr);
 
-    Q_PROPERTY(Fact* x     READ x    CONSTANT)
-    Q_PROPERTY(Fact* y     READ y    CONSTANT)
-    Q_PROPERTY(Fact* z     READ z    CONSTANT)
-    Q_PROPERTY(Fact* vx    READ vx   CONSTANT)
-    Q_PROPERTY(Fact* vy    READ vy   CONSTANT)
-    Q_PROPERTY(Fact* vz    READ vz   CONSTANT)
-
-    Fact* x    () { return &_xFact; }
-    Fact* y    () { return &_yFact; }
-    Fact* z    () { return &_zFact; }
-    Fact* vx   () { return &_vxFact; }
-    Fact* vy   () { return &_vyFact; }
-    Fact* vz   () { return &_vzFact; }
+    Fact *x() { return &_xFact; }
+    Fact *y() { return &_yFact; }
+    Fact *z() { return &_zFact; }
+    Fact *vx() { return &_vxFact; }
+    Fact *vy() { return &_vyFact; }
+    Fact *vz() { return &_vzFact; }
 
     // Overrides from FactGroup
-    void handleMessage(Vehicle* vehicle, mavlink_message_t& message) override;
+    void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) final;
 
 private:
-    const QString _xFactName =     QStringLiteral("x");
-    const QString _yFactName =     QStringLiteral("y");
-    const QString _zFactName =     QStringLiteral("z");
-    const QString _vxFactName =    QStringLiteral("vx");
-    const QString _vyFactName =    QStringLiteral("vy");
-    const QString _vzFactName =    QStringLiteral("vz");
-
-    Fact _xFact;
-    Fact _yFact;
-    Fact _zFact;
-    Fact _vxFact;
-    Fact _vyFact;
-    Fact _vzFact;
+    Fact _xFact = Fact(0, QStringLiteral("x"), FactMetaData::valueTypeDouble);
+    Fact _yFact = Fact(0, QStringLiteral("y"), FactMetaData::valueTypeDouble);
+    Fact _zFact = Fact(0, QStringLiteral("z"), FactMetaData::valueTypeDouble);
+    Fact _vxFact = Fact(0, QStringLiteral("vx"), FactMetaData::valueTypeDouble);
+    Fact _vyFact = Fact(0, QStringLiteral("vy"), FactMetaData::valueTypeDouble);
+    Fact _vzFact = Fact(0, QStringLiteral("vz"), FactMetaData::valueTypeDouble);
 };
