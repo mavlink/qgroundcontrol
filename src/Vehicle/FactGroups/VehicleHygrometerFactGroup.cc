@@ -10,23 +10,22 @@
 #include "VehicleHygrometerFactGroup.h"
 #include "Vehicle.h"
 
-VehicleHygrometerFactGroup::VehicleHygrometerFactGroup(QObject* parent)
-    : FactGroup(1000, ":/json/Vehicle/HygrometerFact.json", parent)
-    , _hygroTempFact             (0, _hygroTempFactName,         FactMetaData::valueTypeDouble)
-    , _hygroHumiFact             (0, _hygroHumiFactName,         FactMetaData::valueTypeDouble)
-    , _hygroIDFact               (0, _hygroIDFactName,           FactMetaData::valueTypeUint16)
-{   
-    _addFact(&_hygroTempFact,               _hygroTempFactName);
-    _addFact(&_hygroHumiFact,               _hygroHumiFactName);
-    _addFact(&_hygroIDFact,                 _hygroIDFactName);
+VehicleHygrometerFactGroup::VehicleHygrometerFactGroup(QObject *parent)
+    : FactGroup(1000, QStringLiteral(":/json/Vehicle/HygrometerFact.json"), parent)
+{
+    _addFact(&_hygroTempFact);
+    _addFact(&_hygroHumiFact);
+    _addFact(&_hygroIDFact);
 
     _hygroTempFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _hygroHumiFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _hygroIDFact.setRawValue(std::numeric_limits<unsigned int>::quiet_NaN());
 }
 
-void VehicleHygrometerFactGroup::handleMessage(Vehicle* /* vehicle */, mavlink_message_t& message)
+void VehicleHygrometerFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)
 {
+    Q_UNUSED(vehicle);
+
     switch (message.msgid) {
     case MAVLINK_MSG_ID_HYGROMETER_SENSOR:
        _handleHygrometerSensor(message);
@@ -36,12 +35,14 @@ void VehicleHygrometerFactGroup::handleMessage(Vehicle* /* vehicle */, mavlink_m
     }
 }
 
-void VehicleHygrometerFactGroup::_handleHygrometerSensor(mavlink_message_t& message)
+void VehicleHygrometerFactGroup::_handleHygrometerSensor(const mavlink_message_t &message)
 {
-    mavlink_hygrometer_sensor_t hygrometer;
+    mavlink_hygrometer_sensor_t hygrometer{};
     mavlink_msg_hygrometer_sensor_decode(&message, &hygrometer);
 
-    _hygroTempFact.setRawValue(hygrometer.temperature/100.f);
+    _hygroTempFact.setRawValue(hygrometer.temperature / 100.f);
     _hygroHumiFact.setRawValue(hygrometer.humidity);
     _hygroIDFact.setRawValue(hygrometer.id);
+
+    _setTelemetryAvailable(true);
 }

@@ -7,31 +7,94 @@
  *
  ****************************************************************************/
 
-/*=====================================================================
-
- QGroundControl Open Source Ground Control Station
-
- (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
- This file is part of the QGROUNDCONTROL project
-
- QGROUNDCONTROL is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- QGROUNDCONTROL is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
- ======================================================================*/
-
 #include "ArduSubFirmwarePlugin.h"
+#include "QGCLoggingCategory.h"
 #include "Vehicle.h"
+
+QGC_LOGGING_CATEGORY(APMSubmarineFactGroupLog, "qgc.firmwareplugin.apm.ardusubfirmwareplugin")
+
+APMSubmarineFactGroup::APMSubmarineFactGroup(QObject *parent)
+    : FactGroup(300, QStringLiteral(":/json/Vehicle/SubmarineFact.json"), parent)
+{
+    // qCDebug(APMSubmarineFactGroupLog) << Q_FUNC_INFO << this;
+
+    _addFact(&_camTiltFact);
+    _addFact(&_tetherTurnsFact);
+    _addFact(&_lightsLevel1Fact);
+    _addFact(&_lightsLevel2Fact);
+    _addFact(&_pilotGainFact);
+    _addFact(&_inputHoldFact);
+    _addFact(&_rollPitchToggleFact);
+    _addFact(&_rangefinderDistanceFact);
+    _addFact(&_rangefinderTargetFact);
+
+    _camTiltFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+    _tetherTurnsFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+    _lightsLevel1Fact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+    _lightsLevel2Fact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+    _pilotGainFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+    _inputHoldFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+    _rollPitchToggleFact.setRawValue(2); // 2 shows "Unavailable" in older firmwares
+    _rangefinderDistanceFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+    _rangefinderTargetFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+}
+
+APMSubmarineFactGroup::~APMSubmarineFactGroup()
+{
+    // qCDebug(APMSubmarineFactGroupLog) << Q_FUNC_INFO << this;
+}
+
+QString ArduSubFirmwarePlugin::vehicleImageOutline(const Vehicle *vehicle) const
+{
+    return vehicleImageOpaque(vehicle);
+}
+
+void ArduSubFirmwarePlugin::adjustMetaData(MAV_TYPE vehicleType, FactMetaData *metaData)
+{
+    Q_UNUSED(vehicleType);
+
+    if (!metaData) {
+        return;
+    }
+
+    if (_factRenameMap.contains(metaData->name())) {
+        metaData->setShortDescription(QString(_factRenameMap[metaData->name()]));
+    }
+}
+
+QString ArduSubFirmwarePlugin::stabilizedFlightMode() const
+{
+    return _modeEnumToString.value(APMSubMode::STABILIZE, _stabilizeFlightMode);
+}
+
+QString ArduSubFirmwarePlugin::motorDetectionFlightMode() const
+{
+    return _modeEnumToString.value(APMSubMode::MOTORDETECTION, _motorDetectionFlightMode);
+}
+
+void ArduSubFirmwarePlugin::updateAvailableFlightModes(FlightModeList &modeList)
+{
+    for (FirmwareFlightMode &mode: modeList) {
+        mode.fixedWing = false;
+        mode.multiRotor = true;
+    }
+
+    _updateFlightModeList(modeList);
+}
+
+uint32_t ArduSubFirmwarePlugin::_convertToCustomFlightModeEnum(uint32_t val) const
+{
+    switch (val) {
+    case APMCustomMode::AUTO:
+        return APMSubMode::AUTO;
+    case APMCustomMode::GUIDED:
+        return APMSubMode::GUIDED;
+    default:
+        return UINT32_MAX;
+    }
+}
+
+/*===========================================================================*/
 
 bool ArduSubFirmwarePlugin::_remapParamNameIntialized = false;
 FirmwarePlugin::remapParamNameMajorVersionMap_t ArduSubFirmwarePlugin::_remapParamName;
@@ -261,86 +324,4 @@ bool ArduSubFirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle *vehicle, mavli
 QMap<QString, FactGroup*>* ArduSubFirmwarePlugin::factGroups()
 {
     return &_nameToFactGroupMap;
-}
-
-/*===========================================================================*/
-
-APMSubmarineFactGroup::APMSubmarineFactGroup(QObject* parent)
-    : FactGroup(300, ":/json/Vehicle/SubmarineFact.json", parent)
-{
-    _addFact(&_camTiltFact,             _camTiltFactName);
-    _addFact(&_tetherTurnsFact,         _tetherTurnsFactName);
-    _addFact(&_lightsLevel1Fact,        _lightsLevel1FactName);
-    _addFact(&_lightsLevel2Fact,        _lightsLevel2FactName);
-    _addFact(&_pilotGainFact,           _pilotGainFactName);
-    _addFact(&_inputHoldFact,           _inputHoldFactName);
-    _addFact(&_rollPitchToggleFact    , _rollPitchToggleFactName);
-    _addFact(&_rangefinderDistanceFact, _rangefinderDistanceFactName);
-    _addFact(&_rangefinderTargetFact,   _rangefinderTargetFactName);
-
-    // Start out as not available "--.--"
-    _camTiltFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _tetherTurnsFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _lightsLevel1Fact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _lightsLevel2Fact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _pilotGainFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _inputHoldFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _rollPitchToggleFact.setRawValue(2); // 2 shows "Unavailable" in older firmwares
-    _rangefinderDistanceFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _rangefinderTargetFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-}
-
-APMSubmarineFactGroup::~APMSubmarineFactGroup()
-{
-
-}
-
-QString ArduSubFirmwarePlugin::vehicleImageOutline(const Vehicle *vehicle) const
-{
-    return vehicleImageOpaque(vehicle);
-}
-
-void ArduSubFirmwarePlugin::adjustMetaData(MAV_TYPE vehicleType, FactMetaData *metaData)
-{
-    Q_UNUSED(vehicleType);
-
-    if (!metaData) {
-        return;
-    }
-
-    if (_factRenameMap.contains(metaData->name())) {
-        metaData->setShortDescription(QString(_factRenameMap[metaData->name()]));
-    }
-}
-
-QString ArduSubFirmwarePlugin::stabilizedFlightMode() const
-{
-    return _modeEnumToString.value(APMSubMode::STABILIZE, _stabilizeFlightMode);
-}
-
-QString ArduSubFirmwarePlugin::motorDetectionFlightMode() const
-{
-    return _modeEnumToString.value(APMSubMode::MOTORDETECTION, _motorDetectionFlightMode);
-}
-
-void ArduSubFirmwarePlugin::updateAvailableFlightModes(FlightModeList &modeList)
-{
-    for (FirmwareFlightMode &mode: modeList) {
-        mode.fixedWing = false;
-        mode.multiRotor = true;
-    }
-
-    _updateFlightModeList(modeList);
-}
-
-uint32_t ArduSubFirmwarePlugin::_convertToCustomFlightModeEnum(uint32_t val) const
-{
-    switch (val) {
-    case APMCustomMode::AUTO:
-        return APMSubMode::AUTO;
-    case APMCustomMode::GUIDED:
-        return APMSubMode::GUIDED;
-    default:
-        return UINT32_MAX;
-    }
 }
