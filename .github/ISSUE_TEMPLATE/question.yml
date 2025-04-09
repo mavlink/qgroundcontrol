@@ -1,9 +1,6 @@
 name: Question
-about: Ask a question related to QGC source
-title: ''
-labels:
-  - Question
-assignees: []
+description: Ask a question related to QGC source
+labels: ["Question"]
 
 body:
   - type: markdown
