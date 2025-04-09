@@ -1,4 +1,4 @@
-# gillamkid/QGroundControl Ground Control Station
+# gillamkid2/QGroundControl Ground Control Station
 
 [![Releases](https://img.shields.io/github/release/mavlink/QGroundControl.svg)](https://github.com/mavlink/QGroundControl/releases)
 
