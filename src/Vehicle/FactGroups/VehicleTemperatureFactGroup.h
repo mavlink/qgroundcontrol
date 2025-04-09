@@ -10,38 +10,32 @@
 #pragma once
 
 #include "FactGroup.h"
-#include "QGCMAVLink.h"
 
 class VehicleTemperatureFactGroup : public FactGroup
 {
     Q_OBJECT
+    Q_PROPERTY(Fact *temperature1 READ temperature1 CONSTANT)
+    Q_PROPERTY(Fact *temperature2 READ temperature2 CONSTANT)
+    Q_PROPERTY(Fact *temperature3 READ temperature3 CONSTANT)
 
 public:
-    VehicleTemperatureFactGroup(QObject* parent = nullptr);
+    explicit VehicleTemperatureFactGroup(QObject *parent = nullptr);
 
-    Q_PROPERTY(Fact* temperature1       READ temperature1       CONSTANT)
-    Q_PROPERTY(Fact* temperature2       READ temperature2       CONSTANT)
-    Q_PROPERTY(Fact* temperature3       READ temperature3       CONSTANT)
-
-    Fact* temperature1 () { return &_temperature1Fact; }
-    Fact* temperature2 () { return &_temperature2Fact; }
-    Fact* temperature3 () { return &_temperature3Fact; }
+    Fact *temperature1() { return &_temperature1Fact; }
+    Fact *temperature2() { return &_temperature2Fact; }
+    Fact *temperature3() { return &_temperature3Fact; }
 
     // Overrides from FactGroup
-    void handleMessage(Vehicle* vehicle, mavlink_message_t& message) override;
+    void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) final;
 
 private:
-    void _handleScaledPressure  (mavlink_message_t& message);
-    void _handleScaledPressure2 (mavlink_message_t& message);
-    void _handleScaledPressure3 (mavlink_message_t& message);
-    void _handleHighLatency     (mavlink_message_t& message);
-    void _handleHighLatency2    (mavlink_message_t& message);
+    void _handleScaledPressure(const mavlink_message_t &message);
+    void _handleScaledPressure2(const mavlink_message_t &message);
+    void _handleScaledPressure3(const mavlink_message_t &message);
+    void _handleHighLatency(const mavlink_message_t &message);
+    void _handleHighLatency2(const mavlink_message_t &message);
 
-    const QString _temperature1FactName =      QStringLiteral("temperature1");
-    const QString _temperature2FactName =      QStringLiteral("temperature2");
-    const QString _temperature3FactName =      QStringLiteral("temperature3");
-
-    Fact            _temperature1Fact;
-    Fact            _temperature2Fact;
-    Fact            _temperature3Fact;
+    Fact _temperature1Fact = Fact(0, QStringLiteral("temperature1"), FactMetaData::valueTypeDouble);
+    Fact _temperature2Fact = Fact(0, QStringLiteral("temperature2"), FactMetaData::valueTypeDouble);
+    Fact _temperature3Fact = Fact(0, QStringLiteral("temperature3"), FactMetaData::valueTypeDouble);
 };

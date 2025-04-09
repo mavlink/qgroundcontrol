@@ -13,28 +13,19 @@
 QGC_LOGGING_CATEGORY(GPSRTKFactGroupLog, "qgc.gps.gpsrtkfactgroup")
 
 GPSRTKFactGroup::GPSRTKFactGroup(QObject *parent)
-    : FactGroup(1000, ":/json/Vehicle/GPSRTKFact.json", parent)
-    , _connected(new Fact(0, _connectedFactName, FactMetaData::valueTypeBool, this))
-    , _currentDuration(new Fact(0, _currentDurationFactName, FactMetaData::valueTypeDouble, this))
-    , _currentAccuracy(new Fact(0, _currentAccuracyFactName, FactMetaData::valueTypeDouble, this))
-    , _currentLatitude(new Fact(0, _currentLatitudeFactName, FactMetaData::valueTypeDouble, this))
-    , _currentLongitude(new Fact(0, _currentLongitudeFactName, FactMetaData::valueTypeDouble, this))
-    , _currentAltitude(new Fact(0, _currentAltitudeFactName, FactMetaData::valueTypeFloat, this))
-    , _valid(new Fact(0, _validFactName, FactMetaData::valueTypeBool, this))
-    , _active(new Fact(0, _activeFactName, FactMetaData::valueTypeBool, this))
-    , _numSatellites(new Fact(0, _numSatellitesFactName, FactMetaData::valueTypeInt32, this))
+    : FactGroup(1000, QStringLiteral(":/json/Vehicle/GPSRTKFact.json"), parent)
 {
     // qCDebug(GPSRTKFactGroupLog) << Q_FUNC_INFO << this;
 
-    _addFact(_connected, _connectedFactName);
-    _addFact(_currentDuration, _currentDurationFactName);
-    _addFact(_currentAccuracy, _currentAccuracyFactName);
-    _addFact(_currentLatitude, _currentLatitudeFactName);
-    _addFact(_currentLongitude, _currentLongitudeFactName);
-    _addFact(_currentAltitude, _currentAltitudeFactName);
-    _addFact(_valid, _validFactName);
-    _addFact(_active, _activeFactName);
-    _addFact(_numSatellites, _numSatellitesFactName);
+    _addFact(&_connectedFact);
+    _addFact(&_currentDurationFact);
+    _addFact(&_currentAccuracyFact);
+    _addFact(&_currentLatitudeFact);
+    _addFact(&_currentLongitudeFact);
+    _addFact(&_currentAltitudeFact);
+    _addFact(&_validFact);
+    _addFact(&_activeFact);
+    _addFact(&_numSatellitesFact);
 }
 
 GPSRTKFactGroup::~GPSRTKFactGroup()

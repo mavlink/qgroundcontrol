@@ -12,23 +12,16 @@
 
 #include <QtMath>
 
-VehicleSetpointFactGroup::VehicleSetpointFactGroup(QObject* parent)
-    : FactGroup     (1000, ":/json/Vehicle/SetpointFact.json", parent)
-    , _rollFact     (0, _rollFactName,      FactMetaData::valueTypeDouble)
-    , _pitchFact    (0, _pitchFactName,     FactMetaData::valueTypeDouble)
-    , _yawFact      (0, _yawFactName,       FactMetaData::valueTypeDouble)
-    , _rollRateFact (0, _rollRateFactName,  FactMetaData::valueTypeDouble)
-    , _pitchRateFact(0, _pitchRateFactName, FactMetaData::valueTypeDouble)
-    , _yawRateFact  (0, _yawRateFactName,   FactMetaData::valueTypeDouble)
+VehicleSetpointFactGroup::VehicleSetpointFactGroup(QObject *parent)
+    : FactGroup(1000, QStringLiteral(":/json/Vehicle/SetpointFact.json"), parent)
 {
-    _addFact(&_rollFact,        _rollFactName);
-    _addFact(&_pitchFact,       _pitchFactName);
-    _addFact(&_yawFact,         _yawFactName);
-    _addFact(&_rollRateFact,    _rollRateFactName);
-    _addFact(&_pitchRateFact,   _pitchRateFactName);
-    _addFact(&_yawRateFact,     _yawRateFactName);
+    _addFact(&_rollFact);
+    _addFact(&_pitchFact);
+    _addFact(&_yawFact);
+    _addFact(&_rollRateFact);
+    _addFact(&_pitchRateFact);
+    _addFact(&_yawRateFact);
 
-    // Start out as not available "--.--"
     _rollFact.setRawValue(qQNaN());
     _pitchFact.setRawValue(qQNaN());
     _yawFact.setRawValue(qQNaN());
@@ -37,27 +30,30 @@ VehicleSetpointFactGroup::VehicleSetpointFactGroup(QObject* parent)
     _yawRateFact.setRawValue(qQNaN());
 }
 
-void VehicleSetpointFactGroup::handleMessage(Vehicle* /* vehicle */, mavlink_message_t& message)
+void VehicleSetpointFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)
 {
+    Q_UNUSED(vehicle);
+
     if (message.msgid != MAVLINK_MSG_ID_ATTITUDE_TARGET) {
         return;
     }
 
-    mavlink_attitude_target_t attitudeTarget;
-
+    mavlink_attitude_target_t attitudeTarget{};
     mavlink_msg_attitude_target_decode(&message, &attitudeTarget);
 
-    float roll, pitch, yaw;
-    mavlink_quaternion_to_euler(attitudeTarget.q, &roll, &pitch, &yaw);
+    float targetRoll, targetPitch, targetYaw;
+    mavlink_quaternion_to_euler(attitudeTarget.q, &targetRoll, &targetPitch, &targetYaw);
 
-    this->roll()->setRawValue   (qRadiansToDegrees(roll));
-    this->pitch()->setRawValue  (qRadiansToDegrees(pitch));
-    if (yaw < 0.f) yaw += 2.f * (float)M_PI; // bring to range [0, 2pi] to match the heading angle
-    this->yaw()->setRawValue    (qRadiansToDegrees(yaw));
+    roll()->setRawValue(qRadiansToDegrees(targetRoll));
+    pitch()->setRawValue(qRadiansToDegrees(targetPitch));
+    if (targetYaw < 0.f) {
+        targetYaw += 2.f * static_cast<float>(M_PI); // bring to range [0, 2pi] to match the heading angle
+    }
+    yaw()->setRawValue(qRadiansToDegrees(targetYaw));
 
-    rollRate()->setRawValue (qRadiansToDegrees(attitudeTarget.body_roll_rate));
+    rollRate()->setRawValue(qRadiansToDegrees(attitudeTarget.body_roll_rate));
     pitchRate()->setRawValue(qRadiansToDegrees(attitudeTarget.body_pitch_rate));
-    yawRate()->setRawValue  (qRadiansToDegrees(attitudeTarget.body_yaw_rate));
+    yawRate()->setRawValue(qRadiansToDegrees(attitudeTarget.body_yaw_rate));
 
     _setTelemetryAvailable(true);
 }
