@@ -41,7 +41,7 @@ body:
     id: system-information
     attributes:
       label: System Information
-      description: When posting bug reports, include the following information:
+      description: When posting bug reports, include the following information.
       placeholder: |
         - Operating System: [e.g. iOS 12.1, Windows 8, macOS Mojave 10.14.1, Ubuntu 14]
         - QGC Version: [e.g. 3.4.4]
