@@ -10,35 +10,30 @@
 #include "VehicleVibrationFactGroup.h"
 #include "Vehicle.h"
 
-VehicleVibrationFactGroup::VehicleVibrationFactGroup(QObject* parent)
-    : FactGroup         (1000, ":/json/Vehicle/VibrationFact.json", parent)
-    , _xAxisFact        (0, _xAxisFactName,         FactMetaData::valueTypeDouble)
-    , _yAxisFact        (0, _yAxisFactName,         FactMetaData::valueTypeDouble)
-    , _zAxisFact        (0, _zAxisFactName,         FactMetaData::valueTypeDouble)
-    , _clipCount1Fact   (0, _clipCount1FactName,    FactMetaData::valueTypeUint32)
-    , _clipCount2Fact   (0, _clipCount2FactName,    FactMetaData::valueTypeUint32)
-    , _clipCount3Fact   (0, _clipCount3FactName,    FactMetaData::valueTypeUint32)
+VehicleVibrationFactGroup::VehicleVibrationFactGroup(QObject *parent)
+    : FactGroup(1000, QStringLiteral(":/json/Vehicle/VibrationFact.json"), parent)
 {
-    _addFact(&_xAxisFact,       _xAxisFactName);
-    _addFact(&_yAxisFact,       _yAxisFactName);
-    _addFact(&_zAxisFact,       _zAxisFactName);
-    _addFact(&_clipCount1Fact,  _clipCount1FactName);
-    _addFact(&_clipCount2Fact,  _clipCount2FactName);
-    _addFact(&_clipCount3Fact,  _clipCount3FactName);
+    _addFact(&_xAxisFact);
+    _addFact(&_yAxisFact);
+    _addFact(&_zAxisFact);
+    _addFact(&_clipCount1Fact);
+    _addFact(&_clipCount2Fact);
+    _addFact(&_clipCount3Fact);
 
-    // Start out as not available "--.--"
     _xAxisFact.setRawValue(qQNaN());
     _yAxisFact.setRawValue(qQNaN());
     _zAxisFact.setRawValue(qQNaN());
 }
 
-void VehicleVibrationFactGroup::handleMessage(Vehicle* /* vehicle */, mavlink_message_t& message)
+void VehicleVibrationFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)
 {
+    Q_UNUSED(vehicle);
+
     if (message.msgid != MAVLINK_MSG_ID_VIBRATION) {
         return;
     }
 
-    mavlink_vibration_t vibration;
+    mavlink_vibration_t vibration{};
     mavlink_msg_vibration_decode(&message, &vibration);
 
     xAxis()->setRawValue(vibration.vibration_x);
@@ -47,6 +42,6 @@ void VehicleVibrationFactGroup::handleMessage(Vehicle* /* vehicle */, mavlink_me
     clipCount1()->setRawValue(vibration.clipping_0);
     clipCount2()->setRawValue(vibration.clipping_1);
     clipCount3()->setRawValue(vibration.clipping_2);
+
     _setTelemetryAvailable(true);
 }
-
