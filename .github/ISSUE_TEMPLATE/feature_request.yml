@@ -1,9 +1,6 @@
 name: Feature request
-about: Tell us about your new idea
-title: ''
-labels:
-  - Feature Request
-assignees: []
+description: Tell us about your new idea
+labels: ["Feature Request"]
 
 body:
   - type: markdown
