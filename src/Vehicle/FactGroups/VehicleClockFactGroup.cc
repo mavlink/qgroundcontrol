@@ -8,28 +8,26 @@
  ****************************************************************************/
 
 #include "VehicleClockFactGroup.h"
+#include "QGCApplication.h"
 
-VehicleClockFactGroup::VehicleClockFactGroup(QObject* parent)
-    : FactGroup(1000, ":/json/Vehicle/ClockFact.json", parent)
-    , _currentTimeFact  (0, _currentTimeFactName,    FactMetaData::valueTypeString)
-    , _currentUTCTimeFact  (0, _currentUTCTimeFactName,    FactMetaData::valueTypeString)
-    , _currentDateFact  (0, _currentDateFactName,    FactMetaData::valueTypeString)
+VehicleClockFactGroup::VehicleClockFactGroup(QObject *parent)
+    : FactGroup(1000, QStringLiteral(":/json/Vehicle/ClockFact.json"), parent)
 {
-    _addFact(&_currentTimeFact, _currentTimeFactName);
-    _addFact(&_currentUTCTimeFact, _currentUTCTimeFactName);
-    _addFact(&_currentDateFact, _currentDateFactName);
+    _addFact(&_currentTimeFact);
+    _addFact(&_currentUTCTimeFact);
+    _addFact(&_currentDateFact);
 
-    // Start out as not available "--.--"
-    _currentTimeFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+    _currentTimeFact.setRawValue(QTime().toString());
     _currentUTCTimeFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _currentDateFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
 }
 
 void VehicleClockFactGroup::_updateAllValues()
 {
-    _currentTimeFact.setRawValue(QTime::currentTime().toString());
-    _currentUTCTimeFact.setRawValue(QDateTime::currentDateTimeUtc().time().toString());
-    _currentDateFact.setRawValue(QDateTime::currentDateTime().toString(QLocale::system().dateFormat(QLocale::ShortFormat)));
+    currentTime()->setRawValue(QTime::currentTime().toString());
+    currentUTCTime()->setRawValue(QDateTime::currentDateTimeUtc().time().toString());
+    currentDate()->setRawValue(QDateTime::currentDateTime().toString(qgcApp()->getCurrentLanguage().dateFormat(QLocale::ShortFormat)));
+
     _setTelemetryAvailable(true);
 
     FactGroup::_updateAllValues();

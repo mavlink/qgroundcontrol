@@ -10,66 +10,54 @@
 #include "VehicleEscStatusFactGroup.h"
 #include "Vehicle.h"
 
-VehicleEscStatusFactGroup::VehicleEscStatusFactGroup(QObject* parent)
-    : FactGroup                         (1000, ":/json/Vehicle/EscStatusFactGroup.json", parent)
-    , _indexFact                        (0, _indexFactName,                         FactMetaData::valueTypeUint8)
-
-    , _rpmFirstFact                     (0, _rpmFirstFactName,                      FactMetaData::valueTypeFloat)
-    , _rpmSecondFact                    (0, _rpmSecondFactName,                     FactMetaData::valueTypeFloat)
-    , _rpmThirdFact                     (0, _rpmThirdFactName,                      FactMetaData::valueTypeFloat)
-    , _rpmFourthFact                    (0, _rpmFourthFactName,                     FactMetaData::valueTypeFloat)
-
-    , _currentFirstFact                 (0, _currentFirstFactName,                  FactMetaData::valueTypeFloat)
-    , _currentSecondFact                (0, _currentSecondFactName,                 FactMetaData::valueTypeFloat)
-    , _currentThirdFact                 (0, _currentThirdFactName,                  FactMetaData::valueTypeFloat)
-    , _currentFourthFact                (0, _currentFourthFactName,                 FactMetaData::valueTypeFloat)
-
-    , _voltageFirstFact                 (0, _voltageFirstFactName,                  FactMetaData::valueTypeFloat)
-    , _voltageSecondFact                (0, _voltageSecondFactName,                 FactMetaData::valueTypeFloat)
-    , _voltageThirdFact                 (0, _voltageThirdFactName,                  FactMetaData::valueTypeFloat)
-    , _voltageFourthFact                (0, _voltageFourthFactName,                 FactMetaData::valueTypeFloat)
+VehicleEscStatusFactGroup::VehicleEscStatusFactGroup(QObject *parent)
+    : FactGroup(1000, QStringLiteral(":/json/Vehicle/EscStatusFactGroup.json"), parent)
 {
-    _addFact(&_indexFact,                       _indexFactName);
+    _addFact(&_indexFact);
 
-    _addFact(&_rpmFirstFact,                    _rpmFirstFactName);
-    _addFact(&_rpmSecondFact,                   _rpmSecondFactName);
-    _addFact(&_rpmThirdFact,                    _rpmThirdFactName);
-    _addFact(&_rpmFourthFact,                   _rpmFourthFactName);
+    _addFact(&_rpmFirstFact);
+    _addFact(&_rpmSecondFact);
+    _addFact(&_rpmThirdFact);
+    _addFact(&_rpmFourthFact);
 
-    _addFact(&_currentFirstFact,                _currentFirstFactName);
-    _addFact(&_currentSecondFact,               _currentSecondFactName);
-    _addFact(&_currentThirdFact,                _currentThirdFactName);
-    _addFact(&_currentFourthFact,               _currentFourthFactName);
+    _addFact(&_currentFirstFact);
+    _addFact(&_currentSecondFact);
+    _addFact(&_currentThirdFact);
+    _addFact(&_currentFourthFact);
 
-    _addFact(&_voltageFirstFact,                _voltageFirstFactName);
-    _addFact(&_voltageSecondFact,               _voltageSecondFactName);
-    _addFact(&_voltageThirdFact,                _voltageThirdFactName);
-    _addFact(&_voltageFourthFact,               _voltageFourthFactName);
+    _addFact(&_voltageFirstFact);
+    _addFact(&_voltageSecondFact);
+    _addFact(&_voltageThirdFact);
+    _addFact(&_voltageFourthFact);
 }
 
-void VehicleEscStatusFactGroup::handleMessage(Vehicle* /* vehicle */, mavlink_message_t& message)
+void VehicleEscStatusFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)
 {
+    Q_UNUSED(vehicle);
+
     if (message.msgid != MAVLINK_MSG_ID_ESC_STATUS) {
         return;
     }
 
-    mavlink_esc_status_t content;
+    mavlink_esc_status_t content{};
     mavlink_msg_esc_status_decode(&message, &content);
 
-    index()->setRawValue                        (content.index);
+    index()->setRawValue(content.index);
 
-    rpmFirst()->setRawValue                     (content.rpm[0]);
-    rpmSecond()->setRawValue                    (content.rpm[1]);
-    rpmThird()->setRawValue                     (content.rpm[2]);
-    rpmFourth()->setRawValue                    (content.rpm[3]);
+    rpmFirst()->setRawValue(content.rpm[0]);
+    rpmSecond()->setRawValue(content.rpm[1]);
+    rpmThird()->setRawValue(content.rpm[2]);
+    rpmFourth()->setRawValue(content.rpm[3]);
 
-    currentFirst()->setRawValue                 (content.current[0]);
-    currentSecond()->setRawValue                (content.current[1]);
-    currentThird()->setRawValue                 (content.current[2]);
-    currentFourth()->setRawValue                (content.current[3]);
+    currentFirst()->setRawValue(content.current[0]);
+    currentSecond()->setRawValue(content.current[1]);
+    currentThird()->setRawValue(content.current[2]);
+    currentFourth()->setRawValue(content.current[3]);
 
-    voltageFirst()->setRawValue                 (content.voltage[0]);
-    voltageSecond()->setRawValue                (content.voltage[1]);
-    voltageThird()->setRawValue                 (content.voltage[2]);
-    voltageFourth()->setRawValue                (content.voltage[3]);
+    voltageFirst()->setRawValue(content.voltage[0]);
+    voltageSecond()->setRawValue(content.voltage[1]);
+    voltageThird()->setRawValue(content.voltage[2]);
+    voltageFourth()->setRawValue(content.voltage[3]);
+
+    _setTelemetryAvailable(true);
 }

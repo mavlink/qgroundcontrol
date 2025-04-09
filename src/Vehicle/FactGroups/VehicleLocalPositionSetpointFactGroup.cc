@@ -10,25 +10,16 @@
 #include "VehicleLocalPositionSetpointFactGroup.h"
 #include "Vehicle.h"
 
-#include <QtMath>
-
-VehicleLocalPositionSetpointFactGroup::VehicleLocalPositionSetpointFactGroup(QObject* parent)
-    : FactGroup     (1000, ":/json/Vehicle/LocalPositionSetpointFact.json", parent)
-    , _xFact    (0, _xFactName,     FactMetaData::valueTypeDouble)
-    , _yFact    (0, _yFactName,     FactMetaData::valueTypeDouble)
-    , _zFact    (0, _zFactName,     FactMetaData::valueTypeDouble)
-    , _vxFact   (0, _vxFactName,    FactMetaData::valueTypeDouble)
-    , _vyFact   (0, _vyFactName,    FactMetaData::valueTypeDouble)
-    , _vzFact   (0, _vzFactName,    FactMetaData::valueTypeDouble)
+VehicleLocalPositionSetpointFactGroup::VehicleLocalPositionSetpointFactGroup(QObject *parent)
+    : FactGroup(1000, QStringLiteral(":/json/Vehicle/LocalPositionSetpointFact.json"), parent)
 {
-    _addFact(&_xFact,      _xFactName);
-    _addFact(&_yFact,      _yFactName);
-    _addFact(&_zFact,      _zFactName);
-    _addFact(&_vxFact,     _vxFactName);
-    _addFact(&_vyFact,     _vyFactName);
-    _addFact(&_vzFact,     _vzFactName);
+    _addFact(&_xFact);
+    _addFact(&_yFact);
+    _addFact(&_zFact);
+    _addFact(&_vxFact);
+    _addFact(&_vyFact);
+    _addFact(&_vzFact);
 
-    // Start out as not available "--.--"
     _xFact.setRawValue(qQNaN());
     _yFact.setRawValue(qQNaN());
     _zFact.setRawValue(qQNaN());
@@ -37,13 +28,15 @@ VehicleLocalPositionSetpointFactGroup::VehicleLocalPositionSetpointFactGroup(QOb
     _vzFact.setRawValue(qQNaN());
 }
 
-void VehicleLocalPositionSetpointFactGroup::handleMessage(Vehicle* /* vehicle */, mavlink_message_t& message)
+void VehicleLocalPositionSetpointFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)
 {
+    Q_UNUSED(vehicle);
+
     if (message.msgid != MAVLINK_MSG_ID_POSITION_TARGET_LOCAL_NED) {
         return;
     }
 
-    mavlink_position_target_local_ned_t localPosition;
+    mavlink_position_target_local_ned_t localPosition{};
     mavlink_msg_position_target_local_ned_decode(&message, &localPosition);
 
     x()->setRawValue(localPosition.x);
