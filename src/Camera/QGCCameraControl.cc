@@ -212,7 +212,9 @@ QGCCameraControl::_initWhenReady()
     qCDebug(CameraControlLog) << "_initWhenReady()";
     if(isBasic()) {
         qCDebug(CameraControlLog) << "Basic, MAVLink only messages.";
-        _requestCameraSettings();
+        QTimer::singleShot(500, this, &QGCCameraControl::_requestCameraSettings);
+        // For now manually request a second time
+        QTimer::singleShot(1500, this, &QGCCameraControl::_requestCameraSettings);
         QTimer::singleShot(250, this, &QGCCameraControl::_checkForVideoStreams);
         //-- Basic cameras have no parameters
         _paramComplete = true;
@@ -221,6 +223,7 @@ QGCCameraControl::_initWhenReady()
         _requestAllParameters();
         //-- Give some time to load the parameters before going after the camera settings
         QTimer::singleShot(2000, this, &QGCCameraControl::_requestCameraSettings);
+        QTimer::singleShot(3000, this, &QGCCameraControl::_requestCameraSettings);
     }
     connect(_vehicle, &Vehicle::mavCommandResult, this, &QGCCameraControl::_mavCommandResult);
     connect(&_captureStatusTimer, &QTimer::timeout, this, &QGCCameraControl::_requestCaptureStatus);
@@ -673,11 +676,20 @@ void
 QGCCameraControl::_requestCaptureStatus()
 {
     qCDebug(CameraControlLog) << "_requestCaptureStatus()";
-    _vehicle->sendMavCommand(
-        _compID,                                // target component
-        MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS,  // command id
-        false,                                  // showError
-        1);                                     // Do Request
+
+    if(_cameraCaptureStatusRetries++ % 2 == 0) {
+        _vehicle->sendMavCommand(
+            _compID,                                // target component
+            MAV_CMD_REQUEST_MESSAGE,                // command id
+            false,                                  // showError
+            MAVLINK_MSG_ID_CAMERA_CAPTURE_STATUS);  // msgid
+    } else {
+        _vehicle->sendMavCommand(
+            _compID,                                // target component
+            MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS,  // command id
+            false,                                  // showError
+            1);                                     // Do Request
+    }
 }
 
 //-----------------------------------------------------------------------------

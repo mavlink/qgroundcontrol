@@ -440,6 +440,7 @@ protected:
     QMap<QString, QVariantList>         _originalOptValues;
     QMap<QString, QGCCameraParamIO*>    _paramIO;
     int                                 _cameraSettingsRetries = 0;
+    int                                 _cameraCaptureStatusRetries = 0;
     int                                 _storageInfoRetries = 0;
     int                                 _captureInfoRetries = 0;
     bool                                _resetting          = false;
