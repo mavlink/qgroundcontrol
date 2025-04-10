@@ -55,6 +55,11 @@ void FactValueGrid::_init(void)
     connect(this,           &FactValueGrid::fontSizeChanged,    this, &FactValueGrid::_saveSettings);
 
     _vehicleClass = QGCMAVLink::vehicleClass(offlineVehicle->vehicleType());
+    instances().append(this);
+}
+
+FactValueGrid::~FactValueGrid() {
+    instances().removeAll(this);
 }
 
 void FactValueGrid::_offlineVehicleTypeChanged(void)
@@ -71,6 +76,7 @@ void FactValueGrid::_offlineVehicleTypeChanged(void)
 void FactValueGrid::componentComplete(void)
 {
     QQuickItem::componentComplete();
+    _componentCompleted = true;
 
     // We should know settingsGroup/defaultSettingsGroup now so we can load settings
     _loadSettings();
@@ -93,6 +99,14 @@ void FactValueGrid::setFontSize(FontSize fontSize)
     if (fontSize != _fontSize) {
         _fontSize = fontSize;
         emit fontSizeChanged(fontSize);
+    }
+}
+
+void FactValueGrid::setVehicle(Vehicle * vehicle)
+{
+    _vehicle = vehicle;
+    if(_componentCompleted){
+        qCritical() << "FactValueGrid assumes setVehicle is only called once (for MultiVehicleFactValueGrid during QML creation)";
     }
 }
 
@@ -226,7 +240,13 @@ void FactValueGrid::deleteLastColumn(void)
 
 InstrumentValueData* FactValueGrid::_createNewInstrumentValueWorker(QObject* parent)
 {
-    InstrumentValueData* value = new InstrumentValueData(this, parent);
+    InstrumentValueData* value;
+    if(_vehicle){
+        value = new InstrumentValueData(this, parent, _vehicle);
+    }
+    else {
+        value = new InstrumentValueData(this, parent);
+    }
     value->setFact(InstrumentValueData::vehicleFactGroupName, "AltitudeRelative");
     value->setText(value->fact()->shortDescription());
     _connectSaveSignals(value);
@@ -273,6 +293,26 @@ void FactValueGrid::_saveSettings(void)
         settings.endArray();
     }
     settings.endArray();
+
+    // If this this settings change was set from a Vehicle card, this makes so the changes are
+    // immediately applied to the other Vehicle cards.
+    for (FactValueGrid* obj : instances()) {
+        if(obj != this && _settingsKey() == obj->_settingsKey()) {
+            obj->_loadSettings();
+        }
+    }
+}
+
+QString FactValueGrid::_settingsKey(void){
+    QSettings   settings;
+    QString     groupNameFormat("%1-%2");
+    const QString spath(QFileInfo(QSettings().fileName()).dir().absolutePath());
+    qCritical() << "this: " << this << "spath: " << spath << " exists: " << QFileInfo(QSettings().fileName()).dir().exists();
+    if (settings.childGroups().contains(groupNameFormat.arg(_defaultSettingsGroup).arg(_vehicleClass))) {
+        return groupNameFormat.arg(_defaultSettingsGroup).arg(_vehicleClass);
+    } else {
+        return groupNameFormat.arg(_userSettingsGroup).arg(_vehicleClass);
+    }
 }
 
 void FactValueGrid::_loadSettings(void)
@@ -291,12 +331,7 @@ void FactValueGrid::_loadSettings(void)
         QGCCorePlugin::instance()->factValueGridCreateDefaultSettings(_defaultSettingsGroup);
     }
 
-
-    if (settings.childGroups().contains(groupNameFormat.arg(_defaultSettingsGroup).arg(_vehicleClass))) {
-        settings.beginGroup(groupNameFormat.arg(_defaultSettingsGroup).arg(_vehicleClass));
-    } else {
-        settings.beginGroup(groupNameFormat.arg(_userSettingsGroup).arg(_vehicleClass));
-    }
+    settings.beginGroup(_settingsKey());
 
     int version = settings.value(_versionKey, 0).toInt();
     if (version != 1) {
