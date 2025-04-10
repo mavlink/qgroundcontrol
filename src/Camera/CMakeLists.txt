@@ -1,20 +1,25 @@
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        CameraMetaData.cc
-        CameraMetaData.h
-        MavlinkCameraControl.cc
-        MavlinkCameraControl.h
-        QGCCameraIO.cc
-        QGCCameraIO.h
-        QGCCameraManager.cc
-        QGCCameraManager.h
-        SimulatedCameraControl.cc
-        SimulatedCameraControl.h
-        VehicleCameraControl.cc
-        VehicleCameraControl.h
+set(QGC_SOURCES
+    ${QGC_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/CameraMetaData.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/CameraMetaData.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/MavlinkCameraControl.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/MavlinkCameraControl.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGCCameraIO.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGCCameraIO.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGCCameraManager.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGCCameraManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/SimulatedCameraControl.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/SimulatedCameraControl.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleCameraControl.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleCameraControl.h
+    CACHE INTERNAL "" FORCE
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+set(QGC_DIRECTORIES
+    ${QGC_DIRECTORIES}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    CACHE INTERNAL "" FORCE
+)
 
 # qt_add_resources(${CMAKE_PROJECT_NAME} "Camera_res"
 #     PREFIX "/"

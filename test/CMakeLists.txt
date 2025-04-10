@@ -2,25 +2,30 @@ if(NOT QGC_BUILD_TESTING)
     return()
 endif()
 
-find_package(Qt6 REQUIRED COMPONENTS Test)
-
 # if(ANDROID)
     # include(AndroidTestUtilities)
 # endif()
 
-# set(UNIT_TESTING_RESOURCES)
-# qt_add_resources(UNIT_TESTING_RESOURCES UnitTest.qrc)
-
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        UnitTestList.cc
-        UnitTestList.h
-        # ${UNIT_TESTING_RESOURCES}
+set(QGC_SOURCES
+    ${QGC_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/UnitTestList.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/UnitTestList.h
+    CACHE INTERNAL "" FORCE
 )
 
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Test)
+set(QGC_LIBRARIES
+    ${QGC_LIBRARIES}
+    Qt6::Test
+    CACHE INTERNAL "" FORCE
+)
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+set(QGC_DIRECTORIES
+    ${QGC_DIRECTORIES}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    CACHE INTERNAL "" FORCE
+)
+
+qt_add_resources(QGC_RESOURCES UnitTest.qrc)
 
 include(CTest)
 add_custom_target(check

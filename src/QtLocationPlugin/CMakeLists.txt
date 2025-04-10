@@ -2,51 +2,47 @@ qt_add_plugin(QGCLocation
     STATIC
     CLASS_NAME QGeoServiceProviderFactoryQGC
     OUTPUT_TARGETS QGCLocation_targets
-    Providers/BingMapProvider.cpp
-    Providers/BingMapProvider.h
-    Providers/ElevationMapProvider.cpp
-    Providers/ElevationMapProvider.h
-    Providers/EsriMapProvider.cpp
-    Providers/EsriMapProvider.h
-    Providers/GenericMapProvider.cpp
-    Providers/GenericMapProvider.h
-    Providers/GoogleMapProvider.cpp
-    Providers/GoogleMapProvider.h
-    Providers/MapboxMapProvider.cpp
-    Providers/MapboxMapProvider.h
-    Providers/MapProvider.cpp
-    Providers/MapProvider.h
-    QMLControl/QGCMapEngineManager.cc
-    QMLControl/QGCMapEngineManager.h
-    QGCCachedTileSet.cpp
-    QGCCachedTileSet.h
-    QGCCacheTile.h
-    QGCMapEngine.cpp
-    QGCMapEngine.h
-    QGCMapTasks.h
-    QGCMapUrlEngine.cpp
-    QGCMapUrlEngine.h
-    QGCTile.h
-    QGCTileCacheWorker.cpp
-    QGCTileCacheWorker.h
-    QGCTileSet.h
-    QGeoFileTileCacheQGC.cpp
-    QGeoFileTileCacheQGC.h
-    QGeoMapReplyQGC.cpp
-    QGeoMapReplyQGC.h
-    QGeoServiceProviderPluginQGC.cpp
-    QGeoServiceProviderPluginQGC.h
-    QGeoTiledMappingManagerEngineQGC.cpp
-    QGeoTiledMappingManagerEngineQGC.h
-    QGeoTiledMapQGC.cpp
-    QGeoTiledMapQGC.h
-    QGeoTileFetcherQGC.cpp
-    QGeoTileFetcherQGC.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Providers/BingMapProvider.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Providers/BingMapProvider.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Providers/ElevationMapProvider.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Providers/ElevationMapProvider.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Providers/EsriMapProvider.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Providers/EsriMapProvider.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Providers/GenericMapProvider.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Providers/GenericMapProvider.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Providers/GoogleMapProvider.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Providers/GoogleMapProvider.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Providers/MapboxMapProvider.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Providers/MapboxMapProvider.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Providers/MapProvider.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Providers/MapProvider.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGCCachedTileSet.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGCCachedTileSet.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGCCacheTile.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGCMapEngine.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGCMapEngine.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGCMapTasks.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGCMapUrlEngine.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGCMapUrlEngine.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGCTile.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGCTileCacheWorker.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGCTileCacheWorker.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGCTileSet.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGeoFileTileCacheQGC.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGeoFileTileCacheQGC.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGeoMapReplyQGC.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGeoMapReplyQGC.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGeoServiceProviderPluginQGC.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGeoServiceProviderPluginQGC.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGeoTiledMappingManagerEngineQGC.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGeoTiledMappingManagerEngineQGC.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGeoTiledMapQGC.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGeoTiledMapQGC.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGeoTileFetcherQGC.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGeoTileFetcherQGC.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/QMLControl/QGCMapEngineManager.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/QMLControl/QGCMapEngineManager.h
 )
-
-if(IOS)
-    target_compile_definitions(QGCLocation PRIVATE QGC_NO_GOOGLE_MAPS)
-endif()
 
 target_link_libraries(QGCLocation
     PRIVATE
@@ -62,19 +58,18 @@ target_link_libraries(QGCLocation
 target_include_directories(QGCLocation
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/..
-        ${CMAKE_CURRENT_SOURCE_DIR}/../FactSystem
-        ${CMAKE_CURRENT_SOURCE_DIR}/../QmlControls
-        ${CMAKE_CURRENT_SOURCE_DIR}/../Terrain
-        ${CMAKE_CURRENT_SOURCE_DIR}/../Terrain/Providers
-        ${CMAKE_CURRENT_SOURCE_DIR}/../Settings
-        ${CMAKE_CURRENT_SOURCE_DIR}/../Utilities
-        ${CMAKE_CURRENT_SOURCE_DIR}/../Utilities/FileSystem
-        Providers
-        QMLControl
+        ${CMAKE_CURRENT_SOURCE_DIR}/Providers
+        ${CMAKE_CURRENT_SOURCE_DIR}/QMLControl
+        ${QGC_DIRECTORIES}
 )
 
 set_source_files_properties(QMLControl/OfflineMapEditor.qml PROPERTIES QT_RESOURCE_ALIAS OfflineMapEditor.qml)
+
+set(QGC_LIBRARIES
+    ${QGC_LIBRARIES}
+    QGCLocation
+    CACHE INTERNAL "" FORCE
+)
 
 # qt_add_qml_module(QGCLocation
 #     URI QGroundControl.QGCLocation

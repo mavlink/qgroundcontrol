@@ -1,73 +1,89 @@
-add_subdirectory(AirLink)
-add_subdirectory(MockLink)
-
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        LinkConfiguration.cc
-        LinkConfiguration.h
-        LinkInterface.cc
-        LinkInterface.h
-        LinkManager.cc
-        LinkManager.h
-        LogReplayLink.cc
-        LogReplayLink.h
-        LogReplayLinkController.cc
-        LogReplayLinkController.h
-        MAVLinkProtocol.cc
-        MAVLinkProtocol.h
-        TCPLink.cc
-        TCPLink.h
-        UDPLink.cc
-        UDPLink.h
+set(QGC_SOURCES
+    ${QGC_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/LinkConfiguration.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/LinkConfiguration.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/LinkInterface.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/LinkInterface.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/LinkManager.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/LinkManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/LogReplayLink.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/LogReplayLink.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/LogReplayLinkController.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/LogReplayLinkController.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/MAVLinkProtocol.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/MAVLinkProtocol.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/TCPLink.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/TCPLink.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/UDPLink.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/UDPLink.h
+    CACHE INTERNAL "" FORCE
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+set(QGC_DIRECTORIES
+    ${QGC_DIRECTORIES}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    CACHE INTERNAL "" FORCE
+)
+
+# set(QGC_DEFINES
+#     ${QGC_DEFINES}
+#     QABSTRACTSOCKET_DEBUG
+#     CACHE INTERNAL "" FORCE
+# )
 
 #===========================================================================#
 
-if(QGC_NO_SERIAL_LINK)
-    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_NO_SERIAL_LINK)
-else()
-    target_sources(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            QGCSerialPortInfo.cc
-            QGCSerialPortInfo.h
-            SerialLink.cc
-            SerialLink.h
-            UdpIODevice.cc
-            UdpIODevice.h
+if(NOT QGC_NO_SERIAL_LINK)
+    set(QGC_SOURCES
+        ${QGC_SOURCES}
+        ${CMAKE_CURRENT_SOURCE_DIR}/QGCSerialPortInfo.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/QGCSerialPortInfo.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/SerialLink.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/SerialLink.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/UdpIODevice.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/UdpIODevice.h
+        CACHE INTERNAL "" FORCE
     )
 
-    if(ANDROID)
-        add_subdirectory(${CMAKE_SOURCE_DIR}/android/libs/qtandroidserialport qtandroidserialport.build)
-        target_sources(${CMAKE_PROJECT_NAME}
-            PRIVATE
-                ${CMAKE_SOURCE_DIR}/android/src/AndroidSerial.cc
-                ${CMAKE_SOURCE_DIR}/android/src/AndroidSerial.h
+    if(NOT ANDROID AND NOT IOS)
+        set(QGC_LIBRARIES
+            ${QGC_LIBRARIES}
+            Qt6::SerialPort
+            CACHE INTERNAL "" FORCE
         )
-        target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/android/src)
-    else()
-        target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::SerialPort)
     endif()
+else()
+    set(QGC_DEFINES
+        ${QGC_DEFINES}
+        QGC_NO_SERIAL_LINK
+        CACHE INTERNAL "" FORCE
+    )
 endif()
 
 #===========================================================================#
 
 if(QGC_ENABLE_BLUETOOTH)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Bluetooth)
-    target_sources(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            BluetoothLink.cc
-            BluetoothLink.h
+    set(QGC_SOURCES
+        ${QGC_SOURCES}
+        ${CMAKE_CURRENT_SOURCE_DIR}/BluetoothLink.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/BluetoothLink.h
+        CACHE INTERNAL "" FORCE
     )
-    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_ENABLE_BLUETOOTH)
+    set(QGC_LIBRARIES
+        ${QGC_LIBRARIES}
+        Qt6::Bluetooth
+        CACHE INTERNAL "" FORCE
+    )
+    set(QGC_DEFINES
+        ${QGC_DEFINES}
+        QGC_ENABLE_BLUETOOTH
+        CACHE INTERNAL "" FORCE
+    )
 endif()
 
 #===========================================================================#
 
 if(QGC_ZEROCONF_ENABLED)
-    message(STATUS "Building QMDNSEngine")
-
     CPMAddPackage(
         NAME qmdnsengine
         GITHUB_REPOSITORY nitroshare/qmdnsengine
@@ -78,10 +94,19 @@ if(QGC_ZEROCONF_ENABLED)
             "BUILD_TESTS OFF"
     )
 
-    if(TARGET qmdnsengine)
-        target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE qmdnsengine)
-        target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_ZEROCONF_ENABLED)
-    endif()
+    set(QGC_LIBRARIES
+        ${QGC_LIBRARIES}
+        qmdnsengine
+        CACHE INTERNAL "" FORCE
+    )
+    set(QGC_DEFINES
+        ${QGC_DEFINES}
+        QGC_ZEROCONF_ENABLED
+        CACHE INTERNAL "" FORCE
+    )
 endif()
 
-# target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QABSTRACTSOCKET_DEBUG)
+#===========================================================================#
+
+add_subdirectory(AirLink)
+add_subdirectory(MockLink)

@@ -34,30 +34,37 @@ qt_generate_deploy_qml_app_script(
 install(SCRIPT ${deploy_script})
 
 if(ANDROID)
+    CPMAddPackage(
+        NAME android_openssl
+        URL https://github.com/KDAB/android_openssl/archive/refs/heads/master.zip
+    )
+    include(${android_openssl_SOURCE_DIR}/android_openssl.cmake)
+    add_android_openssl_libraries(${CMAKE_PROJECT_NAME})
+
     # get_target_property(QGC_ANDROID_DEPLOY_FILE ${CMAKE_PROJECT_NAME} QT_ANDROID_DEPLOYMENT_SETTINGS_FILE)
     # cmake_print_variables(QGC_ANDROID_DEPLOY_FILE)
 elseif(LINUX)
     configure_file(
-        ${CMAKE_SOURCE_DIR}/deploy/linux/org.mavlink.qgroundcontrol.desktop.in
-        ${CMAKE_BINARY_DIR}/org.mavlink.qgroundcontrol.desktop
+        ${CMAKE_SOURCE_DIR}/deploy/linux/${QGC_PACKAGE_NAME}.desktop.in
+        ${CMAKE_BINARY_DIR}/qgroundcontrol.desktop
         @ONLY
     )
     install(
-        FILES ${CMAKE_BINARY_DIR}/org.mavlink.qgroundcontrol.desktop
+        FILES ${CMAKE_BINARY_DIR}/qgroundcontrol.desktop
         DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
     )
     install(
         FILES ${QGC_APPIMAGE_ICON_PATH}
         DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/128x128/apps/
-        RENAME org.mavlink.qgroundcontrol.png
+        RENAME ${CMAKE_PROJECT_NAME}.png
     )
     configure_file(
-        ${CMAKE_SOURCE_DIR}/deploy/linux/org.mavlink.qgroundcontrol.metainfo.xml.in
-        ${CMAKE_BINARY_DIR}/metainfo/org.mavlink.qgroundcontrol.metainfo.xml
+        ${CMAKE_SOURCE_DIR}/deploy/linux/${QGC_PACKAGE_NAME}.metainfo.xml.in
+        ${CMAKE_BINARY_DIR}/metainfo/${QGC_PACKAGE_NAME}.metainfo.xml
         @ONLY
     )
     install(
-        FILES ${CMAKE_BINARY_DIR}/metainfo/org.mavlink.qgroundcontrol.metainfo.xml
+        FILES ${CMAKE_BINARY_DIR}/metainfo/${QGC_PACKAGE_NAME}.metainfo.xml
         DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo/
     )
     install(
@@ -71,4 +78,7 @@ elseif(MACOS)
     install(CODE "set(TARGET_APP_NAME ${QGC_APP_NAME})")
     install(CODE "set(MACDEPLOYQT ${Qt6_DIR}/../../../bin/macdeployqt)")
     install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/CreateMacDMG.cmake")
+elseif(IOS)
+    # set(QT_NO_FFMPEG_XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY ON)
+    qt_add_ios_ffmpeg_libraries(${CMAKE_PROJECT_NAME})
 endif()

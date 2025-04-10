@@ -1,13 +1,20 @@
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        ADSBTest.cc
-        ADSBTest.h
+set(QGC_SOURCES
+    ${QGC_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/ADSBTest.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/ADSBTest.h
+    CACHE INTERNAL "" FORCE
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-
-qt_add_resources(${CMAKE_PROJECT_NAME} "ADSBTest_res"
-    PREFIX "/"
-    FILES
-        ADSB_Simulator.py
+set(QGC_DIRECTORIES
+    ${QGC_DIRECTORIES}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    CACHE INTERNAL "" FORCE
 )
+
+# set(QGC_TEST_RESOURCES
+#     ${QGC_TEST_RESOURCES}
+#     ${CMAKE_CURRENT_SOURCE_DIR}/ADSB_Simulator.py
+#     CACHE INTERNAL "" FORCE
+# )
+
+# set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/ADSB_Simulator.py PROPERTIES QT_RESOURCE_ALIAS ADSB_Simulator.py)

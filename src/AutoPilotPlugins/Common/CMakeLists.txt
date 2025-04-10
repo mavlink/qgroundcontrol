@@ -1,20 +1,25 @@
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        ESP8266Component.cc
-        ESP8266Component.h
-        ESP8266ComponentController.cc
-        ESP8266ComponentController.h
-        MotorComponent.cc
-        MotorComponent.h
-        RadioComponentController.cc
-        RadioComponentController.h
-        SyslinkComponent.cc
-        SyslinkComponent.h
-        SyslinkComponentController.cc
-        SyslinkComponentController.h
+set(QGC_SOURCES
+    ${QGC_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/ESP8266Component.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/ESP8266Component.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/ESP8266ComponentController.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/ESP8266ComponentController.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/MotorComponent.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/MotorComponent.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/RadioComponentController.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/RadioComponentController.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/SyslinkComponent.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/SyslinkComponent.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/SyslinkComponentController.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/SyslinkComponentController.h
+    CACHE INTERNAL "" FORCE
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+set(QGC_DIRECTORIES
+    ${QGC_DIRECTORIES}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    CACHE INTERNAL "" FORCE
+)
 
 # file(GLOB QML_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.qml)
 # file(GLOB QML_RESOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/Images/*.*)

@@ -1,8 +1,9 @@
 if(NOT QGC_DISABLE_APM_PLUGIN_FACTORY)
-    target_sources(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            APMFirmwarePluginFactory.cc
-            APMFirmwarePluginFactory.h
+    set(QGC_SOURCES
+        ${QGC_SOURCES}
+        ${CMAKE_CURRENT_SOURCE_DIR}/APMFirmwarePluginFactory.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/APMFirmwarePluginFactory.h
+        CACHE INTERNAL "" FORCE
     )
 endif()
 
@@ -10,25 +11,37 @@ if(NOT QGC_DISABLE_APM_PLUGIN)
     # set(APM_RESOURCES)
     # qt_add_resources(APM_RESOURCES APMResources.qrc)
 
-    target_sources(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            APMFirmwarePlugin.cc
-            APMFirmwarePlugin.h
-            APMParameterMetaData.cc
-            APMParameterMetaData.h
-            ArduCopterFirmwarePlugin.cc
-            ArduCopterFirmwarePlugin.h
-            ArduPlaneFirmwarePlugin.cc
-            ArduPlaneFirmwarePlugin.h
-            ArduRoverFirmwarePlugin.cc
-            ArduRoverFirmwarePlugin.h
-            ArduSubFirmwarePlugin.cc
-            ArduSubFirmwarePlugin.h
-            # ${APM_RESOURCES}
+    set(QGC_SOURCES
+        ${QGC_SOURCES}
+        ${CMAKE_CURRENT_SOURCE_DIR}/APMFirmwarePlugin.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/APMFirmwarePlugin.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/APMParameterMetaData.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/APMParameterMetaData.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/ArduCopterFirmwarePlugin.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/ArduCopterFirmwarePlugin.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/ArduPlaneFirmwarePlugin.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/ArduPlaneFirmwarePlugin.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/ArduRoverFirmwarePlugin.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/ArduRoverFirmwarePlugin.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/ArduSubFirmwarePlugin.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/ArduSubFirmwarePlugin.h
+        CACHE INTERNAL "" FORCE
     )
 endif()
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+set(QGC_DIRECTORIES
+    ${QGC_DIRECTORIES}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    CACHE INTERNAL "" FORCE
+)
+
+if(QGC_DISABLE_APM_MAVLINK)
+    set(QGC_DEFINES
+        ${QGC_DEFINES}
+        QGC_NO_ARDUPILOT_DIALECT
+        CACHE INTERNAL "" FORCE
+    )
+endif()
 
 # CPMAddPackage(
 #     NAME ArduPilotParams

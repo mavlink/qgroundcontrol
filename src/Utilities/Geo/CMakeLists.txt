@@ -1,16 +1,17 @@
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        QGCGeo.cc
-        QGCGeo.h
+set(QGC_SOURCES
+    ${QGC_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGCGeo.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGCGeo.h
+    CACHE INTERNAL "" FORCE
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+set(QGC_DIRECTORIES
+    ${QGC_DIRECTORIES}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    CACHE INTERNAL "" FORCE
+)
 
 #===========================================================================#
-
-if(LINUX AND EXISTS "/usr/share/cmake/geographiclib")
-    list(APPEND CMAKE_MODULE_PATH "/usr/share/cmake/geographiclib")
-endif()
 
 CPMAddPackage(
     NAME geographiclib
@@ -34,8 +35,11 @@ CPMAddPackage(
         "DOCDIR OFF"
         "EXAMPLEDIR OFF"
     PATCHES geographiclib.patch
+    # EXCLUDE_FROM_ALL
 )
 
-if(TARGET GeographicLib::GeographicLib)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE GeographicLib::GeographicLib)
-endif()
+set(QGC_LIBRARIES
+    ${QGC_LIBRARIES}
+    GeographicLib::GeographicLib
+    CACHE INTERNAL "" FORCE
+)

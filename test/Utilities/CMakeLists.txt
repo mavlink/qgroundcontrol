@@ -1,20 +1,24 @@
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        FileSystem/QGCFileDownloadTest.cc
-        FileSystem/QGCFileDownloadTest.h
+set(QGC_SOURCES
+    ${QGC_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/QGCFileDownloadTest.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/QGCFileDownloadTest.h
+    CACHE INTERNAL "" FORCE
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        FileSystem
+set(QGC_DIRECTORIES
+    ${QGC_DIRECTORIES}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/FileSystem
+    CACHE INTERNAL "" FORCE
 )
 
-qt_add_resources(${CMAKE_PROJECT_NAME} "UtilitiesTest_res"
-    PREFIX "/"
-    FILES
-        arducopter.apj
-)
+# set(QGC_TEST_RESOURCES
+#     ${QGC_TEST_RESOURCES}
+#     arducopter.apj
+#     CACHE INTERNAL "" FORCE
+# )
+
+# set_source_files_properties(arducopter.apj PROPERTIES QT_RESOURCE_ALIAS arducopter.apj)
 
 add_subdirectory(Audio)
 add_subdirectory(Compression)

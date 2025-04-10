@@ -1,5 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- %%INSERT_STRINGS -->
+    <string name="fatal_error_msg" tools:ignore="UnusedResources">Your application encountered a fatal error and cannot continue.</string>
 	<string name="devices">USB Devices</string>
     <string name="CdcAcm">CDC ACM USB Device</string>
     <string name="ChromeCcd">Chrome CCD USB Device</string>

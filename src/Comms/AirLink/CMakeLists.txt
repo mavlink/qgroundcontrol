@@ -1,24 +1,26 @@
 if(QGC_AIRLINK_DISABLED)
-    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_AIRLINK_DISABLED)
+    set(QGC_DEFINES
+        ${QGC_DEFINES}
+        QGC_AIRLINK_DISABLED
+        CACHE INTERNAL "" FORCE
+    )
     return()
 endif()
 
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        AirLinkLink.cc
-        AirLinkLink.h
-        AirLinkManager.cc
-        AirLinkManager.h
+set(QGC_SOURCES
+    ${QGC_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/AirLinkLink.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/AirLinkLink.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AirLinkManager.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/AirLinkManager.h
+    CACHE INTERNAL "" FORCE
 )
 
-target_link_libraries(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        Qt6::Core
-        Qt6::Network
-        Qt6::QmlIntegration
+set(QGC_DIRECTORIES
+    ${QGC_DIRECTORIES}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    CACHE INTERNAL "" FORCE
 )
-
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # qt_add_qml_module(QGC
 #     URI QGroundControl.AirLink
@@ -41,5 +43,4 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 #         QGroundControl.SettingsManager
 # )
 
-# cmake_print_variables(AirLink_targets)
 # target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AirLinkplugin)

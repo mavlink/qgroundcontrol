@@ -24,5 +24,12 @@
         <file alias="UT-MavCmdInfoRover.json">MissionManager/UT-MavCmdInfoRover.json</file>
         <file alias="UT-MavCmdInfoSub.json">MissionManager/UT-MavCmdInfoSub.json</file>
         <file alias="UT-MavCmdInfoVTOL.json">MissionManager/UT-MavCmdInfoVTOL.json</file>
+        <file alias="ADSB_Simulator.py">ADSB/ADSB_Simulator.py</file>
+        <file alias="DSCN0010.jpg">AnalyzeView/DSCN0010.jpg</file>
+        <file alias="SampleULog.ulg">AnalyzeView/SampleULog.ulg</file>
+        <file alias="arducopter.apj">Utilities/arducopter.apj</file>
+        <file alias="manifest.json.gz">Utilities/Compression/manifest.json.gz</file>
+        <file alias="manifest.json.xz">Utilities/Compression/manifest.json.xz</file>
+        <file alias="manifest.json.zip">Utilities/Compression/manifest.json.zip</file>
     </qresource>
 </RCC>

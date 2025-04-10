@@ -1,11 +1,16 @@
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        QGCCorePlugin.cc
-        QGCCorePlugin.h
-        QGCOptions.cc
-        QGCOptions.h
-        QmlComponentInfo.cc
-        QmlComponentInfo.h
+set(QGC_SOURCES
+    ${QGC_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGCCorePlugin.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGCCorePlugin.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGCOptions.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGCOptions.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/QmlComponentInfo.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/QmlComponentInfo.h
+    CACHE INTERNAL "" FORCE
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+set(QGC_DIRECTORIES
+    ${QGC_DIRECTORIES}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    CACHE INTERNAL "" FORCE
+)

@@ -1,15 +1,24 @@
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        DecompressionTest.cc
-        DecompressionTest.h
+set(QGC_SOURCES
+    ${QGC_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/DecompressionTest.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/DecompressionTest.h
+    CACHE INTERNAL "" FORCE
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-
-qt_add_resources(${CMAKE_PROJECT_NAME} "UtilitiesTest_CompressionTest_res"
-    PREFIX "/"
-    FILES
-        manifest.json.gz
-        manifest.json.xz
-        manifest.json.zip
+set(QGC_DIRECTORIES
+    ${QGC_DIRECTORIES}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    CACHE INTERNAL "" FORCE
 )
+
+# set(QGC_TEST_RESOURCES
+#     ${QGC_TEST_RESOURCES}
+#     manifest.json.gz
+#     manifest.json.xz
+#     manifest.json.zip
+#     CACHE INTERNAL "" FORCE
+# )
+
+# set_source_files_properties(manifest.json.gz PROPERTIES QT_RESOURCE_ALIAS manifest.json.gz)
+# set_source_files_properties(manifest.json.xz PROPERTIES QT_RESOURCE_ALIAS manifest.json.xz)
+# set_source_files_properties(manifest.json.zip PROPERTIES QT_RESOURCE_ALIAS manifest.json.zip)

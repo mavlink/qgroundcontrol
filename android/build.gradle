@@ -5,7 +5,8 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.8.0'
+        //noinspection AndroidGradlePluginVersion
+        classpath 'com.android.tools.build:gradle:8.9.1'
     }
 }
 
@@ -31,7 +32,6 @@ dependencies {
 }
 
 def getTimestampStr() { return new Date().format('yyyyMMddHHmmss') }
-def timestampInt = (int)(new Date().getTime() / 1000 / 1)
 
 android {
     /*******************************************************
@@ -48,14 +48,13 @@ android {
      * Changing them manually might break the compilation!
      *******************************************************/
 
-    // namespace = androidPackageName
-    namespace = "org.mavlink.qgroundcontrol"
+    namespace androidPackageName
     compileSdkVersion androidCompileSdkVersion
     buildToolsVersion androidBuildToolsVersion
-    ndkVersion = androidNdkVersion
+    ndkVersion androidNdkVersion
 
     // Extract native libraries from the APK
-    packagingOptions.jniLibs.useLegacyPackaging = true
+    packagingOptions.jniLibs.useLegacyPackaging true
 
     sourceSets {
         main {
@@ -76,7 +75,7 @@ android {
     }
 
     buildFeatures {
-        buildConfig = true
+        buildConfig true
     }
 
     compileOptions {
@@ -85,7 +84,7 @@ android {
     }
 
     lintOptions {
-        abortOnError = false
+        abortOnError false
     }
 
     // Do not compress Qt binary resources file

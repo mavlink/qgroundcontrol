@@ -1,9 +1,14 @@
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        StatusTextHandlerTest.cc
-        StatusTextHandlerTest.h
-        SigningTest.cc
-        SigningTest.h
+set(QGC_SOURCES
+    ${QGC_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/StatusTextHandlerTest.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/StatusTextHandlerTest.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/SigningTest.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/SigningTest.h
+    CACHE INTERNAL "" FORCE
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+set(QGC_DIRECTORIES
+    ${QGC_DIRECTORIES}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    CACHE INTERNAL "" FORCE
+)

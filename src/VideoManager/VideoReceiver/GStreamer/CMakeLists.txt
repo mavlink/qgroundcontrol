@@ -1,38 +1,51 @@
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE GLVideoItemStub.h)
-
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+set(QGC_DIRECTORIES
+    ${QGC_DIRECTORIES}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    CACHE INTERNAL "" FORCE
+)
 
 if(NOT QGC_ENABLE_GST_VIDEOSTREAMING)
+    set(QGC_SOURCES
+        ${QGC_SOURCES}
+        ${CMAKE_CURRENT_SOURCE_DIR}/GLVideoItemStub.h
+        CACHE INTERNAL "" FORCE
+    )
     return()
 endif()
 
-add_subdirectory(gstqml6gl)
-
-if(NOT TARGET gstqml6gl)
-    return()
-endif()
-
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        gstqgc.cc
-        gstqgcelement.cc
-        gstqgcelements.h
-        gstqgcvideosinkbin.cc
-        gstqgcvideosinkbin.h
-        GStreamer.cc
-        GStreamer.h
-        GstVideoReceiver.cc
-        GstVideoReceiver.h
+set(QGC_SOURCES
+    ${QGC_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/gstqgc.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/gstqgcelement.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/gstqgcelements.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/gstqgcvideosinkbin.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/gstqgcvideosinkbin.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/GStreamer.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/GStreamer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/GstVideoReceiver.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/GstVideoReceiver.h
+    CACHE INTERNAL "" FORCE
 )
 
 if(IOS)
-    target_sources(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            gst_ios_init.m
-            gst_ios_init.h
+    set(QGC_SOURCES
+        ${QGC_SOURCES}
+        ${CMAKE_CURRENT_SOURCE_DIR}/gst_ios_init.m
+        ${CMAKE_CURRENT_SOURCE_DIR}/gst_ios_init.h
+        CACHE INTERNAL "" FORCE
     )
 endif()
 
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE gstqml6gl)
+add_subdirectory(gstqml6gl)
+set(QGC_LIBRARIES
+    ${QGC_LIBRARIES}
+    Qt6::OpenGL
+    gstqml6gl
+    CACHE INTERNAL "" FORCE
+)
 
-target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_GST_STREAMING)
+set(QGC_DEFINES
+    ${QGC_DEFINES}
+    QGC_GST_STREAMING
+    CACHE INTERNAL "" FORCE
+)

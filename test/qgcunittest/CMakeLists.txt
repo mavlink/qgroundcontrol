@@ -1,11 +1,16 @@
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        MultiSignalSpy.cc
-        MultiSignalSpy.h
-        MultiSignalSpyV2.cc
-        MultiSignalSpyV2.h
-        UnitTest.cc
-        UnitTest.h
+set(QGC_SOURCES
+    ${QGC_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/MultiSignalSpy.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/MultiSignalSpy.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/MultiSignalSpyV2.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/MultiSignalSpyV2.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/UnitTest.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/UnitTest.h
+    CACHE INTERNAL "" FORCE
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+set(QGC_DIRECTORIES
+    ${QGC_DIRECTORIES}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    CACHE INTERNAL "" FORCE
+)

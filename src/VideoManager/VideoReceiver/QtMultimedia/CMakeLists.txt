@@ -1,17 +1,37 @@
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        QtMultimediaReceiver.cc
-        QtMultimediaReceiver.h
-        UVCReceiver.cc
-        UVCReceiver.h
+set(QGC_SOURCES
+    ${QGC_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/QtMultimediaReceiver.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/QtMultimediaReceiver.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/UVCReceiver.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/UVCReceiver.h
+    CACHE INTERNAL "" FORCE
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+set(QGC_LIBRARIES
+    ${QGC_LIBRARIES}
+    Qt6::Multimedia
+    Qt6::MultimediaQuickPrivate
+    CACHE INTERNAL "" FORCE
+)
+
+set(QGC_DIRECTORIES
+    ${QGC_DIRECTORIES}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    CACHE INTERNAL "" FORCE
+)
 
 if(QGC_ENABLE_QT_VIDEOSTREAMING)
-    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_QT_STREAMING)
+    set(QGC_DEFINES
+        ${QGC_DEFINES}
+        QGC_QT_STREAMING
+        CACHE INTERNAL "" FORCE
+    )
 endif()
 
 if(NOT QGC_ENABLE_UVC)
-    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_DISABLE_UVC)
+    set(QGC_DEFINES
+        ${QGC_DEFINES}
+        QGC_DISABLE_UVC
+        CACHE INTERNAL "" FORCE
+    )
 endif()

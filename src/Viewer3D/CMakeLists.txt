@@ -2,39 +2,50 @@ if(NOT QGC_VIEWER3D)
     return()
 endif()
 
-message(STATUS "Viewer3D is Initialized")
-
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        CityMapGeometry.cc
-        CityMapGeometry.h
-        earcut.hpp
-        OsmParser.cc
-        OsmParser.h
-        OsmParserThread.cc
-        OsmParserThread.h
-        Viewer3DManager.cc
-        Viewer3DManager.h
-        Viewer3DQmlBackend.cc
-        Viewer3DQmlBackend.h
-        Viewer3DQmlVariableTypes.h
-        Viewer3DTerrainGeometry.cc
-        Viewer3DTerrainGeometry.h
-        Viewer3DTerrainTexture.cc
-        Viewer3DTerrainTexture.h
-        Viewer3DTileQuery.cc
-        Viewer3DTileQuery.h
-        Viewer3DTileReply.cc
-        Viewer3DTileReply.h
-        Viewer3DUtils.cc
-        Viewer3DUtils.h
+set(QGC_SOURCES
+    ${QGC_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/CityMapGeometry.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/CityMapGeometry.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/earcut.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/OsmParser.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/OsmParser.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/OsmParserThread.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/OsmParserThread.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Viewer3DManager.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/Viewer3DManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Viewer3DQmlBackend.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/Viewer3DQmlBackend.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Viewer3DQmlVariableTypes.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Viewer3DTerrainGeometry.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/Viewer3DTerrainGeometry.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Viewer3DTerrainTexture.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/Viewer3DTerrainTexture.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Viewer3DTileQuery.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/Viewer3DTileQuery.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Viewer3DTileReply.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/Viewer3DTileReply.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Viewer3DUtils.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/Viewer3DUtils.h
+    CACHE INTERNAL "" FORCE
 )
 
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Quick3D)
+set(QGC_LIBRARIES
+    ${QGC_LIBRARIES}
+    Qt6::Quick3D
+    CACHE INTERNAL "" FORCE
+)
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+set(QGC_DIRECTORIES
+    ${QGC_DIRECTORIES}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    CACHE INTERNAL "" FORCE
+)
 
-target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_VIEWER3D)
+set(QGC_DEFINES
+    ${QGC_DEFINES}
+    QGC_VIEWER3D
+    CACHE INTERNAL "" FORCE
+)
 
 # file(GLOB_RECURSE QML_SOURCES RELATIVE Viewer3DQml Viewer3DQml/*.qml)
 # file(GLOB_RECURSE QML_RESOURCES RELATIVE Viewer3DQml Viewer3DQml/*.mesh)

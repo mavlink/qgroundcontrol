@@ -1,21 +1,26 @@
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        FTPManagerTest.cc
-        FTPManagerTest.h
-        InitialConnectTest.cc
-        InitialConnectTest.h
-        MAVLinkLogManagerTest.cc
-        MAVLinkLogManagerTest.h
-        RequestMessageTest.cc
-        RequestMessageTest.h
-        SendMavCommandWithHandlerTest.cc
-        SendMavCommandWithHandlerTest.h
-        SendMavCommandWithSignallingTest.cc
-        SendMavCommandWithSignallingTest.h
-        VehicleLinkManagerTest.cc
-        VehicleLinkManagerTest.h
+set(QGC_SOURCES
+    ${QGC_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/FTPManagerTest.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/FTPManagerTest.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/InitialConnectTest.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/InitialConnectTest.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/MAVLinkLogManagerTest.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/MAVLinkLogManagerTest.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/RequestMessageTest.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/RequestMessageTest.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/SendMavCommandWithHandlerTest.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/SendMavCommandWithHandlerTest.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/SendMavCommandWithSignallingTest.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/SendMavCommandWithSignallingTest.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleLinkManagerTest.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleLinkManagerTest.h
+    CACHE INTERNAL "" FORCE
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+set(QGC_DIRECTORIES
+    ${QGC_DIRECTORIES}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    CACHE INTERNAL "" FORCE
+)
 
 add_subdirectory(ComponentInformation)

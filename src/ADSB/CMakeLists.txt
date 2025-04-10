@@ -1,11 +1,17 @@
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        ADSBTCPLink.cc
-        ADSBTCPLink.h
-        ADSBVehicle.cc
-        ADSBVehicle.h
-        ADSBVehicleManager.cc
-        ADSBVehicleManager.h
+set(QGC_SOURCES
+    ${QGC_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/ADSB.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/ADSBTCPLink.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/ADSBTCPLink.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/ADSBVehicle.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/ADSBVehicle.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/ADSBVehicleManager.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/ADSBVehicleManager.h
+    CACHE INTERNAL "" FORCE
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+set(QGC_DIRECTORIES
+    ${QGC_DIRECTORIES}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    CACHE INTERNAL "" FORCE
+)
