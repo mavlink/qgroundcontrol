@@ -2,30 +2,37 @@ if(QGC_NO_SERIAL_LINK)
     return()
 endif()
 
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        GPSManager.cc
-        GPSManager.h
-        GPSProvider.cc
-        GPSProvider.h
-        GPSRtk.cc
-        GPSRtk.h
-        GPSRTKFactGroup.cc
-        GPSRTKFactGroup.h
-        RTCMMavlink.cc
-        RTCMMavlink.h
-        satellite_info.h
-        sensor_gnss_relative.h
-        sensor_gps.h
+set(QGC_SOURCES
+    ${QGC_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/definitions.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/GPSManager.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/GPSManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/GPSProvider.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/GPSProvider.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/GPSRtk.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/GPSRtk.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/GPSRTKFactGroup.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/GPSRTKFactGroup.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/RTCMMavlink.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/RTCMMavlink.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/satellite_info.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/sensor_gnss_relative.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/sensor_gps.h
+    CACHE INTERNAL "" FORCE
 )
 
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Core)
+set(QGC_DIRECTORIES
+    ${QGC_DIRECTORIES}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    CACHE INTERNAL "" FORCE
+)
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+# qt_add_resources(${CMAKE_PROJECT_NAME} "GPSRTKFact.json"
+#     PREFIX "/Vehicle"
+#     FILES GPSRTKFact.json
+# )
 
 #===========================================================================#
-
-message(STATUS "Building GPS Drivers")
 
 CPMAddPackage(
     NAME px4-gpsdrivers
@@ -35,12 +42,16 @@ CPMAddPackage(
 )
 
 file(GLOB GPS_DRIVERS_SOURCES "${px4-gpsdrivers_SOURCE_DIR}/src/*")
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        definitions.h
-        ${GPS_DRIVERS_SOURCES}
+qt_add_library(px4-gpsdrivers STATIC ${GPS_DRIVERS_SOURCES})
+
+target_link_libraries(px4-gpsdrivers PUBLIC Qt6::Core)
+
+target_include_directories(px4-gpsdrivers PUBLIC ${px4-gpsdrivers_SOURCE_DIR}/src)
+
+target_compile_definitions(px4-gpsdrivers PUBLIC GPS_DEFINITIONS_HEADER=<${CMAKE_CURRENT_SOURCE_DIR}/definitions.h>)
+
+set(QGC_LIBRARIES
+    ${QGC_LIBRARIES}
+    px4-gpsdrivers
+    CACHE INTERNAL "" FORCE
 )
-
-target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE GPS_DEFINITIONS_HEADER=<${CMAKE_CURRENT_SOURCE_DIR}/definitions.h>)
-
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${px4-gpsdrivers_SOURCE_DIR}/src)

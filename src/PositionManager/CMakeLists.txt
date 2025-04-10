@@ -1,9 +1,20 @@
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        PositionManager.cpp
-        PositionManager.h
-        SimulatedPosition.cc
-        SimulatedPosition.h
+set(QGC_SOURCES
+    ${QGC_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/PositionManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/PositionManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/SimulatedPosition.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/SimulatedPosition.h
+    CACHE INTERNAL "" FORCE
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+set(QGC_LIBRARIES
+    ${QGC_LIBRARIES}
+    Qt6::PositioningPrivate
+    CACHE INTERNAL "" FORCE
+)
+
+set(QGC_DIRECTORIES
+    ${QGC_DIRECTORIES}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    CACHE INTERNAL "" FORCE
+)
