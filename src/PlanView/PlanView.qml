@@ -323,6 +323,28 @@ Item {
         id:             panel
         anchors.fill:   parent
 
+        // Store references to current beacon and geofence
+        property var currentBeacon: null
+        property var currentGeofence: null
+
+        // Function to remove current beacon and geofence
+        function removeCurrentBeacon() {
+            if (currentBeacon) {
+                editorMap.removeMapItem(currentBeacon)
+                currentBeacon.destroy()
+                currentBeacon = null
+            }
+            if (currentGeofence) {
+                editorMap.removeMapItem(currentGeofence)
+                currentGeofence.destroy()
+                currentGeofence = null
+            }
+            // Remove the geofence from the controller
+            if (_geoFenceController) {
+                _geoFenceController.clearPolygon()
+            }
+        }
+
         FlightMap {
             id:                         editorMap
             anchors.fill:               parent
@@ -391,6 +413,111 @@ Item {
                     opacity:     _editingLayer == _layerMission ? 1 : editorMap._nonInteractiveOpacity
                     interactive: _editingLayer == _layerMission
                     vehicle:     _planMasterController.controllerVehicle
+                }
+            }
+
+            // Beacon Map Item Component
+            Component {
+                id: beaconMapItemComponent
+                MapQuickItem {
+                    id: beaconItem
+                    anchorPoint.x: sourceItem.width / 2
+                    anchorPoint.y: sourceItem.height / 2
+                    z: QGroundControl.zOrderWaypointLines + 1
+
+                    sourceItem: Item {
+                        width: ScreenTools.defaultFontPixelHeight * 2
+                        height: width
+
+                        Image {
+                            id: beaconIcon
+                            source: "/qmlimages/Gps.svg"
+                            width: parent.width
+                            height: width
+                            sourceSize.width: width
+                            sourceSize.height: height
+                            anchors.centerIn: parent
+                        }
+
+                        Rectangle {
+                            id: arrow
+                            width: parent.width * 0.6
+                            height: width * 0.2
+                            color: "red"
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.bottom: parent.top
+                            anchors.bottomMargin: -height/2
+                            transform: Rotation {
+                                origin.x: arrow.width/2
+                                origin.y: arrow.height/2
+                                angle: beaconItem.rotation
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Beacon Drop Panel
+            Component {
+                id: beaconDropPanel
+                Column {
+                    spacing: 10
+                    anchors.margins: 20
+
+                    QGCLabel {
+                        text: qsTr("Enter GPS Beacon Location")
+                        font.pointSize: ScreenTools.defaultFontPointSize
+                    }
+
+                    QGCTextField {
+                        id: latInput
+                        placeholderText: "Latitude"
+                        validator: DoubleValidator {
+                            bottom: -90.0
+                            top: 90.0
+                            decimals: 8
+                        }
+                    }
+
+                    QGCTextField {
+                        id: lonInput
+                        placeholderText: "Longitude"
+                        validator: DoubleValidator {
+                            bottom: -180.0
+                            top: 180.0
+                            decimals: 8
+                        }
+                    }
+
+                    QGCTextField {
+                        id: headingInput
+                        placeholderText: "Heading (degrees)"
+                        validator: DoubleValidator {
+                            bottom: 0.0
+                            top: 360.0
+                            decimals: 1
+                        }
+                    }
+
+                    QGCButton {
+                        text: "Place Beacon"
+                        onClicked: {
+                            if (latInput.text && lonInput.text && headingInput.text) {
+                                var lat = parseFloat(latInput.text)
+                                var lon = parseFloat(lonInput.text)
+                                var heading = parseFloat(headingInput.text)
+                                
+                                if (!isNaN(lat) && !isNaN(lon) && !isNaN(heading)) {
+                                    var beacon = beaconMapItemComponent.createObject(editorMap, {
+                                        coordinate: QtPositioning.coordinate(lat, lon),
+                                        rotation: heading
+                                    })
+                                    editorMap.addMapItem(beacon)
+                                    toolStrip.closeDropPanel()
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -511,6 +638,7 @@ Item {
             readonly property int patternButtonIndex:   5
             readonly property int landButtonIndex:      6
             readonly property int centerButtonIndex:    7
+            readonly property int beaconButtonIndex:    8
 
             property bool _isRallyLayer:    _editingLayer == _layerRallyPoints
             property bool _isMissionLayer:  _editingLayer == _layerMission
@@ -595,6 +723,13 @@ Item {
                         enabled:            true
                         visible:            true
                         dropPanelComponent: centerMapDropPanel
+                    },
+                    ToolStripAction {
+                        text:               qsTr("GPS Beacon")
+                        iconSource:         "/qmlimages/Gps.svg"
+                        enabled:            true
+                        visible:            toolStrip._isMissionLayer
+                        dropPanelComponent: beaconDropPanel
                     }
                 ]
             }

@@ -273,11 +273,11 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
         applicationName = QGC_APPLICATION_NAME;
 #endif
     }
-    setApplicationName(applicationName);
+    setApplicationName("MA-Custom");
     setOrganizationName(QGC_ORG_NAME);
     setOrganizationDomain(QGC_ORG_DOMAIN);
 
-    this->setApplicationVersion(QString(APP_VERSION_STR));
+    this->setApplicationVersion("v4.4.0.0");
 
     // Set settings format
     QSettings::setDefaultFormat(QSettings::IniFormat);

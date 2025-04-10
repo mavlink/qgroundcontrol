@@ -38,10 +38,53 @@ Rectangle {
                 mainWindow.showFlyView()
             }
         }
+        QGCToolBarButton {
+            id:                 beaconButton
+            Layout.fillHeight:  true
+            icon.source:        "/qmlimages/Gps.svg"
+            text:               "GPS Beacon"
+            onClicked:          beaconPopup.open()
+        }
         Loader {
             source:             "PlanToolBarIndicators.qml"
             Layout.fillWidth:   true
             Layout.fillHeight:  true
+        }
+    }
+
+    Popup {
+        id: beaconPopup
+        modal: true
+        width: 300
+        height: 220
+        anchors.centerIn: parent
+
+        Column {
+            spacing: 10
+            padding: 20
+
+            TextField {
+                id: latInput
+                placeholderText: "Latitude"
+            }
+
+            TextField {
+                id: lonInput
+                placeholderText: "Longitude"
+            }
+
+            TextField {
+                id: headingInput
+                placeholderText: "Heading"
+            }
+
+            Button {
+                text: "Place Beacon"
+                onClicked: {
+                    beaconPopup.close()
+                    map.addBeacon(latInput.text, lonInput.text, headingInput.text)
+                }
+            }
         }
     }
 }

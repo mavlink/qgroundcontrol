@@ -164,9 +164,9 @@ StableBuild {
 }
 
 # Set the QGC version from git
-APP_VERSION_STR = vUnknown
-VERSION         = 0.0.0   # Marker to indicate out-of-tree build
-MAC_VERSION     = 0.0.0
+APP_VERSION_STR = MAcustom-v4.4.0.0
+VERSION         = 4.4.0.0   # Marker to indicate out-of-tree build
+MAC_VERSION     = 4.4.0
 MAC_BUILD       = 0
 exists ($$PWD/.git) {
     GIT_DESCRIBE = $$system(git --git-dir $$PWD/.git --work-tree $$PWD describe --always --tags)
