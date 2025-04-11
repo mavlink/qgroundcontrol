@@ -1,7 +1,12 @@
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        FollowMeTest.cc
-        FollowMeTest.h
+set(QGC_SOURCES
+    ${QGC_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/FollowMeTest.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/FollowMeTest.h
+    CACHE INTERNAL "" FORCE
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+set(QGC_DIRECTORIES
+    ${QGC_DIRECTORIES}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    CACHE INTERNAL "" FORCE
+)

@@ -1,16 +1,21 @@
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        FactSystemTestBase.cc
-        FactSystemTestBase.h
-        FactSystemTestGeneric.cc
-        FactSystemTestGeneric.h
-        FactSystemTestPX4.cc
-        FactSystemTestPX4.h
-        ParameterManagerTest.cc
-        ParameterManagerTest.h
+set(QGC_SOURCES
+    ${QGC_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/FactSystemTestBase.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/FactSystemTestBase.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/FactSystemTestGeneric.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/FactSystemTestGeneric.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/FactSystemTestPX4.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/FactSystemTestPX4.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/ParameterManagerTest.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/ParameterManagerTest.h
+    CACHE INTERNAL "" FORCE
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+set(QGC_DIRECTORIES
+    ${QGC_DIRECTORIES}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    CACHE INTERNAL "" FORCE
+)
 
 # qt_add_qml_module(${CMAKE_PROJECT_NAME}
 #     URI factsystemtest

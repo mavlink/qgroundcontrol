@@ -1,23 +1,24 @@
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    target_sources(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            MockConfiguration.cc
-            MockConfiguration.h
-            MockLink.cc
-            MockLink.h
-            MockLinkFTP.cc
-            MockLinkFTP.h
-            MockLinkWorker.cc
-            MockLinkWorker.h
-            MockLinkMissionItemHandler.cc
-            MockLinkMissionItemHandler.h
-    )
-
-    target_link_libraries(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            Qt6::Core
-            Qt6::Positioning
-    )
-
-    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+if(NOT ${CMAKE_BUILD_TYPE} MATCHES "Debug")
+    return()
 endif()
+
+set(QGC_SOURCES
+    ${QGC_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/MockConfiguration.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/MockConfiguration.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/MockLink.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/MockLink.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/MockLinkFTP.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/MockLinkFTP.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/MockLinkWorker.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/MockLinkWorker.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/MockLinkMissionItemHandler.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/MockLinkMissionItemHandler.h
+    CACHE INTERNAL "" FORCE
+)
+
+set(QGC_DIRECTORIES
+    ${QGC_DIRECTORIES}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    CACHE INTERNAL "" FORCE
+)

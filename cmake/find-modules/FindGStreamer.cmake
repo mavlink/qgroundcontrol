@@ -156,7 +156,7 @@ function(find_gstreamer_component component pkgconfig_name)
         string(TOUPPER ${component} upper)
         pkg_check_modules(PC_GSTREAMER_${upper} IMPORTED_TARGET ${pkgconfig_name})
         if(TARGET PkgConfig::PC_GSTREAMER_${upper})
-            add_library(GStreamer::${component} INTERFACE IMPORTED)
+            qt_add_library(GStreamer::${component} INTERFACE IMPORTED)
             target_link_libraries(GStreamer::${component} INTERFACE PkgConfig::PC_GSTREAMER_${upper})
             set_target_properties(GStreamer::${component} PROPERTIES VERSION ${PC_GSTREAMER_${upper}_VERSION})
         endif()
@@ -216,7 +216,7 @@ find_package_handle_standard_args(GStreamer
 )
 
 if(GStreamer_FOUND AND NOT TARGET GStreamer::GStreamer)
-    add_library(GStreamer::GStreamer INTERFACE IMPORTED)
+    qt_add_library(GStreamer::GStreamer INTERFACE IMPORTED)
     target_link_libraries(GStreamer::GStreamer
         INTERFACE
             GStreamer::Core
@@ -256,7 +256,7 @@ target_link_directories(GStreamer::GStreamer INTERFACE ${GSTREAMER_LIB_PATH})
 
 # TODO: https://gstreamer.freedesktop.org/documentation/qt6d3d11/index.html#qml6d3d11sink-page
 
-add_library(GStreamer::Plugins INTERFACE IMPORTED)
+qt_add_library(GStreamer::Plugins INTERFACE IMPORTED)
 target_link_directories(GStreamer::Plugins INTERFACE ${GSTREAMER_PLUGIN_PATH})
 
 set(GST_PLUGINS

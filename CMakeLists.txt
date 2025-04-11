@@ -167,36 +167,48 @@ find_package(Qt6
     ${QT_MINIMUM_VERSION}
     REQUIRED
     COMPONENTS
+        Charts
         Concurrent
         Core
         Core5Compat
         Gui
         Location
+        LinguistTools
         Multimedia
+        MultimediaQuickPrivate
         Network
-        OpenGL
         Positioning
         Qml
         QmlIntegration
         Quick
         QuickControls2
-        QuickWidgets
         Sensors
         Sql
         Svg
         TextToSpeech
         Widgets
         Xml
-    OPTIONAL_COMPONENTS
-        Bluetooth
-        Charts
-        LinguistTools
-        MultimediaQuickPrivate
-        Quick3D
-        Quick3DTools
-        SerialPort
-        Test
 )
+
+if(QGC_BUILD_TESTING)
+    find_package(Qt6 ${QT_MINIMUM_VERSION} REQUIRED COMPONENTS Test)
+endif()
+
+if(QGC_ENABLE_GST_VIDEOSTREAMING)
+    find_package(Qt6 ${QT_MINIMUM_VERSION} REQUIRED COMPONENTS OpenGL ShaderTools)
+endif()
+
+if(QGC_ENABLE_BLUETOOTH)
+    find_package(Qt6 ${QT_MINIMUM_VERSION} REQUIRED COMPONENTS Bluetooth)
+endif()
+
+if(QGC_VIEWER3D)
+    find_package(Qt6 ${QT_MINIMUM_VERSION} REQUIRED COMPONENTS Quick3D)
+endif()
+
+if(NOT ANDROID AND NOT IOS)
+    find_package(Qt6 ${QT_MINIMUM_VERSION} REQUIRED COMPONENTS SerialPort)
+endif()
 
 if(LINUX)
     find_package(Qt6 ${QT_MINIMUM_VERSION} COMPONENTS WaylandClient)
@@ -230,8 +242,6 @@ add_compile_definitions(
     $<$<NOT:$<BOOL:${QGC_STABLE_BUILD}>>:QGC_DAILY_BUILD>
     $<$<BOOL:${QGC_BUILD_TESTING}>:QGC_UNITTEST_BUILD>
     $<$<BOOL:${QGC_DEBUG_QML}>:QT_QML_DEBUG>
-    $<$<BOOL:${QGC_DISABLE_APM_MAVLINK}>:QGC_NO_ARDUPILOT_DIALECT>
-    $<$<BOOL:${QGC_VIEWER3D}>:QGC_VIEWER3D>
 )
 
 if(NOT QGC_BUILD_TESTING)
@@ -466,6 +476,10 @@ add_subdirectory(src)
 if(QGC_BUILD_TESTING)
     add_subdirectory(test)
 endif()
+
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${QGC_SOURCES})
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${QGC_LIBRARIES})
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${QGC_DIRECTORIES})
 
 if(QGC_CUSTOM_BUILD)
     target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_SOURCES})

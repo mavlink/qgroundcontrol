@@ -1,17 +1,20 @@
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        EventHandler.cc
-        EventHandler.h
-        HealthAndArmingCheckReport.cc
-        HealthAndArmingCheckReport.h
-        logging.cpp
+set(QGC_SOURCES
+    ${QGC_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/EventHandler.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/EventHandler.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/HealthAndArmingCheckReport.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/HealthAndArmingCheckReport.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/logging.cpp
+    CACHE INTERNAL "" FORCE
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+set(QGC_DIRECTORIES
+    ${QGC_DIRECTORIES}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    CACHE INTERNAL "" FORCE
+)
 
 #===========================================================================#
-
-message(STATUS "Building libevents")
 
 CPMAddPackage(
     NAME libevents
@@ -20,7 +23,14 @@ CPMAddPackage(
     SOURCE_SUBDIR libs/cpp
 )
 
-if(TARGET libevents)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE libevents)
-    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${libevents_SOURCE_DIR}/libs/cpp)
-endif()
+set(QGC_LIBRARIES
+    ${QGC_LIBRARIES}
+    libevents
+    CACHE INTERNAL "" FORCE
+)
+
+set(QGC_DIRECTORIES
+    ${QGC_DIRECTORIES}
+    ${libevents_SOURCE_DIR}/libs/cpp
+    CACHE INTERNAL "" FORCE
+)

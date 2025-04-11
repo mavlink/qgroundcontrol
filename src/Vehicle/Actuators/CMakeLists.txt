@@ -1,21 +1,26 @@
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        ActuatorActions.cc
-        ActuatorActions.h
-        ActuatorOutputs.cc
-        ActuatorOutputs.h
-        Actuators.cc
-        Actuators.h
-        ActuatorTesting.cc
-        ActuatorTesting.h
-        Common.cc
-        Common.h
-        GeometryImage.cc
-        GeometryImage.h
-        Mixer.cc
-        Mixer.h
-        MotorAssignment.cc
-        MotorAssignment.h
+set(QGC_SOURCES
+    ${QGC_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/ActuatorActions.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/ActuatorActions.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/ActuatorOutputs.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/ActuatorOutputs.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Actuators.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/Actuators.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/ActuatorTesting.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/ActuatorTesting.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Common.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/Common.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/GeometryImage.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/GeometryImage.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Mixer.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/Mixer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/MotorAssignment.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/MotorAssignment.h
+    CACHE INTERNAL "" FORCE
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+set(QGC_DIRECTORIES
+    ${QGC_DIRECTORIES}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    CACHE INTERNAL "" FORCE
+)

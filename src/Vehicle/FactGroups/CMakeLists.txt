@@ -1,43 +1,48 @@
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        TerrainFactGroup.cc
-        TerrainFactGroup.h
-        VehicleBatteryFactGroup.cc
-        VehicleBatteryFactGroup.h
-        VehicleClockFactGroup.cc
-        VehicleClockFactGroup.h
-        VehicleDistanceSensorFactGroup.cc
-        VehicleDistanceSensorFactGroup.h
-        VehicleEFIFactGroup.cc
-        VehicleEFIFactGroup.h
-        VehicleEscStatusFactGroup.cc
-        VehicleEscStatusFactGroup.h
-        VehicleEstimatorStatusFactGroup.cc
-        VehicleEstimatorStatusFactGroup.h
-        VehicleGeneratorFactGroup.cc
-        VehicleGeneratorFactGroup.h
-        VehicleFactGroup.cc
-        VehicleFactGroup.h
-        VehicleGPS2FactGroup.cc
-        VehicleGPS2FactGroup.h
-        VehicleGPSFactGroup.cc
-        VehicleGPSFactGroup.h
-        VehicleLocalPositionFactGroup.cc
-        VehicleLocalPositionFactGroup.h
-        VehicleLocalPositionSetpointFactGroup.cc
-        VehicleLocalPositionSetpointFactGroup.h
-        VehicleRPMFactGroup.cc
-        VehicleRPMFactGroup.h
-        VehicleSetpointFactGroup.cc
-        VehicleSetpointFactGroup.h
-        VehicleTemperatureFactGroup.cc
-        VehicleTemperatureFactGroup.h
-        VehicleVibrationFactGroup.cc
-        VehicleVibrationFactGroup.h
-        VehicleWindFactGroup.cc
-        VehicleWindFactGroup.h
-        VehicleHygrometerFactGroup.cc
-        VehicleHygrometerFactGroup.h
+set(QGC_SOURCES
+    ${QGC_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/TerrainFactGroup.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/TerrainFactGroup.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleBatteryFactGroup.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleBatteryFactGroup.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleClockFactGroup.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleClockFactGroup.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleDistanceSensorFactGroup.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleDistanceSensorFactGroup.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleEFIFactGroup.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleEFIFactGroup.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleEscStatusFactGroup.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleEscStatusFactGroup.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleEstimatorStatusFactGroup.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleEstimatorStatusFactGroup.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleGeneratorFactGroup.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleGeneratorFactGroup.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleFactGroup.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleFactGroup.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleGPS2FactGroup.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleGPS2FactGroup.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleGPSFactGroup.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleGPSFactGroup.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleLocalPositionFactGroup.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleLocalPositionFactGroup.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleLocalPositionSetpointFactGroup.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleLocalPositionSetpointFactGroup.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleRPMFactGroup.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleRPMFactGroup.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleSetpointFactGroup.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleSetpointFactGroup.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleTemperatureFactGroup.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleTemperatureFactGroup.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleVibrationFactGroup.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleVibrationFactGroup.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleWindFactGroup.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleWindFactGroup.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleHygrometerFactGroup.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/VehicleHygrometerFactGroup.h
+    CACHE INTERNAL "" FORCE
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+set(QGC_DIRECTORIES
+    ${QGC_DIRECTORIES}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    CACHE INTERNAL "" FORCE
+)

@@ -1,29 +1,36 @@
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        Joystick.cc
-        Joystick.h
-        JoystickManager.cc
-        JoystickManager.h
+set(QGC_SOURCES
+    ${QGC_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/Joystick.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/Joystick.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/JoystickManager.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/JoystickManager.h
+    CACHE INTERNAL "" FORCE
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+set(QGC_DIRECTORIES
+    ${QGC_DIRECTORIES}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    CACHE INTERNAL "" FORCE
+)
 
 if(ANDROID)
-    target_sources(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            JoystickAndroid.cc
-            JoystickAndroid.h
+    set(QGC_SOURCES
+        ${QGC_SOURCES}
+        ${CMAKE_CURRENT_SOURCE_DIR}/JoystickAndroid.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/JoystickAndroid.h
+        CACHE INTERNAL "" FORCE
     )
     return()
 endif()
 
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        JoystickSDL.cc
-        JoystickSDL.h
+set(QGC_SOURCES
+    ${QGC_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/JoystickSDL.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/JoystickSDL.h
+    CACHE INTERNAL "" FORCE
 )
 
-target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_SDL_JOYSTICK SDL_MAIN_HANDLED)
+target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_SDL_JOYSTICK)
 
 #===========================================================================#
 
@@ -42,6 +49,7 @@ qt_add_resources(${CMAKE_PROJECT_NAME} "gamecontrollerdb.txt"
 
 #===========================================================================#
 
+set(SDL2_EXTRA_OPTIONS)
 if(WIN32)
     set(SDL2_EXTRA_OPTIONS
         "SDL_DIRECTX OFF"
@@ -89,7 +97,12 @@ CPMAddPackage(
 )
 
 target_compile_definitions(SDL2-static PRIVATE SDL_MAIN_HANDLED)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE SDL2::SDL2-static)
+
+set(QGC_LIBRARIES
+    ${QGC_LIBRARIES}
+    SDL2::SDL2-static
+    CACHE INTERNAL "" FORCE
+)
 
 # Default list of config overrides - TODO: Add to Custom Build Options
 # set(ENV{SDL_GAMECONTROLLERCONFIG}

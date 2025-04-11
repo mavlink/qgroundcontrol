@@ -24,7 +24,9 @@
 #else
 #include "GLVideoItemStub.h"
 #endif
+#ifdef QGC_QT_STREAMING
 #include "QtMultimediaReceiver.h"
+#endif
 #ifndef QGC_DISABLE_UVC
 #include "UVCReceiver.h"
 #endif

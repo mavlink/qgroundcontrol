@@ -1,33 +1,36 @@
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        ImageProtocolManager.cc
-        ImageProtocolManager.h
-        MAVLinkFTP.cc
-        MAVLinkFTP.h
-        MAVLinkLib.h
-        MAVLinkSigning.cc
-        MAVLinkSigning.h
-        MAVLinkStreamConfig.cc
-        MAVLinkStreamConfig.h
-        QGCMAVLink.cc
-        QGCMAVLink.h
-        StatusTextHandler.cc
-        StatusTextHandler.h
-        SysStatusSensorInfo.cc
-        SysStatusSensorInfo.h
+set(QGC_SOURCES
+    ${QGC_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/ImageProtocolManager.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/ImageProtocolManager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/MAVLinkFTP.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/MAVLinkFTP.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/MAVLinkLib.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/MAVLinkSigning.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/MAVLinkSigning.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/MAVLinkStreamConfig.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/MAVLinkStreamConfig.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGCMAVLink.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/QGCMAVLink.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/StatusTextHandler.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/StatusTextHandler.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/SysStatusSensorInfo.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/SysStatusSensorInfo.h
+    CACHE INTERNAL "" FORCE
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+set(QGC_DIRECTORIES
+    ${QGC_DIRECTORIES}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    CACHE INTERNAL "" FORCE
+)
 
 #===========================================================================#
-
-message(STATUS "Building MAVLink")
 
 # TODO:
 # CPMAddPackage(
 #     NAME mavlink
-#     GITHUB_REPOSITORY mavlink/mavlink
-#     GIT_TAG master
+#     GITHUB_REPOSITORY ${QGC_MAVLINK_GIT_REPO}
+#     GIT_TAG ${QGC_MAVLINK_GIT_TAG}
 #     OPTIONS
 #         "MAVLINK_DIALECT all"
 #         "MAVLINK_VERSION 2.0"
@@ -40,12 +43,13 @@ CPMAddPackage(
 )
 
 # For QGC all dialects means common and development. Though use of development mavlink code should be restricted to debug builds only.
-target_include_directories(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        ${mavlink_SOURCE_DIR}
-        ${mavlink_SOURCE_DIR}/all
-        ${mavlink_SOURCE_DIR}/common
-        ${mavlink_SOURCE_DIR}/development
+set(QGC_DIRECTORIES
+    ${QGC_DIRECTORIES}
+    ${mavlink_SOURCE_DIR}
+    ${mavlink_SOURCE_DIR}/all
+    ${mavlink_SOURCE_DIR}/common
+    ${mavlink_SOURCE_DIR}/development
+    CACHE INTERNAL "" FORCE
 )
 
 # if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")

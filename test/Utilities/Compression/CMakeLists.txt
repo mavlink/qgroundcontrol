@@ -1,10 +1,15 @@
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        DecompressionTest.cc
-        DecompressionTest.h
+set(QGC_SOURCES
+    ${QGC_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/DecompressionTest.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/DecompressionTest.h
+    CACHE INTERNAL "" FORCE
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+set(QGC_DIRECTORIES
+    ${QGC_DIRECTORIES}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    CACHE INTERNAL "" FORCE
+)
 
 qt_add_resources(${CMAKE_PROJECT_NAME} "UtilitiesTest_CompressionTest_res"
     PREFIX "/"
