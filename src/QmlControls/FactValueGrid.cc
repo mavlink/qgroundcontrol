@@ -259,7 +259,11 @@ void FactValueGrid::_saveSettings(void)
     if (_preventSaveSettings) {
         return;
     }
+    saveSettingsForced();
+}
 
+void FactValueGrid::saveSettingsForced(void)
+{
     QSettings   settings;
     QString     groupNameFormat("%1-%2");
     if (_userSettingsGroup.isEmpty()) {
@@ -296,9 +300,11 @@ void FactValueGrid::_saveSettings(void)
 
     // If this this settings change was set from a Vehicle card, this makes so the changes are
     // immediately applied to the other Vehicle cards.
-    for (FactValueGrid* obj : instances()) {
-        if(obj != this && _settingsKey() == obj->_settingsKey()) {
-            obj->_loadSettings();
+    if(!_preventSaveSettings){
+        for (FactValueGrid* obj : instances()) {
+            if(obj != this && _settingsKey() == obj->_settingsKey()) {
+                obj->_loadSettings();
+            }
         }
     }
 }
@@ -328,7 +334,7 @@ void FactValueGrid::_loadSettings(void)
     QString     groupNameFormat("%1-%2");
 
     if (!settings.childGroups().contains(groupNameFormat.arg(_userSettingsGroup).arg(_vehicleClass))) {
-        QGCCorePlugin::instance()->factValueGridCreateDefaultSettings(_defaultSettingsGroup);
+        QGCCorePlugin::instance()->factValueGridCreateDefaultSettings(this);
     }
 
     settings.beginGroup(_settingsKey());
@@ -337,7 +343,7 @@ void FactValueGrid::_loadSettings(void)
     if (version != 1) {
         qgcApp()->showAppMessage(tr("Settings version %1 for %2 is not supported. Setup will be reset to defaults.").arg(version).arg(_userSettingsGroup), tr("Load Settings"));
         settings.remove("");
-        QGCCorePlugin::instance()->factValueGridCreateDefaultSettings(_defaultSettingsGroup);
+        QGCCorePlugin::instance()->factValueGridCreateDefaultSettings(this);
     }
     _fontSize = settings.value(_fontSizeKey, DefaultFontSize).value<FontSize>();
 

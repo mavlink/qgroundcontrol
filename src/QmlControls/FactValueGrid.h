@@ -75,6 +75,8 @@ public:
     // Destroy the FactValueGrid object when done.
     void _loadSettings(void);
 
+    void saveSettingsForced(void);
+
     // Override from QQmlParserStatus
     void componentComplete(void) final;
 
