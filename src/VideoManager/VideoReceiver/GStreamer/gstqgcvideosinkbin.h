@@ -31,6 +31,6 @@ struct _GstQgcVideoSinkBinClass {
     GstBinClass parent_class;
 };
 
-GstQgcVideoSinkBin* gst_qgc_video_sink_bin_new(void);
+GstQgcVideoSinkBin *gst_qgc_video_sink_bin_new();
 
 G_END_DECLS

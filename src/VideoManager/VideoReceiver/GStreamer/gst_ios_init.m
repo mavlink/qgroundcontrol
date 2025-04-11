@@ -15,12 +15,12 @@ G_END_DECLS
 
 #define GST_IOS_GIO_MODULE_GNUTLS
 
-#if defined(GST_IOS_GIO_MODULE_GNUTLS)
-  #include <gio/gio.h>
-  GST_G_IO_MODULE_DECLARE(gnutls);
+#ifdef GST_IOS_GIO_MODULE_GNUTLS
+    #include <gio/gio.h>
+    GST_G_IO_MODULE_DECLARE(gnutls);
 #endif
 
-void gst_ios_pre_init(void)
+void gst_ios_pre_init()
 {
     const NSString *const resources = [[NSBundle mainBundle] resourcePath];
     const NSString *const tmp = NSTemporaryDirectory();
@@ -57,19 +57,21 @@ void gst_ios_post_init()
     /* Lower the ranks of filesrc and giosrc so iosavassetsrc is
      * tried first in gst_element_make_from_uri() for file:// */
 
-    #if defined(GST_IOS_GIO_MODULE_GNUTLS)
-        GST_G_IO_MODULE_LOAD(gnutls);
-    #endif
+#ifdef GST_IOS_GIO_MODULE_GNUTLS
+    GST_G_IO_MODULE_LOAD(gnutls);
+#endif
 
     reg = gst_registry_get();
     plugin = gst_registry_lookup_feature(reg, "filesrc");
     if (plugin) {
         gst_plugin_feature_set_rank(plugin, GST_RANK_SECONDARY);
     }
+
     plugin = gst_registry_lookup_feature(reg, "giosrc");
     if (plugin) {
         gst_plugin_feature_set_rank(plugin, GST_RANK_SECONDARY-1);
     }
+
     if (!gst_registry_lookup_feature(reg, "vtdec_hw")) {
         /* Usually there is no vtdec_hw plugin on iOS - in that case
         * we are increasing vtdec rank since VideoToolbox on iOS

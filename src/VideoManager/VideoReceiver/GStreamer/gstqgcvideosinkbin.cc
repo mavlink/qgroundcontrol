@@ -246,7 +246,7 @@ gst_qgc_video_sink_bin_get_property(GObject *object, guint prop_id, GValue *valu
             GstSample *sample = NULL;
             g_object_get(G_OBJECT(vsb->qmlglsink), PROP_LAST_SAMPLE_NAME, &sample, NULL);
             gst_value_set_sample(value, sample);
-            if (sample != NULL) {
+            if (sample) {
                 gst_sample_unref(sample);
                 sample = NULL;
             }
