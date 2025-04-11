@@ -16,6 +16,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         HorizontalFactValueGrid.h
         InstrumentValueData.cc
         InstrumentValueData.h
+        MultiVehicleFactValueGrid.cc
+        MultiVehicleFactValueGrid.h
         ParameterEditorController.cc
         ParameterEditorController.h
         QGCFileDialogController.cc
