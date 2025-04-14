@@ -7,15 +7,6 @@
  *
  ****************************************************************************/
 
-
-/**
- * @file
- *   @brief Map Tile Cache
- *
- *   @author Gus Grubba <gus@auterion.com>
- *
- */
-
 #include "QGCMapEngine.h"
 #include "QGCCachedTileSet.h"
 #include "QGCTileCacheWorker.h"
@@ -41,7 +32,7 @@ QGCMapEngine *getQGCMapEngine()
 
 QGCMapEngine::QGCMapEngine(QObject *parent)
     : QObject(parent)
-    , m_worker(new QGCCacheWorker(this))
+    , _worker(new QGCTileCacheWorker(this))
 {
     // qCDebug(QGCMapEngineLog) << Q_FUNC_INFO << this;
 
@@ -51,14 +42,14 @@ QGCMapEngine::QGCMapEngine(QObject *parent)
     (void) qRegisterMetaType<QGCTileSet>("QGCTileSet");
     (void) qRegisterMetaType<QGCCacheTile>("QGCCacheTile");
 
-    (void) connect(m_worker, &QGCCacheWorker::updateTotals, this, &QGCMapEngine::_updateTotals);
+    (void) connect(_worker, &QGCTileCacheWorker::updateTotals, this, &QGCMapEngine::_updateTotals);
 }
 
 QGCMapEngine::~QGCMapEngine()
 {
-    (void) disconnect(m_worker);
-    m_worker->stop();
-    m_worker->wait();
+    (void) disconnect(_worker);
+    _worker->stop();
+    _worker->wait();
 
     // qCDebug(QGCMapEngineLog) << Q_FUNC_INFO << this;
 }
@@ -70,7 +61,7 @@ QGCMapEngine *QGCMapEngine::instance()
 
 void QGCMapEngine::init(const QString &databasePath)
 {
-    m_worker->setDatabaseFile(databasePath);
+    _worker->setDatabaseFile(databasePath);
 
     QGCMapTask* const task = new QGCMapTask(QGCMapTask::taskInit);
     (void) addTask(task);
@@ -78,16 +69,16 @@ void QGCMapEngine::init(const QString &databasePath)
 
 bool QGCMapEngine::addTask(QGCMapTask *task)
 {
-    return m_worker->enqueueTask(task);
+    return _worker->enqueueTask(task);
 }
 
 void QGCMapEngine::_updateTotals(quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize)
 {
     emit updateTotals(totaltiles, totalsize, defaulttiles, defaultsize);
 
-    const quint64 maxSize = static_cast<quint64>(QGeoFileTileCacheQGC::getMaxDiskCacheSetting()) * pow(1024, 2);
-    if (!m_prunning && (defaultsize > maxSize)) {
-        m_prunning = true;
+    const quint64 maxSize = static_cast<quint64>(QGeoFileTileCacheQGC::getMaxDiskCacheSetting()) * qPow(1024, 2);
+    if (!_prunning && (defaultsize > maxSize)) {
+        _prunning = true;
 
         const quint64 amountToPrune = defaultsize - maxSize;
         QGCPruneCacheTask* const task = new QGCPruneCacheTask(amountToPrune);
