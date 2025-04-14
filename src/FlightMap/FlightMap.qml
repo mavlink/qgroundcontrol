@@ -171,7 +171,6 @@ Map {
         }
 
         onUpdated: (touchPoints) => {
-            console.log("onUpdated", touchPoints[0].x, touchPoints[0].y, lastMouseX, lastMouseY)
             if (dragActive) {
                 let deltaX = touchPoints[0].x - lastMouseX
                 let deltaY = touchPoints[0].y - lastMouseY
