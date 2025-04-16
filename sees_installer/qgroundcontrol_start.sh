@@ -9,7 +9,11 @@ from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout, QHBoxLay
 from PyQt5.QtCore import Qt
 import sys
 import time
+import configparser
 
+#FILE SECTIONS = ['LinkManager', 'Video', 'General', 'MainWindowState', 'JoystickManager', 'QGC_MAVLINK_PROTOCOL', 'Units', 'DEFAULT', 'FlightMapPosition', 'QGCQml', 'Vehicle14', 'LinkConfigurations', 'MAVLinkLogGroup', 'Vehicle12', 'LoggingFilters', 'Vehicle15', 'Branding', 'Joysticks', 'FlyView', 'TelemetryBarUserSettings-2', 'RadioCalibration']
+CONFIG_CRITICAL_SECTIONS = ['Joysticks', 'Video','TelemetryBarUserSettings-2', 'JoystickManager', 'LinkManager' ]
+IGNORE_PARAMS = ["Xbox%20Series%20X%20Controller\Axis"]
 
 class QGCGitHub():
     def __init__(self, branch):
@@ -112,8 +116,25 @@ class ProgressWindow:
         """Start the event loop"""
         return self.app.exec_()
 
+def section_to_text(config, sections):
+    result = []
+    for section_name in sections:
+        # Create section header
+        result += [f"[{section_name}]\n"]
 
-# Example usage
+        # Get section as a dictionary and add each key-value pair
+        section_dict = dict(config[section_name])
+        for key, value in section_dict.items():
+            ignore_param = False
+            for param in IGNORE_PARAMS:
+                if param in key:
+                    ignore_param = True
+            if not ignore_param:
+                    result += [f"{key}={value}\n"]
+            else:
+                pass
+    return result
+
 if __name__ == "__main__":
     # Create the progress window
     progress_win = ProgressWindow()
@@ -125,24 +146,35 @@ if __name__ == "__main__":
 
     filepath = "sees_installer/QGroundControl%20Daily.ini"
     try:
-    	qgc_ini_file = qgc_github.download_file(filepath)
+        qgc_ini_file = qgc_github.download_file(filepath)
     except Exception as e:
-    	print(f"{e}\n\nPlease install a .env file in the script path with the Github API key")
-    	exit(1)
+        print(f"{e}\n\nPlease install a .env file in the script path with the Github API key which you can find in:\nhttps://www.notion.so/seesai/QGroundcontrol-Sees-flavour-17cf348e991880faa376c0317c9d3ce0")
+        exit(1)
     # Save the file in case user wants to inspect and compare manually.
     file_output = "QGroundControl_github.ini"
+
     with open(file_output, 'wb') as file:
         file.write(qgc_ini_file)
     print(f"File downloaded and saved to {file_output}")
 
+    #with open('QGroundControl_github.ini', 'r') as file1, open('QGroundControl Daily.ini', 'r') as file2:
+    #    github_ini_lines = file1.readlines()
+    #    local_ini_lines = file2.readlines()
 
-    with open('QGroundControl_github.ini', 'r') as file1, open('/home/sees/.config/QGroundControl.org/QGroundControl Daily.ini', 'r') as file2:
-        file1_lines = file1.readlines()
-        file2_lines = file2.readlines()
-        diff = list(difflib.unified_diff(file1_lines, file2_lines, fromfile='QGC.ini', tofile='QGC-test.ini', n=0))
+    config_github = configparser.ConfigParser()
+    config_github.optionxform = str  # This preserves case
+    config_github.read('QGroundControl_github.ini')
+    github_ini_lines = section_to_text(config_github, CONFIG_CRITICAL_SECTIONS)
+
+    config_local = configparser.ConfigParser()
+    config_local.optionxform = str  # This preserves case
+    config_local.read('QGroundControl Daily.ini')
+    local_ini_lines = section_to_text(config_local, CONFIG_CRITICAL_SECTIONS)
+    diff = list(difflib.unified_diff(github_ini_lines, local_ini_lines, fromfile='QGC.ini', tofile='QGC-test.ini', n=0))
 
     progress_win.update_message("Checking QGroundControl config file...")
     time.sleep(1)  # Simulate doing more work
+
 
     if len(diff) > 0:
         # There are some differences
@@ -162,14 +194,14 @@ if __name__ == "__main__":
     # No differences in file,can go ahead and run QGC
     cmd_lst = ["./QGroundControl-v4.3.0-0.0.3.AppImage"]
     try:
-	    subprocess.Popen(
-		cmd_lst,
-		start_new_session=True,
-		text=True,
-		bufsize=1
-	    )
+        subprocess.Popen(
+		    cmd_lst,
+        start_new_session=True,
+        text=True,
+        bufsize=1
+          )
     except Exception as e:
-    	print(f"{e}\n\n. Error starting QGroundControl, have you chmod +x the QGroundControl-vXXX.AppImage file?")
+        print(f"{e}\n\n. Error starting QGroundControl, have you chmod +x the QGroundControl-vXXX.AppImage file?")
     # Keep window open until user closes it
     #sys.exit(progress_win.run())
     # Sleep to give QGC time to start
