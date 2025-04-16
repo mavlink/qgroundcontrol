@@ -336,7 +336,7 @@ Rectangle {
         ColumnLayout {
             anchors.left:   parent.left
             anchors.right:  parent.right
-            spacing:        ScreenTools.defaultFontPixelHeight
+            spacing:        ScreenTools.defaultFontPixelHeight / 2
             visible:        !landingCoordColumn.visible
 
             onVisibleChanged: {
@@ -349,6 +349,12 @@ Rectangle {
                 Layout.fillWidth:   true
                 wrapMode:           Text.WordWrap
                 text:               qsTr("Drag the loiter point to adjust landing direction for wind and obstacles.")
+            }
+
+            FactCheckBox {
+                text:       qsTr("Loiter clockwise")
+                fact:       missionItem.loiterClockwise
+                visible:    missionItem.useLoiterToAlt.rawValue
             }
 
             QGCButton {
