@@ -23,7 +23,7 @@ import QGroundControl.ScreenTools
 Item {
     id:         _root
 
-    property bool loaded: false
+    property bool listViewLoadCompleted: false
 
     Item {
         id:             panel
@@ -35,25 +35,12 @@ Item {
             anchors.margins: ScreenTools.defaultFontPixelWidth
             color:           qgcPal.window
 
-            Connections {
-                target: debugMessageModel
-
-                onDataChanged: {
-                    // Keep the view in sync if the button is checked
-                    if (loaded) {
-                        if (followTail.checked) {
-                            listview.positionViewAtEnd();
-                        }
-                    }
-                }
-            }
-
             Component {
                 id: delegateItem
                 Rectangle {
                     color:  index % 2 == 0 ? qgcPal.window : qgcPal.windowShade
                     height: Math.round(ScreenTools.defaultFontPixelHeight * 0.5 + field.height)
-                    width:  listview.width
+                    width:  listView.width
 
                     QGCLabel {
                         id:         field
@@ -66,18 +53,33 @@ Item {
             }
 
             QGCListView {
-                Component.onCompleted: {
-                    loaded = true
+                id:                     listView
+                anchors.top:            parent.top
+                anchors.left:           parent.left
+                anchors.right:          parent.right
+                anchors.bottom:         followTail.top
+                anchors.bottomMargin:   ScreenTools.defaultFontPixelWidth
+                clip:                   true
+                model:                  debugMessageModel
+                delegate:               delegateItem
+ 
+                function scrollToEnd() {
+                    if (listViewLoadCompleted) {
+                        if (followTail.checked) {
+                            listView.positionViewAtEnd();
+                        }
+                    }
                 }
-                anchors.top:     parent.top
-                anchors.left:    parent.left
-                anchors.right:   parent.right
-                anchors.bottom:  followTail.top
-                anchors.bottomMargin: ScreenTools.defaultFontPixelWidth
-                clip:            true
-                id:              listview
-                model:           debugMessageModel
-                delegate:        delegateItem
+
+                Component.onCompleted: {
+                    listViewLoadCompleted = true
+                    listView.scrollToEnd()
+                }
+
+                Connections {
+                    target:         debugMessageModel
+                    onDataChanged:  listView.scrollToEnd()
+                }
             }
 
             QGCFileDialog {
@@ -134,8 +136,8 @@ Item {
                 checked:                true
 
                 onCheckedChanged: {
-                    if (checked && loaded) {
-                        listview.positionViewAtEnd();
+                    if (checked && listViewLoadCompleted) {
+                        listView.positionViewAtEnd();
                     }
                 }
             }
