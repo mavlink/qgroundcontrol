@@ -1,0 +1,12 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Name=QGroundControl
+Version=1.0
+Path=/home/sees/Work/Sees/QGroundControl
+Exec=/home/sees/Work/Sees/QGroundControl/qgroundcontrol_start.sh
+Terminal=false
+Type=Application
+Categories=Utility
+Comment=QGroundControl
+Icon=/home/sees/.local/share/applications/QGroundControl.png
+StartupWMClass=QGroundControl
