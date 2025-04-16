@@ -56,7 +56,7 @@ class ProgressWindow:
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)  # Important!
         scroll_area.setWidget(self.message_label)  # Set the label as the widget inside scroll area
-        
+
         layoutV.addWidget(scroll_area)
 
         layoutH = QHBoxLayout()
@@ -157,7 +157,7 @@ if __name__ == "__main__":
         file.write(qgc_ini_file)
     print(f"File downloaded and saved to {file_output}")
 
-    #with open('QGroundControl_github.ini', 'r') as file1, open('QGroundControl Daily.ini', 'r') as file2:
+    #with open('QGroundControl_github.ini', 'r') as file1, open(''/home/sees/.config/QGroundControl.org/QGroundControl Daily.ini', 'r') as file2:
     #    github_ini_lines = file1.readlines()
     #    local_ini_lines = file2.readlines()
 
@@ -168,9 +168,9 @@ if __name__ == "__main__":
 
     config_local = configparser.ConfigParser()
     config_local.optionxform = str  # This preserves case
-    config_local.read('QGroundControl Daily.ini')
+    config_local.read('/home/sees/.config/QGroundControl.org/QGroundControl Daily.ini')
     local_ini_lines = section_to_text(config_local, CONFIG_CRITICAL_SECTIONS)
-    diff = list(difflib.unified_diff(github_ini_lines, local_ini_lines, fromfile='QGC.ini', tofile='QGC-test.ini', n=0))
+    diff = list(difflib.unified_diff(github_ini_lines, local_ini_lines, fromfile='QGC github', tofile='QGC local', n=0))
 
     progress_win.update_message("Checking QGroundControl config file...")
     time.sleep(1)  # Simulate doing more work
