@@ -2,12 +2,16 @@
 import os
 import shutil
 
+dest_install = '/home/sees/Work/Sees/QGroundControl'
+
 # Define destination directories
 destinations = [
     '/home/sees/.local/share/applications',
-    '/home/sees/Work/Sees/QGroundControl',
+    dest_install,
     '/home/sees/.config/QGroundControl.org'
 ]
+
+os.system("pip install python-dotenv")
 
 # Check if directories exist and create if user confirms
 for directory in destinations:
@@ -22,9 +26,16 @@ for directory in destinations:
 # Copy the files
 shutil.copy2('QGroundControl.png', '/home/sees/.local/share/applications')
 shutil.copy2('QGroundControl.desktop', '/home/sees/.local/share/applications')
-shutil.copy2('QGroundControl-v4.3.0-0.0.3.AppImage', '/home/sees/Work/Sees/QGroundControl')
-shutil.copy2('qgroundcontrol_start.sh', '/home/sees/Work/Sees/QGroundControl')
+shutil.copy2('QGroundControl-v4.3.0-0.0.3.AppImage', dest_install)
+shutil.copy2('qgroundcontrol_start.sh', dest_install)
+if not os.path.exists(os.path.join(dest_install,".env")):
+	print("No .env file available, copying template one. Please fill in the github API key")
+	shutil.copy2('.env', dest_install)
+else:
+	print(".env file exists, won't overwrite it")
+shutil.copy2('seesai-logo-narrow.jpg', dest_install)
 shutil.copy2('QGroundControl Daily.ini', '/home/sees/.config/QGroundControl.org')
 
 
 print("Files copied successfully!")
+

@@ -5,7 +5,7 @@ import os
 import argparse
 import difflib
 import subprocess
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout, QHBoxLayout, QPushButton
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout, QHBoxLayout, QPushButton, QScrollArea
 from PyQt5.QtCore import Qt
 import sys
 import time
@@ -46,7 +46,14 @@ class ProgressWindow:
         # Create message label
         self.message_label = QLabel("Checking QGroundControl config file...")
         self.message_label.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
-        layoutV.addWidget(self.message_label)
+        self.message_label.setWordWrap(True)  # Enable word wrapping
+
+        # Create a scroll area
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)  # Important!
+        scroll_area.setWidget(self.message_label)  # Set the label as the widget inside scroll area
+        
+        layoutV.addWidget(scroll_area)
 
         layoutH = QHBoxLayout()
 
@@ -117,7 +124,11 @@ if __name__ == "__main__":
     qgc_github = QGCGitHub(branch)
 
     filepath = "sees_installer/QGroundControl%20Daily.ini"
-    qgc_ini_file = qgc_github.download_file(filepath)
+    try:
+    	qgc_ini_file = qgc_github.download_file(filepath)
+    except Exception as e:
+    	print(f"{e}\n\nPlease install a .env file in the script path with the Github API key")
+    	exit(1)
     # Save the file in case user wants to inspect and compare manually.
     file_output = "QGroundControl_github.ini"
     with open(file_output, 'wb') as file:
@@ -150,13 +161,15 @@ if __name__ == "__main__":
     # There are no differences or the user is happy to continue
     # No differences in file,can go ahead and run QGC
     cmd_lst = ["./QGroundControl-v4.3.0-0.0.3.AppImage"]
-    subprocess.Popen(
-        cmd_lst,
-        start_new_session=True,
-        text=True,
-        bufsize=1
-    )
-
+    try:
+	    subprocess.Popen(
+		cmd_lst,
+		start_new_session=True,
+		text=True,
+		bufsize=1
+	    )
+    except Exception as e:
+    	print(f"{e}\n\n. Error starting QGroundControl, have you chmod +x the QGroundControl-vXXX.AppImage file?")
     # Keep window open until user closes it
     #sys.exit(progress_win.run())
     # Sleep to give QGC time to start
