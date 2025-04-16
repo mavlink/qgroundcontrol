@@ -113,7 +113,7 @@ if __name__ == "__main__":
 
     # Prepare to download from github
     load_dotenv()
-    branch = "EAC_test_installer"
+    branch = "v4.3.0-dev"
     qgc_github = QGCGitHub(branch)
 
     filepath = "sees_installer/QGroundControl%20Daily.ini"
