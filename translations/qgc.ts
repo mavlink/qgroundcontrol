@@ -4546,57 +4546,57 @@ Please place your vehicle in water, click the button, and wait. Note that the th
 <context>
     <name>AppMessages</name>
     <message>
-        <location filename="../src/QmlControls/AppMessages.qml" line="113"/>
+        <location filename="../src/QmlControls/AppMessages.qml" line="115"/>
         <source>GStreamer Debug Level</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/AppMessages.qml" line="157"/>
+        <location filename="../src/QmlControls/AppMessages.qml" line="159"/>
         <source>Logging categories</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/AppMessages.qml" line="195"/>
+        <location filename="../src/QmlControls/AppMessages.qml" line="197"/>
         <source>Search:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/AppMessages.qml" line="206"/>
+        <location filename="../src/QmlControls/AppMessages.qml" line="208"/>
         <source>Clear</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/AppMessages.qml" line="229"/>
+        <location filename="../src/QmlControls/AppMessages.qml" line="231"/>
         <source>Clear All</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/AppMessages.qml" line="86"/>
+        <location filename="../src/QmlControls/AppMessages.qml" line="88"/>
         <source>Log files (*.txt)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/AppMessages.qml" line="86"/>
+        <location filename="../src/QmlControls/AppMessages.qml" line="88"/>
         <source>All Files (*)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/AppMessages.qml" line="87"/>
+        <location filename="../src/QmlControls/AppMessages.qml" line="89"/>
         <source>Select log save file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/AppMessages.qml" line="105"/>
+        <location filename="../src/QmlControls/AppMessages.qml" line="107"/>
         <source>Save App Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/AppMessages.qml" line="132"/>
+        <location filename="../src/QmlControls/AppMessages.qml" line="134"/>
         <source>Show Latest</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/AppMessages.qml" line="147"/>
+        <location filename="../src/QmlControls/AppMessages.qml" line="149"/>
         <source>Set Logging</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5850,6 +5850,7 @@ Click Ok to start the auto-tuning process.
     </message>
     <message>
         <location filename="../src/PlanView/FWLandingPatternEditor.qml" line="132"/>
+        <location filename="../src/PlanView/FWLandingPatternEditor.qml" line="355"/>
         <source>Loiter clockwise</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5879,7 +5880,7 @@ Click Ok to start the auto-tuning process.
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/FWLandingPatternEditor.qml" line="355"/>
+        <location filename="../src/PlanView/FWLandingPatternEditor.qml" line="361"/>
         <source>Done</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5932,22 +5933,22 @@ Click Ok to start the auto-tuning process.
 <context>
     <name>FWLandingPatternMapVisual</name>
     <message>
-        <location filename="../src/PlanView/FWLandingPatternMapVisual.qml" line="277"/>
+        <location filename="../src/PlanView/FWLandingPatternMapVisual.qml" line="278"/>
         <source>Loiter</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/FWLandingPatternMapVisual.qml" line="277"/>
+        <location filename="../src/PlanView/FWLandingPatternMapVisual.qml" line="278"/>
         <source>Approach</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/FWLandingPatternMapVisual.qml" line="331"/>
+        <location filename="../src/PlanView/FWLandingPatternMapVisual.qml" line="332"/>
         <source>Landing Area</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/FWLandingPatternMapVisual.qml" line="369"/>
+        <location filename="../src/PlanView/FWLandingPatternMapVisual.qml" line="370"/>
         <source>Glide Slope</source>
         <translation type="unfinished"></translation>
     </message>
