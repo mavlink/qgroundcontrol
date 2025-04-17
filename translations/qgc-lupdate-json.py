@@ -50,7 +50,7 @@ def addLocKeysBasedOnQGCFileType(jsonPath, jsonDict):
             translateKeyValue =         "label,enumStrings,friendlyName,description,category"
             arrayIDKeysKeyValue =       "rawName,comment"
         elif qgcFileType == "FactMetaData":
-            translateKeyValue =         "shortDescription,longDescription,enumStrings"
+            translateKeyValue =         "shortDesc,longDesc,enumStrings"
             arrayIDKeysKeyValue =       "name"
         if translateKeysKey not in jsonDict and translateKeyValue != "":
             jsonDict[translateKeysKey] = translateKeyValue
