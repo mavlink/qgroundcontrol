@@ -134,11 +134,17 @@ Item {
 
             property var    _vehicle:   object
 
+            QGCMouseArea {
+                anchors.fill:       parent
+                onClicked:          toggleSelect(_vehicle.id)
+            }
+
             Column {
                 id:                         innerColumn
                 anchors.horizontalCenter:   parent.horizontalCenter
 
                 RowLayout {
+                    anchors.horizontalCenter:   parent.horizontalCenter
                     anchors.margins:    _margin
                     spacing:            _margin
 
@@ -189,11 +195,21 @@ Item {
                         }
                     }
                 }
-            }
 
-            QGCMouseArea {
-                anchors.fill:       parent
-                onClicked:          toggleSelect(_vehicle.id)
+                QGCFlickable {
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    width:          Math.min(contentWidth, vehicleList.width)
+                    height:         control.height
+                    contentWidth:   control.width
+                    contentHeight:  control.height
+
+                    TelemetryValuesBar {
+                        id:                             control
+                        valueArea_userSettingsGroup:    valueArea.vehicleCardUserSettingsGroup
+                        valueArea_defaultSettingsGroup: valueArea.vehicleCardDefaultSettingsGroup
+                        valueArea_vehicle:              _vehicle
+                    }
+                }
             }
         }
     }

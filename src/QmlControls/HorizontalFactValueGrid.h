@@ -24,8 +24,14 @@ public:
     Q_PROPERTY(QString telemetryBarDefaultSettingsGroup MEMBER telemetryBarDefaultSettingsGroup CONSTANT)
     Q_PROPERTY(QString telemetryBarUserSettingsGroup    MEMBER telemetryBarUserSettingsGroup    CONSTANT)
 
+    Q_PROPERTY(QString vehicleCardDefaultSettingsGroup  MEMBER vehicleCardDefaultSettingsGroup  CONSTANT)
+    Q_PROPERTY(QString vehicleCardUserSettingsGroup     MEMBER vehicleCardUserSettingsGroup     CONSTANT)
+
     static const QString telemetryBarDefaultSettingsGroup;
     static const QString telemetryBarUserSettingsGroup;
+
+    static const QString vehicleCardDefaultSettingsGroup;
+    static const QString vehicleCardUserSettingsGroup;
 
 private:
     Q_DISABLE_COPY(HorizontalFactValueGrid)
