@@ -6,7 +6,7 @@
 
 void ExifParserTest::_readTimeTest()
 {
-    QFile file(":/DSCN0010.jpg");
+    QFile file(":/unittest/DSCN0010.jpg");
     QVERIFY(file.open(QIODevice::ReadOnly));
 
     const QByteArray imageBuffer = file.readAll();
@@ -25,7 +25,7 @@ void ExifParserTest::_readTimeTest()
 
 void ExifParserTest::_writeTest()
 {
-    QFile file(":/DSCN0010.jpg");
+    QFile file(":/unittest/DSCN0010.jpg");
     QVERIFY(file.open(QIODevice::ReadOnly));
 
     QByteArray imageBuffer = file.readAll();
