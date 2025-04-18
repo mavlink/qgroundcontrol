@@ -20,7 +20,7 @@ import QGroundControl.FlightMap
 
 Item {
     property real   _margin:              ScreenTools.defaultFontPixelWidth / 2
-    property real   _widgetHeight:        ScreenTools.defaultFontPixelHeight * 2
+    property real   _widgetHeight:        ScreenTools.defaultFontPixelHeight * 2.5
     property var    _guidedController:    globals.guidedControllerFlyView
     property var    _activeVehicleColor:  "green"
     property var    _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
@@ -141,16 +141,20 @@ Item {
 
             Column {
                 id:                         innerColumn
-                anchors.horizontalCenter:   parent.horizontalCenter
+                anchors.centerIn:           parent
+                spacing:                    _margin
 
                 RowLayout {
                     anchors.horizontalCenter:   parent.horizontalCenter
                     anchors.margins:    _margin
                     spacing:            _margin
 
-                    QGCCompassWidget {
+                    IntegratedCompassAttitude {
                         id: compassWidget
-                        size:                        _widgetHeight
+                        compassRadius:              _widgetHeight / 2 - attitudeSize / 2
+                        compassBorder:              0
+                        attitudeSize:               ScreenTools.defaultFontPixelWidth / 2
+                        attitudeSpacing:            attitudeSize / 2
                         usedByMultipleVehicleList:   true
                         vehicle:                     _vehicle
                     }
