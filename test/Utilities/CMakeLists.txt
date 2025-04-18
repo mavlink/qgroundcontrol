@@ -10,11 +10,11 @@ target_include_directories(${CMAKE_PROJECT_NAME}
         FileSystem
 )
 
-qt_add_resources(${CMAKE_PROJECT_NAME} "UtilitiesTest_res"
-    PREFIX "/"
-    FILES
-        arducopter.apj
-)
+# qt_add_resources(${CMAKE_PROJECT_NAME} "UtilitiesTest_res"
+#     PREFIX "/"
+#     FILES
+#         arducopter.apj
+# )
 
 add_subdirectory(Audio)
 add_subdirectory(Compression)

@@ -15,7 +15,6 @@ target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         UnitTestList.cc
         UnitTestList.h
-        # ${UNIT_TESTING_RESOURCES}
 )
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Test)
