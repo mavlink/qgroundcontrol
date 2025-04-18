@@ -18,6 +18,10 @@ RowLayout {
     TelemetryValuesBar {
         Layout.alignment:   Qt.AlignBottom
         extraWidth:         instrumentPanel.extraValuesWidth
+
+        valueArea_userSettingsGroup:      valueArea.telemetryBarUserSettingsGroup
+        valueArea_defaultSettingsGroup:   valueArea.telemetryBarDefaultSettingsGroup
+        valueArea_vehicle:                QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
     }
 
     FlyViewInstrumentPanel {

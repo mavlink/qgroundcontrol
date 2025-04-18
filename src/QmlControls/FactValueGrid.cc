@@ -55,6 +55,11 @@ void FactValueGrid::_init(void)
     connect(this,           &FactValueGrid::fontSizeChanged,    this, &FactValueGrid::_saveSettings);
 
     _vehicleClass = QGCMAVLink::vehicleClass(offlineVehicle->vehicleType());
+    instances().append(this);
+}
+
+FactValueGrid::~FactValueGrid() {
+    instances().removeAll(this);
 }
 
 void FactValueGrid::_offlineVehicleTypeChanged(void)
@@ -94,6 +99,15 @@ void FactValueGrid::setFontSize(FontSize fontSize)
         _fontSize = fontSize;
         emit fontSizeChanged(fontSize);
     }
+}
+
+void FactValueGrid::setVehicle(Vehicle * vehicle)
+{
+    if(vehicle == nullptr){
+        qCritical() << "FactValueGrid assumes vehicle is not NULL";
+    }
+    _vehicle = vehicle;
+    emit vehicleChanged();
 }
 
 void FactValueGrid::_saveValueData(QSettings& settings, InstrumentValueData* value)
@@ -226,7 +240,7 @@ void FactValueGrid::deleteLastColumn(void)
 
 InstrumentValueData* FactValueGrid::_createNewInstrumentValueWorker(QObject* parent)
 {
-    InstrumentValueData* value = new InstrumentValueData(this, parent);
+    InstrumentValueData* value = new InstrumentValueData(this, parent, _vehicle);
     value->setFact(InstrumentValueData::vehicleFactGroupName, "AltitudeRelative");
     value->setText(value->fact()->shortDescription());
     _connectSaveSignals(value);
@@ -239,7 +253,11 @@ void FactValueGrid::_saveSettings(void)
     if (_preventSaveSettings) {
         return;
     }
+    saveSettingsForced();
+}
 
+void FactValueGrid::saveSettingsForced(void)
+{
     QSettings   settings;
     QString     groupNameFormat("%1-%2");
     if (_userSettingsGroup.isEmpty()) {
@@ -273,6 +291,27 @@ void FactValueGrid::_saveSettings(void)
         settings.endArray();
     }
     settings.endArray();
+
+    // If this settings change was set from a Vehicle card, this makes so the changes are
+    // immediately applied to the other Vehicle cards.
+    if(!_preventSaveSettings){
+        for (FactValueGrid* obj : instances()) {
+            if(obj != this && _settingsKey() == obj->_settingsKey()) {
+                obj->_loadSettings();
+            }
+        }
+    }
+}
+
+QString FactValueGrid::_settingsKey(void){
+    QSettings   settings;
+    QString     groupNameFormat("%1-%2");
+    const QString spath(QFileInfo(QSettings().fileName()).dir().absolutePath());
+    if (settings.childGroups().contains(groupNameFormat.arg(_defaultSettingsGroup).arg(_vehicleClass))) {
+        return groupNameFormat.arg(_defaultSettingsGroup).arg(_vehicleClass);
+    } else {
+        return groupNameFormat.arg(_userSettingsGroup).arg(_vehicleClass);
+    }
 }
 
 void FactValueGrid::_loadSettings(void)
@@ -288,21 +327,16 @@ void FactValueGrid::_loadSettings(void)
     QString     groupNameFormat("%1-%2");
 
     if (!settings.childGroups().contains(groupNameFormat.arg(_userSettingsGroup).arg(_vehicleClass))) {
-        QGCCorePlugin::instance()->factValueGridCreateDefaultSettings(_defaultSettingsGroup);
+        QGCCorePlugin::instance()->factValueGridCreateDefaultSettings(this);
     }
 
-
-    if (settings.childGroups().contains(groupNameFormat.arg(_defaultSettingsGroup).arg(_vehicleClass))) {
-        settings.beginGroup(groupNameFormat.arg(_defaultSettingsGroup).arg(_vehicleClass));
-    } else {
-        settings.beginGroup(groupNameFormat.arg(_userSettingsGroup).arg(_vehicleClass));
-    }
+    settings.beginGroup(_settingsKey());
 
     int version = settings.value(_versionKey, 0).toInt();
     if (version != 1) {
         qgcApp()->showAppMessage(tr("Settings version %1 for %2 is not supported. Setup will be reset to defaults.").arg(version).arg(_userSettingsGroup), tr("Load Settings"));
         settings.remove("");
-        QGCCorePlugin::instance()->factValueGridCreateDefaultSettings(_defaultSettingsGroup);
+        QGCCorePlugin::instance()->factValueGridCreateDefaultSettings(this);
     }
     _fontSize = settings.value(_fontSizeKey, DefaultFontSize).value<FontSize>();
 
