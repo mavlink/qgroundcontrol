@@ -6,11 +6,13 @@ if(MACOS)
     find_library(GSTREAMER_FRAMEWORK GStreamer)
     set(GST_PLUGINS_VERSION 1.24.12)
     set(GSTREAMER_FRAMEWORK_PATH "/Library/Frameworks/GStreamer.framework")
+    if(NOT EXISTS "${GSTREAMER_FRAMEWORK_PATH}")
+        message(FATAL_ERROR "GStreamer.framework not found at ${GSTREAMER_FRAMEWORK_PATH}")
+    endif()
     target_link_libraries(gstqml6gl PUBLIC "$<LINK_LIBRARY:FRAMEWORK,${GSTREAMER_FRAMEWORK_PATH}>")
     target_include_directories(gstqml6gl PUBLIC "${GSTREAMER_FRAMEWORK_PATH}/Headers")
 else()
-    set(GST_COMPONENTS GlEgl GlPrototypes GlWayland GlX11)
-    find_package(GStreamer REQUIRED COMPONENTS OPTIONAL_COMPONENTS ${GST_COMPONENTS})
+    find_package(GStreamer REQUIRED COMPONENTS OPTIONAL_COMPONENTS GlEgl GlPrototypes GlWayland GlX11)
     target_link_libraries(gstqml6gl PUBLIC GStreamer::GStreamer)
 endif()
 
@@ -22,12 +24,6 @@ target_link_libraries(gstqml6gl
         Qt6::Qml
         Qt6::Quick
 )
-
-foreach(component IN LISTS GST_COMPONENTS)
-    if(GStreamer_${component}_FOUND)
-        target_link_libraries(gstqml6gl PUBLIC GStreamer::${component})
-    endif()
-endforeach()
 
 ################################################################################
 
@@ -55,9 +51,6 @@ elseif(WIN32)
     file(GLOB GST_HELPER_BINS ${GST_HELPER_BINS_PATH})
     install(FILES ${GST_HELPER_BINS} DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/gstreamer-1.0)
 elseif(MACOS)
-    if(NOT EXISTS "${GSTREAMER_FRAMEWORK_PATH}")
-        message(FATAL_ERROR "GStreamer.framework not found at ${GSTREAMER_FRAMEWORK_PATH}")
-    endif()
     install(
         DIRECTORY "${GSTREAMER_FRAMEWORK_PATH}"
         DESTINATION "${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}.app/Contents/Frameworks"
@@ -76,30 +69,6 @@ endif()
 
 ################################################################################
 
-# DYLD_LIBRARY_PATH
-
-# <key>LSEnvironment</key>
-# <dict>
-#     <key>GST_REGISTRY_REUSE_PLUGIN_SCANNER</key>
-#     <string>no</string>
-#     <key>GST_PLUGIN_SCANNER</key>
-#     <string>@executable_path/../Frameworks/GStreamer.framework/Versions/1.0/libexec/gstreamer-1.0/gst-plugin-scanner</string>
-#     <key>GST_PTP_HELPER_1_0</key>
-#     <string>@executable_path/../Frameworks/GStreamer.framework/Versions/1.0/libexec/gstreamer-1.0/gst-ptp-helper</string>
-#     <key>GIO_EXTRA_MODULES</key>
-#     <string>@executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib/gio/modules</string>
-#     <key>GST_PLUGIN_SYSTEM_PATH_1_0</key>
-#     <string>@executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0</string>
-#     <key>GST_PLUGIN_SYSTEM_PATH</key>
-#     <string>@executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0</string>
-#     <key>GST_PLUGIN_PATH_1_0</key>
-#     <string>@executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0</string>
-#     <key>GST_PLUGIN_PATH</key>
-#     <string>@executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0</string>
-# </dict>
-
-################################################################################
-
 # Don't Download & Build if gstreamer1.0-qt6 was found
 if(GST_PLUGIN_gstqml6_FOUND)
     return()
@@ -108,6 +77,29 @@ endif()
 ################################################################################
 
 if(GStreamer_VERSION VERSION_GREATER_EQUAL 1.22)
+    # Use Latest Revisions for each minor version: 1.16.3, 1.18.6, 1.20.7, 1.22.12, 1.24.12, 1.26.0
+    string(REPLACE "." ";" GST_VERSION_LIST ${GStreamer_VERSION})
+    list(GET GST_VERSION_LIST 0 GST_VERSION_MAJOR)
+    list(GET GST_VERSION_LIST 1 GST_VERSION_MINOR)
+    list(GET GST_VERSION_LIST 2 GST_VERSION_PATCH)
+
+    if(GST_VERSION_MINOR EQUAL 16)
+        set(GST_VERSION_PATCH 3)
+    elseif(GST_VERSION_MINOR EQUAL 18)
+        set(GST_VERSION_PATCH 6)
+    elseif(GST_VERSION_MINOR EQUAL 20)
+        set(GST_VERSION_PATCH 7)
+    elseif(GST_VERSION_MINOR EQUAL 22)
+        set(GST_VERSION_PATCH 12)
+    elseif(GST_VERSION_MINOR EQUAL 24)
+        set(GST_VERSION_PATCH 12)
+    elseif(GST_VERSION_MINOR EQUAL 26)
+        set(GST_VERSION_PATCH 0)
+    endif()
+
+    set(GST_PLUGINS_VERSION ${GST_VERSION_MAJOR}.${GST_VERSION_MINOR}.${GST_VERSION_PATCH})
+    # cmake_print_variables(GST_PLUGINS_VERSION)
+
     CPMAddPackage(
         NAME gstreamer_good_plugins
         VERSION ${GST_PLUGINS_VERSION}
@@ -118,7 +110,7 @@ if(GStreamer_VERSION VERSION_GREATER_EQUAL 1.22)
 else()
     set(QGC_GST_QT6_PLUGIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/qt6")
 endif()
-cmake_print_variables(QGC_GST_QT6_PLUGIN_PATH)
+# cmake_print_variables(QGC_GST_QT6_PLUGIN_PATH)
 
 ################################################################################
 
@@ -145,7 +137,7 @@ if(GStreamer_GlX11_FOUND)
     target_compile_definitions(gstqml6gl PRIVATE HAVE_QT_X11)
 endif()
 
-if(GStreamer_GlEGL_FOUND)
+if(GStreamer_GlEgl_FOUND)
     target_compile_definitions(gstqml6gl PRIVATE HAVE_QT_EGLFS)
 endif()
 
@@ -173,51 +165,53 @@ target_compile_definitions(gstqml6gl
 
 if(EXISTS "${QGC_GST_QT6_PLUGIN_PATH}/resources.qrc")
     find_package(Qt6 REQUIRED COMPONENTS ShaderTools)
-    if(Qt6ShaderTools_FOUND)
-        set(SHADERS
-            ${QGC_GST_QT6_PLUGIN_PATH}/vertex.vert
-            ${QGC_GST_QT6_PLUGIN_PATH}/YUV_TRIPLANAR.frag
-            ${QGC_GST_QT6_PLUGIN_PATH}/RGBA.frag
-        )
-        set(OUTPUTS
-            vertex.vert.qsb
-            YUV_TRIPLANAR.frag.qsb
-            RGBA.frag.qsb
-        )
-        if(EXISTS "${QGC_GST_QT6_PLUGIN_PATH}/YUV_BIPLANAR.frag")
-            LIST(APPEND SHADERS ${QGC_GST_QT6_PLUGIN_PATH}/YUV_BIPLANAR.frag)
-            LIST(APPEND OUTPUTS YUV_BIPLANAR.frag.qsb)
-        endif()
-        qt6_add_shaders(gstqml6gl "gstqml6gl_shaders"
-            PREFIX "/org/freedesktop/gstreamer/qml6"
-            GLSL "100 es,120,330"
-            OUTPUT_TARGETS gstqml6gl_shaders
-            FILES ${SHADERS}
-            OUTPUTS ${OUTPUTS}
-            BATCHABLE
-        )
 
-        if(EXISTS "${QGC_GST_QT6_PLUGIN_PATH}/RGBA_gles.frag")
-            file(COPY_FILE "${CMAKE_CURRENT_BINARY_DIR}/.qsb/RGBA.frag.qsb" "${CMAKE_CURRENT_BINARY_DIR}/.qsb/RGBA.frag.qsb.external")
-            qt6_add_shaders(gstqml6gl "gstqml6gl_shaders1"
-                PREFIX "/org/freedesktop/gstreamer/qml6"
-                OUTPUT_TARGETS gstqml6gl_shaders1
-                FILES "${CMAKE_CURRENT_BINARY_DIR}/.qsb/RGBA.frag.qsb.external@glsl,100es,${QGC_GST_QT6_PLUGIN_PATH}/RGBA_gles.frag"
-                OUTPUTS "RGBA.frag.qsb.external"
-            )
-        endif()
+    set(SHADERS
+        ${QGC_GST_QT6_PLUGIN_PATH}/vertex.vert
+        ${QGC_GST_QT6_PLUGIN_PATH}/YUV_TRIPLANAR.frag
+        ${QGC_GST_QT6_PLUGIN_PATH}/RGBA.frag
+    )
+
+    set(OUTPUTS
+        vertex.vert.qsb
+        YUV_TRIPLANAR.frag.qsb
+        RGBA.frag.qsb
+    )
+
+    if(EXISTS "${QGC_GST_QT6_PLUGIN_PATH}/YUV_BIPLANAR.frag")
+        LIST(APPEND SHADERS ${QGC_GST_QT6_PLUGIN_PATH}/YUV_BIPLANAR.frag)
+        LIST(APPEND OUTPUTS YUV_BIPLANAR.frag.qsb)
+    endif()
+
+    qt6_add_shaders(gstqml6gl "gstqml6gl_shaders"
+        PREFIX "/org/freedesktop/gstreamer/qml6"
+        GLSL "100 es,120,330"
+        OUTPUT_TARGETS gstqml6gl_shaders
+        FILES ${SHADERS}
+        OUTPUTS ${OUTPUTS}
+        BATCHABLE
+    )
+
+    if(EXISTS "${QGC_GST_QT6_PLUGIN_PATH}/RGBA_gles.frag")
+        file(COPY_FILE "${CMAKE_CURRENT_BINARY_DIR}/.qsb/RGBA.frag.qsb" "${CMAKE_CURRENT_BINARY_DIR}/.qsb/RGBA.frag.qsb.external")
+        qt6_add_shaders(gstqml6gl "gstqml6gl_shaders1"
+            PREFIX "/org/freedesktop/gstreamer/qml6"
+            OUTPUT_TARGETS gstqml6gl_shaders1
+            FILES "${CMAKE_CURRENT_BINARY_DIR}/.qsb/RGBA.frag.qsb.external@glsl,100es,${QGC_GST_QT6_PLUGIN_PATH}/RGBA_gles.frag"
+            OUTPUTS "RGBA.frag.qsb.external"
+        )
     endif()
 endif()
 
 ################################################################################
 
-if(UNIX)
-    target_compile_options(gstqml6gl
-        PRIVATE
-            -Wno-unused-parameter
-            -Wno-implicit-fallthrough
-            -Wno-unused-private-field
-    )
-endif()
+# if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+#     target_compile_options(gstqml6gl
+#         PRIVATE
+#             -Wno-unused-parameter
+#             -Wno-implicit-fallthrough
+#             -Wno-unused-private-field
+#     )
+# endif()
 
 ################################################################################
