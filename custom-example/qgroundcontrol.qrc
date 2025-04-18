@@ -264,6 +264,8 @@
 		<file alias="QGroundControl/FlightMap/CompassHeadingIndicator.qml">../src/FlightMap/Widgets/CompassHeadingIndicator.qml</file>
 		<file alias="QGroundControl/FlightMap/CustomMapItems.qml">../src/FlightMap/MapItems/CustomMapItems.qml</file>
 		<file alias="QGroundControl/FlightMap/FlightMap.qml">../src/FlightMap/FlightMap.qml</file>
+        <file alias="QGroundControl/FlightMap/IntegratedAttitudeIndicator.qml">../src/FlightMap/Widgets/IntegratedAttitudeIndicator.qml</file>
+        <file alias="QGroundControl/FlightMap/IntegratedCompassAttitude.qml">../src/FlightMap/Widgets/IntegratedCompassAttitude.qml</file>
 		<file alias="QGroundControl/FlightMap/MapFitFunctions.qml">../src/FlightMap/Widgets/MapFitFunctions.qml</file>
 		<file alias="QGroundControl/FlightMap/MapScale.qml">../src/FlightMap/MapScale.qml</file>
 		<file alias="QGroundControl/FlightMap/MissionItemIndicator.qml">../src/FlightMap/MapItems/MissionItemIndicator.qml</file>

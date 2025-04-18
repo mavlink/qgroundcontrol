@@ -20,16 +20,17 @@ Item {
     implicitWidth:  (compassRadius * 2) + attitudeSpacing + attitudeSize
     implicitHeight: implicitWidth
 
-    property real attitudeSize:         rollIndicator.attitudeSize
-    property real attitudeSpacing:      rollIndicator.attitudeSpacing
-    property real extraInset:           attitudeSize + attitudeSpacing
-    property real extraValuesWidth:     compassRadius
-    property real defaultCompassRadius: (mainWindow.width * 0.15) / 2
-    property real maxCompassRadius:     ScreenTools.defaultFontPixelHeight * 7 / 2
-    property real compassRadius:        Math.min(defaultCompassRadius, maxCompassRadius)
-    property real compassBorder:        ScreenTools.defaultFontPixelHeight / 2
-    property var  vehicle:              globals.activeVehicle
-    property var  qgcPal:               QGroundControl.globalPalette
+    property alias attitudeSize:                rollIndicator.attitudeSize
+    property alias attitudeSpacing:             rollIndicator.attitudeSpacing
+    property real extraInset:                   attitudeSize + attitudeSpacing
+    property real extraValuesWidth:             compassRadius
+    property real defaultCompassRadius:         (mainWindow.width * 0.15) / 2
+    property real maxCompassRadius:             ScreenTools.defaultFontPixelHeight * 7 / 2
+    property real compassRadius:                Math.min(defaultCompassRadius, maxCompassRadius)
+    property real compassBorder:                ScreenTools.defaultFontPixelHeight / 2
+    property var  vehicle:                      globals.activeVehicle
+    property var  qgcPal:                       QGroundControl.globalPalette
+    property bool usedByMultipleVehicleList:    false
 
     property real _totalAttitudeSize: attitudeSize + attitudeSpacing
 
@@ -44,6 +45,8 @@ Item {
         x:                      -_totalAttitudeSize
         attitudeAngleDegrees:   vehicle ? vehicle.pitch.rawValue : 0
         compassRadius:          control.compassRadius
+        attitudeSize:           control.attitudeSize
+        attitudeSpacing:        control.attitudeSpacing
         transformOrigin:        Item.Center
         rotation:               90
     }
@@ -56,9 +59,10 @@ Item {
         color:  qgcPal.window
 
         QGCCompassWidget {
-            size:               parent.width - compassBorder
-            vehicle:            globals.activeVehicle
-            anchors.centerIn:   parent
+            size:                       parent.width - compassBorder
+            vehicle:                    control.vehicle
+            usedByMultipleVehicleList:  control.usedByMultipleVehicleList
+            anchors.centerIn:           parent
         }
     }
 }
