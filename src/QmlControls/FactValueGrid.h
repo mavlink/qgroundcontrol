@@ -11,6 +11,7 @@
 
 #include "QmlObjectListModel.h"
 #include "QGCMAVLink.h"
+#include "Vehicle.h"
 
 #include <QtCore/QSettings>
 #include <QtQuick/QQuickItem>
@@ -24,6 +25,7 @@ class FactValueGrid : public QQuickItem
 public:
     FactValueGrid(QQuickItem *parent = nullptr);
     FactValueGrid(const QString& defaultSettingsGroup);
+    ~FactValueGrid();
 
     enum FontSize {
         DefaultFontSize=0,
@@ -50,6 +52,7 @@ public:
     Q_PROPERTY(QStringList          iconNames                       READ iconNames                                          CONSTANT)
     Q_PROPERTY(FontSize             fontSize                        READ fontSize                       WRITE setFontSize   NOTIFY fontSizeChanged)
     Q_PROPERTY(QStringList          fontSizeNames                   MEMBER _fontSizeNames                                   CONSTANT)
+    Q_PROPERTY(Vehicle *            vehicle                         READ vehicle                        WRITE setVehicle    NOTIFY vehicleChanged                   REQUIRED)
 
     Q_INVOKABLE void                resetToDefaults (void);
     Q_INVOKABLE QmlObjectListModel* appendColumn    (void);
@@ -57,18 +60,23 @@ public:
     Q_INVOKABLE void                appendRow       (void);
     Q_INVOKABLE void                deleteLastRow   (void);
 
-    QmlObjectListModel*         columns     (void) const { return _columns; }
-    FontSize                    fontSize    (void) const { return _fontSize; }
-    QStringList                 iconNames   (void) const { return _iconNames; }
-    QGCMAVLink::VehicleClass_t  vehicleClass(void) const { return _vehicleClass; }
+    QmlObjectListModel*         columns             (void) const { return _columns; }
+    QString                     userSettingsGroup   (void) const { return _userSettingsGroup; }
+    FontSize                    fontSize            (void) const { return _fontSize; }
+    QStringList                 iconNames           (void) const { return _iconNames; }
+    QGCMAVLink::VehicleClass_t  vehicleClass        (void) const { return _vehicleClass; }
+    Vehicle*                    vehicle             (void) const { return _vehicle; }
 
     void setFontSize(FontSize fontSize);
+    void setVehicle(Vehicle* vehicle);
 
     // This is only exposed for usage of FactValueGrid to be able to just read the settings and display no ui. For this case
     // create a FactValueGrid object with a null parent. Set the userSettingsGroup/defaultSettingsGroup appropriately and then
     // call _loadSettings. Then after that you can read the settings from the object. You should not change any of the values.
     // Destroy the FactValueGrid object when done.
     void _loadSettings(void);
+
+    void saveSettingsForced(void);
 
     // Override from QQmlParserStatus
     void componentComplete(void) final;
@@ -77,6 +85,7 @@ signals:
     void userSettingsGroupChanged   (const QString& userSettingsGroup);
     void defaultSettingsGroupChanged(const QString& defaultSettingsGroup);
     void fontSizeChanged            (FontSize fontSize);
+    void vehicleChanged             ();
     void columnsChanged             (QmlObjectListModel* model);
     void rowCountChanged            (int rowCount);
 
@@ -90,6 +99,7 @@ protected:
     bool                        _preventSaveSettings    = false;
     QmlObjectListModel*         _columns                = nullptr;
     int                         _rowCount               = 0;
+    Vehicle*                    _vehicle                = nullptr;
 
 private slots:
     void _offlineVehicleTypeChanged(void);
@@ -102,6 +112,7 @@ private:
     QString                 _pascalCase                     (const QString& text);
     void                    _saveValueData                  (QSettings& settings, InstrumentValueData* value);
     void                    _loadValueData                  (QSettings& settings, InstrumentValueData* value);
+    QString                 _settingsKey                    (void);
 
     // These are user facing string for the various enums.
     static       QStringList _iconNames;
@@ -124,6 +135,12 @@ private:
     static constexpr const char* _rangeOpacitiesKey   = "rangeOpacities";
 
     static constexpr const char* _deprecatedGroupKey =  "ValuesWidget";
+
+    // Static list of all instances. Used to notify others when settings have changed.
+    static QList<FactValueGrid*>& instances() {
+        static QList<FactValueGrid*> instanceList;
+        return instanceList;
+    }
 };
 
 QML_DECLARE_TYPE(FactValueGrid)

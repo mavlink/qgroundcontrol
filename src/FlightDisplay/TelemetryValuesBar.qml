@@ -23,6 +23,11 @@ Item {
 
     property real extraWidth: 0 ///< Extra width to add to the background rectangle
 
+    property alias valueArea: valueArea
+    property var valueArea_userSettingsGroup
+    property var valueArea_defaultSettingsGroup
+    property var valueArea_vehicle
+
     Rectangle {
         id:         backgroundRect
         width:      control.width + extraWidth
@@ -59,8 +64,9 @@ Item {
 
         HorizontalFactValueGrid {
             id:                     valueArea
-            userSettingsGroup:      telemetryBarUserSettingsGroup
-            defaultSettingsGroup:   telemetryBarDefaultSettingsGroup
+            userSettingsGroup:      valueArea_userSettingsGroup
+            defaultSettingsGroup:   valueArea_defaultSettingsGroup
+            vehicle:                valueArea_vehicle
         }
     }
 
