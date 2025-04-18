@@ -8,6 +8,8 @@ CenterMapDropButton         1.0 CenterMapDropButton.qml
 CenterMapDropPanel          1.0 CenterMapDropPanel.qml
 CompassDial                 1.0 CompassDial.qml
 CompassHeadingIndicator     1.0 CompassHeadingIndicator.qml
+IntegratedAttitudeIndicator 1.0 IntegratedAttitudeIndicator.qml
+IntegratedCompassAttitude   1.0 IntegratedCompassAttitude.qml
 MapFitFunctions             1.0 MapFitFunctions.qml
 MapLineArrow                1.0 MapLineArrow.qml
 MapScale                    1.0 MapScale.qml
