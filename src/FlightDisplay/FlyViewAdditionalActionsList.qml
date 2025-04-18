@@ -13,7 +13,8 @@ QtObject {
     property var guidedController
 
     property bool anyActionAvailable: guidedController.showStartMission || guidedController.showContinueMission || guidedController.showChangeAlt || 
-                                        guidedController.showLandAbort || guidedController.showChangeSpeed || guidedController.showGripper
+                                      guidedController.showChangeLoiterRadius ||  guidedController.showLandAbort || guidedController.showChangeSpeed ||
+                                      guidedController.showGripper
     property var model: [
         {
             title:      guidedController.startMissionTitle,
@@ -32,6 +33,12 @@ QtObject {
             text:       guidedController.changeAltMessage,
             action:     guidedController.actionChangeAlt,
             visible:    guidedController.showChangeAlt
+        },
+        {
+            title:      guidedController.changeLoiterRadiusTitle,
+            text:       guidedController.changeLoiterRadiusMessage,
+            action:     guidedController.actionChangeLoiterRadius,
+            visible:    guidedController.showChangeLoiterRadius
         },
         {
             title:      guidedController.landAbortTitle,
