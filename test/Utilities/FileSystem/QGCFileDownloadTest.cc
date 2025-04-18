@@ -15,7 +15,7 @@ void QGCFileDownloadTest::_testFileDownload()
             QVERIFY(errorMsg.isEmpty());
         });
     QSignalSpy spyQGCFileDownloadDownloadComplete(downloader, &QGCFileDownload::downloadComplete);
-    QVERIFY(downloader->download(":/arducopter.apj"));
+    QVERIFY(downloader->download(":/unittest/arducopter.apj"));
     QVERIFY(spyQGCFileDownloadDownloadComplete.wait(1000));
 }
 
