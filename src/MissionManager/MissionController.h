@@ -28,6 +28,7 @@ class AppSettings;
 class MissionManager;
 class SimpleMissionItem;
 class ComplexMissionItem;
+class LandingComplexItem;
 class MissionSettingsItem;
 class TakeoffMissionItem;
 class PlanViewSettings;
@@ -51,6 +52,7 @@ public:
     typedef struct {
         double                      maxTelemetryDistance;
         double                      totalDistance;
+        double                      plannedDistance;
         double                      totalTime;
         double                      hoverDistance;
         double                      hoverTime;
@@ -76,7 +78,6 @@ public:
 
     Q_PROPERTY(QmlObjectListModel*  visualItems                     READ visualItems                    NOTIFY visualItemsChanged)
     Q_PROPERTY(QmlObjectListModel*  simpleFlightPathSegments        READ simpleFlightPathSegments       CONSTANT)                               ///< Used by Plan view only for interactive editing
-    Q_PROPERTY(QVariantList         waypointPath                    READ waypointPath                   NOTIFY waypointPathChanged)             ///< Used by Fly view only for static display
     Q_PROPERTY(QmlObjectListModel*  directionArrows                 READ directionArrows                CONSTANT)
     Q_PROPERTY(QmlObjectListModel*  incompleteComplexItemLines      READ incompleteComplexItemLines     CONSTANT)                               ///< Segments which are not yet completed.
     Q_PROPERTY(QStringList          complexMissionItemNames         READ complexMissionItemNames        NOTIFY complexMissionItemNamesChanged)
@@ -91,7 +92,8 @@ public:
     Q_PROPERTY(int                  currentPlanViewVIIndex          READ currentPlanViewVIIndex         NOTIFY currentPlanViewVIIndexChanged)
     Q_PROPERTY(VisualMissionItem*   currentPlanViewItem             READ currentPlanViewItem            NOTIFY currentPlanViewItemChanged)
     Q_PROPERTY(TakeoffMissionItem*  takeoffMissionItem              READ takeoffMissionItem             NOTIFY takeoffMissionItemChanged)
-    Q_PROPERTY(double               missionDistance                 READ missionDistance                NOTIFY missionDistanceChanged)
+    Q_PROPERTY(double               missionTotalDistance            READ missionTotalDistance           NOTIFY missionTotalDistanceChanged)
+    Q_PROPERTY(double               missionPlannedDistance          READ missionPlannedDistance         NOTIFY missionPlannedDistanceChanged)
     Q_PROPERTY(double               missionTime                     READ missionTime                    NOTIFY missionTimeChanged)
     Q_PROPERTY(double               missionHoverDistance            READ missionHoverDistance           NOTIFY missionHoverDistanceChanged)
     Q_PROPERTY(double               missionCruiseDistance           READ missionCruiseDistance          NOTIFY missionCruiseDistanceChanged)
@@ -107,6 +109,8 @@ public:
     Q_PROPERTY(bool                 onlyInsertTakeoffValid          MEMBER _onlyInsertTakeoffValid      NOTIFY onlyInsertTakeoffValidChanged)
     Q_PROPERTY(bool                 isInsertTakeoffValid            MEMBER _isInsertTakeoffValid        NOTIFY isInsertTakeoffValidChanged)
     Q_PROPERTY(bool                 isInsertLandValid               MEMBER _isInsertLandValid           NOTIFY isInsertLandValidChanged)
+    Q_PROPERTY(bool                 hasLandItem                     MEMBER _hasLandItem                 NOTIFY hasLandItemChanged)
+    Q_PROPERTY(bool                 multipleLandPatternsAllowed     READ multipleLandPatternsAllowed    NOTIFY multipleLandPatternsAllowedChanged)
     Q_PROPERTY(bool                 isROIActive                     MEMBER _isROIActive                 NOTIFY isROIActiveChanged)
     Q_PROPERTY(bool                 isROIBeginCurrentItem           MEMBER _isROIBeginCurrentItem       NOTIFY isROIBeginCurrentItemChanged)
     Q_PROPERTY(bool                 flyThroughCommandsAllowed       MEMBER _flyThroughCommandsAllowed   NOTIFY flyThroughCommandsAllowedChanged)
@@ -226,7 +230,6 @@ public:
     QmlObjectListModel* simpleFlightPathSegments    (void) { return &_simpleFlightPathSegments; }
     QmlObjectListModel* directionArrows             (void) { return &_directionArrows; }
     QmlObjectListModel* incompleteComplexItemLines  (void) { return &_incompleteComplexItemLines; }
-    QVariantList        waypointPath                (void) { return _waypointPath; }
     QStringList         complexMissionItemNames     (void) const;
     QGeoCoordinate      plannedHomePosition         (void) const;
     VisualMissionItem*  currentPlanViewItem         (void) const { return _currentPlanViewItem; }
@@ -236,6 +239,7 @@ public:
     QString             corridorScanComplexItemName (void) const;
     QString             structureScanComplexItemName(void) const;
     bool                isInsertTakeoffValid        (void) const;
+    bool                multipleLandPatternsAllowed (void) const;
     double              minAMSLAltitude             (void) const { return _minAMSLAltitude; }
     double              maxAMSLAltitude             (void) const { return _maxAMSLAltitude; }
 
@@ -245,7 +249,8 @@ public:
     int currentPlanViewSeqNum       (void) const { return _currentPlanViewSeqNum; }
     int currentPlanViewVIIndex      (void) const { return _currentPlanViewVIIndex; }
 
-    double  missionDistance         (void) const { return _missionFlightStatus.totalDistance; }
+    double  missionTotalDistance    (void) const { return _missionFlightStatus.totalDistance; }
+    double  missionPlannedDistance  (void) const { return _missionFlightStatus.plannedDistance; }
     double  missionTime             (void) const { return _missionFlightStatus.totalTime; }
     double  missionHoverDistance    (void) const { return _missionFlightStatus.hoverDistance; }
     double  missionHoverTime        (void) const { return _missionFlightStatus.hoverTime; }
@@ -256,6 +261,7 @@ public:
     int  batteryChangePoint         (void) const { return _missionFlightStatus.batteryChangePoint; }    ///< -1 for not supported, 0 for not needed
     int  batteriesRequired          (void) const { return _missionFlightStatus.batteriesRequired; }     ///< -1 for not supported
 
+    bool isFirstLandingComplexItem  (const LandingComplexItem* item) const;
     bool isEmpty                    (void) const;
 
     QGroundControlQmlGlobal::AltMode globalAltitudeMode(void);
@@ -264,10 +270,10 @@ public:
 
 signals:
     void visualItemsChanged                 (void);
-    void waypointPathChanged                (void);
     void splitSegmentChanged                (void);
     void newItemsFromVehicle                (void);
-    void missionDistanceChanged             (double missionDistance);
+    void missionTotalDistanceChanged        (double missionTotalDistance);
+    void missionPlannedDistanceChanged      (double missionPlannedDistance);
     void missionTimeChanged                 (void);
     void missionHoverDistanceChanged        (double missionHoverDistance);
     void missionHoverTimeChanged            (void);
@@ -292,6 +298,8 @@ signals:
     void onlyInsertTakeoffValidChanged      (void);
     void isInsertTakeoffValidChanged        (void);
     void isInsertLandValidChanged           (void);
+    void hasLandItemChanged                 (void);
+    void multipleLandPatternsAllowedChanged (void);
     void isROIActiveChanged                 (void);
     void isROIBeginCurrentItemChanged       (void);
     void flyThroughCommandsAllowedChanged   (void);
@@ -319,7 +327,7 @@ private slots:
     void _complexBoundingBoxChanged             (void);
     void _recalcAll                             (void);
     void _managerVehicleChanged                 (Vehicle* managerVehicle);
-    void _takeoffItemNotRequiredChanged         (void);
+    void _forceRecalcOfAllowedBits              (void);
 
 private:
     void                    _init                               (void);
@@ -373,7 +381,6 @@ private:
     MissionSettingsItem*        _settingsItem =                 nullptr;
     PlanViewSettings*           _planViewSettings =             nullptr;
     QmlObjectListModel          _simpleFlightPathSegments;
-    QVariantList                _waypointPath;
     QmlObjectListModel          _directionArrows;
     QmlObjectListModel          _incompleteComplexItemLines;
     FlightPathSegmentHashTable  _flightPathSegmentHashTable;
@@ -396,6 +403,7 @@ private:
     bool                        _onlyInsertTakeoffValid =       true;
     bool                        _isInsertTakeoffValid =         true;
     bool                        _isInsertLandValid =            false;
+    bool                        _hasLandItem =                  false;
     bool                        _isROIActive =                  false;
     bool                        _flyThroughCommandsAllowed =    false;
     bool                        _isROIBeginCurrentItem =        false;

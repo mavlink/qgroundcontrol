@@ -56,7 +56,7 @@ AppLogModel *AppMessages::getModel()
 
 AppLogModel::AppLogModel() : QStringListModel()
 {
-#ifdef __mobile__
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     Qt::ConnectionType contype = Qt::QueuedConnection;
 #else
     Qt::ConnectionType contype = Qt::AutoConnection;
@@ -96,17 +96,13 @@ void AppLogModel::threadsafeLog(const QString message)
 
     if (qgcApp() && qgcApp()->logOutput() && _logFile.fileName().isEmpty()) {
         qDebug() << _logFile.fileName().isEmpty() << qgcApp()->logOutput();
-        QGCToolbox* toolbox = qgcApp()->toolbox();
-        // Be careful of toolbox not being open yet
-        if (toolbox) {
-            QString saveDirPath = qgcApp()->toolbox()->settingsManager()->appSettings()->crashSavePath();
-            QDir saveDir(saveDirPath);
-            QString saveFilePath = saveDir.absoluteFilePath(QStringLiteral("QGCConsole.log"));
+        QString saveDirPath = SettingsManager::instance()->appSettings()->crashSavePath();
+        QDir saveDir(saveDirPath);
+        QString saveFilePath = saveDir.absoluteFilePath(QStringLiteral("QGCConsole.log"));
 
-            _logFile.setFileName(saveFilePath);
-            if (!_logFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
-                qgcApp()->showAppMessage(tr("Open console log output file failed %1 : %2").arg(_logFile.fileName()).arg(_logFile.errorString()));
-            }
+        _logFile.setFileName(saveFilePath);
+        if (!_logFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            qgcApp()->showAppMessage(tr("Open console log output file failed %1 : %2").arg(_logFile.fileName()).arg(_logFile.errorString()));
         }
     }
 

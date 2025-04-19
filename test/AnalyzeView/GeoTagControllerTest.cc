@@ -20,7 +20,7 @@ void GeoTagControllerTest::_geoTagControllerTest()
         }
     }
 
-    QFile file(":/DSCN0010.jpg");
+    QFile file(":/unittest/DSCN0010.jpg");
     for (int i = 0; i < 58; ++i) {
         QVERIFY(file.copy(imageDirPath + QStringLiteral("/geotag_temp_image_%1.jpg").arg(i)));
     }
@@ -38,7 +38,7 @@ void GeoTagControllerTest::_geoTagControllerTest()
 
     GeoTagController* const controller = new GeoTagController(this);
 
-    const QFileInfo log = QFileInfo(":/SampleULog.ulg");
+    const QFileInfo log = QFileInfo(":/unittest/SampleULog.ulg");
     controller->setLogFile(log.filePath());
     controller->setImageDirectory(imageDirPath + "/");
     controller->setSaveDirectory(controller->imageDirectory() + "/TAGGED");
@@ -72,7 +72,7 @@ void GeoTagControllerTest::_geoTagWorkerTest()
         }
     }
 
-    QFile file(":/DSCN0010.jpg");
+    QFile file(":/unittest/DSCN0010.jpg");
     for (int i = 0; i < 58; ++i) {
         QVERIFY(file.copy(imageDirPath + QStringLiteral("/geotag_temp_image_%1.jpg").arg(i)));
     }
@@ -88,7 +88,7 @@ void GeoTagControllerTest::_geoTagWorkerTest()
         }
     }
 
-    const QFileInfo log = QFileInfo(":/SampleULog.ulg");
+    const QFileInfo log = QFileInfo(":/unittest/SampleULog.ulg");
     GeoTagWorker* const worker = new GeoTagWorker(this);
     worker->setLogFile(log.filePath());
     worker->setImageDirectory(imageDirPath + "/");

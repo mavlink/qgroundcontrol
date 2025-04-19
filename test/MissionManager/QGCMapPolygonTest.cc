@@ -13,6 +13,9 @@
 #include "MultiSignalSpy.h"
 #include "QmlObjectListModel.h"
 
+#include <QtTest/QSignalSpy>
+#include <QtTest/QTest>
+
 QGCMapPolygonTest::QGCMapPolygonTest(void)
 {
     _polyPoints << QGeoCoordinate(47.635638361473475, -122.09269407980834 ) <<
@@ -210,23 +213,17 @@ void QGCMapPolygonTest::_testKMLLoad(void)
 {
     QVERIFY(_mapPolygon->loadKMLOrSHPFile(QStringLiteral(":/unittest/PolygonGood.kml")));
 
-    setExpectedMessageBox(QMessageBox::Ok);
     QVERIFY(!_mapPolygon->loadKMLOrSHPFile(QStringLiteral(":/unittest/PolygonBadXml.kml")));
-    checkExpectedMessageBox();
 
-    setExpectedMessageBox(QMessageBox::Ok);
     QVERIFY(!_mapPolygon->loadKMLOrSHPFile(QStringLiteral(":/unittest/PolygonMissingNode.kml")));
-    checkExpectedMessageBox();
 
-    setExpectedMessageBox(QMessageBox::Ok);
     QVERIFY(!_mapPolygon->loadKMLOrSHPFile(QStringLiteral(":/unittest/PolygonBadCoordinatesNode.kml")));
-    checkExpectedMessageBox();
 }
 
 void QGCMapPolygonTest::_testSelectVertex(void)
 {
     // Create polygon
-    foreach (auto vertex, _polyPoints) {
+    for (const QGeoCoordinate &vertex : std::as_const(_polyPoints)) {
         _mapPolygon->appendVertex(vertex);
     }
 
@@ -261,7 +258,7 @@ void QGCMapPolygonTest::_testSelectVertex(void)
 void QGCMapPolygonTest::_testSegmentSplit(void)
 {
     // Create polygon
-    foreach (auto vertex, _polyPoints) {
+    for (const QGeoCoordinate &vertex : std::as_const(_polyPoints)) {
         _mapPolygon->appendVertex(vertex);
     }
 

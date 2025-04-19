@@ -9,7 +9,6 @@
 
 #include "RequestMessageTest.h"
 #include "MultiVehicleManager.h"
-#include "QGCApplication.h"
 #include "MockLink.h"
 
 #include <QtTest/QTest>
@@ -37,7 +36,7 @@ void RequestMessageTest::_testCaseWorker(TestCase_t& testCase)
 {
     _connectMockLinkNoInitialConnectSequence();
 
-    MultiVehicleManager*    vehicleMgr  = qgcApp()->toolbox()->multiVehicleManager();
+    MultiVehicleManager*    vehicleMgr  = MultiVehicleManager::instance();
     Vehicle*                vehicle     = vehicleMgr->activeVehicle();
     
     // Gimbal controller sends message requests when receiving heartbeats, trying to find a gimbal, and it messes with this test so we disable it
@@ -82,7 +81,7 @@ void RequestMessageTest::_duplicateCommand(void)
         MockLink::FailRequestMessageCommandNoResponse, MAV_RESULT_FAILED, Vehicle::RequestMessageFailureDuplicateCommand, 1, false
     };
 
-    MultiVehicleManager*    vehicleMgr  = qgcApp()->toolbox()->multiVehicleManager();
+    MultiVehicleManager*    vehicleMgr  = MultiVehicleManager::instance();
     Vehicle*                vehicle     = vehicleMgr->activeVehicle();
 
     _mockLink->clearReceivedMavCommandCounts();
@@ -128,7 +127,7 @@ void RequestMessageTest::_compIdAllFailure(void)
         MockLink::FailRequestMessageCommandNoResponse, MAV_RESULT_FAILED, Vehicle::RequestMessageFailureCommandError, 0, false
     };
 
-    MultiVehicleManager*    vehicleMgr  = qgcApp()->toolbox()->multiVehicleManager();
+    MultiVehicleManager*    vehicleMgr  = MultiVehicleManager::instance();
     Vehicle*                vehicle     = vehicleMgr->activeVehicle();
 
     _mockLink->clearReceivedMavCommandCounts();

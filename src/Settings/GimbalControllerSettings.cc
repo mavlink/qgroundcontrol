@@ -8,7 +8,6 @@
  ****************************************************************************/
 
 #include "GimbalControllerSettings.h"
-#include "QGCApplication.h"
 
 #include <QQmlEngine>
 #include <QtQml>
@@ -26,3 +25,4 @@ DECLARE_SETTINGSFACT(GimbalControllerSettings, CameraSlideSpeed)
 DECLARE_SETTINGSFACT(GimbalControllerSettings, showAzimuthIndicatorOnMap)
 DECLARE_SETTINGSFACT(GimbalControllerSettings, toolbarIndicatorShowAzimuth)
 DECLARE_SETTINGSFACT(GimbalControllerSettings, toolbarIndicatorShowAcquireReleaseControl)
+DECLARE_SETTINGSFACT(GimbalControllerSettings, joystickButtonsSpeed)

@@ -17,14 +17,13 @@
 Q_DECLARE_LOGGING_CATEGORY(JoystickManagerLog)
 
 class Joystick;
-class MultiVehicleManager;
 class QTimer;
 
 class JoystickManager : public QObject
 {
     Q_OBJECT
-    QML_ELEMENT
-    QML_UNCREATABLE("")
+    // QML_ELEMENT
+    // QML_UNCREATABLE("")
     Q_MOC_INCLUDE("Joystick.h")
     Q_PROPERTY(QVariantList joysticks READ joysticks NOTIFY availableJoysticksChanged)
     Q_PROPERTY(QStringList joystickNames READ joystickNames NOTIFY availableJoysticksChanged)
@@ -36,6 +35,7 @@ public:
     ~JoystickManager();
 
     static JoystickManager *instance();
+    static void registerQmlTypes();
 
     QVariantList joysticks();
     QStringList joystickNames() const { return _name2JoystickMap.keys(); }
@@ -68,6 +68,8 @@ private:
     int _joystickCheckTimerCounter = 0;;
     QTimer *_joystickCheckTimer = nullptr;
 
+    static constexpr int kTimerInterval = 1000;
+    static constexpr int kTimeout = 1000;
     static constexpr const char *_settingsGroup = "JoystickManager";
     static constexpr const char *_settingsKeyActiveJoystick = "ActiveJoystick";
 };

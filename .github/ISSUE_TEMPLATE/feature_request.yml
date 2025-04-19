@@ -1,0 +1,74 @@
+name: Feature request
+description: Tell us about your new idea
+labels: ["Feature Request"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Tell us a bit about the feature:
+        - What problem does it solve?
+        - What does it do?
+        - What flight stacks must it work with? (All, PX4, ArduPilot)
+        - Relevant vehicle types? (All, multirotor, fixed-wing, VTOL, submarine, etc.)
+        - Are there other systems that have this feature?
+        - What communication/integration standards does the feature rely on (e.g. MAVLink commands etc)
+
+        Any additional context you can provide will make the feature easier to evaluate (e.g. mockups, detailed specification, etc).
+
+  - type: textarea
+    id: problem-description
+    attributes:
+      label: Problem Description
+      description: Describe the problem your feature is intended to solve.
+      placeholder: Explain the problem here.
+
+  - type: textarea
+    id: feature-functionality
+    attributes:
+      label: Feature Functionality
+      description: Explain what the feature does.
+      placeholder: Detail the intended functionality here.
+
+  - type: dropdown
+    id: flight-stacks
+    attributes:
+      label: Flight Stacks
+      description: Select the flight stacks the feature must work with.
+      options:
+        - All
+        - PX4
+        - ArduPilot
+
+  - type: dropdown
+    id: vehicle-types
+    attributes:
+      label: Vehicle Types
+      description: Select the relevant vehicle types for this feature.
+      options:
+        - All
+        - Multirotor
+        - Fixed-wing
+        - VTOL
+        - Submarine
+
+  - type: textarea
+    id: comparison-systems
+    attributes:
+      label: Other Systems
+      description: Are there other systems that have this feature? (e.g. competitors)
+      placeholder: List any other systems that offer similar functionality.
+
+  - type: textarea
+    id: communication-standards
+    attributes:
+      label: Communication/Integration Standards
+      description: Describe any communication/integration standards the feature relies on (e.g. MAVLink commands, etc).
+      placeholder: Provide details about protocols or standards.
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Provide any extra details (e.g. mockups, detailed specifications) that can help evaluate the feature.
+      placeholder: Add any additional information here.

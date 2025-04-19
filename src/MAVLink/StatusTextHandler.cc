@@ -65,7 +65,7 @@ QString StatusTextHandler::getMessageText(const mavlink_message_t &message)
     // Ensure NUL-termination
     b[b.length()-1] = '\0';
 
-    const QString text = QString::fromLocal8Bit(b, std::strlen(b.constData()));
+    const QString text = QString::fromLocal8Bit(b.constData(), std::strlen(b.constData()));
 
     return text;
 }
@@ -314,7 +314,8 @@ void StatusTextHandler::_handleStatusText(const mavlink_message_t &message)
 
 void StatusTextHandler::_chunkedStatusTextTimeout()
 {
-    for (auto [compId, chunkedInfo] : m_chunkedStatusTextInfoMap.asKeyValueRange()) {
+    for (auto compId : m_chunkedStatusTextInfoMap.keys()) {
+        auto& chunkedInfo = m_chunkedStatusTextInfoMap[compId];
         (void) chunkedInfo.rgMessageChunks.append(QString());
         _chunkedStatusTextCompleted(compId);
     }
@@ -372,8 +373,18 @@ void StatusTextHandler::_handleTextMessage(uint32_t newCount, MessageType messag
         emit messageCountChanged(messageCount());
     }
 
-    if (messageType != m_messageType) {
-        m_messageType = messageType;
+    // messageType represents the worst message which hasn't been viewed yet
+    MessageType newMessageType = MessageType::MessageNone;
+    if (getErrorCount() > 0) {
+        newMessageType = MessageType::MessageError;
+    } else if (getWarningCount() > 0) {
+        newMessageType = MessageType::MessageWarning;
+    } else if (getNormalCount() > 0) {
+        newMessageType = MessageType::MessageNormal;
+    }
+
+    if (newMessageType != m_messageType) {
+        m_messageType = newMessageType;
         emit messageTypeChanged();
     }
 }

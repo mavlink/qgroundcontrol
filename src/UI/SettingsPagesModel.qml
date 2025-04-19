@@ -16,7 +16,7 @@ ListModel {
     ListElement {
         name: qsTr("General")
         url: "/qml/GeneralSettings.qml"
-        iconUrl: "qrc:/res/QGCLogoWhite"
+        iconUrl: "qrc:/res/QGCLogoWhite.svg"
         pageVisible: function() { return true }
     }
 
@@ -84,7 +84,7 @@ ListModel {
     ListElement {
         name: qsTr("Remote ID")
         url: "/qml/RemoteIDSettings.qml"
-        iconUrl: "qrc:/qmlimages/RidIconGrey.svg"
+        iconUrl: "qrc:/qmlimages/RidIconManNoID.svg"
         pageVisible: function() { return true }
     }
 

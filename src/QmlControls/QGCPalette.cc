@@ -12,7 +12,6 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "QGCPalette.h"
-#include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 
 #include <QtCore/QDebug>
@@ -125,7 +124,7 @@ void QGCPalette::setGlobalTheme(Theme newTheme)
 void QGCPalette::_signalPaletteChangeToAll()
 {
     // Notify all objects of the new theme
-    foreach (QGCPalette* palette, _paletteObjects) {
+    for (QGCPalette *palette : std::as_const(_paletteObjects)) {
         palette->_signalPaletteChanged();
     }
 }

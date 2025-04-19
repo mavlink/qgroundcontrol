@@ -26,7 +26,7 @@ APMFollowComponentController::~APMFollowComponentController()
     // qCDebug() << Q_FUNC_INFO << this;
 }
 
-bool APMFollowComponentController::roverFirmware()
+bool APMFollowComponentController::roverFirmware() const
 {
     return !!qobject_cast<ArduRoverFirmwarePlugin*>(_vehicle->firmwarePlugin());
 }

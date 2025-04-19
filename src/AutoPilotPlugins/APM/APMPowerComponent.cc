@@ -7,36 +7,10 @@
  *
  ****************************************************************************/
 
-
 #include "APMPowerComponent.h"
 
-APMPowerComponent::APMPowerComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
-    : VehicleComponent(vehicle, autopilot, parent),
-    _name(tr("Power"))
+APMPowerComponent::APMPowerComponent(Vehicle *vehicle, AutoPilotPlugin *autopilot, QObject *parent)
+    : VehicleComponent(vehicle, autopilot, AutoPilotPlugin::KnownPowerVehicleComponent, parent)
 {
-}
 
-QString APMPowerComponent::name(void) const
-{
-    return _name;
-}
-
-QString APMPowerComponent::description(void) const
-{
-    return tr("The Power Component is used to setup battery parameters.");
-}
-
-QString APMPowerComponent::iconResource(void) const
-{
-    return QStringLiteral("/qmlimages/PowerComponentIcon.png");
-}
-
-QUrl APMPowerComponent::setupSource(void) const
-{
-    return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMPowerComponent.qml"));
-}
-
-QUrl APMPowerComponent::summaryQmlSource(void) const
-{
-    return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMPowerComponentSummary.qml"));
 }

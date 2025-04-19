@@ -8,7 +8,6 @@
  ****************************************************************************/
 
 #include "QGCCameraManager.h"
-#include "QGCApplication.h"
 #include "JoystickManager.h"
 #include "SimulatedCameraControl.h"
 #include "MultiVehicleManager.h"
@@ -16,10 +15,18 @@
 #include "FirmwarePlugin.h"
 #include "QGCLoggingCategory.h"
 #include "Joystick.h"
+#include "CameraMetaData.h"
+#include "JsonHelper.h"
 
+#include <QtCore/QFile>
+#include <QtCore/QJsonArray>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonObject>
 #include <QtQml/QQmlEngine>
 
-QGC_LOGGING_CATEGORY(CameraManagerLog, "CameraManagerLog")
+QGC_LOGGING_CATEGORY(CameraManagerLog, "qgc.camera.qgccameramanager")
+
+QVariantList QGCCameraManager::_cameraList;
 
 //-----------------------------------------------------------------------------
 QGCCameraManager::CameraStruct::CameraStruct(QObject* parent, uint8_t compID_, Vehicle* vehicle_)
@@ -36,11 +43,13 @@ QGCCameraManager::QGCCameraManager(Vehicle *vehicle)
 {
     qCDebug(CameraManagerLog) << "QGCCameraManager Created";
 
+    (void) qRegisterMetaType<CameraMetaData>("CameraMetaData");
+
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 
     _addCameraControlToLists(_simulatedCameraControl);
 
-    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::parameterReadyVehicleAvailableChanged, this, &QGCCameraManager::_vehicleReady);
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::parameterReadyVehicleAvailableChanged, this, &QGCCameraManager::_vehicleReady);
     connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &QGCCameraManager::_mavlinkMessageReceived);
     connect(&_camerasLostHeartbeatTimer, &QTimer::timeout, this, &QGCCameraManager::_checkForLostCameras);
 
@@ -52,6 +61,16 @@ QGCCameraManager::QGCCameraManager(Vehicle *vehicle)
 
 QGCCameraManager::~QGCCameraManager()
 {
+    for (QVariant cam : _cameraList) {
+        delete cam.value<CameraMetaData*>();
+    }
+}
+
+void QGCCameraManager::registerQmlTypes()
+{
+    qmlRegisterUncreatableType<MavlinkCameraControl>("QGroundControl.Vehicle", 1, 0, "MavlinkCameraControl", "Reference only");
+    qmlRegisterUncreatableType<QGCCameraManager>    ("QGroundControl.Vehicle", 1, 0, "QGCCameraManager",     "Reference only");
+    qmlRegisterUncreatableType<QGCVideoStreamInfo>  ("QGroundControl.Vehicle", 1, 0, "QGCVideoStreamInfo",   "Reference only");
 }
 
 void QGCCameraManager::setCurrentCamera(int sel)
@@ -67,7 +86,7 @@ void QGCCameraManager::_vehicleReady(bool ready)
 {
     qCDebug(CameraManagerLog) << "_vehicleReady(" << ready << ")";
     if(ready) {
-        if(qgcApp()->toolbox()->multiVehicleManager()->activeVehicle() == _vehicle) {
+        if(MultiVehicleManager::instance()->activeVehicle() == _vehicle) {
             _vehicleReadyState = true;
             _activeJoystickChanged(JoystickManager::instance()->activeJoystick());
             connect(JoystickManager::instance(), &JoystickManager::activeJoystickChanged, this, &QGCCameraManager::_activeJoystickChanged);
@@ -232,7 +251,8 @@ QGCCameraManager::_handleCameraInfo(const mavlink_message_t& message)
 void QGCCameraManager::_checkForLostCameras()
 {
     //-- Iterate cameras
-    foreach (QString sCompID, _cameraInfoRequest.keys()) {
+    for (auto it = _cameraInfoRequest.constBegin(); it != _cameraInfoRequest.constEnd(); ++it) {
+        const QString &sCompID = it.key();
         if (_cameraInfoRequest[sCompID]) {
             CameraStruct* pInfo = _cameraInfoRequest[sCompID];
             //-- Have we received a camera info message?
@@ -554,4 +574,88 @@ QGCCameraManager::_stepStream(int direction)
             pCamera->setCurrentStream(c);
         }
     }
+}
+
+const QVariantList &QGCCameraManager::cameraList()
+{
+    if (_cameraList.isEmpty()) {
+        const QList<CameraMetaData*> cams = _parseCameraMetaData(QStringLiteral(":/json/CameraMetaData.json"));
+        _cameraList.reserve(cams.size());
+
+        for (CameraMetaData* cam : cams) {
+            _cameraList << QVariant::fromValue(cam);
+        }
+    }
+
+    return _cameraList;
+}
+
+QList<CameraMetaData*> QGCCameraManager::_parseCameraMetaData(const QString &jsonFilePath)
+{
+    QList<CameraMetaData*> cameraList;
+
+    QString errorString;
+    int version;
+    const QJsonObject jsonObject = JsonHelper::openInternalQGCJsonFile(jsonFilePath, "CameraMetaData", 1, 1, version, errorString);
+    if (!errorString.isEmpty()) {
+        qCWarning(CameraManagerLog) << "Internal Error:" << errorString;
+        return cameraList;
+    }
+
+    static const QList<JsonHelper::KeyValidateInfo> rootKeyInfoList = {
+        { "cameraMetaData", QJsonValue::Array, true }
+    };
+    if (!JsonHelper::validateKeys(jsonObject, rootKeyInfoList, errorString)) {
+        qCWarning(CameraManagerLog) << errorString;
+        return cameraList;
+    }
+
+    static const QList<JsonHelper::KeyValidateInfo> cameraKeyInfoList = {
+        { "canonicalName", QJsonValue::String, true },
+        { "brand", QJsonValue::String, true },
+        { "model", QJsonValue::String, true },
+        { "sensorWidth", QJsonValue::Double, true },
+        { "sensorHeight", QJsonValue::Double, true },
+        { "imageWidth", QJsonValue::Double, true },
+        { "imageHeight", QJsonValue::Double, true },
+        { "focalLength", QJsonValue::Double, true },
+        { "landscape", QJsonValue::Bool, true },
+        { "fixedOrientation", QJsonValue::Bool, true },
+        { "minTriggerInterval", QJsonValue::Double, true },
+        { "deprecatedTranslatedName", QJsonValue::String, true },
+    };
+    const QJsonArray cameraInfo = jsonObject["cameraMetaData"].toArray();
+    for (const QJsonValue &jsonValue : cameraInfo) {
+        if (!jsonValue.isObject()) {
+            qCWarning(CameraManagerLog) << "Entry in CameraMetaData array is not object";
+            return cameraList;
+        }
+
+        const QJsonObject obj = jsonValue.toObject();
+        if (!JsonHelper::validateKeys(obj, cameraKeyInfoList, errorString)) {
+            qCWarning(CameraManagerLog) << errorString;
+            return cameraList;
+        }
+
+        const QString canonicalName = obj["canonicalName"].toString();
+        const QString brand = obj["brand"].toString();
+        const QString model = obj["model"].toString();
+        const double sensorWidth = obj["sensorWidth"].toDouble();
+        const double sensorHeight = obj["sensorHeight"].toDouble();
+        const double imageWidth = obj["imageWidth"].toDouble();
+        const double imageHeight = obj["imageHeight"].toDouble();
+        const double focalLength = obj["focalLength"].toDouble();
+        const bool landscape = obj["landscape"].toBool();
+        const bool fixedOrientation = obj["fixedOrientation"].toBool();
+        const double minTriggerInterval = obj["minTriggerInterval"].toDouble();
+        const QString deprecatedTranslatedName = obj["deprecatedTranslatedName"].toString();
+
+        CameraMetaData *const metaData = new CameraMetaData(
+            canonicalName, brand, model, sensorWidth, sensorHeight,
+            imageWidth, imageHeight, focalLength, landscape,
+            fixedOrientation, minTriggerInterval, deprecatedTranslatedName);
+        cameraList.append(metaData);
+    }
+
+    return cameraList;
 }

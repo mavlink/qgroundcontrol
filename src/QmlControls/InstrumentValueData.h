@@ -30,7 +30,7 @@ public:
     };
     Q_ENUMS(RangeType)
 
-    explicit InstrumentValueData(FactValueGrid* factValueGrid, QObject* parent);
+    explicit InstrumentValueData(FactValueGrid* factValueGrid, QObject* parent, Vehicle* vehicle);
 
     Q_PROPERTY(FactValueGrid*       factValueGrid       MEMBER _factValueGrid                               CONSTANT)
     Q_PROPERTY(QStringList          factGroupNames      READ    factGroupNames                              NOTIFY factGroupNamesChanged)
@@ -62,7 +62,7 @@ public:
     QStringList     factValueNames          (void) const;
     QString         factGroupName           (void) const { return _factGroupName; }
     QString         factName                (void) const { return _factName; }
-    Fact*           fact                    (void) { return _fact; }
+    Fact*           fact                    (void) const { return _fact; }
     QString         text                    (void) const { return _text; }
     bool            showUnits               (void) const { return _showUnits; }
     QString         icon                    (void) const { return _icon; }
@@ -103,7 +103,7 @@ signals:
 private slots:
     void _resetRangeInfo        (void);
     void _updateRanges          (void);
-    void _activeVehicleChanged  (Vehicle* activeVehicle);
+    void _vehicleChanged        (void);
     void _lookForMissingFact    (void);
 
 private:
@@ -114,7 +114,7 @@ private:
     void _setFactWorker         (void);
 
     FactValueGrid*          _factValueGrid =        nullptr;
-    Vehicle*                _activeVehicle =        nullptr;
+    Vehicle*                _vehicle =              nullptr;
     QmlObjectListModel*     _rowModel =             nullptr;
     Fact*                   _fact =                 nullptr;
     QString                 _factName;

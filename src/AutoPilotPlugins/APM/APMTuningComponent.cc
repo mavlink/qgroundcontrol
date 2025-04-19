@@ -7,71 +7,28 @@
  *
  ****************************************************************************/
 
-
 #include "APMTuningComponent.h"
 #include "Vehicle.h"
 
-APMTuningComponent::APMTuningComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
-    : VehicleComponent(vehicle, autopilot, parent)
-    , _name(tr("Tuning"))
+APMTuningComponent::APMTuningComponent(Vehicle *vehicle, AutoPilotPlugin *autopilot, QObject *parent)
+    : VehicleComponent(vehicle, autopilot, AutoPilotPlugin::UnknownVehicleComponent, parent)
 {
+
 }
 
-QString APMTuningComponent::name(void) const
+QUrl APMTuningComponent::setupSource() const
 {
-    return _name;
-}
-
-QString APMTuningComponent::description(void) const
-{
-    return tr("Tuning Setup is used to tune the flight characteristics of the Vehicle.");
-}
-
-QString APMTuningComponent::iconResource(void) const
-{
-    return QStringLiteral("/qmlimages/TuningComponentIcon.png");
-}
-
-bool APMTuningComponent::requiresSetup(void) const
-{
-    return false;
-}
-
-bool APMTuningComponent::setupComplete(void) const
-{
-    return true;
-}
-
-QStringList APMTuningComponent::setupCompleteChangedTriggerList(void) const
-{
-    return QStringList();
-}
-
-QUrl APMTuningComponent::setupSource(void) const
-{
-    QString qmlFile;
-
     switch (_vehicle->vehicleType()) {
-        case MAV_TYPE_QUADROTOR:
-        case MAV_TYPE_COAXIAL:
-        case MAV_TYPE_HELICOPTER:
-        case MAV_TYPE_HEXAROTOR:
-        case MAV_TYPE_OCTOROTOR:
-        case MAV_TYPE_TRICOPTER:
-            qmlFile = QStringLiteral("qrc:/qml/APMTuningComponentCopter.qml");
-            break;
-        case MAV_TYPE_SUBMARINE:
-            qmlFile = QStringLiteral("qrc:/qml/APMTuningComponentSub.qml");
-            break;
-        default:
-            // No tuning panel
-            break;
+    case MAV_TYPE_QUADROTOR:
+    case MAV_TYPE_COAXIAL:
+    case MAV_TYPE_HELICOPTER:
+    case MAV_TYPE_HEXAROTOR:
+    case MAV_TYPE_OCTOROTOR:
+    case MAV_TYPE_TRICOPTER:
+        return QUrl::fromUserInput("qrc:/qml/APMTuningComponentCopter.qml");
+    case MAV_TYPE_SUBMARINE:
+        return QUrl::fromUserInput("qrc:/qml/APMTuningComponentSub.qml");
+    default:
+        return QUrl::fromUserInput(QString());
     }
-
-    return QUrl::fromUserInput(qmlFile);
-}
-
-QUrl APMTuningComponent::summaryQmlSource(void) const
-{
-    return QUrl();
 }

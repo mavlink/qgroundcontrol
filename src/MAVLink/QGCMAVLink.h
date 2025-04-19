@@ -9,22 +9,25 @@
 
 #pragma once
 
-#include <QtCore/QObject>
-#include <QtCore/QString>
 #include <QtCore/QList>
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QObject>
+#include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "MAVLinkLib.h"
 
 Q_DECLARE_LOGGING_CATEGORY(QGCMAVLinkLog)
+// Q_DECLARE_METATYPE(mavlink_message_t)
+Q_DECLARE_METATYPE(MAV_TYPE)
+Q_DECLARE_METATYPE(MAV_AUTOPILOT)
 
 // TODO: Q_NAMESPACE
 class QGCMAVLink : public QObject
 {
     Q_OBJECT
-    QML_ELEMENT
-    QML_UNCREATABLE("")
+    // QML_ELEMENT
+    // QML_UNCREATABLE("")
 
 public:
     // Creating an instance of QGCMAVLink is only meant to be used for the Qml Singleton
@@ -159,4 +162,7 @@ public:
     static bool isValidChannel(mavlink_channel_t channel) { return isValidChannel(static_cast<uint8_t>(channel)); }
 
     static mavlink_status_t* getChannelStatus(mavlink_channel_t channel) { return mavlink_get_channel_status(static_cast<uint8_t>(channel)); }
+
+    static const QHash<int, QString> mavlinkCompIdHash;
 };
+Q_DECLARE_METATYPE(GRIPPER_ACTIONS)

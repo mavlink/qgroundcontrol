@@ -10,9 +10,9 @@
 #include "FTPManagerTest.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
-#include "QGCApplication.h"
 #include "MockLink.h"
 #include "FTPManager.h"
+#include "MockLinkFTP.h"
 
 #include <QtCore/QStandardPaths>
 #include <QtTest/QTest>
@@ -31,7 +31,7 @@ void FTPManagerTest::_testCaseWorker(const TestCase_t& testCase)
 {
     _connectMockLinkNoInitialConnectSequence();
 
-    MultiVehicleManager*    vehicleMgr  = qgcApp()->toolbox()->multiVehicleManager();
+    MultiVehicleManager*    vehicleMgr  = MultiVehicleManager::instance();
     Vehicle*                vehicle     = vehicleMgr->activeVehicle();
     FTPManager*             ftpManager  = vehicle->ftpManager();
 
@@ -146,7 +146,7 @@ void FTPManagerTest::_testListDirectory(void)
 {
     _connectMockLinkNoInitialConnectSequence();
 
-    MultiVehicleManager*    vehicleMgr  = qgcApp()->toolbox()->multiVehicleManager();
+    MultiVehicleManager*    vehicleMgr  = MultiVehicleManager::instance();
     Vehicle*                vehicle     = vehicleMgr->activeVehicle();
     FTPManager*             ftpManager  = vehicle->ftpManager();
 
@@ -169,7 +169,7 @@ void FTPManagerTest::_testListDirectoryNoResponse(void)
 {
     _connectMockLinkNoInitialConnectSequence();
 
-    MultiVehicleManager*    vehicleMgr  = qgcApp()->toolbox()->multiVehicleManager();
+    MultiVehicleManager*    vehicleMgr  = MultiVehicleManager::instance();
     Vehicle*                vehicle     = vehicleMgr->activeVehicle();
     FTPManager*             ftpManager  = vehicle->ftpManager();
 
@@ -192,7 +192,7 @@ void FTPManagerTest::_testListDirectoryNakResponse(void)
 {
     _connectMockLinkNoInitialConnectSequence();
 
-    MultiVehicleManager*    vehicleMgr  = qgcApp()->toolbox()->multiVehicleManager();
+    MultiVehicleManager*    vehicleMgr  = MultiVehicleManager::instance();
     Vehicle*                vehicle     = vehicleMgr->activeVehicle();
     FTPManager*             ftpManager  = vehicle->ftpManager();
 
@@ -215,7 +215,7 @@ void FTPManagerTest::_testListDirectoryNoSecondResponse(void)
 {
     _connectMockLinkNoInitialConnectSequence();
 
-    MultiVehicleManager*    vehicleMgr  = qgcApp()->toolbox()->multiVehicleManager();
+    MultiVehicleManager*    vehicleMgr  = MultiVehicleManager::instance();
     Vehicle*                vehicle     = vehicleMgr->activeVehicle();
     FTPManager*             ftpManager  = vehicle->ftpManager();
 
@@ -238,7 +238,7 @@ void FTPManagerTest::_testListDirectoryNoSecondResponseAllowRetry(void)
 {
     _connectMockLinkNoInitialConnectSequence();
 
-    MultiVehicleManager*    vehicleMgr  = qgcApp()->toolbox()->multiVehicleManager();
+    MultiVehicleManager*    vehicleMgr  = MultiVehicleManager::instance();
     Vehicle*                vehicle     = vehicleMgr->activeVehicle();
     FTPManager*             ftpManager  = vehicle->ftpManager();
 
@@ -261,7 +261,7 @@ void FTPManagerTest::_testListDirectoryNakSecondResponse(void)
 {
     _connectMockLinkNoInitialConnectSequence();
 
-    MultiVehicleManager*    vehicleMgr  = qgcApp()->toolbox()->multiVehicleManager();
+    MultiVehicleManager*    vehicleMgr  = MultiVehicleManager::instance();
     Vehicle*                vehicle     = vehicleMgr->activeVehicle();
     FTPManager*             ftpManager  = vehicle->ftpManager();
 
@@ -284,7 +284,7 @@ void FTPManagerTest::_testListDirectoryBadSequence(void)
 {
     _connectMockLinkNoInitialConnectSequence();
 
-    MultiVehicleManager*    vehicleMgr  = qgcApp()->toolbox()->multiVehicleManager();
+    MultiVehicleManager*    vehicleMgr  = MultiVehicleManager::instance();
     Vehicle*                vehicle     = vehicleMgr->activeVehicle();
     FTPManager*             ftpManager  = vehicle->ftpManager();
 

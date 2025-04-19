@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 #include "TerrainQuery.h"
-#include "TerrainQueryAirMap.h"
+#include "TerrainQueryInterface.h"
 #include "TerrainTileManager.h"
 #include "QGCLoggingCategory.h"
 
@@ -22,7 +22,7 @@ Q_GLOBAL_STATIC(TerrainAtCoordinateBatchManager, _terrainAtCoordinateBatchManage
 TerrainAtCoordinateBatchManager::TerrainAtCoordinateBatchManager(QObject *parent)
     : QObject(parent)
     , _batchTimer(new QTimer(this))
-    , _terrainQuery(new TerrainOfflineAirMapQuery(this))
+    , _terrainQuery(new TerrainOfflineQuery(this))
 {
     // qCDebug(TerrainQueryLog) << Q_FUNC_INFO << this;
 
@@ -190,12 +190,12 @@ TerrainAtCoordinateQuery::TerrainAtCoordinateQuery(bool autoDelete, QObject *par
     : QObject(parent)
     , _autoDelete(autoDelete)
 {
-    // qCDebug(AudioOutputLog) << Q_FUNC_INFO << this;
+    // qCDebug(TerrainQueryLog) << Q_FUNC_INFO << this;
 }
 
 TerrainAtCoordinateQuery::~TerrainAtCoordinateQuery()
 {
-    // qCDebug(AudioOutputLog) << Q_FUNC_INFO << this;
+    // qCDebug(TerrainQueryLog) << Q_FUNC_INFO << this;
 }
 
 void TerrainAtCoordinateQuery::requestData(const QList<QGeoCoordinate> &coordinates)
@@ -225,16 +225,16 @@ void TerrainAtCoordinateQuery::signalTerrainData(bool success, const QList<doubl
 TerrainPathQuery::TerrainPathQuery(bool autoDelete, QObject *parent)
    : QObject(parent)
    , _autoDelete(autoDelete)
-   , _terrainQuery(new TerrainOfflineAirMapQuery(this))
+   , _terrainQuery(new TerrainOfflineQuery(this))
 {
-    // qCDebug(AudioOutputLog) << Q_FUNC_INFO << this;
+    // qCDebug(TerrainQueryLog) << Q_FUNC_INFO << this;
 
     (void) connect(_terrainQuery, &TerrainQueryInterface::pathHeightsReceived, this, &TerrainPathQuery::_pathHeights);
 }
 
 TerrainPathQuery::~TerrainPathQuery()
 {
-    // qCDebug(AudioOutputLog) << Q_FUNC_INFO << this;
+    // qCDebug(TerrainQueryLog) << Q_FUNC_INFO << this;
 }
 
 void TerrainPathQuery::requestData(const QGeoCoordinate &fromCoord, const QGeoCoordinate &toCoord)
@@ -261,14 +261,14 @@ TerrainPolyPathQuery::TerrainPolyPathQuery(bool autoDelete, QObject *parent)
     , _autoDelete(autoDelete)
     , _pathQuery(new TerrainPathQuery(false, this))
 {
-    // qCDebug(AudioOutputLog) << Q_FUNC_INFO << this;
+    // qCDebug(TerrainQueryLog) << Q_FUNC_INFO << this;
 
     (void) connect(_pathQuery, &TerrainPathQuery::terrainDataReceived, this, &TerrainPolyPathQuery::_terrainDataReceived);
 }
 
 TerrainPolyPathQuery::~TerrainPolyPathQuery()
 {
-    // qCDebug(AudioOutputLog) << Q_FUNC_INFO << this;
+    // qCDebug(TerrainQueryLog) << Q_FUNC_INFO << this;
 }
 
 void TerrainPolyPathQuery::requestData(const QVariantList &polyPath)

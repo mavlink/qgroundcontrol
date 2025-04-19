@@ -24,6 +24,7 @@ Item {
     id: _root
 
     property var map        ///< Map control to place item in
+    property var vehicle    ///< Vehicle associated with this item
     property bool interactive: true
 
     signal clicked(int sequenceNumber)
@@ -86,7 +87,6 @@ Item {
     function showMouseArea() {
         if (!_mouseArea) {
             _mouseArea = mouseAreaComponent.createObject(map)
-            map.addMapItem(_mouseArea)
         }
     }
 

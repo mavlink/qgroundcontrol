@@ -9,30 +9,25 @@
 
 #include "FactValueSliderListModel.h"
 #include "Fact.h"
+#include "QGCLoggingCategory.h"
 
-#include <QtQml/QQmlEngine>
 #include <QtCore/QtMath>
 
-FactValueSliderListModel::FactValueSliderListModel(Fact& fact, QObject* parent)
-    : QAbstractListModel        (parent)
-    , _fact                     (fact)
-    , _cValues                  (0)
-    , _firstValueIndexInWindow  (0)
-    , _initialValueIndex        (0)
-    , _cPrevValues              (0)
-    , _cNextValues              (0)
-    , _initialValue             (0)
-    , _initialValueAtPrecision  (0)
-    , _increment                (0)
+QGC_LOGGING_CATEGORY(FactValueSliderListModelLog, "qgc.factsystem.factvaluesliderlistmodel")
+
+FactValueSliderListModel::FactValueSliderListModel(const Fact &fact, QObject *parent)
+    : QAbstractListModel(parent)
+    , _fact(fact)
 {
-    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
+    // qCDebug(FactValueSliderListModelLog) << Q_FUNC_INFO << this;
 }
 
 FactValueSliderListModel::~FactValueSliderListModel()
 {
+    // qCDebug(FactValueSliderListModelLog) << Q_FUNC_INFO << this;
 }
 
-int FactValueSliderListModel::resetInitialValue(void)
+int FactValueSliderListModel::resetInitialValue()
 {
     if (_cValues > 0) {
         // Remove any old rows
@@ -48,11 +43,11 @@ int FactValueSliderListModel::resetInitialValue(void)
     } else {
         _increment = _fact.cookedIncrement();
     }
-    _cPrevValues = qMin((_initialValue - _fact.cookedMin().toDouble())  / _increment, 100.0);
-    _cNextValues = qMin((_fact.cookedMax().toDouble() - _initialValue)  / _increment, 100.0);
+    _cPrevValues = qMin((_initialValue - _fact.cookedMin().toDouble()) / _increment, 100.0);
+    _cNextValues = qMin((_fact.cookedMax().toDouble() - _initialValue) / _increment, 100.0);
     _initialValueIndex = _cPrevValues;
 
-    int totalValueCount = _cPrevValues + 1 + _cNextValues;
+    const int totalValueCount = _cPrevValues + 1 + _cNextValues;
     beginInsertRows(QModelIndex(), 0, totalValueCount - 1);
     _cValues = totalValueCount;
     endInsertRows();
@@ -62,13 +57,6 @@ int FactValueSliderListModel::resetInitialValue(void)
     return _initialValueIndex;
 }
 
-int FactValueSliderListModel::rowCount(const QModelIndex& parent) const
-{
-    Q_UNUSED(parent);
-    
-    return _cValues;
-}
-
 QVariant FactValueSliderListModel::data(const QModelIndex &index, int role) const
 {
     Q_UNUSED(role);
@@ -76,15 +64,15 @@ QVariant FactValueSliderListModel::data(const QModelIndex &index, int role) cons
     if (!index.isValid()) {
         return QVariant();
     }
-    
-    int valueIndex = index.row();
+
+    const int valueIndex = index.row();
     if (valueIndex >= _cValues) {
         return QVariant();
     }
 
     if (role == _valueRole) {
         double value;
-        int cIncrementCount = valueIndex - _initialValueIndex;
+        const int cIncrementCount = valueIndex - _initialValueIndex;
         if (cIncrementCount == 0) {
             value = _initialValue;
         } else {
@@ -96,11 +84,9 @@ QVariant FactValueSliderListModel::data(const QModelIndex &index, int role) cons
     } else {
         return QVariant();
     }
-
-
 }
 
-QHash<int, QByteArray> FactValueSliderListModel::roleNames(void) const
+QHash<int, QByteArray> FactValueSliderListModel::roleNames() const
 {
     QHash<int, QByteArray> hash;
 
@@ -110,19 +96,18 @@ QHash<int, QByteArray> FactValueSliderListModel::roleNames(void) const
     return hash;
 }
 
-double FactValueSliderListModel::valueAtModelIndex(int index)
+double FactValueSliderListModel::valueAtModelIndex(int index) const
 {
     return data(createIndex(index, 0), _valueRole).toDouble();
-
 }
 
-int FactValueSliderListModel::valueIndexAtModelIndex(int index)
+int FactValueSliderListModel::valueIndexAtModelIndex(int index) const
 {
     return data(createIndex(index, 0), _valueIndexRole).toInt();
 }
 
 double FactValueSliderListModel::_valueAtPrecision(double value) const
 {
-    double precision = qPow(10, _fact.decimalPlaces());
-    return qRound(value * precision) / precision;
+    const double precision = qPow(10, _fact.decimalPlaces());
+    return (qRound(value * precision) / precision);
 }

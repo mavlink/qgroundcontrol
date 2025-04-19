@@ -7,18 +7,13 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Pritam Ghanghas <pritam.ghanghas@gmail.com>
-
 #pragma once
 
 #include "APMFirmwarePlugin.h"
 
-class APMRoverMode : public APMCustomMode
+struct APMRoverMode
 {
-public:
-    enum Mode {
+    enum Mode : uint32_t{
         MANUAL          = 0,
         ACRO            = 1,
         LEARNING        = 2, // Deprecated
@@ -33,30 +28,50 @@ public:
         RTL             = 11,
         SMART_RTL       = 12,
         GUIDED          = 15,
-        INITIALIZING    = 16,
+        INITIALIZING    = 16
     };
-
-    APMRoverMode(uint32_t mode, bool settable);
 };
 
 class ArduRoverFirmwarePlugin : public APMFirmwarePlugin
 {
     Q_OBJECT
-    
-public:
-    ArduRoverFirmwarePlugin(void);
 
-    // Overrides from FirmwarePlugin
-    QString pauseFlightMode                         (void) const override { return QStringLiteral("Hold"); }
-    QString followFlightMode                        (void) const override { return QStringLiteral("Follow"); }
-    void    guidedModeChangeAltitude                (Vehicle* vehicle, double altitudeChange, bool pauseVehicle) final;
-    int     remapParamNameHigestMinorVersionNumber  (int majorVersionNumber) const final;
-    const   FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
-    bool    supportsNegativeThrust                  (Vehicle *) final;
-    bool    supportsSmartRTL                        (void) const override { return true; }
-    QString offlineEditingParamFile                 (Vehicle* vehicle) override { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Rover.OfflineEditing.params"); }
+public:
+    explicit ArduRoverFirmwarePlugin(QObject *parent = nullptr);
+    ~ArduRoverFirmwarePlugin();
+
+    QString pauseFlightMode() const override { return QStringLiteral("Hold"); }
+    QString followFlightMode() const override { return QStringLiteral("Follow"); }
+    void guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange, bool pauseVehicle) override;
+    int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const override;
+    const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap() const override { return _remapParamName; }
+    bool supportsNegativeThrust(Vehicle*) const override { return true; }
+    bool supportsSmartRTL() const override { return true; }
+    QString offlineEditingParamFile(Vehicle *vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Rover.OfflineEditing.params"); }
+
+    QString stabilizedFlightMode() const override;
+    void updateAvailableFlightModes(FlightModeList &modeList) override;
+
+protected:
+    uint32_t _convertToCustomFlightModeEnum(uint32_t val) const override;
+
+    const QString _manualFlightMode = tr("Manual");
+    const QString _acroFlightMode = tr("Acro");
+    const QString _learningFlightMode = tr("Learning");
+    const QString _steeringFlightMode = tr("Steering");
+    const QString _holdFlightMode = tr("Hold");
+    const QString _loiterFlightMode = tr("Loiter");
+    const QString _followFlightMode = tr("Follow");
+    const QString _simpleFlightMode = tr("Simple");
+    const QString _dockFlightMode = tr("Dock");
+    const QString _circleFlightMode = tr("Circle");
+    const QString _autoFlightMode = tr("Auto");
+    const QString _rtlFlightMode = tr("RTL");
+    const QString _smartRtlFlightMode = tr("Smart RTL");
+    const QString _guidedFlightMode = tr("Guided");
+    const QString _initializingFlightMode = tr("Initializing");
 
 private:
     static bool _remapParamNameIntialized;
-    static FirmwarePlugin::remapParamNameMajorVersionMap_t  _remapParamName;
+    static FirmwarePlugin::remapParamNameMajorVersionMap_t _remapParamName;
 };

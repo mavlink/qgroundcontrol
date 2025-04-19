@@ -15,6 +15,7 @@
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "SettingsManager.h"
+#include "AppSettings.h"
 
 #include <QtGui/QCursor>
 #include <QtGui/QFontDatabase>
@@ -77,7 +78,7 @@ QString ScreenToolsController::fixedFontFamily()
 QString ScreenToolsController::normalFontFamily()
 {
     //-- See App.SettinsGroup.json for index
-    const int langID = qgcApp()->toolbox()->settingsManager()->appSettings()->qLocaleLanguage()->rawValue().toInt();
+    const int langID = SettingsManager::instance()->appSettings()->qLocaleLanguage()->rawValue().toInt();
     if (langID == QLocale::Korean) {
         return QStringLiteral("NanumGothic");
     }

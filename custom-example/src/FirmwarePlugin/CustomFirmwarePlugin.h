@@ -26,9 +26,10 @@ public:
     CustomFirmwarePlugin();
 
     // FirmwarePlugin overrides
-    AutoPilotPlugin*    autopilotPlugin (Vehicle* vehicle) final;
+    AutoPilotPlugin*    autopilotPlugin (Vehicle* vehicle) const final;
     const QVariantList& toolIndicators  (const Vehicle* vehicle) final;
-    bool                hasGimbal       (Vehicle* vehicle, bool& rollSupported, bool& pitchSupported, bool& yawSupported) final;
+    bool                hasGimbal       (Vehicle* vehicle, bool& rollSupported, bool& pitchSupported, bool& yawSupported) const final;
+    void                updateAvailableFlightModes      (FlightModeList &modeList) override;
 
 private:
     QVariantList _toolIndicatorList;

@@ -16,10 +16,17 @@ import QGroundControl.ScreenTools
 QGCPopupDialog {
     property alias  text:           label.text
     property var    acceptFunction: null        // Mainly used by MainRootWindow.showMessage to specify accept function in call
+    property var    closeFunction:  null
 
     onAccepted: {
         if (acceptFunction) {
             acceptFunction()
+        }
+    }
+
+    onClosed: {
+        if (closeFunction) {
+            closeFunction()
         }
     }
 

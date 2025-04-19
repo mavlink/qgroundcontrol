@@ -13,18 +13,14 @@
 #include "QGCLoggingCategory.h"
 #include "MAVLinkSigning.h"
 #include "SettingsManager.h"
-#include "AppSettings.h"
-
-#ifdef QT_DEBUG
-#include "MockLink.h"
-#endif
+#include "MavlinkSettings.h"
 
 #include <QtQml/QQmlEngine>
 
-QGC_LOGGING_CATEGORY(LinkInterfaceLog, "LinkInterfaceLog")
+QGC_LOGGING_CATEGORY(LinkInterfaceLog, "qgc.comms.linkinterface")
 
 LinkInterface::LinkInterface(SharedLinkConfigurationPtr &config, QObject *parent)
-    : QThread(parent)
+    : QObject(parent)
     , _config(config)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
@@ -53,11 +49,11 @@ bool LinkInterface::mavlinkChannelIsSet() const
     return (LinkManager::invalidMavlinkChannel() != _mavlinkChannel);
 }
 
-bool LinkInterface::initMavlinkSigning(void)
+bool LinkInterface::initMavlinkSigning()
 {
     if (!isSecureConnection()) {
-        auto appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
-        QByteArray signingKeyBytes = appSettings->mavlink2SigningKey()->rawValue().toByteArray();
+        auto mavlinkSettings = SettingsManager::instance()->mavlinkSettings();
+        const QByteArray signingKeyBytes = mavlinkSettings->mavlink2SigningKey()->rawValue().toByteArray();
         if (MAVLinkSigning::initSigning(static_cast<mavlink_channel_t>(_mavlinkChannel), signingKeyBytes, MAVLinkSigning::insecureConnectionAccceptUnsignedCallback)) {
             if (signingKeyBytes.isEmpty()) {
                 qCDebug(LinkInterfaceLog) << "Signing disabled on channel" << _mavlinkChannel;
@@ -65,7 +61,7 @@ bool LinkInterface::initMavlinkSigning(void)
                 qCDebug(LinkInterfaceLog) << "Signing enabled on channel" << _mavlinkChannel;
             }
         } else {
-            qWarning() << Q_FUNC_INFO << "Failed To enable Signing on channel" << _mavlinkChannel;
+            qCWarning(LinkInterfaceLog) << Q_FUNC_INFO << "Failed To enable Signing on channel" << _mavlinkChannel;
             // FIXME: What should we do here?
             return false;
         }
@@ -83,7 +79,7 @@ bool LinkInterface::_allocateMavlinkChannel()
         return true;
     }
 
-    _mavlinkChannel = qgcApp()->toolbox()->linkManager()->allocateMavlinkChannel();
+    _mavlinkChannel = LinkManager::instance()->allocateMavlinkChannel();
 
     if (!mavlinkChannelIsSet()) {
         qCWarning(LinkInterfaceLog) << Q_FUNC_INFO << "failed";
@@ -105,7 +101,7 @@ void LinkInterface::_freeMavlinkChannel()
         return;
     }
 
-    qgcApp()->toolbox()->linkManager()->freeMavlinkChannel(_mavlinkChannel);
+    LinkManager::instance()->freeMavlinkChannel(_mavlinkChannel);
     _mavlinkChannel = LinkManager::invalidMavlinkChannel();
 }
 

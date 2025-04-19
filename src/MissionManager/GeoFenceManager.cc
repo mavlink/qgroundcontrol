@@ -152,11 +152,11 @@ void GeoFenceManager::_planManagerLoadComplete(bool removeAllRequested)
                 expectedCommand = command;
             } else if (expectedVertexCount != item->param1()){
                 // In the middle of a polygon, but count suddenly changed
-                emit error(BadPolygonItemFormat, tr("GeoFence load: Vertex count change mid-polygon - actual:expected").arg(item->param1()).arg(expectedVertexCount));
+                emit error(BadPolygonItemFormat, tr("GeoFence load: Vertex count change mid-polygon - actual:expected") + QString(" %1:%2").arg(item->param1()).arg(expectedVertexCount));
                 break;
-            } if (expectedCommand != command) {
+            } else if (expectedCommand != command) {
                 // Command changed before last polygon was completely loaded
-                emit error(BadPolygonItemFormat, tr("GeoFence load: Polygon type changed before last load complete - actual:expected").arg(command).arg(expectedCommand));
+                emit error(BadPolygonItemFormat, tr("GeoFence load: Polygon type changed before last load complete - actual:expected") + QString(" %1:%2").arg(command).arg(expectedCommand));
                 break;
             }
             nextPolygon.appendVertex(QGeoCoordinate(item->param5(), item->param6()));

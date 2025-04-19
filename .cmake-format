@@ -1,0 +1,4 @@
+line_width: 120
+tab_size: 4
+max_prefix_chars: 40
+use_tabchars: false

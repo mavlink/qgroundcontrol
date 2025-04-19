@@ -55,7 +55,8 @@ QGCLabel {
         0x14: 'AK09918',
         0x15: 'AK09915',
         0x16: 'QMC5883P',
-        0x17: 'BMM350'
+        0x17: 'BMM350',
+        0x18: 'IIS2MDC'
     }
 
     property var imuTypes: {
@@ -89,12 +90,12 @@ QGCLabel {
         0x35: 'INS_ICM42605',
         0x36: 'INS_ICM40605',
         0x37: 'INS_IIM42652',
-        0x38: 'INS_IIM42653',
-        0x39: 'BMI270',
-        0x3A: 'INS_BMI085',
-        0x3B: 'INS_ICM42670',
-        0x3C: 'INS_ICM45686',
-        0x3D: 'INS_SCHA63T'
+        0x38: 'BMI270',
+        0x39: 'INS_BMI085',
+        0x3A: 'INS_ICM42670',
+        0x3B: 'INS_ICM45686',
+        0x3C: 'INS_SCHA63T',
+        0x3D: 'INS_IIM42653'
     }
 
     property var baroTypes: {

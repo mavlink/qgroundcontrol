@@ -8,26 +8,29 @@ on:
     tags:
       - 'v*'
     paths-ignore:
-      - 'android/**'
-      - 'deploy/**'
-      - 'docs/**'
+      - 'docs/**' # Do not trigger for any changes under docs
   pull_request:
-    paths-ignore:
-      - 'android/**'
-      - 'deploy/**'
-      - 'docs/**'
-      - '.github/workflows/docs_deploy.yml'
-      - '.github/workflows/android.yml'
-      - '.github/workflows/macos.yml'
-      - '.github/workflows/windows.yml'
+    paths:
+      - '.github/workflows/linux.yml'
+      - '.github/actions/**'
+      - 'deploy/linux/**'
+      - 'src/**'
+      - 'test/**'
+      - 'CMakeLists.txt'
+      - 'cmake/**'
+
+# concurrency:
+#   group: ${{ github.workflow }}-${{ github.ref }}
+#   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     strategy:
       matrix:
         BuildType: [Debug, Release]
+        # Arch: [x64] # Arm64
 
     defaults:
       run:
@@ -35,33 +38,28 @@ jobs:
 
     env:
       ARTIFACT: QGroundControl-x86_64.AppImage
-      QT_VERSION: 6.6.3
-      GST_VERSION: 1.22.12
+      PACKAGE: QGroundControl-x86_64
+      QT_VERSION: 6.8.3
 
     steps:
-      - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@main
-        with:
-          large-packages: false
-        continue-on-error: true
-
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
           submodules: recursive
           fetch-tags: true
-          fetch-depth: 0
+
+      - name: Initial Setup
+        uses: ./.github/actions/common
 
       - name: Install Dependencies
         run: |
           chmod a+x ./tools/setup/install-dependencies-debian.sh
           sudo ./tools/setup/install-dependencies-debian.sh
-          python3 -m pip install --user ninja cmake
 
       - name: Install Vulkan
         run: |
-          wget -qO - http://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo apt-key add -
-          sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-1.3.283-focal.list https://packages.lunarg.com/vulkan/1.3.283/lunarg-vulkan-1.3.283-focal.list
+          wget -qO- https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo tee /etc/apt/trusted.gpg.d/lunarg.asc
+          sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-jammy.list http://packages.lunarg.com/vulkan/lunarg-vulkan-jammy.list
           sudo apt update
           sudo apt install vulkan-sdk
 
@@ -72,98 +70,27 @@ jobs:
           sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 100 --slave /usr/bin/g++ g++ /usr/bin/g++-11 --slave /usr/bin/gcov gcov /usr/bin/gcov-11
           sudo update-alternatives --set gcc /usr/bin/gcc-11
 
-      - name: Install CCache
-        run: |
-          wget --quiet https://github.com/ccache/ccache/releases/download/v4.10.2/ccache-4.10.2-linux-x86_64.tar.xz
-          tar -xvf ccache-*-linux-x86_64.tar.xz
-          cd ccache-*-linux-x86_64
-          sudo make install
-
-      - name: Set Up Cache
-        uses: hendrikmuhs/ccache-action@v1.2
+      - name: Setup Caching
+        uses: ./.github/actions/cache
         with:
-          create-symlink: true
-          key: ${{ runner.os }}-${{ matrix.BuildType }}
-          restore-keys: ${{ runner.os }}-${{ matrix.BuildType }}
-          max-size: 1G
-          append-timestamp: false
-          save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+          host: linux
+          target: linux_gcc_64
+          build-type: ${{ matrix.BuildType }}
+          cpm-modules: ${{ runner.temp }}/shadow_build_dir/cpm_modules
 
-      - name: Install Qt for Linux
+      - name: Install Qt for Linux (x64)
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
-          aqtversion: ==3.1.*
           host: linux
           target: desktop
-          arch: gcc_64
+          arch: linux_gcc_64
           dir: ${{ runner.temp }}
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
-          cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+          cache: true
 
       # - name: Build GStreamer
       #   uses: ./.github/actions/gstreamer
-
-      - name: Install GStreamer
-        uses: blinemedical/setup-gstreamer@v1
-        with:
-          version: ${{ env.GST_VERSION }}
-          # gstreamerOptions: |
-          #   --buildtype=release
-          #   --wrap-mode=forcefallback
-          #   --strip
-          #   -Dauto_features=disabled
-          #   -Dbase=enabled
-          #   -Ddoc=disabled
-          #   -Dexamples=disabled
-          #   -Dges=disabled
-          #   -Dgpl=enabled
-          #   -Dgst-examples=disabled
-          #   -Dgtk_doc=disabled
-          #   -Dlibav=enabled
-          #   -Dlibnice=disabled
-          #   -Dnls=disabled
-          #   -Dorc=enabled
-          #   -Dpython=disabled
-          #   -Dqt5=disabled
-          #   -Drtsp_server=disabled
-          #   -Dtests=disabled
-          #   -Dgst-plugins-base:app=enabled
-          #   -Dgst-plugins-base:gl=enabled
-          #   -Dgst-plugins-base:gl_api=opengl,gles2
-          #   -Dgst-plugins-base:gl_platform=glx,egl
-          #   -Dgst-plugins-base:gl_winsys=x11,egl,wayland
-          #   -Dgst-plugins-base:playback=enabled
-          #   -Dgst-plugins-base:tcp=enabled
-          #   -Dgst-plugins-base:x11=enabled
-          #   -Dgood=enabled
-          #   -Dgst-plugins-good:isomp4=enabled
-          #   -Dgst-plugins-good:matroska=enabled
-          #   -Dgst-plugins-good:qt-egl=enabled
-          #   -Dgst-plugins-good:qt-method=auto
-          #   -Dgst-plugins-good:qt-wayland=enabled
-          #   -Dgst-plugins-good:qt-x11=enabled
-          #   -Dgst-plugins-good:rtp=enabled
-          #   -Dgst-plugins-good:rtpmanager=enabled
-          #   -Dgst-plugins-good:rtsp=enabled
-          #   -Dgst-plugins-good:udp=enabled
-          #   -Dbad=enabled
-          #   -Dgst-plugins-bad:gl=enabled
-          #   -Dgst-plugins-bad:mpegtsdemux=enabled
-          #   -Dgst-plugins-bad:rtp=enabled
-          #   -Dgst-plugins-bad:sdp=enabled
-          #   -Dgst-plugins-bad:videoparsers=enabled
-          #   -Dgst-plugins-bad:wayland=enabled
-          #   -Dgst-plugins-bad:x11=enabled
-          #   -Dgst-plugins-bad:x265=enabled
-          #   -Dugly=enabled
-          #   -Dgst-plugins-ugly:x264=enabled
-
-      - uses: lukka/get-cmake@latest
-
-      - uses: seanmiddleditch/gha-setup-ninja@v5
-
-      - run: mkdir ${{ runner.temp }}/shadow_build_dir
 
       - name: Configure
         working-directory: ${{ runner.temp }}/shadow_build_dir
@@ -180,19 +107,22 @@ jobs:
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run: cmake --install . --config ${{ matrix.BuildType }}
 
+      - name: Sanity check release excecutable
+        if: matrix.BuildType == 'Release'
+        working-directory: ${{ runner.temp }}/shadow_build_dir
+        run: xvfb-run -a ./${{ env.ARTIFACT }} --simple-boot-test
+
       - name: Run unit tests
         if: matrix.BuildType == 'Debug'
-        uses: coactions/setup-xvfb@v1
-        with:
-          run: ./${{ env.ARTIFACT }} --unittest
-          working-directory: ${{ runner.temp }}/shadow_build_dir
+        working-directory: ${{ runner.temp }}/shadow_build_dir
+        run: xvfb-run -a ./${{ env.ARTIFACT }} --unittest
 
       - name: Upload Build File
         if: matrix.BuildType == 'Release'
         uses: ./.github/actions/upload
         with:
           artifact_name: ${{ env.ARTIFACT }}
+          package_name: ${{ env.PACKAGE }}
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          source: ''
           github_token: ${{ secrets.GITHUB_TOKEN }}

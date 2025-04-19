@@ -22,13 +22,13 @@ class APMFollowComponentController : public FactPanelController
     Q_PROPERTY(bool roverFirmware   READ roverFirmware  CONSTANT)
 
 public:
-    APMFollowComponentController(QObject *parent = nullptr);
+    explicit APMFollowComponentController(QObject *parent = nullptr);
     ~APMFollowComponentController();
 
-    Fact *angleFact() { return _angleFact; }
-    Fact *distanceFact() { return _distanceFact; }
-    Fact *heightFact() { return _heightFact; }
-    bool roverFirmware();
+    Fact *angleFact() const { return _angleFact; }
+    Fact *distanceFact() const { return _distanceFact; }
+    Fact *heightFact() const { return _heightFact; }
+    bool roverFirmware() const;
 
 private:
     QMap<QString, FactMetaData*> _metaDataMap;
@@ -37,8 +37,8 @@ private:
     SettingsFact *_distanceFact = nullptr;
     SettingsFact *_heightFact = nullptr;
 
-    static constexpr const char *_settingsGroup = "APMFollow";
     static constexpr const char *_angleName = "angle";
     static constexpr const char *_distanceName = "distance";
     static constexpr const char *_heightName = "height";
+    static constexpr const char *_settingsGroup = "APMFollow";
 };

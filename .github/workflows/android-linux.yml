@@ -8,16 +8,19 @@ on:
     tags:
       - 'v*'
     paths-ignore:
-      - 'deploy/**'
-      - 'docs/**'
+      - 'docs/**' # Do not trigger for any changes under docs
   pull_request:
-    paths-ignore:
-      - 'deploy/**'
-      - 'docs/**'
-      - '.github/workflows/docs_deploy.yml'
-      - '.github/workflows/linux.yml'
-      - '.github/workflows/macos.yml'
-      - '.github/workflows/windows.yml'
+    paths:
+      - '.github/workflows/android-linux.yml'
+      - 'deploy/android/**'
+      - 'src/**'
+      - 'android/**'
+      - 'CMakeLists.txt'
+      - 'cmake/**'
+
+# concurrency:
+#   group: ${{ github.workflow }}-${{ github.ref }}
+#   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   build:
@@ -33,8 +36,8 @@ jobs:
 
     env:
       ARTIFACT: QGroundControl.apk
-      QT_VERSION: 6.6.3
-      GST_VERSION: 1.22.12
+      PACKAGE: QGroundControl
+      QT_VERSION: 6.8.3
       QT_ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/deploy/android/android_release.keystore
       QT_ANDROID_KEYSTORE_ALIAS: QGCAndroidKeyStore
       QT_ANDROID_KEYSTORE_STORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -42,37 +45,23 @@ jobs:
       QT_ANDROID_ABIS: ${{ matrix.BuildType == 'Release' && 'armeabi-v7a;arm64-v8a' || 'arm64-v8a' }}
 
     steps:
-      - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@main
-        with:
-          android: 'false'
-        continue-on-error: true
-
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
           submodules: recursive
           fetch-tags: true
-          fetch-depth: 0
 
-      - uses: seanmiddleditch/gha-setup-ninja@v5
-
-      - name: Install CCache
-        run: |
-          wget --quiet https://github.com/ccache/ccache/releases/download/v4.10.2/ccache-4.10.2-linux-x86_64.tar.xz
-          tar -xvf ccache-*-linux-x86_64.tar.xz
-          cd ccache-*-linux-x86_64
-          sudo make install
+      - name: Initial Setup
+        uses: ./.github/actions/common
 
       - name: Install Qt for Android
         uses: ./.github/actions/qt-android
         with:
           host: linux
-          arch: gcc_64
+          arch: linux_gcc_64
           version: ${{ env.QT_VERSION }}
           abis: ${{ env.QT_ANDROID_ABIS }}
-
-      - run: mkdir ${{ runner.temp }}/shadow_build_dir
+          cpm-modules: ${{ runner.temp }}/shadow_build_dir/cpm_modules
 
       - name: Configure
         working-directory: ${{ runner.temp }}/shadow_build_dir
@@ -96,9 +85,9 @@ jobs:
         uses: ./.github/actions/upload
         with:
           artifact_name: ${{ env.ARTIFACT }}
+          package_name: ${{ env.PACKAGE }}
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          source: ''
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
       # - name: Deploy to Play Store

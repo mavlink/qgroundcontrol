@@ -2,7 +2,6 @@ message(STATUS "Creating Win Installer")
 
 include(CMakePrintHelpers)
 
-# cmake_path(CONVERT "${CMAKE_BINARY_DIR}/../deploy/windows" TO_CMAKE_PATH_LIST QGC_INSTALLER_SOURCE)
 file(TO_NATIVE_PATH "${CMAKE_BINARY_DIR}/deploy/windows" QGC_INSTALLER_SOURCE)
 file(TO_NATIVE_PATH "${QGC_INSTALLER_SOURCE}/WindowsQGC.ico" QGC_INSTALLER_ICON)
 file(TO_NATIVE_PATH "${QGC_INSTALLER_SOURCE}/installheader.bmp" QGC_INSTALLER_HEADER_BITMAP)
@@ -25,7 +24,7 @@ set(QGC_NSIS_INSTALLER_PARAMETERS
     /DAPPNAME=QGroundControl
     /DEXENAME=QGroundControl
     /DORGNAME=org.mavlink.qgroundcontrol
-    /DDESTDIR=${CMAKE_BINARY_DIR}/staging
+    /DDESTDIR=${CMAKE_INSTALL_PREFIX}
     /NOCD
     "/XOutFile ${QGC_INSTALLER_OUT}"
     ${QGC_NSIS_INSTALLER_SCRIPT}
@@ -41,5 +40,4 @@ execute_process(
     ERROR_VARIABLE NSIS_ERROR
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-
 cmake_print_variables(NSIS_RESULT NSIS_OUTPUT NSIS_ERROR)

@@ -1,0 +1,131 @@
+{
+  "version": 6,
+  "include": ["common.json"],
+  "configurePresets": [
+    {
+      "name": "Windows",
+      "displayName": "Windows configuration using Qt6",
+      "generator": "Ninja Multi-Config",
+      "binaryDir": "${sourceParentDir}/build/qt6-Windows",
+      "toolchainFile": "$penv{QT_ROOT_DIR}/lib/cmake/Qt6/qt.toolchain.cmake",
+      "cacheVariables": {
+        "CMAKE_CONFIGURATION_TYPES": "Release;Debug"
+      }
+    },
+    {
+      "name": "Windows-ccache",
+      "displayName": "Windows configuration using Qt6 and ccache",
+      "inherits": ["dev", "ccache", "Windows"]
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "Windows",
+      "displayName": "Windows release build using Qt6",
+      "configurePreset": "Windows",
+      "configuration": "Release"
+    },
+    {
+      "name": "Windows-debug",
+      "displayName": "Windows debug build using Qt6",
+      "configurePreset": "Windows",
+      "configuration": "Debug"
+    },
+    {
+      "name": "Windows-ccache",
+      "displayName": "Windows release build using Qt6 and ccache",
+      "configurePreset": "Windows-ccache",
+      "configuration": "Release"
+    },
+    {
+      "name": "Windows-debug-ccache",
+      "displayName": "Windows debug build using Qt6 and ccache",
+      "configurePreset": "Windows-ccache",
+      "configuration": "Debug"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "Windows",
+      "displayName": "Windows tests using Qt6",
+      "configurePreset": "Windows",
+      "configuration": "Release",
+      "inherits": ["default"]
+    },
+    {
+      "name": "Windows-ccache",
+      "displayName": "Windows tests using Qt6 and ccache",
+      "configurePreset": "Windows-ccache",
+      "configuration": "Release",
+      "inherits": ["default"]
+    }
+  ],
+  "packagePresets": [
+    {
+      "name": "Windows",
+      "displayName": "Windows package using Qt6",
+      "configurePreset": "Windows",
+      "configurations": ["Release", "Debug"]
+    },
+    {
+      "name": "Windows-ccache",
+      "displayName": "Windows package using Qt6 and ccache",
+      "configurePreset": "Windows-ccache",
+      "configurations": ["Release", "Debug"]
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "Windows",
+      "displayName": "Windows workflow using Qt6",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "Windows"
+        },
+        {
+          "type": "build",
+          "name": "Windows"
+        },
+        {
+          "type": "build",
+          "name": "Windows-debug"
+        },
+        {
+          "type": "test",
+          "name": "Windows"
+        },
+        {
+          "type": "package",
+          "name": "Windows"
+        }
+      ]
+    },
+    {
+      "name": "Windows-ccache",
+      "displayName": "Windows workflow using Qt6 and ccache",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "Windows-ccache"
+        },
+        {
+          "type": "build",
+          "name": "Windows-ccache"
+        },
+        {
+          "type": "build",
+          "name": "Windows-debug-ccache"
+        },
+        {
+          "type": "test",
+          "name": "Windows-ccache"
+        },
+        {
+          "type": "package",
+          "name": "Windows-ccache"
+        }
+      ]
+    }
+  ]
+}

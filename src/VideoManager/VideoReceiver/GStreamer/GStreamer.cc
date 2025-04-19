@@ -8,9 +8,11 @@
  ****************************************************************************/
 
 #include "GStreamer.h"
-#include "GstVideoReceiver.h"
 #include "AppSettings.h"
+#include "GstVideoReceiver.h"
 #include "QGCLoggingCategory.h"
+#include "SettingsManager.h"
+#include "VideoSettings.h"
 #ifdef Q_OS_IOS
 #include "gst_ios_init.h"
 #endif
@@ -39,9 +41,6 @@ GST_PLUGIN_STATIC_DECLARE(mpegtsdemux);
 GST_PLUGIN_STATIC_DECLARE(opengl);
 GST_PLUGIN_STATIC_DECLARE(tcp);
 GST_PLUGIN_STATIC_DECLARE(app);
-// #ifndef Q_OS_ANDROID
-// GST_PLUGIN_STATIC_DECLARE(va);
-// #endif
 #ifdef Q_OS_ANDROID
 GST_PLUGIN_STATIC_DECLARE(androidmedia);
 #elif defined(Q_OS_IOS)
@@ -99,14 +98,15 @@ static void _qgcputenv(const QString &key, const QString &root, const QString &p
 {
     const QByteArray keyArray = key.toLocal8Bit();
     const QByteArray valueArray = (root + path).toLocal8Bit();
-    (void) qputenv(keyArray, valueArray);
+    (void) qputenv(keyArray.constData(), valueArray);
 }
 
 static void _setGstEnvVars()
 {
     const QString currentDir = QCoreApplication::applicationDirPath();
+    qCDebug(GStreamerLog) << "App Directory:" << currentDir;
 
-#if defined(Q_OS_MAC)
+#if defined(Q_OS_MACOS) && defined(QGC_GST_MACOS_FRAMEWORK)
     _qgcputenv("GST_REGISTRY_REUSE_PLUGIN_SCANNER", "no");
     _qgcputenv("GST_PLUGIN_SCANNER", currentDir, "/../Frameworks/GStreamer.framework/Versions/1.0/libexec/gstreamer-1.0/gst-plugin-scanner");
     _qgcputenv("GST_PTP_HELPER_1_0", currentDir, "/../Frameworks/GStreamer.framework/Versions/1.0/libexec/gstreamer-1.0/gst-ptp-helper");
@@ -146,9 +146,6 @@ static void _registerPlugins()
     GST_PLUGIN_STATIC_REGISTER(opengl);
     GST_PLUGIN_STATIC_REGISTER(tcp);
     GST_PLUGIN_STATIC_REGISTER(app);
-// #ifndef Q_OS_ANDROID
-//     GST_PLUGIN_STATIC_REGISTER(va);
-// #endif
 #ifdef Q_OS_ANDROID
     GST_PLUGIN_STATIC_REGISTER(androidmedia);
 #elif defined(Q_OS_IOS)
@@ -183,12 +180,12 @@ void initialize()
 
     const QStringList args = QCoreApplication::arguments();
     int argc = args.size();
-    QList<QByteArray> argList;
+    QByteArrayList argList;
     argList.reserve(argc);
 
     char **argv = new char*[argc];
     for (int i = 0; i < argc; i++) {
-        (void) argList.append(args[i].toUtf8());
+        argList.append(args[i].toUtf8());
         argv[i] = argList[i].data();
     }
 
@@ -207,6 +204,8 @@ void initialize()
 
     GST_PLUGIN_STATIC_REGISTER(qml6);
     GST_PLUGIN_STATIC_REGISTER(qgc);
+
+    blacklist(static_cast<GStreamer::VideoDecoderOptions>(SettingsManager::instance()->videoSettings()->forceVideoDecoder()->rawValue().toInt()));
 }
 
 void blacklist(VideoDecoderOptions option)

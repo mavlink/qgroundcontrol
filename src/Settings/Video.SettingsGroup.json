@@ -11,12 +11,11 @@
     "default":     ""
 },
 {
-    "name":             "udpPort",
-    "shortDesc": "Video UDP Port",
-    "longDesc":  "UDP port to bind to for video stream.",
-    "type":             "uint16",
-    "min":              1025,
-    "default":     5600
+    "name":             "udpUrl",
+    "shortDesc": "Video UDP Url",
+    "longDesc":  "UDP url address and port to bind to for video stream. Example: 0.0.0.0:5600",
+    "type":             "string",
+    "default":     "0.0.0.0:5600"
 },
 {
     "name":             "rtspUrl",
@@ -59,8 +58,8 @@
     "shortDesc": "Video Display Fit",
     "longDesc":  "Handle Video Aspect Ratio.",
     "type":             "uint32",
-    "enumStrings":      "Fit Width,Fit Height,Stretch",
-    "enumValues":       "0,1,2",
+    "enumStrings":      "Fit Width,Fit Height,Fill,No Crop",
+    "enumValues":       "0,1,2,3",
     "default":     1
 },
 {

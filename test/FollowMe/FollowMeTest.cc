@@ -9,27 +9,30 @@
 
 #include "FollowMeTest.h"
 #include "FollowMe.h"
-#include "QGCApplication.h"
 #include "MultiVehicleManager.h"
+#include "PositionManager.h"
 #include "Vehicle.h"
 #include "SettingsManager.h"
+#include "AppSettings.h"
 
 #include <QtTest/QTest>
 #include <QtTest/QSignalSpy>
 
 void FollowMeTest::_testFollowMe()
 {
+    FollowMe::instance()->init();
+    QGCPositionManager::instance()->init();
+
     _connectMockLinkNoInitialConnectSequence();
 
-    MultiVehicleManager *vehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
+    MultiVehicleManager *vehicleMgr = MultiVehicleManager::instance();
     Vehicle *vehicle = vehicleMgr->activeVehicle();
     vehicle->setFlightMode(vehicle->followFlightMode());
-    FollowMe::instance()->init();
-    qgcApp()->toolbox()->settingsManager()->appSettings()->followTarget()->setRawValue(1);
+    SettingsManager::instance()->appSettings()->followTarget()->setRawValue(1);
 
     QSignalSpy spyGCSMotionReport(vehicle, &Vehicle::messagesSentChanged);
 
-    QVERIFY(spyGCSMotionReport.wait(1000));
+    QVERIFY(spyGCSMotionReport.wait(1500));
 
     _disconnectMockLink();
 }

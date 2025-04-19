@@ -1,0 +1,67 @@
+name: Bug report
+description: Create a report to help us improve
+labels: ["Report: Bug"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The following template is for Issue/Bug reporting only. https://docs.qgroundcontrol.com/en/support/support.html#github-issues
+
+        For questions about how to use or build QGC see: http://qgroundcontrol.com/#resources
+
+        If you are using an old stable release please upgrade first and verify your issue before reporting.
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: Please tell us what should happen as detailed as possible.
+      placeholder: Describe the expected behavior here.
+
+  - type: textarea
+    id: current-behavior
+    attributes:
+      label: Current Behavior
+      description: Please describe what happens instead of the expected behavior.
+      placeholder: Describe the current behavior here.
+
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: Provide an unambiguous set of steps to reproduce the current behavior.
+      placeholder: |
+        1.
+        2.
+        3.
+        4.
+
+  - type: textarea
+    id: system-information
+    attributes:
+      label: System Information
+      description: When posting bug reports, include the following information.
+      placeholder: |
+        - Operating System: [e.g. iOS 12.1, Windows 8, macOS Mojave 10.14.1, Ubuntu 14]
+        - QGC Version: [e.g. 3.4.4]
+        - QGC build: [e.g., daily, stable, self-built from source, etc...]
+        - Flight Controller: [e.g., Pixhawk I, Pixhawk Mini, Pixhawk 2, etc.]
+        - Autopilot (with version): [e.g., PX4 1.8.1, Ardupilot Copter 3.6.1]
+
+  - type: textarea
+    id: detailed-description
+    attributes:
+      label: Detailed Description
+      description: Provide further details about your issue/bug.
+      placeholder: Describe your issue in detail here.
+
+  - type: textarea
+    id: logs-screenshots
+    attributes:
+      label: Log Files and Screenshots
+      description: Include links to QGC Console Logs, autopilot logs, and screenshots.
+      placeholder: |
+        - [QGC Console Logs](https://docs.qgroundcontrol.com/en/settings_view/console_logging.html)
+        - Autopilot logs when available (post a link)
+        - Screenshots of QGC to help identify the issue.

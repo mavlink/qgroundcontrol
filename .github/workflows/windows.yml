@@ -8,18 +8,18 @@ on:
     tags:
       - 'v*'
     paths-ignore:
-      - 'android/**'
-      - 'deploy/**'
-      - 'docs/**'
+      - 'docs/**' # Do not trigger for any changes under docs
   pull_request:
-    paths-ignore:
-      - 'android/**'
-      - 'deploy/**'
-      - 'docs/**'
-      - '.github/workflows/docs_deploy.yml'
-      - '.github/workflows/android.yml'
-      - '.github/workflows/linux.yml'
-      - '.github/workflows/macos.yml'
+    paths:
+      - '.github/workflows/windows.yml'
+      - 'deploy/windows/**'
+      - 'src/**'
+      - 'CMakeLists.txt'
+      - 'cmake/**'
+
+# concurrency:
+#   group: ${{ github.workflow }}-${{ github.ref }}
+#   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   build:
@@ -36,9 +36,9 @@ jobs:
 
     env:
       ARTIFACT: QGroundControl-installer.exe
-      QT_VERSION: 6.6.3
+      PACKAGE: QGroundControl-installer
+      QT_VERSION: 6.8.3
       GST_VERSION: 1.22.12
-      SCCACHE_GHA_ENABLED: "true"
 
     steps:
       - name: Checkout repo
@@ -46,14 +46,9 @@ jobs:
         with:
           submodules: recursive
           fetch-tags: true
-          fetch-depth: 0
 
-      - uses: seanmiddleditch/gha-setup-ninja@v5
-
-      - name: Install Dependencies
-        run: |
-          choco install --no-progress ninja pkgconfiglite -y
-          choco install --no-progress cmake --installargs 'ADD_CMAKE_TO_PATH=System' --apply-install-arguments-to-dependencies
+      - name: Initial Setup
+        uses: ./.github/actions/common
 
       - name: Install Vulkan
         working-directory: ${{ runner.temp }}
@@ -68,65 +63,59 @@ jobs:
         with:
           version: ${{ env.GST_VERSION }}
 
-      # - name: Install Gstreamer
-      #   run: choco install --no-progress gstreamer gstreamer-devel --version=${{ env.GST_VERSION }}
-
-      # - name: Set Up sccache
-      #   uses: mozilla-actions/sccache-action@v0.0.5
-
-      - name: Set Up Cache
-        uses: hendrikmuhs/ccache-action@v1.2
+      - name: Setup Caching
+        uses: ./.github/actions/cache
         with:
-          key: ${{ runner.os }}-${{ matrix.Arch }}-${{ matrix.BuildType }}
-          restore-keys: ${{ runner.os }}-${{ matrix.Arch }}-${{ matrix.BuildType }}
-          max-size: 1G
-          append-timestamp: false
-          variant: sccache
-          save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+          host: windows
+          target: win64_msvc2022_64
+          build-type: ${{ matrix.BuildType }}
+          cpm-modules: ${{ runner.temp }}\shadow_build_dir\cpm_modules
 
       - name: Install Qt for Windows (x64)
-        if: matrix.Arch == 'x64'
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
-          aqtversion: ==3.1.*
           host: windows
           target: desktop
-          arch: win64_msvc2019_64
+          arch: win64_msvc2022_64
           dir: ${{ runner.temp }}
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
-          cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+          cache: true
 
+      # Note: Must Use QtMultimedia VideoReceiver or build GStreamer manually
       - name: Install Qt for Windows (Arm64)
         if: matrix.Arch == 'Arm64'
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
-          aqtversion: ==3.1.*
+          aqtversion: ==3.1.19
           host: windows
           target: desktop
-          arch: win64_msvc2019_arm64
+          arch: win64_msvc2022_arm64_cross_compiled
           dir: ${{ runner.temp }}
-          extra: --autodesktop
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
-          cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
       - name: Set up Visual Studio shell
         uses: ilammy/msvc-dev-cmd@v1
         with:
-          arch: x64
-
-      - run: mkdir ${{ runner.temp }}\shadow_build_dir
+          arch: ${{ matrix.Arch == 'Arm64' && 'amd64_arm64' || 'x64' }}
 
       - name: Configure
         working-directory: ${{ runner.temp }}\shadow_build_dir
-        run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja ^
-              -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }} ^
+        run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
+              -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }}
+              -DQT_HOST_PATH="${{ env.QT_ROOT_DIR }}/../msvc2022_64"
+              -DQT_DEBUG_FIND_PACKAGE=ON
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
 
       - name: Build
         working-directory: ${{ runner.temp }}\shadow_build_dir
         run: cmake --build . --target all --config ${{ matrix.BuildType }}
+
+      - name: Sanity check release excecutable
+        if: matrix.BuildType == 'Release'
+        working-directory: ${{ runner.temp }}\shadow_build_dir\Release
+        run: QGroundControl.exe --simple-boot-test
 
       - name: Install
         working-directory: ${{ runner.temp }}\shadow_build_dir
@@ -137,7 +126,7 @@ jobs:
         uses: ./.github/actions/upload
         with:
           artifact_name: ${{ env.ARTIFACT }}
+          package_name: ${{ env.PACKAGE }}
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          source: ''
           github_token: ${{ secrets.GITHUB_TOKEN }}

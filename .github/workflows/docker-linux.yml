@@ -8,18 +8,19 @@ on:
     tags:
       - 'v*'
     paths-ignore:
-      - 'android/**'
-      - 'deploy/**'
-      - 'docs/**'
+      - 'docs/**' # Do not trigger for any changes under docs
   pull_request:
-    paths-ignore:
-      - 'android/**'
-      - 'deploy/**'
-      - 'docs/**'
-      - '.github/workflows/docs_deploy.yml'
-      - '.github/workflows/android.yml'
-      - '.github/workflows/macos.yml'
-      - '.github/workflows/windows.yml'
+    paths:
+      - '.github/workflows/docker-linux.yml'
+      - 'deploy/docker/**'
+      - 'deploy/linux/**'
+      - 'src/**'
+      - 'CMakeLists.txt'
+      - 'cmake/**'
+
+# concurrency:
+#   group: ${{ github.workflow }}-${{ github.ref }}
+#   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   build:
@@ -35,7 +36,6 @@ jobs:
         with:
           submodules: recursive
           fetch-tags: true
-          fetch-depth: 0
 
       - run: chmod a+x ./deploy/docker/run-docker-ubuntu.sh
 

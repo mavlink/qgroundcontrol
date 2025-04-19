@@ -1,6 +1,7 @@
 # QGroundControl Dev Guide
 
-[![Releases](https://img.shields.io/github/release/mavlink/QGroundControl.svg)](https://github.com/mavlink/QGroundControl/releases) [![Discuss](https://img.shields.io/badge/discuss-dev-ff69b4.svg)](http://discuss.px4.io/c/qgroundcontrol/qgroundcontrol-developers)
+[![Discuss](https://img.shields.io/badge/discuss-dev-ff69b4.svg)](http://discuss.px4.io/c/qgroundcontrol/qgroundcontrol-developers)
+[![Discord](https://discordapp.com/api/guilds/1022170275984457759/widget.png?style=shield)](https://discord.com/channels/1022170275984457759/1022185820683255908)
 
 This developer guide is the best source for information if you want to build, modify or extend [QGroundControl](http://qgroundcontrol.com) (QGC).
 It shows how to obtain and build the source code, explains how QGC works, and provides guidelines for contributing code to the project.
@@ -11,14 +12,14 @@ This part of the guide is for **developers**!
 
 :::warning
 This is an active work in progress - information should be correct, but may not be complete!
-If you find that it is missing helpful information (or errors) please raise an issue.
+If you find that it is missing helpful information (or errors) please raise an issue or better yet submit a pull request to the docs with updated information.
 :::
 
 ## Design Philosophy
 
 QGC is designed to provide a single codebase that can run across multiple OS platforms as well as multiple device sizes and styles.
 
-The QGC user interface is implemented using [Qt QML](http://doc.qt.io/qt-5/qtqml-index.html). QML provides for hardware acceleration which is a key feature on lower powered devices such as tablets or phones. QML also provides features which allows us to more easily create a single user interface which can adapt itself to differing screen sizes and resolution.
+The QGC user interface is implemented using Qt Qml. Qml provides for hardware acceleration which is a key feature on lower powered devices such as tablets or phones. Qml also provides features which allows us to more easily create a single user interface which can adapt itself to differing screen sizes and resolution.
 
 The QGC UI targets itself more towards a tablet+touch style of UI than a desktop mouse-based UI. This make a single UI easier to create since tablet style UI also tends to work fine on desktop/laptops.
 
@@ -34,10 +35,6 @@ Information about contributing, including coding styles, testing and licenses ca
 We expect all contributors to adhere to the [QGroundControl code of conduct](https://github.com/mavlink/qgroundcontrol/blob/master/.github/CODE_OF_CONDUCT.md).
 This code aims to foster an open and welcoming environment.
 :::
-
-### Coordination Call
-
-The developer team meets bi-weekly to discuss the highest priority issues, project coordination, and discuss any Issues, PRs, or Questions from the Community. ([Developer Call Details](contribute/dev_call.md))
 
 ### Translations
 
@@ -61,9 +58,6 @@ For more information see: [Licenses](contribute/licences.md).
 
 ## Governance
 
-The QGroundControl mission planner is hosted under the governance of the [Dronecode Project](https://www.dronecode.org/).
-
-<a href="https://www.dronecode.org/" style="padding:20px" ><img src="https://mavlink.io/assets/site/logo_dronecode.png" alt="Dronecode Logo" width="110px"/></a>
-<a href="https://www.linuxfoundation.org/projects" style="padding:20px;"><img src="https://mavlink.io/assets/site/logo_linux_foundation.png" alt="Linux Foundation Logo" width="80px" /></a>
+The QGroundControl ground station is hosted under the governance of the [Dronecode Project](https://www.dronecode.org/).
 
 <div style="padding:10px">&nbsp</div>

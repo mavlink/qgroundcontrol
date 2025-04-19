@@ -1,89 +1,63 @@
-add_subdirectory(Compression)
-
-find_package(Qt6 REQUIRED COMPONENTS Bluetooth Core Gui Network Positioning Sensors Qml Xml)
-
-qt_add_library(Utilities STATIC
-    DeviceInfo.cc
-    DeviceInfo.h
-    JsonHelper.cc
-    JsonHelper.h
-    KMLDomDocument.cc
-    KMLDomDocument.h
-    KMLHelper.cc
-    KMLHelper.h
-    QGC.cc
-    QGC.h
-    QGCCachedFileDownload.cc
-    QGCCachedFileDownload.h
-    QGCFileDownload.cc
-    QGCFileDownload.h
-    QGCLoggingCategory.cc
-    QGCLoggingCategory.h
-    QGCTemporaryFile.cc
-    QGCTemporaryFile.h
-    ShapeFileHelper.cc
-    ShapeFileHelper.h
-    SHPFileHelper.cc
-    SHPFileHelper.h
-    StateMachine.cc
-    StateMachine.h
-)
-
-if(MOBILE)
-    target_sources(Utilities PRIVATE MobileScreenMgr.h)
-    if(ANDROID)
-        target_sources(Utilities PRIVATE MobileScreenMgr.cc)
-    elseif(IOS)
-        target_sources(Utilities PRIVATE MobileScreenMgr.mm)
-    endif()
-endif()
-
-target_include_directories(Utilities PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-
-target_link_libraries(Utilities
+target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
-        Qt6::Qml
-        FactSystem
-        Geo
-        QGC
-        QmlControls
-        Settings
-    PUBLIC
-        Qt6::Core
-        Qt6::Gui
-        Qt6::Network
-        Qt6::Positioning
-        Qt6::Sensors
-        Qt6::Xml
+        DeviceInfo.cc
+        DeviceInfo.h
+        JsonHelper.cc
+        JsonHelper.h
+        KML/KMLDomDocument.cc
+        KML/KMLDomDocument.h
+        KML/KMLHelper.cc
+        KML/KMLHelper.h
+        QGC.cc
+        QGC.h
+        FileSystem/QGCCachedFileDownload.cc
+        FileSystem/QGCCachedFileDownload.h
+        FileSystem/QGCFileDownload.cc
+        FileSystem/QGCFileDownload.h
+        QGCLoggingCategory.cc
+        QGCLoggingCategory.h
+        FileSystem/QGCTemporaryFile.cc
+        FileSystem/QGCTemporaryFile.h
+        Shape/ShapeFileHelper.cc
+        Shape/ShapeFileHelper.h
+        Shape/SHPFileHelper.cc
+        Shape/SHPFileHelper.h
+        StateMachine.cc
+        StateMachine.h
 )
 
-if(QGC_ENABLE_BLUETOOTH)
-    target_link_libraries(Utilities PRIVATE Qt6::Bluetooth)
-endif()
-
-set(MINIMUM_SHAPELIB_VERSION 1.6.0)
-
-if(NOT QGC_BUILD_DEPENDENCIES)
-    find_package(Shapelib ${MINIMUM_SHAPELIB_VERSION})
-    if(Shapelib_FOUND)
-        message(STATUS "Found Shapelib ${Shapelib_VERSION}")
-        target_link_libraries(Utilities PRIVATE SHAPELIB::shp)
-    endif()
-endif()
-
-if(NOT Shapelib_FOUND)
-    message(STATUS "Building Shapelib")
-    include(FetchContent)
-    FetchContent_Declare(shapelib
-        GIT_REPOSITORY https://github.com/OSGeo/shapelib.git
-        GIT_TAG master
-        GIT_SHALLOW TRUE
+if(IOS)
+    target_sources(${CMAKE_PROJECT_NAME}
+        PRIVATE
+            MobileScreenMgr.mm
+            MobileScreenMgr.h
     )
-    set(BUILD_SHAPELIB_CONTRIB OFF CACHE INTERNAL "")
-    set(BUILD_APPS OFF CACHE INTERNAL "")
-    set(saved_BUILD_TESTING ${BUILD_TESTING})
-    set(BUILD_TESTING OFF CACHE INTERNAL "Disable testing for Shapelib")
-    FetchContent_MakeAvailable(shapelib)
-    set(BUILD_TESTING ${saved_BUILD_TESTING} CACHE INTERNAL "Restore BUILD_TESTING")
-    target_link_libraries(Utilities PRIVATE shp)
 endif()
+
+target_include_directories(${CMAKE_PROJECT_NAME}
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        FileSystem
+        KML
+        Shape
+)
+
+#===========================================================================#
+
+CPMAddPackage(
+    NAME Shapelib
+    VERSION 1.6.1
+    GITHUB_REPOSITORY OSGeo/shapelib
+    OPTIONS
+        "BUILD_SHAPELIB_CONTRIB OFF"
+        "BUILD_APPS OFF"
+        "BUILD_TESTING OFF"
+)
+
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE shp)
+
+#===========================================================================#
+
+add_subdirectory(Audio)
+add_subdirectory(Compression)
+add_subdirectory(Geo)

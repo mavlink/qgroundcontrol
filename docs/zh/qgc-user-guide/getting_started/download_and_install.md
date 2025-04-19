@@ -65,8 +65,8 @@ Before installing _QGroundControl_ for the first time:
    sudo usermod -a -G dialout $USER
    sudo apt-get remove modemmanager -y
    sudo apt install gstreamer1.0-plugins-bad gstreamer1.0-libav gstreamer1.0-gl -y
-   sudo apt install libqt5gui5 -y
    sudo apt install libfuse2 -y
+   sudo apt install libxcb-xinerama0 libxkbcommon-x11-0 libxcb-cursor-dev -y
    ```
    <!-- Note, remove install of libqt5gui5 https://github.com/mavlink/qgroundcontrol/issues/10176 fixed -->
 2. Logout and login again to enable the change to user permissions.
@@ -82,6 +82,7 @@ Before installing _QGroundControl_ for the first time:
    **注意** QGroundControlControl在Catalina系统上如果没有被签名认证，会有些问题发生。 当您首次打开 QGC 应用：
    ```
 
+:::info
 There are known [video steaming issues](../troubleshooting/qgc_setup.md#dual_vga) on Ubuntu 18.04 systems with dual adaptors.
 :::
 
@@ -91,8 +92,6 @@ To run these versions on Ubuntu 16.04 you can [build QGroundControl from source 
 :::
 
 ## Android {#android}
-
-_QGroundControl_ is temporily unavailable from the Google Play Store. You can install manually from here:
 
 - [Android 32 位 APK](https://qgroundcontrol.s3-us-west-2.amazonaws.com/latest/QGroundControl32.apk)
 - [Android 64 位 APK](https://qgroundcontrol.s3-us-west-2.amazonaws.com/latest/QGroundControl64.apk)

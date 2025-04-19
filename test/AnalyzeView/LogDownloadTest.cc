@@ -11,58 +11,51 @@
 #include "LogDownloadController.h"
 #include "LogEntry.h"
 #include "MockLink.h"
-#include "MultiSignalSpy.h"
+#include "MultiSignalSpyV2.h"
+#include "QmlObjectListModel.h"
+
+#include "MultiVehicleManager.h"
+#include "MAVLinkProtocol.h"
 
 #include <QtCore/QDir>
+#include <QtTest/QTest>
 
-LogDownloadTest::LogDownloadTest(void)
+void LogDownloadTest::_downloadTest()
 {
-
-}
-
-void LogDownloadTest::downloadTest(void)
-{
+    MultiVehicleManager::instance()->init();
+    MAVLinkProtocol::instance()->init();
 
     _connectMockLink(MAV_AUTOPILOT_PX4);
 
-    LogDownloadController* controller = new LogDownloadController();
-
-    _rgLogDownloadControllerSignals[requestingListChangedSignalIndex] =     SIGNAL(requestingListChanged());
-    _rgLogDownloadControllerSignals[downloadingLogsChangedSignalIndex] =    SIGNAL(downloadingLogsChanged());
-    _rgLogDownloadControllerSignals[modelChangedSignalIndex] =              SIGNAL(modelChanged());
-
-    _multiSpyLogDownloadController = new MultiSignalSpy();
-    QVERIFY(_multiSpyLogDownloadController->init(controller, _rgLogDownloadControllerSignals, _cLogDownloadControllerSignals));
+    LogDownloadController *const controller = new LogDownloadController(this);
+    MultiSignalSpyV2 *multiSpyLogDownloadController = new MultiSignalSpyV2(this);
+    QVERIFY(multiSpyLogDownloadController->init(controller));
 
     controller->refresh();
-    QVERIFY(_multiSpyLogDownloadController->waitForSignalByIndex(requestingListChangedSignalIndex, 10000));
-    _multiSpyLogDownloadController->clearAllSignals();
-    if (controller->requestingList()) {
-        QVERIFY(_multiSpyLogDownloadController->waitForSignalByIndex(requestingListChangedSignalIndex, 10000));
-        QCOMPARE(controller->requestingList(), false);
+    QVERIFY(multiSpyLogDownloadController->waitForSignal("requestingListChanged", 10000));
+    multiSpyLogDownloadController->clearAllSignals();
+    if (controller->_getRequestingList()) {
+        QVERIFY(multiSpyLogDownloadController->waitForSignal("requestingListChanged", 10000));
+        QCOMPARE(controller->_getRequestingList(), false);
     }
-    _multiSpyLogDownloadController->clearAllSignals();
+    multiSpyLogDownloadController->clearAllSignals();
 
-    auto model = controller->model();
+    QmlObjectListModel *const model = controller->_getModel();
     QVERIFY(model);
-    qDebug() << model->count();
     model->value<QGCLogEntry*>(0)->setSelected(true);
 
-    QString downloadTo = QDir::currentPath();
-    qDebug() << "download to:" << downloadTo;
-    controller->downloadToDirectory(downloadTo);
-    QVERIFY(_multiSpyLogDownloadController->waitForSignalByIndex(downloadingLogsChangedSignalIndex, 10000));
-    _multiSpyLogDownloadController->clearAllSignals();
-    if (controller->downloadingLogs()) {
-        QVERIFY(_multiSpyLogDownloadController->waitForSignalByIndex(downloadingLogsChangedSignalIndex, 10000));
-        QCOMPARE(controller->downloadingLogs(), false);
+    const QString downloadTo = QDir::currentPath();
+    controller->download(downloadTo);
+    QVERIFY(multiSpyLogDownloadController->waitForSignal("downloadingLogsChanged", 10000));
+    multiSpyLogDownloadController->clearAllSignals();
+    if (controller->_getDownloadingLogs()) {
+        QVERIFY(multiSpyLogDownloadController->waitForSignal("downloadingLogsChanged", 10000));
+        QCOMPARE(controller->_getDownloadingLogs(), false);
     }
-    _multiSpyLogDownloadController->clearAllSignals();
+    multiSpyLogDownloadController->clearAllSignals();
 
-    QString downloadFile = QDir(downloadTo).filePath("log_0_UnknownDate.ulg");
+    const QString downloadFile = QDir(downloadTo).filePath("log_0_UnknownDate.ulg");
     QVERIFY(UnitTest::fileCompare(downloadFile, _mockLink->logDownloadFile()));
 
-    QFile::remove(downloadFile);
-
-    delete controller;
+    (void) QFile::remove(downloadFile);
 }

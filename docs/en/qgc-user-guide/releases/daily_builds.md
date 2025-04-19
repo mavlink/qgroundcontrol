@@ -11,19 +11,11 @@ These can be downloaded from the links below (install as described in [Download 
 
 - [Windows](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl-installer.exe)
 - [OS X](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl.dmg)
-
-  ::: info
-  QGroundControl continues to not be signed which causes problem on Catalina. To open QGC app for the first time:
-
-  - Right-click the QGC app icon, select Open from the menu. You will only be presented with an option to Cancel. Select Cancel.
-  - Right-click the QGC app icon again, Open from the menu. This time you will be presented with the option to Open.
-
-  :::
-
-- [Linux](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl-x86_64.AppImage)
-- [Android](https://play.google.com/store/apps/details?id=org.mavlink.qgroundcontrolbeta) - Google Play: Listed as _QGroundControl (Daily Test Build)_.
+- [Linux](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl-x86_64.AppImage) - Before running do the following:
+  - `chmod +x QGroundControl.AppImage`
+  - On the command prompt enter (one time only):
+		- `sudo usermod -a -G dialout $USER`
+    	- `sudo apt-get remove modemmanager -y`
+  		- Logout and login again to enable the change to user permissions.
+- [Android](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl.apk)
 - iOS currently unavailable
-
-::: info
-The QGroundControl Continous Delivery pipeline from time to time might experience issues uploading to the Google Play store. You can find the daily build APK for Android devices for direct download here: [QGroundControl.apk](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl.apk)
-:::

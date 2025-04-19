@@ -10,7 +10,6 @@
 #include "RallyPointController.h"
 #include "RallyPoint.h"
 #include "Vehicle.h"
-#include "QGCApplication.h"
 #include "JsonHelper.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
@@ -68,8 +67,15 @@ void RallyPointController::_managerVehicleChanged(Vehicle* managerVehicle)
     connect(_rallyPointManager, &RallyPointManager::inProgressChanged,  this, &RallyPointController::syncInProgressChanged);
 
     //-- RallyPointController::supported() tests both the capability bit AND the protocol version.
-    connect(_managerVehicle,    &Vehicle::capabilityBitsChanged,        this, &RallyPointController::supportedChanged);
-    connect(_managerVehicle,    &Vehicle::requestProtocolVersion,       this, &RallyPointController::supportedChanged);
+    (void) connect(_managerVehicle, &Vehicle::capabilityBitsChanged, this, [this](uint64_t capabilityBits) {
+        Q_UNUSED(capabilityBits);
+        emit supportedChanged(supported());
+    });
+
+    (void) connect(_managerVehicle, &Vehicle::requestProtocolVersion, this, [this](unsigned version) {
+        Q_UNUSED(version);
+        emit supportedChanged(supported());
+    });
 
     emit supportedChanged(supported());
 }
@@ -240,7 +246,7 @@ void RallyPointController::addPoint(QGeoCoordinate point)
         defaultAlt = qobject_cast<RallyPoint*>(_points[_points.count() - 1])->coordinate().altitude();
     } else {
         if(_masterController->controllerVehicle()->fixedWing()) {
-            defaultAlt = qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble();
+            defaultAlt = SettingsManager::instance()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble();
         }
         else {
             defaultAlt = RallyPoint::getDefaultFactAltitude();

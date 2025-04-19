@@ -8,6 +8,7 @@
  ****************************************************************************/
 
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 
 import QGroundControl
@@ -19,39 +20,31 @@ import QGroundControl.FactSystem
 import QGroundControl.FactControls
 
 Item {
-    id:             _root
+    id:             control
     width:          gimbalIndicatorIcon.width * 1.1 + gimbalTelemetryLayout.childrenRect.width + margins
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
 
-    property var    activeVehicle:          QGroundControl.multiVehicleManager.activeVehicle
-    property var    gimbalController:       activeVehicle.gimbalController
-    property bool   showIndicator:          gimbalController && gimbalController.gimbals.count
-    property var    activeGimbal:           gimbalController.activeGimbal
-    property var    multiGimbalSetup:       gimbalController.gimbals.count > 1
+    property var    activeVehicle:              QGroundControl.multiVehicleManager.activeVehicle
+    property var    gimbalController:           activeVehicle.gimbalController
+    property bool   showIndicator:              gimbalController && gimbalController.gimbals.count
+    property var    activeGimbal:               gimbalController.activeGimbal
+    property var    multiGimbalSetup:           gimbalController.gimbals.count > 1
+    property bool   joystickButtonsAvailable:   activeVehicle.joystickEnabled
 
-    property var    margins:                ScreenTools.defaultFontPixelWidth
-    property var    panelRadius:            ScreenTools.defaultFontPixelWidth * 0.5
-    property var    buttonHeight:           height * 1.6
-    property var    separatorHeight:        buttonHeight * 0.9
-    property var    settingsPanelVisible:   false
+    property var    margins:                    ScreenTools.defaultFontPixelWidth
+    property var    panelRadius:                ScreenTools.defaultFontPixelWidth * 0.5
+    property var    buttonHeight:               height * 1.6
+    property var    squareButtonPadding:        ScreenTools.defaultFontPixelWidth
+    property var    separatorHeight:            buttonHeight * 0.9
+    property var    settingsPanelVisible:       false
 
     // Popup panel, appears when clicking top toolbar gimbal indicator
     Component {
-        id: gimbalControlsPopup
+        id: gimbalControlsPage
 
-        Rectangle {
-            width:          mainLayout.width   + mainLayout.anchors.margins * 2          
-            height:         mainLayout.height  + mainLayout.anchors.margins * 2
-            color:          qgcPal.window
-            radius:         panelRadius
-
-            GridLayout {
-                id:                 mainLayout
-                anchors.margins:    ScreenTools.defaultFontPixelWidth
-                anchors.top:        parent.top
-                anchors.right:      parent.right
-
+        ToolIndicatorPage {
+            contentComponent: GridLayout {
                 // Label indicating the purpose of the panel and active gimbal instance
                 QGCLabel {
                     text:                   qsTr("Gimbal ") + 
@@ -99,6 +92,8 @@ Item {
                         visible: modelData.visible
                         pointSize: ScreenTools.smallFontPointSize
                         backRadius: panelRadius * 0.5
+                        leftPadding: squareButtonPadding
+                        rightPadding: squareButtonPadding
                         onClicked: {
                             var callback = callbackList.find(function(item) {
                                 return item.hasOwnProperty(modelData.id);
@@ -211,7 +206,7 @@ Item {
                 }
 
                 // Show settings button. It is thought for persisting popup close actions, hence the visibility
-                // based on a _root.settingsPanelVisible It is interesting as users calibrating onscreen controls 
+                // based on a control.settingsPanelVisible It is interesting as users calibrating onscreen controls 
                 // will be testing and adjusting these frequently, so this way it is handier for them
                 QGCButton {
                     id:                     extendedOptionsButton
@@ -224,10 +219,12 @@ Item {
                     pointSize:              ScreenTools.smallFontPointSize
                     backRadius:             panelRadius * 0.5
                     checkable:              true
-                    checked:                _root.settingsPanelVisible
+                    checked:                control.settingsPanelVisible
+                    leftPadding:            squareButtonPadding
+                    rightPadding:           squareButtonPadding
                     onCheckedChanged: {
-                        if (checked !== _root.settingsPanelVisible) {
-                            _root.settingsPanelVisible = checked
+                        if (checked !== control.settingsPanelVisible) {
+                            control.settingsPanelVisible = checked
                         }
                     }
                 }
@@ -295,8 +292,28 @@ Item {
                         Layout.columnSpan:       2
                         Layout.preferredHeight:  2
                         Layout.preferredWidth:   gimbalAzimuthMapCheckbox.width
-                        Layout.margins:          margins * 1.5
+                        Layout.margins:          margins
                         color:                   qgcPal.windowShade
+                    }
+
+                    QGCLabel {
+                        text:               qsTr("Joystick buttons speed:")
+                        visible:            joystickButtonsAvailable && QGroundControl.settingsManager.gimbalControllerSettings.visible
+                    }
+                    FactTextField {
+                        fact:               QGroundControl.settingsManager.gimbalControllerSettings.joystickButtonsSpeed
+                        visible:            joystickButtonsAvailable && QGroundControl.settingsManager.gimbalControllerSettings.visible
+                        showHelp:           true
+                    }
+
+                    // Separator
+                    Rectangle {
+                        Layout.columnSpan:       2
+                        Layout.preferredHeight:  2
+                        Layout.preferredWidth:   gimbalAzimuthMapCheckbox.width
+                        Layout.margins:          margins
+                        color:                   qgcPal.windowShade
+                        visible:                 joystickButtonsAvailable && QGroundControl.settingsManager.gimbalControllerSettings.visible
                     }
 
                     FactCheckBox {
@@ -387,9 +404,25 @@ Item {
     }
 
     MouseArea {
-        anchors.fill: parent
-        onClicked: {
-            mainWindow.showIndicatorPopup(_root, gimbalControlsPopup, false)
+        anchors.fill:   parent
+        onClicked:      mainWindow.showIndicatorDrawer(gimbalControlsPage, control)
+    }
+
+    Connections {
+        id:                         acquirePopupConnection
+        property bool isPopupOpen:  false
+        target:                     gimbalController
+        onShowAcquireGimbalControlPopup: {
+            if(!acquirePopupConnection.isPopupOpen){
+                acquirePopupConnection.isPopupOpen = true;
+                mainWindow.showMessageDialog(
+                    "Request Gimbal Control?",
+                    "Command not sent. Another user has control of the gimbal.",
+                    Dialog.Yes | Dialog.No,
+                    gimbalController.acquireGimbalControl,
+                    function() { acquirePopupConnection.isPopupOpen = false }
+                )
+            }
         }
     }
 }

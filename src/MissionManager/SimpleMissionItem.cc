@@ -8,12 +8,12 @@
  ****************************************************************************/
 
 #include "SimpleMissionItem.h"
-#include "QGCApplication.h"
 #include "JsonHelper.h"
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
 #include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
+#include "AppSettings.h"
 #include "PlanMasterController.h"
 #include "SpeedSection.h"
 #include "MultiVehicleManager.h"
@@ -33,7 +33,6 @@ FactMetaData* SimpleMissionItem::_longitudeMetaData =       nullptr;
 
 SimpleMissionItem::SimpleMissionItem(PlanMasterController* masterController, bool flyView, bool forLoad)
     : VisualMissionItem                 (masterController, flyView)
-    , _commandTree                      (qgcApp()->toolbox()->missionCommandTree())
     , _supportedCommandFact             (0, "Command:",             FactMetaData::valueTypeUint32)
     , _altitudeFact                     (0, "Altitude",             FactMetaData::valueTypeDouble)
     , _amslAltAboveTerrainFact          (0, "Alt above terrain",    FactMetaData::valueTypeDouble)
@@ -62,7 +61,6 @@ SimpleMissionItem::SimpleMissionItem(PlanMasterController* masterController, boo
 SimpleMissionItem::SimpleMissionItem(PlanMasterController* masterController, bool flyView, const MissionItem& missionItem)
     : VisualMissionItem         (masterController, flyView)
     , _missionItem              (missionItem)
-    , _commandTree              (qgcApp()->toolbox()->missionCommandTree())
     , _supportedCommandFact     (0,         "Command:",             FactMetaData::valueTypeUint32)
     , _altitudeFact             (0,         "Altitude",             FactMetaData::valueTypeDouble)
     , _amslAltAboveTerrainFact  (0,         "Alt above terrain",    FactMetaData::valueTypeDouble)
@@ -209,9 +207,8 @@ void SimpleMissionItem::_setupMetaData(void)
 
         enumStrings.clear();
         enumValues.clear();
-        MissionCommandTree* commandTree = qgcApp()->toolbox()->missionCommandTree();
-        for (const MAV_CMD command: commandTree->allCommandIds()) {
-            enumStrings.append(commandTree->rawName(command));
+        for (const MAV_CMD command: MissionCommandTree::instance()->allCommandIds()) {
+            enumStrings.append(MissionCommandTree::instance()->rawName(command));
             enumValues.append(QVariant((int)command));
         }
         _commandMetaData = new FactMetaData(FactMetaData::valueTypeUint32);
@@ -329,7 +326,7 @@ bool SimpleMissionItem::load(const QJsonObject& json, int sequenceNumber, QStrin
 
 bool SimpleMissionItem::isStandaloneCoordinate(void) const
 {
-    const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_controllerVehicle, _previousVTOLMode, (MAV_CMD)command());
+    const MissionCommandUIInfo* uiInfo = MissionCommandTree::instance()->getUIInfo(_controllerVehicle, _previousVTOLMode, (MAV_CMD)command());
     if (uiInfo) {
         return uiInfo->isStandaloneCoordinate();
     } else {
@@ -339,7 +336,7 @@ bool SimpleMissionItem::isStandaloneCoordinate(void) const
 
 bool SimpleMissionItem::specifiesCoordinate(void) const
 {
-    const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_controllerVehicle, _previousVTOLMode, (MAV_CMD)command());
+    const MissionCommandUIInfo* uiInfo = MissionCommandTree::instance()->getUIInfo(_controllerVehicle, _previousVTOLMode, (MAV_CMD)command());
     if (uiInfo) {
         return uiInfo->specifiesCoordinate();
     } else {
@@ -349,7 +346,7 @@ bool SimpleMissionItem::specifiesCoordinate(void) const
 
 bool SimpleMissionItem::specifiesAltitudeOnly(void) const
 {
-    const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_controllerVehicle, _previousVTOLMode, (MAV_CMD)command());
+    const MissionCommandUIInfo* uiInfo = MissionCommandTree::instance()->getUIInfo(_controllerVehicle, _previousVTOLMode, (MAV_CMD)command());
     if (uiInfo) {
         return uiInfo->specifiesAltitudeOnly();
     } else {
@@ -359,7 +356,7 @@ bool SimpleMissionItem::specifiesAltitudeOnly(void) const
 
 QString SimpleMissionItem::commandDescription(void) const
 {
-    const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_controllerVehicle, _previousVTOLMode, (MAV_CMD)command());
+    const MissionCommandUIInfo* uiInfo = MissionCommandTree::instance()->getUIInfo(_controllerVehicle, _previousVTOLMode, (MAV_CMD)command());
     if (uiInfo) {
         return uiInfo->description();
     } else {
@@ -370,7 +367,7 @@ QString SimpleMissionItem::commandDescription(void) const
 
 QString SimpleMissionItem::commandName(void) const
 {
-    const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_controllerVehicle, _previousVTOLMode, (MAV_CMD)command());
+    const MissionCommandUIInfo* uiInfo = MissionCommandTree::instance()->getUIInfo(_controllerVehicle, _previousVTOLMode, (MAV_CMD)command());
     if (uiInfo) {
         return uiInfo->friendlyName();
     } else {
@@ -411,25 +408,25 @@ void SimpleMissionItem::_rebuildTextFieldFacts(void)
     _textFieldFacts.clear();
     
     if (rawEdit()) {
-        _missionItem._param1Fact._setName("Param1");
+        _missionItem._param1Fact.setName("Param1");
         _missionItem._param1Fact.setMetaData(_defaultParamMetaData);
         _textFieldFacts.append(&_missionItem._param1Fact);
-        _missionItem._param2Fact._setName("Param2");
+        _missionItem._param2Fact.setName("Param2");
         _missionItem._param2Fact.setMetaData(_defaultParamMetaData);
         _textFieldFacts.append(&_missionItem._param2Fact);
-        _missionItem._param3Fact._setName("Param3");
+        _missionItem._param3Fact.setName("Param3");
         _missionItem._param3Fact.setMetaData(_defaultParamMetaData);
         _textFieldFacts.append(&_missionItem._param3Fact);
-        _missionItem._param4Fact._setName("Param4");
+        _missionItem._param4Fact.setName("Param4");
         _missionItem._param4Fact.setMetaData(_defaultParamMetaData);
         _textFieldFacts.append(&_missionItem._param4Fact);
-        _missionItem._param5Fact._setName("Lat/X");
+        _missionItem._param5Fact.setName("Lat/X");
         _missionItem._param5Fact.setMetaData(_defaultParamMetaData);
         _textFieldFacts.append(&_missionItem._param5Fact);
-        _missionItem._param6Fact._setName("Lon/Y");
+        _missionItem._param6Fact.setName("Lon/Y");
         _missionItem._param6Fact.setMetaData(_defaultParamMetaData);
         _textFieldFacts.append(&_missionItem._param6Fact);
-        _missionItem._param7Fact._setName("Alt/Z");
+        _missionItem._param7Fact.setName("Alt/Z");
         _missionItem._param7Fact.setMetaData(_defaultParamMetaData);
         _textFieldFacts.append(&_missionItem._param7Fact);
     } else {
@@ -445,7 +442,7 @@ void SimpleMissionItem::_rebuildTextFieldFacts(void)
         Fact*           rgParamFacts[7] =       { &_missionItem._param1Fact, &_missionItem._param2Fact, &_missionItem._param3Fact, &_missionItem._param4Fact, &_missionItem._param5Fact, &_missionItem._param6Fact, &_missionItem._param7Fact };
         FactMetaData*   rgParamMetaData[7] =    { &_param1MetaData, &_param2MetaData, &_param3MetaData, &_param4MetaData, &_param5MetaData, &_param6MetaData, &_param7MetaData };
 
-        const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_controllerVehicle, _previousVTOLMode, command);
+        const MissionCommandUIInfo* uiInfo = MissionCommandTree::instance()->getUIInfo(_controllerVehicle, _previousVTOLMode, command);
 
         if (uiInfo) {
             for (int i=1; i<=7; i++) {
@@ -456,7 +453,7 @@ void SimpleMissionItem::_rebuildTextFieldFacts(void)
                     Fact*               paramFact =     rgParamFacts[i-1];
                     FactMetaData*       paramMetaData = rgParamMetaData[i-1];
 
-                    paramFact->_setName(paramInfo->label());
+                    paramFact->setName(paramInfo->label());
                     paramMetaData->setDecimalPlaces(paramInfo->decimalPlaces());
                     paramMetaData->setRawUnits(paramInfo->units());
                     paramMetaData->setRawDefaultValue(paramInfo->defaultValue());
@@ -489,7 +486,7 @@ void SimpleMissionItem::_rebuildNaNFacts(void)
         Fact*           rgParamFacts[7] =       { &_missionItem._param1Fact, &_missionItem._param2Fact, &_missionItem._param3Fact, &_missionItem._param4Fact, &_missionItem._param5Fact, &_missionItem._param6Fact, &_missionItem._param7Fact };
         FactMetaData*   rgParamMetaData[7] =    { &_param1MetaData, &_param2MetaData, &_param3MetaData, &_param4MetaData, &_param5MetaData, &_param6MetaData, &_param7MetaData };
 
-        const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_controllerVehicle, _previousVTOLMode, command);
+        const MissionCommandUIInfo* uiInfo = MissionCommandTree::instance()->getUIInfo(_controllerVehicle, _previousVTOLMode, command);
 
         if (uiInfo) {
             for (int i=1; i<=7; i++) {
@@ -499,7 +496,7 @@ void SimpleMissionItem::_rebuildNaNFacts(void)
                 if (showUI && paramInfo && paramInfo->nanUnchanged()) {
                     // Show hide Heading field on waypoint based on vehicle yaw to next waypoint setting. This needs to come from the actual vehicle if it exists
                     // and not _controllerVehicle which is always offline.
-                    Vehicle* firmwareVehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
+                    Vehicle* firmwareVehicle = MultiVehicleManager::instance()->activeVehicle();
                     if (!firmwareVehicle) {
                         firmwareVehicle = _controllerVehicle;
                     }
@@ -507,7 +504,7 @@ void SimpleMissionItem::_rebuildNaNFacts(void)
                     Fact*               paramFact =     rgParamFacts[i-1];
                     FactMetaData*       paramMetaData = rgParamMetaData[i-1];
 
-                    paramFact->_setName(paramInfo->label());
+                    paramFact->setName(paramInfo->label());
                     paramMetaData->setDecimalPlaces(paramInfo->decimalPlaces());
                     paramMetaData->setRawUnits(paramInfo->units());
                     paramMetaData->setRawDefaultValue(paramInfo->defaultValue());
@@ -530,7 +527,7 @@ bool SimpleMissionItem::specifiesAltitude(void) const
 
 bool SimpleMissionItem::isLoiterItem() const
 {
-    const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_controllerVehicle, _previousVTOLMode, (MAV_CMD)command());
+    const MissionCommandUIInfo* uiInfo = MissionCommandTree::instance()->getUIInfo(_controllerVehicle, _previousVTOLMode, (MAV_CMD)command());
     if (uiInfo) {
         return uiInfo->isLoiterCommand();
     } else {
@@ -540,6 +537,18 @@ bool SimpleMissionItem::isLoiterItem() const
 
 bool SimpleMissionItem::showLoiterRadius() const
 {
+    const MissionCommandUIInfo *uiInfo =
+        MissionCommandTree::instance()->getUIInfo(
+            _controllerVehicle, _previousVTOLMode, MAV_CMD_NAV_LOITER_TIME);
+    bool showUI;
+    uiInfo->getParamInfo(3, showUI);
+
+    if (isLoiterItem() && command() == MAV_CMD_NAV_LOITER_TIME && !showUI) {
+        // Don't show the radius of MAV_CMD_NAV_LOITER_TIME items if the
+        // firmware doesn't support specifying it
+        return false;
+    }
+
     return specifiesCoordinate() && (_controllerVehicle->fixedWing() || _controllerVehicle->vtol()) && isLoiterItem();
 }
 
@@ -560,6 +569,8 @@ void SimpleMissionItem::_rebuildComboBoxFacts(void)
         _comboboxFacts.append(&_missionItem._commandFact);
         _comboboxFacts.append(&_missionItem._frameFact);
     } else {
+        _ignoreDirtyChangeSignals = true;
+
         Fact*           rgParamFacts[7] =       { &_missionItem._param1Fact, &_missionItem._param2Fact, &_missionItem._param3Fact, &_missionItem._param4Fact, &_missionItem._param5Fact, &_missionItem._param6Fact, &_missionItem._param7Fact };
         FactMetaData*   rgParamMetaData[7] =    { &_param1MetaData, &_param2MetaData, &_param3MetaData, &_param4MetaData, &_param5MetaData, &_param6MetaData, &_param7MetaData };
 
@@ -572,13 +583,13 @@ void SimpleMissionItem::_rebuildComboBoxFacts(void)
 
         for (int i=1; i<=7; i++) {
             bool showUI;
-            const MissionCmdParamInfo* paramInfo = _commandTree->getUIInfo(_controllerVehicle, _previousVTOLMode, command)->getParamInfo(i, showUI);
+            const MissionCmdParamInfo* paramInfo = MissionCommandTree::instance()->getUIInfo(_controllerVehicle, _previousVTOLMode, command)->getParamInfo(i, showUI);
 
             if (showUI && paramInfo && paramInfo->enumStrings().count() != 0) {
                 Fact*               paramFact =     rgParamFacts[i-1];
                 FactMetaData*       paramMetaData = rgParamMetaData[i-1];
 
-                paramFact->_setName(paramInfo->label());
+                paramFact->setName(paramInfo->label());
                 paramMetaData->setDecimalPlaces(paramInfo->decimalPlaces());
                 paramMetaData->setEnumInfo(paramInfo->enumStrings(), paramInfo->enumValues());
                 paramMetaData->setRawUnits(paramInfo->units());
@@ -589,6 +600,8 @@ void SimpleMissionItem::_rebuildComboBoxFacts(void)
                 _comboboxFacts.append(paramFact);
             }
         }
+
+        _ignoreDirtyChangeSignals = false;
     }
 }
 
@@ -601,7 +614,7 @@ void SimpleMissionItem::_rebuildFacts(void)
 
 bool SimpleMissionItem::friendlyEditAllowed(void) const
 {
-    const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_controllerVehicle, _previousVTOLMode, static_cast<MAV_CMD>(command()));
+    const MissionCommandUIInfo* uiInfo = MissionCommandTree::instance()->getUIInfo(_controllerVehicle, _previousVTOLMode, static_cast<MAV_CMD>(command()));
     if (uiInfo && uiInfo->friendlyEdit()) {
         if (!_missionItem.autoContinue()) {
             return false;
@@ -770,7 +783,7 @@ void SimpleMissionItem::_setDefaultsForCommand(void)
     emit altitudeModeChanged();
     _amslAltAboveTerrainFact.setRawValue(qQNaN());
     if (specifiesAltitude()) {
-        double defaultAlt = qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble();
+        double defaultAlt = SettingsManager::instance()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble();
         _altitudeFact.setRawValue(defaultAlt);
         _missionItem._param7Fact.setRawValue(defaultAlt);
         // Note that setAltitudeMode will also set MAV_FRAME correctly through signalling
@@ -783,7 +796,7 @@ void SimpleMissionItem::_setDefaultsForCommand(void)
     }
 
     MAV_CMD command = static_cast<MAV_CMD>(this->command());
-    const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_controllerVehicle, _previousVTOLMode, command);
+    const MissionCommandUIInfo* uiInfo = MissionCommandTree::instance()->getUIInfo(_controllerVehicle, _previousVTOLMode, command);
     if (uiInfo) {
         for (int i=1; i<=7; i++) {
             bool showUI;
@@ -820,7 +833,7 @@ void SimpleMissionItem::_sendFriendlyEditAllowedChanged(void)
 
 QString SimpleMissionItem::category(void) const
 {
-    const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_controllerVehicle, _previousVTOLMode, static_cast<MAV_CMD>(command()));
+    const MissionCommandUIInfo* uiInfo = MissionCommandTree::instance()->getUIInfo(_controllerVehicle, _previousVTOLMode, static_cast<MAV_CMD>(command()));
     return uiInfo ? uiInfo->category() : QString();
 }
 
@@ -975,7 +988,7 @@ void SimpleMissionItem::appendMissionItems(QList<MissionItem*>& items, QObject* 
 void SimpleMissionItem::applyNewAltitude(double newAltitude)
 {
     MAV_CMD command = static_cast<MAV_CMD>(this->command());
-    const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_controllerVehicle, _previousVTOLMode, command);
+    const MissionCommandUIInfo* uiInfo = MissionCommandTree::instance()->getUIInfo(_controllerVehicle, _previousVTOLMode, command);
 
     if (uiInfo && (uiInfo->specifiesCoordinate() || uiInfo->specifiesAltitudeOnly())) {
         switch (static_cast<MAV_CMD>(this->command())) {
@@ -1043,7 +1056,7 @@ void SimpleMissionItem::_possibleAdditionalTimeDelayChanged(void)
 
 bool SimpleMissionItem::isLandCommand(void) const
 {
-    return _commandTree->isLandCommand(static_cast<MAV_CMD>(this->command()));
+    return MissionCommandTree::instance()->isLandCommand(static_cast<MAV_CMD>(this->command()));
 }
 
 QGeoCoordinate SimpleMissionItem::coordinate(void) const

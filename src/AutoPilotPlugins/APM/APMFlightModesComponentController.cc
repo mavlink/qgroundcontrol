@@ -7,35 +7,27 @@
  *
  ****************************************************************************/
 
-
 #include "APMFlightModesComponentController.h"
 #include "Fact.h"
-#include "Vehicle.h"
 #include "ParameterManager.h"
+#include "Vehicle.h"
 
 #include <QtCore/QVariant>
 #include <QtQml/QQmlEngine>
 
-bool APMFlightModesComponentController::_typeRegistered = false;
-
-APMFlightModesComponentController::APMFlightModesComponentController(void)
-    : _activeFlightMode     (0)
-    , _channelCount         (QGCMAVLink::maxRcChannels)
-    , _simpleMode           (SimpleModeStandard)
-    , _simpleModeFact       (parameterExists(-1, _simpleParamName)      ? getParameterFact(-1, _simpleParamName) : nullptr)
-    , _superSimpleModeFact  (parameterExists(-1, _superSimpleParamName) ? getParameterFact(-1, _superSimpleParamName) : nullptr)
-    , _simpleModesSupported (_simpleModeFact && _superSimpleModeFact)
+APMFlightModesComponentController::APMFlightModesComponentController(QObject *parent)
+    : FactPanelController(parent)
+    , _simpleModeFact(parameterExists(-1, _simpleParamName) ? getParameterFact(-1, _simpleParamName) : nullptr)
+    , _superSimpleModeFact(parameterExists(-1, _superSimpleParamName) ? getParameterFact(-1, _superSimpleParamName) : nullptr)
+    , _simpleModesSupported(_simpleModeFact && _superSimpleModeFact)
 {
-    if (!_typeRegistered) {
-        qmlRegisterUncreatableType<APMFlightModesComponentController>("QGroundControl.Controllers", 1, 0, "APMFlightModesComponentController", "Reference only");
-    }
+    (void) qmlRegisterUncreatableType<APMFlightModesComponentController>("QGroundControl.Controllers", 1, 0, "APMFlightModesComponentController", "Reference only");
 
-    bool arduRoverFirmware = parameterExists(-1, QStringLiteral("MODE1"));
+    const bool arduRoverFirmware = parameterExists(-1, QStringLiteral("MODE1"));
     _modeParamPrefix = arduRoverFirmware ? QStringLiteral("MODE") : QStringLiteral("FLTMODE");
     _modeChannelParam = arduRoverFirmware ? QStringLiteral("MODE_CH") : QStringLiteral("FLTMODE_CH");
 
-    _simpleModeNames << tr("Off") << tr("Simple") << tr("Super-Simple") << tr("Custom");
-    for (int i=0; i<_cFltModes; i++) {
+    for (int i = 0; i < _cFltModes; i++) {
         _simpleModeEnabled.append(QVariant(false));
         _superSimpleModeEnabled.append(QVariant(false));
     }
@@ -43,37 +35,36 @@ APMFlightModesComponentController::APMFlightModesComponentController(void)
     if (_simpleModesSupported) {
         _setupSimpleModeEnabled();
 
-        uint8_t simpleModeValue = static_cast<uint8_t>(_simpleModeFact->rawValue().toUInt());
-        uint8_t superSimpleModeValue = static_cast<uint8_t>(_superSimpleModeFact->rawValue().toUInt());
-        if (simpleModeValue == 0 && superSimpleModeValue == 0) {
+        const uint8_t simpleModeValue = static_cast<uint8_t>(_simpleModeFact->rawValue().toUInt());
+        const uint8_t superSimpleModeValue = static_cast<uint8_t>(_superSimpleModeFact->rawValue().toUInt());
+        if ((simpleModeValue == 0) && (superSimpleModeValue == 0)) {
             _simpleMode = SimpleModeStandard;
-        } else if (simpleModeValue == _allSimpleBits && superSimpleModeValue == 0) {
+        } else if ((simpleModeValue == _allSimpleBits) && (superSimpleModeValue == 0)) {
             _simpleMode = SimpleModeSimple;
-        } else if (simpleModeValue == 0 && superSimpleModeValue == _allSimpleBits) {
+        } else if ((simpleModeValue == 0) && (superSimpleModeValue == _allSimpleBits)) {
             _simpleMode = SimpleModeSuperSimple;
         } else {
             _simpleMode = SimpleModeCustom;
         }
 
-        connect(this, &APMFlightModesComponentController::simpleModeChanged, this, &APMFlightModesComponentController::_updateSimpleParamsFromSimpleMode);
+        (void) connect(this, &APMFlightModesComponentController::simpleModeChanged, this, &APMFlightModesComponentController::_updateSimpleParamsFromSimpleMode);
     }
 
     QStringList usedParams;
-    for (int i=1; i<7; i++) {
+    for (int i = 1; i < 7; i++) {
         usedParams << QStringLiteral("%1%2").arg(_modeParamPrefix).arg(i);
     }
     if (!_allParametersExists(ParameterManager::defaultComponentId, usedParams)) {
         return;
     }
 
-    for (int i=0; i<_cChannelOptions; i++) {
+    for (int i = 0; i < _cChannelOptions; i++) {
         _rgChannelOptionEnabled.append(QVariant(false));
     }
 
-    connect(_vehicle, &Vehicle::rcChannelsChanged, this, &APMFlightModesComponentController::_rcChannelsChanged);
+    (void) connect(_vehicle, &Vehicle::rcChannelsChanged, this, &APMFlightModesComponentController::_rcChannelsChanged);
 }
 
-/// Connected to Vehicle::rcChannelsChanged signal
 void APMFlightModesComponentController::_rcChannelsChanged(int channelCount, int pwmValues[QGCMAVLink::maxRcChannels])
 {
     int flightModeChannel = 4;
@@ -90,8 +81,8 @@ void APMFlightModesComponentController::_rcChannelsChanged(int channelCount, int
     int channelValue = pwmValues[flightModeChannel];
     if (channelValue != -1) {
         bool found = false;
-        int rgThreshold[] = { 1230, 1360, 1490, 1620, 1749 };
-        for (int i=0; i<5; i++) {
+        static constexpr const int rgThreshold[] = { 1230, 1360, 1490, 1620, 1749 };
+        for (int i = 0; i < std::size(rgThreshold); i++) {
             if (channelValue <= rgThreshold[i]) {
                 _activeFlightMode = i + 1;
                 found = true;
@@ -104,9 +95,9 @@ void APMFlightModesComponentController::_rcChannelsChanged(int channelCount, int
     }
     emit activeFlightModeChanged(_activeFlightMode);
 
-    for (int i=0; i<_cChannelOptions; i++) {
+    for (int i = 0; i < _cChannelOptions; i++) {
         _rgChannelOptionEnabled[i] = QVariant(false);
-        channelValue = pwmValues[i+5];
+        channelValue = pwmValues[i + 5];
         if (channelValue > 1800) {
             _rgChannelOptionEnabled[i] = QVariant(true);
         }
@@ -114,7 +105,7 @@ void APMFlightModesComponentController::_rcChannelsChanged(int channelCount, int
     emit channelOptionEnabledChanged();
 }
 
-void APMFlightModesComponentController::_updateSimpleParamsFromSimpleMode(void)
+void APMFlightModesComponentController::_updateSimpleParamsFromSimpleMode()
 {
     int newSimpleModeValue = 0;
     int newSuperSimpleModeValue = 0;
@@ -125,9 +116,9 @@ void APMFlightModesComponentController::_updateSimpleParamsFromSimpleMode(void)
         newSuperSimpleModeValue = _allSimpleBits;
     }
 
-    for (int i=0; i<_cFltModes; i++) {
-        _simpleModeEnabled[i] =         false;
-        _superSimpleModeEnabled[i] =    false;
+    for (int i = 0; i < _cFltModes; i++) {
+        _simpleModeEnabled[i] = false;
+        _superSimpleModeEnabled[i] = false;
     }
     emit simpleModeEnabledChanged();
     emit superSimpleModeEnabledChanged();
@@ -162,13 +153,13 @@ void APMFlightModesComponentController::setSuperSimpleMode(int fltModeIndex, boo
     }
 }
 
-void APMFlightModesComponentController::_setupSimpleModeEnabled(void)
+void APMFlightModesComponentController::_setupSimpleModeEnabled()
 {
-    uint8_t simpleMode =        static_cast<uint8_t>(_simpleModeFact->rawValue().toUInt());
-    uint8_t superSimpleMode =   static_cast<uint8_t>(_superSimpleModeFact->rawValue().toUInt());
+    const uint8_t simpleMode = static_cast<uint8_t>(_simpleModeFact->rawValue().toUInt());
+    const uint8_t superSimpleMode = static_cast<uint8_t>(_superSimpleModeFact->rawValue().toUInt());
 
-    for (int i=0; i<_cFltModes; i++) {
-        uint8_t bitSet = static_cast<uint8_t>(1 << i);
+    for (int i = 0; i < _cFltModes; i++) {
+        const uint8_t bitSet = static_cast<uint8_t>(1 << i);
         _simpleModeEnabled[i] = !!(simpleMode & bitSet);
         _superSimpleModeEnabled[i] = !!(superSimpleMode & bitSet);
     }

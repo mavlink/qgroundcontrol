@@ -10,21 +10,20 @@
 #pragma once
 
 #include "StateMachine.h"
-#include "QGCMAVLink.h"
+#include "MAVLinkLib.h"
 #include "Vehicle.h"
 
 #include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(InitialConnectStateMachineLog)
 
-class Vehicle;
-
 class InitialConnectStateMachine : public StateMachine
 {
     Q_OBJECT
 
 public:
-    InitialConnectStateMachine(Vehicle* vehicle);
+    InitialConnectStateMachine(Vehicle *vehicle, QObject *parent = nullptr);
+    ~InitialConnectStateMachine();
 
     // Overrides from StateMachine
     int             stateCount      (void) const final;
@@ -37,7 +36,7 @@ signals:
     void progressUpdate(float progress);
 
 private slots:
-    void gotProgressUpdate(float progressValue);
+    void gotProgressUpdate(double progressValue);
     void standardModesRequestCompleted();
 
 private:

@@ -9,7 +9,7 @@
 
 #include "StatusTextHandlerTest.h"
 #include "StatusTextHandler.h"
-#include <MAVLinkLib.h>
+#include "MAVLinkLib.h"
 
 #include <QtTest/QTest>
 

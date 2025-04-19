@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 #include "LinkConfiguration.h"
-#ifndef NO_SERIAL_LINK
+#ifndef QGC_NO_SERIAL_LINK
 #include "SerialLink.h"
 #endif
 #include "UDPLink.h"
@@ -21,7 +21,7 @@
 #include "MockLink.h"
 #endif
 #ifndef QGC_AIRLINK_DISABLED
-#include "AirlinkLink.h"
+#include "AirLinkLink.h"
 #endif
 
 LinkConfiguration::LinkConfiguration(const QString &name, QObject *parent)
@@ -51,21 +51,21 @@ LinkConfiguration::~LinkConfiguration()
 
 void LinkConfiguration::copyFrom(const LinkConfiguration *source)
 {
-    Q_CHECK_PTR(source);
+    Q_ASSERT(source);
 
-    _link = source->_link;
-    _name = source->name();
-    _dynamic = source->isDynamic();
-    _autoConnect = source->isAutoConnect();
-    _highLatency = source->isHighLatency();
+    setLink(source->_link.lock());
+    setName(source->name());
+    setDynamic(source->isDynamic());
+    setAutoConnect(source->isAutoConnect());
+    setHighLatency(source->isHighLatency());
 }
 
 LinkConfiguration *LinkConfiguration::createSettings(int type, const QString &name)
 {
     LinkConfiguration *config = nullptr;
 
-    switch(static_cast<LinkType>(type)) {
-#ifndef NO_SERIAL_LINK
+    switch (static_cast<LinkType>(type)) {
+#ifndef QGC_NO_SERIAL_LINK
     case TypeSerial:
         config = new SerialConfiguration(name);
         break;
@@ -82,7 +82,7 @@ LinkConfiguration *LinkConfiguration::createSettings(int type, const QString &na
         break;
 #endif
     case TypeLogReplay:
-        config = new LogReplayLinkConfiguration(name);
+        config = new LogReplayConfiguration(name);
         break;
 #ifdef QT_DEBUG
     case TypeMock:
@@ -90,8 +90,8 @@ LinkConfiguration *LinkConfiguration::createSettings(int type, const QString &na
         break;
 #endif
 #ifndef QGC_AIRLINK_DISABLED
-    case Airlink:
-        config = new AirlinkConfiguration(name);
+    case AirLink:
+        config = new AirLinkConfiguration(name);
         break;
 #endif
     case TypeLast:
@@ -107,7 +107,7 @@ LinkConfiguration *LinkConfiguration::duplicateSettings(const LinkConfiguration 
     LinkConfiguration *dupe = nullptr;
 
     switch(source->type()) {
-#ifndef NO_SERIAL_LINK
+#ifndef QGC_NO_SERIAL_LINK
     case TypeSerial:
         dupe = new SerialConfiguration(qobject_cast<const SerialConfiguration*>(source));
         break;
@@ -124,7 +124,7 @@ LinkConfiguration *LinkConfiguration::duplicateSettings(const LinkConfiguration 
         break;
 #endif
     case TypeLogReplay:
-        dupe = new LogReplayLinkConfiguration(qobject_cast<const LogReplayLinkConfiguration*>(source));
+        dupe = new LogReplayConfiguration(qobject_cast<const LogReplayConfiguration*>(source));
         break;
 #ifdef QT_DEBUG
     case TypeMock:
@@ -132,8 +132,8 @@ LinkConfiguration *LinkConfiguration::duplicateSettings(const LinkConfiguration 
         break;
 #endif
 #ifndef QGC_AIRLINK_DISABLED
-    case Airlink:
-        dupe = new AirlinkConfiguration(qobject_cast<const AirlinkConfiguration*>(source));
+    case AirLink:
+        dupe = new AirLinkConfiguration(qobject_cast<const AirLinkConfiguration*>(source));
         break;
 #endif
     case TypeLast:
@@ -157,6 +157,8 @@ void LinkConfiguration::setLink(const SharedLinkInterfacePtr link)
     if (link.get() != this->link()) {
         _link = link;
         emit linkChanged();
+
+        (void) connect(link.get(), &LinkInterface::disconnected, this, &LinkConfiguration::linkChanged, Qt::QueuedConnection);
     }
 }
 

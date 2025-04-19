@@ -1,0 +1,24 @@
+name: Source Checks
+description: Run Various Checks on Source
+inputs:
+  format:
+    description: Run Clang Format
+    default: 'false'
+  spelling:
+    description: Run Spelling
+    default: 'false'
+runs:
+  using: "composite"
+  steps:
+  - uses: actions/checkout@v4
+
+  - name: Run clang-format style check for C++ Source Files.
+    if: inputs.format == 'true'
+    uses: jidicula/clang-format-action@main
+    with:
+      clang-format-version: '17'
+      check-path: 'src'
+
+  - name: Check spelling
+    if: inputs.spelling == 'true'
+    uses: crate-ci/typos@master

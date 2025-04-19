@@ -38,6 +38,11 @@ Item {
     property bool   _hasZoom:           _camera && _camera.hasZoom
     property int    _fitMode:           QGroundControl.settingsManager.videoSettings.videoFit.rawValue
 
+    property bool   _isMode_FIT_WIDTH:  _fitMode === 0
+    property bool   _isMode_FIT_HEIGHT: _fitMode === 1
+    property bool   _isMode_FILL:       _fitMode === 2
+    property bool   _isMode_NO_CROP:    _fitMode === 3
+
     function getWidth() {
         return videoBackground.getWidth()
     }
@@ -79,20 +84,34 @@ Item {
         color:          "black"
         visible:        QGroundControl.videoManager.decoding
         function getWidth() {
-            //-- Fit Width or Stretch
-            if(_fitMode === 0 || _fitMode === 2) {
-                return parent.width
+            if(_ar != 0.0){
+                if(_isMode_FIT_HEIGHT 
+                        || (_isMode_FILL && (root.width/root.height < _ar))
+                        || (_isMode_NO_CROP && (root.width/root.height > _ar))){
+                    // This return value has different implications depending on the mode
+                    // For FIT_HEIGHT and FILL
+                    //    makes so the video width will be larger than (or equal to) the screen width
+                    // For NO_CROP Mode
+                    //    makes so the video width will be smaller than (or equal to) the screen width
+                    return root.height * _ar
+                }
             }
-            //-- Fit Height
-            return _ar != 0.0 ? parent.height * _ar : parent.width
+            return root.width
         }
         function getHeight() {
-            //-- Fit Height or Stretch
-            if(_fitMode === 1 || _fitMode === 2) {
-                return parent.height
+            if(_ar != 0.0){
+                if(_isMode_FIT_WIDTH 
+                        || (_isMode_FILL && (root.width/root.height > _ar)) 
+                        || (_isMode_NO_CROP && (root.width/root.height < _ar))){
+                    // This return value has different implications depending on the mode
+                    // For FIT_WIDTH and FILL
+                    //    makes so the video height will be larger than (or equal to) the screen height
+                    // For NO_CROP Mode
+                    //    makes so the video height will be smaller than (or equal to) the screen height
+                    return root.width * (1 / _ar)
+                }
             }
-            //-- Fit Width
-            return _ar != 0.0 ? parent.width * (1 / _ar) : parent.height
+            return root.height
         }
         Component {
             id: videoBackgroundComponent

@@ -87,7 +87,7 @@ signals:
 class ParameterEditorController : public FactPanelController
 {
     Q_OBJECT
-    QML_ELEMENT
+    // QML_ELEMENT
     Q_PROPERTY(QString              searchText              MEMBER _searchText                                          NOTIFY searchTextChanged)
     Q_PROPERTY(QmlObjectListModel*  categories              READ categories                                             CONSTANT)
     Q_PROPERTY(QObject*             currentCategory         READ currentCategory            WRITE setCurrentCategory    NOTIFY currentCategoryChanged)
@@ -141,9 +141,12 @@ private slots:
 private:
     bool _shouldShow(Fact *fact) const;
 
+    void _performSearch();
+
 private:
     ParameterManager*           _parameterMgr           = nullptr;
     QString                     _searchText;
+    QTimer                      _searchTimer;
     ParameterEditorCategory*    _currentCategory        = nullptr;
     ParameterEditorGroup*       _currentGroup           = nullptr;
     bool                        _showModifiedOnly       = false;

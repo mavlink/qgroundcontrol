@@ -9,58 +9,55 @@
 
 #pragma once
 
-#include "FactPanelController.h"
-
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QVariant>
 
+#include "FactPanelController.h"
+
+class Fact;
 class Vehicle;
 
 Q_DECLARE_LOGGING_CATEGORY(SyslinkComponentControllerLog)
 
-namespace Ui {
-    class SyslinkComponentController;
-}
-
 class SyslinkComponentController : public FactPanelController
 {
     Q_OBJECT
-    Q_MOC_INCLUDE("Vehicle.h")
+    Q_PROPERTY(int          radioChannel    READ radioChannel   WRITE setRadioChannel   NOTIFY radioChannelChanged)
+    Q_PROPERTY(QString      radioAddress    READ radioAddress   WRITE setRadioAddress   NOTIFY radioAddressChanged)
+    Q_PROPERTY(int          radioRate       READ radioRate      WRITE setRadioRate      NOTIFY radioRateChanged)
+    Q_PROPERTY(QStringList  radioRates      READ radioRates                             CONSTANT)
 
 public:
-    SyslinkComponentController      ();
-    ~SyslinkComponentController     ();
+    explicit SyslinkComponentController(QObject *parent = nullptr);
+    ~SyslinkComponentController();
 
-    Q_PROPERTY(int              radioChannel    READ radioChannel       WRITE setRadioChannel       NOTIFY radioChannelChanged)
-    Q_PROPERTY(QString          radioAddress    READ radioAddress       WRITE setRadioAddress       NOTIFY radioAddressChanged)
-    Q_PROPERTY(int              radioRate       READ radioRate          WRITE setRadioRate          NOTIFY radioRateChanged)
-    Q_PROPERTY(QStringList      radioRates      READ radioRates                                     CONSTANT)
-    Q_PROPERTY(Vehicle*         vehicle         READ vehicle                                        CONSTANT)
+    Q_INVOKABLE void resetDefaults() const;
 
-    Q_INVOKABLE void resetDefaults();
+    int radioChannel() const;
+    QString radioAddress() const;
+    int radioRate() const;
+    QStringList radioRates() const { return _dataRates; }
+    Vehicle *vehicle() const { return _vehicle; }
 
-    int             radioChannel    ();
-    QString         radioAddress    ();
-    int             radioRate       ();
-    QStringList     radioRates      () { return _dataRates; }
-    Vehicle*        vehicle         () { return _vehicle; }
-
-    void        setRadioChannel     (int num);
-    void        setRadioAddress     (QString str);
-    void        setRadioRate        (int idx);
-
+    void setRadioChannel(int num) const;
+    void setRadioAddress(const QString &str) const;
+    void setRadioRate(int idx) const;
 
 signals:
-    void        radioChannelChanged     ();
-    void        radioAddressChanged     ();
-    void        radioRateChanged        ();
+    void radioChannelChanged();
+    void radioAddressChanged();
+    void radioRateChanged();
 
 private slots:
-    void        _channelChanged     (QVariant value);
-    void        _addressChanged     (QVariant value);
-    void        _rateChanged        (QVariant value);
+    void _channelChanged(QVariant value) { Q_UNUSED(value); emit radioChannelChanged(); }
+    void _addressChanged(QVariant value) { Q_UNUSED(value); emit radioAddressChanged(); }
+    void _rateChanged(QVariant value) { Q_UNUSED(value); emit radioRateChanged(); }
 
 private:
-    QStringList _dataRates;
+    const QStringList _dataRates = { QStringLiteral("750Kb/s"), QStringLiteral("1Mb/s"), QStringLiteral("2Mb/s") };
 
+    Fact *_chan = nullptr;
+    Fact *_rate = nullptr;
+    Fact *_addr1 = nullptr;
+    Fact *_addr2 = nullptr;
 };

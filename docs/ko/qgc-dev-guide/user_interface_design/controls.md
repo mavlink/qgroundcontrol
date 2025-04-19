@@ -33,3 +33,4 @@ These custom controls are exclusive to QGC and are used to create standard UI el
 - QGCViewPanel - The main view contents inside of a QGCView.
 - RoundButton - A round button control which uses an image as its inner contents.
 - SetupPage - The base control for all Setup vehicle component pages. Provides a title, description and component page contents area.
+- SelectableControl - Allows users to select from a list of controls to display. Right-click on Desktop or Press and Hold on Mobile will show selection UI. Example usage: Allows user to select between multiple Instrument display variants.

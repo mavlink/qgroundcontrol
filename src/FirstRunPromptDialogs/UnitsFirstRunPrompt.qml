@@ -38,6 +38,10 @@ FirstRunPrompt {
     }
 
     function changeSystemOfUnits(metric) {
+        // Hack to force reload the ComboBoxes, otherwise they don't update
+        unitComboBoxRepeater.model = 0
+        unitComboBoxRepeater.model = _rgFacts.length
+
         if (_unitsSettings.horizontalDistanceUnits.visible) {
             _unitsSettings.horizontalDistanceUnits.value = metric ? UnitsSettings.HorizontalDistanceUnitsMeters : UnitsSettings.HorizontalDistanceUnitsFeet
         }
@@ -100,6 +104,7 @@ FirstRunPrompt {
                 }
 
                 Repeater {
+                    id: unitComboBoxRepeater
                     model: _rgFacts.length
                     FactComboBox {
                         Layout.fillWidth:   true

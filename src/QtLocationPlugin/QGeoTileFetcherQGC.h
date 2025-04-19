@@ -42,7 +42,7 @@ private:
 
     QNetworkAccessManager *m_networkManager = nullptr;
 
-#if defined Q_OS_MAC
+#if defined Q_OS_MACOS
     static constexpr const char* s_userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 14.5; rv:125.0) Gecko/20100101 Firefox/125.0";
 #elif defined Q_OS_WIN
     static constexpr const char* s_userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:100.0) Gecko/20100101 Firefox/112.0";

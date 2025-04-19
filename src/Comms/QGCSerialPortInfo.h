@@ -33,12 +33,13 @@ public:
     ~QGCSerialPortInfo();
 
     enum BoardType_t {
-        BoardTypePixhawk,
+        BoardTypePixhawk = 0,
         BoardTypeSiKRadio,
         BoardTypeOpenPilot,
         BoardTypeRTKGPS,
         BoardTypeUnknown
     };
+
     bool getBoardInfo(BoardType_t &boardType, QString &name) const;
 
     /// @return true: we can flash this board type
@@ -46,6 +47,9 @@ public:
 
     /// @return true: Board is currently in bootloader
     bool isBootloader() const;
+
+    /// @return true: Board is BlackCube
+    bool isBlackCube() const;
 
     /// Known operating system peripherals that are NEVER a peripheral that we should connect to.
     ///     @return true: Port is a system port and not an autopilot
@@ -55,22 +59,17 @@ public:
     static QList<QGCSerialPortInfo> availablePorts();
 
 private:
-    static void _loadJsonData();
+    struct BoardClassString2BoardType_t {
+        const QString classString;
+        const BoardType_t boardType = BoardTypeUnknown;
+    };
+
+    static bool _loadJsonData();
     static BoardType_t _boardClassStringToType(const QString &boardClass);
     static QString _boardTypeToString(BoardType_t boardType);
 
     static bool _jsonLoaded;
-
-    struct BoardClassString2BoardType_t {
-        const char *classString;
-        BoardType_t boardType;
-    };
-    static constexpr const BoardClassString2BoardType_t _rgBoardClass2BoardType[BoardTypeUnknown] = {
-        { "Pixhawk", QGCSerialPortInfo::BoardTypePixhawk },
-        { "RTK GPS", QGCSerialPortInfo::BoardTypeRTKGPS },
-        { "SiK Radio", QGCSerialPortInfo::BoardTypeSiKRadio },
-        { "OpenPilot", QGCSerialPortInfo::BoardTypeOpenPilot },
-    };
+    static bool _jsonDataValid;
 
     struct BoardInfo_t {
         int vendorId;

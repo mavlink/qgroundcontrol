@@ -45,6 +45,7 @@ public:
                             QStringView mapType);
 
     static const QList<std::shared_ptr<const MapProvider>>& getProviders() { return _providers; }
+    static QStringList getElevationProviderTypes();
     static QStringList getProviderTypes();
     static int getQtMapIdFromProviderType(QStringView type);
     static QString getProviderTypeFromQtMapId(int qtMapId);

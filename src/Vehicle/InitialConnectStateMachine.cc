@@ -20,18 +20,25 @@
 #include "RallyPointManager.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(InitialConnectStateMachineLog, "InitialConnectStateMachineLog")
+QGC_LOGGING_CATEGORY(InitialConnectStateMachineLog, "qgc.vehicle.initialconnectstatemachine")
 
-InitialConnectStateMachine::InitialConnectStateMachine(Vehicle* vehicle)
-    : _vehicle(vehicle)
+InitialConnectStateMachine::InitialConnectStateMachine(Vehicle *vehicle, QObject *parent)
+    : StateMachine(parent)
+    , _vehicle(vehicle)
 {
-    static_assert(sizeof(_rgStates)/sizeof(_rgStates[0]) == sizeof(_rgProgressWeights)/sizeof(_rgProgressWeights[0]),
-            "array size mismatch");
+    static_assert(std::size(_rgStates) == std::size(_rgProgressWeights), "array size mismatch");
 
     _progressWeightTotal = 0;
     for (int i = 0; i < _cStates; ++i) {
         _progressWeightTotal += _rgProgressWeights[i];
     }
+
+    // qCDebug(InitialConnectStateMachineLog) << Q_FUNC_INFO << this;
+}
+
+InitialConnectStateMachine::~InitialConnectStateMachine()
+{
+    // qCDebug(InitialConnectStateMachineLog) << Q_FUNC_INFO << this;
 }
 
 int InitialConnectStateMachine::stateCount(void) const
@@ -55,9 +62,9 @@ void InitialConnectStateMachine::advance()
     emit progressUpdate(_progress());
 }
 
-void InitialConnectStateMachine::gotProgressUpdate(float progressValue)
+void InitialConnectStateMachine::gotProgressUpdate(double progressValue)
 {
-    emit progressUpdate(_progress(progressValue));
+    emit progressUpdate(_progress(static_cast<float>(progressValue)));
 }
 
 float InitialConnectStateMachine::_progress(float subProgress)
@@ -67,7 +74,7 @@ float InitialConnectStateMachine::_progress(float subProgress)
         progressWeight += _rgProgressWeights[i];
     }
     int currentWeight = _stateIndex < _cStates ? _rgProgressWeights[_stateIndex] : 1;
-    return (progressWeight + currentWeight * subProgress) / (float)_progressWeightTotal;
+    return (progressWeight + currentWeight * subProgress) / static_cast<float>(_progressWeightTotal);
 }
 
 void InitialConnectStateMachine::_stateRequestAutopilotVersion(StateMachine* stateMachine)
@@ -142,7 +149,7 @@ void InitialConnectStateMachine::_autopilotVersionRequestMessageHandler(void* re
             nullStr[8] = 0;
             vehicle->_gitHash = nullStr;
         }
-        if (vehicle->_toolbox->corePlugin()->options()->checkFirmwareVersion() && !vehicle->_checkLatestStableFWDone) {
+        if (QGCCorePlugin::instance()->options()->checkFirmwareVersion() && !vehicle->_checkLatestStableFWDone) {
             vehicle->_checkLatestStableFWDone = true;
             vehicle->_firmwarePlugin->checkIfIsLatestStable(vehicle);
         }
@@ -318,8 +325,7 @@ void InitialConnectStateMachine::_stateRequestMission(StateMachine* stateMachine
         } else {
             qCDebug(InitialConnectStateMachineLog) << "_stateRequestMission";
             vehicle->_missionManager->loadFromVehicle();
-            connect(vehicle->_missionManager, &MissionManager::progressPctChanged, connectMachine,
-                    &InitialConnectStateMachine::gotProgressUpdate);
+            (void) connect(vehicle->_missionManager, &MissionManager::progressPctChanged, connectMachine, &InitialConnectStateMachine::gotProgressUpdate);
         }
     }
 }

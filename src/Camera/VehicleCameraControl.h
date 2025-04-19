@@ -152,7 +152,7 @@ public:
     virtual Fact*   shutterSpeed        ();
     virtual Fact*   aperture            ();
     virtual Fact*   wb                  ();
-    virtual Fact*   mode                ();   
+    virtual Fact*   mode                ();
     virtual void    factChanged         (Fact* pFact);
     virtual bool    incomingParameter   (Fact* pFact, QVariant& newValue);
     virtual bool    validateParameter   (Fact* pFact, QVariant& newValue);
@@ -226,7 +226,7 @@ protected slots:
     virtual void    _requestCaptureStatus   ();
     virtual void    _requestStorageInfo     ();
     virtual void    _downloadFinished       ();
-    virtual void    _mavCommandResult       (int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
+    virtual void    _mavCommandResult       (int vehicleId, int component, int command, int result, int failureCode);
     virtual void    _dataReady              (QByteArray data);
     virtual void    _paramDone              ();
     virtual void    _streamInfoTimeout      ();
@@ -287,6 +287,7 @@ protected:
     QMap<QString, QVariantList>         _originalOptValues;
     QMap<QString, QGCCameraParamIO*>    _paramIO;
     int                                 _cameraSettingsRetries = 0;
+    int                                 _cameraCaptureStatusRetries = 0;
     int                                 _storageInfoRetries = 0;
     int                                 _captureInfoRetries = 0;
     bool                                _resetting          = false;

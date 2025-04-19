@@ -8,8 +8,8 @@
  ****************************************************************************/
 
 #include "OsmParser.h"
-#include "QGCApplication.h"
 #include "SettingsManager.h"
+#include "Viewer3DSettings.h"
 #include "OsmParserThread.h"
 #include "earcut.hpp"
 
@@ -36,7 +36,7 @@ OsmParser::OsmParser(QObject *parent)
     _doubleStoreyLeisure.append("sports_hall");
     _doubleStoreyLeisure.append("sauna");
 
-    _viewer3DSettings = qgcApp()->toolbox()->settingsManager()->viewer3DSettings();
+    _viewer3DSettings = SettingsManager::instance()->viewer3DSettings();
 
     _gpsRefSet = false;
     _mapLoadedFlag = false;
@@ -95,7 +95,6 @@ void OsmParser::parseOsmFile(QString filePath)
 QByteArray OsmParser::buildingToMesh()
 {
     QByteArray vertexData;
-    QMapIterator<uint64_t, OsmParserThread::BuildingType_t> ii(_osmParserWorker->mapBuildings);
 
     for (auto ii = _osmParserWorker->mapBuildings.begin(), end = _osmParserWorker->mapBuildings.end(); ii != end; ++ii) {
         float bld_height = 0;

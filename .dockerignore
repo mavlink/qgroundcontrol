@@ -1,0 +1,15 @@
+# Ignore Git repository files
+.git
+.gitignore
+.gitattributes
+
+# Ignore node_modules or other build artifacts
+node_modules
+build
+
+# Ignore Docker-related files
+Dockerfile*
+docker-compose.yml
+
+README.md
+CMakeLists.txt.user*

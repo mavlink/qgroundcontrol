@@ -21,7 +21,7 @@ class QGCFileDialogController : public QObject
 {
     Q_OBJECT
     // TODO: Q_NAMESPACE
-    QML_ELEMENT
+    // QML_ELEMENT
 
 public:
     explicit QGCFileDialogController(QObject *parent = nullptr);

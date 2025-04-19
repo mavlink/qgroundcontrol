@@ -2,7 +2,6 @@
     <qresource prefix="/qml">
         <file alias="MockLink.qml">UI/preferences/MockLink.qml</file>
         <file alias="MockLinkSettings.qml">UI/preferences/MockLinkSettings.qml</file>
-        <file alias="QGroundControl/Controls/MockLinkOptionsDlg.qml">Comms/MockLinkOptionsDlg.qml</file>
         <file alias="QGroundControl/Controls/QGCControlDebug.qml">QmlControls/QGCControlDebug.qml</file>
         <file alias="DebugWindow.qml">UI/preferences/DebugWindow.qml</file>
         <file alias="QmlTest.qml">QmlControls/QmlTest.qml</file>
@@ -14,11 +13,10 @@
         <file alias="PolygonGood.kml">MissionManager/PolygonGood.kml</file>
         <file alias="PolygonMissingNode.kml">MissionManager/PolygonMissingNode.kml</file>
         <file alias="SectionTest.plan">MissionManager/SectionTest.plan</file>
-        <file alias="TranslationTest.json">Vehicle/Components/TranslationTest.json</file>
-        <file alias="TranslationTest_de_DE.ts">Vehicle/Components/TranslationTest_de_DE.ts</file>
+        <file alias="TranslationTest.json">Vehicle/ComponentInformation/TranslationTest.json</file>
+        <file alias="TranslationTest_de_DE.ts">Vehicle/ComponentInformation/TranslationTest_de_DE.ts</file>
         <file alias="FactSystemTest.qml">FactSystem/FactSystemTest.qml</file>
         <file alias="MissionPlanner.waypoints">MissionManager/MissionPlanner.waypoints</file>
-        <file alias="MockLinkOptionsDlg.qml">Comms/MockLinkOptionsDlg.qml</file>
         <file alias="OldFileFormat.mission">MissionManager/OldFileFormat.mission</file>
         <file alias="UT-MavCmdInfoCommon.json">MissionManager/UT-MavCmdInfoCommon.json</file>
         <file alias="UT-MavCmdInfoFixedWing.json">MissionManager/UT-MavCmdInfoFixedWing.json</file>
@@ -26,5 +24,12 @@
         <file alias="UT-MavCmdInfoRover.json">MissionManager/UT-MavCmdInfoRover.json</file>
         <file alias="UT-MavCmdInfoSub.json">MissionManager/UT-MavCmdInfoSub.json</file>
         <file alias="UT-MavCmdInfoVTOL.json">MissionManager/UT-MavCmdInfoVTOL.json</file>
+        <file alias="ADSB_Simulator.py">ADSB/ADSB_Simulator.py</file>
+        <file alias="DSCN0010.jpg">AnalyzeView/DSCN0010.jpg</file>
+        <file alias="SampleULog.ulg">AnalyzeView/SampleULog.ulg</file>
+        <file alias="arducopter.apj">Utilities/arducopter.apj</file>
+        <file alias="manifest.json.gz">Utilities/Compression/manifest.json.gz</file>
+        <file alias="manifest.json.xz">Utilities/Compression/manifest.json.xz</file>
+        <file alias="manifest.json.zip">Utilities/Compression/manifest.json.zip</file>
     </qresource>
 </RCC>

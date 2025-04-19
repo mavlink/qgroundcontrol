@@ -32,16 +32,16 @@ Rectangle {
     //property real   availableWidth    ///< Width for control
     //property var    missionItem       ///< Mission Item for editor
 
-    property var    _masterControler:               masterController
-    property var    _missionController:             _masterControler.missionController
-    property var    _missionVehicle:                _masterControler.controllerVehicle
+    property var    _masterControler:           masterController
+    property var    _missionController:         _masterControler.missionController
+    property var    _missionVehicle:            _masterControler.controllerVehicle
     property real   _margin:                    ScreenTools.defaultFontPixelWidth / 2
     property real   _spacer:                    ScreenTools.defaultFontPixelWidth / 2
     property string _setToVehicleHeadingStr:    qsTr("Set to vehicle heading")
     property string _setToVehicleLocationStr:   qsTr("Set to vehicle location")
     property bool   _showCameraSection:         !_missionVehicle.apmFirmware
     property int    _altitudeMode:              missionItem.altitudesAreRelative ? QGroundControl.AltitudeModeRelative : QGroundControl.AltitudeModeAbsolute
-
+    property real   _previousLoiterRadius:      missionItem.loiterRadius.rawValue
 
     Column {
         id:                 editorColumn
@@ -69,7 +69,24 @@ Rectangle {
             FactCheckBox {
                 text:       qsTr("Use loiter to altitude")
                 fact:       missionItem.useLoiterToAlt
-                visible:    missionItem.useLoiterToAlt.visible
+
+                Component.onCompleted: {
+                    if (!missionItem.useLoiterToAlt.rawValue) {
+                        _previousLoiterRadius = missionItem.loiterRadius.defaultValue
+                    }
+                }
+
+                // When not using loiter to altitude, set radius to 0 to set the
+                // glide slope heading correctly
+                onCheckedChanged: {
+                    if (checked) {
+                        // Restore the previous loiter radius
+                        missionItem.loiterRadius.rawValue = _previousLoiterRadius
+                    } else {
+                        _previousLoiterRadius = missionItem.loiterRadius.rawValue
+                        missionItem.loiterRadius.rawValue = 0
+                    }
+                }
             }
 
             GridLayout {
@@ -83,6 +100,18 @@ Rectangle {
                     Layout.fillWidth:   true
                     fact:               missionItem.finalApproachAltitude
                     altitudeMode:       _altitudeMode
+                }
+
+                FactCheckBox {
+                    id:         flightSpeedCheckbox
+                    text:       qsTr("Flight Speed")
+                    fact:       missionItem.useDoChangeSpeed
+                }
+
+                FactTextField {
+                    Layout.fillWidth:   true
+                    fact:               missionItem.finalApproachSpeed
+                    enabled:            flightSpeedCheckbox.checked
                 }
 
                 QGCLabel {
@@ -307,7 +336,7 @@ Rectangle {
         ColumnLayout {
             anchors.left:   parent.left
             anchors.right:  parent.right
-            spacing:        ScreenTools.defaultFontPixelHeight
+            spacing:        ScreenTools.defaultFontPixelHeight / 2
             visible:        !landingCoordColumn.visible
 
             onVisibleChanged: {
@@ -320,6 +349,12 @@ Rectangle {
                 Layout.fillWidth:   true
                 wrapMode:           Text.WordWrap
                 text:               qsTr("Drag the loiter point to adjust landing direction for wind and obstacles.")
+            }
+
+            FactCheckBox {
+                text:       qsTr("Loiter clockwise")
+                fact:       missionItem.loiterClockwise
+                visible:    missionItem.useLoiterToAlt.rawValue
             }
 
             QGCButton {

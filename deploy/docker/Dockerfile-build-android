@@ -1,0 +1,121 @@
+# Use Ubuntu 22.04 as base image
+FROM ubuntu:22.04
+
+# Set environment variables for Android SDK, NDK, and paths
+ENV ANDROID_SDK_ROOT=/opt/android-sdk
+ENV ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/25.2.9519653
+ENV ANDROID_HOME=$ANDROID_SDK_ROOT
+ENV ANDROID_BUILD_TOOLS=$ANDROID_SDK_ROOT/build-tools/34.0.0
+
+# Set apt-get to non-interactive and configure time zone
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=America/New_York
+
+# Configure time zone and install dependencies
+RUN apt-get update && \
+    apt-get install -y tzdata && \
+    ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && \
+    dpkg-reconfigure --frontend noninteractive tzdata && \
+    apt-get install -y \
+    build-essential \
+    libpulse-dev \
+    libxcb-glx0 \
+    libxcb-icccm4 \
+    libxcb-image0 \
+    libxcb-keysyms1 \
+    libxcb-randr0 \
+    libxcb-render-util0 \
+    libxcb-render0 \
+    libxcb-shape0 \
+    libxcb-shm0 \
+    libxcb-sync1 \
+    libxcb-util1 \
+    libxcb-xfixes0 \
+    libxcb-xinerama0 \
+    libxcb1 \
+    libxkbcommon-dev \
+    libxkbcommon-x11-0 \
+    libxcb-xkb-dev \
+    python3 \
+    python3-pip \
+    wget \
+    unzip \
+    git \
+    openjdk-17-jdk \
+    curl \
+    locales \
+    ninja-build
+
+# Set JAVA_HOME and update PATH
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+
+# Ensure UTF-8 locale
+RUN locale-gen en_US.UTF-8 && \
+    dpkg-reconfigure --frontend noninteractive locales && \
+    export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+
+# Install Android SDK and NDK
+RUN mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest && \
+    wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip -O /opt/cmdline-tools.zip && \
+    unzip /opt/cmdline-tools.zip -d $ANDROID_SDK_ROOT/cmdline-tools && \
+    mv $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools/* $ANDROID_SDK_ROOT/cmdline-tools/latest/ && \
+    rm -rf $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools && \
+    rm /opt/cmdline-tools.zip && \
+    yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses && \
+    $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "platforms;android-34" "build-tools;34.0.0" "ndk;25.2.9519653"
+
+# Qt setup and environment variables
+ENV QT_VERSION="6.6.3"
+ENV QT_PATH="/opt/Qt"
+ENV QT_HOST="linux"
+ENV QT_HOST_ARCH="gcc_64"
+ENV QT_TARGET="android"
+ENV QT_TARGET_ARCH_ARMV7="android_armv7"
+ENV QT_TARGET_ARCH_ARM64="android_arm64_v8a"
+ENV QT_MODULES="qtcharts qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtlocation"
+
+# Install aqtinstall and download Qt for both host and target architectures
+RUN python3 -m pip install setuptools wheel py7zr aqtinstall && \
+    mkdir -p $QT_PATH && \
+    aqt install-qt $QT_HOST desktop $QT_VERSION $QT_HOST_ARCH -O $QT_PATH -m $QT_MODULES && \
+    aqt install-qt $QT_HOST $QT_TARGET $QT_VERSION $QT_TARGET_ARCH_ARMV7 -O $QT_PATH -m $QT_MODULES --autodesktop && \
+    aqt install-qt $QT_HOST $QT_TARGET $QT_VERSION $QT_TARGET_ARCH_ARM64 -O $QT_PATH -m $QT_MODULES --autodesktop
+
+# Set Qt-related environment variables for ARMv7 and ARM64 architectures
+ENV QT_ROOT_DIR_ARMV7=$QT_PATH/$QT_VERSION/$QT_TARGET_ARCH_ARMV7
+ENV QT_ROOT_DIR_ARM64=$QT_PATH/$QT_VERSION/$QT_TARGET_ARCH_ARM64
+ENV QT_HOST_PATH=$QT_PATH/$QT_VERSION/$QT_HOST_ARCH
+ENV QT_PLUGIN_PATH_ARMV7=$QT_ROOT_DIR_ARMV7/plugins 
+ENV QT_PLUGIN_PATH_ARM64=$QT_ROOT_DIR_ARM64/plugins
+ENV QML2_IMPORT_PATH_ARMV7=$QT_ROOT_DIR_ARMV7/qml
+ENV QML2_IMPORT_PATH_ARM64=$QT_ROOT_DIR_ARM64/qml
+ENV PKG_CONFIG_PATH_ARMV7=$QT_ROOT_DIR_ARMV7/lib/pkgconfig:$PKG_CONFIG_PATH
+ENV PKG_CONFIG_PATH_ARM64=$QT_ROOT_DIR_ARM64/lib/pkgconfig:$PKG_CONFIG_PATH
+ENV LD_LIBRARY_PATH_ARMV7=$QT_ROOT_DIR_ARMV7/lib:$LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH_ARM64=$QT_ROOT_DIR_ARM64/lib:$LD_LIBRARY_PATH
+
+# Consolidate PATH settings
+ENV PATH=$JAVA_HOME/bin:/usr/lib/ccache:$QT_HOST_PATH/bin:$QT_ROOT_DIR_ARMV7/bin:$QT_ROOT_DIR_ARM64/bin:$PATH:$ANDROID_SDK_ROOT/tools:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_BUILD_TOOLS:$ANDROID_NDK_ROOT
+
+# Set Git safe directories and install CMake
+RUN git config --global --add safe.directory /workspace && \
+    git config --global --add safe.directory /project/source && \
+    pip install cmake
+
+# Set working directory
+WORKDIR /workspace
+
+# Build the project
+CMD mkdir -p /workspace/build/shadow_build_dir && \
+    cd /workspace/build/shadow_build_dir && \
+    qt-cmake -S /project/source -G Ninja \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DQT_HOST_PATH=$QT_HOST_PATH \
+        -DQT_ANDROID_BUILD_ALL_ABIS=OFF \
+        -DQT_ANDROID_ABIS="armeabi-v7a;arm64-v8a" \
+        -DQT_DEBUG_FIND_PACKAGE=ON \
+        -DANDROID_BUILD_TOOLS=$ANDROID_SDK_ROOT/build-tools/34.0.0 \
+        -DANDROID_SDK_ROOT=$ANDROID_SDK_ROOT \
+        -DQT_ANDROID_SIGN_APK=OFF \
+        -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake && \
+        cmake --build . --target all --config Release

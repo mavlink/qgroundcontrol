@@ -8,17 +8,15 @@
  ****************************************************************************/
 
 #include "APMMotorComponent.h"
-#include "AutoPilotPlugin.h"
 #include "Vehicle.h"
 
-APMMotorComponent::APMMotorComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
-    MotorComponent(vehicle, autopilot, parent),
-    _name(tr("Motors"))
+APMMotorComponent::APMMotorComponent(Vehicle *vehicle, AutoPilotPlugin *autopilot, QObject *parent)
+    : MotorComponent(vehicle, autopilot, parent)
 {
 
 }
 
-QUrl APMMotorComponent::setupSource(void) const
+QUrl APMMotorComponent::setupSource() const
 {
     switch (_vehicle->vehicleType()) {
     case MAV_TYPE_SUBMARINE:
@@ -26,11 +24,4 @@ QUrl APMMotorComponent::setupSource(void) const
     default:
         return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMMotorComponent.qml"));
     }
-}
-
-QString APMMotorComponent::motorIndexToLetter(int index)
-{
-    char letter = 'A';
-
-    return QString(char(letter + index));
 }

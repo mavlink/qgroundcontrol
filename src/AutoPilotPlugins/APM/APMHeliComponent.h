@@ -14,24 +14,21 @@
 class APMHeliComponent : public VehicleComponent
 {
     Q_OBJECT
-    
+
 public:
-    APMHeliComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
-    
-    // Virtuals from VehicleComponent
-    QStringList setupCompleteChangedTriggerList(void) const override;
-    
-    // Virtuals from VehicleComponent
-    QString name(void) const override;
-    QString description(void) const override;
-    QString iconResource(void) const override;
-    bool requiresSetup(void) const override;
-    bool setupComplete(void) const override;
-    QUrl setupSource(void) const override;
-    QUrl summaryQmlSource(void) const override;
-    bool allowSetupWhileArmed(void) const override { return true; }
+    explicit APMHeliComponent(Vehicle *vehicle, AutoPilotPlugin *autopilot, QObject *parent = nullptr);
+
+    QStringList setupCompleteChangedTriggerList() const final { return QStringList(); }
+
+    QString name() const final { return _name; }
+    QString description() const final { return tr("Heli Setup is used to setup parameters which are specific to a helicopter."); }
+    QString iconResource() const final { return QStringLiteral("/res/helicoptericon.svg"); }
+    bool requiresSetup() const final { return false; }
+    bool setupComplete() const final { return true; }
+    QUrl setupSource() const final { return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMHeliComponent.qml")); }
+    QUrl summaryQmlSource() const final { return QUrl(); }
+    bool allowSetupWhileArmed() const final { return true; }
 
 private:
-    const QString   _name;
-    QVariantList    _summaryItems;
+    const QString _name = tr("Heli");
 };

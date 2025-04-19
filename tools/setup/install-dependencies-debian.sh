@@ -30,6 +30,7 @@ DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
     python3 \
     python3-pip \
     rsync \
+    wget2 \
     zsync
 
 # Qt Required - https://doc.qt.io/qt-6/linux-requirements.html
@@ -96,6 +97,7 @@ DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
     libcurl4-openssl-dev \
     libexiv2-dev \
     libexpat1-dev \
+    libfmt-dev \
     libinih-dev \
     libssh-dev \
     libxml2-utils \
@@ -112,7 +114,18 @@ DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
     speech-dispatcher-audio-plugins \
     speech-dispatcher-espeak \
     speech-dispatcher-espeak-ng \
-    speech-dispatcher-flite \
+    speech-dispatcher-flite
+
+# Joystick
+DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
+    libsdl2-dev
+
+# Shapelib
+DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
+    libshp-dev
+
+# DNS
+# DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install libavahi-compat-libdnssd-dev
 
 # Additional
 DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
@@ -152,8 +165,6 @@ DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
     liborc-0.4-dev \
     libpng-dev \
     libpulse-dev \
-    libsdl2-dev \
-    libshp-dev \
     libsoup2.4-dev \
     libssl-dev \
     libtheora-dev \
@@ -193,3 +204,12 @@ if apt-cache show libgeographic-dev >/dev/null 2>&1 && apt-cache show libgeograp
 elif apt-cache show libgeographiclib-dev >/dev/null 2>&1 && apt-cache show libgeographiclib-dev 2>/dev/null | grep -q "^Package: libgeographiclib-dev"; then
     DEBIAN_FRONTEND=noninteractive apt-get install -y --quiet libgeographiclib-dev
 fi
+
+# Vulkan
+# Ubuntu 20.04
+# wget -qO - http://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo apt-key add -
+# wget -qO /etc/apt/sources.list.d/lunarg-vulkan-1.3.283-focal.list https://packages.lunarg.com/vulkan/1.3.283/lunarg-vulkan-1.3.283-focal.list
+
+# Ubuntu 22.04
+# wget -qO- https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo tee /etc/apt/trusted.gpg.d/lunarg.asc
+# wget -qO /etc/apt/sources.list.d/lunarg-vulkan-jammy.list http://packages.lunarg.com/vulkan/lunarg-vulkan-jammy.list

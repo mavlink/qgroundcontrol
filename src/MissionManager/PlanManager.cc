@@ -20,7 +20,6 @@ QGC_LOGGING_CATEGORY(PlanManagerLog, "PlanManagerLog")
 PlanManager::PlanManager(Vehicle* vehicle, MAV_MISSION_TYPE planType)
     : QObject                   (vehicle)
     , _vehicle                  (vehicle)
-    , _missionCommandTree       (qgcApp()->toolbox()->missionCommandTree())
     , _planType                 (planType)
     , _ackTimeoutTimer          (nullptr)
     , _expectedAck              (AckNone)
@@ -78,6 +77,11 @@ void PlanManager::writeMissionItems(const QList<MissionItem*>& missionItems)
 
     bool skipFirstItem = _planType == MAV_MISSION_TYPE_MISSION && !_vehicle->firmwarePlugin()->sendHomePositionToVehicle();
 
+    if (skipFirstItem && missionItems.count() > 0) {
+        // First item is not going to be moved to _writeMissionItems, free it now.
+        delete missionItems[0];
+    }
+
     int firstIndex = skipFirstItem ? 1 : 0;
 
     for (int i=firstIndex; i<missionItems.count(); i++) {
@@ -108,8 +112,8 @@ void PlanManager::_writeMissionCount(void)
         mavlink_message_t       message;
 
         mavlink_msg_mission_count_pack_chan(
-            qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-            qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+            MAVLinkProtocol::instance()->getSystemId(),
+            MAVLinkProtocol::getComponentId(),
             sharedLink->mavlinkChannel(),
             &message,
             _vehicle->id(),
@@ -154,8 +158,8 @@ void PlanManager::_requestList(void)
     SharedLinkInterfacePtr  sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
     if (sharedLink){
         mavlink_message_t       message;
-        mavlink_msg_mission_request_list_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-                                                   qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+        mavlink_msg_mission_request_list_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                                   MAVLinkProtocol::getComponentId(),
                                                    sharedLink->mavlinkChannel(),
                                                    &message,
                                                    _vehicle->id(),
@@ -282,7 +286,7 @@ bool PlanManager::_checkForExpectedAck(AckType_t receivedAck)
         } else {
             // We just warn in this case, this could be crap left over from a previous transaction or the vehicle going bonkers.
             // Whatever it is we let the ack timeout handle any error output to the user.
-            qCDebug(PlanManagerLog) << QString("Out of sequence ack %1 expected:received %2:%3").arg(_planTypeString().arg(_ackTypeToString(_expectedAck)).arg(_ackTypeToString(receivedAck)));
+            qCDebug(PlanManagerLog) << QString("Out of sequence ack %1 expected:received %2:%3").arg(_planTypeString()).arg(_ackTypeToString(_expectedAck)).arg(_ackTypeToString(receivedAck));
         }
         return false;
     }
@@ -291,14 +295,14 @@ bool PlanManager::_checkForExpectedAck(AckType_t receivedAck)
 void PlanManager::_readTransactionComplete(void)
 {
     qCDebug(PlanManagerLog) << "_readTransactionComplete read sequence complete";
-    
+
     SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
     if (sharedLink) {
         mavlink_message_t       message;
 
         mavlink_msg_mission_ack_pack_chan(
-            qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-            qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+            MAVLinkProtocol::instance()->getSystemId(),
+            MAVLinkProtocol::getComponentId(),
             sharedLink->mavlinkChannel(),
             &message,
             _vehicle->id(),
@@ -360,8 +364,8 @@ void PlanManager::_requestNextMissionItem(void)
     if (sharedLink) {
         mavlink_message_t       message;
 
-        mavlink_msg_mission_request_int_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-                                                  qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+        mavlink_msg_mission_request_int_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                                  MAVLinkProtocol::getComponentId(),
                                                   sharedLink->mavlinkChannel(),
                                                   &message,
                                                   _vehicle->id(),
@@ -437,7 +441,7 @@ void PlanManager::_handleMissionItem(const mavlink_message_t& message)
         _vehicle->_setHomePosition(newHomePosition);
         return;
     }
-    
+
     if (_itemIndicesToRead.contains(seq)) {
         _itemIndicesToRead.removeOne(seq);
 
@@ -469,7 +473,7 @@ void PlanManager::_handleMissionItem(const mavlink_message_t& message)
     }
 
     emit progressPctChanged((double)seq / (double)_missionItemCountToRead);
-    
+
     _retryCount = 0;
     if (_itemIndicesToRead.count() == 0) {
         _readTransactionComplete();
@@ -500,7 +504,7 @@ void PlanManager::_handleMissionRequest(const mavlink_message_t& message)
         qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionRequest %1 Incorrect mission_type received expected:actual").arg(_planTypeString()) << _planType << missionRequestMissionType;
         return;
     }
-    
+
     if (!_checkForExpectedAck(AckMissionRequest)) {
         return;
     }
@@ -521,7 +525,7 @@ void PlanManager::_handleMissionRequest(const mavlink_message_t& message)
     } else {
         _itemIndicesToWrite.removeOne(missionRequestSeq);
     }
-    
+
     MissionItem* item = _writeMissionItems[missionRequestSeq];
     qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionRequest %1 sequenceNumber:command").arg(_planTypeString()) << missionRequestSeq << item->command();
 
@@ -529,8 +533,8 @@ void PlanManager::_handleMissionRequest(const mavlink_message_t& message)
     if (sharedLink) {
         mavlink_message_t       messageOut;
 
-        mavlink_msg_mission_item_int_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-                                               qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+        mavlink_msg_mission_item_int_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                               MAVLinkProtocol::getComponentId(),
                                                sharedLink->mavlinkChannel(),
                                                &messageOut,
                                                _vehicle->id(),
@@ -556,7 +560,7 @@ void PlanManager::_handleMissionRequest(const mavlink_message_t& message)
 void PlanManager::_handleMissionAck(const mavlink_message_t& message)
 {
     mavlink_mission_ack_t missionAck;
-    
+
     mavlink_msg_mission_ack_decode(&message, &missionAck);
     if (missionAck.mission_type != _planType) {
         // if there was a previous transaction with a different mission_type, it can happen that we receive
@@ -576,7 +580,7 @@ void PlanManager::_handleMissionAck(const mavlink_message_t& message)
     // Save the retry ack before calling _checkForExpectedAck since we'll need it to determine what
     // type of a protocol sequence we are in.
     AckType_t savedExpectedAck = _expectedAck;
-    
+
     // We can get a MISSION_ACK with an error at any time, so if the Acks don't match it is not
     // a protocol sequence error. Call _checkForExpectedAck with _retryAck so it will succeed no
     // matter what.
@@ -697,7 +701,7 @@ QString PlanManager::_lastMissionReqestString(MAV_MISSION_RESULT result)
     if (_lastMissionRequest >= 0 && _lastMissionRequest < _writeMissionItems.count()) {
         MissionItem* item = _writeMissionItems[_lastMissionRequest];
 
-        prefix = tr("Item #%1 Command: %2").arg(_lastMissionRequest).arg(_missionCommandTree->friendlyName(item->command()));
+        prefix = tr("Item #%1 Command: %2").arg(_lastMissionRequest).arg(MissionCommandTree::instance()->friendlyName(item->command()));
 
         switch (result) {
         case MAV_MISSION_UNSUPPORTED_FRAME:
@@ -879,8 +883,8 @@ void PlanManager::_removeAllWorker(void)
     if (sharedLink) {
         mavlink_message_t       message;
 
-        mavlink_msg_mission_clear_all_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-                                                qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+        mavlink_msg_mission_clear_all_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                                MAVLinkProtocol::getComponentId(),
                                                 sharedLink->mavlinkChannel(),
                                                 &message,
                                                 _vehicle->id(),
