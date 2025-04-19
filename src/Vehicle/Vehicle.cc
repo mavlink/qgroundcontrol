@@ -2039,6 +2039,11 @@ bool Vehicle::takeoffVehicleSupported() const
     return _firmwarePlugin->isCapable(this, FirmwarePlugin::TakeoffVehicleCapability);
 }
 
+bool Vehicle::guidedTakeoffSupported() const
+{
+    return _firmwarePlugin->isCapable(this, FirmwarePlugin::GuidedTakeoffCapability);
+}
+
 bool Vehicle::changeHeadingSupported() const
 {
     return _firmwarePlugin->isCapable(this, FirmwarePlugin::ChangeHeadingCapability);
@@ -2102,6 +2107,12 @@ bool Vehicle::hasGripper()  const
 { 
     return _firmwarePlugin->hasGripper(this);
 }
+
+void Vehicle::startTakeoff()
+{
+    _firmwarePlugin->startTakeoff(this);
+}
+
 
 void Vehicle::startMission()
 {
