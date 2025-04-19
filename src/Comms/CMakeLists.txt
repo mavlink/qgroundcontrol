@@ -38,15 +38,7 @@ else()
             UdpIODevice.h
     )
 
-    if(ANDROID)
-        add_subdirectory(${CMAKE_SOURCE_DIR}/android/libs/qtandroidserialport qtandroidserialport.build)
-        target_sources(${CMAKE_PROJECT_NAME}
-            PRIVATE
-                ${CMAKE_SOURCE_DIR}/android/src/AndroidSerial.cc
-                ${CMAKE_SOURCE_DIR}/android/src/AndroidSerial.h
-        )
-        target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/android/src)
-    else()
+    if(NOT ANDROID AND NOT IOS)
         target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::SerialPort)
     endif()
 endif()
