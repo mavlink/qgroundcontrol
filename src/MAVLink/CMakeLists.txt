@@ -26,8 +26,8 @@ message(STATUS "Building MAVLink")
 # TODO:
 # CPMAddPackage(
 #     NAME mavlink
-#     GITHUB_REPOSITORY mavlink/mavlink
-#     GIT_TAG master
+#     GITHUB_REPOSITORY ${QGC_MAVLINK_GIT_REPO}
+#     GIT_TAG ${QGC_MAVLINK_GIT_TAG}
 #     OPTIONS
 #         "MAVLINK_DIALECT all"
 #         "MAVLINK_VERSION 2.0"

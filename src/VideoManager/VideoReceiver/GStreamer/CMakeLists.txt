@@ -1,8 +1,7 @@
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE GLVideoItemStub.h)
-
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(NOT QGC_ENABLE_GST_VIDEOSTREAMING)
+    target_sources(${CMAKE_PROJECT_NAME} PRIVATE GLVideoItemStub.h)
     return()
 endif()
 
