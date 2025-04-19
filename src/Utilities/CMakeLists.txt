@@ -26,13 +26,12 @@ target_sources(${CMAKE_PROJECT_NAME}
         StateMachine.h
 )
 
-if(ANDROID OR IOS)
-    target_sources(${CMAKE_PROJECT_NAME} PRIVATE MobileScreenMgr.h)
-    if(ANDROID)
-        target_sources(${CMAKE_PROJECT_NAME} PRIVATE MobileScreenMgr.cc)
-    elseif(IOS)
-        target_sources(${CMAKE_PROJECT_NAME} PRIVATE MobileScreenMgr.mm)
-    endif()
+if(IOS)
+    target_sources(${CMAKE_PROJECT_NAME}
+        PRIVATE
+            MobileScreenMgr.mm
+            MobileScreenMgr.h
+    )
 endif()
 
 target_include_directories(${CMAKE_PROJECT_NAME}

@@ -11,7 +11,7 @@
 
 #include <QtCore/QtSystemDetection>
 
-#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
+#ifdef Q_OS_IOS
 
 namespace MobileScreenMgr
 {
