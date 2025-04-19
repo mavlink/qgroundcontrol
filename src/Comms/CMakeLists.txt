@@ -57,8 +57,6 @@ endif()
 #===========================================================================#
 
 if(QGC_ZEROCONF_ENABLED)
-    message(STATUS "Building QMDNSEngine")
-
     CPMAddPackage(
         NAME qmdnsengine
         GITHUB_REPOSITORY nitroshare/qmdnsengine

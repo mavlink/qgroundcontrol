@@ -31,7 +31,7 @@ endif()
 #                   Project Info
 #######################################################
 
-include(Prechecks)
+# include(Prechecks)
 
 # set(CMAKE_OSX_ARCHITECTURES "arm64")
 # set(CMAKE_OSX_SYSROOT "iphoneos")
@@ -199,7 +199,7 @@ endif()
 
 # Set extra standard project setup options for Qt 6.7.0 and above
 set(EXTRA_STANDARD_PROJECT_SETUP_OPTIONS)
-if(QT_VERSION VERSION_GREATER_EQUAL 6.7.0)
+if(Qt6_VERSION VERSION_GREATER_EQUAL 6.7.0)
     list(APPEND EXTRA_STANDARD_PROJECT_SETUP_OPTIONS I18N_SOURCE_LANGUAGE en)
 endif()
 

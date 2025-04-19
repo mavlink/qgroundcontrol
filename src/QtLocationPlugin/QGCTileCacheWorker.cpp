@@ -192,7 +192,11 @@ QGCCacheWorker::_deleteBingNoTileTiles()
     // Previously we would store these empty tile graphics in the cache. This prevented the ability to zoom beyong the level
     // of available tiles. So we need to remove only of these still hanging around to make higher zoom levels work.
     QFile file(":/res/BingNoTileBytes.dat");
-    file.open(QFile::ReadOnly);
+    if (!file.open(QFile::ReadOnly)) {
+        qCWarning(QGCTileCacheWorkerLog) << "Failed to Open File" << file.fileName() << ":" << file.errorString();
+        return;
+    }
+
     QByteArray noTileBytes = file.readAll();
     file.close();
 
