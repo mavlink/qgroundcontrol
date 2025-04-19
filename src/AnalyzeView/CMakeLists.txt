@@ -77,9 +77,7 @@ CPMAddPackage(
     GIT_TAG main
 )
 
-if(TARGET ulog_cpp::ulog_cpp)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ulog_cpp::ulog_cpp)
-endif()
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ulog_cpp::ulog_cpp)
 
 #===========================================================================#
 
@@ -106,21 +104,21 @@ CPMAddPackage(
         "${EXPAT_EXTRA_OPTIONS}"
 )
 
-set(_EXIV2_ENABLE_XMP OFF)
-if(EXPAT_ADDED)
-    set(EXPAT_USE_STATIC_LIBS ON)
-    find_package(EXPAT MODULE)
-    if(NOT TARGET EXPAT::EXPAT)
-        find_package(expat CONFIG)
-        if(TARGET expat::expat)
-            add_library(EXPAT::EXPAT INTERFACE IMPORTED)
-            target_link_libraries(EXPAT::EXPAT INTERFACE expat::expat)
-        endif()
-    endif()
 
-    if(TARGET EXPAT::EXPAT)
-        set(_EXIV2_ENABLE_XMP ON)
+set(EXPAT_USE_STATIC_LIBS ON)
+find_package(EXPAT MODULE)
+if(NOT TARGET EXPAT::EXPAT)
+    find_package(expat CONFIG)
+    if(TARGET expat::expat)
+        add_library(EXPAT::EXPAT INTERFACE IMPORTED)
+        target_link_libraries(EXPAT::EXPAT INTERFACE expat::expat)
     endif()
+endif()
+
+if(TARGET EXPAT::EXPAT)
+    set(_EXIV2_ENABLE_XMP ON)
+else()
+    set(_EXIV2_ENABLE_XMP OFF)
 endif()
 
 #===========================================================================#
@@ -151,17 +149,17 @@ CPMAddPackage(
         "BUILD_WITH_CCACHE OFF"
 )
 
-if(TARGET Exiv2::exiv2lib)
-    if(_EXIV2_ENABLE_XMP AND TARGET exiv2-xmp)
-        target_link_libraries(exiv2-xmp PRIVATE EXPAT::EXPAT)
-        if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-            target_compile_options(exiv2-xmp PRIVATE -Wno-unused-command-line-argument -Wno-unused-but-set-variable -Wno-format)
-        endif()
+if(_EXIV2_ENABLE_XMP AND TARGET exiv2-xmp)
+    target_link_libraries(exiv2-xmp PRIVATE EXPAT::EXPAT)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        target_compile_options(exiv2-xmp PRIVATE -Wno-unused-command-line-argument -Wno-unused-but-set-variable -Wno-format)
     endif()
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Exiv2::exiv2lib)
-    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_BINARY_DIR})
-    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        target_compile_options(exiv2lib PRIVATE -Wno-unused-command-line-argument -Wno-unused-variable)
-        target_compile_options(exiv2lib_int PRIVATE -Wno-unused-command-line-argument -Wno-unused-parameter)
-    endif()
+endif()
+
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Exiv2::exiv2lib)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_BINARY_DIR})
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(exiv2lib PRIVATE -Wno-unused-command-line-argument -Wno-unused-variable)
+    target_compile_options(exiv2lib_int PRIVATE -Wno-unused-command-line-argument -Wno-unused-parameter)
 endif()

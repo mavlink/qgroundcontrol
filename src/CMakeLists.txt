@@ -45,7 +45,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         Qt6::TextToSpeech
         Qt6::Widgets
         Qt6::Xml
-        QGCLocation
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -59,31 +58,25 @@ add_subdirectory(Camera)
 add_subdirectory(Comms)
 add_subdirectory(FactSystem)
 add_subdirectory(FirmwarePlugin)
-# add_subdirectory(FirstRunPromptDialogs)
-# add_subdirectory(FlightDisplay)
-# add_subdirectory(FlightMap)
+add_subdirectory(FirstRunPromptDialogs)
+add_subdirectory(FlightDisplay)
+add_subdirectory(FlightMap)
 add_subdirectory(FollowMe)
 add_subdirectory(Gimbal)
 add_subdirectory(GPS)
 add_subdirectory(Joystick)
 add_subdirectory(MAVLink)
 add_subdirectory(MissionManager)
-# add_subdirectory(PlanView)
+add_subdirectory(PlanView)
 add_subdirectory(PositionManager)
 add_subdirectory(QmlControls)
-add_subdirectory(QtLocationPlugin)
 add_subdirectory(Settings)
 add_subdirectory(Terrain)
-# add_subdirectory(UI)
+add_subdirectory(UI)
 add_subdirectory(Utilities)
 add_subdirectory(UTMSP)
 add_subdirectory(Vehicle)
 add_subdirectory(VideoManager)
 add_subdirectory(Viewer3D)
 
-target_precompile_headers(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        <QtCore/QObject>
-        <QtNetwork/QNetworkReply>
-        <QtPositioning/QGeoCoordinate>
-)
+add_subdirectory(QtLocationPlugin)

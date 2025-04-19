@@ -24,11 +24,14 @@ if(NOT QGC_DISABLE_APM_PLUGIN)
             ArduRoverFirmwarePlugin.h
             ArduSubFirmwarePlugin.cc
             ArduSubFirmwarePlugin.h
-            # ${APM_RESOURCES}
     )
 endif()
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+if(QGC_DISABLE_APM_MAVLINK)
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_NO_ARDUPILOT_DIALECT)
+endif()
 
 # CPMAddPackage(
 #     NAME ArduPilotParams

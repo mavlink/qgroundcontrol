@@ -21,6 +21,8 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Test)
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
+target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_UNITTEST_BUILD)
+
 include(CTest)
 add_custom_target(check
     COMMAND ctest --output-on-failure .

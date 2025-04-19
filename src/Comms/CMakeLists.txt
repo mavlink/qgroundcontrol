@@ -58,8 +58,6 @@ endif()
 #===========================================================================#
 
 if(QGC_ZEROCONF_ENABLED)
-    message(STATUS "Building QMDNSEngine")
-
     CPMAddPackage(
         NAME qmdnsengine
         GITHUB_REPOSITORY nitroshare/qmdnsengine
@@ -70,10 +68,8 @@ if(QGC_ZEROCONF_ENABLED)
             "BUILD_TESTS OFF"
     )
 
-    if(TARGET qmdnsengine)
-        target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE qmdnsengine)
-        target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_ZEROCONF_ENABLED)
-    endif()
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE qmdnsengine)
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_ZEROCONF_ENABLED)
 endif()
 
 # target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QABSTRACTSOCKET_DEBUG)
