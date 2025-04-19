@@ -49,7 +49,7 @@ elseif(LINUX)
     install(
         FILES ${QGC_APPIMAGE_ICON_PATH}
         DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/128x128/apps/
-        RENAME org.mavlink.qgroundcontrol.png
+        RENAME ${CMAKE_PROJECT_NAME}.png
     )
     configure_file(
         ${CMAKE_SOURCE_DIR}/deploy/linux/org.mavlink.qgroundcontrol.metainfo.xml.in

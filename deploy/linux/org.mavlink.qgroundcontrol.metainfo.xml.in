@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>org.mavlink.qgroundcontrol</id>
+  <id>@QGC_PACKAGE_NAME@</id>
 
   <name>@CMAKE_PROJECT_NAME@</name>
   <summary>@CMAKE_PROJECT_DESCRIPTION@</summary>
   <developer_name>@QGC_ORG_NAME@</developer_name>
 
   <metadata_license>CC0-1.0</metadata_license>
-  <project_license>GPL-3.0 AND Apache-2.0</project_license>
+  <project_license>GPL-3.0</project_license>
 
   <recommends>
     <control>pointing</control>
