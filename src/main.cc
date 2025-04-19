@@ -57,6 +57,7 @@ int WindowsCrtReportHook(int reportType, char* message, int* returnValue)
 #ifndef Q_OS_ANDROID
 
 #include <csignal>
+#include <unistd.h>
 
 void sigHandler(int s)
 {
