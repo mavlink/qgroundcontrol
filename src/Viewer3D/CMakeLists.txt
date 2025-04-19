@@ -2,8 +2,6 @@ if(NOT QGC_VIEWER3D)
     return()
 endif()
 
-message(STATUS "Viewer3D is Initialized")
-
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         CityMapGeometry.cc

@@ -1,6 +1,3 @@
-add_subdirectory(AirLink)
-add_subdirectory(MockLink)
-
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         LinkConfiguration.cc
@@ -22,6 +19,8 @@ target_sources(${CMAKE_PROJECT_NAME}
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+# target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QABSTRACTSOCKET_DEBUG)
 
 #===========================================================================#
 
@@ -76,4 +75,7 @@ if(QGC_ZEROCONF_ENABLED)
     endif()
 endif()
 
-# target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QABSTRACTSOCKET_DEBUG)
+#===========================================================================#
+
+add_subdirectory(AirLink)
+add_subdirectory(MockLink)
