@@ -3,10 +3,11 @@ include(CMakeDependentOption)
 
 # App
 set(QGC_APP_NAME "QGroundControl" CACHE STRING "App Name")
-set(QGC_APP_COPYRIGHT "Copyright (c) 2024 QGroundControl. All rights reserved." CACHE STRING "Copyright")
+set(QGC_APP_COPYRIGHT "Copyright (c) 2025 QGroundControl. All rights reserved." CACHE STRING "Copyright")
 set(QGC_APP_DESCRIPTION "Open Source Ground Control App" CACHE STRING "Description")
-set(QGC_ORG_NAME "QGroundControl.org" CACHE STRING "Org Name")
-set(QGC_ORG_DOMAIN "org.qgroundcontrol" CACHE STRING "Domain")
+set(QGC_ORG_NAME "QGroundControl" CACHE STRING "Org Name")
+set(QGC_ORG_DOMAIN "qgroundcontrol.com" CACHE STRING "Domain")
+set(QGC_PACKAGE_NAME "org.mavlink.qgroundcontrol" CACHE STRING "Package Name")
 set(QGC_SETTINGS_VERSION "9" CACHE STRING "Settings Version") # If you need to make an incompatible changes to stored settings, bump this version number up by 1. This will caused store settings to be cleared on next boot.
 
 # Build
@@ -52,7 +53,7 @@ else() # Allow building for Android 7.1 if supported
     set(QGC_QT_ANDROID_MIN_SDK_VERSION "25" CACHE STRING "Android Min SDK Version")
 endif()
 set(QGC_QT_ANDROID_TARGET_SDK_VERSION "35" CACHE STRING "Android Target SDK Version")
-set(QGC_ANDROID_PACKAGE_NAME "org.mavlink.qgroundcontrol" CACHE STRING "Android Package Name")
+set(QGC_ANDROID_PACKAGE_NAME "${QGC_PACKAGE_NAME}l" CACHE STRING "Android Package Name")
 set(QGC_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_SOURCE_DIR}/android" CACHE PATH "Android Package Path")
 set(QT_ANDROID_DEPLOYMENT_TYPE "" CACHE STRING "Forces Signing if Set to Release")
 option(QT_ANDROID_SIGN_APK "Enable Signing APK" OFF)
