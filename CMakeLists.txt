@@ -12,6 +12,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 set(CMAKE_REQUIRED_QUIET ON)
+set(CMAKE_POLICY_VERSION_MINIMUM 3.15)
 
 #######################################################
 #                Custom Build Configuration
@@ -30,6 +31,8 @@ endif()
 #                   Project Info
 #######################################################
 
+include(Prechecks)
+
 # set(CMAKE_OSX_ARCHITECTURES "arm64")
 # set(CMAKE_OSX_SYSROOT "iphoneos")
 if(APPLE)
@@ -47,6 +50,11 @@ project(${QGC_APP_NAME}
 
 if(APPLE AND NOT IOS)
     set(MACOS TRUE)
+
+    # CMAKE_APPLE_SILICON_PROCESSOR
+    if("${CMAKE_OSX_ARCHITECTURES}" MATCHES "arm64;x86_64" OR "${CMAKE_OSX_ARCHITECTURES}" MATCHES "x86_64;arm64")
+        set(MACOS_UNIVERSAL_BUILD ON)
+    endif()
 endif()
 
 #######################################################
@@ -56,6 +64,7 @@ endif()
 include(GNUInstallDirs)
 include(FetchContent)
 include(CMakePrintHelpers)
+include(CPM)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -65,8 +74,10 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_COLOR_DIAGNOSTICS ON)
+# set(CMAKE_EXPORT_BUILD_DATABASE ON) # Causes Configuration Error?
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
@@ -82,11 +93,15 @@ if(QGC_USE_CACHE)
         find_program(CCACHE_PROGRAM ccache)
         if(CCACHE_PROGRAM)
             message(STATUS "Using CCache")
-            set(CMAKE_C_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
-            set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
-            if(APPLE)
-                set(CMAKE_OBJC_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
+            set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+            set(CMAKE_C_LINKER_LAUNCHER "${CCACHE_PROGRAM}")
+            set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+            set(CMAKE_CXX_LINKER_LAUNCHER "${CCACHE_PROGRAM}")
+            if(IOS)
+                set(CMAKE_OBJC_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+                set(CMAKE_OBJC_LINKER_LAUNCHER "${CCACHE_PROGRAM}")
             endif()
+
             # set(ENV{CCACHE_SLOPPINESS} pch_defines,time_macros,include_file_mtime,include_file_ctime)
             # set(ENV{CCACHE_BASEDIR} ${CMAKE_SOURCE_DIR})
             # if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -99,8 +114,10 @@ if(QGC_USE_CACHE)
         find_program(SCCACHE_PROGRAM sccache)
         if(SCCACHE_PROGRAM)
             message(STATUS "Using SCCache")
-            set(CMAKE_C_COMPILER_LAUNCHER ${SCCACHE_PROGRAM})
-            set(CMAKE_CXX_COMPILER_LAUNCHER ${SCCACHE_PROGRAM})
+            set(CMAKE_C_COMPILER_LAUNCHER "${SCCACHE_PROGRAM}")
+            # set(CMAKE_C_LINKER_LAUNCHER "${SCCACHE_PROGRAM}")
+            set(CMAKE_CXX_COMPILER_LAUNCHER "${SCCACHE_PROGRAM}")
+            # set(CMAKE_CXX_LINKER_LAUNCHER "${SCCACHE_PROGRAM}")
         endif()
     endif()
 endif()
@@ -109,10 +126,16 @@ if(MSVC)
     set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT Embedded)
 endif()
 
-if(CMAKE_CROSSCOMPILING AND ANDROID)
-    set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)
-    set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)
-    set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
+if(CMAKE_CROSSCOMPILING)
+    if(ANDROID)
+        set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)
+        set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)
+        set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
+    endif()
+
+    if(NOT IS_DIRECTORY ${QT_HOST_PATH})
+        message(FATAL_ERROR "You need to set QT_HOST_PATH to cross compile Qt.")
+    endif()
 endif()
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIGURATION>/lib)
@@ -131,40 +154,12 @@ if(POLICY CMP0075)
     set(CMAKE_POLICY_DEFAULT_CMP0075 NEW)
 endif()
 
-if(QGC_USE_IWYU)
-    include(IWYU)
-endif()
-
 #######################################################
 #               Qt6 Configuration
 #######################################################
 
-if(CMAKE_CROSSCOMPILING AND NOT IS_DIRECTORY ${QT_HOST_PATH})
-    message(FATAL_ERROR "You need to set QT_HOST_PATH to cross compile Qt.")
-endif()
-
-find_program(QMAKE_EXECUTABLE NAMES qmake6 HINTS ${QT_ROOT_DIR} ${QTDIR} ENV QTDIR PATH_SUFFIXES bin)
-execute_process(COMMAND ${QMAKE_EXECUTABLE} -query QT_VERSION OUTPUT_VARIABLE QT_VERSION)
-if(QT_VERSION LESS QT_MINIMUM_VERSION)
-    MESSAGE(FATAL_ERROR "Minimum supported Qt version: ${QT_MINIMUM_VERSION}.
-    Installed version: ${QT_VERSION}")
-endif()
-
-add_compile_definitions(QT_DISABLE_DEPRECATED_UP_TO=0x060800)
-
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    add_compile_definitions(
-        NDEBUG
-        QT_NO_DEBUG
-    )
-endif()
-
-if(ANDROID)
-    list(APPEND QT_ANDROID_MULTI_ABI_FORWARD_VARS QGC_STABLE_BUILD QT_HOST_PATH)
-endif()
-
 find_package(Qt6
-    ${QT_MINIMUM_VERSION}
+    ${QGC_QT_MINIMUM_VERSION}...${QGC_QT_MAXIMUM_VERSION}
     REQUIRED
     COMPONENTS
         Concurrent
@@ -199,7 +194,7 @@ find_package(Qt6
 )
 
 if(LINUX)
-    find_package(Qt6 ${QT_MINIMUM_VERSION} COMPONENTS WaylandClient)
+    find_package(Qt6 COMPONENTS WaylandClient)
 endif()
 
 # Set extra standard project setup options for Qt 6.7.0 and above
@@ -226,26 +221,21 @@ qt_policy(
 #                QGroundControl Options
 #######################################################
 
-add_compile_definitions(
-    $<$<NOT:$<BOOL:${QGC_STABLE_BUILD}>>:QGC_DAILY_BUILD>
-    $<$<BOOL:${QGC_BUILD_TESTING}>:QGC_UNITTEST_BUILD>
-    $<$<BOOL:${QGC_DEBUG_QML}>:QT_QML_DEBUG>
-)
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    add_compile_definitions(
+        NDEBUG
+        QT_NO_DEBUG
+    )
+else()
+    add_compile_definitions(
+        QT_DISABLE_DEPRECATED_UP_TO=0x060800
+        QT_ENABLE_STRICT_MODE_UP_TO=0x060800
+        $<$<BOOL:${QGC_DEBUG_QML}>:QT_QML_DEBUG>
+    )
+endif()
 
 if(NOT QGC_BUILD_TESTING)
     set(BUILD_TESTING OFF CACHE INTERNAL "" FORCE)
-endif()
-
-if("${CMAKE_OSX_ARCHITECTURES}" MATCHES "arm64;x86_64" OR "${CMAKE_OSX_ARCHITECTURES}" MATCHES "x86_64;arm64")
-    set(MACOS_UNIVERSAL_BUILD ON)
-endif()
-
-# TODO: Force building dependencies if(NOT CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL CMAKE_SYSTEM_PROCESSOR)?
-# if(CMAKE_OSX_ARCHITECTURES AND NOT "${CMAKE_HOST_SYSTEM_PROCESSOR}" IN_LIST CMAKE_OSX_ARCHITECTURES)
-
-include(CPM)
-if(CMAKE_CROSSCOMPILING OR ANDROID OR MACOS_UNIVERSAL_BUILD)
-    set(CPM_DOWNLOAD_ALL ON)
 endif()
 
 #######################################################
@@ -297,46 +287,12 @@ qt_add_executable(${CMAKE_PROJECT_NAME}
     ${QGC_RESOURCES}
 )
 
-target_compile_definitions(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        QGC_APP_NAME="${QGC_APP_NAME}"
-        QGC_ORG_NAME="${QGC_ORG_NAME}"
-        QGC_ORG_DOMAIN="${QGC_ORG_DOMAIN}"
-        QGC_APP_VERSION_STR="${QGC_APP_VERSION_STR}"
-        QGC_SETTINGS_VERSION=${QGC_SETTINGS_VERSION}
-)
-
-file(GLOB TS_SOURCES ${CMAKE_SOURCE_DIR}/translations/qgc_*.ts)
-set_source_files_properties(${TS_SOURCES} PROPERTIES OUTPUT_LOCATION "${CMAKE_BINARY_DIR}/i18n")
-qt_add_translations(${CMAKE_PROJECT_NAME}
-    # TS_FILE_BASE ${CMAKE_PROJECT_NAME}
-    # TS_FILE_DIR ${CMAKE_SOURCE_DIR}/translations/
-    TS_FILES ${TS_SOURCES}
-    RESOURCE_PREFIX "/"
-    LUPDATE_OPTIONS -no-obsolete
-)
-
-set_source_files_properties(resources/qtquickcontrols2.conf PROPERTIES QT_RESOURCE_ALIAS qtquickcontrols2.conf)
-qt_add_resources(${CMAKE_PROJECT_NAME} "app_res" FILES resources/qtquickcontrols2.conf)
-
-qt_import_plugins(${CMAKE_PROJECT_NAME}
-    INCLUDE Qt6::QSvgPlugin
-    EXCLUDE_BY_TYPE geoservices
-    INCLUDE_BY_TYPE sqldrivers Qt6::QSQLiteDriverPlugin
-)
-
-set_target_properties(${CMAKE_PROJECT_NAME}
-    PROPERTIES
-        QT_RESOURCE_PREFIX "/qgc"
-        OUTPUT_NAME ${CMAKE_PROJECT_NAME}
-)
-
 if(WIN32)
     # windows installer files shared with core and custom
     set(DEPLOY_WIN_FILES
         "${CMAKE_SOURCE_DIR}/deploy/windows/driver.msi"
         "${CMAKE_SOURCE_DIR}/deploy/windows/nullsoft_installer.nsi"
-        "${CMAKE_SOURCE_DIR}/deploy/windows/QGroundControl.rc"
+        "${QGC_WINDOWS_RESOURCE_FILE_PATH}"
         "${QGC_WINDOWS_INSTALL_HEADER_PATH}"
         "${QGC_WINDOWS_ICON_PATH}"
     )
@@ -360,51 +316,80 @@ if(WIN32)
     set_target_properties(${CMAKE_PROJECT_NAME}
         PROPERTIES
             WIN32_EXECUTABLE TRUE
+            # QT_TARGET_WINDOWS_RC_FILE "${QGC_WINDOWS_RESOURCE_FILE_PATH}"
+            QT_TARGET_COMPANY_NAME "${QGC_ORG_NAME}"
+            QT_TARGET_DESCRIPTION "${CMAKE_PROJECT_DESCRIPTION}"
+            QT_TARGET_VERSION "${CMAKE_PROJECT_VERSION}"
+            QT_TARGET_COPYRIGHT "${QGC_APP_COPYRIGHT}"
+            QT_TARGET_PRODUCT_NAME "${CMAKE_PROJECT_NAME}"
+            # QT_TARGET_COMMENTS: RC Comments
+            # QT_TARGET_ORIGINAL_FILENAME: RC Original FileName
+            # QT_TARGET_TRADEMARKS: RC LegalTrademarks
+            # QT_TARGET_INTERNALNAME: RC InternalName
             QT_TARGET_RC_ICONS "${QGC_WINDOWS_ICON_PATH}"
     )
-    add_compile_definitions(_USE_MATH_DEFINES)
-elseif(MACOS)
-    set(MACOSX_BUNDLE_ICON_FILE "macx.icns")
-    set(app_icon_macos "${QGC_MACOS_ICON_PATH}/macx.icns")
-    set_source_files_properties(${app_icon_macos} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
-    target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${app_icon_macos})
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE _USE_MATH_DEFINES)
+elseif(APPLE)
+    if(CMAKE_GENERATOR STREQUAL "Xcode")
+        # set(CMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM
+        # set(CMAKE_XCODE_ATTRIBUTE_CODE_SIGN_STYLE
+        # set(CMAKE_XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER
+        # set(CMAKE_XCODE_ATTRIBUTE_INSTALL_PATH
+        # set(CMAKE_XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT
+        # set(CMAKE_XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS
+        # set(CMAKE_XCODE_ATTRIBUTE_LD_ENTRY_POINT
+        # set(CMAKE_XCODE_ATTRIBUTE_MARKETING_VERSION
+        # set(CMAKE_XCODE_ATTRIBUTE_CURRENT_PROJECT_VERSION
+    endif()
+
     set_target_properties(${CMAKE_PROJECT_NAME}
         PROPERTIES
             MACOSX_BUNDLE TRUE
-            MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/deploy/macos/MacOSXBundleInfo.plist.in"
+            MACOSX_BUNDLE_INFO_PLIST "${QGC_MACOS_PLIST_PATH}"
             MACOSX_BUNDLE_BUNDLE_NAME "${CMAKE_PROJECT_NAME}"
-            MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
+            MACOSX_BUNDLE_BUNDLE_VERSION "${CMAKE_PROJECT_VERSION}"
             MACOSX_BUNDLE_COPYRIGHT "${QGC_APP_COPYRIGHT}"
-            MACOSX_BUNDLE_GUI_IDENTIFIER "${QGC_BUNDLE_ID}"
-            MACOSX_BUNDLE_ICON_FILE "macx.icns"
-            MACOSX_BUNDLE_INFO_STRING "${QGC_APP_DESCRIPTION}"
-            MACOSX_BUNDLE_LONG_VERSION_STRING "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}"
-            MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}"
-    )
-elseif(IOS)
-    enable_language(OBJC)
-
-    set(CMAKE_XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "14.0")
-    set(CMAKE_XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2") # iPhone,iPad
-    set(CMAKE_XCODE_ATTRIBUTE_INFOPLIST_FILE "${CMAKE_CURRENT_SOURCE_DIR}/deploy/ios/iOS-Info.plist")
-
-    set_target_properties(${CMAKE_PROJECT_NAME}
-        PROPERTIES
-            QT_IOS_LAUNCH_SCREEN ${CMAKE_SOURCE_DIR}/deploy/ios/QGCLaunchScreen.xib
-            XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "${QGC_PACKAGE_NAME}"
-            XCODE_ATTRIBUTE_PRODUCT_NAME ${CMAKE_PROJECT_NAME}
-            XCODE_ATTRIBUTE_CURRENT_PROJECT_VERSION ${CMAKE_PROJECT_VERSION}
-            XCODE_ATTRIBUTE_MARKETING_VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
-            XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
-            XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "14.0"
-            XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2" # iPhone,iPad
-            XCODE_ATTRIBUTE_INFOPLIST_KEY_CFBundleDisplayName ${CMAKE_PROJECT_NAME}
-            XCODE_ATTRIBUTE_INFOPLIST_KEY_LSApplicationCategoryType "public.app-category.mycategory"
-            XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS "YES"
+            MACOSX_BUNDLE_GUI_IDENTIFIER "${QGC_MACOS_BUNDLE_ID}"
+            MACOSX_BUNDLE_ICON_FILE "${MACOSX_BUNDLE_ICON_FILE}"
+            MACOSX_BUNDLE_INFO_STRING "${CMAKE_PROJECT_DESCRIPTION}"
+            MACOSX_BUNDLE_LONG_VERSION_STRING "${CMAKE_PROJECT_VERSION_MAJOR}.${CMAKE_PROJECT_VERSION_MINOR}.${CMAKE_PROJECT_VERSION_PATCH}"
+            MACOSX_BUNDLE_SHORT_VERSION_STRING "${CMAKE_PROJECT_VERSION_MAJOR}.${CMAKE_PROJECT_VERSION_MINOR}"
     )
 
-    # set(QT_NO_FFMPEG_XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY ON)
-    qt_add_ios_ffmpeg_libraries(${CMAKE_PROJECT_NAME})
+    if(MACOS)
+        set(MACOSX_BUNDLE_ICON_FILE "macx.icns")
+        set(app_icon_macos "${QGC_MACOS_ICON_PATH}/${MACOSX_BUNDLE_ICON_FILE}")
+        set_source_files_properties(${app_icon_macos} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+        target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${app_icon_macos})
+    elseif(IOS)
+        enable_language(OBJC)
+
+        set(QT_IOS_LAUNCH_SCREEN "${CMAKE_SOURCE_DIR}/deploy/ios/QGCLaunchScreen.xib")
+
+        # set(CMAKE_XCODE_ATTRIBUTE_ARCHS
+        # set(CMAKE_XCODE_ATTRIBUTE_ENABLE_BITCODE
+        set(CMAKE_XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "14.0")
+        set(CMAKE_XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2") # iPhone,iPad
+        set(CMAKE_XCODE_ATTRIBUTE_INFOPLIST_FILE "${CMAKE_SOURCE_DIR}/deploy/ios/iOS-Info.plist")
+
+        set_target_properties(${CMAKE_PROJECT_NAME}
+            PROPERTIES
+                QT_IOS_LAUNCH_SCREEN "${CMAKE_SOURCE_DIR}/deploy/ios/QGCLaunchScreen.xib"
+                XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "${QGC_PACKAGE_NAME}"
+                XCODE_ATTRIBUTE_PRODUCT_NAME "${CMAKE_PROJECT_NAME}"
+                XCODE_ATTRIBUTE_CURRENT_PROJECT_VERSION ${CMAKE_PROJECT_VERSION}
+                XCODE_ATTRIBUTE_MARKETING_VERSION "${CMAKE_PROJECT_VERSION_MAJOR}.${CMAKE_PROJECT_VERSION_MINOR}"
+                XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
+                XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "14.0"
+                XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2" # iPhone,iPad
+                XCODE_ATTRIBUTE_INFOPLIST_KEY_CFBundleDisplayName ${CMAKE_PROJECT_NAME}
+                XCODE_ATTRIBUTE_INFOPLIST_KEY_LSApplicationCategoryType "public.app-category.mycategory"
+                XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS "YES"
+        )
+
+        # set(QT_NO_FFMPEG_XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY ON)
+        qt_add_ios_ffmpeg_libraries(${CMAKE_PROJECT_NAME})
+    endif()
 elseif(ANDROID)
     CPMAddPackage(
         NAME android_openssl
@@ -414,53 +399,77 @@ elseif(ANDROID)
     add_android_openssl_libraries(${CMAKE_PROJECT_NAME})
 
     # Generation of android version numbers must be consistent release to release such that they are always increasing
-
     if(${PROJECT_VERSION_MAJOR} GREATER 9)
-        message(FATAL_ERROR "Major version larger than 1 digit: ${PROJECT_VERSION_MAJOR}")
+        message(FATAL_ERROR "Major version larger than 1 digit: ${CMAKE_PROJECT_VERSION_MAJOR}")
     endif()
     if(${PROJECT_VERSION_MINOR} GREATER 9)
-        message(FATAL_ERROR "Minor version larger than 1 digit: ${PROJECT_VERSION_MINOR}")
+        message(FATAL_ERROR "Minor version larger than 1 digit: ${CMAKE_PROJECT_VERSION_MINOR}")
     endif()
     if(${PROJECT_VERSION_PATCH} GREATER 99)
-        message(FATAL_ERROR "Patch version larger than 2 digits: ${PROJECT_VERSION_PATCH}")
+        message(FATAL_ERROR "Patch version larger than 2 digits: ${CMAKE_PROJECT_VERSION_PATCH}")
     endif()
 
     # Bitness for android version number is 66/34 instead of 64/32 in because of a required version number bump screw-up ages ago
     set(ANDROID_BITNESS_CODE)
-    if(${ANDROID_ABI} STREQUAL "armeabi-v7a" OR ${ANDROID_ABI} STREQUAL "x86")
+    if(${CMAKE_ANDROID_ARCH_ABI} STREQUAL "armeabi-v7a" OR ${CMAKE_ANDROID_ARCH_ABI} STREQUAL "x86")
         set(ANDROID_BITNESS_CODE 34)
-    elseif(${ANDROID_ABI} STREQUAL "arm64-v8a" OR ${ANDROID_ABI} STREQUAL "x86_64")
+    elseif(${CMAKE_ANDROID_ARCH_ABI} STREQUAL "arm64-v8a" OR ${CMAKE_ANDROID_ARCH_ABI} STREQUAL "x86_64")
         set(ANDROID_BITNESS_CODE 66)
     else()
-        message(FATAL_ERROR "Unsupported Android ABI: ${ANDROID_ABI}")
+        message(FATAL_ERROR "Unsupported Android ABI: ${CMAKE_ANDROID_ARCH_ABI}")
     endif()
 
-    set(ANDROID_PATCH_VERSION ${PROJECT_VERSION_PATCH})
-    if(${PROJECT_VERSION_PATCH} LESS 10)
-        set(ANDROID_PATCH_VERSION "0${PROJECT_VERSION_PATCH}")
+    set(ANDROID_PATCH_VERSION ${CMAKE_PROJECT_VERSION_PATCH})
+    if(${CMAKE_PROJECT_VERSION_PATCH} LESS 10)
+        set(ANDROID_PATCH_VERSION "0${CMAKE_PROJECT_VERSION_PATCH}")
     endif()
 
     # Version code format: BBMIPPDDD (B=Bitness, M=Major, I=Minor, P=Patch, D=Dev) - Dev not currently supported and always 000
-    set(ANDROID_VERSION_CODE "${ANDROID_BITNESS_CODE}${PROJECT_VERSION_MAJOR}${PROJECT_VERSION_MINOR}${ANDROID_PATCH_VERSION}000")
-    message("Android version code: ${ANDROID_VERSION_CODE}")
+    set(ANDROID_VERSION_CODE "${ANDROID_BITNESS_CODE}${CMAKE_PROJECT_VERSION_MAJOR}${CMAKE_PROJECT_VERSION_MINOR}${ANDROID_PATCH_VERSION}000")
+    message(STATUS "Android version code: ${ANDROID_VERSION_CODE}")
 
     set_target_properties(${CMAKE_PROJECT_NAME}
         PROPERTIES
-            # QT_ANDROID_ABIS ${ANDROID_ABI}
+            # QT_ANDROID_ABIS ${CMAKE_ANDROID_ARCH_ABI}
+            # QT_ANDROID_SDK_BUILD_TOOLS_REVISION
             QT_ANDROID_MIN_SDK_VERSION ${QGC_QT_ANDROID_MIN_SDK_VERSION}
             QT_ANDROID_TARGET_SDK_VERSION ${QGC_QT_ANDROID_TARGET_SDK_VERSION}
+            # QT_ANDROID_COMPILE_SDK_VERSION
             QT_ANDROID_PACKAGE_NAME "${QGC_ANDROID_PACKAGE_NAME}"
             QT_ANDROID_PACKAGE_SOURCE_DIR "${QGC_ANDROID_PACKAGE_SOURCE_DIR}"
-            QT_ANDROID_VERSION_NAME ${CMAKE_PROJECT_VERSION}
+            QT_ANDROID_VERSION_NAME "${CMAKE_PROJECT_VERSION}"
             QT_ANDROID_VERSION_CODE ${ANDROID_VERSION_CODE}
+            # QT_ANDROID_APP_NAME
+            # QT_ANDROID_APP_ICON
+            # QT_QML_IMPORT_PATH
             QT_QML_ROOT_PATH ${CMAKE_SOURCE_DIR}
-            # QT_ANDROID_SDK_BUILD_TOOLS_REVISION
             # QT_ANDROID_SYSTEM_LIBS_PREFIX
     )
+
+    # if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    #     set(QT_ANDROID_APPLICATION_ARGUMENTS)
+    # endif()
+
+    list(APPEND QT_ANDROID_MULTI_ABI_FORWARD_VARS QGC_STABLE_BUILD QT_HOST_PATH)
 endif()
 
-add_subdirectory(src)
+target_compile_definitions(${CMAKE_PROJECT_NAME}
+    PRIVATE
+        QGC_APP_NAME="${QGC_APP_NAME}"
+        QGC_ORG_NAME="${QGC_ORG_NAME}"
+        QGC_ORG_DOMAIN="${QGC_ORG_DOMAIN}"
+        QGC_APP_VERSION_STR="${QGC_APP_VERSION_STR}"
+        QGC_SETTINGS_VERSION=${QGC_SETTINGS_VERSION}
+        $<$<NOT:$<BOOL:${QGC_STABLE_BUILD}>>:QGC_DAILY_BUILD>
+)
 
+set_target_properties(${CMAKE_PROJECT_NAME}
+    PROPERTIES
+        QT_RESOURCE_PREFIX "/qgc"
+        OUTPUT_NAME ${CMAKE_PROJECT_NAME}
+)
+
+add_subdirectory(src)
 if(QGC_BUILD_TESTING)
     add_subdirectory(test)
 endif()
@@ -470,6 +479,38 @@ if(QGC_CUSTOM_BUILD)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_LIBRARIES})
     target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_DIRECTORIES})
 endif()
+
+target_precompile_headers(${CMAKE_PROJECT_NAME}
+    PRIVATE
+        <QtCore/QObject>
+        <QtNetwork/QNetworkReply>
+        <QtPositioning/QGeoCoordinate>
+)
+
+file(GLOB TS_SOURCES ${CMAKE_SOURCE_DIR}/translations/qgc_*.ts)
+set_source_files_properties(${TS_SOURCES} PROPERTIES OUTPUT_LOCATION "${CMAKE_BINARY_DIR}/i18n")
+qt_add_translations(${CMAKE_PROJECT_NAME}
+    # TS_FILE_BASE ${CMAKE_PROJECT_NAME}
+    # TS_FILE_DIR ${CMAKE_SOURCE_DIR}/translations/
+    TS_FILES ${TS_SOURCES}
+    RESOURCE_PREFIX "/"
+    LUPDATE_OPTIONS -no-obsolete
+)
+
+set_source_files_properties(resources/qtquickcontrols2.conf PROPERTIES QT_RESOURCE_ALIAS qtquickcontrols2.conf)
+qt_add_resources(${CMAKE_PROJECT_NAME} "qgcresources_cmake"
+    PREFIX "/"
+    FILES
+        resources/qtquickcontrols2.conf
+)
+
+# cmake_print_variables(QT_ALL_PLUGIN_TYPES_FOUND_VIA_FIND_PACKAGE)
+qt_import_plugins(${CMAKE_PROJECT_NAME}
+    INCLUDE Qt6::QSvgPlugin
+    EXCLUDE_BY_TYPE geoservices
+    INCLUDE_BY_TYPE sqldrivers Qt6::QSQLiteDriverPlugin
+    # INCLUDE_BY_TYPE styles Qt6::qtquickcontrols2basicstyleplugin Qt6::qtquickcontrols2basicstyleimplplugin
+)
 
 include(Install)
 

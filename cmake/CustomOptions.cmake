@@ -53,7 +53,7 @@ else() # Allow building for Android 7.1 if supported
     set(QGC_QT_ANDROID_MIN_SDK_VERSION "25" CACHE STRING "Android Min SDK Version")
 endif()
 set(QGC_QT_ANDROID_TARGET_SDK_VERSION "35" CACHE STRING "Android Target SDK Version")
-set(QGC_ANDROID_PACKAGE_NAME "${QGC_PACKAGE_NAME}l" CACHE STRING "Android Package Name")
+set(QGC_ANDROID_PACKAGE_NAME "${QGC_PACKAGE_NAME}" CACHE STRING "Android Package Name")
 set(QGC_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_SOURCE_DIR}/android" CACHE PATH "Android Package Path")
 set(QT_ANDROID_DEPLOYMENT_TYPE "" CACHE STRING "Forces Signing if Set to Release")
 option(QT_ANDROID_SIGN_APK "Enable Signing APK" OFF)
@@ -61,8 +61,10 @@ option(QT_ANDROID_SIGN_AAB "Enable Signing AAB" OFF)
 option(QT_USE_TARGET_ANDROID_BUILD_DIR "Use Target Android Build Dir" OFF)
 
 # MacOS
-set(QGC_BUNDLE_ID "org.qgroundcontrol.QGroundControl" CACHE STRING "MacOS Bundle ID") # MACOS
+set(QGC_MACOS_PLIST_PATH "${CMAKE_SOURCE_DIR}/deploy/macos/MacOSXBundleInfo.plist.in" CACHE FILEPATH "MacOS PList Path")
+set(QGC_MACOS_BUNDLE_ID "org.qgroundcontrol.QGroundControl" CACHE STRING "MacOS Bundle ID") # MACOS
 set(QGC_MACOS_ICON_PATH "${CMAKE_SOURCE_DIR}/deploy/macos" CACHE PATH "MacOS Icon Path") # MACOS
+# option(QGC_MACOS_UNIVERSAL_BUILD "Build MacOS Universal Build (arm64;x86_64)" ON) # MACOS
 
 # Linux
 set(QGC_APPIMAGE_ICON_PATH "${CMAKE_SOURCE_DIR}/resources/icons/qgroundcontrol.png" CACHE FILEPATH "AppImage Icon Path")
@@ -70,9 +72,11 @@ set(QGC_APPIMAGE_ICON_PATH "${CMAKE_SOURCE_DIR}/resources/icons/qgroundcontrol.p
 # Windows
 set(QGC_WINDOWS_INSTALL_HEADER_PATH "${CMAKE_SOURCE_DIR}/deploy/windows/installheader.bmp" CACHE FILEPATH "Windows Install Header Path")
 set(QGC_WINDOWS_ICON_PATH "${CMAKE_SOURCE_DIR}/deploy/windows/WindowsQGC.ico" CACHE FILEPATH "Windows Icon Path")
+set(QGC_WINDOWS_RESOURCE_FILE_PATH "${CMAKE_SOURCE_DIR}/deploy/windows/QGroundControl.rc" CACHE FILEPATH "Windows Resource File Path")
 
 # CPM
 set(CPM_SOURCE_CACHE ${CMAKE_BINARY_DIR}/cpm_modules CACHE PATH "Directory to download CPM dependencies")
+# set(CPM_USE_NAMED_CACHE_DIRECTORIES ON CACHE BOOL "Use additional directory of package name in cache on the most nested level.")
 
 # Qt
 set(QGC_QT_MINIMUM_VERSION "6.6.3" CACHE STRING "Minimum Supported Qt Version")

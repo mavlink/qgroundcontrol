@@ -65,7 +65,7 @@ QString StatusTextHandler::getMessageText(const mavlink_message_t &message)
     // Ensure NUL-termination
     b[b.length()-1] = '\0';
 
-    const QString text = QString::fromLocal8Bit(b, std::strlen(b.constData()));
+    const QString text = QString::fromLocal8Bit(b.constData(), std::strlen(b.constData()));
 
     return text;
 }

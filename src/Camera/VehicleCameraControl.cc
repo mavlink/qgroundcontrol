@@ -663,16 +663,18 @@ VehicleCameraControl::factChanged(Fact* pFact)
 
 //-----------------------------------------------------------------------------
 void
-VehicleCameraControl::_mavCommandResult(int vehicleId, int component, int command, int result, bool noReponseFromVehicle)
+VehicleCameraControl::_mavCommandResult(int vehicleId, int component, int command, int result, int failureCode)
 {
+    Q_UNUSED(failureCode);
+
     //-- Is this ours?
-    if(_vehicle->id() != vehicleId || compID() != component) {
+    if (_vehicle->id() != vehicleId || compID() != component) {
         return;
     }
-    if(!noReponseFromVehicle && result == MAV_RESULT_IN_PROGRESS) {
+    if (result == MAV_RESULT_IN_PROGRESS) {
         //-- Do Nothing
         qCDebug(CameraControlLog) << "In progress response for" << command;
-    }else if(!noReponseFromVehicle && result == MAV_RESULT_ACCEPTED) {
+    } else if(result == MAV_RESULT_ACCEPTED) {
         switch(command) {
             case MAV_CMD_RESET_CAMERA_SETTINGS:
                 _resetting = false;
@@ -702,10 +704,8 @@ VehicleCameraControl::_mavCommandResult(int vehicleId, int component, int comman
                 break;
         }
     } else {
-        if(noReponseFromVehicle || result == MAV_RESULT_TEMPORARILY_REJECTED || result == MAV_RESULT_FAILED) {
-            if(noReponseFromVehicle) {
-                qCDebug(CameraControlLog) << "No response for" << command;
-            } else if (result == MAV_RESULT_TEMPORARILY_REJECTED) {
+        if ((result == MAV_RESULT_TEMPORARILY_REJECTED) || (result == MAV_RESULT_FAILED)) {
+            if (result == MAV_RESULT_TEMPORARILY_REJECTED) {
                 qCDebug(CameraControlLog) << "Command temporarily rejected for" << command;
             } else {
                 qCDebug(CameraControlLog) << "Command failed for" << command;
@@ -2089,7 +2089,7 @@ VehicleCameraControl::_httpRequest(const QString &url)
     QNetworkProxy tempProxy;
     tempProxy.setType(QNetworkProxy::DefaultProxy);
     _netManager->setProxy(tempProxy);
-    QNetworkRequest request(url);
+    QNetworkRequest request(QUrl::fromUserInput(url));
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, true);
     QSslConfiguration conf = request.sslConfiguration();
     conf.setPeerVerifyMode(QSslSocket::VerifyNone);

@@ -95,7 +95,6 @@ void OsmParser::parseOsmFile(QString filePath)
 QByteArray OsmParser::buildingToMesh()
 {
     QByteArray vertexData;
-    QMapIterator<uint64_t, OsmParserThread::BuildingType_t> ii(_osmParserWorker->mapBuildings);
 
     for (auto ii = _osmParserWorker->mapBuildings.begin(), end = _osmParserWorker->mapBuildings.end(); ii != end; ++ii) {
         float bld_height = 0;

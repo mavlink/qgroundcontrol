@@ -148,7 +148,7 @@ void QtMultimediaReceiver::start(const QString &uri, unsigned timeout, int buffe
         emit onStartComplete(STATUS_INVALID_URL);
         return;
     }
-    _mediaPlayer->setSource(uri);
+    _mediaPlayer->setSource(QUrl::fromUserInput(uri));
 
     _frameTimer.setInterval(timeout);
 
