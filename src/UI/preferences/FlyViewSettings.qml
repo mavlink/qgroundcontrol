@@ -28,6 +28,7 @@ SettingsPage {
     property var    _mavlinkActionsSettings:            _settingsManager.mavlinkActionsSettings
     property Fact   _virtualJoystick:                   _settingsManager.appSettings.virtualJoystick
     property Fact   _virtualJoystickAutoCenterThrottle: _settingsManager.appSettings.virtualJoystickAutoCenterThrottle
+    property Fact   _virtualJoystickLeftHandedMode:     _settingsManager.appSettings.virtualJoystickLeftHandedMode
     property Fact   _enableMultiVehiclePanel:           _settingsManager.appSettings.enableMultiVehiclePanel
     property Fact   _showAdditionalIndicatorsCompass:   _flyViewSettings.showAdditionalIndicatorsCompass
     property Fact   _lockNoseUpCompass:                 _flyViewSettings.lockNoseUpCompass
@@ -174,7 +175,7 @@ SettingsPage {
     SettingsGroupLayout {
         Layout.fillWidth:   true
         heading:            qsTr("Virtual Joystick")
-        visible:            _virtualJoystick.visible || _virtualJoystickAutoCenterThrottle.visible
+        visible:            _virtualJoystick.visible || _virtualJoystickAutoCenterThrottle.visible || _virtualJoystickLeftHandedMode.visible
 
         FactCheckBoxSlider {
             Layout.fillWidth:   true
@@ -189,6 +190,14 @@ SettingsPage {
             visible:            _virtualJoystickAutoCenterThrottle.visible
             enabled:            _virtualJoystick.rawValue
             fact:               _virtualJoystickAutoCenterThrottle
+        }
+
+        FactCheckBoxSlider {
+            Layout.fillWidth:   true
+            text:               qsTr("Left-Handed Mode (swap sticks)")
+            visible:            _virtualJoystickLeftHandedMode.visible
+            enabled:            _virtualJoystick.rawValue
+            fact:               _virtualJoystickLeftHandedMode
         }
     }
 
