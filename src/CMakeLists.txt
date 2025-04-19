@@ -80,10 +80,3 @@ add_subdirectory(VideoManager)
 add_subdirectory(Viewer3D)
 
 add_subdirectory(QtLocationPlugin)
-
-target_precompile_headers(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        <QtCore/QObject>
-        <QtNetwork/QNetworkReply>
-        <QtPositioning/QGeoCoordinate>
-)

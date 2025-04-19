@@ -36,7 +36,7 @@ signals:
     void progressUpdate(float progress);
 
 private slots:
-    void gotProgressUpdate(float progressValue);
+    void gotProgressUpdate(double progressValue);
     void standardModesRequestCompleted();
 
 private:

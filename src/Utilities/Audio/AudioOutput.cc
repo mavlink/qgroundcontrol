@@ -78,7 +78,7 @@ void AudioOutput::init(Fact *mutedFact)
         return;
     }
 
-    (void) connect(_engine, &QTextToSpeech::engineChanged, [this](const QString &engine) {
+    (void) connect(_engine, &QTextToSpeech::engineChanged, this, [this](const QString &engine) {
         qCDebug(AudioOutputLog) << "TTS Engine set to:" << engine;
         const QLocale defaultLocale = QLocale("en_US");
         if (_engine->availableLocales().contains(defaultLocale)) {
@@ -86,7 +86,7 @@ void AudioOutput::init(Fact *mutedFact)
         }
     });
 
-    (void) connect(_engine, &QTextToSpeech::aboutToSynthesize, [this](qsizetype id) {
+    (void) connect(_engine, &QTextToSpeech::aboutToSynthesize, this, [this](qsizetype id) {
         qCDebug(AudioOutputLog) << "TTS About To Synthesize ID:" << id;
         _textQueueSize--;
         qCDebug(AudioOutputLog) << "Queue Size:" << _textQueueSize;
@@ -97,19 +97,19 @@ void AudioOutput::init(Fact *mutedFact)
     });
 
     if (AudioOutputLog().isDebugEnabled()) {
-        (void) connect(_engine, &QTextToSpeech::stateChanged, [this](QTextToSpeech::State state) {
+        (void) connect(_engine, &QTextToSpeech::stateChanged, this, [this](QTextToSpeech::State state) {
             qCDebug(AudioOutputLog) << "TTS State changed to:" << state;
         });
-        (void) connect(_engine, &QTextToSpeech::errorOccurred, [](QTextToSpeech::ErrorReason reason, const QString &errorString) {
+        (void) connect(_engine, &QTextToSpeech::errorOccurred, this, [](QTextToSpeech::ErrorReason reason, const QString &errorString) {
             qCDebug(AudioOutputLog) << "TTS Error occurred. Reason:" << reason << ", Message:" << errorString;
         });
-        (void) connect(_engine, &QTextToSpeech::localeChanged, [](const QLocale &locale) {
+        (void) connect(_engine, &QTextToSpeech::localeChanged, this, [](const QLocale &locale) {
             qCDebug(AudioOutputLog) << "TTS Locale change to:" << locale;
         });
-        (void) connect(_engine, &QTextToSpeech::volumeChanged, [](double volume) {
+        (void) connect(_engine, &QTextToSpeech::volumeChanged, this, [](double volume) {
             qCDebug(AudioOutputLog) << "TTS Volume changed to:" << volume;
         });
-        (void) connect(_engine, &QTextToSpeech::sayingWord, [](const QString &word, qsizetype id, qsizetype start, qsizetype length) {
+        (void) connect(_engine, &QTextToSpeech::sayingWord, this, [](const QString &word, qsizetype id, qsizetype start, qsizetype length) {
             qCDebug(AudioOutputLog) << "TTS Saying:" << word << "ID:" << id << "Start:" << start << "Length:" << length;
         });
     }

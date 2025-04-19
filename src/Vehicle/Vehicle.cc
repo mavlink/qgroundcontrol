@@ -337,10 +337,8 @@ void Vehicle::_commonInit()
     // Add firmware-specific fact groups, if provided
     QMap<QString, FactGroup*>* fwFactGroups = _firmwarePlugin->factGroups();
     if (fwFactGroups) {
-        QMapIterator<QString, FactGroup*> i(*fwFactGroups);
-        while(i.hasNext()) {
-            i.next();
-            _addFactGroup(i.value(), i.key());
+        for (auto it = fwFactGroups->keyValueBegin(); it != fwFactGroups->keyValueEnd(); ++it) {
+            _addFactGroup(it->second, it->first);
         }
     }
 

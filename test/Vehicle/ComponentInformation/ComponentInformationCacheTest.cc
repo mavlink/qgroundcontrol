@@ -34,9 +34,12 @@ void ComponentInformationCacheTest::_setup()
         t.path = _tmpFilesDir + "/" + t.content + ".txt";
         t.cacheTag = QString::asprintf("_tag_%08i_xy", i);
         QFile f(t.path);
-        f.open(QIODevice::WriteOnly);
-        f.write(t.content.toUtf8().constData(), t.content.toUtf8().size());
-        f.close();
+        if (f.open(QIODevice::WriteOnly)) {
+            (void) f.write(t.content.toUtf8().constData(), t.content.toUtf8().size());
+            f.close();
+        } else {
+            qWarning() << "Error opening file" << f.fileName();
+        }
         _tmpFiles.push_back(t);
     }
 }

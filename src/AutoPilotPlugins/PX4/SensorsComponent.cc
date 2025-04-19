@@ -49,7 +49,7 @@ bool SensorsComponent::requiresSetup(void) const
 
 bool SensorsComponent::setupComplete(void) const
 {
-    foreach (const QString &triggerParam, _deviceIds) {
+    for (const QString &triggerParam : std::as_const(_deviceIds)) {
         if (_vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, triggerParam)->rawValue().toFloat() == 0.0f) {
             return false;
         }

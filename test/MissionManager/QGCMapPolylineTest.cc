@@ -210,7 +210,7 @@ void QGCMapPolylineTest::_testKMLLoad(void)
 void QGCMapPolylineTest::_testSelectVertex(void)
 {
     // Create polyline
-    foreach (auto vertex, _linePoints) {
+    for (const QGeoCoordinate &vertex : std::as_const(_linePoints)) {
         _mapPolyline->appendVertex(vertex);
     }
 

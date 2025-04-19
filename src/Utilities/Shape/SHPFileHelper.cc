@@ -86,7 +86,7 @@ SHPHandle SHPFileHelper::_loadShape(const QString &shpFile, int *utmZone, bool *
     errorString.clear();
 
     if (_validateSHPFiles(shpFile, utmZone, utmSouthernHemisphere, errorString)) {
-        shpHandle = SHPOpen(shpFile.toUtf8(), "rb");
+        shpHandle = SHPOpen(shpFile.toUtf8().constData(), "rb");
         if (!shpHandle) {
             errorString = QString(_errorPrefix).arg(QObject::tr("SHPOpen failed."));
         }

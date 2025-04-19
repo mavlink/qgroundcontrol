@@ -162,9 +162,9 @@ void APMSensorsComponentController::_stopCalibration(APMSensorsComponentControll
     _calTypeInProgress = QGCMAVLink::CalibrationNone;
 }
 
-void APMSensorsComponentController::_mavCommandResult(int vehicleId, int component, int command, int result, bool noReponseFromVehicle)
+void APMSensorsComponentController::_mavCommandResult(int vehicleId, int component, int command, int result, int failureCode)
 {
-    Q_UNUSED(component); Q_UNUSED(noReponseFromVehicle);
+    Q_UNUSED(component); Q_UNUSED(failureCode);
 
     if (_vehicle->id() != vehicleId) {
         return;

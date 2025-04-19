@@ -460,7 +460,7 @@ void SensorsComponentController::_refreshParams(void)
     
     // We ask for a refresh on these first so that the rotation combo show up as fast as possible
     fastRefreshList << "CAL_MAG0_ID" << "CAL_MAG1_ID" << "CAL_MAG2_ID" << "CAL_MAG0_ROT" << "CAL_MAG1_ROT" << "CAL_MAG2_ROT";
-    foreach (const QString &paramName, fastRefreshList) {
+    for (const QString &paramName : std::as_const(fastRefreshList)) {
         _vehicle->parameterManager()->refreshParameter(ParameterManager::defaultComponentId, paramName);
     }
     

@@ -722,7 +722,7 @@ bool MAVLinkLogManager::_sendLog(const QString &logFile)
     multiPart->append(logPart);
     file->setParent(multiPart);
 
-    QNetworkRequest request(_uploadURL);
+    QNetworkRequest request(QUrl::fromUserInput(_uploadURL));
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, true);
     QNetworkReply *const reply = _networkManager->post(request, multiPart);
     (void) connect(this, &MAVLinkLogManager::abortUpload, reply, &QNetworkReply::abort);
@@ -827,11 +827,9 @@ void MAVLinkLogManager::_mavlinkLogData(Vehicle* /*vehicle*/, uint8_t /*target_s
     emit logRunningChanged();
 }
 
-void MAVLinkLogManager::_mavCommandResult(int vehicleId, int component, int command, int result, bool noReponseFromVehicle)
+void MAVLinkLogManager::_mavCommandResult(int vehicleId, int component, int command, int result, int failureCode)
 {
-    Q_UNUSED(vehicleId);
-    Q_UNUSED(component);
-    Q_UNUSED(noReponseFromVehicle)
+    Q_UNUSED(vehicleId); Q_UNUSED(component); Q_UNUSED(failureCode)
 
     if ((command != MAV_CMD_LOGGING_START) && (command != MAV_CMD_LOGGING_STOP)) {
         return;
