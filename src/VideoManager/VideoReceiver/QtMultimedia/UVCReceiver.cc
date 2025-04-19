@@ -83,7 +83,7 @@ void UVCReceiver::checkPermission()
 {
     const QCameraPermission cameraPermission;
     if (qApp->checkPermission(cameraPermission) == Qt::PermissionStatus::Undetermined) {
-        qApp->requestPermission(cameraPermission, [](const QPermission &permission) {
+        qApp->requestPermission(cameraPermission, qgcApp(), [](const QPermission &permission) {
             if (permission.status() != Qt::PermissionStatus::Granted) {
                 qgcApp()->showAppMessage(QStringLiteral("Failed to get camera permission"));
             }

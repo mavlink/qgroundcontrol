@@ -73,7 +73,7 @@ signals:
     void busyChanged();
 
 private slots:
-    void _mavCommandResult(int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
+    void _mavCommandResult(int vehicleId, int component, int command, int result, int failureCode);
     void _ssidChanged(QVariant value) { emit wifiSSIDChanged(); }
     void _passwordChanged(QVariant value) { emit wifiPasswordChanged(); }
     void _baudChanged(QVariant value) { emit baudIndexChanged(); }

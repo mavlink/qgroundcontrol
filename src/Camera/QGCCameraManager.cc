@@ -251,7 +251,8 @@ QGCCameraManager::_handleCameraInfo(const mavlink_message_t& message)
 void QGCCameraManager::_checkForLostCameras()
 {
     //-- Iterate cameras
-    foreach (QString sCompID, _cameraInfoRequest.keys()) {
+    for (auto it = _cameraInfoRequest.constBegin(); it != _cameraInfoRequest.constEnd(); ++it) {
+        const QString &sCompID = it.key();
         if (_cameraInfoRequest[sCompID]) {
             CameraStruct* pInfo = _cameraInfoRequest[sCompID];
             //-- Have we received a camera info message?

@@ -203,7 +203,7 @@ private slots:
     void _uploadProgress(qint64 bytesSent, qint64 bytesTotal);
     void _mavlinkLogData(Vehicle *vehicle, uint8_t target_system, uint8_t target_component, uint16_t sequence, uint8_t first_message, const QByteArray &data, bool acked);
     void _armedChanged(bool armed);
-    void _mavCommandResult(int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
+    void _mavCommandResult(int vehicleId, int component, int command, int result, int failureCode);
 
 private:
     bool _sendLog(const QString &logFile);

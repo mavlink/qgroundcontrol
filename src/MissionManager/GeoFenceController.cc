@@ -106,8 +106,15 @@ void GeoFenceController::_managerVehicleChanged(Vehicle* managerVehicle)
     connect(_geoFenceManager, &GeoFenceManager::inProgressChanged,              this, &GeoFenceController::syncInProgressChanged);
 
     //-- GeoFenceController::supported() tests both the capability bit AND the protocol version.
-    connect(_managerVehicle,  &Vehicle::capabilityBitsChanged,                  this, &GeoFenceController::supportedChanged);
-    connect(_managerVehicle,  &Vehicle::requestProtocolVersion,                 this, &GeoFenceController::supportedChanged);
+    (void) connect(_managerVehicle, &Vehicle::capabilityBitsChanged, this, [this](uint64_t capabilityBits) {
+        Q_UNUSED(capabilityBits);
+        emit supportedChanged(supported());
+    });
+
+    (void) connect(_managerVehicle, &Vehicle::requestProtocolVersion, this, [this](unsigned version) {
+        Q_UNUSED(version);
+        emit supportedChanged(supported());
+    });
 
     connect(_managerVehicle->parameterManager(), &ParameterManager::parametersReadyChanged, this, &GeoFenceController::_parametersReady);
     _parametersReady();

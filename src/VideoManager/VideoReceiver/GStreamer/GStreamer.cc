@@ -98,7 +98,7 @@ static void _qgcputenv(const QString &key, const QString &root, const QString &p
 {
     const QByteArray keyArray = key.toLocal8Bit();
     const QByteArray valueArray = (root + path).toLocal8Bit();
-    (void) qputenv(keyArray, valueArray);
+    (void) qputenv(keyArray.constData(), valueArray);
 }
 
 static void _setGstEnvVars()
