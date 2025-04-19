@@ -79,6 +79,7 @@ set(CMAKE_COLOR_DIAGNOSTICS ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+# set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
 
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     if(LINUX)
@@ -162,10 +163,12 @@ find_package(Qt6
     ${QGC_QT_MINIMUM_VERSION}...${QGC_QT_MAXIMUM_VERSION}
     REQUIRED
     COMPONENTS
+        Charts
         Concurrent
         Core
         Core5Compat
         Gui
+        LinguistTools
         Location
         Multimedia
         Network
@@ -184,11 +187,8 @@ find_package(Qt6
         Xml
     OPTIONAL_COMPONENTS
         Bluetooth
-        Charts
-        LinguistTools
         MultimediaQuickPrivate
         Quick3D
-        Quick3DTools
         SerialPort
         Test
 )
@@ -288,6 +288,12 @@ qt_add_executable(${CMAKE_PROJECT_NAME}
 )
 
 if(WIN32)
+    # CPMAddPackage(
+    #     NAME windows_drivers
+    #     URL https://firmware.ardupilot.org/Tools/MissionPlanner/driver.msi
+    # )
+    # ${windows_drivers_SOURCE_DIR}/driver.msi
+
     # windows installer files shared with core and custom
     set(DEPLOY_WIN_FILES
         "${CMAKE_SOURCE_DIR}/deploy/windows/driver.msi"
@@ -340,6 +346,7 @@ elseif(APPLE)
         # set(CMAKE_XCODE_ATTRIBUTE_LD_ENTRY_POINT
         # set(CMAKE_XCODE_ATTRIBUTE_MARKETING_VERSION
         # set(CMAKE_XCODE_ATTRIBUTE_CURRENT_PROJECT_VERSION
+        set(CMAKE_XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${QGC_MACOS_ENTITLEMENTS_PATH}")
     endif()
 
     set_target_properties(${CMAKE_PROJECT_NAME}
@@ -361,6 +368,9 @@ elseif(APPLE)
         set(app_icon_macos "${QGC_MACOS_ICON_PATH}/${MACOSX_BUNDLE_ICON_FILE}")
         set_source_files_properties(${app_icon_macos} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
         target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${app_icon_macos})
+
+        set_source_files_properties(${QGC_MACOS_ENTITLEMENTS_PATH} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+        target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${QGC_MACOS_ENTITLEMENTS_PATH})
     elseif(IOS)
         enable_language(OBJC)
 
@@ -493,6 +503,10 @@ qt_add_translations(${CMAKE_PROJECT_NAME}
     # TS_FILE_BASE ${CMAKE_PROJECT_NAME}
     # TS_FILE_DIR ${CMAKE_SOURCE_DIR}/translations/
     TS_FILES ${TS_SOURCES}
+    # TS_FILES_OUTPUT_VARIABLE
+    # QM_FILES_OUTPUT_VARIABLE
+    # TARGETS ${CMAKE_PROJECT_NAME}
+    # SOURCE_TARGETS ${CMAKE_PROJECT_NAME}
     RESOURCE_PREFIX "/"
     LUPDATE_OPTIONS -no-obsolete
 )
