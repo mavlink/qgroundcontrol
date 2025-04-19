@@ -18,4 +18,3 @@ configs:
 
         'spec': 'linux-g++-64'
         'shadow_build_dir': '/vagrant/shadow-build'
-        'pro': '/vagrant/qgroundcontrol.pro'
