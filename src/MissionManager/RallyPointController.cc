@@ -67,8 +67,15 @@ void RallyPointController::_managerVehicleChanged(Vehicle* managerVehicle)
     connect(_rallyPointManager, &RallyPointManager::inProgressChanged,  this, &RallyPointController::syncInProgressChanged);
 
     //-- RallyPointController::supported() tests both the capability bit AND the protocol version.
-    connect(_managerVehicle,    &Vehicle::capabilityBitsChanged,        this, &RallyPointController::supportedChanged);
-    connect(_managerVehicle,    &Vehicle::requestProtocolVersion,       this, &RallyPointController::supportedChanged);
+    (void) connect(_managerVehicle, &Vehicle::capabilityBitsChanged, this, [this](uint64_t capabilityBits) {
+        Q_UNUSED(capabilityBits);
+        emit supportedChanged(supported());
+    });
+
+    (void) connect(_managerVehicle, &Vehicle::requestProtocolVersion, this, [this](unsigned version) {
+        Q_UNUSED(version);
+        emit supportedChanged(supported());
+    });
 
     emit supportedChanged(supported());
 }

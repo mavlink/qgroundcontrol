@@ -18,11 +18,6 @@
     <string>${MACOSX_BUNDLE_BUNDLE_VERSION}</string>
     <key>CFBundleShortVersionString</key>
     <string>${MACOSX_BUNDLE_SHORT_VERSION_STRING}</string>
-    <key>CFBundleLongVersionString</key>
-    <string>${MACOSX_BUNDLE_LONG_VERSION_STRING}</string>
-
-    <key>LSMinimumSystemVersion</key>
-    <string>${CMAKE_OSX_DEPLOYMENT_TARGET}</string>
 
     <key>CFBundleGetInfoString</key>
     <string>${MACOSX_BUNDLE_INFO_STRING}</string>
@@ -34,30 +29,22 @@
 
     <key>CFBundleDevelopmentRegion</key>
     <string>English</string>
-    <key>CFBundleAllowMixedLocalizations</key>
+
+    <key>LSRequiresIPhoneOS</key>
     <true/>
 
-    <key>NSPrincipalClass</key>
-    <string>NSApplication</string>
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
 
-    <key>NSSupportsAutomaticGraphicsSwitching</key>
-    <true/>
-
-
-    <key>CFBundleSignature</key>
-    <string>????</string>
-    <key>CSResourcesFileMapped</key>
-    <true/>
-    <key>LSRequiresCarbon</key>
-    <true/>
-
-    <key>NSBluetoothAlwaysUsageDescription</key>
-    <string>Bluetooth is used to connect to vehicles</string>
     <key>NSCameraUsageDescription</key>
-    <string>Camera devices used for FPV</string>
-    <key>NSLocationUsageDescription</key>
-    <string>Location used for ground control station position</string>
+    <string>Qt Multimedia Example</string>
     <key>NSMicrophoneUsageDescription</key>
-    <string>Qt Multimedia for MacOS uses the camera and microphone.</string>
+    <string>Qt Multimedia Example</string>
 </dict>
 </plist>
+

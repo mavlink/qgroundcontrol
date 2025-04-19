@@ -117,10 +117,13 @@ bool Actuators::isMultirotor() const
 
 void Actuators::load(const QString &json_file)
 {
-    QFile file;
-    file.setFileName(json_file);
-    file.open(QIODevice::ReadOnly | QIODevice::Text);
-    QString json_data = file.readAll();
+    QFile file(json_file);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qCWarning(ActuatorsConfigLog) << "Error opening json file" << file.fileName();
+        return;
+    }
+
+    const QString json_data = file.readAll();
     file.close();
 
     // store the metadata to be loaded later after all params are available

@@ -14,6 +14,7 @@
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QMap>
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
 #include <QtCore/QVariantList>

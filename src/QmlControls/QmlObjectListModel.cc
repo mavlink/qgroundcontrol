@@ -171,7 +171,7 @@ QObject* QmlObjectListModel::removeAt(int i)
     QObject* removedObject = _objectList[i];
     if(removedObject) {
         // Look for a dirtyChanged signal on the object
-        if (_objectList[i]->metaObject()->indexOfSignal(QMetaObject::normalizedSignature("dirtyChanged(bool)")) != -1) {
+        if (_objectList[i]->metaObject()->indexOfSignal(QMetaObject::normalizedSignature("dirtyChanged(bool)").constData()) != -1) {
             if (!_skipDirtyFirstItem || i != 0) {
                 QObject::disconnect(_objectList[i], SIGNAL(dirtyChanged(bool)), this, SLOT(_childDirtyChanged(bool)));
             }
@@ -190,7 +190,7 @@ void QmlObjectListModel::insert(int i, QObject* object)
     if(object) {
         QQmlEngine::setObjectOwnership(object, QQmlEngine::CppOwnership);
         // Look for a dirtyChanged signal on the object
-        if (object->metaObject()->indexOfSignal(QMetaObject::normalizedSignature("dirtyChanged(bool)")) != -1) {
+        if (object->metaObject()->indexOfSignal(QMetaObject::normalizedSignature("dirtyChanged(bool)").constData()) != -1) {
             if (!_skipDirtyFirstItem || i != 0) {
                 QObject::connect(object, SIGNAL(dirtyChanged(bool)), this, SLOT(_childDirtyChanged(bool)));
             }
@@ -212,7 +212,7 @@ void QmlObjectListModel::insert(int i, QList<QObject*> objects)
         QQmlEngine::setObjectOwnership(object, QQmlEngine::CppOwnership);
 
         // Look for a dirtyChanged signal on the object
-        if (object->metaObject()->indexOfSignal(QMetaObject::normalizedSignature("dirtyChanged(bool)")) != -1) {
+        if (object->metaObject()->indexOfSignal(QMetaObject::normalizedSignature("dirtyChanged(bool)").constData()) != -1) {
             if (!_skipDirtyFirstItem || j != 0) {
                 QObject::connect(object, SIGNAL(dirtyChanged(bool)), this, SLOT(_childDirtyChanged(bool)));
             }

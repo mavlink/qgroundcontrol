@@ -137,7 +137,7 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject *parent)
     _zoom = settings.value(_flightMapZoomSettingsKey, _zoom).toDouble();
     _flightMapPositionSettledTimer.setSingleShot(true);
     _flightMapPositionSettledTimer.setInterval(1000);
-    connect(&_flightMapPositionSettledTimer, &QTimer::timeout, [](){
+    (void) connect(&_flightMapPositionSettledTimer, &QTimer::timeout, this, []() {
         // When they settle, save flightMapPosition and Zoom to the config file
         QSettings settings;
         settings.beginGroup(_flightMapPositionSettingsGroup);

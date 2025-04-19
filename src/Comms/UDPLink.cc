@@ -191,12 +191,10 @@ void UDPConfiguration::removeHost(const QString &host)
             return;
         }
 
-        QMutableListIterator<std::shared_ptr<UDPClient>> it(_targetHosts);
-        while (it.hasNext()) {
-            std::shared_ptr<UDPClient> target = it.next();
-            if ((target->address == address) && (target->port == port)) {
-                target.reset();
-                it.remove();
+        for (qsizetype i = 0; i < _targetHosts.size(); ++i) {
+            const std::shared_ptr<UDPClient> &target = _targetHosts[i];
+            if (target->address == address && target->port == port) {
+                _targetHosts.removeAt(i);
                 _updateHostList();
                 return;
             }
@@ -220,12 +218,10 @@ void UDPConfiguration::removeHost(const QString &host, quint16 port)
         return;
     }
 
-    QMutableListIterator<std::shared_ptr<UDPClient>> it(_targetHosts);
-    while (it.hasNext()) {
-        std::shared_ptr<UDPClient> target = it.next();
-        if ((target->address == address) && (target->port == port)) {
-            target.reset();
-            it.remove();
+    for (qsizetype i = 0; i < _targetHosts.size(); ++i) {
+        const std::shared_ptr<UDPClient> &target = _targetHosts[i];
+        if (target->address == address && target->port == port) {
+            _targetHosts.removeAt(i);
             _updateHostList();
             return;
         }
