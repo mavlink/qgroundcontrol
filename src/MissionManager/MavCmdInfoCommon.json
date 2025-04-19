@@ -1009,7 +1009,6 @@
             },
             "param3": {
                 "label":            "Trigger",
-                "default":          25,
                 "enumStrings":      "No Trigger,Once Immediately",
                 "enumValues":       "0,1",
                 "default":          0,

@@ -133,7 +133,6 @@ DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
     flex \
     gobject-introspection \
     gvfs \
-    intel-media-va-driver \
     libasound2-dev \
     libass-dev \
     libdrm-dev \
@@ -203,6 +202,10 @@ if apt-cache show libgeographic-dev >/dev/null 2>&1 && apt-cache show libgeograp
     DEBIAN_FRONTEND=noninteractive apt-get install -y --quiet libgeographic-dev
 elif apt-cache show libgeographiclib-dev >/dev/null 2>&1 && apt-cache show libgeographiclib-dev 2>/dev/null | grep -q "^Package: libgeographiclib-dev"; then
     DEBIAN_FRONTEND=noninteractive apt-get install -y --quiet libgeographiclib-dev
+fi
+
+if apt-cache show intel-media-va-driver >/dev/null 2>&1 && apt-cache show intel-media-va-driver 2>/dev/null | grep -q "^Package: intel-media-va-driver"; then
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --quiet intel-media-va-driver
 fi
 
 # Vulkan
