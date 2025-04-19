@@ -23,7 +23,7 @@ target_sources(${CMAKE_PROJECT_NAME}
         JoystickSDL.h
 )
 
-target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_SDL_JOYSTICK SDL_MAIN_HANDLED)
+target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_SDL_JOYSTICK)
 
 #===========================================================================#
 
@@ -42,6 +42,7 @@ qt_add_resources(${CMAKE_PROJECT_NAME} "gamecontrollerdb.txt"
 
 #===========================================================================#
 
+set(SDL2_EXTRA_OPTIONS)
 if(WIN32)
     set(SDL2_EXTRA_OPTIONS
         "SDL_DIRECTX OFF"
@@ -93,5 +94,5 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE SDL2::SDL2-static)
 
 # Default list of config overrides - TODO: Add to Custom Build Options
 # set(ENV{SDL_GAMECONTROLLERCONFIG}
-
+#   "0300000009120000544f000011010000,OpenTX Radiomaster TX16S Joystick,leftx:a3,lefty:a2,rightx:a0,righty:a1,platform:Linux"
 # )

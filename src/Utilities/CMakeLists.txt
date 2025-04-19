@@ -42,10 +42,6 @@ target_include_directories(${CMAKE_PROJECT_NAME}
         Shape
 )
 
-if(QGC_ENABLE_BLUETOOTH)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Bluetooth)
-endif()
-
 #===========================================================================#
 
 CPMAddPackage(
@@ -58,13 +54,7 @@ CPMAddPackage(
         "BUILD_TESTING OFF"
 )
 
-if(Shapelib_ADDED)
-    if(TARGET shp)
-        target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE shp)
-    elseif(TARGET shapelib::shp)
-        target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE shapelib::shp)
-    endif()
-endif()
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE shp)
 
 #===========================================================================#
 

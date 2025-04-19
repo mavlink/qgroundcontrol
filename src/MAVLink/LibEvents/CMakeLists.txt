@@ -11,8 +11,6 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 
 #===========================================================================#
 
-message(STATUS "Building libevents")
-
 CPMAddPackage(
     NAME libevents
     GITHUB_REPOSITORY mavlink/libevents
@@ -20,7 +18,5 @@ CPMAddPackage(
     SOURCE_SUBDIR libs/cpp
 )
 
-if(TARGET libevents)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE libevents)
-    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${libevents_SOURCE_DIR}/libs/cpp)
-endif()
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE libevents)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${libevents_SOURCE_DIR}/libs/cpp)
