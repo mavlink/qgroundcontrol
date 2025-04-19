@@ -19,7 +19,7 @@ endif()
 
 # Set extra deploy QML app script options for Qt 6.7.0 and above
 set(EXTRA_DEPLOY_QML_APP_SCRIPT_OPTIONS)
-if(QT_VERSION VERSION_GREATER_EQUAL 6.7.0)
+if(Qt6_VERSION VERSION_GREATER_EQUAL 6.7.0)
     list(APPEND EXTRA_DEPLOY_QML_APP_SCRIPT_OPTIONS DEPLOY_TOOL_OPTIONS ${deploy_tool_options_arg})
 endif()
 

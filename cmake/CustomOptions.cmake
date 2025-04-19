@@ -47,7 +47,7 @@ option(QGC_DISABLE_PX4_PLUGIN "Disable PX4 Plugin" OFF)
 option(QGC_DISABLE_PX4_PLUGIN_FACTORY "Disable PX4 Plugin Factory" OFF)
 
 # Android
-if(QT_VERSION VERSION_GREATER_EQUAL 6.7.0)
+if(Qt6_VERSION VERSION_GREATER_EQUAL 6.7.0)
     set(QGC_QT_ANDROID_MIN_SDK_VERSION "28" CACHE STRING "Android Min SDK Version")
 else() # Allow building for Android 7.1 if supported
     set(QGC_QT_ANDROID_MIN_SDK_VERSION "25" CACHE STRING "Android Min SDK Version")
