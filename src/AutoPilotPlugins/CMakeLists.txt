@@ -1,10 +1,3 @@
-if(NOT QGC_DISABLE_APM_PLUGIN)
-    add_subdirectory(APM)
-endif()
-if(NOT QGC_DISABLE_PX4_PLUGIN)
-    add_subdirectory(PX4)
-endif()
-
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         AutoPilotPlugin.cc
@@ -22,3 +15,9 @@ target_include_directories(${CMAKE_PROJECT_NAME}
 )
 
 add_subdirectory(Common)
+if(NOT QGC_DISABLE_APM_PLUGIN)
+    add_subdirectory(APM)
+endif()
+if(NOT QGC_DISABLE_PX4_PLUGIN)
+    add_subdirectory(PX4)
+endif()

@@ -24,12 +24,7 @@ CPMAddPackage(
         "SKIP_INSTALL_ALL ON"
 )
 
-if(zlib_ADDED)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE zlibstatic)
-else()
-    find_package(Qt6ZlibPrivate REQUIRED)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::ZlibPrivate)
-endif()
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE zlibstatic)
 
 #===========================================================================#
 

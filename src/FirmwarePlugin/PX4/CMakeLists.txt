@@ -17,7 +17,6 @@ if(NOT QGC_DISABLE_PX4_PLUGIN)
             PX4FirmwarePlugin.h
             PX4ParameterMetaData.cc
             PX4ParameterMetaData.h
-            # ${PX4_RESOURCES}
     )
 endif()
 

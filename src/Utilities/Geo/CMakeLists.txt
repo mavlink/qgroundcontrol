@@ -8,10 +8,6 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 
 #===========================================================================#
 
-if(LINUX AND EXISTS "/usr/share/cmake/geographiclib")
-    list(APPEND CMAKE_MODULE_PATH "/usr/share/cmake/geographiclib")
-endif()
-
 CPMAddPackage(
     NAME geographiclib
     VERSION 2.5
@@ -36,6 +32,4 @@ CPMAddPackage(
     PATCHES geographiclib.patch
 )
 
-if(TARGET GeographicLib::GeographicLib)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE GeographicLib::GeographicLib)
-endif()
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE GeographicLib::GeographicLib)
