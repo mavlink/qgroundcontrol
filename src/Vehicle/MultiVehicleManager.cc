@@ -25,8 +25,10 @@
 #include "VehicleObjectAvoidance.h"
 #include "TrajectoryPoints.h"
 #include "QmlObjectListModel.h"
-#if defined (Q_OS_IOS) || defined(Q_OS_ANDROID)
+#ifdef Q_OS_IOS
 #include "MobileScreenMgr.h"
+#elif defined(Q_OS_ANDROID)
+#include "AndroidInterface.h"
 #endif
 #include "QGCLoggingCategory.h"
 
@@ -158,10 +160,14 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
         setActiveVehicle(vehicle);
     }
 
-#if defined (Q_OS_IOS) || defined(Q_OS_ANDROID)
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     if (_vehicles->count() == 1) {
-        qCDebug(MultiVehicleManagerLog) << "QAndroidJniObject::keepScreenOn";
-        MobileScreenMgr::setKeepScreenOn(true);
+        qCDebug(MultiVehicleManagerLog) << "keepScreenOn";
+        #if defined(Q_OS_ANDROID)
+            AndroidInterface::setKeepScreenOn(true);
+        #elif defined(Q_OS_IOS)
+            MobileScreenMgr::setKeepScreenOn(true);
+        #endif
     }
 #endif
 }
@@ -210,10 +216,14 @@ void MultiVehicleManager::_deleteVehiclePhase1(Vehicle *vehicle)
     emit vehicleRemoved(vehicle);
     vehicle->prepareDelete();
 
-#if defined (Q_OS_IOS) || defined(Q_OS_ANDROID)
+#if defined(Q_OS_ANDROID) || defined (Q_OS_IOS)
     if (_vehicles->count() == 0) {
-        qCDebug(MultiVehicleManagerLog) << "QAndroidJniObject::restoreScreenOn";
-        MobileScreenMgr::setKeepScreenOn(false);
+        qCDebug(MultiVehicleManagerLog) << "restoreScreenOn";
+        #if defined(Q_OS_ANDROID)
+            AndroidInterface::setKeepScreenOn(false);
+        #elif defined(Q_OS_IOS)
+            MobileScreenMgr::setKeepScreenOn(false);
+        #endif
     }
 #endif
 
