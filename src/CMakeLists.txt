@@ -50,25 +50,9 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-if(ANDROID)
-    target_sources(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            ${CMAKE_SOURCE_DIR}/android/src/AndroidInit.cc
-            ${CMAKE_SOURCE_DIR}/android/src/AndroidInterface.cc
-            ${CMAKE_SOURCE_DIR}/android/src/AndroidInterface.h
-    )
-
-    target_link_libraries(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            Qt6::Core
-            Qt6::CorePrivate
-    )
-
-    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/android/src)
-endif()
-
 add_subdirectory(ADSB)
 add_subdirectory(AnalyzeView)
+add_subdirectory(Android)
 add_subdirectory(API)
 add_subdirectory(AutoPilotPlugins)
 add_subdirectory(Camera)

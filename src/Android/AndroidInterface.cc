@@ -26,6 +26,34 @@ bool cleanJavaException()
     return result;
 }
 
+jclass getActivityClass()
+{
+    static jclass javaClass = nullptr;
+
+    if (!javaClass) {
+        QJniEnvironment env;
+        if (!env.isValid()) {
+            qCWarning(AndroidInterfaceLog) << "Invalid QJniEnvironment";
+            return nullptr;
+        }
+
+        if (!QJniObject::isClassAvailable(kJniQGCActivityClassName)) {
+            qCWarning(AndroidInterfaceLog) << "Class Not Available";
+            return nullptr;
+        }
+
+        javaClass = env.findClass(kJniQGCActivityClassName);
+        if (!javaClass) {
+            qCWarning(AndroidInterfaceLog) << "Class Not Found";
+            return nullptr;
+        }
+
+        env.checkAndClearExceptions();
+    }
+
+    return javaClass;
+}
+
 void setNativeMethods()
 {
     qCDebug(AndroidInterfaceLog) << "Registering Native Functions";
@@ -114,32 +142,11 @@ QString getSDCardPath()
     return result.toString();
 }
 
-jclass getActivityClass()
+void setKeepScreenOn(bool on)
 {
-    static jclass javaClass = nullptr;
+    Q_UNUSED(on);
 
-    if (!javaClass) {
-        QJniEnvironment env;
-        if (!env.isValid()) {
-            qCWarning(AndroidInterfaceLog) << "Invalid QJniEnvironment";
-            return nullptr;
-        }
-
-        if (!QJniObject::isClassAvailable(kJniQGCActivityClassName)) {
-            qCWarning(AndroidInterfaceLog) << "Class Not Available";
-            return nullptr;
-        }
-
-        javaClass = env.findClass(kJniQGCActivityClassName);
-        if (!javaClass) {
-            qCWarning(AndroidInterfaceLog) << "Class Not Found";
-            return nullptr;
-        }
-
-        env.checkAndClearExceptions();
-    }
-
-    return javaClass;
+    //-- Screen is locked on while QGC is running on Android
 }
 
 } // namespace AndroidInterface
