@@ -115,7 +115,7 @@ void QGCMapEngineManager::_tileSetFetched(QGCCachedTileSet *tileSet)
     }
 
     tileSet->setManager(this);
-    (void) _tileSets->append(tileSet);
+    _tileSets->append(tileSet);
     emit tileSetsChanged();
 }
 
@@ -170,7 +170,7 @@ void QGCMapEngineManager::_tileSetSaved(QGCCachedTileSet *set)
 {
     qCDebug(QGCMapEngineManagerLog) << "New tile set saved (" << set->name() << "). Starting download...";
 
-    (void) _tileSets->append(set);
+    _tileSets->append(set);
     emit tileSetsChanged();
     set->createDownloadTask();
 }
@@ -383,12 +383,12 @@ bool QGCMapEngineManager::exportSets(const QString &path)
         return false;
     }
 
-    QVector<QGCCachedTileSet*> sets;
+    QList<QGCCachedTileSet*> sets;
 
     for (qsizetype i = 0; i < _tileSets->count(); i++) {
         QGCCachedTileSet* const set = qobject_cast<QGCCachedTileSet*>(_tileSets->get(i));
         if (set->selected()) {
-            (void) sets.append(set);
+            sets.append(set);
         }
     }
 

@@ -59,7 +59,7 @@ QGeoTiledMapReplyQGC::~QGeoTiledMapReplyQGC()
 void QGeoTiledMapReplyQGC::_initDataFromResources()
 {
     if (_bingNoTileImage.isEmpty()) {
-        QFile file("://res/BingNoTileBytes.dat");
+        QFile file(":/res/BingNoTileBytes.dat");
         if (file.open(QFile::ReadOnly)) {
             _bingNoTileImage = file.readAll();
             file.close();
@@ -67,7 +67,7 @@ void QGeoTiledMapReplyQGC::_initDataFromResources()
     }
 
     if (_badTile.isEmpty()) {
-        QFile file("://res/images/notile.png");
+        QFile file(":/res/images/notile.png");
         if (file.open(QFile::ReadOnly)) {
             _badTile = file.readAll();
             file.close();
