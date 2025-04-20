@@ -32,7 +32,7 @@ class QGCMapEngine : public QObject
     Q_OBJECT
 
 public:
-    QGCMapEngine(QObject *parent = nullptr);
+    explicit QGCMapEngine(QObject *parent = nullptr);
     ~QGCMapEngine();
 
     void init(const QString &databasePath);

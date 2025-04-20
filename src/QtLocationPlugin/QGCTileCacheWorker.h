@@ -95,7 +95,6 @@ private:
     std::atomic_bool _failed = false;
     std::atomic_bool _valid = false;
 
-    static QByteArray _bingNoTileImage;
     static constexpr const char *kSession = "QGeoTileWorkerSession";
     static constexpr const char *kExportSession = "QGeoTileExportSession";
     static constexpr int kShortTimeout = 2;
