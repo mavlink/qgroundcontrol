@@ -26,7 +26,13 @@ target_sources(${CMAKE_PROJECT_NAME}
         StateMachine.h
 )
 
-if(IOS)
+if(LINUX)
+    target_sources(${CMAKE_PROJECT_NAME}
+        PRIVATE
+            SignalHandler.cc
+            SignalHandler.h
+    )
+elseif(IOS)
     target_sources(${CMAKE_PROJECT_NAME}
         PRIVATE
             MobileScreenMgr.mm
