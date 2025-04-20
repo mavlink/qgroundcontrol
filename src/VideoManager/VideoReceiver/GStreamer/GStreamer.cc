@@ -20,6 +20,7 @@
 #include <QtCore/QCoreApplication>
 #include <QtCore/QSettings>
 #include <QtQuick/QQuickItem>
+#include <QtCore/QFileInfo>
 
 QGC_LOGGING_CATEGORY(GStreamerLog, "qgc.videomanager.videoreceiver.gstreamer")
 QGC_LOGGING_CATEGORY(GStreamerAPILog, "qgc.videomanager.videoreceiver.gstreamer.api")
@@ -103,28 +104,36 @@ static void _qgcputenv(const QString &key, const QString &root, const QString &p
 
 static void _setGstEnvVars()
 {
-    const QString currentDir = QCoreApplication::applicationDirPath();
-    qCDebug(GStreamerLog) << "App Directory:" << currentDir;
+    const QString appDir = QCoreApplication::applicationDirPath();
 
-#if defined(Q_OS_MACOS) && defined(QGC_GST_MACOS_FRAMEWORK)
+#if (defined(Q_OS_MACOS) && defined(QGC_GST_MACOS_FRAMEWORK)) || defined(Q_OS_WIN)
+    QString bundledGStreamerPath;
+    #if (defined(Q_OS_MACOS) && defined(QGC_GST_MACOS_FRAMEWORK))
+        bundledGStreamerPath = appDir + "/../Frameworks/GStreamer.framework/Versions/1.0/";
+        _qgcputenv("GTK_PATH", bundledGStreamerPath);
+    #elif defined(Q_OS_WIN)
+        bundledGStreamerPath = appDir + "/../";
+    #else
+        #error "Unsupported platform"
+    #endif
+    
     _qgcputenv("GST_REGISTRY_REUSE_PLUGIN_SCANNER", "no");
-    _qgcputenv("GST_PLUGIN_SCANNER", currentDir, "/../Frameworks/GStreamer.framework/Versions/1.0/libexec/gstreamer-1.0/gst-plugin-scanner");
-    _qgcputenv("GST_PTP_HELPER_1_0", currentDir, "/../Frameworks/GStreamer.framework/Versions/1.0/libexec/gstreamer-1.0/gst-ptp-helper");
-    _qgcputenv("GIO_EXTRA_MODULES", currentDir, "/../Frameworks/GStreamer.framework/Versions/1.0/lib/gio/modules");
-    _qgcputenv("GST_PLUGIN_SYSTEM_PATH_1_0", currentDir, "/../Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0"); // PlugIns/gstreamer
-    _qgcputenv("GST_PLUGIN_SYSTEM_PATH", currentDir, "/../Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0");
-    _qgcputenv("GST_PLUGIN_PATH_1_0", currentDir, "/../Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0");
-    _qgcputenv("GST_PLUGIN_PATH", currentDir, "/../Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0");
-    _qgcputenv("GTK_PATH", currentDir, "/../Frameworks/GStreamer.framework/Versions/1.0");
-#elif defined(Q_OS_WIN)
-    _qgcputenv("GST_REGISTRY_REUSE_PLUGIN_SCANNER", "no");
-    _qgcputenv("GST_PLUGIN_SCANNER", currentDir, "/../libexec/gstreamer-1.0/gst-plugin-scanner");
-    _qgcputenv("GST_PTP_HELPER_1_0", currentDir, "/../libexec/gstreamer-1.0/gst-ptp-helper");
-    _qgcputenv("GIO_EXTRA_MODULES", currentDir, "/../lib/gio/modules");
-    _qgcputenv("GST_PLUGIN_SYSTEM_PATH_1_0", currentDir, "/../lib/gstreamer-1.0");
-    _qgcputenv("GST_PLUGIN_SYSTEM_PATH", currentDir, "/../lib/gstreamer-1.0");
-    _qgcputenv("GST_PLUGIN_PATH_1_0", currentDir, "/../lib/gstreamer-1.0");
-    _qgcputenv("GST_PLUGIN_PATH", currentDir, "/../lib/gstreamer-1.0");
+
+    // Set the GStreamer paths if GStreamer is part of the application bundle. Otherwise we leave things alone
+    // since we are more than likely running from a dev build which did not run *deployqt and GStreamer
+    // is still in the default install location.
+    if (QFileInfo::exists(bundledGStreamerPath)) {
+        qDebug() << "Setting GStreamer environment variables from base GStreamer path:" << bundledGStreamerPath;
+        _qgcputenv("GST_PLUGIN_SCANNER", bundledGStreamerPath, "libexec/gstreamer-1.0/gst-plugin-scanner");
+        _qgcputenv("GST_PTP_HELPER_1_0", bundledGStreamerPath, "libexec/gstreamer-1.0/gst-ptp-helper");
+        _qgcputenv("GIO_EXTRA_MODULES", bundledGStreamerPath, "lib/gio/modules");
+        _qgcputenv("GST_PLUGIN_SYSTEM_PATH_1_0", bundledGStreamerPath, "lib/gstreamer-1.0");
+        _qgcputenv("GST_PLUGIN_SYSTEM_PATH", bundledGStreamerPath, "lib/gstreamer-1.0");
+        _qgcputenv("GST_PLUGIN_PATH_1_0", bundledGStreamerPath, "lib/gstreamer-1.0");
+        _qgcputenv("GST_PLUGIN_PATH", bundledGStreamerPath, "lib/gstreamer-1.0");
+    } else {
+        qDebug() << "GStreamer environment variables not set. GStreamer not found in application bundle.";
+    }
 #endif
 }
 
