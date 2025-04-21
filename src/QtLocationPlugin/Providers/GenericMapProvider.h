@@ -111,6 +111,23 @@ private:
     const QString _mapUrl = QStringLiteral("https://basemaps.linz.govt.nz/v1/tiles/aerial/EPSG:3857/%1/%2/%3.%4?api=d01ev80nqcjxddfvc6amyvkk1ka");
 };
 
+class OpenStreetMapProvider : public MapProvider
+{
+public:
+    OpenStreetMapProvider()
+        : MapProvider(
+            QStringLiteral("Street Map"),
+            QStringLiteral("https://www.openstreetmap.org"),
+            QStringLiteral("png"),
+            AVERAGE_TILE_SIZE,
+            QGeoMapType::StreetMap) {}
+
+private:
+    QString _getURL(int x, int y, int zoom) const final;
+
+    const QString _mapUrl = QStringLiteral("http://tile.openstreetmap.org/%1/%2/%3.png");
+};
+
 class StatkartMapProvider : public MapProvider
 {
 protected:
