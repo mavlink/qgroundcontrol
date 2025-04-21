@@ -186,6 +186,7 @@ find_gstreamer_component(Core gstreamer-1.0)
 find_gstreamer_component(Base gstreamer-base-1.0)
 find_gstreamer_component(Video gstreamer-video-1.0)
 find_gstreamer_component(Gl gstreamer-gl-1.0)
+find_gstreamer_component(Rtsp gstreamer-rtsp-1.0)
 
 if(TARGET PkgConfig::PC_GSTREAMER_GL)
     get_target_property(_qt_incs PkgConfig::PC_GSTREAMER_GL INTERFACE_INCLUDE_DIRECTORIES)
@@ -225,6 +226,7 @@ find_package_handle_standard_args(GStreamer
         GStreamer_Base_FOUND
         GStreamer_Video_FOUND
         GStreamer_Gl_FOUND
+        GStreamer_Rtsp_FOUND
     VERSION_VAR GStreamer_VERSION
     HANDLE_COMPONENTS
 )
@@ -261,6 +263,7 @@ if(GStreamer_FOUND AND NOT TARGET GStreamer::GStreamer)
             GStreamer::Base
             GStreamer::Video
             GStreamer::Gl
+            GStreamer::Rtsp
     )
     # set_target_properties(GStreamer::GStreamer PROPERTIES VERSION ${GStreamer_VERSION})
 
