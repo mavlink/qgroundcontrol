@@ -28,8 +28,7 @@ enum VideoDecoderOptions {
     ForceVideoDecoderVideoToolbox,
 };
 
-void initialize();
-void blacklist(VideoDecoderOptions option);
+bool initialize();
 void *createVideoSink(QObject *parent, QQuickItem *widget);
 void releaseVideoSink(void *sink);
 VideoReceiver *createVideoReceiver(QObject *parent = nullptr);

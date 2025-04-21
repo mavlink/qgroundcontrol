@@ -55,7 +55,9 @@ VideoManager::VideoManager(QObject *parent)
     // qCDebug(VideoManagerLog) << Q_FUNC_INFO << this;
 
 #ifdef QGC_GST_STREAMING
-    GStreamer::initialize();
+    if (!GStreamer::initialize()) {
+        qCCritical(VideoManagerLog) << "Failed To Initialize GStreamer";
+    }
 #endif
 }
 
