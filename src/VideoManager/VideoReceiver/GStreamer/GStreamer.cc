@@ -154,10 +154,98 @@ static void _registerPlugins()
 #endif
 }
 
+static void _checkPlugin(gpointer data, gpointer user_data)
+{
+    GstPlugin *plugin = static_cast<GstPlugin*>(data);
+    if (!plugin) {
+        return;
+    }
+
+    const gchar *name = gst_plugin_get_name(plugin);
+    const gchar *version = gst_plugin_get_version(plugin);
+    qCDebug(GStreamerLog) << QString("Plugin %1: (Version %2)").arg(name, version);
+}
+
+static bool _verifyPlugins()
+{
+    GstRegistry *registry = gst_registry_get();
+
+    GList *plugins = gst_registry_get_plugin_list(registry);
+    g_list_foreach(plugins, _checkPlugin, NULL);
+    g_list_free(plugins);
+
+    GstPlugin *plugin = gst_registry_find_plugin(registry, "coreelements");
+    if (!plugin) {
+        qCCritical(GStreamerLog) << "coreelements plugin NOT found. "
+                                 << "Please ensure that the GStreamer installation includes the 'coreelements' plugin. "
+                                 << "Check your GStreamer setup or reinstall GStreamer";
+        return false;
+    }
+    gst_object_unref(plugin);
+
+    return true;
+}
+
+static void _blacklist(GStreamer::VideoDecoderOptions option)
+{
+    GstRegistry *registry = gst_registry_get();
+
+    if (!registry) {
+        qCCritical(GStreamerLog) << "Failed to get gstreamer registry.";
+        return;
+    }
+
+    const auto changeRank = [registry](const char *featureName, uint16_t rank) {
+        GstPluginFeature *const feature = gst_registry_lookup_feature(registry, featureName);
+        if (!feature) {
+            qCDebug(GStreamerLog) << "Failed to change ranking of feature. Featuer does not exist:" << featureName;
+            return;
+        }
+
+        qCDebug(GStreamerLog) << "Changing feature (" << featureName << ") to use rank:" << rank;
+        gst_plugin_feature_set_rank(feature, rank);
+        (void) gst_registry_add_feature(registry, feature);
+        gst_object_unref(feature);
+    };
+
+    changeRank("bcmdec", GST_RANK_NONE);
+
+    switch (option) {
+        case GStreamer::ForceVideoDecoderDefault:
+            break;
+        case GStreamer::ForceVideoDecoderSoftware:
+            for (const char *name : {"avdec_h264", "avdec_h265"}) {
+                changeRank(name, GST_RANK_PRIMARY + 1);
+            }
+            break;
+        case GStreamer::ForceVideoDecoderVAAPI:
+            for (const char *name : {"vaapimpeg2dec", "vaapimpeg4dec", "vaapih263dec", "vaapih264dec", "vaapih265dec", "vaapivc1dec"}) {
+                changeRank(name, GST_RANK_PRIMARY + 1);
+            }
+            break;
+        case GStreamer::ForceVideoDecoderNVIDIA:
+            for (const char *name : {"nvh265dec", "nvh265sldec", "nvh264dec", "nvh264sldec"}) {
+                changeRank(name, GST_RANK_PRIMARY + 1);
+            }
+            break;
+        case GStreamer::ForceVideoDecoderDirectX3D:
+            for (const char *name : {"d3d11vp9dec", "d3d11h265dec", "d3d11h264dec"}) {
+                changeRank(name, GST_RANK_PRIMARY + 1);
+            }
+            break;
+        case GStreamer::ForceVideoDecoderVideoToolbox:
+            changeRank("vtdec", GST_RANK_PRIMARY + 1);
+            break;
+        default:
+            qCWarning(GStreamerLog) << "Can't handle decode option:" << option;
+            break;
+    }
+}
+
 namespace GStreamer
 {
 
-void initialize()
+bool initialize()
 {
     (void) qRegisterMetaType<VideoReceiver::STATUS>("STATUS");
 
@@ -190,11 +278,16 @@ void initialize()
     }
 
     GError *error = nullptr;
-    if (!gst_init_check(&argc, &argv, &error)) {
+    const gboolean initialized = gst_init_check(&argc, &argv, &error);
+    delete[] argv;
+    if (!initialized) {
         qCCritical(GStreamerLog) << Q_FUNC_INFO << error->message;
         g_error_free(error);
+        return false;
     }
-    delete[] argv;
+
+    const gchar *const version = gst_version_string();
+    qCDebug(GStreamerLog) << QString("GStreamer Initialized (Version: %1)").arg(version);
 
     _registerPlugins();
 
@@ -205,63 +298,13 @@ void initialize()
     GST_PLUGIN_STATIC_REGISTER(qml6);
     GST_PLUGIN_STATIC_REGISTER(qgc);
 
-    blacklist(static_cast<GStreamer::VideoDecoderOptions>(SettingsManager::instance()->videoSettings()->forceVideoDecoder()->rawValue().toInt()));
-}
-
-void blacklist(VideoDecoderOptions option)
-{
-    GstRegistry *const registry = gst_registry_get();
-
-    if (!registry) {
-        qCCritical(GStreamerLog) << "Failed to get gstreamer registry.";
-        return;
+    if (!_verifyPlugins()) {
+        qCCritical(GStreamerLog) << "Failed to Init GStreamer Plugins";
+        return false;
     }
 
-    const auto changeRank = [registry](const char *featureName, uint16_t rank) {
-        GstPluginFeature *const feature = gst_registry_lookup_feature(registry, featureName);
-        if (!feature) {
-            qCDebug(GStreamerLog) << "Failed to change ranking of feature. Featuer does not exist:" << featureName;
-            return;
-        }
-
-        qCDebug(GStreamerLog) << "Changing feature (" << featureName << ") to use rank:" << rank;
-        gst_plugin_feature_set_rank(feature, rank);
-        (void) gst_registry_add_feature(registry, feature);
-        gst_object_unref(feature);
-    };
-
-    changeRank("bcmdec", GST_RANK_NONE);
-
-    switch (option) {
-    case ForceVideoDecoderDefault:
-        break;
-    case ForceVideoDecoderSoftware:
-        for (const char *name : {"avdec_h264", "avdec_h265"}) {
-            changeRank(name, GST_RANK_PRIMARY + 1);
-        }
-        break;
-    case ForceVideoDecoderVAAPI:
-        for (const char *name : {"vaapimpeg2dec", "vaapimpeg4dec", "vaapih263dec", "vaapih264dec", "vaapih265dec", "vaapivc1dec"}) {
-            changeRank(name, GST_RANK_PRIMARY + 1);
-        }
-        break;
-    case ForceVideoDecoderNVIDIA:
-        for (const char *name : {"nvh265dec", "nvh265sldec", "nvh264dec", "nvh264sldec"}) {
-            changeRank(name, GST_RANK_PRIMARY + 1);
-        }
-        break;
-    case ForceVideoDecoderDirectX3D:
-        for (const char *name : {"d3d11vp9dec", "d3d11h265dec", "d3d11h264dec"}) {
-            changeRank(name, GST_RANK_PRIMARY + 1);
-        }
-        break;
-    case ForceVideoDecoderVideoToolbox:
-        changeRank("vtdec", GST_RANK_PRIMARY + 1);
-        break;
-    default:
-        qCWarning(GStreamerLog) << "Can't handle decode option:" << option;
-        break;
-    }
+    _blacklist(static_cast<GStreamer::VideoDecoderOptions>(SettingsManager::instance()->videoSettings()->forceVideoDecoder()->rawValue().toInt()));
+    return true;
 }
 
 void *createVideoSink(QObject *parent, QQuickItem *widget)
