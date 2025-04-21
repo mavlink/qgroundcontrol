@@ -20,6 +20,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         gstqgcvideosinkbin.h
         GStreamer.cc
         GStreamer.h
+        GStreamerHelpers.cc
+        GStreamerHelpers.h
         GstVideoReceiver.cc
         GstVideoReceiver.h
 )
