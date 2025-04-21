@@ -35,9 +35,12 @@ RowLayout {
     }
 
     QGCLabel {
-        id:             mainStatusLabel
-        text:           mainStatusText()
-        font.pointSize: ScreenTools.largeFontPointSize
+        id:                 mainStatusLabel
+        Layout.fillHeight:  true
+        Layout.preferredWidth: contentWidth + vehicleMessagesIcon.width + control.spacing
+        verticalAlignment:  Text.AlignVCenter
+        text:               mainStatusText()
+        font.pointSize:     ScreenTools.largeFontPointSize
 
         property string _commLostText:      qsTr("Comms Lost")
         property string _readyToFlyText:    qsTr("Ready To Fly")
@@ -112,6 +115,31 @@ RowLayout {
             }
         }
 
+        QGCColoredImage {
+            id:                     vehicleMessagesIcon
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.right:          parent.right
+            width:                  ScreenTools.defaultFontPixelWidth * 2
+            height:                 width
+            source:                 "/res/VehicleMessages.png"
+            color:                  getIconColor()
+            sourceSize.width:       width
+            fillMode:               Image.PreserveAspectFit
+            //visible:                _activeVehicle && _activeVehicle.messageCount > 0// FIXME: Is messageCount check needed?
+
+            function getIconColor() {
+                let iconColor = qgcPal.text
+                if (_activeVehicle) {
+                    if (_activeVehicle.messageTypeWarning) {
+                        iconColor = qgcPal.colorOrange
+                    } else if (_activeVehicle.messageTypeError) {
+                        iconColor = qgcPal.colorRed
+                    }
+                }
+                return iconColor
+            }
+        }
+
         QGCMouseArea {
             anchors.fill:   parent
             onClicked:      dropMainStatusIndicator()
@@ -119,46 +147,20 @@ RowLayout {
     }
 
     QGCLabel {
-        id:             vtolModeLabel
-        text:           _vtolInFWDFlight ? qsTr("FW(vtol)") : qsTr("MR(vtol)")
-        font.pointSize: _vehicleInAir ? ScreenTools.largeFontPointSize : ScreenTools.defaultFontPointSize
-        visible:        _activeVehicle && _activeVehicle.vtol
+        id:                 vtolModeLabel
+        Layout.fillHeight:  true
+        verticalAlignment:  Text.AlignVCenter
+        text:               _vtolInFWDFlight ? qsTr("FW(vtol)") : qsTr("MR(vtol)")
+        font.pointSize:     _vehicleInAir ? ScreenTools.largeFontPointSize : ScreenTools.defaultFontPointSize
+        visible:            _activeVehicle && _activeVehicle.vtol
 
         QGCMouseArea {
-            anchors.fill:   parent
+            anchors.fill: parent
             onClicked: {
                 if (_vehicleInAir) {
                     mainWindow.showIndicatorDrawer(vtolTransitionIndicatorPage)
                 }
             }
-        }
-    }
-
-    QGCColoredImage {
-        id:                     vehicleMessagesIcon
-        source:                 "/res/VehicleMessages.png"
-        color:                  getIconColor()
-        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 2
-        Layout.preferredHeight: width
-        sourceSize.width:       width
-        fillMode:               Image.PreserveAspectFit
-        visible:                _activeVehicle && _activeVehicle.messageCount > 0// FIXME: Is messageCount check needed?
-
-        function getIconColor() {
-            let iconColor = qgcPal.text
-            if (_activeVehicle) {
-                if (_activeVehicle.messageTypeWarning) {
-                    iconColor = qgcPal.colorOrange
-                } else if (_activeVehicle.messageTypeError) {
-                    iconColor = qgcPal.colorRed
-                }
-            }
-            return iconColor
-        }
-
-        QGCMouseArea {
-            anchors.fill:   parent
-            onClicked:      dropMainStatusIndicator()
         }
     }
 
