@@ -15,6 +15,7 @@
  */
 
 #include "GstVideoReceiver.h"
+#include "GStreamerHelpers.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QDebug>
@@ -756,8 +757,10 @@ GstVideoReceiver::_makeSource(const QString& uri)
         return nullptr;
     }
 
+    const QUrl url(uri);
+
     bool isUdp264   = uri.contains("udp://",    Qt::CaseInsensitive);
-    bool isRtsp     = uri.contains("rtsp://",   Qt::CaseInsensitive);
+    const bool isRtsp = url.scheme().startsWith("rtsp", Qt::CaseInsensitive);
     bool isUdp265   = uri.contains("udp265://", Qt::CaseInsensitive);
     bool isTcpMPEGTS= uri.contains("tcp://",    Qt::CaseInsensitive);
     bool isUdpMPEGTS= uri.contains("mpegts://", Qt::CaseInsensitive);
@@ -770,15 +773,28 @@ GstVideoReceiver::_makeSource(const QString& uri)
     GstElement* srcbin  = nullptr;
 
     do {
-        QUrl url(uri);
+        if (isRtsp) {
+            if (!GStreamer::is_valid_rtsp_uri(uri.toUtf8().constData())) {
+                qCCritical(VideoReceiverLog) << "Invalid RTSP URI:" << uri;
+                break;
+            }
 
-        if(isTcpMPEGTS) {
+            source = gst_element_factory_make("rtspsrc", "source");
+            if (!source) {
+                qCCritical(VideoReceiverLog) << "gst_element_factory_make('rtspsrc') failed";
+                break;
+            }
+
+            g_object_set(source,
+                         "location", uri.toUtf8().constData(),
+                         "latency", 17,
+                         "udp-reconnect", TRUE,
+                         "timeout", _udpReconnect_us,
+                         NULL);
+
+        } else if (isTcpMPEGTS) {
             if ((source = gst_element_factory_make("tcpclientsrc", "source")) != nullptr) {
                 g_object_set(static_cast<gpointer>(source), "host", qPrintable(url.host()), "port", url.port(), nullptr);
-            }
-        } else if (isRtsp) {
-            if ((source = gst_element_factory_make("rtspsrc", "source")) != nullptr) {
-                g_object_set(static_cast<gpointer>(source), "location", qPrintable(uri), "latency", 17, "udp-reconnect", 1, "timeout", _udpReconnect_us, NULL);
             }
         } else if(isUdp264 || isUdp265 || isUdpMPEGTS) {
             if ((source = gst_element_factory_make("udpsrc", "source")) != nullptr) {
