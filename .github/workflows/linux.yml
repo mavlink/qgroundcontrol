@@ -63,13 +63,6 @@ jobs:
           sudo apt update
           sudo apt install vulkan-sdk
 
-      - name: Install Compiler
-        run: |
-          sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-          sudo apt install gcc-11 g++-11
-          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 100 --slave /usr/bin/g++ g++ /usr/bin/g++-11 --slave /usr/bin/gcov gcov /usr/bin/gcov-11
-          sudo update-alternatives --set gcc /usr/bin/gcc-11
-
       - name: Setup Caching
         uses: ./.github/actions/cache
         with:

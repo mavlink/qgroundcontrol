@@ -216,3 +216,9 @@ fi
 # Ubuntu 22.04
 # wget -qO- https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo tee /etc/apt/trusted.gpg.d/lunarg.asc
 # wget -qO /etc/apt/sources.list.d/lunarg-vulkan-jammy.list http://packages.lunarg.com/vulkan/lunarg-vulkan-jammy.list
+
+# GCC 11
+# add-apt-repository ppa:ubuntu-toolchain-r/test
+# apt-get install gcc-11 g++-11
+# update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 100 --slave /usr/bin/g++ g++ /usr/bin/g++-11 --slave /usr/bin/gcov gcov /usr/bin/gcov-11
+# update-alternatives --set gcc /usr/bin/gcc-11
