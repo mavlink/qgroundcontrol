@@ -17,6 +17,7 @@ on:
       - 'android/**'
       - 'CMakeLists.txt'
       - 'cmake/**'
+      - 'translations/*'
 
 # concurrency:
 #   group: ${{ github.workflow }}-${{ github.ref }}
@@ -72,6 +73,7 @@ jobs:
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
               -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }}
+              -DCMAKE_WARN_DEPRECATED=FALSE
               -DQT_ANDROID_ABIS="${{ env.QT_ANDROID_ABIS }}"
               -DQT_ANDROID_BUILD_ALL_ABIS=OFF
               -DQT_HOST_PATH="${{ env.QT_ROOT_DIR }}/../msvc2022_64"
