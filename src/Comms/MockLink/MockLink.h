@@ -168,11 +168,12 @@ private:
     void _sendStatusTextMessages();
     void _respondWithAutopilotVersion();
     void _sendRCChannels();
-    /// Sends the next parameter to the vehicle
     void _sendADSBVehicles();
     void _sendGeneralMetaData();
     void _sendRemoteIDArmStatus();
+    void _sendVideoInfo();
 
+    /// Sends the next parameter to the vehicle
     void _paramRequestListWorker();
     void _logDownloadWorker();
     void _moveADSBVehicle(int vehicleIndex);

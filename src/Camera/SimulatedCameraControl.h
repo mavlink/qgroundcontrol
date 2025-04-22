@@ -14,6 +14,7 @@
 #include <QtCore/QTimer>
 #include <QtCore/QElapsedTimer>
 
+class QGCVideoStreamInfo;
 class Vehicle;
 
 /// Creates a simulated Camera Control which supports:

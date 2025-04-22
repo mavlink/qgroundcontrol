@@ -8,6 +8,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         QGCCameraIO.h
         QGCCameraManager.cc
         QGCCameraManager.h
+        QGCVideoStreamInfo.cc
+        QGCVideoStreamInfo.h
         SimulatedCameraControl.cc
         SimulatedCameraControl.h
         VehicleCameraControl.cc
