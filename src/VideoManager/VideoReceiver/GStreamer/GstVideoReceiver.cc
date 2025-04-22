@@ -764,6 +764,7 @@ GstVideoReceiver::_makeSource(const QString& uri)
     bool isUdp265   = uri.contains("udp265://", Qt::CaseInsensitive);
     bool isTcpMPEGTS= uri.contains("tcp://",    Qt::CaseInsensitive);
     bool isUdpMPEGTS= uri.contains("mpegts://", Qt::CaseInsensitive);
+    const bool isSrt = url.scheme().contains("srt", Qt::CaseInsensitive);
 
     GstElement* source  = nullptr;
     GstElement* buffer  = nullptr;
@@ -820,6 +821,14 @@ GstVideoReceiver::_makeSource(const QString& uri)
                     caps = nullptr;
                 }
             }
+        } else if (isSrt) {
+            source = gst_element_factory_make("srtsrc", "source");
+            if (!source) {
+                qCCritical(VideoReceiverLog) << "gst_element_factory_make('srtsrc') failed";
+                break;
+            }
+
+            g_object_set(static_cast<gpointer>(source), "uri", uri.toUtf8().constData(), nullptr);
         } else {
             qCDebug(VideoReceiverLog) << "URI is not recognized";
         }

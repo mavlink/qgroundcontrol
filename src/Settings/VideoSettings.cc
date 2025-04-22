@@ -34,6 +34,7 @@ DECLARE_SETTINGGROUP(Video, "Video")
     videoSourceList.append(videoSourceUDPH265);
     videoSourceList.append(videoSourceTCP);
     videoSourceList.append(videoSourceMPEGTS);
+    videoSourceList.append(videoSourceSRT);
     videoSourceList.append(videoSource3DRSolo);
     videoSourceList.append(videoSourceParrotDiscovery);
     videoSourceList.append(videoSourceYuneecMantisG);
@@ -189,6 +190,15 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, tcpUrl)
     return _tcpUrlFact;
 }
 
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, srtUrl)
+{
+    if (!_srtUrlFact) {
+        _srtUrlFact = _createSettingsFact(srtUrlName);
+        (void) connect(_srtUrlFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
+    }
+    return _srtUrlFact;
+}
+
 bool VideoSettings::streamConfigured(void)
 {
     //-- First, check if it's autoconfigured
@@ -220,6 +230,11 @@ bool VideoSettings::streamConfigured(void)
     if(vSource == videoSourceMPEGTS) {
         qCDebug(VideoManagerLog) << "Testing configuration for MPEG-TS Stream:" << udpUrl()->rawValue().toString();
         return !udpUrl()->rawValue().toString().isEmpty();
+    }
+    //-- If SRT, check for URL
+    if (vSource == videoSourceSRT) {
+        qCDebug(VideoManagerLog) << "Testing configuration for SRT Stream:" << srtUrl()->rawValue().toString();
+        return !srtUrl()->rawValue().toString().isEmpty();
     }
     //-- If Herelink Air unit, good to go
     if(vSource == videoSourceHerelinkAirUnit) {

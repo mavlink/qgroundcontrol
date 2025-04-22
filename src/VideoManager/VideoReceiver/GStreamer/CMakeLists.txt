@@ -1,3 +1,5 @@
+# TODO: https://gstreamer.freedesktop.org/documentation/qt6d3d11/index.html#qml6d3d11sink-page
+
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(NOT QGC_ENABLE_GST_VIDEOSTREAMING)

@@ -32,6 +32,13 @@
     "default":     ""
 },
 {
+    "name":         "srtUrl",
+    "shortDesc":    "Video SRT Url",
+    "longDesc":     "SRT url address and port to bind to for video stream. Example: 127.0.0.1:7001",
+    "type":         "string",
+    "default":      "127.0.0.1:9701"
+},
+{
     "name":             "videoSavePath",
     "shortDesc": "Video save directory",
     "longDesc":  "Directory to save videos to.",

@@ -30,6 +30,7 @@ SettingsPage {
     property bool   _isRTSP:                    _isStreamSource && (_videoSource === _videoSettings.rtspVideoSource)
     property bool   _isTCP:                     _isStreamSource && (_videoSource === _videoSettings.tcpVideoSource)
     property bool   _isMPEGTS:                  _isStreamSource && (_videoSource === _videoSettings.mpegtsVideoSource)
+    property bool   _isSRT:                     _isStreamSource && (_videoSource === _videoSettings.srtVideoSource)
     property bool   _videoAutoStreamConfig:     _videoManager.autoStreamConfigured
     property bool   _videoSourceDisabled:       _videoSource === _videoSettings.disabledVideoSource
     property real   _urlFieldWidth:             ScreenTools.defaultFontPixelWidth * 40
@@ -53,7 +54,7 @@ SettingsPage {
     SettingsGroupLayout {
         Layout.fillWidth:   true
         heading:            qsTr("Connection")
-        visible:            !_videoSourceDisabled && !_videoAutoStreamConfig && (_isTCP || _isRTSP | _requiresUDPUrl)
+        visible:            !_videoSourceDisabled && !_videoAutoStreamConfig && (_isTCP || _isRTSP || _requiresUDPUrl || _isSRT)
 
         LabelledFactTextField {
             Layout.fillWidth:           true
@@ -77,6 +78,14 @@ SettingsPage {
             label:                      qsTr("UDP URL")
             fact:                       _videoSettings.udpUrl
             visible:                    _requiresUDPUrl && _videoSettings.udpUrl.visible
+        }
+
+        LabelledFactTextField {
+            Layout.fillWidth:           true
+            textFieldPreferredWidth:    _urlFieldWidth
+            label:                      qsTr("SRT URL")
+            fact:                       _videoSettings.srtUrl
+            visible:                    _isSRT && _videoSettings.srtUrl.visible
         }
     }
 

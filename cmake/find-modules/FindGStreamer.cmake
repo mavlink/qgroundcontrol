@@ -1,8 +1,10 @@
 if(NOT DEFINED GStreamer_FIND_VERSION)
-    if(ANDROID OR IOS OR WIN32)
+    if(ANDROID OR IOS OR MACOS)
+        set(GStreamer_FIND_VERSION 1.24.12)
+    elseif(WIN32) # PluginScanner issue in 1.24.12?
         set(GStreamer_FIND_VERSION 1.22.12)
-    else()
-        set(GStreamer_FIND_VERSION 1.20)
+    elseif(LINUX)
+        set(GStreamer_FIND_VERSION 1.20) # Ubuntu 22.04
     endif()
 endif()
 
@@ -278,58 +280,59 @@ endif()
 
 ################################################################################
 
-# TODO: https://gstreamer.freedesktop.org/documentation/qt6d3d11/index.html#qml6d3d11sink-page
+if(GStreamer_USE_STATIC_LIBS)
+    qt_add_library(GStreamer::Plugins INTERFACE IMPORTED)
+    target_link_directories(GStreamer::Plugins INTERFACE ${GSTREAMER_PLUGIN_PATH})
 
-qt_add_library(GStreamer::Plugins INTERFACE IMPORTED)
-target_link_directories(GStreamer::Plugins INTERFACE ${GSTREAMER_PLUGIN_PATH})
+    set(GST_PLUGINS
+        gstapp
+        gstcoreelements
+        gstisomp4
+        gstlibav
+        gstmatroska
+        gstmpegtsdemux
+        gstopengl
+        gstplayback
+        gstrtp
+        gstrtpmanager
+        gstrtsp
+        gstsdpelem
+        gstsrt
+        gsttcp
+        gstudp
+        gstva
+        gstvaapi
+        gstvideoparsersbad
+        gstx264
+        # gstqml6
+    )
+    if(ANDROID)
+        list(APPEND GST_PLUGINS gstandroidmedia)
+    elseif(IOS)
+        list(APPEND GST_PLUGINS gstapplemedia)
+    endif()
 
-set(GST_PLUGINS
-    gstapp
-    gstcoreelements
-    gstisomp4
-    gstlibav
-    gstmatroska
-    gstmpegtsdemux
-    gstopengl
-    gstplayback
-    gstrtp
-    gstrtpmanager
-    gstrtsp
-    gstsdpelem
-    gsttcp
-    gstudp
-    gstva
-    gstvaapi
-    gstvideoparsersbad
-    gstx264
-    # gstqml6
-)
-if(ANDROID)
-    list(APPEND GST_PLUGINS gstandroidmedia)
-elseif(IOS)
-    list(APPEND GST_PLUGINS gstapplemedia)
-endif()
-
-foreach(plugin IN LISTS GST_PLUGINS)
-    pkg_check_modules(GST_PLUGIN_${plugin} QUIET IMPORTED_TARGET ${plugin})
-    if(GST_PLUGIN_${plugin}_FOUND)
-        target_link_libraries(GStreamer::Plugins INTERFACE PkgConfig::GST_PLUGIN_${plugin})
-    else()
-        find_library(GST_PLUGIN_${plugin}_LIBRARY
-            NAMES ${plugin}
-            PATHS
-                ${GSTREAMER_LIB_PATH}
-                ${GSTREAMER_PLUGIN_PATH}
-        )
-        if(GST_PLUGIN_${plugin}_LIBRARY)
-            target_link_libraries(GStreamer::Plugins INTERFACE ${GST_PLUGIN_${plugin}_LIBRARY})
-            set(GST_PLUGIN_${plugin}_FOUND TRUE)
+    foreach(plugin IN LISTS GST_PLUGINS)
+        pkg_check_modules(GST_PLUGIN_${plugin} QUIET IMPORTED_TARGET ${plugin})
+        if(GST_PLUGIN_${plugin}_FOUND)
+            target_link_libraries(GStreamer::Plugins INTERFACE PkgConfig::GST_PLUGIN_${plugin})
+        else()
+            find_library(GST_PLUGIN_${plugin}_LIBRARY
+                NAMES ${plugin}
+                PATHS
+                    ${GSTREAMER_LIB_PATH}
+                    ${GSTREAMER_PLUGIN_PATH}
+            )
+            if(GST_PLUGIN_${plugin}_LIBRARY)
+                target_link_libraries(GStreamer::Plugins INTERFACE ${GST_PLUGIN_${plugin}_LIBRARY})
+                set(GST_PLUGIN_${plugin}_FOUND TRUE)
+            endif()
         endif()
-    endif()
 
-    if(GST_PLUGIN_${plugin}_FOUND)
-        cmake_print_variables(plugin)
-    endif()
-endforeach()
+        if(GST_PLUGIN_${plugin}_FOUND)
+            cmake_print_variables(plugin)
+        endif()
+    endforeach()
 
-target_link_libraries(GStreamer::GStreamer INTERFACE GStreamer::Plugins)
+    target_link_libraries(GStreamer::GStreamer INTERFACE GStreamer::Plugins)
+endif()

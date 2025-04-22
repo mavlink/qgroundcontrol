@@ -91,6 +91,7 @@ void VideoManager::init()
     (void) connect(_videoSettings->udpUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
     (void) connect(_videoSettings->rtspUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
     (void) connect(_videoSettings->tcpUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
+    (void) connect(_videoSettings->srtUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
     (void) connect(_videoSettings->aspectRatio(), &Fact::rawValueChanged, this, &VideoManager::aspectRatioChanged);
     (void) connect(_videoSettings->lowLatencyMode(), &Fact::rawValueChanged, this, &VideoManager::_lowLatencyModeChanged);
     (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &VideoManager::_setActiveVehicle);
@@ -369,6 +370,7 @@ bool VideoManager::isStreamSource() const
         VideoSettings::videoSourceRTSP,
         VideoSettings::videoSourceTCP,
         VideoSettings::videoSourceMPEGTS,
+        VideoSettings::videoSourceSRT,
         VideoSettings::videoSource3DRSolo,
         VideoSettings::videoSourceParrotDiscovery,
         VideoSettings::videoSourceYuneecMantisG,
@@ -644,6 +646,8 @@ bool VideoManager::_updateSettings(unsigned id)
             settingsChanged |= _updateVideoUri(id, QStringLiteral("udp265://%1").arg(_videoSettings->udpUrl()->rawValue().toString()));
         } else if (source == VideoSettings::videoSourceMPEGTS) {
             settingsChanged |= _updateVideoUri(id, QStringLiteral("mpegts://%1").arg(_videoSettings->udpUrl()->rawValue().toString()));
+        } else if (source == VideoSettings::videoSourceSRT) {
+            settingsChanged |= _updateVideoUri(id, QStringLiteral("srt://%1").arg(_videoSettings->srtUrl()->rawValue().toString()));
         } else if (source == VideoSettings::videoSourceRTSP) {
             settingsChanged |= _updateVideoUri(id, _videoSettings->rtspUrl()->rawValue().toString());
         } else if (source == VideoSettings::videoSourceTCP) {
