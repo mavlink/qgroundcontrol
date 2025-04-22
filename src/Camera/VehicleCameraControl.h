@@ -12,6 +12,7 @@
 #include "MavlinkCameraControl.h"
 #include "QmlObjectListModel.h"
 
+class QGCVideoStreamInfo;
 class QNetworkAccessManager;
 class QDomNode;
 class QDomNodeList;

@@ -107,6 +107,10 @@ void VideoManager::init()
         videoReceiver.name = widgetTypes[videoReceiver.index];
 
         (void) connect(videoReceiver.receiver, &VideoReceiver::onStartComplete, this, [this, &videoReceiver](VideoReceiver::STATUS status) {
+            if (!videoReceiver.receiver) {
+                return;
+            }
+
             qCDebug(VideoManagerLog) << "Video" << videoReceiver.index << "Start complete, status:" << status;
             switch (status) {
             case VideoReceiver::STATUS_OK:
@@ -543,65 +547,53 @@ bool VideoManager::_updateAutoStream(unsigned id)
         return false;
     }
 
-    const QGCVideoStreamInfo *const pInfo = _activeVehicle->cameraManager()->currentStreamInstance();
+    const QGCVideoStreamInfo *pInfo = nullptr;
+    if (id == 0) {
+        pInfo = _activeVehicle->cameraManager()->currentStreamInstance();
+    } else if (id == 1) {
+        pInfo = _activeVehicle->cameraManager()->thermalStreamInstance();
+    }
+
     if (!pInfo) {
         return false;
     }
 
-    bool settingsChanged = false;
-    if (id == 0) {
-        qCDebug(VideoManagerLog) << "Configure primary stream:" << pInfo->uri();
-        switch(pInfo->type()) {
-        case VIDEO_STREAM_TYPE_RTSP:
-            settingsChanged = _updateVideoUri(id, pInfo->uri());
-            if (settingsChanged) {
-                _videoSettings->videoSource()->setRawValue(VideoSettings::videoSourceRTSP);
-            }
-            break;
-        case VIDEO_STREAM_TYPE_TCP_MPEG:
-            settingsChanged = _updateVideoUri(id, pInfo->uri());
-            if (settingsChanged) {
-                _videoSettings->videoSource()->setRawValue(VideoSettings::videoSourceTCP);
-            }
-            break;
-        case VIDEO_STREAM_TYPE_RTPUDP: {
-            const QString url = pInfo->uri().contains("udp://") ? pInfo->uri() : QStringLiteral("udp://0.0.0.0:%1").arg(pInfo->uri());
-            settingsChanged = _updateVideoUri(id, url);
-            if (settingsChanged) {
-                _videoSettings->videoSource()->setRawValue(VideoSettings::videoSourceUDPH264);
-            }
-            break;
+    qCDebug(VideoManagerLog) << QString("Configure stream (%1):").arg(id) << pInfo->uri();
+
+    QString source, url;
+    switch (pInfo->type()) {
+    case VIDEO_STREAM_TYPE_RTSP:
+        source = VideoSettings::videoSourceRTSP;
+        url = pInfo->uri();
+        break;
+    case VIDEO_STREAM_TYPE_TCP_MPEG:
+        source = VideoSettings::videoSourceTCP;
+        url = pInfo->uri();
+        break;
+    case VIDEO_STREAM_TYPE_RTPUDP:
+        if (pInfo->encoding() == VIDEO_STREAM_ENCODING_H265) {
+            source = VideoSettings::videoSourceUDPH265;
+            url = pInfo->uri().contains("udp265://") ? pInfo->uri() : QStringLiteral("udp265://0.0.0.0:%1").arg(pInfo->uri());
+        } else {
+            source = VideoSettings::videoSourceUDPH264;
+            url = pInfo->uri().contains("udp://") ? pInfo->uri() : QStringLiteral("udp://0.0.0.0:%1").arg(pInfo->uri());
         }
-        case VIDEO_STREAM_TYPE_MPEG_TS:
-            settingsChanged = _updateVideoUri(id, QStringLiteral("mpegts://0.0.0.0:%1").arg(pInfo->uri()));
-            if (settingsChanged) {
-                _videoSettings->videoSource()->setRawValue(VideoSettings::videoSourceMPEGTS);
-            }
-            break;
-        default:
-            settingsChanged = _updateVideoUri(id, pInfo->uri());
-            break;
-        }
-    } else if (id == 1) {
-        const QGCVideoStreamInfo *const pTinfo = _activeVehicle->cameraManager()->thermalStreamInstance();
-        if (pTinfo) {
-            qCDebug(VideoManagerLog) << "Configure secondary stream:" << pTinfo->uri();
-            switch(pTinfo->type()) {
-            case VIDEO_STREAM_TYPE_RTSP:
-            case VIDEO_STREAM_TYPE_TCP_MPEG:
-                settingsChanged = _updateVideoUri(id, pTinfo->uri());
-                break;
-            case VIDEO_STREAM_TYPE_RTPUDP:
-                settingsChanged = _updateVideoUri(id, QStringLiteral("udp://0.0.0.0:%1").arg(pTinfo->uri()));
-                break;
-            case VIDEO_STREAM_TYPE_MPEG_TS:
-                settingsChanged = _updateVideoUri(id, QStringLiteral("mpegts://0.0.0.0:%1").arg(pTinfo->uri()));
-                break;
-            default:
-                settingsChanged = _updateVideoUri(id, pTinfo->uri());
-                break;
-            }
-        }
+        break;
+    case VIDEO_STREAM_TYPE_MPEG_TS:
+        source = VideoSettings::videoSourceMPEGTS;
+        url = pInfo->uri().contains("mpegts://") ? pInfo->uri() : QStringLiteral("mpegts://0.0.0.0:%1").arg(pInfo->uri());
+        break;
+    default:
+        qCWarning(VideoManagerLog) << "Unknown VIDEO_STREAM_TYPE";
+        source = VideoSettings::videoSourceNoVideo;
+        url = pInfo->uri();
+        break;
+    }
+
+    const bool settingsChanged = _updateVideoUri(id, url);
+
+    if ((id == 0) && settingsChanged) {
+        _videoSettings->videoSource()->setRawValue(source);
     }
 
     return settingsChanged;
@@ -627,14 +619,7 @@ bool VideoManager::_updateSettings(unsigned id)
     }
 
     settingsChanged |= _updateUVC();
-
-    if (_activeVehicle && _activeVehicle->cameraManager()) {
-        const QGCVideoStreamInfo *const pInfo = _activeVehicle->cameraManager()->currentStreamInstance();
-        if (pInfo) {
-            settingsChanged |= _updateAutoStream(id);
-            return settingsChanged;
-        }
-    }
+    settingsChanged |= _updateAutoStream(id);
 
     if (id == 0) {
         const QString source = _videoSettings->videoSource()->rawValue().toString();
@@ -762,7 +747,7 @@ void VideoManager::_setActiveVehicle(Vehicle *vehicle)
             if (pCamera) {
                 pCamera->stopStream();
             }
-            (void) disconnect(_activeVehicle->cameraManager(), &QGCCameraManager::streamChanged, this, &VideoManager::_restartAllVideos);
+            (void) disconnect(_activeVehicle->cameraManager(), &QGCCameraManager::streamChanged, this, &VideoManager::_videoSourceChanged);
         }
     }
 
@@ -770,7 +755,7 @@ void VideoManager::_setActiveVehicle(Vehicle *vehicle)
     if (_activeVehicle) {
         (void) connect(_activeVehicle->vehicleLinkManager(), &VehicleLinkManager::communicationLostChanged, this, &VideoManager::_communicationLostChanged);
         if (_activeVehicle->cameraManager()) {
-            (void) connect(_activeVehicle->cameraManager(), &QGCCameraManager::streamChanged, this, &VideoManager::_restartAllVideos);
+            (void) connect(_activeVehicle->cameraManager(), &QGCCameraManager::streamChanged, this, &VideoManager::_videoSourceChanged);
             MavlinkCameraControl *const pCamera = _activeVehicle->cameraManager()->currentCameraInstance();
             if (pCamera) {
                 pCamera->resumeStream();
@@ -781,7 +766,7 @@ void VideoManager::_setActiveVehicle(Vehicle *vehicle)
     }
 
     emit autoStreamConfiguredChanged();
-    _restartAllVideos();
+    _videoSourceChanged();
 }
 
 void VideoManager::_communicationLostChanged(bool connectionLost)

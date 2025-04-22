@@ -13,6 +13,7 @@
 #include "SettingsManager.h"
 #include "FlyViewSettings.h"
 #include "Vehicle.h"
+#include "QGCVideoStreamInfo.h"
 
 #include <QtQml/QQmlEngine>
 

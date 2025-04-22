@@ -17,6 +17,7 @@
 #include "Joystick.h"
 #include "CameraMetaData.h"
 #include "JsonHelper.h"
+#include "QGCVideoStreamInfo.h"
 
 #include <QtCore/QFile>
 #include <QtCore/QJsonArray>

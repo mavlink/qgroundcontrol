@@ -10,6 +10,7 @@
 #pragma once
 
 #include "FactGroup.h"
+#include "QGCVideoStreamInfo.h"
 
 #include <QtCore/QObject>
 #include <QtCore/QSizeF>
@@ -22,42 +23,6 @@ class QmlObjectListModel;
 
 Q_DECLARE_LOGGING_CATEGORY(CameraControlLog)
 Q_DECLARE_LOGGING_CATEGORY(CameraControlVerboseLog)
-
-/*===========================================================================*/
-
-/// Video Stream Info
-/// Encapsulates the contents of a [VIDEO_STREAM_INFORMATION](https://mavlink.io/en/messages/common.html#VIDEO_STREAM_INFORMATION) message
-class QGCVideoStreamInfo : public QObject
-{
-    Q_OBJECT
-    Q_MOC_INCLUDE("QmlObjectListModel.h")
-public:
-    QGCVideoStreamInfo(QObject* parent, const mavlink_video_stream_information_t* si);
-
-    Q_PROPERTY(QString      uri                 READ uri                NOTIFY infoChanged)
-    Q_PROPERTY(QString      name                READ name               NOTIFY infoChanged)
-    Q_PROPERTY(int          streamID            READ streamID           NOTIFY infoChanged)
-    Q_PROPERTY(int          type                READ type               NOTIFY infoChanged)
-    Q_PROPERTY(qreal        aspectRatio         READ aspectRatio        NOTIFY infoChanged)
-    Q_PROPERTY(qreal        hfov                READ hfov               NOTIFY infoChanged)
-    Q_PROPERTY(bool         isThermal           READ isThermal          NOTIFY infoChanged)
-
-    QString uri             () const { return QString(_streamInfo.uri);  }
-    QString name            () const { return QString(_streamInfo.name); }
-    qreal   aspectRatio     () const;
-    qreal   hfov            () const{ return _streamInfo.hfov; }
-    int     type            () const{ return _streamInfo.type; }
-    int     streamID        () const{ return _streamInfo.stream_id; }
-    bool    isThermal       () const{ return _streamInfo.flags & VIDEO_STREAM_STATUS_FLAGS_THERMAL; }
-
-    bool    update          (const mavlink_video_stream_status_t* vs);
-
-signals:
-    void    infoChanged     ();
-
-private:
-    mavlink_video_stream_information_t _streamInfo;
-};
 
 /*===========================================================================*/
 
