@@ -10,6 +10,7 @@ from PyQt5.QtCore import Qt
 import sys
 import time
 import configparser
+VERSION = 1.0
 
 #FILE SECTIONS = ['LinkManager', 'Video', 'General', 'MainWindowState', 'JoystickManager', 'QGC_MAVLINK_PROTOCOL', 'Units', 'DEFAULT', 'FlightMapPosition', 'QGCQml', 'Vehicle14', 'LinkConfigurations', 'MAVLinkLogGroup', 'Vehicle12', 'LoggingFilters', 'Vehicle15', 'Branding', 'Joysticks', 'FlyView', 'TelemetryBarUserSettings-2', 'RadioCalibration']
 CONFIG_CRITICAL_SECTIONS = ['Joysticks', 'Video','TelemetryBarUserSettings-2', 'JoystickManager', 'LinkManager' ]
@@ -41,7 +42,7 @@ class ProgressWindow:
 
         # Create window
         self.window = QWidget()
-        self.window.setWindowTitle("Feedback")
+        self.window.setWindowTitle(f"QGC config script checker v{VERSION}")
         self.window.setGeometry(100, 100, 400, 200)
 
         # Create layout

@@ -2,6 +2,7 @@
 import os
 import shutil
 
+VERSION = "1.0"
 dest_install = '/home/sees/Work/Sees/QGroundControl'
 
 # Define destination directories
@@ -11,6 +12,7 @@ destinations = [
     '/home/sees/.config/QGroundControl.org'
 ]
 
+print(f"Script version {VERSION} starting installation. ")
 os.system("pip install python-dotenv")
 
 # Check if directories exist and create if user confirms
@@ -34,8 +36,15 @@ if not os.path.exists(os.path.join(dest_install,".env")):
 else:
 	print(".env file exists, won't overwrite it")
 shutil.copy2('seesai-logo-narrow.jpg', dest_install)
-shutil.copy2('QGroundControl Daily.ini', '/home/sees/.config/QGroundControl.org')
-
+if not os.path.exists('/home/sees/.config/QGroundControl.org/QGroundControl Daily.ini'):
+	print("No .ini file available, copying template one")
+	shutil.copy2('QGroundControl Daily.ini', '/home/sees/.config/QGroundControl.org')
+else:
+	print(".ini file exists, renaming it as .old")
+	shutil.move('/home/sees/.config/QGroundControl.org/QGroundControl Daily.ini', '/home/sees/.config/QGroundControl.org/QGroundControl Daily.old')
+	shutil.copy2('QGroundControl Daily.ini', '/home/sees/.config/QGroundControl.org')
 
 print("Files copied successfully!")
+
+
 
