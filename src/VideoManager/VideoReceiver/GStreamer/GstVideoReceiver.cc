@@ -22,6 +22,8 @@
 #include <QtCore/QUrl>
 #include <QtCore/QDateTime>
 
+#include <gst/gst.h>
+
 QGC_LOGGING_CATEGORY(VideoReceiverLog, "VideoReceiverLog")
 
 //-----------------------------------------------------------------------------
