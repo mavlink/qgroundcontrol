@@ -7,13 +7,10 @@ if(NOT QGC_ENABLE_GST_VIDEOSTREAMING)
     return()
 endif()
 
+add_subdirectory(gstqgc)
+
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
-        gstqgc.cc
-        gstqgcelement.cc
-        gstqgcelements.h
-        gstqgcvideosinkbin.cc
-        gstqgcvideosinkbin.h
         GStreamer.cc
         GStreamer.h
         GStreamerHelpers.cc
