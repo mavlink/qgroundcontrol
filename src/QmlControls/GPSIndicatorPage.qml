@@ -35,7 +35,7 @@ ToolIndicatorPage {
     readonly property var    _femtomes:           0b01000
     readonly property var    _ublox:              0b10000
     
-    /* Manufacturer is used to determine witch parameters to displays
+    /* Manufacturer is used to determine which parameters to displays
      *  1 0b00001 : Standard parameters implemented for all receivers manufacturer
      *  2 0b00010 : Trimble
      *  4 0b00100 : Septentrio
