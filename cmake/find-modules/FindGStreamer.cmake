@@ -1,8 +1,8 @@
 if(NOT DEFINED GStreamer_FIND_VERSION)
-    if(ANDROID OR IOS OR WIN32)
-        set(GStreamer_FIND_VERSION 1.22.12)
-    else()
+    if(LINUX)
         set(GStreamer_FIND_VERSION 1.20)
+    else()
+        set(GStreamer_FIND_VERSION 1.22.12)
     endif()
 endif()
 
@@ -14,7 +14,7 @@ if(NOT DEFINED GStreamer_ROOT_DIR)
     endif()
 
     if(DEFINED GStreamer_ROOT_DIR AND NOT EXISTS "${GStreamer_ROOT_DIR}")
-        message(STATUS "The user provided directory GStreamer_ROOT_DIR=${GStreamer_ROOT_DIR} does not exist")
+        message(STATUS "The user provided GStreamer directory does not exist: ${GStreamer_ROOT_DIR}")
     endif()
 endif()
 
@@ -26,28 +26,42 @@ if(NOT DEFINED GStreamer_USE_STATIC_LIBS)
     endif()
 endif()
 
+if(NOT DEFINED GStreamer_USE_FRAMEWORK)
+    if(APPLE)
+        set(GStreamer_USE_FRAMEWORK ON)
+    else()
+        set(GStreamer_USE_FRAMEWORK OFF)
+    endif()
+endif()
+
 ################################################################################
 
 set(PKG_CONFIG_ARGN)
 
 if(WIN32)
-    if(DEFINED ENV{GSTREAMER_1_0_ROOT_X86_64} AND EXISTS $ENV{GSTREAMER_1_0_ROOT_X86_64})
-        set(GStreamer_ROOT_DIR $ENV{GSTREAMER_1_0_ROOT_X86_64})
-        cmake_path(CONVERT "${GStreamer_ROOT_DIR}" TO_CMAKE_PATH_LIST GStreamer_ROOT_DIR NORMALIZE)
-    elseif(MSVC AND DEFINED ENV{GSTREAMER_1_0_ROOT_MSVC_X86_64} AND EXISTS $ENV{GSTREAMER_1_0_ROOT_MSVC_X86_64})
-        set(GStreamer_ROOT_DIR $ENV{GSTREAMER_1_0_ROOT_MSVC_X86_64})
-        cmake_path(CONVERT "${GStreamer_ROOT_DIR}" TO_CMAKE_PATH_LIST GStreamer_ROOT_DIR NORMALIZE)
-    elseif(MINGW AND DEFINED ENV{GSTREAMER_1_0_ROOT_MINGW_X86_64} AND EXISTS $ENV{GSTREAMER_1_0_ROOT_MINGW_X86_64})
-        set(GStreamer_ROOT_DIR $ENV{GSTREAMER_1_0_ROOT_MINGW_X86_64})
-        cmake_path(CONVERT "${GStreamer_ROOT_DIR}" TO_CMAKE_PATH_LIST GStreamer_ROOT_DIR NORMALIZE)
-    elseif(EXISTS "C:/Program Files/gstreamer/1.0/msvc_x86_64")
-        set(GStreamer_ROOT_DIR "C:/Program Files/gstreamer/1.0/msvc_x86_64")
-    else()
-        set(GStreamer_ROOT_DIR "C:/gstreamer/1.0/msvc_x86_64")
+    if(NOT DEFINED GStreamer_ROOT_DIR)
+        if(DEFINED ENV{GSTREAMER_1_0_ROOT_X86_64} AND EXISTS $ENV{GSTREAMER_1_0_ROOT_X86_64})
+            set(GStreamer_ROOT_DIR $ENV{GSTREAMER_1_0_ROOT_X86_64})
+        elseif(MSVC AND DEFINED ENV{GSTREAMER_1_0_ROOT_MSVC_X86_64} AND EXISTS $ENV{GSTREAMER_1_0_ROOT_MSVC_X86_64})
+            set(GStreamer_ROOT_DIR $ENV{GSTREAMER_1_0_ROOT_MSVC_X86_64})
+        elseif(MINGW AND DEFINED ENV{GSTREAMER_1_0_ROOT_MINGW_X86_64} AND EXISTS $ENV{GSTREAMER_1_0_ROOT_MINGW_X86_64})
+            set(GStreamer_ROOT_DIR $ENV{GSTREAMER_1_0_ROOT_MINGW_X86_64})
+        elseif(EXISTS "C:/Program Files/gstreamer/1.0/msvc_x86_64")
+            set(GStreamer_ROOT_DIR "C:/Program Files/gstreamer/1.0/msvc_x86_64")
+        elseif(EXISTS "C:/gstreamer/1.0/msvc_x86_64")
+            set(GStreamer_ROOT_DIR "C:/gstreamer/1.0/msvc_x86_64")
+        endif()
     endif()
+
+    cmake_path(CONVERT "${GStreamer_ROOT_DIR}" TO_CMAKE_PATH_LIST GStreamer_ROOT_DIR NORMALIZE)
+    if(NOT EXISTS "${GStreamer_ROOT_DIR}")
+        message(FATAL_ERROR "Could not locate GStreamer - check installation or set environment/cmake variables")
+    endif()
+
     set(GSTREAMER_LIB_PATH "${GStreamer_ROOT_DIR}/lib")
     set(GSTREAMER_PLUGIN_PATH "${GSTREAMER_LIB_PATH}/gstreamer-1.0")
     set(GSTREAMER_INCLUDE_PATH "${GStreamer_ROOT_DIR}/include")
+
     set(ENV{PKG_CONFIG} "${GStreamer_ROOT_DIR}/bin")
     set(PKG_CONFIG_EXECUTABLE "$ENV{PKG_CONFIG}/pkg-config.exe")
     set(ENV{PKG_CONFIG_PATH} "${GSTREAMER_LIB_PATH}/pkgconfig;${GSTREAMER_PLUGIN_PATH}/pkgconfig;$ENV{PKG_CONFIG_PATH}")
@@ -57,16 +71,29 @@ if(WIN32)
         --define-variable=libdir=${GSTREAMER_LIB_PATH}
         --define-variable=includedir=${GSTREAMER_INCLUDE_PATH}
     )
-
 elseif(LINUX)
-    set(GStreamer_ROOT_DIR "/usr")
+    if(NOT DEFINED GStreamer_ROOT_DIR)
+        if(EXISTS "/usr")
+            set(GStreamer_ROOT_DIR "/usr")
+        endif()
+    endif()
+
+    cmake_path(CONVERT "${GStreamer_ROOT_DIR}" TO_CMAKE_PATH_LIST GStreamer_ROOT_DIR NORMALIZE)
+    if(NOT EXISTS "${GStreamer_ROOT_DIR}")
+        message(FATAL_ERROR "Could not locate GStreamer - check installation or set environment/cmake variables")
+    endif()
+
     if(EXISTS "${GStreamer_ROOT_DIR}/lib/${CMAKE_SYSTEM_PROCESSOR}-linux-gnu")
         set(GSTREAMER_LIB_PATH "${GStreamer_ROOT_DIR}/lib/${CMAKE_SYSTEM_PROCESSOR}-linux-gnu")
-    else()
+    elseif(EXISTS "${GStreamer_ROOT_DIR}/lib")
         set(GSTREAMER_LIB_PATH "${GStreamer_ROOT_DIR}/lib")
+    else()
+        message(FATAL_ERROR "Could not locate GStreamer - check installation or set environment/cmake variables")
     endif()
+
     set(GSTREAMER_PLUGIN_PATH "${GSTREAMER_LIB_PATH}/gstreamer-1.0")
     set(GSTREAMER_INCLUDE_PATH "${GStreamer_ROOT_DIR}/include")
+
     set(ENV{PKG_CONFIG_PATH} "${GSTREAMER_LIB_PATH}/pkgconfig:$ENV{PKG_CONFIG_PATH}")
 elseif(ANDROID)
     # https://gstreamer.freedesktop.org/data/pkg/android/${GStreamer_FIND_VERSION}/gstreamer-1.0-android-universal-${GStreamer_FIND_VERSION}.tar.xz.sha256sum
@@ -77,84 +104,140 @@ elseif(ANDROID)
         # URL_HASH be92cf477d140c270b480bd8ba0e26b1e01c8db042c46b9e234d87352112e485
     )
 
-    if(${CMAKE_ANDROID_ARCH_ABI} STREQUAL armeabi-v7a)
-        set(GStreamer_ROOT_DIR "${gstreamer_SOURCE_DIR}/armv7")
-    elseif(${CMAKE_ANDROID_ARCH_ABI} STREQUAL arm64-v8a)
-        set(GStreamer_ROOT_DIR "${gstreamer_SOURCE_DIR}/arm64")
-    elseif(${CMAKE_ANDROID_ARCH_ABI} STREQUAL x86)
-        set(GStreamer_ROOT_DIR "${gstreamer_SOURCE_DIR}/x86")
-    elseif(${CMAKE_ANDROID_ARCH_ABI} STREQUAL x86_64)
-        set(GStreamer_ROOT_DIR "${gstreamer_SOURCE_DIR}/x86_64")
+    if(NOT DEFINED GStreamer_ROOT_DIR)
+        if(CMAKE_ANDROID_ARCH_ABI STREQUAL armeabi-v7a)
+            set(GStreamer_ROOT_DIR "${gstreamer_SOURCE_DIR}/armv7")
+        elseif(CMAKE_ANDROID_ARCH_ABI STREQUAL arm64-v8a)
+            set(GStreamer_ROOT_DIR "${gstreamer_SOURCE_DIR}/arm64")
+        elseif(CMAKE_ANDROID_ARCH_ABI STREQUAL x86)
+            set(GStreamer_ROOT_DIR "${gstreamer_SOURCE_DIR}/x86")
+        elseif(CMAKE_ANDROID_ARCH_ABI STREQUAL x86_64)
+            set(GStreamer_ROOT_DIR "${gstreamer_SOURCE_DIR}/x86_64")
+        endif()
     endif()
+
+    cmake_path(CONVERT "${GStreamer_ROOT_DIR}" TO_CMAKE_PATH_LIST GStreamer_ROOT_DIR NORMALIZE)
+    if(NOT EXISTS "${GStreamer_ROOT_DIR}")
+        message(FATAL_ERROR "Could not locate GStreamer - check installation or set environment/cmake variables")
+    endif()
+
     set(GSTREAMER_LIB_PATH "${GStreamer_ROOT_DIR}/lib")
     set(GSTREAMER_PLUGIN_PATH "${GSTREAMER_LIB_PATH}/gstreamer-1.0")
     set(GSTREAMER_INCLUDE_PATH "${GStreamer_ROOT_DIR}/include")
 
-    set(PKG_CONFIG_USE_CMAKE_PREFIX_PATH ON)
     set(ENV{PKG_CONFIG_PATH} "")
     if(CMAKE_HOST_WIN32)
         set(ENV{PKG_CONFIG} "${GStreamer_ROOT_DIR}/share/gst-android/ndk-build/tools/windows")
         set(PKG_CONFIG_EXECUTABLE "$ENV{PKG_CONFIG}/pkg-config.exe")
         set(ENV{PKG_CONFIG_LIBDIR} "${GSTREAMER_LIB_PATH}/pkgconfig;${GSTREAMER_PLUGIN_PATH}/pkgconfig")
+        list(APPEND PKG_CONFIG_ARGN --dont-define-prefix)
     elseif(CMAKE_HOST_UNIX)
         set(ENV{PKG_CONFIG_LIBDIR} "${GSTREAMER_LIB_PATH}/pkgconfig:${GSTREAMER_PLUGIN_PATH}/pkgconfig")
     endif()
+    list(APPEND PKG_CONFIG_ARGN
+        --define-variable=prefix=${GStreamer_ROOT_DIR}
+        --define-variable=libdir=${GSTREAMER_LIB_PATH}
+        --define-variable=includedir=${GSTREAMER_INCLUDE_PATH}
+    )
+elseif(MACOS)
+    if(NOT DEFINED GStreamer_ROOT_DIR)
+        if(EXISTS "/Library/Frameworks/GStreamer.framework")
+            set(GStreamer_ROOT_DIR "/Library/Frameworks/GStreamer.framework/Versions/1.0")
+        elseif(EXISTS "/opt/homebrew/opt/gstreamer")
+            set(GStreamer_ROOT_DIR "/opt/homebrew/opt/gstreamer")
+        elseif(EXISTS "/usr/local/opt/gstreamer")
+            set(GStreamer_ROOT_DIR "/usr/local/opt/gstreamer")
+        endif()
+    endif()
 
+    cmake_path(CONVERT "${GStreamer_ROOT_DIR}" TO_CMAKE_PATH_LIST GStreamer_ROOT_DIR NORMALIZE)
+    if(NOT EXISTS "${GStreamer_ROOT_DIR}")
+        message(FATAL_ERROR "Could not locate GStreamer - check installation or set environment/cmake variables")
+    endif()
+
+    if(GStreamer_USE_FRAMEWORK)
+        set(GSTREAMER_FRAMEWORK_PATH "${GStreamer_ROOT_DIR}/../..")
+    endif()
+
+    set(GSTREAMER_INCLUDE_PATH "${GStreamer_ROOT_DIR}/include")
+    set(GSTREAMER_LIB_PATH "${GStreamer_ROOT_DIR}/lib")
+    set(GSTREAMER_PLUGIN_PATH "${GSTREAMER_LIB_PATH}/gstreamer-1.0")
+
+    set(ENV{PKG_CONFIG} "${GStreamer_ROOT_DIR}/bin")
+    set(PKG_CONFIG_EXECUTABLE "$ENV{PKG_CONFIG}/pkg-config")
+    set(ENV{PKG_CONFIG_PATH} "${GSTREAMER_LIB_PATH}/pkgconfig:${GSTREAMER_PLUGIN_PATH}/pkgconfig:$ENV{PKG_CONFIG_PATH}")
     list(APPEND PKG_CONFIG_ARGN
         --dont-define-prefix
         --define-variable=prefix=${GStreamer_ROOT_DIR}
         --define-variable=libdir=${GSTREAMER_LIB_PATH}
         --define-variable=includedir=${GSTREAMER_INCLUDE_PATH}
     )
-elseif(MACOS)
-    set(CMAKE_FIND_FRAMEWORK ON)
-    list(APPEND CMAKE_FRAMEWORK_PATH "/Library/Frameworks")
-    set(GSTREAMER_FRAMEWORK_PATH "/Library/Frameworks/GStreamer.framework" CACHE PATH "GStreamer Framework Path")
-    set(GStreamer_ROOT_DIR "${GSTREAMER_FRAMEWORK_PATH}/Versions/1.0")
-    set(GSTREAMER_LIB_PATH "${GStreamer_ROOT_DIR}/lib")
-    set(GSTREAMER_PLUGIN_PATH "${GSTREAMER_LIB_PATH}/gstreamer-1.0")
-    set(GSTREAMER_INCLUDE_PATH "${GSTREAMER_FRAMEWORK_PATH}/Headers")
-    set(ENV{PKG_CONFIG} "${GStreamer_ROOT_DIR}/bin")
-    set(ENV{PKG_CONFIG_PATH} "${GSTREAMER_LIB_PATH}/pkgconfig:${GSTREAMER_PLUGIN_PATH}/pkgconfig:$ENV{PKG_CONFIG_PATH}")
 elseif(IOS)
-    # CPMAddPackage(
-    #     NAME gstreamer
-    #     VERSION ${GStreamer_FIND_VERSION}
-    #     URL "https://gstreamer.freedesktop.org/data/pkg/ios/${GStreamer_FIND_VERSION}/gstreamer-1.0-devel-${GStreamer_FIND_VERSION}-ios-universal.pkg"
-    # )
-
-    # set(CMAKE_FIND_FRAMEWORK ON)
-    # list(APPEND CMAKE_FRAMEWORK_PATH "~/Library/Developer/GStreamer/iPhone.sdk")
-    # set(GSTREAMER_FRAMEWORK_PATH "~/Library/Developer/GStreamer/iPhone.sdk/GStreamer.framework")
-    # set(GSTREAMER_INCLUDE_PATH "${GSTREAMER_FRAMEWORK_PATH}/Headers")
-
     message(FATAL_ERROR "GStreamer for iOS is Currently Unsupported.")
+
+    CPMAddPackage(
+        NAME gstreamer
+        VERSION ${GStreamer_FIND_VERSION}
+        URL "https://gstreamer.freedesktop.org/data/pkg/ios/${GStreamer_FIND_VERSION}/gstreamer-1.0-devel-${GStreamer_FIND_VERSION}-ios-universal.pkg"
+    )
+
+    set(GST_PKG_FILE "${gstreamer_SOURCE_DIR}/gstreamer.pkg")
+    set(GST_EXPAND_DIR "${gstreamer_SOURCE_DIR}/gstreamer-pkg-expanded")
+    set(GST_PAYLOAD_DIR "${GST_EXPAND_DIR}/Payload")
+
+    file(MAKE_DIRECTORY "${GST_EXPAND_DIR}")
+    execute_process(
+        COMMAND pkgutil --expand-full "${GST_PKG_FILE}" "${GST_EXPAND_DIR}"
+        RESULT_VARIABLE _pkgutil_rc
+    )
+    if(NOT _pkgutil_rc EQUAL 0)
+        message(FATAL_ERROR "pkgutil failed to expand GStreamer .pkg")
+    endif()
+
+    execute_process(
+        COMMAND xar -xf "${GST_EXPAND_DIR}/gstreamer-1.0-devel-${GStreamer_FIND_VERSION}-ios-universal.pkg/Payload"
+                --directory "${GST_PAYLOAD_DIR}"
+        RESULT_VARIABLE _xar_rc
+    )
+    if(NOT _xar_rc EQUAL 0)
+        message(FATAL_ERROR "xar failed to extract GStreamer Payload")
+    endif()
+
+    # set(GSTREAMER_FRAMEWORK_PATH "/Library/Developer/GStreamer/iPhone.sdk" CACHE PATH "Path of GStreamer.Framework")
+    set(GSTREAMER_FRAMEWORK_PATH "${GST_PAYLOAD_DIR}/usr/local/Frameworks/GStreamer.framework")
+
+    set(GStreamer_ROOT_DIR "${GSTREAMER_FRAMEWORK_PATH}/Versions/1.0")
+
+    if(NOT EXISTS "${GStreamer_ROOT_DIR}")
+        message(FATAL_ERROR "Could not locate GStreamer - check installation or set environment/cmake variables")
+    endif()
+
+    set(GSTREAMER_INCLUDE_PATH "${GSTREAMER_FRAMEWORK_PATH}/Headers")
 endif()
 
-# cmake_print_variables(GStreamer_ROOT_DIR GSTREAMER_LIB_PATH GSTREAMER_PLUGIN_PATH)
+if(NOT EXISTS "${GStreamer_ROOT_DIR}" OR NOT EXISTS "${GSTREAMER_LIB_PATH}" OR NOT EXISTS "${GSTREAMER_PLUGIN_PATH}" OR NOT EXISTS "${GSTREAMER_INCLUDE_PATH}")
+    message(FATAL_ERROR "Could not locate GStreamer - check installation or set environment/cmake variables")
+endif()
+
+if(GStreamer_USE_FRAMEWORK AND NOT EXISTS "${GSTREAMER_FRAMEWORK_PATH}")
+    message(FATAL_ERROR "Could not locate GStreamer - check installation or set environment/cmake variables")
+endif()
 
 ################################################################################
+
+if(GStreamer_USE_FRAMEWORK)
+    list(APPEND CMAKE_FRAMEWORK_PATH "${GSTREAMER_FRAMEWORK_PATH}")
+endif()
 
 if(GStreamer_USE_STATIC_LIBS)
     list(APPEND PKG_CONFIG_ARGN "--static")
 endif()
 
-# TODO: Is this needed with --dont-define-prefix?
-# if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
-    # set(ENV{PKG_CONFIG_DONT_DEFINE_PREFIX} 1)
-# endif()
-
-# message(STATUS "PKG_CONFIG $ENV{PKG_CONFIG}")
-# message(STATUS "PKG_CONFIG_PATH $ENV{PKG_CONFIG_PATH}")
-# message(STATUS "PKG_CONFIG_LIBDIR $ENV{PKG_CONFIG_LIBDIR}")
 find_package(PkgConfig REQUIRED QUIET)
 
-# cmake_print_variables(PKG_CONFIG_EXECUTABLE PKG_CONFIG_ARGN)
-
 list(PREPEND CMAKE_PREFIX_PATH ${GStreamer_ROOT_DIR})
-pkg_check_modules(PC_GStreamer REQUIRED gstreamer-1.0>=${GStreamer_FIND_VERSION})
-# cmake_print_variables(PC_GStreamer)
-set(GStreamer_VERSION "${PC_GStreamer_VERSION}")
+pkg_check_modules(PC_GSTREAMER REQUIRED gstreamer-1.0>=${GStreamer_FIND_VERSION})
+set(GStreamer_VERSION "${PC_GSTREAMER_VERSION}")
 
 ################################################################################
 
@@ -167,16 +250,22 @@ function(find_gstreamer_component component pkgconfig_name)
         if(TARGET PkgConfig::PC_GSTREAMER_${upper})
             qt_add_library(GStreamer::${component} INTERFACE IMPORTED)
             target_link_libraries(GStreamer::${component} INTERFACE PkgConfig::PC_GSTREAMER_${upper})
-            # set_target_properties(GStreamer::${component} PROPERTIES VERSION ${PC_GSTREAMER_${upper}_VERSION})
+            if("PC_GSTREAMER_${upper}" MATCHES "PC_GSTREAMER_GL")
+                get_target_property(_qt_incs PkgConfig::PC_GSTREAMER_GL INTERFACE_INCLUDE_DIRECTORIES)
+                set(__qt_fixed_incs)
+                foreach(path IN LISTS _qt_incs)
+                    if(IS_DIRECTORY "${path}")
+                        list(APPEND __qt_fixed_incs "${path}")
+                    endif()
+                endforeach()
+                set_property(TARGET PkgConfig::PC_GSTREAMER_GL PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${__qt_fixed_incs}")
+            endif()
         endif()
         mark_as_advanced(GStreamer_${component}_INCLUDE_DIR GStreamer_${component}_LIBRARY)
     endif()
 
     if(TARGET ${target})
         set(GStreamer_${component}_FOUND TRUE PARENT_SCOPE)
-        # TODO; define_property
-        # get_target_property(Component_VERSION GStreamer::${component} VERSION)
-        # set(GStreamer_${component}_VERSION ${Component_VERSION} PARENT_SCOPE)
     endif()
 endfunction()
 
@@ -186,27 +275,13 @@ find_gstreamer_component(Core gstreamer-1.0)
 find_gstreamer_component(Base gstreamer-base-1.0)
 find_gstreamer_component(Video gstreamer-video-1.0)
 find_gstreamer_component(Gl gstreamer-gl-1.0)
+find_gstreamer_component(GlPrototypes gstreamer-gl-prototypes-1.0)
 find_gstreamer_component(Rtsp gstreamer-rtsp-1.0)
-
-if(TARGET PkgConfig::PC_GSTREAMER_GL)
-    get_target_property(_qt_incs PkgConfig::PC_GSTREAMER_GL INTERFACE_INCLUDE_DIRECTORIES)
-    set(__qt_fixed_incs)
-    foreach(path IN LISTS _qt_incs)
-        if(IS_DIRECTORY "${path}")
-            list(APPEND __qt_fixed_incs "${path}")
-        endif()
-    endforeach()
-    set_property(TARGET PkgConfig::PC_GSTREAMER_GL PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${__qt_fixed_incs}")
-endif()
 
 ################################################################################
 
 if(GlEgl IN_LIST GStreamer_FIND_COMPONENTS)
     find_gstreamer_component(GlEgl gstreamer-gl-egl-1.0)
-endif()
-
-if(GlPrototypes IN_LIST GStreamer_FIND_COMPONENTS)
-    find_gstreamer_component(GlPrototypes gstreamer-gl-prototypes-1.0)
 endif()
 
 if(GlWayland IN_LIST GStreamer_FIND_COMPONENTS)
@@ -221,12 +296,6 @@ endif()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(GStreamer
-    REQUIRED_VARS
-        GStreamer_Core_FOUND
-        GStreamer_Base_FOUND
-        GStreamer_Video_FOUND
-        GStreamer_Gl_FOUND
-        GStreamer_Rtsp_FOUND
     VERSION_VAR GStreamer_VERSION
     HANDLE_COMPONENTS
 )
@@ -234,28 +303,34 @@ find_package_handle_standard_args(GStreamer
 if(GStreamer_FOUND AND NOT TARGET GStreamer::GStreamer)
     qt_add_library(GStreamer::GStreamer INTERFACE IMPORTED)
 
-    if(APPLE)
-        find_library(GSTREAMER_FRAMEWORK GStreamer PATHS ${GSTREAMER_FRAMEWORK_PATH})
+    if(APPLE AND GStreamer_USE_FRAMEWORK)
+        set(CMAKE_FIND_FRAMEWORK ONLY)
+        find_library(GSTREAMER_FRAMEWORK GStreamer
+            PATHS
+                "${GSTREAMER_FRAMEWORK_PATH}"
+                "/Library/Frameworks"
+                "/usr/local/opt/gstreamer"
+                "/opt/homebrew/opt/gstreamer"
+        )
+        unset(CMAKE_FIND_FRAMEWORK)
         if(GSTREAMER_FRAMEWORK)
+            target_link_libraries(GStreamer::GStreamer INTERFACE ${GSTREAMER_FRAMEWORK})
+            target_include_directories(GStreamer::GStreamer INTERFACE "${GSTREAMER_FRAMEWORK}/Headers")
             if(MACOS)
-                target_link_libraries(GStreamer::GStreamer INTERFACE ${GSTREAMER_FRAMEWORK})
                 target_compile_definitions(GStreamer::GStreamer INTERFACE QGC_GST_MACOS_FRAMEWORK)
-            elseif(IOS)
-                target_link_libraries(GStreamer::GStreamer INTERFACE "-F ~/Library/Developer/GStreamer/iPhone.sdk -framework GStreamer -framework AVFoundation -framework CoreMedia -framework CoreVideo -framework VideoToolbox -liconv -lresolv")
             endif()
-            target_include_directories(GStreamer::GStreamer INTERFACE "${GSTREAMER_INCLUDE_PATH}")
             return()
+        else()
+            message(FATAL_ERROR "Could not locate GStreamer - check installation or set environment/cmake variables")
         endif()
     elseif(ANDROID)
         target_link_options(GStreamer::GStreamer INTERFACE "-Wl,-Bsymbolic")
-        if(${CMAKE_ANDROID_ARCH_ABI} STREQUAL "armeabi-v7a" OR ${CMAKE_ANDROID_ARCH_ABI} STREQUAL "x86")
+        if(CMAKE_SIZEOF_VOID_P EQUAL 4)
             target_link_options(GStreamer::GStreamer INTERFACE "-Wl,-z,notext")
         endif()
     endif()
 
-    if(GStreamer_USE_STATIC_LIBS)
-        target_compile_definitions(GStreamer::GStreamer INTERFACE QGC_GST_STATIC_BUILD)
-    endif()
+    target_link_directories(GStreamer::GStreamer INTERFACE ${GSTREAMER_LIB_PATH})
 
     target_link_libraries(GStreamer::GStreamer
         INTERFACE
@@ -263,9 +338,9 @@ if(GStreamer_FOUND AND NOT TARGET GStreamer::GStreamer)
             GStreamer::Base
             GStreamer::Video
             GStreamer::Gl
+            GStreamer::GlPrototypes
             GStreamer::Rtsp
     )
-    # set_target_properties(GStreamer::GStreamer PROPERTIES VERSION ${GStreamer_VERSION})
 
     foreach(component IN LISTS GStreamer_FIND_COMPONENTS)
         if(GStreamer_${component}_FOUND)
@@ -273,63 +348,71 @@ if(GStreamer_FOUND AND NOT TARGET GStreamer::GStreamer)
         endif()
     endforeach()
 
-    target_link_directories(GStreamer::GStreamer INTERFACE ${GSTREAMER_LIB_PATH})
-endif()
-
 ################################################################################
 
-# TODO: https://gstreamer.freedesktop.org/documentation/qt6d3d11/index.html#qml6d3d11sink-page
+    if(GStreamer_USE_STATIC_LIBS)
+        qt_add_library(GStreamer::Plugins INTERFACE IMPORTED)
+        target_link_directories(GStreamer::Plugins INTERFACE ${GSTREAMER_PLUGIN_PATH})
 
-qt_add_library(GStreamer::Plugins INTERFACE IMPORTED)
-target_link_directories(GStreamer::Plugins INTERFACE ${GSTREAMER_PLUGIN_PATH})
-
-set(GST_PLUGINS
-    gstapp
-    gstcoreelements
-    gstisomp4
-    gstlibav
-    gstmatroska
-    gstmpegtsdemux
-    gstopengl
-    gstplayback
-    gstrtp
-    gstrtpmanager
-    gstrtsp
-    gstsdpelem
-    gsttcp
-    gstudp
-    gstva
-    gstvaapi
-    gstvideoparsersbad
-    gstx264
-    # gstqml6
-)
-if(ANDROID)
-    list(APPEND GST_PLUGINS gstandroidmedia)
-elseif(IOS)
-    list(APPEND GST_PLUGINS gstapplemedia)
-endif()
-
-foreach(plugin IN LISTS GST_PLUGINS)
-    pkg_check_modules(GST_PLUGIN_${plugin} QUIET IMPORTED_TARGET ${plugin})
-    if(GST_PLUGIN_${plugin}_FOUND)
-        target_link_libraries(GStreamer::Plugins INTERFACE PkgConfig::GST_PLUGIN_${plugin})
-    else()
-        find_library(GST_PLUGIN_${plugin}_LIBRARY
-            NAMES ${plugin}
-            PATHS
-                ${GSTREAMER_LIB_PATH}
-                ${GSTREAMER_PLUGIN_PATH}
+        set(GST_PLUGINS
+            # gstqml6
+            gstapp
+            gstcoreelements
+            gstisomp4
+            gstlibav
+            gstmatroska
+            gstmpegtsdemux
+            gstopengl
+            gstplayback
+            gstrtp
+            gstrtpmanager
+            gstrtsp
+            gstsdpelem
+            gsttcp
+            gstudp
+            gstva
+            gstvaapi
+            gstvideoparsersbad
+            gstx264
         )
-        if(GST_PLUGIN_${plugin}_LIBRARY)
-            target_link_libraries(GStreamer::Plugins INTERFACE ${GST_PLUGIN_${plugin}_LIBRARY})
-            set(GST_PLUGIN_${plugin}_FOUND TRUE)
+        if(ANDROID)
+            list(APPEND GST_PLUGINS gstandroidmedia)
+        elseif(IOS)
+            list(APPEND GST_PLUGINS gstapplemedia)
         endif()
+
+        foreach(plugin IN LISTS GST_PLUGINS)
+            pkg_check_modules(GST_PLUGIN_${plugin} QUIET IMPORTED_TARGET ${plugin})
+            if(GST_PLUGIN_${plugin}_FOUND)
+                target_link_libraries(GStreamer::Plugins INTERFACE PkgConfig::GST_PLUGIN_${plugin})
+            else()
+                find_library(GST_PLUGIN_${plugin}_LIBRARY
+                    NAMES ${plugin}
+                    PATHS
+                        ${GSTREAMER_LIB_PATH}
+                        ${GSTREAMER_PLUGIN_PATH}
+                )
+                if(GST_PLUGIN_${plugin}_LIBRARY)
+                    target_link_libraries(GStreamer::Plugins INTERFACE ${GST_PLUGIN_${plugin}_LIBRARY})
+                    set(GST_PLUGIN_${plugin}_FOUND TRUE)
+                endif()
+            endif()
+        endforeach()
+
+        target_link_libraries(GStreamer::GStreamer INTERFACE GStreamer::Plugins)
+        target_compile_definitions(GStreamer::GStreamer INTERFACE QGC_GST_STATIC_BUILD)
+    else()
+        # find_library(
+        #     GSTQML6_LIBRARY
+        #     NAMES gstqml6 libgstqml6
+        #     PATHS "${GSTREAMER_PLUGIN_PATH}"
+        # )
+        # if(GSTQML6_LIBRARY)
+        #     set(GST_PLUGIN_gstqml6_FOUND TRUE)
+        # endif()
     endif()
 
-    if(GST_PLUGIN_${plugin}_FOUND)
-        cmake_print_variables(plugin)
-    endif()
-endforeach()
-
-target_link_libraries(GStreamer::GStreamer INTERFACE GStreamer::Plugins)
+    # if(GST_PLUGIN_gstqml6_FOUND)
+    #     target_compile_definitions(gstqml6gl INTERFACE QGC_GST_QML6GL_FOUND)
+    # endif()
+endif()

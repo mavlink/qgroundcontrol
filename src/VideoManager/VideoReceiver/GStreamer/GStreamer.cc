@@ -21,6 +21,8 @@
 #include <QtCore/QSettings>
 #include <QtQuick/QQuickItem>
 
+#include <gst/gst.h>
+
 QGC_LOGGING_CATEGORY(GStreamerLog, "qgc.videomanager.videoreceiver.gstreamer")
 QGC_LOGGING_CATEGORY(GStreamerAPILog, "qgc.videomanager.videoreceiver.gstreamer.api")
 
@@ -47,9 +49,43 @@ GST_PLUGIN_STATIC_DECLARE(androidmedia);
 GST_PLUGIN_STATIC_DECLARE(applemedia);
 #endif
 #endif
+#if (defined(QGC_GST_STATIC_BUILD) || !defined(QGC_GST_QML6GL_FOUND))
 GST_PLUGIN_STATIC_DECLARE(qml6);
+#endif
 GST_PLUGIN_STATIC_DECLARE(qgc);
 G_END_DECLS
+
+static void _registerPlugins()
+{
+#ifdef QGC_GST_STATIC_BUILD
+    GST_PLUGIN_STATIC_REGISTER(app);
+    GST_PLUGIN_STATIC_REGISTER(coreelements);
+    GST_PLUGIN_STATIC_REGISTER(isomp4);
+    GST_PLUGIN_STATIC_REGISTER(libav);
+    GST_PLUGIN_STATIC_REGISTER(matroska);
+    GST_PLUGIN_STATIC_REGISTER(mpegtsdemux);
+    GST_PLUGIN_STATIC_REGISTER(opengl);
+    GST_PLUGIN_STATIC_REGISTER(playback);
+    GST_PLUGIN_STATIC_REGISTER(rtp);
+    GST_PLUGIN_STATIC_REGISTER(rtpmanager);
+    GST_PLUGIN_STATIC_REGISTER(rtsp);
+    GST_PLUGIN_STATIC_REGISTER(tcp);
+    GST_PLUGIN_STATIC_REGISTER(udp);
+    GST_PLUGIN_STATIC_REGISTER(videoparsersbad);
+    GST_PLUGIN_STATIC_REGISTER(x264);
+#ifdef Q_OS_ANDROID
+    GST_PLUGIN_STATIC_REGISTER(androidmedia);
+#elif defined(Q_OS_IOS)
+    GST_PLUGIN_STATIC_REGISTER(applemedia);
+#endif
+#endif
+
+#if (defined(QGC_GST_STATIC_BUILD) || !defined(QGC_GST_QML6GL_FOUND))
+    GST_PLUGIN_STATIC_REGISTER(qml6);
+#endif
+
+    GST_PLUGIN_STATIC_REGISTER(qgc);
+}
 
 static void qt_gst_log(GstDebugCategory *category,
                        GstDebugLevel level,
@@ -117,40 +153,20 @@ static void _setGstEnvVars()
     _qgcputenv("GST_PLUGIN_PATH", currentDir, "/../Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0");
     _qgcputenv("GTK_PATH", currentDir, "/../Frameworks/GStreamer.framework/Versions/1.0");
 #elif defined(Q_OS_WIN)
-    _qgcputenv("GST_REGISTRY_REUSE_PLUGIN_SCANNER", "no");
-    _qgcputenv("GST_PLUGIN_SCANNER", currentDir, "/../libexec/gstreamer-1.0/gst-plugin-scanner");
-    _qgcputenv("GST_PTP_HELPER_1_0", currentDir, "/../libexec/gstreamer-1.0/gst-ptp-helper");
-    _qgcputenv("GIO_EXTRA_MODULES", currentDir, "/../lib/gio/modules");
-    _qgcputenv("GST_PLUGIN_SYSTEM_PATH_1_0", currentDir, "/../lib/gstreamer-1.0");
-    _qgcputenv("GST_PLUGIN_SYSTEM_PATH", currentDir, "/../lib/gstreamer-1.0");
-    _qgcputenv("GST_PLUGIN_PATH_1_0", currentDir, "/../lib/gstreamer-1.0");
-    _qgcputenv("GST_PLUGIN_PATH", currentDir, "/../lib/gstreamer-1.0");
-#endif
-}
+    const QString binDir = currentDir;
+    const QString libDir = QDir(currentDir).filePath("../lib");
+    const QString pluginDir = QDir(libDir).filePath("gstreamer-1.0");
+    const QString gioMod = QDir(libDir).filePath("gio/modules");
+    const QString scanner = QDir(binDir).filePath("gst-plugin-scanner.exe");
 
-static void _registerPlugins()
-{
-#ifdef QGC_GST_STATIC_BUILD
-    GST_PLUGIN_STATIC_REGISTER(coreelements);
-    GST_PLUGIN_STATIC_REGISTER(playback);
-    GST_PLUGIN_STATIC_REGISTER(libav);
-    GST_PLUGIN_STATIC_REGISTER(rtp);
-    GST_PLUGIN_STATIC_REGISTER(rtsp);
-    GST_PLUGIN_STATIC_REGISTER(udp);
-    GST_PLUGIN_STATIC_REGISTER(videoparsersbad);
-    GST_PLUGIN_STATIC_REGISTER(x264);
-    GST_PLUGIN_STATIC_REGISTER(rtpmanager);
-    GST_PLUGIN_STATIC_REGISTER(isomp4);
-    GST_PLUGIN_STATIC_REGISTER(matroska);
-    GST_PLUGIN_STATIC_REGISTER(mpegtsdemux);
-    GST_PLUGIN_STATIC_REGISTER(opengl);
-    GST_PLUGIN_STATIC_REGISTER(tcp);
-    GST_PLUGIN_STATIC_REGISTER(app);
-#ifdef Q_OS_ANDROID
-    GST_PLUGIN_STATIC_REGISTER(androidmedia);
-#elif defined(Q_OS_IOS)
-    GST_PLUGIN_STATIC_REGISTER(applemedia);
-#endif
+    qputenv("GST_REGISTRY_REUSE_PLUGIN_SCANNER", "no");
+    qputenv("GIO_EXTRA_MODULES", gioMod.toUtf8().constData());
+    qputenv("GST_PLUGIN_SCANNER_1_0", scanner.toUtf8().constData());
+    qputenv("GST_PLUGIN_SCANNER", scanner.toUtf8().constData());
+    qputenv("GST_PLUGIN_SYSTEM_PATH_1_0", pluginDir.toUtf8().constData());
+    qputenv("GST_PLUGIN_SYSTEM_PATH", pluginDir.toUtf8().constData());
+    qputenv("GST_PLUGIN_PATH_1_0", pluginDir.toUtf8().constData());
+    qputenv("GST_PLUGIN_PATH", pluginDir.toUtf8().constData());
 #endif
 }
 
@@ -294,9 +310,6 @@ bool initialize()
 #ifdef Q_OS_IOS
     gst_ios_post_init();
 #endif
-
-    GST_PLUGIN_STATIC_REGISTER(qml6);
-    GST_PLUGIN_STATIC_REGISTER(qgc);
 
     if (!_verifyPlugins()) {
         qCCritical(GStreamerLog) << "Failed to Init GStreamer Plugins";

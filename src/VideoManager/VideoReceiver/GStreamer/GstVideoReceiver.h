@@ -24,7 +24,8 @@
 
 #include "VideoReceiver.h"
 
-#include <gst/gst.h>
+#include <glib.h>
+#include <gst/gstelement.h>
 
 Q_DECLARE_LOGGING_CATEGORY(VideoReceiverLog)
 
