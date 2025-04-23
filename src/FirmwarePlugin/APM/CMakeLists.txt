@@ -12,6 +12,7 @@ if(NOT QGC_DISABLE_APM_PLUGIN)
 
     target_sources(${CMAKE_PROJECT_NAME}
         PRIVATE
+            APM.h
             APMFirmwarePlugin.cc
             APMFirmwarePlugin.h
             APMParameterMetaData.cc

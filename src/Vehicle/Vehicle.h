@@ -357,12 +357,6 @@ public:
     /// Command vichecle to retract landing gear
     Q_INVOKABLE void landingGearRetract();
 
-    /// Command vehicle to Enable Motor Interlock
-    Q_INVOKABLE void motorInterlockEnable();
-
-    /// Command vehicle to Disable Motor Interlock
-    Q_INVOKABLE void motorInterlockDisable();
-
     Q_INVOKABLE void startMission();
 
     /// Alter the current mission item on the vehicle
@@ -409,9 +403,6 @@ public:
     /// Trigger camera using MAV_CMD_DO_DIGICAM_CONTROL command
     Q_INVOKABLE void triggerSimpleCamera(void);
 
-#if !defined(QGC_NO_ARDUPILOT_DIALECT)
-    Q_INVOKABLE void flashBootloader();
-#endif
     /// Set home from flight map coordinate
     Q_INVOKABLE void doSetHome(const QGeoCoordinate& coord);
 
@@ -1316,6 +1307,15 @@ private:
     QMultiHash<uint8_t, uint16_t> _unsupportedMessageIds;
     uint16_t _lastSetMsgIntervalMsgId = 0;
 
+/*===========================================================================*/
+/*                         ardupilotmega Dialect                             */
+/*===========================================================================*/
+public:
+    Q_INVOKABLE void flashBootloader();
+
+    /// Command vehicle to Enable/Disable Motor Interlock
+    Q_INVOKABLE void motorInterlock(bool enable);
+/*---------------------------------------------------------------------------*/
 /*===========================================================================*/
 /*                         Status Text Handler                               */
 /*===========================================================================*/

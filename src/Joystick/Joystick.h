@@ -221,8 +221,7 @@ signals:
     void gripperAction(GRIPPER_ACTIONS gripperAction);
     void landingGearDeploy();
     void landingGearRetract();
-    void motorInterlockEnable();
-    void motorInterlockDisable();
+    void motorInterlock(bool enable);
     void unknownAction(const QString &action);
 
 protected:
