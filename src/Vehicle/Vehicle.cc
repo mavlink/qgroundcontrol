@@ -56,6 +56,7 @@
 #include <MAVLinkSigning.h>
 #include "GimbalController.h"
 #include "MavlinkSettings.h"
+#include "APM.h"
 
 #ifdef QGC_UTM_ADAPTER
 #include "UTMSPVehicle.h"
@@ -2333,26 +2334,6 @@ void Vehicle::landingGearRetract()
                 1.0f);      // up
 }
 
-void Vehicle::motorInterlockEnable()
-{
-    sendMavCommand(
-                defaultComponentId(),
-                MAV_CMD_DO_AUX_FUNCTION,
-                true,       // show error if fails
-                32,       // motor interlock
-                2);      // Enabled
-}
-
-void Vehicle::motorInterlockDisable()
-{
-    sendMavCommand(
-                defaultComponentId(),
-                MAV_CMD_DO_AUX_FUNCTION,
-                true,       // show error if fails
-                32,       // motor interlock
-                0);      // Disabled
-}
-
 void Vehicle::setCurrentMissionSequence(int seq)
 {
     if (!_firmwarePlugin->sendHomePositionToVehicle()) {
@@ -3635,18 +3616,6 @@ void Vehicle::_writeCsvLine()
     stream << allFactValues.join(",") << "\n";
 }
 
-#if !defined(QGC_NO_ARDUPILOT_DIALECT)
-void Vehicle::flashBootloader()
-{
-    sendMavCommand(defaultComponentId(),
-                   MAV_CMD_FLASH_BOOTLOADER,
-                   true,        // show error
-                   0, 0, 0, 0,  // param 1-4 not used
-                   290876);     // magic number
-
-}
-#endif
-
 void Vehicle::doSetHome(const QGeoCoordinate& coord)
 {
     if (coord.isValid()) {
@@ -4065,6 +4034,35 @@ void Vehicle::setMessageRate(uint8_t compId, uint16_t msgId, int32_t rate)
     );
 }
 
+/*===========================================================================*/
+/*                         ardupilotmega Dialect                             */
+/*===========================================================================*/
+
+void Vehicle::flashBootloader()
+{
+    if (apmFirmware()) {
+        sendMavCommand(
+            defaultComponentId(),
+            MAV_CMD_FLASH_BOOTLOADER,
+            true,        // show error
+            0, 0, 0, 0,  // param 1-4 not used
+            290876);     // magic number
+    }
+}
+
+void Vehicle::motorInterlock(bool enable)
+{
+    if (apmFirmware()) {
+        sendMavCommand(
+            defaultComponentId(),
+            MAV_CMD_DO_AUX_FUNCTION,
+            true,
+            APM::AUX_FUNC::MOTOR_INTERLOCK,
+            enable ? MAV_CMD_DO_AUX_FUNCTION_SWITCH_LEVEL_HIGH : MAV_CMD_DO_AUX_FUNCTION_SWITCH_LEVEL_LOW);
+    }
+}
+
+/*---------------------------------------------------------------------------*/
 /*===========================================================================*/
 /*                         Status Text Handler                               */
 /*===========================================================================*/
