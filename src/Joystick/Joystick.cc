@@ -693,6 +693,8 @@ void Joystick::startPolling(Vehicle* vehicle)
             (void) disconnect(this, &Joystick::gripperAction, _activeVehicle, &Vehicle::setGripperAction);
             (void) disconnect(this, &Joystick::landingGearDeploy, _activeVehicle, &Vehicle::landingGearDeploy);
             (void) disconnect(this, &Joystick::landingGearRetract, _activeVehicle, &Vehicle::landingGearRetract);
+            (void) disconnect(this, &Joystick::motorInterlockEnable, _activeVehicle, &Vehicle::motorInterlockEnable);
+            (void) disconnect(this, &Joystick::motorInterlockDisable, _activeVehicle, &Vehicle::motorInterlockDisable);
             (void) disconnect(_activeVehicle, &Vehicle::flightModesChanged, this, &Joystick::_flightModesChanged);
         }
 
@@ -723,6 +725,8 @@ void Joystick::startPolling(Vehicle* vehicle)
             (void) connect(this, &Joystick::gripperAction, _activeVehicle, &Vehicle::setGripperAction);
             (void) connect(this, &Joystick::landingGearDeploy, _activeVehicle, &Vehicle::landingGearDeploy);
             (void) connect(this, &Joystick::landingGearRetract, _activeVehicle, &Vehicle::landingGearRetract);
+            (void) connect(this, &Joystick::motorInterlockEnable, _activeVehicle, &Vehicle::motorInterlockEnable);
+            (void) connect(this, &Joystick::motorInterlockDisable, _activeVehicle, &Vehicle::motorInterlockDisable);
             (void) connect(_activeVehicle, &Vehicle::flightModesChanged, this, &Joystick::_flightModesChanged);
         }
     }
@@ -753,6 +757,8 @@ void Joystick::stopPolling()
         (void) disconnect(this, &Joystick::gripperAction, _activeVehicle, &Vehicle::setGripperAction);
         (void) disconnect(this, &Joystick::landingGearDeploy, _activeVehicle, &Vehicle::landingGearDeploy);
         (void) disconnect(this, &Joystick::landingGearRetract, _activeVehicle, &Vehicle::landingGearRetract);
+        (void) disconnect(this, &Joystick::motorInterlockEnable, _activeVehicle, &Vehicle::motorInterlockEnable);
+        (void) disconnect(this, &Joystick::motorInterlockDisable, _activeVehicle, &Vehicle::motorInterlockDisable);
         (void) disconnect(_activeVehicle, &Vehicle::flightModesChanged, this, &Joystick::_flightModesChanged);
         _activeVehicle = nullptr;
     }
@@ -1106,6 +1112,14 @@ void Joystick::_executeButtonAction(const QString &action, bool buttonDown)
         if (buttonDown) {
             emit landingGearRetract();
         }
+    } else if (action == _buttonActionMotorInterlockEnable) {
+        if (buttonDown) {
+            emit motorInterlockEnable();
+        }
+    } else if (action == _buttonActionMotorInterlockDisable) {
+        if (buttonDown) {
+            emit motorInterlockDisable();
+        }
     } else {
         if (buttonDown && _activeVehicle) {
             emit unknownAction(action);
@@ -1196,6 +1210,8 @@ void Joystick::_buildActionList(Vehicle *activeVehicle)
     _assignableButtonActions->append(new AssignableButtonAction(_buttonActionGripperRelease));
     _assignableButtonActions->append(new AssignableButtonAction(_buttonActionLandingGearDeploy));
     _assignableButtonActions->append(new AssignableButtonAction(_buttonActionLandingGearRetract));
+    _assignableButtonActions->append(new AssignableButtonAction(_buttonActionMotorInterlockEnable));
+    _assignableButtonActions->append(new AssignableButtonAction(_buttonActionMotorInterlockDisable));
 
     const auto customActions = QGCCorePlugin::instance()->joystickActions();
     for (const auto &action : customActions) {
