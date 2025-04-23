@@ -2333,6 +2333,26 @@ void Vehicle::landingGearRetract()
                 1.0f);      // up
 }
 
+void Vehicle::motorInterlockEnable()
+{
+    sendMavCommand(
+                defaultComponentId(),
+                MAV_CMD_DO_AUX_FUNCTION,
+                true,       // show error if fails
+                32,       // motor interlock
+                2);      // Enabled
+}
+
+void Vehicle::motorInterlockDisable()
+{
+    sendMavCommand(
+                defaultComponentId(),
+                MAV_CMD_DO_AUX_FUNCTION,
+                true,       // show error if fails
+                32,       // motor interlock
+                0);      // Disabled
+}
+
 void Vehicle::setCurrentMissionSequence(int seq)
 {
     if (!_firmwarePlugin->sendHomePositionToVehicle()) {

@@ -357,6 +357,12 @@ public:
     /// Command vichecle to retract landing gear
     Q_INVOKABLE void landingGearRetract();
 
+    /// Command vehicle to Enable Motor Interlock
+    Q_INVOKABLE void motorInterlockEnable();
+
+    /// Command vehicle to Disable Motor Interlock
+    Q_INVOKABLE void motorInterlockDisable();
+
     Q_INVOKABLE void startMission();
 
     /// Alter the current mission item on the vehicle
