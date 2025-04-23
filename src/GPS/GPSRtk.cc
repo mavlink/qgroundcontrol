@@ -81,7 +81,12 @@ void GPSRtk::connectGPS(const QString &device, QStringView gps_type)
 
     } else {
         type = GPSProvider::GPSType::u_blox;
-        rtkSettings->baseReceiverManufacturers()->setRawValue(17);
+        if (gps_type.contains(QStringLiteral("blox"), Qt::CaseInsensitive)) {
+            rtkSettings->baseReceiverManufacturers()->setRawValue(17); // Ublox
+        }else{
+            rtkSettings->baseReceiverManufacturers()->setRawValue(1); // Standart
+        }
+
         qCDebug(GPSRtkLog) << "Connecting U-blox device";
     }
 
