@@ -1,13 +1,9 @@
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+add_subdirectory(gstqml6gl)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE gstqml6gl)
+
+# TODO: https://gstreamer.freedesktop.org/documentation/qt6d3d11/index.html#qml6d3d11sink-page
 
 if(NOT QGC_ENABLE_GST_VIDEOSTREAMING)
-    target_sources(${CMAKE_PROJECT_NAME} PRIVATE GLVideoItemStub.h)
-    return()
-endif()
-
-add_subdirectory(gstqml6gl)
-
-if(NOT TARGET gstqml6gl)
     return()
 endif()
 
@@ -34,6 +30,6 @@ if(IOS)
     )
 endif()
 
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE gstqml6gl)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_GST_STREAMING)
