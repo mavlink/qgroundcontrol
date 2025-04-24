@@ -131,7 +131,7 @@ VideoReceiver *QtMultimediaReceiver::createVideoReceiver(QObject *parent)
     return new QtMultimediaReceiver(nullptr);
 }
 
-void QtMultimediaReceiver::start(const QString &uri, unsigned timeout, int buffer)
+void QtMultimediaReceiver::start(const QString &uri, uint32_t timeout, int buffer)
 {
     Q_UNUSED(buffer);
 
