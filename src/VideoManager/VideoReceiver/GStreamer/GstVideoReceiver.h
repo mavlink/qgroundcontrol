@@ -7,168 +7,130 @@
  *
  ****************************************************************************/
 
-/**
- * @file
- *   @brief QGC Video Receiver
- *   @author Gus Grubba <gus@auterion.com>
- */
-
 #pragma once
 
 #include <QtCore/QLoggingCategory>
-#include <QtCore/QTimer>
-#include <QtCore/QThread>
-#include <QtCore/QWaitCondition>
 #include <QtCore/QMutex>
 #include <QtCore/QQueue>
-
-#include "VideoReceiver.h"
+#include <QtCore/QThread>
+#include <QtCore/QTimer>
+#include <QtCore/QWaitCondition>
 
 #include <glib.h>
 #include <gst/gstelement.h>
 
-Q_DECLARE_LOGGING_CATEGORY(VideoReceiverLog)
+#include "VideoReceiver.h"
 
-class Worker : public QThread
+Q_DECLARE_LOGGING_CATEGORY(GstVideoReceiverLog)
+
+typedef std::function<void()> Task;
+
+/*===========================================================================*/
+
+class GstVideoWorker : public QThread
 {
     Q_OBJECT
 
 public:
-    bool needDispatch() {
-        return QThread::currentThread() != this;
-    }
-
-    void dispatch(std::function<void()> t) {
-        QMutexLocker lock(&_taskQueueSync);
-        _taskQueue.enqueue(t);
-        _taskQueueUpdate.wakeOne();
-    }
-
-    void shutdown() {
-        if (needDispatch()) {
-            dispatch([this](){
-                _shutdown = true;
-            });
-            QThread::wait();
-        } else {
-            QThread::terminate();
-        }
-    }
-
-protected:
-    void run() {
-        while(!_shutdown) {
-            _taskQueueSync.lock();
-
-            while (_taskQueue.isEmpty()) {
-                _taskQueueUpdate.wait(&_taskQueueSync);
-            }
-
-            Task t = _taskQueue.dequeue();
-
-            _taskQueueSync.unlock();
-
-            t();
-        }
-    }
+    explicit GstVideoWorker(QObject *parent = nullptr);
+    ~GstVideoWorker();
+    bool needDispatch() const;
+    void dispatch(Task task);
+    void shutdown();
 
 private:
-    typedef std::function<void()> Task;
-    QWaitCondition      _taskQueueUpdate;
-    QMutex              _taskQueueSync;
-    QQueue<Task>        _taskQueue;
-    bool                _shutdown = false;
+    void run() final;
+
+    QWaitCondition _taskQueueUpdate;
+    QMutex _taskQueueSync;
+    QQueue<Task> _taskQueue;
+    bool _shutdown = false;
 };
+
+/*===========================================================================*/
 
 class GstVideoReceiver : public VideoReceiver
 {
     Q_OBJECT
 
 public:
-    explicit GstVideoReceiver(QObject* parent = nullptr);
-    ~GstVideoReceiver(void);
+    explicit GstVideoReceiver(QObject *parent = nullptr);
+    ~GstVideoReceiver();
 
 public slots:
-    virtual void start(const QString& uri, unsigned timeout, int buffer = 0);
-    virtual void stop(void);
-    virtual void startDecoding(void* sink);
-    virtual void stopDecoding(void);
-    virtual void startRecording(const QString& videoFile, FILE_FORMAT format);
-    virtual void stopRecording(void);
-    virtual void takeScreenshot(const QString& imageFile);
+    void start(const QString &uri, uint32_t timeout, int buffer = 0) override;
+    void stop() override;
+    void startDecoding(void *sink) override;
+    void stopDecoding() override;
+    void startRecording(const QString &videoFile, FILE_FORMAT format) override;
+    void stopRecording() override;
+    void takeScreenshot(const QString &imageFile) override;
 
-protected slots:
-    virtual void _watchdog(void);
-    virtual void _handleEOS(void);
+private slots:
+    void _watchdog();
+    void _handleEOS();
 
-protected:
-    virtual GstElement* _makeSource(const QString& uri);
-    virtual GstElement* _makeDecoder(GstCaps* caps = nullptr, GstElement* videoSink = nullptr);
-    virtual GstElement* _makeFileSink(const QString& videoFile, FILE_FORMAT format);
+private:
+    GstElement *_makeSource(const QString &input);
+    GstElement *_makeDecoder(GstCaps *caps = nullptr, GstElement *videoSink = nullptr);
+    GstElement *_makeFileSink(const QString &videoFile, FILE_FORMAT format);
 
-    virtual void _onNewSourcePad(GstPad* pad);
-    virtual void _onNewDecoderPad(GstPad* pad);
-    virtual bool _addDecoder(GstElement* src);
-    virtual bool _addVideoSink(GstPad* pad);
-    virtual void _noteTeeFrame(void);
-    virtual void _noteVideoSinkFrame(void);
-    virtual void _noteEndOfStream(void);
-    virtual bool _unlinkBranch(GstElement* from);
-    virtual void _shutdownDecodingBranch (void);
-    virtual void _shutdownRecordingBranch(void);
+    void _onNewSourcePad(GstPad *pad);
+    void _onNewDecoderPad(GstPad *pad);
+    bool _addDecoder(GstElement *src);
+    bool _addVideoSink(GstPad *pad);
+    void _noteTeeFrame();
+    void _noteVideoSinkFrame();
+    void _noteEndOfStream();
+    /// -Unlink the branch from the src pad
+    /// -Send an EOS event at the beginning of that branch
+    bool _unlinkBranch(GstElement *from);
+    void _shutdownDecodingBranch();
+    void _shutdownRecordingBranch();
 
-    bool _needDispatch(void);
-    void _dispatchSignal(std::function<void()> emitter);
+    bool _needDispatch();
+    void _dispatchSignal(Task emitter);
 
-    static gboolean _onBusMessage(GstBus* bus, GstMessage* message, gpointer user_data);
-    static void _onNewPad(GstElement* element, GstPad* pad, gpointer data);
-    static void _wrapWithGhostPad(GstElement* element, GstPad* pad, gpointer data);
-    static void _linkPad(GstElement* element, GstPad* pad, gpointer data);
-    static gboolean _padProbe(GstElement* element, GstPad* pad, gpointer user_data);
-    static gboolean _filterParserCaps(GstElement* bin, GstPad* pad, GstElement* element, GstQuery* query, gpointer data);
-    static GstPadProbeReturn _teeProbe(GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
-    static GstPadProbeReturn _videoSinkProbe(GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
-    static GstPadProbeReturn _eosProbe(GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
-    static GstPadProbeReturn _keyframeWatch(GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
+    static gboolean _onBusMessage(GstBus *bus, GstMessage *message, gpointer user_data);
+    static void _onNewPad(GstElement *element, GstPad *pad, gpointer data);
+    static void _wrapWithGhostPad(GstElement *element, GstPad *pad, gpointer data);
+    static void _linkPad(GstElement *element, GstPad *pad, gpointer data);
+    static gboolean _padProbe(GstElement *element, GstPad *pad, gpointer user_data);
+    static gboolean _filterParserCaps(GstElement *bin, GstPad *pad, GstElement *element, GstQuery *query, gpointer data);
+    static GstPadProbeReturn _teeProbe(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
+    static GstPadProbeReturn _videoSinkProbe(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
+    static GstPadProbeReturn _eosProbe(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
+    static GstPadProbeReturn _keyframeWatch(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
 
-    bool                _streaming;
-    bool                _decoding;
-    bool                _recording;
-    bool                _removingDecoder;
-    bool                _removingRecorder;
-    GstElement*         _source;
-    GstElement*         _tee;
-    GstElement*         _decoderValve;
-    GstElement*         _recorderValve;
-    GstElement*         _decoder;
-    GstElement*         _videoSink;
-    GstElement*         _fileSink;
-    GstElement*         _pipeline;
+    bool _decoding = false;
+    bool _endOfStream = false;
+    bool _recording = false;
+    bool _removingDecoder = false;
+    bool _removingRecorder = false;
+    bool _resetVideoSink = false;
+    bool _streaming = false;
+    GstElement *_decoder = nullptr;
+    GstElement *_decoderValve = nullptr;
+    GstElement *_fileSink = nullptr;
+    GstElement *_pipeline = nullptr;
+    GstElement *_recorderValve = nullptr;
+    GstElement *_source = nullptr;
+    GstElement *_tee = nullptr;
+    GstElement *_videoSink = nullptr;
+    GstVideoWorker _worker;
+    gulong _teeProbeId = 0;
+    gulong _videoSinkProbeId = 0;
+    int _buffer = 0;
+    qint64 _lastSourceFrameTime = 0;
+    qint64 _lastVideoFrameTime = 0;
+    QString _uri;
+    QTimer _watchdogTimer;
+    uint32_t _signalDepth = 0;
+    uint32_t _timeout = 0;
 
-    qint64              _lastSourceFrameTime;
-    qint64              _lastVideoFrameTime;
-    bool                _resetVideoSink;
-    gulong              _videoSinkProbeId = 0;
-
-    gulong              _teeProbeId = 0;
-
-    QTimer              _watchdogTimer;
-
-    //-- RTSP UDP reconnect timeout
-    uint64_t            _udpReconnect_us;
-
-    QString             _uri;
-    unsigned            _timeout;
-    int                 _buffer;
-
-    Worker              _slotHandler;
-    uint32_t            _signalDepth;
-
-    bool                _endOfStream;
-
-    static const char*  _kFileMux[FILE_FORMAT_MAX - FILE_FORMAT_MIN];
+    static constexpr const char *_kFileMux[FILE_FORMAT_MAX - FILE_FORMAT_MIN] = {
+        "matroskamux",
+        "qtmux",
+        "mp4mux"
+    };
 };
-
-void* createVideoSink(void* widget);
-
-void initializeVideoReceiver(int argc, char* argv[], int debuglevel);
