@@ -13,29 +13,31 @@ body:
         If you are using an old stable release please upgrade first and verify your issue before reporting.
 
   - type: textarea
-    id: expected-behavior
+    id: description
     attributes:
-      label: Expected Behavior
-      description: Please tell us what should happen as detailed as possible.
-      placeholder: Describe the expected behavior here.
-
-  - type: textarea
-    id: current-behavior
-    attributes:
-      label: Current Behavior
-      description: Please describe what happens instead of the expected behavior.
-      placeholder: Describe the current behavior here.
-
-  - type: textarea
-    id: steps-to-reproduce
-    attributes:
-      label: Steps to Reproduce
-      description: Provide an unambiguous set of steps to reproduce the current behavior.
+      label: Description  **(required)**
+      description: |
+        Please describe your issue in detail. Include:
+        1. **Expected Behavior** – What you expected to happen.
+        2. **Current Behavior** – What actually happened instead.
+        3. **Steps To Reproduce** – Step-by-step list of actions to reproduce the issue.
+        3. **Additional Details** – Any other context that helps explain the problem.
       placeholder: |
+        **Expected Behavior**
+        Describe what you thought should happen here.
+
+        **Current Behavior**
+        Describe what actually happened here.
+
+        **Steps To Reproduce**
         1.
         2.
         3.
-        4.
+
+        **Additional Details**
+        Add any extra info (errors, warnings, etc.) here.
+    validations:
+      required: true
 
   - type: textarea
     id: system-information
@@ -43,18 +45,13 @@ body:
       label: System Information
       description: When posting bug reports, include the following information.
       placeholder: |
-        - Operating System: [e.g. iOS 12.1, Windows 8, macOS Mojave 10.14.1, Ubuntu 14]
-        - QGC Version: [e.g. 3.4.4]
-        - QGC build: [e.g., daily, stable, self-built from source, etc...]
-        - Flight Controller: [e.g., Pixhawk I, Pixhawk Mini, Pixhawk 2, etc.]
-        - Autopilot (with version): [e.g., PX4 1.8.1, Ardupilot Copter 3.6.1]
-
-  - type: textarea
-    id: detailed-description
-    attributes:
-      label: Detailed Description
-      description: Provide further details about your issue/bug.
-      placeholder: Describe your issue in detail here.
+        - QGC Version: [e.g. 4.4.0] **(required)**
+        - QGC build: [e.g. daily, stable, self-built from source, etc...]
+        - Operating System: [e.g. Windows 11, Ubuntu 22.04, macOS 15, iOS 17 ]
+        - Flight Controller: [e.g. CubePilot Cube Orange, Pixhawk 6X, etc.]
+        - Autopilot Software (with version): [e.g., PX4 1.15.4, ArduCopter 4.5.7 ]
+      validations:
+        required: true
 
   - type: textarea
     id: logs-screenshots
