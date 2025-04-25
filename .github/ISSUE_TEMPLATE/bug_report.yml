@@ -36,8 +36,8 @@ body:
 
         **Additional Details**
         Add any extra info (errors, warnings, etc.) here.
-      validations:
-        required: true
+    validations:
+      required: true
 
   - type: textarea
     id: system-information
@@ -50,8 +50,8 @@ body:
         - Operating System: [e.g. Windows 11, Ubuntu 22.04, macOS 15, iOS 17 ]
         - Flight Controller: [e.g. CubePilot Cube Orange, Pixhawk 6X, etc.]
         - Autopilot Software (with version): [e.g., PX4 1.15.4, ArduCopter 4.5.7 ]
-      validations:
-        required: true
+    validations:
+      required: true
 
   - type: textarea
     id: logs-screenshots
