@@ -9,11 +9,14 @@
 
 #pragma once
 
-#include <gst/gst.h>
+#include <QtQuick/QQuickItem>
 
-G_BEGIN_DECLS
+class VideoItemStub : public QQuickItem
+{
+    Q_OBJECT
+    // QML_NAMED_ELEMENT(GstQt6VideoItem)
 
-void gst_ios_pre_init(void);
-void gst_ios_post_init(void);
-
-G_END_DECLS
+public:
+    explicit VideoItemStub(QQuickItem *parent = nullptr)
+        : QQuickItem(parent) {}
+};

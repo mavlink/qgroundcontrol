@@ -109,7 +109,7 @@ public:
     /// Allows the plugin to override the creation of VideoReceiver.
     virtual VideoReceiver *createVideoReceiver(QObject *parent);
     /// Allows the plugin to override the creation of VideoSink.
-    virtual void *createVideoSink(QObject *parent, QQuickItem *widget);
+    virtual void *createVideoSink(QQuickItem *widget, QObject *parent = nullptr);
     /// Allows the plugin to override the release of VideoSink.
     virtual void releaseVideoSink(void *sink);
 

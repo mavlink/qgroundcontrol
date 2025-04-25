@@ -161,6 +161,7 @@ DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
     libopenjp2-7-dev \
     libopus-dev \
     liborc-0.4-dev \
+    libpipewire-0.3-dev \
     libpng-dev \
     libpulse-dev \
     libsoup2.4-dev \

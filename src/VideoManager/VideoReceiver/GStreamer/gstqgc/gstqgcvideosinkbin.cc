@@ -10,8 +10,7 @@
 #include "gstqgcvideosinkbin.h"
 #include "gstqgcelements.h"
 
-#include <gst/gl/gstglmemory.h>
-#include <gst/gsterror.h>
+#include <gst/gl/gl.h>
 
 #define GST_CAT_DEFAULT gst_qgc_video_sink_bin_debug
 GST_DEBUG_CATEGORY_STATIC(GST_CAT_DEFAULT);
@@ -46,23 +45,11 @@ static GParamSpec *properties[PROP_LAST];
 enum
 {
     SIGNAL_0,
-    LAST_SIGNAL
+    SIGNAL_CREATE_ELEMENT,
+    SIGNAL_LAST
 };
 
-static guint gst_qgc_video_sink_bin_signals[LAST_SIGNAL] = { 0 };
-
-static GstStaticPadTemplate sink_pad_template =
-    GST_STATIC_PAD_TEMPLATE("sink",
-        GST_PAD_SINK,
-        GST_PAD_ALWAYS,
-        GST_STATIC_CAPS(
-            "video/x-raw(" GST_CAPS_FEATURE_MEMORY_GL_MEMORY "), "
-            "format = (string) { RGBA, BGRA, RGB, YV12, NV12 }, "
-            "width = " GST_VIDEO_SIZE_RANGE ", "
-            "height = " GST_VIDEO_SIZE_RANGE ", "
-            "framerate = " GST_VIDEO_FPS_RANGE ", "
-            "texture-target = (string) { " GST_GL_TEXTURE_TARGET_2D_STR ", "
-                                           GST_GL_TEXTURE_TARGET_EXTERNAL_OES_STR " } "));
+static guint gst_qgc_video_sink_bin_signals[SIGNAL_LAST] = { 0 };
 
 #define gst_qgc_video_sink_bin_parent_class parent_class
 G_DEFINE_TYPE_WITH_CODE(
@@ -82,6 +69,7 @@ GST_ELEMENT_REGISTER_DEFINE_WITH_CODE(qgcvideosinkbin,"qgcvideosinkbin",
 
 static void gst_qgc_video_sink_bin_set_property(GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec);
 static void gst_qgc_video_sink_bin_get_property(GObject *object, guint prop_id, GValue *value, GParamSpec *pspec);
+static GstElement *gst_qgc_video_sink_bin_on_glsinkbin_create_element(GstElement *object, gpointer udata);
 static void gst_qgc_video_sink_bin_dispose(GObject *object);
 static void gst_qgc_video_sink_bin_finalize(GObject *object);
 
@@ -100,24 +88,28 @@ gst_qgc_video_sink_bin_class_init(GstQgcVideoSinkBinClass *klass)
         "enable-last-sample", "Enable last sample",
         "Retain the most recent buffer for UI snapshotting",
         DEFAULT_ENABLE_LAST_SAMPLE,
-        (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+        (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)
+    );
 
     properties[PROP_LAST_SAMPLE] = g_param_spec_boxed(
         "last-sample", "Last sample",
         "Last preroll/played sample held by the sink",
         GST_TYPE_SAMPLE,
-        (GParamFlags)(G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+        (GParamFlags)(G_PARAM_READABLE | G_PARAM_STATIC_STRINGS)
+    );
 
     properties[PROP_WIDGET] = g_param_spec_pointer(
         "widget", "QQuickItem",
         "Owning QML item – handed off to qml6glsink",
-        (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+        (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)
+    );
 
     properties[PROP_FORCE_ASPECT_RATIO] = g_param_spec_boolean(
         "force-aspect-ratio", "Force aspect ratio",
         "Maintain original pixel aspect during scaling",
         DEFAULT_FORCE_ASPECT_RATIO,
-        (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+        (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)
+    );
 
     properties[PROP_PIXEL_ASPECT_RATIO] = gst_param_spec_fraction(
         "pixel-aspect-ratio", "Pixel aspect ratio",
@@ -125,22 +117,34 @@ gst_qgc_video_sink_bin_class_init(GstQgcVideoSinkBinClass *klass)
         DEFAULT_PAR_N, DEFAULT_PAR_D,
         G_MAXINT, 1,
         1, 1,
-        (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+        (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)
+    );
 
-    properties[PROP_SYNC] =
-        g_param_spec_boolean("sync", "Sync",
-                             "Synchronise frame presentation to the pipeline clock",
-                             DEFAULT_SYNC,
-                             (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+    properties[PROP_SYNC] = g_param_spec_boolean(
+        "sync", "Sync",
+        "Synchronise frame presentation to the pipeline clock",
+        DEFAULT_SYNC,
+        (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)
+    );
 
     g_object_class_install_properties(object_class, PROP_LAST, properties);
 
-    gst_element_class_add_static_pad_template(element_class, &sink_pad_template);
+    gst_qgc_video_sink_bin_signals[SIGNAL_CREATE_ELEMENT] = g_signal_new(
+        "create-element",           /* name */
+        G_TYPE_FROM_CLASS(klass),   /* owner type */
+        G_SIGNAL_RUN_LAST,          /* flags */
+        0,                          /* class offset for default handler */
+        NULL, NULL,                 /* accumulator / accu-data */
+        NULL,                       /* generic marshaller */
+        GST_TYPE_ELEMENT,           /* return type */
+        0                           /* param count */
+    );
 
     gst_element_class_set_static_metadata(element_class,
         "QGC Video Sink Bin", "Sink/Video/Bin",
         "GL accelerated video sink wrapper used by QGroundControl",
-        "QGroundControl team");
+        "QGroundControl team"
+    );
 }
 
 static void
@@ -158,12 +162,17 @@ gst_qgc_video_sink_bin_init(GstQgcVideoSinkBin *self)
         return;
     }
 
+    g_return_if_fail(gst_bin_add(GST_BIN(self), self->glsinkbin));
+
     g_object_set(self->glsinkbin,
                  "sink", self->qmlglsink,
                  PROP_ENABLE_LAST_SAMPLE_NAME, FALSE,
                  NULL);
 
-    g_return_if_fail(gst_bin_add(GST_BIN(self), self->glsinkbin));
+    g_signal_connect(self->glsinkbin,
+                    "create-element",
+                    G_CALLBACK(gst_qgc_video_sink_bin_on_glsinkbin_create_element),
+                    self);
 
     GstPad *sinkpad = gst_element_get_static_pad(self->glsinkbin, "sink");
     if (!sinkpad) {
@@ -300,6 +309,22 @@ gst_qgc_video_sink_bin_get_property(GObject *object, guint prop_id, GValue *valu
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
     }
+}
+
+static GstElement *
+gst_qgc_video_sink_bin_on_glsinkbin_create_element(GstElement *object, gpointer udata)
+{
+    GstBin *glsinkbin = GST_BIN(object);
+    GstQgcVideoSinkBin *qgcVideoSinkBin = GST_QGC_VIDEO_SINK_BIN(udata);
+
+    qgcVideoSinkBin->glsinkbin = GST_ELEMENT(glsinkbin);
+    qgcVideoSinkBin->qmlglsink = gst_element_factory_make("qml6glsink", NULL);
+    if (!qgcVideoSinkBin->qmlglsink) {
+        GST_ERROR_OBJECT(qgcVideoSinkBin, "gst_element_factory_make('qml6glsink') failed");
+        g_signal_emit(GST_ELEMENT(qgcVideoSinkBin), gst_qgc_video_sink_bin_signals[SIGNAL_CREATE_ELEMENT], 0, &qgcVideoSinkBin->qmlglsink);
+    }
+
+    return qgcVideoSinkBin->qmlglsink;
 }
 
 static void

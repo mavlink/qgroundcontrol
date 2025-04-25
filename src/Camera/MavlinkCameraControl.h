@@ -49,6 +49,7 @@ public:
     int     type            () const{ return _streamInfo.type; }
     int     streamID        () const{ return _streamInfo.stream_id; }
     bool    isThermal       () const{ return _streamInfo.flags & VIDEO_STREAM_STATUS_FLAGS_THERMAL; }
+    uint8_t encoding        () const { return _streamInfo.encoding; }
 
     bool    update          (const mavlink_video_stream_status_t* vs);
 
