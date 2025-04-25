@@ -84,7 +84,6 @@ DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
     gstreamer1.0-gl \
     gstreamer1.0-libav \
     gstreamer1.0-rtsp \
-    gstreamer1.0-vaapi \
     gstreamer1.0-x
 
 if apt-cache show gstreamer1.0-qt6 >/dev/null 2>&1 && apt-cache show gstreamer1.0-qt6 2>/dev/null | grep -q "^Package: gstreamer1.0-qt6"; then
