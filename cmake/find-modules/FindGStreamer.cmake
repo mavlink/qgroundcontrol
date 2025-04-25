@@ -40,12 +40,12 @@ set(PKG_CONFIG_ARGN)
 
 if(WIN32)
     if(NOT DEFINED GStreamer_ROOT_DIR)
-        if(DEFINED ENV{GSTREAMER_1_0_ROOT_X86_64} AND EXISTS $ENV{GSTREAMER_1_0_ROOT_X86_64})
-            set(GStreamer_ROOT_DIR $ENV{GSTREAMER_1_0_ROOT_X86_64})
-        elseif(MSVC AND DEFINED ENV{GSTREAMER_1_0_ROOT_MSVC_X86_64} AND EXISTS $ENV{GSTREAMER_1_0_ROOT_MSVC_X86_64})
-            set(GStreamer_ROOT_DIR $ENV{GSTREAMER_1_0_ROOT_MSVC_X86_64})
-        elseif(MINGW AND DEFINED ENV{GSTREAMER_1_0_ROOT_MINGW_X86_64} AND EXISTS $ENV{GSTREAMER_1_0_ROOT_MINGW_X86_64})
-            set(GStreamer_ROOT_DIR $ENV{GSTREAMER_1_0_ROOT_MINGW_X86_64})
+        if(DEFINED ENV{GSTREAMER_1_0_ROOT_X86_64} AND EXISTS "$ENV{GSTREAMER_1_0_ROOT_X86_64}")
+            set(GStreamer_ROOT_DIR "$ENV{GSTREAMER_1_0_ROOT_X86_64}")
+        elseif(MSVC AND DEFINED ENV{GSTREAMER_1_0_ROOT_MSVC_X86_64} AND EXISTS "$ENV{GSTREAMER_1_0_ROOT_MSVC_X86_64}")
+            set(GStreamer_ROOT_DIR "$ENV{GSTREAMER_1_0_ROOT_MSVC_X86_64}")
+        elseif(MINGW AND DEFINED ENV{GSTREAMER_1_0_ROOT_MINGW_X86_64} AND EXISTS "$ENV{GSTREAMER_1_0_ROOT_MINGW_X86_64}")
+            set(GStreamer_ROOT_DIR "$ENV{GSTREAMER_1_0_ROOT_MINGW_X86_64}")
         elseif(EXISTS "C:/Program Files/gstreamer/1.0/msvc_x86_64")
             set(GStreamer_ROOT_DIR "C:/Program Files/gstreamer/1.0/msvc_x86_64")
         elseif(EXISTS "C:/gstreamer/1.0/msvc_x86_64")
@@ -356,29 +356,29 @@ if(GStreamer_FOUND AND NOT TARGET GStreamer::GStreamer)
 
         set(GST_PLUGINS
             # gstqml6
-            gstapp
             gstcoreelements
             gstisomp4
             gstlibav
             gstmatroska
             gstmpegtsdemux
             gstopengl
+            gstopenh264
             gstplayback
             gstrtp
             gstrtpmanager
             gstrtsp
             gstsdpelem
             gsttcp
+            gsttypefindfunctions
             gstudp
-            gstva
-            gstvaapi
             gstvideoparsersbad
-            gstx264
         )
         if(ANDROID)
             list(APPEND GST_PLUGINS gstandroidmedia)
         elseif(IOS)
             list(APPEND GST_PLUGINS gstapplemedia)
+        else()
+            list(APPEND GST_PLUGINS gstva)
         endif()
 
         foreach(plugin IN LISTS GST_PLUGINS)
