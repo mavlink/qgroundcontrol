@@ -36,8 +36,8 @@ body:
 
         **Additional Details**
         Add any extra info (errors, warnings, etc.) here.
-    validations:
-      required: true
+      validations:
+        required: true
 
   - type: textarea
     id: system-information
