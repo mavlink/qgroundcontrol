@@ -94,7 +94,7 @@ jobs:
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run: cmake --build . --target all --config ${{ matrix.BuildType }}
 
-      - name: Sanity check release excecutable
+      - name: Sanity check dev build excecutable
         if: matrix.BuildType == 'Release'
         working-directory: ${{ runner.temp }}/shadow_build_dir/Release/QGroundControl.app/Contents/MacOS
         run: ./QGroundControl --simple-boot-test
@@ -102,6 +102,11 @@ jobs:
       - name: Create DMG
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run: cmake --install . --config ${{ matrix.BuildType }}
+
+      - name: Sanity check install build excecutable
+        if: matrix.BuildType == 'Release'
+        working-directory: ${{ runner.temp }}/shadow_build_dir/staging/QGroundControl.app/Contents/MacOS
+        run: ./QGroundControl --simple-boot-test
 
       - name: Upload Build File
         if: matrix.BuildType == 'Release'
