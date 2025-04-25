@@ -14,7 +14,7 @@ set(QGC_SETTINGS_VERSION "9" CACHE STRING "Settings Version") # If you need to m
 option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 option(QGC_STABLE_BUILD "Stable Build" OFF)
 option(QGC_USE_CACHE "Use Build Caching" ON)
-cmake_dependent_option(QGC_BUILD_TESTING "Enable testing" ON "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
+cmake_dependent_option(QGC_BUILD_TESTING "Enable testing" OFF "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
 cmake_dependent_option(QGC_DEBUG_QML "Build QGroundControl with QML debugging/profiling support." OFF "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
 
 # Features

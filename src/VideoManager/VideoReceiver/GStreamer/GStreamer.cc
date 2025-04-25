@@ -29,24 +29,27 @@ QGC_LOGGING_CATEGORY(GStreamerAPILog, "qgc.videomanager.videoreceiver.gstreamer.
 G_BEGIN_DECLS
 #ifdef QGC_GST_STATIC_BUILD
 GST_PLUGIN_STATIC_DECLARE(coreelements);
-GST_PLUGIN_STATIC_DECLARE(playback);
-GST_PLUGIN_STATIC_DECLARE(libav);
-GST_PLUGIN_STATIC_DECLARE(rtp);
-GST_PLUGIN_STATIC_DECLARE(rtsp);
-GST_PLUGIN_STATIC_DECLARE(udp);
-GST_PLUGIN_STATIC_DECLARE(videoparsersbad);
-GST_PLUGIN_STATIC_DECLARE(x264);
-GST_PLUGIN_STATIC_DECLARE(rtpmanager);
 GST_PLUGIN_STATIC_DECLARE(isomp4);
+GST_PLUGIN_STATIC_DECLARE(libav);
 GST_PLUGIN_STATIC_DECLARE(matroska);
 GST_PLUGIN_STATIC_DECLARE(mpegtsdemux);
 GST_PLUGIN_STATIC_DECLARE(opengl);
+GST_PLUGIN_STATIC_DECLARE(openh264);
+GST_PLUGIN_STATIC_DECLARE(playback);
+GST_PLUGIN_STATIC_DECLARE(rtp);
+GST_PLUGIN_STATIC_DECLARE(rtpmanager);
+GST_PLUGIN_STATIC_DECLARE(rtsp);
+GST_PLUGIN_STATIC_DECLARE(sdpelem);
 GST_PLUGIN_STATIC_DECLARE(tcp);
-GST_PLUGIN_STATIC_DECLARE(app);
+GST_PLUGIN_STATIC_DECLARE(typefindfunctions);
+GST_PLUGIN_STATIC_DECLARE(udp);
+GST_PLUGIN_STATIC_DECLARE(videoparsersbad);
 #ifdef Q_OS_ANDROID
 GST_PLUGIN_STATIC_DECLARE(androidmedia);
 #elif defined(Q_OS_IOS)
 GST_PLUGIN_STATIC_DECLARE(applemedia);
+#else
+GST_PLUGIN_STATIC_DECLARE(va);
 #endif
 #endif
 #if (defined(QGC_GST_STATIC_BUILD) || !defined(QGC_GST_QML6GL_FOUND))
@@ -58,25 +61,28 @@ G_END_DECLS
 static void _registerPlugins()
 {
 #ifdef QGC_GST_STATIC_BUILD
-    GST_PLUGIN_STATIC_REGISTER(app);
     GST_PLUGIN_STATIC_REGISTER(coreelements);
     GST_PLUGIN_STATIC_REGISTER(isomp4);
     GST_PLUGIN_STATIC_REGISTER(libav);
     GST_PLUGIN_STATIC_REGISTER(matroska);
     GST_PLUGIN_STATIC_REGISTER(mpegtsdemux);
     GST_PLUGIN_STATIC_REGISTER(opengl);
+    GST_PLUGIN_STATIC_REGISTER(openh264);
     GST_PLUGIN_STATIC_REGISTER(playback);
     GST_PLUGIN_STATIC_REGISTER(rtp);
     GST_PLUGIN_STATIC_REGISTER(rtpmanager);
     GST_PLUGIN_STATIC_REGISTER(rtsp);
+    GST_PLUGIN_STATIC_REGISTER(sdpelem);
     GST_PLUGIN_STATIC_REGISTER(tcp);
+    GST_PLUGIN_STATIC_REGISTER(typefindfunctions);
     GST_PLUGIN_STATIC_REGISTER(udp);
     GST_PLUGIN_STATIC_REGISTER(videoparsersbad);
-    GST_PLUGIN_STATIC_REGISTER(x264);
 #ifdef Q_OS_ANDROID
     GST_PLUGIN_STATIC_REGISTER(androidmedia);
 #elif defined(Q_OS_IOS)
     GST_PLUGIN_STATIC_REGISTER(applemedia);
+#else
+    GST_PLUGIN_STATIC_REGISTER(va);
 #endif
 #endif
 
@@ -157,16 +163,19 @@ static void _setGstEnvVars()
     const QString libDir = QDir(currentDir).filePath("../lib");
     const QString pluginDir = QDir(libDir).filePath("gstreamer-1.0");
     const QString gioMod = QDir(libDir).filePath("gio/modules");
-    const QString scanner = QDir(binDir).filePath("gst-plugin-scanner.exe");
+    const QString libexecDir = QDir(currentDir).filePath("../libexec");
+    const QString scanner = QDir(libexecDir).filePath("gstreamer-1.0/gst-plugin-scanner");
 
-    qputenv("GST_REGISTRY_REUSE_PLUGIN_SCANNER", "no");
-    qputenv("GIO_EXTRA_MODULES", gioMod.toUtf8().constData());
-    qputenv("GST_PLUGIN_SCANNER_1_0", scanner.toUtf8().constData());
-    qputenv("GST_PLUGIN_SCANNER", scanner.toUtf8().constData());
-    qputenv("GST_PLUGIN_SYSTEM_PATH_1_0", pluginDir.toUtf8().constData());
-    qputenv("GST_PLUGIN_SYSTEM_PATH", pluginDir.toUtf8().constData());
-    qputenv("GST_PLUGIN_PATH_1_0", pluginDir.toUtf8().constData());
-    qputenv("GST_PLUGIN_PATH", pluginDir.toUtf8().constData());
+    if (QFileInfo::exists(pluginDir)) {
+        qputenv("GST_REGISTRY_REUSE_PLUGIN_SCANNER", "no");
+        qputenv("GIO_EXTRA_MODULES", gioMod.toUtf8().constData());
+        qputenv("GST_PLUGIN_SCANNER_1_0", scanner.toUtf8().constData());
+        qputenv("GST_PLUGIN_SCANNER", scanner.toUtf8().constData());
+        qputenv("GST_PLUGIN_SYSTEM_PATH_1_0", pluginDir.toUtf8().constData());
+        qputenv("GST_PLUGIN_SYSTEM_PATH", pluginDir.toUtf8().constData());
+        qputenv("GST_PLUGIN_PATH_1_0", pluginDir.toUtf8().constData());
+        qputenv("GST_PLUGIN_PATH", pluginDir.toUtf8().constData());
+    }
 #endif
 }
 
