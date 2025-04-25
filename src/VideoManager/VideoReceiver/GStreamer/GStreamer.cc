@@ -13,6 +13,7 @@
 #include "QGCLoggingCategory.h"
 #include "SettingsManager.h"
 #include "VideoSettings.h"
+#include "QGCApplication.h"
 #ifdef Q_OS_IOS
 #include "gst_ios_init.h"
 #endif
@@ -322,6 +323,10 @@ bool initialize()
 
     if (!_verifyPlugins()) {
         qCCritical(GStreamerLog) << "Failed to Init GStreamer Plugins";
+        if (qgcApp()->simpleBootTest()) {
+            qCCritical(GStreamerLog) << "Exiting out of simple boot test due to failed plugin verification";
+            exit(1);
+        }
         return false;
     }
 
