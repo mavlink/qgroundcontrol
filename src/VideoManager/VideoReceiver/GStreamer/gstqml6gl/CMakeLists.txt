@@ -1,13 +1,6 @@
 qt_add_library(gstqml6gl STATIC)
 
-if(NOT QGC_ENABLE_GST_VIDEOSTREAMING)
-    target_sources(gstqml6gl PUBLIC GLVideoItemStub.h)
-    target_link_libraries(gstqml6gl PUBLIC Qt6::Quick)
-    target_include_directories(gstqml6gl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-    return()
-endif()
-
-find_package(GStreamer REQUIRED COMPONENTS OPTIONAL_COMPONENTS GlEgl GlWayland GlX11)
+find_package(GStreamer REQUIRED COMPONENTS Gl OPTIONAL_COMPONENTS GlEgl GlWayland GlX11)
 
 target_link_libraries(gstqml6gl PUBLIC GStreamer::GStreamer)
 

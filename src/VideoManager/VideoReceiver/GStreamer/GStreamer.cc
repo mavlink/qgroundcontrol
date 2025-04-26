@@ -48,12 +48,17 @@ GST_PLUGIN_STATIC_DECLARE(videoparsersbad);
 GST_PLUGIN_STATIC_DECLARE(androidmedia);
 #elif defined(Q_OS_IOS)
 GST_PLUGIN_STATIC_DECLARE(applemedia);
+#elif defined(Q_OS_WIN)
+GST_PLUGIN_STATIC_DECLARE(d3d11);
 #else
 GST_PLUGIN_STATIC_DECLARE(va);
 #endif
 #endif
 #if (defined(QGC_GST_STATIC_BUILD) || !defined(QGC_GST_QML6GL_FOUND))
-GST_PLUGIN_STATIC_DECLARE(qml6);
+GST_PLUGIN_STATIC_DECLARE(qml6gl);
+#endif
+#if (defined(QGC_GST_STATIC_BUILD) || !defined(QGC_GST_QML6D3D11_FOUND))
+GST_PLUGIN_STATIC_DECLARE(qml6d3d11);
 #endif
 GST_PLUGIN_STATIC_DECLARE(qgc);
 G_END_DECLS
@@ -83,13 +88,16 @@ static void _registerPlugins()
     GST_PLUGIN_STATIC_REGISTER(applemedia);
 #else
     GST_PLUGIN_STATIC_REGISTER(va);
+#elif defined(Q_OS_WIN)
+    GST_PLUGIN_STATIC_REGISTER(d3d11);
 #endif
 #endif
-
 #if (defined(QGC_GST_STATIC_BUILD) || !defined(QGC_GST_QML6GL_FOUND))
     GST_PLUGIN_STATIC_REGISTER(qml6);
 #endif
-
+#if (defined(QGC_GST_STATIC_BUILD) || !defined(QGC_GST_QML6D3D11_FOUND))
+    GST_PLUGIN_STATIC_REGISTER(qml6d3d11);
+#endif
     GST_PLUGIN_STATIC_REGISTER(qgc);
 }
 

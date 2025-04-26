@@ -274,11 +274,18 @@ endfunction()
 find_gstreamer_component(Core gstreamer-1.0)
 find_gstreamer_component(Base gstreamer-base-1.0)
 find_gstreamer_component(Video gstreamer-video-1.0)
-find_gstreamer_component(Gl gstreamer-gl-1.0)
-find_gstreamer_component(GlPrototypes gstreamer-gl-prototypes-1.0)
 find_gstreamer_component(Rtsp gstreamer-rtsp-1.0)
 
 ################################################################################
+
+if(D3d11 IN_LIST GStreamer_FIND_COMPONENTS)
+    find_gstreamer_component(D3d11 gstreamer-d3d11-1.0)
+endif()
+
+if(Gl IN_LIST GStreamer_FIND_COMPONENTS)
+    find_gstreamer_component(Gl gstreamer-gl-1.0)
+    find_gstreamer_component(GlPrototypes gstreamer-gl-prototypes-1.0)
+endif()
 
 if(GlEgl IN_LIST GStreamer_FIND_COMPONENTS)
     find_gstreamer_component(GlEgl gstreamer-gl-egl-1.0)
@@ -328,6 +335,10 @@ if(GStreamer_FOUND AND NOT TARGET GStreamer::GStreamer)
         if(CMAKE_SIZEOF_VOID_P EQUAL 4)
             target_link_options(GStreamer::GStreamer INTERFACE "-Wl,-z,notext")
         endif()
+    elseif(WIN32)
+        if(TARGET GStreamer::D3d11)
+            target_link_libraries(GStreamer::GStreamer INTERFACE GStreamer::D3d11)
+        endif()
     endif()
 
     target_link_directories(GStreamer::GStreamer INTERFACE ${GSTREAMER_LIB_PATH})
@@ -337,10 +348,23 @@ if(GStreamer_FOUND AND NOT TARGET GStreamer::GStreamer)
             GStreamer::Core
             GStreamer::Base
             GStreamer::Video
-            GStreamer::Gl
-            GStreamer::GlPrototypes
             GStreamer::Rtsp
     )
+
+    if(TARGET GStreamer::Gl)
+        target_link_libraries(GStreamer::GStreamer
+            INTERFACE
+                GStreamer::Gl
+                GStreamer::GlPrototypes
+        )
+    endif()
+
+    if(TARGET GStreamer::D3d11)
+        target_link_libraries(GStreamer::GStreamer
+            INTERFACE
+                GStreamer::D3d11
+        )
+    endif()
 
     foreach(component IN LISTS GStreamer_FIND_COMPONENTS)
         if(GStreamer_${component}_FOUND)
@@ -377,6 +401,8 @@ if(GStreamer_FOUND AND NOT TARGET GStreamer::GStreamer)
             list(APPEND GST_PLUGINS gstandroidmedia)
         elseif(IOS)
             list(APPEND GST_PLUGINS gstapplemedia)
+        elseif(WIN32)
+            list(APPEND GST_PLUGINS gstd3d11)
         else()
             list(APPEND GST_PLUGINS gstva)
         endif()
@@ -413,6 +439,10 @@ if(GStreamer_FOUND AND NOT TARGET GStreamer::GStreamer)
     endif()
 
     # if(GST_PLUGIN_gstqml6_FOUND)
-    #     target_compile_definitions(gstqml6gl INTERFACE QGC_GST_QML6GL_FOUND)
+    #     target_compile_definitions(GStreamer::GStreamer INTERFACE QGC_GST_QML6GL_FOUND)
+    # endif()
+
+    # if(GST_PLUGIN_gstd3d11_FOUND)
+    #     target_compile_definitions(GStreamer::GStreamer INTERFACE QGC_GST_QML6D3D11_FOUND)
     # endif()
 endif()
