@@ -66,7 +66,7 @@ elseif(WIN32)
 elseif(MACOS)
     if(GSTREAMER_FRAMEWORK)
         install(
-            DIRECTORY "${GSTREAMER_FRAMEWORK_PATH}"
+            DIRECTORY /Library/Frameworks/GStreamer.framework
             DESTINATION "${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}.app/Contents/Frameworks"
             PATTERN "*.la" EXCLUDE
             PATTERN "*.a" EXCLUDE
