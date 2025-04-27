@@ -106,7 +106,9 @@ jobs:
       - name: Sanity check install build excecutable
         if: matrix.BuildType == 'Release'
         working-directory: ${{ runner.temp }}/shadow_build_dir/staging/QGroundControl.app/Contents/MacOS
-        run: ./QGroundControl --simple-boot-test
+        run: |
+          rm -rf /Library/Frameworks/GStreamer.framework
+          ./QGroundControl --simple-boot-test
 
       - name: Upload Build File
         if: matrix.BuildType == 'Release'
