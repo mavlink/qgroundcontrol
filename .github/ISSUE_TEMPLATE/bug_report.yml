@@ -15,14 +15,14 @@ body:
   - type: textarea
     id: description
     attributes:
-      label: Description  **(required)**
+      label: Description
       description: |
         Please describe your issue in detail. Include:
         1. **Expected Behavior** – What you expected to happen.
         2. **Current Behavior** – What actually happened instead.
         3. **Steps To Reproduce** – Step-by-step list of actions to reproduce the issue.
         3. **Additional Details** – Any other context that helps explain the problem.
-      placeholder: |
+      value: |
         **Expected Behavior**
         Describe what you thought should happen here.
 
@@ -44,7 +44,7 @@ body:
     attributes:
       label: System Information
       description: When posting bug reports, include the following information.
-      placeholder: |
+      value: |
         - QGC Version: [e.g. 4.4.0] **(required)**
         - QGC build: [e.g. daily, stable, self-built from source, etc...]
         - Operating System: [e.g. Windows 11, Ubuntu 22.04, macOS 15, iOS 17 ]
@@ -57,7 +57,7 @@ body:
     id: logs-screenshots
     attributes:
       label: Log Files and Screenshots
-      description: Include links to QGC Console Logs, autopilot logs, and screenshots.
+      description: Include links to [QGC Console Logs](https://docs.qgroundcontrol.com/en/settings_view/console_logging.html), autopilot logs, and screenshots.
       placeholder: |
         - [QGC Console Logs](https://docs.qgroundcontrol.com/en/settings_view/console_logging.html)
         - Autopilot logs when available (post a link)
