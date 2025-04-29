@@ -29,31 +29,48 @@ ToolIndicatorPage {
     property var    rtkSettings:        QGroundControl.settingsManager.rtkSettings
     property var    baseMode:           rtkSettings.baseMode.rawValue
     property var    manufacturer:       rtkSettings.baseReceiverManufacturers.rawValue
+
     readonly property var    _standard:           0b00001
     readonly property var    _trimble:            0b00010
     readonly property var    _septentrio:         0b00100
     readonly property var    _femtomes:           0b01000
     readonly property var    _ublox:              0b10000
+    readonly property var    _all:                0b11111
+    property var             manufacturerId:      _all
     
-    /* Manufacturer is used to determine which parameters to displays
-     *  1 0b00001 : Standard parameters implemented for all receivers manufacturer
-     *  2 0b00010 : Trimble
-     *  4 0b00100 : Septentrio
-     *  8 0b01000 : Femtomes
-     * 16 0b10000 : U-Blox
-     *
-     * If you want to display :
-     * All settings      : 0b11111 (31)
-     * Standard settings : 0b00001 ( 1)
-     * Only Trimble      : 0b00011 ( 3) = Standard | Trimble
-     * Etc ...
-    */
-
-    onManufacturerChanged: {
-        if (baseMode == 3 && !(manufacturer & _septentrio)){
-            baseMode = 1
+    function updateManufacturerId() {
+        switch(manufacturer) {
+            case 0: // Standard
+                manufacturerId = _standard
+                break
+            case 1: // All
+                manufacturerId = _standard | _trimble | _septentrio | _femtomes | _ublox
+                break
+            case 2: // Trimble
+                manufacturerId = _standard | _trimble
+                break
+            case 3: // Septentrio
+                manufacturerId = _standard | _septentrio
+                break
+            case 4: // Femtomes
+                manufacturerId = _standard | _femtomes
+                break
+            case 5: // UBlox
+                manufacturerId = _standard | _ublox
+                break
+            default:
+                manufacturerId = _standard
         }
     }
+
+    onManufacturerChanged: {
+        updateManufacturerId()
+    }
+
+    Component.onCompleted: {
+        updateManufacturerId()
+    }
+
 
     contentComponent: Component {
         ColumnLayout {
@@ -137,7 +154,6 @@ ToolIndicatorPage {
                 }
                 FactComboBox {
                     Layout.fillWidth:   true
-                    // sizeToContents:     true
                     fact:               QGroundControl.settingsManager.rtkSettings.baseReceiverManufacturers
                     visible:            QGroundControl.settingsManager.rtkSettings.baseReceiverManufacturers.visible
                 }
@@ -148,14 +164,14 @@ ToolIndicatorPage {
                     text:       qsTr("Survey-In")
                     checked:    baseMode == 0
                     onClicked:  rtkSettings.baseMode.rawValue = 0
-                    visible:    manufacturer & _standard
+                    visible:    manufacturerId & _standard
                 }
 
                 QGCRadioButton {
                     text: qsTr("Specify position")
                     checked:    baseMode == 1
                     onClicked:  rtkSettings.baseMode.rawValue = 1
-                    visible:    manufacturer & _standard
+                    visible:    manufacturerId & _standard
                 }
             }
 
@@ -168,7 +184,7 @@ ToolIndicatorPage {
                 visible:                (
                     baseMode == 0
                     && rtkSettings.surveyInAccuracyLimit.visible
-                    && (manufacturer & _ublox)
+                    && (manufacturerId & _ublox)
                 )
             }
 
@@ -181,7 +197,7 @@ ToolIndicatorPage {
                 visible:                ( 
                     baseMode == 0
                     && rtkSettings.surveyInMinObservationDuration.visible
-                    && (manufacturer & (_ublox | _femtomes | _trimble))
+                    && (manufacturerId & (_ublox | _femtomes | _trimble))
                 )
             }
 
@@ -190,7 +206,7 @@ ToolIndicatorPage {
                 fact:                   rtkSettings.fixedBasePositionLatitude
                 visible:                (
                     baseMode == 1
-                    && (manufacturer & _standard)
+                    && (manufacturerId & _standard)
                 )
             }
 
@@ -199,7 +215,7 @@ ToolIndicatorPage {
                 fact:               rtkSettings.fixedBasePositionLongitude
                 visible:            (
                     baseMode == 1
-                    && (manufacturer & _standard)
+                    && (manufacturerId & _standard)
                 )
             }
 
@@ -208,7 +224,7 @@ ToolIndicatorPage {
                 fact:               rtkSettings.fixedBasePositionAltitude
                 visible:            (
                     baseMode == 1
-                    && (manufacturer & _standard)
+                    && (manufacturerId & _standard)
                 )
             }
 
@@ -217,7 +233,7 @@ ToolIndicatorPage {
                 fact:               rtkSettings.fixedBasePositionAccuracy
                 visible:            (
                     baseMode == 1
-                    && (manufacturer & _ublox)
+                    && (manufacturerId & _ublox)
                 )
             }
 

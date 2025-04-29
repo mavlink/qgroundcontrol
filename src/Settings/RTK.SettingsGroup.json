@@ -8,8 +8,8 @@
     "shortDesc":            "GPS manufacturers for settings",
     "type":                 "uint8",
     "enumStrings":          "Standard,All,Trimble,Septentrio,Femtomes,UBlox",
-    "enumValues":           "1,31,3,5,9,17",
-    "default":              31
+    "enumValues":           "0,1,2,3,4,5",
+    "default":              1
 },
 {
     "name":                 "surveyInAccuracyLimit",
