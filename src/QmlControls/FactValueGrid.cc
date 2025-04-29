@@ -326,46 +326,48 @@ void FactValueGrid::_loadSettings(void)
     QSettings   settings;
     QString     groupNameFormat("%1-%2");
 
-    if (!settings.childGroups().contains(groupNameFormat.arg(_userSettingsGroup).arg(_vehicleClass))) {
-        QGCCorePlugin::instance()->factValueGridCreateDefaultSettings(this);
-    }
+    if (settings.childGroups().contains(groupNameFormat.arg(_userSettingsGroup).arg(_vehicleClass))) {
+        // Load from settings
+        settings.beginGroup(_settingsKey());
 
-    settings.beginGroup(_settingsKey());
-
-    int version = settings.value(_versionKey, 0).toInt();
-    if (version != 1) {
-        qgcApp()->showAppMessage(tr("Settings version %1 for %2 is not supported. Setup will be reset to defaults.").arg(version).arg(_userSettingsGroup), tr("Load Settings"));
-        settings.remove("");
-        QGCCorePlugin::instance()->factValueGridCreateDefaultSettings(this);
-    }
-    _fontSize = settings.value(_fontSizeKey, DefaultFontSize).value<FontSize>();
-
-    // Initial setup of empty items
-    int cRows       = settings.value(_rowCountKey).toInt();
-    int cModelLists = settings.beginReadArray(_columnsKey);
-    if (cModelLists && cRows) {
-        appendColumn();
-        for (int rowIndex=1; rowIndex<cRows; rowIndex++) {
-            appendRow();
+        int version = settings.value(_versionKey, 0).toInt();
+        if (version != 1) {
+            qgcApp()->showAppMessage(tr("Settings version %1 for %2 is not supported. Setup will be reset to defaults.").arg(version).arg(_userSettingsGroup), tr("Load Settings"));
+            settings.remove("");
+            QGCCorePlugin::instance()->factValueGridCreateDefaultSettings(this);
         }
-        for (int colIndex=1; colIndex<cModelLists; colIndex++) {
+        _fontSize = settings.value(_fontSizeKey, DefaultFontSize).value<FontSize>();
+    
+        // Initial setup of empty items
+        int cRows       = settings.value(_rowCountKey).toInt();
+        int cModelLists = settings.beginReadArray(_columnsKey);
+        if (cModelLists && cRows) {
             appendColumn();
+            for (int rowIndex=1; rowIndex<cRows; rowIndex++) {
+                appendRow();
+            }
+            for (int colIndex=1; colIndex<cModelLists; colIndex++) {
+                appendColumn();
+            }
         }
-    }
-
-    // Fill in the items from settings
-    for (int colIndex=0; colIndex<cModelLists; colIndex++) {
-        settings.setArrayIndex(colIndex);
-        int cItems = settings.beginReadArray(_rowsKey);
-        for (int itemIndex=0; itemIndex<cItems; itemIndex++) {
-            QmlObjectListModel* list = _columns->value<QmlObjectListModel*>(colIndex);
-            InstrumentValueData* value = list->value<InstrumentValueData*>(itemIndex);
-            settings.setArrayIndex(itemIndex);
-            _loadValueData(settings, value);
+    
+        // Fill in the items from settings
+        for (int colIndex=0; colIndex<cModelLists; colIndex++) {
+            settings.setArrayIndex(colIndex);
+            int cItems = settings.beginReadArray(_rowsKey);
+            for (int itemIndex=0; itemIndex<cItems; itemIndex++) {
+                QmlObjectListModel* list = _columns->value<QmlObjectListModel*>(colIndex);
+                InstrumentValueData* value = list->value<InstrumentValueData*>(itemIndex);
+                settings.setArrayIndex(itemIndex);
+                _loadValueData(settings, value);
+            }
+            settings.endArray();
         }
         settings.endArray();
+    } else {
+        // Default settings are added directly to this FactValueGrid
+        QGCCorePlugin::instance()->factValueGridCreateDefaultSettings(this);
     }
-    settings.endArray();
 
     emit columnsChanged(_columns);
 
