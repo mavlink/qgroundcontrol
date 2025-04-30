@@ -170,7 +170,7 @@ static void _setGstEnvVars()
     const QString libDir = QDir(appDir).filePath("../lib");
     const QString pluginDir = QDir(libDir).filePath("gstreamer-1.0");
     const QString gioMod = QDir(libDir).filePath("gio/modules");
-    const QString libexecDir = QDir(currentDir).filePath("../libexec");
+    const QString libexecDir = QDir(appDir).filePath("../libexec");
     const QString scanner = QDir(libexecDir).filePath("gstreamer-1.0/gst-plugin-scanner");
 
     if (QFileInfo::exists(pluginDir)) {
