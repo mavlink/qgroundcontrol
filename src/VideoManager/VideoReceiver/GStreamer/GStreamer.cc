@@ -13,12 +13,14 @@
 #include "QGCLoggingCategory.h"
 #include "SettingsManager.h"
 #include "VideoSettings.h"
+#include "QGCApplication.h"
 #ifdef Q_OS_IOS
 #include "gst_ios_init.h"
 #endif
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QSettings>
+#include <QtCore/QFileInfo>
 #include <QtQuick/QQuickItem>
 
 #include <gst/gst.h>
@@ -145,25 +147,30 @@ static void _qgcputenv(const QString &key, const QString &root, const QString &p
 
 static void _setGstEnvVars()
 {
-    const QString currentDir = QCoreApplication::applicationDirPath();
-    qCDebug(GStreamerLog) << "App Directory:" << currentDir;
+    const QString appDir = QCoreApplication::applicationDirPath();
+    qCDebug(GStreamerLog) << "App Directory:" << appDir;
 
+    // Set the GStreamer environment variables only when GStreamer sitting along with the app.
+    // This way a dev build which does not do the "install" step will still work.
 #if defined(Q_OS_MACOS) && defined(QGC_GST_MACOS_FRAMEWORK)
-    _qgcputenv("GST_REGISTRY_REUSE_PLUGIN_SCANNER", "no");
-    _qgcputenv("GST_PLUGIN_SCANNER", currentDir, "/../Frameworks/GStreamer.framework/Versions/1.0/libexec/gstreamer-1.0/gst-plugin-scanner");
-    _qgcputenv("GST_PTP_HELPER_1_0", currentDir, "/../Frameworks/GStreamer.framework/Versions/1.0/libexec/gstreamer-1.0/gst-ptp-helper");
-    _qgcputenv("GIO_EXTRA_MODULES", currentDir, "/../Frameworks/GStreamer.framework/Versions/1.0/lib/gio/modules");
-    _qgcputenv("GST_PLUGIN_SYSTEM_PATH_1_0", currentDir, "/../Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0"); // PlugIns/gstreamer
-    _qgcputenv("GST_PLUGIN_SYSTEM_PATH", currentDir, "/../Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0");
-    _qgcputenv("GST_PLUGIN_PATH_1_0", currentDir, "/../Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0");
-    _qgcputenv("GST_PLUGIN_PATH", currentDir, "/../Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0");
-    _qgcputenv("GTK_PATH", currentDir, "/../Frameworks/GStreamer.framework/Versions/1.0");
+    const QString frameworkDir = QDir(appDir).filePath("../Frameworks/GStreamer.framework");
+    if (QFileInfo::exists(frameworkDir)) {
+        _qgcputenv("GST_REGISTRY_REUSE_PLUGIN_SCANNER", "no");
+        _qgcputenv("GST_PLUGIN_SCANNER", appDir, "/../Frameworks/GStreamer.framework/Versions/1.0/libexec/gstreamer-1.0/gst-plugin-scanner");
+        _qgcputenv("GST_PTP_HELPER_1_0", appDir, "/../Frameworks/GStreamer.framework/Versions/1.0/libexec/gstreamer-1.0/gst-ptp-helper");
+        _qgcputenv("GIO_EXTRA_MODULES", appDir, "/../Frameworks/GStreamer.framework/Versions/1.0/lib/gio/modules");
+        _qgcputenv("GST_PLUGIN_SYSTEM_PATH_1_0", appDir, "/../Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0"); // PlugIns/gstreamer
+        _qgcputenv("GST_PLUGIN_SYSTEM_PATH", appDir, "/../Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0");
+        _qgcputenv("GST_PLUGIN_PATH_1_0", appDir, "/../Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0");
+        _qgcputenv("GST_PLUGIN_PATH", appDir, "/../Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0");
+        _qgcputenv("GTK_PATH", appDir, "/../Frameworks/GStreamer.framework/Versions/1.0");
+    }
 #elif defined(Q_OS_WIN)
-    const QString binDir = currentDir;
-    const QString libDir = QDir(currentDir).filePath("../lib");
+    const QString binDir = appDir;
+    const QString libDir = QDir(appDir).filePath("../lib");
     const QString pluginDir = QDir(libDir).filePath("gstreamer-1.0");
     const QString gioMod = QDir(libDir).filePath("gio/modules");
-    const QString libexecDir = QDir(currentDir).filePath("../libexec");
+    const QString libexecDir = QDir(appDir).filePath("../libexec");
     const QString scanner = QDir(libexecDir).filePath("gstreamer-1.0/gst-plugin-scanner");
 
     if (QFileInfo::exists(pluginDir)) {
