@@ -322,6 +322,10 @@ bool initialize()
 
     if (!_verifyPlugins()) {
         qCCritical(GStreamerLog) << "Failed to Init GStreamer Plugins";
+        if (qgcApp()->simpleBootTest()) {
+            qCCritical(GStreamerLog) << "Exiting out of simple boot test due to failed plugin verification";
+            exit(1);
+        }
         return false;
     }
 

@@ -48,7 +48,7 @@ class QGCApplication : public QApplication
     /// Unit Test have access to creating and destroying singletons
     friend class UnitTest;
 public:
-    QGCApplication(int &argc, char *argv[], bool unitTesting);
+    QGCApplication(int &argc, char *argv[], bool unitTesting, bool simpleBootTest);
     ~QGCApplication();
 
     /// Sets the persistent flag to delete all settings the next time QGroundControl is started.
@@ -57,8 +57,8 @@ public:
     /// Clears the persistent flag to delete all settings the next time QGroundControl is started.
     void clearDeleteAllSettingsNextBoot();
 
-    /// Returns true if unit tests are being run
     bool runningUnitTests() const { return _runningUnitTests; }
+    bool simpleBootTest() const { return _simpleBootTest; }
 
     /// Returns true if Qt debug output should be logged to a file
     bool logOutput() const { return _logOutput; }
@@ -128,13 +128,16 @@ private slots:
 private:
     bool compressEvent(QEvent *event, QObject *receiver, QPostEventList *postedEvents) final;
 
+    void _initVideo();
+    
     /// Initialize the application for normal application boot. Or in other words we are not going to run unit tests.
     void _initForNormalAppBoot();
 
     QObject *_rootQmlObject();
     void _checkForNewVersion();
 
-    bool _runningUnitTests = false;                                         ///< true: running unit tests, false: normal app
+    bool _runningUnitTests = false;
+    bool _simpleBootTest = false; 
     static constexpr int _missingParamsDelayedDisplayTimerTimeout = 1000;   ///< Timeout to wait for next missing fact to come in before display
     QTimer _missingParamsDelayedDisplayTimer;                               ///< Timer use to delay missing fact display
     QList<QPair<int,QString>> _missingParams;                               ///< List of missing parameter component id:name
@@ -153,6 +156,7 @@ private:
     bool _error = false;
     bool _showErrorsInToolbar = false;
     QElapsedTimer _msecsElapsedTime;
+    bool _videoManagerInitialized = false;
 
     QList<QPair<QString /* title */, QString /* message */>> _delayedAppMessages;
 
