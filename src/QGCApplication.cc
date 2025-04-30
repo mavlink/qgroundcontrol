@@ -102,9 +102,10 @@ static QObject *mavlinkSingletonFactory(QQmlEngine*, QJSEngine*)
     return new QGCMAVLink();
 }
 
-QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting)
+QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting, bool simpleBootTest)
     : QApplication(argc, argv)
     , _runningUnitTests(unitTesting)
+    , _simpleBootTest(simpleBootTest)
 {
     _msecsElapsedTime.start();
 
@@ -135,7 +136,7 @@ QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting)
 
     // Set application information
     QString applicationName;
-    if (_runningUnitTests) {
+    if (_runningUnitTests || simpleBootTest) {
         // We don't want unit tests to use the same QSettings space as the normal app. So we tweak the app
         // name. Also we want to run unit tests with clean settings every time.
         applicationName = QStringLiteral("%1_unittest").arg(QGC_APP_NAME);
@@ -168,7 +169,7 @@ QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting)
     // The setting will delete all settings on this boot
     fClearSettingsOptions |= settings.contains(_deleteAllSettingsKey);
 
-    if (_runningUnitTests) {
+    if (_runningUnitTests || simpleBootTest) {
         // Unit tests run with clean settings
         fClearSettingsOptions = true;
     }
@@ -324,20 +325,30 @@ void QGCApplication::init()
         qCWarning(QGCApplicationLog) << "Could not load /fonts/opensans-demibold font";
     }
 
-    if (!_runningUnitTests) {
+    if (_simpleBootTest) {
+        // Since GStream builds are so problematic we initialize video during the simple boot test
+        // to make sure it works and verfies plugin availability.
+        _initVideo();
+    } else if (!_runningUnitTests) {
         _initForNormalAppBoot();
     }
 }
 
-void QGCApplication::_initForNormalAppBoot()
+void QGCApplication::_initVideo()
 {
 #ifdef QGC_GST_STREAMING
     // Gstreamer video playback requires OpenGL
     QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
 #endif
 
-    QGCCorePlugin::instance(); // CorePlugin must be initialized before VideoManager for Video Cleanup
-    VideoManager::instance(); // GStreamer must be initialized before QmlEngine
+    QGCCorePlugin::instance();  // CorePlugin must be initialized before VideoManager for Video Cleanup
+    VideoManager::instance(); 
+    _videoManagerInitialized = true;
+}
+
+void QGCApplication::_initForNormalAppBoot()
+{
+    _initVideo(); // GStreamer must be initialized before QmlEngine
 
     QQuickStyle::setStyle("Basic");
     QGCCorePlugin::instance()->init();
@@ -747,7 +758,9 @@ void QGCApplication::shutdown()
 {
     qCDebug(QGCApplicationLog) << "Exit";
 
-    VideoManager::instance()->cleanup();
+    if (_videoManagerInitialized) {
+        VideoManager::instance()->cleanup();
+    }
 
     // This is bad, but currently qobject inheritances are incorrect and cause crashes on exit without
     delete _qmlAppEngine;

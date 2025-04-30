@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
     ParseCmdLineOptions(argc, argv, rgCmdLineOptions, std::size(rgCmdLineOptions), false);
 #endif // QT_DEBUG
 
-    QGCApplication app(argc, argv, runUnitTests || simpleBootTest);
+    QGCApplication app(argc, argv, runUnitTests, simpleBootTest);
 
 #ifdef Q_OS_LINUX
 #ifndef Q_OS_ANDROID
