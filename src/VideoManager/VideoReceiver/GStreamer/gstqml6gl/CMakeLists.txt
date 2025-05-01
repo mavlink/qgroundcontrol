@@ -1,110 +1,30 @@
 qt_add_library(gstqml6gl STATIC)
 
-if(NOT QGC_ENABLE_GST_VIDEOSTREAMING)
-    target_sources(gstqml6gl PUBLIC GLVideoItemStub.h)
-    target_link_libraries(gstqml6gl PUBLIC Qt6::Quick)
-    target_include_directories(gstqml6gl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-    return()
-endif()
-
-find_package(GStreamer REQUIRED COMPONENTS OPTIONAL_COMPONENTS GlEgl GlWayland GlX11)
-
 target_link_libraries(gstqml6gl PUBLIC GStreamer::GStreamer)
 
-################################################################################
-
-if(LINUX)
-    install(
-        DIRECTORY
-            "${GSTREAMER_PLUGIN_PATH}"
-            "${GSTREAMER_LIB_PATH}/gio"
-        DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-        FILES_MATCHING
-            PATTERN "*.so"
-            PATTERN "*.so.*"
-        PATTERN "*/include" EXCLUDE
-    )
-    install(
-        DIRECTORY "${GSTREAMER_LIB_PATH}/gstreamer1.0"
-        DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-        FILE_PERMISSIONS
-            OWNER_READ OWNER_WRITE OWNER_EXECUTE
-            GROUP_READ             GROUP_EXECUTE
-            WORLD_READ             WORLD_EXECUTE
-        FILES_MATCHING
-            PATTERN "gst-*"
-    )
-elseif(WIN32)
-    install(
-        DIRECTORY "${GStreamer_ROOT_DIR}/bin/"
-        DESTINATION "${CMAKE_INSTALL_BINDIR}"
-        FILES_MATCHING
-            PATTERN "*.dll"
-    )
-    install(
-        DIRECTORY "${GSTREAMER_LIB_PATH}/gio/modules/"
-        DESTINATION "${CMAKE_INSTALL_LIBDIR}/gio/modules"
-        FILES_MATCHING
-            PATTERN "*.dll"
-    )
-    install(
-        DIRECTORY "${GSTREAMER_PLUGIN_PATH}/"
-        DESTINATION "${CMAKE_INSTALL_LIBDIR}/gstreamer-1.0"
-        FILES_MATCHING
-            PATTERN "*.dll"
-    )
-    install(
-        DIRECTORY "${GStreamer_ROOT_DIR}/libexec/gstreamer-1.0/"
-        DESTINATION "${CMAKE_INSTALL_LIBEXECDIR}/gstreamer-1.0"
-        FILE_PERMISSIONS
-            OWNER_READ OWNER_WRITE OWNER_EXECUTE
-            GROUP_READ             GROUP_EXECUTE
-            WORLD_READ             WORLD_EXECUTE
-        FILES_MATCHING
-            PATTERN "*.exe"
-    )
-elseif(MACOS)
-    if(GSTREAMER_FRAMEWORK)
-        install(
-            DIRECTORY /Library/Frameworks/GStreamer.framework
-            DESTINATION "${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}.app/Contents/Frameworks"
-            PATTERN "*.la" EXCLUDE
-            PATTERN "*.a" EXCLUDE
-            PATTERN "*/bin" EXCLUDE
-            PATTERN "*/etc" EXCLUDE
-            PATTERN "*/gst-validate-launcher" EXCLUDE
-            PATTERN "*/Headers" EXCLUDE
-            PATTERN "*/include" EXCLUDE
-            PATTERN "*/pkgconfig" EXCLUDE
-            PATTERN "*/share" EXCLUDE
-        )
-    endif()
+if(GST_PLUGIN_qml6_FOUND)
+    # Don't Download & Build if gstreamer1.0-qt6 gstqml6 was found
+    return()
 endif()
-
-################################################################################
-
-# Don't Download & Build if gstreamer1.0-qt6 gstqml6 was found
-# if(GST_PLUGIN_gstqml6_FOUND)
-#     return()
-# endif()
 
 ################################################################################
 
 if(GStreamer_VERSION VERSION_GREATER_EQUAL 1.22)
-    # Use Latest Revisions for each minor version: 1.20.7, 1.22.12, 1.24.12, 1.26.0
+    # Use Latest Revisions for each minor version: 1.20.7, 1.22.12, 1.24.12, 1.26.1
     string(REPLACE "." ";" GST_VERSION_LIST ${GStreamer_VERSION})
     list(GET GST_VERSION_LIST 0 GST_VERSION_MAJOR)
     list(GET GST_VERSION_LIST 1 GST_VERSION_MINOR)
     list(GET GST_VERSION_LIST 2 GST_VERSION_PATCH)
 
     if(GST_VERSION_MINOR EQUAL 20)
-        set(GST_VERSION_PATCH 7)
+        set(GST_VERSION_MINOR 22)
+        set(GST_VERSION_PATCH 12)
     elseif(GST_VERSION_MINOR EQUAL 22)
         set(GST_VERSION_PATCH 12)
     elseif(GST_VERSION_MINOR EQUAL 24)
         set(GST_VERSION_PATCH 12)
     elseif(GST_VERSION_MINOR EQUAL 26)
-        set(GST_VERSION_PATCH 0)
+        set(GST_VERSION_PATCH 1)
     endif()
 
     set(GST_PLUGINS_VERSION ${GST_VERSION_MAJOR}.${GST_VERSION_MINOR}.${GST_VERSION_PATCH})
@@ -123,7 +43,7 @@ endif()
 
 ################################################################################
 
-file(READ ${QGC_GST_QT6_PLUGIN_PATH}/qt6glitem.h FILE_CONTENTS)
+file(READ "${QGC_GST_QT6_PLUGIN_PATH}/qt6glitem.h" FILE_CONTENTS)
 string(FIND "${FILE_CONTENTS}" "#include <QtQuick/QQuickWindow>" GST_FIX_INCLUDES)
 if(GST_FIX_INCLUDES EQUAL -1)
     string(REPLACE "#include <QtGui/QOpenGLFunctions>" "#include <QtGui/QOpenGLFunctions>\n#include <QtQuick/QQuickWindow>" FILE_CONTENTS "${FILE_CONTENTS}")
@@ -148,43 +68,6 @@ target_link_libraries(gstqml6gl
 )
 
 target_include_directories(gstqml6gl PUBLIC ${QGC_GST_QT6_PLUGIN_PATH})
-
-# target_precompile_headers(gstqml6gl
-#     PRIVATE
-#         "${QGC_GST_QT6_PLUGIN_PATH}/gstqml6glsink.h"
-# )
-
-################################################################################
-
-if(GStreamer_GlX11_FOUND)
-    target_compile_definitions(gstqml6gl PRIVATE HAVE_QT_X11)
-endif()
-
-if(GStreamer_GlEgl_FOUND)
-    target_compile_definitions(gstqml6gl PRIVATE HAVE_QT_EGLFS)
-endif()
-
-if(GStreamer_GlWayland_FOUND)
-    find_package(Qt6 COMPONENTS WaylandClient)
-    target_link_libraries(gstqml6gl PRIVATE Qt6::WaylandClient)
-    target_compile_definitions(gstqml6gl PRIVATE HAVE_QT_WAYLAND)
-endif()
-
-if(ANDROID)
-    target_compile_definitions(gstqml6gl PRIVATE HAVE_QT_ANDROID)
-elseif(WIN32)
-    target_compile_definitions(gstqml6gl PRIVATE HAVE_QT_WIN32)
-elseif(MACOS)
-    target_compile_definitions(gstqml6gl PRIVATE HAVE_QT_MAC)
-elseif(IOS)
-    target_compile_definitions(gstqml6gl PRIVATE HAVE_QT_IOS)
-endif()
-
-target_compile_definitions(gstqml6gl
-    PRIVATE
-        HAVE_QT_QPA_HEADER
-        QT_QPA_HEADER=<QtGui/qpa/qplatformnativeinterface.h>
-)
 
 ################################################################################
 
@@ -228,3 +111,37 @@ if(EXISTS "${QGC_GST_QT6_PLUGIN_PATH}/resources.qrc")
     #     )
     # endif()
 endif()
+
+################################################################################
+
+if(GStreamer_GlX11_FOUND)
+    target_compile_definitions(gstqml6gl PRIVATE HAVE_QT_X11)
+endif()
+
+if(GStreamer_GlEgl_FOUND)
+    target_compile_definitions(gstqml6gl PRIVATE HAVE_QT_EGLFS)
+endif()
+
+if(GStreamer_GlWayland_FOUND)
+    find_package(Qt6 COMPONENTS WaylandClient)
+    if(TARGET Qt6::WaylandClient)
+        target_link_libraries(gstqml6gl PUBLIC Qt6::WaylandClient)
+    endif()
+    target_compile_definitions(gstqml6gl PRIVATE HAVE_QT_WAYLAND)
+endif()
+
+if(ANDROID)
+    target_compile_definitions(gstqml6gl PRIVATE HAVE_QT_ANDROID)
+elseif(WIN32)
+    target_compile_definitions(gstqml6gl PRIVATE HAVE_QT_WIN32)
+elseif(MACOS)
+    target_compile_definitions(gstqml6gl PRIVATE HAVE_QT_MAC)
+elseif(IOS)
+    target_compile_definitions(gstqml6gl PRIVATE HAVE_QT_IOS)
+endif()
+
+target_compile_definitions(gstqml6gl
+    PRIVATE
+        HAVE_QT_QPA_HEADER
+        QT_QPA_HEADER=<QtGui/qpa/qplatformnativeinterface.h>
+)

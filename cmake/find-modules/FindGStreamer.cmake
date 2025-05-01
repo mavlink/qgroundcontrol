@@ -105,13 +105,13 @@ elseif(ANDROID)
     )
 
     if(NOT DEFINED GStreamer_ROOT_DIR)
-        if(CMAKE_ANDROID_ARCH_ABI STREQUAL armeabi-v7a)
+        if(CMAKE_ANDROID_ARCH_ABI STREQUAL "armeabi-v7a")
             set(GStreamer_ROOT_DIR "${gstreamer_SOURCE_DIR}/armv7")
-        elseif(CMAKE_ANDROID_ARCH_ABI STREQUAL arm64-v8a)
+        elseif(CMAKE_ANDROID_ARCH_ABI STREQUAL "arm64-v8a")
             set(GStreamer_ROOT_DIR "${gstreamer_SOURCE_DIR}/arm64")
-        elseif(CMAKE_ANDROID_ARCH_ABI STREQUAL x86)
+        elseif(CMAKE_ANDROID_ARCH_ABI STREQUAL "x86")
             set(GStreamer_ROOT_DIR "${gstreamer_SOURCE_DIR}/x86")
-        elseif(CMAKE_ANDROID_ARCH_ABI STREQUAL x86_64)
+        elseif(CMAKE_ANDROID_ARCH_ABI STREQUAL "x86_64")
             set(GStreamer_ROOT_DIR "${gstreamer_SOURCE_DIR}/x86_64")
         endif()
     endif()
@@ -139,6 +139,12 @@ elseif(ANDROID)
         --define-variable=libdir=${GSTREAMER_LIB_PATH}
         --define-variable=includedir=${GSTREAMER_INCLUDE_PATH}
     )
+
+    # set(GStreamer_JAVA_SRC_DIR "${CMAKE_SOURCE_DIR}/android/src/org/freedesktop/gstreamer/")
+    # set(GStreamer_Mobile_MODULE_NAME gstreamer_android)
+    # set(GStreamer_ASSETS_DIR "${CMAKE_SOURCE_DIR}/android/assets")
+    # set(G_IO_MODULES "openssl")
+    # set(G_IO_MODULES_PATH "${GStreamer_ROOT_DIR}/lib/gio/modules")
 elseif(MACOS)
     if(NOT DEFINED GStreamer_ROOT_DIR)
         if(EXISTS "/Library/Frameworks/GStreamer.framework")
@@ -261,7 +267,6 @@ function(find_gstreamer_component component pkgconfig_name)
                 set_property(TARGET PkgConfig::PC_GSTREAMER_GL PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${__qt_fixed_incs}")
             endif()
         endif()
-        mark_as_advanced(GStreamer_${component}_INCLUDE_DIR GStreamer_${component}_LIBRARY)
     endif()
 
     if(TARGET ${target})
@@ -302,6 +307,10 @@ find_package_handle_standard_args(GStreamer
 
 if(GStreamer_FOUND AND NOT TARGET GStreamer::GStreamer)
     qt_add_library(GStreamer::GStreamer INTERFACE IMPORTED)
+
+    if(GStreamer_USE_STATIC_LIBS)
+        target_compile_definitions(GStreamer::GStreamer INTERFACE QGC_GST_STATIC_BUILD)
+    endif()
 
     if(APPLE AND GStreamer_USE_FRAMEWORK)
         set(CMAKE_FIND_FRAMEWORK ONLY)
@@ -350,69 +359,59 @@ if(GStreamer_FOUND AND NOT TARGET GStreamer::GStreamer)
 
 ################################################################################
 
-    if(GStreamer_USE_STATIC_LIBS)
-        qt_add_library(GStreamer::Plugins INTERFACE IMPORTED)
-        target_link_directories(GStreamer::Plugins INTERFACE ${GSTREAMER_PLUGIN_PATH})
+    qt_add_library(GStreamer::Plugins INTERFACE IMPORTED)
+    target_link_directories(GStreamer::Plugins INTERFACE ${GSTREAMER_PLUGIN_PATH})
 
-        set(GST_PLUGINS
-            # gstqml6
-            gstcoreelements
-            gstisomp4
-            gstlibav
-            gstmatroska
-            gstmpegtsdemux
-            gstopengl
-            gstopenh264
-            gstplayback
-            gstrtp
-            gstrtpmanager
-            gstrtsp
-            gstsdpelem
-            gsttcp
-            gsttypefindfunctions
-            gstudp
-            gstvideoparsersbad
-        )
-        if(ANDROID)
-            list(APPEND GST_PLUGINS gstandroidmedia)
-        elseif(IOS)
-            list(APPEND GST_PLUGINS gstapplemedia)
-        else()
-            list(APPEND GST_PLUGINS gstva)
-        endif()
-
-        foreach(plugin IN LISTS GST_PLUGINS)
-            pkg_check_modules(GST_PLUGIN_${plugin} QUIET IMPORTED_TARGET ${plugin})
-            if(GST_PLUGIN_${plugin}_FOUND)
-                target_link_libraries(GStreamer::Plugins INTERFACE PkgConfig::GST_PLUGIN_${plugin})
-            else()
-                find_library(GST_PLUGIN_${plugin}_LIBRARY
-                    NAMES ${plugin}
-                    PATHS
-                        ${GSTREAMER_LIB_PATH}
-                        ${GSTREAMER_PLUGIN_PATH}
-                )
-                if(GST_PLUGIN_${plugin}_LIBRARY)
-                    target_link_libraries(GStreamer::Plugins INTERFACE ${GST_PLUGIN_${plugin}_LIBRARY})
-                    set(GST_PLUGIN_${plugin}_FOUND TRUE)
-                endif()
-            endif()
-        endforeach()
-
-        target_link_libraries(GStreamer::GStreamer INTERFACE GStreamer::Plugins)
-        target_compile_definitions(GStreamer::GStreamer INTERFACE QGC_GST_STATIC_BUILD)
-    else()
-        # find_library(
-        #     GSTQML6_LIBRARY
-        #     NAMES gstqml6 libgstqml6
-        #     PATHS "${GSTREAMER_PLUGIN_PATH}"
-        # )
-        # if(GSTQML6_LIBRARY)
-        #     set(GST_PLUGIN_gstqml6_FOUND TRUE)
-        # endif()
+    set(GST_PLUGINS
+        coreelements
+        dav1d
+        isomp4
+        libav
+        matroska
+        mpegtsdemux
+        opengl
+        openh264
+        playback
+        rtp
+        rtpmanager
+        rtsp
+        sdpelem
+        tcp
+        typefindfunctions
+        udp
+        videoparsersbad
+        vpx
+    )
+    if(ANDROID)
+        list(APPEND GST_PLUGINS androidmedia) # vulkan
+    elseif(APPLE)
+        list(APPEND GST_PLUGINS applemedia vulkan)
+    elseif(WIN32)
+        list(APPEND GST_PLUGINS d3d d3d11 d3d12 dxva nvcodec)
+    elseif(LINUX)
+        list(APPEND GST_PLUGINS nvcodec qsv va vulkan) # qml6 - GStreamer provided qml6 is xcb only
     endif()
 
-    # if(GST_PLUGIN_gstqml6_FOUND)
-    #     target_compile_definitions(gstqml6gl INTERFACE QGC_GST_QML6GL_FOUND)
-    # endif()
+    foreach(plugin IN LISTS GST_PLUGINS)
+        pkg_check_modules(GST_PLUGIN_${plugin} QUIET IMPORTED_TARGET gst${plugin})
+        if(GST_PLUGIN_${plugin}_FOUND)
+            target_link_libraries(GStreamer::Plugins INTERFACE PkgConfig::GST_PLUGIN_${plugin})
+        else()
+            find_library(GST_PLUGIN_${plugin}_LIBRARY
+                NAMES gst${plugin}
+                PATHS
+                    ${GSTREAMER_LIB_PATH}
+                    ${GSTREAMER_PLUGIN_PATH}
+            )
+            if(GST_PLUGIN_${plugin}_LIBRARY)
+                target_link_libraries(GStreamer::Plugins INTERFACE ${GST_PLUGIN_${plugin}_LIBRARY})
+                set(GST_PLUGIN_${plugin}_FOUND TRUE)
+            endif()
+        endif()
+        if(GST_PLUGIN_${plugin}_FOUND)
+            target_compile_definitions(GStreamer::Plugins INTERFACE GST_PLUGIN_${plugin}_FOUND)
+        endif()
+    endforeach()
+
+    target_link_libraries(GStreamer::GStreamer INTERFACE GStreamer::Plugins)
 endif()

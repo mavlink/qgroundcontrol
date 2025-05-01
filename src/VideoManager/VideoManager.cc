@@ -22,7 +22,7 @@
 #ifdef QGC_GST_STREAMING
 #include "GStreamer.h"
 #else
-#include "GLVideoItemStub.h"
+#include "VideoItemStub.h"
 #endif
 #ifdef QGC_QT_STREAMING
 #include "QtMultimediaReceiver.h"
@@ -76,7 +76,7 @@ void VideoManager::registerQmlTypes()
     (void) qmlRegisterUncreatableType<VideoManager>("QGroundControl.VideoManager", 1, 0, "VideoManager", "Reference only");
     (void) qmlRegisterUncreatableType<VideoReceiver>("QGroundControl", 1, 0, "VideoReceiver","Reference only");
 #ifndef QGC_GST_STREAMING
-    (void) qmlRegisterType<GLVideoItemStub>("org.freedesktop.gstreamer.Qt6GLVideoItem", 1, 0, "GstGLQt6VideoItem");
+    (void) qmlRegisterType<VideoItemStub>("org.freedesktop.gstreamer.Qt6GLVideoItem", 1, 0, "GstGLQt6VideoItem");
 #endif
 }
 
