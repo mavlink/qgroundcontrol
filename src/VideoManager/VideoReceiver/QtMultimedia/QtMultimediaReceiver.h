@@ -34,12 +34,13 @@ public:
     explicit QtMultimediaReceiver(QObject *parent = nullptr);
     virtual ~QtMultimediaReceiver();
 
-    static void *createVideoSink(QObject *parent, QQuickItem *widget);
+    static bool enabled();
+    static void *createVideoSink(QQuickItem *widget, QObject *parent = nullptr);
     static void releaseVideoSink(void *sink);
     static VideoReceiver *createVideoReceiver(QObject *parent);
 
 public slots:
-    void start(const QString &uri, uint32_t timeout, int buffer = 0) override;
+    void start(uint32_t timeout) override;
     void stop() override;
     void startDecoding(void *sink) override;
     void stopDecoding() override;

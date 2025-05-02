@@ -77,7 +77,7 @@ QtMultimediaReceiver::QtMultimediaReceiver(QObject *parent)
     _mediaRecorder->setVideoResolution(QSize());
     (void) connect(_mediaRecorder, &QMediaRecorder::recorderStateChanged, this, [this](QMediaRecorder::RecorderState state) {
         if (state == QMediaRecorder::RecorderState::RecordingState) {
-            emit recordingStarted();
+            emit recordingStarted(_mediaRecorder->actualLocation().toString());
         }
         emit recordingChanged(_mediaRecorder->recorderState() == QMediaRecorder::RecorderState::RecordingState);
     });
@@ -102,7 +102,16 @@ QtMultimediaReceiver::~QtMultimediaReceiver()
     qCDebug(QtMultimediaReceiverLog) << Q_FUNC_INFO << this;
 }
 
-void *QtMultimediaReceiver::createVideoSink(QObject *parent, QQuickItem *widget)
+bool QtMultimediaReceiver::enabled()
+{
+#ifdef QGC_QT_STREAMING
+    return true;
+#else
+    return false;
+#endif
+}
+
+void *QtMultimediaReceiver::createVideoSink(QQuickItem *widget, QObject *parent)
 {
     Q_UNUSED(parent);
 
@@ -131,10 +140,8 @@ VideoReceiver *QtMultimediaReceiver::createVideoReceiver(QObject *parent)
     return new QtMultimediaReceiver(nullptr);
 }
 
-void QtMultimediaReceiver::start(const QString &uri, uint32_t timeout, int buffer)
+void QtMultimediaReceiver::start(uint32_t timeout)
 {
-    Q_UNUSED(buffer);
-
     qCDebug(QtMultimediaReceiverLog) << Q_FUNC_INFO;
 
     if (_mediaPlayer->isPlaying()) {
@@ -143,12 +150,12 @@ void QtMultimediaReceiver::start(const QString &uri, uint32_t timeout, int buffe
         return;
     }
 
-    if (uri.isEmpty()) {
+    if (_uri.isEmpty()) {
         qCDebug(QtMultimediaReceiverLog) << "Failed because URI is not specified";
         emit onStartComplete(STATUS_INVALID_URL);
         return;
     }
-    _mediaPlayer->setSource(QUrl::fromUserInput(uri));
+    _mediaPlayer->setSource(QUrl::fromUserInput(_uri));
 
     _frameTimer.setInterval(timeout);
 
@@ -271,7 +278,7 @@ void QtMultimediaReceiver::startRecording(const QString &videoFile, FILE_FORMAT 
     }
 
     _mediaRecorder->setOutputLocation(QUrl::fromLocalFile(videoFile));
-
+    _recordingOutput = _mediaRecorder->outputLocation().toLocalFile();
     _mediaRecorder->record();
 
     qCDebug(QtMultimediaReceiverLog) << "Recording";

@@ -180,10 +180,6 @@ Vehicle::Vehicle(LinkInterface*             link,
 
     connect(&_orbitTelemetryTimer, &QTimer::timeout, this, &Vehicle::_orbitTelemetryTimeout);
 
-    // Create camera manager instance
-    _cameraManager = _firmwarePlugin->createCameraManager(this);
-    emit cameraManagerChanged();
-
     // Start csv logger
     connect(&_csvLogTimer, &QTimer::timeout, this, &Vehicle::_writeCsvLine);
     _csvLogTimer.start(1000);
@@ -360,6 +356,9 @@ void Vehicle::_commonInit()
     _loadJoystickSettings();
 
     _gimbalController = new GimbalController(this);
+
+    // Create camera manager instance
+    _cameraManager = _firmwarePlugin->createCameraManager(this);
 }
 
 Vehicle::~Vehicle()

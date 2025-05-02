@@ -43,7 +43,6 @@ Q_APPLICATION_STATIC(MultiVehicleManager, _multiVehicleManagerInstance);
 MultiVehicleManager::MultiVehicleManager(QObject *parent)
     : QObject(parent)
     , _gcsHeartbeatTimer(new QTimer(this))
-    , _offlineEditingVehicle(new Vehicle(Vehicle::MAV_AUTOPILOT_TRACK, Vehicle::MAV_TYPE_TRACK, this))
     , _vehicles(new QmlObjectListModel(this))
     , _selectedVehicles(new QmlObjectListModel(this))
 {
@@ -77,6 +76,8 @@ void MultiVehicleManager::init()
     if (_initialized) {
         return;
     }
+
+    _offlineEditingVehicle = new Vehicle(Vehicle::MAV_AUTOPILOT_TRACK, Vehicle::MAV_TYPE_TRACK, this);
 
     (void) connect(MAVLinkProtocol::instance(), &MAVLinkProtocol::vehicleHeartbeatInfo, this, &MultiVehicleManager::_vehicleHeartbeatInfo);
 

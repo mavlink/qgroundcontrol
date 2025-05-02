@@ -80,9 +80,9 @@ private:
     void _setParameterReadyVehicleAvailable(bool parametersReady);
 
     QTimer *_gcsHeartbeatTimer = nullptr;           ///< Timer to emit heartbeats
-    Vehicle *_offlineEditingVehicle = nullptr;      ///< Disconnected vechicle used for offline editing
     QmlObjectListModel *_vehicles = nullptr;
     QmlObjectListModel *_selectedVehicles = nullptr;
+    Vehicle *_offlineEditingVehicle = nullptr;      ///< Disconnected vechicle used for offline editing
     bool _activeVehicleAvailable = false;           ///< true: An active vehicle is available
     bool _parameterReadyVehicleAvailable = false;   ///< true: An active vehicle with ready parameters is available
     Vehicle *_activeVehicle = nullptr;              ///< Currently active vehicle from a ui perspective
