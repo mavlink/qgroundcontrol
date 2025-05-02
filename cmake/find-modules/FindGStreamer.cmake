@@ -225,13 +225,16 @@ endif()
 
 ################################################################################
 
-if(ANDROID)
+if(GStreamer_USE_STATIC_LIBS)
     set(GSTREAMER_EXTRA_DEPS
         gstreamer-base-1.0
         gstreamer-video-1.0
         gstreamer-gl-1.0
         gstreamer-gl-prototypes-1.0
         gstreamer-rtsp-1.0
+        # gstreamer-gl-egl-1.0
+        # gstreamer-gl-wayland-1.0
+        # gstreamer-gl-x11-1.0
     )
 
     set(GSTREAMER_PLUGINS
@@ -263,7 +266,9 @@ if(ANDROID)
     elseif(LINUX)
         list(APPEND GSTREAMER_PLUGINS nvcodec qsv va vulkan) # qml6 - GStreamer provided qml6 is xcb only
     endif()
+endif()
 
+if(ANDROID)
     set(GStreamer_Mobile_MODULE_NAME gstreamer_android)
     set(G_IO_MODULES openssl)
     set(G_IO_MODULES_PATH "${GStreamer_ROOT_DIR}/lib/gio/modules")
