@@ -16,10 +16,8 @@
 #ifdef QGC_GST_STREAMING
 #include "GStreamer.h"
 #endif
-
 #ifndef QGC_DISABLE_UVC
-#include <QtMultimedia/QMediaDevices>
-#include <QtMultimedia/QCameraDevice>
+#include "UVCReceiver.h"
 #endif
 
 DECLARE_SETTINGGROUP(Video, "Video")
@@ -45,10 +43,7 @@ DECLARE_SETTINGGROUP(Video, "Video")
     #endif
 #endif
 #ifndef QGC_DISABLE_UVC
-    QList<QCameraDevice> videoInputs = QMediaDevices::videoInputs();
-    for (const auto& cameraDevice: videoInputs) {
-        videoSourceList.append(cameraDevice.description());
-    }
+    videoSourceList.append(UVCReceiver::getDeviceNameList());
 #endif
     if (videoSourceList.count() == 0) {
         _noVideo = true;
@@ -232,12 +227,9 @@ bool VideoSettings::streamConfigured(void)
         return true;
     }
 #ifndef QGC_DISABLE_UVC
-    const QList<QCameraDevice> videoInputs = QMediaDevices::videoInputs();
-    for (const auto& cameraDevice: videoInputs) {
-        if(vSource == cameraDevice.description()) {
-            qCDebug(VideoManagerLog) << "Stream configured for UVC";
-            return true;
-        }
+    if (UVCReceiver::enabled() && UVCReceiver::deviceExists(vSource)) {
+        qCDebug(VideoManagerLog) << "Stream configured for UVC";
+        return true;
     }
 #endif
     return false;
@@ -251,7 +243,7 @@ void VideoSettings::_configChanged(QVariant)
 void VideoSettings::_setForceVideoDecodeList()
 {
 #ifdef QGC_GST_STREAMING
-    const QVariantList removeForceVideoDecodeList{
+    static const QList<GStreamer::VideoDecoderOptions> removeForceVideoDecodeList{
 #if defined(Q_OS_ANDROID)
     GStreamer::VideoDecoderOptions::ForceVideoDecoderDirectX3D,
     GStreamer::VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
