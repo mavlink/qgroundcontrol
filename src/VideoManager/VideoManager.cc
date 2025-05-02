@@ -444,7 +444,7 @@ void VideoManager::_initVideo()
             continue;
         }
 
-        videoReceiver.sink = QGCCorePlugin::instance()->createVideoSink(this, widget);
+        videoReceiver.sink = QGCCorePlugin::instance()->createVideoSink(widget, this);
         if (!videoReceiver.sink) {
             qCDebug(VideoManagerLog) << "createVideoSink() failed" << videoReceiver.index;
             continue;
