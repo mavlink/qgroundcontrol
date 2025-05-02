@@ -252,20 +252,26 @@ void VideoSettings::_setForceVideoDecodeList()
 {
 #ifdef QGC_GST_STREAMING
     const QVariantList removeForceVideoDecodeList{
-#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
-        GStreamer::VideoDecoderOptions::ForceVideoDecoderDirectX3D,
-        GStreamer::VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
+#if defined(Q_OS_ANDROID)
+    GStreamer::VideoDecoderOptions::ForceVideoDecoderDirectX3D,
+    GStreamer::VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
+    GStreamer::VideoDecoderOptions::ForceVideoDecoderVAAPI,
+    GStreamer::VideoDecoderOptions::ForceVideoDecoderNVIDIA,
+    GStreamer::VideoDecoderOptions::ForceVideoDecoderIntel,
+#elif defined(Q_OS_LINUX)
+    GStreamer::VideoDecoderOptions::ForceVideoDecoderDirectX3D,
+    GStreamer::VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
 #elif defined(Q_OS_WIN)
-        GStreamer::VideoDecoderOptions::ForceVideoDecoderVAAPI,
-        GStreamer::VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
+    GStreamer::VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
+    GStreamer::VideoDecoderOptions::ForceVideoDecoderVulkan,
 #elif defined(Q_OS_MACOS)
-        GStreamer::VideoDecoderOptions::ForceVideoDecoderDirectX3D,
-        GStreamer::VideoDecoderOptions::ForceVideoDecoderVAAPI,
-#elif defined(Q_OS_ANDROID)
-        GStreamer::VideoDecoderOptions::ForceVideoDecoderDirectX3D,
-        GStreamer::VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
-        GStreamer::VideoDecoderOptions::ForceVideoDecoderVAAPI,
-        GStreamer::VideoDecoderOptions::ForceVideoDecoderNVIDIA,
+    GStreamer::VideoDecoderOptions::ForceVideoDecoderDirectX3D,
+    GStreamer::VideoDecoderOptions::ForceVideoDecoderVAAPI,
+#elif defined(Q_OS_IOS)
+    GStreamer::VideoDecoderOptions::ForceVideoDecoderDirectX3D,
+    GStreamer::VideoDecoderOptions::ForceVideoDecoderVAAPI,
+    GStreamer::VideoDecoderOptions::ForceVideoDecoderNVIDIA,
+    GStreamer::VideoDecoderOptions::ForceVideoDecoderIntel,
 #endif
     };
 
