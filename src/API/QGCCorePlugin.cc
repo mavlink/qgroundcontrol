@@ -39,6 +39,7 @@
 #include <QtQml/qqml.h>
 #include <QtQml/QQmlApplicationEngine>
 #include <QtQml/QQmlContext>
+#include <QtQuick/QQuickItem>
 
 QGC_LOGGING_CATEGORY(QGCCorePluginLog, "qgc.api.qgccoreplugin");
 
@@ -297,19 +298,17 @@ VideoReceiver *QGCCorePlugin::createVideoReceiver(QObject *parent)
 #endif
 }
 
-void *QGCCorePlugin::createVideoSink(QObject *parent, QQuickItem *widget)
+void *QGCCorePlugin::createVideoSink(QQuickItem *widget, QObject *parent)
 {
 #ifdef QGC_GST_STREAMING
-    return GStreamer::createVideoSink(parent, widget);
+    return GStreamer::createVideoSink(widget, parent);
 #elif defined(QGC_QT_STREAMING)
-    return QtMultimediaReceiver::createVideoSink(parent, widget);
+    return QtMultimediaReceiver::createVideoSink(widget, parent);
 #else
-    Q_UNUSED(parent);
-    Q_UNUSED(widget);
+    Q_UNUSED(widget); Q_UNUSED(parent);
     return nullptr;
 #endif
 }
-
 void QGCCorePlugin::releaseVideoSink(void *sink)
 {
 #ifdef QGC_GST_STREAMING
