@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 
 #ifdef Q_OS_ANDROID
@@ -16,6 +17,9 @@
 #else
 #include <QtSerialPort/QSerialPort>
 #endif
+
+Q_DECLARE_LOGGING_CATEGORY(FirmwareUpgradeLog)
+Q_DECLARE_LOGGING_CATEGORY(FirmwareUpgradeVerboseLog)
 
 class FirmwareImage;
 

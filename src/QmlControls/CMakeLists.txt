@@ -1,11 +1,5 @@
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
-        AppMessages.cc
-        AppMessages.h
-        MavlinkAction.cc
-        MavlinkAction.h
-        MavlinkActionManager.cc
-        MavlinkActionManager.h
         EditPositionDialogController.cc
         EditPositionDialogController.h
         FactValueGrid.cc
@@ -16,30 +10,34 @@ target_sources(${CMAKE_PROJECT_NAME}
         HorizontalFactValueGrid.h
         InstrumentValueData.cc
         InstrumentValueData.h
+        MavlinkAction.cc
+        MavlinkAction.h
+        MavlinkActionManager.cc
+        MavlinkActionManager.h
         ParameterEditorController.cc
         ParameterEditorController.h
-        QGCFileDialogController.cc
-        QGCFileDialogController.h
-        QGCGeoBoundingCube.cc
-        QGCGeoBoundingCube.h
-        QGCQGeoCoordinate.cc
-        QGCQGeoCoordinate.h
-        QGCImageProvider.cc
-        QGCImageProvider.h
         QGCFenceCircle.cc
         QGCFenceCircle.h
         QGCFencePolygon.cc
         QGCFencePolygon.h
+        QGCFileDialogController.cc
+        QGCFileDialogController.h
+        QGCGeoBoundingCube.cc
+        QGCGeoBoundingCube.h
+        QGCImageProvider.cc
+        QGCImageProvider.h
         QGCMapCircle.cc
         QGCMapCircle.h
+        QGCMapPalette.cc
+        QGCMapPalette.h
         QGCMapPolygon.cc
         QGCMapPolygon.h
         QGCMapPolyline.cc
         QGCMapPolyline.h
-        QGCMapPalette.cc
-        QGCMapPalette.h
         QGCPalette.cc
         QGCPalette.h
+        QGCQGeoCoordinate.cc
+        QGCQGeoCoordinate.h
         QGroundControlQmlGlobal.cc
         QGroundControlQmlGlobal.h
         QmlObjectListModel.cc

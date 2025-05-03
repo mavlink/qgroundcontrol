@@ -9,10 +9,13 @@
 
 #pragma once
 
-#include "QGCMAVLink.h"
-
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QString>
 #include <QtCore/QVariant>
+
+#include "QGCMAVLink.h"
+
+Q_DECLARE_LOGGING_CATEGORY(MissionCommandsLog)
 
 class MissionCommandTree;
 class MissionCommandUIInfo;
