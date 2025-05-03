@@ -29,8 +29,8 @@ public:
     explicit APMFirmwarePluginFactory(QObject *parent = nullptr);
     ~APMFirmwarePluginFactory();
 
-    QList<QGCMAVLink::FirmwareClass_t> supportedFirmwareClasses() const final;
-    FirmwarePlugin *firmwarePluginForAutopilot(MAV_AUTOPILOT autopilotType, MAV_TYPE vehicleType) final;
+    QList<QGCMAVLink::FirmwareClass_t> supportedFirmwareClasses() const override;
+    FirmwarePlugin *firmwarePluginForAutopilot(MAV_AUTOPILOT autopilotType, MAV_TYPE vehicleType) override;
 
 private:
     ArduCopterFirmwarePlugin *_arduCopterPluginInstance = nullptr;

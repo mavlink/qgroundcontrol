@@ -38,52 +38,48 @@ Item {
             valueText: _followEnabled.enumStringValue
         }
 
-        VehicleSummaryRow {
-            labelText: qsTr("Follow System ID")
-            valueText: _followSysId.valueString
-            visible: _followParamsAvailable
+        Loader {
+            id: followParamsLoader
+            active: _followParamsAvailable
+            sourceComponent: followParamsComponent
         }
+    }
 
-        VehicleSummaryRow {
-            labelText: qsTr("Follow Max Distance")
-            valueText: _followDistanceMax.valueString + " " + _followDistanceMax.units
-            visible: _followParamsAvailable
-        }
-
-        VehicleSummaryRow {
-            labelText: qsTr("Follow Offset X")
-            valueText: _followOffsetX.valueString + " " + _followOffsetX.units
-            visible: _followParamsAvailable
-        }
-
-        VehicleSummaryRow {
-            labelText: qsTr("Follow Offset Y")
-            valueText: _followOffsetY.valueString + " " + _followOffsetY.units
-            visible: _followParamsAvailable
-        }
-
-        VehicleSummaryRow {
-            labelText: qsTr("Follow Offset Z")
-            valueText: _followOffsetZ.valueString + " " + _followOffsetZ.units
-            visible: _followParamsAvailable
-        }
-
-        VehicleSummaryRow {
-            labelText: qsTr("Follow Offset Type")
-            valueText: _followOffsetType.enumStringValue
-            visible: _followParamsAvailable
-        }
-
-        VehicleSummaryRow {
-            labelText: qsTr("Follow Altitude Type")
-            valueText: _followAltitudeType.enumStringValue
-            visible: _followParamsAvailable
-        }
-
-        VehicleSummaryRow {
-            labelText: qsTr("Follow Yaw Behavior")
-            valueText: _followYawBehavior.enumStringValue
-            visible: _followParamsAvailable
+    Component {
+        id: followParamsComponent
+        Column {
+            VehicleSummaryRow {
+                labelText: qsTr("Follow System ID")
+                valueText: _followSysId.valueString
+            }
+            VehicleSummaryRow {
+                labelText: qsTr("Follow Max Distance")
+                valueText: _followDistanceMax.valueString + " " + _followDistanceMax.units
+            }
+            VehicleSummaryRow {
+                labelText: qsTr("Follow Offset X")
+                valueText: _followOffsetX.valueString + " " + _followOffsetX.units
+            }
+            VehicleSummaryRow {
+                labelText: qsTr("Follow Offset Y")
+                valueText: _followOffsetY.valueString + " " + _followOffsetY.units
+            }
+            VehicleSummaryRow {
+                labelText: qsTr("Follow Offset Z")
+                valueText: _followOffsetZ.valueString + " " + _followOffsetZ.units
+            }
+            VehicleSummaryRow {
+                labelText: qsTr("Follow Offset Type")
+                valueText: _followOffsetType.enumStringValue
+            }
+            VehicleSummaryRow {
+                labelText: qsTr("Follow Altitude Type")
+                valueText: _followAltitudeType.enumStringValue
+            }
+            VehicleSummaryRow {
+                labelText: qsTr("Follow Yaw Behavior")
+                valueText: _followYawBehavior.enumStringValue
+            }
         }
     }
 }
