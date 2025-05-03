@@ -8,12 +8,14 @@ target_sources(${CMAKE_PROJECT_NAME}
         KML/KMLDomDocument.h
         KML/KMLHelper.cc
         KML/KMLHelper.h
-        QGC.cc
-        QGC.h
         FileSystem/QGCCachedFileDownload.cc
         FileSystem/QGCCachedFileDownload.h
         FileSystem/QGCFileDownload.cc
         FileSystem/QGCFileDownload.h
+        QGC.cc
+        QGC.h
+        QGCLogging.cc
+        QGCLogging.h
         QGCLoggingCategory.cc
         QGCLoggingCategory.h
         FileSystem/QGCTemporaryFile.cc

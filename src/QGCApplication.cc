@@ -34,7 +34,7 @@
 
 #include <QtCore/private/qthread_p.h>
 
-#include "AppMessages.h"
+#include "QGCLogging.h"
 #include "AudioOutput.h"
 #include "AutoPilotPlugin.h"
 #include "CmdLineOptParser.h"
