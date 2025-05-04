@@ -2,25 +2,25 @@
 
 让 _QGroundControl_ 轻松入门上手使用：
 
-1. [Download and install (Daily 5.0)](../releases/daily_builds.md) the application.
-2. 启动_QGroundControl_。
-3. Attach your vehicle to the ground station device via USB, through a telemetry radio, or over WiFi. _QGroundControl_ should detect your vehicle and connect to it automatically.
+1. [下载并安装 (Daily 5.0)](../releases/daily_builds.md) 应用程序.
+2. 启动 _QGroundControl_。
+3. 通过 USB、遥测电台或 WiFi 将你的飞行器连接到地面站设备。 _QGroundControl_ 应检测你的载具并自动连接。
 
-That's it! 就这么简单！ 如果设备准备飞行（无人机是飞，其它设备是运行），_QGroundControl_应显示如下[Fly View](../fly_view/fly_view.md) (否则将打开[Setup View](../setup_view/setup_view.md))。
+就这么简单！ 如果飞行器已做好飞行准备，_QGroundControl_ 应显示如下的[飞行视图](../fly_view/fly_view.md) （否则将打开[设置视图](../setup_view/setup_view.md)）。
 
 ![](../../../assets/quickstart/fly_view_connected_vehicle.jpg)
 
-要想把_QGroundControl_玩的纯熟，最好方法是亲自上手折腾：
+熟悉 _QGroundControl_ 的一个好方法就是开始动手实践：
 
-- Use the View Selector to switch between main views:
-  - Plan Flight
-  - Analyze Tools
-  - Vehicle Configuration
-  - Application Settings
-- Click the _Status Indicators_ on the toolbar to find out the status of the connected vehicle.
+- 使用视图选择器在主视图之间切换：
+  - 计划飞行
+  - 分析工具
+  - 载具配置
+  - 应用设置
+- 点击工具栏上的 _Status Indicators_ 来查找已连接的载具的状态。
 
-While the UI is fairly intuitive, this documentation can also be referenced to find out more.
+虽然界面相当直观，但也可以引用这些文件来了解更多信息。
 
 :::info
-Make sure QGC has an internet connection when you connect a new vehicle in order to display map content.
+当你连接新载具时，要确保 QGC 能联网，以便显示地图内容。
 :::
