@@ -14,6 +14,8 @@
 #include <QtCore/QStringListModel>
 #include <QtCore/QTimer>
 
+#include "QGCCommandLineParser.h"
+
 Q_DECLARE_LOGGING_CATEGORY(QGCLoggingLog)
 
 class QGCLogging : public QStringListModel
@@ -27,7 +29,7 @@ public:
     static QGCLogging *instance();
 
     /// Install Qt message handler to route logs through this class
-    static void installHandler();
+    static void installHandler(const QGCCommandLineParser::CommandLineParseResult &parseResult);
 
     /// Write current log messages to a file asynchronously
     Q_INVOKABLE void writeMessages(const QString &destFile);
@@ -54,6 +56,7 @@ private slots:
 
 private:
     void _rotateLogs();
+    static void _msgHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg);
 
     QFile _logFile;
     QTimer _flushTimer;

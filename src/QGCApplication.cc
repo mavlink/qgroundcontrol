@@ -37,7 +37,6 @@
 #include "QGCLogging.h"
 #include "AudioOutput.h"
 #include "AutoPilotPlugin.h"
-#include "CmdLineOptParser.h"
 #include "ESP8266ComponentController.h"
 #include "FollowMe.h"
 #include "GeoTagController.h"
@@ -56,6 +55,7 @@
 #include "ParameterManager.h"
 #include "PositionManager.h"
 #include "QGCCameraManager.h"
+#include "QGCCommandLineParser.h"
 #include "QGCCorePlugin.h"
 #include "QGCFileDownload.h"
 #include "QGCImageProvider.h"
@@ -102,41 +102,31 @@ static QObject *mavlinkSingletonFactory(QQmlEngine*, QJSEngine*)
     return new QGCMAVLink();
 }
 
-QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting, bool simpleBootTest)
+QGCApplication::QGCApplication(int &argc, char *argv[], const struct QGCCommandLineParser::CommandLineParseResult::CommandLineParseResult &cli)
     : QApplication(argc, argv)
-    , _runningUnitTests(unitTesting)
-    , _simpleBootTest(simpleBootTest)
+    , _runningUnitTests(cli.runningUnitTests)
+    , _simpleBootTest(cli.simpleBootTest)
+    , _logOutput(cli.logOutput)
+    , _fakeMobile(cli.fakeMobile)
 {
     _msecsElapsedTime.start();
+
+    bool fClearSettingsOptions = cli.clearSettingsOptions;
+    const bool fClearCache = cli.clearCache;
+    const bool logging = cli.logging;
+    const QString loggingOptions = cli.loggingOptions;
 
     // Setup for network proxy support
     QNetworkProxyFactory::setUseSystemConfiguration(true);
 
-    // Parse command line options
-    bool fClearSettingsOptions = false; // Clear stored settings
-    bool fClearCache = false;           // Clear parameter/airframe caches
-    bool logging = false;               // Turn on logging
-    QString loggingOptions;
-
-    CmdLineOpt_t rgCmdLineOptions[] = {
-        { "--clear-settings",   &fClearSettingsOptions, nullptr },
-        { "--clear-cache",      &fClearCache,           nullptr },
-        { "--logging",          &logging,               &loggingOptions },
-        { "--fake-mobile",      &_fakeMobile,           nullptr },
-        { "--log-output",       &_logOutput,            nullptr },
-        // Add additional command line option flags here
-    };
-
-    ParseCmdLineOptions(argc, argv, rgCmdLineOptions, std::size(rgCmdLineOptions), false);
-
     // Set up timer for delayed missing fact display
     _missingParamsDelayedDisplayTimer.setSingleShot(true);
-    _missingParamsDelayedDisplayTimer.setInterval(_missingParamsDelayedDisplayTimerTimeout);
+    _missingParamsDelayedDisplayTimer.setInterval(kMissingParamsDelayedDisplayTimerTimeout);
     (void) connect(&_missingParamsDelayedDisplayTimer, &QTimer::timeout, this, &QGCApplication::_missingParamsDisplay);
 
     // Set application information
     QString applicationName;
-    if (_runningUnitTests || simpleBootTest) {
+    if (_runningUnitTests || _simpleBootTest) {
         // We don't want unit tests to use the same QSettings space as the normal app. So we tweak the app
         // name. Also we want to run unit tests with clean settings every time.
         applicationName = QStringLiteral("%1_unittest").arg(QGC_APP_NAME);
@@ -169,7 +159,7 @@ QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting, bool s
     // The setting will delete all settings on this boot
     fClearSettingsOptions |= settings.contains(_deleteAllSettingsKey);
 
-    if (_runningUnitTests || simpleBootTest) {
+    if (_runningUnitTests || _simpleBootTest) {
         // Unit tests run with clean settings
         fClearSettingsOptions = true;
     }

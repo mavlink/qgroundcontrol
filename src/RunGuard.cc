@@ -14,12 +14,12 @@
 namespace
 {
 
-QString generateKeyHash( const QString& key, const QString& salt )
+QString generateKeyHash( const QString &key, const QString &salt )
 {
     QByteArray data;
 
-    data.append( key.toUtf8() );
-    data.append( salt.toUtf8() );
+    (void) data.append( key.toUtf8() );
+    (void) data.append( salt.toUtf8() );
     data = QCryptographicHash::hash( data, QCryptographicHash::Sha1 ).toHex();
 
     return data;
@@ -34,12 +34,12 @@ RunGuard::RunGuard( const QString& key )
     , sharedMem( sharedmemKey )
     , memLock( memLockKey, 1 )
 {
-    memLock.acquire();
+    (void) memLock.acquire();
     {
         QSharedMemory fix( sharedmemKey );    // Fix for *nix: http://habrahabr.ru/post/173281/
-        fix.attach();
+        (void) fix.attach();
     }
-    memLock.release();
+    (void) memLock.release();
 }
 
 RunGuard::~RunGuard()
@@ -52,11 +52,11 @@ bool RunGuard::isAnotherRunning()
     if ( sharedMem.isAttached() )
         return false;
 
-    memLock.acquire();
+    (void) memLock.acquire();
     const bool isRunning = sharedMem.attach();
     if ( isRunning )
-        sharedMem.detach();
-    memLock.release();
+        (void) sharedMem.detach();
+    (void) memLock.release();
 
     return isRunning;
 }
@@ -66,9 +66,9 @@ bool RunGuard::tryToRun()
     if ( isAnotherRunning() )   // Extra check
         return false;
 
-    memLock.acquire();
+    (void) memLock.acquire();
     const bool result = sharedMem.create( sizeof( quint64 ) );
-    memLock.release();
+    (void) memLock.release();
     if ( !result )
     {
         release();
@@ -80,8 +80,8 @@ bool RunGuard::tryToRun()
 
 void RunGuard::release()
 {
-    memLock.acquire();
+    (void) memLock.acquire();
     if ( sharedMem.isAttached() )
-        sharedMem.detach();
-    memLock.release();
+        (void) sharedMem.detach();
+    (void) memLock.release();
 }

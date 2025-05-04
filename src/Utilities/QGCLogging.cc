@@ -22,9 +22,50 @@ QGC_LOGGING_CATEGORY(QGCLoggingLog, "QGCLoggingLog")
 
 Q_APPLICATION_STATIC(QGCLogging, _qgcLogging)
 
+#if defined(QT_DEBUG) && defined(Q_OS_WIN) && !defined(Q_CC_MINGW)
+#include <crtdbg.h>
+#include <windows.h>
+#include <iostream>
+
+int __cdecl WindowsCrtReportHook(int reportType, char *message, int *returnValue);
+{
+    int nRet = FALSE;
+
+    printf("CRT report hook 1.\n");
+    printf("CRT report type is \"");
+
+    switch (reportType) {
+        case _CRT_ASSERT:
+            printf("_CRT_ASSERT");
+            // nRet = TRUE;   // Always stop for this type of report
+            break;
+        case _CRT_WARN:
+            printf("_CRT_WARN");
+            break;
+        case _CRT_ERROR:
+            printf("_CRT_ERROR");
+            break;
+        default:
+            printf("???Unknown???");
+            break;
+    }
+
+    printf("\".\nCRT report message is:\n\t");
+    printf(szMsg);
+
+    std::cerr << message << std::endl;
+
+    if (returnValue) {
+        *returnValue = 0;
+    }
+
+    return nRet;
+}
+#endif
+
 static QtMessageHandler defaultHandler = nullptr;
 
-static void msgHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+void QGCLogging::_msgHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
     // Filter via QLoggingCategory rules early
     if (!QLoggingCategory(context.category).isDebugEnabled()) {
@@ -69,13 +110,36 @@ QGCLogging::QGCLogging(QObject *parent)
     (void) connect(this, &QGCLogging::emitLog, this, &QGCLogging::_threadsafeLog, conntype);
 }
 
-void QGCLogging::installHandler()
+void QGCLogging::installHandler(const QGCCommandLineParser::CommandLineParseResult &parseResult)
 {
+    if (!qEnvironmentVariableIsSet("QT_FORCE_STDERR_LOGGING")) {
+        (void) qputenv("QT_FORCE_STDERR_LOGGING", "1");
+    }
+    if (!qEnvironmentVariableIsSet("QT_ASSUME_STDERR_HAS_CONSOLE")) {
+        (void) qputenv("QT_ASSUME_STDERR_HAS_CONSOLE", "1");
+    }
+
+#if defined(QT_DEBUG) && defined(Q_OS_WIN) && !defined(Q_CC_MINGW)
+    if (!qEnvironmentVariableIsSet("QT_WIN_DEBUG_CONSOLE")) {
+        (void) qputenv("QT_WIN_DEBUG_CONSOLE", "attach");
+    }
+    if (parseResult.quietWindowsAsserts) {
+        _CrtSetReportHook2(WindowsCrtReportHook);
+    }
+    if (parseResult.runningUnitTests) {
+        const DWORD dwMode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
+        SetErrorMode(dwMode | SEM_NOGPFAULTERRORBOX);
+        _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG);
+        _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_DEBUG);
+        _CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);
+    }
+#endif
+
     // Define the format for qDebug/qWarning/etc output
-    qSetMessagePattern(QStringLiteral("%{time process} - %{type}: %{message} (%{category}:%{function}:%{line})"));
+    qSetMessagePattern(QStringLiteral("%{time process} - %{type}: %{message} (%{category}:%{function}:%{line})")); // QT_MESSAGE_PATTERN
 
     // Install our custom handler
-    defaultHandler = qInstallMessageHandler(msgHandler);
+    defaultHandler = qInstallMessageHandler(_msgHandler);
 }
 
 void QGCLogging::log(const QString &message)
