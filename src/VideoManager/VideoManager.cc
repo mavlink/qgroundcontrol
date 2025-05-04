@@ -8,6 +8,8 @@
  ****************************************************************************/
 
 #include "VideoManager.h"
+#include <qquickgraphicsdevice.h>
+#include <qquickrendertarget.h>
 #include "AppSettings.h"
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
@@ -30,6 +32,7 @@
 #include <QtCore/qapplicationstatic.h>
 #include <QtCore/QDir>
 #include <QtQml/QQmlEngine>
+#include <QtQuick/QQuickGraphicsConfiguration>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 
@@ -790,5 +793,33 @@ FinishVideoInitialization::~FinishVideoInitialization()
 
 void FinishVideoInitialization::run()
 {
+#if 0
+    QQuickGraphicsConfiguration config;
+    config.setAutomaticPipelineCache(true);
+    config.setDebugLayer(true);
+    config.setDebugMarkers(true);
+    config.setDepthBufferFor2D(true);
+    // config.setPipelineCacheLoadFile(QStandardPaths::CacheLocation + "/QSG_RHI_CACHE");
+    // config.setPipelineCacheSaveFile(QStandardPaths::CacheLocation + "/QSG_RHI_CACHE");
+    config.setPreferSoftwareDevice(true);
+    config.setTimestamps(false);
+    _window->setGraphicsConfiguration(config);
+
+    const QQuickGraphicsDevice device = _window->graphicsDevice();
+    const QQuickWindow::GraphicsStateInfo info = _window->graphicsStateInfo();
+    const bool sceneInitialized = _window->isSceneGraphInitialized();
+    const QQuickRenderTarget target = _window->renderTarget();
+    const QSGRendererInterface *interface = _window->rendererInterface();
+    const QRhi *rhi = _window->rhi();
+    const QSGRendererInterface::GraphicsApi api = QQuickWindow::graphicsApi();
+    QQuickWindow::setSceneGraphBackend(QString::number(QSGRendererInterface::GraphicsApi::OpenGL));
+    const QString backend = QQuickWindow::sceneGraphBackend();
+    Q_ASSERT(api == QStringLiteral("OpenGL"));
+    // qt.scenegraph.general
+    // QSG_RENDERER_DEBUG=render
+    // QSG_RENDER_TIMING=1
+    // QSG_VISUALIZE
+    // QSG_RENDER_LOOP
+#endif
     VideoManager::instance()->startVideo(_window);
 }

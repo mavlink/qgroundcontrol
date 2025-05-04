@@ -7,8 +7,8 @@
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         main.cc
-        CmdLineOptParser.cc
-        CmdLineOptParser.h
+        QGCCommandLineParser.cc
+        QGCCommandLineParser.h
         QGCApplication.cc
         QGCApplication.h
 )

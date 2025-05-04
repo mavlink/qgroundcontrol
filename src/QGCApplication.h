@@ -14,8 +14,9 @@
 #include <QtCore/QSet>
 #include <QtCore/QTimer>
 #include <QtCore/QTranslator>
-
 #include <QtWidgets/QApplication>
+
+#include "QGCCommandLineParser.h"
 
 class QQmlApplicationEngine;
 class QQuickWindow;
@@ -48,14 +49,8 @@ class QGCApplication : public QApplication
     /// Unit Test have access to creating and destroying singletons
     friend class UnitTest;
 public:
-    QGCApplication(int &argc, char *argv[], bool unitTesting, bool simpleBootTest);
+    QGCApplication(int &argc, char *argv[], const QGCCommandLineParser::CommandLineParseResult &cli);
     ~QGCApplication();
-
-    /// Sets the persistent flag to delete all settings the next time QGroundControl is started.
-    void deleteAllSettingsNextBoot();
-
-    /// Clears the persistent flag to delete all settings the next time QGroundControl is started.
-    void clearDeleteAllSettingsNextBoot();
 
     bool runningUnitTests() const { return _runningUnitTests; }
     bool simpleBootTest() const { return _simpleBootTest; }
@@ -63,12 +58,21 @@ public:
     /// Returns true if Qt debug output should be logged to a file
     bool logOutput() const { return _logOutput; }
 
+    /// @return true: Fake ui into showing mobile interface
+    bool fakeMobile() const { return _fakeMobile; }
+
+    /// Sets the persistent flag to delete all settings the next time QGroundControl is started.
+    void deleteAllSettingsNextBoot();
+
+    /// Clears the persistent flag to delete all settings the next time QGroundControl is started.
+    void clearDeleteAllSettingsNextBoot();
+
     /// Used to report a missing Parameter. Warning will be displayed to user. Method may be called
     /// multiple times.
     void reportMissingParameter(int componentId, const QString &name);
 
-    /// @return true: Fake ui into showing mobile interface
-    bool fakeMobile() const { return _fakeMobile; }
+    /// Get current language
+    QLocale getCurrentLanguage() const { return _locale; }
 
     void setLanguage();
     QQuickWindow *mainRootWindow();
@@ -87,7 +91,6 @@ public:
     static QString cachedParameterMetaDataFile();
     static QString cachedAirframeMetaDataFile();
 
-public:
     /// Perform initialize which is common to both normal application running and unit tests.
     void init();
     void shutdown();
@@ -96,15 +99,12 @@ public:
     QQmlApplicationEngine *qmlAppEngine() const { return _qmlAppEngine; }
 
 signals:
-    void languageChanged(const QLocale locale);
+    void languageChanged(const QLocale &locale);
 
 public slots:
     void showVehicleConfig();
 
     void qmlAttemptWindowClose();
-
-    /// Get current language
-    QLocale getCurrentLanguage() const { return _locale; }
 
     /// Show non-modal vehicle message to the user
     void showCriticalVehicleMessage(const QString &message);
@@ -127,31 +127,26 @@ private slots:
 
 private:
     bool compressEvent(QEvent *event, QObject *receiver, QPostEventList *postedEvents) final;
-
     void _initVideo();
-    
     /// Initialize the application for normal application boot. Or in other words we are not going to run unit tests.
     void _initForNormalAppBoot();
-
     QObject *_rootQmlObject();
     void _checkForNewVersion();
 
     bool _runningUnitTests = false;
-    bool _simpleBootTest = false; 
-    static constexpr int _missingParamsDelayedDisplayTimerTimeout = 1000;   ///< Timeout to wait for next missing fact to come in before display
+    bool _simpleBootTest = false;
+    bool _logOutput = false;    ///< true: Log Qt debug output to file
+    bool _fakeMobile = false;    ///< true: Fake ui into displaying mobile interface
+
+    static constexpr int kMissingParamsDelayedDisplayTimerTimeout = 1000;   ///< Timeout to wait for next missing fact to come in before display
     QTimer _missingParamsDelayedDisplayTimer;                               ///< Timer use to delay missing fact display
     QList<QPair<int,QString>> _missingParams;                               ///< List of missing parameter component id:name
 
     QQmlApplicationEngine *_qmlAppEngine = nullptr;
-    bool _logOutput = false;    ///< true: Log Qt debug output to file
-    bool _fakeMobile = false;    ///< true: Fake ui into displaying mobile interface
     bool _settingsUpgraded = false;    ///< true: Settings format has been upgrade to new version
-    int _majorVersion = 0;
-    int _minorVersion = 0;
-    int _buildVersion = 0;
+    int _majorVersion = 0, _minorVersion = 0, _buildVersion = 0;
     QQuickWindow *_mainRootWindow = nullptr;
-    QTranslator _qgcTranslatorSourceCode;           ///< translations for source code C++/Qml
-    QTranslator _qgcTranslatorQtLibs;               ///< tranlsations for Qt libraries
+                   ///< tranlsations for Qt libraries
     QLocale _locale;
     bool _error = false;
     bool _showErrorsInToolbar = false;
@@ -159,6 +154,9 @@ private:
     bool _videoManagerInitialized = false;
 
     QList<QPair<QString /* title */, QString /* message */>> _delayedAppMessages;
+
+    QTranslator _qgcTranslatorSourceCode; ///< translations for source code C++/Qml
+    QTranslator _qgcTranslatorQtLibs;
 
     class CompressedSignalList
     {
@@ -175,9 +173,7 @@ private:
         QMap<const QMetaObject*, QSet<int>> _signalMap;
 
         Q_DISABLE_COPY(CompressedSignalList)
-    };
-
-    CompressedSignalList _compressedSignals;
+    } _compressedSignals;
 
     const QString _settingsVersionKey = QStringLiteral("SettingsVersion"); ///< Settings key which hold settings version
     const QString _deleteAllSettingsKey = QStringLiteral("DeleteAllSettingsNextBoot"); ///< If this settings key is set on boot, all settings will be deleted
