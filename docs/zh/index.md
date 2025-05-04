@@ -1,27 +1,27 @@
 ---
-layout: home
+layout: 首页
 hero:
-  name: QGroundControl Guide (Daily Build 5.0)
-  tagline: For beginners, experienced users, and developers
+  name: QGroundControl 手册 (Daily Building 5.0)
+  tagline: 对于初学者、有经验的用户和开发者
   actions:
     - theme: brand
-      text: User Guide
+      text: 使用文档
       link: /zh/qgc-user-guide/index.md
     - theme: brand
     - theme: brand
-      text: Dev Guide
+      text: 开发指南
       link: /zh/qgc-dev-guide/index.md
 features:
-  - title: Multiple flight stacks
-    details: Full setup/configuration of ArduPilot and PX4 Pro powered vehicles
-  - title: Mission planning
-    details: Autonomous flight with path planning, surveys, safe landing
-  - title: Flight map
-    details: Map shows vehicle position, flight track, waypoints and vehicle instruments
-  - title: Video overlay
-    details: FPV video streaming and instrument overlays.
-  - title: Multiple vehicles
-    details: Manage multiple vehicles and different types of vehicles
-  - title: Broad OS support
-    details: Windows, OS X, Linux platforms, iOS and Android devices
+  - title: 多种飞行控制架构
+    details: ArduPilot 和 PX4 Pro 所驱动载具的全套安装/配置。
+  - title: 任务规划
+    details: 具备路径规划、测绘、安全着陆功能的自主飞行
+  - title: 飞行地图
+    details: 地图显示载具位置、飞行轨迹、航点和仪表盘
+  - title: 视频叠加
+    details: FPV 视频流和仪器叠加层。
+  - title: 多载具
+    details: 管理多个不同种类的载具
+  - title: 广泛的操作系统支持
+    details: Windows、 OS X、 Linux 平台、 iOS 和 Android 设备
 ---

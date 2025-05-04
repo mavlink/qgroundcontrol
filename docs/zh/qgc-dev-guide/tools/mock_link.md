@@ -25,7 +25,7 @@ Mock Link允许您在QGroundControl调试版本中创建和停止指向多个模
 
    - 每次单击按钮时，都会创建一个新连接。
    - 当存在多个连接时，将显示多车辆UI。
-     ![](../../../assets/dev_tools/mocklink_connected.jpg)
+      ![](../../../assets/dev_tools/mocklink_connected.jpg)
 
    ![](../../../assets/dev_tools/mocklink_connected.jpg)
 

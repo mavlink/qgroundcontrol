@@ -28,7 +28,7 @@ If you are directed to create an issue, please use the "Bug report" template and
 
 ##### Reporting Crashes from Windows Builds
 
-When QGC crashes a crash dump file will be place in the Users LocalAppData directory. To navigate to that directory use the Start/Run command. You can bring this up window WinKey+R. Type into that `%localappdata%` for Open and click Ok. Crash dumps will be in a `QGCCrashDumps` folder in that directory. You should find a new **.dmp** file there. Add a link to that file in a GitHub Issue when reporting you problem.
+When QGC crashes a crash dump file will be place in the Users LocalAppData directory. To navigate to that directory use the Start/Run command. You can bring this up window WinKey+R. Type into that `%localappdata%` for Open and click Ok. Crash dumps will be in a `QGCCrashDumps` folder in that directory. 您应该在那里找到一个新的 **.dmp** 文件。 Add a link to that file in a GitHub Issue when reporting you problem.
 
 ##### Reporting Hangs from Windows Builds
 
@@ -54,4 +54,4 @@ _Console Logs_ can be helpful when diagnosing _QGroundControl_ problems. For mor
 
 ## Help Improve these Docs!
 
-Just like _QGroundControl_ itself, the user guide is an open source, user created and supported GitBook. We welcome [Pull Requests](https://github.com/mavlink/qgc-user-guide/pulls) against the guide for fixes and/or updates.
+Just like _QGroundControl_ itself, the user guide is an open source, user created and supported GitBook. 我们欢迎[Pull Requests](https://github.com/mavlink/qgc-user-guide/pulls)以进行修正 和/或 更新。

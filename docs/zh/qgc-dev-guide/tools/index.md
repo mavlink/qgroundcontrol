@@ -1,16 +1,15 @@
 # 开发者工具
 
-QGroundControl主要为自动驾驶开发人员提供了许多工具。 这些简化了常见的开发人员任务，包括设置模拟连接以进行测试，以及通过MAVLink访问系统Shell。
-These ease common developer tasks including setting up simulated connections for testing,
-and accessing the System Shell over MAVLink.
+_QGroundControl_ 提供了一系列主要面向自动驾驶仪开发者的工具。
+这些简化了常见的开发人员任务，包括设置模拟连接以进行测试，以及通过MAVLink访问系统Shell。
 
 :::info
-[Build the source in debug mode](https://github.com/mavlink/qgroundcontrol#supported-builds) to enable these tools.
+[在调试模式中生成源](https://github.com/mavlink/qgroundcontrol#supported-builds) 以启用这些工具。
 :::
 
 工具包括：
 
-- **[Mock Link](../tools/mock_link.md)** (Debug Builds only) - Creates and stops multiple simulated vehicle links.
-- **[Replay Flight Data](../../qgc-user-guide/fly_view/replay_flight_data.md)** - Replay a telemetry log (User Guide).
-- **[MAVLink Inspector](../../qgc-user-guide/analyze_view/mavlink_inspector.html)** - Display received MAVLink messages/values and plot trends.
-- **[MAVLink Console](../../qgc-user-guide/analyze_view/mavlink_console.html)** (PX4 Only) - Connect to the PX4 nsh shell and send commands.
+- **[Mock Link](../tools/mock_link.md)** (仅调试版本) - 创建和停止多个模拟载具链接。
+- **[重播飞行数据](../../qgc-user-guide/fly_view/replay_flight_data.md)** - 重播一个遥测日志(用户指南)。
+- **[MAVLink 检查器](../../qgc-user-guide/analyze_view/mavlink_inspector.html)** - 显示已收到的 MAVLink 消息/值和绘图趋势。
+- **[MAVLink 控制台](../../qgc-user-guide/analyze_view/mavlink_console.html)** （仅限PX4） - 连接到 PX4 nsh shell 并发送命令。

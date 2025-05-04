@@ -18,14 +18,14 @@ To create a landing pattern:
 
 2. Choose the _Pattern Tool_ from the _Plan Tools_ and then select _Fixed Wing Landing Pattern_.
 
-   ![Fixed Wing Landing Pattern](../../../assets/plan/pattern/fixed_wing_landing_pattern_menu.jpg)
+  ![Fixed Wing Landing Pattern](../../../assets/plan/pattern/fixed_wing_landing_pattern_menu.jpg)
 
-   This will add a _Landing Pattern_ item to the mission list (on the right).
+  This will add a _Landing Pattern_ item to the mission list (on the right).
 
-   ![Fixed Wing Landing Pattern](../../../assets/plan/pattern/fixed_wing_landing_pattern_mission_item_initial.jpg)
+  ![Fixed Wing Landing Pattern](../../../assets/plan/pattern/fixed_wing_landing_pattern_mission_item_initial.jpg)
 
 3. Click on the map to create both the loiter point and the landing point.
-   These can be moved on the map.
+  These can be moved on the map.
 
 Additional settings are covered in the next section.
 
