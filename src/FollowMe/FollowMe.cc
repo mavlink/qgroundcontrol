@@ -29,6 +29,10 @@ FollowMe::FollowMe(QObject *parent)
     // qCDebug(FollowMeLog) << Q_FUNC_INFO << this;
 
     _gcsMotionReportTimer->setSingleShot(false);
+    // We set the update interval to a fixed amount of time. 
+    // Even if the device can't update this quickly we'll pick up a new value on the next time around.
+    // We can't trust the value for update interval which comes from the actual device.
+    _gcsMotionReportTimer->setInterval(kMotionUpdateInterval);
 }
 
 FollowMe::~FollowMe()
@@ -79,7 +83,6 @@ void FollowMe::_settingsChanged(QVariant value)
 void FollowMe::_enableFollowSend()
 {
     if (!_gcsMotionReportTimer->isActive()) {
-        _gcsMotionReportTimer->setInterval(qMin(QGCPositionManager::instance()->updateInterval(), kMotionUpdateInterval));
         _gcsMotionReportTimer->start();
     }
 }
