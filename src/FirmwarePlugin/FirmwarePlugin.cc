@@ -456,7 +456,7 @@ void FirmwarePlugin::_updateFlightModeList(FlightModeList &flightModeList)
     }
 
     for (const FirmwareFlightMode &flightMode : _flightModeList) {
-        qCDebug(FirmwarePluginLog) << "Flight Mode:" << flightMode.mode_name << " Custom Mode:" << flightMode.custom_mode;
+        qCDebug(FirmwarePluginLog) << "Flight Mode:" << flightMode.mode_name << " Custom Mode:" << flightMode.custom_mode << "MultiRotor:" << flightMode.multiRotor << "FixedWing:" << flightMode.fixedWing;
     }
 }
 

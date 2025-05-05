@@ -783,6 +783,7 @@ const QVariantList& PX4FirmwarePlugin::toolIndicators(const Vehicle* vehicle)
 void PX4FirmwarePlugin::updateAvailableFlightModes(FlightModeList &modeList)
 {
     for(auto &mode: modeList){
+        qDebug() << "Flight Mode before:" << mode.mode_name << mode.multiRotor << mode.fixedWing << Q_FUNC_INFO;
         PX4CustomMode::Mode cMode = static_cast<PX4CustomMode::Mode>(mode.custom_mode);
 
         // Update Multi Rotor
@@ -836,6 +837,7 @@ void PX4FirmwarePlugin::updateAvailableFlightModes(FlightModeList &modeList)
             mode.fixedWing = true;
             break;
         }
+        qDebug() << "Flight Mode after:" << mode.mode_name << mode.multiRotor << mode.fixedWing << Q_FUNC_INFO;
     }
     _updateFlightModeList(modeList);
 }
