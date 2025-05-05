@@ -114,7 +114,8 @@ void PlanManager::_writeMissionCount(void)
                                             _vehicle->id(),
                                             MAV_COMP_ID_AUTOPILOT1,
                                             _writeMissionItems.count(),
-                                            _planType);
+                                            _planType,
+                                            0);
 
         _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
     }
@@ -303,7 +304,8 @@ void PlanManager::_readTransactionComplete(void)
                                           _vehicle->id(),
                                           MAV_COMP_ID_AUTOPILOT1,
                                           MAV_MISSION_ACCEPTED,
-                                          _planType);
+                                          _planType,
+                                          0);
 
         _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
     }

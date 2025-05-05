@@ -162,7 +162,8 @@ void MockLinkMissionItemHandler::_handleMissionRequestList(const mavlink_message
                                             msg.sysid,                  // Target is original sender
                                             msg.compid,                 // Target is original sender
                                             itemCount,                  // Number of mission items
-                                            _requestType);
+                                            _requestType,
+                                            0);
         _mockLink->respondWithMavlinkMessage(responseMsg);
     }
 }
@@ -337,7 +338,8 @@ void MockLinkMissionItemHandler::_sendAck(MAV_MISSION_RESULT ackType)
                                       _mavlinkProtocol->getSystemId(),
                                       _mavlinkProtocol->getComponentId(),
                                       ackType,
-                                      _requestType);
+                                      _requestType,
+                                      0);
     _mockLink->respondWithMavlinkMessage(message);
 }
 
