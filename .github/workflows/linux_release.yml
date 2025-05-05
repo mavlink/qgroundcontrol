@@ -54,7 +54,7 @@ jobs:
         run:  sudo apt-get install -y libsdl2-dev
 
       - name: Install Gstreamer
-        run:  sudo apt-get install -y libgstreamer-plugins-base1.0-dev libgstreamer1.0-0:amd64 libgstreamer1.0-dev
+        run:  sudo apt-get install -y libgstreamer-plugins-base1.0-dev libgstreamer1.0-0:amd64 libgstreamer1.0-dev libunwind-dev
 
       - name: Install ccache
         run:  sudo apt-get install ccache
