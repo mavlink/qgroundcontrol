@@ -1,6 +1,11 @@
 qt_add_library(gstqml6gl STATIC)
 
-target_link_libraries(gstqml6gl PUBLIC GStreamer::GStreamer)
+if(MACOS)
+    target_link_libraries(gstqml6gl PUBLIC "$<LINK_LIBRARY:FRAMEWORK,${GSTREAMER_FRAMEWORK_PATH}>")
+    target_include_directories(gstqml6gl PUBLIC "${GSTREAMER_FRAMEWORK_PATH}/Headers")
+else()
+    target_link_libraries(gstqml6gl PUBLIC GStreamer::GStreamer)
+endif()
 
 # if(GST_PLUGIN_qml6_FOUND)
 #     # Don't Download & Build if gstreamer1.0-qt6 gstqml6 was found

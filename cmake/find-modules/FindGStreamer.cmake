@@ -26,14 +26,6 @@ if(NOT DEFINED GStreamer_USE_STATIC_LIBS)
     endif()
 endif()
 
-if(NOT DEFINED GStreamer_USE_FRAMEWORK)
-    if(APPLE)
-        set(GStreamer_USE_FRAMEWORK ON)
-    else()
-        set(GStreamer_USE_FRAMEWORK OFF)
-    endif()
-endif()
-
 ################################################################################
 
 set(PKG_CONFIG_ARGN)
@@ -140,23 +132,13 @@ elseif(ANDROID)
         --define-variable=includedir=${GSTREAMER_INCLUDE_PATH}
     )
 elseif(MACOS)
-    if(NOT DEFINED GStreamer_ROOT_DIR)
-        if(EXISTS "/Library/Frameworks/GStreamer.framework")
-            set(GStreamer_ROOT_DIR "/Library/Frameworks/GStreamer.framework/Versions/1.0")
-        elseif(EXISTS "/opt/homebrew/opt/gstreamer")
-            set(GStreamer_ROOT_DIR "/opt/homebrew/opt/gstreamer")
-        elseif(EXISTS "/usr/local/opt/gstreamer")
-            set(GStreamer_ROOT_DIR "/usr/local/opt/gstreamer")
-        endif()
+    set(GSTREAMER_FRAMEWORK_PATH "/Library/Frameworks/GStreamer.framework")
+    if(NOT EXISTS "${GSTREAMER_FRAMEWORK_PATH}")
+        message(FATAL_ERROR "Could not locate GStreamer Framework at /Library/Frameworks/GStreamer.framework. Install GStreamer using the tools/setup/install-depedencies-osx.sh script.")
     endif()
-
-    cmake_path(CONVERT "${GStreamer_ROOT_DIR}" TO_CMAKE_PATH_LIST GStreamer_ROOT_DIR NORMALIZE)
+    set(GStreamer_ROOT_DIR "${GSTREAMER_FRAMEWORK_PATH}/Versions/1.0")
     if(NOT EXISTS "${GStreamer_ROOT_DIR}")
-        message(FATAL_ERROR "Could not locate GStreamer - check installation or set environment/cmake variables")
-    endif()
-
-    if(GStreamer_USE_FRAMEWORK)
-        set(GSTREAMER_FRAMEWORK_PATH "${GStreamer_ROOT_DIR}/../..")
+        message(FATAL_ERROR "Could not locate ${GStreamer_ROOT_DIR}. Re-install GStreamer using the tools/setup/install-depedencies-osx.sh script.")
     endif()
 
     set(GSTREAMER_INCLUDE_PATH "${GStreamer_ROOT_DIR}/include")
@@ -216,10 +198,6 @@ elseif(IOS)
 endif()
 
 if(NOT EXISTS "${GStreamer_ROOT_DIR}" OR NOT EXISTS "${GSTREAMER_LIB_PATH}" OR NOT EXISTS "${GSTREAMER_PLUGIN_PATH}" OR NOT EXISTS "${GSTREAMER_INCLUDE_PATH}")
-    message(FATAL_ERROR "Could not locate GStreamer - check installation or set environment/cmake variables")
-endif()
-
-if(GStreamer_USE_FRAMEWORK AND NOT EXISTS "${GSTREAMER_FRAMEWORK_PATH}")
     message(FATAL_ERROR "Could not locate GStreamer - check installation or set environment/cmake variables")
 endif()
 
@@ -285,10 +263,6 @@ if(ANDROID)
 endif()
 
 ################################################################################
-
-if(GStreamer_USE_FRAMEWORK)
-    list(APPEND CMAKE_FRAMEWORK_PATH "${GSTREAMER_FRAMEWORK_PATH}")
-endif()
 
 if(GStreamer_USE_STATIC_LIBS)
     list(APPEND PKG_CONFIG_ARGN "--static")
@@ -367,14 +341,11 @@ if(GStreamer_FOUND AND NOT TARGET GStreamer::GStreamer)
         target_compile_definitions(GStreamer::GStreamer INTERFACE QGC_GST_STATIC_BUILD)
     endif()
 
-    if(APPLE AND GStreamer_USE_FRAMEWORK)
+    if(MACOS)
         set(CMAKE_FIND_FRAMEWORK ONLY)
         find_library(GSTREAMER_FRAMEWORK GStreamer
             PATHS
-                "${GSTREAMER_FRAMEWORK_PATH}"
                 "/Library/Frameworks"
-                "/usr/local/opt/gstreamer"
-                "/opt/homebrew/opt/gstreamer"
         )
         unset(CMAKE_FIND_FRAMEWORK)
         if(GSTREAMER_FRAMEWORK)
@@ -385,7 +356,7 @@ if(GStreamer_FOUND AND NOT TARGET GStreamer::GStreamer)
             endif()
             return()
         else()
-            message(FATAL_ERROR "Could not locate GStreamer - check installation or set environment/cmake variables")
+            message(FATAL_ERROR "Could not locate GStreamer Framework. Re-Install GStreamer using the tools/setup/install-depedencies-osx.sh script.")
         endif()
     elseif(ANDROID)
         target_link_options(GStreamer::GStreamer INTERFACE "-Wl,-Bsymbolic")

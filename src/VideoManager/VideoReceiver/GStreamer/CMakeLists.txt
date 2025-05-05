@@ -79,20 +79,18 @@ if(TARGET gstqml6gl)
                 PATTERN "*.exe"
         )
     elseif(MACOS)
-        if(GSTREAMER_FRAMEWORK)
-            install(
-                DIRECTORY "${GSTREAMER_FRAMEWORK}"
-                DESTINATION "${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}.app/Contents/Frameworks"
-                PATTERN "*.la" EXCLUDE
-                PATTERN "*.a" EXCLUDE
-                PATTERN "*/bin" EXCLUDE
-                PATTERN "*/etc" EXCLUDE
-                PATTERN "*/gst-validate-launcher" EXCLUDE
-                PATTERN "*/Headers" EXCLUDE
-                PATTERN "*/include" EXCLUDE
-                PATTERN "*/pkgconfig" EXCLUDE
-                PATTERN "*/share" EXCLUDE
-            )
-        endif()
+        install(
+            DIRECTORY "${GSTREAMER_FRAMEWORK_PATH}"
+            DESTINATION "${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}.app/Contents/Frameworks"
+            PATTERN "*.la" EXCLUDE
+            PATTERN "*.a" EXCLUDE
+            PATTERN "*/bin" EXCLUDE
+            PATTERN "*/etc" EXCLUDE
+            PATTERN "*/gst-validate-launcher" EXCLUDE
+            PATTERN "*/Headers" EXCLUDE
+            PATTERN "*/include" EXCLUDE
+            PATTERN "*/pkgconfig" EXCLUDE
+            PATTERN "*/share" EXCLUDE
+        )
     endif()
 endif()
