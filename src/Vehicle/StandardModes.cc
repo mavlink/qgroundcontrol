@@ -111,7 +111,6 @@ void StandardModes::ensureUniqueModeNames()
 
 void StandardModes::request()
 {
-#ifdef DAILY_BUILD // Disable use of development/WIP MAVLink messages for release builds
     if (_requestActive) {
         // If we are in the middle of waiting for a request, wait for the response first
         _wantReset = true;
@@ -123,9 +122,6 @@ void StandardModes::request()
     qCDebug(StandardModesLog) << "Requesting available modes";
     // Request one at a time. This could be improved by requesting all, but we can't use Vehicle::requestMessage for that
     StandardModes::requestMode(1);
-#else
-    emit requestCompleted();
-#endif // DAILY_BUILD
 }
 
 void StandardModes::requestMode(int modeIndex)
