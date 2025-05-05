@@ -95,7 +95,7 @@ void UDPConfiguration::copyFrom(const LinkConfiguration *source)
     _targetHosts.clear();
 
     for (const std::shared_ptr<UDPClient> &target : udpSource->targetHosts()) {
-        if (!_targetHosts.contains(target)) {
+        if (!containsTarget(_targetHosts, target->address, target->port)) {
             _targetHosts.append(std::make_shared<UDPClient>(target.get()));
             _updateHostList();
         }
@@ -385,7 +385,7 @@ void UDPWorker::writeData(const QByteArray &data)
 
     // Send to all manually targeted systems
     for (const std::shared_ptr<UDPClient> &target : _udpConfig->targetHosts()) {
-        if (!_sessionTargets.contains(target)) {
+        if (!containsTarget(_sessionTargets, target->address, target->port)) {
             if (_socket->writeDatagram(data, target->address, target->port) < 0) {
                 qCWarning(UDPLinkLog) << "Could Not Send Data - Write Failed!";
             }
