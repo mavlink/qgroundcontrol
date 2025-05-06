@@ -213,6 +213,8 @@ void GstVideoReceiver::start(uint32_t timeout)
             gst_clear_object(&_source);
         }
 
+        // Rate limit restarts on failure. This sleep is OK because we're in the video worker thread.
+        QThread::sleep(1);
         _dispatchSignal([this]() { emit onStartComplete(STATUS_FAIL); });
     } else {
         GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-started");
