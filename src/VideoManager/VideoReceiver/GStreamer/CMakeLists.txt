@@ -2,10 +2,14 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE VideoItemStub.h)
 
 if(QGC_ENABLE_GST_VIDEOSTREAMING)
-    find_package(GStreamer
-        REQUIRED
-        COMPONENTS Core Base Video Gl GlPrototypes Rtsp
-        OPTIONAL_COMPONENTS GlEgl GlWayland GlX11)
+    if(NOT MACOS)
+        # Using FindGStreamer.cmake is currently bypassed on MACOS since it doesn't work
+        # So for now we hack in a simple hardwired setup which does work
+        find_package(GStreamer
+            REQUIRED
+            COMPONENTS Core Base Video Gl GlPrototypes Rtsp
+            OPTIONAL_COMPONENTS GlEgl GlWayland GlX11)
+    endif()
 
     add_subdirectory(gstqml6gl)
     # TODO: https://gstreamer.freedesktop.org/documentation/qt6d3d11/index.html#qml6d3d11sink-page

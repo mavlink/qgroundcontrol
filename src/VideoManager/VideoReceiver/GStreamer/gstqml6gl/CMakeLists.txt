@@ -1,6 +1,19 @@
 qt_add_library(gstqml6gl STATIC)
 
-target_link_libraries(gstqml6gl PUBLIC GStreamer::GStreamer)
+if(MACOS)
+    # Using FindGStreamer.cmake is currently bypassed on MACOS since it doesn't work
+    # So for now we hack in a simple hardwired setup which does work
+    find_library(GSTREAMER_FRAMEWORK GStreamer)
+    set(GST_PLUGINS_VERSION 1.24.12)
+    set(GSTREAMER_FRAMEWORK_PATH "/Library/Frameworks/GStreamer.framework")
+    if(NOT EXISTS "${GSTREAMER_FRAMEWORK_PATH}")
+        message(FATAL_ERROR "GStreamer.framework not found at ${GSTREAMER_FRAMEWORK_PATH}. Install GStreamer using tools/setup/install-dependencies-osx.sh script")
+    endif()
+    target_link_libraries(gstqml6gl PUBLIC "$<LINK_LIBRARY:FRAMEWORK,${GSTREAMER_FRAMEWORK_PATH}>")
+    target_include_directories(gstqml6gl PUBLIC "${GSTREAMER_FRAMEWORK_PATH}/Headers")
+else()
+    target_link_libraries(gstqml6gl PUBLIC GStreamer::GStreamer)
+endif()
 
 # if(GST_PLUGIN_qml6_FOUND)
 #     # Don't Download & Build if gstreamer1.0-qt6 gstqml6 was found
