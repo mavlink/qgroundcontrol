@@ -206,6 +206,7 @@ void GstVideoReceiver::start(uint32_t timeout)
 
         if (!pipelineUp) {
             gst_clear_object(&_recorderValve);
+            gst_clear_object(&recorderQueue);
             gst_clear_object(&_decoderValve);
             gst_clear_object(&decoderQueue);
             gst_clear_object(&_tee);
