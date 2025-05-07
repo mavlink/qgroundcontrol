@@ -565,7 +565,7 @@
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="95"/>
       <source>Avoid ADSB</source>
-      <translation>关闭空中飞行器避障（ADSB）</translation>
+      <translation>关闭ADSB</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="96"/>
@@ -1387,7 +1387,7 @@
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="67"/>
       <source>Manual</source>
-      <translation type="unfinished">Manual</translation>
+      <translation>手动</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="68"/>
@@ -1452,7 +1452,7 @@
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="80"/>
       <source>Avoid ADSB</source>
-      <translation type="unfinished">Avoid ADSB</translation>
+      <translation>关闭ADSB</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="81"/>
@@ -1951,7 +1951,7 @@
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="58"/>
       <source>Manual</source>
-      <translation type="unfinished">Manual</translation>
+      <translation>手动</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="59"/>
@@ -3274,7 +3274,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="507"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="507"/>
       <source>Manual Magnetic Declination</source>
-      <translation>Manual Magnetic Declination</translation>
+      <translation>手动设置磁偏角</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="529"/>
@@ -3780,7 +3780,7 @@ Click Ok to start calibration.</source>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="156"/>
       <source>Manual</source>
-      <translation type="unfinished">Manual</translation>
+      <translation>手动</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="157"/>
@@ -5183,7 +5183,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/MissionManager/CameraCalc.cc" line="302"/>
       <source>Manual (no camera specs)</source>
-      <translation>手动（无相机参数）</translation>
+      <translation>手动 （无相机参数）</translation>
     </message>
   </context>
   <context>
@@ -9868,7 +9868,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/UI/toolbar/MainStatusIndicator.qml" line="45"/>
       <source>Disconnected - Click to manually connect</source>
-      <translation type="unfinished">Disconnected - Click to manually connect</translation>
+      <translation>断开连接 - 点击手动连接</translation>
     </message>
     <message>
       <location filename="../src/UI/toolbar/MainStatusIndicator.qml" line="192"/>
@@ -11005,7 +11005,7 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/QmlControls/PIDTuning.qml" line="316"/>
       <source>Use manual tuning</source>
-      <translation type="unfinished">Use manual tuning</translation>
+      <translation>使用手动调整</translation>
     </message>
   </context>
   <context>
@@ -11049,7 +11049,7 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="35"/>
       <source>Manual</source>
-      <translation>手动Manual</translation>
+      <translation>手动</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="36"/>
@@ -11356,7 +11356,7 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/UI/preferences/PX4LogTransferSettings.qml" line="133"/>
       <source>Manual Start/Stop:</source>
-      <translation type="unfinished">Manual Start/Stop:</translation>
+      <translation>手动开启/停止：</translation>
     </message>
     <message>
       <location filename="../src/UI/preferences/PX4LogTransferSettings.qml" line="137"/>
@@ -14183,7 +14183,7 @@ sudo apt-get 移除调制解调器管理器</translation>
     <message>
       <location filename="../src/MAVLink/QGCMAVLink.cc" line="345"/>
       <source>Onboard ADSB peripheral</source>
-      <translation type="unfinished">Onboard ADSB peripheral</translation>
+      <translation>机载ADSB外部设备</translation>
     </message>
   </context>
   <context>
@@ -16312,7 +16312,7 @@ ROTATION_NONE indicates component points in direction of flight.</translation>
     <message>
       <location filename="../src/UI/SettingsPagesModel.qml" line="52"/>
       <source>ADSB Server</source>
-      <translation type="unfinished">ADSB Server</translation>
+      <translation>ADSB 服务器</translation>
     </message>
     <message>
       <location filename="../src/UI/SettingsPagesModel.qml" line="59"/>
