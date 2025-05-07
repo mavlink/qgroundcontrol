@@ -16,12 +16,10 @@ import QGroundControl.FlightDisplay
 
 RowLayout {
     TelemetryValuesBar {
-        Layout.alignment:   Qt.AlignBottom
-        extraWidth:         instrumentPanel.extraValuesWidth
-
-        valueArea_userSettingsGroup:      valueArea.telemetryBarUserSettingsGroup
-        valueArea_defaultSettingsGroup:   valueArea.telemetryBarDefaultSettingsGroup
-        valueArea_vehicle:                QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
+        Layout.alignment:       Qt.AlignBottom
+        extraWidth:             instrumentPanel.extraValuesWidth
+        settingsGroup:          factValueGrid.telemetryBarSettingsGroup
+        specificVehicleForCard: null // Tracks active vehicle
     }
 
     FlyViewInstrumentPanel {

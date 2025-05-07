@@ -19,19 +19,12 @@ class HorizontalFactValueGrid : public FactValueGrid
 
 public:
     HorizontalFactValueGrid(QQuickItem *parent = nullptr);
-    HorizontalFactValueGrid(const QString& defaultSettingsGroup);
 
-    Q_PROPERTY(QString telemetryBarDefaultSettingsGroup MEMBER telemetryBarDefaultSettingsGroup CONSTANT)
-    Q_PROPERTY(QString telemetryBarUserSettingsGroup    MEMBER telemetryBarUserSettingsGroup    CONSTANT)
+    Q_PROPERTY(QString telemetryBarSettingsGroup    MEMBER telemetryBarSettingsGroup    CONSTANT)
+    Q_PROPERTY(QString vehicleCardSettingsGroup     MEMBER vehicleCardSettingsGroup     CONSTANT)
 
-    Q_PROPERTY(QString vehicleCardDefaultSettingsGroup  MEMBER vehicleCardDefaultSettingsGroup  CONSTANT)
-    Q_PROPERTY(QString vehicleCardUserSettingsGroup     MEMBER vehicleCardUserSettingsGroup     CONSTANT)
-
-    static const QString telemetryBarDefaultSettingsGroup;
-    static const QString telemetryBarUserSettingsGroup;
-
-    static const QString vehicleCardDefaultSettingsGroup;
-    static const QString vehicleCardUserSettingsGroup;
+    static const QString telemetryBarSettingsGroup;
+    static const QString vehicleCardSettingsGroup;
 
 private:
     Q_DISABLE_COPY(HorizontalFactValueGrid)

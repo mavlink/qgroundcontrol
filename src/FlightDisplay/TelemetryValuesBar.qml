@@ -23,10 +23,9 @@ Item {
 
     property real extraWidth: 0 ///< Extra width to add to the background rectangle
 
-    property alias valueArea: valueArea
-    property var valueArea_userSettingsGroup
-    property var valueArea_defaultSettingsGroup
-    property var valueArea_vehicle
+    property alias factValueGrid:           factValueGrid
+    property alias settingsGroup:           factValueGrid.settingsGroup
+    property alias specificVehicleForCard:  factValueGrid.specificVehicleForCard
 
     Rectangle {
         id:         backgroundRect
@@ -44,7 +43,7 @@ Item {
         anchors.left:       parent.left
 
         RowLayout {
-            visible: valueArea.settingsUnlocked
+            visible: factValueGrid.settingsUnlocked
 
             QGCColoredImage {
                 source:             "qrc:/InstrumentValueIcons/lock-open.svg"
@@ -57,16 +56,13 @@ Item {
 
                 QGCMouseArea {
                     anchors.fill: parent
-                    onClicked:    valueArea.settingsUnlocked = false
+                    onClicked:    factValueGrid.settingsUnlocked = false
                 }
             }
         }
 
         HorizontalFactValueGrid {
-            id:                     valueArea
-            userSettingsGroup:      valueArea_userSettingsGroup
-            defaultSettingsGroup:   valueArea_defaultSettingsGroup
-            vehicle:                valueArea_vehicle
+            id: factValueGrid
         }
     }
 
@@ -78,17 +74,17 @@ Item {
         height:                     mainLayout.height
         acceptedButtons:            Qt.LeftButton | Qt.RightButton
         propagateComposedEvents:    true
-        visible:                    !valueArea.settingsUnlocked
+        visible:                    !factValueGrid.settingsUnlocked
 
         onClicked: (mouse) => {
             if (!ScreenTools.isMobile && mouse.button === Qt.RightButton) {
-                valueArea.settingsUnlocked = true
+                factValueGrid.settingsUnlocked = true
                 mouse.accepted = true
             }
         }
 
         onPressAndHold: {
-            valueArea.settingsUnlocked = true
+            factValueGrid.settingsUnlocked = true
             mouse.accepted = true
         }
     }

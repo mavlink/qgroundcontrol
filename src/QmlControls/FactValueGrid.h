@@ -24,7 +24,6 @@ class FactValueGrid : public QQuickItem
 
 public:
     FactValueGrid(QQuickItem *parent = nullptr);
-    FactValueGrid(const QString& defaultSettingsGroup);
     ~FactValueGrid();
 
     enum FontSize {
@@ -35,24 +34,15 @@ public:
     };
     Q_ENUMS(FontSize)
 
-    // defaultSettingsGroup:
-    //  This is the setting group name for default settings which are used when the user has not modified anything from the default setup. These settings will be overwritten
-    //  prior to each use by the call to QGCCorePlugin::FactValueGridCreateDefaultSettings.
+    Q_PROPERTY(QmlObjectListModel*  columns         MEMBER _columns                                     NOTIFY columnsChanged)
+    Q_PROPERTY(int                  rowCount        MEMBER _rowCount                                    NOTIFY rowCountChanged)
+    Q_PROPERTY(QStringList          iconNames       READ iconNames                                      CONSTANT)
+    Q_PROPERTY(FontSize             fontSize        READ fontSize           WRITE setFontSize           NOTIFY fontSizeChanged)
+    Q_PROPERTY(QStringList          fontSizeNames   MEMBER _fontSizeNames                               CONSTANT)
 
-    // userSettingsGroup:
-    //  This is the settings group name for user modified settings. Settings will be saved to here whenever the user modified anything. Also at that point in time the
-    //  defaults settings group will be removed.
-
-    // The combination of the two valuePage*SettingsGroup values allows each FactValueGrid to have it's own persistence space.
-
-    Q_PROPERTY(QmlObjectListModel*  columns                         MEMBER _columns                                         NOTIFY columnsChanged)
-    Q_PROPERTY(int                  rowCount                        MEMBER _rowCount                                        NOTIFY rowCountChanged)
-    Q_PROPERTY(QString              userSettingsGroup               MEMBER _userSettingsGroup                               NOTIFY userSettingsGroupChanged)
-    Q_PROPERTY(QString              defaultSettingsGroup            MEMBER _defaultSettingsGroup                            NOTIFY defaultSettingsGroupChanged)
-    Q_PROPERTY(QStringList          iconNames                       READ iconNames                                          CONSTANT)
-    Q_PROPERTY(FontSize             fontSize                        READ fontSize                       WRITE setFontSize   NOTIFY fontSizeChanged)
-    Q_PROPERTY(QStringList          fontSizeNames                   MEMBER _fontSizeNames                                   CONSTANT)
-    Q_PROPERTY(Vehicle *            vehicle                         READ vehicle                        WRITE setVehicle    NOTIFY vehicleChanged                   REQUIRED)
+    // The following properties should only be set at initial object creation time
+    Q_PROPERTY(QString              settingsGroup           MEMBER _settingsGroup           NOTIFY settingsGroupChanged             REQUIRED)
+    Q_PROPERTY(Vehicle *            specificVehicleForCard  MEMBER _specificVehicleForCard  NOTIFY specificVehicleForCardChanged    REQUIRED)   ///< null means track active vehicle, set to specific vehicle to track a single vehicle and share settings with other cards
 
     Q_INVOKABLE void                resetToDefaults (void);
     Q_INVOKABLE QmlObjectListModel* appendColumn    (void);
@@ -60,59 +50,51 @@ public:
     Q_INVOKABLE void                appendRow       (void);
     Q_INVOKABLE void                deleteLastRow   (void);
 
-    QmlObjectListModel*         columns             (void) const { return _columns; }
-    QString                     userSettingsGroup   (void) const { return _userSettingsGroup; }
-    FontSize                    fontSize            (void) const { return _fontSize; }
-    QStringList                 iconNames           (void) const { return _iconNames; }
-    QGCMAVLink::VehicleClass_t  vehicleClass        (void) const { return _vehicleClass; }
-    Vehicle*                    vehicle             (void) const { return _vehicle; }
+    QmlObjectListModel*         columns                 (void) const { return _columns; }
+    QString                     settingsGroup           (void) const { return _settingsGroup; }
+    FontSize                    fontSize                (void) const { return _fontSize; }
+    QStringList                 iconNames               (void) const { return _iconNames; }
+    QGCMAVLink::VehicleClass_t  vehicleClass            (void) const;
+    Vehicle*                    currentVehicle          (void) const { return _specificVehicleForCard ? _specificVehicleForCard : _activeVehicle; }
+    Vehicle*                    specificVehicleForCard  (void) const { return _specificVehicleForCard; }
 
     void setFontSize(FontSize fontSize);
-    void setVehicle(Vehicle* vehicle);
-
-    // This is only exposed for usage of FactValueGrid to be able to just read the settings and display no ui. For this case
-    // create a FactValueGrid object with a null parent. Set the userSettingsGroup/defaultSettingsGroup appropriately and then
-    // call _loadSettings. Then after that you can read the settings from the object. You should not change any of the values.
-    // Destroy the FactValueGrid object when done.
-    void _loadSettings(void);
-
-    void saveSettingsForced(void);
 
     // Override from QQmlParserStatus
     void componentComplete(void) final;
 
 signals:
-    void userSettingsGroupChanged   (const QString& userSettingsGroup);
-    void defaultSettingsGroupChanged(const QString& defaultSettingsGroup);
-    void fontSizeChanged            (FontSize fontSize);
-    void vehicleChanged             ();
-    void columnsChanged             (QmlObjectListModel* model);
-    void rowCountChanged            (int rowCount);
+    void fontSizeChanged(FontSize fontSize);
+    void columnsChanged (QmlObjectListModel* model);
+    void rowCountChanged(int rowCount);
+    void settingsGroupChanged(QString settingsGroup);
+    void specificVehicleForCardChanged(Vehicle* vehicle);
 
 protected:
     Q_DISABLE_COPY(FactValueGrid)
 
-    QGCMAVLink::VehicleClass_t  _vehicleClass           = QGCMAVLink::VehicleClassGeneric;
-    QString                     _defaultSettingsGroup;                                      // Settings group to read from if the user has not modified from the default settings
-    QString                     _userSettingsGroup;                                         // Settings group to read from for user modified settings
+    QString                     _settingsGroup;
     FontSize                    _fontSize               = DefaultFontSize;
     bool                        _preventSaveSettings    = false;
     QmlObjectListModel*         _columns                = nullptr;
     int                         _rowCount               = 0;
-    Vehicle*                    _vehicle                = nullptr;
+    Vehicle*                    _specificVehicleForCard = nullptr;
+    Vehicle*                    _activeVehicle          = nullptr;
 
 private slots:
-    void _offlineVehicleTypeChanged(void);
+    void _activeVehicleChanged(Vehicle *activeVehicle);
+    void _resetFromSettings(void);
 
 private:
     InstrumentValueData*    _createNewInstrumentValueWorker (QObject* parent);
     void                    _saveSettings                   (void);
-    void                    _init                           (void);
     void                    _connectSaveSignals             (InstrumentValueData* value);
     QString                 _pascalCase                     (const QString& text);
     void                    _saveValueData                  (QSettings& settings, InstrumentValueData* value);
     void                    _loadValueData                  (QSettings& settings, InstrumentValueData* value);
     QString                 _settingsKey                    (void);
+    void                    _initForNewVehicle              (Vehicle* vehicle);
+    void                    _deinitVehicle                  (Vehicle* vehicle);
 
     // These are user facing string for the various enums.
     static       QStringList _iconNames;
@@ -136,11 +118,7 @@ private:
 
     static constexpr const char* _deprecatedGroupKey =  "ValuesWidget";
 
-    // Static list of all instances. Used to notify others when settings have changed.
-    static QList<FactValueGrid*>& instances() {
-        static QList<FactValueGrid*> instanceList;
-        return instanceList;
-    }
+    static QList<FactValueGrid*> _vehicleCardInstanceList;
 };
 
 QML_DECLARE_TYPE(FactValueGrid)

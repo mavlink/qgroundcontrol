@@ -157,7 +157,7 @@ QString QGCCorePlugin::showAdvancedUIMessage() const
 
 void QGCCorePlugin::factValueGridCreateDefaultSettings(FactValueGrid* factValueGrid)
 {
-    if(factValueGrid->userSettingsGroup() == HorizontalFactValueGrid::vehicleCardUserSettingsGroup){
+    if (factValueGrid->specificVehicleForCard()) {
         bool includeFWValues = factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassFixedWing || factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassVTOL || factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassAirship;
 
         factValueGrid->setFontSize(FactValueGrid::LargeFontSize);
@@ -168,7 +168,7 @@ void QGCCorePlugin::factValueGridCreateDefaultSettings(FactValueGrid* factValueG
         int colIndex = 0;
 
         // first cell
-        QmlObjectListModel* column      = factValueGrid->columns()->value<QmlObjectListModel*>(colIndex++);
+        QmlObjectListModel* column = factValueGrid->columns()->value<QmlObjectListModel*>(colIndex++);
         InstrumentValueData* value = column->value<InstrumentValueData*>(rowIndex);
         value->setFact("Vehicle", "AltitudeRelative");
         value->setIcon("arrow-thick-up.svg");
@@ -182,17 +182,13 @@ void QGCCorePlugin::factValueGridCreateDefaultSettings(FactValueGrid* factValueG
             value->setFact("Vehicle", "AirSpeed");
             value->setText("AirSpd");
             value->setShowUnits(true);
-        }
-        else {
+        } else {
             value->setFact("Vehicle", "GroundSpeed");
             value->setIcon("arrow-simple-right.svg");
             value->setText(value->fact()->shortDescription());
             value->setShowUnits(true);
         }
-
-        factValueGrid->saveSettingsForced();
-    }
-    else if(factValueGrid->userSettingsGroup() == HorizontalFactValueGrid::telemetryBarUserSettingsGroup){
+    } else {
         const bool includeFWValues = ((factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassFixedWing) || (factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassVTOL) || (factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassAirship));
 
         factValueGrid->setFontSize(FactValueGrid::LargeFontSize);
@@ -264,11 +260,6 @@ void QGCCorePlugin::factValueGridCreateDefaultSettings(FactValueGrid* factValueG
         value->setIcon(QStringLiteral("travel-walk.svg"));
         value->setText(value->fact()->shortDescription());
         value->setShowUnits(true);
-
-        factValueGrid->saveSettingsForced();
-    }
-    else {
-        qCritical() << "factValueGridCreateDefaultSettings: Unexpected userSettingsGroup: " << factValueGrid->userSettingsGroup();
     }
 }
 
