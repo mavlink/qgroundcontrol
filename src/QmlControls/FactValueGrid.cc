@@ -27,6 +27,8 @@ const QStringList FactValueGrid::_fontSizeNames = {
     QT_TRANSLATE_NOOP("FactValueGrid", "Large"),
 };
 
+QList<FactValueGrid*> FactValueGrid::_vehicleCardInstanceList;
+
 FactValueGrid::FactValueGrid(QQuickItem* parent)
     : QQuickItem(parent)
     , _columns  (new QmlObjectListModel(this))
@@ -35,57 +37,75 @@ FactValueGrid::FactValueGrid(QQuickItem* parent)
         QDir iconDir(":/InstrumentValueIcons/");
         _iconNames = iconDir.entryList();
     }
-
-    _init();
-}
-
-FactValueGrid::FactValueGrid(const QString& defaultSettingsGroup)
-    : QQuickItem            (nullptr)
-    , _defaultSettingsGroup (defaultSettingsGroup)
-    , _columns              (new QmlObjectListModel(this))
-{
-    _init();
-}
-
-void FactValueGrid::_init(void)
-{
-    Vehicle* offlineVehicle  = MultiVehicleManager::instance()->offlineEditingVehicle();
-
-    connect(offlineVehicle, &Vehicle::vehicleTypeChanged,       this, &FactValueGrid::_offlineVehicleTypeChanged);
-    connect(this,           &FactValueGrid::fontSizeChanged,    this, &FactValueGrid::_saveSettings);
-
-    _vehicleClass = QGCMAVLink::vehicleClass(offlineVehicle->vehicleType());
-    instances().append(this);
-}
-
-FactValueGrid::~FactValueGrid() {
-    instances().removeAll(this);
-}
-
-void FactValueGrid::_offlineVehicleTypeChanged(void)
-{
-    Vehicle*                    offlineVehicle  = MultiVehicleManager::instance()->offlineEditingVehicle();
-    QGCMAVLink::VehicleClass_t  newVehicleClass = QGCMAVLink::vehicleClass(offlineVehicle->vehicleType());
-
-    if (newVehicleClass != _vehicleClass) {
-        _vehicleClass = newVehicleClass;
-        _loadSettings();
-    }
 }
 
 void FactValueGrid::componentComplete(void)
 {
     QQuickItem::componentComplete();
 
-    // We should know settingsGroup/defaultSettingsGroup now so we can load settings
-    _loadSettings();
+    connect(this, &FactValueGrid::fontSizeChanged, this, &FactValueGrid::_saveSettings);
+
+    if (_specificVehicleForCard) {
+        _vehicleCardInstanceList.append(this);
+        _initForNewVehicle(_specificVehicleForCard);
+    } else {
+        // We are not tracking a specific vehicle so we need to track the active vehicle or offline editing vehicle if not active vehicle
+        auto multiVehicleManager = MultiVehicleManager::instance();
+        connect(multiVehicleManager, &MultiVehicleManager::activeVehicleChanged, this, &FactValueGrid::_activeVehicleChanged);
+        _activeVehicle = multiVehicleManager->activeVehicle();
+        if (!_activeVehicle) {
+            _activeVehicle = multiVehicleManager->offlineEditingVehicle();
+        }
+        _initForNewVehicle(_activeVehicle);
+    }
+}
+
+void FactValueGrid::_initForNewVehicle(Vehicle* vehicle)
+{
+    if (!vehicle) {
+        qCritical() << "FactValueGrid::_initForNewVehicle: vehicle is NULL";
+        return;
+    }
+
+    connect(vehicle, &Vehicle::vehicleTypeChanged, this, &FactValueGrid::_resetFromSettings);
+    _resetFromSettings();
+}
+
+void FactValueGrid::_deinitVehicle(Vehicle* vehicle)
+{
+    disconnect(vehicle, &Vehicle::vehicleTypeChanged, this, &FactValueGrid::_resetFromSettings);
+}
+
+void FactValueGrid::_activeVehicleChanged(Vehicle* activeVehicle)
+{
+    if (!_activeVehicle) {
+        qCritical() << "FactValueGrid::_activeVehicleChanged: _activeVehicle is NULL";
+    }
+
+    if (_activeVehicle) {
+        _deinitVehicle(_activeVehicle);
+        _activeVehicle = nullptr;
+    }
+
+    _activeVehicle = activeVehicle;
+    _initForNewVehicle(activeVehicle);
+}
+
+FactValueGrid::~FactValueGrid() 
+{
+    _vehicleCardInstanceList.removeAll(this);
+}
+
+QGCMAVLink::VehicleClass_t FactValueGrid::vehicleClass(void) const 
+{
+    return QGCMAVLink::vehicleClass(currentVehicle()->vehicleType());
 }
 
 void FactValueGrid::resetToDefaults(void)
 {
     QSettings settings;
-    settings.remove(_userSettingsGroup);
-    _loadSettings();
+    settings.remove(_settingsGroup);
+    _resetFromSettings();
 }
 
 QString FactValueGrid::_pascalCase(const QString& text)
@@ -99,15 +119,6 @@ void FactValueGrid::setFontSize(FontSize fontSize)
         _fontSize = fontSize;
         emit fontSizeChanged(fontSize);
     }
-}
-
-void FactValueGrid::setVehicle(Vehicle * vehicle)
-{
-    if(vehicle == nullptr){
-        qCritical() << "FactValueGrid assumes vehicle is not NULL";
-    }
-    _vehicle = vehicle;
-    emit vehicleChanged();
 }
 
 void FactValueGrid::_saveValueData(QSettings& settings, InstrumentValueData* value)
@@ -240,7 +251,7 @@ void FactValueGrid::deleteLastColumn(void)
 
 InstrumentValueData* FactValueGrid::_createNewInstrumentValueWorker(QObject* parent)
 {
-    InstrumentValueData* value = new InstrumentValueData(this, parent, _vehicle);
+    InstrumentValueData* value = new InstrumentValueData(this, parent);
     value->setFact(InstrumentValueData::vehicleFactGroupName, "AltitudeRelative");
     value->setText(value->fact()->shortDescription());
     _connectSaveSignals(value);
@@ -253,22 +264,11 @@ void FactValueGrid::_saveSettings(void)
     if (_preventSaveSettings) {
         return;
     }
-    saveSettingsForced();
-}
 
-void FactValueGrid::saveSettingsForced(void)
-{
     QSettings   settings;
     QString     groupNameFormat("%1-%2");
-    if (_userSettingsGroup.isEmpty()) {
-        // This means we are setting up default settings
-        settings.beginGroup(groupNameFormat.arg(_defaultSettingsGroup).arg(_vehicleClass));
-    } else {
-        // This means we are saving user modifications
-        settings.remove(groupNameFormat.arg(_defaultSettingsGroup).arg(_vehicleClass));
-        settings.beginGroup(groupNameFormat.arg(_userSettingsGroup).arg(_vehicleClass));
-    }
 
+    settings.beginGroup(_settingsKey());
     settings.remove(""); // Remove any previous settings
 
     settings.setValue(_versionKey,  1);
@@ -294,27 +294,21 @@ void FactValueGrid::saveSettingsForced(void)
 
     // If this settings change was set from a Vehicle card, this makes so the changes are
     // immediately applied to the other Vehicle cards.
-    if(!_preventSaveSettings){
-        for (FactValueGrid* obj : instances()) {
-            if(obj != this && _settingsKey() == obj->_settingsKey()) {
-                obj->_loadSettings();
+    if (_specificVehicleForCard) {
+        for (FactValueGrid* obj : _vehicleCardInstanceList) {
+            if (obj != this) {
+                obj->_resetFromSettings();
             }
         }
     }
 }
 
-QString FactValueGrid::_settingsKey(void){
-    QSettings   settings;
-    QString     groupNameFormat("%1-%2");
-    const QString spath(QFileInfo(QSettings().fileName()).dir().absolutePath());
-    if (settings.childGroups().contains(groupNameFormat.arg(_defaultSettingsGroup).arg(_vehicleClass))) {
-        return groupNameFormat.arg(_defaultSettingsGroup).arg(_vehicleClass);
-    } else {
-        return groupNameFormat.arg(_userSettingsGroup).arg(_vehicleClass);
-    }
+QString FactValueGrid::_settingsKey(void)
+{
+    return QStringLiteral("%1-%2").arg(_settingsGroup).arg(vehicleClass());
 }
 
-void FactValueGrid::_loadSettings(void)
+void FactValueGrid::_resetFromSettings(void)
 {
     _preventSaveSettings = true;
 
@@ -326,13 +320,13 @@ void FactValueGrid::_loadSettings(void)
     QSettings   settings;
     QString     groupNameFormat("%1-%2");
 
-    if (settings.childGroups().contains(groupNameFormat.arg(_userSettingsGroup).arg(_vehicleClass))) {
+    if (settings.childGroups().contains(_settingsKey())) {
         // Load from settings
         settings.beginGroup(_settingsKey());
 
         int version = settings.value(_versionKey, 0).toInt();
         if (version != 1) {
-            qgcApp()->showAppMessage(tr("Settings version %1 for %2 is not supported. Setup will be reset to defaults.").arg(version).arg(_userSettingsGroup), tr("Load Settings"));
+            qgcApp()->showAppMessage(tr("Settings version %1 for %2 is not supported. Setup will be reset to defaults.").arg(version).arg(_settingsGroup), tr("Load Settings"));
             settings.remove("");
             QGCCorePlugin::instance()->factValueGridCreateDefaultSettings(this);
         }

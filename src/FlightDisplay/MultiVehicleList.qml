@@ -208,10 +208,9 @@ Item {
                     contentHeight:  control.height
 
                     TelemetryValuesBar {
-                        id:                             control
-                        valueArea_userSettingsGroup:    valueArea.vehicleCardUserSettingsGroup
-                        valueArea_defaultSettingsGroup: valueArea.vehicleCardDefaultSettingsGroup
-                        valueArea_vehicle:              _vehicle
+                        id:                     control
+                        settingsGroup:          factValueGrid.vehicleCardSettingsGroup
+                        specificVehicleForCard: _vehicle
                     }
                 }
             }
