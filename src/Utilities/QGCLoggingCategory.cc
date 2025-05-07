@@ -12,14 +12,7 @@
 #include <QtCore/QGlobalStatic>
 #include <QtCore/QSettings>
 
-static constexpr const char* kVideoAllLogCategory = "VideoAllLog";
-
-// Add Global logging categories (not class specific) here using QGC_LOGGING_CATEGORY
-QGC_LOGGING_CATEGORY(FirmwareUpgradeLog, "FirmwareUpgradeLog")
-QGC_LOGGING_CATEGORY(FirmwareUpgradeVerboseLog, "FirmwareUpgradeVerboseLog")
-QGC_LOGGING_CATEGORY(MissionCommandsLog, "MissionCommandsLog")
-QGC_LOGGING_CATEGORY(GuidedActionsControllerLog, "GuidedActionsControllerLog")
-QGC_LOGGING_CATEGORY(VideoAllLog, kVideoAllLogCategory)
+QGC_LOGGING_CATEGORY(QGCLoggingCategoryRegisterLog, "qgc.utilities.qgcloggingcategory")
 
 Q_GLOBAL_STATIC(QGCLoggingCategoryRegister, _QGCLoggingCategoryRegisterInstance);
 
@@ -34,39 +27,35 @@ QStringList QGCLoggingCategoryRegister::registeredCategories()
     return _registeredCategories;
 }
 
-void QGCLoggingCategoryRegister::setCategoryLoggingOn(const QString &category, bool enable) const
+void QGCLoggingCategoryRegister::setCategoryLoggingOn(const QString &category, bool enable)
 {
     QSettings settings;
 
-    settings.beginGroup(_filterRulesSettingsGroup);
+    settings.beginGroup(kFilterRulesSettingsGroup);
     settings.setValue(category, enable);
 
     settings.endGroup();
 }
 
-bool QGCLoggingCategoryRegister::categoryLoggingOn(const QString &category) const
+bool QGCLoggingCategoryRegister::categoryLoggingOn(const QString &category)
 {
     QSettings settings;
 
-    settings.beginGroup(_filterRulesSettingsGroup);
+    settings.beginGroup(kFilterRulesSettingsGroup);
     return settings.value(category, false).toBool();
 }
 
-void QGCLoggingCategoryRegister::setFilterRulesFromSettings(const QString &commandLineLoggingOptions)
+void QGCLoggingCategoryRegister::setFilterRulesFromSettings(const QString &commandLineLoggingOptions) const
 {
-    QString filterRules;
-    QString filterRuleFormat("%1.debug=true\n");
+    static const QString filterRuleFormat = QStringLiteral("%1.debug=true\n");
     bool videoAllLogSet = false;
 
-    if (!commandLineLoggingOptions.isEmpty()) {
-        _commandLineLoggingOptions = commandLineLoggingOptions;
-    }
-
-    filterRules += "*Log.debug=false\n";
-    filterRules += "qgc.*.debug=false\n";
+    QString filterRules;
+    filterRules += QStringLiteral("*Log.debug=false\n");
+    filterRules += QStringLiteral("qgc.*.debug=false\n");
 
     // Set up filters defined in settings
-    for (const QString &category : _registeredCategories) {
+    for (const QString &category : std::as_const(_registeredCategories)) {
         if (categoryLoggingOn(category)) {
             filterRules += filterRuleFormat.arg(category);
             if (category == kVideoAllLogCategory) {
@@ -76,11 +65,11 @@ void QGCLoggingCategoryRegister::setFilterRulesFromSettings(const QString &comma
     }
 
     // Command line rules take precedence, so they go last in the list
-    if (!_commandLineLoggingOptions.isEmpty()) {
-        const QStringList logList = _commandLineLoggingOptions.split(",");
+    if (!commandLineLoggingOptions.isEmpty()) {
+        const QStringList logList = commandLineLoggingOptions.split(",");
 
-        if (logList[0] == "full") {
-            filterRules += "*Log.debug=true\n";
+        if (logList[0] == QStringLiteral("full")) {
+            filterRules += QStringLiteral("*Log.debug=true\n");
             for (const QString &log : logList) {
                 filterRules += filterRuleFormat.arg(log);
             }
@@ -108,6 +97,6 @@ void QGCLoggingCategoryRegister::setFilterRulesFromSettings(const QString &comma
 
     filterRules += QStringLiteral("qt.qml.connections=false");
 
-    qDebug() << "Filter rules" << filterRules;
+    qCDebug(QGCLoggingCategoryRegisterLog) << "Filter rules" << filterRules;
     QLoggingCategory::setFilterRules(filterRules);
 }

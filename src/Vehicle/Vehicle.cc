@@ -36,6 +36,7 @@
 #include "QGCCameraManager.h"
 #include "QGCCorePlugin.h"
 #include "QGCImageProvider.h"
+#include "QGCLoggingCategory.h"
 #include "QGCQGeoCoordinate.h"
 #include "RallyPointManager.h"
 #include "RemoteIDManager.h"
@@ -51,9 +52,9 @@
 #include "VehicleObjectAvoidance.h"
 #include "VideoManager.h"
 #include "VideoSettings.h"
-#include <DeviceInfo.h>
-#include <StatusTextHandler.h>
-#include <MAVLinkSigning.h>
+#include "DeviceInfo.h"
+#include "StatusTextHandler.h"
+#include "MAVLinkSigning.h"
 #include "GimbalController.h"
 #include "MavlinkSettings.h"
 #include "APM.h"
@@ -178,10 +179,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(&_sendMultipleTimer, &QTimer::timeout, this, &Vehicle::_sendMessageMultipleNext);
 
     connect(&_orbitTelemetryTimer, &QTimer::timeout, this, &Vehicle::_orbitTelemetryTimeout);
-
-    // Create camera manager instance
-    _cameraManager = _firmwarePlugin->createCameraManager(this);
-    emit cameraManagerChanged();
 
     // Start csv logger
     connect(&_csvLogTimer, &QTimer::timeout, this, &Vehicle::_writeCsvLine);
@@ -359,6 +356,9 @@ void Vehicle::_commonInit()
     _loadJoystickSettings();
 
     _gimbalController = new GimbalController(this);
+
+    // Create camera manager instance
+    _cameraManager = _firmwarePlugin->createCameraManager(this);
 }
 
 Vehicle::~Vehicle()

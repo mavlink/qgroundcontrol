@@ -16,6 +16,9 @@
 #include <QtCore/QFile>
 #include <QtCore/QThread>
 
+QGC_LOGGING_CATEGORY(FirmwareUpgradeLog, "FirmwareUpgradeLog")
+QGC_LOGGING_CATEGORY(FirmwareUpgradeVerboseLog, "FirmwareUpgradeVerboseLog")
+
 /// This class manages interactions with the bootloader
 Bootloader::Bootloader(bool sikRadio, QObject *parent)
     : QObject   (parent)

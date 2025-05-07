@@ -11,12 +11,12 @@
 
 #include <QtQuick/QQuickItem>
 
-class GLVideoItemStub : public QQuickItem
+class VideoItemStub : public QQuickItem
 {
     Q_OBJECT
-    // QML_NAMED_ELEMENT(GstGLQt6VideoItem)
+    // QML_NAMED_ELEMENT(GstQt6VideoItem)
 
 public:
-    explicit GLVideoItemStub(QQuickItem *parent = nullptr)
+    explicit VideoItemStub(QQuickItem *parent = nullptr)
         : QQuickItem(parent) {}
 };

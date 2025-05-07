@@ -121,14 +121,15 @@ Item {
 
                 Connections {
                     target: QGroundControl.videoManager
-                    function onImageFileChanged() {
+                    function onImageFileChanged(filename) {
                         videoContent.grabToImage(function(result) {
-                            if (!result.saveToFile(QGroundControl.videoManager.imageFile)) {
+                            if (!result.saveToFile(filename)) {
                                 console.error('Error capturing video frame');
                             }
                         });
                     }
                 }
+
                 Rectangle {
                     color:  Qt.rgba(1,1,1,0.5)
                     height: parent.height

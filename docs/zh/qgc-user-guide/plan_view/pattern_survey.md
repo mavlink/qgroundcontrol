@@ -23,14 +23,14 @@ To create a survey:
 
 2. Choose the _Pattern Tool_ from the _Plan Tools_ and then select _Survey_.
 
-   ![Survey Menu](../../../assets/plan/survey/survey_menu.jpg)
+  ![Survey Menu](../../../assets/plan/survey/survey_menu.jpg)
 
-   This will add a survey grid to the map, and a _Survey_ item to the mission list (on the right).
+  This will add a survey grid to the map, and a _Survey_ item to the mission list (on the right).
 
 3. On the map drag the vertices to change the shape of the polygon.
 
 4. Click the `(+)` symbol between existing vertices to create a new vertix.
-   The new vertix can then be dragged into a new position.
+  The new vertix can then be dragged into a new position.
 
 The survey settings are covered in the next section.
 

@@ -49,11 +49,11 @@ public:
 
 typedef QMap<QString, APMFactMetaDataRaw*> ParameterNametoFactMetaDataMap;
 
-/// Collection of Parameter Facts for PX4 AutoPilot
+/// Collection of Parameter Facts for ArduPilot
 class APMParameterMetaData : public QObject
 {
     Q_OBJECT
-    
+
 public:
     explicit APMParameterMetaData(QObject *parent = nullptr);
     ~APMParameterMetaData();

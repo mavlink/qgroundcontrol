@@ -23,6 +23,7 @@ Q_DECLARE_LOGGING_CATEGORY(CameraManagerLog)
 
 class Joystick;
 class SimulatedCameraControl;
+class QGCVideoStreamInfo;
 class Vehicle;
 class CameraMetaData;
 class QGCCameraManagerTest;

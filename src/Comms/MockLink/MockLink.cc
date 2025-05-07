@@ -129,6 +129,7 @@ void MockLink::run1HzTasks()
     _sendSysStatus();
     _sendADSBVehicles();
     _sendRemoteIDArmStatus();
+    // _sendVideoInfo();
     if (!qgcApp()->runningUnitTests()) {
         // Sending RC Channels during unit test breaks RC tests which does it's own RC simulation
         _sendRCChannels();
@@ -1769,4 +1770,92 @@ void MockLink::simulateConnectionRemoved()
 MockLinkFTP *MockLink::mockLinkFTP() const
 {
     return _mockLinkFTP;
+}
+
+void MockLink::_sendVideoInfo()
+{
+    // TODO: Just send heartbeat then reply to info request
+    for (int compid = MAV_COMP_ID_CAMERA; compid <= MAV_COMP_ID_CAMERA2; compid++) {
+        for (int streamid = 1; streamid <= 2; streamid++) {
+            mavlink_message_t msg{};
+            (void) mavlink_msg_heartbeat_pack_chan(
+                _vehicleSystemId,
+                compid,
+                mavlinkChannel(),
+                &msg,
+                MAV_TYPE_CAMERA,
+                MAV_AUTOPILOT_INVALID,
+                0,
+                0,
+                MAV_STATE_STANDBY);
+            respondWithMavlinkMessage(msg);
+
+            const uint8_t vendor[] = "VENDOR";
+            const QString model = QStringLiteral("MODEL %1").arg(compid - 99);
+            QByteArray modelBA = model.toLocal8Bit();
+            modelBA.resize(MAVLINK_MSG_CAMERA_INFORMATION_FIELD_MODEL_NAME_LEN);
+            (void) mavlink_msg_camera_information_pack_chan(
+                _vehicleSystemId,
+                compid,
+                static_cast<uint8_t>(mavlinkChannel()),
+                &msg,
+                0,
+                vendor,
+                reinterpret_cast<const uint8_t*>(modelBA.constData()),
+                0,
+                0,
+                0, 0,
+                1920, 1080,
+                0,
+                CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM | CAMERA_CAP_FLAGS_CAPTURE_VIDEO,
+                0,
+                "",
+                0,
+                0);
+            respondWithMavlinkMessage(msg);
+
+            const QString name = QStringLiteral("STREAM %1").arg(streamid);
+            QByteArray nameBA = name.toLocal8Bit();
+            nameBA.resize(MAVLINK_MSG_VIDEO_STREAM_INFORMATION_FIELD_NAME_LEN);
+            const QString uri = QStringLiteral("udp://0.0.0.0:5600");
+            QByteArray uriBA = uri.toLocal8Bit();
+            uriBA.resize(MAVLINK_MSG_VIDEO_STREAM_INFORMATION_FIELD_URI_LEN);
+            (void) mavlink_msg_video_stream_information_pack_chan(
+                _vehicleSystemId,
+                compid,
+                static_cast<uint8_t>(mavlinkChannel()),
+                &msg,
+                streamid,
+                2,
+                VIDEO_STREAM_TYPE_RTSP,
+                VIDEO_STREAM_STATUS_FLAGS_RUNNING,
+                30,
+                1080,
+                1920,
+                1000,
+                0,
+                70,
+                nameBA.constData(),
+                uriBA.constData(),
+                VIDEO_STREAM_ENCODING_H264,
+                0);
+            respondWithMavlinkMessage(msg);
+
+            (void) mavlink_msg_video_stream_status_pack_chan(
+                _vehicleSystemId,
+                compid,
+                static_cast<uint8_t>(mavlinkChannel()),
+                &msg,
+                streamid,
+                VIDEO_STREAM_STATUS_FLAGS_RUNNING,
+                0,
+                1080,
+                1920,
+                1000,
+                0,
+                70,
+                0);
+            respondWithMavlinkMessage(msg);
+        }
+    }
 }

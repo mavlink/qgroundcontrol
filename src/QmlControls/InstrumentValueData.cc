@@ -26,6 +26,7 @@ const QStringList InstrumentValueData::_rangeTypeNames = {
 InstrumentValueData::InstrumentValueData(FactValueGrid* factValueGrid, QObject* parent, Vehicle* vehicle)
     : QObject       (parent)
     , _factValueGrid(factValueGrid)
+    , _vehicle(vehicle)
 {
     connect(factValueGrid, &FactValueGrid::vehicleChanged,      this, &InstrumentValueData::_vehicleChanged);
     _vehicleChanged();
@@ -38,18 +39,17 @@ InstrumentValueData::InstrumentValueData(FactValueGrid* factValueGrid, QObject* 
     connect(this, &InstrumentValueData::rangeIconsChanged,      this, &InstrumentValueData::_updateRanges);
 }
 
-void InstrumentValueData::_vehicleChanged(){
-
-    if(_factValueGrid->vehicle() == nullptr){
-        qCritical() << "InstrumentValueData: vehicle is expected to be not NULL";
-    }
-
+void InstrumentValueData::_vehicleChanged()
+{
     if (_vehicle) {
         disconnect(_vehicle, &Vehicle::factGroupNamesChanged, this, &InstrumentValueData::_lookForMissingFact);
     }
 
-    _vehicle = _factValueGrid->vehicle();
-    connect(_vehicle, &Vehicle::factGroupNamesChanged, this, &InstrumentValueData::_lookForMissingFact);
+    if (!_vehicle) {
+       _vehicle = MultiVehicleManager::instance()->offlineEditingVehicle();
+    }
+
+    (void) connect(_vehicle, &Vehicle::factGroupNamesChanged, this, &InstrumentValueData::_lookForMissingFact);
 
     emit factGroupNamesChanged();
 

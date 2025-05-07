@@ -94,7 +94,7 @@ jobs:
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run: cmake --build . --target all --config ${{ matrix.BuildType }}
 
-      - name: Sanity check release excecutable
+      - name: Sanity check dev build excecutable
         if: matrix.BuildType == 'Release'
         working-directory: ${{ runner.temp }}/shadow_build_dir/Release/QGroundControl.app/Contents/MacOS
         run: ./QGroundControl --simple-boot-test
@@ -103,6 +103,16 @@ jobs:
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run: cmake --install . --config ${{ matrix.BuildType }}
 
+      - name: Mount DMG
+        if: matrix.BuildType == 'Release'
+        working-directory: ${{ runner.temp }}/shadow_build_dir
+        run: hdiutil attach QGroundControl.dmg
+
+      - name: Sanity check DMG exectuable
+        if: matrix.BuildType == 'Release'
+        working-directory: /Volumes/QGroundControl/QGroundControl.app/Contents/MacOS
+        run: ./QGroundControl --simple-boot-test
+  
       - name: Upload Build File
         if: matrix.BuildType == 'Release'
         uses: ./.github/actions/upload

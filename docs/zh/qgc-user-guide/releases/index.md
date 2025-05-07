@@ -1,3 +1,3 @@
 # Releases
 
-This section contains information about releases and daily builds.
+本节包含有关发布和每日构建的信息。

@@ -18,6 +18,7 @@
 
 #include <glib.h>
 #include <gst/gstelement.h>
+#include <gst/gstpad.h>
 
 #include "VideoReceiver.h"
 
@@ -49,6 +50,8 @@ private:
 
 /*===========================================================================*/
 
+typedef struct _GstElement GstElement;
+
 class GstVideoReceiver : public VideoReceiver
 {
     Q_OBJECT
@@ -58,7 +61,7 @@ public:
     ~GstVideoReceiver();
 
 public slots:
-    void start(const QString &uri, uint32_t timeout, int buffer = 0) override;
+    void start(uint32_t timeout) override;
     void stop() override;
     void startDecoding(void *sink) override;
     void stopDecoding() override;
@@ -102,13 +105,6 @@ private:
     static GstPadProbeReturn _eosProbe(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
     static GstPadProbeReturn _keyframeWatch(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
 
-    bool _decoding = false;
-    bool _endOfStream = false;
-    bool _recording = false;
-    bool _removingDecoder = false;
-    bool _removingRecorder = false;
-    bool _resetVideoSink = false;
-    bool _streaming = false;
     GstElement *_decoder = nullptr;
     GstElement *_decoderValve = nullptr;
     GstElement *_fileSink = nullptr;
@@ -117,18 +113,11 @@ private:
     GstElement *_source = nullptr;
     GstElement *_tee = nullptr;
     GstElement *_videoSink = nullptr;
-    GstVideoWorker _worker;
+    GstVideoWorker *_worker = nullptr;
     gulong _teeProbeId = 0;
     gulong _videoSinkProbeId = 0;
-    int _buffer = 0;
-    qint64 _lastSourceFrameTime = 0;
-    qint64 _lastVideoFrameTime = 0;
-    QString _uri;
-    QTimer _watchdogTimer;
-    uint32_t _signalDepth = 0;
-    uint32_t _timeout = 0;
 
-    static constexpr const char *_kFileMux[FILE_FORMAT_MAX - FILE_FORMAT_MIN] = {
+    static constexpr const char *_kFileMux[FILE_FORMAT_MAX + 1] = {
         "matroskamux",
         "qtmux",
         "mp4mux"

@@ -40,14 +40,14 @@ void SubtitleWriter::startCapturingTelemetry(const QString &videoFile, QSize siz
     _facts.clear();
 
     // Gather the facts currently displayed into _facts
-    FactValueGrid *const grid = new FactValueGrid(nullptr);
+    FactValueGrid *grid = new FactValueGrid();
     (void) grid->setProperty("userSettingsGroup", HorizontalFactValueGrid::telemetryBarUserSettingsGroup);
     (void) grid->setProperty("defaultSettingsGroup", HorizontalFactValueGrid::telemetryBarDefaultSettingsGroup);
     grid->_loadSettings();
     for (int colIndex = 0; colIndex < grid->columns()->count(); colIndex++) {
-        const QmlObjectListModel *const list = grid->columns()->value<const QmlObjectListModel*>(colIndex);
+        const QmlObjectListModel *list = grid->columns()->value<const QmlObjectListModel*>(colIndex);
         for (int rowIndex = 0; rowIndex < list->count(); rowIndex++) {
-            const InstrumentValueData *const value = list->value<InstrumentValueData*>(rowIndex);
+            const InstrumentValueData *value = list->value<InstrumentValueData*>(rowIndex);
             if (value->fact()) {
                 _facts += value->fact();
             }
@@ -119,7 +119,7 @@ void SubtitleWriter::_captureTelemetry()
     QStringList valuesStrings;
 
     // Make a list of "factname:" strings and other with the values, so one can be aligned left and the other right
-    for (const Fact *const fact : std::as_const(_facts)) {
+    for (const Fact *fact : std::as_const(_facts)) {
         valuesStrings << QStringLiteral("%2 %3").arg(fact->cookedValueString(), fact->cookedUnits());
         namesStrings << QStringLiteral("%1:").arg(fact->shortDescription());
     }

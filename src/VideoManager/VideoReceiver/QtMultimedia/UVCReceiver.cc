@@ -29,8 +29,9 @@ UVCReceiver::UVCReceiver(QObject *parent)
     : QtMultimediaReceiver(parent)
     , _camera(new QCamera(this))
     , _imageCapture(new QImageCapture(this))
+    , _mediaDevices(new QMediaDevices(this))
 {
-    // qCDebug(UVCReceiverLog) << Q_FUNC_INFO << this;
+    // qCDebug(UVCReceiverLog) << this;
 
     _captureSession->setCamera(_camera);
     _captureSession->setImageCapture(_imageCapture);
@@ -40,12 +41,26 @@ UVCReceiver::UVCReceiver(QObject *parent)
         adjustAspectRatio();
     });
 
+    // QMediaDevices::defaultVideoInput()
+    (void) connect(_mediaDevices, &QMediaDevices::videoInputsChanged, this, [this] {
+
+    });
+
     checkPermission();
 }
 
 UVCReceiver::~UVCReceiver()
 {
-    // qCDebug(UVCReceiverLog) << Q_FUNC_INFO << this;
+    // qCDebug(UVCReceiverLog) << this;
+}
+
+bool UVCReceiver::enabled()
+{
+#ifdef QGC_DISABLE_UVC
+    return false;
+#else
+    return !QMediaDevices::videoInputs().isEmpty();
+#endif
 }
 
 void UVCReceiver::adjustAspectRatio()
@@ -76,7 +91,7 @@ QCameraDevice UVCReceiver::findCameraDevice(const QString &cameraId)
         }
     }
 
-    return QMediaDevices::defaultVideoInput();
+    return QCameraDevice();
 }
 
 void UVCReceiver::checkPermission()
@@ -104,11 +119,19 @@ QString UVCReceiver::getSourceId()
     return videoSourceID;
 }
 
-bool UVCReceiver::enabled()
+bool UVCReceiver::deviceExists(const QString &device)
 {
-#ifdef QGC_DISABLE_UVC
-    return false;
-#else
-    return !QMediaDevices::videoInputs().isEmpty();
-#endif
+    return !findCameraDevice(device).isNull();
+}
+
+QStringList UVCReceiver::getDeviceNameList()
+{
+    QStringList deviceNameList;
+
+    const QList<QCameraDevice> videoInputs = QMediaDevices::videoInputs();
+    for (const QCameraDevice &cameraDevice : videoInputs) {
+        deviceNameList.append(cameraDevice.description());
+    }
+
+    return deviceNameList;
 }

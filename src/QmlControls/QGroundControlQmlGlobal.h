@@ -9,12 +9,14 @@
 
 #pragma once
 
-#include "QmlUnitsConversion.h"
-#include "QGCLoggingCategory.h"
-
-#include <QtCore/QTimer>
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QPointF>
+#include <QtCore/QTimer>
 #include <QtPositioning/QGeoCoordinate>
+
+#include "QmlUnitsConversion.h"
+
+Q_DECLARE_LOGGING_CATEGORY(GuidedActionsControllerLog)
 
 class ADSBVehicleManager;
 class FactGroup;
@@ -140,16 +142,16 @@ public:
     Q_INVOKABLE void    stopOneMockLink             (void);
 
     /// Returns the list of available logging category names.
-    Q_INVOKABLE QStringList loggingCategories(void) const { return QGCLoggingCategoryRegister::instance()->registeredCategories(); }
+    Q_INVOKABLE static QStringList loggingCategories();
 
     /// Turns on/off logging for the specified category. State is saved in app settings.
-    Q_INVOKABLE void setCategoryLoggingOn(const QString& category, bool enable) { QGCLoggingCategoryRegister::instance()->setCategoryLoggingOn(category, enable); }
+    Q_INVOKABLE static void setCategoryLoggingOn(const QString &category, bool enable);
 
     /// Returns true if logging is turned on for the specified category.
-    Q_INVOKABLE bool categoryLoggingOn(const QString& category) { return QGCLoggingCategoryRegister::instance()->categoryLoggingOn(category); }
+    Q_INVOKABLE static bool categoryLoggingOn(const QString &category);
 
     /// Updates the logging filter rules after settings have changed
-    Q_INVOKABLE void updateLoggingFilterRules(void) { QGCLoggingCategoryRegister::instance()->setFilterRulesFromSettings(QString()); }
+    Q_INVOKABLE static void updateLoggingFilterRules();
 
     Q_INVOKABLE bool linesIntersect(QPointF xLine1, QPointF yLine1, QPointF xLine2, QPointF yLine2);
 

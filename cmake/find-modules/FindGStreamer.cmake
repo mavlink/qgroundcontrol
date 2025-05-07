@@ -105,13 +105,13 @@ elseif(ANDROID)
     )
 
     if(NOT DEFINED GStreamer_ROOT_DIR)
-        if(CMAKE_ANDROID_ARCH_ABI STREQUAL armeabi-v7a)
+        if(CMAKE_ANDROID_ARCH_ABI STREQUAL "armeabi-v7a")
             set(GStreamer_ROOT_DIR "${gstreamer_SOURCE_DIR}/armv7")
-        elseif(CMAKE_ANDROID_ARCH_ABI STREQUAL arm64-v8a)
+        elseif(CMAKE_ANDROID_ARCH_ABI STREQUAL "arm64-v8a")
             set(GStreamer_ROOT_DIR "${gstreamer_SOURCE_DIR}/arm64")
-        elseif(CMAKE_ANDROID_ARCH_ABI STREQUAL x86)
+        elseif(CMAKE_ANDROID_ARCH_ABI STREQUAL "x86")
             set(GStreamer_ROOT_DIR "${gstreamer_SOURCE_DIR}/x86")
-        elseif(CMAKE_ANDROID_ARCH_ABI STREQUAL x86_64)
+        elseif(CMAKE_ANDROID_ARCH_ABI STREQUAL "x86_64")
             set(GStreamer_ROOT_DIR "${gstreamer_SOURCE_DIR}/x86_64")
         endif()
     endif()
@@ -225,6 +225,67 @@ endif()
 
 ################################################################################
 
+if(GStreamer_USE_STATIC_LIBS)
+    set(GSTREAMER_EXTRA_DEPS
+        gstreamer-base-1.0
+        gstreamer-video-1.0
+        gstreamer-gl-1.0
+        gstreamer-gl-prototypes-1.0
+        gstreamer-rtsp-1.0
+        # gstreamer-gl-egl-1.0
+        # gstreamer-gl-wayland-1.0
+        # gstreamer-gl-x11-1.0
+    )
+
+    set(GSTREAMER_PLUGINS
+        coreelements
+        dav1d
+        isomp4
+        libav
+        matroska
+        mpegtsdemux
+        opengl
+        openh264
+        playback
+        rtp
+        rtpmanager
+        rtsp
+        sdpelem
+        tcp
+        typefindfunctions
+        udp
+        videoparsersbad
+        vpx
+    )
+    if(ANDROID)
+        list(APPEND GSTREAMER_PLUGINS androidmedia) # vulkan
+    elseif(APPLE)
+        list(APPEND GSTREAMER_PLUGINS applemedia vulkan)
+    elseif(WIN32)
+        list(APPEND GSTREAMER_PLUGINS d3d d3d11 d3d12 dxva nvcodec)
+    elseif(LINUX)
+        list(APPEND GSTREAMER_PLUGINS nvcodec qsv va vulkan) # qml6 - GStreamer provided qml6 is xcb only
+    endif()
+endif()
+
+if(ANDROID)
+    set(GStreamer_Mobile_MODULE_NAME gstreamer_android)
+    set(G_IO_MODULES openssl)
+    set(G_IO_MODULES_PATH "${GStreamer_ROOT_DIR}/lib/gio/modules")
+
+    set(GStreamer_NDK_BUILD_PATH  "${GStreamer_ROOT_DIR}/share/gst-android/ndk-build/")
+    set(GSTREAMER_ANDROID_MODULE_NAME gstreamer_android)
+    set(GSTREAMER_JAVA_SRC_DIR "${CMAKE_BINARY_DIR}/android-build-${CMAKE_PROJECT_NAME}/src")
+    set(GSTREAMER_ASSETS_DIR "${CMAKE_BINARY_DIR}/android-build-${CMAKE_PROJECT_NAME}/assets")
+
+    configure_file(
+        "${GStreamer_NDK_BUILD_PATH}/gstreamer_android-1.0.c.in"
+        "${GStreamer_Mobile_MODULE_NAME}.c"
+    )
+endif()
+
+################################################################################
+
 if(GStreamer_USE_FRAMEWORK)
     list(APPEND CMAKE_FRAMEWORK_PATH "${GSTREAMER_FRAMEWORK_PATH}")
 endif()
@@ -261,7 +322,6 @@ function(find_gstreamer_component component pkgconfig_name)
                 set_property(TARGET PkgConfig::PC_GSTREAMER_GL PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${__qt_fixed_incs}")
             endif()
         endif()
-        mark_as_advanced(GStreamer_${component}_INCLUDE_DIR GStreamer_${component}_LIBRARY)
     endif()
 
     if(TARGET ${target})
@@ -302,6 +362,10 @@ find_package_handle_standard_args(GStreamer
 
 if(GStreamer_FOUND AND NOT TARGET GStreamer::GStreamer)
     qt_add_library(GStreamer::GStreamer INTERFACE IMPORTED)
+
+    if(GStreamer_USE_STATIC_LIBS)
+        target_compile_definitions(GStreamer::GStreamer INTERFACE QGC_GST_STATIC_BUILD)
+    endif()
 
     if(APPLE AND GStreamer_USE_FRAMEWORK)
         set(CMAKE_FIND_FRAMEWORK ONLY)
@@ -354,40 +418,13 @@ if(GStreamer_FOUND AND NOT TARGET GStreamer::GStreamer)
         qt_add_library(GStreamer::Plugins INTERFACE IMPORTED)
         target_link_directories(GStreamer::Plugins INTERFACE ${GSTREAMER_PLUGIN_PATH})
 
-        set(GST_PLUGINS
-            # gstqml6
-            gstcoreelements
-            gstisomp4
-            gstlibav
-            gstmatroska
-            gstmpegtsdemux
-            gstopengl
-            gstopenh264
-            gstplayback
-            gstrtp
-            gstrtpmanager
-            gstrtsp
-            gstsdpelem
-            gsttcp
-            gsttypefindfunctions
-            gstudp
-            gstvideoparsersbad
-        )
-        if(ANDROID)
-            list(APPEND GST_PLUGINS gstandroidmedia)
-        elseif(IOS)
-            list(APPEND GST_PLUGINS gstapplemedia)
-        else()
-            list(APPEND GST_PLUGINS gstva)
-        endif()
-
-        foreach(plugin IN LISTS GST_PLUGINS)
-            pkg_check_modules(GST_PLUGIN_${plugin} QUIET IMPORTED_TARGET ${plugin})
+        foreach(plugin IN LISTS GSTREAMER_PLUGINS)
+            pkg_check_modules(GST_PLUGIN_${plugin} QUIET IMPORTED_TARGET gst${plugin})
             if(GST_PLUGIN_${plugin}_FOUND)
                 target_link_libraries(GStreamer::Plugins INTERFACE PkgConfig::GST_PLUGIN_${plugin})
             else()
                 find_library(GST_PLUGIN_${plugin}_LIBRARY
-                    NAMES ${plugin}
+                    NAMES gst${plugin}
                     PATHS
                         ${GSTREAMER_LIB_PATH}
                         ${GSTREAMER_PLUGIN_PATH}
@@ -397,22 +434,11 @@ if(GStreamer_FOUND AND NOT TARGET GStreamer::GStreamer)
                     set(GST_PLUGIN_${plugin}_FOUND TRUE)
                 endif()
             endif()
+            if(GST_PLUGIN_${plugin}_FOUND)
+                target_compile_definitions(GStreamer::Plugins INTERFACE GST_PLUGIN_${plugin}_FOUND)
+            endif()
         endforeach()
 
         target_link_libraries(GStreamer::GStreamer INTERFACE GStreamer::Plugins)
-        target_compile_definitions(GStreamer::GStreamer INTERFACE QGC_GST_STATIC_BUILD)
-    else()
-        # find_library(
-        #     GSTQML6_LIBRARY
-        #     NAMES gstqml6 libgstqml6
-        #     PATHS "${GSTREAMER_PLUGIN_PATH}"
-        # )
-        # if(GSTQML6_LIBRARY)
-        #     set(GST_PLUGIN_gstqml6_FOUND TRUE)
-        # endif()
     endif()
-
-    # if(GST_PLUGIN_gstqml6_FOUND)
-    #     target_compile_definitions(gstqml6gl INTERFACE QGC_GST_QML6GL_FOUND)
-    # endif()
 endif()

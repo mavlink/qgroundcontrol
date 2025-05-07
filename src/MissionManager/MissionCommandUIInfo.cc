@@ -12,6 +12,8 @@
 #include "FactMetaData.h"
 #include "QGCLoggingCategory.h"
 
+QGC_LOGGING_CATEGORY(MissionCommandsLog, "MissionCommandsLog")
+
 MissionCmdParamInfo::MissionCmdParamInfo(QObject* parent)
     : QObject(parent)
     , _min   (FactMetaData::minForType(FactMetaData::valueTypeDouble).toDouble())

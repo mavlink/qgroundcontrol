@@ -18,10 +18,10 @@ To create a GeoFence:
 
 2. Select the _Geofence_ radio button above the Mission Command List
 
-   ![Select geofence radio button](../../../assets/plan/geofence/geofence_select.jpg)
+  ![Select geofence radio button](../../../assets/plan/geofence/geofence_select.jpg)
 
 3. Insert a circular or polygon region by pressing the **Circular Fence** or **Polygon Fence** button, respectively.
-   A new region will be added to the map and to the associated list of fences below the buttons.
+  A new region will be added to the map and to the associated list of fences below the buttons.
 
 :::tip
 ::: tip
@@ -44,7 +44,7 @@ You can create multiple regions by pressing the buttons multiple times, allowing
   - Create new vertices by clicking the "unfilled" dots on the lines between the filled vertices.
 
 1. By default new regions are created as _inclusion_ zones (vehicles must stay within the region).
-   Change them to exclusion zones (where the vehicle can't travel) by unchecking the associated _Inclusion_ checkbox in the fence panel.
+  Change them to exclusion zones (where the vehicle can't travel) by unchecking the associated _Inclusion_ checkbox in the fence panel.
 
 ## Edit/Delete a GeoFence
 

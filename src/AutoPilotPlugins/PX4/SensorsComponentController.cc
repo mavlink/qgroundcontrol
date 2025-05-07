@@ -229,6 +229,10 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
     if (uasId != _vehicle->id()) {
         return;
     }
+
+    // Needed for level horizon calibration
+    text.replace("&lt;", "<");
+    text.replace("&gt;", ">");
     
     if (text.contains("progress <")) {
         QString percent = text.split("<").last().split(">").first();

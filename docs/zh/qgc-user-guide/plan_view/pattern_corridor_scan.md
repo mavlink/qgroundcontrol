@@ -16,14 +16,14 @@ To create a corridor scan:
 
 2. Choose the _Pattern Tool_ from the _Plan Tools_ and then select _Corridor Scan_.
 
-   ![Corridor Scan](../../../assets/plan/corridor_scan_menu.jpg)
+  ![Corridor Scan](../../../assets/plan/corridor_scan_menu.jpg)
 
-   This will add a corridor to the map, and a _Corridor Scan_ item to the mission list (on the right).
+  This will add a corridor to the map, and a _Corridor Scan_ item to the mission list (on the right).
 
 3. On the map drag the ends of the corridor to the start and end positions of the scan, respectively.
 
 4. Click the `(+)` symbol at the centre of a line to create a new vertix.
-   The new vertix can then be dragged into position to follow the path of the desired corridor.
+  The new vertix can then be dragged into position to follow the path of the desired corridor.
 
 The corridor scan settings are covered in the next section.
 
