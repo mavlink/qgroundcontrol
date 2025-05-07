@@ -549,7 +549,7 @@ void PX4FirmwarePlugin::guidedModeChangeHeading(Vehicle* vehicle, const QGeoCoor
         return;
     }
 
-    const float degrees = vehicle->coordinate().azimuthTo(headingCoord);
+    const float radians = qDegreesToRadians(vehicle->coordinate().azimuthTo(headingCoord));
 
     vehicle->sendMavCommand(
         vehicle->defaultComponentId(),
@@ -558,7 +558,7 @@ void PX4FirmwarePlugin::guidedModeChangeHeading(Vehicle* vehicle, const QGeoCoor
         -1.0f,                                  // no change in ground speed
         MAV_DO_REPOSITION_FLAGS_CHANGE_MODE,    // switch to guided mode
         0.0f,                                   // reserved
-        degrees,                                // change heading
+        radians,                                // change heading
         NAN, NAN, NAN                           // no change lat, lon, alt
     );
 }
