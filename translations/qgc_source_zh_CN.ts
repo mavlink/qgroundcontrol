@@ -121,7 +121,7 @@
       <location filename="../src/FirmwarePlugin/APM/APMBatteryIndicator.qml" line="38"/>
       <location filename="../src/FirmwarePlugin/APM/APMBatteryIndicator.qml" line="68"/>
       <source>Vehicle Action</source>
-      <translation type="unfinished">Vehicle Action</translation>
+      <translation>载具动作</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMBatteryIndicator.qml" line="45"/>
