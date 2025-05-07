@@ -30,7 +30,7 @@ public:
     };
     Q_ENUMS(RangeType)
 
-    explicit InstrumentValueData(FactValueGrid* factValueGrid, QObject* parent, Vehicle* vehicle);
+    explicit InstrumentValueData(FactValueGrid* factValueGrid, QObject* parent);
 
     Q_PROPERTY(FactValueGrid*       factValueGrid       MEMBER _factValueGrid                               CONSTANT)
     Q_PROPERTY(QStringList          factGroupNames      READ    factGroupNames                              NOTIFY factGroupNamesChanged)
@@ -103,7 +103,6 @@ signals:
 private slots:
     void _resetRangeInfo        (void);
     void _updateRanges          (void);
-    void _vehicleChanged        (void);
     void _lookForMissingFact    (void);
 
 private:

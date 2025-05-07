@@ -23,33 +23,19 @@ const QStringList InstrumentValueData::_rangeTypeNames = {
     QT_TRANSLATE_NOOP("InstrumentValue", "Icon"),
 };
 
-InstrumentValueData::InstrumentValueData(FactValueGrid* factValueGrid, QObject* parent, Vehicle* vehicle)
+InstrumentValueData::InstrumentValueData(FactValueGrid* factValueGrid, QObject* parent)
     : QObject       (parent)
     , _factValueGrid(factValueGrid)
-    , _vehicle(vehicle)
+    , _vehicle      (factValueGrid->currentVehicle())
 {
-    connect(factValueGrid, &FactValueGrid::vehicleChanged,      this, &InstrumentValueData::_vehicleChanged);
-    _vehicleChanged();
-
     connect(this, &InstrumentValueData::rangeTypeChanged,       this, &InstrumentValueData::_resetRangeInfo);
     connect(this, &InstrumentValueData::rangeTypeChanged,       this, &InstrumentValueData::_updateRanges);
     connect(this, &InstrumentValueData::rangeValuesChanged,     this, &InstrumentValueData::_updateRanges);
     connect(this, &InstrumentValueData::rangeColorsChanged,     this, &InstrumentValueData::_updateRanges);
     connect(this, &InstrumentValueData::rangeOpacitiesChanged,  this, &InstrumentValueData::_updateRanges);
     connect(this, &InstrumentValueData::rangeIconsChanged,      this, &InstrumentValueData::_updateRanges);
-}
 
-void InstrumentValueData::_vehicleChanged()
-{
-    if (_vehicle) {
-        disconnect(_vehicle, &Vehicle::factGroupNamesChanged, this, &InstrumentValueData::_lookForMissingFact);
-    }
-
-    if (!_vehicle) {
-       _vehicle = MultiVehicleManager::instance()->offlineEditingVehicle();
-    }
-
-    (void) connect(_vehicle, &Vehicle::factGroupNamesChanged, this, &InstrumentValueData::_lookForMissingFact);
+    connect(_vehicle, &Vehicle::factGroupNamesChanged, this, &InstrumentValueData::_lookForMissingFact);
 
     emit factGroupNamesChanged();
 
