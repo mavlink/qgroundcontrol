@@ -162,12 +162,12 @@ gst_qgc_video_sink_bin_init(GstQgcVideoSinkBin *self)
         return;
     }
 
-    g_return_if_fail(gst_bin_add(GST_BIN(self), self->glsinkbin));
-
     g_object_set(self->glsinkbin,
                  "sink", self->qmlglsink,
                  PROP_ENABLE_LAST_SAMPLE_NAME, FALSE,
                  NULL);
+
+    g_return_if_fail(gst_bin_add(GST_BIN(self), self->glsinkbin));
 
     g_signal_connect(self->glsinkbin,
                     "create-element",
