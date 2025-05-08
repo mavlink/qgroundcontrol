@@ -56,6 +56,7 @@ public:
     void                guidedModeChangeGroundSpeedMetersSecond(Vehicle* vehicle, double groundspeed) const override;
     void                guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle* vehicle, double airspeed_equiv) const override;
     void                guidedModeChangeHeading         (Vehicle* vehicle, const QGeoCoordinate &headingCoord) const override;
+    void                startTakeoff                    (Vehicle* vehicle) const override;
     void                startMission                    (Vehicle* vehicle) const override;
     bool                isGuidedMode                    (const Vehicle* vehicle) const override;
     void                initializeVehicle               (Vehicle* vehicle) override;

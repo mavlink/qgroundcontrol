@@ -81,12 +81,15 @@ AutoPilotPlugin* APMFirmwarePlugin::autopilotPlugin(Vehicle *vehicle) const
 bool APMFirmwarePlugin::isCapable(const Vehicle* vehicle, FirmwareCapabilities capabilities) const
 {
     uint32_t available = SetFlightModeCapability | PauseVehicleCapability | GuidedModeCapability | ROIModeCapability;
-    if (vehicle->multiRotor()) {
+    if (vehicle->fixedWing()) {
         available |= TakeoffVehicleCapability;
-        available |= ROIModeCapability;
+    } else if (vehicle->multiRotor()) {
+        available |= TakeoffVehicleCapability;
+        available |= GuidedTakeoffCapability;
         available |= ChangeHeadingCapability;
     } else if (vehicle->vtol()) {
         available |= TakeoffVehicleCapability;
+        available |= GuidedTakeoffCapability;
     } else if (vehicle->sub()) {
         available |= ChangeHeadingCapability;
     }
@@ -1017,7 +1020,27 @@ bool APMFirmwarePlugin::_guidedModeTakeoff(Vehicle *vehicle, double altitudeRel)
     return true;
 }
 
-void APMFirmwarePlugin::startMission(Vehicle *vehicle) const
+void APMFirmwarePlugin::startTakeoff(Vehicle* vehicle) const
+{
+    if (vehicle->flying()) {
+        qgcApp()->showAppMessage(tr("Unable to start takeoff: Vehicle is already in the air."));
+        return;
+    }
+
+    if (!vehicle->armed()) {
+        if (!_setFlightModeAndValidate(vehicle, takeOffFlightMode())) {
+            qgcApp()->showAppMessage(tr("Unable to start takeoff: Vehicle failed to change to Takeoff mode."));
+            return;
+        }
+
+        if (!_armVehicleAndValidate(vehicle)) {
+            qgcApp()->showAppMessage(tr("Unable to start takeoff: Vehicle failed to arm."));
+            return;
+        }
+    }
+}
+
+void APMFirmwarePlugin::startMission(Vehicle* vehicle) const
 {
     if (vehicle->flying()) {
         // Vehicle already in the air, we just need to switch to auto
