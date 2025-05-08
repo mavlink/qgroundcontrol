@@ -31,6 +31,7 @@ CameraSection::CameraSection(PlanMasterController* masterController, QObject* pa
     , _cameraPhotoIntervalDistanceFact  (0, _cameraPhotoIntervalDistanceName,   FactMetaData::valueTypeDouble)
     , _cameraPhotoIntervalTimeFact      (0, _cameraPhotoIntervalTimeName,       FactMetaData::valueTypeUint32)
     , _cameraModeFact                   (0, _cameraModeName,                    FactMetaData::valueTypeUint32)
+    , _takePhotoSequence                (0)
     , _dirty                            (false)
 {
     if (_metaDataMap.isEmpty()) {
@@ -200,7 +201,7 @@ void CameraSection::appendSectionItems(QList<MissionItem*>& items, QObject* miss
                                    0,                           // Reserved (Set to 0)
                                    0,                           // Interval (none)
                                    1,                           // Take 1 photo
-                                   0,                           // No sequence number specified
+                                   _takePhotoSequence++,        // Increasing sequence number
                                    qQNaN(), qQNaN(), qQNaN(),   // reserved
                                    true,                        // autoContinue
                                    false,                       // isCurrentItem
