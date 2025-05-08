@@ -234,11 +234,11 @@ GPSBaseStationSupport *GPSProvider::_connectGPS()
     }
 
     switch(_rtkData.baseMode){
-        case 1:
+        case BaseModeDefinition::Mode::BaseFixed:
             gpsDriver->setBasePosition(_rtkData.fixedBaseLatitude, _rtkData.fixedBaseLongitude, _rtkData.fixedBaseAltitudeMeters, _rtkData.fixedBaseAccuracyMeters * 1000.0f);
             break;
 
-        case 0:
+        case BaseModeDefinition::Mode::BaseSurveyIn:
         default:
             gpsDriver->setSurveyInSpecs(_rtkData.surveyInAccMeters * 10000.f, _rtkData.surveyInDurationSecs);
             break;
