@@ -110,12 +110,12 @@
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMBatteryIndicator.qml" line="30"/>
       <source>- disabled</source>
-      <translation>禁用</translation>
+      <translation>- 已禁用</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMBatteryIndicator.qml" line="34"/>
       <source>Low Voltage Failsafe</source>
-      <translation>低电压故障保护</translation>
+      <translation>低电压故障安全</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMBatteryIndicator.qml" line="38"/>
@@ -127,13 +127,13 @@
       <location filename="../src/FirmwarePlugin/APM/APMBatteryIndicator.qml" line="45"/>
       <location filename="../src/FirmwarePlugin/APM/APMBatteryIndicator.qml" line="75"/>
       <source>Voltage Trigger</source>
-      <translation>电压触发器</translation>
+      <translation>电压（V）触发器</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMBatteryIndicator.qml" line="54"/>
       <location filename="../src/FirmwarePlugin/APM/APMBatteryIndicator.qml" line="84"/>
       <source>mAh Trigger</source>
-      <translation>mAh 触发器</translation>
+      <translation>电量（mAh）触发器</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMBatteryIndicator.qml" line="64"/>
@@ -525,7 +525,7 @@
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="87"/>
       <source>Land</source>
-      <translation>着陆</translation>
+      <translation>降落</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="88"/>
@@ -540,7 +540,7 @@
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="90"/>
       <source>Flip</source>
-      <translation>翻滚</translation>
+      <translation>翻转</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="91"/>
@@ -550,7 +550,7 @@
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="92"/>
       <source>Position Hold</source>
-      <translation>保持位置</translation>
+      <translation>位置保持</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="93"/>
@@ -585,7 +585,7 @@
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="99"/>
       <source>Follow</source>
-      <translation>跟随</translation>
+      <translation>追踪模式</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="100"/>
@@ -610,7 +610,7 @@
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="104"/>
       <source>Turtle</source>
-      <translation>海龟模式</translation>
+      <translation>乌龟模式</translation>
     </message>
   </context>
   <context>
@@ -618,7 +618,7 @@
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.h" line="101"/>
       <source>Guided</source>
-      <translation>引导</translation>
+      <translation>引导模式</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.h" line="102"/>
@@ -1008,7 +1008,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.h" line="34"/>
       <source>Follow Me</source>
-      <translation type="unfinished">Follow Me</translation>
+      <translation>跟随我</translation>
     </message>
   </context>
   <context>
@@ -1387,7 +1387,7 @@
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="67"/>
       <source>Manual</source>
-      <translation type="unfinished">Manual</translation>
+      <translation>手动</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="68"/>
@@ -1452,7 +1452,7 @@
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="80"/>
       <source>Avoid ADSB</source>
-      <translation type="unfinished">Avoid ADSB</translation>
+      <translation>关闭ADSB</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="81"/>
@@ -1951,7 +1951,7 @@
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="58"/>
       <source>Manual</source>
-      <translation type="unfinished">Manual</translation>
+      <translation>手动</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="59"/>
@@ -1982,91 +1982,6 @@
       <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="64"/>
       <source>Follow</source>
       <translation type="unfinished">Follow</translation>
-    </message>
-    <message>
-      <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="65"/>
-      <source>Simple</source>
-      <translation type="unfinished">Simple</translation>
-    </message>
-    <message>
-      <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="66"/>
-      <source>Dock</source>
-      <translation type="unfinished">Dock</translation>
-    </message>
-    <message>
-      <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="67"/>
-      <source>Circle</source>
-      <translation type="unfinished">Circle</translation>
-    </message>
-    <message>
-      <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="68"/>
-      <source>Auto</source>
-      <translation type="unfinished">Auto</translation>
-    </message>
-    <message>
-      <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="69"/>
-      <source>RTL</source>
-      <translation type="unfinished">RTL</translation>
-    </message>
-    <message>
-      <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="70"/>
-      <source>Smart RTL</source>
-      <translation type="unfinished">Smart RTL</translation>
-    </message>
-    <message>
-      <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="71"/>
-      <source>Guided</source>
-      <translation type="unfinished">Guided</translation>
-    </message>
-    <message>
-      <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="72"/>
-      <source>Initializing</source>
-      <translation type="unfinished">Initializing</translation>
-    </message>
-  </context>
-  <context>
-    <name>APMSafetyComponent</name>
-    <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="65"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="65"/>
-      <source>Requires vehicle reboot</source>
-      <translation>需要重启飞行器</translation>
-    </message>
-    <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="78"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="78"/>
-      <source>Low action:</source>
-      <translation>低位动作：</translation>
-    </message>
-    <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="85"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="85"/>
-      <source>Critical action:</source>
-      <translation>临界值动作：</translation>
-    </message>
-    <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="92"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="92"/>
-      <source>Low voltage threshold:</source>
-      <translation>低电压阈值：</translation>
-    </message>
-    <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="100"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="100"/>
-      <source>Critical voltage threshold:</source>
-      <translation>临界电压阈值：</translation>
-    </message>
-    <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="107"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="107"/>
-      <source>Low mAh threshold:</source>
-      <translation>低毫安时阈值：</translation>
-    </message>
-    <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="114"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="114"/>
-      <source>Critical mAh threshold:</source>
-      <translation>临界毫安时阈值：</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="65"/>
@@ -2653,7 +2568,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="177"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="177"/>
       <source>Power module not set up</source>
-      <translation type="unfinished">Power module not set up</translation>
+      <translation>电源模块未配置</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="185"/>
@@ -3865,7 +3780,7 @@ Click Ok to start calibration.</source>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="156"/>
       <source>Manual</source>
-      <translation type="unfinished">Manual</translation>
+      <translation>手动</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="157"/>
@@ -4603,32 +4518,32 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/QmlControls/AltModeDialog.qml" line="61"/>
       <source>Calculated Above Terrain</source>
-      <translation type="unfinished">Calculated Above Terrain</translation>
+      <translation>Calculated Above Terrain</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AltModeDialog.qml" line="62"/>
       <source>Specified altitudes are distance above terrain. Actual altitudes sent to vehicle are calculated from terrain data and sent as AMSL values.</source>
-      <translation type="unfinished">Specified altitudes are distance above terrain. Actual altitudes sent to vehicle are calculated from terrain data and sent as AMSL values.</translation>
+      <translation>Specified altitudes are distance above terrain. Actual altitudes sent to vehicle are calculated from terrain data and sent as AMSL values.</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AltModeDialog.qml" line="66"/>
       <source>Terrain Frame</source>
-      <translation type="unfinished">Terrain Frame</translation>
+      <translation>Terrain Frame</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AltModeDialog.qml" line="67"/>
       <source>Specified altitudes are distance above terrain. The actual altitude flown is controlled by the vehicle either from terrain height maps being sent to vehicle or a distance sensor.</source>
-      <translation type="unfinished">Specified altitudes are distance above terrain. The actual altitude flown is controlled by the vehicle either from terrain height maps being sent to vehicle or a distance sensor.</translation>
+      <translation>Specified altitudes are distance above terrain. The actual altitude flown is controlled by the vehicle either from terrain height maps being sent to vehicle or a distance sensor.</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AltModeDialog.qml" line="71"/>
       <source>Mixed Modes</source>
-      <translation type="unfinished">Mixed Modes</translation>
+      <translation>Mixed Modes</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AltModeDialog.qml" line="72"/>
       <source>The altitude mode can differ for each individual item.</source>
-      <translation type="unfinished">The altitude mode can differ for each individual item.</translation>
+      <translation>The altitude mode can differ for each individual item.</translation>
     </message>
   </context>
   <context>
@@ -4644,12 +4559,12 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/QmlControls/AppMessages.qml" line="115"/>
       <source>GStreamer Debug Level</source>
-      <translation type="unfinished">GStreamer Debug Level</translation>
+      <translation>GStreamer Debug Level</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AppMessages.qml" line="159"/>
       <source>Logging categories</source>
-      <translation type="unfinished">Logging categories</translation>
+      <translation>Logging categories</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AppMessages.qml" line="197"/>
@@ -4732,7 +4647,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/Settings/AppSettings.h" line="112"/>
       <source>CrashLogs</source>
-      <translation type="unfinished">CrashLogs</translation>
+      <translation>CrashLogs</translation>
     </message>
     <message>
       <location filename="../src/Settings/AppSettings.h" line="113"/>
@@ -4752,7 +4667,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/Settings/AppSettings.cc" line="203"/>
       <source> (Partial)</source>
-      <translation type="unfinished"> (Partial)</translation>
+      <translation> (Partial)</translation>
     </message>
     <message>
       <location filename="../src/Settings/AppSettings.cc" line="211"/>
@@ -8135,7 +8050,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="66"/>
       <source>WARNING: This will force arming of the vehicle bypassing any safety checks.</source>
-      <translation type="unfinished">WARNING: This will force arming of the vehicle bypassing any safety checks.</translation>
+      <translation>WARNING: This will force arming of the vehicle bypassing any safety checks.</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="67"/>
@@ -9877,12 +9792,6 @@ Click Ok to start the auto-tuning process.
       <translation type="unfinished">Vehicle Configuration</translation>
     </message>
     <message>
-      <location filename="../src/UI/MainRootWindow.qml" line="147"/>
-      <location filename="../src/UI/MainRootWindow.qml" line="382"/>
-      <source>Vehicle Configuration</source>
-      <translation type="unfinished">Vehicle Configuration</translation>
-    </message>
-    <message>
       <location filename="../src/UI/MainRootWindow.qml" line="295"/>
       <source>Debug Touch Areas</source>
       <translation type="unfinished">Debug Touch Areas</translation>
@@ -9970,11 +9879,6 @@ Click Ok to start the auto-tuning process.
       <location filename="../src/UI/toolbar/MainStatusIndicator.qml" line="192"/>
       <source>Arm</source>
       <translation>Arm</translation>
-    </message>
-    <message>
-      <location filename="../src/UI/toolbar/MainStatusIndicator.qml" line="216"/>
-      <source>Vehicle Messages</source>
-      <translation type="unfinished">Vehicle Messages</translation>
     </message>
     <message>
       <location filename="../src/UI/toolbar/MainStatusIndicator.qml" line="216"/>
@@ -13207,7 +13111,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</translation>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="207"/>
       <source>Current mission must be paused prior to uploading a new Plan</source>
-      <translation type="unfinished">Current mission must be paused prior to uploading a new Plan</translation>
+      <translation>Current mission must be paused prior to uploading a new Plan</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="587"/>
