@@ -17,6 +17,7 @@ import QGroundControl.ScreenTools
 
 
 import QGroundControl.FactControls
+import QGroundControl.SettingsManager 1.0
 
 // This indicator page is used both when showing RTK status only with no vehicle connect and when showing GPS/RTK status with a vehicle connected
 
@@ -162,15 +163,15 @@ ToolIndicatorPage {
             RowLayout {
                 QGCRadioButton {
                     text:       qsTr("Survey-In")
-                    checked:    baseMode == 0
-                    onClicked:  rtkSettings.baseMode.rawValue = 0
+                    checked:    baseMode == BaseMode.BaseSurveyIn
+                    onClicked:  rtkSettings.baseMode.rawValue = BaseMode.BaseSurveyIn
                     visible:    manufacturerId & _standard
                 }
 
                 QGCRadioButton {
                     text: qsTr("Specify position")
-                    checked:    baseMode == 1
-                    onClicked:  rtkSettings.baseMode.rawValue = 1
+                    checked:    baseMode == BaseMode.BaseFixed
+                    onClicked:  rtkSettings.baseMode.rawValue = BaseMode.BaseFixed
                     visible:    manufacturerId & _standard
                 }
             }
@@ -182,7 +183,7 @@ ToolIndicatorPage {
                 fact:                   QGroundControl.settingsManager.rtkSettings.surveyInAccuracyLimit
                 majorTickStepSize:      0.1
                 visible:                (
-                    baseMode == 0
+                    baseMode == BaseMode.BaseSurveyIn
                     && rtkSettings.surveyInAccuracyLimit.visible
                     && (manufacturerId & _ublox)
                 )
@@ -195,7 +196,7 @@ ToolIndicatorPage {
                 fact:                   rtkSettings.surveyInMinObservationDuration
                 majorTickStepSize:      10
                 visible:                ( 
-                    baseMode == 0
+                    baseMode == BaseMode.BaseSurveyIn
                     && rtkSettings.surveyInMinObservationDuration.visible
                     && (manufacturerId & (_ublox | _femtomes | _trimble))
                 )
@@ -205,7 +206,7 @@ ToolIndicatorPage {
                 label:                  rtkSettings.fixedBasePositionLatitude.shortDescription
                 fact:                   rtkSettings.fixedBasePositionLatitude
                 visible:                (
-                    baseMode == 1
+                    baseMode == BaseMode.BaseFixed
                     && (manufacturerId & _standard)
                 )
             }
@@ -214,7 +215,7 @@ ToolIndicatorPage {
                 label:              rtkSettings.fixedBasePositionLongitude.shortDescription
                 fact:               rtkSettings.fixedBasePositionLongitude
                 visible:            (
-                    baseMode == 1
+                    baseMode == BaseMode.BaseFixed
                     && (manufacturerId & _standard)
                 )
             }
@@ -223,7 +224,7 @@ ToolIndicatorPage {
                 label:              rtkSettings.fixedBasePositionAltitude.shortDescription
                 fact:               rtkSettings.fixedBasePositionAltitude
                 visible:            (
-                    baseMode == 1
+                    baseMode == BaseMode.BaseFixed
                     && (manufacturerId & _standard)
                 )
             }
@@ -232,7 +233,7 @@ ToolIndicatorPage {
                 label:              rtkSettings.fixedBasePositionAccuracy.shortDescription
                 fact:               rtkSettings.fixedBasePositionAccuracy
                 visible:            (
-                    baseMode == 1
+                    baseMode == BaseMode.BaseFixed
                     && (manufacturerId & _ublox)
                 )
             }
@@ -240,7 +241,7 @@ ToolIndicatorPage {
             LabelledButton {
                 label:              qsTr("Current Base Position")
                 buttonText:         enabled ? qsTr("Save") : qsTr("Not Yet Valid")
-                visible:            baseMode == 1
+                visible:            baseMode == BaseMode.BaseFixed
                 enabled:            QGroundControl.gpsRtk.valid.value
 
                 onClicked: {
