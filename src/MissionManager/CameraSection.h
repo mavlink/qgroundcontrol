@@ -123,6 +123,7 @@ private:
     Fact    _cameraPhotoIntervalDistanceFact;
     Fact    _cameraPhotoIntervalTimeFact;
     Fact    _cameraModeFact;
+    int     _takePhotoSequence;
     bool    _dirty;
 
     static QMap<QString, FactMetaData*> _metaDataMap;
