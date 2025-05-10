@@ -62,28 +62,41 @@ void GPSRtk::_onGPSSurveyInStatus(float duration, float accuracyMM,  double lati
 void GPSRtk::connectGPS(const QString &device, QStringView gps_type)
 {
     GPSProvider::GPSType type;
+    RTKSettings* rtkSettings = SettingsManager::instance()->rtkSettings();
+
     if (gps_type.contains(QStringLiteral("trimble"), Qt::CaseInsensitive)) {
         type = GPSProvider::GPSType::trimble;
+        rtkSettings->baseReceiverManufacturers()->setRawValue(2);
         qCDebug(GPSRtkLog) << "Connecting Trimble device";
+
     } else if (gps_type.contains(QStringLiteral("septentrio"), Qt::CaseInsensitive)) {
         type = GPSProvider::GPSType::septentrio;
+        rtkSettings->baseReceiverManufacturers()->setRawValue(3);
         qCDebug(GPSRtkLog) << "Connecting Septentrio device";
+
     } else if (gps_type.contains(QStringLiteral("femtomes"), Qt::CaseInsensitive)) {
         type = GPSProvider::GPSType::femto;
+        rtkSettings->baseReceiverManufacturers()->setRawValue(4);
         qCDebug(GPSRtkLog) << "Connecting Femtomes device";
+
     } else {
         type = GPSProvider::GPSType::u_blox;
+        if (gps_type.contains(QStringLiteral("blox"), Qt::CaseInsensitive)) {
+            rtkSettings->baseReceiverManufacturers()->setRawValue(5); // Ublox
+        }else{
+            rtkSettings->baseReceiverManufacturers()->setRawValue(0); // Standart
+        }
+
         qCDebug(GPSRtkLog) << "Connecting U-blox device";
     }
 
     disconnectGPS();
 
-    RTKSettings* const rtkSettings = SettingsManager::instance()->rtkSettings();
     _requestGpsStop = false;
     const GPSProvider::rtk_data_s rtkData = {
         rtkSettings->surveyInAccuracyLimit()->rawValue().toDouble(),
         rtkSettings->surveyInMinObservationDuration()->rawValue().toInt(),
-        rtkSettings->useFixedBasePosition()->rawValue().toBool(),
+        static_cast<BaseModeDefinition::Mode>(rtkSettings->baseMode()->rawValue().toInt()),
         rtkSettings->fixedBasePositionLatitude()->rawValue().toDouble(),
         rtkSettings->fixedBasePositionLongitude()->rawValue().toDouble(),
         rtkSettings->fixedBasePositionAltitude()->rawValue().toFloat(),
