@@ -71,6 +71,30 @@ int WindowsCrtReportHook(int reportType, char* message, int* returnValue)
 
 int main(int argc, char *argv[])
 {
+    bool runUnitTests = false;
+    bool simpleBootTest = false;
+    QString systemIdStr = QString();
+    bool hasSystemId = false;
+    bool bypassRunGuard = false;
+
+    bool stressUnitTests = false;       // Stress test unit tests
+    bool quietWindowsAsserts = false;   // Don't let asserts pop dialog boxes
+    QString unitTestOptions;
+
+    CmdLineOpt_t rgCmdLineOptions[] = {
+#ifdef QT_DEBUG
+        { "--unittest",             &runUnitTests,          &unitTestOptions },
+        { "--unittest-stress",      &stressUnitTests,       &unitTestOptions },
+        { "--no-windows-assert-ui", &quietWindowsAsserts,   nullptr },
+#endif
+        { "--system-id",            &hasSystemId,           &systemIdStr },
+        { "--allow-multiple",       &bypassRunGuard,        nullptr },
+        { "--simple-boot-test",     &simpleBootTest,        nullptr },
+        // Add additional command line option flags here
+    };
+
+    ParseCmdLineOptions(argc, argv, rgCmdLineOptions, std::size(rgCmdLineOptions), false);
+
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
     // We make the runguard key different for custom and non custom
     // builds, so they can be executed together in the same device.
@@ -79,7 +103,7 @@ int main(int argc, char *argv[])
     const QString runguardString = QStringLiteral("%1 RunGuardKey").arg(QGC_APP_NAME);
 
     RunGuard guard(runguardString);
-    if (!guard.tryToRun()) {
+    if (!bypassRunGuard && !guard.tryToRun()) {
         QApplication errorApp(argc, argv);
         QMessageBox::critical(nullptr, QObject::tr("Error"),
             QObject::tr("A second instance of %1 is already running. Please close the other instance and try again.").arg(QGC_APP_NAME)
@@ -133,28 +157,7 @@ int main(int argc, char *argv[])
     }
 #endif
 
-    bool runUnitTests = false;
-    bool simpleBootTest = false;
-    QString systemIdStr = QString();
-    bool hasSystemId = false;
-
 #ifdef QT_DEBUG
-    // We parse a small set of command line options here prior to QGCApplication in order to handle the ones
-    // which need to be handled before a QApplication object is started.
-
-    bool stressUnitTests = false;       // Stress test unit tests
-    bool quietWindowsAsserts = false;   // Don't let asserts pop dialog boxes
-
-    QString unitTestOptions;
-    CmdLineOpt_t rgCmdLineOptions[] = {
-        { "--unittest",             &runUnitTests,          &unitTestOptions },
-        { "--unittest-stress",      &stressUnitTests,       &unitTestOptions },
-        { "--no-windows-assert-ui", &quietWindowsAsserts,   nullptr },
-        { "--system-id",            &hasSystemId,           &systemIdStr },
-        // Add additional command line option flags here
-    };
-
-    ParseCmdLineOptions(argc, argv, rgCmdLineOptions, std::size(rgCmdLineOptions), false);
     if (stressUnitTests) {
         runUnitTests = true;
     }
@@ -175,11 +178,6 @@ int main(int argc, char *argv[])
         SetErrorMode(dwMode | SEM_NOGPFAULTERRORBOX);
     }
 #endif // Q_OS_WIN
-#else
-    CmdLineOpt_t rgCmdLineOptions[] = {
-        { "--simple-boot-test", &simpleBootTest, nullptr },
-    };
-    ParseCmdLineOptions(argc, argv, rgCmdLineOptions, std::size(rgCmdLineOptions), false);
 #endif // QT_DEBUG
 
     QGCApplication app(argc, argv, runUnitTests, simpleBootTest);
