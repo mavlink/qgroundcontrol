@@ -22,7 +22,7 @@ Item {
     property bool   gcsControlStatusFlags_TakeoverAllowed:  activeVehicle ? activeVehicle.gcsControlStatusFlags_TakeoverAllowed : false
     property Fact   requestControlAllowTakeoverFact:        QGroundControl.settingsManager.flyViewSettings.requestControlAllowTakeover
     property bool   requestControlAllowTakeover:            requestControlAllowTakeoverFact.rawValue
-    property bool   isThisGCSinControl:                     sysidInControl == QGroundControl.mavlinkSystemID
+    property bool   isThisGCSinControl:                     sysidInControl == QGroundControl.settingsManager.mavlinkSettings.gcsMavlinkSystemID.rawValue
     property bool   sendControlRequestAllowed:              activeVehicle ? activeVehicle.sendControlRequestAllowed : false
 
     property var    margins:                                ScreenTools.defaultFontPixelWidth
@@ -322,24 +322,12 @@ Item {
                     color:                  qgcPal.windowShade
                     height:                 outdoorPalette ? 1 : 2
                 }
-                QGCLabel {
-                    text:                   qsTr("This GCS Mavlink System ID: ")
+                LabelledFactTextField {
+                    Layout.fillWidth:       true
+                    Layout.columnSpan:      2
+                    label:                  qsTr("This GCS Mavlink System ID: ")
+                    fact:                   QGroundControl.settingsManager.mavlinkSettings.gcsMavlinkSystemID
                 }
-                QGCTextField {
-                    text:                   QGroundControl.mavlinkSystemID.toString()
-                    numericValuesOnly:      true
-                    Layout.alignment:       Qt.AlignRight
-                    Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 7
-                    horizontalAlignment:    TextInput.AlignHCenter
-                    onEditingFinished: {
-                        if (parseInt(text) > 0 && parseInt(text) < 256) {
-                            QGroundControl.mavlinkSystemID = parseInt(text)
-                        } else {
-                            mainWindow.showMessageDialog(qsTr("Invalid System ID"), qsTr("System ID must be in the range of 1 - 255"))
-                        }
-                    }
-                }
-
             }
         }
     }
