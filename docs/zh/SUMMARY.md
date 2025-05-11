@@ -8,12 +8,12 @@
 - [Fly View](qgc-user-guide/fly_view/fly_view.md)
   - [Toolbar](qgc-user-guide/fly_view/fly_view_toolbar.md)
   - [Fly Tools](qgc-user-guide/fly_view/fly_tools.md)
-  - [Instrument Panel](qgc-user-guide/fly_view/instrument_panel.md)
+  - [仪表盘](qgc-user-guide/fly_view/instrument_panel.md)
   - [Attitude/Compass](qgc-user-guide/fly_view/hud.md)
   - [Camera Tools](qgc-user-guide/fly_view/camera_tools.md)
   - [Video](qgc-user-guide/fly_view/video.md)
     - [Video Overlay](qgc-user-guide/fly_view/video_overlay.md)
-  - [Replay Flight Data](qgc-user-guide/fly_view/replay_flight_data.md)
+  - [重放飞行数据](qgc-user-guide/fly_view/replay_flight_data.md)
 
 - [Mavlink Actions](qgc-user-guide/custom_actions/custom_actions.md)
 
