@@ -22,4 +22,4 @@
 - Value参数值
 - 使用MAVLink MAV_PARAM_TYPE_ \*枚举值键入参数类型
 
-参数文件包含单个Vehicle的参数。 它可以包含该Vehicle中多个组件的参数。 It can contain parameters for multiple components within that Vehicle.
+参数文件包含单个载具的参数。 它可以包含该载具上多个组件的参数。

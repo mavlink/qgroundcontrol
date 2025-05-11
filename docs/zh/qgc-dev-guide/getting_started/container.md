@@ -93,4 +93,4 @@ One fix is to force Linux line endings using the command:
 git config --global core.autocrlf false
 ```
 
-Then update/recreate your local repository.
+然后更新/重新创建您的本地资源库。

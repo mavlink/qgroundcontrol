@@ -51,7 +51,7 @@ This section contains a high level and _non-exhaustive_ list of new features add
     - **Flight Modes** Specify channels for all available transmitter switches.
     - **Tuning: Advanced** Initial implementation of vehicle PID tuning support. Note that this is a work in progress that will improve in 3.5 daily builds.
   - ArduPilot Firmware
-    - **Power/Safety** Support for new multi-battery setup.
+    - **电源/安全** 支持新的多电池设置。
     - **Trad Heli** New setup page.
 
 - **Plan**
