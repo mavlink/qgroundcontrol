@@ -4016,17 +4016,50 @@ void Vehicle::requestOperatorControl(bool allowOverride, int requestTimeoutSecs)
         // If out of limits use default value
         safeRequestTimeoutSecs = SettingsManager::instance()->flyViewSettings()->requestControlTimeout()->cookedDefaultValue().toInt();
     }
-    sendMavCommand(_defaultComponentId,
-                   MAV_CMD_REQUEST_OPERATOR_CONTROL,
-                   false,                   // Don't show errors, as per Mavlink control protocol Autopilot will report result failed prior to forwarding the request to the GCS in control.
-                   0,                       // System ID of GCS requesting control, 0 if it is this GCS
-                   1,                       // Action - 0: Release control, 1: Request control.
-                   allowOverride ? 1 : 0,   // Allow takeover - Enable automatic granting of ownership on request. 0: Ask current owner and reject request, 1: Allow automatic takeover.
-                   safeRequestTimeoutSecs); // Timeout in seconds before a request to a GCS to allow takeover is assumed to be rejected. This is used to display the timeout graphically on requestor and GCS in control.
+
+    const MavCmdAckHandlerInfo_t handlerInfo = {&Vehicle::_requestOperatorControlAckHandler, this, nullptr, nullptr};
+    sendMavCommandWithHandler(
+        &handlerInfo,
+        _defaultComponentId,
+        MAV_CMD_REQUEST_OPERATOR_CONTROL,
+        0,                                  // System ID of GCS requesting control, 0 if it is this GCS
+        1,                                  // Action - 0: Release control, 1: Request control.
+        allowOverride ? 1 : 0,              // Allow takeover - Enable automatic granting of ownership on request. 0: Ask current owner and reject request, 1: Allow automatic takeover.
+        safeRequestTimeoutSecs              // Timeout in seconds before a request to a GCS to allow takeover is assumed to be rejected. This is used to display the timeout graphically on requestor and GCS in control.
+    );
 
     // If this is a request we sent to other GCS, start timer so User can not keep sending requests until the current timeout expires
     if (requestTimeoutSecs > 0) {
         requestOperatorControlStartTimer(requestTimeoutSecs * 1000);
+    }
+}
+
+void Vehicle::_requestOperatorControlAckHandler(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, MavCmdResultFailureCode_t failureCode)
+{
+    // For the moment, this will always come from an autopilot, compid 1
+    Q_UNUSED(compId);
+
+    // If duplicated or no response, show popup to user. Otherwise only log it.
+    switch (failureCode) {
+        case MavCmdResultFailureDuplicateCommand:
+            qgcApp()->showAppMessage(tr("Waiting for previous operator control request"));
+            return;
+        case MavCmdResultFailureNoResponseToCommand:
+            qgcApp()->showAppMessage(tr("No response to operator control request"));
+            return;
+        default:
+            break;
+    }
+    
+    Vehicle* vehicle = static_cast<Vehicle*>(resultHandlerData);
+    if (!vehicle) {
+        return;
+    }
+    
+    if (ack.result == MAV_RESULT_ACCEPTED) {
+        qCDebug(VehicleLog) << "Operator control request accepted";
+    } else {
+        qCDebug(VehicleLog) << "Operator control request rejected";
     }
 }
 
