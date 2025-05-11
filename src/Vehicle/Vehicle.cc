@@ -650,6 +650,12 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         _handleMessageInterval(message);
         break;
     }
+    case MAVLINK_MSG_ID_CONTROL_STATUS:
+        _handleControlStatus(message);
+        break;   
+    case MAVLINK_MSG_ID_COMMAND_LONG:
+        _handleCommandLong(message);
+        break;
     }
 
     // This must be emitted after the vehicle processes the message. This way the vehicle state is up to date when anyone else
@@ -3976,6 +3982,62 @@ void Vehicle::_handleMessageInterval(const mavlink_message_t& message)
     {
         (void) _mavlinkMsgIntervals.insert(compMsgId, rate);
         emit mavlinkMsgIntervalsChanged(message.compid, data.message_id, rate);
+    }
+}
+
+void Vehicle::requestOperatorControl(bool allowOverride)
+{
+    sendMavCommand(_defaultComponentId,
+                   MAV_CMD(43005),          // MAV_CMD_REQUEST_OPERATOR_CONTROL
+                   true,                    // show errors
+                   0,                       // System ID of GCS requesting control, 0 if it is this GCS
+                   1,                       // Action - 0: Release control, 1: Request control.
+                   allowOverride ? 1 : 0);  // Allow takeover - Enable automatic granting of ownership on request. 0: Ask current owner and reject request, 1: Allow automatic takeover.
+}
+
+void Vehicle::_handleControlStatus(const mavlink_message_t& message)
+{
+    mavlink_control_status_t controlStatus;
+    mavlink_msg_control_status_decode(&message, &controlStatus);
+
+    bool updateControlStatusSignals = false;
+    if (_gcsControlStatusFlags != controlStatus.flags) {
+        _gcsControlStatusFlags = controlStatus.flags;
+        _gcsControlStatusFlags_SystemManager = controlStatus.flags & GCS_CONTROL_STATUS_FLAGS_SYSTEM_MANAGER;
+        _gcsControlStatusFlags_TakeoverAllowed = controlStatus.flags & GCS_CONTROL_STATUS_FLAGS_TAKEOVER_ALLOWED;
+        updateControlStatusSignals = true;
+    }
+
+    if (_sysid_in_control != controlStatus.sysid_in_control) {
+        _sysid_in_control = controlStatus.sysid_in_control;
+        updateControlStatusSignals = true;
+    }
+
+    if (!_firstControlStatusReceived) {
+        _firstControlStatusReceived = true;
+        updateControlStatusSignals = true;
+    }
+
+    if (updateControlStatusSignals) {
+        emit gcsControlStatusChanged();
+    }
+}
+
+void Vehicle::_handleCommandRequestOperatorControl(const mavlink_command_long_t commandLong)
+{
+    emit requestOperatorControlReceived(commandLong.param1, commandLong.param3);
+}
+
+void Vehicle::_handleCommandLong(const mavlink_message_t& message)
+{
+    mavlink_command_long_t commandLong;
+    mavlink_msg_command_long_decode(&message, &commandLong);
+    // Ignore command if it is not targeted for us
+    if (commandLong.target_system != MAVLinkProtocol::instance()->getSystemId()) {
+        return;
+    }
+    if (commandLong.command == MAV_CMD(32100)) { // MAV_CMD_REQUEST_OPERATOR_CONTROL
+        _handleCommandRequestOperatorControl(commandLong);
     }
 }
 
