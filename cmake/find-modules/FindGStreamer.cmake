@@ -83,7 +83,7 @@ elseif(LINUX)
         message(FATAL_ERROR "Could not locate GStreamer - check installation or set environment/cmake variables")
     endif()
 
-    if(EXISTS "${GStreamer_ROOT_DIR}/lib/${CMAKE_SYSTEM_PROCESSOR}-linux-gnu")
+    if((EXISTS "${GStreamer_ROOT_DIR}/lib/${CMAKE_SYSTEM_PROCESSOR}-linux-gnu" ) AND (EXISTS "${GStreamer_ROOT_DIR}/lib/${CMAKE_SYSTEM_PROCESSOR}-linux-gnu/gstreamer-1.0"))
         set(GSTREAMER_LIB_PATH "${GStreamer_ROOT_DIR}/lib/${CMAKE_SYSTEM_PROCESSOR}-linux-gnu")
     elseif(EXISTS "${GStreamer_ROOT_DIR}/lib")
         set(GSTREAMER_LIB_PATH "${GStreamer_ROOT_DIR}/lib")
