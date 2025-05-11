@@ -4008,7 +4008,7 @@ void Vehicle::requestOperatorControl(bool allowOverride, int requestTimeoutSecs)
         safeRequestTimeoutSecs = SettingsManager::instance()->flyViewSettings()->requestControlTimeout()->cookedDefaultValue().toInt();
     }
     sendMavCommand(_defaultComponentId,
-                   MAV_CMD(32100),          // MAV_CMD_REQUEST_OPERATOR_CONTROL
+                   MAV_CMD_REQUEST_OPERATOR_CONTROL,
                    false,                   // Don't show errors, as per Mavlink control protocol Autopilot will report result failed prior to forwarding the request to the GCS in control.
                    0,                       // System ID of GCS requesting control, 0 if it is this GCS
                    1,                       // Action - 0: Release control, 1: Request control.
@@ -4088,7 +4088,7 @@ void Vehicle::_handleCommandLong(const mavlink_message_t& message)
     if (commandLong.target_system != MAVLinkProtocol::instance()->getSystemId()) {
         return;
     }
-    if (commandLong.command == MAV_CMD(32100)) { // MAV_CMD_REQUEST_OPERATOR_CONTROL
+    if (commandLong.command == MAV_CMD_REQUEST_OPERATOR_CONTROL) {
         _handleCommandRequestOperatorControl(commandLong);
     }
 }
