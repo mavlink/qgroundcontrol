@@ -36,5 +36,5 @@ To replay a flight:
    After disconnecting, the **Load Telemetry Log** button will be displayed.
 
 :::tip
-You can inspect the running replay in more detail using the [MAVLink Inspector](../analyze_view/mavlink_inspector.md).
+您可以使用 [MAVLink 检查器](../analyze_view/mavlink_inspector.md)更详细地检查正在运行的回放。
 :::

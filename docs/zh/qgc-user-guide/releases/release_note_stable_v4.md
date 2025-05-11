@@ -43,7 +43,7 @@ The format for Settings in QGC had to change in this release. Which means all QG
     - Allows you to save settings for a Pattern item (Survey, Corridor Scan, ...) into a named preset. You can then use this preset over and over again as you create new Pattern.
 - Fly
   - Click to ROI support
-  - Added support for connecting to ADSB SBS server. Adds support for ADSB data from USB SDR Dongle running 'dump1090 --net' for example.
+  - Added support for connecting to ADSB SBS server. 增添了对来自 USB 软件定义无线电（SDR）加密狗的ADSB数据的支持（例如 “dump1090 --net”）。
   - Ability to turn on Heading to home, COG and Next Waypoint heading indicators in Compass.
   - Video
     - Add support for h.265 video streams

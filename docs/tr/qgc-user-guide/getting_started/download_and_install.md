@@ -52,7 +52,7 @@ QGroundControl continues to not be signed which causes problem on Catalina. To o
 
 ## Ubuntu Linux {#ubuntu}
 
-_QGroundControl_ can be installed/run on Ubuntu LTS 20.04 (and later).
+_QGroundControl_ can be installed/run on Ubuntu LTS 22.04 (and later).
 
 Ubuntu, bir seri bağlantı noktasının (veya USB serisinin) robotikle ilgili kullanımına müdahale eden bir seri modem yöneticisi ile birlikte gelir.
 _ QGroundControl _ 'ü kurmadan önce modem yöneticisini kaldırmalı ve seri bağlantı noktasına erişim için kendinize izin vermelisiniz.
@@ -61,26 +61,26 @@ Ayrıca video akışını desteklemek için _ GStreamer _ 'ı da yüklemeniz ger
 QGroundControl \* 'ı ilk kez kurmadan önce:
 
 1. On the command prompt enter:
-   ```sh
-   sudo usermod -a -G dialout $USER
-   sudo apt-get remove modemmanager -y
-   sudo apt install gstreamer1.0-plugins-bad gstreamer1.0-libav gstreamer1.0-gl -y
-   sudo apt install libfuse2 -y
-   sudo apt install libxcb-xinerama0 libxkbcommon-x11-0 libxcb-cursor-dev -y
-   ```
-   <!-- Note, remove install of libqt5gui5 https://github.com/mavlink/qgroundcontrol/issues/10176 fixed -->
+  ```sh
+  sudo usermod -a -G dialout $USER
+  sudo apt-get remove modemmanager -y
+  sudo apt install gstreamer1.0-plugins-bad gstreamer1.0-libav gstreamer1.0-gl -y
+  sudo apt install libfuse2 -y
+  sudo apt install libxcb-xinerama0 libxkbcommon-x11-0 libxcb-cursor-dev -y
+  ```
+  <!-- Note, remove install of libqt5gui5 https://github.com/mavlink/qgroundcontrol/issues/10176 fixed -->
 2. Logout and login again to enable the change to user permissions.
 
 &nbsp; _ QGroundControl _ yüklemek için:
 
 1. Download [QGroundControl.AppImage](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl.AppImage).
 2. Install (and run) using the terminal commands:
-   ```sh
-   Aşağıdaki terminal komutlarını kullanarak kurun (ve çalıştırın):
-      sh
-      chmod +x ./QGroundControl.AppImage
-      ./QGroundControl.AppImage (or double click)
-   ```
+  ```sh
+  Aşağıdaki terminal komutlarını kullanarak kurun (ve çalıştırın):
+     sh
+     chmod +x ./QGroundControl.AppImage
+     ./QGroundControl.AppImage (or double click)
+  ```
 
 :::info
 There are known [video steaming issues](../troubleshooting/qgc_setup.md#dual_vga) on Ubuntu 18.04 systems with dual adaptors.

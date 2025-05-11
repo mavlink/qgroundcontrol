@@ -3,5 +3,5 @@
 本节包含有关贡献代码的主题，包括编码风格，测试和拉取请求的格式。
 
 :::info
-注意: QGroundControl（QGC）作为Apache 2.0和GPLv3双重许可。 所有代码贡献都必须在两个许可证下进行。 All contributions have to be made under both licenses.
+QGroundControl (QGC) 是 [Apache 2.0 和 GPLv3双重授权](../contribute/licences.md)的。 All contributions have to be made under both licenses.
 :::

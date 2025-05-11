@@ -52,7 +52,7 @@ QGroundControl continues to not be signed which causes problem on Catalina. To o
 
 ## Ubuntu Linux 系统 {#ubuntu}
 
-_QGroundControl_ 可以在 Ubuntu LTS 20.04 （及以后）安装/运行。
+_QGroundControl_ can be installed/run on Ubuntu LTS 22.04 (and later).
 
 Ubuntu 自带一个串口调制解调器管理器，它会干扰串口（或 USB 转串口）在任何与机器人相关方面的使用。
 在安装 _QGroundControl_ 之前，您应该删除调制解调器管理器并授予自己访问串行端口的权限。

@@ -90,7 +90,7 @@ The list may be a mix of both [SimpleItem](#mission_simple_item) and [ComplexIte
 | `vehicleType`            | The vehicle type for which this mission was created. This is one of the [MAV_TYPE](https://mavlink.io/en/messages/common.html#MAV_TYPE) enum values.                                                        |
 | `cruiseSpeed`            | The default forward speed for Fixed wing or VTOL vehicles (i.e. when moving between waypoints).                                                                                               |
 | `hoverSpeed`             | The default forward speed for multi-rotor vehicles.                                                                                                                                                                                              |
-| `items`                  | The list of mission item objects associated with the mission . The list may contain either/both [SimpleItem](#mission_simple_item) and [ComplexItem](#mission_complex_item) objects.                                             |
+| `items`                  | The list of mission item objects associated with the mission . 列表可能包含 [SimpleItem](#mission_simple_item) 对象和 [ComplexItem](#mission_complex_item) 对象。                                                                                            |
 | `plannedHomePosition`    | The planned home position is shown on the map and used for mission planning when no vehicle is connected. The array values shown above are (from top): latitude, longitude and AMSL altitude. |
 
 简单和复杂项目的格式如下。
