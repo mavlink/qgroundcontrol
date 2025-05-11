@@ -3988,7 +3988,7 @@ void Vehicle::startTimerRevertAllowTakeover()
     // Disconnect any previous connections to avoid multiple handlers
     disconnect(&_timerRevertAllowTakeover, &QTimer::timeout, nullptr, nullptr);
     
-    connect(&_timerRevertAllowTakeover, &QTimer::timeout, [this](){
+    connect(&_timerRevertAllowTakeover, &QTimer::timeout, this, [this](){
         if (MAVLinkProtocol::instance()->getSystemId() == _sysid_in_control) {
             this->requestOperatorControl(false);
         }
@@ -4032,7 +4032,7 @@ void Vehicle::requestOperatorControlStartTimer(int requestTimeoutMsecs)
     _timerRequestOperatorControl.setInterval(requestTimeoutMsecs);
     // Disconnect any previous connections to avoid multiple handlers
     disconnect(&_timerRequestOperatorControl, &QTimer::timeout, nullptr, nullptr);
-    connect(&_timerRequestOperatorControl, &QTimer::timeout, [this](){
+    connect(&_timerRequestOperatorControl, &QTimer::timeout, this, [this](){
         _sendControlRequestAllowed = true;
         emit sendControlRequestAllowedChanged(true);
     });
