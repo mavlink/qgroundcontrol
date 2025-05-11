@@ -42,7 +42,7 @@ option(QGC_ENABLE_QT_VIDEOSTREAMING "Enable QtMultimedia Video Backend" OFF) # Q
 
 # MAVLink
 set(QGC_MAVLINK_GIT_REPO "https://github.com/mavlink/c_library_v2.git" CACHE STRING "URL to MAVLink Git Repo")
-set(QGC_MAVLINK_GIT_TAG "7ea034366ee7f09f3991a5b82f51f0c259023b38" CACHE STRING "Tag of MAVLink Git Repo")
+set(QGC_MAVLINK_GIT_TAG "19f9955598af9a9181064619bd2e3c04bd2d848a" CACHE STRING "Tag of MAVLink Git Repo")
 
 # APM
 option(QGC_DISABLE_APM_MAVLINK "Disable APM Dialect" OFF)
