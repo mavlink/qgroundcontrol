@@ -384,7 +384,7 @@ void APMSensorsComponentController::_handleTextMessage(int sysid, int componenti
 void APMSensorsComponentController::_refreshParams()
 {
     static const QStringList fastRefreshList = {
-        QStringLiteral("COMPASS_OFS_X"), QStringLiteral("COMPASS_OFS_X"), QStringLiteral("COMPASS_OFS_X"),
+        QStringLiteral("COMPASS_OFS_X"), QStringLiteral("COMPASS_OFS_Y"), QStringLiteral("COMPASS_OFS_Z"),
         QStringLiteral("INS_ACCOFFS_X"), QStringLiteral("INS_ACCOFFS_Y"), QStringLiteral("INS_ACCOFFS_Z")
     };
 
@@ -497,80 +497,154 @@ void APMSensorsComponentController::_handleCommandAck(const mavlink_message_t &m
 
 void APMSensorsComponentController::_handleMagCalProgress(const mavlink_message_t &message)
 {
-    if (_calTypeInProgress == QGCMAVLink::CalibrationMag) {
-        mavlink_mag_cal_progress_t magCalProgress{};
-        mavlink_msg_mag_cal_progress_decode(&message, &magCalProgress);
+    if (_calTypeInProgress != QGCMAVLink::CalibrationMag) {
+        return;
+    }
 
-        qCDebug(APMSensorsComponentControllerVerboseLog) << "_handleMagCalProgress id:mask:pct"
-                                                         << magCalProgress.compass_id
-                                                         << magCalProgress.cal_mask
-                                                         << magCalProgress.completion_pct;
+    mavlink_mag_cal_progress_t magCalProgress{};
+    mavlink_msg_mag_cal_progress_decode(&message, &magCalProgress);
 
-        // How many compasses are we calibrating?
-        int compassCalCount = 0;
-        for (int i = 0; i < 3; i++) {
-            if (magCalProgress.cal_mask & (1 << i)) {
-                compassCalCount++;
-            }
+    qCDebug(APMSensorsComponentControllerVerboseLog) << "id:mask:pct"
+                                                     << magCalProgress.compass_id
+                                                     << magCalProgress.cal_mask
+                                                     << magCalProgress.completion_pct;
+
+    // How many compasses are we calibrating?
+    int compassCalCount = 0;
+    for (int i = 0; i < 3; i++) {
+        if (magCalProgress.cal_mask & (1 << i)) {
+            compassCalCount++;
         }
+    }
 
-        if ((magCalProgress.compass_id < 3) && (compassCalCount != 0)) {
-            // Each compass gets a portion of the overall progress
-            _rgCompassCalProgress[magCalProgress.compass_id] = magCalProgress.completion_pct / compassCalCount;
-        }
+    if ((magCalProgress.compass_id < 3) && (compassCalCount != 0)) {
+        // Each compass gets a portion of the overall progress
+        _rgCompassCalProgress[magCalProgress.compass_id] = magCalProgress.completion_pct / compassCalCount;
+    }
 
-        if (_progressBar) {
-            (void) _progressBar->setProperty("value", static_cast<float>(_rgCompassCalProgress[0] + _rgCompassCalProgress[1] + (_rgCompassCalProgress[2]) / 100.0));
-        }
+    if (_progressBar) {
+        (void) _progressBar->setProperty("value", static_cast<float>(_rgCompassCalProgress[0] + _rgCompassCalProgress[1] + _rgCompassCalProgress[2]) / 100.0);
     }
 }
 
 void APMSensorsComponentController::_handleMagCalReport(const mavlink_message_t &message)
 {
-    if (_calTypeInProgress == QGCMAVLink::CalibrationMag) {
-        mavlink_mag_cal_report_t magCalReport{};
-        mavlink_msg_mag_cal_report_decode(&message, &magCalReport);
-
-        qCDebug(APMSensorsComponentControllerVerboseLog) << "_handleMagCalReport id:mask:status:fitness"
-                                                         << magCalReport.compass_id << magCalReport.cal_mask << magCalReport.cal_status << magCalReport.fitness;
-
-        bool additionalCompassCompleted = false;
-        if ((magCalReport.compass_id < 3) && !_rgCompassCalComplete[magCalReport.compass_id]) {
-            if (magCalReport.cal_status == MAG_CAL_SUCCESS) {
-                _appendStatusLog(tr("Compass %1 calibration complete").arg(magCalReport.compass_id));
-            } else {
-                _appendStatusLog(tr("Compass %1 calibration below quality threshold").arg(magCalReport.compass_id));
-            }
-            _rgCompassCalComplete[magCalReport.compass_id] = true;
-            _rgCompassCalSucceeded[magCalReport.compass_id] = magCalReport.cal_status == MAG_CAL_SUCCESS;
-            _rgCompassCalFitness[magCalReport.compass_id] = magCalReport.fitness;
-            additionalCompassCompleted = true;
-        }
-
-        if (_rgCompassCalComplete[0] && _rgCompassCalComplete[1] &&_rgCompassCalComplete[2]) {
-            for (int i = 0; i < 3; i++) {
-                qCDebug(APMSensorsComponentControllerLog) << QString("Onboard compass call report #%1: succeed:fitness %2:%3").arg(i).arg(_rgCompassCalSucceeded[i]).arg(_rgCompassCalFitness[i]);
-            }
-            emit compass1CalFitnessChanged(_rgCompassCalFitness[0]);
-            emit compass2CalFitnessChanged(_rgCompassCalFitness[1]);
-            emit compass3CalFitnessChanged(_rgCompassCalFitness[2]);
-            emit compass1CalSucceededChanged(_rgCompassCalSucceeded[0]);
-            emit compass2CalSucceededChanged(_rgCompassCalSucceeded[1]);
-            emit compass3CalSucceededChanged(_rgCompassCalSucceeded[2]);
-            if (_rgCompassCalSucceeded[0] && _rgCompassCalSucceeded[1] && _rgCompassCalSucceeded[2]) {
-                _appendStatusLog(tr("All compasses calibrated successfully"));
-                _appendStatusLog(tr("YOU MUST REBOOT YOUR VEHICLE NOW FOR NEW SETTINGS TO TAKE AFFECT"));
-                _stopCalibration(StopCalibrationSuccessShowLog);
-            } else {
-                _appendStatusLog(tr("Compass calibration failed"));
-                _appendStatusLog(tr("YOU MUST REBOOT YOUR VEHICLE NOW AND RETRY COMPASS CALIBRATION PRIOR TO FLIGHT"));
-                _stopCalibration(StopCalibrationFailed);
-            }
-        } else if (additionalCompassCompleted) {
-            _appendStatusLog(tr("Continue rotating..."));
-        }
-
+    if (_calTypeInProgress != QGCMAVLink::CalibrationMag) {
+        return;
     }
+
+    mavlink_mag_cal_report_t magCalReport{};
+    mavlink_msg_mag_cal_report_decode(&message, &magCalReport);
+
+    qCDebug(APMSensorsComponentControllerVerboseLog) << "id:mask:status:fitness"
+                                                     << magCalReport.compass_id << magCalReport.cal_mask << magCalReport.cal_status << magCalReport.fitness;
+
+    bool additionalCompassCompleted = false;
+    if ((magCalReport.compass_id < 3) && !_rgCompassCalComplete[magCalReport.compass_id]) {
+        if (magCalReport.cal_status == MAG_CAL_SUCCESS) {
+            _appendStatusLog(tr("Compass %1 calibration complete").arg(magCalReport.compass_id));
+        } else {
+            _appendStatusLog(tr("Compass %1 calibration below quality threshold").arg(magCalReport.compass_id));
+        }
+        _rgCompassCalComplete[magCalReport.compass_id] = true;
+        _rgCompassCalSucceeded[magCalReport.compass_id] = (magCalReport.cal_status == MAG_CAL_SUCCESS);
+        _rgCompassCalFitness[magCalReport.compass_id] = magCalReport.fitness;
+        additionalCompassCompleted = true;
+    }
+
+    if (_rgCompassCalComplete[0] && _rgCompassCalComplete[1] &&_rgCompassCalComplete[2]) {
+        for (int i = 0; i < 3; i++) {
+            qCDebug(APMSensorsComponentControllerLog) << QString("Onboard compass call report #%1: succeed:fitness %2:%3").arg(i).arg(_rgCompassCalSucceeded[i]).arg(_rgCompassCalFitness[i]);
+        }
+        emit compass1CalFitnessChanged(_rgCompassCalFitness[0]);
+        emit compass2CalFitnessChanged(_rgCompassCalFitness[1]);
+        emit compass3CalFitnessChanged(_rgCompassCalFitness[2]);
+        emit compass1CalSucceededChanged(_rgCompassCalSucceeded[0]);
+        emit compass2CalSucceededChanged(_rgCompassCalSucceeded[1]);
+        emit compass3CalSucceededChanged(_rgCompassCalSucceeded[2]);
+        if (_rgCompassCalSucceeded[0] && _rgCompassCalSucceeded[1] && _rgCompassCalSucceeded[2]) {
+            _appendStatusLog(tr("All compasses calibrated successfully"));
+            _appendStatusLog(tr("YOU MUST REBOOT YOUR VEHICLE NOW FOR NEW SETTINGS TO TAKE AFFECT"));
+            _stopCalibration(StopCalibrationSuccessShowLog);
+        } else {
+            _appendStatusLog(tr("Compass calibration failed"));
+            _appendStatusLog(tr("YOU MUST REBOOT YOUR VEHICLE NOW AND RETRY COMPASS CALIBRATION PRIOR TO FLIGHT"));
+            _stopCalibration(StopCalibrationFailed);
+        }
+    } else if (additionalCompassCompleted) {
+        _appendStatusLog(tr("Continue rotating..."));
+    }
+}
+
+bool APMSensorsComponentController::_handleCmdLongAccelcalVehiclePos(const mavlink_command_long_t &commandLong)
+{
+    bool updateImages = false;
+
+    switch (static_cast<ACCELCAL_VEHICLE_POS>(static_cast<int>(commandLong.param1))) {
+    case ACCELCAL_VEHICLE_POS_LEVEL:
+        if (!_orientationCalDownSideInProgress) {
+            updateImages = true;
+            _orientationCalDownSideInProgress = true;
+            _nextButton->setEnabled(true);
+        }
+        break;
+    case ACCELCAL_VEHICLE_POS_LEFT:
+        if (!_orientationCalLeftSideInProgress) {
+            updateImages = true;
+            _orientationCalDownSideDone = true;
+            _orientationCalDownSideInProgress = false;
+            _orientationCalLeftSideInProgress = true;
+            (void) _progressBar->setProperty("value", static_cast<qreal>(17 / 100.0));
+        }
+        break;
+    case ACCELCAL_VEHICLE_POS_RIGHT:
+        if (!_orientationCalRightSideInProgress) {
+            updateImages = true;
+            _orientationCalLeftSideDone = true;
+            _orientationCalLeftSideInProgress = false;
+            _orientationCalRightSideInProgress = true;
+            (void) _progressBar->setProperty("value", static_cast<qreal>(34 / 100.0));
+        }
+        break;
+    case ACCELCAL_VEHICLE_POS_NOSEDOWN:
+        if (!_orientationCalNoseDownSideInProgress) {
+            updateImages = true;
+            _orientationCalRightSideDone = true;
+            _orientationCalRightSideInProgress = false;
+            _orientationCalNoseDownSideInProgress = true;
+            (void) _progressBar->setProperty("value", static_cast<qreal>(51 / 100.0));
+        }
+        break;
+    case ACCELCAL_VEHICLE_POS_NOSEUP:
+        if (!_orientationCalTailDownSideInProgress) {
+            updateImages = true;
+            _orientationCalNoseDownSideDone = true;
+            _orientationCalNoseDownSideInProgress = false;
+            _orientationCalTailDownSideInProgress = true;
+            (void) _progressBar->setProperty("value", static_cast<qreal>(68 / 100.0));
+        }
+        break;
+    case ACCELCAL_VEHICLE_POS_BACK:
+        if (!_orientationCalUpsideDownSideInProgress) {
+            updateImages = true;
+            _orientationCalTailDownSideDone = true;
+            _orientationCalTailDownSideInProgress = false;
+            _orientationCalUpsideDownSideInProgress = true;
+            (void) _progressBar->setProperty("value", static_cast<qreal>(85 / 100.0));
+        }
+        break;
+    case ACCELCAL_VEHICLE_POS_SUCCESS:
+        _stopCalibration(StopCalibrationSuccess);
+        break;
+    case ACCELCAL_VEHICLE_POS_FAILED:
+        _stopCalibration(StopCalibrationFailed);
+        break;
+    case ACCELCAL_VEHICLE_POS_ENUM_END:
+    default:
+        break;
+    }
+
+    return updateImages;
 }
 
 void APMSensorsComponentController::_handleCommandLong(const mavlink_message_t &message)
@@ -581,75 +655,13 @@ void APMSensorsComponentController::_handleCommandLong(const mavlink_message_t &
     mavlink_msg_command_long_decode(&message, &commandLong);
 
     if (commandLong.command == MAV_CMD_ACCELCAL_VEHICLE_POS) {
-        switch (static_cast<ACCELCAL_VEHICLE_POS>(static_cast<int>(commandLong.param1))) {
-        case ACCELCAL_VEHICLE_POS_LEVEL:
-            if (!_orientationCalDownSideInProgress) {
-                updateImages = true;
-                _orientationCalDownSideInProgress = true;
-                _nextButton->setEnabled(true);
-            }
-            break;
-        case ACCELCAL_VEHICLE_POS_LEFT:
-            if (!_orientationCalLeftSideInProgress) {
-                updateImages = true;
-                _orientationCalDownSideDone = true;
-                _orientationCalDownSideInProgress = false;
-                _orientationCalLeftSideInProgress = true;
-                (void) _progressBar->setProperty("value", static_cast<qreal>(17 / 100.0));
-            }
-            break;
-        case ACCELCAL_VEHICLE_POS_RIGHT:
-            if (!_orientationCalRightSideInProgress) {
-                updateImages = true;
-                _orientationCalLeftSideDone = true;
-                _orientationCalLeftSideInProgress = false;
-                _orientationCalRightSideInProgress = true;
-                (void) _progressBar->setProperty("value", static_cast<qreal>(34 / 100.0));
-            }
-            break;
-        case ACCELCAL_VEHICLE_POS_NOSEDOWN:
-            if (!_orientationCalNoseDownSideInProgress) {
-                updateImages = true;
-                _orientationCalRightSideDone = true;
-                _orientationCalRightSideInProgress = false;
-                _orientationCalNoseDownSideInProgress = true;
-                (void) _progressBar->setProperty("value", static_cast<qreal>(51 / 100.0));
-            }
-            break;
-        case ACCELCAL_VEHICLE_POS_NOSEUP:
-            if (!_orientationCalTailDownSideInProgress) {
-                updateImages = true;
-                _orientationCalNoseDownSideDone = true;
-                _orientationCalNoseDownSideInProgress = false;
-                _orientationCalTailDownSideInProgress = true;
-                (void) _progressBar->setProperty("value", static_cast<qreal>(68 / 100.0));
-            }
-            break;
-        case ACCELCAL_VEHICLE_POS_BACK:
-            if (!_orientationCalUpsideDownSideInProgress) {
-                updateImages = true;
-                _orientationCalTailDownSideDone = true;
-                _orientationCalTailDownSideInProgress = false;
-                _orientationCalUpsideDownSideInProgress = true;
-                (void) _progressBar->setProperty("value", static_cast<qreal>(85 / 100.0));
-            }
-            break;
-        case ACCELCAL_VEHICLE_POS_SUCCESS:
-            _stopCalibration(StopCalibrationSuccess);
-            break;
-        case ACCELCAL_VEHICLE_POS_FAILED:
-            _stopCalibration(StopCalibrationFailed);
-            break;
-        case ACCELCAL_VEHICLE_POS_ENUM_END:
-        default:
-            break;
-        }
+        updateImages = _handleCmdLongAccelcalVehiclePos(commandLong);
+    }
 
-        if (updateImages) {
-            emit orientationCalSidesDoneChanged();
-            emit orientationCalSidesInProgressChanged();
-            emit orientationCalSidesRotateChanged();
-        }
+    if (updateImages) {
+        emit orientationCalSidesDoneChanged();
+        emit orientationCalSidesInProgressChanged();
+        emit orientationCalSidesRotateChanged();
     }
 }
 
