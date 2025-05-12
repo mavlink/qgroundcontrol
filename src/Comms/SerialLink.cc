@@ -10,11 +10,6 @@
 #include "SerialLink.h"
 #include "QGCLoggingCategory.h"
 #include "QGCSerialPortInfo.h"
-#ifdef Q_OS_ANDROID
-#include "qserialportinfo.h"
-#else
-#include <QtSerialPort/QSerialPortInfo>
-#endif
 #include <QtCore/QSettings>
 #include <QtCore/QThread>
 #include <QtCore/QTimer>
@@ -32,20 +27,20 @@ namespace {
 SerialConfiguration::SerialConfiguration(const QString &name, QObject *parent)
     : LinkConfiguration(name, parent)
 {
-    // qCDebug(SerialLinkLog) << Q_FUNC_INFO << this;
+    // qCDebug(SerialLinkLog) << this;
 }
 
 SerialConfiguration::SerialConfiguration(const SerialConfiguration *source, QObject *parent)
     : LinkConfiguration(source, parent)
 {
-    // qCDebug(SerialLinkLog) << Q_FUNC_INFO << this;
+    // qCDebug(SerialLinkLog) << this;
 
     SerialConfiguration::copyFrom(source);
 }
 
 SerialConfiguration::~SerialConfiguration()
 {
-    // qCDebug(SerialLinkLog) << Q_FUNC_INFO << this;
+    // qCDebug(SerialLinkLog) << this;
 }
 
 void SerialConfiguration::setPortName(const QString &name)
@@ -142,7 +137,7 @@ SerialWorker::SerialWorker(const SerialConfiguration *config, QObject *parent)
     : QObject(parent)
     , _serialConfig(config)
 {
-    // qCDebug(SerialLinkLog) << Q_FUNC_INFO << this;
+    // qCDebug(SerialLinkLog) << this;
 
     (void) qRegisterMetaType<QSerialPort::SerialPortError>("QSerialPort::SerialPortError");
 }
@@ -151,7 +146,7 @@ SerialWorker::~SerialWorker()
 {
     disconnectFromPort();
 
-    // qCDebug(SerialLinkLog) << Q_FUNC_INFO << this;
+    // qCDebug(SerialLinkLog) << this;
 }
 
 bool SerialWorker::isConnected() const
@@ -289,7 +284,7 @@ void SerialWorker::_onPortReadyRead()
 {
     const QByteArray data = _port->readAll();
     if (!data.isEmpty()) {
-        // qCDebug(SerialLinkLog) << "_onPortReadyRead:" << data.size();
+        // qCDebug(SerialLinkLog) << data.size();
         emit dataReceived(data);
     }
 }
@@ -354,11 +349,11 @@ SerialLink::SerialLink(SharedLinkConfigurationPtr &config, QObject *parent)
     , _worker(new SerialWorker(_serialConfig))
     , _workerThread(new QThread(this))
 {
-    // qCDebug(SerialLinkLog) << Q_FUNC_INFO << this;
+    // qCDebug(SerialLinkLog) << this;
 
     _workerThread->setObjectName(QStringLiteral("Serial_%1").arg(_serialConfig->name()));
 
-    _worker->moveToThread(_workerThread);
+    (void) _worker->moveToThread(_workerThread);
 
     (void) connect(_workerThread, &QThread::started, _worker, &SerialWorker::setupPort);
     (void) connect(_workerThread, &QThread::finished, _worker, &QObject::deleteLater);
@@ -374,15 +369,14 @@ SerialLink::SerialLink(SharedLinkConfigurationPtr &config, QObject *parent)
 
 SerialLink::~SerialLink()
 {
-    SerialLink::disconnect();
+    (void) QMetaObject::invokeMethod(_worker, "disconnectFromPort", Qt::BlockingQueuedConnection);
 
     _workerThread->quit();
     if (!_workerThread->wait(DISCONNECT_TIMEOUT_MS)) {
         qCWarning(SerialLinkLog) << "Failed to wait for Serial Thread to close";
-        // _workerThread->terminate();
     }
 
-    // qCDebug(SerialLinkLog) << Q_FUNC_INFO << this;
+    // qCDebug(SerialLinkLog) << this;
 }
 
 bool SerialLink::isConnected() const
