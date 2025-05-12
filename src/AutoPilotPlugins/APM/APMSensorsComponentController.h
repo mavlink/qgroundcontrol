@@ -137,6 +137,7 @@ private:
     void _handleCommandAck(const mavlink_message_t &message);
     void _handleMagCalProgress(const mavlink_message_t &message);
     void _handleMagCalReport(const mavlink_message_t &message);
+    bool _handleCmdLongAccelcalVehiclePos(const mavlink_command_long_t &commandLong);
     void _handleCommandLong(const mavlink_message_t &message);
     void _restorePreviousCompassCalFitness();
 
