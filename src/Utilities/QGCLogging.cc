@@ -14,13 +14,13 @@
 #include "SettingsManager.h"
 
 #include <QtConcurrent/QtConcurrentRun>
-#include <QtCore/qapplicationstatic.h>
+#include <QtCore/QGlobalStatic>
 #include <QtCore/QStringListModel>
 #include <QtCore/QTextStream>
 
 QGC_LOGGING_CATEGORY(QGCLoggingLog, "QGCLoggingLog")
 
-Q_APPLICATION_STATIC(QGCLogging, _qgcLogging)
+Q_GLOBAL_STATIC(QGCLogging, _qgcLogging)
 
 static QtMessageHandler defaultHandler = nullptr;
 
@@ -82,7 +82,7 @@ void QGCLogging::log(const QString &message)
 {
     // Emit the signal so threadsafeLog runs in the correct thread
     if (!_ioError) {
-        emit _qgcLogging->emitLog(message);
+        emit emitLog(message);
     }
 }
 
