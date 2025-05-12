@@ -464,7 +464,7 @@ bool VideoManager::_updateVideoUri(VideoReceiver *receiver, const QString &uri)
         return false;
     }
 
-    if (uri == receiver->uri()) {
+    if ((uri == receiver->uri()) && !receiver->uri().isNull()) {
         return false;
     }
 
