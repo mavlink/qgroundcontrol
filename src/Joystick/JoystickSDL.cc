@@ -200,7 +200,7 @@ bool JoystickSDL::_getHat(int hat, int i) const
 
 void JoystickSDL::_loadGameControllerMappings()
 {
-    QFile file(QStringLiteral(":/db/mapping/joystick/gamecontrollerdb.txt"));
+    QFile file(QStringLiteral(":/gamecontrollerdb.txt"));
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qCWarning(JoystickSDLLog) << "Couldn't load GameController mapping database.";
         return;
