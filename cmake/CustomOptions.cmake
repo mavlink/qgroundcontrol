@@ -1,6 +1,13 @@
 include(CMakeDependentOption)
 # The following options can be overriden by custom builds using the CustomOverrides.cmake file
 
+# Herelink integrated contollers only support Android 7.1. The latest version of Qt which supports this is 6.6.3.
+# Given the fact that normal QGC builds have moved on to 6.8.3 this option provides a workaround to be able to use
+# 6.6.3 and older android sdk. Note that this is likely the last major QGC release to provide this workaround.
+# This option is only available when building for Android. Usage of this option for something other than integrated
+# controllers workaround is not supported and will likely cause issues.
+option(QGC_ENABLE_HERELINK "Enable Herelink Support" OFF)
+
 # App
 set(QGC_APP_NAME "QGroundControl" CACHE STRING "App Name")
 set(QGC_APP_COPYRIGHT "Copyright (c) 2025 QGroundControl. All rights reserved." CACHE STRING "Copyright")
@@ -47,11 +54,6 @@ option(QGC_DISABLE_PX4_PLUGIN "Disable PX4 Plugin" OFF)
 option(QGC_DISABLE_PX4_PLUGIN_FACTORY "Disable PX4 Plugin Factory" OFF)
 
 # Android
-if(Qt6_VERSION VERSION_GREATER_EQUAL 6.7.0)
-    set(QGC_QT_ANDROID_MIN_SDK_VERSION "28" CACHE STRING "Android Min SDK Version")
-else() # Allow building for Android 7.1 if supported
-    set(QGC_QT_ANDROID_MIN_SDK_VERSION "25" CACHE STRING "Android Min SDK Version")
-endif()
 set(QGC_QT_ANDROID_TARGET_SDK_VERSION "35" CACHE STRING "Android Target SDK Version")
 set(QGC_ANDROID_PACKAGE_NAME "${QGC_PACKAGE_NAME}" CACHE STRING "Android Package Name")
 set(QGC_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_SOURCE_DIR}/android" CACHE PATH "Android Package Path")
@@ -80,8 +82,6 @@ set(CPM_SOURCE_CACHE ${CMAKE_BINARY_DIR}/cpm_modules CACHE PATH "Directory to do
 # set(CPM_USE_NAMED_CACHE_DIRECTORIES ON CACHE BOOL "Use additional directory of package name in cache on the most nested level.")
 
 # Qt
-set(QGC_QT_MINIMUM_VERSION "6.6.3" CACHE STRING "Minimum Supported Qt Version")
-set(QGC_QT_MAXIMUM_VERSION "6.8.3" CACHE STRING "Maximum Supported Qt Version")
 set(QT_QML_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/qml" CACHE PATH "Install path for QML")
 set(QML_IMPORT_PATH "${QT_QML_OUTPUT_DIRECTORY}" CACHE STRING "Extra QML Import Paths")
 option(QML_IMPORT_TRACE "Debug QML Imports" OFF)
