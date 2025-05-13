@@ -75,7 +75,7 @@ jobs:
         if: matrix.arch == 'win64_msvc2022_64'
         uses: blinemedical/setup-gstreamer@v1
         with:
-          version: 1.22.12
+          version: 1.26.5
 
       - name: Setup cache
         uses: ./.github/actions/cache

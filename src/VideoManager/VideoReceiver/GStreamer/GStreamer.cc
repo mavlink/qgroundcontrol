@@ -43,6 +43,7 @@ GST_PLUGIN_STATIC_DECLARE(opengl);
 GST_PLUGIN_STATIC_DECLARE(openh264);
 GST_PLUGIN_STATIC_DECLARE(playback);
 GST_PLUGIN_STATIC_DECLARE(qml6);
+GST_PLUGIN_STATIC_DECLARE(qml6d3d11);
 GST_PLUGIN_STATIC_DECLARE(qsv);
 GST_PLUGIN_STATIC_DECLARE(rtp);
 GST_PLUGIN_STATIC_DECLARE(rtpmanager);
@@ -120,9 +121,18 @@ void _registerPlugins()
     #endif
 #endif
 
-// #if !defined(GST_PLUGIN_qml6_FOUND) && defined(QGC_GST_STATIC_BUILD)
-    GST_PLUGIN_STATIC_REGISTER(qml6);
+// #if !defined(GST_PLUGIN_qml6d3d11_FOUND) || defined(QGC_GST_STATIC_BUILD)
+    // GST_PLUGIN_STATIC_REGISTER(qml6d3d11);
 // #endif
+
+// #if !defined(GST_PLUGIN_qml6_FOUND) || defined(QGC_GST_STATIC_BUILD)
+    // GST_PLUGIN_STATIC_REGISTER(qml6);
+// #endif
+
+    GST_PLUGIN_STATIC_REGISTER(qml6);
+#ifdef Q_OS_WIN
+    GST_PLUGIN_STATIC_REGISTER(qml6d3d11);
+#endif
 
     GST_PLUGIN_STATIC_REGISTER(qgc);
 }
@@ -246,7 +256,13 @@ bool _verifyPlugins()
     g_list_foreach(plugins, _checkPlugin, NULL);
     g_list_free(plugins);
 
-    static constexpr const char *pluginNames[2] = {"qml6", "qgc"};
+    static constexpr const char *pluginNames[] = {
+        "qgc",
+        "qml6"
+#ifdef Q_OS_WIN
+        , "qml6d3d11"
+#endif
+    };
     for (const char *name : pluginNames) {
         GstPlugin *plugin = gst_registry_find_plugin(registry, name);
         if (!plugin) {
@@ -407,9 +423,15 @@ bool initialize()
 
     _setCodecPriorities(static_cast<GStreamer::VideoDecoderOptions>(SettingsManager::instance()->videoSettings()->forceVideoDecoder()->rawValue().toInt()));
 
-    GstElement *sink = gst_element_factory_make("qml6glsink", nullptr);
+#ifdef Q_OS_WIN
+    static constexpr const char *qmlSinkName = "qml6d3d11sink";
+#else
+    static constexpr const char *qmlSinkName = "qml6glsink";
+#endif
+
+    GstElement *sink = gst_element_factory_make(qmlSinkName, nullptr);
     if (!sink) {
-        qCCritical(GStreamerLog) << "failed to init qml6glsink";
+        qCCritical(GStreamerLog) << "failed to init" << qmlSinkName;
         return false;
     }
 
@@ -419,13 +441,19 @@ bool initialize()
 
 void *createVideoSink(QQuickItem *widget, QObject *parent)
 {
-    GstElement *videoSinkBin = gst_element_factory_make("qgcvideosinkbin", NULL);
+#ifdef Q_OS_WIN
+    static constexpr const char *videoSinkBinName = "qgcvideosinkbind3d11";
+#else
+    static constexpr const char *videoSinkBinName = "qgcvideosinkbin";
+#endif
+
+    GstElement *videoSinkBin = gst_element_factory_make(videoSinkBinName, NULL);
     if (videoSinkBin) {
         if (widget) {
             g_object_set(videoSinkBin, "widget", widget, NULL);
         }
     } else {
-        qCCritical(GStreamerLog) << "gst_element_factory_make('qgcvideosinkbin') failed";
+        qCCritical(GStreamerLog) << QStringLiteral("gst_element_factory_make('%1') failed").arg(videoSinkBinName);
     }
 
     return videoSinkBin;

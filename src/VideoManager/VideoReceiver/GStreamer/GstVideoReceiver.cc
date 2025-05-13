@@ -1011,7 +1011,9 @@ bool GstVideoReceiver::_addVideoSink(GstPad *pad)
 
     g_object_set(_videoSink,
                  "widget", _widget,
-                 "sync", (_buffer >= 0),
+                 #ifndef Q_OS_WIN
+                    "sync", (_buffer >= 0),
+                 #endif
                  NULL);
 
     (void) gst_element_sync_state_with_parent(_videoSink);

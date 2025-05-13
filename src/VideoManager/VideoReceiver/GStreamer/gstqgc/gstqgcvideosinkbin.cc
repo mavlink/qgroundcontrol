@@ -156,14 +156,14 @@ gst_qgc_video_sink_bin_init(GstQgcVideoSinkBin *self)
         return;
     }
 
-    self->qmlglsink = gst_element_factory_make("qml6glsink", NULL);
-    if (!self->qmlglsink) {
+    self->qml6glsink = gst_element_factory_make("qml6glsink", NULL);
+    if (!self->qml6glsink) {
         GST_ERROR_OBJECT(self, "gst_element_factory_make('qml6glsink') failed");
         return;
     }
 
     g_object_set(self->glsinkbin,
-                 "sink", self->qmlglsink,
+                 "sink", self->qml6glsink,
                  PROP_ENABLE_LAST_SAMPLE_NAME, FALSE,
                  NULL);
 
@@ -209,7 +209,7 @@ gst_qgc_video_sink_bin_set_property(GObject *object, guint prop_id, const GValue
                      NULL);
         break;
     case PROP_WIDGET:
-        g_object_set(self->qmlglsink,
+        g_object_set(self->qml6glsink,
                      PROP_WIDGET_NAME,
                      g_value_get_pointer(value),
                      NULL);
@@ -223,7 +223,7 @@ gst_qgc_video_sink_bin_set_property(GObject *object, guint prop_id, const GValue
     case PROP_PIXEL_ASPECT_RATIO: {
         const gint num = gst_value_get_fraction_numerator(value);
         const gint den = gst_value_get_fraction_denominator(value);
-        g_object_set(self->qmlglsink,
+        g_object_set(self->qml6glsink,
                      PROP_PIXEL_ASPECT_RATIO_NAME,
                      num,
                      den,
@@ -271,7 +271,7 @@ gst_qgc_video_sink_bin_get_property(GObject *object, guint prop_id, GValue *valu
     }
     case PROP_WIDGET: {
         gpointer widget = NULL;
-        g_object_get(self->qmlglsink,
+        g_object_get(self->qml6glsink,
                      PROP_WIDGET_NAME,
                      &widget,
                      NULL);
@@ -289,7 +289,7 @@ gst_qgc_video_sink_bin_get_property(GObject *object, guint prop_id, GValue *valu
     }
     case PROP_PIXEL_ASPECT_RATIO: {
         gint num = 0, den = 1;
-        g_object_get(self->qmlglsink,
+        g_object_get(self->qml6glsink,
                      PROP_PIXEL_ASPECT_RATIO_NAME,
                      &num, &den,
                      NULL);
@@ -318,13 +318,13 @@ gst_qgc_video_sink_bin_on_glsinkbin_create_element(GstElement *object, gpointer 
     GstQgcVideoSinkBin *qgcVideoSinkBin = GST_QGC_VIDEO_SINK_BIN(udata);
 
     qgcVideoSinkBin->glsinkbin = GST_ELEMENT(glsinkbin);
-    qgcVideoSinkBin->qmlglsink = gst_element_factory_make("qml6glsink", NULL);
-    if (!qgcVideoSinkBin->qmlglsink) {
+    qgcVideoSinkBin->qml6glsink = gst_element_factory_make("qml6glsink", NULL);
+    if (!qgcVideoSinkBin->qml6glsink) {
         GST_ERROR_OBJECT(qgcVideoSinkBin, "gst_element_factory_make('qml6glsink') failed");
-        g_signal_emit(GST_ELEMENT(qgcVideoSinkBin), gst_qgc_video_sink_bin_signals[SIGNAL_CREATE_ELEMENT], 0, &qgcVideoSinkBin->qmlglsink);
+        g_signal_emit(GST_ELEMENT(qgcVideoSinkBin), gst_qgc_video_sink_bin_signals[SIGNAL_CREATE_ELEMENT], 0, &qgcVideoSinkBin->qml6glsink);
     }
 
-    return qgcVideoSinkBin->qmlglsink;
+    return qgcVideoSinkBin->qml6glsink;
 }
 
 static void

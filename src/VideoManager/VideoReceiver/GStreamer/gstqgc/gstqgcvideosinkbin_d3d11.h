@@ -13,14 +13,15 @@
 
 G_BEGIN_DECLS
 
-#define GST_TYPE_QGC_VIDEO_SINK_BIN (gst_qgc_video_sink_bin_get_type())
-G_DECLARE_FINAL_TYPE (GstQgcVideoSinkBin, gst_qgc_video_sink_bin, GST, QGC_VIDEO_SINK_BIN, GstBin)
+#define GST_TYPE_QGC_VIDEO_SINK_BIN_D3D11 (gst_qgc_video_sink_bin_d3d11_get_type())
+G_DECLARE_FINAL_TYPE (GstQgcVideoSinkBinD3d11, gst_qgc_video_sink_bin_d3d11, GST, QGC_VIDEO_SINK_BIN_D3D11, GstBin)
 
-struct _GstQgcVideoSinkBin
+struct _GstQgcVideoSinkBinD3d11
 {
     GstBin parent;
-    GstElement *glsinkbin;
-    GstElement *qml6glsink;
+    GstElement *d3d11upload;
+    GstElement *d3d11colorconvert;
+    GstElement *qml6d3d11sink;
 };
 
 G_END_DECLS

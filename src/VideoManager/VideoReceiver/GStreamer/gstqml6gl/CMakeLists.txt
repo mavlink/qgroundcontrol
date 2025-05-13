@@ -23,7 +23,7 @@ endif()
 ################################################################################
 
 if(GStreamer_VERSION VERSION_GREATER_EQUAL 1.22)
-    # Use Latest Revisions for each minor version: 1.20.7, 1.22.12, 1.24.12, 1.26.3
+    # Use Latest Revisions for each minor version: 1.20.7, 1.22.12, 1.24.13, 1.26.3
     string(REPLACE "." ";" GST_VERSION_LIST ${GStreamer_VERSION})
     list(GET GST_VERSION_LIST 0 GST_VERSION_MAJOR)
     list(GET GST_VERSION_LIST 1 GST_VERSION_MINOR)
@@ -34,7 +34,7 @@ if(GStreamer_VERSION VERSION_GREATER_EQUAL 1.22)
     elseif(GST_VERSION_MINOR EQUAL 22)
         set(GST_VERSION_PATCH 12)
     elseif(GST_VERSION_MINOR EQUAL 24)
-        set(GST_VERSION_PATCH 12)
+        set(GST_VERSION_PATCH 13)
     elseif(GST_VERSION_MINOR EQUAL 26)
         set(GST_VERSION_PATCH 3)
     endif()
@@ -48,25 +48,25 @@ if(GStreamer_VERSION VERSION_GREATER_EQUAL 1.22)
         # URL https://gitlab.freedesktop.org/gstreamer/gstreamer/-/archive/${GST_PLUGINS_VERSION}/gstreamer-${GST_PLUGINS_VERSION}.zip?path=subprojects/gst-plugins-good/ext/qt6
         URL https://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-${GST_PLUGINS_VERSION}.tar.xz
     )
-    set(QGC_GST_QT6_PLUGIN_PATH "${gstreamer_good_plugins_SOURCE_DIR}/ext/qt6")
+    set(QGC_GST_QML6_DIR "${gstreamer_good_plugins_SOURCE_DIR}/ext/qt6")
 else()
-    set(QGC_GST_QT6_PLUGIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/qt6")
+    set(QGC_GST_QML6_DIR "${CMAKE_CURRENT_SOURCE_DIR}/qt6")
 endif()
 
 ################################################################################
 
-file(READ ${QGC_GST_QT6_PLUGIN_PATH}/qt6glitem.h FILE_CONTENTS)
+file(READ ${QGC_GST_QML6_DIR}/qt6glitem.h FILE_CONTENTS)
 string(FIND "${FILE_CONTENTS}" "#include <QtQuick/QQuickWindow>" GST_FIX_INCLUDES)
 if(GST_FIX_INCLUDES EQUAL -1)
     string(REPLACE "#include <QtGui/QOpenGLFunctions>" "#include <QtGui/QOpenGLFunctions>\n#include <QtQuick/QQuickWindow>" FILE_CONTENTS "${FILE_CONTENTS}")
-    file(WRITE ${QGC_GST_QT6_PLUGIN_PATH}/qt6glitem.h "${FILE_CONTENTS}")
+    file(WRITE ${QGC_GST_QML6_DIR}/qt6glitem.h "${FILE_CONTENTS}")
 endif()
 
 ################################################################################
 
 file(GLOB gstqml6gl_SRCS
-    ${QGC_GST_QT6_PLUGIN_PATH}/*.cc
-    ${QGC_GST_QT6_PLUGIN_PATH}/*.h
+    ${QGC_GST_QML6_DIR}/*.cc
+    ${QGC_GST_QML6_DIR}/*.h
 )
 target_sources(gstqml6gl PRIVATE ${gstqml6gl_SRCS})
 
@@ -80,7 +80,7 @@ target_link_libraries(gstqml6gl
         Qt6::Quick
 )
 
-target_include_directories(gstqml6gl PUBLIC ${QGC_GST_QT6_PLUGIN_PATH})
+target_include_directories(gstqml6gl PUBLIC ${QGC_GST_QML6_DIR})
 
 target_precompile_headers(gstqml6gl
     PRIVATE
@@ -91,13 +91,13 @@ target_precompile_headers(gstqml6gl
 
 ################################################################################
 
-if(EXISTS "${QGC_GST_QT6_PLUGIN_PATH}/resources.qrc")
+if(EXISTS "${QGC_GST_QML6_DIR}/resources.qrc")
     find_package(Qt6 REQUIRED COMPONENTS ShaderTools)
 
     set(SHADERS
-        "${QGC_GST_QT6_PLUGIN_PATH}/vertex.vert"
-        "${QGC_GST_QT6_PLUGIN_PATH}/YUV_TRIPLANAR.frag"
-        "${QGC_GST_QT6_PLUGIN_PATH}/RGBA.frag"
+        "${QGC_GST_QML6_DIR}/vertex.vert"
+        "${QGC_GST_QML6_DIR}/YUV_TRIPLANAR.frag"
+        "${QGC_GST_QML6_DIR}/RGBA.frag"
     )
 
     set(OUTPUTS
@@ -106,8 +106,8 @@ if(EXISTS "${QGC_GST_QT6_PLUGIN_PATH}/resources.qrc")
         RGBA.frag.qsb
     )
 
-    if(EXISTS "${QGC_GST_QT6_PLUGIN_PATH}/YUV_BIPLANAR.frag")
-        LIST(APPEND SHADERS "${QGC_GST_QT6_PLUGIN_PATH}/YUV_BIPLANAR.frag")
+    if(EXISTS "${QGC_GST_QML6_DIR}/YUV_BIPLANAR.frag")
+        LIST(APPEND SHADERS "${QGC_GST_QML6_DIR}/YUV_BIPLANAR.frag")
         LIST(APPEND OUTPUTS "YUV_BIPLANAR.frag.qsb")
     endif()
 
@@ -120,35 +120,31 @@ if(EXISTS "${QGC_GST_QT6_PLUGIN_PATH}/resources.qrc")
         BATCHABLE
     )
 
-    if(EXISTS "${QGC_GST_QT6_PLUGIN_PATH}/RGBA_gles.frag")
+    if(EXISTS "${QGC_GST_QML6_DIR}/RGBA_gles.frag")
         find_program(QSB_PROGRAM
-            NAMES qsb
-            HINTS ${QT_HOST_PATH} ${QT_ROOT_DIR} ${QTDIR}
-            ENV QTDIR
+            NAMES qsb-qt6 qsb
+            HINTS "${QT_HOST_PATH}" "${QT_ROOT_DIR}"
             PATH_SUFFIXES bin
             REQUIRED
         )
 
         find_program(QSB_WRAPPER
             NAMES qsb-wrapper.py
-            PATHS "${QGC_GST_QT6_PLUGIN_PATH}"
+            PATHS "${QGC_GST_QML6_DIR}"
             REQUIRED
         )
 
         set(RGBA_BASE_QSB "${CMAKE_CURRENT_BINARY_DIR}/.qsb/RGBA.frag.qsb")
-        set(RGBA_GLES_SRC "${QGC_GST_QT6_PLUGIN_PATH}/RGBA_gles.frag")
+        set(RGBA_GLES_SRC "${QGC_GST_QML6_DIR}/RGBA_gles.frag")
         set(RGBA_EXTERNAL "${CMAKE_CURRENT_BINARY_DIR}/.qsb/RGBA.frag.qsb.external")
 
+        message(STATUS "gstqml6gl_shaders ${gstqml6gl_shaders}")
+        message(STATUS "RGBA_BASE_QSB ${RGBA_BASE_QSB}")
+
         add_custom_command(
-            OUTPUT ${RGBA_EXTERNAL}
-            COMMAND ${QSB_WRAPPER}
-                ${QSB_PROGRAM}
-                ${RGBA_EXTERNAL}
-                ${RGBA_GLES_SRC}
-                ${RGBA_BASE_QSB}
-            DEPENDS
-                ${RGBA_BASE_QSB}
-                ${RGBA_GLES_SRC}
+            OUTPUT "${RGBA_EXTERNAL}"
+            COMMAND "${QSB_WRAPPER}" "${QSB_PROGRAM}" "${RGBA_EXTERNAL}" "${RGBA_GLES_SRC}" "${RGBA_BASE_QSB}"
+            DEPENDS "${RGBA_BASE_QSB}" "${RGBA_GLES_SRC}"
             COMMENT "Generating external GLES shader: ${RGBA_EXTERNAL}"
             VERBATIM
         )

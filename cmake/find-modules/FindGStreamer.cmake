@@ -1,6 +1,8 @@
 if(NOT DEFINED GStreamer_FIND_VERSION)
     if(LINUX)
         set(GStreamer_FIND_VERSION 1.20)
+    elseif(WIN32)
+        set(GStreamer_FIND_VERSION 1.26.3)
     else()
         set(GStreamer_FIND_VERSION 1.22.12)
     endif()
@@ -232,18 +234,21 @@ endif()
 
 ################################################################################
 
-if(GStreamer_USE_STATIC_LIBS)
-    set(GSTREAMER_EXTRA_DEPS
-        gstreamer-base-1.0
-        gstreamer-video-1.0
-        gstreamer-gl-1.0
-        gstreamer-gl-prototypes-1.0
-        gstreamer-rtsp-1.0
-        # gstreamer-gl-egl-1.0
-        # gstreamer-gl-wayland-1.0
-        # gstreamer-gl-x11-1.0
-    )
+set(GSTREAMER_EXTRA_DEPS
+    gstreamer-base-1.0
+    gstreamer-video-1.0
+    gstreamer-rtsp-1.0
+    gstreamer-gl-1.0
+    gstreamer-gl-prototypes-1.0
+    # gstreamer-gl-egl-1.0
+    # gstreamer-gl-wayland-1.0
+    # gstreamer-gl-x11-1.0
+)
+if(WIN32)
+    list(APPEND GSTREAMER_EXTRA_DEPS gstreamer-d3d11-1.0)
+endif()
 
+if(GStreamer_USE_STATIC_LIBS)
     set(GSTREAMER_PLUGINS
         coreelements
         dav1d
@@ -345,9 +350,9 @@ endfunction()
 find_gstreamer_component(Core gstreamer-1.0)
 find_gstreamer_component(Base gstreamer-base-1.0)
 find_gstreamer_component(Video gstreamer-video-1.0)
+find_gstreamer_component(Rtsp gstreamer-rtsp-1.0)
 find_gstreamer_component(Gl gstreamer-gl-1.0)
 find_gstreamer_component(GlPrototypes gstreamer-gl-prototypes-1.0)
-find_gstreamer_component(Rtsp gstreamer-rtsp-1.0)
 
 ################################################################################
 
@@ -361,6 +366,10 @@ endif()
 
 if(GlX11 IN_LIST GStreamer_FIND_COMPONENTS)
     find_gstreamer_component(GlX11 gstreamer-gl-x11-1.0)
+endif()
+
+if(D3d11 IN_LIST GStreamer_FIND_COMPONENTS)
+    find_gstreamer_component(D3d11 gstreamer-d3d11-1.0)
 endif()
 
 ################################################################################
@@ -412,10 +421,15 @@ if(GStreamer_FOUND AND NOT TARGET GStreamer::GStreamer)
             GStreamer::Core
             GStreamer::Base
             GStreamer::Video
+            GStreamer::Rtsp
             GStreamer::Gl
             GStreamer::GlPrototypes
-            GStreamer::Rtsp
     )
+
+    if(TARGET GStreamer::D3d11)
+        target_compile_definitions(GStreamer::D3d11 INTERFACE GST_USE_UNSTABLE_API)
+        target_link_libraries(GStreamer::GStreamer INTERFACE GStreamer::D3d11)
+    endif()
 
     foreach(component IN LISTS GStreamer_FIND_COMPONENTS)
         if(GStreamer_${component}_FOUND)
