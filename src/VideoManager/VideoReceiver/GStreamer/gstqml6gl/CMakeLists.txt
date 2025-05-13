@@ -36,7 +36,7 @@ if(GStreamer_VERSION VERSION_GREATER_EQUAL 1.22)
     elseif(GST_VERSION_MINOR EQUAL 24)
         set(GST_VERSION_PATCH 12)
     elseif(GST_VERSION_MINOR EQUAL 26)
-        set(GST_VERSION_PATCH 2)
+        set(GST_VERSION_PATCH 3)
     endif()
 
     set(GST_PLUGINS_VERSION ${GST_VERSION_MAJOR}.${GST_VERSION_MINOR}.${GST_VERSION_PATCH})
@@ -153,7 +153,7 @@ if(EXISTS "${QGC_GST_QT6_PLUGIN_PATH}/resources.qrc")
             VERBATIM
         )
 
-        set_source_files_properties(${RGBA_EXTERNAL} PROPERTIES QT_RESOURCE_ALIAS org/freedesktop/gstreamer/qml6/RGBA.frag.qsb.external)
+        set_source_files_properties(${RGBA_EXTERNAL} TARGET_DIRECTORY ${CMAKE_PROJECT_NAME} PROPERTIES QT_RESOURCE_ALIAS org/freedesktop/gstreamer/qml6/RGBA.frag.qsb.external)
         set(QGC_GSTREAMER_SHADER_RESOURCES "${RGBA_EXTERNAL}" CACHE INTERNAL "")
         # qt_add_resources(gstqml6gl "gstqml6gl_shaders1"
         #     PREFIX "/org/freedesktop/gstreamer/qml6"
