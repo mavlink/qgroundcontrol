@@ -59,7 +59,7 @@ public:
 
     Q_INVOKABLE void grabImage(const QString &imageFile = QString());
     Q_INVOKABLE void startRecording(const QString &videoFile = QString());
-    Q_INVOKABLE void startVideo(QQuickWindow *window);
+    Q_INVOKABLE void startVideo();
     Q_INVOKABLE void stopRecording();
     Q_INVOKABLE void stopVideo();
 
@@ -140,11 +140,8 @@ private:
 class FinishVideoInitialization : public QRunnable
 {
 public:
-    FinishVideoInitialization(QQuickWindow *window);
+    FinishVideoInitialization();
     ~FinishVideoInitialization();
 
     void run() final;
-
-private:
-    QQuickWindow *_window = nullptr;
 };

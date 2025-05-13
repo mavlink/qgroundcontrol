@@ -121,7 +121,7 @@ void VideoManager::init(QQuickWindow *window)
         _initVideoReceiver(receiver, window);
     }
 
-    window->scheduleRenderJob(new FinishVideoInitialization(window), QQuickWindow::BeforeSynchronizingStage);
+    window->scheduleRenderJob(new FinishVideoInitialization(), QQuickWindow::BeforeSynchronizingStage);
 
     _initialized = true;
 }
@@ -650,6 +650,12 @@ void VideoManager::_initVideoReceiver(VideoReceiver *receiver, QQuickWindow *win
         qCWarning(VideoManagerLog) << "Receiver already initialized";
     }
 
+    QQuickItem *widget = window->findChild<QQuickItem*>(receiver->name());
+    if (!widget) {
+        qCWarning(VideoManagerLog) << "stream widget not found" << receiver->name();
+    }
+    receiver->setWidget(widget);
+
     (void) connect(receiver, &VideoReceiver::onStartComplete, this, [this, receiver](VideoReceiver::STATUS status) {
         if (!receiver) {
             return;
@@ -748,37 +754,20 @@ void VideoManager::_initVideoReceiver(VideoReceiver *receiver, QQuickWindow *win
     }
 }
 
-void VideoManager::startVideo(QQuickWindow *window)
+void VideoManager::startVideo()
 {
-    if (!window) {
-        qCCritical(VideoManagerLog) << "Failed To Finish Video Initilization - root windows is null";
-        return;
-    }
-
     if (!hasVideo()) {
         qCDebug(VideoManagerLog) << "Stream not enabled/configured";
         return;
     }
 
-    for (VideoReceiver *receiver : std::as_const(_videoReceivers)) {
-        QQuickItem *widget = window->findChild<QQuickItem*>(receiver->name());
-        if (!widget) {
-            qCDebug(VideoManagerLog) << "stream widget not found" << receiver->name();
-            continue;
-        }
-        receiver->setWidget(widget);
-
-        if (receiver->sink() && receiver->started()) {
-            receiver->startDecoding(receiver->sink());
-        }
-    }
+    _restartAllVideos();
 }
 
 /*===========================================================================*/
 
-FinishVideoInitialization::FinishVideoInitialization(QQuickWindow *window)
+FinishVideoInitialization::FinishVideoInitialization()
     : QRunnable()
-    , _window(window)
 {
     // qCDebug(VideoManagerLog) << this;
 }
@@ -790,5 +779,5 @@ FinishVideoInitialization::~FinishVideoInitialization()
 
 void FinishVideoInitialization::run()
 {
-    VideoManager::instance()->startVideo(_window);
+    VideoManager::instance()->startVideo();
 }
