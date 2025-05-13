@@ -17,68 +17,39 @@ import QGroundControl.Controls
 Item {
     anchors.fill: parent
 
-    FactPanelController { id: controller; }
+    FactPanelController { id: controller }
 
-    property Fact _followEnabled: controller.getParameterFact(-1, "FOLL_ENABLE")
-    property bool _followParamsAvailable: controller.parameterExists(-1, "FOLL_SYSID")
-    property Fact _followDistanceMax: controller.getParameterFact(-1, "FOLL_DIST_MAX", false /* reportMissing */)
-    property Fact _followSysId: controller.getParameterFact(-1, "FOLL_SYSID", false /* reportMissing */)
-    property Fact _followOffsetX: controller.getParameterFact(-1, "FOLL_OFS_X", false /* reportMissing */)
-    property Fact _followOffsetY: controller.getParameterFact(-1, "FOLL_OFS_Y", false /* reportMissing */)
-    property Fact _followOffsetZ: controller.getParameterFact(-1, "FOLL_OFS_Z", false /* reportMissing */)
-    property Fact _followOffsetType: controller.getParameterFact(-1, "FOLL_OFS_TYPE", false /* reportMissing */)
-    property Fact _followAltitudeType: controller.getParameterFact(-1, "FOLL_ALT_TYPE", false /* reportMissing */)
-    property Fact _followYawBehavior: controller.getParameterFact(-1, "FOLL_YAW_BEHAVE", false /* reportMissing */)
+    function getFact(name) {
+        return controller.getParameterFact(-1, name, false)
+    }
+
+    property bool followParamsAvailable: controller.parameterExists(-1, "FOLL_SYSID")
+
+    property var followItems: [
+        { label: qsTr("Follow Enabled"),    fact: getFact("FOLL_ENABLE"),       visible: true},
+        { label: qsTr("Follow System ID"),  fact: getFact("FOLL_SYSID"),        visible: followParamsAvailable },
+        { label: qsTr("Max Distance"),      fact: getFact("FOLL_DIST_MAX"),     visible: followParamsAvailable },
+        { label: qsTr("Offset X"),          fact: getFact("FOLL_OFS_X"),        visible: followParamsAvailable },
+        { label: qsTr("Offset Y"),          fact: getFact("FOLL_OFS_Y"),        visible: followParamsAvailable },
+        { label: qsTr("Offset Z"),          fact: getFact("FOLL_OFS_Z"),        visible: followParamsAvailable },
+        { label: qsTr("Offset Type"),       fact: getFact("FOLL_OFS_TYPE"),     visible: followParamsAvailable },
+        { label: qsTr("Altitude Type"),     fact: getFact("FOLL_ALT_TYPE"),     visible: followParamsAvailable },
+        { label: qsTr("Yaw Behavior"),      fact: getFact("FOLL_YAW_BEHAVE"),   visible: followParamsAvailable }
+    ]
 
     Column {
         anchors.fill: parent
 
-        VehicleSummaryRow {
-            labelText: qsTr("Follow Enabled")
-            valueText: _followEnabled.enumStringValue
-        }
+        Repeater {
+            model: followItems
+            delegate: VehicleSummaryRow {
+                labelText: modelData.label
+                valueText: formatFact(modelData.fact)
+                visible: modelData.visible
 
-        Loader {
-            id: followParamsLoader
-            active: _followParamsAvailable
-            sourceComponent: followParamsComponent
-        }
-    }
-
-    Component {
-        id: followParamsComponent
-        Column {
-            VehicleSummaryRow {
-                labelText: qsTr("Follow System ID")
-                valueText: _followSysId.valueString
-            }
-            VehicleSummaryRow {
-                labelText: qsTr("Follow Max Distance")
-                valueText: _followDistanceMax.valueString + " " + _followDistanceMax.units
-            }
-            VehicleSummaryRow {
-                labelText: qsTr("Follow Offset X")
-                valueText: _followOffsetX.valueString + " " + _followOffsetX.units
-            }
-            VehicleSummaryRow {
-                labelText: qsTr("Follow Offset Y")
-                valueText: _followOffsetY.valueString + " " + _followOffsetY.units
-            }
-            VehicleSummaryRow {
-                labelText: qsTr("Follow Offset Z")
-                valueText: _followOffsetZ.valueString + " " + _followOffsetZ.units
-            }
-            VehicleSummaryRow {
-                labelText: qsTr("Follow Offset Type")
-                valueText: _followOffsetType.enumStringValue
-            }
-            VehicleSummaryRow {
-                labelText: qsTr("Follow Altitude Type")
-                valueText: _followAltitudeType.enumStringValue
-            }
-            VehicleSummaryRow {
-                labelText: qsTr("Follow Yaw Behavior")
-                valueText: _followYawBehavior.enumStringValue
+                function formatFact(fact) {
+                    return (fact && (fact.enumStringValue || (fact.valueString + " " + fact.units)))
+                }
             }
         }
     }
