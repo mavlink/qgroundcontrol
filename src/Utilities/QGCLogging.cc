@@ -18,6 +18,8 @@
 #include <QtCore/QStringListModel>
 #include <QtCore/QTextStream>
 
+QGC_LOGGING_CATEGORY(QGCLoggingLog, "qgc.utilities.qgclogging")
+
 #ifdef Q_OS_WIN
 
 #include <crtdbg.h>
@@ -37,19 +39,12 @@ static int WindowsCrtReportHook(int reportType, char *message, int *returnValue)
 
 #endif
 
-QGC_LOGGING_CATEGORY(QGCLoggingLog, "QGCLoggingLog")
-
 Q_GLOBAL_STATIC(QGCLogging, _qgcLogging)
 
 static QtMessageHandler defaultHandler = nullptr;
 
 static void msgHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
-    // Filter via QLoggingCategory rules early
-    if (!QLoggingCategory(context.category).isDebugEnabled()) {
-        return;
-    }
-
     // Format the message using Qt's pattern
     const QString message = qFormatLogMessage(type, context, msg);
 
@@ -72,7 +67,7 @@ QGCLogging *QGCLogging::instance()
 QGCLogging::QGCLogging(QObject *parent)
     : QStringListModel(parent)
 {
-    // qCDebug(QGCLoggingLog) << this;
+    qCDebug(QGCLoggingLog) << this;
 
     _flushTimer.setInterval(kFlushIntervalMSecs);
     _flushTimer.setSingleShot(false);
@@ -88,6 +83,11 @@ QGCLogging::QGCLogging(QObject *parent)
     (void) connect(this, &QGCLogging::emitLog, this, &QGCLogging::_threadsafeLog, conntype);
 }
 
+QGCLogging::~QGCLogging()
+{
+    qCDebug(QGCLoggingLog) << this;
+}
+
 void QGCLogging::installHandler(bool quietWindowsAsserts)
 {
 #ifdef Q_OS_WIN
@@ -99,7 +99,7 @@ void QGCLogging::installHandler(bool quietWindowsAsserts)
 #endif
 
     // Define the format for qDebug/qWarning/etc output
-    qSetMessagePattern(QStringLiteral("%{time process} - %{type}: %{message} (%{category}:%{function}:%{line})"));
+    qSetMessagePattern(QStringLiteral("%{category}:: %{time process} - %{type}: %{message} (%{function}:%{line})"));
 
     // Install our custom handler
     defaultHandler = qInstallMessageHandler(msgHandler);
