@@ -23,6 +23,9 @@ import QGroundControl.FlightMap
 
 import QGroundControl.UTMSP
 
+// 3D Viewer modules
+import Viewer3D
+
 /// @brief Native QML top level window
 /// All properties defined here are visible to all QML pages.
 ApplicationWindow {
@@ -278,6 +281,11 @@ ApplicationWindow {
         id:                     flyView
         anchors.fill:           parent
         utmspSendActTrigger:    _utmspSendActTrigger
+
+        Viewer3D{
+            id:                     viewer3DWindow
+            anchors.fill:           parent
+        }
     }
 
     PlanView {

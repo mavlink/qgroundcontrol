@@ -27,9 +27,6 @@ import QGroundControl.Palette
 import QGroundControl.ScreenTools
 import QGroundControl.Vehicle
 
-// 3D Viewer modules
-import Viewer3D
-
 Item {
     id: _root
 
@@ -172,11 +169,6 @@ Item {
             anchors.bottom:     parent.bottom
             z:                  QGroundControl.zOrderTopMost
             visible:            false
-        }
-
-        Viewer3D{
-            id:                     viewer3DWindow
-            anchors.fill:           parent
         }
     }
 }
