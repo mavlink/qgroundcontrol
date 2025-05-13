@@ -6,11 +6,22 @@ body:
   - type: markdown
     attributes:
       value: |
-        The following template is for Issue/Bug reporting only. https://docs.qgroundcontrol.com/en/support/support.html#github-issues
+        The following template is for Issue/Bug reporting only.
 
-        For questions about how to use or build QGC see: http://qgroundcontrol.com/#resources
+        See our full guidelines here:
+        [github-issues](https://docs.qgroundcontrol.com/en/support/support.html#github-issues)
 
-        If you are using an old stable release please upgrade first and verify your issue before reporting.
+        For questions about how to use or build QGC, see:
+        [resources](http://qgroundcontrol.com/#resources)
+
+  - type: checkboxes
+    id: release-check
+    attributes:
+      label: Have you checked the latest release for fixes?
+      description: Check to verify the bug still exists.
+      options:
+        - label: Yes, I’ve tested on the latest release
+          required: true
 
   - type: textarea
     id: description
@@ -18,11 +29,7 @@ body:
       label: Description
       description: |
         Please describe your issue in detail. Include:
-        1. **Expected Behavior** – What you expected to happen.
-        2. **Current Behavior** – What actually happened instead.
-        3. **Steps To Reproduce** – Step-by-step list of actions to reproduce the issue.
-        3. **Additional Details** – Any other context that helps explain the problem.
-      value: |
+
         **Expected Behavior**
         Describe what you thought should happen here.
 
@@ -43,9 +50,9 @@ body:
     id: system-information
     attributes:
       label: System Information
-      description: When posting bug reports, include the following information.
-      value: |
-        - QGC Version: [e.g. 4.4.0] **(required)**
+      description: |
+        Please include the following information:
+        - QGC Version: [e.g. 4.4.0]
         - QGC build: [e.g. daily, stable, self-built from source, etc...]
         - Operating System: [e.g. Windows 11, Ubuntu 22.04, macOS 15, iOS 17 ]
         - Flight Controller: [e.g. CubePilot Cube Orange, Pixhawk 6X, etc.]
@@ -57,8 +64,8 @@ body:
     id: logs-screenshots
     attributes:
       label: Log Files and Screenshots
-      description: Include links to [QGC Console Logs](https://docs.qgroundcontrol.com/en/settings_view/console_logging.html), autopilot logs, and screenshots.
-      placeholder: |
-        - [QGC Console Logs](https://docs.qgroundcontrol.com/en/settings_view/console_logging.html)
-        - Autopilot logs when available (post a link)
-        - Screenshots of QGC to help identify the issue.
+      description: |
+        Include links to:
+          - [QGC Console Logs](https://docs.qgroundcontrol.com/en/settings_view/console_logging.html)
+          - Autopilot logs when available
+          - Screenshots of QGC to help identify the issue.
