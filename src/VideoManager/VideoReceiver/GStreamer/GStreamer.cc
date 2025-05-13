@@ -43,6 +43,7 @@ GST_PLUGIN_STATIC_DECLARE(opengl);
 GST_PLUGIN_STATIC_DECLARE(openh264);
 GST_PLUGIN_STATIC_DECLARE(playback);
 GST_PLUGIN_STATIC_DECLARE(qml6);
+GST_PLUGIN_STATIC_DECLARE(qml6d3d11);
 GST_PLUGIN_STATIC_DECLARE(qsv);
 GST_PLUGIN_STATIC_DECLARE(rtp);
 GST_PLUGIN_STATIC_DECLARE(rtpmanager);
@@ -120,9 +121,19 @@ void _registerPlugins()
     #endif
 #endif
 
-// #if !defined(GST_PLUGIN_qml6_FOUND) && defined(QGC_GST_STATIC_BUILD)
-    GST_PLUGIN_STATIC_REGISTER(qml6);
+// #if !defined(GST_PLUGIN_qml6_FOUND) || defined(QGC_GST_STATIC_BUILD)
+    // GST_PLUGIN_STATIC_REGISTER(qml6);
 // #endif
+
+// #if !defined(GST_PLUGIN_qml6d3d11_FOUND) || defined(QGC_GST_STATIC_BUILD)
+    // GST_PLUGIN_STATIC_DECLARE(qml6d3d11);
+// #endif
+
+#ifdef Q_OS_WIN
+    GST_PLUGIN_STATIC_DECLARE(qml6d3d11);
+#else
+    GST_PLUGIN_STATIC_REGISTER(qml6);
+#endif
 
     GST_PLUGIN_STATIC_REGISTER(qgc);
 }
