@@ -8,9 +8,6 @@ body:
       value: |
         The following template is for Issue/Bug reporting only.
 
-        See our full guidelines here:
-        [github-issues](https://docs.qgroundcontrol.com/en/support/support.html#github-issues)
-
         For questions about how to use or build QGC, see:
         [resources](http://qgroundcontrol.com/#resources)
 
@@ -29,7 +26,11 @@ body:
       label: Description
       description: |
         Please describe your issue in detail. Include:
-
+        1. **Expected Behavior** – What you expected to happen.
+        2. **Current Behavior** – What actually happened instead.
+        3. **Steps To Reproduce** – Step-by-step list of actions to reproduce the issue.
+        3. **Additional Details** – Any other context that helps explain the problem.
+      value: |
         **Expected Behavior**
         Describe what you thought should happen here.
 
