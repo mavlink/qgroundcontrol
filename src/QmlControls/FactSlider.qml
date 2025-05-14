@@ -29,8 +29,11 @@ ValueSlider {
     property real _minMaxVisibilityPadding: ScreenTools.defaultFontPixelWidth
     property Fact _nullFact:                Fact { }
     property Fact _fact:                    fact ? fact : _nullFact
+
+    property bool _loadComplete: false
     
     Component.onCompleted: {
+        _loadComplete = true
         if (fact && fact.minIsDefaultForType && fact.min == from) {
             console.error("FactSlider: Fact is minIsDefaultForType", _fact.name)
         }
@@ -55,7 +58,11 @@ ValueSlider {
     }
 
     onValueChanged: {
-        // We don't want to spam the vehicle with parameter updates
-        updateTimer.restart()
+        // We don't want to spam the vehicle with parameter updates so we coalesce multiple updated with a timer
+        // We also don't want to update the fact value until we know the control has finished initialization. During
+        // initialization the fact value can go through slight changes due to cooked value floating point inprecision.
+        if (_loadComplete) {
+            updateTimer.start()
+        }
     }
 }
