@@ -5,16 +5,15 @@ import os
 import argparse
 import difflib
 import subprocess
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout, QHBoxLayout, QPushButton, QScrollArea
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout, QHBoxLayout, QPushButton, QScrollArea, QRadioButton
 from PyQt5.QtCore import Qt
 import sys
 import time
 import configparser
-VERSION = 1.0
+import yaml
 
-#FILE SECTIONS = ['LinkManager', 'Video', 'General', 'MainWindowState', 'JoystickManager', 'QGC_MAVLINK_PROTOCOL', 'Units', 'DEFAULT', 'FlightMapPosition', 'QGCQml', 'Vehicle14', 'LinkConfigurations', 'MAVLinkLogGroup', 'Vehicle12', 'LoggingFilters', 'Vehicle15', 'Branding', 'Joysticks', 'FlyView', 'TelemetryBarUserSettings-2', 'RadioCalibration']
-CONFIG_CRITICAL_SECTIONS = ['Joysticks', 'Video','TelemetryBarUserSettings-2', 'JoystickManager', 'LinkManager' ]
-IGNORE_PARAMS = ["Xbox%20Series%20X%20Controller\Axis"]
+VERSION = 1.1 # Added selection of drones, added config by yaml
+
 
 class QGCGitHub():
     def __init__(self, branch):
@@ -39,6 +38,7 @@ class ProgressWindow:
         self.app = QApplication(sys.argv)
         self.continue_execution = False
         self.abort_execution = False
+        self.drone_selected = None
 
         # Create window
         self.window = QWidget()
@@ -60,25 +60,42 @@ class ProgressWindow:
 
         layoutV.addWidget(scroll_area)
 
-        layoutH = QHBoxLayout()
+        layoutHconfirm = QHBoxLayout()
 
         # Create continue button
         self.continue_button = QPushButton("Continue")
         self.continue_button.clicked.connect(self.on_continue_clicked)
-        self.continue_button.setVisible(False)  # Hidden by default
-        layoutH.addWidget(self.continue_button)
+        self.continue_button.setEnabled(False)  # Hidden by default
+        layoutHconfirm.addWidget(self.continue_button)
 
         # Create abort button
         self.abort_button = QPushButton("Abort")
         self.abort_button.clicked.connect(self.on_abort_clicked)
-        self.abort_button.setVisible(False)  # Hidden by default
-        layoutH.addWidget(self.abort_button)
+        self.abort_button.setEnabled(True)  # Hidden by default
+        layoutHconfirm.addWidget(self.abort_button)
+
+        self.btn_uav_lst = []
+        for uav in UAV_DICT.keys():
+            self.btn_uav_lst.append(QRadioButton(uav))
+        layoutHdrone = QHBoxLayout()
+        for button in self.btn_uav_lst:
+            layoutHdrone.addWidget(button)
+            button.toggled.connect(self.btn_uav_toggled)
 
         # Set layout and show
-        layoutV.addLayout(layoutH)
+        layoutV.addWidget(QLabel("Select drone to Continue:"))
+        layoutV.addLayout(layoutHdrone)
+        layoutV.addLayout(layoutHconfirm)
         self.window.setLayout(layoutV)
         self.window.show()
         self.app.processEvents()
+
+    def btn_uav_toggled(self):
+        for button in self.btn_uav_lst:
+            if button.isChecked():
+                self.drone_selected = button.text()
+                print(f"Drone selected: {self.drone_selected}")
+                self.continue_button.setEnabled(True)  # Hidden by default
 
     def update_message(self, message, align = Qt.AlignCenter):
         """Update the displayed message"""
@@ -91,18 +108,12 @@ class ProgressWindow:
         self.update_message(message, align=Qt.AlignLeft)
         self.continue_execution = False
         self.abort_execution = False
-        self.continue_button.setVisible(True)
-        self.abort_button.setVisible(True)
         self.app.processEvents()
 
         # Wait until the button is clicked
         while not self.continue_execution and not self.abort_execution:
             self.app.processEvents()
             time.sleep(0.1)  # Small sleep to prevent high CPU usage
-
-        # Hide the button again
-        self.continue_button.setVisible(False)
-        self.abort_button.setVisible(False)
 
     def on_continue_clicked(self):
         """Called when the continue button is clicked"""
@@ -111,7 +122,6 @@ class ProgressWindow:
     def on_abort_clicked(self):
         """Called when the continue button is clicked"""
         self.abort_execution = True
-
 
     def run(self):
         """Start the event loop"""
@@ -136,16 +146,33 @@ def section_to_text(config, sections):
                 pass
     return result
 
+def update_config_comms(config, name, IP, port):
+    print(f"Setting QGC connection to {name} at {IP}")
+    config['Video']['rtspUrl'] = f"rtsp://{IP}:{port}/fpv"
+    config['LinkConfigurations']['Link0\\auto'] = "true"
+    config['LinkConfigurations']['Link0\\host0'] = IP
+    config['LinkConfigurations']['Link0\\name'] = f"Auto {name} {IP}"
+    return config
+
 if __name__ == "__main__":
+    # Load settings
+    config_file = open("qgroundcontrol_start.yaml")
+    config = yaml.safe_load(config_file)
+    UAV_DICT = config["UAVS"]
+    CONFIG_CRITICAL_SECTIONS = config["QGC_INI"]["CONFIG_CRITICAL_SECTIONS"]
+    IGNORE_PARAMS = config["QGC_INI"]["IGNORE_PARAMS"]
+    RTSP_PORT = config["RTSP"]["RTSP_PORT"]
+
     # Create the progress window
     progress_win = ProgressWindow()
 
     # Prepare to download from github
     load_dotenv()
-    branch = "v4.3.0-dev"
+    branch = config["GIT"]["Branch"]
     qgc_github = QGCGitHub(branch)
 
     filepath = "sees_installer/QGroundControl%20Daily.ini"
+
     try:
         qgc_ini_file = qgc_github.download_file(filepath)
     except Exception as e:
@@ -157,10 +184,6 @@ if __name__ == "__main__":
     with open(file_output, 'wb') as file:
         file.write(qgc_ini_file)
     print(f"File downloaded and saved to {file_output}")
-
-    #with open('QGroundControl_github.ini', 'r') as file1, open(''/home/sees/.config/QGroundControl.org/QGroundControl Daily.ini', 'r') as file2:
-    #    github_ini_lines = file1.readlines()
-    #    local_ini_lines = file2.readlines()
 
     config_github = configparser.ConfigParser()
     config_github.optionxform = str  # This preserves case
@@ -176,7 +199,6 @@ if __name__ == "__main__":
     progress_win.update_message("Checking QGroundControl config file...")
     time.sleep(1)  # Simulate doing more work
 
-
     if len(diff) > 0:
         # There are some differences
         diff_content = ''.join(diff)
@@ -186,10 +208,19 @@ if __name__ == "__main__":
             progress_win.app.quit()
             sys.exit(1)
         progress_win.update_message("Ignoring differences, starting QGC...")
-        time.sleep(1)  # Simulate doing more work
+        time.sleep(1)  # Display message
     else:
-        progress_win.update_message("No differences found, starting QGC...")
-        time.sleep(1)  # Simulate doing more work
+        progress_win.wait_for_user("No differences found, select drone to start QGC...")
+        time.sleep(1)  # Display message
+
+    # Update config according to drone selection
+    drone_IP = UAV_DICT[progress_win.drone_selected]
+    drone_name = progress_win.drone_selected
+    update_config_comms(config_local, drone_name, drone_IP, RTSP_PORT)
+
+    # Update ini file with the drone selected
+    with open( 'QGroundControl Daily.ini', 'w') as configfile:
+        config_local.write(configfile)
 
     # There are no differences or the user is happy to continue
     # No differences in file,can go ahead and run QGC
