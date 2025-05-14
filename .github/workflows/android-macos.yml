@@ -50,7 +50,10 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 1
-          fetch-tags: true
+          fetch-tags: false
+
+      - name: Fetch tags
+        run: git fetch --tags
 
       - name: Initial Setup
         uses: ./.github/actions/common
