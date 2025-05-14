@@ -25,19 +25,19 @@ QDomDocument KMLHelper::_loadFile(const QString &kmlFile, QString &errorString)
 
     QFile file(kmlFile);
     if (!file.exists()) {
-        errorString = QString(_errorPrefix).arg(QObject::tr("File not found: %1").arg(kmlFile));
+        errorString = QString(_errorPrefix).arg(QString(QT_TRANSLATE_NOOP("KML", "File not found: %1")).arg(kmlFile));
         return QDomDocument();
     }
 
     if (!file.open(QIODevice::ReadOnly)) {
-        errorString = QString(_errorPrefix).arg(QObject::tr("Unable to open file: %1 error: $%2").arg(kmlFile).arg(file.errorString()));
+        errorString = QString(_errorPrefix).arg(QString(QT_TRANSLATE_NOOP("KML", "Unable to open file: %1 error: $%2")).arg(kmlFile).arg(file.errorString()));
         return QDomDocument();
     }
 
     QDomDocument doc;
     const QDomDocument::ParseResult result = doc.setContent(&file, QDomDocument::ParseOption::Default);
     if (!result) {
-        errorString = QString(_errorPrefix).arg(QObject::tr("Unable to parse KML file: %1 error: %2 line: %3").arg(kmlFile).arg(result.errorMessage).arg(result.errorLine));
+        errorString = QString(_errorPrefix).arg(QString(QT_TRANSLATE_NOOP("KML", "Unable to parse KML file: %1 error: %2 line: %3")).arg(kmlFile).arg(result.errorMessage).arg(result.errorLine));
         return QDomDocument();
     }
 
@@ -46,23 +46,25 @@ QDomDocument KMLHelper::_loadFile(const QString &kmlFile, QString &errorString)
 
 ShapeFileHelper::ShapeType KMLHelper::determineShapeType(const QString &kmlFile, QString &errorString)
 {
+    using ShapeType = ShapeFileHelper::ShapeType;
+
     const QDomDocument domDocument = KMLHelper::_loadFile(kmlFile, errorString);
     if (!errorString.isEmpty()) {
-        return ShapeFileHelper::Error;
+        return ShapeType::Error;
     }
 
     const QDomNodeList rgNodesPolygon = domDocument.elementsByTagName("Polygon");
     if (!rgNodesPolygon.isEmpty()) {
-        return ShapeFileHelper::Polygon;
+        return ShapeType::Polygon;
     }
 
     const QDomNodeList rgNodesLineString = domDocument.elementsByTagName("LineString");
     if (!rgNodesLineString.isEmpty()) {
-        return ShapeFileHelper::Polyline;
+        return ShapeType::Polyline;
     }
 
-    errorString = QString(_errorPrefix).arg(QObject::tr("No supported type found in KML file."));
-    return ShapeFileHelper::Error;
+    errorString = QString(_errorPrefix).arg(QT_TRANSLATE_NOOP("KML", "No supported type found in KML file."));
+    return ShapeType::Error;
 }
 
 bool KMLHelper::loadPolygonFromFile(const QString &kmlFile, QList<QGeoCoordinate> &vertices, QString &errorString)
@@ -77,13 +79,13 @@ bool KMLHelper::loadPolygonFromFile(const QString &kmlFile, QList<QGeoCoordinate
 
     const QDomNodeList rgNodes = domDocument.elementsByTagName("Polygon");
     if (rgNodes.isEmpty()) {
-        errorString = QString(_errorPrefix).arg(QObject::tr("Unable to find Polygon node in KML"));
+        errorString = QString(_errorPrefix).arg(QT_TRANSLATE_NOOP("KML", "Unable to find Polygon node in KML"));
         return false;
     }
 
     const QDomNode coordinatesNode = rgNodes.item(0).namedItem("outerBoundaryIs").namedItem("LinearRing").namedItem("coordinates");
     if (coordinatesNode.isNull()) {
-        errorString = QString(_errorPrefix).arg(QObject::tr("Internal error: Unable to find coordinates node in KML"));
+        errorString = QString(_errorPrefix).arg(QT_TRANSLATE_NOOP("KML", "Internal error: Unable to find coordinates node in KML"));
         return false;
     }
 
@@ -93,7 +95,7 @@ bool KMLHelper::loadPolygonFromFile(const QString &kmlFile, QList<QGeoCoordinate
     QList<QGeoCoordinate> rgCoords;
     for (const QString &coordinateString : rgCoordinateStrings) {
         const QStringList rgValueStrings = coordinateString.split(",");
-        const QGeoCoordinate coord(rgValueStrings[0].toDouble(), rgValueStrings[1].toDouble());
+        const QGeoCoordinate coord(rgValueStrings[1].toDouble(), rgValueStrings[0].toDouble());
         rgCoords.append(coord);
     }
 
@@ -101,7 +103,7 @@ bool KMLHelper::loadPolygonFromFile(const QString &kmlFile, QList<QGeoCoordinate
     double sum = 0;
     for (int i=0; i<rgCoords.count(); i++) {
         const QGeoCoordinate coord1 = rgCoords[i];
-        const QGeoCoordinate coord2 = (i == rgCoords.count() - 1) ? rgCoords[0] : rgCoords[i+1];
+        const QGeoCoordinate coord2 = (i == (rgCoords.count() - 1)) ? rgCoords[0] : rgCoords[i+1];
 
         sum += (coord2.longitude() - coord1.longitude()) * (coord2.latitude() + coord1.latitude());
     }
@@ -132,13 +134,13 @@ bool KMLHelper::loadPolylineFromFile(const QString &kmlFile, QList<QGeoCoordinat
 
     const QDomNodeList rgNodes = domDocument.elementsByTagName("LineString");
     if (rgNodes.isEmpty()) {
-        errorString = QString(_errorPrefix).arg(QObject::tr("Unable to find LineString node in KML"));
+        errorString = QString(_errorPrefix).arg(QT_TRANSLATE_NOOP("KML", "Unable to find LineString node in KML"));
         return false;
     }
 
     const QDomNode coordinatesNode = rgNodes.item(0).namedItem("coordinates");
     if (coordinatesNode.isNull()) {
-        errorString = QString(_errorPrefix).arg(QObject::tr("Internal error: Unable to find coordinates node in KML"));
+        errorString = QString(_errorPrefix).arg(QT_TRANSLATE_NOOP("KML", "Internal error: Unable to find coordinates node in KML"));
         return false;
     }
 
@@ -146,10 +148,9 @@ bool KMLHelper::loadPolylineFromFile(const QString &kmlFile, QList<QGeoCoordinat
     const QStringList rgCoordinateStrings = coordinatesString.split(" ");
 
     QList<QGeoCoordinate> rgCoords;
-    for (int i = 0; i < rgCoordinateStrings.count() - 1; i++) {
-        const QString coordinateString = rgCoordinateStrings[i];
+    for (const QString &coordinateString : rgCoordinateStrings) {
         const QStringList rgValueStrings = coordinateString.split(",");
-        const QGeoCoordinate coord(rgValueStrings[0].toDouble(), rgValueStrings[1].toDouble());
+        const QGeoCoordinate coord(rgValueStrings[1].toDouble(), rgValueStrings[0].toDouble());
         rgCoords.append(coord);
     }
 

@@ -23,6 +23,7 @@ Item {
     id: _root
 
     property var map        ///< Map control to place item in
+    property var vehicle
 
     property var _missionItem:      object
     property var _structurePolygon: object.structurePolygon

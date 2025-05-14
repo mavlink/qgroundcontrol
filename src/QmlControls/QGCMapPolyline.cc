@@ -288,7 +288,6 @@ QList<QPointF> QGCMapPolyline::nedPolyline(void)
     return nedPolyline;
 }
 
-
 QList<QGeoCoordinate> QGCMapPolyline::offsetPolyline(double distance)
 {
     QList<QGeoCoordinate> rgNewPolyline;
@@ -403,6 +402,8 @@ void QGCMapPolyline::appendVertices(const QList<QGeoCoordinate>& coordinates)
     _polylineModel.append(objects);
 
     _endResetIfNotActive();
+
+    emit pathChanged();
 }
 
 void QGCMapPolyline::beginReset(void)

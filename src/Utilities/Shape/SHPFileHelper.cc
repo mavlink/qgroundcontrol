@@ -38,17 +38,20 @@ bool SHPFileHelper::_validateSHPFiles(const QString &shpFile, int *utmZone, bool
     errorString.clear();
 
     if (!shpFile.endsWith(QStringLiteral(".shp"))) {
-        errorString = QString(_errorPrefix).arg(QObject::tr("File is not a .shp file: %1").arg(shpFile));
+        errorString = QString(_errorPrefix).arg(QString(QT_TRANSLATE_NOOP("SHP", "File is not a .shp file: %1")).arg(shpFile));
+        return false;
     }
 
     const QString prjFilename = shpFile.left(shpFile.length() - 4) + QStringLiteral(".prj");
     QFile prjFile(prjFilename);
     if (!prjFile.exists()) {
-        errorString = QString(_errorPrefix).arg(QObject::tr("File not found: %1").arg(prjFilename));
+        errorString = QString(_errorPrefix).arg(QString(QT_TRANSLATE_NOOP("SHP", "File not found: %1")).arg(prjFilename));
+        return false;
     }
 
     if (!prjFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        errorString = QString(_errorPrefix).arg(QObject::tr("PRJ file open failed: %1"), prjFile.errorString());
+        errorString = QString(_errorPrefix).arg(QT_TRANSLATE_NOOP("SHP", "PRJ file open failed: %1"), prjFile.errorString());
+        return false;
     }
 
     QTextStream strm(&prjFile);
@@ -56,23 +59,23 @@ bool SHPFileHelper::_validateSHPFiles(const QString &shpFile, int *utmZone, bool
     if (line.startsWith(QStringLiteral("GEOGCS[\"GCS_WGS_1984\","))) {
         *utmZone = 0;
         *utmSouthernHemisphere = false;
-    } else if (!line.startsWith(QStringLiteral("PROJCS[\"WGS_1984_UTM_Zone_"))) {
-        errorString = QString(_errorPrefix).arg(QObject::tr("Only WGS84 or UTM projections are supported."));
-    }
-
-    static QRegularExpression regEx(QStringLiteral("^PROJCS\\[\"WGS_1984_UTM_Zone_(\\d+){1,2}([NS]{1})"));
-    const QRegularExpressionMatch regExMatch = regEx.match(line);
-    const QStringList rgCapture = regExMatch.capturedTexts();
-    if (rgCapture.count() == 3) {
-        const int zone = rgCapture[1].toInt();
-        if ((zone >= 1) && (zone <= 60)) {
-            *utmZone = zone;
-            *utmSouthernHemisphere = (rgCapture[2] == QStringLiteral("S"));
+    } else if (line.startsWith(QStringLiteral("PROJCS[\"WGS_1984_UTM_Zone_"))) {
+        static QRegularExpression regEx(QStringLiteral("^PROJCS\\[\"WGS_1984_UTM_Zone_(\\d+){1,2}([NS]{1})"));
+        const QRegularExpressionMatch regExMatch = regEx.match(line);
+        const QStringList rgCapture = regExMatch.capturedTexts();
+        if (rgCapture.count() == 3) {
+            const int zone = rgCapture[1].toInt();
+            if ((zone >= 1) && (zone <= 60)) {
+                *utmZone = zone;
+                *utmSouthernHemisphere = (rgCapture[2] == QStringLiteral("S"));
+            }
         }
-    }
 
-    if (*utmZone == 0) {
-        errorString = QString(_errorPrefix).arg(QObject::tr("UTM projection is not in supported format. Must be PROJCS[\"WGS_1984_UTM_Zone_##N/S"));
+        if (*utmZone == 0) {
+            errorString = QString(_errorPrefix).arg(QT_TRANSLATE_NOOP("SHP", "UTM projection is not in supported format. Must be PROJCS[\"WGS_1984_UTM_Zone_##N/S"));
+        }
+    } else {
+        errorString = QString(_errorPrefix).arg(QT_TRANSLATE_NOOP("SHP", "Only WGS84 or UTM projections are supported."));
     }
 
     return errorString.isEmpty();
@@ -81,14 +84,14 @@ bool SHPFileHelper::_validateSHPFiles(const QString &shpFile, int *utmZone, bool
 
 SHPHandle SHPFileHelper::_loadShape(const QString &shpFile, int *utmZone, bool *utmSouthernHemisphere, QString &errorString)
 {
-    SHPHandle shpHandle = Q_NULLPTR;
+    SHPHandle shpHandle = nullptr;
 
     errorString.clear();
 
     if (_validateSHPFiles(shpFile, utmZone, utmSouthernHemisphere, errorString)) {
         shpHandle = SHPOpen(shpFile.toUtf8().constData(), "rb");
         if (!shpHandle) {
-            errorString = QString(_errorPrefix).arg(QObject::tr("SHPOpen failed."));
+            errorString = QString(_errorPrefix).arg(QT_TRANSLATE_NOOP("SHP", "SHPOpen failed."));
         }
     }
 
@@ -97,7 +100,9 @@ SHPHandle SHPFileHelper::_loadShape(const QString &shpFile, int *utmZone, bool *
 
 ShapeFileHelper::ShapeType SHPFileHelper::determineShapeType(const QString &shpFile, QString &errorString)
 {
-    ShapeFileHelper::ShapeType shapeType = ShapeFileHelper::Error;
+    using ShapeType = ShapeFileHelper::ShapeType;
+
+    ShapeType shapeType = ShapeType::Error;
 
     errorString.clear();
 
@@ -106,14 +111,14 @@ ShapeFileHelper::ShapeType SHPFileHelper::determineShapeType(const QString &shpF
     SHPHandle shpHandle = SHPFileHelper::_loadShape(shpFile, &utmZone, &utmSouthernHemisphere, errorString);
     if (errorString.isEmpty()) {
         int cEntities, type;
-        SHPGetInfo(shpHandle, &cEntities /* pnEntities */, &type, Q_NULLPTR /* padfMinBound */, Q_NULLPTR /* padfMaxBound */);
+        SHPGetInfo(shpHandle, &cEntities /* pnEntities */, &type, nullptr /* padfMinBound */, nullptr /* padfMaxBound */);
         qCDebug(SHPFileHelperLog) << "SHPGetInfo" << shpHandle << cEntities << type;
         if (cEntities != 1) {
-            errorString = QString(_errorPrefix).arg(QObject::tr("More than one entity found."));
+            errorString = QString(_errorPrefix).arg(QT_TRANSLATE_NOOP("SHP", "More than one entity found."));
         } else if (type == SHPT_POLYGON) {
-            shapeType = ShapeFileHelper::Polygon;
+            shapeType = ShapeType::Polygon;
         } else {
-            errorString = QString(_errorPrefix).arg(QObject::tr("No supported types found."));
+            errorString = QString(_errorPrefix).arg(QT_TRANSLATE_NOOP("SHP", "No supported types found."));
         }
     }
 
@@ -124,30 +129,29 @@ ShapeFileHelper::ShapeType SHPFileHelper::determineShapeType(const QString &shpF
 
 bool SHPFileHelper::loadPolygonFromFile(const QString &shpFile, QList<QGeoCoordinate> &vertices, QString &errorString)
 {
+    static constexpr double vertexFilterMeters = 5;
     int utmZone = 0;
     bool utmSouthernHemisphere = false;
-    double vertexFilterMeters = 5;
-    SHPHandle shpHandle = Q_NULLPTR;
-    SHPObject *shpObject = Q_NULLPTR;
+    SHPObject *shpObject = nullptr;
 
     errorString.clear();
     vertices.clear();
 
-    shpHandle = SHPFileHelper::_loadShape(shpFile, &utmZone, &utmSouthernHemisphere, errorString);
+    SHPHandle shpHandle = SHPFileHelper::_loadShape(shpFile, &utmZone, &utmSouthernHemisphere, errorString);
     if (!errorString.isEmpty()) {
         goto Error;
     }
 
     int cEntities, shapeType;
-    SHPGetInfo(shpHandle, &cEntities, &shapeType, Q_NULLPTR /* padfMinBound */, Q_NULLPTR /* padfMaxBound */);
+    SHPGetInfo(shpHandle, &cEntities, &shapeType, nullptr /* padfMinBound */, nullptr /* padfMaxBound */);
     if (shapeType != SHPT_POLYGON) {
-        errorString = QString(_errorPrefix).arg(QObject::tr("File does not contain a polygon."));
+        errorString = QString(_errorPrefix).arg(QT_TRANSLATE_NOOP("SHP", "File does not contain a polygon."));
         goto Error;
     }
 
     shpObject = SHPReadObject(shpHandle, 0);
     if (shpObject->nParts != 1) {
-        errorString = QString(_errorPrefix).arg(QObject::tr("Only single part polygons are supported."));
+        errorString = QString(_errorPrefix).arg(QT_TRANSLATE_NOOP("SHP", "Only single part polygons are supported."));
         goto Error;
     }
 
