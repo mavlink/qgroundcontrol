@@ -37,39 +37,39 @@ ToolIndicatorPage {
     readonly property var    _femtomes:           0b01000
     readonly property var    _ublox:              0b10000
     readonly property var    _all:                0b11111
-    property var             manufacturerId:      _all
+    property var             settingsDisplayId:      _all
     
-    function updateManufacturerId() {
+    function updateSettingsDisplayId() {
         switch(manufacturer) {
             case 0: // Standard
-                manufacturerId = _standard
+                settingsDisplayId = _standard
                 break
             case 1: // All
-                manufacturerId = _standard | _trimble | _septentrio | _femtomes | _ublox
+                settingsDisplayId = _standard | _trimble | _septentrio | _femtomes | _ublox
                 break
             case 2: // Trimble
-                manufacturerId = _standard | _trimble
+                settingsDisplayId = _standard | _trimble
                 break
             case 3: // Septentrio
-                manufacturerId = _standard | _septentrio
+                settingsDisplayId = _standard | _septentrio
                 break
             case 4: // Femtomes
-                manufacturerId = _standard | _femtomes
+                settingsDisplayId = _standard | _femtomes
                 break
             case 5: // UBlox
-                manufacturerId = _standard | _ublox
+                settingsDisplayId = _standard | _ublox
                 break
             default:
-                manufacturerId = _standard
+                settingsDisplayId = _standard
         }
     }
 
     onManufacturerChanged: {
-        updateManufacturerId()
+        updateSettingsDisplayId()
     }
 
     Component.onCompleted: {
-        updateManufacturerId()
+        updateSettingsDisplayId()
     }
 
 
@@ -151,7 +151,7 @@ ToolIndicatorPage {
                 columns: 2
 
                 QGCLabel {
-                    text: qsTr("Manufacturer")
+                    text: qsTr("Settings displayed")
                 }
                 FactComboBox {
                     Layout.fillWidth:   true
@@ -165,14 +165,14 @@ ToolIndicatorPage {
                     text:       qsTr("Survey-In")
                     checked:    baseMode == BaseMode.BaseSurveyIn
                     onClicked:  rtkSettings.baseMode.rawValue = BaseMode.BaseSurveyIn
-                    visible:    manufacturerId & _standard
+                    visible:    settingsDisplayId & _standard
                 }
 
                 QGCRadioButton {
                     text: qsTr("Specify position")
                     checked:    baseMode == BaseMode.BaseFixed
                     onClicked:  rtkSettings.baseMode.rawValue = BaseMode.BaseFixed
-                    visible:    manufacturerId & _standard
+                    visible:    settingsDisplayId & _standard
                 }
             }
 
@@ -185,7 +185,7 @@ ToolIndicatorPage {
                 visible:                (
                     baseMode == BaseMode.BaseSurveyIn
                     && rtkSettings.surveyInAccuracyLimit.visible
-                    && (manufacturerId & _ublox)
+                    && (settingsDisplayId & _ublox)
                 )
             }
 
@@ -198,7 +198,7 @@ ToolIndicatorPage {
                 visible:                ( 
                     baseMode == BaseMode.BaseSurveyIn
                     && rtkSettings.surveyInMinObservationDuration.visible
-                    && (manufacturerId & (_ublox | _femtomes | _trimble))
+                    && (settingsDisplayId & (_ublox | _femtomes | _trimble))
                 )
             }
 
@@ -207,7 +207,7 @@ ToolIndicatorPage {
                 fact:                   rtkSettings.fixedBasePositionLatitude
                 visible:                (
                     baseMode == BaseMode.BaseFixed
-                    && (manufacturerId & _standard)
+                    && (settingsDisplayId & _standard)
                 )
             }
 
@@ -216,7 +216,7 @@ ToolIndicatorPage {
                 fact:               rtkSettings.fixedBasePositionLongitude
                 visible:            (
                     baseMode == BaseMode.BaseFixed
-                    && (manufacturerId & _standard)
+                    && (settingsDisplayId & _standard)
                 )
             }
 
@@ -225,7 +225,7 @@ ToolIndicatorPage {
                 fact:               rtkSettings.fixedBasePositionAltitude
                 visible:            (
                     baseMode == BaseMode.BaseFixed
-                    && (manufacturerId & _standard)
+                    && (settingsDisplayId & _standard)
                 )
             }
 
@@ -234,7 +234,7 @@ ToolIndicatorPage {
                 fact:               rtkSettings.fixedBasePositionAccuracy
                 visible:            (
                     baseMode == BaseMode.BaseFixed
-                    && (manufacturerId & _ublox)
+                    && (settingsDisplayId & _ublox)
                 )
             }
 
