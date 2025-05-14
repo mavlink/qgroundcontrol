@@ -2,6 +2,7 @@
 QGC_INI:
   CONFIG_CRITICAL_SECTIONS: ['Joysticks', 'TelemetryBarUserSettings-2', 'JoystickManager', 'LinkManager' ]
   IGNORE_PARAMS: ["Xbox%20Series%20X%20Controller\\Axis"]
+  PATH: '/home/sees/.config/QGroundControl.org/QGroundControl Daily.ini'
 
 # Port for the RTSP stream server on drone
 RTSP:

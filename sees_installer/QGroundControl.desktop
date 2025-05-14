@@ -2,8 +2,8 @@
 [Desktop Entry]
 Name=QGroundControl
 Version=1.0
-Path=/home/sees/Work/Sees/QGroundControl
-Exec=/home/sees/Work/Sees/QGroundControl/qgroundcontrol_start.sh
+Path=/opt/sees/apps/qgroundcontrol
+Exec=/opt/sees/apps/qgroundcontrol/qgroundcontrol_start.py
 Terminal=false
 Type=Application
 Categories=Utility

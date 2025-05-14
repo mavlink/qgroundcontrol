@@ -163,6 +163,7 @@ if __name__ == "__main__":
     CONFIG_CRITICAL_SECTIONS = config["QGC_INI"]["CONFIG_CRITICAL_SECTIONS"]
     IGNORE_PARAMS = config["QGC_INI"]["IGNORE_PARAMS"]
     RTSP_PORT = config["RTSP"]["RTSP_PORT"]
+    QGC_INI_PATH = config["QGC_INI"]["PATH"]
 
     # Create the progress window
     progress_win = ProgressWindow()
@@ -193,12 +194,12 @@ if __name__ == "__main__":
 
     config_local = configparser.ConfigParser()
     config_local.optionxform = str  # This preserves case
-    config_local.read('/home/sees/.config/QGroundControl.org/QGroundControl Daily.ini')
+    config_local.read(QGC_INI_PATH)
     local_ini_lines = section_to_text(config_local, CONFIG_CRITICAL_SECTIONS)
     diff = list(difflib.unified_diff(github_ini_lines, local_ini_lines, fromfile='QGC github', tofile='QGC local', n=0))
 
     progress_win.update_message("Checking QGroundControl config file...")
-    time.sleep(1)  # Simulate doing more work
+    time.sleep(1)  # Give time to display message
 
     if len(diff) > 0:
         # There are some differences
@@ -220,7 +221,7 @@ if __name__ == "__main__":
     update_config_comms(config_local, drone_name, drone_IP, RTSP_PORT)
 
     # Update ini file with the drone selected
-    with open( '/home/sees/.config/QGroundControl.org/QGroundControl Daily.ini', 'w') as configfile:
+    with open( QGC_INI_PATH, 'w') as configfile:
         config_local.write(configfile)
 
     # There are no differences or the user is happy to continue
