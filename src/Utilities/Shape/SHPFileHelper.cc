@@ -60,7 +60,7 @@ bool SHPFileHelper::_validateSHPFiles(const QString &shpFile, int *utmZone, bool
         *utmZone = 0;
         *utmSouthernHemisphere = false;
     } else if (line.startsWith(QStringLiteral("PROJCS[\"WGS_1984_UTM_Zone_"))) {
-        static QRegularExpression regEx(QStringLiteral("^PROJCS\\[\"WGS_1984_UTM_Zone_(\\d+){1,2}([NS]{1})"));
+        static const QRegularExpression regEx(QStringLiteral("^PROJCS\\[\"WGS_1984_UTM_Zone_(\\d{1,2})([NS])"));
         const QRegularExpressionMatch regExMatch = regEx.match(line);
         const QStringList rgCapture = regExMatch.capturedTexts();
         if (rgCapture.count() == 3) {
@@ -81,18 +81,24 @@ bool SHPFileHelper::_validateSHPFiles(const QString &shpFile, int *utmZone, bool
     return errorString.isEmpty();
 }
 
-
 SHPHandle SHPFileHelper::_loadShape(const QString &shpFile, int *utmZone, bool *utmSouthernHemisphere, QString &errorString)
 {
-    SHPHandle shpHandle = nullptr;
-
     errorString.clear();
 
-    if (_validateSHPFiles(shpFile, utmZone, utmSouthernHemisphere, errorString)) {
-        shpHandle = SHPOpen(shpFile.toUtf8().constData(), "rb");
-        if (!shpHandle) {
-            errorString = QString(_errorPrefix).arg(QT_TRANSLATE_NOOP("SHP", "SHPOpen failed."));
-        }
+    if (!_validateSHPFiles(shpFile, utmZone, utmSouthernHemisphere, errorString)) {
+        return nullptr;
+    }
+
+    SAHooks sHooks{};
+    SASetupDefaultHooks(&sHooks);
+    sHooks.Error = [](const char *message) {
+        qCWarning(SHPFileHelperLog) << "SHP Error:" << message;
+    };
+    // TODO: Replace other hooks and use QFile to be compatible with Qt Resource System
+
+    SHPHandle shpHandle = SHPOpenLL(shpFile.toUtf8().constData(), "rb", &sHooks);
+    if (!shpHandle) {
+        errorString = QString(_errorPrefix).arg(QT_TRANSLATE_NOOP("SHP", "SHPOpen failed."));
     }
 
     return shpHandle;
@@ -110,6 +116,8 @@ ShapeFileHelper::ShapeType SHPFileHelper::determineShapeType(const QString &shpF
     bool utmSouthernHemisphere;
     SHPHandle shpHandle = SHPFileHelper::_loadShape(shpFile, &utmZone, &utmSouthernHemisphere, errorString);
     if (errorString.isEmpty()) {
+        Q_CHECK_PTR(shpHandle);
+
         int cEntities, type;
         SHPGetInfo(shpHandle, &cEntities /* pnEntities */, &type, nullptr /* padfMinBound */, nullptr /* padfMaxBound */);
         qCDebug(SHPFileHelperLog) << "SHPGetInfo" << shpHandle << cEntities << type;
@@ -117,12 +125,16 @@ ShapeFileHelper::ShapeType SHPFileHelper::determineShapeType(const QString &shpF
             errorString = QString(_errorPrefix).arg(QT_TRANSLATE_NOOP("SHP", "More than one entity found."));
         } else if (type == SHPT_POLYGON) {
             shapeType = ShapeType::Polygon;
+        } else if (type == SHPT_ARC) {
+            shapeType = ShapeType::Polyline;
         } else {
             errorString = QString(_errorPrefix).arg(QT_TRANSLATE_NOOP("SHP", "No supported types found."));
         }
     }
 
-    SHPClose(shpHandle);
+    if (shpHandle) {
+        SHPClose(shpHandle);
+    }
 
     return shapeType;
 }
@@ -141,6 +153,7 @@ bool SHPFileHelper::loadPolygonFromFile(const QString &shpFile, QList<QGeoCoordi
     if (!errorString.isEmpty()) {
         goto Error;
     }
+    Q_CHECK_PTR(shpHandle);
 
     int cEntities, shapeType;
     SHPGetInfo(shpHandle, &cEntities, &shapeType, nullptr /* padfMinBound */, nullptr /* padfMaxBound */);
@@ -150,6 +163,11 @@ bool SHPFileHelper::loadPolygonFromFile(const QString &shpFile, QList<QGeoCoordi
     }
 
     shpObject = SHPReadObject(shpHandle, 0);
+    if (!shpObject) {
+        errorString = QString(_errorPrefix).arg(QT_TRANSLATE_NOOP("SHP", "Failed to read polygon object."));
+        goto Error;
+    }
+
     if (shpObject->nParts != 1) {
         errorString = QString(_errorPrefix).arg(QT_TRANSLATE_NOOP("SHP", "Only single part polygons are supported."));
         goto Error;
@@ -175,13 +193,67 @@ bool SHPFileHelper::loadPolygonFromFile(const QString &shpFile, QList<QGeoCoordi
     // Filter vertex distances to be larger than 1 meter apart
     {
         int i = 0;
-        while (i < vertices.count() - 2) {
+        while (i < (vertices.count() - 2)) {
             if (vertices[i].distanceTo(vertices[i+1]) < vertexFilterMeters) {
                 vertices.removeAt(i+1);
             } else {
                 i++;
             }
         }
+    }
+
+Error:
+    if (shpObject) {
+        SHPDestroyObject(shpObject);
+    }
+
+    if (shpHandle) {
+        SHPClose(shpHandle);
+    }
+
+    return errorString.isEmpty();
+}
+
+bool SHPFileHelper::loadPolylineFromFile(const QString &shpFile, QList<QGeoCoordinate> &vertices, QString &errorString)
+{
+    int utmZone = 0;
+    bool utmSouthernHemisphere = false;
+    SHPObject *shpObject = nullptr;
+
+    errorString.clear();
+    vertices.clear();
+
+    SHPHandle shpHandle = SHPFileHelper::_loadShape(shpFile, &utmZone, &utmSouthernHemisphere, errorString);
+    if (!errorString.isEmpty()) {
+        goto Error;
+    }
+    Q_CHECK_PTR(shpHandle);
+
+    int cEntities, shapeType;
+    SHPGetInfo(shpHandle, &cEntities, &shapeType, nullptr /* padfMinBound */, nullptr /* padfMaxBound */);
+    if (shapeType != SHPT_ARC) {
+        errorString = QString(_errorPrefix).arg(QT_TRANSLATE_NOOP("SHP", "File does not contain a polyline."));
+        goto Error;
+    }
+
+    shpObject = SHPReadObject(shpHandle, 0);
+    if (!shpObject) {
+        errorString = QString(_errorPrefix).arg(QT_TRANSLATE_NOOP("SHP", "Failed to read polyline object."));
+        goto Error;
+    }
+
+    if (shpObject->nParts != 1) {
+        errorString = QString(_errorPrefix).arg(QT_TRANSLATE_NOOP("SHP", "Only single part polylines are supported."));
+        goto Error;
+    }
+
+    for (int i = 0; i < shpObject->nVertices; i++) {
+        QGeoCoordinate coord;
+        if (!utmZone || !QGCGeo::convertUTMToGeo(shpObject->padfX[i], shpObject->padfY[i], utmZone, utmSouthernHemisphere, coord)) {
+            coord.setLatitude(shpObject->padfY[i]);
+            coord.setLongitude(shpObject->padfX[i]);
+        }
+        vertices.append(coord);
     }
 
 Error:

@@ -12,7 +12,7 @@
 #include "JsonHelper.h"
 #include "QGCQGeoCoordinate.h"
 #include "QGCApplication.h"
-#include "KMLHelper.h"
+#include "ShapeFileHelper.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QLineF>
@@ -345,20 +345,18 @@ QList<QGeoCoordinate> QGCMapPolyline::offsetPolyline(double distance)
     return rgNewPolyline;
 }
 
-bool QGCMapPolyline::loadKMLFile(const QString& kmlFile)
+bool QGCMapPolyline::loadKMLOrSHPFile(const QString &file)
 {
-    _beginResetIfNotActive();
-
     QString errorString;
     QList<QGeoCoordinate> rgCoords;
-    if (!KMLHelper::loadPolylineFromFile(kmlFile, rgCoords, errorString)) {
+    if (!ShapeFileHelper::loadPolylineFromFile(file, rgCoords, errorString)) {
         qgcApp()->showAppMessage(errorString);
         return false;
     }
 
+    _beginResetIfNotActive();
     clear();
     appendVertices(rgCoords);
-
     _endResetIfNotActive();
 
     return true;

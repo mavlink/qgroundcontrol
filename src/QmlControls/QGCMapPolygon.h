@@ -66,7 +66,7 @@ public:
     /// Offsets the current polygon edges by the specified distance in meters
     Q_INVOKABLE void offset(double distance);
 
-    /// Loads a polygon from a KML/SH{ file
+    /// Loads a polygon from a KML/SHP file
     /// @return true: success
     Q_INVOKABLE bool loadKMLOrSHPFile(const QString& file);
 

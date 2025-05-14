@@ -28,5 +28,15 @@
         <file alias="manifest.json.gz">Utilities/Compression/manifest.json.gz</file>
         <file alias="manifest.json.xz">Utilities/Compression/manifest.json.xz</file>
         <file alias="manifest.json.zip">Utilities/Compression/manifest.json.zip</file>
+        <file alias="pline.dbf">Utilities/Shape/pline.dbf</file>
+        <file alias="pline.prj">Utilities/Shape/pline.prj</file>
+        <file alias="pline.shp">Utilities/Shape/pline.shp</file>
+        <file alias="pline.shx">Utilities/Shape/pline.shx</file>
+        <file alias="polygon.dbf">Utilities/Shape/polygon.dbf</file>
+        <file alias="polygon.prj">Utilities/Shape/polygon.prj</file>
+        <file alias="polygon.shp">Utilities/Shape/polygon.shp</file>
+        <file alias="polygon.shx">Utilities/Shape/polygon.shx</file>
+        <file alias="polyline.kml">Utilities/Shape/polyline.kml</file>
+        <file alias="polygon.kml">Utilities/Shape/polygon.kml</file>
     </qresource>
 </RCC>

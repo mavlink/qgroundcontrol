@@ -37,7 +37,14 @@ public:
     static constexpr const char *shpFileExtension = "shp";
 
 private:
+    enum class ShapeFileType {
+        None,
+        KML,
+        SHP
+    };
+    static ShapeFileType _getShapeFileType(const QString &file, QString &errorString);
     static bool _fileIsKML(const QString &file, QString &errorString);
+    static bool _fileIsSHP(const QString &file, QString &errorString);
 
     static constexpr const char *_errorPrefix = QT_TR_NOOP("Shape file load failed. %1");
 };
