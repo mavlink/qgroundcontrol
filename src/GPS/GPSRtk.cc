@@ -76,15 +76,14 @@ void GPSRtk::connectGPS(const QString &device, QStringView gps_type)
         rtkSettings->baseReceiverManufacturers()->setRawValue(4);
         qCDebug(GPSRtkLog) << "Connecting Femtomes device";
 
-    } else {
+    } else if(gps_type.contains(QStringLiteral("blox"), Qt::CaseInsensitive)) {
         type = GPSProvider::GPSType::u_blox;
-        if (gps_type.contains(QStringLiteral("blox"), Qt::CaseInsensitive)) {
-            rtkSettings->baseReceiverManufacturers()->setRawValue(5); // Ublox
-        }else{
-            rtkSettings->baseReceiverManufacturers()->setRawValue(0); // Standart
-        }
-
+        rtkSettings->baseReceiverManufacturers()->setRawValue(5); // Ublox
         qCDebug(GPSRtkLog) << "Connecting U-blox device";
+    }else{
+        type = GPSProvider::GPSType::u_blox;
+        rtkSettings->baseReceiverManufacturers()->setRawValue(0); // Standart
+        qCDebug(GPSRtkLog) << "Connecting device has U-blox by default";
     }
 
     disconnectGPS();
