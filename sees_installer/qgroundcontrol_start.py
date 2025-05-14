@@ -12,7 +12,7 @@ import time
 import configparser
 import yaml
 
-VERSION = 1.1 # Added selection of drones, added config by yaml
+VERSION = 1.2 # Added selection of drones, added config by yaml
 
 
 class QGCGitHub():
