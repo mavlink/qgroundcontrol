@@ -1,18 +1,25 @@
-# Qgroundcontrol.ini checker
+# The IPs used are those of the OpenVPN (Elsight) or Wireguard (Straight Doodle)
 QGC_INI:
   CONFIG_CRITICAL_SECTIONS: ['Joysticks', 'TelemetryBarUserSettings-2', 'JoystickManager', 'LinkManager' ]
   IGNORE_PARAMS: ["Xbox%20Series%20X%20Controller\\Axis"]
   PATH: '/home/sees/.config/QGroundControl.org/QGroundControl Daily.ini'
 
-# Port for the RTSP stream server on drone
-RTSP:
-  RTSP_PORT: 8554
-
-# The IPs used are the OpenVPN (Elsight) or Wireguard (Straight Doodle)
 UAVS:
-  Yealm1: "10.22.110.1"
-  Yealm2: "10.223.126.41"
-  Yealm3: "10.223.221.39"
+  Yealm1:
+    MAVLINK_IP: "10.22.110.1"
+    MAVLINK_PORT: "60000"
+    RTSP_IP: "10.22.110.4"
+  Yealm2:
+    MAVLINK_IP: "10.223.126.41"
+    MAVLINK_PORT: "14550"
+    RTSP_IP: "10.223.126.41"
+  Yealm3:
+    MAVLINK_IP: "10.223.221.39"
+    MAVLINK_PORT: "14500"
+    RTSP_IP: "10.223.221.39"
+
+RTSP:
+  PORT: 8554
 
 GIT:
   Branch: "v4.3.0-dev"

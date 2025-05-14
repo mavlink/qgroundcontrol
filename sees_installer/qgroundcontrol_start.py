@@ -146,13 +146,15 @@ def section_to_text(config, sections):
                 pass
     return result
 
-def update_config_comms(config, name, IP, port):
-    print(f"Setting QGC connection to {name} at {IP}")
-    config['Video']['rtspUrl'] = f"rtsp://{IP}:{port}/fpv"
+def update_config_comms(config, drone_name, RTSP_IP, RTSP_port, mavlink_IP, mavlink_port):
+    print(f"Setting QGC connection to {drone_name} at {mavlink_IP}")
+    config['Video']['rtspUrl'] = f"rtsp://{RTSP_IP}:{RTSP_port}/fpv"
     config['Video']['videoSource'] = "RTSP Video Stream"
     config['LinkConfigurations']['Link0\\auto'] = "true"
-    config['LinkConfigurations']['Link0\\host0'] = IP
-    config['LinkConfigurations']['Link0\\name'] = f"Auto {name} {IP}"
+    config['LinkConfigurations']['Link0\\host0'] = mavlink_IP
+    config['LinkConfigurations']['Link0\\port0'] = mavlink_port
+    config['LinkConfigurations']['Link0\\port'] = mavlink_port
+    config['LinkConfigurations']['Link0\\name'] = f"Auto {drone_name} {mavlink_IP}"
     return config
 
 if __name__ == "__main__":
@@ -162,7 +164,7 @@ if __name__ == "__main__":
     UAV_DICT = config["UAVS"]
     CONFIG_CRITICAL_SECTIONS = config["QGC_INI"]["CONFIG_CRITICAL_SECTIONS"]
     IGNORE_PARAMS = config["QGC_INI"]["IGNORE_PARAMS"]
-    RTSP_PORT = config["RTSP"]["RTSP_PORT"]
+    RTSP_PORT = config["RTSP"]["PORT"]
     QGC_INI_PATH = config["QGC_INI"]["PATH"]
 
     # Create the progress window
@@ -216,9 +218,12 @@ if __name__ == "__main__":
         time.sleep(1)  # Display message
 
     # Update config according to drone selection
-    drone_IP = UAV_DICT[progress_win.drone_selected]
+    drone_info = UAV_DICT[progress_win.drone_selected]
     drone_name = progress_win.drone_selected
-    update_config_comms(config_local, drone_name, drone_IP, RTSP_PORT)
+
+
+    update_config_comms(config_local, drone_name, drone_info["RTSP_IP"], RTSP_PORT, drone_info["MAVLINK_IP"], drone_info["MAVLINK_PORT"])
+
 
     # Update ini file with the drone selected
     with open( QGC_INI_PATH, 'w') as configfile:
