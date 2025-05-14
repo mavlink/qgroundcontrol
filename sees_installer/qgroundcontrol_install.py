@@ -31,7 +31,7 @@ for directory in destinations:
 shutil.copy2('QGroundControl.png', dest_qgc_desktop_shortcut)
 shutil.copy2('QGroundControl.desktop', dest_qgc_desktop_shortcut)
 shutil.copy2('QGroundControl-v4.3.0-0.0.3.AppImage', dest_qgc_start)
-shutil.copy2('qgroundcontrol_start.sh', dest_qgc_start)
+shutil.copy2('qgroundcontrol_start.py', dest_qgc_start)
 shutil.copy2('qgroundcontrol_start.yaml', dest_qgc_start)
 if not os.path.exists(os.path.join(dest_qgc_start, ".env")):
 	print("No .env file available, copying template one. Please fill in the github API key")
