@@ -149,6 +149,7 @@ def section_to_text(config, sections):
 def update_config_comms(config, name, IP, port):
     print(f"Setting QGC connection to {name} at {IP}")
     config['Video']['rtspUrl'] = f"rtsp://{IP}:{port}/fpv"
+    config['Video']['videoSource'] = "RTSP Video Stream"
     config['LinkConfigurations']['Link0\\auto'] = "true"
     config['LinkConfigurations']['Link0\\host0'] = IP
     config['LinkConfigurations']['Link0\\name'] = f"Auto {name} {IP}"
@@ -219,7 +220,7 @@ if __name__ == "__main__":
     update_config_comms(config_local, drone_name, drone_IP, RTSP_PORT)
 
     # Update ini file with the drone selected
-    with open( 'QGroundControl Daily.ini', 'w') as configfile:
+    with open( '/home/sees/.config/QGroundControl.org/QGroundControl Daily.ini', 'w') as configfile:
         config_local.write(configfile)
 
     # There are no differences or the user is happy to continue
