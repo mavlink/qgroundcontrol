@@ -21,4 +21,5 @@ namespace SHPFileHelper
 {
     ShapeFileHelper::ShapeType determineShapeType(const QString &shpFile, QString &errorString);
     bool loadPolygonFromFile(const QString &shpFile, QList<QGeoCoordinate> &vertices, QString &errorString);
+    bool loadPolylineFromFile(const QString &shpFile, QList<QGeoCoordinate> &coords, QString &errorString);
 };
