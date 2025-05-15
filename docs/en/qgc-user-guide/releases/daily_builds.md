@@ -12,7 +12,7 @@ These can be downloaded from the links below (install as described in [Download 
 - [Windows](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl-installer.exe)
 - [OS X](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl.dmg)
 - [Linux](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl-x86_64.AppImage) - Before running do the following:
-  - `chmod +x QGroundControl.AppImage`
+  - `chmod +x QGroundControl-x86_64.AppImage`
   - On the command prompt enter (one time only):
 		- `sudo usermod -a -G dialout $USER`
     	- `sudo apt-get remove modemmanager -y`
