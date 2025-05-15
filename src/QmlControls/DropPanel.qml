@@ -41,25 +41,28 @@ Popup {
 
     onAboutToShow: {
         // Panel defaults to dropping to the right of click position
-        _root.x = clickRect.x + clickRect.width
+        let xPos = clickRect.x + clickRect.width
 
         // If there isn't room to the right then we switch to drop to the left
-        if (_root.x + _root.width > dropViewPort.x + dropViewPort.width) {
+        if (xPos + _root.width > dropViewPort.x + dropViewPort.width) {
             _dropRight = false
-            _root.x = clickRect.x - _root.width
+            xPos = clickRect.x - _root.width
         }
 
         // Default position of panel is vertically centered on click position
-        _root.y = clickRect.y + (clickRect.height / 2)
-        _root.y -= _root.height / 2
+        let yPos = clickRect.y + (clickRect.height / 2)
+        yPos -= _root.height / 2
 
         // Make sure panel is within viewport
-        let originRootY = _root.y
-        _root.y = Math.max(_root.y, dropViewPort.y)
-        _root.y = Math.min(_root.y, dropViewPort.y + dropViewPort.height - _root.height)
+        let originalYPos = yPos
+        yPos = Math.max(yPos, dropViewPort.y)
+        yPos = Math.min(yPos, dropViewPort.y + dropViewPort.height - _root.height)
+
+        _root.x = xPos
+        _root.y = yPos
 
         // Adjust arrow position back to point at click position
-        _arrowPointPositionY += originRootY - _root.y
+        _arrowPointPositionY += originalYPos - yPos
     }
 
     background: Item {
