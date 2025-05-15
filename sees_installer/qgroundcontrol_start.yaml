@@ -1,8 +1,11 @@
-# The IPs used are those of the OpenVPN (Elsight) or Wireguard (Straight Doodle)
 QGC_INI:
   CONFIG_CRITICAL_SECTIONS: ['Joysticks', 'TelemetryBarUserSettings-2', 'JoystickManager', 'LinkManager' ]
   IGNORE_PARAMS: ["Xbox%20Series%20X%20Controller\\Axis"]
   PATH: '/home/sees/.config/QGroundControl.org/QGroundControl Daily.ini'
+
+# The IPs used for RTSP are those of the OpenVPN of the NUC (Elsight) or Wireguard NUC (Doodle)
+# The IPs used for Mavlink are the OpenVPN of the Elsight itself, or the Doodle itself (which requires a computer connected
+# to the doodle on the base to work)
 
 UAVS:
   Yealm1:
@@ -12,11 +15,11 @@ UAVS:
   Yealm2:
     MAVLINK_IP: "10.223.126.41"
     MAVLINK_PORT: "14550"
-    RTSP_IP: "10.223.126.41"
+    RTSP_IP: "10.8.0.73"
   Yealm3:
     MAVLINK_IP: "10.223.221.39"
-    MAVLINK_PORT: "14500"
-    RTSP_IP: "10.223.221.39"
+    MAVLINK_PORT: "14550"
+    RTSP_IP: "10.8.0.74"
 
 RTSP:
   PORT: 8554
