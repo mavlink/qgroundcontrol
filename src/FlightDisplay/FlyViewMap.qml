@@ -388,15 +388,6 @@ FlightMap {
             globals.guidedControllerFlyView.fwdFlightGotoMapCircle = this
         }
 
-        Connections {
-            target: QGroundControl.multiVehicleManager
-            function onActiveVehicleChanged(activeVehicle) {
-                if (!activeVehicle) {
-                    visible = false
-                }
-            }
-        }
-
         Binding {
             target: _fwdFlightGotoMapCircle
             property: "center"
@@ -476,7 +467,7 @@ FlightMap {
             target: QGroundControl.multiVehicleManager
             function onActiveVehicleChanged(activeVehicle) {
                 if (!activeVehicle) {
-                    hide()
+                    gotoLocationItem.hide()
                 }
             }
         }
