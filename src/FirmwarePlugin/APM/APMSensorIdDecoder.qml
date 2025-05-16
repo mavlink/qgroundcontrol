@@ -148,9 +148,9 @@ QGCLabel {
             return ""
         }
         if (deviceName.startsWith('COMPASS')) {
-            if (busType === 3 && devtype === 1) {
+            if (busType === 'UAVCAN') {
                 decodedDevname = 'UAVCAN'
-            } else if (busType === 6 && devtype === 1) {
+            } else if (busType === 'EAHRS') {
                 decodedDevname = 'EAHRS'
             } else {
                 decodedDevname = compassTypes[devtype] || '?'
