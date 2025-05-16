@@ -17,6 +17,9 @@
 #include <QtCore/QObject>
 #include <QtQmlIntegration/QtQmlIntegration>
 
+#include <thread>
+#include <mutex>
+
 Q_DECLARE_LOGGING_CATEGORY(ParameterEditorControllerLog)
 
 class ParameterManager;
@@ -88,7 +91,7 @@ class ParameterEditorController : public FactPanelController
 {
     Q_OBJECT
     // QML_ELEMENT
-    Q_PROPERTY(QString              searchText              MEMBER _searchText                                          NOTIFY searchTextChanged)
+    Q_PROPERTY(QString              searchText              READ searchText                 WRITE setSearchText         NOTIFY searchTextChanged)
     Q_PROPERTY(QmlObjectListModel*  categories              READ categories                                             CONSTANT)
     Q_PROPERTY(QObject*             currentCategory         READ currentCategory            WRITE setCurrentCategory    NOTIFY currentCategoryChanged)
     Q_PROPERTY(QObject*             currentGroup            READ currentGroup               WRITE setCurrentGroup       NOTIFY currentGroupChanged)
@@ -118,8 +121,11 @@ public:
     QObject*            currentGroup        (void) { return _currentGroup; }
     QmlObjectListModel* categories          (void) { return &_categories; }
     QmlObjectListModel* diffList            (void) { return &_diffList; }
+    QString             searchText          (void);
+
     void                setCurrentCategory  (QObject* currentCategory);
     void                setCurrentGroup     (QObject* currentGroup);
+    void                setSearchText       (const QString& searchText);
 
 signals:
     void searchTextChanged              (QString searchText);
@@ -129,6 +135,7 @@ signals:
     void diffOtherVehicleChanged        (bool diffOtherVehicle);
     void diffMultipleComponentsChanged  (bool diffMultipleComponents);
     void parametersChanged              (void);
+    void searchResultsReady             (void);
 
 private slots:
     void _currentCategoryChanged(void);
@@ -137,25 +144,28 @@ private slots:
     void _buildLists            (void);
     void _buildListsForComponent(int compId);
     void _factAdded             (int compId, Fact* fact);
+    void _swapSearchResults     (void);
 
 private:
     bool _shouldShow(Fact *fact) const;
-
-    void _performSearch();
+    void _performThreadedSearch();
 
 private:
     ParameterManager*           _parameterMgr           = nullptr;
     QString                     _searchText;
-    QTimer                      _searchTimer;
     ParameterEditorCategory*    _currentCategory        = nullptr;
     ParameterEditorGroup*       _currentGroup           = nullptr;
     bool                        _showModifiedOnly       = false;
     bool                        _diffOtherVehicle       = false;
     bool                        _diffMultipleComponents = false;
 
+    bool                        _cancelSearchThread     = false;
+    std::thread                 _searchThread;
+    std::mutex                  _searchTextMutex;
+
     QmlObjectListModel          _categories;
     QmlObjectListModel          _diffList;
-    QmlObjectListModel          _searchParameters;
     QmlObjectListModel*         _parameters             = nullptr;
+    QmlObjectListModel*         _searchResults          = nullptr;
     QMap<QString, ParameterEditorCategory*> _mapCategoryName2Category;
 };

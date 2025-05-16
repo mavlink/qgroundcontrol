@@ -24,14 +24,11 @@ ParameterEditorController::ParameterEditorController(QObject *parent)
 
     _buildLists();
 
-    _searchTimer.setSingleShot(true);
-    _searchTimer.setInterval(300);
-
     connect(this, &ParameterEditorController::currentCategoryChanged,   this, &ParameterEditorController::_currentCategoryChanged);
     connect(this, &ParameterEditorController::currentGroupChanged,      this, &ParameterEditorController::_currentGroupChanged);
     connect(this, &ParameterEditorController::searchTextChanged,        this, &ParameterEditorController::_searchTextChanged);
     connect(this, &ParameterEditorController::showModifiedOnlyChanged,  this, &ParameterEditorController::_searchTextChanged);
-    connect(&_searchTimer, &QTimer::timeout,                            this, &ParameterEditorController::_performSearch);
+    connect(this, &ParameterEditorController::searchResultsReady,       this, &ParameterEditorController::_swapSearchResults, Qt::QueuedConnection);
     connect(_parameterMgr, &ParameterManager::factAdded,                this, &ParameterEditorController::_factAdded);
 
     ParameterEditorCategory* category = _categories.count() ? _categories.value<ParameterEditorCategory*>(0) : nullptr;
@@ -374,61 +371,88 @@ bool ParameterEditorController::_shouldShow(Fact* fact) const
 
 void ParameterEditorController::_searchTextChanged(void)
 {
-    if (!_searchTimer.isActive()) {
-        _searchTimer.start();
+    // If there is already a search in progress, stop it
+    if (_searchThread.joinable()) {
+        qDebug() << "Stopping previous search thread";
+        _cancelSearchThread = true;
+        _searchThread.join();
+        _cancelSearchThread = false;
+    }
+
+    if (_searchText.isEmpty() && !_showModifiedOnly) {
+        // Reset back to normal non search mode
+        ParameterEditorCategory* category = _categories.count() ? _categories.value<ParameterEditorCategory*>(0) : nullptr;
+        setCurrentCategory(category);
+    } else {
+        // We need to start a new search thread
+        _searchThread = std::thread(&ParameterEditorController::_performThreadedSearch, this);
+        _searchThread.detach();
     }
 }
 
-void ParameterEditorController::_performSearch(void)
+QString ParameterEditorController::searchText(void)
 {
-    QObjectList newParameterList;
+    std::lock_guard<std::mutex> lock(_searchTextMutex);
+    return _searchText;
+}
 
-    QStringList rgSearchStrings = _searchText.split(' ', Qt::SkipEmptyParts);
+void ParameterEditorController::setSearchText(const QString& searchText)
+{
+    std::lock_guard<std::mutex> lock(_searchTextMutex);
+    if (_searchText != searchText) {
+        _searchText = searchText;
+        emit searchTextChanged(_searchText);
+    }
+}
 
-    if (rgSearchStrings.isEmpty() && !_showModifiedOnly) {
-        ParameterEditorCategory* category = _categories.count() ? _categories.value<ParameterEditorCategory*>(0) : nullptr;
-        setCurrentCategory(category);
-        _searchParameters.clear();
-    } else {
-        _searchParameters.beginReset();
-        _searchParameters.clear();
+void ParameterEditorController::_performThreadedSearch(void)
+{
+    QStringList rgSearchStrings = searchText().split(' ', Qt::SkipEmptyParts);
+    _searchResults = new QmlObjectListModel;
 
-        for (const QString &paraName: _parameterMgr->parameterNames(_vehicle->defaultComponentId())) {
-            Fact* fact = _parameterMgr->getParameter(_vehicle->defaultComponentId(), paraName);
-            bool matched = _shouldShow(fact);
-            // All of the search items must match in order for the parameter to be added to the list
-            if (matched) {
-                for (const auto& searchItem : rgSearchStrings) {
-                    QRegularExpression re = QRegularExpression(searchItem, QRegularExpression::CaseInsensitiveOption);
-                    if (re.isValid()) {
-                        if (!fact->name().contains(re) &&
-                                !fact->shortDescription().contains(re) &&
-                                !fact->longDescription().contains(re)) {
-                            matched = false;
-                        }
-                    } else {
-                        if (!fact->name().contains(searchItem, Qt::CaseInsensitive) &&
-                                !fact->shortDescription().contains(searchItem, Qt::CaseInsensitive) &&
-                                !fact->longDescription().contains(searchItem, Qt::CaseInsensitive)) {
-                            matched = false;
-                        }
+    for (const QString &paramName: _parameterMgr->parameterNames(_vehicle->defaultComponentId())) {
+        Fact* fact = _parameterMgr->getParameter(_vehicle->defaultComponentId(), paramName);
+        bool matched = _shouldShow(fact);
+        // All of the search items must match in order for the parameter to be added to the list
+        if (matched) {
+            for (const auto& searchItem : rgSearchStrings) {
+                if (_cancelSearchThread) {
+                    delete _searchResults;
+                    return;
+                }
+                QRegularExpression re = QRegularExpression(searchItem, QRegularExpression::CaseInsensitiveOption);
+                if (re.isValid()) {
+                    if (!fact->name().contains(re) &&
+                            !fact->shortDescription().contains(re) &&
+                            !fact->longDescription().contains(re)) {
+                        matched = false;
+                    }
+                } else {
+                    if (!fact->name().contains(searchItem, Qt::CaseInsensitive) &&
+                            !fact->shortDescription().contains(searchItem, Qt::CaseInsensitive) &&
+                            !fact->longDescription().contains(searchItem, Qt::CaseInsensitive)) {
+                        matched = false;
                     }
                 }
             }
-            if (matched) {
-                _searchParameters.append(fact);
-            }
         }
-
-        _searchParameters.endReset();
-
-        if (_parameters != &_searchParameters) {
-            _parameters = &_searchParameters;
-            emit parametersChanged();
-
-            _currentCategory    = nullptr;
-            _currentGroup       = nullptr;
+        if (matched) {
+            _searchResults->append(fact);
         }
+    }
+
+    _searchResults->moveToThread(this->thread());
+    emit searchResultsReady();
+}
+
+void ParameterEditorController::_swapSearchResults()
+{
+    if (_searchResults) {
+        //delete _parameters;
+        _parameters = _searchResults;
+        _currentCategory = nullptr;
+        _currentGroup = nullptr;
+        emit parametersChanged();
     }
 }
 
