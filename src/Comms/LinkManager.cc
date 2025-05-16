@@ -171,7 +171,7 @@ bool LinkManager::createConnectedLink(SharedLinkConfigurationPtr &config)
     _rgLinks.append(link);
     config->setLink(link);
 
-    (void) connect(link.get(), &LinkInterface::communicationError, qgcApp(), &QGCApplication::showAppMessage);
+    (void) connect(link.get(), &LinkInterface::communicationError, this, &LinkManager::_communicationError);
     (void) connect(link.get(), &LinkInterface::bytesReceived, MAVLinkProtocol::instance(), &MAVLinkProtocol::receiveBytes);
     (void) connect(link.get(), &LinkInterface::bytesSent, MAVLinkProtocol::instance(), &MAVLinkProtocol::logSentBytes);
     (void) connect(link.get(), &LinkInterface::disconnected, this, &LinkManager::_linkDisconnected);
@@ -187,6 +187,11 @@ bool LinkManager::createConnectedLink(SharedLinkConfigurationPtr &config)
     }
 
     return true;
+}
+
+void LinkManager::_communicationError(const QString &title, const QString &error)
+{
+    qgcApp()->showAppMessage(error, title);
 }
 
 SharedLinkInterfacePtr LinkManager::mavlinkForwardingLink()

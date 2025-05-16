@@ -124,6 +124,7 @@ signals:
 
 private slots:
     void _linkDisconnected();
+    void _communicationError(const QString &title, const QString &error);
 
 private:
     QmlObjectListModel *_qmlLinkConfigurations();
