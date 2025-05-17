@@ -774,6 +774,7 @@ Item {
                             }
                         }
                         onSelectNextNotReadyItem:   selectNextNotReady()
+                        Component.onCompleted: console.log("MissionItemEditor: " + object.sequenceNumber)
                     }
                 }
             }
