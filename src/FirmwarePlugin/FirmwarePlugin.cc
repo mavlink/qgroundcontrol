@@ -467,7 +467,7 @@ void FirmwarePlugin::_updateFlightModeList(FlightModeList &flightModeList)
     }
 
     for (const FirmwareFlightMode &flightMode : _flightModeList) {
-        qCDebug(FirmwarePluginLog) << "Flight Mode:" << flightMode.mode_name << " Custom Mode:" << flightMode.custom_mode;
+        qCDebug(FirmwarePluginLog) << "Flight Mode:" << flightMode.mode_name << " Custom Mode:" << flightMode.custom_mode << "MultiRotor:" << flightMode.multiRotor << "FixedWing:" << flightMode.fixedWing;
     }
 }
 
@@ -475,6 +475,7 @@ void FirmwarePlugin::_addNewFlightMode(FirmwareFlightMode &newFlightMode)
 {
     for (const FirmwareFlightMode &existingFlightMode : _flightModeList) {
         if (existingFlightMode.custom_mode == newFlightMode.custom_mode) {
+            qCWarning(FirmwarePluginLog) << "Flight mode" << newFlightMode.mode_name << "already exists in the list. Not adding it again. custom_mode:" << newFlightMode.custom_mode;
             // Already exists
             return;
         }
