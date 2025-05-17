@@ -9,11 +9,15 @@
 
 #pragma once
 
+#include <QtCore/QLoggingCategory>
+#include <QtGui/QColor>
 #include <QtXml/QDomDocument>
 #include <QtXml/QDomElement>
-#include <QtGui/QColor>
 
+class QColor;
 class QGeoCoordinate;
+
+Q_DECLARE_LOGGING_CATEGORY(KMLDomDocumentLog)
 
 /// Used to convert a Plan to a KML document
 class KMLDomDocument : public QDomDocument

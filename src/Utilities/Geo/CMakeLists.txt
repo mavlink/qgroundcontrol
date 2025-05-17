@@ -1,7 +1,17 @@
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
+        GeoJsonHelper.cc
+        GeoJsonHelper.h
+        KMLDomDocument.cc
+        KMLDomDocument.h
+        KMLHelper.cc
+        KMLHelper.h
         QGCGeo.cc
         QGCGeo.h
+        ShapeFileHelper.cc
+        ShapeFileHelper.h
+        SHPFileHelper.cc
+        SHPFileHelper.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -35,3 +45,17 @@ CPMAddPackage(
 target_compile_options(GeographicLib_STATIC PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/wd9025>)
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE GeographicLib::GeographicLib)
+
+#===========================================================================#
+
+CPMAddPackage(
+    NAME Shapelib
+    VERSION 1.6.1
+    GITHUB_REPOSITORY OSGeo/shapelib
+    OPTIONS
+        "BUILD_SHAPELIB_CONTRIB OFF"
+        "BUILD_APPS OFF"
+        "BUILD_TESTING OFF"
+)
+
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE shp)
