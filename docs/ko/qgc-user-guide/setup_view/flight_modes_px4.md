@@ -30,7 +30,7 @@ In order to set up flight modes you must already have
    - 송신기 **모드 채널**을 선택합니다(위의 채널 5로 표시됨).
    - 채널에 인코딩된 스위치 위치에 대해 최대 6개의 **비행 모드**를 선택합니다.
 
-     > **참고** 위치 모드, 리턴 모드 및 미션 모드가 [권장됩니다](https://docs.px4.io/master/en/config/flight_mode.html#what-flight-modes-and-switches-should-i-set).
+     > **참고** 위치 모드, 리턴 모드 및 미션 모드가 [권장됩니다](https://docs.px4.io/main/en/config/flight_mode.html#what-flight-modes-and-switches-should-i-set).
      > :::
 
 4. _스위치 설정_ 설정
