@@ -10,12 +10,13 @@
 #include "SHPFileHelper.h"
 #include "QGCGeo.h"
 #include "QGCLoggingCategory.h"
-#include "shapefil.h"
 
 #include <QtCore/QFile>
 #include <QtCore/QRegularExpression>
 
-QGC_LOGGING_CATEGORY(SHPFileHelperLog, "qgc.utilities.shpfilehelper");
+#include "shapefil.h"
+
+QGC_LOGGING_CATEGORY(SHPFileHelperLog, "qgc.utilities.geo.shpfilehelper")
 
 namespace SHPFileHelper
 {
