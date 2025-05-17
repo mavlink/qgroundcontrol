@@ -8,7 +8,12 @@
  ****************************************************************************/
 
 #include "KMLDomDocument.h"
+#include "QGCLoggingCategory.h"
+
+#include <QtGui/QColor>
 #include <QtPositioning/QGeoCoordinate>
+
+QGC_LOGGING_CATEGORY(KMLDomDocumentLog, "qgc.utilities.geo.kmldomdocument")
 
 KMLDomDocument::KMLDomDocument(const QString &name)
 {

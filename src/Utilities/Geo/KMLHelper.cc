@@ -8,9 +8,12 @@
  ****************************************************************************/
 
 #include "KMLHelper.h"
+#include "QGCLoggingCategory.h"
 
 #include <QtCore/QFile>
 #include <QtXml/QDomDocument>
+
+QGC_LOGGING_CATEGORY(KMLHelperLog, "qgc.utilities.geo.kmlhelper")
 
 namespace KMLHelper
 {
