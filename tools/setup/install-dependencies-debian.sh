@@ -123,6 +123,11 @@ DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
 DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
     libshp-dev
 
+# GDAL
+DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
+    libproj-dev \
+    proj-bin
+
 # DNS
 # DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install libavahi-compat-libdnssd-dev
 
