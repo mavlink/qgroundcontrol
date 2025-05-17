@@ -37,17 +37,6 @@ Item {
         id: controller
     }
 
-    Timer {
-        id:         clearTimer
-        interval:   100;
-        running:    false;
-        repeat:     false
-        onTriggered: {
-            searchText.text = ""
-            controller.searchText = ""
-        }
-    }
-
     QGCMenu {
         id:                 toolsMenu
         QGCMenuItem {
@@ -157,7 +146,8 @@ Item {
                     if(ScreenTools.isMobile) {
                         Qt.inputMethod.hide();
                     }
-                    clearTimer.start()
+                    searchText.text = ""
+                    controller.searchText = ""
                 }
             }
 
