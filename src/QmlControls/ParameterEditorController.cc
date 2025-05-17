@@ -38,6 +38,7 @@ ParameterEditorController::ParameterEditorController(QObject *parent)
 ParameterEditorController::~ParameterEditorController()
 {
     // qCDebug(ParameterEditorControllerLog) << Q_FUNC_INFO << this;
+    _stopSearchThread();
 }
 
 void ParameterEditorController::_buildListsForComponent(int compId)
@@ -369,15 +370,18 @@ bool ParameterEditorController::_shouldShow(Fact* fact) const
     return fact->defaultValueAvailable() && !fact->valueEqualsDefault();
 }
 
-void ParameterEditorController::_searchTextChanged(void)
+void ParameterEditorController::_stopSearchThread()
 {
-    // If there is already a search in progress, stop it
     if (_searchThread.joinable()) {
-        qDebug() << "Stopping previous search thread";
         _cancelSearchThread = true;
         _searchThread.join();
         _cancelSearchThread = false;
     }
+}
+
+void ParameterEditorController::_searchTextChanged(void)
+{
+    _stopSearchThread();
 
     if (_searchText.isEmpty() && !_showModifiedOnly) {
         // Reset back to normal non search mode
@@ -408,7 +412,8 @@ void ParameterEditorController::setSearchText(const QString& searchText)
 void ParameterEditorController::_performThreadedSearch(void)
 {
     QStringList rgSearchStrings = searchText().split(' ', Qt::SkipEmptyParts);
-    _searchResults = new QmlObjectListModel;
+
+    _searchResults.clear();
 
     for (const QString &paramName: _parameterMgr->parameterNames(_vehicle->defaultComponentId())) {
         Fact* fact = _parameterMgr->getParameter(_vehicle->defaultComponentId(), paramName);
@@ -417,7 +422,7 @@ void ParameterEditorController::_performThreadedSearch(void)
         if (matched) {
             for (const auto& searchItem : rgSearchStrings) {
                 if (_cancelSearchThread) {
-                    delete _searchResults;
+                    _searchResults.clear();
                     return;
                 }
                 QRegularExpression re = QRegularExpression(searchItem, QRegularExpression::CaseInsensitiveOption);
@@ -437,23 +442,26 @@ void ParameterEditorController::_performThreadedSearch(void)
             }
         }
         if (matched) {
-            _searchResults->append(fact);
+            _searchResults.append(fact);
         }
     }
 
-    _searchResults->moveToThread(this->thread());
     emit searchResultsReady();
 }
 
 void ParameterEditorController::_swapSearchResults()
 {
-    if (_searchResults) {
-        //delete _parameters;
-        _parameters = _searchResults;
-        _currentCategory = nullptr;
-        _currentGroup = nullptr;
-        emit parametersChanged();
+    _parameters->beginReset();
+    _parameters->clear();
+    for (Fact* fact : _searchResults) {
+        _parameters->append(fact);
     }
+    _parameters->endReset();
+
+    _currentCategory = nullptr;
+    _currentGroup = nullptr;
+
+    emit parametersChanged();
 }
 
 void ParameterEditorController::_currentCategoryChanged(void)

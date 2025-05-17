@@ -149,6 +149,7 @@ private slots:
 private:
     bool _shouldShow(Fact *fact) const;
     void _performThreadedSearch();
+    void _stopSearchThread();
 
 private:
     ParameterManager*           _parameterMgr           = nullptr;
@@ -166,6 +167,6 @@ private:
     QmlObjectListModel          _categories;
     QmlObjectListModel          _diffList;
     QmlObjectListModel*         _parameters             = nullptr;
-    QmlObjectListModel*         _searchResults          = nullptr;
+    QList<Fact*>                _searchResults;
     QMap<QString, ParameterEditorCategory*> _mapCategoryName2Category;
 };
