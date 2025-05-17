@@ -145,6 +145,7 @@ private slots:
     void _buildListsForComponent(int compId);
     void _factAdded             (int compId, Fact* fact);
     void _swapSearchResults     (void);
+    void _startSearchThread     (void);
 
 private:
     bool _shouldShow(Fact *fact) const;
@@ -163,6 +164,7 @@ private:
     bool                        _cancelSearchThread     = false;
     std::thread                 _searchThread;
     std::mutex                  _searchTextMutex;
+    QTimer                      _searchTimer;
 
     QmlObjectListModel          _categories;
     QmlObjectListModel          _diffList;
