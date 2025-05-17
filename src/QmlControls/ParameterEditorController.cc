@@ -381,54 +381,62 @@ void ParameterEditorController::_searchTextChanged(void)
 
 void ParameterEditorController::_performSearch(void)
 {
-    QObjectList newParameterList;
-
     QStringList rgSearchStrings = _searchText.split(' ', Qt::SkipEmptyParts);
 
     if (rgSearchStrings.isEmpty() && !_showModifiedOnly) {
         ParameterEditorCategory* category = _categories.count() ? _categories.value<ParameterEditorCategory*>(0) : nullptr;
         setCurrentCategory(category);
         _searchParameters.clear();
-    } else {
-        _searchParameters.beginReset();
-        _searchParameters.clear();
+        return;
+    }
 
-        for (const QString &paraName: _parameterMgr->parameterNames(_vehicle->defaultComponentId())) {
-            Fact* fact = _parameterMgr->getParameter(_vehicle->defaultComponentId(), paraName);
-            bool matched = _shouldShow(fact);
-            // All of the search items must match in order for the parameter to be added to the list
-            if (matched) {
-                for (const auto& searchItem : rgSearchStrings) {
-                    QRegularExpression re = QRegularExpression(searchItem, QRegularExpression::CaseInsensitiveOption);
-                    if (re.isValid()) {
-                        if (!fact->name().contains(re) &&
-                                !fact->shortDescription().contains(re) &&
-                                !fact->longDescription().contains(re)) {
-                            matched = false;
-                        }
-                    } else {
-                        if (!fact->name().contains(searchItem, Qt::CaseInsensitive) &&
-                                !fact->shortDescription().contains(searchItem, Qt::CaseInsensitive) &&
-                                !fact->longDescription().contains(searchItem, Qt::CaseInsensitive)) {
-                            matched = false;
-                        }
+    QVector<QRegularExpression> regexList;
+    regexList.reserve(rgSearchStrings.size());
+    for (const QString &searchItem : rgSearchStrings) {
+        QRegularExpression re(searchItem, QRegularExpression::CaseInsensitiveOption);
+        regexList.append(re.isValid() ? re : QRegularExpression());
+    }
+
+    _searchParameters.beginReset();
+    _searchParameters.clear();
+
+    for (const QString &paraName: _parameterMgr->parameterNames(_vehicle->defaultComponentId())) {
+        Fact* fact = _parameterMgr->getParameter(_vehicle->defaultComponentId(), paraName);
+        bool matched = _shouldShow(fact);
+        // All of the search items must match in order for the parameter to be added to the list
+        if (matched) {
+            for (int i = 0; i < rgSearchStrings.size() && matched; ++i) {
+                const QRegularExpression &re = regexList.at(i);
+                if (re.isValid()) {
+                    if (!fact->name().contains(re) &&
+                        !fact->shortDescription().contains(re) &&
+                        !fact->longDescription().contains(re)) {
+                        matched = false;
+                    }
+                } else {
+                    const QString &searchItem = rgSearchStrings.at(i);
+                    if (!fact->name().contains(searchItem, Qt::CaseInsensitive) &&
+                        !fact->shortDescription().contains(searchItem, Qt::CaseInsensitive) &&
+                        !fact->longDescription().contains(searchItem, Qt::CaseInsensitive)) {
+                        matched = false;
                     }
                 }
             }
-            if (matched) {
-                _searchParameters.append(fact);
-            }
         }
 
-        _searchParameters.endReset();
-
-        if (_parameters != &_searchParameters) {
-            _parameters = &_searchParameters;
-            emit parametersChanged();
-
-            _currentCategory    = nullptr;
-            _currentGroup       = nullptr;
+        if (matched) {
+            _searchParameters.append(fact);
         }
+    }
+
+    _searchParameters.endReset();
+
+    if (_parameters != &_searchParameters) {
+        _parameters = &_searchParameters;
+        emit parametersChanged();
+
+        _currentCategory    = nullptr;
+        _currentGroup       = nullptr;
     }
 }
 
