@@ -51,9 +51,8 @@ Map {
         // is nothing to do.
         _map.visibleRegion = QtPositioning.rectangle(QtPositioning.coordinate(0, 0), QtPositioning.coordinate(0, 0))
         _map.visibleRegion = region
-        if (_map.zoomLevel > 15) {
-            // Don't go past a reasonable zoom level
-            _map.zoomLevel = 15
+        if (_map.zoomLevel > maxZoomLevel) {
+            _map.zoomLevel = maxZoomLevel
         }
     }
 
