@@ -64,6 +64,12 @@ endif()
 include(GNUInstallDirs)
 include(FetchContent)
 include(CMakePrintHelpers)
+
+if(EXISTS "${QGC_CPM_SOURCE_CACHE}")
+    set(ENV{CPM_SOURCE_CACHE} "${QGC_CPM_SOURCE_CACHE}")
+else()
+    set(ENV{CPM_SOURCE_CACHE} "${CMAKE_BINARY_DIR}/cpm_modules")
+endif()
 include(CPM)
 
 set(CMAKE_CXX_STANDARD 20)
