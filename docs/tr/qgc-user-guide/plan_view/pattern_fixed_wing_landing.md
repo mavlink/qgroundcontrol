@@ -18,14 +18,14 @@ Hem oyalanma hem de iniş noktaları, istenilen yeni noktalara sürüklenebilir 
 
 2. _Plan Tools_ 'dan _Plan Tools_'u açın ve _Fixed Wing Landing Pattern_'i seçin.
 
-   ![Sabit Kanat İniş Yolu](../../../assets/plan/pattern/fixed_wing_landing_pattern_menu.jpg)
+  ![Sabit Kanat İniş Yolu](../../../assets/plan/pattern/fixed_wing_landing_pattern_menu.jpg)
 
-   Bu, görev listesine (sağda) _Landing Pattern_ öğesi ekleyecektir.
+  Bu, görev listesine (sağda) _Landing Pattern_ öğesi ekleyecektir.
 
-   ![Sabit Kanat İniş Yolu](../../../assets/plan/pattern/fixed_wing_landing_pattern_mission_item_initial.jpg)
+  ![Sabit Kanat İniş Yolu](../../../assets/plan/pattern/fixed_wing_landing_pattern_mission_item_initial.jpg)
 
 3. Click on the map to create both the loiter point and the landing point.
-   Bu noktalar harita üzerinde hareket ettirilebilir.
+  Bu noktalar harita üzerinde hareket ettirilebilir.
 
 Ek ayarlar bir sonraki bölümde ele alınmıştır.
 

@@ -1,54 +1,54 @@
-# ArduPilot Flight Mode Setup
+# ArduPilot 飞行模式设置
 
-The _Flight Modes_ section allows you to configure which flight modes and other actions are triggered by particular switches/switch positions on your RC transmitter.
+_飞行模式_ 部分允许您配置由遥控发射器上特定 开关 / 扳机位置 触发的飞行模式及其他操作。
 
 ::: info
 In order to set up flight modes you must already have
 
-> - In order to set up flight modes you must already have - [Configured your radio](../setup_view/radio.md) in order to set flight modes.
-> - - [Setup the RC transmitter](../setup_view/FlightModes.md#transmitter-setup) (Flight Modes > Transmitter Setup)
+> - [配置您的无线电](../setup_view/radio.md)以设置飞行模式。
+> - [设置RC 发射机](../setup_view/FlightModes.md#transmitter-setup) (飞行模式 > 发射器设置)> ::
 
-To access this section, select the **Gear** icon (Vehicle Setup) in the top toolbar and then **Flight Modes** in the sidebar.
+若要访问本部分，请在顶部工具栏中选择**齿轮** 图标(载具设置)，然后在侧边栏中选择**飞行模式**。
 
-![Flight modes setup - ArduCopter](../../../assets/setup/flight_modes/ardupilot_copter.jpg)
+![飞行模式设置 - ArduCopter](../../../assets/setup/flight_modes/ardupilot_copter.jpg)
 
-## Flight Mode Settings
+## 飞行模式设置
 
-On ArduPilot you can assign up to 6 different flight modes to a single channel of your transmitter (the channel is selectable on Plane, but fixed to channel 5 on Copter).
-ArduCopter also allows you to specify additional _Channel Options_ for channels 7-12.
-These allow you to assign functions to these switches (for example, to turn on a camera, or return to launch).
+在 ArduPilot 中，你可以将多达 6 种不同的飞行模式分配到发射器的单个通道上（在固定翼飞行器（Plane）中该通道可选择，而在多旋翼飞行器（Copter）中则固定为通道 5 ）。
+ArduCopter还允许您为第 7-12 频道指定额外的 _频道选项_。
+这些允许您将函数分配给这些开关（例如，开启相机或返回启动）。
 
-To set the flight modes:
+设置飞行模式：
 
-1. Turn on your RC transmitter.
+1. 打开您的遥控器发射器。
 
-2. Select the **Gear** icon (Vehicle Setup) in the top toolbar and then **Flight Modes** in the sidebar.
+2. 在顶部工具栏中选择**齿轮** 图标(载具设置)，然后在侧边栏中选择**飞行模式**。
 
-   ![Flight modes setup - ArduCopter](../../../assets/setup/flight_modes/ardupilot_copter.jpg)
+   ![飞行模式设置 - ArduCopter](../../../assets/setup/flight_modes/ardupilot_copter.jpg)
 
    ::: info
-   The above image is a screenshot of the flight mode setup for ArduCopter.
+   以上图像是ArduCopter飞行模式设置的屏幕截图。
    :::
 
-3. Select up to 6 flight modes in the drop downs.
+3. 在降落中最多选择6种飞行模式。
 
-4. **ArduCopter only:** Select additional _Channel Options_ for channels 7-12.
+4. **仅ArduCopter:** 为频道 7-12 选择额外的 _频道选项_。
 
-5. **ArduPlane only:** Select the mode channel from the dropdown.
+5. **ArduPlane 仅限：** 从下拉列表中选择模式频道。
 
-   ![Flight modes setup - ArduPlane](../../../assets/setup/flight_modes/ardupilot_plane.jpg)
+   ![飞行模式设置 - ArduPlane](../../../assets/setup/flight_modes/ardupilot_plane.jpg)
 
-6. Test that the modes are mapped to the right transmitter switches by selecting each mode switch on your transmitter in turn, and check that the desired flight mode is activated (the text turns yellow on _QGroundControl_ for the active mode).
+6. 通过在您的发射机上选择每个模式开关来测试模式是否映射到右转发器切换器。 并检查所需飞行模式是否已激活（在 _QGroundControl_ 上，激活的模式文本会变成黄色）。
 
-All values are automatically saved as they are changed.
+所有值都在被更改时自动保存。
 
 :::info
-The ArduCopter screenshot above shows a typical setup for a three position flight mode switch with an additional option of RTL being on a channel 7 switch.
-You can also setup 6 flight modes using two switches plus mixing on your transmitter. Scroll down to the center section of this [page](http://ardupilot.org/copter/docs/common-rc-transmitter-flight-mode-configuration.html#common-rc-transmitter-flight-mode-configuration) for tutorials on how to do that.
+上面的ArduCopter屏幕截图显示了一个三个位置飞行模式开关的典型设置，另外一个选项是RTL在通道7开关上。
+你还可以利用发射机上的两个开关以及混合设置来设定6种飞行模式。 向下滚动到这个[页面](http://ardupilot.org/copter/docs/common-rc-transmitter-flight-mode-configuration.html#common-rc-transmitter-flight-mode-configuration)的中间部分，获取有关如何操作的教程。
 :::
 
-## See Also
+## 另请参考
 
-- [ArduCopter Flight Modes](http://ardupilot.org/copter/docs/flight-modes.html)
-- [ArduPlane Flight Modes](http://ardupilot.org/plane/docs/flight-modes.html)
-- [ArduCopter > Auxiliary Function Switches](https://ardupilot.org/copter/docs/channel-7-and-8-options.html#channel-7-and-8-options) - additional information about channel configuration.
+- [ArduCopter 飞行模式](http://ardupilot.org/copter/docs/flight-modes.html)
+- [ArduPlane 飞行模式](http://ardupilot.org/plane/docs/flight-modes.html)
+- [ArduCopter > 辅助功能切换](https://ardupilot.org/copter/docs/channel-7-and-8-options.html#channel-7-and-8-options) - 关于频道配置的额外信息。

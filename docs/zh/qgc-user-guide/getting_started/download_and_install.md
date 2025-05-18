@@ -1,9 +1,9 @@
 # 下载和安装
 
-The sections below can be used to download the [current stable release](../releases/release_notes.md) of _QGroundControl_ for each platform.
+下面的部分可以用于下载每个平台的 _QGroundControl_ 的当前 [稳定版本](../releases/release_notes.md)。
 
 :::tip
-See [Troubleshooting QGC Setup](../troubleshooting/qgc_setup.md) if _QGroundControl_ doesn't start and run properly after installation!
+如果 _QGroundControl_ 没有在安装后启动和正常运行，请参阅[故障排除QGC配置](../troubleshooting/qgc_setup.md)
 :::
 
 ## 系统配置要求
@@ -16,9 +16,9 @@ QGC可以在任何当下流行的计算机或移动设备上正常运行。 性�
 
 ## Windows 系统 {#windows}
 
-_QGroundControl_ can be installed on 64 bit versions of Windows:
+_QGroundControl_ 可以安装在 64 位版本的 Windows：
 
-1. Download [QGroundControl-installer.exe](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl-installer.exe).
+1. 下载 [QGroundControl-installer.exe](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl-installer.exe)。
 2. 双击可执行文件来启动安装程序。
 
 :::info
@@ -28,8 +28,8 @@ Windows 安装程序创建 3 个快捷方式：**QGroundControl**，**GPU 兼容
 :::
 
 :::info
-Prebuilt _QGroundControl_ versions from 4.0 onwards are 64-bit only.
-It is possible to manually build 32 bit versions (this is not supported by the dev team).
+从 4.0 开始预构建的 _QGroundControl_ 版本仅支持 64 位。
+手动构建32位版本是可能的（开发团队为这个版本提供支持）。
 :::
 
 ## Mac OS X 系统 {#macOS}
@@ -52,7 +52,7 @@ QGroundControl continues to not be signed which causes problem on Catalina. To o
 
 ## Ubuntu Linux 系统 {#ubuntu}
 
-_QGroundControl_ can be installed/run on Ubuntu LTS 22.04 (and later).
+_QGroundControl_ 可以在 Ubuntu LTS 22.04 (及以后)安装/运行。
 
 Ubuntu 自带一个串口调制解调器管理器，它会干扰串口（或 USB 转串口）在任何与机器人相关方面的使用。
 在安装 _QGroundControl_ 之前，您应该删除调制解调器管理器并授予自己访问串行端口的权限。

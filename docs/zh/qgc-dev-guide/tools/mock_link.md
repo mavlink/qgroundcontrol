@@ -15,7 +15,7 @@ Mock Link允许您在QGroundControl调试版本中创建和停止指向多个模
 
 为了使用Mock Link：
 
-1. Create a debug build by [building the source](https://github.com/mavlink/qgroundcontrol#supported-builds).
+1. 通过[构建源代码](https://github.com/mavlink/qgroundcontrol#supported-builds)创建一个调试版本。
 
 2. 通过选择顶部工具栏中的“应用程序设置”图标，然后选择侧栏中的“模拟链接”来访问“模拟链接”：
 

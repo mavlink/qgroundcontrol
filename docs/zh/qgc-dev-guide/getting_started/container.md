@@ -1,37 +1,37 @@
-# Building using Containers
+# 使用容器构建
 
-The community created a docker image that makes it much easier to build a Linux-based QGC application.
-This can give you a massive boost in productivity and help with testing.
+社区创建了一个 Docker 镜像，这使得构建基于 Linux 的 QGC 应用程序变得容易得多。
+这可以大大提高您的生产力，并帮助您进行测试。
 
-## About the Container
+## 关于容器
 
-The Container is located in the `./deploy/docker` directory.
-It's based on ubuntu 20.04.
-It pre-installs all the dependencies at build time, including Qt, thanks to a script located in the same directory, `install-qt-linux.sh`.
-The main advantage of using the container is the usage of the `CMake` build system and its many improvements over `qmake`
+容器位于 `./depl/docker` 目录中。
+基于 ubuntu 20.04。
+它在构建时预先安装所有依赖关系，包括Qt，因为一个脚本位于同一个目录中，`install-qt-linux.sh`。
+使用容器的主要优点是使用 `CMake` 构建系统和它在 `qmake` 上的许多改进
 
-## Building the Container
+## 构建容器
 
-### Script
+### 脚本
 
-To build the container using the script, run this command in the qgc root directory
+要使用脚本构建容器，请在 qgc 根目录中运行此命令
 
 ```
-./deploy/docker/run-docker-ubuntu.sh
+./depl/docker/run-docker-ubuntu.sh
 ```
 
-### Manual
+### 手册
 
-if you want to Build using the container manually, then you first have to build the image.
-You can accomplish this using docker, running the following script from the root of the QGC source code directory.
+如果你想要手动使用容器构建，那么你必须先构建镜像。
+您可以使用 docker 完成这个操作，从QGC 源代码目录的根目录运行下面的脚本。
 
 ```
 docker build --file ./deploy/docker/Dockerfile-build-ubuntu -t qgc-ubuntu-docker .
 ```
 
 :::info
-The `-t` flag is essential.
-Keep in mind this is tagging the image for later reference since you can have multiple builds of the same container
+`-t` 选项至关重要。
+请记住，这是为镜像添加标签以便日后引用，因为同一容器可能会有多个构建版本。
 :::
 
 ::: info
@@ -41,7 +41,7 @@ If building on a Mac computer with an M1 chip you must also specify the build op
 docker build --platform linux/x86_64 --file ./deploy/docker/Dockerfile-build-ubuntu -t qgc-ubuntu-docker .
 ```
 
-Otherwise you will get a build error like:
+否则，你将会遇到一个构建错误，比如：
 
 ```
 qemu-x86_64: Could not open '/lib64/ld-linux-x86-64.so.2': No such file or directory
@@ -49,10 +49,10 @@ qemu-x86_64: Could not open '/lib64/ld-linux-x86-64.so.2': No such file or direc
 
 :::
 
-## Building QGC using the Container
+## 使用容器构建QGC
 
-To use the container to build QGC, you first need to define a directory to save the artifacts.
-We recommend you create a `build` directory on the source tree and then run the docker image using the tag provided above as follows, from the root directory:
+要使用该容器构建 QGC，首先需要定义一个目录来保存构建产物。
+我们建议你在源代码树中创建一个“build”目录，然后从根目录使用上述提供的标签按如下方式运行Docker镜像：
 
 ```
 mkdir build
@@ -74,20 +74,20 @@ docker run --rm -v %cd%:/project/source -v %cd%/build:/project/build qgc-ubuntu-
 
 :::
 
-Depending on your system resources, or the resources assigned to your Docker Daemon, the build step can take some time.
+根据您的系统资源或分配给您的 Docker 守护进程的资源，构建步骤可能需要一些时间。
 
-## Troubleshooting
+## 故障处理
 
 ### Windows: 'bash\r': No such file or directory
 
-This error indicates that a Linux script is being run with Windows line endings, which might occur if `git` was configured to use Windows line endings:
+此错误表明正在以Windows换行符格式运行Linux脚本。如果将 `git` 配置为使用Windows换行符，就可能出现这种情况。
 
 ```
  > [4/7] RUN /tmp/qt/install-qt-linux.sh:
 #9 0.445 /usr/bin/env: 'bash\r': No such file or directory
 ```
 
-One fix is to force Linux line endings using the command:
+一个修复是强制使用 Linux 行尾使用命令：
 
 ```
 git config --global core.autocrlf false

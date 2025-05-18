@@ -64,13 +64,13 @@ Yerdeki bir aracın görevini başlatmak için:
 
 2. İletişim kutusundan _Start Mission_'ı seçin.
 
-   ![Görevi Başlatma Eylemi](../../../assets/fly/start_mission_action.jpg)
+  ![Görevi Başlatma Eylemi](../../../assets/fly/start_mission_action.jpg)
 
-   (kaydırmalı onay çubuğunu görüntülemek için)
+  (kaydırmalı onay çubuğunu görüntülemek için)
 
 3. Onay kaydıracı belirdiğinde görevi başlatmak için kaydırın.
 
-   ![Görevi Başlatma](../../../assets/fly/start_mission.jpg)
+  ![Görevi Başlatma](../../../assets/fly/start_mission.jpg)
 
 #### Göreve Devam Etme (Continue Mission) {#continue_mission}
 
@@ -88,11 +88,11 @@ Görevinize aşağıdakileri yaparak devam edebilirsiniz (hali hazırda bir gör
 
 2. İletişim kutusundan _Continue Mission_'ı seçin.
 
-   ![Göreve Devam Etme/Yüksekliği Değiştirme ](../../../assets/fly/continue_mission_change_altitude_action.jpg)
+  ![Göreve Devam Etme/Yüksekliği Değiştirme ](../../../assets/fly/continue_mission_change_altitude_action.jpg)
 
 3. Kaydırmalı onay butonunu kaydırarak göreve devam edin.
 
-   ![Göreve Devam Etme (Continue Mission)](../../../assets/fly/continue_mission.jpg)
+  ![Göreve Devam Etme (Continue Mission)](../../../assets/fly/continue_mission.jpg)
 
 #### Göreve Devam Etme (Resume Mission) {#resume_mission}
 
