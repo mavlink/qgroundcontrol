@@ -39,4 +39,4 @@ Sub için gövde modelini seçmek için:
 
    - ArduSub için varsayılan parametre setini yüklemek için \*\* Load Vehicle Default Parameters\*\* 'ye de tıklayabilirsiniz.
 
-     ![Araç parametrelerini yükle](../../../assets/setup/airframe_ardusub_parameters.jpg)
+      ![Araç parametrelerini yükle](../../../assets/setup/airframe_ardusub_parameters.jpg)

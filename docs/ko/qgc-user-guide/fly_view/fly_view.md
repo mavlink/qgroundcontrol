@@ -64,13 +64,13 @@ _위치 이동_ 작업은 일시 중지가 불가능 합니다.
 
 2. 대화 상자에서 _미션 시작_ 작업을 선택합니다.
 
-   ![미션 액션 시작](../../../assets/fly/start_mission_action.jpg)
+  ![미션 액션 시작](../../../assets/fly/start_mission_action.jpg)
 
-   (확인 슬라이더를 표시하기 위하여)
+  (확인 슬라이더를 표시하기 위하여)
 
 3. 확인 슬라이더가 나타나면 드래그하여 미션을 시작합니다.
 
-   ![미션 시작](../../../assets/fly/start_mission.jpg)
+  ![미션 시작](../../../assets/fly/start_mission.jpg)
 
 #### 미션 지속 {#continue_mission}
 
@@ -88,11 +88,11 @@ _위치 이동_ 작업은 일시 중지가 불가능 합니다.
 
 2. 대화 상자에서 _임무 지속_ 작업을 선택합니다.
 
-   ![임무 계속/고도 변경 작업](../../../assets/fly/continue_mission_change_altitude_action.jpg)
+  ![임무 계속/고도 변경 작업](../../../assets/fly/continue_mission_change_altitude_action.jpg)
 
 3. 확인 슬라이더를 끌어 임무를 지속하십시오.
 
-   ![미션 계속](../../../assets/fly/continue_mission.jpg)
+  ![미션 계속](../../../assets/fly/continue_mission.jpg)
 
 #### 임무 재개 {#resume_mission}
 

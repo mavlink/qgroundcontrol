@@ -23,14 +23,14 @@ Bir gözlem görevi oluşturmak için:
 
 2. _Plan Tools_ 'dan _Pattern Tool_'u seçin ve _Survey_'e tıklayın.
 
-   ![Gözlem Menüsü](../../../assets/plan/survey/survey_menu.jpg)
+  ![Gözlem Menüsü](../../../assets/plan/survey/survey_menu.jpg)
 
-   Bu haritaya bir gözlem alanı ve görev listesine (sağda) bir _Survey_ öğesi ekleyecektir.
+  Bu haritaya bir gözlem alanı ve görev listesine (sağda) bir _Survey_ öğesi ekleyecektir.
 
 3. On the map drag the vertices to change the shape of the polygon.
 
 4. Yeni bir köşe noktası oluşturmak için var olan köşelerin ortalarındaki `(+)` semboüne tıklayın.
-   Yeni köşe, yeni pozisyonlara çekilebilir.
+  Yeni köşe, yeni pozisyonlara çekilebilir.
 
 Gözlem modu ayarları bir sonraki bölümde ele alınmıştır.
 

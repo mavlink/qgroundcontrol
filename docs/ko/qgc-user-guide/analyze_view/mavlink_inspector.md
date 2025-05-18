@@ -35,8 +35,8 @@ _MAVLink 탐색기_를 사용하려면:
    - 필드는 하나의 차트에만 추가할 수 있습니다.
 
    - 차트에는 여러 필드와 여러 메시지의 필드가 있을 수 있습니다(각 차트 위에 나열됨).
-     차트로 표시되는 필드가 포함된 메시지는 별표로 강조됩니다.
+      차트로 표시되는 필드가 포함된 메시지는 별표로 강조됩니다.
 
-     ![MAVLink 탐색기: 차트 필드 세부 정보](../../../assets/analyze/mavlink_inspector/mavlink_inspector_charted_messages.jpg)
+      ![MAVLink 탐색기: 차트 필드 세부 정보](../../../assets/analyze/mavlink_inspector/mavlink_inspector_charted_messages.jpg)
 
    - _Scale_ 및 _Range_는 적절한 값으로 설정되지만 필요한 경우 수정할 수 있습니다.

@@ -18,10 +18,10 @@ Coğrafi Sınır Oluşturmak için:
 
 2. Görev Komutları Listesi'nin üstünden _Geofence_'i seçin
 
-   ![Select geofence radio button](../../../assets/plan/geofence/geofence_select.jpg)
+  ![Select geofence radio button](../../../assets/plan/geofence/geofence_select.jpg)
 
 3. Insert a circular or polygon region by pressing the **Circular Fence** or **Polygon Fence** button, respectively.
-   Haritaya yeni bir bölge ve butonların altına sınırlarla ilgili yeni bir liste eklenecektir.
+  Haritaya yeni bir bölge ve butonların altına sınırlarla ilgili yeni bir liste eklenecektir.
 
 :::tip
 ::: tip
@@ -44,7 +44,7 @@ Butonlara birden çok kez basarak birden çok bölge oluşturabilirsiniz, böyle
   - İçi dolu noktaların arasındaki içi boş noktalara basarak yeni köşeler oluşturun.
 
 1. Varsayılan olarak, _inclusion_ bölgeleri olarak yeni bölgeler oluşturulur (araçlar bölge içinde kalmalıdır).
-   Sınır panelindeki _Inclusion_ onay kutusunun tikini kaldırarak, exclusion bölgelerine (aracın içinde uçamayacağı) dönüştürebilirsiniz.
+  Sınır panelindeki _Inclusion_ onay kutusunun tikini kaldırarak, exclusion bölgelerine (aracın içinde uçamayacağı) dönüştürebilirsiniz.
 
 ## GeoFence Düzenleme/Silme
 

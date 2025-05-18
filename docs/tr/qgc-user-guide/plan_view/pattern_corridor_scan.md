@@ -16,14 +16,14 @@ Bir koridor taraması oluşturmak için:
 
 2. _Plan Tools_ 'dan _Pattern Tool_'u seçin ve _Corridor Scan_'a tıklayın.
 
-   ![Koridor Taraması](../../../assets/plan/corridor_scan_menu.jpg)
+  ![Koridor Taraması](../../../assets/plan/corridor_scan_menu.jpg)
 
-   Bu haritaya bir koridor ve görev listesine (sağda) bir _Corridor Scan_ öğesi ekleyecektir.
+  Bu haritaya bir koridor ve görev listesine (sağda) bir _Corridor Scan_ öğesi ekleyecektir.
 
 3. Koridorun uçlarını, sırasıyla taramanın başlangıç ve bitiş noktalarına sürükleyin.
 
 4. Yeni bir köşe noktası oluşturmak için hattın ortasındaki `(+)` semboüne tıklayın.
-   Yeni köşe noktası, istenen koridor yolunu takip edeceği bir noktaya sürüklenebilir.
+  Yeni köşe noktası, istenen koridor yolunu takip edeceği bir noktaya sürüklenebilir.
 
 Koridor taraması ayarları bir sonraki bölümde ele alınmıştır.
 

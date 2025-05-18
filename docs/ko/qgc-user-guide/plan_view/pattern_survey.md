@@ -23,14 +23,14 @@ If the survey area has significant elevation variation then consider enabling [T
 
 2. _계획 도구_에서 _패턴 도구_를 선택한 다음 _탐사_를 선택합니다.
 
-   ![탐사 메뉴](../../../assets/plan/survey/survey_menu.jpg)
+  ![탐사 메뉴](../../../assets/plan/survey/survey_menu.jpg)
 
-   그러면 지도에 설문조사 그리드가 추가되고 임무 목록(오른쪽)에 _설문조사_ 항목이 추가됩니다.
+  그러면 지도에 설문조사 그리드가 추가되고 임무 목록(오른쪽)에 _설문조사_ 항목이 추가됩니다.
 
 3. 지도에서 정점을 끌어 다각형의 모양을 변경합니다.
 
 4. 기존 정점 사이의 `(+)` 기호를 클릭하여 새 정점을 만듭니다.
-   그런 다음 새 정점을 새 위치로 끌어서 수정할 수 있습니다.
+  그런 다음 새 정점을 새 위치로 끌어서 수정할 수 있습니다.
 
 The survey settings are covered in the next section.
 
