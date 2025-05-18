@@ -4,7 +4,7 @@ _GeoTag 图像_界面（**分析Analyze > GeoTag Images**）允许您使用飞�
 
 :::info
 此功能仅适用于 _PX4_ 飞行日志。 ArduPilot 不支持。
-ArduPilot is not supported.
+不支持 ArduPilot 。
 :::
 
 ![分析试图 - GeoTag 图像](../../../assets/analyze/geotag_images.jpg)

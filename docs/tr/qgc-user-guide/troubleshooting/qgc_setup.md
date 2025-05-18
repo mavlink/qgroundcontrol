@@ -16,7 +16,7 @@ The solution is to set the desired _32-bit voice_ for your system:
 
 1. Run the control panel application: **C:\Windows\SysWOW64\Speech\SpeechUX\sapi.cpl**.
 2. Make your desired _Voice selection_ and then click **OK** at the bottom of the dialog.
-   ![Windows 32-bit Text-To-Speech Control Panel](../../../assets/support/windows_text_to_speech.png)
+  ![Windows 32-bit Text-To-Speech Control Panel](../../../assets/support/windows_text_to_speech.png)
 
 :::info
 Additional information about the Windows speech APIs can be found [here](https://www.webbie.org.uk/blog/microsoft-speech/).

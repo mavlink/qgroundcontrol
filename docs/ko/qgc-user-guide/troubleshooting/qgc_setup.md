@@ -16,7 +16,7 @@ Windows 64비트 시스템에서 _QGroundControl_은 때때로 **제어판 > 음
 
 1. 제어판 응용 프로그램을 실행합니다: **C:\Windows\SysWOW64\Speech\SpeechUX\sapi.cpl**.
 2. 원하는 _음성 선택_을 한 다음 대화상자 하단의 **확인**을 클릭합니다.
-   ![Windows 32비트 TTS(텍스트 음성 변환) 제어판](../../../assets/support/windows_text_to_speech.png)
+  ![Windows 32비트 TTS(텍스트 음성 변환) 제어판](../../../assets/support/windows_text_to_speech.png)
 
 :::info
 Windows 음성 API에 대한 추가 정보는 [여기](https://www.webbie.org.uk/blog/microsoft-speech/)를 참고하십시오.

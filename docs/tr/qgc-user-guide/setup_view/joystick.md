@@ -36,22 +36,22 @@ Joystick'i ayarlamak için:
 2. Joystick ya da Gamepad'i bir USB portuna bağlayın.
 
 3. Üstteki araç çubuğundan **dişli** simgesini (Vechicle Setup), daha sonra kenar çubuğundan **Joystick**'i seçin.
-   Aşağıdaki ekran görünecektir.
+  Aşağıdaki ekran görünecektir.
 
-   ![Joystick Kurulumu - Playstation](../../../assets/setup/joystick_sony_playstation.jpg)
+  ![Joystick Kurulumu - Playstation](../../../assets/setup/joystick_sony_playstation.jpg)
 
 4. \*\* Active joystick \*\* açılır menüsünde kumanda çubuğunuzun seçildiğinden emin olun.
 
 5. \*\*Calibrate \*\* Sekmesine gidin, \*\* Start \*\* tuşuna basın ve sonra çubukları kalibre etmek/hareket ettirmek için ekrandaki talimatları izleyin.
 
-   ![Joystick Kurulumu - Kalibrasyon](../../../assets/setup/joystick_calibration.jpg)
+  ![Joystick Kurulumu - Kalibrasyon](../../../assets/setup/joystick_calibration.jpg)
 
-   Joystick, kalibrasyon işleminin son adımı olarak _ etkinleştirilir _.
+  Joystick, kalibrasyon işleminin son adımı olarak _ etkinleştirilir _.
 
 6. Düğmelerin ve çubukların amaçlandığı gibi çalışıp çalışmadığını onlara basarak ve sonucu \*\* General \*\* sekmesindeki Axis/Buton monitöründe görüntüleyerek test edin.
 
 7. Her bir kumanda kolu düğmesiyle etkinleştirilen uçuş modlarını/araç işlevlerini seçin.
-   ![Joystick Kurulumu - Butonlar](../../../assets/setup/joystick_buttons.jpg)
+  ![Joystick Kurulumu - Butonlar](../../../assets/setup/joystick_buttons.jpg)
 
 ## Gelişmiş Seçenekler
 
@@ -146,19 +146,19 @@ Kontrolcünün Linux altında kablosuz olarak çalışmasını sağlamak için [
 Adımlar şunlardır:
 
 1. <span></span>
-   ```
-   jstest-gtk \* 'yi yükleyin: `sudo apt install jstest-gtk`
-   ```
+  ```
+  jstest-gtk \* 'yi yükleyin: `sudo apt install jstest-gtk`
+  ```
 2. Bu, gaz kolunun yaylı olduğu kurulumlar için kullanışlıdır, çünkü kullanıcı çubuğu bırakarak gazı istenen seviyede tutabilir.
-   ```
-   ds4drv \* yükleyin: `sudo pip install ds4drv`
-   ```
+  ```
+  ds4drv \* yükleyin: `sudo pip install ds4drv`
+  ```
 3. Ds4drv'yi çalıştırın `sudo ds4drv`
-   ```
-   <span></span>
-   ```
+  ```
+  <span></span>
+  ```
 4. Kontrolcünün LED'i hızla yanıp sönmeye başlayana kadar \*\* Share \*\* düğmesini ve sonra \*\* PS \*\* düğmesini basılı tutun.
-   Daha sonra _ ds4drv _ yeni bir aygıt algılamalıdır.
+  Daha sonra _ ds4drv _ yeni bir aygıt algılamalıdır.
 5. Son olarak, _ jstest-gtk _ yardımcı programını çalıştırarak denetleyici kurulumunu kontrol etmelisiniz.
 
 ### FrSky Taranis XD9 plus

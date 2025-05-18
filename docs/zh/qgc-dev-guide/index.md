@@ -7,11 +7,11 @@
 它展示了如何获取和构建源代码，解释了QGC 是如何运作的，并提供了为项目提供代码的指导方针。
 
 :::tip
-This part of the guide is for **developers**!
+指南的这一部分是为 **开发者** 提供的！
 :::
 
 :::warning
-This is an active work in progress - information should be correct, but may not be complete!
+这是一项正在积极推进的工作——信息应该是正确的，但可能并不完整！
 如果您发现缺少有用的信息(或错误)，请提出问题或更好地向文档提交包含更新信息的拉取请求。
 :::
 
@@ -33,7 +33,7 @@ QGC 用户界面是使用 Qt Qml 实现的。 Qml 提供硬件加速，它是平
 
 :::tip
 我们期望所有贡献者都遵守[QGroundControl Code of Conduct](https://github.com/mavlink/qgroundcontrol/blob/master/.github/CODE_OF_CONDUCT.md)。
-This code aims to foster an open and welcoming environment.
+该守则旨在营造一个开放和热情的环境。
 :::
 
 ### 翻译

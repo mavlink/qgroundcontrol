@@ -38,30 +38,30 @@ Tarama oluşturmak için:
 
 1. Bu haritada basit kare bir yapı taraması oluşturacaktır.
 
-   ![İlk Köşegen](../../../assets/plan/structure_scan_v2/initial_polygon_scan.jpg)
+  ![İlk Köşegen](../../../assets/plan/structure_scan_v2/initial_polygon_scan.jpg)
 
-   Yeşil bölge, yapıyı kaplayacak şekilde düzenlenmelidir.
+  Yeşil bölge, yapıyı kaplayacak şekilde düzenlenmelidir.
 
-   - Haritadaki opak köşeleri yapının kenarlarına sürükleyin (yukarıda leylak rengi daire içine alınmış köşeler).
-   - Yapının kapladığı alan basit bir kareden fazlaysa, yeni bir köşe noktası oluşturmak için köşeler arasındaki yarı saydam dairelere tıklayabilirsiniz.
+  - Haritadaki opak köşeleri yapının kenarlarına sürükleyin (yukarıda leylak rengi daire içine alınmış köşeler).
+  - Yapının kapladığı alan basit bir kareden fazlaysa, yeni bir köşe noktası oluşturmak için köşeler arasındaki yarı saydam dairelere tıklayabilirsiniz.
 
 2. Ayrıca merkezdeki "daire"ye (kırmızı ile işaretlenmiş) tıklayarak ve açılır menüden _Circle_ 'ı seçerek dairesel bir alana geçebilirsiniz.
 
-   ![Dairesel Tarama](../../../assets/plan/structure_scan_v2/circle_scan.jpg).
+  ![Dairesel Tarama](../../../assets/plan/structure_scan_v2/circle_scan.jpg).
 
-   - Açılır menüden çokgen alana geri dönebilir ve taramanın yarıçapını ve/veya konumunu değiştirebilirsiniz.
-   - Çemberin merkezini konumlandırmak için merkezdeki daireyi sürükleyin.
+  - Açılır menüden çokgen alana geri dönebilir ve taramanın yarıçapını ve/veya konumunu değiştirebilirsiniz.
+  - Çemberin merkezini konumlandırmak için merkezdeki daireyi sürükleyin.
 
 3. Geri kalan düzenlemeler, ekranın sağındaki _Structure Scan_ editörü kullanılarak halledilir.
-   İlk olarak manuel tarama, belirli bir kamera kullanarak tarama veya özel bir kamera tanımı kullanarak tarama seçeneklerinden hangisini istediğinizi seçin.
+  İlk olarak manuel tarama, belirli bir kamera kullanarak tarama veya özel bir kamera tanımı kullanarak tarama seçeneklerinden hangisini istediğinizi seçin.
 
-   ::: info
-   Modlar arasındaki temel fark, önceden tanımlanmış kameraların etkili bir katman yüksekliğini ve deklanşör mesafesini doğru bir şekilde hesaplamak için zaten ayarlanmış olmasıdır.
-   :::
+  ::: info
+  Modlar arasındaki temel fark, önceden tanımlanmış kameraların etkili bir katman yüksekliğini ve deklanşör mesafesini doğru bir şekilde hesaplamak için zaten ayarlanmış olmasıdır.
+  :::
 
-   Farklı modlar için seçenekler aşağıda gösterilmiştir.
+  Farklı modlar için seçenekler aşağıda gösterilmiştir.
 
-   ![Yapı Taraması Editörü](../../../assets/plan/structure_scan_v2/editor_options.jpg)
+  ![Yapı Taraması Editörü](../../../assets/plan/structure_scan_v2/editor_options.jpg)
 
 Kullanıcı her zaman aşağıdaki ayarları yapılandırabilir:
 

@@ -38,4 +38,4 @@ Sub의 프레임 유형을 선택하려면:
 
    - 또한, **차량 기본 매개변수 로드**를 클릭하여 ArduSub에 대한 기본 매개변수 세트를 로드할 수 있습니다.
 
-     ![차량 매개변수 로드](../../../assets/setup/airframe_ardusub_parameters.jpg)
+      ![차량 매개변수 로드](../../../assets/setup/airframe_ardusub_parameters.jpg)
