@@ -8,6 +8,10 @@ QGC_INI:
 # to the doodle on the base to work)
 
 UAVS:
+  Locahost:
+    MAVLINK_IP: "127.0.0.1"
+    MAVLINK_PORT: "14550"
+    RTSP_IP: "127.0.0.1"
   Yealm1:
     MAVLINK_IP: "10.22.110.1"
     MAVLINK_PORT: "60000"
