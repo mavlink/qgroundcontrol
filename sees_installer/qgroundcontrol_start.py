@@ -5,7 +5,7 @@ import os
 import argparse
 import difflib
 import subprocess
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout, QHBoxLayout, QPushButton, QScrollArea, QRadioButton
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout, QHBoxLayout, QPushButton, QScrollArea, QRadioButton, QCheckBox
 from PyQt5.QtCore import Qt
 import sys
 import time
@@ -33,7 +33,7 @@ class QGCGitHub():
         return(response.content)
 
 
-class ProgressWindow:
+class QGCStartWindow:
     def __init__(self):
         self.app = QApplication(sys.argv)
         self.continue_execution = False
@@ -82,9 +82,13 @@ class ProgressWindow:
             layoutHdrone.addWidget(button)
             button.toggled.connect(self.btn_uav_toggled)
 
+        self.chech_box_fpv = QCheckBox("FPV required")
+        self.chech_box_fpv.setChecked(True)
+
         # Set layout and show
         layoutV.addWidget(QLabel("Select drone to Continue:"))
         layoutV.addLayout(layoutHdrone)
+        layoutV.addWidget(self.chech_box_fpv)
         layoutV.addLayout(layoutHconfirm)
         self.window.setLayout(layoutV)
         self.window.show()
@@ -118,6 +122,8 @@ class ProgressWindow:
     def on_continue_clicked(self):
         """Called when the continue button is clicked"""
         self.continue_execution = True
+        self.enable_fpv = self.chech_box_fpv.isChecked()
+        print(f"Enable video: {self.enable_fpv}")
 
     def on_abort_clicked(self):
         """Called when the continue button is clicked"""
@@ -148,8 +154,11 @@ def section_to_text(config, sections):
 
 def update_config_comms(config, drone_name, RTSP_IP, RTSP_port, mavlink_IP, mavlink_port):
     print(f"Setting QGC connection to {drone_name} at {mavlink_IP}")
-    config['Video']['rtspUrl'] = f"rtsp://{RTSP_IP}:{RTSP_port}/fpv"
-    config['Video']['videoSource'] = "RTSP Video Stream"
+    if qgc_start_win.enable_fpv:   #ToDo, accessing qgc_start_win direclty is not pretty
+        config['Video']['rtspUrl'] = f"rtsp://{RTSP_IP}:{RTSP_port}/fpv"
+        config['Video']['videoSource'] = "RTSP Video Stream"
+    else:
+        config['Video']['videoSource'] = "Video Stream Disabled"
     config['LinkConfigurations']['Link0\\auto'] = "true"
     config['LinkConfigurations']['Link0\\host0'] = mavlink_IP
     config['LinkConfigurations']['Link0\\port0'] = mavlink_port
@@ -168,17 +177,17 @@ if __name__ == "__main__":
     QGC_INI_PATH = config["QGC_INI"]["PATH"]
 
     # Create the progress window
-    progress_win = ProgressWindow()
+    qgc_start_win = QGCStartWindow()
 
     # Prepare to download from github
     load_dotenv()
     branch = config["GIT"]["Branch"]
     qgc_github = QGCGitHub(branch)
 
-    filepath = "sees_installer/QGroundControl%20Daily.ini"
+    gitfilepath = "sees_installer/QGroundControl%20Daily.ini"
 
     try:
-        qgc_ini_file = qgc_github.download_file(filepath)
+        qgc_ini_file = qgc_github.download_file(gitfilepath)
     except Exception as e:
         print(f"{e}\n\nPlease install a .env file in the script path with the Github API key which you can find in:\nhttps://www.notion.so/seesai/QGroundcontrol-Sees-flavour-17cf348e991880faa376c0317c9d3ce0")
         exit(1)
@@ -200,26 +209,26 @@ if __name__ == "__main__":
     local_ini_lines = section_to_text(config_local, CONFIG_CRITICAL_SECTIONS)
     diff = list(difflib.unified_diff(github_ini_lines, local_ini_lines, fromfile='QGC github', tofile='QGC local', n=0))
 
-    progress_win.update_message("Checking QGroundControl config file...")
+    qgc_start_win.update_message("Checking QGroundControl config file...")
     time.sleep(1)  # Give time to display message
 
     if len(diff) > 0:
         # There are some differences
         diff_content = ''.join(diff)
-        progress_win.wait_for_user(f"The files are different, what do you want to do?\n{diff_content}")
+        qgc_start_win.wait_for_user(f"The files are different, what do you want to do?\n{diff_content}")
         print(f"These are the differences found \n{diff_content}")
-        if progress_win.abort_execution:
-            progress_win.app.quit()
+        if qgc_start_win.abort_execution:
+            qgc_start_win.app.quit()
             sys.exit(1)
-        progress_win.update_message("Ignoring differences, starting QGC...")
+        qgc_start_win.update_message("Ignoring differences, starting QGC...")
         time.sleep(1)  # Display message
     else:
-        progress_win.wait_for_user("No differences found, select drone to start QGC...")
+        qgc_start_win.wait_for_user("No differences found, select drone to start QGC...")
         time.sleep(1)  # Display message
 
     # Update config according to drone selection
-    drone_info = UAV_DICT[progress_win.drone_selected]
-    drone_name = progress_win.drone_selected
+    drone_info = UAV_DICT[qgc_start_win.drone_selected]
+    drone_name = qgc_start_win.drone_selected
 
 
     update_config_comms(config_local, drone_name, drone_info["RTSP_IP"], RTSP_PORT, drone_info["MAVLINK_IP"], drone_info["MAVLINK_PORT"])
@@ -246,5 +255,5 @@ if __name__ == "__main__":
     # Sleep to give QGC time to start
     time.sleep(2)
     # Close windows
-    progress_win.app.quit()
+    qgc_start_win.app.quit()
     sys.exit(0)
