@@ -16,6 +16,129 @@
 
 QGC_LOGGING_CATEGORY(ParameterEditorControllerLog, "qgc.qmlcontrols.parametereditorcontroller")
 
+ParameterTableModel::ParameterTableModel(QObject* parent)
+    : QAbstractTableModel(parent)
+{
+
+}
+
+ParameterTableModel::~ParameterTableModel()
+{
+    
+}
+
+int ParameterTableModel::rowCount(const QModelIndex& /*parent*/) const
+{
+    return _tableData.count();
+}
+
+int ParameterTableModel::columnCount(const QModelIndex & /*parent*/) const
+{
+    return _tableViewColCount;
+}
+
+QVariant ParameterTableModel::data(const QModelIndex &index, int role) const
+{
+    if (!index.isValid()) {
+        return QVariant();
+    }
+    
+    if (index.row() < 0 || index.row() >= _tableData.count()) {
+        return QVariant();
+    }
+    if (index.column() < 0 || index.column() >= _tableViewColCount) {
+        return QVariant();
+    }
+    
+    switch (role) {
+        case Qt::DisplayRole:
+            return QVariant::fromValue(_tableData[index.row()][index.column()]);
+        case FactRole:
+            return QVariant::fromValue(_tableData[index.row()][ValueColumn]);
+        default:
+            return QVariant();
+    }
+}
+
+QHash<int, QByteArray> ParameterTableModel::roleNames() const
+{
+    return { 
+        {Qt::DisplayRole, "display"},
+        {FactRole, "fact"}
+    };
+}
+
+void ParameterTableModel::clear()
+{
+    if (!_externalBeginResetModel) {
+        beginResetModel();
+    }
+    _tableData.clear();
+    if (!_externalBeginResetModel) {
+        endResetModel();
+        emit rowCountChanged(0);
+    }
+}
+
+void ParameterTableModel::append(Fact* fact)
+{
+    insert(rowCount(), fact);
+}
+
+void ParameterTableModel::insert(int row, Fact* fact)
+{
+    if (row < 0 || row > rowCount()) {
+        qWarning() << "Invalid row row:rowCount" << row << rowCount() << Q_FUNC_INFO;
+        row = qMax(qMin(row, rowCount()), 0);
+    }
+
+    ColumnData colData(_tableViewColCount, QString());
+    colData[NameColumn] = fact->name();
+    colData[ValueColumn] = QVariant::fromValue(fact);
+    colData[DescriptionColumn] = fact->shortDescription();
+
+    beginInsertRows(QModelIndex(), row, row);
+    _tableData.insert(row, colData);
+    endInsertRows();
+
+    emit rowCountChanged(rowCount());
+}
+
+void ParameterTableModel::beginReset()
+{
+    if (_externalBeginResetModel) {
+        qWarning() << "ParameterTableModel::beginReset already set";
+    }
+    _externalBeginResetModel = true;
+    beginResetModel();
+}
+
+void ParameterTableModel::endReset()
+{
+    if (!_externalBeginResetModel) {
+        qWarning() << "ParameterTableModel::endReset begin not set";
+    }
+    _externalBeginResetModel = false;
+    endResetModel();
+}
+
+Fact* ParameterTableModel::factAt(int row) const
+{
+    if (row < 0 || row >= _tableData.count()) {
+        qWarning() << "Invalid row row:rowCount" << row << _tableData.count() << Q_FUNC_INFO;
+        return nullptr;
+    }
+
+    return _tableData[row][0].value<Fact*>();
+}
+
+
+ParameterEditorGroup::ParameterEditorGroup(QObject* parent) 
+    : QObject(parent) 
+{ 
+
+}
+
 ParameterEditorController::ParameterEditorController(QObject *parent)
     : FactPanelController(parent)
     , _parameterMgr(_vehicle->parameterManager())
@@ -174,40 +297,14 @@ void ParameterEditorController::_factAdded(int compId, Fact* fact)
     }
 
     // Insert in sorted order
-    QmlObjectListModel& facts = group->facts;
-    inserted = false;
-    for (int i=0; i<facts.count(); i++) {
-        if (facts.value<Fact*>(i)->name() > fact->name()) {
+    auto& facts = group->facts;
+    for (int i=0; i<facts.rowCount(); i++) {
+        if (facts.factAt(i)->name() > fact->name()) {
             facts.insert(i, fact);
-            inserted = true;
-            break;
+            return;
         }
     }
-    if (!inserted) {
-        facts.append(fact);
-    }
-}
-
-QStringList ParameterEditorController::searchParameters(const QString& searchText, bool searchInName, bool searchInDescriptions)
-{
-    QStringList list;
-
-    for(const QString &paramName: _parameterMgr->parameterNames(_vehicle->defaultComponentId())) {
-        if (searchText.isEmpty()) {
-            list += paramName;
-        } else {
-            Fact* fact = _parameterMgr->getParameter(_vehicle->defaultComponentId(), paramName);
-
-            if (searchInName && fact->name().contains(searchText, Qt::CaseInsensitive)) {
-                list += paramName;
-            } else if (searchInDescriptions && (fact->shortDescription().contains(searchText, Qt::CaseInsensitive) || fact->longDescription().contains(searchText, Qt::CaseInsensitive))) {
-                list += paramName;
-            }
-        }
-    }
-    list.sort();
-
-    return list;
+    facts.append(fact);
 }
 
 void ParameterEditorController::saveToFile(const QString& filename)
@@ -374,9 +471,7 @@ bool ParameterEditorController::_shouldShow(Fact* fact) const
 
 void ParameterEditorController::_searchTextChanged(void)
 {
-    if (!_searchTimer.isActive()) {
-        _searchTimer.start();
-    }
+    _searchTimer.start();
 }
 
 void ParameterEditorController::_performSearch(void)
@@ -390,6 +485,13 @@ void ParameterEditorController::_performSearch(void)
         setCurrentCategory(category);
         _searchParameters.clear();
     } else {
+        QVector<QRegularExpression> regexList;
+        regexList.reserve(rgSearchStrings.size());
+        for (const QString &searchItem : rgSearchStrings) {
+            QRegularExpression re(searchItem, QRegularExpression::CaseInsensitiveOption);
+            regexList.append(re.isValid() ? re : QRegularExpression());
+        }
+
         _searchParameters.beginReset();
         _searchParameters.clear();
 
@@ -398,8 +500,8 @@ void ParameterEditorController::_performSearch(void)
             bool matched = _shouldShow(fact);
             // All of the search items must match in order for the parameter to be added to the list
             if (matched) {
-                for (const auto& searchItem : rgSearchStrings) {
-                    QRegularExpression re = QRegularExpression(searchItem, QRegularExpression::CaseInsensitiveOption);
+                for (int i = 0; i < rgSearchStrings.size(); ++i) {
+                    const QRegularExpression &re = regexList.at(i);
                     if (re.isValid()) {
                         if (!fact->name().contains(re) &&
                                 !fact->shortDescription().contains(re) &&
@@ -407,11 +509,12 @@ void ParameterEditorController::_performSearch(void)
                             matched = false;
                         }
                     } else {
+                        const QString &searchItem = rgSearchStrings.at(i);
                         if (!fact->name().contains(searchItem, Qt::CaseInsensitive) &&
                                 !fact->shortDescription().contains(searchItem, Qt::CaseInsensitive) &&
                                 !fact->longDescription().contains(searchItem, Qt::CaseInsensitive)) {
                             matched = false;
-                        }
+                        }                    
                     }
                 }
             }
