@@ -145,8 +145,9 @@ RowLayout {
                                 parent.children[1].toggle()
                                 parent.children[1].clicked()
                             } else {
-                                var controller = globals.guidedControllerFlyView
-                                controller.confirmAction(controller.actionSetFlightMode, modelData)
+                                //var controller = globals.guidedControllerFlyView
+                                //controller.confirmAction(controller.actionSetFlightMode, modelData)
+                                activeVehicle.flightMode = modelData
                                 mainWindow.closeIndicatorDrawer()
                             }
                         }
