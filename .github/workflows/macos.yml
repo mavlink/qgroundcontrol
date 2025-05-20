@@ -102,7 +102,7 @@ jobs:
 
       - name: Sanity check dev build excecutable
         if: matrix.BuildType == 'Release'
-        working-directory: ${{ runner.temp }}/shadow_build_dir/Release/QGroundControl.app/Contents/MacOS
+        working-directory: ${{ runner.temp }}/shadow_build_dir/QGroundControl.app/Contents/MacOS
         run: ./QGroundControl --simple-boot-test
 
       - name: Create DMG
@@ -118,7 +118,7 @@ jobs:
         if: matrix.BuildType == 'Release'
         working-directory: /Volumes/QGroundControl/QGroundControl.app/Contents/MacOS
         run: ./QGroundControl --simple-boot-test
-  
+
       - name: Upload Build File
         if: matrix.BuildType == 'Release'
         uses: ./.github/actions/upload

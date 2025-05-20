@@ -16,6 +16,7 @@ import QGroundControl.Palette
 import QGroundControl.Controls
 import QGroundControl.Controllers
 import QGroundControl.ScreenTools
+import QGC
 
 Rectangle {
     id:     _root

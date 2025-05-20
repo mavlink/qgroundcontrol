@@ -13,8 +13,8 @@
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 
-#include <QtCharts/QLineSeries>
 #include <QtCharts/QAbstractSeries>
+#include <QtCharts/QLineSeries>
 
 QGC_LOGGING_CATEGORY(MAVLinkMessageFieldLog, "qgc.analyzeview.mavlinkmessagefield")
 
@@ -24,14 +24,14 @@ QGCMAVLinkMessageField::QGCMAVLinkMessageField(const QString &name, const QStrin
     , _name(name)
     , _msg(parent)
 {
-    // qCDebug(MAVLinkMessageFieldLog) << Q_FUNC_INFO << this;
+    // qCDebug(MAVLinkMessageFieldLog) << this;
 
     qCDebug(MAVLinkMessageFieldLog) << "Field:" << name << type;
 }
 
 QGCMAVLinkMessageField::~QGCMAVLinkMessageField()
 {
-    // qCDebug(MAVLinkMessageFieldLog) << Q_FUNC_INFO << this;
+    // qCDebug(MAVLinkMessageFieldLog) << this;
 }
 
 void QGCMAVLinkMessageField::addSeries(MAVLinkChartController *chart, QAbstractSeries *series)

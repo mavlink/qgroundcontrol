@@ -145,9 +145,9 @@ if(CMAKE_CROSSCOMPILING)
     endif()
 endif()
 
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIGURATION>/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIGURATION>)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIGURATION>)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib) # $<CONFIGURATION>/
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 # https://cmake.org/cmake/help/latest/policy/CMP0168.html#policy:CMP0168
 if(POLICY CMP0168)
@@ -165,8 +165,8 @@ endif()
 #               Qt6 Configuration
 #######################################################
 
-# The values specified below are the ONLY supported configurations for this version of QGC. 
-# Change these to something else at your own risk. Anything other than what is specified 
+# The values specified below are the ONLY supported configurations for this version of QGC.
+# Change these to something else at your own risk. Anything other than what is specified
 # here is unsupported so don't expect any help with problems.
 
 if(QGC_ENABLE_HERELINK AND ANDROID)
@@ -494,6 +494,34 @@ set_target_properties(${CMAKE_PROJECT_NAME}
     PROPERTIES
         QT_RESOURCE_PREFIX "/qgc"
         OUTPUT_NAME ${CMAKE_PROJECT_NAME}
+        # QT_TARGETS_FOLDER
+        # QT_QMLLINTER_TARGETS_FOLDER
+        # QT_QMLCACHEGEN_ARGUMENTS
+        # QT_QMLCACHEGEN_DIRECT_CALLS
+)
+
+# file(GLOB QML_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/FirstRunPromptDialogs/*.qml)
+# file(GLOB QML_RESOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/src/FirstRunPromptDialogs/res/*/*.*)
+qt_add_qml_module(${CMAKE_PROJECT_NAME}
+    URI QGC
+    # QML_FILES ${QML_SOURCES}
+    # RESOURCES ${QML_RESOURCES}
+    # OUTPUT_TARGETS qgcqml_targets
+    # IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
+    IMPORTS
+        QtQuick
+        QtQuick.Controls
+        QtQuick.Dialogs
+        QtQuick.Layouts
+        QtQuick.Window
+        QtCharts
+        QtLocation
+        QtMultimedia
+        QtPositioning
+        Qt.labs.animation
+    DEPENDENCIES
+        QtCore
+    # ENABLE_TYPE_COMPILER
 )
 
 add_subdirectory(src)
@@ -527,6 +555,8 @@ qt_add_translations(${CMAKE_PROJECT_NAME}
     RESOURCE_PREFIX "/"
     LUPDATE_OPTIONS -no-obsolete
 )
+# QT_EXCLUDE_FROM_TRANSLATION
+# QT_EXCLUDE_SOURCES_FROM_TRANSLATION
 
 set_source_files_properties(resources/qtquickcontrols2.conf PROPERTIES QT_RESOURCE_ALIAS qtquickcontrols2.conf)
 set_source_files_properties(${SDL_GAMECONTROLLERDB_PATH} PROPERTIES QT_RESOURCE_ALIAS gamecontrollerdb.txt)
@@ -546,5 +576,24 @@ qt_import_plugins(${CMAKE_PROJECT_NAME}
 )
 
 include(Install)
+
+# qt_query_qml_module(${CMAKE_PROJECT_NAME}
+#     URI module_uri
+#     VERSION module_version
+#     PLUGIN_TARGET module_plugin_target
+#     TARGET_PATH module_target_path
+#     MODULE_RESOURCE_PATH module_module_resource_path
+#     QMLDIR module_qmldir
+#     TYPEINFO module_typeinfo
+#     QML_FILES module_qml_files
+#     QML_FILES_DEPLOY_PATHS module_qml_files_deploy_paths
+#     QML_FILES_PREFIX_OVERRIDES module_qml_files_prefix_overrides_var
+#     RESOURCES module_resources
+#     RESOURCES_DEPLOY_PATHS module_resources_deploy_paths
+#     RESOURCES_PREFIX_OVERRIDES module_resources_prefix_overrides_var
+# )
+# cmake_print_variables(module_uri module_version module_plugin_target module_target_path module_module_resource_path module_qmldir module_typeinfo
+                        # module_qml_files module_qml_files_deploy_paths module_qml_files_prefix_overrides_var
+                        # module_resources module_resources_deploy_paths module_resources_prefix_overrides_var)
 
 include(PrintSummary)

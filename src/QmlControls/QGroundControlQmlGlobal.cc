@@ -33,7 +33,6 @@
 #include "ParameterEditorController.h"
 #include "QGCFileDialogController.h"
 #include "RCChannelMonitorController.h"
-#include "ScreenToolsController.h"
 #include "QGCMapPalette.h"
 #include "QGCPalette.h"
 #include "QmlObjectListModel.h"
@@ -66,12 +65,6 @@ QGC_LOGGING_CATEGORY(GuidedActionsControllerLog, "GuidedActionsControllerLog")
 QGeoCoordinate QGroundControlQmlGlobal::_coord = QGeoCoordinate(0.0,0.0);
 double QGroundControlQmlGlobal::_zoom = 2;
 
-static QObject* screenToolsControllerSingletonFactory(QQmlEngine*, QJSEngine*)
-{
-    ScreenToolsController* screenToolsController = new ScreenToolsController();
-    return screenToolsController;
-}
-
 static QObject* qgroundcontrolQmlGlobalSingletonFactory(QQmlEngine*, QJSEngine*)
 {
     QGroundControlQmlGlobal *const qmlGlobal = new QGroundControlQmlGlobal();
@@ -98,13 +91,11 @@ void QGroundControlQmlGlobal::registerQmlTypes()
     qmlRegisterType<QGCPalette>                         ("QGroundControl.Palette",               1, 0, "QGCPalette");
     qmlRegisterType<RCChannelMonitorController>         ("QGroundControl.Controllers",           1, 0, "RCChannelMonitorController");
     qmlRegisterType<RCToParamDialogController>          ("QGroundControl.Controllers",           1, 0, "RCToParamDialogController");
-    qmlRegisterType<ScreenToolsController>              ("QGroundControl.Controllers",           1, 0, "ScreenToolsController");
     qmlRegisterType<TerrainProfile>                     ("QGroundControl.Controls",              1, 0, "TerrainProfile");
     qmlRegisterType<ToolStripAction>                    ("QGroundControl.Controls",              1, 0, "ToolStripAction");
     qmlRegisterType<ToolStripActionList>                ("QGroundControl.Controls",              1, 0, "ToolStripActionList");
 
     qmlRegisterSingletonType<QGroundControlQmlGlobal>   ("QGroundControl",                       1, 0, "QGroundControl",         qgroundcontrolQmlGlobalSingletonFactory);
-    qmlRegisterSingletonType<ScreenToolsController>     ("QGroundControl.ScreenToolsController", 1, 0, "ScreenToolsController",  screenToolsControllerSingletonFactory);
 }
 
 QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject *parent)

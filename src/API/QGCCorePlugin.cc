@@ -276,6 +276,7 @@ QQmlApplicationEngine *QGCCorePlugin::createQmlApplicationEngine(QObject *parent
 void QGCCorePlugin::createRootWindow(QQmlApplicationEngine *qmlEngine)
 {
     qmlEngine->load(QUrl(QStringLiteral("qrc:/qml/MainRootWindow.qml")));
+    // qmlEngine->loadFromModule("QGroundControl", "MainRootWindow");
 }
 
 VideoReceiver *QGCCorePlugin::createVideoReceiver(QObject *parent)

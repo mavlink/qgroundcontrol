@@ -285,14 +285,6 @@ void QGCApplication::init()
 
     qmlRegisterUncreatableType<GimbalController>("QGroundControl.Vehicle", 1, 0, "GimbalController", "Reference only");
 
-#ifndef QGC_DISABLE_MAVLINK_INSPECTOR
-    qmlRegisterUncreatableType<MAVLinkChartController>("QGroundControl", 1, 0, "MAVLinkChart", "Reference only");
-    qmlRegisterType<MAVLinkInspectorController>("QGroundControl.Controllers", 1, 0, "MAVLinkInspectorController");
-#endif
-    qmlRegisterType<GeoTagController>("QGroundControl.Controllers", 1, 0, "GeoTagController");
-    qmlRegisterType<LogDownloadController>("QGroundControl.Controllers", 1, 0, "LogDownloadController");
-    qmlRegisterType<MAVLinkConsoleController>("QGroundControl.Controllers", 1, 0, "MAVLinkConsoleController");
-
 
     qmlRegisterUncreatableType<AutoPilotPlugin>("QGroundControl.AutoPilotPlugin", 1, 0, "AutoPilotPlugin", "Reference only");
     qmlRegisterType<ESP8266ComponentController>("QGroundControl.Controllers", 1, 0, "ESP8266ComponentController");
@@ -348,7 +340,14 @@ void QGCApplication::_initForNormalAppBoot()
     MAVLinkProtocol::instance()->init();
     MultiVehicleManager::instance()->init();
     _qmlAppEngine = QGCCorePlugin::instance()->createQmlApplicationEngine(this);
+    // qCDebug(QGCApplicationLog) << _qmlAppEngine->importPathList();
+    // QDirIterator it(":", QDirIterator::Subdirectories);
+    // while (it.hasNext()) {
+    //     qDebug() << it.next();
+    // }
+
     QObject::connect(_qmlAppEngine, &QQmlApplicationEngine::objectCreationFailed, this, QCoreApplication::quit, Qt::QueuedConnection);
+    // QObject::connect(_qmlAppEngine, &QQmlApplicationEngine::warnings, this, [this](const QList<QQmlError> &warnings){});
     QGCCorePlugin::instance()->createRootWindow(_qmlAppEngine);
 
     AudioOutput::instance()->init(SettingsManager::instance()->appSettings()->audioMuted());

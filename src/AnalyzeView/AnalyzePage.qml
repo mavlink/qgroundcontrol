@@ -14,6 +14,7 @@ import QGroundControl
 import QGroundControl.Palette
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
+import QGC
 
 /// Base view control for all Analyze pages
 Item {

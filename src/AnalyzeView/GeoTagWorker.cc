@@ -7,13 +7,11 @@
  *
  ****************************************************************************/
 
-// TODO: https://github.com/PX4/PX4-Autopilot/blob/main/Tools/geotag_images_ulog.py
-
 #include "GeoTagWorker.h"
 #include "ExifParser.h"
-#include "ULogParser.h"
 #include "PX4LogParser.h"
 #include "QGCLoggingCategory.h"
+#include "ULogParser.h"
 
 #include <QtCore/QDir>
 
@@ -22,18 +20,18 @@ QGC_LOGGING_CATEGORY(GeoTagWorkerLog, "qgc.analyzeview.geotagworker")
 GeoTagWorker::GeoTagWorker(QObject *parent)
     : QObject(parent)
 {
-    // qCDebug(GeoTagWorkerLog) << Q_FUNC_INFO << this;
+    qCDebug(GeoTagWorkerLog) << this;
 
-#ifdef QT_DEBUG
-    (void) connect(this, &GeoTagWorker::error, this, [](const QString &errorMsg) {
-        qCDebug(GeoTagWorkerLog) << errorMsg;
-    }, Qt::AutoConnection);
-#endif
+    if (GeoTagWorkerLog().isDebugEnabled()) {
+        (void) connect(this, &GeoTagWorker::error, this, [](const QString &errorMsg) {
+            qCDebug(GeoTagWorkerLog) << errorMsg;
+        }, Qt::AutoConnection);
+    }
 }
 
 GeoTagWorker::~GeoTagWorker()
 {
-    // qCDebug(GeoTagWorkerLog) << Q_FUNC_INFO << this;
+    qCDebug(GeoTagWorkerLog) << this;
 }
 
 bool GeoTagWorker::process()

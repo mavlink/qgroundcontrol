@@ -13,18 +13,18 @@
 
 #include <QtCore/QtMath>
 
-QGC_LOGGING_CATEGORY(LogEntryLog, "test.analyzeview.logentry")
+QGC_LOGGING_CATEGORY(LogEntryLog, "qgc.analyzeview.logentry")
 
 LogDownloadData::LogDownloadData(QGCLogEntry * const entry)
     : ID(entry->id())
     , entry(entry)
 {
-    // qCDebug(LogEntryLog) << Q_FUNC_INFO << this;
+    // qCDebug(LogEntryLog) << this;
 }
 
 LogDownloadData::~LogDownloadData()
 {
-    // qCDebug(LogEntryLog) << Q_FUNC_INFO << this;
+    // qCDebug(LogEntryLog) << this;
 }
 
 void LogDownloadData::advanceChunk()
@@ -59,12 +59,12 @@ QGCLogEntry::QGCLogEntry(uint logId, const QDateTime &dateTime, uint logSize, bo
     , _logTimeUTC(dateTime)
     , _received(received)
 {
-    // qCDebug(LogEntryLog) << Q_FUNC_INFO << this;
+    // qCDebug(LogEntryLog) << this;
 }
 
 QGCLogEntry::~QGCLogEntry()
 {
-    // qCDebug(LogEntryLog) << Q_FUNC_INFO << this;
+    // qCDebug(LogEntryLog) << this;
 }
 
 QString QGCLogEntry::sizeStr() const

@@ -46,7 +46,7 @@ MAVLinkInspectorController::MAVLinkInspectorController(QObject *parent)
     , _systems(new QmlObjectListModel(this))
     , _charts(new QmlObjectListModel(this))
 {
-    // qCDebug(MAVLinkInspectorControllerLog) << Q_FUNC_INFO << this;
+    qCDebug(MAVLinkInspectorControllerLog) << this;
 
     MultiVehicleManager *const multiVehicleManager = MultiVehicleManager::instance();
     (void) connect(multiVehicleManager, &MultiVehicleManager::vehicleAdded,   this, &MAVLinkInspectorController::_vehicleAdded);
@@ -87,7 +87,7 @@ MAVLinkInspectorController::~MAVLinkInspectorController()
     _charts->clearAndDeleteContents();
     _systems->clearAndDeleteContents();
 
-    // qCDebug(MAVLinkInspectorControllerLog) << Q_FUNC_INFO << this;
+    qCDebug(MAVLinkInspectorControllerLog) << this;
 }
 
 QStringList MAVLinkInspectorController::timeScales()

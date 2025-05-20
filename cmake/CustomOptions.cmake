@@ -61,6 +61,7 @@ set(QT_ANDROID_DEPLOYMENT_TYPE "" CACHE STRING "Forces Signing if Set to Release
 option(QT_ANDROID_SIGN_APK "Enable Signing APK" OFF)
 option(QT_ANDROID_SIGN_AAB "Enable Signing AAB" OFF)
 option(QT_USE_TARGET_ANDROID_BUILD_DIR "Use Target Android Build Dir" OFF)
+# QT_ANDROID_APPLICATION_ARGUMENTS
 
 # MacOS
 set(QGC_MACOS_PLIST_PATH "${CMAKE_SOURCE_DIR}/deploy/macos/MacOSXBundleInfo.plist.in" CACHE FILEPATH "MacOS PList Path")
@@ -83,6 +84,8 @@ set(QGC_CPM_SOURCE_CACHE "" CACHE PATH "Directory to Download CPM Dependencies, 
 
 # Qt
 set(QT_QML_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/qml" CACHE PATH "Install path for QML")
+# set(QT_QML_GENERATE_AOTSTATS ON)
+# set(QT_QML_GENERATE_QMLLS_INI ON)
 set(QML_IMPORT_PATH "${QT_QML_OUTPUT_DIRECTORY}" CACHE STRING "Extra QML Import Paths")
 option(QML_IMPORT_TRACE "Debug QML Imports" OFF)
 option(QT_SILENCE_MISSING_DEPENDENCY_TARGET_WARNING "Silence Missing Dependency Warnings" OFF)

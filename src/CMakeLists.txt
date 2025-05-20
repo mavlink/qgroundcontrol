@@ -1,9 +1,3 @@
-# qt_add_qml_module(QGC
-#     URI QGroundControl
-#     VERSION 1.0
-#     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
-# )
-
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         main.cc

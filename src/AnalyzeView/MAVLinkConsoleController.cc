@@ -14,8 +14,8 @@
 #include "QGCPalette.h"
 #include "Vehicle.h"
 
-#include <QtGui/QGuiApplication>
 #include <QtGui/QClipboard>
+#include <QtGui/QGuiApplication>
 
 QGC_LOGGING_CATEGORY(MAVLinkConsoleControllerLog, "qgc.analyzeview.mavlinkconsolecontroller")
 
@@ -23,7 +23,7 @@ MAVLinkConsoleController::MAVLinkConsoleController(QObject *parent)
     : QStringListModel(parent)
     , _palette(new QGCPalette(this))
 {
-    // qCDebug(MAVLinkConsoleControllerLog) << Q_FUNC_INFO << this;
+    qCDebug(MAVLinkConsoleControllerLog) << this;
 
     (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &MAVLinkConsoleController::_setActiveVehicle);
 
@@ -37,7 +37,7 @@ MAVLinkConsoleController::~MAVLinkConsoleController()
         _sendSerialData(msg, true);
     }
 
-    // qCDebug(MAVLinkConsoleControllerLog) << Q_FUNC_INFO << this;
+    qCDebug(MAVLinkConsoleControllerLog) << this;
 }
 
 void MAVLinkConsoleController::sendCommand(const QString &command)

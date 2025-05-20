@@ -14,24 +14,27 @@
 
 QGC_LOGGING_CATEGORY(PX4LogParserLog, "qgc.analyzeview.px4logparser")
 
-// general message header
-static constexpr const char header[3] = {static_cast<char>(0xA3), static_cast<char>(0x95), static_cast<char>(0x00)};
+namespace
+{
+    // general message header
+    constexpr const char header[3] = {static_cast<char>(0xA3), static_cast<char>(0x95), static_cast<char>(0x00)};
 
-// header for GPOS message header
-static constexpr const char gposHeaderHeader[5] = {static_cast<char>(0xA3), static_cast<char>(0x95), static_cast<char>(0x80), static_cast<char>(0x10), static_cast<char>(0x00)};
+    // header for GPOS message header
+    constexpr const char gposHeaderHeader[5] = {static_cast<char>(0xA3), static_cast<char>(0x95), static_cast<char>(0x80), static_cast<char>(0x10), static_cast<char>(0x00)};
 
-// header for GPOS message
-static constexpr const char gposHeader[4] = {static_cast<char>(0xA3), static_cast<char>(0x95), static_cast<char>(0x10), static_cast<char>(0x00)};
-static constexpr const int gposOffsets[3] = {3, 7, 11};
-static constexpr const int gposLengths[3] = {4, 4, 4};
+    // header for GPOS message
+    constexpr const char gposHeader[4] = {static_cast<char>(0xA3), static_cast<char>(0x95), static_cast<char>(0x10), static_cast<char>(0x00)};
+    constexpr const int gposOffsets[3] = {3, 7, 11};
+    constexpr const int gposLengths[3] = {4, 4, 4};
 
-// header for trigger message header
-static constexpr const char triggerHeaderHeader[] = {static_cast<char>(0xA3), static_cast<char>(0x95), static_cast<char>(0x80), static_cast<char>(0x37), static_cast<char>(0x00)};
+    // header for trigger message header
+    constexpr const char triggerHeaderHeader[] = {static_cast<char>(0xA3), static_cast<char>(0x95), static_cast<char>(0x80), static_cast<char>(0x37), static_cast<char>(0x00)};
 
-// header for trigger message
-static constexpr const char triggerHeader[4] = {static_cast<char>(0xA3), static_cast<char>(0x95), static_cast<char>(0x37), static_cast<char>(0x00)};
-static constexpr const int triggerOffsets[2] = {3, 11};
-static constexpr const int triggerLengths[2] = {8, 4};
+    // header for trigger message
+    constexpr const char triggerHeader[4] = {static_cast<char>(0xA3), static_cast<char>(0x95), static_cast<char>(0x37), static_cast<char>(0x00)};
+    constexpr const int triggerOffsets[2] = {3, 11};
+    constexpr const int triggerLengths[2] = {8, 4};
+}
 
 namespace PX4LogParser {
 

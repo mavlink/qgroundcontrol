@@ -23,31 +23,36 @@ GeoTagController::GeoTagController(QObject *parent)
     , _worker(new GeoTagWorker())
     , _workerThread(new QThread(this))
 {
-    // qCDebug(GeoTagControllerLog) << Q_FUNC_INFO << this;
+    qCDebug(GeoTagControllerLog) << this;
+
+    _workerThread->setObjectName(QStringLiteral("GeoTag"));
 
     _worker->moveToThread(_workerThread);
 
-    (void) connect(_worker, &GeoTagWorker::progressChanged, this, &GeoTagController::_workerProgressChanged);
-    (void) connect(_worker, &GeoTagWorker::error, this, &GeoTagController::_workerError);
     (void) connect(_workerThread, &QThread::started, _worker, &GeoTagWorker::process);
+    (void) connect(_workerThread, &QThread::finished, _worker, &QObject::deleteLater);
     (void) connect(_workerThread, &QThread::started, this, &GeoTagController::inProgressChanged);
     (void) connect(_workerThread, &QThread::finished, this, &GeoTagController::inProgressChanged);
+
+    (void) connect(_worker, &GeoTagWorker::progressChanged, this, &GeoTagController::_workerProgressChanged, Qt::QueuedConnection);
+    (void) connect(_worker, &GeoTagWorker::error, this, &GeoTagController::_workerError, Qt::QueuedConnection);
 }
 
 GeoTagController::~GeoTagController()
 {
     cancelTagging();
-    delete _worker;
 
-    // qCDebug(GeoTagControllerLog) << Q_FUNC_INFO << this;
+    qCDebug(GeoTagControllerLog) << this;
 }
 
 void GeoTagController::cancelTagging()
 {
-    (void) QMetaObject::invokeMethod(_worker, "cancelTagging", Qt::AutoConnection);
-    (void) QMetaObject::invokeMethod(_workerThread, "quit", Qt::AutoConnection);
+    (void) QMetaObject::invokeMethod(_worker, "cancelTagging", Qt::QueuedConnection);
 
-    _workerThread->wait();
+    _workerThread->quit();
+    if (!_workerThread->wait()) {
+        qCWarning(GeoTagControllerLog) << "Failed to wait for GeoTagWorker Thread to close";
+    }
 }
 
 QString GeoTagController::logFile() const
