@@ -96,32 +96,41 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 endif()
 
 if(QGC_USE_CACHE)
-    if(CMAKE_HOST_UNIX)
+    if(CMAKE_HOST_UNIX AND CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)|(i.86)")
         find_program(CCACHE_PROGRAM ccache)
         if(CCACHE_PROGRAM)
-            set(CCACHE_CMD
-                CCACHE_BASEDIR=${CMAKE_BINARY_DIR}
-                CCACHE_COMPRESSLEVEL=6
-                CCACHE_SLOPPINESS=pch_defines,time_macros,include_file_mtime,include_file_ctime
-                ${CCACHE_PROGRAM}
+            execute_process(
+                COMMAND "${CCACHE_PROGRAM}" --version
+                RESULT_VARIABLE CCACHE_OK
+                OUTPUT_QUIET
+                ERROR_QUIET
             )
-            message(STATUS "QGC: Using ccache cmd - ${CCACHE_CMD}")
-            set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_CMD}")
-            set(CMAKE_C_LINKER_LAUNCHER "${CCACHE_CMD}")
-            set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_CMD}")
-            set(CMAKE_CXX_LINKER_LAUNCHER "${CCACHE_CMD}")
-            if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-                add_compile_options(-Xclang -fno-pch-timestamp)
+            if(CCACHE_OK EQUAL 0)
+                message(STATUS "QGC: Found ccache at ${CCACHE_PROGRAM}")
+
+                set(ENV{CCACHE_BASEDIR} "${CMAKE_BINARY_DIR}")
+                set(ENV{CCACHE_COMPRESSLEVEL} "6")
+                set(ENV{CCACHE_SLOPPINESS} "pch_defines,time_macros,include_file_mtime,include_file_ctime")
+
+                set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}" CACHE STRING "C compiler launcher")
+                set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}" CACHE STRING "CXX compiler launcher")
+                # set(CMAKE_C_LINKER_LAUNCHER "${CCACHE_PROGRAM}" CACHE STRING "C linker cache used")
+                # set(CMAKE_CXX_LINKER_LAUNCHER "${CCACHE_PROGRAM}" CACHE STRING "CXX linker cache used")
+
+                if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+                    add_compile_options(-Xclang -fno-pch-timestamp)
+                endif()
             endif()
         endif()
     elseif(CMAKE_HOST_WIN32)
         find_program(SCCACHE_PROGRAM sccache)
         if(SCCACHE_PROGRAM)
             message(STATUS "QGC: Using sccache ${SCCACHE_PROGRAM}")
-            set(CMAKE_C_COMPILER_LAUNCHER "${SCCACHE_PROGRAM}")
-            # set(CMAKE_C_LINKER_LAUNCHER "${SCCACHE_PROGRAM}")
-            set(CMAKE_CXX_COMPILER_LAUNCHER "${SCCACHE_PROGRAM}")
-            # set(CMAKE_CXX_LINKER_LAUNCHER "${SCCACHE_PROGRAM}")
+
+            set(CMAKE_C_COMPILER_LAUNCHER "${SCCACHE_PROGRAM}" CACHE STRING "C compiler launcher")
+            set(CMAKE_CXX_COMPILER_LAUNCHER "${SCCACHE_PROGRAM}" CACHE STRING "CXX compiler launcher")
+            # set(CMAKE_C_LINKER_LAUNCHER "${SCCACHE_PROGRAM}" CACHE STRING "C linker cache used")
+            # set(CMAKE_CXX_LINKER_LAUNCHER "${SCCACHE_PROGRAM}" CACHE STRING "CXX linker cache used")
         endif()
     endif()
 endif()
