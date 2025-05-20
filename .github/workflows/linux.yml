@@ -25,20 +25,32 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.runs-on }}
 
     strategy:
       matrix:
         BuildType: [Debug, Release]
-        # Arch: [x64] # Arm64
+        runs-on: [ubuntu-24.04-arm, ubuntu-22.04]
+        include:
+          - runs-on: ubuntu-24.04-arm
+            ARTIFACT: QGroundControl-aarch64.AppImage
+            PACKAGE: QGroundControl-aarch64
+            host: linux_arm64
+            arch: linux_gcc_arm64
+          - runs-on: ubuntu-22.04
+            ARTIFACT: QGroundControl-x86_64.AppImage
+            PACKAGE: QGroundControl-x86_64
+            host: linux
+            arch: linux_gcc_64
+        exclude:
+          - runs-on: ubuntu-24.04-arm
+            BuildType: Debug
 
     defaults:
       run:
         shell: bash
 
     env:
-      ARTIFACT: QGroundControl-x86_64.AppImage
-      PACKAGE: QGroundControl-x86_64
       QT_VERSION: 6.8.3
 
     steps:
@@ -50,7 +62,7 @@ jobs:
           fetch-tags: false
 
       - name: Get all tags for correct version determination
-        working-directory:  ${{ github.workspace }}
+        working-directory: ${{ github.workspace }}
         run: |
           git fetch --all --tags -f --depth 1
 
@@ -62,28 +74,22 @@ jobs:
           chmod a+x ./tools/setup/install-dependencies-debian.sh
           sudo ./tools/setup/install-dependencies-debian.sh
 
-      - name: Install Vulkan
-        run: |
-          wget -qO- https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo tee /etc/apt/trusted.gpg.d/lunarg.asc
-          sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-jammy.list http://packages.lunarg.com/vulkan/lunarg-vulkan-jammy.list
-          sudo apt update
-          sudo apt install vulkan-sdk
-
       - name: Setup Caching
+        if: ${{ matrix.arch == 'linux_gcc_64' }}
         uses: ./.github/actions/cache
         with:
-          host: linux
-          target: linux_gcc_64
+          host: ${{ matrix.host }}
+          target: ${{ matrix.arch }}
           build-type: ${{ matrix.BuildType }}
           cpm-modules: ${{ runner.temp }}/shadow_build_dir/cpm_modules
 
-      - name: Install Qt for Linux (x64)
+      - name: Install Qt for Linux
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
-          host: linux
+          host: ${{ matrix.host }}
           target: desktop
-          arch: linux_gcc_64
+          arch: ${{ matrix.arch }}
           dir: ${{ runner.temp }}
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
           cache: true
@@ -109,19 +115,19 @@ jobs:
       - name: Sanity check release excecutable
         if: matrix.BuildType == 'Release'
         working-directory: ${{ runner.temp }}/shadow_build_dir
-        run: xvfb-run -a ./${{ env.ARTIFACT }} --simple-boot-test
+        run: xvfb-run -a ./${{ matrix.ARTIFACT }} --simple-boot-test
 
       - name: Run unit tests
         if: matrix.BuildType == 'Debug'
         working-directory: ${{ runner.temp }}/shadow_build_dir
-        run: xvfb-run -a ./${{ env.ARTIFACT }} --unittest
+        run: xvfb-run -a ./${{ matrix.ARTIFACT }} --unittest
 
       - name: Upload Build File
         if: matrix.BuildType == 'Release'
         uses: ./.github/actions/upload
         with:
-          artifact_name: ${{ env.ARTIFACT }}
-          package_name: ${{ env.PACKAGE }}
+          artifact_name: ${{ matrix.ARTIFACT }}
+          package_name: ${{ matrix.PACKAGE }}
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
