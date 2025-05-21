@@ -17,6 +17,9 @@
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
 
+
+#include <tuple>
+
 QGC_LOGGING_CATEGORY(QGCSerialPortInfoLog, "qgc.comms.qgcserialportinfo")
 
 bool QGCSerialPortInfo::_jsonLoaded = false;
@@ -251,19 +254,73 @@ QString QGCSerialPortInfo::_boardTypeToString(BoardType_t boardType)
 
 QList<QGCSerialPortInfo> QGCSerialPortInfo::availablePorts()
 {
-    QList<QGCSerialPortInfo> list;
+    typedef std::tuple<quint16, quint16, QString> VidPidSerialTuple_t;
 
-    const QList<QSerialPortInfo> availablePorts = QSerialPortInfo::availablePorts();
-    for (const QSerialPortInfo &portInfo : availablePorts) {
-        if (isSystemPort(portInfo)) {
-            continue;
-        }
+    QMap<VidPidSerialTuple_t, QList<QGCSerialPortInfo>> compositePortMap;
+    QList<QGCSerialPortInfo> genericPortInfoList;
 
+    // Create map of possible composite devices and list of generic devices
+    for (QSerialPortInfo portInfo: QSerialPortInfo::availablePorts()) {
         const QGCSerialPortInfo *const qgcPortInfo = reinterpret_cast<const QGCSerialPortInfo*>(&portInfo);
-        list << *qgcPortInfo;
+
+        if (!isSystemPort(portInfo)) {
+            if (portInfo.hasVendorIdentifier() && portInfo.hasProductIdentifier() && !portInfo.serialNumber().isEmpty() && portInfo.serialNumber() != "0") {
+                if(portInfo.description().contains("NMEA")) {
+                    // Internal NMEA devices can present like a composite device, don't treat them as such
+                    genericPortInfoList.append(*qgcPortInfo);
+                } else {
+                    VidPidSerialTuple_t vidPidSerialTuple(portInfo.vendorIdentifier(), portInfo.productIdentifier(), portInfo.serialNumber());
+                    compositePortMap[vidPidSerialTuple].append(*qgcPortInfo);
+                    qDebug() << "Adding possible composite device" << portInfo.description() << portInfo.vendorIdentifier() << portInfo.productIdentifier() << portInfo.serialNumber() << portInfo.portName();   
+                }
+            } else {
+                genericPortInfoList.append(*qgcPortInfo);
+            }
+        }
     }
 
-    return list;
+    QList<QGCSerialPortInfo> portList;
+
+    // Figure out which of the composite devices are actually composite devices
+    for (auto entry=compositePortMap.cbegin(), end=compositePortMap.cend(); entry != end; ++entry) {
+        const VidPidSerialTuple_t &vidPidSerialTuple = entry.key();
+        const QList<QGCSerialPortInfo> &portInfoList = entry.value();
+
+        if (portInfoList.size() > 1) {
+            const QGCSerialPortInfo& firstPortInfo = portInfoList[0];
+            qDebug() << "Detected composite device" << firstPortInfo.description() << firstPortInfo.vendorIdentifier() << firstPortInfo.productIdentifier() << firstPortInfo.serialNumber(); 
+
+            QStringList portNameList;  
+            for (const QGCSerialPortInfo &portInfo : portInfoList) {
+                qDebug() << portInfo.description() << portInfo.portName();
+                portNameList.append(portInfo.portName());
+            }
+
+            // The true Mavlink port is the one with the lowest number
+            portNameList.sort();
+            qDebug() << "Mavlink port is" << portNameList[0];
+            for (const QGCSerialPortInfo &portInfo : portInfoList) {
+                if (portInfo.portName() == portNameList[0]) {
+                    // This is the Mavlink port
+                    portList.append(portInfo);
+                    break;
+                }
+            }
+        } else {
+            // If we only have one port, it is not a composite device
+            const QGCSerialPortInfo& portInfo = portInfoList[0];
+            qDebug() << "Possible composite device is actually generic" << portInfo.description() << portInfo.vendorIdentifier() << portInfo.productIdentifier() << portInfo.serialNumber() << portInfo.portName();   
+            portList.append(portInfoList[0]);
+        }
+    }
+
+    qDebug() << "Detected generic device(s)" << genericPortInfoList.size();
+    for (const QGCSerialPortInfo &portInfo : genericPortInfoList) {
+        qDebug() << portInfo.description() << portInfo.portName();
+        portList.append(portInfo);
+    }
+
+    return portList;
 }
 
 bool QGCSerialPortInfo::isBootloader() const
