@@ -354,10 +354,10 @@ bool QGCMapPolyline::loadKMLOrSHPFile(const QString &file)
         return false;
     }
 
-    _beginResetIfNotActive();
+    beginReset();
     clear();
     appendVertices(rgCoords);
-    _endResetIfNotActive();
+    endReset();
 
     return true;
 }
