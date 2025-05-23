@@ -1,7 +1,7 @@
 set(QGC_APP_NAME "Custom-QGroundControl" CACHE STRING "App Name" FORCE)
 
-if(EXISTS "${CMAKE_SOURCE_DIR}/custom/res/custom_qgroundcontrol.icns")
-    set(QGC_MACOS_ICON_PATH "${CMAKE_SOURCE_DIR}/custom/custom_qgroundcontrol.icns" CACHE FILEPATH "MacOS Icon Path" FORCE)
+if(EXISTS "${CMAKE_SOURCE_DIR}/custom/res/icons/custom_qgroundcontrol.icns")
+    set(QGC_MACOS_ICON_PATH "${CMAKE_SOURCE_DIR}/custom/res/icons/custom_qgroundcontrol.icns" CACHE FILEPATH "MacOS Icon Path" FORCE)
 endif()
 
 if(EXISTS "${CMAKE_SOURCE_DIR}/custom/res/icons/custom_qgroundcontrol.svg")
