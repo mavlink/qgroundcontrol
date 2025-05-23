@@ -32,23 +32,8 @@ if(ANDROID)
     endif()
 endif()
 
-find_package(Python3 REQUIRED)
-execute_process(
-    COMMAND ${Python3_EXECUTABLE}
-    RESULT_VARIABLE PYTHON_RESULT
-    OUTPUT_VARIABLE PYTHON_OUTPUT
-    ERROR_VARIABLE PYTHON_ERROR
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    INPUT_FILE updateqrc.py
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-cmake_print_variables(PYTHON_RESULT PYTHON_OUTPUT PYTHON_ERROR)
-
 # Our own, custom resources
 list(APPEND CUSTOM_RESOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/qgcimages.qrc
-    ${CMAKE_CURRENT_SOURCE_DIR}/qgcresources.qrc
-    ${CMAKE_CURRENT_SOURCE_DIR}/qgroundcontrol.qrc
     ${CMAKE_CURRENT_SOURCE_DIR}/custom.qrc
 )
 set(QGC_RESOURCES ${QGC_RESOURCES} ${CUSTOM_RESOURCES} CACHE STRING "Paths to .qrc Resources" FORCE)
@@ -78,23 +63,3 @@ set(CUSTOM_DIRECTORIES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/FirmwarePlugin
     CACHE INTERNAL "" FORCE
 )
-
-# file(GLOB_RECURSE QML_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/res/*.qml)
-# file(GLOB QML_RESOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/res/Images/*.*)
-# qt_add_qml_module(CustomPlugin
-#     URI QGroundControl.CustomPlugin
-#     VERSION 1.0
-#     RESOURCE_PREFIX "/"
-#     QML_FILES ${QML_SOURCES}
-#     RESOURCES ${QML_RESOURCES}
-#     OUTPUT_TARGETS CustomPlugin_targets
-#     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
-#     IMPORTS
-#         QtQuick
-#         QtQuick.Controls
-#         QtQuick.Layouts
-#         QGroundControl
-#         QGroundControl.Controls
-#         QGroundControl.Palette
-#         QGroundControl.ScreenTools
-# )

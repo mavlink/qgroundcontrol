@@ -266,14 +266,11 @@ endif()
 
 # Note: Adding Resources to Library instead requires using Q_INIT_RESOURCE(qgcresources)
 
-if(NOT QGC_CUSTOM_BUILD)
-    # Custom builds can override the resources
-    list(APPEND QGC_RESOURCES
-        ${CMAKE_SOURCE_DIR}/qgcimages.qrc
-        ${CMAKE_SOURCE_DIR}/qgcresources.qrc
-        ${CMAKE_SOURCE_DIR}/qgroundcontrol.qrc
-    )
-endif()
+list(APPEND QGC_RESOURCES
+    ${CMAKE_SOURCE_DIR}/qgcimages.qrc
+    ${CMAKE_SOURCE_DIR}/qgcresources.qrc
+    ${CMAKE_SOURCE_DIR}/qgroundcontrol.qrc
+)
 
 list(APPEND QGC_RESOURCES
     ${CMAKE_SOURCE_DIR}/resources/InstrumentValueIcons/InstrumentValueIcons.qrc

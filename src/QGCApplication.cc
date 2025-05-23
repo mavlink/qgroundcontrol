@@ -755,6 +755,8 @@ void QGCApplication::shutdown()
         VideoManager::instance()->cleanup();
     }
 
+    QGCCorePlugin::instance()->cleanup();
+
     // This is bad, but currently qobject inheritances are incorrect and cause crashes on exit without
     delete _qmlAppEngine;
 }

@@ -52,12 +52,13 @@ class QGCCorePlugin : public QObject
 
 public:
     explicit QGCCorePlugin(QObject *parent = nullptr);
-    ~QGCCorePlugin();
+    virtual ~QGCCorePlugin();
 
     static QGCCorePlugin *instance();
     static void registerQmlTypes();
 
-    virtual void init() { };
+    virtual void init() { }
+    virtual void cleanup() { }
 
     /// The list of pages/buttons under the Analyze Menu
     /// @return A list of QmlPageInfo
