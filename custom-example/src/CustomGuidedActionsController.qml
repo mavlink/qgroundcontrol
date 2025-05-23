@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -13,9 +13,7 @@ import QtQml
 
 QtObject {
     readonly property int actionCustomButton: _guidedController.customActionStart + 0
-
     readonly property string customButtonTitle: qsTr("Custom")
-
     readonly property string customButtonMessage: qsTr("Example of a custom action.")
 
     function customConfirmAction(actionCode, actionData, mapIndicator, confirmDialog) {

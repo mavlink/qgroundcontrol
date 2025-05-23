@@ -1,13 +1,5 @@
 message(STATUS "Adding Custom Plugin")
 
-# Enable custom build
-set_property(DIRECTORY ${CMAKE_SOURCE_DIR}
-    APPEND PROPERTY COMPILE_DEFINITIONS
-    QGC_CUSTOM_BUILD
-    CUSTOMHEADER="CustomPlugin.h"
-    CUSTOMCLASS=CustomPlugin
-)
-
 if(ANDROID)
     set(CUSTOM_ANDROID_DIR "${CMAKE_SOURCE_DIR}/custom/android")
     if(EXISTS "${CUSTOM_ANDROID_DIR}")
@@ -61,5 +53,12 @@ set(CUSTOM_DIRECTORIES
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/src/AutoPilotPlugin
     ${CMAKE_CURRENT_SOURCE_DIR}/src/FirmwarePlugin
+    CACHE INTERNAL "" FORCE
+)
+
+set(CUSTOM_DEFINITIONS
+    QGC_CUSTOM_BUILD
+    CUSTOMHEADER="CustomPlugin.h"
+    CUSTOMCLASS=CustomPlugin
     CACHE INTERNAL "" FORCE
 )
