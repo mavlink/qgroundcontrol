@@ -66,9 +66,9 @@ QString FirmwarePlugin::flightMode(uint8_t base_mode, uint32_t custom_mode) cons
     if (base_mode == 0) {
         flightMode = "PreFlight";
     } else if (base_mode & MAV_MODE_FLAG_CUSTOM_MODE_ENABLED) {
-        flightMode = _modeEnumToString.value(custom_mode, QString("Custom:0x%1").arg(custom_mode, 0, 16));
+        flightMode = _modeEnumToString.value(custom_mode, QStringLiteral("Custom:0x%1").arg(custom_mode, 0, 16));
     } else {
-        for (size_t i = 0; std::size(rgBit2Name); i++) {
+        for (size_t i = 0; i < std::size(rgBit2Name); i++) {
             if (base_mode & rgBit2Name[i].baseModeBit) {
                 if (i != 0) {
                     flightMode += " ";
