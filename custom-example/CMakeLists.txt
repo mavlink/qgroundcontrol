@@ -1,13 +1,5 @@
 message(STATUS "QGC: Adding Custom Plugin")
 
-# Enable custom build
-set_property(DIRECTORY ${CMAKE_SOURCE_DIR}
-    APPEND PROPERTY COMPILE_DEFINITIONS
-    QGC_CUSTOM_BUILD
-    CUSTOMHEADER="CustomPlugin.h"
-    CUSTOMCLASS=CustomPlugin
-)
-
 if(ANDROID)
     set(CUSTOM_ANDROID_DIR "${CMAKE_SOURCE_DIR}/custom/android")
     if(EXISTS "${CUSTOM_ANDROID_DIR}")
@@ -43,13 +35,15 @@ set(QML_IMPORT_PATH ${QML_IMPORT_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/res" CACHE S
 qt_add_library(CustomModule STATIC)
 
 set_source_files_properties(res/Custom/Widgets/CustomArtificialHorizon.qml PROPERTIES QT_RESOURCE_ALIAS CustomArtificialHorizon.qml)
-set_source_files_properties(res/Custom/Widgets/CustomAttitudeWidget.qml PROPERTIES QT_RESOURCE_ALIAS CustomAttitudeWidget.qml)
-set_source_files_properties(res/Custom/Widgets/CustomIconButton.qml PROPERTIES QT_RESOURCE_ALIAS CustomIconButton.qml)
-set_source_files_properties(res/Custom/Widgets/CustomOnOffSwitch.qml PROPERTIES QT_RESOURCE_ALIAS CustomOnOffSwitch.qml)
-set_source_files_properties(res/Custom/Widgets/CustomQuickButton.qml PROPERTIES QT_RESOURCE_ALIAS CustomQuickButton.qml)
-set_source_files_properties(res/Custom/Widgets/CustomSignalStrength.qml PROPERTIES QT_RESOURCE_ALIAS CustomSignalStrength.qml)
-set_source_files_properties(res/Custom/Widgets/CustomToolBarButton.qml PROPERTIES QT_RESOURCE_ALIAS CustomToolBarButton.qml)
-set_source_files_properties(res/Custom/Widgets/CustomVehicleButton.qml PROPERTIES QT_RESOURCE_ALIAS CustomVehicleButton.qml)
+qgc_set_qt_resource_alias(
+    res/Custom/Widgets/CustomAttitudeWidget.qml
+    res/Custom/Widgets/CustomIconButton.qml
+    res/Custom/Widgets/CustomOnOffSwitch.qml
+    res/Custom/Widgets/CustomQuickButton.qml
+    res/Custom/Widgets/CustomSignalStrength.qml
+    res/Custom/Widgets/CustomToolBarButton.qml
+    res/Custom/Widgets/CustomVehicleButton.qml
+)
 
 qt_add_qml_module(CustomModule
     URI Custom.Widgets
@@ -84,9 +78,21 @@ set(CUSTOM_LIBRARIES
     CACHE INTERNAL "" FORCE
 )
 
-set(CUSTOM_DIRECTORIES
+set(CUSTOM_INCLUDE_DIRECTORIES
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/src/AutoPilotPlugin
     ${CMAKE_CURRENT_SOURCE_DIR}/src/FirmwarePlugin
+    CACHE INTERNAL "" FORCE
+)
+
+set(CUSTOM_DEFINITIONS
+    QGC_CUSTOM_BUILD
+    CUSTOMHEADER="CustomPlugin.h"
+    CUSTOMCLASS=CustomPlugin
+    CACHE INTERNAL "" FORCE
+)
+
+set(CUSTOM_QT_COMPONENTS
+    Core
     CACHE INTERNAL "" FORCE
 )
