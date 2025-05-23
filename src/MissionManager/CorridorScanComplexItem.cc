@@ -178,7 +178,13 @@ void CorridorScanComplexItem::_polylineDirtyChanged(bool dirty)
 
 void CorridorScanComplexItem::rotateEntryPoint(void)
 {
-    _entryPoint++;
+    if (_calcTransectCount() < 2) {
+        // Cycle by 2 indexes when the path only has a single "lane", to prevent having to double click the "rotate entry point" button to invert the scan's direction along the path
+        _entryPoint += 2;
+    } else {
+        _entryPoint++;
+    }
+
     if (_entryPoint > 3) {
         _entryPoint = 0;
     }
