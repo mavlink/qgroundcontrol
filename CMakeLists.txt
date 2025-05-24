@@ -8,7 +8,7 @@ list(APPEND CMAKE_MODULE_PATH
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
-    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug;Release")
+    set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Configuration types" FORCE)
 endif()
 
 set(CMAKE_REQUIRED_QUIET ON)
@@ -44,7 +44,7 @@ include(Git)
 project(${QGC_APP_NAME}
     VERSION ${QGC_APP_VERSION}
     DESCRIPTION ${QGC_APP_DESCRIPTION}
-    HOMEPAGE_URL ${QGC_ORG_DOMAIN}
+    HOMEPAGE_URL "https://${QGC_ORG_DOMAIN}"
     LANGUAGES C CXX
 )
 
@@ -85,15 +85,36 @@ set(CMAKE_COLOR_DIAGNOSTICS ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-# set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
 
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    if(LINUX)
-        set_property(CACHE CMAKE_INSTALL_PREFIX PROPERTY VALUE "${CMAKE_BINARY_DIR}/AppDir/usr")
-    else()
-        set_property(CACHE CMAKE_INSTALL_PREFIX PROPERTY VALUE "${CMAKE_BINARY_DIR}/staging")
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT LTO_SUPPORTED)
+    if(LTO_SUPPORTED)
+        set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+        message(STATUS "QGC: LTO is enabled")
     endif()
 endif()
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    add_link_options("$<$<CONFIG:Release>:-flto=thin>")
+elseif(MSVC)
+    add_link_options("$<$<CONFIG:Release>:/LTCG:INCREMENTAL>")
+endif()
+
+if(MSVC)
+    set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<$<CONFIG:Debug,RelWithDebInfo>:Embedded>")
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+endif()
+
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/staging/$<CONFIG>" CACHE PATH "Install path prefix" FORCE)
+    if(LINUX AND QGC_CREATE_APPIMAGE)
+        # set(ENV{DESTDIR} "${CMAKE_BINARY_DIR}/staging/$<CONFIG>")
+        set(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/AppDir/usr" CACHE PATH "Install path prefix for AppImage" FORCE)
+    endif()
+endif()
+
+# set(RULE_LAUNCH_CUSTOM "/usr/bin/time -v")
 
 if(QGC_USE_CACHE)
     if(CMAKE_HOST_UNIX)
@@ -126,10 +147,6 @@ if(QGC_USE_CACHE)
     endif()
 endif()
 
-if(MSVC)
-    set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT Embedded)
-endif()
-
 if(CMAKE_CROSSCOMPILING)
     if(ANDROID)
         set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)
@@ -142,9 +159,13 @@ if(CMAKE_CROSSCOMPILING)
     endif()
 endif()
 
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIGURATION>/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIGURATION>)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIGURATION>)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIG>/bin)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIG>/lib)
+if(WIN32)
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIG>/bin)
+else()
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIG>/lib)
+endif()
 
 # https://cmake.org/cmake/help/latest/policy/CMP0168.html#policy:CMP0168
 if(POLICY CMP0168)
@@ -162,8 +183,8 @@ endif()
 #               Qt6 Configuration
 #######################################################
 
-# The values specified below are the ONLY supported configurations for this version of QGC. 
-# Change these to something else at your own risk. Anything other than what is specified 
+# The values specified below are the ONLY supported configurations for this version of QGC.
+# Change these to something else at your own risk. Anything other than what is specified
 # here is unsupported so don't expect any help with problems.
 
 if(QGC_ENABLE_HERELINK AND ANDROID)
@@ -242,6 +263,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
     add_compile_definitions(
         NDEBUG
         QT_NO_DEBUG
+        QT_MESSAGELOGCONTEXT
     )
 else()
     add_compile_definitions(
@@ -302,37 +324,6 @@ qt_add_executable(${CMAKE_PROJECT_NAME}
 )
 
 if(WIN32)
-    # CPMAddPackage(
-    #     NAME windows_drivers
-    #     URL https://firmware.ardupilot.org/Tools/MissionPlanner/driver.msi
-    # )
-    # ${windows_drivers_SOURCE_DIR}/driver.msi
-
-    # windows installer files shared with core and custom
-    set(DEPLOY_WIN_FILES
-        "${CMAKE_SOURCE_DIR}/deploy/windows/driver.msi"
-        "${CMAKE_SOURCE_DIR}/deploy/windows/nullsoft_installer.nsi"
-        "${QGC_WINDOWS_RESOURCE_FILE_PATH}"
-        "${QGC_WINDOWS_INSTALL_HEADER_PATH}"
-        "${QGC_WINDOWS_ICON_PATH}"
-    )
-
-    # Destination directory where files will be copied
-    set(QGC_INSTALLER_SOURCE_WIN "${CMAKE_BINARY_DIR}/deploy/windows")
-    file(MAKE_DIRECTORY ${QGC_INSTALLER_SOURCE_WIN})
-    foreach(FILE ${DEPLOY_WIN_FILES})
-        # filename without the path
-        get_filename_component(FILE_NAME ${FILE} NAME)
-        # re-copy the file if it changes
-        add_custom_command(
-            OUTPUT "${QGC_INSTALLER_SOURCE_WIN}/${FILE_NAME}"
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different "${FILE}" "${QGC_INSTALLER_SOURCE_WIN}/${FILE_NAME}"
-            DEPENDS "${FILE}"  # Depend on the source file so that it re-copies when it changes
-        )
-        list(APPEND QGC_INSTALLER_SOURCE_WIN_FILES "${QGC_INSTALLER_SOURCE_WIN}/${FILE_NAME}")
-    endforeach()
-
-    target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${QGC_INSTALLER_SOURCE_WIN_FILES})
     set_target_properties(${CMAKE_PROJECT_NAME}
         PROPERTIES
             WIN32_EXECUTABLE TRUE
@@ -363,6 +354,8 @@ elseif(APPLE)
         set(CMAKE_XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${QGC_MACOS_ENTITLEMENTS_PATH}")
     endif()
 
+    cmake_path(GET QGC_MACOS_ICON_PATH FILENAME MACOSX_BUNDLE_ICON_FILE)
+
     set_target_properties(${CMAKE_PROJECT_NAME}
         PROPERTIES
             MACOSX_BUNDLE TRUE
@@ -378,13 +371,13 @@ elseif(APPLE)
     )
 
     if(MACOS)
-        set(MACOSX_BUNDLE_ICON_FILE "macx.icns")
-        set(app_icon_macos "${QGC_MACOS_ICON_PATH}/${MACOSX_BUNDLE_ICON_FILE}")
+        set(app_icon_macos "${QGC_MACOS_ICON_PATH}")
         set_source_files_properties(${app_icon_macos} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
-        target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${app_icon_macos})
+        target_sources(${CMAKE_PROJECT_NAME} PRIVATE "${app_icon_macos}")
 
-        set_source_files_properties(${QGC_MACOS_ENTITLEMENTS_PATH} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
-        target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${QGC_MACOS_ENTITLEMENTS_PATH})
+        set(app_entitlements_macos "${QGC_MACOS_ENTITLEMENTS_PATH}")
+        set_source_files_properties(${app_entitlements_macos} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+        target_sources(${CMAKE_PROJECT_NAME} PRIVATE "${app_entitlements_macos}")
     elseif(IOS)
         enable_language(OBJC)
 
@@ -392,24 +385,26 @@ elseif(APPLE)
 
         # set(CMAKE_XCODE_ATTRIBUTE_ARCHS
         # set(CMAKE_XCODE_ATTRIBUTE_ENABLE_BITCODE
-        set(CMAKE_XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "14.0")
-        set(CMAKE_XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2") # iPhone,iPad
+        set(CMAKE_XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET 14.0)
+        set(CMAKE_XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY 1,2) # iPhone,iPad
         set(CMAKE_XCODE_ATTRIBUTE_INFOPLIST_FILE "${CMAKE_SOURCE_DIR}/deploy/ios/iOS-Info.plist")
 
         set_target_properties(${CMAKE_PROJECT_NAME}
             PROPERTIES
                 QT_IOS_LAUNCH_SCREEN "${CMAKE_SOURCE_DIR}/deploy/ios/QGCLaunchScreen.xib"
-                XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "${QGC_PACKAGE_NAME}"
-                XCODE_ATTRIBUTE_PRODUCT_NAME "${CMAKE_PROJECT_NAME}"
+                XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER ${QGC_PACKAGE_NAME}
+                XCODE_ATTRIBUTE_PRODUCT_NAME ${CMAKE_PROJECT_NAME}
                 XCODE_ATTRIBUTE_CURRENT_PROJECT_VERSION ${CMAKE_PROJECT_VERSION}
-                XCODE_ATTRIBUTE_MARKETING_VERSION "${CMAKE_PROJECT_VERSION_MAJOR}.${CMAKE_PROJECT_VERSION_MINOR}"
-                XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
-                XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "14.0"
-                XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2" # iPhone,iPad
+                XCODE_ATTRIBUTE_MARKETING_VERSION ${CMAKE_PROJECT_VERSION_MAJOR}.${CMAKE_PROJECT_VERSION_MINOR}
+                XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME AppIcon
+                XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET ${CMAKE_XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET}
+                XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY ${CMAKE_XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY}
                 XCODE_ATTRIBUTE_INFOPLIST_KEY_CFBundleDisplayName ${CMAKE_PROJECT_NAME}
-                XCODE_ATTRIBUTE_INFOPLIST_KEY_LSApplicationCategoryType "public.app-category.mycategory"
-                XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS "YES"
+                XCODE_ATTRIBUTE_INFOPLIST_KEY_LSApplicationCategoryType public.app-category.mycategory
+                XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS YES
         )
+
+        # XCODE_EMIT_EFFECTIVE_PLATFORM_NAME
 
         # set(QT_NO_FFMPEG_XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY ON)
         qt_add_ios_ffmpeg_libraries(${CMAKE_PROJECT_NAME})
@@ -466,7 +461,7 @@ elseif(ANDROID)
             # QT_ANDROID_APP_NAME
             # QT_ANDROID_APP_ICON
             # QT_QML_IMPORT_PATH
-            QT_QML_ROOT_PATH ${CMAKE_SOURCE_DIR}
+            QT_QML_ROOT_PATH "${CMAKE_SOURCE_DIR}"
             # QT_ANDROID_SYSTEM_LIBS_PREFIX
     )
 

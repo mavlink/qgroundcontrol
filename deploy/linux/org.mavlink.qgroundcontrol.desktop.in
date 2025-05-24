@@ -6,4 +6,4 @@ Comment=@CMAKE_PROJECT_DESCRIPTION@
 Icon=@CMAKE_PROJECT_NAME@
 Exec=@CMAKE_PROJECT_NAME@
 Terminal=false
-Categories=Utility;
+Categories=Qt;Utility;Maps
