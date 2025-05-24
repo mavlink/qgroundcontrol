@@ -54,8 +54,6 @@ void MAVLinkProtocol::init()
         return;
     }
 
-    (void) memset(_firstMessage, 1, sizeof(_firstMessage));
-
     (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleRemoved, this, &MAVLinkProtocol::_vehicleCountChanged);
 
     _initialized = true;
@@ -77,9 +75,6 @@ void MAVLinkProtocol::resetMetadataForLink(LinkInterface *link)
     _totalReceiveCounter[channel] = 0;
     _totalLossCounter[channel] = 0;
     _runningLossPercent[channel] = 0.f;
-    for (int i = 0; i < 256; i++) {
-        _firstMessage[channel][i] = 1;
-    }
 
     link->setDecodedFirstMavlinkPacket(false);
 }
@@ -159,32 +154,32 @@ void MAVLinkProtocol::_updateVersion(LinkInterface *link, uint8_t mavlinkChannel
 
 void MAVLinkProtocol::_updateCounters(uint8_t mavlinkChannel, const mavlink_message_t &message)
 {
-    uint8_t lastSeq = _lastIndex[message.sysid][message.compid];
-    uint8_t expectedSeq = lastSeq + 1;
     _totalReceiveCounter[mavlinkChannel]++;
-    if (_firstMessage[message.sysid][message.compid] != 0) {
-        _firstMessage[message.sysid][message.compid] = 0;
-        lastSeq = message.seq;
+
+    uint8_t &lastSeq = _lastIndex[message.sysid][message.compid];
+
+    const QPair<uint8_t,uint8_t> key(message.sysid, message.compid);
+    uint8_t expectedSeq;
+    if (!_firstMessageSeen.contains(key)) {
+        _firstMessageSeen.insert(key);
         expectedSeq = message.seq;
+    } else {
+        expectedSeq = lastSeq + 1;
     }
 
-    if (message.seq != expectedSeq) {
-        uint64_t lostMessages = message.seq;
-        if (message.seq < expectedSeq) {
-            lostMessages += 255;
-        }
-        lostMessages -= expectedSeq;
-        _totalLossCounter[mavlinkChannel] += lostMessages;
+    uint64_t lostMessages;
+    if (message.seq >= expectedSeq) {
+        lostMessages = message.seq - expectedSeq;
+    } else {
+        lostMessages = static_cast<uint64_t>(message.seq) + 256ULL - expectedSeq;
     }
+    _totalLossCounter[mavlinkChannel] += lostMessages;
 
-    _lastIndex[message.sysid][message.compid] = message.seq;
+    lastSeq = message.seq;
 
     const uint64_t totalSent = _totalReceiveCounter[mavlinkChannel] + _totalLossCounter[mavlinkChannel];
-    float receiveLossPercent = static_cast<float>(static_cast<double>(_totalLossCounter[mavlinkChannel]) / static_cast<double>(totalSent));
-    receiveLossPercent *= 100.0f;
-    receiveLossPercent *= 0.5f;
-    receiveLossPercent += (_runningLossPercent[mavlinkChannel] * 0.5f);
-    _runningLossPercent[mavlinkChannel] = receiveLossPercent;
+    const float currentLossPercent = (static_cast<double>(_totalLossCounter[mavlinkChannel]) / totalSent) * 100.0f;
+    _runningLossPercent[mavlinkChannel] = (currentLossPercent + _runningLossPercent[mavlinkChannel]) * 0.5f;
 }
 
 void MAVLinkProtocol::_forward(const mavlink_message_t &message)

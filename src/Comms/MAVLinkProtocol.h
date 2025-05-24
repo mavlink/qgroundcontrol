@@ -119,7 +119,7 @@ private:
     bool _vehicleWasArmed = false;  ///< true: Vehicle was armed during log sequence
 
     uint8_t _lastIndex[256][256]{};                             ///< Store the last received sequence ID for each system/component pair
-    uint8_t _firstMessage[256][256]{};                          ///< First message flag
+    QSet<QPair<uint8_t,uint8_t>> _firstMessageSeen;
     uint64_t _totalReceiveCounter[MAVLINK_COMM_NUM_BUFFERS]{};  ///< The total number of successfully received messages
     uint64_t _totalLossCounter[MAVLINK_COMM_NUM_BUFFERS]{};     ///< Total messages lost during transmission.
     float _runningLossPercent[MAVLINK_COMM_NUM_BUFFERS]{};      ///< Loss rate
