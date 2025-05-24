@@ -9,9 +9,9 @@
 
 #pragma once
 
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QString>
-#include <QtCore/QLoggingCategory>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "MAVLinkLib.h"
@@ -23,7 +23,8 @@ Q_DECLARE_LOGGING_CATEGORY(MAVLinkMessageLog)
 class QGCMAVLinkMessage : public QObject
 {
     Q_OBJECT
-    // QML_ELEMENT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_MOC_INCLUDE("QmlObjectListModel.h")
     Q_PROPERTY(quint32              id              READ id             CONSTANT)
     Q_PROPERTY(quint32              sysId           READ sysId          CONSTANT)

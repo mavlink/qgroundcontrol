@@ -25,7 +25,7 @@ Q_DECLARE_LOGGING_CATEGORY(LogEntryLog)
 
 struct LogDownloadData
 {
-    explicit LogDownloadData(QGCLogEntry * const entry);
+    LogDownloadData(QGCLogEntry * const entry);
     ~LogDownloadData();
 
     void advanceChunk();
@@ -60,8 +60,8 @@ struct LogDownloadData
 class QGCLogEntry : public QObject
 {
     Q_OBJECT
-    // QML_ELEMENT
-
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_PROPERTY(uint         id          READ id                             NOTIFY idChanged)
     Q_PROPERTY(QDateTime    time        READ time                           NOTIFY timeChanged)
     Q_PROPERTY(uint         size        READ size                           NOTIFY sizeChanged)

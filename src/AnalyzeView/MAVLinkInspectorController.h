@@ -29,7 +29,8 @@ class Vehicle;
 class MAVLinkInspectorController : public QObject
 {
     Q_OBJECT
-    // QML_ELEMENT
+    QML_ELEMENT
+    // QML_UNCREATABLE("")
     Q_MOC_INCLUDE("LinkInterface.h")
     Q_MOC_INCLUDE("Vehicle.h")
     Q_MOC_INCLUDE("MAVLinkSystem.h")

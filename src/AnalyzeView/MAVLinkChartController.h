@@ -7,10 +7,6 @@
  *
  ****************************************************************************/
 
-/// @file
-/// @brief MAVLink message inspector and charting controller
-/// @author Gus Grubba <gus@auterion.com>
-
 #pragma once
 
 #include <QtCore/QDateTime>
@@ -29,7 +25,8 @@ class QTimer;
 class MAVLinkChartController : public QObject
 {
     Q_OBJECT
-    // QML_ELEMENT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_MOC_INCLUDE("MAVLinkInspectorController.h")
     Q_MOC_INCLUDE("MAVLinkMessageField.h")
     Q_MOC_INCLUDE("QtCharts/qabstractseries.h")

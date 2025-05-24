@@ -26,7 +26,7 @@ MAVLinkChartController::MAVLinkChartController(MAVLinkInspectorController *contr
     , _controller(controller)
     , _updateSeriesTimer(new QTimer(this))
 {
-    // qCDebug(MAVLinkChartControllerLog) << Q_FUNC_INFO << this;
+    qCDebug(MAVLinkChartControllerLog) << this;
 
     (void) qRegisterMetaType<QAbstractSeries*>("QAbstractSeries*");
 
@@ -37,7 +37,7 @@ MAVLinkChartController::MAVLinkChartController(MAVLinkInspectorController *contr
 
 MAVLinkChartController::~MAVLinkChartController()
 {
-    // qCDebug(MAVLinkChartControllerLog) << Q_FUNC_INFO << this;
+    qCDebug(MAVLinkChartControllerLog) << this;
 }
 
 void MAVLinkChartController::setRangeYIndex(quint32 index)

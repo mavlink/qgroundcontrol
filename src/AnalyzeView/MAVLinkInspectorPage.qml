@@ -19,6 +19,7 @@ import QGroundControl.Palette
 import QGroundControl.Controls
 import QGroundControl.Controllers
 import QGroundControl.ScreenTools
+import QGC
 
 AnalyzePage {
     id: root

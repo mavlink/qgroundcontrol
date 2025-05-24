@@ -15,18 +15,19 @@
 
 Q_DECLARE_LOGGING_CATEGORY(LogDownloadControllerLog)
 
-struct LogDownloadData;
+class LogDownloadTest;
 class QGCLogEntry;
 class QmlObjectListModel;
-class QTimer;
 class QThread;
+class QTimer;
 class Vehicle;
-class LogDownloadTest;
+struct LogDownloadData;
 
 class LogDownloadController : public QObject
 {
     Q_OBJECT
-    // QML_ELEMENT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     // QML_SINGLETON
     Q_MOC_INCLUDE("Vehicle.h")
     Q_MOC_INCLUDE("QmlObjectListModel.h")

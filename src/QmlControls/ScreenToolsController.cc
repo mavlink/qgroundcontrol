@@ -7,15 +7,11 @@
  *
  ****************************************************************************/
 
-
-/// @file
-/// @author Gus Grubba <gus@auterion.com>
-
 #include "ScreenToolsController.h"
+#include "AppSettings.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "SettingsManager.h"
-#include "AppSettings.h"
 
 #include <QtGui/QCursor>
 #include <QtGui/QFontDatabase>
@@ -31,12 +27,12 @@ QGC_LOGGING_CATEGORY(ScreenToolsControllerLog, "qgc.qmlcontrols.screentoolscontr
 ScreenToolsController::ScreenToolsController(QObject *parent)
     : QObject(parent)
 {
-    // qCDebug(ScreenToolsControllerLog) << Q_FUNC_INFO << this;
+    qCDebug(ScreenToolsControllerLog) << this;
 }
 
 ScreenToolsController::~ScreenToolsController()
 {
-    // qCDebug(ScreenToolsControllerLog) << Q_FUNC_INFO << this;
+    qCDebug(ScreenToolsControllerLog) << this;
 }
 
 int ScreenToolsController::mouseX()
