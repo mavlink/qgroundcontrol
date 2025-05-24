@@ -20,6 +20,7 @@
 *.ico           binary
 *.pdf           binary
 *.zip           binary
+*.keystore      binary
 
 # Compiled Object files
 *.slo           binary

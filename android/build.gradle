@@ -31,7 +31,6 @@ dependencies {
 }
 
 def getTimestampStr() { return new Date().format('yyyyMMddHHmmss') }
-def timestampInt = (int)(new Date().getTime() / 1000 / 1)
 
 android {
     /*******************************************************
@@ -114,4 +113,5 @@ android {
     println "androidNdkVersion: ${ndkVersion}"
     println "project.name: ${project.name}"
     println "qtAndroidDir: ${qtAndroidDir}"
+    println "Java Version: " + JavaVersion.current()
 }
