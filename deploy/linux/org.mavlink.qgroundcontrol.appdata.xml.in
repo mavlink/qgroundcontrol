@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+	<id>@QGC_PACKAGE_NAME@</id>
+	<metadata_license>CC0-1.0</metadata_license>
+	<project_license>GPL-3.0</project_license>
+	<name>@QGC_APP_NAME@</name>
+	<summary>@QGC_APP_DESCRIPTION@</summary>
+	<developer>@QGC_ORG_NAME@</developer>
+	<description>
+		<p>
+			QGroundControl (QGC) is a highly intuitive and powerful Ground Control Station (GCS) designed for UAVs. Whether you're a first-time pilot or an experienced professional, QGC provides a seamless user experience for flight control and mission planning, making it the go-to solution for any MAVLink-enabled drone.
+		</p>
+	</description>
+	<categories>
+    	<category>Utility</category>
+    	<category>Maps</category>
+  	</categories>
+	<recommends>
+	    <control>pointing</control>
+	    <control>keyboard</control>
+	    <control>touch</control>
+	    <control>gamepad</control>
+	</recommends>
+	<content_rating type="oars-1.1"/>
+	<launchable type="desktop-id">@QGC_PACKAGE_NAME@.desktop</launchable>
+	<screenshots>
+		<screenshot type="default">
+			<caption>Connected Vehicle</caption>
+			<image>https://docs.qgroundcontrol.com/master/assets/connected_vehicle.BmASIvhv.jpg</image>
+		</screenshot>
+	</screenshots>
+	<url type="homepage">https://@QGC_ORG_DOMAIN@</url>
+	<url type="help">https://docs.qgroundcontrol.com/master/en/index.html</url>
+  	<url type="bugtracker">https://github.com/mavlink/qgroundcontrol/issues</url>
+	<provides>
+		<binary>@QGC_APP_NAME@</binary>
+	</provides>
+	<releases>
+	    <release version="@CMAKE_PROJECT_VERSION@" date="@QGC_APP_DATE@">
+	      	<description>
+	        	<p>Rebuilt with CMake for Qt6.8</p>
+	      	</description>
+	    </release>
+  	</releases>
+</component>
