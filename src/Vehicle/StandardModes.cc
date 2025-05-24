@@ -130,6 +130,7 @@ void StandardModes::request()
 
     qCDebug(StandardModesLog) << "Requesting available modes";
     // Request one at a time. This could be improved by requesting all, but we can't use Vehicle::requestMessage for that
+    _modeList.clear();
     StandardModes::requestMode(1);
 }
 

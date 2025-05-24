@@ -454,15 +454,10 @@ Autotune *FirmwarePlugin::createAutotune(Vehicle *vehicle) const
 void FirmwarePlugin::_updateFlightModeList(FlightModeList &flightModeList)
 {
     _flightModeList.clear();
+    _modeEnumToString.clear();
 
-    for (FirmwareFlightMode &flightMode : flightModeList){
-        if (_modeEnumToString.contains(flightMode.custom_mode)) {
-            // Flight mode already exists in initial mapping, use that name which provides for localizations
-            flightMode.mode_name = _modeEnumToString[flightMode.custom_mode];
-        } else{
-            // This is a custom flight mode that is not already known. Best we can do is used the provided name
-            _modeEnumToString[flightMode.custom_mode] = flightMode.mode_name;
-        }
+    for (FirmwareFlightMode &flightMode : flightModeList) {
+        _modeEnumToString[flightMode.custom_mode] = flightMode.mode_name;
         _addNewFlightMode(flightMode);
     }
 
