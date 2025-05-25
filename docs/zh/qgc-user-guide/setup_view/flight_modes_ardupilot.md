@@ -43,7 +43,7 @@ ArduCopter还允许您为第 7-12 频道指定额外的 _频道选项_。
 所有值都在被更改时自动保存。
 
 :::info
-上面的ArduCopter屏幕截图显示了一个三个位置飞行模式开关的典型设置，另外一个选项是RTL在通道7开关上。
+上面的ArduCopter屏幕截图显示了一个三位置飞行模式开关的典型设置，另外一个选项是RTL在通道7开关上。
 你还可以利用发射机上的两个开关以及混合设置来设定6种飞行模式。 向下滚动到这个[页面](http://ardupilot.org/copter/docs/common-rc-transmitter-flight-mode-configuration.html#common-rc-transmitter-flight-mode-configuration)的中间部分，获取有关如何操作的教程。
 :::
 

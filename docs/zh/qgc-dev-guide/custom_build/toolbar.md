@@ -32,7 +32,7 @@ These are indicators which are associated with information about the vehicle. Th
 
 #### Vehicle Mode Indicators
 
-These are indicators which are associated with information about the vehicle. They require additional UI provided by the Fly View to complete their actions. An example is Arming and Disarming. They are only available when a vehicle is connected. To manipulate the list of vehicle mode indicators you override `FirmwarePlugin::modeIndicators`.
+These are indicators which are associated with information about the vehicle. They require additional UI provided by the Fly View to complete their actions. 一个例子是“解锁与上锁” 。 They are only available when a vehicle is connected. To manipulate the list of vehicle mode indicators you override `FirmwarePlugin::modeIndicators`.
 
 ### Modifying the toolbar UI itself
 

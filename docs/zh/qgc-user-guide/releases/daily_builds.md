@@ -18,4 +18,4 @@ These can be downloaded from the links below (install as described in [Download 
     \- `sudo apt-get remove modemmanager -y`
     \- Logout and login again to enable the change to user permissions.
 - [Android](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl.apk)
-- iOS currently unavailable
+- iOS 当前不可用
