@@ -2,7 +2,7 @@
 
 ## QGroundControl许可证
 
-_QGroundControl_ (QGC) 是采用 Apache 2.0 和 GPLv3 双重许可的。 所有贡献都必须在两种许可下进行。 用户可以在任一许可下免费使用它。
+_QGroundControl_ (QGC) 是采用 Apache 2.0 和 GPLv3 双重许可的。 所有贡献都必须在双重许可证下进行。 用户可以在任一许可下免费使用它。
 
 :::warning
 _QGroundControl_ 许可证禁止重复使用任何受版权保护（如 GPL）的代码。 所有贡献必须是原创的或采用兼容的许可证（BSD 2/3 条款、MIT、Apache 2.0）。

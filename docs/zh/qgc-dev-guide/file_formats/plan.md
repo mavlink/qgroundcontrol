@@ -1,11 +1,11 @@
 # 计划文件格式
 
-计划文件以JSON文件格式存储，包含任务项和（可选）地理围栏和集结点。 您可以在下面看到Plan文件的顶级格式
-地理围栏“多边形”计划格式的版本号。 记录的版本是2。
+计划文件存储在 JSON 文件格式，包含任务项目和 (可选) 地理栅栏和路点.
+下面你可以看到计划文件的顶级格式
 
 :::tip
-**提示：** 这是“接近最小” - 计划必须包含至少一个任务项目。 当没有任务运行时，计划围栏和集结点也用于模式。
-The plan fence and rally points are also used in modes when no mission is running.
+这是 "近乎最低限度"的计划——必须至少包含一个任务项目。
+当没有任务运行时，计划围栏和集结点（rally points）也用于模式。
 :::
 
 ```json
@@ -28,20 +28,20 @@ The plan fence and rally points are also used in modes when no mission is runnin
 
 主要领域是：
 
-| 键                              | 描述                                                |
-| ------------------------------ | ------------------------------------------------- |
-| `version`                      | 地理围栏计划格式的版本号。 记录的版本是2。 地理围栏“圈子”计划格式的版本号。 记录的版本是1。 |
-| `fileType`                     | 必须是“计划”。                                          |
-| `groundStation`                | 创建此文件的地面站的名称（此处为QGroundControl）                   |
-| [`mission`](#mission)          | 与此飞行计划相关的任务。                                      |
-| [`geoFence`](#geofence)        | （可选）此计划的地理围栏信息。                                   |
-| [`rallyPoints`](#rally_points) | （可选）此计划的拉力/安全点信息                                  |
+| 键                              | 描述                                  |
+| ------------------------------ | ----------------------------------- |
+| `version`                      | 此文件的版本。 当前版本是 1。                    |
+| `fileType`                     | 必须是“计划”。                            |
+| `groundStation`                | 创建此文件的地面站的名称（此处为 _QGroundControl_ ） |
+| [`mission`](#mission)          | 与此飞行计划相关的任务。                        |
+| [`geoFence`](#geofence)        | （可选）此计划的地理围栏信息。                     |
+| [`rallyPoints`](#rally_points) | （可选）此计划的集结点（rally points）信息         |
 
 ## 使命对象 {#mission}
 
-The structure of the mission object is shown below.
-任务对象的结构如下所示。 items字段包含以逗号分隔的任务项列表（它必须包含至少一个任务项，如下所示）。 该列表可以是SimpleItem和ComplexItem对象的混合
-The list may be a mix of both [SimpleItem](#mission_simple_item) and [ComplexItem](#mission_complex_item) objects.
+任务对象的结构如下所示。
+`items`字段包含一个逗号分隔的任务项目列表(如下文所示，它必须至少包含一个任务项目)。
+列表可能既有 [SimpleItem](#mission_simple_item) 对象也有 [ComplexItem](#mission_complex_item) 对象。
 
 ```json
     "mission": {
@@ -80,17 +80,17 @@ The list may be a mix of both [SimpleItem](#mission_simple_item) and [ComplexIte
     },
 ```
 
-需要以下值：
+必须输入以下值：
 
 | 键                        | 描述                                                                                                                                                                                                                                                               |
 | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `version`                | 任务对象的版本。 目前的版本是2。 Current version is 2.                                                                                                                                                                                                          |
-| `firmwareType`           | 为此任务创建的固件类型。 这是MAV_AUTOPILOT枚举值之一。 This is one of the [MAV_AUTOPILOT](https://mavlink.io/en/messages/common.html#MAV_AUTOPILOT) enum values.                                                           |
-| `globalPlanAltitudeMode` | The global plan-wide altitude mode setting. This is used by plan items that don't specify an `"AltitudeMode"`.                                                                                                                   |
-| `vehicleType`            | The vehicle type for which this mission was created. This is one of the [MAV_TYPE](https://mavlink.io/en/messages/common.html#MAV_TYPE) enum values.                                                        |
-| `cruiseSpeed`            | The default forward speed for Fixed wing or VTOL vehicles (i.e. when moving between waypoints).                                                                                               |
-| `hoverSpeed`             | The default forward speed for multi-rotor vehicles.                                                                                                                                                                                              |
-| `items`                  | The list of mission item objects associated with the mission . 列表可能包含 [SimpleItem](#mission_simple_item) 对象和 [ComplexItem](#mission_complex_item) 对象。                                                                                            |
+| `version`                | 任务对象的版本。 当前版本是 2。                                                                                                                                                                                                                                                |
+| `firmwareType`           | 创建此任务的固件类型。 这是 [MAV_AUTOPILOT](https://mavlink.io/en/messages/common.html#MAV_AUTOPILOT)枚举值之一。                                                                                                                                              |
+| `globalPlanAltitudeMode` | 全局高度模式设置。 此选项用于不指定\`"高度模型"的计划。                                                                                                                                                                                                                                   |
+| `vehicleType`            | 创建此任务的载具类型。 这是 [MAV_TYPE](https://mavlink.io/en/messages/common.html#MAV_TYPE)枚举值之一。                                                                                                                                                        |
+| `cruiseSpeed`            | 固定翼或VTOL载具的默认前进速度（例如在航点之间移动时）。                                                                                                                                                                                                                                   |
+| `hoverSpeed`             | 多旋翼飞行器的默认前进速度。                                                                                                                                                                                                                                                   |
+| `items`                  | 与任务关联的任务项目对象列表 列表可能包含 [SimpleItem](#mission_simple_item) 对象和 [ComplexItem](#mission_complex_item) 对象。                                                                                                                                                            |
 | `plannedHomePosition`    | The planned home position is shown on the map and used for mission planning when no vehicle is connected. The array values shown above are (from top): latitude, longitude and AMSL altitude. |
 
 简单和复杂项目的格式如下。

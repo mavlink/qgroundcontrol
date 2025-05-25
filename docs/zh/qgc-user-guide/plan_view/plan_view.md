@@ -1,6 +1,6 @@
 # 计划视图
 
-_计划视图_ 用于为你的载具规 划自动化任务_ 并上传到载具。 一旦任务已 [规划](#plan_mission) 并被送往车辆，您将切换到[飞行视图](../fly_view/fly_view.md) 来执行任务。
+_计划视图_ 用于为你的载具规 划自动化任务_ 并上传到载具。 一旦任务已 [规划](#plan_mission) 并被送往载具，您将切换到[飞行视图](../fly_view/fly_view.md) 来执行任务。
 
 如果固件支持，它也可以用来配置 [地理围栏](plan_geofence.md) 和 [集结点](plan_rally_points.md)。
 
@@ -147,7 +147,7 @@ This allows you to view the waypoint trajectory for your vehicle from takeoff to
 :::info
 This is only the _planned_ home position and you should place it where you plan to start the vehicle from.
 It has no actual impact on flying the mission.
-The actual home position of a vehicle is set by the vehicle itself when arming.
+载具的实际Home位置由载具本身在解锁时确定。
 :::
 
 This section allows you to set the **Altitude** and **Set Home to Map Centre** (you can move it to another position by dragging it on the map).
