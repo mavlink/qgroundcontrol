@@ -197,15 +197,13 @@ void SerialWorker::connectToPort()
     if (!_port->open(QIODevice::ReadWrite)) {
         qCWarning(SerialLinkLog) << "Opening port" << _port->portName() << "failed:" << _port->errorString();
 
-        if (!_errorEmitted) {
+        // If auto-connect is enabled, we don't want to emit an error for PermissionError from devices already in use
+        if (!_errorEmitted && (!_serialConfig->isAutoConnect() || _port->error() != QSerialPort::PermissionError)) {
             emit errorOccurred(tr("Could not open port: %1").arg(_port->errorString()));
             _errorEmitted = true;
         }
 
-        // Disconnecting here on autoconnect will cause continuous error popups
-        if (!_serialConfig->isAutoConnect()) {
-            _onPortDisconnected();
-        }
+        _onPortDisconnected();
 
         return;
     }
