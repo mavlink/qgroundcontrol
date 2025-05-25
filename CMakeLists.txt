@@ -540,6 +540,7 @@ qt_add_resources(${CMAKE_PROJECT_NAME} "qgcresources_cmake"
     FILES
         resources/qtquickcontrols2.conf
         ${SDL_GAMECONTROLLERDB_PATH}
+        ${QGC_GSTREAMER_SHADER_RESOURCES}
 )
 
 # cmake_print_variables(QT_ALL_PLUGIN_TYPES_FOUND_VIA_FIND_PACKAGE)
