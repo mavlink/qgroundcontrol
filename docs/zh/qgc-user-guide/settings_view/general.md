@@ -4,7 +4,7 @@
 设置值包括：显示单位、自动连接装置、视频显示和存储、RTK GPS、品牌图像和其他杂项设置。
 
 :::info
-即使没有工具连接，值也是可以设置的。 需要重新启动车辆的设置会在用户界面中显示。
+即使没有工具连接，值也是可以设置的。 需要重新启动载具的设置会在用户界面中显示。
 :::
 
 ![设置视图-完整通用标签](../../../assets/settings/general/overview.jpg)
@@ -54,7 +54,7 @@
 
 - **检查互联网连接**：取消选中以允许地图在中国/地图上下载可能失败的地方使用(停止地图引擎持续检查互联网连接)。
 
-- <span id="autoload_missions"></span> **Autoload Mission**：如果启用，连接时自动上传计划到车辆。
+- <span id="autoload_missions"></span> **Autoload Mission**：如果启用，连接时自动上传计划到载具。
   - 计划文件必须命名为 **AutoLoad#.plan**, 其中`#` 被替换为载具ID。
   - 计划文件必须位于[应用程序加载/保存路径](#load_save_path)。
 
@@ -80,7 +80,7 @@
 设置如下：
 
 - <span id="autosave_log"></span>**每次飞行后保存日志**: 遥测日志 (`.tlog`) 飞行后自动保存到 _Application Load/Save Path_ ([above](#load_save_path) )。
-- **保存日志，即使载具没有装备设备**: 当载具连接到 _QGroundControl_ 时记录日志。
+- **保存日志，即使载具没有解锁设备**: 当载具连接到 _QGroundControl_ 时记录日志。
   当最后一辆载具断开时停止日志记录。
 - [**CSV 日志**](csv.md)：将遥测数据子集记录到一个CSV文件。
 
@@ -92,7 +92,7 @@ The settings are:
 
 - **Use Preflight Checklist**: Enable pre-flight checklist in Fly toolbar.
 
-- **Enforce Preflight Checklist**: Checklist completion is a pre-condition for arming.
+- **执行飞行前检查清单**：完成检查清单是启动的前提条件。
 
 - **Keep Map Centered on Vehicle**: Forces map to center on the currently selected vehicle.
 
@@ -247,7 +247,7 @@ The settings are:
 
 - **Aspect Ratio**: Aspect ratio for scaling video in video widget (set to 0.0 to ignore scaling)
 
-- **Disabled When Disarmed**: Disable video feed when vehicle is disarmed.
+- **解除武装时禁用**：飞行器解除武装时禁用视频传输。
 
 - **Low Latency Mode**: Enabling low latency mode reduces the video stream latency, but may cause frame loss and choppy video (especially with a poor network connection). <!-- disables the internal jitter buffer -->
 

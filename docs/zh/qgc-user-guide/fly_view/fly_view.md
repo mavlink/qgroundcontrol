@@ -121,7 +121,7 @@ Instead _QGroundControl_ rebuilds the mission, starting from the last mission it
 
 #### Remove Mission Prompt After Landing {#resume_mission_prompt}
 
-You will be prompted to remove the mission from the vehicle after the mission completes and the vehicle lands and disarms.
+任务完成、飞行器着陆并解除武装后，系统会提示你从飞行器中移除该任务。
 This is meant to prevent issues where stale missions are unknowingly left on a vehicle, potentially resulting in unexpected behavior.
 
 ### Display Video {#video_switcher}

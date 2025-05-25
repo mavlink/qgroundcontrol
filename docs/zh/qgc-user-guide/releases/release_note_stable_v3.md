@@ -1,56 +1,56 @@
-# QGC v3 Release Notes
+# QGC v3 版本说明
 
-This topic contains the cumulative release notes for _QGroundControl v3.x_.
+此主题包含_QGroundControl v3.x_的累积版本说明。
 
-## Stable Version 3.5
+## 稳定版本 3.5
 
-This section contains a high level and _non-exhaustive_ list of new features added to _QGroundControl_ in version 3.5.
+本节包含一个高级和 _非详尽无遗的_ 新功能列表，在版本3.5中添加到 _QGroundControl_。
 
-- **Overall**
-  - Added Airmap integration to QGC. OSX build only.
-  - Bumped settings version (now 8).
-    This will cause all settings to be reset to defaults.
-  - Added Chinese and Turkish localization and partial German localization.
-  - Added support for the Taisync 2.4GHz ViUlinx digital HD wireless link.
-  - Fix loading of parameters from multiple components.
-    This especially affected WiFi connections.
-  - **ArduPilot** Support for ChibiOS firmware connect and flash.
-- **Settings**
-  - **RTK** Add support for specifying fixed RTK based station location in Settings/General.
-  - **GCS Location**
-    - Added UDP Port option for NMEA GPS Device.
-    - GCS heading shown if available
-- **Plan**
-  - **Polygons** Support loading polygons from SHP files.
-  - **Fixed Wing Landing Pattern** Add stop photo/video support.
-    Defaults to on such that doing an RTL will stop camera.
-  - **Edit Position dialog** Available on polygon vertices.
-- **Fly**
-  - **Camera Page** Updated support for new MAVLInk camera messages.
-    Camera select, camera mode, start/stop photo/video, storage mangement...
-  - **Orbit** Support for changing rotation direction.
-  - **Instrument Panel**
-    - Added ESTIMATOR_STATUS values to new estimatorStatus Vehicle FactGroup.
-      These are now available to display in instrument panel.
-    - Make Distance to GCS available for display from instrument panel.
-    - Make Heading to Home available for display from instrument panel.
+- **整体**
+  - 添加了 QGC 的Airmap 集成。 OSX 仅构建。
+  - Bumped 设置版本(现在是8)。
+    这将导致所有设置被重置为默认设置。
+  - 添加中文和土耳其本地化和部分德文本地化。
+  - 添加支持Taisync 2.4GHz ViUlinx digital HD 无线链接。
+  - 修复多个组件的参数加载。
+    这尤其影响到无线网络连接。
+  - **ArduPilot** 支持 ChibiOS 固件连接和刷入。
+- **设置**
+  - **RTK** 在设置/通用中添加支持以指定 RTK 的电台位置。
+  - **地面控制站位置**
+    - 为NMEA GPS设备添加UDP端口选项。
+    - 地面控制站标题是否可用
+- **规划**
+  - **多边形** 支持从 SHP 文件装入多边形。
+  - **固定翼着陆模式** 添加停止照片/视频支持。
+    默认为执行返航会停止摄像头。
+  - **编辑位置对话** 在多边形顶点上可用。
+- **飞行**
+  - **相机页面** 更新支持新 MAVLInk 相机消息。
+    相机选择相机模式，开始/停止照片/视频，存储配置...
+  - **轨道** 支持改变旋转方向。
+  - **仪表盘**
+    - 将ESTIMATOR_STATUS值添加到新的estimatorStatus Vehicle FactGroup。
+      这些都可以在仪表盘上显示。
+    - 在仪表盘上显示GCS。
+    - 在仪表板上显示 "航向原点"。
 
-## Stable Version 3.4
+## 稳定版本 3.4
 
-This section contains a high level and _non-exhaustive_ list of new features added to _QGroundControl_ in version 3.4. Not to mention the large number of bug fixes in each stable release.
+本节包含一个高级和 _非详尽无遗的_ 新功能列表，在版本3.4中添加到 _QGroundControl_。 请不要提及每个稳定版本中的大量错误修复。
 
-- **Settings**
-  - **Offline Maps**
-    - Center Tool allows you to specify a map location in lat/lon or UTM coordinates. Making it easier to get to the location you want to create an offline map for.
-    - Ability to pre-download terrain heights for offline use.
-  - **Help** Provides links to QGC user guide and forums.
+- **配置**
+  - **离线地图**
+    - 中心工具允许您在经纬度或 UTM 坐标中指定地图位置。 更容易到达您想要创建离线地图的位置。
+    - 能够预下载地形高度供离线使用。
+  - **帮助** 提供到 QGC 用户指南和论坛的链接。
 
-- **Setup**
-  - **Firmware** Ability to flash either PX4 or ArduPilot Flow firmware.
-  - PX4 Pro Firmware
-    - **Flight Modes** Specify channels for all available transmitter switches.
-    - **Tuning: Advanced** Initial implementation of vehicle PID tuning support. Note that this is a work in progress that will improve in 3.5 daily builds.
-  - ArduPilot Firmware
+- **设置**
+  - **固件** 能刷入 PX4 或 ArduPilot Flow 固件。
+  - PX4 Pro 固件
+    - **飞行模式** 指定所有可用发射器开关的频道。
+    - **调整：高级** 初步实施载具ID调整支持。 请注意，这是一项正在进行中的工作，将在3.5个每日构建中得到改进。
+  - ArduPilot 固件
     - **电源/安全** 支持新的多电池设置。
     - **Trad Heli** New setup page.
 
