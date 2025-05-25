@@ -16,7 +16,7 @@ For the best experience and compatibility, we recommend you the newest version o
 
 ## Windows {#windows}
 
-_QGroundControl_ can be installed on 64 bit versions of Windows:
+_QGroundControl_ can be installed on 64 bit versions of Windows 10 (1809 or later) or Windows 11:
 
 1. Download [QGroundControl-installer.exe](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl-installer.exe).
 1. Double click the executable to launch the installer.
@@ -27,14 +27,9 @@ Use the first shortcut unless you experience startup or video rendering issues.
 For more information see [Troubleshooting QGC Setup > Windows: UI Rendering/Video Driver Issues](../troubleshooting/qgc_setup.md#opengl_troubleshooting).
 :::
 
-::: info
-Prebuilt _QGroundControl_ versions from 4.0 onwards are 64-bit only.
-It is possible to manually build 32 bit versions (this is not supported by the dev team).
-:::
-
 ## Mac OS X {#macOS}
 
-_QGroundControl_ can be installed on macOS 10.11 or later:
+_QGroundControl_ can be installed on macOS 12 (Monterey) or later:
 
 <!-- match version using https://docs.qgroundcontrol.com/master/en/qgc-dev-guide/getting_started/#native-builds -->
 <!-- usually based on Qt macOS dependency -->
@@ -43,15 +38,12 @@ _QGroundControl_ can be installed on macOS 10.11 or later:
 1. Double-click the .dmg file to mount it, then drag the _QGroundControl_ application to your _Application_ folder.
 
 ::: info
-QGroundControl continues to not be signed which causes problem on Catalina. To open QGC app for the first time:
-
-- Right-click the QGC app icon, select Open from the menu. You will only be presented with an option to Cancel. Select Cancel.
-- Right-click the QGC app icon again, Open from the menu. This time you will be presented with the option to Open.
-  :::
+QGroundControl continues to not be signed. You will not to allow permission for it to install based on you macOS version.
+::
 
 ## Ubuntu Linux {#ubuntu}
 
-_QGroundControl_ can be installed/run on Ubuntu LTS 22.04 (and later).
+_QGroundControl_ can be installed/run on Ubuntu LTS 22.04 (and later):
 
 Ubuntu comes with a serial modem manager that interferes with any robotics related use of a serial port (or USB serial).
 Before installing _QGroundControl_ you should remove the modem manager and grant yourself permissions to access the serial port.
@@ -80,19 +72,11 @@ To install _QGroundControl_:
    ./QGroundControl.AppImage  (or double click)
    ```
 
-::: info
-There are known [video steaming issues](../troubleshooting/qgc_setup.md#dual_vga) on Ubuntu 18.04 systems with dual adaptors.
-:::
-
-::: info
-Prebuilt _QGroundControl_ versions from 4.0 cannot run on Ubuntu 16.04.
-To run these versions on Ubuntu 16.04 you can [build QGroundControl from source without video libraries](https://dev.qgroundcontrol.com/en/getting_started/).
-:::
-
 ## Android {#android}
 
-- [Android 32 bit APK](https://qgroundcontrol.s3-us-west-2.amazonaws.com/latest/QGroundControl32.apk)
-- [Android 64 bit APK](https://qgroundcontrol.s3-us-west-2.amazonaws.com/latest/QGroundControl64.apk)
+_QGroundControl_ can be installed/run on Android 9 or later:
+
+- [Android 32/64 bit APK](https://qgroundcontrol.s3-us-west-2.amazonaws.com/latest/QGroundControl.apk)
 
 ## Old Stable Releases
 
