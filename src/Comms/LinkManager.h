@@ -181,11 +181,18 @@ signals:
     void commPortsChanged();
 
 private:
+    typedef std::tuple<quint16, quint16, QString> VidPidSerialTuple_t;
+    typedef QPair<QGCSerialPortInfo, bool> PortInfoPair_t; ///< QGCSerialPortInfo, true: connection has been tried
+    typedef QMap<VidPidSerialTuple_t, QList<PortInfoPair_t>> CompositePortMap_t;
+
+    QList<QGCSerialPortInfo> _updateCompositePortMap();
     bool _isSerialPortConnected() const;
     void _updateSerialPorts();
     bool _allowAutoConnectToBoard(QGCSerialPortInfo::BoardType_t boardType) const;
     void _addSerialAutoConnectLink();
-    bool _portAlreadyConnected(const QString &portName) const;
+    bool _serialPortAlreadyConnected(const QString &portName) const;
+
+    CompositePortMap_t _compositePortMap;           ///< key: (vid, pid, serial), value: list of ports with that vid/pid/serial
 
     UdpIODevice *_nmeaSocket = nullptr;
     QMap<QString, int> _autoconnectPortWaitList;   ///< key: QGCSerialPortInfo::systemLocation, value: wait count
