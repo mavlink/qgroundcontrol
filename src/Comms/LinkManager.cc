@@ -789,7 +789,6 @@ void LinkManager::_filterCompositePorts(QList<QGCSerialPortInfo> &portList)
 {
     typedef QPair<quint16, quint16> VidPidPair_t;
 
-    QList<QGCSerialPortInfo>        list;
     QMap<VidPidPair_t, QStringList> seenSerialNumbers;
 
     for (auto it = portList.begin(); it != portList.end();) {
