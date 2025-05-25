@@ -78,6 +78,8 @@ SettingsPage {
             onClicked: {
                 if (checked) {
                     QGroundControl.deleteAllSettingsNextBoot()
+                } else {
+                    QGroundControl.clearDeleteAllSettingsNextBoot()
                 }
             }
         }

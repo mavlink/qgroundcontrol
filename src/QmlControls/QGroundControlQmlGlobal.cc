@@ -313,9 +313,9 @@ void QGroundControlQmlGlobal::setFlightMapZoom(double zoom)
     }
 }
 
-QString QGroundControlQmlGlobal::qgcVersion(void) const
+QString QGroundControlQmlGlobal::qgcVersion(void)
 {
-    QString versionStr = qgcApp()->applicationVersion();
+    QString versionStr = QCoreApplication::applicationVersion();
     if(QSysInfo::buildAbi().contains("32"))
     {
         versionStr += QStringLiteral(" %1").arg(tr("32 bit"));
@@ -398,17 +398,17 @@ QString QGroundControlQmlGlobal::telemetryFileExtension() const
 
 QString QGroundControlQmlGlobal::appName()
 {
-    return qgcApp()->applicationName();
+    return QCoreApplication::applicationName();
 }
 
 void QGroundControlQmlGlobal::deleteAllSettingsNextBoot()
 {
-    qgcApp()->deleteAllSettingsNextBoot();
+    QGCApplication::deleteAllSettingsNextBoot();
 }
 
 void QGroundControlQmlGlobal::clearDeleteAllSettingsNextBoot()
 {
-    qgcApp()->clearDeleteAllSettingsNextBoot();
+    QGCApplication::clearDeleteAllSettingsNextBoot();
 }
 
 QStringList QGroundControlQmlGlobal::loggingCategories()
