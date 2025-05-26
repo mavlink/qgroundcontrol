@@ -17,14 +17,15 @@
 
 Q_DECLARE_LOGGING_CATEGORY(MAVLinkMessageFieldLog)
 
+class QAbstractSeries;
 class QGCMAVLinkMessage;
 class MAVLinkChartController;
-class QAbstractSeries;
 
 class QGCMAVLinkMessageField : public QObject
 {
     Q_OBJECT
-    // QML_ELEMENT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_MOC_INCLUDE(<QtCharts/QAbstractSeries>)
     Q_PROPERTY(QString                  name        READ name       CONSTANT)
     Q_PROPERTY(QString                  label       READ label      CONSTANT)
@@ -35,7 +36,7 @@ class QGCMAVLinkMessageField : public QObject
     Q_PROPERTY(const QAbstractSeries    *series     READ series     NOTIFY seriesChanged)
 
 public:
-    QGCMAVLinkMessageField(const QString &name, const QString &type, QGCMAVLinkMessage *parent = nullptr);
+    explicit QGCMAVLinkMessageField(const QString &name, const QString &type, QGCMAVLinkMessage *parent = nullptr);
     ~QGCMAVLinkMessageField();
 
     QString name() const { return _name;  }

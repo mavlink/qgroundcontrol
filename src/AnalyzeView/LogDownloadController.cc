@@ -31,7 +31,7 @@ LogDownloadController::LogDownloadController(QObject *parent)
     , _timer(new QTimer(this))
     , _logEntriesModel(new QmlObjectListModel(this))
 {
-    // qCDebug(LogDownloadControllerLog) << Q_FUNC_INFO << this;
+    qCDebug(LogDownloadControllerLog) << this;
 
     (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &LogDownloadController::_setActiveVehicle);
     (void) connect(_timer, &QTimer::timeout, this, &LogDownloadController::_processDownload);
@@ -43,7 +43,7 @@ LogDownloadController::LogDownloadController(QObject *parent)
 
 LogDownloadController::~LogDownloadController()
 {
-    // qCDebug(LogDownloadControllerLog) << Q_FUNC_INFO << this;
+    qCDebug(LogDownloadControllerLog) << this;
 }
 
 LogDownloadController *LogDownloadController::instance()
