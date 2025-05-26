@@ -6,7 +6,7 @@ The full list of unit tests can be found in [UnitTestList.cc](https://github.com
 
 To run unit tests:
 
-1. Build in `debug` mode with `UNITTEST_BUILD` definition.
+1. Build in `debug` mode with `QGC_UNITTEST_BUILD` definition.
 1. Copy the **deploy/qgroundcontrol-start.sh** script in the **debug** directory
 1. Run _all_ unit tests from the command line using the `--unittest` command line option.
    For Linux this is done as shown:

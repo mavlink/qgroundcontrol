@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+
+    <key>CFBundleName</key>
+    <string>${MACOSX_BUNDLE_BUNDLE_NAME}</string>
+    <key>CFBundleIdentifier</key>
+    <string>${MACOSX_BUNDLE_GUI_IDENTIFIER}</string>
+    <key>CFBundleExecutable</key>
+    <string>${MACOSX_BUNDLE_EXECUTABLE_NAME}</string>
+
+    <key>CFBundleVersion</key>
+    <string>${MACOSX_BUNDLE_BUNDLE_VERSION}</string>
+    <key>CFBundleShortVersionString</key>
+    <string>${MACOSX_BUNDLE_SHORT_VERSION_STRING}</string>
+    <key>CFBundleLongVersionString</key>
+    <string>${MACOSX_BUNDLE_LONG_VERSION_STRING}</string>
+
+    <key>LSMinimumSystemVersion</key>
+    <string>${CMAKE_OSX_DEPLOYMENT_TARGET}</string>
+
+    <key>CFBundleGetInfoString</key>
+    <string>${MACOSX_BUNDLE_INFO_STRING}</string>
+    <key>NSHumanReadableCopyright</key>
+    <string>${MACOSX_BUNDLE_COPYRIGHT}</string>
+
+    <key>CFBundleIconFile</key>
+    <string>${MACOSX_BUNDLE_ICON_FILE}</string>
+
+    <key>CFBundleDevelopmentRegion</key>
+    <string>English</string>
+    <key>CFBundleAllowMixedLocalizations</key>
+    <true/>
+
+    <key>NSPrincipalClass</key>
+    <string>NSApplication</string>
+
+    <key>NSSupportsAutomaticGraphicsSwitching</key>
+    <true/>
+
+
+    <key>CFBundleSignature</key>
+    <string>????</string>
+    <key>CSResourcesFileMapped</key>
+    <true/>
+    <key>LSRequiresCarbon</key>
+    <true/>
+
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>Bluetooth is used to connect to vehicles</string>
+    <key>NSCameraUsageDescription</key>
+    <string>Camera devices used for FPV</string>
+    <key>NSLocationUsageDescription</key>
+    <string>Location used for ground control station position</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Qt Multimedia for MacOS uses the camera and microphone.</string>
+</dict>
+</plist>

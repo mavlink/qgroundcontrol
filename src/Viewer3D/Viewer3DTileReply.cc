@@ -1,3 +1,12 @@
+/****************************************************************************
+ *
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 #include "Viewer3DTileReply.h"
 
 #include <MapProvider.h>
@@ -9,16 +18,19 @@
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
 
-QByteArray  Viewer3DTileReply::_bingNoTileImage;
+QByteArray Viewer3DTileReply::_bingNoTileImage;
 
 Viewer3DTileReply::Viewer3DTileReply(int zoomLevel, int tileX, int tileY, int mapId, QObject *parent)
     : QObject{parent}
 {
     if (_bingNoTileImage.length() == 0) {
-        QFile file(":/res/BingNoTileBytes.dat");
-        file.open(QFile::ReadOnly);
-        _bingNoTileImage = file.readAll();
-        file.close();
+        QFile file(QStringLiteral(":/res/BingNoTileBytes.dat"));
+        if (file.open(QFile::ReadOnly)) {
+            _bingNoTileImage = file.readAll();
+            file.close();
+        } else {
+            qWarning() << "Error opening file" << file.fileName();
+        }
     }
 
     _timeoutCounter = 0;

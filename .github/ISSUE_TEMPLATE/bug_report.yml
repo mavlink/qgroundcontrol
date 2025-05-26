@@ -1,0 +1,72 @@
+name: Bug report
+description: Create a report to help us improve
+labels: ["Report: Bug"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The following template is for Issue/Bug reporting only.
+
+        For questions about how to use or build QGC, see:
+        [resources](http://qgroundcontrol.com/#resources)
+
+  - type: checkboxes
+    id: release-check
+    attributes:
+      label: Have you checked the latest release for fixes?
+      description: Check to verify the bug still exists.
+      options:
+        - label: Yes, I’ve tested on the latest release
+          required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: |
+        Please describe your issue in detail. Include:
+        1. **Expected Behavior** – What you expected to happen.
+        2. **Current Behavior** – What actually happened instead.
+        3. **Steps To Reproduce** – Step-by-step list of actions to reproduce the issue.
+        3. **Additional Details** – Any other context that helps explain the problem.
+      value: |
+        **Expected Behavior**
+        Describe what you thought should happen here.
+
+        **Current Behavior**
+        Describe what actually happened here.
+
+        **Steps To Reproduce**
+        1.
+        2.
+        3.
+
+        **Additional Details**
+        Add any extra info (errors, warnings, etc.) here.
+    validations:
+      required: true
+
+  - type: textarea
+    id: system-information
+    attributes:
+      label: System Information
+      description: |
+        Please include the following information:
+        - QGC Version: [e.g. 4.4.0]
+        - QGC build: [e.g. daily, stable, self-built from source, etc...]
+        - Operating System: [e.g. Windows 11, Ubuntu 22.04, macOS 15, iOS 17 ]
+        - Flight Controller: [e.g. CubePilot Cube Orange, Pixhawk 6X, etc.]
+        - Autopilot Software (with version): [e.g., PX4 1.15.4, ArduCopter 4.5.7 ]
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs-screenshots
+    attributes:
+      label: Log Files and Screenshots
+      description: |
+        Include links to:
+          - [QGC Console Logs](https://docs.qgroundcontrol.com/en/settings_view/console_logging.html)
+          - Autopilot logs when available
+          - Screenshots of QGC to help identify the issue.

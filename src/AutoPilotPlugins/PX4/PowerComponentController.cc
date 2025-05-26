@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -99,12 +99,12 @@ void PowerComponentController::_handleVehicleTextMessage(int vehicleId, int /* c
     QString failedPrefix("calibration failed: ");
     if (text.startsWith(failedPrefix)) {
         QString failureText = text.right(text.length() - failedPrefix.length());
+        _stopCalibration();
         if (failureText.startsWith("Disconnect battery")) {
             emit disconnectBattery();
             return;
         }
         
-        _stopCalibration();
         emit calibrationFailed(text.right(text.length() - failedPrefix.length()));
         return;
     }

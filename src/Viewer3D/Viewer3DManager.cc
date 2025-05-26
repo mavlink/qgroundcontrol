@@ -1,3 +1,12 @@
+/****************************************************************************
+ *
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 #include "Viewer3DManager.h"
 #include "OsmParser.h"
 #include "Viewer3DQmlBackend.h"
@@ -6,7 +15,7 @@
 #include "CityMapGeometry.h"
 #include "Viewer3DQmlVariableTypes.h"
 
-#include <QtQml/QtQml>
+#include <QtQml/qqml.h>
 
 Viewer3DManager::Viewer3DManager()
 {

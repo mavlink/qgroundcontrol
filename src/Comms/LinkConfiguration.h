@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -21,7 +21,7 @@ class LinkConfiguration : public QObject
     Q_MOC_INCLUDE("LinkInterface.h")
 
     Q_PROPERTY(QString          name            READ name           WRITE setName           NOTIFY nameChanged)
-    Q_PROPERTY(LinkInterface*   link            READ link                                   NOTIFY linkChanged)
+    Q_PROPERTY(LinkInterface    *link           READ link                                   NOTIFY linkChanged)
     Q_PROPERTY(LinkType         linkType        READ type                                   CONSTANT)
     Q_PROPERTY(bool             dynamic         READ isDynamic      WRITE setDynamic        NOTIFY dynamicChanged)
     Q_PROPERTY(bool             autoConnect     READ isAutoConnect  WRITE setAutoConnect    NOTIFY autoConnectChanged)
@@ -31,30 +31,37 @@ class LinkConfiguration : public QObject
 
 public:
     LinkConfiguration(const QString &name, QObject *parent = nullptr);
-    LinkConfiguration(LinkConfiguration *copy, QObject *parent = nullptr);
+    LinkConfiguration(const LinkConfiguration *copy, QObject *parent = nullptr);
     virtual ~LinkConfiguration();
 
-    QString name() const { return m_name; }
+    QString name() const { return _name; }
     void setName(const QString &name);
 
-    LinkInterface *link() { return m_link.lock().get(); }
-    void setLink(std::shared_ptr<LinkInterface> link);
+    LinkInterface *link() const { return _link.lock().get(); }
+    void setLink(const std::shared_ptr<LinkInterface> link);
 
     /// Is this a dynamic configuration?
     ///     @return True if not persisted
-    bool isDynamic() const { return m_dynamic; }
+    bool isDynamic() const { return _dynamic; }
 
     /// Set if this is this a dynamic configuration. (decided at runtime)
     void setDynamic(bool dynamic = true);
 
-    bool isAutoConnect() const { return m_autoConnect; }
+    /// Is this a forwarding link configuration?
+    ///     @return True if forwarding
+    bool isForwarding() const { return _forwarding; }
+
+    /// Set if this is this a forwarding link configuration. (decided at runtime)
+    void setForwarding(bool forwarding = true) { _forwarding = forwarding; };
+
+    bool isAutoConnect() const { return _autoConnect; }
 
     /// Set if this is this an Auto Connect configuration.
-    void setAutoConnect(bool autoc = true);
+    virtual void setAutoConnect(bool autoc = true);
 
     /// Is this a High Latency configuration?
     ///     @return True if this is an High Latency configuration (link with large delays).
-    bool isHighLatency() const{ return m_highLatency; }
+    bool isHighLatency() const { return _highLatency; }
 
     /// Set if this is this an High Latency configuration.
     void setHighLatency(bool hl = false);
@@ -62,12 +69,12 @@ public:
     /// Copy instance data, When manipulating data, you create a copy of the configuration using the copy constructor,
     /// edit it and then transfer its content to the original using this method.
     ///     @param[in] source The source instance (the edited copy)
-    virtual void copyFrom(LinkConfiguration *source);
+    virtual void copyFrom(const LinkConfiguration *source);
 
     /// The link types supported by QGC
     /// Any changes here MUST be reflected in LinkManager::linkTypeStrings()
     enum LinkType {
-#ifndef NO_SERIAL_LINK
+#ifndef QGC_NO_SERIAL_LINK
         TypeSerial,     ///< Serial Link
 #endif
         TypeUdp,        ///< UDP Link
@@ -79,7 +86,7 @@ public:
         TypeMock,       ///< Mock Link for Unitesting
 #endif
 #ifndef QGC_AIRLINK_DISABLED
-        Airlink,
+        AirLink,
 #endif
         TypeLogReplay,
         TypeLast        // Last type value (type >= TypeLast == invalid)
@@ -88,7 +95,7 @@ public:
 
     /// Connection type, pure virtual method returning one of the -TypeXxx types above.
     ///     @return The type of links these settings belong to.
-    virtual LinkType type() = 0;
+    virtual LinkType type() const = 0;
 
     /// Load settings, Pure virtual method telling the instance to load its configuration.
     ///     @param[in] settings The QSettings instance to use
@@ -98,13 +105,13 @@ public:
     /// Save settings, Pure virtual method telling the instance to save its configuration.
     ///     @param[in] settings The QSettings instance to use
     ///     @param[in] root The root path of the setting.
-    virtual void saveSettings(QSettings &settings, const QString &root) = 0;
+    virtual void saveSettings(QSettings &settings, const QString &root) const = 0;
 
     /// Settings URL, Pure virtual method providing the URL for the (QML) settings dialog
-    virtual QString settingsURL() = 0;
+    virtual QString settingsURL() const = 0;
 
     /// Settings Title, Pure virtual method providing the Title for the (QML) settings dialog
-    virtual QString settingsTitle() = 0;
+    virtual QString settingsTitle() const = 0;
 
     /// Configuration Factory to create new link configuration instance based on the given type.
     ///     @return A new instance of the given type
@@ -112,7 +119,7 @@ public:
 
     /// Duplicate configuration instance. Helper method to create a new instance copy for editing.
     ///     @return A new copy of the given settings instance
-    static LinkConfiguration *duplicateSettings(LinkConfiguration *source);
+    static LinkConfiguration *duplicateSettings(const LinkConfiguration *source);
 
     /// Root path for QSettings
     ///     @return The root path of the settings.
@@ -126,13 +133,14 @@ signals:
     void highLatencyChanged();
 
 protected:
-    std::weak_ptr<LinkInterface> m_link; ///< Link currently using this configuration (if any)
+    std::weak_ptr<LinkInterface> _link; ///< Link currently using this configuration (if any)
 
 private:
-    QString m_name;
-    bool m_dynamic = false;     ///< A connection added automatically and not persistent (unless it's edited).
-    bool m_autoConnect = false; ///< This connection is started automatically at boot
-    bool m_highLatency = false;
+    QString _name;
+    bool _dynamic = false;     ///< A connection added automatically and not persistent (unless it's edited).
+    bool _forwarding = false;  ///< Automatically added Mavlink forwarding connection
+    bool _autoConnect = false; ///< This connection is started automatically at boot
+    bool _highLatency = false;
 };
 
 typedef std::shared_ptr<LinkConfiguration> SharedLinkConfigurationPtr;

@@ -15,6 +15,12 @@
             "paramRemove":  "1"
         },
         {
+            "id":           189,
+            "comment":      "MAV_CMD_DO_LAND_START",
+            "specifiesCoordinate":  false,
+            "standaloneCoordinate": false
+        },
+        {
             "id":           2500,
             "comment":      "MAV_CMD_VIDEO_START_CAPTURE",
             "paramRemove":  "2"

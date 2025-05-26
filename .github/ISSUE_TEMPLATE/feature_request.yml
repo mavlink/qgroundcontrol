@@ -1,0 +1,44 @@
+name: Feature request
+description: Tell us about your new idea
+labels: ["Feature Request"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Tell us a bit about the feature:
+        - What problem does it solve?
+        - What does it do?
+        - Are there other systems that have this feature?
+        - What communication/integration standards does the feature rely on (e.g. MAVLink commands etc)
+
+        Any additional context you can provide will make the feature easier to evaluate (e.g. mockups, detailed specification, etc).
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Feature Description
+    validations:
+      required: true
+
+  - type: dropdown
+    id: flight-stacks
+    attributes:
+      label: Flight Stacks
+      description: Select the flight stacks the feature must work with.
+      multiple: true
+      options:
+        - PX4
+        - ArduPilot
+
+  - type: dropdown
+    id: vehicle-types
+    attributes:
+      label: Vehicle Types
+      description: Select the relevant vehicle types for this feature.
+      multiple: true
+      options:
+        - Multirotor
+        - Fixed-wing
+        - VTOL
+        - Submarine

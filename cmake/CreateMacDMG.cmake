@@ -1,34 +1,18 @@
-message(STATUS "Copy GStreamer framework into bundle")
-file(COPY /Library/Frameworks/GStreamer.framework DESTINATION staging/QGroundControl.app/Contents/Frameworks)
-file(REMOVE_RECURSE staging/QGroundControl.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/bin)
-file(REMOVE_RECURSE staging/QGroundControl.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/etc)
-file(REMOVE_RECURSE staging/QGroundControl.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/share)
-file(REMOVE_RECURSE staging/QGroundControl.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/Headers)
-file(REMOVE_RECURSE staging/QGroundControl.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/include)
-file(REMOVE_RECURSE staging/QGroundControl.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/Commands)
-file(REMOVE_RECURSE staging/QGroundControl.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/libexec)
-file(REMOVE_RECURSE staging/QGroundControl.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/lib/pkgconfig)
-file(REMOVE staging/QGroundControl.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/lib/glib-2.0)
-file(REMOVE staging/QGroundControl.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/lib/gst-validate-launcher)
-file(GLOB REMOVE_LIB_FILES staging/QGroundControl.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/lib/*.a)
-file(REMOVE ${REMOVE_LIB_FILES})
-file(GLOB REMOVE_LIB_FILES staging/QGroundControl.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/lib/*.la)
-file(REMOVE ${REMOVE_LIB_FILES})
 
-# Fix up library paths to point into bundle
-execute_process(COMMAND install_name_tool -change @rpath/libgstgl-1.0.0.dylib @executable_path/../Frameworks/GStreamer.framework/Libraries/libgstgl-1.0.0.dylib staging/QGroundControl.app/Contents/MacOS/QGroundControl)
-execute_process(COMMAND install_name_tool -change @rpath/libgstvideo-1.0.0.dylib @executable_path/../Frameworks/GStreamer.framework/Libraries/libgstvideo-1.0.0.dylib staging/QGroundControl.app/Contents/MacOS/QGroundControl)
-execute_process(COMMAND install_name_tool -change @rpath/libgstbase-1.0.0.dylib @executable_path/../Frameworks/GStreamer.framework/Libraries/libgstbase-1.0.0.dylib staging/QGroundControl.app/Contents/MacOS/QGroundControl)
-execute_process(COMMAND install_name_tool -change @rpath/libgstreamer-1.0.0.dylib @executable_path/../Frameworks/GStreamer.framework/Libraries/libgstreamer-1.0.0.dylib staging/QGroundControl.app/Contents/MacOS/QGroundControl)
-execute_process(COMMAND install_name_tool -change @rpath/libgobject-2.0.0.dylib @executable_path/../Frameworks/GStreamer.framework/Libraries/libgobject-2.0.0.dylib staging/QGroundControl.app/Contents/MacOS/QGroundControl)
-execute_process(COMMAND install_name_tool -change @rpath/libglib-2.0.0.dylib @executable_path/../Frameworks/GStreamer.framework/Libraries/libglib-2.0.0.dylib staging/QGroundControl.app/Contents/MacOS/QGroundControl)
-execute_process(COMMAND install_name_tool -change @rpath/libintl.8.dylib @executable_path/../Frameworks/GStreamer.framework/Libraries/libintl.8.dylib staging/QGroundControl.app/Contents/MacOS/QGroundControl)
+set(STAGING_BUNDLE_PATH ${CMAKE_BINARY_DIR}/staging/${TARGET_APP_NAME}.app)
 
-message(STATUS "Creating Mac DMG")
-file(REMOVE_RECURSE package)
-file(MAKE_DIRECTORY package)
-file(COPY staging/QGroundControl.app DESTINATION package)
-file(REMOVE /tmp/tmp.dmg)
-execute_process(COMMAND hdiutil create /tmp/tmp.dmg -ov -volname QGroundControl -fs HFS+ -srcfolder package)
-execute_process(COMMAND hdiutil convert /tmp/tmp.dmg -format UDBZ -o package/QGroundControl.dmg)
-file(REMOVE /tmp/tmp.dmg)
+message(STATUS "Signing bundle: ${STAGING_BUNDLE_PATH}")
+execute_process(
+    COMMAND codesign --force --deep -s - "${STAGING_BUNDLE_PATH}"
+    COMMAND_ERROR_IS_FATAL ANY
+)
+
+file(REMOVE_RECURSE ${CMAKE_BINARY_DIR}/package)
+file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/package)
+file(COPY ${STAGING_BUNDLE_PATH} DESTINATION ${CMAKE_BINARY_DIR}/package)
+
+message(STATUS "Creating DMG: ${TARGET_APP_NAME}.dmg")
+execute_process(
+    COMMAND create-dmg --volname "${TARGET_APP_NAME}" --filesystem "APFS" "${TARGET_APP_NAME}.dmg" "${CMAKE_BINARY_DIR}/package/"
+    COMMAND_ERROR_IS_FATAL ANY
+)

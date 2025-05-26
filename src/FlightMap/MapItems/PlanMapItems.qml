@@ -50,21 +50,35 @@ Item {
         _missionLineViewComponent = missionLineViewComponent.createObject(map)
         if (_missionLineViewComponent.status === Component.Error)
             console.log(_missionLineViewComponent.errorString())
-        map.addMapItem(_missionLineViewComponent)
+        map.addMapItemGroup(_missionLineViewComponent)
     }
 
     Component.onDestruction: {
-        _missionLineViewComponent.destroy()
+        if (_missionLineViewComponent) {
+            // Must remove MapItemGroup before destruction, otherwise we crash on quit
+            map.removeMapItemGroup(_missionLineViewComponent)
+            _missionLineViewComponent.destroy()
+        }
     }
 
     Component {
         id: missionLineViewComponent
 
-        MapPolyline {
-            line.width: 3
-            line.color: "#be781c"                           // Hack, can't get palette to work in here
-            z:          QGroundControl.zOrderWaypointLines
-            path:       _missionController.waypointPath
+        MapItemGroup {
+            MissionLineView {
+                model: _missionController.simpleFlightPathSegments
+            }
+
+            MapItemView {
+                model: _missionController.directionArrows
+
+                delegate: MapLineArrow {
+                    fromCoord:      object ? object.coordinate1 : undefined
+                    toCoord:        object ? object.coordinate2 : undefined
+                    arrowPosition:  3
+                    z:              QGroundControl.zOrderWaypointLines + 1
+                }
+            }
         }
     }
 }

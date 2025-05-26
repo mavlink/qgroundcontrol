@@ -1,0 +1,16 @@
+{
+  "version": 4,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 22,
+    "patch": 1
+  },
+  "include": [
+    "cmake/presets/common.json",
+    "cmake/presets/Android.json",
+    "cmake/presets/iOS.json",
+    "cmake/presets/Linux.json",
+    "cmake/presets/macOS.json",
+    "cmake/presets/Windows.json"
+  ]
+}

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Capa_2" data-name="Capa 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #fff;
+      }
+
+      .cls-2 {
+        fill: none;
+      }
+    </style>
+  </defs>
+  <g id="REMOTE_ID" data-name="REMOTE ID">
+    <g>
+      <g>
+        <ellipse class="cls-1" cx="30.17" cy="19.35" rx="18.96" ry="19.35"/>
+        <g>
+          <path class="cls-1" d="m54.83,64.79h2.94c.78,0,1.47-.1,2.1-.29-.47-3.76-1.27-7.36-2.38-10.71h-2.66v11Z"/>
+          <path class="cls-1" d="m44.9,72v-25.42c0-.81.65-1.47,1.44-1.47h7.33c-1.95-3.43-4.26-6.44-6.85-8.88-4.05,4.72-10.01,7.71-16.64,7.71s-12.59-2.99-16.64-7.71C5.38,43.9,0,57.06,0,72h32.83v-25.42c0-.81.65-1.47,1.44-1.47h7.05c.8,0,1.44.66,1.44,1.47v25.42h2.13Z"/>
+        </g>
+      </g>
+      <rect class="cls-2" x="0" width="72" height="72"/>
+    </g>
+  </g>
+</svg>

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -16,6 +16,15 @@
 #include "MissionCommandUIInfo.h"
 #include "QGCLoggingCategory.h"
 
+#include "CameraCalc.h"
+#include "GeoFenceController.h"
+#include "MissionController.h"
+#include "VisualMissionItem.h"
+#include "RallyPointController.h"
+#include "PlanMasterController.h"
+
+#include <QtQml/qqml.h>
+
 QGC_LOGGING_CATEGORY(MissionManagerLog, "MissionManagerLog")
 
 MissionManager::MissionManager(Vehicle* vehicle)
@@ -29,6 +38,19 @@ MissionManager::~MissionManager()
 {
 
 }
+
+void MissionManager::registerQmlTypes()
+{
+    qmlRegisterUncreatableType<CameraCalc>          ("QGroundControl",              1, 0, "CameraCalc",           "Reference only");
+    qmlRegisterUncreatableType<GeoFenceController>  ("QGroundControl.Controllers",  1, 0, "GeoFenceController",   "Reference only");
+    qmlRegisterUncreatableType<MissionController>   ("QGroundControl.Controllers",  1, 0, "MissionController",    "Reference only");
+    qmlRegisterUncreatableType<MissionItem>         ("QGroundControl",              1, 0, "MissionItem",          "Reference only");
+    qmlRegisterUncreatableType<MissionManager>      ("QGroundControl.Vehicle",      1, 0, "MissionManager",       "Reference only");
+    qmlRegisterUncreatableType<RallyPointController>("QGroundControl.Controllers",  1, 0, "RallyPointController", "Reference only");
+    qmlRegisterUncreatableType<VisualMissionItem>   ("QGroundControl",              1, 0, "VisualMissionItem",    "Reference only");
+    qmlRegisterType<PlanMasterController>           ("QGroundControl.Controllers",  1, 0, "PlanMasterController");
+}
+
 void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoCoord, bool altChangeOnly)
 {
     if (inProgress()) {
@@ -40,11 +62,8 @@ void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoC
 
     _connectToMavlink();
 
-    WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
-    if (!weakLink.expired()) {
-        SharedLinkInterfacePtr sharedLink = weakLink.lock();
-
-
+    SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
+    if (sharedLink) {
         mavlink_message_t       messageOut;
         mavlink_mission_item_t  missionItem;
 
@@ -64,8 +83,8 @@ void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoC
         missionItem.current =           altChangeOnly ? 3 : 2;
         missionItem.autocontinue =      true;
 
-        mavlink_msg_mission_item_encode_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-                                             qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+        mavlink_msg_mission_item_encode_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                             MAVLinkProtocol::getComponentId(),
                                              sharedLink->mavlinkChannel(),
                                              &messageOut,
                                              &missionItem);
@@ -99,11 +118,11 @@ void MissionManager::generateResumeMission(int resumeIndex)
     resumeIndex = qMax(0, qMin(resumeIndex, _missionItems.count() - 1));
 
     // Adjust resume index to be a location based command
-    const MissionCommandUIInfo* uiInfo = qgcApp()->toolbox()->missionCommandTree()->getUIInfo(_vehicle, _vehicle->vehicleClass(), _missionItems[resumeIndex]->command());
+    const MissionCommandUIInfo* uiInfo = MissionCommandTree::instance()->getUIInfo(_vehicle, _vehicle->vehicleClass(), _missionItems[resumeIndex]->command());
     if (!uiInfo || uiInfo->isStandaloneCoordinate() || !uiInfo->specifiesCoordinate()) {
         // We have to back up to the last command which the vehicle flies through
         while (--resumeIndex > 0) {
-            uiInfo = qgcApp()->toolbox()->missionCommandTree()->getUIInfo(_vehicle, _vehicle->vehicleClass(), _missionItems[resumeIndex]->command());
+            uiInfo = MissionCommandTree::instance()->getUIInfo(_vehicle, _vehicle->vehicleClass(), _missionItems[resumeIndex]->command());
             if (uiInfo && (uiInfo->specifiesCoordinate() && !uiInfo->isStandaloneCoordinate())) {
                 // Found it
                 break;
@@ -138,7 +157,7 @@ void MissionManager::generateResumeMission(int resumeIndex)
     int prefixCommandCount = 0;
     for (int i=0; i<_missionItems.count(); i++) {
         MissionItem* oldItem = _missionItems[i];
-        const MissionCommandUIInfo* uiInfo = qgcApp()->toolbox()->missionCommandTree()->getUIInfo(_vehicle, _vehicle->vehicleClass(), oldItem->command());
+        const MissionCommandUIInfo* uiInfo = MissionCommandTree::instance()->getUIInfo(_vehicle, _vehicle->vehicleClass(), oldItem->command());
         if ((i == 0 && addHomePosition) || i >= resumeIndex || includedResumeCommands.contains(oldItem->command()) || (uiInfo && uiInfo->isTakeoffCommand())) {
             if (i < resumeIndex) {
                 prefixCommandCount++;

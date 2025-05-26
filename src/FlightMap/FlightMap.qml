@@ -12,6 +12,7 @@ import QtQuick.Controls
 import QtLocation
 import QtPositioning
 import QtQuick.Dialogs
+import Qt.labs.animation
 
 import QGroundControl
 import QGroundControl.FactSystem
@@ -50,6 +51,9 @@ Map {
         // is nothing to do.
         _map.visibleRegion = QtPositioning.rectangle(QtPositioning.coordinate(0, 0), QtPositioning.coordinate(0, 0))
         _map.visibleRegion = region
+        if (_map.zoomLevel > maxZoomLevel) {
+            _map.zoomLevel = maxZoomLevel
+        }
     }
 
     function _possiblyCenterToVehiclePosition() {
@@ -120,20 +124,20 @@ Map {
     signal mapClicked(var position)
     
     PinchHandler {
-        id:                 pinch
-        target:             null
-        grabPermissions:    PointerHandler.TakeOverForbidden
+        id:     pinchHandler
+        target: null
 
         property var pinchStartCentroid
 
         onActiveChanged: {
             if (active) {
-                pinchStartCentroid = _map.toCoordinate(pinch.centroid.position, false)
+                pinchStartCentroid = _map.toCoordinate(pinchHandler.centroid.position, false)
             }
         }
         onScaleChanged: (delta) => {
-            _map.zoomLevel += Math.log2(delta)
-            _map.alignCoordinateToPoint(pinchStartCentroid, pinch.centroid.position)
+            let newZoomLevel = Math.min(Math.max(_map.zoomLevel + Math.log2(delta), 0), maxZoomLevel)
+            _map.zoomLevel = newZoomLevel
+            _map.alignCoordinateToPoint(pinchStartCentroid, pinchHandler.centroid.position)
         }
     }
 
@@ -145,27 +149,60 @@ Map {
                                 PointerDevice.Mouse | PointerDevice.TouchPad : PointerDevice.Mouse
         rotationScale:      1 / 120
         property:           "zoomLevel"
+
     }
 
-    DragHandler {
-        target: null
-        grabPermissions: PointerHandler.TakeOverForbidden
+    BoundaryRule on zoomLevel {
+        minimum: 0
+        maximum: maxZoomLevel
+    }
 
-        onActiveChanged: {
-            if (active) {
-                mapPanStart()
-            } else {
-                mapPanStop()
+    // We specifically do not use a DragHandler for panning. It just causes too many problems if you overlay anything else like a Flickable above it.
+    // Causes all sorts of crazy problems where dragging/scrolling  no longerr works on items above in the hierarchy.
+    // Since we are using a MouseArea we also can't use TapHandler for clicks. So we handle that here as well.
+    MultiPointTouchArea {
+        anchors.fill: parent
+        maximumTouchPoints: 1
+        mouseEnabled: true
+
+        property bool dragActive: false
+        property real lastMouseX
+        property real lastMouseY
+
+        onPressed: (touchPoints) => {
+            lastMouseX = touchPoints[0].x
+            lastMouseY = touchPoints[0].y
+        }
+
+        onGestureStarted: (gesture) => {
+            dragActive = true
+            gesture.grab()
+            mapPanStart()
+        }
+
+        onUpdated: (touchPoints) => {
+            if (dragActive) {
+                let deltaX = touchPoints[0].x - lastMouseX
+                let deltaY = touchPoints[0].y - lastMouseY
+                if (Math.abs(deltaX) >= 1.0 || Math.abs(deltaY) >= 1.0) {
+                    _map.pan(lastMouseX - touchPoints[0].x, lastMouseY - touchPoints[0].y)
+                    lastMouseX = touchPoints[0].x
+                    lastMouseY = touchPoints[0].y
+                }
             }
         }
 
-        onActiveTranslationChanged: (delta) => _map.pan(-delta.x, -delta.y)
+        onReleased: (touchPoints) => {
+            if (dragActive) {
+                _map.pan(lastMouseX - touchPoints[0].x, lastMouseY - touchPoints[0].y)
+                dragActive = false
+                mapPanStop()
+            } else {
+                mapClicked(Qt.point(touchPoints[0].x, touchPoints[0].y))
+            }
+        }
     }
 
-    TapHandler {
-        onTapped: (eventPoint) => mapClicked(eventPoint.position)
-    }
-    
     /// Ground Station location
     MapQuickItem {
         anchorPoint.x:  sourceItem.width / 2
@@ -175,7 +212,7 @@ Map {
 
         sourceItem: Image {
             id:             mapItemImage
-            source:         isNaN(gcsHeading) ? "/res/QGCLogoFull" : "/res/QGCLogoArrow"
+            source:         isNaN(gcsHeading) ? "/res/QGCLogoFull.svg" : "/res/QGCLogoArrow.svg"
             mipmap:         true
             antialiasing:   true
             fillMode:       Image.PreserveAspectFit

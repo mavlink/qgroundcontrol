@@ -1,3 +1,12 @@
+/****************************************************************************
+ *
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 #include "QGeoTileFetcherQGC.h"
 #include "QGeoTiledMappingManagerEngineQGC.h"
 #include "QGeoMapReplyQGC.h"
@@ -5,8 +14,6 @@
 #include "MapProvider.h"
 #include <QGCLoggingCategory.h>
 
-// #include <QtNetwork/QNetworkDiskCache>
-#include <QtNetwork/QNetworkProxy>
 #include <QtNetwork/QNetworkRequest>
 #include <QtLocation/private/qgeotiledmappingmanagerengine_p.h>
 #include <QtLocation/private/qgeotilespec_p.h>
@@ -16,7 +23,6 @@ QGC_LOGGING_CATEGORY(QGeoTileFetcherQGCLog, "qgc.qtlocationplugin.qgeotilefetche
 QGeoTileFetcherQGC::QGeoTileFetcherQGC(QNetworkAccessManager *networkManager, const QVariantMap &parameters, QGeoTiledMappingManagerEngineQGC *parent)
     : QGeoTileFetcher(parent)
     , m_networkManager(networkManager)
-    // , m_diskCache(new QNetworkDiskCache(this))
 {
     Q_CHECK_PTR(networkManager);
 
@@ -26,18 +32,6 @@ QGeoTileFetcherQGC::QGeoTileFetcherQGC(QNetworkAccessManager *networkManager, co
     /*if (parameters.contains(QStringLiteral("useragent"))) {
         setUserAgent(parameters.value(QStringLiteral("useragent")).toString().toLatin1());
     }*/
-
-#ifndef __mobile__
-    QNetworkProxy proxy = m_networkManager->proxy();
-    proxy.setType(QNetworkProxy::DefaultProxy);
-    m_networkManager->setProxy(proxy);
-#endif
-
-    /*m_networkManager->setTransferTimeout(10000);
-    m_networkManager->setAutoDeleteReplies(true);
-    m_diskCache->setCacheDirectory(directory() + "/Downloads");
-    m_diskCache->setMaximumCacheSize(static_cast<qint64>(_getDefaultMaxDiskCache()));
-    m_networkManager->setCache(m_diskCache);*/
 }
 
 QGeoTileFetcherQGC::~QGeoTileFetcherQGC()

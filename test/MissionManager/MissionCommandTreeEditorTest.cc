@@ -8,11 +8,11 @@
  ****************************************************************************/
 
 #include "MissionCommandTreeEditorTest.h"
-#include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 #include "FirmwarePlugin.h"
 #include "FirmwarePluginManager.h"
 #include "SettingsManager.h"
+#include "AppSettings.h"
 #include "SimpleMissionItem.h"
 #include "PlanMasterController.h"
 
@@ -30,14 +30,14 @@ void MissionCommandTreeEditorTest::_testEditorsWorker(QGCMAVLink::FirmwareClass_
     QString firmwareClassString = QGCMAVLink::firmwareClassToString(firmwareClass).replace(" ", "");
     QString vehicleClassString  = QGCMAVLink::vehicleClassToUserVisibleString(vehicleClass).replace(" ", "");
 
-    AppSettings* appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
+    AppSettings* appSettings = SettingsManager::instance()->appSettings();
     appSettings->offlineEditingFirmwareClass()->setRawValue(firmwareClass);
     appSettings->offlineEditingVehicleClass()->setRawValue(vehicleClass);
     PlanMasterController masterController;
 
-    FirmwarePlugin* firmwarePlugin = qgcApp()->toolbox()->firmwarePluginManager()->firmwarePluginForAutopilot(QGCMAVLink::firmwareClassToAutopilot(firmwareClass), QGCMAVLink::vehicleClassToMavType(vehicleClass));
+    FirmwarePlugin* firmwarePlugin = FirmwarePluginManager::instance()->firmwarePluginForAutopilot(QGCMAVLink::firmwareClassToAutopilot(firmwareClass), QGCMAVLink::vehicleClassToMavType(vehicleClass));
     if (firmwarePlugin->supportedMissionCommands(vehicleClass).count() == 0) {
-        firmwarePlugin = qgcApp()->toolbox()->firmwarePluginManager()->firmwarePluginForAutopilot(QGCMAVLink::firmwareClassToAutopilot(QGCMAVLink::FirmwareClassPX4), QGCMAVLink::vehicleClassToMavType(vehicleClass));
+        firmwarePlugin = FirmwarePluginManager::instance()->firmwarePluginForAutopilot(QGCMAVLink::firmwareClassToAutopilot(QGCMAVLink::FirmwareClassPX4), QGCMAVLink::vehicleClassToMavType(vehicleClass));
     }
     int cColumns = firmwarePlugin->supportedMissionCommands(vehicleClass).count();
 
@@ -48,7 +48,7 @@ void MissionCommandTreeEditorTest::_testEditorsWorker(QGCMAVLink::FirmwareClass_
         varSimpleItems.append(QVariant::fromValue(simpleItem));
     }
 
-    QQmlApplicationEngine* qmlAppEngine = qgcApp()->toolbox()->corePlugin()->createQmlApplicationEngine(this);
+    QQmlApplicationEngine* qmlAppEngine = QGCCorePlugin::instance()->createQmlApplicationEngine(this);
     qmlAppEngine->rootContext()->setContextProperty("planMasterController", &masterController);
     qmlAppEngine->rootContext()->setContextProperty("missionItems", varSimpleItems);
     qmlAppEngine->rootContext()->setContextProperty("cColumns", cColumns);

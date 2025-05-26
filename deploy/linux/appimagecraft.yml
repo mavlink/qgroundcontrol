@@ -1,0 +1,23 @@
+version: 1
+
+project:
+  name: QGroundControl
+  version: Daily
+
+build:
+  cmake:
+    source_dir: src/
+    extra_variables:
+     - Qt6_ROOT=/home/runner/work/_temp/Qt/6.8.3/gcc_64
+  environment:
+    BUILD_TYPE: Release
+
+appimage:
+  linuxdeploy:
+    plugins:
+      - qt
+    raw_environment:
+      QML_SOURCES_PATHS: "\"$PROJECT_ROOT\"/src/qmlcomponents/"
+    environment:
+      EXTRA_PLATFORM_PLUGINS: "libqwayland-egl.so;libqwayland-generic.so"
+      EXTRA_QT_PLUGINS: "waylandcompositor"

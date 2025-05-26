@@ -1,0 +1,12 @@
+name: Common Setup
+description: Common Setup for All Runners
+runs:
+  using: "composite"
+  steps:
+    - uses: lukka/get-cmake@latest
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '>=3.9.x'
+
+    - run: mkdir $RUNNER_TEMP/shadow_build_dir
+      shell: bash

@@ -10,6 +10,7 @@
 #pragma once
 
 #include "FactGroup.h"
+#include "QGCVideoStreamInfo.h"
 
 #include <QtCore/QObject>
 #include <QtCore/QSizeF>
@@ -23,50 +24,24 @@ class QmlObjectListModel;
 Q_DECLARE_LOGGING_CATEGORY(CameraControlLog)
 Q_DECLARE_LOGGING_CATEGORY(CameraControlVerboseLog)
 
-//-----------------------------------------------------------------------------
-/// Video Stream Info
-/// Encapsulates the contents of a [VIDEO_STREAM_INFORMATION](https://mavlink.io/en/messages/common.html#VIDEO_STREAM_INFORMATION) message
-class QGCVideoStreamInfo : public QObject
-{
-    Q_OBJECT
-    Q_MOC_INCLUDE("QmlObjectListModel.h")
-public:
-    QGCVideoStreamInfo(QObject* parent, const mavlink_video_stream_information_t* si);
-
-    Q_PROPERTY(QString      uri                 READ uri                NOTIFY infoChanged)
-    Q_PROPERTY(QString      name                READ name               NOTIFY infoChanged)
-    Q_PROPERTY(int          streamID            READ streamID           NOTIFY infoChanged)
-    Q_PROPERTY(int          type                READ type               NOTIFY infoChanged)
-    Q_PROPERTY(qreal        aspectRatio         READ aspectRatio        NOTIFY infoChanged)
-    Q_PROPERTY(qreal        hfov                READ hfov               NOTIFY infoChanged)
-    Q_PROPERTY(bool         isThermal           READ isThermal          NOTIFY infoChanged)
-
-    QString uri             () const { return QString(_streamInfo.uri);  }
-    QString name            () const { return QString(_streamInfo.name); }
-    qreal   aspectRatio     () const;
-    qreal   hfov            () const{ return _streamInfo.hfov; }
-    int     type            () const{ return _streamInfo.type; }
-    int     streamID        () const{ return _streamInfo.stream_id; }
-    bool    isThermal       () const{ return _streamInfo.flags & VIDEO_STREAM_STATUS_FLAGS_THERMAL; }
-
-    bool    update          (const mavlink_video_stream_status_t* vs);
-
-signals:
-    void    infoChanged     ();
-
-private:
-    mavlink_video_stream_information_t _streamInfo;
-};
-
+/*===========================================================================*/
 
 /// Abstract base class for all camera controls: real and simulated
 class MavlinkCameraControl : public FactGroup
 {
     Q_OBJECT
+    Q_PROPERTY(Fact *exposureMode   READ exposureMode   NOTIFY parametersReady)
+    Q_PROPERTY(Fact *ev             READ ev             NOTIFY parametersReady)
+    Q_PROPERTY(Fact *iso            READ iso            NOTIFY parametersReady)
+    Q_PROPERTY(Fact *shutterSpeed   READ shutterSpeed   NOTIFY parametersReady)
+    Q_PROPERTY(Fact *aperture       READ aperture       NOTIFY parametersReady)
+    Q_PROPERTY(Fact *wb             READ wb             NOTIFY parametersReady)
+    Q_PROPERTY(Fact *mode           READ mode           NOTIFY parametersReady)
+
     friend class QGCCameraParamIO;
 
 public:
-    MavlinkCameraControl(QObject* parent = nullptr);
+    explicit MavlinkCameraControl(QObject *parent = nullptr);
     virtual ~MavlinkCameraControl();
 
     enum CameraMode {
@@ -176,14 +151,6 @@ public:
     Q_PROPERTY(bool                 trackingImageStatus     READ trackingImageStatus                                NOTIFY trackingImageStatusChanged)
     Q_PROPERTY(QRectF               trackingImageRect       READ trackingImageRect                                  NOTIFY trackingImageStatusChanged)
 
-    Q_PROPERTY(Fact*                exposureMode            READ exposureMode                                       NOTIFY parametersReady)
-    Q_PROPERTY(Fact*                ev                      READ ev                                                 NOTIFY parametersReady)
-    Q_PROPERTY(Fact*                iso                     READ iso                                                NOTIFY parametersReady)
-    Q_PROPERTY(Fact*                shutterSpeed            READ shutterSpeed                                       NOTIFY parametersReady)
-    Q_PROPERTY(Fact*                aperture                READ aperture                                           NOTIFY parametersReady)
-    Q_PROPERTY(Fact*                wb                      READ wb                                                 NOTIFY parametersReady)
-    Q_PROPERTY(Fact*                mode                    READ mode                                               NOTIFY parametersReady)
-
     Q_INVOKABLE virtual void setCameraModeVideo       () = 0;
     Q_INVOKABLE virtual void setCameraModePhoto       () = 0;
     Q_INVOKABLE virtual void toggleCameraMode         () = 0;
@@ -248,13 +215,13 @@ public:
     virtual quint32      recordTime         () = 0;
     virtual QString      recordTimeStr      () = 0;
 
-    virtual Fact*       exposureMode        () = 0;
-    virtual Fact*       ev                  () = 0;
-    virtual Fact*       iso                 () = 0;
-    virtual Fact*       shutterSpeed        () = 0;
-    virtual Fact*       aperture            () = 0;
-    virtual Fact*       wb                  () = 0;
-    virtual Fact*       mode                () = 0;
+    virtual Fact *exposureMode() = 0;
+    virtual Fact *ev() = 0;
+    virtual Fact *iso() = 0;
+    virtual Fact *shutterSpeed() = 0;
+    virtual Fact *aperture() = 0;
+    virtual Fact *wb() = 0;
+    virtual Fact *mode() = 0;
 
     
     virtual QStringList streamLabels        () = 0; ///< Stream names to show the user (for selection)

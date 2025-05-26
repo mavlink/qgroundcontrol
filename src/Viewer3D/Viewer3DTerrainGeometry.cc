@@ -1,6 +1,14 @@
+/****************************************************************************
+ *
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 #include "Viewer3DTerrainGeometry.h"
 #include "Viewer3DUtils.h"
-#include "QGCApplication.h"
 #include "SettingsManager.h"
 #include "Viewer3DSettings.h"
 
@@ -12,7 +20,7 @@
 
 Viewer3DTerrainGeometry::Viewer3DTerrainGeometry()
 {
-    _viewer3DSettings = qgcApp()->toolbox()->settingsManager()->viewer3DSettings();
+    _viewer3DSettings = SettingsManager::instance()->viewer3DSettings();
     setSectorCount(0);
     setStackCount(0);
     setRadius(EarthRadius);

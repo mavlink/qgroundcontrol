@@ -8,11 +8,12 @@
  ****************************************************************************/
 
 #include "TransectStyleComplexItemTestBase.h"
-#include "QGCApplication.h"
 #include "SettingsManager.h"
 #include "PlanMasterController.h"
 #include "PlanViewSettings.h"
 #include "MissionItem.h"
+
+#include <QtTest/QTest>
 
 TransectStyleComplexItemTestBase::TransectStyleComplexItemTestBase(void)
 {
@@ -22,7 +23,7 @@ void TransectStyleComplexItemTestBase::init(void)
 {
     UnitTest::init();
 
-    _planViewSettings = qgcApp()->toolbox()->settingsManager()->planViewSettings();
+    _planViewSettings = SettingsManager::instance()->planViewSettings();
     _masterController = new PlanMasterController(this);
     _controllerVehicle = _masterController->controllerVehicle();
 }

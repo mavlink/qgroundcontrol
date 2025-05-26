@@ -125,7 +125,7 @@ SetupPage {
 
                 QGCLabel {
                     text:       qsTr("Basic Tuning")
-                    font.family: ScreenTools.demiboldFontFamily
+                    font.bold:   true
                 }
 
                 Rectangle {
@@ -149,7 +149,7 @@ SetupPage {
 
                             QGCLabel {
                                 text:       qsTr("Roll/Pitch Sensitivity")
-                                font.family: ScreenTools.demiboldFontFamily
+                                font.bold:   true
                             }
 
                             QGCLabel {
@@ -182,7 +182,7 @@ SetupPage {
 
                             QGCLabel {
                                 text:       qsTr("Climb Sensitivity")
-                                font.family: ScreenTools.demiboldFontFamily
+                                font.bold:   true
                             }
 
                             QGCLabel {
@@ -215,7 +215,7 @@ SetupPage {
 
                             QGCLabel {
                                 text:       qsTr("RC Roll/Pitch Feel")
-                                font.family: ScreenTools.demiboldFontFamily
+                                font.bold:   true
                             }
 
                             QGCLabel {
@@ -245,7 +245,7 @@ SetupPage {
 
                             QGCLabel {
                                 text:       qsTr("Spin While Armed")
-                                font.family: ScreenTools.demiboldFontFamily
+                                font.bold:   true
                             }
 
                             QGCLabel {
@@ -275,7 +275,7 @@ SetupPage {
 
                             QGCLabel {
                                 text:       qsTr("Minimum Thrust")
-                                font.family: ScreenTools.demiboldFontFamily
+                                font.bold:   true
                             }
 
                             QGCLabel {
@@ -320,7 +320,7 @@ SetupPage {
                         QGCLabel {
                             id:                 autoTuneLabel
                             text:               qsTr("AutoTune")
-                            font.family:        ScreenTools.demiboldFontFamily
+                            font.bold:          true
                         }
 
                         Rectangle {
@@ -380,7 +380,7 @@ SetupPage {
                         QGCLabel {
                             id:                 inFlightTuneLabel
                             text:               qsTr("In Flight Tuning")
-                            font.family:        ScreenTools.demiboldFontFamily
+                            font.bold:          true
                         }
 
                         Rectangle {

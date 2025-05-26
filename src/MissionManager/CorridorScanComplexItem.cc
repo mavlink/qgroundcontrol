@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -21,7 +21,7 @@ QGC_LOGGING_CATEGORY(CorridorScanComplexItemLog, "CorridorScanComplexItemLog")
 
 const QString CorridorScanComplexItem::name(CorridorScanComplexItem::tr("Corridor Scan"));
 
-CorridorScanComplexItem::CorridorScanComplexItem(PlanMasterController* masterController, bool flyView, const QString& kmlFile)
+CorridorScanComplexItem::CorridorScanComplexItem(PlanMasterController* masterController, bool flyView, const QString& kmlOrShpFile)
     : TransectStyleComplexItem  (masterController, flyView, settingsGroup)
     , _entryPoint               (0)
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/CorridorScan.SettingsGroup.json"), this))
@@ -31,7 +31,7 @@ CorridorScanComplexItem::CorridorScanComplexItem(PlanMasterController* masterCon
 
     // We override the altitude to the mission default
     if (_cameraCalc.isManualCamera() || !_cameraCalc.valueSetIsDistance()->rawValue().toBool()) {
-        _cameraCalc.distanceToSurface()->setRawValue(qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue());
+        _cameraCalc.distanceToSurface()->setRawValue(SettingsManager::instance()->appSettings()->defaultMissionItemAltitude()->rawValue());
     }
 
     connect(&_corridorWidthFact,    &Fact::valueChanged,                            this, &CorridorScanComplexItem::_setDirty);
@@ -45,8 +45,8 @@ CorridorScanComplexItem::CorridorScanComplexItem(PlanMasterController* masterCon
     connect(&_corridorPolyline,     &QGCMapPolyline::isValidChanged,                this, &CorridorScanComplexItem::_updateWizardMode);
     connect(&_corridorPolyline,     &QGCMapPolyline::traceModeChanged,              this, &CorridorScanComplexItem::_updateWizardMode);
 
-    if (!kmlFile.isEmpty()) {
-        _corridorPolyline.loadKMLFile(kmlFile);
+    if (!kmlOrShpFile.isEmpty()) {
+        _corridorPolyline.loadKMLOrSHPFile(kmlOrShpFile);
         _corridorPolyline.setDirty(false);
     }
     setDirty(false);

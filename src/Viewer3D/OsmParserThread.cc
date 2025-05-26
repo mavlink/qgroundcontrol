@@ -1,3 +1,12 @@
+/****************************************************************************
+ *
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 #include "OsmParserThread.h"
 #include "Viewer3DUtils.h"
 
@@ -276,7 +285,7 @@ void OsmParserThread::decodeRelations(QDomElement &xmlComponent, QMap<uint64_t, 
             bld_tmp.levels = (bld_tmp.levels == 0)?(2):(bld_tmp.levels);
         }
     }
-    if(isMultipolygon){
+    if(isMultipolygon && (bldToBeRemoved.size() > 0)){
         for(uint i_id=0; i_id<bldToBeRemoved.size(); i_id++){
             bldMap.remove(bldToBeRemoved[i_id]);
         }

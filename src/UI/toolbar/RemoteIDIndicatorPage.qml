@@ -19,7 +19,7 @@ import QGroundControl.FactSystem
 import QGroundControl.FactControls
 
 ToolIndicatorPage {
-    showExpand: false
+    showExpand: true
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
 
@@ -45,8 +45,19 @@ ToolIndicatorPage {
         EU
     }
 
+    enum LocationType {
+        TAKEOFF,
+        LIVE,
+        FIXED
+    }
+
+    enum ClassificationType {
+        UNDEFINED,
+        EU
+    }
+
     function goToSettings() {
-        if (!mainWindow.preventViewSwitch()) {
+        if (mainWindow.allowViewSwitch()) {
             globals.commingFromRIDIndicator = true
             mainWindow.showSettingsTool()
         }
@@ -71,7 +82,7 @@ ToolIndicatorPage {
                 QGCLabel {
                     id:                         remoteIDLabel
                     text:                       qsTr("RemoteID Status")
-                    font.family:                ScreenTools.demiboldFontFamily
+                    font.bold:                  true
                     anchors.horizontalCenter:   parent.horizontalCenter
                 }
 
@@ -219,7 +230,7 @@ ToolIndicatorPage {
                 QGCLabel {
                     id:                     emergencyDeclareLabel
                     text:                   emergencyDeclared ? qsTr("EMERGENCY HAS BEEN DECLARED, Press and Hold for 3 seconds to cancel") : qsTr("Press and Hold below button to declare emergency")
-                    font.family:            ScreenTools.demiboldFontFamily
+                    font.bold:              true
                     anchors.top:            parent.top
                     anchors.left:           parent.left
                     anchors.right:          parent.right
@@ -283,6 +294,132 @@ ToolIndicatorPage {
                     }
                 }
             }
+        }
+    }
+
+    expandedComponent: Component {
+        RowLayout {
+            spacing: ScreenTools.defaultFontPixelWidth
+
+            property var  remoteIDSettings:QGroundControl.settingsManager.remoteIDSettings
+            property Fact regionFact:           remoteIDSettings.region
+            property Fact sendOperatorIdFact:   remoteIDSettings.sendOperatorID
+            property Fact locationTypeFact:     remoteIDSettings.locationType
+            property Fact operatorIDFact:       remoteIDSettings.operatorID
+            property bool isEURegion:           regionFact.rawValue == RemoteIDIndicatorPage.EU
+            property bool isFAARegion:          regionFact.rawValue == RemoteIDIndicatorPage.FAA
+            property real textFieldWidth:       ScreenTools.defaultFontPixelWidth * 24
+            property real textLabelWidth:       ScreenTools.defaultFontPixelWidth * 30
+
+            Connections {
+                target: regionFact
+                onRawValueChanged: {
+                    if (regionFact.rawValue === RemoteIDIndicatorPage.EU) {
+                        sendOperatorIdFact.rawValue = true
+                    }
+                    if (regionFact.rawValue === RemoteIDIndicatorPage.FAA) {
+                        locationTypeFact.value = RemoteIDIndicatorPage.LocationType.LIVE
+                    }
+                }
+            }
+
+            ColumnLayout {
+                spacing:            ScreenTools.defaultFontPixelHeight / 2
+                Layout.alignment:   Qt.AlignTop
+
+
+                SettingsGroupLayout {
+                    visible:            armStatusLabel.labelText !== ""
+                    LabelledLabel {
+                        id :                armStatusLabel
+                        label:              qsTr("Arm Status Error")
+                        labelText:          remoteIDManager.armStatusError
+                        Layout.fillWidth:   true
+                    }
+                }
+
+                SettingsGroupLayout {
+                    heading:                qsTr("Self ID")
+                    headingDescription:     qsTr("If an emergency is declared, Emergency Text will be broadcast even if Broadcast setting is not enabled.")
+                    Layout.fillWidth:       true
+                    Layout.preferredWidth:  textLabelWidth + textFieldWidth
+
+                    FactCheckBoxSlider {
+                        id:                 sendSelfIDSlider
+                        text:               qsTr("Broadcast")
+                        fact:               _fact
+                        visible:            _fact.visible
+                        Layout.fillWidth:   true
+
+                        property Fact _fact: remoteIDSettings.sendSelfID
+                    }
+
+                    LabelledFactComboBox {
+                        id:                 selfIDTypeCombo
+                        label:              qsTr("Broadcast Message")
+                        fact:               _fact
+                        indexModel:         false
+                        visible:            _fact.visible
+                        enabled:            sendSelfIDSlider._fact.rawValue
+                        Layout.fillWidth:   true
+
+                        property Fact _fact: remoteIDSettings.selfIDType
+                    }
+
+                    LabelledFactTextField {
+                        label:                      _fact.shortDescription
+                        fact:                       _fact
+                        visible:                    _fact.visible
+                        enabled:                     sendSelfIDSlider._fact.rawValue
+                        textField.maximumLength:    23
+                        Layout.fillWidth:           true
+                        textFieldPreferredWidth:    textFieldWidth
+
+                        property Fact _fact: remoteIDSettings.selfIDFree
+                    }
+
+                    LabelledFactTextField {
+                        label:                      _fact.shortDescription
+                        fact:                       _fact
+                        visible:                    _fact.visible
+                        enabled:                    sendSelfIDSlider._fact.rawValue
+                        textField.maximumLength:    23
+                        Layout.fillWidth:           true
+                        textFieldPreferredWidth:    textFieldWidth
+
+                        property Fact _fact: remoteIDSettings.selfIDExtended
+                    }
+
+                    LabelledFactTextField {
+                        label:                      _fact.shortDescription
+                        fact:                       _fact
+                        visible:                    _fact.visible
+                        textField.maximumLength:    23
+                        Layout.fillWidth:           true
+                        textFieldPreferredWidth:    textFieldWidth
+
+                        property Fact _fact: remoteIDSettings.selfIDEmergency
+                    }
+                }
+
+                SettingsGroupLayout {
+                    Layout.fillWidth:   true
+                    visible:            QGroundControl.corePlugin.showAdvancedUI
+
+                    RowLayout {
+                        Layout.fillWidth: true
+
+                        QGCLabel { Layout.fillWidth: true; text: qsTr("Remote ID") }
+                        QGCButton {
+                            text: qsTr("Configure")
+                            onClicked: {
+                                goToSettings()
+                            }
+                        }
+                    }
+                }
+            }
+
         }
     }
 }

@@ -14,15 +14,15 @@
 QGC_LOGGING_CATEGORY(CameraControlLog, "CameraControlLog")
 QGC_LOGGING_CATEGORY(CameraControlVerboseLog, "CameraControlVerboseLog")
 
-MavlinkCameraControl::MavlinkCameraControl(QObject* parent)
+MavlinkCameraControl::MavlinkCameraControl(QObject *parent)
     : FactGroup(0, parent, true /* ignore camel case */)
 {
-    
+    // qCDebug(CameraControlLog) << Q_FUNC_INFO << this;
 }
 
 MavlinkCameraControl::~MavlinkCameraControl()
 {
-
+    // qCDebug(CameraControlLog) << Q_FUNC_INFO << this;
 }
 
 QString MavlinkCameraControl::captureImageStatusToStr(uint8_t image_status)

@@ -71,6 +71,7 @@ ui_*
 *.o
 *.moc
 *.prl
+.qmlls.ini
 
 # android
 android/local.properties
@@ -90,3 +91,6 @@ Qt*-linux*.tar.*
 node_modules/
 docs/.vitepress/cache/
 docs/.vitepress/dist/
+
+CMakeUserPresets.json
+cpm_modules

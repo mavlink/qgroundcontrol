@@ -41,7 +41,7 @@ Item {
     property bool   _disableDueToFlying:    vehicleComponent ? (!_vehicleIsRover && !vehicleComponent.allowSetupWhileFlying && _vehicleFlying) : false
     property string _disableReason:         _disableDueToArmed ? qsTr("armed") : qsTr("flying")
     property real   _margins:               ScreenTools.defaultFontPixelHeight * 0.5
-    property string _pageTitle:             qsTr("%1 Setup").arg(pageName)
+    property string _pageTitle:             qsTr("%1 Config").arg(pageName)
 
     Component.onCompleted: {
         if(pageLoader.item && pageLoader.item.setupPageCompleted) {

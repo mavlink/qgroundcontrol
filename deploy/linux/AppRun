@@ -1,0 +1,22 @@
+#!/bin/bash
+
+if [ -z "$APPDIR" ]; then
+    APPDIR="$(dirname "$(readlink -f "$0")")"
+fi
+
+export LD_LIBRARY_PATH="${APPDIR}/usr/lib:${APPDIR}/usr/lib/gstreamer-1.0:${LD_LIBRARY_PATH}"
+
+export GST_REGISTRY_REUSE_PLUGIN_SCANNER="no"
+export GIO_EXTRA_MODULES="${APPDIR}/usr/lib/gio/modules"
+export GST_PTP_HELPER_1_0="${APPDIR}/usr/lib/gstreamer1.0/gstreamer-1.0/gst-ptp-helper"
+export GST_PTP_HELPER="${APPDIR}/usr/lib/gstreamer1.0/gstreamer-1.0/gst-ptp-helper"
+export GST_PLUGIN_SCANNER_1_0="${APPDIR}/usr/lib/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner"
+export GST_PLUGIN_SCANNER="${APPDIR}/usr/lib/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner"
+export GST_PLUGIN_SYSTEM_PATH_1_0="${APPDIR}/usr/lib/gstreamer-1.0"
+export GST_PLUGIN_SYSTEM_PATH="${APPDIR}/usr/lib/gstreamer-1.0"
+export GST_PLUGIN_PATH_1_0="${APPDIR}/usr/lib/gstreamer-1.0"
+export GST_PLUGIN_PATH="${APPDIR}/usr/lib/gstreamer-1.0"
+
+# export QT_QPA_PLATFORM="wayland;xcb"
+
+exec "${APPDIR}/usr/bin/QGroundControl" "$@"

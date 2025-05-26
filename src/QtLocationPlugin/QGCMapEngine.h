@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -32,15 +32,13 @@ class QGCMapEngine : public QObject
     Q_OBJECT
 
 public:
-    QGCMapEngine(QObject *parent = nullptr);
+    explicit QGCMapEngine(QObject *parent = nullptr);
     ~QGCMapEngine();
 
-    void init();
+    void init(const QString &databasePath);
     bool addTask(QGCMapTask *task);
 
-    QString getCachePath() const { return m_cachePath; }
-
-    static QGCMapEngine* instance();
+    static QGCMapEngine *instance();
 
 signals:
     void updateTotals(quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize);
@@ -50,13 +48,8 @@ private slots:
     void _pruned() { m_prunning = false; }
 
 private:
-    bool _wipeDirectory(const QString &dirPath);
-    void _wipeOldCaches();
-
     QGCCacheWorker *m_worker = nullptr;
     bool m_prunning = false;
-    bool m_cacheWasReset = false;
-    QString m_cachePath;
 };
 
-QGCMapEngine* getQGCMapEngine();
+extern QGCMapEngine *getQGCMapEngine();

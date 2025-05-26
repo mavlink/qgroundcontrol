@@ -1,87 +1,88 @@
-# General Settings (Settings View)
+# 常规设置(设置视图)
 
-The general settings (**SettingsView > General Settings**) are the main place for application-level configuration.
-Settable values include: display units, autoconnection devices, video display and storage, RTK GPS, brand image, and other miscellaneous settings.
+一般设置 (**SettingsView > General Settings**) 是应用程序级别配置的主要位置。
+设置值包括：显示单位、自动连接装置、视频显示和存储、RTK GPS、品牌图像和其他杂项设置。
 
 :::info
-Values are settable even if no vehicle is connected. Settings that require a vehicle restart are indicated in the UI.
+即使没有工具连接，值也是可以设置的。 需要重新启动车辆的设置会在用户界面中显示。
 :::
 
-![SettingsView - Full General Tab](../../../assets/settings/general/overview.jpg)
+![设置视图-完整通用标签](../../../assets/settings/general/overview.jpg)
 
-## Units
+## 单位
 
-This section defines the display units used in the application.
+本节定义应用程序中使用的显示单位。
 
-![Units settings](../../../assets/settings/general/units.jpg)
+![单位设置](../../../assets/settings/general/units.jpg)
 
-The settings are:
+设置如下：
 
-- **Distance**: Meters | Feet
-- **Area**: SquareMetres | SquareFeet | SquareKilometers | Hectares | Acres | SquareMiles
-- **Speed**: Metres/second | Feet/second | Miles/hour | Kilometres/hour | Knots
-- **Temperature**: Celsius | Fahrenheit
+- **距离** 米|英尺。
+- \*\* 面积\*\*：平方米 | 平方英尺 | 平方公里 | 公顷 | 英亩 | 平方英里
+- **速度**：米/秒 | 英尺/秒 | 英里/小时 | 公里/小时 | 节
+- **温度** ：摄氏度 | 华氏度
 
-## Miscellaneous
+## 杂项
 
-This section defines a number of miscellaneous settings, related to (non exhaustively): font sizes, colour schemes, map providers, map types, telemetry logging, audio output, low battery announcement levels, default mission altitude, [virtual joysticks](../settings_view/virtual_joystick.md), mission autoloading, default application file load/save path etc.
+本节定义了一些杂项设置，涉及（不完全）：字体大小、配色方案、地图提供者、地图类型、遥测记录、音频输出、低电量公告级别、默认任务高度、[虚拟操纵杆]（.../settings_view/virtual_joystick.md）、任务自动加载、默认应用程序文件加载/保存路径等。
 
-![Miscellaneous settings](../../../assets/settings/general/miscellaneous.jpg)
+![杂项设置](../../../assets/settings/general/miscellaneous.jpg)
 
-The settings are:
+设置如下：
 
-- <span id="language"></span>**Language**: System (System Language) | Bulgarian, Chinese, ...
+- <span id="language"></span>**语言**：系统 (系统语言) | 保加利亚语，中文...
 
-  ![Display languages](../../../assets/settings/general/languages.jpg)
+  ![显示语言](../../../assets/settings/general/languages.jpg)
 
-  Translations are generally built into the application and selected automatically based on the system language.
+  翻译通常纳入应用程序，并根据系统语言自动选择。
 
-  Metadata downloaded from the vehicle (such as parameter descriptions) might have translations as well.
-  These are downloaded from the internet upon vehicle connection. The translations are then cached locally.
-  This means an internet connection during vehicle connection is required at least once.
+  从载具下载的元数据(例如参数描述)也可能有翻译。
+  这些都是通过载具连接从互联网下载的。 然后本地缓存翻译。
+  这意味着在载具连接期间至少需要一次互联网连接。
 
-- <span id="colour_scheme"></span>**Color Scheme**: Indoor (Dark) | Outdoor (Light)
+- <span id="colour_scheme"></span>**颜色方案**: 室内(暗) | 户外(亮度)
 
-- **Map Provider**: Google | Mapbox | Bing | Airmap | VWorld | Eniro | Statkart
+- **地图提供商**: Google | Mapbox | Bing | Airmap | VWorld | Eniro| Statkart
 
-- **Map Type**: Road | Hybrid | Satellite
+- **地图类型**: Road | Mixed | Satellite
 
-- **Stream GCS Position**: Never | Always | When in Follow Me Flight Mode.
+- **流式传输地面控制站位置**永远不要| 始终关注我的飞行模式。
 
-- **UI Scaling**: UI scale percentage (affects fonts, icons, button sizes, layout etc.)
+- **UI 缩放** ：UI 缩放百分比 (影响字体，图标，按钮大小，布局等)
 
-- **Mute all audio output**: Turns off all audio output.
+- **静音所有音频输出**：关闭所有音频输出。
 
-- **Check for Internet Connection**: Uncheck to allow maps to be used in China/places where map tile downloads are likely to fail (stops the map-tile engine continually rechecking for an Internet connection).
+- **检查互联网连接**：取消选中以允许地图在中国/地图上下载可能失败的地方使用(停止地图引擎持续检查互联网连接)。
 
-- <span id="autoload_missions"></span> **Autoload Missions**: If enabled, automatically upload a plan to the vehicle on connection.
-  - The plan file must be named **AutoLoad#.plan**, where the `#` is replaced with the vehicle id.
-  - The plan file must be located in the [Application Load/Save Path](#load_save_path).
+- <span id="autoload_missions"></span> **Autoload Mission**：如果启用，连接时自动上传计划到车辆。
+  - 计划文件必须命名为 **AutoLoad#.plan**, 其中`#` 被替换为载具ID。
+  - 计划文件必须位于[应用程序加载/保存路径](#load_save_path)。
 
-- **Clear all settings on next start**: Resets all settings to the default (including this one) when _QGroundControl_ restarts.
+- **在下次启动时清除所有设置**：重置所有设置为默认设置(包括此设置)，当 _QGroundControl_ 重启时。
 
-- **Announce battery lower than**: Battery level at which _QGroundControl_ will start low battery announcements.
+- **电池电量过低通知**：_QGroundControl_ 将在电池电量水平上启动低电量通知。
 
-- <span id="load_save_path"></span>**Application Load/Save Path**: Default location for loading/saving application files, including: parameters, telemetry logs, and mission plans.
+- <span id="load_save_path"></span>**应用程序加载/保存路径**: 下载/保存应用程序文件的默认位置，包括参数、遥测日志和飞行计划。
 
-## Data Persistence {#data_persistence}
+## 数据持久化 {#data_persistence}
 
-![Data Persistence Settings](../../../assets/settings/general/data_persistence.jpg)
+![数据持久化设置](../../../assets/settings/general/data_persistence.jpg)
 
-The settings are:
+设置如下：
 
-- **Disable all data persistence**: Check to prevent any data being saved or cached: logs, map tiles etc.
+- **禁用所有数据持久化**：选中以防止任何数据被保存或缓存：日志、地图栏等。
+  此设置禁用[遥测日志部分](#telemetry_logs)。
 
-## Telemetry Logs from Vehicle {#telemetry_logs}
+## 来自载具的 {#telemetry_logs} 遥测日志
 
-![Telemetry Logs from Vehicle Settings](../../../assets/settings/general/telemetry_logs.jpg)
+![载具设置中的遥测日志](../../../assets/settings/general/telemetry_logs.jpg)
 
-The settings are:
+设置如下：
 
-- <span id="autosave_log"></span>**Save log after each flight**: Telemetry logs (`.tlog`) automatically saved to the _Application Load/Save Path_ ([above](#load_save_path)) after flight.
-- **Save logs even if vehicle was not armed**: Logs when a vehicle connects to _QGroundControl_.
-  Stops logging when the last vehicle disconnects.
-- [**CSV Logging**](csv.md): Log subset of telemetry data to a CSV file.
+- <span id="autosave_log"></span>**每次飞行后保存日志**: 遥测日志 (`.tlog`) 飞行后自动保存到 _Application Load/Save Path_ ([above](#load_save_path) )。
+- **保存日志，即使载具没有装备设备**: 当载具连接到 _QGroundControl_ 时记录日志。
+  当最后一辆载具断开时停止日志记录。
+- [**CSV 日志**](csv.md)：将遥测数据子集记录到一个CSV文件。
 
 ## Fly View {#fly_view}
 
@@ -205,7 +206,7 @@ The settings are:
 
 ## ADSB Server {#adsb_server}
 
-![ADSB\_Server Settings](../../../assets/settings/general/adbs_server.jpg)
+![ADSB_Server Settings](../../../assets/settings/general/adbs_server.jpg)
 
 The settings are:
 
@@ -236,7 +237,7 @@ The _Video_ section is used to define the source and connection settings for vid
 
 The settings are:
 
-- **Video Source**: Video Stream Disabled | RTSP Video Stream | UDP h.264 Video Stream | UDP h.265 Video Stream | TCP-MPEG2 Video Stream | MPEG-TS (h.264) Video Stream | Integrated Camera
+- **视频源** ：视频流已禁用 | RTSP 视频流| UDP h.264 视频流| UDP h. 65 视频流 | TCP-MPEG2 视频流 | MPEGTS 视频流 | 集成摄像头
 
   ::: info
   If no video source is specified then no other video or _video recording_ settings will be displayed (above we see the settings when UDP source is selected).

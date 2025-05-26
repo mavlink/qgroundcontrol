@@ -11,12 +11,11 @@
     "default":     ""
 },
 {
-    "name":             "udpPort",
-    "shortDesc": "Video UDP Port",
-    "longDesc":  "UDP port to bind to for video stream.",
-    "type":             "uint16",
-    "min":              1025,
-    "default":     5600
+    "name":             "udpUrl",
+    "shortDesc": "Video UDP Url",
+    "longDesc":  "UDP url address and port to bind to for video stream. Example: 0.0.0.0:5600",
+    "type":             "string",
+    "default":     "0.0.0.0:5600"
 },
 {
     "name":             "rtspUrl",
@@ -48,21 +47,19 @@
     "default":     1.777777
 },
 {
-    "name":             "gridLines",
-    "shortDesc": "Video Grid Lines",
-    "longDesc":  "Displays a grid overlaid over the video view.",
-    "type":             "uint32",
-    "enumStrings":      "Hide,Show",
-    "enumValues":       "1,0",
-    "default":     0
+    "name":         "gridLines",
+    "shortDesc":    "Video Grid Lines",
+    "longDesc":     "Displays a grid overlaid over the video view.",
+    "type":         "bool",
+    "default":      false
 },
 {
     "name":             "videoFit",
     "shortDesc": "Video Display Fit",
     "longDesc":  "Handle Video Aspect Ratio.",
     "type":             "uint32",
-    "enumStrings":      "Fit Width,Fit Height,Stretch",
-    "enumValues":       "0,1,2",
+    "enumStrings":      "Fit Width,Fit Height,Fill,No Crop",
+    "enumValues":       "0,1,2,3",
     "default":     1
 },
 {
@@ -134,10 +131,9 @@
     "shortDesc":        "Force specific category of video decode",
     "longDesc":         "Force the change of prioritization between video decode methods, allowing the user to force some video hardware decode plugins if necessary.",
     "type":             "uint32",
-    "enumStrings":      "Default,Force software decoder,Force NVIDIA decoder,Force VA-API decoder,Force DirectX3D 11 decoder,Force VideoToolbox decoder",
-    "enumValues":       "0,1,2,3,4,5",
-    "default":           0,
-    "qgcRebootRequired": true
+    "enumStrings":      "Default,Force software decoder,Force NVIDIA decoder,Force VA-API decoder,Force DirectX3D 11 decoder,Force VideoToolbox decoder,Force Intel decoder,Force Vulkan decoder",
+    "enumValues":       "0,1,2,3,4,5,6,7",
+    "default":           0
 }
 ]
 }

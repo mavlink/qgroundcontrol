@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -11,6 +11,8 @@
 #include "QGCApplication.h"
 #include "JsonHelper.h"
 #include "MissionController.h"
+#include "MissionCommandTree.h"
+#include "MissionCommandUIInfo.h"
 #include "SimpleMissionItem.h"
 #include "PlanMasterController.h"
 #include "TakeoffMissionItem.h"
@@ -51,6 +53,8 @@ void LandingComplexItem::_init(void)
     connect(useLoiterToAlt(),           &Fact::rawValueChanged,                             this, &LandingComplexItem::_recalcFromCoordinateChange);
 
     connect(finalApproachAltitude(),    &Fact::valueChanged,                                this, &LandingComplexItem::_setDirty);
+    connect(useDoChangeSpeed(),         &Fact::valueChanged,                                this, &LandingComplexItem::_setDirty);
+    connect(finalApproachSpeed(),       &Fact::valueChanged,                                this, &LandingComplexItem::_setDirty);
     connect(landingAltitude(),          &Fact::valueChanged,                                this, &LandingComplexItem::_setDirty);
     connect(landingDistance(),          &Fact::valueChanged,                                this, &LandingComplexItem::_setDirty);
     connect(landingHeading(),           &Fact::valueChanged,                                this, &LandingComplexItem::_setDirty);
@@ -87,6 +91,8 @@ void LandingComplexItem::_init(void)
     connect(landingAltitude(),          &Fact::valueChanged,                                this, &LandingComplexItem::_updateFlightPathSegmentsSignal);
     connect(this,                       &LandingComplexItem::altitudesAreRelativeChanged,   this, &LandingComplexItem::_updateFlightPathSegmentsSignal);
     connect(_missionController,         &MissionController::plannedHomePositionChanged,     this, &LandingComplexItem::_updateFlightPathSegmentsSignal);
+
+    connect(_missionController,         &MissionController::_recalcFlightPathSegmentsSignal,this, &LandingComplexItem::patternNameChanged);
 
     connect(finalApproachAltitude(),    &Fact::valueChanged,                                this, &LandingComplexItem::_updateFinalApproachCoodinateAltitudeFromFact);
     connect(landingAltitude(),          &Fact::valueChanged,                                this, &LandingComplexItem::_updateLandingCoodinateAltitudeFromFact);
@@ -282,6 +288,10 @@ void LandingComplexItem::appendMissionItems(QList<MissionItem*>& items, QObject*
     MissionItem* item = _createDoLandStartItem(seqNum++, missionItemParent);
     items.append(item);
 
+    if (useDoChangeSpeed()->rawValue().toBool()) {
+        item = _createDoChangeSpeedItem(SPEED_TYPE_AIRSPEED, finalApproachSpeed()->rawValue().toDouble(), -1, seqNum++, missionItemParent);
+        items.append(item);
+    }
 
     if (stopTakingPhotos()->rawValue().toBool()) {
         CameraSection::appendStopTakingPhotos(items, seqNum, missionItemParent);
@@ -303,12 +313,51 @@ void LandingComplexItem::appendMissionItems(QList<MissionItem*>& items, QObject*
 
 MissionItem* LandingComplexItem::_createDoLandStartItem(int seqNum, QObject* parent)
 {
-    return new MissionItem(seqNum,                              // sequence number
-                           MAV_CMD_DO_LAND_START,               // MAV_CMD
-                           MAV_FRAME_MISSION,                   // MAV_FRAME
-                           0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,   // param 1-7
-                           true,                                // autoContinue
-                           false,                               // isCurrentItem
+    auto doLandStartItem =
+        new MissionItem(seqNum,                            // sequence number
+                        MAV_CMD_DO_LAND_START,             // MAV_CMD
+                        MAV_FRAME_MISSION,                 // MAV_FRAME
+                        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, // param 1-7
+                        true,                              // autoContinue
+                        false,                             // isCurrentItem
+                        parent);
+
+    bool firmwareAllowsDoLandStartCoords =
+        MissionCommandTree::instance()
+            ->getUIInfo(_controllerVehicle, _previousVTOLMode,
+                        MAV_CMD_DO_LAND_START)
+            ->specifiesCoordinate();
+
+    // This allows skipping the coordinates for firmware that doesn't require
+    // them, keeping the flight plan simpler. The expression can be expanded to
+    // include any additional firmware versions where this is the case.
+    bool firmwareRequiresDoLandStartCoords =
+        !(_masterController->managerVehicle()->apmFirmware() &&
+          (_masterController->managerVehicle()->versionCompare(4, 2, 0)));
+
+    if (firmwareAllowsDoLandStartCoords && firmwareRequiresDoLandStartCoords) {
+        doLandStartItem->setFrame(_altitudesAreRelative
+                                      ? MAV_FRAME_GLOBAL_RELATIVE_ALT
+                                      : MAV_FRAME_GLOBAL);
+
+        doLandStartItem->setParam5(_finalApproachCoordinate.latitude());
+        doLandStartItem->setParam6(_finalApproachCoordinate.longitude());
+        doLandStartItem->setParam7(
+            _finalApproachAltitude()->rawValue().toFloat());
+    }
+
+    return doLandStartItem;
+}
+
+MissionItem* LandingComplexItem::_createDoChangeSpeedItem(int speedType, int speedValue, int throttlePercentage, int seqNum, QObject* parent)
+{
+    return new MissionItem(seqNum++,                                    // sequence number
+                           MAV_CMD_DO_CHANGE_SPEED,                     // MAV_CMD
+                           MAV_FRAME_MISSION,                           // MAV_FRAME
+                           speedType, speedValue, throttlePercentage,   // param 1-3
+                           0.0, 0.0, 0.0, 0.0,                          // param 4-7
+                           true,                                        // autoContinue
+                           false,                                       // isCurrentItem
                            parent);
 }
 
@@ -345,7 +394,7 @@ MissionItem* LandingComplexItem::_createFinalApproachItem(int seqNum, QObject* p
     }
 }
 
-bool LandingComplexItem::_scanForItem(QmlObjectListModel* visualItems, bool flyView, PlanMasterController* masterController, IsLandItemFunc isLandItemFunc, CreateItemFunc createItemFunc)
+bool LandingComplexItem::_scanForItems(QmlObjectListModel* visualItems, bool flyView, PlanMasterController* masterController, IsLandItemFunc isLandItemFunc, CreateItemFunc createItemFunc)
 {
     qCDebug(LandingComplexItemLog) << "VTOLLandingComplexItem::scanForItem count" << visualItems->count();
 
@@ -353,16 +402,32 @@ bool LandingComplexItem::_scanForItem(QmlObjectListModel* visualItems, bool flyV
         return false;
     }
 
+    // Start looking for the commands in reverse order from the end of the list
+    int startIndex = visualItems->count();
+    bool foundAny = false;
+
+    while (startIndex >= 0) {
+        if (_scanForItem(visualItems, startIndex, flyView, masterController, isLandItemFunc, createItemFunc)) {
+            foundAny = true;
+        } else {
+            startIndex--;
+        }
+    }
+
+    return foundAny;
+}
+
+bool LandingComplexItem::_scanForItem(QmlObjectListModel* visualItems, int& startIndex, bool flyView, PlanMasterController* masterController, IsLandItemFunc isLandItemFunc, CreateItemFunc createItemFunc)
+{
     // A valid landing pattern is comprised of the follow commands in this order at the end of the item list:
     //  MAV_CMD_DO_LAND_START - required
+    //  MAV_CMD_DO_CHANGE_SPEED - optional
     //  Stop taking photos sequence - optional
     //  Stop taking video sequence - optional
     //  MAV_CMD_NAV_LOITER_TO_ALT or MAV_CMD_NAV_WAYPOINT
     //  MAV_CMD_NAV_LAND or MAV_CMD_NAV_VTOL_LAND
 
-    // Start looking for the commands in reverse order from the end of the list
-
-    int scanIndex = visualItems->count() - 1;
+    int scanIndex = startIndex - 1;
 
     if (scanIndex < 0 || scanIndex > visualItems->count() - 1) {
         return false;
@@ -388,14 +453,19 @@ bool LandingComplexItem::_scanForItem(QmlObjectListModel* visualItems, bool flyV
     MissionItem& missionItemFinalApproach = item->missionItem();
     if (missionItemFinalApproach.command() == MAV_CMD_NAV_LOITER_TO_ALT) {
         if (missionItemFinalApproach.frame() != landPointFrame ||
-                missionItemFinalApproach.param1() != 1.0 || missionItemFinalApproach.param3() != 0 || missionItemFinalApproach.param4() != 1.0) {
+            (masterController->managerVehicle()->apmFirmware()
+             // APM automatically changes the value of param1 to 1, so when sending a plan it will
+             // be 0, and when downloading it, the value will be 1
+             ? missionItemFinalApproach.param1() != 0.0 && missionItemFinalApproach.param1() != 1.0
+             : missionItemFinalApproach.param1() != 1.0) ||
+            missionItemFinalApproach.param3() != 0 || missionItemFinalApproach.param4() != 1.0) {
             return false;
         }
     } else if (missionItemFinalApproach.command() == MAV_CMD_NAV_WAYPOINT) {
         if (missionItemFinalApproach.frame() != landPointFrame ||
-                missionItemFinalApproach.param1() != 0 || missionItemFinalApproach.param2() != 0 || missionItemFinalApproach.param3() != 0 ||
-                !qIsNaN(missionItemFinalApproach.param4()) ||
-                qIsNaN(missionItemFinalApproach.param5()) || qIsNaN(missionItemFinalApproach.param6()) || qIsNaN(missionItemFinalApproach.param6())) {
+            missionItemFinalApproach.param1() != 0 || missionItemFinalApproach.param2() != 0 || missionItemFinalApproach.param3() != 0 ||
+            (!masterController->managerVehicle()->apmFirmware() && !qIsNaN(missionItemFinalApproach.param4())) ||
+            qIsNaN(missionItemFinalApproach.param5()) || qIsNaN(missionItemFinalApproach.param6()) || qIsNaN(missionItemFinalApproach.param6())) {
             return false;
         }
         useLoiterToAlt = false;
@@ -416,6 +486,27 @@ bool LandingComplexItem::_scanForItem(QmlObjectListModel* visualItems, bool flyV
     }
 
     scanIndex--;
+    bool useDoChangeSpeed = false;
+    double finalApproachSpeed = 0;
+    if (scanIndex >= 0 && scanIndex < visualItems->count()) {
+        item = visualItems->value<SimpleMissionItem*>(scanIndex);
+        if (item) {
+            MissionItem& missionItemChangeSpeed = item->missionItem();
+            if (missionItemChangeSpeed.command() == MAV_CMD_DO_CHANGE_SPEED &&
+                missionItemChangeSpeed.param1() == static_cast<double>(SPEED_TYPE_AIRSPEED) &&
+                missionItemChangeSpeed.param2() >= -2 &&
+                missionItemChangeSpeed.param3() == -1 &&
+                missionItemChangeSpeed.param4() == 0) {
+                useDoChangeSpeed = true;
+                finalApproachSpeed = missionItemChangeSpeed.param2();
+            }
+        }
+    }
+    if (!useDoChangeSpeed) {
+        scanIndex++;
+    }
+
+    scanIndex--;
     if (scanIndex < 0 || scanIndex > visualItems->count() - 1) {
         return false;
     }
@@ -425,14 +516,12 @@ bool LandingComplexItem::_scanForItem(QmlObjectListModel* visualItems, bool flyV
     }
     MissionItem& missionItemDoLandStart = item->missionItem();
     if (missionItemDoLandStart.command() != MAV_CMD_DO_LAND_START ||
-            missionItemDoLandStart.frame() != MAV_FRAME_MISSION ||
-            missionItemDoLandStart.param1() != 0 || missionItemDoLandStart.param2() != 0 || missionItemDoLandStart.param3() != 0 || missionItemDoLandStart.param4() != 0 ||
-            missionItemDoLandStart.param5() != 0 || missionItemDoLandStart.param6() != 0 || missionItemDoLandStart.param7() != 0) {
+        missionItemDoLandStart.param1() != 0 || missionItemDoLandStart.param2() != 0 || missionItemDoLandStart.param3() != 0 || missionItemDoLandStart.param4() != 0 ||
+        missionItemDoLandStart.param5() != 0 || missionItemDoLandStart.param6() != 0 || missionItemDoLandStart.param7() != 0) {
         return false;
     }
 
     // We made it this far so we do have a Fixed Wing Landing Pattern item at the end of the mission.
-    // Since we have scanned it we need to remove the items for it fromt the list
     int deleteCount = 3;
     if (stopTakingPhotos) {
         deleteCount += CameraSection::stopTakingPhotosCommandCount();
@@ -440,7 +529,10 @@ bool LandingComplexItem::_scanForItem(QmlObjectListModel* visualItems, bool flyV
     if (stopTakingVideo) {
         deleteCount += CameraSection::stopTakingVideoCommandCount();
     }
-    int firstItem = visualItems->count() - deleteCount;
+    if (useDoChangeSpeed) {
+        deleteCount++;
+    }
+    int firstItem = startIndex - deleteCount;
     while (deleteCount--) {
         visualItems->removeAt(firstItem)->deleteLater();
     }
@@ -454,8 +546,12 @@ bool LandingComplexItem::_scanForItem(QmlObjectListModel* visualItems, bool flyV
     complexItem->_altitudesAreRelative = landPointFrame == MAV_FRAME_GLOBAL_RELATIVE_ALT;
     complexItem->setFinalApproachCoordinate(QGeoCoordinate(missionItemFinalApproach.param5(), missionItemFinalApproach.param6()));
     complexItem->finalApproachAltitude()->setRawValue(missionItemFinalApproach.param7());
+    complexItem->useDoChangeSpeed()->setRawValue(useDoChangeSpeed);
     complexItem->useLoiterToAlt()->setRawValue(useLoiterToAlt);
 
+    if (useDoChangeSpeed) {
+        complexItem->finalApproachSpeed()->setRawValue(finalApproachSpeed);
+    }
     if (useLoiterToAlt) {
         complexItem->loiterRadius()->setRawValue(qAbs(missionItemFinalApproach.param2()));
         complexItem->loiterClockwise()->setRawValue(missionItemFinalApproach.param2() > 0);
@@ -475,7 +571,8 @@ bool LandingComplexItem::_scanForItem(QmlObjectListModel* visualItems, bool flyV
     complexItem->_recalcFromCoordinateChange();
     complexItem->setDirty(false);
 
-    visualItems->append(complexItem);
+    visualItems->insert(firstItem, complexItem);
+    startIndex = firstItem;
 
     return true;
 }
@@ -558,6 +655,9 @@ QJsonObject LandingComplexItem::_save(void)
     JsonHelper::saveGeoCoordinate(coordinate, true /* writeAltitude */, jsonCoordinate);
     saveObject[_jsonFinalApproachCoordinateKey] = jsonCoordinate;
 
+    saveObject[_jsonUseDoChangeSpeedKey]        = useDoChangeSpeed()->rawValue().toBool();
+    saveObject[_jsonFinalApproachSpeedKey]      = finalApproachSpeed()->rawValue().toDouble();
+
     coordinate = _landingCoordinate;
     coordinate.setAltitude(landingAltitude()->rawValue().toDouble());
     JsonHelper::saveGeoCoordinate(coordinate, true /* writeAltitude */, jsonCoordinate);
@@ -581,6 +681,8 @@ bool LandingComplexItem::_load(const QJsonObject& complexObject, int sequenceNum
         { ComplexMissionItem::jsonComplexItemTypeKey,   QJsonValue::String, true },
         { _jsonDeprecatedLoiterCoordinateKey,           QJsonValue::Array,  false }, // Loiter changed to Final Approach
         { _jsonFinalApproachCoordinateKey,              QJsonValue::Array,  false },
+        { _jsonUseDoChangeSpeedKey,                     QJsonValue::Bool,   false },
+        { _jsonFinalApproachSpeedKey,                   QJsonValue::Double, false },
         { _jsonLoiterRadiusKey,                         QJsonValue::Double, true },
         { _jsonLoiterClockwiseKey,                      QJsonValue::Bool,   true },
         { _jsonLandingCoordinateKey,                    QJsonValue::Array,  true },
@@ -649,6 +751,11 @@ bool LandingComplexItem::_load(const QJsonObject& complexObject, int sequenceNum
     }
     _finalApproachCoordinate = coordinate;
     finalApproachAltitude()->setRawValue(coordinate.altitude());
+
+    useDoChangeSpeed()->setRawValue(complexObject[_jsonUseDoChangeSpeedKey].toBool(false));
+    finalApproachSpeed()->setRawValue(complexObject.contains(_jsonFinalApproachSpeedKey)
+                                      ? complexObject[_jsonFinalApproachSpeedKey].toDouble()
+                                      : finalApproachSpeed()->rawDefaultValue());
 
     if (!JsonHelper::loadGeoCoordinate(complexObject[_jsonLandingCoordinateKey], true /* altitudeRequired */, coordinate, errorString)) {
         return false;

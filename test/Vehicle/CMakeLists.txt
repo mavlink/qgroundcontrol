@@ -1,11 +1,11 @@
-add_subdirectory(Components)
-
-find_package(Qt6 REQUIRED COMPONENTS Core Test)
-
-qt_add_library(VehicleTest
-    STATIC
+target_sources(${CMAKE_PROJECT_NAME}
+    PRIVATE
         FTPManagerTest.cc
         FTPManagerTest.h
+        InitialConnectTest.cc
+        InitialConnectTest.h
+        MAVLinkLogManagerTest.cc
+        MAVLinkLogManagerTest.h
         RequestMessageTest.cc
         RequestMessageTest.h
         SendMavCommandWithHandlerTest.cc
@@ -16,16 +16,6 @@ qt_add_library(VehicleTest
         VehicleLinkManagerTest.h
 )
 
-target_link_libraries(VehicleTest
-    PRIVATE
-        Qt6::Test
-        QGC
-    PUBLIC
-        Comms
-        qgcunittest
-        Vehicle
-    INTERFACE
-        VehicleComponentsTest
-)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_include_directories(VehicleTest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+add_subdirectory(ComponentInformation)

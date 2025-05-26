@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -62,7 +62,7 @@ public:
     QStringList     factValueNames          (void) const;
     QString         factGroupName           (void) const { return _factGroupName; }
     QString         factName                (void) const { return _factName; }
-    Fact*           fact                    (void) { return _fact; }
+    Fact*           fact                    (void) const { return _fact; }
     QString         text                    (void) const { return _text; }
     bool            showUnits               (void) const { return _showUnits; }
     QString         icon                    (void) const { return _icon; }
@@ -103,7 +103,6 @@ signals:
 private slots:
     void _resetRangeInfo        (void);
     void _updateRanges          (void);
-    void _activeVehicleChanged  (Vehicle* activeVehicle);
     void _lookForMissingFact    (void);
 
 private:
@@ -114,7 +113,7 @@ private:
     void _setFactWorker         (void);
 
     FactValueGrid*          _factValueGrid =        nullptr;
-    Vehicle*                _activeVehicle =        nullptr;
+    Vehicle*                _vehicle =              nullptr;
     QmlObjectListModel*     _rowModel =             nullptr;
     Fact*                   _fact =                 nullptr;
     QString                 _factName;

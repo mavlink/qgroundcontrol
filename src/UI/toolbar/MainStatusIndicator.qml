@@ -19,7 +19,7 @@ import QGroundControl.FactSystem
 
 RowLayout {
     id:         control
-    spacing:    0
+    spacing:    ScreenTools.defaultFontPixelWidth
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     property var    _vehicleInAir:      _activeVehicle ? _activeVehicle.flying || _activeVehicle.landing : false
@@ -29,14 +29,20 @@ RowLayout {
     property real   _spacing:           ScreenTools.defaultFontPixelWidth / 2
     property bool   _healthAndArmingChecksSupported: _activeVehicle ? _activeVehicle.healthAndArmingCheckReport.supported : false
 
-    QGCMarqueeLabel {
-        id:             mainStatusLabel
-        text:           mainStatusText()
-        font.pointSize: ScreenTools.largeFontPointSize
-        implicitWidth:  maxWidth
-        maxWidth:       ScreenTools.defaultFontPixelWidth * ScreenTools.largeFontPointRatio * 10
+    function dropMainStatusIndicator() {
+        let overallStatusComponent = _activeVehicle ? overallStatusIndicatorPage : overallStatusOfflineIndicatorPage
+        mainWindow.showIndicatorDrawer(overallStatusComponent, control)
+    }
 
-        property string _commLostText:      qsTr("Communication Lost")
+    QGCLabel {
+        id:                 mainStatusLabel
+        Layout.fillHeight:  true
+        Layout.preferredWidth: contentWidth + vehicleMessagesIcon.width + control.spacing
+        verticalAlignment:  Text.AlignVCenter
+        text:               mainStatusText()
+        font.pointSize:     ScreenTools.largeFontPointSize
+
+        property string _commLostText:      qsTr("Comms Lost")
         property string _readyToFlyText:    qsTr("Ready To Fly")
         property string _notReadyToFlyText: qsTr("Not Ready")
         property string _disconnectedText:  qsTr("Disconnected - Click to manually connect")
@@ -94,7 +100,7 @@ RowLayout {
                         }
                     } else {
                         // Best we can do is determine readiness based on AutoPilot component setup and health indicators from SYS_STATUS
-                        if (_activeVehicle.allSensorsHealthy && _activeVehicle.autopilot.setupComplete) {
+                        if (_activeVehicle.allSensorsHealthy && _activeVehicle.autopilotPlugin.setupComplete) {
                             _mainStatusBGColor = "green"
                             return mainStatusLabel._readyToFlyText
                         } else {
@@ -109,44 +115,59 @@ RowLayout {
             }
         }
 
-        QGCMouseArea {
-            anchors.left:           parent.left
-            anchors.right:          parent.right
+        QGCColoredImage {
+            id:                     vehicleMessagesIcon
             anchors.verticalCenter: parent.verticalCenter
-            height:                 control.height
-            onClicked:              mainWindow.showIndicatorDrawer(overallStatusComponent, control)
+            anchors.right:          parent.right
+            width:                  ScreenTools.defaultFontPixelWidth * 2
+            height:                 width
+            source:                 "/res/VehicleMessages.png"
+            color:                  getIconColor()
+            sourceSize.width:       width
+            fillMode:               Image.PreserveAspectFit
+            //visible:                _activeVehicle && _activeVehicle.messageCount > 0// FIXME: Is messageCount check needed?
 
-            property Component overallStatusComponent: _activeVehicle ? overallStatusIndicatorPage : overallStatusOfflineIndicatorPage
+            function getIconColor() {
+                let iconColor = qgcPal.text
+                if (_activeVehicle) {
+                    if (_activeVehicle.messageTypeWarning) {
+                        iconColor = qgcPal.colorOrange
+                    } else if (_activeVehicle.messageTypeError) {
+                        iconColor = qgcPal.colorRed
+                    }
+                }
+                return iconColor
+            }
         }
-    }
-
-    Item {
-        implicitWidth:  ScreenTools.defaultFontPixelWidth * ScreenTools.largeFontPointRatio * 1.5
-        implicitHeight: 1
-        visible:        vtolModeLabel.visible
-    }
-
-    QGCLabel {
-        id:                     vtolModeLabel
-        Layout.alignment:       Qt.AlignVCenter
-        text:                   _vtolInFWDFlight ? qsTr("FW(vtol)") : qsTr("MR(vtol)")
-        font.pointSize:         enabled ? ScreenTools.largeFontPointSize : ScreenTools.defaultFontPointSize
-        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * ScreenTools.largeFontPointRatio * text.length
-        visible:                _activeVehicle && _activeVehicle.vtol
-        enabled:                _activeVehicle && _activeVehicle.vtol && _vehicleInAir
 
         QGCMouseArea {
             anchors.fill:   parent
-            onClicked:      mainWindow.showIndicatorDrawer(vtolTransitionIndicatorPage)
+            onClicked:      dropMainStatusIndicator()
+        }
+    }
+
+    QGCLabel {
+        id:                 vtolModeLabel
+        Layout.fillHeight:  true
+        verticalAlignment:  Text.AlignVCenter
+        text:               _vtolInFWDFlight ? qsTr("FW(vtol)") : qsTr("MR(vtol)")
+        font.pointSize:     _vehicleInAir ? ScreenTools.largeFontPointSize : ScreenTools.defaultFontPointSize
+        visible:            _activeVehicle && _activeVehicle.vtol
+
+        QGCMouseArea {
+            anchors.fill: parent
+            onClicked: {
+                if (_vehicleInAir) {
+                    mainWindow.showIndicatorDrawer(vtolTransitionIndicatorPage)
+                }
+            }
         }
     }
 
     Component {
         id: overallStatusOfflineIndicatorPage
 
-        MainStatusIndicatorOfflinePage {
-
-        }
+        MainStatusIndicatorOfflinePage { }
     }
 
     Component {
@@ -163,14 +184,15 @@ RowLayout {
     Component {
         id: mainStatusContentComponent
 
-        Column {
+        ColumnLayout {
             id:         mainLayout
             spacing:    _spacing
 
             QGCButton {
                 // FIXME: forceArm is not possible anymore if _healthAndArmingChecksSupported == true
-                enabled:    _armed || !_healthAndArmingChecksSupported || _activeVehicle.healthAndArmingCheckReport.canArm
-                text:       _armed ?  qsTr("Disarm") : (forceArm ? qsTr("Force Arm") : qsTr("Arm"))
+                enabled:            _armed || !_healthAndArmingChecksSupported || _activeVehicle.healthAndArmingCheckReport.canArm
+                text:               _armed ?  qsTr("Disarm") : (forceArm ? qsTr("Force Arm") : qsTr("Arm"))
+                Layout.alignment:   Qt.AlignLeft
 
                 property bool forceArm: false
 
@@ -191,39 +213,49 @@ RowLayout {
                 }
             }
 
-            QGCLabel {
-                anchors.horizontalCenter:   parent.horizontalCenter
-                text:                       qsTr("Sensor Status")
-                visible:                    !_healthAndArmingChecksSupported
-            }
+            SettingsGroupLayout {
+                //Layout.fillWidth:   true
+                heading:            qsTr("Vehicle Messages")
+                visible:            !vehicleMessageList.noMessages
 
-            GridLayout {
-                rowSpacing:     _spacing
-                columnSpacing:  _spacing
-                rows:           _activeVehicle.sysStatusSensorInfo.sensorNames.length
-                flow:           GridLayout.TopToBottom
-                visible:        !_healthAndArmingChecksSupported
-
-                Repeater {
-                    model: _activeVehicle.sysStatusSensorInfo.sensorNames
-                    QGCLabel { text: modelData }
-                }
-
-                Repeater {
-                    model: _activeVehicle.sysStatusSensorInfo.sensorStatus
-                    QGCLabel { text: modelData }
+                VehicleMessageList { 
+                    id: vehicleMessageList
                 }
             }
 
-            QGCLabel {
-                text:       qsTr("Overall Status")
-                visible:    _healthAndArmingChecksSupported && _activeVehicle.healthAndArmingCheckReport.problemsForCurrentMode.count > 0
+            SettingsGroupLayout {
+                //Layout.fillWidth:   true
+                heading:            qsTr("Sensor Status")
+                visible:            !_healthAndArmingChecksSupported
+
+                GridLayout {
+                    rowSpacing:     _spacing
+                    columnSpacing:  _spacing
+                    rows:           _activeVehicle.sysStatusSensorInfo.sensorNames.length
+                    flow:           GridLayout.TopToBottom
+
+                    Repeater {
+                        model: _activeVehicle.sysStatusSensorInfo.sensorNames
+                        QGCLabel { text: modelData }
+                    }
+
+                    Repeater {
+                        model: _activeVehicle.sysStatusSensorInfo.sensorStatus
+                        QGCLabel { text: modelData }
+                    }
+                }
             }
-            // List health and arming checks
-            Repeater {
-                visible:    _healthAndArmingChecksSupported
-                model:      _activeVehicle ? _activeVehicle.healthAndArmingCheckReport.problemsForCurrentMode : null
-                delegate:   listdelegate
+
+            SettingsGroupLayout {
+                //Layout.fillWidth:   true
+                heading:            qsTr("Overall Status")
+                visible:            _healthAndArmingChecksSupported && _activeVehicle.healthAndArmingCheckReport.problemsForCurrentMode.count > 0
+
+                // List health and arming checks
+                Repeater {
+                    model:      _activeVehicle ? _activeVehicle.healthAndArmingCheckReport.problemsForCurrentMode : null
+                    delegate:   listdelegate
+                }
             }
 
             FactPanelController {
@@ -316,7 +348,8 @@ RowLayout {
             }
 
             SettingsGroupLayout {
-                Layout.fillWidth: true
+                Layout.fillWidth:   true
+                visible:            QGroundControl.corePlugin.showAdvancedUI
 
                 GridLayout {
                     columns:            2
@@ -328,16 +361,16 @@ RowLayout {
                     QGCButton {
                         text: qsTr("Configure")
                         onClicked: {                            
-                            mainWindow.showVehicleSetupTool(qsTr("Parameters"))
+                            mainWindow.showVehicleConfigParametersPage()
                             mainWindow.closeIndicatorDrawer()
                         }
                     }
 
-                    QGCLabel { Layout.fillWidth: true; text: qsTr("Initial Vehicle Setup") }
+                    QGCLabel { Layout.fillWidth: true; text: qsTr("Vehicle Configuration") }
                     QGCButton {
                         text: qsTr("Configure")
                         onClicked: {                            
-                            mainWindow.showVehicleSetupTool()
+                            mainWindow.showVehicleConfig()
                             mainWindow.closeIndicatorDrawer()
                         }
                     }

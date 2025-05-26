@@ -2,7 +2,7 @@
 
 _QGroundControl_'ü kurmak ve çalıştırmak, hızlı ve kolaydır:
 
-1. Uygulamayı [indirin ve kurun](../getting_started/download_and_install.md).
+1. [Download and install (Daily 5.0)](../releases/daily_builds.md) the application.
 2. _QGroundControl_'ü başlatın.
 3. Aracınızı yer istasyonu cihazına USB, telemetri veya WIFI ile bağlayın. _QGroundControl_ aracınızı otomatik olarak tespit edip bağlanacaktır.
 
@@ -12,16 +12,15 @@ _QGroundControl_'ü kurmak ve çalıştırmak, hızlı ve kolaydır:
 
 _QGroundControl_'e alışmanın iyi bir yolu denemeye başlamaktır:
 
-- Ana ekranlar arasında geçiş yapmak için [toolbar](../toolbar/toolbar.md) 'ı kullan:
-  - [Settings](../settings_view/settings_view.md): _QGroundControl_ uygulamasını yapılandırın.
-  - [Setup](../setup_view/setup_view.md): Aracınızı yapılandırın ve ayarlayın.
-  - [Plan](../plan_view/plan_view.md): Otonom görevler oluşturun.
-  - [Fly](../fly_view/fly_view.md): Video akışıyla birlikte araç(lar)ınızı uçarken izleyin.
-  - [Analyze] \*\* Description of Analyze view is missing \*\*
-- Bağlı aracın durumunu öğrenmek için araç çubuğundaki _Status icons_'a tıklayın.
+- Use the View Selector to switch between main views:
+  - Plan Flight
+  - Analyze Tools
+  - Vehicle Configuration
+  - Application Settings
+- Click the _Status Indicators_ on the toolbar to find out the status of the connected vehicle.
 
 Kullanıcı arayüzü gayet açık olsa da, daha fazlasını öğrenmek için bu dokümantasyona başvurulabilir.
 
 :::info
-Make sure QGC has an internet connection when you connect a new vehicle. This will allow it to get the latest parameter and other metadata for the vehicle, along with [translations](../settings_view/general.md#miscellaneous).
+Make sure QGC has an internet connection when you connect a new vehicle in order to display map content.
 :::

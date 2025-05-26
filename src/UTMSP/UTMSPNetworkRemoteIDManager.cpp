@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2023 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -9,7 +9,6 @@
 
 #include "UTMSPNetworkRemoteIDManager.h"
 #include "UTMSPLogger.h"
-#include "services/dispatcher.h"
 
 UTMSPNetworkRemoteIDManager::UTMSPNetworkRemoteIDManager(std::shared_ptr<Dispatcher> dispatcher):
     _dispatcher(dispatcher)
@@ -24,8 +23,7 @@ UTMSPNetworkRemoteIDManager::~UTMSPNetworkRemoteIDManager()
 
 void UTMSPNetworkRemoteIDManager::getCapabilty(const std::string &token)
 {
-    connectNetwork();
-    setBearerToken(token);
+    setBearerToken(token.c_str());
 }
 
 void UTMSPNetworkRemoteIDManager::startTelemetry(const double &latitude,
@@ -146,41 +144,31 @@ void UTMSPNetworkRemoteIDManager::startTelemetry(const double &latitude,
     final_format["observations"] = final_array;
     json data = final_format;
 
-    // Get the RID response
-    _dispatcher->add_task([data,this]() {
-        auto [statusCode, response] = requestTelemetry(data.dump(4));
-        _statusCode = statusCode;
-        _response = response;
-    });
+    auto [statusCode, response] = requestTelemetry(data.dump(4));
+    _statusCode = statusCode;
+    _response = response;
+    UTMSP_LOG_DEBUG()<< "Response " << _response;
+    UTMSP_LOG_DEBUG()<< "Status Code: " << _statusCode;
 
-    if(!_response.empty()){
-
-        if(_statusCode == 201)
-        {
-            try {
-                json responseJson = json::parse(_response);
-                _response.clear();
-                if (responseJson.contains("message")){
-                    if(responseJson["message"] == "Telemetry data succesfully submitted"){
-
-                        auto now = std::chrono::system_clock::now();
-                        std::time_t now_c = std::chrono::system_clock::to_time_t(now);
-                        char buffer[20];
-                        std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", std::localtime(&now_c));
-                        UTMSP_LOG_DEBUG() <<"The Telemetry RID data submitted at " << buffer;
-                        UTMSP_LOG_DEBUG() << "--------------Telemetry Submitted Successfully---------------";
-                    }
-                }
-            }
-            catch (const json::parse_error& e) {
-                UTMSP_LOG_ERROR() << "UTMSPNetworkRemoteManager: Error parsing the response: " << e.what();
-            }
+    if(_statusCode == 201)
+    {
+        try {
+            auto now = std::chrono::system_clock::now();
+            std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+            char buffer[20];
+            std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", std::localtime(&now_c));
+            UTMSP_LOG_DEBUG() <<"The Telemetry RID data submitted at " << buffer;
+            UTMSP_LOG_DEBUG() << "--------------Telemetry Submitted Successfully---------------";
         }
-        else
-        {
-            UTMSP_LOG_ERROR() << "UTMSPNetworkRemoteManager: Invalid Status Code";
+        catch (const json::parse_error& e) {
+            UTMSP_LOG_ERROR() << "UTMSPNetworkRemoteManager: Error parsing the Telemetry response: " << e.what();
         }
     }
+    else
+    {
+        UTMSP_LOG_ERROR() << "UTMSPNetworkRemoteManager: Invalid Status Code";
+    }
+
 }
 
 bool UTMSPNetworkRemoteIDManager::stopTelemetry()

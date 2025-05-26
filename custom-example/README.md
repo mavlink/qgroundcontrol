@@ -7,7 +7,6 @@ To build this sample custom version:
 * Clean you build directory of any previous build
 * Rename the directory from `custom-example` to `custom`
 * Change to the `custom` directory
-* Run `python updateqrc.py`
 * Build QGC
 
 ![Custom Build Screenshot](README.jpg)
@@ -23,5 +22,3 @@ The main features of this example:
 * Customizes portions of the interface such as you can see in the above screenshot which shows a custom instrument widget replacing the standard QGC ui.
 * It also overrides various QGC Application settings to hide some settings the users shouldn't modify as well as adjusting defaults for others.
 * The source code is fully commented to explain what and why it is doing things.
-
-> Important Note: This custom build is not automatically built each time regular QGC code changes. This can mean that it may fall out of date with the latest changes in QGC code. This can show up as the `python updateqrc.py` steps failing due to upstream resource changes. Or possibly fail to compile because the plugin mechanism for custom builds has changed. If this happens please notify the QGC devs and they will bring it up to date. Or even better, submit a pull for the fix yourself!

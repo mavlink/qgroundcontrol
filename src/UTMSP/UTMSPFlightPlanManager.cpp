@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2023 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -9,6 +9,7 @@
 
 #include "UTMSPFlightPlanManager.h"
 #include "UTMSPLogger.h"
+#include <iostream>
 
 UTMSPFlightPlanManager::UTMSPFlightPlanManager():
     _currentState(FlightState::Idle),
@@ -51,6 +52,8 @@ void UTMSPFlightPlanManager::registerFlightPlan(const std::string &token,
     this->_flightData.user      =  "user@example.com"; //TODO
     this->_flightData.operation = 1;
     this->_flightData.party     = "Flight 1023"; //TODO
+    this->_flightData.aircraftID = "Test Flight-01"; //TODO : Replace with actual ID
+    this->_flightData.gcsID = "Test GCS-01"; //TODO : Replace with actual ID
     this->_flightData.startDateTime = startDateTime;
     this->_flightData.endDateTime   = endDateTime;
     this->_flightData.flightDeclaration.type  = "FeatureCollection";
@@ -62,6 +65,7 @@ void UTMSPFlightPlanManager::registerFlightPlan(const std::string &token,
     this->_flightData.flightDeclaration.features.geometry.type = "Polygon";
     this->_flightData.flightDeclaration.features.geometry.coordinates = boundaryPolygons;
 
+
     _flightDataJson.clear();
 
     // Generate GeoJson for flight plan
@@ -69,6 +73,8 @@ void UTMSPFlightPlanManager::registerFlightPlan(const std::string &token,
     _flightDataJson["submitted_by"] = this->_flightData.user;
     _flightDataJson["type_of_operation"]= this->_flightData.operation;
     _flightDataJson["originating_party"]= this->_flightData.party;
+    _flightDataJson["aircraft_id"]=this->_flightData.aircraftID ;
+    _flightDataJson["gcs_id"]=this->_flightData.gcsID;
     _flightDataJson["start_datetime"]= this->_flightData.startDateTime;
     _flightDataJson["end_datetime"] = this->_flightData.endDateTime;
     _flightDataJson["flight_declaration_geo_json"]["type"] = this->_flightData.flightDeclaration.type;
@@ -95,13 +101,12 @@ void UTMSPFlightPlanManager::registerFlightPlan(const std::string &token,
 
 
     json data = _flightDataJson;
-    setHost("BlenderClient");
-    connectNetwork();
+    setHost(HostTarget::BlenderClient);
     setBearerToken(token);
     auto [statusCode, response] =  setFlightPlan(data.dump(4));
     UTMSP_LOG_INFO() << "UTMSPFlightPlanManager: Register Response -->" << response;
 
-    if(statusCode == 201)
+    if(statusCode == 200)
     {
         try {
             json jsonData = json::parse(response);
@@ -130,9 +135,33 @@ std::tuple<std::string, std::string, bool> UTMSPFlightPlanManager::registerFligh
     return std::make_tuple(_responseJSON, _flightResponseID, _responseStatus);
 }
 
-void UTMSPFlightPlanManager::activateFlightPlan()
+bool UTMSPFlightPlanManager::activateFlightPlan(const std::string &token)
 {
     //TODO : Plan for conformance Monitering phase 2
+    _updateState["state"] = 2;
+    _updateState["submitted_by"] = this->_flightData.user;
+    json data = _updateState;
+    std::cout << data.dump(4) << std::endl;
+    setHost(HostTarget::BlenderClient);
+    setBearerToken(token);
+    auto [statusCode, response] =  updateFlightState(data.dump(4), _flightResponseID);
+
+    if(statusCode == 200)
+    {
+        try {
+            UTMSP_LOG_DEBUG() << "Update flight plan response" << response;
+            return true;
+        }
+        catch (const json::parse_error& e) {
+            UTMSP_LOG_ERROR() << "UTMSPFlightPlanManager: Error parsing the response: " << e.what();
+            return false;
+        }
+    }
+    else
+    {
+        UTMSP_LOG_ERROR() << "UTMSPFlightPlanManager: Invalid Status Code";
+        return false;
+    }
 }
 
 void UTMSPFlightPlanManager::activateFlightPlanNotification()

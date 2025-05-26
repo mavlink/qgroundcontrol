@@ -1,3 +1,12 @@
+/****************************************************************************
+ *
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 #pragma once
 
 #include <QtLocation/private/qgeotilefetcher_p.h>
@@ -10,7 +19,6 @@ class QGeoTiledMappingManagerEngineQGC;
 class QGeoTiledMapReplyQGC;
 class QGeoTileSpec;
 class QNetworkAccessManager;
-class QNetworkDiskCache;
 
 class QGeoTileFetcherQGC : public QGeoTileFetcher
 {
@@ -33,9 +41,8 @@ private:
     void handleReply(QGeoTiledMapReply *reply, const QGeoTileSpec &spec) final;
 
     QNetworkAccessManager *m_networkManager = nullptr;
-    // QNetworkDiskCache *m_diskCache = nullptr;
 
-#if defined Q_OS_MAC
+#if defined Q_OS_MACOS
     static constexpr const char* s_userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 14.5; rv:125.0) Gecko/20100101 Firefox/125.0";
 #elif defined Q_OS_WIN
     static constexpr const char* s_userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:100.0) Gecko/20100101 Firefox/112.0";

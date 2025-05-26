@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -12,9 +12,29 @@
 
 #include <QtQml/QQmlEngine>
 
-DECLARE_SETTINGGROUP(AutoConnect, "LinkManager")
+DECLARE_SETTINGGROUP(AutoConnect, "AutoConnect")
 {
-    qmlRegisterUncreatableType<AutoConnectSettings>("QGroundControl.SettingsManager", 1, 0, "AutoConnectSettings", "Reference only"); \
+    qmlRegisterUncreatableType<AutoConnectSettings>("QGroundControl.SettingsManager", 1, 0, "AutoConnectSettings", "Reference only");
+
+    // Settings group name was changed from "LinkManager" to "AutoConnect" in v5.0.0
+    // Copy over an old settings to the new name
+    QSettings settings;
+    static const char* deprecatedGroupName = "LinkManager";
+    if (settings.childGroups().contains(deprecatedGroupName)) {
+        settings.beginGroup(deprecatedGroupName);
+        QList<QPair<QString, QVariant>> values;
+        for (const QString& key: settings.childKeys()) {
+            values.append(QPair<QString, QVariant>(key, settings.value(key)));
+        }
+        settings.endGroup();
+        settings.remove(deprecatedGroupName);
+
+        settings.beginGroup(_name);
+        for (const QPair<QString, QVariant>& pair: values) {
+            settings.setValue(pair.first, pair.second);
+        }
+        settings.endGroup();
+    }
 }
 
 DECLARE_SETTINGSFACT(AutoConnectSettings, autoConnectUDP)
@@ -43,17 +63,6 @@ DECLARE_SETTINGSFACT_NO_FUNC(AutoConnectSettings, autoConnectSiKRadio)
 #endif
     }
     return _autoConnectSiKRadioFact;
-}
-
-DECLARE_SETTINGSFACT_NO_FUNC(AutoConnectSettings, autoConnectPX4Flow)
-{
-    if (!_autoConnectPX4FlowFact) {
-        _autoConnectPX4FlowFact = _createSettingsFact(autoConnectPX4FlowName);
-#ifdef Q_OS_IOS
-        _autoConnectPX4FlowFact->setVisible(false);
-#endif
-    }
-    return _autoConnectPX4FlowFact;
 }
 
 DECLARE_SETTINGSFACT_NO_FUNC(AutoConnectSettings, autoConnectRTKGPS)

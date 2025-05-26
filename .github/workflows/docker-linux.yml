@@ -1,0 +1,49 @@
+name: Docker-Linux
+
+on:
+  push:
+    branches:
+      - master
+      - 'Stable*'
+    tags:
+      - 'v*'
+    paths-ignore:
+      - 'docs/**' # Do not trigger for any changes under docs
+  pull_request:
+    paths:
+      - '.github/workflows/docker-linux.yml'
+      - 'deploy/docker/**'
+      - 'deploy/linux/**'
+      - 'src/**'
+      - 'CMakeLists.txt'
+      - 'cmake/**'
+
+# concurrency:
+#   group: ${{ github.workflow }}-${{ github.ref }}
+#   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: false
+
+      - name: Get all tags for correct version determination
+        working-directory:  ${{ github.workspace }}
+        run: |
+          git fetch --all --tags -f --depth 1
+
+      - run: chmod a+x ./deploy/docker/run-docker-ubuntu.sh
+
+      - name: Run Docker Build
+        run: ./deploy/docker/run-docker-ubuntu.sh

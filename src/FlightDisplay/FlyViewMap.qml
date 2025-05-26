@@ -326,17 +326,6 @@ FlightMap {
         }
     }
 
-    MapItemView {
-        model: pipMode ? undefined : _missionController.directionArrows
-
-        delegate: MapLineArrow {
-            fromCoord:      object ? object.coordinate1 : undefined
-            toCoord:        object ? object.coordinate2 : undefined
-            arrowPosition:  2
-            z:              QGroundControl.zOrderWaypointLines
-        }
-    }
-
     // Allow custom builds to add map items
     CustomMapItems {
         map:            _root
@@ -379,6 +368,77 @@ FlightMap {
         }
     }
 
+    // GoTo Location forward flight circle visuals
+    QGCMapCircleVisuals {
+        id:                 fwdFlightGotoMapCircle
+        mapControl:         parent
+        mapCircle:          _fwdFlightGotoMapCircle
+        radiusLabelVisible: true
+        visible:            gotoLocationItem.visible && _activeVehicle &&
+                            _activeVehicle.inFwdFlight &&
+                            !_activeVehicle.orbitActive
+
+        property alias coordinate: _fwdFlightGotoMapCircle.center
+        property alias radius: _fwdFlightGotoMapCircle.radius
+
+        Component.onCompleted: {
+            // Only allow editing the radius, not the position
+            centerDragHandleVisible = false
+
+            globals.guidedControllerFlyView.fwdFlightGotoMapCircle = this
+        }
+
+        Binding {
+            target: _fwdFlightGotoMapCircle
+            property: "center"
+            value: gotoLocationItem.coordinate
+        }
+
+        function startLoiterRadiusEdit() {
+            _fwdFlightGotoMapCircle.interactive = true
+        }
+
+        // Called when loiter edit is confirmed
+        function actionConfirmed() {
+            _fwdFlightGotoMapCircle.interactive = false
+            _fwdFlightGotoMapCircle._commitRadius()
+        }
+
+        // Called when loiter edit is cancelled
+        function actionCancelled() {
+            _fwdFlightGotoMapCircle.interactive = false
+            _fwdFlightGotoMapCircle._restoreRadius()
+        }
+
+        QGCMapCircle {
+            id:                 _fwdFlightGotoMapCircle
+            interactive:        false
+            showRotation:       true
+            clockwiseRotation:  true
+
+            property real _defaultLoiterRadius: _flyViewSettings.forwardFlightGoToLocationLoiterRad.value
+            property real _committedRadius;
+
+            onCenterChanged: {
+                radius.rawValue = _defaultLoiterRadius
+                // Don't commit the radius in case this operation is undone
+            }
+
+            Component.onCompleted: {
+                radius.rawValue = _defaultLoiterRadius
+                _commitRadius()
+            }
+
+            function _commitRadius() {
+                _committedRadius = radius.rawValue
+            }
+
+            function _restoreRadius() {
+                radius.rawValue = _committedRadius
+            }
+        }
+    }
+
     // GoTo Location visuals
     MapQuickItem {
         id:             gotoLocationItem
@@ -394,19 +454,12 @@ FlightMap {
 
         property bool inGotoFlightMode: _activeVehicle ? _activeVehicle.flightMode === _activeVehicle.gotoFlightMode : false
 
+        property var _committedCoordinate: null
+
         onInGotoFlightModeChanged: {
             if (!inGotoFlightMode && gotoLocationItem.visible) {
                 // Hide goto indicator when vehicle falls out of guided mode
-                gotoLocationItem.visible = false
-            }
-        }
-
-        Connections {
-            target: QGroundControl.multiVehicleManager
-            function onActiveVehicleChanged(activeVehicle) {
-                if (!activeVehicle) {
-                    gotoLocationItem.visible = false
-                }
+                hide()
             }
         }
 
@@ -420,11 +473,35 @@ FlightMap {
         }
 
         function actionConfirmed() {
+            _commitCoordinate()
+
+            // Commit the new radius which possibly changed
+            fwdFlightGotoMapCircle.actionConfirmed()
+
             // We leave the indicator visible. The handling for onInGuidedModeChanged will hide it.
         }
 
         function actionCancelled() {
-            hide()
+            _restoreCoordinate()
+
+            // Also restore the loiter radius
+            fwdFlightGotoMapCircle.actionCancelled()
+        }
+
+        function _commitCoordinate() {
+            // Must deep copy
+            _committedCoordinate = QtPositioning.coordinate(
+                coordinate.latitude,
+                coordinate.longitude
+            );
+        }
+
+        function _restoreCoordinate() {
+            if (_committedCoordinate) {
+                coordinate = _committedCoordinate
+            } else {
+                hide()
+            }
         }
     }
 
@@ -490,17 +567,29 @@ FlightMap {
         anchorPoint.x:  sourceItem.anchorPointX
         anchorPoint.y:  sourceItem.anchorPointY
 
+        Connections {
+            target: _activeVehicle
+            onRoiCoordChanged: (centerCoord) => {
+                roiLocationItem.show(centerCoord)
+            }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: (position) => {
+                position = Qt.point(position.x, position.y)
+                var clickCoord = _root.toCoordinate(position, false /* clipToViewPort */)
+                // For some strange reason using mainWindow in mapToItem doesn't work, so we use globals.parent instead which also gets us mainWindow
+                position = mapToItem(globals.parent, position)
+                var dropPanel = roiEditDropPanelComponent.createObject(mainWindow, { clickRect: Qt.rect(position.x, position.y, 0, 0) })
+                dropPanel.open()
+            }
+        }
+
         sourceItem: MissionItemIndexLabel {
             checked:    true
             index:      -1
             label:      qsTr("ROI here", "Make this a Region Of Interest")
-
-            onClicked: (position) => {
-                var roiEditMenu = popupMenuComponent.createObject(_root, { coord: roiLocationItem.coordinate, contentItemComponent: roiEditMenuComponent })
-                var clickPoint = mapToItem(_root, position.x, position.y)
-                roiEditMenu.setPosition(clickPoint.x, clickPoint.y)
-                roiEditMenu.open()
-            }
         }
 
         //-- Visibilty controlled by actual state
@@ -522,132 +611,12 @@ FlightMap {
         anchorPoint.x:  sourceItem.anchorPointX
         anchorPoint.y:  sourceItem.anchorPointY
         coordinate:     _activeVehicle ? _activeVehicle.orbitMapCircle.center : QtPositioning.coordinate()
-        visible:        orbitTelemetryCircle.visible
+        visible:        orbitTelemetryCircle.visible && !gotoLocationItem.visible
 
         sourceItem: MissionItemIndexLabel {
             checked:    true
             index:      -1
             label:      qsTr("Orbit", "Orbit waypoint")
-        }
-    }
-
-    Component {
-        id: popupMenuComponent
-
-        Popup {
-            id: mapClickMenu
-            modal: true
-
-            property var coord
-            property var contentItemComponent
-
-            function setPosition(mouseX, mouseY) {
-                var newX = mouseX
-                var newY = mouseY
-
-                // Filtering coordinates
-                if (newX + mapClickMenu.width > _root.width) {
-                    newX = _root.width - mapClickMenu.width
-                }
-                if (newY + mapClickMenu.height > _root.height) {
-                    newY = _root.height - mapClickMenu.height
-                }
-
-                // Set coordiantes
-                x = newX
-                y = newY
-            }
-
-            background: Rectangle {
-                radius: ScreenTools.defaultFontPixelHeight * 0.5
-                color: qgcPal.window
-                border.color: qgcPal.text
-            }
-
-            contentItem: Loader {
-                sourceComponent: contentItemComponent
-
-                property var mapClickCoord: mapClickMenu.coord
-                property var popup:         mapClickMenu
-            }
-        }
-    }
-
-    Component {
-        id: mapClickMenuComponent
-
-        ColumnLayout {
-            id: mainLayout
-            spacing: ScreenTools.defaultFontPixelWidth / 2
-
-            QGCButton {
-                Layout.fillWidth:   true
-                text:               qsTr("Go to location")
-                visible:            globals.guidedControllerFlyView.showGotoLocation
-                onClicked: {
-                    if (popup.opened) {
-                        popup.close()
-                    }
-                    gotoLocationItem.show(mapClickCoord)
-                    globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionGoto, mapClickCoord, gotoLocationItem)
-                }
-            }
-
-            QGCButton {
-                Layout.fillWidth:   true
-                text:               qsTr("Orbit at location")
-                visible:            globals.guidedControllerFlyView.showOrbit
-                onClicked: {
-                    if (popup.opened) {
-                        popup.close()
-                    }
-                    orbitMapCircle.show(mapClickCoord)
-                    globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionOrbit, mapClickCoord, orbitMapCircle)
-                }
-            }
-
-            QGCButton {
-                Layout.fillWidth:   true
-                text:               qsTr("ROI at location")
-                visible:            globals.guidedControllerFlyView.showROI
-                onClicked: {
-                    if (popup.opened) {
-                        popup.close()
-                    }
-                    roiLocationItem.show(mapClickCoord)
-                    globals.guidedControllerFlyView.executeAction(globals.guidedControllerFlyView.actionROI, mapClickCoord, 0, false)
-                }
-            }
-
-            QGCButton {
-                Layout.fillWidth:   true
-                text:               qsTr("Set home here")
-                visible:            globals.guidedControllerFlyView.showSetHome
-                onClicked: {
-                    if (popup.opened) {
-                        popup.close()
-                    }
-                    globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionSetHome, mapClickCoord)
-                }
-            }
-
-            QGCButton {
-                Layout.fillWidth:   true
-                text:               qsTr("Set Estimator Origin")
-                visible:            globals.guidedControllerFlyView.showSetEstimatorOrigin
-                onClicked: {
-                    if (popup.opened) {
-                        popup.close()
-                    }
-                    globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionSetEstimatorOrigin, mapClickCoord)
-                }
-            }
-
-            ColumnLayout {
-                spacing: 0
-                QGCLabel { text: qsTr("Lat: %1").arg(mapClickCoord.latitude.toFixed(6)) }
-                QGCLabel { text: qsTr("Lon: %1").arg(mapClickCoord.longitude.toFixed(6)) }
-            }
         }
     }
 
@@ -665,27 +634,122 @@ FlightMap {
     }
 
     Component {
-        id: roiEditMenuComponent
+        id: roiEditDropPanelComponent
 
-        ColumnLayout {
-            id: mainLayout
-            spacing: ScreenTools.defaultFontPixelWidth / 2
+        DropPanel {
+            id: roiEditDropPanel
 
-            QGCButton {
-                Layout.fillWidth:   true
-                text:               qsTr("Cancel ROI")
-                onClicked: {
-                    _activeVehicle.stopGuidedModeROI()
-                    popup.close()
+            sourceComponent: Component {
+                ColumnLayout {
+                    spacing: ScreenTools.defaultFontPixelWidth / 2
+
+                    QGCButton {
+                        Layout.fillWidth:   true
+                        text:               qsTr("Cancel ROI")
+                        onClicked: {
+                            _activeVehicle.stopGuidedModeROI()
+                            roiEditDropPanel.close()
+                        }
+                    }
+
+                    QGCButton {
+                        Layout.fillWidth:   true
+                        text:               qsTr("Edit Position")
+                        onClicked: {         
+                            roiEditPositionDialogComponent.createObject(mainWindow, { showSetPositionFromVehicle: false }).open()
+                            roiEditDropPanel.close()
+                        }
+                    }
                 }
             }
+        }
+    }
 
-            QGCButton {
-                Layout.fillWidth:   true
-                text:               qsTr("Edit Position")
-                onClicked: {         
-                    roiEditPositionDialogComponent.createObject(mainWindow, { showSetPositionFromVehicle: false }).open()
-                    popup.close()
+    Component {
+        id: mapClickDropPanelComponent
+
+        DropPanel {
+            id: mapClickDropPanel
+
+            property var mapClickCoord
+
+            sourceComponent: Component {
+                ColumnLayout {
+                    spacing: ScreenTools.defaultFontPixelWidth / 2
+
+                    QGCButton {
+                        Layout.fillWidth:   true
+                        text:               qsTr("Go to location")
+                        visible:            globals.guidedControllerFlyView.showGotoLocation
+                        onClicked: {
+                            mapClickDropPanel.close()
+                            gotoLocationItem.show(mapClickCoord)
+
+                            if ((_activeVehicle.flightMode == _activeVehicle.gotoFlightMode) && !_flyViewSettings.goToLocationRequiresConfirmInGuided.value) {
+                                globals.guidedControllerFlyView.executeAction(globals.guidedControllerFlyView.actionGoto, mapClickCoord, gotoLocationItem)
+                                gotoLocationItem.actionConfirmed() // Still need to call this to commit the new coordinate and radius
+                            } else {
+                                globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionGoto, mapClickCoord, gotoLocationItem)
+                            }
+                        }
+                    }
+
+                    QGCButton {
+                        Layout.fillWidth:   true
+                        text:               qsTr("Orbit at location")
+                        visible:            globals.guidedControllerFlyView.showOrbit
+                        onClicked: {
+                            mapClickDropPanel.close()
+                            orbitMapCircle.show(mapClickCoord)
+                            globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionOrbit, mapClickCoord, orbitMapCircle)
+                        }
+                    }
+
+                    QGCButton {
+                        Layout.fillWidth:   true
+                        text:               qsTr("ROI at location")
+                        visible:            globals.guidedControllerFlyView.showROI
+                        onClicked: {
+                            mapClickDropPanel.close()
+                            globals.guidedControllerFlyView.executeAction(globals.guidedControllerFlyView.actionROI, mapClickCoord, 0, false)
+                        }
+                    }
+
+                    QGCButton {
+                        Layout.fillWidth:   true
+                        text:               qsTr("Set home here")
+                        visible:            globals.guidedControllerFlyView.showSetHome
+                        onClicked: {
+                            mapClickDropPanel.close()
+                            globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionSetHome, mapClickCoord)
+                        }
+                    }
+
+                    QGCButton {
+                        Layout.fillWidth:   true
+                        text:               qsTr("Set Estimator Origin")
+                        visible:            globals.guidedControllerFlyView.showSetEstimatorOrigin
+                        onClicked: {
+                            mapClickDropPanel.close()
+                            globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionSetEstimatorOrigin, mapClickCoord)
+                        }
+                    }
+
+                    QGCButton {
+                        Layout.fillWidth:   true
+                        text:               qsTr("Set Heading")
+                        visible:            globals.guidedControllerFlyView.showChangeHeading
+                        onClicked: {
+                            mapClickDropPanel.close()
+                            globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionChangeHeading, mapClickCoord)
+                        }
+                    }
+
+                    ColumnLayout {
+                        spacing: 0
+                        QGCLabel { text: qsTr("Lat: %1").arg(mapClickCoord.latitude.toFixed(6)) }
+                        QGCLabel { text: qsTr("Lon: %1").arg(mapClickCoord.longitude.toFixed(6)) }
+                    }
                 }
             }
         }
@@ -693,13 +757,16 @@ FlightMap {
 
     onMapClicked: (position) => {
         if (!globals.guidedControllerFlyView.guidedUIVisible && 
-            (globals.guidedControllerFlyView.showGotoLocation || globals.guidedControllerFlyView.showOrbit || globals.guidedControllerFlyView.showROI || globals.guidedControllerFlyView.showSetHome || globals.guidedControllerFlyView.showSetEstimatorOrigin)) {
-            orbitMapCircle.hide()
-            gotoLocationItem.hide()
-            var clickCoord = _root.toCoordinate(Qt.point(position.x, position.y), false /* clipToViewPort */)
-            var mapClickMenu = popupMenuComponent.createObject(_root, { coord: clickCoord, contentItemComponent: mapClickMenuComponent })
-            mapClickMenu.setPosition(position.x, position.y)
-            mapClickMenu.open()
+            (globals.guidedControllerFlyView.showGotoLocation || globals.guidedControllerFlyView.showOrbit ||
+             globals.guidedControllerFlyView.showROI || globals.guidedControllerFlyView.showSetHome ||
+             globals.guidedControllerFlyView.showSetEstimatorOrigin)) {
+
+            position = Qt.point(position.x, position.y)
+            var clickCoord = _root.toCoordinate(position, false /* clipToViewPort */)
+            // For some strange reason using mainWindow in mapToItem doesn't work, so we use globals.parent instead which also gets us mainWindow
+            position = _root.mapToItem(globals.parent, position)
+            var dropPanel = mapClickDropPanelComponent.createObject(mainWindow, { mapClickCoord: clickCoord, clickRect: Qt.rect(position.x, position.y, 0, 0) })
+            dropPanel.open()
         }
     }
 

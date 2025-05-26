@@ -1,10 +1,19 @@
+/****************************************************************************
+ *
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 #pragma once
 
-#include <QtSensors/QAmbientTemperatureSensor>
-#include <QtSensors/QPressureSensor>
-#include <QtSensors/QCompass>
-#include <QtPositioning/QGeoPositionInfo>
 #include <QtCore/QLoggingCategory>
+#include <QtPositioning/QGeoPositionInfo>
+#include <QtSensors/QAmbientTemperatureSensor>
+#include <QtSensors/QCompass>
+#include <QtSensors/QPressureSensor>
 
 Q_DECLARE_LOGGING_CATEGORY(QGCDeviceInfoLog)
 
@@ -13,7 +22,7 @@ namespace QGCDeviceInfo
 
 bool isInternetAvailable();
 bool isBluetoothAvailable();
-bool isNetworkWired();
+bool isNetworkEthernet();
 
 ////////////////////////////////////////////////////////////////////
 

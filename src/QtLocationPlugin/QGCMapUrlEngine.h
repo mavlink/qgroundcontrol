@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -45,6 +45,7 @@ public:
                             QStringView mapType);
 
     static const QList<std::shared_ptr<const MapProvider>>& getProviders() { return _providers; }
+    static QStringList getElevationProviderTypes();
     static QStringList getProviderTypes();
     static int getQtMapIdFromProviderType(QStringView type);
     static QString getProviderTypeFromQtMapId(int qtMapId);

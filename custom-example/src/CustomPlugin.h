@@ -12,10 +12,10 @@
 #pragma once
 
 #include <QtCore/QTranslator>
+#include <QtQml/QQmlAbstractUrlInterceptor>
 
 #include "QGCCorePlugin.h"
 #include "QGCOptions.h"
-#include <QGCLoggingCategory.h>
 
 class CustomOptions;
 class CustomPlugin;
@@ -34,38 +34,44 @@ public:
     bool                    showMultiVehicleList        (void) const final;
 };
 
+/*===========================================================================*/
+
 class CustomOptions : public QGCOptions
 {
 public:
-    CustomOptions(CustomPlugin*, QObject* parent = nullptr);
+    CustomOptions(CustomPlugin *plugin, QObject* parent = nullptr);
 
     // Overrides from QGCOptions
     bool                    wifiReliableForCalibration  (void) const final;
     bool                    showFirmwareUpgrade         (void) const final;
-    QGCFlyViewOptions*      flyViewOptions(void) final;
+    QGCFlyViewOptions*      flyViewOptions(void) const final;
 
 private:
-    CustomFlyViewOptions* _flyViewOptions = nullptr;
+    QGCCorePlugin *_plugin = nullptr;
+    CustomFlyViewOptions *_flyViewOptions = nullptr;
 };
+
+/*===========================================================================*/
 
 class CustomPlugin : public QGCCorePlugin
 {
     Q_OBJECT
 public:
-    CustomPlugin(QGCApplication* app, QGCToolbox *toolbox);
+    explicit CustomPlugin(QObject *parent = nullptr);
     ~CustomPlugin();
 
+    static QGCCorePlugin *instance();
+
     // Overrides from QGCCorePlugin
+    void init() final;
+    void cleanup() final;
     QGCOptions*             options                         (void) final;
     QString                 brandImageIndoor                (void) const final;
     QString                 brandImageOutdoor               (void) const final;
-    bool                    overrideSettingsGroupVisibility (QString name) final;
+    bool                    overrideSettingsGroupVisibility (const QString &name) final;
     bool                    adjustSettingMetaData           (const QString& settingsGroup, FactMetaData& metaData) final;
-    void                    paletteOverride                 (QString colorName, QGCPalette::PaletteColorInfo_t& colorInfo) final;
+    void                    paletteOverride                 (const QString &colorName, QGCPalette::PaletteColorInfo_t& colorInfo) final;
     QQmlApplicationEngine*  createQmlApplicationEngine      (QObject* parent) final;
-
-    // Overrides from QGCTool
-    void                    setToolbox                      (QGCToolbox* toolbox);
 
 private slots:
     void _advancedChanged(bool advanced);
@@ -75,5 +81,17 @@ private:
 
 private:
     CustomOptions*  _options = nullptr;
+    QQmlApplicationEngine *_qmlEngine = nullptr;
+    class CustomOverrideInterceptor *_selector = nullptr;
     QVariantList    _customSettingsList; // Not to be mixed up with QGCCorePlugin implementation
+};
+
+/*===========================================================================*/
+
+class CustomOverrideInterceptor : public QQmlAbstractUrlInterceptor
+{
+public:
+    CustomOverrideInterceptor();
+
+    QUrl intercept(const QUrl &url, QQmlAbstractUrlInterceptor::DataType type) final;
 };

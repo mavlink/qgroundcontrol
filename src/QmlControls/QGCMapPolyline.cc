@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -12,7 +12,7 @@
 #include "JsonHelper.h"
 #include "QGCQGeoCoordinate.h"
 #include "QGCApplication.h"
-#include "KMLHelper.h"
+#include "ShapeFileHelper.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QLineF>
@@ -288,7 +288,6 @@ QList<QPointF> QGCMapPolyline::nedPolyline(void)
     return nedPolyline;
 }
 
-
 QList<QGeoCoordinate> QGCMapPolyline::offsetPolyline(double distance)
 {
     QList<QGeoCoordinate> rgNewPolyline;
@@ -346,21 +345,19 @@ QList<QGeoCoordinate> QGCMapPolyline::offsetPolyline(double distance)
     return rgNewPolyline;
 }
 
-bool QGCMapPolyline::loadKMLFile(const QString& kmlFile)
+bool QGCMapPolyline::loadKMLOrSHPFile(const QString &file)
 {
-    _beginResetIfNotActive();
-
     QString errorString;
     QList<QGeoCoordinate> rgCoords;
-    if (!KMLHelper::loadPolylineFromFile(kmlFile, rgCoords, errorString)) {
+    if (!ShapeFileHelper::loadPolylineFromFile(file, rgCoords, errorString)) {
         qgcApp()->showAppMessage(errorString);
         return false;
     }
 
+    beginReset();
     clear();
     appendVertices(rgCoords);
-
-    _endResetIfNotActive();
+    endReset();
 
     return true;
 }
@@ -403,6 +400,8 @@ void QGCMapPolyline::appendVertices(const QList<QGeoCoordinate>& coordinates)
     _polylineModel.append(objects);
 
     _endResetIfNotActive();
+
+    emit pathChanged();
 }
 
 void QGCMapPolyline::beginReset(void)
@@ -448,9 +447,8 @@ void QGCMapPolyline::selectVertex(int index)
         _selectedVertexIndex = index;
     } else {
         if (!qgcApp()->runningUnitTests()) {
-            qCWarning(ParameterManagerLog)
-                    << QString("QGCMapPolyline: Selected vertex index (%1) is out of bounds! "
-                               "Polyline vertices indexes range is [%2..%3].").arg(index).arg(0).arg(count()-1);
+            qWarning() << QStringLiteral("QGCMapPolyline: Selected vertex index (%1) is out of bounds! "
+                                         "Polyline vertices indexes range is [%2..%3].").arg(index).arg(0).arg(count()-1);
         }
         _selectedVertexIndex = -1;   // deselect vertex
     }

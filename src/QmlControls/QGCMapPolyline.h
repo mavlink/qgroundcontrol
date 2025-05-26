@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -52,9 +52,9 @@ public:
     /// @return Offset set of vertices
     QList<QGeoCoordinate> offsetPolyline(double distance);
 
-    /// Loads a polyline from a KML file
+    /// Loads a polyline from a KML/SHP file
     /// @return true: success
-    Q_INVOKABLE bool loadKMLFile(const QString& kmlFile);
+    Q_INVOKABLE bool loadKMLOrSHPFile(const QString &file);
 
     Q_INVOKABLE void beginReset (void);
     Q_INVOKABLE void endReset   (void);

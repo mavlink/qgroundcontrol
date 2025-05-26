@@ -22,7 +22,8 @@ import QGroundControl.ScreenTools
 
 QGCPopupDialog {
     id:         root
-    title:      qsTr("Parameter Editor")
+    title:      fact.componentId > 0 ? fact.name : qsTr("Value Editor")
+
     buttons:    Dialog.Save | (validate ? 0 : Dialog.Cancel)
 
     property Fact   fact
@@ -75,7 +76,6 @@ QGCPopupDialog {
     }
 
     Component.onCompleted: {
-        console.log("ParameterEditor")
         if (validate) {
             valueField.text = validateValue
             validationError.text = fact.validate(validateValue, false /* convertOnly */)
@@ -116,11 +116,12 @@ QGCPopupDialog {
             }
 
             QGCComboBox {
-                id:         factCombo
-                width:      _editFieldWidth
-                model:      fact.enumStrings
-                visible:    _showCombo
-                focus:      setFocus && visible
+                id:             factCombo
+                width:          _editFieldWidth
+                model:          fact.enumStrings
+                sizeToContents: true
+                visible:        _showCombo
+                focus:          setFocus && visible
 
                 Component.onCompleted: {
                     // We can't bind directly to fact.enumIndex since that would add an unknown value
@@ -202,11 +203,6 @@ QGCPopupDialog {
                 text:       qsTr("Default: ") + fact.defaultValueString
                 visible:    _allowDefaultReset
             }
-        }
-
-        QGCLabel {
-            text:       qsTr("Parameter name: ") + fact.name
-            visible:    fact.componentId > 0 // > 0 means it's a parameter fact
         }
 
         QGCLabel {

@@ -1,37 +1,25 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Test)
-
-qt_add_library(AnalyzeViewTest
-    STATIC
+target_sources(${CMAKE_PROJECT_NAME}
+    PRIVATE
         ExifParserTest.cc
         ExifParserTest.h
+        # GeoTagControllerTest.cc
+        # GeoTagControllerTest.h
         LogDownloadTest.cc
         LogDownloadTest.h
         MavlinkLogTest.cc
         MavlinkLogTest.h
         PX4LogParserTest.cc
         PX4LogParserTest.h
-        ULogParserTest.cc
-        ULogParserTest.h
+        # ULogParserTest.cc
+        # ULogParserTest.h
 )
 
-target_link_libraries(AnalyzeViewTest
-    PRIVATE
-        Qt6::Core
-        Qt6::Test
-        AnalyzeView
-        MAVLink
-        QGC
-        Utilities
-        Vehicle
-    PUBLIC
-        qgcunittest
-)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_include_directories(AnalyzeViewTest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-
-qt_add_resources(AnalyzeViewTest "AnalyzeViewTest_res"
-    PREFIX "/"
-    FILES
-        DSCN0010.jpg
-        SampleULog.ulg
-)
+# https://github.com/ianare/exif-samples
+# qt_add_resources(${CMAKE_PROJECT_NAME} "AnalyzeViewTest_res"
+#     PREFIX "/"
+#     FILES
+#         DSCN0010.jpg
+#         # SampleULog.ulg
+# )

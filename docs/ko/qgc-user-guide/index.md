@@ -1,6 +1,9 @@
-# QGroundControl 사용자 안내서
+# QGroundControl Guide (Daily Build 5.0)
 
-[![배포](https://img.shields.io/github/release/mavlink/QGroundControl.svg)](https://github.com/mavlink/QGroundControl/releases) [![토론](https://img.shields.io/badge/discuss-px4-ff69b4.svg)](http://discuss.px4.io/c/qgroundcontrol/qgroundcontrol-usage) [![토론](https://img.shields.io/badge/discuss-ardupilot-ff69b4.svg)](http://discuss.ardupilot.org/c/ground-control-software/qgroundcontrol) [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/mavlink/qgroundcontrol?utm_source=badge\&utm_medium=badge\&utm_campaign=pr-badge\&utm_content=badge) [![슬랙](../../assets/site/slack.svg)](https://join.slack.com/t/px4/shared_invite/zt-si4xo5qs-R4baYFmMjlrT4rQK5yUnaA)
+[![Discuss](https://img.shields.io/badge/discuss-px4-ff69b4.svg)](http://discuss.px4.io/c/qgroundcontrol/qgroundcontrol-usage)
+[![Discuss](https://img.shields.io/badge/discuss-ardupilot-ff69b4.svg)](http://discuss.ardupilot.org/c/ground-control-software/qgroundcontrol)
+
+_You are viewing the docs for the upcoming 5.0 release of QGroundControl. If you want docs for a Stable build select from the Version dropdown above._
 
 _QGroundControl_을 이용하여 PX4나 ArduPilot 구동 차량을 설정하고 운행할 수 있습니다.
 초보자를 위한 쉽고 간편한 기능 뿐만 아니라 숙련자를 위한 고급 기능들도 제공합니다.
@@ -11,6 +14,7 @@ _QGroundControl_을 이용하여 PX4나 ArduPilot 구동 차량을 설정하고 
 - PX4와 ArduPilot(또는 기타 MAVLink 통신 자동조종장치)을 실행하는 기체 비행 방법
 - 자율 비행을 위한 미션 계획
 - 기체 위치, 비행 트랙, 웨이포인트 및 기체 계기를 표출하는 지도 디스플레이
+- 3D viewer visualizing the 3D map of the environment (.osm file), the 3D model of the vehicle (only multi-rotors for the moment), and the mission 3D trajectory (including the waypoints).
 - 기기 디스플레이 오버레이를 이용한 비디오 스트리밍
 - Support for managing multiple vehicles.
 - QGroundControl은 Windows, OS X, Linux 플랫폼, iOS 및 Android 장치에서 실행됩니다.

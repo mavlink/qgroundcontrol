@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -24,7 +24,7 @@ QMap<QString, AirframeComponentAirframes::AirframeType_t*>& AirframeComponentAir
         // Standard planes
         AirframeType_t *standardPlane = new AirframeType_t;
         standardPlane->name = "Standard Airplane";
-        standardPlane->imageResource = "qrc:/qmlimages/AirframeStandardPlane.png";
+        standardPlane->imageResource = "qrc:/qmlimages/AirframeStandardPlane.svg";
         AirframeInfo_t *easystar = new AirframeInfo_t;
         easystar->name = "Multiplex Easystar 1/2";
         easystar->autostartId = 2100;
@@ -47,7 +47,7 @@ void AirframeComponentAirframes::insert(QString& group, QString& image, QString&
         g->name = group;
 
         if (image.length() > 0) {
-            g->imageResource = QString(":/qmlimages/Airframe/").append(image);
+            g->imageResource = QString(":/qmlimages/Airframe/%1.svg").arg(image);
             if (!QFile::exists(g->imageResource)) {
                 g->imageResource.clear();
             } else {
@@ -56,7 +56,7 @@ void AirframeComponentAirframes::insert(QString& group, QString& image, QString&
         }
 
         if (g->imageResource.isEmpty()) {
-            g->imageResource = QString("qrc:/qmlimages/Airframe/AirframeUnknown");
+            g->imageResource = QString("qrc:/qmlimages/Airframe/AirframeUnknown.svg");
         }
 
         rgAirframeTypes.insert(group, g);

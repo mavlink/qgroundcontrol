@@ -8,18 +8,18 @@ on:
     tags:
       - 'v*'
     paths-ignore:
-      - 'android/**'
-      - 'deploy/**'
-      - 'docs/**'
+      - 'docs/**' # Do not trigger for any changes under docs
   pull_request:
-    paths-ignore:
-      - 'android/**'
-      - 'deploy/**'
-      - 'docs/**'
-      - '.github/workflows/docs_deploy.yml'
-      - '.github/workflows/android.yml'
-      - '.github/workflows/linux.yml'
-      - '.github/workflows/macos.yml'
+    paths:
+      - '.github/workflows/windows.yml'
+      - 'deploy/windows/**'
+      - 'src/**'
+      - 'CMakeLists.txt'
+      - 'cmake/**'
+
+# concurrency:
+#   group: ${{ github.workflow }}-${{ github.ref }}
+#   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   build:
@@ -27,7 +27,8 @@ jobs:
 
     strategy:
       matrix:
-        BuildType: [Debug, Release]
+        BuildType: [Release]
+        Arch: [x64] # Arm64
 
     defaults:
       run:
@@ -35,22 +36,25 @@ jobs:
 
     env:
       ARTIFACT: QGroundControl-installer.exe
-      QT_VERSION: 6.6.3
-      GST_VERSION: 1.22.11
-      SCCACHE_GHA_ENABLED: "true"
+      PACKAGE: QGroundControl-installer
+      QT_VERSION: 6.8.3
+      GST_VERSION: 1.22.12
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
           submodules: recursive
-          fetch-tags: true
-          fetch-depth: 0
+          fetch-depth: 1
+          fetch-tags: false
 
-      - name: Install Dependencies
+      - name: Get all tags for correct version determination
+        working-directory:  ${{ github.workspace }}
         run: |
-          choco install --no-progress ninja sccache -y
-          choco install --no-progress cmake --installargs 'ADD_CMAKE_TO_PATH=System' --apply-install-arguments-to-dependencies
+          git fetch --all --tags -f --depth 1
+
+      - name: Initial Setup
+        uses: ./.github/actions/common
 
       - name: Install Vulkan
         working-directory: ${{ runner.temp }}
@@ -60,62 +64,75 @@ jobs:
           .\vulkan-sdk.exe --root C:\VulkanSDK\latest --accept-licenses --default-answer --confirm-command install com.lunarg.vulkan.glm com.lunarg.vulkan.volk com.lunarg.vulkan.vma com.lunarg.vulkan.debug
           echo "VULKAN_SDK=C:\VulkanSDK\latest" >> $env:GITHUB_ENV
 
-      - name: Install Gstreamer
+      - name: Install GStreamer
         uses: blinemedical/setup-gstreamer@v1
         with:
           version: ${{ env.GST_VERSION }}
-        # run: choco install --no-progress gstreamer gstreamer-devel --version=1.22.8
 
-      - name: Set Up Cache
-        uses: hendrikmuhs/ccache-action@v1.2
+      - name: Setup Caching
+        uses: ./.github/actions/cache
         with:
-          key: ${{ runner.os }}-${{ matrix.BuildType }}
-          restore-keys: ${{ runner.os }}-${{ matrix.BuildType }}
-          max-size: 1G
-          append-timestamp: false
-          variant: sccache
-          save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+          host: windows
+          target: win64_msvc2022_64
+          build-type: ${{ matrix.BuildType }}
+          cpm-modules: ${{ runner.temp }}\shadow_build_dir\cpm_modules
 
-      - name: Install Qt
+      - name: Install Qt for Windows (x64)
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
-          aqtversion: ==3.1.*
           host: windows
           target: desktop
-          arch: win64_msvc2019_64
+          arch: win64_msvc2022_64
           dir: ${{ runner.temp }}
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
-          setup-python: true
-          cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
+          cache: true
+
+      # Note: Must Use QtMultimedia VideoReceiver or build GStreamer manually
+      - name: Install Qt for Windows (Arm64)
+        if: matrix.Arch == 'Arm64'
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          aqtversion: ==3.1.19
+          host: windows
+          target: desktop
+          arch: win64_msvc2022_arm64_cross_compiled
+          dir: ${{ runner.temp }}
+          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
 
       - name: Set up Visual Studio shell
         uses: ilammy/msvc-dev-cmd@v1
         with:
-          arch: x64
-
-      - name: Create build directory
-        run: mkdir ${{ runner.temp }}\shadow_build_dir
+          arch: ${{ matrix.Arch == 'Arm64' && 'amd64_arm64' || 'x64' }}
 
       - name: Configure
         working-directory: ${{ runner.temp }}\shadow_build_dir
-        run: cmake -S ${{ github.workspace }} -B . -G Ninja ^
-              -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }} ^
+        run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
+              -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }}
+              -DQT_HOST_PATH="${{ env.QT_ROOT_DIR }}/../msvc2022_64"
+              -DQT_DEBUG_FIND_PACKAGE=ON
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
 
       - name: Build
         working-directory: ${{ runner.temp }}\shadow_build_dir
         run: cmake --build . --target all --config ${{ matrix.BuildType }}
 
+      - name: Sanity check release excecutable
+        if: matrix.BuildType == 'Release'
+        working-directory: ${{ runner.temp }}\shadow_build_dir\Release
+        run: QGroundControl.exe --simple-boot-test
+
       - name: Install
         working-directory: ${{ runner.temp }}\shadow_build_dir
         run: cmake --install . --config ${{ matrix.BuildType }}
 
       - name: Upload Build File
-        uses: ./.github/actions/upload
         if: matrix.BuildType == 'Release'
+        uses: ./.github/actions/upload
         with:
           artifact_name: ${{ env.ARTIFACT }}
+          package_name: ${{ env.PACKAGE }}
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          source: ''
+          github_token: ${{ secrets.GITHUB_TOKEN }}

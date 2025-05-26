@@ -199,5 +199,5 @@ Bu olasılığı analiz etmek için, Plan yükleme/indirme için [ Console Loggi
 
 ## Daha Fazla Bilgi
 
-- [QGC v3.2 sürümü](../releases/stable_v3.2_long.md#plan_view) için yeni plan ekranı özellikleri
-- [QGC v3.3 sürümü](../releases/stable_v3.3_long.md#plan_view) için yeni plan ekranı özellikleri
+- New Plan View features for [QGC release v3.2](../qgc-user-guide/releases/release_note_stable_v3.md#plan_view)
+- New Plan View features for [QGC release v3.3](../qgc-user-guide/releases/release_note_stable_v3.md#plan-view-1)

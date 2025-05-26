@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -11,9 +11,9 @@
 #include "ParameterManager.h"
 #include "Vehicle.h"
 
-SensorsComponent::SensorsComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
-    VehicleComponent(vehicle, autopilot, parent),
-    _name(tr("Sensors"))
+SensorsComponent::SensorsComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
+    : VehicleComponent(vehicle, autopilot, AutoPilotPlugin::KnownSensorsVehicleComponent, parent)
+    , _name(tr("Sensors"))
 {
     _deviceIds = QStringList({QStringLiteral("CAL_GYRO0_ID"), QStringLiteral("CAL_ACC0_ID") });
 
@@ -49,7 +49,7 @@ bool SensorsComponent::requiresSetup(void) const
 
 bool SensorsComponent::setupComplete(void) const
 {
-    foreach (const QString &triggerParam, _deviceIds) {
+    for (const QString &triggerParam : std::as_const(_deviceIds)) {
         if (_vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, triggerParam)->rawValue().toFloat() == 0.0f) {
             return false;
         }
@@ -64,7 +64,7 @@ bool SensorsComponent::setupComplete(void) const
     }
 
     if (_vehicle->fixedWing() || _vehicle->vtol() || _vehicle->airship()) {
-        if (_vehicle->firmwareMajorVersion() >= 1 && _vehicle->firmwareMinorVersion() >= 14) {
+        if (_vehicle->firmwareMajorVersion() > 1 || (_vehicle->firmwareMajorVersion() == 1 && _vehicle->firmwareMinorVersion() > 14)) {
             if (_vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, "SYS_HAS_NUM_ASPD")->rawValue().toBool() &&
                     _vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, "SENS_DPRES_OFF")->rawValue().toFloat() == 0.0f) {
                 return false;
@@ -114,7 +114,7 @@ QUrl SensorsComponent::summaryQmlSource(void) const
  bool SensorsComponent::_airspeedCalSupported(void) const
  {
     if (_vehicle->fixedWing() || _vehicle->vtol() || _vehicle->airship()) {
-        if (_vehicle->firmwareMajorVersion() >= 1 && _vehicle->firmwareMinorVersion() >= 14) {
+        if (_vehicle->firmwareMajorVersion() > 1 || (_vehicle->firmwareMajorVersion() == 1 && _vehicle->firmwareMinorVersion() > 14)) {
             if (_vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, "SYS_HAS_NUM_ASPD")->rawValue().toBool()) {
                 return true;
             }

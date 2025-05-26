@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -47,7 +47,7 @@ void KMLPlanDomDocument::_addFlightPath(Vehicle* vehicle, QList<MissionItem*> rg
     QList<QGeoCoordinate> rgFlightCoords;
     QGeoCoordinate homeCoord = rgMissionItems[0]->coordinate();
     for (const MissionItem* item : rgMissionItems) {
-        const MissionCommandUIInfo* uiInfo = qgcApp()->toolbox()->missionCommandTree()->getUIInfo(vehicle, QGCMAVLink::VehicleClassGeneric, item->command());
+        const MissionCommandUIInfo* uiInfo = MissionCommandTree::instance()->getUIInfo(vehicle, QGCMAVLink::VehicleClassGeneric, item->command());
         if (uiInfo) {
             double altAdjustment = item->frame() == MAV_FRAME_GLOBAL ? 0 : homeCoord.altitude(); // Used to convert to amsl
             if (uiInfo->isTakeoffCommand() && !vehicle->fixedWing()) {

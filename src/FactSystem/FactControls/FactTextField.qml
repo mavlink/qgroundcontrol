@@ -8,8 +8,7 @@ import QGroundControl.Controls
 import QGroundControl.ScreenTools
 
 QGCTextField {
-    id: control
-
+    id:                 control
     text:               fact ? fact.valueString : ""
     unitsLabel:         fact ? fact.units : ""
     showUnits:          true
@@ -18,49 +17,22 @@ QGCTextField {
 
     signal updated()
 
-    property Fact   fact: null
+    property Fact fact: null
 
-    property string _validateString
-
-    onEditingFinished: {
+    onEditingFinished: _onEditingFinished()
+    
+    function _onEditingFinished() {
         var errorString = fact.validate(text, false /* convertOnly */)
         if (errorString === "") {
-            globals.validationError = false
-            validationToolTip.visible = false
+            clearValidationError()
             fact.value = text
             control.updated()
         } else {
-            globals.validationError = true
-            validationToolTip.text = errorString
-            validationToolTip.visible = true
+            showValidationError(errorString, fact.valueString)
         }
     }
 
     onHelpClicked: helpDialogComponent.createObject(mainWindow).open()
-
-    ToolTip {
-        id: validationToolTip
-
-        QGCMouseArea {
-            anchors.fill: parent
-            onClicked: {
-                control.text = fact.valueString
-                validationToolTip.visible = false
-                globals.validationError = false
-            }
-        }
-    }
-
-    Component {
-        id: validationErrorDialogComponent
-
-        ParameterEditorDialog {
-            title:          qsTr("Invalid Value")
-            validate:       true
-            validateValue:  _validateString
-            fact:           control.fact
-        }
-    }
 
     Component {
         id: helpDialogComponent

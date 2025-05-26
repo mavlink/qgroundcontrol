@@ -4,6 +4,8 @@
 <dict>
 	<key>NSCameraUsageDescription</key>
 	<string>QGC uses UVC devices for video streaming.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Qt Multimedia for iOS uses the camera and microphone.</string>
 	<key>CFBundleDisplayName</key>
 	<string>QGroundControl</string>
 	<key>CFBundleExecutable</key>

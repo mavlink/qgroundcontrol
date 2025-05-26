@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -13,7 +13,6 @@
 
 #include "GeoFenceController.h"
 #include "Vehicle.h"
-#include "QGCApplication.h"
 #include "ParameterManager.h"
 #include "JsonHelper.h"
 #include "PlanMasterController.h"
@@ -36,7 +35,7 @@ GeoFenceController::GeoFenceController(PlanMasterController* masterController, Q
     , _managerVehicle               (masterController->managerVehicle())
     , _geoFenceManager              (masterController->managerVehicle()->geoFenceManager())
     , _breachReturnAltitudeFact     (0, _breachReturnAltitudeFactName, FactMetaData::valueTypeDouble)
-    , _breachReturnDefaultAltitude  (qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble())
+    , _breachReturnDefaultAltitude  (SettingsManager::instance()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble())
 {
     if (_metaDataMap.isEmpty()) {
         _metaDataMap = FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/BreachReturn.FactMetaData.json"), nullptr /* metaDataParent */);
@@ -107,8 +106,15 @@ void GeoFenceController::_managerVehicleChanged(Vehicle* managerVehicle)
     connect(_geoFenceManager, &GeoFenceManager::inProgressChanged,              this, &GeoFenceController::syncInProgressChanged);
 
     //-- GeoFenceController::supported() tests both the capability bit AND the protocol version.
-    connect(_managerVehicle,  &Vehicle::capabilityBitsChanged,                  this, &GeoFenceController::supportedChanged);
-    connect(_managerVehicle,  &Vehicle::requestProtocolVersion,                 this, &GeoFenceController::supportedChanged);
+    (void) connect(_managerVehicle, &Vehicle::capabilityBitsChanged, this, [this](uint64_t capabilityBits) {
+        Q_UNUSED(capabilityBits);
+        emit supportedChanged(supported());
+    });
+
+    (void) connect(_managerVehicle, &Vehicle::requestProtocolVersion, this, [this](unsigned version) {
+        Q_UNUSED(version);
+        emit supportedChanged(supported());
+    });
 
     connect(_managerVehicle->parameterManager(), &ParameterManager::parametersReadyChanged, this, &GeoFenceController::_parametersReady);
     _parametersReady();
@@ -591,7 +597,7 @@ bool GeoFenceController::isEmpty(void) const
 
 }
 
-#ifdef CONFIG_UTM_ADAPTER
+#ifdef QGC_UTM_ADAPTER
 void GeoFenceController::loadFlightPlanData()
 {
     QJsonArray jsonPolygonArray;
@@ -621,11 +627,5 @@ void GeoFenceController::loadFlightPlanData()
     }
 
     emit polygonBoundarySent(geoCoordinates);
-}
-bool GeoFenceController::loadUploadFlag()
-{
-    emit uploadFlagSent(true);
-
-    return true;
 }
 #endif

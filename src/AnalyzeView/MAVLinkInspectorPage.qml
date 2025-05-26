@@ -35,6 +35,39 @@ AnalyzePage {
         id: controller
     }
 
+    function updateEnabledStatus(repeater, message, chart) {
+        if(!message) {
+            return;
+        }
+
+        for (let i = 0; i < repeater.count; i++) {
+            let checkBox = repeater.itemAt(i)
+            if(!checkBox) {
+                continue
+            }
+            const object = message.fields.get(i)
+            checkBox.enabled = isCheckboxEnabled(checkBox, object, chart)
+        }
+    }
+
+    function isCheckboxEnabled(checkBox, object, chart) {
+        if(checkBox.checkState === Qt.Checked) {
+            return true
+        }
+        if(!object.selectable) {
+            return false
+        }
+        if(object.series !== null) {
+            return false
+        }
+        if(chart.chartController !== null) {
+            if (chart.chartController.chartFields.length >= chart.seriesColors.length) {
+                return false
+            }
+        }
+        return true
+    }
+
     Component {
         id:  headerComponent
         //-- Header
@@ -263,24 +296,12 @@ AnalyzePage {
                             }
                         }
                         Repeater {
+                            id: chart1Repeater
                             model:      curMessage ? curMessage.fields : []
                             delegate:   QGCCheckBox {
                                 Layout.row:         index + 2
                                 Layout.column:      3
                                 Layout.alignment:   Qt.AlignHCenter
-                                enabled: {
-                                    if(checked)
-                                        return true
-                                    if(!object.selectable)
-                                        return false
-                                    if(object.series !== null)
-                                        return false
-                                    if(chart1.chartController !== null) {
-                                        if(chart1.chartController.chartFields.length >= chart1.seriesColors.length)
-                                            return false
-                                    }
-                                    return true;
-                                }
                                 checked:            object.series !== null && object.chartIndex === 0
                                 onClicked: {
                                     if(checked) {
@@ -288,28 +309,19 @@ AnalyzePage {
                                     } else {
                                         chart1.delDimension(object)
                                     }
+                                    updateEnabledStatus(chart1Repeater, curMessage, chart1)
+                                    updateEnabledStatus(chart2Repeater, curMessage, chart2)
                                 }
+                                Component.onCompleted: updateEnabledStatus(chart1Repeater, curMessage, chart1)
                             }
                         }
                         Repeater {
+                            id: chart2Repeater
                             model:      curMessage ? curMessage.fields : []
                             delegate:   QGCCheckBox {
                                 Layout.row:         index + 2
                                 Layout.column:      4
                                 Layout.alignment:   Qt.AlignHCenter
-                                enabled: {
-                                    if(checked)
-                                        return true
-                                    if(!object.selectable)
-                                        return false
-                                    if(object.series !== null)
-                                        return false
-                                    if(chart2.chartController !== null) {
-                                        if(chart2.chartController.chartFields.length >= chart2.seriesColors.length)
-                                            return false
-                                    }
-                                    return true;
-                                }
                                 checked:            object.series !== null && object.chartIndex === 1
                                 onClicked: {
                                     if(checked) {
@@ -317,7 +329,10 @@ AnalyzePage {
                                     } else {
                                         chart2.delDimension(object)
                                     }
+                                    updateEnabledStatus(chart2Repeater, curMessage, chart2)
+                                    updateEnabledStatus(chart1Repeater, curMessage, chart1)
                                 }
+                                Component.onCompleted: updateEnabledStatus(chart2Repeater, curMessage, chart2)
                             }
                         }
                     }

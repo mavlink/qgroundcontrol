@@ -1,3 +1,12 @@
+/****************************************************************************
+ *
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 #include "PX4LogParser.h"
 #include "QGCLoggingCategory.h"
 
@@ -26,7 +35,7 @@ static constexpr const int triggerLengths[2] = {8, 4};
 
 namespace PX4LogParser {
 
-bool getTagsFromLog(const QByteArray& log, QList<GeoTagWorker::cameraFeedbackPacket>& cameraFeedback)
+bool getTagsFromLog(const QByteArray& log, QList<GeoTagWorker::CameraFeedbackPacket>& cameraFeedback)
 {
     // extract header information: message lengths
     const uint8_t* iptr = reinterpret_cast<const uint8_t*>(log.mid(log.indexOf(gposHeaderHeader) + 4, 1).constData());
@@ -51,7 +60,7 @@ bool getTagsFromLog(const QByteArray& log, QList<GeoTagWorker::cameraFeedbackPac
             continue;
         }
 
-        GeoTagWorker::cameraFeedbackPacket feedback;
+        GeoTagWorker::CameraFeedbackPacket feedback;
         (void) memset(&feedback, 0, sizeof(feedback));
 
         const uint64_t* const time = reinterpret_cast<const uint64_t*>(log.mid(index + triggerOffsets[0], triggerLengths[0]).data());

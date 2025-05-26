@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2022 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -55,9 +55,6 @@ void StandardModes::gotMessage(MAV_RESULT result, const mavlink_message_t &messa
             case MAV_STANDARD_MODE_ALTITUDE_HOLD:
                 name = "Altitude";
                 break;
-            case MAV_STANDARD_MODE_RETURN_HOME:
-                name = "Return";
-                break;
             case MAV_STANDARD_MODE_SAFE_RECOVERY:
                 name = "Safe Recovery";
                 break;
@@ -76,22 +73,32 @@ void StandardModes::gotMessage(MAV_RESULT result, const mavlink_message_t &messa
             cannotBeSet = true;
         }
 
-        qCDebug(StandardModesLog) << "Got mode:" << name << ", idx:" << availableModes.mode_index << ", custom_mode" << availableModes.custom_mode;
+        qCDebug(StandardModesLog) << "Available mode received - name:" << name <<
+            "index:" << availableModes.mode_index <<
+            "standard_mode:" << availableModes.standard_mode <<
+            "advanced:" << advanced <<
+            "cannotBeSet:" << cannotBeSet <<
+            "custom_mode:" << availableModes.custom_mode;
 
-        _nextModes[availableModes.custom_mode] = Mode{name, availableModes.standard_mode, advanced, cannotBeSet};
+        _modeList += FirmwareFlightMode{
+            name,
+            availableModes.standard_mode,
+            availableModes.custom_mode,
+            !cannotBeSet,
+            advanced,
+            true,  // fixed wing - Since we don't know at this point we assume fixed wing support
+            true   // multi-rotor - Since we don't know at this point we assume multi-rotor support as well
+        };
 
         if (availableModes.mode_index >= availableModes.number_modes) { // We are done
-            qCDebug(StandardModesLog) << "Completed, num modes:" << _nextModes.size();
-            _modes = _nextModes;
+            qCDebug(StandardModesLog) << "Completed, num modes:" << availableModes.number_modes;
             ensureUniqueModeNames();
-            _hasModes = true;
+            _vehicle->firmwarePlugin()->updateAvailableFlightModes(_modeList);
             emit modesUpdated();
             emit requestCompleted();
-
         } else {
             requestMode(availableModes.mode_index + 1);
         }
-
     } else {
         qCDebug(StandardModesLog) << "Failed to retrieve available modes" << result;
         emit requestCompleted();
@@ -102,11 +109,11 @@ void StandardModes::ensureUniqueModeNames()
 {
     // Ensure mode names are unique. This should generally already be the case, but e.g. during development when
     // restarting dynamic modes, it might not be.
-    for (auto iter = _modes.begin(); iter != _modes.end(); ++iter) {
+    for (auto iter = _modeList.begin(); iter != _modeList.end(); ++iter) {
         int duplicateIdx = 0;
-        for (auto iter2 = std::next(iter); iter2 != _modes.end(); ++iter2) {
-            if (iter.value().name == iter2.value().name) {
-                iter2.value().name += QStringLiteral(" (%1)").arg(duplicateIdx + 1);
+        for (auto iter2 = std::next(iter); iter2 != _modeList.end(); ++iter2) {
+            if ((*iter).mode_name == (*iter2).mode_name) {
+                (*iter2).mode_name += QStringLiteral(" (%1)").arg(duplicateIdx + 1);
                 ++duplicateIdx;
             }
         }
@@ -115,21 +122,15 @@ void StandardModes::ensureUniqueModeNames()
 
 void StandardModes::request()
 {
-#ifdef DAILY_BUILD // Disable use of development/WIP MAVLink messages for release builds
     if (_requestActive) {
         // If we are in the middle of waiting for a request, wait for the response first
         _wantReset = true;
         return;
     }
 
-    _nextModes.clear();
-
     qCDebug(StandardModesLog) << "Requesting available modes";
     // Request one at a time. This could be improved by requesting all, but we can't use Vehicle::requestMessage for that
     StandardModes::requestMode(1);
-#else
-    emit requestCompleted();
-#endif // DAILY_BUILD
 }
 
 void StandardModes::requestMode(int modeIndex)
@@ -149,36 +150,4 @@ void StandardModes::availableModesMonitorReceived(uint8_t seq)
         _lastSeq = seq;
         request();
     }
-}
-
-QStringList StandardModes::flightModes()
-{
-    QStringList ret;
-    for (const auto& mode : _modes) {
-        if (mode.cannotBeSet) {
-            continue;
-        }
-        ret += mode.name;
-    }
-    return ret;
-}
-
-QString StandardModes::flightMode(uint32_t custom_mode) const
-{
-    auto iter = _modes.find(custom_mode);
-    if (iter != _modes.end()) {
-        return iter->name;
-    }
-    return tr("Unknown %2").arg(custom_mode);
-}
-
-bool StandardModes::setFlightMode(const QString &flightMode, uint32_t *custom_mode)
-{
-    for (auto iter = _modes.constBegin(); iter != _modes.constEnd(); ++iter) {
-        if (iter->name == flightMode) {
-            *custom_mode = iter.key();
-            return true;
-        }
-    }
-    return false;
 }

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -22,7 +22,7 @@
 class SurveyComplexItem;
 class SimpleMissionItem;
 class MissionController;
-#ifdef UNITTEST_BUILD
+#ifdef QGC_UNITTEST_BUILD
     class MissionItemTest;
 #endif
 
@@ -147,7 +147,7 @@ private:
     friend class SurveyComplexItem;
     friend class SimpleMissionItem;
     friend class MissionController;
-#ifdef UNITTEST_BUILD
+#ifdef QGC_UNITTEST_BUILD
     friend class MissionItemTest;
 #endif
 };

@@ -29,8 +29,8 @@ Rectangle {
     property bool   _communicationLost: _activeVehicle ? _activeVehicle.vehicleLinkManager.communicationLost : false
     property color  _mainStatusBGColor: qgcPal.brandingPurple
 
-    function dropMessageIndicatorTool() {
-        toolIndicators.dropMessageIndicatorTool();
+    function dropMainStatusIndicatorTool() {
+        mainStatusIndicator.dropMainStatusIndicator();
     }
 
     QGCPalette { id: qgcPal }
@@ -66,12 +66,13 @@ Rectangle {
         QGCToolBarButton {
             id:                     currentButton
             Layout.preferredHeight: viewButtonRow.height
-            icon.source:            "/res/QGCLogoFull"
+            icon.source:            "/res/QGCLogoFull.svg"
             logo:                   true
             onClicked:              mainWindow.showToolSelectDialog()
         }
 
         MainStatusIndicator {
+            id: mainStatusIndicator
             Layout.preferredHeight: viewButtonRow.height
         }
 
@@ -86,6 +87,7 @@ Rectangle {
     QGCFlickable {
         id:                     toolsFlickable
         anchors.leftMargin:     ScreenTools.defaultFontPixelWidth * ScreenTools.largeFontPointRatio * 1.5
+        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth / 2
         anchors.left:           viewButtonRow.right
         anchors.bottomMargin:   1
         anchors.top:            parent.top
@@ -113,8 +115,8 @@ Rectangle {
         property bool   _corePluginBranding:    QGroundControl.corePlugin.brandImageIndoor.length != 0
         property string _userBrandImageIndoor:  QGroundControl.settingsManager.brandImageSettings.userBrandImageIndoor.value
         property string _userBrandImageOutdoor: QGroundControl.settingsManager.brandImageSettings.userBrandImageOutdoor.value
-        property bool   _userBrandingIndoor:    _userBrandImageIndoor.length != 0
-        property bool   _userBrandingOutdoor:   _userBrandImageOutdoor.length != 0
+        property bool   _userBrandingIndoor:    QGroundControl.settingsManager.brandImageSettings.visible && _userBrandImageIndoor.length != 0
+        property bool   _userBrandingOutdoor:   QGroundControl.settingsManager.brandImageSettings.visible && _userBrandImageOutdoor.length != 0
         property string _brandImageIndoor:      brandImageIndoor()
         property string _brandImageOutdoor:     brandImageOutdoor()
 
@@ -123,7 +125,7 @@ Rectangle {
                 return _userBrandImageIndoor
             } else {
                 if (_userBrandingOutdoor) {
-                    return _userBrandingOutdoor
+                    return _userBrandImageOutdoor
                 } else {
                     if (_corePluginBranding) {
                         return QGroundControl.corePlugin.brandImageIndoor
@@ -136,10 +138,10 @@ Rectangle {
 
         function brandImageOutdoor() {
             if (_userBrandingOutdoor) {
-                return _userBrandingOutdoor
+                return _userBrandImageOutdoor
             } else {
                 if (_userBrandingIndoor) {
-                    return _userBrandingIndoor
+                    return _userBrandImageIndoor
                 } else {
                     if (_corePluginBranding) {
                         return QGroundControl.corePlugin.brandImageOutdoor

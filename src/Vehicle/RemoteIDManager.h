@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2022 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -15,14 +15,12 @@
 #include <QtPositioning/QGeoPositionInfo>
 #include <QtCore/QLoggingCategory>
 
-#include "QGCMAVLink.h"
+#include "MAVLinkLib.h"
 
 Q_DECLARE_LOGGING_CATEGORY(RemoteIDManagerLog)
 
 class RemoteIDSettings;
-class QGCPositionManager;
 class Vehicle;
-class MAVLinkProtocol;
 
 // Supporting Open Drone ID protocol
 class RemoteIDManager : public QObject
@@ -106,10 +104,8 @@ private:
     bool _isEUOperatorIDValid(const QString& operatorID) const;
     QChar _calculateLuhnMod36(const QString& input) const;
 
-    MAVLinkProtocol*    _mavlink;
     Vehicle*            _vehicle;
     RemoteIDSettings*   _settings;
-    QGCPositionManager* _positionManager;
 
     // Flags ODID
     bool    _available = false;

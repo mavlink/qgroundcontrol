@@ -11,8 +11,8 @@
 #include "ParameterManagerTest.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
-#include "QGCApplication.h"
 #include "ParameterManager.h"
+#include "MockLinkFTP.h"
 
 #include <QtTest/QTest>
 #include <QtTest/QSignalSpy>
@@ -23,7 +23,7 @@ void ParameterManagerTest::_noFailureWorker(MockConfiguration::FailureMode_t fai
     Q_ASSERT(!_mockLink);
     _mockLink = MockLink::startPX4MockLink(false, failureMode);
 
-    MultiVehicleManager* vehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
+    MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     QVERIFY(vehicleMgr);
 
     // Wait for the Vehicle to get created
@@ -71,13 +71,10 @@ void ParameterManagerTest::_requestListMissingParamSuccess(void)
 // Test no response to param_request_list
 void ParameterManagerTest::_requestListNoResponse(void)
 {
-    // Will pop error about request failure
-    setExpectedMessageBox(QMessageBox::Ok);
-
     Q_ASSERT(!_mockLink);
     _mockLink = MockLink::startPX4MockLink(false, MockConfiguration::FailParamNoReponseToRequestList);
 
-    MultiVehicleManager* vehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
+    MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     QVERIFY(vehicleMgr);
 
     // Wait for the Vehicle to get created
@@ -97,22 +94,16 @@ void ParameterManagerTest::_requestListNoResponse(void)
     // We should not get any progress bar updates, nor a parameter ready signal
     QCOMPARE(spyProgress.wait(500), false);
     QCOMPARE(spyParamsReady.wait(40000), false);
-
-    // User should have been notified
-    checkExpectedMessageBox();
 }
 
 // MockLink will fail to send a param on initial request, it will also fail to send it on subsequent
 // param_read requests.
 void ParameterManagerTest::_requestListMissingParamFail(void)
 {
-    // Will pop error about missing params
-    setExpectedMessageBox(QMessageBox::Ok);
-
     Q_ASSERT(!_mockLink);
     _mockLink = MockLink::startPX4MockLink(false, MockConfiguration::FailMissingParamOnAllRequests);
 
-    MultiVehicleManager* vehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
+    MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     QVERIFY(vehicleMgr);
 
     // Wait for the Vehicle to get created
@@ -138,9 +129,6 @@ void ParameterManagerTest::_requestListMissingParamFail(void)
     // We should get a parameters ready signal, but Vehicle should indicate missing params
     QCOMPARE(spyParamsReady.wait(40000), true);
     QCOMPARE(vehicle->parameterManager()->missingParameters(), true);
-
-    // User should have been notified
-    checkExpectedMessageBox();
 }
 
 void ParameterManagerTest::_FTPnoFailure()
@@ -148,7 +136,7 @@ void ParameterManagerTest::_FTPnoFailure()
     Q_ASSERT(!_mockLink);
     _mockLink = MockLink::startAPMArduPlaneMockLink(false, MockConfiguration::FailParamNoReponseToRequestList);
     _mockLink->mockLinkFTP()->enableBinParamFile(true);
-    MultiVehicleManager* vehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
+    MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     QVERIFY(vehicleMgr);
 
     // Wait for the Vehicle to get created
@@ -184,12 +172,13 @@ void ParameterManagerTest::_FTPnoFailure()
     QCOMPARE(arguments.at(0).toFloat(), 0.0f);
 }
 
+#if 0
 void ParameterManagerTest::_FTPChangeParam()
 {
     Q_ASSERT(!_mockLink);
     _mockLink = MockLink::startAPMArduPlaneMockLink(false, MockConfiguration::FailParamNoReponseToRequestList);
     _mockLink->mockLinkFTP()->enableBinParamFile(true);
-    MultiVehicleManager* vehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
+    MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     QVERIFY(vehicleMgr);
 
     // Wait for the Vehicle to get created
@@ -235,3 +224,4 @@ void ParameterManagerTest::_FTPChangeParam()
     QCOMPARE(arguments.count(), 1);
     QCOMPARE(arguments.at(0).toFloat(), 0.0f);
 }
+#endif

@@ -26,14 +26,14 @@ Rectangle {
 
     signal setCurrentSeqNum(int seqNum)
 
-    property real _margins:             ScreenTools.defaultFontPixelWidth / 2
-    property var  _visualItems:         missionController.visualItems
-    property real _altRange:            _maxAMSLAltitude - _minAMSLAltitude
-    property real _indicatorSpacing:    5
-    property real _minAMSLAltitude:     isNaN(terrainProfile.minAMSLAlt) ? 0 : terrainProfile.minAMSLAlt
-    property real _maxAMSLAltitude:     isNaN(terrainProfile.maxAMSLAlt) ? 100 : terrainProfile.maxAMSLAlt
-    property real _missionDistance:     isNaN(missionController.missionDistance) ? 100 : missionController.missionDistance
-    property var  _unitsConversion:     QGroundControl.unitsConversion
+    property real _margins:                 ScreenTools.defaultFontPixelWidth / 2
+    property var  _visualItems:             missionController.visualItems
+    property real _altRange:                _maxAMSLAltitude - _minAMSLAltitude
+    property real _indicatorSpacing:        5
+    property real _minAMSLAltitude:         isNaN(terrainProfile.minAMSLAlt) ? 0 : terrainProfile.minAMSLAlt
+    property real _maxAMSLAltitude:         isNaN(terrainProfile.maxAMSLAlt) ? 100 : terrainProfile.maxAMSLAlt
+    property real _missionTotalDistance:    isNaN(missionController.missionTotalDistance) ? 100 : missionController.missionTotalDistance
+    property var  _unitsConversion:         QGroundControl.unitsConversion
 
     QGCPalette { id: qgcPal }
 
@@ -75,13 +75,13 @@ Rectangle {
                 ValueAxis {
                     id:                         axisX
                     min:                        0
-                    max:                        _unitsConversion.metersToAppSettingsHorizontalDistanceUnits(missionController.missionDistance)
+                    max:                        _unitsConversion.metersToAppSettingsHorizontalDistanceUnits(missionController.missionTotalDistance)
                     lineVisible:                true
-                    labelsFont.family:          "Fixed"
+                    labelsFont.family:          ScreenTools.fixedFontFamily
                     labelsFont.pointSize:       ScreenTools.smallFontPointSize
-                    labelsColor:                "white"
+                    labelsColor:                qgcPal.text
                     tickCount:                  5
-                    gridLineColor:              "#44FFFFFF"
+                    gridLineColor:              applyOpacity(qgcPal.text, 0.25)
                 }
 
                 ValueAxis {
@@ -89,11 +89,11 @@ Rectangle {
                     min:                        _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_minAMSLAltitude)
                     max:                        _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_maxAMSLAltitude)
                     lineVisible:                true
-                    labelsFont.family:          "Fixed"
+                    labelsFont.family:          ScreenTools.fixedFontFamily
                     labelsFont.pointSize:       ScreenTools.smallFontPointSize
-                    labelsColor:                "white"
+                    labelsColor:                qgcPal.text
                     tickCount:                  4
-                    gridLineColor:              "#44FFFFFF"
+                    gridLineColor:              applyOpacity(qgcPal.text, 0.25)
                 }
 
                 LineSeries {
@@ -103,7 +103,7 @@ Rectangle {
                     visible:    true
 
                     XYPoint { x: 0; y: _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_minAMSLAltitude) }
-                    XYPoint { x: _unitsConversion.metersToAppSettingsHorizontalDistanceUnits(_missionDistance); y: _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_maxAMSLAltitude) }
+                    XYPoint { x: _unitsConversion.metersToAppSettingsHorizontalDistanceUnits(_missionTotalDistance); y: _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_maxAMSLAltitude) }
                 }
             }
 
@@ -127,7 +127,7 @@ Rectangle {
                             id:         simpleItem
                             height:     terrainProfile.height
                             width:      1
-                            color:      "white"
+                            color:      qgcPal.text
                             x:          (object.distanceFromStart * terrainProfile.pixelsPerMeter)
                             visible:    object.isSimpleItem || object.isSingleItem
 
@@ -146,7 +146,7 @@ Rectangle {
                             id:         complexItemEntry
                             height:     terrainProfile.height
                             width:      1
-                            color:      "white"
+                            color:      qgcPal.text
                             x:          (object.distanceFromStart * terrainProfile.pixelsPerMeter)
                             visible:    complexItem.visible
 
@@ -164,7 +164,7 @@ Rectangle {
                             id:         complexItemExit
                             height:     terrainProfile.height
                             width:      1
-                            color:      "white"
+                            color:      qgcPal.text
                             x:          ((object.distanceFromStart + object.complexDistance) * terrainProfile.pixelsPerMeter)
                             visible:    complexItem.visible
 
@@ -203,5 +203,9 @@ Rectangle {
                 }
             }
         }
+    }
+
+    function applyOpacity(colorIn, opacity){
+        return Qt.rgba(colorIn.r, colorIn.g, colorIn.b, opacity)
     }
 }

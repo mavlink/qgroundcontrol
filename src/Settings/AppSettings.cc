@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -11,6 +11,7 @@
 #include "QGCPalette.h"
 #include "QGCApplication.h"
 #include "QGCMAVLink.h"
+#include "LinkManager.h"
 
 #ifdef Q_OS_ANDROID
 #include "AndroidInterface.h"
@@ -92,7 +93,7 @@ DECLARE_SETTINGGROUP(App, "")
 
     SettingsFact* savePathFact = qobject_cast<SettingsFact*>(savePath());
     QString appName = QCoreApplication::applicationName();
-#ifdef __mobile__
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     // Mobile builds always use the runtime generated location for savePath.
     bool userHasModifiedSavePath = false;
 #else
@@ -100,7 +101,7 @@ DECLARE_SETTINGGROUP(App, "")
 #endif
 
     if (!userHasModifiedSavePath) {
-#ifdef __mobile__
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     #ifdef Q_OS_IOS
         // This will expose the directories directly to the File iOs app
         QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
@@ -146,38 +147,28 @@ DECLARE_SETTINGSFACT(AppSettings, offlineEditingAscentSpeed)
 DECLARE_SETTINGSFACT(AppSettings, offlineEditingDescentSpeed)
 DECLARE_SETTINGSFACT(AppSettings, batteryPercentRemainingAnnounce)
 DECLARE_SETTINGSFACT(AppSettings, defaultMissionItemAltitude)
-DECLARE_SETTINGSFACT(AppSettings, telemetrySave)
-DECLARE_SETTINGSFACT(AppSettings, telemetrySaveNotArmed)
 DECLARE_SETTINGSFACT(AppSettings, audioMuted)
 DECLARE_SETTINGSFACT(AppSettings, virtualJoystick)
 DECLARE_SETTINGSFACT(AppSettings, virtualJoystickAutoCenterThrottle)
+DECLARE_SETTINGSFACT(AppSettings, virtualJoystickLeftHandedMode)
 DECLARE_SETTINGSFACT(AppSettings, appFontPointSize)
-DECLARE_SETTINGSFACT(AppSettings, showLargeCompass)
 DECLARE_SETTINGSFACT(AppSettings, savePath)
 DECLARE_SETTINGSFACT(AppSettings, androidSaveToSDCard)
 DECLARE_SETTINGSFACT(AppSettings, useChecklist)
 DECLARE_SETTINGSFACT(AppSettings, enforceChecklist)
+DECLARE_SETTINGSFACT(AppSettings, enableMultiVehiclePanel)
 DECLARE_SETTINGSFACT(AppSettings, mapboxToken)
 DECLARE_SETTINGSFACT(AppSettings, mapboxAccount)
 DECLARE_SETTINGSFACT(AppSettings, mapboxStyle)
 DECLARE_SETTINGSFACT(AppSettings, esriToken)
 DECLARE_SETTINGSFACT(AppSettings, customURL)
 DECLARE_SETTINGSFACT(AppSettings, vworldToken)
-DECLARE_SETTINGSFACT(AppSettings, defaultFirmwareType)
 DECLARE_SETTINGSFACT(AppSettings, gstDebugLevel)
 DECLARE_SETTINGSFACT(AppSettings, followTarget)
-DECLARE_SETTINGSFACT(AppSettings, apmStartMavlinkStreams)
 DECLARE_SETTINGSFACT(AppSettings, disableAllPersistence)
-DECLARE_SETTINGSFACT(AppSettings, usePairing)
-DECLARE_SETTINGSFACT(AppSettings, saveCsvTelemetry)
 DECLARE_SETTINGSFACT(AppSettings, firstRunPromptIdsShown)
-DECLARE_SETTINGSFACT(AppSettings, forwardMavlink)
-DECLARE_SETTINGSFACT(AppSettings, forwardMavlinkHostName)
-DECLARE_SETTINGSFACT(AppSettings, forwardMavlinkAPMSupportHostName)
 DECLARE_SETTINGSFACT(AppSettings, loginAirLink)
 DECLARE_SETTINGSFACT(AppSettings, passAirLink)
-DECLARE_SETTINGSFACT(AppSettings, mavlink2Signing)
-DECLARE_SETTINGSFACT(AppSettings, mavlink2SigningKey)
 
 DECLARE_SETTINGSFACT_NO_FUNC(AppSettings, indoorPalette)
 {
@@ -214,7 +205,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(AppSettings, qLocaleLanguage)
                 rgEnumValues.append(languageInfo.languageId);
             }
         }
-#ifdef DAILY_BUILD
+#ifdef QGC_DAILY_BUILD
         // Only daily builds include full set of languages for testing purposes
         for (const auto& languageInfo: _rgLanguageInfo) {
             if (!_rgReleaseLanguages.contains(languageInfo.languageId) && !_rgPartialLanguages.contains(languageInfo.languageId)) {
@@ -251,7 +242,7 @@ void AppSettings::_checkSavePathDirectories(void)
         savePathDir.mkdir(videoDirectory);
         savePathDir.mkdir(photoDirectory);
         savePathDir.mkdir(crashDirectory);
-        savePathDir.mkdir(customActionsDirectory);
+        savePathDir.mkdir(mavlinkActionsDirectory);
     }
 }
 
@@ -330,12 +321,12 @@ QString AppSettings::crashSavePath(void)
     return QString();
 }
 
-QString AppSettings::customActionsSavePath(void)
+QString AppSettings::mavlinkActionsSavePath(void)
 {
     QString path = savePath()->rawValue().toString();
     if (!path.isEmpty() && QDir(path).exists()) {
         QDir dir(path);
-        return dir.filePath(customActionsDirectory);
+        return dir.filePath(mavlinkActionsDirectory);
     }
     return QString();
 }

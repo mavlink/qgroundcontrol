@@ -48,12 +48,11 @@ SettingsPage {
             visible:    _appSettings.indoorPalette.visible
         }
 
-        FactCheckBoxSlider {
-            Layout.fillWidth: true
-            text:       qsTr("Stream GCS Position")
-            fact:       _followTarget
-            visible:    _followTarget.visible
-            property Fact   _followTarget:      QGroundControl.settingsManager.appSettings.followTarget
+        LabelledFactComboBox {
+            label:       qsTr("Stream GCS Position")
+            fact:       _appSettings.followTarget
+            indexModel: false
+            visible:    _appSettings.followTarget.visible
         }
 
         FactCheckBoxSlider {
@@ -79,6 +78,8 @@ SettingsPage {
             onClicked: {
                 if (checked) {
                     QGroundControl.deleteAllSettingsNextBoot()
+                } else {
+                    QGroundControl.clearDeleteAllSettingsNextBoot()
                 }
             }
         }
@@ -97,7 +98,7 @@ SettingsPage {
                 spacing: ScreenTools.defaultFontPixelWidth * 2
 
                 QGCButton {
-                    width:                  height
+                    Layout.preferredWidth:  height
                     height:                 baseFontEdit.height * 1.5
                     text:                   "-"
                     onClicked: {
@@ -114,7 +115,7 @@ SettingsPage {
                 }
 
                 QGCButton {
-                    width:                  height
+                    Layout.preferredWidth:  height
                     height:                 baseFontEdit.height * 1.5
                     text:                   "+"
                     onClicked: {
@@ -188,14 +189,17 @@ SettingsPage {
                 Layout.fillWidth:   true
                 spacing:            0
 
-                QGCLabel { text: qsTr("Indoor Image") }
+                QGCLabel { 
+                    Layout.fillWidth:   true
+                    text:               qsTr("Indoor Image") 
+                }
                 QGCLabel { 
                     Layout.fillWidth:   true
                     font.pointSize:     ScreenTools.smallFontPointSize
                     text:               _userBrandImageIndoor.valueString.replace("file:///", "") 
                     elide:              Text.ElideMiddle
                     visible:            _userBrandImageIndoor.valueString.length > 0
-                    }
+                }
             }
 
             QGCButton {
@@ -221,14 +225,17 @@ SettingsPage {
                 Layout.fillWidth:   true
                 spacing:            0
 
-                QGCLabel { text: qsTr("Outdoor Image") }
+                QGCLabel { 
+                    Layout.fillWidth:   true
+                    text:               qsTr("Outdoor Image") 
+                }
                 QGCLabel { 
                     Layout.fillWidth:   true
                     font.pointSize:     ScreenTools.smallFontPointSize
                     text:               _userBrandImageOutdoor.valueString.replace("file:///", "") 
                     elide:              Text.ElideMiddle
                     visible:            _userBrandImageOutdoor.valueString.length > 0
-                    }
+                }
             }
 
             QGCButton {

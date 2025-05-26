@@ -23,6 +23,10 @@ Item {
 
     property real extraWidth: 0 ///< Extra width to add to the background rectangle
 
+    property alias factValueGrid:           factValueGrid
+    property alias settingsGroup:           factValueGrid.settingsGroup
+    property alias specificVehicleForCard:  factValueGrid.specificVehicleForCard
+
     Rectangle {
         id:         backgroundRect
         width:      control.width + extraWidth
@@ -32,8 +36,6 @@ Item {
         opacity:    0.75
     }
 
-    //DeadMouseArea { anchors.fill: parent }
-
     ColumnLayout {
         id:                 mainLayout
         anchors.margins:    _toolsMargin
@@ -41,10 +43,10 @@ Item {
         anchors.left:       parent.left
 
         RowLayout {
-            visible: mouseArea.containsMouse || valueArea.settingsUnlocked
+            visible: factValueGrid.settingsUnlocked
 
             QGCColoredImage {
-                source:             valueArea.settingsUnlocked ? "/res/LockOpen.svg" : "/res/pencil.svg"
+                source:             "qrc:/InstrumentValueIcons/lock-open.svg"
                 mipmap:             true
                 width:              ScreenTools.minTouchPixels * 0.75
                 height:             width
@@ -54,17 +56,13 @@ Item {
 
                 QGCMouseArea {
                     anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape:  Qt.PointingHandCursor
-                    onClicked:    valueArea.settingsUnlocked = !valueArea.settingsUnlocked
+                    onClicked:    factValueGrid.settingsUnlocked = false
                 }
             }
         }
 
         HorizontalFactValueGrid {
-            id:                     valueArea
-            userSettingsGroup:      telemetryBarUserSettingsGroup
-            defaultSettingsGroup:   telemetryBarDefaultSettingsGroup
+            id: factValueGrid
         }
     }
 
@@ -74,17 +72,20 @@ Item {
         y:                          mainLayout.y
         width:                      mainLayout.width
         height:                     mainLayout.height
-        hoverEnabled:               !ScreenTools.isMobile
+        acceptedButtons:            Qt.LeftButton | Qt.RightButton
         propagateComposedEvents:    true
-        visible:                    !valueArea.settingsUnlocked
+        visible:                    !factValueGrid.settingsUnlocked
 
         onClicked: (mouse) => {
-            if (ScreenTools.isMobile) {
-                valueArea.settingsUnlocked = true
+            if (!ScreenTools.isMobile && mouse.button === Qt.RightButton) {
+                factValueGrid.settingsUnlocked = true
                 mouse.accepted = true
-            } else {
-                mouse.accepted = false
             }
+        }
+
+        onPressAndHold: {
+            factValueGrid.settingsUnlocked = true
+            mouse.accepted = true
         }
     }
 }

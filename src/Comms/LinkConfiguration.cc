@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 #include "LinkConfiguration.h"
-#ifndef NO_SERIAL_LINK
+#ifndef QGC_NO_SERIAL_LINK
 #include "SerialLink.h"
 #endif
 #include "UDPLink.h"
@@ -21,29 +21,27 @@
 #include "MockLink.h"
 #endif
 #ifndef QGC_AIRLINK_DISABLED
-#include "AirlinkLink.h"
+#include "AirLinkLink.h"
 #endif
 
 LinkConfiguration::LinkConfiguration(const QString &name, QObject *parent)
     : QObject(parent)
-    , m_name(name)
+    , _name(name)
 {
     // qCDebug(AudioOutputLog) << Q_FUNC_INFO << this;
 }
 
-LinkConfiguration::LinkConfiguration(LinkConfiguration *copy, QObject *parent)
+LinkConfiguration::LinkConfiguration(const LinkConfiguration *copy, QObject *parent)
     : QObject(parent)
-    , m_link(copy->m_link)
-    , m_name(copy->name())
-    , m_dynamic(copy->isDynamic())
-    , m_autoConnect(copy->isAutoConnect())
-    , m_highLatency(copy->isHighLatency())
+    , _link(copy->_link)
+    , _name(copy->name())
+    , _dynamic(copy->isDynamic())
+    , _autoConnect(copy->isAutoConnect())
+    , _highLatency(copy->isHighLatency())
 {
     // qCDebug(AudioOutputLog) << Q_FUNC_INFO << this;
 
-    LinkConfiguration::copyFrom(copy);
-
-    Q_ASSERT(!m_name.isEmpty());
+    Q_ASSERT(!_name.isEmpty());
 }
 
 LinkConfiguration::~LinkConfiguration()
@@ -51,23 +49,23 @@ LinkConfiguration::~LinkConfiguration()
     // qCDebug(AudioOutputLog) << Q_FUNC_INFO << this;
 }
 
-void LinkConfiguration::copyFrom(LinkConfiguration *source)
+void LinkConfiguration::copyFrom(const LinkConfiguration *source)
 {
-    Q_CHECK_PTR(source);
+    Q_ASSERT(source);
 
-    m_link = source->m_link;
-    m_name = source->name();
-    m_dynamic = source->isDynamic();
-    m_autoConnect = source->isAutoConnect();
-    m_highLatency = source->isHighLatency();
+    setLink(source->_link.lock());
+    setName(source->name());
+    setDynamic(source->isDynamic());
+    setAutoConnect(source->isAutoConnect());
+    setHighLatency(source->isHighLatency());
 }
 
 LinkConfiguration *LinkConfiguration::createSettings(int type, const QString &name)
 {
     LinkConfiguration *config = nullptr;
 
-    switch(static_cast<LinkType>(type)) {
-#ifndef NO_SERIAL_LINK
+    switch (static_cast<LinkType>(type)) {
+#ifndef QGC_NO_SERIAL_LINK
     case TypeSerial:
         config = new SerialConfiguration(name);
         break;
@@ -84,7 +82,7 @@ LinkConfiguration *LinkConfiguration::createSettings(int type, const QString &na
         break;
 #endif
     case TypeLogReplay:
-        config = new LogReplayLinkConfiguration(name);
+        config = new LogReplayConfiguration(name);
         break;
 #ifdef QT_DEBUG
     case TypeMock:
@@ -92,8 +90,8 @@ LinkConfiguration *LinkConfiguration::createSettings(int type, const QString &na
         break;
 #endif
 #ifndef QGC_AIRLINK_DISABLED
-    case Airlink:
-        config = new AirlinkConfiguration(name);
+    case AirLink:
+        config = new AirLinkConfiguration(name);
         break;
 #endif
     case TypeLast:
@@ -104,38 +102,38 @@ LinkConfiguration *LinkConfiguration::createSettings(int type, const QString &na
     return config;
 }
 
-LinkConfiguration *LinkConfiguration::duplicateSettings(LinkConfiguration *source)
+LinkConfiguration *LinkConfiguration::duplicateSettings(const LinkConfiguration *source)
 {
     LinkConfiguration *dupe = nullptr;
 
     switch(source->type()) {
-#ifndef NO_SERIAL_LINK
+#ifndef QGC_NO_SERIAL_LINK
     case TypeSerial:
-        dupe = new SerialConfiguration(qobject_cast<SerialConfiguration*>(source));
+        dupe = new SerialConfiguration(qobject_cast<const SerialConfiguration*>(source));
         break;
 #endif
     case TypeUdp:
-        dupe = new UDPConfiguration(qobject_cast<UDPConfiguration*>(source));
+        dupe = new UDPConfiguration(qobject_cast<const UDPConfiguration*>(source));
         break;
     case TypeTcp:
-        dupe = new TCPConfiguration(qobject_cast<TCPConfiguration*>(source));
+        dupe = new TCPConfiguration(qobject_cast<const TCPConfiguration*>(source));
         break;
 #ifdef QGC_ENABLE_BLUETOOTH
     case TypeBluetooth:
-        dupe = new BluetoothConfiguration(qobject_cast<BluetoothConfiguration*>(source));
+        dupe = new BluetoothConfiguration(qobject_cast<const BluetoothConfiguration*>(source));
         break;
 #endif
     case TypeLogReplay:
-        dupe = new LogReplayLinkConfiguration(qobject_cast<LogReplayLinkConfiguration*>(source));
+        dupe = new LogReplayConfiguration(qobject_cast<const LogReplayConfiguration*>(source));
         break;
 #ifdef QT_DEBUG
     case TypeMock:
-        dupe = new MockConfiguration(qobject_cast<MockConfiguration*>(source));
+        dupe = new MockConfiguration(qobject_cast<const MockConfiguration*>(source));
         break;
 #endif
 #ifndef QGC_AIRLINK_DISABLED
-    case Airlink:
-        dupe = new AirlinkConfiguration(qobject_cast<AirlinkConfiguration*>(source));
+    case AirLink:
+        dupe = new AirLinkConfiguration(qobject_cast<const AirLinkConfiguration*>(source));
         break;
 #endif
     case TypeLast:
@@ -148,40 +146,42 @@ LinkConfiguration *LinkConfiguration::duplicateSettings(LinkConfiguration *sourc
 
 void LinkConfiguration::setName(const QString &name)
 {
-    if (name != m_name) {
-        m_name = name;
+    if (name != _name) {
+        _name = name;
         emit nameChanged(name);
     }
 }
 
-void LinkConfiguration::setLink(SharedLinkInterfacePtr link)
+void LinkConfiguration::setLink(const SharedLinkInterfacePtr link)
 {
     if (link.get() != this->link()) {
-        m_link = link;
+        _link = link;
         emit linkChanged();
+
+        (void) connect(link.get(), &LinkInterface::disconnected, this, &LinkConfiguration::linkChanged, Qt::QueuedConnection);
     }
 }
 
 void LinkConfiguration::setDynamic(bool dynamic)
 {
-    if (dynamic != m_dynamic) {
-        m_dynamic = dynamic;
+    if (dynamic != _dynamic) {
+        _dynamic = dynamic;
         emit dynamicChanged();
     }
 }
 
 void LinkConfiguration::setAutoConnect(bool autoc)
 {
-    if (autoc != m_autoConnect) {
-        m_autoConnect = autoc;
+    if (autoc != _autoConnect) {
+        _autoConnect = autoc;
         emit autoConnectChanged();
     }
 }
 
 void LinkConfiguration::setHighLatency(bool hl)
 {
-    if (hl != m_highLatency) {
-        m_highLatency = hl;
+    if (hl != _highLatency) {
+        _highLatency = hl;
         emit highLatencyChanged();
     }
 }

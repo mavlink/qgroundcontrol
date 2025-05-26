@@ -10,14 +10,20 @@
  */
 
 #include "CustomPlugin.h"
-#include "QGCApplication.h"
 #include "QmlComponentInfo.h"
+#include "QGCLoggingCategory.h"
 #include "QGCPalette.h"
+#include "QGCMAVLink.h"
 #include "AppSettings.h"
 #include "BrandImageSettings.h"
+
+#include <QtCore/QApplicationStatic>
 #include <QtQml/QQmlApplicationEngine>
+#include <QtQml/QQmlFile>
 
 QGC_LOGGING_CATEGORY(CustomLog, "gcs.custom.customplugin")
+
+Q_APPLICATION_STATIC(CustomPlugin, _customPluginInstance);
 
 CustomFlyViewOptions::CustomFlyViewOptions(CustomOptions* options, QObject* parent)
     : QGCFlyViewOptions(options, parent)
@@ -37,23 +43,23 @@ bool CustomFlyViewOptions::showInstrumentPanel(void) const
     return false;
 }
 
-CustomOptions::CustomOptions(CustomPlugin*, QObject* parent)
+CustomOptions::CustomOptions(CustomPlugin *plugin, QObject *parent)
     : QGCOptions(parent)
+    , _plugin(plugin)
+    , _flyViewOptions(new CustomFlyViewOptions(this, this))
 {
+    Q_CHECK_PTR(_plugin);
 }
 
-QGCFlyViewOptions* CustomOptions::flyViewOptions(void)
+QGCFlyViewOptions* CustomOptions::flyViewOptions(void) const
 {
-    if (!_flyViewOptions) {
-        _flyViewOptions = new CustomFlyViewOptions(this, this);
-    }
     return _flyViewOptions;
 }
 
 // Firmware upgrade page is only shown in Advanced Mode.
 bool CustomOptions::showFirmwareUpgrade() const
 {
-    return qgcApp()->toolbox()->corePlugin()->showAdvancedUI();
+    return _plugin->showAdvancedUI();
 }
 
 // Normal QGC needs to work with an ESP8266 WiFi thing which is remarkably crappy. This in turns causes PX4 Pro calibration to fail
@@ -64,23 +70,38 @@ bool CustomOptions::wifiReliableForCalibration(void) const
     return true;
 }
 
-CustomPlugin::CustomPlugin(QGCApplication *app, QGCToolbox* toolbox)
-    : QGCCorePlugin(app, toolbox)
+/*===========================================================================*/
+
+CustomPlugin::CustomPlugin(QObject *parent)
+    : QGCCorePlugin(parent)
+    , _options(new CustomOptions(this, this))
 {
-    _options = new CustomOptions(this, this);
     _showAdvancedUI = false;
+    connect(this, &QGCCorePlugin::showAdvancedUIChanged, this, &CustomPlugin::_advancedChanged);
 }
 
 CustomPlugin::~CustomPlugin()
 {
+
 }
 
-void CustomPlugin::setToolbox(QGCToolbox* toolbox)
+QGCCorePlugin *CustomPlugin::instance()
 {
-    QGCCorePlugin::setToolbox(toolbox);
+    return _customPluginInstance();
+}
 
-    // Allows us to be notified when the user goes in/out out advanced mode
-    connect(qgcApp()->toolbox()->corePlugin(), &QGCCorePlugin::showAdvancedUIChanged, this, &CustomPlugin::_advancedChanged);
+void CustomPlugin::init()
+{
+
+}
+
+void CustomPlugin::cleanup()
+{
+    if (_qmlEngine) {
+        _qmlEngine->removeUrlInterceptor(_selector);
+    }
+
+    delete _selector;
 }
 
 void CustomPlugin::_advancedChanged(bool changed)
@@ -89,7 +110,6 @@ void CustomPlugin::_advancedChanged(bool changed)
     emit _options->showFirmwareUpgradeChanged(changed);
 }
 
-//-----------------------------------------------------------------------------
 void CustomPlugin::_addSettingsEntry(const QString& title, const char* qmlFile, const char* iconFile)
 {
     Q_CHECK_PTR(qmlFile);
@@ -108,15 +128,15 @@ QGCOptions* CustomPlugin::options()
 
 QString CustomPlugin::brandImageIndoor(void) const
 {
-    return QStringLiteral("/custom/img/CustomAppIcon.png");
+    return QStringLiteral("/custom/img/dronecode-white.svg");
 }
 
 QString CustomPlugin::brandImageOutdoor(void) const
 {
-    return QStringLiteral("/custom/img/CustomAppIcon.png");
+    return QStringLiteral("/custom/img/dronecode-black.svg");
 }
 
-bool CustomPlugin::overrideSettingsGroupVisibility(QString name)
+bool CustomPlugin::overrideSettingsGroupVisibility(const QString &name)
 {
     // We have set up our own specific brand imaging. Hide the brand image settings such that the end user
     // can't change it.
@@ -147,7 +167,7 @@ bool CustomPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaD
 }
 
 // This modifies QGC colors palette to match possible custom corporate branding
-void CustomPlugin::paletteOverride(QString colorName, QGCPalette::PaletteColorInfo_t& colorInfo)
+void CustomPlugin::paletteOverride(const QString &colorName, QGCPalette::PaletteColorInfo_t& colorInfo)
 {
     if (colorName == QStringLiteral("window")) {
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = QColor("#212529");
@@ -340,7 +360,45 @@ void CustomPlugin::paletteOverride(QString colorName, QGCPalette::PaletteColorIn
 // We override this so we can get access to QQmlApplicationEngine and use it to register our qml module
 QQmlApplicationEngine* CustomPlugin::createQmlApplicationEngine(QObject* parent)
 {
-    QQmlApplicationEngine* qmlEngine = QGCCorePlugin::createQmlApplicationEngine(parent);
-    qmlEngine->addImportPath("qrc:/Custom/Widgets");
-    return qmlEngine;
+    _qmlEngine = QGCCorePlugin::createQmlApplicationEngine(parent);
+    _qmlEngine->addImportPath("qrc:/Custom/Widgets");
+    // TODO: Investigate _qmlEngine->setExtraSelectors({"custom"})
+
+    _selector = new CustomOverrideInterceptor();
+    _qmlEngine->addUrlInterceptor(_selector);
+
+    return _qmlEngine;
+}
+
+/*===========================================================================*/
+
+CustomOverrideInterceptor::CustomOverrideInterceptor()
+    : QQmlAbstractUrlInterceptor()
+{
+
+}
+
+QUrl CustomOverrideInterceptor::intercept(const QUrl &url, QQmlAbstractUrlInterceptor::DataType type)
+{
+    switch (type) {
+    using DataType = QQmlAbstractUrlInterceptor::DataType;
+    case DataType::QmlFile:
+    case DataType::UrlString:
+        if (url.scheme() == QStringLiteral("qrc")) {
+            const QString origPath = url.path();
+            const QString overrideRes = QStringLiteral(":/Custom%1").arg(origPath);
+            if (QFile::exists(overrideRes)) {
+                const QString relPath = overrideRes.mid(2);
+                QUrl result;
+                result.setScheme(QStringLiteral("qrc"));
+                result.setPath('/' + relPath);
+                return result;
+            }
+        }
+        break;
+    default:
+        break;
+    }
+
+    return url;
 }

@@ -50,13 +50,13 @@ Popup {
 
     property string title
     property var    buttons:                Dialog.Ok
-    property bool   acceptAllowed:          acceptButton.visible
-    property bool   rejectAllowed:          rejectButton.visible
     property alias  acceptButtonEnabled:    acceptButton.enabled
     property alias  rejectButtonEnabled:    rejectButton.enabled
     property var    dialogProperties
     property bool   destroyOnClose:         true
     property bool   preventClose:           false
+    
+    readonly property real headerMinWidth: titleLable.implicitWidth + rejectButton.width + acceptButton.width + titleRowLayout.spacing * 2
 
     signal accepted
     signal rejected
@@ -64,6 +64,9 @@ Popup {
     property var    _qgcPal:            QGroundControl.globalPalette
     property real   _frameSize:         ScreenTools.defaultFontPixelWidth
     property real   _contentMargin:     ScreenTools.defaultFontPixelHeight / 2
+    property bool   _acceptAllowed:     acceptButton.visible
+    property bool   _rejectAllowed:     rejectButton.visible
+    property int    _previousValidationErrorCount: 0
 
     background: QGCMouseArea {
         width:  mainWindow.width
@@ -71,13 +74,7 @@ Popup {
 
         onClicked: {
             if (closePolicy & Popup.CloseOnPressOutside) {
-                if (rejectAllowed) {
-                    focus = true    // Take focus to force FactTextFields to validate
-                    _reject()
-                } else if (acceptAllowed) {
-                    focus = true    // Take focus to force FactTextFields to validate
-                    _accept()
-                }
+                _reject()
             }
         }
     }
@@ -88,8 +85,13 @@ Popup {
         contentChildren[contentChildren.length - 1].parent = dialogContentParent
     }
 
-    onAboutToShow: setupDialogButtons(buttons)
+    onAboutToShow: {
+        _previousValidationErrorCount = globals.validationErrorCount
+        setupDialogButtons(buttons)
+    }
+
     onClosed: {
+        globals.validationErrorCount = _previousValidationErrorCount
         Qt.inputMethod.hide()
         if (destroyOnClose) {
             root.destroy()
@@ -97,7 +99,7 @@ Popup {
     }
 
     function _accept() {
-        if (acceptAllowed && !globals.validationError) {
+        if (_acceptAllowed && mainWindow.allowViewSwitch(_previousValidationErrorCount)) {
             accepted()
             if (preventClose) {
                 preventClose = false
@@ -108,7 +110,8 @@ Popup {
     }
 
     function _reject() {
-        if (rejectAllowed && !globals.validationError) {
+        // Dialogs with cancel button are allowed to close with validation errors
+        if (_rejectAllowed && ((buttons & Dialog.Cancel) || mainWindow.allowViewSwitch(_previousValidationErrorCount))) {
             rejected()
             if (preventClose) {
                 preventClose = false
@@ -181,7 +184,7 @@ Popup {
         }
 
         closePolicy = Popup.NoAutoClose
-        if (rejectAllowed) {
+        if (buttons & Dialog.Cancel) {
             closePolicy |= Popup.CloseOnEscape
         }
     }
@@ -214,6 +217,7 @@ Popup {
             spacing:                _contentMargin
 
             QGCLabel {
+                id: titleLable
                 Layout.fillWidth:   true
                 text:               root.title
                 font.pointSize:     ScreenTools.mediumFontPointSize
@@ -221,14 +225,16 @@ Popup {
             }
 
             QGCButton {
-                id:         rejectButton
-                onClicked:  _reject()
+                id:                     rejectButton
+                onClicked:              _reject()
+                Layout.minimumWidth:    height * 1.5
             }
 
             QGCButton {
-                id:         acceptButton
-                primary:    true
-                onClicked:  _accept()
+                id:                     acceptButton
+                primary:                true
+                onClicked:              _accept()
+                Layout.minimumWidth:    height * 1.5
             }
         }
 
@@ -253,12 +259,9 @@ Popup {
                     id:     dialogContentParent
                     focus:  true
 
-                    Keys.onReleased: (event) => {
-                        if (event.key === Qt.Key_Escape && rejectAllowed) {
+                    Keys.onPressed: (event) => {
+                        if (event.key === Qt.Key_Escape && _rejectAllowed) {
                             _reject()
-                            event.accepted = true
-                        } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                            _accept()
                             event.accepted = true
                         }
                     }

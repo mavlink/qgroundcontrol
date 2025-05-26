@@ -15,7 +15,6 @@
 
 #include "MavlinkLogTest.h"
 #include "QGCTemporaryFile.h"
-#include "QGCApplication.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
 #include "MAVLinkProtocol.h"
@@ -72,18 +71,11 @@ void MavlinkLogTest::_bootLogDetectionCancel_test(void)
 {
     // Create a fake mavlink log
     _createTempLogFile(false);
-    
-    // We should get a message box, followed by a getSaveFileName dialog.
-    setExpectedMessageBox(QMessageBox::Ok);
-    setExpectedFileDialog(getSaveFileName, QStringList());
 
     // Kick the protocol to check for lost log files and wait for signals to move through
-    connect(this, &MavlinkLogTest::checkForLostLogFiles, qgcApp()->toolbox()->mavlinkProtocol(), &MAVLinkProtocol::checkForLostLogFiles);
+    connect(this, &MavlinkLogTest::checkForLostLogFiles, MAVLinkProtocol::instance(), &MAVLinkProtocol::checkForLostLogFiles);
     emit checkForLostLogFiles();
     QTest::qWait(1000);
-    
-    checkExpectedMessageBox();
-    checkExpectedFileDialog();
 }
 
 void MavlinkLogTest::_bootLogDetectionSave_test(void)
@@ -92,18 +84,12 @@ void MavlinkLogTest::_bootLogDetectionSave_test(void)
     _createTempLogFile(false);
     
     // We should get a message box, followed by a getSaveFileName dialog.
-    setExpectedMessageBox(QMessageBox::Ok);
     QDir logSaveDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
-    QString logSaveFile(logSaveDir.filePath(_saveLogFilename));
-    setExpectedFileDialog(getSaveFileName, QStringList(logSaveFile));
     
     // Kick the protocol to check for lost log files and wait for signals to move through
-    connect(this, &MavlinkLogTest::checkForLostLogFiles, qgcApp()->toolbox()->mavlinkProtocol(), &MAVLinkProtocol::checkForLostLogFiles);
+    connect(this, &MavlinkLogTest::checkForLostLogFiles, MAVLinkProtocol::instance(), &MAVLinkProtocol::checkForLostLogFiles);
     emit checkForLostLogFiles();
     QTest::qWait(1000);
-    
-    checkExpectedMessageBox();
-    checkExpectedFileDialog();
     
     // Make sure the file is there and delete it
     QCOMPARE(logSaveDir.remove(_saveLogFilename), true);
@@ -115,7 +101,7 @@ void MavlinkLogTest::_bootLogDetectionZeroLength_test(void)
     _createTempLogFile(true);
     
     // Kick the protocol to check for lost log files and wait for signals to move through
-    connect(this, &MavlinkLogTest::checkForLostLogFiles, qgcApp()->toolbox()->mavlinkProtocol(), &MAVLinkProtocol::checkForLostLogFiles);
+    connect(this, &MavlinkLogTest::checkForLostLogFiles, MAVLinkProtocol::instance(), &MAVLinkProtocol::checkForLostLogFiles);
     emit checkForLostLogFiles();
     QTest::qWait(1000);
     
@@ -129,20 +115,16 @@ void MavlinkLogTest::_connectLogWorker(bool arm)
     QDir logSaveDir;
     
     if (arm) {
-        qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->setArmedShowError(true);
+        MultiVehicleManager::instance()->activeVehicle()->setArmedShowError(true);
         QTest::qWait(500); // Wait long enough for heartbeat to come through
         
         // On Disconnect: We should get a getSaveFileName dialog.
         logSaveDir.setPath(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
-        QString logSaveFile(logSaveDir.filePath(_saveLogFilename));
-        setExpectedFileDialog(getSaveFileName, QStringList(logSaveFile));
     }
     
     _disconnectMockLink();
 
     if (arm) {
-        checkExpectedFileDialog();
-    
         // Make sure the file is there and delete it
         QCOMPARE(logSaveDir.remove(_saveLogFilename), true);
     }

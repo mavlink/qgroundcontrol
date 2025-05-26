@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -8,7 +8,6 @@
  ****************************************************************************/
 
 #include "APMMavlinkStreamRateSettings.h"
-#include "QGCApplication.h"
 #include "Vehicle.h"
 #include "MultiVehicleManager.h"
 
@@ -37,7 +36,7 @@ DECLARE_SETTINGSFACT(APMMavlinkStreamRateSettings, streamRateExtra3)
 
 void APMMavlinkStreamRateSettings::_updateStreamRateWorker(MAV_DATA_STREAM mavStream, QVariant rateVar)
 {
-    Vehicle* activeVehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
+    Vehicle* activeVehicle = MultiVehicleManager::instance()->activeVehicle();
 
     if (activeVehicle) {
         int streamRate = rateVar.toInt();

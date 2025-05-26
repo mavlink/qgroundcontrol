@@ -34,174 +34,88 @@ FlightModeIndicator {
             property Fact mpc_z_vel_all:            controller.getParameterFact(-1, "MPC_Z_VEL_ALL", false)
             property var  qgcPal:                   QGroundControl.globalPalette
             property real margins:                  ScreenTools.defaultFontPixelHeight
-            property real sliderWidth:              ScreenTools.defaultFontPixelWidth * 25
+            property real sliderWidth:              ScreenTools.defaultFontPixelWidth * 40
+            property var  flyViewSettings:          QGroundControl.settingsManager.flyViewSettings
 
             FactPanelController { id: controller }
 
             SettingsGroupLayout {
                 Layout.fillWidth: true
 
-                LabelledFactSlider {
+                FactSlider {
                     Layout.fillWidth:       true
+                    Layout.preferredWidth:  sliderWidth
                     label:                  qsTr("RTL Altitude")
                     fact:                   controller.getParameterFact(-1, "RTL_RETURN_ALT")
                     to:                     fact.maxIsDefaultForType ? QGroundControl.unitsConversion.metersToAppSettingsVerticalDistanceUnits(121.92) : fact.max
-                    sliderPreferredWidth:   sliderWidth
+                    majorTickStepSize:      10
                 }
+            }
 
-                LabelledFactSlider {
+            SettingsGroupLayout {
+                Layout.fillWidth:   true
+                heading:            qsTr("GeoFence")
+
+                LabelledFactComboBox {
                     Layout.fillWidth:       true
-                    label:                  qsTr("Land Descent Rate")
-                    fact:                   mpcLandSpeedFact
-                    to:                     fact.maxIsDefaultForType ? QGroundControl.unitsConversion.metersToAppSettingsVerticalDistanceUnits(4) : fact.max
-                    sliderPreferredWidth:   sliderWidth
-                    visible:                mpcLandSpeedFact && controller.vehicle && !controller.vehicle.fixedWing
-                }
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing:          ScreenTools.defaultFontPixelWidth * 2
-                    visible:          precisionLandingFact
-
-                    QGCLabel {
-                        Layout.fillWidth:   true;
-                        text:               qsTr("Precision Landing")
-                    }
-                    FactComboBox {
-                        fact:       precisionLandingFact
-                        indexModel: false
-                    }
-                }
-            }
-
-            SettingsGroupLayout {
-                Layout.fillWidth:   true
-                visible:            sys_vehicle_resp
-
-                ColumnLayout {
-                    Layout.fillWidth:   true
-
-                    QGCCheckBoxSlider {
-                        id:                 responsivenessCheckBox
-                        Layout.fillWidth:   true
-                        text:               qsTr("Overall Responsiveness")
-                        checked:            sys_vehicle_resp && sys_vehicle_resp.value >= 0
-
-                        onClicked: {
-                            if (checked) {
-                                sys_vehicle_resp.value = Math.abs(sys_vehicle_resp.value)
-                            } else {
-                                sys_vehicle_resp.value = -Math.abs(sys_vehicle_resp.value)
-                            }
-                        }
-                    }
-
-                    QGCLabel {
-                        Layout.fillWidth:   true
-                        enabled:            responsivenessCheckBox.checked
-                        text:               qsTr("A higher value makes the vehicle react faster. Be aware that this affects braking as well, and a combination of slow responsiveness with high maximum velocity will lead to long braking distances.")
-                        font.pointSize:     ScreenTools.smallFontPointSize
-                        wrapMode:           QGCLabel.WordWrap
-                    }
-                    QGCLabel {
-                        Layout.fillWidth:   true
-                        visible:            sys_vehicle_resp && sys_vehicle_resp.value > 0.8
-                        color:              qgcPal.warningText
-                        text:               qsTr("Warning: a high responsiveness requires a vehicle with large thrust-to-weight ratio. The vehicle might lose altitude otherwise.")
-                        font.pointSize:     ScreenTools.smallFontPointSize
-                        wrapMode:           QGCLabel.WordWrap
-                    }
-
-                    FactSlider {
-                        Layout.fillWidth:   true
-                        enabled:            responsivenessCheckBox.checked
-                        fact:               sys_vehicle_resp
-                        from:               0.01
-                        to:                 1
-                        stepSize:           0.01
-                    }
-                }
-
-                Item {
-                    Layout.fillWidth:   true
-                    height:             1
+                    label:                  qsTr("Breach Action")
+                    fact:                   controller.getParameterFact(-1, "GF_ACTION")
                 }
 
                 ColumnLayout {
-                    Layout.fillWidth:   true
-                    visible:            mpc_xy_vel_all
-
                     QGCCheckBoxSlider {
-                        id:                 xyVelCheckBox
                         Layout.fillWidth:   true
-                        text:               qsTr("Overall Horizontal Velocity (m/s)")
-                        checked:            mpc_xy_vel_all && mpc_xy_vel_all.value >= 0
+                        text:               qsTr("Max Distance")
+                        checked:            maxDistanceSlider.value > 0
 
                         onClicked: {
                             if (checked) {
-                                mpc_xy_vel_all.value = Math.abs(mpc_xy_vel_all.value)
+                                maxDistanceSlider.setValue(prevValue != 0 ? prevValue : maxDistanceSlider.to)
                             } else {
-                                mpc_xy_vel_all.value = -Math.abs(mpc_xy_vel_all.value)
+                                prevValue = maxDistanceSlider.value
+                                maxDistanceSlider.setValue(0)
                             }
                         }
+
+                        property real prevValue: 0
                     }
 
                     FactSlider {
+                        id:                 maxDistanceSlider
                         Layout.fillWidth:   true
-                        enabled:            xyVelCheckBox.checked
-                        fact:               mpc_xy_vel_all
-                        from:               0.5
-                        to:                 20
-                        stepSize:           0.5
+                        fact:               controller.getParameterFact(-1, "GF_MAX_HOR_DIST")
+                        to:                 flyViewSettings.maxGoToLocationDistance.value
+                        majorTickStepSize:  500
+                        enabled:            fact.value > 0
                     }
+                }
 
-                    Item {
-                        Layout.fillWidth: true
-                        height: 1
-                    }
-
-                    ColumnLayout {
+                ColumnLayout {
+                    QGCCheckBoxSlider {
                         Layout.fillWidth:   true
-                        visible:            mpc_z_vel_all
+                        text:               qsTr("Max Altitude")
+                        checked:            maxAltitudeSlider.value > 0
 
-                        QGCCheckBoxSlider {
-                            id:                 zVelCheckBox
-                            Layout.fillWidth:   true
-                            text:               qsTr("Overall Vertical Velocity (m/s)")
-                            checked:            mpc_z_vel_all && mpc_z_vel_all.value >= 0
-
-                            onClicked: {
-                                if (checked) {
-                                    mpc_z_vel_all.value = Math.abs(mpc_z_vel_all.value)
-                                } else {
-                                    mpc_z_vel_all.value = -Math.abs(mpc_z_vel_all.value)
-                                }
+                        onClicked: {
+                            if (checked) {
+                                maxAltitudeSlider.setValue(prevValue != 0 ? prevValue : maxAltitudeSlider.to)
+                            } else {
+                                prevValue = maxAltitudeSlider.value
+                                maxAltitudeSlider.setValue(0)
                             }
                         }
 
-                        FactSlider {
-                            Layout.fillWidth:   true
-                            enabled:            zVelCheckBox.checked
-                            fact:               mpc_z_vel_all
-                            from:               0.2
-                            to:                 8
-                            stepSize:           0.2
-                        }
+                        property real prevValue: 0
                     }
-                }
-            }
 
-            SettingsGroupLayout {
-                Layout.fillWidth:   true
-                heading:            qsTr("Mission Turning Radius")
-                headingDescription: qsTr("Increasing this leads to rounder turns in missions (corner cutting). Use the minimum value for accurate corner tracking.")
-
-                FactSlider {
-                    Layout.fillWidth:   true
-                    fact:               controller.getParameterFact(-1, "NAV_ACC_RAD")
-                    from:               2
-                    to:                 16
-                    stepSize:           0.5
+                    FactSlider {
+                        id:                 maxAltitudeSlider
+                        Layout.fillWidth:   true
+                        fact:               controller.getParameterFact(-1, "GF_MAX_VER_DIST")
+                        to:                 flyViewSettings.guidedMaximumAltitude.value
+                        majorTickStepSize:  10
+                        enabled:            fact.value > 0
+                    }
                 }
             }
         }

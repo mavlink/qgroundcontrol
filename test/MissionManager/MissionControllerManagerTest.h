@@ -7,9 +7,7 @@
  *
  ****************************************************************************/
 
-
-#ifndef MissionControllerManagerTest_H
-#define MissionControllerManagerTest_H
+#pragma once
 
 #include "UnitTest.h"
 #include "MissionManager.h"
@@ -74,5 +72,3 @@ protected:
 
     static const int _missionManagerSignalWaitTime = MissionManager::_ackTimeoutMilliseconds * MissionManager::_maxRetryCount * 2;
 };
-
-#endif

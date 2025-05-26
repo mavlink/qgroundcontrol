@@ -7,7 +7,7 @@ import QGroundControl.Controls
 
 QGCComboBox {
     property Fact fact: Fact { }
-    property bool indexModel: true  ///< true: model must be specifed, selected index is fact value, false: use enum meta data
+    property bool indexModel: fact ? fact.enumValues.length === 0 : true // true: Fact values are indices, false: Fact values are FactMetadata.enumValues
 
     model: fact ? fact.enumStrings : null
 

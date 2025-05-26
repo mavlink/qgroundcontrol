@@ -1,3 +1,12 @@
+/****************************************************************************
+ *
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 #pragma once
 
 #include <QtCore/QLoggingCategory>
@@ -25,9 +34,7 @@ public:
 private slots:
     void _networkReplyFinished();
     void _networkReplyError(QNetworkReply::NetworkError error);
-#if QT_CONFIG(ssl)
     void _networkReplySslErrors(const QList<QSslError> &errors);
-#endif
     void _cacheReply(QGCCacheTile *tile);
     void _cacheError(QGCMapTask::TaskType type, QStringView errorString);
 

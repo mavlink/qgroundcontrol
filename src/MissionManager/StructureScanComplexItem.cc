@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -42,7 +42,7 @@ StructureScanComplexItem::StructureScanComplexItem(PlanMasterController* masterC
 {
     _editorQml = "qrc:/qml/StructureScanEditor.qml";
 
-    _entranceAltFact.setRawValue(qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue());
+    _entranceAltFact.setRawValue(SettingsManager::instance()->appSettings()->defaultMissionItemAltitude()->rawValue());
 
     connect(&_entranceAltFact,      &Fact::valueChanged, this, &StructureScanComplexItem::_setDirty);
     connect(&_scanBottomAltFact,    &Fact::valueChanged, this, &StructureScanComplexItem::_setDirty);
@@ -241,7 +241,7 @@ bool StructureScanComplexItem::load(const QJsonObject& complexObject, int sequen
     _layersFact.setRawValue             (complexObject[layersName].toDouble());
     _structureHeightFact.setRawValue    (complexObject[structureHeightName].toDouble());
     _startFromTopFact.setRawValue       (complexObject[startFromTopName].toBool());
-    _entranceAltFact.setRawValue        (complexObject[startFromTopName].toDouble());
+    _entranceAltFact.setRawValue        (complexObject[_entranceAltName].toDouble());
     _gimbalPitchFact.setRawValue        (complexObject[gimbalPitchName].toDouble());
 
     if (!_structurePolygon.loadFromJson(complexObject, true /* required */, errorString)) {

@@ -1,0 +1,19 @@
+name: Question
+description: Ask a question related to QGC source
+labels: ["Question"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please only ask questions related to source code.
+        - For questions about how to use or build QGC see: http://qgroundcontrol.com/#resources
+        - If your question still isn't answered, please check the forums: https://discuss.px4.io/c/qgroundcontrol/15.
+        - If it is about Qt or any QGC dependencies, please refer to them instead.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: Write your question related to the QGC source code.
+      placeholder: Enter your question here.

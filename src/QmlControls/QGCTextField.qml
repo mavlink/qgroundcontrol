@@ -27,15 +27,16 @@ TextField {
     property string unitsLabel:         ""
     property string extraUnitsLabel:    ""
     property bool   numericValuesOnly:  false   // true: Used as hint for mobile devices to show numeric only keyboard
-    property alias textColor:           control.color
+    property alias  textColor:          control.color
+    property bool   validationError:    false
 
     property real _helpLayoutWidth: 0
     property real _marginPadding:   ScreenTools.defaultFontPixelHeight / 3
 
     signal helpClicked
 
-    Component.onCompleted: selectAllIfActiveFocus()
-    onActiveFocusChanged: selectAllIfActiveFocus()
+    Component.onCompleted: checkActiveFocus()
+    onActiveFocusChanged: checkActiveFocus()
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
@@ -46,15 +47,43 @@ TextField {
         }
     }
 
-    function selectAllIfActiveFocus() {
+    function checkActiveFocus() {
         if (activeFocus) {
             selectAll()
+            if (validationError) {
+                validationToolTip.visible = true
+            }
+        } else {
+            validationToolTip.visible = false
+        }
+    }
+
+    function showValidationError(errorString, originalValidValue = undefined, preventViewSiwtch = true) {
+        validationToolTip.text = errorString
+        validationToolTip.originalValidValue = originalValidValue
+        validationToolTip.visible = true
+        if (!validationError) {
+            validationError = true
+            if (preventViewSiwtch) {
+                globals.validationErrorCount++
+            }
+        }
+    }
+
+    function clearValidationError(preventViewSiwtch = true) {
+        validationToolTip.visible = false
+        validationToolTip.originalValidValue = undefined
+        if (validationError) {
+            validationError = false
+            if (preventViewSiwtch) {
+                globals.validationErrorCount--
+            }
         }
     }
 
     background: Rectangle {
-        border.width:   qgcPal.globalTheme === QGCPalette.Light ? 1 : 0
-        border.color:   qgcPal.buttonBorder
+        border.width:   control.validationError ? 2 : (qgcPal.globalTheme === QGCPalette.Light ? 1 : 0)
+        border.color:   control.validationError ? qgcPal.colorRed : qgcPal.buttonBorder
         radius:         ScreenTools.buttonBorderRadius
         color:          qgcPal.textField
         implicitWidth:  ScreenTools.implicitTextFieldWidth
@@ -113,6 +142,22 @@ TextField {
                 antialiasing:       true
                 color:              control.color
                 visible:            control.showUnits && text !== ""
+            }
+        }
+    }
+
+    ToolTip {
+        id: validationToolTip
+
+        property var originalValidValue: undefined
+
+        QGCMouseArea {
+            anchors.fill: parent
+            onClicked: {
+                if (validationToolTip.originalValidValue !== undefined) {
+                    control.text = validationToolTip.originalValidValue
+                    control.clearValidationError()
+                }
             }
         }
     }

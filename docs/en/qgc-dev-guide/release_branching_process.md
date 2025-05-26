@@ -74,7 +74,8 @@ A proposed strategy for branching on custom builds can be found [here](custom_bu
 1. Create a tag on the HEAD of master name `dX.Y` where the minor version is one greater than the new Stable. For example if you are create a new Stable 4.2 version then the tag would be 'd4.3'. This tag is used to create the version numbers for Android daily builds. Example: `git tag -a d4.3.0 -m "QGroundControl Daily Android Version Base"`.
 1. Create an annotated tag on the newly created Stable branch named `vX.Y.0` with the correct major/minor version number. Example: `git tag -a v4.2.0 -m "QGroundControl v4.2.0"`. Pushing this tag to the repo will start a build.
 1. Once the build completes verify the builds are pushed up to S3 correctly and sanity check that they at least boot correctly. Location on S3 will be `https://qgroundcontrol.s3.us-west-2.amazonaws.com/latest/...`.
-1. Update the `https://qgroundcontrol.s3.us-west-2.amazonaws.com/latest/QGC.version.txt` text file to the latest Stable version. This will notify uses there is a new Stable available the next time they launch QGC.
+1. Update the `https://qgroundcontrol.s3.us-west-2.amazonaws.com/latest/QGC.version.txt` text file to the latest Stable version. This will notify users that there is a new Stable available the next time they launch QGC.
+1. Note that the cached cloudfront downloads will take up to 24h to refresh. If they need to update earlier, the caches would need to be manually invalidated.
 
 ### Patch Version
 

@@ -70,7 +70,7 @@ Button {
             spacing:                ScreenTools.defaultFontPixelHeight * 0.25
             QGCLabel {
                 text:               qsTr("Vehicle ") + (vehicle ? vehicle.id : qsTr("None"))
-                font.family:        ScreenTools.demiboldFontFamily
+                font.bold:          true
                 color:              button.checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
             }
             Row {

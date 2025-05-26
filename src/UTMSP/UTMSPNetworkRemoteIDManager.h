@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2023 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -9,9 +9,11 @@
 
 #pragma once
 
-#include <nlohmann/json.hpp>
+// #include <nlohmann/json.hpp>
+#include "services/dispatcher.h"
 
 #include "UTMSPBlenderRestInterface.h"
+#include "parse/nlohmann/json.hpp"
 
 class Dispatcher;
 

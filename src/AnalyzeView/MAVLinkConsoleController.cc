@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2017 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *   (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -8,24 +8,26 @@
  ****************************************************************************/
 
 #include "MAVLinkConsoleController.h"
-#include "QGCApplication.h"
-#include "QGCToolbox.h"
-#include "MultiVehicleManager.h"
-#include "Vehicle.h"
 #include "MAVLinkProtocol.h"
+#include "MultiVehicleManager.h"
 #include "QGCLoggingCategory.h"
+#include "QGCPalette.h"
+#include "Vehicle.h"
 
 #include <QtGui/QGuiApplication>
 #include <QtGui/QClipboard>
 
 QGC_LOGGING_CATEGORY(MAVLinkConsoleControllerLog, "qgc.analyzeview.mavlinkconsolecontroller")
 
-MAVLinkConsoleController::MAVLinkConsoleController()
-    : QStringListModel()
+MAVLinkConsoleController::MAVLinkConsoleController(QObject *parent)
+    : QStringListModel(parent)
+    , _palette(new QGCPalette(this))
 {
-    auto *manager = qgcApp()->toolbox()->multiVehicleManager();
-    connect(manager, &MultiVehicleManager::activeVehicleChanged, this, &MAVLinkConsoleController::_setActiveVehicle);
-    _setActiveVehicle(manager->activeVehicle());
+    // qCDebug(MAVLinkConsoleControllerLog) << Q_FUNC_INFO << this;
+
+    (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &MAVLinkConsoleController::_setActiveVehicle);
+
+    _setActiveVehicle(MultiVehicleManager::instance()->activeVehicle());
 }
 
 MAVLinkConsoleController::~MAVLinkConsoleController()
@@ -34,111 +36,107 @@ MAVLinkConsoleController::~MAVLinkConsoleController()
         QByteArray msg;
         _sendSerialData(msg, true);
     }
+
+    // qCDebug(MAVLinkConsoleControllerLog) << Q_FUNC_INFO << this;
 }
 
-void
-MAVLinkConsoleController::sendCommand(QString command)
+void MAVLinkConsoleController::sendCommand(const QString &command)
 {
+    QString output = command;
+
     // there might be multiple commands, add them separately to the history
-    QStringList lines = command.split('\n');
-    for (int i = 0; i < lines.size(); ++i) {
-        if (lines[i].size() > 0) {
-            _history.append(lines[i]);
+    const QStringList lines = output.split('\n');
+    for (const QString &line : lines) {
+        if (!line.isEmpty()) {
+            _history.append(line);
         }
     }
-    command.append("\n");
-    _sendSerialData(qPrintable(command));
-    _cursor_home_pos = -1;
+
+    (void) output.append("\n");
+    _sendSerialData(qPrintable(output));
+    _cursorHomePos = -1;
 }
 
-QString
-MAVLinkConsoleController::historyUp(const QString& current)
-{
-    return _history.up(current);
-}
-
-QString
-MAVLinkConsoleController::historyDown(const QString& current)
-{
-    return _history.down(current);
-}
-
-QString
-MAVLinkConsoleController::handleClipboard(const QString& command_pre)
+QString MAVLinkConsoleController::handleClipboard(const QString &command_pre)
 {
     QString clipboardData = command_pre + QGuiApplication::clipboard()->text();
-    int lastLinePos = clipboardData.lastIndexOf('\n');
+
+    const int lastLinePos = clipboardData.lastIndexOf('\n');
     if (lastLinePos != -1) {
-        QString commands = clipboardData.mid(0, lastLinePos);
+        const QString commands = clipboardData.mid(0, lastLinePos);
         sendCommand(commands);
-        clipboardData = clipboardData.mid(lastLinePos+1);
+        clipboardData = clipboardData.mid(lastLinePos + 1);
     }
+
     return clipboardData;
 }
 
-void
-MAVLinkConsoleController::_setActiveVehicle(Vehicle* vehicle)
+void MAVLinkConsoleController::_setActiveVehicle(Vehicle *vehicle)
 {
-    for (auto &con : _uas_connections)
-        disconnect(con);
-    _uas_connections.clear();
+    for (QMetaObject::Connection &con : _connections) {
+        (void) disconnect(con);
+    }
+    _connections.clear();
 
     _vehicle = vehicle;
-
     if (_vehicle) {
-        _incoming_buffer.clear();
+        _incomingBuffer.clear();
         // Reset the model
         setStringList(QStringList());
         _cursorY = 0;
         _cursorX = 0;
-        _cursor_home_pos = -1;
-        _uas_connections << connect(_vehicle, &Vehicle::mavlinkSerialControl, this, &MAVLinkConsoleController::_receiveData);
+        _cursorHomePos = -1;
+        _connections << connect(_vehicle, &Vehicle::mavlinkSerialControl, this, &MAVLinkConsoleController::_receiveData);
     }
 }
 
-void
-MAVLinkConsoleController::_receiveData(uint8_t device, uint8_t, uint16_t, uint32_t, QByteArray data)
+void MAVLinkConsoleController::_receiveData(uint8_t device, uint8_t flags, uint16_t timeout, uint32_t baudrate, const QByteArray &data)
 {
-    if (device != SERIAL_CONTROL_DEV_SHELL)
+    Q_UNUSED(flags); Q_UNUSED(timeout); Q_UNUSED(baudrate);
+
+    if (device != SERIAL_CONTROL_DEV_SHELL) {
         return;
+    }
 
     // Append incoming data and parse for ANSI codes
-    _incoming_buffer.append(data);
-    while(!_incoming_buffer.isEmpty()) {
+    (void) _incomingBuffer.append(data);
+
+    while (!_incomingBuffer.isEmpty()) {
         bool newline = false;
-        int idx = _incoming_buffer.indexOf('\n');
+
+        int idx = _incomingBuffer.indexOf('\n');
         if (idx == -1) {
             // Read the whole incoming buffer
-            idx = _incoming_buffer.size();
+            idx = _incomingBuffer.size();
         } else {
             newline = true;
         }
 
-        QByteArray fragment = _incoming_buffer.mid(0, idx);
-        if (_processANSItext(fragment)) {
-            writeLine(_cursorY, fragment);
-            if (newline) {
-                _cursorY++;
-                _cursorX = 0;
-                // ensure line exists
-                int rc = rowCount();
-                if (_cursorY >= rc) {
-                    insertRows(rc, 1 + _cursorY - rc);
-                }
-            }
-            _incoming_buffer.remove(0, idx + (newline ? 1 : 0));
-        } else {
+        QByteArray fragment = _incomingBuffer.mid(0, idx);
+        if (!_processANSItext(fragment)) {
             // ANSI processing failed, need more data
             return;
         }
+
+        _writeLine(_cursorY, fragment);
+        if (newline) {
+            _cursorY++;
+            _cursorX = 0;
+            // ensure line exists
+            const int rc = rowCount();
+            if (_cursorY >= rc) {
+                (void) insertRows(rc, 1 + _cursorY - rc);
+            }
+        }
+
+        (void) _incomingBuffer.remove(0, idx + (newline ? 1 : 0));
     }
 }
 
-void
-MAVLinkConsoleController::_sendSerialData(QByteArray data, bool close)
+void MAVLinkConsoleController::_sendSerialData(const QByteArray &data, bool close)
 {
     if (!_vehicle) {
-        qWarning() << "Internal error";
+        qCWarning(MAVLinkConsoleControllerLog) << "Internal error";
         return;
     }
 
@@ -148,184 +146,198 @@ MAVLinkConsoleController::_sendSerialData(QByteArray data, bool close)
     }
 
     // Send maximum sized chunks until the complete buffer is transmitted
-    while(data.size()) {
-        QByteArray chunk{data.left(MAVLINK_MSG_SERIAL_CONTROL_FIELD_DATA_LEN)};
-        int dataSize = chunk.size();
+    QByteArray output(data);
+    while (output.size()) {
+        QByteArray chunk(data.left(MAVLINK_MSG_SERIAL_CONTROL_FIELD_DATA_LEN));
+        const int dataSize = chunk.size();
+
         // Ensure the buffer is large enough, as the MAVLink parser expects MAVLINK_MSG_SERIAL_CONTROL_FIELD_DATA_LEN bytes
-        chunk.append(MAVLINK_MSG_SERIAL_CONTROL_FIELD_DATA_LEN - chunk.size(), '\0');
-        uint8_t flags = SERIAL_CONTROL_FLAG_EXCLUSIVE |  SERIAL_CONTROL_FLAG_RESPOND | SERIAL_CONTROL_FLAG_MULTI;
-        if (close) flags = 0;
-        auto protocol = qgcApp()->toolbox()->mavlinkProtocol();
-        auto link = _vehicle->vehicleLinkManager()->primaryLink();
+        (void) chunk.append(MAVLINK_MSG_SERIAL_CONTROL_FIELD_DATA_LEN - chunk.size(), '\0');
+
+        const uint8_t flags = close ? 0 : SERIAL_CONTROL_FLAG_EXCLUSIVE |  SERIAL_CONTROL_FLAG_RESPOND | SERIAL_CONTROL_FLAG_MULTI;
+
         mavlink_message_t msg;
-        mavlink_msg_serial_control_pack_chan(
-                    protocol->getSystemId(),
-                    protocol->getComponentId(),
-                    sharedLink->mavlinkChannel(),
-                    &msg,
-                    SERIAL_CONTROL_DEV_SHELL,
-                    flags,
-                    0,
-                    0,
-                    dataSize,
-                    reinterpret_cast<uint8_t*>(chunk.data()),
-                    _vehicle->id(), _vehicle->defaultComponentId());
-        _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
-        data.remove(0, chunk.size());
+        (void) mavlink_msg_serial_control_pack_chan(
+            MAVLinkProtocol::instance()->getSystemId(),
+            MAVLinkProtocol::getComponentId(),
+            sharedLink->mavlinkChannel(),
+            &msg,
+            SERIAL_CONTROL_DEV_SHELL,
+            flags,
+            0,
+            0,
+            dataSize,
+            reinterpret_cast<uint8_t*>(chunk.data()),
+            _vehicle->id(),
+            _vehicle->defaultComponentId()
+        );
+
+        (void) _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+        (void) output.remove(0, chunk.size());
     }
 }
 
-bool
-MAVLinkConsoleController::_processANSItext(QByteArray &line)
+bool MAVLinkConsoleController::_processANSItext(QByteArray &line)
 {
     // Iterate over the incoming buffer to parse off known ANSI control codes
     for (int i = 0; i < line.size(); i++) {
-        if (line.at(i) == '\x1B') {
-            // For ANSI codes we expect at least 3 incoming chars
-            if (i < line.size() - 2 && line.at(i+1) == '[') {
-                // Parse ANSI code
-                switch(line.at(i+2)) {
-                    default:
-                        continue;
-                    case 'H':
-                        if (_cursor_home_pos == -1) {
-                            // Assign new home position if home is unset
-                            _cursor_home_pos = _cursorY;
-                        } else {
-                            // Rewind write cursor position to home
-                            _cursorY = _cursor_home_pos;
-                            _cursorX = 0;
-                        }
-                        break;
-                    case 'K':
-                        // Erase the current line to the end
-                        if (_cursorY < rowCount()) {
-                            auto idx = index(_cursorY);
-                            QString updated = data(idx, Qt::DisplayRole).toString();
-                            int eraseIdx = _cursorX + i;
-                            if (eraseIdx < updated.length()) {
-                                setData(idx, updated.remove(eraseIdx, updated.length()));
-                            }
-                        }
-                        break;
-                    case '2':
-                        // Check for sufficient buffer size
-                        if ( i >= line.size() - 3)
-                            return false;
+        if (line[i] != '\x1B') {
+            continue;
+        }
 
-                        if (line.at(i+3) == 'J' && _cursor_home_pos != -1) {
-                            // Erase everything and rewind to home
-                            bool blocked = blockSignals(true);
-                            for (int j = _cursor_home_pos; j < rowCount(); j++)
-                                setData(index(j), "");
-                            blockSignals(blocked);
-                            QVector<int> roles({Qt::DisplayRole, Qt::EditRole});
-                            emit dataChanged(index(_cursorY), index(rowCount()), roles);
-                        }
-                        // Even if we didn't understand this ANSI code, remove the 4th char
-                        line.remove(i+3,1);
-                        break;
-                }
-                // Remove the parsed ANSI code and decrement the bufferpos
-                line.remove(i, 3);
-                i--;
+        // For ANSI codes we expect at least 3 incoming chars
+        if ((i >= (line.size() - 2)) || (line[i + 1] != '[')) {
+            // We can reasonably expect a control code was fragemented
+            // Stop parsing here and wait for it to come in
+            return false;
+        }
+
+        switch (line[i + 2]) {
+        case 'H':
+            if (_cursorHomePos == -1) {
+                // Assign new home position if home is unset
+                _cursorHomePos = _cursorY;
             } else {
-                // We can reasonably expect a control code was fragemented
-                // Stop parsing here and wait for it to come in
+                // Rewind write cursor position to home
+                _cursorY = _cursorHomePos;
+                _cursorX = 0;
+            }
+            break;
+        case 'K':
+            // Erase the current line to the end
+            if (_cursorY < rowCount()) {
+                const QModelIndex idx = index(_cursorY);
+                QString updated = data(idx, Qt::DisplayRole).toString();
+                const int eraseIdx = _cursorX + i;
+                if (eraseIdx < updated.length()) {
+                    (void) setData(idx, updated.remove(eraseIdx, updated.length()));
+                }
+            }
+            break;
+        case '2':
+            // Check for sufficient buffer size
+            if (i >= (line.size() - 3)) {
                 return false;
             }
+
+            if ((line[i + 3] == 'J') && (_cursorHomePos != -1)) {
+                // Erase everything and rewind to home
+                const bool blocked = blockSignals(true);
+                for (int j = _cursorHomePos; j < rowCount(); j++) {
+                    (void) setData(index(j), "");
+                }
+                (void) blockSignals(blocked);
+
+                const QVector<int> roles({Qt::DisplayRole, Qt::EditRole});
+                emit dataChanged(index(_cursorY), index(rowCount()), roles);
+            }
+
+            // Even if we didn't understand this ANSI code, remove the 4th char
+            (void) line.remove(i + 3,1);
+            break;
+        default:
+            continue;
         }
+
+        // Remove the parsed ANSI code and decrement the bufferpos
+        (void) line.remove(i, 3);
+        i--;
     }
+
     return true;
 }
 
-QString
-MAVLinkConsoleController::transformLineForRichText(const QString& line) const
+QString MAVLinkConsoleController::_transformLineForRichText(const QString &line) const
 {
     QString ret = line.toHtmlEscaped().replace(" ","&nbsp;").replace("\t", "&nbsp;&nbsp;&nbsp;&nbsp;");
 
     if (ret.startsWith("WARN", Qt::CaseSensitive)) {
-        ret.replace(0, 4, "<font color=\"" + _palette.colorOrange().name() + "\">WARN</font>");
+        (void) ret.replace(0, 4, "<font color=\"" + _palette->colorOrange().name() + "\">WARN</font>");
     } else if (ret.startsWith("ERROR", Qt::CaseSensitive)) {
-        ret.replace(0, 5, "<font color=\"" + _palette.colorRed().name() + "\">ERROR</font>");
+        (void) ret.replace(0, 5, "<font color=\"" + _palette->colorRed().name() + "\">ERROR</font>");
     }
 
     return ret;
 }
 
-QString
-MAVLinkConsoleController::getText() const
+QString MAVLinkConsoleController::_getText() const
 {
     QString ret;
     if (rowCount() > 0) {
-        ret = transformLineForRichText(data(index(0), Qt::DisplayRole).toString());
+        ret = _transformLineForRichText(data(index(0), Qt::DisplayRole).toString());
     }
+
     for (int i = 1; i < rowCount(); ++i) {
-        ret += "<br>" + transformLineForRichText(data(index(i), Qt::DisplayRole).toString());
+        ret += ("<br>" + _transformLineForRichText(data(index(i), Qt::DisplayRole).toString()));
     }
 
     return ret;
 }
 
-void
-MAVLinkConsoleController::writeLine(int line, const QByteArray &text)
+void MAVLinkConsoleController::_writeLine(int line, const QByteArray &text)
 {
-    auto rc = rowCount();
+    const int rc = rowCount();
     if (line >= rc) {
-        insertRows(rc, 1 + line - rc);
+        (void) insertRows(rc, 1 + line - rc);
     }
-    if (rowCount() > _max_num_lines) {
-        int count = rowCount() - _max_num_lines;
-        removeRows(0, count);
+
+    if (rowCount() > kMaxNumLines) {
+        const int count = rowCount() - kMaxNumLines;
+        (void) removeRows(0, count);
         line -= count;
         _cursorY -= count;
-        _cursor_home_pos -= count;
-        if (_cursor_home_pos < 0)
-            _cursor_home_pos = -1;
+        _cursorHomePos -= count;
+        if (_cursorHomePos < 0) {
+            _cursorHomePos = -1;
+        }
     }
-    auto idx = index(line);
+
+    const QModelIndex idx = index(line);
     QString updated = data(idx, Qt::DisplayRole).toString();
-    updated.replace(_cursorX, text.size(), text);
-    setData(idx, updated);
+    (void) updated.replace(_cursorX, text.size(), text);
+    (void) setData(idx, updated);
     _cursorX += text.size();
 }
 
-void MAVLinkConsoleController::CommandHistory::append(const QString& command)
+void MAVLinkConsoleController::CommandHistory::append(const QString &command)
 {
-    if (command.length() > 0) {
-
+    if (!command.isEmpty()) {
         // do not append duplicates
-        if (_history.length() == 0 || _history.last() != command) {
-
-            if (_history.length() >= maxHistoryLength) {
+        if ((_history.isEmpty()) || (_history.last() != command)) {
+            if (_history.length() >= CommandHistory::kMaxHistoryLength) {
                 _history.removeFirst();
             }
             _history.append(command);
         }
     }
+
     _index = _history.length();
 }
 
-QString MAVLinkConsoleController::CommandHistory::up(const QString& current)
+QString MAVLinkConsoleController::CommandHistory::up(const QString &current)
 {
-    if (_index <= 0)
+    if (_index <= 0) {
         return current;
+    }
 
     --_index;
     if (_index < _history.length()) {
         return _history[_index];
     }
-    return "";
+
+    return QStringLiteral("");
 }
 
-QString MAVLinkConsoleController::CommandHistory::down(const QString& current)
+QString MAVLinkConsoleController::CommandHistory::down(const QString &current)
 {
-    if (_index >= _history.length())
+    if (_index >= _history.length()) {
         return current;
+    }
 
     ++_index;
     if (_index < _history.length()) {
         return _history[_index];
     }
-    return "";
+
+    return QStringLiteral("");
 }

@@ -1,6 +1,6 @@
 /***************_qgcTranslatorSourceCode***********************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -32,42 +32,30 @@ public:
     DEFINE_SETTINGFACT(offlineEditingDescentSpeed)
     DEFINE_SETTINGFACT(batteryPercentRemainingAnnounce) // Important: This is only used to calculate battery swaps
     DEFINE_SETTINGFACT(defaultMissionItemAltitude)
-    DEFINE_SETTINGFACT(telemetrySave)
-    DEFINE_SETTINGFACT(telemetrySaveNotArmed)
     DEFINE_SETTINGFACT(audioMuted)
     DEFINE_SETTINGFACT(virtualJoystick)
     DEFINE_SETTINGFACT(virtualJoystickAutoCenterThrottle)
+    DEFINE_SETTINGFACT(virtualJoystickLeftHandedMode)
     DEFINE_SETTINGFACT(appFontPointSize)
     DEFINE_SETTINGFACT(indoorPalette)
-    DEFINE_SETTINGFACT(showLargeCompass)
     DEFINE_SETTINGFACT(savePath)
     DEFINE_SETTINGFACT(androidSaveToSDCard)
     DEFINE_SETTINGFACT(useChecklist)
     DEFINE_SETTINGFACT(enforceChecklist)
+    DEFINE_SETTINGFACT(enableMultiVehiclePanel)
     DEFINE_SETTINGFACT(mapboxToken)
     DEFINE_SETTINGFACT(mapboxAccount)
     DEFINE_SETTINGFACT(mapboxStyle)
     DEFINE_SETTINGFACT(esriToken)
     DEFINE_SETTINGFACT(customURL)
     DEFINE_SETTINGFACT(vworldToken)
-    DEFINE_SETTINGFACT(defaultFirmwareType)
     DEFINE_SETTINGFACT(gstDebugLevel)
     DEFINE_SETTINGFACT(followTarget)
     DEFINE_SETTINGFACT(qLocaleLanguage)
     DEFINE_SETTINGFACT(disableAllPersistence)
-    DEFINE_SETTINGFACT(usePairing)
-    DEFINE_SETTINGFACT(saveCsvTelemetry)
     DEFINE_SETTINGFACT(firstRunPromptIdsShown)
-    DEFINE_SETTINGFACT(forwardMavlink)
-    DEFINE_SETTINGFACT(forwardMavlinkHostName)
-    DEFINE_SETTINGFACT(forwardMavlinkAPMSupportHostName)
     DEFINE_SETTINGFACT(loginAirLink)
     DEFINE_SETTINGFACT(passAirLink)
-    DEFINE_SETTINGFACT(mavlink2Signing)
-    DEFINE_SETTINGFACT(mavlink2SigningKey)
-
-    // Although this is a global setting it only affects ArduPilot vehicle since PX4 automatically starts the stream from the vehicle side
-    DEFINE_SETTINGFACT(apmStartMavlinkStreams)
 
     Q_PROPERTY(QString missionSavePath          READ missionSavePath            NOTIFY savePathsChanged)
     Q_PROPERTY(QString parameterSavePath        READ parameterSavePath          NOTIFY savePathsChanged)
@@ -76,7 +64,7 @@ public:
     Q_PROPERTY(QString videoSavePath            READ videoSavePath              NOTIFY savePathsChanged)
     Q_PROPERTY(QString photoSavePath            READ photoSavePath              NOTIFY savePathsChanged)
     Q_PROPERTY(QString crashSavePath            READ crashSavePath              NOTIFY savePathsChanged)
-    Q_PROPERTY(QString customActionsSavePath    READ customActionsSavePath      NOTIFY savePathsChanged)
+    Q_PROPERTY(QString mavlinkActionsSavePath    READ mavlinkActionsSavePath      NOTIFY savePathsChanged)
 
     Q_PROPERTY(QString planFileExtension        MEMBER planFileExtension        CONSTANT)
     Q_PROPERTY(QString missionFileExtension     MEMBER missionFileExtension     CONSTANT)
@@ -95,7 +83,7 @@ public:
     QString videoSavePath         ();
     QString photoSavePath         ();
     QString crashSavePath         ();
-    QString customActionsSavePath ();
+    QString mavlinkActionsSavePath ();
 
     // Helper methods for working with firstRunPromptIds QVariant settings string list
     static QList<int> firstRunPromptsIdsVariantToList   (const QVariant& firstRunPromptIds);
@@ -123,7 +111,7 @@ public:
     static constexpr const char* videoDirectory =           QT_TRANSLATE_NOOP("AppSettings", "Video");
     static constexpr const char* photoDirectory =           QT_TRANSLATE_NOOP("AppSettings", "Photo");
     static constexpr const char* crashDirectory =           QT_TRANSLATE_NOOP("AppSettings", "CrashLogs");
-    static constexpr const char* customActionsDirectory =   QT_TRANSLATE_NOOP("AppSettings", "CustomActions");
+    static constexpr const char* mavlinkActionsDirectory =  QT_TRANSLATE_NOOP("AppSettings", "MavlinkActions");
 
 signals:
     void savePathsChanged();

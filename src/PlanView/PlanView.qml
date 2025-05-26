@@ -69,7 +69,6 @@ Item {
     readonly property int       _layerUTMSP:                4 // Additional Tab button when UTMSP is enabled
     readonly property string    _armedVehicleUploadPrompt:  qsTr("Vehicle is currently armed. Do you want to upload the mission to the vehicle?")
 
-    signal activationParamsSent(string startTime, bool activate, string flightID)
 
     function mapCenter() {
         var coordinate = editorMap.center
@@ -372,6 +371,9 @@ Item {
             onMapClicked: (mouse) => {
                 // Take focus to close any previous editing
                 editorMap.focus = true
+                if (!mainWindow.allowViewSwitch()) {
+                    return
+                }
                 var coordinate = editorMap.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
                 coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
                 coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
@@ -555,16 +557,14 @@ Item {
             anchors.top:        parent.top
             z:                  QGroundControl.zOrderWidgets
             maxHeight:          parent.height - toolStrip.y
-            title:              qsTr("Plan")
 
-            readonly property int flyButtonIndex:       0
-            readonly property int fileButtonIndex:      1
-            readonly property int takeoffButtonIndex:   2
-            readonly property int waypointButtonIndex:  3
-            readonly property int roiButtonIndex:       4
-            readonly property int patternButtonIndex:   5
-            readonly property int landButtonIndex:      6
-            readonly property int centerButtonIndex:    7
+            readonly property int fileButtonIndex:      0
+            readonly property int takeoffButtonIndex:   1
+            readonly property int waypointButtonIndex:  2
+            readonly property int roiButtonIndex:       3
+            readonly property int patternButtonIndex:   4
+            readonly property int landButtonIndex:      5
+            readonly property int centerButtonIndex:    6
 
             property bool _isRallyLayer:    _editingLayer == _layerRallyPoints
             property bool _isMissionLayer:  _editingLayer == _layerMission
@@ -573,11 +573,6 @@ Item {
             ToolStripActionList {
                 id: toolStripActionList
                 model: [
-                    ToolStripAction {
-                        text:           qsTr("Fly")
-                        iconSource:     "/qmlimages/PaperPlane.svg"
-                        onTriggered:    mainWindow.showFlyView()
-                    },
                     ToolStripAction {
                         text:                   qsTr("File")
                         enabled:                !_planMasterController.syncInProgress
@@ -636,7 +631,11 @@ Item {
                         }
                     },
                     ToolStripAction {
-                        text:       _planMasterController.controllerVehicle.multiRotor ? qsTr("Return") : qsTr("Land")
+                        text:       _planMasterController.controllerVehicle.multiRotor
+                                    ? qsTr("Return")
+                                    : _missionController.isInsertLandValid && _missionController.hasLandItem
+                                      ? qsTr("Alt Land")
+                                      : qsTr("Land")
                         iconSource: "/res/rtl.svg"
                         enabled:    _missionController.isInsertLandValid
                         visible:    toolStrip._isMissionLayer || toolStrip._isUtmspLayer
@@ -826,26 +825,6 @@ Item {
             }
         }
 
-        Connections {
-            target: utmspEditor
-            function onResponseSent(response, responseFlag) {
-                if(responseFlag===true){
-                    successPopup.opacity = 1
-                    successPopup.visible = true
-                    success_notify.text = "Flight Plan for Vehicle:" + _vehicleID +" is successfully Registered..."
-                    var disappearTimer1 = Qt.createQmlObject("import QtQuick 2.0; Timer { interval: 3000; onTriggered: {successPopup.visible = false; successPopup.opacity = 0;} }", parent, "disappearTimer");
-                    disappearTimer1.start()
-                }
-                else{
-                    failPopup.opacity = 1
-                    failPopup.visible = true
-                    fail_notify.text = "Error in Flightblender Response..." //TODO->Will pass the response message
-                    var disappearTimer4 = Qt.createQmlObject("import QtQuick 2.0; Timer { interval: 3000; onTriggered: {failPopup.visible = false; failPopup.opacity = 0;} }", parent, "disappearTimer");
-                    disappearTimer4.start()
-                }
-            }
-        }
-
         QGCLabel {
             // Elevation provider notice on top of terrain plot
             readonly property string _licenseString: QGroundControl.elevationProviderNotice
@@ -919,10 +898,22 @@ Item {
         mainWindow.showMessageDialog(qsTr("Clear"),
                                      qsTr("Are you sure you want to remove all mission items and clear the mission from the vehicle?"),
                                      Dialog.Yes | Dialog.Cancel,
-                                     function() { _planMasterController.removeAllFromVehicle(); _missionController.setCurrentPlanViewSeqNum(0, true); if(_utmspEnabled){_resetRegisterFlightPlan = true; QGroundControl.utmspManager.utmspVehicle.triggerActivationStatusBar(false);}})
+                                     function() { _planMasterController.removeAllFromVehicle();
+                                                  _missionController.setCurrentPlanViewSeqNum(0, true);
+                                                  if(_utmspEnabled)
+                                                    {_resetRegisterFlightPlan = true;
+                                                      QGroundControl.utmspManager.utmspVehicle.triggerActivationStatusBar(false);
+                                                      UTMSPStateStorage.startTimeStamp = "";
+                                                      UTMSPStateStorage.showActivationTab = false;
+                                                      UTMSPStateStorage.flightID = "";
+                                                      UTMSPStateStorage.enableMissionUploadButton = false;
+                                                      UTMSPStateStorage.indicatorPendingStatus = true;
+                                                      UTMSPStateStorage.indicatorApprovedStatus = false;
+                                                      UTMSPStateStorage.indicatorActivatedStatus = false;
+                                                      UTMSPStateStorage.currentStateIndex = 0}})
     }
 
-    //- ToolStrip DropPanel Components
+    //- ToolStrip ToolStripDropPanel Components
 
     Component {
         id: centerMapDropPanel
@@ -1169,130 +1160,6 @@ Item {
                     }
                 }
             }
-        }
-    }
-
-    Rectangle {
-        id:             successPopup
-        x:              Math.round((mainWindow.width - width) * 0.5)
-        y:              ScreenTools.defaultFontPixelHeight
-        width:          mainWindow.width  * 0.55
-        height:         ScreenTools.defaultFontPixelHeight * 2.944
-        color:          _utmspEnabled? qgcPal.successNotifyUTMSP: qgcPal.buttonText
-        radius:         ScreenTools.defaultFontPixelHeight * 0.5
-        border.color:   qgcPal.alertBorder
-        border.width:   1
-        opacity:        0
-        visible:        false
-        Text{
-            id:             success_notify
-            width:          successPopup.width - (ScreenTools.defaultFontPixelHeight * 2)
-            x:              ScreenTools.defaultFontPixelWidth * 2
-            y:              ScreenTools.defaultFontPixelHeight * 0.667
-            textFormat:     TextEdit.RichText
-            font.pointSize: ScreenTools.defaultFontPointSize
-            font.family:    ScreenTools.demiboldFontFamily
-            wrapMode:       TextEdit.WordWrap
-            color:          qgcPal.alertText
-        }
-        Rectangle {
-            anchors.horizontalCenter:   parent.horizontalCenter
-            anchors.top:                parent.top
-            anchors.topMargin:          -(height / 2)
-            color:                      _utmspEnabled? qgcPal.successNotifyUTMSP: qgcPal.buttonText
-            radius:                     ScreenTools.defaultFontPixelHeight * 0.25
-            border.color:               qgcPal.alertBorder
-            border.width:               1
-            width:                      statusLabel.contentWidth + _margins
-            height:                     statusLabel.contentHeight + _margins
-
-            property real _margins: ScreenTools.defaultFontPixelHeight * 0.25
-
-            QGCLabel {
-                id:                 statusLabel
-                anchors.centerIn:   parent
-                text:               qsTr("Status")
-                font.pointSize:     ScreenTools.smallFontPointSize
-                color:              qgcPal.alertText
-            }
-        }
-        Behavior on opacity {
-            NumberAnimation { duration: 1000 }
-        }
-        function hidesuccessPopup() {
-            successPopup.visible = false;
-            successPopup.opacity = 0;
-        }
-        Behavior on visible {
-            SequentialAnimation {
-                NumberAnimation { from: 2.5; to: 3.5; duration: 500 }
-                PauseAnimation { duration: 2000 }
-                NumberAnimation { from: 3.5; to: 2.5; duration: 500 }
-            }
-        }
-    }
-    // Failure Notification Popup
-    Rectangle {
-        id:      failPopup
-        x:       Math.round((mainWindow.width - width) * 0.5)
-        y:       ScreenTools.defaultFontPixelHeight
-        width:   mainWindow.width  * 0.55
-        height:  ScreenTools.defaultFontPixelHeight  * 2.944
-        color:   qgcPal.alertBackground
-        radius:  ScreenTools.defaultFontPixelHeight * 0.5
-        opacity: 0
-        visible: false
-        Text{
-            id:fail_notify
-            width:          successPopup.width - (ScreenTools.defaultFontPixelHeight * 2)
-            x:              ScreenTools.defaultFontPixelWidth * 2
-            y:              ScreenTools.defaultFontPixelHeight * 0.667
-            textFormat:     TextEdit.RichText
-            font.pointSize: ScreenTools.defaultFontPointSize
-            font.family:    ScreenTools.demiboldFontFamily
-            wrapMode:       TextEdit.WordWrap
-            color:          qgcPal.alertText
-        }
-        Rectangle {
-            anchors.horizontalCenter:   parent.horizontalCenter
-            anchors.top:                parent.top
-            anchors.topMargin:          -(height / 2)
-            color:                      qgcPal.alertBackground
-            radius:                     ScreenTools.defaultFontPixelHeight * 0.25
-            border.color:               qgcPal.alertBorder
-            border.width:               1
-            width:                      warningLabel.contentWidth + _margins
-            height:                     warningLabel.contentHeight + _margins
-
-            property real _margins: ScreenTools.defaultFontPixelHeight * 0.25
-
-            QGCLabel {
-                id:                 warningLabel
-                anchors.centerIn:   parent
-                text:               qsTr("Status Error")
-                font.pointSize:     ScreenTools.smallFontPointSize
-                color:              qgcPal.alertText
-            }
-        }
-        Behavior on opacity {
-            NumberAnimation { duration: 1000 }
-        }
-        function hidefailPopup() {
-            failPopup.visible = false;
-            failPopup.opacity = 0;
-        }
-        Behavior on visible {
-            SequentialAnimation {
-                NumberAnimation { from: 2.5; to: 3.5; duration: 500 }
-                PauseAnimation { duration: 2000 }
-                NumberAnimation { from: 3.5; to: 2.5; duration: 500 }
-            }
-        }
-    }
-    Connections{
-        target: utmspEditor
-        function onTimeStampSent(timestamp, activateflag, id){
-            activationParamsSent(timestamp,activateflag, id)
         }
     }
 

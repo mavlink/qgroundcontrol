@@ -1,18 +1,18 @@
-# Mission Command Tree
+# 任务命令树
 
-QGC creates the user interface for editing a specific mission item command dynamically from a hierarchy of json metadata. This hierarchy is called the Mission Command Tree. This way only json metadata must be created when new commands are added.
+QGC 创建用户界面，动态地从json 元数据层次编辑特定的任务项命令。 此层次结构称为任务命令树。 这种方式只能在添加新命令时创建 json 元数据。
 
-## Why a tree?
+## 为什么是树型结构？
 
-The tree is needed to deal with the idosyncracies of differening firmware supporting commands differently and/or different vehicle types supporting the commands in different ways. The simplest example of that is mavlink spec may include command parameters which are not supported by all firmwares. Or command parameters which are only valid for certain vehicle types. Also in some cases a GCS may decide to hide some of the command parameters from view to end users since they are too complex or cause usability problems.
+不同的固件支持不同的命令，以及/或者不同类型的车辆以不同的方式支持不同的命令，因此需要使用树形结构来处理这些问题。 最简单的例子是 mavlink 规范可能包含了并非所有固件都支持的命令参数。 或仅适用于某些类型载具的命令参数。 此外，在某些情况下，地面控制站可能会决定将某些命令参数在视图中对最终用户进行隐藏，因为它们过于复杂或导致可用性问题。
 
-The tree is the MissionCommandTree class: [MissionCommandTree.cc](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MissionCommandTree.cc), [MissionCommandTree.h](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MissionCommandTree.h)
+该树是 MissionCommandTree 类：[MissionCommandTree.cc](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MissionCommandTree.cc), [MissionCommandTree.h](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MissionCommandTree.h)
 
-### Tree Root
+### 树根目录
 
-The root of the tree is json metadata which matches the mavlink spec exactly.
+树的根目录是与 mavlink 规范完全匹配的json元数据。
 
-Here you can see an example of the root [json](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoCommon.json#L27) for `MAV_CMD_NAV_WAYPOINT`:
+下面是 MAV_CMD_NAV_WAYPOINT 的根 [json](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoCommon.json#L27) 示例：
 
 ```
         {
@@ -55,35 +55,35 @@ Note: In reality this based information should be provided by mavlink itself and
 
 ### Leaf Nodes
 
-The leaf nodes then provides metadata which can override values for the command and/or remove parameters from display to the user. The full tree hierarchy is this:
+The leaf nodes then provides metadata which can override values for the command and/or remove parameters from display to the user. 完整的树层次结构是这样：
 
-- Root - Generic Mavlink
-  - Vehicle Type Specific - Vehicle specific overrides to the generic spec
-  - Firmware Type Specific - One optional leaf node for each firmware type (PX4/ArduPilot)
-    - Vehicle Type Specific - One optional leaf node for each vehicel type (FW/MR/VTOL/Rover/Sub)
+- 根-通用Mavlink
+  - 特定的载具类型－特定载具的通用规范
+  - 固件类型特定——每种固件类型的一个可选叶节点 (PX4/ArduPilot)
+    - 特定载具型号——每种载具类型有一个可选的叶节点（固定翼/多旋翼/垂直起降飞行器（VTOL）/小车/潜艇）
 
-Note: In reality this override capability should be part of mavlink spec and should be able to be queried from the vehicle.
+注意：实际上，此替代功能应该是mavlink规格的一部分，并且应该可以从载具中查询。
 
-### Building the instance tree from the full tree
+### 从完整树中构建实例树
 
-Since the json metadata provides information for all firmware/vehicle type combinations the actual tree to use must be built based on the firmware and vehicle type which is being used to create a Plan. This is done through a process call "collapsing" the full tree to a firmware/vehicle specific tree ([code](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MissionCommandTree.cc#L119)).
+由于json元数据提供了所有固件/载具类型组合的信息，实际使用的树必须建立在用于创建计划的固件和载具类型的基础上。 这是通过一个进程叫做“折叠”完整树到一个固件/载具特定树([code](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MissionCommandTree.cc#L119))来完成的。
 
-The steps are as follows:
+步骤如下：
 
-- Add the root to the instance tree
-- Apply the vehicle type specific overrides to the instance tree
-- Apply the firmware type specific overrides to the instance tree
-- Apply the firmware/vehicle type specific overrides to the instance tree
+- 将根添加到实例树
+- 将特定的载具类型重写实例树
+- 对实例树应用固件类型特定覆盖
+- 对实例树应用固件/载具类型特定覆盖
 
-The resulting Mission Command Tree is then used to build UI for the Plan View item editors. In reality it is used for more than just that, there are many other places where knowing more information about a specific command id is useful.
+然后，生成的任务命令树将为平面项目编辑器构建UI。 实际上，它不仅用于此，还有许多其他地方可以帮助您了解有关特定命令 id 的更多信息。
 
-## Example hierarchy for `MAV_CMD_NAV_WAYPOINT`
+## `MAV_CMD_NAV_WAYPOINT` 示例层次结构
 
-Let's walk through an example hierarchy for `MAV_CMD_NAV_WAYPOINT`. Root information is shown above.
+让我们来看看 `MAV_CMD_NAV_WAYPOINT` 的示例层次结构。 根信息如上图所示。
 
-### Root - Vehicle Type Specific leaf node
+### 根-载具类型特定叶节点
 
-The next level of the hiearchy is generic mavlink but vehicle specific. Json files are here: [MR](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoMultiRotor.json), [FW](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoFixedWing.json), [ROVER](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoRover.json), [Sub](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoSub.json), [VTOL](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoVTOL.json). And here are the overrides for (Fixed Wings)(https\://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoFixedWing.json#L7):
+层次结构的下一个层级是通用的 mavlink，但只针对特定的载具。 Json 文件在这里: [多旋翼](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoMultiRotor.json)，[固定翼](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoRover.json)，[小车](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoRover.json)，[潜艇](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoSub.json)， [垂直起降飞行器（VTOL）](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoVTOL.json)。 这里是重写 (固定Wings) (https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoFixedWing.json#L7):
 
 ```
         {
@@ -93,11 +93,11 @@ The next level of the hiearchy is generic mavlink but vehicle specific. Json fil
         },
 ```
 
-What this does is remove the editing UI for param4 which is Yaw and not used by fixed wings. Since this is a leaf node of the root, this applies to all fixed wing vehicle no matter the firmware type.
+这样做是删除参数4的编辑界面，固定翼没有使用航向（Yaw）参数。 由于这是根的叶节点，因此无论固件类型如何，这都适用于所有固定翼载具。
 
-### Root - Firmware Type Specific leaf node
+### 根－载具类型的特定叶节点
 
-The next level of the hiearchy are overrides which are specific to a firmware type but apply to all vehicle types. Once again lets loook at the waypoint overrides:
+The next level of the hiearchy are overrides which are specific to a firmware type but apply to all vehicle types. 让我们再次看看航点重写功能：
 
 [ArduPilot](https://github.com/mavlink/qgroundcontrol/blob/master/src/FirmwarePlugin/APM/MavCmdInfoCommon.json#L6):
 
@@ -119,15 +119,15 @@ The next level of the hiearchy are overrides which are specific to a firmware ty
         },
 ```
 
-You can see that for both firmwares param2 which is acceptance radius is removed from the editing ui. This is a QGC specific decision. It is generally safer and easier to use the firmwares generic acceptance radius handling than the specify a value. So we've decided to hide it from users.
+您可以看到，对于两个固件参数参数2，即接受半径，从编辑 ui 中删除。 这是QGC的特性决定。 与指定值相比，使用固件通用接受半径会更加安全和容易。 因此，我们决定对用户隐藏它。
 
-You can also see that for PX4 param3/PassThru is removed since it is not supported by PX.
+您还可以看到，对于 PX4 param3/PassThru，由于 PX 不支持它，因此已被删除。
 
-### Root - Firmware Type Specific - Vehicle Type Specific leaf node
+### 根－特定于固件的类型－特定于载具类型的叶子节点
 
-The last level of the hiearchy is both firmware and vehicle type specific.
+层次结构的最后一个级别既针对固件又针对载具类型。
 
-[ArduPilot/MR](https://github.com/mavlink/qgroundcontrol/blob/master/src/FirmwarePlugin/APM/MavCmdInfoMultiRotor.json#L7):
+[ArduPilot/MR](https://github.com/mavlink/qgroundcontrol/blob/master/src/FirmwarePlugin/APM/MavCmdInfoMultiRotor.json#L7)：
 
 ```
         {
@@ -137,60 +137,61 @@ The last level of the hiearchy is both firmware and vehicle type specific.
         },
 ```
 
-Here you can see that for an ArduPilot Multi-Rotor vehicle param2/3/4 Acceptance/PassThru/Yaw are removed. Yaw for example is removed because it is not supported. Due to quirk of how this code works, you need to repeat the overrides from the lower level.
+在这里你可以看到，ArduPilot的多电机载具参数2/3/4 Acceptance/PassThru/Yaw 已被移除。 例如，航向（Yaw）是因为不支持所以被移除。 由于这个代码如何工作的问题，您需要从较低级别重复重写。
 
-## Mission Command UI Info
+## 任务命令界面信息
 
-Two classes define the metadata associated with a command:
+两个类定义与命令相关联的元数据：
 
-- MissionCommandUIInfo - Metadata for the entire command
-- MissionCmdParamInfo - Metadata for a param in a command
+- MissionCommandUIInfo－整个命令的元数据
+- MissionCmdParamInfo－命令中参数的元数据
 
-The source is commented with full details of the json keys which are supported.
+源中注释了支持 json 键的完整详细信息。
 
-[MissionCommandUIInfo](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MissionCommandUIInfo.h#L82):
-
-```
-/// UI Information associated with a mission command (MAV_CMD)
-///
-/// MissionCommandUIInfo is used to automatically generate editing ui for a MAV_CMD. This object also supports the concept of only having a set of partial
-/// information for the command. This is used to create overrides of the base command information. For on override just specify the keys you want to modify
-/// from the base command ui info. To override param ui info you must specify the entire MissionParamInfo object.
-///
-/// The json format for a MissionCommandUIInfo object is:
-///
-/// Key                     Type    Default     Description
-/// id                      int     reauired    MAV_CMD id
-/// comment                 string              Used to add a comment
-/// rawName                 string  required    MAV_CMD enum name, should only be set of base tree information
-/// friendlyName            string  rawName     Short description of command
-/// description             string              Long description of command
-/// specifiesCoordinate     bool    false       true: Command specifies a lat/lon/alt coordinate
-/// specifiesAltitudeOnly   bool    false       true: Command specifies an altitude only (no coordinate)
-/// standaloneCoordinate    bool    false       true: Vehicle does not fly through coordinate associated with command (exampl: ROI)
-/// isLandCommand           bool    false       true: Command specifies a land command (LAND, VTOL_LAND, ...)
-/// friendlyEdit            bool    false       true: Command supports friendly editing dialog, false: Command supports 'Show all values" style editing only
-/// category                string  Advanced    Category which this command belongs to
-/// paramRemove             string              Used by an override to remove params, example: "1,3" will remove params 1 and 3 on the override
-/// param[1-7]              object              MissionCommandParamInfo object
-///
-```
-
-[MissionCmdParamInfo](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MissionCommandUIInfo.h#L25):
+[任务指令信息](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MissionCommandUIInfo.h#L82):
 
 ```
-/// UI Information associated with a mission command (MAV_CMD) parameter
+/// 与任务指令（MAV_CMD）相关联的用户界面信息
+///
+/// MissionCommandUIInfo 用于为 MAV_CMD 自动生成编辑用户界面。
+/// 此对象还支持仅针对指令拥有一组部分信息的概念。这用于创建对基本指令信息的覆盖。
+/// 对于覆盖，只需指定你想要从基本指令用户界面信息中修改的键。
+/// 要覆盖参数用户界面信息，你必须指定整个 MissionParamInfo 对象。
+///
+///  MissionCommandUIInfo 对象的 JSON 格式如下：
+///
+/// 键                      类型     默认值      描述
+/// id                      int     必填项       MAV_CMD id
+/// comment                 string              用于添加注释
+/// rawName                 string  必填项       MAV_CMD 枚举名称，应仅在基本树信息中设置
+/// friendlyName            string  rawName     指令的简短描述
+/// description             string              指令的详细描述
+/// specifiesCoordinate     bool    false       true: 指令指定经纬度 / 高度坐标
+/// specifiesAltitudeOnly   bool    false       true: 指令仅指定高度（无坐标）
+/// standaloneCoordinate    bool    false       true: 飞行器不会飞越与指令相关的坐标（例如：兴趣点（ROI））
+/// isLandCommand           bool    false       true: 指令指定着陆指令（LAND、VTOL_LAND 等）
+/// friendlyEdit            bool    false       true: 指令支持友好的编辑对话框，false：指令仅支持 “显示所有值” 样式的编辑
+/// category                string  Advanced    此指令所属的类别
+/// paramRemove             string              覆盖时用于移除参数，例如：“1,3” 将在覆盖时移除参数 1 和 3
+/// param[1-7]              object              MissionCommandParamInfo 对象
+///
+```
+
+[任务参数信息https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MissionCommandUIInfo.h#L25](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MissionCommandUIInfo.h#L25):
+
+```
+/// MissionCommandParamInfo 用于为与 MAV_CMD 相关的参数自动生成编辑用户界面。
 ///
 /// MissionCommandParamInfo is used to automatically generate editing ui for a parameter associated with a MAV_CMD.
 ///
-/// The json format for a MissionCmdParamInfo object is:
+/// MissionCmdParamInfo 对象的 JSON 格式如下：
 ///
-/// Key             Type    Default     Description
-/// label           string  required    Label for text field
-/// units           string              Units for value, should use FactMetaData units strings in order to get automatic translation
-/// default         double  0.0/NaN     Default value for param. If no default value specified and nanUnchanged == true, then defaultValue is NaN.
-/// decimalPlaces   int     7           Number of decimal places to show for value
-/// enumStrings     string              Strings to show in combo box for selection
-/// enumValues      string              Values associated with each enum string
-/// nanUnchanged    bool    false       True: value can be set to NaN to signal unchanged
+/// 键              类型    默认值       描述
+/// label           string  必填项      文本字段的标签
+/// units           string              值的单位，应使用 FactMetaData 单位字符串以实现自动转换translation
+/// default         double  0.0/NaN     参数的默认值。如果未指定默认值且 nanUnchanged == true，则 defaultValue 为 NaN。
+/// decimalPlaces   int     7           值要显示的小数位数
+/// enumStrings     string              组合框中显示供选择的字符串
+/// enumValues      string              与每个枚举字符串关联的值
+/// nanUnchanged    bool    false       True: 值可设置为 NaN 以表示未更改
 ```

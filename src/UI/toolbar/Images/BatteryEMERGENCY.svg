@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 72 72">
+    <g style="fill:red;fill-opacity:1;stroke:none;stroke-width:.924504;stroke-dasharray:none;stroke-opacity:1">
+        <path d="M171.9-208c0 .2-.2.4-.4.4H155c-.2 0-.4-.2-.4-.4v-4.2c0-.2.2-.4.4-.4h16.5c.2 0 .4.2.4.4z" style="stroke-miterlimit:10;fill:red;fill-opacity:1;stroke:none;stroke-width:.924504;stroke-dasharray:none;stroke-opacity:1" transform="matrix(1.04737 0 0 1.11707 -135.129 239.568)"/>
+    </g>
+    <g transform="translate(-44.382 -.617)">
+        <rect width="40.078" height="57.934" x="60.301" y="9.043" rx="3.866" ry="3.364" style="fill:none;fill-opacity:1;stroke:red;stroke-width:2.80276;stroke-miterlimit:3;stroke-dasharray:none;stroke-opacity:1"/>
+        <text xml:space="preserve" x="76.998" y="34.271" style="fill:red;stroke:red;stroke-width:3;stroke-miterlimit:3"/>
+        <text xml:space="preserve" x="77.182" y="37.237" style="font-size:48px;font-family:&quot;DejaVu Serif&quot;;-inkscape-font-specification:&quot;DejaVu Serif&quot;;fill:#fff;stroke:#b5b5b5;stroke-width:4.837;stroke-miterlimit:3"/>
+        <path d="M349.787-171.706c-2.772 0-4.711 1.911-4.711 4.692 0 2.681 1.883 4.697 4.606 4.697h.105c2.825 0 4.653-2.016 4.653-4.696-.05-2.782-1.883-4.693-4.653-4.693z" style="fill:red;stroke:#ad1515;stroke-width:1.87103;stroke-opacity:1" transform="translate(-268.88 220.903)"/>
+        <path d="M16.191 4.579h-4.387l.61 12.579h3.165z" style="fill:red;stroke:#ad1515;stroke-opacity:1" transform="matrix(2.1202 0 0 2.2726 51.205 5.694)"/>
+    </g>
+</svg>

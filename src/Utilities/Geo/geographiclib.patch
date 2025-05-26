@@ -1,0 +1,55 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 40d0b206..738d6c83 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -452,32 +452,32 @@ if (WIN32)
+ endif ()
+ 
+ # The list of tools (to be installed into, e.g., /usr/local/bin)
+-set (TOOLS CartConvert ConicProj GeodesicProj GeoConvert GeodSolve
+-  GeoidEval Gravity IntersectTool MagneticField Planimeter RhumbSolve
+-  TransverseMercatorProj)
++# set (TOOLS CartConvert ConicProj GeodesicProj GeoConvert GeodSolve
++#   GeoidEval Gravity IntersectTool MagneticField Planimeter RhumbSolve
++#   TransverseMercatorProj)
+ # The list of scripts (to be installed into, e.g., /usr/local/sbin)
+-set (SCRIPTS geographiclib-get-geoids geographiclib-get-gravity
+-  geographiclib-get-magnetic)
++# set (SCRIPTS geographiclib-get-geoids geographiclib-get-gravity
++#   geographiclib-get-magnetic)
+ 
+ set_property (GLOBAL PROPERTY USE_FOLDERS ON)
+ 
+ # The list of subdirectories to process
+ add_subdirectory (src)
+ add_subdirectory (include/GeographicLib)
+-add_subdirectory (tools)
+-add_subdirectory (man)
+-add_subdirectory (doc)
+-if (EXAMPLEDIR)
+-  set (CALLED_FROM_TOPLEVEL ON)
+-  add_subdirectory (examples)   # This just installs the examples
+-endif ()
++# add_subdirectory (tools)
++# add_subdirectory (man)
++# add_subdirectory (doc)
++# if (EXAMPLEDIR)
++#   set (CALLED_FROM_TOPLEVEL ON)
++#   add_subdirectory (examples)   # This just installs the examples
++# endif ()
+ add_subdirectory (cmake)
+-enable_testing ()
+-add_subdirectory (tests)
+-add_subdirectory (experimental)
+-if (NOT RELEASE)
+-  add_subdirectory (develop)
+-endif ()
++# enable_testing ()
++# add_subdirectory (tests)
++# add_subdirectory (experimental)
++# if (NOT RELEASE)
++#   add_subdirectory (develop)
++# endif ()
+ 
+ # make exampleprograms does a fresh cmake configuration and so uses
+ # find_package to find the just-built version of GeographicLib (via the

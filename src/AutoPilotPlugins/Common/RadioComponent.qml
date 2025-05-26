@@ -389,6 +389,14 @@ SetupPage {
                     }
 
                     QGCButton {
+                        text:       qsTr("CRSF Bind")
+                        onClicked:  mainWindow.showMessageDialog(qsTr("CRSF Bind"),
+                                                                 qsTr("Click Ok to place your CRSF receiver in the bind mode."),
+                                                                 Dialog.Ok | Dialog.Cancel,
+                                                                 function() { controller.crsfBindMode() })
+                    }
+
+                    QGCButton {
                         text:       qsTr("Copy Trims")
                         onClicked:  mainWindow.showMessageDialog(qsTr("Copy Trims"),
                                                                  qsTr("Center your sticks and move throttle all the way down, then press Ok to copy trims. After pressing Ok, reset the trims on your radio back to zero."),

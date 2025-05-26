@@ -167,7 +167,7 @@ SetupPage {
                     QGCLabel {
                         id:             settingsLabel
                         text:           qsTr("Light Output Channels")
-                        font.family:    ScreenTools.demiboldFontFamily
+                        font.bold:      true
                     }
 
                     Rectangle {

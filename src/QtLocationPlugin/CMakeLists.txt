@@ -1,22 +1,23 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Location Network Positioning Qml Sql)
-
-qt_add_plugin(QGCLocation STATIC
+qt_add_plugin(QGCLocation
+    STATIC
     CLASS_NAME QGeoServiceProviderFactoryQGC
     OUTPUT_TARGETS QGCLocation_targets
-    BingMapProvider.cpp
-    BingMapProvider.h
-    ElevationMapProvider.cpp
-    ElevationMapProvider.h
-    EsriMapProvider.cpp
-    EsriMapProvider.h
-    GenericMapProvider.cpp
-    GenericMapProvider.h
-    GoogleMapProvider.cpp
-    GoogleMapProvider.h
-    MapboxMapProvider.cpp
-    MapboxMapProvider.h
-    MapProvider.cpp
-    MapProvider.h
+    Providers/BingMapProvider.cpp
+    Providers/BingMapProvider.h
+    Providers/ElevationMapProvider.cpp
+    Providers/ElevationMapProvider.h
+    Providers/EsriMapProvider.cpp
+    Providers/EsriMapProvider.h
+    Providers/GenericMapProvider.cpp
+    Providers/GenericMapProvider.h
+    Providers/GoogleMapProvider.cpp
+    Providers/GoogleMapProvider.h
+    Providers/MapboxMapProvider.cpp
+    Providers/MapboxMapProvider.h
+    Providers/MapProvider.cpp
+    Providers/MapProvider.h
+    QMLControl/QGCMapEngineManager.cc
+    QMLControl/QGCMapEngineManager.h
     QGCCachedTileSet.cpp
     QGCCachedTileSet.h
     QGCCacheTile.h
@@ -41,11 +42,8 @@ qt_add_plugin(QGCLocation STATIC
     QGeoTiledMapQGC.h
     QGeoTileFetcherQGC.cpp
     QGeoTileFetcherQGC.h
-    QMLControl/QGCMapEngineManager.cc
-    QMLControl/QGCMapEngineManager.h
 )
 
-target_compile_definitions(QGCLocation PRIVATE CMAKE_LOCATION_PLUGIN)
 if(IOS)
     target_compile_definitions(QGCLocation PRIVATE QGC_NO_GOOGLE_MAPS)
 endif()
@@ -53,39 +51,37 @@ endif()
 target_link_libraries(QGCLocation
     PRIVATE
         Qt6::Positioning
-        Settings
-        Utilities
+        Qt6::Sql
     PUBLIC
         Qt6::Core
         Qt6::Location
         Qt6::LocationPrivate
         Qt6::Network
-        Qt6::Sql
-        QGC
-        QmlControls
 )
 
 target_include_directories(QGCLocation
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/..
+        ${CMAKE_CURRENT_SOURCE_DIR}/../FactSystem
+        ${CMAKE_CURRENT_SOURCE_DIR}/../QmlControls
+        ${CMAKE_CURRENT_SOURCE_DIR}/../Terrain
+        ${CMAKE_CURRENT_SOURCE_DIR}/../Terrain/Providers
+        ${CMAKE_CURRENT_SOURCE_DIR}/../Settings
+        ${CMAKE_CURRENT_SOURCE_DIR}/../Utilities
+        ${CMAKE_CURRENT_SOURCE_DIR}/../Utilities/FileSystem
+        Providers
         QMLControl
 )
 
-set_source_files_properties(QMLControl/OfflineMap.qml
-    PROPERTIES
-        QT_RESOURCE_ALIAS OfflineMap.qml
-)
+set_source_files_properties(QMLControl/OfflineMapEditor.qml PROPERTIES QT_RESOURCE_ALIAS OfflineMapEditor.qml)
 
-set_source_files_properties(QMLControl/OfflineMapEditor.qml
-    PROPERTIES
-        QT_RESOURCE_ALIAS OfflineMapEditor.qml
-)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCLocation)
 
 # qt_add_qml_module(QGCLocation
 #     URI QGroundControl.QGCLocation
 #     VERSION 1.0
 #     QML_FILES
-#         QMLControl/OfflineMap.qml
 #         QMLControl/OfflineMapEditor.qml
 #     OUTPUT_TARGETS QGCLocation_targets
 #     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}

@@ -1,6 +1,9 @@
-# QGroundControl User Guide
+# QGroundControl Guide (Daily Build 5.0)
 
-[![Releases](https://img.shields.io/github/release/mavlink/QGroundControl.svg)](https://github.com/mavlink/QGroundControl/releases) [![Discuss](https://img.shields.io/badge/discuss-px4-ff69b4.svg)](http://discuss.px4.io/c/qgroundcontrol/qgroundcontrol-usage) [![Discuss](https://img.shields.io/badge/discuss-ardupilot-ff69b4.svg)](http://discuss.ardupilot.org/c/ground-control-software/qgroundcontrol)
+[![Discuss](https://img.shields.io/badge/discuss-px4-ff69b4.svg)](http://discuss.px4.io/c/qgroundcontrol/qgroundcontrol-usage) 
+[![Discuss](https://img.shields.io/badge/discuss-ardupilot-ff69b4.svg)](http://discuss.ardupilot.org/c/ground-control-software/qgroundcontrol)
+
+_You are viewing the docs for the upcoming 5.0 release of QGroundControl. If you want docs for a Stable build select from the Version dropdown above._
 
 _QGroundControl_ provides full flight control and vehicle setup for PX4 or ArduPilot powered vehicles.
 It provides easy and straightforward usage for beginners, while still delivering high end feature support for experienced users.

@@ -79,46 +79,19 @@ Rectangle {
                 id:     buttonRepeater
                 model:  settingsPagesModel
 
-                Button {
+                SettingsButton {
                     Layout.fillWidth:   true
                     text:               name
-                    padding:            ScreenTools.defaultFontPixelWidth / 2
-                    autoExclusive:      true
                     icon.source:        iconUrl
                     visible:            pageVisible()
 
-                    background: Rectangle {
-                        color:  checked ? qgcPal.buttonHighlight : "transparent"
-                        radius: ScreenTools.defaultFontPixelWidth / 2
-                    }
-
-                    contentItem: RowLayout {
-                        spacing: ScreenTools.defaultFontPixelWidth
-
-                        QGCColoredImage {
-                            source: iconUrl
-                            color:  checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
-                            width:  ScreenTools.defaultFontPixelHeight
-                            height: ScreenTools.defaultFontPixelHeight
-                        }
-
-                        QGCLabel {
-                            Layout.fillWidth:       true
-                            text:                   name
-                            color:                  checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
-                            horizontalAlignment:    QGCLabel.AlignLeft
-                        }
-                    }
-
                     onClicked: {
-                        focus = true
-                        if (mainWindow.preventViewSwitch()) {
-                            return
+                        if (mainWindow.allowViewSwitch()) {
+                            if (rightPanel.source !== url) {
+                                rightPanel.source = url
+                            }
+                            checked = true
                         }
-                        if (rightPanel.source !== url) {
-                            rightPanel.source = url
-                        }
-                        checked = true
                     }
 
                     Component.onCompleted: {
