@@ -505,6 +505,7 @@ if(QGC_CUSTOM_BUILD)
     target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_SOURCES})
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_LIBRARIES})
     target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_DIRECTORIES})
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_DEFINITIONS})
 endif()
 
 target_precompile_headers(${CMAKE_PROJECT_NAME}
