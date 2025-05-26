@@ -12,127 +12,221 @@
 
 #include <QtCore/QByteArray>
 #include <QtCore/QDateTime>
-
-#include <exiv2/exiv2.hpp>
+#include <QtCore/QtEndian>
 
 QGC_LOGGING_CATEGORY(ExifParserLog, "qgc.analyzeview.exifparser")
 
 namespace ExifParser
 {
 
-void init()
-{
-    Exiv2::XmpParser::initialize();
-    ::atexit(Exiv2::XmpParser::terminate);
-}
-
 QDateTime readTime(const QByteArray &buf)
 {
-    try {
-        // Convert QByteArray to std::string for Exiv2
-        const Exiv2::Image::UniquePtr image = Exiv2::ImageFactory::open(reinterpret_cast<const Exiv2::byte*>(buf.constData()), buf.size());
-        image->readMetadata();
+    QByteArray tiffHeader("\x49\x49\x2A", 3);
+    QByteArray createDateHeader("\x04\x90\x02", 3);
 
-        const Exiv2::ExifData &exifData = image->exifData();
-        if (exifData.empty()) {
-            qCWarning(ExifParserLog) << "No EXIF data found in the image.";
-            return QDateTime();
-        }
+    // find header position
+    uint32_t tiffHeaderIndex = buf.indexOf(tiffHeader);
 
-        // Read DateTimeOriginal
-        const Exiv2::ExifKey key("Exif.Photo.DateTimeOriginal");
-        // Exiv2::ExifData::const_iterator it = dateTimeOriginal(exifData);
-        const Exiv2::ExifData::const_iterator pos = exifData.findKey(key);
-        if (pos == exifData.end()) {
-            qCWarning(ExifParserLog) << "No DateTimeOriginal found.";
-            return QDateTime();
-        }
+    // find creation date header index
+    uint32_t createDateHeaderIndex = buf.indexOf(createDateHeader);
 
-        const std::string dateTimeOriginal = pos->toString();
-        const QString createDate = QString::fromStdString(dateTimeOriginal);
-        const QStringList createDateList = createDate.split(' ');
+    // extract size of date-time string, -1 accounting for null-termination
+    uint32_t* sizeString = reinterpret_cast<uint32_t*>(buf.mid(createDateHeaderIndex + 4, 4).data());
+    uint32_t createDateStringSize = qFromLittleEndian(*sizeString) - 1;
 
-        if (createDateList.size() < 2) {
-            qCWarning(ExifParserLog) << "Invalid date/time format: " << createDateList;
-            return QDateTime();
-        }
+    // extract location of date-time string
+    uint32_t* dataIndex = reinterpret_cast<uint32_t*>(buf.mid(createDateHeaderIndex + 8, 4).data());
+    uint32_t createDateStringDataIndex = qFromLittleEndian(*dataIndex) + tiffHeaderIndex;
 
-        const QStringList dateList = createDateList[0].split(':');
-        const QStringList timeList = createDateList[1].split(':');
+    // read out data of create date-time field
+    QString createDate = buf.mid(createDateStringDataIndex, createDateStringSize);
 
-        if ((dateList.size() < 3) || (timeList.size() < 3)) {
-            qCWarning(ExifParserLog) << "Could not parse creation date/time: " << dateList << " " << timeList;
-            return QDateTime();
-        }
-
-        const QDate date(dateList[0].toInt(), dateList[1].toInt(), dateList[2].toInt());
-        const QTime time(timeList[0].toInt(), timeList[1].toInt(), timeList[2].toInt());
-
-        const QDateTime tagTime(date, time);
-
-        return tagTime;
-    } catch (const Exiv2::Error &e) {
-        qCWarning(ExifParserLog) << "Error reading EXIF data:" << e.what();
+    QStringList createDateList = createDate.split(' ');
+    if (createDateList.count() < 2) {
+        qCWarning(ExifParserLog) << "Could not decode creation time and date: " << createDateList;
         return QDateTime();
     }
+    QStringList dateList = createDateList[0].split(':');
+    if (dateList.count() < 3) {
+        qCWarning(ExifParserLog) << "Could not decode creation date: " << dateList;
+        return QDateTime();
+    }
+    QStringList timeList = createDateList[1].split(':');
+    if (timeList.count() < 3) {
+        qCWarning(ExifParserLog) << "Could not decode creation time: " << timeList;
+        return QDateTime();
+    }
+    QDate date(dateList[0].toInt(), dateList[1].toInt(), dateList[2].toInt());
+    QTime time(timeList[0].toInt(), timeList[1].toInt(), timeList[2].toInt());
+    QDateTime tagTime(date, time);
+    return tagTime;
 }
 
 bool write(QByteArray &buf, const GeoTagWorker::CameraFeedbackPacket &geotag)
 {
-    try {
-        // Convert QByteArray to std::string for Exiv2
-        const Exiv2::Image::UniquePtr image = Exiv2::ImageFactory::open(reinterpret_cast<const Exiv2::byte*>(buf.constData()), buf.size());
-        image->readMetadata();
+    QByteArray app1Header("\xff\xe1", 2);
+    uint32_t app1HeaderInd = buf.indexOf(app1Header);
+    uint16_t *conversionPointer = reinterpret_cast<uint16_t *>(buf.mid(app1HeaderInd + 2, 2).data());
+    uint16_t app1Size = *conversionPointer;
+    uint16_t app1SizeEndian = qFromBigEndian(app1Size) + 0xa5;  // change wrong endian
+    QByteArray tiffHeader("\x49\x49\x2A", 3);
+    uint32_t tiffHeaderInd = buf.indexOf(tiffHeader);
+    conversionPointer = reinterpret_cast<uint16_t *>(buf.mid(tiffHeaderInd + 8, 2).data());
+    uint16_t numberOfTiffFields  = *conversionPointer;
+    uint32_t nextIfdOffsetInd = tiffHeaderInd + 10 + 12 * (numberOfTiffFields);
+    conversionPointer = reinterpret_cast<uint16_t *>(buf.mid(nextIfdOffsetInd, 2).data());
+    uint16_t nextIfdOffset = *conversionPointer;
 
-        Exiv2::ExifData &exifData = image->exifData();
+    // Definition of useful unions and structs
+    union char2uint32_u {
+        char c[4];
+        uint32_t i;
+    };
+    union char2uint16_u {
+        char c[2];
+        uint16_t i;
+    };
+    // This struct describes a standart field used in exif files
+    struct field_s {
+        uint16_t tagID;  // Describes which information is added here, e.g. GPS Lat
+        uint16_t type;  // Describes the data type, e.g. string, uint8_t,...
+        uint32_t size;  // Describes the size
+        uint32_t content;  // Either contains the information, or the offset to the exif header where the information is stored (if 32 bits is not enough)
+    };
+    // This struct contains all the fields that we want to add to the image
+    struct fields_s {
+        field_s gpsVersion;
+        field_s gpsLatRef;
+        field_s gpsLat;
+        field_s gpsLonRef;
+        field_s gpsLon;
+        field_s gpsAltRef;
+        field_s gpsAlt;
+        field_s gpsMapDatum;
+        uint32_t finishedDataField;
+    };
+    // These are the additional information that can not be put into a single uin32_t
+    struct extended_s {
+        uint32_t gpsLat[6];
+        uint32_t gpsLon[6];
+        uint32_t gpsAlt[2];
+        char mapDatum[7];// = {0x57,0x47,0x53,0x2D,0x38,0x34,0x00};
+    };
+    // This struct contains all the information we want to add to the image
+    struct readable_s {
+        fields_s fields;
+        extended_s extendedData;
+    };
 
-        // Set GPSVersionID
-        exifData["Exif.GPSInfo.GPSVersionID"] = "2 2 0 0";
+    // This union is used because for writing the information we have to use a char array, but we still want the information to be available in a more descriptive way
+    union {
+        char c[0xa3];
+        readable_s readable;
+    } gpsData;
 
-        // Set GPS map datum
-        exifData["Exif.GPSInfo.GPSMapDatum"] = "WGS-84";
 
-        // Latitude in degrees, minutes, seconds
-        const double latitude = std::fabs(geotag.latitude); // Absolute value for conversion
-        const int latDegrees = static_cast<int>(latitude);
-        const int latMinutes = static_cast<int>((latitude - latDegrees) * 60);
-        const double latSeconds = (latitude - latDegrees - latMinutes / 60.0) * 3600.0;
+    char2uint32_u gpsIFDInd;
+    gpsIFDInd.i = nextIfdOffset;
 
-        // Set GPS latitude
-        exifData["Exif.GPSInfo.GPSLatitudeRef"] = (geotag.latitude > 0) ? "N" : "S";
-        exifData["Exif.GPSInfo.GPSLatitude"] =
-            std::to_string(latDegrees) + "/1 " +
-            std::to_string(latMinutes) + "/1 " +
-            std::to_string(static_cast<int>(latSeconds * 1000)) + "/1000";
+    // this will stay constant
+    QByteArray gpsInfo("\x25\x88\x04\x00\x01\x00\x00\x00", 8);
+    gpsInfo.append(gpsIFDInd.c[0]);
+    gpsInfo.append(gpsIFDInd.c[1]);
+    gpsInfo.append(gpsIFDInd.c[2]);
+    gpsInfo.append(gpsIFDInd.c[3]);
 
-        // Longitude in degrees, minutes, seconds
-        const double longitude = std::fabs(geotag.longitude);
-        const int lonDegrees = static_cast<int>(longitude);
-        const int lonMinutes = static_cast<int>((longitude - lonDegrees) * 60);
-        const double lonSeconds = (longitude - lonDegrees - lonMinutes / 60.0) * 3600.0;
+    // filling values to gpsData
+    uint32_t gpsDataExtInd = gpsIFDInd.i + 2 + sizeof(fields_s);
 
-        // Set GPS longitude
-        exifData["Exif.GPSInfo.GPSLongitudeRef"] = (geotag.longitude > 0) ? "E" : "W";
-        exifData["Exif.GPSInfo.GPSLongitude"] =
-            std::to_string(lonDegrees) + "/1 " +
-            std::to_string(lonMinutes) + "/1 " +
-            std::to_string(static_cast<int>(lonSeconds * 1000)) + "/1000";
+    // Filling up the fields with the corresponding values
+    gpsData.readable.fields.gpsVersion.tagID = 0;
+    gpsData.readable.fields.gpsVersion.type = 1;
+    gpsData.readable.fields.gpsVersion.size = 4;
+    gpsData.readable.fields.gpsVersion.content = 2;
 
-        // Set GPS altitude
-        exifData["Exif.GPSInfo.GPSAltitudeRef"] = (geotag.altitude < 0) ? 1 : 0;
-        exifData["Exif.GPSInfo.GPSAltitude"] = std::to_string(static_cast<uint32_t>(geotag.altitude * 100)) + "/100";
+    gpsData.readable.fields.gpsLatRef.tagID = 1;
+    gpsData.readable.fields.gpsLatRef.type = 2;
+    gpsData.readable.fields.gpsLatRef.size = 2;
+    gpsData.readable.fields.gpsLatRef.content = geotag.latitude > 0 ? 'N' : 'S';
 
-        // Write the updated metadata back to the buffer
-        image->setExifData(exifData);
-        image->writeMetadata();
+    gpsData.readable.fields.gpsLat.tagID = 2;
+    gpsData.readable.fields.gpsLat.type = 5;
+    gpsData.readable.fields.gpsLat.size = 3;
+    gpsData.readable.fields.gpsLat.content = gpsDataExtInd;
 
-        // Update the buffer with new image data
-        buf = QByteArray(reinterpret_cast<const char*>(image->io().mmap()), image->io().size());
-        return true;
-    } catch (Exiv2::Error& e) {
-        qCWarning(ExifParserLog) << "Error writing EXIF GPS data:" << e.what();
-        return false;
-    }
+    gpsData.readable.fields.gpsLonRef.tagID = 3;
+    gpsData.readable.fields.gpsLonRef.type = 2;
+    gpsData.readable.fields.gpsLonRef.size = 2;
+    gpsData.readable.fields.gpsLonRef.content = geotag.longitude > 0 ? 'E' : 'W';
+
+    gpsData.readable.fields.gpsLon.tagID = 4;
+    gpsData.readable.fields.gpsLon.type = 5;
+    gpsData.readable.fields.gpsLon.size = 3;
+    gpsData.readable.fields.gpsLon.content = gpsDataExtInd + 6 * 4;
+
+    gpsData.readable.fields.gpsAltRef.tagID = 5;
+    gpsData.readable.fields.gpsAltRef.type = 1;
+    gpsData.readable.fields.gpsAltRef.size = 1;
+    gpsData.readable.fields.gpsAltRef.content = 0x00;
+
+    gpsData.readable.fields.gpsAlt.tagID = 6;
+    gpsData.readable.fields.gpsAlt.type = 5;
+    gpsData.readable.fields.gpsAlt.size = 1;
+    gpsData.readable.fields.gpsAlt.content = gpsDataExtInd + 6 * 4 * 2;
+
+    gpsData.readable.fields.gpsMapDatum.tagID = 18;
+    gpsData.readable.fields.gpsMapDatum.type = 2;
+    gpsData.readable.fields.gpsMapDatum.size = 7;
+    gpsData.readable.fields.gpsMapDatum.content = gpsDataExtInd + 6 * 4 * 2 + 2 * 4;
+
+    gpsData.readable.fields.finishedDataField = 0;
+
+    // Filling up the additional information that does not fit into the fields
+    gpsData.readable.extendedData.gpsLat[0] = abs(static_cast<int>(geotag.latitude));
+    gpsData.readable.extendedData.gpsLat[1] = 1;
+    gpsData.readable.extendedData.gpsLat[2] = static_cast<int>((fabs(geotag.latitude) - floor(fabs(geotag.latitude))) * 60.0);
+    gpsData.readable.extendedData.gpsLat[3] = 1;
+    gpsData.readable.extendedData.gpsLat[4] = static_cast<int>((fabs(geotag.latitude) * 60.0 - floor(fabs(geotag.latitude) * 60.0)) * 60000.0);
+    gpsData.readable.extendedData.gpsLat[5] = 1000;
+
+    gpsData.readable.extendedData.gpsLon[0] = abs(static_cast<int>(geotag.longitude));
+    gpsData.readable.extendedData.gpsLon[1] = 1;
+    gpsData.readable.extendedData.gpsLon[2] = static_cast<int>((fabs(geotag.longitude) - floor(fabs(geotag.longitude))) * 60.0);
+    gpsData.readable.extendedData.gpsLon[3] = 1;
+    gpsData.readable.extendedData.gpsLon[4] = static_cast<int>((fabs(geotag.longitude) * 60.0 - floor(fabs(geotag.longitude) * 60.0)) * 60000.0);
+    gpsData.readable.extendedData.gpsLon[5] = 1000;
+
+    gpsData.readable.extendedData.gpsAlt[0] = geotag.altitude * 100;
+    gpsData.readable.extendedData.gpsAlt[1] = 100;
+    gpsData.readable.extendedData.mapDatum[0] = 'W';
+    gpsData.readable.extendedData.mapDatum[1] = 'G';
+    gpsData.readable.extendedData.mapDatum[2] = 'S';
+    gpsData.readable.extendedData.mapDatum[3] = '-';
+    gpsData.readable.extendedData.mapDatum[4] = '8';
+    gpsData.readable.extendedData.mapDatum[5] = '4';
+    gpsData.readable.extendedData.mapDatum[6] = 0x00;
+
+    // remove 12 spaces from image description, as otherwise we need to loop through every field and correct the new address values
+    buf.remove(nextIfdOffsetInd + 4, 12);
+    // TODO correct size in image description
+    // insert Gps Info to image file
+    buf.insert(nextIfdOffsetInd, gpsInfo.constData(), 12);
+    char numberOfFields[2] = {0x08, 0x00};
+    // insert number of gps specific fields that we want to add
+    buf.insert(gpsIFDInd.i + tiffHeaderInd, numberOfFields, 2);
+    // insert the gps data
+    buf.insert(gpsIFDInd.i + 2 + tiffHeaderInd, gpsData.c, 0xa3);
+
+    // update the new file size and exif offsets
+    char2uint16_u converter;
+    converter.i = qToBigEndian(app1SizeEndian);
+    buf.replace(app1HeaderInd + 2, 2, converter.c, 2);
+    converter.i = nextIfdOffset + 12 + 0xa5;
+    buf.replace(nextIfdOffsetInd + 12, 2, converter.c, 2);
+
+    converter.i = (numberOfTiffFields) + 1;
+    buf.replace(tiffHeaderInd + 8, 2, converter.c, 2);
+    return true;
 }
 
 } // namespace ExifParser

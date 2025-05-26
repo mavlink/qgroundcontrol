@@ -91,17 +91,17 @@ if apt-cache show gstreamer1.0-qt6 >/dev/null 2>&1 && apt-cache show gstreamer1.
 fi
 
 # Exiv2
-DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
-    libbrotli-dev \
-    libcurl4-openssl-dev \
-    libexiv2-dev \
-    libexpat1-dev \
-    libfmt-dev \
-    libinih-dev \
-    libssh-dev \
-    libxml2-utils \
-    libz-dev \
-    zlib1g-dev
+# DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
+#     libbrotli-dev \
+#     libcurl4-openssl-dev \
+#     libexiv2-dev \
+#     libexpat1-dev \
+#     libfmt-dev \
+#     libinih-dev \
+#     libssh-dev \
+#     libxml2-utils \
+#     libz-dev \
+#     zlib1g-dev
 
 # Speech
 DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
