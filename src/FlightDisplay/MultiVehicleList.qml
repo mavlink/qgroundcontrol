@@ -17,6 +17,7 @@ import QGroundControl.Controls
 import QGroundControl.Palette
 import QGroundControl.Vehicle
 import QGroundControl.FlightMap
+import QGroundControl.FlightDisplay
 
 Item {
     property real   _margin:              ScreenTools.defaultFontPixelWidth / 2
