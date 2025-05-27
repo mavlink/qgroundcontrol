@@ -160,10 +160,10 @@ Item {
                 let pt  = Qt.point((rec_start_x + x1) / 2, (y0 + y1) / 2)
                 videoStreaming._camera.startTracking(pt, radius / videoStreaming.getWidth())
             } else {
-                let rec = Qt.rect(x0, y0, x1 - rect_start_x, y1 - y0)
-                videoStreaming._camera.startTracking(rec)
+                let rec = Qt.rect(x0, y0, x1 - x0, y1 - y0)
+                videoStreaming._camera.startTracking(rec, latestFrameTimestamp)
             }
-            videoStreaming._camera._requestTrackingStatus()
+            // videoStreaming._camera._requestTrackingStatus()
         }
 
         onWheel: (wheel) => {

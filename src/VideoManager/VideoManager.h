@@ -14,6 +14,7 @@
 #include <QtCore/QRunnable>
 #include <QtCore/QSize>
 // #include <QtQmlIntegration/QtQmlIntegration>
+#include "KLVMetadata.h"
 
 Q_DECLARE_LOGGING_CATEGORY(VideoManagerLog)
 
@@ -49,6 +50,7 @@ class VideoManager : public QObject
     Q_PROPERTY(QSize    videoSize               READ videoSize                                  NOTIFY videoSizeChanged)
     Q_PROPERTY(QString  imageFile               READ imageFile                                  NOTIFY imageFileChanged)
     Q_PROPERTY(QString  uvcVideoSourceID        READ uvcVideoSourceID                           NOTIFY uvcVideoSourceIDChanged)
+    Q_PROPERTY(uint64_t lastKlvTimestamp        READ lastKlvTimestamp                           NOTIFY klvTimestampChanged)
 
 public:
     explicit VideoManager(QObject *parent = nullptr);
@@ -86,6 +88,11 @@ public:
     static bool qtmultimediaEnabled();
     static bool uvcEnabled();
 
+
+    uint64_t lastKlvTimestamp(void) {
+        return _lastKlvTimestamp;
+    }
+
 signals:
     void aspectRatioChanged();
     void autoStreamConfiguredChanged();
@@ -101,6 +108,7 @@ signals:
     void streamingChanged();
     void uvcVideoSourceIDChanged();
     void videoSizeChanged();
+    void klvTimestampChanged();
 
 private slots:
     void _communicationLostChanged(bool communicationLost);
@@ -128,6 +136,7 @@ private:
     bool _fullScreen = false;
     QAtomicInteger<bool> _decoding = false;
     QAtomicInteger<bool> _recording = false;
+    uint64_t _lastKlvTimestamp = 0;
     QAtomicInteger<bool> _streaming = false;
     QSize _videoSize;
     QString _imageFile;

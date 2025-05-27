@@ -65,9 +65,9 @@ public:
     void                stopStream                  () override {}
     bool                stopTakePhoto               () override { return false;}
     void                resumeStream                () override {}
-    void                startTracking               (QRectF /*rec*/) override {}
+    void                startTracking               (QRectF /*rec*/, uint64_t timestamp=0) override {}
     void                startTracking               (QPointF /*point*/, double /*radius*/) override {}
-    void                stopTracking                () override {}
+    void                stopTracking                (uint64_t timestamp=0) override {}
     int                 version                     () override { return 0; }
     QString             modelName                   () override { return QStringLiteral("Simulated Camera"); }
     QString             vendor                      () override { return QStringLiteral("QGroundControl"); }

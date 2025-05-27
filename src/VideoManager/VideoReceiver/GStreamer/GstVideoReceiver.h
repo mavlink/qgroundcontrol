@@ -21,6 +21,7 @@
 #include <gst/gstpad.h>
 
 #include "VideoReceiver.h"
+#include "KLVMetadata.h"
 
 Q_DECLARE_LOGGING_CATEGORY(GstVideoReceiverLog)
 
@@ -97,13 +98,16 @@ private:
     static gboolean _onBusMessage(GstBus *bus, GstMessage *message, gpointer user_data);
     static void _onNewPad(GstElement *element, GstPad *pad, gpointer data);
     static void _wrapWithGhostPad(GstElement *element, GstPad *pad, gpointer data);
-    static void _linkPad(GstElement *element, GstPad *pad, gpointer data);
+    static void _linkVideoPad(GstElement* element, GstPad* pad, gpointer data);
+    static void _linkMedatadaPad(GstElement* element, GstPad* pad, gpointer data);
     static gboolean _padProbe(GstElement *element, GstPad *pad, gpointer user_data);
     static gboolean _filterParserCaps(GstElement *bin, GstPad *pad, GstElement *element, GstQuery *query, gpointer data);
     static GstPadProbeReturn _teeProbe(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
     static GstPadProbeReturn _videoSinkProbe(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
     static GstPadProbeReturn _eosProbe(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
     static GstPadProbeReturn _keyframeWatch(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
+    static gboolean _padHasMetadataCaps(GstPad* pad);
+    static GstFlowReturn _onNewMedatada(GstElement *sink, gpointer user_data);
 
     GstElement *_decoder = nullptr;
     GstElement *_decoderValve = nullptr;

@@ -166,9 +166,9 @@ public:
     Q_INVOKABLE virtual void stopZoom           () = 0;
     Q_INVOKABLE virtual void stopStream         () = 0;
     Q_INVOKABLE virtual void resumeStream       () = 0;
-    Q_INVOKABLE virtual void startTracking      (QRectF rec) = 0;
+    Q_INVOKABLE virtual void startTracking      (QRectF rec, uint64_t timestamp) = 0;
     Q_INVOKABLE virtual void startTracking      (QPointF point, double radius) = 0;
-    Q_INVOKABLE virtual void stopTracking       () = 0;
+    Q_INVOKABLE virtual void stopTracking       (uint64_t timestamp) = 0;
 
     virtual int         version             () = 0;
     virtual QString     modelName           () = 0;

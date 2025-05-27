@@ -302,6 +302,8 @@ qt_add_executable(${CMAKE_PROJECT_NAME}
     WIN32
     MACOSX_BUNDLE
     ${QGC_RESOURCES}
+    src/VideoManager/VideoReceiver/GStreamer/KLVMetadata.h
+    src/VideoManager/VideoReceiver/GStreamer/KLVMetadata.cpp
 )
 
 if(WIN32)

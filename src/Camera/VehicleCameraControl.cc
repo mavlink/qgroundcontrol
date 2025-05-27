@@ -2304,7 +2304,7 @@ VehicleCameraControl::setTrackingEnabled(bool set)
 
 //-----------------------------------------------------------------------------
 void
-VehicleCameraControl::startTracking(QRectF rec)
+VehicleCameraControl::startTracking(QRectF rec, uint64_t timestamp)
 {
     if(_trackingMarquee != rec) {
         _trackingMarquee = rec;
@@ -2313,7 +2313,16 @@ VehicleCameraControl::startTracking(QRectF rec)
                                   << static_cast<float>(rec.x()) << ", "
                                   << static_cast<float>(rec.y()) << "] - ["
                                   << static_cast<float>(rec.x() + rec.width()) << ", "
-                                  << static_cast<float>(rec.y() + rec.height()) << "]";
+                                  << static_cast<float>(rec.y() + rec.height()) << "]"
+                                  << ", Timestamp: " << timestamp;
+
+        // FIXME: we put the 64-bit timestamp into fifth and sixth parameters here which is not a good practice in MavLink
+        uint32_t timestampLow = static_cast<uint32_t>(timestamp);
+        uint32_t timestampHigh = static_cast<uint32_t>(timestamp >> 32);
+
+        float param5, param6;
+        std::memcpy(&param5, &timestampLow, sizeof(param5));
+        std::memcpy(&param6, &timestampHigh, sizeof(param6));
 
         _vehicle->sendMavCommand(_compID,
                                  MAV_CMD_CAMERA_TRACK_RECTANGLE,
@@ -2321,7 +2330,9 @@ VehicleCameraControl::startTracking(QRectF rec)
                                  static_cast<float>(rec.x()),
                                  static_cast<float>(rec.y()),
                                  static_cast<float>(rec.x() + rec.width()),
-                                 static_cast<float>(rec.y() + rec.height()));
+                                 static_cast<float>(rec.y() + rec.height()),
+                                 param5,
+                                 param6);
     }
 }
 
@@ -2349,14 +2360,24 @@ VehicleCameraControl::startTracking(QPointF point, double radius)
 
 //-----------------------------------------------------------------------------
 void
-VehicleCameraControl::stopTracking()
+VehicleCameraControl::stopTracking(uint64_t timestamp)
 {
     qCDebug(CameraControlLog) << "Stop Tracking";
+
+    // FIXME: we put the 64-bit timestamp into first and second parameters here which is not a good practice in MavLink
+    uint32_t timestampLow = static_cast<uint32_t>(timestamp);
+    uint32_t timestampHigh = static_cast<uint32_t>(timestamp >> 32);
+
+    float param1, param2;
+    std::memcpy(&param1, &timestampLow, sizeof(param1));
+    std::memcpy(&param2, &timestampHigh, sizeof(param2));
 
     //-- Stop Tracking
     _vehicle->sendMavCommand(_compID,
                              MAV_CMD_CAMERA_STOP_TRACKING,
-                             true);
+                             true,
+                             param1,
+                             param2);
 
     //-- Stop Sending Tracking Status
     _vehicle->sendMavCommand(_compID,

@@ -645,6 +645,9 @@ GstElement *GstVideoReceiver::_makeSource(const QString &input)
     GstElement *parser = nullptr;
     GstElement *bin = nullptr;
     GstElement *srcbin = nullptr;
+    GstElement *appsink    = nullptr;
+    GstElement *videoQueue = nullptr;
+    GstElement *klvQueue   = nullptr;
 
     do {
         if (isRtsp) {
@@ -736,6 +739,7 @@ GstElement *GstVideoReceiver::_makeSource(const QString &input)
 
         // FIXME: AV: Android does not determine MPEG2-TS via parsebin - have to explicitly state which demux to use
         // FIXME: AV: tsdemux handling is a bit ugly - let's try to find elegant solution for that later
+        // Explicit creation of tdemux here also helps with demuxed metadata handling in a separate pipeline branch
         if (isTcpMPEGTS || isUdpMPEGTS) {
             tsdemux = gst_element_factory_make("tsdemux", nullptr);
             if (!tsdemux) {
@@ -743,15 +747,52 @@ GstElement *GstVideoReceiver::_makeSource(const QString &input)
                 break;
             }
 
-            (void) gst_bin_add(GST_BIN(bin), tsdemux);
+            g_object_set(tsdemux, "latency", 10, nullptr);
 
+            gst_bin_add(GST_BIN(bin), tsdemux);
+
+            // Create appsink for receiving metadata and a queue before it as pipeline will be split
+            if ((appsink = gst_element_factory_make("appsink", nullptr)) == nullptr) {
+                qCCritical(GstVideoReceiverLog) << "gst_element_factory_make('appsink') failed";
+                break;
+            }
+            if ((klvQueue = gst_element_factory_make("queue", nullptr)) == nullptr) {
+                qCCritical(GstVideoReceiverLog) << "gst_element_factory_make('queue') failed";
+                break;
+            }
+
+            if ((videoQueue = gst_element_factory_make("queue", nullptr)) == nullptr) {
+                qCCritical(GstVideoReceiverLog) << "gst_element_factory_make('queue') failed";
+                break;
+            }
+
+            g_object_set(appsink, "sync", false, nullptr);
+            g_object_set(appsink, "async", false, nullptr);
+            g_object_set(appsink, "emit-signals", true, nullptr);
+            g_signal_connect(appsink, "new-sample", G_CALLBACK(_onNewMedatada), this);
+
+            gst_bin_add_many(GST_BIN(bin), klvQueue, videoQueue, appsink, nullptr);
+
+            // Link source to tsdemux
             if (!gst_element_link(source, tsdemux)) {
                 qCCritical(GstVideoReceiverLog) << "gst_element_link() failed";
                 break;
             }
 
+            // Link queue and appsink. Queue will be linked to tsdemux when the pad is available
+            if (!gst_element_link(klvQueue, appsink)) {
+                qCCritical(GstVideoReceiverLog) << "gst_element_link() failed";
+                break;
+            }
+
+            // Link queue and parser. Queue will be linked to tsdemux when the pad is available
+            if (!gst_element_link(videoQueue, parser)) {
+                qCCritical(GstVideoReceiverLog) << "gst_element_link() failed";
+                break;
+            }
+
+
             source = tsdemux;
-            tsdemux = nullptr;
         }
 
         int probeRes = 0;
@@ -777,9 +818,14 @@ GstElement *GstVideoReceiver::_makeSource(const QString &input)
                     break;
                 }
             }
+        } else if (tsdemux != nullptr) {
+            // If the stream type is mpeg-ts and demuxer was created, the stream will be splitted into metadata and video here
+            g_signal_connect(tsdemux, "pad-added", G_CALLBACK(_linkMedatadaPad), klvQueue);
+            g_signal_connect(source, "pad-added", G_CALLBACK(_linkVideoPad), videoQueue);
         } else {
-            (void) g_signal_connect(source, "pad-added", G_CALLBACK(_linkPad), parser);
+            g_signal_connect(source, "pad-added", G_CALLBACK(_linkVideoPad), parser);
         }
+
 
         (void) g_signal_connect(parser, "pad-added", G_CALLBACK(_wrapWithGhostPad), nullptr);
 
@@ -791,7 +837,11 @@ GstElement *GstVideoReceiver::_makeSource(const QString &input)
 
     gst_clear_object(&bin);
     gst_clear_object(&parser);
-    gst_clear_object(&tsdemux);
+    if (tsdemux != nullptr) {
+        gst_object_unref(tsdemux);
+        tsdemux = nullptr;
+        source = nullptr;
+    }
     gst_clear_object(&buffer);
     gst_clear_object(&source);
 
@@ -802,9 +852,9 @@ GstElement *GstVideoReceiver::_makeDecoder(GstCaps *caps, GstElement *videoSink)
 {
     Q_UNUSED(caps); Q_UNUSED(videoSink)
 
-    GstElement *decoder = gst_element_factory_make("decodebin3", nullptr);
+    GstElement *decoder = gst_element_factory_make("decodebin", nullptr);
     if (!decoder) {
-        qCCritical(GstVideoReceiverLog) << "gst_element_factory_make('decodebin3') failed";
+        qCCritical(GstVideoReceiverLog) << "gst_element_factory_make('decodebin') failed";
     }
 
     return decoder;
@@ -1279,19 +1329,45 @@ void GstVideoReceiver::_wrapWithGhostPad(GstElement *element, GstPad *pad, gpoin
     }
 }
 
-void GstVideoReceiver::_linkPad(GstElement *element, GstPad *pad, gpointer data)
+void
+GstVideoReceiver::_linkVideoPad(GstElement* element, GstPad* pad, gpointer data)
 {
-    gchar *name = gst_pad_get_name(pad);
-    if (!name) {
-        qCCritical(GstVideoReceiverLog) << "gst_pad_get_name() failed";
+    // Don'd link the pad if it contains metadata and not video stream
+    if (_padHasMetadataCaps(pad)) {
         return;
     }
 
-    if (!gst_element_link_pads(element, name, GST_ELEMENT(data), "sink")) {
-        qCCritical(GstVideoReceiverLog) << "gst_element_link_pads() failed";
+    gchar* name;
+
+    if ((name = gst_pad_get_name(pad)) != nullptr) {
+        if(gst_element_link_pads(element, name, GST_ELEMENT(data), "sink") == false) {
+            qCCritical(GstVideoReceiverLog) << "gst_element_link_pads() failed";
+        }
+
+        g_free(name);
+        name = nullptr;
+    } else {
+        qCCritical(GstVideoReceiverLog) << "gst_pad_get_name() failed";
+    }
+}
+
+void GstVideoReceiver::_linkMedatadaPad(GstElement* element, GstPad* pad, gpointer data) {
+    // Don't link pad if it doesn't contain metadata
+    if (!_padHasMetadataCaps(pad)) {
+        return;
     }
 
-    g_clear_pointer(&name, g_free);
+    gchar* name;
+    if ((name = gst_pad_get_name(pad)) != nullptr) {
+        if(gst_element_link_pads(element, name, GST_ELEMENT(data), "sink") == false) {
+            qCCritical(GstVideoReceiverLog) << "gst_element_link_pads() failed";
+        }
+
+        g_free(name);
+        name = nullptr;
+    } else {
+        qCCritical(GstVideoReceiverLog) << "gst_pad_get_name() failed";
+    }
 }
 
 gboolean GstVideoReceiver::_padProbe(GstElement *element, GstPad *pad, gpointer user_data)
@@ -1460,3 +1536,58 @@ void GstVideoWorker::run()
         task();
     }
 }
+
+gboolean GstVideoReceiver::_padHasMetadataCaps(GstPad* pad) {
+    // Get the new pad caps and check if it is metadata
+    GstCaps *pad_caps = gst_pad_get_current_caps(pad);
+    if (pad_caps != nullptr) {
+        GstStructure *pad_struct = gst_caps_get_structure(pad_caps, 0);
+        const gchar *pad_type = gst_structure_get_name(pad_struct);
+
+        if (g_str_has_prefix(pad_type, "meta/x-klv")) {
+            gst_object_unref(pad_caps);
+            return true;
+        }
+    }
+    if (pad_caps != nullptr) {
+        gst_object_unref(pad_caps);
+    }
+    return false;
+}
+
+
+
+GstFlowReturn GstVideoReceiver::_onNewMedatada(GstElement *sink, gpointer user_data) {
+    GstVideoReceiver* pThis = static_cast<GstVideoReceiver *>(user_data);
+
+    GstSample *sample;
+
+    /* Retrieve the buffer */
+    g_signal_emit_by_name(sink, "pull-sample", &sample);
+    if (sample)
+    {
+        GstBuffer *gstBuffer = gst_sample_get_buffer(sample);
+
+        if (gstBuffer)
+        {
+            GstMapInfo map;
+            gst_buffer_map(gstBuffer, &map, GST_MAP_READ);
+            auto metadata = KLVMetadata(map.data, map.size);
+            auto allValues = metadata.getAllMetadata();
+
+                    // Emit the signal with newly received metadata
+            pThis->_dispatchSignal([&]() {
+                emit pThis->klvMetadataReceived(metadata);
+            });
+
+            gst_sample_unref(sample);
+            return GST_FLOW_OK;
+        }
+    }
+
+    return GST_FLOW_ERROR;
+
+
+}
+
+

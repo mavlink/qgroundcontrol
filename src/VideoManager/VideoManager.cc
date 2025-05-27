@@ -730,6 +730,16 @@ void VideoManager::_initVideoReceiver(VideoReceiver *receiver, QQuickWindow *win
         }
     });
 
+    connect(receiver, &VideoReceiver::klvMetadataReceived, this, [this](KLVMetadata metadata){
+        qCDebug(VideoManagerLog) << "New metadata received";
+        // TODO: we can extract more information out of the metadata here and e.g. display it somewhere
+        auto timestamp = metadata.getTimestamp();
+        if (timestamp.has_value()) {
+            _lastKlvTimestamp = timestamp.value();
+        }
+        emit klvTimestampChanged();
+    });
+
     (void) connect(receiver, &VideoReceiver::onTakeScreenshotComplete, this, [receiver](VideoReceiver::STATUS status) {
         if (status == VideoReceiver::STATUS_OK) {
             qCDebug(VideoManagerLog) << "Video" << receiver->name() << "screenshot taken";
