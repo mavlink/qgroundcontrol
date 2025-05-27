@@ -29,8 +29,8 @@ public:
     QString iconResource() const final { return QStringLiteral("/qmlimages/RadioComponentIcon.png"); }
     bool requiresSetup() const final { return true; }
     bool setupComplete() const final;
-    QUrl setupSource() const final { return QUrl::fromUserInput(QStringLiteral("qrc:/qml/RadioComponent.qml")); }
-    QUrl summaryQmlSource() const final { return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMRadioComponentSummary.qml")); }
+    QUrl setupSource() const final { return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/Common/RadioComponent.qml")); }
+    QUrl summaryQmlSource() const final { return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMRadioComponentSummary.qml")); }
 
 private slots:
     void _triggerChanged();

@@ -46,11 +46,11 @@ QUrl APMSafetyComponent::setupSource() const
     case MAV_TYPE_OCTOROTOR:
     case MAV_TYPE_TRICOPTER:
     case MAV_TYPE_GROUND_ROVER:
-        return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMSafetyComponent.qml"));
+        return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMSafetyComponent.qml"));
     case MAV_TYPE_SUBMARINE:
-        return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMSafetyComponentSub.qml"));
+        return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMSafetyComponentSub.qml"));
     default:
-        return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMNotSupported.qml"));
+        return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMNotSupported.qml"));
     }
 }
 
@@ -65,10 +65,10 @@ QUrl APMSafetyComponent::summaryQmlSource() const
     case MAV_TYPE_OCTOROTOR:
     case MAV_TYPE_TRICOPTER:
     case MAV_TYPE_GROUND_ROVER:
-        return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMSafetyComponentSummary.qml"));
+        return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml"));
     case MAV_TYPE_SUBMARINE:
-        return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMSafetyComponentSummarySub.qml"));
+        return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMSafetyComponentSummarySub.qml"));
     default:
-        return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMNotSupported.qml"));
+        return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMNotSupported.qml"));
     }
 }

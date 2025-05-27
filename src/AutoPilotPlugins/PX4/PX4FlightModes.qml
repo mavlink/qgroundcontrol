@@ -29,7 +29,7 @@ SetupPage {
         Loader {
             width:  availableWidth
             height: availableHeight
-            source: "qrc:/qml/PX4SimpleFlightModes.qml"
+            source: "qrc:/qml/QGroundControl/AutoPilotPlugins/PX4/PX4SimpleFlightModes.qml"
 
             property Fact _nullFact
             property bool _rcMapFltmodeExists:  controller.parameterExists(-1, "RC_MAP_FLTMODE")

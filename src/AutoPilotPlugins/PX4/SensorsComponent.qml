@@ -10,7 +10,7 @@
 import QtQuick
 
 import QGroundControl.Controls
-import QGroundControl.PX4
+import QGroundControl.AutoPilotPlugins.PX4
 
 SetupPage {
     pageComponent:  pageComponent

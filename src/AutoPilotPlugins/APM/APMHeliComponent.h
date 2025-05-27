@@ -25,7 +25,7 @@ public:
     QString iconResource() const final { return QStringLiteral("/res/helicoptericon.svg"); }
     bool requiresSetup() const final { return false; }
     bool setupComplete() const final { return true; }
-    QUrl setupSource() const final { return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMHeliComponent.qml")); }
+    QUrl setupSource() const final { return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMHeliComponent.qml")); }
     QUrl summaryQmlSource() const final { return QUrl(); }
     bool allowSetupWhileArmed() const final { return true; }
 
