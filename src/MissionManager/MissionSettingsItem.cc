@@ -28,7 +28,7 @@ MissionSettingsItem::MissionSettingsItem(PlanMasterController* masterController,
     , _speedSection                     (masterController)
 {
     _isIncomplete = false;
-    _editorQml = "qrc:/qml/MissionSettingsEditor.qml";
+    _editorQml = "qrc:/qml/QGroundControl/Controls/MissionSettingsEditor.qml";
 
     if (_metaDataMap.isEmpty()) {
         _metaDataMap = FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/MissionSettings.FactMetaData.json"), nullptr /* metaDataParent */);
