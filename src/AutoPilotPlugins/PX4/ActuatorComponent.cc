@@ -62,7 +62,7 @@ QStringList ActuatorComponent::setupCompleteChangedTriggerList(void) const
 
 QUrl ActuatorComponent::setupSource(void) const
 {
-    return QUrl::fromUserInput(QStringLiteral("qrc:/qml/ActuatorComponent.qml"));
+    return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/PX4/ActuatorComponent.qml"));
 }
 
 QUrl ActuatorComponent::summaryQmlSource(void) const
