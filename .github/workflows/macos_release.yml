@@ -57,28 +57,11 @@ jobs:
 
       - name: Install Gstreamer
         run: |
-            wget https://gstreamer.freedesktop.org/data/pkg/osx/1.18.6/gstreamer-1.0-devel-1.18.6-x86_64.pkg
-            wget https://gstreamer.freedesktop.org/data/pkg/osx/1.18.6/gstreamer-1.0-1.18.6-x86_64.pkg
-            for package in *.pkg ;
-              do sudo installer -verbose -pkg "$package" -target /
-            done
-
-            # Create proper framework structure with symlinks
-            sudo rm -rf /Library/lib/GStreamer.framework  # Clean up any existing framework
-            sudo mkdir -p /Library/lib
-            sudo mkdir -p /Library/lib/GStreamer.framework/Versions/1.0
-            cd /Library/lib/GStreamer.framework/Versions
-            sudo ln -sf 1.0 Current
-            cd /Library/lib/GStreamer.framework
-            sudo ln -sf Versions/Current/lib lib
-            sudo ln -sf Versions/Current/Headers Headers
-            sudo ln -sf Versions/Current/Resources Resources
-
-            # Create the main symlink for the whole framework
-            sudo ln -sf /Library/Frameworks/GStreamer.framework /Library/lib/GStreamer.framework
-
-            # Verify the links
-            ls -la /Library/lib/GStreamer.framework/Versions/1.0/
+          wget https://gstreamer.freedesktop.org/data/pkg/osx/1.18.6/gstreamer-1.0-devel-1.18.6-x86_64.pkg
+          wget https://gstreamer.freedesktop.org/data/pkg/osx/1.18.6/gstreamer-1.0-1.18.6-x86_64.pkg
+          for package in *.pkg ;
+            do sudo installer -verbose -pkg "$package" -target /
+          done
 
       - name: Detect Architecture
         run: |
