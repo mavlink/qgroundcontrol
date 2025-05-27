@@ -17,6 +17,7 @@
 #include "KLVMetadata.h"
 
 Q_DECLARE_LOGGING_CATEGORY(VideoManagerLog)
+Q_DECLARE_METATYPE(KLVMetadata)
 
 class QQuickWindow;
 class FinishVideoInitialization;
@@ -50,7 +51,8 @@ class VideoManager : public QObject
     Q_PROPERTY(QSize    videoSize               READ videoSize                                  NOTIFY videoSizeChanged)
     Q_PROPERTY(QString  imageFile               READ imageFile                                  NOTIFY imageFileChanged)
     Q_PROPERTY(QString  uvcVideoSourceID        READ uvcVideoSourceID                           NOTIFY uvcVideoSourceIDChanged)
-    Q_PROPERTY(uint64_t lastKlvTimestamp        READ lastKlvTimestamp                           NOTIFY klvTimestampChanged)
+    // KLV timestamp is atually a uint64. However, JS number cannot correctly handle such big numbers, so we use strings to keep the precision
+    Q_PROPERTY(QString  lastKlvTimestamp        READ lastKlvTimestamp                           NOTIFY klvTimestampChanged)
 
 public:
     explicit VideoManager(QObject *parent = nullptr);
@@ -89,8 +91,8 @@ public:
     static bool uvcEnabled();
 
 
-    uint64_t lastKlvTimestamp(void) {
-        return _lastKlvTimestamp;
+    QString lastKlvTimestamp(void) {
+        return QString::number(static_cast<qulonglong>(_lastKlvTimestamp));
     }
 
 signals:

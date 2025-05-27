@@ -66,9 +66,9 @@ public:
     Q_INVOKABLE virtual void stopZoom               ();
     Q_INVOKABLE virtual void stopStream             ();
     Q_INVOKABLE virtual void resumeStream           ();
-    Q_INVOKABLE virtual void startTracking          (QRectF rec, uint64_t timestamp);
+    Q_INVOKABLE virtual void startTracking          (QRectF rec, QString timestamp, bool is_zoom = false);
     Q_INVOKABLE virtual void startTracking          (QPointF point, double radius);
-    Q_INVOKABLE virtual void stopTracking           (uint64_t timestamp);
+    Q_INVOKABLE virtual void stopTracking           (QString timestamp);
 
     virtual int         version             () { return _version; }
     virtual QString     modelName           () { return _modelName; }
@@ -141,11 +141,16 @@ public:
 
     virtual bool        trackingEnabled     () { return _trackingStatus & TRACKING_ENABLED; }
     virtual void        setTrackingEnabled  (bool set);
+    virtual void        setZoomEnabled  (bool set);
+
 
     virtual TrackingStatus trackingStatus   () { return _trackingStatus; }
 
     virtual bool trackingImageStatus() { return _trackingImageStatus.tracking_status == 1; }
     virtual QRectF trackingImageRect() { return _trackingImageRect; }
+
+    virtual bool        zoomEnabled     () { return _zoomLevel != 1.0; }
+    virtual ZoomStatus  zoomStatus   () { return _zoomStatus; }
 
     virtual Fact*   exposureMode        ();
     virtual Fact*   ev                  ();
@@ -311,6 +316,7 @@ protected:
     ThermalViewMode                     _thermalMode        = THERMAL_BLEND;
     double                              _thermalOpacity     = 85.0;
     TrackingStatus                      _trackingStatus     = TRACKING_UNKNOWN;
+    ZoomStatus                          _zoomStatus         = ZOOM_UNKNOWN;
     QRectF                              _trackingMarquee;
     QPointF                             _trackingPoint;
     double                              _trackingRadius     = 0.0;

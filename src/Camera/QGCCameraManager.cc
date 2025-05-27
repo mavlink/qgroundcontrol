@@ -259,7 +259,7 @@ void QGCCameraManager::_checkForLostCameras()
             //-- Have we received a camera info message?
             if (pInfo->infoReceived) {
                 //-- Has the camera stopped talking to us?
-                if (pInfo->lastHeartbeat.elapsed() > 5000) {
+                if (pInfo->lastHeartbeat.elapsed() > 60000) {
                     auto pCamera = _findCamera(pInfo->compID);
 
                     if (pCamera) {

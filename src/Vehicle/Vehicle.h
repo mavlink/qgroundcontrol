@@ -366,6 +366,9 @@ public:
     /// Alter the current mission item on the vehicle
     Q_INVOKABLE void setCurrentMissionSequence(int seq);
 
+    /// Reboot all onboard computers
+    Q_INVOKABLE void rebootOnboardComputers();
+
     /// Reboot vehicle
     Q_INVOKABLE void rebootVehicle();
 

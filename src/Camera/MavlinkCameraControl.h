@@ -94,6 +94,14 @@ public:
         TRACKING_POINT          = 8
     };
 
+
+    enum ZoomStatus {
+        ZOOM_UNKNOWN        = 0,
+        ZOOM_SUPPORTED      = 1,
+        ZOOM_ENABLED        = 2,
+        ZOOM_SEL_ACTIVE     = 4,
+    };
+
     Q_ENUM(CameraMode)
     Q_ENUM(VideoCaptureStatus)
     Q_ENUM(PhotoCaptureStatus)
@@ -101,6 +109,7 @@ public:
     Q_ENUM(StorageStatus)
     Q_ENUM(ThermalViewMode)
     Q_ENUM(TrackingStatus)
+    Q_ENUM(ZoomStatus)
 
     Q_PROPERTY(int                  version                 READ version                                            NOTIFY infoChanged)
     Q_PROPERTY(QString              modelName               READ modelName                                          NOTIFY infoChanged)
@@ -150,6 +159,8 @@ public:
     Q_PROPERTY(TrackingStatus       trackingStatus          READ trackingStatus                                     CONSTANT)
     Q_PROPERTY(bool                 trackingImageStatus     READ trackingImageStatus                                NOTIFY trackingImageStatusChanged)
     Q_PROPERTY(QRectF               trackingImageRect       READ trackingImageRect                                  NOTIFY trackingImageStatusChanged)
+    Q_PROPERTY(ZoomStatus           zoomStatus              READ zoomStatus                                         CONSTANT)
+    Q_PROPERTY(bool                 zoomEnabled             READ zoomEnabled            WRITE setZoomEnabled        NOTIFY zoomEnabledChanged)
 
     Q_INVOKABLE virtual void setCameraModeVideo       () = 0;
     Q_INVOKABLE virtual void setCameraModePhoto       () = 0;
@@ -166,9 +177,9 @@ public:
     Q_INVOKABLE virtual void stopZoom           () = 0;
     Q_INVOKABLE virtual void stopStream         () = 0;
     Q_INVOKABLE virtual void resumeStream       () = 0;
-    Q_INVOKABLE virtual void startTracking      (QRectF rec, uint64_t timestamp) = 0;
+    Q_INVOKABLE virtual void startTracking      (QRectF rec, QString timestamp, bool is_zoom = false) = 0;
     Q_INVOKABLE virtual void startTracking      (QPointF point, double radius) = 0;
-    Q_INVOKABLE virtual void stopTracking       (uint64_t timestamp) = 0;
+    Q_INVOKABLE virtual void stopTracking       (QString timestamp) = 0;
 
     virtual int         version             () = 0;
     virtual QString     modelName           () = 0;
@@ -240,6 +251,9 @@ public:
 
     virtual bool        trackingEnabled     () = 0;
     virtual void        setTrackingEnabled  (bool set) = 0;
+    virtual bool        zoomEnabled     () = 0;
+    virtual void        setZoomEnabled  (bool set) = 0;
+    virtual ZoomStatus  zoomStatus   () = 0;
 
     virtual TrackingStatus trackingStatus   () = 0;
 
@@ -288,6 +302,7 @@ signals:
     void    recordTimeChanged           ();
     void    streamLabelsChanged         ();
     void    trackingEnabledChanged      ();
+    void    zoomEnabledChanged          ();
     void    trackingImageStatusChanged  ();
     void    thermalModeChanged          ();
     void    thermalOpacityChanged       ();

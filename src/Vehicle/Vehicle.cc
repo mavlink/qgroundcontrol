@@ -2644,7 +2644,7 @@ void Vehicle::_sendMavCommandWorker(
             emit mavCommandResult(_id, targetCompId, command, MAV_RESULT_FAILED, failureCode);
         }
         if (showError) {
-            qgcApp()->showAppMessage(tr("Unable to send command: %1.").arg(compIdAll ? tr("Internal error - MAV_COMP_ID_ALL not supported") : tr("Waiting on previous response to same command.")));
+            qCCritical(VehicleLog) << tr("Unable to send command: %1.").arg(compIdAll ? tr("Internal error - MAV_COMP_ID_ALL not supported") : tr("Waiting on previous response to same command."));
         }
 
         return;
@@ -2701,7 +2701,7 @@ void Vehicle::_sendMavCommandFromList(int index)
             emit mavCommandResult(_id, commandEntry.targetCompId, commandEntry.command, MAV_RESULT_FAILED, MavCmdResultFailureNoResponseToCommand);
         }
         if (commandEntry.showError) {
-            qgcApp()->showAppMessage(tr("Vehicle did not respond to command: %1").arg(rawCommandName));
+            qCCritical(VehicleLog) << tr("Vehicle did not respond to command: %1").arg(rawCommandName);
         }
         return;
     }
@@ -3078,6 +3078,20 @@ void Vehicle::rebootVehicle()
     handlerInfo.resultHandlerData   = this;
 
     sendMavCommandWithHandler(&handlerInfo, _defaultComponentId, MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 1);
+}
+
+void Vehicle::rebootOnboardComputers()
+{
+    // There can be four different onboard computers on the vehicle, so sending the reboot command to all of them
+    for (int i = 0; i < 4; ++i)
+    {
+        sendMavCommand(MAV_COMP_ID_ONBOARD_COMPUTER + i,
+                       MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN,
+                       false,                                                   // do not show errors
+                       0,                                                       // do nothing to autopilot
+                       3,                                                       // reboot onboard computer
+                       0, 0, 0, 0, 0);                                          // param 3-7 unused
+    }
 }
 
 void Vehicle::startCalibration(QGCMAVLink::CalibrationType calType)

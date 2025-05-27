@@ -65,9 +65,9 @@ public:
     void                stopStream                  () override {}
     bool                stopTakePhoto               () override { return false;}
     void                resumeStream                () override {}
-    void                startTracking               (QRectF /*rec*/, uint64_t timestamp=0) override {}
+    void                startTracking               (QRectF /*rec*/, QString /*timestamp*/, bool /*is_zoom*/ = false) override {}
     void                startTracking               (QPointF /*point*/, double /*radius*/) override {}
-    void                stopTracking                (uint64_t timestamp=0) override {}
+    void                stopTracking                (QString timestamp) override {}
     int                 version                     () override { return 0; }
     QString             modelName                   () override { return QStringLiteral("Simulated Camera"); }
     QString             vendor                      () override { return QStringLiteral("QGroundControl"); }
@@ -111,8 +111,11 @@ public:
     void                setZoomLevel                (qreal /*level*/) override {}
     void                setFocusLevel               (qreal /*level*/) override {}
     bool                trackingEnabled             () override { return false; }
+    bool                zoomEnabled                 () override { return false; }
     void                setTrackingEnabled          (bool /*set*/) override {}
+    void                setZoomEnabled              (bool /*set*/) override {}
     TrackingStatus      trackingStatus              () override { return TRACKING_UNKNOWN; }
+    ZoomStatus          zoomStatus                  () override { return ZOOM_UNKNOWN; }
     bool                trackingImageStatus         () override { return false; }
     QRectF              trackingImageRect           () override { return QRectF(); }
     void                factChanged                 (Fact* /*pFact*/) override {};

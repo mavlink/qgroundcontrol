@@ -28,6 +28,7 @@
 #include "LinkInterface.h"
 #include "MAVLinkProtocol.h"
 #include "QGCVideoStreamInfo.h"
+#include <cstring>
 
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtCore/QDir>
@@ -524,6 +525,7 @@ VehicleCameraControl::setZoomLevel(qreal level)
 {
     qCDebug(CameraControlLog) << "setZoomLevel()" << level;
     if(hasZoom()) {
+         _zoomLevel = level;
         //-- Limit
         level = std::min(std::max(level, 0.0), 100.0);
         if(_vehicle) {
@@ -534,6 +536,7 @@ VehicleCameraControl::setZoomLevel(qreal level)
                 ZOOM_TYPE_RANGE,                        // Zoom type
                 static_cast<float>(level));             // Level
         }
+        emit zoomEnabledChanged();
     }
 }
 
@@ -1481,12 +1484,12 @@ VehicleCameraControl::handleSettings(const mavlink_camera_settings_t& settings)
 {
     qCDebug(CameraControlLog) << "handleSettings() Mode:" << settings.mode_id;
     _setCameraMode(static_cast<CameraMode>(settings.mode_id));
-    qreal z = static_cast<qreal>(settings.zoomLevel);
+    // qreal z = static_cast<qreal>(settings.zoomLevel);
     qreal f = static_cast<qreal>(settings.focusLevel);
-    if(std::isfinite(z) && z != _zoomLevel) {
-        _zoomLevel = z;
-        emit zoomLevelChanged();
-    }
+    // if(std::isfinite(z) && z != _zoomLevel) {
+    //     _zoomLevel = z;
+    //     emit zoomLevelChanged();
+    // }
     if(std::isfinite(f) && f != _focusLevel) {
         _focusLevel = f;
         emit focusLevelChanged();
@@ -1638,22 +1641,22 @@ VehicleCameraControl::handleTrackingImageStatus(const mavlink_camera_tracking_im
             qCDebug(CameraControlLog) << "Tracking off";
         } else {
             if (_trackingImageStatus.tracking_mode == 2) {
-                _trackingImageRect = QRectF(QPointF(_trackingImageStatus.rec_top_x, _trackingImageStatus.rec_top_y),
-                                            QPointF(_trackingImageStatus.rec_bottom_x, _trackingImageStatus.rec_bottom_y));
+                // _trackingImageRect = QRectF(QPointF(_trackingImageStatus.rec_top_x, _trackingImageStatus.rec_top_y),
+                //                             QPointF(_trackingImageStatus.rec_bottom_x, _trackingImageStatus.rec_bottom_y));
             } else {
                 float r = _trackingImageStatus.radius;
                 if (qIsNaN(r) || r <= 0 ) {
                     r = 0.05f;
                 }
                 // Bottom is NAN so that we can draw perfect square using video aspect ratio
-                _trackingImageRect = QRectF(QPointF(_trackingImageStatus.point_x - r, _trackingImageStatus.point_y - r),
-                                            QPointF(_trackingImageStatus.point_x + r, NAN));
+                // _trackingImageRect = QRectF(QPointF(_trackingImageStatus.point_x - r, _trackingImageStatus.point_y - r),
+                //                             QPointF(_trackingImageStatus.point_x + r, NAN));
             }
             // get rectangle into [0..1] boundaries
-            _trackingImageRect.setLeft(std::min(std::max(_trackingImageRect.left(), 0.0), 1.0));
-            _trackingImageRect.setTop(std::min(std::max(_trackingImageRect.top(), 0.0), 1.0));
-            _trackingImageRect.setRight(std::min(std::max(_trackingImageRect.right(), 0.0), 1.0));
-            _trackingImageRect.setBottom(std::min(std::max(_trackingImageRect.bottom(), 0.0), 1.0));
+            // _trackingImageRect.setLeft(std::min(std::max(_trackingImageRect.left(), 0.0), 1.0));
+            // _trackingImageRect.setTop(std::min(std::max(_trackingImageRect.top(), 0.0), 1.0));
+            // _trackingImageRect.setRight(std::min(std::max(_trackingImageRect.right(), 0.0), 1.0));
+            // _trackingImageRect.setBottom(std::min(std::max(_trackingImageRect.bottom(), 0.0), 1.0));
 
             qCDebug(CameraControlLog) << "Tracking Image Status [left:" << _trackingImageRect.left()
                                       << "top:" << _trackingImageRect.top()
@@ -2291,6 +2294,18 @@ VehicleCameraControl::mode()
 }
 
 //-----------------------------------------------------------------------------
+
+
+void
+VehicleCameraControl::setZoomEnabled(bool set)
+{
+    if(!set) {
+        _zoomLevel = 1.0;
+    }
+    emit zoomEnabledChanged();
+}
+
+//-----------------------------------------------------------------------------
 void
 VehicleCameraControl::setTrackingEnabled(bool set)
 {
@@ -2304,7 +2319,7 @@ VehicleCameraControl::setTrackingEnabled(bool set)
 
 //-----------------------------------------------------------------------------
 void
-VehicleCameraControl::startTracking(QRectF rec, uint64_t timestamp)
+VehicleCameraControl::startTracking(QRectF rec, QString timestamp, bool is_zoom)
 {
     if(_trackingMarquee != rec) {
         _trackingMarquee = rec;
@@ -2317,8 +2332,12 @@ VehicleCameraControl::startTracking(QRectF rec, uint64_t timestamp)
                                   << ", Timestamp: " << timestamp;
 
         // FIXME: we put the 64-bit timestamp into fifth and sixth parameters here which is not a good practice in MavLink
-        uint32_t timestampLow = static_cast<uint32_t>(timestamp);
-        uint32_t timestampHigh = static_cast<uint32_t>(timestamp >> 32);
+        uint64_t uint_timestamp = timestamp.toULongLong();
+        if (is_zoom) {
+            uint_timestamp = uint_timestamp | (1ULL << 63);
+        }
+        uint32_t timestampLow = static_cast<uint32_t>(uint_timestamp);
+        uint32_t timestampHigh = static_cast<uint32_t>(uint_timestamp >> 32);
 
         float param5, param6;
         std::memcpy(&param5, &timestampLow, sizeof(param5));
@@ -2375,13 +2394,14 @@ VehicleCameraControl::startTracking(QPointF point, double radius)
 
 //-----------------------------------------------------------------------------
 void
-VehicleCameraControl::stopTracking(uint64_t timestamp)
+VehicleCameraControl::stopTracking(QString timestamp)
 {
     qCDebug(CameraControlLog) << "Stop Tracking";
 
     // FIXME: we put the 64-bit timestamp into first and second parameters here which is not a good practice in MavLink
-    uint32_t timestampLow = static_cast<uint32_t>(timestamp);
-    uint32_t timestampHigh = static_cast<uint32_t>(timestamp >> 32);
+    uint64_t uint_timestamp = timestamp.toULongLong();
+    uint32_t timestampLow = static_cast<uint32_t>(uint_timestamp);
+    uint32_t timestampHigh = static_cast<uint32_t>(uint_timestamp >> 32);
 
     float param1, param2;
     std::memcpy(&param1, &timestampLow, sizeof(param1));
