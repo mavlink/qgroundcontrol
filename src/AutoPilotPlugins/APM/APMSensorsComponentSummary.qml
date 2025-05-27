@@ -7,7 +7,7 @@ import QGroundControl.FactControls
 import QGroundControl.Controls
 import QGroundControl.Palette
 import QGroundControl.Controllers
-import QGroundControl.ArduPilot
+import QGroundControl.AutoPilotPlugins.APM
 
 /*
     IMPORTANT NOTE: Any changes made here must also be made to SensorsComponentSummary.qml

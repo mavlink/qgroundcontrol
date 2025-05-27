@@ -19,8 +19,8 @@ APMCameraComponent::APMCameraComponent(Vehicle *vehicle, AutoPilotPlugin *autopi
 QUrl APMCameraComponent::setupSource() const
 {
     if (_vehicle->sub()) {
-        return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMCameraSubComponent.qml"));
+        return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMCameraSubComponent.qml"));
     }
 
-    return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMCameraComponent.qml"));
+    return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMCameraComponent.qml"));
 }

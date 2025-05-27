@@ -18,7 +18,7 @@ import QGroundControl.FactControls
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
 import QGroundControl.Controllers
-import QGroundControl.PX4
+import QGroundControl.AutoPilotPlugins.PX4
 
 // Note: This setup supports back compat on battery parameter naming
 //  Older firmware: Single battery setup using BAT_* naming

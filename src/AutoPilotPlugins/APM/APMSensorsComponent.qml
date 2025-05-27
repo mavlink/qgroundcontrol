@@ -20,7 +20,7 @@ import QGroundControl.Palette
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
 import QGroundControl.Controllers
-import QGroundControl.ArduPilot
+import QGroundControl.AutoPilotPlugins.APM
 import QGroundControl.QGCPositionManager
 import MAVLink
 
