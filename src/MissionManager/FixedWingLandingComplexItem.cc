@@ -38,7 +38,7 @@ FixedWingLandingComplexItem::FixedWingLandingComplexItem(PlanMasterController* m
     , _stopTakingVideoFact      (settingsGroup, _metaDataMap[stopTakingVideoName])
     , _valueSetIsDistanceFact   (settingsGroup, _metaDataMap[valueSetIsDistanceName])
 {
-    _editorQml      = "qrc:/qml/FWLandingPatternEditor.qml";
+    _editorQml      = "qrc:/qml/QGroundControl/Controls/FWLandingPatternEditor.qml";
     _isIncomplete   = false;
 
     _init();

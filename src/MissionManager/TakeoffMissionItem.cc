@@ -46,7 +46,7 @@ TakeoffMissionItem::~TakeoffMissionItem()
 
 void TakeoffMissionItem::_init(bool forLoad)
 {
-    _editorQml = QStringLiteral("qrc:/qml/SimpleItemEditor.qml");
+    _editorQml = QStringLiteral("qrc:/qml/QGroundControl/Controls/SimpleItemEditor.qml");
 
     connect(_settingsItem, &MissionSettingsItem::coordinateChanged, this, &TakeoffMissionItem::launchCoordinateChanged);
 
