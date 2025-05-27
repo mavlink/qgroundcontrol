@@ -24,6 +24,8 @@ FirstRunPrompt                          1.0 FirstRunPrompt.qml
 FlightModeIndicator                     1.0 FlightModeIndicator.qml
 FlightModeMenu                          1.0 FlightModeMenu.qml
 FlightModeMenuIndicator                 1.0 FlightModeMenuIndicator.qml
+FlyViewToolBar                          1.0 FlyViewToolBar.qml
+FlyViewToolBarIndicators                1.0 FlyViewToolBarIndicators.qml
 GeoFenceEditor                          1.0 GeoFenceEditor.qml
 GeoFenceMapVisuals                      1.0 GeoFenceMapVisuals.qml
 GPSIndicator                            1.0 GPSIndicator.qml
@@ -64,7 +66,6 @@ PipView                                 1.0 PipView.qml
 PlanEditToolbar                         1.0 PlanEditToolbar.qml
 PreFlightCheckButton                    1.0 PreFlightCheckButton.qml
 PreFlightCheckGroup                     1.0 PreFlightCheckGroup.qml
-PreFlightCheckList                      1.0 PreFlightCheckList.qml
 PreFlightCheckModel                     1.0 PreFlightCheckModel.qml
 QGCButton                               1.0 QGCButton.qml
 QGCCheckBox                             1.0 QGCCheckBox.qml
