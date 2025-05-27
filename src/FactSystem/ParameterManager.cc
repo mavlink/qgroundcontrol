@@ -135,7 +135,8 @@ void ParameterManager::_updateProgressBar()
 void ParameterManager::mavlinkMessageReceived(const mavlink_message_t &message)
 {
     if (_tryftp && (message.compid == MAV_COMP_ID_AUTOPILOT1) && !_initialLoadComplete)
-        return;
+        // FIXME: we are not using FTP as this way updating parameters from other components other than autopilot is not happening
+        // return;
 
     if (message.msgid == MAVLINK_MSG_ID_PARAM_VALUE) {
         mavlink_param_value_t param_value{};
@@ -185,6 +186,9 @@ void ParameterManager::mavlinkMessageReceived(const mavlink_message_t &message)
 
 void ParameterManager::_handleParamValue(int componentId, const QString &parameterName, int parameterCount, int parameterIndex, MAV_PARAM_TYPE mavParamType, const QVariant &parameterValue)
 {
+    if (componentId != 1) {
+        qDebug() << "Handling parameter from " << componentId << ", count: " << parameterCount;
+    }
 
     qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix(componentId) <<
                                             "_parameterUpdate" <<
@@ -482,11 +486,16 @@ void ParameterManager::refreshAllParameters(uint8_t componentId)
             qCWarning(ParameterManagerLog) << "ParameterManager::refreshallParameters FTPManager::download returned failure";
             (void) disconnect(ftpManager, &FTPManager::downloadComplete, this, &ParameterManager::_ftpDownloadComplete);
         }
-    } else {
+    }
+
+    // If the if statement before was false or wwas true with componentId == MAV_COMP_ID_ALL
+    if (!(_tryftp && componentId == MAV_COMP_ID_AUTOPILOT1))
+    {
+        qDebug() << "Resetting indices";
         // Reset index wait lists
         for (int cid: _paramCountMap.keys()) {
             // Add/Update all indices to the wait list, parameter index is 0-based
-            if ((componentId != MAV_COMP_ID_ALL) && (componentId != cid)) {
+            if ((componentId != MAV_COMP_ID_ALL && componentId != cid) || (componentId == MAV_COMP_ID_ALL && cid == MAV_COMP_ID_AUTOPILOT1 && _tryftp)) {
                 continue;
             }
             for (int waitingIndex = 0; waitingIndex < _paramCountMap[cid]; waitingIndex++) {

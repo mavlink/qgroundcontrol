@@ -2333,6 +2333,14 @@ VehicleCameraControl::startTracking(QRectF rec, uint64_t timestamp)
                                  static_cast<float>(rec.y() + rec.height()),
                                  param5,
                                  param6);
+
+
+        // Ask the camera to continuously send tracking status
+        _vehicle->sendMavCommand(_compID,
+                                 MAV_CMD_SET_MESSAGE_INTERVAL,
+                                 true,
+                                 MAVLINK_MSG_ID_CAMERA_TRACKING_IMAGE_STATUS,
+                                 50000);
     }
 }
 
@@ -2355,6 +2363,13 @@ VehicleCameraControl::startTracking(QPointF point, double radius)
                                  static_cast<float>(point.x()),
                                  static_cast<float>(point.y()),
                                  static_cast<float>(radius));
+
+        // Ask the camera to continuously send tracking status
+        _vehicle->sendMavCommand(_compID,
+                                 MAV_CMD_SET_MESSAGE_INTERVAL,
+                                 true,
+                                 MAVLINK_MSG_ID_CAMERA_TRACKING_IMAGE_STATUS,
+                                 50000);
     }
 }
 
