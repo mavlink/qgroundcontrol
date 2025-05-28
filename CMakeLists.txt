@@ -99,18 +99,18 @@ if(QGC_USE_CACHE)
     if(CMAKE_HOST_UNIX)
         find_program(CCACHE_PROGRAM ccache)
         if(CCACHE_PROGRAM)
-            message(STATUS "Using CCache")
-            set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
-            set(CMAKE_C_LINKER_LAUNCHER "${CCACHE_PROGRAM}")
-            set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
-            set(CMAKE_CXX_LINKER_LAUNCHER "${CCACHE_PROGRAM}")
-            if(IOS)
-                set(CMAKE_OBJC_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
-                set(CMAKE_OBJC_LINKER_LAUNCHER "${CCACHE_PROGRAM}")
-            endif()
-
-            # set(ENV{CCACHE_SLOPPINESS} pch_defines,time_macros,include_file_mtime,include_file_ctime)
-            # set(ENV{CCACHE_BASEDIR} ${CMAKE_SOURCE_DIR})
+            message(STATUS "QGC: Using ccache ${CCACHE_PROGRAM}")
+            set(CCACHE_WRAPPER
+                "${CMAKE_COMMAND}" -E env
+                CCACHE_DIR=${CMAKE_BINARY_DIR}/.ccache
+                CCACHE_BASEDIR=${CMAKE_SOURCE_DIR}
+                CCACHE_SLOPPINESS=pch_defines,time_macros,include_file_mtime,include_file_ctime
+                ${CCACHE_PROGRAM}
+            )
+            set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_WRAPPER}")
+            set(CMAKE_C_LINKER_LAUNCHER "${CCACHE_WRAPPER}")
+            set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_WRAPPER}")
+            set(CMAKE_CXX_LINKER_LAUNCHER "${CCACHE_WRAPPER}")
             # if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
             #     add_compile_options(-Xclang -fno-pch-timestamp)
             # elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
@@ -120,7 +120,7 @@ if(QGC_USE_CACHE)
     elseif(CMAKE_HOST_WIN32)
         find_program(SCCACHE_PROGRAM sccache)
         if(SCCACHE_PROGRAM)
-            message(STATUS "Using SCCache")
+            message(STATUS "QGC: Using sccache ${SCCACHE_PROGRAM}")
             set(CMAKE_C_COMPILER_LAUNCHER "${SCCACHE_PROGRAM}")
             # set(CMAKE_C_LINKER_LAUNCHER "${SCCACHE_PROGRAM}")
             set(CMAKE_CXX_COMPILER_LAUNCHER "${SCCACHE_PROGRAM}")
@@ -507,12 +507,14 @@ if(QGC_CUSTOM_BUILD)
     target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_DIRECTORIES})
 endif()
 
-target_precompile_headers(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        <QtCore/QObject>
-        <QtNetwork/QNetworkReply>
-        <QtPositioning/QGeoCoordinate>
-)
+if(QGC_USE_CACHE)
+    target_precompile_headers(${CMAKE_PROJECT_NAME}
+        PRIVATE
+            <QtCore/QObject>
+            <QtNetwork/QNetworkReply>
+            <QtPositioning/QGeoCoordinate>
+    )
+endif()
 
 file(GLOB TS_SOURCES ${CMAKE_SOURCE_DIR}/translations/qgc_*.ts)
 set_source_files_properties(${TS_SOURCES} PROPERTIES OUTPUT_LOCATION "${CMAKE_BINARY_DIR}/i18n")
