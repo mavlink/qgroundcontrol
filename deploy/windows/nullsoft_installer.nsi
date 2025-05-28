@@ -59,16 +59,10 @@ SetCompressor /SOLID /FINAL lzma
 !insertmacro MUI_LANGUAGE "English"
 
 Section
-  DetailPrint "Checking for 32 bit uninstaller"
-  SetRegView 32
-  ReadRegStr $R0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "UninstallString"
-  StrCmp $R0 "" check64BitUninstall doUninstall
-
-check64BitUninstall:
-  DetailPrint "Checking for 64 bit  uninstaller"
+  DetailPrint "Checking for 64 bit uninstaller"
   SetRegView 64
   ReadRegStr $R0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "UninstallString"
-  StrCmp $R0 "" doInstall
+  StrCmp $R0 "" doInstall doUninstall
 
 doUninstall:
   DetailPrint "Uninstalling previous version..."
@@ -84,50 +78,12 @@ doInstall:
   SetOutPath $INSTDIR
   File /r /x ${EXENAME}.pdb /x ${EXENAME}.lib /x ${EXENAME}.exp ${DESTDIR}\*.*
 
-  ; Driver location is http://firmware.ardupilot.org/Tools/MissionPlanner/driver.msi
-  ; Whenever this driver is updated in the repo QGCCURRENTDRIVERVERSION must be bumped by 1
-  File ${DRIVER_MSI}
-
   WriteUninstaller $INSTDIR\${EXENAME}-Uninstall.exe
   WriteRegStr HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayName" "${APPNAME}"
   WriteRegStr HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "UninstallString" "$\"$INSTDIR\${EXENAME}-Uninstall.exe$\""
   WriteRegDWORD HKLM "SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\${EXENAME}.exe" "DumpCount" 5
   WriteRegDWORD HKLM "SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\${EXENAME}.exe" "DumpType" 1
   WriteRegExpandStr HKLM "SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\${EXENAME}.exe" "DumpFolder" "%LOCALAPPDATA%\QGCCrashDumps"
-
-  ; QGC stores its own driver version key to prevent installation if already up to date
-  ; This prevents running the driver install a second time which will start up in repair mode which is confusing
-  !define QGCDRIVERVERSIONKEY "SOFTWARE\QGroundControlUAVDrivers"
-  !define QGCCURRENTDRIVERVERSION 3
-
-  ; If the drivers are already installed the key "HKCU/SOFTWARE\MichaelOborne\driver\installed" will be present and set to 1
-  SetRegView 64
-  !define DRIVERKEY "SOFTWARE\MichaelOborne\driver"
-  ReadRegDWORD $0 HKCU "${DRIVERKEY}" "installed"
-  IntCmp $0 1 driversInstalled driversNotInstalled driversNotInstalled
-
-driversInstalled:
-  DetailPrint "UAV Drivers already installed. Checking version..."
-  ; Check if the installed drivers are out of date.
-  ; Missing key also indicates out of date driver install.
-  ReadRegDWORD $0 HKCU "${QGCDRIVERVERSIONKEY}" "version"
-  IntCmp $0 ${QGCCURRENTDRIVERVERSION} done driversOutOfDate done
-
-driversOutOfDate:
-  DetailPrint "UAV Drivers out of date."
-  goto installDrivers
-
-driversNotInstalled:
-  DetailPrint "UAV Drivers not installed."
-  ; Delete abandoned possibly out of date version key
-  DeleteRegKey HKCU "SOFTWARE\QGroundControlUAVDrivers"
-
-installDrivers:
-  DetailPrint "Installing UAV Drivers..."
-  ExecWait '"msiexec" /i "driver.msi"'
-  ; Set current driver version value
-  WriteRegDWORD HKCU "${QGCDRIVERVERSIONKEY}" "version" ${QGCCURRENTDRIVERVERSION}
-  goto done
 
 done:
   SetRegView lastused
@@ -147,7 +103,6 @@ Section "Uninstall"
   ${Endif}
   DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}"
   DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\${EXENAME}.exe"
-  ; NOTE: We specifically do not delete the driver version key since we need it to persist around uninstalls
 SectionEnd
 
 Section "create Start Menu Shortcuts"

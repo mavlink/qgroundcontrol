@@ -305,15 +305,8 @@ qt_add_executable(${CMAKE_PROJECT_NAME}
 )
 
 if(WIN32)
-    # CPMAddPackage(
-    #     NAME windows_drivers
-    #     URL https://firmware.ardupilot.org/Tools/MissionPlanner/driver.msi
-    # )
-    # ${windows_drivers_SOURCE_DIR}/driver.msi
-
     # windows installer files shared with core and custom
     set(DEPLOY_WIN_FILES
-        "${CMAKE_SOURCE_DIR}/deploy/windows/driver.msi"
         "${CMAKE_SOURCE_DIR}/deploy/windows/nullsoft_installer.nsi"
         "${QGC_WINDOWS_RESOURCE_FILE_PATH}"
         "${QGC_WINDOWS_INSTALL_HEADER_PATH}"
