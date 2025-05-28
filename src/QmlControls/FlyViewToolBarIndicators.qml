@@ -11,6 +11,7 @@ import QtQuick
 
 import QGroundControl
 import QGroundControl.ScreenTools
+import QGroundControl.Toolbar
 
 //-------------------------------------------------------------------------
 //-- Toolbar Indicators

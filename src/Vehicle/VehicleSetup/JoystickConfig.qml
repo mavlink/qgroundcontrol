@@ -92,7 +92,7 @@ SetupPage {
                 }
             }
 
-            property var pages:  ["JoystickConfigGeneral.qml", "JoystickConfigButtons.qml", "JoystickConfigCalibration.qml", "JoystickConfigAdvanced.qml"]
+            property var pages:  ["qrc:/qml/QGroundControl/VehicleSetup/JoystickConfigGeneral.qml", "qrc:/qml/QGroundControl/VehicleSetup/JoystickConfigButtons.qml", "qrc:/qml/QGroundControl/VehicleSetup/JoystickConfigCalibration.qml", "qrc:/qml/QGroundControl/VehicleSetup/JoystickConfigAdvanced.qml"]
 
             Loader {
                 id:             joyLoader

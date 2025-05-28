@@ -68,6 +68,7 @@ qt_add_qml_module(QGroundControlControlsModule
     RESOURCE_PREFIX /qml
     QML_FILES
         AltModeDialog.qml
+        AppSettings.qml
         APMSubMotorDisplay.qml
         AppMessages.qml
         AutotuneUI.qml
