@@ -72,14 +72,22 @@ target_sources(gstqml6gl PRIVATE ${gstqml6gl_SRCS})
 
 target_link_libraries(gstqml6gl
     PRIVATE
+        Qt6::GuiPrivate
+    PUBLIC
         Qt6::Core
         Qt6::Gui
-        Qt6::GuiPrivate
         Qt6::Qml
         Qt6::Quick
 )
 
 target_include_directories(gstqml6gl PUBLIC ${QGC_GST_QT6_PLUGIN_PATH})
+
+target_precompile_headers(gstqml6gl
+    PRIVATE
+        <gst/gst.h>
+        <gst/gl/gl.h>
+        <gst/video/video.h>
+)
 
 ################################################################################
 
@@ -137,7 +145,7 @@ endif()
 if(GStreamer_GlWayland_FOUND)
     find_package(Qt6 COMPONENTS WaylandClient)
     if(TARGET Qt6::WaylandClient)
-        target_link_libraries(gstqml6gl PUBLIC Qt6::WaylandClient)
+        target_link_libraries(gstqml6gl PRIVATE Qt6::WaylandClient)
     endif()
     target_compile_definitions(gstqml6gl PRIVATE HAVE_QT_WAYLAND)
 endif()

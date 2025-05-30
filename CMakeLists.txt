@@ -99,23 +99,20 @@ if(QGC_USE_CACHE)
     if(CMAKE_HOST_UNIX)
         find_program(CCACHE_PROGRAM ccache)
         if(CCACHE_PROGRAM)
-            message(STATUS "QGC: Using ccache ${CCACHE_PROGRAM}")
-            set(CCACHE_WRAPPER
-                "${CMAKE_COMMAND}" -E env
-                CCACHE_DIR=${CMAKE_BINARY_DIR}/.ccache
-                CCACHE_BASEDIR=${CMAKE_SOURCE_DIR}
+            set(CCACHE_CMD
+                CCACHE_BASEDIR=${CMAKE_BINARY_DIR}
+                CCACHE_COMPRESSLEVEL=6
                 CCACHE_SLOPPINESS=pch_defines,time_macros,include_file_mtime,include_file_ctime
                 ${CCACHE_PROGRAM}
             )
-            set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_WRAPPER}")
-            set(CMAKE_C_LINKER_LAUNCHER "${CCACHE_WRAPPER}")
-            set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_WRAPPER}")
-            set(CMAKE_CXX_LINKER_LAUNCHER "${CCACHE_WRAPPER}")
-            # if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-            #     add_compile_options(-Xclang -fno-pch-timestamp)
-            # elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-            #     add_compile_options(-fpch-preprocess)
-            # endif()
+            message(STATUS "QGC: Using ccache cmd - ${CCACHE_CMD}")
+            set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_CMD}")
+            set(CMAKE_C_LINKER_LAUNCHER "${CCACHE_CMD}")
+            set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_CMD}")
+            set(CMAKE_CXX_LINKER_LAUNCHER "${CCACHE_CMD}")
+            if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+                add_compile_options(-Xclang -fno-pch-timestamp)
+            endif()
         endif()
     elseif(CMAKE_HOST_WIN32)
         find_program(SCCACHE_PROGRAM sccache)
@@ -496,6 +493,14 @@ set_target_properties(${CMAKE_PROJECT_NAME}
         OUTPUT_NAME ${CMAKE_PROJECT_NAME}
 )
 
+target_precompile_headers(${CMAKE_PROJECT_NAME}
+    PRIVATE
+        <QtCore/QLoggingCategory>
+        <QtCore/QObject>
+        <QtCore/QString>
+        <QtCore/QTimer>
+)
+
 add_subdirectory(src)
 if(QGC_BUILD_TESTING)
     add_subdirectory(test)
@@ -505,15 +510,6 @@ if(QGC_CUSTOM_BUILD)
     target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_SOURCES})
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_LIBRARIES})
     target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_DIRECTORIES})
-endif()
-
-if(QGC_USE_CACHE)
-    target_precompile_headers(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            <QtCore/QObject>
-            <QtNetwork/QNetworkReply>
-            <QtPositioning/QGeoCoordinate>
-    )
 endif()
 
 file(GLOB TS_SOURCES ${CMAKE_SOURCE_DIR}/translations/qgc_*.ts)
