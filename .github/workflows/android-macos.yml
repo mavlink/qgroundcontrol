@@ -16,6 +16,7 @@ on:
       - 'src/**'
       - 'android/**'
       - 'CMakeLists.txt'
+      - 'cmake/**'
       - 'translations/*'
 
 # concurrency:
@@ -53,7 +54,7 @@ jobs:
           fetch-tags: false
 
       - name: Get all tags for correct version determination
-        working-directory:  ${{ github.workspace }}
+        working-directory: ${{ github.workspace }}
         run: |
           git fetch --all --tags -f --depth 1
 
@@ -88,5 +89,5 @@ jobs:
       - name: Save APK
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.PACKAGE }}
+          name: ${{ env.ARTIFACT }}
           path: ${{ runner.temp }}/shadow_build_dir/android-build/*.apk

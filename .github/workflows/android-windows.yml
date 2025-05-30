@@ -54,7 +54,7 @@ jobs:
           fetch-tags: false
 
       - name: Get all tags for correct version determination
-        working-directory:  ${{ github.workspace }}
+        working-directory: ${{ github.workspace }}
         run: |
           git fetch --all --tags -f --depth 1
 
@@ -69,11 +69,6 @@ jobs:
           version: ${{ env.QT_VERSION }}
           abis: ${{ env.QT_ANDROID_ABIS }}
           cpm-modules: ${{ runner.temp }}\shadow_build_dir\cpm_modules
-
-      - name: Set up Visual Studio shell
-        uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: x64
 
       - name: Configure
         working-directory: ${{ runner.temp }}/shadow_build_dir
@@ -94,5 +89,5 @@ jobs:
       - name: Save APK
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.PACKAGE }}
+          name: ${{ env.ARTIFACT }}
           path: ${{ runner.temp }}/shadow_build_dir/android-build/*.apk

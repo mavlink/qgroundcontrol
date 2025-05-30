@@ -16,9 +16,7 @@ inputs:
   ccache-version:
     description: ccache Version to Install
     required: false
-    default: 4.11.1
-    # windows-x86_64.zip, darwin.tar.gz, linux-x86_64.tar.xz
-    # https://github.com/ccache/ccache/releases/download/${version}/ccache-${version}-${host}.${zip}
+    default: 4.11.3
 runs:
   using: "composite"
   steps:
@@ -36,18 +34,17 @@ runs:
         sudo make install
 
     - name: Setup sccache (Windows)
-      if: runner.os == 'Windows' && inputs.target != 'android'
-      uses: mozilla-actions/sccache-action@v0.0.7
+      if: runner.os == 'Windows'
+      uses: mozilla-actions/sccache-action@v0.0.8
 
     - run: echo "SCCACHE_GHA_ENABLED=true" >> "$GITHUB_ENV"
-      if: runner.os == 'Windows' && inputs.target != 'android'
+      if: runner.os == 'Windows'
       shell: bash
 
     - name: Setup Build Cache
       uses: hendrikmuhs/ccache-action@main
       with:
-        create-symlink: ${{ runner.os != 'Windows' }}
-        variant: ${{ runner.os == 'Windows' && inputs.target != 'android' && 'sccache' || 'ccache' }}
+        variant: ${{ runner.os == 'Windows' && 'sccache' || 'ccache' }}
         key: ${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}
         restore-keys: |
           ${{ inputs.host }}-${{ inputs.target }}
