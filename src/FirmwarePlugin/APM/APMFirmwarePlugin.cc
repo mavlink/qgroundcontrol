@@ -637,7 +637,7 @@ const QVariantList &APMFirmwarePlugin::toolIndicators(const Vehicle *vehicle)
         // Find the generic flight mode indicator and replace with the custom one
         for (int i = 0; i < _toolIndicatorList.size(); i++) {
             if (_toolIndicatorList.at(i).toUrl().toString().contains("FlightModeIndicator.qml")) {
-                _toolIndicatorList[i] = QVariant::fromValue(QUrl::fromUserInput("qrc:/APM/Indicators/APMFlightModeIndicator.qml"));
+                _toolIndicatorList[i] = QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/APMFlightModeIndicator.qml"));
                 break;
             }
         }
@@ -645,7 +645,7 @@ const QVariantList &APMFirmwarePlugin::toolIndicators(const Vehicle *vehicle)
         // Find the generic battery indicator and replace with the custom one
         for (int i = 0; i < _toolIndicatorList.size(); i++) {
             if (_toolIndicatorList.at(i).toUrl().toString().contains("BatteryIndicator.qml")) {
-                _toolIndicatorList[i] = QVariant::fromValue(QUrl::fromUserInput("qrc:/APM/Indicators/APMBatteryIndicator.qml"));
+                _toolIndicatorList[i] = QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/APMBatteryIndicator.qml"));
                 break;
             }
         }
@@ -1255,7 +1255,7 @@ void APMFirmwarePlugin::guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle *
 
 QVariant APMFirmwarePlugin::mainStatusIndicatorContentItem(const Vehicle*) const
 {
-    return QVariant::fromValue(QUrl::fromUserInput("qrc:/APM/Indicators/APMMainStatusIndicatorContentItem.qml"));
+    return QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/APMMainStatusIndicatorContentItem.qml"));
 }
 
 void APMFirmwarePlugin::_setBaroGndTemp(Vehicle* vehicle, qreal temp)
