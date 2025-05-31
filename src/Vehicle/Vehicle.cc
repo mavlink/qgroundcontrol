@@ -835,16 +835,31 @@ void Vehicle::_handleHighLatency2(mavlink_message_t& message)
         // bad modes while unit testing.
         previousFlightMode = flightMode();
     }
-    _base_mode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
+    // ArduPilot has the basemode in the custom0 field of the high latency message.
+    if (highLatency2.autopilot == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+        _base_mode = (uint8_t)highLatency2.custom0;
+    } else {
+        _base_mode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
+    }
     _custom_mode = _firmwarePlugin->highLatencyCustomModeTo32Bits(highLatency2.custom_mode);
     if (previousFlightMode != flightMode()) {
         emit flightModeChanged(flightMode());
     }
-
-    // Assume armed since we don't know
-    if (_armed != true) {
-        _armed = true;
-        emit armedChanged(_armed);
+    // ArduPilot has the arming status (basemode) in the custom0 field of the high latency message.
+    if (highLatency2.autopilot == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+        if ((uint8_t)highLatency2.custom0 & MAV_MODE_FLAG_SAFETY_ARMED && _armed != true) {
+            _armed = true;
+            emit armedChanged(_armed);
+        } else if (!((uint8_t)highLatency2.custom0 & MAV_MODE_FLAG_SAFETY_ARMED) && _armed != false) {
+            _armed = false;
+            emit armedChanged(_armed);
+        }
+    } else {
+        // Assume armed since we don't know
+        if (_armed != true) {
+            _armed = true;
+            emit armedChanged(_armed);
+        }
     }
 
     _coordinate.setLatitude(highLatency2.latitude  / (double)1E7);
