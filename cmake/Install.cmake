@@ -38,32 +38,36 @@ if(ANDROID)
     # cmake_print_variables(QGC_ANDROID_DEPLOY_FILE)
 elseif(LINUX)
     configure_file(
-        ${CMAKE_SOURCE_DIR}/deploy/linux/org.mavlink.qgroundcontrol.desktop.in
-        ${CMAKE_BINARY_DIR}/org.mavlink.qgroundcontrol.desktop
+        ${QGC_APPIMAGE_DESKTOP_ENTRY_PATH}
+        ${CMAKE_BINARY_DIR}/${QGC_PACKAGE_NAME}.desktop
         @ONLY
     )
     install(
-        FILES ${CMAKE_BINARY_DIR}/org.mavlink.qgroundcontrol.desktop
-        DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
+        FILES ${CMAKE_BINARY_DIR}/${QGC_PACKAGE_NAME}.desktop
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/applications/
     )
     install(
         FILES ${QGC_APPIMAGE_ICON_PATH}
-        DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/128x128/apps/
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/256x256/apps/
         RENAME ${CMAKE_PROJECT_NAME}.png
     )
     configure_file(
-        ${CMAKE_SOURCE_DIR}/deploy/linux/org.mavlink.qgroundcontrol.metainfo.xml.in
-        ${CMAKE_BINARY_DIR}/metainfo/org.mavlink.qgroundcontrol.metainfo.xml
+        ${QGC_APPIMAGE_METADATA_PATH}
+        ${CMAKE_BINARY_DIR}/${QGC_PACKAGE_NAME}.appdata.xml
         @ONLY
     )
     install(
-        FILES ${CMAKE_BINARY_DIR}/metainfo/org.mavlink.qgroundcontrol.metainfo.xml
+        FILES ${CMAKE_BINARY_DIR}/${QGC_PACKAGE_NAME}.appdata.xml
         DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo/
     )
     install(
         FILES ${CMAKE_SOURCE_DIR}/deploy/linux/AppRun
-        DESTINATION ${CMAKE_BINARY_DIR}
+        DESTINATION ${CMAKE_BINARY_DIR}/
     )
+    install(CODE "set(CMAKE_PROJECT_NAME ${CMAKE_PROJECT_NAME})")
+    install(CODE "set(CMAKE_PROJECT_VERSION ${CMAKE_PROJECT_VERSION})")
+    install(CODE "set(QGC_PACKAGE_NAME ${QGC_PACKAGE_NAME})")
+    install(CODE "set(CMAKE_SYSTEM_PROCESSOR ${CMAKE_SYSTEM_PROCESSOR})")
     install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/CreateAppImage.cmake")
 elseif(WIN32)
     install(CODE "set(CMAKE_PROJECT_NAME ${CMAKE_PROJECT_NAME})")
@@ -75,7 +79,8 @@ elseif(WIN32)
     install(CODE "set(QGC_WINDOWS_INSTALLER_SCRIPT ${CMAKE_SOURCE_DIR}/deploy/windows/nullsoft_installer.nsi)")
     install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/CreateWinInstaller.cmake")
 elseif(MACOS)
-    install(CODE "set(TARGET_APP_NAME ${QGC_APP_NAME})")
-    install(CODE "set(MACDEPLOYQT ${Qt6_DIR}/../../../bin/macdeployqt)")
+    install(CODE "set(TARGET_APP_NAME ${CMAKE_PROJECT_NAME})")
+    install(CODE "include(BundleUtilities)")
+    install(CODE "fixup_bundle(\"$<TARGET_BUNDLE_DIR:${CMAKE_PROJECT_NAME}>\" \"\" \"${CMAKE_BINARY_DIR}\")")
     install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/CreateMacDMG.cmake")
 endif()
