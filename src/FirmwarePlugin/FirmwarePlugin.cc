@@ -66,9 +66,9 @@ QString FirmwarePlugin::flightMode(uint8_t base_mode, uint32_t custom_mode) cons
     if (base_mode == 0) {
         flightMode = "PreFlight";
     } else if (base_mode & MAV_MODE_FLAG_CUSTOM_MODE_ENABLED) {
-        flightMode = _modeEnumToString.value(custom_mode, QString("Custom:0x%1").arg(custom_mode, 0, 16));
+        flightMode = _modeEnumToString.value(custom_mode, QStringLiteral("Custom:0x%1").arg(custom_mode, 0, 16));
     } else {
-        for (size_t i = 0; std::size(rgBit2Name); i++) {
+        for (size_t i = 0; i < std::size(rgBit2Name); i++) {
             if (base_mode & rgBit2Name[i].baseModeBit) {
                 if (i != 0) {
                     flightMode += " ";
@@ -207,15 +207,15 @@ const QVariantList &FirmwarePlugin::toolIndicators(const Vehicle*)
     if (_toolIndicatorList.isEmpty()) {
         _toolIndicatorList = QVariantList({
             QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Controls/FlightModeIndicator.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/VehicleGPSIndicator.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/TelemetryRSSIIndicator.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RCRSSIIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/VehicleGPSIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/TelemetryRSSIIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/RCRSSIIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Controls/BatteryIndicator.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RemoteIDIndicator.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/GimbalIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/RemoteIDIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/GimbalIndicator.qml")),
 // ControlIndicator is only available in debug builds for the moment
 #ifdef QT_DEBUG
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/GCSControlIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/GCSControlIndicator.qml")),
 #endif
         });
     }
@@ -228,8 +228,8 @@ const QVariantList &FirmwarePlugin::modeIndicators(const Vehicle*)
     //-- Default list of indicators for all vehicles.
     if (_modeIndicatorList.isEmpty()) {
         _modeIndicatorList = QVariantList({
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/MultiVehicleSelector.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/LinkIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/MultiVehicleSelector.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/LinkIndicator.qml")),
         });
     }
 
@@ -454,15 +454,10 @@ Autotune *FirmwarePlugin::createAutotune(Vehicle *vehicle) const
 void FirmwarePlugin::_updateFlightModeList(FlightModeList &flightModeList)
 {
     _flightModeList.clear();
+    _modeEnumToString.clear();
 
-    for (FirmwareFlightMode &flightMode : flightModeList){
-        if (_modeEnumToString.contains(flightMode.custom_mode)) {
-            // Flight mode already exists in initial mapping, use that name which provides for localizations
-            flightMode.mode_name = _modeEnumToString[flightMode.custom_mode];
-        } else{
-            // This is a custom flight mode that is not already known. Best we can do is used the provided name
-            _modeEnumToString[flightMode.custom_mode] = flightMode.mode_name;
-        }
+    for (FirmwareFlightMode &flightMode : flightModeList) {
+        _modeEnumToString[flightMode.custom_mode] = flightMode.mode_name;
         _addNewFlightMode(flightMode);
     }
 

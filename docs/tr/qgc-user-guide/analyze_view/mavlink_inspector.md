@@ -35,8 +35,8 @@ To use the _MAVLink Inspector_:
    - Fields can be added to only one chart.
 
    - A chart can have multiple fields, and fields from multiple messages (these are listed above each chart).
-     Messages containing fields that are being charted are highlighted with an asterisk.
+      Messages containing fields that are being charted are highlighted with an asterisk.
 
-     ![MAVLink inspector: chart fields detail](../../../assets/analyze/mavlink_inspector/mavlink_inspector_charted_messages.jpg)
+      ![MAVLink inspector: chart fields detail](../../../assets/analyze/mavlink_inspector/mavlink_inspector_charted_messages.jpg)
 
    - The _Scale_ and _Range_ are set to sensible values, but can be modified if needed.

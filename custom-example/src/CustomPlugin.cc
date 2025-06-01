@@ -11,13 +11,15 @@
 
 #include "CustomPlugin.h"
 #include "QmlComponentInfo.h"
+#include "QGCLoggingCategory.h"
 #include "QGCPalette.h"
 #include "QGCMAVLink.h"
 #include "AppSettings.h"
 #include "BrandImageSettings.h"
 
-#include <QtCore/qapplicationstatic.h>
+#include <QtCore/QApplicationStatic>
 #include <QtQml/QQmlApplicationEngine>
+#include <QtQml/QQmlFile>
 
 QGC_LOGGING_CATEGORY(CustomLog, "gcs.custom.customplugin")
 
@@ -68,6 +70,8 @@ bool CustomOptions::wifiReliableForCalibration(void) const
     return true;
 }
 
+/*===========================================================================*/
+
 CustomPlugin::CustomPlugin(QObject *parent)
     : QGCCorePlugin(parent)
     , _options(new CustomOptions(this, this))
@@ -78,11 +82,26 @@ CustomPlugin::CustomPlugin(QObject *parent)
 
 CustomPlugin::~CustomPlugin()
 {
+
 }
 
 QGCCorePlugin *CustomPlugin::instance()
 {
     return _customPluginInstance();
+}
+
+void CustomPlugin::init()
+{
+
+}
+
+void CustomPlugin::cleanup()
+{
+    if (_qmlEngine) {
+        _qmlEngine->removeUrlInterceptor(_selector);
+    }
+
+    delete _selector;
 }
 
 void CustomPlugin::_advancedChanged(bool changed)
@@ -91,7 +110,6 @@ void CustomPlugin::_advancedChanged(bool changed)
     emit _options->showFirmwareUpgradeChanged(changed);
 }
 
-//-----------------------------------------------------------------------------
 void CustomPlugin::_addSettingsEntry(const QString& title, const char* qmlFile, const char* iconFile)
 {
     Q_CHECK_PTR(qmlFile);
@@ -342,7 +360,45 @@ void CustomPlugin::paletteOverride(const QString &colorName, QGCPalette::Palette
 // We override this so we can get access to QQmlApplicationEngine and use it to register our qml module
 QQmlApplicationEngine* CustomPlugin::createQmlApplicationEngine(QObject* parent)
 {
-    QQmlApplicationEngine* qmlEngine = QGCCorePlugin::createQmlApplicationEngine(parent);
-    qmlEngine->addImportPath("qrc:/Custom/Widgets");
-    return qmlEngine;
+    _qmlEngine = QGCCorePlugin::createQmlApplicationEngine(parent);
+    _qmlEngine->addImportPath("qrc:/Custom/Widgets");
+    // TODO: Investigate _qmlEngine->setExtraSelectors({"custom"})
+
+    _selector = new CustomOverrideInterceptor();
+    _qmlEngine->addUrlInterceptor(_selector);
+
+    return _qmlEngine;
+}
+
+/*===========================================================================*/
+
+CustomOverrideInterceptor::CustomOverrideInterceptor()
+    : QQmlAbstractUrlInterceptor()
+{
+
+}
+
+QUrl CustomOverrideInterceptor::intercept(const QUrl &url, QQmlAbstractUrlInterceptor::DataType type)
+{
+    switch (type) {
+    using DataType = QQmlAbstractUrlInterceptor::DataType;
+    case DataType::QmlFile:
+    case DataType::UrlString:
+        if (url.scheme() == QStringLiteral("qrc")) {
+            const QString origPath = url.path();
+            const QString overrideRes = QStringLiteral(":/Custom%1").arg(origPath);
+            if (QFile::exists(overrideRes)) {
+                const QString relPath = overrideRes.mid(2);
+                QUrl result;
+                result.setScheme(QStringLiteral("qrc"));
+                result.setPath('/' + relPath);
+                return result;
+            }
+        }
+        break;
+    default:
+        break;
+    }
+
+    return url;
 }

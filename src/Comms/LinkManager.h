@@ -124,6 +124,7 @@ signals:
 
 private slots:
     void _linkDisconnected();
+    void _communicationError(const QString &title, const QString &error);
 
 private:
     QmlObjectListModel *_qmlLinkConfigurations();
@@ -185,6 +186,7 @@ private:
     bool _allowAutoConnectToBoard(QGCSerialPortInfo::BoardType_t boardType) const;
     void _addSerialAutoConnectLink();
     bool _portAlreadyConnected(const QString &portName) const;
+    void _filterCompositePorts(QList<QGCSerialPortInfo> &portList);
 
     UdpIODevice *_nmeaSocket = nullptr;
     QMap<QString, int> _autoconnectPortWaitList;   ///< key: QGCSerialPortInfo::systemLocation, value: wait count

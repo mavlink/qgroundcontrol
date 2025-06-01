@@ -18,7 +18,7 @@ The joystick is _enabled_ as the last step of the calibration process.
 
 ## Enabling PX4 Joystick Support
 
-To enable Joystick support in PX4 you need to set the parameter [`COM_RC_IN_MODE`](https://docs.px4.io/en/main/advanced_config/parameter_reference.html#COM_RC_IN_MODE) to `1` - _Joystick_.
+若要在 PX4 中启用操纵杆支持，您需要将参数 [`COM_RC_IN_MODE`](https://docs.px4.io/en/main/advanced_config/parameter_reference.html#COM_RC_IN_MODE) 设置为 `1` - _操纵杆_。
 If this parameter is `0` then _Joystick_ will not be offered as a setup option.
 
 This is enabled by default for PX4 SITL builds (see the [Parameters](../setup_view/parameters.md) topic for information on how to find and set a particular parameter).
@@ -145,11 +145,11 @@ To make the controller work wirelessly under Linux the [jstest-gtk](https://jste
 
 The steps are:
 
-1. Install _jstest-gtk_:
+1. 安装 _jst-gtk_：
   ```
   Install _jstest-gtk_: `sudo apt install jstest-gtk`
   ```
-2. Install _ds4drv_:
+2. 安装 _ds4drv_:：
   ```
   Install _ds4drv_: `sudo pip install ds4drv`
   ```

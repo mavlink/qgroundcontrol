@@ -1,10 +1,10 @@
-# Custom Mavlink Action
+# 自定义 Mavlink 动作
 
-Both the Fly View and Joysticks support the ability execute arbitrary mavlink commands to the active vehicle. In the Fly View these will show up in the Toolstrip Action list. With Joysticks you can assign then to button presses.
+飞行视图和操纵杆都支持对正在运行的载具执行任意的MAVLink命令的功能。 在飞行视图中，这些将会显示在工具条行动列表中。 通过操纵杆，你可以将命令分配给按钮按下操作。
 
-## Mavlink Actions File
+## Mavlink 动作文件
 
-The actions available are defined in a JSON file. The format of that file is as follows:
+在 JSON 文件中定义了可用的动作。 该文件的格式如下：
 
 ```
 {
@@ -30,15 +30,15 @@ The actions available are defined in a JSON file. The format of that file is as 
 }
 ```
 
-Fields:
+字段：
 
-- actions (required) - An array of json objects, one for each command
-- label (required) - The user visible short description for the command. This is used as the button text for the Fly View - Actions command list. For Joysticks, this is the command you select from the dropdown. For Joysticks, make sure your name doesn't conflict with the built in names.
-- description (required) - This is a longer description of the command used in the Fly View - Action list. This is not used by joysticks.
-- mavCmd (required) - The command id of the mavlink command you want to send.
-- compId (options) - The component id for where you want to send the command to. If not specified `MAV_COMP_ID_AUTOPILOT1` is used.
-- param1 thru param7 (optional) - The parameters for the command. Parameters which are not specified will default to 0.0
+- actions (必填) - 每个命令一个 json 对象数组
+- label (必填) - 命令的用户可见简短描述。 这被用作飞行视图 - 操作命令列表中的按钮文本。 对于操纵杆，这是您从下拉菜单中选择的命令。 对于操纵杆，请确保您的名字与内置名称不冲突。
+- description (必填) - 这是Fly View 中使用的命令的较长描述 - 动作列表。 操纵杆并不会使用这个字段。
+- mavCmd (必填) - 你想要发送的 mavlink 命令的命令ID。
+- compId (可选) - 你想要将命令发送到哪里的组件id。 如果未指定`MAV_COMP_ID_AUTOPILOT1`，则使用它。
+- param1 到 param7 (可选) - 命令的参数。 未指定的参数将默认为0.0
 
-Mavlink action files should be located in the MavlinkActions directory of the QGC save location. For example on Linux that would be `~/Documents/QGroundControl/MavlinkActions` or `~/Documents/QGroundControl Daily/MavlinkActions`. The Fly View and Joysticks can each have there own custom actions file.
+Mavlink 操作文件应该位于QGC 保存位置的MavlinkAction目录。 例如，在 Linux 上，它是 "~/Documents/QGroundControl/MavlinkActions" 或 "~/Documents/QGroundControlDaily/MavlinkActions" 。 飞行视图和操纵杆都可以有自己的自定义操作文件。
 
-When you start up QGC it will load these files if they exist and make the commands available for use.
+当你启动QGC时，如果这些文件存在，它将加载这些文件，并使相关命令可供使用。

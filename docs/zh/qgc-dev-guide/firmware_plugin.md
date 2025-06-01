@@ -1,23 +1,23 @@
-# Plugin Architecture
+# 插件架构
 
-虽然MAVLink规范定义了与载具通信的标准通信协议。 There are many aspects of that spec that are up for interpretation by the firmware developers. There are many aspects of that spec that are up for interpretation by the firmware developers. Because of this there are many cases where communication with a vehicle running one firmware is be slightly different than communication with a vehicle running a different firmware in order to accomplish the same task. Also each firmware may implement a different subset of the MAVLink command set.
+尽管 MAVLink 规范定义了与载具通信的标准通信协议。 这个规范在许多方面需要固件开发者来解释。 由于这种情况，在许多情况下，为完成相同任务，与运行一种固件的载具进行通信，和与运行不同固件的载具进行通信，二者会略有差异。 此外，每个固件可能实现一个不同的 MAVLink 命令集的子集。
 
-另一个主要问题是MAVLink规范不包括载具配置或通用参数集。 Due to this all code which relates to vehicle setup ends up being firmware specific. Due to this all code which relates to vehicle setup ends up being firmware specific. 此外，任何必须引用特定参数的代码也是特定于固件的。
+另一个主要问题是MAVLink规范不包括载具配置或通用参数集。 Due to this all code which relates to vehicle setup ends up being firmware specific. 正因如此，所有与载具配置相关的代码最终都具有固件特定性。 此外，任何必须引用特定参数的代码也是特定于固件的。
 
-鉴于固件实现之间的所有这些差异，创建单个地面站应用程序可能非常棘手，可以支持每个应用程序而不会使代码库降级为基于车辆使用的固件在任何地方遍布的大量if / then / else语句。
+鉴于固件实现之间的所有这些差异，创建单个地面站应用程序可能非常棘手，可以支持每个应用程序而不会使代码库降级为基于载具使用的固件在任何地方遍布的大量if / then / else语句。
 
-QGC uses a plugin architecture to isolate the firmware specific code from the code which is generic to all firmwares. There are two main plugins which accomplish this `FirmwarePlugin` and `AutoPilotPlugin`.
+QGC 使用插件架构将固件特定代码与通用至所有固件的代码隔离开来。 这主要由 `FirmwarePlugin` 和 `AutoPilotPlugin` 来完成。
 
-This plugin architecture is also used by custom builds to allow ever further customization beyond when standard QGC can provide.
+此插件架构也被自定义构建用来允许在标准的 QGC 能够提供的情况下进行进一步的自定义操作。
 
-## FirmwarePlugin
+## 固件插件
 
-This is used to create a standard interface to parts of Mavlink which are generally not standardized.
+这是用来创建通向Mavlink中通常不标准化的部分的标准接口。
 
-## AutoPilotPlugin
+## 自动驾驶插件
 
-This is used to provide the user interface for Vehicle Setup.
+这用于为载具安装提供用户界面。
 
-## QGCCorePlugin
+## QGC核心插件
 
-This is used to expose features of the QGC application itself which are not related to a Vehicle through a standard interface. This is then used by custom builds to adjust the QGC feature set to their needs.
+这用于通过标准接口展示 QGC 应用程序本身与载具无关的功能。 然后由自定义构建来根据他们的需要调整 QGC 功能。

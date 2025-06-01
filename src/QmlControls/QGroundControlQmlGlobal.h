@@ -130,8 +130,8 @@ public:
     Q_INVOKABLE void    saveBoolGlobalSetting   (const QString& key, bool value);
     Q_INVOKABLE bool    loadBoolGlobalSetting   (const QString& key, bool defaultValue);
 
-    Q_INVOKABLE void    deleteAllSettingsNextBoot       ();
-    Q_INVOKABLE void    clearDeleteAllSettingsNextBoot  ();
+    Q_INVOKABLE static void deleteAllSettingsNextBoot();
+    Q_INVOKABLE static void clearDeleteAllSettingsNextBoot();
 
     Q_INVOKABLE void    startPX4MockLink            (bool sendStatusText);
     Q_INVOKABLE void    startGenericMockLink        (bool sendStatusText);
@@ -160,7 +160,7 @@ public:
 
     // Property accessors
 
-    QString                 appName             ();
+    static QString appName();
     LinkManager*            linkManager         ()  { return _linkManager; }
     MultiVehicleManager*    multiVehicleManager ()  { return _multiVehicleManager; }
     QGCMapEngineManager*    mapEngineManager    ()  { return _mapEngineManager; }
@@ -219,7 +219,7 @@ public:
     QString missionFileExtension    (void) const;
     QString telemetryFileExtension  (void) const;
 
-    QString qgcVersion              (void) const;
+    static QString qgcVersion();
 
 #ifdef QGC_UTM_ADAPTER
     UTMSPManager* utmspManager() {return _utmspManager;}

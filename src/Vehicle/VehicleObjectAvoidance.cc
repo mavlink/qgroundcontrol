@@ -64,7 +64,7 @@ VehicleObjectAvoidance::update(mavlink_obstacle_distance_t* message)
 bool
 VehicleObjectAvoidance::enabled()
 {
-    uint8_t id = static_cast<uint8_t>(_vehicle->id());
+    uint8_t id = static_cast<uint8_t>(_vehicle->compId());
     if(_vehicle->parameterManager()->parameterExists(id, kColPrevParam)) {
         return _vehicle->parameterManager()->getParameter(id, kColPrevParam)->rawValue().toInt() >= 0;
     }
@@ -75,7 +75,7 @@ VehicleObjectAvoidance::enabled()
 void
 VehicleObjectAvoidance::start(int minDistance)
 {
-    uint8_t id = static_cast<uint8_t>(_vehicle->id());
+    uint8_t id = static_cast<uint8_t>(_vehicle->compId());
     if(_vehicle->parameterManager()->parameterExists(id, kColPrevParam)) {
         _vehicle->parameterManager()->getParameter(id, kColPrevParam)->setRawValue(minDistance);
         emit objectAvoidanceChanged();
@@ -86,7 +86,7 @@ VehicleObjectAvoidance::start(int minDistance)
 void
 VehicleObjectAvoidance::stop()
 {
-    uint8_t id = static_cast<uint8_t>(_vehicle->id());
+    uint8_t id = static_cast<uint8_t>(_vehicle->compId());
     if(_vehicle->parameterManager()->parameterExists(id, kColPrevParam)) {
         _vehicle->parameterManager()->getParameter(id, kColPrevParam)->setRawValue(-1);
         emit objectAvoidanceChanged();

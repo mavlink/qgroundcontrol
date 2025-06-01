@@ -64,6 +64,12 @@ endif()
 include(GNUInstallDirs)
 include(FetchContent)
 include(CMakePrintHelpers)
+
+if(EXISTS "${QGC_CPM_SOURCE_CACHE}")
+    set(ENV{CPM_SOURCE_CACHE} "${QGC_CPM_SOURCE_CACHE}")
+else()
+    set(ENV{CPM_SOURCE_CACHE} "${CMAKE_BINARY_DIR}/cpm_modules")
+endif()
 include(CPM)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -93,28 +99,25 @@ if(QGC_USE_CACHE)
     if(CMAKE_HOST_UNIX)
         find_program(CCACHE_PROGRAM ccache)
         if(CCACHE_PROGRAM)
-            message(STATUS "Using CCache")
-            set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
-            set(CMAKE_C_LINKER_LAUNCHER "${CCACHE_PROGRAM}")
-            set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
-            set(CMAKE_CXX_LINKER_LAUNCHER "${CCACHE_PROGRAM}")
-            if(IOS)
-                set(CMAKE_OBJC_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
-                set(CMAKE_OBJC_LINKER_LAUNCHER "${CCACHE_PROGRAM}")
+            set(CCACHE_CMD
+                CCACHE_BASEDIR=${CMAKE_BINARY_DIR}
+                CCACHE_COMPRESSLEVEL=6
+                CCACHE_SLOPPINESS=pch_defines,time_macros,include_file_mtime,include_file_ctime
+                ${CCACHE_PROGRAM}
+            )
+            message(STATUS "QGC: Using ccache cmd - ${CCACHE_CMD}")
+            set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_CMD}")
+            set(CMAKE_C_LINKER_LAUNCHER "${CCACHE_CMD}")
+            set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_CMD}")
+            set(CMAKE_CXX_LINKER_LAUNCHER "${CCACHE_CMD}")
+            if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+                add_compile_options(-Xclang -fno-pch-timestamp)
             endif()
-
-            # set(ENV{CCACHE_SLOPPINESS} pch_defines,time_macros,include_file_mtime,include_file_ctime)
-            # set(ENV{CCACHE_BASEDIR} ${CMAKE_SOURCE_DIR})
-            # if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-            #     add_compile_options(-Xclang -fno-pch-timestamp)
-            # elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-            #     add_compile_options(-fpch-preprocess)
-            # endif()
         endif()
     elseif(CMAKE_HOST_WIN32)
         find_program(SCCACHE_PROGRAM sccache)
         if(SCCACHE_PROGRAM)
-            message(STATUS "Using SCCache")
+            message(STATUS "QGC: Using sccache ${SCCACHE_PROGRAM}")
             set(CMAKE_C_COMPILER_LAUNCHER "${SCCACHE_PROGRAM}")
             # set(CMAKE_C_LINKER_LAUNCHER "${SCCACHE_PROGRAM}")
             set(CMAKE_CXX_COMPILER_LAUNCHER "${SCCACHE_PROGRAM}")
@@ -266,14 +269,11 @@ endif()
 
 # Note: Adding Resources to Library instead requires using Q_INIT_RESOURCE(qgcresources)
 
-if(NOT QGC_CUSTOM_BUILD)
-    # Custom builds can override the resources
-    list(APPEND QGC_RESOURCES
-        ${CMAKE_SOURCE_DIR}/qgcimages.qrc
-        ${CMAKE_SOURCE_DIR}/qgcresources.qrc
-        ${CMAKE_SOURCE_DIR}/qgroundcontrol.qrc
-    )
-endif()
+list(APPEND QGC_RESOURCES
+    ${CMAKE_SOURCE_DIR}/qgcimages.qrc
+    ${CMAKE_SOURCE_DIR}/qgcresources.qrc
+    ${CMAKE_SOURCE_DIR}/qgroundcontrol.qrc
+)
 
 list(APPEND QGC_RESOURCES
     ${CMAKE_SOURCE_DIR}/resources/InstrumentValueIcons/InstrumentValueIcons.qrc
@@ -493,6 +493,14 @@ set_target_properties(${CMAKE_PROJECT_NAME}
         OUTPUT_NAME ${CMAKE_PROJECT_NAME}
 )
 
+target_precompile_headers(${CMAKE_PROJECT_NAME}
+    PRIVATE
+        <QtCore/QLoggingCategory>
+        <QtCore/QObject>
+        <QtCore/QString>
+        <QtCore/QTimer>
+)
+
 add_subdirectory(src)
 if(QGC_BUILD_TESTING)
     add_subdirectory(test)
@@ -503,13 +511,6 @@ if(QGC_CUSTOM_BUILD)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_LIBRARIES})
     target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_DIRECTORIES})
 endif()
-
-target_precompile_headers(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        <QtCore/QObject>
-        <QtNetwork/QNetworkReply>
-        <QtPositioning/QGeoCoordinate>
-)
 
 file(GLOB TS_SOURCES ${CMAKE_SOURCE_DIR}/translations/qgc_*.ts)
 set_source_files_properties(${TS_SOURCES} PROPERTIES OUTPUT_LOCATION "${CMAKE_BINARY_DIR}/i18n")

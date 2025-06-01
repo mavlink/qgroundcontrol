@@ -122,14 +122,13 @@ Item {
 
     QGCPalette { id: qgcPal }
 
-    QGCFileDialog {
-        id:             kmlLoadDialog
-        folder:         QGroundControl.settingsManager.appSettings.missionSavePath
-        title:          qsTr("Select KML File")
-        nameFilters:    ShapeFileHelper.fileDialogKMLFilters
+    KMLOrSHPFileDialog {
+        id:             kmlOrSHPLoadDialog
+        title:          qsTr("Select Polyline File")
 
         onAcceptedForLoad: (file) => {
-            mapPolyline.loadKMLFile(file)
+            mapPolyline.loadKMLOrSHPFile(file)
+            mapFitFunctions.fitMapViewportToMissionItems()
             close()
         }
     }
@@ -354,8 +353,8 @@ Item {
 
             QGCButton {
                 _horizontalPadding: 0
-                text:               qsTr("Load KML...")
-                onClicked:          kmlLoadDialog.openForLoad()
+                text:               qsTr("Load KML/SHP...")
+                onClicked:          kmlOrSHPLoadDialog.openForLoad()
                 visible:            !mapPolyline.traceMode
             }
         }

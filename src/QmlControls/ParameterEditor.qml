@@ -71,7 +71,7 @@ Item {
         }
         QGCMenuSeparator { }
         QGCMenuItem {
-            text:           qsTr("Load from file...")
+            text:           qsTr("Load from file for review...")
             onTriggered: {
                 fileDialog.title =          qsTr("Load Parameters")
                 fileDialog.openForLoad()
@@ -238,67 +238,70 @@ Item {
         }
     }
 
-    QGCFlickable {
-        id:                 parameterScroll
+    TableView {
+        id:                 tableView
         anchors.leftMargin: ScreenTools.defaultFontPixelWidth
         anchors.top:        header.bottom
         anchors.bottom:     parent.bottom
         anchors.left:       _searchFilter ? parent.left : groupScroll.right
         anchors.right:      parent.right
+        columnSpacing:      ScreenTools.defaultFontPixelWidth
+        rowSpacing:         ScreenTools.defaultFontPixelHeight / 4
+        model:              controller.parameters
+        contentWidth:       width
         clip:               true
-        contentHeight:      parameterListGridLayout.height
-        contentWidth:       parameterListGridLayout.width
 
-        Item {
-            width:  parameterListGridLayout.width
-            height: parameterListGridLayout.height
+        // Qt is supposed to adjust column widths automatically when larger widths come into view.
+        // But it doesn't work. So we have to do it force a layout manually when we scroll.
+        Timer {
+            id:             forceLayoutTimer
+            interval:       500
+            repeat:         false
+            onTriggered:    tableView.forceLayout()
+        }
 
-            GridLayout {
-                id:             parameterListGridLayout
-                rows:           controller.parameters.count
-                columnSpacing:  ScreenTools.defaultFontPixelWidth
-                flow:           GridLayout.TopToBottom
+        onTopRowChanged: forceLayoutTimer.start()
+        onModelChanged: {
+            positionViewAtRow(0, TableView.AlignLeft | TableView.AlignTop)
+            forceLayoutTimer.start()
+        }
 
-                Repeater {
-                    model: controller.parameters
+        delegate: Item {
+            implicitWidth:  label.contentWidth
+            implicitHeight: label.contentHeight
+            clip:           true
 
-                    QGCLabel { 
-                        text: object.name 
-                        property Fact fact: object
+            QGCLabel {
+                id:                 label
+                width:              column == 1 ? ScreenTools.defaultFontPixelWidth * 15 : contentWidth
+                text:               column == 1 ? col1String() : display
+                color:              column == 1 ? col1Color() : qgcPal.text
+                maximumLineCount:   1
+                elide:              column == 1 ? Text.ElideRight : Text.ElideNone
+
+                Component.onCompleted: {
+                    return
+                    if (tableView.columnWidth(column) < width) {
+                        console.log("setColumnWidth", column, width)
+                        tableView.setColumnWidth(column, width)
                     }
                 }
 
-                Repeater {
-                    model: controller.parameters
-
-                    QGCLabel {
-                        Layout.alignment:       Qt.AlignRight
-                        Layout.maximumWidth:    ScreenTools.defaultFontPixelWidth * 15
-                        color:                  object.defaultValueAvailable ? 
-                                                    (object.valueEqualsDefault ? qgcPal.text : qgcPal.warningText) : 
-                                                    qgcPal.text
-                        elide:                  Text.ElideRight
-                        clip:                   true
-
-                        text: {
-                            if (object.enumStrings.length === 0) {
-                                return object.valueString + " " + object.units
-                            }
-                            if (object.bitmaskStrings.length != 0) {
-                                return object.selectedBitmaskStrings.join(',')
-                            }
-                            return object.enumStringValue
-                        }
+                function col1String() {
+                    if (fact.enumStrings.length === 0) {
+                        return fact.valueString + " " + fact.units
                     }
+                    if (fact.bitmaskStrings.length != 0) {
+                        return fact.selectedBitmaskStrings.join(',')
+                    }
+                    return fact.enumStringValue
                 }
 
-                Repeater {
-                    model: controller.parameters
-
-                    QGCLabel { 
-                        text:                   object.shortDescription 
-                        maximumLineCount:       1
-                        elide:                  Text.ElideRight
+                function col1Color() {
+                    if (fact.defaultValueAvailable) {
+                        return fact.valueEqualsDefault ? qgcPal.text : qgcPal.warningText
+                    } else {
+                        return qgcPal.text
                     }
                 }
             }
@@ -306,94 +309,10 @@ Item {
             QGCMouseArea {
                 anchors.fill: parent
                 onClicked: mouse => {
-                    let control = parameterListGridLayout.childAt(3, mouse.y)
-                    _editorDialogFact = control.fact
+                    _editorDialogFact = fact
                     editorDialogComponent.createObject(mainWindow).open()
                 }
             }
         }
     }
-
-/*
-    /// Parameter list
-    QGCListView {
-        id:                 editorListView
-        anchors.leftMargin: ScreenTools.defaultFontPixelWidth
-        anchors.left:       _searchFilter ? parent.left : groupScroll.right
-        anchors.right:      parent.right
-        anchors.top:        header.bottom
-        anchors.bottom:     parent.bottom
-        orientation:        ListView.Vertical
-        model:              controller.parameters
-        cacheBuffer:        height > 0 ? height * 2 : 0
-        clip:               true
-
-        delegate: Rectangle {
-            height: _rowHeight
-            width:  _rowWidth
-            color:  Qt.rgba(0,0,0,0)
-
-            Row {
-                id:     factRow
-                spacing: Math.ceil(ScreenTools.defaultFontPixelWidth * 0.5)
-                anchors.verticalCenter: parent.verticalCenter
-
-                property Fact modelFact: object
-
-                QGCLabel {
-                    id:     nameLabel
-                    width:  ScreenTools.defaultFontPixelWidth  * 20
-                    text:   factRow.modelFact.name
-                    clip:   true
-                }
-
-                QGCLabel {
-                    id:     valueLabel
-                    width:  ScreenTools.defaultFontPixelWidth  * 20
-                    color:  factRow.modelFact.defaultValueAvailable ? (factRow.modelFact.valueEqualsDefault ? qgcPal.text : qgcPal.warningText) : qgcPal.text
-                    text:   {
-                        if(factRow.modelFact.enumStrings.length === 0) {
-                            return factRow.modelFact.valueString + " " + factRow.modelFact.units
-                        }
-
-                        if(factRow.modelFact.bitmaskStrings.length != 0) {
-                            return factRow.modelFact.selectedBitmaskStrings.join(',')
-                        }
-
-                        return factRow.modelFact.enumStringValue
-                    }
-                    clip:   true
-                }
-
-                QGCLabel {
-                    text:   factRow.modelFact.shortDescription
-                }
-
-                Component.onCompleted: {
-                    if(_rowWidth < factRow.width + ScreenTools.defaultFontPixelWidth) {
-                        _rowWidth = factRow.width + ScreenTools.defaultFontPixelWidth
-                    }
-                }
-            }
-
-            Rectangle {
-                width:  _rowWidth
-                height: 1
-                color:  qgcPal.text
-                opacity: 0.15
-                anchors.bottom: parent.bottom
-                anchors.left:   parent.left
-            }
-
-            MouseArea {
-                anchors.fill:       parent
-                acceptedButtons:    Qt.LeftButton
-                onClicked: {
-                    _editorDialogFact = factRow.modelFact
-                    editorDialogComponent.createObject(mainWindow).open()
-                }
-            }
-        }
-    }
-*/
 }

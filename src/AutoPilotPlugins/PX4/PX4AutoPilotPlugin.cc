@@ -107,7 +107,7 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
                 _tuningComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_tuningComponent)));
 
-                if(_vehicle->parameterManager()->parameterExists(_vehicle->id(), "SYS_VEHICLE_RESP")) {
+                if(_vehicle->parameterManager()->parameterExists(_vehicle->compId(), "SYS_VEHICLE_RESP")) {
                     _flightBehavior = new PX4FlightBehavior(_vehicle, this, this);
                     _flightBehavior->setupTriggerSignals();
                     _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_flightBehavior)));
@@ -123,7 +123,7 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
                 qWarning() << "Call to vehicleCompenents prior to parametersReady";
             }
 
-            if(_vehicle->parameterManager()->parameterExists(_vehicle->id(), "SLNK_RADIO_CHAN")) {
+            if(_vehicle->parameterManager()->parameterExists(_vehicle->compId(), "SLNK_RADIO_CHAN")) {
                 _syslinkComponent = new SyslinkComponent(_vehicle, this, this);
                 _syslinkComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_syslinkComponent)));

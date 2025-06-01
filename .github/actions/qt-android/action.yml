@@ -127,3 +127,12 @@ runs:
         modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
         setup-python: false
         cache: true
+
+    - name: Build Info
+      shell: bash
+      run: |
+        if [[ "$RUNNER_OS" == "Windows" ]]; then
+          "${GITHUB_WORKSPACE}"/android/gradlew.bat --version
+        else
+          "${GITHUB_WORKSPACE}"/android/gradlew --version
+        fi

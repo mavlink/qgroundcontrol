@@ -10,6 +10,7 @@
 #include "AudioOutput.h"
 #include "Fact.h"
 #include "QGCLoggingCategory.h"
+#include "QGCApplication.h"
 
 #include <QtCore/QRegularExpression>
 #include <QtCore/qapplicationstatic.h>
@@ -46,12 +47,12 @@ AudioOutput::AudioOutput(QObject *parent)
     : QObject(parent)
     , _engine(new QTextToSpeech(QStringLiteral("none"), this))
 {
-    // qCDebug(AudioOutputLog) << Q_FUNC_INFO << this;
+    // qCDebug(AudioOutputLog) << this;
 }
 
 AudioOutput::~AudioOutput()
 {
-    // qCDebug(AudioOutputLog) << Q_FUNC_INFO << this;
+    // qCDebug(AudioOutputLog) << this;
 }
 
 AudioOutput *AudioOutput::instance()
@@ -131,7 +132,9 @@ void AudioOutput::setMuted(bool muted)
 void AudioOutput::say(const QString &text, TextMods textMods)
 {
     if (!_initialized) {
-        qCWarning(AudioOutputLog) << "AudioOutput not initialized. Call init() before using say().";
+        if (!qgcApp()->runningUnitTests()) {
+            qCWarning(AudioOutputLog) << "AudioOutput not initialized. Call init() before using say().";
+        }
         return;
     }
 

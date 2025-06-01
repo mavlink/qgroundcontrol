@@ -87,6 +87,9 @@ void FactValueGrid::_activeVehicleChanged(Vehicle* activeVehicle)
         _activeVehicle = nullptr;
     }
 
+    if (!activeVehicle) {
+        activeVehicle = MultiVehicleManager::instance()->offlineEditingVehicle();
+    }
     _activeVehicle = activeVehicle;
     _initForNewVehicle(activeVehicle);
 }

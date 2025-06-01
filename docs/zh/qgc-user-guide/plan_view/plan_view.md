@@ -1,86 +1,86 @@
-# Plan View
+# 计划视图
 
-The _Plan View_ is used to plan _autonomous missions_ for your vehicle, and upload them to the vehicle. Once the mission is [planned](#plan_mission) and sent to the vehicle, you switch to the [Fly View](../fly_view/fly_view.md) to fly the mission.
+_计划视图_ 用于为你的载具规 划自动化任务_ 并上传到载具。 一旦任务已 [规划](#plan_mission) 并被送往载具，您将切换到[飞行视图](../fly_view/fly_view.md) 来执行任务。
 
-It is also use to configure the [GeoFence](plan_geofence.md) and [Rally Points](plan_rally_points.md) if these are supported by the firmware.
+如果固件支持，它也可以用来配置 [地理围栏](plan_geofence.md) 和 [集结点](plan_rally_points.md)。
 
 <span id="plan_screenshot"></span>
-![Plan View](../../../assets/plan/plan_view_overview.jpg)
+![计划视图](../../../assets/plan/plan_view_overview.jpg)
 
-## UI Overview {#ui_overview}
+## 界面概述{#ui_overview}
 
-The [screenshot above](#plan_screenshot) shows a simple mission plan that starts with a takeoff at the [Planned Home](#planned_home) position (H), flies through three waypoints, and then lands on the last waypoint (i.e. waypoint 3).
+[屏幕截图](#plan_screenshot) 显示一个简单的任务计划，该任务从计划起始点位置（H）起飞，途经三个航点，然后在最后一个航点（即航点 3）降落。
 
-The main elements of the UI are:
+界面的主要要素是：
 
-- **Map:** Displays the numbered indicators for the current mission, including the [Planned Home](#planned_home).
-  Click on the indicators to select them (for editing) or drag them around to reposition them.
-- **Plan Toolbar:** Status information for the currently selected waypoint relative to the previous waypoint, as well as statistics for the entire mission (e.g. horizontal distance and time for mission).
-  - `Max telem dist` is the distance between the [Planned Home](#planned_home) and the furthest waypoint.
-  - When connected to a vehicle it also shows an **Upload** button, can be used to upload the plan to the vehicle.
-- **[Plan Tools](#plan_tools):** Used to create and manage missions.
-- **[Mission Command List/Overlay](#mission_command_list):** Displays the current list of mission items (select items to [edit](#mission_command_editors)).
-- **Terrain Altitude Overlay:** Shows the relative altitude of each mission command.
+- **地图：** 显示当前任务的带编号指示器，其中包括 [计划起始点](#planned_home)。
+  点击指示器来选择他们(用于编辑)或将他们拖动到周围来重新定位。
+- **计划工具栏：** 当前选定的航点相对于上一个航点的状态信息，以及整个任务的统计资料（飞行任务的水平距离和时间）。
+  - `最大距离`是[计划起始点](#planned_home)与最远路点之间的距离。
+  - 当连接到载具时，它也会显示一个 **上传** 按钮，可以用来上传计划到载具上。
+- **[计划工具](#plan_tools)：** 用于创建和管理任务。
+- **[任务命令列表](#mission_command_list):** 显示当前任务项目列表 (选择项目到 [编辑](#mission_command_editors))。
+- **地形高度概览：** 显示每个任务命令的相对高度.
 
-It shows you information related to the currently selected waypoint as well as statistics for the entire mission.
+它显示了您当前选择的航点信息以及整个飞行任务的统计数据。
 
-## Planning a Mission {#plan_mission}
+## 规划一个任务 {#plan_mission}
 
-At very high level, the steps to create a mission are:
+概括来说，创建任务的步骤如下：
 
-1. Change to _Plan View_.
-2. Add waypoints or commands to the mission and edit as needed.
-3. Upload the mission to the vehicle.
-4. Change to _Fly View_ and fly the mission.
+1. 更改 _计划视图_。
+2. 添加航点或命令到任务中并根据需要编辑。
+3. 将任务上传到载具上。
+4. 更改为 _飞行视图_ 并执行任务。
 
-The following sections explain some of the details in the view.
+以下各节解释了视图中的一些细节。
 
-## Planned Home Position {#planned_home}
+## 计划起始位置 {#planned_home}
 
-The _Planned Home_ shown in _Plan View_ is used to set the approximate start point when planning a mission (i.e. when a vehicle may not even be connected to QGC).
-It is used by QGC to estimate mission times and to draw waypoint lines.
+在 _计划视图_ 中显示的 _计划起始点_ 用于设置计划任务时的大致起点(此时飞行器甚至可能并未与 QGC 连接)。
+它被QGC会用来估计飞行任务时间和绘制航线。
 
-![Planned Home Position](../../../assets/plan/mission/mission_settings_planned_home.jpg)
+![计划的起始位置](../../../assets/plan/mission/mission_settings_planned_home.jpg)
 
-You should move/drag the planned home position to roughly the location where you plan to takeoff.
-The altitude for the planned home position is set in the [Mission Settings](#mission_settings) panel.
+您应该移动/拖动计划中的起始位置到您计划起飞的大致位置。
+计划起始位置的高度设置在[任务设置](#mission_settings) 面板中。
 
 <img src="../../../assets/plan/mission/mission_settings_planned_home_position_section.jpg" style="width: 200px;"/>
 
 :::tip
-The Fly View displays the _actual_ home position set by the vehicle firmware when it arms (this is where the vehicle will return in Return/RTL mode).
+飞行视图显示由载具固件设置的 _实际_ 起始位置。(这是载具在返回/返航 模式返回的地方)。
 :::
 
-## Plan Tools {#plan_tools}
+## 计划工具 {#plan_tools}
 
-The plan tools are used for adding individual waypoints, easing mission creation for complicated geometries, uploading/downloading/saving/restoring missions, and for navigating the map. The main tools are described below.
+计划工具用于添加单独的航点，方便任务创建复杂的几何，上传/下载/保存/恢复飞行任务，以及导航地图。 主要工具说明如下。
 
 :::info
-**Center map**, **Zoom In**, **Zoom Out** tools help users better view and navigate the _Plan view_ map (they don't affect the mission commands sent to the vehicle).
+**地图居中**, **放大**, **缩小**工具可以帮助用户更好地查看和浏览 _计划视图_ 地图 (他们不影响送往载具的任务命令)。
 :::
 
-### Add Waypoints
+### 添加航点
 
-Click on the **Add Waypoint** tool to activate it. While active, clicking on the map will add new mission waypoint at the clicked location.
-The tool will stay active until you select it again.
-Once you have added a waypoint, you can select it and drag it around to change its position.
+点击**添加航点** 工具激活它。 当激活时，点击地图将在点击的位置添加新的飞行任务航点。
+该工具将保持激活状态，直到你再次选中它。
+一旦您添加了一个航点，您可以选择它并将它拖动到周围以改变它的位置。
 
-### File (Sync) {#file}
+### 文件 (同步) {#file}
 
-The _File tools_ are used to move missions between the ground station and vehicle, and to save/restore them from files.
-The tool displays an `!` to indicate that there are mission changes that you have not sent to the vehicle.
+_文件工具_ 用于在地面站和载具之间传输任务，并保存/还原文件。
+工具显示了一个 `!` 来表示你没有发送给载具进行任务变更。
 
 :::info
-Before you fly a mission you must upload it to the vehicle.
+在你执行飞行任务之前，你必须将它上传到载具上。
 :::
 
-The _File tools_ provide the following functionality:
+_文件工具_ 提供以下功能：
 
-- Upload (Send to vehicle)
-- Download (Load from vehicle)
-- Save/Save as to File, including as KML file.
-- Load from File
-- Remove All (removes all mission waypoints from _Plan view_ and from vehicle)
+- 上传(向载具发送)
+- 下载 (从载具加载)
+- 保存/保存到文件, 包括 KML 文件。
+- 从文件加载
+- 移除所有 (从 _计划视图_ 和 从载具中移除所有飞行任务航点)
 
 ### Pattern
 
@@ -147,7 +147,7 @@ This allows you to view the waypoint trajectory for your vehicle from takeoff to
 :::info
 This is only the _planned_ home position and you should place it where you plan to start the vehicle from.
 It has no actual impact on flying the mission.
-The actual home position of a vehicle is set by the vehicle itself when arming.
+载具的实际Home位置由载具本身在解锁时确定。
 :::
 
 This section allows you to set the **Altitude** and **Set Home to Map Centre** (you can move it to another position by dragging it on the map).
@@ -199,5 +199,5 @@ To analyse this possibility you can turn on [Console Logging](../settings_view/c
 
 ## Further Info
 
-- New Plan View features for [QGC release v3.2](../qgc-user-guide/releases/release_note_stable_v3.md#plan_view)
-- New Plan View features for [QGC release v3.3](../qgc-user-guide/releases/release_note_stable_v3.md#plan-view-1)
+- [QGC v3.2](../qgc-user-guide/releases/release_note_stable_v3.md#plan_view)上新的计划视图功能
+- [QGC v3.3](../qgc-user-guide/releases/release_note_stable_v3.md#plan-view-1)上新的计划视图功能

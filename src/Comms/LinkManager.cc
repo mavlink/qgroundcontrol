@@ -171,7 +171,7 @@ bool LinkManager::createConnectedLink(SharedLinkConfigurationPtr &config)
     _rgLinks.append(link);
     config->setLink(link);
 
-    (void) connect(link.get(), &LinkInterface::communicationError, qgcApp(), &QGCApplication::showAppMessage);
+    (void) connect(link.get(), &LinkInterface::communicationError, this, &LinkManager::_communicationError);
     (void) connect(link.get(), &LinkInterface::bytesReceived, MAVLinkProtocol::instance(), &MAVLinkProtocol::receiveBytes);
     (void) connect(link.get(), &LinkInterface::bytesSent, MAVLinkProtocol::instance(), &MAVLinkProtocol::logSentBytes);
     (void) connect(link.get(), &LinkInterface::disconnected, this, &LinkManager::_linkDisconnected);
@@ -187,6 +187,11 @@ bool LinkManager::createConnectedLink(SharedLinkConfigurationPtr &config)
     }
 
     return true;
+}
+
+void LinkManager::_communicationError(const QString &title, const QString &error)
+{
+    qgcApp()->showAppMessage(error, title);
 }
 
 SharedLinkInterfacePtr LinkManager::mavlinkForwardingLink()
@@ -780,6 +785,31 @@ void LinkManager::resetMavlinkSigning()
     }
 }
 
+void LinkManager::_filterCompositePorts(QList<QGCSerialPortInfo> &portList)
+{
+    typedef QPair<quint16, quint16> VidPidPair_t;
+
+    QMap<VidPidPair_t, QStringList> seenSerialNumbers;
+
+    for (auto it = portList.begin(); it != portList.end();) {
+        const QGCSerialPortInfo &portInfo = *it;
+        if (portInfo.hasVendorIdentifier() && portInfo.hasProductIdentifier() && !portInfo.serialNumber().isEmpty() && portInfo.serialNumber() != "0") {
+            VidPidPair_t vidPid(portInfo.vendorIdentifier(), portInfo.productIdentifier());
+            if (seenSerialNumbers.contains(vidPid) && seenSerialNumbers[vidPid].contains(portInfo.serialNumber())) {
+                // Some boards are a composite USB device, with the first port being mavlink and the second something else. We only expose to first mavlink port.
+                // However internal NMEA devices can present like this, so dont skip anything with NMEA in description
+                if(!portInfo.description().contains("NMEA")) {
+                    qCDebug(LinkManagerVerboseLog) << QStringLiteral("Removing secondary port on same device - port:%1 vid:%2 pid%3 sn:%4").arg(portInfo.portName()).arg(portInfo.vendorIdentifier()).arg(portInfo.productIdentifier()).arg(portInfo.serialNumber()) << Q_FUNC_INFO;
+                    it = portList.erase(it);
+                    continue;
+                }
+            }
+            seenSerialNumbers[vidPid].append(portInfo.serialNumber());
+        }
+        it++;
+    }
+}
+
 #ifndef QGC_NO_SERIAL_LINK // Serial Only Functions
 
 void LinkManager::_addSerialAutoConnectLink()
@@ -795,6 +825,8 @@ void LinkManager::_addSerialAutoConnectLink()
 #else
     portList = QGCSerialPortInfo::availablePorts();
 #endif
+
+    _filterCompositePorts(portList);
 
     QStringList currentPorts;
     for (const QGCSerialPortInfo &portInfo: portList) {

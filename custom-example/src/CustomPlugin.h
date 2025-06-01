@@ -12,10 +12,10 @@
 #pragma once
 
 #include <QtCore/QTranslator>
+#include <QtQml/QQmlAbstractUrlInterceptor>
 
 #include "QGCCorePlugin.h"
 #include "QGCOptions.h"
-#include "QGCLoggingCategory.h"
 
 class CustomOptions;
 class CustomPlugin;
@@ -34,6 +34,8 @@ public:
     bool                    showMultiVehicleList        (void) const final;
 };
 
+/*===========================================================================*/
+
 class CustomOptions : public QGCOptions
 {
 public:
@@ -49,16 +51,20 @@ private:
     CustomFlyViewOptions *_flyViewOptions = nullptr;
 };
 
+/*===========================================================================*/
+
 class CustomPlugin : public QGCCorePlugin
 {
     Q_OBJECT
 public:
-    CustomPlugin(QObject *parent = nullptr);
+    explicit CustomPlugin(QObject *parent = nullptr);
     ~CustomPlugin();
 
     static QGCCorePlugin *instance();
 
     // Overrides from QGCCorePlugin
+    void init() final;
+    void cleanup() final;
     QGCOptions*             options                         (void) final;
     QString                 brandImageIndoor                (void) const final;
     QString                 brandImageOutdoor               (void) const final;
@@ -75,5 +81,17 @@ private:
 
 private:
     CustomOptions*  _options = nullptr;
+    QQmlApplicationEngine *_qmlEngine = nullptr;
+    class CustomOverrideInterceptor *_selector = nullptr;
     QVariantList    _customSettingsList; // Not to be mixed up with QGCCorePlugin implementation
+};
+
+/*===========================================================================*/
+
+class CustomOverrideInterceptor : public QQmlAbstractUrlInterceptor
+{
+public:
+    CustomOverrideInterceptor();
+
+    QUrl intercept(const QUrl &url, QQmlAbstractUrlInterceptor::DataType type) final;
 };

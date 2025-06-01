@@ -111,13 +111,6 @@ void VideoManager::init(QQuickWindow *window)
         }
         receiver->setName(streamName);
 
-        void *sink = QGCCorePlugin::instance()->createVideoSink(receiver->widget(), receiver);
-        if (!sink) {
-            qCDebug(VideoManagerLog) << "createVideoSink() failed" << streamName;
-            continue;
-        }
-        receiver->setSink(sink);
-
         _initVideoReceiver(receiver, window);
     }
 
@@ -652,9 +645,15 @@ void VideoManager::_initVideoReceiver(VideoReceiver *receiver, QQuickWindow *win
 
     QQuickItem *widget = window->findChild<QQuickItem*>(receiver->name());
     if (!widget) {
-        qCWarning(VideoManagerLog) << "stream widget not found" << receiver->name();
+        qCCritical(VideoManagerLog) << "stream widget not found" << receiver->name();
     }
     receiver->setWidget(widget);
+
+    void *sink = QGCCorePlugin::instance()->createVideoSink(receiver->widget(), receiver);
+    if (!sink) {
+        qCCritical(VideoManagerLog) << "createVideoSink() failed" << receiver->name();
+    }
+    receiver->setSink(sink);
 
     (void) connect(receiver, &VideoReceiver::onStartComplete, this, [this, receiver](VideoReceiver::STATUS status) {
         if (!receiver) {

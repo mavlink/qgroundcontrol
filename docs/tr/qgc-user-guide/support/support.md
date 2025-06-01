@@ -8,7 +8,7 @@ _Questions_ about how to use _QGroundControl_ should be raised in the discussion
 - [PX4 Pro Flight Stack](http://discuss.px4.io/c/qgroundcontrol/qgroundcontrol-usage) (discuss.px4.io).
 - [ArduPilot Flight Stack](http://discuss.ardupilot.org/c/ground-control-software/qgroundcontrol) (discuss.ardupilot.org).
 
-These forums are also the best place to start discussions on bugs/problems you are having with _QGroundControl_ and or feature requests you would like to make. From there you may be directed to entering information in a GitHub Issue for further resolution.
+These forums are also mainly self-help from other QGC community members. The QGC devs themselves monitor them on a very limited basis.
 
 ### Developer Chat {#developer_chat}
 

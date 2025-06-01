@@ -12,7 +12,7 @@ QGC中的“链接”是一种特定类型的通信管道，例如串行端口�
 
 ## （MultiVehicleManager）多载具管理类
 
-系统内有一个单独的 `MultiVoilleManager` 对象。 当它在以前没有连接过的链接上收到 HEARTTBEAT（心跳包） 时，它会产生一个载具对象（object）。 `MultiVehicleManager` 还会跟踪系统中的所有载具，并处理从一个活动载具到另一个活动载具的切换，并正确处理被移除的车辆。
+系统内有一个单独的 `MultiVoilleManager` 对象。 当它在以前没有连接过的链接上收到 HEARTTBEAT（心跳包） 时，它会产生一个载具对象（object）。 `MultiVehicleManager` 还会跟踪系统中的所有载具，并处理从一个活动载具到另一个活动载具的切换，并正确处理被移除的载具。
 
 ## (Vehicle)载具类
 

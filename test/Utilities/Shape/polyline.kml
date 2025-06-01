@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/kml/2.2 http://schemas.opengis.net/kml/2.2.0/ogckml22.xsd">
+  <Document>
+    <name>Circular Corridor Path</name>
+    <Placemark>
+      <name>Circle Line</name>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          11.32613,46.47522,0
+          11.32704,46.47493,0
+          11.32754,46.47422,0
+          11.32704,46.47351,0
+          11.32613,46.47322,0
+          11.32522,46.47351,0
+          11.32472,46.47422,0
+          11.32522,46.47493,0
+          11.32613,46.47522,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+  </Document>
+</kml>

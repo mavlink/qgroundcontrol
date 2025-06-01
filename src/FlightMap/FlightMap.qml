@@ -12,6 +12,7 @@ import QtQuick.Controls
 import QtLocation
 import QtPositioning
 import QtQuick.Dialogs
+import Qt.labs.animation
 
 import QGroundControl
 import QGroundControl.FactSystem
@@ -50,6 +51,9 @@ Map {
         // is nothing to do.
         _map.visibleRegion = QtPositioning.rectangle(QtPositioning.coordinate(0, 0), QtPositioning.coordinate(0, 0))
         _map.visibleRegion = region
+        if (_map.zoomLevel > maxZoomLevel) {
+            _map.zoomLevel = maxZoomLevel
+        }
     }
 
     function _possiblyCenterToVehiclePosition() {
@@ -131,7 +135,8 @@ Map {
             }
         }
         onScaleChanged: (delta) => {
-            _map.zoomLevel += Math.log2(delta)
+            let newZoomLevel = Math.min(Math.max(_map.zoomLevel + Math.log2(delta), 0), maxZoomLevel)
+            _map.zoomLevel = newZoomLevel
             _map.alignCoordinateToPoint(pinchStartCentroid, pinchHandler.centroid.position)
         }
     }
@@ -144,6 +149,12 @@ Map {
                                 PointerDevice.Mouse | PointerDevice.TouchPad : PointerDevice.Mouse
         rotationScale:      1 / 120
         property:           "zoomLevel"
+
+    }
+
+    BoundaryRule on zoomLevel {
+        minimum: 0
+        maximum: maxZoomLevel
     }
 
     // We specifically do not use a DragHandler for panning. It just causes too many problems if you overlay anything else like a Flickable above it.

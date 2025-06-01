@@ -113,9 +113,12 @@ add_subdirectory(Utilities)
 add_qgc_test(AudioOutputTest)
 # Compression
 add_qgc_test(DecompressionTest)
-add_qgc_test(UtilitiesTest)
+# FileSystem
+add_qgc_test(QGCFileDownloadTest)
 # Geo
 add_qgc_test(GeoTest)
+# Shape
+add_qgc_test(ShapeTest)
 
 add_subdirectory(Vehicle)
 # Components

@@ -34,7 +34,7 @@ Performing an AutoTune:
 
 - Move the AutoTune switch to low to test previous settings.
 
-- To save new settings, land and disarm while AutoTune switch is in high position.
+- 为了保存新的设置，AutoTune开关处于高位置时降落和解除。
 
 Note:
 

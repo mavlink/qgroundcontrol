@@ -80,7 +80,7 @@ The test steps are:
 7. Apply the tuning:
    - **Fixed Wing:** The tuning will be immediately/automatically be applied and tested in flight (by default).
       PX4 will then run a 4 second test and revert the new tuning if a problem is detected.
-   - **Multicopters:** Manually land and disarm to apply the new tuning parameters.
+   - **多旋翼:** 手动降落并上锁来应用新的调整参数。
       Takeoff carefully and manually test that the vehicle is stable.
 
 8. If any strong oscillations occur, land immediately and follow the instructions in [PX4 User Guide > Autotuning > Troubleshooting](http://docs.px4.io/master/en/config/autotune.html#troubleshooting).

@@ -36,7 +36,7 @@ SurveyComplexItem::SurveyComplexItem(PlanMasterController* masterController, boo
     , _splitConcavePolygonsFact (settingsGroup, _metaDataMap[splitConcavePolygonsName])
     , _entryPoint               (EntryLocationTopLeft)
 {
-    _editorQml = "qrc:/qml/SurveyItemEditor.qml";
+    _editorQml = "qrc:/qml/QGroundControl/Controls/SurveyItemEditor.qml";
 
     if (_controllerVehicle && !(_controllerVehicle->fixedWing() || _controllerVehicle->vtol())) {
         // Only fixed wing flight paths support alternate transects
