@@ -1069,13 +1069,13 @@
       <extracomment>.QGC.MetaData.Facts[gridLines].longDesc, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Displays a grid overlaid over the video view.</source>
-      <translation type="unfinished">Displays a grid overlaid over the video view.</translation>
+      <translation>在视频视图上显示网格覆盖。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[videoFit].shortDesc, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Video Display Fit</source>
-      <translation type="unfinished">Video Display Fit</translation>
+      <translation>适合的视频显示</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[videoFit].longDesc, </extracomment>
@@ -1987,7 +1987,7 @@
       <extracomment>.QGC.MetaData.Facts[clipCount2].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/VibrationFact.json"/>
       <source>Clip Count (2)</source>
-      <translation type="unfinished">Clip Count (2)</translation>
+      <translation>片段数量 (2)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[clipCount3].shortDesc, </extracomment>
@@ -2176,7 +2176,7 @@
       <extracomment>.QGC.MetaData.Facts[temperature2].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/TemperatureFact.json"/>
       <source>Temperature (2)</source>
-      <translation type="unfinished">Temperature (2)</translation>
+      <translation>温度 (2)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[temperature3].shortDesc, </extracomment>
