@@ -1352,7 +1352,7 @@
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMMainStatusIndicatorContentItem.qml" line="32"/>
       <source>Vehicle Action</source>
-      <translation type="unfinished">Vehicle Action</translation>
+      <translation>载具动作</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMMainStatusIndicatorContentItem.qml" line="40"/>
@@ -3262,7 +3262,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="477"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="477"/>
       <source>Simple accelerometer calibration is less precise but allows calibrating without rotating the vehicle. Check this if you have a large/heavy vehicle.</source>
-      <translation type="unfinished">Simple accelerometer calibration is less precise but allows calibrating without rotating the vehicle. Check this if you have a large/heavy vehicle.</translation>
+      <translation>简单加速度计校准精度较低，但无需旋转载具即可完成校准。如果你拥有大型/重型飞行器，可勾选此项。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="495"/>
@@ -3280,7 +3280,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="529"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="529"/>
       <source>Fast compass calibration given vehicle position and yaw. This </source>
-      <translation type="unfinished">Fast compass calibration given vehicle position and yaw. This </translation>
+      <translation>根据载具位置和偏航角快速校准罗盘。 </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="530"/>
@@ -3292,19 +3292,19 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="531"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="531"/>
       <source>suitable for vehicles where the field is close to spherical. It is </source>
-      <translation type="unfinished">suitable for vehicles where the field is close to spherical. It is </translation>
+      <translation>适用于磁场接近球形的载具。  </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="532"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="532"/>
       <source>useful for large vehicles where moving the vehicle to calibrate it </source>
-      <translation type="unfinished">useful for large vehicles where moving the vehicle to calibrate it </translation>
+      <translation>对于难以移动载具进行校准的大型载具，它很有用。 </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="533"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="533"/>
       <source>is difficult. Point the vehicle North before using it.</source>
-      <translation type="unfinished">is difficult. Point the vehicle North before using it.</translation>
+      <translation>在使用前将载具朝向北方。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="546"/>
@@ -3316,7 +3316,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="554"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="554"/>
       <source>Vehicle has no Valid positon, please provide it</source>
-      <translation type="unfinished">Vehicle has no Valid positon, please provide it</translation>
+      <translation>飞行器没有有效位置，请提供位置信息。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="560"/>
@@ -3676,13 +3676,13 @@ Click Ok to start calibration.</source>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="75"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="75"/>
       <source>Accelerometer(s):</source>
-      <translation type="unfinished">Accelerometer(s):</translation>
+      <translation>加速计：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="88"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="88"/>
       <source>Barometer(s):</source>
-      <translation type="unfinished">Barometer(s):</translation>
+      <translation>气压计：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="89"/>
@@ -4172,27 +4172,27 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/Vehicle/Actuators/ActuatorActions.cc" line="18"/>
       <source>Beep</source>
-      <translation type="unfinished">Beep</translation>
+      <translation>蜂鸣声</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Actuators/ActuatorActions.cc" line="19"/>
       <source>3D mode: On</source>
-      <translation type="unfinished">3D mode: On</translation>
+      <translation>3D模式：开</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Actuators/ActuatorActions.cc" line="20"/>
       <source>3D mode: Off</source>
-      <translation type="unfinished">3D mode: Off</translation>
+      <translation>3D模式：关</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Actuators/ActuatorActions.cc" line="21"/>
       <source>Set Spin Direction 1</source>
-      <translation type="unfinished">Set Spin Direction 1</translation>
+      <translation>设置旋转方向 1</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Actuators/ActuatorActions.cc" line="22"/>
       <source>Set Spin Direction 2</source>
-      <translation type="unfinished">Set Spin Direction 2</translation>
+      <translation>设置旋转方向 2</translation>
     </message>
   </context>
   <context>
@@ -4200,7 +4200,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/Vehicle/Actuators/ActuatorActions.cc" line="54"/>
       <source>Actuator action command failed</source>
-      <translation type="unfinished">Actuator action command failed</translation>
+      <translation>执行器动作命令失败</translation>
     </message>
   </context>
   <context>
@@ -4284,27 +4284,27 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/Vehicle/Actuators/ActuatorTesting.cc" line="49"/>
       <source>All Motors</source>
-      <translation type="unfinished">All Motors</translation>
+      <translation>所有电机</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Actuators/ActuatorTesting.cc" line="148"/>
       <source>Actuator test command temporarily rejected</source>
-      <translation type="unfinished">Actuator test command temporarily rejected</translation>
+      <translation>执行器测试命令暂时被拒绝</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Actuators/ActuatorTesting.cc" line="150"/>
       <source>Actuator test command denied</source>
-      <translation type="unfinished">Actuator test command denied</translation>
+      <translation>执行器测试命令被拒绝</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Actuators/ActuatorTesting.cc" line="152"/>
       <source>Actuator test command not supported</source>
-      <translation type="unfinished">Actuator test command not supported</translation>
+      <translation>执行器测试命令不支持</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Actuators/ActuatorTesting.cc" line="154"/>
       <source>Actuator test command failed</source>
-      <translation type="unfinished">Actuator test command failed</translation>
+      <translation>执行器测试命令失败</translation>
     </message>
   </context>
   <context>
@@ -4386,7 +4386,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="121"/>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="121"/>
       <source>Clicking &apos;Apply&apos; will save the changes you have made to your airframe configuration.&lt;br&gt;&lt;br&gt;                                                                        All vehicle parameters other than Radio Calibration will be reset.&lt;br&gt;&lt;br&gt;                                                                        Your vehicle will also be restarted in order to complete the process.</source>
-      <translation type="unfinished">Clicking &apos;Apply&apos; will save the changes you have made to your airframe configuration.&lt;br&gt;&lt;br&gt;                                                                        All vehicle parameters other than Radio Calibration will be reset.&lt;br&gt;&lt;br&gt;                                                                        Your vehicle will also be restarted in order to complete the process.</translation>
+      <translation>单击 &apos;应用 &apos;将保存您对机身配置所做的更改。&lt;br&gt;&lt;br&gt;                                                        除无线电校准之外的所有载具参数都将被重置。&lt;br&gt;&lt;br&gt;                                                                          您的载具也将重新启动以完成该过程。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="111"/>
@@ -4807,17 +4807,16 @@ Before starting the auto-tuning process, make sure that:
 
 Click Ok to start the auto-tuning process.
 </source>
-      <translation type="unfinished">WARNING!
+      <translation>Display Video警告！
 
-The auto-tuning procedure should be executed with caution and requires the vehicle to fly stable enough before attempting the procedure!
+自动调参过程应谨慎执行，并且要求飞行器在尝试该过程之前飞行足够稳定！
 
-Before starting the auto-tuning process, make sure that:
-1. You have read the auto-tuning guide and have followed the preliminary steps
-2. The current control gains are good enough to stabilize the drone in presence of medium disturbances
-3. You are ready to abort the auto-tuning sequence by moving the RC sticks, if anything unexpected happens.
+在开始自动调参过程之前，请确保：
+1. 您已阅读自动调参指南并已遵循初步步骤
+2. 当前控制增益足以在存在中等干扰的情况下稳定无人机
+3. 如果发生任何意外情况，您可以通过移动遥控器（RC）摇杆来中止自动调参过程序列。
 
-Click Ok to start the auto-tuning process.
-</translation>
+单击 “确定” 以启动自动调参过程。</translation>
     </message>
   </context>
   <context>
@@ -4911,7 +4910,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/UI/toolbar/BatteryIndicator.qml" line="406"/>
       <source>Vehicle Power</source>
-      <translation type="unfinished">Vehicle Power</translation>
+      <translation>载具功率</translation>
     </message>
     <message>
       <location filename="../src/UI/toolbar/BatteryIndicator.qml" line="407"/>
@@ -5393,7 +5392,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/Vehicle/ComponentInformation/ComponentInformationTranslation.cc" line="209"/>
       <source>File open failed: file:error %1 %2</source>
-      <translation type="unfinished">File open failed: file:error %1 %2</translation>
+      <translation>打开文件失败：文件:错误 %1 %2</translation>
     </message>
   </context>
   <context>
@@ -17166,7 +17165,7 @@ ROTATION_NONE indicates component points in direction of flight.</translation>
     <message>
       <location filename="../src/UI/preferences/TelemetrySettings.qml" line="90"/>
       <source>Signing key has changed. Don&apos;t forget to send to Vehicle(s) if needed.</source>
-      <translation type="unfinished">Signing key has changed. Don&apos;t forget to send to Vehicle(s) if needed.</translation>
+      <translation>签名密钥已更改。不要忘记在需要时发送到载具。</translation>
     </message>
     <message>
       <location filename="../src/UI/preferences/TelemetrySettings.qml" line="97"/>
