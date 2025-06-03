@@ -21,7 +21,6 @@ if(NOT QGC_NO_SERIAL_LINK)
 endif()
 
 qt_add_library(VehicleSetupModule STATIC)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE VehicleSetupModuleplugin)
 
 qt_add_qml_module(VehicleSetupModule
     URI QGroundControl.VehicleSetup
@@ -38,4 +37,5 @@ qt_add_qml_module(VehicleSetupModule
         SetupParameterEditor.qml
         SetupView.qml
         VehicleSummary.qml
+    NO_PLUGIN
 )
