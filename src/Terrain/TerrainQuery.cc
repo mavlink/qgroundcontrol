@@ -49,7 +49,6 @@ void TerrainAtCoordinateBatchManager::addQuery(TerrainAtCoordinateQuery *terrain
         return;
     }
 
-    (void) connect(terrainAtCoordinateQuery, &TerrainAtCoordinateQuery::destroyed, this, &TerrainAtCoordinateBatchManager::_queryObjectDestroyed);
     const QueuedRequestInfo_t queuedRequestInfo = {
         terrainAtCoordinateQuery,
         coordinates
@@ -84,7 +83,6 @@ void TerrainAtCoordinateBatchManager::_sendNextBatch()
         const QueuedRequestInfo_t requestInfo = _requestQueue.dequeue();
         const SentRequestInfo_t sentRequestInfo = {
             requestInfo.terrainAtCoordinateQuery,
-            false,
             requestInfo.coordinates.count()
         };
         (void) _sentRequests.append(sentRequestInfo);
@@ -105,36 +103,12 @@ void TerrainAtCoordinateBatchManager::_batchFailed()
     const QList<double> noHeights;
 
     for (const SentRequestInfo_t &sentRequestInfo: _sentRequests) {
-        if (!sentRequestInfo.queryObjectDestroyed) {
-            (void) disconnect(sentRequestInfo.terrainAtCoordinateQuery, &TerrainAtCoordinateQuery::destroyed, this, &TerrainAtCoordinateBatchManager::_queryObjectDestroyed);
+        if (!sentRequestInfo.terrainAtCoordinateQuery.isNull()) {
             sentRequestInfo.terrainAtCoordinateQuery->signalTerrainData(false, noHeights);
         }
     }
 
     _sentRequests.clear();
-}
-
-void TerrainAtCoordinateBatchManager::_queryObjectDestroyed(QObject *terrainAtCoordinateQuery)
-{
-    qCDebug(TerrainQueryLog) << Q_FUNC_INFO << "TerrainAtCoordinateQuery" << terrainAtCoordinateQuery;
-
-    int i = 0;
-    while (i < _requestQueue.count()) {
-        const QueuedRequestInfo_t &requestInfo = _requestQueue[i];
-        if (requestInfo.terrainAtCoordinateQuery == terrainAtCoordinateQuery) {
-            qCDebug(TerrainQueryLog) << "Removing deleted provider from _requestQueue index:terrainAtCoordinateQuery" << i << requestInfo.terrainAtCoordinateQuery;
-            (void) _requestQueue.removeAt(i);
-        } else {
-            i++;
-        }
-    }
-
-    for (SentRequestInfo_t &sentRequestInfo : _sentRequests) {
-        if (sentRequestInfo.terrainAtCoordinateQuery == terrainAtCoordinateQuery) {
-            qCDebug(TerrainQueryLog) << "Zombieing deleted provider from _sentRequests index:terrainAtCoordinateQuery" << sentRequestInfo.terrainAtCoordinateQuery;
-            sentRequestInfo.queryObjectDestroyed = true;
-        }
-    }
 }
 
 QString TerrainAtCoordinateBatchManager::_stateToString(TerrainQuery::State state)
@@ -164,12 +138,12 @@ void TerrainAtCoordinateBatchManager::_coordinateHeights(bool success, const QLi
 
     int currentIndex = 0;
     for (const SentRequestInfo_t &sentRequestInfo: _sentRequests) {
-        if (sentRequestInfo.queryObjectDestroyed) {
+        if (sentRequestInfo.terrainAtCoordinateQuery.isNull()) {
+            // Skip deleted objects
             continue;
         }
 
         qCDebug(TerrainQueryVerboseLog) << Q_FUNC_INFO << "returned TerrainCoordinateQuery:count" << sentRequestInfo.terrainAtCoordinateQuery << sentRequestInfo.cCoord;
-        (void) disconnect(sentRequestInfo.terrainAtCoordinateQuery, &TerrainAtCoordinateQuery::destroyed, this, &TerrainAtCoordinateBatchManager::_queryObjectDestroyed);
         const QList<double> requestAltitudes = heights.mid(currentIndex, sentRequestInfo.cCoord);
         sentRequestInfo.terrainAtCoordinateQuery->signalTerrainData(true, requestAltitudes);
         currentIndex += sentRequestInfo.cCoord;
