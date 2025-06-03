@@ -45,7 +45,40 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         Qt6::TextToSpeech
         Qt6::Widgets
         Qt6::Xml
+        # Explicitly link QML modules, needed by Qt 6.6.3
+        # TODO: Remove when support for this version is dropped
+        AnalyzeViewModule
+        AppSettingsModule
+        AutoPilotPluginsCommonModule
+        FactControlsModule
+        FlightDisplayModule
+        FlightMapModule
+        MainWindowModule
+        QGroundControlControlsModule
+        ScreenToolsModule
+        ToolbarModule
+        VehicleSetupModule
 )
+
+# Required by Qt 6.6.3. TODO: Remove when no longer supported.
+if(QGC_CUSTOM_BUILD)
+    target_link_libraries(${CMAKE_PROJECT_NAME}
+        PRIVATE
+            CustomModule
+    )
+endif()
+if(NOT QGC_DISABLE_APM_PLUGIN AND NOT QGC_DISABLE_APM_PLUGIN_FACTORY)
+    target_link_libraries(${CMAKE_PROJECT_NAME}
+        PRIVATE
+            AutoPilotPluginsAPMModule
+    )
+endif()
+if(NOT QGC_DISABLE_PX4_PLUGIN AND NOT QGC_DISABLE_PX4_PLUGIN_FACTORY)
+    target_link_libraries(${CMAKE_PROJECT_NAME}
+        PRIVATE
+            AutoPilotPluginsPX4Module
+    )
+endif()
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 

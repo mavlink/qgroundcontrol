@@ -28,4 +28,5 @@ qt_add_qml_module(AutoPilotPluginsCommonModule
         MotorComponent.qml
         RadioComponent.qml
         SyslinkComponent.qml
+    NO_PLUGIN # Required by Qt 6.6.3. TODO: Remove when no longer supported.
 )
