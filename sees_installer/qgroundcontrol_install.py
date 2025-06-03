@@ -2,7 +2,7 @@
 import os
 import shutil
 
-VERSION = "1.0"
+VERSION = "1.1"
 dest_qgc_start = '/opt/sees/apps/qgroundcontrol'
 dest_qgc_desktop_shortcut = '/home/sees/.local/share/applications'
 dest_qgc_ini = '/home/sees/.config/QGroundControl.org'
@@ -16,6 +16,8 @@ destinations = [
 
 print(f"Script version {VERSION} starting installation. ")
 os.system("pip install python-dotenv")
+os.system("pip install pyqt5")
+
 
 # Check if directories exist and create if user confirms
 for directory in destinations:
