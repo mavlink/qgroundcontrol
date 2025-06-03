@@ -80,7 +80,6 @@ void TerrainAtCoordinateBatchManager::_sendNextBatch()
 
     // Convert coordinates to point strings for json query
     QList<QGeoCoordinate> coords;
-    int requestQueueAdded = 0;
     while (!_requestQueue.isEmpty()) {
         const QueuedRequestInfo_t requestInfo = _requestQueue.dequeue();
         const SentRequestInfo_t sentRequestInfo = {
@@ -90,13 +89,11 @@ void TerrainAtCoordinateBatchManager::_sendNextBatch()
         };
         (void) _sentRequests.append(sentRequestInfo);
         coords += requestInfo.coordinates;
-        requestQueueAdded++;
         if (coords.count() > 50) {
             break;
         }
     }
 
-    (void) _requestQueue.append(_requestQueue.mid(requestQueueAdded));
     qCDebug(TerrainQueryLog) << Q_FUNC_INFO << "requesting next batch _state:_requestQueue.count:_sentRequests.count" << _stateToString(_state) << _requestQueue.count() << _sentRequests.count();
 
     _state = TerrainQuery::State::Downloading;
@@ -223,9 +220,9 @@ void TerrainAtCoordinateQuery::signalTerrainData(bool success, const QList<doubl
 /*===========================================================================*/
 
 TerrainPathQuery::TerrainPathQuery(bool autoDelete, QObject *parent)
-   : QObject(parent)
-   , _autoDelete(autoDelete)
-   , _terrainQuery(new TerrainOfflineQuery(this))
+    : QObject(parent)
+    , _autoDelete(autoDelete)
+    , _terrainQuery(new TerrainOfflineQuery(this))
 {
     // qCDebug(TerrainQueryLog) << Q_FUNC_INFO << this;
 
