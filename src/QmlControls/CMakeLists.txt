@@ -61,7 +61,6 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 
 qt_add_library(QGroundControlControlsModule STATIC)
 
-
 qt_add_qml_module(QGroundControlControlsModule
     URI QGroundControl.Controls
     VERSION 1.0
