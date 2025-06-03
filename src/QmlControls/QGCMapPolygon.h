@@ -168,4 +168,5 @@ private:
     bool                _traceMode =            false;
     bool                _showAltColor =         false;
     int                 _selectedVertexIndex =  -1;
+    bool                _deferredPathChanged =  false;
 };

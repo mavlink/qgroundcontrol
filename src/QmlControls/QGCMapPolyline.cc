@@ -75,8 +75,14 @@ void QGCMapPolyline::clear(void)
 void QGCMapPolyline::adjustVertex(int vertexIndex, const QGeoCoordinate coordinate)
 {
     _polylinePath[vertexIndex] = QVariant::fromValue(coordinate);
-    emit pathChanged();
     _polylineModel.value<QGCQGeoCoordinate*>(vertexIndex)->setCoordinate(coordinate);
+    if (!_deferredPathChanged) {
+        _deferredPathChanged = true;
+        QTimer::singleShot(0, this, [this]() {
+            emit pathChanged();
+            _deferredPathChanged = false;
+        });
+    }
     setDirty(true);
 }
 
