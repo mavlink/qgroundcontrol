@@ -322,7 +322,7 @@
       <extracomment>.QGC.MetaData.Facts[appFontPointSize].shortDesc, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>Application font size</source>
-      <translation type="unfinished">Application font size</translation>
+      <translation>应用字体大小</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[appFontPointSize].longDesc, </extracomment>
@@ -334,7 +334,7 @@
       <extracomment>.QGC.MetaData.Facts[indoorPalette].shortDesc, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>Application color scheme</source>
-      <translation type="unfinished">Application color scheme</translation>
+      <translation>应用配色方案</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[indoorPalette].longDesc, </extracomment>
@@ -352,7 +352,7 @@
       <extracomment>.QGC.MetaData.Facts[savePath].shortDesc, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>Application save directory</source>
-      <translation type="unfinished">Application save directory</translation>
+      <translation>应用程序保存目录</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[savePath].longDesc, </extracomment>
@@ -370,7 +370,7 @@
       <extracomment>.QGC.MetaData.Facts[androidSaveToSDCard].longDesc, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>Application data is saved to the sd card</source>
-      <translation type="unfinished">Application data is saved to the sd card</translation>
+      <translation>应用程序数据保存到 sd 卡</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[mapboxToken].shortDesc, </extracomment>
