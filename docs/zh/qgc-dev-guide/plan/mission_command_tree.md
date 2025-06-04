@@ -97,7 +97,7 @@ The leaf nodes then provides metadata which can override values for the command 
 
 ### 根－载具类型的特定叶节点
 
-The next level of the hiearchy are overrides which are specific to a firmware type but apply to all vehicle types. 让我们再次看看航点重写功能：
+下一层厚此薄彼会覆盖固件类型特定但适用于所有载具类型。 让我们再次看看航点重写功能：
 
 [ArduPilot](https://github.com/mavlink/qgroundcontrol/blob/master/src/FirmwarePlugin/APM/MavCmdInfoCommon.json#L6):
 

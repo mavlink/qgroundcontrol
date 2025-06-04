@@ -1,60 +1,60 @@
-# Fly Tools
+# 飞行工具
 
-## Pre Flight Checklist {#preflight_checklist}
+## 飞行检查清单 {#preflight_checklist}
 
-An automated preflight checklist can be used to run through standard checks that the vehicle is configured correctly and it is safe to fly.
+飞行前自动核对表可以用来进行标准检查，检查车辆配置正确，可以安全飞行。
 
-To view the checklist, first enable the tool by navigating to [Application Settings > General > Fly View](../settings_view/general.md) and selecting the **Use preflight checklist** checkbox.
-The tool will then be added to the _Flight Tools_.
-Press it to open the checklist:
+查看核对表， 首先通过导航到 [应用设置 > 常规> 飞行视图](../settings_view/general.md) 并选择 **使用预览列表** 复选框来启用工具。
+然后工具将被添加到 _飞行工具_。
+按下它以打开检查清单：
 
-![Pre Flight Checklist](../../../assets/fly/pre_flight_checklist.jpg)
+![飞行检查清单](../../../assets/fly/pre_flight_checklist.jpg)
 
-Once you have performed each test, select it on the UI to mark it as complete.
+完成每项测试后，在用户界面上选择该项，将其标记为已完成。
 
-## Takeoff {#takeoff}
+## 关闭 {#takeoff}
 
 :::tip
-If you are starting a mission for a multicopter, _QGroundControl_ will automatically perform the takeoff step.
+如果你正在为多功能飞行器启动任务，_QGroundControl_ 将自动执行起飞步骤。
 :::
 
-To takeoff (when landed):
+起飞(降落时)：
 
-1. Press the **Takeoff** button in the _Fly Tools_ (this will toggle to a **Land** button after taking off).
-2. Optionally set the takeoff altitude in the right-side vertical slider.
+1. 按 _Fly Tools_ 中的 **起飞** 按钮(这将在起飞后切换到 **着陆** 按钮)。
+2. 在右侧垂直滑块中可选择设置起飞高度。
 
-- You can slide up/down to change the altitude
-- You can also click on the specified altitude (10 ft in example) and then type in a specific altitude.
+- 您可以向上/向下滑动以更改高度
+- 您也可以点击指定的高度(例如10英尺)，然后输入特定的海拔。
 
-1. Confirm takeoff using the slider.
+1. 使用滑块确认起飞。
 
-![takeoff](../../../assets/fly/takeoff.png)
+![起飞](../../../assets/fly/takeoff.png)
 
-## Land {#land}
+## 着陆 {#land}
 
-You can land at the current position at any time while flying:
+你可以在飞行时随时降落在当前位置：
 
-1. Press the **Land** button in the _Fly Tools_ (this will toggle to a **Takeoff** button when landed).
-2. Confirm landing using the slider.
+1. 按下 _飞行工具_ 中的 **着陆** 按钮(当降落将切换到 **起飞** 按钮)。
+2. 使用滑块确认降落。
 
-## RTL/Return
+## 返航/返回
 
-Return to a "safe point" at any time while flying:
+飞行时返回“安全点”：
 
-1. Press the **RTL** button in the _Fly Tools_.
-2. Confirm RTL using the slider.
+1. 按 _飞行工具_ 中的 **返航** 按钮。
+2. 使用滑块确认返航。
 
 :::info
-Vehicles commonly return to the "home" (takeoff) location and land.
-This behaviour depends on the vehicle type and configuration.
-For example, rally points or mission landings may be used as alternative return targets.
+飞行器通常返回 “Home点”（起飞）位置并着陆。
+这种行为取决于载具类型和配置。
+例如，集结点或飞行任务着陆可能被用作替代返回目标。
 :::
 
-## Change Altitude {#change_altitude}
+## 更改高度 {#change_altitude}
 
-You can change altitude while flying, except when in a mission:
+飞行过程中你可以改变高度，但执行任务时除外：
 
-1. Press the **Actions** button on the _Fly Tools_
-2. Select the _Change Altitude_ button
-3. Select the new altitude from the vertical slider
-4. Confirm the action
+1. 按 _飞行工具_ 上的 **操作** 按钮
+2. 选择 _改变高度_ 按钮
+3. 从垂直滑块选择新高度
+4. 确认操作

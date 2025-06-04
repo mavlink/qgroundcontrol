@@ -1,11 +1,11 @@
-# CSV Logging
+# CSV 日志记录
 
-![Csv checkbox](../../../assets/settings/general/csv.jpg)
+![Csv 复选框](../../../assets/settings/general/csv.jpg)
 
-When checked, a CSV (comma-separated value) telemetry file will be created along with the usual **.tlog** telemetry file.
-The file is only created if **Save log after each flight** is enabled, and is recorded for the same duration.
+选中时，将创建一个 CSV (逗号分隔的值) 遥测文件和通常的 **.tlog** 遥测文件。
+只有在启用每次飞行后**保存日志** 并记录相同的时间段时，文件才被创建。
 
-This CSV file contains the most relevant vehicle telemetry data available for quick analysis such as GPS position, attitude, battery status, and others.
-It is populated at 1 Hz and while it is not as detailed as the telemetry log, it is a lot easier to work with and quicker to extract data out of.
+这个CSV文件包含可供快速分析的最相关的车辆遥测数据，例如GPS位置、姿势、电池状态等等。
+它的密度为1赫兹，虽然它不像遥测日志那样详细。 更容易与之合作，更快地从中提取数据。
 
-The file can be opened by common spreadsheet software, including: Microsoft Excel, Google Sheets, LibreOffice Calc or OpenOffice Calc.
+该文件可以通过通用的电子表格软件打开，其中包括：Microsoft Excel、谷歌表单、LibreOffice Calc或OpenOffice Calc。

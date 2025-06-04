@@ -1,55 +1,55 @@
-# 3D View
+# 3D 视图
 
-The 3D View is used to visualize and monitor the vehicle, the environment, and the planned mission in 3D. Most of the capabilities available in the [Fly View](../fly_view/fly_view.md)  is also available in the 3D View.
+3D视图用于视觉和监测载具、环境以及计划在3D中执行的任务。 [飞行视图](../fly_view/fly_view.md) 中的大部分功能在3D视图中同样可用。
 
-You can use it to:
+您可以使用它：
 
-- To import and display the 3D map for any region of interest downloaded from the OpenStreetMap website (.osm file).
-- Display the vehicle along with its mission in 3D.
-- And most of the capabilities of the [Fly View](../fly_view/fly_view.md), including:
-    - Run an automated [pre-flight checklist](#preflight_checklist).
-    - Arm the vehicle (or check why it won't arm).
-    - Control missions: [start](#start_mission), [continue](#continue_mission), [pause](#pause), and [resume](#resume_mission).
-    - Guide the vehicle to [arm](#arm)/[disarm](#disarm)/[emergency stop](#emergency_stop), [takeoff](#takeoff)/[land](#land), [change altitude](#change_altitude), and [return/RTL](#rtl).
-    - Switch between a map view and a video view (if available)
-    - Display video, mission, telemetry, and other information for the current vehicle, and also switch between connected vehicles.
+- 从OpenStreetMap 网站(.osm 文件)下载的任何感兴趣区域导入和显示3D映射图。
+- 在 3D 中显示车辆和它的任务。
+- 以及[飞行视图](../fly_view/fly_view.md)的大多数功能，包括：
+    - 运行一个自动的[飞行前检查列表](#preflight_checklist)。
+    - 把载具解锁(或检查它为什么不会解锁)。
+    - 控制任务： [开始](#start_mission)、 [继续](#continue_mission)、 [暂停](#pause)和 [恢复](#resume_mission)。
+    - 引导飞行器进行[解锁](#arm)/[上锁](#disarm)/[紧急停止](#emergency_stop)、[起飞](#takeoff)/[降落](#land)、[改变高度](#change_altitude) 以及 [返航/一键返航](#rtl)。
+    - 在地图视图和视频视图之间切换(如果可用)
+    - 显示当前载具的视频、飞行任务、遥测和其他信息，同时在已连接的载具之间切换。
 
-![3D View](../../../assets/viewer_3d/viewer_3d_overview.jpg)
+![3D 视图](../../../assets/viewer_3d/viewer_3d_overview.jpg)
 
-# UI Overview
+# 界面概述
 
-The screenshot above shows the main elements of the 3D View.
+上面的截图显示3D视图的主要元素。
 
-<font color="red">**Enabling the 3D View:** </font>The 3D View is disabled by default. To enable it, go to **Application Settings** ->**Fly View** tab, and under the **3D View** settings group, toggle the **Enabled** switch as shown below:
+<font color="red">**启用3D 视图：** </font>默认禁用3D 视图。 若要启用它，请前往**应用程序设置** ->**Fly View** 标签，并在 **3D View** 设置组下切换下面显示的 **启用** 切换：
 
-![3D View](../../../assets/viewer_3d/enable_3d_view.jpg)
+![3D 视图](../../../assets/viewer_3d/enable_3d_view.jpg)
 
-To open the 3D View, when you are in the [Fly View](../fly_view/fly_view.md), from the toolbar on the left, select the 3D View icon as illustrated below:
+打开3D 视图，当您在 [飞行视图](../fly_view/fly_view.md) 从左边的工具栏中选择3D视图图标如下所示：
 
-![3D View](../../../assets/viewer_3d/open_3d_viewer.jpg)
+![3D 视图](../../../assets/viewer_3d/open_3d_viewer.jpg)
 
-Once the 3D View is opened, you can navigate through the 3D environment by using either a mouse or a touchscreen as follows:
+打开3D视图后，您可以使用鼠标或触摸屏来导航3D环境：
 
-- **Mouse:**
-    - **To move horizontally and vertically**: Press and hold the mouse left-click, then move the cursor.
-    - **To rotate**: Press and hold the mouse right-click, then move the cursor.
-    - **To zoom**: Use the mouse wheel\middle button.
+- **鼠标：**
+    - **要水平和垂直移动**：按住鼠标左键，然后移动光标。
+    - **要旋转**：按住鼠标右键，然后移动光标。
+    - **放大**：使用鼠标滚轮\中键。
 
-- **Touchscreen:**
-    - **To move horizontally and vertically**: Use a single finger, then tap and move your finger.
-    - **To rotate**: Use two fingers, then tap and move your fingers while keeping them together.
-    - **To zoom**: Use a pinch with two fingers and move them together or apart to zoom in or out.
+- **触摸屏:**
+    - **要水平和垂直移动**：使用单指，然后点击并移动您的手指。
+    - **要旋转**：使用两个手指，然后点击并移动你的手指，同时将它们保持在一起。
+    - **要缩放**：使用双指的粉丝并移动到一起或分别缩放。
 
-To visualize the 3D map of a particular area in the 3D viewer, you have to download the .osm file of that area from the [OpenStreetMap](https://www.openstreetmap.org/#map=16/47.3964/8.5498) website and then import it through the **3D View** settings. More details on the **3D View** settings can be found in the next section.
+若要在三维查看器中可视化特定区域的3D地图，您必须下载。 从 [OpenStreetMap](https://www.openstreetmap.org/#map=16/47.3964/8.5498)网站上的sm 文件，然后通过 **3D View** 的设置导入。 更多关于**3D View** 设置的详细信息可在下一节找到。
 
-# Settings
+# 设置
 
-You can change the settings of the 3D View from **Application Settings** ->**Fly View** tab under the **3D View** settings group.
-The following properties can be modified in the 3D View settings group:
+您可以在 **应用程序设置** ->**Fly View** 标签在 **3D View** 设置组中更改3D 视图的设置。
+以下属性可以在 3D 视图设置组中修改：
 
-- **Enabled**: To enable or disable the 3D View.
-- **3D Map File**: The path to the .osm file of a region of interest to be visualized in the QGC. The .osm file can be uploaded by clicking on the **Select File** button. To clear the 3D View from the previously loaded .osm file, you can click on the **Clear** button.
-- **Average Building Level Height**: This parameter determines the height of each storey of the buildings, as in .osm file sometimes the height of the buildings is specified in terms of the level/storey.
-- **Vehicle Altitude Bias**: This refers to the bias in the altitude of vehicles and their missions with respect to the ground level. It is helpful in cases where the estimated altitude of the vehicle by its flight control is biased, as the relative altitude is currently used in the 3D View.
+- **启用**：要启用或禁用3D视图。
+- **3D地图文件**：在QGC中可视化感兴趣区域的.osm文件的路径。 可以点击 **选择文件** 按钮上传.osm 文件。 要清除以前加载的 .osm 文件的3D 视图，您可以点击**清除** 按钮。
+- **建筑物平均楼层高度**：此参数决定建筑物每层的高度，因为在.osm文件中，建筑物高度有时是按楼层来指定的。
+- **载具高度偏差**：这是指载具及其任务的高度相对于地面的偏差。 在飞行器飞控估算的高度存在偏差的情况下，这很有用，因为3D视图目前使用的是相对高度。
 
 

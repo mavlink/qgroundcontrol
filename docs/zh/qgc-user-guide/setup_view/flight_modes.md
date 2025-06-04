@@ -1,6 +1,6 @@
 # Flight Modes Setup
 
-The _Flight Modes_ section allows you to map flight modes to radio channel(s), and hence to the switches on your radio control transmitter.
+_飞行模式_ 部分允许您将飞行模式映射到无线电频道，从而映射到您的无线电控制发射器上的开关。
 Both flight mode setup and the available flight modes are different in PX4 and ArduPilot (and there are some differences between ArduCopter and ArduPlane).
 
 :::info

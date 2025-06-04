@@ -3,7 +3,7 @@
 The MAVLink Console (**Analyze > Mavlink Console**) allows you to connect to the PX4 [System Console](https://docs.px4.io/main/en/debug/system_console.html) and send commands.
 
 :::info
-The console only works when connected to _hardware_ running the _PX4_ flight stack.
+它仅在桌面版本上支持 (Windows, Linux, Mac OS)。
 PX4 SITL and ArduPilot are not supported.
 :::
 

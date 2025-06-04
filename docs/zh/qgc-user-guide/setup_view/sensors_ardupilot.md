@@ -109,7 +109,7 @@ For example, the image below are at orientations: `ROTATION_NONE`, `ROTATION_YAW
 
 ![Flight controller yaw rotation](../../../assets/setup/flight_controller_yaw_rotation.png)
 
-To set the orientation(s) and compasses used:
+确定使用的方向和指南针：
 
 1. Select the **Sensor Settings** button.
 

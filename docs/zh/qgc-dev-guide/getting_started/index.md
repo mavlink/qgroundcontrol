@@ -103,7 +103,7 @@ QGC 已通过指定 Qt 版本（{{ $frontmatter.qt_version }}）的全面测试�
 
   - **视频流/Gstream:** - 查看 [视频流](https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoManager/VideoReceiver/GStreamer/README.md)
 
-#### 安装 Visual Studio (仅Windows) {#vs}
+#### 安装 Visual Studio (仅限Windows) {#vs}
 
 安装 [Visual Studio 2022 Community Edition](https://visualstudio.microsoft.com/downloads/)。
 

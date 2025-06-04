@@ -1,6 +1,6 @@
 # 常规设置(设置视图)
 
-一般设置 (**SettingsView > General Settings**) 是应用程序级别配置的主要位置。
+常规设置 (**设置视图 > 常规视图**) 是应用程序级别配置的主要位置。
 设置值包括：显示单位、自动连接装置、视频显示和存储、RTK GPS、品牌图像和其他杂项设置。
 
 :::info
@@ -84,99 +84,99 @@
   当最后一辆载具断开时停止日志记录。
 - [**CSV 日志**](csv.md)：将遥测数据子集记录到一个CSV文件。
 
-## Fly View {#fly_view}
+## 飞行视图{#fly_view}
 
-![Fly View Settings](../../../assets/settings/general/fly_view.jpg)
+![飞行视图设置](../../../assets/settings/general/fly_view.jpg)
 
-The settings are:
+设置如下：
 
-- **Use Preflight Checklist**: Enable pre-flight checklist in Fly toolbar.
+- **使用飞行检查清单**：在飞行工具栏中启用飞行前检查清单。
 
-- **执行飞行前检查清单**：完成检查清单是启动的前提条件。
+- **强制执行飞行检查清单**：完成检查清单是解锁的先决条件。
 
-- **Keep Map Centered on Vehicle**: Forces map to center on the currently selected vehicle.
+- **保持地图以载具为中心**：强制地图以当前选定的载具为中心。
 
-- **Show Telemetry Log Replay Status Bar**: Display status bar for [Replaying Flight Data](../fly_view/replay_flight_data.md).
+- **显示遥测日志重播状态栏**：显示[重播飞行数据](../fly_view/replay_flight_data.md)的状态栏。
 
-- **Virtual Joystick**: Enable [virtual joysticks](../settings_view/virtual_joystick.md) (PX4 only)
+- **虚拟操纵杆**：启用 [虚拟操纵杆](../settings_view/virtual_joystick.md) (仅限PX4)
 
-- **Use Vertical Instrument Panel**: Align instrument panel vertically rather than horizontally (default).
+- **使用垂直仪表面**：垂直对齐仪表面，而不是水平对齐(默认)。
 
-- **Show additional heading indicators on Compass**: Adds additional indicators to the compass rose:
+- **在指南针上显示额外的标题指示器**：在指南针旋转中添加额外的指示器：
 
-- _Blue arrow_: course over ground.
+- _蓝色箭头_：地速航向。
 
-- _White house_: direction back to home.
+- **锁定罗盘指北**：勾选以旋。转罗盘刻度盘（默认是在罗盘指示器内旋转飞行器）。
 
-- _Green line_: Direction to next waypoint.
+- _绿色的线_：指向下一个航点。
 
-- **Lock Compass Nose-Up**: Check to rotate the compass rose (default is to rotate the vehicle inside the compass indicateor).
+- **锁定罗盘指北**：勾选以旋转罗盘刻度盘（默认是在罗盘指示器内旋转飞行器）。
 
-- **Guided Minimum Altitude**: Minimum value for guided actions altitude slider.
+- **引导最小高度**：引导操作高度滑块的最小值。
 
-- **Guided Maximum Altitude**: Minimum value for guided actions altitude slider.
+- **引导最大高度**：引导操作高度滑块的最大值。
 
-- **Go To Location Max Distance**: The maximum distance that a Go To location can be set from the current vehicle location (in guided mode).
+- 计划视图 {#plan_view}
 
-## Plan View {#plan_view}
+## 计划视图 {#plan_view}
 
-![Plan View Settings](../../../assets/settings/general/plan_view.jpg)
+![计划视图设置](../../../assets/settings/general/plan_view.jpg)
 
-The settings are:
+设置如下：
 
-- **Default Mission Altitude**: The default altitude used for the Mission Start Panel, and hence for the first waypoint.
+- **默认飞行任务高度**：用于任务起始面板的默认高度，因此也是第一个航点的默认高度。
 
-## AutoConnect to the following devices {#auto_connect}
+## 自动连接到以下设备 {#auto_connect}
 
-This section defines the set of devices to which _QGroundControl_ will auto-connect.
+本节定义了_QGroundControl_ 将自动连接到的设备集合。
 
-![Device autoconnect settings](../../../assets/settings/general/autoconnect_devices.jpg)
+![设备自动连接设置](../../../assets/settings/general/autoconnect_devices.jpg)
 
-Settings include:
+设置包括：
 
-- **Pixhawk:** Autoconnect to Pixhawk-series device
-- **SiK Radio:** Autoconnect to SiK (Telemetry) radio
-- **PX4 Flow:** Autoconnect to PX4Flow device
-- **LibrePilot:** Autoconnect to Libre Pilot autopilot
-- **UDP:** Autoconnect to UDP
-- **RTK GPS:** Autoconnect to RTK GPS device
+- **Pixhawk:** 自动连接到 Pixhawk系列设备
+- **SiK电台**：自动连接到SiK（遥测）电台
+- **PX4 Flow：** 自动连接到 PX4Flow 设备
+- **LibrePilot:** 自动连接到 Libre Pilot autopilot
+- **UDP:** 自动连接到 UDP
+- **RTK GPS：** 自动连接到 RTK GPS 设备
 - **NMEA GPS Device:** Autoconnect to an external GPS device to get ground station position ([see below](#nmea_gps))
 
-### Ground Station Location (NMEA GPS Device) {#nmea_gps}
+### 地面站位置(NMEA GPS 设备) {#nmea_gps}
 
-_QGroundControl_ will automatically use an internal GPS to display its own location on the map with a purple `Q` icon (if the GPS provides a heading, this will be also indicated by the icon).
-It may also use the GPS as a location source for _Follow Me Mode_ - currently supported on [PX4 Multicopters only](https://docs.px4.io/en/flight_modes/follow_me.html).
+_QGroundControl_ 将自动使用内置GPS，通过紫色的 “Q” 图标在地图上显示自身位置（如果GPS提供航向，图标也会指示出来）。
+它也可能将GPS用作 _跟随我模式_ 的位置源 - 目前仅在[PX4多旋翼飞行器上支持](https://docs.px4.io/en/flight_modes/follow_me.html) 。
 
-You can also configure QGC to connect to an external GPS device via a serial or UDP port.
-The GPS device must support the ASCII NMEA format - this is normally the case.
+您也可以通过串口或 UDP端口配置QGC 连接到外部GPS设备。
+GPS设备必须支持 ASCII NMEA 格式――通常情况是这样。
 
 :::tip
-A higher quality external GPS system may be useful even if the ground station has internal GPS support.
+即使地面站得到内部全球定位系统支持，质量更高的外部全球定位系统也可能有用。
 :::
 
-Use the _NMEA GPS Device_ drop-down selector to manually select the GPS device and other options:
+使用 _NMEA GPS 设备_下拉选择器手动选择GPS 设备和其他选项：
 
-- USB connection:
+- USB 连接：
 
-  ![NMEA GPS Device - Serial](../../../assets/settings/general/nmea_gps_serial.jpg)
+  ![NMEA GPS设备 - 串口](../../../assets/settings/general/nmea_gps_serial.jpg)
 
-  - **NMEA GPS Device:** _Serial_
-  - **NMEA GPS Baudrate**: The baudrate for the serial port
+  - **NMEA GPS设备**：_串口_
+  - **NMEA GPS波特率**：串口的波特率
 
-  ::: tip
-  To troubleshoot serial GPS problems: Disable RTK GPS [auto connection](#auto_connect), close _QGroundControl_, reconnect your GPS, and open QGC.
+  :::tip
+  解决串行GPS问题: 禁用 RTK GPS [自动连接](#auto_connect), 关闭 _QGroundControl_, 重新连接您的 GPS, 并打开 QGC。
   :::
 
-- Network connection:
+- 网络连接：
 
-  ![NMEA GPS Device - UDP](../../../assets/settings/general/nmea_gps_udp.jpg)
+  ![NMEA GPS 设备 - UDP](../../../assets/settings/general/nmea_gps_udp.jpg)
 
-  - **NMEA GPS Device:** _UDP Port_.
-  - **NMEA Stream UDP Port**: The UDP port on which QGC will listen for NMEA data (QGC binds the port as a server)
+  - **NMEA GPS 设备:** _UDP 端口_。
+  - **NMEA 流 UDP 端口**: QGC 监听NMEA 数据的 UDP 端口(QGC 绑定端口作为服务器)
 
 ## RTK GPS {#rtk_gps}
 
-This section allows you to specify the RTK GPS "Survey-in" settings, to save and reuse the result of a Survey-In operation, or to directly enter any other known position for the base station.
+此部分允许您指定RTK GPS “测量初始化” 设置，保存并复用测量初始化操作的结果，或者直接输入基站的任何其他已知位置。
 
 ![RTK GPS Settings](../../../assets/settings/general/rtk_gps.jpg)
 
@@ -247,7 +247,7 @@ The settings are:
 
 - **Aspect Ratio**: Aspect ratio for scaling video in video widget (set to 0.0 to ignore scaling)
 
-- **解除武装时禁用**：飞行器解除武装时禁用视频传输。
+- **锁定时禁用**：飞行器锁定时禁用视频传输。
 
 - **Low Latency Mode**: Enabling low latency mode reduces the video stream latency, but may cause frame loss and choppy video (especially with a poor network connection). <!-- disables the internal jitter buffer -->
 
