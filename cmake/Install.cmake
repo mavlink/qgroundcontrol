@@ -64,6 +64,7 @@ elseif(LINUX)
         FILES ${CMAKE_SOURCE_DIR}/deploy/linux/AppRun
         DESTINATION ${CMAKE_BINARY_DIR}
     )
+    install(CODE "set(CMAKE_SYSTEM_PROCESSOR \"${CMAKE_SYSTEM_PROCESSOR}\")")
     install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/CreateAppImage.cmake")
 elseif(WIN32)
     install(CODE "set(CMAKE_PROJECT_NAME ${CMAKE_PROJECT_NAME})")
