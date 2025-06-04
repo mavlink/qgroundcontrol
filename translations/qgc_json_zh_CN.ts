@@ -601,7 +601,7 @@
       <extracomment>.QGC.MetaData.Facts[surveyInAccuracyLimit].shortDesc, </extracomment>
       <location filename="../src/Settings/RTK.SettingsGroup.json"/>
       <source>Survey in accuracy (U-blox only)</source>
-      <translation type="unfinished">Survey in accuracy (U-blox only)</translation>
+      <translation>精确度调查 (仅限U-blex)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[surveyInAccuracyLimit].longDesc, </extracomment>
@@ -922,7 +922,7 @@
       <extracomment>.QGC.MetaData.Facts[apmStartMavlinkStreams].shortDesc, </extracomment>
       <location filename="../src/Settings/Mavlink.SettingsGroup.json"/>
       <source>Request start of MAVLink telemetry streams (ArduPilot only)</source>
-      <translation type="unfinished">Request start of MAVLink telemetry streams (ArduPilot only)</translation>
+      <translation>请求启动MAVLink遥测流（仅ArduPilot）</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[saveCsvTelemetry].shortDesc, </extracomment>
@@ -1621,7 +1621,7 @@
       <extracomment>.QGC.MetaData.Facts[showGimbalOnlyWhenSet].shortDesc, </extracomment>
       <location filename="../src/Settings/PlanView.SettingsGroup.json"/>
       <source>Show gimbal yaw visual only when set explicitly for the waypoint</source>
-      <translation type="unfinished">Show gimbal yaw visual only when set explicitly for the waypoint</translation>
+      <translation>仅当为航点明确设置时，才显示云台偏航视觉信息。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[vtolTransitionDistance].shortDesc, </extracomment>
