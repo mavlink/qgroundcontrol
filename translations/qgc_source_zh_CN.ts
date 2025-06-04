@@ -4657,12 +4657,12 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/Settings/AppSettings.cc" line="117"/>
       <source>Save to SD card specified for application data. But no SD card present. Using internal storage.</source>
-      <translation type="unfinished">Save to SD card specified for application data. But no SD card present. Using internal storage.</translation>
+      <translation>应用数据保存到指定 SD 卡。没有SD卡存在时，使用内部存储。</translation>
     </message>
     <message>
       <location filename="../src/Settings/AppSettings.cc" line="120"/>
       <source>Save to SD card specified for application data. But SD card is write protected. Using internal storage.</source>
-      <translation type="unfinished">Save to SD card specified for application data. But SD card is write protected. Using internal storage.</translation>
+      <translation>应用数据保存到指定 SD 卡。SD卡开启写保护时，使用内部存储。</translation>
     </message>
     <message>
       <location filename="../src/Settings/AppSettings.cc" line="203"/>
@@ -7373,7 +7373,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/UI/preferences/GeneralSettings.qml" line="68"/>
       <source>Save application data to SD Card</source>
-      <translation type="unfinished">Save application data to SD Card</translation>
+      <translation>将应用程序数据保存到 SD 卡</translation>
     </message>
     <message>
       <location filename="../src/UI/preferences/GeneralSettings.qml" line="141"/>
@@ -9745,7 +9745,7 @@ Click Ok to start the auto-tuning process.
       <location filename="../src/UI/MainRootWindow.qml" line="164"/>
       <location filename="../src/UI/MainRootWindow.qml" line="396"/>
       <source>Application Settings</source>
-      <translation type="unfinished">Application Settings</translation>
+      <translation>应用程序设置</translation>
     </message>
     <message>
       <location filename="../src/UI/MainRootWindow.qml" line="226"/>
