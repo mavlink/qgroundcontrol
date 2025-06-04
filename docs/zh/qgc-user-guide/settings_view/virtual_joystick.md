@@ -13,8 +13,8 @@ Thumbstick control is not as responsive as using an RC Transmitter (because the 
 To enable the virtual joysticks:
 
 1. Select the **Q** icon from the top toolbar
-2. Open the **Application Settings**
+2. 打开 **应用程序设置**
 3. Make sure you're on the **General** tab
 4. Check the **Virtual joystick** box
 
-   ![QGroundControl Application Settings > Enable Virtual joystick](../../../assets/settings/joystick_virtual_joystick_enable.png)
+   ![QGroundControl 应用程序设置 > 允许虚拟摇杆](../../../assets/settings/joystick_virtual_joystick_enable.png)

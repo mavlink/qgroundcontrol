@@ -4,7 +4,7 @@ The _MAVLink Inspector_ provides real-time information and charting of MAVLink t
 
 :::warning
 This feature is intended primarily for **autopilot developers**/**vehicle creators**.
-It is only supported on desktop builds (Windows, Linux, Mac OS).
+它仅在桌面版本上支持 (Windows, Linux, Mac OS)。
 :::
 
 ![MAVLink inspector](../../../assets/analyze/mavlink_inspector/mavlink_inspector.jpg)
@@ -32,7 +32,7 @@ To use the _MAVLink Inspector_:
 
    ![MAVLink inspector: chart fields detail](../../../assets/analyze/mavlink_inspector/mavlink_inspector_plot1.jpg)
 
-   - Fields can be added to only one chart.
+   - 字段只能添加到一个图表。
 
    - A chart can have multiple fields, and fields from multiple messages (these are listed above each chart).
       Messages containing fields that are being charted are highlighted with an asterisk.

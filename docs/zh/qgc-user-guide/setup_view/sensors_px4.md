@@ -146,7 +146,7 @@ For example, the image below are at orientations: `ROTATION_NONE`, `ROTATION_YAW
 
 <img src="../../../assets/setup/flight_controller_yaw_rotation.png" style="width: 600px;"/>
 
-To set the orientation(s) on PX4:
+设置PX4的方向：
 
 1. Select the **Set Orientations** button.
 

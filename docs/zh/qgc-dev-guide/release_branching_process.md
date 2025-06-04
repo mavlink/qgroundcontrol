@@ -21,7 +21,7 @@ The branch has one or more git tags for each patch release (with the format `vX.
 
 A patch release contains fixes to the stable release that are important enough to _require_ an update, and are safe enough that the stable release continues to maintain high quality.
 
-Patch releases increment the patch version number only.
+补丁发布的只是补丁版本号递增。
 
 ### Patch - Development Stage
 
@@ -35,7 +35,7 @@ Commits/changes to the stable branch must also be brought over to the master bra
 At the point where the decision is made to do a patch release, the release binaries are created and a new _tag_ is added to the stable branch (with the same patch release number) indicating the associated source code.
 
 :::info
-New branches are not created for patch releases - only for major and minor releases.
+不为补丁发布创建新分支——仅针对主要和次要发布的分支。
 :::
 
 ## Daily Builds
@@ -51,7 +51,7 @@ The released daily build will always match repo HEAD.
 ### Release Stage
 
 When the decision is made to release a new major/minor version the master branch tends to go through an intial lockdown mode.
-This is where only important fixes for the release are accepted as pull requests.
+在这个地方，只有发布的重要修复被接受为拉取请求。
 
 :::info
 During the lockdown phase, new features are not allowed in master.

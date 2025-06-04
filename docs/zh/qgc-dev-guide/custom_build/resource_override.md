@@ -6,11 +6,11 @@ A "resource" in QGC source code terminology is anything found in Qt resources fi
 - [qgcresources.qrc](https://github.com/mavlink/qgroundcontrol/blob/master/qgcresources.qrc) file.
 - [InstrumentValueIcons.qrc](https://github.com/mavlink/qgroundcontrol/blob/master/resources/InstrumenValueIcons/InstrumentValueIcons.qrc)
 
-By overriding a resource you can replace it with your own version of it. This could be as simple as a single icon, or as complex as replacing an entire Vehicle Setup page of qml ui code. Be aware that using resource overrides does not isolate you from upstream QGC changes like the plugin architecture does. In a sense you are directly modify the upstream QGC resources used by the main code.
+By overriding a resource you can replace it with your own version of it. 这可能像单个图标一样简单，或者像替换一个完整的 qml ui 代码的载具安装页面一样复杂。 Be aware that using resource overrides does not isolate you from upstream QGC changes like the plugin architecture does. In a sense you are directly modify the upstream QGC resources used by the main code.
 
 ## Exclusion Files
 
-The first step to overriding a resource is to "exclude" it from the standard portion of the upstream build. This means that you are going to provide that resource in your own custom build resource file(s). There are two files which achieve this: qgroundcontrol.exclusion and [qgcresources.exclusion](https://github.com/mavlink/qgroundcontrol/blob/master/custom-example/qgcresources.exclusion). They correspond directly with the \*.qrc counterparts. In order to exclude a resource, copy the resource line from the .qrc file into the appropriate .exclusion file.
+The first step to overriding a resource is to "exclude" it from the standard portion of the upstream build. 这意味着您将在自己的自定义构建资源文件中提供该资源。 There are two files which achieve this: qgroundcontrol.exclusion and [qgcresources.exclusion](https://github.com/mavlink/qgroundcontrol/blob/master/custom-example/qgcresources.exclusion). They correspond directly with the \*.qrc counterparts. In order to exclude a resource, copy the resource line from the .qrc file into the appropriate .exclusion file.
 
 ## Custom version of excluded resources
 

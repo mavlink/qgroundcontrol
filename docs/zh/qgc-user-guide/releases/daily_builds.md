@@ -1,13 +1,13 @@
-# Daily Builds
+# 每日构建
 
-Daily Builds of _QGroundControl_ have the absolute latest set of [new features](../releases/daily_build_new_features.md).
+每日生成的 _QGroundControl_ 有绝对最新的 [新功能](../releases/daily_build_new_features.md)。
 
 :::warning
-Daily Builds are less tested than stable builds.
-Use at your own risk!
+每日构建版本的测试力度比稳定版本小。
+请自行承担使用风险！
 :::
 
-These can be downloaded from the links below (install as described in [Download and Install](../getting_started/download_and_install.md)):
+这些可从以下链接下载（按照 [下载与安装](../getting_started/download_and_install.md) 中所述进行安装）：
 
 - [Windows](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl-installer.exe)
 - [OS X](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl.dmg)
