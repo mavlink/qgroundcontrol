@@ -27,9 +27,6 @@ Item {
     property bool interactive: true
 
     property var    _missionItem:       object
-    property var    _itemVisual
-    property var    _loiterVisual
-    property var    _dragArea
     property bool   _itemVisualShowing: false
     property bool   _dragAreaShowing:   false
 
@@ -37,32 +34,30 @@ Item {
 
     function hideItemVisuals() {
         if (_itemVisualShowing) {
-            _itemVisual.destroy()
-            _loiterVisual.destroy()
+            itemVisualLoader.active = false
+            loiterVisualLoader.active = false
             _itemVisualShowing = false
         }
     }
 
     function showItemVisuals() {
         if (!_itemVisualShowing) {
-            _itemVisual = indicatorComponent.createObject(map)
-            map.addMapItem(_itemVisual)
-            _loiterVisual = loiterComponent.createObject(map)
-            map.addMapItem(_loiterVisual)
+            itemVisualLoader.active = true
+            loiterVisualLoader.active = true
             _itemVisualShowing = true
         }
     }
 
     function hideDragArea() {
         if (_dragAreaShowing) {
-            _dragArea.destroy()
+            dragAreaLoader.active = false
             _dragAreaShowing = false
         }
     }
 
     function showDragArea() {
         if (!_dragAreaShowing) {
-            _dragArea = dragAreaComponent.createObject(map)
+            dragAreaLoader.active = true
             _dragAreaShowing = true
         }
     }
@@ -80,12 +75,6 @@ Item {
         updateDragArea()
     }
 
-    Component.onDestruction: {
-        hideDragArea()
-        hideItemVisuals()
-    }
-
-
     Connections {
         target: _missionItem
 
@@ -97,11 +86,62 @@ Item {
         target: _missionItem.isSimpleItem ? _missionItem : null
 
         onLoiterRadiusChanged: {
-            _loiterVisual.handleLoiterRadiusChange()
+            if (loiterVisualLoader.item) {
+                loiterVisualLoader.item.handleLoiterRadiusChange()
+            }
         }
 
         onCoordinateChanged: {
-            _loiterVisual.handleCoordinateChange()
+            if (loiterVisualLoader.item) {
+                loiterVisualLoader.item.handleCoordinateChange()
+            }
+        }
+    }
+
+    Loader {
+        id: dragAreaLoader
+
+        asynchronous: true
+        active: false
+
+        sourceComponent: dragAreaComponent
+
+        onLoaded: {
+            if (item) {
+                item.parent = map
+            }
+        }
+    }
+
+    Loader {
+        id: itemVisualLoader
+
+        asynchronous: true
+        active: false
+
+        sourceComponent: indicatorComponent
+
+        onLoaded: {
+            if (item) {
+                item.parent = map
+                map.addMapItem(item)
+            }
+        }
+    }
+
+    Loader {
+        id: loiterVisualLoader
+
+        asynchronous: true
+        active: false
+
+        sourceComponent: loiterComponent
+
+        onLoaded: {
+            if (item) {
+                item.parent = map
+                map.addMapItem(item)
+            }
         }
     }
 
@@ -111,7 +151,7 @@ Item {
 
         MissionItemIndicatorDrag {
             mapControl:              _root.map
-            itemIndicator:           _itemVisual
+            itemIndicator:           itemVisualLoader.item
             itemCoordinate:          _missionItem.coordinate
             visible:                 _root.interactive
             onItemCoordinateChanged: _missionItem.coordinate = itemCoordinate
