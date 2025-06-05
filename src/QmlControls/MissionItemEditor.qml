@@ -313,6 +313,7 @@ Rectangle {
         anchors.left:       parent.left
         anchors.top:        topRowLayout.bottom
         source:             _currentItem ? missionItem.editorQml : ""
+        asynchronous:       true
 
         property var    masterController:   _masterController
         property real   availableWidth:     _root.width - (anchors.margins * 2) ///< How wide the editor should be
