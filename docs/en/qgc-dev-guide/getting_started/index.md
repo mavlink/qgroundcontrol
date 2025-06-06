@@ -127,7 +127,7 @@ To install Qt:
    These features can be forcibly enabled/disabled by specifying additional values to qmake.
    :::
 
-   - **Video Streaming/Gstreamer:** - see [Video Streaming](https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoReceiver/README.md).
+   - **Video Streaming/Gstreamer:** - see [Video Streaming](https://github.com/mavlink/qgroundcontrol/blob/Stable_V4.4/src/VideoReceiver/README.md).
    - **Airmap SDK:** - TBD.
 
 1. Disable platform-specific optional features that are enabled (but not installed), by default.
