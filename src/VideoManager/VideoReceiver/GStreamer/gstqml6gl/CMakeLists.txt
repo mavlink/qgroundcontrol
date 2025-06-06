@@ -111,7 +111,7 @@ if(EXISTS "${QGC_GST_QT6_PLUGIN_PATH}/resources.qrc")
         LIST(APPEND OUTPUTS "YUV_BIPLANAR.frag.qsb")
     endif()
 
-    qt6_add_shaders(gstqml6gl "gstqml6gl_shaders"
+    qt_add_shaders(gstqml6gl "gstqml6gl_shaders"
         PREFIX "/org/freedesktop/gstreamer/qml6"
         GLSL "100 es,120,330"
         OUTPUT_TARGETS gstqml6gl_shaders
@@ -120,16 +120,52 @@ if(EXISTS "${QGC_GST_QT6_PLUGIN_PATH}/resources.qrc")
         BATCHABLE
     )
 
-    # if(EXISTS "${QGC_GST_QT6_PLUGIN_PATH}/RGBA_gles.frag")
-    #     set(RGBA_SHADER_EXTERNAL "${CMAKE_CURRENT_BINARY_DIR}/.qsb/_RGBA.frag.qsb")
-    #     file(COPY_FILE "${CMAKE_CURRENT_BINARY_DIR}/.qsb/RGBA.frag.qsb" "${RGBA_SHADER_EXTERNAL}")
-    #     qt6_add_shaders(gstqml6gl "gstqml6gl_shaders1"
-    #         PREFIX "/org/freedesktop/gstreamer/qml6"
-    #         OUTPUT_TARGETS gstqml6gl_shaders1
-    #         FILES "${RGBA_SHADER_EXTERNAL}@glsl,100es,${QGC_GST_QT6_PLUGIN_PATH}/RGBA_gles.frag"
-    #         OUTPUTS "RGBA.frag.qsb.external"
-    #     )
-    # endif()
+    if(EXISTS "${QGC_GST_QT6_PLUGIN_PATH}/RGBA_gles.frag")
+        find_program(QSB_PROGRAM
+            NAMES qsb
+            HINTS ${QT_HOST_PATH} ${QT_ROOT_DIR} ${QTDIR}
+            ENV QTDIR
+            PATH_SUFFIXES bin
+            REQUIRED
+        )
+
+        find_program(QSB_WRAPPER
+            NAMES qsb-wrapper.py
+            PATHS "${QGC_GST_QT6_PLUGIN_PATH}"
+            REQUIRED
+        )
+
+        set(RGBA_BASE_QSB "${CMAKE_CURRENT_BINARY_DIR}/.qsb/RGBA.frag.qsb")
+        set(RGBA_GLES_SRC "${QGC_GST_QT6_PLUGIN_PATH}/RGBA_gles.frag")
+        set(RGBA_EXTERNAL "${CMAKE_CURRENT_BINARY_DIR}/.qsb/RGBA.frag.qsb.external")
+
+        add_custom_command(
+            OUTPUT ${RGBA_EXTERNAL}
+            COMMAND ${QSB_WRAPPER}
+                ${QSB_PROGRAM}
+                ${RGBA_EXTERNAL}
+                ${RGBA_GLES_SRC}
+                ${RGBA_BASE_QSB}
+            DEPENDS
+                ${RGBA_BASE_QSB}
+                ${RGBA_GLES_SRC}
+            COMMENT "Generating external GLES shader: ${RGBA_EXTERNAL}"
+            VERBATIM
+        )
+
+        add_custom_target(gstqml6gl_shaders_external ALL
+            DEPENDS ${RGBA_EXTERNAL}
+            COMMENT "Building external shader bundle for RGBA.frag"
+        )
+
+        set_source_files_properties(${RGBA_EXTERNAL} PROPERTIES QT_RESOURCE_ALIAS RGBA.frag.qsb.external)
+        qt_add_resources(${CMAKE_PROJECT_NAME} "gstqml6gl_shaders1"
+            PREFIX "/org/freedesktop/gstreamer/qml6"
+            FILES "${RGBA_EXTERNAL}"
+        )
+
+        add_dependencies(gstqml6gl gstqml6gl_shaders_external)
+    endif()
 endif()
 
 ################################################################################
