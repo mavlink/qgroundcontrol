@@ -102,25 +102,30 @@ jobs:
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run: cmake --build . --target all --config ${{ matrix.BuildType }}
 
+      - name: Sanity check release executable
+        if: matrix.BuildType == 'Release'
+        working-directory: ${{ runner.temp }}/shadow_build_dir
+        run: xvfb-run -a ./QGroundControl --simple-boot-test
+
+      - name: Run unit tests
+        if: matrix.BuildType == 'Debug'
+        working-directory: ${{ runner.temp }}/shadow_build_dir/${{ matrix.BuildType }}
+        run: xvfb-run -a ./bin/QGroundControl --unittest
+
       - name: Create AppImage
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run: cmake --install . --config ${{ matrix.BuildType }}
 
-      - name: Sanity check release excecutable
+      - name: Sanity check AppImage
         if: matrix.BuildType == 'Release'
-        working-directory: ${{ runner.temp }}/shadow_build_dir
-        run: xvfb-run -a ./${{ env.ARTIFACT }} --simple-boot-test
-
-      - name: Run unit tests
-        if: matrix.BuildType == 'Debug'
-        working-directory: ${{ runner.temp }}/shadow_build_dir
-        run: xvfb-run -a ./${{ env.ARTIFACT }} --unittest
+        working-directory: ${{ runner.temp }}/shadow_build_dir/staging/${{ matrix.BuildType }}
+        run: ./QGroundControl-*.AppImage --simple-boot-test
 
       - name: Upload Build File
         if: matrix.BuildType == 'Release'
         uses: ./.github/actions/upload
         with:
-          artifact_name: ${{ env.ARTIFACT }}
+          artifact_name: staging/${{ matrix.BuildType }}/${{ env.ARTIFACT }}
           package_name: ${{ env.PACKAGE }}
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
