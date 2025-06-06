@@ -37,6 +37,7 @@ target_sources(${CMAKE_PROJECT_NAME}
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 qt_add_library(AutoPilotPluginsPX4Module STATIC)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AutoPilotPluginsPX4Module)
 
 qt_add_qml_module(AutoPilotPluginsPX4Module
     URI QGroundControl.AutoPilotPlugins.PX4

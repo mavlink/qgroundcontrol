@@ -1,4 +1,5 @@
 qt_add_library(ToolbarModule STATIC)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ToolbarModule)
 
 qt_add_qml_module(ToolbarModule
     URI QGroundControl.Toolbar

@@ -60,7 +60,7 @@ target_sources(${CMAKE_PROJECT_NAME}
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 qt_add_library(QGroundControlControlsModule STATIC)
-
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGroundControlControlsModule)
 
 qt_add_qml_module(QGroundControlControlsModule
     URI QGroundControl.Controls
@@ -232,6 +232,7 @@ qt_add_qml_module(QGroundControlControlsModule
 )
 
 qt_add_library(ScreenToolsModule STATIC)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ScreenToolsModule)
 
 set_source_files_properties(ScreenTools.qml PROPERTIES
     QT_QML_SINGLETON_TYPE TRUE

@@ -1,4 +1,5 @@
 qt_add_library(FlightDisplayModule STATIC)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE FlightDisplayModule)
 
 qt_add_qml_module(FlightDisplayModule
     URI QGroundControl.FlightDisplay

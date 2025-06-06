@@ -1,4 +1,5 @@
 qt_add_library(FlightMapModule STATIC)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE FlightMapModule)
 
 qt_add_qml_module(FlightMapModule
     URI QGroundControl.FlightMap

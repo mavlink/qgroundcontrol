@@ -1,4 +1,5 @@
 qt_add_library(AppSettingsModule STATIC)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AppSettingsModule)
 
 qt_add_qml_module(AppSettingsModule
     URI QGroundControl.AppSettings
