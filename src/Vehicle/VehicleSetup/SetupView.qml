@@ -25,8 +25,6 @@ Rectangle {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
-    ButtonGroup { id: setupButtonGroup }
-
     readonly property real      _defaultTextHeight: ScreenTools.defaultFontPixelHeight
     readonly property real      _defaultTextWidth:  ScreenTools.defaultFontPixelWidth
     readonly property real      _horizontalMargin:  _defaultTextWidth / 2
@@ -109,7 +107,7 @@ Rectangle {
     Connections {
         target: QGroundControl.multiVehicleManager
         onParameterReadyVehicleAvailableChanged: {
-            if (QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable || summaryButton.checked || setupButtonGroup.current != firmwareButton) {
+            if (QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable || summaryButton.checked || !firmwareButton.checked) {
                 // Show/Reload the Summary panel when:
                 //      A new vehicle shows up
                 //      The summary panel is already showing and the active vehicle goes away
