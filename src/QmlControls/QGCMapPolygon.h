@@ -29,6 +29,8 @@ public:
     QGCMapPolygon(QObject* parent = nullptr);
     QGCMapPolygon(const QGCMapPolygon& other, QObject* parent = nullptr);
 
+    ~QGCMapPolygon() override;
+
     const QGCMapPolygon& operator=(const QGCMapPolygon& other);
 
     Q_PROPERTY(int                  count           READ count                                  NOTIFY countChanged)

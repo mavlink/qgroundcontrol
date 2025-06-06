@@ -23,6 +23,8 @@ public:
     QGCMapPolyline(QObject* parent = nullptr);
     QGCMapPolyline(const QGCMapPolyline& other, QObject* parent = nullptr);
 
+    ~QGCMapPolyline() override;
+
     const QGCMapPolyline& operator=(const QGCMapPolyline& other);
 
     Q_PROPERTY(int                  count       READ count                                  NOTIFY countChanged)

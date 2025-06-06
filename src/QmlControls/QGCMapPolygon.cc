@@ -16,6 +16,7 @@
 #include "KMLDomDocument.h"
 
 #include <QtCore/QLineF>
+#include <QMetaMethod>
 
 QGCMapPolygon::QGCMapPolygon(QObject* parent)
     : QObject               (parent)
@@ -41,6 +42,11 @@ QGCMapPolygon::QGCMapPolygon(const QGCMapPolygon& other, QObject* parent)
     _init();
 }
 
+QGCMapPolygon::~QGCMapPolygon()
+{
+    qgcApp()->removeCompressedSignal(QMetaMethod::fromSignal(&QGCMapPolygon::pathChanged));
+}
+
 void QGCMapPolygon::_init(void)
 {
     connect(&_polygonModel, &QmlObjectListModel::dirtyChanged, this, &QGCMapPolygon::_polygonModelDirtyChanged);
@@ -49,6 +55,8 @@ void QGCMapPolygon::_init(void)
     connect(this, &QGCMapPolygon::pathChanged,  this, &QGCMapPolygon::_updateCenter);
     connect(this, &QGCMapPolygon::countChanged, this, &QGCMapPolygon::isValidChanged);
     connect(this, &QGCMapPolygon::countChanged, this, &QGCMapPolygon::isEmptyChanged);
+
+    qgcApp()->addCompressedSignal(QMetaMethod::fromSignal(&QGCMapPolygon::pathChanged));
 }
 
 const QGCMapPolygon& QGCMapPolygon::operator=(const QGCMapPolygon& other)
