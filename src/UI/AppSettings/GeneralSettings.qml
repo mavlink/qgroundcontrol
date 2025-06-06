@@ -30,6 +30,8 @@ SettingsPage {
     property Fact   _userBrandImageOutdoor:     _brandImageSettings.userBrandImageOutdoor
     property Fact   _appSavePath:               _appSettings.savePath
 
+    Component.onCompleted: console.log("GeneralSettings.qml: Component.onCompleted", width, height)
+
     SettingsGroupLayout {
         Layout.fillWidth:   true
         heading:            qsTr("General")
