@@ -1,4 +1,4 @@
-﻿{
+{
     "comment":  "AutoConnect usb board info",
     "version":  1,
     "fileType": "USBBoardInfo",
@@ -56,6 +56,7 @@
 
         { "vendorID": 1027, "productID": 24597,     "boardClass": "SiK Radio",  "name": "SiK Radio",            "comment": "3DR Radio" },
         { "vendorID": 4292, "productID": 60000,     "boardClass": "SiK Radio",  "name": "SiK Radio",            "comment": "SILabs Radio" },
+        { "vendorID": 12346, "productID": 4097,     "boardClass": "SiK Radio",  "name": "DroneBridge Radio",    "comment": "ESP32-based telemetry radio" },
 
         { "vendorID": 5446, "productID": 424,       "boardClass": "RTK GPS",    "name": "U-blox RTK GPS",       "comment": "U-blox RTK GPS (M8P)" },
         { "vendorID": 5446, "productID": 425,       "boardClass": "RTK GPS",    "name": "U-blox RTK GPS",       "comment": "U-blox RTK GPS (F9P)" },
