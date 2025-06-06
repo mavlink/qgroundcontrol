@@ -1417,14 +1417,15 @@ bool FactMetaData::_parseEnum(const QJsonObject &jsonObject, const DefineMap_t &
 
     const QString jsonStrings = jsonObject.value(_enumStringsJsonKey).toString();
     const QString defineMapStrings = defineMap.value(jsonStrings, jsonStrings);
-    rgDescriptions = defineMapStrings.split(",", Qt::SkipEmptyParts);
+    const QRegularExpression splitRegex("[,，、]"); // Note chinese commas for translations which have modified the english comma
+    rgDescriptions = defineMapStrings.split(splitRegex, Qt::SkipEmptyParts);
     for (QString &desc: rgDescriptions) {
         desc = desc.trimmed();
     }
 
     const QString jsonValues = jsonObject.value(_enumValuesJsonKey).toString();
     const QString defineMapValues = defineMap.value(jsonValues, jsonValues);
-    rgValues = defineMapValues.split(",", Qt::SkipEmptyParts);
+    rgValues = defineMapValues.split(splitRegex, Qt::SkipEmptyParts);
     for (QString &value: rgValues) {
         value = value.trimmed();
     }
