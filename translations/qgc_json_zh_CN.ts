@@ -4921,7 +4921,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].param1.enumStrings, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>Enable,Disable</source>
-      <translation>启用/禁用</translation>
+      <translation>启用,禁用</translation>
     </message>
   </context>
 </TS>
