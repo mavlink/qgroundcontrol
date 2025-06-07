@@ -128,6 +128,7 @@ private:
 
     QVariantList        _polylinePath;
     QmlObjectListModel  _polylineModel;
+    bool                _deferredPathChanged = false;
     bool                _dirty;
     bool                _interactive;
     bool                _resetActive;
