@@ -115,6 +115,10 @@ public:
     static const QString defaultCategory() { return QString(kDefaultCategory); }
     static const QString defaultGroup() { return QString(kDefaultGroup); }
 
+    // Splits a comma separated list of strings into a QStringList. Taking into account the possibility that
+    // the commas may have been translated to other characters such as chinese commas.
+    static QStringList splitTranslatedList(const QString &translatedList);
+
     int decimalPlaces() const;
     QVariant rawDefaultValue() const;
     QVariant cookedDefaultValue() const { return _rawTranslator(rawDefaultValue()); }
@@ -250,7 +254,7 @@ private:
     bool isInRawMinLimit(const QVariant &variantValue) const;
     bool isInRawMaxLimit(const QVariant &variantValue) const;
 
-    static bool _parseEnum(const QJsonObject &jsonObject, const DefineMap_t &defineMap, QStringList &rgDescriptions, QStringList &rgValues, QString &errorString);
+    static bool _parseEnum(const QString& name, const QJsonObject &jsonObject, const DefineMap_t &defineMap, QStringList &rgDescriptions, QStringList &rgValues, QString &errorString);
     static bool _parseValuesArray(const QJsonObject &jsonObject, QStringList &rgDescriptions, QList<double> &rgValues, QString &errorString);
     static bool _parseBitmaskArray(const QJsonObject &jsonObject, QStringList &rgDescriptions, QList<int> &rgValues, QString &errorString);
 
