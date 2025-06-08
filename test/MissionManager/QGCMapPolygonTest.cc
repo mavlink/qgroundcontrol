@@ -52,8 +52,11 @@ void QGCMapPolygonTest::cleanup(void)
 {
     UnitTest::cleanup();
     delete _mapPolygon;
+    _mapPolygon = nullptr;
     delete _multiSpyPolygon;
+    _multiSpyPolygon = nullptr;
     delete _multiSpyModel;
+    _multiSpyModel = nullptr;
 }
 
 void QGCMapPolygonTest::_testDirty(void)

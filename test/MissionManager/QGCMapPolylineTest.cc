@@ -38,6 +38,18 @@ void QGCMapPolylineTest::init()
     _modelDirtyChangedMask = _multiSpyModel->signalNameToMask("dirtyChanged");
 }
 
+void QGCMapPolylineTest::cleanup()
+{
+    UnitTest::cleanup();
+
+    delete _multiSpyModel;
+    _multiSpyModel = nullptr;
+    delete _multiSpyPolyline;
+    _multiSpyPolyline = nullptr;
+    delete _mapPolyline;
+    _mapPolyline = nullptr;
+}
+
 void QGCMapPolylineTest::_testDirty()
 {
     // Check basic dirty bit set/get
