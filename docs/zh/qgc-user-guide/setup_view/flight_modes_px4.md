@@ -6,7 +6,8 @@ The _Flight Modes_ section allows you to configure which [flight modes](http://d
 In order to set up flight modes you must already have
 
 - In order to set up flight modes you must already have - [Configured your radio](../setup_view/radio.md) in order to set flight modes.
-- - [Setup the RC transmitter](../setup_view/FlightModes.md#transmitter-setup) (Flight Modes > Transmitter Setup)
+- [设置遥控发射器](../setup_view/FlightModes.md#transmitter-setup)（飞行模式>发射器设置）
+  :::
 
 To access this section, select the **Gear** icon (Vehicle Setup) in the top toolbar and then **Flight Modes** in the sidebar.
 
@@ -31,7 +32,7 @@ The steps are:
   - Select up to six **Flight Modes** for switch positions encoded in the channel.
 
     ::: info
-    Position mode, return mode and mission mode [are recommended](https://docs.px4.io/master/en/config/flight_mode.html#what-flight-modes-and-switches-should-i-set).
+    位置模式、返航模式和任务模式[是推荐使用的](https://docs.px4.io/master/en/config/flight_mode.html#what-flight-modes-and-switches-should-i-set)。
     :::
 
 4. Specify _Switch Settings_:

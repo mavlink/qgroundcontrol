@@ -74,7 +74,7 @@
     - Survey and Corridor Scan can generate flight plans which follow terrain.
 
       ::: info
-      This feature does not support [ArduPilot terrain following](http://ardupilot.org/copter/docs/common-terrain-following.html).
+      此功能不支持[ArduPilot地形跟随](http://ardupilot.org/copter/docs/common-terrain-following.html)。
       :::
 
   - **Edit Position** Set item position from vehicle position.

@@ -38,7 +38,7 @@ _QGroundControl_ 可以安装在 macOS 12 (Montreey) 上或以后：
 1. Download [QGroundControl.dmg](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl.dmg).
 2. 双击 .dmg 文件以挂载它，然后将 _QGroundControl_ 应用程序拖动到您的 _Application_ 文件夹。
 
-::: 信息
+::: info
 QGroundControl 仍然没有签名。 根据你的 macOS 版本，你将无法对其安装给予许可。
 根据你的 macOS 版本，你将无法对其安装给予许可。
 
@@ -65,11 +65,11 @@ Ubuntu 自带一个串口调制解调器管理器，它会干扰串口（或 USB
 
 &nbsp; 若要安装 _QGroundControl_：
 
-1. 下载 [QGroundControl.AppImage](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl.AppImage)。
+1. Download [QGroundControl-x86_64.AppImage](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl-x86_64.AppImage).
 2. 使用终端命令安装(并运行)：
    ```sh
-   chmod +x ./QGroundControl.AppImage
-   ./QGroundControl.AppImage  (或双击)
+   chmod +x ./QGroundControl-x86_64.AppImage
+   ./QGroundControl-x86_64.AppImage  (or double click)
    ```
 
 ## Android {#android}

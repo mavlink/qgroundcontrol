@@ -51,7 +51,7 @@ _QGroundControl_ 使用 [Qt](http://www.qt.io)作为其跨平台支持库。
 
 所需的 Qt 版本为 {{ $frontmatter.qt_version }} **(必须无误)**。
 
-:::warning
+::: warning
 **请勿使用任何其他版本的 Qt！**
 QGC 已通过指定 Qt 版本（{{ $frontmatter.qt_version }}）的全面测试。
 其它的 Qt 版本很可能会注入影响稳定和安全的 bug (即使QGC 编译通过)。
@@ -96,7 +96,7 @@ QGC 已通过指定 Qt 版本（{{ $frontmatter.qt_version }}）的全面测试�
 
 2. 安装可选/特定操作功能
 
-  ::: 信息
+  ::: info
   依赖操作系统和用户安装的库的可选功能在下面链接/描述。
   这些功能可以被强制启用/禁用，为qmake指定额外的值。
   :::
