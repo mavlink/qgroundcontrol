@@ -1,4 +1,4 @@
-# Download and Install
+# Download and Install Huitzlin 
 
 The sections below can be used to download the [current stable release](../releases/release_notes.md) of _QGroundControl_ for each platform.
 
