@@ -65,13 +65,11 @@ _QGroundControl_을 처음 설치하기 전에:
 
 &nbsp; _QGroundControl_을 설치하려면:
 
-1. [QGroundControl.AppImage](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl.AppImage)를 다운로드합니다.
+1. Download [QGroundControl-x86_64.AppImage](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl-x86_64.AppImage).
 2. Install (and run) using the terminal commands:
    ```sh
-   터미널 명령을 사용하여 설치:
-      sh
-      chmod +x ./QGroundControl.AppImage
-      ./QGroundControl.AppImage (or double click)
+   chmod +x ./QGroundControl-x86_64.AppImage
+   ./QGroundControl-x86_64.AppImage  (or double click)
    ```
 
 ## 안드로이드 {#android}

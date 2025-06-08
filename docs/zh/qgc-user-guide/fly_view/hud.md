@@ -142,107 +142,107 @@ GPS指示器在工具栏图标中显示卫星计数和HDOP。 下拉菜单显示
 
 ![飞行前检查清单](../../../assets/fly/pre_flight_checklist.jpg)
 
-Once you have performed each test, select it on the UI to mark it as complete.
+完成每项测试后，在用户界面上选择该项测试，将其标记为已完成。
 
-### Takeoff {#takeoff}
+### 起飞{#takeoff}
 
 :::tip
-If you are starting a mission for a multicopter, _QGroundControl_ will automatically perform the takeoff step.
+如果你正在为多功能飞行器启动任务，_QGroundControl_ 将自动执行起飞步骤。
 :::
 
-To takeoff (when landed):
+起飞(降落时)：
 
-1. Press the **Takeoff** button in the _Fly Tools_ (this will toggle to a **Land** button after taking off).
-2. Optionally set the takeoff altitude in the right-side vertical slider.
+1. 按 _飞行工具_ 中的 **起飞** 按钮(这将在起飞后切换到 **着陆** 按钮)。
+2. 可选设置右侧垂直滑块的起飞海拔。
 
-- You can slide up/down to change the altitude
-- You can also click on the specified altitude (10 ft in example) and then type in a specific altitude.
+- 您可以向上/向下滑动以更改高度
+- 您也可以点击指定的高度(例如10英尺)，然后输入特定的海拔。
 
-1. Confirm takeoff using the slider.
+1. 使用滑块确认起飞。
 
-![takeoff](../../../assets/fly/takeoff.png)
+![起飞](../../../assets/fly/takeoff.png)
 
-### Land {#land}
+### 着陆 {#land}
 
-You can land at the current position at any time while flying:
+你可以在飞行时随时降落在当前位置：
 
-1. Press the **Land** button in the _Fly Tools_ (this will toggle to a **Takeoff** button when landed).
-2. Confirm landing using the slider.
+1. 按下 _飞行工具_ 中的 **着陆** 按钮(当降落将切换到 **起飞** 按钮)。
+2. 使用滑块确认降落。
 
-### RTL/Return
+### 返航/返回
 
-Return to a "safe point" at any time while flying:
+飞行时返回“安全点”：
 
-1. Press the **RTL** button in the _Fly Tools_.
-2. Confirm RTL using the slider.
+1. 按 _飞行工具_ 中的 **返航** 按钮。
+2. 使用滑块确认返航。
 
 :::info
 飞行器通常返回 “Home点”（起飞）位置并着陆。
 这种行为取决于载具类型和配置。
-For example, rally points or mission landings may be used as alternative return targets.
+例如，集结点或飞行任务着陆可能被用作替代返回目标。
 :::
 
-### Change Altitude {#change_altitude}
+### 更改高度 {#change_altitude}
 
-You can change altitude while flying, except when in a mission:
+飞行过程中你可以改变高度，但执行任务时除外：
 
-1. Press the **Actions** button on the _Fly Tools_
-2. Select the _Change Altitude_ button
-3. Select the new altitude from the vertical slider
-4. Confirm the action
+1. 按 _飞行工具_ 上的 **操作** 按钮
+2. 选择 _改变高度_ 按钮
+3. 从垂直滑块选择新高度
+4. 确认操作
 
-## Instrument Panel (Telemetry) {#instrument_panel}
+## 仪器面板(电子版) {#instrument_panel}
 
 仪器面板显示关于当前载具的遥测信息。
 
-![Instrument Panel - for values/telemetry](../../../assets/fly/instrument_panel/instrument_panel_default_values.png)
+![仪表板 - 用于数值 / 遥测数据](../../../assets/fly/instrument_panel/instrument_panel_default_values.png)
 
 默认值包括高度(相对于Home点位置)、横向和纵向速度、飞行总时间和载具与地面站之间的距离。
 
-You can configure where the information is displayed by:
+你可以通过以下方式配置信息显示位置：
 
-- Tablets: Press and hold over control
-- Desktop: Right click control
-- Click to Lock icon to close and save changes
+- 平板电脑：按住控件
+- 桌面：右键点击控制
+- 点击锁定图标以关闭并保存更改
 
-![Instrument Panel - edit tools](../../../assets/fly/instrument_panel/instrument_panel_tools_edit.png)
+![仪表板 - 编辑工具](../../../assets/fly/instrument_panel/instrument_panel_tools_edit.png)
 
-You configure what information is display by selecting the edit/pencil icon.
-The grid will then display "+" and "-" icons that you can use to add or remove rows and columns (and the pencil icon is replaced by a "lock" icon that you can use to save the settings).
+您通过选择编辑/铅笔图标来配置显示的信息。
+然后，网格将显示您可以用来添加或移除行和列的"+"和"-"图标(而且铅笔图标被您可以用来保存设置的“锁”图标所取代)。
 
-Select a value to launch its "Value Display" editor.
-This allows you to change the icon, text, size, units and so on of the current telemetry value.
+选择一个值来启动其"值显示"编辑器。
+这允许您更改当前遥测值的图标、文本、大小、单位等。
 
-![Instrument Panel - edit a value](../../../assets/fly/instrument_panel/instrument_panel_tools_edit_value.png)
+![仪表板-编辑一个值](../../../assets/fly/instrument_panel/instrument_panel_tools_edit_value.png)
 
-The selection list on the top left is used to change the source of the telemetry.
+左上方的选择列表用于更改遥测源源。
 默认情况下是载具，但你可以使用选择器选择特定的传感器类型。
 
-![Instrument Panel - value type](../../../assets/fly/instrument_panel/instrument_panel_edit_value_type.png)
+![仪表板-值类型](../../../assets/fly/instrument_panel/instrument_panel_edit_value_type.png)
 
 右上方的选择列表用于为载具或传感器选择一个特定的遥测值。
 
-![Instrument Panel - value options](../../../assets/fly/instrument_panel/instrument_panel_edit_value_options.png)
+![仪表板 - 值选项](../../../assets/fly/instrument_panel/instrument_panel_edit_value_options.png)
 
-## Attitude /Compass {#hud}
+## 态度/指南针 {#hud}
 
-You can select from multiple types of instruments by:
+您可以从多种类型的工具中选择：
 
-- Tablets: Press and hold over control
-- Desktop: Right click over control
-- Click the Lock icon to close and save changes
+- 平板电脑：按住控件
+- 桌面：右键点击控制
+- 点击锁定图标以关闭并保存更改
 
-![Instrument Panel - hover for move/edit tools](../../../assets/fly/hud_select_variant.png)
+![仪表板-悬停移动/编辑工具](../../../assets/fly/hud_select_variant.png)
 
-### Camera {#camera_instrument_page}
+### 相机{#camera_instrument_page}
 
-The camera panel is used to capture still images and video, and to configure the camera.
+相机面板用于拍摄仍然存在的图像和视频，并配置相机。
 
-![Camera Panel](../../../assets/fly/camera_panel/camera_mavlink.png)
+![相机面板](../../../assets/fly/camera_panel/camera_mavlink.png)
 
-The camera capture and configuration options depend on the connected camera.
-The configuration options are selected using the panel gear icon.
-The configuration for a simple autopilot-connected camera are shown below.
+相机捕获和配置选项取决于已连接的相机。
+配置选项是使用面板装备图标选择的。
+一个简单的自动化摄像头的配置显示在下面。
 
 ![Camera Panel - minimal settings](../../../assets/fly/camera_panel/camera_settings_minimal.png)
 

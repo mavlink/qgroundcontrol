@@ -15,7 +15,7 @@ Performing an AutoTune:
 - Select which axes you would like to tune.
 
   ::: tip
-  Tuning all axes at once can take a significant amount of time, which may cause you to run out of battery.
+  一次性调整所有轴可能会花费大量时间，这可能导致您的电池耗尽。
   To prevent this choose to tune only one axis at a time.
   :::
 
