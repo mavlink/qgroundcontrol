@@ -124,13 +124,12 @@ private:
     QGeoCoordinate  _coordFromPointF        (const QPointF& point) const;
     QPointF         _pointFFromCoord        (const QGeoCoordinate& coordinate) const;
     void            _beginResetIfNotActive  (void);
-    void            _endResetIfNotActive    (void);
+    void            _endResetIfActive       (void);
 
     QVariantList        _polylinePath;
     QmlObjectListModel  _polylineModel;
     bool                _dirty;
     bool                _interactive;
-    bool                _resetActive;
     bool                _traceMode = false;
     int                 _selectedVertexIndex = -1;
 };

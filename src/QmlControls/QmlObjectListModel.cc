@@ -20,9 +20,13 @@ QmlObjectListModel::QmlObjectListModel(QObject* parent)
     : QAbstractListModel        (parent)
     , _dirty                    (false)
     , _skipDirtyFirstItem       (false)
-    , _externalBeginResetModel  (false)
 {
-
+    connect(this, &QmlObjectListModel::modelAboutToBeReset, this, [this]() {
+        _resetActive = true;
+    });
+    connect(this, &QmlObjectListModel::modelReset, this, [this]() {
+        _resetActive = false;
+    });
 }
 
 QmlObjectListModel::~QmlObjectListModel()

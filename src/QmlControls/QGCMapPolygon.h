@@ -155,7 +155,7 @@ private:
     QGeoCoordinate  _coordFromPointF        (const QPointF& point) const;
     QPointF         _pointFFromCoord        (const QGeoCoordinate& coordinate) const;
     void            _beginResetIfNotActive  (void);
-    void            _endResetIfNotActive    (void);
+    void            _endResetIfActive       (void);
 
     QVariantList        _polygonPath;
     QmlObjectListModel  _polygonModel;
@@ -164,7 +164,6 @@ private:
     bool                _centerDrag =           false;
     bool                _ignoreCenterUpdates =  false;
     bool                _interactive =          false;
-    bool                _resetActive =          false;
     bool                _traceMode =            false;
     bool                _showAltColor =         false;
     int                 _selectedVertexIndex =  -1;

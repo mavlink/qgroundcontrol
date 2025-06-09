@@ -21,7 +21,6 @@ QGCMapPolyline::QGCMapPolyline(QObject* parent)
     : QObject               (parent)
     , _dirty                (false)
     , _interactive          (false)
-    , _resetActive          (false)
 {
     _init();
 }
@@ -30,7 +29,6 @@ QGCMapPolyline::QGCMapPolyline(const QGCMapPolyline& other, QObject* parent)
     : QObject               (parent)
     , _dirty                (false)
     , _interactive          (false)
-    , _resetActive          (false)
 {
     *this = other;
 
@@ -128,7 +126,7 @@ void QGCMapPolyline::setPath(const QList<QGeoCoordinate>& path)
 
     setDirty(true);
 
-    _endResetIfNotActive();
+    _endResetIfActive();
 }
 
 void QGCMapPolyline::setPath(const QVariantList& path)
@@ -142,7 +140,7 @@ void QGCMapPolyline::setPath(const QVariantList& path)
     }
     setDirty(true);
 
-    _endResetIfNotActive();
+    _endResetIfActive();
 }
 
 
@@ -399,34 +397,32 @@ void QGCMapPolyline::appendVertices(const QList<QGeoCoordinate>& coordinates)
     }
     _polylineModel.append(objects);
 
-    _endResetIfNotActive();
+    _endResetIfActive();
 
     emit pathChanged();
 }
 
 void QGCMapPolyline::beginReset(void)
 {
-    _resetActive = true;
     _polylineModel.beginReset();
 }
 
 void QGCMapPolyline::endReset(void)
 {
-    _resetActive = false;
     _polylineModel.endReset();
     emit pathChanged();
 }
 
 void QGCMapPolyline::_beginResetIfNotActive(void)
 {
-    if (!_resetActive) {
+    if (!_polylineModel.externalResetActive()) {
         beginReset();
     }
 }
 
-void QGCMapPolyline::_endResetIfNotActive(void)
+void QGCMapPolyline::_endResetIfActive(void)
 {
-    if (!_resetActive) {
+    if (_polylineModel.externalResetActive()) {
         endReset();
     }
 }

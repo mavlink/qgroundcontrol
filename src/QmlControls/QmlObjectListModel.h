@@ -62,6 +62,8 @@ public:
 
     void beginReset                 ();
     void endReset                   ();
+    bool externalResetActive() const { return _externalBeginResetModel; }
+    bool resetActive() const { return _resetActive; }
 
 signals:
     void countChanged               (int count);
@@ -84,7 +86,8 @@ private:
     
     bool _dirty;
     bool _skipDirtyFirstItem;
-    bool _externalBeginResetModel;
+    bool _externalBeginResetModel = false;
+    bool _resetActive = false;
         
     static constexpr int ObjectRole = Qt::UserRole;
     static constexpr int TextRole = Qt::UserRole + 1;

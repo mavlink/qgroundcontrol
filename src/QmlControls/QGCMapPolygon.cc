@@ -23,7 +23,6 @@ QGCMapPolygon::QGCMapPolygon(QObject* parent)
     , _centerDrag           (false)
     , _ignoreCenterUpdates  (false)
     , _interactive          (false)
-    , _resetActive          (false)
 {
     _init();
 }
@@ -34,7 +33,6 @@ QGCMapPolygon::QGCMapPolygon(const QGCMapPolygon& other, QObject* parent)
     , _centerDrag           (false)
     , _ignoreCenterUpdates  (false)
     , _interactive          (false)
-    , _resetActive          (false)
 {
     *this = other;
 
@@ -273,7 +271,7 @@ void QGCMapPolygon::appendVertices(const QList<QGeoCoordinate>& coordinates)
         _polygonPath.append(QVariant::fromValue(coordinate));
     }
     _polygonModel.append(objects);
-    _endResetIfNotActive();
+    _endResetIfActive();
 
     emit pathChanged();
 }
@@ -471,7 +469,7 @@ void QGCMapPolygon::offset(double distance)
     _beginResetIfNotActive();
     clear();
     appendVertices(rgNewPolygon);
-    _endResetIfNotActive();
+    _endResetIfActive();
 }
 
 bool QGCMapPolygon::loadKMLOrSHPFile(const QString& file)
@@ -486,7 +484,7 @@ bool QGCMapPolygon::loadKMLOrSHPFile(const QString& file)
     _beginResetIfNotActive();
     clear();
     appendVertices(rgCoords);
-    _endResetIfNotActive();
+    _endResetIfActive();
 
     return true;
 }
@@ -536,19 +534,17 @@ void QGCMapPolygon::verifyClockwiseWinding(void)
         _beginResetIfNotActive();
         clear();
         appendVertices(rgReversed);
-        _endResetIfNotActive();
+        _endResetIfActive();
     }
 }
 
 void QGCMapPolygon::beginReset(void)
 {
-    _resetActive = true;
     _polygonModel.beginReset();
 }
 
 void QGCMapPolygon::endReset(void)
 {
-    _resetActive = false;
     _polygonModel.endReset();
     emit pathChanged();
     emit centerChanged(_center);
@@ -556,14 +552,14 @@ void QGCMapPolygon::endReset(void)
 
 void QGCMapPolygon::_beginResetIfNotActive(void)
 {
-    if (!_resetActive) {
+    if (!_polygonModel.externalResetActive()) {
         beginReset();
     }
 }
 
-void QGCMapPolygon::_endResetIfNotActive(void)
+void QGCMapPolygon::_endResetIfActive(void)
 {
-    if (!_resetActive) {
+    if (_polygonModel.externalResetActive()) {
         endReset();
     }
 }
