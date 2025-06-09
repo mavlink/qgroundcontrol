@@ -501,6 +501,13 @@ target_precompile_headers(${CMAKE_PROJECT_NAME}
         <QtCore/QTimer>
 )
 
+qt_add_qml_module(${CMAKE_PROJECT_NAME}
+    URI QGroundControl
+    VERSION 1.0
+    RESOURCE_PREFIX /qml
+    NO_PLUGIN
+)
+
 add_subdirectory(src)
 if(QGC_BUILD_TESTING)
     add_subdirectory(test)
