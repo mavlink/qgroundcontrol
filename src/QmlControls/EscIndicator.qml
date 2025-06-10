@@ -49,8 +49,36 @@ Item {
     function _getEscHealthStatus() {
         if (!_escStatus || !_escDataAvailable) return false
 
-        // Health is good if all expected motors are online
-        return _onlineMotorCount === _motorCount && _motorCount > 0
+        // Health is good if all expected motors are online and have no failure flags
+        if (_onlineMotorCount !== _motorCount || _motorCount === 0) return false
+
+        // Check failure flags for each motor
+        for (var i = 0; i < _motorCount && i < 8; i++) {
+            if ((_infoBitmask & (1 << i)) !== 0) { // Motor is online
+                var failureFlags = _getMotorFailureFlags(i)
+                if (failureFlags > 0) { // Any failure flag set means unhealthy
+                    return false
+                }
+            }
+        }
+
+        return true
+    }
+
+    function _getMotorFailureFlags(motorIndex) {
+        if (!_escStatus) return 0
+
+        switch (motorIndex) {
+        case 0: return _escStatus.failureFlagsFirst.rawValue
+        case 1: return _escStatus.failureFlagsSecond.rawValue
+        case 2: return _escStatus.failureFlagsThird.rawValue
+        case 3: return _escStatus.failureFlagsFourth.rawValue
+        case 4: return _escStatus.failureFlagsFifth.rawValue
+        case 5: return _escStatus.failureFlagsSixth.rawValue
+        case 6: return _escStatus.failureFlagsSeventh.rawValue
+        case 7: return _escStatus.failureFlagsEighth.rawValue
+        default: return 0
+        }
     }
 
     function getEscStatusColor() {
@@ -76,7 +104,7 @@ Item {
             width:              height
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
-            source:             "/qmlimages/EscMotor.svg"
+            source:             "/qmlimages/MotorComponentIcon.svg"
             fillMode:           Image.PreserveAspectFit
             sourceSize.height:  height
             opacity:            (_activeVehicle && _escDataAvailable) ? 1 : 0.5

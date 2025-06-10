@@ -45,7 +45,9 @@ ToolIndicatorPage {
             voltage: 0,
             temperature: 0,
             errorCount: 0,
-            online: _isMotorOnline(motorIndex)
+            failureFlags: 0,
+            online: _isMotorOnline(motorIndex),
+            healthy: false
         }
 
         switch (motorIndex) {
@@ -55,6 +57,7 @@ ToolIndicatorPage {
             motorData.voltage = _escStatus.voltageFirst.rawValue;
             motorData.temperature = _escStatus.temperatureFirst.rawValue;
             motorData.errorCount = _escStatus.errorCountFirst.rawValue;
+            motorData.failureFlags = _escStatus.failureFlagsFirst.rawValue;
             break;
         case 1:
             motorData.rpm = _escStatus.rpmSecond.rawValue;
@@ -62,6 +65,7 @@ ToolIndicatorPage {
             motorData.voltage = _escStatus.voltageSecond.rawValue;
             motorData.temperature = _escStatus.temperatureSecond.rawValue;
             motorData.errorCount = _escStatus.errorCountSecond.rawValue;
+            motorData.failureFlags = _escStatus.failureFlagsSecond.rawValue;
             break;
         case 2:
             motorData.rpm = _escStatus.rpmThird.rawValue;
@@ -69,6 +73,7 @@ ToolIndicatorPage {
             motorData.voltage = _escStatus.voltageThird.rawValue;
             motorData.temperature = _escStatus.temperatureThird.rawValue;
             motorData.errorCount = _escStatus.errorCountThird.rawValue;
+            motorData.failureFlags = _escStatus.failureFlagsThird.rawValue;
             break;
         case 3:
             motorData.rpm = _escStatus.rpmFourth.rawValue;
@@ -76,6 +81,7 @@ ToolIndicatorPage {
             motorData.voltage = _escStatus.voltageFourth.rawValue;
             motorData.temperature = _escStatus.temperatureFourth.rawValue;
             motorData.errorCount = _escStatus.errorCountFourth.rawValue;
+            motorData.failureFlags = _escStatus.failureFlagsFourth.rawValue;
             break;
         case 4:
             motorData.rpm = _escStatus.rpmFifth.rawValue;
@@ -83,6 +89,7 @@ ToolIndicatorPage {
             motorData.voltage = _escStatus.voltageFifth.rawValue;
             motorData.temperature = _escStatus.temperatureFifth.rawValue;
             motorData.errorCount = _escStatus.errorCountFifth.rawValue;
+            motorData.failureFlags = _escStatus.failureFlagsFifth.rawValue;
             break;
         case 5:
             motorData.rpm = _escStatus.rpmSixth.rawValue;
@@ -90,6 +97,7 @@ ToolIndicatorPage {
             motorData.voltage = _escStatus.voltageSixth.rawValue;
             motorData.temperature = _escStatus.temperatureSixth.rawValue;
             motorData.errorCount = _escStatus.errorCountSixth.rawValue;
+            motorData.failureFlags = _escStatus.failureFlagsSixth.rawValue;
             break;
         case 6:
             motorData.rpm = _escStatus.rpmSeventh.rawValue;
@@ -97,6 +105,7 @@ ToolIndicatorPage {
             motorData.voltage = _escStatus.voltageSeventh.rawValue;
             motorData.temperature = _escStatus.temperatureSeventh.rawValue;
             motorData.errorCount = _escStatus.errorCountSeventh.rawValue;
+            motorData.failureFlags = _escStatus.failureFlagsSeventh.rawValue;
             break;
         case 7:
             motorData.rpm = _escStatus.rpmEighth.rawValue;
@@ -104,8 +113,12 @@ ToolIndicatorPage {
             motorData.voltage = _escStatus.voltageEighth.rawValue;
             motorData.temperature = _escStatus.temperatureEighth.rawValue;
             motorData.errorCount = _escStatus.errorCountEighth.rawValue;
+            motorData.failureFlags = _escStatus.failureFlagsEighth.rawValue;
             break;
         }
+
+        // Set healthy status: motor is healthy if it's online and has no failure flags
+        motorData.healthy = motorData.online && motorData.failureFlags === 0
 
         return motorData
     }
@@ -142,20 +155,11 @@ ToolIndicatorPage {
                         label:      qsTr("Healthy Motors")
                         labelText:  {
                             if (!_escDataAvailable) return na
-                            return _allMotors.length + "/" + _motorCount
-                        }
-                    }
-
-                    LabelledLabel {
-                        Layout.fillWidth: true
-                        label:      qsTr("Max Current")
-                        labelText:  {
-                            if (!_escDataAvailable || _allMotors.length === 0) return valueNA
-                            var maxCurrent = 0
+                            var healthyCount = 0
                             for (var i = 0; i < _allMotors.length; i++) {
-                                if (_allMotors[i].current > maxCurrent) maxCurrent = _allMotors[i].current
+                                if (_allMotors[i].healthy) healthyCount++
                             }
-                            return maxCurrent.toFixed(1) + "A"
+                            return healthyCount + "/" + _motorCount
                         }
                     }
 
@@ -188,6 +192,19 @@ ToolIndicatorPage {
                             return totalErrors.toString()
                         }
                     }
+
+                    LabelledLabel {
+                        Layout.fillWidth: true
+                        label:      qsTr("Max Current")
+                        labelText:  {
+                            if (!_escDataAvailable || _allMotors.length === 0) return valueNA
+                            var maxCurrent = 0
+                            for (var i = 0; i < _allMotors.length; i++) {
+                                if (_allMotors[i].current > maxCurrent) maxCurrent = _allMotors[i].current
+                            }
+                            return maxCurrent.toFixed(1) + "A"
+                        }
+                    }
                 }
             }
 
@@ -211,6 +228,7 @@ ToolIndicatorPage {
 
                             ColumnLayout {
                                 spacing: ScreenTools.defaultFontPixelHeight * 0.1
+                                Layout.bottomMargin: index < Math.min(4, _allMotors.length) - 1 ? ScreenTools.defaultFontPixelHeight * 0.5 : 0
 
                                 QGCLabel {
                                     text: qsTr("Motor %1").arg(_allMotors[index].id)
@@ -220,7 +238,7 @@ ToolIndicatorPage {
                                 Rectangle {
                                     Layout.fillWidth: true
                                     height: ScreenTools.defaultFontPixelHeight * 0.15
-                                    color: _allMotors[index].online ? qgcPal.colorGreen : qgcPal.colorRed
+                                    color: _allMotors[index].healthy ? qgcPal.colorGreen : qgcPal.colorRed
                                     radius: 2
                                 }
 
@@ -236,8 +254,8 @@ ToolIndicatorPage {
                                     }
 
                                     LabelledLabel {
-                                        label: qsTr("Current")
-                                        labelText: _allMotors[index].current.toFixed(1) + "A"
+                                        label: qsTr("Temp")
+                                        labelText: _allMotors[index].temperature > 0 ? _allMotors[index].temperature.toFixed(1) + "°C" : na
                                     }
 
                                     LabelledLabel {
@@ -246,8 +264,8 @@ ToolIndicatorPage {
                                     }
 
                                     LabelledLabel {
-                                        label: qsTr("Temp")
-                                        labelText: _allMotors[index].temperature > 0 ? _allMotors[index].temperature.toFixed(1) + "°C" : na
+                                        label: qsTr("Current")
+                                        labelText: _allMotors[index].current.toFixed(1) + "A"
                                     }
 
                                     LabelledLabel {
@@ -275,6 +293,7 @@ ToolIndicatorPage {
 
                             ColumnLayout {
                                 spacing: ScreenTools.defaultFontPixelHeight * 0.1
+                                Layout.bottomMargin: index < Math.max(0, _allMotors.length - 4) - 1 ? ScreenTools.defaultFontPixelHeight * 0.5 : 0
 
                                 QGCLabel {
                                     text: qsTr("Motor %1").arg(_allMotors[index + 4].id)
@@ -285,7 +304,7 @@ ToolIndicatorPage {
                                 Rectangle {
                                     Layout.fillWidth: true
                                     height: ScreenTools.defaultFontPixelHeight * 0.15
-                                    color: _allMotors[index + 4].online ? qgcPal.colorGreen : qgcPal.colorRed
+                                    color: _allMotors[index + 4].healthy ? qgcPal.colorGreen : qgcPal.colorRed
                                     radius: 2
                                 }
 
