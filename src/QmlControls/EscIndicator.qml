@@ -25,6 +25,8 @@ Item {
     anchors.bottom: parent.bottom
     width:          escIndicatorRow.width
 
+    property bool showIndicator:       true
+
     property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
     property var  _escStatus:           _activeVehicle ? _activeVehicle.escStatus : null
 

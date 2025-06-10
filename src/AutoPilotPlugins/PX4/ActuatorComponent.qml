@@ -353,7 +353,7 @@ SetupPage {
 
                                 ActuatorSlider {
                                     channel: object
-                                    motorIndex: object.isMotor ? index : -1
+                                    motorIndex: (object && object.isMotor) ? index : -1
                                     escStatus: _escStatus
                                     onActuatorValueChanged: (value) =>{
                                         if (isNaN(value)) {
