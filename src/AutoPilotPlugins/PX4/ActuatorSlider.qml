@@ -136,27 +136,15 @@ Item {
         y: channelSlider.y + channelSlider.height / 2 - height / 2
     }
 
-    // Motor number label below slider
-    QGCLabel {
-        // text: motorIndex >= 0 ? (motorIndex + 1).toString() : qsTr("all")
-        text:                     channel.label
-        font.pointSize:           ScreenTools.smallFontPointSize
-        anchors {
-            horizontalCenter: parent.horizontalCenter
-            bottom: parent.bottom
-        }
-        visible: channel.isMotor && motorIndex === -1
-    }
-
     QGCLabel {
         id: channelLabel
-        anchors.horizontalCenter: parent.horizontalCenter
-        text:                     channel.label
-        width:                    contentHeight
-        height:                   contentWidth
+        text: channel.label
+        font.pointSize: ScreenTools.defaultFontPointSize
+        width: contentHeight
+        height: contentWidth
         transform: [
             Rotation { origin.x: 0; origin.y: 0; angle: -90 },
             Translate { y: channelLabel.height + 5 }
-            ]
+        ]
     }
 } // Item
