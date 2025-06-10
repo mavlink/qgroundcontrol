@@ -16,6 +16,7 @@ SetupPage {
     showAdvanced:   true
 
     property var actuators:       globals.activeVehicle.actuators
+    property var _escStatus:      globals.activeVehicle ? globals.activeVehicle.escStatus : null
 
     property var _showAdvanced:              advanced
     readonly property real _margins:         ScreenTools.defaultFontPixelHeight
@@ -26,6 +27,85 @@ SetupPage {
         Row {
             spacing:                        ScreenTools.defaultFontPixelWidth * 4
             property var _leftColumnWidth:  Math.max(actuatorTesting.implicitWidth, mixerUi.implicitWidth) + (_margins * 2)
+
+            // ESC data properties
+            property bool   _escDataAvailable:  _escStatus ? _escStatus.telemetryAvailable : false
+            property int    _motorCount:        _escStatus ? _escStatus.count.rawValue : 0
+            property int    _infoBitmask:       _escStatus ? _escStatus.info.rawValue : 0
+
+            function _isMotorOnline(motorIndex) {
+                return (_infoBitmask & (1 << motorIndex)) !== 0
+            }
+
+            function _isMotorHealthy(motorIndex) {
+                if (!_escDataAvailable || !_isMotorOnline(motorIndex)) return false
+                var failureFlags = _getMotorFailureFlags(motorIndex)
+                return failureFlags === 0
+            }
+
+            function _getMotorFailureFlags(motorIndex) {
+                if (!_escStatus) return 0
+
+                switch (motorIndex) {
+                case 0: return _escStatus.failureFlagsFirst.rawValue
+                case 1: return _escStatus.failureFlagsSecond.rawValue
+                case 2: return _escStatus.failureFlagsThird.rawValue
+                case 3: return _escStatus.failureFlagsFourth.rawValue
+                case 4: return _escStatus.failureFlagsFifth.rawValue
+                case 5: return _escStatus.failureFlagsSixth.rawValue
+                case 6: return _escStatus.failureFlagsSeventh.rawValue
+                case 7: return _escStatus.failureFlagsEighth.rawValue
+                default: return 0
+                }
+            }
+
+            function _getMotorRPM(motorIndex) {
+                if (!_escStatus) return 0
+
+                switch (motorIndex) {
+                case 0: return _escStatus.rpmFirst.rawValue
+                case 1: return _escStatus.rpmSecond.rawValue
+                case 2: return _escStatus.rpmThird.rawValue
+                case 3: return _escStatus.rpmFourth.rawValue
+                case 4: return _escStatus.rpmFifth.rawValue
+                case 5: return _escStatus.rpmSixth.rawValue
+                case 6: return _escStatus.rpmSeventh.rawValue
+                case 7: return _escStatus.rpmEighth.rawValue
+                default: return 0
+                }
+            }
+
+            function _getMotorVoltage(motorIndex) {
+                if (!_escStatus) return 0
+
+                switch (motorIndex) {
+                case 0: return _escStatus.voltageFirst.rawValue
+                case 1: return _escStatus.voltageSecond.rawValue
+                case 2: return _escStatus.voltageThird.rawValue
+                case 3: return _escStatus.voltageFourth.rawValue
+                case 4: return _escStatus.voltageFifth.rawValue
+                case 5: return _escStatus.voltageSixth.rawValue
+                case 6: return _escStatus.voltageSeventh.rawValue
+                case 7: return _escStatus.voltageEighth.rawValue
+                default: return 0
+                }
+            }
+
+            function _getMotorCurrent(motorIndex) {
+                if (!_escStatus) return 0
+
+                switch (motorIndex) {
+                case 0: return _escStatus.currentFirst.rawValue
+                case 1: return _escStatus.currentSecond.rawValue
+                case 2: return _escStatus.currentThird.rawValue
+                case 3: return _escStatus.currentFourth.rawValue
+                case 4: return _escStatus.currentFifth.rawValue
+                case 5: return _escStatus.currentSixth.rawValue
+                case 6: return _escStatus.currentSeventh.rawValue
+                case 7: return _escStatus.currentEighth.rawValue
+                default: return 0
+                }
+            }
 
             ColumnLayout {
                 spacing:                    ScreenTools.defaultFontPixelHeight
@@ -239,7 +319,7 @@ SetupPage {
                         } // Row
 
                         Row {
-                            spacing: ScreenTools.defaultFontPixelWidth * 2
+                            spacing: ScreenTools.defaultFontPixelWidth * 0.5
                             enabled: safetySwitch.checked
 
                             // (optional) slider for all motors
@@ -256,9 +336,9 @@ SetupPage {
                                     onActuatorValueChanged: {
                                         stopTimer();
                                         for (var channelIdx=0; channelIdx<sliderRepeater.count; channelIdx++) {
-                                            var channelSlider = sliderRepeater.itemAt(channelIdx);
-                                            if (channelSlider.channel.isMotor) {
-                                                channelSlider.value = sliderValue;
+                                            var sliderComponent = sliderRepeater.itemAt(channelIdx);
+                                            if (sliderComponent.channel.isMotor) {
+                                                sliderComponent.value = sliderValue;
                                             }
                                         }
                                     }
@@ -270,14 +350,74 @@ SetupPage {
                                 id:         sliderRepeater
                                 model:      actuators.actuatorTest.actuators
 
-                                ActuatorSlider {
-                                    channel: object
-                                    onActuatorValueChanged: (value) =>{
-                                        if (isNaN(value)) {
-                                            actuators.actuatorTest.stopControl(index);
-                                            stop();
-                                        } else {
-                                            actuators.actuatorTest.setChannelTo(index, value);
+                                // Custom component that wraps ActuatorSlider with telemetry
+                                Item {
+                                    id: sliderWithTelemetry
+                                    width: Math.max(actuatorSlider.width, telemetryColumn.width)
+                                    height: actuatorSlider.height
+
+                                    // Expose ActuatorSlider properties for compatibility
+                                    property alias channel: actuatorSlider.channel
+                                    property alias value: actuatorSlider.value
+                                    function stop() { actuatorSlider.stop() }
+
+                                    ActuatorSlider {
+                                        id: actuatorSlider
+                                        channel: object
+                                        anchors.left: parent.left
+                                        onActuatorValueChanged: (value) =>{
+                                            if (isNaN(value)) {
+                                                actuators.actuatorTest.stopControl(index);
+                                                stop();
+                                            } else {
+                                                actuators.actuatorTest.setChannelTo(index, value);
+                                            }
+                                        }
+                                    }
+
+                                    // ESC telemetry display - fixed width for up to 4-digit RPM
+                                    Column {
+                                        id: telemetryColumn
+                                        anchors.left: actuatorSlider.right
+                                        anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 0.5
+                                        anchors.verticalCenter: actuatorSlider.verticalCenter
+                                        visible: object.isMotor
+                                        width: ScreenTools.defaultFontPixelWidth * 8  // Fixed width for "9999 rpm"
+                                        spacing: ScreenTools.defaultFontPixelHeight * 0.1
+
+                                        // ESC telemetry for healthy motors
+                                        QGCLabel {
+                                            visible: _isMotorHealthy(index)
+                                            text: _getMotorRPM(index) + "rpm"
+                                            font.pointSize: ScreenTools.smallFontPointSize
+                                            width: parent.width
+                                            elide: Text.ElideRight
+                                        }
+
+                                        QGCLabel {
+                                            visible: _isMotorHealthy(index)
+                                            text: _getMotorVoltage(index).toFixed(1) + "V"
+                                            font.pointSize: ScreenTools.smallFontPointSize
+                                            width: parent.width
+                                            elide: Text.ElideRight
+                                        }
+
+                                        QGCLabel {
+                                            visible: _isMotorHealthy(index)
+                                            text: _getMotorCurrent(index).toFixed(1) + "A"
+                                            font.pointSize: ScreenTools.smallFontPointSize
+                                            width: parent.width
+                                            elide: Text.ElideRight
+                                        }
+
+                                        // Motor status indicator (offline/unhealthy)
+                                        QGCLabel {
+                                            visible: _escDataAvailable && !_isMotorHealthy(index)
+                                            text: _isMotorOnline(index) ? qsTr("UNHEALTHY") : qsTr("OFFLINE")
+                                            font.pointSize: ScreenTools.smallFontPointSize
+                                            color: qgcPal.colorRed
+                                            width: parent.width
+                                            elide: Text.ElideRight
                                         }
                                     }
                                 }
