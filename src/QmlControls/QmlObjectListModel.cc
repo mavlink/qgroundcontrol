@@ -7,10 +7,6 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "QmlObjectListModel.h"
 
 #include <QtCore/QDebug>
@@ -20,14 +16,15 @@ QmlObjectListModel::QmlObjectListModel(QObject* parent)
     : QAbstractListModel        (parent)
     , _dirty                    (false)
     , _skipDirtyFirstItem       (false)
-    , _externalBeginResetModel  (false)
 {
 
 }
 
 QmlObjectListModel::~QmlObjectListModel()
 {
-    
+    if (_resetModelNestingCount > 0) {
+        qWarning() << "QmlObjectListModel destroyed with unbalanced begin/endResetModel calls";
+    }
 }
 
 QObject* QmlObjectListModel::get(int index)
@@ -156,14 +153,9 @@ const QObject* QmlObjectListModel::operator[](int index) const
 
 void QmlObjectListModel::clear()
 {
-    if (!_externalBeginResetModel) {
-        beginResetModel();
-    }
+    beginResetModel();
     _objectList.clear();
-    if (!_externalBeginResetModel) {
-        endResetModel();
-        emit countChanged(count());
-    }
+    endResetModel();
 }
 
 QObject* QmlObjectListModel::removeAt(int i)
@@ -240,14 +232,9 @@ void QmlObjectListModel::append(QList<QObject*> objects)
 QObjectList QmlObjectListModel::swapObjectList(const QObjectList& newlist)
 {
     QObjectList oldlist(_objectList);
-    if (!_externalBeginResetModel) {
-        beginResetModel();
-    }
+    beginResetModel();
     _objectList = newlist;
-    if (!_externalBeginResetModel) {
-        endResetModel();
-        emit countChanged(count());
-    }
+    endResetModel();
     return oldlist;
 }
 
@@ -296,20 +283,27 @@ void QmlObjectListModel::clearAndDeleteContents()
     clear();
 }
 
-void QmlObjectListModel::beginReset()
+void QmlObjectListModel::beginResetModel()
 {
-    if (_externalBeginResetModel) {
-        qWarning() << "QmlObjectListModel::beginReset already set";
+    if (_resetModelNestingCount == 0) {
+        //qDebug() << "QAbstractListModel::beginResetModel";
+        QAbstractListModel::beginResetModel();
     }
-    _externalBeginResetModel = true;
-    beginResetModel();
+    _resetModelNestingCount++;
+    //qDebug() << "QmlObjectListModel::beginResetModel reentractCount:" << _resetModelNestingCount;
 }
 
-void QmlObjectListModel::endReset()
+void QmlObjectListModel::endResetModel()
 {
-    if (!_externalBeginResetModel) {
-        qWarning() << "QmlObjectListModel::endReset begin not set";
+    if (_resetModelNestingCount == 0) {
+        qWarning() << "QmlObjectListModel::endResetModel called without prior beginResetModel";
+        return;
     }
-    _externalBeginResetModel = false;
-    endResetModel();
+    _resetModelNestingCount--;
+    //qDebug() << "QmlObjectListModel::endResetModel reentractCount:" << _resetModelNestingCount;
+    if (_resetModelNestingCount == 0) {
+        //qDebug() << "QAbstractListModel::endResetModel";
+        QAbstractListModel::endResetModel();
+        emit countChanged(count());
+    }
 }
