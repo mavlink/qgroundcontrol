@@ -37,6 +37,7 @@ jobs:
       ARTIFACT: QGroundControl.dmg
       PACKAGE: QGroundControl
       QT_VERSION: 6.8.3
+      QGC_MACOS_SIGNING_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
 
     steps:
       - name: Checkout repo
@@ -93,14 +94,13 @@ jobs:
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
               -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }}
-              -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64"
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
 
       - name: Build
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run: cmake --build . --target all --config ${{ matrix.BuildType }} --parallel
 
-      - name: Sanity check dev build excecutable
+      - name: Sanity check dev build executable
         if: matrix.BuildType == 'Release'
         working-directory: ${{ runner.temp }}/shadow_build_dir/Release/QGroundControl.app/Contents/MacOS
         run: ./QGroundControl --simple-boot-test
@@ -111,10 +111,10 @@ jobs:
 
       - name: Mount DMG
         if: matrix.BuildType == 'Release'
-        working-directory: ${{ runner.temp }}/shadow_build_dir
+        working-directory: ${{ runner.temp }}/shadow_build_dir/staging
         run: hdiutil attach QGroundControl.dmg
 
-      - name: Sanity check DMG exectuable
+      - name: Sanity check DMG executable
         if: matrix.BuildType == 'Release'
         working-directory: /Volumes/QGroundControl/QGroundControl.app/Contents/MacOS
         run: ./QGroundControl --simple-boot-test
@@ -123,7 +123,7 @@ jobs:
         if: matrix.BuildType == 'Release'
         uses: ./.github/actions/upload
         with:
-          artifact_name: ${{ env.ARTIFACT }}
+          artifact_name: staging/${{ env.ARTIFACT }}
           package_name: ${{ env.PACKAGE }}
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
