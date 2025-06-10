@@ -78,6 +78,8 @@ qt_add_qml_module(QGroundControlControlsModule
         DropButton.qml
         DropPanel.qml
         EditPositionDialog.qml
+        EscIndicator.qml
+        EscIndicatorPage.qml
         ExclusiveGroupItem.qml
         FactSlider.qml
         FactSliderPanel.qml
