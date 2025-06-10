@@ -1233,23 +1233,22 @@ void MockLink::_sendGpsRawInt()
         _vehicleComponentId,
         mavlinkChannel(),
         &msg,
-        timeTick++,                             // time since boot
+        timeTick++,                           // time since boot
         GPS_FIX_TYPE_3D_FIX,
-        static_cast<int32_t>(_vehicleLatitude * 1E7),
-        static_cast<int32_t>(_vehicleLongitude * 1E7),
-        static_cast<int32_t>(_vehicleAltitudeAMSL * 1000),
-        3 * 100,                                // hdop
-        3 * 100,                                // vdop
-        UINT16_MAX,                             // velocity not known
-        UINT16_MAX,                             // course over ground not known
-        8,                                      // satellites visible
+        (int32_t)(_vehicleLatitude  * 1E7),
+        (int32_t)(_vehicleLongitude * 1E7),
+        (int32_t)(_vehicleAltitudeAMSL  * 1000),
+        UINT16_MAX, UINT16_MAX,               // HDOP/VDOP not known
+        UINT16_MAX,                           // velocity not known
+        UINT16_MAX,                           // course over ground not known
+        8,                                    // satellites visible
         //-- Extension
-        0,                                      // Altitude (above WGS84, EGM96 ellipsoid), in meters * 1000 (positive for up).
-        0,                                      // Position uncertainty in meters * 1000 (positive for up).
-        0,                                      // Altitude uncertainty in meters * 1000 (positive for up).
-        0,                                      // Speed uncertainty in meters * 1000 (positive for up).
-        0,                                      // Heading / track uncertainty in degrees * 1e5.
-        65535                                   // Yaw not provided
+        0,                                    // Altitude (above WGS84, EGM96 ellipsoid), in meters * 1000 (positive for up).
+        0,                                    // Position uncertainty in meters * 1000 (positive for up).
+        0,                                    // Altitude uncertainty in meters * 1000 (positive for up).
+        0,                                    // Speed uncertainty in meters * 1000 (positive for up).
+        0,                                    // Heading / track uncertainty in degrees * 1e5.
+        65535                                 // Yaw not provided
     );
     respondWithMavlinkMessage(msg);
 }
