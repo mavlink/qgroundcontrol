@@ -126,17 +126,6 @@ Item {
         }
     }
 
-    // Horizontal motor label at bottom
-    QGCLabel {
-        text: motorIndex >= 0 ? (motorIndex + 1).toString() : qsTr("all")
-        font.pointSize: ScreenTools.smallFontPointSize
-        anchors {
-            horizontalCenter: parent.horizontalCenter
-            bottom: parent.bottom
-        }
-        visible: channel.isMotor || motorIndex === -1
-    }
-
     // RPM value positioned to middle-right of slider
     QGCLabel {
         visible: motorIndex >= 0 && channel.isMotor && escStatus && escStatus.telemetryAvailable
@@ -147,16 +136,27 @@ Item {
         y: channelSlider.y + channelSlider.height / 2 - height / 2
     }
 
-    // Fallback to original vertical label for non-motors
+    // Motor number label below slider
     QGCLabel {
-        visible: !channel.isMotor && motorIndex !== -1
+        // text: motorIndex >= 0 ? (motorIndex + 1).toString() : qsTr("all")
+        text:                     channel.label
+        font.pointSize:           ScreenTools.smallFontPointSize
+        anchors {
+            horizontalCenter: parent.horizontalCenter
+            bottom: parent.bottom
+        }
+        visible: channel.isMotor && motorIndex === -1
+    }
+
+    QGCLabel {
+        id: channelLabel
         anchors.horizontalCenter: parent.horizontalCenter
-        text: channel.label
-        width: contentHeight
-        height: contentWidth
+        text:                     channel.label
+        width:                    contentHeight
+        height:                   contentWidth
         transform: [
             Rotation { origin.x: 0; origin.y: 0; angle: -90 },
-            Translate { y: height + 5 }
-        ]
+            Translate { y: channelLabel.height + 5 }
+            ]
     }
 } // Item
