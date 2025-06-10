@@ -61,6 +61,15 @@ VehicleEscStatusFactGroup::VehicleEscStatusFactGroup(QObject *parent)
     _addFact(&_errorCountSixthFact);
     _addFact(&_errorCountSeventhFact);
     _addFact(&_errorCountEighthFact);
+
+    _addFact(&_failureFlagsFirstFact);
+    _addFact(&_failureFlagsSecondFact);
+    _addFact(&_failureFlagsThirdFact);
+    _addFact(&_failureFlagsFourthFact);
+    _addFact(&_failureFlagsFifthFact);
+    _addFact(&_failureFlagsSixthFact);
+    _addFact(&_failureFlagsSeventhFact);
+    _addFact(&_failureFlagsEighthFact);
 }
 
 void VehicleEscStatusFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)
@@ -126,6 +135,12 @@ void VehicleEscStatusFactGroup::handleMessage(Vehicle *vehicle, const mavlink_me
             errorCountSecond()->setRawValue(content.error_count[1]);
             errorCountThird()->setRawValue(content.error_count[2]);
             errorCountFourth()->setRawValue(content.error_count[3]);
+
+            // Failure flags
+            failureFlagsFirst()->setRawValue(content.failure_flags[0]);
+            failureFlagsSecond()->setRawValue(content.failure_flags[1]);
+            failureFlagsThird()->setRawValue(content.failure_flags[2]);
+            failureFlagsFourth()->setRawValue(content.failure_flags[3]);
             break;
         case 1:
             // ESC index 1 (motors 5-8)
@@ -138,6 +153,12 @@ void VehicleEscStatusFactGroup::handleMessage(Vehicle *vehicle, const mavlink_me
             errorCountSixth()->setRawValue(content.error_count[1]);
             errorCountSeventh()->setRawValue(content.error_count[2]);
             errorCountEighth()->setRawValue(content.error_count[3]);
+
+            // Failure flags
+            failureFlagsFifth()->setRawValue(content.failure_flags[0]);
+            failureFlagsSixth()->setRawValue(content.failure_flags[1]);
+            failureFlagsSeventh()->setRawValue(content.failure_flags[2]);
+            failureFlagsEighth()->setRawValue(content.failure_flags[3]);
             break;
         default:
             // Support for additional ESC indices can be added here

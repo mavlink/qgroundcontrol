@@ -57,6 +57,14 @@ class VehicleEscStatusFactGroup : public FactGroup
     Q_PROPERTY(Fact *errorCountSixth    READ errorCountSixth    CONSTANT)
     Q_PROPERTY(Fact *errorCountSeventh  READ errorCountSeventh  CONSTANT)
     Q_PROPERTY(Fact *errorCountEighth   READ errorCountEighth   CONSTANT)
+    Q_PROPERTY(Fact *failureFlagsFirst    READ failureFlagsFirst    CONSTANT)
+    Q_PROPERTY(Fact *failureFlagsSecond   READ failureFlagsSecond   CONSTANT)
+    Q_PROPERTY(Fact *failureFlagsThird    READ failureFlagsThird    CONSTANT)
+    Q_PROPERTY(Fact *failureFlagsFourth   READ failureFlagsFourth   CONSTANT)
+    Q_PROPERTY(Fact *failureFlagsFifth    READ failureFlagsFifth    CONSTANT)
+    Q_PROPERTY(Fact *failureFlagsSixth    READ failureFlagsSixth    CONSTANT)
+    Q_PROPERTY(Fact *failureFlagsSeventh  READ failureFlagsSeventh  CONSTANT)
+    Q_PROPERTY(Fact *failureFlagsEighth   READ failureFlagsEighth   CONSTANT)
 
 public:
     explicit VehicleEscStatusFactGroup(QObject *parent = nullptr);
@@ -109,6 +117,15 @@ public:
     Fact *errorCountSeventh() { return &_errorCountSeventhFact; }
     Fact *errorCountEighth() { return &_errorCountEighthFact; }
 
+    Fact *failureFlagsFirst() { return &_failureFlagsFirstFact; }
+    Fact *failureFlagsSecond() { return &_failureFlagsSecondFact; }
+    Fact *failureFlagsThird() { return &_failureFlagsThirdFact; }
+    Fact *failureFlagsFourth() { return &_failureFlagsFourthFact; }
+    Fact *failureFlagsFifth() { return &_failureFlagsFifthFact; }
+    Fact *failureFlagsSixth() { return &_failureFlagsSixthFact; }
+    Fact *failureFlagsSeventh() { return &_failureFlagsSeventhFact; }
+    Fact *failureFlagsEighth() { return &_failureFlagsEighthFact; }
+
     // Overrides from FactGroup
     void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) final;
 
@@ -160,4 +177,13 @@ private:
     Fact _errorCountSixthFact = Fact(0, QStringLiteral("errorCount6"), FactMetaData::valueTypeUint32);
     Fact _errorCountSeventhFact = Fact(0, QStringLiteral("errorCount7"), FactMetaData::valueTypeUint32);
     Fact _errorCountEighthFact = Fact(0, QStringLiteral("errorCount8"), FactMetaData::valueTypeUint32);
+
+    Fact _failureFlagsFirstFact = Fact(0, QStringLiteral("failureFlags1"), FactMetaData::valueTypeUint32);
+    Fact _failureFlagsSecondFact = Fact(0, QStringLiteral("failureFlags2"), FactMetaData::valueTypeUint32);
+    Fact _failureFlagsThirdFact = Fact(0, QStringLiteral("failureFlags3"), FactMetaData::valueTypeUint32);
+    Fact _failureFlagsFourthFact = Fact(0, QStringLiteral("failureFlags4"), FactMetaData::valueTypeUint32);
+    Fact _failureFlagsFifthFact = Fact(0, QStringLiteral("failureFlags5"), FactMetaData::valueTypeUint32);
+    Fact _failureFlagsSixthFact = Fact(0, QStringLiteral("failureFlags6"), FactMetaData::valueTypeUint32);
+    Fact _failureFlagsSeventhFact = Fact(0, QStringLiteral("failureFlags7"), FactMetaData::valueTypeUint32);
+    Fact _failureFlagsEighthFact = Fact(0, QStringLiteral("failureFlags8"), FactMetaData::valueTypeUint32);
 };
