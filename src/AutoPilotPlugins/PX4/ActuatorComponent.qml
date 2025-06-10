@@ -318,111 +318,195 @@ SetupPage {
                             }
                         } // Row
 
-                        Row {
-                            spacing: ScreenTools.defaultFontPixelWidth * 0.5
+                        // Custom slider layout that adapts to motor count
+                        Item {
+                            id: sliderContainer
                             enabled: safetySwitch.checked
+                            width: _leftColumnWidth
+                            height: childrenRect.height
 
-                            // (optional) slider for all motors
-                            Loader {
-                                id:                allMotorsLoader
-                                sourceComponent:   actuators.actuatorTest.allMotorsActuator ?  allMotorsComponent : null
-                                Layout.alignment:  Qt.AlignTop
+                            property int motorCount: {
+                                var count = 0
+                                for (var i = 0; i < actuators.actuatorTest.actuators.count; i++) {
+                                    if (actuators.actuatorTest.actuators.get(i).isMotor) count++
+                                }
+                                return count
                             }
+                            property bool useDoubleRow: motorCount > 4
+                            property int totalSliders: motorCount + (actuators.actuatorTest.allMotorsActuator ? 1 : 0)
+                            property int slidersPerRow: useDoubleRow ? 4 : Math.min(5, totalSliders)
+                            property real sliderWidth: (width - (slidersPerRow - 1) * ScreenTools.defaultFontPixelWidth) / slidersPerRow
+                            property real sliderHeight: useDoubleRow ? ScreenTools.defaultFontPixelHeight * 3.5 : ScreenTools.defaultFontPixelHeight * 5.5
+
                             Component {
-                                id:                allMotorsComponent
-                                ActuatorSlider {
-                                    channel:       actuators.actuatorTest.allMotorsActuator
-                                    rightPadding:  ScreenTools.defaultFontPixelWidth * 3
-                                    onActuatorValueChanged: {
-                                        stopTimer();
-                                        for (var channelIdx=0; channelIdx<sliderRepeater.count; channelIdx++) {
-                                            var sliderComponent = sliderRepeater.itemAt(channelIdx);
-                                            if (sliderComponent.channel.isMotor) {
-                                                sliderComponent.value = sliderValue;
+                                id: customSliderComponent
+
+                                Column {
+                                    width: sliderContainer.sliderWidth
+                                    spacing: ScreenTools.defaultFontPixelHeight * 0.15
+
+                                    property var channel
+                                    property alias value: slider.value
+                                    property int sliderIndex: 0
+                                    function stop() {
+                                        slider.value = slider.snap ? slider.channel.min - slider.snapRange : slider.channel.defaultValue
+                                        sendTimer.stop()
+                                    }
+
+                                    // Custom slider without rotated label
+                                    QGCSlider {
+                                        id: slider
+                                        orientation: Qt.Vertical
+                                        from: snap ? channel.min - snapRange : channel.min
+                                        to: channel.max
+                                        stepSize: (channel.max - channel.min) / 100
+                                        value: snap ? channel.min - snapRange : channel.defaultValue
+                                        live: true
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        height: sliderContainer.sliderHeight
+                                        indicatorBarVisible: sendTimer.running
+
+                                        property var snap: isNaN(channel.defaultValue)
+                                        property var span: channel.max - channel.min
+                                        property var snapRange: span * 0.15
+                                        property var blockUpdates: true
+
+                                        onValueChanged: {
+                                            if (blockUpdates) return
+                                            if (snap) {
+                                                if (value < channel.min) {
+                                                    if (value < channel.min - snapRange/2) {
+                                                        value = channel.min - snapRange
+                                                    } else {
+                                                        value = channel.min
+                                                    }
+                                                }
+                                            }
+                                            sendTimer.start()
+                                        }
+
+                                        Timer {
+                                            id: sendTimer
+                                            interval: 50
+                                            triggeredOnStart: true
+                                            repeat: true
+                                            running: false
+                                            onTriggered: {
+                                                var sendValue = slider.value
+                                                if (sendValue < channel.min - slider.snapRange/2) {
+                                                    sendValue = channel.defaultValue
+                                                }
+                                                parent.parent.actuatorValueChanged(sendValue, slider.value)
+                                            }
+                                        }
+
+                                        Component.onCompleted: blockUpdates = false
+                                    }
+
+                                    // Horizontal label at bottom
+                                    QGCLabel {
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        text: channel.label
+                                        font.pointSize: ScreenTools.smallFontPointSize
+                                        width: parent.width
+                                        horizontalAlignment: Text.AlignHCenter
+                                        elide: Text.ElideMiddle
+                                    }
+
+                                    // ESC telemetry for motors
+                                    Column {
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        visible: channel.isMotor && sliderIndex >= 0
+                                        spacing: ScreenTools.defaultFontPixelHeight * 0.05
+
+                                        QGCLabel {
+                                            visible: _isMotorHealthy(sliderIndex)
+                                            text: _getMotorRPM(sliderIndex) + "rpm"
+                                            font.pointSize: ScreenTools.smallFontPointSize * 0.85
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                        }
+
+                                        QGCLabel {
+                                            visible: _isMotorHealthy(sliderIndex)
+                                            text: _getMotorVoltage(sliderIndex).toFixed(1) + "V"
+                                            font.pointSize: ScreenTools.smallFontPointSize * 0.85
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                        }
+
+                                        QGCLabel {
+                                            visible: _isMotorHealthy(sliderIndex)
+                                            text: _getMotorCurrent(sliderIndex).toFixed(1) + "A"
+                                            font.pointSize: ScreenTools.smallFontPointSize * 0.85
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                        }
+
+                                        QGCLabel {
+                                            visible: _escDataAvailable && !_isMotorHealthy(sliderIndex)
+                                            text: _isMotorOnline(sliderIndex) ? qsTr("UNHEALTHY") : qsTr("OFFLINE")
+                                            font.pointSize: ScreenTools.smallFontPointSize * 0.85
+                                            color: qgcPal.colorRed
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                        }
+                                    }
+
+                                    signal actuatorValueChanged(real value, real sliderValue)
+                                }
+                            }
+
+                            GridLayout {
+                                id: sliderGrid
+                                anchors.fill: parent
+                                columns: sliderContainer.slidersPerRow
+                                rows: sliderContainer.useDoubleRow ? 2 : 1
+                                columnSpacing: ScreenTools.defaultFontPixelWidth
+                                rowSpacing: ScreenTools.defaultFontPixelHeight * 0.5
+
+                                // All motors slider (if exists)
+                                Loader {
+                                    id: allMotorsLoader
+                                    sourceComponent: actuators.actuatorTest.allMotorsActuator ? customSliderComponent : null
+                                    onLoaded: {
+                                        if (item) {
+                                            item.channel = actuators.actuatorTest.allMotorsActuator
+                                            item.sliderIndex = -1
+                                            item.actuatorValueChanged.connect(function(value, sliderValue) {
+                                                sendTimer.stop()
+                                                for (var channelIdx = 0; channelIdx < sliderRepeater.count; channelIdx++) {
+                                                    var sliderComponent = sliderRepeater.itemAt(channelIdx)
+                                                    if (sliderComponent && sliderComponent.item && sliderComponent.item.channel.isMotor) {
+                                                        sliderComponent.item.value = sliderValue
+                                                    }
+                                                }
+                                            })
+                                        }
+                                    }
+                                }
+
+                                // Individual sliders
+                                Repeater {
+                                    id: sliderRepeater
+                                    model: actuators.actuatorTest.actuators
+
+                                    Loader {
+                                        sourceComponent: customSliderComponent
+                                        onLoaded: {
+                                            if (item) {
+                                                item.channel = object
+                                                item.sliderIndex = index
+                                                item.actuatorValueChanged.connect(function(value, sliderValue) {
+                                                    if (isNaN(value)) {
+                                                        actuators.actuatorTest.stopControl(index)
+                                                        item.stop()
+                                                    } else {
+                                                        actuators.actuatorTest.setChannelTo(index, value)
+                                                    }
+                                                })
                                             }
                                         }
                                     }
                                 }
                             }
-
-                            // all channels
-                            Repeater {
-                                id:         sliderRepeater
-                                model:      actuators.actuatorTest.actuators
-
-                                // Custom component that wraps ActuatorSlider with telemetry
-                                Item {
-                                    id: sliderWithTelemetry
-                                    width: Math.max(actuatorSlider.width, telemetryColumn.width)
-                                    height: actuatorSlider.height
-
-                                    // Expose ActuatorSlider properties for compatibility
-                                    property alias channel: actuatorSlider.channel
-                                    property alias value: actuatorSlider.value
-                                    function stop() { actuatorSlider.stop() }
-
-                                    ActuatorSlider {
-                                        id: actuatorSlider
-                                        channel: object
-                                        anchors.left: parent.left
-                                        onActuatorValueChanged: (value) =>{
-                                            if (isNaN(value)) {
-                                                actuators.actuatorTest.stopControl(index);
-                                                stop();
-                                            } else {
-                                                actuators.actuatorTest.setChannelTo(index, value);
-                                            }
-                                        }
-                                    }
-
-                                    // ESC telemetry display - fixed width for up to 4-digit RPM
-                                    Column {
-                                        id: telemetryColumn
-                                        anchors.left: actuatorSlider.right
-                                        anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 0.5
-                                        anchors.verticalCenter: actuatorSlider.verticalCenter
-                                        visible: object.isMotor
-                                        width: ScreenTools.defaultFontPixelWidth * 8  // Fixed width for "9999 rpm"
-                                        spacing: ScreenTools.defaultFontPixelHeight * 0.1
-
-                                        // ESC telemetry for healthy motors
-                                        QGCLabel {
-                                            visible: _isMotorHealthy(index)
-                                            text: _getMotorRPM(index) + "rpm"
-                                            font.pointSize: ScreenTools.smallFontPointSize
-                                            width: parent.width
-                                            elide: Text.ElideRight
-                                        }
-
-                                        QGCLabel {
-                                            visible: _isMotorHealthy(index)
-                                            text: _getMotorVoltage(index).toFixed(1) + "V"
-                                            font.pointSize: ScreenTools.smallFontPointSize
-                                            width: parent.width
-                                            elide: Text.ElideRight
-                                        }
-
-                                        QGCLabel {
-                                            visible: _isMotorHealthy(index)
-                                            text: _getMotorCurrent(index).toFixed(1) + "A"
-                                            font.pointSize: ScreenTools.smallFontPointSize
-                                            width: parent.width
-                                            elide: Text.ElideRight
-                                        }
-
-                                        // Motor status indicator (offline/unhealthy)
-                                        QGCLabel {
-                                            visible: _escDataAvailable && !_isMotorHealthy(index)
-                                            text: _isMotorOnline(index) ? qsTr("UNHEALTHY") : qsTr("OFFLINE")
-                                            font.pointSize: ScreenTools.smallFontPointSize
-                                            color: qgcPal.colorRed
-                                            width: parent.width
-                                            elide: Text.ElideRight
-                                        }
-                                    }
-                                }
-                            } // Repeater
-                        } // Row
+                        }
 
                         // actuator actions
                         Column {
