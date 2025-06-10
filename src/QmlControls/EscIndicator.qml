@@ -25,22 +25,32 @@ Item {
     anchors.bottom: parent.bottom
     width:          escIndicatorRow.width
 
-    property bool showIndicator: true
     property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
     property var  _escStatus:           _activeVehicle ? _activeVehicle.escStatus : null
 
     // ESC status properties derived from vehicle data
     property bool   _escDataAvailable:  _escStatus ? _escStatus.telemetryAvailable : false
-    property int    _escCount:          4      // Assuming 4 ESCs for now
+    property int    _motorCount:        _escStatus ? _escStatus.count.rawValue : 0
+    property int    _infoBitmask:       _escStatus ? _escStatus.info.rawValue : 0
+    property int    _onlineMotorCount:  _getOnlineMotorCount()
     property bool   _escHealthy:        _escDataAvailable && _getEscHealthStatus()
-    property real   _maxEscRpm:         _escDataAvailable ? Math.max(_escStatus.rpmFirst.rawValue, _escStatus.rpmSecond.rawValue, _escStatus.rpmThird.rawValue, _escStatus.rpmFourth.rawValue) : 0
+
+    function _getOnlineMotorCount() {
+        if (!_escDataAvailable) return 0
+        var count = 0
+        for (var i = 0; i < _motorCount && i < 8; i++) {
+            if ((_infoBitmask & (1 << i)) !== 0) {
+                count++
+            }
+        }
+        return count
+    }
 
     function _getEscHealthStatus() {
         if (!_escStatus || !_escDataAvailable) return false
-        // Consider ESCs healthy if they have reasonable RPM values when armed
-        var anyRpm = _escStatus.rpmFirst.rawValue > 0 || _escStatus.rpmSecond.rawValue > 0 || 
-                     _escStatus.rpmThird.rawValue > 0 || _escStatus.rpmFourth.rawValue > 0
-        return _activeVehicle.armed ? anyRpm : true
+
+        // Health is good if all expected motors are online
+        return _onlineMotorCount === _motorCount && _motorCount > 0
     }
 
     function getEscStatusColor() {
@@ -82,7 +92,7 @@ Item {
             QGCLabel {
                 anchors.horizontalCenter:   parent.horizontalCenter
                 color:                      qgcPal.buttonText
-                text:                       _escCount.toString()
+                text:                       _onlineMotorCount.toString()
                 font.pointSize:            ScreenTools.smallFontPointSize
             }
 
