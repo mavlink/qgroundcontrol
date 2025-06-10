@@ -349,7 +349,7 @@ SetupPage {
                                     property alias value: slider.value
                                     property int sliderIndex: 0
                                     function stop() {
-                                        slider.value = slider.snap ? slider.channel.min - slider.snapRange : slider.channel.defaultValue
+                                        slider.value = slider.snap ? channel.min - slider.snapRange : channel.defaultValue
                                         sendTimer.stop()
                                     }
 
@@ -470,7 +470,6 @@ SetupPage {
                                             item.channel = actuators.actuatorTest.allMotorsActuator
                                             item.sliderIndex = -1
                                             item.actuatorValueChanged.connect(function(value, sliderValue) {
-                                                sendTimer.stop()
                                                 for (var channelIdx = 0; channelIdx < sliderRepeater.count; channelIdx++) {
                                                     var sliderComponent = sliderRepeater.itemAt(channelIdx)
                                                     if (sliderComponent && sliderComponent.item && sliderComponent.item.channel.isMotor) {
@@ -510,6 +509,7 @@ SetupPage {
 
                         // actuator actions
                         Column {
+                            topPadding: ScreenTools.defaultFontPixelHeight
                             visible: actuators.actuatorActions.count > 0
                             enabled: !safetySwitch.checked && !actuators.motorAssignmentActive
                             Row {
