@@ -127,14 +127,17 @@ Item {
     }
 
     // RPM value positioned to middle-right of slider
-    QGCLabel {
-        visible: motorIndex >= 0 && channel.isMotor && escStatus && escStatus.telemetryAvailable
-        text: _isMotorHealthy() ? _getMotorRPM().toString() : qsTr("ERR")
-        font.pointSize: ScreenTools.smallFontPointSize * 0.8
-        color: _isMotorHealthy() ? qgcPal.text : qgcPal.colorRed
-        x: channelSlider.x + channelSlider.width + 5
-        y: channelSlider.y + channelSlider.height / 2 - height / 2
-    }
+    // QGCLabel {
+    //     visible: motorIndex >= 0 && channel.isMotor && escStatus && escStatus.telemetryAvailable
+    //     text: _isMotorHealthy() ? _getMotorRPM().toString() : qsTr("ERR")
+    //     // font.pointSize: ScreenTools.smallFontPointSize * 0.8
+    //     color: _isMotorHealthy() ? qgcPal.text : qgcPal.colorRed
+    //     // x: channelSlider.x + channelSlider.width + 5
+    //     // y: channelSlider.y + channelSlider.height / 2 - height / 2
+    //     transform: [
+    //         Translate { y: channelSlider.y + channelSlider.height / 2 - height / 2 }
+    //     ]
+    // }
 
     QGCLabel {
         id: channelLabel
