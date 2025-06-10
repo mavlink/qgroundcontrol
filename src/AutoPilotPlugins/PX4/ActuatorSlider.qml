@@ -79,15 +79,30 @@ Item {
 
     signal actuatorValueChanged(real value, real sliderValue)
 
+    // RPM value positioned above the slider
+    QGCLabel {
+        id: rpmLabel
+        visible: motorIndex >= 0 && channel.isMotor && escStatus && escStatus.telemetryAvailable
+        text: _isMotorHealthy() ? _getMotorRPM().toString() : qsTr("ERR")
+        color: _isMotorHealthy() ? qgcPal.text : qgcPal.colorRed
+
+        // Center horizontally and position above slider
+        anchors.horizontalCenter: channelSlider.horizontalCenter
+        anchors.bottom: channelSlider.top
+        anchors.bottomMargin: 2
+    }
+
     QGCSlider {
         id:                         channelSlider
         orientation:                Qt.Vertical
-        from:               snap ? channel.min - snapRange : channel.min
-        to:               channel.max
+        from:                       snap ? channel.min - snapRange : channel.min
+        to:                         channel.max
         stepSize:                   (channel.max-channel.min)/100
         value:                      defaultVal
-        live:   true
+        live:                       true
         anchors.horizontalCenter:   parent.horizontalCenter
+        anchors.top:                parent.top
+        anchors.topMargin:          20  // Leave space for RPM label above
         height:                     ScreenTools.defaultFontPixelHeight * _sliderHeight
         indicatorBarVisible:        sendTimer.running
 
@@ -126,27 +141,16 @@ Item {
         }
     }
 
-    // RPM value positioned to middle-right of slider
-    // QGCLabel {
-    //     visible: motorIndex >= 0 && channel.isMotor && escStatus && escStatus.telemetryAvailable
-    //     text: _isMotorHealthy() ? _getMotorRPM().toString() : qsTr("ERR")
-    //     // font.pointSize: ScreenTools.smallFontPointSize * 0.8
-    //     color: _isMotorHealthy() ? qgcPal.text : qgcPal.colorRed
-    //     // x: channelSlider.x + channelSlider.width + 5
-    //     // y: channelSlider.y + channelSlider.height / 2 - height / 2
-    //     transform: [
-    //         Translate { y: channelSlider.y + channelSlider.height / 2 - height / 2 }
-    //     ]
-    // }
-
     QGCLabel {
         id: channelLabel
         text: channel.label
         font.pointSize: ScreenTools.defaultFontPointSize
         width: contentHeight
         height: contentWidth
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 6
         transform: [
-            Rotation { origin.x: 0; origin.y: 0; angle: -90 },
+            Rotation { origin.x: -5; origin.y: 0; angle: -90 },
             Translate { y: channelLabel.height + 5 }
         ]
     }
