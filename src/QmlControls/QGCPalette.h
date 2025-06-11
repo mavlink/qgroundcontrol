@@ -144,6 +144,7 @@ public:
     DEFINE_QGC_COLOR(colorRed,                      setColorRed)
     DEFINE_QGC_COLOR(colorGrey,                     setColorGrey)
     DEFINE_QGC_COLOR(colorBlue,                     setColorBlue)
+    DEFINE_QGC_COLOR(colorWhite,                    setColorWhite)
     DEFINE_QGC_COLOR(alertBackground,               setAlertBackground)
     DEFINE_QGC_COLOR(alertBorder,                   setAlertBorder)
     DEFINE_QGC_COLOR(alertText,                     setAlertText)
