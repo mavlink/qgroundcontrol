@@ -36,6 +36,9 @@ VehicleGPSFactGroup::VehicleGPSFactGroup(QObject *parent)
     _hdopFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _vdopFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _courseOverGroundFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+    _spoofingStateFact.setRawValue(0);
+    _jammingStateFact.setRawValue(0);
+    _authenticationStateFact.setRawValue(0);
 }
 
 void VehicleGPSFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)
@@ -105,7 +108,7 @@ void VehicleGPSFactGroup::_handleHighLatency2(const mavlink_message_t &message)
     _setTelemetryAvailable(true);
 }
 
-void VehicleGPSFactGroup::_handleGnssIntegrity(mavlink_message_t& message)
+void VehicleGPSFactGroup::_handleGnssIntegrity(const mavlink_message_t& message)
 {
     mavlink_gnss_integrity_t gnssIntegrity;
     mavlink_msg_gnss_integrity_decode(&message, &gnssIntegrity);

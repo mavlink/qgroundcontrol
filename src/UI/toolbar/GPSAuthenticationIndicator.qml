@@ -86,8 +86,6 @@ Item {
         ColumnLayout{
             spacing: ScreenTools.defaultFontPixelHeight / 2
 
-            property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
-
             SettingsGroupLayout {
                 heading: qsTr("GPS Authentication")
                 contentSpacing: 0
