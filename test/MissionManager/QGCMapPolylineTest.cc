@@ -94,6 +94,7 @@ void QGCMapPolylineTest::_testVertexManipulation()
         QCOMPARE(_mapPolyline->count(), i);
 
         _mapPolyline->appendVertex(_linePoints[i]);
+        QTest::qWait(100); // Let event loop process so queued signals flow through
         QVERIFY(_multiSpyPolyline->checkOnlySignalByMask(_pathChangedMask | _dirtyChangedMask | _countChangedMask | _isEmptyChangedMask | _isValidChangedMask));
         QVERIFY(_multiSpyModel->checkSignalByMask(_modelDirtyChangedMask | _modelCountChangedMask));
         QCOMPARE(_multiSpyPolyline->pullIntFromSignal("countChanged"), i+1);
@@ -123,6 +124,7 @@ void QGCMapPolylineTest::_testVertexManipulation()
 
     QGeoCoordinate adjustCoord(_linePoints[1].latitude() + 1, _linePoints[1].longitude() + 1);
     _mapPolyline->adjustVertex(1, adjustCoord);
+    QTest::qWait(100); // Let event loop process so queued signals flow through
     QVERIFY(_multiSpyPolyline->checkOnlySignalByMask(_pathChangedMask | _dirtyChangedMask));
     QVERIFY(_multiSpyModel->checkOnlySignalByMask(_modelDirtyChangedMask));
 
