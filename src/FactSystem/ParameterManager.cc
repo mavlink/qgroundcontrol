@@ -134,9 +134,10 @@ void ParameterManager::_updateProgressBar()
 
 void ParameterManager::mavlinkMessageReceived(const mavlink_message_t &message)
 {
-    if (_tryftp && (message.compid == MAV_COMP_ID_AUTOPILOT1) && !_initialLoadComplete)
+    if (_tryftp && (message.compid == MAV_COMP_ID_AUTOPILOT1) && !_initialLoadComplete) {
         // FIXME: we are not using FTP as this way updating parameters from other components other than autopilot is not happening
         // return;
+    }
 
     if (message.msgid == MAVLINK_MSG_ID_PARAM_VALUE) {
         mavlink_param_value_t param_value{};
