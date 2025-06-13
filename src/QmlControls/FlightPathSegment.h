@@ -35,8 +35,8 @@ public:
 
     FlightPathSegment(SegmentType segmentType, const QGeoCoordinate& coord1, double coord1AMSLAlt, const QGeoCoordinate& coord2, double coord2AMSLAlt, bool queryTerrainData, QObject* parent);
 
-    Q_PROPERTY(QGeoCoordinate   coordinate1             MEMBER _coord1                                          NOTIFY coordinate1Changed)
-    Q_PROPERTY(QGeoCoordinate   coordinate2             MEMBER _coord2                                          NOTIFY coordinate2Changed)
+    Q_PROPERTY(QGeoCoordinate   coordinate1             READ   coordinate1              WRITE setCoordinate1    NOTIFY coordinate1Changed)
+    Q_PROPERTY(QGeoCoordinate   coordinate2             READ   coordinate2              WRITE setCoordinate2    NOTIFY coordinate2Changed)
     Q_PROPERTY(double           coord1AMSLAlt           MEMBER _coord1AMSLAlt                                   NOTIFY coord1AMSLAltChanged)
     Q_PROPERTY(double           coord2AMSLAlt           MEMBER _coord2AMSLAlt                                   NOTIFY coord2AMSLAltChanged)
     Q_PROPERTY(bool             specialVisual           READ specialVisual              WRITE setSpecialVisual  NOTIFY specialVisualChanged)
@@ -64,6 +64,8 @@ public:
 public slots:
     void setCoordinate1     (const QGeoCoordinate& coordinate);
     void setCoordinate2     (const QGeoCoordinate& coordinate);
+    void setCoord1LoiterRadius(double loiterRadius);
+    void setCoord2LoiterRadius(double loiterRadius);
     void setCoord1AMSLAlt   (double alt);
     void setCoord2AMSLAlt   (double alt);
 
@@ -86,10 +88,16 @@ private slots:
     void _updateTerrainCollision    (void);
 
 private:
+
+    void adjustCoordinatesForLoiterRadius();
     QGeoCoordinate      _coord1;
     QGeoCoordinate      _coord2;
+    QGeoCoordinate      _realCoord1;
+    QGeoCoordinate      _realCoord2;
     double              _coord1AMSLAlt =                qQNaN();
     double              _coord2AMSLAlt =                qQNaN();
+    double              _coord1LoiterRadius =           qQNaN();
+    double              _coord2LoiterRadius =           qQNaN();
     bool                _queryTerrainData;
     bool                _terrainCollision =             false;
     bool                _specialVisual =                false;
