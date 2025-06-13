@@ -153,20 +153,24 @@ SetupPage {
 
                 // actuator image
                 Image {
+                    id:                     actuatorImage
+                    source:                 "image://actuators/geometry"+refreshFlag
+                    sourceSize.width:       imageSize
+                    sourceSize.height:      imageSize
+                    Layout.preferredWidth:  imageSize
+                    Layout.preferredHeight: imageSize
+                    Layout.alignment:       Qt.AlignHCenter
+                    visible:                actuators.isMultirotor
+                    cache:                  false
+
                     property var refreshFlag:         actuators.imageRefreshFlag
                     readonly property real imageSize: 9 * ScreenTools.defaultFontPixelHeight
 
-                    id:                actuatorImage
-                    source:            "image://actuators/geometry"+refreshFlag
-                    sourceSize.width:  Math.max(parent.width, imageSize)
-                    sourceSize.height: imageSize
-                    visible:           actuators.isMultirotor
-                    cache:             false
                     MouseArea {
                         anchors.fill:  parent
                         onClicked: (mouse) => {
                             if (mouse.button == Qt.LeftButton) {
-                                actuators.imageClicked(mouse.x, mouse.y);
+                                actuators.imageClicked(Qt.size(width, height), mouse.x, mouse.y);
                             }
                         }
                     }
@@ -387,7 +391,6 @@ SetupPage {
                                     onButtonClicked: function (button, role) {
                                         switch (button) {
                                         case MessageDialog.Yes:
-                                            console.log(actuators.motorAssignmentActive)
                                             actuators.startMotorAssignment()
                                             break;
                                         }
