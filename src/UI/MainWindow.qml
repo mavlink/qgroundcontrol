@@ -462,26 +462,23 @@ ApplicationWindow {
         }
     }
 
-    Drawer {
+    Rectangle {
         id:             toolDrawer
-        width:          mainWindow.width
-        height:         mainWindow.height
-        edge:           Qt.LeftEdge
-        dragMargin:     0
-        closePolicy:    Drawer.NoAutoClose
-        interactive:    false
+        anchors.fill:   parent
         visible:        false
+        color:          qgcPal.window
 
         property var backIcon
         property string toolTitle
         property alias toolSource:  toolDrawerLoader.source
         property var toolIcon
 
-        // Unload the loader only after closed, otherwise we will see a "blank" loader in the meantime
-        onClosed: {
-            toolDrawer.toolSource = ""
+        onVisibleChanged: {
+            if (!toolDrawer.visible) {
+                toolDrawerLoader.source = ""
+            }
         }
-        
+
         Rectangle {
             id:             toolDrawerToolbar
             anchors.left:   parent.left
