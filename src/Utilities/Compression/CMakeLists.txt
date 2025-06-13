@@ -25,11 +25,10 @@ CPMAddPackage(
     GIT_TAG develop
     OPTIONS
         "ZLIB_BUILD_TESTING OFF"
-        "ZLIB_BUILD_SHARED OFF"
+        "ZLIB_BUILD_SHARED ON"
         "ZLIB_BUILD_STATIC ON"
         "ZLIB_BUILD_MINIZIP OFF"
         "ZLIB_INSTALL OFF"
-        "ZLIB_PREFIX OFF"
         "${ZLIB_EXTRA_OPTIONS}"
 )
 
