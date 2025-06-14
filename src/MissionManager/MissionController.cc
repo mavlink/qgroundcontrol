@@ -1183,8 +1183,44 @@ FlightPathSegment* MissionController::_createFlightPathSegmentWorker(VisualItemP
     } else if (pair.second->isLandCommand()) {
         segmentType = FlightPathSegment::SegmentTypeLand;
     }
+    SimpleMissionItem* firstItem = nullptr;
+    SimpleMissionItem* secondItem = nullptr;
+    LandingComplexItem* secondLandingItem = nullptr;
+    if (pair.first->isSimpleItem()) {
+        firstItem = qobject_cast<SimpleMissionItem*>(pair.first);
+    }
+    if (pair.second->isSimpleItem()) {
+        secondItem = qobject_cast<SimpleMissionItem*>(pair.second);
+    } else if (pair.second->isLandCommand()){
+        secondLandingItem = qobject_cast<LandingComplexItem*>(pair.second);
+    }
 
     FlightPathSegment* segment = new FlightPathSegment(segmentType, coord1, coord1AMSLAlt, coord2, coord2AMSLAlt, !_flyView /* queryTerrainData */,  this);
+    if (firstItem && firstItem->isLoiterItem()) {
+        segment->setCoord1LoiterRadius(firstItem->loiterRadius());
+        connect(firstItem, &SimpleMissionItem::loiterRadiusChanged, segment, &FlightPathSegment::setCoord1LoiterRadius);
+    }
+    if (secondItem && secondItem->isLoiterItem()) {
+        segment->setCoord2LoiterRadius(secondItem->loiterRadius());
+        connect(secondItem, &SimpleMissionItem::loiterRadiusChanged, segment,
+                &FlightPathSegment::setCoord2LoiterRadius);
+    } else if (secondLandingItem && secondLandingItem->loiterRadius()) {
+        auto calculateSignedRadius = [secondLandingItem](const QVariant& radiusValue) -> double {
+            bool clockwise = secondLandingItem->loiterClockwise()->rawValue().toBool();
+            return clockwise ? radiusValue.toDouble() : -radiusValue.toDouble();
+        };
+        double radius = calculateSignedRadius(secondLandingItem->loiterRadius()->rawValue());
+        segment->setCoord2LoiterRadius(radius);
+        connect(secondLandingItem->loiterRadius(), &Fact::rawValueChanged, segment, [=](const QVariant& value) {
+            segment->setCoord2LoiterRadius(calculateSignedRadius(value));
+        });
+        connect(secondLandingItem->loiterClockwise(), &Fact::rawValueChanged, segment, [=](const QVariant& value) {
+            bool clockwise = value.toBool();
+            double radius = clockwise ? secondLandingItem->loiterRadius()->rawValue().toDouble()
+                                      : -secondLandingItem->loiterRadius()->rawValue().toDouble();
+            segment->setCoord2LoiterRadius(radius);
+        });
+    }
 
     if (takeoffStraightUp) {
         connect(pair.second, &VisualMissionItem::amslEntryAltChanged, segment, &FlightPathSegment::setCoord1AMSLAlt);
