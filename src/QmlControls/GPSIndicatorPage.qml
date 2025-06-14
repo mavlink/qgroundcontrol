@@ -61,6 +61,11 @@ ToolIndicatorPage {
                     label:      qsTr("Course Over Ground")
                     labelText:  activeVehicle ? activeVehicle.gps.courseOverGround.valueString : valueNA
                 }
+
+                LabelledLabel {
+                    label:      qsTr("Yaw")
+                    labelText:  activeVehicle ? activeVehicle.gps.yaw.valueString : valueNA
+                }
             }
 
             SettingsGroupLayout {
