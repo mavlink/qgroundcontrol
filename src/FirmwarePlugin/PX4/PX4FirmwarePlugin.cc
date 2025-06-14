@@ -282,7 +282,7 @@ QString PX4FirmwarePlugin::missionCommandOverrides(QGCMAVLink::VehicleClass_t ve
 
 QObject* PX4FirmwarePlugin::_loadParameterMetaData(const QString& metaDataFile)
 {
-    PX4ParameterMetaData* metaData = new PX4ParameterMetaData;
+    PX4ParameterMetaData* metaData = new PX4ParameterMetaData(this);
     if (!metaDataFile.isEmpty()) {
         metaData->loadParameterFactMetaDataFile(metaDataFile);
     }
