@@ -41,7 +41,7 @@ Rectangle {
     property string _setToVehicleLocationStr:   qsTr("Set to vehicle location")
     property bool   _showCameraSection:         !_missionVehicle.apmFirmware
     property int    _altitudeMode:              missionItem.altitudesAreRelative ? QGroundControl.AltitudeModeRelative : QGroundControl.AltitudeModeAbsolute
-    property real   _previousLoiterRadius:      0
+
 
     Column {
         id:                 editorColumn
@@ -69,22 +69,6 @@ Rectangle {
             FactCheckBox {
                 text:       qsTr("Use loiter to altitude")
                 fact:       missionItem.useLoiterToAlt
-
-                // When not using loiter to altitude, set radius to 0 to set the
-                // glide slope heading correctly
-                onCheckedChanged: {
-                    if (checked) {
-                        // Restore the previous loiter radius or set the default value
-                        if (_previousLoiterRadius > 0) {
-                            missionItem.loiterRadius.rawValue = _previousLoiterRadius
-                        } else {
-                            missionItem.loiterRadius.rawValue = missionItem.loiterRadius.defaultValue
-                        }
-                    } else {
-                        _previousLoiterRadius = missionItem.loiterRadius.rawValue
-                        missionItem.loiterRadius.rawValue = 0
-                    }
-                }
             }
 
             GridLayout {
