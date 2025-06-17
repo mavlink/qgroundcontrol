@@ -14,64 +14,63 @@
 class VehicleEscStatusFactGroup : public FactGroup
 {
     Q_OBJECT
-    Q_PROPERTY(Fact *index          READ index          CONSTANT)
-    Q_PROPERTY(Fact *count          READ count          CONSTANT)
-    Q_PROPERTY(Fact *info           READ info           CONSTANT)
-    Q_PROPERTY(Fact *rpmFirst       READ rpmFirst       CONSTANT)
-    Q_PROPERTY(Fact *rpmSecond      READ rpmSecond      CONSTANT)
-    Q_PROPERTY(Fact *rpmThird       READ rpmThird       CONSTANT)
-    Q_PROPERTY(Fact *rpmFourth      READ rpmFourth      CONSTANT)
-    Q_PROPERTY(Fact *rpmFifth       READ rpmFifth       CONSTANT)
-    Q_PROPERTY(Fact *rpmSixth       READ rpmSixth       CONSTANT)
-    Q_PROPERTY(Fact *rpmSeventh     READ rpmSeventh     CONSTANT)
-    Q_PROPERTY(Fact *rpmEighth      READ rpmEighth      CONSTANT)
-    Q_PROPERTY(Fact *currentFirst   READ currentFirst   CONSTANT)
-    Q_PROPERTY(Fact *currentSecond  READ currentSecond  CONSTANT)
-    Q_PROPERTY(Fact *currentThird   READ currentThird   CONSTANT)
-    Q_PROPERTY(Fact *currentFourth  READ currentFourth  CONSTANT)
-    Q_PROPERTY(Fact *currentFifth   READ currentFifth   CONSTANT)
-    Q_PROPERTY(Fact *currentSixth   READ currentSixth   CONSTANT)
-    Q_PROPERTY(Fact *currentSeventh READ currentSeventh CONSTANT)
-    Q_PROPERTY(Fact *currentEighth  READ currentEighth  CONSTANT)
-    Q_PROPERTY(Fact *voltageFirst   READ voltageFirst   CONSTANT)
-    Q_PROPERTY(Fact *voltageSecond  READ voltageSecond  CONSTANT)
-    Q_PROPERTY(Fact *voltageThird   READ voltageThird   CONSTANT)
-    Q_PROPERTY(Fact *voltageFourth  READ voltageFourth  CONSTANT)
-    Q_PROPERTY(Fact *voltageFifth   READ voltageFifth   CONSTANT)
-    Q_PROPERTY(Fact *voltageSixth   READ voltageSixth   CONSTANT)
-    Q_PROPERTY(Fact *voltageSeventh READ voltageSeventh CONSTANT)
-    Q_PROPERTY(Fact *voltageEighth  READ voltageEighth  CONSTANT)
-    Q_PROPERTY(Fact *temperatureFirst   READ temperatureFirst   CONSTANT)
-    Q_PROPERTY(Fact *temperatureSecond  READ temperatureSecond  CONSTANT)
-    Q_PROPERTY(Fact *temperatureThird   READ temperatureThird   CONSTANT)
-    Q_PROPERTY(Fact *temperatureFourth  READ temperatureFourth  CONSTANT)
-    Q_PROPERTY(Fact *temperatureFifth   READ temperatureFifth   CONSTANT)
-    Q_PROPERTY(Fact *temperatureSixth   READ temperatureSixth   CONSTANT)
-    Q_PROPERTY(Fact *temperatureSeventh READ temperatureSeventh CONSTANT)
-    Q_PROPERTY(Fact *temperatureEighth  READ temperatureEighth  CONSTANT)
-    Q_PROPERTY(Fact *errorCountFirst    READ errorCountFirst    CONSTANT)
-    Q_PROPERTY(Fact *errorCountSecond   READ errorCountSecond   CONSTANT)
-    Q_PROPERTY(Fact *errorCountThird    READ errorCountThird    CONSTANT)
-    Q_PROPERTY(Fact *errorCountFourth   READ errorCountFourth   CONSTANT)
-    Q_PROPERTY(Fact *errorCountFifth    READ errorCountFifth    CONSTANT)
-    Q_PROPERTY(Fact *errorCountSixth    READ errorCountSixth    CONSTANT)
-    Q_PROPERTY(Fact *errorCountSeventh  READ errorCountSeventh  CONSTANT)
-    Q_PROPERTY(Fact *errorCountEighth   READ errorCountEighth   CONSTANT)
-    Q_PROPERTY(Fact *failureFlagsFirst    READ failureFlagsFirst    CONSTANT)
-    Q_PROPERTY(Fact *failureFlagsSecond   READ failureFlagsSecond   CONSTANT)
-    Q_PROPERTY(Fact *failureFlagsThird    READ failureFlagsThird    CONSTANT)
-    Q_PROPERTY(Fact *failureFlagsFourth   READ failureFlagsFourth   CONSTANT)
-    Q_PROPERTY(Fact *failureFlagsFifth    READ failureFlagsFifth    CONSTANT)
-    Q_PROPERTY(Fact *failureFlagsSixth    READ failureFlagsSixth    CONSTANT)
-    Q_PROPERTY(Fact *failureFlagsSeventh  READ failureFlagsSeventh  CONSTANT)
-    Q_PROPERTY(Fact *failureFlagsEighth   READ failureFlagsEighth   CONSTANT)
+    Q_PROPERTY(Fact *count                  READ count                  CONSTANT)
+    Q_PROPERTY(Fact *info                   READ info                   CONSTANT)
+    Q_PROPERTY(Fact *rpmFirst               READ rpmFirst               CONSTANT)
+    Q_PROPERTY(Fact *rpmSecond              READ rpmSecond              CONSTANT)
+    Q_PROPERTY(Fact *rpmThird               READ rpmThird               CONSTANT)
+    Q_PROPERTY(Fact *rpmFourth              READ rpmFourth              CONSTANT)
+    Q_PROPERTY(Fact *rpmFifth               READ rpmFifth               CONSTANT)
+    Q_PROPERTY(Fact *rpmSixth               READ rpmSixth               CONSTANT)
+    Q_PROPERTY(Fact *rpmSeventh             READ rpmSeventh             CONSTANT)
+    Q_PROPERTY(Fact *rpmEighth              READ rpmEighth              CONSTANT)
+    Q_PROPERTY(Fact *currentFirst           READ currentFirst           CONSTANT)
+    Q_PROPERTY(Fact *currentSecond          READ currentSecond          CONSTANT)
+    Q_PROPERTY(Fact *currentThird           READ currentThird           CONSTANT)
+    Q_PROPERTY(Fact *currentFourth          READ currentFourth          CONSTANT)
+    Q_PROPERTY(Fact *currentFifth           READ currentFifth           CONSTANT)
+    Q_PROPERTY(Fact *currentSixth           READ currentSixth           CONSTANT)
+    Q_PROPERTY(Fact *currentSeventh         READ currentSeventh         CONSTANT)
+    Q_PROPERTY(Fact *currentEighth          READ currentEighth          CONSTANT)
+    Q_PROPERTY(Fact *voltageFirst           READ voltageFirst           CONSTANT)
+    Q_PROPERTY(Fact *voltageSecond          READ voltageSecond          CONSTANT)
+    Q_PROPERTY(Fact *voltageThird           READ voltageThird           CONSTANT)
+    Q_PROPERTY(Fact *voltageFourth          READ voltageFourth          CONSTANT)
+    Q_PROPERTY(Fact *voltageFifth           READ voltageFifth           CONSTANT)
+    Q_PROPERTY(Fact *voltageSixth           READ voltageSixth           CONSTANT)
+    Q_PROPERTY(Fact *voltageSeventh         READ voltageSeventh         CONSTANT)
+    Q_PROPERTY(Fact *voltageEighth          READ voltageEighth          CONSTANT)
+    Q_PROPERTY(Fact *temperatureFirst       READ temperatureFirst       CONSTANT)
+    Q_PROPERTY(Fact *temperatureSecond      READ temperatureSecond      CONSTANT)
+    Q_PROPERTY(Fact *temperatureThird       READ temperatureThird       CONSTANT)
+    Q_PROPERTY(Fact *temperatureFourth      READ temperatureFourth      CONSTANT)
+    Q_PROPERTY(Fact *temperatureFifth       READ temperatureFifth       CONSTANT)
+    Q_PROPERTY(Fact *temperatureSixth       READ temperatureSixth       CONSTANT)
+    Q_PROPERTY(Fact *temperatureSeventh     READ temperatureSeventh     CONSTANT)
+    Q_PROPERTY(Fact *temperatureEighth      READ temperatureEighth      CONSTANT)
+    Q_PROPERTY(Fact *errorCountFirst        READ errorCountFirst        CONSTANT)
+    Q_PROPERTY(Fact *errorCountSecond       READ errorCountSecond       CONSTANT)
+    Q_PROPERTY(Fact *errorCountThird        READ errorCountThird        CONSTANT)
+    Q_PROPERTY(Fact *errorCountFourth       READ errorCountFourth       CONSTANT)
+    Q_PROPERTY(Fact *errorCountFifth        READ errorCountFifth        CONSTANT)
+    Q_PROPERTY(Fact *errorCountSixth        READ errorCountSixth        CONSTANT)
+    Q_PROPERTY(Fact *errorCountSeventh      READ errorCountSeventh      CONSTANT)
+    Q_PROPERTY(Fact *errorCountEighth       READ errorCountEighth       CONSTANT)
+    Q_PROPERTY(Fact *failureFlagsFirst      READ failureFlagsFirst      CONSTANT)
+    Q_PROPERTY(Fact *failureFlagsSecond     READ failureFlagsSecond     CONSTANT)
+    Q_PROPERTY(Fact *failureFlagsThird      READ failureFlagsThird      CONSTANT)
+    Q_PROPERTY(Fact *failureFlagsFourth     READ failureFlagsFourth     CONSTANT)
+    Q_PROPERTY(Fact *failureFlagsFifth      READ failureFlagsFifth      CONSTANT)
+    Q_PROPERTY(Fact *failureFlagsSixth      READ failureFlagsSixth      CONSTANT)
+    Q_PROPERTY(Fact *failureFlagsSeventh    READ failureFlagsSeventh    CONSTANT)
+    Q_PROPERTY(Fact *failureFlagsEighth     READ failureFlagsEighth     CONSTANT)
 
 public:
     explicit VehicleEscStatusFactGroup(QObject *parent = nullptr);
 
-    Fact *index() { return &_indexFact; }
     Fact *count() { return &_countFact; }
     Fact *info() { return &_infoFact; }
+
     Fact *rpmFirst() { return &_rpmFirstFact; }
     Fact *rpmSecond() { return &_rpmSecondFact; }
     Fact *rpmThird() { return &_rpmThirdFact; }
@@ -130,17 +129,18 @@ public:
     void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) final;
 
 private:
-    Fact _indexFact = Fact(0, QStringLiteral("index"), FactMetaData::valueTypeUint8);
     Fact _countFact = Fact(0, QStringLiteral("count"), FactMetaData::valueTypeUint8);
-    Fact _infoFact = Fact(0, QStringLiteral("info"), FactMetaData::valueTypeUint64);
-    Fact _rpmFirstFact = Fact(0, QStringLiteral("rpm1"), FactMetaData::valueTypeFloat);
-    Fact _rpmSecondFact = Fact(0, QStringLiteral("rpm2"), FactMetaData::valueTypeFloat);
-    Fact _rpmThirdFact = Fact(0, QStringLiteral("rpm3"), FactMetaData::valueTypeFloat);
-    Fact _rpmFourthFact = Fact(0, QStringLiteral("rpm4"), FactMetaData::valueTypeFloat);
-    Fact _rpmFifthFact = Fact(0, QStringLiteral("rpm5"), FactMetaData::valueTypeFloat);
-    Fact _rpmSixthFact = Fact(0, QStringLiteral("rpm6"), FactMetaData::valueTypeFloat);
-    Fact _rpmSeventhFact = Fact(0, QStringLiteral("rpm7"), FactMetaData::valueTypeFloat);
-    Fact _rpmEighthFact = Fact(0, QStringLiteral("rpm8"), FactMetaData::valueTypeFloat);
+
+    Fact _infoFact = Fact(0, QStringLiteral("info"), FactMetaData::valueTypeUint8);
+
+    Fact _rpmFirstFact = Fact(0, QStringLiteral("rpm1"), FactMetaData::valueTypeInt32);
+    Fact _rpmSecondFact = Fact(0, QStringLiteral("rpm2"), FactMetaData::valueTypeInt32);
+    Fact _rpmThirdFact = Fact(0, QStringLiteral("rpm3"), FactMetaData::valueTypeInt32);
+    Fact _rpmFourthFact = Fact(0, QStringLiteral("rpm4"), FactMetaData::valueTypeInt32);
+    Fact _rpmFifthFact = Fact(0, QStringLiteral("rpm5"), FactMetaData::valueTypeInt32);
+    Fact _rpmSixthFact = Fact(0, QStringLiteral("rpm6"), FactMetaData::valueTypeInt32);
+    Fact _rpmSeventhFact = Fact(0, QStringLiteral("rpm7"), FactMetaData::valueTypeInt32);
+    Fact _rpmEighthFact = Fact(0, QStringLiteral("rpm8"), FactMetaData::valueTypeInt32);
 
     Fact _currentFirstFact = Fact(0, QStringLiteral("current1"), FactMetaData::valueTypeFloat);
     Fact _currentSecondFact = Fact(0, QStringLiteral("current2"), FactMetaData::valueTypeFloat);
@@ -178,12 +178,12 @@ private:
     Fact _errorCountSeventhFact = Fact(0, QStringLiteral("errorCount7"), FactMetaData::valueTypeUint32);
     Fact _errorCountEighthFact = Fact(0, QStringLiteral("errorCount8"), FactMetaData::valueTypeUint32);
 
-    Fact _failureFlagsFirstFact = Fact(0, QStringLiteral("failureFlags1"), FactMetaData::valueTypeUint32);
-    Fact _failureFlagsSecondFact = Fact(0, QStringLiteral("failureFlags2"), FactMetaData::valueTypeUint32);
-    Fact _failureFlagsThirdFact = Fact(0, QStringLiteral("failureFlags3"), FactMetaData::valueTypeUint32);
-    Fact _failureFlagsFourthFact = Fact(0, QStringLiteral("failureFlags4"), FactMetaData::valueTypeUint32);
-    Fact _failureFlagsFifthFact = Fact(0, QStringLiteral("failureFlags5"), FactMetaData::valueTypeUint32);
-    Fact _failureFlagsSixthFact = Fact(0, QStringLiteral("failureFlags6"), FactMetaData::valueTypeUint32);
-    Fact _failureFlagsSeventhFact = Fact(0, QStringLiteral("failureFlags7"), FactMetaData::valueTypeUint32);
-    Fact _failureFlagsEighthFact = Fact(0, QStringLiteral("failureFlags8"), FactMetaData::valueTypeUint32);
+    Fact _failureFlagsFirstFact = Fact(0, QStringLiteral("failureFlags1"), FactMetaData::valueTypeUint16);
+    Fact _failureFlagsSecondFact = Fact(0, QStringLiteral("failureFlags2"), FactMetaData::valueTypeUint16);
+    Fact _failureFlagsThirdFact = Fact(0, QStringLiteral("failureFlags3"), FactMetaData::valueTypeUint16);
+    Fact _failureFlagsFourthFact = Fact(0, QStringLiteral("failureFlags4"), FactMetaData::valueTypeUint16);
+    Fact _failureFlagsFifthFact = Fact(0, QStringLiteral("failureFlags5"), FactMetaData::valueTypeUint16);
+    Fact _failureFlagsSixthFact = Fact(0, QStringLiteral("failureFlags6"), FactMetaData::valueTypeUint16);
+    Fact _failureFlagsSeventhFact = Fact(0, QStringLiteral("failureFlags7"), FactMetaData::valueTypeUint16);
+    Fact _failureFlagsEighthFact = Fact(0, QStringLiteral("failureFlags8"), FactMetaData::valueTypeUint16);
 };
