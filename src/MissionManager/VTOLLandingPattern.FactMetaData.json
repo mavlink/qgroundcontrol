@@ -5,7 +5,7 @@
 [
 {
     "name":             "LandingDistance",
-    "shortDesc":        "Distance between landing and approach points.",
+    "shortDesc":        "Distance between approach and land points.",
     "type":             "double",
     "units":            "m",
     "min":              10,
