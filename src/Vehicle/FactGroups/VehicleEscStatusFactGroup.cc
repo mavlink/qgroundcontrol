@@ -13,7 +13,6 @@
 VehicleEscStatusFactGroup::VehicleEscStatusFactGroup(QObject *parent)
     : FactGroup(1000, QStringLiteral(":/json/Vehicle/EscStatusFactGroup.json"), parent)
 {
-    _addFact(&_indexFact);
     _addFact(&_countFact);
     _addFact(&_infoFact);
 
@@ -77,92 +76,95 @@ void VehicleEscStatusFactGroup::handleMessage(Vehicle *vehicle, const mavlink_me
     Q_UNUSED(vehicle);
 
     if (message.msgid == MAVLINK_MSG_ID_ESC_STATUS) {
-        mavlink_esc_status_t content{};
-        mavlink_msg_esc_status_decode(&message, &content);
+        mavlink_esc_status_t esc_status{};
+        mavlink_msg_esc_status_decode(&message, &esc_status);
 
-        index()->setRawValue(content.index);
-
-        // ESC_STATUS supports up to 8 motors in the arrays
-        rpmFirst()->setRawValue(content.rpm[0]);
-        rpmSecond()->setRawValue(content.rpm[1]);
-        rpmThird()->setRawValue(content.rpm[2]);
-        rpmFourth()->setRawValue(content.rpm[3]);
-        rpmFifth()->setRawValue(content.rpm[4]);
-        rpmSixth()->setRawValue(content.rpm[5]);
-        rpmSeventh()->setRawValue(content.rpm[6]);
-        rpmEighth()->setRawValue(content.rpm[7]);
-
-        currentFirst()->setRawValue(content.current[0]);
-        currentSecond()->setRawValue(content.current[1]);
-        currentThird()->setRawValue(content.current[2]);
-        currentFourth()->setRawValue(content.current[3]);
-        currentFifth()->setRawValue(content.current[4]);
-        currentSixth()->setRawValue(content.current[5]);
-        currentSeventh()->setRawValue(content.current[6]);
-        currentEighth()->setRawValue(content.current[7]);
-
-        voltageFirst()->setRawValue(content.voltage[0]);
-        voltageSecond()->setRawValue(content.voltage[1]);
-        voltageThird()->setRawValue(content.voltage[2]);
-        voltageFourth()->setRawValue(content.voltage[3]);
-        voltageFifth()->setRawValue(content.voltage[4]);
-        voltageSixth()->setRawValue(content.voltage[5]);
-        voltageSeventh()->setRawValue(content.voltage[6]);
-        voltageEighth()->setRawValue(content.voltage[7]);
-
-        _setTelemetryAvailable(true);
-    } else if (message.msgid == MAVLINK_MSG_ID_ESC_INFO) {
-        mavlink_esc_info_t content{};
-        mavlink_msg_esc_info_decode(&message, &content);
-
-        // ESC_INFO contains count, info bitmask, temperature and error count data
-        // The index field tells us which ESC this data is for
-        
-        // Store the count and info bitmask (these are global for this ESC index)
-        count()->setRawValue(content.count);
-        info()->setRawValue(content.info);
-        
-        switch (content.index) {
+        // Index - is motors 1-4, index 4 is motors 5-8
+        // NOTE: we will discard messgaes with indices other than 0 and 4
+        switch (esc_status.index) {
         case 0:
-            // Temperature is in centi-celsius, convert to celsius
-            temperatureFirst()->setRawValue(content.temperature[0] / 100.0);
-            temperatureSecond()->setRawValue(content.temperature[1] / 100.0);
-            temperatureThird()->setRawValue(content.temperature[2] / 100.0);
-            temperatureFourth()->setRawValue(content.temperature[3] / 100.0);
-            
-            // Error counts
-            errorCountFirst()->setRawValue(content.error_count[0]);
-            errorCountSecond()->setRawValue(content.error_count[1]);
-            errorCountThird()->setRawValue(content.error_count[2]);
-            errorCountFourth()->setRawValue(content.error_count[3]);
+            rpmFirst()->setRawValue(esc_status.rpm[0]);
+            rpmSecond()->setRawValue(esc_status.rpm[1]);
+            rpmThird()->setRawValue(esc_status.rpm[2]);
+            rpmFourth()->setRawValue(esc_status.rpm[3]);
+            currentFirst()->setRawValue(esc_status.current[0]);
+            currentSecond()->setRawValue(esc_status.current[1]);
+            currentThird()->setRawValue(esc_status.current[2]);
+            currentFourth()->setRawValue(esc_status.current[3]);
+            voltageFirst()->setRawValue(esc_status.voltage[0]);
+            voltageSecond()->setRawValue(esc_status.voltage[1]);
+            voltageThird()->setRawValue(esc_status.voltage[2]);
+            voltageFourth()->setRawValue(esc_status.voltage[3]);
+        case 4:
+            rpmFifth()->setRawValue(esc_status.rpm[0]);
+            rpmSixth()->setRawValue(esc_status.rpm[1]);
+            rpmSeventh()->setRawValue(esc_status.rpm[2]);
+            rpmEighth()->setRawValue(esc_status.rpm[3]);
+            currentFifth()->setRawValue(esc_status.current[0]);
+            currentSixth()->setRawValue(esc_status.current[1]);
+            currentSeventh()->setRawValue(esc_status.current[2]);
+            currentEighth()->setRawValue(esc_status.current[3]);
+            voltageFifth()->setRawValue(esc_status.voltage[0]);
+            voltageSixth()->setRawValue(esc_status.voltage[1]);
+            voltageSeventh()->setRawValue(esc_status.voltage[2]);
+            voltageEighth()->setRawValue(esc_status.voltage[3]);
+        }
 
-            // Failure flags
-            failureFlagsFirst()->setRawValue(content.failure_flags[0]);
-            failureFlagsSecond()->setRawValue(content.failure_flags[1]);
-            failureFlagsThird()->setRawValue(content.failure_flags[2]);
-            failureFlagsFourth()->setRawValue(content.failure_flags[3]);
-            break;
-        case 1:
-            // ESC index 1 (motors 5-8)
-            temperatureFifth()->setRawValue(content.temperature[0] / 100.0);
-            temperatureSixth()->setRawValue(content.temperature[1] / 100.0);
-            temperatureSeventh()->setRawValue(content.temperature[2] / 100.0);
-            temperatureEighth()->setRawValue(content.temperature[3] / 100.0);
-            
-            errorCountFifth()->setRawValue(content.error_count[0]);
-            errorCountSixth()->setRawValue(content.error_count[1]);
-            errorCountSeventh()->setRawValue(content.error_count[2]);
-            errorCountEighth()->setRawValue(content.error_count[3]);
+    } else if (message.msgid == MAVLINK_MSG_ID_ESC_INFO) {
+        mavlink_esc_info_t esc_info{};
+        mavlink_msg_esc_info_decode(&message, &esc_info);
+        
+        count()->setRawValue(esc_info.count);
 
-            // Failure flags
-            failureFlagsFifth()->setRawValue(content.failure_flags[0]);
-            failureFlagsSixth()->setRawValue(content.failure_flags[1]);
-            failureFlagsSeventh()->setRawValue(content.failure_flags[2]);
-            failureFlagsEighth()->setRawValue(content.failure_flags[3]);
-            break;
-        default:
-            // Support for additional ESC indices can be added here
+        switch (esc_info.index) {
+        case 0:
+        {
+            // Info from first ESC block (4 motors)
+            uint8_t value = (info()->rawValue().toUInt() & 0xF0) | uint8_t(esc_info.info << 0);
+            info()->setRawValue(value);
+
+            temperatureFirst()->setRawValue(esc_info.temperature[0] / 100.0);
+            temperatureSecond()->setRawValue(esc_info.temperature[1] / 100.0);
+            temperatureThird()->setRawValue(esc_info.temperature[2] / 100.0);
+            temperatureFourth()->setRawValue(esc_info.temperature[3] / 100.0);
+            
+            errorCountFirst()->setRawValue(esc_info.error_count[0]);
+            errorCountSecond()->setRawValue(esc_info.error_count[1]);
+            errorCountThird()->setRawValue(esc_info.error_count[2]);
+            errorCountFourth()->setRawValue(esc_info.error_count[3]);
+
+            failureFlagsFirst()->setRawValue(esc_info.failure_flags[0]);
+            failureFlagsSecond()->setRawValue(esc_info.failure_flags[1]);
+            failureFlagsThird()->setRawValue(esc_info.failure_flags[2]);
+            failureFlagsFourth()->setRawValue(esc_info.failure_flags[3]);
             break;
         }
+        case 4:
+        {
+            // Info from second ESC block (4 motors)
+            uint8_t value = (info()->rawValue().toUInt() & 0x0F) | uint8_t(esc_info.info << 0);
+            info()->setRawValue(value);
+
+            temperatureFifth()->setRawValue(esc_info.temperature[0] / 100.0);
+            temperatureSixth()->setRawValue(esc_info.temperature[1] / 100.0);
+            temperatureSeventh()->setRawValue(esc_info.temperature[2] / 100.0);
+            temperatureEighth()->setRawValue(esc_info.temperature[3] / 100.0);
+            
+            errorCountFifth()->setRawValue(esc_info.error_count[0]);
+            errorCountSixth()->setRawValue(esc_info.error_count[1]);
+            errorCountSeventh()->setRawValue(esc_info.error_count[2]);
+            errorCountEighth()->setRawValue(esc_info.error_count[3]);
+
+            failureFlagsFifth()->setRawValue(esc_info.failure_flags[0]);
+            failureFlagsSixth()->setRawValue(esc_info.failure_flags[1]);
+            failureFlagsSeventh()->setRawValue(esc_info.failure_flags[2]);
+            failureFlagsEighth()->setRawValue(esc_info.failure_flags[3]);
+            break;
+        }
+        default:
+            break;
+        }
+
+        _setTelemetryAvailable(true);
     }
 }
