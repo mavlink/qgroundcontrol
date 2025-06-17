@@ -6,6 +6,8 @@ list(APPEND CMAKE_MODULE_PATH
     ${CMAKE_SOURCE_DIR}/cmake/find-modules
 )
 
+include(Helpers)
+
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug;Release")
@@ -533,8 +535,11 @@ qt_add_translations(${CMAKE_PROJECT_NAME}
     LUPDATE_OPTIONS -no-obsolete
 )
 
-set_source_files_properties(resources/qtquickcontrols2.conf PROPERTIES QT_RESOURCE_ALIAS qtquickcontrols2.conf)
-set_source_files_properties(${SDL_GAMECONTROLLERDB_PATH} PROPERTIES QT_RESOURCE_ALIAS gamecontrollerdb.txt)
+qgc_set_qt_resource_alias(
+    resources/qtquickcontrols2.conf
+    ${SDL_GAMECONTROLLERDB_PATH}
+)
+
 qt_add_resources(${CMAKE_PROJECT_NAME} "qgcresources_cmake"
     PREFIX "/"
     FILES
