@@ -18,6 +18,9 @@
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <!-- Needed to keep working while 'asleep' -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Needed for read/write to SD Card Path in AppSettings -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <!-- %%INSERT_FEATURES -->
 

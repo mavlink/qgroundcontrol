@@ -11,6 +11,9 @@
 #pragma once
 
 #include <QtCore/QAbstractListModel>
+#include <QtCore/QLoggingCategory>
+
+Q_DECLARE_LOGGING_CATEGORY(QmlObjectListModelLog)
 
 class QmlObjectListModel : public QAbstractListModel
 {
@@ -60,8 +63,10 @@ public:
     /// Clears the list and calls deleteLater on each entry
     void clearAndDeleteContents     ();
 
-    void beginReset                 ();
-    void endReset                   ();
+    /// These methods handling nesting a begin/end pairs. Such that only the outermost
+    /// beginResetModel/endResetModel pair will emit modelReset.
+    void beginResetModel            ();
+    void endResetModel              ();
 
 signals:
     void countChanged               (int count);
@@ -84,7 +89,7 @@ private:
     
     bool _dirty;
     bool _skipDirtyFirstItem;
-    bool _externalBeginResetModel;
+    uint _resetModelNestingCount = 0;
         
     static constexpr int ObjectRole = Qt::UserRole;
     static constexpr int TextRole = Qt::UserRole + 1;

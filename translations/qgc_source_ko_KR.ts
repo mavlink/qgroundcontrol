@@ -10408,6 +10408,103 @@ Click Ok to start the auto-tuning process.
       <translation type="unfinished">Send Status Text and Voice</translation>
     </message>
     <message>
+      <location filename="../src/Vehicle/Actuators/Mixer.cc" line="111"/>
+      <source>Upwards</source>
+      <translation type="unfinished">Upwards</translation>
+    </message>
+    <message>
+      <location filename="../src/Vehicle/Actuators/Mixer.cc" line="111"/>
+      <source>Downwards</source>
+      <translation type="unfinished">Downwards</translation>
+    </message>
+    <message>
+      <location filename="../src/Vehicle/Actuators/Mixer.cc" line="111"/>
+      <source>Forwards</source>
+      <translation type="unfinished">Forwards</translation>
+    </message>
+    <message>
+      <location filename="../src/Vehicle/Actuators/Mixer.cc" line="111"/>
+      <source>Backwards</source>
+      <translation type="unfinished">Backwards</translation>
+    </message>
+    <message>
+      <location filename="../src/Vehicle/Actuators/Mixer.cc" line="112"/>
+      <source>Leftwards</source>
+      <translation type="unfinished">Leftwards</translation>
+    </message>
+    <message>
+      <location filename="../src/Vehicle/Actuators/Mixer.cc" line="112"/>
+      <source>Rightwards</source>
+      <translation type="unfinished">Rightwards</translation>
+    </message>
+  </context>
+  <context>
+    <name>Mixer::Mixers</name>
+    <message>
+      <location filename="../src/Vehicle/Actuators/Mixer.cc" line="489"/>
+      <source>Axis</source>
+      <translation type="unfinished">Axis</translation>
+    </message>
+  </context>
+  <context>
+    <name>MockConfiguration</name>
+    <message>
+      <location filename="../src/Comms/MockLink/MockConfiguration.h" line="37"/>
+      <source>Mock Link Settings</source>
+      <translation>가상링크 설정</translation>
+    </message>
+  </context>
+  <context>
+    <name>MockLink</name>
+    <message>
+      <location filename="../src/UI/AppSettings/MockLink.qml" line="43"/>
+      <source>Send status text + voice</source>
+      <translation type="unfinished">Send status text + voice</translation>
+    </message>
+    <message>
+      <location filename="../src/UI/AppSettings/MockLink.qml" line="46"/>
+      <source>PX4 Vehicle</source>
+      <translation type="unfinished">PX4 Vehicle</translation>
+    </message>
+    <message>
+      <location filename="../src/UI/AppSettings/MockLink.qml" line="51"/>
+      <source>APM ArduCopter Vehicle</source>
+      <translation type="unfinished">APM ArduCopter Vehicle</translation>
+    </message>
+    <message>
+      <location filename="../src/UI/AppSettings/MockLink.qml" line="57"/>
+      <source>APM ArduPlane Vehicle</source>
+      <translation type="unfinished">APM ArduPlane Vehicle</translation>
+    </message>
+    <message>
+      <location filename="../src/UI/AppSettings/MockLink.qml" line="63"/>
+      <source>APM ArduSub Vehicle</source>
+      <translation type="unfinished">APM ArduSub Vehicle</translation>
+    </message>
+    <message>
+      <location filename="../src/UI/AppSettings/MockLink.qml" line="69"/>
+      <source>APM ArduRover Vehicle</source>
+      <translation type="unfinished">APM ArduRover Vehicle</translation>
+    </message>
+    <message>
+      <location filename="../src/UI/AppSettings/MockLink.qml" line="75"/>
+      <source>Generic Vehicle</source>
+      <translation type="unfinished">Generic Vehicle</translation>
+    </message>
+    <message>
+      <location filename="../src/UI/AppSettings/MockLink.qml" line="80"/>
+      <source>Stop One MockLink</source>
+      <translation type="unfinished">Stop One MockLink</translation>
+    </message>
+  </context>
+  <context>
+    <name>MockLinkSettings</name>
+    <message>
+      <location filename="../src/UI/AppSettings/MockLinkSettings.qml" line="73"/>
+      <source>Send Status Text and Voice</source>
+      <translation type="unfinished">Send Status Text and Voice</translation>
+    </message>
+    <message>
       <location filename="../src/UI/AppSettings/MockLinkSettings.qml" line="80"/>
       <source>Increment Vehicle Id</source>
       <translation type="unfinished">Increment Vehicle Id</translation>
