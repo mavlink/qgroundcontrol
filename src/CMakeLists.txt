@@ -102,3 +102,7 @@ add_subdirectory(VideoManager)
 add_subdirectory(Viewer3D)
 
 add_subdirectory(QtLocationPlugin)
+
+if(QGC_DISABLE_APM_MAVLINK)
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_NO_ARDUPILOT_DIALECT)
+endif()
