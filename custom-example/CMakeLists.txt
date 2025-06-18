@@ -64,6 +64,7 @@ qt_add_qml_module(CustomModule
         res/Custom/Widgets/CustomSignalStrength.qml
         res/Custom/Widgets/CustomToolBarButton.qml
         res/Custom/Widgets/CustomVehicleButton.qml
+    NO_PLUGIN
 )
 
 set(CUSTOM_SOURCES
@@ -79,7 +80,7 @@ set(CUSTOM_SOURCES
 )
 
 set(CUSTOM_LIBRARIES
-    CustomModuleplugin
+    CustomModule # Explicitly link QML module, needed by Qt 6.6.3, TODO: Remove when support for this version is dropped
     CACHE INTERNAL "" FORCE
 )
 

@@ -74,7 +74,7 @@
     - Survey and Corridor Scan can generate flight plans which follow terrain.
 
       ::: info
-      This feature does not support [ArduPilot terrain following](http://ardupilot.org/copter/docs/common-terrain-following.html).
+      此功能不支持[ArduPilot地形跟随](http://ardupilot.org/copter/docs/common-terrain-following.html)。
       :::
 
   - **Edit Position** Set item position from vehicle position.
@@ -159,7 +159,7 @@ QGC supports the new MAVLink GeoFence and Rally Point specification/protocol. Th
 
 The fence which is currently selected by the "Edit" radio button will show the on screen editing controls such as the drag points for polygon editing.
 
-**Note** Only PX4 Pro firmware supports the new specification. ArduPilot does not yet support the new spec. Support for GeoFence/Rally is temporarily disabled in QGC until QGC ArduPilot code is reworked to the new architecture.
+**注意** 只有PX4 Pro 固件支持新的说明。 ArduPilot does not yet support the new spec. Support for GeoFence/Rally is temporarily disabled in QGC until QGC ArduPilot code is reworked to the new architecture.
 
 #### Edit Position Dialog
 
@@ -228,7 +228,7 @@ This section contains a high level and _non-exhaustive_ list of new features add
 
 - **Setup**
 
-  - ArduPilot only
+  - 仅ArduPilot
     - **Pre-Flight Barometer and Airspeed calibration** - Now supported
     - **Copy RC Trims** - Now supported
 
@@ -285,7 +285,7 @@ This is a more detailed high level (but still _non-exhaustive_) list of new feat
 #### Telemetry log auto-save
 
 If you have _Save telemetry log after each flight_ turned on you will no longer be prompted as to where to save the log each time the vehicle disarms.
-Logs will automatically be saved to the [Application Load/Save Path](../settings_view/general.md#load_save_path)
+日志将自动保存到 [应用程序加载/保存路径](../settings_view/general.md#load_save_path)
 
 For more information see [Settings > General (Miscellaneous)](../settings_view/general.md#autosave_log).
 
@@ -293,7 +293,7 @@ For more information see [Settings > General (Miscellaneous)](../settings_view/g
 
 If this setting is turned on, _QGroundControl_ will automatically upload a plan to the vehicle when it connects.
 The plan file must be named **AutoLoad#.plan** where the `#` is replaced with the vehicle id.
-The plan file must be located in the [Application Load/Save Path](../settings_view/general.md#load_save_path).
+计划文件必须位于[应用程序加载/保存路径](../settings_view/general.md#load_save_path)。
 
 For more information see [Settings > General (Miscellaneous)](../settings_view/general.md#autoload_missions).
 
@@ -387,7 +387,7 @@ The additional value that can be specified when planning a mission is the vehicl
 
 <img src="../../../assets/plan/mission/mission_settings_planned_home.jpg" style="width: 150px;"/>
 
-The planned home position allows you to simulate the vehicle's home position while planning a mission. This way you see the waypoint trajectory for your vehicle from takeoff to mission completion. Keep in mind that this is only the "planned" home position and you should place it where you plan to start the vehicle from. It has no actual impact on flying the mission. The actual home position of a vehicle is set by the vehicle itself when arming.
+The planned home position allows you to simulate the vehicle's home position while planning a mission. This way you see the waypoint trajectory for your vehicle from takeoff to mission completion. 请记住，这只是“计划的”Home点位置，你应将其设置在计划启动载具的位置。 It has no actual impact on flying the mission. The actual home position of a vehicle is set by the vehicle itself when arming.
 
 #### New Waypoint features
 
@@ -519,7 +519,7 @@ For existing users who have already modified their instrument panel values you w
 
 ### Multi-Vehicle View
 
-There is a new view available when you have multiple vehicles connected to QGC. It will only show up when more than one vehicle is connected. When that happens you will see an additional set of radio button at the top right of the Plan view.
+There is a new view available when you have multiple vehicles connected to QGC. 它只会在多辆载具连接时显示。 When that happens you will see an additional set of radio button at the top right of the Plan view.
 
 <img src="../../../assets/daily_build_changes/multi_vehicle_radios.jpg" style="width: 150px;"/>
 
@@ -548,11 +548,11 @@ New Features
 
 - [Survey](../plan_view/pattern_survey.md) mission support
 - [GeoFence](../plan_view/plan_geofence.md) support in Plan View
-- [Rally Point](../plan_view/plan_rally_points.md) support in Plan View (ArduPilot only)
+- [集结点](../plan_view/plan_rally_points.md)在规划视图中的支持（仅适用于ArduPilot）
 - ArduPilot onboard compass calibration
 - Parameter editor search will now search as you type for quicker access
 - Parameter display now supports unit conversion
-- GeoTag images from log files (PX4 only)
+- 来自日志文件的 GeoTag 图像 (PX4)
 - System health in instrument panel
 - MAVLink 2.0 support (no signing yet)
 

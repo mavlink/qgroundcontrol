@@ -61,7 +61,6 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 
 qt_add_library(QGroundControlControlsModule STATIC)
 
-
 qt_add_qml_module(QGroundControlControlsModule
     URI QGroundControl.Controls
     VERSION 1.0
@@ -229,6 +228,8 @@ qt_add_qml_module(QGroundControlControlsModule
 
         # src/QtLocationPlugin/QMLControl/
         OfflineMapEditor.qml
+
+    NO_PLUGIN # Required by Qt 6.6.3. TODO: Remove when no longer supported.
 )
 
 qt_add_library(ScreenToolsModule STATIC)
@@ -243,5 +244,6 @@ qt_add_qml_module(ScreenToolsModule
     RESOURCE_PREFIX /qml
     QML_FILES
         ScreenTools.qml
+    NO_PLUGIN # Required by Qt 6.6.3. TODO: Remove when no longer supported.
 )
 

@@ -1,69 +1,69 @@
-# Privacy Policy
+# 隐私政策
 
-Dronecode Project, Inc. built the QGroundControl (org.mavlink.qgroundcontrol) app as an Open Source app. This SERVICE is provided by Dronecode Project, Inc. at no cost and is intended for use as is.
+Dronecode Project, Inc.构建了 QGroundControl(org.mavlink.qgroundcontrol) 应用程序作为开源应用。 这种服务由Dronecode Project, Inc.免费提供，目的是照原样使用。
 
-This page is used to inform visitors regarding our policies with the collection, use, and disclosure of Personal Information if anyone decided to use our Service.
+此页面用于让访客了解我们的收藏政策。 如果任何人决定使用我们的服务，则使用和披露个人信息。
 
-If you choose to use our Service, then you agree to the collection and use of information in relation to this policy. The Personal Information that we collect is used for providing and improving the Service. We will not use or share your information with anyone except as described in this Privacy Policy.
+如果您选择使用我们的服务，那么您就同意收集和使用与此政策相关的信息。 收集的个人信息用于提供和改进 服务。 我们不会使用您的信息或与任何人分享您的信息，除非本隐私政策中作了说明。
 
-The terms used in this Privacy Policy have the same meanings as in our Terms and Conditions, which are accessible at QGroundControl (org.mavlink.qgroundcontrol) unless otherwise defined in this Privacy Policy.
+本隐私政策中使用的术语与我们条款和条件中使用的术语具有相同的含义，可以在 QGroundControl网站(org.mavlink.qgroundcontrol)上访问，除非本隐私政策中另有定义。
 
-**Information Collection and Use**
+**信息收集和使用**
 
-For a better experience, while using our Service, we may require you to provide us with certain personally identifiable information, including but not limited to device data. The information that we request will be retained by us and used as described in this privacy policy.
+为了更好的体验，同时使用我们的服务 我们可能要求您向我们提供某些可以识别个人身份的信息，包括但不限于设备数据。 我们所要求的信息将被我们保留，并按照这一隐私政策加以使用。
 
-_QGroundControl_ may require access to personal and/or sensitive user data. None of this data is used outside of _QGroundControl_.
+_QGroundControl_ 可能需要访问个人和/或敏感用户数据。 这些数据都没有在_QGroundControl_之外使用。
 
-The list below explains how some of the data is used:
+下面的列表解释了如何使用某些数据：
 
-- Camera sensor: This is used to overlay the video with flight telemetry data.
-- Location: This is used for tracking the current user position on the map.
+- 相机传感器：用于用飞行遥测数据覆盖视频。
+- 位置：用于跟踪当前地图上的用户位置。
 
-The app does use third-party services that may collect information used to identify you.
+该应用确实使用第三方服务来收集用于识别您的信息。
 
-Link to the privacy policy of third-party service providers used by the app
+链接到应用程序使用的第三方服务提供商的隐私政策
 
-- [Google Play Services](https://www.google.com/policies/privacy/)
+- [Google Play 服务](https://www.google.com/policies/privacy/)
 
-**Log Data**
+**日志数据**
 
-We want to inform you that whenever you use our Service, in a case of an error in the app we collect data and information (through third-party products) on your phone called Log Data. This Log Data may include information such as your device Internet Protocol (“IP”) address, device name, operating system version, the configuration of the app when utilizing our Service, the time and date of your use of the Service, and other statistics.
+我们要通知您，每次您使用我们的服务。 在应用程序中出现错误时，我们会在您的手机上收集数据和信息（通过第三方产品）。 此日志数据可能包括诸如您的设备互联网协议地址（ip地址）、设备名称、操作系统版本、使用我们服务时应用程序的配置、您使用服务的时间和日期以及其他统计信息。
 
 **Cookies**
 
-Cookies are files with a small amount of data that are commonly used as anonymous unique identifiers. These are sent to your browser from the websites that you visit and are stored on your device's internal memory.
+Cookie 是具有少量数据的文件，通常用作匿名唯一标识符。 这些是从您访问的网站发送到您的浏览器，并存储在您设备的内部内存中。
 
-This Service does not use these “cookies” explicitly. However, the app may use third-party code and libraries that use “cookies” to collect information and improve their services. You have the option to either accept or refuse these cookies and know when a cookie is being sent to your device. If you choose to refuse our cookies, you may not be able to use some portions of this Service.
+此服务没有明确使用这些“cookes”。 然而，应用可以使用第三方代码和图书馆来收集信息和改进他们的服务。 您可以选择接受或拒绝这些cookie，并知道什么时候有一个 cookie 被发送到您的设备。 如果您选择拒绝我们的 cookie，您可能无法使用此服务的某些部分。
 
-**Service Providers**
+**服务提供者**
 
-We may employ third-party companies and individuals due to the following reasons:
+基于以下原因，我们可能会允许第三方个人或第三方公司参与：
 
-- To facilitate our Service;
-- To provide the Service on our behalf;
-- To perform Service-related services; or
-- To assist us in analyzing how our Service is used.
+- 为我们的服务提供便利；
+- 代我们提供服务；
+- 提供与服务有关的服务；或
+- 协助我们分析我们的服务是如何被使用的。
 
-We want to inform users of this Service that these third parties have access to their Personal Information. The reason is to perform the tasks assigned to them on our behalf. However, they are obligated not to disclose or use the information for any other purpose.
+我们要告诉该服务的用户，这些第三方可以获得他们的个人信息。 原因是为了执行分配给他们的任务。 但是，它们有义务不为任何其他目的披露或使用信息。
 
-**Security**
+**安全**
 
-We value your trust in providing us your Personal Information, thus we are striving to use commercially acceptable means of protecting it. But remember that no method of transmission over the internet, or method of electronic storage is 100% secure and reliable, and we cannot guarantee its absolute security.
+我们珍视你对向我们提供个人信息的信任，因此我们正在努力使用商业上可以接受的手段来保护它。 但请记住，互联网上的任何传输方式或电子存储方式都无法做到100%安全可靠，我们无法保证其绝对安全。
 
-**Links to Other Sites**
+**链接到其他站点**
 
-This Service may contain links to other sites. If you click on a third-party link, you will be directed to that site. Note that these external sites are not operated by us. Therefore, we strongly advise you to review the Privacy Policy of these websites. We have no control over and assume no responsibility for the content, privacy policies, or practices of any third-party sites or services.
+此服务可能包含到其他站点的链接。 如果您点击第三方链接，您将被引导到该站点。 请注意，这些外部网站不是我们经营的。 因此，我们强烈建议您审查这些网站的隐私政策。 我们对任何第三方网站或服务的内容、隐私政策或做法没有控制权，也没有任何责任。
 
-**Children’s Privacy**
+**儿童隐私**
 
-These Services do not address anyone under the age of 13. We do not knowingly collect personally identifiable information from children under 13 years of age. In the case we discover that a child under 13 has provided us with personal information, we immediately delete this from our servers. If you are a parent or guardian and you are aware that your child has provided us with personal information, please contact us so that we will be able to do the necessary actions.
+这些服务不针对任何13岁以下的人。 我们不会故意从13岁以下儿童那里收集可识别个人身份的资料。 如果我们发现13岁以下的儿童向我们提供了个人信息，我们将立即从我们的服务器上删除它。 如果你是父母或监护人，并且你知道你的孩子已经为我们提供了个人信息， 请联系我们，以便我们能够采取必要的行动。
 
-**Changes to This Privacy Policy**
+**此隐私政策的更改**
 
-We may update our Privacy Policy from time to time. Thus, you are advised to review this page periodically for any changes. We will notify you of any changes by posting the new Privacy Policy on this page.
+我们可以随时更新我们的隐私政策。 因此，建议您定期审查本页以了解任何更改。 我们将通过在这个页面上发布新的隐私政策来通知您任何更改。
 
-This policy is effective as of 2024-03-12
+该政策自2024-03-12年起生效
 
-**Contact Us**
+**联系我们**
 
-If you have any questions or suggestions about our Privacy Policy, do not hesitate to contact us at info@dronecode.org.
+如果您对我们的隐私政策有任何问题或建议，请毫不犹豫地通过info@dronecode.org与我们联系。

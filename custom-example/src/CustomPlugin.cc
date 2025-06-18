@@ -17,7 +17,9 @@
 #include "AppSettings.h"
 #include "BrandImageSettings.h"
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
 #include <QtCore/QApplicationStatic>
+#endif
 #include <QtQml/QQmlApplicationEngine>
 #include <QtQml/QQmlFile>
 

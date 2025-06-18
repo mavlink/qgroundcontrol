@@ -3,7 +3,7 @@
 下面的部分可以用于下载每个平台的 _QGroundControl_ 的当前 [稳定版本](../releases/release_notes.md)。
 
 :::tip
-如果 _QGroundControl_ 没有在安装后启动和正常运行，请参阅[故障排除QGC配置](../troubleshooting/qgc_setup.md)
+如果 _QGroundControl_ 没有在安装后启动和正常运行，请参阅[故障排除QGC配置](../troubleshooting/qgc_setup.md)！
 :::
 
 ## 系统配置要求
@@ -16,7 +16,7 @@ QGC可以在任何当下流行的计算机或移动设备上正常运行。 性�
 
 ## Windows 系统 {#windows}
 
-_QGroundControl_ can be installed on 64 bit versions of Windows 10 (1809 or later) or Windows 11:
+_QGroundControl_ 可以安装在 Windows 10 (1809 或更高) 或 Windows 11的64 位版本上：
 
 1. 下载 [QGroundControl-installer.exe](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl-installer.exe)。
 2. 双击可执行文件来启动安装程序。
@@ -29,7 +29,7 @@ Windows 安装程序创建 3 个快捷方式：**QGroundControl**，**GPU 兼容
 
 ## Mac OS X 系统 {#macOS}
 
-_QGroundControl_ can be installed on macOS 12 (Monterey) or later:
+_QGroundControl_ 可以安装在 macOS 12 (Montreey) 上或以后：
 
 <!-- match version using https://docs.qgroundcontrol.com/master/en/qgc-dev-guide/getting_started/#native-builds -->
 
@@ -39,12 +39,12 @@ _QGroundControl_ can be installed on macOS 12 (Monterey) or later:
 2. 双击 .dmg 文件以挂载它，然后将 _QGroundControl_ 应用程序拖动到您的 _Application_ 文件夹。
 
 ::: info
-QGroundControl continues to not be signed. You will not to allow permission for it to install based on you macOS version.
-::
+QGroundControl 仍然没有签名。 根据你的 macOS 版本，你将无法对其安装给予许可。
+根据你的 macOS 版本，你将无法对其安装给予许可。
 
 ## Ubuntu Linux 系统 {#ubuntu}
 
-_QGroundControl_ can be installed/run on Ubuntu LTS 22.04 (and later):
+_QGroundControl_ 可以在 Ubuntu LTS 22.04 (及以后) 安装/运行：
 
 Ubuntu 自带一个串口调制解调器管理器，它会干扰串口（或 USB 转串口）在任何与机器人相关方面的使用。
 在安装 _QGroundControl_ 之前，您应该删除调制解调器管理器并授予自己访问串行端口的权限。
@@ -65,16 +65,16 @@ Ubuntu 自带一个串口调制解调器管理器，它会干扰串口（或 USB
 
 &nbsp; 若要安装 _QGroundControl_：
 
-1. 下载 [QGroundControl.AppImage](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl.AppImage)。
+1. Download [QGroundControl-x86_64.AppImage](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl-x86_64.AppImage).
 2. 使用终端命令安装(并运行)：
    ```sh
-   chmod +x ./QGroundControl.AppImage
-   ./QGroundControl.AppImage  (或双击)
+   chmod +x ./QGroundControl-x86_64.AppImage
+   ./QGroundControl-x86_64.AppImage  (or double click)
    ```
 
 ## Android {#android}
 
-_QGroundControl_ can be installed/run on Android 9 or later:
+_QGroundControl_ 可以在 Android 9 上安装/运行：
 
 - [Android 32/64 bit APK](https://qgroundcontrol.s3-us-west-2.amazonaws.com/latest/QGroundControl.apk)
 

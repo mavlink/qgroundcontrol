@@ -199,7 +199,7 @@ The settings are:
 - Use Specified Base Position
   - **Base Position Latitude:** Latitude of fixed RTK base station.
   - **Base Position Longitude:** Longitude of fixed RTK base station.
-  - **Base Position Alt (WGS94):** Altitude of fixed RTK base station.
+  - **Base Position Alt (WGS84):** Altitude of fixed RTK base station.
   - **Base Position Accuracy:** Accuracy of base station position information.
   - **Save Current Base Position** (button): Press to copy settings from the last Survey-In operation to the _Use Specified Base Position_ fields above.
 

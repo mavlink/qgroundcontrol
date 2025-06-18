@@ -27,24 +27,19 @@ import QGroundControl.UTMSP
 /// All properties defined here are visible to all QML pages.
 ApplicationWindow {
     id:             mainWindow
-    minimumWidth:   ScreenTools.isMobile ? ScreenTools.screenWidth  : Math.min(ScreenTools.defaultFontPixelWidth * 100, Screen.width)
-    minimumHeight:  ScreenTools.isMobile ? ScreenTools.screenHeight : Math.min(ScreenTools.defaultFontPixelWidth * 50, Screen.height)
     visible:        true
 
     property bool   _utmspSendActTrigger
     property bool   _utmspStartTelemetry
 
     Component.onCompleted: {
-        //-- Full screen on mobile or tiny screens
-        if (!ScreenTools.isFakeMobile && (ScreenTools.isMobile || Screen.height / ScreenTools.realPixelDensity < 120)) {
-            mainWindow.showFullScreen()
-        } else {
-            width   = ScreenTools.isMobile ? ScreenTools.screenWidth  : Math.min(250 * Screen.pixelDensity, Screen.width)
-            height  = ScreenTools.isMobile ? ScreenTools.screenHeight : Math.min(150 * Screen.pixelDensity, Screen.height)
-        }
-
         // Start the sequence of first run prompt(s)
         firstRunPromptManager.nextPrompt()
+    }
+
+    /// Saves main window position and size and re-opens it in the same position and size next time
+    MainWindowSavedState {
+        window: mainWindow
     }
 
     QtObject {
@@ -123,7 +118,6 @@ ApplicationWindow {
     function showPlanView() {
         flyView.visible = false
         planView.visible = true
-        viewer3DWindow.close()
     }
 
     function showFlyView() {
@@ -184,11 +178,6 @@ ApplicationWindow {
 
         QGCSimpleMessageDialog {
         }
-    }
-
-    /// Saves main window position and size
-    MainWindowSavedState {
-        window: mainWindow
     }
 
     property bool _forceClose: false
@@ -473,26 +462,23 @@ ApplicationWindow {
         }
     }
 
-    Drawer {
+    Rectangle {
         id:             toolDrawer
-        width:          mainWindow.width
-        height:         mainWindow.height
-        edge:           Qt.LeftEdge
-        dragMargin:     0
-        closePolicy:    Drawer.NoAutoClose
-        interactive:    false
+        anchors.fill:   parent
         visible:        false
+        color:          qgcPal.window
 
         property var backIcon
         property string toolTitle
         property alias toolSource:  toolDrawerLoader.source
         property var toolIcon
 
-        // Unload the loader only after closed, otherwise we will see a "blank" loader in the meantime
-        onClosed: {
-            toolDrawer.toolSource = ""
+        onVisibleChanged: {
+            if (!toolDrawer.visible) {
+                toolDrawerLoader.source = ""
+            }
         }
-        
+
         Rectangle {
             id:             toolDrawerToolbar
             anchors.left:   parent.left

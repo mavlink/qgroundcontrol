@@ -16,6 +16,7 @@
 #include "KMLDomDocument.h"
 
 #include <QtCore/QLineF>
+#include <QMetaMethod>
 
 QGCMapPolygon::QGCMapPolygon(QObject* parent)
     : QObject               (parent)
@@ -23,7 +24,6 @@ QGCMapPolygon::QGCMapPolygon(QObject* parent)
     , _centerDrag           (false)
     , _ignoreCenterUpdates  (false)
     , _interactive          (false)
-    , _resetActive          (false)
 {
     _init();
 }
@@ -34,21 +34,30 @@ QGCMapPolygon::QGCMapPolygon(const QGCMapPolygon& other, QObject* parent)
     , _centerDrag           (false)
     , _ignoreCenterUpdates  (false)
     , _interactive          (false)
-    , _resetActive          (false)
 {
     *this = other;
 
     _init();
 }
 
+QGCMapPolygon::~QGCMapPolygon()
+{
+    qgcApp()->removeCompressedSignal(QMetaMethod::fromSignal(&QGCMapPolygon::pathChanged));
+}
+
 void QGCMapPolygon::_init(void)
 {
     connect(&_polygonModel, &QmlObjectListModel::dirtyChanged, this, &QGCMapPolygon::_polygonModelDirtyChanged);
     connect(&_polygonModel, &QmlObjectListModel::countChanged, this, &QGCMapPolygon::_polygonModelCountChanged);
+    connect(&_polygonModel, &QmlObjectListModel::modelReset, this, [this]() {
+        emit pathChanged();
+        emit centerChanged(_center);
+    });
 
     connect(this, &QGCMapPolygon::pathChanged,  this, &QGCMapPolygon::_updateCenter);
     connect(this, &QGCMapPolygon::countChanged, this, &QGCMapPolygon::isValidChanged);
     connect(this, &QGCMapPolygon::countChanged, this, &QGCMapPolygon::isEmptyChanged);
+
 }
 
 const QGCMapPolygon& QGCMapPolygon::operator=(const QGCMapPolygon& other)
@@ -94,7 +103,14 @@ void QGCMapPolygon::adjustVertex(int vertexIndex, const QGeoCoordinate coordinat
     _polygonModel.value<QGCQGeoCoordinate*>(vertexIndex)->setCoordinate(coordinate);
     if (!_centerDrag) {
         // When dragging center we don't signal path changed until all vertices are updated
-        emit pathChanged();
+        if (!_deferredPathChanged) {
+            // Only update the path once per event loop, to prevent lag-spikes 
+            _deferredPathChanged = true;
+            QTimer::singleShot(0, this, [this]() {
+                emit pathChanged();
+                _deferredPathChanged = false;
+            });
+        }
     }
     setDirty(true);
 }
@@ -260,20 +276,27 @@ void QGCMapPolygon::appendVertex(const QGeoCoordinate& coordinate)
 {
     _polygonPath.append(QVariant::fromValue(coordinate));
     _polygonModel.append(new QGCQGeoCoordinate(coordinate, this));
-    emit pathChanged();
+    if (!_deferredPathChanged) {
+        // Only update the path once per event loop, to prevent lag-spikes
+        _deferredPathChanged = true;
+        QTimer::singleShot(0, this, [this]() {
+            emit pathChanged();
+            _deferredPathChanged = false;
+        });
+    }
 }
 
 void QGCMapPolygon::appendVertices(const QList<QGeoCoordinate>& coordinates)
 {
     QList<QObject*> objects;
 
-    _beginResetIfNotActive();
+    beginReset();
     for (const QGeoCoordinate& coordinate: coordinates) {
         objects.append(new QGCQGeoCoordinate(coordinate, this));
         _polygonPath.append(QVariant::fromValue(coordinate));
     }
     _polygonModel.append(objects);
-    _endResetIfNotActive();
+    endReset();
 
     emit pathChanged();
 }
@@ -360,13 +383,27 @@ void QGCMapPolygon::setCenter(QGeoCoordinate newCenter)
 
         if (_centerDrag) {
             // When center dragging, signals from adjustVertext are not sent. So we need to signal here when all adjusting is complete.
-            emit pathChanged();
+            if (!_deferredPathChanged) {
+                // Only update the path once per event loop, to prevent lag-spikes
+                _deferredPathChanged = true;
+                QTimer::singleShot(0, this, [this]() {
+                    emit pathChanged();
+                    _deferredPathChanged = false;
+                });
+            }
         }
 
         _ignoreCenterUpdates = false;
 
         _center = newCenter;
-        emit centerChanged(newCenter);
+        if (!_deferredPathChanged) {
+            // Only update the center once per event loop, to prevent lag-spikes 
+            _deferredPathChanged = true;
+            QTimer::singleShot(0, this, [this, newCenter]() {
+                emit centerChanged(newCenter);
+                _deferredPathChanged = false;
+            });
+        }
     }
 }
 
@@ -468,10 +505,10 @@ void QGCMapPolygon::offset(double distance)
     }
 
     // Update internals
-    _beginResetIfNotActive();
+    beginReset();
     clear();
     appendVertices(rgNewPolygon);
-    _endResetIfNotActive();
+    endReset();
 }
 
 bool QGCMapPolygon::loadKMLOrSHPFile(const QString& file)
@@ -483,10 +520,10 @@ bool QGCMapPolygon::loadKMLOrSHPFile(const QString& file)
         return false;
     }
 
-    _beginResetIfNotActive();
+    beginReset();
     clear();
     appendVertices(rgCoords);
-    _endResetIfNotActive();
+    endReset();
 
     return true;
 }
@@ -533,39 +570,21 @@ void QGCMapPolygon::verifyClockwiseWinding(void)
             rgReversed.prepend(varCoord.value<QGeoCoordinate>());
         }
 
-        _beginResetIfNotActive();
+        beginReset();
         clear();
         appendVertices(rgReversed);
-        _endResetIfNotActive();
+        endReset();
     }
 }
 
 void QGCMapPolygon::beginReset(void)
 {
-    _resetActive = true;
-    _polygonModel.beginReset();
+    _polygonModel.beginResetModel();
 }
 
 void QGCMapPolygon::endReset(void)
 {
-    _resetActive = false;
-    _polygonModel.endReset();
-    emit pathChanged();
-    emit centerChanged(_center);
-}
-
-void QGCMapPolygon::_beginResetIfNotActive(void)
-{
-    if (!_resetActive) {
-        beginReset();
-    }
-}
-
-void QGCMapPolygon::_endResetIfNotActive(void)
-{
-    if (!_resetActive) {
-        endReset();
-    }
+    _polygonModel.endResetModel();
 }
 
 QDomElement QGCMapPolygon::kmlPolygonElement(KMLDomDocument& domDocument)

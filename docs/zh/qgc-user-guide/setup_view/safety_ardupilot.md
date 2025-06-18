@@ -184,7 +184,7 @@ For additional safety settings and information see: [Failsafes](https://www.ardu
 
 The configuration options are:
 
-- **地面控制站心跳** - 从以下选项中选择其一：禁用、仅警告、解除武装、进入定深模式、进入水面模式。
+- **地面控制站心跳** - 从以下选项中选择其一：禁用、仅警告、锁定、进入定深模式、进入水面模式。
 - **Leak** - Select one of: Disabled, Warn only, Enter surface mode.
   - **Detector Pin** - Select one of: Disabled, Pixhawk Aux (1-6), Pixhawk 3.3ADC(1-2), Pixhawk 6.6ADC.
   - **Logic when Dry** - Select one of: Low, High.

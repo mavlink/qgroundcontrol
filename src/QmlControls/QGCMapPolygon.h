@@ -29,6 +29,8 @@ public:
     QGCMapPolygon(QObject* parent = nullptr);
     QGCMapPolygon(const QGCMapPolygon& other, QObject* parent = nullptr);
 
+    ~QGCMapPolygon() override;
+
     const QGCMapPolygon& operator=(const QGCMapPolygon& other);
 
     Q_PROPERTY(int                  count           READ count                                  NOTIFY countChanged)
@@ -154,8 +156,6 @@ private:
     QPolygonF       _toPolygonF             (void) const;
     QGeoCoordinate  _coordFromPointF        (const QPointF& point) const;
     QPointF         _pointFFromCoord        (const QGeoCoordinate& coordinate) const;
-    void            _beginResetIfNotActive  (void);
-    void            _endResetIfNotActive    (void);
 
     QVariantList        _polygonPath;
     QmlObjectListModel  _polygonModel;
@@ -164,8 +164,8 @@ private:
     bool                _centerDrag =           false;
     bool                _ignoreCenterUpdates =  false;
     bool                _interactive =          false;
-    bool                _resetActive =          false;
     bool                _traceMode =            false;
     bool                _showAltColor =         false;
     int                 _selectedVertexIndex =  -1;
+    bool                _deferredPathChanged =  false;
 };

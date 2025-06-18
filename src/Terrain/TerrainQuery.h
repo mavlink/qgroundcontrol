@@ -11,6 +11,7 @@
 
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
+#include <QtCore/QPointer>
 #include <QtCore/QQueue>
 #include <QtCore/QVariant>
 #include <QtPositioning/QGeoCoordinate>
@@ -49,18 +50,16 @@ public:
 
 private slots:
     void _sendNextBatch();
-    void _queryObjectDestroyed(QObject *elevationProvider);
     void _coordinateHeights(bool success, const QList<double> &heights);
 
 private:
     struct QueuedRequestInfo_t {
-        TerrainAtCoordinateQuery *terrainAtCoordinateQuery;
+        QPointer<TerrainAtCoordinateQuery> terrainAtCoordinateQuery;
         QList<QGeoCoordinate> coordinates;
     };
 
     struct SentRequestInfo_t {
-        TerrainAtCoordinateQuery *terrainAtCoordinateQuery;
-        bool queryObjectDestroyed;
+        QPointer<TerrainAtCoordinateQuery> terrainAtCoordinateQuery;
         qsizetype cCoord;
     };
 

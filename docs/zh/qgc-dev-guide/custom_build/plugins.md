@@ -4,4 +4,4 @@ The mechanisms for customizing QGC for a custom build is through the existing `F
 
 ## QGCCorePlugin
 
-This allows you to modify the parts of QGC which are not directly related to vehicle but are related to the QGC application itself. This includes things like application settings, color palettes, branding and so forth.
+This allows you to modify the parts of QGC which are not directly related to vehicle but are related to the QGC application itself. 这包括诸如应用程序设置、调色板、品牌标识等等内容。

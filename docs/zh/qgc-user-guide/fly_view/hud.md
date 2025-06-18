@@ -1,248 +1,248 @@
-# Fly View
+# 飞行视图
 
-The Fly View is used to command and monitor the vehicle when flying.
+飞行时使用飞行视图来指挥和监视载具。
 
-You can use it to:
+您可以使用它：
 
-- Run an automated [pre-flight checklist](#preflight_checklist).
-- Arm the vehicle (or check why it won't arm).
-- Control missions: [start](#start_mission), [continue](#continue_mission), [pause](#pause), and [resume](#resume_mission).
-- Guide the vehicle to [arm](#arm)/[disarm](#disarm)/[emergency stop](#emergency_stop), [takeoff](#takeoff)/[land](#land), [change altitude](#change_altitude), [go to](#map_actions) or [orbit](#map_actions) a particular location, and [return/RTL](#rtl).
-- Switch between a map view and a video view (if available)
-- Display video, mission, telemetry, and other information for the current vehicle, and also switch between connected vehicles.
+- 运行一个自动的[飞行前检查列表](#preflight_checklist)。
+- 把载具解锁(或检查它为什么不会解锁)。
+- 控制任务： [开始](#start_mission)、 [继续](#continue_mission)、 [暂停](#pause)和 [恢复](#resume_mission)。
+- 引导飞行器进行[解锁](#arm)/[锁定](#disarm)/[紧急停止](#emergency_stop)、[起飞](#takeoff)/[降落](#land)、[改变高度](#change_altitude)、[前往](#map_actions)或[环绕](#map_actions)特定位置，以及[返航/按预设路线返航](#rtl)。
+- 在地图视图和视频视图之间切换(如果可用)
+- 显示当前载具的视频、飞行任务、遥测和其他信息，同时在已连接的载具之间切换。
 
-![Fly View](../../../assets/fly/fly_view_overview.jpg)
+![飞行视图](../../../assets/fly/fly_view_overview.jpg)
 
-## UI Overview
+## 界面概述
 
-The screenshot above shows the main elements of the fly view:
+上面的屏幕截图显示了直观的主要元素：
 
-- **[Fly Toolbar](fly_view_toolbar.md):** Key status information for vehicle components (GPS, battery, RC control), and vehicle state (Flight mode, Armed/Disarmed status).
-  - Select the [toolbar indicator](#toolbar_indicator) to view more detail.
-  - Press the _Flight mode_ text (e.g. "Hold") to select a new mode.
-    Not every mode may be available.
-  - The text next to the **Q** icon indicates the flight readiness using text: "Not Ready", "Ready to Fly", "Flying", and status using colour: "green" (all good!), amber (a warning), red (serious problem). You can also select the text to reach a button to arm/disarm/emergency-stop the vehicle.
-- **[Fly tools](fly_tools.md):** You can use these to:
-  - Select the [preflight checklist](#preflight_checklist) (tool option disabled by default).
-  - Toggle between takeoff/land.
-  - Pause/restart the current operation (e.g. landing, or the mission).
-  - Safety return (also known as RTL or Return).
-  - The _Actions_ button offers other appropriate options for the current state. Actions include changing the altitude or continuing a mission.
-- **Map:** Displays the positions of all connected vehicles and the mission for the current vehicle.
-  - You can drag the map to move it around (the map automatically re-centres on the vehicle after a certain amount of time).
-  - You can zoom the map in and out using the zoom buttons, mouse wheel, track pad or pinch on a tablet.
-  - Once flying, you can click on the map to set a [Go to](#goto) or [Orbit at](#orbit) location.
-- **[Instrument Panel](instrument_panel.md):** A widget that displays vehicle telemetry.
-- **[Attitude/Compass](hud.md):** A widget that provides virtual horizon and heading information.
-- **Camera Tools**: A widget for switching between still and video modes, starting/stopping capture, and controlling camera settings.
-- **[Video/Switcher](#video_switcher):** Toggle between video or map in a window.
-  - Press the element to switch _Video_ and _Map_ to foreground.
-  - _QGroundControl_ supports RTP and RTSP video streaming over your vehicles UDP connection.
-    It also supports directly connected UVC devices.
-    QGC video support is further discussed in the [Video README](https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoStreaming/README.md).
-  - A [Telemetry Overlay](../fly_view/video_overlay.md) is automatically generated as a subtitle file
-- **Confirmation Slider:** Context sensitive slider to confirm requested actions. Slide to confirm operation. You can also hold the spacebar to confirm. Press **X** to cancel.
+- **[飞行工具栏](fly_view_toolbar.md)：** 载具部件的关键状态信息(GPS、电池、遥控器控制)和载具状态(轻型模式、解锁/锁定)。
+  - 选择 [工具栏指标] (#toolbar_indicator) 查看更多细节。
+  - 按 _飞行模式_ 文本(例如“保持”) 可选择一个新模式。
+    并非每种模式都可用。
+  - **Q**图标旁边的文本使用文本表示飞行准备状态：“未准备好”， "准备好飞行", "准备飞行", 以及使用颜色的状态: “绿色”（一切正常！）、“黄色”（警告）、“红色”（严重问题）。 您也可以选择要到达按钮来解除/解除/紧急停止载具的文本。
+- **[飞行工具](fly_tools.md)：** 您可以使用这些：
+  - 选择 [飞行前检查列表] (#preflight_checklist) (默认禁用工具选项)。
+  - 切换起飞/着陆。
+  - 暂停/重新启动当前操作(例如着陆或飞行任务)。
+  - 安全返回（也称为返航或返回）。
+  - _操作_ 按钮为当前状态提供了其他适当的选项。 行动包括改变高度或继续飞行任务。
+- **地图：** 显示所有连接载具的位置和当前载具的任务。
+  - 你可以拖动地图来移动它周围(地图在一定时间后自动重置到载具上)。
+  - 您可以使用缩放按钮、鼠标滚轮、轨迹板或固定在平板电脑上来放大地图。
+  - 一旦飞行，您可以点击地图来设置[转到](#goto)或[轨道](#orbit) 位置。
+- **[仪器面板](instrument_panel.md)：** 显示载具遥测器的部件。
+- **[姿态/罗盘](hud.md)：** 一个提供虚拟地平线和航向信息的部件。
+- **相机工具**：用于在仍然和视频模式之间切换、启动/停止捕获以及控制相机设置的部件。
+- **[视频/切换器](#video_switcher)：** 在窗口中切换视频或地图
+  - 按下元素切换到 _视频_ 和 _地图_ 到前台。
+  - _QGroundControl_ 支持您的载具通过UDP连接上的RTP和RTSP视频流媒体。
+    它还支持直接连接的通用视频类（UVC）设备。
+    QGC 视频支持将在 [Video README](https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoStreaming/README.md)中进一步讨论。
+  - [遥测叠加](../fly_view/video_overlay.md) 将自动生成为字幕文件
+- **确认滑块:** 上下文敏感滑块以确认请求的操作。 滑动以确认操作。 您也可以按住空格键确认。 按 **X** 可取消。
 
-There are a number of other elements that are not displayed by default/are only displayed in certain conditions.
-For example, the multi-vehicle selector is only displayed if you have multiple vehicles, and the preflight checklist tool button is only displayed if the appropriate setting is enabled.
+还有一些其他元素没有在默认情况下显示/仅在某些条件下显示。
+例如，多飞行器选择器仅在你拥有多个飞行器时才会显示，而飞行前检查清单工具按钮仅在启用相应设置时才会显示。
 
-## Fly Toolbar {#toolbar}
+## 飞行工具栏 {#toolbar}
 
-### View Selector
+### 视图选择器
 
-The "Q" icon on the left of the toolbar allows you to select between additional top level views:
+工具栏左边的“Q”图标允许您在其他顶级视图中选择：
 
-- **[Plan Flight](../plan_view/plan_view.md):** Used to create missions, geo-fences and rally points
-- **Analyze Tools:** A set of tools for things like log download, geo-tagging images, or viewing telemetry.
-- **Vehicle Configuration:** The various options for the initial configuration of a new vehicle.
-- **Application Settings:** Settings for the QGroundControl application itself.
+- **[计划飞行](../plan_view/plan_view.md)：** 用于创建任务、地理栅栏和集结点
+- **分析工具：** 用于日志下载、地理标记图像或查看遥测等事项的一组工具。
+- **载具配置：** 新载具初始配置的各种选项。
+- **应用程序设置：** QGroundControl应用程序本身的设置。
 
-### Toolbar Indicators {#toolbar_indicators}
+### 工具栏指示器 {#toolbar_indicators}
 
-Next are a toolbar indicators for vehicle status. The dropdowns for each toolbar indicator provide additional detail on status. You can also expand the indicators to show additional application and vehicle settings associated with the indicator. Press the ">" button to expand.
+接下来是载具状况的工具栏指标。 每个工具栏指示器的下拉功能提供了关于状态的更多细节。 您也可以展开指示器以显示与指示器相关联的其他应用程序和载具设置。 按">"按钮来扩展。
 
-![Toolbar Indicator - expand button](../../../assets/fly/toolbar_indicator_expand.png)
+![工具栏指示器 - 展开按钮](../../../assets/fly/toolbar_indicator_expand.png)
 
-Here is an example expanded toolbar indicator for flight modes on a vehicle running PX4 firmware. The settings in this indicator provide access to things which may be relevant to change from flight to flight.
+这是运行PX4固件的载具飞行模式的扩展工具栏示例指示器。 此指示器中的设置提供了可能与从飞行到飞行的更改相关的东西的访问权限。
 
-![Toolbar Indicator - expanded](../../../assets/fly/toolbar_indicator_expanded.png)
+![工具栏指示器 - 扩展](../../../assets/fly/toolbar_indicator_expanded.png)
 
-They also provide access to the Vehicle Configuration associated with the indicator. In this example: _Flight Modes_ - _Configure_.
+他们还提供查阅与指标有关的载具配置的机会。 在此示例：_飞行模型_ - _配置_。
 
-### Ready/Not Ready Indicator
+### 准备/未准备就绪指示器
 
-![Vehicle state - ready to fly green/ready background](../../../assets/fly/vehicle_states/ready_to_fly_ok.png)
+![载具状态 - 准备飞行（绿色 / 准备就绪背景）](../../../assets/fly/vehicle_states/ready_to_fly_ok.png)
 
-Next in the toolbar is the indicator which shows you whether the vehicle is ready to fly or not.
+工具栏中的下一个是显示载具是否已准备好飞行。
 
-It can be in one of the following states:
+它可以是下列状态之一：
 
-- **Ready To Fly** (_green background_) - Vehicle is ready to fly
-- **Ready To Fly** (_yellow background_) - Vehicle is ready to fly in the current flight mode. But there are warnings which may cause problems.
-- **Not Ready** - Vehicle is not ready to fly and will not takeoff.
-- **Armed** - Vehicle is armed and ready to Takeoff.
-- **Flying** - Vehicle is in the air and flying.
-- **Landing** - Vehicle is in the process of landing.
-- **Communication Lost** - QGroundControl has lost communication with the vehicle.
+- **准备好飞行** (_绿色背景) - 载具已准备就绪
+- **准备好飞行** (_黄色背景) - 载具已准备好在当前飞行模式下飞行。 但有些警告可能造成问题。
+- **尚未准备好** - 载具没有准备好飞行，也不会起飞。
+- **解锁** - 载具已解锁并准备起飞。
+- **飞行** - 载具在空中飞行和飞行中。
+- **着陆** - 载具正在着陆。
+- **通信丢失** - QGroundControl已失去与载具的通信。
 
-The Ready Indicator dropdown also gives you acess to:
+“准备就绪指示器”下拉菜单还可让你访问：
 
-- **Arming** - Arming a vehicle starts the motors in preparation for takeoff. You will only be able to arm the vehicle if it is safe and ready to fly. Generally you do not need to manually arm the vehicle. You can simply takeoff or start a mission and the vehicle will arm itself.
-- **Disarm** - Disarming a vehicle is only availble when the vehicle is on the ground. It will stop the motors. Generally you do not need to explicitly disarm as vehicles will disarm automatically after landing, or shortly after arming if you do not take off.
-- **Emergency Stop** - Emergency stop is effectively the same as disarming the vehicle while it is flying. For emergency use only, your vehicle will crash!
+- **解锁** - 解锁一辆载具开启发动机以准备起飞。 你只有在载具安全和准备飞行时才能解锁载具。 通常你不需要手动解锁载具。 你可以简单地起飞或开始执行任务，载具将解锁自己。
+- **锁定** - 只有当载具在地面时才能解除载具。 它会关停电机。 一般来说，你无需明确进行锁定操作，因为飞行器会在着陆后自动锁定，或者如果在解锁后若未起飞，不久后也会自动锁定。
+- **紧急停机** - 紧急停机实际上与在飞行时锁定载具相同。 仅供紧急情况使用，你的飞行器会坠毁！
 
-In the cases of warnings or not ready state you can click the indicator to display the dropdown which will show the reason(s) why. The toggle on the right expands each error with additional information and possible solutions.
+在警告或尚未准备好状态的情况下，您可以点击指示器来显示下拉菜单，显示原因。 右侧的切换按钮会展开每个错误，并显示更多信息及可能的解决方案。
 
-![UI To check arming warnings](../../../assets/fly/vehicle_states/arming_preflight_check_ui.png)
+![用于检查解锁警告的用户界面](../../../assets/fly/vehicle_states/arming_preflight_check_ui.png)
 
-Once each issue is resolved it will disappear from the UI.
-When all issues blocking arming have been removed you should now be ready to fly.
+每个问题解决后，将从用户界面中消失。
+当所有阻止解锁的问题被移除时，你现在应该可以准备飞行了。
 
-### Flight Mode Indicator
+### 飞行模式指示器
 
-![Vehicle state - ready to fly green/ready background](../../../assets/fly/toolbar/flight_modes_indicator.png)
+![载具状态 - 准备飞行（绿色 / 准备就绪背景）](../../../assets/fly/toolbar/flight_modes_indicator.png)
 
-The Flight Mode Indicator dropdown allows you to switch between flight modes. The expanded page allows you to:
+飞行模式指示器下拉允许您在飞行模式之间切换。 扩展页面允许您：
 
-- Configure vehicle land settings
-- Set global geo-fence settings
-- Add/Remove flight modes from the displayed list
+- 配置载具降落设置
+- 设置全局地理栅栏设置
+- 从显示列表中添加/删除飞行模式
 
-### Vehicle Messages Indicator
+### 载具消息指示器
 
-![Vehicle state - ready to fly green/ready background](../../../assets/fly/toolbar/messages_indicator.png)
+![载具状态 - 准备飞行（绿色 / 准备就绪背景）](../../../assets/fly/toolbar/messages_indicator.png)
 
-The Vehicle Messages Indicator dropdown shows you messages which come from the vehicle. The indicator will turn red if there are important messages available.
+载具消息指示器下拉显示来自载具的消息。 如果有重要信息，指示器将会变红。
 
-### GPS Indicator
+### GPS 指示器
 
-![Vehicle state - ready to fly green/ready background](../../../assets/fly/toolbar/gps_indicator.png)
+![载具状态 - 准备飞行（绿色 / 准备就绪背景）](../../../assets/fly/toolbar/gps_indicator.png)
 
-The GPS Indicator shows you the satellite count and the HDOP in the toolbar icon. The dropdown shows you additional GPS status. The expanded page give you access to RTK settings.
+GPS指示器在工具栏图标中显示卫星计数和HDOP。 下拉菜单显示您额外的 GPS 状态。 扩展页面允许您访问RTK设置。
 
-### Battery Indicator
+### 电量指示器
 
-![Vehicle state - ready to fly green/ready background](../../../assets/fly/toolbar/battery_indicator.png)
+![载具状态 - 准备飞行（绿色 / 准备就绪背景）](../../../assets/fly/toolbar/battery_indicator.png)
 
-The Battery Indicator shows you a configurable colored battery icon for remaining charge. It can also be configured to show percent remaining, voltage or both. The expanded page allows you to:
+电池指示器向您展示了一个可配置的充电图标。 它也可以配置为显示剩余的电压或两种电压。 扩展页面允许您：
 
-- Set what value(s) you want displayed in the battery icon
-- Configure the icon coloring
-- Set up the low battery failsafe
+- 设定电池图标中显示的值
+- 配置图标着色
+- 设置低电量故障安全
 
-## Fly Tools {#fly_tools}
+## 飞行工具 {#fly_tools}
 
-### Pre Flight Checklist {#preflight_checklist}
+### 飞行检查清单 {#preflight_checklist}
 
-An automated preflight checklist can be used to run through standard checks that the vehicle is configured correctly and it is safe to fly.
+飞行前自动核对表可以用来进行标准检查，检查载具配置正确，可以安全飞行。
 
-To view the checklist, first enable the tool by navigating to [Application Settings > General > Fly View](../settings_view/general.md) and selecting the **Use preflight checklist** checkbox.
-The tool will then be added to the _Flight Tools_.
-Press it to open the checklist:
+要查看检查清单，首先需通过导航至[应用程序设置 > 常规 > 飞行视图](../settings_view/general.md)并勾选**使用飞行前检查清单**复选框来启用该工具。
+然后工具将被添加到 _飞行工具_。
+按下它以打开检查清单：
 
-![Pre Flight Checklist](../../../assets/fly/pre_flight_checklist.jpg)
+![飞行前检查清单](../../../assets/fly/pre_flight_checklist.jpg)
 
-Once you have performed each test, select it on the UI to mark it as complete.
+完成每项测试后，在用户界面上选择该项测试，将其标记为已完成。
 
-### Takeoff {#takeoff}
+### 起飞{#takeoff}
 
 :::tip
-If you are starting a mission for a multicopter, _QGroundControl_ will automatically perform the takeoff step.
+如果你正在为多功能飞行器启动任务，_QGroundControl_ 将自动执行起飞步骤。
 :::
 
-To takeoff (when landed):
+起飞(降落时)：
 
-1. Press the **Takeoff** button in the _Fly Tools_ (this will toggle to a **Land** button after taking off).
-2. Optionally set the takeoff altitude in the right-side vertical slider.
+1. 按 _飞行工具_ 中的 **起飞** 按钮(这将在起飞后切换到 **着陆** 按钮)。
+2. 可选设置右侧垂直滑块的起飞海拔。
 
-- You can slide up/down to change the altitude
-- You can also click on the specified altitude (10 ft in example) and then type in a specific altitude.
+- 您可以向上/向下滑动以更改高度
+- 您也可以点击指定的高度(例如10英尺)，然后输入特定的海拔。
 
-1. Confirm takeoff using the slider.
+1. 使用滑块确认起飞。
 
-![takeoff](../../../assets/fly/takeoff.png)
+![起飞](../../../assets/fly/takeoff.png)
 
-### Land {#land}
+### 着陆 {#land}
 
-You can land at the current position at any time while flying:
+你可以在飞行时随时降落在当前位置：
 
-1. Press the **Land** button in the _Fly Tools_ (this will toggle to a **Takeoff** button when landed).
-2. Confirm landing using the slider.
+1. 按下 _飞行工具_ 中的 **着陆** 按钮(当降落将切换到 **起飞** 按钮)。
+2. 使用滑块确认降落。
 
-### RTL/Return
+### 返航/返回
 
-Return to a "safe point" at any time while flying:
+飞行时返回“安全点”：
 
-1. Press the **RTL** button in the _Fly Tools_.
-2. Confirm RTL using the slider.
+1. 按 _飞行工具_ 中的 **返航** 按钮。
+2. 使用滑块确认返航。
 
 :::info
-Vehicles commonly return to the "home" (takeoff) location and land.
-This behaviour depends on the vehicle type and configuration.
-For example, rally points or mission landings may be used as alternative return targets.
+飞行器通常返回 “Home点”（起飞）位置并着陆。
+这种行为取决于载具类型和配置。
+例如，集结点或飞行任务着陆可能被用作替代返回目标。
 :::
 
-### Change Altitude {#change_altitude}
+### 更改高度 {#change_altitude}
 
-You can change altitude while flying, except when in a mission:
+飞行过程中你可以改变高度，但执行任务时除外：
 
-1. Press the **Actions** button on the _Fly Tools_
-2. Select the _Change Altitude_ button
-3. Select the new altitude from the vertical slider
-4. Confirm the action
+1. 按 _飞行工具_ 上的 **操作** 按钮
+2. 选择 _改变高度_ 按钮
+3. 从垂直滑块选择新高度
+4. 确认操作
 
-## Instrument Panel (Telemetry) {#instrument_panel}
+## 仪器面板(电子版) {#instrument_panel}
 
-The instrument panel displays telemetry information about the current vehicle.
+仪器面板显示关于当前载具的遥测信息。
 
-![Instrument Panel - for values/telemetry](../../../assets/fly/instrument_panel/instrument_panel_default_values.png)
+![仪表板 - 用于数值 / 遥测数据](../../../assets/fly/instrument_panel/instrument_panel_default_values.png)
 
-The default values include altitude (relative to the home location), horizontal and vertical speed, total flight time, and distance between vehicle and ground station.
+默认值包括高度(相对于Home点位置)、横向和纵向速度、飞行总时间和载具与地面站之间的距离。
 
-You can configure where the information is displayed by:
+你可以通过以下方式配置信息显示位置：
 
-- Tablets: Press and hold over control
-- Desktop: Right click control
-- Click to Lock icon to close and save changes
+- 平板电脑：按住控件
+- 桌面：右键点击控制
+- 点击锁定图标以关闭并保存更改
 
-![Instrument Panel - edit tools](../../../assets/fly/instrument_panel/instrument_panel_tools_edit.png)
+![仪表板 - 编辑工具](../../../assets/fly/instrument_panel/instrument_panel_tools_edit.png)
 
-You configure what information is display by selecting the edit/pencil icon.
-The grid will then display "+" and "-" icons that you can use to add or remove rows and columns (and the pencil icon is replaced by a "lock" icon that you can use to save the settings).
+您通过选择编辑/铅笔图标来配置显示的信息。
+然后，网格将显示您可以用来添加或移除行和列的"+"和"-"图标(而且铅笔图标被您可以用来保存设置的“锁”图标所取代)。
 
-Select a value to launch its "Value Display" editor.
-This allows you to change the icon, text, size, units and so on of the current telemetry value.
+选择一个值来启动其"值显示"编辑器。
+这允许您更改当前遥测值的图标、文本、大小、单位等。
 
-![Instrument Panel - edit a value](../../../assets/fly/instrument_panel/instrument_panel_tools_edit_value.png)
+![仪表板-编辑一个值](../../../assets/fly/instrument_panel/instrument_panel_tools_edit_value.png)
 
-The selection list on the top left is used to change the source of the telemetry.
-By default this is the vehicle, but you can use the selector to choose a particular sensor type.
+左上方的选择列表用于更改遥测源源。
+默认情况下是载具，但你可以使用选择器选择特定的传感器类型。
 
-![Instrument Panel - value type](../../../assets/fly/instrument_panel/instrument_panel_edit_value_type.png)
+![仪表板-值类型](../../../assets/fly/instrument_panel/instrument_panel_edit_value_type.png)
 
-The selection list on the top right is used to select a particular telemetry value for the vehicle or sensor.
+右上方的选择列表用于为载具或传感器选择一个特定的遥测值。
 
-![Instrument Panel - value options](../../../assets/fly/instrument_panel/instrument_panel_edit_value_options.png)
+![仪表板 - 值选项](../../../assets/fly/instrument_panel/instrument_panel_edit_value_options.png)
 
-## Attitude /Compass {#hud}
+## 态度/指南针 {#hud}
 
-You can select from multiple types of instruments by:
+您可以从多种类型的工具中选择：
 
-- Tablets: Press and hold over control
-- Desktop: Right click over control
-- Click the Lock icon to close and save changes
+- 平板电脑：按住控件
+- 桌面：右键点击控制
+- 点击锁定图标以关闭并保存更改
 
-![Instrument Panel - hover for move/edit tools](../../../assets/fly/hud_select_variant.png)
+![仪表板-悬停移动/编辑工具](../../../assets/fly/hud_select_variant.png)
 
-### Camera {#camera_instrument_page}
+### 相机{#camera_instrument_page}
 
-The camera panel is used to capture still images and video, and to configure the camera.
+相机面板用于拍摄仍然存在的图像和视频，并配置相机。
 
-![Camera Panel](../../../assets/fly/camera_panel/camera_mavlink.png)
+![相机面板](../../../assets/fly/camera_panel/camera_mavlink.png)
 
-The camera capture and configuration options depend on the connected camera.
-The configuration options are selected using the panel gear icon.
-The configuration for a simple autopilot-connected camera are shown below.
+相机捕获和配置选项取决于已连接的相机。
+配置选项是使用面板装备图标选择的。
+一个简单的自动化摄像头的配置显示在下面。
 
 ![Camera Panel - minimal settings](../../../assets/fly/camera_panel/camera_settings_minimal.png)
 
@@ -268,8 +268,8 @@ When enabled, you can start/stop the video stream, enable a grid overlay, change
 
 The following sections describe how to perform common operations/tasks in the Fly View.
 
-::: info
-Many of the available options depend on both the vehicle type and its current state.
+::: 信息
+许多可用的选项都取决于载具类型和当前状态。
 :::
 
 ### Actions associated with a map position (#map_actions)
@@ -285,7 +285,7 @@ Examples of map position actions are Go To Location, Orbit and so forth.
 
 ### Pause
 
-You can pause most operations, including taking off, landing, RTL, mission execution, orbit at location. The vehicle behaviour when paused depends on the vehicle type; typically a multicopter will hover, and a fixed wing vehicle will circle.
+You can pause most operations, including taking off, landing, RTL, mission execution, orbit at location. 暂停使用时的载具行为取决于载具类型；通常是多层飞行器悬停，固定翼飞行器将环绕。
 
 :::info
 You cannot pause a _Goto location_ operation.
@@ -301,7 +301,7 @@ To pause:
 
 #### Start Mission {#start_mission}
 
-You can start a mission when the vehicle is landed (the start mission confirmation slider is often displayed by default).
+你可以在载具着陆时开始执行任务(起始任务确认滑块通常默认显示)。
 
 To start a mission from landed:
 
@@ -329,101 +329,100 @@ Resume mission is used when you've used a RTL or landed midway through a mission
 
 You can continue the current mission while (unless already in a mission!):
 
-1. Press the **Action** button on the _Fly Tools_
+1. 按下 _飞行工具_ 上的**操作**按钮
 
-2. Select the _Continue Mission_ action from the dialog.
+2. 在对话框中选择 _继续任务_ 操作。
 
-  ![Continue Mission/Change Altitude action](../../../assets/fly/continue_mission_change_altitude_action.jpg)
+  ![继续任务/改变高度](../../../assets/fly/continue_mission_change_altitude_action.jpg)
 
-3. Drag the confirmation slider to continue the mission.
+3. 拖动滑块以确认继续执行任务。
 
-  ![Continue Mission](../../../assets/fly/continue_mission.jpg)
+  ![继续任务](../../../assets/fly/continue_mission.jpg)
 
-#### Resume Mission {#resume_mission}
+#### 恢复任务{#resume_mission}
 
-_Resume Mission_ is used to resume a mission after performing an [RTL/Return](#rtl) or [Land](#land) from within a mission (in order, for example, to perform a battery change).
-
-:::info
-If you are performing a battery change, **do not** disconnect QGC from the vehicle after disconnecting the battery.
-After you insert the new battery _QGroundControl_ will detect the vehicle again and automatically restore the connection.
-:::
-
-After landing you will be prompted with a _Flight Plan complete_ dialog, which gives you the option to remove the plan from the vehicle, leave it on the vehicle, or to resume the mission from the last waypoint that was traveled through.
-
-![Resume Mission](../../../assets/fly/resume_mission.jpg)
-
-If you select to resume the mission, then _QGroundControl_ will rebuild the mission and upload it to the vehicle.
-Then use the _Start Mission_ slider to continue the mission.
-
-The image below shows the mission that was rebuilt after the Return shown above.
-
-![Resume Rebuilt Mission](../../../assets/fly/resume_mission_rebuilt.jpg)
+您可以在任何地方按切换器来切换 _视频_ 和 _地图_ 到前台(在下面的图像中，视频会显示在前台)。
 
 :::info
-A mission cannot simply resume from the last mission item that the vehicle executed, because there may be multiple items at the last waypoint that affect the next stage of the mission (e.g. speed commands or camera control commands).
-Instead _QGroundControl_ rebuilds the mission, starting from the last mission item flown, and automatically prepending any relevant commands to the front of the mission.
+如果你正在更换电池，断开电池后**请勿**断开 QGC 与飞行器的连接。
+插入新电池后，“QGroundControl” 将再次检测到飞行器并自动恢复连接。
 :::
 
-#### Remove Mission Prompt After Landing {#resume_mission_prompt}
+着陆后，系统将弹出 _飞行计划完成” 对话框，你可以选择从飞行器中删除该计划、_将其保留在飞行器上，或者从最后经过的航点恢复任务。
 
-You will be prompted to remove the mission from the vehicle after the mission completes and the vehicle lands and disarms.
-This is meant to prevent issues where stale missions are unknowingly left on a vehicle, potentially resulting in unexpected behavior.
+![恢复任务](../../../assets/fly/resume_mission.jpg)
 
-### Display Video {#video_switcher}
+如果你选择回复任务，_QGroundControl_ 会重新构建任务并将它上传到载具。
+然后使用 _启动任务_ 滑块以继续任务。
 
-When video streaming is enabled, _QGroundControl_ will display the video stream for the currently selected vehicle in the "video switcher window" at the bottom left of the map.
-You can press the switcher anywhere to toggle _Video_ and _Map_ to foreground (in the image below, the video is shown in the foreground).
+下图展示了在上述返航操作后重新生成的任务。
 
-![Video Stream Record](../../../assets/fly/video_record.jpg)
+![恢复重构任务](../../../assets/fly/resume_mission_rebuilt.jpg)
 
 :::info
-Video streaming is configured/enabled in [Application Settings > General tab > Video](../settings_view/general.md#video).
+任务不能简单地从飞行器执行的最后一个任务项目继续，因为在最后一个航点可能有多个影响任务下一阶段的项目（例如速度指令或相机控制指令）。
+相反，_QGroundControl_ 会从最后飞行的任务项目开始重构任务，并自动将任何相关指令添加到任务开头。
 :::
 
-You can further configure video display using controls on the switcher:
+#### 着陆后移除任务提示 {#resume_mission_prompt}
 
-![Video Pop](../../../assets/fly/video_pop.jpg)
+任务完成、载具着陆并锁定后，系统会提示你从载具中移除该任务。
+这旨在防止陈旧的任务在不知不觉中留在载具上，从而可能导致意外行为的问题。
 
-- Resize the switcher by dragging the icon in the top right corner.
-- Hide the switcher by pressing the toggle icon in the lower left.
-- Detach the video switcher window by pressing on the icon in its top left corner
-  (once detached, you can move and resize the window just like any other in your OS).
-  If you close the detached window the switcher will re-lock to the QGC Fly view.
+### 显示视频 {#video_switcher}
 
-### Record Video
+启用视频流传输后，_QGroundControl_ 会在地图左下角的 “视频切换窗口” 中显示当前选定载具的视频流。
+您可以在任何地方按切换器来切换 _视频_ 和 _地图_ 到前台(在下面的图像中，视频会显示在前台)。
 
-If supported by the camera and vehicle, _QGroundControl_ can start and stop video recording on the camera itself. _QGroundControl_ can also record the video stream and save it locally.
+![录制视频流](../../../assets/fly/video_record.jpg)
+
+:::info
+视频流已配置/启用在 [应用程序设置 > 常规 > 视频](../settings_view/general.md#video)。
+:::
+
+您可以在开关上使用控件来进一步配置视频显示：
+
+![视频窗口](../../../assets/fly/video_pop.jpg)
+
+- 通过拖动右上角的图标来调整切换器的大小。
+- 点击左下方的切换图标来隐藏切换器。
+- 按下视频切换器窗口左上角的图标可将其分离（分离后，你可以像操作系统中的其他窗口一样移动和调整该窗口的大小）。
+  如果您关闭分离的窗口，切换器将重新锁定到 QGC 飞行视图。
+
+### 录制视频
+
+如果相机和载具支持，_QGroundControl_ 可以在相机上开始和停止视频录制。 _QGroundControl_ 也可以录制视频流并在本地保存。
 
 :::tip
-Video stored on the camera may be of much higher quality, but it is likely that your ground station will have a much larger recording capacity.
+存储在相机上的视频质量可能要高得多。 但你的地面站很可能有更大的录制能力。
 :::
 
-#### Record Video Stream (on GCS)
+#### 录制视频流 (GCS)
 
-Video stream recording is controlled on the [video stream instrument page](#video_instrument_page).
-Press the red circle to start recording a new video (a new video file is created each time the circle is pressed); the circle will change into a red square while recording is in progress.
+视频流录制在[视频流仪表页面](#video_instrument_page)进行控制。
+按下红色圆圈开始录制新视频(每次按下圆圈时创建新视频文件)； 正在录制时，圆圈将会变成红色正方形。
 
-![Video Stream Record](../../../assets/fly/video_record.jpg)
+![录制视频流](../../../assets/fly/video_record.jpg)
 
-Video stream recording is configured in the [Application Settings > General tab](../settings_view/general.md):
+视频流录制已配置在 [应用程序设置 > 常规](../settings_view/general.md)：
 
-- [Video Recording](../settings_view/general.md#video-recording) - specifies the recording file format and storage limits.
+- [视频录制](../settings_view/general.md#video-recording) - 指定录制文件格式和存储限制。
 
-  ::: info
-  Videos are saved in Matroska format (.mkv) by default.
-  This format is relatively robust against corruption in case of errors.
+  ::: 信息
+  视频默认保存为 Matroska 格式 (.mkv) 。
+  这种格式在出现错误的情况下，相对不容易损坏。
   :::
 
-- [Miscellaneous](../settings_view/general.md#miscellaneous) - Streamed video is saved under the **Application Load/Save Path**.
+- [杂项](../settings_view/general.md#miscellaneous) - 流视频保存在**应用程序加载/保存路径**下。
 
 :::tip
-The stored video includes just the video stream itself.
-To record video with QGroundControl application elements displayed, you should use separate screen recording software.
+存储的视频仅包括视频流本身。
+要使用显示的 QGroundControl 应用程序元素录制视频，您应该使用单独的屏幕录制软件。
 :::
 
-#### Record Video on Camera
+#### 在相机上录制视频
 
-Start/stop video recording _on the camera itself_ using the [camera instrument page](#camera_instrument_page).
-First toggle to video mode, then select the red button to start recording.
+使用[相机仪表页面](#camera_instrument_page)_在相机上_开始/停止视频录制。
+先切换到视频模式，然后选择红色按钮开始录制。
 
-![Instrument Page - Camera MAVLink Settings](../../../assets/fly/instrument_page_camera_mavlink.jpg)
+![仪表页面 - 相机 MAVLink 设置](../../../assets/fly/instrument_page_camera_mavlink.jpg)

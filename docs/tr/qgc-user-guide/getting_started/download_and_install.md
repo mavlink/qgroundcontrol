@@ -65,13 +65,11 @@ QGroundControl \* 'ı ilk kez kurmadan önce:
 
 &nbsp; _ QGroundControl _ yüklemek için:
 
-1. Download [QGroundControl.AppImage](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl.AppImage).
+1. Download [QGroundControl-x86_64.AppImage](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl-x86_64.AppImage).
 2. Install (and run) using the terminal commands:
    ```sh
-   Aşağıdaki terminal komutlarını kullanarak kurun (ve çalıştırın):
-      sh
-      chmod +x ./QGroundControl.AppImage
-      ./QGroundControl.AppImage (or double click)
+   chmod +x ./QGroundControl-x86_64.AppImage
+   ./QGroundControl-x86_64.AppImage  (or double click)
    ```
 
 ## Android {#android}

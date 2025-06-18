@@ -1,9 +1,3 @@
-# qt_add_qml_module(QGC
-#     URI QGroundControl
-#     VERSION 1.0
-#     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
-# )
-
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         main.cc
@@ -45,7 +39,35 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         Qt6::TextToSpeech
         Qt6::Widgets
         Qt6::Xml
+        # Explicitly link QML modules, needed by Qt 6.6.3
+        # TODO: Remove when support for this version is dropped
+        AnalyzeViewModule
+        AppSettingsModule
+        AutoPilotPluginsCommonModule
+        FactControlsModule
+        FactSystemModule
+        FlightDisplayModule
+        FlightMapModule
+        MainWindowModule
+        QGroundControlControlsModule
+        ScreenToolsModule
+        ToolbarModule
+        VehicleModule
+        VehicleSetupModule
 )
+
+if(NOT QGC_DISABLE_APM_PLUGIN AND NOT QGC_DISABLE_APM_PLUGIN_FACTORY)
+    target_link_libraries(${CMAKE_PROJECT_NAME}
+        PRIVATE
+            AutoPilotPluginsAPMModule
+    )
+endif()
+if(NOT QGC_DISABLE_PX4_PLUGIN AND NOT QGC_DISABLE_PX4_PLUGIN_FACTORY)
+    target_link_libraries(${CMAKE_PROJECT_NAME}
+        PRIVATE
+            AutoPilotPluginsPX4Module
+    )
+endif()
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
