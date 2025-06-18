@@ -256,9 +256,9 @@ void Vehicle::_commonInit()
     connect(_firmwarePlugin, &FirmwarePlugin::toolIndicatorsChanged, this, &Vehicle::toolIndicatorsChanged);
     connect(_firmwarePlugin, &FirmwarePlugin::modeIndicatorsChanged, this, &Vehicle::modeIndicatorsChanged);
 
-    connect(this, &Vehicle::coordinateChanged,      this, &Vehicle::_updateDistanceHeadingToHome);
-    connect(this, &Vehicle::coordinateChanged,      this, &Vehicle::_updateDistanceToGCS);
-    connect(this, &Vehicle::homePositionChanged,    this, &Vehicle::_updateDistanceHeadingToHome);
+    connect(this, &Vehicle::coordinateChanged,      this, &Vehicle::_updateDistanceHeadingHome);
+    connect(this, &Vehicle::coordinateChanged,      this, &Vehicle::_updateDistanceHeadingGCS);
+    connect(this, &Vehicle::homePositionChanged,    this, &Vehicle::_updateDistanceHeadingHome);
     connect(this, &Vehicle::hobbsMeterChanged,      this, &Vehicle::_updateHobbsMeter);
     connect(this, &Vehicle::coordinateChanged,      this, &Vehicle::_updateAltAboveTerrain);
     // Initialize alt above terrain to Nan so frontend can display it correctly in case the terrain query had no response
@@ -267,7 +267,7 @@ void Vehicle::_commonInit()
     connect(this, &Vehicle::vehicleTypeChanged,     this, &Vehicle::inFwdFlightChanged);
     connect(this, &Vehicle::vtolInFwdFlightChanged, this, &Vehicle::inFwdFlightChanged);
 
-    connect(QGCPositionManager::instance(), &QGCPositionManager::gcsPositionChanged, this, &Vehicle::_updateDistanceToGCS);
+    connect(QGCPositionManager::instance(), &QGCPositionManager::gcsPositionChanged, this, &Vehicle::_updateDistanceHeadingGCS);
     connect(QGCPositionManager::instance(), &QGCPositionManager::gcsPositionChanged, this, &Vehicle::_updateHomepoint);
 
     _missionManager = new MissionManager(this);
@@ -3437,18 +3437,21 @@ bool Vehicle::autoDisarm()
     return false;
 }
 
-void Vehicle::_updateDistanceHeadingToHome()
+void Vehicle::_updateDistanceHeadingHome()
 {
     if (coordinate().isValid() && homePosition().isValid()) {
         _distanceToHomeFact.setRawValue(coordinate().distanceTo(homePosition()));
         if (_distanceToHomeFact.rawValue().toDouble() > 1.0) {
             _headingToHomeFact.setRawValue(coordinate().azimuthTo(homePosition()));
+            _headingFromHomeFact.setRawValue(homePosition().azimuthTo(coordinate()));
         } else {
             _headingToHomeFact.setRawValue(qQNaN());
+            _headingFromHomeFact.setRawValue(qQNaN());
         }
     } else {
         _distanceToHomeFact.setRawValue(qQNaN());
         _headingToHomeFact.setRawValue(qQNaN());
+        _headingFromHomeFact.setRawValue(qQNaN());
     }
 }
 
@@ -3480,13 +3483,15 @@ void Vehicle::_updateMissionItemIndex()
     _missionItemIndexFact.setRawValue(currentIndex + offset);
 }
 
-void Vehicle::_updateDistanceToGCS()
+void Vehicle::_updateDistanceHeadingGCS()
 {
     QGeoCoordinate gcsPosition = QGCPositionManager::instance()->gcsPosition();
     if (coordinate().isValid() && gcsPosition.isValid()) {
         _distanceToGCSFact.setRawValue(coordinate().distanceTo(gcsPosition));
+        _headingFromGCSFact.setRawValue(gcsPosition.azimuthTo(coordinate()));
     } else {
         _distanceToGCSFact.setRawValue(qQNaN());
+        _headingFromGCSFact.setRawValue(qQNaN());
     }
 }
 
