@@ -182,14 +182,16 @@ void VideoManager::startRecording(const QString &videoFile)
     const QString videoFileUrl = videoFile.isEmpty() ? QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss") : videoFile;
     const QString ext = kFileExtension[fileFormat];
 
-    const QString videoFileName = savePath + "/" + videoFileUrl + ".%1" + ext;
+    const QString videoFileNameTemplate = savePath + "/" + videoFileUrl + ".%1" + ext;
 
     for (VideoReceiver *receiver : std::as_const(_videoReceivers)) {
         if (!receiver->started()) {
             qCDebug(VideoManagerLog) << "Video receiver is not ready.";
             continue;
         }
-        receiver->startRecording(videoFileName.arg(receiver->name()), fileFormat);
+        const QString streamName = (receiver->name() == QStringLiteral("videoContent")) ? "" : (receiver->name() + ".");
+        const QString videoFileName = videoFileNameTemplate.arg(streamName);
+        receiver->startRecording(videoFileName, fileFormat);
     }
 }
 
