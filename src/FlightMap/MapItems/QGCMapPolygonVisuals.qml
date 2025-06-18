@@ -687,7 +687,6 @@ Item {
                 pendingCoord = undefined
                 var radius = mapPolygon.center.distanceTo(coord)
                 _createCircularPolygon(mapPolygon.center, radius)
-                _lastRadius = radius
             }
         }
     }
@@ -698,12 +697,10 @@ Item {
         MissionItemIndicatorDrag {
             mapControl: _root.mapControl
 
-            property real _lastRadius
-
             onItemCoordinateChanged: {
                 var radius = mapPolygon.center.distanceTo(itemCoordinate)
 
-                if (Math.abs(radius - _lastRadius) > 0.1) {
+                if (Math.abs(radius - _circleRadius) > 0.1) {
                     // De-bounced circular polygon re-drawing
                     radiusDragDebounceTimer.pendingCoord = itemCoordinate
                     radiusDragDebounceTimer.start()
