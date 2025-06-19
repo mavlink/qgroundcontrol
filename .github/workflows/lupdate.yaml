@@ -39,7 +39,7 @@ jobs:
 
       - name: Commit updated translations
         run: |
-          git add translations/qgc.ts translations/*.json
+          git add translations/*.ts
           git diff --cached --quiet || git commit -m "chore: update translations"
 
       - name: Create Pull Request
