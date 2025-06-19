@@ -242,7 +242,7 @@ void GstVideoReceiver::stop()
         GstPad *sinkpad = gst_element_get_static_pad(_tee, "sink");
         if (sinkpad) {
             gst_pad_remove_probe(sinkpad, _teeProbeId);
-            sinkpad = nullptr;
+            gst_clear_object(&sinkpad);
         }
         _teeProbeId = 0;
     }
