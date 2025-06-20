@@ -3739,57 +3739,57 @@ Please place your vehicle in water, click the button, and wait. Note that the th
       <translation type="unfinished">Geometry</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="177"/>
+      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="181"/>
       <source>Actuator Testing</source>
       <translation type="unfinished">Actuator Testing</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="196"/>
+      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="200"/>
       <source>Configure some outputs in order to test them.</source>
       <translation type="unfinished">Configure some outputs in order to test them.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="233"/>
+      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="237"/>
       <source>Careful: Actuator sliders are enabled</source>
       <translation type="unfinished">Careful: Actuator sliders are enabled</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="233"/>
+      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="237"/>
       <source>Propellers are removed - Enable sliders</source>
       <translation type="unfinished">Propellers are removed - Enable sliders</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="322"/>
+      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="326"/>
       <source>Actuator Outputs</source>
       <translation type="unfinished">Actuator Outputs</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="327"/>
+      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="331"/>
       <source>One or more actuator still needs to be assigned to an output.</source>
       <translation type="unfinished">One or more actuator still needs to be assigned to an output.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="369"/>
+      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="373"/>
       <source>Identify &amp; Assign Motors</source>
       <translation type="unfinished">Identify &amp; Assign Motors</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="385"/>
+      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="389"/>
       <source>Motor Order Identification and Assignment</source>
       <translation type="unfinished">Motor Order Identification and Assignment</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="401"/>
+      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="404"/>
       <source>Error</source>
       <translation type="unfinished">Error</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="406"/>
+      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="409"/>
       <source>Spin Motor Again</source>
       <translation type="unfinished">Spin Motor Again</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="413"/>
+      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="416"/>
       <source>Abort</source>
       <translation type="unfinished">Abort</translation>
     </message>
@@ -5106,7 +5106,7 @@ Click Ok to start the auto-tuning process.
     </message>
   </context>
   <context>
-    <name>DebugWindow</name>
+    <name>DefaultChecklist</name>
     <message>
       <location filename="../src/FlightDisplay/DefaultChecklist.qml" line="25"/>
       <source>Generic Initial checks</source>
@@ -6966,120 +6966,6 @@ Click Ok to start the auto-tuning process.
     </message>
   </context>
   <context>
-    <name>GCSControlIndicator</name>
-    <message>
-      <location filename="../src/UI/toolbar/GCSControlIndicator.qml" line="110"/>
-      <source>GCS </source>
-      <translation type="unfinished">GCS </translation>
-    </message>
-    <message>
-      <location filename="../src/UI/toolbar/GCSControlIndicator.qml" line="110"/>
-      <source> is requesting control</source>
-      <translation type="unfinished"> is requesting control</translation>
-    </message>
-    <message>
-      <location filename="../src/UI/toolbar/GCSControlIndicator.qml" line="115"/>
-      <source>Allow &lt;br&gt; takeover</source>
-      <translation type="unfinished">Allow &lt;br&gt; takeover</translation>
-    </message>
-    <message>
-      <location filename="../src/UI/toolbar/GCSControlIndicator.qml" line="132"/>
-      <source>Ignoring automatically in </source>
-      <translation type="unfinished">Ignoring automatically in </translation>
-    </message>
-    <message>
-      <location filename="../src/UI/toolbar/GCSControlIndicator.qml" line="132"/>
-      <source> seconds</source>
-      <translation type="unfinished"> seconds</translation>
-    </message>
-    <message>
-      <location filename="../src/UI/toolbar/GCSControlIndicator.qml" line="136"/>
-      <location filename="../src/UI/toolbar/GCSControlIndicator.qml" line="193"/>
-      <source>Ignore</source>
-      <translation type="unfinished">Ignore</translation>
-    </message>
-    <message>
-      <location filename="../src/UI/toolbar/GCSControlIndicator.qml" line="187"/>
-      <source>Reverting back to takeover not allowed if GCS </source>
-      <translation type="unfinished">Reverting back to takeover not allowed if GCS </translation>
-    </message>
-    <message>
-      <location filename="../src/UI/toolbar/GCSControlIndicator.qml" line="188"/>
-      <source> doesn&apos;t take control in </source>
-      <translation type="unfinished"> doesn&apos;t take control in </translation>
-    </message>
-    <message>
-      <location filename="../src/UI/toolbar/GCSControlIndicator.qml" line="189"/>
-      <source> seconds ...</source>
-      <translation type="unfinished"> seconds ...</translation>
-    </message>
-    <message>
-      <location filename="../src/UI/toolbar/GCSControlIndicator.qml" line="238"/>
-      <source>System in control: </source>
-      <translation type="unfinished">System in control: </translation>
-    </message>
-    <message>
-      <location filename="../src/UI/toolbar/GCSControlIndicator.qml" line="242"/>
-      <source>This GCS</source>
-      <translation type="unfinished">This GCS</translation>
-    </message>
-    <message>
-      <location filename="../src/UI/toolbar/GCSControlIndicator.qml" line="250"/>
-      <source>Takeover allowed</source>
-      <translation type="unfinished">Takeover allowed</translation>
-    </message>
-    <message>
-      <location filename="../src/UI/toolbar/GCSControlIndicator.qml" line="250"/>
-      <source>Takeover NOT allowed</source>
-      <translation type="unfinished">Takeover NOT allowed</translation>
-    </message>
-    <message>
-      <location filename="../src/UI/toolbar/GCSControlIndicator.qml" line="266"/>
-      <source>Send Control Request:</source>
-      <translation type="unfinished">Send Control Request:</translation>
-    </message>
-    <message>
-      <location filename="../src/UI/toolbar/GCSControlIndicator.qml" line="271"/>
-      <source>Change takeover condition:</source>
-      <translation type="unfinished">Change takeover condition:</translation>
-    </message>
-    <message>
-      <location filename="../src/UI/toolbar/GCSControlIndicator.qml" line="277"/>
-      <source>Request sent: </source>
-      <translation type="unfinished">Request sent: </translation>
-    </message>
-    <message>
-      <location filename="../src/UI/toolbar/GCSControlIndicator.qml" line="282"/>
-      <source>Allow takeover</source>
-      <translation type="unfinished">Allow takeover</translation>
-    </message>
-    <message>
-      <location filename="../src/UI/toolbar/GCSControlIndicator.qml" line="287"/>
-      <source>Adquire Control</source>
-      <translation type="unfinished">Adquire Control</translation>
-    </message>
-    <message>
-      <location filename="../src/UI/toolbar/GCSControlIndicator.qml" line="287"/>
-      <source>Send Request</source>
-      <translation type="unfinished">Send Request</translation>
-    </message>
-    <message>
-      <location filename="../src/UI/toolbar/GCSControlIndicator.qml" line="301"/>
-      <source>Request Timeout (sec):</source>
-      <translation type="unfinished">Request Timeout (sec):</translation>
-    </message>
-    <message>
-      <location filename="../src/UI/toolbar/GCSControlIndicator.qml" line="311"/>
-      <source>Change</source>
-      <translation type="unfinished">Change</translation>
-    </message>
-    <message>
-      <location filename="../src/UI/toolbar/GCSControlIndicator.qml" line="328"/>
-      <source>This GCS Mavlink System ID: </source>
-      <translation type="unfinished">This GCS Mavlink System ID: </translation>
-    </message>
-  </context>
-  <context>
     <name>GPSIndicator</name>
     <message>
       <location filename="../src/QmlControls/GPSIndicator.qml" line="44"/>
@@ -8760,45 +8646,6 @@ Click Ok to start the auto-tuning process.
     </message>
   </context>
   <context>
-    <name>KML</name>
-    <message>
-      <location filename="../src/Utilities/Shape/KMLHelper.cc" line="28"/>
-      <source>File not found: %1</source>
-      <translation type="unfinished">File not found: %1</translation>
-    </message>
-    <message>
-      <location filename="../src/Utilities/Shape/KMLHelper.cc" line="33"/>
-      <source>Unable to open file: %1 error: $%2</source>
-      <translation type="unfinished">Unable to open file: %1 error: $%2</translation>
-    </message>
-    <message>
-      <location filename="../src/Utilities/Shape/KMLHelper.cc" line="40"/>
-      <source>Unable to parse KML file: %1 error: %2 line: %3</source>
-      <translation type="unfinished">Unable to parse KML file: %1 error: %2 line: %3</translation>
-    </message>
-    <message>
-      <location filename="../src/Utilities/Shape/KMLHelper.cc" line="66"/>
-      <source>No supported type found in KML file.</source>
-      <translation type="unfinished">No supported type found in KML file.</translation>
-    </message>
-    <message>
-      <location filename="../src/Utilities/Shape/KMLHelper.cc" line="82"/>
-      <source>Unable to find Polygon node in KML</source>
-      <translation type="unfinished">Unable to find Polygon node in KML</translation>
-    </message>
-    <message>
-      <location filename="../src/Utilities/Shape/KMLHelper.cc" line="88"/>
-      <location filename="../src/Utilities/Shape/KMLHelper.cc" line="143"/>
-      <source>Internal error: Unable to find coordinates node in KML</source>
-      <translation type="unfinished">Internal error: Unable to find coordinates node in KML</translation>
-    </message>
-    <message>
-      <location filename="../src/Utilities/Shape/KMLHelper.cc" line="137"/>
-      <source>Unable to find LineString node in KML</source>
-      <translation type="unfinished">Unable to find LineString node in KML</translation>
-    </message>
-  </context>
-  <context>
     <name>KMLHelper</name>
     <message>
       <location filename="../src/Utilities/Shape/KMLHelper.cc" line="19"/>
@@ -9896,87 +9743,87 @@ Click Ok to start the auto-tuning process.
   <context>
     <name>MainWindow</name>
     <message>
-      <location filename="../src/UI/MainWindow.qml" line="143"/>
-      <location filename="../src/UI/MainWindow.qml" line="367"/>
+      <location filename="../src/UI/MainWindow.qml" line="137"/>
+      <location filename="../src/UI/MainWindow.qml" line="356"/>
       <source>Analyze Tools</source>
       <translation type="unfinished">Analyze Tools</translation>
     </message>
     <message>
-      <location filename="../src/UI/MainWindow.qml" line="147"/>
-      <location filename="../src/UI/MainWindow.qml" line="382"/>
+      <location filename="../src/UI/MainWindow.qml" line="141"/>
+      <location filename="../src/UI/MainWindow.qml" line="371"/>
       <source>Vehicle Configuration</source>
       <translation type="unfinished">Vehicle Configuration</translation>
     </message>
     <message>
-      <location filename="../src/UI/MainWindow.qml" line="164"/>
-      <location filename="../src/UI/MainWindow.qml" line="396"/>
+      <location filename="../src/UI/MainWindow.qml" line="158"/>
+      <location filename="../src/UI/MainWindow.qml" line="385"/>
       <source>Application Settings</source>
       <translation type="unfinished">Application Settings</translation>
     </message>
     <message>
-      <location filename="../src/UI/MainWindow.qml" line="226"/>
-      <location filename="../src/UI/MainWindow.qml" line="412"/>
+      <location filename="../src/UI/MainWindow.qml" line="215"/>
+      <location filename="../src/UI/MainWindow.qml" line="401"/>
       <source>Close %1</source>
       <translation type="unfinished">Close %1</translation>
     </message>
     <message>
-      <location filename="../src/UI/MainWindow.qml" line="231"/>
+      <location filename="../src/UI/MainWindow.qml" line="220"/>
       <source>You have a mission edit in progress which has not been saved/sent. If you close you will lose changes. Are you sure you want to close?</source>
       <translation type="unfinished">You have a mission edit in progress which has not been saved/sent. If you close you will lose changes. Are you sure you want to close?</translation>
     </message>
     <message>
-      <location filename="../src/UI/MainWindow.qml" line="244"/>
+      <location filename="../src/UI/MainWindow.qml" line="233"/>
       <source>You have pending parameter updates to a vehicle. If you close you will lose changes. Are you sure you want to close?</source>
       <translation type="unfinished">You have pending parameter updates to a vehicle. If you close you will lose changes. Are you sure you want to close?</translation>
     </message>
     <message>
-      <location filename="../src/UI/MainWindow.qml" line="256"/>
+      <location filename="../src/UI/MainWindow.qml" line="245"/>
       <source>There are still active connections to vehicles. Are you sure you want to exit?</source>
       <translation type="unfinished">There are still active connections to vehicles. Are you sure you want to exit?</translation>
     </message>
     <message>
-      <location filename="../src/UI/MainWindow.qml" line="295"/>
+      <location filename="../src/UI/MainWindow.qml" line="284"/>
       <source>Debug Touch Areas</source>
       <translation type="unfinished">Debug Touch Areas</translation>
     </message>
     <message>
-      <location filename="../src/UI/MainWindow.qml" line="296"/>
+      <location filename="../src/UI/MainWindow.qml" line="285"/>
       <source>Touch Area display toggled</source>
       <translation type="unfinished">Touch Area display toggled</translation>
     </message>
     <message>
-      <location filename="../src/UI/MainWindow.qml" line="302"/>
-      <location filename="../src/UI/MainWindow.qml" line="314"/>
+      <location filename="../src/UI/MainWindow.qml" line="291"/>
+      <location filename="../src/UI/MainWindow.qml" line="303"/>
       <source>Advanced Mode</source>
       <translation type="unfinished">Advanced Mode</translation>
     </message>
     <message>
-      <location filename="../src/UI/MainWindow.qml" line="315"/>
+      <location filename="../src/UI/MainWindow.qml" line="304"/>
       <source>Turn off Advanced Mode?</source>
       <translation type="unfinished">Turn off Advanced Mode?</translation>
     </message>
     <message>
-      <location filename="../src/UI/MainWindow.qml" line="353"/>
+      <location filename="../src/UI/MainWindow.qml" line="342"/>
       <source>Plan Flight</source>
       <translation type="unfinished">Plan Flight</translation>
     </message>
     <message>
-      <location filename="../src/UI/MainWindow.qml" line="429"/>
+      <location filename="../src/UI/MainWindow.qml" line="418"/>
       <source>%1 Version</source>
       <translation type="unfinished">%1 Version</translation>
     </message>
     <message>
-      <location filename="../src/UI/MainWindow.qml" line="519"/>
+      <location filename="../src/UI/MainWindow.qml" line="505"/>
       <source>Exit</source>
       <translation type="unfinished">Exit</translation>
     </message>
     <message>
-      <location filename="../src/UI/MainWindow.qml" line="600"/>
+      <location filename="../src/UI/MainWindow.qml" line="586"/>
       <source>Vehicle Error</source>
       <translation type="unfinished">Vehicle Error</translation>
     </message>
     <message>
-      <location filename="../src/UI/MainWindow.qml" line="624"/>
+      <location filename="../src/UI/MainWindow.qml" line="610"/>
       <source>Additional errors received</source>
       <translation type="unfinished">Additional errors received</translation>
     </message>
@@ -10498,97 +10345,6 @@ Click Ok to start the auto-tuning process.
   </context>
   <context>
     <name>MockConfiguration</name>
-    <message>
-      <location filename="../src/Comms/MockLink/MockConfiguration.h" line="37"/>
-      <source>Mock Link Settings</source>
-      <translation type="unfinished">Mock Link Settings</translation>
-    </message>
-  </context>
-  <context>
-    <name>MockLink</name>
-    <message>
-      <location filename="../src/UI/AppSettings/MockLink.qml" line="43"/>
-      <source>Send status text + voice</source>
-      <translation type="unfinished">Send status text + voice</translation>
-    </message>
-    <message>
-      <location filename="../src/UI/AppSettings/MockLink.qml" line="46"/>
-      <source>PX4 Vehicle</source>
-      <translation type="unfinished">PX4 Vehicle</translation>
-    </message>
-    <message>
-      <location filename="../src/UI/AppSettings/MockLink.qml" line="51"/>
-      <source>APM ArduCopter Vehicle</source>
-      <translation type="unfinished">APM ArduCopter Vehicle</translation>
-    </message>
-    <message>
-      <location filename="../src/UI/AppSettings/MockLink.qml" line="57"/>
-      <source>APM ArduPlane Vehicle</source>
-      <translation type="unfinished">APM ArduPlane Vehicle</translation>
-    </message>
-    <message>
-      <location filename="../src/UI/AppSettings/MockLink.qml" line="63"/>
-      <source>APM ArduSub Vehicle</source>
-      <translation type="unfinished">APM ArduSub Vehicle</translation>
-    </message>
-    <message>
-      <location filename="../src/UI/AppSettings/MockLink.qml" line="69"/>
-      <source>APM ArduRover Vehicle</source>
-      <translation type="unfinished">APM ArduRover Vehicle</translation>
-    </message>
-    <message>
-      <location filename="../src/UI/AppSettings/MockLink.qml" line="75"/>
-      <source>Generic Vehicle</source>
-      <translation type="unfinished">Generic Vehicle</translation>
-    </message>
-    <message>
-      <location filename="../src/UI/AppSettings/MockLink.qml" line="80"/>
-      <source>Stop One MockLink</source>
-      <translation type="unfinished">Stop One MockLink</translation>
-    </message>
-  </context>
-  <context>
-    <name>MockLinkSettings</name>
-    <message>
-      <location filename="../src/UI/AppSettings/MockLinkSettings.qml" line="73"/>
-      <source>Send Status Text and Voice</source>
-      <translation type="unfinished">Send Status Text and Voice</translation>
-    </message>
-    <message>
-      <location filename="../src/UI/AppSettings/MockLinkSettings.qml" line="80"/>
-      <source>Increment Vehicle Id</source>
-      <translation type="unfinished">Increment Vehicle Id</translation>
-    </message>
-    <message>
-      <location filename="../src/UI/AppSettings/MockLinkSettings.qml" line="84"/>
-      <source>Firmware</source>
-      <translation type="unfinished">Firmware</translation>
-    </message>
-    <message>
-      <location filename="../src/UI/AppSettings/MockLinkSettings.qml" line="88"/>
-      <source>PX4 Pro</source>
-      <translation type="unfinished">PX4 Pro</translation>
-    </message>
-    <message>
-      <location filename="../src/UI/AppSettings/MockLinkSettings.qml" line="88"/>
-      <source>ArduPilot</source>
-      <translation type="unfinished">ArduPilot</translation>
-    </message>
-    <message>
-      <location filename="../src/UI/AppSettings/MockLinkSettings.qml" line="88"/>
-      <source>Generic MAVLink</source>
-      <translation type="unfinished">Generic MAVLink</translation>
-    </message>
-    <message>
-      <location filename="../src/UI/AppSettings/MockLinkSettings.qml" line="94"/>
-      <source>Vehicle Type</source>
-      <translation type="unfinished">Vehicle Type</translation>
-    </message>
-    <message>
-      <location filename="../src/UI/AppSettings/MockLinkSettings.qml" line="100"/>
-      <source>ArduCopter</source>
-      <translation type="unfinished">ArduCopter</translation>
-    </message>
     <message>
       <location filename="../src/Comms/MockLink/MockConfiguration.h" line="37"/>
       <source>Mock Link Settings</source>
@@ -11737,12 +11493,12 @@ Is this really what you want?</translation>
   <context>
     <name>PX4ParameterMetaData</name>
     <message>
-      <location filename="../src/FirmwarePlugin/PX4/PX4ParameterMetaData.cc" line="337"/>
+      <location filename="../src/FirmwarePlugin/PX4/PX4ParameterMetaData.cc" line="338"/>
       <source>Enabled</source>
       <translation>Enabled</translation>
     </message>
     <message>
-      <location filename="../src/FirmwarePlugin/PX4/PX4ParameterMetaData.cc" line="339"/>
+      <location filename="../src/FirmwarePlugin/PX4/PX4ParameterMetaData.cc" line="340"/>
       <source>Disabled</source>
       <translation>Disabled</translation>
     </message>
@@ -11959,13 +11715,13 @@ Is this really what you want?</translation>
     <name>PX4TuningComponentCopterRate</name>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="32"/>
-      <source>Airmode (disable during tuning) &lt;b&gt;&lt;a href=&quot;https://docs.px4.io/master/en/config_mc/pid_tuning_guide_multicopter.html#airmode-mixer-saturation&quot;&gt;?&lt;/a&gt;&lt;/b&gt;</source>
-      <translation type="unfinished">Airmode (disable during tuning) &lt;b&gt;&lt;a href=&quot;https://docs.px4.io/master/en/config_mc/pid_tuning_guide_multicopter.html#airmode-mixer-saturation&quot;&gt;?&lt;/a&gt;&lt;/b&gt;</translation>
+      <source>Airmode (disable during tuning) &lt;b&gt;&lt;a href=&quot;https://docs.px4.io/main/en/config_mc/pid_tuning_guide_multicopter.html#airmode-mixer-saturation&quot;&gt;?&lt;/a&gt;&lt;/b&gt;</source>
+      <translation type="unfinished">Airmode (disable during tuning) &lt;b&gt;&lt;a href=&quot;https://docs.px4.io/main/en/config_mc/pid_tuning_guide_multicopter.html#airmode-mixer-saturation&quot;&gt;?&lt;/a&gt;&lt;/b&gt;</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="49"/>
-      <source>Thrust curve &lt;b&gt;&lt;a href=&quot;https://docs.px4.io/master/en/config_mc/pid_tuning_guide_multicopter.html#thrust-curve&quot;&gt;?&lt;/a&gt;&lt;/b&gt;</source>
-      <translation type="unfinished">Thrust curve &lt;b&gt;&lt;a href=&quot;https://docs.px4.io/master/en/config_mc/pid_tuning_guide_multicopter.html#thrust-curve&quot;&gt;?&lt;/a&gt;&lt;/b&gt;</translation>
+      <source>Thrust curve &lt;b&gt;&lt;a href=&quot;https://docs.px4.io/main/en/config_mc/pid_tuning_guide_multicopter.html#thrust-curve&quot;&gt;?&lt;/a&gt;&lt;/b&gt;</source>
+      <translation type="unfinished">Thrust curve &lt;b&gt;&lt;a href=&quot;https://docs.px4.io/main/en/config_mc/pid_tuning_guide_multicopter.html#thrust-curve&quot;&gt;?&lt;/a&gt;&lt;/b&gt;</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="63"/>
@@ -14028,19 +13784,6 @@ Click &apos;Ok&apos; to upload the Plan anyway.</translation>
     </message>
   </context>
   <context>
-    <name>QGCLogging</name>
-    <message>
-      <location filename="../src/Utilities/QGCLogging.cc" line="146"/>
-      <source>Unable to reopen log file %1: %2</source>
-      <translation type="unfinished">Unable to reopen log file %1: %2</translation>
-    </message>
-    <message>
-      <location filename="../src/Utilities/QGCLogging.cc" line="170"/>
-      <source>Open console log output file failed %1 : %2</source>
-      <translation type="unfinished">Open console log output file failed %1 : %2</translation>
-    </message>
-  </context>
-  <context>
     <name>QGCMAVLink</name>
     <message>
       <location filename="../src/MAVLink/QGCMAVLink.cc" line="318"/>
@@ -15542,79 +15285,6 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     </message>
   </context>
   <context>
-    <name>SHP</name>
-    <message>
-      <location filename="../src/Utilities/Shape/SHPFileHelper.cc" line="41"/>
-      <source>File is not a .shp file: %1</source>
-      <translation type="unfinished">File is not a .shp file: %1</translation>
-    </message>
-    <message>
-      <location filename="../src/Utilities/Shape/SHPFileHelper.cc" line="48"/>
-      <source>File not found: %1</source>
-      <translation type="unfinished">File not found: %1</translation>
-    </message>
-    <message>
-      <location filename="../src/Utilities/Shape/SHPFileHelper.cc" line="53"/>
-      <source>PRJ file open failed: %1</source>
-      <translation type="unfinished">PRJ file open failed: %1</translation>
-    </message>
-    <message>
-      <location filename="../src/Utilities/Shape/SHPFileHelper.cc" line="75"/>
-      <source>UTM projection is not in supported format. Must be PROJCS[&quot;WGS_1984_UTM_Zone_##N/S</source>
-      <translation type="unfinished">UTM projection is not in supported format. Must be PROJCS[&quot;WGS_1984_UTM_Zone_##N/S</translation>
-    </message>
-    <message>
-      <location filename="../src/Utilities/Shape/SHPFileHelper.cc" line="78"/>
-      <source>Only WGS84 or UTM projections are supported.</source>
-      <translation type="unfinished">Only WGS84 or UTM projections are supported.</translation>
-    </message>
-    <message>
-      <location filename="../src/Utilities/Shape/SHPFileHelper.cc" line="101"/>
-      <source>SHPOpen failed.</source>
-      <translation type="unfinished">SHPOpen failed.</translation>
-    </message>
-    <message>
-      <location filename="../src/Utilities/Shape/SHPFileHelper.cc" line="125"/>
-      <source>More than one entity found.</source>
-      <translation type="unfinished">More than one entity found.</translation>
-    </message>
-    <message>
-      <location filename="../src/Utilities/Shape/SHPFileHelper.cc" line="131"/>
-      <source>No supported types found.</source>
-      <translation type="unfinished">No supported types found.</translation>
-    </message>
-    <message>
-      <location filename="../src/Utilities/Shape/SHPFileHelper.cc" line="161"/>
-      <source>File does not contain a polygon.</source>
-      <translation type="unfinished">File does not contain a polygon.</translation>
-    </message>
-    <message>
-      <location filename="../src/Utilities/Shape/SHPFileHelper.cc" line="167"/>
-      <source>Failed to read polygon object.</source>
-      <translation type="unfinished">Failed to read polygon object.</translation>
-    </message>
-    <message>
-      <location filename="../src/Utilities/Shape/SHPFileHelper.cc" line="172"/>
-      <source>Only single part polygons are supported.</source>
-      <translation type="unfinished">Only single part polygons are supported.</translation>
-    </message>
-    <message>
-      <location filename="../src/Utilities/Shape/SHPFileHelper.cc" line="235"/>
-      <source>File does not contain a polyline.</source>
-      <translation type="unfinished">File does not contain a polyline.</translation>
-    </message>
-    <message>
-      <location filename="../src/Utilities/Shape/SHPFileHelper.cc" line="241"/>
-      <source>Failed to read polyline object.</source>
-      <translation type="unfinished">Failed to read polyline object.</translation>
-    </message>
-    <message>
-      <location filename="../src/Utilities/Shape/SHPFileHelper.cc" line="246"/>
-      <source>Only single part polylines are supported.</source>
-      <translation type="unfinished">Only single part polylines are supported.</translation>
-    </message>
-  </context>
-  <context>
     <name>SHPFileHelper</name>
     <message>
       <location filename="../src/Utilities/Shape/SHPFileHelper.cc" line="32"/>
@@ -16229,12 +15899,12 @@ ROTATION_NONE indicates component points in direction of flight.</translation>
   <context>
     <name>SerialLink</name>
     <message>
-      <location filename="../src/Comms/SerialLink.cc" line="408"/>
+      <location filename="../src/Comms/SerialLink.cc" line="460"/>
       <source>Serial Link Error</source>
       <translation type="unfinished">Serial Link Error</translation>
     </message>
     <message>
-      <location filename="../src/Comms/SerialLink.cc" line="408"/>
+      <location filename="../src/Comms/SerialLink.cc" line="460"/>
       <source>Link %1: (Port: %2) %3</source>
       <translation type="unfinished">Link %1: (Port: %2) %3</translation>
     </message>
@@ -16305,37 +15975,37 @@ ROTATION_NONE indicates component points in direction of flight.</translation>
   <context>
     <name>SerialWorker</name>
     <message>
-      <location filename="../src/Comms/SerialLink.cc" line="189"/>
+      <location filename="../src/Comms/SerialLink.cc" line="241"/>
       <source>Not connecting to a bootloader</source>
       <translation type="unfinished">Not connecting to a bootloader</translation>
     </message>
     <message>
-      <location filename="../src/Comms/SerialLink.cc" line="202"/>
+      <location filename="../src/Comms/SerialLink.cc" line="254"/>
       <source>Could not open port: %1</source>
       <translation type="unfinished">Could not open port: %1</translation>
     </message>
     <message>
-      <location filename="../src/Comms/SerialLink.cc" line="228"/>
+      <location filename="../src/Comms/SerialLink.cc" line="280"/>
       <source>Data to Send is Empty</source>
       <translation type="unfinished">Data to Send is Empty</translation>
     </message>
     <message>
-      <location filename="../src/Comms/SerialLink.cc" line="233"/>
+      <location filename="../src/Comms/SerialLink.cc" line="285"/>
       <source>Port is not Connected</source>
       <translation type="unfinished">Port is not Connected</translation>
     </message>
     <message>
-      <location filename="../src/Comms/SerialLink.cc" line="238"/>
+      <location filename="../src/Comms/SerialLink.cc" line="290"/>
       <source>Port is not Writable</source>
       <translation type="unfinished">Port is not Writable</translation>
     </message>
     <message>
-      <location filename="../src/Comms/SerialLink.cc" line="246"/>
+      <location filename="../src/Comms/SerialLink.cc" line="298"/>
       <source>Could Not Send Data - Write Failed: %1</source>
       <translation type="unfinished">Could Not Send Data - Write Failed: %1</translation>
     </message>
     <message>
-      <location filename="../src/Comms/SerialLink.cc" line="249"/>
+      <location filename="../src/Comms/SerialLink.cc" line="301"/>
       <source>Could Not Send Data - Write Returned 0 Bytes</source>
       <translation type="unfinished">Could Not Send Data - Write Returned 0 Bytes</translation>
     </message>
@@ -16520,21 +16190,6 @@ ROTATION_NONE indicates component points in direction of flight.</translation>
       <location filename="../src/Utilities/Shape/ShapeFileHelper.h" line="49"/>
       <source>Shape file load failed. %1</source>
       <translation>Shape file load failed. %1</translation>
-    </message>
-    <message>
-      <location filename="../src/Utilities/Shape/ShapeFileHelper.cc" line="33"/>
-      <source>Unsupported file type. Only .%1 and .%2 are supported.</source>
-      <translation type="unfinished">Unsupported file type. Only .%1 and .%2 are supported.</translation>
-    </message>
-    <message>
-      <location filename="../src/Utilities/Shape/ShapeFileHelper.cc" line="88"/>
-      <source>KML Files (*.%1)</source>
-      <translation type="unfinished">KML Files (*.%1)</translation>
-    </message>
-    <message>
-      <location filename="../src/Utilities/Shape/ShapeFileHelper.cc" line="94"/>
-      <source>KML/SHP Files (*.%1 *.%2)</source>
-      <translation type="unfinished">KML/SHP Files (*.%1 *.%2)</translation>
     </message>
     <message>
       <location filename="../src/Utilities/Shape/ShapeFileHelper.cc" line="33"/>
