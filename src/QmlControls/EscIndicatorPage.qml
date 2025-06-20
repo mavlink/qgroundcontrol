@@ -230,17 +230,24 @@ ToolIndicatorPage {
                                 spacing: ScreenTools.defaultFontPixelHeight * 0.1
                                 Layout.bottomMargin: index < Math.min(4, _allMotors.length) - 1 ? ScreenTools.defaultFontPixelHeight * 0.5 : 0
 
-                                QGCLabel {
-                                    text: qsTr("Motor %1").arg(_allMotors[index].id)
-                                    color: qgcPal.text
+                                RowLayout {
+
+                                    QGCLabel {
+                                        text: qsTr("Motor %1").arg(_allMotors[index].id)
+                                        color: qgcPal.text
+                                    }
+                                    QGCLabel {
+                                        text: _allMotors[index].healthy ? qsTr("ONLINE") : qsTr("OFFLINE")
+                                        color: _allMotors[index].healthy ? qgcPal.colorGreen : qgcPal.colorRed
+                                    }
                                 }
 
-                                Rectangle {
-                                    Layout.fillWidth: true
-                                    height: ScreenTools.defaultFontPixelHeight * 0.15
-                                    color: _allMotors[index].healthy ? qgcPal.colorGreen : qgcPal.colorRed
-                                    radius: 2
-                                }
+                                // Rectangle {
+                                //     Layout.fillWidth: true
+                                //     height: ScreenTools.defaultFontPixelHeight * 0.15
+                                //     color: _allMotors[index].healthy ? qgcPal.colorGreen : qgcPal.colorRed
+                                //     radius: 2
+                                // }
 
                                 GridLayout {
                                     Layout.fillWidth: true
@@ -358,7 +365,7 @@ ToolIndicatorPage {
                 visible: !_escDataAvailable
 
                 QGCLabel {
-                    text: qsTr("No ESC data available. ESC status information will be displayed here when the vehicle sends ESC_INFO and ESC_STATUS MAVLink messages.")
+                    text: qsTr("No ESC data available. Requires ESC_INFO and ESC_STATUS MAVLink messages.")
                     wrapMode: Text.WordWrap
                     Layout.fillWidth: true
                 }

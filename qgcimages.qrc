@@ -130,6 +130,7 @@
         <file alias="MAVLinkInspector.svg">src/AnalyzeView/MAVLinkInspector.svg</file>
         <file alias="Megaphone.svg">src/UI/toolbar/Images/Megaphone.svg</file>
         <file alias="MotorComponentIcon.svg">src/AutoPilotPlugins/Common/Images/MotorComponentIcon.svg</file>
+        <file alias="PropellerComponentIcon.svg">src/AutoPilotPlugins/Common/Images/PropellerComponentIcon.svg</file>
         <file alias="no-logging-light.svg">src/AutoPilotPlugins/PX4/Images/no-logging-light.svg</file>
         <file alias="no-logging.svg">src/AutoPilotPlugins/PX4/Images/no-logging.svg</file>
         <file alias="ObjectAvoidance.svg">src/AutoPilotPlugins/PX4/Images/ObjectAvoidance.svg</file>
