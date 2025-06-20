@@ -70,7 +70,7 @@ void GstVideoReceiver::start(uint32_t timeout)
     _timeout = timeout;
     _buffer = lowLatency() ? -1 : 0;
 
-    qCDebug(GstVideoReceiverLog) << "Starting" << _uri << ", buffer" << _buffer;
+    qCDebug(GstVideoReceiverLog) << "Starting" << _uri << ", lowLatency" << lowLatency() << ", timeout" << _timeout;
 
     _endOfStream = false;
 
@@ -1176,10 +1176,12 @@ void GstVideoReceiver::_dispatchSignal(Task emitter)
     _signalDepth -= 1;
 }
 
-gboolean GstVideoReceiver::_onBusMessage(GstBus *bus, GstMessage *msg, gpointer data)
+gboolean GstVideoReceiver::_onBusMessage(GstBus * /* bus */, GstMessage *msg, gpointer data)
 {
-    Q_UNUSED(bus)
-    Q_ASSERT(msg); Q_ASSERT(data);
+    if (!msg || !data) {
+        qCCritical(GstVideoReceiverLog) << "Invalid parameters in _onBusMessage: msg=" << msg << "data=" << data;
+        return TRUE;
+    }
 
     GstVideoReceiver *pThis = static_cast<GstVideoReceiver*>(data);
 
