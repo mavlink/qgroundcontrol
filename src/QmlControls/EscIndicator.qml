@@ -106,11 +106,11 @@ Item {
             width:              height
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
-            source:             "/qmlimages/MotorComponentIcon.svg"
+            source:             "/qmlimages/PropellerComponentIcon.svg"
             fillMode:           Image.PreserveAspectFit
             sourceSize.height:  height
             opacity:            (_activeVehicle && _escDataAvailable) ? 1 : 0.5
-            color:              getEscStatusColor()
+            color:              qgcPal.buttonText
         }
 
         Column {
@@ -127,7 +127,7 @@ Item {
             }
 
             QGCLabel {
-                color:          qgcPal.buttonText
+                color:          getEscStatusColor()
                 text:           _escHealthy ? qsTr("OK") : qsTr("ERR")
                 font.pointSize: ScreenTools.smallFontPointSize
             }
