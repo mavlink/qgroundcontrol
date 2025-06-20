@@ -230,24 +230,29 @@ ToolIndicatorPage {
                                 spacing: ScreenTools.defaultFontPixelHeight * 0.1
                                 Layout.bottomMargin: index < Math.min(4, _allMotors.length) - 1 ? ScreenTools.defaultFontPixelHeight * 0.5 : 0
 
+                                // Option 1: Compact status with colored circle
                                 RowLayout {
+                                    spacing: ScreenTools.defaultFontPixelWidth * 0.5
 
                                     QGCLabel {
                                         text: qsTr("Motor %1").arg(_allMotors[index].id)
                                         color: qgcPal.text
                                     }
+
+                                    // Small colored circle indicator
+                                    Rectangle {
+                                        width: ScreenTools.defaultFontPixelHeight * 0.6
+                                        height: ScreenTools.defaultFontPixelHeight * 0.6
+                                        radius: width / 2
+                                        color: _allMotors[index].healthy ? qgcPal.colorGreen : qgcPal.colorRed
+                                    }
+
                                     QGCLabel {
                                         text: _allMotors[index].healthy ? qsTr("ONLINE") : qsTr("OFFLINE")
                                         color: _allMotors[index].healthy ? qgcPal.colorGreen : qgcPal.colorRed
+                                        font.pointSize: ScreenTools.smallFontPointSize
                                     }
                                 }
-
-                                // Rectangle {
-                                //     Layout.fillWidth: true
-                                //     height: ScreenTools.defaultFontPixelHeight * 0.15
-                                //     color: _allMotors[index].healthy ? qgcPal.colorGreen : qgcPal.colorRed
-                                //     radius: 2
-                                // }
 
                                 GridLayout {
                                     Layout.fillWidth: true
@@ -276,20 +281,18 @@ ToolIndicatorPage {
                                     }
 
                                     LabelledLabel {
-                                        // Layout.fillWidth: true
                                         label: qsTr("Errors")
                                         labelText: _allMotors[index].errorCount.toString()
                                     }
 
                                     // Empty cell
                                     Item { }
-
                                 }
                             }
                         }
                     }
 
-                    // Column 2 - Motors 5-8
+                    // Column 2 - Motors 5-8 (consistent with Column 1)
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: ScreenTools.defaultFontPixelHeight * 0.25
@@ -302,57 +305,62 @@ ToolIndicatorPage {
                                 spacing: ScreenTools.defaultFontPixelHeight * 0.1
                                 Layout.bottomMargin: index < Math.max(0, _allMotors.length - 4) - 1 ? ScreenTools.defaultFontPixelHeight * 0.5 : 0
 
-                                QGCLabel {
-                                    text: qsTr("Motor %1").arg(_allMotors[index + 4].id)
-                                    font.pointSize: ScreenTools.smallFontPointSize
-                                    color: qgcPal.text
-                                }
+                                // Consistent with Column 1
+                                RowLayout {
+                                    spacing: ScreenTools.defaultFontPixelWidth * 0.5
 
-                                Rectangle {
-                                    Layout.fillWidth: true
-                                    height: ScreenTools.defaultFontPixelHeight * 0.15
-                                    color: _allMotors[index + 4].healthy ? qgcPal.colorGreen : qgcPal.colorRed
-                                    radius: 2
+                                    QGCLabel {
+                                        text: qsTr("Motor %1").arg(_allMotors[index + 4].id)
+                                        color: qgcPal.text
+                                    }
+
+                                    Rectangle {
+                                        width: ScreenTools.defaultFontPixelHeight * 0.6
+                                        height: ScreenTools.defaultFontPixelHeight * 0.6
+                                        radius: width / 2
+                                        color: _allMotors[index + 4].healthy ? qgcPal.colorGreen : qgcPal.colorRed
+                                    }
+
+                                    QGCLabel {
+                                        text: _allMotors[index + 4].healthy ? qsTr("ONLINE") : qsTr("OFFLINE")
+                                        color: _allMotors[index + 4].healthy ? qgcPal.colorGreen : qgcPal.colorRed
+                                        font.pointSize: ScreenTools.smallFontPointSize
+                                    }
                                 }
 
                                 GridLayout {
                                     Layout.fillWidth: true
                                     columns: 2
                                     rowSpacing: 2
-                                    columnSpacing: ScreenTools.defaultFontPixelWidth
+                                    columnSpacing: ScreenTools.defaultFontPixelWidth * 2
 
                                     LabelledLabel {
-                                        Layout.fillWidth: true
                                         label: qsTr("RPM")
                                         labelText: _allMotors[index + 4].rpm.toString()
                                     }
 
                                     LabelledLabel {
-                                        Layout.fillWidth: true
                                         label: qsTr("Current")
                                         labelText: _allMotors[index + 4].current.toFixed(1) + "A"
                                     }
 
                                     LabelledLabel {
-                                        Layout.fillWidth: true
                                         label: qsTr("Voltage")
                                         labelText: _allMotors[index + 4].voltage.toFixed(1) + "V"
                                     }
 
                                     LabelledLabel {
-                                        Layout.fillWidth: true
                                         label: qsTr("Temp")
                                         labelText: _allMotors[index + 4].temperature > 0 ? _allMotors[index + 4].temperature.toFixed(1) + "°C" : na
                                     }
 
                                     LabelledLabel {
-                                        Layout.fillWidth: true
                                         label: qsTr("Errors")
                                         labelText: _allMotors[index + 4].errorCount.toString()
                                     }
 
                                     // Empty cell
-                                    Item { Layout.fillWidth: true }
+                                    Item { }
                                 }
                             }
                         }
