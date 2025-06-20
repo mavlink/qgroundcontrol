@@ -146,7 +146,7 @@ ToolIndicatorPage {
 
                 GridLayout {
                     Layout.fillWidth: true
-                    columns: 2
+                    columns: 1
                     rowSpacing: ScreenTools.defaultFontPixelHeight * 0.25
                     columnSpacing: ScreenTools.defaultFontPixelWidth * 2
 
@@ -165,6 +165,19 @@ ToolIndicatorPage {
 
                     LabelledLabel {
                         Layout.fillWidth: true
+                        label:      qsTr("Total Errors")
+                        labelText:  {
+                            if (!_escDataAvailable || _allMotors.length === 0) return na
+                            var totalErrors = 0
+                            for (var i = 0; i < _allMotors.length; i++) {
+                                totalErrors += _allMotors[i].errorCount
+                            }
+                            return totalErrors.toString()
+                        }
+                    }
+
+                    LabelledLabel {
+                        Layout.fillWidth: true
                         label:      qsTr("Max Temperature")
                         labelText:  {
                             if (!_escDataAvailable || _allMotors.length === 0) return valueNA
@@ -177,19 +190,6 @@ ToolIndicatorPage {
                                 }
                             }
                             return hasTemperature ? maxTemp.toFixed(1) + "°C" : na
-                        }
-                    }
-
-                    LabelledLabel {
-                        Layout.fillWidth: true
-                        label:      qsTr("Total Errors")
-                        labelText:  {
-                            if (!_escDataAvailable || _allMotors.length === 0) return na
-                            var totalErrors = 0
-                            for (var i = 0; i < _allMotors.length; i++) {
-                                totalErrors += _allMotors[i].errorCount
-                            }
-                            return totalErrors.toString()
                         }
                     }
 
