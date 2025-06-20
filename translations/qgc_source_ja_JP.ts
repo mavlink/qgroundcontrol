@@ -3735,57 +3735,57 @@ Please place your vehicle in water, click the button, and wait. Note that the th
       <translation>ジオメトリー</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="177"/>
+      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="181"/>
       <source>Actuator Testing</source>
       <translation>アクチュエータのテスト</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="196"/>
+      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="200"/>
       <source>Configure some outputs in order to test them.</source>
       <translation>いくつかの出力を設定してテストします。</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="233"/>
+      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="237"/>
       <source>Careful: Actuator sliders are enabled</source>
       <translation>注意: モータースライダーは有効です</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="233"/>
+      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="237"/>
       <source>Propellers are removed - Enable sliders</source>
       <translation>プロペラが取り外されました - スライダーを有効にします</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="322"/>
+      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="326"/>
       <source>Actuator Outputs</source>
       <translation>アクチュエータ 出力</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="327"/>
+      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="331"/>
       <source>One or more actuator still needs to be assigned to an output.</source>
       <translation>1つ以上のアクチュエータを出力に割り当てる必要があります。</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="369"/>
+      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="373"/>
       <source>Identify &amp; Assign Motors</source>
       <translation>モーターの識別と割り当て</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="385"/>
+      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="389"/>
       <source>Motor Order Identification and Assignment</source>
       <translation>モーター注文の識別と割り当て</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="401"/>
+      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="404"/>
       <source>Error</source>
       <translation>エラー</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="406"/>
+      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="409"/>
       <source>Spin Motor Again</source>
       <translation>もう一度スピンモーター</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="413"/>
+      <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="416"/>
       <source>Abort</source>
       <translation>中止</translation>
     </message>
@@ -9737,87 +9737,87 @@ OKをクリックして、自動調整プロセスを開始します。</transla
   <context>
     <name>MainWindow</name>
     <message>
-      <location filename="../src/UI/MainWindow.qml" line="143"/>
-      <location filename="../src/UI/MainWindow.qml" line="367"/>
+      <location filename="../src/UI/MainWindow.qml" line="137"/>
+      <location filename="../src/UI/MainWindow.qml" line="356"/>
       <source>Analyze Tools</source>
       <translation type="unfinished">Analyze Tools</translation>
     </message>
     <message>
-      <location filename="../src/UI/MainWindow.qml" line="147"/>
-      <location filename="../src/UI/MainWindow.qml" line="382"/>
+      <location filename="../src/UI/MainWindow.qml" line="141"/>
+      <location filename="../src/UI/MainWindow.qml" line="371"/>
       <source>Vehicle Configuration</source>
       <translation type="unfinished">Vehicle Configuration</translation>
     </message>
     <message>
-      <location filename="../src/UI/MainWindow.qml" line="164"/>
-      <location filename="../src/UI/MainWindow.qml" line="396"/>
+      <location filename="../src/UI/MainWindow.qml" line="158"/>
+      <location filename="../src/UI/MainWindow.qml" line="385"/>
       <source>Application Settings</source>
       <translation type="unfinished">Application Settings</translation>
     </message>
     <message>
-      <location filename="../src/UI/MainWindow.qml" line="226"/>
-      <location filename="../src/UI/MainWindow.qml" line="412"/>
+      <location filename="../src/UI/MainWindow.qml" line="215"/>
+      <location filename="../src/UI/MainWindow.qml" line="401"/>
       <source>Close %1</source>
       <translation type="unfinished">Close %1</translation>
     </message>
     <message>
-      <location filename="../src/UI/MainWindow.qml" line="231"/>
+      <location filename="../src/UI/MainWindow.qml" line="220"/>
       <source>You have a mission edit in progress which has not been saved/sent. If you close you will lose changes. Are you sure you want to close?</source>
       <translation type="unfinished">You have a mission edit in progress which has not been saved/sent. If you close you will lose changes. Are you sure you want to close?</translation>
     </message>
     <message>
-      <location filename="../src/UI/MainWindow.qml" line="244"/>
+      <location filename="../src/UI/MainWindow.qml" line="233"/>
       <source>You have pending parameter updates to a vehicle. If you close you will lose changes. Are you sure you want to close?</source>
       <translation type="unfinished">You have pending parameter updates to a vehicle. If you close you will lose changes. Are you sure you want to close?</translation>
     </message>
     <message>
-      <location filename="../src/UI/MainWindow.qml" line="256"/>
+      <location filename="../src/UI/MainWindow.qml" line="245"/>
       <source>There are still active connections to vehicles. Are you sure you want to exit?</source>
       <translation type="unfinished">There are still active connections to vehicles. Are you sure you want to exit?</translation>
     </message>
     <message>
-      <location filename="../src/UI/MainWindow.qml" line="295"/>
+      <location filename="../src/UI/MainWindow.qml" line="284"/>
       <source>Debug Touch Areas</source>
       <translation type="unfinished">Debug Touch Areas</translation>
     </message>
     <message>
-      <location filename="../src/UI/MainWindow.qml" line="296"/>
+      <location filename="../src/UI/MainWindow.qml" line="285"/>
       <source>Touch Area display toggled</source>
       <translation type="unfinished">Touch Area display toggled</translation>
     </message>
     <message>
-      <location filename="../src/UI/MainWindow.qml" line="302"/>
-      <location filename="../src/UI/MainWindow.qml" line="314"/>
+      <location filename="../src/UI/MainWindow.qml" line="291"/>
+      <location filename="../src/UI/MainWindow.qml" line="303"/>
       <source>Advanced Mode</source>
       <translation type="unfinished">Advanced Mode</translation>
     </message>
     <message>
-      <location filename="../src/UI/MainWindow.qml" line="315"/>
+      <location filename="../src/UI/MainWindow.qml" line="304"/>
       <source>Turn off Advanced Mode?</source>
       <translation type="unfinished">Turn off Advanced Mode?</translation>
     </message>
     <message>
-      <location filename="../src/UI/MainWindow.qml" line="353"/>
+      <location filename="../src/UI/MainWindow.qml" line="342"/>
       <source>Plan Flight</source>
       <translation type="unfinished">Plan Flight</translation>
     </message>
     <message>
-      <location filename="../src/UI/MainWindow.qml" line="429"/>
+      <location filename="../src/UI/MainWindow.qml" line="418"/>
       <source>%1 Version</source>
       <translation type="unfinished">%1 Version</translation>
     </message>
     <message>
-      <location filename="../src/UI/MainWindow.qml" line="519"/>
+      <location filename="../src/UI/MainWindow.qml" line="505"/>
       <source>Exit</source>
       <translation type="unfinished">Exit</translation>
     </message>
     <message>
-      <location filename="../src/UI/MainWindow.qml" line="600"/>
+      <location filename="../src/UI/MainWindow.qml" line="586"/>
       <source>Vehicle Error</source>
       <translation type="unfinished">Vehicle Error</translation>
     </message>
     <message>
-      <location filename="../src/UI/MainWindow.qml" line="624"/>
+      <location filename="../src/UI/MainWindow.qml" line="610"/>
       <source>Additional errors received</source>
       <translation type="unfinished">Additional errors received</translation>
     </message>
@@ -11488,12 +11488,12 @@ Is this really what you want?</source>
   <context>
     <name>PX4ParameterMetaData</name>
     <message>
-      <location filename="../src/FirmwarePlugin/PX4/PX4ParameterMetaData.cc" line="337"/>
+      <location filename="../src/FirmwarePlugin/PX4/PX4ParameterMetaData.cc" line="338"/>
       <source>Enabled</source>
       <translation>有効</translation>
     </message>
     <message>
-      <location filename="../src/FirmwarePlugin/PX4/PX4ParameterMetaData.cc" line="339"/>
+      <location filename="../src/FirmwarePlugin/PX4/PX4ParameterMetaData.cc" line="340"/>
       <source>Disabled</source>
       <translation>無効</translation>
     </message>
@@ -11710,13 +11710,13 @@ Is this really what you want?</source>
     <name>PX4TuningComponentCopterRate</name>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="32"/>
-      <source>Airmode (disable during tuning) &lt;b&gt;&lt;a href=&quot;https://docs.px4.io/master/en/config_mc/pid_tuning_guide_multicopter.html#airmode-mixer-saturation&quot;&gt;?&lt;/a&gt;&lt;/b&gt;</source>
-      <translation>エアモード (チューニング中は無効) &lt;b&gt;&lt;a href=&quot;https://docs.px4.io/master/en/config_mc/pid_tuning_guide_multicopter.html#airmode-mixer-saturation&quot;&gt;?&lt;/a&gt;&lt;/b&gt;</translation>
+      <source>Airmode (disable during tuning) &lt;b&gt;&lt;a href=&quot;https://docs.px4.io/main/en/config_mc/pid_tuning_guide_multicopter.html#airmode-mixer-saturation&quot;&gt;?&lt;/a&gt;&lt;/b&gt;</source>
+      <translation type="unfinished">Airmode (disable during tuning) &lt;b&gt;&lt;a href=&quot;https://docs.px4.io/main/en/config_mc/pid_tuning_guide_multicopter.html#airmode-mixer-saturation&quot;&gt;?&lt;/a&gt;&lt;/b&gt;</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="49"/>
-      <source>Thrust curve &lt;b&gt;&lt;a href=&quot;https://docs.px4.io/master/en/config_mc/pid_tuning_guide_multicopter.html#thrust-curve&quot;&gt;?&lt;/a&gt;&lt;/b&gt;</source>
-      <translation>スラストカーブ &lt;b&gt;&lt;a href=&quot;https://docs.px4.io/master/en/config_mc/pid_tuning_guide_multicopter.html#thrust-curve&quot;&gt;?&lt;/a&gt;&lt;/b&gt;</translation>
+      <source>Thrust curve &lt;b&gt;&lt;a href=&quot;https://docs.px4.io/main/en/config_mc/pid_tuning_guide_multicopter.html#thrust-curve&quot;&gt;?&lt;/a&gt;&lt;/b&gt;</source>
+      <translation type="unfinished">Thrust curve &lt;b&gt;&lt;a href=&quot;https://docs.px4.io/main/en/config_mc/pid_tuning_guide_multicopter.html#thrust-curve&quot;&gt;?&lt;/a&gt;&lt;/b&gt;</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="63"/>
@@ -15894,12 +15894,12 @@ ROTATION_NONEは、コンポーネントが飛行方向を向いていること�
   <context>
     <name>SerialLink</name>
     <message>
-      <location filename="../src/Comms/SerialLink.cc" line="408"/>
+      <location filename="../src/Comms/SerialLink.cc" line="460"/>
       <source>Serial Link Error</source>
       <translation type="unfinished">Serial Link Error</translation>
     </message>
     <message>
-      <location filename="../src/Comms/SerialLink.cc" line="408"/>
+      <location filename="../src/Comms/SerialLink.cc" line="460"/>
       <source>Link %1: (Port: %2) %3</source>
       <translation type="unfinished">Link %1: (Port: %2) %3</translation>
     </message>
@@ -15970,37 +15970,37 @@ ROTATION_NONEは、コンポーネントが飛行方向を向いていること�
   <context>
     <name>SerialWorker</name>
     <message>
-      <location filename="../src/Comms/SerialLink.cc" line="189"/>
+      <location filename="../src/Comms/SerialLink.cc" line="241"/>
       <source>Not connecting to a bootloader</source>
       <translation type="unfinished">Not connecting to a bootloader</translation>
     </message>
     <message>
-      <location filename="../src/Comms/SerialLink.cc" line="202"/>
+      <location filename="../src/Comms/SerialLink.cc" line="254"/>
       <source>Could not open port: %1</source>
       <translation type="unfinished">Could not open port: %1</translation>
     </message>
     <message>
-      <location filename="../src/Comms/SerialLink.cc" line="228"/>
+      <location filename="../src/Comms/SerialLink.cc" line="280"/>
       <source>Data to Send is Empty</source>
       <translation type="unfinished">Data to Send is Empty</translation>
     </message>
     <message>
-      <location filename="../src/Comms/SerialLink.cc" line="233"/>
+      <location filename="../src/Comms/SerialLink.cc" line="285"/>
       <source>Port is not Connected</source>
       <translation type="unfinished">Port is not Connected</translation>
     </message>
     <message>
-      <location filename="../src/Comms/SerialLink.cc" line="238"/>
+      <location filename="../src/Comms/SerialLink.cc" line="290"/>
       <source>Port is not Writable</source>
       <translation type="unfinished">Port is not Writable</translation>
     </message>
     <message>
-      <location filename="../src/Comms/SerialLink.cc" line="246"/>
+      <location filename="../src/Comms/SerialLink.cc" line="298"/>
       <source>Could Not Send Data - Write Failed: %1</source>
       <translation type="unfinished">Could Not Send Data - Write Failed: %1</translation>
     </message>
     <message>
-      <location filename="../src/Comms/SerialLink.cc" line="249"/>
+      <location filename="../src/Comms/SerialLink.cc" line="301"/>
       <source>Could Not Send Data - Write Returned 0 Bytes</source>
       <translation type="unfinished">Could Not Send Data - Write Returned 0 Bytes</translation>
     </message>
