@@ -43,12 +43,12 @@ Item {
     property real   _landingAltitudeMeters:         _missionItem.landingAltitude.rawValue
     property real   _finalApproachAltitudeMeters:   _missionItem.finalApproachAltitude.rawValue
     property bool   _useLoiterToAlt:                _missionItem.useLoiterToAlt.rawValue
-    property real   _landingAreaBearing:            _missionItem.landingCoordinate.azimuthTo(_useLoiterToAlt ? _missionItem.loiterTangentCoordinate : _missionItem.finalApproachCoordinate)
+    property real   _landingAreaBearing:            _missionItem.landingCoordinate.azimuthTo(_missionItem.slopeStartCoordinate)
 
     function _calcGlideSlopeHeights() {
         var adjacent
         if (_useLoiterToAlt) {
-            adjacent = _missionItem.landingCoordinate.distanceTo(_missionItem.loiterTangentCoordinate)
+            adjacent = _missionItem.landingCoordinate.distanceTo(_missionItem.slopeStartCoordinate)
         } else {
             adjacent = _missionItem.landingCoordinate.distanceTo(_missionItem.finalApproachCoordinate)
         }
@@ -106,7 +106,7 @@ Item {
 
     function _setFlightPath() {
         if (_useLoiterToAlt) {
-            _flightPath = [ _missionItem.loiterTangentCoordinate, _missionItem.landingCoordinate ]
+            _flightPath = [ _missionItem.slopeStartCoordinate, _missionItem.landingCoordinate ]
         } else {
             _flightPath = [ _missionItem.finalApproachCoordinate, _missionItem.landingCoordinate ]
         }
@@ -177,7 +177,7 @@ Item {
             _setFlightPath()
         }
 
-        onLoiterTangentCoordinateChanged: {
+        onSlopeStartCoordinateChanged: {
             _calcGlideSlopeHeights()
             _setFlightPath()
         }
@@ -400,7 +400,7 @@ Item {
             Connections {
                 target:                             _missionItem
                 onLandingCoordinateChanged:         recalc()
-                onLoiterTangentCoordinateChanged:   recalc()
+                onSlopeStartCoordinateChanged:      recalc()
                 onFinalApproachCoordinateChanged:   recalc()
             }
         }
@@ -433,7 +433,7 @@ Item {
             Connections {
                 target:                             _missionItem
                 onLandingCoordinateChanged:         recalc()
-                onLoiterTangentCoordinateChanged:   recalc()
+                onSlopeStartCoordinateChanged:      recalc()
                 onFinalApproachCoordinateChanged:   recalc()
             }
         }
@@ -457,7 +457,7 @@ Item {
                 path = [ ]
                 addCoordinate(_missionItem.landingCoordinate.atDistanceAndAzimuth(hypotenuse, _landingAreaBearing - angleDegrees))
                 addCoordinate(_missionItem.landingCoordinate.atDistanceAndAzimuth(hypotenuse, _landingAreaBearing + angleDegrees))
-                addCoordinate(_useLoiterToAlt ? _missionItem.loiterTangentCoordinate : _missionItem.finalApproachCoordinate)
+                addCoordinate(_useLoiterToAlt ? _missionItem.slopeStartCoordinate : _missionItem.finalApproachCoordinate)
             }
 
             Component.onCompleted: recalc()
@@ -465,7 +465,7 @@ Item {
             Connections {
                 target:                             _missionItem
                 onLandingCoordinateChanged:         recalc()
-                onLoiterTangentCoordinateChanged:   recalc()
+                onSlopeStartCoordinateChanged:      recalc()
                 onFinalApproachCoordinateChanged:   recalc()
             }
 
@@ -502,7 +502,7 @@ Item {
             Connections {
                 target:                             _missionItem
                 onLandingCoordinateChanged:         recalc()
-                onLoiterTangentCoordinateChanged:   recalc()
+                onSlopeStartCoordinateChanged:      recalc()
                 onFinalApproachCoordinateChanged:   recalc()
             }
         }
@@ -525,7 +525,7 @@ Item {
 
             function recalc() {
                 var transitionCoordinate = _missionItem.landingCoordinate.atDistanceAndAzimuth(_landingLengthMeters / 2, _landingAreaBearing)
-                var halfDistance = transitionCoordinate.distanceTo(_useLoiterToAlt ? _missionItem.loiterTangentCoordinate : _missionItem.finalApproachCoordinate) / 2
+                var halfDistance = transitionCoordinate.distanceTo(_useLoiterToAlt ? _missionItem.slopeStartCoordinate : _missionItem.finalApproachCoordinate) / 2
                 var centeredCoordinate = transitionCoordinate.atDistanceAndAzimuth(halfDistance, _landingAreaBearing)
                 var angleIncrement = _landingAreaBearing > 180 ? -90 : 90
                 coordinate = centeredCoordinate.atDistanceAndAzimuth(_landingWidthMeters / 2, _landingAreaBearing + angleIncrement)
@@ -536,7 +536,7 @@ Item {
             Connections {
                 target:                             _missionItem
                 onLandingCoordinateChanged:         recalc()
-                onLoiterTangentCoordinateChanged:   recalc()
+                onSlopeStartCoordinateChanged:      recalc()
                 onFinalApproachCoordinateChanged:   recalc()
             }
 
@@ -555,7 +555,7 @@ Item {
             anchorPoint.y:  0
             z:              QGroundControl.zOrderMapItems
             visible:        _missionItem.isCurrentItem
-            coordinate:     _useLoiterToAlt ? _missionItem.loiterTangentCoordinate : _missionItem.finalApproachCoordinate
+            coordinate:     _missionItem.slopeStartCoordinate
 
             sourceItem: HeightIndicator {
                 map:        _root.map
