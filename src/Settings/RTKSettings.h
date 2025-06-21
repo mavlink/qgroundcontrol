@@ -10,6 +10,21 @@
 #pragma once
 
 #include "SettingsGroup.h"
+#include <QObject>
+
+// Definition of BaseMode moved here
+class BaseModeDefinition {
+    Q_GADGET
+public:
+    enum class Mode {
+        BaseSurveyIn = 0,
+        BaseFixed    = 1
+    };
+    Q_ENUM(Mode)
+
+private:
+    explicit BaseModeDefinition(); // Prevent instantiation
+};
 
 class RTKSettings : public SettingsGroup
 {
@@ -17,9 +32,10 @@ class RTKSettings : public SettingsGroup
 public:
     RTKSettings(QObject* parent = nullptr);
     DEFINE_SETTING_NAME_GROUP()
+    DEFINE_SETTINGFACT(baseReceiverManufacturers)
     DEFINE_SETTINGFACT(surveyInAccuracyLimit)
     DEFINE_SETTINGFACT(surveyInMinObservationDuration)
-    DEFINE_SETTINGFACT(useFixedBasePosition)
+    DEFINE_SETTINGFACT(baseMode)
     DEFINE_SETTINGFACT(fixedBasePositionLatitude)
     DEFINE_SETTINGFACT(fixedBasePositionLongitude)
     DEFINE_SETTINGFACT(fixedBasePositionAltitude)
