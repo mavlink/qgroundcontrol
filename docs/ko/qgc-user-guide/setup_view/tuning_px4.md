@@ -18,7 +18,7 @@ Tuning only needs to be done once, and is recommended unless you're using vehicl
 
 :::info
 이 가이드는 자동 튜닝의 기본 사용법을 보여줍니다.
-추가 정보 및 설정은 [PX4 자동 튜닝 가이드](http://docs.px4.io/master/en/config/autotune.html)(PX4 사용자 가이드)을 참고하십시오.
+Additional information and configuration can be found in the [PX4 Autotuning Guide](http://docs.px4.io/main/en/config/autotune.html) (PX4 User Guide).
 :::
 
 ### 사전 자동 튜닝 테스트
@@ -42,7 +42,7 @@ Tuning only needs to be done once, and is recommended unless you're using vehicl
 
 드론이 2번의 진동 내에서 스스로 안정화될 수 있으면 자동 튜닝 절차의 준비가 완료된 것입니다.
 
-그렇지 않으면, [PX4 사용 설명서 > 자동 튜닝 > 문제 해결](http://docs.px4.io/master/en/config/autotune.html#troubleshooting)을 참고하십시오.
+If not, see the [PX4 User Guide > Autotuning > Troubleshooting](http://docs.px4.io/main/en/config/autotune.html#troubleshooting).
 
 ### 자동 튜닝 절차
 
@@ -83,7 +83,7 @@ RC 컨트롤러로 자동 튜닝 프로세스를 중단할 준비를 하십시�
    - **멀티콥터:** 새로운 조정 매개변수를 적용하기 위하여 수동으로 착륙하고 시동을 해제합니다.
       조심스럽게 이륙하고 기체의 안정성을 수동으로 테스트하십시오.
 
-8. 강한 진동이 발생하면 즉시 착지하고 [PX4 사용자 가이드 > 자동 튜닝 > 문제 해결](http://docs.px4.io/master/en/config/autotune.html#troubleshooting)의 지침을 따르십시오.
+8. If any strong oscillations occur, land immediately and follow the instructions in [PX4 User Guide > Autotuning > Troubleshooting](http://docs.px4.io/main/en/config/autotune.html#troubleshooting).
 
 <br/>
 
@@ -101,7 +101,7 @@ A video of the process is shown below:
 수동 튜닝은 비행 중에 이루어지므로 기체는 미리 비행에 적합하게 튜닝되어 있어야 합니다(일반적으로 적절한 기본 기체를 선택한 경우).
 
 아래 지침은 수동 튜닝 UI를 사용하는 방법을 설명합니다.
-PID 값을 변경할 때 사용할 스텝 크기의 종류에 대한 자세한 힌트를 제공하는 [PX4 수동 PID 튜닝 가이드](http://docs.px4.io/master/en/config/autotune.html#see-also)와 함께 읽고/사용하도록 설계되었습니다.
+It is designed to be read/used in conjustion with the [PX4 Manual PID Tuning Guides](http://docs.px4.io/main/en/config/autotune.html#see-also), which provide more detailed hints on the kinds of step sizes to use when changing PID values.
 
 개요:
 
