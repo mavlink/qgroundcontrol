@@ -35,5 +35,5 @@
 
 ## 附加信息
 
-- [基本配置 > Motor Setup](http://docs.px4.io/master/en/config/motors.html) (_PX4 用户指南) - 这包含额外的 PX4 特定信息。
+- [Basic Configuration > Motor Setup](http://docs.px4.io/main/en/config/motors.html) (_PX4 User Guide_) - This contains additional PX4-specific information.
 - [电调与电机](https://ardupilot.org/copter/docs/connect-escs-and-motors.html#motor-order-diagrams) - 这是所有机架的电机顺序图
