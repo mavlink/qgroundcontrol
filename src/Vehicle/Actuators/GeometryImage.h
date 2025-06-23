@@ -40,7 +40,7 @@ public:
 
     static VehicleGeometryImageProvider* instance();
 
-    int getHighlightedMotorIndexAtPos(const QSizeF& displaySize, const QPointF& position);
+    int getHighlightedMotorIndexAtPos(const QPointF& position);
 
     QList<ActuatorGeometry>& actuators() { return _actuators; }
 
@@ -52,9 +52,8 @@ private:
 
     QList<ActuatorGeometry> _actuators{};
 
-    QSize                   _imageSize;                 ///< size of the image requested, used to scale click positions
-    QList<ImagePosition>    _actuatorImagePositions{};  ///< highlighted actuators image positions
-    QGCPalette              _palette;
+    QList<ImagePosition> _actuatorImagePositions{}; ///< highlighted actuators image positions
+    QGCPalette           _palette;
 };
 
 } // namespace GeometryImage
