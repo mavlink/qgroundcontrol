@@ -11,7 +11,7 @@
 #include <QtWidgets/QApplication>
 
 #ifdef Q_OS_MACOS
-    #include <QtCore/QProcessEnvironment>
+#include <QtCore/QProcessEnvironment>
 #endif
 
 #include "QGCApplication.h"
@@ -21,23 +21,23 @@
 #include "MavlinkSettings.h"
 
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
-    #include <QtWidgets/QMessageBox>
-    #include "RunGuard.h"
+#include <QtWidgets/QMessageBox>
+#include "RunGuard.h"
 #endif
 
 #ifdef Q_OS_ANDROID
-    #include "AndroidInterface.h"
+#include "AndroidInterface.h"
 #endif
 
 #ifdef Q_OS_LINUX
 #ifndef Q_OS_ANDROID
-    #include "SignalHandler.h"
+#include "SignalHandler.h"
 #endif
 #endif
 
 #ifdef QT_DEBUG
 #ifdef QGC_UNITTEST_BUILD
-    #include "UnitTestList.h"
+#include "UnitTestList.h"
 #endif
 
 #ifdef Q_OS_WIN
@@ -107,8 +107,8 @@ int main(int argc, char *argv[])
     if (!bypassRunGuard && !guard.tryToRun()) {
         QApplication errorApp(argc, argv);
         QMessageBox::critical(nullptr, QObject::tr("Error"),
-            QObject::tr("A second instance of %1 is already running. Please close the other instance and try again.").arg(QGC_APP_NAME)
-        );
+                              QObject::tr("A second instance of %1 is already running. Please close the other instance and try again.").arg(QGC_APP_NAME)
+                              );
         return -1;
     }
 #endif
@@ -118,10 +118,10 @@ int main(int argc, char *argv[])
     if (getuid() == 0) {
         QApplication errorApp(argc, argv);
         QMessageBox::critical(nullptr, QObject::tr("Error"),
-            QObject::tr("You are running %1 as root. "
-                "You should not do this since it will cause other issues with %1."
-                "%1 will now exit.<br/><br/>").arg(QGC_APP_NAME)
-        );
+                              QObject::tr("You are running %1 as root. "
+                                          "You should not do this since it will cause other issues with %1."
+                                          "%1 will now exit.<br/><br/>").arg(QGC_APP_NAME)
+                              );
         return -1;
     }
 #endif
@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
     // Set our own OpenGL buglist
     // qputenv("QT_OPENGL_BUGLIST", ":/opengl/resources/opengl/buglist.json");
 
-    // Allow for command line override of renderer
+            // Allow for command line override of renderer
     for (int i = 0; i < argc; i++) {
         const QString arg(argv[i]);
         if (arg == QStringLiteral("-desktop")) {
@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
 
     app.init();
 
-    // Set system ID if specified via command line, for example --system-id:255
+            // Set system ID if specified via command line, for example --system-id:255
     if (hasSystemId) {
         bool ok;
         int systemId = systemIdStr.toInt(&ok);
@@ -212,9 +212,9 @@ int main(int argc, char *argv[])
     } else
 #endif
     {
-        #ifdef Q_OS_ANDROID
-            AndroidInterface::checkStoragePermissions();
-        #endif
+#ifdef Q_OS_ANDROID
+        AndroidInterface::checkStoragePermissions();
+#endif
 
         if (!simpleBootTest) {
             exitCode = app.exec();
