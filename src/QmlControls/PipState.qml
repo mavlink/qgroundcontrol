@@ -10,6 +10,7 @@
 import QtQuick
 
 // Used to manage state for itesm using with QGCPipOveral
+
 Item {
     id:     control
     state:  initState

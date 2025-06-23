@@ -37,6 +37,7 @@ Item {
     property real   _maxSize:           0.75                // Percentage of parent control size
     property real   _minSize:           0.10
     property bool   _componentComplete: false
+    property bool _isCamera: false
 
     Component.onCompleted: {
         _initForItems()
@@ -74,12 +75,14 @@ Item {
             _fullItem = item2
             _pipOrWindowItem = item1
             item1IsFull = false
+            _isCamera = true
         } else {
             item1.pipState.state = item1.pipState.fullState
             item2.pipState.state = item2.pipState.pipState
             _fullItem = item1
             _pipOrWindowItem = item2
             item1IsFull = true
+            _isCamera = false
         }
         QGroundControl.saveBoolGlobalSetting(item1IsFullSettingsKey, item1IsFull)
     }
@@ -124,23 +127,22 @@ Item {
         preventStealing:    true
         cursorShape:        Qt.PointingHandCursor
 
-        property real initialX:     0
+        property real initialY: 0
         property real initialWidth: 0
 
         onPressed: (mouse) => {
-            // Remove the anchor so the our mouse coordinates stay in the same original place for drag tracking
             pipResize.anchors.fill = undefined
-            pipResize.initialX = mouse.x
+            pipResize.initialY = mouse.y
             pipResize.initialWidth = _root.width
         }
 
         onReleased: pipResize.anchors.fill = pipResizeIcon
 
-        // Drag
         onPositionChanged: (mouse) => {
             if (pipResize.pressed) {
                 var parentWidth = _root.parent.width
-                var newWidth = pipResize.initialWidth + mouse.x - pipResize.initialX
+                var deltaY = mouse.y - pipResize.initialY
+                var newWidth = pipResize.initialWidth + deltaY
                 if (newWidth < parentWidth * _maxSize && newWidth > parentWidth * _minSize) {
                     _pipSize = newWidth
                 }
@@ -148,14 +150,16 @@ Item {
         }
     }
 
+
     // Resize icon
     Image {
         id:             pipResizeIcon
         source:         "/qmlimages/pipResize.svg"
         fillMode:       Image.PreserveAspectFit
         mipmap:         true
-        anchors.right:  parent.right
-        anchors.top:    parent.top
+        anchors.left:  parent.left
+        anchors.bottom:    parent.bottom
+         rotation:       180
         visible:        _isExpanded && (ScreenTools.isMobile || pipMouseArea.containsMouse)
         height:         ScreenTools.defaultFontPixelHeight * 2.5
         width:          ScreenTools.defaultFontPixelHeight * 2.5
@@ -203,9 +207,10 @@ Item {
         id:             hidePIP
         source:         "/qmlimages/pipHide.svg"
         mipmap:         true
+         rotation:       180
         fillMode:       Image.PreserveAspectFit
-        anchors.left:   parent.left
-        anchors.bottom: parent.bottom
+        anchors.right:   parent.right
+        anchors.top: parent.top
         visible:        _isExpanded && (ScreenTools.isMobile || pipMouseArea.containsMouse)
         height:         ScreenTools.defaultFontPixelHeight * 2.5
         width:          ScreenTools.defaultFontPixelHeight * 2.5
@@ -216,24 +221,38 @@ Item {
         }
     }
 
+    // nút mủi tên mở
     Rectangle {
         id:                     showPip
-        anchors.left :          parent.left
-        anchors.bottom:         parent.bottom
-        height:                 ScreenTools.defaultFontPixelHeight * 2
-        width:                  ScreenTools.defaultFontPixelHeight * 2
-        radius:                 ScreenTools.defaultFontPixelHeight / 3
+        anchors.right :          parent.right
+        anchors.top:            parent.top
+        height:                 ScreenTools.defaultFontPixelHeight * 2.5
+        width:                  ScreenTools.defaultFontPixelHeight * 2.5
+        radius:                 12
         visible:                !_isExpanded
-        color:                  _fullItem.pipState.isDark ? Qt.rgba(0,0,0,0.75) : Qt.rgba(0,0,0,0.5)
-        Image {
-            width:              parent.width  * 0.75
-            height:             parent.height * 0.75
-            sourceSize.height:  height
-            source:             "/res/buttonRight.svg"
-            mipmap:             true
-            fillMode:           Image.PreserveAspectFit
-            anchors.verticalCenter:     parent.verticalCenter
-            anchors.horizontalCenter:   parent.horizontalCenter
+        color:                  _fullItem.pipState.isDark ? Qt.rgba(0,0,0,0.75) : "#b2ffffff"
+        Column {
+            anchors.centerIn: parent
+            spacing: ScreenTools.defaultFontPixelHeight * 0.1
+            width: parent.width
+
+            Image {
+                width:              parent.width * 0.5
+                height:             width
+                sourceSize.height:  height
+                source:             _root._isCamera ? _fullItem.pipState.isDark ? "/res/Map_White.svg" : "/res/Map_Black.svg" : _fullItem.pipState.isDark ? "/res/Camera_White.svg" : "/res/Camera_Black.svg"
+                mipmap:             true
+                fillMode:           Image.PreserveAspectFit
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+
+            Text {
+                text:               _root._isCamera ? qsTr("Map") : qsTr('Camera')
+                color:              _fullItem.pipState.isDark ? '#ffffff' : '#000000'
+                font.pixelSize:     parent.width * 0.2
+                horizontalAlignment: Text.AlignHCenter
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
         }
         MouseArea {
             anchors.fill:   parent
@@ -241,3 +260,4 @@ Item {
         }
     }
 }
+
