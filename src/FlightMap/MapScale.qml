@@ -54,7 +54,6 @@ Item {
         var dist = Math.round(feet)
         if (dist >= 5280) {
             dist = Math.round(dist / 5280)
-            dist = dist
             if (dist == 1) {
                 dist += qsTr(" mile")
             } else {
@@ -69,9 +68,7 @@ Item {
     function calculateMetersRatio(scaleLineMeters, scaleLinePixelLength) {
         var scaleLineRatio = 0
 
-        if (scaleLineMeters === 0) {
-            // not visible
-        } else {
+        if (scaleLineMeters !== 0) {
             for (var i = 0; i < _scaleLengthsMeters.length - 1; i++) {
                 if (scaleLineMeters < (_scaleLengthsMeters[i] + _scaleLengthsMeters[i+1]) / 2 ) {
                     scaleLineRatio = _scaleLengthsMeters[i] / scaleLineMeters
@@ -94,9 +91,7 @@ Item {
         var scaleLineRatio = 0
         var scaleLineFeet = scaleLineMeters * 3.2808399
 
-        if (scaleLineFeet === 0) {
-            // not visible
-        } else {
+        if (scaleLineFeet !== 0) {
             for (var i = 0; i < _scaleLengthsFeet.length - 1; i++) {
                 if (scaleLineFeet < (_scaleLengthsFeet[i] + _scaleLengthsFeet[i+1]) / 2 ) {
                     scaleLineRatio = _scaleLengthsFeet[i] / scaleLineFeet
@@ -118,8 +113,8 @@ Item {
     function calculateScale() {
         if(mapControl) {
             var scaleLinePixelLength = 100
-            var leftCoord  = mapControl.toCoordinate(Qt.point(0, scale.y), false /* clipToViewPort */)
-            var rightCoord = mapControl.toCoordinate(Qt.point(scaleLinePixelLength, scale.y), false /* clipToViewPort */)
+            var leftCoord  = mapControl.toCoordinate(Qt.point(0, scale.y), false)
+            var rightCoord = mapControl.toCoordinate(Qt.point(scaleLinePixelLength, scale.y), false)
             var scaleLineMeters = Math.round(leftCoord.distanceTo(rightCoord))
             if (QGroundControl.settingsManager.unitsSettings.horizontalDistanceUnits.value === UnitsSettings.HorizontalDistanceUnitsFeet) {
                 calculateFeetRatio(scaleLineMeters, scaleLinePixelLength)
@@ -130,103 +125,114 @@ Item {
     }
 
     Connections {
-        target:             mapControl
+        target: mapControl
         function onWidthChanged() {     scaleTimer.restart() }
         function onHeightChanged() {    scaleTimer.restart() }
         function onZoomLevelChanged() { scaleTimer.restart() }
     }
 
     Timer {
-        id:                 scaleTimer
-        interval:           100
-        running:            false
-        repeat:             false
-        onTriggered:        calculateScale()
+        id: scaleTimer
+        interval: 100
+        running: false
+        repeat: false
+        onTriggered: calculateScale()
     }
 
     QGCMapLabel {
-        id:                 scaleText
-        map:                mapControl
-        font.bold:          true
-        anchors.left:       parent.left
-        anchors.right:      rightEnd.right
-        horizontalAlignment:Text.AlignRight
-        text:               "0 m"
+        id: scaleText
+        map: mapControl
+        font.bold: true
+        anchors.left: parent.left
+        anchors.right: rightEnd.right
+        horizontalAlignment: Text.AlignRight
+        text: "0 m"
     }
 
     Rectangle {
-        id:                 leftEnd
-        anchors.top:        scaleText.bottom
+        id: leftEnd
+        anchors.top: scaleText.bottom
         anchors.leftMargin: buttonsOnLeft && (_zoomButtonsVisible || terrainButtonVisible) ? ScreenTools.defaultFontPixelWidth / 2 : 0
-        anchors.left:       buttonsOnLeft ?
-                                (_zoomButtonsVisible ? zoomDownButton.right : (terrainButtonVisible ? terrainButton.right : parent.left)) :
-                                parent.left
-        width:              2
-        height:             ScreenTools.defaultFontPixelHeight
-        color:              _color
+        anchors.left: buttonsOnLeft ?
+                         (_zoomButtonsVisible ? zoomDownButton.right : (terrainButtonVisible ? terrainButton.right : parent.left)) :
+                         parent.left
+        width: 2
+        height: ScreenTools.defaultFontPixelHeight
+        color: _color
     }
 
     Rectangle {
-        id:                 centerLine
-        anchors.bottomMargin:   2
-        anchors.bottom:     leftEnd.bottom
-        anchors.left:       leftEnd.right
-        height:             2
-        color:              _color
+        id: centerLine
+        anchors.bottomMargin: 2
+        anchors.bottom: leftEnd.bottom
+        anchors.left: leftEnd.right
+        height: 2
+        color: _color
     }
 
     Rectangle {
-        id:                 rightEnd
-        anchors.top:        leftEnd.top
-        anchors.left:       centerLine.right
-        width:              2
-        height:             ScreenTools.defaultFontPixelHeight
-        color:              _color
+        id: rightEnd
+        anchors.top: leftEnd.top
+        anchors.left: centerLine.right
+        width: 2
+        height: ScreenTools.defaultFontPixelHeight
+        color: _color
     }
 
     QGCButton {
-        id:                 terrainButton
-        anchors.top:        scaleText.top
-        anchors.bottom:     rightEnd.bottom
+        id: terrainButton
+        anchors.top: scaleText.top
+        anchors.bottom: rightEnd.bottom
         anchors.leftMargin: buttonsOnLeft ? 0 : ScreenTools.defaultFontPixelWidth / 2
-        anchors.left:       buttonsOnLeft ? parent.left : rightEnd.right
-        leftPadding:        topPadding
-        iconSource:         "/res/terrain.svg"
-        width:              height
-        opacity:            0.75
-        visible:            terrainButtonVisible
-        onClicked:          terrainButtonClicked()
+        anchors.left: buttonsOnLeft ? parent.left : rightEnd.right
+        leftPadding: topPadding
+        iconSource: "/res/terrain.svg"
+        width: height
+        opacity: 0.75
+        visible: terrainButtonVisible
+        onClicked: terrainButtonClicked()
     }
 
     QGCButton {
-        id:                 zoomUpButton
-        anchors.top:        scaleText.top
-        anchors.bottom:     rightEnd.bottom
+        id: zoomUpButton
+        anchors.top: scaleText.top
+        anchors.bottom: rightEnd.bottom
         anchors.leftMargin: terrainButton.visible ? ScreenTools.defaultFontPixelWidth / 2 : 0
-        anchors.left:       terrainButton.visible ? terrainButton.right : terrainButton.left
-        text:               qsTr("+")
-        width:              height
-        opacity:            0.75
-        visible:            _zoomButtonsVisible
-        onClicked:          mapControl.zoomLevel += 0.5
+        anchors.left: terrainButton.visible ? terrainButton.right : terrainButton.left
+        text: qsTr("+")
+        width: height
+        opacity: 0.75
+        visible: _zoomButtonsVisible
+        onClicked: {
+            if (mapControl.zoomLevel < 19) {
+                mapControl.zoomLevel += 0.5
+            }
+        }
     }
 
     QGCButton {
-        id:                 zoomDownButton
-        anchors.top:        scaleText.top
-        anchors.bottom:     rightEnd.bottom
+        id: zoomDownButton
+        anchors.top: scaleText.top
+        anchors.bottom: rightEnd.bottom
         anchors.leftMargin: ScreenTools.defaultFontPixelWidth / 2
-        anchors.left:       zoomUpButton.right
-        text:               qsTr("-")
-        width:              height
-        opacity:            0.75
-        visible:            _zoomButtonsVisible
-        onClicked:          mapControl.zoomLevel -= 0.5
+        anchors.left: zoomUpButton.right
+        text: qsTr("-")
+        width: height
+        opacity: 0.75
+        visible: _zoomButtonsVisible
+        onClicked: {
+            if (mapControl.zoomLevel > 2) {
+                mapControl.zoomLevel -= 0.5
+            }
+        }
     }
 
     Component.onCompleted: {
         if (scale.visible) {
-            calculateScale();
+            if (mapControl.zoomLevel > 19) {
+                mapControl.zoomLevel = 19
+            }
+            calculateScale()
         }
     }
 }

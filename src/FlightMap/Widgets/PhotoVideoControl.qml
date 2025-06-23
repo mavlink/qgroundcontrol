@@ -47,11 +47,11 @@ Rectangle {
 
     RowLayout {
         id:                 mainLayout
+        anchors.right:      parent.right
+        anchors.verticalCenter: parent.verticalCenter
         anchors.margins:    _margins
-        anchors.top:        parent.top
-        anchors.left:       parent.left
         spacing:            _margins
-
+        
         ColumnLayout {
             Layout.fillHeight:  true
             spacing:            _margins
