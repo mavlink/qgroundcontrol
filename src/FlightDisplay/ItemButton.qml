@@ -10,8 +10,8 @@ Rectangle {
     // Các thuộc tính bên ngoài
     property alias label: labelText.text
     property string iconSource: ""
-    property color activeColor: "#c6004f98"       // Màu khi active
-    property color defaultColor: "#bf222222"      // Màu mặc định
+    property color activeColor: "#c614599b"       // Màu khi active
+    property color defaultColor: "#d1222222"      // Màu mặc định
     signal clicked()
 
     // Trạng thái nội bộ
@@ -37,6 +37,7 @@ Rectangle {
                 height: 24
                 fillMode: Image.PreserveAspectFit
                 smooth: true
+                anchors.horizontalCenter: parent.horizontalCenter
             }
 
             Text {
@@ -45,6 +46,7 @@ Rectangle {
                 font.pixelSize: 12
                 color: "white"
                 horizontalAlignment: Text.AlignHCenter
+                anchors.horizontalCenter: parent.horizontalCenter
             }
         }
 

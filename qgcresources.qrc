@@ -17,6 +17,8 @@
         <file alias="droneItems.png">resources/images/droneItems.png</file>
     </qresource>
     <qresource prefix="/res">
+
+
     
         <file alias="Map_White.svg">resources/Map_White.svg</file>
         <file alias="Map_Black.svg">resources/Map_Black.svg</file>
@@ -145,6 +147,8 @@
         <file alias="scene.gltf">resources/model3d/scene.gltf</file>
     </qresource>
     <qresource prefix="/icons">
-         <file alias="rocket_while.svg">resources/rocket_while.svg</file>
+        <file alias="rocket_while.svg">resources/rocket_while.svg</file>
+        <!-- <file alias="rocket_black.svg">resources/rocket_black.svg</file> -->
+        <file alias="campaign_while.svg">resources/campaign_while.svg</file>
     </qresource>
 </RCC>

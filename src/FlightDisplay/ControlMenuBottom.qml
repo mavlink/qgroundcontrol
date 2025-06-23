@@ -7,12 +7,6 @@ Rectangle {
     height: 80
     color: "transparent"
 
-    // Biến trạng thái cho mỗi nút (true = đang active)
-    property bool btn1Active: false
-    property bool btn2Active: false
-    property bool btn3Active: false
-    property bool btn4Active: false
-
     // --- Các hàm xử lý toggle
     function toggleBtn1() {
         btn1.isActive = !btn1.isActive
@@ -45,8 +39,13 @@ Rectangle {
     }
     function toggleBtn7() { btn7.isActive = !btn7.isActive; console.log("Button 7 clicked") }
     function toggleBtn8() { btn8.isActive = !btn8.isActive; console.log("Button 8 clicked") }
-    function toggleBtn9() { btn9.isActive = !btn9.isActive; console.log("Button 9 clicked") }
     function toggleBtnStartMission() { btnStartMission.isActive = !btnStartMission.isActive; console.log("Start Mission clicked") }
+
+    function toggleBtnCoiBao() { 
+        btnCoiBao.isActive = !btnCoiBao.isActive
+        QGroundControl.CustomCommandManager.triggerCoiBao()
+
+     }
 
     Column {
         spacing: 10
@@ -64,10 +63,11 @@ Rectangle {
             }
 
             ItemButton {
-                id: btn9
-                label: "9"
-                iconSource: "/icons/rocket_while.svg"
-                onClicked: toggleBtn9()
+                id: btnCoiBao
+                width: 100
+                label: "còi báo"
+                iconSource: "/icons/campaign_while.svg"
+                onClicked: toggleBtnCoiBao()
             }
 
             ItemButton {
