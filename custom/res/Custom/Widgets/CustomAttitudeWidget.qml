@@ -43,7 +43,7 @@ Item {
             pitchAngle:         _pitchAngle
             skyColor1:          "#0a2e50"
             skyColor2:          "#2f85d4"
-            groundColor1:       "#897459"
+            groundColor1:       "#7b6850"
             groundColor2:       "#4b3820"
             anchors.fill:       parent
         }

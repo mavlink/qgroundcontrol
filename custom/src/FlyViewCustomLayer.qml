@@ -18,9 +18,11 @@ import QGroundControl.Controls
 import QGroundControl.Palette
 import QGroundControl.ScreenTools
 
+
 import Custom.Widgets
 
-Item {
+Item { 
+    
     property var parentToolInsets                       // These insets tell you what screen real estate is available for positioning the controls in your overlay
     property var totalToolInsets:   _totalToolInsets    // The insets updated for the custom overlay additions
     property var mapControl
@@ -74,9 +76,10 @@ Item {
     // - we use parent bottomEdgeLeftInset to dodge the virtual joystick if enabled
     // - we use the parent leftEdgeTopInset to size our element to the same width as the ToolStripAction
     // - we export the width of this element as the leftEdgeCenterInset so that the map will recenter if the vehicle flys behind this element
+    // menu bên trái
     Rectangle {
         id: exampleRectangle
-        visible: false // to see this example, set this to true. To view insets, enable the insets viewer FlyView.qml
+        visible: true // to see this example, set this to true. To view insets, enable the insets viewer FlyView.qml
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.bottom: parent.bottom
@@ -84,8 +87,54 @@ Item {
         anchors.bottomMargin: parentToolInsets.bottomEdgeLeftInset + _toolsMargin
         anchors.leftMargin: _toolsMargin
         width: parentToolInsets.leftEdgeTopInset - _toolsMargin
-        color: 'red'
+        // color: 'red'
+        color: Qt.rgba(0, 0, 0, 0) // Màu nền bán trong suốt
+        // color: qgcPal.windowShade // hex dạng ARGB => alpha = 00 (trong suốt)
 
+
+        // Nút còi
+        // Rectangle {
+        //     id: hornButton
+        //     width: exampleRectangle.width
+        //     height: exampleRectangle.width
+        //     radius: 8 // Bo tròn nhẹ
+        //     color: mouseArea.pressed ? "#4593db" : "#3d81c2" // Đổi nền thành xanh khi ấn
+        //     anchors.top: parent.top
+        //     // anchors.topMargin: 10
+
+        //     Column {
+        //         anchors.centerIn: parent
+        //         spacing: 2
+
+        //         Image {
+        //             source: "/res/bullhorn.svg"
+        //             width: parent.width
+        //             height: width
+        //             fillMode: Image.PreserveAspectFit
+        //             sourceSize: Qt.size(width, width) // Đảm bảo kích thước của biểu tượng
+        //             // sourceSize: Qt.size(100, 100) // Kích thước cố
+        //         }
+
+        //         QGCLabel {
+        //             text: "horn"
+        //             color: "black"
+        //             font.pointSize: ScreenTools.defaultFontPointSize
+        //             font.bold: true
+        //             horizontalAlignment: Text.AlignHCenter
+        //         }
+        //     }
+
+        //     MouseArea {
+        //         id: mouseArea
+        //         anchors.fill: parent
+        //         onClicked: {
+        //             console.log("The horn was pressed.!")
+        //             // Gửi hành động còi tại đây
+        //         }
+        //         hoverEnabled: true
+        //         cursorShape: Qt.PointingHandCursor
+        //     }
+        // }
         property real leftEdgeCenterInset: visible ? x + width : 0
     }
 
@@ -95,10 +144,9 @@ Item {
         id:                         compassBar
         height:                     ScreenTools.defaultFontPixelHeight * 1.5
         width:                      ScreenTools.defaultFontPixelWidth  * 50
-        anchors.bottom:             parent.bottom
-        anchors.bottomMargin:       _toolsMargin
-        color:                      "#DEDEDE"
-        radius:                     2
+        anchors.bottom:             parent.bottom + 2
+        color:                      "#bb303030"
+        radius: Math.min(height, width) / 2
         clip:                       true
         anchors.horizontalCenter:   parent.horizontalCenter
         Repeater {
@@ -114,7 +162,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 x:              visible ? ((modelData * (compassBar.width / 360)) - (width * 0.5)) : 0
                 visible:        _angle % 45 == 0
-                color:          "#75505565"
+                color:          "#dcf3ff"
                 font.pointSize: ScreenTools.smallFontPointSize
                 text: {
                     switch(_angle) {
@@ -137,6 +185,7 @@ Item {
         height:                     ScreenTools.defaultFontPixelHeight
         width:                      ScreenTools.defaultFontPixelWidth * 4
         color:                      qgcPal.windowShadeDark
+        radius:                     ScreenTools.defaultFontPixelWidth * 0.5
         anchors.top:                compassBar.top
         anchors.topMargin:          -headingIndicator.height / 2
         anchors.horizontalCenter:   parent.horizontalCenter
@@ -159,15 +208,17 @@ Item {
         anchors.horizontalCenter:   parent.horizontalCenter
     }
 
+    // la bàn bên trái
     Rectangle {
         id:                     compassBackground
         anchors.bottom:         attitudeIndicator.bottom
         anchors.right:          attitudeIndicator.left
         anchors.rightMargin:    -attitudeIndicator.width / 2
+        anchors.leftMargin:     20
         width:                  -anchors.rightMargin + compassBezel.width + (_toolsMargin * 2)
         height:                 attitudeIndicator.height * 0.75
-        radius:                 2
-        color:                  qgcPal.window
+        radius:                 10
+        color:                  "#ca282828"
 
         Rectangle {
             id:                     compassBezel
@@ -217,6 +268,7 @@ Item {
                 }]
         }
 
+            // la bàn bên dưới
         Rectangle {
             id:                         headingLabelBackground
             anchors.top:                compassBezel.bottom
@@ -237,6 +289,7 @@ Item {
         }
     }
 
+// la bàn bên phải
     Rectangle {
         id:                     attitudeIndicator
         anchors.bottomMargin:   _toolsMargin + parentToolInsets.bottomEdgeRightInset

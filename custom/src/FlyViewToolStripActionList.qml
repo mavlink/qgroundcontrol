@@ -30,6 +30,6 @@ ToolStripActionList {
             visible:    true
             enabled:    true
             actionID:   _guidedController._customController.actionCustomButton
-}
+        }
     ]
 }

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" id="Layer_1" x="0" y="0" version="1.1" viewBox="0 0 288 36">
+    <style>
+        .line, .arrow {
+            fill: none;
+            stroke: #00cc00;
+            stroke-width: 6;
+            stroke-miterlimit: 10;
+        }
+        .arrow {
+            stroke-linecap: round;
+        }
+    </style>
+    <path d="M0 0h288v36H0z" style="fill:none"/>
+    <!-- Đường ngang 2 bên -->
+    <path d="M0 18h72M288 18h-72" class="line"/>
+    <!-- Mũi tên chính giữa -->
+    <path d="M194.5 31.1 144 18 93.5 31.1" class="arrow"/>
+</svg>
