@@ -173,12 +173,15 @@ Item {
 
     FlyViewToolStrip {
         id:                     toolStrip
+        // anchors.leftMargin:     _toolsMargin + parentToolInsets.leftEdgeCenterInset
+        // anchors.topMargin:      _toolsMargin + parentToolInsets.topEdgeLeftInset
+        // anchors.left:           parent.left
+        // anchors.top:            parent.top
+        anchors.left:           parent.left                     // giữ bên trái
+        anchors.verticalCenter: parent.verticalCenter           // căn giữa chiều dọc
         anchors.leftMargin:     _toolsMargin + parentToolInsets.leftEdgeCenterInset
-        anchors.topMargin:      _toolsMargin + parentToolInsets.topEdgeLeftInset
-        anchors.left:           parent.left
-        anchors.top:            parent.top
         z:                      QGroundControl.zOrderWidgets
-        maxHeight:              parent.height - y - parentToolInsets.bottomEdgeLeftInset - _toolsMargin
+        maxHeight: parent.height - parentToolInsets.bottomEdgeLeftInset - _toolsMargin
         visible:                !QGroundControl.videoManager.fullScreen
 
         onDisplayPreFlightChecklist: {
@@ -205,8 +208,8 @@ Item {
     MapScale {
         id:                 mapScale
         anchors.margins:    _toolsMargin
-        anchors.left:       toolStrip.right
-        anchors.top:        parent.top
+        anchors.left:       parent.left
+        anchors.bottom:        parent.bottom
         mapControl:         _mapControl
         buttonsOnLeft:      true
         visible:            !ScreenTools.isTinyScreen && QGroundControl.corePlugin.options.flyView.showMapScale && !isViewer3DOpen && mapControl.pipState.state === mapControl.pipState.fullState

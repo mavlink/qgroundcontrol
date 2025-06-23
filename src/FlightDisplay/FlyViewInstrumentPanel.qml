@@ -13,7 +13,7 @@ import QGroundControl
 import QGroundControl.Controls
 
 SelectableControl {
-    z:                      QGroundControl.zOrderWidgets
+    z:                      20 // QGroundControl.zOrderWidgets
     selectionUIRightAnchor: true
     selectedControl:        QGroundControl.settingsManager.flyViewSettings.instrumentQmlFile2
 

@@ -86,7 +86,9 @@ Item {
 
     Item {
         id:                 mapHolder
-        anchors.top:        toolbar.bottom
+        // anchors.top:        toolbar.bottom
+        z: -1
+        anchors.top:        parent.top
         anchors.bottom:     parent.bottom
         anchors.left:       parent.left
         anchors.right:      parent.right
@@ -107,25 +109,30 @@ Item {
             pipView:    _pipView
         }
 
-        PipView {
-            id:                     _pipView
-            anchors.left:           parent.left
-            anchors.bottom:         parent.bottom
-            anchors.margins:        _toolsMargin
-            item1IsFullSettingsKey: "MainFlyWindowIsMap"
-            item1:                  mapControl
-            item2:                  QGroundControl.videoManager.hasVideo ? videoControl : null
-            show:                   QGroundControl.videoManager.hasVideo && !QGroundControl.videoManager.fullScreen &&
-                                        (videoControl.pipState.state === videoControl.pipState.pipState || mapControl.pipState.state === mapControl.pipState.pipState)
-            z:                      QGroundControl.zOrderWidgets
+        // bản đồ nhỏ ở dưới
+            PipView {
+                id:                     _pipView
+                anchors.right:          parent.right
+                anchors.top:            parent.top
+                anchors.margins:        _toolsMargin
+                anchors.topMargin:      80
+                item1IsFullSettingsKey: "MainFlyWindowIsMap"
+                item1:                  mapControl
+                item2:                  QGroundControl.videoManager.hasVideo ? videoControl : null
+                show:                   QGroundControl.videoManager.hasVideo && !QGroundControl.videoManager.fullScreen &&
+                                            (videoControl.pipState.state === videoControl.pipState.pipState || mapControl.pipState.state === mapControl.pipState.pipState)
+                z:                      100
 
-            property real leftEdgeBottomInset: visible ? width + anchors.margins : 0
-            property real bottomEdgeLeftInset: visible ? height + anchors.margins : 0
-        }
+                property real leftEdgeBottomInset: visible ? width + anchors.margins : 0
+                property real bottomEdgeLeftInset: visible ? height + anchors.margins : 0
+            }
 
+
+        // toàn bộ la bàn gốc trên
         FlyViewWidgetLayer {
             id:                     widgetLayer
             anchors.top:            parent.top
+            anchors.topMargin:      70    // Thêm khoảng cách 25px từ trên
             anchors.bottom:         parent.bottom
             anchors.left:           parent.left
             anchors.right:          guidedValueSlider.visible ? guidedValueSlider.left : parent.right
@@ -147,6 +154,7 @@ Item {
         }
 
         // Development tool for visualizing the insets for a paticular layer, show if needed
+        // bất chế độ development
         FlyViewInsetViewer {
             id:                     widgetLayerInsetViewer
             anchors.top:            parent.top
@@ -165,18 +173,31 @@ Item {
         }
 
         //-- Guided value slider (e.g. altitude)
+        // bất chế độ development
         GuidedValueSlider {
             id:                 guidedValueSlider
             anchors.right:      parent.right
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
             z:                  QGroundControl.zOrderTopMost
-            visible:            false
+            visible:            false // QGroundControl.developmentMode
         }
 
         Viewer3D{
             id:                     viewer3DWindow
             anchors.fill:           parent
+        }
+
+        ControlMenuBottom {
+            id:                     controlMenuBottom
+            anchors.bottom:         parent.bottom
+            anchors.left:           parent.left
+            anchors.right:          parent.right
+            anchors.bottomMargin:  70
+            anchors.margins:        _margins
+            width: parent.width * 0.8
+            height: 100
+            z:                      10
         }
     }
 }

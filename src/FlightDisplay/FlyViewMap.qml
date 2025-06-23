@@ -199,6 +199,7 @@ FlightMap {
         }
     }
 
+    //pip view camera
     PipState {
         id:         _pipState
         pipView:    _root.pipView

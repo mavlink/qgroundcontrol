@@ -83,6 +83,8 @@ Item {
         anchors.fill:   parent
         color:          "black"
         visible:        QGroundControl.videoManager.decoding
+
+
         function getWidth() {
             if(_ar != 0.0){
                 if(_isMode_FIT_HEIGHT 
@@ -115,6 +117,7 @@ Item {
         }
         Component {
             id: videoBackgroundComponent
+
             QGCVideoBackground {
                 id:             videoContent
                 objectName:     "videoContent"
@@ -160,6 +163,7 @@ Item {
                 }
             }
         }
+
         Loader {
             // GStreamer is causing crashes on Lenovo laptop OpenGL Intel drivers. In order to workaround this
             // we don't load a QGCVideoBackground object when video is disabled. This prevents any video rendering

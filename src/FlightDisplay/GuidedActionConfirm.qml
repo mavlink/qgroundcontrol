@@ -19,9 +19,12 @@ import QGroundControl.UTMSP
 
 Rectangle {
     id:         _root
+   anchors.top: parent.top
+    anchors.topMargin: 50
+
     width:      ScreenTools.defaultFontPixelWidth * 35
     height:     mainLayout.height + (_margins * 2)
-    radius:     ScreenTools.defaultFontPixelWidth / 2
+    radius:     8
     color:      qgcPal.window
     visible:    _utmspEnabled === true ? utmspSliderTrigger: false
 
@@ -77,7 +80,7 @@ Rectangle {
             mapIndicator = undefined
         }
     }
-
+        
     Timer {
         id:             visibleTimer
         interval:       1000

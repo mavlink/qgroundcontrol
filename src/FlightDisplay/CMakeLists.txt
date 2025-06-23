@@ -1,4 +1,6 @@
+
 qt_add_library(FlightDisplayModule STATIC)
+
 
 qt_add_qml_module(FlightDisplayModule
     URI QGroundControl.FlightDisplay
@@ -63,5 +65,7 @@ qt_add_qml_module(FlightDisplayModule
         TerrainProgress.qml
         VehicleWarnings.qml
         VirtualJoystick.qml
+        ControlMenuBottom.qml
+        ItemButton.qml
     NO_PLUGIN # Required by Qt 6.6.3. TODO: Remove when no longer supported.
 )
