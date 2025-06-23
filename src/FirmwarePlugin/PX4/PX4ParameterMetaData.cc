@@ -21,8 +21,7 @@
 
 QGC_LOGGING_CATEGORY(PX4ParameterMetaDataLog, "PX4ParameterMetaDataLog")
 
-PX4ParameterMetaData::PX4ParameterMetaData(QObject* parent)
-    : QObject(parent)
+PX4ParameterMetaData::PX4ParameterMetaData(void)
 {
 
 }
