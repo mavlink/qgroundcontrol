@@ -27,19 +27,27 @@ import QGroundControl.UTMSP
 /// All properties defined here are visible to all QML pages.
 ApplicationWindow {
     id:             mainWindow
-    visible:        true
+    flags: Qt.Window | Qt.FramelessWindowHint | Qt.WindowSystemMenuHint
+        minimumWidth: ScreenTools.isMobile ? ScreenTools.screenWidth  : Math.min(ScreenTools.defaultFontPixelWidth * 100, Screen.width)
+        minimumHeight: ScreenTools.isMobile ? ScreenTools.screenHeight : Math.min(ScreenTools.defaultFontPixelWidth * 50, Screen.height)
+        visibility: "FullScreen"
+
+
 
     property bool   _utmspSendActTrigger
     property bool   _utmspStartTelemetry
 
     Component.onCompleted: {
+        //-- Full screen on mobile or tiny screens
+        if (!ScreenTools.isFakeMobile && (ScreenTools.isMobile || Screen.height / ScreenTools.realPixelDensity < 120)) {
+            mainWindow.showFullScreen()
+        } else {
+            width   = ScreenTools.isMobile ? ScreenTools.screenWidth  : Math.min(250 * Screen.pixelDensity, Screen.width)
+            height  = ScreenTools.isMobile ? ScreenTools.screenHeight : Math.min(150 * Screen.pixelDensity, Screen.height)
+        }
+
         // Start the sequence of first run prompt(s)
         firstRunPromptManager.nextPrompt()
-    }
-
-    /// Saves main window position and size and re-opens it in the same position and size next time
-    MainWindowSavedState {
-        window: mainWindow
     }
 
     QtObject {
@@ -84,7 +92,7 @@ ApplicationWindow {
         readonly property var       guidedControllerFlyView:        flyView.guidedController
 
         // Number of QGCTextField's with validation errors. Used to prevent closing panels with validation errors.
-        property int                validationErrorCount:           0 
+        property int                validationErrorCount:           0
 
         // Property to manage RemoteID quick access to settings page
         property bool               commingFromRIDIndicator:        false
@@ -118,6 +126,7 @@ ApplicationWindow {
     function showPlanView() {
         flyView.visible = false
         planView.visible = true
+        viewer3DWindow.close()
     }
 
     function showFlyView() {
@@ -161,6 +170,11 @@ ApplicationWindow {
         }
     }
 
+    function showDroneList() {
+        showTool(qsTr("Drone List"), "qrc:/qml/QGroundControl/DroneList/DroneList.qml", "/res/QGCLogoWhite")
+    }
+
+
     //-------------------------------------------------------------------------
     //-- Global simple message dialog
 
@@ -176,8 +190,12 @@ ApplicationWindow {
     Component {
         id: simpleMessageDialogComponent
 
-        QGCSimpleMessageDialog {
-        }
+        QGCSimpleMessageDialog {}
+    }
+
+    /// Saves main window position and size
+    MainWindowSavedState {
+        window: mainWindow
     }
 
     property bool _forceClose: false
@@ -260,10 +278,11 @@ ApplicationWindow {
 
     background: Rectangle {
         anchors.fill:   parent
-        color:          QGroundControl.globalPalette.window
+        // color:          QGroundControl.globalPalette.window
+        color: '#00214233'
     }
 
-    FlyView { 
+    FlyView {
         id:                     flyView
         anchors.fill:           parent
         utmspSendActTrigger:    _utmspSendActTrigger
@@ -274,6 +293,41 @@ ApplicationWindow {
         anchors.fill:   parent
         visible:        false
     }
+
+    Rectangle {
+        id: _root
+        visible: !planView.visible
+        anchors.fill: parent
+        height: ScreenTools.screenHeight
+        width: ScreenTools.screenWidth
+        color: "transparent"
+        z: 0
+        
+        // Ảnh nền trên cùng
+        Image {
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: 80
+            source: "qrc:/res/header.png"
+            opacity: 0.6 // Độ mờ của ảnh nền
+            fillMode: Image.PreserveAspectCrop
+        }
+
+        // Ảnh bên dưới ảnh đầu (gắn ngay dưới ảnh trên)
+        Image {
+            id: backgroundImageBottom
+            anchors.bottom: parent.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: 80 // hoặc tùy ý
+            source: "qrc:/res/footer.png"
+            opacity: 0.6 // Độ mờ của ảnh nền
+            fillMode: Image.PreserveAspectCrop
+        }
+
+    }
+
 
     footer: LogReplayStatusBar {
         visible: QGroundControl.settingsManager.flyViewSettings.showLogReplayStatusBar.rawValue
@@ -321,7 +375,6 @@ ApplicationWindow {
 
         ToolIndicatorPage {
             id:         toolSelectDialog
-            //title:      qsTr("Select Tool")
 
             property real _toolButtonHeight:    ScreenTools.defaultFontPixelHeight * 3
             property real _margins:             ScreenTools.defaultFontPixelWidth
@@ -383,13 +436,29 @@ ApplicationWindow {
                             height:             toolSelectDialog._toolButtonHeight
                             Layout.fillWidth:   true
                             text:               qsTr("Application Settings")
-                            imageResource:      "/res/QGCLogoFull.svg"
+                            imageResource:      "/res/CT-UAV.svg"
                             imageColor:         "transparent"
                             visible:            !QGroundControl.corePlugin.options.combineSettingsAndSetup
                             onClicked: {
                                 if (mainWindow.allowViewSwitch()) {
                                     drawer.close()
                                     mainWindow.showSettingsTool()
+                                }
+                            }
+                        }
+
+                        SubMenuButton {
+                            id:                 droneListButton
+                            height:             toolSelectDialog._toolButtonHeight
+                            Layout.fillWidth:   true
+                            text:               qsTr("Drone List")
+                            imageResource:      "/res/CT-UAV.svg"
+                            imageColor:         "transparent"
+                            visible:            !QGroundControl.corePlugin.options.combineSettingsAndSetup
+                            onClicked: {
+                                if (mainWindow.allowViewSwitch()) {
+                                    mainWindow.closeIndicatorDrawer()
+                                    mainWindow.showDroneList()
                                 }
                             }
                         }
@@ -407,130 +476,86 @@ ApplicationWindow {
                                 }
                             }
                         }
+                    }
+                }
+            }
+        }
+    }
 
-                        ColumnLayout {
-                            width:                  innerLayout.width
-                            spacing:                0
-                            Layout.alignment:       Qt.AlignHCenter
+    Drawer {
+            id:             toolDrawer
+            width:          mainWindow.width
+            height:         mainWindow.height
+            edge:           Qt.LeftEdge
+            dragMargin:     0
+            closePolicy:    Drawer.NoAutoClose
+            interactive:    false
+            visible:        false
 
-                            QGCLabel {
-                                id:                     versionLabel
-                                text:                   qsTr("%1 Version").arg(QGroundControl.appName)
-                                font.pointSize:         ScreenTools.smallFontPointSize
-                                wrapMode:               QGCLabel.WordWrap
-                                Layout.maximumWidth:    parent.width
-                                Layout.alignment:       Qt.AlignHCenter
-                            }
+            property var backIcon
+            property string toolTitle
+            property alias toolSource:  toolDrawerLoader.source
+            property var toolIcon
 
-                            QGCLabel {
-                                text:                   QGroundControl.qgcVersion
-                                font.pointSize:         ScreenTools.smallFontPointSize
-                                wrapMode:               QGCLabel.WrapAnywhere
-                                Layout.maximumWidth:    parent.width
-                                Layout.alignment:       Qt.AlignHCenter
+            // Unload the loader only after closed, otherwise we will see a "blank" loader in the meantime
+            onClosed: {
+                toolDrawer.toolSource = ""
+            }
 
-                                QGCMouseArea {
-                                    id:                 easterEggMouseArea
-                                    anchors.topMargin:  -versionLabel.height
-                                    anchors.fill:       parent
+            Rectangle {
+                id:             toolDrawerToolbar
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                anchors.top:    parent.top
+                height:         ScreenTools.toolbarHeight
+                color:          qgcPal.toolbarBackground
 
-                                    onClicked: (mouse) => {
-                                        if (mouse.modifiers & Qt.ControlModifier) {
-                                            QGroundControl.corePlugin.showTouchAreas = !QGroundControl.corePlugin.showTouchAreas
-                                            showTouchAreasNotification.open()
-                                        } else if (ScreenTools.isMobile || mouse.modifiers & Qt.ShiftModifier) {
-                                            mainWindow.closeIndicatorDrawer()
-                                            if(!QGroundControl.corePlugin.showAdvancedUI) {
-                                                advancedModeOnConfirmation.open()
-                                            } else {
-                                                advancedModeOffConfirmation.open()
-                                            }
-                                        }
-                                    }
+                RowLayout {
+                    id:                 toolDrawerToolbarLayout
+                    anchors.leftMargin: ScreenTools.defaultFontPixelWidth
+                    anchors.left:       parent.left
+                    anchors.top:        parent.top
+                    anchors.bottom:     parent.bottom
+                    spacing:            ScreenTools.defaultFontPixelWidth
 
-                                    // This allows you to change this on mobile
-                                    onPressAndHold: {
-                                        QGroundControl.corePlugin.showTouchAreas = !QGroundControl.corePlugin.showTouchAreas
-                                        showTouchAreasNotification.open()
-                                    }
-                                }
-                            }
+                    QGCLabel {
+                        font.pointSize: ScreenTools.largeFontPointSize
+                        text:           "<"
+                    }
+
+                    QGCLabel {
+                        id:             toolbarDrawerText
+                        text:           qsTr("Exit") + " " + toolDrawer.toolTitle
+                        font.pointSize: ScreenTools.largeFontPointSize
+                    }
+                }
+
+                QGCMouseArea {
+                    anchors.fill: toolDrawerToolbarLayout
+                    onClicked: {
+                        if (mainWindow.allowViewSwitch()) {
+                            toolDrawer.visible = false
                         }
                     }
                 }
             }
-        }
-    }
 
-    Rectangle {
-        id:             toolDrawer
-        anchors.fill:   parent
-        visible:        false
-        color:          qgcPal.window
+            Loader {
+                id:             toolDrawerLoader
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                anchors.top:    toolDrawerToolbar.bottom
+                anchors.bottom: parent.bottom
 
-        property var backIcon
-        property string toolTitle
-        property alias toolSource:  toolDrawerLoader.source
-        property var toolIcon
-
-        onVisibleChanged: {
-            if (!toolDrawer.visible) {
-                toolDrawerLoader.source = ""
-            }
-        }
-
-        Rectangle {
-            id:             toolDrawerToolbar
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            anchors.top:    parent.top
-            height:         ScreenTools.toolbarHeight
-            color:          qgcPal.toolbarBackground
-
-            RowLayout {
-                id:                 toolDrawerToolbarLayout
-                anchors.leftMargin: ScreenTools.defaultFontPixelWidth
-                anchors.left:       parent.left
-                anchors.top:        parent.top
-                anchors.bottom:     parent.bottom
-                spacing:            ScreenTools.defaultFontPixelWidth
-
-                QGCLabel {
-                    font.pointSize: ScreenTools.largeFontPointSize
-                    text:           "<"
-                }
-
-                QGCLabel {
-                    id:             toolbarDrawerText
-                    text:           qsTr("Exit") + " " + toolDrawer.toolTitle
-                    font.pointSize: ScreenTools.largeFontPointSize
-                }
-            }
-
-            QGCMouseArea {
-                anchors.fill: toolDrawerToolbarLayout
-                onClicked: {
-                    if (mainWindow.allowViewSwitch()) {
-                        toolDrawer.visible = false
-                    }
+                Connections {
+                    target:                 toolDrawerLoader.item
+                    ignoreUnknownSignals:   true
+                    onPopout:               toolDrawer.visible = false
                 }
             }
         }
 
-        Loader {
-            id:             toolDrawerLoader
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            anchors.top:    toolDrawerToolbar.bottom
-            anchors.bottom: parent.bottom
 
-            Connections {
-                target:                 toolDrawerLoader.item
-                ignoreUnknownSignals:   true
-                onPopout:               toolDrawer.visible = false
-            }
-        }
-    }
 
     //-------------------------------------------------------------------------
     //-- Critical Vehicle Message Popup
@@ -712,7 +737,7 @@ ApplicationWindow {
                     anchors.centerIn:   parent
                     text:               ">"
                     color:              QGroundControl.globalPalette.buttonText
-                }  
+                }
 
                 QGCMouseArea {
                     fillItem: parent
