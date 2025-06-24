@@ -48,6 +48,16 @@ ChartView {
         }
     }
 
+    Connections {
+        target: QGroundControl.multiVehicleManager
+
+        function onVehicleRemoved(vehicle) {
+            // Hack to prevent references to deleted QGCMavlinkSystem fields. https://github.com/mavlink/qgroundcontrol/issues/13077
+            controller.deleteChart(chartController);
+            chartController = null;
+        }
+    }
+
     DateTimeAxis {
         id:                         axisX
         min:                        chartController ? chartController.rangeXMin : new Date()
