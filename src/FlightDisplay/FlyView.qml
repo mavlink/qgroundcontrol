@@ -205,7 +205,7 @@ Item {
             anchors.top:         parent.top
             anchors.left:           parent.left
             anchors.right:          parent.right
-            anchors.topMargin:  30
+            anchors.topMargin:  50
             anchors.margins:        _margins
             width: parent.width * 0.8
             height: 100

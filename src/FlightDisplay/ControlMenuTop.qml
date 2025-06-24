@@ -9,23 +9,12 @@ Rectangle {
     height: 80
     color: "transparent"
 
-    visible: QGroundControl.multiVehicleManager.activeVehicle !== null
+    // Tab hiện tại đang chọn
+    property string currentTab: "Home"
 
-
-    function sendCustomMavCommand(btn_id, mavCmdId, param1 = 1) {
-        let vehicle = QGroundControl.multiVehicleManager.activeVehicle
-        if (vehicle) {
-            btn_id.isActive = !btn_id.isActive
-            vehicle.sendCommand(
-                vehicle.id,
-                mavCmdId,
-                true,
-                param1, 0, 0, 0, 0, 0, 0
-            )
-            console.log("📡 Send MAV_CMD " + mavCmdId)
-        } else {
-            console.warn("🚫 error")
-        }
+    function switchTab(tabId) {
+        currentTab = tabId
+        console.log("🔁 Switched to tab:", tabId)
     }
 
     Column {
@@ -36,44 +25,44 @@ Rectangle {
             spacing: 10
 
             ItemButton {
-                id: btn1
-                width: 64
-                label: "a"
-                iconSource: "/icons/rocket_while.svg"
-                onClicked: sendCustomMavCommand(btn1, 30008) 
+                id: btnHome
+                width: 100
+                label: "Home"
+                isActive: currentTab === "Home"
+                onClicked: switchTab("Home")
             }
 
             ItemButton {
-                id: btn2
-                width: 64
-                label: "b"
-                iconSource: "/icons/rocket_while.svg"
-                onClicked: sendCustomMavCommand(btn2, 30010) 
+                id: btnTelemetry
+                width: 100
+                label: "Telemetry"
+                isActive: currentTab === "Telemetry"
+                onClicked: switchTab("Telemetry")
             }
 
             ItemButton {
-                id: btn3
-                width: 64
-                label: "c"
-                iconSource: "/icons/rocket_while.svg"
-                onClicked: sendCustomMavCommand(btn3, 30011)
+                id: btnMission
+                width: 100
+                label: "Mission"
+                isActive: currentTab === "Mission"
+                onClicked: switchTab("Mission")
             }
 
             ItemButton {
-                id: btn4
-                width: 64
-                label: "d"
-                iconSource: "/icons/rocket_while.svg"
-                onClicked: sendCustomMavCommand(btn4, 30012) 
-            }
-
-            ItemButton {
-                id: btn5
-                width: 64
-                label: "e"
-                iconSource: "/icons/rocket_while.svg"
-                onClicked: sendCustomMavCommand(btn3, 30013)
+                id: btnCamera
+                width: 100
+                label: "Camera"
+                isActive: currentTab === "Camera"
+                onClicked: switchTab("Camera")
             }
         }
+
+        // Hiển thị trạng thái tab hiện tại (để bạn debug)
+        // Text {
+        //     text: "Current Tab: " + currentTab
+        //     color: "white"
+        //     font.pixelSize: 14
+        //     anchors.horizontalCenter: parent.horizontalCenter
+        // }
     }
 }
