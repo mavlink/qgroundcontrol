@@ -55,50 +55,6 @@ Item {
     // Used to pass help text to the preCalibrationDialog dialog
     property string preCalibrationDialogHelp
 
-    readonly property var rotations: [
-        "ROTATION_NONE",
-        "ROTATION_YAW_45",
-        "ROTATION_YAW_90",
-        "ROTATION_YAW_135",
-        "ROTATION_YAW_180",
-        "ROTATION_YAW_225",
-        "ROTATION_YAW_270",
-        "ROTATION_YAW_315",
-        "ROTATION_ROLL_180",
-        "ROTATION_ROLL_180_YAW_45",
-        "ROTATION_ROLL_180_YAW_90",
-        "ROTATION_ROLL_180_YAW_135",
-        "ROTATION_PITCH_180",
-        "ROTATION_ROLL_180_YAW_225",
-        "ROTATION_ROLL_180_YAW_270",
-        "ROTATION_ROLL_180_YAW_315",
-        "ROTATION_ROLL_90",
-        "ROTATION_ROLL_90_YAW_45",
-        "ROTATION_ROLL_90_YAW_90",
-        "ROTATION_ROLL_90_YAW_135",
-        "ROTATION_ROLL_270",
-        "ROTATION_ROLL_270_YAW_45",
-        "ROTATION_ROLL_270_YAW_90",
-        "ROTATION_ROLL_270_YAW_135",
-        "ROTATION_PITCH_90",
-        "ROTATION_PITCH_270",
-        "ROTATION_PITCH_180_YAW_90",
-        "ROTATION_PITCH_180_YAW_270",
-        "ROTATION_ROLL_90_PITCH_90",
-        "ROTATION_ROLL_180_PITCH_90",
-        "ROTATION_ROLL_270_PITCH_90",
-        "ROTATION_ROLL_90_PITCH_180",
-        "ROTATION_ROLL_270_PITCH_180",
-        "ROTATION_ROLL_90_PITCH_270",
-        "ROTATION_ROLL_180_PITCH_270",
-        "ROTATION_ROLL_270_PITCH_270",
-        "ROTATION_ROLL_90_PITCH_180_YAW_90",
-        "ROTATION_ROLL_90_YAW_270",
-        "ROTATION_ROLL_90_PITCH_68_YAW_293",
-        "ROTATION_PITCH_315",
-        "ROTATION_ROLL_90_PITCH_315"
-    ]
-
     property Fact cal_mag0_id:      controller.getParameterFact(-1, "CAL_MAG0_ID")
     property Fact cal_mag1_id:      controller.getParameterFact(-1, "CAL_MAG1_ID")
     property Fact cal_mag2_id:      controller.getParameterFact(-1, "CAL_MAG2_ID")
@@ -291,7 +247,6 @@ Item {
 
                         FactComboBox {
                             sizeToContents: true
-                            model:          rotations
                             fact:           sens_board_rot
                         }
 
@@ -348,7 +303,6 @@ Item {
 
                     FactComboBox {
                         sizeToContents: true
-                        model:          rotations
                         fact:           sens_board_rot
                     }
                 }
@@ -369,7 +323,6 @@ Item {
 
                         FactComboBox {
                             sizeToContents: true
-                            model:          rotations
                             fact:           parent.calMagRotFact
                         }
                     }
