@@ -1,5 +1,7 @@
 import QtQuick
 import QtQuick.Controls
+import QGroundControl
+import QGroundControl.Controls
 
 Rectangle {
     id: _root
@@ -7,45 +9,24 @@ Rectangle {
     height: 80
     color: "transparent"
 
-    // --- Các hàm xử lý toggle
-    function toggleBtn1() {
-        btn1.isActive = !btn1.isActive
-        console.log("Button 1 clicked")
+    visible: QGroundControl.multiVehicleManager.activeVehicle !== null
+
+
+    function sendCustomMavCommand(btn_id, mavCmdId, param1 = 1) {
+        let vehicle = QGroundControl.multiVehicleManager.activeVehicle
+        if (vehicle) {
+            btn_id.isActive = !btn_id.isActive
+            vehicle.sendCommand(
+                vehicle.id,
+                mavCmdId,
+                true,
+                param1, 0, 0, 0, 0, 0, 0
+            )
+            console.log("📡 Send MAV_CMD " + mavCmdId)
+        } else {
+            console.warn("🚫 error")
+        }
     }
-
-    function toggleBtn2() {
-        btn2.isActive = !btn2.isActive
-        console.log("Button 2 clicked")
-    }
-
-    function toggleBtn3() {
-        btn3.isActive = !btn3.isActive
-        console.log("Button 3 clicked")
-    }
-
-    function toggleBtn4() {
-        btn4.isActive = !btn4.isActive
-        console.log("Button 4 clicked")
-    }
-
-    function toggleBtn5() {
-        btn5.isActive = !btn5.isActive
-        console.log("Button 5 clicked")
-    }
-
-    function toggleBtn6() {
-        btn6.isActive = !btn6.isActive
-        console.log("Button 6 clicked")
-    }
-    function toggleBtn7() { btn7.isActive = !btn7.isActive; console.log("Button 7 clicked") }
-    function toggleBtn8() { btn8.isActive = !btn8.isActive; console.log("Button 8 clicked") }
-    function toggleBtnStartMission() { btnStartMission.isActive = !btnStartMission.isActive; console.log("Start Mission clicked") }
-
-    function toggleBtnCoiBao() { 
-        btnCoiBao.isActive = !btnCoiBao.isActive
-        QGroundControl.CustomCommandManager.triggerCoiBao()
-
-     }
 
     Column {
         spacing: 10
@@ -58,29 +39,22 @@ Rectangle {
                 id: btnStartMission
                 width: 170
                 label: "Start Mission"
-                // iconSource: "/icons/rocket_while.svg"
-                onClicked: toggleBtnStartMission()
+                onClicked: sendCustomMavCommand(btnStartMission, 30000) 
             }
 
             ItemButton {
                 id: btnCoiBao
-                width: 100
-                label: "còi báo"
+                width: 110
+                label: "Còi báo"
                 iconSource: "/icons/campaign_while.svg"
-                onClicked: toggleBtnCoiBao()
+                onClicked: btnCoiBao.isActive ? sendCustomMavCommand(btnCoiBao, 30009) : sendCustomMavCommand(btnCoiBao, 30001)
             }
 
-            ItemButton {
-                id: btn8
-                label: "8"
-                iconSource: "/icons/rocket_while.svg"
-                onClicked: toggleBtn8()
-            }
             ItemButton {
                 id: btn7
                 label: "7"
                 iconSource: "/icons/rocket_while.svg"
-                onClicked: toggleBtn7()
+                onClicked: sendCustomMavCommand(btn7, 30007)
             }
         }
 
@@ -91,42 +65,43 @@ Rectangle {
                 id: btn1
                 label: "1"
                 iconSource: "/icons/rocket_while.svg"
-                onClicked: toggleBtn1()
+                onClicked: sendCustomMavCommand(btn1, 30001)
             }
 
             ItemButton {
                 id: btn2
                 label: "2"
                 iconSource: "/icons/rocket_while.svg"
-                onClicked: toggleBtn2()
+                onClicked: sendCustomMavCommand(btn2, 30002)
             }
 
             ItemButton {
                 id: btn3
                 label: "3"
                 iconSource: "/icons/rocket_while.svg"
-                onClicked: toggleBtn3()
+                onClicked: sendCustomMavCommand(btn3, 30003)
             }
 
             ItemButton {
                 id: btn4
                 label: "4"
                 iconSource: "/icons/rocket_while.svg"
-                onClicked: toggleBtn4()
+                onClicked: sendCustomMavCommand(btn4, 30004)
             }
+
             ItemButton {
                 id: btn5
                 label: "5"
                 iconSource: "/icons/rocket_while.svg"
-                onClicked: toggleBtn5()
+                onClicked: sendCustomMavCommand(btn5, 30005)
             }
+
             ItemButton {
                 id: btn6
                 label: "6"
                 iconSource: "/icons/rocket_while.svg"
-                onClicked: toggleBtn6()
+                onClicked: sendCustomMavCommand(btn6, 30006)
             }
         }
     }
-    
 }

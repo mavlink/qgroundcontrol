@@ -1,4137 +1,5024 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.1" language="vi" sourcelanguage="en">
-<context>
+<TS version="2.1" language="uk" sourcelanguage="en">
+  <context>
     <name>GimbalFact.json</name>
     <message>
-        <source>Gimbal Roll</source>
-        <extracomment>.QGC.MetaData.Facts[gimbalRoll].shortDesc, </extracomment>
-        <translation>Gimbal Roll</translation>
+      <extracomment>.QGC.MetaData.Facts[gimbalRoll].shortDesc, </extracomment>
+      <location filename="../src/Gimbal/GimbalFact.json"/>
+      <source>Gimbal Roll</source>
+      <translation type="unfinished">Gimbal Roll</translation>
     </message>
     <message>
-        <source>Gimbal Pitch</source>
-        <extracomment>.QGC.MetaData.Facts[gimbalPitch].shortDesc, </extracomment>
-        <translation>Gimbal Pitch</translation>
+      <extracomment>.QGC.MetaData.Facts[gimbalPitch].shortDesc, </extracomment>
+      <location filename="../src/Gimbal/GimbalFact.json"/>
+      <source>Gimbal Pitch</source>
+      <translation type="unfinished">Gimbal Pitch</translation>
     </message>
     <message>
-        <source>Gimbal Yaw</source>
-        <extracomment>.QGC.MetaData.Facts[gimbalYaw].shortDesc, </extracomment>
-        <translation>Gimbal Yaw</translation>
+      <extracomment>.QGC.MetaData.Facts[gimbalYaw].shortDesc, </extracomment>
+      <location filename="../src/Gimbal/GimbalFact.json"/>
+      <source>Gimbal Yaw</source>
+      <translation type="unfinished">Gimbal Yaw</translation>
     </message>
     <message>
-        <source>Azimuth</source>
-        <extracomment>.QGC.MetaData.Facts[gimbalAzimuth].shortDesc, </extracomment>
-        <translation>Phương vị</translation>
+      <extracomment>.QGC.MetaData.Facts[gimbalAzimuth].shortDesc, </extracomment>
+      <location filename="../src/Gimbal/GimbalFact.json"/>
+      <source>Azimuth</source>
+      <translation type="unfinished">Azimuth</translation>
     </message>
     <message>
-        <source>gimbal device Id</source>
-        <extracomment>.QGC.MetaData.Facts[deviceId].shortDesc, </extracomment>
-        <translation>ID thiết bị gimbal</translation>
+      <extracomment>.QGC.MetaData.Facts[deviceId].shortDesc, </extracomment>
+      <location filename="../src/Gimbal/GimbalFact.json"/>
+      <source>gimbal device Id</source>
+      <translation type="unfinished">gimbal device Id</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>OfflineMaps.SettingsGroup.json</name>
     <message>
-        <source>Minimum zoom level for downloads.</source>
-        <extracomment>.QGC.MetaData.Facts[minZoomLevelDownload].shortDesc, </extracomment>
-        <translation>Mức thu phóng tối thiểu để tải xuống.</translation>
+      <extracomment>.QGC.MetaData.Facts[minZoomLevelDownload].shortDesc, </extracomment>
+      <location filename="../src/Settings/OfflineMaps.SettingsGroup.json"/>
+      <source>Minimum zoom level for downloads.</source>
+      <translation type="unfinished">Minimum zoom level for downloads.</translation>
     </message>
     <message>
-        <source>Maximum zoom level for downloads.</source>
-        <extracomment>.QGC.MetaData.Facts[maxZoomLevelDownload].shortDesc, </extracomment>
-        <translation>Mức thu phóng tối đa để tải xuống.</translation>
+      <extracomment>.QGC.MetaData.Facts[maxZoomLevelDownload].shortDesc, </extracomment>
+      <location filename="../src/Settings/OfflineMaps.SettingsGroup.json"/>
+      <source>Maximum zoom level for downloads.</source>
+      <translation type="unfinished">Maximum zoom level for downloads.</translation>
     </message>
     <message>
-        <source>Maximum number of tiles for download.</source>
-        <extracomment>.QGC.MetaData.Facts[maxTilesForDownload].shortDesc, </extracomment>
-        <translation>Số lượng gạch tối đa để tải xuống.</translation>
+      <extracomment>.QGC.MetaData.Facts[maxTilesForDownload].shortDesc, </extracomment>
+      <location filename="../src/Settings/OfflineMaps.SettingsGroup.json"/>
+      <source>Maximum number of tiles for download.</source>
+      <translation type="unfinished">Maximum number of tiles for download.</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>FlyView.SettingsGroup.json</name>
     <message>
-        <source>Minimum altitude for guided actions altitude slider.</source>
-        <extracomment>.QGC.MetaData.Facts[guidedMinimumAltitude].shortDesc, </extracomment>
-        <translation>Độ cao tối thiểu cho các hành động hướng dẫn độ cao trượt.</translation>
+      <extracomment>.QGC.MetaData.Facts[guidedMinimumAltitude].shortDesc, </extracomment>
+      <location filename="../src/Settings/FlyView.SettingsGroup.json"/>
+      <source>Minimum altitude for guided actions altitude slider.</source>
+      <translation type="unfinished">Minimum altitude for guided actions altitude slider.</translation>
     </message>
     <message>
-        <source>Maximum altitude for guided actions altitude slider.</source>
-        <extracomment>.QGC.MetaData.Facts[guidedMaximumAltitude].shortDesc, </extracomment>
-        <translation>Độ cao tối đa cho các hành động hướng dẫn độ cao trượt.</translation>
+      <extracomment>.QGC.MetaData.Facts[guidedMaximumAltitude].shortDesc, </extracomment>
+      <location filename="../src/Settings/FlyView.SettingsGroup.json"/>
+      <source>Maximum altitude for guided actions altitude slider.</source>
+      <translation type="unfinished">Maximum altitude for guided actions altitude slider.</translation>
     </message>
     <message>
-        <source>Show/Hide Log Replay status bar</source>
-        <extracomment>.QGC.MetaData.Facts[showLogReplayStatusBar].shortDesc, </extracomment>
-        <translation>Hiển thị/ẩn thanh trạng thái phát lại nhật ký</translation>
+      <extracomment>.QGC.MetaData.Facts[showLogReplayStatusBar].shortDesc, </extracomment>
+      <location filename="../src/Settings/FlyView.SettingsGroup.json"/>
+      <source>Show/Hide Log Replay status bar</source>
+      <translation type="unfinished">Show/Hide Log Replay status bar</translation>
     </message>
     <message>
-        <source>Show additional heading indicators on Compass</source>
-        <extracomment>.QGC.MetaData.Facts[showAdditionalIndicatorsCompass].shortDesc, </extracomment>
-        <translation>Hiển thị các chỉ số tiêu đề bổ sung trên la bàn</translation>
+      <extracomment>.QGC.MetaData.Facts[showAdditionalIndicatorsCompass].shortDesc, </extracomment>
+      <location filename="../src/Settings/FlyView.SettingsGroup.json"/>
+      <source>Show additional heading indicators on Compass</source>
+      <translation type="unfinished">Show additional heading indicators on Compass</translation>
     </message>
     <message>
-        <source>Lock Compass Nose-Up</source>
-        <extracomment>.QGC.MetaData.Facts[lockNoseUpCompass].shortDesc, </extracomment>
-        <translation>Khóa la bàn mũi lên</translation>
+      <extracomment>.QGC.MetaData.Facts[lockNoseUpCompass].shortDesc, </extracomment>
+      <location filename="../src/Settings/FlyView.SettingsGroup.json"/>
+      <source>Lock Compass Nose-Up</source>
+      <translation type="unfinished">Lock Compass Nose-Up</translation>
     </message>
     <message>
-        <source>Keep map centered on vehicle</source>
-        <extracomment>.QGC.MetaData.Facts[keepMapCenteredOnVehicle].shortDesc, </extracomment>
-        <translation>Giữ bản đồ tập trung trên xe</translation>
+      <extracomment>.QGC.MetaData.Facts[keepMapCenteredOnVehicle].shortDesc, </extracomment>
+      <location filename="../src/Settings/FlyView.SettingsGroup.json"/>
+      <source>Keep map centered on vehicle</source>
+      <translation type="unfinished">Keep map centered on vehicle</translation>
     </message>
     <message>
-        <source>Show controls for camera triggering using MAV_CMD_DO_DIGICAM_CONTROL.</source>
-        <extracomment>.QGC.MetaData.Facts[showSimpleCameraControl].shortDesc, </extracomment>
-        <translation>Hiển thị các điều khiển để kích hoạt camera bằng MAV_CMD_DO_DIGICAM_CONTROL.</translation>
+      <extracomment>.QGC.MetaData.Facts[showSimpleCameraControl].shortDesc, </extracomment>
+      <location filename="../src/Settings/FlyView.SettingsGroup.json"/>
+      <source>Show controls for camera triggering using MAV_CMD_DO_DIGICAM_CONTROL.</source>
+      <translation type="unfinished">Show controls for camera triggering using MAV_CMD_DO_DIGICAM_CONTROL.</translation>
     </message>
     <message>
-        <source>Show obstacle distance overlay on map and video.</source>
-        <extracomment>.QGC.MetaData.Facts[showObstacleDistanceOverlay].shortDesc, </extracomment>
-        <translation>Hiển thị lớp phủ khoảng cách vượt chướng ngại vật trên bản đồ và video.</translation>
+      <extracomment>.QGC.MetaData.Facts[showObstacleDistanceOverlay].shortDesc, </extracomment>
+      <location filename="../src/Settings/FlyView.SettingsGroup.json"/>
+      <source>Show obstacle distance overlay on map and video.</source>
+      <translation type="unfinished">Show obstacle distance overlay on map and video.</translation>
     </message>
     <message>
-        <source>Maximum distance allowed for Go To Location.</source>
-        <extracomment>.QGC.MetaData.Facts[maxGoToLocationDistance].shortDesc, </extracomment>
-        <translation>Khoảng cách tối đa cho phép đi đến vị trí.</translation>
+      <extracomment>.QGC.MetaData.Facts[maxGoToLocationDistance].shortDesc, </extracomment>
+      <location filename="../src/Settings/FlyView.SettingsGroup.json"/>
+      <source>Maximum distance allowed for Go To Location.</source>
+      <translation type="unfinished">Maximum distance allowed for Go To Location.</translation>
     </message>
     <message>
-        <source>Send updated GCS&apos; home position to autopilot in case of change of the home position</source>
-        <extracomment>.QGC.MetaData.Facts[updateHomePosition].shortDesc, </extracomment>
-        <translation>Gửi vị trí nhà của GCS được cập nhật đến Autopilot trong trường hợp thay đổi vị trí nhà</translation>
+      <extracomment>.QGC.MetaData.Facts[forwardFlightGoToLocationLoiterRad].shortDesc, </extracomment>
+      <location filename="../src/Settings/FlyView.SettingsGroup.json"/>
+      <source>Loiter radius for orbiting the Go To Location during forward flight. This only applies if the firmware supports a radius in MAV_CMD_DO_REPOSITION commands.</source>
+      <translation type="unfinished">Loiter radius for orbiting the Go To Location during forward flight. This only applies if the firmware supports a radius in MAV_CMD_DO_REPOSITION commands.</translation>
     </message>
     <message>
-        <source>Qml file for instrument panel</source>
-        <extracomment>.QGC.MetaData.Facts[instrumentQmlFile].shortDesc, </extracomment>
-        <translation>Tệp QML cho bảng điều khiển</translation>
+      <extracomment>.QGC.MetaData.Facts[goToLocationRequiresConfirmInGuided].shortDesc, </extracomment>
+      <location filename="../src/Settings/FlyView.SettingsGroup.json"/>
+      <source>Require slide confirmation for Go To Location when the vehicle is already in Guided mode.</source>
+      <translation type="unfinished">Require slide confirmation for Go To Location when the vehicle is already in Guided mode.</translation>
     </message>
     <message>
-        <source>Integrated Compass &amp; Attitude,Horizontal Compass &amp; Attitude,Large Vertical</source>
-        <extracomment>.QGC.MetaData.Facts[instrumentQmlFile].enumStrings, </extracomment>
-        <translation>La bàn và thái độ tích hợp, la bàn và thái độ ngang, dọc lớn</translation>
+      <extracomment>.QGC.MetaData.Facts[updateHomePosition].shortDesc, </extracomment>
+      <location filename="../src/Settings/FlyView.SettingsGroup.json"/>
+      <source>Send updated GCS&apos; home position to autopilot in case of change of the home position</source>
+      <translation type="unfinished">Send updated GCS&apos; home position to autopilot in case of change of the home position</translation>
     </message>
-</context>
-<context>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[instrumentQmlFile2].shortDesc, </extracomment>
+      <location filename="../src/Settings/FlyView.SettingsGroup.json"/>
+      <source>Qml file for instrument panel</source>
+      <translation type="unfinished">Qml file for instrument panel</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[instrumentQmlFile2].enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/Settings/FlyView.SettingsGroup.json"/>
+      <source>Integrated Compass &amp; Attitude,Horizontal Compass &amp; Attitude,Large Vertical</source>
+      <translation type="unfinished">Integrated Compass &amp; Attitude,Horizontal Compass &amp; Attitude,Large Vertical</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[requestControlAllowTakeover].shortDesc, </extracomment>
+      <location filename="../src/Settings/FlyView.SettingsGroup.json"/>
+      <source>When requesting vehicle control, allow other GCS to override control automatically, or require this GCS to accept the request first.</source>
+      <translation type="unfinished">When requesting vehicle control, allow other GCS to override control automatically, or require this GCS to accept the request first.</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[requestControlTimeout].shortDesc, </extracomment>
+      <location filename="../src/Settings/FlyView.SettingsGroup.json"/>
+      <source>Timeout in seconds before a request to a GCS to allow takeover is assumed to be rejected. This is used to display the timeout graphically on requestor and GCS in control.</source>
+      <translation type="unfinished">Timeout in seconds before a request to a GCS to allow takeover is assumed to be rejected. This is used to display the timeout graphically on requestor and GCS in control.</translation>
+    </message>
+  </context>
+  <context>
     <name>App.SettingsGroup.json</name>
     <message>
-        <source>Offline editing firmware class</source>
-        <extracomment>.QGC.MetaData.Facts[offlineEditingFirmwareClass].shortDesc, </extracomment>
-        <translation>Lớp phần sụn chỉnh sửa ngoại tuyến</translation>
+      <extracomment>.QGC.MetaData.Facts[offlineEditingFirmwareClass].shortDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Offline editing firmware class</source>
+      <translation type="unfinished">Offline editing firmware class</translation>
     </message>
     <message>
-        <source>ArduPilot,PX4 Pro,Mavlink Generic</source>
-        <extracomment>.QGC.MetaData.Facts[offlineEditingFirmwareClass].enumStrings, </extracomment>
-        <translation>Ardupilot, PX4 Pro, Mavlink Generic</translation>
+      <extracomment>.QGC.MetaData.Facts[offlineEditingFirmwareClass].enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>ArduPilot,PX4 Pro,Mavlink Generic</source>
+      <translation type="unfinished">ArduPilot,PX4 Pro,Mavlink Generic</translation>
     </message>
     <message>
-        <source>Offline editing vehicle class</source>
-        <extracomment>.QGC.MetaData.Facts[offlineEditingVehicleClass].shortDesc, </extracomment>
-        <translation>Lớp xe chỉnh sửa ngoại tuyến</translation>
+      <extracomment>.QGC.MetaData.Facts[offlineEditingVehicleClass].shortDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Offline editing vehicle class</source>
+      <translation type="unfinished">Offline editing vehicle class</translation>
     </message>
     <message>
-        <source>Fixed Wing,Multi-Rotor,VTOL,Rover,Sub,Mavlink Generic</source>
-        <extracomment>.QGC.MetaData.Facts[offlineEditingVehicleClass].enumStrings, </extracomment>
-        <translation>Cố định cánh, đa cánh quạt, VTOL, Rover, Sub, Mavlink Generic</translation>
+      <extracomment>.QGC.MetaData.Facts[offlineEditingVehicleClass].enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Fixed Wing,Multi-Rotor,VTOL,Rover,Sub,Mavlink Generic</source>
+      <translation type="unfinished">Fixed Wing,Multi-Rotor,VTOL,Rover,Sub,Mavlink Generic</translation>
     </message>
     <message>
-        <source>Offline editing cruise speed</source>
-        <extracomment>.QGC.MetaData.Facts[offlineEditingCruiseSpeed].shortDesc, </extracomment>
-        <translation>Tốc độ hành trình chỉnh sửa ngoại tuyến</translation>
+      <extracomment>.QGC.MetaData.Facts[offlineEditingCruiseSpeed].shortDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Offline editing cruise speed</source>
+      <translation type="unfinished">Offline editing cruise speed</translation>
     </message>
     <message>
-        <source>This value defines the default speed for calculating mission statistics for vehicles which do not support hover or VTOL vehicles in fixed wing mode. It does not modify the flight speed for a specific flight plan.</source>
-        <extracomment>.QGC.MetaData.Facts[offlineEditingCruiseSpeed].longDesc, </extracomment>
-        <translation>Giá trị này xác định tốc độ mặc định để tính toán số liệu thống kê sứ mệnh cho các phương tiện không hỗ trợ các phương tiện Hover hoặc VTOL ở chế độ cánh cố định. Nó không sửa đổi tốc độ bay cho một kế hoạch bay cụ thể.</translation>
+      <extracomment>.QGC.MetaData.Facts[offlineEditingCruiseSpeed].longDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>This value defines the default speed for calculating mission statistics for vehicles which do not support hover or VTOL vehicles in fixed wing mode. It does not modify the flight speed for a specific flight plan.</source>
+      <translation type="unfinished">This value defines the default speed for calculating mission statistics for vehicles which do not support hover or VTOL vehicles in fixed wing mode. It does not modify the flight speed for a specific flight plan.</translation>
     </message>
     <message>
-        <source>Offline editing hover speed</source>
-        <extracomment>.QGC.MetaData.Facts[offlineEditingHoverSpeed].shortDesc, </extracomment>
-        <translation>Chỉnh sửa đường di chuột Chỉnh sửa</translation>
+      <extracomment>.QGC.MetaData.Facts[offlineEditingHoverSpeed].shortDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Offline editing hover speed</source>
+      <translation type="unfinished">Offline editing hover speed</translation>
     </message>
     <message>
-        <source>This value defines the default speed for calculating mission statistics for multi-rotor vehicles or VTOL vehicle in multi-rotor mode. It does not modify the flight speed for a specific flight plan.</source>
-        <extracomment>.QGC.MetaData.Facts[offlineEditingHoverSpeed].longDesc, </extracomment>
-        <translation>Giá trị này xác định tốc độ mặc định để tính toán số liệu thống kê nhiệm vụ cho xe đa rotor hoặc xe VTOL ở chế độ đa cánh quạt. Nó không sửa đổi tốc độ bay cho một kế hoạch bay cụ thể.</translation>
+      <extracomment>.QGC.MetaData.Facts[offlineEditingHoverSpeed].longDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>This value defines the default speed for calculating mission statistics for multi-rotor vehicles or VTOL vehicle in multi-rotor mode. It does not modify the flight speed for a specific flight plan.</source>
+      <translation type="unfinished">This value defines the default speed for calculating mission statistics for multi-rotor vehicles or VTOL vehicle in multi-rotor mode. It does not modify the flight speed for a specific flight plan.</translation>
     </message>
     <message>
-        <source>Offline editing ascent speed</source>
-        <extracomment>.QGC.MetaData.Facts[offlineEditingAscentSpeed].shortDesc, </extracomment>
-        <translation>Tốc độ chỉnh sửa ngoại tuyến</translation>
+      <extracomment>.QGC.MetaData.Facts[offlineEditingAscentSpeed].shortDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Offline editing ascent speed</source>
+      <translation type="unfinished">Offline editing ascent speed</translation>
     </message>
     <message>
-        <source>This value defines the ascent speed for multi-rotor vehicles for use in calculating mission duration.</source>
-        <extracomment>.QGC.MetaData.Facts[offlineEditingAscentSpeed].longDesc, </extracomment>
-        <translation>Giá trị này xác định tốc độ đi lên đối với các phương tiện đa cánh quạt để sử dụng trong tính toán thời lượng nhiệm vụ.</translation>
+      <extracomment>.QGC.MetaData.Facts[offlineEditingAscentSpeed].longDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>This value defines the ascent speed for multi-rotor vehicles for use in calculating mission duration.</source>
+      <translation type="unfinished">This value defines the ascent speed for multi-rotor vehicles for use in calculating mission duration.</translation>
     </message>
     <message>
-        <source>Offline editing descent speed</source>
-        <extracomment>.QGC.MetaData.Facts[offlineEditingDescentSpeed].shortDesc, </extracomment>
-        <translation>Tốc độ chỉnh sửa ngoại tuyến</translation>
+      <extracomment>.QGC.MetaData.Facts[offlineEditingDescentSpeed].shortDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Offline editing descent speed</source>
+      <translation type="unfinished">Offline editing descent speed</translation>
     </message>
     <message>
-        <source>This value defines the cruising speed for multi-rotor vehicles for use in calculating mission duration.</source>
-        <extracomment>.QGC.MetaData.Facts[offlineEditingDescentSpeed].longDesc, </extracomment>
-        <translation>Giá trị này xác định tốc độ bay cho các phương tiện đa cánh quạt để sử dụng trong tính toán thời lượng nhiệm vụ.</translation>
+      <extracomment>.QGC.MetaData.Facts[offlineEditingDescentSpeed].longDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>This value defines the cruising speed for multi-rotor vehicles for use in calculating mission duration.</source>
+      <translation type="unfinished">This value defines the cruising speed for multi-rotor vehicles for use in calculating mission duration.</translation>
     </message>
     <message>
-        <source>Announce battery remaining percent</source>
-        <extracomment>.QGC.MetaData.Facts[batteryPercentRemainingAnnounce].shortDesc, </extracomment>
-        <translation>Thông báo pin còn lại phần trăm</translation>
+      <extracomment>.QGC.MetaData.Facts[batteryPercentRemainingAnnounce].shortDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Announce battery remaining percent</source>
+      <translation type="unfinished">Announce battery remaining percent</translation>
     </message>
     <message>
-        <source>Announce the remaining battery percent when it falls below the specified percentage.</source>
-        <extracomment>.QGC.MetaData.Facts[batteryPercentRemainingAnnounce].longDesc, </extracomment>
-        <translation>Thông báo phần trăm pin còn lại khi nó giảm xuống dưới tỷ lệ phần trăm được chỉ định.</translation>
+      <extracomment>.QGC.MetaData.Facts[batteryPercentRemainingAnnounce].longDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Announce the remaining battery percent when it falls below the specified percentage.</source>
+      <translation type="unfinished">Announce the remaining battery percent when it falls below the specified percentage.</translation>
     </message>
     <message>
-        <source>Default value for altitude</source>
-        <extracomment>.QGC.MetaData.Facts[defaultMissionItemAltitude].shortDesc, </extracomment>
-        <translation>Giá trị mặc định cho độ cao</translation>
+      <extracomment>.QGC.MetaData.Facts[defaultMissionItemAltitude].shortDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Default value for altitude</source>
+      <translation type="unfinished">Default value for altitude</translation>
     </message>
     <message>
-        <source>This value specifies the default altitude for new items added to a mission.</source>
-        <extracomment>.QGC.MetaData.Facts[defaultMissionItemAltitude].longDesc, </extracomment>
-        <translation>Giá trị này chỉ định độ cao mặc định cho các mục mới được thêm vào một nhiệm vụ.</translation>
+      <extracomment>.QGC.MetaData.Facts[defaultMissionItemAltitude].longDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>This value specifies the default altitude for new items added to a mission.</source>
+      <translation type="unfinished">This value specifies the default altitude for new items added to a mission.</translation>
     </message>
     <message>
-        <source>Mute audio output</source>
-        <extracomment>.QGC.MetaData.Facts[audioMuted].shortDesc, </extracomment>
-        <translation>Đầu ra âm thanh tắt tiếng</translation>
+      <extracomment>.QGC.MetaData.Facts[audioMuted].shortDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Mute audio output</source>
+      <translation type="unfinished">Mute audio output</translation>
     </message>
     <message>
-        <source>If this option is enabled all audio output will be muted.</source>
-        <extracomment>.QGC.MetaData.Facts[audioMuted].longDesc, </extracomment>
-        <translation>Nếu tùy chọn này được bật, tất cả đầu ra âm thanh sẽ bị tắt tiếng.</translation>
+      <extracomment>.QGC.MetaData.Facts[audioMuted].longDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>If this option is enabled all audio output will be muted.</source>
+      <translation type="unfinished">If this option is enabled all audio output will be muted.</translation>
     </message>
     <message>
-        <source>Show virtual joystick</source>
-        <extracomment>.QGC.MetaData.Facts[virtualJoystick].shortDesc, </extracomment>
-        <translation>Hiển thị phím điều khiển ảo</translation>
+      <extracomment>.QGC.MetaData.Facts[virtualJoystick].shortDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Show virtual joystick</source>
+      <translation type="unfinished">Show virtual joystick</translation>
     </message>
     <message>
-        <source>If this option is enabled the virtual joystick will be shown on the Fly view.</source>
-        <extracomment>.QGC.MetaData.Facts[virtualJoystick].longDesc, </extracomment>
-        <translation>Nếu tùy chọn này được kích hoạt, cần điều khiển ảo sẽ được hiển thị trên chế độ xem bay.</translation>
+      <extracomment>.QGC.MetaData.Facts[virtualJoystick].longDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>If this option is enabled the virtual joystick will be shown on the Fly view.</source>
+      <translation type="unfinished">If this option is enabled the virtual joystick will be shown on the Fly view.</translation>
     </message>
     <message>
-        <source>Auto-Center Throttle</source>
-        <extracomment>.QGC.MetaData.Facts[virtualJoystickAutoCenterThrottle].shortDesc, </extracomment>
-        <translation>Tăng tốc tự động trung tâm</translation>
+      <extracomment>.QGC.MetaData.Facts[virtualJoystickAutoCenterThrottle].shortDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Auto-Center Throttle</source>
+      <translation type="unfinished">Auto-Center Throttle</translation>
     </message>
     <message>
-        <source>If enabled the throttle stick will snap back to center when released.</source>
-        <extracomment>.QGC.MetaData.Facts[virtualJoystickAutoCenterThrottle].longDesc, </extracomment>
-        <translation>Nếu kích hoạt thanh bướm ga sẽ quay trở lại trung tâm khi được phát hành.</translation>
+      <extracomment>.QGC.MetaData.Facts[virtualJoystickAutoCenterThrottle].longDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>If enabled the throttle stick will snap back to center when released.</source>
+      <translation type="unfinished">If enabled the throttle stick will snap back to center when released.</translation>
     </message>
     <message>
-        <source>Video streaming debug</source>
-        <extracomment>.QGC.MetaData.Facts[gstDebugLevel].shortDesc, </extracomment>
-        <translation>Video phát trực tuyến gỡ lỗi</translation>
+      <extracomment>.QGC.MetaData.Facts[virtualJoystickLeftHandedMode].shortDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Left Handed Mode</source>
+      <translation type="unfinished">Left Handed Mode</translation>
     </message>
     <message>
-        <source>Sets the environment variable GST_DEBUG for all pipeline elements on boot.</source>
-        <extracomment>.QGC.MetaData.Facts[gstDebugLevel].longDesc, </extracomment>
-        <translation>Đặt biến môi trường GST_DEBUG cho tất cả các yếu tố đường ống khi khởi động.</translation>
+      <extracomment>.QGC.MetaData.Facts[virtualJoystickLeftHandedMode].longDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>If this option is enabled the virtual joystick layout will be reversed</source>
+      <translation type="unfinished">If this option is enabled the virtual joystick layout will be reversed</translation>
     </message>
     <message>
-        <source>Disabled,Error,Warning,FixMe,Info,Debug,Log,Trace</source>
-        <extracomment>.QGC.MetaData.Facts[gstDebugLevel].enumStrings, </extracomment>
-        <translation>Bị vô hiệu hóa, lỗi, cảnh báo, fixme, thông tin, gỡ lỗi, nhật ký, dấu vết</translation>
+      <extracomment>.QGC.MetaData.Facts[gstDebugLevel].shortDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Video streaming debug</source>
+      <translation type="unfinished">Video streaming debug</translation>
     </message>
     <message>
-        <source>Use preflight checklist</source>
-        <extracomment>.QGC.MetaData.Facts[useChecklist].shortDesc, </extracomment>
-        <translation>Sử dụng danh sách kiểm tra preflight</translation>
+      <extracomment>.QGC.MetaData.Facts[gstDebugLevel].longDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Sets the environment variable GST_DEBUG for all pipeline elements on boot.</source>
+      <translation type="unfinished">Sets the environment variable GST_DEBUG for all pipeline elements on boot.</translation>
     </message>
     <message>
-        <source>If this option is enabled the preflight checklist will be used.</source>
-        <extracomment>.QGC.MetaData.Facts[useChecklist].longDesc, </extracomment>
-        <translation>Nếu tùy chọn này được bật, danh sách kiểm tra preflight sẽ được sử dụng.</translation>
+      <extracomment>.QGC.MetaData.Facts[gstDebugLevel].enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Disabled,Error,Warning,FixMe,Info,Debug,Log,Trace</source>
+      <translation type="unfinished">Disabled,Error,Warning,FixMe,Info,Debug,Log,Trace</translation>
     </message>
     <message>
-        <source>Preflight checklist must pass before arming</source>
-        <extracomment>.QGC.MetaData.Facts[enforceChecklist].shortDesc, </extracomment>
-        <translation>Danh sách kiểm tra Preflight phải vượt qua trước khi vũ trang</translation>
+      <extracomment>.QGC.MetaData.Facts[useChecklist].shortDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Use preflight checklist</source>
+      <translation type="unfinished">Use preflight checklist</translation>
     </message>
     <message>
-        <source>If this option is enabled the preflight checklist must pass before arming.</source>
-        <extracomment>.QGC.MetaData.Facts[enforceChecklist].longDesc, </extracomment>
-        <translation>Nếu tùy chọn này được kích hoạt, danh sách kiểm tra preflight phải vượt qua trước khi vũ trang.</translation>
+      <extracomment>.QGC.MetaData.Facts[useChecklist].longDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>If this option is enabled the preflight checklist will be used.</source>
+      <translation type="unfinished">If this option is enabled the preflight checklist will be used.</translation>
     </message>
     <message>
-        <source>Enable Multi-Vehicle Panel</source>
-        <extracomment>.QGC.MetaData.Facts[enableMultiVehiclePanel].shortDesc, </extracomment>
-        <translation>Bật bảng điều khiển đa phương tiện</translation>
+      <extracomment>.QGC.MetaData.Facts[enforceChecklist].shortDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Preflight checklist must pass before arming</source>
+      <translation type="unfinished">Preflight checklist must pass before arming</translation>
     </message>
     <message>
-        <source>Enable Multi-Vehicle Panel when multiple vehicles are connected.</source>
-        <extracomment>.QGC.MetaData.Facts[enableMultiVehiclePanel].longDesc, </extracomment>
-        <translation>Kích hoạt bảng điều khiển đa phương tiện khi nhiều phương tiện được kết nối.</translation>
+      <extracomment>.QGC.MetaData.Facts[enforceChecklist].longDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>If this option is enabled the preflight checklist must pass before arming.</source>
+      <translation type="unfinished">If this option is enabled the preflight checklist must pass before arming.</translation>
     </message>
     <message>
-        <source>Application font size</source>
-        <extracomment>.QGC.MetaData.Facts[appFontPointSize].shortDesc, </extracomment>
-        <translation>Kích thước phông chữ ứng dụng</translation>
+      <extracomment>.QGC.MetaData.Facts[enableMultiVehiclePanel].shortDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Enable Multi-Vehicle Panel</source>
+      <translation type="unfinished">Enable Multi-Vehicle Panel</translation>
     </message>
     <message>
-        <source>The point size for the default font used.</source>
-        <extracomment>.QGC.MetaData.Facts[appFontPointSize].longDesc, </extracomment>
-        <translation>Kích thước điểm cho phông chữ mặc định được sử dụng.</translation>
+      <extracomment>.QGC.MetaData.Facts[enableMultiVehiclePanel].longDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Enable Multi-Vehicle Panel when multiple vehicles are connected.</source>
+      <translation type="unfinished">Enable Multi-Vehicle Panel when multiple vehicles are connected.</translation>
     </message>
     <message>
-        <source>Application color scheme</source>
-        <extracomment>.QGC.MetaData.Facts[indoorPalette].shortDesc, </extracomment>
-        <translation>Bảng màu ứng dụng</translation>
+      <extracomment>.QGC.MetaData.Facts[appFontPointSize].shortDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Application font size</source>
+      <translation type="unfinished">Application font size</translation>
     </message>
     <message>
-        <source>The color scheme for the user interface.</source>
-        <extracomment>.QGC.MetaData.Facts[indoorPalette].longDesc, </extracomment>
-        <translation>Bảng màu cho giao diện người dùng.</translation>
+      <extracomment>.QGC.MetaData.Facts[appFontPointSize].longDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>The point size for the default font used.</source>
+      <translation type="unfinished">The point size for the default font used.</translation>
     </message>
     <message>
-        <source>Indoor,Outdoor</source>
-        <extracomment>.QGC.MetaData.Facts[indoorPalette].enumStrings, </extracomment>
-        <translation>Trong nhà, ngoài trời</translation>
+      <extracomment>.QGC.MetaData.Facts[indoorPalette].shortDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Application color scheme</source>
+      <translation type="unfinished">Application color scheme</translation>
     </message>
     <message>
-        <source>Application save directory</source>
-        <extracomment>.QGC.MetaData.Facts[savePath].shortDesc, </extracomment>
-        <translation>Ứng dụng lưu thư mục</translation>
+      <extracomment>.QGC.MetaData.Facts[indoorPalette].longDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>The color scheme for the user interface.</source>
+      <translation type="unfinished">The color scheme for the user interface.</translation>
     </message>
     <message>
-        <source>Directory to which all data files are saved/loaded from</source>
-        <extracomment>.QGC.MetaData.Facts[savePath].longDesc, </extracomment>
-        <translation>Thư mục mà tất cả các tệp dữ liệu được lưu/tải từ</translation>
+      <extracomment>.QGC.MetaData.Facts[indoorPalette].enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Indoor,Outdoor</source>
+      <translation type="unfinished">Indoor,Outdoor</translation>
     </message>
     <message>
-        <source>Save to SD card</source>
-        <extracomment>.QGC.MetaData.Facts[androidSaveToSDCard].shortDesc, </extracomment>
-        <translation>Lưu vào thẻ SD</translation>
+      <extracomment>.QGC.MetaData.Facts[savePath].shortDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Application save directory</source>
+      <translation type="unfinished">Application save directory</translation>
     </message>
     <message>
-        <source>Application data is saved to the sd card</source>
-        <extracomment>.QGC.MetaData.Facts[androidSaveToSDCard].longDesc, </extracomment>
-        <translation>Dữ liệu ứng dụng được lưu vào thẻ SD</translation>
+      <extracomment>.QGC.MetaData.Facts[savePath].longDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Directory to which all data files are saved/loaded from</source>
+      <translation type="unfinished">Directory to which all data files are saved/loaded from</translation>
     </message>
     <message>
-        <source>Access token to Mapbox maps</source>
-        <extracomment>.QGC.MetaData.Facts[mapboxToken].shortDesc, </extracomment>
-        <translation>Truy cập mã thông báo vào bản đồ Mapbox</translation>
+      <extracomment>.QGC.MetaData.Facts[androidSaveToSDCard].shortDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Save to SD card</source>
+      <translation type="unfinished">Save to SD card</translation>
     </message>
     <message>
-        <source>Your personal access token for Mapbox maps</source>
-        <extracomment>.QGC.MetaData.Facts[mapboxToken].longDesc, </extracomment>
-        <translation>Mã thông báo truy cập cá nhân của bạn cho bản đồ Mapbox</translation>
+      <extracomment>.QGC.MetaData.Facts[androidSaveToSDCard].longDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Application data is saved to the sd card</source>
+      <translation type="unfinished">Application data is saved to the sd card</translation>
     </message>
     <message>
-        <source>Account name for Mapbox maps</source>
-        <extracomment>.QGC.MetaData.Facts[mapboxAccount].shortDesc, </extracomment>
-        <translation>Tên tài khoản cho bản đồ Mapbox</translation>
+      <extracomment>.QGC.MetaData.Facts[mapboxToken].shortDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Access token to Mapbox maps</source>
+      <translation type="unfinished">Access token to Mapbox maps</translation>
     </message>
     <message>
-        <source>Your personal account name for Mapbox maps</source>
-        <extracomment>.QGC.MetaData.Facts[mapboxAccount].longDesc, </extracomment>
-        <translation>Tên tài khoản cá nhân của bạn cho bản đồ Mapbox</translation>
+      <extracomment>.QGC.MetaData.Facts[mapboxToken].longDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Your personal access token for Mapbox maps</source>
+      <translation type="unfinished">Your personal access token for Mapbox maps</translation>
     </message>
     <message>
-        <source>Map style ID</source>
-        <extracomment>.QGC.MetaData.Facts[mapboxStyle].shortDesc, </extracomment>
-        <translation>Bản đồ kiểu ID</translation>
+      <extracomment>.QGC.MetaData.Facts[mapboxAccount].shortDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Account name for Mapbox maps</source>
+      <translation type="unfinished">Account name for Mapbox maps</translation>
     </message>
     <message>
-        <source>Map design style ID for Mapbox maps</source>
-        <extracomment>.QGC.MetaData.Facts[mapboxStyle].longDesc, </extracomment>
-        <translation>Bản đồ thiết kế kiểu ID cho bản đồ bản đồ</translation>
+      <extracomment>.QGC.MetaData.Facts[mapboxAccount].longDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Your personal account name for Mapbox maps</source>
+      <translation type="unfinished">Your personal account name for Mapbox maps</translation>
     </message>
     <message>
-        <source>Access token to Esri maps</source>
-        <extracomment>.QGC.MetaData.Facts[esriToken].shortDesc, </extracomment>
-        <translation>Truy cập mã thông báo vào bản đồ ESRI</translation>
+      <extracomment>.QGC.MetaData.Facts[mapboxStyle].shortDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Map style ID</source>
+      <translation type="unfinished">Map style ID</translation>
     </message>
     <message>
-        <source>Your personal access token for Esri maps</source>
-        <extracomment>.QGC.MetaData.Facts[esriToken].longDesc, </extracomment>
-        <translation>Mã thông báo truy cập cá nhân của bạn cho bản đồ ESRI</translation>
+      <extracomment>.QGC.MetaData.Facts[mapboxStyle].longDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Map design style ID for Mapbox maps</source>
+      <translation type="unfinished">Map design style ID for Mapbox maps</translation>
     </message>
     <message>
-        <source>Custom Map URL</source>
-        <extracomment>.QGC.MetaData.Facts[customURL].shortDesc, </extracomment>
-        <translation>URL bản đồ tùy chỉnh</translation>
+      <extracomment>.QGC.MetaData.Facts[esriToken].shortDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Access token to Esri maps</source>
+      <translation type="unfinished">Access token to Esri maps</translation>
     </message>
     <message>
-        <source>URL for X Y Z map with {x} {y} {z} or {zoom} substitutions. Eg: https://basemaps.linz.govt.nz/v1/tiles/aerial/EPSG:3857/{z}/{x}/{y}.png?api=d01ev80nqcjxddfvc6amyvkk1ka</source>
-        <extracomment>.QGC.MetaData.Facts[customURL].longDesc, </extracomment>
-        <translation>URL cho bản đồ x y z với {x} {y} {z} hoặc {zoom} thay thế. Ví dụ: https://basemaps.linz.govt.nz/v1/tiles/aerial/epsg:3857/{z =</translation>
+      <extracomment>.QGC.MetaData.Facts[esriToken].longDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Your personal access token for Esri maps</source>
+      <translation type="unfinished">Your personal access token for Esri maps</translation>
     </message>
     <message>
-        <source>VWorld Token</source>
-        <extracomment>.QGC.MetaData.Facts[vworldToken].shortDesc, </extracomment>
-        <translation>Mã thông báo VWorld</translation>
+      <extracomment>.QGC.MetaData.Facts[customURL].shortDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Custom Map URL</source>
+      <translation type="unfinished">Custom Map URL</translation>
     </message>
     <message>
-        <source>Your personal access token for VWorld maps</source>
-        <extracomment>.QGC.MetaData.Facts[vworldToken].longDesc, </extracomment>
-        <translation>Mã thông báo truy cập cá nhân của bạn cho bản đồ VWorld</translation>
+      <extracomment>.QGC.MetaData.Facts[customURL].longDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>URL for X Y Z map with {x} {y} {z} or {zoom} substitutions. Eg: https://basemaps.linz.govt.nz/v1/tiles/aerial/EPSG:3857/{z}/{x}/{y}.png?api=d01ev80nqcjxddfvc6amyvkk1ka</source>
+      <translation type="unfinished">URL for X Y Z map with {x} {y} {z} or {zoom} substitutions. Eg: https://basemaps.linz.govt.nz/v1/tiles/aerial/EPSG:3857/{z}/{x}/{y}.png?api=d01ev80nqcjxddfvc6amyvkk1ka</translation>
     </message>
     <message>
-        <source>Stream GCS&apos; coordinates to Autopilot</source>
-        <extracomment>.QGC.MetaData.Facts[followTarget].shortDesc, </extracomment>
-        <translation>Phát trực tuyến tọa độ của GCS để lái tự động</translation>
+      <extracomment>.QGC.MetaData.Facts[vworldToken].shortDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>VWorld Token</source>
+      <translation type="unfinished">VWorld Token</translation>
     </message>
     <message>
-        <source>Never,Always,When in Follow Me Flight Mode</source>
-        <extracomment>.QGC.MetaData.Facts[followTarget].enumStrings, </extracomment>
-        <translation>Không bao giờ, luôn luôn, khi ở trong chế độ bay theo tôi</translation>
+      <extracomment>.QGC.MetaData.Facts[vworldToken].longDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Your personal access token for VWorld maps</source>
+      <translation type="unfinished">Your personal access token for VWorld maps</translation>
     </message>
     <message>
-        <source>Language</source>
-        <extracomment>.QGC.MetaData.Facts[qLocaleLanguage].shortDesc, </extracomment>
-        <translation>Ngôn ngữ</translation>
+      <extracomment>.QGC.MetaData.Facts[followTarget].shortDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Stream GCS&apos; coordinates to Autopilot</source>
+      <translation type="unfinished">Stream GCS&apos; coordinates to Autopilot</translation>
     </message>
     <message>
-        <source>Disable all data persistence</source>
-        <extracomment>.QGC.MetaData.Facts[disableAllPersistence].shortDesc, </extracomment>
-        <translation>Vô hiệu hóa tất cả sự tồn tại của dữ liệu</translation>
+      <extracomment>.QGC.MetaData.Facts[followTarget].enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Never,Always,When in Follow Me Flight Mode</source>
+      <translation type="unfinished">Never,Always,When in Follow Me Flight Mode</translation>
     </message>
     <message>
-        <source>If this option is set, nothing will be saved to disk.</source>
-        <extracomment>.QGC.MetaData.Facts[disableAllPersistence].longDesc, </extracomment>
-        <translation>Nếu tùy chọn này được đặt, sẽ không có gì được lưu vào đĩa.</translation>
+      <extracomment>.QGC.MetaData.Facts[qLocaleLanguage].shortDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Language</source>
+      <translation type="unfinished">Language</translation>
     </message>
     <message>
-        <source>Comma separated list of first run prompt ids which have already been shown.</source>
-        <extracomment>.QGC.MetaData.Facts[firstRunPromptIdsShown].shortDesc, </extracomment>
-        <translation>Danh sách phân tách dấu phẩy của ID nhắc đầu tiên đã được hiển thị.</translation>
+      <extracomment>.QGC.MetaData.Facts[disableAllPersistence].shortDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Disable all data persistence</source>
+      <translation type="unfinished">Disable all data persistence</translation>
     </message>
     <message>
-        <source>AirLink User Name</source>
-        <extracomment>.QGC.MetaData.Facts[loginAirLink].shortDesc, </extracomment>
-        <translation>Tên người dùng Airlink</translation>
+      <extracomment>.QGC.MetaData.Facts[disableAllPersistence].longDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>If this option is set, nothing will be saved to disk.</source>
+      <translation type="unfinished">If this option is set, nothing will be saved to disk.</translation>
     </message>
     <message>
-        <source>AirLink Password</source>
-        <extracomment>.QGC.MetaData.Facts[passAirLink].shortDesc, </extracomment>
-        <translation>Mật khẩu Airlink</translation>
+      <extracomment>.QGC.MetaData.Facts[firstRunPromptIdsShown].shortDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Comma separated list of first run prompt ids which have already been shown.</source>
+      <translation type="unfinished">Comma separated list of first run prompt ids which have already been shown.</translation>
     </message>
-</context>
-<context>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[loginAirLink].shortDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>AirLink User Name</source>
+      <translation type="unfinished">AirLink User Name</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[passAirLink].shortDesc, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>AirLink Password</source>
+      <translation type="unfinished">AirLink Password</translation>
+    </message>
+  </context>
+  <context>
     <name>MavlinkActions.SettingsGroup.json</name>
     <message>
-        <source>Name of JSON custom actions file for Fly View</source>
-        <extracomment>.QGC.MetaData.Facts[flyViewActionsFile].shortDesc, </extracomment>
-        <translation>Tên của tệp hành động tùy chỉnh JSON cho chế độ xem bay</translation>
+      <extracomment>.QGC.MetaData.Facts[flyViewActionsFile].shortDesc, </extracomment>
+      <location filename="../src/Settings/MavlinkActions.SettingsGroup.json"/>
+      <source>Name of JSON custom actions file for Fly View</source>
+      <translation type="unfinished">Name of JSON custom actions file for Fly View</translation>
     </message>
     <message>
-        <source>Name of JSON custom actions file for Joysticks</source>
-        <extracomment>.QGC.MetaData.Facts[joystickActionsFile].shortDesc, </extracomment>
-        <translation>Tên của tệp hành động tùy chỉnh JSON cho cần điều khiển</translation>
+      <extracomment>.QGC.MetaData.Facts[joystickActionsFile].shortDesc, </extracomment>
+      <location filename="../src/Settings/MavlinkActions.SettingsGroup.json"/>
+      <source>Name of JSON custom actions file for Joysticks</source>
+      <translation type="unfinished">Name of JSON custom actions file for Joysticks</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>FirmwareUpgrade.SettingsGroup.json</name>
     <message>
-        <source>Default firmware type for flashing</source>
-        <extracomment>.QGC.MetaData.Facts[defaultFirmwareType].shortDesc, </extracomment>
-        <translation>Loại phần sụn mặc định để nhấp nháy</translation>
+      <extracomment>.QGC.MetaData.Facts[defaultFirmwareType].shortDesc, </extracomment>
+      <location filename="../src/Settings/FirmwareUpgrade.SettingsGroup.json"/>
+      <source>Default firmware type for flashing</source>
+      <translation type="unfinished">Default firmware type for flashing</translation>
     </message>
     <message>
-        <source>ChibiOS,NuttX</source>
-        <extracomment>.QGC.MetaData.Facts[apmChibiOS].enumStrings, </extracomment>
-        <translation>Chibios, Nuttx</translation>
+      <extracomment>.QGC.MetaData.Facts[apmChibiOS].enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/Settings/FirmwareUpgrade.SettingsGroup.json"/>
+      <source>ChibiOS,NuttX</source>
+      <translation type="unfinished">ChibiOS,NuttX</translation>
     </message>
     <message>
-        <source>Multi-Rotor,Helicopter,Plane,Rover,Sub</source>
-        <extracomment>.QGC.MetaData.Facts[apmVehicleType].enumStrings, </extracomment>
-        <translation>Đa khoan, trực thăng, mặt phẳng, rover, phụ</translation>
+      <extracomment>.QGC.MetaData.Facts[apmVehicleType].enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/Settings/FirmwareUpgrade.SettingsGroup.json"/>
+      <source>Multi-Rotor,Helicopter,Plane,Rover,Sub</source>
+      <translation type="unfinished">Multi-Rotor,Helicopter,Plane,Rover,Sub</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>BrandImage.SettingsGroup.json</name>
     <message>
-        <source>User-selected brand image</source>
-        <extracomment>.QGC.MetaData.Facts[userBrandImageIndoor].shortDesc, .QGC.MetaData.Facts[userBrandImageOutdoor].shortDesc, </extracomment>
-        <translation>Hình ảnh thương hiệu do người dùng chọn</translation>
+      <extracomment>.QGC.MetaData.Facts[userBrandImageIndoor].shortDesc, .QGC.MetaData.Facts[userBrandImageOutdoor].shortDesc, </extracomment>
+      <location filename="../src/Settings/BrandImage.SettingsGroup.json"/>
+      <source>User-selected brand image</source>
+      <translation type="unfinished">User-selected brand image</translation>
     </message>
     <message>
-        <source>Location in file system of user-selected brand image (indoor)</source>
-        <extracomment>.QGC.MetaData.Facts[userBrandImageIndoor].longDesc, </extracomment>
-        <translation>Vị trí trong hệ thống tệp của hình ảnh thương hiệu do người dùng chọn (trong nhà)</translation>
+      <extracomment>.QGC.MetaData.Facts[userBrandImageIndoor].longDesc, </extracomment>
+      <location filename="../src/Settings/BrandImage.SettingsGroup.json"/>
+      <source>Location in file system of user-selected brand image (indoor)</source>
+      <translation type="unfinished">Location in file system of user-selected brand image (indoor)</translation>
     </message>
     <message>
-        <source>Location in file system of user-selected brand image (outdoor)</source>
-        <extracomment>.QGC.MetaData.Facts[userBrandImageOutdoor].longDesc, </extracomment>
-        <translation>Vị trí trong hệ thống tệp của hình ảnh thương hiệu do người dùng chọn (ngoài trời)</translation>
+      <extracomment>.QGC.MetaData.Facts[userBrandImageOutdoor].longDesc, </extracomment>
+      <location filename="../src/Settings/BrandImage.SettingsGroup.json"/>
+      <source>Location in file system of user-selected brand image (outdoor)</source>
+      <translation type="unfinished">Location in file system of user-selected brand image (outdoor)</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>FlightMode.SettingsGroup.json</name>
     <message>
-        <source>Comma separated list of hidden flight modes</source>
-        <extracomment>.QGC.MetaData.Facts[px4HiddenFlightModes].shortDesc, </extracomment>
-        <translation>Danh sách phân tách dấu phẩy của các chế độ bay ẩn</translation>
+      <extracomment>.QGC.MetaData.Facts[px4HiddenFlightModes].shortDesc, </extracomment>
+      <location filename="../src/Settings/FlightMode.SettingsGroup.json"/>
+      <source>Comma separated list of hidden flight modes</source>
+      <translation type="unfinished">Comma separated list of hidden flight modes</translation>
     </message>
     <message>
-        <source>Comma separated list of hidden flight modes for MultiRotor</source>
-        <extracomment>.QGC.MetaData.Facts[px4HiddenFlightModesMultiRotor].shortDesc, .QGC.MetaData.Facts[apmHiddenFlightModesMultiRotor].shortDesc, </extracomment>
-        <translation>Danh sách phân tách dấu phẩy của các chế độ chuyến bay ẩn cho multirotor</translation>
+      <extracomment>.QGC.MetaData.Facts[px4HiddenFlightModesMultiRotor].shortDesc, .QGC.MetaData.Facts[apmHiddenFlightModesMultiRotor].shortDesc, </extracomment>
+      <location filename="../src/Settings/FlightMode.SettingsGroup.json"/>
+      <source>Comma separated list of hidden flight modes for MultiRotor</source>
+      <translation type="unfinished">Comma separated list of hidden flight modes for MultiRotor</translation>
     </message>
     <message>
-        <source>Comma separated list of hidden flight modes for FixedWing</source>
-        <extracomment>.QGC.MetaData.Facts[px4HiddenFlightModesFixedWing].shortDesc, .QGC.MetaData.Facts[apmHiddenFlightModesFixedWing].shortDesc, </extracomment>
-        <translation>Danh sách phân tách dấu phẩy của các chế độ bay ẩn để cố định</translation>
+      <extracomment>.QGC.MetaData.Facts[px4HiddenFlightModesFixedWing].shortDesc, .QGC.MetaData.Facts[apmHiddenFlightModesFixedWing].shortDesc, </extracomment>
+      <location filename="../src/Settings/FlightMode.SettingsGroup.json"/>
+      <source>Comma separated list of hidden flight modes for FixedWing</source>
+      <translation type="unfinished">Comma separated list of hidden flight modes for FixedWing</translation>
     </message>
     <message>
-        <source>Comma separated list of hidden flight modes for VTOL</source>
-        <extracomment>.QGC.MetaData.Facts[px4HiddenFlightModesVTOL].shortDesc, .QGC.MetaData.Facts[apmHiddenFlightModesVTOL].shortDesc, </extracomment>
-        <translation>Danh sách phân tách dấu phẩy của các chế độ bay ẩn cho VTOL</translation>
+      <extracomment>.QGC.MetaData.Facts[px4HiddenFlightModesVTOL].shortDesc, .QGC.MetaData.Facts[apmHiddenFlightModesVTOL].shortDesc, </extracomment>
+      <location filename="../src/Settings/FlightMode.SettingsGroup.json"/>
+      <source>Comma separated list of hidden flight modes for VTOL</source>
+      <translation type="unfinished">Comma separated list of hidden flight modes for VTOL</translation>
     </message>
     <message>
-        <source>Comma separated list of hidden flight modes for RoverBoat</source>
-        <extracomment>.QGC.MetaData.Facts[px4HiddenFlightModesRoverBoat].shortDesc, .QGC.MetaData.Facts[apmHiddenFlightModesRoverBoat].shortDesc, </extracomment>
-        <translation>Danh sách phân tách dấu phẩy của các chế độ bay ẩn cho Roverboat</translation>
+      <extracomment>.QGC.MetaData.Facts[px4HiddenFlightModesRoverBoat].shortDesc, .QGC.MetaData.Facts[apmHiddenFlightModesRoverBoat].shortDesc, </extracomment>
+      <location filename="../src/Settings/FlightMode.SettingsGroup.json"/>
+      <source>Comma separated list of hidden flight modes for RoverBoat</source>
+      <translation type="unfinished">Comma separated list of hidden flight modes for RoverBoat</translation>
     </message>
     <message>
-        <source>Comma separated list of hidden flight modes for Sub</source>
-        <extracomment>.QGC.MetaData.Facts[px4HiddenFlightModesSub].shortDesc, .QGC.MetaData.Facts[apmHiddenFlightModesSub].shortDesc, </extracomment>
-        <translation>Danh sách phân tách dấu phẩy của các chế độ bay ẩn cho phụ</translation>
+      <extracomment>.QGC.MetaData.Facts[px4HiddenFlightModesSub].shortDesc, .QGC.MetaData.Facts[apmHiddenFlightModesSub].shortDesc, </extracomment>
+      <location filename="../src/Settings/FlightMode.SettingsGroup.json"/>
+      <source>Comma separated list of hidden flight modes for Sub</source>
+      <translation type="unfinished">Comma separated list of hidden flight modes for Sub</translation>
     </message>
     <message>
-        <source>Comma separated list of hidden flight modes for Airship</source>
-        <extracomment>.QGC.MetaData.Facts[px4HiddenFlightModesAirship].shortDesc, .QGC.MetaData.Facts[apmHiddenFlightModesAirship].shortDesc, </extracomment>
-        <translation>Danh sách phân tách dấu phẩy của các chế độ bay ẩn cho khí cầu</translation>
+      <extracomment>.QGC.MetaData.Facts[px4HiddenFlightModesAirship].shortDesc, .QGC.MetaData.Facts[apmHiddenFlightModesAirship].shortDesc, </extracomment>
+      <location filename="../src/Settings/FlightMode.SettingsGroup.json"/>
+      <source>Comma separated list of hidden flight modes for Airship</source>
+      <translation type="unfinished">Comma separated list of hidden flight modes for Airship</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>RTK.SettingsGroup.json</name>
     <message>
-        <source>Survey in accuracy (U-blox only)</source>
-        <extracomment>.QGC.MetaData.Facts[surveyInAccuracyLimit].shortDesc, </extracomment>
-        <translation>Khảo sát về độ chính xác (chỉ U-Blox)</translation>
+      <extracomment>.QGC.MetaData.Facts[surveyInAccuracyLimit].shortDesc, </extracomment>
+      <location filename="../src/Settings/RTK.SettingsGroup.json"/>
+      <source>Survey in accuracy (U-blox only)</source>
+      <translation type="unfinished">Survey in accuracy (U-blox only)</translation>
     </message>
     <message>
-        <source>The minimum accuracy value that Survey-In must achieve before it can complete.</source>
-        <extracomment>.QGC.MetaData.Facts[surveyInAccuracyLimit].longDesc, </extracomment>
-        <translation>Giá trị độ chính xác tối thiểu mà khảo sát phải đạt được trước khi có thể hoàn thành.</translation>
+      <extracomment>.QGC.MetaData.Facts[surveyInAccuracyLimit].longDesc, </extracomment>
+      <location filename="../src/Settings/RTK.SettingsGroup.json"/>
+      <source>The minimum accuracy value that Survey-In must achieve before it can complete.</source>
+      <translation type="unfinished">The minimum accuracy value that Survey-In must achieve before it can complete.</translation>
     </message>
     <message>
-        <source>Min observation time</source>
-        <extracomment>.QGC.MetaData.Facts[surveyInMinObservationDuration].shortDesc, </extracomment>
-        <translation>Thời gian quan sát tối thiểu</translation>
+      <extracomment>.QGC.MetaData.Facts[surveyInMinObservationDuration].shortDesc, </extracomment>
+      <location filename="../src/Settings/RTK.SettingsGroup.json"/>
+      <source>Min observation time</source>
+      <translation type="unfinished">Min observation time</translation>
     </message>
     <message>
-        <source>Defines the minimum amount of observation time for the position calculation.</source>
-        <extracomment>.QGC.MetaData.Facts[surveyInMinObservationDuration].longDesc, </extracomment>
-        <translation>Xác định lượng thời gian quan sát tối thiểu cho tính toán vị trí.</translation>
+      <extracomment>.QGC.MetaData.Facts[surveyInMinObservationDuration].longDesc, </extracomment>
+      <location filename="../src/Settings/RTK.SettingsGroup.json"/>
+      <source>Defines the minimum amount of observation time for the position calculation.</source>
+      <translation type="unfinished">Defines the minimum amount of observation time for the position calculation.</translation>
     </message>
     <message>
-        <source>Use specified base position</source>
-        <extracomment>.QGC.MetaData.Facts[useFixedBasePosition].shortDesc, </extracomment>
-        <translation>Sử dụng vị trí cơ sở được chỉ định</translation>
+      <extracomment>.QGC.MetaData.Facts[useFixedBasePosition].shortDesc, </extracomment>
+      <location filename="../src/Settings/RTK.SettingsGroup.json"/>
+      <source>Use specified base position</source>
+      <translation type="unfinished">Use specified base position</translation>
     </message>
     <message>
-        <source>Specify the values for the RTK base position without having to do a survey in.</source>
-        <extracomment>.QGC.MetaData.Facts[useFixedBasePosition].longDesc, </extracomment>
-        <translation>Chỉ định các giá trị cho vị trí cơ sở RTK mà không phải thực hiện khảo sát.</translation>
+      <extracomment>.QGC.MetaData.Facts[useFixedBasePosition].longDesc, </extracomment>
+      <location filename="../src/Settings/RTK.SettingsGroup.json"/>
+      <source>Specify the values for the RTK base position without having to do a survey in.</source>
+      <translation type="unfinished">Specify the values for the RTK base position without having to do a survey in.</translation>
     </message>
     <message>
-        <source>Base Position Latitude</source>
-        <extracomment>.QGC.MetaData.Facts[fixedBasePositionLatitude].shortDesc, </extracomment>
-        <translation>Vị trí cơ sở vĩ độ</translation>
+      <extracomment>.QGC.MetaData.Facts[fixedBasePositionLatitude].shortDesc, </extracomment>
+      <location filename="../src/Settings/RTK.SettingsGroup.json"/>
+      <source>Base Position Latitude</source>
+      <translation type="unfinished">Base Position Latitude</translation>
     </message>
     <message>
-        <source>Defines the latitude of the fixed RTK base position.</source>
-        <extracomment>.QGC.MetaData.Facts[fixedBasePositionLatitude].longDesc, </extracomment>
-        <translation>Xác định vĩ độ của vị trí cơ sở RTK cố định.</translation>
+      <extracomment>.QGC.MetaData.Facts[fixedBasePositionLatitude].longDesc, </extracomment>
+      <location filename="../src/Settings/RTK.SettingsGroup.json"/>
+      <source>Defines the latitude of the fixed RTK base position.</source>
+      <translation type="unfinished">Defines the latitude of the fixed RTK base position.</translation>
     </message>
     <message>
-        <source>Base Position Longitude</source>
-        <extracomment>.QGC.MetaData.Facts[fixedBasePositionLongitude].shortDesc, </extracomment>
-        <translation>Vị trí cơ sở kinh độ</translation>
+      <extracomment>.QGC.MetaData.Facts[fixedBasePositionLongitude].shortDesc, </extracomment>
+      <location filename="../src/Settings/RTK.SettingsGroup.json"/>
+      <source>Base Position Longitude</source>
+      <translation type="unfinished">Base Position Longitude</translation>
     </message>
     <message>
-        <source>Defines the longitude of the fixed RTK base position.</source>
-        <extracomment>.QGC.MetaData.Facts[fixedBasePositionLongitude].longDesc, </extracomment>
-        <translation>Xác định kinh độ của vị trí cơ sở RTK cố định.</translation>
+      <extracomment>.QGC.MetaData.Facts[fixedBasePositionLongitude].longDesc, </extracomment>
+      <location filename="../src/Settings/RTK.SettingsGroup.json"/>
+      <source>Defines the longitude of the fixed RTK base position.</source>
+      <translation type="unfinished">Defines the longitude of the fixed RTK base position.</translation>
     </message>
     <message>
-        <source>Base Position Alt (WGS84)</source>
-        <extracomment>.QGC.MetaData.Facts[fixedBasePositionAltitude].shortDesc, </extracomment>
-        <translation>Vị trí cơ sở Alt (WGS84)</translation>
+      <extracomment>.QGC.MetaData.Facts[fixedBasePositionAltitude].shortDesc, </extracomment>
+      <location filename="../src/Settings/RTK.SettingsGroup.json"/>
+      <source>Base Position Alt (WGS84)</source>
+      <translation type="unfinished">Base Position Alt (WGS84)</translation>
     </message>
     <message>
-        <source>Defines the altitude of the fixed RTK base position.</source>
-        <extracomment>.QGC.MetaData.Facts[fixedBasePositionAltitude].longDesc, </extracomment>
-        <translation>Xác định độ cao của vị trí cơ sở RTK cố định.</translation>
+      <extracomment>.QGC.MetaData.Facts[fixedBasePositionAltitude].longDesc, </extracomment>
+      <location filename="../src/Settings/RTK.SettingsGroup.json"/>
+      <source>Defines the altitude of the fixed RTK base position.</source>
+      <translation type="unfinished">Defines the altitude of the fixed RTK base position.</translation>
     </message>
     <message>
-        <source>Base Position Accuracy</source>
-        <extracomment>.QGC.MetaData.Facts[fixedBasePositionAccuracy].shortDesc, </extracomment>
-        <translation>Độ chính xác vị trí cơ sở</translation>
+      <extracomment>.QGC.MetaData.Facts[fixedBasePositionAccuracy].shortDesc, </extracomment>
+      <location filename="../src/Settings/RTK.SettingsGroup.json"/>
+      <source>Base Position Accuracy</source>
+      <translation type="unfinished">Base Position Accuracy</translation>
     </message>
     <message>
-        <source>Defines the accuracy of the fixed RTK base position.</source>
-        <extracomment>.QGC.MetaData.Facts[fixedBasePositionAccuracy].longDesc, </extracomment>
-        <translation>Xác định độ chính xác của vị trí cơ sở RTK cố định.</translation>
+      <extracomment>.QGC.MetaData.Facts[fixedBasePositionAccuracy].longDesc, </extracomment>
+      <location filename="../src/Settings/RTK.SettingsGroup.json"/>
+      <source>Defines the accuracy of the fixed RTK base position.</source>
+      <translation type="unfinished">Defines the accuracy of the fixed RTK base position.</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>APMMavlinkStreamRate.SettingsGroup.json</name>
     <message>
-        <source>Controlled By Vehicle,0 hz,1 hz,2 hz,3 hz,4 hz,5 hz,6 hz,7 hz,8 hz,9 hz,10 hz,50 hz,100 hz</source>
-        <extracomment>.QGC.MetaData.Defines.StreamRateEnumStrings, </extracomment>
-        <translation>Được điều khiển bởi xe, 0 Hz, 1 Hz, 2 Hz, 3 Hz, 4 Hz, 5 Hz, 6 Hz, 7 Hz, 8 Hz, 9 Hz, 10 Hz, 50 Hz, 100 Hz</translation>
+      <extracomment>.QGC.MetaData.Defines.StreamRateEnumStrings, </extracomment>
+      <location filename="../src/Settings/APMMavlinkStreamRate.SettingsGroup.json"/>
+      <source>Controlled By Vehicle,0 hz,1 hz,2 hz,3 hz,4 hz,5 hz,6 hz,7 hz,8 hz,9 hz,10 hz,50 hz,100 hz</source>
+      <translation type="unfinished">Controlled By Vehicle,0 hz,1 hz,2 hz,3 hz,4 hz,5 hz,6 hz,7 hz,8 hz,9 hz,10 hz,50 hz,100 hz</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>FlightMap.SettingsGroup.json</name>
     <message>
-        <source>Currently selected map provider for flight maps</source>
-        <extracomment>.QGC.MetaData.Facts[mapProvider].shortDesc, </extracomment>
-        <translation>Nhà cung cấp bản đồ hiện được chọn cho bản đồ chuyến bay</translation>
+      <extracomment>.QGC.MetaData.Facts[mapProvider].shortDesc, </extracomment>
+      <location filename="../src/Settings/FlightMap.SettingsGroup.json"/>
+      <source>Currently selected map provider for flight maps</source>
+      <translation type="unfinished">Currently selected map provider for flight maps</translation>
     </message>
     <message>
-        <source>Currently selected map type for flight maps</source>
-        <extracomment>.QGC.MetaData.Facts[mapType].shortDesc, </extracomment>
-        <translation>Loại bản đồ hiện được chọn cho bản đồ chuyến bay</translation>
+      <extracomment>.QGC.MetaData.Facts[mapType].shortDesc, </extracomment>
+      <location filename="../src/Settings/FlightMap.SettingsGroup.json"/>
+      <source>Currently selected map type for flight maps</source>
+      <translation type="unfinished">Currently selected map type for flight maps</translation>
     </message>
     <message>
-        <source>Currently selected elevation map provider</source>
-        <extracomment>.QGC.MetaData.Facts[elevationMapProvider].shortDesc, </extracomment>
-        <translation>Nhà cung cấp bản đồ độ cao hiện đang được chọn</translation>
+      <extracomment>.QGC.MetaData.Facts[elevationMapProvider].shortDesc, </extracomment>
+      <location filename="../src/Settings/FlightMap.SettingsGroup.json"/>
+      <source>Currently selected elevation map provider</source>
+      <translation type="unfinished">Currently selected elevation map provider</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>AutoConnect.SettingsGroup.json</name>
     <message>
-        <source>Automatically open a connection over UDP</source>
-        <extracomment>.QGC.MetaData.Facts[autoConnectUDP].shortDesc, </extracomment>
-        <translation>Tự động mở kết nối qua UDP</translation>
+      <extracomment>.QGC.MetaData.Facts[autoConnectUDP].shortDesc, </extracomment>
+      <location filename="../src/Settings/AutoConnect.SettingsGroup.json"/>
+      <source>Automatically open a connection over UDP</source>
+      <translation type="unfinished">Automatically open a connection over UDP</translation>
     </message>
     <message>
-        <source>If this option is enabled GroundControl will automatically connect to a vehicle which is detected on a UDP communication link.</source>
-        <extracomment>.QGC.MetaData.Facts[autoConnectUDP].longDesc, </extracomment>
-        <translation>Nếu tùy chọn này được bật mặt đất sẽ tự động kết nối với một chiếc xe được phát hiện trên liên kết giao tiếp UDP.</translation>
+      <extracomment>.QGC.MetaData.Facts[autoConnectUDP].longDesc, </extracomment>
+      <location filename="../src/Settings/AutoConnect.SettingsGroup.json"/>
+      <source>If this option is enabled GroundControl will automatically connect to a vehicle which is detected on a UDP communication link.</source>
+      <translation type="unfinished">If this option is enabled GroundControl will automatically connect to a vehicle which is detected on a UDP communication link.</translation>
     </message>
     <message>
-        <source>Automatically connect to a Pixhawk board</source>
-        <extracomment>.QGC.MetaData.Facts[autoConnectPixhawk].shortDesc, </extracomment>
-        <translation>Tự động kết nối với bảng pixhawk</translation>
+      <extracomment>.QGC.MetaData.Facts[autoConnectPixhawk].shortDesc, </extracomment>
+      <location filename="../src/Settings/AutoConnect.SettingsGroup.json"/>
+      <source>Automatically connect to a Pixhawk board</source>
+      <translation type="unfinished">Automatically connect to a Pixhawk board</translation>
     </message>
     <message>
-        <source>If this option is enabled GroundControl will automatically connect to a Pixhawk board which is connected via USB.</source>
-        <extracomment>.QGC.MetaData.Facts[autoConnectPixhawk].longDesc, </extracomment>
-        <translation>Nếu tùy chọn này được bật mặt đất sẽ tự động kết nối với bảng Pixhawk được kết nối qua USB.</translation>
+      <extracomment>.QGC.MetaData.Facts[autoConnectPixhawk].longDesc, </extracomment>
+      <location filename="../src/Settings/AutoConnect.SettingsGroup.json"/>
+      <source>If this option is enabled GroundControl will automatically connect to a Pixhawk board which is connected via USB.</source>
+      <translation type="unfinished">If this option is enabled GroundControl will automatically connect to a Pixhawk board which is connected via USB.</translation>
     </message>
     <message>
-        <source>Automatically connect to a SiK Radio</source>
-        <extracomment>.QGC.MetaData.Facts[autoConnectSiKRadio].shortDesc, </extracomment>
-        <translation>Tự động kết nối với đài SIK</translation>
+      <extracomment>.QGC.MetaData.Facts[autoConnectSiKRadio].shortDesc, </extracomment>
+      <location filename="../src/Settings/AutoConnect.SettingsGroup.json"/>
+      <source>Automatically connect to a SiK Radio</source>
+      <translation type="unfinished">Automatically connect to a SiK Radio</translation>
     </message>
     <message>
-        <source>If this option is enabled GroundControl will automatically connect to a vehicle which is detected on a SiK Radio communication link.</source>
-        <extracomment>.QGC.MetaData.Facts[autoConnectSiKRadio].longDesc, </extracomment>
-        <translation>Nếu tùy chọn này được bật mặt đất sẽ tự động kết nối với một chiếc xe được phát hiện trên liên kết truyền thông radio SIK.</translation>
+      <extracomment>.QGC.MetaData.Facts[autoConnectSiKRadio].longDesc, </extracomment>
+      <location filename="../src/Settings/AutoConnect.SettingsGroup.json"/>
+      <source>If this option is enabled GroundControl will automatically connect to a vehicle which is detected on a SiK Radio communication link.</source>
+      <translation type="unfinished">If this option is enabled GroundControl will automatically connect to a vehicle which is detected on a SiK Radio communication link.</translation>
     </message>
     <message>
-        <source>Automatically connect to an RTK GPS</source>
-        <extracomment>.QGC.MetaData.Facts[autoConnectRTKGPS].shortDesc, </extracomment>
-        <translation>Tự động kết nối với GPS RTK</translation>
+      <extracomment>.QGC.MetaData.Facts[autoConnectRTKGPS].shortDesc, </extracomment>
+      <location filename="../src/Settings/AutoConnect.SettingsGroup.json"/>
+      <source>Automatically connect to an RTK GPS</source>
+      <translation type="unfinished">Automatically connect to an RTK GPS</translation>
     </message>
     <message>
-        <source>If this option is enabled GroundControl will automatically connect to an RTK GPS which is connected via USB.</source>
-        <extracomment>.QGC.MetaData.Facts[autoConnectRTKGPS].longDesc, </extracomment>
-        <translation>Nếu tùy chọn này được bật mặt đất sẽ tự động kết nối với GPS RTK được kết nối qua USB.</translation>
+      <extracomment>.QGC.MetaData.Facts[autoConnectRTKGPS].longDesc, </extracomment>
+      <location filename="../src/Settings/AutoConnect.SettingsGroup.json"/>
+      <source>If this option is enabled GroundControl will automatically connect to an RTK GPS which is connected via USB.</source>
+      <translation type="unfinished">If this option is enabled GroundControl will automatically connect to an RTK GPS which is connected via USB.</translation>
     </message>
     <message>
-        <source>Automatically connect to a LibrePilot</source>
-        <extracomment>.QGC.MetaData.Facts[autoConnectLibrePilot].shortDesc, </extracomment>
-        <translation>Tự động kết nối với librepilot</translation>
+      <extracomment>.QGC.MetaData.Facts[autoConnectLibrePilot].shortDesc, </extracomment>
+      <location filename="../src/Settings/AutoConnect.SettingsGroup.json"/>
+      <source>Automatically connect to a LibrePilot</source>
+      <translation type="unfinished">Automatically connect to a LibrePilot</translation>
     </message>
     <message>
-        <source>If this option is enabled GroundControl will automatically connect to a LibrePilot board which is connected via USB.</source>
-        <extracomment>.QGC.MetaData.Facts[autoConnectLibrePilot].longDesc, </extracomment>
-        <translation>Nếu tùy chọn này được bật mặt đất sẽ tự động kết nối với bảng librepilot được kết nối qua USB.</translation>
+      <extracomment>.QGC.MetaData.Facts[autoConnectLibrePilot].longDesc, </extracomment>
+      <location filename="../src/Settings/AutoConnect.SettingsGroup.json"/>
+      <source>If this option is enabled GroundControl will automatically connect to a LibrePilot board which is connected via USB.</source>
+      <translation type="unfinished">If this option is enabled GroundControl will automatically connect to a LibrePilot board which is connected via USB.</translation>
     </message>
     <message>
-        <source>NMEA GPS device for GCS position</source>
-        <extracomment>.QGC.MetaData.Facts[autoConnectNmeaPort].shortDesc, .QGC.MetaData.Facts[autoConnectNmeaPort].longDesc, </extracomment>
-        <translation>Thiết bị GPS NMEA cho vị trí GCS</translation>
+      <extracomment>.QGC.MetaData.Facts[autoConnectNmeaPort].shortDesc, .QGC.MetaData.Facts[autoConnectNmeaPort].longDesc, </extracomment>
+      <location filename="../src/Settings/AutoConnect.SettingsGroup.json"/>
+      <source>NMEA GPS device for GCS position</source>
+      <translation type="unfinished">NMEA GPS device for GCS position</translation>
     </message>
     <message>
-        <source>NMEA GPS Baudrate</source>
-        <extracomment>.QGC.MetaData.Facts[autoConnectNmeaBaud].shortDesc, .QGC.MetaData.Facts[autoConnectNmeaBaud].longDesc, </extracomment>
-        <translation>NMEA GPS Baudrate</translation>
+      <extracomment>.QGC.MetaData.Facts[autoConnectNmeaBaud].shortDesc, .QGC.MetaData.Facts[autoConnectNmeaBaud].longDesc, </extracomment>
+      <location filename="../src/Settings/AutoConnect.SettingsGroup.json"/>
+      <source>NMEA GPS Baudrate</source>
+      <translation type="unfinished">NMEA GPS Baudrate</translation>
     </message>
     <message>
-        <source>Automatically open a connection with Zero-Conf</source>
-        <extracomment>.QGC.MetaData.Facts[autoConnectZeroConf].shortDesc, </extracomment>
-        <translation>Tự động mở kết nối với Zero-Conf</translation>
+      <extracomment>.QGC.MetaData.Facts[autoConnectZeroConf].shortDesc, </extracomment>
+      <location filename="../src/Settings/AutoConnect.SettingsGroup.json"/>
+      <source>Automatically open a connection with Zero-Conf</source>
+      <translation type="unfinished">Automatically open a connection with Zero-Conf</translation>
     </message>
     <message>
-        <source>If this option is enabled GroundControl will automatically connect to a vehicle which is detected over Zero-Conf.</source>
-        <extracomment>.QGC.MetaData.Facts[autoConnectZeroConf].longDesc, </extracomment>
-        <translation>Nếu tùy chọn này được bật mặt đất sẽ tự động kết nối với một chiếc xe được phát hiện trên không-conf.</translation>
+      <extracomment>.QGC.MetaData.Facts[autoConnectZeroConf].longDesc, </extracomment>
+      <location filename="../src/Settings/AutoConnect.SettingsGroup.json"/>
+      <source>If this option is enabled GroundControl will automatically connect to a vehicle which is detected over Zero-Conf.</source>
+      <translation type="unfinished">If this option is enabled GroundControl will automatically connect to a vehicle which is detected over Zero-Conf.</translation>
     </message>
     <message>
-        <source>UDP port for autoconnect</source>
-        <extracomment>.QGC.MetaData.Facts[udpListenPort].shortDesc, </extracomment>
-        <translation>Cổng UDP cho AutoConnect</translation>
+      <extracomment>.QGC.MetaData.Facts[udpListenPort].shortDesc, </extracomment>
+      <location filename="../src/Settings/AutoConnect.SettingsGroup.json"/>
+      <source>UDP port for autoconnect</source>
+      <translation type="unfinished">UDP port for autoconnect</translation>
     </message>
     <message>
-        <source>UDP target host IP for autoconnect</source>
-        <extracomment>.QGC.MetaData.Facts[udpTargetHostIP].shortDesc, </extracomment>
-        <translation>IP máy chủ đích UDP cho AutoConnect</translation>
+      <extracomment>.QGC.MetaData.Facts[udpTargetHostIP].shortDesc, </extracomment>
+      <location filename="../src/Settings/AutoConnect.SettingsGroup.json"/>
+      <source>UDP target host IP for autoconnect</source>
+      <translation type="unfinished">UDP target host IP for autoconnect</translation>
     </message>
     <message>
-        <source>UDP target host port for autoconnect</source>
-        <extracomment>.QGC.MetaData.Facts[udpTargetHostPort].shortDesc, </extracomment>
-        <translation>Cổng máy chủ đích UDP cho AutoConnect</translation>
+      <extracomment>.QGC.MetaData.Facts[udpTargetHostPort].shortDesc, </extracomment>
+      <location filename="../src/Settings/AutoConnect.SettingsGroup.json"/>
+      <source>UDP target host port for autoconnect</source>
+      <translation type="unfinished">UDP target host port for autoconnect</translation>
     </message>
     <message>
-        <source>Udp port to receive NMEA streams</source>
-        <extracomment>.QGC.MetaData.Facts[nmeaUdpPort].shortDesc, </extracomment>
-        <translation>Cổng UDP để nhận luồng NMEA</translation>
+      <extracomment>.QGC.MetaData.Facts[nmeaUdpPort].shortDesc, </extracomment>
+      <location filename="../src/Settings/AutoConnect.SettingsGroup.json"/>
+      <source>Udp port to receive NMEA streams</source>
+      <translation type="unfinished">Udp port to receive NMEA streams</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>Viewer3D.SettingsGroup.json</name>
     <message>
-        <source>Enable the 3D viewer</source>
-        <extracomment>.QGC.MetaData.Facts[enabled].shortDesc, </extracomment>
-        <translation>Bật trình xem 3D</translation>
+      <extracomment>.QGC.MetaData.Facts[enabled].shortDesc, </extracomment>
+      <location filename="../src/Settings/Viewer3D.SettingsGroup.json"/>
+      <source>Enable the 3D viewer</source>
+      <translation type="unfinished">Enable the 3D viewer</translation>
     </message>
     <message>
-        <source>Path to the OSM file for the 3D viewer.</source>
-        <extracomment>.QGC.MetaData.Facts[osmFilePath].shortDesc, </extracomment>
-        <translation>Đường dẫn đến tệp OSM cho trình xem 3D.</translation>
+      <extracomment>.QGC.MetaData.Facts[osmFilePath].shortDesc, </extracomment>
+      <location filename="../src/Settings/Viewer3D.SettingsGroup.json"/>
+      <source>Path to the OSM file for the 3D viewer.</source>
+      <translation type="unfinished">Path to the OSM file for the 3D viewer.</translation>
     </message>
     <message>
-        <source>Average Height for each level of the buildings</source>
-        <extracomment>.QGC.MetaData.Facts[buildingLevelHeight].shortDesc, </extracomment>
-        <translation>Chiều cao trung bình cho mỗi cấp của các tòa nhà</translation>
+      <extracomment>.QGC.MetaData.Facts[buildingLevelHeight].shortDesc, </extracomment>
+      <location filename="../src/Settings/Viewer3D.SettingsGroup.json"/>
+      <source>Average Height for each level of the buildings</source>
+      <translation type="unfinished">Average Height for each level of the buildings</translation>
     </message>
     <message>
-        <source>Altitude bias for vehicles in the 3D View</source>
-        <extracomment>.QGC.MetaData.Facts[altitudeBias].shortDesc, </extracomment>
-        <translation>Độ lệch độ cao cho các phương tiện trong chế độ xem 3D</translation>
+      <extracomment>.QGC.MetaData.Facts[altitudeBias].shortDesc, </extracomment>
+      <location filename="../src/Settings/Viewer3D.SettingsGroup.json"/>
+      <source>Altitude bias for vehicles in the 3D View</source>
+      <translation type="unfinished">Altitude bias for vehicles in the 3D View</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>Maps.SettingsGroup.json</name>
     <message>
-        <source>Max disk cache</source>
-        <extracomment>.QGC.MetaData.Facts[maxCacheDiskSize].shortDesc, </extracomment>
-        <translation>Bộ đệm đĩa tối đa</translation>
+      <extracomment>.QGC.MetaData.Facts[maxCacheDiskSize].shortDesc, </extracomment>
+      <location filename="../src/Settings/Maps.SettingsGroup.json"/>
+      <source>Max disk cache</source>
+      <translation type="unfinished">Max disk cache</translation>
     </message>
     <message>
-        <source>Max memory cache</source>
-        <extracomment>.QGC.MetaData.Facts[maxCacheMemorySize].shortDesc, </extracomment>
-        <translation>Bộ nhớ cache bộ nhớ tối đa</translation>
+      <extracomment>.QGC.MetaData.Facts[maxCacheMemorySize].shortDesc, </extracomment>
+      <location filename="../src/Settings/Maps.SettingsGroup.json"/>
+      <source>Max memory cache</source>
+      <translation type="unfinished">Max memory cache</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>BatteryIndicator.SettingsGroup.json</name>
     <message>
-        <source>Select values to display in indicator</source>
-        <extracomment>.QGC.MetaData.Facts[valueDisplay].shortDesc, </extracomment>
-        <translation>Chọn các giá trị để hiển thị trong chỉ báo</translation>
+      <extracomment>.QGC.MetaData.Facts[valueDisplay].shortDesc, </extracomment>
+      <location filename="../src/Settings/BatteryIndicator.SettingsGroup.json"/>
+      <source>Select values to display in indicator</source>
+      <translation type="unfinished">Select values to display in indicator</translation>
     </message>
     <message>
-        <source>Percentage,Voltage,Percentage and Voltage</source>
-        <extracomment>.QGC.MetaData.Facts[valueDisplay].enumStrings, </extracomment>
-        <translation>Tỷ lệ phần trăm, điện áp, tỷ lệ phần trăm và điện áp</translation>
+      <extracomment>.QGC.MetaData.Facts[valueDisplay].enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/Settings/BatteryIndicator.SettingsGroup.json"/>
+      <source>Percentage,Voltage,Percentage and Voltage</source>
+      <translation type="unfinished">Percentage,Voltage,Percentage and Voltage</translation>
     </message>
     <message>
-        <source>Battery level threshold 1</source>
-        <extracomment>.QGC.MetaData.Facts[threshold1].shortDesc, </extracomment>
-        <translation>Ngưỡng mức pin 1</translation>
+      <extracomment>.QGC.MetaData.Facts[threshold1].shortDesc, </extracomment>
+      <location filename="../src/Settings/BatteryIndicator.SettingsGroup.json"/>
+      <source>Battery level threshold 1</source>
+      <translation type="unfinished">Battery level threshold 1</translation>
     </message>
     <message>
-        <source>Battery level threshold 2</source>
-        <extracomment>.QGC.MetaData.Facts[threshold2].shortDesc, </extracomment>
-        <translation>Ngưỡng mức pin 2</translation>
+      <extracomment>.QGC.MetaData.Facts[threshold2].shortDesc, </extracomment>
+      <location filename="../src/Settings/BatteryIndicator.SettingsGroup.json"/>
+      <source>Battery level threshold 2</source>
+      <translation type="unfinished">Battery level threshold 2</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>Mavlink.SettingsGroup.json</name>
     <message>
-        <source>Save telemetry Log after each flight</source>
-        <extracomment>.QGC.MetaData.Facts[telemetrySave].shortDesc, </extracomment>
-        <translation>Lưu nhật ký từ xa sau mỗi chuyến bay</translation>
+      <extracomment>.QGC.MetaData.Facts[telemetrySave].shortDesc, </extracomment>
+      <location filename="../src/Settings/Mavlink.SettingsGroup.json"/>
+      <source>Save telemetry Log after each flight</source>
+      <translation type="unfinished">Save telemetry Log after each flight</translation>
     </message>
     <message>
-        <source>If this option is enabled a telemetry will be saved after each flight completes.</source>
-        <extracomment>.QGC.MetaData.Facts[telemetrySave].longDesc, </extracomment>
-        <translation>Nếu tùy chọn này được bật, từ xa sẽ được lưu sau khi mỗi chuyến bay hoàn tất.</translation>
+      <extracomment>.QGC.MetaData.Facts[telemetrySave].longDesc, </extracomment>
+      <location filename="../src/Settings/Mavlink.SettingsGroup.json"/>
+      <source>If this option is enabled a telemetry will be saved after each flight completes.</source>
+      <translation type="unfinished">If this option is enabled a telemetry will be saved after each flight completes.</translation>
     </message>
     <message>
-        <source>Save telemetry log even if vehicle was not armed</source>
-        <extracomment>.QGC.MetaData.Facts[telemetrySaveNotArmed].shortDesc, </extracomment>
-        <translation>Lưu nhật ký từ xa ngay cả khi xe không được trang bị vũ khí</translation>
+      <extracomment>.QGC.MetaData.Facts[telemetrySaveNotArmed].shortDesc, </extracomment>
+      <location filename="../src/Settings/Mavlink.SettingsGroup.json"/>
+      <source>Save telemetry log even if vehicle was not armed</source>
+      <translation type="unfinished">Save telemetry log even if vehicle was not armed</translation>
     </message>
     <message>
-        <source>If this option is enabled a telemtry log will be saved even if vehicle was never armed.</source>
-        <extracomment>.QGC.MetaData.Facts[telemetrySaveNotArmed].longDesc, </extracomment>
-        <translation>Nếu tùy chọn này được kích hoạt, một bản ghi Telemtry sẽ được lưu ngay cả khi phương tiện không bao giờ được vũ trang.</translation>
+      <extracomment>.QGC.MetaData.Facts[telemetrySaveNotArmed].longDesc, </extracomment>
+      <location filename="../src/Settings/Mavlink.SettingsGroup.json"/>
+      <source>If this option is enabled a telemtry log will be saved even if vehicle was never armed.</source>
+      <translation type="unfinished">If this option is enabled a telemtry log will be saved even if vehicle was never armed.</translation>
     </message>
     <message>
-        <source>Request start of MAVLink telemetry streams (ArduPilot only)</source>
-        <extracomment>.QGC.MetaData.Facts[apmStartMavlinkStreams].shortDesc, </extracomment>
-        <translation>Yêu cầu Bắt đầu các luồng từ xa Mavlink (chỉ Ardupilot)</translation>
+      <extracomment>.QGC.MetaData.Facts[apmStartMavlinkStreams].shortDesc, </extracomment>
+      <location filename="../src/Settings/Mavlink.SettingsGroup.json"/>
+      <source>Request start of MAVLink telemetry streams (ArduPilot only)</source>
+      <translation type="unfinished">Request start of MAVLink telemetry streams (ArduPilot only)</translation>
     </message>
     <message>
-        <source>Save CSV Telementry Logs</source>
-        <extracomment>.QGC.MetaData.Facts[saveCsvTelemetry].shortDesc, </extracomment>
-        <translation>Lưu nhật ký dịch chuyển CSV</translation>
+      <extracomment>.QGC.MetaData.Facts[saveCsvTelemetry].shortDesc, </extracomment>
+      <location filename="../src/Settings/Mavlink.SettingsGroup.json"/>
+      <source>Save CSV Telementry Logs</source>
+      <translation type="unfinished">Save CSV Telementry Logs</translation>
     </message>
     <message>
-        <source>If this option is enabled, all Facts will be written to a CSV file with a 1 Hertz frequency.</source>
-        <extracomment>.QGC.MetaData.Facts[saveCsvTelemetry].longDesc, </extracomment>
-        <translation>Nếu tùy chọn này được bật, tất cả các sự kiện sẽ được ghi vào tệp CSV với tần số 1 Hertz.</translation>
+      <extracomment>.QGC.MetaData.Facts[saveCsvTelemetry].longDesc, </extracomment>
+      <location filename="../src/Settings/Mavlink.SettingsGroup.json"/>
+      <source>If this option is enabled, all Facts will be written to a CSV file with a 1 Hertz frequency.</source>
+      <translation type="unfinished">If this option is enabled, all Facts will be written to a CSV file with a 1 Hertz frequency.</translation>
     </message>
     <message>
-        <source>Enable mavlink forwarding</source>
-        <extracomment>.QGC.MetaData.Facts[forwardMavlink].shortDesc, .QGC.MetaData.Facts[forwardMavlink].longDesc, </extracomment>
-        <translation>Kích hoạt chuyển tiếp mavlink</translation>
+      <extracomment>.QGC.MetaData.Facts[forwardMavlink].shortDesc, .QGC.MetaData.Facts[forwardMavlink].longDesc, </extracomment>
+      <location filename="../src/Settings/Mavlink.SettingsGroup.json"/>
+      <source>Enable mavlink forwarding</source>
+      <translation type="unfinished">Enable mavlink forwarding</translation>
     </message>
     <message>
-        <source>Host name</source>
-        <extracomment>.QGC.MetaData.Facts[forwardMavlinkHostName].shortDesc, </extracomment>
-        <translation>Tên máy chủ</translation>
+      <extracomment>.QGC.MetaData.Facts[forwardMavlinkHostName].shortDesc, </extracomment>
+      <location filename="../src/Settings/Mavlink.SettingsGroup.json"/>
+      <source>Host name</source>
+      <translation type="unfinished">Host name</translation>
     </message>
     <message>
-        <source>Host name to forward mavlink to. i.e: localhost:14445</source>
-        <extracomment>.QGC.MetaData.Facts[forwardMavlinkHostName].longDesc, </extracomment>
-        <translation>Tên máy chủ để chuyển tiếp mavlink đến. tức là: localhost: 14445</translation>
+      <extracomment>.QGC.MetaData.Facts[forwardMavlinkHostName].longDesc, </extracomment>
+      <location filename="../src/Settings/Mavlink.SettingsGroup.json"/>
+      <source>Host name to forward mavlink to. i.e: localhost:14445</source>
+      <translation type="unfinished">Host name to forward mavlink to. i.e: localhost:14445</translation>
     </message>
     <message>
-        <source>Ardupilot Support Host name</source>
-        <extracomment>.QGC.MetaData.Facts[forwardMavlinkAPMSupportHostName].shortDesc, </extracomment>
-        <translation>Tên máy chủ hỗ trợ Ardupilot</translation>
+      <extracomment>.QGC.MetaData.Facts[forwardMavlinkAPMSupportHostName].shortDesc, </extracomment>
+      <location filename="../src/Settings/Mavlink.SettingsGroup.json"/>
+      <source>Ardupilot Support Host name</source>
+      <translation type="unfinished">Ardupilot Support Host name</translation>
     </message>
     <message>
-        <source>Ardupilot Support server to forward mavlink to. i.e: support.ardupilot.org:xxxx</source>
-        <extracomment>.QGC.MetaData.Facts[forwardMavlinkAPMSupportHostName].longDesc, </extracomment>
-        <translation>Máy chủ hỗ trợ Ardupilot để chuyển tiếp mavlink đến. I.E: ASSARD.ardupilot.org:xxxx</translation>
+      <extracomment>.QGC.MetaData.Facts[forwardMavlinkAPMSupportHostName].longDesc, </extracomment>
+      <location filename="../src/Settings/Mavlink.SettingsGroup.json"/>
+      <source>Ardupilot Support server to forward mavlink to. i.e: support.ardupilot.org:xxxx</source>
+      <translation type="unfinished">Ardupilot Support server to forward mavlink to. i.e: support.ardupilot.org:xxxx</translation>
     </message>
     <message>
-        <source>MAVLink 2.0 signing key</source>
-        <extracomment>.QGC.MetaData.Facts[mavlink2SigningKey].shortDesc, </extracomment>
-        <translation>Khóa ký kết Mavlink 2.0</translation>
+      <extracomment>.QGC.MetaData.Facts[mavlink2SigningKey].shortDesc, </extracomment>
+      <location filename="../src/Settings/Mavlink.SettingsGroup.json"/>
+      <source>MAVLink 2.0 signing key</source>
+      <translation type="unfinished">MAVLink 2.0 signing key</translation>
     </message>
     <message>
-        <source>Send GCS Heartbeat</source>
-        <extracomment>.QGC.MetaData.Facts[sendGCSHeartbeat].shortDesc, </extracomment>
-        <translation>Gửi nhịp tim GCS</translation>
+      <extracomment>.QGC.MetaData.Facts[sendGCSHeartbeat].shortDesc, </extracomment>
+      <location filename="../src/Settings/Mavlink.SettingsGroup.json"/>
+      <source>Send GCS Heartbeat</source>
+      <translation type="unfinished">Send GCS Heartbeat</translation>
     </message>
     <message>
-        <source>GCS MAVLink System ID</source>
-        <extracomment>.QGC.MetaData.Facts[gcsMavlinkSystemID].shortDesc, </extracomment>
-        <translation>Id hệ thống mavlink gcs</translation>
+      <extracomment>.QGC.MetaData.Facts[gcsMavlinkSystemID].shortDesc, </extracomment>
+      <location filename="../src/Settings/Mavlink.SettingsGroup.json"/>
+      <source>GCS MAVLink System ID</source>
+      <translation type="unfinished">GCS MAVLink System ID</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>Video.SettingsGroup.json</name>
     <message>
-        <source>Video source</source>
-        <extracomment>.QGC.MetaData.Facts[videoSource].shortDesc, </extracomment>
-        <translation>Nguồn video</translation>
+      <extracomment>.QGC.MetaData.Facts[videoSource].shortDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Video source</source>
+      <translation type="unfinished">Video source</translation>
     </message>
     <message>
-        <source>Source for video. UDP, TCP, RTSP and UVC Cameras may be supported depending on Vehicle and ground station version.</source>
-        <extracomment>.QGC.MetaData.Facts[videoSource].longDesc, </extracomment>
-        <translation>Nguồn cho video. Máy ảnh UDP, TCP, RTSP và UVC có thể được hỗ trợ tùy thuộc vào phiên bản xe và trạm mặt đất.</translation>
+      <extracomment>.QGC.MetaData.Facts[videoSource].longDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Source for video. UDP, TCP, RTSP and UVC Cameras may be supported depending on Vehicle and ground station version.</source>
+      <translation type="unfinished">Source for video. UDP, TCP, RTSP and UVC Cameras may be supported depending on Vehicle and ground station version.</translation>
     </message>
     <message>
-        <source>Video UDP Url</source>
-        <extracomment>.QGC.MetaData.Facts[udpUrl].shortDesc, </extracomment>
-        <translation>Video UDP URL</translation>
+      <extracomment>.QGC.MetaData.Facts[udpUrl].shortDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Video UDP Url</source>
+      <translation type="unfinished">Video UDP Url</translation>
     </message>
     <message>
-        <source>UDP url address and port to bind to for video stream. Example: 0.0.0.0:5600</source>
-        <extracomment>.QGC.MetaData.Facts[udpUrl].longDesc, </extracomment>
-        <translation>Địa chỉ UDP URL và cổng để liên kết với luồng video. Ví dụ: 0,0.0.0:5600</translation>
+      <extracomment>.QGC.MetaData.Facts[udpUrl].longDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>UDP url address and port to bind to for video stream. Example: 0.0.0.0:5600</source>
+      <translation type="unfinished">UDP url address and port to bind to for video stream. Example: 0.0.0.0:5600</translation>
     </message>
     <message>
-        <source>Video RTSP Url</source>
-        <extracomment>.QGC.MetaData.Facts[rtspUrl].shortDesc, </extracomment>
-        <translation>Video URL RTSP</translation>
+      <extracomment>.QGC.MetaData.Facts[rtspUrl].shortDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Video RTSP Url</source>
+      <translation type="unfinished">Video RTSP Url</translation>
     </message>
     <message>
-        <source>RTSP url address and port to bind to for video stream. Example: rtsp://192.168.42.1:554/live</source>
-        <extracomment>.QGC.MetaData.Facts[rtspUrl].longDesc, </extracomment>
-        <translation>Địa chỉ URL RTSP và cổng để liên kết với luồng video. Ví dụ: RTSP: //192.168.42.1: 554/Live</translation>
+      <extracomment>.QGC.MetaData.Facts[rtspUrl].longDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>RTSP url address and port to bind to for video stream. Example: rtsp://192.168.42.1:554/live</source>
+      <translation type="unfinished">RTSP url address and port to bind to for video stream. Example: rtsp://192.168.42.1:554/live</translation>
     </message>
     <message>
-        <source>Video TCP Url</source>
-        <extracomment>.QGC.MetaData.Facts[tcpUrl].shortDesc, </extracomment>
-        <translation>Video URL TCP</translation>
+      <extracomment>.QGC.MetaData.Facts[tcpUrl].shortDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Video TCP Url</source>
+      <translation type="unfinished">Video TCP Url</translation>
     </message>
     <message>
-        <source>TCP url address and port to bind to for video stream. Example: 192.168.143.200:3001</source>
-        <extracomment>.QGC.MetaData.Facts[tcpUrl].longDesc, </extracomment>
-        <translation>Địa chỉ URL TCP và cổng để liên kết với luồng video. Ví dụ: 192.168.143.200:3001</translation>
+      <extracomment>.QGC.MetaData.Facts[tcpUrl].longDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>TCP url address and port to bind to for video stream. Example: 192.168.143.200:3001</source>
+      <translation type="unfinished">TCP url address and port to bind to for video stream. Example: 192.168.143.200:3001</translation>
     </message>
     <message>
-        <source>Video save directory</source>
-        <extracomment>.QGC.MetaData.Facts[videoSavePath].shortDesc, </extracomment>
-        <translation>Video lưu thư mục</translation>
+      <extracomment>.QGC.MetaData.Facts[videoSavePath].shortDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Video save directory</source>
+      <translation type="unfinished">Video save directory</translation>
     </message>
     <message>
-        <source>Directory to save videos to.</source>
-        <extracomment>.QGC.MetaData.Facts[videoSavePath].longDesc, </extracomment>
-        <translation>Thư mục để lưu video vào.</translation>
+      <extracomment>.QGC.MetaData.Facts[videoSavePath].longDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Directory to save videos to.</source>
+      <translation type="unfinished">Directory to save videos to.</translation>
     </message>
     <message>
-        <source>Video Aspect Ratio</source>
-        <extracomment>.QGC.MetaData.Facts[aspectRatio].shortDesc, </extracomment>
-        <translation>Tỷ lệ khung hình video</translation>
+      <extracomment>.QGC.MetaData.Facts[aspectRatio].shortDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Video Aspect Ratio</source>
+      <translation type="unfinished">Video Aspect Ratio</translation>
     </message>
     <message>
-        <source>Video Aspect Ratio (width / height). Use 0.0 to ignore it.</source>
-        <extracomment>.QGC.MetaData.Facts[aspectRatio].longDesc, </extracomment>
-        <translation>Video Aspect Ratio (width / height). Sử dụng 0,0 để bỏ qua nó.</translation>
+      <extracomment>.QGC.MetaData.Facts[aspectRatio].longDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Video Aspect Ratio (width / height). Use 0.0 to ignore it.</source>
+      <translation type="unfinished">Video Aspect Ratio (width / height). Use 0.0 to ignore it.</translation>
     </message>
     <message>
-        <source>Video Grid Lines</source>
-        <extracomment>.QGC.MetaData.Facts[gridLines].shortDesc, </extracomment>
-        <translation>Dòng video</translation>
+      <extracomment>.QGC.MetaData.Facts[gridLines].shortDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Video Grid Lines</source>
+      <translation type="unfinished">Video Grid Lines</translation>
     </message>
     <message>
-        <source>Displays a grid overlaid over the video view.</source>
-        <extracomment>.QGC.MetaData.Facts[gridLines].longDesc, </extracomment>
-        <translation>Hiển thị một lưới được phủ lên trên chế độ xem video.</translation>
+      <extracomment>.QGC.MetaData.Facts[gridLines].longDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Displays a grid overlaid over the video view.</source>
+      <translation type="unfinished">Displays a grid overlaid over the video view.</translation>
     </message>
     <message>
-        <source>Video Display Fit</source>
-        <extracomment>.QGC.MetaData.Facts[videoFit].shortDesc, </extracomment>
-        <translation>Video Hiển thị phù hợp</translation>
+      <extracomment>.QGC.MetaData.Facts[videoFit].shortDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Video Display Fit</source>
+      <translation type="unfinished">Video Display Fit</translation>
     </message>
     <message>
-        <source>Handle Video Aspect Ratio.</source>
-        <extracomment>.QGC.MetaData.Facts[videoFit].longDesc, </extracomment>
-        <translation>Xử lý tỷ lệ khung hình video.</translation>
+      <extracomment>.QGC.MetaData.Facts[videoFit].longDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Handle Video Aspect Ratio.</source>
+      <translation type="unfinished">Handle Video Aspect Ratio.</translation>
     </message>
     <message>
-        <source>Fit Width,Fit Height,Fill,No Crop</source>
-        <extracomment>.QGC.MetaData.Facts[videoFit].enumStrings, </extracomment>
-        <translation>Chiều rộng phù hợp, chiều cao phù hợp, lấp đầy, không có cây trồng</translation>
+      <extracomment>.QGC.MetaData.Facts[videoFit].enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Fit Width,Fit Height,Fill,No Crop</source>
+      <translation type="unfinished">Fit Width,Fit Height,Fill,No Crop</translation>
     </message>
     <message>
-        <source>Show Video Record Control</source>
-        <extracomment>.QGC.MetaData.Facts[showRecControl].shortDesc, </extracomment>
-        <translation>Hiển thị kiểm soát bản ghi video</translation>
+      <extracomment>.QGC.MetaData.Facts[showRecControl].shortDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Show Video Record Control</source>
+      <translation type="unfinished">Show Video Record Control</translation>
     </message>
     <message>
-        <source>Show recording control in the UI.</source>
-        <extracomment>.QGC.MetaData.Facts[showRecControl].longDesc, </extracomment>
-        <translation>Hiển thị điều khiển ghi trong UI.</translation>
+      <extracomment>.QGC.MetaData.Facts[showRecControl].longDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Show recording control in the UI.</source>
+      <translation type="unfinished">Show recording control in the UI.</translation>
     </message>
     <message>
-        <source>Video Recording Format</source>
-        <extracomment>.QGC.MetaData.Facts[recordingFormat].shortDesc, </extracomment>
-        <translation>Định dạng ghi video</translation>
+      <extracomment>.QGC.MetaData.Facts[recordingFormat].shortDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Video Recording Format</source>
+      <translation type="unfinished">Video Recording Format</translation>
     </message>
     <message>
-        <source>Video recording file format.</source>
-        <extracomment>.QGC.MetaData.Facts[recordingFormat].longDesc, </extracomment>
-        <translation>Video Ghi lại định dạng tệp.</translation>
+      <extracomment>.QGC.MetaData.Facts[recordingFormat].longDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Video recording file format.</source>
+      <translation type="unfinished">Video recording file format.</translation>
     </message>
     <message>
-        <source>mkv,mov,mp4</source>
-        <extracomment>.QGC.MetaData.Facts[recordingFormat].enumStrings, </extracomment>
-        <translation>MKV, MOV, MP4</translation>
+      <extracomment>.QGC.MetaData.Facts[recordingFormat].enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>mkv,mov,mp4</source>
+      <translation type="unfinished">mkv,mov,mp4</translation>
     </message>
     <message>
-        <source>Max Video Storage Usage</source>
-        <extracomment>.QGC.MetaData.Facts[maxVideoSize].shortDesc, </extracomment>
-        <translation>Sử dụng lưu trữ video tối đa</translation>
+      <extracomment>.QGC.MetaData.Facts[maxVideoSize].shortDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Max Video Storage Usage</source>
+      <translation type="unfinished">Max Video Storage Usage</translation>
     </message>
     <message>
-        <source>Maximum amount of disk space used by video recording.</source>
-        <extracomment>.QGC.MetaData.Facts[maxVideoSize].longDesc, </extracomment>
-        <translation>Số lượng tối đa của không gian đĩa được sử dụng bằng cách quay video.</translation>
+      <extracomment>.QGC.MetaData.Facts[maxVideoSize].longDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Maximum amount of disk space used by video recording.</source>
+      <translation type="unfinished">Maximum amount of disk space used by video recording.</translation>
     </message>
     <message>
-        <source>Enable/Disable Limits on Storage Usage</source>
-        <extracomment>.QGC.MetaData.Facts[enableStorageLimit].shortDesc, </extracomment>
-        <translation>Bật/tắt giới hạn khi sử dụng lưu trữ</translation>
+      <extracomment>.QGC.MetaData.Facts[enableStorageLimit].shortDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Enable/Disable Limits on Storage Usage</source>
+      <translation type="unfinished">Enable/Disable Limits on Storage Usage</translation>
     </message>
     <message>
-        <source>When enabled, old video files will be auto-deleted when the total size of QGC-recorded video exceeds the maximum video storage usage.</source>
-        <extracomment>.QGC.MetaData.Facts[enableStorageLimit].longDesc, </extracomment>
-        <translation>Khi được bật, các tệp video cũ sẽ được tự động xóa khi tổng kích thước của video được ghi lại QGC vượt quá mức sử dụng lưu trữ video tối đa.</translation>
+      <extracomment>.QGC.MetaData.Facts[enableStorageLimit].longDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>When enabled, old video files will be auto-deleted when the total size of QGC-recorded video exceeds the maximum video storage usage.</source>
+      <translation type="unfinished">When enabled, old video files will be auto-deleted when the total size of QGC-recorded video exceeds the maximum video storage usage.</translation>
     </message>
     <message>
-        <source>RTSP Video Timeout</source>
-        <extracomment>.QGC.MetaData.Facts[rtspTimeout].shortDesc, </extracomment>
-        <translation>Thời gian chờ video RTSP</translation>
+      <extracomment>.QGC.MetaData.Facts[rtspTimeout].shortDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>RTSP Video Timeout</source>
+      <translation type="unfinished">RTSP Video Timeout</translation>
     </message>
     <message>
-        <source>How long to wait before assuming RTSP link is gone.</source>
-        <extracomment>.QGC.MetaData.Facts[rtspTimeout].longDesc, </extracomment>
-        <translation>Bao lâu để đợi trước khi giả định liên kết RTSP đã biến mất.</translation>
+      <extracomment>.QGC.MetaData.Facts[rtspTimeout].longDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>How long to wait before assuming RTSP link is gone.</source>
+      <translation type="unfinished">How long to wait before assuming RTSP link is gone.</translation>
     </message>
     <message>
-        <source>Video Stream Enabled</source>
-        <extracomment>.QGC.MetaData.Facts[streamEnabled].shortDesc, </extracomment>
-        <translation>Phát trực tuyến video được bật</translation>
+      <extracomment>.QGC.MetaData.Facts[streamEnabled].shortDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Video Stream Enabled</source>
+      <translation type="unfinished">Video Stream Enabled</translation>
     </message>
     <message>
-        <source>Start/Stop Video Stream.</source>
-        <extracomment>.QGC.MetaData.Facts[streamEnabled].longDesc, </extracomment>
-        <translation>Bắt đầu/dừng luồng video.</translation>
+      <extracomment>.QGC.MetaData.Facts[streamEnabled].longDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Start/Stop Video Stream.</source>
+      <translation type="unfinished">Start/Stop Video Stream.</translation>
     </message>
     <message>
-        <source>Video Stream Disnabled When Armed</source>
-        <extracomment>.QGC.MetaData.Facts[disableWhenDisarmed].shortDesc, </extracomment>
-        <translation>Phát video không bị loại bỏ khi vũ trang</translation>
+      <extracomment>.QGC.MetaData.Facts[disableWhenDisarmed].shortDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Video Stream Disnabled When Armed</source>
+      <translation type="unfinished">Video Stream Disnabled When Armed</translation>
     </message>
     <message>
-        <source>Disable Video Stream when disarmed.</source>
-        <extracomment>.QGC.MetaData.Facts[disableWhenDisarmed].longDesc, </extracomment>
-        <translation>Vô hiệu hóa luồng video khi bị tước vũ khí.</translation>
+      <extracomment>.QGC.MetaData.Facts[disableWhenDisarmed].longDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Disable Video Stream when disarmed.</source>
+      <translation type="unfinished">Disable Video Stream when disarmed.</translation>
     </message>
     <message>
-        <source>Tweaks video for lower latency</source>
-        <extracomment>.QGC.MetaData.Facts[lowLatencyMode].shortDesc, </extracomment>
-        <translation>Điều chỉnh video cho độ trễ thấp hơn</translation>
+      <extracomment>.QGC.MetaData.Facts[lowLatencyMode].shortDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Tweaks video for lower latency</source>
+      <translation type="unfinished">Tweaks video for lower latency</translation>
     </message>
     <message>
-        <source>If this option is enabled, the rtpjitterbuffer is removed and the video sink is set to assynchronous mode, reducing the latency by about 200 ms.</source>
-        <extracomment>.QGC.MetaData.Facts[lowLatencyMode].longDesc, </extracomment>
-        <translation>Nếu tùy chọn này được bật, RTPJitterBuffer sẽ bị xóa và phần chìm video được đặt thành chế độ đồng bộ hóa, giảm độ trễ khoảng 200 ms.</translation>
+      <extracomment>.QGC.MetaData.Facts[lowLatencyMode].longDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>If this option is enabled, the rtpjitterbuffer is removed and the video sink is set to assynchronous mode, reducing the latency by about 200 ms.</source>
+      <translation type="unfinished">If this option is enabled, the rtpjitterbuffer is removed and the video sink is set to assynchronous mode, reducing the latency by about 200 ms.</translation>
     </message>
     <message>
-        <source>Force specific category of video decode</source>
-        <extracomment>.QGC.MetaData.Facts[forceVideoDecoder].shortDesc, </extracomment>
-        <translation>Thể loại cụ thể của việc giải mã video</translation>
+      <extracomment>.QGC.MetaData.Facts[forceVideoDecoder].shortDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Force specific category of video decode</source>
+      <translation type="unfinished">Force specific category of video decode</translation>
     </message>
     <message>
-        <source>Force the change of prioritization between video decode methods, allowing the user to force some video hardware decode plugins if necessary.</source>
-        <extracomment>.QGC.MetaData.Facts[forceVideoDecoder].longDesc, </extracomment>
-        <translation>Buộc thay đổi ưu tiên giữa các phương thức giải mã video, cho phép người dùng buộc một số plugin giải mã phần cứng video nếu cần thiết.</translation>
+      <extracomment>.QGC.MetaData.Facts[forceVideoDecoder].longDesc, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Force the change of prioritization between video decode methods, allowing the user to force some video hardware decode plugins if necessary.</source>
+      <translation type="unfinished">Force the change of prioritization between video decode methods, allowing the user to force some video hardware decode plugins if necessary.</translation>
     </message>
     <message>
-        <source>Default,Force software decoder,Force NVIDIA decoder,Force VA-API decoder,Force DirectX3D 11 decoder,Force VideoToolbox decoder</source>
-        <extracomment>.QGC.MetaData.Facts[forceVideoDecoder].enumStrings, </extracomment>
-        <translation>Mặc định, bộ giải mã phần mềm lực lượng, bộ giải mã NVIDIA, bộ giải mã Force VA-API, Force DirectX3D 11 Decoder</translation>
+      <extracomment>.QGC.MetaData.Facts[forceVideoDecoder].enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Default,Force software decoder,Force NVIDIA decoder,Force VA-API decoder,Force DirectX3D 11 decoder,Force VideoToolbox decoder,Force Intel decoder,Force Vulkan decoder</source>
+      <translation type="unfinished">Default,Force software decoder,Force NVIDIA decoder,Force VA-API decoder,Force DirectX3D 11 decoder,Force VideoToolbox decoder,Force Intel decoder,Force Vulkan decoder</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>RemoteID.SettingsGroup.json</name>
     <message>
-        <source>Operator ID</source>
-        <extracomment>.QGC.MetaData.Facts[operatorID].shortDesc, </extracomment>
-        <translation>ID toán tử</translation>
+      <extracomment>.QGC.MetaData.Facts[operatorID].shortDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Operator ID</source>
+      <translation type="unfinished">Operator ID</translation>
     </message>
     <message>
-        <source>Operator ID. Maximum 20 characters.</source>
-        <extracomment>.QGC.MetaData.Facts[operatorID].longDesc, </extracomment>
-        <translation>ID toán tử. Tối đa 20 ký tự.</translation>
+      <extracomment>.QGC.MetaData.Facts[operatorID].longDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Operator ID. Maximum 20 characters.</source>
+      <translation type="unfinished">Operator ID. Maximum 20 characters.</translation>
     </message>
     <message>
-        <source>Operator ID is valid</source>
-        <extracomment>.QGC.MetaData.Facts[operatorIDValid].shortDesc, </extracomment>
-        <translation>ID toán tử là hợp lệ</translation>
+      <extracomment>.QGC.MetaData.Facts[operatorIDValid].shortDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Operator ID is valid</source>
+      <translation type="unfinished">Operator ID is valid</translation>
     </message>
     <message>
-        <source>Operator ID has been checked using checksum.</source>
-        <extracomment>.QGC.MetaData.Facts[operatorIDValid].longDesc, </extracomment>
-        <translation>ID toán tử đã được kiểm tra bằng tổng kiểm tra.</translation>
+      <extracomment>.QGC.MetaData.Facts[operatorIDValid].longDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Operator ID has been checked using checksum.</source>
+      <translation type="unfinished">Operator ID has been checked using checksum.</translation>
     </message>
     <message>
-        <source>Operator ID type</source>
-        <extracomment>.QGC.MetaData.Facts[operatorIDType].shortDesc, </extracomment>
-        <translation>Loại ID toán tử</translation>
+      <extracomment>.QGC.MetaData.Facts[operatorIDType].shortDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Operator ID type</source>
+      <translation type="unfinished">Operator ID type</translation>
     </message>
     <message>
-        <source>CAA</source>
-        <extracomment>.QGC.MetaData.Facts[operatorIDType].enumStrings, </extracomment>
-        <translation>CAA</translation>
+      <extracomment>.QGC.MetaData.Facts[operatorIDType].enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>CAA</source>
+      <translation type="unfinished">CAA</translation>
     </message>
     <message>
-        <source>Send Operator ID</source>
-        <extracomment>.QGC.MetaData.Facts[sendOperatorID].shortDesc, </extracomment>
-        <translation>Gửi ID toán tử</translation>
+      <extracomment>.QGC.MetaData.Facts[sendOperatorID].shortDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Send Operator ID</source>
+      <translation type="unfinished">Send Operator ID</translation>
     </message>
     <message>
-        <source>When enabled, sends operator ID message</source>
-        <extracomment>.QGC.MetaData.Facts[sendOperatorID].longDesc, </extracomment>
-        <translation>Khi được bật, gửi tin nhắn ID toán tử</translation>
+      <extracomment>.QGC.MetaData.Facts[sendOperatorID].longDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>When enabled, sends operator ID message</source>
+      <translation type="unfinished">When enabled, sends operator ID message</translation>
     </message>
     <message>
-        <source>Flight Purpose</source>
-        <extracomment>.QGC.MetaData.Facts[selfIDFree].shortDesc, </extracomment>
-        <translation>Mục đích bay</translation>
+      <extracomment>.QGC.MetaData.Facts[selfIDFree].shortDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Flight Purpose</source>
+      <translation type="unfinished">Flight Purpose</translation>
     </message>
     <message>
-        <source>Optional plain text for operator to specify operations data (Free Text). Maximum 23 characters.</source>
-        <extracomment>.QGC.MetaData.Facts[selfIDFree].longDesc, </extracomment>
-        <translation>Văn bản đơn giản tùy chọn cho toán tử để chỉ định dữ liệu hoạt động (văn bản miễn phí). Tối đa 23 ký tự.</translation>
+      <extracomment>.QGC.MetaData.Facts[selfIDFree].longDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Optional plain text for operator to specify operations data (Free Text). Maximum 23 characters.</source>
+      <translation type="unfinished">Optional plain text for operator to specify operations data (Free Text). Maximum 23 characters.</translation>
     </message>
     <message>
-        <source>Emergency Text</source>
-        <extracomment>.QGC.MetaData.Facts[selfIDEmergency].shortDesc, </extracomment>
-        <translation>Văn bản khẩn cấp</translation>
+      <extracomment>.QGC.MetaData.Facts[selfIDEmergency].shortDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Emergency Text</source>
+      <translation type="unfinished">Emergency Text</translation>
     </message>
     <message>
-        <source>Optional plain text for operator to specify operations data (Emergency Text). Maximum 23 characters.</source>
-        <extracomment>.QGC.MetaData.Facts[selfIDEmergency].longDesc, </extracomment>
-        <translation>Văn bản đơn giản tùy chọn cho nhà điều hành để chỉ định dữ liệu hoạt động (văn bản khẩn cấp). Tối đa 23 ký tự.</translation>
+      <extracomment>.QGC.MetaData.Facts[selfIDEmergency].longDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Optional plain text for operator to specify operations data (Emergency Text). Maximum 23 characters.</source>
+      <translation type="unfinished">Optional plain text for operator to specify operations data (Emergency Text). Maximum 23 characters.</translation>
     </message>
     <message>
-        <source>Extended Status</source>
-        <extracomment>.QGC.MetaData.Facts[selfIDExtended].shortDesc, </extracomment>
-        <translation>Trạng thái mở rộng</translation>
+      <extracomment>.QGC.MetaData.Facts[selfIDExtended].shortDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Extended Status</source>
+      <translation type="unfinished">Extended Status</translation>
     </message>
     <message>
-        <source>Optional plain text for operator to specify operations data (Extended Text). Maximum 23 characters.</source>
-        <extracomment>.QGC.MetaData.Facts[selfIDExtended].longDesc, </extracomment>
-        <translation>Văn bản đơn giản tùy chọn cho toán tử để chỉ định dữ liệu hoạt động (văn bản mở rộng). Tối đa 23 ký tự.</translation>
+      <extracomment>.QGC.MetaData.Facts[selfIDExtended].longDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Optional plain text for operator to specify operations data (Extended Text). Maximum 23 characters.</source>
+      <translation type="unfinished">Optional plain text for operator to specify operations data (Extended Text). Maximum 23 characters.</translation>
     </message>
     <message>
-        <source>Self ID type</source>
-        <extracomment>.QGC.MetaData.Facts[selfIDType].shortDesc, </extracomment>
-        <translation>Loại id tự</translation>
+      <extracomment>.QGC.MetaData.Facts[selfIDType].shortDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Self ID type</source>
+      <translation type="unfinished">Self ID type</translation>
     </message>
     <message>
-        <source>Flight Purpose,Emergency,Extended Status</source>
-        <extracomment>.QGC.MetaData.Facts[selfIDType].enumStrings, </extracomment>
-        <translation>Mục đích bay, khẩn cấp, tình trạng mở rộng</translation>
+      <extracomment>.QGC.MetaData.Facts[selfIDType].enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Flight Purpose,Emergency,Extended Status</source>
+      <translation type="unfinished">Flight Purpose,Emergency,Extended Status</translation>
     </message>
     <message>
-        <source>Send Self ID</source>
-        <extracomment>.QGC.MetaData.Facts[sendSelfID].shortDesc, </extracomment>
-        <translation>Gửi ID bản thân</translation>
+      <extracomment>.QGC.MetaData.Facts[sendSelfID].shortDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Send Self ID</source>
+      <translation type="unfinished">Send Self ID</translation>
     </message>
     <message>
-        <source>When enabled, sends self ID message</source>
-        <extracomment>.QGC.MetaData.Facts[sendSelfID].longDesc, </extracomment>
-        <translation>Khi được bật, hãy gửi tin nhắn tự ID</translation>
+      <extracomment>.QGC.MetaData.Facts[sendSelfID].longDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>When enabled, sends self ID message</source>
+      <translation type="unfinished">When enabled, sends self ID message</translation>
     </message>
     <message>
-        <source>Basic ID</source>
-        <extracomment>.QGC.MetaData.Facts[basicID].shortDesc, </extracomment>
-        <translation>ID cơ bản</translation>
+      <extracomment>.QGC.MetaData.Facts[basicID].shortDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Basic ID</source>
+      <translation type="unfinished">Basic ID</translation>
     </message>
     <message>
-        <source>Basic ID Type</source>
-        <extracomment>.QGC.MetaData.Facts[basicIDType].shortDesc, </extracomment>
-        <translation>Loại ID cơ bản</translation>
+      <extracomment>.QGC.MetaData.Facts[basicIDType].shortDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Basic ID Type</source>
+      <translation type="unfinished">Basic ID Type</translation>
     </message>
     <message>
-        <source>None,SerialNumber (ANSI/CTA-2063),CAA,UTM (RFC4122),Specific</source>
-        <extracomment>.QGC.MetaData.Facts[basicIDType].enumStrings, </extracomment>
-        <translation>Không, serialnumber (ANSI/CTA-2063), CAA, UTM (RFC4122), cụ thể</translation>
+      <extracomment>.QGC.MetaData.Facts[basicIDType].enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>None,SerialNumber (ANSI/CTA-2063),CAA,UTM (RFC4122),Specific</source>
+      <translation type="unfinished">None,SerialNumber (ANSI/CTA-2063),CAA,UTM (RFC4122),Specific</translation>
     </message>
     <message>
-        <source>UA type</source>
-        <extracomment>.QGC.MetaData.Facts[basicIDUaType].shortDesc, </extracomment>
-        <translation>Loại UA</translation>
+      <extracomment>.QGC.MetaData.Facts[basicIDUaType].shortDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>UA type</source>
+      <translation type="unfinished">UA type</translation>
     </message>
     <message>
-        <source>Undefined,Airplane/FixedWing,Helicopter/Multirrotor,Gyroplane,VTOL,Ornithopter,Glider,Kite,Free Ballon,Captive Ballon,Airship,Parachute,Rocket,Tethered powered aircraft,Ground Obstacle,Other</source>
-        <extracomment>.QGC.MetaData.Facts[basicIDUaType].enumStrings, </extracomment>
-        <translation>Không xác định, máy bay/cố định, máy bay trực thăng/multrotor, con quay, vtol, ornithopter, l Glider, diều, ballon miễn phí, ballon bị giam cầm, khí cầu, nhảy dù, tên lửa, máy bay có chướng ngại vật, chướng ngại vật khác</translation>
+      <extracomment>.QGC.MetaData.Facts[basicIDUaType].enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Undefined,Airplane/FixedWing,Helicopter/Multirrotor,Gyroplane,VTOL,Ornithopter,Glider,Kite,Free Ballon,Captive Ballon,Airship,Parachute,Rocket,Tethered powered aircraft,Ground Obstacle,Other</source>
+      <translation type="unfinished">Undefined,Airplane/FixedWing,Helicopter/Multirrotor,Gyroplane,VTOL,Ornithopter,Glider,Kite,Free Ballon,Captive Ballon,Airship,Parachute,Rocket,Tethered powered aircraft,Ground Obstacle,Other</translation>
     </message>
     <message>
-        <source>Send Basic ID</source>
-        <extracomment>.QGC.MetaData.Facts[sendBasicID].shortDesc, </extracomment>
-        <translation>Gửi ID cơ bản</translation>
+      <extracomment>.QGC.MetaData.Facts[sendBasicID].shortDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Send Basic ID</source>
+      <translation type="unfinished">Send Basic ID</translation>
     </message>
     <message>
-        <source>When enabled, sends basic ID message</source>
-        <extracomment>.QGC.MetaData.Facts[sendBasicID].longDesc, </extracomment>
-        <translation>Khi được bật, hãy gửi tin nhắn ID cơ bản</translation>
+      <extracomment>.QGC.MetaData.Facts[sendBasicID].longDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>When enabled, sends basic ID message</source>
+      <translation type="unfinished">When enabled, sends basic ID message</translation>
     </message>
     <message>
-        <source>Region of operation</source>
-        <extracomment>.QGC.MetaData.Facts[region].shortDesc, </extracomment>
-        <translation>Vùng hoạt động</translation>
+      <extracomment>.QGC.MetaData.Facts[region].shortDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Region of operation</source>
+      <translation type="unfinished">Region of operation</translation>
     </message>
     <message>
-        <source>The region of operation the mission will take place in</source>
-        <extracomment>.QGC.MetaData.Facts[region].longDesc, </extracomment>
-        <translation>Khu vực hoạt động, nhiệm vụ sẽ diễn ra trong</translation>
+      <extracomment>.QGC.MetaData.Facts[region].longDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>The region of operation the mission will take place in</source>
+      <translation type="unfinished">The region of operation the mission will take place in</translation>
     </message>
     <message>
-        <source>FAA,EU</source>
-        <extracomment>.QGC.MetaData.Facts[region].enumStrings, </extracomment>
-        <translation>FAA, EU</translation>
+      <extracomment>.QGC.MetaData.Facts[region].enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>FAA,EU</source>
+      <translation type="unfinished">FAA,EU</translation>
     </message>
     <message>
-        <source>Location Type</source>
-        <extracomment>.QGC.MetaData.Facts[locationType].shortDesc, </extracomment>
-        <translation>Loại vị trí</translation>
+      <extracomment>.QGC.MetaData.Facts[locationType].shortDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Location Type</source>
+      <translation type="unfinished">Location Type</translation>
     </message>
     <message>
-        <source>Operator location Type</source>
-        <extracomment>.QGC.MetaData.Facts[locationType].longDesc, </extracomment>
-        <translation>Loại vị trí vận hành</translation>
+      <extracomment>.QGC.MetaData.Facts[locationType].longDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Operator location Type</source>
+      <translation type="unfinished">Operator location Type</translation>
     </message>
     <message>
-        <source>Takeoff(Not Supported),Live GNNS, Fixed (not for FAA)</source>
-        <extracomment>.QGC.MetaData.Facts[locationType].enumStrings, </extracomment>
-        <translation>Takeoff (không được hỗ trợ), GNNS trực tiếp, cố định (không dành cho FAA)</translation>
+      <extracomment>.QGC.MetaData.Facts[locationType].enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Takeoff(Not Supported),Live GNNS, Fixed (not for FAA)</source>
+      <translation type="unfinished">Takeoff(Not Supported),Live GNNS, Fixed (not for FAA)</translation>
     </message>
     <message>
-        <source>Latitude Fixed</source>
-        <extracomment>.QGC.MetaData.Facts[latitudeFixed].shortDesc, </extracomment>
-        <translation>Vĩ độ cố định</translation>
+      <extracomment>.QGC.MetaData.Facts[latitudeFixed].shortDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Latitude Fixed</source>
+      <translation type="unfinished">Latitude Fixed</translation>
     </message>
     <message>
-        <source>Fixed latitude to send on SYSTEM message</source>
-        <extracomment>.QGC.MetaData.Facts[latitudeFixed].longDesc, </extracomment>
-        <translation>Đã sửa lỗi vĩ độ để gửi trên tin nhắn hệ thống</translation>
+      <extracomment>.QGC.MetaData.Facts[latitudeFixed].longDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Fixed latitude to send on SYSTEM message</source>
+      <translation type="unfinished">Fixed latitude to send on SYSTEM message</translation>
     </message>
     <message>
-        <source>Longitude Fixed</source>
-        <extracomment>.QGC.MetaData.Facts[longitudeFixed].shortDesc, </extracomment>
-        <translation>Kinh độ cố định</translation>
+      <extracomment>.QGC.MetaData.Facts[longitudeFixed].shortDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Longitude Fixed</source>
+      <translation type="unfinished">Longitude Fixed</translation>
     </message>
     <message>
-        <source>Fixed Longitude to send on SYSTEM message</source>
-        <extracomment>.QGC.MetaData.Facts[longitudeFixed].longDesc, </extracomment>
-        <translation>Đã sửa kinh độ để gửi trên tin nhắn hệ thống</translation>
+      <extracomment>.QGC.MetaData.Facts[longitudeFixed].longDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Fixed Longitude to send on SYSTEM message</source>
+      <translation type="unfinished">Fixed Longitude to send on SYSTEM message</translation>
     </message>
     <message>
-        <source>Altitude Fixed</source>
-        <extracomment>.QGC.MetaData.Facts[altitudeFixed].shortDesc, </extracomment>
-        <translation>Độ cao cố định</translation>
+      <extracomment>.QGC.MetaData.Facts[altitudeFixed].shortDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Altitude Fixed</source>
+      <translation type="unfinished">Altitude Fixed</translation>
     </message>
     <message>
-        <source>Fixed Altitude to send on SYSTEM message</source>
-        <extracomment>.QGC.MetaData.Facts[altitudeFixed].longDesc, </extracomment>
-        <translation>Đã sửa độ cao để gửi trên tin nhắn hệ thống</translation>
+      <extracomment>.QGC.MetaData.Facts[altitudeFixed].longDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Fixed Altitude to send on SYSTEM message</source>
+      <translation type="unfinished">Fixed Altitude to send on SYSTEM message</translation>
     </message>
     <message>
-        <source>Classification Type</source>
-        <extracomment>.QGC.MetaData.Facts[classificationType].shortDesc, </extracomment>
-        <translation>Loại phân loại</translation>
+      <extracomment>.QGC.MetaData.Facts[classificationType].shortDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Classification Type</source>
+      <translation type="unfinished">Classification Type</translation>
     </message>
     <message>
-        <source>Classification Type of UAS</source>
-        <extracomment>.QGC.MetaData.Facts[classificationType].longDesc, </extracomment>
-        <translation>Loại phân loại của UAS</translation>
+      <extracomment>.QGC.MetaData.Facts[classificationType].longDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Classification Type of UAS</source>
+      <translation type="unfinished">Classification Type of UAS</translation>
     </message>
     <message>
-        <source>Undeclared,EU</source>
-        <extracomment>.QGC.MetaData.Facts[classificationType].enumStrings, </extracomment>
-        <translation>Không được khai báo, EU</translation>
+      <extracomment>.QGC.MetaData.Facts[classificationType].enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Undeclared,EU</source>
+      <translation type="unfinished">Undeclared,EU</translation>
     </message>
     <message>
-        <source>Category</source>
-        <extracomment>.QGC.MetaData.Facts[categoryEU].shortDesc, </extracomment>
-        <translation>Loại</translation>
+      <extracomment>.QGC.MetaData.Facts[categoryEU].shortDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Category</source>
+      <translation type="unfinished">Category</translation>
     </message>
     <message>
-        <source>Category of the UAS in the EU region</source>
-        <extracomment>.QGC.MetaData.Facts[categoryEU].longDesc, </extracomment>
-        <translation>Loại UAS trong khu vực EU</translation>
+      <extracomment>.QGC.MetaData.Facts[categoryEU].longDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Category of the UAS in the EU region</source>
+      <translation type="unfinished">Category of the UAS in the EU region</translation>
     </message>
     <message>
-        <source>Undeclared,Open,Specific,Certified</source>
-        <extracomment>.QGC.MetaData.Facts[categoryEU].enumStrings, </extracomment>
-        <translation>Không được khai báo, mở, cụ thể, được chứng nhận</translation>
+      <extracomment>.QGC.MetaData.Facts[categoryEU].enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Undeclared,Open,Specific,Certified</source>
+      <translation type="unfinished">Undeclared,Open,Specific,Certified</translation>
     </message>
     <message>
-        <source>Class</source>
-        <extracomment>.QGC.MetaData.Facts[classEU].shortDesc, </extracomment>
-        <translation>Lớp học</translation>
+      <extracomment>.QGC.MetaData.Facts[classEU].shortDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Class</source>
+      <translation type="unfinished">Class</translation>
     </message>
     <message>
-        <source>Class of the UAS in the EU region</source>
-        <extracomment>.QGC.MetaData.Facts[classEU].longDesc, </extracomment>
-        <translation>Lớp của UAS trong khu vực EU</translation>
+      <extracomment>.QGC.MetaData.Facts[classEU].longDesc, </extracomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Class of the UAS in the EU region</source>
+      <translation type="unfinished">Class of the UAS in the EU region</translation>
     </message>
     <message>
-        <source>Undeclared,Class 0,Class 1,Class 2,Class 3,Class 4,Class 5,Class 6</source>
-        <extracomment>.QGC.MetaData.Facts[classEU].enumStrings, </extracomment>
-        <translation>Không được khai báo, Lớp 0, Lớp 1, Lớp 2, Lớp 3, Lớp 4, Lớp 5, Lớp 6</translation>
+      <extracomment>.QGC.MetaData.Facts[classEU].enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
+      <source>Undeclared,Class 0,Class 1,Class 2,Class 3,Class 4,Class 5,Class 6</source>
+      <translation type="unfinished">Undeclared,Class 0,Class 1,Class 2,Class 3,Class 4,Class 5,Class 6</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>ADSBVehicleManager.SettingsGroup.json</name>
     <message>
-        <source>Connect to ADSB SBS server</source>
-        <extracomment>.QGC.MetaData.Facts[adsbServerConnectEnabled].shortDesc, </extracomment>
-        <translation>Kết nối với máy chủ ADSB SBS</translation>
+      <extracomment>.QGC.MetaData.Facts[adsbServerConnectEnabled].shortDesc, </extracomment>
+      <location filename="../src/Settings/ADSBVehicleManager.SettingsGroup.json"/>
+      <source>Connect to ADSB SBS server</source>
+      <translation type="unfinished">Connect to ADSB SBS server</translation>
     </message>
     <message>
-        <source>Connect to ADSB SBS-1 server using specified address/port</source>
-        <extracomment>.QGC.MetaData.Facts[adsbServerConnectEnabled].longDesc, </extracomment>
-        <translation>Kết nối với máy chủ ADSB SBS-1 bằng địa chỉ/cổng được chỉ định</translation>
+      <extracomment>.QGC.MetaData.Facts[adsbServerConnectEnabled].longDesc, </extracomment>
+      <location filename="../src/Settings/ADSBVehicleManager.SettingsGroup.json"/>
+      <source>Connect to ADSB SBS-1 server using specified address/port</source>
+      <translation type="unfinished">Connect to ADSB SBS-1 server using specified address/port</translation>
     </message>
     <message>
-        <source>Host address</source>
-        <extracomment>.QGC.MetaData.Facts[adsbServerHostAddress].shortDesc, </extracomment>
-        <translation>Địa chỉ máy chủ</translation>
+      <extracomment>.QGC.MetaData.Facts[adsbServerHostAddress].shortDesc, </extracomment>
+      <location filename="../src/Settings/ADSBVehicleManager.SettingsGroup.json"/>
+      <source>Host address</source>
+      <translation type="unfinished">Host address</translation>
     </message>
     <message>
-        <source>Server port</source>
-        <extracomment>.QGC.MetaData.Facts[adsbServerPort].shortDesc, </extracomment>
-        <translation>Cổng máy chủ</translation>
+      <extracomment>.QGC.MetaData.Facts[adsbServerPort].shortDesc, </extracomment>
+      <location filename="../src/Settings/ADSBVehicleManager.SettingsGroup.json"/>
+      <source>Server port</source>
+      <translation type="unfinished">Server port</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>GimbalController.SettingsGroup.json</name>
     <message>
-        <source>Enable on Screen Camera Control</source>
-        <extracomment>.QGC.MetaData.Facts[EnableOnScreenControl].shortDesc, </extracomment>
-        <translation>Bật điều khiển camera màn hình</translation>
+      <extracomment>.QGC.MetaData.Facts[EnableOnScreenControl].shortDesc, </extracomment>
+      <location filename="../src/Settings/GimbalController.SettingsGroup.json"/>
+      <source>Enable on Screen Camera Control</source>
+      <translation type="unfinished">Enable on Screen Camera Control</translation>
     </message>
     <message>
-        <source>Type of on-screen control</source>
-        <extracomment>.QGC.MetaData.Facts[ControlType].shortDesc, </extracomment>
-        <translation>Loại điều khiển trên màn hình</translation>
+      <extracomment>.QGC.MetaData.Facts[ControlType].shortDesc, </extracomment>
+      <location filename="../src/Settings/GimbalController.SettingsGroup.json"/>
+      <source>Type of on-screen control</source>
+      <translation type="unfinished">Type of on-screen control</translation>
     </message>
     <message>
-        <source>Click to point, click and drag</source>
-        <extracomment>.QGC.MetaData.Facts[ControlType].enumStrings, </extracomment>
-        <translation>Bấm để chỉ, nhấp và kéo</translation>
+      <extracomment>.QGC.MetaData.Facts[ControlType].enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/Settings/GimbalController.SettingsGroup.json"/>
+      <source>Click to point, click and drag</source>
+      <translation type="unfinished">Click to point, click and drag</translation>
     </message>
     <message>
-        <source>Vertical camera field of view</source>
-        <extracomment>.QGC.MetaData.Facts[CameraVFov].shortDesc, </extracomment>
-        <translation>Trường nhìn theo chiều dọc</translation>
+      <extracomment>.QGC.MetaData.Facts[CameraVFov].shortDesc, </extracomment>
+      <location filename="../src/Settings/GimbalController.SettingsGroup.json"/>
+      <source>Vertical camera field of view</source>
+      <translation type="unfinished">Vertical camera field of view</translation>
     </message>
     <message>
-        <source>Horizontal camera field of view</source>
-        <extracomment>.QGC.MetaData.Facts[CameraHFov].shortDesc, </extracomment>
-        <translation>Trường nhìn ngang</translation>
+      <extracomment>.QGC.MetaData.Facts[CameraHFov].shortDesc, </extracomment>
+      <location filename="../src/Settings/GimbalController.SettingsGroup.json"/>
+      <source>Horizontal camera field of view</source>
+      <translation type="unfinished">Horizontal camera field of view</translation>
     </message>
     <message>
-        <source>Maximum gimbal speed on click and drag (deg/sec)</source>
-        <extracomment>.QGC.MetaData.Facts[CameraSlideSpeed].shortDesc, </extracomment>
-        <translation>Tốc độ gimbal tối đa khi nhấp và kéo (DEG/SEC)</translation>
+      <extracomment>.QGC.MetaData.Facts[CameraSlideSpeed].shortDesc, </extracomment>
+      <location filename="../src/Settings/GimbalController.SettingsGroup.json"/>
+      <source>Maximum gimbal speed on click and drag (deg/sec)</source>
+      <translation type="unfinished">Maximum gimbal speed on click and drag (deg/sec)</translation>
     </message>
     <message>
-        <source>Show gimbal Azimuth indicator over vehicle icon in map</source>
-        <extracomment>.QGC.MetaData.Facts[showAzimuthIndicatorOnMap].shortDesc, </extracomment>
-        <translation>Hiển thị chỉ báo Azimuth Gimbal trên biểu tượng xe trong bản đồ</translation>
+      <extracomment>.QGC.MetaData.Facts[showAzimuthIndicatorOnMap].shortDesc, </extracomment>
+      <location filename="../src/Settings/GimbalController.SettingsGroup.json"/>
+      <source>Show gimbal Azimuth indicator over vehicle icon in map</source>
+      <translation type="unfinished">Show gimbal Azimuth indicator over vehicle icon in map</translation>
     </message>
     <message>
-        <source>Show Azimuth instead of local yaw on top toolbar gimbal indicator</source>
-        <extracomment>.QGC.MetaData.Facts[toolbarIndicatorShowAzimuth].shortDesc, </extracomment>
-        <translation>Hiển thị phương vị thay vì ngáp cục bộ trên chỉ báo gimbal thanh công cụ hàng đầu</translation>
+      <extracomment>.QGC.MetaData.Facts[toolbarIndicatorShowAzimuth].shortDesc, </extracomment>
+      <location filename="../src/Settings/GimbalController.SettingsGroup.json"/>
+      <source>Show Azimuth instead of local yaw on top toolbar gimbal indicator</source>
+      <translation type="unfinished">Show Azimuth instead of local yaw on top toolbar gimbal indicator</translation>
     </message>
     <message>
-        <source>Show Azimuth Acquire/release buttons in the gimbal buttons panel</source>
-        <extracomment>.QGC.MetaData.Facts[toolbarIndicatorShowAcquireReleaseControl].shortDesc, </extracomment>
-        <translation>Hiển thị các nút AZIMUTH ACRIRE/REOLLE trong bảng điều khiển Nút Gimbal</translation>
+      <extracomment>.QGC.MetaData.Facts[toolbarIndicatorShowAcquireReleaseControl].shortDesc, </extracomment>
+      <location filename="../src/Settings/GimbalController.SettingsGroup.json"/>
+      <source>Show Azimuth Acquire/release buttons in the gimbal buttons panel</source>
+      <translation type="unfinished">Show Azimuth Acquire/release buttons in the gimbal buttons panel</translation>
     </message>
     <message>
-        <source>Rate used for joystick button control (deg/sec)</source>
-        <extracomment>.QGC.MetaData.Facts[joystickButtonsSpeed].shortDesc, </extracomment>
-        <translation>Tỷ lệ được sử dụng để điều khiển nút điều khiển (DEG/SEC)</translation>
+      <extracomment>.QGC.MetaData.Facts[joystickButtonsSpeed].shortDesc, </extracomment>
+      <location filename="../src/Settings/GimbalController.SettingsGroup.json"/>
+      <source>Rate used for joystick button control (deg/sec)</source>
+      <translation type="unfinished">Rate used for joystick button control (deg/sec)</translation>
     </message>
     <message>
-        <source>When a joystick button is set to gimbal left/right/up/down, it will send this rate when pressed, and it will stop moving when button is released</source>
-        <extracomment>.QGC.MetaData.Facts[joystickButtonsSpeed].longDesc, </extracomment>
-        <translation>Khi nút điều khiển được đặt thành gimbal trái/phải/lên/xuống, nó sẽ gửi tốc độ này khi nhấn và nó sẽ ngừng di chuyển khi nút được phát hành</translation>
+      <extracomment>.QGC.MetaData.Facts[joystickButtonsSpeed].longDesc, </extracomment>
+      <location filename="../src/Settings/GimbalController.SettingsGroup.json"/>
+      <source>When a joystick button is set to gimbal left/right/up/down, it will send this rate when pressed, and it will stop moving when button is released</source>
+      <translation type="unfinished">When a joystick button is set to gimbal left/right/up/down, it will send this rate when pressed, and it will stop moving when button is released</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>PlanView.SettingsGroup.json</name>
     <message>
-        <source>Display the presets tab at start</source>
-        <extracomment>.QGC.MetaData.Facts[displayPresetsTabFirst].shortDesc, </extracomment>
-        <translation>Hiển thị tab cài đặt trước khi bắt đầu</translation>
+      <extracomment>.QGC.MetaData.Facts[displayPresetsTabFirst].shortDesc, </extracomment>
+      <location filename="../src/Settings/PlanView.SettingsGroup.json"/>
+      <source>Display the presets tab at start</source>
+      <translation type="unfinished">Display the presets tab at start</translation>
     </message>
     <message>
-        <source>Show/Hide the mission item status display</source>
-        <extracomment>.QGC.MetaData.Facts[showMissionItemStatus].shortDesc, </extracomment>
-        <translation>Hiển thị/Ẩn hiển thị trạng thái mục nhiệm vụ</translation>
+      <extracomment>.QGC.MetaData.Facts[showMissionItemStatus].shortDesc, </extracomment>
+      <location filename="../src/Settings/PlanView.SettingsGroup.json"/>
+      <source>Show/Hide the mission item status display</source>
+      <translation type="unfinished">Show/Hide the mission item status display</translation>
     </message>
     <message>
-        <source>Allow missions to not require a takeoff item</source>
-        <extracomment>.QGC.MetaData.Facts[takeoffItemNotRequired].shortDesc, </extracomment>
-        <translation>Cho phép các nhiệm vụ không yêu cầu vật phẩm cất cánh</translation>
+      <extracomment>.QGC.MetaData.Facts[takeoffItemNotRequired].shortDesc, </extracomment>
+      <location filename="../src/Settings/PlanView.SettingsGroup.json"/>
+      <source>Allow missions to not require a takeoff item</source>
+      <translation type="unfinished">Allow missions to not require a takeoff item</translation>
     </message>
     <message>
-        <source>Allow configuring multiple landing sequences if the firmware supports it. The first one will be used for the mission, but in the event of an RTL, the one that is closest will be used instead.</source>
-        <extracomment>.QGC.MetaData.Facts[allowMultipleLandingPatterns].shortDesc, </extracomment>
-        <translation>Cho phép định cấu hình nhiều chuỗi hạ cánh nếu phần sụn hỗ trợ nó. Cái đầu tiên sẽ được sử dụng cho nhiệm vụ, nhưng trong trường hợp RTL, cái gần nhất sẽ được sử dụng thay thế.</translation>
+      <extracomment>.QGC.MetaData.Facts[allowMultipleLandingPatterns].shortDesc, </extracomment>
+      <location filename="../src/Settings/PlanView.SettingsGroup.json"/>
+      <source>Allow configuring multiple landing sequences if the firmware supports it. The first one will be used for the mission, but in the event of an RTL, the one that is closest will be used instead.</source>
+      <translation type="unfinished">Allow configuring multiple landing sequences if the firmware supports it. The first one will be used for the mission, but in the event of an RTL, the one that is closest will be used instead.</translation>
     </message>
     <message>
-        <source>Use MAV_CMD_CONDITION_GATE for pattern generation</source>
-        <extracomment>.QGC.MetaData.Facts[useConditionGate].shortDesc, </extracomment>
-        <translation>Sử dụng mav_cmd_condition_gate để tạo mẫu</translation>
+      <extracomment>.QGC.MetaData.Facts[useConditionGate].shortDesc, </extracomment>
+      <location filename="../src/Settings/PlanView.SettingsGroup.json"/>
+      <source>Use MAV_CMD_CONDITION_GATE for pattern generation</source>
+      <translation type="unfinished">Use MAV_CMD_CONDITION_GATE for pattern generation</translation>
     </message>
     <message>
-        <source>Show gimbal yaw visual only when set explicitly for the waypoint</source>
-        <extracomment>.QGC.MetaData.Facts[showGimbalOnlyWhenSet].shortDesc, </extracomment>
-        <translation>Chỉ hiển thị hình ảnh của gimbal khi đặt rõ ràng cho điểm tham số</translation>
+      <extracomment>.QGC.MetaData.Facts[showGimbalOnlyWhenSet].shortDesc, </extracomment>
+      <location filename="../src/Settings/PlanView.SettingsGroup.json"/>
+      <source>Show gimbal yaw visual only when set explicitly for the waypoint</source>
+      <translation type="unfinished">Show gimbal yaw visual only when set explicitly for the waypoint</translation>
     </message>
     <message>
-        <source>Amount of distance required for vehicle to complete a transition</source>
-        <extracomment>.QGC.MetaData.Facts[vtolTransitionDistance].shortDesc, </extracomment>
-        <translation>Lượng khoảng cách cần thiết cho xe để hoàn thành quá trình chuyển đổi</translation>
+      <extracomment>.QGC.MetaData.Facts[vtolTransitionDistance].shortDesc, </extracomment>
+      <location filename="../src/Settings/PlanView.SettingsGroup.json"/>
+      <source>Amount of distance required for vehicle to complete a transition</source>
+      <translation type="unfinished">Amount of distance required for vehicle to complete a transition</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>DistanceSensorFact.json</name>
     <message>
-        <source>Forward</source>
-        <extracomment>.QGC.MetaData.Facts[rotationNone].shortDesc, </extracomment>
-        <translation>Phía trước</translation>
+      <extracomment>.QGC.MetaData.Facts[rotationNone].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/DistanceSensorFact.json"/>
+      <source>Forward</source>
+      <translation type="unfinished">Forward</translation>
     </message>
     <message>
-        <source>Forward/Right</source>
-        <extracomment>.QGC.MetaData.Facts[rotationYaw45].shortDesc, </extracomment>
-        <translation>Chuyển tiếp/đúng</translation>
+      <extracomment>.QGC.MetaData.Facts[rotationYaw45].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/DistanceSensorFact.json"/>
+      <source>Forward/Right</source>
+      <translation type="unfinished">Forward/Right</translation>
     </message>
     <message>
-        <source>Right</source>
-        <extracomment>.QGC.MetaData.Facts[rotationYaw90].shortDesc, </extracomment>
-        <translation>Phải</translation>
+      <extracomment>.QGC.MetaData.Facts[rotationYaw90].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/DistanceSensorFact.json"/>
+      <source>Right</source>
+      <translation type="unfinished">Right</translation>
     </message>
     <message>
-        <source>Rear/Right</source>
-        <extracomment>.QGC.MetaData.Facts[rotationYaw135].shortDesc, </extracomment>
-        <translation>Phía sau/phải</translation>
+      <extracomment>.QGC.MetaData.Facts[rotationYaw135].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/DistanceSensorFact.json"/>
+      <source>Rear/Right</source>
+      <translation type="unfinished">Rear/Right</translation>
     </message>
     <message>
-        <source>Rear</source>
-        <extracomment>.QGC.MetaData.Facts[rotationYaw180].shortDesc, </extracomment>
-        <translation>Ở phía sau</translation>
+      <extracomment>.QGC.MetaData.Facts[rotationYaw180].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/DistanceSensorFact.json"/>
+      <source>Rear</source>
+      <translation type="unfinished">Rear</translation>
     </message>
     <message>
-        <source>Rear/Left</source>
-        <extracomment>.QGC.MetaData.Facts[rotationYaw225].shortDesc, </extracomment>
-        <translation>Phía sau/trái</translation>
+      <extracomment>.QGC.MetaData.Facts[rotationYaw225].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/DistanceSensorFact.json"/>
+      <source>Rear/Left</source>
+      <translation type="unfinished">Rear/Left</translation>
     </message>
     <message>
-        <source>Left</source>
-        <extracomment>.QGC.MetaData.Facts[rotationYaw270].shortDesc, </extracomment>
-        <translation>Bên trái</translation>
+      <extracomment>.QGC.MetaData.Facts[rotationYaw270].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/DistanceSensorFact.json"/>
+      <source>Left</source>
+      <translation type="unfinished">Left</translation>
     </message>
     <message>
-        <source>Forward/Left</source>
-        <extracomment>.QGC.MetaData.Facts[rotationYaw315].shortDesc, </extracomment>
-        <translation>Chuyển tiếp/trái</translation>
+      <extracomment>.QGC.MetaData.Facts[rotationYaw315].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/DistanceSensorFact.json"/>
+      <source>Forward/Left</source>
+      <translation type="unfinished">Forward/Left</translation>
     </message>
     <message>
-        <source>Up</source>
-        <extracomment>.QGC.MetaData.Facts[rotationPitch90].shortDesc, </extracomment>
-        <translation>Hướng lên</translation>
+      <extracomment>.QGC.MetaData.Facts[rotationPitch90].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/DistanceSensorFact.json"/>
+      <source>Up</source>
+      <translation type="unfinished">Up</translation>
     </message>
     <message>
-        <source>Down</source>
-        <extracomment>.QGC.MetaData.Facts[rotationPitch270].shortDesc, </extracomment>
-        <translation>Xuống</translation>
+      <extracomment>.QGC.MetaData.Facts[rotationPitch270].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/DistanceSensorFact.json"/>
+      <source>Down</source>
+      <translation type="unfinished">Down</translation>
     </message>
     <message>
-        <source>Minimum distance sensor can detect</source>
-        <extracomment>.QGC.MetaData.Facts[minDistance].shortDesc, </extracomment>
-        <translation>Cảm biến khoảng cách tối thiểu có thể phát hiện</translation>
+      <extracomment>.QGC.MetaData.Facts[minDistance].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/DistanceSensorFact.json"/>
+      <source>Minimum distance sensor can detect</source>
+      <translation type="unfinished">Minimum distance sensor can detect</translation>
     </message>
     <message>
-        <source>Maximum distance sensor can detect</source>
-        <extracomment>.QGC.MetaData.Facts[maxDistance].shortDesc, </extracomment>
-        <translation>Cảm biến khoảng cách tối đa có thể phát hiện</translation>
+      <extracomment>.QGC.MetaData.Facts[maxDistance].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/DistanceSensorFact.json"/>
+      <source>Maximum distance sensor can detect</source>
+      <translation type="unfinished">Maximum distance sensor can detect</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>SetpointFact.json</name>
     <message>
-        <source>Roll Setpoint</source>
-        <extracomment>.QGC.MetaData.Facts[roll].shortDesc, </extracomment>
-        <translation>Cuộn điểm đặt</translation>
+      <extracomment>.QGC.MetaData.Facts[roll].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/SetpointFact.json"/>
+      <source>Roll Setpoint</source>
+      <translation type="unfinished">Roll Setpoint</translation>
     </message>
     <message>
-        <source>Pitch Setpoint</source>
-        <extracomment>.QGC.MetaData.Facts[pitch].shortDesc, </extracomment>
-        <translation>Điểm đặt sân</translation>
+      <extracomment>.QGC.MetaData.Facts[pitch].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/SetpointFact.json"/>
+      <source>Pitch Setpoint</source>
+      <translation type="unfinished">Pitch Setpoint</translation>
     </message>
     <message>
-        <source>Yaw Setpoint</source>
-        <extracomment>.QGC.MetaData.Facts[yaw].shortDesc, </extracomment>
-        <translation>Yaw SetPoint</translation>
+      <extracomment>.QGC.MetaData.Facts[yaw].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/SetpointFact.json"/>
+      <source>Yaw Setpoint</source>
+      <translation type="unfinished">Yaw Setpoint</translation>
     </message>
     <message>
-        <source>Roll Rate Setpoint</source>
-        <extracomment>.QGC.MetaData.Facts[rollRate].shortDesc, </extracomment>
-        <translation>Điểm đặt điểm đặt</translation>
+      <extracomment>.QGC.MetaData.Facts[rollRate].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/SetpointFact.json"/>
+      <source>Roll Rate Setpoint</source>
+      <translation type="unfinished">Roll Rate Setpoint</translation>
     </message>
     <message>
-        <source>Pitch Rate Setpoint</source>
-        <extracomment>.QGC.MetaData.Facts[pitchRate].shortDesc, </extracomment>
-        <translation>Điểm đặt điểm sân</translation>
+      <extracomment>.QGC.MetaData.Facts[pitchRate].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/SetpointFact.json"/>
+      <source>Pitch Rate Setpoint</source>
+      <translation type="unfinished">Pitch Rate Setpoint</translation>
     </message>
     <message>
-        <source>Yaw Rate Setpoint</source>
-        <extracomment>.QGC.MetaData.Facts[yawRate].shortDesc, </extracomment>
-        <translation>Điểm đặt ra điểm đặt</translation>
+      <extracomment>.QGC.MetaData.Facts[yawRate].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/SetpointFact.json"/>
+      <source>Yaw Rate Setpoint</source>
+      <translation type="unfinished">Yaw Rate Setpoint</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>BatteryFact.json</name>
     <message>
-        <source>Battery Id</source>
-        <extracomment>.QGC.MetaData.Facts[id].shortDesc, </extracomment>
-        <translation>ID pin</translation>
+      <extracomment>.QGC.MetaData.Facts[id].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/BatteryFact.json"/>
+      <source>Battery Id</source>
+      <translation type="unfinished">Battery Id</translation>
     </message>
     <message>
-        <source>Battery Function</source>
-        <extracomment>.QGC.MetaData.Facts[batteryFunction].shortDesc, </extracomment>
-        <translation>Chức năng pin</translation>
+      <extracomment>.QGC.MetaData.Facts[batteryFunction].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/BatteryFact.json"/>
+      <source>Battery Function</source>
+      <translation type="unfinished">Battery Function</translation>
     </message>
     <message>
-        <source>n/a,All Flight Systems,Propulsion,Avionics,Payload</source>
-        <extracomment>.QGC.MetaData.Facts[batteryFunction].enumStrings, </extracomment>
-        <translation>N/A, tất cả các hệ thống bay, lực đẩy, hệ thống điện tử, tải trọng</translation>
+      <extracomment>.QGC.MetaData.Facts[batteryFunction].enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/Vehicle/FactGroups/BatteryFact.json"/>
+      <source>n/a,All Flight Systems,Propulsion,Avionics,Payload</source>
+      <translation type="unfinished">n/a,All Flight Systems,Propulsion,Avionics,Payload</translation>
     </message>
     <message>
-        <source>Battery Type</source>
-        <extracomment>.QGC.MetaData.Facts[batteryType].shortDesc, </extracomment>
-        <translation>Loại pin</translation>
+      <extracomment>.QGC.MetaData.Facts[batteryType].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/BatteryFact.json"/>
+      <source>Battery Type</source>
+      <translation type="unfinished">Battery Type</translation>
     </message>
     <message>
-        <source>n/a,LIPO,LIFE,LION,NIMH</source>
-        <extracomment>.QGC.MetaData.Facts[batteryType].enumStrings, </extracomment>
-        <translation>N/A, Lipo, Life, Sư tử, Nimh</translation>
+      <extracomment>.QGC.MetaData.Facts[batteryType].enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/Vehicle/FactGroups/BatteryFact.json"/>
+      <source>n/a,LIPO,LIFE,LION,NIMH</source>
+      <translation type="unfinished">n/a,LIPO,LIFE,LION,NIMH</translation>
     </message>
     <message>
-        <source>Voltage</source>
-        <extracomment>.QGC.MetaData.Facts[voltage].shortDesc, </extracomment>
-        <translation>Điện áp</translation>
+      <extracomment>.QGC.MetaData.Facts[voltage].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/BatteryFact.json"/>
+      <source>Voltage</source>
+      <translation type="unfinished">Voltage</translation>
     </message>
     <message>
-        <source>Percent</source>
-        <extracomment>.QGC.MetaData.Facts[percentRemaining].shortDesc, </extracomment>
-        <translation>Phần trăm</translation>
+      <extracomment>.QGC.MetaData.Facts[percentRemaining].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/BatteryFact.json"/>
+      <source>Percent</source>
+      <translation type="unfinished">Percent</translation>
     </message>
     <message>
-        <source>Consumed</source>
-        <extracomment>.QGC.MetaData.Facts[mahConsumed].shortDesc, </extracomment>
-        <translation>Tiêu thụ</translation>
+      <extracomment>.QGC.MetaData.Facts[mahConsumed].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/BatteryFact.json"/>
+      <source>Consumed</source>
+      <translation type="unfinished">Consumed</translation>
     </message>
     <message>
-        <source>Current</source>
-        <extracomment>.QGC.MetaData.Facts[current].shortDesc, </extracomment>
-        <translation>Hiện hành</translation>
+      <extracomment>.QGC.MetaData.Facts[current].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/BatteryFact.json"/>
+      <source>Current</source>
+      <translation type="unfinished">Current</translation>
     </message>
     <message>
-        <source>Temperature</source>
-        <extracomment>.QGC.MetaData.Facts[temperature].shortDesc, </extracomment>
-        <translation>Nhiệt độ</translation>
+      <extracomment>.QGC.MetaData.Facts[temperature].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/BatteryFact.json"/>
+      <source>Temperature</source>
+      <translation type="unfinished">Temperature</translation>
     </message>
     <message>
-        <source>Watts</source>
-        <extracomment>.QGC.MetaData.Facts[instantPower].shortDesc, </extracomment>
-        <translation>Watts</translation>
+      <extracomment>.QGC.MetaData.Facts[instantPower].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/BatteryFact.json"/>
+      <source>Watts</source>
+      <translation type="unfinished">Watts</translation>
     </message>
     <message>
-        <source>Time Remaining</source>
-        <extracomment>.QGC.MetaData.Facts[timeRemaining].shortDesc, .QGC.MetaData.Facts[timeRemainingStr].shortDesc, </extracomment>
-        <translation>Thời gian còn lại</translation>
+      <extracomment>.QGC.MetaData.Facts[timeRemaining].shortDesc, .QGC.MetaData.Facts[timeRemainingStr].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/BatteryFact.json"/>
+      <source>Time Remaining</source>
+      <translation type="unfinished">Time Remaining</translation>
     </message>
     <message>
-        <source>Charge State</source>
-        <extracomment>.QGC.MetaData.Facts[chargeState].shortDesc, </extracomment>
-        <translation>Trạng thái tính phí</translation>
+      <extracomment>.QGC.MetaData.Facts[chargeState].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/BatteryFact.json"/>
+      <source>Charge State</source>
+      <translation type="unfinished">Charge State</translation>
     </message>
     <message>
-        <source>n/a,Ok,Low,Critical,Emergency,Failed,Unhealthy,Charging</source>
-        <extracomment>.QGC.MetaData.Facts[chargeState].enumStrings, </extracomment>
-        <translation>n/a, ok, thấp, quan trọng, khẩn cấp, thất bại, không lành mạnh, sạc</translation>
+      <extracomment>.QGC.MetaData.Facts[chargeState].enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/Vehicle/FactGroups/BatteryFact.json"/>
+      <source>n/a,Ok,Low,Critical,Emergency,Failed,Unhealthy,Charging</source>
+      <translation type="unfinished">n/a,Ok,Low,Critical,Emergency,Failed,Unhealthy,Charging</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>GeneratorFact.json</name>
     <message>
-        <source>Status</source>
-        <extracomment>.QGC.MetaData.Facts[status].shortDesc, </extracomment>
-        <translation>Trạng thái</translation>
+      <extracomment>.QGC.MetaData.Facts[status].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/GeneratorFact.json"/>
+      <source>Status</source>
+      <translation type="unfinished">Status</translation>
     </message>
     <message>
-        <source>Generator Speed</source>
-        <extracomment>.QGC.MetaData.Facts[genSpeed].shortDesc, </extracomment>
-        <translation>Tốc độ máy phát</translation>
+      <extracomment>.QGC.MetaData.Facts[genSpeed].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/GeneratorFact.json"/>
+      <source>Generator Speed</source>
+      <translation type="unfinished">Generator Speed</translation>
     </message>
     <message>
-        <source>Battery Current</source>
-        <extracomment>.QGC.MetaData.Facts[batteryCurrent].shortDesc, </extracomment>
-        <translation>Dòng pin</translation>
+      <extracomment>.QGC.MetaData.Facts[batteryCurrent].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/GeneratorFact.json"/>
+      <source>Battery Current</source>
+      <translation type="unfinished">Battery Current</translation>
     </message>
     <message>
-        <source>Load Current</source>
-        <extracomment>.QGC.MetaData.Facts[loadCurrent].shortDesc, </extracomment>
-        <translation>Tải hiện tại</translation>
+      <extracomment>.QGC.MetaData.Facts[loadCurrent].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/GeneratorFact.json"/>
+      <source>Load Current</source>
+      <translation type="unfinished">Load Current</translation>
     </message>
     <message>
-        <source>Power Generated</source>
-        <extracomment>.QGC.MetaData.Facts[powerGenerated].shortDesc, </extracomment>
-        <translation>Năng lượng được tạo ra</translation>
+      <extracomment>.QGC.MetaData.Facts[powerGenerated].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/GeneratorFact.json"/>
+      <source>Power Generated</source>
+      <translation type="unfinished">Power Generated</translation>
     </message>
     <message>
-        <source>Bus Voltage</source>
-        <extracomment>.QGC.MetaData.Facts[busVoltage].shortDesc, </extracomment>
-        <translation>Điện áp xe buýt</translation>
+      <extracomment>.QGC.MetaData.Facts[busVoltage].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/GeneratorFact.json"/>
+      <source>Bus Voltage</source>
+      <translation type="unfinished">Bus Voltage</translation>
     </message>
     <message>
-        <source>Rectifier Temperature</source>
-        <extracomment>.QGC.MetaData.Facts[rectifierTemp].shortDesc, </extracomment>
-        <translation>Nhiệt độ chỉnh lưu</translation>
+      <extracomment>.QGC.MetaData.Facts[rectifierTemp].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/GeneratorFact.json"/>
+      <source>Rectifier Temperature</source>
+      <translation type="unfinished">Rectifier Temperature</translation>
     </message>
     <message>
-        <source>Battery Current Setpoint</source>
-        <extracomment>.QGC.MetaData.Facts[batCurrentSetpoint].shortDesc, </extracomment>
-        <translation>Pin hiện tại điểm đặt</translation>
+      <extracomment>.QGC.MetaData.Facts[batCurrentSetpoint].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/GeneratorFact.json"/>
+      <source>Battery Current Setpoint</source>
+      <translation type="unfinished">Battery Current Setpoint</translation>
     </message>
     <message>
-        <source>Generator Temperature</source>
-        <extracomment>.QGC.MetaData.Facts[genTemp].shortDesc, </extracomment>
-        <translation>Nhiệt độ máy phát</translation>
+      <extracomment>.QGC.MetaData.Facts[genTemp].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/GeneratorFact.json"/>
+      <source>Generator Temperature</source>
+      <translation type="unfinished">Generator Temperature</translation>
     </message>
     <message>
-        <source>runtime</source>
-        <extracomment>.QGC.MetaData.Facts[runtime].shortDesc, </extracomment>
-        <translation>thời gian chạy</translation>
+      <extracomment>.QGC.MetaData.Facts[runtime].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/GeneratorFact.json"/>
+      <source>runtime</source>
+      <translation type="unfinished">runtime</translation>
     </message>
     <message>
-        <source>Time until Maintenance</source>
-        <extracomment>.QGC.MetaData.Facts[timeMaintenance].shortDesc, </extracomment>
-        <translation>Thời gian cho đến khi bảo trì</translation>
+      <extracomment>.QGC.MetaData.Facts[timeMaintenance].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/GeneratorFact.json"/>
+      <source>Time until Maintenance</source>
+      <translation type="unfinished">Time until Maintenance</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>GPSFact.json</name>
     <message>
-        <source>Latitude</source>
-        <extracomment>.QGC.MetaData.Facts[lat].shortDesc, </extracomment>
-        <translation>Vĩ độ</translation>
+      <extracomment>.QGC.MetaData.Facts[lat].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/GPSFact.json"/>
+      <source>Latitude</source>
+      <translation type="unfinished">Latitude</translation>
     </message>
     <message>
-        <source>Longitude</source>
-        <extracomment>.QGC.MetaData.Facts[lon].shortDesc, </extracomment>
-        <translation>Kinh độ</translation>
+      <extracomment>.QGC.MetaData.Facts[lon].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/GPSFact.json"/>
+      <source>Longitude</source>
+      <translation type="unfinished">Longitude</translation>
     </message>
     <message>
-        <source>MGRS Position</source>
-        <extracomment>.QGC.MetaData.Facts[mgrs].shortDesc, </extracomment>
-        <translation>Vị trí MGRS</translation>
+      <extracomment>.QGC.MetaData.Facts[mgrs].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/GPSFact.json"/>
+      <source>MGRS Position</source>
+      <translation type="unfinished">MGRS Position</translation>
     </message>
     <message>
-        <source>HDOP</source>
-        <extracomment>.QGC.MetaData.Facts[hdop].shortDesc, </extracomment>
-        <translation>Hdop</translation>
+      <extracomment>.QGC.MetaData.Facts[hdop].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/GPSFact.json"/>
+      <source>HDOP</source>
+      <translation type="unfinished">HDOP</translation>
     </message>
     <message>
-        <source>VDOP</source>
-        <extracomment>.QGC.MetaData.Facts[vdop].shortDesc, </extracomment>
-        <translation>Vdop</translation>
+      <extracomment>.QGC.MetaData.Facts[vdop].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/GPSFact.json"/>
+      <source>VDOP</source>
+      <translation type="unfinished">VDOP</translation>
     </message>
     <message>
-        <source>Course Over Ground</source>
-        <extracomment>.QGC.MetaData.Facts[courseOverGround].shortDesc, </extracomment>
-        <translation>Khóa học trên mặt đất</translation>
+      <extracomment>.QGC.MetaData.Facts[courseOverGround].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/GPSFact.json"/>
+      <source>Course Over Ground</source>
+      <translation type="unfinished">Course Over Ground</translation>
     </message>
     <message>
-        <source>GPS Lock</source>
-        <extracomment>.QGC.MetaData.Facts[lock].shortDesc, </extracomment>
-        <translation>Khóa GPS</translation>
+      <extracomment>.QGC.MetaData.Facts[lock].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/GPSFact.json"/>
+      <source>GPS Lock</source>
+      <translation type="unfinished">GPS Lock</translation>
     </message>
     <message>
-        <source>None,None,2D Lock,3D Lock,3D DGPS Lock,3D RTK GPS Lock (float),3D RTK GPS Lock (fixed),Static (fixed)</source>
-        <extracomment>.QGC.MetaData.Facts[lock].enumStrings, </extracomment>
-        <translation>Không có, Không, Khóa 2D, Khóa 3D, Khóa DGPS 3D, Khóa 3D RTK GPS (Float), Khóa GPS RTK 3D (đã sửa), Tĩnh (đã sửa)</translation>
+      <extracomment>.QGC.MetaData.Facts[lock].enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/Vehicle/FactGroups/GPSFact.json"/>
+      <source>None,None,2D Lock,3D Lock,3D DGPS Lock,3D RTK GPS Lock (float),3D RTK GPS Lock (fixed),Static (fixed)</source>
+      <translation type="unfinished">None,None,2D Lock,3D Lock,3D DGPS Lock,3D RTK GPS Lock (float),3D RTK GPS Lock (fixed),Static (fixed)</translation>
     </message>
     <message>
-        <source>Sat Count</source>
-        <extracomment>.QGC.MetaData.Facts[count].shortDesc, </extracomment>
-        <translation>Sat Count</translation>
+      <extracomment>.QGC.MetaData.Facts[count].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/GPSFact.json"/>
+      <source>Sat Count</source>
+      <translation type="unfinished">Sat Count</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>VibrationFact.json</name>
     <message>
-        <source>Vibe xAxis</source>
-        <extracomment>.QGC.MetaData.Facts[xAxis].shortDesc, </extracomment>
-        <translation>Vibe Xaxis</translation>
+      <extracomment>.QGC.MetaData.Facts[xAxis].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/VibrationFact.json"/>
+      <source>Vibe xAxis</source>
+      <translation type="unfinished">Vibe xAxis</translation>
     </message>
     <message>
-        <source>Vibe yAxis</source>
-        <extracomment>.QGC.MetaData.Facts[yAxis].shortDesc, </extracomment>
-        <translation>Vibe Yaxis</translation>
+      <extracomment>.QGC.MetaData.Facts[yAxis].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/VibrationFact.json"/>
+      <source>Vibe yAxis</source>
+      <translation type="unfinished">Vibe yAxis</translation>
     </message>
     <message>
-        <source>Vibe zAxis</source>
-        <extracomment>.QGC.MetaData.Facts[zAxis].shortDesc, </extracomment>
-        <translation>Vibe Zaxis</translation>
+      <extracomment>.QGC.MetaData.Facts[zAxis].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/VibrationFact.json"/>
+      <source>Vibe zAxis</source>
+      <translation type="unfinished">Vibe zAxis</translation>
     </message>
     <message>
-        <source>Clip Count (1)</source>
-        <extracomment>.QGC.MetaData.Facts[clipCount1].shortDesc, </extracomment>
-        <translation>Số lượng clip (1)</translation>
+      <extracomment>.QGC.MetaData.Facts[clipCount1].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/VibrationFact.json"/>
+      <source>Clip Count (1)</source>
+      <translation type="unfinished">Clip Count (1)</translation>
     </message>
     <message>
-        <source>Clip Count (2)</source>
-        <extracomment>.QGC.MetaData.Facts[clipCount2].shortDesc, </extracomment>
-        <translation>Số lượng clip (2)</translation>
+      <extracomment>.QGC.MetaData.Facts[clipCount2].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/VibrationFact.json"/>
+      <source>Clip Count (2)</source>
+      <translation type="unfinished">Clip Count (2)</translation>
     </message>
     <message>
-        <source>Clip Count (3)</source>
-        <extracomment>.QGC.MetaData.Facts[clipCount3].shortDesc, </extracomment>
-        <translation>Số lượng clip (3)</translation>
+      <extracomment>.QGC.MetaData.Facts[clipCount3].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/VibrationFact.json"/>
+      <source>Clip Count (3)</source>
+      <translation type="unfinished">Clip Count (3)</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>WindFact.json</name>
     <message>
-        <source>Wind Direction</source>
-        <extracomment>.QGC.MetaData.Facts[direction].shortDesc, </extracomment>
-        <translation>Hướng gió</translation>
+      <extracomment>.QGC.MetaData.Facts[direction].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/WindFact.json"/>
+      <source>Wind Direction</source>
+      <translation type="unfinished">Wind Direction</translation>
     </message>
     <message>
-        <source>Wind Spd</source>
-        <extracomment>.QGC.MetaData.Facts[speed].shortDesc, </extracomment>
-        <translation>SPD gió</translation>
+      <extracomment>.QGC.MetaData.Facts[speed].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/WindFact.json"/>
+      <source>Wind Spd</source>
+      <translation type="unfinished">Wind Spd</translation>
     </message>
     <message>
-        <source>Wind Spd (vert)</source>
-        <extracomment>.QGC.MetaData.Facts[verticalSpeed].shortDesc, </extracomment>
-        <translation>SPD gió (đỉnh)</translation>
+      <extracomment>.QGC.MetaData.Facts[verticalSpeed].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/WindFact.json"/>
+      <source>Wind Spd (vert)</source>
+      <translation type="unfinished">Wind Spd (vert)</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>EscStatusFactGroup.json</name>
     <message>
-        <source>Index Of The First ESC In This Message</source>
-        <extracomment>.QGC.MetaData.Facts[index].shortDesc, </extracomment>
-        <translation>Chỉ mục của ESC đầu tiên trong thông báo này</translation>
+      <extracomment>.QGC.MetaData.Facts[index].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EscStatusFactGroup.json"/>
+      <source>Index Of The First ESC In This Message</source>
+      <translation type="unfinished">Index Of The First ESC In This Message</translation>
     </message>
     <message>
-        <source>Rotation Per Minute</source>
-        <extracomment>.QGC.MetaData.Facts[rpmFirst].shortDesc, .QGC.MetaData.Facts[rpmSecond].shortDesc, .QGC.MetaData.Facts[rpmThird].shortDesc, .QGC.MetaData.Facts[rpmFourth].shortDesc, </extracomment>
-        <translation>Vòng quay mỗi phút</translation>
+      <extracomment>.QGC.MetaData.Facts[rpmFirst].shortDesc, .QGC.MetaData.Facts[rpmSecond].shortDesc, .QGC.MetaData.Facts[rpmThird].shortDesc, .QGC.MetaData.Facts[rpmFourth].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EscStatusFactGroup.json"/>
+      <source>Rotation Per Minute</source>
+      <translation type="unfinished">Rotation Per Minute</translation>
     </message>
     <message>
-        <source>Current</source>
-        <extracomment>.QGC.MetaData.Facts[currentFirst].shortDesc, .QGC.MetaData.Facts[currentSecond].shortDesc, .QGC.MetaData.Facts[currentThird].shortDesc, .QGC.MetaData.Facts[currentFourth].shortDesc, </extracomment>
-        <translation>Hiện hành</translation>
+      <extracomment>.QGC.MetaData.Facts[currentFirst].shortDesc, .QGC.MetaData.Facts[currentSecond].shortDesc, .QGC.MetaData.Facts[currentThird].shortDesc, .QGC.MetaData.Facts[currentFourth].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EscStatusFactGroup.json"/>
+      <source>Current</source>
+      <translation type="unfinished">Current</translation>
     </message>
     <message>
-        <source>Voltage</source>
-        <extracomment>.QGC.MetaData.Facts[voltageFirst].shortDesc, .QGC.MetaData.Facts[voltageSecond].shortDesc, .QGC.MetaData.Facts[voltageThird].shortDesc, .QGC.MetaData.Facts[voltageFourth].shortDesc, </extracomment>
-        <translation>Điện áp</translation>
+      <extracomment>.QGC.MetaData.Facts[voltageFirst].shortDesc, .QGC.MetaData.Facts[voltageSecond].shortDesc, .QGC.MetaData.Facts[voltageThird].shortDesc, .QGC.MetaData.Facts[voltageFourth].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EscStatusFactGroup.json"/>
+      <source>Voltage</source>
+      <translation type="unfinished">Voltage</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>TerrainFactGroup.json</name>
     <message>
-        <source>Blocks Pending</source>
-        <extracomment>.QGC.MetaData.Facts[blocksPending].shortDesc, </extracomment>
-        <translation>Khối đang chờ xử lý</translation>
+      <extracomment>.QGC.MetaData.Facts[blocksPending].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/TerrainFactGroup.json"/>
+      <source>Blocks Pending</source>
+      <translation type="unfinished">Blocks Pending</translation>
     </message>
     <message>
-        <source>Blocks Loaded</source>
-        <extracomment>.QGC.MetaData.Facts[blocksLoaded].shortDesc, </extracomment>
-        <translation>Khối được tải</translation>
+      <extracomment>.QGC.MetaData.Facts[blocksLoaded].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/TerrainFactGroup.json"/>
+      <source>Blocks Loaded</source>
+      <translation type="unfinished">Blocks Loaded</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>EFIFact.json</name>
     <message>
-        <source>Health</source>
-        <extracomment>.QGC.MetaData.Facts[health].shortDesc, </extracomment>
-        <translation>Sức khỏe</translation>
+      <extracomment>.QGC.MetaData.Facts[health].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EFIFact.json"/>
+      <source>Health</source>
+      <translation type="unfinished">Health</translation>
     </message>
     <message>
-        <source>Ecu Index</source>
-        <extracomment>.QGC.MetaData.Facts[ecuIndex].shortDesc, </extracomment>
-        <translation>Chỉ số ECU</translation>
+      <extracomment>.QGC.MetaData.Facts[ecuIndex].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EFIFact.json"/>
+      <source>Ecu Index</source>
+      <translation type="unfinished">Ecu Index</translation>
     </message>
     <message>
-        <source>Rpm</source>
-        <extracomment>.QGC.MetaData.Facts[rpm].shortDesc, </extracomment>
-        <translation>Vòng / phút</translation>
+      <extracomment>.QGC.MetaData.Facts[rpm].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EFIFact.json"/>
+      <source>Rpm</source>
+      <translation type="unfinished">Rpm</translation>
     </message>
     <message>
-        <source>Fuel Consumed</source>
-        <extracomment>.QGC.MetaData.Facts[fuelConsumed].shortDesc, </extracomment>
-        <translation>Sử dụng nhiên liệu</translation>
+      <extracomment>.QGC.MetaData.Facts[fuelConsumed].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EFIFact.json"/>
+      <source>Fuel Consumed</source>
+      <translation type="unfinished">Fuel Consumed</translation>
     </message>
     <message>
-        <source>Fuel Flow</source>
-        <extracomment>.QGC.MetaData.Facts[fuelFlow].shortDesc, </extracomment>
-        <translation>Lưu lượng nhiên liệu</translation>
+      <extracomment>.QGC.MetaData.Facts[fuelFlow].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EFIFact.json"/>
+      <source>Fuel Flow</source>
+      <translation type="unfinished">Fuel Flow</translation>
     </message>
     <message>
-        <source>Engine Load</source>
-        <extracomment>.QGC.MetaData.Facts[engineLoad].shortDesc, </extracomment>
-        <translation>Tải động cơ</translation>
+      <extracomment>.QGC.MetaData.Facts[engineLoad].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EFIFact.json"/>
+      <source>Engine Load</source>
+      <translation type="unfinished">Engine Load</translation>
     </message>
     <message>
-        <source>Throttle Position</source>
-        <extracomment>.QGC.MetaData.Facts[throttlePos].shortDesc, </extracomment>
-        <translation>Vị trí bướm ga</translation>
+      <extracomment>.QGC.MetaData.Facts[throttlePos].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EFIFact.json"/>
+      <source>Throttle Position</source>
+      <translation type="unfinished">Throttle Position</translation>
     </message>
     <message>
-        <source>Spark dwell time</source>
-        <extracomment>.QGC.MetaData.Facts[sparkTime].shortDesc, </extracomment>
-        <translation>Tia lửa thời gian</translation>
+      <extracomment>.QGC.MetaData.Facts[sparkTime].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EFIFact.json"/>
+      <source>Spark dwell time</source>
+      <translation type="unfinished">Spark dwell time</translation>
     </message>
     <message>
-        <source>BarometricPressure</source>
-        <extracomment>.QGC.MetaData.Facts[baroPress].shortDesc, </extracomment>
-        <translation>Áp dụng áp bức</translation>
+      <extracomment>.QGC.MetaData.Facts[baroPress].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EFIFact.json"/>
+      <source>BarometricPressure</source>
+      <translation type="unfinished">BarometricPressure</translation>
     </message>
     <message>
-        <source>Intake mainfold pressure</source>
-        <extracomment>.QGC.MetaData.Facts[intakePress].shortDesc, </extracomment>
-        <translation>Lượng áp lực chính</translation>
+      <extracomment>.QGC.MetaData.Facts[intakePress].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EFIFact.json"/>
+      <source>Intake mainfold pressure</source>
+      <translation type="unfinished">Intake mainfold pressure</translation>
     </message>
     <message>
-        <source>Intake mainfold temperature</source>
-        <extracomment>.QGC.MetaData.Facts[intakeTemp].shortDesc, </extracomment>
-        <translation>Lượng nhiệt độ chính</translation>
+      <extracomment>.QGC.MetaData.Facts[intakeTemp].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EFIFact.json"/>
+      <source>Intake mainfold temperature</source>
+      <translation type="unfinished">Intake mainfold temperature</translation>
     </message>
     <message>
-        <source>Cylinder head temperature</source>
-        <extracomment>.QGC.MetaData.Facts[cylinderTemp].shortDesc, </extracomment>
-        <translation>Nhiệt độ đầu xi lanh</translation>
+      <extracomment>.QGC.MetaData.Facts[cylinderTemp].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EFIFact.json"/>
+      <source>Cylinder head temperature</source>
+      <translation type="unfinished">Cylinder head temperature</translation>
     </message>
     <message>
-        <source>Ignition Timing</source>
-        <extracomment>.QGC.MetaData.Facts[ignTime].shortDesc, </extracomment>
-        <translation>Thời gian đánh lửa</translation>
+      <extracomment>.QGC.MetaData.Facts[ignTime].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EFIFact.json"/>
+      <source>Ignition Timing</source>
+      <translation type="unfinished">Ignition Timing</translation>
     </message>
     <message>
-        <source>Injection Time</source>
-        <extracomment>.QGC.MetaData.Facts[injTime].shortDesc, </extracomment>
-        <translation>Thời gian tiêm</translation>
+      <extracomment>.QGC.MetaData.Facts[injTime].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EFIFact.json"/>
+      <source>Injection Time</source>
+      <translation type="unfinished">Injection Time</translation>
     </message>
     <message>
-        <source>Exhaust gas Temperature</source>
-        <extracomment>.QGC.MetaData.Facts[exGasTemp].shortDesc, </extracomment>
-        <translation>Nhiệt độ khí thải</translation>
+      <extracomment>.QGC.MetaData.Facts[exGasTemp].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EFIFact.json"/>
+      <source>Exhaust gas Temperature</source>
+      <translation type="unfinished">Exhaust gas Temperature</translation>
     </message>
     <message>
-        <source>Throttle Out</source>
-        <extracomment>.QGC.MetaData.Facts[throttleOut].shortDesc, </extracomment>
-        <translation>Ga ra</translation>
+      <extracomment>.QGC.MetaData.Facts[throttleOut].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EFIFact.json"/>
+      <source>Throttle Out</source>
+      <translation type="unfinished">Throttle Out</translation>
     </message>
     <message>
-        <source>Pt Compensation</source>
-        <extracomment>.QGC.MetaData.Facts[ptComp].shortDesc, </extracomment>
-        <translation>Bồi thường PT</translation>
+      <extracomment>.QGC.MetaData.Facts[ptComp].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EFIFact.json"/>
+      <source>Pt Compensation</source>
+      <translation type="unfinished">Pt Compensation</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>TemperatureFact.json</name>
     <message>
-        <source>Temperature (1)</source>
-        <extracomment>.QGC.MetaData.Facts[temperature1].shortDesc, </extracomment>
-        <translation>Nhiệt độ (1)</translation>
+      <extracomment>.QGC.MetaData.Facts[temperature1].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/TemperatureFact.json"/>
+      <source>Temperature (1)</source>
+      <translation type="unfinished">Temperature (1)</translation>
     </message>
     <message>
-        <source>Temperature (2)</source>
-        <extracomment>.QGC.MetaData.Facts[temperature2].shortDesc, </extracomment>
-        <translation>Nhiệt độ (2)</translation>
+      <extracomment>.QGC.MetaData.Facts[temperature2].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/TemperatureFact.json"/>
+      <source>Temperature (2)</source>
+      <translation type="unfinished">Temperature (2)</translation>
     </message>
     <message>
-        <source>Temperature (3)</source>
-        <extracomment>.QGC.MetaData.Facts[temperature3].shortDesc, </extracomment>
-        <translation>Nhiệt độ (3)</translation>
+      <extracomment>.QGC.MetaData.Facts[temperature3].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/TemperatureFact.json"/>
+      <source>Temperature (3)</source>
+      <translation type="unfinished">Temperature (3)</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>SubmarineFact.json</name>
     <message>
-        <source>Camera Tilt</source>
-        <extracomment>.QGC.MetaData.Facts[cameraTilt].shortDesc, </extracomment>
-        <translation>Độ nghiêng của camera</translation>
+      <extracomment>.QGC.MetaData.Facts[cameraTilt].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/SubmarineFact.json"/>
+      <source>Camera Tilt</source>
+      <translation type="unfinished">Camera Tilt</translation>
     </message>
     <message>
-        <source>Tether Turns</source>
-        <extracomment>.QGC.MetaData.Facts[tetherTurns].shortDesc, </extracomment>
-        <translation>Tether quay</translation>
+      <extracomment>.QGC.MetaData.Facts[tetherTurns].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/SubmarineFact.json"/>
+      <source>Tether Turns</source>
+      <translation type="unfinished">Tether Turns</translation>
     </message>
     <message>
-        <source>Lights 1 level</source>
-        <extracomment>.QGC.MetaData.Facts[lights1].shortDesc, </extracomment>
-        <translation>Đèn 1 cấp độ</translation>
+      <extracomment>.QGC.MetaData.Facts[lights1].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/SubmarineFact.json"/>
+      <source>Lights 1 level</source>
+      <translation type="unfinished">Lights 1 level</translation>
     </message>
     <message>
-        <source>Lights 2 level</source>
-        <extracomment>.QGC.MetaData.Facts[lights2].shortDesc, </extracomment>
-        <translation>Đèn 2 cấp độ</translation>
+      <extracomment>.QGC.MetaData.Facts[lights2].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/SubmarineFact.json"/>
+      <source>Lights 2 level</source>
+      <translation type="unfinished">Lights 2 level</translation>
     </message>
     <message>
-        <source>Pilot Gain</source>
-        <extracomment>.QGC.MetaData.Facts[pilotGain].shortDesc, </extracomment>
-        <translation>Phi công tăng</translation>
+      <extracomment>.QGC.MetaData.Facts[pilotGain].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/SubmarineFact.json"/>
+      <source>Pilot Gain</source>
+      <translation type="unfinished">Pilot Gain</translation>
     </message>
     <message>
-        <source>Input Hold</source>
-        <extracomment>.QGC.MetaData.Facts[inputHold].shortDesc, </extracomment>
-        <translation>Đầu vào giữ</translation>
+      <extracomment>.QGC.MetaData.Facts[inputHold].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/SubmarineFact.json"/>
+      <source>Input Hold</source>
+      <translation type="unfinished">Input Hold</translation>
     </message>
     <message>
-        <source>Disabled,Enabled</source>
-        <extracomment>.QGC.MetaData.Facts[inputHold].enumStrings, </extracomment>
-        <translation>Bị vô hiệu hóa, được bật</translation>
+      <extracomment>.QGC.MetaData.Facts[inputHold].enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/Vehicle/FactGroups/SubmarineFact.json"/>
+      <source>Disabled,Enabled</source>
+      <translation type="unfinished">Disabled,Enabled</translation>
     </message>
     <message>
-        <source>Rangefinder</source>
-        <extracomment>.QGC.MetaData.Facts[rangefinderDistance].shortDesc, </extracomment>
-        <translation>Rangefinder</translation>
+      <extracomment>.QGC.MetaData.Facts[rangefinderDistance].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/SubmarineFact.json"/>
+      <source>Rangefinder</source>
+      <translation type="unfinished">Rangefinder</translation>
     </message>
     <message>
-        <source>RFTarget</source>
-        <extracomment>.QGC.MetaData.Facts[rangefinderTarget].shortDesc, </extracomment>
-        <translation>Rftarget</translation>
+      <extracomment>.QGC.MetaData.Facts[rangefinderTarget].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/SubmarineFact.json"/>
+      <source>RFTarget</source>
+      <translation type="unfinished">RFTarget</translation>
     </message>
     <message>
-        <source>Roll/Pitch Toggle</source>
-        <extracomment>.QGC.MetaData.Facts[rollPitchToggle].shortDesc, </extracomment>
-        <translation>Cuộn/chuyển đổi sân</translation>
+      <extracomment>.QGC.MetaData.Facts[rollPitchToggle].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/SubmarineFact.json"/>
+      <source>Roll/Pitch Toggle</source>
+      <translation type="unfinished">Roll/Pitch Toggle</translation>
     </message>
     <message>
-        <source>Disabled,Enabled,Unavailable</source>
-        <extracomment>.QGC.MetaData.Facts[rollPitchToggle].enumStrings, </extracomment>
-        <translation>Bị vô hiệu hóa, bật, không khả dụng</translation>
+      <extracomment>.QGC.MetaData.Facts[rollPitchToggle].enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/Vehicle/FactGroups/SubmarineFact.json"/>
+      <source>Disabled,Enabled,Unavailable</source>
+      <translation type="unfinished">Disabled,Enabled,Unavailable</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>VehicleFact.json</name>
     <message>
-        <source>Roll</source>
-        <extracomment>.QGC.MetaData.Facts[roll].shortDesc, </extracomment>
-        <translation>Cuộn</translation>
+      <extracomment>.QGC.MetaData.Facts[roll].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
+      <source>Roll</source>
+      <translation type="unfinished">Roll</translation>
     </message>
     <message>
-        <source>Pitch</source>
-        <extracomment>.QGC.MetaData.Facts[pitch].shortDesc, </extracomment>
-        <translation>Sân bóng đá</translation>
+      <extracomment>.QGC.MetaData.Facts[pitch].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
+      <source>Pitch</source>
+      <translation type="unfinished">Pitch</translation>
     </message>
     <message>
-        <source>Heading</source>
-        <extracomment>.QGC.MetaData.Facts[heading].shortDesc, </extracomment>
-        <translation>Tiêu đề</translation>
+      <extracomment>.QGC.MetaData.Facts[heading].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
+      <source>Heading</source>
+      <translation type="unfinished">Heading</translation>
     </message>
     <message>
-        <source>Roll Rate</source>
-        <extracomment>.QGC.MetaData.Facts[rollRate].shortDesc, </extracomment>
-        <translation>Tốc độ cuộn</translation>
+      <extracomment>.QGC.MetaData.Facts[rollRate].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
+      <source>Roll Rate</source>
+      <translation type="unfinished">Roll Rate</translation>
     </message>
     <message>
-        <source>Pitch Rate</source>
-        <extracomment>.QGC.MetaData.Facts[pitchRate].shortDesc, </extracomment>
-        <translation>Tỷ lệ sân</translation>
+      <extracomment>.QGC.MetaData.Facts[pitchRate].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
+      <source>Pitch Rate</source>
+      <translation type="unfinished">Pitch Rate</translation>
     </message>
     <message>
-        <source>Yaw Rate</source>
-        <extracomment>.QGC.MetaData.Facts[yawRate].shortDesc, </extracomment>
-        <translation>Tỷ lệ ngáp</translation>
+      <extracomment>.QGC.MetaData.Facts[yawRate].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
+      <source>Yaw Rate</source>
+      <translation type="unfinished">Yaw Rate</translation>
     </message>
     <message>
-        <source>Ground Speed</source>
-        <extracomment>.QGC.MetaData.Facts[groundSpeed].shortDesc, </extracomment>
-        <translation>Tốc độ mặt đất</translation>
+      <extracomment>.QGC.MetaData.Facts[groundSpeed].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
+      <source>Ground Speed</source>
+      <translation type="unfinished">Ground Speed</translation>
     </message>
     <message>
-        <source>Air Speed</source>
-        <extracomment>.QGC.MetaData.Facts[airSpeed].shortDesc, </extracomment>
-        <translation>Tốc độ không khí</translation>
+      <extracomment>.QGC.MetaData.Facts[airSpeed].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
+      <source>Air Speed</source>
+      <translation type="unfinished">Air Speed</translation>
     </message>
     <message>
-        <source>Climb Rate</source>
-        <extracomment>.QGC.MetaData.Facts[climbRate].shortDesc, </extracomment>
-        <translation>Tỷ lệ leo</translation>
+      <extracomment>.QGC.MetaData.Facts[climbRate].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
+      <source>Climb Rate</source>
+      <translation type="unfinished">Climb Rate</translation>
     </message>
     <message>
-        <source>Alt (Rel)</source>
-        <extracomment>.QGC.MetaData.Facts[altitudeRelative].shortDesc, </extracomment>
-        <translation>Alt (rel)</translation>
+      <extracomment>.QGC.MetaData.Facts[altitudeRelative].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
+      <source>Alt (Rel)</source>
+      <translation type="unfinished">Alt (Rel)</translation>
     </message>
     <message>
-        <source>Alt (AMSL)</source>
-        <extracomment>.QGC.MetaData.Facts[altitudeAMSL].shortDesc, </extracomment>
-        <translation>ALT (AMSL)</translation>
+      <extracomment>.QGC.MetaData.Facts[altitudeAMSL].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
+      <source>Alt (AMSL)</source>
+      <translation type="unfinished">Alt (AMSL)</translation>
     </message>
     <message>
-        <source>Alt (Above Terrain)</source>
-        <extracomment>.QGC.MetaData.Facts[altitudeAboveTerr].shortDesc, </extracomment>
-        <translation>Alt (trên địa hình)</translation>
+      <extracomment>.QGC.MetaData.Facts[altitudeAboveTerr].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
+      <source>Alt (Above Terrain)</source>
+      <translation type="unfinished">Alt (Above Terrain)</translation>
     </message>
     <message>
-        <source>Flight Distance</source>
-        <extracomment>.QGC.MetaData.Facts[flightDistance].shortDesc, </extracomment>
-        <translation>Khoảng cách bay</translation>
+      <extracomment>.QGC.MetaData.Facts[flightDistance].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
+      <source>Flight Distance</source>
+      <translation type="unfinished">Flight Distance</translation>
     </message>
     <message>
-        <source>Distance to Home</source>
-        <extracomment>.QGC.MetaData.Facts[distanceToHome].shortDesc, </extracomment>
-        <translation>Khoảng cách đến nhà</translation>
+      <extracomment>.QGC.MetaData.Facts[distanceToHome].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
+      <source>Distance to Home</source>
+      <translation type="unfinished">Distance to Home</translation>
     </message>
     <message>
-        <source>Time to Home</source>
-        <extracomment>.QGC.MetaData.Facts[timeToHome].shortDesc, </extracomment>
-        <translation>Thời gian về nhà</translation>
+      <extracomment>.QGC.MetaData.Facts[timeToHome].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
+      <source>Time to Home</source>
+      <translation type="unfinished">Time to Home</translation>
     </message>
     <message>
-        <source>Heading to Home</source>
-        <extracomment>.QGC.MetaData.Facts[headingToHome].shortDesc, </extracomment>
-        <translation>Đi về nhà</translation>
+      <extracomment>.QGC.MetaData.Facts[headingToHome].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
+      <source>Heading to Home</source>
+      <translation type="unfinished">Heading to Home</translation>
     </message>
     <message>
-        <source>Distance to GCS</source>
-        <extracomment>.QGC.MetaData.Facts[distanceToGCS].shortDesc, </extracomment>
-        <translation>Khoảng cách đến GCS</translation>
+      <extracomment>.QGC.MetaData.Facts[distanceToGCS].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
+      <source>Distance to GCS</source>
+      <translation type="unfinished">Distance to GCS</translation>
     </message>
     <message>
-        <source>Mission Item Index</source>
-        <extracomment>.QGC.MetaData.Facts[missionItemIndex].shortDesc, </extracomment>
-        <translation>Chỉ số mục nhiệm vụ</translation>
+      <extracomment>.QGC.MetaData.Facts[missionItemIndex].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
+      <source>Mission Item Index</source>
+      <translation type="unfinished">Mission Item Index</translation>
     </message>
     <message>
-        <source>Next WP Heading</source>
-        <extracomment>.QGC.MetaData.Facts[headingToNextWP].shortDesc, </extracomment>
-        <translation>Tiêu đề WP tiếp theo</translation>
+      <extracomment>.QGC.MetaData.Facts[headingToNextWP].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
+      <source>Next WP Heading</source>
+      <translation type="unfinished">Next WP Heading</translation>
     </message>
     <message>
-        <source>Next WP distance</source>
-        <extracomment>.QGC.MetaData.Facts[distanceToNextWP].shortDesc, </extracomment>
-        <translation>Khoảng cách WP tiếp theo</translation>
+      <extracomment>.QGC.MetaData.Facts[distanceToNextWP].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
+      <source>Next WP distance</source>
+      <translation type="unfinished">Next WP distance</translation>
     </message>
     <message>
-        <source>Flight Time</source>
-        <extracomment>.QGC.MetaData.Facts[flightTime].shortDesc, </extracomment>
-        <translation>Giờ bay</translation>
+      <extracomment>.QGC.MetaData.Facts[flightTime].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
+      <source>Flight Time</source>
+      <translation type="unfinished">Flight Time</translation>
     </message>
     <message>
-        <source>Hobbs Meter</source>
-        <extracomment>.QGC.MetaData.Facts[hobbs].shortDesc, </extracomment>
-        <translation>Máy đo Hobbs</translation>
+      <extracomment>.QGC.MetaData.Facts[hobbs].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
+      <source>Hobbs Meter</source>
+      <translation type="unfinished">Hobbs Meter</translation>
     </message>
     <message>
-        <source>Throttle %</source>
-        <extracomment>.QGC.MetaData.Facts[throttlePct].shortDesc, </extracomment>
-        <translation>% Cho %</translation>
+      <extracomment>.QGC.MetaData.Facts[throttlePct].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
+      <source>Throttle %</source>
+      <translation type="unfinished">Throttle %</translation>
     </message>
     <message>
-        <source>Imu temperature</source>
-        <extracomment>.QGC.MetaData.Facts[imuTemp].shortDesc, </extracomment>
-        <translation>Nhiệt độ IMU</translation>
+      <extracomment>.QGC.MetaData.Facts[imuTemp].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
+      <source>Imu temperature</source>
+      <translation type="unfinished">Imu temperature</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>ClockFact.json</name>
     <message>
-        <source>Time</source>
-        <extracomment>.QGC.MetaData.Facts[currentTime].shortDesc, </extracomment>
-        <translation>Thời gian</translation>
+      <extracomment>.QGC.MetaData.Facts[currentTime].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/ClockFact.json"/>
+      <source>Time</source>
+      <translation type="unfinished">Time</translation>
     </message>
     <message>
-        <source>UTC Time</source>
-        <extracomment>.QGC.MetaData.Facts[currentUTCTime].shortDesc, </extracomment>
-        <translation>Thời gian UTC</translation>
+      <extracomment>.QGC.MetaData.Facts[currentUTCTime].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/ClockFact.json"/>
+      <source>UTC Time</source>
+      <translation type="unfinished">UTC Time</translation>
     </message>
     <message>
-        <source>Date</source>
-        <extracomment>.QGC.MetaData.Facts[currentDate].shortDesc, </extracomment>
-        <translation>Ngày</translation>
+      <extracomment>.QGC.MetaData.Facts[currentDate].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/ClockFact.json"/>
+      <source>Date</source>
+      <translation type="unfinished">Date</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>LocalPositionFact.json</name>
     <message>
-        <source>X</source>
-        <extracomment>.QGC.MetaData.Facts[x].shortDesc, </extracomment>
-        <translation>X</translation>
+      <extracomment>.QGC.MetaData.Facts[x].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/LocalPositionFact.json"/>
+      <source>X</source>
+      <translation type="unfinished">X</translation>
     </message>
     <message>
-        <source>Y</source>
-        <extracomment>.QGC.MetaData.Facts[y].shortDesc, </extracomment>
-        <translation>Y</translation>
+      <extracomment>.QGC.MetaData.Facts[y].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/LocalPositionFact.json"/>
+      <source>Y</source>
+      <translation type="unfinished">Y</translation>
     </message>
     <message>
-        <source>Z</source>
-        <extracomment>.QGC.MetaData.Facts[z].shortDesc, </extracomment>
-        <translation>Z</translation>
+      <extracomment>.QGC.MetaData.Facts[z].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/LocalPositionFact.json"/>
+      <source>Z</source>
+      <translation type="unfinished">Z</translation>
     </message>
     <message>
-        <source>VX</source>
-        <extracomment>.QGC.MetaData.Facts[vx].shortDesc, </extracomment>
-        <translation>VX</translation>
+      <extracomment>.QGC.MetaData.Facts[vx].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/LocalPositionFact.json"/>
+      <source>VX</source>
+      <translation type="unfinished">VX</translation>
     </message>
     <message>
-        <source>Vy</source>
-        <extracomment>.QGC.MetaData.Facts[vy].shortDesc, </extracomment>
-        <translation>Vy</translation>
+      <extracomment>.QGC.MetaData.Facts[vy].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/LocalPositionFact.json"/>
+      <source>Vy</source>
+      <translation type="unfinished">Vy</translation>
     </message>
     <message>
-        <source>Vz</source>
-        <extracomment>.QGC.MetaData.Facts[vz].shortDesc, </extracomment>
-        <translation>Vz</translation>
+      <extracomment>.QGC.MetaData.Facts[vz].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/LocalPositionFact.json"/>
+      <source>Vz</source>
+      <translation type="unfinished">Vz</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>HygrometerFact.json</name>
     <message>
-        <source>Temperature</source>
-        <extracomment>.QGC.MetaData.Facts[temperature].shortDesc, </extracomment>
-        <translation>Nhiệt độ</translation>
+      <extracomment>.QGC.MetaData.Facts[temperature].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/HygrometerFact.json"/>
+      <source>Temperature</source>
+      <translation type="unfinished">Temperature</translation>
     </message>
     <message>
-        <source>Humidity %</source>
-        <extracomment>.QGC.MetaData.Facts[humidity].shortDesc, </extracomment>
-        <translation>Độ ẩm %</translation>
+      <extracomment>.QGC.MetaData.Facts[humidity].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/HygrometerFact.json"/>
+      <source>Humidity %</source>
+      <translation type="unfinished">Humidity %</translation>
     </message>
     <message>
-        <source>ID</source>
-        <extracomment>.QGC.MetaData.Facts[hygrometerid].shortDesc, </extracomment>
-        <translation>NHẬN DẠNG</translation>
+      <extracomment>.QGC.MetaData.Facts[hygrometerid].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/HygrometerFact.json"/>
+      <source>ID</source>
+      <translation type="unfinished">ID</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>RPMFact.json</name>
     <message>
-        <source>RPM 1</source>
-        <extracomment>.QGC.MetaData.Facts[rpm1].shortDesc, </extracomment>
-        <translation>RPM 1</translation>
+      <extracomment>.QGC.MetaData.Facts[rpm1].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/RPMFact.json"/>
+      <source>RPM 1</source>
+      <translation type="unfinished">RPM 1</translation>
     </message>
     <message>
-        <source>RPM 2</source>
-        <extracomment>.QGC.MetaData.Facts[rpm2].shortDesc, </extracomment>
-        <translation>RPM 2</translation>
+      <extracomment>.QGC.MetaData.Facts[rpm2].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/RPMFact.json"/>
+      <source>RPM 2</source>
+      <translation type="unfinished">RPM 2</translation>
     </message>
     <message>
-        <source>RPM 3</source>
-        <extracomment>.QGC.MetaData.Facts[rpm3].shortDesc, </extracomment>
-        <translation>RPM 3</translation>
+      <extracomment>.QGC.MetaData.Facts[rpm3].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/RPMFact.json"/>
+      <source>RPM 3</source>
+      <translation type="unfinished">RPM 3</translation>
     </message>
     <message>
-        <source>RPM 4</source>
-        <extracomment>.QGC.MetaData.Facts[rpm4].shortDesc, </extracomment>
-        <translation>RPM 4</translation>
+      <extracomment>.QGC.MetaData.Facts[rpm4].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/RPMFact.json"/>
+      <source>RPM 4</source>
+      <translation type="unfinished">RPM 4</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>EstimatorStatusFactGroup.json</name>
     <message>
-        <source>Good Attitude Esimate</source>
-        <extracomment>.QGC.MetaData.Facts[goodAttitudeEsimate].shortDesc, </extracomment>
-        <translation>Thái độ tốt esimate</translation>
+      <extracomment>.QGC.MetaData.Facts[goodAttitudeEsimate].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
+      <source>Good Attitude Esimate</source>
+      <translation type="unfinished">Good Attitude Esimate</translation>
     </message>
     <message>
-        <source>Good Horiz Vel Estimate</source>
-        <extracomment>.QGC.MetaData.Facts[goodHorizVelEstimate].shortDesc, </extracomment>
-        <translation>Ước tính Vel Horiz tốt</translation>
+      <extracomment>.QGC.MetaData.Facts[goodHorizVelEstimate].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
+      <source>Good Horiz Vel Estimate</source>
+      <translation type="unfinished">Good Horiz Vel Estimate</translation>
     </message>
     <message>
-        <source>Good Vert Vel Estimate</source>
-        <extracomment>.QGC.MetaData.Facts[goodVertVelEstimate].shortDesc, </extracomment>
-        <translation>Ước tính Vel Vel tốt</translation>
+      <extracomment>.QGC.MetaData.Facts[goodVertVelEstimate].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
+      <source>Good Vert Vel Estimate</source>
+      <translation type="unfinished">Good Vert Vel Estimate</translation>
     </message>
     <message>
-        <source>Good Horiz Pos Rel Estimate</source>
-        <extracomment>.QGC.MetaData.Facts[goodHorizPosRelEstimate].shortDesc, </extracomment>
-        <translation>Ước tính POS POS tốt</translation>
+      <extracomment>.QGC.MetaData.Facts[goodHorizPosRelEstimate].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
+      <source>Good Horiz Pos Rel Estimate</source>
+      <translation type="unfinished">Good Horiz Pos Rel Estimate</translation>
     </message>
     <message>
-        <source>Good Horiz Pos Abs Estimate</source>
-        <extracomment>.QGC.MetaData.Facts[goodHorizPosAbsEstimate].shortDesc, </extracomment>
-        <translation>Ước tính ABS POS tốt</translation>
+      <extracomment>.QGC.MetaData.Facts[goodHorizPosAbsEstimate].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
+      <source>Good Horiz Pos Abs Estimate</source>
+      <translation type="unfinished">Good Horiz Pos Abs Estimate</translation>
     </message>
     <message>
-        <source>Good Vert Pos Abs Estimate</source>
-        <extracomment>.QGC.MetaData.Facts[goodVertPosAbsEstimate].shortDesc, </extracomment>
-        <translation>Ước tính abs pos pos tốt</translation>
+      <extracomment>.QGC.MetaData.Facts[goodVertPosAbsEstimate].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
+      <source>Good Vert Pos Abs Estimate</source>
+      <translation type="unfinished">Good Vert Pos Abs Estimate</translation>
     </message>
     <message>
-        <source>Good Vert Pos AGL Estimate</source>
-        <extracomment>.QGC.MetaData.Facts[goodVertPosAGLEstimate].shortDesc, </extracomment>
-        <translation>Good Vert Pos AGL Ước tính</translation>
+      <extracomment>.QGC.MetaData.Facts[goodVertPosAGLEstimate].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
+      <source>Good Vert Pos AGL Estimate</source>
+      <translation type="unfinished">Good Vert Pos AGL Estimate</translation>
     </message>
     <message>
-        <source>Good Const Pos Mode Estimate</source>
-        <extracomment>.QGC.MetaData.Facts[goodConstPosModeEstimate].shortDesc, </extracomment>
-        <translation>Ước tính chế độ pos const tốt</translation>
+      <extracomment>.QGC.MetaData.Facts[goodConstPosModeEstimate].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
+      <source>Good Const Pos Mode Estimate</source>
+      <translation type="unfinished">Good Const Pos Mode Estimate</translation>
     </message>
     <message>
-        <source>Good Pred Horiz Pos Rel Estimate</source>
-        <extracomment>.QGC.MetaData.Facts[goodPredHorizPosRelEstimate].shortDesc, </extracomment>
-        <translation>Ước tính Pos Pos Pos ước tính tốt</translation>
+      <extracomment>.QGC.MetaData.Facts[goodPredHorizPosRelEstimate].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
+      <source>Good Pred Horiz Pos Rel Estimate</source>
+      <translation type="unfinished">Good Pred Horiz Pos Rel Estimate</translation>
     </message>
     <message>
-        <source>Good Pred Horiz Pos Abs Estimate</source>
-        <extracomment>.QGC.MetaData.Facts[goodPredHorizPosAbsEstimate].shortDesc, </extracomment>
-        <translation>Ước tính POS abs tốt</translation>
+      <extracomment>.QGC.MetaData.Facts[goodPredHorizPosAbsEstimate].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
+      <source>Good Pred Horiz Pos Abs Estimate</source>
+      <translation type="unfinished">Good Pred Horiz Pos Abs Estimate</translation>
     </message>
     <message>
-        <source>Gps Glitch</source>
-        <extracomment>.QGC.MetaData.Facts[gpsGlitch].shortDesc, </extracomment>
-        <translation>GPS trục trặc</translation>
+      <extracomment>.QGC.MetaData.Facts[gpsGlitch].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
+      <source>Gps Glitch</source>
+      <translation type="unfinished">Gps Glitch</translation>
     </message>
     <message>
-        <source>Accel Error</source>
-        <extracomment>.QGC.MetaData.Facts[accelError].shortDesc, </extracomment>
-        <translation>Accel lỗi</translation>
+      <extracomment>.QGC.MetaData.Facts[accelError].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
+      <source>Accel Error</source>
+      <translation type="unfinished">Accel Error</translation>
     </message>
     <message>
-        <source>Vel Ratio</source>
-        <extracomment>.QGC.MetaData.Facts[velRatio].shortDesc, </extracomment>
-        <translation>Tỷ lệ vel</translation>
+      <extracomment>.QGC.MetaData.Facts[velRatio].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
+      <source>Vel Ratio</source>
+      <translation type="unfinished">Vel Ratio</translation>
     </message>
     <message>
-        <source>Horiz Pos Ratio</source>
-        <extracomment>.QGC.MetaData.Facts[horizPosRatio].shortDesc, </extracomment>
-        <translation>Tỷ lệ POS chân trời</translation>
+      <extracomment>.QGC.MetaData.Facts[horizPosRatio].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
+      <source>Horiz Pos Ratio</source>
+      <translation type="unfinished">Horiz Pos Ratio</translation>
     </message>
     <message>
-        <source>Vert Pos Ratio</source>
-        <extracomment>.QGC.MetaData.Facts[vertPosRatio].shortDesc, </extracomment>
-        <translation>Tỷ lệ pos pos</translation>
+      <extracomment>.QGC.MetaData.Facts[vertPosRatio].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
+      <source>Vert Pos Ratio</source>
+      <translation type="unfinished">Vert Pos Ratio</translation>
     </message>
     <message>
-        <source>Mag Ratio</source>
-        <extracomment>.QGC.MetaData.Facts[magRatio].shortDesc, </extracomment>
-        <translation>Tỷ lệ mag</translation>
+      <extracomment>.QGC.MetaData.Facts[magRatio].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
+      <source>Mag Ratio</source>
+      <translation type="unfinished">Mag Ratio</translation>
     </message>
     <message>
-        <source>HAGL Ratio</source>
-        <extracomment>.QGC.MetaData.Facts[haglRatio].shortDesc, </extracomment>
-        <translation>Tỷ lệ Hagl</translation>
+      <extracomment>.QGC.MetaData.Facts[haglRatio].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
+      <source>HAGL Ratio</source>
+      <translation type="unfinished">HAGL Ratio</translation>
     </message>
     <message>
-        <source>TAS Ratio</source>
-        <extracomment>.QGC.MetaData.Facts[tasRatio].shortDesc, </extracomment>
-        <translation>Tỷ lệ TAS</translation>
+      <extracomment>.QGC.MetaData.Facts[tasRatio].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
+      <source>TAS Ratio</source>
+      <translation type="unfinished">TAS Ratio</translation>
     </message>
     <message>
-        <source>Horiz Pos Accuracy</source>
-        <extracomment>.QGC.MetaData.Facts[horizPosAccuracy].shortDesc, </extracomment>
-        <translation>Độ chính xác của POS</translation>
+      <extracomment>.QGC.MetaData.Facts[horizPosAccuracy].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
+      <source>Horiz Pos Accuracy</source>
+      <translation type="unfinished">Horiz Pos Accuracy</translation>
     </message>
     <message>
-        <source>Vert Pos Accuracy</source>
-        <extracomment>.QGC.MetaData.Facts[vertPosAccuracy].shortDesc, </extracomment>
-        <translation>Vert Pos chính xác</translation>
+      <extracomment>.QGC.MetaData.Facts[vertPosAccuracy].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
+      <source>Vert Pos Accuracy</source>
+      <translation type="unfinished">Vert Pos Accuracy</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>GPSRTKFact.json</name>
     <message>
-        <source>Connected</source>
-        <extracomment>.QGC.MetaData.Facts[connected].shortDesc, </extracomment>
-        <translation>Kết nối</translation>
+      <extracomment>.QGC.MetaData.Facts[connected].shortDesc, </extracomment>
+      <location filename="../src/GPS/GPSRTKFact.json"/>
+      <source>Connected</source>
+      <translation type="unfinished">Connected</translation>
     </message>
     <message>
-        <source>Current Survey-In Accuracy</source>
-        <extracomment>.QGC.MetaData.Facts[currentAccuracy].shortDesc, </extracomment>
-        <translation>Khảo sát hiện tại-trong độ chính xác</translation>
+      <extracomment>.QGC.MetaData.Facts[currentAccuracy].shortDesc, </extracomment>
+      <location filename="../src/GPS/GPSRTKFact.json"/>
+      <source>Current Survey-In Accuracy</source>
+      <translation type="unfinished">Current Survey-In Accuracy</translation>
     </message>
     <message>
-        <source>Current Survey-In Latitude</source>
-        <extracomment>.QGC.MetaData.Facts[currentLatitude].shortDesc, </extracomment>
-        <translation>Vĩ độ khảo sát hiện tại</translation>
+      <extracomment>.QGC.MetaData.Facts[currentLatitude].shortDesc, </extracomment>
+      <location filename="../src/GPS/GPSRTKFact.json"/>
+      <source>Current Survey-In Latitude</source>
+      <translation type="unfinished">Current Survey-In Latitude</translation>
     </message>
     <message>
-        <source>Current Survey-In Longitude</source>
-        <extracomment>.QGC.MetaData.Facts[currentLongitude].shortDesc, </extracomment>
-        <translation>Khảo sát hiện tại-trong kinh độ</translation>
+      <extracomment>.QGC.MetaData.Facts[currentLongitude].shortDesc, </extracomment>
+      <location filename="../src/GPS/GPSRTKFact.json"/>
+      <source>Current Survey-In Longitude</source>
+      <translation type="unfinished">Current Survey-In Longitude</translation>
     </message>
     <message>
-        <source>Current Survey-In Altitude</source>
-        <extracomment>.QGC.MetaData.Facts[currentAltitude].shortDesc, </extracomment>
-        <translation>Khảo sát hiện tại trong độ cao</translation>
+      <extracomment>.QGC.MetaData.Facts[currentAltitude].shortDesc, </extracomment>
+      <location filename="../src/GPS/GPSRTKFact.json"/>
+      <source>Current Survey-In Altitude</source>
+      <translation type="unfinished">Current Survey-In Altitude</translation>
     </message>
     <message>
-        <source>Current Survey-In Duration</source>
-        <extracomment>.QGC.MetaData.Facts[currentDuration].shortDesc, </extracomment>
-        <translation>Thời gian khảo sát hiện tại</translation>
+      <extracomment>.QGC.MetaData.Facts[currentDuration].shortDesc, </extracomment>
+      <location filename="../src/GPS/GPSRTKFact.json"/>
+      <source>Current Survey-In Duration</source>
+      <translation type="unfinished">Current Survey-In Duration</translation>
     </message>
     <message>
-        <source>Survey-In Valid</source>
-        <extracomment>.QGC.MetaData.Facts[valid].shortDesc, </extracomment>
-        <translation>Khảo sát trong hợp lệ</translation>
+      <extracomment>.QGC.MetaData.Facts[valid].shortDesc, </extracomment>
+      <location filename="../src/GPS/GPSRTKFact.json"/>
+      <source>Survey-In Valid</source>
+      <translation type="unfinished">Survey-In Valid</translation>
     </message>
     <message>
-        <source>Survey-In Active</source>
-        <extracomment>.QGC.MetaData.Facts[active].shortDesc, </extracomment>
-        <translation>Khảo sát-trong hoạt động</translation>
+      <extracomment>.QGC.MetaData.Facts[active].shortDesc, </extracomment>
+      <location filename="../src/GPS/GPSRTKFact.json"/>
+      <source>Survey-In Active</source>
+      <translation type="unfinished">Survey-In Active</translation>
     </message>
     <message>
-        <source>Number of Satellites</source>
-        <extracomment>.QGC.MetaData.Facts[numSatellites].shortDesc, </extracomment>
-        <translation>Số lượng vệ tinh</translation>
+      <extracomment>.QGC.MetaData.Facts[numSatellites].shortDesc, </extracomment>
+      <location filename="../src/GPS/GPSRTKFact.json"/>
+      <source>Number of Satellites</source>
+      <translation type="unfinished">Number of Satellites</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>RCToParamDialog.FactMetaData.json</name>
     <message>
-        <source>Scale the RC range</source>
-        <extracomment>.QGC.MetaData.Facts[Scale].shortDesc, </extracomment>
-        <translation>Quy mô phạm vi RC</translation>
+      <extracomment>.QGC.MetaData.Facts[Scale].shortDesc, </extracomment>
+      <location filename="../src/QmlControls/RCToParamDialog.FactMetaData.json"/>
+      <source>Scale the RC range</source>
+      <translation type="unfinished">Scale the RC range</translation>
     </message>
     <message>
-        <source>Parameter value when RC output is 0</source>
-        <extracomment>.QGC.MetaData.Facts[CenterValue].shortDesc, </extracomment>
-        <translation>Giá trị tham số khi đầu ra RC là 0</translation>
+      <extracomment>.QGC.MetaData.Facts[CenterValue].shortDesc, </extracomment>
+      <location filename="../src/QmlControls/RCToParamDialog.FactMetaData.json"/>
+      <source>Parameter value when RC output is 0</source>
+      <translation type="unfinished">Parameter value when RC output is 0</translation>
     </message>
     <message>
-        <source>Minimum parameter value</source>
-        <extracomment>.QGC.MetaData.Facts[MinValue].shortDesc, </extracomment>
-        <translation>Giá trị tham số tối thiểu</translation>
+      <extracomment>.QGC.MetaData.Facts[MinValue].shortDesc, </extracomment>
+      <location filename="../src/QmlControls/RCToParamDialog.FactMetaData.json"/>
+      <source>Minimum parameter value</source>
+      <translation type="unfinished">Minimum parameter value</translation>
     </message>
     <message>
-        <source>Maximum parameter value</source>
-        <extracomment>.QGC.MetaData.Facts[MaxValue].shortDesc, </extracomment>
-        <translation>Giá trị tham số tối đa</translation>
+      <extracomment>.QGC.MetaData.Facts[MaxValue].shortDesc, </extracomment>
+      <location filename="../src/QmlControls/RCToParamDialog.FactMetaData.json"/>
+      <source>Maximum parameter value</source>
+      <translation type="unfinished">Maximum parameter value</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>EditPositionDialog.FactMetaData.json</name>
     <message>
-        <source>Latitude of item position</source>
-        <extracomment>.QGC.MetaData.Facts[Latitude].shortDesc, </extracomment>
-        <translation>Vùng vĩ độ của vị trí vật phẩm</translation>
+      <extracomment>.QGC.MetaData.Facts[Latitude].shortDesc, </extracomment>
+      <location filename="../src/QmlControls/EditPositionDialog.FactMetaData.json"/>
+      <source>Latitude of item position</source>
+      <translation type="unfinished">Latitude of item position</translation>
     </message>
     <message>
-        <source>Longitude of item position</source>
-        <extracomment>.QGC.MetaData.Facts[Longitude].shortDesc, </extracomment>
-        <translation>Kinh độ của vị trí vật phẩm</translation>
+      <extracomment>.QGC.MetaData.Facts[Longitude].shortDesc, </extracomment>
+      <location filename="../src/QmlControls/EditPositionDialog.FactMetaData.json"/>
+      <source>Longitude of item position</source>
+      <translation type="unfinished">Longitude of item position</translation>
     </message>
     <message>
-        <source>Easting of item position</source>
-        <extracomment>.QGC.MetaData.Facts[Easting].shortDesc, </extracomment>
-        <translation>Đông của vị trí vật phẩm</translation>
+      <extracomment>.QGC.MetaData.Facts[Easting].shortDesc, </extracomment>
+      <location filename="../src/QmlControls/EditPositionDialog.FactMetaData.json"/>
+      <source>Easting of item position</source>
+      <translation type="unfinished">Easting of item position</translation>
     </message>
     <message>
-        <source>Northing of item position</source>
-        <extracomment>.QGC.MetaData.Facts[Northing].shortDesc, </extracomment>
-        <translation>Northing của vị trí vật phẩm</translation>
+      <extracomment>.QGC.MetaData.Facts[Northing].shortDesc, </extracomment>
+      <location filename="../src/QmlControls/EditPositionDialog.FactMetaData.json"/>
+      <source>Northing of item position</source>
+      <translation type="unfinished">Northing of item position</translation>
     </message>
     <message>
-        <source>UTM zone</source>
-        <extracomment>.QGC.MetaData.Facts[Zone].shortDesc, </extracomment>
-        <translation>Vùng UTM</translation>
+      <extracomment>.QGC.MetaData.Facts[Zone].shortDesc, </extracomment>
+      <location filename="../src/QmlControls/EditPositionDialog.FactMetaData.json"/>
+      <source>UTM zone</source>
+      <translation type="unfinished">UTM zone</translation>
     </message>
     <message>
-        <source>Hemisphere for position</source>
-        <extracomment>.QGC.MetaData.Facts[Hemisphere].shortDesc, </extracomment>
-        <translation>Bán cầu cho vị trí</translation>
+      <extracomment>.QGC.MetaData.Facts[Hemisphere].shortDesc, </extracomment>
+      <location filename="../src/QmlControls/EditPositionDialog.FactMetaData.json"/>
+      <source>Hemisphere for position</source>
+      <translation type="unfinished">Hemisphere for position</translation>
     </message>
     <message>
-        <source>North,South</source>
-        <extracomment>.QGC.MetaData.Facts[Hemisphere].enumStrings, </extracomment>
-        <translation>Bắc, Nam</translation>
+      <extracomment>.QGC.MetaData.Facts[Hemisphere].enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/QmlControls/EditPositionDialog.FactMetaData.json"/>
+      <source>North,South</source>
+      <translation type="unfinished">North,South</translation>
     </message>
     <message>
-        <source>MGRS coordinate</source>
-        <extracomment>.QGC.MetaData.Facts[MGRS].shortDesc, </extracomment>
-        <translation>Phối hợp MGRS</translation>
+      <extracomment>.QGC.MetaData.Facts[MGRS].shortDesc, </extracomment>
+      <location filename="../src/QmlControls/EditPositionDialog.FactMetaData.json"/>
+      <source>MGRS coordinate</source>
+      <translation type="unfinished">MGRS coordinate</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>QGCMapCircle.Facts.json</name>
     <message>
-        <source>Radius for geofence circle.</source>
-        <extracomment>.QGC.MetaData.Facts[Radius].shortDesc, </extracomment>
-        <translation>Bán kính cho vòng tròn Geofence.</translation>
+      <extracomment>.QGC.MetaData.Facts[Radius].shortDesc, </extracomment>
+      <location filename="../src/QmlControls/QGCMapCircle.Facts.json"/>
+      <source>Radius for geofence circle.</source>
+      <translation type="unfinished">Radius for geofence circle.</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>APMFollowComponent.FactMetaData.json</name>
     <message>
-        <source>Angle from ground station to vehicle</source>
-        <extracomment>.QGC.MetaData.Facts[angle].shortDesc, </extracomment>
-        <translation>Góc từ ga đất đến phương tiện</translation>
+      <extracomment>.QGC.MetaData.Facts[angle].shortDesc, </extracomment>
+      <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.FactMetaData.json"/>
+      <source>Angle from ground station to vehicle</source>
+      <translation type="unfinished">Angle from ground station to vehicle</translation>
     </message>
     <message>
-        <source>Horizontal distance from ground station to vehicle</source>
-        <extracomment>.QGC.MetaData.Facts[distance].shortDesc, </extracomment>
-        <translation>Khoảng cách ngang từ trạm đất đến xe</translation>
+      <extracomment>.QGC.MetaData.Facts[distance].shortDesc, </extracomment>
+      <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.FactMetaData.json"/>
+      <source>Horizontal distance from ground station to vehicle</source>
+      <translation type="unfinished">Horizontal distance from ground station to vehicle</translation>
     </message>
     <message>
-        <source>Vertical distance from Launch (home) position to vehicle</source>
-        <extracomment>.QGC.MetaData.Facts[height].shortDesc, </extracomment>
-        <translation>Khoảng cách thẳng đứng từ vị trí ra mắt (nhà) đến phương tiện</translation>
+      <extracomment>.QGC.MetaData.Facts[height].shortDesc, </extracomment>
+      <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.FactMetaData.json"/>
+      <source>Vertical distance from Launch (home) position to vehicle</source>
+      <translation type="unfinished">Vertical distance from Launch (home) position to vehicle</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>TransectStyle.SettingsGroup.json</name>
     <message>
-        <source>Amount of additional distance to add outside the survey area for vehicle turn around.</source>
-        <extracomment>.QGC.MetaData.Facts[TurnAroundDistance].shortDesc, .QGC.MetaData.Facts[TurnAroundDistanceMultiRotor].shortDesc, </extracomment>
-        <translation>Lượng khoảng cách bổ sung để thêm bên ngoài khu vực khảo sát cho xe quay lại.</translation>
+      <extracomment>.QGC.MetaData.Facts[TurnAroundDistance].shortDesc, .QGC.MetaData.Facts[TurnAroundDistanceMultiRotor].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/TransectStyle.SettingsGroup.json"/>
+      <source>Amount of additional distance to add outside the survey area for vehicle turn around.</source>
+      <translation type="unfinished">Amount of additional distance to add outside the survey area for vehicle turn around.</translation>
     </message>
     <message>
-        <source>Camera continues taking images in turn arounds.</source>
-        <extracomment>.QGC.MetaData.Facts[CameraTriggerInTurnAround].shortDesc, </extracomment>
-        <translation>Camera tiếp tục chụp ảnh lần lượt.</translation>
+      <extracomment>.QGC.MetaData.Facts[CameraTriggerInTurnAround].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/TransectStyle.SettingsGroup.json"/>
+      <source>Camera continues taking images in turn arounds.</source>
+      <translation type="unfinished">Camera continues taking images in turn arounds.</translation>
     </message>
     <message>
-        <source>Stop and Hover at each image point before taking image</source>
-        <extracomment>.QGC.MetaData.Facts[HoverAndCapture].shortDesc, </extracomment>
-        <translation>Dừng và di chuột tại mỗi điểm hình ảnh trước khi chụp ảnh</translation>
+      <extracomment>.QGC.MetaData.Facts[HoverAndCapture].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/TransectStyle.SettingsGroup.json"/>
+      <source>Stop and Hover at each image point before taking image</source>
+      <translation type="unfinished">Stop and Hover at each image point before taking image</translation>
     </message>
     <message>
-        <source>Refly the pattern at a 90 degree angle</source>
-        <extracomment>.QGC.MetaData.Facts[Refly90Degrees].shortDesc, </extracomment>
-        <translation>Tham khảo mô hình ở góc 90 độ</translation>
+      <extracomment>.QGC.MetaData.Facts[Refly90Degrees].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/TransectStyle.SettingsGroup.json"/>
+      <source>Refly the pattern at a 90 degree angle</source>
+      <translation type="unfinished">Refly the pattern at a 90 degree angle</translation>
     </message>
     <message>
-        <source>Additional waypoints within the transect will be added if the terrain altitude difference grows larger than this tolerance.</source>
-        <extracomment>.QGC.MetaData.Facts[TerrainAdjustTolerance].shortDesc, </extracomment>
-        <translation>Các điểm tham chiếu bổ sung trong mặt cắt sẽ được thêm vào nếu chênh lệch độ cao địa hình phát triển lớn hơn khả năng chịu đựng này.</translation>
+      <extracomment>.QGC.MetaData.Facts[TerrainAdjustTolerance].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/TransectStyle.SettingsGroup.json"/>
+      <source>Additional waypoints within the transect will be added if the terrain altitude difference grows larger than this tolerance.</source>
+      <translation type="unfinished">Additional waypoints within the transect will be added if the terrain altitude difference grows larger than this tolerance.</translation>
     </message>
     <message>
-        <source>The maximum climb rate from one waypoint to another when adjusting for terrain. Set to 0 for no max.</source>
-        <extracomment>.QGC.MetaData.Facts[TerrainAdjustMaxClimbRate].shortDesc, </extracomment>
-        <translation>Tỷ lệ leo tối đa từ điểm này sang điểm khác khi điều chỉnh địa hình. Đặt thành 0 cho không tối đa.</translation>
+      <extracomment>.QGC.MetaData.Facts[TerrainAdjustMaxClimbRate].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/TransectStyle.SettingsGroup.json"/>
+      <source>The maximum climb rate from one waypoint to another when adjusting for terrain. Set to 0 for no max.</source>
+      <translation type="unfinished">The maximum climb rate from one waypoint to another when adjusting for terrain. Set to 0 for no max.</translation>
     </message>
     <message>
-        <source>The maximum descent rate from one waypoint to another when adjusting for terrain. Set to 0 for no max.</source>
-        <extracomment>.QGC.MetaData.Facts[TerrainAdjustMaxDescentRate].shortDesc, </extracomment>
-        <translation>Tỷ lệ giảm tối đa từ điểm này sang điểm khác khi điều chỉnh địa hình. Đặt thành 0 cho không tối đa.</translation>
+      <extracomment>.QGC.MetaData.Facts[TerrainAdjustMaxDescentRate].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/TransectStyle.SettingsGroup.json"/>
+      <source>The maximum descent rate from one waypoint to another when adjusting for terrain. Set to 0 for no max.</source>
+      <translation type="unfinished">The maximum descent rate from one waypoint to another when adjusting for terrain. Set to 0 for no max.</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>VTOLLandingPattern.FactMetaData.json</name>
     <message>
-        <source>Distance between landing and approach points.</source>
-        <extracomment>.QGC.MetaData.Facts[LandingDistance].shortDesc, </extracomment>
-        <translation>Khoảng cách giữa các điểm hạ cánh và cách tiếp cận.</translation>
+      <extracomment>.QGC.MetaData.Facts[LandingDistance].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/VTOLLandingPattern.FactMetaData.json"/>
+      <source>Distance between landing and approach points.</source>
+      <translation type="unfinished">Distance between landing and approach points.</translation>
     </message>
     <message>
-        <source>Heading from approach to land point.</source>
-        <extracomment>.QGC.MetaData.Facts[LandingHeading].shortDesc, </extracomment>
-        <translation>Hướng đến cách tiếp cận đến điểm đất.</translation>
+      <extracomment>.QGC.MetaData.Facts[LandingHeading].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/VTOLLandingPattern.FactMetaData.json"/>
+      <source>Heading from approach to land point.</source>
+      <translation type="unfinished">Heading from approach to land point.</translation>
     </message>
     <message>
-        <source>Altitude to begin landing approach from.</source>
-        <extracomment>.QGC.MetaData.Facts[FinalApproachAltitude].shortDesc, </extracomment>
-        <translation>Độ cao để bắt đầu tiếp cận hạ cánh từ.</translation>
+      <extracomment>.QGC.MetaData.Facts[FinalApproachAltitude].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/VTOLLandingPattern.FactMetaData.json"/>
+      <source>Altitude to begin landing approach from.</source>
+      <translation type="unfinished">Altitude to begin landing approach from.</translation>
     </message>
     <message>
-        <source>Loiter radius.</source>
-        <extracomment>.QGC.MetaData.Facts[LoiterRadius].shortDesc, </extracomment>
-        <translation>Bán kính loiter.</translation>
+      <extracomment>.QGC.MetaData.Facts[LoiterRadius].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/VTOLLandingPattern.FactMetaData.json"/>
+      <source>Loiter radius.</source>
+      <translation type="unfinished">Loiter radius.</translation>
     </message>
     <message>
-        <source>Loiter clockwise around the final approach point.</source>
-        <extracomment>.QGC.MetaData.Facts[LoiterClockwise].shortDesc, </extracomment>
-        <translation>Loiter theo chiều kim đồng hồ xung quanh điểm tiếp cận cuối cùng.</translation>
+      <extracomment>.QGC.MetaData.Facts[LoiterClockwise].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/VTOLLandingPattern.FactMetaData.json"/>
+      <source>Loiter clockwise around the final approach point.</source>
+      <translation type="unfinished">Loiter clockwise around the final approach point.</translation>
     </message>
     <message>
-        <source>Altitude for landing point on ground.</source>
-        <extracomment>.QGC.MetaData.Facts[LandingAltitude].shortDesc, </extracomment>
-        <translation>Độ cao cho điểm hạ cánh trên mặt đất.</translation>
+      <extracomment>.QGC.MetaData.Facts[LandingAltitude].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/VTOLLandingPattern.FactMetaData.json"/>
+      <source>Altitude for landing point on ground.</source>
+      <translation type="unfinished">Altitude for landing point on ground.</translation>
     </message>
     <message>
-        <source>Use a loiter to altitude item for final appoach. Otherwise use a regular waypoint.</source>
-        <extracomment>.QGC.MetaData.Facts[UseLoiterToAlt].shortDesc, </extracomment>
-        <translation>Sử dụng một mục LOITER cho độ cao cho ứng dụng cuối cùng. Nếu không hãy sử dụng một điểm tham chiếu thường xuyên.</translation>
+      <extracomment>.QGC.MetaData.Facts[UseLoiterToAlt].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/VTOLLandingPattern.FactMetaData.json"/>
+      <source>Use a loiter to altitude item for final appoach. Otherwise use a regular waypoint.</source>
+      <translation type="unfinished">Use a loiter to altitude item for final appoach. Otherwise use a regular waypoint.</translation>
     </message>
     <message>
-        <source>Stop taking photos</source>
-        <extracomment>.QGC.MetaData.Facts[StopTakingPhotos].shortDesc, </extracomment>
-        <translation>Ngừng chụp ảnh</translation>
+      <extracomment>.QGC.MetaData.Facts[StopTakingPhotos].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/VTOLLandingPattern.FactMetaData.json"/>
+      <source>Stop taking photos</source>
+      <translation type="unfinished">Stop taking photos</translation>
     </message>
     <message>
-        <source>Stop taking video</source>
-        <extracomment>.QGC.MetaData.Facts[StopTakingVideo].shortDesc, </extracomment>
-        <translation>Ngừng lấy video</translation>
+      <extracomment>.QGC.MetaData.Facts[StopTakingVideo].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/VTOLLandingPattern.FactMetaData.json"/>
+      <source>Stop taking video</source>
+      <translation type="unfinished">Stop taking video</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>CorridorScan.SettingsGroup.json</name>
     <message>
-        <source>Altitude for the bottom layer of the structure scan.</source>
-        <extracomment>.QGC.MetaData.Facts[Altitude].shortDesc, </extracomment>
-        <translation>Độ cao cho lớp dưới cùng của quét cấu trúc.</translation>
+      <extracomment>.QGC.MetaData.Facts[Altitude].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/CorridorScan.SettingsGroup.json"/>
+      <source>Altitude for the bottom layer of the structure scan.</source>
+      <translation type="unfinished">Altitude for the bottom layer of the structure scan.</translation>
     </message>
     <message>
-        <source>Corridor width. Specify 0 width for a single pass scan.</source>
-        <extracomment>.QGC.MetaData.Facts[CorridorWidth].shortDesc, </extracomment>
-        <translation>Chiều rộng hành lang. Chỉ định chiều rộng 0 cho một lần quét Pass duy nhất.</translation>
+      <extracomment>.QGC.MetaData.Facts[CorridorWidth].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/CorridorScan.SettingsGroup.json"/>
+      <source>Corridor width. Specify 0 width for a single pass scan.</source>
+      <translation type="unfinished">Corridor width. Specify 0 width for a single pass scan.</translation>
     </message>
     <message>
-        <source>Distance between each triggering of the camera. 0 specifies not camera trigger.</source>
-        <extracomment>.QGC.MetaData.Facts[Trigger distance].shortDesc, </extracomment>
-        <translation>Khoảng cách giữa mỗi lần kích hoạt của máy ảnh. 0 Chỉ định không kích hoạt máy ảnh.</translation>
+      <extracomment>.QGC.MetaData.Facts[Trigger distance].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/CorridorScan.SettingsGroup.json"/>
+      <source>Distance between each triggering of the camera. 0 specifies not camera trigger.</source>
+      <translation type="unfinished">Distance between each triggering of the camera. 0 specifies not camera trigger.</translation>
     </message>
     <message>
-        <source>Amount of spacing in between parallel grid lines.</source>
-        <extracomment>.QGC.MetaData.Facts[GridSpacing].shortDesc, </extracomment>
-        <translation>Số lượng khoảng cách ở giữa các đường lưới song song.</translation>
+      <extracomment>.QGC.MetaData.Facts[GridSpacing].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/CorridorScan.SettingsGroup.json"/>
+      <source>Amount of spacing in between parallel grid lines.</source>
+      <translation type="unfinished">Amount of spacing in between parallel grid lines.</translation>
     </message>
     <message>
-        <source>Amount of additional distance to add outside the survey area for vehicle turnaround.</source>
-        <extracomment>.QGC.MetaData.Facts[TurnaroundDistance].shortDesc, </extracomment>
-        <translation>Lượng khoảng cách bổ sung để thêm bên ngoài khu vực khảo sát cho vòng quay xe.</translation>
+      <extracomment>.QGC.MetaData.Facts[TurnaroundDistance].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/CorridorScan.SettingsGroup.json"/>
+      <source>Amount of additional distance to add outside the survey area for vehicle turnaround.</source>
+      <translation type="unfinished">Amount of additional distance to add outside the survey area for vehicle turnaround.</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>StructureScan.SettingsGroup.json</name>
     <message>
-        <source>Gimbal pitch rotation.</source>
-        <extracomment>.QGC.MetaData.Facts[GimbalPitch].shortDesc, </extracomment>
-        <translation>Xoay sân gimbal.</translation>
+      <extracomment>.QGC.MetaData.Facts[GimbalPitch].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/StructureScan.SettingsGroup.json"/>
+      <source>Gimbal pitch rotation.</source>
+      <translation type="unfinished">Gimbal pitch rotation.</translation>
     </message>
     <message>
-        <source>Vehicle will fly to/from the structure at this altitude.</source>
-        <extracomment>.QGC.MetaData.Facts[EntranceAltitude].shortDesc, </extracomment>
-        <translation>Xe sẽ bay đến/từ cấu trúc ở độ cao này.</translation>
+      <extracomment>.QGC.MetaData.Facts[EntranceAltitude].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/StructureScan.SettingsGroup.json"/>
+      <source>Vehicle will fly to/from the structure at this altitude.</source>
+      <translation type="unfinished">Vehicle will fly to/from the structure at this altitude.</translation>
     </message>
     <message>
-        <source>Altitude for the bottomost covered area of the scan. You can adjust this value such that the Bottom Layer Alt will fly above obstacles on the ground.</source>
-        <extracomment>.QGC.MetaData.Facts[ScanBottomAlt].shortDesc, </extracomment>
-        <translation>Độ cao cho khu vực được bao phủ dưới đáy của quét. Bạn có thể điều chỉnh giá trị này sao cho lớp dưới cùng sẽ bay trên chướng ngại vật trên mặt đất.</translation>
+      <extracomment>.QGC.MetaData.Facts[ScanBottomAlt].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/StructureScan.SettingsGroup.json"/>
+      <source>Altitude for the bottomost covered area of the scan. You can adjust this value such that the Bottom Layer Alt will fly above obstacles on the ground.</source>
+      <translation type="unfinished">Altitude for the bottomost covered area of the scan. You can adjust this value such that the Bottom Layer Alt will fly above obstacles on the ground.</translation>
     </message>
     <message>
-        <source>Number of scan layers.</source>
-        <extracomment>.QGC.MetaData.Facts[Layers].shortDesc, </extracomment>
-        <translation>Số lượng lớp quét.</translation>
+      <extracomment>.QGC.MetaData.Facts[Layers].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/StructureScan.SettingsGroup.json"/>
+      <source>Number of scan layers.</source>
+      <translation type="unfinished">Number of scan layers.</translation>
     </message>
     <message>
-        <source>Height of structure being scanned.</source>
-        <extracomment>.QGC.MetaData.Facts[StructureHeight].shortDesc, </extracomment>
-        <translation>Chiều cao của cấu trúc được quét.</translation>
+      <extracomment>.QGC.MetaData.Facts[StructureHeight].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/StructureScan.SettingsGroup.json"/>
+      <source>Height of structure being scanned.</source>
+      <translation type="unfinished">Height of structure being scanned.</translation>
     </message>
     <message>
-        <source>Start scanning from top of structure.</source>
-        <extracomment>.QGC.MetaData.Facts[StartFromTop].shortDesc, </extracomment>
-        <translation>Bắt đầu quét từ đầu cấu trúc.</translation>
+      <extracomment>.QGC.MetaData.Facts[StartFromTop].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/StructureScan.SettingsGroup.json"/>
+      <source>Start scanning from top of structure.</source>
+      <translation type="unfinished">Start scanning from top of structure.</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>MavCmdInfoMultiRotor.json</name>
     <message>
-        <source>Yaw</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].param4.label, </extracomment>
-        <translation>Ngáp</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].param4.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoMultiRotor.json"/>
+      <source>Yaw</source>
+      <translation type="unfinished">Yaw</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>MissionSettings.FactMetaData.json</name>
     <message>
-        <source>Launch position altitude</source>
-        <extracomment>.QGC.MetaData.Facts[PlannedHomePositionAltitude].shortDesc, </extracomment>
-        <translation>Khởi động độ cao vị trí</translation>
+      <extracomment>.QGC.MetaData.Facts[PlannedHomePositionAltitude].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/MissionSettings.FactMetaData.json"/>
+      <source>Launch position altitude</source>
+      <translation type="unfinished">Launch position altitude</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>CameraSpec.FactMetaData.json</name>
     <message>
-        <source>Camera name.</source>
-        <extracomment>.QGC.MetaData.Facts[Name].shortDesc, </extracomment>
-        <translation>Tên máy ảnh.</translation>
+      <extracomment>.QGC.MetaData.Facts[Name].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/CameraSpec.FactMetaData.json"/>
+      <source>Camera name.</source>
+      <translation type="unfinished">Camera name.</translation>
     </message>
     <message>
-        <source>Width of camera image sensor.</source>
-        <extracomment>.QGC.MetaData.Facts[SensorWidth].shortDesc, </extracomment>
-        <translation>Chiều rộng của cảm biến hình ảnh camera.</translation>
+      <extracomment>.QGC.MetaData.Facts[SensorWidth].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/CameraSpec.FactMetaData.json"/>
+      <source>Width of camera image sensor.</source>
+      <translation type="unfinished">Width of camera image sensor.</translation>
     </message>
     <message>
-        <source>Height of camera image sensor.</source>
-        <extracomment>.QGC.MetaData.Facts[SensorHeight].shortDesc, </extracomment>
-        <translation>Chiều cao của cảm biến hình ảnh camera.</translation>
+      <extracomment>.QGC.MetaData.Facts[SensorHeight].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/CameraSpec.FactMetaData.json"/>
+      <source>Height of camera image sensor.</source>
+      <translation type="unfinished">Height of camera image sensor.</translation>
     </message>
     <message>
-        <source>Camera image resolution width.</source>
-        <extracomment>.QGC.MetaData.Facts[ImageWidth].shortDesc, </extracomment>
-        <translation>Chiều rộng độ phân giải hình ảnh camera.</translation>
+      <extracomment>.QGC.MetaData.Facts[ImageWidth].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/CameraSpec.FactMetaData.json"/>
+      <source>Camera image resolution width.</source>
+      <translation type="unfinished">Camera image resolution width.</translation>
     </message>
     <message>
-        <source>Camera image resolution height.</source>
-        <extracomment>.QGC.MetaData.Facts[ImageHeight].shortDesc, </extracomment>
-        <translation>Chiều cao độ phân giải hình ảnh camera.</translation>
+      <extracomment>.QGC.MetaData.Facts[ImageHeight].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/CameraSpec.FactMetaData.json"/>
+      <source>Camera image resolution height.</source>
+      <translation type="unfinished">Camera image resolution height.</translation>
     </message>
     <message>
-        <source>Focal length of camera lens.</source>
-        <extracomment>.QGC.MetaData.Facts[FocalLength].shortDesc, </extracomment>
-        <translation>Tiêu cự của ống kính máy ảnh.</translation>
+      <extracomment>.QGC.MetaData.Facts[FocalLength].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/CameraSpec.FactMetaData.json"/>
+      <source>Focal length of camera lens.</source>
+      <translation type="unfinished">Focal length of camera lens.</translation>
     </message>
     <message>
-        <source>Camera on vehicle is in landscape orientation.</source>
-        <extracomment>.QGC.MetaData.Facts[Landscape].shortDesc, </extracomment>
-        <translation>Camera trên xe là định hướng cảnh quan.</translation>
+      <extracomment>.QGC.MetaData.Facts[Landscape].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/CameraSpec.FactMetaData.json"/>
+      <source>Camera on vehicle is in landscape orientation.</source>
+      <translation type="unfinished">Camera on vehicle is in landscape orientation.</translation>
     </message>
     <message>
-        <source>Camera orientation ix fixed and cannot be changed.</source>
-        <extracomment>.QGC.MetaData.Facts[FixedOrientation].shortDesc, </extracomment>
-        <translation>Định hướng camera IX cố định và không thể thay đổi.</translation>
+      <extracomment>.QGC.MetaData.Facts[FixedOrientation].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/CameraSpec.FactMetaData.json"/>
+      <source>Camera orientation ix fixed and cannot be changed.</source>
+      <translation type="unfinished">Camera orientation ix fixed and cannot be changed.</translation>
     </message>
     <message>
-        <source>Minimum amount of time between each camera trigger.</source>
-        <extracomment>.QGC.MetaData.Facts[MinTriggerInterval].shortDesc, </extracomment>
-        <translation>Lượng thời gian tối thiểu giữa mỗi lần kích hoạt camera.</translation>
+      <extracomment>.QGC.MetaData.Facts[MinTriggerInterval].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/CameraSpec.FactMetaData.json"/>
+      <source>Minimum amount of time between each camera trigger.</source>
+      <translation type="unfinished">Minimum amount of time between each camera trigger.</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>MavCmdInfoFixedWing.json</name>
     <message>
-        <source>Pitch</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].param1.label, </extracomment>
-        <translation>Sân bóng đá</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].param1.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoFixedWing.json"/>
+      <source>Pitch</source>
+      <translation type="unfinished">Pitch</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>CameraCalc.FactMetaData.json</name>
     <message>
-        <source>Camera name.</source>
-        <extracomment>.QGC.MetaData.Facts[CameraName].shortDesc, </extracomment>
-        <translation>Tên máy ảnh.</translation>
+      <extracomment>.QGC.MetaData.Facts[CameraName].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/CameraCalc.FactMetaData.json"/>
+      <source>Camera name.</source>
+      <translation type="unfinished">Camera name.</translation>
     </message>
     <message>
-        <source>Value specified is distance to surface.</source>
-        <extracomment>.QGC.MetaData.Facts[ValueSetIsDistance].shortDesc, </extracomment>
-        <translation>Giá trị được chỉ định là khoảng cách đến bề mặt.</translation>
+      <extracomment>.QGC.MetaData.Facts[ValueSetIsDistance].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/CameraCalc.FactMetaData.json"/>
+      <source>Value specified is distance to surface.</source>
+      <translation type="unfinished">Value specified is distance to surface.</translation>
     </message>
     <message>
-        <source>Distance vehicle is away from surface.</source>
-        <extracomment>.QGC.MetaData.Facts[DistanceToSurface].shortDesc, </extracomment>
-        <translation>Xe từ xa cách xa bề mặt.</translation>
+      <extracomment>.QGC.MetaData.Facts[DistanceToSurface].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/CameraCalc.FactMetaData.json"/>
+      <source>Distance vehicle is away from surface.</source>
+      <translation type="unfinished">Distance vehicle is away from surface.</translation>
     </message>
     <message>
-        <source>Image desity at surface.</source>
-        <extracomment>.QGC.MetaData.Facts[ImageDensity].shortDesc, </extracomment>
-        <translation>Hình ảnh Desity ở bề mặt.</translation>
+      <extracomment>.QGC.MetaData.Facts[ImageDensity].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/CameraCalc.FactMetaData.json"/>
+      <source>Image desity at surface.</source>
+      <translation type="unfinished">Image desity at surface.</translation>
     </message>
     <message>
-        <source>Amount of overlap between images in the forward facing direction.</source>
-        <extracomment>.QGC.MetaData.Facts[FrontalOverlap].shortDesc, </extracomment>
-        <translation>Số lượng chồng chéo giữa hình ảnh theo hướng hướng về phía trước.</translation>
+      <extracomment>.QGC.MetaData.Facts[FrontalOverlap].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/CameraCalc.FactMetaData.json"/>
+      <source>Amount of overlap between images in the forward facing direction.</source>
+      <translation type="unfinished">Amount of overlap between images in the forward facing direction.</translation>
     </message>
     <message>
-        <source>Amount of overlap between images in the side facing direction.</source>
-        <extracomment>.QGC.MetaData.Facts[SideOverlap].shortDesc, </extracomment>
-        <translation>Số lượng chồng chéo giữa hình ảnh theo hướng bên cạnh.</translation>
+      <extracomment>.QGC.MetaData.Facts[SideOverlap].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/CameraCalc.FactMetaData.json"/>
+      <source>Amount of overlap between images in the side facing direction.</source>
+      <translation type="unfinished">Amount of overlap between images in the side facing direction.</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>SpeedSection.FactMetaData.json</name>
     <message>
-        <source>Set the current flight speed</source>
-        <extracomment>.QGC.MetaData.Facts[FlightSpeed].shortDesc, </extracomment>
-        <translation>Đặt tốc độ bay hiện tại</translation>
+      <extracomment>.QGC.MetaData.Facts[FlightSpeed].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/SpeedSection.FactMetaData.json"/>
+      <source>Set the current flight speed</source>
+      <translation type="unfinished">Set the current flight speed</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>FWLandingPattern.FactMetaData.json</name>
     <message>
-        <source>Distance between approach and land points.</source>
-        <extracomment>.QGC.MetaData.Facts[LandingDistance].shortDesc, </extracomment>
-        <translation>Khoảng cách giữa cách tiếp cận và điểm đất.</translation>
+      <extracomment>.QGC.MetaData.Facts[LandingDistance].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
+      <source>Distance between approach and land points.</source>
+      <translation type="unfinished">Distance between approach and land points.</translation>
     </message>
     <message>
-        <source>Heading from approach to land point.</source>
-        <extracomment>.QGC.MetaData.Facts[LandingHeading].shortDesc, </extracomment>
-        <translation>Hướng đến cách tiếp cận đến điểm đất.</translation>
+      <extracomment>.QGC.MetaData.Facts[LandingHeading].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
+      <source>Heading from approach to land point.</source>
+      <translation type="unfinished">Heading from approach to land point.</translation>
     </message>
     <message>
-        <source>Altitude to begin landing approach from.</source>
-        <extracomment>.QGC.MetaData.Facts[FinalApproachAltitude].shortDesc, </extracomment>
-        <translation>Độ cao để bắt đầu tiếp cận hạ cánh từ.</translation>
+      <extracomment>.QGC.MetaData.Facts[FinalApproachAltitude].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
+      <source>Altitude to begin landing approach from.</source>
+      <translation type="unfinished">Altitude to begin landing approach from.</translation>
     </message>
     <message>
-        <source>Command a specific speed for the approach, useful for reducing energy before the glide slope.</source>
-        <extracomment>.QGC.MetaData.Facts[UseDoChangeSpeed].shortDesc, </extracomment>
-        <translation>Chỉ huy một tốc độ cụ thể cho phương pháp, hữu ích để giảm năng lượng trước độ dốc trượt.</translation>
+      <extracomment>.QGC.MetaData.Facts[UseDoChangeSpeed].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
+      <source>Command a specific speed for the approach, useful for reducing energy before the glide slope.</source>
+      <translation type="unfinished">Command a specific speed for the approach, useful for reducing energy before the glide slope.</translation>
     </message>
     <message>
-        <source>Speed to perform the approach at.</source>
-        <extracomment>.QGC.MetaData.Facts[FinalApproachSpeed].shortDesc, </extracomment>
-        <translation>Tốc độ để thực hiện phương pháp tiếp cận tại.</translation>
+      <extracomment>.QGC.MetaData.Facts[FinalApproachSpeed].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
+      <source>Speed to perform the approach at.</source>
+      <translation type="unfinished">Speed to perform the approach at.</translation>
     </message>
     <message>
-        <source>Loiter radius.</source>
-        <extracomment>.QGC.MetaData.Facts[LoiterRadius].shortDesc, </extracomment>
-        <translation>Bán kính loiter.</translation>
+      <extracomment>.QGC.MetaData.Facts[LoiterRadius].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
+      <source>Loiter radius.</source>
+      <translation type="unfinished">Loiter radius.</translation>
     </message>
     <message>
-        <source>Loiter clockwise around the final approach point.</source>
-        <extracomment>.QGC.MetaData.Facts[LoiterClockwise].shortDesc, </extracomment>
-        <translation>Loiter theo chiều kim đồng hồ xung quanh điểm tiếp cận cuối cùng.</translation>
+      <extracomment>.QGC.MetaData.Facts[LoiterClockwise].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
+      <source>Loiter clockwise around the final approach point.</source>
+      <translation type="unfinished">Loiter clockwise around the final approach point.</translation>
     </message>
     <message>
-        <source>Altitude for landing point.</source>
-        <extracomment>.QGC.MetaData.Facts[LandingAltitude].shortDesc, </extracomment>
-        <translation>Độ cao cho điểm hạ cánh.</translation>
+      <extracomment>.QGC.MetaData.Facts[LandingAltitude].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
+      <source>Altitude for landing point.</source>
+      <translation type="unfinished">Altitude for landing point.</translation>
     </message>
     <message>
-        <source>The glide slope between the loiter and landing point.</source>
-        <extracomment>.QGC.MetaData.Facts[GlideSlope].shortDesc, </extracomment>
-        <translation>Độ dốc trượt giữa loiter và điểm hạ cánh.</translation>
+      <extracomment>.QGC.MetaData.Facts[GlideSlope].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
+      <source>The glide slope between the loiter and landing point.</source>
+      <translation type="unfinished">The glide slope between the loiter and landing point.</translation>
     </message>
     <message>
-        <source>Value controller approach point is distance</source>
-        <extracomment>.QGC.MetaData.Facts[ValueSetIsDistance].shortDesc, </extracomment>
-        <translation>Điểm tiếp cận của bộ điều khiển giá trị là khoảng cách</translation>
+      <extracomment>.QGC.MetaData.Facts[ValueSetIsDistance].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
+      <source>Value controller approach point is distance</source>
+      <translation type="unfinished">Value controller approach point is distance</translation>
     </message>
     <message>
-        <source>Use a loiter to altitude item for final appoach. Otherwise use a regular waypoint.</source>
-        <extracomment>.QGC.MetaData.Facts[UseLoiterToAlt].shortDesc, </extracomment>
-        <translation>Sử dụng một mục LOITER cho độ cao cho ứng dụng cuối cùng. Nếu không hãy sử dụng một điểm tham chiếu thường xuyên.</translation>
+      <extracomment>.QGC.MetaData.Facts[UseLoiterToAlt].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
+      <source>Use a loiter to altitude item for final appoach. Otherwise use a regular waypoint.</source>
+      <translation type="unfinished">Use a loiter to altitude item for final appoach. Otherwise use a regular waypoint.</translation>
     </message>
     <message>
-        <source>Stop taking photos</source>
-        <extracomment>.QGC.MetaData.Facts[StopTakingPhotos].shortDesc, </extracomment>
-        <translation>Ngừng chụp ảnh</translation>
+      <extracomment>.QGC.MetaData.Facts[StopTakingPhotos].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
+      <source>Stop taking photos</source>
+      <translation type="unfinished">Stop taking photos</translation>
     </message>
     <message>
-        <source>Stop taking video</source>
-        <extracomment>.QGC.MetaData.Facts[StopTakingVideo].shortDesc, </extracomment>
-        <translation>Ngừng lấy video</translation>
+      <extracomment>.QGC.MetaData.Facts[StopTakingVideo].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
+      <source>Stop taking video</source>
+      <translation type="unfinished">Stop taking video</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>RallyPoint.FactMetaData.json</name>
     <message>
-        <source>Latitude of rally point position</source>
-        <extracomment>.QGC.MetaData.Facts[Latitude].shortDesc, </extracomment>
-        <translation>Vùng vĩ độ của vị trí điểm Rally</translation>
+      <extracomment>.QGC.MetaData.Facts[Latitude].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/RallyPoint.FactMetaData.json"/>
+      <source>Latitude of rally point position</source>
+      <translation type="unfinished">Latitude of rally point position</translation>
     </message>
     <message>
-        <source>Longitude of rally point position</source>
-        <extracomment>.QGC.MetaData.Facts[Longitude].shortDesc, </extracomment>
-        <translation>Kinh độ của vị trí điểm Rally</translation>
+      <extracomment>.QGC.MetaData.Facts[Longitude].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/RallyPoint.FactMetaData.json"/>
+      <source>Longitude of rally point position</source>
+      <translation type="unfinished">Longitude of rally point position</translation>
     </message>
     <message>
-        <source>Altitude of rally point position (home relative)</source>
-        <extracomment>.QGC.MetaData.Facts[RelativeAltitude].shortDesc, </extracomment>
-        <translation>Độ cao của vị trí điểm Rally (tương đối nhà)</translation>
+      <extracomment>.QGC.MetaData.Facts[RelativeAltitude].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/RallyPoint.FactMetaData.json"/>
+      <source>Altitude of rally point position (home relative)</source>
+      <translation type="unfinished">Altitude of rally point position (home relative)</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>BreachReturn.FactMetaData.json</name>
     <message>
-        <source>Latitude of breach return point position</source>
-        <extracomment>.QGC.MetaData.Facts[Latitude].shortDesc, </extracomment>
-        <translation>Vị trí điểm trở lại của vi phạm</translation>
+      <extracomment>.QGC.MetaData.Facts[Latitude].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/BreachReturn.FactMetaData.json"/>
+      <source>Latitude of breach return point position</source>
+      <translation type="unfinished">Latitude of breach return point position</translation>
     </message>
     <message>
-        <source>Longitude of breach return point position</source>
-        <extracomment>.QGC.MetaData.Facts[Longitude].shortDesc, </extracomment>
-        <translation>Kinh độ vi phạm vị trí điểm trở lại</translation>
+      <extracomment>.QGC.MetaData.Facts[Longitude].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/BreachReturn.FactMetaData.json"/>
+      <source>Longitude of breach return point position</source>
+      <translation type="unfinished">Longitude of breach return point position</translation>
     </message>
     <message>
-        <source>Altitude of breach return point position (Rel)</source>
-        <extracomment>.QGC.MetaData.Facts[Altitude].shortDesc, </extracomment>
-        <translation>Độ cao của Vị trí điểm trở lại (REL)</translation>
+      <extracomment>.QGC.MetaData.Facts[Altitude].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/BreachReturn.FactMetaData.json"/>
+      <source>Altitude of breach return point position (Rel)</source>
+      <translation type="unfinished">Altitude of breach return point position (Rel)</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>MavCmdInfoCommon.json</name>
     <message>
-        <source>Home Position</source>
-        <extracomment>.mavCmdInfo[HomeRaw].friendlyName, </extracomment>
-        <translation>Vị trí nhà</translation>
+      <extracomment>.mavCmdInfo[HomeRaw].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Home Position</source>
+      <translation type="unfinished">Home Position</translation>
     </message>
     <message>
-        <source>Planned home position for mission.</source>
-        <extracomment>.mavCmdInfo[HomeRaw].description, </extracomment>
-        <translation>Kế hoạch vị trí nhà cho nhiệm vụ.</translation>
+      <extracomment>.mavCmdInfo[HomeRaw].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Planned home position for mission.</source>
+      <translation type="unfinished">Planned home position for mission.</translation>
     </message>
     <message>
-        <source>Basic</source>
-        <extracomment>.mavCmdInfo[HomeRaw].category, .mavCmdInfo[MAV_CMD_NAV_WAYPOINT].category, .mavCmdInfo[MAV_CMD_NAV_RETURN_TO_LAUNCH].category, .mavCmdInfo[MAV_CMD_NAV_LAND].category, .mavCmdInfo[MAV_CMD_NAV_TAKEOFF].category, .mavCmdInfo[MAV_CMD_NAV_SPLINE_WAYPOINT].category, .mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].category, .mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].category, .mavCmdInfo[MAV_CMD_CONDITION_DELAY].category, </extracomment>
-        <translation>Nền tảng</translation>
+      <extracomment>.mavCmdInfo[HomeRaw].category, .mavCmdInfo[MAV_CMD_NAV_WAYPOINT].category, .mavCmdInfo[MAV_CMD_NAV_RETURN_TO_LAUNCH].category, .mavCmdInfo[MAV_CMD_NAV_LAND].category, .mavCmdInfo[MAV_CMD_NAV_TAKEOFF].category, .mavCmdInfo[MAV_CMD_NAV_SPLINE_WAYPOINT].category, .mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].category, .mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].category, .mavCmdInfo[MAV_CMD_CONDITION_DELAY].category, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Basic</source>
+      <translation type="unfinished">Basic</translation>
     </message>
     <message>
-        <source>Latitude</source>
-        <extracomment>.mavCmdInfo[HomeRaw].param5.label, </extracomment>
-        <translation>Vĩ độ</translation>
+      <extracomment>.mavCmdInfo[HomeRaw].param5.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Latitude</source>
+      <translation type="unfinished">Latitude</translation>
     </message>
     <message>
-        <source>Longitude</source>
-        <extracomment>.mavCmdInfo[HomeRaw].param6.label, </extracomment>
-        <translation>Kinh độ</translation>
+      <extracomment>.mavCmdInfo[HomeRaw].param6.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Longitude</source>
+      <translation type="unfinished">Longitude</translation>
     </message>
     <message>
-        <source>Waypoint</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].friendlyName, </extracomment>
-        <translation>Điểm tham chiếu</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Waypoint</source>
+      <translation type="unfinished">Waypoint</translation>
     </message>
     <message>
-        <source>Travel to a position in 3D space.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].description, </extracomment>
-        <translation>Du lịch đến một vị trí trong không gian 3D.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Travel to a position in 3D space.</source>
+      <translation type="unfinished">Travel to a position in 3D space.</translation>
     </message>
     <message>
-        <source>Hold</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].param1.label, .mavCmdInfo[MAV_CMD_NAV_SPLINE_WAYPOINT].param1.label, .mavCmdInfo[MAV_CMD_NAV_DELAY].param1.label, </extracomment>
-        <translation>Giữ</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].param1.label, .mavCmdInfo[MAV_CMD_NAV_SPLINE_WAYPOINT].param1.label, .mavCmdInfo[MAV_CMD_NAV_DELAY].param1.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Hold</source>
+      <translation type="unfinished">Hold</translation>
     </message>
     <message>
-        <source>Acceptance</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].param2.label, </extracomment>
-        <translation>Chấp nhận</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].param2.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Acceptance</source>
+      <translation type="unfinished">Acceptance</translation>
     </message>
     <message>
-        <source>Pass Radius</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].param3.label, </extracomment>
-        <translation>Vượt qua bán kính</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].param3.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Pass Radius</source>
+      <translation type="unfinished">Pass Radius</translation>
     </message>
     <message>
-        <source>Yaw</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].param4.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].param4.label, .mavCmdInfo[MAV_CMD_NAV_LAND].param4.label, .mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].param4.label, .mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].param4.label, .mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].param2.label, </extracomment>
-        <translation>Ngáp</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].param4.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].param4.label, .mavCmdInfo[MAV_CMD_NAV_LAND].param4.label, .mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].param4.label, .mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].param4.label, .mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].param2.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Yaw</source>
+      <translation type="unfinished">Yaw</translation>
     </message>
     <message>
-        <source>Loiter</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].friendlyName, .mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].category, .mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].category, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].category, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].category, </extracomment>
-        <translation>Đi lang thang</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].friendlyName, .mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].category, .mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].category, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].category, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].category, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Loiter</source>
+      <translation type="unfinished">Loiter</translation>
     </message>
     <message>
-        <source>Travel to a position and Loiter around the specified position indefinitely.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].description, </extracomment>
-        <translation>Đi đến một vị trí và loiter xung quanh vị trí được chỉ định vô thời hạn.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Travel to a position and Loiter around the specified position indefinitely.</source>
+      <translation type="unfinished">Travel to a position and Loiter around the specified position indefinitely.</translation>
     </message>
     <message>
-        <source>Radius</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].param3.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param3.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param3.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param2.label, </extracomment>
-        <translation>Bán kính</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].param3.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param3.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param3.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param2.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Radius</source>
+      <translation type="unfinished">Radius</translation>
     </message>
     <message>
-        <source>Loiter (turns)</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].friendlyName, </extracomment>
-        <translation>LOITER (lượt)</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Loiter (turns)</source>
+      <translation type="unfinished">Loiter (turns)</translation>
     </message>
     <message>
-        <source>Travel to a position and Loiter around the specified position for a number of turns.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].description, </extracomment>
-        <translation>Đi đến một vị trí và loiter xung quanh vị trí được chỉ định cho một số lượt.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Travel to a position and Loiter around the specified position for a number of turns.</source>
+      <translation type="unfinished">Travel to a position and Loiter around the specified position for a number of turns.</translation>
     </message>
     <message>
-        <source>Turns</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param1.label, </extracomment>
-        <translation>Quay lại</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param1.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Turns</source>
+      <translation type="unfinished">Turns</translation>
     </message>
     <message>
-        <source>Leave Loiter</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param2.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param2.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param1.label, </extracomment>
-        <translation>Để lại loiter</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param2.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param2.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param1.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Leave Loiter</source>
+      <translation type="unfinished">Leave Loiter</translation>
     </message>
     <message>
-        <source>Direction of next waypoint,Any direction</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param2.enumStrings, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param1.enumStrings, </extracomment>
-        <translation>Hướng của điểm tiếp theo, bất kỳ hướng nào</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param2.enumStrings, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param1.enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Direction of next waypoint,Any direction</source>
+      <translation type="unfinished">Direction of next waypoint,Any direction</translation>
     </message>
     <message>
-        <source>Exit loiter from</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param4.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param4.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param4.label, </extracomment>
-        <translation>Thoát khỏi loiter từ</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param4.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param4.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param4.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Exit loiter from</source>
+      <translation type="unfinished">Exit loiter from</translation>
     </message>
     <message>
-        <source>Center,Tangent</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param4.enumStrings, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param4.enumStrings, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param4.enumStrings, </extracomment>
-        <translation>Trung tâm, tiếp tuyến</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param4.enumStrings, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param4.enumStrings, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param4.enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Center,Tangent</source>
+      <translation type="unfinished">Center,Tangent</translation>
     </message>
     <message>
-        <source>Loiter (time)</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].friendlyName, </extracomment>
-        <translation>LOITER (thời gian)</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Loiter (time)</source>
+      <translation type="unfinished">Loiter (time)</translation>
     </message>
     <message>
-        <source>Travel to a position and Loiter around the specified position for an amount of time.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].description, </extracomment>
-        <translation>Đi đến một vị trí và loiter xung quanh vị trí được chỉ định trong một khoảng thời gian.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Travel to a position and Loiter around the specified position for an amount of time.</source>
+      <translation type="unfinished">Travel to a position and Loiter around the specified position for an amount of time.</translation>
     </message>
     <message>
-        <source>Loiter Time</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param1.label, </extracomment>
-        <translation>Thời gian loitit</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param1.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Loiter Time</source>
+      <translation type="unfinished">Loiter Time</translation>
     </message>
     <message>
-        <source>Direction of next waypoint,Current direction</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param2.enumStrings, </extracomment>
-        <translation>Hướng của điểm tiếp theo, hướng hiện tại</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param2.enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Direction of next waypoint,Current direction</source>
+      <translation type="unfinished">Direction of next waypoint,Current direction</translation>
     </message>
     <message>
-        <source>Return To Launch</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_RETURN_TO_LAUNCH].friendlyName, </extracomment>
-        <translation>Trở lại để ra mắt</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_RETURN_TO_LAUNCH].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Return To Launch</source>
+      <translation type="unfinished">Return To Launch</translation>
     </message>
     <message>
-        <source>Send the vehicle back to the launch position.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_RETURN_TO_LAUNCH].description, </extracomment>
-        <translation>Gửi xe trở lại vị trí ra mắt.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_RETURN_TO_LAUNCH].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Send the vehicle back to the launch position.</source>
+      <translation type="unfinished">Send the vehicle back to the launch position.</translation>
     </message>
     <message>
-        <source>Land</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].friendlyName, </extracomment>
-        <translation>Đất</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Land</source>
+      <translation type="unfinished">Land</translation>
     </message>
     <message>
-        <source>Land vehicle at the specified location.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].description, </extracomment>
-        <translation>Xe đất tại vị trí được chỉ định.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Land vehicle at the specified location.</source>
+      <translation type="unfinished">Land vehicle at the specified location.</translation>
     </message>
     <message>
-        <source>Abort Alt</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].param1.label, </extracomment>
-        <translation>Hủy bỏ alt</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].param1.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Abort Alt</source>
+      <translation type="unfinished">Abort Alt</translation>
     </message>
     <message>
-        <source>Precision Land</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].param2.label, </extracomment>
-        <translation>Đất chính xác</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].param2.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Precision Land</source>
+      <translation type="unfinished">Precision Land</translation>
     </message>
     <message>
-        <source>Disabled,Opportunistic,Required</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].param2.enumStrings, </extracomment>
-        <translation>Khuyết tật, cơ hội, cần thiết</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].param2.enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Disabled,Opportunistic,Required</source>
+      <translation type="unfinished">Disabled,Opportunistic,Required</translation>
     </message>
     <message>
-        <source>Takeoff</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].friendlyName, </extracomment>
-        <translation>Cởi</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Takeoff</source>
+      <translation type="unfinished">Takeoff</translation>
     </message>
     <message>
-        <source>Launch from the ground and travel towards the specified takeoff position.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].description, </extracomment>
-        <translation>Ra mắt từ mặt đất và đi về phía vị trí cất cánh cụ thể.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Launch from the ground and travel towards the specified takeoff position.</source>
+      <translation type="unfinished">Launch from the ground and travel towards the specified takeoff position.</translation>
     </message>
     <message>
-        <source>Land local</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND_LOCAL].friendlyName, </extracomment>
-        <translation>Đất địa phương</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND_LOCAL].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Land local</source>
+      <translation type="unfinished">Land local</translation>
     </message>
     <message>
-        <source>Takeoff local</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF_LOCAL].friendlyName, </extracomment>
-        <translation>Takeoff địa phương</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF_LOCAL].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Takeoff local</source>
+      <translation type="unfinished">Takeoff local</translation>
     </message>
     <message>
-        <source>Nav follow</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_FOLLOW].friendlyName, </extracomment>
-        <translation>NAV theo dõi</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_FOLLOW].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Nav follow</source>
+      <translation type="unfinished">Nav follow</translation>
     </message>
     <message>
-        <source>Change Altitude</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT].friendlyName, </extracomment>
-        <translation>Thay đổi độ cao</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Change Altitude</source>
+      <translation type="unfinished">Change Altitude</translation>
     </message>
     <message>
-        <source>Continue on the current course and climb/descend to specified altitude. When the altitude is reached continue to the next command.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT].description, </extracomment>
-        <translation>Tiếp tục vào khóa học hiện tại và leo lên/hạ xuống độ cao được chỉ định. Khi độ cao đạt được, tiếp tục đến lệnh tiếp theo.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Continue on the current course and climb/descend to specified altitude. When the altitude is reached continue to the next command.</source>
+      <translation type="unfinished">Continue on the current course and climb/descend to specified altitude. When the altitude is reached continue to the next command.</translation>
     </message>
     <message>
-        <source>Flight control</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT].category, .mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].category, .mavCmdInfo[MAV_CMD_DO_LAND_START].category, .mavCmdInfo[MAV_CMD_DO_INVERTED_FLIGHT].category, </extracomment>
-        <translation>Kiểm soát chuyến bay</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT].category, .mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].category, .mavCmdInfo[MAV_CMD_DO_LAND_START].category, .mavCmdInfo[MAV_CMD_DO_INVERTED_FLIGHT].category, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Flight control</source>
+      <translation type="unfinished">Flight control</translation>
     </message>
     <message>
-        <source>Mode</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT].param1.label, .mavCmdInfo[MAV_CMD_DO_SET_MODE].param1.label, .mavCmdInfo[MAV_CMD_DO_SET_HOME].param1.label, .mavCmdInfo[MAV_CMD_DO_SET_ROI].param1.label, .mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].param1.label, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param1.label, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param7.label, .mavCmdInfo[MAV_CMD_SET_CAMERA_MODE].param2.label, .mavCmdInfo[MAV_CMD_DO_VTOL_TRANSITION].param1.label, </extracomment>
-        <translation>Cách thức</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT].param1.label, .mavCmdInfo[MAV_CMD_DO_SET_MODE].param1.label, .mavCmdInfo[MAV_CMD_DO_SET_HOME].param1.label, .mavCmdInfo[MAV_CMD_DO_SET_ROI].param1.label, .mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].param1.label, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param1.label, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param7.label, .mavCmdInfo[MAV_CMD_SET_CAMERA_MODE].param2.label, .mavCmdInfo[MAV_CMD_DO_VTOL_TRANSITION].param1.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Mode</source>
+      <translation type="unfinished">Mode</translation>
     </message>
     <message>
-        <source>Climb,Neutral,Descend</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT].param1.enumStrings, </extracomment>
-        <translation>Leo lên, trung lập, xuống</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT].param1.enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Climb,Neutral,Descend</source>
+      <translation type="unfinished">Climb,Neutral,Descend</translation>
     </message>
     <message>
-        <source>Loiter (altitude)</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].friendlyName, </extracomment>
-        <translation>Loiter (độ cao)</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Loiter (altitude)</source>
+      <translation type="unfinished">Loiter (altitude)</translation>
     </message>
     <message>
-        <source>Loiter at specified position until altitude reached.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].description, </extracomment>
-        <translation>Loiter tại vị trí cụ thể cho đến khi độ cao đạt được.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Loiter at specified position until altitude reached.</source>
+      <translation type="unfinished">Loiter at specified position until altitude reached.</translation>
     </message>
     <message>
-        <source>Follow Me</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_FOLLOW].friendlyName, </extracomment>
-        <translation>Theo tôi</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_FOLLOW].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Follow Me</source>
+      <translation type="unfinished">Follow Me</translation>
     </message>
     <message>
-        <source>Vehicle reposition</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_FOLLOW_REPOSITION].friendlyName, </extracomment>
-        <translation>Tái định vị xe</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_FOLLOW_REPOSITION].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Vehicle reposition</source>
+      <translation type="unfinished">Vehicle reposition</translation>
     </message>
     <message>
-        <source>Path planning</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].friendlyName, </extracomment>
-        <translation>Lập kế hoạch đường dẫn</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Path planning</source>
+      <translation type="unfinished">Path planning</translation>
     </message>
     <message>
-        <source>Control autonomous path planning.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].description, </extracomment>
-        <translation>Kiểm soát kế hoạch đường dẫn tự trị.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Control autonomous path planning.</source>
+      <translation type="unfinished">Control autonomous path planning.</translation>
     </message>
     <message>
-        <source>Advanced</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].category, .mavCmdInfo[MAV_CMD_DO_SET_MODE].category, .mavCmdInfo[MAV_CMD_DO_JUMP].category, .mavCmdInfo[MAV_CMD_DO_SET_HOME].category, .mavCmdInfo[MAV_CMD_DO_SET_REVERSE].category, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].category, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].category, .mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].category, .mavCmdInfo[MAV_CMD_DO_GRIPPER].category, .mavCmdInfo[MAV_CMD_DO_AUTOTUNE_ENABLE].category, </extracomment>
-        <translation>Trình độ cao</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].category, .mavCmdInfo[MAV_CMD_DO_SET_MODE].category, .mavCmdInfo[MAV_CMD_DO_JUMP].category, .mavCmdInfo[MAV_CMD_DO_SET_HOME].category, .mavCmdInfo[MAV_CMD_DO_SET_REVERSE].category, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].category, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].category, .mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].category, .mavCmdInfo[MAV_CMD_DO_GRIPPER].category, .mavCmdInfo[MAV_CMD_DO_AUTOTUNE_ENABLE].category, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Advanced</source>
+      <translation type="unfinished">Advanced</translation>
     </message>
     <message>
-        <source>Local planning</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].param1.label, </extracomment>
-        <translation>Lập kế hoạch địa phương</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].param1.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Local planning</source>
+      <translation type="unfinished">Local planning</translation>
     </message>
     <message>
-        <source>Disable,Enable,Enable+reset</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].param1.enumStrings, </extracomment>
-        <translation>Vô hiệu hóa, bật, Bật+Đặt lại</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].param1.enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Disable,Enable,Enable+reset</source>
+      <translation type="unfinished">Disable,Enable,Enable+reset</translation>
     </message>
     <message>
-        <source>Full planning</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].param2.label, </extracomment>
-        <translation>Kế hoạch đầy đủ</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].param2.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Full planning</source>
+      <translation type="unfinished">Full planning</translation>
     </message>
     <message>
-        <source>Disable,Enable,Enable+reset,Enable+reset route only</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].param2.enumStrings, </extracomment>
-        <translation>Vô hiệu hóa, bật, Bật+Đặt lại, Bật+Đặt lại tuyến đường</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].param2.enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Disable,Enable,Enable+reset,Enable+reset route only</source>
+      <translation type="unfinished">Disable,Enable,Enable+reset,Enable+reset route only</translation>
     </message>
     <message>
-        <source>Heading goal</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].param4.label, </extracomment>
-        <translation>Mục tiêu tiêu đề</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].param4.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Heading goal</source>
+      <translation type="unfinished">Heading goal</translation>
     </message>
     <message>
-        <source>Spline waypoint</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_SPLINE_WAYPOINT].friendlyName, </extracomment>
-        <translation>Spline Waypoint</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_SPLINE_WAYPOINT].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Spline waypoint</source>
+      <translation type="unfinished">Spline waypoint</translation>
     </message>
     <message>
-        <source>Travel to a position in 3D space using spline path.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_SPLINE_WAYPOINT].description, </extracomment>
-        <translation>Đi đến một vị trí trong không gian 3D bằng đường dẫn spline.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_SPLINE_WAYPOINT].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Travel to a position in 3D space using spline path.</source>
+      <translation type="unfinished">Travel to a position in 3D space using spline path.</translation>
     </message>
     <message>
-        <source>Altitude wait</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_ALTITUDE_WAIT].friendlyName, </extracomment>
-        <translation>Độ cao chờ đợi</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_ALTITUDE_WAIT].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Altitude wait</source>
+      <translation type="unfinished">Altitude wait</translation>
     </message>
     <message>
-        <source>VTOL takeoff</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].friendlyName, </extracomment>
-        <translation>Vtol cất cánh</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>VTOL takeoff</source>
+      <translation type="unfinished">VTOL takeoff</translation>
     </message>
     <message>
-        <source>Hover straight up to specified altitude, transition to fixed-wing and fly to the specified takeoff location.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].description, </extracomment>
-        <translation>Di chuột thẳng lên độ cao được chỉ định, chuyển sang cánh cố định và bay đến vị trí cất cánh được chỉ định.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Hover straight up to specified altitude, transition to fixed-wing and fly to the specified takeoff location.</source>
+      <translation type="unfinished">Hover straight up to specified altitude, transition to fixed-wing and fly to the specified takeoff location.</translation>
     </message>
     <message>
-        <source>Transition Heading</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].param2.label, </extracomment>
-        <translation>Tiêu đề chuyển tiếp</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].param2.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Transition Heading</source>
+      <translation type="unfinished">Transition Heading</translation>
     </message>
     <message>
-        <source>Default,Next waypoint,Takeoff,Specified,Any</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].param2.enumStrings, </extracomment>
-        <translation>Mặc định, điểm tiếp theo, cất cánh, được chỉ định, bất kỳ</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].param2.enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Default,Next waypoint,Takeoff,Specified,Any</source>
+      <translation type="unfinished">Default,Next waypoint,Takeoff,Specified,Any</translation>
     </message>
     <message>
-        <source>VTOL land</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].friendlyName, </extracomment>
-        <translation>Vùng đất VTOL</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>VTOL land</source>
+      <translation type="unfinished">VTOL land</translation>
     </message>
     <message>
-        <source>Fly to specified location at current altitude, transition to multi-rotor and land.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].description, </extracomment>
-        <translation>Bay đến vị trí được chỉ định ở độ cao hiện tại, chuyển sang đa cánh quạt và đất.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Fly to specified location at current altitude, transition to multi-rotor and land.</source>
+      <translation type="unfinished">Fly to specified location at current altitude, transition to multi-rotor and land.</translation>
     </message>
     <message>
-        <source>Approach Alt</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].param3.label, </extracomment>
-        <translation>Cách tiếp cận alt</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].param3.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Approach Alt</source>
+      <translation type="unfinished">Approach Alt</translation>
     </message>
     <message>
-        <source>Guided enable</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_GUIDED_ENABLE].friendlyName, </extracomment>
-        <translation>Hướng dẫn cho phép</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_GUIDED_ENABLE].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Guided enable</source>
+      <translation type="unfinished">Guided enable</translation>
     </message>
     <message>
-        <source>Enable/Disabled guided mode.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_GUIDED_ENABLE].description, </extracomment>
-        <translation>Bật/Chế độ hướng dẫn vô hiệu hóa.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_GUIDED_ENABLE].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Enable/Disabled guided mode.</source>
+      <translation type="unfinished">Enable/Disabled guided mode.</translation>
     </message>
     <message>
-        <source>Enable</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_GUIDED_ENABLE].param1.label, .mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].param1.label, .mavCmdInfo[MAV_CMD_DO_AUTOTUNE_ENABLE].param1.label, </extracomment>
-        <translation>Cho phép</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_GUIDED_ENABLE].param1.label, .mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].param1.label, .mavCmdInfo[MAV_CMD_DO_AUTOTUNE_ENABLE].param1.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Enable</source>
+      <translation type="unfinished">Enable</translation>
     </message>
     <message>
-        <source>On,Off</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_GUIDED_ENABLE].param1.enumStrings, </extracomment>
-        <translation>Trên, tắt</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_GUIDED_ENABLE].param1.enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>On,Off</source>
+      <translation type="unfinished">On,Off</translation>
     </message>
     <message>
-        <source>Delay until</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_DELAY].friendlyName, </extracomment>
-        <translation>Trì hoãn cho đến khi</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_DELAY].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Delay until</source>
+      <translation type="unfinished">Delay until</translation>
     </message>
     <message>
-        <source>Delay until the specified time is reached.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_DELAY].description, </extracomment>
-        <translation>Độ trễ cho đến khi đạt được thời gian quy định.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_DELAY].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Delay until the specified time is reached.</source>
+      <translation type="unfinished">Delay until the specified time is reached.</translation>
     </message>
     <message>
-        <source>Hour (utc)</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_DELAY].param2.label, </extracomment>
-        <translation>Giờ (UTC)</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_DELAY].param2.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Hour (utc)</source>
+      <translation type="unfinished">Hour (utc)</translation>
     </message>
     <message>
-        <source>Min (utc)</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_DELAY].param3.label, </extracomment>
-        <translation>Min (UTC)</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_DELAY].param3.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Min (utc)</source>
+      <translation type="unfinished">Min (utc)</translation>
     </message>
     <message>
-        <source>Sec (utc)</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_DELAY].param4.label, </extracomment>
-        <translation>Sec (UTC)</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_DELAY].param4.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Sec (utc)</source>
+      <translation type="unfinished">Sec (utc)</translation>
     </message>
     <message>
-        <source>Delay</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_DELAY].friendlyName, .mavCmdInfo[MAV_CMD_CONDITION_DELAY].param1.label, </extracomment>
-        <translation>Trì hoãn</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_DELAY].friendlyName, .mavCmdInfo[MAV_CMD_CONDITION_DELAY].param1.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Delay</source>
+      <translation type="unfinished">Delay</translation>
     </message>
     <message>
-        <source>Delay the mission for the number of seconds.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_DELAY].description, </extracomment>
-        <translation>Trì hoãn nhiệm vụ trong số giây.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_DELAY].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Delay the mission for the number of seconds.</source>
+      <translation type="unfinished">Delay the mission for the number of seconds.</translation>
     </message>
     <message>
-        <source>Wait for altitude</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_CHANGE_ALT].friendlyName, </extracomment>
-        <translation>Chờ độ cao</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_CHANGE_ALT].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Wait for altitude</source>
+      <translation type="unfinished">Wait for altitude</translation>
     </message>
     <message>
-        <source>Delay the mission until the specified altitide is reached.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_CHANGE_ALT].description, </extracomment>
-        <translation>Trì hoãn nhiệm vụ cho đến khi đạt được Altitide được chỉ định.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_CHANGE_ALT].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Delay the mission until the specified altitide is reached.</source>
+      <translation type="unfinished">Delay the mission until the specified altitide is reached.</translation>
     </message>
     <message>
-        <source>Conditionals</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_CHANGE_ALT].category, .mavCmdInfo[MAV_CMD_CONDITION_DISTANCE].category, .mavCmdInfo[MAV_CMD_CONDITION_YAW].category, .mavCmdInfo[MAV_CMD_CONDITION_GATE].category, </extracomment>
-        <translation>Điều kiện</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_CHANGE_ALT].category, .mavCmdInfo[MAV_CMD_CONDITION_DISTANCE].category, .mavCmdInfo[MAV_CMD_CONDITION_YAW].category, .mavCmdInfo[MAV_CMD_CONDITION_GATE].category, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Conditionals</source>
+      <translation type="unfinished">Conditionals</translation>
     </message>
     <message>
-        <source>Rate</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_CHANGE_ALT].param1.label, .mavCmdInfo[MAV_CMD_CONDITION_YAW].param2.label, </extracomment>
-        <translation>Tỷ lệ</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_CHANGE_ALT].param1.label, .mavCmdInfo[MAV_CMD_CONDITION_YAW].param2.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Rate</source>
+      <translation type="unfinished">Rate</translation>
     </message>
     <message>
-        <source>Wait for distance</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_DISTANCE].friendlyName, </extracomment>
-        <translation>Chờ khoảng cách</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_DISTANCE].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Wait for distance</source>
+      <translation type="unfinished">Wait for distance</translation>
     </message>
     <message>
-        <source>Delay the mission until within the specified distance of the next waypoint.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_DISTANCE].description, </extracomment>
-        <translation>Trì hoãn nhiệm vụ cho đến khi trong khoảng cách được chỉ định của điểm tiếp theo.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_DISTANCE].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Delay the mission until within the specified distance of the next waypoint.</source>
+      <translation type="unfinished">Delay the mission until within the specified distance of the next waypoint.</translation>
     </message>
     <message>
-        <source>Distance</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_DISTANCE].param1.label, .mavCmdInfo[MAV_CMD_DO_SET_CAM_TRIGG_DIST].param1.label, </extracomment>
-        <translation>Khoảng cách</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_DISTANCE].param1.label, .mavCmdInfo[MAV_CMD_DO_SET_CAM_TRIGG_DIST].param1.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Distance</source>
+      <translation type="unfinished">Distance</translation>
     </message>
     <message>
-        <source>Wait for Yaw</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_YAW].friendlyName, </extracomment>
-        <translation>Chờ ngáp</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_YAW].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Wait for Yaw</source>
+      <translation type="unfinished">Wait for Yaw</translation>
     </message>
     <message>
-        <source>Delay the mission until the specified heading is reached.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_YAW].description, </extracomment>
-        <translation>Trì hoãn nhiệm vụ cho đến khi đạt được tiêu đề được chỉ định.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_YAW].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Delay the mission until the specified heading is reached.</source>
+      <translation type="unfinished">Delay the mission until the specified heading is reached.</translation>
     </message>
     <message>
-        <source>Heading</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_YAW].param1.label, </extracomment>
-        <translation>Tiêu đề</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_YAW].param1.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Heading</source>
+      <translation type="unfinished">Heading</translation>
     </message>
     <message>
-        <source>Direction</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_YAW].param3.label, .mavCmdInfo[MAV_CMD_DO_SET_REVERSE].param1.label, </extracomment>
-        <translation>Phương hướng</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_YAW].param3.label, .mavCmdInfo[MAV_CMD_DO_SET_REVERSE].param1.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Direction</source>
+      <translation type="unfinished">Direction</translation>
     </message>
     <message>
-        <source>Clockwise,Shortest,Counter-Clockwise</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_YAW].param3.enumStrings, </extracomment>
-        <translation>Theo chiều kim đồng hồ, ngắn nhất, ngược chiều kim đồng hồ</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_YAW].param3.enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Clockwise,Shortest,Counter-Clockwise</source>
+      <translation type="unfinished">Clockwise,Shortest,Counter-Clockwise</translation>
     </message>
     <message>
-        <source>Offset</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_YAW].param4.label, .mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].param4.label, </extracomment>
-        <translation>Bù lại</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_YAW].param4.label, .mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].param4.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Offset</source>
+      <translation type="unfinished">Offset</translation>
     </message>
     <message>
-        <source>Relative,Absolute</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_YAW].param4.enumStrings, .mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].param4.enumStrings, </extracomment>
-        <translation>Tương đối, tuyệt đối</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_YAW].param4.enumStrings, .mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].param4.enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Relative,Absolute</source>
+      <translation type="unfinished">Relative,Absolute</translation>
     </message>
     <message>
-        <source>Set mode</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].friendlyName, </extracomment>
-        <translation>Đặt chế độ</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Set mode</source>
+      <translation type="unfinished">Set mode</translation>
     </message>
     <message>
-        <source>Set flight mode</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].friendlyName, </extracomment>
-        <translation>Đặt chế độ bay</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Set flight mode</source>
+      <translation type="unfinished">Set flight mode</translation>
     </message>
     <message>
-        <source>Set flight mode.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].description, </extracomment>
-        <translation>Đặt chế độ bay.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Set flight mode.</source>
+      <translation type="unfinished">Set flight mode.</translation>
     </message>
     <message>
-        <source>Custom Mode</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].param2.label, </extracomment>
-        <translation>Chế độ tùy chỉnh</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].param2.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Custom Mode</source>
+      <translation type="unfinished">Custom Mode</translation>
     </message>
     <message>
-        <source>Sub Mode</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].param3.label, </extracomment>
-        <translation>Chế độ phụ</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].param3.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Sub Mode</source>
+      <translation type="unfinished">Sub Mode</translation>
     </message>
     <message>
-        <source>Jump to item</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_JUMP].friendlyName, </extracomment>
-        <translation>Nhảy đến vật phẩm</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_JUMP].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Jump to item</source>
+      <translation type="unfinished">Jump to item</translation>
     </message>
     <message>
-        <source>Mission will continue at the specified item.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_JUMP].description, </extracomment>
-        <translation>Nhiệm vụ sẽ tiếp tục tại mục được chỉ định.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_JUMP].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Mission will continue at the specified item.</source>
+      <translation type="unfinished">Mission will continue at the specified item.</translation>
     </message>
     <message>
-        <source>Item #</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_JUMP].param1.label, </extracomment>
-        <translation>Mục #</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_JUMP].param1.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Item #</source>
+      <translation type="unfinished">Item #</translation>
     </message>
     <message>
-        <source>Repeat</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_JUMP].param2.label, </extracomment>
-        <translation>Lặp lại</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_JUMP].param2.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Repeat</source>
+      <translation type="unfinished">Repeat</translation>
     </message>
     <message>
-        <source>Change speed</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].friendlyName, </extracomment>
-        <translation>Thay đổi tốc độ</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Change speed</source>
+      <translation type="unfinished">Change speed</translation>
     </message>
     <message>
-        <source>Change speed and/or throttle set points.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].description, </extracomment>
-        <translation>Thay đổi tốc độ và/hoặc điểm đặt bướm ga.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Change speed and/or throttle set points.</source>
+      <translation type="unfinished">Change speed and/or throttle set points.</translation>
     </message>
     <message>
-        <source>Type</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].param1.label, </extracomment>
-        <translation>Kiểu</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].param1.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Type</source>
+      <translation type="unfinished">Type</translation>
     </message>
     <message>
-        <source>Airspeed,Ground Speed,Ascend Speed,Descend Speed</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].param1.enumStrings, </extracomment>
-        <translation>Tốc độ không khí, tốc độ mặt đất, tốc độ tăng dần, tốc độ xuống</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].param1.enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Airspeed,Ground Speed,Ascend Speed,Descend Speed</source>
+      <translation type="unfinished">Airspeed,Ground Speed,Ascend Speed,Descend Speed</translation>
     </message>
     <message>
-        <source>Speed</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].param2.label, </extracomment>
-        <translation>Tốc độ</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].param2.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Speed</source>
+      <translation type="unfinished">Speed</translation>
     </message>
     <message>
-        <source>Throttle</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].param3.label, </extracomment>
-        <translation>Ga</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].param3.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Throttle</source>
+      <translation type="unfinished">Throttle</translation>
     </message>
     <message>
-        <source>Set launch location</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_HOME].friendlyName, </extracomment>
-        <translation>Đặt vị trí khởi động</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_HOME].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Set launch location</source>
+      <translation type="unfinished">Set launch location</translation>
     </message>
     <message>
-        <source>Changes the launch location either to the current location or a specified location.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_HOME].description, </extracomment>
-        <translation>Thay đổi vị trí khởi chạy thành vị trí hiện tại hoặc một vị trí được chỉ định.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_HOME].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Changes the launch location either to the current location or a specified location.</source>
+      <translation type="unfinished">Changes the launch location either to the current location or a specified location.</translation>
     </message>
     <message>
-        <source>Vehicle position,Specified position</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_HOME].param1.enumStrings, </extracomment>
-        <translation>Vị trí xe, vị trí được chỉ định</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_HOME].param1.enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Vehicle position,Specified position</source>
+      <translation type="unfinished">Vehicle position,Specified position</translation>
     </message>
     <message>
-        <source>Set Parameter</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_PARAMETER].friendlyName, </extracomment>
-        <translation>Đặt tham số</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_PARAMETER].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Set Parameter</source>
+      <translation type="unfinished">Set Parameter</translation>
     </message>
     <message>
-        <source>Set relay</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_RELAY].friendlyName, </extracomment>
-        <translation>Đặt rơle</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_RELAY].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Set relay</source>
+      <translation type="unfinished">Set relay</translation>
     </message>
     <message>
-        <source>Set relay to a condition.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_RELAY].description, </extracomment>
-        <translation>Đặt rơle thành một điều kiện.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_RELAY].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Set relay to a condition.</source>
+      <translation type="unfinished">Set relay to a condition.</translation>
     </message>
     <message>
-        <source>Relay #</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_RELAY].param1.label, .mavCmdInfo[MAV_CMD_DO_REPEAT_RELAY].param1.label, </extracomment>
-        <translation>RELAY #</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_RELAY].param1.label, .mavCmdInfo[MAV_CMD_DO_REPEAT_RELAY].param1.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Relay #</source>
+      <translation type="unfinished">Relay #</translation>
     </message>
     <message>
-        <source>Value</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_RELAY].param2.label, </extracomment>
-        <translation>Giá trị</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_RELAY].param2.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Value</source>
+      <translation type="unfinished">Value</translation>
     </message>
     <message>
-        <source>Cycle relay</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_REPEAT_RELAY].friendlyName, </extracomment>
-        <translation>Rơle chu kỳ</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_REPEAT_RELAY].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Cycle relay</source>
+      <translation type="unfinished">Cycle relay</translation>
     </message>
     <message>
-        <source>Cycle relay on/off for desired cycles/time.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_REPEAT_RELAY].description, </extracomment>
-        <translation>BẬT/TẮT rơle chu kỳ cho chu kỳ/thời gian mong muốn.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_REPEAT_RELAY].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Cycle relay on/off for desired cycles/time.</source>
+      <translation type="unfinished">Cycle relay on/off for desired cycles/time.</translation>
     </message>
     <message>
-        <source>Cycles</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_REPEAT_RELAY].param2.label, .mavCmdInfo[MAV_CMD_DO_REPEAT_SERVO].param3.label, </extracomment>
-        <translation>Chu kỳ</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_REPEAT_RELAY].param2.label, .mavCmdInfo[MAV_CMD_DO_REPEAT_SERVO].param3.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Cycles</source>
+      <translation type="unfinished">Cycles</translation>
     </message>
     <message>
-        <source>Time</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_REPEAT_RELAY].param3.label, .mavCmdInfo[MAV_CMD_DO_REPEAT_SERVO].param4.label, </extracomment>
-        <translation>Thời gian</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_REPEAT_RELAY].param3.label, .mavCmdInfo[MAV_CMD_DO_REPEAT_SERVO].param4.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Time</source>
+      <translation type="unfinished">Time</translation>
     </message>
     <message>
-        <source>Set servo</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_SERVO].friendlyName, </extracomment>
-        <translation>Đặt servo</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_SERVO].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Set servo</source>
+      <translation type="unfinished">Set servo</translation>
     </message>
     <message>
-        <source>Set servo to specified PWM value.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_SERVO].description, .mavCmdInfo[MAV_CMD_DO_REPEAT_SERVO].description, </extracomment>
-        <translation>Đặt servo thành giá trị PWM được chỉ định.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_SERVO].description, .mavCmdInfo[MAV_CMD_DO_REPEAT_SERVO].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Set servo to specified PWM value.</source>
+      <translation type="unfinished">Set servo to specified PWM value.</translation>
     </message>
     <message>
-        <source>Servo</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_SERVO].param1.label, .mavCmdInfo[MAV_CMD_DO_REPEAT_SERVO].param1.label, </extracomment>
-        <translation>Servo</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_SERVO].param1.label, .mavCmdInfo[MAV_CMD_DO_REPEAT_SERVO].param1.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Servo</source>
+      <translation type="unfinished">Servo</translation>
     </message>
     <message>
-        <source>PWM</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_SERVO].param2.label, .mavCmdInfo[MAV_CMD_DO_REPEAT_SERVO].param2.label, </extracomment>
-        <translation>PWM</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_SERVO].param2.label, .mavCmdInfo[MAV_CMD_DO_REPEAT_SERVO].param2.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>PWM</source>
+      <translation type="unfinished">PWM</translation>
     </message>
     <message>
-        <source>Cycle servo</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_REPEAT_SERVO].friendlyName, </extracomment>
-        <translation>Chu kỳ servo</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_REPEAT_SERVO].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Cycle servo</source>
+      <translation type="unfinished">Cycle servo</translation>
     </message>
     <message>
-        <source>Set actuator</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ACTUATOR].friendlyName, </extracomment>
-        <translation>Đặt bộ truyền động</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ACTUATOR].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Set actuator</source>
+      <translation type="unfinished">Set actuator</translation>
     </message>
     <message>
-        <source>Set actuator to specified output value (range [-1, 1]).</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ACTUATOR].description, </extracomment>
-        <translation>Đặt bộ truyền động thành giá trị đầu ra được chỉ định (phạm vi [-1, 1]).</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ACTUATOR].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Set actuator to specified output value (range [-1, 1]).</source>
+      <translation type="unfinished">Set actuator to specified output value (range [-1, 1]).</translation>
     </message>
     <message>
-        <source>Actuator 1</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ACTUATOR].param1.label, </extracomment>
-        <translation>Bộ truyền động 1</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ACTUATOR].param1.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Actuator 1</source>
+      <translation type="unfinished">Actuator 1</translation>
     </message>
     <message>
-        <source>Actuator 2</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ACTUATOR].param2.label, </extracomment>
-        <translation>Tổ chức truyền động 2</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ACTUATOR].param2.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Actuator 2</source>
+      <translation type="unfinished">Actuator 2</translation>
     </message>
     <message>
-        <source>Actuator 3</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ACTUATOR].param3.label, </extracomment>
-        <translation>Tổ chức truyền động 3</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ACTUATOR].param3.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Actuator 3</source>
+      <translation type="unfinished">Actuator 3</translation>
     </message>
     <message>
-        <source>Actuator 4</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ACTUATOR].param4.label, </extracomment>
-        <translation>Tổ chức truyền động 4</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ACTUATOR].param4.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Actuator 4</source>
+      <translation type="unfinished">Actuator 4</translation>
     </message>
     <message>
-        <source>Flight termination</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_FLIGHTTERMINATION].friendlyName, </extracomment>
-        <translation>Chấm dứt chuyến bay</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_FLIGHTTERMINATION].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Flight termination</source>
+      <translation type="unfinished">Flight termination</translation>
     </message>
     <message>
-        <source>Land start</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_LAND_START].friendlyName, </extracomment>
-        <translation>Đất bắt đầu</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_LAND_START].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Land start</source>
+      <translation type="unfinished">Land start</translation>
     </message>
     <message>
-        <source>Marker to indicate start of landing sequence.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_LAND_START].description, </extracomment>
-        <translation>Điểm đánh dấu để chỉ ra bắt đầu của chuỗi hạ cánh.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_LAND_START].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Marker to indicate start of landing sequence.</source>
+      <translation type="unfinished">Marker to indicate start of landing sequence.</translation>
     </message>
     <message>
-        <source>Rally land</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_RALLY_LAND].friendlyName, </extracomment>
-        <translation>Đất đai</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_RALLY_LAND].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Rally land</source>
+      <translation type="unfinished">Rally land</translation>
     </message>
     <message>
-        <source>Go around</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_GO_AROUND].friendlyName, </extracomment>
-        <translation>Đi xung quanh</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_GO_AROUND].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Go around</source>
+      <translation type="unfinished">Go around</translation>
     </message>
     <message>
-        <source>Reposition</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_REPOSITION].friendlyName, </extracomment>
-        <translation>Định vị lại</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_REPOSITION].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Reposition</source>
+      <translation type="unfinished">Reposition</translation>
     </message>
     <message>
-        <source>Pause/Continue</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_PAUSE_CONTINUE].friendlyName, </extracomment>
-        <translation>Tạm dừng/Tiếp tục</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_PAUSE_CONTINUE].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Pause/Continue</source>
+      <translation type="unfinished">Pause/Continue</translation>
     </message>
     <message>
-        <source>Set moving direction</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_REVERSE].friendlyName, </extracomment>
-        <translation>Đặt hướng di chuyển</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_REVERSE].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Set moving direction</source>
+      <translation type="unfinished">Set moving direction</translation>
     </message>
     <message>
-        <source>Set moving direction to forward or reverse.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_REVERSE].description, </extracomment>
-        <translation>Đặt hướng di chuyển để chuyển tiếp hoặc đảo ngược.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_REVERSE].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Set moving direction to forward or reverse.</source>
+      <translation type="unfinished">Set moving direction to forward or reverse.</translation>
     </message>
     <message>
-        <source>Forward,Reverse</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_REVERSE].param1.enumStrings, </extracomment>
-        <translation>Chuyển tiếp, đảo ngược</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_REVERSE].param1.enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Forward,Reverse</source>
+      <translation type="unfinished">Forward,Reverse</translation>
     </message>
     <message>
-        <source>Region of interest (ROI)</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_LOCATION].friendlyName, </extracomment>
-        <translation>Vùng quan tâm (ROI)</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_LOCATION].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Region of interest (ROI)</source>
+      <translation type="unfinished">Region of interest (ROI)</translation>
     </message>
     <message>
-        <source>Sets the region of interest for cameras.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_LOCATION].description, .mavCmdInfo[MAV_CMD_DO_SET_ROI].description, </extracomment>
-        <translation>Đặt khu vực quan tâm cho máy ảnh.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_LOCATION].description, .mavCmdInfo[MAV_CMD_DO_SET_ROI].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Sets the region of interest for cameras.</source>
+      <translation type="unfinished">Sets the region of interest for cameras.</translation>
     </message>
     <message>
-        <source>Camera</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_LOCATION].category, .mavCmdInfo[MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET].category, .mavCmdInfo[MAV_CMD_DO_SET_ROI_NONE].category, .mavCmdInfo[MAV_CMD_DO_SET_ROI].category, .mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].category, .mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].category, .mavCmdInfo[MAV_CMD_DO_SET_CAM_TRIGG_DIST].category, .mavCmdInfo[MAV_CMD_SET_CAMERA_MODE].category, .mavCmdInfo[MAV_CMD_IMAGE_START_CAPTURE].category, .mavCmdInfo[MAV_CMD_IMAGE_STOP_CAPTURE].category, .mavCmdInfo[MAV_CMD_VIDEO_START_CAPTURE].category, .mavCmdInfo[MAV_CMD_VIDEO_STOP_CAPTURE].category, </extracomment>
-        <translation>Camera</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_LOCATION].category, .mavCmdInfo[MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET].category, .mavCmdInfo[MAV_CMD_DO_SET_ROI_NONE].category, .mavCmdInfo[MAV_CMD_DO_SET_ROI].category, .mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].category, .mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].category, .mavCmdInfo[MAV_CMD_DO_SET_CAM_TRIGG_DIST].category, .mavCmdInfo[MAV_CMD_SET_CAMERA_MODE].category, .mavCmdInfo[MAV_CMD_IMAGE_START_CAPTURE].category, .mavCmdInfo[MAV_CMD_IMAGE_STOP_CAPTURE].category, .mavCmdInfo[MAV_CMD_VIDEO_START_CAPTURE].category, .mavCmdInfo[MAV_CMD_VIDEO_STOP_CAPTURE].category, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Camera</source>
+      <translation type="unfinished">Camera</translation>
     </message>
     <message>
-        <source>ROI to next waypoint</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET].friendlyName, </extracomment>
-        <translation>ROI đến điểm tiếp theo</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>ROI to next waypoint</source>
+      <translation type="unfinished">ROI to next waypoint</translation>
     </message>
     <message>
-        <source>Sets the region of interest to point towards the next waypoint with optional offsets.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET].description, </extracomment>
-        <translation>Đặt khu vực quan tâm để hướng tới điểm tham chiếu tiếp theo với các độ lệch tùy chọn.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Sets the region of interest to point towards the next waypoint with optional offsets.</source>
+      <translation type="unfinished">Sets the region of interest to point towards the next waypoint with optional offsets.</translation>
     </message>
     <message>
-        <source>Pitch offset</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET].param5.label, </extracomment>
-        <translation>Bù sân</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET].param5.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Pitch offset</source>
+      <translation type="unfinished">Pitch offset</translation>
     </message>
     <message>
-        <source>Roll offset</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET].param6.label, </extracomment>
-        <translation>Cuộn bù</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET].param6.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Roll offset</source>
+      <translation type="unfinished">Roll offset</translation>
     </message>
     <message>
-        <source>Yaw offset</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET].param7.label, </extracomment>
-        <translation>Ngáp bù</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET].param7.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Yaw offset</source>
+      <translation type="unfinished">Yaw offset</translation>
     </message>
     <message>
-        <source>Cancel ROI</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_NONE].friendlyName, </extracomment>
-        <translation>Hủy ROI</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_NONE].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Cancel ROI</source>
+      <translation type="unfinished">Cancel ROI</translation>
     </message>
     <message>
-        <source>Cancels the region of interest.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_NONE].description, </extracomment>
-        <translation>Hủy bỏ khu vực quan tâm.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_NONE].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Cancels the region of interest.</source>
+      <translation type="unfinished">Cancels the region of interest.</translation>
     </message>
     <message>
-        <source>Control video</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_CONTROL_VIDEO].friendlyName, </extracomment>
-        <translation>Video điều khiển</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_CONTROL_VIDEO].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Control video</source>
+      <translation type="unfinished">Control video</translation>
     </message>
     <message>
-        <source>Region of interest</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI].friendlyName, </extracomment>
-        <translation>Khu vực quan tâm</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Region of interest</source>
+      <translation type="unfinished">Region of interest</translation>
     </message>
     <message>
-        <source>None,Next waypoint,Mission item,Location,ROI item</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI].param1.enumStrings, </extracomment>
-        <translation>Không có, điểm tiếp theo, mục nhiệm vụ, vị trí, mục ROI</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI].param1.enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>None,Next waypoint,Mission item,Location,ROI item</source>
+      <translation type="unfinished">None,Next waypoint,Mission item,Location,ROI item</translation>
     </message>
     <message>
-        <source>Mission Index</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI].param2.label, </extracomment>
-        <translation>Chỉ số nhiệm vụ</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI].param2.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Mission Index</source>
+      <translation type="unfinished">Mission Index</translation>
     </message>
     <message>
-        <source>ROI Index</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI].param3.label, </extracomment>
-        <translation>Chỉ số ROI</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI].param3.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>ROI Index</source>
+      <translation type="unfinished">ROI Index</translation>
     </message>
     <message>
-        <source>Camera config</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].friendlyName, </extracomment>
-        <translation>Cấu hình máy ảnh</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Camera config</source>
+      <translation type="unfinished">Camera config</translation>
     </message>
     <message>
-        <source>Configure onboard camera controller.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].description, </extracomment>
-        <translation>Định cấu hình bộ điều khiển camera trên bo mạch.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Configure onboard camera controller.</source>
+      <translation type="unfinished">Configure onboard camera controller.</translation>
     </message>
     <message>
-        <source>Shutter spd</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].param2.label, </extracomment>
-        <translation>SPD màn trập</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].param2.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Shutter spd</source>
+      <translation type="unfinished">Shutter spd</translation>
     </message>
     <message>
-        <source>Aperture</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].param3.label, </extracomment>
-        <translation>Khẩu độ</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].param3.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Aperture</source>
+      <translation type="unfinished">Aperture</translation>
     </message>
     <message>
-        <source>ISO</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].param4.label, </extracomment>
-        <translation>ISO</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].param4.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>ISO</source>
+      <translation type="unfinished">ISO</translation>
     </message>
     <message>
-        <source>Exposure</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].param5.label, </extracomment>
-        <translation>Phơi bày</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].param5.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Exposure</source>
+      <translation type="unfinished">Exposure</translation>
     </message>
     <message>
-        <source>Command</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].param6.label, .mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].param5.label, </extracomment>
-        <translation>Yêu cầu</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].param6.label, .mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].param5.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Command</source>
+      <translation type="unfinished">Command</translation>
     </message>
     <message>
-        <source>Cut off</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].param7.label, </extracomment>
-        <translation>Cắt bỏ</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].param7.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Cut off</source>
+      <translation type="unfinished">Cut off</translation>
     </message>
     <message>
-        <source>Camera control</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].friendlyName, </extracomment>
-        <translation>Kiểm soát camera</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Camera control</source>
+      <translation type="unfinished">Camera control</translation>
     </message>
     <message>
-        <source>Control onboard camera.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].description, </extracomment>
-        <translation>Điều khiển máy ảnh trên tàu.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Control onboard camera.</source>
+      <translation type="unfinished">Control onboard camera.</translation>
     </message>
     <message>
-        <source>Session</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].param1.label, </extracomment>
-        <translation>Phiên họp</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].param1.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Session</source>
+      <translation type="unfinished">Session</translation>
     </message>
     <message>
-        <source>Zoom</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].param2.label, </extracomment>
-        <translation>Phóng</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].param2.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Zoom</source>
+      <translation type="unfinished">Zoom</translation>
     </message>
     <message>
-        <source>Step</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].param3.label, </extracomment>
-        <translation>Bước chân</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].param3.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Step</source>
+      <translation type="unfinished">Step</translation>
     </message>
     <message>
-        <source>Focus lock</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].param4.label, </extracomment>
-        <translation>Khóa tập trung</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].param4.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Focus lock</source>
+      <translation type="unfinished">Focus lock</translation>
     </message>
     <message>
-        <source>Id</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].param6.label, </extracomment>
-        <translation>Nhận dạng</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].param6.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Id</source>
+      <translation type="unfinished">Id</translation>
     </message>
     <message>
-        <source>Configure Mount</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].friendlyName, </extracomment>
-        <translation>Cấu hình gắn kết</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Configure Mount</source>
+      <translation type="unfinished">Configure Mount</translation>
     </message>
     <message>
-        <source>Configure the vehicle mount (e.g. gimbal).</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].description, </extracomment>
-        <translation>Định cấu hình giá treo xe (ví dụ: Gimbal).</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Configure the vehicle mount (e.g. gimbal).</source>
+      <translation type="unfinished">Configure the vehicle mount (e.g. gimbal).</translation>
     </message>
     <message>
-        <source>Retract,Neutral,Mavlink Targeting,RC Targeting,GPS Point</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param1.enumStrings, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param7.enumStrings, </extracomment>
-        <translation>Rút lại, trung tính, nhắm mục tiêu mavlink, nhắm mục tiêu RC, điểm GPS</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param1.enumStrings, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param7.enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Retract,Neutral,Mavlink Targeting,RC Targeting,GPS Point</source>
+      <translation type="unfinished">Retract,Neutral,Mavlink Targeting,RC Targeting,GPS Point</translation>
     </message>
     <message>
-        <source>Stabilize Roll</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param2.label, </extracomment>
-        <translation>Ổn định cuộn</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param2.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Stabilize Roll</source>
+      <translation type="unfinished">Stabilize Roll</translation>
     </message>
     <message>
-        <source>No,Yes</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param2.enumStrings, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param3.enumStrings, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param4.enumStrings, </extracomment>
-        <translation>Không, vâng</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param2.enumStrings, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param3.enumStrings, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param4.enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>No,Yes</source>
+      <translation type="unfinished">No,Yes</translation>
     </message>
     <message>
-        <source>Stabilize Pitch</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param3.label, </extracomment>
-        <translation>Ổn định cao độ</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param3.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Stabilize Pitch</source>
+      <translation type="unfinished">Stabilize Pitch</translation>
     </message>
     <message>
-        <source>Stabilize Yaw</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param4.label, </extracomment>
-        <translation>Ổn định ngáp</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param4.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Stabilize Yaw</source>
+      <translation type="unfinished">Stabilize Yaw</translation>
     </message>
     <message>
-        <source>Control Mount</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].friendlyName, </extracomment>
-        <translation>Kiểm soát gắn kết</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Control Mount</source>
+      <translation type="unfinished">Control Mount</translation>
     </message>
     <message>
-        <source>Control the vehicle mount (e.g. gimbal).</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].description, </extracomment>
-        <translation>Kiểm soát giá treo xe (ví dụ: Gimbal).</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Control the vehicle mount (e.g. gimbal).</source>
+      <translation type="unfinished">Control the vehicle mount (e.g. gimbal).</translation>
     </message>
     <message>
-        <source>Lat/Pitch</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param1.label, </extracomment>
-        <translation>Lat/cao độ</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param1.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Lat/Pitch</source>
+      <translation type="unfinished">Lat/Pitch</translation>
     </message>
     <message>
-        <source>Lon/Roll</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param2.label, </extracomment>
-        <translation>Lon/Roll</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param2.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Lon/Roll</source>
+      <translation type="unfinished">Lon/Roll</translation>
     </message>
     <message>
-        <source>Alt/Yaw</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param3.label, </extracomment>
-        <translation>Alt/Yaw</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param3.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Alt/Yaw</source>
+      <translation type="unfinished">Alt/Yaw</translation>
     </message>
     <message>
-        <source>Gimbal Manager PitchYaw</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].friendlyName, </extracomment>
-        <translation>Người quản lý Gimbal Pitchyaw</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Gimbal Manager PitchYaw</source>
+      <translation type="unfinished">Gimbal Manager PitchYaw</translation>
     </message>
     <message>
-        <source>Control the gimbal during the mission</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].description, </extracomment>
-        <translation>Kiểm soát gimbal trong nhiệm vụ</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Control the gimbal during the mission</source>
+      <translation type="unfinished">Control the gimbal during the mission</translation>
     </message>
     <message>
-        <source>Pitch</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].param1.label, </extracomment>
-        <translation>Sân bóng đá</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].param1.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Pitch</source>
+      <translation type="unfinished">Pitch</translation>
     </message>
     <message>
-        <source>Pitch rate</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].param3.label, </extracomment>
-        <translation>Tỷ lệ sân</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].param3.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Pitch rate</source>
+      <translation type="unfinished">Pitch rate</translation>
     </message>
     <message>
-        <source>Yaw rate</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].param4.label, </extracomment>
-        <translation>Tỷ lệ ngáp</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].param4.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Yaw rate</source>
+      <translation type="unfinished">Yaw rate</translation>
     </message>
     <message>
-        <source>Follow yaw</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].param5.label, </extracomment>
-        <translation>Theo dõi ngáp</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].param5.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Follow yaw</source>
+      <translation type="unfinished">Follow yaw</translation>
     </message>
     <message>
-        <source>Follow yaw, Lock yaw</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].param5.enumStrings, </extracomment>
-        <translation>Theo dõi, khóa ngáp</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].param5.enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Follow yaw, Lock yaw</source>
+      <translation type="unfinished">Follow yaw, Lock yaw</translation>
     </message>
     <message>
-        <source>Gimbal</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].param7.label, </extracomment>
-        <translation>Gimbal</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].param7.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Gimbal</source>
+      <translation type="unfinished">Gimbal</translation>
     </message>
     <message>
-        <source>Primary,first gimbal,second gimbal</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].param7.enumStrings, </extracomment>
-        <translation>Tiểu học, gimbal thứ nhất, gimbal thứ hai</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].param7.enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Primary,first gimbal,second gimbal</source>
+      <translation type="unfinished">Primary,first gimbal,second gimbal</translation>
     </message>
     <message>
-        <source>Camera trigger distance</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_CAM_TRIGG_DIST].friendlyName, </extracomment>
-        <translation>Khoảng cách kích hoạt camera</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_CAM_TRIGG_DIST].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Camera trigger distance</source>
+      <translation type="unfinished">Camera trigger distance</translation>
     </message>
     <message>
-        <source>Set camera trigger distance.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_CAM_TRIGG_DIST].description, </extracomment>
-        <translation>Đặt khoảng cách kích hoạt camera.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_CAM_TRIGG_DIST].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Set camera trigger distance.</source>
+      <translation type="unfinished">Set camera trigger distance.</translation>
     </message>
     <message>
-        <source>Shutter</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_CAM_TRIGG_DIST].param2.label, </extracomment>
-        <translation>Màn trập</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_CAM_TRIGG_DIST].param2.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Shutter</source>
+      <translation type="unfinished">Shutter</translation>
     </message>
     <message>
-        <source>Trigger</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_CAM_TRIGG_DIST].param3.label, .mavCmdInfo[MAV_CMD_DO_PARACHUTE].param1.label, </extracomment>
-        <translation>Cò súng</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_CAM_TRIGG_DIST].param3.label, .mavCmdInfo[MAV_CMD_DO_PARACHUTE].param1.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Trigger</source>
+      <translation type="unfinished">Trigger</translation>
     </message>
     <message>
-        <source>No Trigger,Once Immediately</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_CAM_TRIGG_DIST].param3.enumStrings, </extracomment>
-        <translation>Không có kích hoạt, một lần ngay lập tức</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_CAM_TRIGG_DIST].param3.enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>No Trigger,Once Immediately</source>
+      <translation type="unfinished">No Trigger,Once Immediately</translation>
     </message>
     <message>
-        <source>Enable geofence</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].friendlyName, </extracomment>
-        <translation>Cho phép Geofence</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Enable geofence</source>
+      <translation type="unfinished">Enable geofence</translation>
     </message>
     <message>
-        <source>Enable/Disable geofence.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].description, </extracomment>
-        <translation>Bật/tắt Geofence.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Enable/Disable geofence.</source>
+      <translation type="unfinished">Enable/Disable geofence.</translation>
     </message>
     <message>
-        <source>Safety</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].category, .mavCmdInfo[MAV_CMD_DO_PARACHUTE].category, </extracomment>
-        <translation>Sự an toàn</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].category, .mavCmdInfo[MAV_CMD_DO_PARACHUTE].category, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Safety</source>
+      <translation type="unfinished">Safety</translation>
     </message>
     <message>
-        <source>Disable,Disable floor only,Enable</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].param1.enumStrings, </extracomment>
-        <translation>Vô hiệu hóa, chỉ vô hiệu hóa sàn, kích hoạt</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].param1.enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Disable,Disable floor only,Enable</source>
+      <translation type="unfinished">Disable,Disable floor only,Enable</translation>
     </message>
     <message>
-        <source>Trigger parachute</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_PARACHUTE].friendlyName, </extracomment>
-        <translation>Kích hoạt nhảy dù</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_PARACHUTE].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Trigger parachute</source>
+      <translation type="unfinished">Trigger parachute</translation>
     </message>
     <message>
-        <source>Enable/Disable auto-release or Release a parachute</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_PARACHUTE].description, </extracomment>
-        <translation>Bật/tắt tự động giải phóng hoặc giải phóng dù</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_PARACHUTE].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Enable/Disable auto-release or Release a parachute</source>
+      <translation type="unfinished">Enable/Disable auto-release or Release a parachute</translation>
     </message>
     <message>
-        <source>Disable,Enable,Release</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_PARACHUTE].param1.enumStrings, </extracomment>
-        <translation>Vô hiệu hóa, bật, phát hành</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_PARACHUTE].param1.enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Disable,Enable,Release</source>
+      <translation type="unfinished">Disable,Enable,Release</translation>
     </message>
     <message>
-        <source>Motor test</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_MOTOR_TEST].friendlyName, </extracomment>
-        <translation>Kiểm tra động cơ</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_MOTOR_TEST].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Motor test</source>
+      <translation type="unfinished">Motor test</translation>
     </message>
     <message>
-        <source>Inverted flight</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_INVERTED_FLIGHT].friendlyName, </extracomment>
-        <translation>Chuyến bay đảo ngược</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_INVERTED_FLIGHT].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Inverted flight</source>
+      <translation type="unfinished">Inverted flight</translation>
     </message>
     <message>
-        <source>Change to/from inverted flight.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_INVERTED_FLIGHT].description, </extracomment>
-        <translation>Thay đổi/từ chuyến bay ngược.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_INVERTED_FLIGHT].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Change to/from inverted flight.</source>
+      <translation type="unfinished">Change to/from inverted flight.</translation>
     </message>
     <message>
-        <source>Inverted</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_INVERTED_FLIGHT].param1.label, </extracomment>
-        <translation>Đảo ngược</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_INVERTED_FLIGHT].param1.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Inverted</source>
+      <translation type="unfinished">Inverted</translation>
     </message>
     <message>
-        <source>Normal,Inverted</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_INVERTED_FLIGHT].param1.enumStrings, </extracomment>
-        <translation>Bình thường, đảo ngược</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_INVERTED_FLIGHT].param1.enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Normal,Inverted</source>
+      <translation type="unfinished">Normal,Inverted</translation>
     </message>
     <message>
-        <source>Gripper Mechanism</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_GRIPPER].friendlyName, </extracomment>
-        <translation>Cơ chế kẹp</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_GRIPPER].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Gripper Mechanism</source>
+      <translation type="unfinished">Gripper Mechanism</translation>
     </message>
     <message>
-        <source>Control a gripper mechanism.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_GRIPPER].description, </extracomment>
-        <translation>Kiểm soát một cơ chế kẹp.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_GRIPPER].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Control a gripper mechanism.</source>
+      <translation type="unfinished">Control a gripper mechanism.</translation>
     </message>
     <message>
-        <source>Gripper id</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_GRIPPER].param1.label, </extracomment>
-        <translation>Id kẹp</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_GRIPPER].param1.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Gripper id</source>
+      <translation type="unfinished">Gripper id</translation>
     </message>
     <message>
-        <source>Action</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_GRIPPER].param2.label, </extracomment>
-        <translation>Hoạt động</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_GRIPPER].param2.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Action</source>
+      <translation type="unfinished">Action</translation>
     </message>
     <message>
-        <source>Release,Grab</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_GRIPPER].param2.enumStrings, </extracomment>
-        <translation>Phát hành, lấy</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_GRIPPER].param2.enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Release,Grab</source>
+      <translation type="unfinished">Release,Grab</translation>
     </message>
     <message>
-        <source>AutoTune Enable</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_AUTOTUNE_ENABLE].friendlyName, </extracomment>
-        <translation>Bật Autotune</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_AUTOTUNE_ENABLE].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>AutoTune Enable</source>
+      <translation type="unfinished">AutoTune Enable</translation>
     </message>
     <message>
-        <source>AutoTune Enable.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_AUTOTUNE_ENABLE].description, </extracomment>
-        <translation>Bật Autotune.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_AUTOTUNE_ENABLE].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>AutoTune Enable.</source>
+      <translation type="unfinished">AutoTune Enable.</translation>
     </message>
     <message>
-        <source>Enable,Disable</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_AUTOTUNE_ENABLE].param1.enumStrings, </extracomment>
-        <translation>Bật, tắt</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_AUTOTUNE_ENABLE].param1.enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Enable,Disable</source>
+      <translation type="unfinished">Enable,Disable</translation>
     </message>
     <message>
-        <source>Guided limits</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_GUIDED_LIMITS].friendlyName, </extracomment>
-        <translation>Giới hạn hướng dẫn</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_GUIDED_LIMITS].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Guided limits</source>
+      <translation type="unfinished">Guided limits</translation>
     </message>
     <message>
-        <source>Set limits for external control</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_GUIDED_LIMITS].description, </extracomment>
-        <translation>Đặt giới hạn cho kiểm soát bên ngoài</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_GUIDED_LIMITS].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Set limits for external control</source>
+      <translation type="unfinished">Set limits for external control</translation>
     </message>
     <message>
-        <source>Timeout</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_GUIDED_LIMITS].param1.label, </extracomment>
-        <translation>Thời gian chờ</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_GUIDED_LIMITS].param1.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Timeout</source>
+      <translation type="unfinished">Timeout</translation>
     </message>
     <message>
-        <source>Min Alt</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_GUIDED_LIMITS].param2.label, </extracomment>
-        <translation>Tối thiểu alt</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_GUIDED_LIMITS].param2.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Min Alt</source>
+      <translation type="unfinished">Min Alt</translation>
     </message>
     <message>
-        <source>Max Alt</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_GUIDED_LIMITS].param3.label, </extracomment>
-        <translation>Max Alt</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_GUIDED_LIMITS].param3.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Max Alt</source>
+      <translation type="unfinished">Max Alt</translation>
     </message>
     <message>
-        <source>H Limit</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_GUIDED_LIMITS].param4.label, </extracomment>
-        <translation>H giới hạn</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_GUIDED_LIMITS].param4.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>H Limit</source>
+      <translation type="unfinished">H Limit</translation>
     </message>
     <message>
-        <source>Calibration</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_PREFLIGHT_CALIBRATION].friendlyName, </extracomment>
-        <translation>Sự định cỡ</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_PREFLIGHT_CALIBRATION].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Calibration</source>
+      <translation type="unfinished">Calibration</translation>
     </message>
     <message>
-        <source>Set sensor offsets</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_PREFLIGHT_SET_SENSOR_OFFSETS].friendlyName, </extracomment>
-        <translation>Đặt độ lệch cảm biến</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_PREFLIGHT_SET_SENSOR_OFFSETS].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Set sensor offsets</source>
+      <translation type="unfinished">Set sensor offsets</translation>
     </message>
     <message>
-        <source>UAVCAN configure</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_PREFLIGHT_UAVCAN].friendlyName, </extracomment>
-        <translation>Cấu hình Uavcan</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_PREFLIGHT_UAVCAN].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>UAVCAN configure</source>
+      <translation type="unfinished">UAVCAN configure</translation>
     </message>
     <message>
-        <source>Store parameters</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_PREFLIGHT_STORAGE].friendlyName, </extracomment>
-        <translation>Lưu trữ tham số</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_PREFLIGHT_STORAGE].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Store parameters</source>
+      <translation type="unfinished">Store parameters</translation>
     </message>
     <message>
-        <source>Reboot/Shutdown vehicle</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN].friendlyName, </extracomment>
-        <translation>Khởi động lại/Tắt xe</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Reboot/Shutdown vehicle</source>
+      <translation type="unfinished">Reboot/Shutdown vehicle</translation>
     </message>
     <message>
-        <source>Override goto</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_OVERRIDE_GOTO].friendlyName, </extracomment>
-        <translation>Ghi đè Goto</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_OVERRIDE_GOTO].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Override goto</source>
+      <translation type="unfinished">Override goto</translation>
     </message>
     <message>
-        <source>Mission start</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_MISSION_START].friendlyName, </extracomment>
-        <translation>Nhiệm vụ bắt đầu</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_MISSION_START].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Mission start</source>
+      <translation type="unfinished">Mission start</translation>
     </message>
     <message>
-        <source>Arm/Disarm</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_COMPONENT_ARM_DISARM].friendlyName, </extracomment>
-        <translation>Cánh tay/giải giáp</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_COMPONENT_ARM_DISARM].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Arm/Disarm</source>
+      <translation type="unfinished">Arm/Disarm</translation>
     </message>
     <message>
-        <source>Get launch position</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_GET_HOME_POSITION].friendlyName, </extracomment>
-        <translation>Nhận vị trí khởi động</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_GET_HOME_POSITION].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Get launch position</source>
+      <translation type="unfinished">Get launch position</translation>
     </message>
     <message>
-        <source>Bind Spektrum receiver</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_START_RX_PAIR].friendlyName, </extracomment>
-        <translation>Liên kết máy thu Spektrum</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_START_RX_PAIR].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Bind Spektrum receiver</source>
+      <translation type="unfinished">Bind Spektrum receiver</translation>
     </message>
     <message>
-        <source>Get message interval</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_GET_MESSAGE_INTERVAL].friendlyName, </extracomment>
-        <translation>Nhận khoảng thời gian tin nhắn</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_GET_MESSAGE_INTERVAL].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Get message interval</source>
+      <translation type="unfinished">Get message interval</translation>
     </message>
     <message>
-        <source>Set message interval</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_SET_MESSAGE_INTERVAL].friendlyName, </extracomment>
-        <translation>Đặt khoảng thời gian tin nhắn</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_SET_MESSAGE_INTERVAL].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Set message interval</source>
+      <translation type="unfinished">Set message interval</translation>
     </message>
     <message>
-        <source>Get capabilities</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES].friendlyName, </extracomment>
-        <translation>Nhận khả năng</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Get capabilities</source>
+      <translation type="unfinished">Get capabilities</translation>
     </message>
     <message>
-        <source>Set camera modes</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_SET_CAMERA_MODE].friendlyName, </extracomment>
-        <translation>Đặt chế độ camera</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_SET_CAMERA_MODE].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Set camera modes</source>
+      <translation type="unfinished">Set camera modes</translation>
     </message>
     <message>
-        <source>Set camera photo, video modes.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_SET_CAMERA_MODE].description, </extracomment>
-        <translation>Đặt ảnh camera, chế độ video.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_SET_CAMERA_MODE].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Set camera photo, video modes.</source>
+      <translation type="unfinished">Set camera photo, video modes.</translation>
     </message>
     <message>
-        <source>Take photos,Record video,Survey photo mode</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_SET_CAMERA_MODE].param2.enumStrings, </extracomment>
-        <translation>Chụp ảnh, ghi video, chế độ chụp ảnh khảo sát</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_SET_CAMERA_MODE].param2.enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Take photos,Record video,Survey photo mode</source>
+      <translation type="unfinished">Take photos,Record video,Survey photo mode</translation>
     </message>
     <message>
-        <source>Start image capture</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_IMAGE_START_CAPTURE].friendlyName, </extracomment>
-        <translation>Bắt đầu chụp ảnh</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_IMAGE_START_CAPTURE].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Start image capture</source>
+      <translation type="unfinished">Start image capture</translation>
     </message>
     <message>
-        <source>Start taking one or more photos.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_IMAGE_START_CAPTURE].description, </extracomment>
-        <translation>Bắt đầu chụp một hoặc nhiều ảnh.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_IMAGE_START_CAPTURE].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Start taking one or more photos.</source>
+      <translation type="unfinished">Start taking one or more photos.</translation>
     </message>
     <message>
-        <source>Interval</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_IMAGE_START_CAPTURE].param2.label, </extracomment>
-        <translation>Khoảng thời gian</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_IMAGE_START_CAPTURE].param2.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Interval</source>
+      <translation type="unfinished">Interval</translation>
     </message>
     <message>
-        <source>Photo count</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_IMAGE_START_CAPTURE].param3.label, </extracomment>
-        <translation>Số lượng ảnh</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_IMAGE_START_CAPTURE].param3.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Photo count</source>
+      <translation type="unfinished">Photo count</translation>
     </message>
     <message>
-        <source>Stop image capture</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_IMAGE_STOP_CAPTURE].friendlyName, </extracomment>
-        <translation>Dừng chụp ảnh</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_IMAGE_STOP_CAPTURE].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Stop image capture</source>
+      <translation type="unfinished">Stop image capture</translation>
     </message>
     <message>
-        <source>Stop taking photos.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_IMAGE_STOP_CAPTURE].description, </extracomment>
-        <translation>Ngừng chụp ảnh.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_IMAGE_STOP_CAPTURE].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Stop taking photos.</source>
+      <translation type="unfinished">Stop taking photos.</translation>
     </message>
     <message>
-        <source>Trigger control</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_TRIGGER_CONTROL].friendlyName, </extracomment>
-        <translation>Kiểm soát kích hoạt</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_TRIGGER_CONTROL].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Trigger control</source>
+      <translation type="unfinished">Trigger control</translation>
     </message>
     <message>
-        <source>Start video capture</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_VIDEO_START_CAPTURE].friendlyName, </extracomment>
-        <translation>Bắt đầu quay video</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_VIDEO_START_CAPTURE].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Start video capture</source>
+      <translation type="unfinished">Start video capture</translation>
     </message>
     <message>
-        <source>Start video capture.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_VIDEO_START_CAPTURE].description, </extracomment>
-        <translation>Bắt đầu quay video.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_VIDEO_START_CAPTURE].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Start video capture.</source>
+      <translation type="unfinished">Start video capture.</translation>
     </message>
     <message>
-        <source>Status Frequency</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_VIDEO_START_CAPTURE].param2.label, </extracomment>
-        <translation>Tần số trạng thái</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_VIDEO_START_CAPTURE].param2.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Status Frequency</source>
+      <translation type="unfinished">Status Frequency</translation>
     </message>
     <message>
-        <source>Stop video capture</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_VIDEO_STOP_CAPTURE].friendlyName, </extracomment>
-        <translation>Dừng quay video</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_VIDEO_STOP_CAPTURE].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Stop video capture</source>
+      <translation type="unfinished">Stop video capture</translation>
     </message>
     <message>
-        <source>Stop video capture.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_VIDEO_STOP_CAPTURE].description, </extracomment>
-        <translation>Dừng quay video.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_VIDEO_STOP_CAPTURE].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Stop video capture.</source>
+      <translation type="unfinished">Stop video capture.</translation>
     </message>
     <message>
-        <source>Control high latency link</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_CONTROL_HIGH_LATENCY].friendlyName, </extracomment>
-        <translation>Kiểm soát liên kết độ trễ cao</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_CONTROL_HIGH_LATENCY].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Control high latency link</source>
+      <translation type="unfinished">Control high latency link</translation>
     </message>
     <message>
-        <source>Create panorama</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_PANORAMA_CREATE].friendlyName, </extracomment>
-        <translation>Tạo toàn cảnh</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_PANORAMA_CREATE].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Create panorama</source>
+      <translation type="unfinished">Create panorama</translation>
     </message>
     <message>
-        <source>VTOL Transition</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_VTOL_TRANSITION].friendlyName, </extracomment>
-        <translation>Chuyển đổi VTOL</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_VTOL_TRANSITION].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>VTOL Transition</source>
+      <translation type="unfinished">VTOL Transition</translation>
     </message>
     <message>
-        <source>Perform flight mode transition.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_VTOL_TRANSITION].description, </extracomment>
-        <translation>Thực hiện chuyển đổi chế độ bay.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_VTOL_TRANSITION].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Perform flight mode transition.</source>
+      <translation type="unfinished">Perform flight mode transition.</translation>
     </message>
     <message>
-        <source>VTOL</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_VTOL_TRANSITION].category, </extracomment>
-        <translation>Vtol</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_VTOL_TRANSITION].category, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>VTOL</source>
+      <translation type="unfinished">VTOL</translation>
     </message>
     <message>
-        <source>Multi Rotor,Fixed Wing</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_VTOL_TRANSITION].param1.enumStrings, </extracomment>
-        <translation>Đa rôto, cánh cố định</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_VTOL_TRANSITION].param1.enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Multi Rotor,Fixed Wing</source>
+      <translation type="unfinished">Multi Rotor,Fixed Wing</translation>
     </message>
     <message>
-        <source>Condition Gate</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_GATE].friendlyName, </extracomment>
-        <translation>Cổng điều kiện</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_GATE].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Condition Gate</source>
+      <translation type="unfinished">Condition Gate</translation>
     </message>
     <message>
-        <source>Delay mission state machine until gate has been reached.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_GATE].description, </extracomment>
-        <translation>Delay Mission State Machine cho đến khi cổng đạt được.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_GATE].description, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Delay mission state machine until gate has been reached.</source>
+      <translation type="unfinished">Delay mission state machine until gate has been reached.</translation>
     </message>
     <message>
-        <source>Ignore Alt</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_GATE].param2.label, </extracomment>
-        <translation>Bỏ qua Alt</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_GATE].param2.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Ignore Alt</source>
+      <translation type="unfinished">Ignore Alt</translation>
     </message>
     <message>
-        <source>False,True</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_GATE].param2.enumStrings, </extracomment>
-        <translation>Sai, đúng</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_GATE].param2.enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>False,True</source>
+      <translation type="unfinished">False,True</translation>
     </message>
     <message>
-        <source>Payload prepare deploy</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_PAYLOAD_PREPARE_DEPLOY].friendlyName, </extracomment>
-        <translation>Tải trọng chuẩn bị triển khai</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_PAYLOAD_PREPARE_DEPLOY].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Payload prepare deploy</source>
+      <translation type="unfinished">Payload prepare deploy</translation>
     </message>
     <message>
-        <source>Payload control deploy</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_PAYLOAD_CONTROL_DEPLOY].friendlyName, </extracomment>
-        <translation>Triển khai kiểm soát tải trọng</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_PAYLOAD_CONTROL_DEPLOY].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
+      <source>Payload control deploy</source>
+      <translation type="unfinished">Payload control deploy</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>CameraSection.FactMetaData.json</name>
     <message>
-        <source>Specify whether the camera should take photos or video</source>
-        <extracomment>.QGC.MetaData.Facts[CameraAction].shortDesc, </extracomment>
-        <translation>Chỉ định xem máy ảnh có nên chụp ảnh hoặc video</translation>
+      <extracomment>.QGC.MetaData.Facts[CameraAction].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/CameraSection.FactMetaData.json"/>
+      <source>Specify whether the camera should take photos or video</source>
+      <translation type="unfinished">Specify whether the camera should take photos or video</translation>
     </message>
     <message>
-        <source>No change,Take photo,Take photos (time),Take photos (distance),Stop taking photos,Start recording video,Stop recording video</source>
-        <extracomment>.QGC.MetaData.Facts[CameraAction].enumStrings, </extracomment>
-        <translation>Không thay đổi, chụp ảnh, chụp ảnh (thời gian), chụp ảnh (khoảng cách), ngừng chụp ảnh, bắt đầu quay video, dừng quay video</translation>
+      <extracomment>.QGC.MetaData.Facts[CameraAction].enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/MissionManager/CameraSection.FactMetaData.json"/>
+      <source>No change,Take photo,Take photos (time),Take photos (distance),Stop taking photos,Start recording video,Stop recording video</source>
+      <translation type="unfinished">No change,Take photo,Take photos (time),Take photos (distance),Stop taking photos,Start recording video,Stop recording video</translation>
     </message>
     <message>
-        <source>Specify the distance between each photo</source>
-        <extracomment>.QGC.MetaData.Facts[CameraPhotoIntervalDistance].shortDesc, </extracomment>
-        <translation>Chỉ định khoảng cách giữa mỗi bức ảnh</translation>
+      <extracomment>.QGC.MetaData.Facts[CameraPhotoIntervalDistance].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/CameraSection.FactMetaData.json"/>
+      <source>Specify the distance between each photo</source>
+      <translation type="unfinished">Specify the distance between each photo</translation>
     </message>
     <message>
-        <source>Specify the time between each photo</source>
-        <extracomment>.QGC.MetaData.Facts[CameraPhotoIntervalTime].shortDesc, </extracomment>
-        <translation>Chỉ định thời gian giữa mỗi bức ảnh</translation>
+      <extracomment>.QGC.MetaData.Facts[CameraPhotoIntervalTime].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/CameraSection.FactMetaData.json"/>
+      <source>Specify the time between each photo</source>
+      <translation type="unfinished">Specify the time between each photo</translation>
     </message>
     <message>
-        <source>Gimbal pitch rotation.</source>
-        <extracomment>.QGC.MetaData.Facts[GimbalPitch].shortDesc, </extracomment>
-        <translation>Xoay sân gimbal.</translation>
+      <extracomment>.QGC.MetaData.Facts[GimbalPitch].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/CameraSection.FactMetaData.json"/>
+      <source>Gimbal pitch rotation.</source>
+      <translation type="unfinished">Gimbal pitch rotation.</translation>
     </message>
     <message>
-        <source>Gimbal yaw rotation.</source>
-        <extracomment>.QGC.MetaData.Facts[GimbalYaw].shortDesc, </extracomment>
-        <translation>Gimbal Yaw xoay vòng.</translation>
+      <extracomment>.QGC.MetaData.Facts[GimbalYaw].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/CameraSection.FactMetaData.json"/>
+      <source>Gimbal yaw rotation.</source>
+      <translation type="unfinished">Gimbal yaw rotation.</translation>
     </message>
     <message>
-        <source>Specify whether the camera should switch to Photo, Video or Survey mode</source>
-        <extracomment>.QGC.MetaData.Facts[CameraMode].shortDesc, </extracomment>
-        <translation>Chỉ định xem máy ảnh có nên chuyển sang ảnh, video hoặc chế độ khảo sát</translation>
+      <extracomment>.QGC.MetaData.Facts[CameraMode].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/CameraSection.FactMetaData.json"/>
+      <source>Specify whether the camera should switch to Photo, Video or Survey mode</source>
+      <translation type="unfinished">Specify whether the camera should switch to Photo, Video or Survey mode</translation>
     </message>
     <message>
-        <source>Photo,Video,Survey</source>
-        <extracomment>.QGC.MetaData.Facts[CameraMode].enumStrings, </extracomment>
-        <translation>Ảnh, video, khảo sát</translation>
+      <extracomment>.QGC.MetaData.Facts[CameraMode].enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/MissionManager/CameraSection.FactMetaData.json"/>
+      <source>Photo,Video,Survey</source>
+      <translation type="unfinished">Photo,Video,Survey</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>Survey.SettingsGroup.json</name>
     <message>
-        <source>Angle for parallel lines of grid.</source>
-        <extracomment>.QGC.MetaData.Facts[GridAngle].shortDesc, </extracomment>
-        <translation>Góc cho các đường song song của lưới.</translation>
+      <extracomment>.QGC.MetaData.Facts[GridAngle].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/Survey.SettingsGroup.json"/>
+      <source>Angle for parallel lines of grid.</source>
+      <translation type="unfinished">Angle for parallel lines of grid.</translation>
     </message>
     <message>
-        <source>Fly every other transect in each pass.</source>
-        <extracomment>.QGC.MetaData.Facts[FlyAlternateTransects].shortDesc, </extracomment>
-        <translation>Bay mọi mặt cắt khác trong mỗi lần vượt qua.</translation>
+      <extracomment>.QGC.MetaData.Facts[FlyAlternateTransects].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/Survey.SettingsGroup.json"/>
+      <source>Fly every other transect in each pass.</source>
+      <translation type="unfinished">Fly every other transect in each pass.</translation>
     </message>
     <message>
-        <source>Split mission concave polygons into separate regular, convex polygons.</source>
-        <extracomment>.QGC.MetaData.Facts[SplitConcavePolygons].shortDesc, </extracomment>
-        <translation>Phân chia các đa giác lõm vào các đa giác thường xuyên, lồi.</translation>
+      <extracomment>.QGC.MetaData.Facts[SplitConcavePolygons].shortDesc, </extracomment>
+      <location filename="../src/MissionManager/Survey.SettingsGroup.json"/>
+      <source>Split mission concave polygons into separate regular, convex polygons.</source>
+      <translation type="unfinished">Split mission concave polygons into separate regular, convex polygons.</translation>
     </message>
-</context>
-<context>
+  </context>
+  <context>
     <name>APM-MavCmdInfoCommon.json</name>
     <message>
-        <source>Take off from the ground and ascend to specified altitude.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].description, </extracomment>
-        <translation>Tắt từ mặt đất và lên đến độ cao được chỉ định.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].description, </extracomment>
+      <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
+      <source>Take off from the ground and ascend to specified altitude.</source>
+      <translation type="unfinished">Take off from the ground and ascend to specified altitude.</translation>
     </message>
     <message>
-        <source>Takeoff to specified altitude.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].description, </extracomment>
-        <translation>Takeoff đến độ cao được chỉ định.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].description, </extracomment>
+      <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
+      <source>Takeoff to specified altitude.</source>
+      <translation type="unfinished">Takeoff to specified altitude.</translation>
     </message>
     <message>
-        <source>VTOL</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].category, .mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].category, </extracomment>
-        <translation>Vtol</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].category, .mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].category, </extracomment>
+      <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
+      <source>VTOL</source>
+      <translation type="unfinished">VTOL</translation>
     </message>
     <message>
-        <source>Land using VTOL mode.</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].description, </extracomment>
-        <translation>Đất sử dụng chế độ VTOL.</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].description, </extracomment>
+      <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
+      <source>Land using VTOL mode.</source>
+      <translation type="unfinished">Land using VTOL mode.</translation>
     </message>
     <message>
-        <source>Setting</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_RELAY].param2.label, </extracomment>
-        <translation>Cài đặt</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_RELAY].param2.label, </extracomment>
+      <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
+      <source>Setting</source>
+      <translation type="unfinished">Setting</translation>
     </message>
     <message>
-        <source>On,Off</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_RELAY].param2.enumStrings, </extracomment>
-        <translation>Trên, tắt</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_RELAY].param2.enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
+      <source>On,Off</source>
+      <translation type="unfinished">On,Off</translation>
     </message>
     <message>
-        <source>Pitch</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param1.label, </extracomment>
-        <translation>Sân bóng đá</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param1.label, </extracomment>
+      <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
+      <source>Pitch</source>
+      <translation type="unfinished">Pitch</translation>
     </message>
     <message>
-        <source>Roll</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param2.label, </extracomment>
-        <translation>Cuộn</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param2.label, </extracomment>
+      <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
+      <source>Roll</source>
+      <translation type="unfinished">Roll</translation>
     </message>
     <message>
-        <source>Yaw</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param3.label, </extracomment>
-        <translation>Ngáp</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param3.label, </extracomment>
+      <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
+      <source>Yaw</source>
+      <translation type="unfinished">Yaw</translation>
     </message>
     <message>
-        <source>Enable</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].param1.label, </extracomment>
-        <translation>Cho phép</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].param1.label, </extracomment>
+      <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
+      <source>Enable</source>
+      <translation type="unfinished">Enable</translation>
     </message>
     <message>
-        <source>Enable,Disable</source>
-        <extracomment>.mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].param1.enumStrings, </extracomment>
-        <translation>Bật, tắt</translation>
+      <extracomment>.mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].param1.enumStrings, </extracomment>
+      <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+      <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
+      <source>Enable,Disable</source>
+      <translation type="unfinished">Enable,Disable</translation>
     </message>
-</context>
+  </context>
 </TS>

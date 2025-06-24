@@ -418,7 +418,7 @@
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="79"/>
         <source>Stabilize</source>
-        <translation>Ổn định</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="80"/>
@@ -468,7 +468,7 @@
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="89"/>
         <source>Sport</source>
-        <translation>Thể thao</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="90"/>
@@ -493,7 +493,7 @@
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="94"/>
         <source>Throw</source>
-        <translation>Ném</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="95"/>
@@ -508,7 +508,7 @@
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="97"/>
         <source>Smart RTL</source>
-        <translation>RTL thông minh</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="98"/>
@@ -523,12 +523,12 @@
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="100"/>
         <source>ZigZag</source>
-        <translation>Zigzag</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="101"/>
         <source>SystemID</source>
-        <translation>Hệ thống</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="102"/>
@@ -543,7 +543,7 @@
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="104"/>
         <source>Turtle</source>
-        <translation>Con rùa</translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -774,22 +774,22 @@
     <message>
         <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentController.h" line="72"/>
         <source>Off</source>
-        <translation>Tắt</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentController.h" line="72"/>
         <source>Simple</source>
-        <translation>Đơn giản</translation>
+        <translation>\</translation>
     </message>
     <message>
         <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentController.h" line="72"/>
         <source>Super-Simple</source>
-        <translation>Siêu đơn giản</translation>
+        <translation>\</translation>
     </message>
     <message>
         <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentController.h" line="72"/>
         <source>Custom</source>
-        <translation>Phong tục</translation>
+        <translation>\</translation>
     </message>
 </context>
 <context>
@@ -797,32 +797,32 @@
     <message>
         <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml" line="28"/>
         <source>Flight Mode 1</source>
-        <translation>Chế độ bay 1</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml" line="33"/>
         <source>Flight Mode 2</source>
-        <translation>Chế độ bay 2</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml" line="38"/>
         <source>Flight Mode 3</source>
-        <translation>Chế độ bay 3</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml" line="43"/>
         <source>Flight Mode 4</source>
-        <translation>Chế độ bay 4</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml" line="48"/>
         <source>Flight Mode 5</source>
-        <translation>Chế độ bay 5</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml" line="53"/>
         <source>Flight Mode 6</source>
-        <translation>Chế độ bay 6</translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -1244,7 +1244,7 @@
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="67"/>
         <source>Manual</source>
-        <translation>Thủ công</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="68"/>
@@ -1284,87 +1284,87 @@
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="75"/>
         <source>Autotune</source>
-        <translation>Tự động</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="76"/>
         <source>Auto</source>
-        <translation>Tự động</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="77"/>
         <source>RTL</source>
-        <translation>RTL</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="78"/>
         <source>Loiter</source>
-        <translation>Đi lang thang</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="79"/>
         <source>Takeoff</source>
-        <translation>Cởi</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="80"/>
         <source>Avoid ADSB</source>
-        <translation>Tránh ADSB</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="81"/>
         <source>Guided</source>
-        <translation>Được hướng dẫn</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="82"/>
         <source>Initializing</source>
-        <translation>Khởi tạo</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="83"/>
         <source>QuadPlane Stabilize</source>
-        <translation>Quadplane ổn định</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="84"/>
         <source>QuadPlane Hover</source>
-        <translation>Di chuột quadplane</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="85"/>
         <source>QuadPlane Loiter</source>
-        <translation>Quadplane loiter</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="86"/>
         <source>QuadPlane Land</source>
-        <translation>Đất quadplane</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="87"/>
         <source>QuadPlane RTL</source>
-        <translation>Quadplane RTL</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="88"/>
         <source>QuadPlane AutoTune</source>
-        <translation>Quadplane Autotune</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="89"/>
         <source>QuadPlane Acro</source>
-        <translation>ACRO QuadPlane</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="90"/>
         <source>Thermal</source>
-        <translation>Nhiệt</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="91"/>
         <source>Loiter to QLand</source>
-        <translation>Loiter đến Qland</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="92"/>
@@ -1485,7 +1485,7 @@
     <message>
         <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="335"/>
         <source>3DR Iris</source>
-        <translation>Iris 3dr</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="344"/>
@@ -3354,37 +3354,37 @@ Click Ok to start calibration.</source>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="125"/>
         <source>Manual</source>
-        <translation>Thủ công</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="126"/>
         <source>Stabilize</source>
-        <translation>Ổn định</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="127"/>
         <source>Acro</source>
-        <translation>Acro</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="128"/>
         <source>Depth Hold</source>
-        <translation>Độ sâu giữ</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="129"/>
         <source>Auto</source>
-        <translation>Tự động</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="130"/>
         <source>Guided</source>
-        <translation>Được hướng dẫn</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="131"/>
         <source>Circle</source>
-        <translation>Vòng tròn</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="132"/>
@@ -3394,17 +3394,17 @@ Click Ok to start calibration.</source>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="133"/>
         <source>Position Hold</source>
-        <translation>Giữ vị trí</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="134"/>
         <source>Motor Detection</source>
-        <translation>Phát hiện động cơ</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="135"/>
         <source>Surftrak</source>
-        <translation>Surftrak</translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -5320,42 +5320,42 @@ Bấm OK để bắt đầu quá trình tự động điều chỉnh.
     <message>
         <location filename="../src/AutoPilotPlugins/Common/ESP8266ComponentSummary.qml" line="29"/>
         <source>Firmware Version</source>
-        <translation>Phiên bản phần sụn</translation>
+        <translation>\</translation>
     </message>
     <message>
         <location filename="../src/AutoPilotPlugins/Common/ESP8266ComponentSummary.qml" line="33"/>
         <source>WiFi Mode</source>
-        <translation>Chế độ WiFi</translation>
+        <translation>\</translation>
     </message>
     <message>
         <location filename="../src/AutoPilotPlugins/Common/ESP8266ComponentSummary.qml" line="34"/>
         <source>AP Mode</source>
-        <translation>Chế độ AP</translation>
+        <translation>\</translation>
     </message>
     <message>
         <location filename="../src/AutoPilotPlugins/Common/ESP8266ComponentSummary.qml" line="34"/>
         <source>Station Mode</source>
-        <translation>Chế độ trạm</translation>
+        <translation>\</translation>
     </message>
     <message>
         <location filename="../src/AutoPilotPlugins/Common/ESP8266ComponentSummary.qml" line="37"/>
         <source>WiFi Channel</source>
-        <translation>Kênh WiFi</translation>
+        <translation>\</translation>
     </message>
     <message>
         <location filename="../src/AutoPilotPlugins/Common/ESP8266ComponentSummary.qml" line="42"/>
         <source>WiFi AP SSID</source>
-        <translation>WiFi AP SSID</translation>
+        <translation>\</translation>
     </message>
     <message>
         <location filename="../src/AutoPilotPlugins/Common/ESP8266ComponentSummary.qml" line="46"/>
         <source>WiFi AP Password</source>
-        <translation>Mật khẩu WiFi AP</translation>
+        <translation>\</translation>
     </message>
     <message>
         <location filename="../src/AutoPilotPlugins/Common/ESP8266ComponentSummary.qml" line="60"/>
         <source>UART Baud Rate</source>
-        <translation>Tốc độ baud uart</translation>
+        <translation>\</translation>
     </message>
 </context>
 <context>
@@ -6354,27 +6354,27 @@ Bấm OK để bắt đầu quá trình tự động điều chỉnh.
         <location filename="../src/QmlControls/FlightModeIndicator.qml" line="50"/>
         <source>N/A</source>
         <comment>No data to display</comment>
-        <translation>N/a</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/QmlControls/FlightModeIndicator.qml" line="176"/>
         <source>Some Modes Hidden</source>
-        <translation>Một số chế độ ẩn</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/QmlControls/FlightModeIndicator.qml" line="212"/>
         <source>Edit Displayed Flight Modes</source>
-        <translation>Chỉnh sửa các chế độ bay hiển thị</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/QmlControls/FlightModeIndicator.qml" line="222"/>
         <source>Flight Modes</source>
-        <translation>Chế độ bay</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/QmlControls/FlightModeIndicator.qml" line="223"/>
         <source>Configure</source>
-        <translation>Cấu hình</translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -6383,7 +6383,7 @@ Bấm OK để bắt đầu quá trình tự động điều chỉnh.
         <location filename="../src/QmlControls/FlightModeMenu.qml" line="20"/>
         <source>N/A</source>
         <comment>No data to display</comment>
-        <translation>N/a</translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -6392,7 +6392,7 @@ Bấm OK để bắt đầu quá trình tự động điều chỉnh.
         <location filename="../src/QmlControls/FlightModeMenuIndicator.qml" line="59"/>
         <source>N/A</source>
         <comment>No data to display</comment>
-        <translation>N/a</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/QmlControls/FlightModeMenuIndicator.qml" line="129"/>
@@ -6402,12 +6402,12 @@ Bấm OK để bắt đầu quá trình tự động điều chỉnh.
     <message>
         <location filename="../src/QmlControls/FlightModeMenuIndicator.qml" line="140"/>
         <source>Land Descent Rate:</source>
-        <translation>Tỷ lệ hạ cánh đất:</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/QmlControls/FlightModeMenuIndicator.qml" line="151"/>
         <source>Precision Landing</source>
-        <translation>Hạ cánh chính xác</translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -6415,12 +6415,12 @@ Bấm OK để bắt đầu quá trình tự động điều chỉnh.
     <message>
         <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponent.cc" line="25"/>
         <source>Flight Modes</source>
-        <translation>Chế độ bay</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponent.cc" line="36"/>
         <source>Flight Modes Setup is used to configure the transmitter switches associated with Flight Modes.</source>
-        <translation>Thiết lập chế độ bay được sử dụng để định cấu hình các công tắc máy phát được liên kết với các chế độ bay.</translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -6428,17 +6428,17 @@ Bấm OK để bắt đầu quá trình tự động điều chỉnh.
     <message>
         <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="21"/>
         <source>Mode switch</source>
-        <translation>Chuyển đổi chế độ</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="22"/>
         <source>Setup required</source>
-        <translation>Cần thiết lập thiết lập</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="27"/>
         <source>Flight Mode %1 </source>
-        <translation>Chế độ bay %1 </translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -16003,77 +16003,77 @@ Xoay_none chỉ ra các điểm thành phần theo hướng bay.</translation>
     <message>
         <location filename="../src/UI/AppSettings/SettingsPagesModel.qml" line="17"/>
         <source>General</source>
-        <translation>Tổng quan</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/UI/AppSettings/SettingsPagesModel.qml" line="24"/>
         <source>Fly View</source>
-        <translation>Bay View</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/UI/AppSettings/SettingsPagesModel.qml" line="31"/>
         <source>Plan View</source>
-        <translation>Kế hoạch xem</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/UI/AppSettings/SettingsPagesModel.qml" line="38"/>
         <source>Video</source>
-        <translation>Băng hình</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/UI/AppSettings/SettingsPagesModel.qml" line="45"/>
         <source>Telemetry</source>
-        <translation>Từ xa</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/UI/AppSettings/SettingsPagesModel.qml" line="52"/>
         <source>ADSB Server</source>
-        <translation>Máy chủ ADSB</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/UI/AppSettings/SettingsPagesModel.qml" line="59"/>
         <source>Comm Links</source>
-        <translation>Liên kết Comm</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/UI/AppSettings/SettingsPagesModel.qml" line="66"/>
         <source>Maps</source>
-        <translation>Bản đồ</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/UI/AppSettings/SettingsPagesModel.qml" line="73"/>
         <source>PX4 Log Transfer</source>
-        <translation>Chuyển nhật ký PX4</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/UI/AppSettings/SettingsPagesModel.qml" line="85"/>
         <source>Remote ID</source>
-        <translation>ID từ xa</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/UI/AppSettings/SettingsPagesModel.qml" line="92"/>
         <source>Console</source>
-        <translation>Bảng điều khiển</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/UI/AppSettings/SettingsPagesModel.qml" line="99"/>
         <source>Help</source>
-        <translation>Giúp đỡ</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/UI/AppSettings/SettingsPagesModel.qml" line="106"/>
         <source>Mock Link</source>
-        <translation>Liên kết giả</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/UI/AppSettings/SettingsPagesModel.qml" line="113"/>
         <source>Debug</source>
-        <translation>Gỡ lỗi</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/UI/AppSettings/SettingsPagesModel.qml" line="120"/>
         <source>Palette Test</source>
-        <translation>Kiểm tra bảng màu</translation>
+        <translation></translation>
     </message>
 </context>
 <context>

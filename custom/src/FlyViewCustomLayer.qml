@@ -144,7 +144,8 @@ Item {
         id:                         compassBar
         height:                     ScreenTools.defaultFontPixelHeight * 1.5
         width:                      ScreenTools.defaultFontPixelWidth  * 50
-        anchors.bottom:             parent.bottom + 2
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: -2
         color:                      "#bb303030"
         radius: Math.min(height, width) / 2
         clip:                       true

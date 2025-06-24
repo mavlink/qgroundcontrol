@@ -99,15 +99,39 @@ Rectangle {
         anchors.bottomMargin: 1
         anchors.top: parent.top
         anchors.bottom: parent.bottom
-        // spacing:                ScreenTools.defaultFontPixelWidth / 2
+        anchors.leftMargin: 10
+        spacing:                ScreenTools.defaultFontPixelWidth / 2
 
-        QGCToolBarButton {
-            id: currentButton
-            Layout.preferredHeight: viewButtonRow.height
-            icon.source: "/res/QGCLogoFull.svg"
-            logo: true
-            onClicked: mainWindow.showToolSelectDialog()
+        Rectangle {
+            id: buttonContainer
+            color: mouseArea.pressed ? "#c80066c5" : (qgcPal.globalTheme === QGCPalette.Light ? "#c8ffffff" : "#c8000000")
+            radius: 10
+            border.color: "#a8616161"
+            border.width:  1
+            Layout.alignment: Qt.AlignVCenter
+            height: viewButtonRow.height * 0.8
+            width: currentButton.implicitWidth + 4
+            
+
+            QGCToolBarButton {
+                id: currentButton
+                anchors.centerIn: parent
+                icon.source: "/res/QGCLogoFull.svg"
+                logo: true
+            }
+            Behavior on color {
+                ColorAnimation { duration: 150 }
+            }
+            MouseArea {
+                id: mouseArea
+                anchors.fill: parent
+                onClicked: {
+                    mainWindow.showToolSelectDialog()
+                }
+            }
         }
+
+
 
         MainStatusIndicator {
             id: mainStatusIndicator
