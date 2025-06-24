@@ -193,7 +193,19 @@ Item {
             anchors.bottom:         parent.bottom
             anchors.left:           parent.left
             anchors.right:          parent.right
-            anchors.bottomMargin:  70
+            anchors.bottomMargin:  65
+            anchors.margins:        _margins
+            width: parent.width * 0.8
+            height: 100
+            z:                      10
+        }
+
+        ControlMenuTop{
+            id:                     controlMenuTop
+            anchors.top:         parent.top
+            anchors.left:           parent.left
+            anchors.right:          parent.right
+            anchors.topMargin:  30
             anchors.margins:        _margins
             width: parent.width * 0.8
             height: 100

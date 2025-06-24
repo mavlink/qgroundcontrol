@@ -67,5 +67,6 @@ qt_add_qml_module(FlightDisplayModule
         VirtualJoystick.qml
         ControlMenuBottom.qml
         ItemButton.qml
+        ControlMenuTop.qml
     NO_PLUGIN # Required by Qt 6.6.3. TODO: Remove when no longer supported.
 )

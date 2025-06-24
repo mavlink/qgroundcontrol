@@ -53,17 +53,17 @@ Rectangle {
 
     Rectangle {
                 width: parent.width
-                height: parent.height                     // Mỏng lại, ví dụ 10px
+                height: parent.height * 1.2                    // Mỏng lại, ví dụ 10px
                 anchors.top: parent.top        // Gắn vào phía trên
                 gradient: Gradient {
                     orientation: Gradient.Vertical
                     GradientStop {
                         position: 0.0
-                        color: "#b5222222"
+                        color: "#b5000000"
                     } // Đen với alpha 50%
                     GradientStop {
                         position: 1.0
-                        color: "#00222222"
+                        color: "#00000000"
                     } // Trong suốt
                 }
             } 
@@ -79,6 +79,8 @@ Rectangle {
             verticalAlignment: Text.AlignVCenter
             text: mainStatusIndicator.mainStatusText()
             font.pointSize: ScreenTools.largeFontPointSize
+            font.bold: true
+
 
             QGCMouseArea {
                 id: mainStatusMouseArea
