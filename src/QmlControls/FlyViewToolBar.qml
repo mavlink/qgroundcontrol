@@ -78,9 +78,8 @@ Rectangle {
             anchors.centerIn: parent 
             verticalAlignment: Text.AlignVCenter
             text: mainStatusIndicator.mainStatusText()
+            
             font.pointSize: ScreenTools.largeFontPointSize
-            font.bold: true
-
 
             QGCMouseArea {
                 id: mainStatusMouseArea

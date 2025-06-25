@@ -8,6 +8,7 @@
         <file alias="lightshow-S3-PRO.png">resources/lists/lightshow-S3-PRO.png</file>
     </qresource>
     <qresource prefix="/fonts">
+        <file alias="Aldrich-Regular">resources/fonts/Aldrich-Regular.ttf</file>
         <file alias="opensans">resources/fonts/OpenSans-Regular.ttf</file>
         <file alias="opensans-demibold">resources/fonts/OpenSans-Semibold.ttf</file>
         <file alias="NanumGothic-Regular">resources/fonts/NanumGothic-Regular.ttf</file>
@@ -17,9 +18,10 @@
         <file alias="droneItems.png">resources/images/droneItems.png</file>
     </qresource>
     <qresource prefix="/res">
-
-
     
+        <file alias="menu_while.svg">resources/menu_while.svg</file>
+        <file alias="settings_while.svg">resources/settings_while.svg</file>
+
         <file alias="Map_White.svg">resources/Map_White.svg</file>
         <file alias="Map_Black.svg">resources/Map_Black.svg</file>
         <file alias="Camera_Black.svg">resources/Camera_Black.svg</file>

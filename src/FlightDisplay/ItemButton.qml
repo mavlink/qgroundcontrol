@@ -12,6 +12,9 @@ Rectangle {
     property string iconSource: ""
     property color activeColor: "#c614599b"       // Màu khi active
     property color defaultColor: "#d1222222"      // Màu mặc định
+    
+    property bool bold: false
+    property int fontSize: 12
     signal clicked()
 
     // Trạng thái nội bộ
@@ -43,11 +46,14 @@ Rectangle {
             Text {
                 id: labelText
                 text: "1"
-                font.pixelSize: 12
+                font.pixelSize: button.fontSize     // ← phải có
+                font.bold: button.bold              // ← phải có
+                font.family: aldrichFont.name
                 color: "white"
                 horizontalAlignment: Text.AlignHCenter
                 anchors.horizontalCenter: parent.horizontalCenter
             }
+
         }
 
         // Nếu không có icon, chỉ hiển thị chữ ở giữa
@@ -56,10 +62,13 @@ Rectangle {
             visible: iconSource === ""
             anchors.centerIn: parent
             text: labelText.text
-            font.pixelSize: 14
+            font.pixelSize: button.fontSize     // ← phải có
+            font.bold: button.bold              // ← phải có
+            font.family: aldrichFont.name
             color: "white"
             horizontalAlignment: Text.AlignHCenter
         }
+
     }
 
     MouseArea {

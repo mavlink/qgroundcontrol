@@ -205,11 +205,30 @@ Item {
             anchors.top:         parent.top
             anchors.left:           parent.left
             anchors.right:          parent.right
-            anchors.topMargin:  50
+            anchors.topMargin:  28
             anchors.margins:        _margins
             width: parent.width * 0.8
             height: 100
             z:                      10
         }
+
+        // Rectangle {
+        //     width: parent.width
+        //     height: 50
+        //     anchors.bottom: parent.bottom
+        //     gradient: Gradient {
+        //         orientation: Gradient.Vertical  // Dọc: từ trên (0.0) xuống dưới (1.0)
+        //         GradientStop {
+        //             position: 0.0     // Trên cùng
+        //             color: "#00000000"  // Trong suốt
+        //         }
+        //         GradientStop {
+        //             position: 1.0     // Dưới cùng
+        //             color: "#b5000000"  // Đen đậm với alpha
+        //         }
+        //     }
+        // }
+
+
     }
 }

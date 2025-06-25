@@ -10,7 +10,7 @@ Rectangle {
     color: "transparent"
 
     // Tab hiện tại đang chọn
-    property string currentTab: "Home"
+    property string currentTab: "POWERLINE"
 
     function switchTab(tabId) {
         currentTab = tabId
@@ -25,35 +25,45 @@ Rectangle {
             spacing: 10
 
             ItemButton {
-                id: btnHome
+                id: btnPOWERLINE
+                defaultColor: "transparent"
+                activeColor: "#d1222222"
                 width: 100
-                label: "Home"
-                isActive: currentTab === "Home"
-                onClicked: switchTab("Home")
+                height: 30
+                radius: 6
+                bold: true
+                fontSize: 14
+                label: "POWERLINE"
+                isActive: currentTab === "POWERLINE"
+                onClicked: switchTab("POWERLINE")
             }
 
             ItemButton {
-                id: btnTelemetry
-                width: 100
-                label: "Telemetry"
-                isActive: currentTab === "Telemetry"
-                onClicked: switchTab("Telemetry")
+                id: btnCONSTRUCTION
+                defaultColor: "transparent"
+                activeColor: "#d1222222"
+                width: 140
+                height: 30
+                radius: 6
+                bold: true
+                fontSize: 14
+                label: "CONSTRUCTION"
+                isActive: currentTab === "CONSTRUCTION"
+                onClicked: switchTab("CONSTRUCTION")
             }
 
             ItemButton {
-                id: btnMission
+                id: btnTOURISM
+                defaultColor: "transparent"
+                activeColor: "#d1222222"
                 width: 100
-                label: "Mission"
-                isActive: currentTab === "Mission"
-                onClicked: switchTab("Mission")
-            }
-
-            ItemButton {
-                id: btnCamera
-                width: 100
-                label: "Camera"
-                isActive: currentTab === "Camera"
-                onClicked: switchTab("Camera")
+                height: 30
+                radius: 6
+                bold: true
+                fontSize: 14
+                label: "TOURISM"
+                isActive: currentTab === "TOURISM"
+                onClicked: switchTab("TOURISM")
             }
         }
 

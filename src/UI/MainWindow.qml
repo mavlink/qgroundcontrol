@@ -27,13 +27,17 @@ import QGroundControl.UTMSP
 /// All properties defined here are visible to all QML pages.
 ApplicationWindow {
     id:             mainWindow
-    visibility: "FullScreen"
+    // visibility: "FullScreen"
     visible: true
-    flags: Qt.Window | Qt.FramelessWindowHint
+    // flags: Qt.Window | Qt.FramelessWindowHint
         minimumWidth: ScreenTools.isMobile ? ScreenTools.screenWidth  : Math.min(ScreenTools.defaultFontPixelWidth * 100, Screen.width)
         minimumHeight: ScreenTools.isMobile ? ScreenTools.screenHeight : Math.min(ScreenTools.defaultFontPixelWidth * 50, Screen.height)
         
 
+FontLoader {
+    id: aldrichFont
+    source: "qrc:/fonts/Aldrich-Regular"
+}
 
 
     property bool   _utmspSendActTrigger
@@ -159,14 +163,14 @@ ApplicationWindow {
     }
 
     function showSettingsTool(settingsPage = "") {
-        showTool(qsTr("Application Settings"), "qrc:/qml/QGroundControl/Controls/AppSettings.qml", "/res/QGCLogoWhite")
+        showTool(qsTr("Application Settings"), "qrc:/qml/QGroundControl/Controls/AppSettings.qml", "/res/settings_while.svg")
         if (settingsPage !== "") {
             toolDrawerLoader.item.showSettingsPage(settingsPage)
         }
     }
 
     function showDroneList() {
-        showTool(qsTr("Drone List"), "qrc:/qml/QGroundControl/DroneList/DroneList.qml", "/res/QGCLogoWhite")
+        showTool(qsTr("Drone List"), "qrc:/qml/QGroundControl/DroneList/DroneList.qml", "/res/menu_while.svg")
     }
 
 
@@ -431,7 +435,7 @@ ApplicationWindow {
                             height:             toolSelectDialog._toolButtonHeight
                             Layout.fillWidth:   true
                             text:               qsTr("Application Settings")
-                            imageResource:      "/res/CT-UAV.svg"
+                            imageResource:      "/res/settings_while.svg"
                             imageColor:         "transparent"
                             visible:            !QGroundControl.corePlugin.options.combineSettingsAndSetup
                             onClicked: {
@@ -447,7 +451,7 @@ ApplicationWindow {
                             height:             toolSelectDialog._toolButtonHeight
                             Layout.fillWidth:   true
                             text:               qsTr("Drone List")
-                            imageResource:      "/res/CT-UAV.svg"
+                            imageResource:      "/res/menu_while.svg"
                             imageColor:         "transparent"
                             visible:            !QGroundControl.corePlugin.options.combineSettingsAndSetup
                             onClicked: {
