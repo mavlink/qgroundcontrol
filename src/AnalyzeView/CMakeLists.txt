@@ -49,9 +49,8 @@ qt_add_qml_module(AnalyzeViewModule
 #===========================================================================#
 
 CPMAddPackage(
-    NAME ulog_cpp
-    GITHUB_REPOSITORY PX4/ulog_cpp
-    GIT_TAG main
+        NAME ulog_cpp
+        SOURCE_DIR "${CMAKE_SOURCE_DIR}/cpm_modules/ulog_cpp"
 )
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
