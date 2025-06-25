@@ -31,7 +31,7 @@ ChartView {
         var serie   = createSeries(ChartView.SeriesTypeLine, field.label)
         serie.axisX = axisX
         serie.axisY = axisY
-        serie.useOpenGL = true
+        serie.useOpenGL = QGroundControl.videoManager.gstreamerEnabled // Details on why here: https://github.com/mavlink/qgroundcontrol/issues/13068
         serie.color = color
         serie.width = 1
         chartController.addSeries(field, serie)
