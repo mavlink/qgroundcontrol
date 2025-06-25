@@ -68,5 +68,6 @@ qt_add_qml_module(FlightDisplayModule
         ControlMenuBottom.qml
         ItemButton.qml
         ControlMenuTop.qml
+        VTOLChecklist.qml
     NO_PLUGIN # Required by Qt 6.6.3. TODO: Remove when no longer supported.
 )

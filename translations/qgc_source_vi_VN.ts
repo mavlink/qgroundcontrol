@@ -110,7 +110,7 @@
         <location filename="../src/UI/toolbar/APMBatteryIndicator.qml" line="38"/>
         <location filename="../src/UI/toolbar/APMBatteryIndicator.qml" line="68"/>
         <source>Vehicle Action</source>
-        <translation>Hành động xe</translation>
+        <translation>Hành động phương tiện</translation>
     </message>
     <message>
         <location filename="../src/UI/toolbar/APMBatteryIndicator.qml" line="45"/>
@@ -7695,7 +7695,7 @@ Bấm OK để bắt đầu quá trình tự động điều chỉnh.
     <message>
         <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="42"/>
         <source>Takeoff</source>
-        <translation>Cởi</translation>
+        <translation>Cất cánh</translation>
     </message>
     <message>
         <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="43"/>
@@ -10938,7 +10938,7 @@ Is this really what you want?</source>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4BatteryIndicator.qml" line="28"/>
         <source>Low Battery Failsafe</source>
-        <translation>Pin thấp không an toàn</translation>
+        <translation>Pin ở mức thấp</translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4BatteryIndicator.qml" line="33"/>
@@ -10966,152 +10966,152 @@ Is this really what you want?</source>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="35"/>
         <source>Manual</source>
-        <translation>Thủ công</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="36"/>
         <source>Acro</source>
-        <translation>Acro</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="37"/>
         <source>Stabilized</source>
-        <translation>Ổn định</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="38"/>
         <source>Rattitude</source>
-        <translation>Sự trân trọng</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="39"/>
         <source>Altitude</source>
-        <translation>Độ cao</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="40"/>
         <source>Position</source>
-        <translation>Chức vụ</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="41"/>
         <source>Offboard</source>
-        <translation>Ngoài khơi</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="42"/>
         <source>Ready</source>
-        <translation>Sẵn sàng</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="43"/>
         <source>Takeoff</source>
-        <translation>Cởi</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="44"/>
         <source>Hold</source>
-        <translation>Giữ</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="45"/>
         <source>Mission</source>
-        <translation>Nhiệm vụ</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="46"/>
         <source>Return</source>
-        <translation>Trở lại</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="47"/>
         <source>Land</source>
-        <translation>Đất</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="48"/>
         <source>Precision Land</source>
-        <translation>Đất chính xác</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="49"/>
         <source>Return to Groundstation</source>
-        <translation>Trở lại căn cứ</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="50"/>
         <source>Follow Me</source>
-        <translation>Theo tôi</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="51"/>
         <source>Simple</source>
-        <translation>Đơn giản</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="52"/>
         <source>Orbit</source>
-        <translation>Quỹ đạo</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="136"/>
         <source>Unknown %1:%2</source>
-        <translation>Không xác định %1: %2</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="342"/>
         <source>Unable to takeoff, vehicle position not known.</source>
-        <translation>Không thể cất cánh, vị trí xe không được biết.</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="410"/>
         <source>Unable to go to location, vehicle position not known.</source>
-        <translation>Không thể đi đến vị trí, vị trí xe không được biết.</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="481"/>
         <source>Unable to pause vehicle.</source>
-        <translation>Không thể tạm dừng xe.</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="490"/>
         <source>Unable to change altitude, home position unknown.</source>
-        <translation>Không thể thay đổi độ cao, vị trí nhà không rõ.</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="494"/>
         <source>Unable to change altitude, home position altitude unknown.</source>
-        <translation>Không thể thay đổi độ cao, độ cao vị trí nhà không rõ.</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="555"/>
         <source>Vehicle does not support guided rotate</source>
-        <translation>Xe không hỗ trợ xoay vòng có hướng dẫn</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="577"/>
         <source>Unable to start takeoff: Vehicle rejected arming.</source>
-        <translation>Không thể bắt đầu cất cánh: Xe bị từ chối vũ trang.</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="581"/>
         <source>Unable to start takeoff: Vehicle not changing to %1 flight mode.</source>
-        <translation>Không thể bắt đầu cất cánh: phương tiện không thay đổi thành %1 chế độ bay.</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="589"/>
         <source>Unable to start mission: Vehicle rejected arming.</source>
-        <translation>Không thể bắt đầu nhiệm vụ: Xe bị từ chối vũ trang.</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="593"/>
         <source>Unable to start mission: Vehicle not changing to %1 flight mode.</source>
-        <translation>Không thể bắt đầu nhiệm vụ: phương tiện không thay đổi thành %1 chế độ bay.</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="710"/>
         <source>QGroundControl supports PX4 Pro firmware Version %1.%2.%3 and above. You are using a version prior to that which will lead to unpredictable results. Please upgrade your firmware.</source>
-        <translation>QgroundControl hỗ trợ phiên bản phần mềm PX4 Pro %1.%2.%3 trở lên.Bạn đang sử dụng một phiên bản trước đó sẽ dẫn đến kết quả không thể đoán trước.Vui lòng nâng cấp chương trình cơ sở của bạn.</translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -11152,12 +11152,12 @@ Is this really what you want?</source>
     <message>
         <location filename="../src/AutoPilotPlugins/PX4/PX4FlightBehavior.cc" line="17"/>
         <source>Flight Behavior</source>
-        <translation>Hành vi bay</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/AutoPilotPlugins/PX4/PX4FlightBehavior.cc" line="28"/>
         <source>Flight Behavior is used to configure flight characteristics.</source>
-        <translation>Hành vi bay được sử dụng để cấu hình các đặc điểm bay.</translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -12912,7 +12912,7 @@ Nhấp vào &apos;OK&apos; để tải lên kế hoạch.</translation>
     <message>
         <location filename="../src/QmlControls/PlanView.qml" line="586"/>
         <source>Takeoff</source>
-        <translation>Cởi</translation>
+        <translation>Cất cánh</translation>
     </message>
     <message>
         <location filename="../src/QmlControls/PlanView.qml" line="598"/>
@@ -16225,7 +16225,7 @@ Xoay_none chỉ ra các điểm thành phần theo hướng bay.</translation>
     <message>
         <location filename="../src/QmlControls/SimpleItemEditor.qml" line="77"/>
         <source>Takeoff</source>
-        <translation>Cởi</translation>
+        <translation>Cất cánh</translation>
     </message>
     <message>
         <location filename="../src/QmlControls/SimpleItemEditor.qml" line="78"/>
@@ -16298,7 +16298,7 @@ Xoay_none chỉ ra các điểm thành phần theo hướng bay.</translation>
     <message>
         <location filename="../src/MissionManager/SimpleMissionItem.cc" line="386"/>
         <source>Takeoff</source>
-        <translation>Cởi</translation>
+        <translation>Cất cánh</translation>
     </message>
     <message>
         <location filename="../src/MissionManager/SimpleMissionItem.cc" line="388"/>
