@@ -32,6 +32,7 @@
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
+#include <QtCore/QTimer>
 
 QGC_LOGGING_CATEGORY(VideoManagerLog, "qgc.videomanager.videomanager")
 
@@ -182,14 +183,16 @@ void VideoManager::startRecording(const QString &videoFile)
     const QString videoFileUrl = videoFile.isEmpty() ? QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss") : videoFile;
     const QString ext = kFileExtension[fileFormat];
 
-    const QString videoFileName = savePath + "/" + videoFileUrl + ".%1" + ext;
+    const QString videoFileNameTemplate = savePath + "/" + videoFileUrl + ".%1" + ext;
 
     for (VideoReceiver *receiver : std::as_const(_videoReceivers)) {
         if (!receiver->started()) {
             qCDebug(VideoManagerLog) << "Video receiver is not ready.";
             continue;
         }
-        receiver->startRecording(videoFileName.arg(receiver->name()), fileFormat);
+        const QString streamName = (receiver->name() == QStringLiteral("videoContent")) ? "" : (receiver->name() + ".");
+        const QString videoFileName = videoFileNameTemplate.arg(streamName);
+        receiver->startRecording(videoFileName, fileFormat);
     }
 }
 
@@ -678,12 +681,15 @@ void VideoManager::_initVideoReceiver(VideoReceiver *receiver, QQuickWindow *win
     });
 
     (void) connect(receiver, &VideoReceiver::onStopComplete, this, [this, receiver](VideoReceiver::STATUS status) {
-        qCDebug(VideoManagerLog) << "Video" << receiver->name() << "Stop complete, status:" << status;
+        qCDebug(VideoManagerLog) << "Stop complete" << receiver->name() << receiver->uri()  << ", status:" << status;
         receiver->setStarted(false);
         if (status == VideoReceiver::STATUS_INVALID_URL) {
             qCDebug(VideoManagerLog) << "Invalid video URL. Not restarting";
         } else {
-            _startReceiver(receiver);
+            QTimer::singleShot(1000, receiver, [this, receiver]() {
+                qCDebug(VideoManagerLog) << "Restarting video receiver" << receiver->name() << receiver->uri();
+                _startReceiver(receiver);
+            });
         }
     });
 

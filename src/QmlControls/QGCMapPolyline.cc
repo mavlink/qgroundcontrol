@@ -21,7 +21,6 @@ QGCMapPolyline::QGCMapPolyline(QObject* parent)
     : QObject               (parent)
     , _dirty                (false)
     , _interactive          (false)
-    , _resetActive          (false)
 {
     _init();
 }
@@ -30,7 +29,6 @@ QGCMapPolyline::QGCMapPolyline(const QGCMapPolyline& other, QObject* parent)
     : QObject               (parent)
     , _dirty                (false)
     , _interactive          (false)
-    , _resetActive          (false)
 {
     *this = other;
 
@@ -55,6 +53,7 @@ void QGCMapPolyline::_init(void)
 {
     connect(&_polylineModel, &QmlObjectListModel::dirtyChanged, this, &QGCMapPolyline::_polylineModelDirtyChanged);
     connect(&_polylineModel, &QmlObjectListModel::countChanged, this, &QGCMapPolyline::_polylineModelCountChanged);
+    connect(&_polylineModel, &QmlObjectListModel::modelReset, this, &QGCMapPolyline::pathChanged);
 
     connect(this, &QGCMapPolyline::countChanged, this, &QGCMapPolyline::isValidChanged);
     connect(this, &QGCMapPolyline::countChanged, this, &QGCMapPolyline::isEmptyChanged);
@@ -117,7 +116,7 @@ QPointF QGCMapPolyline::_pointFFromCoord(const QGeoCoordinate& coordinate) const
 
 void QGCMapPolyline::setPath(const QList<QGeoCoordinate>& path)
 {
-    _beginResetIfNotActive();
+    beginReset();
 
     _polylinePath.clear();
     _polylineModel.clearAndDeleteContents();
@@ -128,12 +127,12 @@ void QGCMapPolyline::setPath(const QList<QGeoCoordinate>& path)
 
     setDirty(true);
 
-    _endResetIfNotActive();
+    endReset();
 }
 
 void QGCMapPolyline::setPath(const QVariantList& path)
 {
-    _beginResetIfNotActive();
+    beginReset();
 
     _polylinePath = path;
     _polylineModel.clearAndDeleteContents();
@@ -142,7 +141,7 @@ void QGCMapPolyline::setPath(const QVariantList& path)
     }
     setDirty(true);
 
-    _endResetIfNotActive();
+    endReset();
 }
 
 
@@ -390,7 +389,7 @@ double QGCMapPolyline::length(void) const
 
 void QGCMapPolyline::appendVertices(const QList<QGeoCoordinate>& coordinates)
 {
-    _beginResetIfNotActive();
+    beginReset();
 
     QList<QObject*> objects;
     for (const QGeoCoordinate& coordinate: coordinates) {
@@ -399,36 +398,19 @@ void QGCMapPolyline::appendVertices(const QList<QGeoCoordinate>& coordinates)
     }
     _polylineModel.append(objects);
 
-    _endResetIfNotActive();
+    endReset();
 
     emit pathChanged();
 }
 
 void QGCMapPolyline::beginReset(void)
 {
-    _resetActive = true;
-    _polylineModel.beginReset();
+    _polylineModel.beginResetModel();
 }
 
 void QGCMapPolyline::endReset(void)
 {
-    _resetActive = false;
-    _polylineModel.endReset();
-    emit pathChanged();
-}
-
-void QGCMapPolyline::_beginResetIfNotActive(void)
-{
-    if (!_resetActive) {
-        beginReset();
-    }
-}
-
-void QGCMapPolyline::_endResetIfNotActive(void)
-{
-    if (!_resetActive) {
-        endReset();
-    }
+    _polylineModel.endResetModel();
 }
 
 void QGCMapPolyline::setTraceMode(bool traceMode)

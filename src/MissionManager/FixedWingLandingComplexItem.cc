@@ -170,15 +170,15 @@ void FixedWingLandingComplexItem::_updateFlightPathSegmentsDontCallDirectly(void
         emit terrainCollisionChanged(false);
     }
 
-    _flightPathSegments.beginReset();
+    _flightPathSegments.beginResetModel();
     _flightPathSegments.clearAndDeleteContents();
     if (useLoiterToAlt()->rawValue().toBool()) {
-        _appendFlightPathSegment(FlightPathSegment::SegmentTypeGeneric, finalApproachCoordinate(), amslEntryAlt(), loiterTangentCoordinate(),  amslEntryAlt()); // Best we can do to simulate loiter circle terrain profile
-        _appendFlightPathSegment(FlightPathSegment::SegmentTypeLand, loiterTangentCoordinate(), amslEntryAlt(), landingCoordinate(),        amslExitAlt());
+        _appendFlightPathSegment(FlightPathSegment::SegmentTypeGeneric, finalApproachCoordinate(), amslEntryAlt(), slopeStartCoordinate(),  amslEntryAlt()); // Best we can do to simulate loiter circle terrain profile
+        _appendFlightPathSegment(FlightPathSegment::SegmentTypeLand, slopeStartCoordinate(), amslEntryAlt(), landingCoordinate(),        amslExitAlt());
     } else {
         _appendFlightPathSegment(FlightPathSegment::SegmentTypeLand, finalApproachCoordinate(), amslEntryAlt(), landingCoordinate(),        amslExitAlt());
     }
-    _flightPathSegments.endReset();
+    _flightPathSegments.endResetModel();
 
     if (_cTerrainCollisionSegments != 0) {
         emit terrainCollisionChanged(true);

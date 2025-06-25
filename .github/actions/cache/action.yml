@@ -34,17 +34,17 @@ runs:
         sudo make install
 
     - name: Setup sccache (Windows)
-      if: runner.os == 'Windows'
+      if: runner.os == 'Windows' && inputs.target != 'android'
       uses: mozilla-actions/sccache-action@v0.0.8
 
     - run: echo "SCCACHE_GHA_ENABLED=true" >> "$GITHUB_ENV"
-      if: runner.os == 'Windows'
+      if: runner.os == 'Windows' && inputs.target != 'android'
       shell: bash
 
     - name: Setup Build Cache
       uses: hendrikmuhs/ccache-action@main
       with:
-        variant: ${{ runner.os == 'Windows' && 'sccache' || 'ccache' }}
+        variant: ${{ runner.os == 'Windows' && inputs.target != 'android' && 'sccache' || 'ccache' }}
         key: ${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}
         restore-keys: |
           ${{ inputs.host }}-${{ inputs.target }}
