@@ -19,6 +19,7 @@ set(APM_PLUGIN_HEADERS
         ArduRoverFirmwarePlugin.h
         ArduSubFirmwarePlugin.h
 )
+
 # 根据宏是否禁用决定是否创建库
 if(NOT QGC_DISABLE_APM_PLUGIN_FACTORY AND NOT QGC_DISABLE_APM_PLUGIN)
 
