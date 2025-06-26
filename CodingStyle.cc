@@ -45,7 +45,8 @@ void CodingStyle::_privateMethod(void)
     // Note the brace placement
     if (_lastSeenComponent == -1) {
         _lastSeenComponent = component;
-    } else {
+    }else
+    {
         Q_ASSERT(component == _lastSeenComponent);  // Asserts are your friend
     }
 }
