@@ -106,6 +106,7 @@ QStringList APMFirmwarePlugin::flightModes(Vehicle *vehicle) const
             flightModesList += mode.mode_name;
         }
     }
+
     return flightModesList;
 }
 
@@ -116,6 +117,7 @@ QString APMFirmwarePlugin::flightMode(uint8_t base_mode, uint32_t custom_mode) c
     if (base_mode & MAV_MODE_FLAG_CUSTOM_MODE_ENABLED) {
         return _modeEnumToString.value(custom_mode, flightMode);
     }
+
     return flightMode;
 }
 

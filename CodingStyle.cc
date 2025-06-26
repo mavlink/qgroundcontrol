@@ -87,6 +87,7 @@ void CodingStyle::_methodWithManyArguments(QWidget*         parent,
                                            Options          options1,
                                            Options          /* options2 */,
                                            Options          options3)
+
 {
     // options2 is an unused method argument.
     // Do not use Q_UNUSUED and do not just remove the argument name and leave the type.
