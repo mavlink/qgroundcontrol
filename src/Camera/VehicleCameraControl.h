@@ -232,6 +232,8 @@ protected slots:
     virtual void    _paramDone              ();
     virtual void    _streamInfoTimeout      ();
     virtual void    _streamStatusTimeout    ();
+    virtual void    _cameraSettingsTimeout  ();
+    virtual void    _storageInfoTimeout     ();
     virtual void    _recTimerHandler        ();
     virtual void    _checkForVideoStreams   ();
 
@@ -306,6 +308,8 @@ protected:
     int                                 _expectedCount      = 1;
     QTimer                              _streamInfoTimer;
     QTimer                              _streamStatusTimer;
+    QTimer                              _cameraSettingsTimer;
+    QTimer                              _storageInfoTimer;
     QmlObjectListModel                  _streams;
     QStringList                         _streamLabels;
     ThermalViewMode                     _thermalMode        = THERMAL_BLEND;
