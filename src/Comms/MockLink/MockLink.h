@@ -121,6 +121,14 @@ private slots:
     void _writeBytesQueued(const QByteArray &bytes);
 
 private:
+    typedef struct {
+        const char *name;
+        uint8_t standard_mode;
+        uint32_t custom_mode;
+        bool canBeSet;
+        bool advanced;
+    } FlightMode_t;
+
     bool _connect() final;
     bool _allocateMavlinkChannel() final;
     void _freeMavlinkChannel() final;
@@ -172,10 +180,13 @@ private:
     void _sendGeneralMetaData();
     void _sendRemoteIDArmStatus();
     void _sendVideoInfo();
+    void _sendAvailableModesMonitor();
 
-    /// Sends the next parameter to the vehicle
     void _paramRequestListWorker();
     void _logDownloadWorker();
+    void _availableModesWorker();
+    void _sendAvailableMode(uint8_t modeIndexOneBased);
+    int  _availableModesCount() const;
     void _moveADSBVehicle(int vehicleIndex);
 
     static MockLink *_startMockLinkWorker(const QString &configName, MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, bool sendStatusText, MockConfiguration::FailureMode_t failureMode);
@@ -233,6 +244,10 @@ private:
     int _currentParamRequestListComponentIndex = -1;    ///< Current component index for param request list workflow, -1 for no request in progress
     int _currentParamRequestListParamIndex = -1;        ///< Current parameter index for param request list workflow
 
+    // Mavlink standard modes worker information
+    int _availableModesWorkerNextModeIndex = 0;         ///< 0: not active, +index: next mode the send in sequence, -index: send a single mode (indices are 1-based)
+    uint8_t _availableModesMonitorSeqNumber = 0;        ///< Sequence number for the next available mode message to send
+
     QString _logDownloadFilename;                       ///< Filename for log download which is in progress
     uint32_t _logDownloadCurrentOffset = 0;             ///< Current offset we are sending from
     uint32_t _logDownloadBytesRemaining = 0;            ///< Number of bytes still to send, 0 = send inactive
@@ -269,4 +284,6 @@ private:
     static constexpr uint32_t _logDownloadFileSize = 1000;  ///< Size of simulated log file
 
     static constexpr bool _mavlinkStarted = true;
+
+    static QList<FlightMode_t> _availableFlightModes;
 };

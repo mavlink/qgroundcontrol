@@ -13,6 +13,7 @@
 #include "MockLinkWorker.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
+#include "FirmwarePlugin.h"
 
 #include <QtCore/QFile>
 #include <QtCore/QMutexLocker>
@@ -25,6 +26,26 @@ QGC_LOGGING_CATEGORY(MockLinkLog, "qgc.comms.mocklink.mocklink")
 QGC_LOGGING_CATEGORY(MockLinkVerboseLog, "qgc.comms.mocklink.mocklink:verbose")
 
 int MockLink::_nextVehicleSystemId = 128;
+
+QList<MockLink::FlightMode_t> MockLink::_availableFlightModes = {
+    // Mode Name                Standard Mode               Custom Mode                         CanBeSet    adv
+    { "Manual",                 0,                          PX4CustomMode::MANUAL,              true,       true },
+    { "Stabilized",             0,                          PX4CustomMode::STABILIZED,          true,       true },
+    { "Acro",                   0,                          PX4CustomMode::ACRO,                true,       true },
+    { "Altitude",               0,                          PX4CustomMode::ALTCTL,              true,       false},
+    { "Offboard",               0,                          PX4CustomMode::OFFBOARD,            true,       true },
+    { "Position",               0,                          PX4CustomMode::POSCTL_POSCTL,       true,       false},
+    { "Orbit",                  0,                          PX4CustomMode::POSCTL_ORBIT,        false,      true },
+    { "Hold",                   0,                          PX4CustomMode::AUTO_LOITER,         true,       true },
+    { "Mission",                0,                          PX4CustomMode::AUTO_MISSION,        true,       true },
+    { "Return",                 0,                          PX4CustomMode::AUTO_RTL,            true,       true },
+    { "Land",                   MAV_STANDARD_MODE_LAND,     PX4CustomMode::AUTO_LAND,           false,      true },
+    { "Precision Landing",      0,                          PX4CustomMode::AUTO_PRECLAND,       true,       true },
+    { "Takeoff",                MAV_STANDARD_MODE_TAKEOFF,  PX4CustomMode::AUTO_TAKEOFF,        false,      false},
+    { "MockLink Mode",          0,                          PX4CustomMode::RATTITUDE,           true,       false},
+    { "(Mode not available)",   0,                          PX4CustomMode::AUTO_RTGS,           false,      false},
+    { "MockLink Mode (delayed)",0,                          PX4CustomMode::AUTO_FOLLOW_TARGET,  true,       false},
+};
 
 MockLink::MockLink(SharedLinkConfigurationPtr &config, QObject *parent)
     : LinkInterface(config, parent)
@@ -129,6 +150,7 @@ void MockLink::run1HzTasks()
     _sendSysStatus();
     _sendADSBVehicles();
     _sendRemoteIDArmStatus();
+    _sendAvailableModesMonitor();
     // _sendVideoInfo();
     if (!qgcApp()->runningUnitTests()) {
         // Sending RC Channels during unit test breaks RC tests which does it's own RC simulation
@@ -140,6 +162,11 @@ void MockLink::run1HzTasks()
         _sendHomePositionDelayCount--;
     } else {
         _sendHomePosition();
+        // We piggy back on this delay to signal we have new standard modes available
+        if (_availableModesMonitorSeqNumber == 0) {
+            qCDebug(MockLinkLog) << "Bumping sequence number for available modes monitor to trigger requery of modes";
+            _availableModesMonitorSeqNumber = 1;
+        }
     }
 }
 
@@ -171,6 +198,7 @@ void MockLink::run500HzTasks()
     if (_mavlinkStarted && _connected) {
         _paramRequestListWorker();
         _logDownloadWorker();
+        _availableModesWorker();
     }
 }
 
@@ -1726,6 +1754,27 @@ bool MockLink::_handleRequestMessage(const mavlink_command_long_t &request, bool
 
         return true;
     }
+    case MAVLINK_MSG_ID_AVAILABLE_MODES:
+    {
+        if (request.param2 == 0) {
+            // Request for available modes to be streamed out
+            if (_availableModesWorkerNextModeIndex != 0) {
+                qCWarning(MockLinkLog) << "MAVLINK_MSG_ID_AVAILABLE_MODES: _availableModesWorker already running - _availableModesWorkerNextModeIndex:" << _availableModesWorkerNextModeIndex;
+                return false;
+            }
+            qCDebug(MockLinkLog) << "MAVLINK_MSG_ID_AVAILABLE_MODES: starting available modes sequence worker";
+            _availableModesWorkerNextModeIndex = 1; // Start with the first mode in sequence (1-based index)
+        } else {
+            // Request for specific mode
+            if (request.param2 > _availableFlightModes.count()) {
+                qCWarning(MockLinkLog) << "MAVLINK_MSG_ID_AVAILABLE_MODES: requested mode index out of range" << request.param2 << _availableFlightModes.count();
+                return false;
+            }
+            qCDebug(MockLinkLog) << "MAVLINK_MSG_ID_AVAILABLE_MODES: received specific mode request for index" << request.param2;
+            _availableModesWorkerNextModeIndex = -request.param2; // Negative index indicates a specific single mode request
+        }
+        return true;
+    }
     }
 
     return false;
@@ -1858,4 +1907,67 @@ void MockLink::_sendVideoInfo()
             respondWithMavlinkMessage(msg);
         }
     }
+}
+
+void MockLink::_sendAvailableMode(uint8_t modeIndexOneBased) 
+{
+    if (modeIndexOneBased > _availableModesCount()) {
+        qCWarning(MockLinkLog) << "modeIndexOneBased out of range" << modeIndexOneBased << _availableModesCount();
+        return;
+    }
+
+    qCDebug(MockLinkLog) << "_sendAvailableMode modeIndexOneBased:" << modeIndexOneBased;
+
+    const FlightMode_t &availableMode = _availableFlightModes[modeIndexOneBased - 1];
+    mavlink_message_t msg{};
+
+    (void) mavlink_msg_available_modes_pack_chan(
+        _vehicleSystemId,
+        _vehicleComponentId,
+        mavlinkChannel(),
+        &msg,
+        _availableModesCount(),
+        modeIndexOneBased,
+        availableMode.standard_mode,
+        availableMode.custom_mode,
+        availableMode.canBeSet ? 0 : MAV_MODE_PROPERTY_NOT_USER_SELECTABLE,
+        availableMode.name);
+    respondWithMavlinkMessage(msg);
+}
+
+void MockLink::_availableModesWorker()
+{
+    if (_availableModesWorkerNextModeIndex == 0) {
+        //  Not active
+        return;
+    }
+
+    _sendAvailableMode(qAbs(_availableModesWorkerNextModeIndex));
+
+    if (_availableModesWorkerNextModeIndex < 0) {
+        // Single mode request, stop worker
+        _availableModesWorkerNextModeIndex = 0;
+    } else if (++_availableModesWorkerNextModeIndex > _availableModesCount()) {
+        // All modes sent, stop worker
+        _availableModesWorkerNextModeIndex = 0;
+        qCDebug(MockLinkLog) << "_availableModesWorker: all modes sent, stopping worker";
+    }
+}
+
+void MockLink::_sendAvailableModesMonitor()
+{
+    mavlink_message_t msg{};
+
+    (void) mavlink_msg_available_modes_monitor_pack_chan(
+        _vehicleSystemId,
+        _vehicleComponentId,
+        mavlinkChannel(),
+        &msg,
+        _availableModesMonitorSeqNumber);
+    respondWithMavlinkMessage(msg);
+}
+
+int MockLink::_availableModesCount() const
+{
+    return _availableFlightModes.count() - (_availableModesMonitorSeqNumber == 0 ? 1 : 0); // Exclude the delayed mode
 }
