@@ -37,6 +37,7 @@ jobs:
       ARTIFACT: QGroundControl.dmg
       PACKAGE: QGroundControl
       QT_VERSION: 6.8.3
+      QGC_MACOS_SIGNING_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
 
     steps:
       - name: Checkout repo
