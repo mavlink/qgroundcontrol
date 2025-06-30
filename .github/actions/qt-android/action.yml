@@ -42,7 +42,7 @@ runs:
       uses: nttld/setup-ndk@v1
       id: setup-ndk
       with:
-        ndk-version: r26b
+        ndk-version: ${{ inputs.version == '6.8.3' && 'r26b' || 'r25b' }}
         add-to-path: false
 
     - run: |
