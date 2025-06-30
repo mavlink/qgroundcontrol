@@ -78,4 +78,5 @@ qt_add_qml_module(Viewer3DModule
         Viewer3DQml/Drones/Djif450/DroneModel_propeller22_2/node.mesh
         Viewer3DQml/Drones/Djif450/DroneModel_Base_bottom_1/node.mesh
         Viewer3DQml/Drones/Djif450/DroneModel_Base_Top_1/node.mesh
+    NO_PLUGIN
 )

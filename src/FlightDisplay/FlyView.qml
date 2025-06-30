@@ -25,6 +25,7 @@ import QGroundControl.FlightDisplay
 import QGroundControl.FlightMap
 import QGroundControl.Palette
 import QGroundControl.ScreenTools
+import QGroundControl.UTMSP
 import QGroundControl.Vehicle
 import QGroundControl.Viewer3D
 
@@ -175,6 +176,17 @@ Item {
         Viewer3D {
             id: viewer3DWindow
             anchors.fill: parent
+        }
+    }
+
+    UTMSPActivationStatusBar {
+        activationStartTimestamp:   UTMSPStateStorage.startTimeStamp
+        activationApproval:         UTMSPStateStorage.showActivationTab && QGroundControl.utmspManager.utmspVehicle.vehicleActivation
+        flightID:                   UTMSPStateStorage.flightID
+        anchors.fill:               parent
+
+        function onActivationTriggered(value) {
+            _root.utmspSendActTrigger = value
         }
     }
 }
