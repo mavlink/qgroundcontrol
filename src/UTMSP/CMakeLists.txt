@@ -105,7 +105,6 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_UTM_ADAPTER)
 #         QGroundControl.FactControls
 #         QGroundControl.Palette
 #         QGroundControl.Controllers
-#         QGroundControl.ShapeFileHelper
 #         QGroundControl.UTMSP
 #         QGroundControl.FlightDisplay
 #         QGroundControl.MultiVehicleManager
