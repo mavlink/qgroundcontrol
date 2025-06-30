@@ -22,7 +22,6 @@ import QGroundControl.FactControls
 import QGroundControl.Palette
 import QGroundControl.MultiVehicleManager
 import QGroundControl.FlightMap
-import QGroundControl.ShapeFileHelper
 import QGroundControl.UTMSP
 
 QGCFlickable {
