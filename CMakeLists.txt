@@ -516,13 +516,6 @@ target_precompile_headers(${CMAKE_PROJECT_NAME}
         <QtCore/QTimer>
 )
 
-qt_add_qml_module(${CMAKE_PROJECT_NAME}
-    URI QGroundControl
-    VERSION 1.0
-    RESOURCE_PREFIX /qml
-    NO_PLUGIN
-)
-
 add_subdirectory(src)
 if(QGC_BUILD_TESTING)
     add_subdirectory(test)
@@ -533,6 +526,12 @@ if(QGC_CUSTOM_BUILD)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_LIBRARIES})
     target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_DIRECTORIES})
 endif()
+
+qt_add_qml_module(${CMAKE_PROJECT_NAME}
+    URI QGroundControl
+    VERSION 1.0
+    RESOURCE_PREFIX /qml
+)
 
 file(GLOB TS_SOURCES ${CMAKE_SOURCE_DIR}/translations/qgc_*.ts)
 set_source_files_properties(${TS_SOURCES} PROPERTIES OUTPUT_LOCATION "${CMAKE_BINARY_DIR}/i18n")
@@ -549,14 +548,14 @@ qt_add_translations(${CMAKE_PROJECT_NAME}
 )
 
 qgc_set_qt_resource_alias(
-    resources/qtquickcontrols2.conf
+    ${CMAKE_SOURCE_DIR}/resources/qtquickcontrols2.conf
     ${SDL_GAMECONTROLLERDB_PATH}
 )
 
 qt_add_resources(${CMAKE_PROJECT_NAME} "qgcresources_cmake"
     PREFIX "/"
     FILES
-        resources/qtquickcontrols2.conf
+        ${CMAKE_SOURCE_DIR}/resources/qtquickcontrols2.conf
         ${SDL_GAMECONTROLLERDB_PATH}
         ${QGC_GSTREAMER_SHADER_RESOURCES}
         ${QGC_ARDUPILOT_PARAMS_RESOURCES}
