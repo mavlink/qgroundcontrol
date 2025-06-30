@@ -12,11 +12,14 @@
 #include <QtCore/QList>
 #include <QtCore/QObject>
 #include <QtPositioning/QGeoCoordinate>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 /// Routines for loading polygons or polylines from KML or SHP files.
 class ShapeFileHelper : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_SINGLETON
     Q_PROPERTY(QStringList fileDialogKMLFilters         READ fileDialogKMLFilters       CONSTANT) ///< File filter list for load/save KML file dialogs
     Q_PROPERTY(QStringList fileDialogKMLOrSHPFilters    READ fileDialogKMLOrSHPFilters  CONSTANT) ///< File filter list for load/save shape file dialogs
 

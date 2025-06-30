@@ -21,7 +21,6 @@ import QGroundControl.Controls
 import QGroundControl.ScreenTools
 import QGroundControl.Controllers
 import QGroundControl.QGCPositionManager
-import MAVLink
 
 SetupPage {
     id:             sensorsPage
