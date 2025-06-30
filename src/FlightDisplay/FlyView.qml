@@ -26,9 +26,7 @@ import QGroundControl.FlightMap
 import QGroundControl.Palette
 import QGroundControl.ScreenTools
 import QGroundControl.Vehicle
-
-// 3D Viewer modules
-import Viewer3D
+import QGroundControl.Viewer3D
 
 Item {
     id: _root
@@ -174,9 +172,9 @@ Item {
             visible:            false
         }
 
-        Viewer3D{
-            id:                     viewer3DWindow
-            anchors.fill:           parent
+        Viewer3D {
+            id: viewer3DWindow
+            anchors.fill: parent
         }
     }
 }

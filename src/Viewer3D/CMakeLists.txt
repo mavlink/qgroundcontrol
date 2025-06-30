@@ -34,38 +34,48 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_VIEWER3D)
 
-# file(GLOB_RECURSE QML_SOURCES RELATIVE Viewer3DQml Viewer3DQml/*.qml)
-# file(GLOB_RECURSE QML_RESOURCES RELATIVE Viewer3DQml Viewer3DQml/*.mesh)
-# qt_add_qml_module(QGC
-#     URI QGroundControl.Viewer3D
-#     VERSION 1.0
-#     QML_FILES ${QML_SOURCES}
-#     OUTPUT_TARGETS Viewer3D_targets
-#     RESOURCES
-#       Images/city_3d_map_icon.svg
-#       SampleOsmMap/map_sim_small.osm
-#       Shaders/earthMaterial.frag
-#       Shaders/earthMaterial.vert
-#       ${QML_RESOURCES}
-#     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
-#     IMPORTS
-#       QtQuick
-#       QtQuick.Controls
-#       QtQuick.Dialogs
-#       QtQuick.Layouts
-#       QtQuick3D
-#       QtPositioning
+qt_add_library(Viewer3DModule STATIC)
 
-#       QGroundControl
-#       QGroundControl.Controls
-#       QGroundControl.Controllers
-#       QGroundControl.FactSystem
-#       QGroundControl.FlightDisplay
-#       QGroundControl.FlightMap
-#       QGroundControl.Palette
-#       QGroundControl.ScreenTools
-#       QGroundControl.Vehicle
-
-#       QGroundControl.Viewer3D
-#       Viewer3D.Models3D
-# )
+qt_add_qml_module(Viewer3DModule
+    URI QGroundControl.Viewer3D
+    VERSION 1.0
+    RESOURCE_PREFIX /qml
+    QML_FILES
+        Viewer3DQml/Viewer3D.qml
+        Viewer3DQml/Models3D/CameraLightModel.qml
+        Viewer3DQml/Models3D/Viewer3DModel.qml
+        Viewer3DQml/Drones/DroneModelDjiF450.qml
+        Viewer3DQml/Drones/Djif450/DroneModel_arm_1/DroneModel_arm_1.qml
+        Viewer3DQml/Drones/Djif450/DroneModel_arm_2/DroneModel_arm_2.qml
+        Viewer3DQml/Drones/Djif450/DroneModel_arm_3/DroneModel_arm_3.qml
+        Viewer3DQml/Drones/Djif450/DroneModel_arm_4/DroneModel_arm_4.qml
+        Viewer3DQml/Drones/Djif450/DroneModel_BLDC_1/DroneModel_BLDC_1.qml
+        Viewer3DQml/Drones/Djif450/DroneModel_BLDC_2/DroneModel_BLDC_2.qml
+        Viewer3DQml/Drones/Djif450/DroneModel_BLDC_3/DroneModel_BLDC_3.qml
+        Viewer3DQml/Drones/Djif450/DroneModel_BLDC_4/DroneModel_BLDC_4.qml
+        Viewer3DQml/Drones/Djif450/DroneModel_propeller2_2/DroneModel_propeller2_2.qml
+        Viewer3DQml/Drones/Djif450/DroneModel_propeller2_7/DroneModel_propeller2_7.qml
+        Viewer3DQml/Drones/Djif450/DroneModel_propeller22_1/DroneModel_propeller22_1.qml
+        Viewer3DQml/Drones/Djif450/DroneModel_propeller22_2/DroneModel_propeller22_2.qml
+        Viewer3DQml/Drones/Djif450/DroneModel_Base_bottom_1/DroneModel_Base_bottom_1.qml
+        Viewer3DQml/Drones/Djif450/DroneModel_Base_Top_1/DroneModel_Base_Top_1.qml
+        Viewer3DQml/Models3D/Waypoint3DModel.qml
+        Viewer3DQml/Models3D/Line3D.qml
+        Viewer3DQml/Models3D/Viewer3DVehicleItems.qml
+        Viewer3DQml/Viewer3DProgressBar.qml
+    RESOURCES
+        Viewer3DQml/Drones/Djif450/DroneModel_arm_1/node.mesh
+        Viewer3DQml/Drones/Djif450/DroneModel_arm_2/node.mesh
+        Viewer3DQml/Drones/Djif450/DroneModel_arm_3/node.mesh
+        Viewer3DQml/Drones/Djif450/DroneModel_arm_4/node.mesh
+        Viewer3DQml/Drones/Djif450/DroneModel_BLDC_1/node.mesh
+        Viewer3DQml/Drones/Djif450/DroneModel_BLDC_2/node.mesh
+        Viewer3DQml/Drones/Djif450/DroneModel_BLDC_3/node.mesh
+        Viewer3DQml/Drones/Djif450/DroneModel_BLDC_4/node.mesh
+        Viewer3DQml/Drones/Djif450/DroneModel_propeller2_2/node.mesh
+        Viewer3DQml/Drones/Djif450/DroneModel_propeller2_7/node.mesh
+        Viewer3DQml/Drones/Djif450/DroneModel_propeller22_1/node.mesh
+        Viewer3DQml/Drones/Djif450/DroneModel_propeller22_2/node.mesh
+        Viewer3DQml/Drones/Djif450/DroneModel_Base_bottom_1/node.mesh
+        Viewer3DQml/Drones/Djif450/DroneModel_Base_Top_1/node.mesh
+)
