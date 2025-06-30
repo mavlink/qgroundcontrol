@@ -31,8 +31,6 @@ endif()
 #                   Project Info
 #######################################################
 
-# include(Prechecks)
-
 # set(CMAKE_OSX_ARCHITECTURES "arm64")
 # set(CMAKE_OSX_SYSROOT "iphoneos")
 if(APPLE)
@@ -415,21 +413,24 @@ elseif(APPLE)
         qt_add_ios_ffmpeg_libraries(${CMAKE_PROJECT_NAME})
     endif()
 elseif(ANDROID)
-    CPMAddPackage(
-        NAME android_openssl
-        URL https://github.com/KDAB/android_openssl/archive/refs/heads/master.zip
-    )
-    include(${android_openssl_SOURCE_DIR}/android_openssl.cmake)
-    add_android_openssl_libraries(${CMAKE_PROJECT_NAME})
+    if(${Qt6_VERSION} VERSION_EQUAL 6.6.3)
+        if(NOT ${CMAKE_ANDROID_NDK_VERSION} VERSION_EQUAL 25.1)
+            message(FATAL_ERROR "Invalid NDK Version: ${CMAKE_ANDROID_NDK_VERSION}, Use Version 25B instead.")
+        endif()
+    elseif(${Qt6_VERSION} VERSION_EQUAL 6.8.3)
+        if(NOT ${CMAKE_ANDROID_NDK_VERSION} VERSION_EQUAL 26.1)
+            message(FATAL_ERROR "Invalid NDK Version: ${CMAKE_ANDROID_NDK_VERSION}, Use Version 26B instead.")
+        endif()
+    endif()
 
     # Generation of android version numbers must be consistent release to release such that they are always increasing
-    if(${PROJECT_VERSION_MAJOR} GREATER 9)
+    if(${CMAKE_PROJECT_VERSION_MAJOR} GREATER 9)
         message(FATAL_ERROR "Major version larger than 1 digit: ${CMAKE_PROJECT_VERSION_MAJOR}")
     endif()
-    if(${PROJECT_VERSION_MINOR} GREATER 9)
+    if(${CMAKE_PROJECT_VERSION_MINOR} GREATER 9)
         message(FATAL_ERROR "Minor version larger than 1 digit: ${CMAKE_PROJECT_VERSION_MINOR}")
     endif()
-    if(${PROJECT_VERSION_PATCH} GREATER 99)
+    if(${CMAKE_PROJECT_VERSION_PATCH} GREATER 99)
         message(FATAL_ERROR "Patch version larger than 2 digits: ${CMAKE_PROJECT_VERSION_PATCH}")
     endif()
 
@@ -475,6 +476,13 @@ elseif(ANDROID)
     # endif()
 
     list(APPEND QT_ANDROID_MULTI_ABI_FORWARD_VARS QGC_STABLE_BUILD QT_HOST_PATH)
+
+    CPMAddPackage(
+        NAME android_openssl
+        URL https://github.com/KDAB/android_openssl/archive/refs/heads/master.zip
+    )
+    include(${android_openssl_SOURCE_DIR}/android_openssl.cmake)
+    add_android_openssl_libraries(${CMAKE_PROJECT_NAME})
 endif()
 
 target_compile_definitions(${CMAKE_PROJECT_NAME}
