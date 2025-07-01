@@ -97,8 +97,8 @@ Rectangle {
 
     Connections {
         target: QGroundControl.corePlugin
-        onShowAdvancedUIChanged: {
-            if(!QGroundControl.corePlugin.showAdvancedUI) {
+        function onShowAdvancedUIChanged(showAdvancedUI) {
+            if (!showAdvancedUI) {
                 _showSummaryPanel()
             }
         }
@@ -106,8 +106,8 @@ Rectangle {
 
     Connections {
         target: QGroundControl.multiVehicleManager
-        onParameterReadyVehicleAvailableChanged: {
-            if (QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable || summaryButton.checked || !firmwareButton.checked) {
+        function onParameterReadyVehicleAvailableChanged(parametersReady) {
+            if (parametersReady || summaryButton.checked || !firmwareButton.checked) {
                 // Show/Reload the Summary panel when:
                 //      A new vehicle shows up
                 //      The summary panel is already showing and the active vehicle goes away

@@ -52,7 +52,7 @@ Item {
 
         Connections {
             target:                 _mapEngineManager
-            onErrorMessageChanged:  errorDialogComponent.createObject(mainWindow).open()
+            function onErrorMessageChanged() { errorDialogComponent.createObject(mainWindow).open() }
         }
 
         SettingsGroupLayout {

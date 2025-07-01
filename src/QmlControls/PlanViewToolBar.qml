@@ -116,7 +116,7 @@ Rectangle {
 
         Connections {
             target:                 QGroundControl.multiVehicleManager
-            onActiveVehicleChanged: largeProgressBar._userHide = false
+            function onActiveVehicleChanged(activeVehicle) { largeProgressBar._userHide = false }
         }
 
         Rectangle {
@@ -158,14 +158,14 @@ Rectangle {
     Connections {
         target: planMasterController.missionController
 
-        onProgressPctChanged: {
-            if (_controllerProgressPct === 1) {
+        function onProgressPctChanged(progressPct) {
+            if (progressPct === 1) {
                 if (_root.visible) {
                     resetProgressTimer.start()
                 } else {
                     progressBar.visible = false
                 }
-            } else if (_controllerProgressPct > 0) {
+            } else if (progressPct > 0) {
                 progressBar.visible = true
             }
         }
