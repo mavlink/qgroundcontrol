@@ -45,21 +45,16 @@ endif()
 
 include(Git)
 
+if(QGC_USE_CACHE)
+    qgc_config_caching()
+endif()
+
 project(${QGC_APP_NAME}
     VERSION ${QGC_APP_VERSION}
     DESCRIPTION ${QGC_APP_DESCRIPTION}
     HOMEPAGE_URL "https://${QGC_ORG_DOMAIN}"
     LANGUAGES C CXX
 )
-
-if(APPLE AND NOT IOS)
-    set(MACOS TRUE)
-
-    # CMAKE_APPLE_SILICON_PROCESSOR
-    if("${CMAKE_OSX_ARCHITECTURES}" MATCHES "arm64;x86_64" OR "${CMAKE_OSX_ARCHITECTURES}" MATCHES "x86_64;arm64")
-        set(MACOS_UNIVERSAL_BUILD ON)
-    endif()
-endif()
 
 #######################################################
 #            CMake Configuration Options
@@ -77,10 +72,6 @@ endif()
 include(CPM)
 
 include(Toolchain)
-
-if(QGC_USE_CACHE)
-    qgc_config_caching()
-endif()
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIGURATION>/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIGURATION>)

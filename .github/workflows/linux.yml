@@ -76,7 +76,6 @@ jobs:
           sudo ./tools/setup/install-dependencies-debian.sh
 
       - name: Setup Caching
-        if: ${{ matrix.arch == 'linux_gcc_64' }}
         uses: ./.github/actions/cache
         with:
           host: ${{ matrix.host }}

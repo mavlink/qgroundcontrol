@@ -13,7 +13,7 @@ function(qgc_config_caching)
         find_program(SCCACHE_PROGRAM sccache)
         if(SCCACHE_PROGRAM)
             execute_process(
-                COMMAND "${CCACHE_PROGRAM}" --version
+                COMMAND "${SCCACHE_PROGRAM}" --version
                 RESULT_VARIABLE SCCACHE_OK
                 OUTPUT_QUIET
                 ERROR_QUIET
@@ -22,8 +22,8 @@ function(qgc_config_caching)
                 message(STATUS "QGC: Using sccache ${SCCACHE_PROGRAM}")
 
                 set(CMAKE_C_COMPILER_LAUNCHER "${SCCACHE_PROGRAM}" CACHE STRING "C compiler launcher")
-                set(CMAKE_CXX_COMPILER_LAUNCHER "${SCCACHE_PROGRAM}" CACHE STRING "CXX compiler launcher")
                 # set(CMAKE_C_LINKER_LAUNCHER "${SCCACHE_PROGRAM}" CACHE STRING "C linker cache used")
+                set(CMAKE_CXX_COMPILER_LAUNCHER "${SCCACHE_PROGRAM}" CACHE STRING "CXX compiler launcher")
                 # set(CMAKE_CXX_LINKER_LAUNCHER "${SCCACHE_PROGRAM}" CACHE STRING "CXX linker cache used")
             endif()
         endif()
@@ -39,21 +39,18 @@ function(qgc_config_caching)
             if(CCACHE_OK EQUAL 0)
                 message(STATUS "QGC: Using ccache ${CCACHE_PROGRAM}")
 
-                set(CCACHE_ENV
-                    CCACHE_BASEDIR=${CMAKE_BINARY_DIR}
-                    CCACHE_COMPRESSLEVEL=6
-                    CCACHE_SLOPPINESS=pch_defines,time_macros,include_file_mtime,include_file_ctime
-                )
+                set(ENV{CCACHE_BASEDIR} "${CMAKE_SOURCE_DIR}")
+                set(ENV{CCACHE_HASHDIR} "false")
+                set(ENV{CCACHE_COMPILER_CHECK} "content")
+                set(ENV{CCACHE_SLOPPINESS} "pch_defines,time_macros,include_file_mtime,include_file_ctime")
 
-                set(CMAKE_C_COMPILER_LAUNCHER ${CMAKE_COMMAND} -E env ${CCACHE_ENV} ${CCACHE_PROGRAM} CACHE STRING "C compiler launcher")
-                set(CMAKE_CXX_COMPILER_LAUNCHER ${CMAKE_COMMAND} -E env ${CCACHE_ENV} ${CCACHE_PROGRAM} CACHE STRING "CXX compiler launcher")
-                set(CMAKE_C_LINKER_LAUNCHER ${CMAKE_COMMAND} -E env ${CCACHE_ENV} ${CCACHE_PROGRAM} CACHE STRING "C linker cache used")
-                set(CMAKE_CXX_LINKER_LAUNCHER ${CMAKE_COMMAND} -E env ${CCACHE_ENV} ${CCACHE_PROGRAM} CACHE STRING "CXX linker cache used")
+                set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}" CACHE STRING "C compiler launcher")
+                set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}" CACHE STRING "CXX compiler launcher")
+                set(CMAKE_C_LINKER_LAUNCHER "${CCACHE_PROGRAM}" CACHE STRING "C linker cache used")
+                set(CMAKE_CXX_LINKER_LAUNCHER "${CCACHE_PROGRAM}" CACHE STRING "CXX linker cache used")
 
                 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
                     add_compile_options(-Xclang -fno-pch-timestamp)
-                elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-                    # add_compile_options(-fpch-preprocess)
                 endif()
             endif()
         endif()
