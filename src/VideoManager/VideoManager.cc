@@ -345,9 +345,24 @@ bool VideoManager::isStreamSource() const
 void VideoManager::_videoSourceChanged()
 {
     bool changed = false;
-
-    for (VideoReceiver *receiver : std::as_const(_videoReceivers)) {
-        changed |= _updateSettings(receiver);
+    if (_activeVehicle) {
+        QGCCameraManager* camMgr = _activeVehicle->cameraManager();
+        for (VideoReceiver *receiver : std::as_const(_videoReceivers)) {
+            QGCVideoStreamInfo* info = nullptr;
+            if (receiver->isThermal()) {
+                info = camMgr ? camMgr->thermalStreamInstance() : nullptr;
+            } else {
+                info = camMgr ? camMgr->currentStreamInstance() : nullptr;
+            }
+            // Assign stream info
+            receiver->setVideoStreamInfo(info);
+            changed |= _updateSettings(receiver);
+        }
+    } else {
+        for (VideoReceiver *receiver : std::as_const(_videoReceivers)) {
+            receiver->setVideoStreamInfo(nullptr);
+            changed |= _updateSettings(receiver);
+        }
     }
 
     if (changed) {
@@ -416,6 +431,9 @@ bool VideoManager::_updateAutoStream(VideoReceiver *receiver)
     case VIDEO_STREAM_TYPE_RTSP:
         source = VideoSettings::videoSourceRTSP;
         url = pInfo->uri();
+        if (source == VideoSettings::videoSourceRTSP) {
+            _videoSettings->rtspUrl()->setRawValue(url);
+        }
         break;
     case VIDEO_STREAM_TYPE_TCP_MPEG:
         source = VideoSettings::videoSourceTCP;
