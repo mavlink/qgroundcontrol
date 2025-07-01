@@ -1956,6 +1956,12 @@
         <source>Sat Count</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <extracomment>.QGC.MetaData.Facts[count].shortDesc, </extracomment>
+        <location filename="../src/Vehicle/FactGroups/GPSFact.json"/>
+        <source>Sat Count</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>VibrationFact.json</name>
