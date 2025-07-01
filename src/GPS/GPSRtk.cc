@@ -63,26 +63,26 @@ void GPSRtk::connectGPS(const QString &device, QStringView gps_type)
 
     if (gps_type.contains(QStringLiteral("trimble"), Qt::CaseInsensitive)) {
         type = GPSProvider::GPSType::trimble;
-        rtkSettings->baseReceiverManufacturers()->setRawValue(2);
+        rtkSettings->baseReceiverManufacturers()->setRawValue(1); // Trimble
         qCDebug(GPSRtkLog) << "Connecting Trimble device";
 
     } else if (gps_type.contains(QStringLiteral("septentrio"), Qt::CaseInsensitive)) {
         type = GPSProvider::GPSType::septentrio;
-        rtkSettings->baseReceiverManufacturers()->setRawValue(3);
+        rtkSettings->baseReceiverManufacturers()->setRawValue(2); // Septentrio
         qCDebug(GPSRtkLog) << "Connecting Septentrio device";
 
     } else if (gps_type.contains(QStringLiteral("femtomes"), Qt::CaseInsensitive)) {
         type = GPSProvider::GPSType::femto;
-        rtkSettings->baseReceiverManufacturers()->setRawValue(4);
+        rtkSettings->baseReceiverManufacturers()->setRawValue(3); // Femto
         qCDebug(GPSRtkLog) << "Connecting Femtomes device";
 
     } else if(gps_type.contains(QStringLiteral("blox"), Qt::CaseInsensitive)) {
         type = GPSProvider::GPSType::u_blox;
-        rtkSettings->baseReceiverManufacturers()->setRawValue(5); // Ublox
+        rtkSettings->baseReceiverManufacturers()->setRawValue(4); // Ublox
         qCDebug(GPSRtkLog) << "Connecting U-blox device";
     }else{
         type = GPSProvider::GPSType::u_blox;
-        rtkSettings->baseReceiverManufacturers()->setRawValue(0); // Standart
+        rtkSettings->baseReceiverManufacturers()->setRawValue(4); // Ublox
         qCDebug(GPSRtkLog) << "Connecting device has U-blox by default";
     }
 
