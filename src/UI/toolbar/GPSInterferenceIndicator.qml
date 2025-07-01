@@ -25,8 +25,9 @@ Item {
 
     property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
 
-    property bool   showIndicator: _activeVehicle && (_activeVehicle.gps.spoofingState.value > 0 || _activeVehicle.gps.jammingState.value > 0)
-
+    // property bool   showIndicator: _activeVehicle && (_activeVehicle.gps.spoofingState.value > 0 || _activeVehicle.gps.jammingState.value > 0)
+    property bool   showIndicator: true
+    
 
     function spoofingText() {
         if(!_activeVehicle){
