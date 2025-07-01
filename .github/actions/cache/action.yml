@@ -21,7 +21,7 @@ runs:
   using: "composite"
   steps:
     - name: Install ccache (Linux)
-      if: runner.os == 'Linux'
+      if: inputs.host == 'linux' && inputs.target != 'linux_gcc_arm64'
       shell: bash
       run: |
         set -e
@@ -35,7 +35,7 @@ runs:
 
     - name: Setup sccache (Windows)
       if: runner.os == 'Windows' && inputs.target != 'android'
-      uses: mozilla-actions/sccache-action@v0.0.8
+      uses: mozilla-actions/sccache-action@v0.0.9
 
     - run: echo "SCCACHE_GHA_ENABLED=true" >> "$GITHUB_ENV"
       if: runner.os == 'Windows' && inputs.target != 'android'
