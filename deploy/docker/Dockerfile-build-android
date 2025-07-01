@@ -75,9 +75,8 @@ CMD mkdir -p /workspace/build/shadow_build_dir && \
         -DQT_HOST_PATH=$QT_HOST_PATH \
         -DQT_ANDROID_BUILD_ALL_ABIS=OFF \
         -DQT_ANDROID_ABIS="armeabi-v7a;arm64-v8a" \
-        -DQT_DEBUG_FIND_PACKAGE=ON \
         -DANDROID_BUILD_TOOLS=$ANDROID_SDK_ROOT/build-tools/35.0.0 \
         -DANDROID_SDK_ROOT=$ANDROID_SDK_ROOT \
         -DQT_ANDROID_SIGN_APK=OFF \
         -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake && \
-        cmake --build . --target all --config Release
+        cmake --build . --target all --config Release --parallel

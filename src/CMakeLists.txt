@@ -35,6 +35,7 @@ target_sources(${CMAKE_PROJECT_NAME}
         main.cc
         CmdLineOptParser.cc
         CmdLineOptParser.h
+        pch.h
         QGCApplication.cc
         QGCApplication.h
 )
@@ -103,4 +104,12 @@ endif()
 
 if(QGC_DISABLE_APM_MAVLINK)
     target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_NO_ARDUPILOT_DIALECT)
+endif()
+
+target_precompile_headers(${CMAKE_PROJECT_NAME} PRIVATE pch.h)
+
+if(QGC_CUSTOM_BUILD)
+    target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_SOURCES})
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_LIBRARIES})
+    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_DIRECTORIES})
 endif()

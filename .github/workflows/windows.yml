@@ -112,12 +112,11 @@ jobs:
         run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
               -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }}
               -DQT_HOST_PATH="${{ env.QT_ROOT_DIR }}/../msvc2022_64"
-              -DQT_DEBUG_FIND_PACKAGE=ON
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
 
       - name: Build
         working-directory: ${{ runner.temp }}\shadow_build_dir
-        run: cmake --build . --target all --config ${{ matrix.BuildType }}
+        run: cmake --build . --target all --config ${{ matrix.BuildType }} --parallel
 
       - name: Sanity check release excecutable
         if: matrix.BuildType == 'Release'

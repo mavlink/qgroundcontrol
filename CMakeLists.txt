@@ -2,19 +2,23 @@ cmake_minimum_required(VERSION 3.25)
 
 list(APPEND CMAKE_MODULE_PATH
     ${CMAKE_SOURCE_DIR}/cmake
-    ${CMAKE_SOURCE_DIR}/cmake/modules
+    ${CMAKE_SOURCE_DIR}/cmake/CPack
     ${CMAKE_SOURCE_DIR}/cmake/find-modules
+    ${CMAKE_SOURCE_DIR}/cmake/install
+    ${CMAKE_SOURCE_DIR}/cmake/install/CPack
+    ${CMAKE_SOURCE_DIR}/cmake/modules
+    ${CMAKE_SOURCE_DIR}/cmake/platform
 )
 
 include(Helpers)
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
-    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug;Release")
+    set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Configuration types" FORCE)
 endif()
 
 set(CMAKE_REQUIRED_QUIET ON)
-set(CMAKE_POLICY_VERSION_MINIMUM 3.15)
+set(CMAKE_POLICY_VERSION_MINIMUM ${CMAKE_MINIMUM_REQUIRED_VERSION})
 
 #######################################################
 #                Custom Build Configuration
@@ -44,7 +48,7 @@ include(Git)
 project(${QGC_APP_NAME}
     VERSION ${QGC_APP_VERSION}
     DESCRIPTION ${QGC_APP_DESCRIPTION}
-    HOMEPAGE_URL ${QGC_ORG_DOMAIN}
+    HOMEPAGE_URL "https://${QGC_ORG_DOMAIN}"
     LANGUAGES C CXX
 )
 
@@ -72,87 +76,10 @@ else()
 endif()
 include(CPM)
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTOUIC ON)
-set(CMAKE_AUTORCC ON)
-
-set(CMAKE_COLOR_DIAGNOSTICS ON)
-# set(CMAKE_EXPORT_BUILD_DATABASE ON) # Causes Configuration Error?
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-# set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
-
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    if(LINUX)
-        set_property(CACHE CMAKE_INSTALL_PREFIX PROPERTY VALUE "${CMAKE_BINARY_DIR}/AppDir/usr")
-    else()
-        set_property(CACHE CMAKE_INSTALL_PREFIX PROPERTY VALUE "${CMAKE_BINARY_DIR}/staging")
-    endif()
-endif()
+include(Toolchain)
 
 if(QGC_USE_CACHE)
-    if(WIN32)
-        find_program(SCCACHE_PROGRAM sccache)
-        if(SCCACHE_PROGRAM)
-            message(STATUS "QGC: Using sccache ${SCCACHE_PROGRAM}")
-
-            set(CMAKE_C_COMPILER_LAUNCHER "${SCCACHE_PROGRAM}" CACHE STRING "C compiler launcher")
-            set(CMAKE_CXX_COMPILER_LAUNCHER "${SCCACHE_PROGRAM}" CACHE STRING "CXX compiler launcher")
-            # set(CMAKE_C_LINKER_LAUNCHER "${SCCACHE_PROGRAM}" CACHE STRING "C linker cache used")
-            # set(CMAKE_CXX_LINKER_LAUNCHER "${SCCACHE_PROGRAM}" CACHE STRING "CXX linker cache used")
-        endif()
-    else()
-        find_program(CCACHE_PROGRAM ccache)
-        if(CCACHE_PROGRAM)
-            execute_process(
-                COMMAND "${CCACHE_PROGRAM}" --version
-                RESULT_VARIABLE CCACHE_OK
-                OUTPUT_QUIET
-                ERROR_QUIET
-            )
-            if(CCACHE_OK EQUAL 0)
-                message(STATUS "QGC: Found ccache at ${CCACHE_PROGRAM}")
-
-                set(CCACHE_ENV
-                    CCACHE_BASEDIR=${CMAKE_BINARY_DIR}
-                    CCACHE_COMPRESSLEVEL=6
-                    CCACHE_SLOPPINESS=pch_defines,time_macros,include_file_mtime,include_file_ctime
-                )
-
-                set(CMAKE_C_COMPILER_LAUNCHER ${CMAKE_COMMAND} -E env ${CCACHE_ENV} ${CCACHE_PROGRAM} CACHE STRING "C compiler launcher")
-                set(CMAKE_CXX_COMPILER_LAUNCHER ${CMAKE_COMMAND} -E env ${CCACHE_ENV} ${CCACHE_PROGRAM} CACHE STRING "CXX compiler launcher")
-                set(CMAKE_C_LINKER_LAUNCHER ${CMAKE_COMMAND} -E env ${CCACHE_ENV} ${CCACHE_PROGRAM} CACHE STRING "C linker cache used")
-                set(CMAKE_CXX_LINKER_LAUNCHER ${CMAKE_COMMAND} -E env ${CCACHE_ENV} ${CCACHE_PROGRAM} CACHE STRING "CXX linker cache used")
-
-                if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-                    add_compile_options(-Xclang -fno-pch-timestamp)
-                elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-                    # add_compile_options(-fpch-preprocess)
-                endif()
-            endif()
-        endif()
-    endif()
-endif()
-
-if(MSVC)
-    set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT Embedded)
-endif()
-
-if(CMAKE_CROSSCOMPILING)
-    if(ANDROID)
-        set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)
-        set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)
-        set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
-    endif()
-
-    if(NOT IS_DIRECTORY ${QT_HOST_PATH})
-        message(FATAL_ERROR "You need to set QT_HOST_PATH to cross compile Qt.")
-    endif()
+    qgc_config_caching()
 endif()
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIGURATION>/lib)
@@ -175,8 +102,8 @@ endif()
 #               Qt6 Configuration
 #######################################################
 
-# The values specified below are the ONLY supported configurations for this version of QGC. 
-# Change these to something else at your own risk. Anything other than what is specified 
+# The values specified below are the ONLY supported configurations for this version of QGC.
+# Change these to something else at your own risk. Anything other than what is specified
 # here is unsupported so don't expect any help with problems.
 
 if(QGC_ENABLE_HERELINK AND ANDROID)
@@ -255,6 +182,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
     add_compile_definitions(
         NDEBUG
         QT_NO_DEBUG
+        QT_MESSAGELOGCONTEXT
     )
 else()
     add_compile_definitions(
@@ -309,189 +237,11 @@ qt_add_executable(${CMAKE_PROJECT_NAME}
 )
 
 if(WIN32)
-    # CPMAddPackage(
-    #     NAME windows_drivers
-    #     URL https://firmware.ardupilot.org/Tools/MissionPlanner/driver.msi
-    # )
-    # ${windows_drivers_SOURCE_DIR}/driver.msi
-
-    # windows installer files shared with core and custom
-    set(DEPLOY_WIN_FILES
-        "${CMAKE_SOURCE_DIR}/deploy/windows/driver.msi"
-        "${CMAKE_SOURCE_DIR}/deploy/windows/nullsoft_installer.nsi"
-        "${QGC_WINDOWS_RESOURCE_FILE_PATH}"
-        "${QGC_WINDOWS_INSTALL_HEADER_PATH}"
-        "${QGC_WINDOWS_ICON_PATH}"
-    )
-
-    # Destination directory where files will be copied
-    set(QGC_INSTALLER_SOURCE_WIN "${CMAKE_BINARY_DIR}/deploy/windows")
-    file(MAKE_DIRECTORY ${QGC_INSTALLER_SOURCE_WIN})
-    foreach(FILE ${DEPLOY_WIN_FILES})
-        # filename without the path
-        get_filename_component(FILE_NAME ${FILE} NAME)
-        # re-copy the file if it changes
-        add_custom_command(
-            OUTPUT "${QGC_INSTALLER_SOURCE_WIN}/${FILE_NAME}"
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different "${FILE}" "${QGC_INSTALLER_SOURCE_WIN}/${FILE_NAME}"
-            DEPENDS "${FILE}"  # Depend on the source file so that it re-copies when it changes
-        )
-        list(APPEND QGC_INSTALLER_SOURCE_WIN_FILES "${QGC_INSTALLER_SOURCE_WIN}/${FILE_NAME}")
-    endforeach()
-
-    target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${QGC_INSTALLER_SOURCE_WIN_FILES})
-    set_target_properties(${CMAKE_PROJECT_NAME}
-        PROPERTIES
-            WIN32_EXECUTABLE TRUE
-            # QT_TARGET_WINDOWS_RC_FILE "${QGC_WINDOWS_RESOURCE_FILE_PATH}"
-            QT_TARGET_COMPANY_NAME "${QGC_ORG_NAME}"
-            QT_TARGET_DESCRIPTION "${CMAKE_PROJECT_DESCRIPTION}"
-            QT_TARGET_VERSION "${CMAKE_PROJECT_VERSION}"
-            QT_TARGET_COPYRIGHT "${QGC_APP_COPYRIGHT}"
-            QT_TARGET_PRODUCT_NAME "${CMAKE_PROJECT_NAME}"
-            # QT_TARGET_COMMENTS: RC Comments
-            # QT_TARGET_ORIGINAL_FILENAME: RC Original FileName
-            # QT_TARGET_TRADEMARKS: RC LegalTrademarks
-            # QT_TARGET_INTERNALNAME: RC InternalName
-            QT_TARGET_RC_ICONS "${QGC_WINDOWS_ICON_PATH}"
-    )
-    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE _USE_MATH_DEFINES)
+    include(Windows)
 elseif(APPLE)
-    if(CMAKE_GENERATOR STREQUAL "Xcode")
-        # set(CMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM
-        # set(CMAKE_XCODE_ATTRIBUTE_CODE_SIGN_STYLE
-        # set(CMAKE_XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER
-        # set(CMAKE_XCODE_ATTRIBUTE_INSTALL_PATH
-        # set(CMAKE_XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT
-        # set(CMAKE_XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS
-        # set(CMAKE_XCODE_ATTRIBUTE_LD_ENTRY_POINT
-        # set(CMAKE_XCODE_ATTRIBUTE_MARKETING_VERSION
-        # set(CMAKE_XCODE_ATTRIBUTE_CURRENT_PROJECT_VERSION
-        set(CMAKE_XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${QGC_MACOS_ENTITLEMENTS_PATH}")
-    endif()
-
-    set_target_properties(${CMAKE_PROJECT_NAME}
-        PROPERTIES
-            MACOSX_BUNDLE TRUE
-            MACOSX_BUNDLE_INFO_PLIST "${QGC_MACOS_PLIST_PATH}"
-            MACOSX_BUNDLE_BUNDLE_NAME "${CMAKE_PROJECT_NAME}"
-            MACOSX_BUNDLE_BUNDLE_VERSION "${CMAKE_PROJECT_VERSION}"
-            MACOSX_BUNDLE_COPYRIGHT "${QGC_APP_COPYRIGHT}"
-            MACOSX_BUNDLE_GUI_IDENTIFIER "${QGC_MACOS_BUNDLE_ID}"
-            MACOSX_BUNDLE_ICON_FILE "${MACOSX_BUNDLE_ICON_FILE}"
-            MACOSX_BUNDLE_INFO_STRING "${CMAKE_PROJECT_DESCRIPTION}"
-            MACOSX_BUNDLE_LONG_VERSION_STRING "${CMAKE_PROJECT_VERSION_MAJOR}.${CMAKE_PROJECT_VERSION_MINOR}.${CMAKE_PROJECT_VERSION_PATCH}"
-            MACOSX_BUNDLE_SHORT_VERSION_STRING "${CMAKE_PROJECT_VERSION_MAJOR}.${CMAKE_PROJECT_VERSION_MINOR}"
-    )
-
-    if(MACOS)
-        set(MACOSX_BUNDLE_ICON_FILE "macx.icns")
-        set(app_icon_macos "${QGC_MACOS_ICON_PATH}/${MACOSX_BUNDLE_ICON_FILE}")
-        set_source_files_properties(${app_icon_macos} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
-        target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${app_icon_macos})
-
-        set_source_files_properties(${QGC_MACOS_ENTITLEMENTS_PATH} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
-        target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${QGC_MACOS_ENTITLEMENTS_PATH})
-    elseif(IOS)
-        enable_language(OBJC)
-
-        set(QT_IOS_LAUNCH_SCREEN "${CMAKE_SOURCE_DIR}/deploy/ios/QGCLaunchScreen.xib")
-
-        # set(CMAKE_XCODE_ATTRIBUTE_ARCHS
-        # set(CMAKE_XCODE_ATTRIBUTE_ENABLE_BITCODE
-        set(CMAKE_XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "14.0")
-        set(CMAKE_XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2") # iPhone,iPad
-        set(CMAKE_XCODE_ATTRIBUTE_INFOPLIST_FILE "${CMAKE_SOURCE_DIR}/deploy/ios/iOS-Info.plist")
-
-        set_target_properties(${CMAKE_PROJECT_NAME}
-            PROPERTIES
-                QT_IOS_LAUNCH_SCREEN "${CMAKE_SOURCE_DIR}/deploy/ios/QGCLaunchScreen.xib"
-                XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "${QGC_PACKAGE_NAME}"
-                XCODE_ATTRIBUTE_PRODUCT_NAME "${CMAKE_PROJECT_NAME}"
-                XCODE_ATTRIBUTE_CURRENT_PROJECT_VERSION ${CMAKE_PROJECT_VERSION}
-                XCODE_ATTRIBUTE_MARKETING_VERSION "${CMAKE_PROJECT_VERSION_MAJOR}.${CMAKE_PROJECT_VERSION_MINOR}"
-                XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
-                XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "14.0"
-                XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2" # iPhone,iPad
-                XCODE_ATTRIBUTE_INFOPLIST_KEY_CFBundleDisplayName ${CMAKE_PROJECT_NAME}
-                XCODE_ATTRIBUTE_INFOPLIST_KEY_LSApplicationCategoryType "public.app-category.mycategory"
-                XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS "YES"
-        )
-
-        # set(QT_NO_FFMPEG_XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY ON)
-        qt_add_ios_ffmpeg_libraries(${CMAKE_PROJECT_NAME})
-    endif()
+    include(Apple)
 elseif(ANDROID)
-    if(${Qt6_VERSION} VERSION_EQUAL 6.6.3)
-        if(NOT ${CMAKE_ANDROID_NDK_VERSION} VERSION_EQUAL 25.1)
-            message(FATAL_ERROR "Invalid NDK Version: ${CMAKE_ANDROID_NDK_VERSION}, Use Version 25B instead.")
-        endif()
-    elseif(${Qt6_VERSION} VERSION_EQUAL 6.8.3)
-        if(NOT ${CMAKE_ANDROID_NDK_VERSION} VERSION_EQUAL 26.1)
-            message(FATAL_ERROR "Invalid NDK Version: ${CMAKE_ANDROID_NDK_VERSION}, Use Version 26B instead.")
-        endif()
-    endif()
-
-    # Generation of android version numbers must be consistent release to release such that they are always increasing
-    if(${CMAKE_PROJECT_VERSION_MAJOR} GREATER 9)
-        message(FATAL_ERROR "Major version larger than 1 digit: ${CMAKE_PROJECT_VERSION_MAJOR}")
-    endif()
-    if(${CMAKE_PROJECT_VERSION_MINOR} GREATER 9)
-        message(FATAL_ERROR "Minor version larger than 1 digit: ${CMAKE_PROJECT_VERSION_MINOR}")
-    endif()
-    if(${CMAKE_PROJECT_VERSION_PATCH} GREATER 99)
-        message(FATAL_ERROR "Patch version larger than 2 digits: ${CMAKE_PROJECT_VERSION_PATCH}")
-    endif()
-
-    # Bitness for android version number is 66/34 instead of 64/32 in because of a required version number bump screw-up ages ago
-    set(ANDROID_BITNESS_CODE)
-    if(${CMAKE_ANDROID_ARCH_ABI} STREQUAL "armeabi-v7a" OR ${CMAKE_ANDROID_ARCH_ABI} STREQUAL "x86")
-        set(ANDROID_BITNESS_CODE 34)
-    elseif(${CMAKE_ANDROID_ARCH_ABI} STREQUAL "arm64-v8a" OR ${CMAKE_ANDROID_ARCH_ABI} STREQUAL "x86_64")
-        set(ANDROID_BITNESS_CODE 66)
-    else()
-        message(FATAL_ERROR "Unsupported Android ABI: ${CMAKE_ANDROID_ARCH_ABI}")
-    endif()
-
-    set(ANDROID_PATCH_VERSION ${CMAKE_PROJECT_VERSION_PATCH})
-    if(${CMAKE_PROJECT_VERSION_PATCH} LESS 10)
-        set(ANDROID_PATCH_VERSION "0${CMAKE_PROJECT_VERSION_PATCH}")
-    endif()
-
-    # Version code format: BBMIPPDDD (B=Bitness, M=Major, I=Minor, P=Patch, D=Dev) - Dev not currently supported and always 000
-    set(ANDROID_VERSION_CODE "${ANDROID_BITNESS_CODE}${CMAKE_PROJECT_VERSION_MAJOR}${CMAKE_PROJECT_VERSION_MINOR}${ANDROID_PATCH_VERSION}000")
-    message(STATUS "Android version code: ${ANDROID_VERSION_CODE}")
-
-    set_target_properties(${CMAKE_PROJECT_NAME}
-        PROPERTIES
-            # QT_ANDROID_ABIS ${CMAKE_ANDROID_ARCH_ABI}
-            # QT_ANDROID_SDK_BUILD_TOOLS_REVISION
-            QT_ANDROID_MIN_SDK_VERSION ${QGC_QT_ANDROID_MIN_SDK_VERSION}
-            QT_ANDROID_TARGET_SDK_VERSION ${QGC_QT_ANDROID_TARGET_SDK_VERSION}
-            # QT_ANDROID_COMPILE_SDK_VERSION
-            QT_ANDROID_PACKAGE_NAME "${QGC_ANDROID_PACKAGE_NAME}"
-            QT_ANDROID_PACKAGE_SOURCE_DIR "${QGC_ANDROID_PACKAGE_SOURCE_DIR}"
-            QT_ANDROID_VERSION_NAME "${CMAKE_PROJECT_VERSION}"
-            QT_ANDROID_VERSION_CODE ${ANDROID_VERSION_CODE}
-            # QT_ANDROID_APP_NAME
-            # QT_ANDROID_APP_ICON
-            # QT_QML_IMPORT_PATH
-            QT_QML_ROOT_PATH ${CMAKE_SOURCE_DIR}
-            # QT_ANDROID_SYSTEM_LIBS_PREFIX
-    )
-
-    # if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    #     set(QT_ANDROID_APPLICATION_ARGUMENTS)
-    # endif()
-
-    list(APPEND QT_ANDROID_MULTI_ABI_FORWARD_VARS QGC_STABLE_BUILD QT_HOST_PATH)
-
-    CPMAddPackage(
-        NAME android_openssl
-        URL https://github.com/KDAB/android_openssl/archive/refs/heads/master.zip
-    )
-    include(${android_openssl_SOURCE_DIR}/android_openssl.cmake)
-    add_android_openssl_libraries(${CMAKE_PROJECT_NAME})
+    include(Android)
 endif()
 
 target_compile_definitions(${CMAKE_PROJECT_NAME}
@@ -510,23 +260,9 @@ set_target_properties(${CMAKE_PROJECT_NAME}
         OUTPUT_NAME ${CMAKE_PROJECT_NAME}
 )
 
-target_precompile_headers(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        <QtCore/QLoggingCategory>
-        <QtCore/QObject>
-        <QtCore/QString>
-        <QtCore/QTimer>
-)
-
 add_subdirectory(src)
 if(QGC_BUILD_TESTING)
     add_subdirectory(test)
-endif()
-
-if(QGC_CUSTOM_BUILD)
-    target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_SOURCES})
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_LIBRARIES})
-    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_DIRECTORIES})
 endif()
 
 qt_add_qml_module(${CMAKE_PROJECT_NAME}
@@ -561,6 +297,7 @@ qt_add_resources(${CMAKE_PROJECT_NAME} "qgcresources_cmake"
         ${SDL_GAMECONTROLLERDB_PATH}
         ${QGC_GSTREAMER_SHADER_RESOURCES}
         ${QGC_ARDUPILOT_PARAMS_RESOURCES}
+        # ${QGC_TEST_RESOURCES}
 )
 
 # cmake_print_variables(QT_ALL_PLUGIN_TYPES_FOUND_VIA_FIND_PACKAGE)
