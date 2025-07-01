@@ -38,33 +38,43 @@ if(ANDROID)
     # cmake_print_variables(QGC_ANDROID_DEPLOY_FILE)
 elseif(LINUX)
     configure_file(
-        ${CMAKE_SOURCE_DIR}/deploy/linux/org.mavlink.qgroundcontrol.desktop.in
-        ${CMAKE_BINARY_DIR}/org.mavlink.qgroundcontrol.desktop
+        "${QGC_APPIMAGE_DESKTOP_ENTRY_PATH}"
+        "${CMAKE_BINARY_DIR}/${QGC_PACKAGE_NAME}.desktop"
         @ONLY
     )
     install(
-        FILES ${CMAKE_BINARY_DIR}/org.mavlink.qgroundcontrol.desktop
-        DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
+        FILES "${CMAKE_BINARY_DIR}/${QGC_PACKAGE_NAME}.desktop"
+        DESTINATION "${CMAKE_INSTALL_DATADIR}/applications"
     )
     install(
-        FILES ${QGC_APPIMAGE_ICON_PATH}
-        DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/128x128/apps/
+        FILES "${QGC_APPIMAGE_ICON_256_PATH}"
+        DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/256x256/apps/"
         RENAME ${CMAKE_PROJECT_NAME}.png
     )
+    install(
+        FILES "${QGC_APPIMAGE_ICON_SCALABLE_PATH}"
+        DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps/"
+        RENAME ${CMAKE_PROJECT_NAME}.svg
+    )
     configure_file(
-        ${CMAKE_SOURCE_DIR}/deploy/linux/org.mavlink.qgroundcontrol.metainfo.xml.in
-        ${CMAKE_BINARY_DIR}/metainfo/org.mavlink.qgroundcontrol.metainfo.xml
+        "${QGC_APPIMAGE_METADATA_PATH}"
+        "${CMAKE_BINARY_DIR}/${QGC_PACKAGE_NAME}.appdata.xml"
         @ONLY
     )
     install(
-        FILES ${CMAKE_BINARY_DIR}/metainfo/org.mavlink.qgroundcontrol.metainfo.xml
-        DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo/
+        PROGRAMS "${CMAKE_BINARY_DIR}/${QGC_PACKAGE_NAME}.appdata.xml"
+        DESTINATION "${CMAKE_INSTALL_DATADIR}/metainfo/"
     )
     install(
-        FILES ${CMAKE_SOURCE_DIR}/deploy/linux/AppRun
-        DESTINATION ${CMAKE_BINARY_DIR}
+        FILES "${QGC_APPIMAGE_APPRUN_PATH}"
+        DESTINATION "${CMAKE_BINARY_DIR}/"
     )
-    install(CODE "set(CMAKE_SYSTEM_PROCESSOR \"${CMAKE_SYSTEM_PROCESSOR}\")")
+    install(CODE "
+        set(CMAKE_PROJECT_NAME ${CMAKE_PROJECT_NAME})
+        set(CMAKE_PROJECT_VERSION ${CMAKE_PROJECT_VERSION})
+        set(QGC_PACKAGE_NAME ${QGC_PACKAGE_NAME})
+        set(CMAKE_SYSTEM_PROCESSOR ${CMAKE_SYSTEM_PROCESSOR})
+    ")
     install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/install/CreateAppImage.cmake")
 elseif(WIN32)
     install(CODE "set(CMAKE_PROJECT_NAME ${CMAKE_PROJECT_NAME})")
