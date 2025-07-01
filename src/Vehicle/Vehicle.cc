@@ -457,6 +457,8 @@ void Vehicle::resetCounters()
     _heardFrom          = false;
 }
 
+
+// 拦截并处理特定消息
 void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message)
 {
     // If the link is already running at Mavlink V2 set our max proto version to it.
@@ -504,6 +506,23 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
 
     // Give the plugin a change to adjust the message contents
     if (!_firmwarePlugin->adjustIncomingMavlinkMessage(this, &message)) {
+
+        // if (message.msgid == MAVLINK_MSG_ID_ATTITUDE) {
+        //     struct __attribute__((packed)) {
+        //         uint32_t time_boot_ms;
+        //         float yaw;
+        //         float pitch;
+        //         float roll;
+        //         float custom_field;
+        //     } vendor_attitude;
+        //
+        //     memcpy(&vendor_attitude, message.payload64, sizeof(vendor_attitude));
+        //
+        //     setVendorYaw(vendor_attitude.yaw);
+        //     setVendorRoll(vendor_attitude.roll);
+        //     // emit 信号让 UI 更新
+        // }
+
         return;
     }
 

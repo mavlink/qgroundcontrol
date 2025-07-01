@@ -134,25 +134,12 @@ if(EXISTS "${QGC_GST_QT6_PLUGIN_PATH}/resources.qrc")
             PATHS "${QGC_GST_QT6_PLUGIN_PATH}"
             REQUIRED
         )
-
         set(RGBA_BASE_QSB "${CMAKE_CURRENT_BINARY_DIR}/.qsb/RGBA.frag.qsb")
         set(RGBA_GLES_SRC "${QGC_GST_QT6_PLUGIN_PATH}/RGBA_gles.frag")
         set(RGBA_EXTERNAL "${CMAKE_CURRENT_BINARY_DIR}/.qsb/RGBA.frag.qsb.external")
 
-#        add_custom_command(
-#            OUTPUT ${RGBA_EXTERNAL}
-#            COMMAND ${QSB_WRAPPER}
-#                ${QSB_PROGRAM}
-#                ${RGBA_EXTERNAL}
-#                ${RGBA_GLES_SRC}
-#                ${RGBA_BASE_QSB}
-#            DEPENDS
-#                ${RGBA_BASE_QSB}
-#                ${RGBA_GLES_SRC}
-#            COMMENT "Generating external GLES shader: ${RGBA_EXTERNAL}"
-#            VERBATIM
-#        )
-        # 生成 external 文件的命令（你已有）
+        file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/.qsb")
+
         add_custom_command(
                 OUTPUT ${RGBA_EXTERNAL}
                 COMMAND ${QSB_WRAPPER} ${QSB_PROGRAM} ${RGBA_EXTERNAL} ${RGBA_GLES_SRC} ${RGBA_BASE_QSB}
@@ -161,20 +148,56 @@ if(EXISTS "${QGC_GST_QT6_PLUGIN_PATH}/resources.qrc")
                 VERBATIM
         )
 
-        # 计算 RGBA_EXTERNAL 相对路径（相对于当前构建目录）
-        file(RELATIVE_PATH RGBA_REL_PATH "${CMAKE_CURRENT_BINARY_DIR}" "${RGBA_EXTERNAL}")
+        # ✅ 设置资源别名（明确指定）
+        set_source_files_properties(${RGBA_EXTERNAL} PROPERTIES QT_RESOURCE_ALIAS "RGBA.frag.qsb.external")
 
-        message(STATUS "RGBA_EXTERNAL = ${RGBA_EXTERNAL}")
-        message(STATUS "RGBA_REL_PATH = ${RGBA_REL_PATH}")
-
-        # 给绝对路径文件设置资源别名，必须用相对路径
-        set_source_files_properties(${RGBA_EXTERNAL} PROPERTIES QT_RESOURCE_ALIAS "${RGBA_REL_PATH}")
-
-        # 添加 Qt 资源，使用绝对路径文件，但别名为相对路径
+        # ✅ 注册资源
         qt_add_resources(gstqml6gl "gstqml6gl_shaders1"
                 PREFIX "/org/freedesktop/gstreamer/qml6"
                 FILES "${RGBA_EXTERNAL}"
         )
+
+
+        #        set(RGBA_BASE_QSB "${CMAKE_CURRENT_BINARY_DIR}/.qsb/RGBA.frag.qsb")
+#        set(RGBA_GLES_SRC "${QGC_GST_QT6_PLUGIN_PATH}/RGBA_gles.frag")
+#        set(RGBA_EXTERNAL "${CMAKE_CURRENT_BINARY_DIR}/.qsb/RGBA.frag.qsb.external")
+#
+##        add_custom_command(
+##            OUTPUT ${RGBA_EXTERNAL}
+##            COMMAND ${QSB_WRAPPER}
+##                ${QSB_PROGRAM}
+##                ${RGBA_EXTERNAL}
+##                ${RGBA_GLES_SRC}
+##                ${RGBA_BASE_QSB}
+##            DEPENDS
+##                ${RGBA_BASE_QSB}
+##                ${RGBA_GLES_SRC}
+##            COMMENT "Generating external GLES shader: ${RGBA_EXTERNAL}"
+##            VERBATIM
+##        )
+#        # 生成 external 文件的命令（你已有）
+#        add_custom_command(
+#                OUTPUT ${RGBA_EXTERNAL}
+#                COMMAND ${QSB_WRAPPER} ${QSB_PROGRAM} ${RGBA_EXTERNAL} ${RGBA_GLES_SRC} ${RGBA_BASE_QSB}
+#                DEPENDS ${RGBA_BASE_QSB} ${RGBA_GLES_SRC}
+#                COMMENT "Generating external GLES shader: ${RGBA_EXTERNAL}"
+#                VERBATIM
+#        )
+#
+#        # 计算 RGBA_EXTERNAL 相对路径（相对于当前构建目录）
+#        file(RELATIVE_PATH RGBA_REL_PATH "${CMAKE_CURRENT_BINARY_DIR}" "${RGBA_EXTERNAL}")
+#
+#        message(STATUS "RGBA_EXTERNAL = ${RGBA_EXTERNAL}")
+#        message(STATUS "RGBA_REL_PATH = ${RGBA_REL_PATH}")
+#
+#        # 给绝对路径文件设置资源别名，必须用相对路径
+#        set_source_files_properties(${RGBA_EXTERNAL} PROPERTIES QT_RESOURCE_ALIAS "${RGBA_REL_PATH}")
+#
+#        # 添加 Qt 资源，使用绝对路径文件，但别名为相对路径
+#        qt_add_resources(gstqml6gl "gstqml6gl_shaders1"
+#                PREFIX "/org/freedesktop/gstreamer/qml6"
+#                FILES "${RGBA_EXTERNAL}"
+#        )
 
 #        set_source_files_properties(${RGBA_EXTERNAL} PROPERTIES QT_RESOURCE_ALIAS org/freedesktop/gstreamer/qml6/RGBA.frag.qsb.external)
 #        set(QGC_GSTREAMER_SHADER_RESOURCES "${RGBA_EXTERNAL}" CACHE INTERNAL "")
