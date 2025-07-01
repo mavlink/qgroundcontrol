@@ -38,6 +38,7 @@ apt-get install -y -qq --no-install-recommends \
     libfuse3-3 \
     libtool \
     locales \
+    mold \
     ninja-build \
     patchelf \
     pipx \

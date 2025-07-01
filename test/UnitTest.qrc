@@ -1,8 +1,4 @@
 <RCC>
-    <qresource prefix="/qml">
-        <file alias="QGroundControl/Controls/QGCControlDebug.qml">QmlControls/QGCControlDebug.qml</file>
-        <file alias="QmlTest.qml">QmlControls/QmlTest.qml</file>
-    </qresource>
     <qresource prefix="/unittest">
         <file alias="PolygonAreaTest.kml">MissionManager/PolygonAreaTest.kml</file>
         <file alias="PolygonBadCoordinatesNode.kml">MissionManager/PolygonBadCoordinatesNode.kml</file>

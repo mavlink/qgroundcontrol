@@ -1,13 +1,6 @@
 include(CMakeDependentOption)
 # The following options can be overriden by custom builds using the CustomOverrides.cmake file
 
-# Herelink integrated contollers only support Android 7.1. The latest version of Qt which supports this is 6.6.3.
-# Given the fact that normal QGC builds have moved on to 6.8.3 this option provides a workaround to be able to use
-# 6.6.3 and older android sdk. Note that this is likely the last major QGC release to provide this workaround.
-# This option is only available when building for Android. Usage of this option for something other than integrated
-# controllers workaround is not supported and will likely cause issues.
-option(QGC_ENABLE_HERELINK "Enable Herelink Support" OFF)
-
 # App
 set(QGC_APP_NAME "QGroundControl" CACHE STRING "App Name")
 set(QGC_APP_COPYRIGHT "Copyright (c) 2025 QGroundControl. All rights reserved." CACHE STRING "Copyright")
@@ -22,7 +15,7 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 option(QGC_STABLE_BUILD "Stable Build" OFF)
 option(QGC_USE_CACHE "Use Build Caching" ON)
 cmake_dependent_option(QGC_BUILD_TESTING "Enable testing" ON "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
-cmake_dependent_option(QGC_DEBUG_QML "Build QGroundControl with QML debugging/profiling support." OFF "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
+cmake_dependent_option(QGC_DEBUG_QML "Build QGroundControl with QML debugging/profiling support." ON "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
 
 # Features
 option(QGC_UTM_ADAPTER "Enable UTM Adapter" OFF)
@@ -61,6 +54,12 @@ set(QT_ANDROID_DEPLOYMENT_TYPE "" CACHE STRING "Forces Signing if Set to Release
 option(QT_ANDROID_SIGN_APK "Enable Signing APK" OFF)
 option(QT_ANDROID_SIGN_AAB "Enable Signing AAB" OFF)
 option(QT_USE_TARGET_ANDROID_BUILD_DIR "Use Target Android Build Dir" OFF)
+# Herelink integrated contollers only support Android 7.1. The latest version of Qt which supports this is 6.6.3.
+# Given the fact that normal QGC builds have moved on to 6.8.3 this option provides a workaround to be able to use
+# 6.6.3 and older android sdk. Note that this is likely the last major QGC release to provide this workaround.
+# This option is only available when building for Android. Usage of this option for something other than integrated
+# controllers workaround is not supported and will likely cause issues.
+option(QGC_ENABLE_HERELINK "Enable Herelink Support" OFF)
 
 # MacOS
 set(QGC_MACOS_PLIST_PATH "${CMAKE_SOURCE_DIR}/deploy/macos/MacOSXBundleInfo.plist.in" CACHE FILEPATH "MacOS PList Path")
@@ -83,7 +82,13 @@ set(QGC_CPM_SOURCE_CACHE "" CACHE PATH "Directory to Download CPM Dependencies, 
 
 # Qt
 set(QT_QML_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/qml" CACHE PATH "Install path for QML")
-set(QML_IMPORT_PATH "${QT_QML_OUTPUT_DIRECTORY}" CACHE STRING "Extra QML Import Paths")
-option(QML_IMPORT_TRACE "Debug QML Imports" OFF)
 option(QT_SILENCE_MISSING_DEPENDENCY_TARGET_WARNING "Silence Missing Dependency Warnings" OFF)
 option(QT_ENABLE_VERBOSE_DEPLOYMENT "Verbose Deployment" OFF)
+option(QT_DEBUG_FIND_PACKAGE "Print Used Search Paths When a Package is Not Found" ON)
+option(QT_QML_GENERATE_QMLLS_INI "https://doc.qt.io/qt-6/cmake-variable-qt-qml-generate-qmlls-ini.html" ON)
+# set(ENV{QML_IMPORT_PATH} "${QT_QML_OUTPUT_DIRECTORY}")
+# set(ENV{QT_DEBUG_PLUGINS} "1")
+# set(ENV{QML_IMPORT_TRACE} "1")
+
+# CMAKE
+# option(CMAKE_FIND_DEBUG_MODE "Print Used Search Paths When Finding a Package" OFF)

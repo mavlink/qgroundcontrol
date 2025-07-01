@@ -53,6 +53,6 @@ WORKDIR /project/build
 # Multiline string is kept on ONE bash argument to avoid JSON-escaping nightmares.
 CMD ["bash", "-lc", "\
   qt-cmake -S /project/source -B /project/build -G Ninja -DCMAKE_BUILD_TYPE=Release && \
-  cmake --build /project/build --target all && \
+  cmake --build /project/build --target all --parallel && \
   cmake --install /project/build --config Release \
 "]

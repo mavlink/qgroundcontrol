@@ -79,13 +79,12 @@ jobs:
               -DQT_ANDROID_BUILD_ALL_ABIS=OFF
               -DQT_HOST_PATH="${{ env.QT_ROOT_DIR }}/../gcc_64"
               -DQT_ANDROID_SIGN_APK=${{ env.QT_ANDROID_KEYSTORE_STORE_PASS != '' && 'ON' || 'OFF' }}
-              -DQT_DEBUG_FIND_PACKAGE=ON
               -DQGC_ENABLE_HERELINK=ON
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
 
       - name: Build
         working-directory: ${{ runner.temp }}/shadow_build_dir
-        run: cmake --build . --target all --config ${{ matrix.BuildType }}
+        run: cmake --build . --target all --config ${{ matrix.BuildType }} --parallel
 
       - run: cp ${{ runner.temp }}/shadow_build_dir/android-build/*.apk ${{ runner.temp }}/shadow_build_dir/${{ env.ARTIFACT }}
 
