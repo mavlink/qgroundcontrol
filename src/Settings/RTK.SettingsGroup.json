@@ -7,8 +7,8 @@
     "name":                 "baseReceiverManufacturers",
     "shortDesc":            "GPS manufacturers for settings",
     "type":                 "uint8",
-    "enumStrings":          "Standard,All,Trimble,Septentrio,Femtomes,UBlox",
-    "enumValues":           "0,1,2,3,4,5",
+    "enumStrings":          "All,Trimble,Septentrio,Femtomes,UBlox",
+    "enumValues":           "0,1,2,3,4",
     "default":              1
 },
 {

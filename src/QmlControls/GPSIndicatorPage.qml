@@ -31,36 +31,32 @@ ToolIndicatorPage {
     property var    baseMode:           rtkSettings.baseMode.rawValue
     property var    manufacturer:       rtkSettings.baseReceiverManufacturers.rawValue
 
-    readonly property var    _standard:           0b00001
-    readonly property var    _trimble:            0b00010
-    readonly property var    _septentrio:         0b00100
-    readonly property var    _femtomes:           0b01000
-    readonly property var    _ublox:              0b10000
-    readonly property var    _all:                0b11111
-    property var             settingsDisplayId:      _all
+    readonly property var    _trimble:            0b0001
+    readonly property var    _septentrio:         0b0010
+    readonly property var    _femtomes:           0b0100
+    readonly property var    _ublox:              0b1000
+    readonly property var    _all:                0b1111
+    property var             settingsDisplayId:     _all
     
     function updateSettingsDisplayId() {
         switch(manufacturer) {
-            case 0: // Standard
-                settingsDisplayId = _standard
+            case 0: // All
+                settingsDisplayId = _trimble | _septentrio | _femtomes | _ublox
                 break
-            case 1: // All
-                settingsDisplayId = _standard | _trimble | _septentrio | _femtomes | _ublox
+            case 1: // Trimble
+                settingsDisplayId = _trimble
                 break
-            case 2: // Trimble
-                settingsDisplayId = _standard | _trimble
+            case 2: // Septentrio
+                settingsDisplayId = _septentrio
                 break
-            case 3: // Septentrio
-                settingsDisplayId = _standard | _septentrio
+            case 3: // Femtomes
+                settingsDisplayId = _femtomes
                 break
-            case 4: // Femtomes
-                settingsDisplayId = _standard | _femtomes
-                break
-            case 5: // UBlox
-                settingsDisplayId = _standard | _ublox
+            case 4: // UBlox
+                settingsDisplayId = _ublox
                 break
             default:
-                settingsDisplayId = _standard
+                settingsDisplayId = _all
         }
     }
 
@@ -165,14 +161,14 @@ ToolIndicatorPage {
                     text:       qsTr("Survey-In")
                     checked:    baseMode == BaseMode.BaseSurveyIn
                     onClicked:  rtkSettings.baseMode.rawValue = BaseMode.BaseSurveyIn
-                    visible:    settingsDisplayId & _standard
+                    visible:    settingsDisplayId & _all
                 }
 
                 QGCRadioButton {
                     text: qsTr("Specify position")
                     checked:    baseMode == BaseMode.BaseFixed
                     onClicked:  rtkSettings.baseMode.rawValue = BaseMode.BaseFixed
-                    visible:    settingsDisplayId & _standard
+                    visible:    settingsDisplayId & _all
                 }
             }
 
@@ -207,7 +203,7 @@ ToolIndicatorPage {
                 fact:                   rtkSettings.fixedBasePositionLatitude
                 visible:                (
                     baseMode == BaseMode.BaseFixed
-                    && (settingsDisplayId & _standard)
+                    && (settingsDisplayId & _all)
                 )
             }
 
@@ -216,7 +212,7 @@ ToolIndicatorPage {
                 fact:               rtkSettings.fixedBasePositionLongitude
                 visible:            (
                     baseMode == BaseMode.BaseFixed
-                    && (settingsDisplayId & _standard)
+                    && (settingsDisplayId & _all)
                 )
             }
 
@@ -225,7 +221,7 @@ ToolIndicatorPage {
                 fact:               rtkSettings.fixedBasePositionAltitude
                 visible:            (
                     baseMode == BaseMode.BaseFixed
-                    && (settingsDisplayId & _standard)
+                    && (settingsDisplayId & _all)
                 )
             }
 
