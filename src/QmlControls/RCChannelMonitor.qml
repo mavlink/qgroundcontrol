@@ -107,7 +107,7 @@ Item {
         Connections {
             target: controller
 
-            onChannelRCValueChanged: (channel, rcValue) => {
+            function onChannelRCValueChanged(channel, rcValue) {
                 if (channelMonitorRepeater.itemAt(channel)) {
                     channelMonitorRepeater.itemAt(channel).loader.item.rcValue = rcValue
                 }
