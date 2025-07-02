@@ -25,8 +25,7 @@ Item {
 
     property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
 
-    // property bool   showIndicator: _activeVehicle && _activeVehicle.gps.authenticationState.value > 0
-    property bool   showIndicator: true
+    property bool   showIndicator: _activeVehicle && _activeVehicle.gps.authenticationState.value > 0
 
     function authenticationIconColor() {
         if(!_activeVehicle){

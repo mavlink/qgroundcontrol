@@ -1957,9 +1957,27 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <extracomment>.QGC.MetaData.Facts[count].shortDesc, </extracomment>
+        <extracomment>.QGC.MetaData.Facts[correctionsQuality].shortDesc, </extracomment>
         <location filename="../src/Vehicle/FactGroups/GPSFact.json"/>
-        <source>Sat Count</source>
+        <source>Corrections Quality</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <extracomment>.QGC.MetaData.Facts[systemQuality].shortDesc, </extracomment>
+        <location filename="../src/Vehicle/FactGroups/GPSFact.json"/>
+        <source>System Status Quality</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <extracomment>.QGC.MetaData.Facts[gnssSignalQuality].shortDesc, </extracomment>
+        <location filename="../src/Vehicle/FactGroups/GPSFact.json"/>
+        <source>Gnss Signal Quality</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <extracomment>.QGC.MetaData.Facts[postProcessingQuality].shortDesc, </extracomment>
+        <location filename="../src/Vehicle/FactGroups/GPSFact.json"/>
+        <source>Post Processing Quality</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

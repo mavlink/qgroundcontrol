@@ -80,6 +80,26 @@
     "enumStrings":      "Unknoww,Initializing,Error,Ok,Disabled",
     "enumValues":       "0,1,2,3,4",
     "decimalPlaces":    0
+},
+{
+    "name":             "correctionsQuality",
+    "shortDesc": "Corrections Quality",
+    "type":             "uint8"
+},
+{
+    "name":             "systemQuality",
+    "shortDesc": "System Status Quality",
+    "type":             "uint8"
+},
+{
+    "name":             "gnssSignalQuality",
+    "shortDesc": "Gnss Signal Quality",
+    "type":             "uint8"
+},
+{
+    "name":             "postProcessingQuality",
+    "shortDesc": "Post Processing Quality",
+    "type":             "uint8"
 }
 ]
 }
