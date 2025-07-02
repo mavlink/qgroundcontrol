@@ -22,11 +22,12 @@ Q_DECLARE_LOGGING_CATEGORY(QGCMAVLinkLog)
 Q_DECLARE_METATYPE(MAV_TYPE)
 Q_DECLARE_METATYPE(MAV_AUTOPILOT)
 
+// TODO: Q_NAMESPACE
 class QGCMAVLink : public QObject
 {
     Q_OBJECT
-    QML_NAMED_ELEMENT(MAVLink)
-    QML_SINGLETON
+    // QML_ELEMENT
+    // QML_UNCREATABLE("")
 
 public:
     // Creating an instance of QGCMAVLink is only meant to be used for the Qml Singleton
