@@ -10,6 +10,7 @@
 #include "VehicleGPSFactGroup.h"
 #include "Vehicle.h"
 #include "QGCGeo.h"
+#include "development/mavlink_msg_gnss_integrity.h"
 
 #include <QtPositioning/QGeoCoordinate>
 
@@ -24,6 +25,14 @@ VehicleGPSFactGroup::VehicleGPSFactGroup(QObject *parent)
     _addFact(&_courseOverGroundFact);
     _addFact(&_lockFact);
     _addFact(&_countFact);
+    _addFact(&_systemErrorsFact);
+    _addFact(&_spoofingStateFact);
+    _addFact(&_jammingStateFact);
+    _addFact(&_authenticationStateFact);
+    _addFact(&_correctionsQualityFact);
+    _addFact(&_systemQualityFact);
+    _addFact(&_gnssSignalQualityFact);
+    _addFact(&_postProcessingQualityFact);
 
     _latFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _lonFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
@@ -31,6 +40,13 @@ VehicleGPSFactGroup::VehicleGPSFactGroup(QObject *parent)
     _hdopFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _vdopFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _courseOverGroundFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+    _spoofingStateFact.setRawValue(0);
+    _jammingStateFact.setRawValue(0);
+    _authenticationStateFact.setRawValue(255);
+    _correctionsQualityFact.setRawValue(255);
+    _systemQualityFact.setRawValue(255);
+    _gnssSignalQualityFact.setRawValue(255);
+    _postProcessingQualityFact.setRawValue(255);
 }
 
 void VehicleGPSFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)
@@ -46,6 +62,9 @@ void VehicleGPSFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_
         break;
     case MAVLINK_MSG_ID_HIGH_LATENCY2:
         _handleHighLatency2(message);
+        break;
+    case MAVLINK_MSG_ID_GNSS_INTEGRITY:
+        _handleGnssIntegrity(message);
         break;
     default:
         break;
@@ -96,3 +115,19 @@ void VehicleGPSFactGroup::_handleHighLatency2(const mavlink_message_t &message)
 
     _setTelemetryAvailable(true);
 }
+
+void VehicleGPSFactGroup::_handleGnssIntegrity(const mavlink_message_t& message)
+{
+    mavlink_gnss_integrity_t gnssIntegrity;
+    mavlink_msg_gnss_integrity_decode(&message, &gnssIntegrity);
+
+    systemErrors()->setRawValue         (gnssIntegrity.system_errors);
+    spoofingState()->setRawValue        (gnssIntegrity.spoofing_state);
+    jammingState()->setRawValue         (gnssIntegrity.jamming_state);
+    authenticationState()->setRawValue  (gnssIntegrity.authentication_state);
+    correctionsQuality()->setRawValue   (gnssIntegrity.corrections_quality);
+    systemQuality()->setRawValue        (gnssIntegrity.system_status_summary);
+    gnssSignalQuality()->setRawValue    (gnssIntegrity.gnss_signal_quality);
+    postProcessingQuality()->setRawValue(gnssIntegrity.post_processing_quality);
+}
+
