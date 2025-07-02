@@ -2449,6 +2449,12 @@
       <translation type="unfinished">Course Over Ground</translation>
     </message>
     <message>
+      <extracomment>.QGC.MetaData.Facts[yaw].shortDesc, </extracomment>
+      <location filename="../src/Vehicle/FactGroups/GPSFact.json"/>
+      <source>Yaw</source>
+      <translation type="unfinished">Yaw</translation>
+    </message>
+    <message>
       <extracomment>.QGC.MetaData.Facts[lock].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/GPSFact.json"/>
       <source>GPS Lock</source>
