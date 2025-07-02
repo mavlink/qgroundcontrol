@@ -18,6 +18,7 @@ import QGroundControl.Palette
 import QGroundControl.FactSystem
 import QGroundControl.FactControls
 import QGroundControl.AutoPilotPlugin
+import MAVLink
 
 //-------------------------------------------------------------------------
 //-- Battery Indicator

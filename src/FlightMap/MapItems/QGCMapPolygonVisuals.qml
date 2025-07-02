@@ -19,6 +19,7 @@ import QGroundControl.ScreenTools
 import QGroundControl.Palette
 import QGroundControl.Controls
 import QGroundControl.FlightMap
+import QGroundControl.ShapeFileHelper
 
 /// QGCMapPolygon map visuals
 Item {
