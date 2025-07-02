@@ -116,10 +116,13 @@ QGCLabel {
         0x0F: 'ICP101XX',
         0x10: 'ICP201XX',
         0x11: 'MS5607',
-        0x12: 'MS5837',
+        0x12: 'MS5837_30BA',
         0x13: 'MS5637',
         0x14: 'BMP390',
-        0x15: 'BMP581'
+        0x15: 'BMP581',
+        0x16: 'SPA06',
+        0x17: 'AUAV',
+        0x18: 'MS5837_02BA'
     }
 
     property var airspeedTypes: {

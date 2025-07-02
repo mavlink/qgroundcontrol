@@ -46,17 +46,18 @@ runs:
       run: aws s3 cp ${{ inputs.artifact_name }} s3://qgroundcontrol/latest/${{ inputs.artifact_name }} --acl public-read
       shell: bash
 
-    - name: Create Continuous Release
-      if: ${{ github.event_name != 'pull_request' && github.ref_name == 'master' && inputs.github_token != '' }}
-      uses: Wandalen/wretry.action@master
-      with:
-        action: softprops/action-gh-release@v2
-        with: |
-          tag_name: latest
-          target_commitish: master
-          files: ${{ runner.temp }}/shadow_build_dir/${{ inputs.source }}/${{ inputs.artifact_name }}
-          name: "Continuous Release"
-          body: "This release is continuously updated with every commit to master."
-          draft: false
-          prerelease: true
-          token: ${{ inputs.github_token }}
+# Commented out since it is 100% fail in CI
+#    - name: Create Continuous Release
+#      if: ${{ github.event_name != 'pull_request' && github.ref_name == 'master' && inputs.github_token != '' }}
+#      uses: Wandalen/wretry.action@master
+#      with:
+#        action: softprops/action-gh-release@v2
+#        with: |
+#          tag_name: latest
+#          target_commitish: master
+#          files: ${{ runner.temp }}/shadow_build_dir/${{ inputs.source }}/${{ inputs.artifact_name }}
+#          name: "Continuous Release"
+#          body: "This release is continuously updated with every commit to master."
+#          draft: false
+#          prerelease: true
+#          token: ${{ inputs.github_token }}

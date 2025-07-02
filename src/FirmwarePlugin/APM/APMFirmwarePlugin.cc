@@ -596,7 +596,7 @@ QObject *APMFirmwarePlugin::_loadParameterMetaData(const QString &metaDataFile)
 {
     Q_UNUSED(metaDataFile);
 
-    APMParameterMetaData *const metaData = new APMParameterMetaData();
+    APMParameterMetaData *const metaData = new APMParameterMetaData(this);
     metaData->loadParameterFactMetaDataFile(metaDataFile);
     return metaData;
 }

@@ -472,7 +472,8 @@ void FirmwarePlugin::_addNewFlightMode(FirmwareFlightMode &newFlightMode)
 {
     for (const FirmwareFlightMode &existingFlightMode : _flightModeList) {
         if (existingFlightMode.custom_mode == newFlightMode.custom_mode) {
-            // Already exists
+            qCDebug(FirmwarePluginLog) << "Flight Mode:" << newFlightMode.mode_name << " Custom Mode:" << newFlightMode.custom_mode
+                                       << " already exists, not adding again.";
             return;
         }
     }

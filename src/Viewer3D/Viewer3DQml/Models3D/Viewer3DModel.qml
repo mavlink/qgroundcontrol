@@ -4,11 +4,6 @@ import QtQuick.Controls
 import QtQuick.Window
 import QtPositioning
 
-import Viewer3D
-import Viewer3D.Models3D.Drones
-import Viewer3D.Models3D
-import QGroundControl.Viewer3D
-
 import QGroundControl
 import QGroundControl.Controllers
 import QGroundControl.Controls
@@ -17,6 +12,7 @@ import QGroundControl.FlightMap
 import QGroundControl.Palette
 import QGroundControl.ScreenTools
 import QGroundControl.Vehicle
+import QGroundControl.Viewer3D
 
 ///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
 

@@ -5,7 +5,7 @@
 [
 {
     "name":             "LandingDistance",
-    "shortDesc":        "Distance between landing and approach points.",
+    "shortDesc":        "Distance between approach and land points.",
     "type":             "double",
     "units":            "m",
     "min":              10,
@@ -29,6 +29,21 @@
     "units":            "m",
     "decimalPlaces":    1,
     "default":          30.0
+},
+{
+    "name":             "UseDoChangeSpeed",
+    "shortDesc":        "Command a specific speed for the approach, useful for reducing energy before the glide slope.",
+    "type":             "bool",
+    "default":          false
+},
+{
+    "name":             "FinalApproachSpeed",
+    "shortDesc":        "Speed to perform the approach at.",
+    "type":             "double",
+    "units":            "m/s",
+    "min":              0.0,
+    "decimalPlaces":    1,
+    "default":          9.0
 },
 {
     "name":             "LoiterRadius",

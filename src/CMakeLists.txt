@@ -1,8 +1,41 @@
+add_subdirectory(ADSB)
+add_subdirectory(AnalyzeView)
+add_subdirectory(Android)
+add_subdirectory(API)
+add_subdirectory(AutoPilotPlugins)
+add_subdirectory(Camera)
+add_subdirectory(Comms)
+add_subdirectory(FactSystem)
+add_subdirectory(FirmwarePlugin)
+add_subdirectory(FirstRunPromptDialogs)
+add_subdirectory(FlightDisplay)
+add_subdirectory(FlightMap)
+add_subdirectory(FollowMe)
+add_subdirectory(Gimbal)
+add_subdirectory(GPS)
+add_subdirectory(Joystick)
+add_subdirectory(MAVLink)
+add_subdirectory(MissionManager)
+add_subdirectory(PlanView)
+add_subdirectory(PositionManager)
+add_subdirectory(QmlControls)
+add_subdirectory(Settings)
+add_subdirectory(Terrain)
+add_subdirectory(UI)
+add_subdirectory(Utilities)
+add_subdirectory(UTMSP)
+add_subdirectory(Vehicle)
+add_subdirectory(VideoManager)
+add_subdirectory(Viewer3D)
+
+add_subdirectory(QtLocationPlugin)
+
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         main.cc
         CmdLineOptParser.cc
         CmdLineOptParser.h
+        pch.h
         QGCApplication.cc
         QGCApplication.h
 )
@@ -14,6 +47,8 @@ if(NOT ANDROID AND NOT IOS)
             RunGuard.h
     )
 endif()
+
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(${CMAKE_PROJECT_NAME}
     PRIVATE
@@ -52,53 +87,29 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         QGroundControlControlsModule
         ScreenToolsModule
         ToolbarModule
+        UTMSPModule
         VehicleModule
         VehicleSetupModule
 )
 
 if(NOT QGC_DISABLE_APM_PLUGIN AND NOT QGC_DISABLE_APM_PLUGIN_FACTORY)
-    target_link_libraries(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            AutoPilotPluginsAPMModule
-    )
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AutoPilotPluginsAPMModule)
 endif()
 if(NOT QGC_DISABLE_PX4_PLUGIN AND NOT QGC_DISABLE_PX4_PLUGIN_FACTORY)
-    target_link_libraries(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            AutoPilotPluginsPX4Module
-    )
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AutoPilotPluginsPX4Module)
+endif()
+if(QGC_VIEWER3D)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Viewer3DModule)
 endif()
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+if(QGC_DISABLE_APM_MAVLINK)
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_NO_ARDUPILOT_DIALECT)
+endif()
 
-add_subdirectory(ADSB)
-add_subdirectory(AnalyzeView)
-add_subdirectory(Android)
-add_subdirectory(API)
-add_subdirectory(AutoPilotPlugins)
-add_subdirectory(Camera)
-add_subdirectory(Comms)
-add_subdirectory(FactSystem)
-add_subdirectory(FirmwarePlugin)
-add_subdirectory(FirstRunPromptDialogs)
-add_subdirectory(FlightDisplay)
-add_subdirectory(FlightMap)
-add_subdirectory(FollowMe)
-add_subdirectory(Gimbal)
-add_subdirectory(GPS)
-add_subdirectory(Joystick)
-add_subdirectory(MAVLink)
-add_subdirectory(MissionManager)
-add_subdirectory(PlanView)
-add_subdirectory(PositionManager)
-add_subdirectory(QmlControls)
-add_subdirectory(Settings)
-add_subdirectory(Terrain)
-add_subdirectory(UI)
-add_subdirectory(Utilities)
-add_subdirectory(UTMSP)
-add_subdirectory(Vehicle)
-add_subdirectory(VideoManager)
-add_subdirectory(Viewer3D)
+target_precompile_headers(${CMAKE_PROJECT_NAME} PRIVATE pch.h)
 
-add_subdirectory(QtLocationPlugin)
+if(QGC_CUSTOM_BUILD)
+    target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_SOURCES})
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_LIBRARIES})
+    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_DIRECTORIES})
+endif()

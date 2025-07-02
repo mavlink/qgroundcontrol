@@ -365,6 +365,7 @@ QGCCameraManager::_handleVideoStreamInfo(const mavlink_message_t& message)
         mavlink_video_stream_information_t streamInfo;
         mavlink_msg_video_stream_information_decode(&message, &streamInfo);
         pCamera->handleVideoInfo(&streamInfo);
+        emit streamChanged();
     }
 }
 

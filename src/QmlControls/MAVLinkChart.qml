@@ -31,7 +31,7 @@ ChartView {
         var serie   = createSeries(ChartView.SeriesTypeLine, field.label)
         serie.axisX = axisX
         serie.axisY = axisY
-        serie.useOpenGL = true
+        serie.useOpenGL = QGroundControl.videoManager.gstreamerEnabled // Details on why here: https://github.com/mavlink/qgroundcontrol/issues/13068
         serie.color = color
         serie.width = 1
         chartController.addSeries(field, serie)
@@ -45,6 +45,16 @@ ChartView {
                 controller.deleteChart(chartController)
                 chartController = null
             }
+        }
+    }
+
+    Connections {
+        target: QGroundControl.multiVehicleManager
+
+        function onVehicleRemoved(vehicle) {
+            // Hack to prevent references to deleted QGCMavlinkSystem fields. https://github.com/mavlink/qgroundcontrol/issues/13077
+            controller.deleteChart(chartController);
+            chartController = null;
         }
     }
 

@@ -84,7 +84,7 @@ jobs:
 
       - name: Build
         working-directory: ${{ runner.temp }}/shadow_build_dir
-        run: cmake --build . --target all --config ${{ matrix.BuildType }}
+        run: cmake --build . --target all --config ${{ matrix.BuildType }} --parallel
 
       - name: Save App
         uses: actions/upload-artifact@v4

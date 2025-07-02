@@ -673,23 +673,37 @@ Item {
         }
     }
 
+    Timer {
+        id: radiusDragDebounceTimer
+        interval: 0
+        repeat: false
+
+        property var pendingCoord: undefined
+
+        onTriggered: {
+            // re-build the circular polygon only once per event loop
+            if (pendingCoord) {
+                var coord = pendingCoord
+                pendingCoord = undefined
+                var radius = mapPolygon.center.distanceTo(coord)
+                _createCircularPolygon(mapPolygon.center, radius)
+            }
+        }
+    }
+
     Component {
         id: radiusDragAreaComponent
 
         MissionItemIndicatorDrag {
             mapControl: _root.mapControl
 
-            property real _lastRadius
-
             onItemCoordinateChanged: {
                 var radius = mapPolygon.center.distanceTo(itemCoordinate)
-                // Prevent signalling re-entrancy
-                if (!_circleRadiusDrag && Math.abs(radius - _lastRadius) > 0.1) {
-                    _circleRadiusDrag = true
-                    _createCircularPolygon(mapPolygon.center, radius)
-                    _circleRadiusDragCoord = itemCoordinate
-                    _circleRadiusDrag = false
-                    _lastRadius = radius
+
+                if (Math.abs(radius - _circleRadius) > 0.1) {
+                    // De-bounced circular polygon re-drawing
+                    radiusDragDebounceTimer.pendingCoord = itemCoordinate
+                    radiusDragDebounceTimer.start()
                 }
             }
         }

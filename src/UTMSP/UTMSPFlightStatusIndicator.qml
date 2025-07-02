@@ -41,11 +41,11 @@ Rectangle {
     anchors.leftMargin: ScreenTools.defaultFontPixelHeight * 1.25
     visible: true
 
-    property var ledImages: ["qrc:/utmsp/yellow_led.png",
-                             "qrc:/utmsp/orange_led.png",
-                             "qrc:/utmsp/pale_green.png",
-                             "qrc:/utmsp/parrot_green.png",
-                             "qrc:/utmsp/green_led.png"]
+    property var ledImages: ["qrc:/qml/QGroundControl/UTMSP/images/yellow_led.png",
+                             "qrc:/qml/QGroundControl/UTMSP/images/orange_led.png",
+                             "qrc:/qml/QGroundControl/UTMSP/images/pale_green.png",
+                             "qrc:/qml/QGroundControl/UTMSP/images/parrot_green.png",
+                             "qrc:/qml/QGroundControl/UTMSP/images/green_led.png"]
 
     property var statusBarColor: ["#bcc21b",
                                   "#f0a351",

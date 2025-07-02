@@ -39,4 +39,6 @@ private:
 
     QSocketNotifier *_notifierInt = nullptr;
     QSocketNotifier *_notifierTerm = nullptr;
+
+    int _sigIntCount = 0;
 };
