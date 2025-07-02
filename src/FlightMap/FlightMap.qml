@@ -39,8 +39,6 @@ Map {
     property bool   firstVehiclePositionReceived:   false   ///< true: first vehicle position update was responded to
     property bool   planView:                       false   ///< true: map being using for Plan view, items should be draggable
 
-    readonly property real  maxZoomLevel: 20
-
     property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
     property var    _activeVehicleCoordinate:   _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
 
@@ -49,6 +47,7 @@ Map {
         // This works around a bug on Qt where if you set a visibleRegion and then the user moves or zooms the map
         // and then you set the same visibleRegion the map will not move/scale appropriately since it thinks there
         // is nothing to do.
+        let maxZoomLevel = 20
         _map.visibleRegion = QtPositioning.rectangle(QtPositioning.coordinate(0, 0), QtPositioning.coordinate(0, 0))
         _map.visibleRegion = region
         if (_map.zoomLevel > maxZoomLevel) {
@@ -135,7 +134,7 @@ Map {
             }
         }
         onScaleChanged: (delta) => {
-            let newZoomLevel = Math.min(Math.max(_map.zoomLevel + Math.log2(delta), 0), maxZoomLevel)
+            let newZoomLevel = Math.max(_map.zoomLevel + Math.log2(delta), 0)
             _map.zoomLevel = newZoomLevel
             _map.alignCoordinateToPoint(pinchStartCentroid, pinchHandler.centroid.position)
         }
@@ -150,11 +149,6 @@ Map {
         rotationScale:      1 / 120
         property:           "zoomLevel"
 
-    }
-
-    BoundaryRule on zoomLevel {
-        minimum: 0
-        maximum: maxZoomLevel
     }
 
     // We specifically do not use a DragHandler for panning. It just causes too many problems if you overlay anything else like a Flickable above it.
