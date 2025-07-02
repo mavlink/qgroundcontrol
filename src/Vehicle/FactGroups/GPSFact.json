@@ -61,7 +61,7 @@
     "name":             "spoofingState",
     "shortDesc": "Signal Spoofing State",
     "type":             "uint8",
-    "enumStrings":      "Unknoww,Ok,Mitigated,Detected",
+    "enumStrings":      "Unknown,Ok,Mitigated,Detected",
     "enumValues":       "0,1,2,3",
     "decimalPlaces":    0
 },
@@ -69,7 +69,7 @@
     "name":             "jammingState",
     "shortDesc": "Signal Jamming State",
     "type":             "uint8",
-    "enumStrings":      "Unknoww,Ok,Mitigated,Detected",
+    "enumStrings":      "Unknown,Ok,Mitigated,Detected",
     "enumValues":       "0,1,2,3",
     "decimalPlaces":    0
 },
@@ -77,7 +77,7 @@
     "name":             "authenticationState",
     "shortDesc": "Signal Authentication State",
     "type":             "uint8",
-    "enumStrings":      "Unknoww,Initializing,Error,Ok,Disabled",
+    "enumStrings":      "Unknown,Initializing,Error,Ok,Disabled",
     "enumValues":       "0,1,2,3,4",
     "decimalPlaces":    0
 },

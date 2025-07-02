@@ -126,7 +126,7 @@ void VehicleGPSFactGroup::_handleGnssIntegrity(const mavlink_message_t& message)
     jammingState()->setRawValue         (gnssIntegrity.jamming_state);
     authenticationState()->setRawValue  (gnssIntegrity.authentication_state);
     correctionsQuality()->setRawValue   (gnssIntegrity.corrections_quality);
-    systemQuality()->setRawValue  (gnssIntegrity.system_status_summary);
+    systemQuality()->setRawValue        (gnssIntegrity.system_status_summary);
     gnssSignalQuality()->setRawValue    (gnssIntegrity.gnss_signal_quality);
     postProcessingQuality()->setRawValue(gnssIntegrity.post_processing_quality);
 }
