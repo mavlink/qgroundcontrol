@@ -21,6 +21,7 @@ TextField {
     rightPadding:       _marginPadding + unitsHelpLayout.width
     topPadding:         _marginPadding
     bottomPadding:      _marginPadding
+    EnterKey.type:      Qt.EnterKeyDone
 
     property bool   showUnits:          false
     property bool   showHelp:           false
