@@ -12,6 +12,12 @@ target_sources(${CMAKE_PROJECT_NAME}
         GPSRtk.h
         GPSRTKFactGroup.cc
         GPSRTKFactGroup.h
+        NMEAMessage.cc
+        NMEAMessage.h
+        NTRIPManager.cc
+        NTRIPManager.h
+        NTRIPTCPLink.cc
+        NTRIPTCPLink.h
         RTCMMavlink.cc
         RTCMMavlink.h
         satellite_info.h
