@@ -249,11 +249,10 @@ SettingsPage {
 
         Connections {
             target: regionFact
-            onRawValueChanged: {
-                if (regionFact.rawValue === RemoteIDSettings.EU) {
+            function onRawValueChanged(value) {
+                if (value === RemoteIDSettings.EU) {
                     sendOperatorIdFact.rawValue = true
-                }
-                if (regionFact.rawValue === RemoteIDSettings.FAA) {
+                } else if (value === RemoteIDSettings.FAA) {
                     locationTypeFact.value = RemoteIDSettings.LocationType.LIVE
                 }
             }

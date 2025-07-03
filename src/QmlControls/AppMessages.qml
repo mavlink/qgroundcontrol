@@ -78,7 +78,7 @@ Item {
 
                 Connections {
                     target:         debugMessageModel
-                    onDataChanged:  listView.scrollToEnd()
+                    function onDataChanged(topLeft, bottomRight, roles) { listView.scrollToEnd() }
                 }
             }
 
@@ -95,8 +95,8 @@ Item {
 
             Connections {
                 target:          debugMessageModel
-                onWriteStarted:  writeButton.enabled = false;
-                onWriteFinished: writeButton.enabled = true;
+                function onWriteStarted() { writeButton.enabled = false }
+                function onWriteFinished(success) { writeButton.enabled = true }
             }
 
             QGCButton {

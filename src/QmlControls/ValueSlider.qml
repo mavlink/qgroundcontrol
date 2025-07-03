@@ -304,7 +304,7 @@ Control {
 
                 Connections {
                     target: control
-                    onValueChanged: sliderValueTextField.visible = false
+                    function onValueChanged() { sliderValueTextField.visible = false }
                 }
             }
         }

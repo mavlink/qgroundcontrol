@@ -30,7 +30,7 @@ RowLayout {
 
     Connections {
         target:         QGroundControl.multiVehicleManager.vehicles
-        onCountChanged: _updateVehicleModel()
+        function onCountChanged(count) { _updateVehicleModel() }
     }
 
     Component.onCompleted:      _updateVehicleModel()

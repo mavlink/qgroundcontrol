@@ -62,8 +62,8 @@ Item {
     Connections {
         target: _missionItem
 
-        onIsCurrentItemChanged: {
-            if (_missionItem.isCurrentItem && map.planView) {
+        function onIsCurrentItemChanged(isCurrentItem) {
+            if (isCurrentItem && map.planView) {
                 addEditingVisuals()
             } else {
                 _objMgrEditingVisuals.destroyObjects()

@@ -58,7 +58,7 @@ Rectangle {
             // I don't know why this does not work
             Connections {
                 target:         QGroundControl.settingsManager.appSettings.appFontPointSize
-                onValueChanged: buttonColumn.reflowWidths()
+                function onValueChanged(value) { buttonColumn.reflowWidths() }
             }
 
             function reflowWidths() {
@@ -121,7 +121,7 @@ Rectangle {
 
         Connections {
             target:     panelLoader.item
-            onPopout:   mainWindow.createrWindowedAnalyzePage(panelLoader.title, panelLoader.source)
+            function onPopout() { mainWindow.createrWindowedAnalyzePage(panelLoader.title, panelLoader.source) }
         }
     }
 }

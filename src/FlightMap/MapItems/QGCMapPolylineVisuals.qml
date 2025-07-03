@@ -97,8 +97,8 @@ Item {
 
     Connections {
         target: mapPolyline
-        onTraceModeChanged: {
-            if (mapPolyline.traceMode) {
+        function onTraceModeChanged(traceMode) {
+            if (traceMode) {
                 _instructionText = _traceText
                 _objMgrTraceVisuals.createObject(traceMouseAreaComponent, mapControl, false)
             } else {

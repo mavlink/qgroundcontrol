@@ -412,7 +412,7 @@ Item {
         id:                         acquirePopupConnection
         property bool isPopupOpen:  false
         target:                     gimbalController
-        onShowAcquireGimbalControlPopup: {
+        function onShowAcquireGimbalControlPopup() {
             if(!acquirePopupConnection.isPopupOpen){
                 acquirePopupConnection.isPopupOpen = true;
                 mainWindow.showMessageDialog(

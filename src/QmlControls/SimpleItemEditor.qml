@@ -42,7 +42,7 @@ Rectangle {
 
     Connections {
         target:                 missionItem
-        onAltitudeModeChanged:  updateAltitudeModeText()
+        function onAltitudeModeChanged() { updateAltitudeModeText() }
     }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }

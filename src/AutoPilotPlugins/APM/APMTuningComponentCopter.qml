@@ -110,12 +110,12 @@ SetupPage {
                 }
             }
 
-            Connections { target: _ch7Opt; onValueChanged: calcAutoTuneChannel() }
-            Connections { target: _ch8Opt; onValueChanged: calcAutoTuneChannel() }
-            Connections { target: _ch9Opt; onValueChanged: calcAutoTuneChannel() }
-            Connections { target: _ch10Opt; onValueChanged: calcAutoTuneChannel() }
-            Connections { target: _ch11Opt; onValueChanged: calcAutoTuneChannel() }
-            Connections { target: _ch12Opt; onValueChanged: calcAutoTuneChannel() }
+            Connections { target: _ch7Opt; function onValueChanged(value) { calcAutoTuneChannel() } }
+            Connections { target: _ch8Opt; function onValueChanged(value) { calcAutoTuneChannel() } }
+            Connections { target: _ch9Opt; function onValueChanged(value) { calcAutoTuneChannel() } }
+            Connections { target: _ch10Opt; function onValueChanged(value) { calcAutoTuneChannel() } }
+            Connections { target: _ch11Opt; function onValueChanged(value) { calcAutoTuneChannel() } }
+            Connections { target: _ch12Opt; function onValueChanged(value) { calcAutoTuneChannel() } }
 
             Column {
                 anchors.left:       parent.left

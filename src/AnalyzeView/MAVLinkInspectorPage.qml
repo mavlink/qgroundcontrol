@@ -90,7 +90,7 @@ AnalyzePage {
 
                     Connections {
                         target: controller
-                        onActiveSystemChanged: {
+                        function onActiveSystemChanged() {
                             for (var systemIndex=0; systemIndex<controller.systems.count; systemIndex++) {
                                 if (controller.systems.get(systemIndex) == curSystem) {
                                     systemCombo.currentIndex = systemIndex
