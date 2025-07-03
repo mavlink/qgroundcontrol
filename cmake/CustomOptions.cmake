@@ -82,11 +82,11 @@ set(QGC_CPM_SOURCE_CACHE "" CACHE PATH "Directory to Download CPM Dependencies, 
 
 # Qt
 set(QT_QML_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/qml" CACHE PATH "Install path for QML")
+set(QML_IMPORT_PATH "${QT_QML_OUTPUT_DIRECTORY}" CACHE STRING "Extra QML Import Paths")
 option(QT_SILENCE_MISSING_DEPENDENCY_TARGET_WARNING "Silence Missing Dependency Warnings" OFF)
 option(QT_ENABLE_VERBOSE_DEPLOYMENT "Verbose Deployment" OFF)
 option(QT_DEBUG_FIND_PACKAGE "Print Used Search Paths When a Package is Not Found" ON)
 option(QT_QML_GENERATE_QMLLS_INI "https://doc.qt.io/qt-6/cmake-variable-qt-qml-generate-qmlls-ini.html" ON)
-# set(ENV{QML_IMPORT_PATH} "${QT_QML_OUTPUT_DIRECTORY}")
 # set(ENV{QT_DEBUG_PLUGINS} "1")
 # set(ENV{QML_IMPORT_TRACE} "1")
 
