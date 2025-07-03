@@ -3766,11 +3766,19 @@ void Vehicle::_updateAltAboveTerrain()
 void Vehicle::_altitudeAboveTerrainReceived(bool success, QList<double> heights)
 {
     if (!success) {
-        qCDebug(VehicleLog) << "_altitudeAboveTerrainReceived: terrain data not available for vehicle coordinate";
+        qCDebug(VehicleLog) << "terrain data not available for vehicle coordinate";
+        if (_coordinate.isValid() &&
+            SettingsManager::instance()->flyViewSettings()->altitudeWarnThresholdEnabled()->rawValue().toBool() && _flying) {
+            _terrainDataAvailableFact.setRawValue(false);
+        }
+        _altitudeAboveTerrFact.setRawValue(qQNaN()); // Reset the altitude above terrain fact to NaN
     } else {
+        if (!_terrainDataAvailableFact.rawValue().toBool()) {
+            _terrainDataAvailableFact.setRawValue(true);
+        }
         // Query was succesful, save the data.
-        double terrainAltitude = heights[0];
-        double altitudeAboveTerrain = altitudeAMSL()->rawValue().toDouble() - terrainAltitude;
+        const double terrainAltitude = heights[0];
+        const double altitudeAboveTerrain = altitudeAMSL()->rawValue().toDouble() - terrainAltitude;
         _altitudeAboveTerrFact.setRawValue(altitudeAboveTerrain);
     }
     // Clean up

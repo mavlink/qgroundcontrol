@@ -34,4 +34,7 @@ public:
     DEFINE_SETTINGFACT(instrumentQmlFile2)
     DEFINE_SETTINGFACT(requestControlAllowTakeover)
     DEFINE_SETTINGFACT(requestControlTimeout)
+    DEFINE_SETTINGFACT(altitudeWarnThresholdEnabled)
+    DEFINE_SETTINGFACT(altitudeWarnMinAGL)
+    DEFINE_SETTINGFACT(altitudeWarnMaxAGL)
 };

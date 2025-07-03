@@ -116,6 +116,34 @@ SettingsPage {
 
     SettingsGroupLayout {
         Layout.fillWidth:   true
+        heading:            qsTr("Altitude above ground level warning threshold")
+
+        FactCheckBoxSlider {
+            Layout.fillWidth:   true
+            text:               qsTr("Altitude warning enabled")
+            visible:            fact.visible
+            fact:               _flyViewSettings.altitudeWarnThresholdEnabled
+        }
+
+        LabelledFactTextField {
+            Layout.fillWidth:   true
+            label:              qsTr("Minimum Altitude")
+            fact:               _flyViewSettings.altitudeWarnMinAGL
+            visible:            fact.visible
+            enabled:            _flyViewSettings.altitudeWarnThresholdEnabled.value
+        }
+
+        LabelledFactTextField {
+            Layout.fillWidth:   true
+            label:              qsTr("Maximum Altitude")
+            fact:               _flyViewSettings.altitudeWarnMaxAGL
+            visible:            fact.visible
+            enabled:            _flyViewSettings.altitudeWarnThresholdEnabled.value
+        }
+    }
+
+    SettingsGroupLayout {
+        Layout.fillWidth:   true
         heading:            qsTr("Guided Commands")
         visible:            _guidedMinimumAltitude.visible || _guidedMaximumAltitude.visible ||
                             _maxGoToLocationDistance.visible || _forwardFlightGoToLocationLoiterRad.visible ||

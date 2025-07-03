@@ -27,6 +27,7 @@ class VehicleFactGroup : public FactGroup
     Q_PROPERTY(Fact *altitudeRelative       READ altitudeRelative       CONSTANT)
     Q_PROPERTY(Fact *altitudeAMSL           READ altitudeAMSL           CONSTANT)
     Q_PROPERTY(Fact *altitudeAboveTerr      READ altitudeAboveTerr      CONSTANT)
+    Q_PROPERTY(Fact *terrainDataAvailable   READ terrainDataAvailable   CONSTANT)
     Q_PROPERTY(Fact *altitudeTuning         READ altitudeTuning         CONSTANT)
     Q_PROPERTY(Fact *altitudeTuningSetpoint READ altitudeTuningSetpoint CONSTANT)
     Q_PROPERTY(Fact *xTrackError            READ xTrackError            CONSTANT)
@@ -61,6 +62,7 @@ public:
     Fact *altitudeRelative() { return &_altitudeRelativeFact; }
     Fact *altitudeAMSL() { return &_altitudeAMSLFact; }
     Fact *altitudeAboveTerr() { return &_altitudeAboveTerrFact; }
+    Fact *terrainDataAvailable() { return &_terrainDataAvailableFact; }
     Fact *altitudeTuning() { return &_altitudeTuningFact; }
     Fact *altitudeTuningSetpoint() { return &_altitudeTuningSetpointFact; }
     Fact *xTrackError() { return &_xTrackErrorFact; }
@@ -105,6 +107,7 @@ protected:
     Fact _altitudeRelativeFact = Fact(0, QStringLiteral("altitudeRelative"), FactMetaData::valueTypeDouble);
     Fact _altitudeAMSLFact = Fact(0, QStringLiteral("altitudeAMSL"), FactMetaData::valueTypeDouble);
     Fact _altitudeAboveTerrFact = Fact(0, QStringLiteral("altitudeAboveTerr"), FactMetaData::valueTypeDouble);
+    Fact _terrainDataAvailableFact = Fact(0, QStringLiteral("terrainDataAvailable"), FactMetaData::valueTypeBool);
     Fact _altitudeTuningFact = Fact(0, QStringLiteral("altitudeTuning"), FactMetaData::valueTypeDouble);
     Fact _altitudeTuningSetpointFact = Fact(0, QStringLiteral("altitudeTuningSetpoint"), FactMetaData::valueTypeDouble);
     Fact _xTrackErrorFact = Fact(0, QStringLiteral("xTrackError"), FactMetaData::valueTypeDouble);

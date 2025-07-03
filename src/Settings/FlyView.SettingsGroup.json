@@ -102,6 +102,33 @@
     "min":          3,
     "max":          60,
     "default":      10
+},
+{
+    "name":            "altitudeWarnThresholdEnabled",
+    "shortDesc":       "Altitude warning threshold enabled",
+    "longDesc":        "If this option is enabled, warn user if drone flies above or below altitude threshold.",
+    "type":            "bool",
+    "default":         false
+},
+{
+    "name":            "altitudeWarnMinAGL",
+    "shortDesc":       "Minimum altitude AGL for warning",
+    "longDesc":        "Minimum altitude warning threshold in meters above ground level.",
+    "type":            "double",
+    "default":         2.0,
+    "min":             0.0,
+    "units":           "m",
+    "decimalPlaces":   1
+},
+{
+    "name":            "altitudeWarnMaxAGL",
+    "shortDesc":       "Minimum altitude AGL for warning",
+    "longDesc":        "Minimum altitude warning threshold in meters above ground level.",
+    "type":            "double",
+    "default":         121.92,
+    "min":             0.0,
+    "units":           "m",
+    "decimalPlaces":   1
 }
 ]
 }

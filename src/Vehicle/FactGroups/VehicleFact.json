@@ -88,6 +88,12 @@
     "units":            "m"
 },
 {
+    "name":             "terrainDataAvailable",
+    "shortDesc": "Terrain Data Available",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
     "name":             "flightDistance",
     "shortDesc": "Flight Distance",
     "type":             "double",
