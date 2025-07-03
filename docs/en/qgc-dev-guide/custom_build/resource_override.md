@@ -1,27 +1,14 @@
 # Resource Overrides
 
 A "resource" in QGC source code terminology is anything found in Qt resources file:
-* [qgroundcontrol.qrc](https://github.com/mavlink/qgroundcontrol/blob/master/qgroundcontrol.qrc) and 
-* [qgcresources.qrc](https://github.com/mavlink/qgroundcontrol/blob/master/qgcresources.qrc) file. 
+
+* [qgroundcontrol.qrc](https://github.com/mavlink/qgroundcontrol/blob/master/qgroundcontrol.qrc)
+* [qgcresources.qrc](https://github.com/mavlink/qgroundcontrol/blob/master/qgcresources.qrc)
 * [InstrumentValueIcons.qrc](https://github.com/mavlink/qgroundcontrol/blob/master/resources/InstrumenValueIcons/InstrumentValueIcons.qrc)
+* Qml files
 
-By overriding a resource you can replace it with your own version of it. This could be as simple as a single icon, or as complex as replacing an entire Vehicle Setup page of qml ui code. Be aware that using resource overrides does not isolate you from upstream QGC changes like the plugin architecture does. In a sense you are directly modify the upstream QGC resources used by the main code.
+By overriding a resource you can replace it with your own version of it. This could be as simple as a single icon, or as complex as replacing an entire Vehicle Setup page of qml ui code. Be aware that using resource overrides means you are duplicating regular QGC source code. This can be a good or a bad thing depending on how you go about it. By using a resource override on a Qml file example it allows you to get away from dealing with crazy merge conflicts which you merge in newer versions of upstream QGC source. But it also means that you need to pay attention to what is going on in that upstream QGC source to see if you need to modify your copied code in a similar way.
 
-## Exclusion Files
+Resource overrides work by using `QQmlEngine::addUrlInterceptor` to intercept requests for resources and re-route the request to available custom resources instead of the normal resource. Look at [custom_example/CustomPlugin.cc](https://github.com/mavlink/qgroundcontrol/blob/master/custom-example/CustomPlugin.cc) for how it's done and replicate that in your own custom build source.
 
-The first step to overriding a resource is to "exclude" it from the standard portion of the upstream build. This means that you are going to provide that resource in your own custom build resource file(s). There are two files which achieve this: [qgroundcontrol.exclusion]() and [qgcresources.exclusion](https://github.com/mavlink/qgroundcontrol/blob/master/custom-example/qgcresources.exclusion). They correspond directly with the \*.qrc counterparts. In order to exclude a resource, copy the resource line from the .qrc file into the appropriate .exclusion file.
-
-## Custom version of excluded resources
-
-You must include the custom version of the overriden resouce in you custom build resource file. The resource alias must exactly match the upstream alias. The name and actual location of the resource can be anywhere within your custom directory structure.
-
-## Generating the new modified versions of standard QGC resource file
-
-This is done using the resource update python scripts:`python updateqrc.py` and `python updateinstrumentqrc.py`. It will read the upstream resouce files and the corresponding exclusion files and output new versions of these files in your custom directory. These new versions will not have the resources you specified to exclude in them. The build system for custom builds uses these generated files (if they exist) to build with instead of the upstream versions. The generated version of these file should be added to your repo. Also whenever you update the upstream portion of QGC in your custom repo you must re-run the scripts to generate new versions of the files since the upstream resources may have changed.
-
-## Custom Build Example
-
-You can see an examples of custom build qgcresource overrides in the repo custom build example:
-
-- [qgcresources.qrc](https://github.com/mavlink/qgroundcontrol/blob/master/custom-example/qgcresources.exclusion)
-- [custom.qrc](https://github.com/mavlink/qgroundcontrol/blob/master/custom-example/custom.qrc)
+Custom resources that are meant for override are prepended with `/Custom` to the resource prefix in the custom resource file. The file alias for the resouce should be exactly the same as the normal QGC resource. Take a look at [custom_example/custom.qrc](https://github.com/mavlink/qgroundcontrol/blob/master/custom-example/custom.qrc) and [custom_example/CMakeLists.txt](https://github.com/mavlink/qgroundcontrol/blob/master/custom-example/CMakeLists.txt) for examples of how to do all of this.

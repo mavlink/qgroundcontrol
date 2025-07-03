@@ -103,7 +103,7 @@
     - [Mock Link](qgc-dev-guide/tools/mock_link.md)
   - [Command Line Options](qgc-dev-guide/command_line_options.md)
   - [Custom Builds](qgc-dev-guide/custom_build/custom_build.md)
-    - [Initial Repository Setup For Custom Build](qgc-dev-guide/custom_build/create_repos.md)
+    - [Initial Repository Setup For Custom Build](qgc-dev-guide/custom_build/fork_repo.md)
     - [Custom Build Plugins](qgc-dev-guide/custom_build/plugins.md)
     - [Resources Overrides](qgc-dev-guide/custom_build/resource_override.md)
     - [Customization](qgc-dev-guide/custom_build/customization.md)
