@@ -17,15 +17,12 @@ GST_DEBUG_CATEGORY_STATIC(GST_CAT_DEFAULT);
 
 #define DEFAULT_ENABLE_LAST_SAMPLE FALSE
 #define DEFAULT_FORCE_ASPECT_RATIO TRUE
-#define DEFAULT_PAR_N 0
-#define DEFAULT_PAR_D 1
 #define DEFAULT_SYNC TRUE
 
 #define PROP_ENABLE_LAST_SAMPLE_NAME    "enable-last-sample"
 #define PROP_LAST_SAMPLE_NAME           "last-sample"
 #define PROP_WIDGET_NAME                "widget"
 #define PROP_FORCE_ASPECT_RATIO_NAME    "force-aspect-ratio"
-#define PROP_PIXEL_ASPECT_RATIO_NAME    "pixel-aspect-ratio"
 #define PROP_SYNC_NAME                  "sync"
 
 enum
@@ -35,7 +32,6 @@ enum
     PROP_LAST_SAMPLE,
     PROP_WIDGET,
     PROP_FORCE_ASPECT_RATIO,
-    PROP_PIXEL_ASPECT_RATIO,
     PROP_SYNC,
     PROP_LAST
 };
@@ -100,7 +96,7 @@ gst_qgc_video_sink_bin_class_init(GstQgcVideoSinkBinClass *klass)
 
     properties[PROP_WIDGET] = g_param_spec_pointer(
         "widget", "QQuickItem",
-        "Owning QML item – handed off to qml6glsink",
+        "Owning QML item – handed off to qml6d3d11sink",
         (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)
     );
 
@@ -108,15 +104,6 @@ gst_qgc_video_sink_bin_class_init(GstQgcVideoSinkBinClass *klass)
         "force-aspect-ratio", "Force aspect ratio",
         "Maintain original pixel aspect during scaling",
         DEFAULT_FORCE_ASPECT_RATIO,
-        (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)
-    );
-
-    properties[PROP_PIXEL_ASPECT_RATIO] = gst_param_spec_fraction(
-        "pixel-aspect-ratio", "Pixel aspect ratio",
-        "Pixel aspect ratio of the display surface",
-        DEFAULT_PAR_N, DEFAULT_PAR_D,
-        G_MAXINT, 1,
-        1, 1,
         (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)
     );
 
@@ -142,7 +129,7 @@ gst_qgc_video_sink_bin_class_init(GstQgcVideoSinkBinClass *klass)
 
     gst_element_class_set_static_metadata(element_class,
         "QGC Video Sink Bin", "Sink/Video/Bin",
-        "GL accelerated video sink wrapper used by QGroundControl",
+        "D3D11 accelerated video sink wrapper used by QGroundControl",
         "QGroundControl team"
     );
 }
@@ -156,14 +143,14 @@ gst_qgc_video_sink_bin_init(GstQgcVideoSinkBin *self)
         return;
     }
 
-    self->qml6glsink = gst_element_factory_make("qml6glsink", NULL);
-    if (!self->qml6glsink) {
-        GST_ERROR_OBJECT(self, "gst_element_factory_make('qml6glsink') failed");
+    self->qml6d3d11sink = gst_element_factory_make("qml6d3d11sink", NULL);
+    if (!self->qml6d3d11sink) {
+        GST_ERROR_OBJECT(self, "gst_element_factory_make('qml6d3d11sink') failed");
         return;
     }
 
     g_object_set(self->glsinkbin,
-                 "sink", self->qml6glsink,
+                 "sink", self->qml6d3d11sink,
                  PROP_ENABLE_LAST_SAMPLE_NAME, FALSE,
                  NULL);
 
@@ -209,7 +196,7 @@ gst_qgc_video_sink_bin_set_property(GObject *object, guint prop_id, const GValue
                      NULL);
         break;
     case PROP_WIDGET:
-        g_object_set(self->qml6glsink,
+        g_object_set(self->qml6d3d11sink,
                      PROP_WIDGET_NAME,
                      g_value_get_pointer(value),
                      NULL);
@@ -220,16 +207,6 @@ gst_qgc_video_sink_bin_set_property(GObject *object, guint prop_id, const GValue
                      g_value_get_boolean(value),
                      NULL);
         break;
-    case PROP_PIXEL_ASPECT_RATIO: {
-        const gint num = gst_value_get_fraction_numerator(value);
-        const gint den = gst_value_get_fraction_denominator(value);
-        g_object_set(self->qml6glsink,
-                     PROP_PIXEL_ASPECT_RATIO_NAME,
-                     num,
-                     den,
-                     NULL);
-        break;
-    }
     case PROP_SYNC:
         g_object_set(self->glsinkbin,
                      PROP_SYNC_NAME,
@@ -271,7 +248,7 @@ gst_qgc_video_sink_bin_get_property(GObject *object, guint prop_id, GValue *valu
     }
     case PROP_WIDGET: {
         gpointer widget = NULL;
-        g_object_get(self->qml6glsink,
+        g_object_get(self->qml6d3d11sink,
                      PROP_WIDGET_NAME,
                      &widget,
                      NULL);
@@ -285,15 +262,6 @@ gst_qgc_video_sink_bin_get_property(GObject *object, guint prop_id, GValue *valu
                      &enable,
                      NULL);
         g_value_set_boolean(value, enable);
-        break;
-    }
-    case PROP_PIXEL_ASPECT_RATIO: {
-        gint num = 0, den = 1;
-        g_object_get(self->qml6glsink,
-                     PROP_PIXEL_ASPECT_RATIO_NAME,
-                     &num, &den,
-                     NULL);
-        gst_value_set_fraction(value, num, den);
         break;
     }
     case PROP_SYNC: {
@@ -318,13 +286,13 @@ gst_qgc_video_sink_bin_on_glsinkbin_create_element(GstElement *object, gpointer 
     GstQgcVideoSinkBin *qgcVideoSinkBin = GST_QGC_VIDEO_SINK_BIN(udata);
 
     qgcVideoSinkBin->glsinkbin = GST_ELEMENT(glsinkbin);
-    qgcVideoSinkBin->qml6glsink = gst_element_factory_make("qml6glsink", NULL);
-    if (!qgcVideoSinkBin->qml6glsink) {
-        GST_ERROR_OBJECT(qgcVideoSinkBin, "gst_element_factory_make('qml6glsink') failed");
-        g_signal_emit(GST_ELEMENT(qgcVideoSinkBin), gst_qgc_video_sink_bin_signals[SIGNAL_CREATE_ELEMENT], 0, &qgcVideoSinkBin->qml6glsink);
+    qgcVideoSinkBin->qml6d3d11sink = gst_element_factory_make("qml6d3d11sink", NULL);
+    if (!qgcVideoSinkBin->qml6d3d11sink) {
+        GST_ERROR_OBJECT(qgcVideoSinkBin, "gst_element_factory_make('qml6d3d11sink') failed");
+        g_signal_emit(GST_ELEMENT(qgcVideoSinkBin), gst_qgc_video_sink_bin_signals[SIGNAL_CREATE_ELEMENT], 0, &qgcVideoSinkBin->qml6d3d11sink);
     }
 
-    return qgcVideoSinkBin->qml6glsink;
+    return qgcVideoSinkBin->qml6d3d11sink;
 }
 
 static void
