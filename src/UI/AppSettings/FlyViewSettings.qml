@@ -116,6 +116,35 @@ SettingsPage {
 
     SettingsGroupLayout {
         Layout.fillWidth:   true
+        heading:            qsTr("Altitude above ground level warning threshold")
+
+        FactCheckBoxSlider {
+            Layout.fillWidth:   true
+            text:               qsTr("Altitude warning enabled")
+            visible:            _virtualJoystickAutoCenterThrottle.visible
+            enabled:            _virtualJoystick.rawValue
+            fact:               QGroundControl.settingsManager.appSettings.altitudeWarnThresholdEnabled
+        }
+
+        LabelledFactTextField {
+            Layout.fillWidth:   true
+            label:              qsTr("Minimum Altitude")
+            fact:               _settingsManager.appSettings.altitudeWarnMinAGL
+            visible:            fact.visible
+            enabled:            QGroundControl.settingsManager.appSettings.altitudeWarnThresholdEnabled.value
+        }
+
+        LabelledFactTextField {
+            Layout.fillWidth:   true
+            label:              qsTr("Maximum Altitude")
+            fact:               _settingsManager.appSettings.altitudeWarnMaxAGL
+            visible:            fact.visible
+            enabled:            QGroundControl.settingsManager.appSettings.altitudeWarnThresholdEnabled.value
+        }
+    }
+
+    SettingsGroupLayout {
+        Layout.fillWidth:   true
         heading:            qsTr("Guided Commands")
         visible:            _guidedMinimumAltitude.visible || _guidedMaximumAltitude.visible ||
                             _maxGoToLocationDistance.visible || _forwardFlightGoToLocationLoiterRad.visible ||
