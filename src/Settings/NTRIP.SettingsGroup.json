@@ -1,0 +1,83 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":                 "ntripServerConnectEnabled",
+    "shortDesc":     "Connect to NTRIP server",
+    "longDesc":      "Connect to NTRIP server using specified address/port",
+    "type":                 "bool",
+    "default":         false,
+    "qgcRebootRequired":    true
+},
+{
+    "name":                 "ntripServerHostAddress",
+    "shortDesc":     "Host address",
+    "type":                 "string",
+    "default":         "127.0.0.1",
+    "qgcRebootRequired":    true
+},
+{
+    "name":                 "ntripServerPort",
+    "shortDesc":     "Server port",
+    "type":                 "string",
+    "default":         2101,
+    "qgcRebootRequired":    true
+},
+{
+    "name":                 "ntripUsername",
+    "shortDesc":     "Username",
+    "type":                 "string",
+    "default":         "",
+    "qgcRebootRequired":    true
+},
+{
+    "name":                 "ntripPassword",
+    "shortDesc":     "Password",
+    "type":                 "string",
+    "default":         "",
+    "qgcRebootRequired":    true
+},
+{
+    "name":                 "ntripMountpoint",
+    "shortDesc":     "Mount Point",
+    "longDesc":      "NTRIP Mount Point. Leave blank for RTCM over TCP",
+    "type":                 "string",
+    "default":         "",
+    "qgcRebootRequired":    true
+},
+{
+    "name":                 "ntripWhitelist",
+    "shortDesc":     "RTCM Message ID Whitelist, comma separated",
+    "longDesc":      "RTCM Messages to send over mavlink. Leave blank for all messages",
+    "type":                 "string",
+    "default":         "",
+    "qgcRebootRequired":    true
+},
+{
+    "name":                 "ntripEnableVRS",
+    "shortDesc":     "Enable NTRIP VRS",
+    "longDesc":      "Check to Enable VRS RTK",
+    "type":                 "bool",
+    "default":         false,
+    "qgcRebootRequired":    true
+},
+{
+    "name":                 "ntripForceNtripV1",
+    "shortDesc":     "Force NTRIP V1 instead of V2",
+    "longDesc":      "By default the system will connect using NTRIP V2. Check this box to force NTRIP V1",
+    "type":                 "bool",
+    "default":         false,
+    "qgcRebootRequired":    true
+},
+{
+    "name":                 "ntripTakeNmeaPosFromVehicle",
+    "shortDesc":     "For VRS, take NMEA position from vehicle's home position",
+    "longDesc":      "When VRS is enabled, take NMEA position from vehicle's home position when Base Station position is not available",
+    "type":                 "bool",
+    "default":         true,
+    "qgcRebootRequired":    true
+}
+]
+}

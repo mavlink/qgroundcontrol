@@ -111,6 +111,61 @@ SettingsPage {
     }
 
     SettingsGroupLayout {
+        heading: qsTr("NTRIP / RTCM")
+        visible: _ntripSettings.visible
+
+        property var _ntripSettings: QGroundControl.settingsManager.ntripSettings
+
+        FactCheckBoxSlider {
+            text: fact.shortDescription
+            fact: _ntripSettings.ntripServerConnectEnabled
+            visible: fact.visible
+        }
+
+        FactCheckBoxSlider {
+            text: fact.shortDescription
+            fact: _ntripSettings.ntripEnableVRS
+            visible: fact.visible
+        }
+
+        LabelledFactTextField {
+            label: fact.shortDescription
+            fact: _ntripSettings.ntripServerHostAddress
+            visible: fact.visible
+        }
+
+        LabelledFactTextField {
+            label: fact.shortDescription
+            fact: _ntripSettings.ntripServerPort
+            visible: fact.visible
+        }
+
+        LabelledFactTextField {
+            label: fact.shortDescription
+            fact: _ntripSettings.ntripUsername
+            visible: fact.visible
+        }
+
+        LabelledFactTextField {
+            label: fact.shortDescription
+            fact: _ntripSettings.ntripPassword
+            visible: fact.visible
+        }
+
+        LabelledFactTextField {
+            label: fact.shortDescription
+            fact: _ntripSettings.ntripMountpoint
+            visible: fact.visible
+        }
+
+        LabelledFactTextField {
+            label: fact.shortDescription
+            fact: _ntripSettings.ntripWhitelist
+            visible: fact.visible
+        }
+    }
+
+    SettingsGroupLayout {
         heading: qsTr("Links")
 
         Repeater {
