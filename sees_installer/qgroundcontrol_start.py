@@ -13,7 +13,7 @@ import time
 import configparser
 import yaml
 
-VERSION = 1.2 # Added selection of drones, added config by yaml
+VERSION = 1.2  # Added selection of drones, added config by yaml
 
 
 class QGCGitHub():
@@ -26,12 +26,12 @@ class QGCGitHub():
             'Accept': 'application/vnd.github.v3.raw'
         }
 
-    def download_file(self,filepath):
+    def download_file(self, filepath):
         url = f'https://api.github.com/repos/SEESAI/qgroundcontrol/contents/{filepath}?ref={self.branch}'
         # Download the file
         response = requests.get(url, headers=self.headers)
         response.raise_for_status()  # Check for errors
-        return(response.content)
+        return (response.content)
 
 
 class QGCStartWindow:
@@ -120,8 +120,6 @@ class QGCStartWindow:
                 if self.drone_selected is not None and self.rtk_base_selected is not None:
                     self.continue_button.setEnabled(True)  # Hidden by default
 
-
-
     def btn_rtk_base_toggled(self):
         for button in self.btn_rtk_base_lst:
             if button.isChecked():
@@ -130,11 +128,10 @@ class QGCStartWindow:
                 if self.drone_selected is not None and self.rtk_base_selected is not None:
                     self.continue_button.setEnabled(True)  # Hidden by default
 
-
-    def update_message(self, message, align = Qt.AlignCenter):
+    def update_message(self, message, align=Qt.AlignCenter):
         """Update the displayed message"""
         self.message_label.setText(message)
-        self.message_label.setAlignment( align | Qt.AlignVCenter)
+        self.message_label.setAlignment(align | Qt.AlignVCenter)
         self.app.processEvents()  # Process UI events to update display
 
     def wait_for_user(self, message="Press Continue to proceed"):
@@ -169,6 +166,7 @@ class QGCStartWindow:
         self.app.quit()
         self.app.processEvents()
 
+
 def section_to_text(config, sections):
     result = []
     for section_name in sections:
@@ -183,24 +181,11 @@ def section_to_text(config, sections):
                 if param in key:
                     ignore_param = True
             if not ignore_param:
-                    result += [f"{key}={value}\n"]
+                result += [f"{key}={value}\n"]
             else:
                 pass
     return result
 
-def update_config_comms(config, drone_name, RTSP_IP, RTSP_port, mavlink_IP, mavlink_port):
-    print(f"Setting QGC connection to {drone_name} at {mavlink_IP}")
-    if qgc_start_win.enable_fpv:   #ToDo, accessing qgc_start_win direclty is not pretty
-        config['Video']['rtspUrl'] = f"rtsp://{RTSP_IP}:{RTSP_port}/fpv"
-        config['Video']['videoSource'] = "RTSP Video Stream"
-    else:
-        config['Video']['videoSource'] = "Video Stream Disabled"
-    config['LinkConfigurations']['Link0\\auto'] = "true"
-    config['LinkConfigurations']['Link0\\host0'] = mavlink_IP
-    config['LinkConfigurations']['Link0\\port0'] = mavlink_port
-    config['LinkConfigurations']['Link0\\port'] = mavlink_port
-    config['LinkConfigurations']['Link0\\name'] = f"Auto {drone_name} {mavlink_IP}"
-    return config
 
 def start_remote_mavlink_rtk_server(rtk_base_name, rtk_base_ip, drone_name, mavlink_ip):
     from paramiko.client import SSHClient
@@ -218,6 +203,7 @@ def start_remote_mavlink_rtk_server(rtk_base_name, rtk_base_ip, drone_name, mavl
     cmd = f'DISPLAY=:0 /home/sees/Work/Sees/BackupLink/BackupCommsGUI/launch_backup_comms_and_QGC.py {drone_name} {mavlink_ip}'
     print(f"Running command {cmd} on {rtk_base_name} at {rtk_base_ip}")
     _, stdout_, stderr_ = client.exec_command(cmd)
+
 
 if __name__ == "__main__":
     # Load settings
@@ -238,7 +224,7 @@ if __name__ == "__main__":
 
     print(f"Local machine configured as {LOCAL_MACHINE}")
 
-    if LOCAL_MACHINE=="GCS":
+    if LOCAL_MACHINE == "GCS":
         # Create the progress window
         qgc_start_win = QGCStartWindow()
         # Prepare to download from github
@@ -265,9 +251,9 @@ if __name__ == "__main__":
         config_github.read('QGroundControl_github.ini')
         github_ini_lines = section_to_text(config_github, CONFIG_CRITICAL_SECTIONS)
 
-
         local_ini_lines = section_to_text(qgc_config_local, CONFIG_CRITICAL_SECTIONS)
-        diff = list(difflib.unified_diff(github_ini_lines, local_ini_lines, fromfile='QGC github', tofile='QGC local', n=0))
+        diff = list(
+            difflib.unified_diff(github_ini_lines, local_ini_lines, fromfile='QGC github', tofile='QGC local', n=0))
 
         qgc_start_win.update_message("Checking QGroundControl config file...")
         time.sleep(1)  # Give time to display message
@@ -292,31 +278,43 @@ if __name__ == "__main__":
             time.sleep(1)  # Display message
             # Update config according to drone selection
 
-        drone_info = UAV_DICT[qgc_start_win.drone_selected]
         drone_name = qgc_start_win.drone_selected
-        base_selected = RTK_BASE_DICT[qgc_start_win.rtk_base_selected]
+        drone_info = UAV_DICT[drone_name]
 
-        update_config_comms(qgc_config_local, drone_name, drone_info["RTSP_IP"], RTSP_PORT, drone_info["MAVLINK_IP"],
-                            drone_info["MAVLINK_PORT"])
+        base_name = qgc_start_win.rtk_base_selected
+        base_info = RTK_BASE_DICT[base_name]
 
-        start_remote_mavlink_rtk_server(qgc_start_win.rtk_base_selected, base_selected["IP"], drone_name, drone_info["MAVLINK_IP"])
+        print(f"Setting QGC connection to {drone_name} at {drone_info['MAVLINK_IP']}")
+        if qgc_start_win.enable_fpv:  # ToDo, accessing qgc_start_win direclty is not pretty
+            qgc_config_local['Video']['rtspUrl'] = f"rtsp://{drone_info['RTSP_IP']}:{RTSP_PORT}/fpv"
+            qgc_config_local['Video']['videoSource'] = "RTSP Video Stream"
+        else:
+            qgc_config_local['Video']['vieoSource'] = "Video Stream Disabled"
+        qgc_config_local['LinkConfigurations']['Link0\\auto'] = "true"
+        qgc_config_local['LinkConfigurations']['Link0\\host0'] = base_info["IP"]
+        qgc_config_local['LinkConfigurations']['Link0\\port0'] = base_info["PORT"]
+        qgc_config_local['LinkConfigurations']['Link0\\port'] = base_info["PORT"]
+        qgc_config_local['LinkConfigurations']['Link0\\name'] = f"RTK base to {drone_name}"
+        qgc_config_local['LinkManager']['autoConnectRTKGPS'] = "false"
+        qgc_config_local['LinkManager']['autoConnectUDP'] = "false"
+
+        start_remote_mavlink_rtk_server(base_name, base_info["IP"], drone_name, drone_info["MAVLINK_IP"])
 
 
-    elif LOCAL_MACHINE=="RTK_BASE":
+    elif LOCAL_MACHINE == "RTK_BASE":
         print("Setting RTK and UDP Comms options to true.")
         qgc_config_local['LinkManager']['autoConnectRTKGPS'] = "true"
         qgc_config_local['LinkManager']['autoConnectUDP'] = "true"
 
-    elif LOCAL_MACHINE=="UAV":
+    elif LOCAL_MACHINE == "UAV":
         print("Setting UPD Comms options to true.")
         qgc_config_local['LinkManager']['autoConnectUDP'] = "true"
 
-    elif LOCAL_MACHINE=="OTHER":
+    elif LOCAL_MACHINE == "OTHER":
         # Don't do any checks, this QGC is only for debugging
         pass
     else:
         Exception("Type not defined")
-
 
     if LOCAL_MACHINE != "OTHER":
         # Update ini file with the necessary settings
@@ -328,15 +326,15 @@ if __name__ == "__main__":
     cmd_lst = ["./QGroundControl-v4.3.0-0.0.3.AppImage"]
     try:
         subprocess.Popen(
-		    cmd_lst,
-        start_new_session=True,
-        text=True,
-        bufsize=1
-          )
+            cmd_lst,
+            start_new_session=True,
+            text=True,
+            bufsize=1
+        )
     except Exception as e:
         print(f"{e}\n\n. Error starting QGroundControl, have you chmod +x the QGroundControl-vXXX.AppImage file?")
     # Keep window open until user closes it
-    #sys.exit(progress_win.run())
+    # sys.exit(progress_win.run())
 
     # Sleep to give QGC time to start, keeping window open for user to see
     time.sleep(2)  # Wait, if we exit before QGC has started it gets killed
