@@ -1,5 +1,5 @@
 if(NOT APPLE)
-    message(FATAL_ERROR "Invalid Platform")
+    message(FATAL_ERROR "QGC: Invalid Platform")
     return()
 endif()
 
@@ -16,6 +16,8 @@ if(CMAKE_GENERATOR STREQUAL "Xcode")
     set(CMAKE_XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${QGC_MACOS_ENTITLEMENTS_PATH}")
 endif()
 
+cmake_path(GET QGC_MACOS_ICON_PATH FILENAME MACOSX_BUNDLE_ICON_FILE)
+
 set_target_properties(${CMAKE_PROJECT_NAME}
     PROPERTIES
         MACOSX_BUNDLE TRUE
@@ -31,13 +33,17 @@ set_target_properties(${CMAKE_PROJECT_NAME}
 )
 
 if(MACOS)
-    set(MACOSX_BUNDLE_ICON_FILE "macx.icns")
-    set(app_icon_macos "${QGC_MACOS_ICON_PATH}/${MACOSX_BUNDLE_ICON_FILE}")
+    set(app_icon_macos "${QGC_MACOS_ICON_PATH}")
     set_source_files_properties(${app_icon_macos} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
-    target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${app_icon_macos})
 
-    set_source_files_properties(${QGC_MACOS_ENTITLEMENTS_PATH} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
-    target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${QGC_MACOS_ENTITLEMENTS_PATH})
+    set(app_entitlements_macos "${QGC_MACOS_ENTITLEMENTS_PATH}")
+    set_source_files_properties(${app_entitlements_macos} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+
+    target_sources(${CMAKE_PROJECT_NAME}
+        PRIVATE
+            "${app_entitlements_macos}"
+            "${app_icon_macos}"
+    )
 elseif(IOS)
     enable_language(OBJC)
 

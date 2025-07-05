@@ -26,10 +26,10 @@ set(CMAKE_POLICY_VERSION_MINIMUM ${CMAKE_MINIMUM_REQUIRED_VERSION})
 
 include(CustomOptions)
 
-if(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/custom)
-    message(STATUS "Enabling custom build")
+if(IS_DIRECTORY "${CMAKE_SOURCE_DIR}/custom")
+    message(STATUS "QGC: Enabling custom build")
     set(QGC_CUSTOM_BUILD ON)
-    list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/custom/cmake)
+    list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/custom/cmake")
     include(CustomOverrides)
 endif()
 
@@ -37,10 +37,12 @@ endif()
 #                   Project Info
 #######################################################
 
-# set(CMAKE_OSX_ARCHITECTURES "arm64")
-# set(CMAKE_OSX_SYSROOT "iphoneos")
 if(APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0")
+    # set(CMAKE_OSX_SYSROOT "iphoneos")
+    if(QGC_MACOS_UNIVERSAL_BUILD)
+        set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64")
+    endif()
 endif()
 
 include(Git)
@@ -73,9 +75,9 @@ include(CPM)
 
 include(Toolchain)
 
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIGURATION>/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIGURATION>)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIGURATION>)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>/lib")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
 
 # https://cmake.org/cmake/help/latest/policy/CMP0168.html#policy:CMP0168
 if(POLICY CMP0168)

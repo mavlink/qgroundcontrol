@@ -9,27 +9,29 @@ install(
 )
 
 set(deploy_tool_options_arg "")
-if(MACOS OR WIN32)
-    set(deploy_tool_options_arg "-qmldir=${CMAKE_SOURCE_DIR}")
-    # if(MACOS_SIGNING_IDENTITY)
-    #     message(STATUS "Signing MacOS Bundle")
-    #     set(deploy_tool_options_arg "${deploy_tool_options_arg} -sign-for-notarization=${MACOS_SIGNING_IDENTITY}")
-    # endif()
-endif()
+if(Qt6_VERSION VERSION_GREATER_EQUAL 6.7.0 AND (MACOS OR WIN32))
+    list(APPEND deploy_tool_options_arg DEPLOY_TOOL_OPTIONS)
+    list(APPEND deploy_tool_options_arg "-qmldir=${CMAKE_SOURCE_DIR}")
+    if(MACOS)
+        if(DEFINED $ENV{QGC_MACOS_SIGNING_IDENTITY})
+            message(STATUS "QGC: Deploy Sign For Notarization")
+            list(APPEND deploy_tool_options_arg "-sign-for-notarization=$ENV{QGC_MACOS_SIGNING_IDENTITY}")
+        endif()
 
-# Set extra deploy QML app script options for Qt 6.7.0 and above
-set(EXTRA_DEPLOY_QML_APP_SCRIPT_OPTIONS)
-if(Qt6_VERSION VERSION_GREATER_EQUAL 6.7.0)
-    list(APPEND EXTRA_DEPLOY_QML_APP_SCRIPT_OPTIONS DEPLOY_TOOL_OPTIONS ${deploy_tool_options_arg})
+        # find_program(CREATE_DMG_PROGRAM create-dmg)
+        # if(NOT CREATE_DMG_PROGRAM)
+        #     list(APPEND deploy_tool_options_arg "-dmg" "-fs=APFS")
+        # endif()
+    endif()
 endif()
 
 qt_generate_deploy_qml_app_script(
     TARGET ${CMAKE_PROJECT_NAME}
     OUTPUT_SCRIPT deploy_script
-    ${EXTRA_DEPLOY_QML_APP_SCRIPT_OPTIONS}
     MACOS_BUNDLE_POST_BUILD
     NO_UNSUPPORTED_PLATFORM_ERROR
     DEPLOY_USER_QML_MODULES_ON_UNSUPPORTED_PLATFORM
+    ${deploy_tool_options_arg}
 )
 install(SCRIPT ${deploy_script})
 
@@ -86,7 +88,24 @@ elseif(WIN32)
     install(CODE "set(QGC_WINDOWS_INSTALLER_SCRIPT ${CMAKE_SOURCE_DIR}/deploy/windows/nullsoft_installer.nsi)")
     install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/install/CreateWinInstaller.cmake")
 elseif(MACOS)
-    install(CODE "set(TARGET_APP_NAME ${QGC_APP_NAME})")
-    install(CODE "set(MACDEPLOYQT ${Qt6_DIR}/../../../bin/macdeployqt)")
-    install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/install/CreateMacDMG.cmake")
+    # include(CreateCPackDMG)
+
+    install(CODE "
+        include(CMakePrintHelpers)
+        include(BundleUtilities)
+        fixup_bundle(\"$<TARGET_BUNDLE_DIR:${CMAKE_PROJECT_NAME}>\" \"\" \"${CMAKE_BINARY_DIR}\")
+        verify_app(\"$<TARGET_BUNDLE_DIR:${CMAKE_PROJECT_NAME}>\")
+        verify_bundle_prerequisites(\"$<TARGET_BUNDLE_DIR:${CMAKE_PROJECT_NAME}>\" _bundle_prereqs_result _bundle_prereqs_info)
+        cmake_print_variables(_bundle_prereqs_result _bundle_prereqs_info)
+        verify_bundle_symlinks(\"$<TARGET_BUNDLE_DIR:${CMAKE_PROJECT_NAME}>\" _bundle_symlinks_result _bundle_symlinks_info)
+        cmake_print_variables(_bundle_symlinks_result _bundle_symlinks_info)
+    ")
+    # set(QGC_TARGET_APP_NAME ${CMAKE_PROJECT_NAME})
+    # set(QGC_BUNDLE_PATH ${CMAKE_INSTALL_PREFIX}/${QGC_TARGET_APP_NAME}.app)
+    # set(QGC_MACOS_ENTITLEMENTS_PATH ${QGC_MACOS_ENTITLEMENTS_PATH})
+    # if(DEFINED $ENV{QGC_MACOS_SIGNING_IDENTITY})
+    #     set(QGC_MACOS_SIGNING_IDENTITY $ENV{QGC_MACOS_SIGNING_IDENTITY})
+    # endif()
+    # include(${CMAKE_SOURCE_DIR}/cmake/modules/CPM.cmake)
+    # install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/install/CreateMacDMG.cmake")
 endif()
