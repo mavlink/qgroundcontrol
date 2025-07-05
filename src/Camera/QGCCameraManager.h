@@ -65,6 +65,7 @@ public:
         bool        infoReceived    = false;
         uint8_t     compID          = 0;
         Vehicle*    vehicle         = nullptr;
+        int         retryCount      = 0;
     };
 
 signals:
