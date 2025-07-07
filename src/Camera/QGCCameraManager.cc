@@ -97,7 +97,8 @@ void QGCCameraManager::_vehicleReady(bool ready)
 
 void QGCCameraManager::_mavlinkMessageReceived(const mavlink_message_t& message)
 {
-    //-- Only pay attention to camera components, as identified by their compId
+    //-- Only pay attention to the camera components, as identified by their compId,
+    //   as well as the autopilot, as it might have a non-MAVLink camera connected.
     if(message.sysid == _vehicle->id() && (message.compid == MAV_COMP_ID_AUTOPILOT1 ||
         (message.compid >= MAV_COMP_ID_CAMERA && message.compid <= MAV_COMP_ID_CAMERA6))) {
         switch (message.msgid) {
