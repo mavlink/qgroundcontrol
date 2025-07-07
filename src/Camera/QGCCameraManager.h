@@ -69,6 +69,7 @@ public:
         uint8_t     compID          = 0;
         Vehicle*    vehicle         = nullptr;
         int         retryCount      = 0;
+        QTimer*     backoffTimer    = nullptr;
     };
 
 signals:
