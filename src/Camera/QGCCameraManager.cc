@@ -411,6 +411,7 @@ QGCCameraManager::_handleTrackingImageStatus(const mavlink_message_t& message)
 // Forward declarations for mutually recursive handler functions
 static void _requestCameraInfoCommandResultHandler(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, Vehicle::MavCmdResultFailureCode_t failureCode);
 static void _requestCameraInfoMessageResultHandler(void* resultHandlerData, MAV_RESULT result, Vehicle::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message);
+static void _requestCameraInfoHelper(QGCCameraManager* manager, QGCCameraManager::CameraStruct* pInfo);
 
 static void _requestCameraInfoCommandResultHandler(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, Vehicle::MavCmdResultFailureCode_t failureCode)
 {
@@ -419,28 +420,9 @@ static void _requestCameraInfoCommandResultHandler(void* resultHandlerData, int 
     if (ack.result != MAV_RESULT_ACCEPTED) {
         qCDebug(CameraManagerLog) << "MAV_CMD_REQUEST_CAMERA_INFORMATION failed. compId" << cameraInfo->compID << "Result:" << ack.result << "FailureCode:" << failureCode << "retryCount:" << cameraInfo->retryCount;
 
-        // Retry logic - up to 5 attempts
-        if (cameraInfo->retryCount < 5) {
-            cameraInfo->retryCount++;
-
-            // Use REQUEST_MESSAGE on even attempts, legacy REQUEST_CAMERA_INFORMATION on odd
-            if (cameraInfo->retryCount % 2 == 0) {
-                qCDebug(CameraManagerLog) << "Retrying with MAV_CMD_REQUEST_MESSAGE, attempt" << cameraInfo->retryCount;
-                cameraInfo->vehicle->requestMessage(_requestCameraInfoMessageResultHandler, cameraInfo, cameraInfo->compID, MAVLINK_MSG_ID_CAMERA_INFORMATION);
-            } else {
-                qCDebug(CameraManagerLog) << "Retrying with MAV_CMD_REQUEST_CAMERA_INFORMATION, attempt" << cameraInfo->retryCount;
-
-                Vehicle::MavCmdAckHandlerInfo_t ackHandlerInfo;
-                ackHandlerInfo.resultHandler        = _requestCameraInfoCommandResultHandler;
-                ackHandlerInfo.resultHandlerData    = cameraInfo;
-                ackHandlerInfo.progressHandler      = nullptr;
-                ackHandlerInfo.progressHandlerData  = nullptr;
-
-                cameraInfo->vehicle->sendMavCommandWithHandler(&ackHandlerInfo, cameraInfo->compID, MAV_CMD_REQUEST_CAMERA_INFORMATION, 1 /* request camera capabilities */);
-            }
-        } else {
-            qCWarning(CameraManagerLog) << "Giving up requesting camera info after" << cameraInfo->retryCount << "attempts for compId" << cameraInfo->compID;
-        }
+        // Retry logic
+        cameraInfo->retryCount++;
+        _requestCameraInfoHelper(static_cast<QGCCameraManager*>(cameraInfo->parent()), cameraInfo);
     }
 }
 
@@ -451,41 +433,27 @@ static void _requestCameraInfoMessageResultHandler(void* resultHandlerData, MAV_
     if (result != MAV_RESULT_ACCEPTED) {
         qCDebug(CameraManagerLog) << "MAV_CMD_REQUEST_MESSAGE:MAVLINK_MSG_ID_CAMERA_INFORMATION failed. compId" << cameraInfo->compID << "Result:" << result << "FailureCode:" << failureCode << "retryCount:" << cameraInfo->retryCount;
 
-        // Retry logic - up to 5 attempts
-        if (cameraInfo->retryCount < 5) {
-            cameraInfo->retryCount++;
-
-            // Use REQUEST_MESSAGE on even attempts, legacy REQUEST_CAMERA_INFORMATION on odd
-            if (cameraInfo->retryCount % 2 == 0) {
-                qCDebug(CameraManagerLog) << "Retrying with MAV_CMD_REQUEST_MESSAGE, attempt" << cameraInfo->retryCount;
-                cameraInfo->vehicle->requestMessage(_requestCameraInfoMessageResultHandler, cameraInfo, cameraInfo->compID, MAVLINK_MSG_ID_CAMERA_INFORMATION);
-            } else {
-                qCDebug(CameraManagerLog) << "Retrying with MAV_CMD_REQUEST_CAMERA_INFORMATION, attempt" << cameraInfo->retryCount;
-
-                Vehicle::MavCmdAckHandlerInfo_t ackHandlerInfo;
-                ackHandlerInfo.resultHandler        = _requestCameraInfoCommandResultHandler;
-                ackHandlerInfo.resultHandlerData    = cameraInfo;
-                ackHandlerInfo.progressHandler      = nullptr;
-                ackHandlerInfo.progressHandlerData  = nullptr;
-
-                cameraInfo->vehicle->sendMavCommandWithHandler(&ackHandlerInfo, cameraInfo->compID, MAV_CMD_REQUEST_CAMERA_INFORMATION, 1 /* request camera capabilities */);
-            }
-        } else {
-            qCWarning(CameraManagerLog) << "Giving up requesting camera info after" << cameraInfo->retryCount << "attempts for compId" << cameraInfo->compID;
-        }
+        // Retry logic
+        cameraInfo->retryCount++;
+        _requestCameraInfoHelper(static_cast<QGCCameraManager*>(cameraInfo->parent()), cameraInfo);
     }
 }
 
 //-----------------------------------------------------------------------------
-void
-QGCCameraManager::_requestCameraInfo(CameraStruct* pInfo)
+static void _requestCameraInfoHelper(QGCCameraManager* manager, QGCCameraManager::CameraStruct* pInfo)
 {
     qCDebug(CameraManagerLog) << Q_FUNC_INFO << pInfo->compID << "retryCount:" << pInfo->retryCount;
+
+    // Check retry limit
+    if (pInfo->retryCount >= 6) {
+        qCWarning(CameraManagerLog) << "Giving up requesting camera info after" << pInfo->retryCount << "attempts for compId" << pInfo->compID;
+        return;
+    }
 
     // Use REQUEST_MESSAGE on even attempts (including 0), legacy REQUEST_CAMERA_INFORMATION on odd
     if (pInfo->retryCount % 2 == 0) {
         qCDebug(CameraManagerLog) << "Using MAV_CMD_REQUEST_MESSAGE for compId" << pInfo->compID;
-        _vehicle->requestMessage(_requestCameraInfoMessageResultHandler, pInfo, pInfo->compID, MAVLINK_MSG_ID_CAMERA_INFORMATION);
+        manager->vehicle()->requestMessage(_requestCameraInfoMessageResultHandler, pInfo, pInfo->compID, MAVLINK_MSG_ID_CAMERA_INFORMATION);
     } else {
         qCDebug(CameraManagerLog) << "Using MAV_CMD_REQUEST_CAMERA_INFORMATION for compId" << pInfo->compID;
 
@@ -497,6 +465,13 @@ QGCCameraManager::_requestCameraInfo(CameraStruct* pInfo)
 
         pInfo->vehicle->sendMavCommandWithHandler(&ackHandlerInfo, pInfo->compID, MAV_CMD_REQUEST_CAMERA_INFORMATION, 1 /* request camera capabilities */);
     }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraManager::_requestCameraInfo(CameraStruct* pInfo)
+{
+    _requestCameraInfoHelper(this, pInfo);
 }
 
 //----------------------------------------------------------------------------------------
