@@ -157,6 +157,17 @@ void QGCCameraManager::_handleHeartbeat(const mavlink_message_t &message)
             if (pInfo->infoReceived) {
                 //-- We have it. Just update the heartbeat timeout
                 pInfo->lastHeartbeat.start();
+            } else {
+                //-- Camera info not received yet. Check if camera was silent and is now back
+                if (pInfo->lastHeartbeat.elapsed() > 5000) {
+                    qCDebug(CameraManagerLog) << "Camera" << message.compid << "reappeared after being silent. Resetting retry count and requesting info.";
+                    pInfo->retryCount = 0;  // Reset retry count for fresh attempts
+                    pInfo->lastHeartbeat.start();
+                    _requestCameraInfo(pInfo);
+                } else {
+                    //-- Just update heartbeat
+                    pInfo->lastHeartbeat.start();
+                }
             }
         } else {
             qWarning() << Q_FUNC_INFO << "_cameraInfoRequest[" << sCompID << "] is null";
