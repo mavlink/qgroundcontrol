@@ -183,19 +183,19 @@ VehicleCameraControl::_initWhenReady()
         _requestAllParameters();
     }
 
-    QTimer::singleShot(1000, this, &VehicleCameraControl::_requestCameraSettings);
+    QTimer::singleShot(500, this, &VehicleCameraControl::_requestCameraSettings);
     connect(&_cameraSettingsTimer, &QTimer::timeout, this, &VehicleCameraControl::_cameraSettingsTimeout);
 
-    QTimer::singleShot(1500, this, &VehicleCameraControl::_checkForVideoStreams);
+    QTimer::singleShot(1000, this, &VehicleCameraControl::_checkForVideoStreams);
 
     connect(_vehicle, &Vehicle::mavCommandResult, this, &VehicleCameraControl::_mavCommandResult);
 
     connect(&_captureStatusTimer, &QTimer::timeout, this, &VehicleCameraControl::_requestCaptureStatus);
     _captureStatusTimer.setSingleShot(true);
-    _captureStatusTimer.start(2750);
+    _captureStatusTimer.start(1500);
 
     connect(&_storageInfoTimer, &QTimer::timeout, this, &VehicleCameraControl::_storageInfoTimeout);
-    QTimer::singleShot(2500, this, &VehicleCameraControl::_requestStorageInfo);
+    QTimer::singleShot(2000, this, &VehicleCameraControl::_requestStorageInfo);
 
     emit infoChanged();
 
@@ -640,15 +640,17 @@ VehicleCameraControl::stopZoom()
 void
 VehicleCameraControl::_requestCaptureStatus()
 {
-    qCDebug(CameraControlLog) << "_requestCaptureStatus()";
+    qCDebug(CameraControlLog) << "_requestCaptureStatus() - retries:" << _cameraCaptureStatusRetries;
 
     if(_cameraCaptureStatusRetries++ % 2 == 0) {
+        qCDebug(CameraControlLog) << "_requestCaptureStatus() - using REQUEST_MESSAGE";
         _vehicle->sendMavCommand(
             _compID,                                // target component
             MAV_CMD_REQUEST_MESSAGE,                // command id
             false,                                  // showError
             MAVLINK_MSG_ID_CAMERA_CAPTURE_STATUS);  // msgid
     } else {
+        qCDebug(CameraControlLog) << "_requestCaptureStatus() - using legacy MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS";
         _vehicle->sendMavCommand(
             _compID,                                // target component
             MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS,  // command id
@@ -698,7 +700,7 @@ VehicleCameraControl::_mavCommandResult(int vehicleId, int component, int comman
                 _captureStatusTimer.start(1000);
                 break;
             case MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS:
-                _captureInfoRetries = 0;
+                _cameraCaptureStatusRetries = 0;
                 break;
             case MAV_CMD_REQUEST_STORAGE_INFORMATION:
                 _storageInfoRetries = 0;
@@ -721,7 +723,7 @@ VehicleCameraControl::_mavCommandResult(int vehicleId, int component, int comman
                 break;
                 case MAV_CMD_IMAGE_START_CAPTURE:
                 case MAV_CMD_IMAGE_STOP_CAPTURE:
-                    if(++_captureInfoRetries < 5) {
+                    if(++_captureInfoRetries <= 5) {
                         _captureStatusTimer.start(1000);
                     } else {
                         qCDebug(CameraControlLog) << "Giving up start/stop image capture";
@@ -729,15 +731,15 @@ VehicleCameraControl::_mavCommandResult(int vehicleId, int component, int comman
                     }
                     break;
                 case MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS:
-                    if(++_captureInfoRetries < 5) {
-                        _captureStatusTimer.start(500);
+                    if(++_cameraCaptureStatusRetries <= 5) {
+                        _captureStatusTimer.start(1000);
                     } else {
                         qCDebug(CameraControlLog) << "Giving up requesting capture status";
                     }
                     break;
                 case MAV_CMD_REQUEST_STORAGE_INFORMATION:
-                    if(++_storageInfoRetries < 5) {
-                        QTimer::singleShot(500, this, &VehicleCameraControl::_requestStorageInfo);
+                    if(++_storageInfoRetries <= 5) {
+                        QTimer::singleShot(1000, this, &VehicleCameraControl::_requestStorageInfo);
                     } else {
                         qCDebug(CameraControlLog) << "Giving up requesting storage status";
                     }
@@ -1561,6 +1563,9 @@ void
 VehicleCameraControl::handleCaptureStatus(const mavlink_camera_capture_status_t& cap)
 {
     //-- This is a response to MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS
+    qCDebug(CameraControlLog) << "handleCaptureStatus() - stopping timer, resetting retries";
+    _captureStatusTimer.stop();
+    _cameraCaptureStatusRetries = 0;
     qCDebug(CameraControlLog).noquote() << "handleCaptureStatus:"
         << "\n\tImage status:" << captureImageStatusToStr(cap.image_status)
         << "\n\tVideo status:" << captureVideoStatusToStr(cap.video_status)
@@ -1639,13 +1644,14 @@ VehicleCameraControl::handleVideoInfo(const mavlink_video_stream_information_t* 
 void
 VehicleCameraControl::handleVideoStatus(const mavlink_video_stream_status_t* vs)
 {
+    qCDebug(CameraControlLog) << "handleVideoStatus() - stopping timer, resetting retries";
     _streamStatusTimer.stop();
+    _videoStreamStatusRetries = 0;
     qCDebug(CameraControlLog) << "handleVideoStatus:" << vs->stream_id;
     QGCVideoStreamInfo* pInfo = _findStream(vs->stream_id);
     if(pInfo) {
         pInfo->update(*vs);
     }
-    _videoStreamStatusRetries = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -1793,10 +1799,11 @@ VehicleCameraControl::thermalStreamInstance()
 void
 VehicleCameraControl::_requestStreamInfo(uint8_t streamID)
 {
-    qCDebug(CameraControlLog) << "Requesting video stream info for:" << streamID;
+    qCDebug(CameraControlLog) << "_requestStreamInfo() - stream:" << streamID << "retries:" << _videoStreamInfoRetries;
     // By default, try to use new REQUEST_MESSAGE command instead of
     // deprecated MAV_CMD_REQUEST_VIDEO_STREAM_INFORMATION.
     if (_videoStreamInfoRetries % 2 == 0) {
+        qCDebug(CameraControlLog) << "_requestStreamInfo() - using REQUEST_MESSAGE";
         _vehicle->sendMavCommand(
             _compID,                                         // target component
             MAV_CMD_REQUEST_MESSAGE,                        // command id
@@ -1804,6 +1811,7 @@ VehicleCameraControl::_requestStreamInfo(uint8_t streamID)
             MAVLINK_MSG_ID_VIDEO_STREAM_INFORMATION,        // msgid
             streamID);                                      // stream ID
     } else {
+        qCDebug(CameraControlLog) << "_requestStreamInfo() - using legacy MAV_CMD_REQUEST_VIDEO_STREAM_INFORMATION";
         _vehicle->sendMavCommand(
             _compID,                                            // Target component
             MAV_CMD_REQUEST_VIDEO_STREAM_INFORMATION,           // Command id
@@ -1817,10 +1825,11 @@ VehicleCameraControl::_requestStreamInfo(uint8_t streamID)
 void
 VehicleCameraControl::_requestStreamStatus(uint8_t streamID)
 {
-    qCDebug(CameraControlLog) << "Requesting video stream status for:" << streamID;
+    qCDebug(CameraControlLog) << "_requestStreamStatus() - stream:" << streamID << "retries:" << _videoStreamStatusRetries;
     // By default, try to use new REQUEST_MESSAGE command instead of
     // deprecated MAV_CMD_REQUEST_VIDEO_STREAM_STATUS.
     if (_videoStreamStatusRetries % 2 == 0) {
+        qCDebug(CameraControlLog) << "_requestStreamStatus() - using REQUEST_MESSAGE";
         _vehicle->sendMavCommand(
             _compID,                                         // target component
             MAV_CMD_REQUEST_MESSAGE,                        // command id
@@ -1828,6 +1837,7 @@ VehicleCameraControl::_requestStreamStatus(uint8_t streamID)
             MAVLINK_MSG_ID_VIDEO_STREAM_STATUS,             // msgid
             streamID);                                      // stream id
     } else {
+        qCDebug(CameraControlLog) << "_requestStreamStatus() - using legacy MAV_CMD_REQUEST_VIDEO_STREAM_STATUS";
         _vehicle->sendMavCommand(
             _compID,                                            // Target component
             MAV_CMD_REQUEST_VIDEO_STREAM_STATUS,                // Command id
@@ -1881,7 +1891,7 @@ void
 VehicleCameraControl::_streamInfoTimeout()
 {
     _videoStreamInfoRetries++;
-    int count = _expectedCount * 5;
+    int count = _expectedCount * 6;
     if(_videoStreamInfoRetries > count) {
         qCWarning(CameraControlLog) << "Giving up requesting video stream info";
         _streamInfoTimer.stop();
