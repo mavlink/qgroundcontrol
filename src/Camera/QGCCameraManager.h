@@ -57,6 +57,9 @@ public:
     /// Returns a list of CameraMetaData objects for available cameras on the vehicle.
     virtual const QVariantList &cameraList();
 
+    // Helper method for static functions to access vehicle
+    Vehicle* vehicle() const { return _vehicle; }
+
     // This is public to avoid some circular include problems caused by statics
     class CameraStruct : public QObject {
     public:
