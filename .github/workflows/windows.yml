@@ -118,9 +118,9 @@ jobs:
         working-directory: ${{ runner.temp }}\shadow_build_dir
         run: cmake --build . --target all --config ${{ matrix.BuildType }} --parallel
 
-      - name: Sanity check release excecutable
+      - name: Sanity check release executable
         if: matrix.BuildType == 'Release'
-        working-directory: ${{ runner.temp }}\shadow_build_dir\Release
+        working-directory: ${{ runner.temp }}\shadow_build_dir\${{ matrix.BuildType }}
         run: QGroundControl.exe --simple-boot-test
 
       - name: Install
