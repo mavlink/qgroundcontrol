@@ -40,6 +40,9 @@
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
 
+    <key>NSHighResolutionCapable</key>
+    <true/>
+
     <key>NSSupportsAutomaticGraphicsSwitching</key>
     <true/>
 
@@ -55,9 +58,14 @@
     <string>Bluetooth is used to connect to vehicles</string>
     <key>NSCameraUsageDescription</key>
     <string>Camera devices used for FPV</string>
+    <key>NSCameraUseContinuityCameraDeviceType</key>
+    <true/>
     <key>NSLocationUsageDescription</key>
     <string>Location used for ground control station position</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>Qt Multimedia for MacOS uses the camera and microphone.</string>
+
+    <key>NSAppSleepDisabled</key>
+    <true/>
 </dict>
 </plist>

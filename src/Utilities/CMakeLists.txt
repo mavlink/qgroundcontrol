@@ -8,14 +8,16 @@ target_sources(${CMAKE_PROJECT_NAME}
         FileSystem/QGCCachedFileDownload.h
         FileSystem/QGCFileDownload.cc
         FileSystem/QGCFileDownload.h
+        FileSystem/QGCTemporaryFile.cc
+        FileSystem/QGCTemporaryFile.h
+        Platform.cc
+        Platform.h
         QGC.cc
         QGC.h
         QGCLogging.cc
         QGCLogging.h
         QGCLoggingCategory.cc
         QGCLoggingCategory.h
-        FileSystem/QGCTemporaryFile.cc
-        FileSystem/QGCTemporaryFile.h
         StateMachine.cc
         StateMachine.h
 )
