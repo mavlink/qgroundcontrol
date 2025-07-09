@@ -2,9 +2,10 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import QGroundControl.Palette
+import QGroundControl
+
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
+
 
 Rectangle {
     id: _root

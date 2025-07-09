@@ -31,6 +31,8 @@ public:
     GimbalController(Vehicle *vehicle);
     ~GimbalController();
 
+    static void registerQmlTypes();
+
     Gimbal *activeGimbal() const { return _activeGimbal; }
     QmlObjectListModel *gimbals() const { return _gimbals; }
 

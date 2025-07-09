@@ -57,8 +57,8 @@ JoystickManager *JoystickManager::instance()
 
 void JoystickManager::registerQmlTypes()
 {
-    (void) qmlRegisterUncreatableType<JoystickManager>("QGroundControl.JoystickManager", 1, 0, "JoystickManager", "Reference only");
-    (void) qmlRegisterUncreatableType<Joystick>("QGroundControl.JoystickManager", 1, 0, "Joystick", "Reference only");
+    (void) qmlRegisterUncreatableType<JoystickManager>("QGroundControl", 1, 0, "JoystickManager", "Reference only");
+    (void) qmlRegisterUncreatableType<Joystick>("QGroundControl", 1, 0, "Joystick", "Reference only");
 }
 
 void JoystickManager::init()

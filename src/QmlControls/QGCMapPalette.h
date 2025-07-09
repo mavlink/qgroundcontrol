@@ -14,28 +14,9 @@
 #include <QtGui/QColor>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-/*!
- QGCMapPalette is a variant of QGCPalette which is used to hold colors used for display over
- the map control. Since the coloring of a satellite map differs greatly from the coloring of
- a street map you need to be able to switch between sets of color based on map type.
-
- Usage:
-
-        import QGroundControl.Palette 1.0
-
-        FlightMap {
-            id:             map
-            anchors.fill:   parent
-
-            QGCMapPalette { id: mapPal: lightColors: map.isSatelliteMap }
-
-            QGCLabel {
-                text:   "Text over map"
-                color:  mapPal.text
-            }
-        }
-**/
-
+/// QGCMapPalette is a variant of QGCPalette which is used to hold colors used for display over
+/// the map control. Since the coloring of a satellite map differs greatly from the coloring of
+/// a street map you need to be able to switch between sets of color based on map type.
 class QGCMapPalette : public QObject
 {
     Q_OBJECT

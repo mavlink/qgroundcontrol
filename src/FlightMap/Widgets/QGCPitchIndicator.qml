@@ -7,15 +7,9 @@
  *
  ****************************************************************************/
 
-
-/**
- * @file
- *   @brief QGC Pitch Indicator
- *   @author Gus Grubba <gus@auterion.com>
- */
-
 import QtQuick
-import QGroundControl.ScreenTools
+
+import QGroundControl
 import QGroundControl.Controls
 
 Rectangle {

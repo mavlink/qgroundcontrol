@@ -9,6 +9,9 @@
 
 import QtQml
 
+import QGroundControl
+import QGroundControl.Controls
+
 QtObject {
     property var guidedController
 

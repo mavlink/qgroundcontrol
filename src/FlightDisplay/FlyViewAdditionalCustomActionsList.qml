@@ -9,6 +9,9 @@
 
 import QtQuick
 
+import QGroundControl
+import QGroundControl.Controls
+
 // Custom builds can override this resource to add additional custom actions
 Item {
     visible: false

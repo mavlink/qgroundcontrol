@@ -1,5 +1,8 @@
 import QtQuick
 
+import QGroundControl
+import QGroundControl.Controls
+
 Item {
     id: root
     // Setable propterties

@@ -13,7 +13,7 @@
 
 DECLARE_SETTINGGROUP(Units, "Units")
 {
-    qmlRegisterUncreatableType<UnitsSettings>("QGroundControl.SettingsManager", 1, 0, "UnitsSettings", "Reference only");
+    qmlRegisterUncreatableType<UnitsSettings>("QGroundControl", 1, 0, "UnitsSettings", "Reference only");
 }
 
 DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, horizontalDistanceUnits)

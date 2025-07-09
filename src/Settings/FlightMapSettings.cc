@@ -13,7 +13,7 @@
 
 DECLARE_SETTINGGROUP(FlightMap, "FlightMap")
 {
-    qmlRegisterUncreatableType<FlightMapSettings>("QGroundControl.SettingsManager", 1, 0, "FlightMapSettings", "Reference only");
+    qmlRegisterUncreatableType<FlightMapSettings>("QGroundControl", 1, 0, "FlightMapSettings", "Reference only");
 }
 
 DECLARE_SETTINGSFACT(FlightMapSettings, mapProvider)

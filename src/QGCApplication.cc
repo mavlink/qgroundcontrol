@@ -37,19 +37,16 @@
 #include "QGCLogging.h"
 #include "AudioOutput.h"
 #include "AutoPilotPlugin.h"
+#include "AnalyzeView.h"
 #include "CmdLineOptParser.h"
-#include "ESP8266ComponentController.h"
 #include "FollowMe.h"
-#include "GeoTagController.h"
 #include "GimbalController.h"
 #include "GPSRtk.h"
 #include "JoystickConfigController.h"
 #include "JoystickManager.h"
 #include "JsonHelper.h"
 #include "LinkManager.h"
-#include "LogDownloadController.h"
-#include "MAVLinkChartController.h"
-#include "MAVLinkConsoleController.h"
+
 #include "MAVLinkProtocol.h"
 #include "MissionManager.h"
 #include "MultiVehicleManager.h"
@@ -64,15 +61,11 @@
 #include "SettingsManager.h"
 #include "AppSettings.h"
 #include "ShapeFileHelper.h"
-#include "SyslinkComponentController.h"
 #include "UDPLink.h"
 #include "Vehicle.h"
 #include "VehicleComponent.h"
 #include "VideoManager.h"
 
-#ifndef QGC_DISABLE_MAVLINK_INSPECTOR
-#include "MAVLinkInspectorController.h"
-#endif
 #ifdef QGC_VIEWER3D
 #include "Viewer3DManager.h"
 #endif
@@ -82,13 +75,6 @@
 #endif
 
 QGC_LOGGING_CATEGORY(QGCApplicationLog, "qgc.qgcapplication")
-
-// Qml Singleton factories
-
-static QObject *mavlinkSingletonFactory(QQmlEngine*, QJSEngine*)
-{
-    return new QGCMAVLink();
-}
 
 QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting, bool simpleBootTest)
     : QApplication(argc, argv)
@@ -260,11 +246,14 @@ void QGCApplication::init()
 {
     SettingsManager::instance()->init();
 
+    AutoPilotPlugin::registerQmlTypes();
+    AnalyzeView::registerQmlTypes();
     LinkManager::registerQmlTypes();
     ParameterManager::registerQmlTypes();
     QGroundControlQmlGlobal::registerQmlTypes();
     MissionManager::registerQmlTypes();
     QGCCameraManager::registerQmlTypes();
+    GimbalController::registerQmlTypes();
     MultiVehicleManager::registerQmlTypes();
     QGCPositionManager::registerQmlTypes();
     SettingsManager::registerQmlTypes();
@@ -276,31 +265,14 @@ void QGCApplication::init()
     Viewer3DManager::registerQmlTypes();
 #endif
 
-    qmlRegisterUncreatableType<GimbalController>("QGroundControl.Vehicle", 1, 0, "GimbalController", "Reference only");
-
-#ifndef QGC_DISABLE_MAVLINK_INSPECTOR
-    qmlRegisterUncreatableType<MAVLinkChartController>("QGroundControl", 1, 0, "MAVLinkChart", "Reference only");
-    qmlRegisterType<MAVLinkInspectorController>("QGroundControl.Controllers", 1, 0, "MAVLinkInspectorController");
-#endif
-    qmlRegisterType<GeoTagController>("QGroundControl.Controllers", 1, 0, "GeoTagController");
-    qmlRegisterType<LogDownloadController>("QGroundControl.Controllers", 1, 0, "LogDownloadController");
-    qmlRegisterType<MAVLinkConsoleController>("QGroundControl.Controllers", 1, 0, "MAVLinkConsoleController");
-
-
-    qmlRegisterUncreatableType<AutoPilotPlugin>("QGroundControl.AutoPilotPlugin", 1, 0, "AutoPilotPlugin", "Reference only");
-    qmlRegisterType<ESP8266ComponentController>("QGroundControl.Controllers", 1, 0, "ESP8266ComponentController");
-    qmlRegisterType<SyslinkComponentController>("QGroundControl.Controllers", 1, 0, "SyslinkComponentController");
-
-
-    qmlRegisterUncreatableType<VehicleComponent>("QGroundControl.AutoPilotPlugin", 1, 0, "VehicleComponent", "Reference only");
 #ifndef QGC_NO_SERIAL_LINK
     qmlRegisterType<FirmwareUpgradeController>("QGroundControl.Controllers", 1, 0, "FirmwareUpgradeController");
 #endif
     qmlRegisterType<JoystickConfigController>("QGroundControl.Controllers", 1, 0, "JoystickConfigController");
 
-    (void) qmlRegisterSingletonType<ShapeFileHelper>("QGroundControl.ShapeFileHelper", 1, 0, "ShapeFileHelper", [](QQmlEngine *, QJSEngine *) { return new ShapeFileHelper(); });
+    (void) qmlRegisterSingletonType<ShapeFileHelper>("QGroundControl", 1, 0, "ShapeFileHelper", [](QQmlEngine *, QJSEngine *) { return new ShapeFileHelper(); });
 
-    qmlRegisterSingletonType<QGCMAVLink>("MAVLink", 1, 0, "MAVLink", mavlinkSingletonFactory);
+    (void) qmlRegisterSingletonType<QGCMAVLink>("QGroundControl", 1, 0, "MAVLink", [](QQmlEngine *, QJSEngine *) { return new QGCMAVLink(); });
 
     // Although this should really be in _initForNormalAppBoot putting it here allowws us to create unit tests which pop up more easily
     if(QFontDatabase::addApplicationFont(":/fonts/opensans") < 0) {

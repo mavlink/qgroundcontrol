@@ -65,11 +65,11 @@ ParameterManager::~ParameterManager()
 
 void ParameterManager::registerQmlTypes()
 {
-    (void) qmlRegisterType<Fact>("QGroundControl.FactSystem", 1, 0, "Fact");
-    (void) qmlRegisterType<FactMetaData>("QGroundControl.FactSystem", 1, 0, "FactMetaData");
-    (void) qmlRegisterType<FactPanelController>("QGroundControl.FactSystem", 1, 0, "FactPanelController");
+    (void) qmlRegisterType<Fact>("QGroundControl", 1, 0, "Fact");
+    (void) qmlRegisterType<FactMetaData>("QGroundControl", 1, 0, "FactMetaData");
+    (void) qmlRegisterType<FactPanelController>("QGroundControl", 1, 0, "FactPanelController");
 
-    (void) qmlRegisterUncreatableType<FactGroup>("QGroundControl.FactSystem", 1, 0, "FactGroup", "Reference only");
+    (void) qmlRegisterUncreatableType<FactGroup>("QGroundControl", 1, 0, "FactGroup", "Reference only");
     (void) qmlRegisterUncreatableType<FactValueSliderListModel>("QGroundControl.FactControls", 1, 0, "FactValueSliderListModel", "Reference only");
     (void) qmlRegisterUncreatableType<ParameterManager>("QGroundControl.Vehicle", 1, 0, "ParameterManager", "Reference only");
 }

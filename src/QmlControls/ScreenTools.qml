@@ -5,26 +5,8 @@ import QtQuick.Controls
 import QtQuick.Window
 
 import QGroundControl
-import QGroundControl.ScreenToolsController
+import QGroundControl.Controls
 
-/*!
- The ScreenTools Singleton provides information on QGC's standard font metrics. It also provides information on screen
- size which can be used to adjust user interface for varying available screen real estate.
-
- QGC has four standard font sizes: default, small, medium and large. The QGC controls use the default font for display and you should use this font
- for most text within the system that is drawn using something other than a standard QGC control. The small font is smaller than the default font.
- The medium and large fonts are larger than the default font.
-
- Usage:
-
-        import QGroundControl.ScreenTools
-
-        Rectangle {
-            anchors.fill:       parent
-            anchors.margins:    ScreenTools.defaultFontPixelWidth
-            ...
-        }
-*/
 Item {
     id: _screenTools
 

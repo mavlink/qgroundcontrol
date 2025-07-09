@@ -13,7 +13,7 @@
 
 DECLARE_SETTINGGROUP(FirmwareUpgrade, "FirmwareUpgrade")
 {
-    qmlRegisterUncreatableType<FirmwareUpgradeSettings>("QGroundControl.SettingsManager", 1, 0, "FirmwareUpgradeSettings", "Reference only");
+    qmlRegisterUncreatableType<FirmwareUpgradeSettings>("QGroundControl", 1, 0, "FirmwareUpgradeSettings", "Reference only");
 }
 
 DECLARE_SETTINGSFACT(FirmwareUpgradeSettings, defaultFirmwareType)

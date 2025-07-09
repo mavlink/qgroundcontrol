@@ -2,8 +2,9 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import QGroundControl.ScreenTools
-import QGroundControl.Palette
+import QGroundControl
+import QGroundControl.Controls
+
 
 ColumnLayout {
     id:         _root

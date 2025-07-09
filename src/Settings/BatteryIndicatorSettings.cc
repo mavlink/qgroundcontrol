@@ -14,7 +14,7 @@
 
 DECLARE_SETTINGGROUP(BatteryIndicator, "BatteryIndicator")
 {
-    qmlRegisterUncreatableType<BatteryIndicatorSettings>("QGroundControl.SettingsManager", 1, 0, "BatteryIndicatorSettings", "Reference only");
+    qmlRegisterUncreatableType<BatteryIndicatorSettings>("QGroundControl", 1, 0, "BatteryIndicatorSettings", "Reference only");
 }
 
 DECLARE_SETTINGSFACT(BatteryIndicatorSettings, valueDisplay)

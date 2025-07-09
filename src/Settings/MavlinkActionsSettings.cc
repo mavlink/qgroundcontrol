@@ -16,7 +16,7 @@
 
 DECLARE_SETTINGGROUP(MavlinkActions, "MavlinkActions")
 {
-    qmlRegisterUncreatableType<MavlinkActionsSettings>("QGroundControl.SettingsManager", 1, 0, "MavlinkActionsSettings", "Reference only");
+    qmlRegisterUncreatableType<MavlinkActionsSettings>("QGroundControl", 1, 0, "MavlinkActionsSettings", "Reference only");
 
     // Notify the user of new Fly View mavlink actions support
     QSettings deprecatedSettings;

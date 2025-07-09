@@ -6,8 +6,8 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FactControls
-import QGroundControl.FactSystem
-import QGroundControl.ScreenTools
+
+
 import QGroundControl.AutoPilotPlugins.PX4
 
 SetupPage {

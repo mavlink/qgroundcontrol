@@ -15,10 +15,10 @@ import QtQuick.Window
 import QtCharts
 
 import QGroundControl
-import QGroundControl.Palette
+
 import QGroundControl.Controls
 import QGroundControl.Controllers
-import QGroundControl.ScreenTools
+
 
 AnalyzePage {
     id: root

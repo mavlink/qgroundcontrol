@@ -42,7 +42,7 @@ QGCMapEngineManager::QGCMapEngineManager(QObject *parent)
     : QObject(parent)
     , _tileSets(new QmlObjectListModel(this))
 {
-    (void) qmlRegisterUncreatableType<QGCMapEngineManager>("QGroundControl.QGCMapEngineManager", 1, 0, "QGCMapEngineManager", "Reference only");
+    (void) qmlRegisterUncreatableType<QGCMapEngineManager>("QGroundControl", 1, 0, "QGCMapEngineManager", "Reference only");
 
     (void) connect(getQGCMapEngine(), &QGCMapEngine::updateTotals, this, &QGCMapEngineManager::_updateTotals);
 

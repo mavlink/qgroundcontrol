@@ -11,7 +11,8 @@
 import QtQuick
 import QtLocation
 
-import QGroundControl.ScreenTools
+
+import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.Vehicle
 

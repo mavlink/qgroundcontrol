@@ -1,5 +1,6 @@
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
+        AnalyzeView.h
         ExifParser.cc
         ExifParser.h
         GeoTagController.cc

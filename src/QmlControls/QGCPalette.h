@@ -70,24 +70,10 @@
     } \
     void SETNAME(const QColor& color) { _colorInfoMap[_theme][_colorGroupEnabled  ? ColorGroupEnabled : ColorGroupDisabled][QStringLiteral(#NAME)] = color; _signalPaletteChangeToAll(); }
 
-/*!
- QGCPalette is used in QML ui to expose color properties for the QGC palette. There are two
- separate palettes in QGC, light and dark. The light palette is for outdoor use and the dark
- palette is for indoor use. Each palette also has a set of different colors for enabled and
- disabled states.
-
- Usage:
-
-        import QGroundControl.Palette 1.0
-
-        Rectangle {
-            anchors.fill:   parent
-            color:          qgcPal.window
-
-            QGCPalette { id: qgcPal: colorGroupEnabled: enabled }
-        }
-*/
-
+/// QGCPalette is used in QML ui to expose color properties for the QGC palette. There are two
+/// separate palettes in QGC, light and dark. The light palette is for outdoor use and the dark
+/// palette is for indoor use. Each palette also has a set of different colors for enabled and
+/// disabled states.
 class QGCPalette : public QObject
 {
     Q_OBJECT

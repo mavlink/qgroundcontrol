@@ -20,7 +20,6 @@ cmake_dependent_option(QGC_DEBUG_QML "Build QGroundControl with QML debugging/pr
 # Features
 option(QGC_UTM_ADAPTER "Enable UTM Adapter" OFF)
 option(QGC_VIEWER3D "Enable Viewer3D" ON) # Qt6Quick3D_FOUND
-# option(QGC_DISABLE_MAVLINK_INSPECTOR "Disable Mavlink Inspector" OFF) # This removes QtCharts which is GPL licensed
 
 # Comms
 option(QGC_ENABLE_BLUETOOTH "Enable Bluetooth Links" ON) # Qt6Bluetooth_FOUND

@@ -229,6 +229,12 @@ qt_add_qml_module(${CMAKE_PROJECT_NAME}
     URI QGroundControl
     VERSION 1.0
     RESOURCE_PREFIX /qml
+    IMPORTS
+        QtQuick
+        QtQuick.Controls
+        QtQuick.Dialogs
+        QtQuick.Layouts
+        QtQuick.Window
 )
 
 file(GLOB TS_SOURCES ${CMAKE_SOURCE_DIR}/translations/qgc_*.ts)

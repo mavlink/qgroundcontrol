@@ -1,6 +1,8 @@
 import QtQuick
 import QtQuick.Controls
 
+import QGroundControl
+import QGroundControl.Controls
 
 /// The ExclusiveGroupItem control can be used as a base class for a control which
 /// needs support for ButtonGroup

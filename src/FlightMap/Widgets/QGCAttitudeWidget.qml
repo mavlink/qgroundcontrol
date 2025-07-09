@@ -7,20 +7,13 @@
  *
  ****************************************************************************/
 
-
-/**
- * @file
- *   @brief QGC Attitude Instrument
- *   @author Gus Grubba <gus@auterion.com>
- */
-
 import QtQuick
 import QtQuick.Effects
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
-import QGroundControl.Palette
+
+
 
 Item {
     id: root

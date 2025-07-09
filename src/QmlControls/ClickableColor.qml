@@ -3,6 +3,9 @@ import QtQuick.Controls
 import QtQuick.Dialogs
 import Qt.labs.platform
 
+import QGroundControl
+import QGroundControl.Controls
+
 Rectangle {
     id:             _root
     width:          80

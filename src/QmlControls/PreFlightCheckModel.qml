@@ -10,6 +10,9 @@
 import QtQuick
 import QtQml.Models
 
+import QGroundControl
+import QGroundControl.Controls
+
 ObjectModel {
     id: _root
     property bool enforceOrder: true

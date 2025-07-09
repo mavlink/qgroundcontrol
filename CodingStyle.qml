@@ -12,9 +12,9 @@ import QtQuick
 import QtQuick.Controls
 
 import QGroundControl
-import QGroundControl.ScreenTools
+
 import QGroundControl.Controls
-import QGroundControl.Palette
+
 
 /// This is an example Qml file which is used to describe the QGroundControl coding style.
 /// In general almost everything in here has some coding style meaning including order of

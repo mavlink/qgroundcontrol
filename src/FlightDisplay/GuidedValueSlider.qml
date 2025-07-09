@@ -14,9 +14,9 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.Vehicle
-import QGroundControl.Palette
-import QGroundControl.ScreenTools
-import QGroundControl.SettingsManager
+
+
+
 
 Item {
     id:     control

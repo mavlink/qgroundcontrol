@@ -13,7 +13,7 @@
 
 DECLARE_SETTINGGROUP(PlanView, "PlanView")
 {
-    qmlRegisterUncreatableType<PlanViewSettings>("QGroundControl.SettingsManager", 1, 0, "PlanViewSettings", "Reference only"); \
+    qmlRegisterUncreatableType<PlanViewSettings>("QGroundControl", 1, 0, "PlanViewSettings", "Reference only"); \
 }
 
 DECLARE_SETTINGSFACT(PlanViewSettings, displayPresetsTabFirst)

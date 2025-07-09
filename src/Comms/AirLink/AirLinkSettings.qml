@@ -16,9 +16,9 @@ import QGroundControl
 import QGroundControl.Controllers
 import QGroundControl.Controls
 import QGroundControl.FactControls
-import QGroundControl.FactSystem
-import QGroundControl.ScreenTools
-import QGroundControl.SettingsManager
+
+
+
 
 ColumnLayout {
     spacing: _rowSpacing

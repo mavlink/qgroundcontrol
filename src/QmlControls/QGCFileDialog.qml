@@ -5,8 +5,8 @@ import QtQuick.Layouts
 import Qt.labs.platform as Labs
 
 import QGroundControl
-import QGroundControl.ScreenTools
-import QGroundControl.Palette
+import QGroundControl.Controls
+
 import QGroundControl.Controllers
 
 /// This control is meant to be a direct replacement for the standard Qml FileDialog control.

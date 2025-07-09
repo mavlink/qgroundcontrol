@@ -11,9 +11,9 @@
 import QtQuick
 
 import QGroundControl
-import QGroundControl.ScreenTools
+
 import QGroundControl.Controls
-import QGroundControl.Palette
+
 import QGroundControl.Vehicle
 
 Item {

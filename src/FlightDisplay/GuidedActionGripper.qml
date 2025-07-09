@@ -7,8 +7,9 @@
  *
  ****************************************************************************/
 
-import QGroundControl.FlightDisplay
 import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.FlightDisplay
 
 GuidedToolStripAction {
     property var   activeVehicle:           QGroundControl.multiVehicleManager.activeVehicle 

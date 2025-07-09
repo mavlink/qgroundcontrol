@@ -13,8 +13,11 @@
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 #include "VehicleComponent.h"
+#include "ESP8266ComponentController.h"
+#include "SyslinkComponentController.h"
 
 #include <QtCore/QCoreApplication>
+#include <QtQml/QQmlEngine>
 
 QGC_LOGGING_CATEGORY(AutoPilotPluginLog, "qgc.autopilotplugin.autopilotplugin");
 
@@ -29,6 +32,15 @@ AutoPilotPlugin::AutoPilotPlugin(Vehicle *vehicle, QObject *parent)
 AutoPilotPlugin::~AutoPilotPlugin()
 {
     // qCDebug(AutoPilotPluginLog) << Q_FUNC_INFO << this;
+}
+
+void AutoPilotPlugin::registerQmlTypes()
+{
+    (void) qmlRegisterUncreatableType<AutoPilotPlugin>("QGroundControl.AutoPilotPlugins", 1, 0, "AutoPilotPlugin", QStringLiteral("Reference only"));
+    (void) qmlRegisterType<ESP8266ComponentController>("QGroundControl.Controllers", 1, 0, "ESP8266ComponentController");
+    (void) qmlRegisterType<SyslinkComponentController>("QGroundControl.Controllers", 1, 0, "SyslinkComponentController");
+
+    (void) qmlRegisterUncreatableType<VehicleComponent>("QGroundControl.AutoPilotPlugins", 1, 0, "VehicleComponent", QStringLiteral("Reference only"));
 }
 
 void AutoPilotPlugin::_recalcSetupComplete()

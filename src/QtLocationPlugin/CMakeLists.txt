@@ -99,7 +99,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCLocation)
 #       QGroundControl.ScreenTools
 #       QGroundControl.Palette
 #       QGroundControl.FlightMap
-#       QGroundControl.QGCMapEngineManager
 #       QGroundControl.FactSystem
 #       QGroundControl.FactControls
 # )
