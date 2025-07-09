@@ -1,4 +1,5 @@
 add_subdirectory(AppSettings)
+add_subdirectory(FirstRunPromptDialogs)
 add_subdirectory(toolbar)
 
 qt_add_library(MainWindowModule STATIC)

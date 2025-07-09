@@ -1,11 +1,4 @@
 <RCC>
-    <qresource prefix="/qml">
-        <file alias="AirLinkSettings.qml">src/Comms/AirLink/AirLinkSettings.qml</file>
-    </qresource>
-    <qresource prefix="/FirstRunPromptDialogs">
-        <file alias="UnitsFirstRunPrompt.qml">src/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml</file>
-        <file alias="OfflineVehicleFirstRunPrompt.qml">src/FirstRunPromptDialogs/OfflineVehicleFirstRunPrompt.qml</file>
-    </qresource>
     <qresource prefix="/json">
         <file alias="ADSBVehicleManager.SettingsGroup.json">src/Settings/ADSBVehicleManager.SettingsGroup.json</file>
         <file alias="APMMavlinkStreamRate.SettingsGroup.json">src/Settings/APMMavlinkStreamRate.SettingsGroup.json</file>
