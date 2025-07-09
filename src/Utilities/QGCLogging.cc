@@ -18,6 +18,25 @@
 #include <QtCore/QStringListModel>
 #include <QtCore/QTextStream>
 
+#ifdef Q_OS_WIN
+
+#include <crtdbg.h>
+#include <windows.h>
+#include <iostream>
+
+/// CRT Report Hook installed using _CrtSetReportHook. We install this hook when
+/// we don't want asserts to pop a dialog on windows.
+static int WindowsCrtReportHook(int reportType, char *message, int *returnValue)
+{
+    Q_UNUSED(reportType);
+
+    std::cerr << message << std::endl;  // Output message to stderr
+    *returnValue = 0;                   // Don't break into debugger
+    return true;                        // We handled this fully ourselves
+}
+
+#endif
+
 QGC_LOGGING_CATEGORY(QGCLoggingLog, "QGCLoggingLog")
 
 Q_GLOBAL_STATIC(QGCLogging, _qgcLogging)
@@ -69,8 +88,16 @@ QGCLogging::QGCLogging(QObject *parent)
     (void) connect(this, &QGCLogging::emitLog, this, &QGCLogging::_threadsafeLog, conntype);
 }
 
-void QGCLogging::installHandler()
+void QGCLogging::installHandler(bool quietWindowsAsserts)
 {
+#ifdef Q_OS_WIN
+    if (quietWindowsAsserts) {
+        _CrtSetReportHook(WindowsCrtReportHook);
+    }
+#else
+    Q_UNUSED(quietWindowsAsserts)
+#endif
+
     // Define the format for qDebug/qWarning/etc output
     qSetMessagePattern(QStringLiteral("%{time process} - %{type}: %{message} (%{category}:%{function}:%{line})"));
 
