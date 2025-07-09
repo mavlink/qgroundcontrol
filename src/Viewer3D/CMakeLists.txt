@@ -36,7 +36,7 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_VIEWER3D)
 
 qt_add_library(Viewer3DModule STATIC)
 
-set_source_files_properties(Images/city_3d_map_icon.svg PROPERTIES QT_RESOURCE_ALIAS Viewer3D/City3DMapIcon.svg)
+set_source_files_properties(Images/city_3d_map_icon.svg PROPERTIES QT_RESOURCE_ALIAS City3DMapIcon.svg)
 set_source_files_properties(Shaders/earthMaterial.frag PROPERTIES QT_RESOURCE_ALIAS ShaderFragment/earthMaterial.frag)
 set_source_files_properties(Shaders/earthMaterial.vert PROPERTIES QT_RESOURCE_ALIAS ShaderVertex/earthMaterial.vert)
 
