@@ -16,9 +16,13 @@ inputs:
   github_token:
     description: GitHub Token
     required: false
+  upload_aws:
+    description: Upload artifact to AWS
+    required: true
+    default: true
 
 runs:
-  using: "composite"
+  using: composite
   steps:
     - name: Save artifact
       uses: actions/upload-artifact@v4
@@ -27,7 +31,7 @@ runs:
         path: ${{ runner.temp }}/shadow_build_dir/${{ inputs.artifact_name }}
 
     - name: Configure AWS Credentials
-      if: ${{ github.event_name == 'push' && !github.event.pull_request.head.repo.fork && inputs.aws_key_id != '' && inputs.aws_secret_access_key != '' }}
+      if: ${{ inputs.upload_aws && github.event_name == 'push' && !github.event.pull_request.head.repo.fork && inputs.aws_key_id != '' && inputs.aws_secret_access_key != '' }}
       uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-access-key-id: ${{ inputs.aws_key_id }}
@@ -35,13 +39,13 @@ runs:
         aws-region: us-west-2
 
     - name: Upload stable build to S3 Bucket
-      if: ${{ github.event_name == 'push' && !github.event.pull_request.head.repo.fork && inputs.aws_key_id != '' && inputs.aws_secret_access_key != '' }}
+      if: ${{ inputs.upload_aws && github.event_name == 'push' && !github.event.pull_request.head.repo.fork && inputs.aws_key_id != '' && inputs.aws_secret_access_key != '' }}
       working-directory: ${{ runner.temp }}/shadow_build_dir/${{ inputs.source }}
       run: aws s3 cp ${{ inputs.artifact_name }} s3://qgroundcontrol/builds/${{ github.ref_name }}/${{ inputs.artifact_name }} --acl public-read
       shell: bash
 
     - name: Upload tagged stable build to S3 latest Bucket
-      if: ${{ github.event_name == 'push' && github.ref_type == 'tag' && !github.event.pull_request.head.repo.fork && inputs.aws_key_id != '' && inputs.aws_secret_access_key != '' }}
+      if: ${{ inputs.upload_aws && github.event_name == 'push' && github.ref_type == 'tag' && !github.event.pull_request.head.repo.fork && inputs.aws_key_id != '' && inputs.aws_secret_access_key != '' }}
       working-directory: ${{ runner.temp }}/shadow_build_dir/${{ inputs.source }}
       run: aws s3 cp ${{ inputs.artifact_name }} s3://qgroundcontrol/latest/${{ inputs.artifact_name }} --acl public-read
       shell: bash
