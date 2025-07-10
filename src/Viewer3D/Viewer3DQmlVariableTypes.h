@@ -12,7 +12,7 @@
 #include <QtCore/QObject>
 #include <QtPositioning/QGeoCoordinate>
 
-#include "Viewer3DUtils.h"
+#include "QGCGeo.h"
 
 ///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
 
@@ -34,7 +34,7 @@ public:
         QGeoCoordinate gps_tmp = _coordinate;
         QGeoCoordinate gps_ref_tmp = _gpsRef;
 
-        QVector3D local_pose_tmp = mapGpsToLocalPoint(gps_tmp, gps_ref_tmp);
+        QVector3D local_pose_tmp = QGCGeo::convertGpsToEnu(gps_tmp, gps_ref_tmp);
 
         if(_localCoordinate != local_pose_tmp) {
             _localCoordinate = local_pose_tmp;
