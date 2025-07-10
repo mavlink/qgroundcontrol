@@ -53,11 +53,6 @@ jobs:
           fetch-depth: 1
           fetch-tags: false
 
-      - name: Get all tags for correct version determination
-        working-directory: ${{ github.workspace }}
-        run: |
-          git fetch --all --tags -f --depth 1
-
       - name: Initial Setup
         uses: ./.github/actions/common
 
