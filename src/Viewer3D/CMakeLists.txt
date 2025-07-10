@@ -24,8 +24,6 @@ target_sources(${CMAKE_PROJECT_NAME}
         Viewer3DTileQuery.h
         Viewer3DTileReply.cc
         Viewer3DTileReply.h
-        Viewer3DUtils.cc
-        Viewer3DUtils.h
 )
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Quick3D)
