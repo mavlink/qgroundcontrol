@@ -136,13 +136,9 @@ add_subdirectory(qgcunittest)
 # add_qgc_test(MainWindowTest)
 # add_qgc_test(MessageBoxTest)
 
-add_subdirectory(QmlControls)
-
 add_subdirectory(Terrain)
 add_qgc_test(TerrainQueryTest)
 add_qgc_test(TerrainTileTest)
-
-add_subdirectory(UI)
 
 add_subdirectory(Utilities)
 # Audio

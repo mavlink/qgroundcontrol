@@ -60,7 +60,7 @@ SettingsPage {
 
         Connections {
             target:             mavlink2SigningGroup._mavlink2SigningKey
-            onRawValueChanged:  sendToVehiclePrompt.visible = true
+            function onRawValueChanged(value) { sendToVehiclePrompt.visible = true }
         }
 
         RowLayout {

@@ -26,24 +26,34 @@ set(CMAKE_POLICY_VERSION_MINIMUM ${CMAKE_MINIMUM_REQUIRED_VERSION})
 
 include(CustomOptions)
 
-if(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/custom)
-    message(STATUS "Enabling custom build")
+if(IS_DIRECTORY "${CMAKE_SOURCE_DIR}/custom")
+    message(STATUS "QGC: Enabling custom build")
     set(QGC_CUSTOM_BUILD ON)
-    list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/custom/cmake)
+    list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/custom/cmake")
     include(CustomOverrides)
+endif()
+
+if(NOT QGC_BUILD_TESTING)
+    set(BUILD_TESTING OFF CACHE INTERNAL "" FORCE)
 endif()
 
 #######################################################
 #                   Project Info
 #######################################################
 
-# set(CMAKE_OSX_ARCHITECTURES "arm64")
-# set(CMAKE_OSX_SYSROOT "iphoneos")
 if(APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0")
+    # set(CMAKE_OSX_SYSROOT "iphoneos")
+    if(QGC_MACOS_UNIVERSAL_BUILD)
+        set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64")
+    endif()
 endif()
 
 include(Git)
+
+if(QGC_USE_CACHE)
+    qgc_config_caching()
+endif()
 
 project(${QGC_APP_NAME}
     VERSION ${QGC_APP_VERSION}
@@ -51,15 +61,6 @@ project(${QGC_APP_NAME}
     HOMEPAGE_URL "https://${QGC_ORG_DOMAIN}"
     LANGUAGES C CXX
 )
-
-if(APPLE AND NOT IOS)
-    set(MACOS TRUE)
-
-    # CMAKE_APPLE_SILICON_PROCESSOR
-    if("${CMAKE_OSX_ARCHITECTURES}" MATCHES "arm64;x86_64" OR "${CMAKE_OSX_ARCHITECTURES}" MATCHES "x86_64;arm64")
-        set(MACOS_UNIVERSAL_BUILD ON)
-    endif()
-endif()
 
 #######################################################
 #            CMake Configuration Options
@@ -78,13 +79,9 @@ include(CPM)
 
 include(Toolchain)
 
-if(QGC_USE_CACHE)
-    qgc_config_caching()
-endif()
-
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIGURATION>/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIGURATION>)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIGURATION>)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>/lib")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>")
 
 # https://cmake.org/cmake/help/latest/policy/CMP0168.html#policy:CMP0168
 if(POLICY CMP0168)
@@ -175,28 +172,6 @@ qt_policy(
 )
 
 #######################################################
-#                QGroundControl Options
-#######################################################
-
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    add_compile_definitions(
-        NDEBUG
-        QT_NO_DEBUG
-        QT_MESSAGELOGCONTEXT
-    )
-else()
-    add_compile_definitions(
-        QT_DISABLE_DEPRECATED_UP_TO=0x060800
-        QT_ENABLE_STRICT_MODE_UP_TO=0x060800
-        $<$<BOOL:${QGC_DEBUG_QML}>:QT_QML_DEBUG>
-    )
-endif()
-
-if(NOT QGC_BUILD_TESTING)
-    set(BUILD_TESTING OFF CACHE INTERNAL "" FORCE)
-endif()
-
-#######################################################
 #                Custom Build Configuration
 #######################################################
 
@@ -244,25 +219,10 @@ elseif(ANDROID)
     include(Android)
 endif()
 
-target_compile_definitions(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        QGC_APP_NAME="${QGC_APP_NAME}"
-        QGC_ORG_NAME="${QGC_ORG_NAME}"
-        QGC_ORG_DOMAIN="${QGC_ORG_DOMAIN}"
-        QGC_APP_VERSION_STR="${QGC_APP_VERSION_STR}"
-        QGC_SETTINGS_VERSION=${QGC_SETTINGS_VERSION}
-        $<$<NOT:$<BOOL:${QGC_STABLE_BUILD}>>:QGC_DAILY_BUILD>
-)
-
-set_target_properties(${CMAKE_PROJECT_NAME}
-    PROPERTIES
-        QT_RESOURCE_PREFIX "/qgc"
-        OUTPUT_NAME ${CMAKE_PROJECT_NAME}
-)
-
 add_subdirectory(src)
 if(QGC_BUILD_TESTING)
     add_subdirectory(test)
+    set_property(DIRECTORY test PROPERTY QT_EXCLUDE_FROM_TRANSLATION ON)
 endif()
 
 qt_add_qml_module(${CMAKE_PROJECT_NAME}
@@ -273,16 +233,17 @@ qt_add_qml_module(${CMAKE_PROJECT_NAME}
 
 file(GLOB TS_SOURCES ${CMAKE_SOURCE_DIR}/translations/qgc_*.ts)
 set_source_files_properties(${TS_SOURCES} PROPERTIES OUTPUT_LOCATION "${CMAKE_BINARY_DIR}/i18n")
+
+set(translations_options_arg)
+if(Qt6_VERSION VERSION_GREATER_EQUAL 6.7.0)
+    list(APPEND translations_options_arg TS_FILE_DIR "${CMAKE_SOURCE_DIR}/translations")
+    list(APPEND translations_options_arg TS_FILE_BASE ${CMAKE_PROJECT_NAME})
+endif()
 qt_add_translations(${CMAKE_PROJECT_NAME}
-    # TS_FILE_BASE ${CMAKE_PROJECT_NAME}
-    # TS_FILE_DIR ${CMAKE_SOURCE_DIR}/translations/
     TS_FILES ${TS_SOURCES}
-    # TS_FILES_OUTPUT_VARIABLE
-    # QM_FILES_OUTPUT_VARIABLE
-    # TARGETS ${CMAKE_PROJECT_NAME}
-    # SOURCE_TARGETS ${CMAKE_PROJECT_NAME}
     RESOURCE_PREFIX "/"
     LUPDATE_OPTIONS -no-obsolete
+    ${translations_options_arg}
 )
 
 qgc_set_qt_resource_alias(

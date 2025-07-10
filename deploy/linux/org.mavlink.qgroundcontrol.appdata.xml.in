@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>@QGC_PACKAGE_NAME@</id>
+  <name>@QGC_APP_NAME@</name>
+  <launchable type="desktop-id">@QGC_PACKAGE_NAME@.desktop</launchable>
+
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>Apache-2.0 OR GPL-3.0</project_license>
+  <content_rating type="oars-1.1"/>
+
+ <!--  <developer id="org.@QGC_APPIMAGE_APPDATA_DEVELOPER@">
+    <name translate="no">@QGC_APPIMAGE_APPDATA_DEVELOPER@</name>
+  </developer> -->
+
+  <summary>@QGC_APP_DESCRIPTION@</summary>
+  <description>
+    <p>
+      QGroundControl (QGC) is a highly intuitive and powerful Ground Control Station (GCS) designed for UAVs.
+      Whether you're a first-time pilot or an experienced professional,
+      QGC provides a seamless user experience for flight control and mission planning,
+      making it the go-to solution for any MAVLink-enabled drone.
+    </p>
+  </description>
+  <icon type="stock">@QGC_APP_NAME@</icon>
+
+  <provides>
+    <binary>@QGC_APP_NAME@</binary>
+  </provides>
+
+  <releases>
+    <release version="@CMAKE_PROJECT_VERSION@" date="@QGC_APP_DATE@">
+      <description>
+        <p>Rebuilt with CMake for Qt6.8</p>
+      </description>
+    </release>
+  </releases>
+
+  <screenshots>
+    <screenshot type="default">
+      <caption>Connected Vehicle</caption>
+      <image>https://docs.qgroundcontrol.com/master/assets/connected_vehicle.BmASIvhv.jpg</image>
+    </screenshot>
+  </screenshots>
+
+  <url type="homepage">https://@QGC_ORG_DOMAIN@</url>
+  <url type="help">https://docs.qgroundcontrol.com/master/en/index.html</url>
+  <url type="bugtracker">https://github.com/mavlink/qgroundcontrol/issues</url>
+  <url type="contact">https://docs.qgroundcontrol.com/master/en/qgc-user-guide/support/support.html</url>
+  <!-- <url type="contribute">https://github.com/mavlink/qgroundcontrol/blob/master/.github/CONTRIBUTING.md</url> -->
+
+  <requires>
+    <display_length>360</display_length>
+  </requires>
+<!--   <recommends>
+    <internet>first-run</internet>
+  </recommends> -->
+  <supports>
+    <control>keyboard</control>
+    <control>pointing</control>
+    <control>touch</control>
+    <control>gamepad</control>
+  </supports>
+
+  <categories>
+    <category>Qt</category>
+    <category>Utility</category>
+    <category>Maps</category>
+  </categories>
+
+  <keywords>
+    <keyword translate="no">mavlink</keyword>
+    <keyword translate="no">qt</keyword>
+    <keyword>drone</keyword>
+    <keyword translate="no">ardupilot</keyword>
+    <keyword translate="no">pixhawk</keyword>
+  </keywords>
+</component>

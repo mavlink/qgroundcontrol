@@ -71,8 +71,7 @@ AnalyzePage {
 
             Connections {
                 target: conController
-
-                onDataChanged: {
+                function onDataChanged(topLeft, bottomRight, roles) {
                     if (isLoaded) {
                         // rate-limit updates to reduce CPU load
                         updateTimer.start();

@@ -14,6 +14,7 @@
 class VehicleGPSFactGroup : public FactGroup
 {
     Q_OBJECT
+
     Q_PROPERTY(Fact *lat                    READ lat                    CONSTANT)
     Q_PROPERTY(Fact *lon                    READ lon                    CONSTANT)
     Q_PROPERTY(Fact *mgrs                   READ mgrs                   CONSTANT)
@@ -30,7 +31,7 @@ class VehicleGPSFactGroup : public FactGroup
     Q_PROPERTY(Fact* systemQuality          READ systemQuality          CONSTANT)
     Q_PROPERTY(Fact* gnssSignalQuality      READ gnssSignalQuality      CONSTANT)
     Q_PROPERTY(Fact* postProcessingQuality  READ postProcessingQuality  CONSTANT)
-
+    Q_PROPERTY(Fact *yaw                    READ yaw                    CONSTANT)
 
 public:
     explicit VehicleGPSFactGroup(QObject *parent = nullptr);
@@ -41,6 +42,7 @@ public:
     Fact *hdop() { return &_hdopFact; }
     Fact *vdop() { return &_vdopFact; }
     Fact *courseOverGround() { return &_courseOverGroundFact; }
+    Fact *yaw() { return &_yawFact; }
     Fact *count() { return &_countFact; }
     Fact *lock() { return &_lockFact; }
     Fact *systemErrors() { return &_systemErrorsFact; }
@@ -67,6 +69,7 @@ protected:
     Fact _hdopFact = Fact(0, QStringLiteral("hdop"), FactMetaData::valueTypeDouble);
     Fact _vdopFact = Fact(0, QStringLiteral("vdop"), FactMetaData::valueTypeDouble);
     Fact _courseOverGroundFact = Fact(0, QStringLiteral("courseOverGround"), FactMetaData::valueTypeDouble);
+    Fact _yawFact = Fact(0, QStringLiteral("yaw"), FactMetaData::valueTypeDouble);
     Fact _countFact = Fact(0, QStringLiteral("count"), FactMetaData::valueTypeInt32);
     Fact _lockFact = Fact(0, QStringLiteral("lock"), FactMetaData::valueTypeInt32);
     Fact _systemErrorsFact = Fact(0, QStringLiteral("systemErrors"), FactMetaData::valueTypeUint8);

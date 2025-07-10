@@ -27,7 +27,7 @@ public:
     static QGCLogging *instance();
 
     /// Install Qt message handler to route logs through this class
-    static void installHandler();
+    static void installHandler(bool quietWindowsAsserts);
 
     /// Write current log messages to a file asynchronously
     Q_INVOKABLE void writeMessages(const QString &destFile);

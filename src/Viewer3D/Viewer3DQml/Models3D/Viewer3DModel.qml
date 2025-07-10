@@ -159,8 +159,8 @@ View3D {
                 }
 
                 materials: CustomMaterial {
-                    vertexShader: "/ShaderVertex/earthMaterial.vert"
-                    fragmentShader: "/ShaderFragment/earthMaterial.frag"
+                    vertexShader: "/qml/QGroundControl/Viewer3D/ShaderVertex/earthMaterial.vert"
+                    fragmentShader: "/qml/QGroundControl/Viewer3D/ShaderFragment/earthMaterial.frag"
                     property TextureInput someTextureMap: TextureInput {
                         texture: Texture {
                             textureData: _terrainTextureManager

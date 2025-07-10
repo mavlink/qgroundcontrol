@@ -1,11 +1,4 @@
 <RCC>
-    <qresource prefix="/qml">
-        <file alias="AirLinkSettings.qml">src/Comms/AirLink/AirLinkSettings.qml</file>
-    </qresource>
-    <qresource prefix="/FirstRunPromptDialogs">
-        <file alias="UnitsFirstRunPrompt.qml">src/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml</file>
-        <file alias="OfflineVehicleFirstRunPrompt.qml">src/FirstRunPromptDialogs/OfflineVehicleFirstRunPrompt.qml</file>
-    </qresource>
     <qresource prefix="/json">
         <file alias="ADSBVehicleManager.SettingsGroup.json">src/Settings/ADSBVehicleManager.SettingsGroup.json</file>
         <file alias="APMMavlinkStreamRate.SettingsGroup.json">src/Settings/APMMavlinkStreamRate.SettingsGroup.json</file>
@@ -82,11 +75,5 @@
         <file alias="Parameter.MetaData.json.xz">src/Comms/MockLink/MockLink.Parameter.MetaData.json.xz</file>
         <file alias="Parameter.MetaData.json">src/Comms/MockLink/MockLink.Parameter.MetaData.json</file>
         <file alias="Arduplane.params.ftp.bin">src/Comms/MockLink/Mocklink.Arduplane.params.ftp.bin</file>
-    </qresource>
-    <qresource prefix="/ShaderVertex">
-        <file alias="earthMaterial.vert">src/Viewer3D/Shaders/earthMaterial.vert</file>
-    </qresource>
-    <qresource prefix="/ShaderFragment">
-        <file alias="earthMaterial.frag">src/Viewer3D/Shaders/earthMaterial.frag</file>
     </qresource>
 </RCC>

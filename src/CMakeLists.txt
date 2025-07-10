@@ -7,7 +7,6 @@ add_subdirectory(Camera)
 add_subdirectory(Comms)
 add_subdirectory(FactSystem)
 add_subdirectory(FirmwarePlugin)
-add_subdirectory(FirstRunPromptDialogs)
 add_subdirectory(FlightDisplay)
 add_subdirectory(FlightMap)
 add_subdirectory(FollowMe)
@@ -16,7 +15,6 @@ add_subdirectory(GPS)
 add_subdirectory(Joystick)
 add_subdirectory(MAVLink)
 add_subdirectory(MissionManager)
-add_subdirectory(PlanView)
 add_subdirectory(PositionManager)
 add_subdirectory(QmlControls)
 add_subdirectory(Settings)
@@ -81,6 +79,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         AutoPilotPluginsCommonModule
         FactControlsModule
         FactSystemModule
+        FirstRunPromptDialogsModule
         FlightDisplayModule
         FlightMapModule
         MainWindowModule
@@ -101,15 +100,49 @@ endif()
 if(QGC_VIEWER3D)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Viewer3DModule)
 endif()
-
-if(QGC_DISABLE_APM_MAVLINK)
-    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_NO_ARDUPILOT_DIALECT)
+if(NOT QGC_AIRLINK_DISABLED)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AirLinkModule)
 endif()
+
+target_compile_definitions(${CMAKE_PROJECT_NAME}
+    PRIVATE
+        QGC_APP_NAME="${QGC_APP_NAME}"
+        QGC_ORG_NAME="${QGC_ORG_NAME}"
+        QGC_ORG_DOMAIN="${QGC_ORG_DOMAIN}"
+        QGC_APP_VERSION_STR="${QGC_APP_VERSION_STR}"
+        QGC_SETTINGS_VERSION=${QGC_SETTINGS_VERSION}
+        $<$<NOT:$<BOOL:${QGC_STABLE_BUILD}>>:QGC_DAILY_BUILD>
+        $<$<BOOL:${QGC_DISABLE_APM_MAVLINK}>:QGC_NO_ARDUPILOT_DIALECT>
+)
+
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    target_compile_definitions(${CMAKE_PROJECT_NAME}
+        PRIVATE
+            NDEBUG
+            QT_NO_DEBUG
+            QT_MESSAGELOGCONTEXT
+    )
+else()
+    target_compile_definitions(${CMAKE_PROJECT_NAME}
+        PRIVATE
+            QT_DISABLE_DEPRECATED_UP_TO=0x060800
+            QT_ENABLE_STRICT_MODE_UP_TO=0x060800
+            $<$<BOOL:${QGC_DEBUG_QML}>:QT_QML_DEBUG>
+    )
+endif()
+
+set_target_properties(${CMAKE_PROJECT_NAME}
+    PROPERTIES
+        QT_RESOURCE_PREFIX "/qml"
+        OUTPUT_NAME ${CMAKE_PROJECT_NAME}
+)
 
 target_precompile_headers(${CMAKE_PROJECT_NAME} PRIVATE pch.h)
 
 if(QGC_CUSTOM_BUILD)
+    find_package(Qt6 REQUIRED COMPONENTS ${CUSTOM_QT_COMPONENTS})
     target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_SOURCES})
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_LIBRARIES})
-    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_DIRECTORIES})
+    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_INCLUDE_DIRECTORIES})
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_DEFINITIONS})
 endif()

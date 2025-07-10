@@ -31,6 +31,7 @@ option(QGC_NO_SERIAL_LINK "Disable Serial Links" OFF) # NOT IOS AND Qt6SerialPor
 # Video
 option(QGC_ENABLE_UVC "Enable UVC Devices" ON) # Qt6Multimedia_FOUND
 option(QGC_ENABLE_GST_VIDEOSTREAMING "Enable GStreamer Video Backend" ON)
+cmake_dependent_option(QGC_CUSTOM_GST_PACKAGE "Enable Using QGC Provided Custom GStreamer Packages" OFF "QGC_ENABLE_GST_VIDEOSTREAMING" OFF)
 option(QGC_ENABLE_QT_VIDEOSTREAMING "Enable QtMultimedia Video Backend" OFF) # Qt6Multimedia_FOUND
 
 # MAVLink
@@ -63,13 +64,19 @@ option(QGC_ENABLE_HERELINK "Enable Herelink Support" OFF)
 
 # MacOS
 set(QGC_MACOS_PLIST_PATH "${CMAKE_SOURCE_DIR}/deploy/macos/MacOSXBundleInfo.plist.in" CACHE FILEPATH "MacOS PList Path")
-set(QGC_MACOS_BUNDLE_ID "org.qgroundcontrol.QGroundControl" CACHE STRING "MacOS Bundle ID") # MACOS
-set(QGC_MACOS_ICON_PATH "${CMAKE_SOURCE_DIR}/deploy/macos" CACHE PATH "MacOS Icon Path") # MACOS
+set(QGC_MACOS_BUNDLE_ID "${QGC_PACKAGE_NAME}" CACHE STRING "MacOS Bundle ID")
+set(QGC_MACOS_ICON_PATH "${CMAKE_SOURCE_DIR}/deploy/macos/qgroundcontrol.icns" CACHE FILEPATH "MacOS Icon Path")
 set(QGC_MACOS_ENTITLEMENTS_PATH "${CMAKE_SOURCE_DIR}/deploy/macos/qgroundcontrol.entitlements" CACHE FILEPATH "MacOS Entitlements Path")
-# option(QGC_MACOS_UNIVERSAL_BUILD "Build MacOS Universal Build (arm64;x86_64)" ON) # MACOS
+option(QGC_MACOS_UNIVERSAL_BUILD "Build MacOS Universal Build (arm64;x86_64)" ON)
 
 # Linux
-set(QGC_APPIMAGE_ICON_PATH "${CMAKE_SOURCE_DIR}/resources/icons/qgroundcontrol.png" CACHE FILEPATH "AppImage Icon Path")
+option(QGC_CREATE_APPIMAGE "Build an AppImage after build" ON)
+set(QGC_APPIMAGE_ICON_256_PATH "${CMAKE_SOURCE_DIR}/deploy/linux/QGroundControl_256.png" CACHE FILEPATH "AppImage Icon 256x256 Path")
+set(QGC_APPIMAGE_ICON_SCALABLE_PATH "${CMAKE_SOURCE_DIR}/deploy/linux/QGroundControl.svg" CACHE FILEPATH "AppImage Icon SVG Path")
+set(QGC_APPIMAGE_APPRUN_PATH "${CMAKE_SOURCE_DIR}/deploy/linux/AppRun" CACHE FILEPATH "AppImage AppRun Path")
+set(QGC_APPIMAGE_DESKTOP_ENTRY_PATH "${CMAKE_SOURCE_DIR}/deploy/linux/org.mavlink.qgroundcontrol.desktop.in" CACHE FILEPATH "AppImage Desktop Entry Path")
+set(QGC_APPIMAGE_METADATA_PATH "${CMAKE_SOURCE_DIR}/deploy/linux/org.mavlink.qgroundcontrol.appdata.xml.in" CACHE FILEPATH "AppImage Metadata Path")
+set(QGC_APPIMAGE_APPDATA_DEVELOPER "qgroundcontrol" CACHE STRING "AppImage Metadata Developer")
 
 # Windows
 set(QGC_WINDOWS_INSTALL_HEADER_PATH "${CMAKE_SOURCE_DIR}/deploy/windows/installheader.bmp" CACHE FILEPATH "Windows Install Header Path")
@@ -82,11 +89,11 @@ set(QGC_CPM_SOURCE_CACHE "" CACHE PATH "Directory to Download CPM Dependencies, 
 
 # Qt
 set(QT_QML_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/qml" CACHE PATH "Install path for QML")
+set(QML_IMPORT_PATH "${QT_QML_OUTPUT_DIRECTORY}" CACHE STRING "Extra QML Import Paths")
 option(QT_SILENCE_MISSING_DEPENDENCY_TARGET_WARNING "Silence Missing Dependency Warnings" OFF)
 option(QT_ENABLE_VERBOSE_DEPLOYMENT "Verbose Deployment" OFF)
 option(QT_DEBUG_FIND_PACKAGE "Print Used Search Paths When a Package is Not Found" ON)
 option(QT_QML_GENERATE_QMLLS_INI "https://doc.qt.io/qt-6/cmake-variable-qt-qml-generate-qmlls-ini.html" ON)
-# set(ENV{QML_IMPORT_PATH} "${QT_QML_OUTPUT_DIRECTORY}")
 # set(ENV{QT_DEBUG_PLUGINS} "1")
 # set(ENV{QML_IMPORT_TRACE} "1")
 

@@ -38,7 +38,7 @@ ColumnLayout {
 
             Connections {
                 target:                 cameraCalc
-                onCameraBrandChanged:   cameraBrandCombo.selectCurrentBrand()
+                function onCameraBrandChanged() { cameraBrandCombo.selectCurrentBrand() }
             }
 
             function selectCurrentBrand() {
@@ -56,7 +56,7 @@ ColumnLayout {
 
             Connections {
                 target:                 cameraCalc
-                onCameraModelChanged:   cameraModelCombo.selectCurrentModel()
+                function onCameraModelChanged() { cameraModelCombo.selectCurrentModel() }
             }
 
             function selectCurrentModel() {
