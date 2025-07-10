@@ -1,5 +1,7 @@
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
+        karchive.cc
+        karchive.h
         QGCLZMA.cc
         QGCLZMA.h
         QGCZip.cc
@@ -75,3 +77,34 @@ target_compile_definitions(xz
 )
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE xz)
+
+#===========================================================================#
+
+CPMAddPackage(
+    NAME ECM
+    GITHUB_REPOSITORY KDE/extra-cmake-modules
+    VERSION 6.18.0
+    DOWNLOAD_ONLY
+    OPTIONS
+        "BUILD_DOC OFF"
+        "BUILD_TESTING OFF"
+)
+
+list(APPEND CMAKE_MODULE_PATH
+    "${ECM_SOURCE_DIR}/modules"
+)
+
+#===========================================================================#
+
+CPMAddPackage(
+    NAME karchive
+    GITHUB_REPOSITORY KDE/karchive
+    VERSION 6.18.0
+    OPTIONS
+        "WITH_BZIP2 ON"
+        "WITH_LIBLZMA ON"
+        "WITH_OPENSSL OFF"
+        "WITH_LIBZSTD OFF"
+)
+
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE KF6::Archive)
