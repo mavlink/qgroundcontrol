@@ -89,6 +89,12 @@ if(POLICY CMP0168)
     set(CMAKE_POLICY_DEFAULT_CMP0168 NEW)
 endif()
 
+# https://cmake.org/cmake/help/latest/policy/CMP0141.html#policy:CMP0141
+if(POLICY CMP0141)
+    cmake_policy(SET CMP0141 NEW)
+    set(CMAKE_POLICY_DEFAULT_CMP0141 NEW)
+endif()
+
 # https://cmake.org/cmake/help/latest/policy/CMP0075.html#policy:CMP0075
 if(POLICY CMP0075)
     cmake_policy(SET CMP0075 NEW)
@@ -126,7 +132,6 @@ find_package(Qt6
         Location
         Multimedia
         Network
-        OpenGL
         Positioning
         Qml
         QmlIntegration
@@ -142,6 +147,7 @@ find_package(Qt6
     OPTIONAL_COMPONENTS
         Bluetooth
         MultimediaQuickPrivate
+        OpenGL
         Quick3D
         SerialPort
         Test

@@ -19,14 +19,14 @@ inputs:
     description: CPM Cache Path
     required: false
 runs:
-  using: "composite"
+  using: composite
   steps:
     - name: Setup Java Environment
       uses: actions/setup-java@v4
       with:
         distribution: temurin
         java-version: 17
-        cache: 'gradle'
+        cache: gradle
         cache-dependency-path: |
           **/*.gradle*
           **/gradle-wrapper.properties
@@ -52,7 +52,7 @@ runs:
       shell: bash
 
     - name: Update Android SDK / NDK / Tools
-      if: ${{ runner.os != 'Windows' }}
+      if: runner.os != 'Windows'
       run: sdkmanager --update
       shell: bash
 
