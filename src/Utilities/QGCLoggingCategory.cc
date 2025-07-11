@@ -16,6 +16,23 @@ QGC_LOGGING_CATEGORY(QGCLoggingCategoryRegisterLog, "qgc.utilities.qgcloggingcat
 
 Q_GLOBAL_STATIC(QGCLoggingCategoryRegister, _QGCLoggingCategoryRegisterInstance);
 
+static QLoggingCategory::CategoryFilter defaultCategoryFilter = nullptr;
+
+static void qgcCategoryFilter(QLoggingCategory *category)
+{
+    if (defaultCategoryFilter) {
+        defaultCategoryFilter(category);
+    }
+
+    const QString categoryName = QString(category->categoryName());
+    if (categoryName.startsWith("qgc.")) {
+        if (!QGCLoggingCategoryRegister::instance()->registeredCategories().contains(categoryName)) {
+            QGCLoggingCategoryRegister::instance()->registerCategory(categoryName);
+            // category->setEnabled(QtDebugMsg, true);
+        }
+    }
+}
+
 QGCLoggingCategoryRegister *QGCLoggingCategoryRegister::instance()
 {
     return _QGCLoggingCategoryRegisterInstance();
@@ -84,12 +101,7 @@ void QGCLoggingCategoryRegister::setFilterRulesFromSettings(const QString &comma
     }
 
     if (videoAllLogSet) {
-        filterRules += filterRuleFormat.arg("qgc.videomanager.videomanager");
-        filterRules += filterRuleFormat.arg("qgc.videomanager.subtitlewriter");
-        filterRules += filterRuleFormat.arg("qgc.videomanager.videoreceiver.gstreamer");
-        filterRules += filterRuleFormat.arg("qgc.videomanager.videoreceiver.gstreamer.gstvideoreceiver");
-        filterRules += filterRuleFormat.arg("qgc.videomanager.videoreceiver.qtmultimedia.qtmultimediareceiver");
-        filterRules += filterRuleFormat.arg("qgc.videomanager.videoreceiver.qtmultimedia.uvcreceiver");
+        filterRules += filterRuleFormat.arg("qgc.videomanager.*");
     }
 
     // Logging from GStreamer library itself controlled by gstreamer debug levels is always turned on
@@ -98,5 +110,9 @@ void QGCLoggingCategoryRegister::setFilterRulesFromSettings(const QString &comma
     filterRules += QStringLiteral("qt.qml.connections=false");
 
     qCDebug(QGCLoggingCategoryRegisterLog) << "Filter rules" << filterRules;
+    const QLoggingCategory::CategoryFilter categoryFilter = QLoggingCategory::installFilter(qgcCategoryFilter);
+    if (!defaultCategoryFilter) {
+        defaultCategoryFilter = categoryFilter;
+    }
     QLoggingCategory::setFilterRules(filterRules);
 }
