@@ -2,7 +2,7 @@
 
 - [Overview](qgc-user-guide/index.md)
   - [Quick Start](qgc-user-guide/getting_started/quick_start.md)
-  - [Download and Install (Daily Build)](qgc-user-guide/releases/daily_builds.md)
+  - [Download and Install](qgc-user-guide/getting_started/download_and_install.md)
   - [Support](qgc-user-guide/support/support.md)
 - [Fly View](qgc-user-guide/fly_view/fly_view.md)
   - [Toolbar](qgc-user-guide/fly_view/fly_view_toolbar.md)
