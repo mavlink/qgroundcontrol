@@ -256,7 +256,6 @@ qt_add_resources(${CMAKE_PROJECT_NAME} "qgcresources_cmake"
     FILES
         ${CMAKE_SOURCE_DIR}/resources/qtquickcontrols2.conf
         ${SDL_GAMECONTROLLERDB_PATH}
-        ${QGC_GSTREAMER_SHADER_RESOURCES}
         ${QGC_ARDUPILOT_PARAMS_RESOURCES}
         # ${QGC_TEST_RESOURCES}
 )
