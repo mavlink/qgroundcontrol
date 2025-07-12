@@ -10,7 +10,7 @@
 import QtQuick
 
 import QGroundControl
-import QGroundControl.SettingsManager
+import QGroundControl.Controls
 
 Canvas {
     id: canvas

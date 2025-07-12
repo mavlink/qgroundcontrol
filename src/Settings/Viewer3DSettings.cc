@@ -13,7 +13,7 @@
 
 DECLARE_SETTINGGROUP(Viewer3D, "Viewer3D")
 {
-    qmlRegisterUncreatableType<Viewer3DSettings>("QGroundControl.SettingsManager", 1, 0, "Viewer3DSettings", "Reference only");
+    qmlRegisterUncreatableType<Viewer3DSettings>("QGroundControl", 1, 0, "Viewer3DSettings", "Reference only");
 }
 
 DECLARE_SETTINGSFACT(Viewer3DSettings, enabled)

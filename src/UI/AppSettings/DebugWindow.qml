@@ -14,10 +14,11 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 import QtQuick.Window
 
+import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.Palette
+
 import QGroundControl.Controllers
-import QGroundControl.ScreenTools
+
 
 Item {
 

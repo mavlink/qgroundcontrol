@@ -11,6 +11,8 @@
 
 import QtQml
 
+import QGroundControl
+
 QtObject {
     function customConfirmAction(actionCode, actionData, mapIndicator, confirmDialog) {
         return false // false = action not handled here

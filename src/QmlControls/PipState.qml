@@ -9,6 +9,9 @@
 
 import QtQuick
 
+import QGroundControl
+import QGroundControl.Controls
+
 // Used to manage state for itesm using with QGCPipOveral
 Item {
     id:     control

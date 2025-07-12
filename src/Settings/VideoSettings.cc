@@ -22,7 +22,7 @@
 
 DECLARE_SETTINGGROUP(Video, "Video")
 {
-    qmlRegisterUncreatableType<VideoSettings>("QGroundControl.SettingsManager", 1, 0, "VideoSettings", "Reference only");
+    qmlRegisterUncreatableType<VideoSettings>("QGroundControl", 1, 0, "VideoSettings", "Reference only");
 
     // Setup enum values for videoSource settings into meta data
     QVariantList videoSourceList;

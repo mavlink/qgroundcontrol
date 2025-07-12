@@ -16,6 +16,8 @@
 #include "SettingsManager.h"
 #include "Vehicle.h"
 
+#include <QtQml/QQmlEngine>
+
 QGC_LOGGING_CATEGORY(GimbalControllerLog, "qgc.gimbal.gimbalcontroller")
 
 GimbalController::GimbalController(Vehicle *vehicle)
@@ -34,6 +36,11 @@ GimbalController::GimbalController(Vehicle *vehicle)
 GimbalController::~GimbalController()
 {
     // qCDebug(GimbalControllerLog) << Q_FUNC_INFO << this;
+}
+
+void GimbalController::registerQmlTypes()
+{
+    (void) qmlRegisterUncreatableType<GimbalController>("QGroundControl.Vehicle", 1, 0, "GimbalController", "Reference only");
 }
 
 void GimbalController::setActiveGimbal(Gimbal *gimbal)

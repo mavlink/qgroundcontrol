@@ -1,8 +1,8 @@
 import QtQuick
 import QtQuick.Controls
 
-import QGroundControl.Palette
-import QGroundControl.ScreenTools
+import QGroundControl
+import QGroundControl.Controls
 
 CheckBox {
     id:             control

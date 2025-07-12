@@ -13,7 +13,7 @@
 
 DECLARE_SETTINGGROUP(FlightMode, "FlightMode")
 {
-    qmlRegisterUncreatableType<FlightModeSettings>("QGroundControl.SettingsManager", 1, 0, "FlightModeSettings", "Reference only");
+    qmlRegisterUncreatableType<FlightModeSettings>("QGroundControl", 1, 0, "FlightModeSettings", "Reference only");
 }
 
 DECLARE_SETTINGSFACT(FlightModeSettings, px4HiddenFlightModesMultiRotor)

@@ -34,6 +34,8 @@ public:
     explicit AutoPilotPlugin(Vehicle *vehicle, QObject *parent = nullptr);
     virtual ~AutoPilotPlugin();
 
+    static void registerQmlTypes();
+
     // Vehicle Components which are available for firmware types
     enum KnownVehicleComponent {
         KnownRadioVehicleComponent,

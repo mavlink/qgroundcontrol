@@ -15,7 +15,7 @@
 
 DECLARE_SETTINGGROUP(Mavlink, "")
 {
-    qmlRegisterUncreatableType<MavlinkSettings>("QGroundControl.SettingsManager", 1, 0, "MavlinkSettings", "Reference only");
+    qmlRegisterUncreatableType<MavlinkSettings>("QGroundControl", 1, 0, "MavlinkSettings", "Reference only");
 
     // Move deprecated settings to new location/names
 

@@ -43,7 +43,7 @@ QGCPositionManager *QGCPositionManager::instance()
 
 void QGCPositionManager::registerQmlTypes()
 {
-    (void) qmlRegisterUncreatableType<QGCPositionManager>("QGroundControl.QGCPositionManager", 1, 0, "QGCPositionManager", "Reference only");
+    (void) qmlRegisterUncreatableType<QGCPositionManager>("QGroundControl", 1, 0, "QGCPositionManager", "Reference only");
 }
 
 void QGCPositionManager::init()

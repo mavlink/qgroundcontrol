@@ -11,6 +11,7 @@ import QtQuick
 import QtMultimedia
 
 import QGroundControl
+import QGroundControl.Controls
 
 Rectangle {
     id:                 _root

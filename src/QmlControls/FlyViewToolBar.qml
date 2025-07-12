@@ -14,9 +14,9 @@ import QtQuick.Dialogs
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.Palette
-import QGroundControl.MultiVehicleManager
-import QGroundControl.ScreenTools
+
+import QGroundControl.Vehicle
+
 import QGroundControl.Controllers
 
 Rectangle {
