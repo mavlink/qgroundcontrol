@@ -61,7 +61,7 @@ if(WIN32)
         TIMEOUT 60
     )
 #   file(COPY ${CMAKE_SOURCE_DIR}/deploy/windows/driver.msi DESTINATION ${INSTALLER_SOURCE_PACKAGES_QGC_DATA_DIR}/driver.msi)
-    set(QGC_INSTALLER_NAME ${CMAKE_PROJECT_NAME}-Installer.exe)
+    set(QGC_INSTALLER_NAME ${CMAKE_PROJECT_NAME}-Installer-${CMAKE_SYSTEM_PROCESSOR}.exe)
 # endif()
 
 execute_process(
