@@ -105,6 +105,7 @@ protected:
     Fact _altitudeRelativeFact = Fact(0, QStringLiteral("altitudeRelative"), FactMetaData::valueTypeDouble);
     Fact _altitudeAMSLFact = Fact(0, QStringLiteral("altitudeAMSL"), FactMetaData::valueTypeDouble);
     Fact _altitudeAboveTerrFact = Fact(0, QStringLiteral("altitudeAboveTerr"), FactMetaData::valueTypeDouble);
+    Fact _terrainDataAvailableFact = Fact(0, QStringLiteral("terrainDataAvailable"), FactMetaData::valueTypeBool);
     Fact _altitudeTuningFact = Fact(0, QStringLiteral("altitudeTuning"), FactMetaData::valueTypeDouble);
     Fact _altitudeTuningSetpointFact = Fact(0, QStringLiteral("altitudeTuningSetpoint"), FactMetaData::valueTypeDouble);
     Fact _xTrackErrorFact = Fact(0, QStringLiteral("xTrackError"), FactMetaData::valueTypeDouble);

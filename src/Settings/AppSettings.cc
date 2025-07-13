@@ -169,6 +169,9 @@ DECLARE_SETTINGSFACT(AppSettings, disableAllPersistence)
 DECLARE_SETTINGSFACT(AppSettings, firstRunPromptIdsShown)
 DECLARE_SETTINGSFACT(AppSettings, loginAirLink)
 DECLARE_SETTINGSFACT(AppSettings, passAirLink)
+DECLARE_SETTINGSFACT(AppSettings, altitudeWarnThresholdEnabled)
+DECLARE_SETTINGSFACT(AppSettings, altitudeWarnMinAGL)
+DECLARE_SETTINGSFACT(AppSettings, altitudeWarnMaxAGL)
 
 DECLARE_SETTINGSFACT_NO_FUNC(AppSettings, indoorPalette)
 {
