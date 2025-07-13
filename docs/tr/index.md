@@ -1,7 +1,8 @@
 ---
 layout: home
+
 hero:
-  name: QGroundControl Guide (v5.0)
+  name: "QGroundControl Guide (Daily Builds)"
   tagline: For beginners, experienced users, and developers
   actions:
     - theme: brand
@@ -11,6 +12,7 @@ hero:
     - theme: brand
       text: Dev Guide
       link: /tr/qgc-dev-guide/index.md
+
 features:
   - title: Multiple flight stacks
     details: Full setup/configuration of ArduPilot and PX4 Pro powered vehicles
