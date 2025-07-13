@@ -11,8 +11,8 @@ The custom build architecure includes mechanisms for a custom build to both over
 
 Each first run prompt is a simple dialog which can display ui to the user. Whether the specific dialog has already been show to the user or not is stored in a setting. Here is the code for the upstream first run prompt dialogs:
 
-- [Units Settings](https://github.com/mavlink/qgroundcontrol/blob/master/src/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml)
-- [Offline Vehicle Settings](https://github.com/mavlink/qgroundcontrol/blob/master/src/FirstRunPromptDialogs/OfflineVehicleFirstRunPrompt.qml)
+- [Units Settings](https://github.com/mavlink/qgroundcontrol/blob/master/src/UI/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml)
+- [Offline Vehicle Settings](https://github.com/mavlink/qgroundcontrol/blob/master/src/UI/FirstRunPromptDialogs/OfflineVehicleFirstRunPrompt.qml)
 
 ## Standard First Run Prompt Dialogs
 
