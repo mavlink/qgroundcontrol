@@ -165,6 +165,14 @@ VehicleCameraControl::VehicleCameraControl(const mavlink_camera_information_t *i
 //-----------------------------------------------------------------------------
 VehicleCameraControl::~VehicleCameraControl()
 {
+    // Stop all timers to prevent them from firing during or after destruction
+    _captureStatusTimer.stop();
+    _recTimer.stop();
+    _streamInfoTimer.stop();
+    _streamStatusTimer.stop();
+    _cameraSettingsTimer.stop();
+    _storageInfoTimer.stop();
+
     delete _netManager;
     _netManager = nullptr;
 }

@@ -64,9 +64,18 @@ QGCCameraManager::QGCCameraManager(Vehicle *vehicle)
 
 QGCCameraManager::~QGCCameraManager()
 {
-    for (QVariant cam : _cameraList) {
-        delete cam.value<CameraMetaData*>();
+    // Stop all camera info request timers and clean up
+    for (auto* cameraInfo : _cameraInfoRequest) {
+        if (cameraInfo->backoffTimer) {
+            cameraInfo->backoffTimer->stop();
+            QObject::disconnect(cameraInfo->backoffTimer, nullptr, nullptr, nullptr);
+        }
+        delete cameraInfo;
     }
+    _cameraInfoRequest.clear();
+
+    // Stop the main heartbeat timer
+    _camerasLostHeartbeatTimer.stop();
 }
 
 void QGCCameraManager::registerQmlTypes()
@@ -445,7 +454,7 @@ static void _handleCameraInfoRetry(QGCCameraManager::CameraStruct* cameraInfo)
         // Stop any existing timer and set up new one
         cameraInfo->backoffTimer->stop();
         QObject::disconnect(cameraInfo->backoffTimer, nullptr, nullptr, nullptr);
-        QObject::connect(cameraInfo->backoffTimer, &QTimer::timeout, cameraInfo, [=]() {
+        QObject::connect(cameraInfo->backoffTimer, &QTimer::timeout, manager, [=]() {
             _requestCameraInfoHelper(manager, cameraInfo);
         });
 
