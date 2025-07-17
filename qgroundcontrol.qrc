@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/qml">
+        <file alias="CustomControlView.qml">src/UI/CustomControlView.qml</file>
         <file alias="AirLinkSettings.qml">src/Comms/AirLink/AirLinkSettings.qml</file>
         <file alias="Viewer3D/Viewer3D.qml">src/Viewer3D/Viewer3DQml/Viewer3D.qml</file>
         <file alias="Viewer3D/qmldir">src/QmlControls/Viewer3D/qmldir</file>

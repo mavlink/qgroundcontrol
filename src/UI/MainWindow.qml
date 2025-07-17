@@ -84,7 +84,7 @@ ApplicationWindow {
         readonly property var       guidedControllerFlyView:        flyView.guidedController
 
         // Number of QGCTextField's with validation errors. Used to prevent closing panels with validation errors.
-        property int                validationErrorCount:           0 
+        property int                validationErrorCount:           0
 
         // Property to manage RemoteID quick access to settings page
         property bool               commingFromRIDIndicator:        false
@@ -135,6 +135,11 @@ ApplicationWindow {
 
     function showAnalyzeTool() {
         showTool(qsTr("Analyze Tools"), "qrc:/qml/QGroundControl/AnalyzeView/AnalyzeView.qml", "/qmlimages/Analyze.svg")
+    }
+
+    function showCustomControlView() {
+        mainWindow.showTool("控制面板", "qrc:/qml/CustomControlView.qml", "/qmlimages/Control.svg", { "vehicle": QGroundControl.multiVehicleManager.activeVehicle })
+
     }
 
     function showVehicleConfig() {
@@ -263,7 +268,7 @@ ApplicationWindow {
         color:          QGroundControl.globalPalette.window
     }
 
-    FlyView { 
+    FlyView {
         id:                     flyView
         anchors.fill:           parent
         utmspSendActTrigger:    _utmspSendActTrigger
@@ -315,6 +320,8 @@ ApplicationWindow {
             mainWindow.showIndicatorDrawer(toolSelectComponent, null)
         }
     }
+
+
 
     Component {
         id: toolSelectComponent
@@ -391,6 +398,18 @@ ApplicationWindow {
                                     drawer.close()
                                     mainWindow.showSettingsTool()
                                 }
+                            }
+                        }
+
+                        SubMenuButton {
+                            id:                 control_Button
+                            height:             toolSelectDialog._toolButtonHeight
+                            Layout.fillWidth:   true
+                            text: qsTr("control panel")
+                            imageResource:      "/qmlimages/Gears.svg"
+                            onClicked: {
+                                mainWindow.closeIndicatorDrawer()
+                                mainWindow.showCustomControlView()
                             }
                         }
 
@@ -712,7 +731,7 @@ ApplicationWindow {
                     anchors.centerIn:   parent
                     text:               ">"
                     color:              QGroundControl.globalPalette.buttonText
-                }  
+                }
 
                 QGCMouseArea {
                     fillItem: parent
