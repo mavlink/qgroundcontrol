@@ -37,7 +37,7 @@ static int WindowsCrtReportHook(int reportType, char *message, int *returnValue)
 
 #endif
 
-QGC_LOGGING_CATEGORY(QGCLoggingLog, "QGCLoggingLog")
+QGC_LOGGING_CATEGORY(QGCLoggingLog, "qgc.utilities.qgclogging")
 
 Q_GLOBAL_STATIC(QGCLogging, _qgcLogging)
 
@@ -46,17 +46,14 @@ static QtMessageHandler defaultHandler = nullptr;
 static void msgHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
     // Filter via QLoggingCategory rules early
-    if (!QLoggingCategory(context.category).isDebugEnabled()) {
+    const QLoggingCategory category(context.category);
+    if (!category.isDebugEnabled()) {
         return;
     }
 
     // Format the message using Qt's pattern
     const QString message = qFormatLogMessage(type, context, msg);
-
-    // Filter out Qt Quick internals
-    if (!QString(context.category).startsWith("qt.quick")) {
-        QGCLogging::instance()->log(message);
-    }
+    QGCLogging::instance()->log(message);
 
     // Call the previous handler if it exists
     if (defaultHandler) {
@@ -72,20 +69,26 @@ QGCLogging *QGCLogging::instance()
 QGCLogging::QGCLogging(QObject *parent)
     : QStringListModel(parent)
 {
-    // qCDebug(QGCLoggingLog) << this;
+    qCDebug(QGCLoggingLog) << this;
 
     _flushTimer.setInterval(kFlushIntervalMSecs);
     _flushTimer.setSingleShot(false);
     (void) connect(&_flushTimer, &QTimer::timeout, this, &QGCLogging::_flushToDisk);
     _flushTimer.start();
 
-    // Connect the emitLog signal to threadsafeLog slot
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     const Qt::ConnectionType conntype = Qt::QueuedConnection;
 #else
     const Qt::ConnectionType conntype = Qt::AutoConnection;
 #endif
+
+    // Connect the emitLog signal to threadsafeLog slot
     (void) connect(this, &QGCLogging::emitLog, this, &QGCLogging::_threadsafeLog, conntype);
+}
+
+QGCLogging::~QGCLogging()
+{
+    qCDebug(QGCLoggingLog) << this;
 }
 
 void QGCLogging::installHandler(bool quietWindowsAsserts)
@@ -99,7 +102,7 @@ void QGCLogging::installHandler(bool quietWindowsAsserts)
 #endif
 
     // Define the format for qDebug/qWarning/etc output
-    qSetMessagePattern(QStringLiteral("%{time process} - %{type}: %{message} (%{category}:%{function}:%{line})"));
+    qSetMessagePattern(QStringLiteral("%{category}:: %{time process} - %{type}: %{message} (%{function}:%{line})"));
 
     // Install our custom handler
     defaultHandler = qInstallMessageHandler(msgHandler);
