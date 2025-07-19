@@ -24,6 +24,7 @@
 #include "FlyViewSettings.h"
 #include "GimbalControllerSettings.h"
 #include "MapsSettings.h"
+#include "NTRIPSettings.h"
 #include "OfflineMapsSettings.h"
 #include "PlanViewSettings.h"
 #include "RemoteIDSettings.h"
