@@ -8,13 +8,15 @@
  ****************************************************************************/
 
 #include "Viewer3DTerrainGeometry.h"
-#include "Viewer3DUtils.h"
 #include "SettingsManager.h"
 #include "Viewer3DSettings.h"
+#include "QGCGeo.h"
 
 #include "math.h"
 
 #define PI                  acos(-1.0f)
+#define DEG_TO_RAD          PI/180.0f
+#define RAD_TO_DEG          180.0f/PI
 #define MaxLatitude         85.05112878
 #define EarthRadius         6378137
 
@@ -399,7 +401,7 @@ bool Viewer3DTerrainGeometry::buildTerrain_2(QGeoCoordinate roiMinCoordinate, QG
             sectorAngle = sectorRef + j * sectorStep;           // starting from -180 to 180
 
             Vertex vertex;
-            localPoint = mapGpsToLocalPoint(QGeoCoordinate(stackAngle, sectorAngle, 0), refCoordinate);
+            localPoint = QGCGeo::mapGpsToLocalPoint(QGeoCoordinate(stackAngle, sectorAngle, 0), refCoordinate);
             vertex.x = localPoint.x();
             vertex.y = localPoint.y();
             vertex.z = 0;
