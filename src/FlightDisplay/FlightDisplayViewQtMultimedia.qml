@@ -10,6 +10,9 @@
 import QtQuick
 import QtMultimedia
 
+import QGroundControl
+import QGroundControl.Controls
+
 VideoOutput {
     id:             videoOutput
     anchors.fill:   parent

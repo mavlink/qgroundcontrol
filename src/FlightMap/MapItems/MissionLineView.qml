@@ -12,7 +12,8 @@ import QtLocation
 import QtPositioning
 
 import QGroundControl
-import QGroundControl.Palette
+import QGroundControl.Controls
+
 
 /// The MissionLineView control is used to add lines between mission items
 MapItemView {

@@ -61,7 +61,7 @@ MultiVehicleManager *MultiVehicleManager::instance()
 
 void MultiVehicleManager::registerQmlTypes()
 {
-    (void) qmlRegisterUncreatableType<MultiVehicleManager>      ("QGroundControl.MultiVehicleManager",  1, 0, "MultiVehicleManager",    "Reference only");
+    (void) qmlRegisterUncreatableType<MultiVehicleManager>      ("QGroundControl.Vehicle",              1, 0, "MultiVehicleManager",    "Reference only");
     (void) qmlRegisterUncreatableType<Vehicle>                  ("QGroundControl.Vehicle",              1, 0, "Vehicle",                "Reference only");
     (void) qmlRegisterUncreatableType<VehicleLinkManager>       ("QGroundControl.Vehicle",              1, 0, "VehicleLinkManager",     "Reference only");
     (void) qmlRegisterUncreatableType<Autotune>                 ("QGroundControl.Vehicle",              1, 0, "Autotune",               "Reference only");

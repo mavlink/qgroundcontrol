@@ -13,7 +13,7 @@
 
 DECLARE_SETTINGGROUP(FlyView, "FlyView")
 {
-    qmlRegisterUncreatableType<FlyViewSettings>("QGroundControl.SettingsManager", 1, 0, "FlyViewSettings", "Reference only"); \
+    qmlRegisterUncreatableType<FlyViewSettings>("QGroundControl", 1, 0, "FlyViewSettings", "Reference only"); \
 }
 
 DECLARE_SETTINGSFACT(FlyViewSettings, guidedMinimumAltitude)

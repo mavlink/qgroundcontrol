@@ -3,12 +3,12 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.ScreenTools
+
 import QGroundControl.Vehicle
 import QGroundControl.Controls
 import QGroundControl.FactControls
-import QGroundControl.Palette
-import QGroundControl.SettingsManager
+
+
 import QGroundControl.Controllers
 
 // Editor for Mission Settings

@@ -12,8 +12,8 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.Palette
-import QGroundControl.ScreenTools
+
+
 
 Rectangle {
     color:          qgcPal.window

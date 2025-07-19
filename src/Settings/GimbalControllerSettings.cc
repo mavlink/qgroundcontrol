@@ -14,7 +14,7 @@
 
 DECLARE_SETTINGGROUP(GimbalController, "GimbalController")
 {
-    qmlRegisterUncreatableType<GimbalControllerSettings>("QGroundControl.SettingsManager", 1, 0, "GimbalControllerSettings", "Reference only");
+    qmlRegisterUncreatableType<GimbalControllerSettings>("QGroundControl", 1, 0, "GimbalControllerSettings", "Reference only");
 }
 
 DECLARE_SETTINGSFACT(GimbalControllerSettings, EnableOnScreenControl)

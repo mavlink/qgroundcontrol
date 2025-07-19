@@ -13,7 +13,7 @@
 
 DECLARE_SETTINGGROUP(RTK, "RTK")
 {
-    qmlRegisterUncreatableType<RTKSettings>("QGroundControl.SettingsManager", 1, 0, "RTKSettings", "Reference only"); \
+    qmlRegisterUncreatableType<RTKSettings>("QGroundControl", 1, 0, "RTKSettings", "Reference only"); \
 }
 
 DECLARE_SETTINGSFACT(RTKSettings, surveyInAccuracyLimit)

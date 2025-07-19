@@ -60,7 +60,7 @@ SettingsManager *SettingsManager::instance()
 
 void SettingsManager::registerQmlTypes()
 {
-    (void) qmlRegisterUncreatableType<SettingsManager>("QGroundControl.SettingsManager", 1, 0, "SettingsManager", "Reference only");
+    (void) qmlRegisterUncreatableType<SettingsManager>("QGroundControl", 1, 0, "SettingsManager", "Reference only");
 }
 
 void SettingsManager::init()

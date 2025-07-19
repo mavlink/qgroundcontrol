@@ -13,10 +13,10 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.FactSystem
+
 import QGroundControl.FactControls
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
+
 import QGroundControl.Controllers
 
 // Exposes the set of battery parameters taking into account the availability of the parameters.

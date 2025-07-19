@@ -11,6 +11,7 @@ import QtQuick
 import QtPositioning
 
 import QGroundControl
+import QGroundControl.Controls
 import QGroundControl.FlightMap
 
 /// Set of functions for fitting the map view to a specific constraint
