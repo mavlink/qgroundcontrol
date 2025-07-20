@@ -17,8 +17,6 @@ import QGroundControl.Controls
 import QGroundControl.ScreenTools
 import QGroundControl.MultiVehicleManager
 import QGroundControl.Palette
-import QGroundControl.AutoPilotPlugins.PX4
-import QGroundControl.AutoPilotPlugins.APM
 
 Rectangle {
     id:             _summaryRoot
