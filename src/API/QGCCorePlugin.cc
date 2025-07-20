@@ -18,7 +18,6 @@
 #include "HorizontalFactValueGrid.h"
 #include "InstrumentValueData.h"
 #include "JoystickManager.h"
-#include "LogDownloadController.h"
 #include "MAVLinkLib.h"
 #include "QGCLoggingCategory.h"
 #include "QGCOptions.h"
@@ -269,7 +268,6 @@ QQmlApplicationEngine *QGCCorePlugin::createQmlApplicationEngine(QObject *parent
     qmlEngine->addImportPath(QStringLiteral("qrc:/qml"));
     qmlEngine->rootContext()->setContextProperty(QStringLiteral("joystickManager"), JoystickManager::instance());
     qmlEngine->rootContext()->setContextProperty(QStringLiteral("debugMessageModel"), QGCLogging::instance());
-    qmlEngine->rootContext()->setContextProperty(QStringLiteral("logDownloadController"), LogDownloadController::instance());
     return qmlEngine;
 }
 
