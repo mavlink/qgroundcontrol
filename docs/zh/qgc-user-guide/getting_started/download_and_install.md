@@ -38,9 +38,9 @@ _QGroundControl_ 可以安装在 macOS 12 (Montreey) 上或以后：
 1. Download [QGroundControl.dmg](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl.dmg).
 2. 双击 .dmg 文件以挂载它，然后将 _QGroundControl_ 应用程序拖动到您的 _Application_ 文件夹。
 
-::: info
-QGroundControl 仍然没有签名。 根据你的 macOS 版本，你将无法对其安装给予许可。
-根据你的 macOS 版本，你将无法对其安装给予许可。
+:::info
+QGroundControl continues to not be signed. You will not to allow permission for it to install based on you macOS version.
+:::
 
 ## Ubuntu Linux 系统 {#ubuntu}
 
@@ -50,27 +50,54 @@ Ubuntu 自带一个串口调制解调器管理器，它会干扰串口（或 USB
 在安装 _QGroundControl_ 之前，您应该删除调制解调器管理器并授予自己访问串行端口的权限。
 您还需要安装 _GStreamer_以支持视频流。
 
-在首次安装 _QGroundControl_ 之前：
+**Before installing _QGroundControl_ for the first time:**
 
-1. 在命令提示符下输入：
-   ```sh
-   sudo usermod -a -G dialout $USER
-   sudo apt-get remove modemmanager -y
-   sudo apt install gstreamer1.0-plugins-bad gstreamer1.0-libav gstreamer1.0-gl -y
-   sudo apt install libfuse2 -y
-   sudo apt install libxcb-xinerama0 libxkbcommon-x11-0 libxcb-cursor-dev -y
-   ```
-   <!-- Note, remove install of libqt5gui5 https://github.com/mavlink/qgroundcontrol/issues/10176 fixed -->
-2. 注销并重新登录以启用对用户权限的更改。
+1. Enable serial-port access
+  Add your user to the dialout group so you can talk to USB devices without root:
 
-&nbsp; 若要安装 _QGroundControl_：
+```
+sudo usermod -aG dialout "$(id -un)"
+```
+
+:::info
+At login, your shell takes a snapshot of your user and group memberships. Because you just changed groups, you need a fresh login shell to pick up “dialout” access. Logging out and back in reloads that snapshot, so you get the new permissions.
+:::
+
+1. (Optional) Disable ModemManager
+  On some Ubuntu-based systems, ModemManager can claim serial ports that QGC needs. If you don't use it elsewhere, mask or remove it.
+
+```
+# preferred: stop and mask the service
+sudo systemctl mask --now ModemManager.service
+
+# or, if you’d rather remove the package
+sudo apt remove --purge modemmanager
+```
+
+1. On the command prompt, enter:
+
+```sh
+sudo apt install gstreamer1.0-plugins-bad gstreamer1.0-libav gstreamer1.0-gl -y
+sudo apt install libfuse2 -y
+sudo apt install libxcb-xinerama0 libxkbcommon-x11-0 libxcb-cursor-dev -y
+```
+
+**To install _QGroundControl_:**
 
 1. Download [QGroundControl-x86_64.AppImage](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl-x86_64.AppImage).
-2. 使用终端命令安装(并运行)：
-   ```sh
-   chmod +x ./QGroundControl-x86_64.AppImage
-   ./QGroundControl-x86_64.AppImage  (or double click)
-   ```
+
+2. Make the AppImage executable
+
+```
+chmod +x QGroundControl-<arch>.AppImage
+```
+
+1. Run QGroundControl
+  Either double-click the AppImage in your file manager or launch it from a terminal:
+
+```
+./QGroundControl-<arch>.AppImage
+```
 
 ## Android {#android}
 
