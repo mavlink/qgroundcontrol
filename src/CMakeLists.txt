@@ -1,3 +1,14 @@
+qt_add_library(QGroundControlModule STATIC)
+
+qt_add_qml_module(QGroundControlModule
+    URI QGroundControl
+    VERSION 1.0
+    RESOURCE_PREFIX /qml
+    IMPORTS
+        QGC
+    NO_PLUGIN
+)
+
 add_subdirectory(ADSB)
 add_subdirectory(AnalyzeView)
 add_subdirectory(Android)
@@ -84,6 +95,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         FlightMapModule
         MainWindowModule
         QGroundControlControlsModule
+        QGroundControlModule
         ScreenToolsModule
         ToolbarModule
         UTMSPModule

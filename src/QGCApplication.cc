@@ -47,7 +47,6 @@
 #include "JoystickManager.h"
 #include "JsonHelper.h"
 #include "LinkManager.h"
-#include "LogDownloadController.h"
 #include "MAVLinkChartController.h"
 #include "MAVLinkConsoleController.h"
 #include "MAVLinkProtocol.h"
@@ -63,7 +62,6 @@
 #include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
-#include "ShapeFileHelper.h"
 #include "SyslinkComponentController.h"
 #include "UDPLink.h"
 #include "Vehicle.h"
@@ -82,13 +80,6 @@
 #endif
 
 QGC_LOGGING_CATEGORY(QGCApplicationLog, "qgc.qgcapplication")
-
-// Qml Singleton factories
-
-static QObject *mavlinkSingletonFactory(QQmlEngine*, QJSEngine*)
-{
-    return new QGCMAVLink();
-}
 
 QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting, bool simpleBootTest)
     : QApplication(argc, argv)
@@ -283,7 +274,6 @@ void QGCApplication::init()
     qmlRegisterType<MAVLinkInspectorController>("QGroundControl.Controllers", 1, 0, "MAVLinkInspectorController");
 #endif
     qmlRegisterType<GeoTagController>("QGroundControl.Controllers", 1, 0, "GeoTagController");
-    qmlRegisterType<LogDownloadController>("QGroundControl.Controllers", 1, 0, "LogDownloadController");
     qmlRegisterType<MAVLinkConsoleController>("QGroundControl.Controllers", 1, 0, "MAVLinkConsoleController");
 
 
@@ -297,10 +287,6 @@ void QGCApplication::init()
     qmlRegisterType<FirmwareUpgradeController>("QGroundControl.Controllers", 1, 0, "FirmwareUpgradeController");
 #endif
     qmlRegisterType<JoystickConfigController>("QGroundControl.Controllers", 1, 0, "JoystickConfigController");
-
-    (void) qmlRegisterSingletonType<ShapeFileHelper>("QGroundControl.ShapeFileHelper", 1, 0, "ShapeFileHelper", [](QQmlEngine *, QJSEngine *) { return new ShapeFileHelper(); });
-
-    qmlRegisterSingletonType<QGCMAVLink>("MAVLink", 1, 0, "MAVLink", mavlinkSingletonFactory);
 
     // Although this should really be in _initForNormalAppBoot putting it here allowws us to create unit tests which pop up more easily
     if(QFontDatabase::addApplicationFont(":/fonts/opensans") < 0) {

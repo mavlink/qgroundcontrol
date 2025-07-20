@@ -219,17 +219,17 @@ elseif(ANDROID)
     include(Android)
 endif()
 
+qt_add_qml_module(${CMAKE_PROJECT_NAME}
+    URI QGC
+    VERSION 1.0
+    RESOURCE_PREFIX /qml
+)
+
 add_subdirectory(src)
 if(QGC_BUILD_TESTING)
     add_subdirectory(test)
     set_property(DIRECTORY test PROPERTY QT_EXCLUDE_FROM_TRANSLATION ON)
 endif()
-
-qt_add_qml_module(${CMAKE_PROJECT_NAME}
-    URI QGroundControl
-    VERSION 1.0
-    RESOURCE_PREFIX /qml
-)
 
 file(GLOB TS_SOURCES ${CMAKE_SOURCE_DIR}/translations/qgc_*.ts)
 set_source_files_properties(${TS_SOURCES} PROPERTIES OUTPUT_LOCATION "${CMAKE_BINARY_DIR}/i18n")

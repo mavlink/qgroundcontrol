@@ -13,6 +13,7 @@
 #include <QtCore/QPointF>
 #include <QtCore/QTimer>
 #include <QtPositioning/QGeoCoordinate>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "QmlUnitsConversion.h"
 
@@ -53,6 +54,8 @@ Q_MOC_INCLUDE("AirLinkManager.h")
 class QGroundControlQmlGlobal : public QObject
 {
     Q_OBJECT
+    QML_NAMED_ELEMENT(QGroundControl)
+    QML_SINGLETON
 
 public:
     QGroundControlQmlGlobal(QObject *parent = nullptr);
