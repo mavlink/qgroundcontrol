@@ -10,7 +10,8 @@
 import QtQuick
 import QtQuick.Controls
 
-import QGroundControl.Palette
+import QGroundControl
+
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
 

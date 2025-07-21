@@ -89,7 +89,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         AppSettingsModule
         AutoPilotPluginsCommonModule
         FactControlsModule
-        FactSystemModule
         FirstRunPromptDialogsModule
         FlightDisplayModule
         FlightMapModule
@@ -99,7 +98,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         ScreenToolsModule
         ToolbarModule
         UTMSPModule
-        VehicleModule
         VehicleSetupModule
 )
 

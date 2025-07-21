@@ -11,11 +11,6 @@
 #include "APMAutoPilotPlugin.h"
 #include "QGCMAVLink.h"
 #include "QGCApplication.h"
-#include "APMFlightModesComponentController.h"
-#include "APMAirframeComponentController.h"
-#include "APMSensorsComponentController.h"
-#include "APMFollowComponentController.h"
-#include "APMSubMotorComponentController.h"
 #include "MissionManager.h"
 #include "ParameterManager.h"
 #include "SettingsManager.h"
@@ -60,12 +55,6 @@ APMFirmwarePlugin::APMFirmwarePlugin(QObject *parent)
     };
 
     updateAvailableFlightModes(modeList);
-
-    (void) qmlRegisterType<APMFlightModesComponentController>("QGroundControl.Controllers", 1, 0, "APMFlightModesComponentController");
-    (void) qmlRegisterType<APMAirframeComponentController>("QGroundControl.Controllers", 1, 0, "APMAirframeComponentController");
-    (void) qmlRegisterType<APMSensorsComponentController>("QGroundControl.Controllers", 1, 0, "APMSensorsComponentController");
-    (void) qmlRegisterType<APMFollowComponentController>("QGroundControl.Controllers", 1, 0, "APMFollowComponentController");
-    (void) qmlRegisterType<APMSubMotorComponentController>("QGroundControl.Controllers", 1, 0, "APMSubMotorComponentController");
 }
 
 APMFirmwarePlugin::~APMFirmwarePlugin()

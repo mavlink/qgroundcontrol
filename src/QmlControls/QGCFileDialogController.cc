@@ -20,12 +20,12 @@ QGC_LOGGING_CATEGORY(QGCFileDialogControllerLog, "qgc.qmlcontrols.qgcfiledialogc
 QGCFileDialogController::QGCFileDialogController(QObject *parent)
     : QObject(parent)
 {
-    // qCDebug(QGCFileDialogControllerLog) << Q_FUNC_INFO << this;
+    qCDebug(QGCFileDialogControllerLog) << this;
 }
 
 QGCFileDialogController::~QGCFileDialogController()
 {
-    // qCDebug(QGCFileDialogControllerLog) << Q_FUNC_INFO << this;
+    qCDebug(QGCFileDialogControllerLog) << this;
 }
 
 QStringList QGCFileDialogController::getFiles(const QString &directoryPath, const QStringList &nameFilters)

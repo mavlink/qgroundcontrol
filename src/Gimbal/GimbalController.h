@@ -11,6 +11,7 @@
 
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QTimer>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "Gimbal.h"
 #include "MAVLinkLib.h"
@@ -23,6 +24,8 @@ class Vehicle;
 class GimbalController : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_MOC_INCLUDE("QmlObjectListModel.h")
     Q_PROPERTY(Gimbal *activeGimbal READ activeGimbal WRITE setActiveGimbal NOTIFY activeGimbalChanged)
     Q_PROPERTY(QmlObjectListModel *gimbals READ gimbals CONSTANT)

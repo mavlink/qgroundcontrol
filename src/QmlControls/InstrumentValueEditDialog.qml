@@ -15,10 +15,10 @@ import QtQuick.Controls
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
-import QGroundControl.FactSystem
+
 import QGroundControl.FactControls
-import QGroundControl.Controllers
-import QGroundControl.Palette
+
+
 
 QGCPopupDialog {
     id:         root

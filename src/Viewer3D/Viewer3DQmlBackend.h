@@ -11,6 +11,7 @@
 
 #include <QtCore/QObject>
 #include <QtPositioning/QGeoCoordinate>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 ///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
 
@@ -21,7 +22,8 @@ class OsmParser;
 class Viewer3DQmlBackend : public QObject
 {
     Q_OBJECT
-
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_PROPERTY(QGeoCoordinate gpsRef READ gpsRef NOTIFY gpsRefChanged)
 
 public:

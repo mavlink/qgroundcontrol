@@ -12,13 +12,15 @@
 
 #include <QtCore/QAbstractListModel>
 #include <QtCore/QLoggingCategory>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 Q_DECLARE_LOGGING_CATEGORY(QmlObjectListModelLog)
 
 class QmlObjectListModel : public QAbstractListModel
 {
     Q_OBJECT
-    
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
     QmlObjectListModel(QObject* parent = nullptr);
     ~QmlObjectListModel() override;

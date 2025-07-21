@@ -9,10 +9,11 @@
 
 #pragma once
 
+#include <QtCore/QLoggingCategory>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QSGGeometryNode>
 #include <QtQuick/QSGGeometry>
-#include <QtCore/QLoggingCategory>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 Q_DECLARE_LOGGING_CATEGORY(TerrainProfileLog)
 
@@ -25,6 +26,7 @@ Q_MOC_INCLUDE("MissionController.h")
 class TerrainProfile : public QQuickItem
 {
     Q_OBJECT
+    QML_ELEMENT
 
 public:
     TerrainProfile(QQuickItem *parent = nullptr);

@@ -15,6 +15,7 @@
 
 #include <QtQuick/QQuickItem>
 #include <QtCore/QLoggingCategory>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "FactPanelController.h"
 
@@ -24,7 +25,7 @@ Q_DECLARE_LOGGING_CATEGORY(SensorsComponentControllerLog)
 class SensorsComponentController : public FactPanelController
 {
     Q_OBJECT
-    
+    QML_ELEMENT
 public:
     SensorsComponentController(void);
     

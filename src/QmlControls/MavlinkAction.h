@@ -22,7 +22,7 @@ class Vehicle;
 class MavlinkAction: public QObject
 {
     Q_OBJECT
-    // QML_ELEMENT
+    QML_ELEMENT
     Q_MOC_INCLUDE("Vehicle.h")
     Q_PROPERTY(QString label READ label CONSTANT)
     Q_PROPERTY(QString description READ description CONSTANT)

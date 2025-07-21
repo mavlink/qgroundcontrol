@@ -13,6 +13,7 @@
 #include <QtPositioning/QGeoCoordinate>
 #include <QtGui/QVector3D>
 #include <QtGui/QVector2D>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 class Viewer3DSettings;
 
@@ -21,6 +22,7 @@ class Viewer3DSettings;
 class Viewer3DTerrainGeometry : public QQuick3DGeometry
 {
     Q_OBJECT
+    QML_ELEMENT
 
     Q_PROPERTY(int sectorCount READ sectorCount WRITE setSectorCount NOTIFY sectorCountChanged)
     Q_PROPERTY(int stackCount READ stackCount WRITE setStackCount NOTIFY stackCountChanged)

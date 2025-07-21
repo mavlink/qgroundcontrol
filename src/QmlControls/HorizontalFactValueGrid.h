@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <QtQmlIntegration/QtQmlIntegration>
+
 #include "FactValueGrid.h"
 
 class InstrumentValueData;
@@ -16,9 +18,10 @@ class InstrumentValueData;
 class HorizontalFactValueGrid : public FactValueGrid
 {
     Q_OBJECT
+    QML_NAMED_ELEMENT(HorizontalFactValueGridTemplate)
 
 public:
-    HorizontalFactValueGrid(QQuickItem *parent = nullptr);
+    explicit HorizontalFactValueGrid(QQuickItem *parent = nullptr);
 
     Q_PROPERTY(QString telemetryBarSettingsGroup    MEMBER telemetryBarSettingsGroup    CONSTANT)
     Q_PROPERTY(QString vehicleCardSettingsGroup     MEMBER vehicleCardSettingsGroup     CONSTANT)

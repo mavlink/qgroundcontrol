@@ -14,7 +14,7 @@ import QtQuick
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
-import QGroundControl.Palette
+
 import QGroundControl.FlightMap
 import Qt5Compat.GraphicalEffects
 Item {

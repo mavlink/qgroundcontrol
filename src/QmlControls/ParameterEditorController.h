@@ -9,13 +9,13 @@
 
 #pragma once
 
-#include "FactPanelController.h"
-#include "QmlObjectListModel.h"
-#include "FactMetaData.h"
-
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtQmlIntegration/QtQmlIntegration>
+
+#include "FactPanelController.h"
+#include "QmlObjectListModel.h"
+#include "FactMetaData.h"
 
 Q_DECLARE_LOGGING_CATEGORY(ParameterEditorControllerLog)
 
@@ -26,7 +26,7 @@ class ParameterTableModel : public QAbstractTableModel
     Q_OBJECT
     
 public:
-    ParameterTableModel(QObject* parent = nullptr);
+    explicit ParameterTableModel(QObject* parent = nullptr);
     ~ParameterTableModel() override;
 
     typedef QVector<QVariant> ColumnData;
@@ -131,7 +131,7 @@ signals:
 class ParameterEditorController : public FactPanelController
 {
     Q_OBJECT
-    // QML_ELEMENT
+    QML_ELEMENT
     Q_PROPERTY(QString              searchText              MEMBER _searchText                                          NOTIFY searchTextChanged)
     Q_PROPERTY(QmlObjectListModel*  categories              READ categories                                             CONSTANT)
     Q_PROPERTY(QObject*             currentCategory         READ currentCategory            WRITE setCurrentCategory    NOTIFY currentCategoryChanged)

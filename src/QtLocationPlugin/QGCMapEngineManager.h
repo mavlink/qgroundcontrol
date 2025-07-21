@@ -28,7 +28,7 @@ class QGCMapEngineManager : public QObject
 {
     Q_OBJECT
     // QML_ELEMENT
-    // QML_SINGLETON
+    // QML_UNCREATABLE("")
     Q_MOC_INCLUDE("QmlObjectListModel.h")
     Q_MOC_INCLUDE("QGCCachedTileSet.h")
     Q_PROPERTY(bool                 fetchElevation  MEMBER _fetchElevation                          NOTIFY fetchElevationChanged)

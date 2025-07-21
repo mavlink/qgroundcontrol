@@ -11,6 +11,7 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QLoggingCategory>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "MissionController.h"
 #include "GeoFenceController.h"
@@ -26,6 +27,7 @@ class Vehicle;
 class PlanMasterController : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
     Q_MOC_INCLUDE("QmlObjectListModel.h")
     Q_MOC_INCLUDE("Vehicle.h")
     

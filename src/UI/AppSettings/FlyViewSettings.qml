@@ -14,13 +14,13 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.FactSystem
+
 import QGroundControl.FactControls
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
-import QGroundControl.MultiVehicleManager
-import QGroundControl.Palette
-import QGroundControl.Controllers
+
+
+
 
 SettingsPage {
     property var    _settingsManager:                       QGroundControl.settingsManager
@@ -43,10 +43,8 @@ SettingsPage {
     property Fact   _viewer3DBuildingLevelHeight:           _viewer3DSettings.buildingLevelHeight
     property Fact   _viewer3DAltitudeBias:                  _viewer3DSettings.altitudeBias
 
-    QGCFileDialogController { id: fileController }
-
     function mavlinkActionList() {
-        var fileModel = fileController.getFiles(_settingsManager.appSettings.mavlinkActionsSavePath, "*.json")
+        var fileModel = QGCFileDialogController.getFiles(_settingsManager.appSettings.mavlinkActionsSavePath, "*.json")
         fileModel.unshift(qsTr("<None>"))
         return fileModel
     }

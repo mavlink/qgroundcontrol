@@ -12,10 +12,10 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.MultiVehicleManager
+
 import QGroundControl.ScreenTools
-import QGroundControl.Palette
-import QGroundControl.FactSystem
+
+
 import QGroundControl.FactControls
 
 // This indicator page is used both when showing RTK status only with no vehicle connect and when showing GPS/RTK status with a vehicle connected

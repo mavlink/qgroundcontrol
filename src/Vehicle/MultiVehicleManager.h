@@ -15,6 +15,7 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QLoggingCategory>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 class LinkInterface;
 class Vehicle;
@@ -26,6 +27,8 @@ Q_DECLARE_LOGGING_CATEGORY(MultiVehicleManagerLog)
 class MultiVehicleManager : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_MOC_INCLUDE("QmlObjectListModel.h")
     Q_MOC_INCLUDE("LinkInterface.h")
     Q_MOC_INCLUDE("Vehicle.h")

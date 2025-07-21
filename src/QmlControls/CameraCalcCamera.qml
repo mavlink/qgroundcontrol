@@ -6,7 +6,7 @@ import QGroundControl
 import QGroundControl.ScreenTools
 import QGroundControl.Controls
 import QGroundControl.FactControls
-import QGroundControl.Palette
+
 
 // Camera calculator "Camera" section for mission item editors
 ColumnLayout {

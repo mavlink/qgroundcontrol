@@ -11,7 +11,7 @@
 
 import QtQuick
 
-import QGroundControl.Palette
+
 import QGroundControl.ScreenTools
 import QGroundControl.Controls
 

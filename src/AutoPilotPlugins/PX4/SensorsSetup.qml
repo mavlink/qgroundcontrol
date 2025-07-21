@@ -13,12 +13,12 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.FactSystem
+
 import QGroundControl.FactControls
-import QGroundControl.Palette
+
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
-import QGroundControl.Controllers
+
 
 /// Page for sensor calibration. This control is used within the SensorsComponent control and can also be used
 /// standalone for custom uis. When using standadalone you can use the various show* bools to show/hide what you want.

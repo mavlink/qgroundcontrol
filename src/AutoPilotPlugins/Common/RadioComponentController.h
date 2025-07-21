@@ -11,6 +11,7 @@
 
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QElapsedTimer>
+#include <QtQmlIntegration/QtQmlIntegration>
 #include <QtQuick/QQuickItem>
 
 #include "FactPanelController.h"
@@ -22,6 +23,7 @@ Q_DECLARE_LOGGING_CATEGORY(RadioComponentControllerVerboseLog)
 class RadioComponentController : public FactPanelController
 {
     Q_OBJECT
+    QML_ELEMENT
     Q_PROPERTY(int minChannelCount MEMBER _chanMinimum CONSTANT)
     Q_PROPERTY(int channelCount READ channelCount NOTIFY channelCountChanged)
     Q_PROPERTY(QQuickItem *statusText MEMBER _statusText NOTIFY statusTextChanged)

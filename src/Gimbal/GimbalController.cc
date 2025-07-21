@@ -23,7 +23,7 @@ GimbalController::GimbalController(Vehicle *vehicle)
     , _vehicle(vehicle)
     , _gimbals(new QmlObjectListModel(this))
 {
-    // qCDebug(GimbalControllerLog) << Q_FUNC_INFO << this;
+    qCDebug(GimbalControllerLog) << this;
 
     (void) connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &GimbalController::_mavlinkMessageReceived);
 
@@ -33,7 +33,7 @@ GimbalController::GimbalController(Vehicle *vehicle)
 
 GimbalController::~GimbalController()
 {
-    // qCDebug(GimbalControllerLog) << Q_FUNC_INFO << this;
+    qCDebug(GimbalControllerLog) << this;
 }
 
 void GimbalController::setActiveGimbal(Gimbal *gimbal)

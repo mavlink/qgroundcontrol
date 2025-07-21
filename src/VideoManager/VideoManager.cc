@@ -49,7 +49,7 @@ VideoManager::VideoManager(QObject *parent)
     , _subtitleWriter(new SubtitleWriter(this))
     , _videoSettings(SettingsManager::instance()->videoSettings())
 {
-    // qCDebug(VideoManagerLog) << this;
+    qCDebug(VideoManagerLog) << this;
 
     (void) qRegisterMetaType<VideoReceiver::STATUS>("STATUS");
 
@@ -57,26 +57,19 @@ VideoManager::VideoManager(QObject *parent)
     if (!GStreamer::initialize()) {
         qCCritical(VideoManagerLog) << "Failed To Initialize GStreamer";
     }
+#else
+    (void) qmlRegisterType<VideoItemStub>("org.freedesktop.gstreamer.Qt6GLVideoItem", 1, 0, "GstGLQt6VideoItem");
 #endif
 }
 
 VideoManager::~VideoManager()
 {
-    // qCDebug(VideoManagerLog) << this;
+    qCDebug(VideoManagerLog) << this;
 }
 
 VideoManager *VideoManager::instance()
 {
     return _videoManagerInstance();
-}
-
-void VideoManager::registerQmlTypes()
-{
-    (void) qmlRegisterUncreatableType<VideoManager>("QGroundControl.VideoManager", 1, 0, "VideoManager", "Reference only");
-    (void) qmlRegisterUncreatableType<VideoReceiver>("QGroundControl", 1, 0, "VideoReceiver","Reference only");
-#ifndef QGC_GST_STREAMING
-    (void) qmlRegisterType<VideoItemStub>("org.freedesktop.gstreamer.Qt6GLVideoItem", 1, 0, "GstGLQt6VideoItem");
-#endif
 }
 
 void VideoManager::init(QQuickWindow *window)

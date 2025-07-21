@@ -12,7 +12,7 @@ import QtQuick.Controls
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.Palette
+
 import QGroundControl.ScreenTools
 
 // Important Note: Toolbar buttons must manage their checked state manually in order to support

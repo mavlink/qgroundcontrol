@@ -11,6 +11,7 @@
 
 #include <QtCore/QString>
 #include <QtQuick3D/QQuick3DGeometry>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 ///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
 
@@ -20,6 +21,7 @@ class OsmParser;
 class CityMapGeometry : public QQuick3DGeometry
 {
     Q_OBJECT
+    QML_ELEMENT
     Q_MOC_INCLUDE("OsmParser.h")
 
     Q_PROPERTY(QString modelName READ modelName WRITE setModelName NOTIFY modelNameChanged)

@@ -9,12 +9,15 @@
 
 #pragma once
 
+#include <QtQmlIntegration/QtQmlIntegration>
+
 #include "SettingsGroup.h"
 
 class VideoSettings : public SettingsGroup
 {
     Q_OBJECT
-
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
     VideoSettings(QObject* parent = nullptr);
     DEFINE_SETTING_NAME_GROUP()

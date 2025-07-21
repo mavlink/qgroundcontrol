@@ -12,9 +12,9 @@ import QtQuick
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
-import QGroundControl.FactSystem
+
 import QGroundControl.FlightMap
-import QGroundControl.Palette
+
 
 Rectangle {
     width:  ScreenTools.defaultFontPixelHeight * 10

@@ -45,22 +45,17 @@ Q_APPLICATION_STATIC(SettingsManager, _settingsManagerInstance);
 SettingsManager::SettingsManager(QObject *parent)
     : QObject(parent)
 {
-    // qCDebug(SettingsManagerLog) << Q_FUNC_INFO << this;
+    qCDebug(SettingsManagerLog) << this;
 }
 
 SettingsManager::~SettingsManager()
 {
-    // qCDebug(SettingsManagerLog) << Q_FUNC_INFO << this;
+    qCDebug(SettingsManagerLog) << this;
 }
 
 SettingsManager *SettingsManager::instance()
 {
     return _settingsManagerInstance();
-}
-
-void SettingsManager::registerQmlTypes()
-{
-    (void) qmlRegisterUncreatableType<SettingsManager>("QGroundControl.SettingsManager", 1, 0, "SettingsManager", "Reference only");
 }
 
 void SettingsManager::init()

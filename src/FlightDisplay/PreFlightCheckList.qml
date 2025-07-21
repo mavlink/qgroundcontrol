@@ -16,7 +16,7 @@ import QGroundControl
 import QGroundControl.ScreenTools
 import QGroundControl.Controls
 import QGroundControl.FlightDisplay
-import QGroundControl.Vehicle
+
 
 ColumnLayout {
     spacing: 0.8 * ScreenTools.defaultFontPixelWidth

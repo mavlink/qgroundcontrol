@@ -10,7 +10,6 @@
 #include "VideoSettings.h"
 #include "VideoManager.h"
 
-#include <QtQml/QQmlEngine>
 #include <QtCore/QVariantList>
 
 #ifdef QGC_GST_STREAMING
@@ -22,8 +21,6 @@
 
 DECLARE_SETTINGGROUP(Video, "Video")
 {
-    qmlRegisterUncreatableType<VideoSettings>("QGroundControl.SettingsManager", 1, 0, "VideoSettings", "Reference only");
-
     // Setup enum values for videoSource settings into meta data
     QVariantList videoSourceList;
 #if defined(QGC_GST_STREAMING) || defined(QGC_QT_STREAMING)

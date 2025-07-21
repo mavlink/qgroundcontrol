@@ -10,6 +10,7 @@
 #pragma once
 
 #include <QtCore/QLoggingCategory>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "LogReplayLink.h"
 
@@ -18,7 +19,7 @@ Q_DECLARE_LOGGING_CATEGORY(LogReplayLinkControllerLog)
 class LogReplayLinkController : public QObject
 {
     Q_OBJECT
-
+    QML_ELEMENT
     Q_PROPERTY(LogReplayLink    *link           READ    link            WRITE setLink               NOTIFY linkChanged)
     Q_PROPERTY(bool             isPlaying       READ    isPlaying       WRITE setIsPlaying          NOTIFY isPlayingChanged)
     Q_PROPERTY(qreal            percentComplete READ    percentComplete WRITE setPercentComplete    NOTIFY percentCompleteChanged)

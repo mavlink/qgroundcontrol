@@ -13,11 +13,11 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.FactSystem
+
 import QGroundControl.FactControls
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
-import QGroundControl.Controllers
+
 import QGroundControl.AutoPilotPlugins.PX4
 
 // Note: Only the _SOURCE parameter can be assumed to be always available. The remainder of the parameters

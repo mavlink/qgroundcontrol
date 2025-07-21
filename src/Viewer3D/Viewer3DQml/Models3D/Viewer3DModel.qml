@@ -5,13 +5,13 @@ import QtQuick.Window
 import QtPositioning
 
 import QGroundControl
-import QGroundControl.Controllers
+
 import QGroundControl.Controls
 import QGroundControl.FlightDisplay
 import QGroundControl.FlightMap
-import QGroundControl.Palette
+
 import QGroundControl.ScreenTools
-import QGroundControl.Vehicle
+
 import QGroundControl.Viewer3D
 
 ///     @author Omid Esrafilian <esrafilian.omid@gmail.com>

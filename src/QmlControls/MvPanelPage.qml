@@ -3,7 +3,7 @@ import QtQuick.Controls
 
 import QGroundControl
 import QGroundControl.ScreenTools
-import QGroundControl.Palette
+
 
 Item {
     property bool showBorder:               true

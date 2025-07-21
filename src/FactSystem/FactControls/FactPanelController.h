@@ -13,6 +13,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QStringList>
 #include <QtCore/QTimer>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 Q_DECLARE_LOGGING_CATEGORY(FactPanelControllerLog)
 
@@ -23,6 +24,7 @@ class Fact;
 class FactPanelController : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
     Q_MOC_INCLUDE("Vehicle.h")
     Q_MOC_INCLUDE("Fact.h")
     Q_PROPERTY(Vehicle *vehicle MEMBER _vehicle CONSTANT)

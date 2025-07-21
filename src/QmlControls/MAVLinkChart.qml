@@ -4,9 +4,9 @@ import QtQuick.Layouts
 import QtCharts
 
 import QGroundControl
-import QGroundControl.Palette
+
 import QGroundControl.Controls
-import QGroundControl.Controllers
+
 import QGroundControl.ScreenTools
 
 ChartView {

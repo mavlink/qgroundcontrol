@@ -17,6 +17,7 @@
 #include <QtCore/QRectF>
 #include <QtCore/QPointF>
 #include <QtCore/QLoggingCategory>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 class QGCCameraParamIO;
 class QmlObjectListModel;
@@ -30,6 +31,8 @@ Q_DECLARE_LOGGING_CATEGORY(CameraControlVerboseLog)
 class MavlinkCameraControl : public FactGroup
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_PROPERTY(Fact *exposureMode   READ exposureMode   NOTIFY parametersReady)
     Q_PROPERTY(Fact *ev             READ ev             NOTIFY parametersReady)
     Q_PROPERTY(Fact *iso            READ iso            NOTIFY parametersReady)

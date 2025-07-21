@@ -20,8 +20,6 @@
 #include <QtCore/qapplicationstatic.h>
 #include <QtCore/QSettings>
 #include <QtCore/QTimer>
-#include <QtQml/QQmlEngine>
-#include <QtQml/qqml.h>
 
 QGC_LOGGING_CATEGORY(JoystickManagerLog, "qgc.joystick.joystickmanager")
 
@@ -53,12 +51,6 @@ JoystickManager::~JoystickManager()
 JoystickManager *JoystickManager::instance()
 {
     return _joystickManager();
-}
-
-void JoystickManager::registerQmlTypes()
-{
-    (void) qmlRegisterUncreatableType<JoystickManager>("QGroundControl.JoystickManager", 1, 0, "JoystickManager", "Reference only");
-    (void) qmlRegisterUncreatableType<Joystick>("QGroundControl.JoystickManager", 1, 0, "Joystick", "Reference only");
 }
 
 void JoystickManager::init()
