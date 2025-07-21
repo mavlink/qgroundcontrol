@@ -10,16 +10,16 @@
 #include "JoystickManager.h"
 #include "Joystick.h"
 #if defined(QGC_SDL_JOYSTICK)
+    #include <SDL3/SDL.h>
     #include "JoystickSDL.h"
-    #include <SDL.h>
 #elif defined(Q_OS_ANDROID)
     #include "JoystickAndroid.h"
 #endif
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/qapplicationstatic.h>
+#include <QtCore/QMutexLocker>
 #include <QtCore/QSettings>
-#include <QtCore/QTimer>
 #include <QtQml/QQmlEngine>
 #include <QtQml/qqml.h>
 
@@ -29,25 +29,27 @@ Q_APPLICATION_STATIC(JoystickManager, _joystickManager);
 
 JoystickManager::JoystickManager(QObject *parent)
     : QObject(parent)
-    , _joystickCheckTimer(new QTimer(this))
 {
-    // qCDebug(JoystickManagerLog) << Q_FUNC_INFO << this;
+    qCDebug(JoystickManagerLog) << this;
 
-
-
-    _joystickCheckTimer->setInterval(kTimerInterval);
-    _joystickCheckTimer->setSingleShot(false);
+    _joystickCheckTimer.setInterval(kTimerInterval);
+    _joystickCheckTimer.setSingleShot(false);
+    (void) connect(&_joystickCheckTimer, &QTimer::timeout, this, &JoystickManager::_updateAvailableJoysticks);
 }
 
 JoystickManager::~JoystickManager()
 {
-    for (QMap<QString, Joystick*>::key_value_iterator it = _name2JoystickMap.keyValueBegin(); it != _name2JoystickMap.keyValueEnd(); ++it) {
-        qCDebug(JoystickManagerLog) << "Releasing joystick:" << it->first;
-        it->second->stop();
-        delete it->second;
+    QMutexLocker locker(&_mutex);
+    for (auto [name, js] : _name2JoystickMap.asKeyValueRange()) {
+        qCDebug(JoystickManagerLog) << "Releasing joystick:" << name;
+        if (js) {
+            js->stopPolling();
+            (void) js->wait(kTimeout);
+            delete js;
+        }
     }
 
-    // qCDebug(JoystickManagerLog) << Q_FUNC_INFO << this;
+    qCDebug(JoystickManagerLog) << this;
 }
 
 JoystickManager *JoystickManager::instance()
@@ -73,14 +75,14 @@ void JoystickManager::init()
         return;
     }
     (void) connect(this, &JoystickManager::updateAvailableJoysticksSignal, this, [this]() {
+        QMutexLocker locker(&_mutex);
         _joystickCheckTimerCounter = 5;
-        _joystickCheckTimer->start();
+        _joystickCheckTimer.start();
     });
 #endif
 
-    (void) connect(_joystickCheckTimer, &QTimer::timeout, this, &JoystickManager::_updateAvailableJoysticks);
     _joystickCheckTimerCounter = 5;
-    _joystickCheckTimer->start();
+    _joystickCheckTimer.start();
 }
 
 void JoystickManager::_setActiveJoystickFromSettings()
@@ -93,103 +95,130 @@ void JoystickManager::_setActiveJoystickFromSettings()
     newMap = JoystickAndroid::discover();
 #endif
 
-    if (_activeJoystick && !newMap.contains(_activeJoystick->name())) {
-        qCDebug(JoystickManagerLog) << "Active joystick removed";
-        setActiveJoystick(nullptr);
-    }
+    bool activeRemoved = false;
+    {
+        QMutexLocker locker(&_mutex);
 
-    // Check to see if our current mapping contains any joysticks that are not in the new mapping
-    // If so, those joysticks have been unplugged, and need to be cleaned up
-    for (QMap<QString, Joystick*>::key_value_iterator it = _name2JoystickMap.keyValueBegin(); it != _name2JoystickMap.keyValueEnd(); ++it) {
-        if (!newMap.contains(it->first)) {
-            qCDebug(JoystickManagerLog) << "Releasing joystick:" << it->first;
-            it->second->stopPolling();
-            (void) it->second->wait(kTimeout);
-            it->second->deleteLater();
+        if (_activeJoystick && !newMap.contains(_activeJoystick->name())) {
+            qCDebug(JoystickManagerLog) << "Active joystick removed";
+            activeRemoved = true;
         }
+
+        // Clean up unplugged sticks
+        for (auto [name, js] : _name2JoystickMap.asKeyValueRange()) {
+            if (!newMap.contains(name)) {
+                qCDebug(JoystickManagerLog) << "Releasing joystick:" << name;
+                js->stopPolling();
+                (void) js->wait(kTimeout);
+                js->deleteLater();
+            }
+        }
+
+        _name2JoystickMap = newMap;
     }
 
-    _name2JoystickMap = newMap;
     emit availableJoysticksChanged();
 
-    if (_name2JoystickMap.isEmpty()) {
+    Joystick *desiredActive = nullptr;
+
+    if (!_name2JoystickMap.isEmpty()) {
+        QSettings settings;
+        settings.beginGroup(_settingsGroup);
+        QString name = settings.value(_settingsKeyActiveJoystick).toString();
+        if (name.isEmpty() || !_name2JoystickMap.contains(name)) {
+            name = _name2JoystickMap.first()->name();
+        }
+        desiredActive = _name2JoystickMap.value(name, nullptr);
+        settings.endGroup();
+    }
+
+    if (activeRemoved) {
         setActiveJoystick(nullptr);
-        return;
     }
-
-    QSettings settings;
-    settings.beginGroup(_settingsGroup);
-
-    QString name = settings.value(_settingsKeyActiveJoystick).toString();
-    if (name.isEmpty()) {
-        name = _name2JoystickMap.first()->name();
-    }
-
-    setActiveJoystick(_name2JoystickMap.value(name, _name2JoystickMap.first()));
-    settings.setValue(_settingsKeyActiveJoystick, _activeJoystick->name());
-
-    settings.endGroup();
+    setActiveJoystick(desiredActive);
 }
 
 Joystick *JoystickManager::activeJoystick()
 {
+    QMutexLocker locker(&_mutex);
     return _activeJoystick;
 }
 
 void JoystickManager::setActiveJoystick(Joystick *joystick)
 {
-    if (joystick && !_name2JoystickMap.contains(joystick->name())) {
-        qCWarning(JoystickManagerLog) << "Set active not in map" << joystick->name();
-        return;
+    Joystick *activeJoystick = nullptr;
+    QString activeName;
+
+    {
+        QMutexLocker locker(&_mutex);
+
+        if (joystick && !_name2JoystickMap.contains(joystick->name())) {
+            qCWarning(JoystickManagerLog) << "Set active not in map" << joystick->name();
+            return;
+        }
+
+        if (_activeJoystick == joystick) {
+            return;
+        }
+
+        if (_activeJoystick) {
+            _activeJoystick->stopPolling();
+        }
+
+        _activeJoystick = joystick;
+        activeJoystick = _activeJoystick;
+        activeName = _activeJoystick ? _activeJoystick->name() : QString();
+
+        if (_activeJoystick) {
+            qCDebug(JoystickManagerLog) << "Set active:" << _activeJoystick->name();
+
+            QSettings settings;
+            settings.beginGroup(_settingsGroup);
+            settings.setValue(_settingsKeyActiveJoystick, _activeJoystick->name());
+            settings.endGroup();
+        }
     }
 
-    if (_activeJoystick == joystick) {
-        return;
-    }
-
-    if (_activeJoystick) {
-        _activeJoystick->stopPolling();
-    }
-
-    _activeJoystick = joystick;
-
-    if (_activeJoystick) {
-        qCDebug(JoystickManagerLog) << "Set active:" << _activeJoystick->name();
-
-        QSettings settings;
-        settings.beginGroup(_settingsGroup);
-        settings.setValue(_settingsKeyActiveJoystick, _activeJoystick->name());
-        settings.endGroup();
-    }
-
-    emit activeJoystickChanged(_activeJoystick);
-    emit activeJoystickNameChanged(_activeJoystick ? _activeJoystick->name() : "");
+    emit activeJoystickChanged(activeJoystick);
+    emit activeJoystickNameChanged(activeName);
 }
 
 QVariantList JoystickManager::joysticks()
 {
     QVariantList list;
-    for (auto it = _name2JoystickMap.constBegin(); it != _name2JoystickMap.constEnd(); ++it) {
-        list += QVariant::fromValue(it.value());
+    QMutexLocker locker(&_mutex);
+    for (auto js : _name2JoystickMap) {
+        list += QVariant::fromValue(js);
     }
-
     return list;
 }
 
-QString JoystickManager::activeJoystickName() const
+QStringList JoystickManager::joystickNames()
 {
+    QMutexLocker locker(&_mutex);
+    return _name2JoystickMap.keys();
+}
+
+QString JoystickManager::activeJoystickName()
+{
+    QMutexLocker locker(&_mutex);
     return (_activeJoystick ? _activeJoystick->name() : QString());
 }
 
 bool JoystickManager::setActiveJoystickName(const QString &name)
 {
-    if (_name2JoystickMap.contains(name)) {
-        setActiveJoystick(_name2JoystickMap[name]);
-        return true;
+    Joystick *target = nullptr;
+    {
+        QMutexLocker locker(&_mutex);
+        if (_name2JoystickMap.contains(name)) {
+            target = _name2JoystickMap[name];
+        } else {
+            qCWarning(JoystickManagerLog) << "Set active not in map" << name;
+            return false;
+        }
     }
-
-    qCWarning(JoystickManagerLog) << "Set active not in map" << name;
-    return false;
+    setActiveJoystick(target);
+    return true;
 }
 
 void JoystickManager::_updateAvailableJoysticks()
@@ -198,18 +227,24 @@ void JoystickManager::_updateAvailableJoysticks()
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
         switch(event.type) {
-        case SDL_QUIT:
-            qCDebug(JoystickManagerLog) << "SDL ERROR:" << SDL_GetError();
+        case SDL_EVENT_GAMEPAD_ADDED:
+            qCDebug(JoystickManagerLog) << "Gamepad added:" << event.gdevice.which;
+            _setActiveJoystickFromSettings();
             break;
-        case SDL_CONTROLLERDEVICEADDED:
-        case SDL_JOYDEVICEADDED:
+        case SDL_EVENT_JOYSTICK_ADDED:
             qCDebug(JoystickManagerLog) << "Joystick added:" << event.jdevice.which;
             _setActiveJoystickFromSettings();
             break;
-        case SDL_CONTROLLERDEVICEREMOVED:
-        case SDL_JOYDEVICEREMOVED:
+        case SDL_EVENT_GAMEPAD_REMOVED:
+            qCDebug(JoystickManagerLog) << "Gamepad removed:" << event.gdevice.which;
+            _setActiveJoystickFromSettings();
+            break;
+        case SDL_EVENT_JOYSTICK_REMOVED:
             qCDebug(JoystickManagerLog) << "Joystick removed:" << event.jdevice.which;
             _setActiveJoystickFromSettings();
+            break;
+        case SDL_EVENT_QUIT:
+            qCWarning(JoystickManagerLog) << "SDL quit event received";
             break;
         default:
             break;
@@ -219,7 +254,7 @@ void JoystickManager::_updateAvailableJoysticks()
     _joystickCheckTimerCounter--;
     _setActiveJoystickFromSettings();
     if (_joystickCheckTimerCounter <= 0) {
-        _joystickCheckTimer->stop();
+        _joystickCheckTimer.stop();
     }
 #endif
 }

@@ -360,7 +360,7 @@ void Vehicle::_commonInit()
     }
 
     // enable Joystick if appropriate
-    _loadJoystickSettings();
+    _loadJoystickSettings(JoystickManager::instance()->activeJoystick());
 
     _gimbalController = new GimbalController(this);
 
@@ -1521,90 +1521,19 @@ bool Vehicle::xConfigMotors()
     return _firmwarePlugin->multiRotorXConfig(this);
 }
 
-// this function called in three cases:
-// 1. On constructor of vehicle, to see if we should enable a joystick
-// 2. When there is a new active joystick
-// 3. When the active joystick is disconnected (even if there isnt a new one)
-void Vehicle::_loadJoystickSettings()
-{
-    QSettings settings;
-    settings.beginGroup(QString(_settingsGroup).arg(_id));
-
-    if (JoystickManager::instance()->activeJoystick()) {
-        qCDebug(JoystickLog) << "Vehicle " << this->id() << " Notified of an active joystick. Loading setting joystickenabled: " << settings.value(_joystickEnabledSettingsKey, false).toBool();
-        setJoystickEnabled(settings.value(_joystickEnabledSettingsKey, false).toBool());
-    } else {
-        qCDebug(JoystickLog) << "Vehicle " << this->id() << " Notified that there is no active joystick";
-        setJoystickEnabled(false);
-    }
-}
-
-// This is called from the UI when a deliberate action is taken to enable or disable the joystick
-// This save allows the joystick enable state to persist restarts, disconnections of the joystick etc
-void Vehicle::saveJoystickSettings()
-{
-    QSettings settings;
-    settings.beginGroup(QString(_settingsGroup).arg(_id));
-
-    // The joystick enabled setting should only be changed if a joystick is present
-    // since the checkbox can only be clicked if one is present
-    if (JoystickManager::instance()->joysticks().count()) {
-        qCDebug(JoystickLog) << "Vehicle " << this->id() << " Saving setting joystickenabled: " << _joystickEnabled;
-        settings.setValue(_joystickEnabledSettingsKey, _joystickEnabled);
-    }
-}
-
-bool Vehicle::joystickEnabled() const
-{
-    return _joystickEnabled;
-}
-
-void Vehicle::setJoystickEnabled(bool enabled)
-{
-    if (enabled){
-        qCDebug(JoystickLog) << "Vehicle " << this->id() << " Joystick Enabled";
-    }
-    else {
-        qCDebug(JoystickLog) << "Vehicle " << this->id() << " Joystick Disabled";
-    }
-
-    // _joystickEnabled is the runtime state - it determines whether a vehicle is using joystick data when it is active
-    _joystickEnabled = enabled;
-
-    // if we are the active vehicle, call start polling on the active joystick
-    // This routes the joystick signals to this vehicle
-    if (enabled && MultiVehicleManager::instance()->activeVehicle() == this){
-        _captureJoystick();
-    }
-
-    emit joystickEnabledChanged(_joystickEnabled);
-}
-
 void Vehicle::_activeVehicleChanged(Vehicle *newActiveVehicle)
 {
     // the new active vehicle should always capture the joystick
     // even if the new active vehicle has joystick disabled
     // capturing the joystick will stop the joystick data going to the inactive vehicle
-    if (newActiveVehicle == this){
-        qCDebug(JoystickLog) << "Vehicle " << this->id() << " is the new active vehicle";
+    if (newActiveVehicle == this) {
+        qCDebug(VehicleLog) << "Vehicle" << this->id() << "is the new active vehicle";
         _captureJoystick();
         _isActiveVehicle = true;
     } else {
         _isActiveVehicle = false;
     }
 }
-
-// tells the active joystick where to send data
-void Vehicle::_captureJoystick()
-{
-    Joystick* joystick = JoystickManager::instance()->activeJoystick();
-
-    if(joystick){
-        qCDebug(JoystickLog) << "Vehicle " << this->id() << " Capture Joystick" << joystick->name();
-        joystick->startPolling(this);
-    }
-}
-
 
 QGeoCoordinate Vehicle::homePosition()
 {
@@ -1907,19 +1836,6 @@ void Vehicle::_remoteControlRSSIChanged(uint8_t rssi)
     if(_rcRSSI != filteredRSSI) {
         _rcRSSI = filteredRSSI;
         emit rcRSSIChanged(_rcRSSI);
-    }
-}
-
-void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, double thrust)
-{
-    // The following if statement prevents the virtualTabletJoystick from sending values if the standard joystick is enabled
-    if (!_joystickEnabled) {
-        sendJoystickDataThreadSafe(
-                    static_cast<float>(roll),
-                    static_cast<float>(pitch),
-                    static_cast<float>(yaw),
-                    static_cast<float>(thrust),
-                    0);
     }
 }
 
@@ -3883,45 +3799,6 @@ void Vehicle::clearAllParamMapRC(void)
     }
 }
 
-void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, float thrust, quint16 buttons)
-{
-    SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
-    if (!sharedLink) {
-        qCDebug(VehicleLog)<< "sendJoystickDataThreadSafe: primary link gone!";
-        return;
-    }
-
-    if (sharedLink->linkConfiguration()->isHighLatency()) {
-        return;
-    }
-
-    mavlink_message_t message;
-
-    // Incoming values are in the range -1:1
-    float axesScaling =         1.0 * 1000.0;
-    float newRollCommand =      roll * axesScaling;
-    float newPitchCommand  =    pitch * axesScaling;    // Joystick data is reverse of mavlink values
-    float newYawCommand    =    yaw * axesScaling;
-    float newThrustCommand =    thrust * axesScaling;
-
-    mavlink_msg_manual_control_pack_chan(
-        static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
-        static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
-        sharedLink->mavlinkChannel(),
-        &message,
-        static_cast<uint8_t>(_id),
-        static_cast<int16_t>(newPitchCommand),
-        static_cast<int16_t>(newRollCommand),
-        static_cast<int16_t>(newThrustCommand),
-        static_cast<int16_t>(newYawCommand),
-        buttons, 0,
-        0,
-        0, 0,
-        0, 0, 0, 0, 0, 0
-    );
-    sendMessageOnLinkThreadSafe(sharedLink.get(), message);
-}
-
 void Vehicle::triggerSimpleCamera()
 {
     sendMavCommand(_defaultComponentId,
@@ -4402,6 +4279,122 @@ void Vehicle::_createMAVLinkLogManager()
 MAVLinkLogManager *Vehicle::mavlinkLogManager() const
 {
     return _mavlinkLogManager;
+}
+
+/*---------------------------------------------------------------------------*/
+/*===========================================================================*/
+/*                               Joystick                                    */
+/*===========================================================================*/
+
+void Vehicle::_loadJoystickSettings(Joystick *joystick)
+{
+    if (!joystick) {
+        qCDebug(JoystickLog) << "Vehicle" << this->id() << "Notified that there is no active joystick";
+        setJoystickEnabled(false);
+        return;
+    }
+
+    QSettings settings;
+    settings.beginGroup(QString(_settingsGroup).arg(_id));
+    const bool joystickEnabled = settings.value(_joystickEnabledSettingsKey, false).toBool();
+    qCDebug(JoystickLog) << "Vehicle" << this->id() << "Notified of an active joystick. Loading setting joystickenabled:" << joystickEnabled;
+    setJoystickEnabled(joystickEnabled);
+    settings.endGroup();
+}
+
+void Vehicle::saveJoystickSettings()
+{
+    // The joystick enabled setting should only be changed if a joystick is present
+    // since the checkbox can only be clicked if one is present
+    if (JoystickManager::instance()->joysticks().isEmpty()) {
+        return;
+    }
+
+    qCDebug(JoystickLog) << "Vehicle" << this->id() << "Saving setting joystickenabled:" << _joystickEnabled;
+    QSettings settings;
+    settings.beginGroup(QString(_settingsGroup).arg(_id));
+    settings.setValue(_joystickEnabledSettingsKey, _joystickEnabled);
+    settings.endGroup();
+}
+
+void Vehicle::_captureJoystick()
+{
+    Joystick *joystick = JoystickManager::instance()->activeJoystick();
+    if (joystick) {
+        qCDebug(JoystickLog) << "Vehicle" << this->id() << "Capture Joystick" << joystick->name();
+        joystick->startPolling(this);
+    }
+}
+
+void Vehicle::setJoystickEnabled(bool enabled)
+{
+    if (enabled != _joystickEnabled) {
+        qCDebug(JoystickLog) << "Vehicle" << this->id() << "Joystick" << (enabled ? "Enabled" : "Disabled");
+
+        // _joystickEnabled is the runtime state - it determines whether a vehicle is using joystick data when it is active
+        _joystickEnabled = enabled;
+
+        // if we are the active vehicle, call start polling on the active joystick
+        // This routes the joystick signals to this vehicle
+        if (_joystickEnabled && (MultiVehicleManager::instance()->activeVehicle() == this)) {
+            _captureJoystick();
+        }
+
+        emit joystickEnabledChanged(_joystickEnabled);
+    }
+}
+
+void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, float thrust, quint16 buttons)
+{
+    SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
+    if (!sharedLink) {
+        qCDebug(VehicleLog)<< "sendJoystickDataThreadSafe: primary link gone!";
+        return;
+    }
+
+    if (sharedLink->linkConfiguration()->isHighLatency()) {
+        return;
+    }
+
+    // Incoming values are in the range -1:1
+    static constexpr float axesScaling = 1000.0;
+
+    const float newRollCommand = roll * axesScaling;
+    const float newPitchCommand = pitch * axesScaling;
+    const float newYawCommand = yaw * axesScaling;
+    const float newThrustCommand = thrust * axesScaling;
+
+    mavlink_message_t message{};
+    (void) mavlink_msg_manual_control_pack_chan(
+        static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
+        static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
+        sharedLink->mavlinkChannel(),
+        &message,
+        static_cast<uint8_t>(_id),
+        static_cast<int16_t>(newPitchCommand),
+        static_cast<int16_t>(newRollCommand),
+        static_cast<int16_t>(newThrustCommand),
+        static_cast<int16_t>(newYawCommand),
+        buttons, 0,
+        0,
+        0, 0,
+        0, 0, 0, 0, 0, 0
+    );
+
+    sendMessageOnLinkThreadSafe(sharedLink.get(), message);
+}
+
+void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, double thrust)
+{
+    // Prevents the virtualTabletJoystick from sending values if the standard joystick is enabled
+    if (!_joystickEnabled) {
+        sendJoystickDataThreadSafe(
+                    static_cast<float>(roll),
+                    static_cast<float>(pitch),
+                    static_cast<float>(yaw),
+                    static_cast<float>(thrust),
+                    0);
+    }
 }
 
 /*---------------------------------------------------------------------------*/
