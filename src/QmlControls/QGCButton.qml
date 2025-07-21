@@ -2,7 +2,8 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import QGroundControl.Palette
+import QGroundControl
+
 import QGroundControl.ScreenTools
 
 /// Standard push button control:

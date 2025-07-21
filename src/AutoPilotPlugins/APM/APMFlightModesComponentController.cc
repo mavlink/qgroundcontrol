@@ -13,7 +13,6 @@
 #include "Vehicle.h"
 
 #include <QtCore/QVariant>
-#include <QtQml/QQmlEngine>
 
 APMFlightModesComponentController::APMFlightModesComponentController(QObject *parent)
     : FactPanelController(parent)
@@ -21,8 +20,6 @@ APMFlightModesComponentController::APMFlightModesComponentController(QObject *pa
     , _superSimpleModeFact(parameterExists(-1, _superSimpleParamName) ? getParameterFact(-1, _superSimpleParamName) : nullptr)
     , _simpleModesSupported(_simpleModeFact && _superSimpleModeFact)
 {
-    (void) qmlRegisterUncreatableType<APMFlightModesComponentController>("QGroundControl.Controllers", 1, 0, "APMFlightModesComponentController", "Reference only");
-
     const bool arduRoverFirmware = parameterExists(-1, QStringLiteral("MODE1"));
     _modeParamPrefix = arduRoverFirmware ? QStringLiteral("MODE") : QStringLiteral("FLTMODE");
     _modeChannelParam = arduRoverFirmware ? QStringLiteral("MODE_CH") : QStringLiteral("FLTMODE_CH");

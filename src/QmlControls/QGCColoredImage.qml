@@ -2,7 +2,8 @@ import QtQuick
 import QtQuick.Controls
 import Qt5Compat.GraphicalEffects
 
-import QGroundControl.Palette
+import QGroundControl
+
 
 Item {
     property color color: "white"   // Image color

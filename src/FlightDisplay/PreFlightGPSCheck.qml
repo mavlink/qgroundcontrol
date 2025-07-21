@@ -11,7 +11,7 @@ import QtQuick
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.Vehicle
+
 
 PreFlightCheckButton {
     name:                           qsTr("GPS")

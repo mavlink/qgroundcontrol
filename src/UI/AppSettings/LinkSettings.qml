@@ -16,7 +16,7 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FactControls
 import QGroundControl.ScreenTools
-import QGroundControl.Palette
+
 
 SettingsPage {
     property var _linkManager:          QGroundControl.linkManager

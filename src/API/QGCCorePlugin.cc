@@ -51,12 +51,12 @@ QGCCorePlugin::QGCCorePlugin(QObject *parent)
     , _defaultOptions(new QGCOptions(this))
     , _emptyCustomMapItems(new QmlObjectListModel(this))
 {
-    // qCDebug(QGCCorePluginLog) << Q_FUNC_INFO << this;
+    qCDebug(QGCCorePluginLog) << this;
 }
 
 QGCCorePlugin::~QGCCorePlugin()
 {
-    // qCDebug(QGCCorePluginLog) << Q_FUNC_INFO << this;
+    qCDebug(QGCCorePluginLog) << this;
 }
 
 QGCCorePlugin *QGCCorePlugin::instance()
@@ -66,13 +66,6 @@ QGCCorePlugin *QGCCorePlugin::instance()
 #else
     return CUSTOMCLASS::instance();
 #endif
-}
-
-void QGCCorePlugin::registerQmlTypes()
-{
-    (void) qmlRegisterUncreatableType<QGCCorePlugin>("QGroundControl", 1, 0, "QGCCorePlugin", QStringLiteral("Reference only"));
-    (void) qmlRegisterUncreatableType<QGCOptions>("QGroundControl", 1, 0, "QGCOptions", QStringLiteral("Reference only"));
-    (void) qmlRegisterUncreatableType<QGCFlyViewOptions>("QGroundControl", 1, 0, "QGCFlyViewOptions", QStringLiteral("Reference only"));
 }
 
 const QVariantList &QGCCorePlugin::analyzePages()

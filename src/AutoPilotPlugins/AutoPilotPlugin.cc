@@ -23,12 +23,12 @@ AutoPilotPlugin::AutoPilotPlugin(Vehicle *vehicle, QObject *parent)
     , _vehicle(vehicle)
     , _firmwarePlugin(vehicle->firmwarePlugin())
 {
-    // qCDebug(AutoPilotPluginLog) << Q_FUNC_INFO << this;
+    qCDebug(AutoPilotPluginLog) << this;
 }
 
 AutoPilotPlugin::~AutoPilotPlugin()
 {
-    // qCDebug(AutoPilotPluginLog) << Q_FUNC_INFO << this;
+    qCDebug(AutoPilotPluginLog) << this;
 }
 
 void AutoPilotPlugin::_recalcSetupComplete()

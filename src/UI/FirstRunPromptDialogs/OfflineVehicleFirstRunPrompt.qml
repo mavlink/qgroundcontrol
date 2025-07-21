@@ -11,10 +11,10 @@ import QtQuick
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.FactSystem
+
 import QGroundControl.FactControls
 import QGroundControl.ScreenTools
-import QGroundControl.SettingsManager
+
 import QGroundControl.Controls
 
 FirstRunPrompt {

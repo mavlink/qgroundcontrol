@@ -23,7 +23,6 @@
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
-#include <QtQml/QQmlEngine>
 
 QGC_LOGGING_CATEGORY(CameraManagerLog, "qgc.camera.qgccameramanager")
 
@@ -76,13 +75,6 @@ QGCCameraManager::~QGCCameraManager()
 
     // Stop the main heartbeat timer
     _camerasLostHeartbeatTimer.stop();
-}
-
-void QGCCameraManager::registerQmlTypes()
-{
-    qmlRegisterUncreatableType<MavlinkCameraControl>("QGroundControl.Vehicle", 1, 0, "MavlinkCameraControl", "Reference only");
-    qmlRegisterUncreatableType<QGCCameraManager>    ("QGroundControl.Vehicle", 1, 0, "QGCCameraManager",     "Reference only");
-    qmlRegisterUncreatableType<QGCVideoStreamInfo>  ("QGroundControl.Vehicle", 1, 0, "QGCVideoStreamInfo",   "Reference only");
 }
 
 void QGCCameraManager::setCurrentCamera(int sel)

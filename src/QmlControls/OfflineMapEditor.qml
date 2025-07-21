@@ -18,10 +18,9 @@ import QtPositioning
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
-import QGroundControl.Palette
+
 import QGroundControl.FlightMap
-import QGroundControl.QGCMapEngineManager
-import QGroundControl.FactSystem
+
 import QGroundControl.FactControls
 
 FlightMap {

@@ -11,6 +11,7 @@
 
 #include <QtCore/QObject>
 #include <QtPositioning/QGeoCoordinate>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "Viewer3DUtils.h"
 
@@ -19,6 +20,7 @@
 class GeoCoordinateType: public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
     Q_PROPERTY(QGeoCoordinate gpsRef READ gpsRef WRITE setGpsRef NOTIFY gpsRefChanged)
     Q_PROPERTY(QGeoCoordinate coordinate READ coordinate WRITE setCoordinate NOTIFY coordinateChanged)
     Q_PROPERTY(QVector3D localCoordinate READ localCoordinate NOTIFY localCoordinateChanged)

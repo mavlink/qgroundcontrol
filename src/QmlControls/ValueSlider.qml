@@ -14,10 +14,10 @@ import Qt.labs.animation
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.Vehicle
-import QGroundControl.Palette
+
+
 import QGroundControl.ScreenTools
-import QGroundControl.SettingsManager
+
 
 Control {
     id: control

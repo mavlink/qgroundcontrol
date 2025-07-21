@@ -58,10 +58,8 @@ class QGroundControlQmlGlobal : public QObject
     QML_SINGLETON
 
 public:
-    QGroundControlQmlGlobal(QObject *parent = nullptr);
+    explicit QGroundControlQmlGlobal(QObject *parent = nullptr);
     ~QGroundControlQmlGlobal();
-
-    static void registerQmlTypes();
 
     enum AltMode {
         AltitudeModeMixed,              // Used by global altitude mode for mission planning

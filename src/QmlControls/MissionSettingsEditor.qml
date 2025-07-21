@@ -4,12 +4,12 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.ScreenTools
-import QGroundControl.Vehicle
+
 import QGroundControl.Controls
 import QGroundControl.FactControls
-import QGroundControl.Palette
-import QGroundControl.SettingsManager
-import QGroundControl.Controllers
+
+
+
 
 // Editor for Mission Settings
 Rectangle {
@@ -44,7 +44,6 @@ Rectangle {
     readonly property real  _margin:            ScreenTools.defaultFontPixelWidth / 2
 
     QGCPalette { id: qgcPal }
-    QGCFileDialogController { id: fileController }
     Component { id: altModeDialogComponent; AltModeDialog { } }
 
     Connections {

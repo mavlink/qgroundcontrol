@@ -14,12 +14,12 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.FactSystem
+
 import QGroundControl.FactControls
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
-import QGroundControl.MultiVehicleManager
-import QGroundControl.Palette
+
+
 
 SettingsPage {
     property var    _settingsManager:           QGroundControl.settingsManager

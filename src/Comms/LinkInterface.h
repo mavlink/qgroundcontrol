@@ -10,6 +10,7 @@
 #pragma once
 
 #include <QtCore/QLoggingCategory>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "LinkConfiguration.h"
 
@@ -21,7 +22,8 @@ Q_DECLARE_LOGGING_CATEGORY(LinkInterfaceLog)
 class LinkInterface : public QObject
 {
     Q_OBJECT
-
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     friend class LinkManager;
 
 public:

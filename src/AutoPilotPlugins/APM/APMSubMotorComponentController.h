@@ -9,12 +9,15 @@
 
 #pragma once
 
+#include <QtQmlIntegration/QtQmlIntegration>
+
 #include "FactPanelController.h"
 
 /// MVC Controller for APMSubMotorComponent.qml.
 class APMSubMotorComponentController : public FactPanelController
 {
     Q_OBJECT
+    QML_ELEMENT
     Q_PROPERTY(QString motorDetectionMessages READ motorDetectionMessages NOTIFY motorDetectionMessagesChanged)
 
 public:

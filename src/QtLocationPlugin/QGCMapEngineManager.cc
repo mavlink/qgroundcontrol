@@ -42,18 +42,18 @@ QGCMapEngineManager::QGCMapEngineManager(QObject *parent)
     : QObject(parent)
     , _tileSets(new QmlObjectListModel(this))
 {
+    qCDebug(QGCMapEngineManagerLog) << this;
+
     (void) qmlRegisterUncreatableType<QGCMapEngineManager>("QGroundControl.QGCMapEngineManager", 1, 0, "QGCMapEngineManager", "Reference only");
 
     (void) connect(getQGCMapEngine(), &QGCMapEngine::updateTotals, this, &QGCMapEngineManager::_updateTotals);
-
-    // qCDebug(QGCMapEngineManagerLog) << Q_FUNC_INFO << this;
 }
 
 QGCMapEngineManager::~QGCMapEngineManager()
 {
     _tileSets->clear();
 
-    // qCDebug(QGCMapEngineManagerLog) << Q_FUNC_INFO << this;
+    qCDebug(QGCMapEngineManagerLog) << this;
 }
 
 void QGCMapEngineManager::updateForCurrentView(double lon0, double lat0, double lon1, double lat1, int minZoom, int maxZoom, const QString &mapName)

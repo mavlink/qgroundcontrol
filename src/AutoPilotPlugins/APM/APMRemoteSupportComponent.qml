@@ -14,9 +14,9 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
-import QGroundControl.Palette
+
 import QGroundControl.FactControls
-import QGroundControl.FactSystem
+
 
 SetupPage {
     pageComponent:  pageComponent

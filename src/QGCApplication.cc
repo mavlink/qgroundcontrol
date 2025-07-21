@@ -7,15 +7,6 @@
  *
  ****************************************************************************/
 
-
-/**
- * @file
- *   @brief Implementation of class QGCApplication
- *
- *   @author Lorenz Meier <mavteam@student.ethz.ch>
- *
- */
-
 #include "QGCApplication.h"
 
 #include <QtCore/QEvent>
@@ -36,46 +27,27 @@
 
 #include "QGCLogging.h"
 #include "AudioOutput.h"
-#include "AutoPilotPlugin.h"
 #include "CmdLineOptParser.h"
-#include "ESP8266ComponentController.h"
 #include "FollowMe.h"
-#include "GeoTagController.h"
-#include "GimbalController.h"
-#include "GPSRtk.h"
-#include "JoystickConfigController.h"
 #include "JoystickManager.h"
 #include "JsonHelper.h"
 #include "LinkManager.h"
-#include "MAVLinkChartController.h"
-#include "MAVLinkConsoleController.h"
 #include "MAVLinkProtocol.h"
-#include "MissionManager.h"
 #include "MultiVehicleManager.h"
 #include "ParameterManager.h"
 #include "PositionManager.h"
-#include "QGCCameraManager.h"
 #include "QGCCorePlugin.h"
 #include "QGCFileDownload.h"
 #include "QGCImageProvider.h"
 #include "QGCLoggingCategory.h"
-#include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
-#include "SyslinkComponentController.h"
 #include "UDPLink.h"
 #include "Vehicle.h"
 #include "VehicleComponent.h"
 #include "VideoManager.h"
 
-#ifndef QGC_DISABLE_MAVLINK_INSPECTOR
-#include "MAVLinkInspectorController.h"
-#endif
-#ifdef QGC_VIEWER3D
-#include "Viewer3DManager.h"
-#endif
 #ifndef QGC_NO_SERIAL_LINK
-#include "FirmwareUpgradeController.h"
 #include "SerialLink.h"
 #endif
 
@@ -250,43 +222,6 @@ QGCApplication::~QGCApplication()
 void QGCApplication::init()
 {
     SettingsManager::instance()->init();
-
-    LinkManager::registerQmlTypes();
-    ParameterManager::registerQmlTypes();
-    QGroundControlQmlGlobal::registerQmlTypes();
-    MissionManager::registerQmlTypes();
-    QGCCameraManager::registerQmlTypes();
-    MultiVehicleManager::registerQmlTypes();
-    QGCPositionManager::registerQmlTypes();
-    SettingsManager::registerQmlTypes();
-    VideoManager::registerQmlTypes();
-    QGCCorePlugin::registerQmlTypes();
-    GPSRtk::registerQmlTypes();
-    JoystickManager::registerQmlTypes();
-#ifdef QGC_VIEWER3D
-    Viewer3DManager::registerQmlTypes();
-#endif
-
-    qmlRegisterUncreatableType<GimbalController>("QGroundControl.Vehicle", 1, 0, "GimbalController", "Reference only");
-
-#ifndef QGC_DISABLE_MAVLINK_INSPECTOR
-    qmlRegisterUncreatableType<MAVLinkChartController>("QGroundControl", 1, 0, "MAVLinkChart", "Reference only");
-    qmlRegisterType<MAVLinkInspectorController>("QGroundControl.Controllers", 1, 0, "MAVLinkInspectorController");
-#endif
-    qmlRegisterType<GeoTagController>("QGroundControl.Controllers", 1, 0, "GeoTagController");
-    qmlRegisterType<MAVLinkConsoleController>("QGroundControl.Controllers", 1, 0, "MAVLinkConsoleController");
-
-
-    qmlRegisterUncreatableType<AutoPilotPlugin>("QGroundControl.AutoPilotPlugin", 1, 0, "AutoPilotPlugin", "Reference only");
-    qmlRegisterType<ESP8266ComponentController>("QGroundControl.Controllers", 1, 0, "ESP8266ComponentController");
-    qmlRegisterType<SyslinkComponentController>("QGroundControl.Controllers", 1, 0, "SyslinkComponentController");
-
-
-    qmlRegisterUncreatableType<VehicleComponent>("QGroundControl.AutoPilotPlugin", 1, 0, "VehicleComponent", "Reference only");
-#ifndef QGC_NO_SERIAL_LINK
-    qmlRegisterType<FirmwareUpgradeController>("QGroundControl.Controllers", 1, 0, "FirmwareUpgradeController");
-#endif
-    qmlRegisterType<JoystickConfigController>("QGroundControl.Controllers", 1, 0, "JoystickConfigController");
 
     // Although this should really be in _initForNormalAppBoot putting it here allowws us to create unit tests which pop up more easily
     if(QFontDatabase::addApplicationFont(":/fonts/opensans") < 0) {

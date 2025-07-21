@@ -12,8 +12,8 @@ import QtQuick
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
-import QGroundControl.Vehicle
-import QGroundControl.Palette
+
+
 
 Canvas {
     id:                 control

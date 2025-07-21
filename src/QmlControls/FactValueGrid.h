@@ -9,19 +9,21 @@
 
 #pragma once
 
+#include <QtCore/QSettings>
+#include <QtQuick/QQuickItem>
+#include <QtQmlIntegration/QtQmlIntegration>
+
 #include "QmlObjectListModel.h"
 #include "QGCMAVLink.h"
 #include "Vehicle.h"
-
-#include <QtCore/QSettings>
-#include <QtQuick/QQuickItem>
 
 class InstrumentValueData;
 
 class FactValueGrid : public QQuickItem
 {
     Q_OBJECT
-
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
     FactValueGrid(QQuickItem *parent = nullptr);
     ~FactValueGrid();

@@ -16,7 +16,6 @@
 #include "QGCCameraManager.h"
 #include "QGCFileDownload.h"
 #include "QGCLoggingCategory.h"
-#include "RadioComponentController.h"
 #include "VehicleCameraControl.h"
 #include "VehicleComponent.h"
 
@@ -30,14 +29,12 @@ static const QString guided_mode_not_supported_by_vehicle = QObject::tr("Guided 
 FirmwarePlugin::FirmwarePlugin(QObject *parent)
     : QObject(parent)
 {
-    // qCDebug(FirmwarePluginLog) << Q_FUNC_INFO << this;
-
-    (void) qmlRegisterType<RadioComponentController>("QGroundControl.Controllers", 1, 0, "RadioComponentController");
+    qCDebug(FirmwarePluginLog) << this;
 }
 
 FirmwarePlugin::~FirmwarePlugin()
 {
-    // qCDebug(FirmwarePluginLog) << Q_FUNC_INFO << this;
+    qCDebug(FirmwarePluginLog) << this;
 }
 
 AutoPilotPlugin *FirmwarePlugin::autopilotPlugin(Vehicle *vehicle) const

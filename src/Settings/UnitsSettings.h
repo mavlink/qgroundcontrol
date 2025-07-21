@@ -9,13 +9,15 @@
 
 #pragma once
 
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "SettingsGroup.h"
 
 class UnitsSettings : public SettingsGroup
 {
     Q_OBJECT
-    
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
     UnitsSettings(QObject* parent = nullptr);
 

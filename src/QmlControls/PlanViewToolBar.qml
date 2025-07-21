@@ -14,10 +14,10 @@ import QtQuick.Dialogs
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.Palette
-import QGroundControl.MultiVehicleManager
+
+
 import QGroundControl.ScreenTools
-import QGroundControl.Controllers
+
 
 Rectangle {
     id:     _root

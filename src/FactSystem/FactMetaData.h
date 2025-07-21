@@ -15,6 +15,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QVariant>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 Q_DECLARE_LOGGING_CATEGORY(FactMetaDataLog)
 
@@ -24,7 +25,7 @@ Q_DECLARE_LOGGING_CATEGORY(FactMetaDataLog)
 class FactMetaData : public QObject
 {
     Q_OBJECT
-
+    QML_ELEMENT
 public:
     enum ValueType_t {
         valueTypeUint8,

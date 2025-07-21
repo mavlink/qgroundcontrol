@@ -1,5 +1,6 @@
 import QtQuick
 
+import QGroundControl
 import QGroundControl.ScreenTools
 
 Rectangle {

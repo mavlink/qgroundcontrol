@@ -11,6 +11,7 @@
 
 #include <QtCore/QLoggingCategory>
 #include <QtPositioning/QGeoCoordinate>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "PlanElementController.h"
 #include "QmlObjectListModel.h"
@@ -26,6 +27,8 @@ class Vehicle;
 class GeoFenceController : public PlanElementController
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_MOC_INCLUDE("QGCFencePolygon.h")
     Q_MOC_INCLUDE("QGCFenceCircle.h")
 

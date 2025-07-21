@@ -9,11 +9,15 @@
 
 #pragma once
 
+#include <QtQmlIntegration/QtQmlIntegration>
+
 #include "SettingsGroup.h"
 
 class RTKSettings : public SettingsGroup
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
     RTKSettings(QObject* parent = nullptr);
     DEFINE_SETTING_NAME_GROUP()

@@ -14,7 +14,7 @@ import QtPositioning
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlightMap
-import QGroundControl.Vehicle
+
 
 // Allow custom builds to add visual items associated with the Flight Plan to the map
 Item {

@@ -12,9 +12,9 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.FactSystem
+
 import QGroundControl.Controls
-import QGroundControl.Palette
+
 import QGroundControl.ScreenTools
 
 SetupPage {

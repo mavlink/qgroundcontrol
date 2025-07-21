@@ -11,7 +11,8 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import QGroundControl.Palette
+import QGroundControl
+
 import QGroundControl.ScreenTools
 
 RowLayout {

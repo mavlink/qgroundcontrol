@@ -1,7 +1,8 @@
 import QtQuick
 import QtQuick.Controls
 
-import QGroundControl.Palette
+import QGroundControl
+
 import QGroundControl.ScreenTools
 
 // Important Note: SubMenuButtons must manage their checked state manually in order to support

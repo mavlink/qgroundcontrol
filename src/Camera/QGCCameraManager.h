@@ -18,6 +18,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
 #include <QtCore/QVariantList>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 Q_DECLARE_LOGGING_CATEGORY(CameraManagerLog)
 
@@ -33,13 +34,13 @@ class QGCCameraManagerTest;
 class QGCCameraManager : public QObject
 {
     Q_OBJECT
-
+    QML_ELEMENT
+    QML_UNCREATABLE("")
+    Q_MOC_INCLUDE("Joystick.h")
     friend class QGCCameraManagerTest;
 public:
     QGCCameraManager(Vehicle* vehicle);
     virtual ~QGCCameraManager();
-
-    static void registerQmlTypes();
 
     Q_PROPERTY(QmlObjectListModel*      cameras                 READ cameras                                        NOTIFY camerasChanged)
     Q_PROPERTY(QStringList              cameraLabels            READ cameraLabels                                   NOTIFY cameraLabelsChanged)

@@ -15,6 +15,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QTimer>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "Fact.h"
 #include "FactMetaData.h"
@@ -31,6 +32,8 @@ class Vehicle;
 class ParameterManager : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_PROPERTY(bool     parametersReady     READ parametersReady    NOTIFY parametersReadyChanged)      ///< true: Parameters are ready for use
     Q_PROPERTY(bool     missingParameters   READ missingParameters  NOTIFY missingParametersChanged)    ///< true: Parameters are missing from firmware response, false: all parameters received from firmware
     Q_PROPERTY(double   loadProgress        READ loadProgress       NOTIFY loadProgressChanged)
@@ -40,8 +43,6 @@ class ParameterManager : public QObject
 public:
     ParameterManager(Vehicle *vehicle);
     ~ParameterManager();
-
-    static void registerQmlTypes();
 
     bool parametersReady() const { return _parametersReady; }
     bool missingParameters() const { return _missingParameters; }

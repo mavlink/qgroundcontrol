@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <QtQmlIntegration/QtQmlIntegration>
+
 #include "UTMSPServiceController.h"
 #include "UTMSPOperator.h"
 #include "UTMSPFlightDetails.h"
@@ -20,6 +22,8 @@ class Vehicle;
 class UTMSPVehicle : public UTMSPServiceController
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_PROPERTY(QString                 vehicleSerialNumber            READ vehicleSerialNumber       NOTIFY vehicleSerialNumberChanged)
     Q_PROPERTY(bool                    vehicleActivation              READ vehicleActivation         NOTIFY vehicleActivationChanged)
 

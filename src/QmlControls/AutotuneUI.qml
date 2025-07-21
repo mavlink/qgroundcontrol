@@ -11,10 +11,11 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import QGroundControl.FactSystem
+import QGroundControl
+
 import QGroundControl.FactControls
-import QGroundControl.Controllers
-import QGroundControl.Palette
+
+
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
 

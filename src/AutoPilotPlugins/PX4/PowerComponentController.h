@@ -13,13 +13,15 @@
 
 #pragma once
 
+#include <QtQmlIntegration/QtQmlIntegration>
+
 #include "FactPanelController.h"
 
 /// Power Component MVC Controller for PowerComponent.qml.
 class PowerComponentController : public FactPanelController
 {
     Q_OBJECT
-    
+    QML_ELEMENT
 public:
     PowerComponentController(void);
     

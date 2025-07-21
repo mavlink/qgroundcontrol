@@ -15,10 +15,10 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.FactSystem
+
 import QGroundControl.FactControls
-import QGroundControl.Palette
-import QGroundControl.Controllers
+
+
 import QGroundControl.ScreenTools
 
 SetupPage {

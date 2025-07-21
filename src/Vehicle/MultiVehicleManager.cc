@@ -19,11 +19,7 @@
 #include "LinkManager.h"
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
-#include "Autotune.h"
 #include "LinkInterface.h"
-#include "RemoteIDManager.h"
-#include "VehicleObjectAvoidance.h"
-#include "TrajectoryPoints.h"
 #include "QmlObjectListModel.h"
 #ifdef Q_OS_IOS
 #include "MobileScreenMgr.h"
@@ -34,7 +30,6 @@
 
 #include <QtCore/qapplicationstatic.h>
 #include <QtCore/QTimer>
-#include <QtQml/QQmlEngine>
 
 QGC_LOGGING_CATEGORY(MultiVehicleManagerLog, "qgc.vehicle.multivehiclemanager")
 
@@ -46,29 +41,19 @@ MultiVehicleManager::MultiVehicleManager(QObject *parent)
     , _vehicles(new QmlObjectListModel(this))
     , _selectedVehicles(new QmlObjectListModel(this))
 {
-    // qCDebug(MultiVehicleManagerLog) << Q_FUNC_INFO << this;
+    qCDebug(MultiVehicleManagerLog) << this;
+
+    (void) qRegisterMetaType<Vehicle::MavCmdResultFailureCode_t>("MavCmdResultFailureCode_t");
 }
 
 MultiVehicleManager::~MultiVehicleManager()
 {
-    // qCDebug(MultiVehicleManagerLog) << Q_FUNC_INFO << this;
+    qCDebug(MultiVehicleManagerLog) << this;
 }
 
 MultiVehicleManager *MultiVehicleManager::instance()
 {
     return _multiVehicleManagerInstance();
-}
-
-void MultiVehicleManager::registerQmlTypes()
-{
-    (void) qmlRegisterUncreatableType<MultiVehicleManager>      ("QGroundControl.MultiVehicleManager",  1, 0, "MultiVehicleManager",    "Reference only");
-    (void) qmlRegisterUncreatableType<Vehicle>                  ("QGroundControl.Vehicle",              1, 0, "Vehicle",                "Reference only");
-    (void) qmlRegisterUncreatableType<VehicleLinkManager>       ("QGroundControl.Vehicle",              1, 0, "VehicleLinkManager",     "Reference only");
-    (void) qmlRegisterUncreatableType<Autotune>                 ("QGroundControl.Vehicle",              1, 0, "Autotune",               "Reference only");
-    (void) qmlRegisterUncreatableType<RemoteIDManager>          ("QGroundControl.Vehicle",              1, 0, "RemoteIDManager",        "Reference only");
-    (void) qmlRegisterUncreatableType<TrajectoryPoints>         ("QGroundControl.FlightMap",            1, 0, "TrajectoryPoints",       "Reference only");
-    (void) qmlRegisterUncreatableType<VehicleObjectAvoidance>   ("QGroundControl.Vehicle",              1, 0, "VehicleObjectAvoidance", "Reference only");
-    (void) qRegisterMetaType<Vehicle::MavCmdResultFailureCode_t>("MavCmdResultFailureCode_t");
 }
 
 void MultiVehicleManager::init()

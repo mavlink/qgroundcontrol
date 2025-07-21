@@ -15,13 +15,12 @@ import QtQuick.Dialogs
 import Qt.labs.animation
 
 import QGroundControl
-import QGroundControl.FactSystem
+
 import QGroundControl.Controls
 import QGroundControl.FlightMap
 import QGroundControl.ScreenTools
-import QGroundControl.MultiVehicleManager
-import QGroundControl.Vehicle
-import QGroundControl.QGCPositionManager
+
+
 
 Map {
     id: _map

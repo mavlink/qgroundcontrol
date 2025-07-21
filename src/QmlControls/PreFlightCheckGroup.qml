@@ -10,6 +10,7 @@
 import QtQuick
 import QtQml.Models
 
+import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
 

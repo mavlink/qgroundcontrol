@@ -229,6 +229,12 @@ qt_add_qml_module(${CMAKE_PROJECT_NAME}
     URI QGC
     VERSION 1.0
     RESOURCE_PREFIX /qml
+    IMPORTS
+        QtQuick
+        QtQuick.Controls
+        QtQuick.Dialogs
+        QtQuick.Layouts
+        QtQuick.Window
 )
 
 add_subdirectory(src)

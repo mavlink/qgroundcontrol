@@ -3551,7 +3551,7 @@ void Vehicle::_mavlinkMessageStatus(int uasId, uint64_t totalSent, uint64_t tota
     }
 }
 
-int Vehicle::versionCompare(QString& compare) const
+int Vehicle::versionCompare(const QString& compare) const
 {
     return _firmwarePlugin->versionCompare(this, compare);
 }

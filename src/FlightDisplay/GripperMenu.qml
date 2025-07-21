@@ -9,8 +9,8 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.ScreenTools
 import QGroundControl.Controls
-import QGroundControl.Palette
-import QGroundControl.Vehicle
+
+
 import QGroundControl.FlightMap
 
 QGCPopupDialog {

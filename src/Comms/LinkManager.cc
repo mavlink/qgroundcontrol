@@ -9,7 +9,7 @@
 
 #include "LinkManager.h"
 #include "DeviceInfo.h"
-#include "LogReplayLinkController.h"
+#include "LogReplayLink.h"
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
@@ -51,7 +51,6 @@
 
 #include <QtCore/qapplicationstatic.h>
 #include <QtCore/QTimer>
-#include <QtQml/qqml.h>
 
 QGC_LOGGING_CATEGORY(LinkManagerLog, "qgc.comms.linkmanager")
 QGC_LOGGING_CATEGORY(LinkManagerVerboseLog, "qgc.comms.linkmanager:verbose")
@@ -66,34 +65,23 @@ LinkManager::LinkManager(QObject *parent)
     , _nmeaSocket(new UdpIODevice(this))
 #endif
 {
-    // qCDebug(LinkManagerLog) << Q_FUNC_INFO << this;
-}
-
-LinkManager::~LinkManager()
-{
-    // qCDebug(LinkManagerLog) << Q_FUNC_INFO << this;
-}
-
-LinkManager *LinkManager::instance()
-{
-    return _linkManagerInstance();
-}
-
-void LinkManager::registerQmlTypes()
-{
-    (void) qmlRegisterUncreatableType<LinkManager>("QGroundControl",       1, 0, "LinkManager",         "Reference only");
-    (void) qmlRegisterUncreatableType<LinkConfiguration>("QGroundControl", 1, 0, "LinkConfiguration",   "Reference only");
-    (void) qmlRegisterUncreatableType<LinkInterface>("QGroundControl",     1, 0, "LinkInterface",       "Reference only");
-
-    (void) qmlRegisterUncreatableType<LinkInterface>("QGroundControl.Vehicle", 1, 0, "LinkInterface", "Reference only");
-    (void) qmlRegisterUncreatableType<LogReplayLink>("QGroundControl",         1, 0, "LogReplayLink", "Reference only");
-    (void) qmlRegisterType<LogReplayLinkController> ("QGroundControl",         1, 0, "LogReplayLinkController");
+    qCDebug(LinkManagerLog) << this;
 
     (void) qRegisterMetaType<QAbstractSocket::SocketError>("QAbstractSocket::SocketError");
     (void) qRegisterMetaType<LinkInterface*>("LinkInterface*");
 #ifndef QGC_NO_SERIAL_LINK
     (void) qRegisterMetaType<QGCSerialPortInfo>("QGCSerialPortInfo");
 #endif
+}
+
+LinkManager::~LinkManager()
+{
+    qCDebug(LinkManagerLog) << this;
+}
+
+LinkManager *LinkManager::instance()
+{
+    return _linkManagerInstance();
 }
 
 void LinkManager::init()
@@ -785,6 +773,8 @@ void LinkManager::resetMavlinkSigning()
     }
 }
 
+#ifndef QGC_NO_SERIAL_LINK // Serial Only Functions
+
 void LinkManager::_filterCompositePorts(QList<QGCSerialPortInfo> &portList)
 {
     typedef QPair<quint16, quint16> VidPidPair_t;
@@ -809,8 +799,6 @@ void LinkManager::_filterCompositePorts(QList<QGCSerialPortInfo> &portList)
         it++;
     }
 }
-
-#ifndef QGC_NO_SERIAL_LINK // Serial Only Functions
 
 void LinkManager::_addSerialAutoConnectLink()
 {

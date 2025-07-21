@@ -14,9 +14,9 @@ import QtQuick.Dialogs
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.Palette
-import QGroundControl.Controllers
-import QGroundControl.FactSystem
+
+
+
 import QGroundControl.FactControls
 import QGroundControl.ScreenTools
 

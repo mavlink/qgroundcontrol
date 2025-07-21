@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <QtQmlIntegration/QtQmlIntegration>
+
 #include "PlanManager.h"
 
 Q_DECLARE_LOGGING_CATEGORY(MissionManagerLog)
@@ -18,7 +20,8 @@ class Vehicle;
 class MissionManager : public PlanManager
 {
     Q_OBJECT
-    
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
     MissionManager(Vehicle* vehicle);
     ~MissionManager();
@@ -37,8 +40,6 @@ public:
     /// Generates a new mission which starts from the specified index. It will include all the CMD_DO items
     /// from mission start to resumeIndex in the generate mission.
     void generateResumeMission(int resumeIndex);
-
-    static void registerQmlTypes();
 
 private slots:
     void _mavlinkMessageReceived(const mavlink_message_t& message);
