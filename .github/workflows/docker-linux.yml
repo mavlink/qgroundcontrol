@@ -8,7 +8,7 @@ on:
     tags:
       - 'v*'
     paths-ignore:
-      - 'docs/**' # Do not trigger for any changes under docs
+      - 'docs/**'
   pull_request:
     paths:
       - '.github/workflows/docker-linux.yml'
@@ -36,7 +36,7 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 1
-          fetch-tags: false
+          fetch-tags: true
 
       - name: Get all tags for correct version determination
         working-directory:  ${{ github.workspace }}
