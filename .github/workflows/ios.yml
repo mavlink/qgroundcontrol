@@ -30,7 +30,7 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 1
-          fetch-tags: false
+          fetch-tags: true
 
       - name: Initial Setup
         uses: ./.github/actions/common
@@ -46,7 +46,7 @@ jobs:
           host: mac
           target: ios
           build-type: ${{ matrix.BuildType }}
-          cpm-modules: ${{ runner.temp }}/shadow_build_dir/cpm_modules
+          cpm-modules: ${{ runner.temp }}/build/cpm_modules
 
       - name: Install Qt for MacOS
         uses: jurplel/install-qt-action@v4
@@ -72,18 +72,18 @@ jobs:
           cache: true
 
       - name: Configure
-        working-directory: ${{ runner.temp }}/shadow_build_dir
+        working-directory: ${{ runner.temp }}/build
         run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
               -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }}
               -DQT_HOST_PATH="${{ env.QT_ROOT_DIR }}/../macos"
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
 
       - name: Build
-        working-directory: ${{ runner.temp }}/shadow_build_dir
+        working-directory: ${{ runner.temp }}/build
         run: cmake --build . --target all --config ${{ matrix.BuildType }} --parallel
 
       - name: Save App
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.PACKAGE }}
-          path: ${{ runner.temp }}/shadow_build_dir/*.app
+          path: ${{ runner.temp }}/build/*.app

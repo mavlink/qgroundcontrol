@@ -38,6 +38,10 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: true
 
       - name: Initial Setup
         uses: ./.github/actions/common
@@ -60,7 +64,7 @@ jobs:
           host: windows
           target: win64_msvc2022_64
           build-type: Release
-          cpm-modules: ${{ runner.temp }}\shadow_build_dir\cpm_modules
+          cpm-modules: ${{ runner.temp }}\build\cpm_modules
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
@@ -78,16 +82,16 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: Configure
-        working-directory: ${{ runner.temp }}\shadow_build_dir
+        working-directory: ${{ runner.temp }}\build
         run: |
           ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja ^
             -DCMAKE_BUILD_TYPE=Release ^
             -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
 
       - name: Build
-        working-directory: ${{ runner.temp }}\shadow_build_dir
+        working-directory: ${{ runner.temp }}\build
         run: cmake --build . --target all --config Release --parallel
 
       - name: Verify executable
-        working-directory: ${{ runner.temp }}\shadow_build_dir\Release
+        working-directory: ${{ runner.temp }}\build\Release
         run: Custom-QGroundControl.exe --simple-boot-test

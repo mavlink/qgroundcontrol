@@ -11,7 +11,7 @@ runs:
 
     - name: Create build directory
       shell: bash
-      run: mkdir -p "$RUNNER_TEMP/shadow_build_dir"
+      run: mkdir -p "$RUNNER_TEMP/build"
 
     - name: Fetch all tags (for version-string logic)
       shell: bash
