@@ -68,7 +68,6 @@
         <file alias="CameraMetaData.json">src/Camera/CameraMetaData.json</file>
     </qresource>
     <qresource prefix="/MockLink">
-        <file alias="APMArduSubMockLink.params">src/Comms/MockLink/APMArduSubMockLink.params</file>
         <file alias="PX4MockLink.params">src/Comms/MockLink/PX4MockLink.params</file>
         <file alias="General.MetaData.json">src/Comms/MockLink/MockLink.General.MetaData.json</file>
         <file alias="General.MetaData.json.xz">src/Comms/MockLink/MockLink.General.MetaData.json.xz</file>
