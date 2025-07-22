@@ -279,7 +279,16 @@ QGCPopupDialog {
                 id:             colorPickerDialog
                 modality:       Qt.ApplicationModal
                 selectedColor:  instrumentValueData.rangeColors.length ? instrumentValueData.rangeColors[colorIndex] : "white"
-                onAccepted:     updateColorValue(colorIndex, color)
+                onAccepted: {
+                    function colorToHex(c) {
+                        function toHex(d) {
+                            var s = Math.round(d * 255).toString(16);
+                            return s.length === 1 ? "0" + s : s;
+                        }
+                        return "#" + toHex(c.r) + toHex(c.g) + toHex(c.b);
+                    }
+                    updateColorValue(colorIndex, colorToHex(colorPickerDialog.selectedColor))
+                }
 
                 property int colorIndex: 0
             }
