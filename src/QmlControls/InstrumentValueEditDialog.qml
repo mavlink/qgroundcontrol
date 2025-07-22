@@ -279,7 +279,7 @@ QGCPopupDialog {
                 id:             colorPickerDialog
                 modality:       Qt.ApplicationModal
                 selectedColor:  instrumentValueData.rangeColors.length ? instrumentValueData.rangeColors[colorIndex] : "white"
-                onAccepted:     updateColorValue(colorIndex, color)
+                onAccepted:     updateColorValue(colorIndex, selectedColor)
 
                 property int colorIndex: 0
             }
