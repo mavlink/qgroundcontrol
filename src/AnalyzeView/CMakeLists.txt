@@ -43,7 +43,6 @@ qt_add_qml_module(AnalyzeViewModule
         MAVLinkConsolePage.qml
         MAVLinkInspectorPage.qml
         VibrationPage.qml
-    NO_PLUGIN
 )
 
 #===========================================================================#

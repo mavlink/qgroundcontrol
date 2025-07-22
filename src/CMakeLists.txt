@@ -6,7 +6,6 @@ qt_add_qml_module(QGroundControlModule
     RESOURCE_PREFIX /qml
     IMPORTS
         QGC
-    NO_PLUGIN
 )
 
 add_subdirectory(ADSB)
@@ -85,33 +84,33 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         Qt6::Xml
         # Explicitly link QML modules, needed by Qt 6.6.3
         # TODO: Remove when support for this version is dropped
-        AnalyzeViewModule
-        AppSettingsModule
-        AutoPilotPluginsCommonModule
-        FactControlsModule
-        FirstRunPromptDialogsModule
-        FlightDisplayModule
-        FlightMapModule
-        MainWindowModule
-        QGroundControlControlsModule
-        QGroundControlModule
-        ScreenToolsModule
-        ToolbarModule
-        UTMSPModule
-        VehicleSetupModule
+        AnalyzeViewModuleplugin
+        AppSettingsModuleplugin
+        AutoPilotPluginsCommonModuleplugin
+        FactControlsModuleplugin
+        FirstRunPromptDialogsModuleplugin
+        FlightDisplayModuleplugin
+        FlightMapModuleplugin
+        MainWindowModuleplugin
+        QGroundControlControlsModuleplugin
+        QGroundControlModuleplugin
+        ScreenToolsModuleplugin
+        ToolbarModuleplugin
+        UTMSPModuleplugin
+        VehicleSetupModuleplugin
 )
 
 if(NOT QGC_DISABLE_APM_PLUGIN AND NOT QGC_DISABLE_APM_PLUGIN_FACTORY)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AutoPilotPluginsAPMModule)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AutoPilotPluginsAPMModuleplugin)
 endif()
 if(NOT QGC_DISABLE_PX4_PLUGIN AND NOT QGC_DISABLE_PX4_PLUGIN_FACTORY)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AutoPilotPluginsPX4Module)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AutoPilotPluginsPX4Moduleplugin)
 endif()
 if(QGC_VIEWER3D)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Viewer3DModule)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Viewer3DModuleplugin)
 endif()
 if(NOT QGC_AIRLINK_DISABLED)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AirLinkModule)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AirLinkModuleplugin)
 endif()
 
 target_compile_definitions(${CMAKE_PROJECT_NAME}

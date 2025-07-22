@@ -15,7 +15,6 @@ if(NOT QGC_UTM_ADAPTER)
             dummy/UTMSPMapVisuals.qml
             dummy/UTMSPNotificationSlider.qml
             dummy/UTMSPStateStorage.qml
-        NO_PLUGIN
     )
 
     return()
@@ -97,5 +96,4 @@ qt_add_qml_module(UTMSPModule
         images/time.svg
         images/timer.gif
         images/yellow_led.png
-    NO_PLUGIN
 )
