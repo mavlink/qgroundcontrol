@@ -280,7 +280,7 @@ Item {
         _missionController.insertComplexMissionItem(complexItemName, mapCenter(), nextIndex, true /* makeCurrentItem */)
     }
 
-    function insertTakeItemAfterCurrent() {
+    function insertTakeoffItemAfterCurrent() {
         var nextIndex = _missionController.currentPlanViewVIIndex + 1
         _missionController.insertTakeoffItem(mapCenter(), nextIndex, true /* makeCurrentItem */)
     }
@@ -588,7 +588,7 @@ Item {
                         visible:    (toolStrip._isMissionLayer || toolStrip._isUtmspLayer) && !_planMasterController.controllerVehicle.rover
                         onTriggered: {
                             toolStrip.allAddClickBoolsOff()
-                            insertTakeItemAfterCurrent()
+                            insertTakeoffItemAfterCurrent()
                             _triggerSubmit = true
                         }
                     },

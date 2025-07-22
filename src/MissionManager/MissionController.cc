@@ -2385,13 +2385,18 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
         _currentPlanViewItem  =         nullptr;
         _currentPlanViewSeqNum =        -1;
         _currentPlanViewVIIndex =       -1;
-        _onlyInsertTakeoffValid =       !_planViewSettings->takeoffItemNotRequired()->rawValue().toBool() && _visualItems->count() == 1; // First item must be takeoff
+        _onlyInsertTakeoffValid =       false;
         _isInsertTakeoffValid =         true;
         _isInsertLandValid =            true;
         _isROIActive =                  false;
         _isROIBeginCurrentItem =        false;
         _flyThroughCommandsAllowed =    true;
         _previousCoordinate =           QGeoCoordinate();
+
+        bool noItemsAddedYet = _visualItems->count() == 1;
+        if (_masterController->controllerVehicle()->takeoffVehicleSupported() && !_planViewSettings->takeoffItemNotRequired()->rawValue().toBool() && noItemsAddedYet) {
+            _onlyInsertTakeoffValid = true;
+        }
 
         for (int viIndex=0; viIndex<_visualItems->count(); viIndex++) {
             VisualMissionItem*  pVI =        qobject_cast<VisualMissionItem*>(_visualItems->get(viIndex));
