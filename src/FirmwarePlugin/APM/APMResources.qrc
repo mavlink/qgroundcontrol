@@ -9,8 +9,9 @@
         <file alias="APMFollowComponent.FactMetaData.json">../../AutoPilotPlugins/APM/APMFollowComponent.FactMetaData.json</file>
     </qresource>
     <qresource prefix="/FirmwarePlugin/APM">
-        <file alias="Copter.OfflineEditing.params">Copter3.6.OfflineEditing.params</file>
-        <file alias="Plane.OfflineEditing.params">Plane3.9.OfflineEditing.params</file>
-        <file alias="Rover.OfflineEditing.params">Rover3.5.OfflineEditing.params</file>
+        <file alias="Copter.OfflineEditing.params">Copter.OfflineEditing.params</file>
+        <file alias="Plane.OfflineEditing.params">Plane.OfflineEditing.params</file>
+        <file alias="Rover.OfflineEditing.params">Rover.OfflineEditing.params</file>
+        <file alias="Sub.OfflineEditing.params">Sub.OfflineEditing.params</file>
     </qresource>
 </RCC>
