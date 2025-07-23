@@ -21,7 +21,7 @@ import QGroundControl.FactControls
 
 Item {
     id:             control
-    width:          gimbalIndicatorIcon.width * 1.1 + gimbalTelemetryLayout.childrenRect.width + margins
+    width:          gimbalIndicatorIcon.width * 1.1 + ScreenTools.defaultFontPixelWidth * 12 + margins
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
 
@@ -376,6 +376,7 @@ Item {
         anchors.left:              gimbalIndicatorIcon.right
         anchors.leftMargin:        margins
         anchors.verticalCenter:    parent.verticalCenter
+        width:                     ScreenTools.defaultFontPixelWidth * 12
         columns:                   2
         rows:                      2
         rowSpacing:                0
@@ -389,17 +390,20 @@ Item {
                                         (activeGimbal && activeGimbal.yawLock ? qsTr("Yaw locked") : qsTr("Yaw follow"))
             Layout.columnSpan:      2
             Layout.alignment:       Qt.AlignHCenter
+            Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 10
         }
         QGCLabel {
             id:                     pitchLabel
-            text:                   activeGimbal ? qsTr("P: ") + activeGimbal.absolutePitch.rawValue.toFixed(1) : ""
+            text:                   activeGimbal ? qsTr("P: ") + Math.round(activeGimbal.absolutePitch.rawValue) : ""
+            Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 5
         }
         QGCLabel {
             id:                     panLabel
             text:                   activeGimbal ? 
-                                        gimbalTelemetryLayout.showAzimuth ? (qsTr("Az: ") + activeGimbal.absoluteYaw.rawValue.toFixed(1)) :
-                                            (qsTr("Y: ") + activeGimbal.bodyYaw.rawValue.toFixed(1)) :
+                                        gimbalTelemetryLayout.showAzimuth ? (qsTr("Az: ") + Math.round(activeGimbal.absoluteYaw.rawValue)) :
+                                            (qsTr("Y: ") + Math.round(activeGimbal.bodyYaw.rawValue)) :
                                                 ""
+            Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 6
         }
     }
 
