@@ -16,7 +16,7 @@ Windows 64비트 시스템에서 _QGroundControl_은 때때로 **제어판 > 음
 
 1. 제어판 응용 프로그램을 실행합니다: **C:\Windows\SysWOW64\Speech\SpeechUX\sapi.cpl**.
 2. 원하는 _음성 선택_을 한 다음 대화상자 하단의 **확인**을 클릭합니다.
-   ![Windows 32비트 TTS(텍스트 음성 변환) 제어판](../../../assets/support/windows_text_to_speech.png)
+  ![Windows 32비트 TTS(텍스트 음성 변환) 제어판](../../../assets/support/windows_text_to_speech.png)
 
 :::info
 Windows 음성 API에 대한 추가 정보는 [여기](https://www.webbie.org.uk/blog/microsoft-speech/)를 참고하십시오.
@@ -79,17 +79,3 @@ LIBVA_DRIVER_NAME=fakedriver ./QGroundControl
 ```
 
 다른 대안은 VGA 중 하나를 비활성화하거나 VA API 구성 요소를 제거하거나 GStreamer 1.16으로 업그레이드하는 것입니다(Ubuntu 18.04에서는 이를 수행하는 쉬운 방법이 없습니다.
-
-## Ubuntu 16.04: GLIBC_2.27을 찾을 수 없음 {#glibc_2_27}
-
-사전 빌드된 QGroundControl 4.0(이상)용 AppImages는 Ubuntu 18.04 LTS(이상)에서만 실행 가능합니다.
-Ubuntu 16.04에서는 실행되지 않습니다.
-
-실행시 다음과 같은 에러가 발생합니다.
-
-```sh
-$ ./QGroundControl.AppImage
-/tmp/.mount_i4hPuB/QGroundControl: /lib/x86_64-linux-gnu/libm.so.6: version `GLIBC_2.27' not found (required by /tmp/.mount_i4hPuB/QGroundControl)
-```
-
-Ubuntu 16.04를 사용해야 하는 경우의 한 가지 해결 방법은 비디오 라이브러리 없이 소스에서 빌드하는 것입니다.

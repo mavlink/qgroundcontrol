@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -8,29 +8,80 @@
  ****************************************************************************/
 
 #include "QGCMAVLink.h"
-#include <QGCLoggingCategory.h>
+#include "QGCLoggingCategory.h"
 
-#include <QtCore/QDebug>
+QGC_LOGGING_CATEGORY(QGCMAVLinkLog, "qgc.mavlink.qgcmavlink")
 
-constexpr QGCMAVLink::FirmwareClass_t QGCMAVLink::FirmwareClassPX4;
-constexpr QGCMAVLink::FirmwareClass_t QGCMAVLink::FirmwareClassArduPilot;
-constexpr QGCMAVLink::FirmwareClass_t QGCMAVLink::FirmwareClassGeneric;
+const QHash<int, QString> QGCMAVLink::mavlinkCompIdHash {
+    { MAV_COMP_ID_CAMERA,   "Camera1" },
+    { MAV_COMP_ID_CAMERA2,  "Camera2" },
+    { MAV_COMP_ID_CAMERA3,  "Camera3" },
+    { MAV_COMP_ID_CAMERA4,  "Camera4" },
+    { MAV_COMP_ID_CAMERA5,  "Camera5" },
+    { MAV_COMP_ID_CAMERA6,  "Camera6" },
+    { MAV_COMP_ID_SERVO1,   "Servo1" },
+    { MAV_COMP_ID_SERVO2,   "Servo2" },
+    { MAV_COMP_ID_SERVO3,   "Servo3" },
+    { MAV_COMP_ID_SERVO4,   "Servo4" },
+    { MAV_COMP_ID_SERVO5,   "Servo5" },
+    { MAV_COMP_ID_SERVO6,   "Servo6" },
+    { MAV_COMP_ID_SERVO7,   "Servo7" },
+    { MAV_COMP_ID_SERVO8,   "Servo8" },
+    { MAV_COMP_ID_SERVO9,   "Servo9" },
+    { MAV_COMP_ID_SERVO10,  "Servo10" },
+    { MAV_COMP_ID_SERVO11,  "Servo11" },
+    { MAV_COMP_ID_SERVO12,  "Servo12" },
+    { MAV_COMP_ID_SERVO13,  "Servo13" },
+    { MAV_COMP_ID_SERVO14,  "Servo14" },
+    { MAV_COMP_ID_GIMBAL,   "Gimbal1" },
+    { MAV_COMP_ID_ADSB,     "ADSB" },
+    { MAV_COMP_ID_OSD,      "OSD" },
+    { MAV_COMP_ID_FLARM,    "FLARM" },
+    { MAV_COMP_ID_GIMBAL2,  "Gimbal2" },
+    { MAV_COMP_ID_GIMBAL3,  "Gimbal3" },
+    { MAV_COMP_ID_GIMBAL4,  "Gimbal4" },
+    { MAV_COMP_ID_GIMBAL5,  "Gimbal5" },
+    { MAV_COMP_ID_GIMBAL6,  "Gimbal6" },
+    { MAV_COMP_ID_IMU,      "IMU1" },
+    { MAV_COMP_ID_IMU_2,    "IMU2" },
+    { MAV_COMP_ID_IMU_3,    "IMU3" },
+    { MAV_COMP_ID_GPS,      "GPS1" },
+    { MAV_COMP_ID_GPS2,     "GPS2" }
+};
 
-constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassAirship;
-constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassFixedWing;
-constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassRoverBoat;
-constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassSub;
-constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassMultiRotor;
-constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassVTOL;
-constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassGeneric;
+#ifdef MAVLINK_EXTERNAL_RX_STATUS
+    mavlink_status_t m_mavlink_status[MAVLINK_COMM_NUM_BUFFERS];
+#endif
 
-// Mavlink status structures for entire app
-mavlink_status_t m_mavlink_status[MAVLINK_COMM_NUM_BUFFERS];
+#ifdef MAVLINK_GET_CHANNEL_STATUS
+mavlink_status_t* mavlink_get_channel_status(uint8_t channel)
+{
+#ifndef MAVLINK_EXTERNAL_RX_STATUS
+    static QList<mavlink_status_t> m_mavlink_status(MAVLINK_COMM_NUM_BUFFERS);
+#endif
+    if (!QGCMAVLink::isValidChannel(channel)) {
+        qCWarning(QGCMAVLinkLog) << Q_FUNC_INFO << "Invalid Channel Number:" << channel;
+        return nullptr;
+    }
 
-QGCMAVLink::QGCMAVLink(QObject* parent)
+    return &m_mavlink_status[channel];
+}
+#endif
+
+QGCMAVLink::QGCMAVLink(QObject *parent)
     : QObject(parent)
 {
+    // qCDebug(StatusTextHandlerLog) << Q_FUNC_INFO << this;
 
+   (void) qRegisterMetaType<mavlink_message_t>("mavlink_message_t");
+   (void) qRegisterMetaType<MAV_TYPE>("MAV_TYPE");
+   (void) qRegisterMetaType<MAV_AUTOPILOT>("MAV_AUTOPILOT");
+   (void) qRegisterMetaType<GRIPPER_ACTIONS>("GRIPPER_ACTIONS");
+}
+
+QGCMAVLink::~QGCMAVLink()
+{
+    // qCDebug(StatusTextHandlerLog) << Q_FUNC_INFO << this;
 }
 
 QList<QGCMAVLink::FirmwareClass_t> QGCMAVLink::allFirmwareClasses(void)
@@ -263,7 +314,7 @@ QString QGCMAVLink::mavSysStatusSensorToString(MAV_SYS_STATUS_SENSOR sysStatusSe
 }
 
 QString QGCMAVLink::mavTypeToString(MAV_TYPE mavType) {
-    static QMap<int, QString> typeNames = {
+    static const QMap<int, QString> typeNames = {
         { MAV_TYPE_GENERIC,         tr("Generic micro air vehicle" )},
         { MAV_TYPE_FIXED_WING,      tr("Fixed wing aircraft")},
         { MAV_TYPE_QUADROTOR,       tr("Quadrotor")},
@@ -381,7 +432,7 @@ uint32_t QGCMAVLink::highLatencyFailuresToMavSysStatus(mavlink_high_latency2_t& 
         MAV_SYS_STATUS_SENSOR   sensorBit;
     };
 
-    static const failure2Sensor_s rgFailure2Sensor[] = {
+    static constexpr const failure2Sensor_s rgFailure2Sensor[] = {
         { HL_FAILURE_FLAG_GPS,                      MAV_SYS_STATUS_SENSOR_GPS },
         { HL_FAILURE_FLAG_DIFFERENTIAL_PRESSURE,    MAV_SYS_STATUS_SENSOR_DIFFERENTIAL_PRESSURE },
         { HL_FAILURE_FLAG_ABSOLUTE_PRESSURE,        MAV_SYS_STATUS_SENSOR_ABSOLUTE_PRESSURE },

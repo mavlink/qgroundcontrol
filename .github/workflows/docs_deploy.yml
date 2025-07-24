@@ -5,14 +5,13 @@ on:
     branches:
       - master
       - 'Stable*'
-    tags:
-      - 'v*'
     paths:
       - 'docs/**'
+      - 'package*.json'
   pull_request:
     paths:
       - 'docs/**'
-
+      - 'package*.json'
   workflow_dispatch:
 
 env:

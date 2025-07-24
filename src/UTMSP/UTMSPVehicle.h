@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2023 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -9,8 +9,9 @@
 
 #pragma once
 
+#include <QtQmlIntegration/QtQmlIntegration>
+
 #include "UTMSPServiceController.h"
-#include "UTMSPAircraft.h"
 #include "UTMSPOperator.h"
 #include "UTMSPFlightDetails.h"
 
@@ -21,12 +22,14 @@ class Vehicle;
 class UTMSPVehicle : public UTMSPServiceController
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_PROPERTY(QString                 vehicleSerialNumber            READ vehicleSerialNumber       NOTIFY vehicleSerialNumberChanged)
     Q_PROPERTY(bool                    vehicleActivation              READ vehicleActivation         NOTIFY vehicleActivationChanged)
 
 public:
-    UTMSPVehicle        (std::shared_ptr<Dispatcher> dispatcher,const Vehicle& vehicle);
-    ~UTMSPVehicle       () override = default;
+    UTMSPVehicle(std::shared_ptr<Dispatcher> dispatcher, Vehicle *vehicle, QObject *parent = nullptr);
+    ~UTMSPVehicle();
 
     Q_INVOKABLE void loadTelemetryFlag(bool value);
 
@@ -54,9 +57,9 @@ private:
     std::string                   _operatorID;
     std::string                   _operatorClass;
     std::shared_ptr<Dispatcher>   _dispatcher;
-    bool                          _remoteIDFlag;
-    bool                          _stopFlag;
-    std::string                   _flightID;
-    QString                       _vehicleSerialNumber;
-    bool                          _vehicleActivation;
+    bool                          _remoteIDFlag = false;
+    bool                          _stopFlag = false;
+    std::string                   _flightID = "";
+    QString                       _vehicleSerialNumber = "";
+    bool                          _vehicleActivation = false;
 };

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -60,7 +60,7 @@ private:
 
     static QMap<QString, FactMetaData*> _metaDataMap;
 
-    static const char* _longitudeFactName;
-    static const char* _latitudeFactName;
-    static const char* _altitudeFactName;
+    static constexpr const char* _longitudeFactName =    "Longitude";
+    static constexpr const char* _latitudeFactName =     "Latitude";
+    static constexpr const char* _altitudeFactName =     "RelativeAltitude";
 };

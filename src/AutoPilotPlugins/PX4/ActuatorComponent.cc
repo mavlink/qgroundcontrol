@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2021 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -16,9 +16,10 @@
 
 static bool imageProviderAdded{false};
 
-ActuatorComponent::ActuatorComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
-    VehicleComponent(vehicle, autopilot, parent),
-    _name(tr("Actuators")), _actuators(*vehicle->actuators())
+ActuatorComponent::ActuatorComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) 
+    : VehicleComponent(vehicle, autopilot, AutoPilotPlugin::UnknownVehicleComponent, parent)
+    , _name(tr("Actuators"))
+    , _actuators(*vehicle->actuators())
 {
     if (!imageProviderAdded) {
         // TODO: qmlAppEngine should not be accessed inside app
@@ -61,7 +62,7 @@ QStringList ActuatorComponent::setupCompleteChangedTriggerList(void) const
 
 QUrl ActuatorComponent::setupSource(void) const
 {
-    return QUrl::fromUserInput(QStringLiteral("qrc:/qml/ActuatorComponent.qml"));
+    return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/PX4/ActuatorComponent.qml"));
 }
 
 QUrl ActuatorComponent::summaryQmlSource(void) const

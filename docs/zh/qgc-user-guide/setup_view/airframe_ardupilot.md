@@ -38,4 +38,4 @@ To select the frame type for Sub:
 
    - You can also click **Load Vehicle Default Parameters** to load default parameter set for ArduSub.
 
-     ![Load vehicle params](../../../assets/setup/airframe_ardusub_parameters.jpg)
+      ![Load vehicle params](../../../assets/setup/airframe_ardusub_parameters.jpg)

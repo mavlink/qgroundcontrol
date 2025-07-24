@@ -1,60 +1,115 @@
-#! /usr/bin/env bash
+#!/usr/bin/env bash
+#
+# QGroundControl build‑time dependencies for Ubuntu/Debian‑based images
+# --------------------------------------------------------------------
+# * Designed for non‑interactive CI/containers
+# * Uses --no-install-recommends to keep the image lean
+# * Cleans APT cache at the end to minimise final size
 
-set -e
+set -euo pipefail
+export DEBIAN_FRONTEND=noninteractive
 
-apt-get update -y --quiet
+apt-get update -y -qq
+apt-get install -y -qq --no-install-recommends \
+    software-properties-common \
+    gnupg2 \
+    ca-certificates
 
-#Build Tools
-DEBIAN_FRONTEND=noninteractive apt-get -y --quiet --no-install-recommends install \
-	build-essential \
-	ccache \
-	cmake \
-	cppcheck \
-	file \
-	g++ \
-	gcc \
-	gdb \
-	git \
-	libfuse2 \
-	make \
-	ninja-build \
-	rsync \
+# Enable the “universe” component (needed for several dev packages)
+add-apt-repository -y universe
+apt-get update -y -qq
+
+# --------------------------------------------------------------------
+# Core build tools
+# --------------------------------------------------------------------
+apt-get install -y -qq --no-install-recommends \
+    appstream \
     binutils \
+    build-essential \
+    ccache \
+    cmake \
+    cppcheck \
+    file \
+    gdb \
+    git \
+    libfuse2 \
+    fuse3 \
+    libtool \
     locales \
-    patchelf
+    mold \
+    ninja-build \
+    patchelf \
+    pipx \
+    pkgconf \
+    python3 \
+    python3-pip \
+    rsync \
+    wget \
+    zsync
 
-#Qt Required
-DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
-	libxcb-xinerama0 \
-    libxkbcommon-x11-0 \
-    libxcb-cursor0
+# --------------------------------------------------------------------
+# Qt6 compile/runtime dependencies
+# See: https://doc.qt.io/qt-6/linux-requirements.html
+# --------------------------------------------------------------------
+apt-get install -y -qq --no-install-recommends \
+    libatspi2.0-dev \
+    libfontconfig1-dev \
+    libfreetype-dev \
+    libgtk-3-dev \
+    libsm-dev \
+    libx11-dev \
+    libx11-xcb-dev \
+    libxcb-cursor-dev \
+    libxcb-glx0-dev \
+    libxcb-icccm4-dev \
+    libxcb-image0-dev \
+    libxcb-keysyms1-dev \
+    libxcb-present-dev \
+    libxcb-randr0-dev \
+    libxcb-render-util0-dev \
+    libxcb-render0-dev \
+    libxcb-shape0-dev \
+    libxcb-shm0-dev \
+    libxcb-sync-dev \
+    libxcb-util-dev \
+    libxcb-xfixes0-dev \
+    libxcb-xinerama0-dev \
+    libxcb-xkb-dev \
+    libxcb1-dev \
+    libxext-dev \
+    libxfixes-dev \
+    libxi-dev \
+    libxkbcommon-dev \
+    libxkbcommon-x11-dev \
+    libxrender-dev \
+    libunwind-dev
 
-#QGC
-DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
-	libsdl2-dev \
-	libspeechd2 \
-	flite \
-	speech-dispatcher \
-	speech-dispatcher-flite
+# --------------------------------------------------------------------
+# GStreamer (video/telemetry streaming)
+# --------------------------------------------------------------------
+apt-get install -y -qq --no-install-recommends \
+    libgstreamer1.0-dev \
+    libgstreamer-plugins-bad1.0-dev \
+    libgstreamer-plugins-base1.0-dev \
+    libgstreamer-plugins-good1.0-dev \
+    libgstreamer-gl1.0-0 \
+    gstreamer1.0-plugins-bad \
+    gstreamer1.0-plugins-base \
+    gstreamer1.0-plugins-good \
+    gstreamer1.0-plugins-ugly \
+    gstreamer1.0-plugins-rtp \
+    gstreamer1.0-gl \
+    gstreamer1.0-libav \
+    gstreamer1.0-rtsp \
+    gstreamer1.0-x
 
-#GStreamer
-DEBIAN_FRONTEND=noninteractive apt-get -y --quiet install \
-	libgstreamer1.0-dev \
-	libgstreamer-plugins-base1.0-dev \
-	libgstreamer-plugins-good1.0-dev \
-	libgstreamer-plugins-bad1.0-dev \
-	gstreamer1.0-plugins-base \
-	gstreamer1.0-plugins-good \
-	gstreamer1.0-plugins-bad \
-	gstreamer1.0-plugins-ugly \
-	gstreamer1.0-plugins-rtp \
-	gstreamer1.0-libav \
-	gstreamer1.0-tools \
-	gstreamer1.0-x \
-	gstreamer1.0-alsa \
-	gstreamer1.0-gl \
-	gstreamer1.0-gtk3 \
-	gstreamer1.0-gl \
-	gstreamer1.0-vaapi \
-	gstreamer1.0-rtsp \
-    libdrm-dev
+# Optional – only present on Ubuntu 22.04+; skip gracefully otherwise
+if apt-cache show gstreamer1.0-qt6 >/dev/null 2>&1; then
+    apt-get install -y -qq --no-install-recommends gstreamer1.0-qt6
+fi
+
+# --------------------------------------------------------------------
+# Clean‑up
+# --------------------------------------------------------------------
+apt-get clean
+rm -rf /var/lib/apt/lists/*

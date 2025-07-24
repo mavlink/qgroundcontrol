@@ -14,34 +14,11 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlightDisplay
 import QGroundControl.FlightMap
-import QGroundControl.Palette
+
 import QGroundControl.ScreenTools
 
 ColumnLayout {
     width: _rightPanelWidth
-
-    RowLayout {
-        id:                 multiVehiclePanelSelector
-        Layout.alignment:   Qt.AlignTop
-        spacing:            ScreenTools.defaultFontPixelWidth
-        visible:            QGroundControl.multiVehicleManager.vehicles.count > 1 && QGroundControl.corePlugin.options.flyView.showMultiVehicleList
-
-        QGCMapPalette { id: mapPal; lightColors: true }
-
-        QGCRadioButton {
-            id:             singleVehicleRadio
-            text:           qsTr("Single")
-            checked:        _showSingleVehicleUI
-            onClicked:      _showSingleVehicleUI = true
-            textColor:      mapPal.text
-        }
-
-        QGCRadioButton {
-            text:           qsTr("Multi-Vehicle")
-            textColor:      mapPal.text
-            onClicked:      _showSingleVehicleUI = false
-        }
-    }
 
     TerrainProgress {
         Layout.alignment:       Qt.AlignTop
@@ -53,8 +30,8 @@ ColumnLayout {
     // to be null all over the place
     Loader {
         id:                 photoVideoControlLoader
-        Layout.alignment:   Qt.AlignVCenter | Qt.AlignRight
-        sourceComponent:    globals.activeVehicle && _showSingleVehicleUI ? photoVideoControlComponent : undefined
+        Layout.alignment:   Qt.AlignTop | Qt.AlignRight
+        sourceComponent:    globals.activeVehicle ? photoVideoControlComponent : undefined
 
         property real rightEdgeCenterInset: visible ? parent.width - x : 0
 
@@ -64,11 +41,5 @@ ColumnLayout {
             PhotoVideoControl {
             }
         }
-    }
-
-    MultiVehicleList {
-        Layout.preferredWidth:  _rightPanelWidth
-        Layout.fillHeight:      true
-        visible:                !_showSingleVehicleUI
     }
 }

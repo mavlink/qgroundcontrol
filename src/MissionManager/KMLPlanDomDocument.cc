@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -17,9 +17,6 @@
 #include "ComplexMissionItem.h"
 #include "Vehicle.h"
 #include "QmlObjectListModel.h"
-
-const char* KMLPlanDomDocument::_missionLineStyleName =     "MissionLineStyle";
-const char* KMLPlanDomDocument::surveyPolygonStyleName =   "SurveyPolygonStyle";
 
 KMLPlanDomDocument::KMLPlanDomDocument()
     : KMLDomDocument(QStringLiteral("%1 Plan KML").arg(QCoreApplication::applicationName()))
@@ -50,7 +47,7 @@ void KMLPlanDomDocument::_addFlightPath(Vehicle* vehicle, QList<MissionItem*> rg
     QList<QGeoCoordinate> rgFlightCoords;
     QGeoCoordinate homeCoord = rgMissionItems[0]->coordinate();
     for (const MissionItem* item : rgMissionItems) {
-        const MissionCommandUIInfo* uiInfo = qgcApp()->toolbox()->missionCommandTree()->getUIInfo(vehicle, QGCMAVLink::VehicleClassGeneric, item->command());
+        const MissionCommandUIInfo* uiInfo = MissionCommandTree::instance()->getUIInfo(vehicle, QGCMAVLink::VehicleClassGeneric, item->command());
         if (uiInfo) {
             double altAdjustment = item->frame() == MAV_FRAME_GLOBAL ? 0 : homeCoord.altitude(); // Used to convert to amsl
             if (uiInfo->isTakeoffCommand() && !vehicle->fixedWing()) {
@@ -83,8 +80,8 @@ void KMLPlanDomDocument::_addFlightPath(Vehicle* vehicle, QList<MissionItem*> rg
                 QString htmlString;
                 htmlString += QStringLiteral("Index: %1\n").arg(item->sequenceNumber());
                 htmlString += uiInfo->friendlyName() + "\n";
-                htmlString += QStringLiteral("Alt AMSL: %1 %2\n").arg(QString::number(FactMetaData::metersToAppSettingsHorizontalDistanceUnits(coord.altitude()).toDouble(), 'f', 2)).arg(FactMetaData::appSettingsHorizontalDistanceUnitsString());
-                htmlString += QStringLiteral("Alt Rel: %1 %2\n").arg(QString::number(FactMetaData::metersToAppSettingsHorizontalDistanceUnits(coord.altitude() - homeCoord.altitude()).toDouble(), 'f', 2)).arg(FactMetaData::appSettingsHorizontalDistanceUnitsString());
+                htmlString += QStringLiteral("Alt AMSL: %1 %2\n").arg(QString::number(FactMetaData::metersToAppSettingsVerticalDistanceUnits(coord.altitude()).toDouble(), 'f', 2)).arg(FactMetaData::appSettingsVerticalDistanceUnitsString());
+                htmlString += QStringLiteral("Alt Rel: %1 %2\n").arg(QString::number(FactMetaData::metersToAppSettingsVerticalDistanceUnits(coord.altitude() - homeCoord.altitude()).toDouble(), 'f', 2)).arg(FactMetaData::appSettingsVerticalDistanceUnitsString());
                 htmlString += QStringLiteral("Lat: %1\n").arg(QString::number(coord.latitude(), 'f', 7));
                 htmlString += QStringLiteral("Lon: %1\n").arg(QString::number(coord.longitude(), 'f', 7));
                 QDomCDATASection cdataSection = createCDATASection(htmlString);

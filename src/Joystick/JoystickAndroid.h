@@ -1,47 +1,55 @@
+/****************************************************************************
+ *
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 #pragma once
 
-#include "Joystick.h"
+#include <QtCore/QLoggingCategory>
 #include <QtCore/private/qandroidextras_p.h>
 
-class MultiVehicleManager;
-class JoystickManager;
+#include "Joystick.h"
+
+Q_DECLARE_LOGGING_CATEGORY(JoystickAndroidLog)
 
 class JoystickAndroid : public Joystick, public QtAndroidPrivate::GenericMotionEventListener, public QtAndroidPrivate::KeyEventListener
 {
 public:
-    JoystickAndroid(const QString& name, int axisCount, int buttonCount, int id, MultiVehicleManager* multiVehicleManager);
-
+    JoystickAndroid(const QString &name, int axisCount, int buttonCount, int id, QObject *parent = nullptr);
     ~JoystickAndroid();
 
-    static bool init(JoystickManager *manager);
-
+    static bool init();
     static void setNativeMethods();
-
-    static QMap<QString, Joystick*> discover(MultiVehicleManager* _multiVehicleManager);
+    static QMap<QString, Joystick*> discover();
 
 private:
+    bool _open() final { return true; }
+    void _close() final {}
+    bool _update() final { return true; }
+
+    bool _getButton(int i) const final { return btnValue[i]; }
+    int _getAxis(int i) const final { return axisValue[i]; }
+    bool _getHat(int hat, int i) const final;
+
+    int _getAndroidHatAxis(int axisHatCode) const;
+
     bool handleKeyEvent(jobject event);
     bool handleGenericMotionEvent(jobject event);
-    int  _getAndroidHatAxis(int axisHatCode);
 
-    virtual bool _open          ();
-    virtual void _close         ();
-    virtual bool _update        ();
+    int deviceId = 0;
 
-    virtual bool _getButton     (int i);
-    virtual int  _getAxis       (int i);
-    virtual bool _getHat        (int hat,int i);
+    QList<int> btnCode;
+    QList<int> axisCode;
+    QList<bool> btnValue;
+    QList<int> axisValue;
 
-    int *btnCode;
-    int *axisCode;
-    bool *btnValue;
-    int *axisValue;
-
-    static int * _androidBtnList; //list of all possible android buttons
-    static int _androidBtnListCount;
+    static constexpr int _androidBtnListCount = 31;
+    static QList<int> _androidBtnList;
 
     static int ACTION_DOWN, ACTION_UP, AXIS_HAT_X, AXIS_HAT_Y;
-    static QMutex m_mutex;
-
-    int deviceId;
+    static QMutex _mutex;
 };

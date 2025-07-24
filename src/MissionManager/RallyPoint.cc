@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -8,10 +8,6 @@
  ****************************************************************************/
 
 #include "RallyPoint.h"
-
-const char* RallyPoint::_longitudeFactName =    "Longitude";
-const char* RallyPoint::_latitudeFactName =     "Latitude";
-const char* RallyPoint::_altitudeFactName =     "RelativeAltitude";
 
 QMap<QString, FactMetaData*> RallyPoint::_metaDataMap;
 

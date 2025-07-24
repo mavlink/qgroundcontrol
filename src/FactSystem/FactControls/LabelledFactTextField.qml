@@ -10,9 +10,10 @@
 import QtQuick
 import QtQuick.Layouts
 
+import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
-import QGroundControl.FactSystem
+
 import QGroundControl.FactControls
 
 RowLayout {
@@ -22,6 +23,7 @@ RowLayout {
     property alias  textFieldUnitsLabel:     _factTextField.unitsLabel
     property alias  textFieldShowUnits:      _factTextField.showUnits
     property alias  textFieldShowHelp:       _factTextField.showHelp
+    property alias  textField:               _factTextField
 
     spacing: ScreenTools.defaultFontPixelWidth * 2
 

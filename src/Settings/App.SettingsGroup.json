@@ -80,20 +80,6 @@
     "decimalPlaces":    1
 },
 {
-    "name":             "telemetrySave",
-    "shortDesc": "Save telemetry Log after each flight",
-    "longDesc":  "If this option is enabled a telemetry will be saved after each flight completes.",
-    "type":             "bool",
-    "default":     true
-},
-{
-    "name":             "telemetrySaveNotArmed",
-    "shortDesc": "Save telemetry log even if vehicle was not armed",
-    "longDesc":  "If this option is enabled a telemtry log will be saved even if vehicle was never armed.",
-    "type":             "bool",
-    "default":     false
-},
-{
     "name":             "audioMuted",
     "shortDesc": "Mute audio output",
     "longDesc":  "If this option is enabled all audio output will be muted.",
@@ -113,6 +99,13 @@
     "longDesc":  "If enabled the throttle stick will snap back to center when released.",
     "type":             "bool",
     "default":     true
+},
+{
+    "name":             "virtualJoystickLeftHandedMode",
+    "shortDesc": "Left Handed Mode",
+    "longDesc":  "If this option is enabled the virtual joystick layout will be reversed",
+    "type":             "bool",
+    "default":     false
 },
 {
     "name":                 "gstDebugLevel",
@@ -139,6 +132,13 @@
     "default":     false
 },
 {
+    "name":                 "enableMultiVehiclePanel",
+    "shortDesc":            "Enable Multi-Vehicle Panel",
+    "longDesc":             "Enable Multi-Vehicle Panel when multiple vehicles are connected.",
+    "type":                 "bool",
+    "default":              true
+},
+{
     "name":                 "appFontPointSize",
     "shortDesc":     "Application font size",
     "longDesc":      "The point size for the default font used.",
@@ -158,13 +158,6 @@
     "default":     0
 },
 {
-    "name":             "showLargeCompass",
-    "shortDesc": "Show large compass",
-    "longDesc":  "Show large compass on instrument panel",
-    "type":             "bool",
-    "default":     false
-},
-{
     "name":             "savePath",
     "shortDesc": "Application save directory",
     "longDesc":  "Directory to which all data files are saved/loaded from",
@@ -178,20 +171,6 @@
     "type":                 "bool",
     "default":              false,
     "qgcRebootRequired":    true
-},
-{
-    "name":             "userBrandImageIndoor",
-    "shortDesc": "User-selected brand image",
-    "longDesc":  "Location in file system of user-selected brand image (indoor)",
-    "type":             "string",
-    "default":     ""
-},
-{
-    "name":             "userBrandImageOutdoor",
-    "shortDesc": "User-selected brand image",
-    "longDesc":  "Location in file system of user-selected brand image (outdoor)",
-    "type":             "string",
-    "default":     ""
 },
 {
     "name":             "mapboxToken",
@@ -236,12 +215,6 @@
     "default":     ""
 },
 {
-    "name":             "defaultFirmwareType",
-    "shortDesc": "Default firmware type for flashing",
-    "type":             "uint32",
-    "default":     12
-},
-{
     "name":             "followTarget",
     "shortDesc": "Stream GCS' coordinates to Autopilot",
     "type":             "uint32",
@@ -250,20 +223,12 @@
     "default":     2
 },
 {
-    "name":                 "apmStartMavlinkStreams",
-    "shortDesc":     "Request start of MAVLink telemetry streams (ArduPilot only)",
-    "type":                 "bool",
-    "default":         true,
-    "qgcRebootRequired":    true
-},
-{
-    "name":         "qLocaleLanguage",
-    "shortDesc":    "Language",
-    "type":         "uint32",
-    "enumStrings":  "System,Azerbaijani (Azerbaijani),български (Bulgarian),中文 (Chinese),Nederlands (Dutch),English,Suomi (Finnish),Français (French),Deutsche (German),Ελληνικά (Greek), עברית (Hebrew),Italiano (Italian),日本語 (Japanese),한국어 (Korean),Norsk (Norwegian),Polskie (Polish),Português (Portuguese),Pусский (Russian),Español (Spanish),Svenska (Swedish),Türk (Turkish)",
-    "enumValues":   "0,12,20,25,30,31,36,37,42,43,48,58,59,66,85,90,91,96,111,114,125",
-    "comment":      "enumValues uses Qt QLocale::Language values",
-    "default":      0
+    "name":                 "qLocaleLanguage",
+    "shortDesc":            "Language",
+    "type":                 "uint32",
+    "default":              0,
+    "qgcRebootRequired":    true,
+    "comment":              "QLocale::Language id. Fact enum metadata is setup in AppSettings code. QGC reboot required in order to load new json translations into FactMetaData."
 },
 {
     "name":             "disableAllPersistence",
@@ -273,46 +238,10 @@
     "default":     false
 },
 {
-    "name":             "usePairing",
-    "shortDesc": "Use Pairing",
-    "longDesc":  "Use Link Pairing.",
-    "type":             "bool",
-    "default":     false
-},
-{
-    "name":             "saveCsvTelemetry",
-    "shortDesc": "Save CSV Telementry Logs",
-    "longDesc":  "If this option is enabled, all Facts will be written to a CSV file with a 1 Hertz frequency.",
-    "type":             "bool",
-    "default":     false
-},
-{
     "name":             "firstRunPromptIdsShown",
     "shortDesc": "Comma separated list of first run prompt ids which have already been shown.",
     "type":             "string",
     "default":     ""
-},
-{
-    "name":             "forwardMavlink",
-    "shortDesc": "Enable mavlink forwarding",
-    "longDesc":  "Enable mavlink forwarding",
-    "type":             "bool",
-    "default":     false
-},
-{
-    "name":             "forwardMavlinkHostName",
-    "shortDesc": "Host name",
-    "longDesc":  "Host name to forward mavlink to. i.e: localhost:14445",
-    "type":             "string",
-    "default":     "localhost:14445",
-    "qgcRebootRequired":    true
-},
-{
-    "name":      "forwardMavlinkAPMSupportHostName",
-    "shortDesc": "Ardupilot Support Host name",
-    "longDesc":  "Ardupilot Support server to forward mavlink to. i.e: support.ardupilot.org:xxxx",
-    "type":      "string",
-    "default":   "support.ardupilot.org:xxxx"
 },
 {
     "name": "loginAirLink",

@@ -12,11 +12,12 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
 
-import QGroundControl.FactSystem
+import QGroundControl
+
 import QGroundControl.FactControls
-import QGroundControl.Palette
+
 import QGroundControl.Controls
-import QGroundControl.Controllers
+
 import QGroundControl.ScreenTools
 
 SetupPage {
@@ -109,7 +110,7 @@ SetupPage {
                                          qsTr("You've connected a %1.").arg(controller.currentVehicleName) :
                                          qsTr("Airframe is not set.")) +
                                     qsTr("To change this configuration, select the desired airframe below then click 'Apply and Restart'.")
-                    font.family:    ScreenTools.demiboldFontFamily
+                    font.bold:      true
                     wrapMode:       Text.WordWrap
                 }
 

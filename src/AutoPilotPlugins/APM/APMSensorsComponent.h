@@ -1,12 +1,11 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
  ****************************************************************************/
-
 
 #pragma once
 
@@ -15,26 +14,23 @@
 class APMSensorsComponent : public VehicleComponent
 {
     Q_OBJECT
-    
+
 public:
-    APMSensorsComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
+    explicit APMSensorsComponent(Vehicle *vehicle, AutoPilotPlugin *autopilot, QObject *parent = nullptr);
 
-    bool compassSetupNeeded(void) const;
-    bool accelSetupNeeded(void) const;
+    bool compassSetupNeeded() const;
+    bool accelSetupNeeded() const;
 
-    // Virtuals from VehicleComponent
-    QStringList setupCompleteChangedTriggerList(void) const final;
-    
-    // Virtuals from VehicleComponent
-    QString name(void) const final;
-    QString description(void) const final;
-    QString iconResource(void) const final;
-    bool requiresSetup(void) const final;
-    bool setupComplete(void) const final;
-    QUrl setupSource(void) const final;
-    QUrl summaryQmlSource(void) const final;
-    
+    QStringList setupCompleteChangedTriggerList() const final;
+
+    QString name() const final { return _name; }
+    QString description() const final { return tr("Sensors Setup is used to calibrate the sensors within your vehicle."); }
+    QString iconResource() const final { return QStringLiteral("/qmlimages/SensorsComponentIcon.png"); }
+    bool requiresSetup() const final { return true; }
+    bool setupComplete() const final { return (!compassSetupNeeded() && !accelSetupNeeded()); }
+    QUrl setupSource() const final { return QUrl::fromUserInput("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMSensorsComponent.qml"); }
+    QUrl summaryQmlSource() const final { return QUrl::fromUserInput("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml"); }
+
 private:
-    const QString   _name;
-    QVariantList    _summaryItems;
+    const QString _name = tr("Sensors");
 };

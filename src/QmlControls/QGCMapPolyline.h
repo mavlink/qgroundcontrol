@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -22,6 +22,8 @@ class QGCMapPolyline : public QObject
 public:
     QGCMapPolyline(QObject* parent = nullptr);
     QGCMapPolyline(const QGCMapPolyline& other, QObject* parent = nullptr);
+
+    ~QGCMapPolyline() override;
 
     const QGCMapPolyline& operator=(const QGCMapPolyline& other);
 
@@ -52,9 +54,9 @@ public:
     /// @return Offset set of vertices
     QList<QGeoCoordinate> offsetPolyline(double distance);
 
-    /// Loads a polyline from a KML file
+    /// Loads a polyline from a KML/SHP file
     /// @return true: success
-    Q_INVOKABLE bool loadKMLFile(const QString& kmlFile);
+    Q_INVOKABLE bool loadKMLOrSHPFile(const QString &file);
 
     Q_INVOKABLE void beginReset (void);
     Q_INVOKABLE void endReset   (void);
@@ -102,7 +104,7 @@ public:
     void setTraceMode   (bool traceMode);
     void selectVertex   (int index);
 
-    static const char* jsonPolylineKey;
+    static constexpr const char* jsonPolylineKey = "polyline";
 
 signals:
     void countChanged       (int count);
@@ -123,14 +125,12 @@ private:
     void            _init                   (void);
     QGeoCoordinate  _coordFromPointF        (const QPointF& point) const;
     QPointF         _pointFFromCoord        (const QGeoCoordinate& coordinate) const;
-    void            _beginResetIfNotActive  (void);
-    void            _endResetIfNotActive    (void);
 
     QVariantList        _polylinePath;
     QmlObjectListModel  _polylineModel;
+    bool                _deferredPathChanged = false;
     bool                _dirty;
     bool                _interactive;
-    bool                _resetActive;
     bool                _traceMode = false;
     int                 _selectedVertexIndex = -1;
 };

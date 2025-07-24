@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -11,6 +11,8 @@
 #include "QGCApplication.h"
 #include "JsonHelper.h"
 #include "MissionController.h"
+#include "MissionCommandTree.h"
+#include "MissionCommandUIInfo.h"
 #include "SimpleMissionItem.h"
 #include "PlanMasterController.h"
 #include "TakeoffMissionItem.h"
@@ -21,36 +23,6 @@
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(LandingComplexItemLog, "LandingComplexItemLog")
-
-const char* LandingComplexItem::_jsonFinalApproachCoordinateKey = "landingApproachCoordinate";
-const char* LandingComplexItem::_jsonLoiterRadiusKey            = "loiterRadius";
-const char* LandingComplexItem::_jsonLoiterClockwiseKey         = "loiterClockwise";
-const char* LandingComplexItem::_jsonLandingCoordinateKey       = "landCoordinate";
-const char* LandingComplexItem::_jsonAltitudesAreRelativeKey    = "altitudesAreRelative";
-const char* LandingComplexItem::_jsonUseLoiterToAltKey          = "useLoiterToAlt";
-const char* LandingComplexItem::_jsonStopTakingPhotosKey        = "stopTakingPhotos";
-const char* LandingComplexItem::_jsonStopTakingVideoKey         = "stopVideoPhotos";
-
-const char* LandingComplexItem::finalApproachToLandDistanceName = "LandingDistance";
-const char* LandingComplexItem::landingHeadingName              = "LandingHeading";
-const char* LandingComplexItem::finalApproachAltitudeName       = "FinalApproachAltitude";
-const char* LandingComplexItem::loiterRadiusName                = "LoiterRadius";
-const char* LandingComplexItem::loiterClockwiseName             = "LoiterClockwise";
-const char* LandingComplexItem::landingAltitudeName             = "LandingAltitude";
-const char* LandingComplexItem::useLoiterToAltName              = "UseLoiterToAlt";
-const char* LandingComplexItem::stopTakingPhotosName            = "StopTakingPhotos";
-const char* LandingComplexItem::stopTakingVideoName             = "StopTakingVideo";
-
-// Deprecated keys
-
-// Support for separate relative alt settings for land/loiter was removed. It now only has a single
-// relative alt setting stored in _jsonAltitudesAreRelativeKey.
-const char* LandingComplexItem::_jsonDeprecatedLandingAltitudeRelativeKey   = "landAltitudeRelative";
-const char* LandingComplexItem::_jsonDeprecatedLoiterAltitudeRelativeKey    = "loiterAltitudeRelative";
-
-// Name changed from _jsonDeprecatedLoiterCoordinateKey to _jsonFinalApproachCoordinateKey to reflect
-// the new support for using either a loiter or just a waypoint as the approach entry point.
-const char* LandingComplexItem::_jsonDeprecatedLoiterCoordinateKey          = "loiterCoordinate";
 
 LandingComplexItem::LandingComplexItem(PlanMasterController* masterController, bool flyView)
     : ComplexMissionItem        (masterController, flyView)
@@ -76,11 +48,14 @@ void LandingComplexItem::_init(void)
     connect(loiterRadius(),             &Fact::valueChanged,                                this, &LandingComplexItem::_recalcFromRadiusChange);
     connect(loiterClockwise(),          &Fact::rawValueChanged,                             this, &LandingComplexItem::_recalcFromRadiusChange);
 
+    connect(useLoiterToAlt(),           &Fact::rawValueChanged,                             this, &LandingComplexItem::_recalcFromApproachModeChange);
+
     connect(this,                       &LandingComplexItem::finalApproachCoordinateChanged,this, &LandingComplexItem::_recalcFromCoordinateChange);
     connect(this,                       &LandingComplexItem::landingCoordinateChanged,      this, &LandingComplexItem::_recalcFromCoordinateChange);
-    connect(useLoiterToAlt(),           &Fact::rawValueChanged,                             this, &LandingComplexItem::_recalcFromCoordinateChange);
 
     connect(finalApproachAltitude(),    &Fact::valueChanged,                                this, &LandingComplexItem::_setDirty);
+    connect(useDoChangeSpeed(),         &Fact::valueChanged,                                this, &LandingComplexItem::_setDirty);
+    connect(finalApproachSpeed(),       &Fact::valueChanged,                                this, &LandingComplexItem::_setDirty);
     connect(landingAltitude(),          &Fact::valueChanged,                                this, &LandingComplexItem::_setDirty);
     connect(landingDistance(),          &Fact::valueChanged,                                this, &LandingComplexItem::_setDirty);
     connect(landingHeading(),           &Fact::valueChanged,                                this, &LandingComplexItem::_setDirty);
@@ -107,16 +82,18 @@ void LandingComplexItem::_init(void)
     connect(this,                       &LandingComplexItem::wizardModeChanged,             this, &LandingComplexItem::readyForSaveStateChanged);
 
     connect(this,                       &LandingComplexItem::finalApproachCoordinateChanged,this, &LandingComplexItem::complexDistanceChanged);
-    connect(this,                       &LandingComplexItem::loiterTangentCoordinateChanged,this, &LandingComplexItem::complexDistanceChanged);
+    connect(this,                       &LandingComplexItem::slopeStartCoordinateChanged,   this, &LandingComplexItem::complexDistanceChanged);
     connect(this,                       &LandingComplexItem::landingCoordinateChanged,      this, &LandingComplexItem::complexDistanceChanged);
 
-    connect(this,                       &LandingComplexItem::loiterTangentCoordinateChanged,this, &LandingComplexItem::_updateFlightPathSegmentsSignal);
+    connect(this,                       &LandingComplexItem::slopeStartCoordinateChanged,   this, &LandingComplexItem::_updateFlightPathSegmentsSignal);
     connect(this,                       &LandingComplexItem::finalApproachCoordinateChanged,this, &LandingComplexItem::_updateFlightPathSegmentsSignal);
     connect(this,                       &LandingComplexItem::landingCoordinateChanged,      this, &LandingComplexItem::_updateFlightPathSegmentsSignal);
     connect(finalApproachAltitude(),    &Fact::valueChanged,                                this, &LandingComplexItem::_updateFlightPathSegmentsSignal);
     connect(landingAltitude(),          &Fact::valueChanged,                                this, &LandingComplexItem::_updateFlightPathSegmentsSignal);
     connect(this,                       &LandingComplexItem::altitudesAreRelativeChanged,   this, &LandingComplexItem::_updateFlightPathSegmentsSignal);
     connect(_missionController,         &MissionController::plannedHomePositionChanged,     this, &LandingComplexItem::_updateFlightPathSegmentsSignal);
+
+    connect(_missionController,         &MissionController::_recalcFlightPathSegmentsSignal,this, &LandingComplexItem::patternNameChanged);
 
     connect(finalApproachAltitude(),    &Fact::valueChanged,                                this, &LandingComplexItem::_updateFinalApproachCoodinateAltitudeFromFact);
     connect(landingAltitude(),          &Fact::valueChanged,                                this, &LandingComplexItem::_updateLandingCoodinateAltitudeFromFact);
@@ -133,7 +110,7 @@ void LandingComplexItem::setLandingHeadingToTakeoffHeading()
 
 double LandingComplexItem::complexDistance(void) const
 {
-    return finalApproachCoordinate().distanceTo(loiterTangentCoordinate()) + loiterTangentCoordinate().distanceTo(landingCoordinate());
+    return finalApproachCoordinate().distanceTo(slopeStartCoordinate()) + slopeStartCoordinate().distanceTo(landingCoordinate());
 }
 
 void LandingComplexItem::setLandingCoordinate(const QGeoCoordinate& coordinate)
@@ -183,25 +160,30 @@ void LandingComplexItem::_recalcFromHeadingAndDistanceChange(void)
     //      distance
     //      radius
     // Adjusted:
-    //      loiter
-    //      loiter tangent
-    //      glide slope
+    //      final approach
+    //      slope start
 
     if (!_ignoreRecalcSignals && _landingCoordSet) {
         // These are our known values
-        double radius = loiterRadius()->rawValue().toDouble();
-        double landToTangentDistance = landingDistance()->rawValue().toDouble();
+        double distance = landingDistance()->rawValue().toDouble();
         double heading = landingHeading()->rawValue().toDouble();
 
-        // Heading is from loiter to land, hence +180
-        _loiterTangentCoordinate = _landingCoordinate.atDistanceAndAzimuth(landToTangentDistance, heading + 180);
+        // Heading is from slope start to land, hence +180
+        _slopeStartCoordinate = _landingCoordinate.atDistanceAndAzimuth(distance, heading + 180);
 
-        // Loiter coord is 90 degrees counter clockwise from tangent coord
-        _finalApproachCoordinate = _loiterTangentCoordinate.atDistanceAndAzimuth(radius, heading - 180 + (_loiterClockwise()->rawValue().toBool() ? -90 : 90));
+        if (useLoiterToAlt()->rawValue().toBool()) {
+            double radius = loiterRadius()->rawValue().toDouble();
+
+            // Loiter coord is 90 degrees counter clockwise from tangent coord
+            _finalApproachCoordinate = _slopeStartCoordinate.atDistanceAndAzimuth(radius, heading - 180 + (_loiterClockwise()->rawValue().toBool() ? -90 : 90));
+        } else {
+            _finalApproachCoordinate = _slopeStartCoordinate;
+        }
+
         _finalApproachCoordinate.setAltitude(finalApproachAltitude()->rawValue().toDouble());
 
         _ignoreRecalcSignals = true;
-        emit loiterTangentCoordinateChanged(_loiterTangentCoordinate);
+        emit slopeStartCoordinateChanged(_slopeStartCoordinate);
         emit finalApproachCoordinateChanged(_finalApproachCoordinate);
         emit coordinateChanged(_finalApproachCoordinate);
         _calcGlideSlope();
@@ -213,7 +195,7 @@ void LandingComplexItem::_recalcFromRadiusChange(void)
 {
     // Fixed:
     //      land
-    //      loiter tangent
+    //      slope start
     //      distance
     //      radius
     //      heading
@@ -223,22 +205,22 @@ void LandingComplexItem::_recalcFromRadiusChange(void)
     if (!_ignoreRecalcSignals) {
         // These are our known values
         double radius  = loiterRadius()->rawValue().toDouble();
-        double landToTangentDistance = landingDistance()->rawValue().toDouble();
+        double distance = landingDistance()->rawValue().toDouble();
         double heading = landingHeading()->rawValue().toDouble();
 
         double landToLoiterDistance = _landingCoordinate.distanceTo(_finalApproachCoordinate);
         if (landToLoiterDistance < radius) {
             // Degnenerate case: Move tangent to loiter point
-            _loiterTangentCoordinate = _finalApproachCoordinate;
+            _slopeStartCoordinate = _finalApproachCoordinate;
 
-            double heading = _landingCoordinate.azimuthTo(_loiterTangentCoordinate);
+            double heading = _landingCoordinate.azimuthTo(_slopeStartCoordinate);
 
             _ignoreRecalcSignals = true;
             landingHeading()->setRawValue(heading);
-            emit loiterTangentCoordinateChanged(_loiterTangentCoordinate);
+            emit slopeStartCoordinateChanged(_slopeStartCoordinate);
             _ignoreRecalcSignals = false;
         } else {
-            double landToLoiterDistance = qSqrt(qPow(radius, 2) + qPow(landToTangentDistance, 2));
+            double landToLoiterDistance = qSqrt(qPow(radius, 2) + qPow(distance, 2));
             double angleLoiterToTangent = qRadiansToDegrees(qAsin(radius/landToLoiterDistance)) * (_loiterClockwise()->rawValue().toBool() ? -1 : 1);
 
             _finalApproachCoordinate = _landingCoordinate.atDistanceAndAzimuth(landToLoiterDistance, heading + 180 + angleLoiterToTangent);
@@ -252,43 +234,80 @@ void LandingComplexItem::_recalcFromRadiusChange(void)
     }
 }
 
+void LandingComplexItem::_recalcFromApproachModeChange(void)
+{
+    // Fixed:
+    //      land
+    //      slope start
+    //      heading
+    //      distance
+    // Adjusted:
+    //      final approach
+
+    if (!_ignoreRecalcSignals && _landingCoordSet) {
+        if (useLoiterToAlt()->rawValue().toBool()) {
+            double radius = loiterRadius()->rawValue().toDouble();
+            double offsetAngle =
+                landingHeading()->rawValue().toDouble() - 180 +
+                (_loiterClockwise()->rawValue().toBool() ? -90 : 90);
+
+            _finalApproachCoordinate =
+                _slopeStartCoordinate.atDistanceAndAzimuth(radius, offsetAngle);
+        } else {
+            _finalApproachCoordinate = _slopeStartCoordinate;
+        }
+
+        _finalApproachCoordinate.setAltitude(finalApproachAltitude()->rawValue().toDouble());
+
+        _ignoreRecalcSignals = true;
+        emit finalApproachCoordinateChanged(_finalApproachCoordinate);
+        emit coordinateChanged(_finalApproachCoordinate);
+        _calcGlideSlope();
+        _ignoreRecalcSignals = false;
+    }
+}
+
 void LandingComplexItem::_recalcFromCoordinateChange(void)
 {
     // Fixed:
     //      land
-    //      loiter
+    //      final approach
     //      radius
     // Adjusted:
-    //      loiter tangent
     //      heading
     //      distance
-    //      glide slope
+    //      slope start
 
     if (!_ignoreRecalcSignals && _landingCoordSet) {
-        // These are our known values
-        double radius = loiterRadius()->rawValue().toDouble();
-        double landToLoiterDistance = _landingCoordinate.distanceTo(_finalApproachCoordinate);
-        double landToLoiterHeading = _landingCoordinate.azimuthTo(_finalApproachCoordinate);
+        double distance;
 
-        double landToTangentDistance;
-        if (landToLoiterDistance < radius) {
-            // Degenerate case, set tangent to loiter coordinate
-            _loiterTangentCoordinate = _finalApproachCoordinate;
-            landToTangentDistance = _landingCoordinate.distanceTo(_loiterTangentCoordinate);
+        if (useLoiterToAlt()->rawValue().toBool()) {
+            // These are our known values
+            double radius = loiterRadius()->rawValue().toDouble();
+            double landToLoiterDistance = _landingCoordinate.distanceTo(_finalApproachCoordinate);
+            double landToLoiterHeading = _landingCoordinate.azimuthTo(_finalApproachCoordinate);
+
+            if (landToLoiterDistance < radius) {
+                // Degenerate case: tangent at loiter coordinate
+                _slopeStartCoordinate = _finalApproachCoordinate;
+                distance = _landingCoordinate.distanceTo(_slopeStartCoordinate);
+            } else {
+                // Calculate tangent point using circle geometry
+                double loiterToTangentAngle = qRadiansToDegrees(qAsin(radius/landToLoiterDistance)) * (_loiterClockwise()->rawValue().toBool() ? 1 : -1);
+                distance = qSqrt(qPow(landToLoiterDistance, 2) - qPow(radius, 2));
+                _slopeStartCoordinate = _landingCoordinate.atDistanceAndAzimuth(distance, landToLoiterHeading + loiterToTangentAngle);
+            }
         } else {
-            double loiterToTangentAngle = qRadiansToDegrees(qAsin(radius/landToLoiterDistance)) * (_loiterClockwise()->rawValue().toBool() ? 1 : -1);
-            landToTangentDistance = qSqrt(qPow(landToLoiterDistance, 2) - qPow(radius, 2));
-
-            _loiterTangentCoordinate = _landingCoordinate.atDistanceAndAzimuth(landToTangentDistance, landToLoiterHeading + loiterToTangentAngle);
-
+            _slopeStartCoordinate = _finalApproachCoordinate;
+            distance = _landingCoordinate.distanceTo(_slopeStartCoordinate);
         }
 
-        double heading = _loiterTangentCoordinate.azimuthTo(_landingCoordinate);
+        double heading = _slopeStartCoordinate.azimuthTo(_landingCoordinate);
 
         _ignoreRecalcSignals = true;
         landingHeading()->setRawValue(heading);
-        landingDistance()->setRawValue(landToTangentDistance);
-        emit loiterTangentCoordinateChanged(_loiterTangentCoordinate);
+        landingDistance()->setRawValue(distance);
+        emit slopeStartCoordinateChanged(_slopeStartCoordinate);
         _calcGlideSlope();
         _ignoreRecalcSignals = false;
     }
@@ -312,6 +331,10 @@ void LandingComplexItem::appendMissionItems(QList<MissionItem*>& items, QObject*
     MissionItem* item = _createDoLandStartItem(seqNum++, missionItemParent);
     items.append(item);
 
+    if (useDoChangeSpeed()->rawValue().toBool()) {
+        item = _createDoChangeSpeedItem(SPEED_TYPE_AIRSPEED, finalApproachSpeed()->rawValue().toDouble(), -1, seqNum++, missionItemParent);
+        items.append(item);
+    }
 
     if (stopTakingPhotos()->rawValue().toBool()) {
         CameraSection::appendStopTakingPhotos(items, seqNum, missionItemParent);
@@ -333,12 +356,51 @@ void LandingComplexItem::appendMissionItems(QList<MissionItem*>& items, QObject*
 
 MissionItem* LandingComplexItem::_createDoLandStartItem(int seqNum, QObject* parent)
 {
-    return new MissionItem(seqNum,                              // sequence number
-                           MAV_CMD_DO_LAND_START,               // MAV_CMD
-                           MAV_FRAME_MISSION,                   // MAV_FRAME
-                           0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,   // param 1-7
-                           true,                                // autoContinue
-                           false,                               // isCurrentItem
+    auto doLandStartItem =
+        new MissionItem(seqNum,                            // sequence number
+                        MAV_CMD_DO_LAND_START,             // MAV_CMD
+                        MAV_FRAME_MISSION,                 // MAV_FRAME
+                        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, // param 1-7
+                        true,                              // autoContinue
+                        false,                             // isCurrentItem
+                        parent);
+
+    bool firmwareAllowsDoLandStartCoords =
+        MissionCommandTree::instance()
+            ->getUIInfo(_controllerVehicle, _previousVTOLMode,
+                        MAV_CMD_DO_LAND_START)
+            ->specifiesCoordinate();
+
+    // This allows skipping the coordinates for firmware that doesn't require
+    // them, keeping the flight plan simpler. The expression can be expanded to
+    // include any additional firmware versions where this is the case.
+    bool firmwareRequiresDoLandStartCoords =
+        !(_masterController->managerVehicle()->apmFirmware() &&
+          (_masterController->managerVehicle()->versionCompare(4, 2, 0)));
+
+    if (firmwareAllowsDoLandStartCoords && firmwareRequiresDoLandStartCoords) {
+        doLandStartItem->setFrame(_altitudesAreRelative
+                                      ? MAV_FRAME_GLOBAL_RELATIVE_ALT
+                                      : MAV_FRAME_GLOBAL);
+
+        doLandStartItem->setParam5(_finalApproachCoordinate.latitude());
+        doLandStartItem->setParam6(_finalApproachCoordinate.longitude());
+        doLandStartItem->setParam7(
+            _finalApproachAltitude()->rawValue().toFloat());
+    }
+
+    return doLandStartItem;
+}
+
+MissionItem* LandingComplexItem::_createDoChangeSpeedItem(int speedType, int speedValue, int throttlePercentage, int seqNum, QObject* parent)
+{
+    return new MissionItem(seqNum++,                                    // sequence number
+                           MAV_CMD_DO_CHANGE_SPEED,                     // MAV_CMD
+                           MAV_FRAME_MISSION,                           // MAV_FRAME
+                           speedType, speedValue, throttlePercentage,   // param 1-3
+                           0.0, 0.0, 0.0, 0.0,                          // param 4-7
+                           true,                                        // autoContinue
+                           false,                                       // isCurrentItem
                            parent);
 }
 
@@ -375,7 +437,7 @@ MissionItem* LandingComplexItem::_createFinalApproachItem(int seqNum, QObject* p
     }
 }
 
-bool LandingComplexItem::_scanForItem(QmlObjectListModel* visualItems, bool flyView, PlanMasterController* masterController, IsLandItemFunc isLandItemFunc, CreateItemFunc createItemFunc)
+bool LandingComplexItem::_scanForItems(QmlObjectListModel* visualItems, bool flyView, PlanMasterController* masterController, IsLandItemFunc isLandItemFunc, CreateItemFunc createItemFunc)
 {
     qCDebug(LandingComplexItemLog) << "VTOLLandingComplexItem::scanForItem count" << visualItems->count();
 
@@ -383,16 +445,32 @@ bool LandingComplexItem::_scanForItem(QmlObjectListModel* visualItems, bool flyV
         return false;
     }
 
+    // Start looking for the commands in reverse order from the end of the list
+    int startIndex = visualItems->count();
+    bool foundAny = false;
+
+    while (startIndex >= 0) {
+        if (_scanForItem(visualItems, startIndex, flyView, masterController, isLandItemFunc, createItemFunc)) {
+            foundAny = true;
+        } else {
+            startIndex--;
+        }
+    }
+
+    return foundAny;
+}
+
+bool LandingComplexItem::_scanForItem(QmlObjectListModel* visualItems, int& startIndex, bool flyView, PlanMasterController* masterController, IsLandItemFunc isLandItemFunc, CreateItemFunc createItemFunc)
+{
     // A valid landing pattern is comprised of the follow commands in this order at the end of the item list:
     //  MAV_CMD_DO_LAND_START - required
+    //  MAV_CMD_DO_CHANGE_SPEED - optional
     //  Stop taking photos sequence - optional
     //  Stop taking video sequence - optional
     //  MAV_CMD_NAV_LOITER_TO_ALT or MAV_CMD_NAV_WAYPOINT
     //  MAV_CMD_NAV_LAND or MAV_CMD_NAV_VTOL_LAND
 
-    // Start looking for the commands in reverse order from the end of the list
-
-    int scanIndex = visualItems->count() - 1;
+    int scanIndex = startIndex - 1;
 
     if (scanIndex < 0 || scanIndex > visualItems->count() - 1) {
         return false;
@@ -418,14 +496,19 @@ bool LandingComplexItem::_scanForItem(QmlObjectListModel* visualItems, bool flyV
     MissionItem& missionItemFinalApproach = item->missionItem();
     if (missionItemFinalApproach.command() == MAV_CMD_NAV_LOITER_TO_ALT) {
         if (missionItemFinalApproach.frame() != landPointFrame ||
-                missionItemFinalApproach.param1() != 1.0 || missionItemFinalApproach.param3() != 0 || missionItemFinalApproach.param4() != 1.0) {
+            (masterController->managerVehicle()->apmFirmware()
+             // APM automatically changes the value of param1 to 1, so when sending a plan it will
+             // be 0, and when downloading it, the value will be 1
+             ? missionItemFinalApproach.param1() != 0.0 && missionItemFinalApproach.param1() != 1.0
+             : missionItemFinalApproach.param1() != 1.0) ||
+            missionItemFinalApproach.param3() != 0 || missionItemFinalApproach.param4() != 1.0) {
             return false;
         }
     } else if (missionItemFinalApproach.command() == MAV_CMD_NAV_WAYPOINT) {
         if (missionItemFinalApproach.frame() != landPointFrame ||
-                missionItemFinalApproach.param1() != 0 || missionItemFinalApproach.param2() != 0 || missionItemFinalApproach.param3() != 0 ||
-                !qIsNaN(missionItemFinalApproach.param4()) ||
-                qIsNaN(missionItemFinalApproach.param5()) || qIsNaN(missionItemFinalApproach.param6()) || qIsNaN(missionItemFinalApproach.param6())) {
+            missionItemFinalApproach.param1() != 0 || missionItemFinalApproach.param2() != 0 || missionItemFinalApproach.param3() != 0 ||
+            (!masterController->managerVehicle()->apmFirmware() && !qIsNaN(missionItemFinalApproach.param4())) ||
+            qIsNaN(missionItemFinalApproach.param5()) || qIsNaN(missionItemFinalApproach.param6()) || qIsNaN(missionItemFinalApproach.param6())) {
             return false;
         }
         useLoiterToAlt = false;
@@ -446,6 +529,27 @@ bool LandingComplexItem::_scanForItem(QmlObjectListModel* visualItems, bool flyV
     }
 
     scanIndex--;
+    bool useDoChangeSpeed = false;
+    double finalApproachSpeed = 0;
+    if (scanIndex >= 0 && scanIndex < visualItems->count()) {
+        item = visualItems->value<SimpleMissionItem*>(scanIndex);
+        if (item) {
+            MissionItem& missionItemChangeSpeed = item->missionItem();
+            if (missionItemChangeSpeed.command() == MAV_CMD_DO_CHANGE_SPEED &&
+                missionItemChangeSpeed.param1() == static_cast<double>(SPEED_TYPE_AIRSPEED) &&
+                missionItemChangeSpeed.param2() >= -2 &&
+                missionItemChangeSpeed.param3() == -1 &&
+                missionItemChangeSpeed.param4() == 0) {
+                useDoChangeSpeed = true;
+                finalApproachSpeed = missionItemChangeSpeed.param2();
+            }
+        }
+    }
+    if (!useDoChangeSpeed) {
+        scanIndex++;
+    }
+
+    scanIndex--;
     if (scanIndex < 0 || scanIndex > visualItems->count() - 1) {
         return false;
     }
@@ -455,14 +559,12 @@ bool LandingComplexItem::_scanForItem(QmlObjectListModel* visualItems, bool flyV
     }
     MissionItem& missionItemDoLandStart = item->missionItem();
     if (missionItemDoLandStart.command() != MAV_CMD_DO_LAND_START ||
-            missionItemDoLandStart.frame() != MAV_FRAME_MISSION ||
-            missionItemDoLandStart.param1() != 0 || missionItemDoLandStart.param2() != 0 || missionItemDoLandStart.param3() != 0 || missionItemDoLandStart.param4() != 0 ||
-            missionItemDoLandStart.param5() != 0 || missionItemDoLandStart.param6() != 0 || missionItemDoLandStart.param7() != 0) {
+        missionItemDoLandStart.param1() != 0 || missionItemDoLandStart.param2() != 0 || missionItemDoLandStart.param3() != 0 || missionItemDoLandStart.param4() != 0 ||
+        missionItemDoLandStart.param5() != 0 || missionItemDoLandStart.param6() != 0 || missionItemDoLandStart.param7() != 0) {
         return false;
     }
 
     // We made it this far so we do have a Fixed Wing Landing Pattern item at the end of the mission.
-    // Since we have scanned it we need to remove the items for it fromt the list
     int deleteCount = 3;
     if (stopTakingPhotos) {
         deleteCount += CameraSection::stopTakingPhotosCommandCount();
@@ -470,7 +572,10 @@ bool LandingComplexItem::_scanForItem(QmlObjectListModel* visualItems, bool flyV
     if (stopTakingVideo) {
         deleteCount += CameraSection::stopTakingVideoCommandCount();
     }
-    int firstItem = visualItems->count() - deleteCount;
+    if (useDoChangeSpeed) {
+        deleteCount++;
+    }
+    int firstItem = startIndex - deleteCount;
     while (deleteCount--) {
         visualItems->removeAt(firstItem)->deleteLater();
     }
@@ -484,8 +589,12 @@ bool LandingComplexItem::_scanForItem(QmlObjectListModel* visualItems, bool flyV
     complexItem->_altitudesAreRelative = landPointFrame == MAV_FRAME_GLOBAL_RELATIVE_ALT;
     complexItem->setFinalApproachCoordinate(QGeoCoordinate(missionItemFinalApproach.param5(), missionItemFinalApproach.param6()));
     complexItem->finalApproachAltitude()->setRawValue(missionItemFinalApproach.param7());
+    complexItem->useDoChangeSpeed()->setRawValue(useDoChangeSpeed);
     complexItem->useLoiterToAlt()->setRawValue(useLoiterToAlt);
 
+    if (useDoChangeSpeed) {
+        complexItem->finalApproachSpeed()->setRawValue(finalApproachSpeed);
+    }
     if (useLoiterToAlt) {
         complexItem->loiterRadius()->setRawValue(qAbs(missionItemFinalApproach.param2()));
         complexItem->loiterClockwise()->setRawValue(missionItemFinalApproach.param2() > 0);
@@ -505,7 +614,8 @@ bool LandingComplexItem::_scanForItem(QmlObjectListModel* visualItems, bool flyV
     complexItem->_recalcFromCoordinateChange();
     complexItem->setDirty(false);
 
-    visualItems->append(complexItem);
+    visualItems->insert(firstItem, complexItem);
+    startIndex = firstItem;
 
     return true;
 }
@@ -588,6 +698,9 @@ QJsonObject LandingComplexItem::_save(void)
     JsonHelper::saveGeoCoordinate(coordinate, true /* writeAltitude */, jsonCoordinate);
     saveObject[_jsonFinalApproachCoordinateKey] = jsonCoordinate;
 
+    saveObject[_jsonUseDoChangeSpeedKey]        = useDoChangeSpeed()->rawValue().toBool();
+    saveObject[_jsonFinalApproachSpeedKey]      = finalApproachSpeed()->rawValue().toDouble();
+
     coordinate = _landingCoordinate;
     coordinate.setAltitude(landingAltitude()->rawValue().toDouble());
     JsonHelper::saveGeoCoordinate(coordinate, true /* writeAltitude */, jsonCoordinate);
@@ -611,6 +724,8 @@ bool LandingComplexItem::_load(const QJsonObject& complexObject, int sequenceNum
         { ComplexMissionItem::jsonComplexItemTypeKey,   QJsonValue::String, true },
         { _jsonDeprecatedLoiterCoordinateKey,           QJsonValue::Array,  false }, // Loiter changed to Final Approach
         { _jsonFinalApproachCoordinateKey,              QJsonValue::Array,  false },
+        { _jsonUseDoChangeSpeedKey,                     QJsonValue::Bool,   false },
+        { _jsonFinalApproachSpeedKey,                   QJsonValue::Double, false },
         { _jsonLoiterRadiusKey,                         QJsonValue::Double, true },
         { _jsonLoiterClockwiseKey,                      QJsonValue::Bool,   true },
         { _jsonLandingCoordinateKey,                    QJsonValue::Array,  true },
@@ -679,6 +794,11 @@ bool LandingComplexItem::_load(const QJsonObject& complexObject, int sequenceNum
     }
     _finalApproachCoordinate = coordinate;
     finalApproachAltitude()->setRawValue(coordinate.altitude());
+
+    useDoChangeSpeed()->setRawValue(complexObject[_jsonUseDoChangeSpeedKey].toBool(false));
+    finalApproachSpeed()->setRawValue(complexObject.contains(_jsonFinalApproachSpeedKey)
+                                      ? complexObject[_jsonFinalApproachSpeedKey].toDouble()
+                                      : finalApproachSpeed()->rawDefaultValue());
 
     if (!JsonHelper::loadGeoCoordinate(complexObject[_jsonLandingCoordinateKey], true /* altitudeRequired */, coordinate, errorString)) {
         return false;

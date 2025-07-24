@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -24,10 +24,13 @@ class KMLDomDocument;
 class QGCMapPolygon : public QObject
 {
     Q_OBJECT
-
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
     QGCMapPolygon(QObject* parent = nullptr);
     QGCMapPolygon(const QGCMapPolygon& other, QObject* parent = nullptr);
+
+    ~QGCMapPolygon() override;
 
     const QGCMapPolygon& operator=(const QGCMapPolygon& other);
 
@@ -66,7 +69,7 @@ public:
     /// Offsets the current polygon edges by the specified distance in meters
     Q_INVOKABLE void offset(double distance);
 
-    /// Loads a polygon from a KML/SH{ file
+    /// Loads a polygon from a KML/SHP file
     /// @return true: success
     Q_INVOKABLE bool loadKMLOrSHPFile(const QString& file);
 
@@ -128,7 +131,7 @@ public:
     void setShowAltColor(bool showAltColor);
     void selectVertex   (int index);
 
-    static const char* jsonPolygonKey;
+    static constexpr const char* jsonPolygonKey = "polygon";
 
 signals:
     void countChanged       (int count);
@@ -154,8 +157,6 @@ private:
     QPolygonF       _toPolygonF             (void) const;
     QGeoCoordinate  _coordFromPointF        (const QPointF& point) const;
     QPointF         _pointFFromCoord        (const QGeoCoordinate& coordinate) const;
-    void            _beginResetIfNotActive  (void);
-    void            _endResetIfNotActive    (void);
 
     QVariantList        _polygonPath;
     QmlObjectListModel  _polygonModel;
@@ -164,8 +165,8 @@ private:
     bool                _centerDrag =           false;
     bool                _ignoreCenterUpdates =  false;
     bool                _interactive =          false;
-    bool                _resetActive =          false;
     bool                _traceMode =            false;
     bool                _showAltColor =         false;
     int                 _selectedVertexIndex =  -1;
+    bool                _deferredPathChanged =  false;
 };

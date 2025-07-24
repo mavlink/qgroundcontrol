@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -12,39 +12,7 @@
 #include "FactMetaData.h"
 #include "QGCLoggingCategory.h"
 
-const char* MissionCommandUIInfo::_categoryJsonKey              = "category";
-const char* MissionCommandUIInfo::_decimalPlacesJsonKey         = "decimalPlaces";
-const char* MissionCommandUIInfo::_defaultJsonKey               = "default";
-const char* MissionCommandUIInfo::_descriptionJsonKey           = "description";
-const char* MissionCommandUIInfo::_enumStringsJsonKey           = "enumStrings";
-const char* MissionCommandUIInfo::_enumValuesJsonKey            = "enumValues";
-const char* MissionCommandUIInfo::_nanUnchangedJsonKey          = "nanUnchanged";
-const char* MissionCommandUIInfo::_friendlyEditJsonKey          = "friendlyEdit";
-const char* MissionCommandUIInfo::_friendlyNameJsonKey          = "friendlyName";
-const char* MissionCommandUIInfo::_idJsonKey                    = "id";
-const char* MissionCommandUIInfo::_labelJsonKey                 = "label";
-const char* MissionCommandUIInfo::_mavCmdInfoJsonKey            = "mavCmdInfo";
-const char* MissionCommandUIInfo::_maxJsonKey                   = "max";
-const char* MissionCommandUIInfo::_minJsonKey                   = "min";
-const char* MissionCommandUIInfo::_param1JsonKey                = "param1";
-const char* MissionCommandUIInfo::_param2JsonKey                = "param2";
-const char* MissionCommandUIInfo::_param3JsonKey                = "param3";
-const char* MissionCommandUIInfo::_param4JsonKey                = "param4";
-const char* MissionCommandUIInfo::_param5JsonKey                = "param5";
-const char* MissionCommandUIInfo::_param6JsonKey                = "param6";
-const char* MissionCommandUIInfo::_param7JsonKey                = "param7";
-const char* MissionCommandUIInfo::_paramJsonKeyFormat           = "param%1";
-const char* MissionCommandUIInfo::_paramRemoveJsonKey           = "paramRemove";
-const char* MissionCommandUIInfo::_rawNameJsonKey               = "rawName";
-const char* MissionCommandUIInfo::_standaloneCoordinateJsonKey  = "standaloneCoordinate";
-const char* MissionCommandUIInfo::_specifiesCoordinateJsonKey   = "specifiesCoordinate";
-const char* MissionCommandUIInfo::_specifiesAltitudeOnlyJsonKey = "specifiesAltitudeOnly";
-const char* MissionCommandUIInfo::_isLandCommandJsonKey         = "isLandCommand";
-const char* MissionCommandUIInfo::_isTakeoffCommandJsonKey      = "isTakeoffCommand";
-const char* MissionCommandUIInfo::_isLoiterCommandJsonKey       = "isLoiterCommand";
-const char* MissionCommandUIInfo::_unitsJsonKey                 = "units";
-const char* MissionCommandUIInfo::_commentJsonKey               = "comment";
-const char* MissionCommandUIInfo::_advancedCategory             = "Advanced";
+QGC_LOGGING_CATEGORY(MissionCommandsLog, "MissionCommandsLog")
 
 MissionCmdParamInfo::MissionCmdParamInfo(QObject* parent)
     : QObject(parent)
@@ -411,7 +379,7 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
             paramInfo->_param =         i;
             paramInfo->_units =         paramObject.value(_unitsJsonKey).toString();
             paramInfo->_nanUnchanged =  paramObject.value(_nanUnchangedJsonKey).toBool(false);
-            paramInfo->_enumStrings =   paramObject.value(_enumStringsJsonKey).toString().split(",", Qt::SkipEmptyParts);
+            paramInfo->_enumStrings =   FactMetaData::splitTranslatedList(paramObject.value(_enumStringsJsonKey).toString());
 
             // The min and max values are defaulted correctly already, so only set them if a value is present in the JSON.
             if (paramObject.value(_minJsonKey).isDouble()) {
@@ -435,7 +403,7 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
                 paramInfo->_defaultValue = paramInfo->_nanUnchanged ? std::numeric_limits<double>::quiet_NaN() : 0;
             }
 
-            QStringList enumValues = paramObject.value(_enumValuesJsonKey).toString().split(",", Qt::SkipEmptyParts);
+            QStringList enumValues = FactMetaData::splitTranslatedList(paramObject.value(_enumValuesJsonKey).toString()); //Never translated but still useful to use common string splitting code
             for (const QString &enumValue: enumValues) {
                 bool    convertOk;
                 double  value = enumValue.toDouble(&convertOk);
@@ -449,7 +417,9 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
                 paramInfo->_enumValues << QVariant(value);
             }
             if (paramInfo->_enumValues.count() != paramInfo->_enumStrings.count()) {
-                internalError = QString("enum strings/values count mismatch, label:'%1' enumStrings:'%2'").arg(paramInfo->_label).arg(paramInfo->_enumStrings.join(","));
+                internalError = QStringLiteral("Enum strings/values count mismatch - label: '%1' strings: '%2'[%3] values: '%4'[%5]")
+                                    .arg(paramInfo->_label).arg(paramObject.value(_enumStringsJsonKey).toString()).arg(paramInfo->_enumStrings.count())
+                                    .arg(paramObject.value(_enumValuesJsonKey).toString()).arg(paramInfo->_enumValues.count());
                 errorString = _loadErrorString(internalError);
                 return false;
             }

@@ -13,9 +13,10 @@ import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
 
-import QGroundControl.FactSystem
+import QGroundControl
+
 import QGroundControl.FactControls
-import QGroundControl.Palette
+
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
 
@@ -58,7 +59,7 @@ SetupPage {
 
                 QGCLabel {
                     text:       qsTr("Battery 1")
-                    font.family: ScreenTools.demiboldFontFamily
+                    font.bold:   true
                 }
 
                 Rectangle {
@@ -108,7 +109,7 @@ SetupPage {
 
                 QGCLabel {
                     text:       qsTr("Battery 1")
-                    font.family: ScreenTools.demiboldFontFamily
+                    font.bold:   true
                 }
 
                 Rectangle {
@@ -145,7 +146,7 @@ SetupPage {
 
                 QGCLabel {
                     text:       qsTr("Battery 2")
-                    font.family: ScreenTools.demiboldFontFamily
+                    font.bold:   true
                 }
 
                 Rectangle {
@@ -195,7 +196,7 @@ SetupPage {
 
                 QGCLabel {
                     text:       qsTr("Battery 2")
-                    font.family: ScreenTools.demiboldFontFamily
+                    font.bold:   true
                 }
 
                 Rectangle {
@@ -231,7 +232,7 @@ SetupPage {
 
                 QGCLabel {
                     text:       qsTr("ESC Calibration")
-                    font.family: ScreenTools.demiboldFontFamily
+                    font.bold:   true
                 }
 
                 Rectangle {

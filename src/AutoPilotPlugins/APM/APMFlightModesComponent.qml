@@ -12,11 +12,12 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import QGroundControl.FactSystem
+import QGroundControl
+
 import QGroundControl.FactControls
-import QGroundControl.Palette
+
 import QGroundControl.Controls
-import QGroundControl.Controllers
+
 import QGroundControl.ScreenTools
 
 SetupPage {
@@ -56,7 +57,7 @@ SetupPage {
                 QGCLabel {
                     id:             flightModeLabel
                     text:           qsTr("Flight Mode Settings") + (_fltmodeChExists ? "" : qsTr(" (Channel 5)"))
-                    font.family:    ScreenTools.demiboldFontFamily
+                    font.bold:      true
                 }
 
                 Rectangle {
@@ -183,7 +184,7 @@ SetupPage {
                 QGCLabel {
                     id:                 channelOptionsLabel
                     text:               qsTr("Switch Options")
-                    font.family:        ScreenTools.demiboldFontFamily
+                    font.bold:          true
                 }
 
                 Rectangle {

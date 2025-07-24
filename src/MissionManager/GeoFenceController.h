@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -11,6 +11,7 @@
 
 #include <QtCore/QLoggingCategory>
 #include <QtPositioning/QGeoCoordinate>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "PlanElementController.h"
 #include "QmlObjectListModel.h"
@@ -26,6 +27,8 @@ class Vehicle;
 class GeoFenceController : public PlanElementController
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_MOC_INCLUDE("QGCFencePolygon.h")
     Q_MOC_INCLUDE("QGCFenceCircle.h")
 
@@ -62,9 +65,8 @@ public:
     /// Clears the interactive bit from all fence items
     Q_INVOKABLE void clearAllInteractive(void);
 
-#ifdef CONFIG_UTM_ADAPTER
+#ifdef QGC_UTM_ADAPTER
     Q_INVOKABLE void loadFlightPlanData(void);
-    Q_INVOKABLE bool loadUploadFlag(void);
 #endif
 
     double  paramCircularFence  (void);
@@ -98,7 +100,7 @@ signals:
     void loadComplete                   (void);
     void paramCircularFenceChanged      (void);
 
-#ifdef CONFIG_UTM_ADAPTER
+#ifdef QGC_UTM_ADAPTER
     void uploadFlagSent         (bool flag);
     void polygonBoundarySent    (QList<QGeoCoordinate> coords);
 #endif
@@ -135,17 +137,17 @@ private:
 
     static QMap<QString, FactMetaData*> _metaDataMap;
 
-    static const char* _px4ParamCircularFence;
-    static const char* _apmParamCircularFenceRadius;
-    static const char* _apmParamCircularFenceEnabled;
-    static const char* _apmParamCircularFenceType;
+    static constexpr int _jsonCurrentVersion = 2;
 
-    static const int _jsonCurrentVersion = 2;
+    static constexpr const char* _jsonFileTypeValue =        "GeoFence";
+    static constexpr const char* _jsonBreachReturnKey =      "breachReturn";
+    static constexpr const char* _jsonPolygonsKey =          "polygons";
+    static constexpr const char* _jsonCirclesKey =           "circles";
 
-    static const char* _jsonFileTypeValue;
-    static const char* _jsonBreachReturnKey;
-    static const char* _jsonPolygonsKey;
-    static const char* _jsonCirclesKey;
+    static constexpr const char* _breachReturnAltitudeFactName = "Altitude";
 
-    static const char* _breachReturnAltitudeFactName;
+    static constexpr const char* _px4ParamCircularFence =    "GF_MAX_HOR_DIST";
+    static constexpr const char* _apmParamCircularFenceRadius =    "FENCE_RADIUS";
+    static constexpr const char* _apmParamCircularFenceEnabled =    "FENCE_ENABLE";
+    static constexpr const char* _apmParamCircularFenceType =    "FENCE_TYPE";
 };

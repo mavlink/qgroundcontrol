@@ -1,15 +1,35 @@
 name: Android-MacOS
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - 'Stable*'
+    tags:
+      - 'v*'
+    paths-ignore:
+      - 'docs/**' # Do not trigger for any changes under docs
+  pull_request:
+    paths:
+      - '.github/workflows/android-macos.yml'
+      - 'deploy/android/**'
+      - 'src/**'
+      - 'android/**'
+      - 'CMakeLists.txt'
+      - 'cmake/**'
+      - 'translations/*'
+
+# concurrency:
+#   group: ${{ github.workflow }}-${{ github.ref }}
+#   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   build:
-    runs-on: macos-13
+    runs-on: macos-latest
 
     strategy:
       matrix:
-        BuildType: [Debug, Release]
+        BuildType: [Release]
 
     defaults:
       run:
@@ -17,131 +37,50 @@ jobs:
 
     env:
       ARTIFACT: QGroundControl.apk
-      QT_VERSION: 6.6.3
+      QT_VERSION: 6.8.3
       QT_ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/deploy/android/android_release.keystore
       QT_ANDROID_KEYSTORE_ALIAS: QGCAndroidKeyStore
       QT_ANDROID_KEYSTORE_STORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       QT_ANDROID_KEYSTORE_KEY_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-      QT_ANDROID_ABIS: "armeabi-v7a;arm64-v8a"
+      QT_ANDROID_ABIS: 'arm64-v8a'
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          fetch-depth: 1
           fetch-tags: true
 
-      - name: Setup Java Environment
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
+      - name: Initial Setup
+        uses: ./.github/actions/common
 
-      - uses: actions/checkout@v4
+      - name: Install Qt for Android
+        uses: ./.github/actions/qt-android
         with:
-          repository: jurplel/install-qt-action
-          ref: master
-          path: install-qt-action
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: install-qt-action/action/
-
-      - name: Build jurplel/install-qt-action
-        run: |
-          cd install-qt-action/action/
-          npm ci || npm install
-          npm run build
-
-      - name: Install Qt6 for MacOS
-        uses: ./install-qt-action/action/
-        with:
-          version: ${{ env.QT_VERSION }}
           host: mac
-          target: desktop
-          dir: ${{ runner.temp }}
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
-          cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
-          tools: 'tools_cmake'
-
-      - name: Install Qt6 for Android (armv7)
-        uses: ./install-qt-action/action/
-        if: contains( env.QT_ANDROID_ABIS, 'armeabi-v7a')
-        with:
+          arch: clang_64
           version: ${{ env.QT_VERSION }}
-          host: mac
-          target: android
-          arch: android_armv7
-          dir: ${{ runner.temp }}
-          extra: --autodesktop
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
-          cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
-
-      - name: Install Qt6 for Android (arm64_v8a)
-        uses: ./install-qt-action/action/
-        if: contains( env.QT_ANDROID_ABIS, 'arm64-v8a')
-        with:
-          version: ${{ env.QT_VERSION }}
-          host: mac
-          target: android
-          arch: android_arm64_v8a
-          dir: ${{ runner.temp }}
-          extra: --autodesktop
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
-          cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
-
-      - name: Install Qt6 for Android (x86)
-        uses: ./install-qt-action/action/
-        if: contains( env.QT_ANDROID_ABIS, 'x86')
-        with:
-          version: ${{ env.QT_VERSION }}
-          host: mac
-          target: android
-          arch: android_x86
-          dir: ${{ runner.temp }}
-          extra: --autodesktop
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
-          cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
-
-      - name: Install Qt6 for Android (x86_64)
-        uses: ./install-qt-action/action/
-        if: contains( env.QT_ANDROID_ABIS, 'x86_64')
-        with:
-          version: ${{ env.QT_VERSION }}
-          host: mac
-          target: android
-          arch: android_x86_64
-          dir: ${{ runner.temp }}
-          extra: --autodesktop
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
-          cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
-
-      - name: Install Dependencies
-        run: |
-          brew update
-          brew install ninja cmake
-
-      - run: mkdir ${{ runner.temp }}/shadow_build_dir
+          abis: ${{ env.QT_ANDROID_ABIS }}
+          cpm-modules: ${{ runner.temp }}/build/cpm_modules
 
       - name: Configure
-        working-directory: ${{ runner.temp }}/shadow_build_dir
+        working-directory: ${{ runner.temp }}/build
         run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
               -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }}
+              -DCMAKE_WARN_DEPRECATED=FALSE
               -DQT_ANDROID_ABIS="${{ env.QT_ANDROID_ABIS }}"
               -DQT_ANDROID_BUILD_ALL_ABIS=OFF
-              -DQT_HOST_PATH="${{ env.QT_ROOT_DIR }}/../msvc2019_64"
-              -DQT_ANDROID_SIGN_APK=${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && 'ON' || 'OFF' }}
-              -DQT_DEBUG_FIND_PACKAGE=ON
+              -DQT_HOST_PATH="${{ env.QT_ROOT_DIR }}/../macos"
+              -DQT_ANDROID_SIGN_APK=${{ env.QT_ANDROID_KEYSTORE_STORE_PASS != '' && 'ON' || 'OFF' }}
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
 
       - name: Build
-        working-directory: ${{ runner.temp }}/shadow_build_dir
-        run: cmake --build . --target all --config ${{ matrix.BuildType }}
+        working-directory: ${{ runner.temp }}/build
+        run: cmake --build . --target all --config ${{ matrix.BuildType }} --parallel
 
       - name: Save APK
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.ARTIFACT }}
-          path: ${{ runner.temp }}/shadow_build_dir/android-build/*.apk
+          path: ${{ runner.temp }}/build/android-build/*.apk

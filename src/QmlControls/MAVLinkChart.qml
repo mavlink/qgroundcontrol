@@ -4,9 +4,9 @@ import QtQuick.Layouts
 import QtCharts
 
 import QGroundControl
-import QGroundControl.Palette
+
 import QGroundControl.Controls
-import QGroundControl.Controllers
+
 import QGroundControl.ScreenTools
 
 ChartView {
@@ -31,7 +31,7 @@ ChartView {
         var serie   = createSeries(ChartView.SeriesTypeLine, field.label)
         serie.axisX = axisX
         serie.axisY = axisY
-        serie.useOpenGL = true
+        serie.useOpenGL = QGroundControl.videoManager.gstreamerEnabled // Details on why here: https://github.com/mavlink/qgroundcontrol/issues/13068
         serie.color = color
         serie.width = 1
         chartController.addSeries(field, serie)
@@ -48,6 +48,16 @@ ChartView {
         }
     }
 
+    Connections {
+        target: QGroundControl.multiVehicleManager
+
+        function onVehicleRemoved(vehicle) {
+            // Hack to prevent references to deleted QGCMavlinkSystem fields. https://github.com/mavlink/qgroundcontrol/issues/13077
+            controller.deleteChart(chartController);
+            chartController = null;
+        }
+    }
+
     DateTimeAxis {
         id:                         axisX
         min:                        chartController ? chartController.rangeXMin : new Date()
@@ -56,7 +66,7 @@ ChartView {
         format:                     "<br/>mm:ss.zzz"
         tickCount:                  5
         gridVisible:                true
-        labelsFont.family:          "Fixed"
+        labelsFont.family:          ScreenTools.fixedFontFamily
         labelsFont.pointSize:       ScreenTools.smallFontPointSize
         labelsColor:                qgcPal.text
     }
@@ -67,7 +77,7 @@ ChartView {
         max:                        chartController ? chartController.rangeYMax : 0
         visible:                    chartController !== null
         lineVisible:                false
-        labelsFont.family:          "Fixed"
+        labelsFont.family:          ScreenTools.fixedFontFamily
         labelsFont.pointSize:       ScreenTools.smallFontPointSize
         labelsColor:                qgcPal.text
     }

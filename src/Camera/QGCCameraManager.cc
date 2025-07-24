@@ -8,7 +8,6 @@
  ****************************************************************************/
 
 #include "QGCCameraManager.h"
-#include "QGCApplication.h"
 #include "JoystickManager.h"
 #include "SimulatedCameraControl.h"
 #include "MultiVehicleManager.h"
@@ -16,16 +15,27 @@
 #include "FirmwarePlugin.h"
 #include "QGCLoggingCategory.h"
 #include "Joystick.h"
+#include "CameraMetaData.h"
+#include "JsonHelper.h"
+#include "QGCVideoStreamInfo.h"
 
-#include <QtQml/QQmlEngine>
+#include <QtCore/QFile>
+#include <QtCore/QJsonArray>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonObject>
 
-QGC_LOGGING_CATEGORY(CameraManagerLog, "CameraManagerLog")
+QGC_LOGGING_CATEGORY(CameraManagerLog, "qgc.camera.qgccameramanager")
+
+QVariantList QGCCameraManager::_cameraList;
 
 //-----------------------------------------------------------------------------
-QGCCameraManager::CameraStruct::CameraStruct(QObject* parent, uint8_t compID_)
+QGCCameraManager::CameraStruct::CameraStruct(QObject* parent, uint8_t compID_, Vehicle* vehicle_)
     : QObject   (parent)
     , compID    (compID_)
+    , vehicle   (vehicle_)
 {
+    backoffTimer = new QTimer(this);
+    backoffTimer->setSingleShot(true);
 }
 
 //-----------------------------------------------------------------------------
@@ -35,11 +45,13 @@ QGCCameraManager::QGCCameraManager(Vehicle *vehicle)
 {
     qCDebug(CameraManagerLog) << "QGCCameraManager Created";
 
+    (void) qRegisterMetaType<CameraMetaData>("CameraMetaData");
+
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 
     _addCameraControlToLists(_simulatedCameraControl);
 
-    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::parameterReadyVehicleAvailableChanged, this, &QGCCameraManager::_vehicleReady);
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::parameterReadyVehicleAvailableChanged, this, &QGCCameraManager::_vehicleReady);
     connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &QGCCameraManager::_mavlinkMessageReceived);
     connect(&_camerasLostHeartbeatTimer, &QTimer::timeout, this, &QGCCameraManager::_checkForLostCameras);
 
@@ -51,6 +63,18 @@ QGCCameraManager::QGCCameraManager(Vehicle *vehicle)
 
 QGCCameraManager::~QGCCameraManager()
 {
+    // Stop all camera info request timers and clean up
+    for (auto* cameraInfo : _cameraInfoRequest) {
+        if (cameraInfo->backoffTimer) {
+            cameraInfo->backoffTimer->stop();
+            QObject::disconnect(cameraInfo->backoffTimer, nullptr, nullptr, nullptr);
+        }
+        delete cameraInfo;
+    }
+    _cameraInfoRequest.clear();
+
+    // Stop the main heartbeat timer
+    _camerasLostHeartbeatTimer.stop();
 }
 
 void QGCCameraManager::setCurrentCamera(int sel)
@@ -66,19 +90,20 @@ void QGCCameraManager::_vehicleReady(bool ready)
 {
     qCDebug(CameraManagerLog) << "_vehicleReady(" << ready << ")";
     if(ready) {
-        if(qgcApp()->toolbox()->multiVehicleManager()->activeVehicle() == _vehicle) {
+        if(MultiVehicleManager::instance()->activeVehicle() == _vehicle) {
             _vehicleReadyState = true;
-            JoystickManager *pJoyMgr = qgcApp()->toolbox()->joystickManager();
-            _activeJoystickChanged(pJoyMgr->activeJoystick());
-            connect(pJoyMgr, &JoystickManager::activeJoystickChanged, this, &QGCCameraManager::_activeJoystickChanged);
+            _activeJoystickChanged(JoystickManager::instance()->activeJoystick());
+            connect(JoystickManager::instance(), &JoystickManager::activeJoystickChanged, this, &QGCCameraManager::_activeJoystickChanged);
         }
     }
 }
 
 void QGCCameraManager::_mavlinkMessageReceived(const mavlink_message_t& message)
 {
-    //-- Only pay attention to camera components, as identified by their compId
-    if(message.sysid == _vehicle->id() && (message.compid >= MAV_COMP_ID_CAMERA && message.compid <= MAV_COMP_ID_CAMERA6)) {
+    //-- Only pay attention to the camera components, as identified by their compId,
+    //   as well as the autopilot, as it might have a non-MAVLink camera connected.
+    if(message.sysid == _vehicle->id() && (message.compid == MAV_COMP_ID_AUTOPILOT1 ||
+        (message.compid >= MAV_COMP_ID_CAMERA && message.compid <= MAV_COMP_ID_CAMERA6))) {
         switch (message.msgid) {
             case MAVLINK_MSG_ID_CAMERA_CAPTURE_STATUS:
                 _handleCaptureStatus(message);
@@ -119,39 +144,37 @@ void QGCCameraManager::_mavlinkMessageReceived(const mavlink_message_t& message)
 
 void QGCCameraManager::_handleHeartbeat(const mavlink_message_t &message)
 {
-    //-- First time hearing from this one?
     QString sCompID = QString::number(message.compid);
-    if(!_cameraInfoRequest.contains(sCompID)) {
+
+    if (!_cameraInfoRequest.contains(sCompID)) {
+        // This is the first time we are heading from this camera
         qCDebug(CameraManagerLog) << "Hearbeat from " << message.compid;
-        CameraStruct* pInfo = new CameraStruct(this, message.compid);
+        CameraStruct* pInfo = new CameraStruct(this, message.compid, _vehicle);
         pInfo->lastHeartbeat.start();
         _cameraInfoRequest[sCompID] = pInfo;
-        //-- Request camera info
-        _requestCameraInfo(message.compid);
+        _requestCameraInfo(pInfo);
     } else {
-        if(_cameraInfoRequest[sCompID]) {
+        if (_cameraInfoRequest[sCompID]) {
             CameraStruct* pInfo = _cameraInfoRequest[sCompID];
             //-- Check if we have indeed received the camera info
-            if(pInfo->infoReceived) {
+            if (pInfo->infoReceived) {
                 //-- We have it. Just update the heartbeat timeout
                 pInfo->lastHeartbeat.start();
             } else {
-                //-- Try again. Maybe.
-                if(pInfo->lastHeartbeat.elapsed() > 2000) {
-                    if(pInfo->tryCount > 10) {
-                        if(!pInfo->gaveUp) {
-                            pInfo->gaveUp = true;
-                            qWarning() << "Giving up requesting camera info from" << _vehicle->id() << message.compid;
-                        }
-                    } else {
-                        pInfo->tryCount++;
-                        //-- Request camera info again.
-                        _requestCameraInfo(message.compid);
-                    }
+                //-- Camera info not received yet. Check if camera was silent and is now back
+                if (pInfo->lastHeartbeat.elapsed() > 5000) {
+                    qCDebug(CameraManagerLog) << "Camera" << message.compid << "reappeared after being silent. Resetting retry count and requesting info.";
+                    pInfo->retryCount = 0;  // Reset retry count for fresh attempts
+                    pInfo->backoffTimer->stop();  // Stop any pending backoff timer
+                    pInfo->lastHeartbeat.start();
+                    _requestCameraInfo(pInfo);
+                } else {
+                    //-- Just update heartbeat
+                    pInfo->lastHeartbeat.start();
                 }
             }
         } else {
-            qWarning() << "_cameraInfoRequest[" << sCompID << "] is null";
+            qWarning() << Q_FUNC_INFO << "_cameraInfoRequest[" << sCompID << "] is null";
         }
     }
 }
@@ -231,6 +254,9 @@ QGCCameraManager::_handleCameraInfo(const mavlink_message_t& message)
     if(_cameraInfoRequest.contains(sCompID) && !_cameraInfoRequest[sCompID]->infoReceived) {
         //-- Flag it as done
         _cameraInfoRequest[sCompID]->infoReceived = true;
+        _cameraInfoRequest[sCompID]->retryCount = 0;  // Reset retry counter on success
+        _cameraInfoRequest[sCompID]->backoffTimer->stop();  // Stop any pending backoff timer
+        qCDebug(CameraManagerLog) << "_handleCameraInfo: Success for compId" << message.compid << "- reset retry counter";
         mavlink_camera_information_t info;
         mavlink_msg_camera_information_decode(&message, &info);
         qCDebug(CameraManagerLog) << "_handleCameraInfo:" << reinterpret_cast<const char*>(info.model_name) << reinterpret_cast<const char*>(info.vendor_name) << "Comp ID:" << message.compid;
@@ -245,7 +271,8 @@ QGCCameraManager::_handleCameraInfo(const mavlink_message_t& message)
 void QGCCameraManager::_checkForLostCameras()
 {
     //-- Iterate cameras
-    foreach (QString sCompID, _cameraInfoRequest.keys()) {
+    for (auto it = _cameraInfoRequest.constBegin(); it != _cameraInfoRequest.constEnd(); ++it) {
+        const QString &sCompID = it.key();
         if (_cameraInfoRequest[sCompID]) {
             CameraStruct* pInfo = _cameraInfoRequest[sCompID];
             //-- Have we received a camera info message?
@@ -357,6 +384,7 @@ QGCCameraManager::_handleVideoStreamInfo(const mavlink_message_t& message)
         mavlink_video_stream_information_t streamInfo;
         mavlink_msg_video_stream_information_decode(&message, &streamInfo);
         pCamera->handleVideoInfo(&streamInfo);
+        emit streamChanged();
     }
 }
 
@@ -396,18 +424,92 @@ QGCCameraManager::_handleTrackingImageStatus(const mavlink_message_t& message)
     }
 }
 
+// Forward declarations for mutually recursive handler functions
+static void _requestCameraInfoCommandResultHandler(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, Vehicle::MavCmdResultFailureCode_t failureCode);
+static void _requestCameraInfoMessageResultHandler(void* resultHandlerData, MAV_RESULT result, Vehicle::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message);
+static void _requestCameraInfoHelper(QGCCameraManager* manager, QGCCameraManager::CameraStruct* pInfo);
+
+
+static void _handleCameraInfoRetry(QGCCameraManager::CameraStruct* cameraInfo)
+{
+    cameraInfo->retryCount++;
+    auto manager = static_cast<QGCCameraManager*>(cameraInfo->parent());
+
+    // For even attempts >= 2, use exponential backoff
+    if (cameraInfo->retryCount >= 2 && cameraInfo->retryCount % 2 == 0) {
+        // Calculate delay: 2^(retryCount/2) seconds
+        int delaySeconds = 1 << (cameraInfo->retryCount / 2);
+        int delayMs = delaySeconds * 1000;
+
+        qCDebug(CameraManagerLog) << "Waiting" << delaySeconds << "seconds before retry for compId" << cameraInfo->compID;
+
+        // Stop any existing timer and set up new one
+        cameraInfo->backoffTimer->stop();
+        QObject::disconnect(cameraInfo->backoffTimer, nullptr, nullptr, nullptr);
+        QObject::connect(cameraInfo->backoffTimer, &QTimer::timeout, manager, [=]() {
+            _requestCameraInfoHelper(manager, cameraInfo);
+        });
+
+        cameraInfo->backoffTimer->start(delayMs);
+    } else {
+        // Make immediate retry
+        _requestCameraInfoHelper(manager, cameraInfo);
+    }
+}
+
+static void _requestCameraInfoCommandResultHandler(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, Vehicle::MavCmdResultFailureCode_t failureCode)
+{
+    auto  cameraInfo = static_cast<QGCCameraManager::CameraStruct*>(resultHandlerData);
+
+    if (ack.result != MAV_RESULT_ACCEPTED) {
+        qCDebug(CameraManagerLog) << "MAV_CMD_REQUEST_CAMERA_INFORMATION failed. compId" << cameraInfo->compID << "Result:" << ack.result << "FailureCode:" << failureCode << "retryCount:" << cameraInfo->retryCount;
+
+        _handleCameraInfoRetry(cameraInfo);
+    }
+}
+
+static void _requestCameraInfoMessageResultHandler(void* resultHandlerData, MAV_RESULT result, Vehicle::RequestMessageResultHandlerFailureCode_t failureCode, [[maybe_unused]] const mavlink_message_t& message)
+{
+    auto cameraInfo = static_cast<QGCCameraManager::CameraStruct*>(resultHandlerData);
+
+    if (result != MAV_RESULT_ACCEPTED) {
+        qCDebug(CameraManagerLog) << "MAV_CMD_REQUEST_MESSAGE:MAVLINK_MSG_ID_CAMERA_INFORMATION failed. compId" << cameraInfo->compID << "Result:" << result << "FailureCode:" << failureCode << "retryCount:" << cameraInfo->retryCount;
+
+        _handleCameraInfoRetry(cameraInfo);
+    }
+}
+
+//-----------------------------------------------------------------------------
+static void _requestCameraInfoHelper(QGCCameraManager* manager, QGCCameraManager::CameraStruct* pInfo)
+{
+    // Give up after 10 attempts
+    if (pInfo->retryCount >= 10) {
+        qCWarning(CameraManagerLog) << "Giving up requesting camera info after" << pInfo->retryCount << "attempts for compId" << pInfo->compID;
+        return;
+    }
+
+    // Make immediate request - alternate between REQUEST_MESSAGE and REQUEST_CAMERA_INFORMATION
+    if (pInfo->retryCount % 2 == 0) {
+        qCDebug(CameraManagerLog) << "Using MAV_CMD_REQUEST_MESSAGE for compId" << pInfo->compID;
+        manager->vehicle()->requestMessage(_requestCameraInfoMessageResultHandler, pInfo, pInfo->compID, MAVLINK_MSG_ID_CAMERA_INFORMATION);
+    } else {
+        qCDebug(CameraManagerLog) << "Using MAV_CMD_REQUEST_CAMERA_INFORMATION for compId" << pInfo->compID;
+
+        Vehicle::MavCmdAckHandlerInfo_t ackHandlerInfo;
+        ackHandlerInfo.resultHandler        = _requestCameraInfoCommandResultHandler;
+        ackHandlerInfo.resultHandlerData    = pInfo;
+        ackHandlerInfo.progressHandler      = nullptr;
+        ackHandlerInfo.progressHandlerData  = nullptr;
+
+        pInfo->vehicle->sendMavCommandWithHandler(&ackHandlerInfo, pInfo->compID, MAV_CMD_REQUEST_CAMERA_INFORMATION, 1 /* request camera capabilities */);
+    }
+}
+
 //-----------------------------------------------------------------------------
 void
-QGCCameraManager::_requestCameraInfo(int compID)
+QGCCameraManager::_requestCameraInfo(CameraStruct* pInfo)
 {
-    qCDebug(CameraManagerLog) << "_requestCameraInfo(" << compID << ")";
-    if(_vehicle) {
-        _vehicle->sendMavCommand(
-            compID,                                 // target component
-            MAV_CMD_REQUEST_CAMERA_INFORMATION,     // command id
-            false,                                  // showError
-            1);                                     // Do Request
-    }
+    _requestCameraInfoHelper(this, pInfo);
 }
 
 //----------------------------------------------------------------------------------------
@@ -545,4 +647,88 @@ QGCCameraManager::_stepStream(int direction)
             pCamera->setCurrentStream(c);
         }
     }
+}
+
+const QVariantList &QGCCameraManager::cameraList()
+{
+    if (_cameraList.isEmpty()) {
+        const QList<CameraMetaData*> cams = _parseCameraMetaData(QStringLiteral(":/json/CameraMetaData.json"));
+        _cameraList.reserve(cams.size());
+
+        for (CameraMetaData* cam : cams) {
+            _cameraList << QVariant::fromValue(cam);
+        }
+    }
+
+    return _cameraList;
+}
+
+QList<CameraMetaData*> QGCCameraManager::_parseCameraMetaData(const QString &jsonFilePath)
+{
+    QList<CameraMetaData*> cameraList;
+
+    QString errorString;
+    int version;
+    const QJsonObject jsonObject = JsonHelper::openInternalQGCJsonFile(jsonFilePath, "CameraMetaData", 1, 1, version, errorString);
+    if (!errorString.isEmpty()) {
+        qCWarning(CameraManagerLog) << "Internal Error:" << errorString;
+        return cameraList;
+    }
+
+    static const QList<JsonHelper::KeyValidateInfo> rootKeyInfoList = {
+        { "cameraMetaData", QJsonValue::Array, true }
+    };
+    if (!JsonHelper::validateKeys(jsonObject, rootKeyInfoList, errorString)) {
+        qCWarning(CameraManagerLog) << errorString;
+        return cameraList;
+    }
+
+    static const QList<JsonHelper::KeyValidateInfo> cameraKeyInfoList = {
+        { "canonicalName", QJsonValue::String, true },
+        { "brand", QJsonValue::String, true },
+        { "model", QJsonValue::String, true },
+        { "sensorWidth", QJsonValue::Double, true },
+        { "sensorHeight", QJsonValue::Double, true },
+        { "imageWidth", QJsonValue::Double, true },
+        { "imageHeight", QJsonValue::Double, true },
+        { "focalLength", QJsonValue::Double, true },
+        { "landscape", QJsonValue::Bool, true },
+        { "fixedOrientation", QJsonValue::Bool, true },
+        { "minTriggerInterval", QJsonValue::Double, true },
+        { "deprecatedTranslatedName", QJsonValue::String, true },
+    };
+    const QJsonArray cameraInfo = jsonObject["cameraMetaData"].toArray();
+    for (const QJsonValue &jsonValue : cameraInfo) {
+        if (!jsonValue.isObject()) {
+            qCWarning(CameraManagerLog) << "Entry in CameraMetaData array is not object";
+            return cameraList;
+        }
+
+        const QJsonObject obj = jsonValue.toObject();
+        if (!JsonHelper::validateKeys(obj, cameraKeyInfoList, errorString)) {
+            qCWarning(CameraManagerLog) << errorString;
+            return cameraList;
+        }
+
+        const QString canonicalName = obj["canonicalName"].toString();
+        const QString brand = obj["brand"].toString();
+        const QString model = obj["model"].toString();
+        const double sensorWidth = obj["sensorWidth"].toDouble();
+        const double sensorHeight = obj["sensorHeight"].toDouble();
+        const double imageWidth = obj["imageWidth"].toDouble();
+        const double imageHeight = obj["imageHeight"].toDouble();
+        const double focalLength = obj["focalLength"].toDouble();
+        const bool landscape = obj["landscape"].toBool();
+        const bool fixedOrientation = obj["fixedOrientation"].toBool();
+        const double minTriggerInterval = obj["minTriggerInterval"].toDouble();
+        const QString deprecatedTranslatedName = obj["deprecatedTranslatedName"].toString();
+
+        CameraMetaData *const metaData = new CameraMetaData(
+            canonicalName, brand, model, sensorWidth, sensorHeight,
+            imageWidth, imageHeight, focalLength, landscape,
+            fixedOrientation, minTriggerInterval, deprecatedTranslatedName);
+        cameraList.append(metaData);
+    }
+
+    return cameraList;
 }

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2021 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -8,7 +8,6 @@
  ****************************************************************************/
 
 #include "ActuatorOutputs.h"
-#include "FactSystem.h"
 #include "ParameterManager.h"
 
 using namespace ActuatorOutputs;
@@ -29,8 +28,8 @@ ActuatorOutputChannel::ActuatorOutputChannel(QObject *parent, const QString &lab
         param.replace("${i}", sparamIndex);
 
         Fact* fact = nullptr;
-        if (parameterManager->parameterExists(FactSystem::defaultComponentId, param)) {
-            fact = parameterManager->getParameter(FactSystem::defaultComponentId, param);
+        if (parameterManager->parameterExists(ParameterManager::defaultComponentId, param)) {
+            fact = parameterManager->getParameter(ParameterManager::defaultComponentId, param);
             if (channelConfig->displayOption() == Parameter::DisplayOption::Bitset) {
                 fact = new FactBitset(channelConfig, fact, paramIndex + channelConfig->indexOffset());
             } else if (channelConfig->displayOption() == Parameter::DisplayOption::BoolTrueIfPositive) {

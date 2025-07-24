@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -15,6 +15,7 @@
 
 #include <QtQuick/QQuickItem>
 #include <QtCore/QLoggingCategory>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "FactPanelController.h"
 
@@ -24,7 +25,7 @@ Q_DECLARE_LOGGING_CATEGORY(SensorsComponentControllerLog)
 class SensorsComponentController : public FactPanelController
 {
     Q_OBJECT
-    
+    QML_ELEMENT
 public:
     SensorsComponentController(void);
     
@@ -93,7 +94,7 @@ signals:
     void magCalComplete(void);
 
 private slots:
-    void _handleUASTextMessage(int uasId, int compId, int severity, QString text);
+    void _handleUASTextMessage(int uasId, int compId, int severity, QString text, const QString &description);
     void _handleParametersReset(bool success);
     
 private:

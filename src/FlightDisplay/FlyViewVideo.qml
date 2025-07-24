@@ -11,7 +11,7 @@ import QtQuick
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.Controllers
+
 import QGroundControl.ScreenTools
 
 Item {
@@ -58,14 +58,14 @@ Item {
         id:             videoStreaming
         anchors.fill:   parent
         useSmallFont:   _root.pipState.state !== _root.pipState.fullState
-        visible:        QGroundControl.videoManager.isGStreamer
+        visible:        QGroundControl.videoManager.isStreamSource
     }
     //-- UVC Video (USB Camera or Video Device)
     Loader {
         id:             cameraLoader
         anchors.fill:   parent
-        visible:        !QGroundControl.videoManager.isGStreamer
-        source:         QGroundControl.videoManager.uvcEnabled ? "qrc:/qml/FlightDisplayViewUVC.qml" : "qrc:/qml/FlightDisplayViewDummy.qml"
+        visible:        QGroundControl.videoManager.isUvc
+        source:         QGroundControl.videoManager.uvcEnabled ? "qrc:/qml/QGroundControl/FlightDisplay/FlightDisplayViewUVC.qml" : "qrc:/qml/QGroundControl/FlightDisplay//FlightDisplayViewDummy.qml"
     }
 
     QGCLabel {
@@ -89,6 +89,14 @@ Item {
         }
     }
 
+    OnScreenGimbalController {
+        id:                      onScreenGimbalController
+        anchors.fill:            parent
+        screenX:                 flyViewVideoMouseArea.mouseX
+        screenY:                 flyViewVideoMouseArea.mouseY
+        cameraTrackingEnabled:   videoStreaming._camera && videoStreaming._camera.trackingEnabled
+    }
+
     MouseArea {
         id:                         flyViewVideoMouseArea
         anchors.fill:               parent
@@ -105,9 +113,12 @@ Item {
         property var trackingROI:   null
         property var trackingStatus: trackingStatusComponent.createObject(flyViewVideoMouseArea, {})
 
+        onClicked:       onScreenGimbalController.clickControl()
         onDoubleClicked: QGroundControl.videoManager.fullScreen = !QGroundControl.videoManager.fullScreen
 
         onPressed:(mouse) => {
+            onScreenGimbalController.pressControl()
+
             _track_rec_x = mouse.x
             _track_rec_y = mouse.y
 
@@ -139,6 +150,8 @@ Item {
             }
         }
         onReleased: (mouse) => {
+            onScreenGimbalController.releaseControl()
+            
             //if there is already a selection, delete it
             if (trackingROI !== null) {
                 trackingROI.destroy();

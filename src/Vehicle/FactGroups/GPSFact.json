@@ -40,6 +40,13 @@
     "units":            "deg"
 },
 {
+    "name":             "yaw",
+    "shortDesc": "Yaw",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "deg"
+},
+{
     "name":             "lock",
     "shortDesc": "GPS Lock",
     "type":             "uint32",

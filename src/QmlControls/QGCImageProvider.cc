@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -14,54 +14,63 @@
 
 QGCImageProvider::QGCImageProvider(QQmlImageProviderBase::ImageType imageType)
     : QQuickImageProvider(imageType)
+    , _dummy(320, 240, QImage::Format_RGBA8888)
 {
-    //-- Dummy temporary image until something comes along
-   m_image = QImage(320, 240, QImage::Format_RGBA8888);
-   m_image.fill(Qt::black);
-   QPainter painter(&m_image);
-   QFont f = painter.font();
-   f.setPixelSize(20);
-   painter.setFont(f);
-   painter.setPen(Qt::white);
-   painter.drawText(QRectF(0, 0, 320, 240), Qt::AlignCenter, "Waiting...");
+    // qCDebug(ImageProtocolManagerLog) << Q_FUNC_INFO << this;
+
+    Q_ASSERT(imageType == QQmlImageProviderBase::ImageType::Image);
+
+    // Dummy temporary image until something comes along
+    _dummy.fill(Qt::black);
+    QPainter painter(&_dummy);
+    QFont f = painter.font();
+    f.setPixelSize(20);
+    painter.setFont(f);
+    painter.setPen(Qt::white);
+    painter.drawText(QRectF(0, 0, _dummy.width(), _dummy.height()), Qt::AlignCenter, QStringLiteral("Waiting..."));
+    _images[0] = _dummy;
 }
 
 QGCImageProvider::~QGCImageProvider()
 {
-
+    // qCDebug(ImageProtocolManagerLog) << Q_FUNC_INFO << this;
 }
 
-QImage QGCImageProvider::requestImage(const QString & /* image url with vehicle id*/, QSize *, const QSize &)
+QImage QGCImageProvider::requestImage(const QString &id, QSize *size, const QSize &requestedSize)
 {
-/*
-    The QML side will request an image using a special URL, which we've registered as QGCImages.
-    The URL follows this format (or anything you want to make out of it after the "QGCImages" part):
+    Q_UNUSED(requestedSize);
 
-    "image://QGCImages/vvv/iii"
+    if (id.isEmpty()) {
+        return _dummy;
+    }
 
-    Where:
-        vvv: Some vehicle id
-        iii: An auto incremented index (which forces the Item to reload the image)
+    if (!id.contains("/")) {
+        return _dummy;
+    }
 
-    The image index is incremented each time a new image arrives. A signal is emitted and the QML side
-    updates its contents automatically.
+    const QStringList url = id.split('/', Qt::SkipEmptyParts);
+    if (url.size() != 2) {
+        return _dummy;
+    }
 
-        Image {
-            source:     "image://QGCImages/" + _activeVehicle.id + "/" + _activeVehicle.flowImageIndex
-            width:      parent.width * 0.5
-            height:     width * 0.75
-            cache:      false
-            anchors.centerIn: parent
-            fillMode: Image.PreserveAspectFit
-        }
+    bool ok = false;
+    const uint8_t vehicleId = url[0].toUInt(&ok);
+    if (!ok) {
+        return _dummy;
+    }
 
-    For now, we don't even look at the URL. This will have to be fixed if we're to support multiple
-    vehicles transmitting flow images.
-*/
-    return m_image;
-}
+    const uint8_t index = url[1].toUInt(&ok);
+    if (!ok) {
+        return _dummy;
+    }
 
-void QGCImageProvider::setImage(QImage* pImage, int /* vehicle id*/)
-{
-    m_image = pImage->mirrored();
+    if (!_images.contains(vehicleId)) {
+        return _dummy;
+    }
+
+    const QImage image = _images[vehicleId];
+    // image->scaled(requestedSize);
+    *size = image.size();
+
+    return image;
 }

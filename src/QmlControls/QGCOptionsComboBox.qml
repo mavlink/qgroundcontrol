@@ -13,8 +13,9 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
+import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.Palette
+
 import QGroundControl.ScreenTools
 
 ComboBox {

@@ -4,26 +4,51 @@ Daily Builds of _QGroundControl_ have the absolute latest set of [new features](
 
 ::: warning
 Daily Builds are less tested than stable builds.
-Use at your own risk!
+Use at your own risk.
 :::
 
 These can be downloaded from the links below (install as described in [Download and Install](../getting_started/download_and_install.md)):
 
 - [Windows](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl-installer.exe)
 - [OS X](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl.dmg)
+- Linux - (See installation instructions below)
+  - [Linux x86_64](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl-x86_64.AppImage)
+  - [Linux aarch64](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl-aarch64.AppImage)
+- [Android](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl.apk)
+- iOS is currently unavailable
 
-  ::: info
-  QGroundControl continues to not be signed which causes problem on Catalina. To open QGC app for the first time:
+## Linux Installation Instructions
 
-  - Right-click the QGC app icon, select Open from the menu. You will only be presented with an option to Cancel. Select Cancel.
-  - Right-click the QGC app icon again, Open from the menu. This time you will be presented with the option to Open.
+1. Make the AppImage executable
+```
+chmod +x QGroundControl-<arch>.AppImage
+```
 
-  :::
+2. Enable serial-port access
+Add your user to the dialout group so you can talk to USB devices without root:
 
-- [Linux](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl.AppImage)
-- [Android](https://play.google.com/store/apps/details?id=org.mavlink.qgroundcontrolbeta) - Google Play: Listed as _QGroundControl (Daily Test Build)_.
-- iOS currently unavailable
+```
+sudo usermod -aG dialout "$(id -un)"
+```
 
 ::: info
-The QGroundControl Continous Delivery pipeline from time to time might experience issues uploading to the Google Play store. You can find the daily build APK for Android devices for direct download here: [QGroundControl32.apk](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl32.apk), and [QGroundControl64.apk](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl64.apk)
+At login, your shell takes a snapshot of your user and group memberships. Because you just changed groups, you need a fresh login shell to pick up “dialout” access. Logging out and back in reloads that snapshot, so you get the new permissions.
 :::
+
+
+3. (Optional) Disable ModemManager
+On some Ubuntu-based systems, ModemManager can claim serial ports that QGC needs. If you don't use it elsewhere, mask or remove it.
+```
+# preferred: stop and mask the service
+sudo systemctl mask --now ModemManager.service
+
+# or, if you’d rather remove the package
+sudo apt remove --purge modemmanager
+```
+
+4. Run QGroundControl
+Either double-click the AppImage in your file manager or launch it from a terminal:
+
+```
+./QGroundControl-<arch>.AppImage
+```

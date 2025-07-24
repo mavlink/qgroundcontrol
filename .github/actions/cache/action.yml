@@ -1,0 +1,78 @@
+name: Caching
+description: Setup Caching
+inputs:
+  host:
+    description: Host OS
+    required: true
+  target:
+    description: Target OS
+    required: true
+  build-type:
+    description: Build Type
+    required: true
+    type: choice
+    options:
+      - Debug
+      - Release
+  cpm-modules:
+    description: Path to CPM Modules
+    required: false
+  ccache-version:
+    description: ccache Version to Install
+    required: false
+    default: 4.11.3
+runs:
+  using: composite
+  steps:
+    - name: Install ccache (Linux)
+      if: inputs.host == 'linux' && inputs.target != 'linux_gcc_arm64'
+      shell: bash
+      run: |
+        set -e
+        echo "Downloading ccache..."
+        wget --quiet https://github.com/ccache/ccache/releases/download/v${{ inputs.ccache-version }}/ccache-${{ inputs.ccache-version }}-linux-x86_64.tar.xz
+        echo "Extracting archive..."
+        tar -xvf ccache-${{ inputs.ccache-version }}-linux-x86_64.tar.xz
+        cd ccache-${{ inputs.ccache-version }}-linux-x86_64
+        echo "Installing ccache..."
+        sudo make install
+
+    # - name: Setup sccache (Windows)
+    #   if: runner.os == 'Windows' && inputs.target != 'android'
+    #   uses: mozilla-actions/sccache-action@v0.0.9
+
+    - name: Setup sccache (Windows)
+      if: runner.os == 'Windows' && inputs.target != 'android'
+      uses: ./.github/actions/build-action
+      with:
+        repo: mozilla-actions/sccache-action
+        ref: main
+
+    - run: echo "SCCACHE_GHA_ENABLED=true" >> "$GITHUB_ENV"
+      if: runner.os == 'Windows' && inputs.target != 'android'
+      shell: bash
+
+    - name: Setup Build Cache
+      uses: hendrikmuhs/ccache-action@main
+      with:
+        variant: ${{ runner.os == 'Windows' && inputs.target != 'android' && 'sccache' || 'ccache' }}
+        key: ${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}
+        restore-keys: |
+          ${{ inputs.host }}-${{ inputs.target }}
+          ${{ inputs.host }}-
+        max-size: 1G
+        verbose: 1
+        evict-old-files: job
+
+    - name: Ensure cpm-modules directory exists
+      run: mkdir -p "${{ inputs.cpm-modules }}"
+      shell: bash
+
+    - name: Cache CPM Modules
+      if: inputs.cpm-modules != ''
+      uses: actions/cache@v4
+      with:
+        path: ${{ inputs.cpm-modules }}
+        key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
+        restore-keys: ${{ github.workflow }}-cpm-modules-
+        # enableCrossOsArchive: true

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2021 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -8,7 +8,6 @@
  ****************************************************************************/
 
 #include "Common.h"
-#include "FactSystem.h"
 #include "ParameterManager.h"
 #include "QGCLoggingCategory.h"
 
@@ -166,9 +165,8 @@ Condition::Condition(const QString &condition, ParameterManager *parameterManage
 
         qCDebug(ActuatorsConfigLog) << "Condition: Param:" << _parameter << "op:" << operation << "value:" << _value;
 
-        if (parameterManager->parameterExists(FactSystem::defaultComponentId, _parameter))
-        {
-            Fact *param = parameterManager->getParameter(FactSystem::defaultComponentId, _parameter);
+        if (parameterManager->parameterExists(ParameterManager::defaultComponentId, _parameter)) {
+            Fact* param = parameterManager->getParameter(ParameterManager::defaultComponentId, _parameter);
             if (param->type() == FactMetaData::ValueType_t::valueTypeBool ||
                 param->type() == FactMetaData::ValueType_t::valueTypeInt32)
             {

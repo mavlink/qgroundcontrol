@@ -24,7 +24,7 @@ The calibration steps are:
 1. Click the **Compass** sensor button ![Select Compass calibration PX4](../../../assets/setup/sensor_compass_select_px4.jpg)
 
    ::: info
-   The default flight controller orientation is `ROTATION_NONE` (flight controller and compass mounted upright on the vehicle and facing the front).
+   默认飞行控制器方向是 `ROTATION_NONE` (飞行控制器和挂载在车上和前方的指南针)。
    You can set a different value here or in [Set Orientations](#flight_controller_orientation).
    :::
 
@@ -74,7 +74,7 @@ The calibration steps are:
    ![Accelerometer calibration](../../../assets/setup/sensor/accelerometer_px4.jpg)
 
    ::: info
-   You should already have set the [Flight Controller Orientation](#flight_controller_orientation) above.
+   您应该已经设置了上述的[飞控方向](#flight_controller_orientation) 。
    If not, you can also set it here.
    :::
 
@@ -98,7 +98,7 @@ You will be asked to place the vehicle in a level orientation while it captures 
    ![Level Horizon calibration](../../../assets/setup/sensor_level_horizon.jpg)
 
    ::: info
-   You should already have set the [Flight Controller Orientation](#flight_controller_orientation) above.
+   您应该已经设置了上述的[飞控方向](#flight_controller_orientation) 。
    If not, you can also set it here.
    :::
 
@@ -123,7 +123,7 @@ To calibrate the airspeed sensor:
 2. Cover the sensor (i.e. with your hand)
 
    ::: warning
-   Do not touch the sensor (obstruct any holes) during calibration.
+   校准期间请勿触摸传感器（遮挡任何孔洞）。
    :::
 
 3. Click **OK** to start the calibration.
@@ -146,7 +146,7 @@ For example, the image below are at orientations: `ROTATION_NONE`, `ROTATION_YAW
 
 <img src="../../../assets/setup/flight_controller_yaw_rotation.png" style="width: 600px;"/>
 
-To set the orientation(s) on PX4:
+设置PX4的方向：
 
 1. Select the **Set Orientations** button.
 

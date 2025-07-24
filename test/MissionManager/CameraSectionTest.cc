@@ -12,10 +12,10 @@
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
 #include "PlanMasterController.h"
-#include "QGCApplication.h"
 #include "SimpleMissionItem.h"
 #include "MultiSignalSpy.h"
 
+#include <QtTest/QTest>
 #include <functional>
 
 CameraSectionTest::CameraSectionTest(void)
@@ -1062,8 +1062,6 @@ void CameraSectionTest::_resetSection(void)
 /// Test that we can scan the commands associated with the camera section in various orders/combinations.
 void CameraSectionTest::_testScanForMultipleItems(void)
 {
-    MissionCommandTree* commandTree = qgcApp()->toolbox()->missionCommandTree();
-
     QCOMPARE(_cameraSection->available(), true);
 
     int scanIndex = 0;
@@ -1086,7 +1084,7 @@ void CameraSectionTest::_testScanForMultipleItems(void)
             item2->missionItem() = cameraItem->missionItem();
             visualItems.append(item1);
             visualItems.append(item2);
-            //qDebug() << commandTree->getUIInfo(_controllerVehicle, QGCMAVLink::VehicleClassGeneric, (MAV_CMD)item1->command())->rawName() << commandTree->getUIInfo(_controllerVehicle, QGCMAVLink::VehicleClassGeneric, (MAV_CMD)item2->command())->rawName();
+            //qDebug() << MissionCommandTree::instance()->getUIInfo(_controllerVehicle, QGCMAVLink::VehicleClassGeneric, (MAV_CMD)item1->command())->rawName() << MissionCommandTree::instance()->getUIInfo(_controllerVehicle, QGCMAVLink::VehicleClassGeneric, (MAV_CMD)item2->command())->rawName();
 
             scanIndex = 0;
             QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), true);
@@ -1107,7 +1105,7 @@ void CameraSectionTest::_testScanForMultipleItems(void)
             item2->missionItem() = cameraItem->missionItem();
             visualItems.append(item1);
             visualItems.append(item2);
-            qDebug() << commandTree->getUIInfo(_controllerVehicle, QGCMAVLink::VehicleClassGeneric, (MAV_CMD)item1->command())->rawName() << commandTree->getUIInfo(_controllerVehicle, QGCMAVLink::VehicleClassGeneric, (MAV_CMD)item2->command())->rawName();;
+            qDebug() << MissionCommandTree::instance()->getUIInfo(_controllerVehicle, QGCMAVLink::VehicleClassGeneric, (MAV_CMD)item1->command())->rawName() << MissionCommandTree::instance()->getUIInfo(_controllerVehicle, QGCMAVLink::VehicleClassGeneric, (MAV_CMD)item2->command())->rawName();;
 
             scanIndex = 0;
             QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), true);

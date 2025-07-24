@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -20,45 +20,25 @@
 #include "RallyPointManager.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(InitialConnectStateMachineLog, "InitialConnectStateMachineLog")
+QGC_LOGGING_CATEGORY(InitialConnectStateMachineLog, "qgc.vehicle.initialconnectstatemachine")
 
-const StateMachine::StateFn InitialConnectStateMachine::_rgStates[] = {
-    InitialConnectStateMachine::_stateRequestAutopilotVersion,
-    InitialConnectStateMachine::_stateRequestProtocolVersion,
-    InitialConnectStateMachine::_stateRequestStandardModes,
-    InitialConnectStateMachine::_stateRequestCompInfo,
-    InitialConnectStateMachine::_stateRequestParameters,
-    InitialConnectStateMachine::_stateRequestMission,
-    InitialConnectStateMachine::_stateRequestGeoFence,
-    InitialConnectStateMachine::_stateRequestRallyPoints,
-    InitialConnectStateMachine::_stateSignalInitialConnectComplete
-};
-
-const int InitialConnectStateMachine::_rgProgressWeights[] = {
-    1, //_stateRequestCapabilities
-    1, //_stateRequestProtocolVersion
-    1, //_stateRequestStandardModes
-    5, //_stateRequestCompInfo
-    5, //_stateRequestParameters
-    2, //_stateRequestMission
-    1, //_stateRequestGeoFence
-    1, //_stateRequestRallyPoints
-    1, //_stateSignalInitialConnectComplete
-};
-
-
-const int InitialConnectStateMachine::_cStates = sizeof(InitialConnectStateMachine::_rgStates) / sizeof(InitialConnectStateMachine::_rgStates[0]);
-
-InitialConnectStateMachine::InitialConnectStateMachine(Vehicle* vehicle)
-    : _vehicle(vehicle)
+InitialConnectStateMachine::InitialConnectStateMachine(Vehicle *vehicle, QObject *parent)
+    : StateMachine(parent)
+    , _vehicle(vehicle)
 {
-    static_assert(sizeof(_rgStates)/sizeof(_rgStates[0]) == sizeof(_rgProgressWeights)/sizeof(_rgProgressWeights[0]),
-            "array size mismatch");
+    static_assert(std::size(_rgStates) == std::size(_rgProgressWeights), "array size mismatch");
 
     _progressWeightTotal = 0;
     for (int i = 0; i < _cStates; ++i) {
         _progressWeightTotal += _rgProgressWeights[i];
     }
+
+    // qCDebug(InitialConnectStateMachineLog) << Q_FUNC_INFO << this;
+}
+
+InitialConnectStateMachine::~InitialConnectStateMachine()
+{
+    // qCDebug(InitialConnectStateMachineLog) << Q_FUNC_INFO << this;
 }
 
 int InitialConnectStateMachine::stateCount(void) const
@@ -82,9 +62,9 @@ void InitialConnectStateMachine::advance()
     emit progressUpdate(_progress());
 }
 
-void InitialConnectStateMachine::gotProgressUpdate(float progressValue)
+void InitialConnectStateMachine::gotProgressUpdate(double progressValue)
 {
-    emit progressUpdate(_progress(progressValue));
+    emit progressUpdate(_progress(static_cast<float>(progressValue)));
 }
 
 float InitialConnectStateMachine::_progress(float subProgress)
@@ -94,7 +74,7 @@ float InitialConnectStateMachine::_progress(float subProgress)
         progressWeight += _rgProgressWeights[i];
     }
     int currentWeight = _stateIndex < _cStates ? _rgProgressWeights[_stateIndex] : 1;
-    return (progressWeight + currentWeight * subProgress) / (float)_progressWeightTotal;
+    return (progressWeight + currentWeight * subProgress) / static_cast<float>(_progressWeightTotal);
 }
 
 void InitialConnectStateMachine::_stateRequestAutopilotVersion(StateMachine* stateMachine)
@@ -107,7 +87,7 @@ void InitialConnectStateMachine::_stateRequestAutopilotVersion(StateMachine* sta
         qCDebug(InitialConnectStateMachineLog) << "Skipping REQUEST_MESSAGE:AUTOPILOT_VERSION request due to no primary link";
         connectMachine->advance();
     } else {
-        if (sharedLink->linkConfiguration()->isHighLatency() || sharedLink->isPX4Flow() || sharedLink->isLogReplay()) {
+        if (sharedLink->linkConfiguration()->isHighLatency() || sharedLink->isLogReplay()) {
             qCDebug(InitialConnectStateMachineLog) << "Skipping REQUEST_MESSAGE:AUTOPILOT_VERSION request due to link type";
             connectMachine->advance();
         } else {
@@ -169,7 +149,7 @@ void InitialConnectStateMachine::_autopilotVersionRequestMessageHandler(void* re
             nullStr[8] = 0;
             vehicle->_gitHash = nullStr;
         }
-        if (vehicle->_toolbox->corePlugin()->options()->checkFirmwareVersion() && !vehicle->_checkLatestStableFWDone) {
+        if (QGCCorePlugin::instance()->options()->checkFirmwareVersion() && !vehicle->_checkLatestStableFWDone) {
             vehicle->_checkLatestStableFWDone = true;
             vehicle->_firmwarePlugin->checkIfIsLatestStable(vehicle);
         }
@@ -219,7 +199,7 @@ void InitialConnectStateMachine::_stateRequestProtocolVersion(StateMachine* stat
         qCDebug(InitialConnectStateMachineLog) << "Skipping REQUEST_MESSAGE:PROTOCOL_VERSION request due to no primary link";
         connectMachine->advance();
     } else {
-        if (sharedLink->linkConfiguration()->isHighLatency() || sharedLink->isPX4Flow() || sharedLink->isLogReplay()) {
+        if (sharedLink->linkConfiguration()->isHighLatency() || sharedLink->isLogReplay()) {
             qCDebug(InitialConnectStateMachineLog) << "Skipping REQUEST_MESSAGE:PROTOCOL_VERSION request due to link type";
             connectMachine->advance();
         } else if (vehicle->apmFirmware()) {
@@ -339,14 +319,13 @@ void InitialConnectStateMachine::_stateRequestMission(StateMachine* stateMachine
         qCDebug(InitialConnectStateMachineLog) << "_stateRequestMission: Skipping first mission load request due to no primary link";
         connectMachine->advance();
     } else {
-        if (sharedLink->linkConfiguration()->isHighLatency() || sharedLink->isPX4Flow() || sharedLink->isLogReplay()) {
+        if (sharedLink->linkConfiguration()->isHighLatency() || sharedLink->isLogReplay()) {
             qCDebug(InitialConnectStateMachineLog) << "_stateRequestMission: Skipping first mission load request due to link type";
             vehicle->_firstMissionLoadComplete();
         } else {
             qCDebug(InitialConnectStateMachineLog) << "_stateRequestMission";
             vehicle->_missionManager->loadFromVehicle();
-            connect(vehicle->_missionManager, &MissionManager::progressPctChanged, connectMachine,
-                    &InitialConnectStateMachine::gotProgressUpdate);
+            (void) connect(vehicle->_missionManager, &MissionManager::progressPctChanged, connectMachine, &InitialConnectStateMachine::gotProgressUpdate);
         }
     }
 }
@@ -364,7 +343,7 @@ void InitialConnectStateMachine::_stateRequestGeoFence(StateMachine* stateMachin
         qCDebug(InitialConnectStateMachineLog) << "_stateRequestGeoFence: Skipping first geofence load request due to no primary link";
         connectMachine->advance();
     } else {
-        if (sharedLink->linkConfiguration()->isHighLatency() || sharedLink->isPX4Flow() || sharedLink->isLogReplay()) {
+        if (sharedLink->linkConfiguration()->isHighLatency() || sharedLink->isLogReplay()) {
             qCDebug(InitialConnectStateMachineLog) << "_stateRequestGeoFence: Skipping first geofence load request due to link type";
             vehicle->_firstGeoFenceLoadComplete();
         } else {
@@ -394,7 +373,7 @@ void InitialConnectStateMachine::_stateRequestRallyPoints(StateMachine* stateMac
         qCDebug(InitialConnectStateMachineLog) << "_stateRequestRallyPoints: Skipping first rally point load request due to no primary link";
         connectMachine->advance();
     } else {
-        if (sharedLink->linkConfiguration()->isHighLatency() || sharedLink->isPX4Flow() || sharedLink->isLogReplay()) {
+        if (sharedLink->linkConfiguration()->isHighLatency() || sharedLink->isLogReplay()) {
             qCDebug(InitialConnectStateMachineLog) << "_stateRequestRallyPoints: Skipping first rally point load request due to link type";
             vehicle->_firstRallyPointLoadComplete();
         } else {

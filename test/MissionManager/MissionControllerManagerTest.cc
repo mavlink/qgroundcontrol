@@ -11,8 +11,9 @@
 #include "MissionControllerManagerTest.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
-#include "QGCApplication.h"
 #include "MultiSignalSpy.h"
+
+#include <QtTest/QTest>
 
 MissionControllerManagerTest::MissionControllerManagerTest(void)
 {
@@ -33,7 +34,7 @@ void MissionControllerManagerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareTy
     
     // Wait for the Mission Manager to finish it's initial load
     
-    _missionManager = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->missionManager();
+    _missionManager = MultiVehicleManager::instance()->activeVehicle()->missionManager();
     QVERIFY(_missionManager);
     
     _rgMissionManagerSignals[newMissionItemsAvailableSignalIndex] = SIGNAL(newMissionItemsAvailable(bool));

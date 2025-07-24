@@ -1,6 +1,14 @@
+/****************************************************************************
+ *
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 #include "Viewer3DTerrainTexture.h"
 
-#include "QGCApplication.h"
 #include "SettingsManager.h"
 #include "QGCMapEngine.h"
 #include "QGCMapUrlEngine.h"
@@ -11,7 +19,7 @@
 Viewer3DTerrainTexture::Viewer3DTerrainTexture()
 {
     _terrainTileLoader = nullptr;
-    _flightMapSettings = qgcApp()->toolbox()->settingsManager()->flightMapSettings();
+    _flightMapSettings = SettingsManager::instance()->flightMapSettings();
     mapTypeChangedEvent();
 
     setTextureGeometryDone(false);
@@ -70,7 +78,7 @@ void Viewer3DTerrainTexture::mapTypeChangedEvent(void)
     _mapType = _flightMapSettings->mapProvider()->rawValue().toString() + QString(" ");
     _mapType += _flightMapSettings->mapType()->rawValue().toString();
 
-    int mapId = getQGCMapEngine()->urlFactory()->getQtMapIdFromProviderType(_mapType);
+    int mapId = UrlFactory::getQtMapIdFromProviderType(_mapType);
 
     if(mapId == _mapId){
         return;

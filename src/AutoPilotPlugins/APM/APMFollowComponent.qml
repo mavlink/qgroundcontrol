@@ -14,12 +14,12 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.FactSystem
+
 import QGroundControl.FactControls
-import QGroundControl.Palette
+
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
-import QGroundControl.Controllers
+
 
 SetupPage {
     id:             followPage
@@ -65,7 +65,7 @@ SetupPage {
             Component.onCompleted: _setUIFromParams()
 
             function validateSupportedParamSetup() {
-                var followSysIdOk = _followSysId.rawValue == QGroundControl.mavlinkSystemID
+                var followSysIdOk = _followSysId.rawValue == QGroundControl.settingsManager.mavlinkSettings.gcsMavlinkSystemID.rawValue
                 var followOffsetOk = _followOffsetType.rawValue == _followOffsetTypeRelative
                 var followAltOk = true
                 var followYawOk = true
@@ -113,7 +113,7 @@ SetupPage {
             }
 
             function _setFollowMeParamDefaults() {
-                _followSysId.rawValue = QGroundControl.mavlinkSystemID
+                _followSysId.rawValue = QGroundControl.settingsManager.mavlinkSettings.gcsMavlinkSystemID.rawValue
                 _followOffsetType.rawValue = _followOffsetTypeRelative
                 if (!_roverFirmware) {
                     _followAltitudeType.rawValue = _followAltitudeTypeRelative
@@ -350,7 +350,7 @@ SetupPage {
                     Image {
                         id:                 gcsIcon
                         anchors.centerIn:   parent
-                        source:             "/res/QGCLogoArrow"
+                        source:             "/res/QGCLogoArrow.svg"
                         mipmap:             true
                         antialiasing:       true
                         fillMode:           Image.PreserveAspectFit

@@ -14,10 +14,10 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.FactSystem
+
 import QGroundControl.FactControls
 import QGroundControl.ScreenTools
-import QGroundControl.Vehicle
+
 
 RowLayout {
     spacing: _margins
@@ -258,7 +258,7 @@ RowLayout {
                         dataTimer.running = !dataTimer.running
                         _last_t = 0
                         if (showAutoModeChange && autoModeChange.checked) {
-                            globals.activeVehicle.flightMode = dataTimer.running ? "Stabilized" : globals.activeVehicle.pauseFlightMode
+                            globals.activeVehicle.flightMode = dataTimer.running ? globals.activeVehicle.stabilizedFlightMode : globals.activeVehicle.pauseFlightMode
                         }
                     }
                 }

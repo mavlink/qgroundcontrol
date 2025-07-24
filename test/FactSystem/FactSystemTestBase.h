@@ -7,12 +7,7 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
-#ifndef FactSystemTestBase_H
-#define FactSystemTestBase_H
+#pragma once
 
 #include "UnitTest.h"
 
@@ -38,4 +33,3 @@ protected:
     AutoPilotPlugin*                _plugin;
 };
 
-#endif

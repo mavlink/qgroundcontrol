@@ -1,31 +1,11 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml)
-
-qt_add_library(API STATIC
-	QGCCorePlugin.cc
-	QGCCorePlugin.h
-	QGCOptions.cc
-	QGCOptions.h
-	QGCSettings.cc
-	QGCSettings.h
-	QmlComponentInfo.cc
-	QmlComponentInfo.h
+target_sources(${CMAKE_PROJECT_NAME}
+    PRIVATE
+        QGCCorePlugin.cc
+        QGCCorePlugin.h
+        QGCOptions.cc
+        QGCOptions.h
+        QmlComponentInfo.cc
+        QmlComponentInfo.h
 )
 
-target_link_libraries(API
-	PRIVATE
-		Qt6::Qml
-		FactSystem
-		Joystick
-		Settings
-		Utilities
-		VideoReceiver
-		VideoManager
-	PUBLIC
-		Qt6::Core
-		Qt6::Gui
-		Comms
-		QGC
-		QmlControls
-)
-
-target_include_directories(API PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

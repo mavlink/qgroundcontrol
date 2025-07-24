@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2021 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -9,7 +9,6 @@
 
 #include "Actuators.h"
 #include "GeometryImage.h"
-#include "FactSystem.h"
 #include "ParameterManager.h"
 #include "Vehicle.h"
 
@@ -35,11 +34,12 @@ Actuators::Actuators(QObject *parent, Vehicle *vehicle)
             { highlightActuators(false); });
 }
 
-void Actuators::imageClicked(float x, float y)
+void Actuators::imageClicked(QSizeF displaySize, float x, float y)
 {
-    GeometryImage::VehicleGeometryImageProvider *provider = GeometryImage::VehicleGeometryImageProvider::instance();
-    int motorIndex = provider->getHighlightedMotorIndexAtPos(QPointF{x, y});
-    qCDebug(ActuatorsConfigLog) << "Image clicked:" << x << "," << y << "motor index:" << motorIndex;
+    GeometryImage::VehicleGeometryImageProvider* provider = GeometryImage::VehicleGeometryImageProvider::instance();
+    QPointF clickPosition{ x, y };
+    int motorIndex = provider->getHighlightedMotorIndexAtPos(displaySize, clickPosition);
+    qCDebug(ActuatorsConfigLog) << "Image clicked: position:" << clickPosition << "displaySize:" << displaySize << "motor index:" << motorIndex;
 
     if (_motorAssignment.active())
     {
@@ -131,10 +131,13 @@ bool Actuators::isMultirotor() const
 
 void Actuators::load(const QString &json_file)
 {
-    QFile file;
-    file.setFileName(json_file);
-    file.open(QIODevice::ReadOnly | QIODevice::Text);
-    QString json_data = file.readAll();
+    QFile file(json_file);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qCWarning(ActuatorsConfigLog) << "Error opening json file" << file.fileName();
+        return;
+    }
+
+    const QString json_data = file.readAll();
     file.close();
 
     // store the metadata to be loaded later after all params are available
@@ -880,14 +883,13 @@ bool Actuators::parseJson(const QJsonDocument &json)
 
 Fact *Actuators::getFact(const QString &paramName)
 {
-    if (!_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, paramName))
-    {
+    if (!_vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, paramName)) {
         qCDebug(ActuatorsConfigLog) << "Mixer: Param does not exist:" << paramName;
         return nullptr;
     }
-    Fact *fact = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, paramName);
-    subscribeFact(fact);
-    return fact;
+    Fact* fact = _vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, paramName);
+	subscribeFact(fact);
+	return fact;
 }
 
 void Actuators::subscribeFact(Fact *fact)

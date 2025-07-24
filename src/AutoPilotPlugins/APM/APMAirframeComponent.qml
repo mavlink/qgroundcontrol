@@ -13,11 +13,12 @@ import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
 
-import QGroundControl.FactSystem
+import QGroundControl
+
 import QGroundControl.FactControls
-import QGroundControl.Palette
+
 import QGroundControl.Controls
-import QGroundControl.Controllers
+
 import QGroundControl.ScreenTools
 
 SetupPage {
@@ -73,7 +74,7 @@ SetupPage {
                                          (_frameTypeAvailable ?  qsTr(" and frame type '%2'").arg(_frameType.enumStringValue) : "") +
                                          qsTr(".", "period for end of sentence")) +
                                     qsTr(" To change this configuration, select the desired frame class below and then reboot the vehicle.")
-                font.family:        ScreenTools.demiboldFontFamily
+                font.bold:          true
                 wrapMode:           Text.WordWrap
             }
 
@@ -198,7 +199,7 @@ SetupPage {
                                     Connections {
                                         target:                 _frameTypeAvailable ? _frameType : null
                                         ignoreUnknownSignals:   true
-                                        onRawValueChanged:      combo.selectFrameType()
+                                        function onRawValueChanged(value) { combo.selectFrameType() }
                                     }
                                 }
                             }

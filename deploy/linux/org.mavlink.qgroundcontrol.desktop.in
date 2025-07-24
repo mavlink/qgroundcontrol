@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=@CMAKE_PROJECT_NAME@
+GenericName=Ground Control Station
+Comment=@CMAKE_PROJECT_DESCRIPTION@
+Icon=@CMAKE_PROJECT_NAME@
+Exec=@CMAKE_PROJECT_NAME@
+Terminal=false
+Categories=Qt;Utility;Maps

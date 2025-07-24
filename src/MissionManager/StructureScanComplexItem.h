@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -102,14 +102,14 @@ public:
 
     static const QString name;
 
-    static const char* jsonComplexItemTypeValue;
+    static constexpr const char* settingsGroup =               "StructureScan";
+    static constexpr const char* scanBottomAltName =           "ScanBottomAlt";
+    static constexpr const char* structureHeightName =         "StructureHeight";
+    static constexpr const char* layersName =                  "Layers";
+    static constexpr const char* gimbalPitchName =             "GimbalPitch";
+    static constexpr const char* startFromTopName =            "StartFromTop";
 
-    static const char* settingsGroup;
-    static const char* scanBottomAltName;
-    static const char* structureHeightName;
-    static const char* layersName;
-    static const char* gimbalPitchName;
-    static const char* startFromTopName;
+    static constexpr const char* jsonComplexItemTypeValue =    "StructureScan";
 
 signals:
     void cameraShotsChanged             (int cameraShots);
@@ -160,9 +160,9 @@ private:
     SettingsFact    _startFromTopFact;
     SettingsFact    _entranceAltFact;
 
-    static const char* _jsonCameraCalcKey;
+    static constexpr const char* _jsonCameraCalcKey =          "CameraCalc";
 
-    static const char* _entranceAltName; // This value cannot be overriden
+    static constexpr const char* _entranceAltName = "EntranceAltitude"; // This value cannot be overriden
 
     friend class StructureScanComplexItemTest;
 };

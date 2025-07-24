@@ -1,5 +1,14 @@
 /****************************************************************************
  *
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
+/****************************************************************************
+ *
  *   Copyright (c) 2016 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,51 +49,29 @@
 #pragma once
 
 #include <QtCore/QtGlobal>
-
-#define GPS_READ_BUFFER_SIZE 1024
-
-#define GPS_INFO(...) qInfo(__VA_ARGS__)
-#define GPS_WARN(...) qWarning(__VA_ARGS__)
-#define GPS_ERR(...) qCritical(__VA_ARGS__)
+#include <QtCore/QDateTime>
+#include <QtCore/QLoggingCategory>
+#include <QtCore/QThread>
 
 #include "sensor_gps.h"
 #include "sensor_gnss_relative.h"
 #include "satellite_info.h"
 
-#define M_DEG_TO_RAD 		(M_PI / 180.0)
-#define M_RAD_TO_DEG 		(180.0 / M_PI)
-#define M_DEG_TO_RAD_F 		0.01745329251994f
-#define M_RAD_TO_DEG_F 		57.2957795130823f
+Q_DECLARE_LOGGING_CATEGORY(GPSDriversLog)
 
-#define M_PI_2_F M_PI
+#define GPS_INFO(...) qCInfo(GPSDriversLog, __VA_ARGS__)
+#define GPS_WARN(...) qCWarning(GPSDriversLog, __VA_ARGS__)
+#define GPS_ERR(...) qCCritical(GPSDriversLog, __VA_ARGS__)
 
-#include <QtCore/QThread>
+#define M_DEG_TO_RAD (M_PI / 180.0)
+#define M_RAD_TO_DEG (180.0 / M_PI)
+#define M_DEG_TO_RAD_F 0.0174532925f
+#define M_RAD_TO_DEG_F 57.2957795f
 
-class Sleeper : public QThread
-{
-public:
-    static void usleep(unsigned long usecs) { QThread::usleep(usecs); }
-};
+#define M_PI_2_F 0.63661977f
 
-static inline void gps_usleep(unsigned long usecs) {
-    Sleeper::usleep(usecs);
-}
-
-typedef uint64_t gps_abstime;
-
-#include <QtCore/QDateTime>
-/**
- * Get the current time in us. Function signature:
- * uint64_t hrt_absolute_time()
- */
-static inline gps_abstime gps_absolute_time() {
-    //FIXME: is there something with microsecond accuracy?
-    return QDateTime::currentMSecsSinceEpoch() * 1000;
-}
-
-//timespec is UNIX-specific
 #ifdef _WIN32
-#if _MSC_VER < 1900
+#if (_MSC_VER < 1900)
 struct timespec
 {
     time_t tv_sec;
@@ -95,3 +82,13 @@ struct timespec
 #endif
 #endif
 
+static inline void gps_usleep(unsigned long usecs)
+{
+    QThread::usleep(usecs);
+}
+
+typedef uint64_t gps_abstime;
+static inline gps_abstime gps_absolute_time()
+{
+    return (QDateTime::currentMSecsSinceEpoch() * 1000);
+}

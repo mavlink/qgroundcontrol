@@ -14,6 +14,12 @@
     "shortDesc": "Currently selected map type for flight maps",
     "type":             "string",
     "default":     "Hybrid"
+},
+{
+    "name":      "elevationMapProvider",
+    "shortDesc": "Currently selected elevation map provider",
+    "type":      "string",
+    "default":   "Copernicus"
 }
 ]
 }

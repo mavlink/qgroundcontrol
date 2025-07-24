@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2023 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -10,9 +10,10 @@
 #pragma once
 
 #include <string>
-#include <nlohmann/json.hpp>
+// #include <nlohmann/json_fwd.hpp>
 
 #include "UTMSPBlenderRestInterface.h"
+#include "parse/nlohmann/json.hpp"
 
 using json = nlohmann::ordered_json;
 
@@ -41,7 +42,7 @@ public:
                             const std::string& startDateTime,
                             const std::string& endDateTime);
     std::tuple<std::string, std::string, bool> registerFlightPlanNotification();
-    void activateFlightPlan();
+    bool activateFlightPlan(const std::string &token);
     void activateFlightPlanNotification();
     void  updateFlightPlanState(FlightState state);
     FlightState getFlightPlanState();
@@ -83,6 +84,8 @@ public:
     struct FlightData{
         std::string user;
         int operation;
+        std::string aircraftID;
+        std::string gcsID;
         std::string party;
         std::string startDateTime;
         std::string endDateTime;
@@ -96,4 +99,5 @@ private:
     std::string                _responseJSON;
     bool                       _responseStatus;
     std::string                _flightResponseID;
+    json                       _updateState;
 };

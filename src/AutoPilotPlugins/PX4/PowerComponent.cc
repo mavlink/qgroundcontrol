@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -13,12 +13,11 @@
 
 #include "PowerComponent.h"
 #include "ParameterManager.h"
-#include "FactSystem.h"
 #include "Vehicle.h"
 
-PowerComponent::PowerComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
-    VehicleComponent(vehicle, autopilot, parent),
-    _name(tr("Power"))
+PowerComponent::PowerComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
+    : VehicleComponent(vehicle, autopilot, AutoPilotPlugin::KnownPowerVehicleComponent, parent)
+    , _name(tr("Power"))
 {
 }
 
@@ -44,16 +43,16 @@ bool PowerComponent::requiresSetup(void) const
 
 bool PowerComponent::setupComplete(void) const
 {
-    if (!_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "BAT1_SOURCE") ||
-        !_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "BAT1_V_CHARGED") ||
-        !_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "BAT1_V_EMPTY") ||
-        !_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "BAT1_N_CELLS")) {
+    if (!_vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "BAT1_SOURCE") ||
+        !_vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "BAT1_V_CHARGED") ||
+        !_vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "BAT1_V_EMPTY") ||
+        !_vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "BAT1_N_CELLS")) {
         return true;
     }
-    return _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "BAT1_SOURCE")->rawValue().toInt() == -1 ||
-        (_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "BAT1_V_CHARGED")->rawValue().toFloat() != 0.0f &&
-        _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "BAT1_V_EMPTY")->rawValue().toFloat() != 0.0f &&
-        _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "BAT1_N_CELLS")->rawValue().toInt() != 0);
+    return _vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, "BAT1_SOURCE")->rawValue().toInt() == -1 ||
+        (_vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, "BAT1_V_CHARGED")->rawValue().toFloat() != 0.0f &&
+        _vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, "BAT1_V_EMPTY")->rawValue().toFloat() != 0.0f &&
+        _vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, "BAT1_N_CELLS")->rawValue().toInt() != 0);
 }
 
 QStringList PowerComponent::setupCompleteChangedTriggerList(void) const
@@ -63,10 +62,10 @@ QStringList PowerComponent::setupCompleteChangedTriggerList(void) const
 
 QUrl PowerComponent::setupSource(void) const
 {
-    return QUrl::fromUserInput("qrc:/qml/PowerComponent.qml");
+    return QUrl::fromUserInput("qrc:/qml/QGroundControl/AutoPilotPlugins/PX4/PowerComponent.qml");
 }
 
 QUrl PowerComponent::summaryQmlSource(void) const
 {
-    return QUrl::fromUserInput("qrc:/qml/PowerComponentSummary.qml");
+    return QUrl::fromUserInput("qrc:/qml/QGroundControl/AutoPilotPlugins/PX4/PowerComponentSummary.qml");
 }

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -10,17 +10,27 @@
 
 #include "RCChannelMonitorController.h"
 #include "Vehicle.h"
+#include "QGCLoggingCategory.h"
 
-RCChannelMonitorController::RCChannelMonitorController(void)
-    : _chanCount(0)
+QGC_LOGGING_CATEGORY(RCChannelMonitorControllerLog, "qgc.qmlcontrols.rcchannelmonitorcontroller")
+
+RCChannelMonitorController::RCChannelMonitorController(QObject *parent)
+    : FactPanelController(parent)
 {
-    connect(_vehicle, &Vehicle::rcChannelsChanged, this, &RCChannelMonitorController::_rcChannelsChanged);
+    // qCDebug(RCChannelMonitorControllerLog) << Q_FUNC_INFO << this;
+
+    (void) connect(_vehicle, &Vehicle::rcChannelsChanged, this, &RCChannelMonitorController::_rcChannelsChanged);
+}
+
+RCChannelMonitorController::~RCChannelMonitorController()
+{
+    // qCDebug(RCChannelMonitorControllerLog) << Q_FUNC_INFO << this;
 }
 
 void RCChannelMonitorController::_rcChannelsChanged(int channelCount, int pwmValues[QGCMAVLink::maxRcChannels])
 {
-    for (int channel=0; channel<channelCount; channel++) {
-        int channelValue = pwmValues[channel];
+    for (int channel = 0; channel < channelCount; channel++) {
+        const int channelValue = pwmValues[channel];
 
         if (_chanCount != channelCount) {
             _chanCount = channelCount;

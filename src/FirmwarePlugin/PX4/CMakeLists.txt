@@ -1,39 +1,30 @@
-find_package(Qt6 REQUIRED COMPONENTS Core)
+if(NOT QGC_DISABLE_PX4_PLUGIN_FACTORY)
+    target_sources(${CMAKE_PROJECT_NAME}
+        PRIVATE
+            PX4FirmwarePluginFactory.cc
+            PX4FirmwarePluginFactory.h
+    )
+endif()
 
-set(PX4_RESOURCES)
-qt_add_resources(PX4_RESOURCES PX4Resources.qrc)
-qt_add_library(PX4FirmwarePlugin STATIC
-    px4_custom_mode.h
-    PX4FirmwarePlugin.cc
-    PX4FirmwarePlugin.h
-    # PX4FirmwarePluginFactory.cc
-    # PX4FirmwarePluginFactory.h
-    PX4ParameterMetaData.cc
-    PX4ParameterMetaData.h
-    ${PX4_RESOURCES}
-)
+if(NOT QGC_DISABLE_PX4_PLUGIN)
+    # set(PX4_RESOURCES)
+    # qt_add_resources(PX4_RESOURCES PX4Resources.qrc)
 
-target_link_libraries(PX4FirmwarePlugin
-    PRIVATE
-        AutoPilotPlugins
-        MissionManager
-        PX4AutoPilotPlugin
-        QGC
-        Settings
-        VehicleSetup
-        Utilities
-    PUBLIC
-        Qt6::Core
-        FactSystem
-        FirmwarePlugin
-        MAVLink
-)
+    target_sources(${CMAKE_PROJECT_NAME}
+        PRIVATE
+            px4_custom_mode.h
+            PX4FirmwarePlugin.cc
+            PX4FirmwarePlugin.h
+            PX4ParameterMetaData.cc
+            PX4ParameterMetaData.h
+    )
+endif()
 
-target_include_directories(PX4FirmwarePlugin PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # file(GLOB QML_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.qml)
 # # file(GLOB QML_RESOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/res/*/*.*)
-# qt_add_qml_module(PX4FirmwarePlugin
+# qt_add_qml_module(QGC
 #     URI QGroundControl.PX4FirmwarePlugin
 #     VERSION 1.0
 #     # RESOURCES ${QML_RESOURCES}

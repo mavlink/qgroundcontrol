@@ -11,11 +11,12 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import QGroundControl.FactSystem
+import QGroundControl
+
 import QGroundControl.FactControls
-import QGroundControl.Palette
+
 import QGroundControl.Controls
-import QGroundControl.Controllers
+
 import QGroundControl.ScreenTools
 
 Item {
@@ -65,7 +66,7 @@ Item {
                     QGCLabel {
                         id:             flightModeLabel
                         text:           qsTr("Flight Mode Settings")
-                        font.family:    ScreenTools.demiboldFontFamily
+                        font.bold:      true
                     }
 
                     Rectangle {
@@ -126,7 +127,7 @@ Item {
 
                     QGCLabel {
                         text:           qsTr("Switch Settings")
-                        font.family:    ScreenTools.demiboldFontFamily
+                        font.bold:      true
                     }
 
                     Rectangle {

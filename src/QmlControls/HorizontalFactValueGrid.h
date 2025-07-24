@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <QtQmlIntegration/QtQmlIntegration>
+
 #include "FactValueGrid.h"
 
 class InstrumentValueData;
@@ -16,16 +18,16 @@ class InstrumentValueData;
 class HorizontalFactValueGrid : public FactValueGrid
 {
     Q_OBJECT
+    QML_NAMED_ELEMENT(HorizontalFactValueGridTemplate)
 
 public:
-    HorizontalFactValueGrid(QQuickItem *parent = nullptr);
-    HorizontalFactValueGrid(const QString& defaultSettingsGroup);
+    explicit HorizontalFactValueGrid(QQuickItem *parent = nullptr);
 
-    Q_PROPERTY(QString telemetryBarDefaultSettingsGroup MEMBER telemetryBarDefaultSettingsGroup CONSTANT)
-    Q_PROPERTY(QString telemetryBarUserSettingsGroup    MEMBER telemetryBarUserSettingsGroup    CONSTANT)
+    Q_PROPERTY(QString telemetryBarSettingsGroup    MEMBER telemetryBarSettingsGroup    CONSTANT)
+    Q_PROPERTY(QString vehicleCardSettingsGroup     MEMBER vehicleCardSettingsGroup     CONSTANT)
 
-    static const QString telemetryBarDefaultSettingsGroup;
-    static const QString telemetryBarUserSettingsGroup;
+    static const QString telemetryBarSettingsGroup;
+    static const QString vehicleCardSettingsGroup;
 
 private:
     Q_DISABLE_COPY(HorizontalFactValueGrid)

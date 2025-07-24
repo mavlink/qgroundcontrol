@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -29,7 +29,7 @@ class PX4ParameterMetaData : public QObject
     Q_OBJECT
 
 public:
-    PX4ParameterMetaData(void);
+    PX4ParameterMetaData(QObject* parent = nullptr);
 
     void            loadParameterFactMetaDataFile   (const QString& metaDataFile);
     FactMetaData*   getMetaDataForFact              (const QString& name, MAV_TYPE vehicleType, FactMetaData::ValueType_t type);
@@ -55,4 +55,7 @@ private:
 
     bool                                _parameterMetaDataLoaded        = false;    ///< true: parameter meta data already loaded
     FactMetaData::NameToMetaDataMap_t   _mapParameterName2FactMetaData;             ///< Maps from a parameter name to FactMetaData
+
+    static constexpr const char* kInvalidConverstion = "Internal Error: No support for string parameters";
+
 };

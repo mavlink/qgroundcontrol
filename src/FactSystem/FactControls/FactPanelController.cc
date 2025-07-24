@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -8,50 +8,52 @@
  ****************************************************************************/
 
 #include "FactPanelController.h"
-#include "MultiVehicleManager.h"
-#include "QGCApplication.h"
-#include "ParameterManager.h"
-#include "FactSystem.h"
 #include "AutoPilotPlugin.h"
-#include "Vehicle.h"
+#include "MultiVehicleManager.h"
+#include "ParameterManager.h"
+#include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
+#include "Vehicle.h"
 
 #include <QtQml/QQmlEngine>
 
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
+QGC_LOGGING_CATEGORY(FactPanelControllerLog, "qgc.factsystem.factcontrols.factpanelcontroller")
 
-QGC_LOGGING_CATEGORY(FactPanelControllerLog, "FactPanelControllerLog")
-
-FactPanelController::FactPanelController()
+FactPanelController::FactPanelController(QObject *parent)
+    : QObject(parent)
+    , _vehicle(MultiVehicleManager::instance()->activeVehicle())
 {
-    _vehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
-    if (_vehicle) {
-        _autopilot = _vehicle->autopilotPlugin();
-    } else {
-        _vehicle = qgcApp()->toolbox()->multiVehicleManager()->offlineEditingVehicle();
+    // qCDebug(FactPanelControllerLog) << Q_FUNC_INFO << this;
+
+    if (!_vehicle) {
+        _vehicle = MultiVehicleManager::instance()->offlineEditingVehicle();
     }
 
     _missingParametersTimer.setInterval(500);
     _missingParametersTimer.setSingleShot(true);
-    connect(&_missingParametersTimer, &QTimer::timeout, this, &FactPanelController::_checkForMissingParameters);
+    (void) connect(&_missingParametersTimer, &QTimer::timeout, this, &FactPanelController::_checkForMissingParameters);
 }
 
-void FactPanelController::_reportMissingParameter(int componentId, const QString& name)
+FactPanelController::~FactPanelController()
 {
-    if (componentId == FactSystem::defaultComponentId) {
+    // qCDebug(FactPanelControllerLog) << Q_FUNC_INFO << this;
+}
+
+void FactPanelController::_reportMissingParameter(int componentId, const QString &name) const
+{
+    if (componentId == ParameterManager::defaultComponentId) {
         componentId = _vehicle->defaultComponentId();
     }
 
     qgcApp()->reportMissingParameter(componentId, name);
-    qCWarning(FactPanelControllerLog) << "Missing parameter:" << QString("%1:%2").arg(componentId).arg(name);
+    qCWarning(FactPanelControllerLog) << "Missing parameter:" << componentId << name;
 }
 
-bool FactPanelController::_allParametersExists(int componentId, QStringList names)
+bool FactPanelController::_allParametersExists(int componentId, const QStringList &names) const
 {
     bool noMissingFacts = true;
 
-    foreach (const QString &name, names) {
+    for (const QString &name : names) {
         if (_vehicle && !_vehicle->parameterManager()->parameterExists(componentId, name)) {
             _reportMissingParameter(componentId, name);
             noMissingFacts = false;
@@ -61,29 +63,29 @@ bool FactPanelController::_allParametersExists(int componentId, QStringList name
     return noMissingFacts;
 }
 
-
-Fact* FactPanelController::getParameterFact(int componentId, const QString& name, bool reportMissing)
+Fact *FactPanelController::getParameterFact(int componentId, const QString &name, bool reportMissing) const
 {
     if (_vehicle && _vehicle->parameterManager()->parameterExists(componentId, name)) {
-        Fact* fact = _vehicle->parameterManager()->getParameter(componentId, name);
+        Fact *const fact = _vehicle->parameterManager()->getParameter(componentId, name);
         QQmlEngine::setObjectOwnership(fact, QQmlEngine::CppOwnership);
         return fact;
-    } else {
-        if (reportMissing) {
-            _reportMissingParameter(componentId, name);
-        }
-        return nullptr;
     }
+
+    if (reportMissing) {
+        _reportMissingParameter(componentId, name);
+    }
+
+    return nullptr;
 }
 
-bool FactPanelController::parameterExists(int componentId, const QString& name)
+bool FactPanelController::parameterExists(int componentId, const QString &name) const
 {
-    return _vehicle ? _vehicle->parameterManager()->parameterExists(componentId, name) : false;
+    return (_vehicle ? _vehicle->parameterManager()->parameterExists(componentId, name) : false);
 }
 
-void FactPanelController::getMissingParameters(QStringList rgNames)
+void FactPanelController::getMissingParameters(const QStringList &rgNames)
 {
-    for (const QString& name: rgNames) {
+    for (const QString &name: rgNames) {
         _missingParameterWaitList.append(name);
         _vehicle->parameterManager()->refreshParameter(MAV_COMP_ID_AUTOPILOT1, name);
     }
@@ -91,12 +93,12 @@ void FactPanelController::getMissingParameters(QStringList rgNames)
     _missingParametersTimer.start();
 }
 
-void FactPanelController::_checkForMissingParameters(void)
+void FactPanelController::_checkForMissingParameters()
 {
-    QStringList waitList = _missingParameterWaitList;
-    for (const QString& name: waitList) {
+    const QStringList waitList = _missingParameterWaitList;
+    for (const QString &name: waitList) {
         if (_vehicle->parameterManager()->parameterExists(MAV_COMP_ID_AUTOPILOT1, name)) {
-            _missingParameterWaitList.removeOne(name);
+            (void) _missingParameterWaitList.removeOne(name);
         }
     }
 

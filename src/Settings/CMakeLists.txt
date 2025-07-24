@@ -1,62 +1,57 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Multimedia Qml)
-
-qt_add_library(Settings STATIC
-	ADSBVehicleManagerSettings.cc
-	ADSBVehicleManagerSettings.h
-	APMMavlinkStreamRateSettings.cc
-	APMMavlinkStreamRateSettings.h
-	AppSettings.cc
-	AppSettings.h
-	AutoConnectSettings.cc
-	AutoConnectSettings.h
-	BatteryIndicatorSettings.cc
-	BatteryIndicatorSettings.h
-	BrandImageSettings.cc
-	BrandImageSettings.h
-	CustomMavlinkActionsSettings.cc
-	CustomMavlinkActionsSettings.h
-	FirmwareUpgradeSettings.cc
-	FirmwareUpgradeSettings.h
-	FlightMapSettings.cc
-	FlightMapSettings.h
-	FlightModeSettings.cc
-	FlightModeSettings.h
-	FlyViewSettings.cc
-	FlyViewSettings.h
-	OfflineMapsSettings.cc
-	OfflineMapsSettings.h
-	PlanViewSettings.cc
-	PlanViewSettings.h
-	RemoteIDSettings.cc
-	RemoteIDSettings.h
-	RTKSettings.cc
-	RTKSettings.h
-	SettingsGroup.cc
-	SettingsGroup.h
-	SettingsManager.cc
-	SettingsManager.h
-	UnitsSettings.cc
-	UnitsSettings.h
-	VideoSettings.cc
-	VideoSettings.h
-    MapsSettings.cc
-    MapsSettings.h
-    Viewer3DSettings.cc
-    Viewer3DSettings.h
+target_sources(${CMAKE_PROJECT_NAME}
+    PRIVATE
+        ADSBVehicleManagerSettings.cc
+        ADSBVehicleManagerSettings.h
+        AppSettings.cc
+        AppSettings.h
+        AutoConnectSettings.cc
+        AutoConnectSettings.h
+        BatteryIndicatorSettings.cc
+        BatteryIndicatorSettings.h
+        BrandImageSettings.cc
+        BrandImageSettings.h
+        MavlinkActionsSettings.cc
+        MavlinkActionsSettings.h
+        FirmwareUpgradeSettings.cc
+        FirmwareUpgradeSettings.h
+        FlightMapSettings.cc
+        FlightMapSettings.h
+        FlightModeSettings.cc
+        FlightModeSettings.h
+        FlyViewSettings.cc
+        FlyViewSettings.h
+        GimbalControllerSettings.cc
+        GimbalControllerSettings.h
+        MavlinkSettings.cc
+        MavlinkSettings.h
+        OfflineMapsSettings.cc
+        OfflineMapsSettings.h
+        PlanViewSettings.cc
+        PlanViewSettings.h
+        RemoteIDSettings.cc
+        RemoteIDSettings.h
+        RTKSettings.cc
+        RTKSettings.h
+        SettingsGroup.cc
+        SettingsGroup.h
+        SettingsManager.cc
+        SettingsManager.h
+        UnitsSettings.cc
+        UnitsSettings.h
+        VideoSettings.cc
+        VideoSettings.h
+        MapsSettings.cc
+        MapsSettings.h
+        Viewer3DSettings.cc
+        Viewer3DSettings.h
 )
 
-target_link_libraries(Settings
-	PRIVATE
-		Qt6::Multimedia
-		API
-		QmlControls
-		Vehicle
-	PUBLIC
-		Qt6::Core
-		Qt6::Qml
-		Comms
-		FactSystem
-		QGC
-)
+if(NOT QGC_DISABLE_APM_MAVLINK)
+    target_sources(${CMAKE_PROJECT_NAME}
+        PRIVATE
+            APMMavlinkStreamRateSettings.cc
+            APMMavlinkStreamRateSettings.h
+    )
+endif()
 
-target_include_directories(Settings PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

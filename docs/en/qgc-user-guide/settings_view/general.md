@@ -178,7 +178,7 @@ The settings are:
 - Use Specified Base Position
   - **Base Position Latitude:** Latitude of fixed RTK base station.
   - **Base Position Longitude:** Longitude of fixed RTK base station.
-  - **Base Position Alt (WGS94):** Altitude of fixed RTK base station.
+  - **Base Position Alt (WGS84):** Altitude of fixed RTK base station.
   - **Base Position Accuracy:** Accuracy of base station position information.
   - **Save Current Base Position** (button): Press to copy settings from the last Survey-In operation to the _Use Specified Base Position_ fields above.
 
@@ -215,7 +215,7 @@ The _Video_ section is used to define the source and connection settings for vid
 
 The settings are:
 
-- **Video Source**: Video Stream Disabled | RTSP Video Stream | UDP h.264 Video Stream | UDP h.265 Video Stream | TCP-MPEG2 Video Stream | MPEG-TS (h.264) Video Stream | Integrated Camera
+- **Video Source**: Video Stream Disabled | RTSP Video Stream | UDP h.264 Video Stream | UDP h.265 Video Stream | TCP-MPEG2 Video Stream | MPEG-TS Video Stream | Integrated Camera
 
   ::: info
   If no video source is specified then no other video or _video recording_ settings will be displayed (above we see the settings when UDP source is selected).

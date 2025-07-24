@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -70,4 +70,7 @@ protected:
     QString         _settingsGroup;
 
     QMap<QString, FactMetaData*> _nameToMetaDataMap;
+
+private:
+    static constexpr const char* kJsonFile = ":/json/%1.SettingsGroup.json";
 };

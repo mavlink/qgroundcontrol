@@ -4,21 +4,6 @@ import QtPositioning
 
 import QGroundControl.Viewer3D
 
-import "Djif450/DroneModel_arm_1"
-import "Djif450/DroneModel_arm_2"
-import "Djif450/DroneModel_arm_3"
-import "Djif450/DroneModel_arm_4"
-import "Djif450/DroneModel_BLDC_1"
-import "Djif450/DroneModel_BLDC_2"
-import "Djif450/DroneModel_BLDC_3"
-import "Djif450/DroneModel_BLDC_4"
-import "Djif450/DroneModel_Base_Top_1"
-import "Djif450/DroneModel_Base_bottom_1"
-import "Djif450/DroneModel_propeller22_1"
-import "Djif450/DroneModel_propeller22_2"
-import "Djif450/DroneModel_propeller2_2"
-import "Djif450/DroneModel_propeller2_7"
-
 ///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
 
 Node{

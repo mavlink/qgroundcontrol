@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -12,6 +12,7 @@
 
 #include <QtCore/QStringList>
 #include <QtCore/QVariantList>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "FactPanelController.h"
 #include "QGCMAVLink.h"
@@ -20,18 +21,8 @@
 class APMFlightModesComponentController : public FactPanelController
 {
     Q_OBJECT
-    
-public:
-    enum SimpleModeValues {
-        SimpleModeStandard = 0,
-        SimpleModeSimple,
-        SimpleModeSuperSimple,
-        SimpleModeCustom
-    };
-    Q_ENUM(SimpleModeValues)
-
-    APMFlightModesComponentController(void);
-    
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_PROPERTY(QString      modeParamPrefix         MEMBER _modeParamPrefix         CONSTANT)
     Q_PROPERTY(QString      modeChannelParam        MEMBER _modeChannelParam        CONSTANT)
     Q_PROPERTY(int          activeFlightMode        READ activeFlightMode           NOTIFY activeFlightModeChanged)
@@ -43,45 +34,55 @@ public:
     Q_PROPERTY(QVariantList simpleModeEnabled       MEMBER _simpleModeEnabled       NOTIFY simpleModeEnabledChanged)
     Q_PROPERTY(QVariantList superSimpleModeEnabled  MEMBER _superSimpleModeEnabled  NOTIFY superSimpleModeEnabledChanged)
 
+public:
+    explicit APMFlightModesComponentController(QObject *parent = nullptr);
+
+    enum SimpleModeValues {
+        SimpleModeStandard = 0,
+        SimpleModeSimple,
+        SimpleModeSuperSimple,
+        SimpleModeCustom
+    };
+    Q_ENUM(SimpleModeValues)
+
     Q_INVOKABLE void setSimpleMode(int fltModeIndex, bool enabled);
     Q_INVOKABLE void setSuperSimpleMode(int fltModeIndex, bool enabled);
 
-    int activeFlightMode(void) const { return _activeFlightMode; }
-    QVariantList channelOptionEnabled(void) const { return _rgChannelOptionEnabled; }
+    int activeFlightMode() const { return _activeFlightMode; }
+    QVariantList channelOptionEnabled() const { return _rgChannelOptionEnabled; }
 
 signals:
-    void activeFlightModeChanged        (int activeFlightMode);
-    void channelOptionEnabledChanged    (void);
-    void simpleModeChanged              (int simpleMode);
-    void simpleModeEnabledChanged       (void);
-    void superSimpleModeEnabledChanged  (void);
+    void activeFlightModeChanged(int activeFlightMode);
+    void channelOptionEnabledChanged();
+    void simpleModeChanged(int simpleMode);
+    void simpleModeEnabledChanged();
+    void superSimpleModeEnabledChanged();
 
 private slots:
-    void _rcChannelsChanged                     (int channelCount, int pwmValues[QGCMAVLink::maxRcChannels]);
-    void _updateSimpleParamsFromSimpleMode      (void);
-    void _setupSimpleModeEnabled     (void);
+    void _rcChannelsChanged(int channelCount, int pwmValues[QGCMAVLink::maxRcChannels]);
+    void _updateSimpleParamsFromSimpleMode();
+    void _setupSimpleModeEnabled();
 
 private:
-    QString         _modeParamPrefix;
-    QString         _modeChannelParam;
-    int             _activeFlightMode;
-    int             _channelCount;
-    QVariantList    _rgChannelOptionEnabled;
-    QStringList     _simpleModeNames;
-    int             _simpleMode;
-    Fact*           _simpleModeFact;
-    Fact*           _superSimpleModeFact;
-    bool            _simpleModesSupported;
-    QVariantList    _simpleModeEnabled;
-    QVariantList    _superSimpleModeEnabled;
+    Fact *_simpleModeFact = nullptr;
+    Fact *_superSimpleModeFact = nullptr;
+    const bool _simpleModesSupported = false;
+    int _activeFlightMode = 0;
+    int _channelCount = QGCMAVLink::maxRcChannels;
+    int _simpleMode = SimpleModeStandard;
+    QString _modeChannelParam;
+    QString _modeParamPrefix;
+    const QStringList _simpleModeNames = { tr("Off"), tr("Simple"), tr("Super-Simple"), tr("Custom") };
+    QVariantList _rgChannelOptionEnabled;
 
-    static const uint8_t    _allSimpleBits =    0x3F;
-    static const int        _cChannelOptions =  11;
-    static const int        _cSimpleModeBits =  8;
-    static const int        _cFltModes =        6;
+    QVariantList _simpleModeEnabled;
+    QVariantList _superSimpleModeEnabled;
 
-    static const char*      _simpleParamName;
-    static const char*      _superSimpleParamName;
+    static constexpr uint8_t _allSimpleBits = 0x3F;
+    static constexpr int _cChannelOptions = 11;
+    static constexpr int _cSimpleModeBits = 8;
+    static constexpr int _cFltModes = 6;
 
-    static bool _typeRegistered;
+    static constexpr const char *_simpleParamName = "SIMPLE";
+    static constexpr const char *_superSimpleParamName = "SUPER_SIMPLE";
 };

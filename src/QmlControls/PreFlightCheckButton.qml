@@ -11,7 +11,7 @@ import QtQuick
 import QtQuick.Controls
 
 import QGroundControl
-import QGroundControl.Palette
+
 import QGroundControl.ScreenTools
 
 /// The PreFlightCheckButton supports creating a button which the user then has to verify/click to confirm a check.
@@ -107,9 +107,9 @@ QGCButton {
             _telemetryState = _statePassed
             return
         }
-        if (manualText !== "" && _manualState !== _statePassed) {
+        if (manualText !== "") {
             // User is confirming a manual check
-            _manualState = _statePassed
+            _manualState = (_manualState === _statePassed) ? _statePending : _statePassed
         }
     }
 

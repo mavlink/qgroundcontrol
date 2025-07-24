@@ -38,30 +38,30 @@ To create a scan:
 
 1. This will create a simple square structure scan on the map.
 
-   ![Initial Polygon](../../../assets/plan/structure_scan_v2/initial_polygon_scan.jpg)
+  ![Initial Polygon](../../../assets/plan/structure_scan_v2/initial_polygon_scan.jpg)
 
-   The region shown in green must be modified so that it surrounds the structure.
+  The region shown in green must be modified so that it surrounds the structure.
 
-   - Drag the opaque vertices on the map to the edge of the structure (example circled in mauve above).
-   - If the structure footprint is more than a simple square you can click the semi-transparent circles between the vertices to create a new vertix.
+  - Drag the opaque vertices on the map to the edge of the structure (example circled in mauve above).
+  - If the structure footprint is more than a simple square you can click the semi-transparent circles between the vertices to create a new vertix.
 
 2. You can also change to a circular footprint by clicking on the central "vertix" (marked in red) and selecting _Circle_ in the popup menu.
 
-   ![Circle Scan](../../../assets/plan/structure_scan_v2/circle_scan.jpg).
+  ![Circle Scan](../../../assets/plan/structure_scan_v2/circle_scan.jpg).
 
-   - From the popup menu you can switch back to a polygon footprint and change the radius and/or position of the scan.
-   - Drag the central vertix to position the centre of the circle.
+  - From the popup menu you can switch back to a polygon footprint and change the radius and/or position of the scan.
+  - Drag the central vertix to position the centre of the circle.
 
 3. The rest of the configuration is handled using the _Structure Scan_ editor on the right hand side of the view.
-   First select whether you want to perform a manual scan, a scan using a particular camera, or a scan using a custom camera definition.
+  First select whether you want to perform a manual scan, a scan using a particular camera, or a scan using a custom camera definition.
 
-   ::: info
-   The main difference between the modes is that predefined cameras are already set up to correctly calculate an effective layer height and trigger distance.
-   :::
+  ::: info
+  模式之间的主要差异是预定义的摄像头已经设置，以正确计算有效的图层高度和触发距离。
+  :::
 
-   Options for the different modes are shown below.
+  Options for the different modes are shown below.
 
-   ![Structure Scan editor](../../../assets/plan/structure_scan_v2/editor_options.jpg)
+  ![Structure Scan editor](../../../assets/plan/structure_scan_v2/editor_options.jpg)
 
 The user can always configure the following settings:
 

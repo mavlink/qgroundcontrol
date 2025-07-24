@@ -11,9 +11,10 @@
 import QtQuick
 import QtQuick.Controls
 
-import QGroundControl.FactSystem
+import QGroundControl
+
 import QGroundControl.FactControls
-import QGroundControl.Palette
+
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
 
@@ -141,16 +142,16 @@ SetupPage {
             }
 
             // Whenever any SERVO#_FUNCTION parameters changes we need to go looking for gimbal output channels again
-            Connections { target: _rc5Function; onValueChanged: calcGimbalOutValues() }
-            Connections { target: _rc6Function; onValueChanged: calcGimbalOutValues() }
-            Connections { target: _rc7Function; onValueChanged: calcGimbalOutValues() }
-            Connections { target: _rc8Function; onValueChanged: calcGimbalOutValues() }
-            Connections { target: _rc9Function; onValueChanged: calcGimbalOutValues() }
-            Connections { target: _rc10Function; onValueChanged: calcGimbalOutValues() }
-            Connections { target: _rc11Function; onValueChanged: calcGimbalOutValues() }
-            Connections { target: _rc12Function; onValueChanged: calcGimbalOutValues() }
-            Connections { target: _rc13Function; onValueChanged: calcGimbalOutValues() }
-            Connections { target: _rc14Function; onValueChanged: calcGimbalOutValues() }
+            Connections { target: _rc5Function; function onValueChanged(value) { calcGimbalOutValues() } }
+            Connections { target: _rc6Function; function onValueChanged(value) { calcGimbalOutValues() } }
+            Connections { target: _rc7Function; function onValueChanged(value) { calcGimbalOutValues() } }
+            Connections { target: _rc8Function; function onValueChanged(value) { calcGimbalOutValues() } }
+            Connections { target: _rc9Function; function onValueChanged(value) { calcGimbalOutValues() } }
+            Connections { target: _rc10Function; function onValueChanged(value) { calcGimbalOutValues() } }
+            Connections { target: _rc11Function; function onValueChanged(value) { calcGimbalOutValues() } }
+            Connections { target: _rc12Function; function onValueChanged(value) { calcGimbalOutValues() } }
+            Connections { target: _rc13Function; function onValueChanged(value) { calcGimbalOutValues() } }
+            Connections { target: _rc14Function; function onValueChanged(value) { calcGimbalOutValues() } }
 
             // Whenever an MNT_RC_IN_* setting is changed make sure to turn on RC targeting
             Connections {
@@ -190,8 +191,12 @@ SetupPage {
                     var baseValue = 8
                     // Extra outputs
                     // http://ardupilot.org/copter/docs/parameters.html#brd-pwm-count-auxiliary-pin-config
-                    var brd_pwm_count_value = controller.getParameterFact(-1, "BRD_PWM_COUNT").value
-                    update(8 + (brd_pwm_count_value == 7 ? 3 : brd_pwm_count_value))
+                    if (controller.parameterExists(-1, "BRD_PWM_COUNT")) {
+                        const brd_pwm_count_value = controller.getParameterFact(-1, "BRD_PWM_COUNT").value
+                        update(baseValue + (brd_pwm_count_value == 7 ? 3 : brd_pwm_count_value))
+                    } else {
+                        update(baseValue)
+                    }
                 }
             }
 
@@ -219,7 +224,7 @@ SetupPage {
                     QGCLabel {
                         id:         directionLabel
                         text:       qsTr("Gimbal ") + directionTitle
-                        font.family: ScreenTools.demiboldFontFamily
+                        font.bold:   true
                     }
 
                     Rectangle {
@@ -404,7 +409,7 @@ SetupPage {
                     QGCLabel {
                         id:             settingsLabel
                         text:           qsTr("Gimbal Settings")
-                        font.family:    ScreenTools.demiboldFontFamily
+                        font.bold:      true
                     }
 
                     Rectangle {

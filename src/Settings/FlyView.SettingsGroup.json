@@ -62,18 +62,46 @@
     "min":              1
 },
 {
+    "name":         "forwardFlightGoToLocationLoiterRad",
+    "shortDesc":    "Loiter radius for orbiting the Go To Location during forward flight. This only applies if the firmware supports a radius in MAV_CMD_DO_REPOSITION commands.",
+    "type":         "double",
+    "units":        "m",
+    "default":      80,
+    "min":          25
+},
+{
+    "name":         "goToLocationRequiresConfirmInGuided",
+    "shortDesc":    "Require slide confirmation for Go To Location when the vehicle is already in Guided mode.",
+    "type":         "bool",
+    "default":      true
+},
+{
     "name":             "updateHomePosition",
     "shortDesc": "Send updated GCS' home position to autopilot in case of change of the home position",
     "type":                 "bool",
     "default":              false
 },
 {
-    "name":         "instrumentQmlFile",
+    "name":         "instrumentQmlFile2",
     "shortDesc":    "Qml file for instrument panel",
     "type":         "string",
-    "enumStrings":  "Integrated Compass/Attitude,Horizontal Compass/Atttitude,Large Vertical",
-    "enumValues":   "qrc:/qml/IntegratedCompassAttitude.qml,qrc:/qml/HorizontalCompassAttitude.qml,qrc:/qml/VerticalCompassAttitude.qml",
-    "default":      "qrc:/qml/IntegratedCompassAttitude.qml"
+    "enumStrings":  "Integrated Compass & Attitude,Horizontal Compass & Attitude,Large Vertical",
+    "enumValues":   "qrc:/qml/QGroundControl/FlightMap/Widgets/IntegratedCompassAttitude.qml,qrc:/qml/QGroundControl/FlightMap/Widgets/HorizontalCompassAttitude.qml,qrc:/qml/QGroundControl/FlightMap/Widgets/VerticalCompassAttitude.qml",
+    "default":      "qrc:/qml/QGroundControl/FlightMap/Widgets/IntegratedCompassAttitude.qml"
+},
+{
+    "name":         "requestControlAllowTakeover",
+    "shortDesc":    "When requesting vehicle control, allow other GCS to override control automatically, or require this GCS to accept the request first.",
+    "type":         "bool",
+    "default":      false
+},
+{
+    "name":         "requestControlTimeout",
+    "shortDesc":    "Timeout in seconds before a request to a GCS to allow takeover is assumed to be rejected. This is used to display the timeout graphically on requestor and GCS in control.",
+    "type":         "uint32",
+    "min":          3,
+    "max":          60,
+    "default":      10
 }
 ]
 }

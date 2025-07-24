@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -9,18 +9,17 @@
 
 #pragma once
 
-#include "QGCToolbox.h"
 #include "QGCMAVLink.h"
 
-#include <QtCore/QVariantList>
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QMap>
+#include <QtCore/QObject>
+#include <QtCore/QVariantList>
+#include <QtQmlIntegration/QtQmlIntegration>
 
-class MissionCommandUIInfo;
 class MissionCommandList;
-class SettingsManager;
-#ifdef UNITTEST_BUILD
 class MissionCommandTreeTest;
-#endif
+class MissionCommandUIInfo;
 class Vehicle;
 
 /// Manages a hierarchy of MissionCommandUIInfo.
@@ -42,57 +41,63 @@ class Vehicle;
 /// When ui info is requested for a specific vehicle the static hierarchy in _staticCommandTree is collapsed into the set of available commands in
 /// _allCommands taking into account the appropriate set of overrides for the MAV_AUTOPILOT/MAV_TYPE combination associated with the vehicle.
 ///
-class MissionCommandTree : public QGCTool
+class MissionCommandTree : public QObject
 {
     Q_OBJECT
-    
+    QML_ELEMENT
+    QML_UNCREATABLE("")
+    Q_MOC_INCLUDE("Vehicle.h")
+
+    friend class MissionCommandTreeTest;
+
 public:
-    MissionCommandTree(QGCApplication* app, QGCToolbox* toolbox, bool unitTest = false);
+    /// Constructs an MissionCommandTree object.
+    ///     @param unitTest Unit Tests are Running.
+    ///     @param parent The parent QObject.
+    explicit MissionCommandTree(bool unitTest = false, QObject *parent = nullptr);
 
-    /// Returns the friendly name for the specified command
-    QString friendlyName(MAV_CMD command);
+    /// Destructor for the MissionCommandTree class.
+    ~MissionCommandTree();
 
-    /// Returns the raw name for the specified command
-    QString rawName(MAV_CMD command);
+    /// Gets the singleton instance of MissionCommandTree.
+    ///     @return The singleton instance.
+    static MissionCommandTree *instance();
 
-    bool isLandCommand(MAV_CMD command);
-    bool isTakeoffCommand(MAV_CMD command);
-
-    const QList<MAV_CMD>& allCommandIds(void) const;
-
-    Q_INVOKABLE QStringList categoriesForVehicle(Vehicle* vehicle) { return _availableCategoriesForVehicle(vehicle); }
-
-    const MissionCommandUIInfo* getUIInfo(Vehicle* vehicle, QGCMAVLink::VehicleClass_t vtolMode, MAV_CMD command);
+    Q_INVOKABLE QStringList categoriesForVehicle(Vehicle *vehicle);
 
     /// @param showFlyThroughCommands - true: all commands shows, false: filter out commands which the vehicle flies through (specifiedCoordinate=true, standaloneCoordinate=false)
-    Q_INVOKABLE QVariantList getCommandsForCategory(Vehicle* vehicle, const QString& category, bool showFlyThroughCommands);
+    Q_INVOKABLE QVariantList getCommandsForCategory(Vehicle *vehicle, const QString &category, bool showFlyThroughCommands);
 
-    // Overrides from QGCTool
-    virtual void setToolbox(QGCToolbox* toolbox);
+    /// Returns the friendly name for the specified command
+    QString friendlyName(MAV_CMD command) const;
+
+    /// Returns the raw name for the specified command
+    QString rawName(MAV_CMD command) const;
+
+    bool isLandCommand(MAV_CMD command) const;
+    bool isTakeoffCommand(MAV_CMD command) const;
+
+    const QList<MAV_CMD> &allCommandIds() const;
+
+    const MissionCommandUIInfo *getUIInfo(Vehicle *vehicle, QGCMAVLink::VehicleClass_t vtolMode, MAV_CMD command);
 
 private:
-    void                        _collapseHierarchy              (const MissionCommandList* cmdList, QMap<MAV_CMD, MissionCommandUIInfo*>& collapsedTree);
-    void                        _buildAllCommands               (Vehicle* vehicle, QGCMAVLink::VehicleClass_t vtolMode);
-    QStringList                 _availableCategoriesForVehicle  (Vehicle* vehicle);
-    void                        _firmwareAndVehicleClassInfo    (Vehicle* vehicle, QGCMAVLink::VehicleClass_t vtolMode, QGCMAVLink::FirmwareClass_t& firmwareClass, QGCMAVLink::VehicleClass_t& vehicleClass) const;
+    /// Add the next level of the hierarchy to a collapsed tree.
+    ///     @param cmdList          List of mission commands to collapse into ui info
+    ///     @param collapsedTree    Tree we are collapsing into
+    void _collapseHierarchy(const MissionCommandList *cmdList, QMap<MAV_CMD, MissionCommandUIInfo*> &collapsedTree) const;
+    void _buildAllCommands(Vehicle *vehicle, QGCMAVLink::VehicleClass_t vtolMode);
+    QStringList _availableCategoriesForVehicle(Vehicle *vehicle);
+    void _firmwareAndVehicleClassInfo(Vehicle *vehicle, QGCMAVLink::VehicleClass_t vtolMode, QGCMAVLink::FirmwareClass_t &firmwareClass, QGCMAVLink::VehicleClass_t &vehicleClass) const;
 
-private:
-    QString             _allCommandsCategory;   ///< Category which contains all available commands
-    QList<int>          _allCommandIds;         ///< List of all known command ids (not vehicle specific)
-    SettingsManager*    _settingsManager;
-    bool                _unitTest;              ///< true: running in unit test mode
+    const QString _allCommandsCategory = tr("All commands");    ///< Category which contains all available commands
 
     /// Full hierarchy
-    QMap<QGCMAVLink::FirmwareClass_t, QMap<QGCMAVLink::VehicleClass_t, MissionCommandList*>>                    _staticCommandTree;
+    QMap<QGCMAVLink::FirmwareClass_t, QMap<QGCMAVLink::VehicleClass_t, MissionCommandList*>> _staticCommandTree;
 
     /// Collapsed hierarchy for specific vehicle type
-    QMap<QGCMAVLink::FirmwareClass_t, QMap<QGCMAVLink::VehicleClass_t, QMap<MAV_CMD, MissionCommandUIInfo*>>>   _allCommands;
+    QMap<QGCMAVLink::FirmwareClass_t, QMap<QGCMAVLink::VehicleClass_t, QMap<MAV_CMD, MissionCommandUIInfo*>>> _allCommands;
 
     /// Collapsed hierarchy for specific vehicle type
-    QMap<QGCMAVLink::FirmwareClass_t, QMap<QGCMAVLink::VehicleClass_t, QStringList /* category */>>             _supportedCategories;
-
-
-#ifdef UNITTEST_BUILD
-    friend class MissionCommandTreeTest;
-#endif
+    QMap<QGCMAVLink::FirmwareClass_t, QMap<QGCMAVLink::VehicleClass_t, QStringList /* category */>> _supportedCategories;
 };

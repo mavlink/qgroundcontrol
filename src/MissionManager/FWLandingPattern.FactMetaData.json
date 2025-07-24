@@ -31,6 +31,21 @@
     "default":          40.0
 },
 {
+    "name":             "UseDoChangeSpeed",
+    "shortDesc":        "Command a specific speed for the approach, useful for reducing energy before the glide slope.",
+    "type":             "bool",
+    "default":          false
+},
+{
+    "name":             "FinalApproachSpeed",
+    "shortDesc":        "Speed to perform the approach at.",
+    "type":             "double",
+    "units":            "m/s",
+    "min":              0.0,
+    "decimalPlaces":    1,
+    "default":          9.0
+},
+{
     "name":             "LoiterRadius",
     "shortDesc":        "Loiter radius.",
     "type":             "double",

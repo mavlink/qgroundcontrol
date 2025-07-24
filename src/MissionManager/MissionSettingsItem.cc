@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -18,8 +18,6 @@
 
 QGC_LOGGING_CATEGORY(MissionSettingsItemLog, "MissionSettingsItemLog")
 
-const char* MissionSettingsItem::_plannedHomePositionAltitudeName = "PlannedHomePositionAltitude";
-
 QMap<QString, FactMetaData*> MissionSettingsItem::_metaDataMap;
 
 MissionSettingsItem::MissionSettingsItem(PlanMasterController* masterController, bool flyView)
@@ -30,7 +28,7 @@ MissionSettingsItem::MissionSettingsItem(PlanMasterController* masterController,
     , _speedSection                     (masterController)
 {
     _isIncomplete = false;
-    _editorQml = "qrc:/qml/MissionSettingsEditor.qml";
+    _editorQml = "qrc:/qml/QGroundControl/Controls/MissionSettingsEditor.qml";
 
     if (_metaDataMap.isEmpty()) {
         _metaDataMap = FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/MissionSettings.FactMetaData.json"), nullptr /* metaDataParent */);

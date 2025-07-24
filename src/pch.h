@@ -1,29 +1,37 @@
-#ifdef __cplusplus
-#include <QtBluetooth/QBluetoothSocket>
-#include <QtCharts/QAbstractSeries>
-#include <QtConcurrent/QtConcurrent>
-#include <QtCore/QCoreApplication>
-#include <QtGui/QGuiApplication>
-#include <QtLocation/QGeoServiceProvider>
-#include <QtMultimedia/QMediaDevices>
-#include <QtNetwork/QNetworkAccessManager>
-#include <QtPositioning/QGeoCoordinate>
-#include <QtQml/QQmlApplicationEngine>
-#include <QtQmlIntegration/QtQmlIntegration>
-#include <QtQuick/QQuickItem>
-#include <QtQuickControls2/QQuickStyle>
-#include <QtSql/QSqlDatabase>
-#include <QtTest/QSignalSpy>
-#include <QtTextToSpeech/QTextToSpeech>
-#include <QtWidgets/QApplication>
-#include <QtXml/QDomDocument>
-#if !defined(Q_OS_IOS) && !defined(Q_OS_ANDROID)
-#include <QtSerialPort/QSerialPort>
-#endif
-#ifdef Q_OS_ANDROID
-#include <QtCore/QJniEnvironment>
-#endif
-#ifdef QT_DEBUG
+#pragma once
+
+#include <functional>
+#include <memory>
+#include <string>
+#include <vector>
+
 #include <QtCore/QDebug>
-#endif
-#endif
+#include <QtCore/QList>
+#include <QtCore/QMap>
+#include <QtCore/QObject>
+#include <QtCore/QString>
+#include <QtCore/QtGlobal>
+#include <QtCore/QVariant>
+#include <QtCore/QVector>
+
+#include <QtCore/QJsonArray>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonObject>
+
+#include <QtGui/QImage>
+#include <QtGui/QPainter>
+#include <QtGui/QTransform>
+
+#include <QtNetwork/QNetworkAccessManager>
+#include <QtNetwork/QNetworkReply>
+#include <QtNetwork/QNetworkRequest>
+
+#include <QtQml/QQmlApplicationEngine>
+#include <QtQml/QQmlContext>
+
+#include <QtQuick/QQuickItem>
+#include <QtQuick/QQuickView>
+
+#include <QtQuickControls2/QQuickStyle>
+
+#include "MAVLinkLib.h"

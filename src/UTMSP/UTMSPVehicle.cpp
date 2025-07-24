@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2023 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -12,21 +12,23 @@
 #include "services/dispatcher.h"
 #include "Vehicle.h"
 
-UTMSPVehicle::UTMSPVehicle(std::shared_ptr<Dispatcher> dispatcher, const Vehicle& vehicle):
-    _dispatcher(dispatcher),
-    _remoteIDFlag(false),
-    _stopFlag(false),
-    _flightID(""),
-    _vehicleSerialNumber(""),
-    _vehicleActivation(false)
+UTMSPVehicle::UTMSPVehicle(std::shared_ptr<Dispatcher> dispatcher, Vehicle *vehicle, QObject *parent)
+    : UTMSPServiceController(parent)
+    , _dispatcher(dispatcher)
 {
     UTMSP_LOG_INFO() << "UTMSPManagerLog: UTMSPVehicle Contructor";
-    connect(&vehicle, &Vehicle::mavlinkMessageReceived, this, &UTMSPVehicle::triggerNetworkRemoteID);
+    Q_CHECK_PTR(vehicle);
+    connect(vehicle, &Vehicle::mavlinkMessageReceived, this, &UTMSPVehicle::triggerNetworkRemoteID);
     UTMSP_LOG_INFO() << "UTMSPManagerLog: UTMSPVehicle MAvlink msg slot connected";
     _aircraftModel = _utmspAircraft.aircraftModel();
     _aircraftClass = _utmspAircraft.aircraftClass();
     _operatorID    = _utmspOperator.operatorID();
     _operatorClass = _utmspOperator.operatorClass();
+}
+
+UTMSPVehicle::~UTMSPVehicle()
+{
+
 }
 
 void UTMSPVehicle::loadTelemetryFlag(bool value){

@@ -12,9 +12,9 @@ import QtQuick.Window
 import QtQuick.Controls
 
 import QGroundControl
-import QGroundControl.Palette
+
 import QGroundControl.Controls
-import QGroundControl.Controllers
+
 import QGroundControl.ScreenTools
 
 Rectangle {
@@ -32,10 +32,6 @@ Rectangle {
 
     GeoTagController {
         id: geoController
-    }
-
-    LogDownloadController {
-        id: logController
     }
 
     QGCFlickable {
@@ -62,7 +58,7 @@ Rectangle {
             // I don't know why this does not work
             Connections {
                 target:         QGroundControl.settingsManager.appSettings.appFontPointSize
-                onValueChanged: buttonColumn.reflowWidths()
+                function onValueChanged(value) { buttonColumn.reflowWidths() }
             }
 
             function reflowWidths() {
@@ -84,7 +80,6 @@ Rectangle {
                 SubMenuButton {
                     id:                 subMenu
                     imageResource:      modelData.icon
-                    setupIndicator:     false
                     autoExclusive:      true
                     text:               modelData.title
 
@@ -126,7 +121,7 @@ Rectangle {
 
         Connections {
             target:     panelLoader.item
-            onPopout:   mainWindow.createrWindowedAnalyzePage(panelLoader.title, panelLoader.source)
+            function onPopout() { mainWindow.createrWindowedAnalyzePage(panelLoader.title, panelLoader.source) }
         }
     }
 }

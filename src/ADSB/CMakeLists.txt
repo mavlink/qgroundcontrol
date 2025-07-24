@@ -1,24 +1,11 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Network Positioning)
-
-qt_add_library(ADSB STATIC
-	ADSBVehicle.cc
-	ADSBVehicle.h
-	ADSBTCPLink.cc
-	ADSBTCPLink.h
-	ADSBVehicleManager.cc
-	ADSBVehicleManager.h
+target_sources(${CMAKE_PROJECT_NAME}
+    PRIVATE
+        ADSBTCPLink.cc
+        ADSBTCPLink.h
+        ADSBVehicle.cc
+        ADSBVehicle.h
+        ADSBVehicleManager.cc
+        ADSBVehicleManager.h
 )
 
-target_link_libraries(ADSB
-	PRIVATE
-		Qt6::Network
-		Settings
-		Utilities
-	PUBLIC
-		Qt6::Core
-		Qt6::Positioning
-		QGC
-		QmlControls
-)
-
-target_include_directories(ADSB PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

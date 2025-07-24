@@ -14,11 +14,12 @@ import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
 
-import QGroundControl.FactSystem
+import QGroundControl
+
 import QGroundControl.FactControls
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
-import QGroundControl.Controllers
+
 
 SetupPage {
     id:             syslinkPage
@@ -41,7 +42,7 @@ SetupPage {
 
             QGCLabel {
                 text: qsTr("Radio Settings")
-                font.family: ScreenTools.demiboldFontFamily
+                font.bold:   true
             }
 
             Rectangle {

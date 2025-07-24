@@ -2,11 +2,11 @@ import QtQuick
 import QtQuick.Controls
 
 import QGroundControl
-import QGroundControl.Controllers
+
 import QGroundControl.Controls
 import QGroundControl.FlightDisplay
 import QGroundControl.FlightMap
-import QGroundControl.Palette
+
 import QGroundControl.ScreenTools
 
 ///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
@@ -56,7 +56,7 @@ Rectangle{
             anchors.horizontalCenter: parent.horizontalCenter
             text:                progressText + Number(Math.floor(progressBody.progressValue)) + " %"
             color:              qgcPal.text
-            font.family:        ScreenTools.demiboldFontFamily
+            font.bold:          true
             font.pointSize:     ScreenTools.mediumFontPointSize
             horizontalAlignment:Text.AlignHCenter
         }

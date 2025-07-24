@@ -1,3 +1,12 @@
+/****************************************************************************
+ *
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 /*!
  * @file
  *   @brief Camera Controller
@@ -9,8 +18,8 @@
 #include "QGCCameraIO.h"
 #include "QGCApplication.h"
 #include "SettingsManager.h"
+#include "AppSettings.h"
 #include "VideoManager.h"
-#include "QGCMapEngine.h"
 #include "QGCCameraManager.h"
 #include "FTPManager.h"
 #include "QGCLZMA.h"
@@ -18,6 +27,7 @@
 #include "Vehicle.h"
 #include "LinkInterface.h"
 #include "MAVLinkProtocol.h"
+#include "QGCVideoStreamInfo.h"
 
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtCore/QDir>
@@ -27,57 +37,6 @@
 #include <QtQml/QQmlEngine>
 #include <QtNetwork/QNetworkProxy>
 #include <QtNetwork/QNetworkReply>
-
-static const char* kCondition       = "condition";
-static const char* kControl         = "control";
-static const char* kDefault         = "default";
-static const char* kDefnition       = "definition";
-static const char* kDescription     = "description";
-static const char* kExclusion       = "exclude";
-static const char* kExclusions      = "exclusions";
-static const char* kLocale          = "locale";
-static const char* kLocalization    = "localization";
-static const char* kMax             = "max";
-static const char* kMin             = "min";
-static const char* kModel           = "model";
-static const char* kName            = "name";
-static const char* kOption          = "option";
-static const char* kOptions         = "options";
-static const char* kOriginal        = "original";
-static const char* kParameter       = "parameter";
-static const char* kParameterrange  = "parameterrange";
-static const char* kParameterranges = "parameterranges";
-static const char* kParameters      = "parameters";
-static const char* kReadOnly        = "readonly";
-static const char* kWriteOnly       = "writeonly";
-static const char* kRoption         = "roption";
-static const char* kStep            = "step";
-static const char* kDecimalPlaces   = "decimalPlaces";
-static const char* kStrings         = "strings";
-static const char* kTranslated      = "translated";
-static const char* kType            = "type";
-static const char* kUnit            = "unit";
-static const char* kUpdate          = "update";
-static const char* kUpdates         = "updates";
-static const char* kValue           = "value";
-static const char* kVendor          = "vendor";
-static const char* kVersion         = "version";
-
-static const char* kPhotoMode       = "PhotoCaptureMode";
-static const char* kPhotoLapse      = "PhotoLapse";
-static const char* kPhotoLapseCount = "PhotoLapseCount";
-static const char* kThermalOpacity  = "ThermalOpacity";
-static const char* kThermalMode     = "ThermalMode";
-
-//-----------------------------------------------------------------------------
-// Known Parameters
-const char* VehicleCameraControl::kCAM_EV          = "CAM_EV";
-const char* VehicleCameraControl::kCAM_EXPMODE     = "CAM_EXPMODE";
-const char* VehicleCameraControl::kCAM_ISO         = "CAM_ISO";
-const char* VehicleCameraControl::kCAM_SHUTTERSPD  = "CAM_SHUTTERSPD";
-const char* VehicleCameraControl::kCAM_APERTURE    = "CAM_APERTURE";
-const char* VehicleCameraControl::kCAM_WBMODE      = "CAM_WBMODE";
-const char* VehicleCameraControl::kCAM_MODE        = "CAM_MODE";
 
 //-----------------------------------------------------------------------------
 QGCCameraOptionExclusion::QGCCameraOptionExclusion(QObject* parent, QString param_, QString value_, QStringList exclusions_)
@@ -173,7 +132,7 @@ VehicleCameraControl::VehicleCameraControl(const mavlink_camera_information_t *i
     _modelName = QString(reinterpret_cast<const char*>(info->model_name));
     int ver = static_cast<int>(_info.cam_definition_version);
     _cacheFile = QString::asprintf("%s/%s_%s_%03d.xml",
-        qgcApp()->toolbox()->settingsManager()->appSettings()->parameterSavePath().toStdString().c_str(),
+        SettingsManager::instance()->appSettings()->parameterSavePath().toStdString().c_str(),
         _vendor.toStdString().c_str(),
         _modelName.toStdString().c_str(),
         ver);
@@ -206,6 +165,14 @@ VehicleCameraControl::VehicleCameraControl(const mavlink_camera_information_t *i
 //-----------------------------------------------------------------------------
 VehicleCameraControl::~VehicleCameraControl()
 {
+    // Stop all timers to prevent them from firing during or after destruction
+    _captureStatusTimer.stop();
+    _recTimer.stop();
+    _streamInfoTimer.stop();
+    _streamStatusTimer.stop();
+    _cameraSettingsTimer.stop();
+    _storageInfoTimer.stop();
+
     delete _netManager;
     _netManager = nullptr;
 }
@@ -216,22 +183,28 @@ VehicleCameraControl::_initWhenReady()
 {
     qCDebug(CameraControlLog) << "_initWhenReady()";
     if(isBasic()) {
-        qCDebug(CameraControlLog) << "Basic, MAVLink only messages.";
-        _requestCameraSettings();
-        QTimer::singleShot(250, this, &VehicleCameraControl::_checkForVideoStreams);
+        qCDebug(CameraControlLog) << "Basic, MAVLink only messages, no parameters.";
         //-- Basic cameras have no parameters
         _paramComplete = true;
         emit parametersReady();
     } else {
         _requestAllParameters();
-        //-- Give some time to load the parameters before going after the camera settings
-        QTimer::singleShot(2000, this, &VehicleCameraControl::_requestCameraSettings);
     }
+
+    QTimer::singleShot(500, this, &VehicleCameraControl::_requestCameraSettings);
+    connect(&_cameraSettingsTimer, &QTimer::timeout, this, &VehicleCameraControl::_cameraSettingsTimeout);
+
+    QTimer::singleShot(1000, this, &VehicleCameraControl::_checkForVideoStreams);
+
     connect(_vehicle, &Vehicle::mavCommandResult, this, &VehicleCameraControl::_mavCommandResult);
+
     connect(&_captureStatusTimer, &QTimer::timeout, this, &VehicleCameraControl::_requestCaptureStatus);
     _captureStatusTimer.setSingleShot(true);
-    QTimer::singleShot(2500, this, &VehicleCameraControl::_requestStorageInfo);
-    _captureStatusTimer.start(2750);
+    _captureStatusTimer.start(1500);
+
+    connect(&_storageInfoTimer, &QTimer::timeout, this, &VehicleCameraControl::_storageInfoTimeout);
+    QTimer::singleShot(2000, this, &VehicleCameraControl::_requestStorageInfo);
+
     emit infoChanged();
 
     delete _netManager;
@@ -273,7 +246,7 @@ VehicleCameraControl::photoCaptureStatus()
 QString
 VehicleCameraControl::storageFreeStr()
 {
-    return QGCMapEngine::storageFreeSizeToString(static_cast<quint64>(_storageFree));
+    return qgcApp()->bigSizeMBToString(static_cast<quint64>(_storageFree));
 }
 
 //-----------------------------------------------------------------------------
@@ -281,7 +254,7 @@ QString
 VehicleCameraControl::batteryRemainingStr()
 {
     if(_batteryRemaining >= 0) {
-        return QGCMapEngine::numberToString(static_cast<quint64>(_batteryRemaining)) + " %";
+        return qgcApp()->numberToString(static_cast<quint64>(_batteryRemaining)) + " %";
     }
     return "";
 }
@@ -403,9 +376,7 @@ VehicleCameraControl::takePhoto()
             _setPhotoStatus(PHOTO_CAPTURE_IN_PROGRESS);
             _captureInfoRetries = 0;
             //-- Capture local image as well
-            if(qgcApp()->toolbox()->videoManager()) {
-                qgcApp()->toolbox()->videoManager()->grabImage();
-            }
+            VideoManager::instance()->grabImage();
             return true;
         }
     }
@@ -677,12 +648,23 @@ VehicleCameraControl::stopZoom()
 void
 VehicleCameraControl::_requestCaptureStatus()
 {
-    qCDebug(CameraControlLog) << "_requestCaptureStatus()";
-    _vehicle->sendMavCommand(
-        _compID,                                // target component
-        MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS,  // command id
-        false,                                  // showError
-        1);                                     // Do Request
+    qCDebug(CameraControlLog) << "_requestCaptureStatus() - retries:" << _cameraCaptureStatusRetries;
+
+    if(_cameraCaptureStatusRetries++ % 2 == 0) {
+        qCDebug(CameraControlLog) << "_requestCaptureStatus() - using REQUEST_MESSAGE";
+        _vehicle->sendMavCommand(
+            _compID,                                // target component
+            MAV_CMD_REQUEST_MESSAGE,                // command id
+            false,                                  // showError
+            MAVLINK_MSG_ID_CAMERA_CAPTURE_STATUS);  // msgid
+    } else {
+        qCDebug(CameraControlLog) << "_requestCaptureStatus() - using legacy MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS";
+        _vehicle->sendMavCommand(
+            _compID,                                // target component
+            MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS,  // command id
+            false,                                  // showError
+            1);                                     // Do Request
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -695,16 +677,18 @@ VehicleCameraControl::factChanged(Fact* pFact)
 
 //-----------------------------------------------------------------------------
 void
-VehicleCameraControl::_mavCommandResult(int vehicleId, int component, int command, int result, bool noReponseFromVehicle)
+VehicleCameraControl::_mavCommandResult(int vehicleId, int component, int command, int result, int failureCode)
 {
+    Q_UNUSED(failureCode);
+
     //-- Is this ours?
-    if(_vehicle->id() != vehicleId || compID() != component) {
+    if (_vehicle->id() != vehicleId || compID() != component) {
         return;
     }
-    if(!noReponseFromVehicle && result == MAV_RESULT_IN_PROGRESS) {
+    if (result == MAV_RESULT_IN_PROGRESS) {
         //-- Do Nothing
         qCDebug(CameraControlLog) << "In progress response for" << command;
-    }else if(!noReponseFromVehicle && result == MAV_RESULT_ACCEPTED) {
+    } else if(result == MAV_RESULT_ACCEPTED) {
         switch(command) {
             case MAV_CMD_RESET_CAMERA_SETTINGS:
                 _resetting = false;
@@ -724,7 +708,7 @@ VehicleCameraControl::_mavCommandResult(int vehicleId, int component, int comman
                 _captureStatusTimer.start(1000);
                 break;
             case MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS:
-                _captureInfoRetries = 0;
+                _cameraCaptureStatusRetries = 0;
                 break;
             case MAV_CMD_REQUEST_STORAGE_INFORMATION:
                 _storageInfoRetries = 0;
@@ -734,10 +718,8 @@ VehicleCameraControl::_mavCommandResult(int vehicleId, int component, int comman
                 break;
         }
     } else {
-        if(noReponseFromVehicle || result == MAV_RESULT_TEMPORARILY_REJECTED || result == MAV_RESULT_FAILED) {
-            if(noReponseFromVehicle) {
-                qCDebug(CameraControlLog) << "No response for" << command;
-            } else if (result == MAV_RESULT_TEMPORARILY_REJECTED) {
+        if ((result == MAV_RESULT_TEMPORARILY_REJECTED) || (result == MAV_RESULT_FAILED)) {
+            if (result == MAV_RESULT_TEMPORARILY_REJECTED) {
                 qCDebug(CameraControlLog) << "Command temporarily rejected for" << command;
             } else {
                 qCDebug(CameraControlLog) << "Command failed for" << command;
@@ -749,7 +731,7 @@ VehicleCameraControl::_mavCommandResult(int vehicleId, int component, int comman
                 break;
                 case MAV_CMD_IMAGE_START_CAPTURE:
                 case MAV_CMD_IMAGE_STOP_CAPTURE:
-                    if(++_captureInfoRetries < 3) {
+                    if(++_captureInfoRetries <= 5) {
                         _captureStatusTimer.start(1000);
                     } else {
                         qCDebug(CameraControlLog) << "Giving up start/stop image capture";
@@ -757,15 +739,15 @@ VehicleCameraControl::_mavCommandResult(int vehicleId, int component, int comman
                     }
                     break;
                 case MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS:
-                    if(++_captureInfoRetries < 3) {
-                        _captureStatusTimer.start(500);
+                    if(++_cameraCaptureStatusRetries <= 5) {
+                        _captureStatusTimer.start(1000);
                     } else {
                         qCDebug(CameraControlLog) << "Giving up requesting capture status";
                     }
                     break;
                 case MAV_CMD_REQUEST_STORAGE_INFORMATION:
-                    if(++_storageInfoRetries < 3) {
-                        QTimer::singleShot(500, this, &VehicleCameraControl::_requestStorageInfo);
+                    if(++_storageInfoRetries <= 5) {
+                        QTimer::singleShot(1000, this, &VehicleCameraControl::_requestStorageInfo);
                     } else {
                         qCDebug(CameraControlLog) << "Giving up requesting storage status";
                     }
@@ -824,12 +806,12 @@ VehicleCameraControl::_loadCameraDefinitionFile(QByteArray& bytes)
     if(!_handleLocalization(bytes)) {
         return false;
     }
-    int errorLine;
-    QString errorMsg;
+
     QDomDocument doc;
-    if(!doc.setContent(bytes, false, &errorMsg, &errorLine)) {
-        qCCritical(CameraControlLog) << "Unable to parse camera definition file on line:" << errorLine;
-        qCCritical(CameraControlLog) << errorMsg;
+    const QDomDocument::ParseResult result = doc.setContent(bytes, QDomDocument::ParseOption::Default);
+    if (!result) {
+        qCCritical(CameraControlLog) << "Unable to parse camera definition file on line:" << result.errorLine;
+        qCCritical(CameraControlLog) << result.errorMessage;
         return false;
     }
     //-- Load camera constants
@@ -1083,7 +1065,7 @@ VehicleCameraControl::_loadSettings(const QDomNodeList nodeList)
             Fact* pFact = new Fact(_compID, factName, factType, this);
             QQmlEngine::setObjectOwnership(pFact, QQmlEngine::CppOwnership);
             pFact->setMetaData(metaData);
-            pFact->_containerSetRawValue(metaData->rawDefaultValue());
+            pFact->containerSetRawValue(metaData->rawDefaultValue());
             QGCCameraParamIO* pIO = new QGCCameraParamIO(this, pFact, _vehicle);
             QQmlEngine::setObjectOwnership(pIO, QQmlEngine::CppOwnership);
             _paramIO[factName] = pIO;
@@ -1104,17 +1086,16 @@ VehicleCameraControl::_loadSettings(const QDomNodeList nodeList)
 bool
 VehicleCameraControl::_handleLocalization(QByteArray& bytes)
 {
-    QString errorMsg;
-    int errorLine;
     QDomDocument doc;
-    if(!doc.setContent(bytes, false, &errorMsg, &errorLine)) {
-        qCritical() << "Unable to parse camera definition file on line:" << errorLine;
-        qCritical() << errorMsg;
+    const QDomDocument::ParseResult result = doc.setContent(bytes, QDomDocument::ParseOption::Default);
+    if (!result) {
+        qCritical() << "Unable to parse camera definition file on line:" << result.errorLine;
+        qCritical() << result.errorMessage;
         return false;
     }
     //-- Find out where we are
     QLocale locale = QLocale::system();
-#if defined (Q_OS_MAC)
+#if defined (Q_OS_MACOS)
     locale = QLocale(locale.name());
 #endif
     QString localeName = locale.name().toLower().replace("-", "_");
@@ -1196,15 +1177,12 @@ VehicleCameraControl::_requestAllParameters()
             qCritical() << "QGCParamIO is NULL" << paramName;
         }
     }
-    WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
-    if (!weakLink.expired()) {
-        SharedLinkInterfacePtr sharedLink = weakLink.lock();
-
-        MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
+    SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
+    if (sharedLink) {
         mavlink_message_t msg;
         mavlink_msg_param_ext_request_list_pack_chan(
-                    static_cast<uint8_t>(mavlink->getSystemId()),
-                    static_cast<uint8_t>(mavlink->getComponentId()),
+                    static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
+                    static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
                     sharedLink->mavlinkChannel(),
                     &msg,
                     static_cast<uint8_t>(_vehicle->id()),
@@ -1218,8 +1196,10 @@ VehicleCameraControl::_requestAllParameters()
 QString
 VehicleCameraControl::_getParamName(const char* param_id)
 {
-    QByteArray bytes(param_id, MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN);
-    QString parameterName(bytes);
+    // This will null terminate the name string
+    char parameterNameWithNull[MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1] = {};
+    (void) strncpy(parameterNameWithNull, param_id, MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN);
+    const QString parameterName(parameterNameWithNull);
     return parameterName;
 }
 
@@ -1462,28 +1442,63 @@ VehicleCameraControl::_requestParamUpdates()
 void
 VehicleCameraControl::_requestCameraSettings()
 {
-    qCDebug(CameraControlLog) << "_requestCameraSettings()";
+    qCDebug(CameraControlLog) << "_requestCameraSettings() - retries:" << _cameraSettingsRetries << "timer active:" << _cameraSettingsTimer.isActive();
     if(_vehicle) {
-        _vehicle->sendMavCommand(
-            _compID,                                // Target component
-            MAV_CMD_REQUEST_CAMERA_SETTINGS,        // command id
-            false,                                  // showError
-            1);                                     // Do Request
+        // Use REQUEST_MESSAGE instead of deprecated REQUEST_CAMERA_SETTINGS
+        // first time and every other time after that.
+
+        if(_cameraSettingsRetries % 2 == 0) {
+            qCDebug(CameraControlLog) << "_requestCameraSettings() - using REQUEST_MESSAGE";
+            _vehicle->sendMavCommand(
+                _compID,                                 // target component
+                MAV_CMD_REQUEST_MESSAGE,                // command id
+                false,                                  // showError
+                MAVLINK_MSG_ID_CAMERA_SETTINGS);        // msgid
+        } else {
+            qCDebug(CameraControlLog) << "_requestCameraSettings() - using legacy MAV_CMD_REQUEST_CAMERA_SETTINGS";
+            _vehicle->sendMavCommand(
+                _compID,                                // Target component
+                MAV_CMD_REQUEST_CAMERA_SETTINGS,        // command id
+                false,                                  // showError
+                1);                                     // Do Request
+        }
+        if(_cameraSettingsTimer.isActive()) {
+            qCDebug(CameraControlLog) << "_requestCameraSettings() - RESTARTING already active timer";
+        } else {
+            qCDebug(CameraControlLog) << "_requestCameraSettings() - starting timer";
+        }
+        _cameraSettingsTimer.start(1000);               // Wait up to a second for it
     }
+
 }
 
 //-----------------------------------------------------------------------------
 void
 VehicleCameraControl::_requestStorageInfo()
 {
-    qCDebug(CameraControlLog) << "_requestStorageInfo()";
+    qCDebug(CameraControlLog) << "_requestStorageInfo() - retries:" << _storageInfoRetries << "timer active:" << _storageInfoTimer.isActive();
     if(_vehicle) {
-        _vehicle->sendMavCommand(
-            _compID,                                // Target component
-            MAV_CMD_REQUEST_STORAGE_INFORMATION,    // command id
-            false,                                  // showError
-            0,                                      // Storage ID (0 for all, 1 for first, 2 for second, etc.)
-            1);                                     // Do Request
+        // Use REQUEST_MESSAGE instead of deprecated REQUEST_STORAGE_INFORMATION
+        // first time and every other time after that.
+        if(_storageInfoRetries % 2 == 0) {
+            qCDebug(CameraControlLog) << "_requestStorageInfo() - using REQUEST_MESSAGE";
+            _vehicle->sendMavCommand(
+                _compID,                                 // target component
+                MAV_CMD_REQUEST_MESSAGE,                // command id
+                false,                                  // showError
+                MAVLINK_MSG_ID_STORAGE_INFORMATION,     // msgid
+                0);                                     // storage ID
+        } else {
+            qCDebug(CameraControlLog) << "_requestStorageInfo() - using legacy MAV_CMD_REQUEST_STORAGE_INFORMATION";
+            _vehicle->sendMavCommand(
+                _compID,                                // Target component
+                MAV_CMD_REQUEST_STORAGE_INFORMATION,    // command id
+                false,                                  // showError
+                0,                                      // Storage ID (0 for all, 1 for first, 2 for second, etc.)
+                1);                                     // Do Request
+        }
+        qCDebug(CameraControlLog) << "_requestStorageInfo() - starting timer";
+        _storageInfoTimer.start(1000);                  // Wait up to a second for it
     }
 }
 
@@ -1491,7 +1506,9 @@ VehicleCameraControl::_requestStorageInfo()
 void
 VehicleCameraControl::handleSettings(const mavlink_camera_settings_t& settings)
 {
-    qCDebug(CameraControlLog) << "handleSettings() Mode:" << settings.mode_id;
+    qCDebug(CameraControlLog) << "handleSettings() Mode:" << settings.mode_id << "- stopping timer, resetting retries";
+    _cameraSettingsTimer.stop();
+    _cameraSettingsRetries = 0;
     _setCameraMode(static_cast<CameraMode>(settings.mode_id));
     qreal z = static_cast<qreal>(settings.zoomLevel);
     qreal f = static_cast<qreal>(settings.focusLevel);
@@ -1509,14 +1526,17 @@ VehicleCameraControl::handleSettings(const mavlink_camera_settings_t& settings)
 void
 VehicleCameraControl::handleStorageInfo(const mavlink_storage_information_t& st)
 {
-    qCDebug(CameraControlLog) << "handleStorageInfo:" 
-        << "\n\tStorage id:" << st.storage_id 
-        << "\n\tStorage count:" << st.storage_count 
+    qCDebug(CameraControlLog) << "handleStorageInfo() - stopping timer, resetting retries";
+    _storageInfoTimer.stop();
+    _storageInfoRetries = 0;
+    qCDebug(CameraControlLog) << "handleStorageInfo:"
+        << "\n\tStorage id:" << st.storage_id
+        << "\n\tStorage count:" << st.storage_count
         << "\n\tStatus:"<< storageStatusToStr(st.status)
-        << "\n\tTotal capacity:" << st.total_capacity 
+        << "\n\tTotal capacity:" << st.total_capacity
         << "\n\tUsed capacity:" << st.used_capacity
         << "\n\tAvailable capacity:" << st.available_capacity;
-    
+
     if(st.status == STORAGE_STATUS_READY) {
         uint32_t t = static_cast<uint32_t>(st.total_capacity);
         if(_storageTotal != t) {
@@ -1551,10 +1571,13 @@ void
 VehicleCameraControl::handleCaptureStatus(const mavlink_camera_capture_status_t& cap)
 {
     //-- This is a response to MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS
-    qCDebug(CameraControlLog).noquote() << "handleCaptureStatus:" 
+    qCDebug(CameraControlLog) << "handleCaptureStatus() - stopping timer, resetting retries";
+    _captureStatusTimer.stop();
+    _cameraCaptureStatusRetries = 0;
+    qCDebug(CameraControlLog).noquote() << "handleCaptureStatus:"
         << "\n\tImage status:" << captureImageStatusToStr(cap.image_status)
         << "\n\tVideo status:" << captureVideoStatusToStr(cap.video_status)
-        << "\n\tInterval:" << cap.image_interval 
+        << "\n\tInterval:" << cap.image_interval
         << "\n\tRecording time (ms):" << cap.recording_time_ms
         << "\n\tCapacity:" << cap.available_capacity;
     //-- Disk Free Space
@@ -1585,12 +1608,10 @@ VehicleCameraControl::handleCaptureStatus(const mavlink_camera_capture_status_t&
     //-- Time Lapse
     if(photoCaptureStatus() == PHOTO_CAPTURE_INTERVAL_IDLE || photoCaptureStatus() == PHOTO_CAPTURE_INTERVAL_IN_PROGRESS) {
         //-- Capture local image as well
-        if(qgcApp()->toolbox()->videoManager()) {
-            QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
-            QDir().mkpath(photoPath);
-            photoPath += + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz") + ".jpg";
-            qgcApp()->toolbox()->videoManager()->grabImage(photoPath);
-        }
+        QString photoPath = SettingsManager::instance()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
+        QDir().mkpath(photoPath);
+        photoPath += "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz") + ".jpg";
+        VideoManager::instance()->grabImage(photoPath);
     }
 }
 
@@ -1602,7 +1623,7 @@ VehicleCameraControl::handleVideoInfo(const mavlink_video_stream_information_t* 
     _expectedCount = vi->count;
     if(!_findStream(vi->stream_id, false)) {
         qCDebug(CameraControlLog) << "Create stream handler for stream ID:" << vi->stream_id;
-        QGCVideoStreamInfo* pStream = new QGCVideoStreamInfo(this, vi);
+        QGCVideoStreamInfo* pStream = new QGCVideoStreamInfo(*vi, this);
         QQmlEngine::setObjectOwnership(pStream, QQmlEngine::CppOwnership);
         _streams.append(pStream);
         //-- Thermal is handled separately and not listed
@@ -1617,10 +1638,11 @@ VehicleCameraControl::handleVideoInfo(const mavlink_video_stream_information_t* 
     //-- Check for missing count
     if(_streams.count() < _expectedCount) {
         _streamInfoTimer.start(1000);
-    } else {
+    } else if (_streamInfoTimer.isActive()) {
         //-- Done
         qCDebug(CameraControlLog) << "All stream handlers done";
         _streamInfoTimer.stop();
+        _videoStreamInfoRetries = 0;
         emit autoStreamChanged();
         emit _vehicle->cameraManager()->streamChanged();
     }
@@ -1630,11 +1652,13 @@ VehicleCameraControl::handleVideoInfo(const mavlink_video_stream_information_t* 
 void
 VehicleCameraControl::handleVideoStatus(const mavlink_video_stream_status_t* vs)
 {
+    qCDebug(CameraControlLog) << "handleVideoStatus() - stopping timer, resetting retries";
     _streamStatusTimer.stop();
+    _videoStreamStatusRetries = 0;
     qCDebug(CameraControlLog) << "handleVideoStatus:" << vs->stream_id;
     QGCVideoStreamInfo* pInfo = _findStream(vs->stream_id);
     if(pInfo) {
-        pInfo->update(vs);
+        pInfo->update(*vs);
     }
 }
 
@@ -1681,34 +1705,32 @@ VehicleCameraControl::handleTrackingImageStatus(const mavlink_camera_tracking_im
 void
 VehicleCameraControl::setCurrentStream(int stream)
 {
-    if(stream != _currentStream && stream >= 0 && stream < _streamLabels.count()) {
-        if(_currentStream != stream) {
-            QGCVideoStreamInfo* pInfo = currentStreamInstance();
-            if(pInfo) {
-                qCDebug(CameraControlLog) << "Stopping stream:" << pInfo->uri();
-                //-- Stop current stream
-                _vehicle->sendMavCommand(
-                    _compID,                                // Target component
-                    MAV_CMD_VIDEO_STOP_STREAMING,           // Command id
-                    false,                                  // ShowError
-                    pInfo->streamID());                     // Stream ID
-            }
-            _currentStream = stream;
-            pInfo = currentStreamInstance();
-            if(pInfo) {
-                //-- Start new stream
-                qCDebug(CameraControlLog) << "Starting stream:" << pInfo->uri();
-                _vehicle->sendMavCommand(
-                    _compID,                                // Target component
-                    MAV_CMD_VIDEO_START_STREAMING,          // Command id
-                    false,                                  // ShowError
-                    pInfo->streamID());                     // Stream ID
-                //-- Update stream status
-                _requestStreamStatus(static_cast<uint8_t>(pInfo->streamID()));
-            }
-            emit currentStreamChanged();
-            emit _vehicle->cameraManager()->streamChanged();
+    if (stream != _currentStream && stream >= 0 && stream < _streamLabels.count()) {
+        QGCVideoStreamInfo* pInfo = currentStreamInstance();
+        if(pInfo) {
+            qCDebug(CameraControlLog) << "Stopping stream:" << pInfo->uri();
+            //-- Stop current stream
+            _vehicle->sendMavCommand(
+                _compID,                                // Target component
+                MAV_CMD_VIDEO_STOP_STREAMING,           // Command id
+                false,                                  // ShowError
+                pInfo->streamID());                     // Stream ID
         }
+        _currentStream = stream;
+        pInfo = currentStreamInstance();
+        if(pInfo) {
+            //-- Start new stream
+            qCDebug(CameraControlLog) << "Starting stream:" << pInfo->uri();
+            _vehicle->sendMavCommand(
+                _compID,                                // Target component
+                MAV_CMD_VIDEO_START_STREAMING,          // Command id
+                false,                                  // ShowError
+                pInfo->streamID());                     // Stream ID
+            //-- Update stream status
+            _requestStreamStatus(static_cast<uint8_t>(pInfo->streamID()));
+        }
+        emit currentStreamChanged();
+        emit _vehicle->cameraManager()->streamChanged();
     }
 }
 
@@ -1785,24 +1807,51 @@ VehicleCameraControl::thermalStreamInstance()
 void
 VehicleCameraControl::_requestStreamInfo(uint8_t streamID)
 {
-    qCDebug(CameraControlLog) << "Requesting video stream info for:" << streamID;
-    _vehicle->sendMavCommand(
-        _compID,                                            // Target component
-        MAV_CMD_REQUEST_VIDEO_STREAM_INFORMATION,           // Command id
-        false,                                              // ShowError
-        streamID);                                          // Stream ID
+    qCDebug(CameraControlLog) << "_requestStreamInfo() - stream:" << streamID << "retries:" << _videoStreamInfoRetries;
+    // By default, try to use new REQUEST_MESSAGE command instead of
+    // deprecated MAV_CMD_REQUEST_VIDEO_STREAM_INFORMATION.
+    if (_videoStreamInfoRetries % 2 == 0) {
+        qCDebug(CameraControlLog) << "_requestStreamInfo() - using REQUEST_MESSAGE";
+        _vehicle->sendMavCommand(
+            _compID,                                         // target component
+            MAV_CMD_REQUEST_MESSAGE,                        // command id
+            false,                                          // showError
+            MAVLINK_MSG_ID_VIDEO_STREAM_INFORMATION,        // msgid
+            streamID);                                      // stream ID
+    } else {
+        qCDebug(CameraControlLog) << "_requestStreamInfo() - using legacy MAV_CMD_REQUEST_VIDEO_STREAM_INFORMATION";
+        _vehicle->sendMavCommand(
+            _compID,                                            // Target component
+            MAV_CMD_REQUEST_VIDEO_STREAM_INFORMATION,           // Command id
+            false,                                              // ShowError
+            streamID);                                          // Stream ID
+    }
+    _streamInfoTimer.start(1000);                           // Wait up to a second for it
 }
 
 //-----------------------------------------------------------------------------
 void
 VehicleCameraControl::_requestStreamStatus(uint8_t streamID)
 {
-    qCDebug(CameraControlLog) << "Requesting video stream status for:" << streamID;
-    _vehicle->sendMavCommand(
-        _compID,                                            // Target component
-        MAV_CMD_REQUEST_VIDEO_STREAM_STATUS,                // Command id
-        false,                                              // ShowError
-        streamID);                                          // Stream ID
+    qCDebug(CameraControlLog) << "_requestStreamStatus() - stream:" << streamID << "retries:" << _videoStreamStatusRetries;
+    // By default, try to use new REQUEST_MESSAGE command instead of
+    // deprecated MAV_CMD_REQUEST_VIDEO_STREAM_STATUS.
+    if (_videoStreamStatusRetries % 2 == 0) {
+        qCDebug(CameraControlLog) << "_requestStreamStatus() - using REQUEST_MESSAGE";
+        _vehicle->sendMavCommand(
+            _compID,                                         // target component
+            MAV_CMD_REQUEST_MESSAGE,                        // command id
+            false,                                          // showError
+            MAVLINK_MSG_ID_VIDEO_STREAM_STATUS,             // msgid
+            streamID);                                      // stream id
+    } else {
+        qCDebug(CameraControlLog) << "_requestStreamStatus() - using legacy MAV_CMD_REQUEST_VIDEO_STREAM_STATUS";
+        _vehicle->sendMavCommand(
+            _compID,                                            // Target component
+            MAV_CMD_REQUEST_VIDEO_STREAM_STATUS,                // Command id
+            false,                                              // ShowError
+            streamID);                                          // Stream ID
+    }
     _streamStatusTimer.start(1000);                         // Wait up to a second for it
 }
 
@@ -1847,11 +1896,11 @@ VehicleCameraControl::_findStream(const QString name)
 
 //-----------------------------------------------------------------------------
 void
-VehicleCameraControl::_streamTimeout()
+VehicleCameraControl::_streamInfoTimeout()
 {
-    _requestCount++;
-    int count = _expectedCount * 3;
-    if(_requestCount > count) {
+    _videoStreamInfoRetries++;
+    int count = _expectedCount * 6;
+    if(_videoStreamInfoRetries > count) {
         qCWarning(CameraControlLog) << "Giving up requesting video stream info";
         _streamInfoTimer.stop();
         //-- If we have at least one stream, work with what we have.
@@ -1874,10 +1923,46 @@ VehicleCameraControl::_streamTimeout()
 void
 VehicleCameraControl::_streamStatusTimeout()
 {
+    _videoStreamStatusRetries++;
+    if(_videoStreamStatusRetries > 5) {
+        qCWarning(CameraControlLog) << "Giving up requesting video stream status";
+        _streamStatusTimer.stop();
+        return;
+    }
     QGCVideoStreamInfo* pStream = currentStreamInstance();
     if(pStream) {
         _requestStreamStatus(static_cast<uint8_t>(pStream->streamID()));
     }
+}
+
+//-----------------------------------------------------------------------------
+void
+VehicleCameraControl::_cameraSettingsTimeout()
+{
+    _cameraSettingsRetries++;
+    qCDebug(CameraControlLog) << "_cameraSettingsTimeout() - retries now:" << _cameraSettingsRetries;
+    if(_cameraSettingsRetries > 5) {
+        qCWarning(CameraControlLog) << "Giving up requesting camera settings after" << _cameraSettingsRetries << "retries";
+        _cameraSettingsTimer.stop();
+        return;
+    }
+    qCDebug(CameraControlLog) << "_cameraSettingsTimeout() - calling _requestCameraSettings()";
+    _requestCameraSettings();
+}
+
+//-----------------------------------------------------------------------------
+void
+VehicleCameraControl::_storageInfoTimeout()
+{
+    _storageInfoRetries++;
+    qCDebug(CameraControlLog) << "_storageInfoTimeout() - retries now:" << _storageInfoRetries;
+    if(_storageInfoRetries > 5) {
+        qCWarning(CameraControlLog) << "Giving up requesting storage info after" << _storageInfoRetries << "retries";
+        _storageInfoTimer.stop();
+        return;
+    }
+    qCDebug(CameraControlLog) << "_storageInfoTimeout() - calling _requestStorageInfo()";
+    _requestStorageInfo();
 }
 
 //-----------------------------------------------------------------------------
@@ -2041,7 +2126,7 @@ VehicleCameraControl::_handleDefinitionFile(const QString &url)
             ext.toStdString().c_str());
         connect(_vehicle->ftpManager(), &FTPManager::downloadComplete, this, &VehicleCameraControl::_ftpDownloadComplete);
         _vehicle->ftpManager()->download(_compID, url,
-            qgcApp()->toolbox()->settingsManager()->appSettings()->parameterSavePath().toStdString().c_str(),
+            SettingsManager::instance()->appSettings()->parameterSavePath().toStdString().c_str(),
             fileName);
         return;
     }
@@ -2058,7 +2143,8 @@ VehicleCameraControl::_handleDefinitionFile(const QString &url)
     }
     QByteArray bytes = xmlFile.readAll();
     QDomDocument doc;
-    if(!doc.setContent(bytes, false)) {
+    const QDomDocument::ParseResult result = doc.setContent(bytes, QDomDocument::ParseOption::Default);
+    if (!result) {
         qWarning() << "Could not parse cached camera definition file:" << _cacheFile;
         _httpRequest(url);
         return;
@@ -2081,7 +2167,7 @@ VehicleCameraControl::_httpRequest(const QString &url)
     QNetworkProxy tempProxy;
     tempProxy.setType(QNetworkProxy::DefaultProxy);
     _netManager->setProxy(tempProxy);
-    QNetworkRequest request(url);
+    QNetworkRequest request(QUrl::fromUserInput(url));
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, true);
     QSslConfiguration conf = request.sslConfiguration();
     conf.setPeerVerifyMode(QSslSocket::VerifyNone);
@@ -2160,7 +2246,7 @@ VehicleCameraControl::_dataReady(QByteArray data)
     } else {
         qCDebug(CameraControlLog) << "No camera definition received, trying to search on our own...";
         QFile definitionFile;
-        if(qgcApp()->toolbox()->corePlugin()->getOfflineCameraDefinitionFile(_modelName, definitionFile)) {
+        if(QGCCorePlugin::instance()->getOfflineCameraDefinitionFile(_modelName, definitionFile)) {
             qCDebug(CameraControlLog) << "Found offline definition file for: " << _modelName << ", loading: " << definitionFile.fileName();
             if (definitionFile.open(QIODevice::ReadOnly)) {
                 QByteArray newData = definitionFile.readAll();
@@ -2187,8 +2273,6 @@ VehicleCameraControl::_paramDone()
     //-- All parameters loaded (or timed out)
     _paramComplete = true;
     emit parametersReady();
-    //-- Check for video streaming
-    _checkForVideoStreams();
 }
 
 //-----------------------------------------------------------------------------
@@ -2196,7 +2280,7 @@ void
 VehicleCameraControl::_checkForVideoStreams()
 {
     if(_info.flags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM) {
-        connect(&_streamInfoTimer, &QTimer::timeout, this, &VehicleCameraControl::_streamTimeout);
+        connect(&_streamInfoTimer, &QTimer::timeout, this, &VehicleCameraControl::_streamInfoTimeout);
         _streamInfoTimer.setSingleShot(false);
         connect(&_streamStatusTimer, &QTimer::timeout, this, &VehicleCameraControl::_streamStatusTimeout);
         _streamStatusTimer.setSingleShot(true);
@@ -2279,63 +2363,6 @@ Fact*
 VehicleCameraControl::mode()
 {
     return _paramComplete && factExists(kCAM_MODE) ? getFact(kCAM_MODE) : nullptr;
-}
-
-//-----------------------------------------------------------------------------
-QGCVideoStreamInfo::QGCVideoStreamInfo(QObject* parent, const mavlink_video_stream_information_t *si)
-    : QObject(parent)
-{
-    memcpy(&_streamInfo, si, sizeof(mavlink_video_stream_information_t));
-}
-
-//-----------------------------------------------------------------------------
-qreal
-QGCVideoStreamInfo::aspectRatio() const
-{
-    qreal ar = 1.0;
-    if(_streamInfo.resolution_h && _streamInfo.resolution_v) {
-        ar = static_cast<double>(_streamInfo.resolution_h) / static_cast<double>(_streamInfo.resolution_v);
-    }
-    return ar;
-}
-
-//-----------------------------------------------------------------------------
-bool
-QGCVideoStreamInfo::update(const mavlink_video_stream_status_t* vs)
-{
-    bool changed = false;
-    if(_streamInfo.hfov != vs->hfov) {
-        changed = true;
-        _streamInfo.hfov = vs->hfov;
-    }
-    if(_streamInfo.flags != vs->flags) {
-        changed = true;
-        _streamInfo.flags = vs->flags;
-    }
-    if(_streamInfo.bitrate != vs->bitrate) {
-        changed = true;
-        _streamInfo.bitrate = vs->bitrate;
-    }
-    if(_streamInfo.rotation != vs->rotation) {
-        changed = true;
-        _streamInfo.rotation = vs->rotation;
-    }
-    if(_streamInfo.framerate != vs->framerate) {
-        changed = true;
-        _streamInfo.framerate = vs->framerate;
-    }
-    if(_streamInfo.resolution_h != vs->resolution_h) {
-        changed = true;
-        _streamInfo.resolution_h = vs->resolution_h;
-    }
-    if(_streamInfo.resolution_v != vs->resolution_v) {
-        changed = true;
-        _streamInfo.resolution_v = vs->resolution_v;
-    }
-    if(changed) {
-        emit infoChanged();
-    }
-    return changed;
 }
 
 //-----------------------------------------------------------------------------

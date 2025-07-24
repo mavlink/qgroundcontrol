@@ -9,7 +9,7 @@ libs/lib/Frameworks/GStreamer.framework
 *.nfs
 CMakeFiles
 tags
-build*/
+build/
 obj
 .DS_Store
 *.log
@@ -71,9 +71,11 @@ ui_*
 *.o
 *.moc
 *.prl
+.qmlls.ini
 
 # android
 android/local.properties
+*.class
 
 # doxygen
 src/html/
@@ -89,3 +91,6 @@ Qt*-linux*.tar.*
 node_modules/
 docs/.vitepress/cache/
 docs/.vitepress/dist/
+
+CMakeUserPresets.json
+cpm_modules

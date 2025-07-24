@@ -13,7 +13,7 @@ import QtPositioning
 
 import QGroundControl
 import QGroundControl.ScreenTools
-import QGroundControl.Vehicle
+
 import QGroundControl.Controls
 import QGroundControl.FlightDisplay
 
@@ -69,7 +69,7 @@ Item {
                 x:                      (_sectorViewEllipsoid.width / 2) - (width / 2)
                 y:                      (_sectorViewEllipsoid.height / 2) - (height / 2)
                 text:                   proximityValues.rgRotationValueStrings[index]
-                font.family:            ScreenTools.demiboldFontFamily
+                font.bold:              true
                 visible:                !isNaN(proximityValues.rgRotationValues[index])
 
                 transform: Translate {

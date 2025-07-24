@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -19,11 +19,10 @@
 #include <QtCore/QDebug>
 #include <QtCore/QXmlStreamReader>
 
-static const char* kInvalidConverstion = "Internal Error: No support for string parameters";
-
 QGC_LOGGING_CATEGORY(PX4ParameterMetaDataLog, "PX4ParameterMetaDataLog")
 
-PX4ParameterMetaData::PX4ParameterMetaData(void)
+PX4ParameterMetaData::PX4ParameterMetaData(QObject* parent)
+    : QObject(parent)
 {
 
 }
@@ -79,7 +78,7 @@ QVariant PX4ParameterMetaData::_stringToTypedVariant(const QString& string, Fact
 
 void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaDataFile)
 {
-    qCDebug(ParameterManagerLog) << "PX4ParameterMetaData::loadParameterFactMetaDataFile" << metaDataFile;
+    qCDebug(PX4ParameterMetaDataLog) << "PX4ParameterMetaData::loadParameterFactMetaDataFile" << metaDataFile;
 
     if (_parameterMetaDataLoaded) {
         qWarning() << "Internal error: parameter meta data loaded more than once";
@@ -417,7 +416,7 @@ void _jsonWriteLine(QFile& file, int indent, const QString& line)
 
 void PX4ParameterMetaData::_generateParameterJson()
 {
-    qCDebug(ParameterManagerLog) << "PX4ParameterMetaData::_generateParameterJson";
+    qCDebug(PX4ParameterMetaDataLog) << "PX4ParameterMetaData::_generateParameterJson";
 
     int indentLevel = 0;
     QFile jsonFile(QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).absoluteFilePath("parameter.json"));

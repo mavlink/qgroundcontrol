@@ -1,85 +1,74 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
  ****************************************************************************/
 
-/// @file
-/// @brief  Joystick Manager
-
 #pragma once
 
-#include "QGCToolbox.h"
-
+#include <QtCore/QObject>
 #include <QtCore/QVariantList>
-#include <QtCore/QTimer>
 #include <QtCore/QLoggingCategory>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 Q_DECLARE_LOGGING_CATEGORY(JoystickManagerLog)
 
-class MultiVehicleManager;
 class Joystick;
+class QTimer;
 
-/// Joystick Manager
-class JoystickManager : public QGCTool
+class JoystickManager : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_MOC_INCLUDE("Joystick.h")
-
-public:
-    JoystickManager(QGCApplication* app, QGCToolbox* toolbox);
-    ~JoystickManager();
-
     Q_PROPERTY(QVariantList joysticks READ joysticks NOTIFY availableJoysticksChanged)
-    Q_PROPERTY(QStringList  joystickNames READ joystickNames NOTIFY availableJoysticksChanged)
-
-    Q_PROPERTY(Joystick* activeJoystick READ activeJoystick WRITE setActiveJoystick NOTIFY activeJoystickChanged)
+    Q_PROPERTY(QStringList joystickNames READ joystickNames NOTIFY availableJoysticksChanged)
+    Q_PROPERTY(Joystick *activeJoystick READ activeJoystick WRITE setActiveJoystick NOTIFY activeJoystickChanged)
     Q_PROPERTY(QString activeJoystickName READ activeJoystickName WRITE setActiveJoystickName NOTIFY activeJoystickNameChanged)
 
-    /// List of available joysticks
+public:
+    explicit JoystickManager(QObject *parent = nullptr);
+    ~JoystickManager();
+
+    static JoystickManager *instance();
+
     QVariantList joysticks();
-    /// List of available joystick names
-    QStringList joystickNames(void);
+    QStringList joystickNames() const { return _name2JoystickMap.keys(); }
 
-    /// Get active joystick
-    Joystick* activeJoystick(void);
-    /// Set active joystick
-    void setActiveJoystick(Joystick* joystick);
+    Joystick *activeJoystick();
+    void setActiveJoystick(Joystick *joystick);
 
-    QString activeJoystickName(void);
-    bool setActiveJoystickName(const QString& name);
+    QString activeJoystickName() const;
+    bool setActiveJoystickName(const QString &name);
 
-    void restartJoystickCheckTimer(void);
-
-    // Override from QGCTool
-    virtual void setToolbox(QGCToolbox *toolbox);
+signals:
+    void activeJoystickChanged(Joystick *joystick);
+    void activeJoystickNameChanged(const QString &name);
+    void availableJoysticksChanged();
+    void updateAvailableJoysticksSignal();
 
 public slots:
     void init();
 
-signals:
-    void activeJoystickChanged(Joystick* joystick);
-    void activeJoystickNameChanged(const QString& name);
-    void availableJoysticksChanged(void);
-    void updateAvailableJoysticksSignal();
-
 private slots:
-    void _updateAvailableJoysticks(void);
+    // TODO: move this to the right place: JoystickSDL.cc and JoystickAndroid.cc respectively and call through Joystick.cc
+    void _updateAvailableJoysticks();
 
 private:
-    void _setActiveJoystickFromSettings(void);
+    void _setActiveJoystickFromSettings();
 
-private:
-    Joystick*                   _activeJoystick;
-    QMap<QString, Joystick*>    _name2JoystickMap;
-    MultiVehicleManager*        _multiVehicleManager;
+    Joystick *_activeJoystick = nullptr;
+    QMap<QString, Joystick*> _name2JoystickMap;
 
-    static const char * _settingsGroup;
-    static const char * _settingsKeyActiveJoystick;
+    int _joystickCheckTimerCounter = 0;;
+    QTimer *_joystickCheckTimer = nullptr;
 
-    int _joystickCheckTimerCounter;
-    QTimer _joystickCheckTimer;
+    static constexpr int kTimerInterval = 1000;
+    static constexpr int kTimeout = 1000;
+    static constexpr const char *_settingsGroup = "JoystickManager";
+    static constexpr const char *_settingsKeyActiveJoystick = "ActiveJoystick";
 };

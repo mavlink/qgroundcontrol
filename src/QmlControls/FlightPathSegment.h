@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -9,13 +9,13 @@
 
 #pragma once
 
-#include "TerrainQuery.h"
-
-#include <QtCore/QObject>
-#include <QtPositioning/QGeoCoordinate>
-#include <QtCore/QTimer>
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QObject>
+#include <QtCore/QTimer>
+#include <QtPositioning/QGeoCoordinate>
+#include <QtQmlIntegration/QtQmlIntegration>
 
+#include "TerrainQuery.h"
 
 Q_DECLARE_LOGGING_CATEGORY(FlightPathSegmentLog)
 
@@ -23,7 +23,8 @@ Q_DECLARE_LOGGING_CATEGORY(FlightPathSegmentLog)
 class FlightPathSegment : public QObject
 {
     Q_OBJECT
-    
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
     enum SegmentType {
         SegmentTypeTakeoff,         // Takeoff segments ignore the first part of the segment for terrain collisions

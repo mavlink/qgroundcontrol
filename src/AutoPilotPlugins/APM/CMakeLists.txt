@@ -1,90 +1,92 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Quick)
-
-qt_add_library(APMAutoPilotPlugin STATIC
-    APMAirframeComponent.cc
-    APMAirframeComponent.h
-    APMAirframeComponentController.cc
-    APMAirframeComponentController.h
-    APMAutoPilotPlugin.cc
-    APMAutoPilotPlugin.h
-    APMCameraComponent.cc
-    APMCameraComponent.h
-    APMFlightModesComponent.cc
-    APMFlightModesComponent.h
-    APMFlightModesComponentController.cc
-    APMFlightModesComponentController.h
-    APMFollowComponent.cc
-    APMFollowComponent.h
-    APMFollowComponentController.cc
-    APMFollowComponentController.h
-    APMHeliComponent.cc
-    APMHeliComponent.h
-    APMLightsComponent.cc
-    APMLightsComponent.h
-    APMMotorComponent.cc
-    APMMotorComponent.h
-    APMPowerComponent.cc
-    APMPowerComponent.h
-    APMRadioComponent.cc
-    APMRadioComponent.h
-    APMRemoteSupportComponent.cc
-    APMRemoteSupportComponent.h
-    APMSafetyComponent.cc
-    APMSafetyComponent.h
-    APMSensorsComponent.cc
-    APMSensorsComponent.h
-    APMSensorsComponentController.cc
-    APMSensorsComponentController.h
-    APMSubFrameComponent.cc
-    APMSubFrameComponent.h
-    APMSubMotorComponentController.cc
-    APMSubMotorComponentController.h
-    APMTuningComponent.cc
-    APMTuningComponent.h
-)
-
-target_link_libraries(APMAutoPilotPlugin
+target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
-        APMFirmwarePlugin
-        AutoPilotPlugins
-        FactSystem
-        QGC
-        Settings
-        Utilities
-        Vehicle
-        VehicleActuators
-    PUBLIC
-        Qt6::Core
-        Qt6::Quick
-        CommonAutoPilotPlugin
-        FactControls
-        MAVLink
-        VehicleSetup
+        APMAirframeComponent.cc
+        APMAirframeComponent.h
+        APMAirframeComponentController.cc
+        APMAirframeComponentController.h
+        APMAutoPilotPlugin.cc
+        APMAutoPilotPlugin.h
+        APMCameraComponent.cc
+        APMCameraComponent.h
+        APMFlightModesComponent.cc
+        APMFlightModesComponent.h
+        APMFlightModesComponentController.cc
+        APMFlightModesComponentController.h
+        APMFollowComponent.cc
+        APMFollowComponent.h
+        APMFollowComponentController.cc
+        APMFollowComponentController.h
+        APMHeliComponent.cc
+        APMHeliComponent.h
+        APMLightsComponent.cc
+        APMLightsComponent.h
+        APMMotorComponent.cc
+        APMMotorComponent.h
+        APMPowerComponent.cc
+        APMPowerComponent.h
+        APMRadioComponent.cc
+        APMRadioComponent.h
+        APMRemoteSupportComponent.cc
+        APMRemoteSupportComponent.h
+        APMSafetyComponent.cc
+        APMSafetyComponent.h
+        APMSensorsComponent.cc
+        APMSensorsComponent.h
+        APMSensorsComponentController.cc
+        APMSensorsComponentController.h
+        APMSubFrameComponent.cc
+        APMSubFrameComponent.h
+        APMSubMotorComponentController.cc
+        APMSubMotorComponentController.h
+        APMTuningComponent.cc
+        APMTuningComponent.h
 )
 
-target_include_directories(APMAutoPilotPlugin PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-# file(GLOB QML_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.qml)
-# file(GLOB QML_RESOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/Images/*.*)
-# qt_add_qml_module(APMAutoPilotPlugin
-#     URI QGroundControl.APMAutoPilotPlugin
-#     VERSION 1.0
-#     QML_FILES ${QML_SOURCES}
-#     RESOURCES ${QML_RESOURCES}
-#     OUTPUT_TARGETS APMAutoPilotPlugin_targets
-#     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
-#     IMPORTS
-#         QtQuick
-#         QtQuick.Controls
-#         QtQuick.Dialogs
-#         QtQuick.Layouts
+qt_add_library(AutoPilotPluginsAPMModule STATIC)
 
-#         QGroundControl
-#         QGroundControl.FactSystem
-#         QGroundControl.FactControls
-#         QGroundControl.Controls
-#         QGroundControl.ScreenTools
-#         QGroundControl.Controllers
-#         QGroundControl.Palette
-#         QGroundControl.Vehicle
-# )
+qt_add_qml_module(AutoPilotPluginsAPMModule
+    URI QGroundControl.AutoPilotPlugins.APM
+    VERSION 1.0
+    RESOURCE_PREFIX /qml
+    QML_FILES
+        APMAirframeComponent.qml
+        APMAirframeComponentSummary.qml
+        APMCameraComponent.qml
+        APMCameraComponentSummary.qml
+        APMCameraSubComponent.qml
+        APMFlightModesComponent.qml
+        APMFlightModesComponentSummary.qml
+        APMFollowComponent.qml
+        APMFollowComponentSummary.qml
+        APMHeliComponent.qml
+        APMLightsComponent.qml
+        APMLightsComponentSummary.qml
+        APMMotorComponent.qml
+        APMNotSupported.qml
+        APMPowerComponent.qml
+        APMPowerComponentSummary.qml
+        APMRadioComponentSummary.qml
+        APMRemoteSupportComponent.qml
+        APMSafetyComponent.qml
+        APMSafetyComponentCopter.qml
+        APMSafetyComponentPlane.qml
+        APMSafetyComponentRover.qml
+        APMSafetyComponentSub.qml
+        APMSafetyComponentSummary.qml
+        APMSafetyComponentSummaryCopter.qml
+        APMSafetyComponentSummaryPlane.qml
+        APMSafetyComponentSummaryRover.qml
+        APMSafetyComponentSummarySub.qml
+        APMSensorsComponent.qml
+        APMSensorsComponentSummary.qml
+        APMSensorIdDecoder.qml
+        APMSensorParams.qml
+        APMSubFrameComponent.qml
+        APMSubFrameComponentSummary.qml
+        APMSubMotorComponent.qml
+        APMTuningComponentCopter.qml
+        APMTuningComponentSub.qml
+    NO_PLUGIN # Required by Qt 6.6.3. TODO: Remove when no longer supported.
+)

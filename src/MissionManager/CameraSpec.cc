@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -11,15 +11,6 @@
 #include "JsonHelper.h"
 
 #include <QtQml/QQmlEngine>
-
-const char* CameraSpec::_sensorWidthName =          "SensorWidth";
-const char* CameraSpec::_sensorHeightName =         "SensorHeight";
-const char* CameraSpec::_imageWidthName =           "ImageWidth";
-const char* CameraSpec::_imageHeightName =          "ImageHeight";
-const char* CameraSpec::_focalLengthName =          "FocalLength";
-const char* CameraSpec::_landscapeName =            "Landscape";
-const char* CameraSpec::_fixedOrientationName =     "FixedOrientation";
-const char* CameraSpec::_minTriggerIntervalName =   "MinTriggerInterval";
 
 CameraSpec::CameraSpec(const QString& settingsGroup, QObject* parent)
     : QObject                   (parent)

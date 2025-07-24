@@ -10,8 +10,8 @@
 #pragma once
 
 #include "UnitTest.h"
-#include "MissionItem.h"
 
+class MissionItem;
 class PlanMasterController;
 
 /// Unit test for the MissionItem Object

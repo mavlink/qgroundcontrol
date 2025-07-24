@@ -10,8 +10,9 @@
 import QtQuick
 import QtQuick.Controls
 
+import QGroundControl
 import QGroundControl.ScreenTools
-import QGroundControl.Palette
+
 
 Button {
     id:             control
@@ -44,14 +45,18 @@ Button {
     onCheckedChanged: toolStripAction.checked = checked
 
     onClicked: {
-        dropPanel.hide()
-        if (!toolStripAction.dropPanelComponent) {
-            toolStripAction.triggered(this)
-        } else if (checked) {
-            var panelEdgeTopPoint = mapToItem(_root, width, 0)
-            dropPanel.show(panelEdgeTopPoint, toolStripAction.dropPanelComponent, this)
-            checked = true
-            control.dropped(index)
+        if (mainWindow.allowViewSwitch()) {
+            dropPanel.hide()
+            if (!toolStripAction.dropPanelComponent) {
+                toolStripAction.triggered(this)
+            } else if (checked) {
+                var panelEdgeTopPoint = mapToItem(_root, width, 0)
+                dropPanel.show(panelEdgeTopPoint, toolStripAction.dropPanelComponent, this)
+                checked = true
+                control.dropped(index)
+            }
+        } else if (checkable) {
+            checked = !checked
         }
     }
 
@@ -127,7 +132,7 @@ Button {
         id:             buttonBkRect
         color:          (control.checked || control.pressed) ?
                             qgcPal.buttonHighlight :
-                            (control.hovered ? qgcPal.toolStripHoverColor : qgcPal.toolbarBackground)
+                            ((control.enabled && control.hovered) ? qgcPal.toolStripHoverColor : qgcPal.toolbarBackground)
         anchors.fill:   parent
     }
 }

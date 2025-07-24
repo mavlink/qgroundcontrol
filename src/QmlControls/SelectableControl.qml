@@ -11,9 +11,10 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
+import QGroundControl
 import QGroundControl.ScreenTools
-import QGroundControl.Palette
-import QGroundControl.FactSystem
+
+
 import QGroundControl.FactControls
 
 /// Controt that allows the user to select from a list of controls to display.
@@ -42,15 +43,15 @@ Control {
             spacing:        ScreenTools.defaultFontPixelWidth
             visible:        _showSelectionUI
 
+            QGCButton {
+                onClicked:  _showSelectionUI = false
+                iconSource: "qrc:/InstrumentValueIcons/lock-open.svg"
+            }
+
             FactComboBox {
                 fact:           selectedControl
                 indexModel:     false
                 sizeToContents: true
-            }
-
-            QGCButton {
-                text:       qsTr("X")
-                onClicked:  _showSelectionUI = false
             }
         }
     }
@@ -74,11 +75,7 @@ Control {
                 }
             }
 
-            onPressAndHold: {
-                if (ScreenTools.isMobile) {
-                    _showSelectionUI = true
-                }
-            }
+            onPressAndHold: _showSelectionUI = true
         }
     }
 }

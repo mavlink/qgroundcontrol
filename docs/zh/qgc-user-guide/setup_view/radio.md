@@ -22,8 +22,8 @@ To calibrate the radio:
 
    ![Radio setup - before starting](../../../assets/setup/radio_start_setup.jpg)
 
-   ::: info
-   The image above is for PX4 Pro. Calibration/top section is the same for both firmware, but the _Additional Radio setup_ section will differ.
+   ::: warning
+   校准期间请勿触摸传感器（遮挡任何孔洞）。 Calibration/top section is the same for both firmware, but the _Additional Radio setup_ section will differ.
    :::
 
 4. Set the _transmitter mode_ radio button that matches your transmitter configuration (this ensures that _QGroundControl_ displays the correct stick positions for you to follow during calibration).

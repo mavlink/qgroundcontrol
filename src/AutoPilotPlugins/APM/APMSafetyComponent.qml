@@ -11,9 +11,10 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import QGroundControl.FactSystem
+import QGroundControl
+
 import QGroundControl.FactControls
-import QGroundControl.Palette
+
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
 
@@ -144,7 +145,7 @@ SetupPage {
 
                 QGCLabel {
                     text:       qsTr("Battery1 Failsafe Triggers")
-                    font.family: ScreenTools.demiboldFontFamily
+                    font.bold:   true
                 }
 
                 Rectangle {
@@ -178,7 +179,7 @@ SetupPage {
 
                 QGCLabel {
                     text:       qsTr("Battery2 Failsafe Triggers")
-                    font.family: ScreenTools.demiboldFontFamily
+                    font.bold:   true
                 }
 
                 Rectangle {
@@ -217,7 +218,7 @@ SetupPage {
 
                     QGCLabel {
                         text:       qsTr("Failsafe Triggers")
-                        font.family: ScreenTools.demiboldFontFamily
+                        font.bold:   true
                     }
 
                     Rectangle {
@@ -276,7 +277,7 @@ SetupPage {
                     QGCLabel {
                         id:         failsafeLabel
                         text:       qsTr("Failsafe Triggers")
-                        font.family: ScreenTools.demiboldFontFamily
+                        font.bold:   true
                     }
 
                     Rectangle {
@@ -342,7 +343,7 @@ SetupPage {
 
                     QGCLabel {
                         text:       qsTr("General Failsafe Triggers")
-                        font.family: ScreenTools.demiboldFontFamily
+                        font.bold:   true
                     }
 
                     Rectangle {
@@ -414,7 +415,7 @@ SetupPage {
 
                     QGCLabel {
                         text:           qsTr("GeoFence")
-                        font.family:    ScreenTools.demiboldFontFamily
+                        font.bold:      true
                     }
 
                     Rectangle {
@@ -541,7 +542,7 @@ SetupPage {
                     QGCLabel {
                         id:             rtlLabel
                         text:           qsTr("Return to Launch")
-                        font.family:    ScreenTools.demiboldFontFamily
+                        font.bold:      true
                     }
 
                     Rectangle {
@@ -660,11 +661,17 @@ SetupPage {
                 Column {
                     spacing: _margins / 2
 
-                    property Fact _rtlAltFact: controller.getParameterFact(-1, "ALT_HOLD_RTL")
+                    property Fact _rtlAltFact: {
+                        if (controller.firmwareMajorVersion < 4 || (controller.firmwareMajorVersion === 4 && controller.firmwareMinorVersion < 5)) {
+                            return controller.getParameterFact(-1, "ALT_HOLD_RTL")
+                        } else {
+                            return controller.getParameterFact(-1, "RTL_ALTITUDE")
+                        }
+                    }
 
                     QGCLabel {
                         text:           qsTr("Return to Launch")
-                        font.family:    ScreenTools.demiboldFontFamily
+                        font.bold:      true
                     }
 
                     Rectangle {
@@ -716,7 +723,7 @@ SetupPage {
 
                 QGCLabel {
                     text:           qsTr("Arming Checks")
-                    font.family:    ScreenTools.demiboldFontFamily
+                    font.bold:      true
                 }
 
                 Rectangle {

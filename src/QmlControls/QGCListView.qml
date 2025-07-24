@@ -1,6 +1,7 @@
 import QtQuick
 
-import QGroundControl.Palette
+import QGroundControl
+
 
 /// QGC version of ListVIew control that shows horizontal/vertial scroll indicators
 ListView {
@@ -13,9 +14,9 @@ ListView {
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
     Component.onCompleted: {
-        var indicatorComponent = Qt.createComponent("QGCFlickableVerticalIndicator.qml")
-        indicatorComponent.createObject(root)
-        indicatorComponent = Qt.createComponent("QGCFlickableHorizontalIndicator.qml")
-        indicatorComponent.createObject(root)
+        var indicatorComponent = Qt.createComponent("QGCFlickableScrollIndicator.qml")
+        indicatorComponent.createObject(root, { orientation: QGCFlickableScrollIndicator.Horizontal })
+        indicatorComponent = Qt.createComponent("QGCFlickableScrollIndicator.qml")
+        indicatorComponent.createObject(root, { orientation: QGCFlickableScrollIndicator.Vertical })
     }
 }

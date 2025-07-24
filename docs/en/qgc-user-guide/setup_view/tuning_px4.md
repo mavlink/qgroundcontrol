@@ -18,7 +18,7 @@ Auto-tuning automates the process of tuning the PX4 rate and attitude controller
 
 ::: info
 This guide shows the default usage of this feature.
-Additional information and configuration can be found in the [PX4 Autotuning Guide](http://docs.px4.io/master/en/config/autotune.html) (PX4 User Guide).
+Additional information and configuration can be found in the [PX4 Autotuning Guide](http://docs.px4.io/main/en/config/autotune.html) (PX4 User Guide).
 :::
 
 ### Pre-Autotuning Test
@@ -42,7 +42,7 @@ To make sure the vehicle is stable enough for auto-tuning:
 
 If the drone can stabilize itself within 2 oscillations it is ready for the auto-tuning procedure.
 
-If not, see the [PX4 User Guide > Autotuning > Troubleshooting](http://docs.px4.io/master/en/config/autotune.html#troubleshooting).
+If not, see the [PX4 User Guide > Autotuning > Troubleshooting](http://docs.px4.io/main/en/config/autotune.html#troubleshooting).
 
 ### Auto-tuning procedure
 
@@ -77,7 +77,7 @@ The test steps are:
      PX4 will then run a 4 second test and revert the new tuning if a problem is detected.
    - **Multicopters:** Manually land and disarm to apply the new tuning parameters.
      Takeoff carefully and manually test that the vehicle is stable.
-1. If any strong oscillations occur, land immediately and follow the instructions in [PX4 User Guide > Autotuning > Troubleshooting](http://docs.px4.io/master/en/config/autotune.html#troubleshooting).
+1. If any strong oscillations occur, land immediately and follow the instructions in [PX4 User Guide > Autotuning > Troubleshooting](http://docs.px4.io/main/en/config/autotune.html#troubleshooting).
 
 <br/>
 
@@ -95,7 +95,7 @@ A video of the process is shown below:
 Manual tuning is done in-flight, so your vehicle must already be tuned well enough to fly with (this is normally the case if you have selected an appropriate default airframe).
 
 The instructions below explain how you can use the manual tuning UI.
-It is designed to be read/used in conjustion with the [PX4 Manual PID Tuning Guides](http://docs.px4.io/master/en/config/autotune.html#see-also), which provide more detailed hints on the kinds of step sizes to use when changing PID values.
+It is designed to be read/used in conjustion with the [PX4 Manual PID Tuning Guides](http://docs.px4.io/main/en/config/autotune.html#see-also), which provide more detailed hints on the kinds of step sizes to use when changing PID values.
 
 In overview:
 

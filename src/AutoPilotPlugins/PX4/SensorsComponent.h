@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -23,6 +23,9 @@ class SensorsComponent : public VehicleComponent
 public:
     SensorsComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
     
+    Q_PROPERTY(bool airspeedCalSupported    READ _airspeedCalSupported  STORED false NOTIFY setupCompleteChanged)
+    Q_PROPERTY(bool airspeedCalRequired     READ _airspeedCalRequired   STORED false NOTIFY setupCompleteChanged)
+
     // Virtuals from VehicleComponent
     QStringList setupCompleteChangedTriggerList(void) const override;
     
@@ -36,14 +39,17 @@ public:
     virtual QUrl summaryQmlSource(void) const override;
     
 private:
+    bool _airspeedCalSupported  (void) const;
+    bool _airspeedCalRequired   (void) const;
+
     const QString   _name;
     QVariantList    _summaryItems;
     QStringList     _deviceIds;
+    QStringList     _airspeedCalTriggerParams;
 
-    static const char* _airspeedDisabledParam;
-    static const char* _airspeedBreakerParam;
-    static const char* _airspeedCalParam;
-
-    static const char* _magEnabledParam;
-    static const char* _magCalParam;
+    static constexpr const char* _airspeedBreakerParam = "CBRK_AIRSPD_CHK";
+    static constexpr const char* _airspeedDisabledParam = "FW_ARSP_MODE";
+    static constexpr const char* _airspeedCalParam = "SENS_DPRES_OFF";
+    static constexpr const char* _magEnabledParam = "SYS_HAS_MAG";
+    static constexpr const char* _magCalParam = "CAL_MAG0_ID";
 };

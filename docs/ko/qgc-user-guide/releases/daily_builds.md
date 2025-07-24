@@ -4,29 +4,52 @@ _QGroundControl_의 일일 빌드에는 [새로운 기능](../releases/daily_bui
 
 :::warning
 일일 빌드는 안정적인 빌드보다 테스트가 부족합니다.
-Use at your own risk!
+Use at your own risk.
 :::
 
 아래 링크에서 다운로드할 수 있습니다([다운로드 및 설치](../getting_started/download_and_install.md)에 설명된 대로 설치).
 
 - [윈도우](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl-installer.exe)
-
 - [OS X](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl.dmg)
+- Linux - (See installation instructions below)
+  - [Linux x86_64](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl-x86_64.AppImage)
+  - [Linux aarch64](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl-aarch64.AppImage)
+- [Android](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl.apk)
+- iOS is currently unavailable
 
-  ::: info
-  QGroundControl 미서명 문제로 인하여 Catalina에서 문제가 발생합니다. To open QGC app for the first time:
+## Linux Installation Instructions
 
-  - QGroundControl 앱 아이콘을 마우스 오른쪽 버튼으로 클릭하고, 메뉴에서 열기를 선택합니다. 취소 옵션만 제공됩니다. 취소를 선택합니다.
-  - QGroundControl 앱 아이콘을 마우스 오른쪽 버튼으로 클릭하고 메뉴에서 열기를 선택합니다. 이번에는 열기 옵션이 표시됩니다.
+1. Make the AppImage executable
 
-  :::
+```
+chmod +x QGroundControl-<arch>.AppImage
+```
 
-- [리눅스](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl.AppImage)
+2. Enable serial-port access
+  Add your user to the dialout group so you can talk to USB devices without root:
 
-- [안드로이드](https://play.google.com/store/apps/details?id=org.mavlink.qgroundcontrolbeta) - Google Play: \*QGroundControl(일일 테스트 빌드)\*로 나열됩니다.
-
-- iOS에서는 현재 사용 불가합니다.
+```
+sudo usermod -aG dialout "$(id -un)"
+```
 
 :::info
-QGroundControl Continous Delivery 파이프라인에서 Google Play 스토어에 업로드하는 데 문제가 발생할 수 있습니다. [QGroundControl32.apk](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl32.apk) 및 [QGroundControl64.apk](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl64.apk)에서 직접 다운로드할 수 있는 안드로이드 기기용 일일 빌드 APK를 찾을 수 있습니다.
+At login, your shell takes a snapshot of your user and group memberships. Because you just changed groups, you need a fresh login shell to pick up “dialout” access. Logging out and back in reloads that snapshot, so you get the new permissions.
 :::
+
+3. (Optional) Disable ModemManager
+  On some Ubuntu-based systems, ModemManager can claim serial ports that QGC needs. If you don't use it elsewhere, mask or remove it.
+
+```
+# preferred: stop and mask the service
+sudo systemctl mask --now ModemManager.service
+
+# or, if you’d rather remove the package
+sudo apt remove --purge modemmanager
+```
+
+4. Run QGroundControl
+  Either double-click the AppImage in your file manager or launch it from a terminal:
+
+```
+./QGroundControl-<arch>.AppImage
+```

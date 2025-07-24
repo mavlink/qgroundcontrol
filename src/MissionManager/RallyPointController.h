@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -9,11 +9,12 @@
 
 #pragma once
 
+#include <QtCore/QLoggingCategory>
+#include <QtPositioning/QGeoCoordinate>
+#include <QtQmlIntegration/QtQmlIntegration>
+
 #include "PlanElementController.h"
 #include "QmlObjectListModel.h"
-
-#include <QtPositioning/QGeoCoordinate>
-#include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(RallyPointControllerLog)
 
@@ -24,9 +25,10 @@ class Vehicle;
 class RallyPointController : public PlanElementController
 {
     Q_OBJECT
-    
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
-    RallyPointController(PlanMasterController* masterController, QObject* parent = nullptr);
+    explicit RallyPointController(PlanMasterController* masterController, QObject* parent = nullptr);
     ~RallyPointController();
     
     Q_PROPERTY(QmlObjectListModel*  points                  READ points                                             CONSTANT)
@@ -77,7 +79,7 @@ private:
     QObject*            _currentRallyPoint =    nullptr;
     bool                _itemsRequested =       false;
 
-    static const int    _jsonCurrentVersion = 2;
-    static const char*  _jsonFileTypeValue;
-    static const char*  _jsonPointsKey;
+    static constexpr int    _jsonCurrentVersion = 2;
+    static constexpr const char* _jsonFileTypeValue =  "RallyPoints";
+    static constexpr const char* _jsonPointsKey =      "points";
 };

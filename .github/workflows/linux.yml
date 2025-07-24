@@ -8,131 +8,129 @@ on:
     tags:
       - 'v*'
     paths-ignore:
-      - 'android/**'
-      - 'deploy/**'
-      - 'docs/**'
+      - 'docs/**' # Do not trigger for any changes under docs
   pull_request:
-    paths-ignore:
-      - 'android/**'
-      - 'deploy/**'
-      - 'docs/**'
-      - '.github/workflows/docs_deploy.yml'
-      - '.github/workflows/android.yml'
-      - '.github/workflows/macos.yml'
-      - '.github/workflows/windows.yml'
+    paths:
+      - '.github/workflows/linux.yml'
+      - '.github/actions/**'
+      - 'deploy/linux/**'
+      - 'src/**'
+      - 'test/**'
+      - 'CMakeLists.txt'
+      - 'cmake/**'
+      - 'tools/setup/*debian*'
+
+# concurrency:
+#   group: ${{ github.workflow }}-${{ github.ref }}
+#   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    name: Build ${{ matrix.arch }} ${{ matrix.build_type }}
+    runs-on: ${{ matrix.os }}
 
     strategy:
+      fail-fast: false
       matrix:
-        BuildType: [Debug, Release]
+        build_type: [Debug, Release]
+        os: [ubuntu-24.04-arm, ubuntu-22.04]
+        include:
+          - os: ubuntu-24.04-arm
+            package: QGroundControl-aarch64
+            host: linux_arm64
+            arch: linux_gcc_arm64
 
-    env:
-      ARTIFACT: QGroundControl-x86_64.AppImage
-      QT_VERSION: 6.6.3
+          - os: ubuntu-22.04
+            package: QGroundControl-x86_64
+            host: linux
+            arch: linux_gcc_64
+
+        exclude:
+          - os: ubuntu-24.04-arm
+            build_type: Debug
 
     defaults:
       run:
         shell: bash
+
+    env:
+      QT_VERSION: 6.8.3
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          fetch-depth: 1
           fetch-tags: true
 
-      # Temporary solution
-      - name: Remove unused dependencies
-        run: |
-          rm -rf libs/Frameworks
-          rm -rf libs/sdl2
-          rm -rf libs/OpenSSL
+      - name: Initial Setup
+        uses: ./.github/actions/common
 
       - name: Install Dependencies
         run: |
           chmod a+x ./tools/setup/install-dependencies-debian.sh
           sudo ./tools/setup/install-dependencies-debian.sh
-          sudo apt clean
 
-      - name: Install Build Tools
-        run: |
-          wget --quiet https://github.com/ccache/ccache/releases/download/v4.9.1/ccache-4.9.1-linux-x86_64.tar.xz
-          tar -xvf ccache-*-linux-x86_64.tar.xz
-          cd ccache-*-linux-x86_64
-          sudo make install
-          sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-          sudo apt install gcc-13 g++-13
-          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100 --slave /usr/bin/g++ g++ /usr/bin/g++-13 --slave /usr/bin/gcov gcov /usr/bin/gcov-13
-          sudo update-alternatives --set gcc /usr/bin/gcc-13
-          python3 -m pip install --user ninja meson
-
-      - name: Install Vulkan
-        run: |
-          wget -qO - http://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo apt-key add -
-          sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-focal.list http://packages.lunarg.com/vulkan/lunarg-vulkan-focal.list
-          sudo apt update
-          sudo apt install vulkan-sdk
-
-      - name: Set Up Cache
-        uses: hendrikmuhs/ccache-action@v1.2
+      - name: Setup Caching
+        uses: ./.github/actions/cache
         with:
-          create-symlink: true
-          key: ${{ runner.os }}-${{ matrix.BuildType }}
-          restore-keys: ${{ runner.os }}-${{ matrix.BuildType }}
-          max-size: 1G
-          append-timestamp: false
-          save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+          host: ${{ matrix.host }}
+          target: ${{ matrix.arch }}
+          build-type: ${{ matrix.build_type }}
+          cpm-modules: ${{ runner.temp }}/build/cpm_modules
 
-      - name: Install Qt
-        uses: jurplel/install-qt-action@v3
+      - name: Install Qt for Linux
+        uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
-          aqtversion: ==3.1.*
-          host: linux
+          host: ${{ matrix.host }}
           target: desktop
+          arch: ${{ matrix.arch }}
           dir: ${{ runner.temp }}
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
-          setup-python: true
-          cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
-          tools: 'tools_cmake'
+          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
+          setup-python: false
+          cache: true
 
-    # - name: Build GStreamer
-    #   uses: ./.github/actions/gstreamer
-
-      - name: Cleanup
-        run: sudo apt clean
-
-      - name: Create build directory
-        run:  mkdir ${{ runner.temp }}/shadow_build_dir
+      # - name: Build GStreamer
+      #   uses: ./.github/actions/gstreamer
 
       - name: Configure
-        working-directory: ${{ runner.temp }}/shadow_build_dir
-        run: cmake -S ${{ github.workspace }} -B . -G Ninja
-              -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }}
-              -DQGC_BUILD_TESTING=${{ matrix.BuildType == 'Debug' && 'ON' || 'OFF' }}
+        working-directory: ${{ runner.temp }}/build
+        run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
+              -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+              -DQGC_BUILD_TESTING=${{ matrix.build_type == 'Debug' && 'ON' || 'OFF' }}
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
 
       - name: Build
-        working-directory: ${{ runner.temp }}/shadow_build_dir
-        run: cmake --build . --target all --config ${{ matrix.BuildType }}
+        working-directory: ${{ runner.temp }}/build
+        run: cmake --build . --target all --config ${{ matrix.build_type }} --parallel
+
+      - name: Verify Executable
+        if: matrix.build_type == 'Release'
+        working-directory: ${{ runner.temp }}/build/${{ matrix.build_type }}
+        run: xvfb-run -a ./QGroundControl --simple-boot-test
 
       - name: Create AppImage
-        working-directory: ${{ runner.temp }}/shadow_build_dir
-        run: cmake --install . --config ${{ matrix.BuildType }}
+        working-directory: ${{ runner.temp }}/build
+        run: cmake --install . --config ${{ matrix.build_type }}
 
-      - name: Run unit tests
-        if: matrix.BuildType == 'Debug'
-        working-directory:  ${{ runner.temp }}/shadow_build_dir
-        run: xvfb-run -a ./${{ env.ARTIFACT }} --unittest
+      - name: Verify AppImage
+        if: matrix.build_type == 'Release'
+        working-directory: ${{ runner.temp }}/build
+        run: xvfb-run -a ./${{ matrix.package }}.AppImage --simple-boot-test
+
+      - name: Run Unit Tests
+        if: matrix.build_type == 'Debug'
+        working-directory: ${{ runner.temp }}/build
+        run: xvfb-run -a ./${{ matrix.package }}.AppImage --unittest
 
       - name: Upload Build File
+        if: matrix.build_type == 'Release'
         uses: ./.github/actions/upload
-        if: matrix.BuildType == 'Release'
         with:
-          artifact_name: ${{ env.ARTIFACT }}
+          artifact_name: ${{ matrix.package }}.AppImage
+          package_name: ${{ matrix.package }}
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          source: ''
+          github_token: ${{ secrets.GITHUB_TOKEN }}

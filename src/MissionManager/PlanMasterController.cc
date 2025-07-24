@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -31,16 +31,10 @@
 
 QGC_LOGGING_CATEGORY(PlanMasterControllerLog, "PlanMasterControllerLog")
 
-const int   PlanMasterController::kPlanFileVersion =            1;
-const char* PlanMasterController::kPlanFileType =               "Plan";
-const char* PlanMasterController::kJsonMissionObjectKey =       "mission";
-const char* PlanMasterController::kJsonGeoFenceObjectKey =      "geoFence";
-const char* PlanMasterController::kJsonRallyPointsObjectKey =   "rallyPoints";
-
 PlanMasterController::PlanMasterController(QObject* parent)
     : QObject               (parent)
-    , _multiVehicleMgr      (qgcApp()->toolbox()->multiVehicleManager())
-    , _controllerVehicle    (new Vehicle(Vehicle::MAV_AUTOPILOT_TRACK, Vehicle::MAV_TYPE_TRACK, qgcApp()->toolbox()->firmwarePluginManager(), this))
+    , _multiVehicleMgr      (MultiVehicleManager::instance())
+    , _controllerVehicle    (new Vehicle(Vehicle::MAV_AUTOPILOT_TRACK, Vehicle::MAV_TYPE_TRACK, this))
     , _managerVehicle       (_controllerVehicle)
     , _missionController    (this)
     , _geoFenceController   (this)
@@ -52,8 +46,8 @@ PlanMasterController::PlanMasterController(QObject* parent)
 #ifdef QT_DEBUG
 PlanMasterController::PlanMasterController(MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, QObject* parent)
     : QObject               (parent)
-    , _multiVehicleMgr      (qgcApp()->toolbox()->multiVehicleManager())
-    , _controllerVehicle    (new Vehicle(firmwareType, vehicleType, qgcApp()->toolbox()->firmwarePluginManager()))
+    , _multiVehicleMgr      (MultiVehicleManager::instance())
+    , _controllerVehicle    (new Vehicle(firmwareType, vehicleType))
     , _managerVehicle       (_controllerVehicle)
     , _missionController    (this)
     , _geoFenceController   (this)
@@ -65,9 +59,10 @@ PlanMasterController::PlanMasterController(MAV_AUTOPILOT firmwareType, MAV_TYPE 
 
 void PlanMasterController::_commonInit(void)
 {
-    connect(&_missionController,    &MissionController::dirtyChanged,               this, &PlanMasterController::dirtyChanged);
-    connect(&_geoFenceController,   &GeoFenceController::dirtyChanged,              this, &PlanMasterController::dirtyChanged);
-    connect(&_rallyPointController, &RallyPointController::dirtyChanged,            this, &PlanMasterController::dirtyChanged);
+    _previousOverallDirty = dirty();
+    connect(&_missionController,    &MissionController::dirtyChanged,               this, &PlanMasterController::_updateOverallDirty);
+    connect(&_geoFenceController,   &GeoFenceController::dirtyChanged,              this, &PlanMasterController::_updateOverallDirty);
+    connect(&_rallyPointController, &RallyPointController::dirtyChanged,            this, &PlanMasterController::_updateOverallDirty);
 
     connect(&_missionController,    &MissionController::containsItemsChanged,       this, &PlanMasterController::containsItemsChanged);
     connect(&_geoFenceController,   &GeoFenceController::containsItemsChanged,      this, &PlanMasterController::containsItemsChanged);
@@ -135,7 +130,7 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
         _managerVehicle = activeVehicle;
 
         // Update controllerVehicle to the currently connected vehicle
-        AppSettings* appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
+        AppSettings* appSettings = SettingsManager::instance()->appSettings();
         appSettings->offlineEditingFirmwareClass()->setRawValue(QGCMAVLink::firmwareClass(_managerVehicle->firmwareType()));
         appSettings->offlineEditingVehicleClass()->setRawValue(QGCMAVLink::vehicleClass(_managerVehicle->vehicleType()));
 
@@ -206,16 +201,15 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
 
 void PlanMasterController::loadFromVehicle(void)
 {
-    WeakLinkInterfacePtr weakLink = _managerVehicle->vehicleLinkManager()->primaryLink();
-    if (weakLink.expired()) {
-        // Vehicle is shutting down
-        return;
-    } else {
-        SharedLinkInterfacePtr sharedLink = weakLink.lock();
+    SharedLinkInterfacePtr sharedLink = _managerVehicle->vehicleLinkManager()->primaryLink().lock();
+    if (sharedLink) {
         if (sharedLink->linkConfiguration()->isHighLatency()) {
             qgcApp()->showAppMessage(tr("Download not supported on high latency links."));
             return;
         }
+    } else {
+        // Vehicle is shutting down
+        return;
     }
 
     if (offline()) {
@@ -311,16 +305,15 @@ void PlanMasterController::_sendRallyPointsComplete(void)
 
 void PlanMasterController::sendToVehicle(void)
 {
-    WeakLinkInterfacePtr weakLink = _managerVehicle->vehicleLinkManager()->primaryLink();
-    if (weakLink.expired()) {
-        // Vehicle is shutting down
-        return;
-    } else {
-        SharedLinkInterfacePtr sharedLink = weakLink.lock();
+    SharedLinkInterfacePtr sharedLink = _managerVehicle->vehicleLinkManager()->primaryLink().lock();
+    if (sharedLink) {
         if (sharedLink->linkConfiguration()->isHighLatency()) {
             qgcApp()->showAppMessage(tr("Upload not supported on high latency links."));
             return;
         }
+    } else {
+        // Vehicle is shutting down
+        return;
     }
 
     if (offline()) {
@@ -377,7 +370,7 @@ void PlanMasterController::loadFromFile(const QString& filename)
 
         QJsonObject json = jsonDoc.object();
         //-- Allow plugins to pre process the load
-        qgcApp()->toolbox()->corePlugin()->preLoadFromJson(this, json);
+        QGCCorePlugin::instance()->preLoadFromJson(this, json);
 
         int version;
         if (!JsonHelper::validateExternalQGCJsonFile(json, kPlanFileType, kPlanFileVersion, kPlanFileVersion, version, errorString)) {
@@ -401,7 +394,7 @@ void PlanMasterController::loadFromFile(const QString& filename)
             qgcApp()->showAppMessage(errorMessage.arg(errorString));
         } else {
             //-- Allow plugins to post process the load
-            qgcApp()->toolbox()->corePlugin()->postLoadFromJson(this, json);
+            QGCCorePlugin::instance()->postLoadFromJson(this, json);
             success = true;
         }
     }
@@ -421,22 +414,22 @@ void PlanMasterController::loadFromFile(const QString& filename)
 QJsonDocument PlanMasterController::saveToJson()
 {
     QJsonObject planJson;
-    qgcApp()->toolbox()->corePlugin()->preSaveToJson(this, planJson);
+    QGCCorePlugin::instance()->preSaveToJson(this, planJson);
     QJsonObject missionJson;
     QJsonObject fenceJson;
     QJsonObject rallyJson;
     JsonHelper::saveQGCJsonFileHeader(planJson, kPlanFileType, kPlanFileVersion);
     //-- Allow plugin to preemptly add its own keys to mission
-    qgcApp()->toolbox()->corePlugin()->preSaveToMissionJson(this, missionJson);
+    QGCCorePlugin::instance()->preSaveToMissionJson(this, missionJson);
     _missionController.save(missionJson);
     //-- Allow plugin to add its own keys to mission
-    qgcApp()->toolbox()->corePlugin()->postSaveToMissionJson(this, missionJson);
+    QGCCorePlugin::instance()->postSaveToMissionJson(this, missionJson);
     _geoFenceController.save(fenceJson);
     _rallyPointController.save(rallyJson);
     planJson[kJsonMissionObjectKey] = missionJson;
     planJson[kJsonGeoFenceObjectKey] = fenceJson;
     planJson[kJsonRallyPointsObjectKey] = rallyJson;
-    qgcApp()->toolbox()->corePlugin()->postSaveToJson(this, planJson);
+    QGCCorePlugin::instance()->postSaveToJson(this, planJson);
     return QJsonDocument(planJson);
 }
 
@@ -615,6 +608,14 @@ bool PlanMasterController::isEmpty(void) const
     return _missionController.isEmpty() &&
             _geoFenceController.isEmpty() &&
             _rallyPointController.isEmpty();
+}
+
+void PlanMasterController::_updateOverallDirty(void)
+{
+    if(_previousOverallDirty != dirty()){
+        _previousOverallDirty = dirty();
+        emit dirtyChanged(_previousOverallDirty);
+    }    
 }
 
 void PlanMasterController::_updatePlanCreatorsList(void)

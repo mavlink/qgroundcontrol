@@ -1,8 +1,9 @@
 import QtQuick
 import QtQuick.Controls
 
-import QGroundControl.FactSystem
-import QGroundControl.Palette
+import QGroundControl
+
+
 import QGroundControl.Controls
 
 QGCCheckBox {
@@ -14,8 +15,8 @@ QGCCheckBox {
     Binding on checkState {
         value: fact ?
                    (fact.typeIsBool ?
-                        (fact.value === false ? Qt.Unchecked : Qt.Checked) :
-                        (fact.value === 0 ? Qt.Unchecked : Qt.Checked)) :
+                        (fact.value ? Qt.Checked : Qt.Unchecked) :
+                        (fact.value !== 0 ? Qt.Checked : Qt.Unchecked)) :
                    Qt.Unchecked
     }
 

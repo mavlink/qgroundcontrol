@@ -15,7 +15,6 @@
 class MavlinkCameraControl;
 class Fact;
 class Vehicle;
-class MAVLinkProtocol;
 
 Q_DECLARE_LOGGING_CATEGORY(CameraIOLog)
 Q_DECLARE_LOGGING_CATEGORY(CameraIOLogVerbose)
@@ -77,7 +76,6 @@ private:
     bool                _done;
     bool                _updateOnSet;
     MAV_PARAM_EXT_TYPE  _mavParamType;
-    MAVLinkProtocol*    _pMavlink;
     bool                _forceUIUpdate;
 };
 

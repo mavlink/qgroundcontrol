@@ -1,281 +1,282 @@
-# General Settings (Settings View)
+# 常规设置(设置视图)
 
-The general settings (**SettingsView > General Settings**) are the main place for application-level configuration.
-Settable values include: display units, autoconnection devices, video display and storage, RTK GPS, brand image, and other miscellaneous settings.
+常规设置 (**设置视图 > 常规视图**) 是应用程序级别配置的主要位置。
+设置值包括：显示单位、自动连接装置、视频显示和存储、RTK GPS、品牌图像和其他杂项设置。
 
 :::info
-Values are settable even if no vehicle is connected. Settings that require a vehicle restart are indicated in the UI.
+即使没有工具连接，值也是可以设置的。 需要重新启动载具的设置会在用户界面中显示。
 :::
 
-![SettingsView - Full General Tab](../../../assets/settings/general/overview.jpg)
+![设置视图-完整通用标签](../../../assets/settings/general/overview.jpg)
 
-## Units
+## 单位
 
-This section defines the display units used in the application.
+本节定义应用程序中使用的显示单位。
 
-![Units settings](../../../assets/settings/general/units.jpg)
+![单位设置](../../../assets/settings/general/units.jpg)
 
-The settings are:
+设置如下：
 
-- **Distance**: Meters | Feet
-- **Area**: SquareMetres | SquareFeet | SquareKilometers | Hectares | Acres | SquareMiles
-- **Speed**: Metres/second | Feet/second | Miles/hour | Kilometres/hour | Knots
-- **Temperature**: Celsius | Fahrenheit
+- **距离** 米|英尺。
+- \*\* 面积\*\*：平方米 | 平方英尺 | 平方公里 | 公顷 | 英亩 | 平方英里
+- **速度**：米/秒 | 英尺/秒 | 英里/小时 | 公里/小时 | 节
+- **温度** ：摄氏度 | 华氏度
 
-## Miscellaneous
+## 杂项
 
-This section defines a number of miscellaneous settings, related to (non exhaustively): font sizes, colour schemes, map providers, map types, telemetry logging, audio output, low battery announcement levels, default mission altitude, [virtual joysticks](../settings_view/virtual_joystick.md), mission autoloading, default application file load/save path etc.
+本节定义了一些杂项设置，涉及（不完全）：字体大小、配色方案、地图提供者、地图类型、遥测记录、音频输出、低电量公告级别、默认任务高度、[虚拟操纵杆]（.../settings_view/virtual_joystick.md）、任务自动加载、默认应用程序文件加载/保存路径等。
 
-![Miscellaneous settings](../../../assets/settings/general/miscellaneous.jpg)
+![杂项设置](../../../assets/settings/general/miscellaneous.jpg)
 
-The settings are:
+设置如下：
 
-- <span id="language"></span>**Language**: System (System Language) | Bulgarian, Chinese, ...
+- <span id="language"></span>**语言**：系统 (系统语言) | 保加利亚语，中文...
 
-  ![Display languages](../../../assets/settings/general/languages.jpg)
+  ![显示语言](../../../assets/settings/general/languages.jpg)
 
-  Translations are generally built into the application and selected automatically based on the system language.
+  翻译通常纳入应用程序，并根据系统语言自动选择。
 
-  Metadata downloaded from the vehicle (such as parameter descriptions) might have translations as well.
-  These are downloaded from the internet upon vehicle connection. The translations are then cached locally.
-  This means an internet connection during vehicle connection is required at least once.
+  从载具下载的元数据(例如参数描述)也可能有翻译。
+  这些都是通过载具连接从互联网下载的。 然后本地缓存翻译。
+  这意味着在载具连接期间至少需要一次互联网连接。
 
-- <span id="colour_scheme"></span>**Color Scheme**: Indoor (Dark) | Outdoor (Light)
+- <span id="colour_scheme"></span>**颜色方案**: 室内(暗) | 户外(亮度)
 
-- **Map Provider**: Google | Mapbox | Bing | Airmap | VWorld | Eniro | Statkart
+- **地图提供商**: Google | Mapbox | Bing | Airmap | VWorld | Eniro| Statkart
 
-- **Map Type**: Road | Hybrid | Satellite
+- **地图类型**: Road | Mixed | Satellite
 
-- **Stream GCS Position**: Never | Always | When in Follow Me Flight Mode.
+- **流式传输地面控制站位置**永远不要| 始终关注我的飞行模式。
 
-- **UI Scaling**: UI scale percentage (affects fonts, icons, button sizes, layout etc.)
+- **UI 缩放** ：UI 缩放百分比 (影响字体，图标，按钮大小，布局等)
 
-- **Mute all audio output**: Turns off all audio output.
+- **静音所有音频输出**：关闭所有音频输出。
 
-- **Check for Internet Connection**: Uncheck to allow maps to be used in China/places where map tile downloads are likely to fail (stops the map-tile engine continually rechecking for an Internet connection).
+- **检查互联网连接**：取消选中以允许地图在中国/地图上下载可能失败的地方使用(停止地图引擎持续检查互联网连接)。
 
-- <span id="autoload_missions"></span> **Autoload Missions**: If enabled, automatically upload a plan to the vehicle on connection.
-  - The plan file must be named **AutoLoad#.plan**, where the `#` is replaced with the vehicle id.
-  - The plan file must be located in the [Application Load/Save Path](#load_save_path).
+- <span id="autoload_missions"></span> **自动加载任务**：如果启用，连接时自动上传计划到载具。
+  - 计划文件必须命名为 **AutoLoad#.plan**, 其中`#` 被替换为载具ID。
+  - 计划文件必须位于[应用程序加载/保存路径](#load_save_path)。
 
-- **Clear all settings on next start**: Resets all settings to the default (including this one) when _QGroundControl_ restarts.
+- **在下次启动时清除所有设置**：重置所有设置为默认设置(包括此设置)，当 _QGroundControl_ 重启时。
 
-- **Announce battery lower than**: Battery level at which _QGroundControl_ will start low battery announcements.
+- **电池电量过低通知**：_QGroundControl_ 将在电池电量水平上启动低电量通知。
 
-- <span id="load_save_path"></span>**Application Load/Save Path**: Default location for loading/saving application files, including: parameters, telemetry logs, and mission plans.
+- <span id="load_save_path"></span>**应用程序加载/保存路径**: 下载/保存应用程序文件的默认位置，包括参数、遥测日志和飞行计划。
 
-## Data Persistence {#data_persistence}
+## 数据持久化 {#data_persistence}
 
-![Data Persistence Settings](../../../assets/settings/general/data_persistence.jpg)
+![数据持久化设置](../../../assets/settings/general/data_persistence.jpg)
 
-The settings are:
+设置如下：
 
-- **Disable all data persistence**: Check to prevent any data being saved or cached: logs, map tiles etc.
+- **禁用所有数据持久化**：选中以防止任何数据被保存或缓存：日志、地图栏等。
+  此设置禁用[遥测日志部分](#telemetry_logs)。
 
-## Telemetry Logs from Vehicle {#telemetry_logs}
+## 来自载具的 {#telemetry_logs} 遥测日志
 
-![Telemetry Logs from Vehicle Settings](../../../assets/settings/general/telemetry_logs.jpg)
+![载具设置中的遥测日志](../../../assets/settings/general/telemetry_logs.jpg)
 
-The settings are:
+设置如下：
 
-- <span id="autosave_log"></span>**Save log after each flight**: Telemetry logs (`.tlog`) automatically saved to the _Application Load/Save Path_ ([above](#load_save_path)) after flight.
-- **Save logs even if vehicle was not armed**: Logs when a vehicle connects to _QGroundControl_.
-  Stops logging when the last vehicle disconnects.
-- [**CSV Logging**](csv.md): Log subset of telemetry data to a CSV file.
+- <span id="autosave_log"></span>**每次飞行后保存日志**: 遥测日志 (`.tlog`) 飞行后自动保存到 _Application Load/Save Path_ ([above](#load_save_path) )。
+- **保存日志，即使载具没有解锁设备**: 当载具连接到 _QGroundControl_ 时记录日志。
+  当最后一辆载具断开时停止日志记录。
+- [**CSV 日志**](csv.md)：将遥测数据子集记录到一个CSV文件。
 
-## Fly View {#fly_view}
+## 飞行视图{#fly_view}
 
-![Fly View Settings](../../../assets/settings/general/fly_view.jpg)
+![飞行视图设置](../../../assets/settings/general/fly_view.jpg)
 
-The settings are:
+设置如下：
 
-- **Use Preflight Checklist**: Enable pre-flight checklist in Fly toolbar.
+- **使用飞行检查清单**：在飞行工具栏中启用飞行前检查清单。
 
-- **Enforce Preflight Checklist**: Checklist completion is a pre-condition for arming.
+- **强制执行飞行检查清单**：完成检查清单是解锁的先决条件。
 
-- **Keep Map Centered on Vehicle**: Forces map to center on the currently selected vehicle.
+- **保持地图以载具为中心**：强制地图以当前选定的载具为中心。
 
-- **Show Telemetry Log Replay Status Bar**: Display status bar for [Replaying Flight Data](../fly_view/replay_flight_data.md).
+- **显示遥测日志重播状态栏**：显示[重播飞行数据](../fly_view/replay_flight_data.md)的状态栏。
 
-- **Virtual Joystick**: Enable [virtual joysticks](../settings_view/virtual_joystick.md) (PX4 only)
+- **虚拟操纵杆**：启用 [虚拟操纵杆](../settings_view/virtual_joystick.md) (仅限PX4)
 
-- **Use Vertical Instrument Panel**: Align instrument panel vertically rather than horizontally (default).
+- **使用垂直仪表面**：垂直对齐仪表面，而不是水平对齐(默认)。
 
-- **Show additional heading indicators on Compass**: Adds additional indicators to the compass rose:
+- **在指南针上显示额外的标题指示器**：在指南针旋转中添加额外的指示器：
 
-- _Blue arrow_: course over ground.
+- _蓝色箭头_：地速航向。
 
-- _White house_: direction back to home.
+- **锁定罗盘指北**：勾选以旋。转罗盘刻度盘（默认是在罗盘指示器内旋转飞行器）。
 
-- _Green line_: Direction to next waypoint.
+- _绿色的线_：指向下一个航点。
 
-- **Lock Compass Nose-Up**: Check to rotate the compass rose (default is to rotate the vehicle inside the compass indicateor).
+- **锁定罗盘指北**：勾选以旋转罗盘刻度盘（默认是在罗盘指示器内旋转飞行器）。
 
-- **Guided Minimum Altitude**: Minimum value for guided actions altitude slider.
+- **引导最小高度**：引导操作高度滑块的最小值。
 
-- **Guided Maximum Altitude**: Minimum value for guided actions altitude slider.
+- **引导最大高度**：引导操作高度滑块的最大值。
 
-- **Go To Location Max Distance**: The maximum distance that a Go To location can be set from the current vehicle location (in guided mode).
+- 计划视图 {#plan_view}
 
-## Plan View {#plan_view}
+## 计划视图 {#plan_view}
 
-![Plan View Settings](../../../assets/settings/general/plan_view.jpg)
+![计划视图设置](../../../assets/settings/general/plan_view.jpg)
 
-The settings are:
+设置如下：
 
-- **Default Mission Altitude**: The default altitude used for the Mission Start Panel, and hence for the first waypoint.
+- **默认飞行任务高度**：用于任务起始面板的默认高度，因此也是第一个航点的默认高度。
 
-## AutoConnect to the following devices {#auto_connect}
+## 自动连接到以下设备 {#auto_connect}
 
-This section defines the set of devices to which _QGroundControl_ will auto-connect.
+本节定义了_QGroundControl_ 将自动连接到的设备集合。
 
-![Device autoconnect settings](../../../assets/settings/general/autoconnect_devices.jpg)
+![设备自动连接设置](../../../assets/settings/general/autoconnect_devices.jpg)
 
-Settings include:
+设置包括：
 
-- **Pixhawk:** Autoconnect to Pixhawk-series device
-- **SiK Radio:** Autoconnect to SiK (Telemetry) radio
-- **PX4 Flow:** Autoconnect to PX4Flow device
-- **LibrePilot:** Autoconnect to Libre Pilot autopilot
-- **UDP:** Autoconnect to UDP
-- **RTK GPS:** Autoconnect to RTK GPS device
+- **Pixhawk:** 自动连接到 Pixhawk系列设备
+- **SiK电台**：自动连接到SiK（遥测）电台
+- **PX4 Flow：** 自动连接到 PX4Flow 设备
+- **LibrePilot:** 自动连接到 Libre Pilot autopilot
+- **UDP:** 自动连接到 UDP
+- **RTK GPS：** 自动连接到 RTK GPS 设备
 - **NMEA GPS Device:** Autoconnect to an external GPS device to get ground station position ([see below](#nmea_gps))
 
-### Ground Station Location (NMEA GPS Device) {#nmea_gps}
+### 地面站位置(NMEA GPS 设备) {#nmea_gps}
 
-_QGroundControl_ will automatically use an internal GPS to display its own location on the map with a purple `Q` icon (if the GPS provides a heading, this will be also indicated by the icon).
-It may also use the GPS as a location source for _Follow Me Mode_ - currently supported on [PX4 Multicopters only](https://docs.px4.io/en/flight_modes/follow_me.html).
+_QGroundControl_ 将自动使用内置GPS，通过紫色的 “Q” 图标在地图上显示自身位置（如果GPS提供航向，图标也会指示出来）。
+它也可能将GPS用作 _跟随我模式_ 的位置源 - 目前仅在[PX4多旋翼飞行器上支持](https://docs.px4.io/en/flight_modes/follow_me.html) 。
 
-You can also configure QGC to connect to an external GPS device via a serial or UDP port.
-The GPS device must support the ASCII NMEA format - this is normally the case.
+您也可以通过串口或 UDP端口配置QGC 连接到外部GPS设备。
+GPS设备必须支持 ASCII NMEA 格式――通常情况是这样。
 
 :::tip
-A higher quality external GPS system may be useful even if the ground station has internal GPS support.
+即使地面站得到内部全球定位系统支持，质量更高的外部全球定位系统也可能有用。
 :::
 
-Use the _NMEA GPS Device_ drop-down selector to manually select the GPS device and other options:
+使用 _NMEA GPS 设备_下拉选择器手动选择GPS 设备和其他选项：
 
-- USB connection:
+- USB 连接：
 
-  ![NMEA GPS Device - Serial](../../../assets/settings/general/nmea_gps_serial.jpg)
+  ![NMEA GPS设备 - 串口](../../../assets/settings/general/nmea_gps_serial.jpg)
 
-  - **NMEA GPS Device:** _Serial_
-  - **NMEA GPS Baudrate**: The baudrate for the serial port
+  - **NMEA GPS设备**：_串口_
+  - **NMEA GPS波特率**：串口的波特率
 
-  ::: tip
-  To troubleshoot serial GPS problems: Disable RTK GPS [auto connection](#auto_connect), close _QGroundControl_, reconnect your GPS, and open QGC.
+  :::tip
+  解决串行GPS问题: 禁用 RTK GPS [自动连接](#auto_connect), 关闭 _QGroundControl_, 重新连接您的 GPS, 并打开 QGC。
   :::
 
-- Network connection:
+- 网络连接：
 
-  ![NMEA GPS Device - UDP](../../../assets/settings/general/nmea_gps_udp.jpg)
+  ![NMEA GPS 设备 - UDP](../../../assets/settings/general/nmea_gps_udp.jpg)
 
-  - **NMEA GPS Device:** _UDP Port_.
-  - **NMEA Stream UDP Port**: The UDP port on which QGC will listen for NMEA data (QGC binds the port as a server)
+  - **NMEA GPS 设备:** _UDP 端口_。
+  - **NMEA 流 UDP 端口**: QGC 监听NMEA 数据的 UDP 端口(QGC 绑定端口作为服务器)
 
 ## RTK GPS {#rtk_gps}
 
-This section allows you to specify the RTK GPS "Survey-in" settings, to save and reuse the result of a Survey-In operation, or to directly enter any other known position for the base station.
+此部分允许您指定RTK GPS “测量初始化” 设置，保存并复用测量初始化操作的结果，或者直接输入基站的任何其他已知位置。
 
-![RTK GPS Settings](../../../assets/settings/general/rtk_gps.jpg)
+![RTK GPS 设置](../../../assets/settings/general/rtk_gps.jpg)
 
 :::info
-The _Survey-In_ process is a startup procedure required by RTK GPS systems to get an accurate estimate of the base station position.
-The process takes measurements over time, leading to increasing position accuracy.
-Both of the setting conditions must met for the Survey-in process to complete.
-For more information see [RTK GPS](https://docs.px4.io/en/advanced_features/rtk-gps.html) (PX4 docs) and [GPS- How it works](http://ardupilot.org/copter/docs/common-gps-how-it-works.html#rtk-corrections) (ArduPilot docs).
+_Survey-In_进程是 RTK GPS 系统为准确估算基站位置所需的启动程序。
+这一过程经过一段时间后进行测量，从而提高了位置准确性。
+这两个设置条件都必须满足，以便完成调查进程。
+欲了解更多信息，请参阅[RTK GPS](https://docs.px4.io/en/advanced_features/rtk-gps.html) (PX4 文档) 和 [GPS- 它如何工作](http://ardupilot.org/copter/docs/common-gps-how-it-works.html#rtk-corrections) (ArduPilot 文档)。
 :::
 
 :::tip
-In order to save and reuse a base position (because Survey-In is time consuming!) perform Survey-In once, select _Use Specified Base Position_ and press **Save Current Base Position** to copy in the values for the last survey.
-The values will then persist across QGC reboots until they are changed.
+为了保存和重新使用基本位置(因为检查耗费时间！) 执行一次测量初始化，选择 _使用指定的基站位置_ ，然后按下 _保存当前基站位置_ ，将上次测量的值复制进去。
+然后，值将在所有QGC 重启后持续，直到它们被更改。
 :::
 
-The settings are:
+步骤如下：
 
-- Perform Survey-In
-  - **Survey-in accuracy (U-blox only):** The minimum position accuracy for the RTK Survey-In process to complete.
-  - **Minimum observation duration:** The minimum time that will be taken for the RTK Survey-in process.
-- Use Specified Base Position
-  - **Base Position Latitude:** Latitude of fixed RTK base station.
-  - **Base Position Longitude:** Longitude of fixed RTK base station.
-  - **Base Position Alt (WGS94):** Altitude of fixed RTK base station.
-  - **Base Position Accuracy:** Accuracy of base station position information.
-  - **Save Current Base Position** (button): Press to copy settings from the last Survey-In operation to the _Use Specified Base Position_ fields above.
+- 执行 Survey-In
+  - **调查精度(仅有U-blox)：** RTK调查完成的最低位置精度。
+  - **最小观察持续时间：** RTK调查过程的最短时间。
+- 使用指定的基站位置
+  - **基础位置纬度：** 固定RTK基站纬度。
+  - **基础位置经度：** 固定RTK基地站的经度。
+  - **Base Position Alt (WGS84):** Altitude of fixed RTK base station.
+  - **基础位置精确度：** 基础站位置信息的准确性。
+  - **保存当前基地位置** (按钮)：点击复制上次调查操作中的设置到上面的 _Use 指定的基础位置_ 字段。
 
-## ADSB Server {#adsb_server}
+## ADSB 服务器 {#adsb_server}
 
-![ADSB\_Server Settings](../../../assets/settings/general/adbs_server.jpg)
+![ADSB_Server 设置](../../../assets/settings/general/adbs_server.jpg)
 
-The settings are:
+设置如下：
 
-- **Connect to ADSB SBS server**: Check to connect to ADSB server on startup.
-- **Host address**: Host address of ADSB server
-- **Server port**: Port of ADSB server
+- **连接到 ADSB SBS 服务器**：检查启动时连接到 ADSB 服务器。
+- **主机地址**: ADSB 服务器的主机地址
+- **服务器端口**：ADSB服务器端口
 
-QGC can consume ADSB messages in SBS format from a remote or local server (at the specified IP address/port) and display detected vehicles on the Fly View map.
+QGC 可以使用 SBS 格式从远程服务器或本地服务器(在指定的 IP 地址/端口)消耗ADSB 消息，并在飞行视图的地图上显示检测到的车辆。
 
 ::: tip
 One way to get ADSB information from nearby vehicles is to use [dump1090](https://github.com/antirez/dump1090) to serve the data from a connected RTL-SDR dongle to QGC.
 
-The steps are: 1.
+步骤如下：
 
-1. Get an RTL-SDR dongle (and antenna) and attach it to your ground station computer (you may need to find compatible drivers for your OS).
-2. Install _dump1090_ on your OS (either pre-built or build from source).
-3. Run `dump1090 --net` to start broadcasting messages for detected vehicles on TCP localhost port 30003 (127.0.0.1:30003).
-4. Enter the server (`127.0.0.1`) and port (`30003`) address in the QGC settings above.
-5. Restart QGC to start seeing local vehicles on the map.
+1. 获取RTL-SDR dongle (和天线)，并将其附加到您的地面站计算机(您可能需要为您的操作系统找到兼容的驱动程序)。
+2. 在您的操作系统上安装 _dump1090_ (要么预建要么从源代码构建)。
+3. 运行 `dump1090 --net` 以开始在TCP本地主机端口30003（127.0.0.1:30003）上广播检测到的飞行器的消息。
+4. 在上述QGC 设置中输入服务器 (`127.0.0.1`)和端口 (`30003`) 地址。
+5. 重新启动QGC 以开始查看地图上的本地车辆。
 
 :::
 
-## Video {#video}
+## 视频 {#video}
 
-The _Video_ section is used to define the source and connection settings for video that will be displayed in _Fly View_.
+_视频_ 部分用于定义视频的源和连接设置，将显示在 _飞行视图_中。
 
-![Video settings](../../../assets/settings/general/video_udp.jpg)
+![视频设置](../../../assets/settings/general/video_udp.jpg)
 
-The settings are:
+设置如下：
 
-- **Video Source**: Video Stream Disabled | RTSP Video Stream | UDP h.264 Video Stream | UDP h.265 Video Stream | TCP-MPEG2 Video Stream | MPEG-TS (h.264) Video Stream | Integrated Camera
+- **视频源** ：视频流已禁用 | RTSP 视频流| UDP h.264 视频流| UDP h. 65 视频流 | TCP-MPEG2 视频流 | MPEGTS 视频流 | 集成摄像头
 
   ::: info
-  If no video source is specified then no other video or _video recording_ settings will be displayed (above we see the settings when UDP source is selected).
+  如果没有指定视频源，那么将不会显示其他视频或 _video 录制设置(我们在选择UDP源时看到设置)。
   :::
 
-- **URL/Port**: Connection type-specific stream address (may be port or URL).
+- **URL/端口**：连接类型特定流地址 (可能是端口或URL)。
 
-- **Aspect Ratio**: Aspect ratio for scaling video in video widget (set to 0.0 to ignore scaling)
+- **宽高比**：视频小部件中缩放视频的宽高比(设置为0.0 忽略缩放)
 
-- **Disabled When Disarmed**: Disable video feed when vehicle is disarmed.
+- **锁定时禁用**：飞行器锁定时禁用视频传输。
 
-- **Low Latency Mode**: Enabling low latency mode reduces the video stream latency, but may cause frame loss and choppy video (especially with a poor network connection). <!-- disables the internal jitter buffer -->
+- **低延迟模式**：启用低延迟模式可降低视频流延迟，但可能会导致丢帧和视频卡顿（特别是在网络连接不佳的情况下）。 <!-- disables the internal jitter buffer -->
 
-## Video Recording
+## 视频录制
 
-The _Video Recording_ section is used to specify the file format and maximum allocated file storage for storing video.
-Videos are saved to a sub-directory ("Video") of the [Application Load/Save Path](#load_save_path).
+使用 _视频录制_ 部分指定文件格式和最大分配的文件存储以存储视频。
+视频被保存到 [应用程序加载/保存路径]的子目录 ("视频") (#load_save_path)。
 
-![Video - without auto deletion](../../../assets/settings/general/video_recording.jpg)
+![视频 - 没有自动删除](../../../assets/settings/general/video_recording.jpg)
 
-![Video - auto deletion](../../../assets/settings/general/video_recording_auto_delete.jpg)
+![视频 - 自动删除](../../../assets/settings/general/video_recording_auto_delete.jpg)
 
-The settings are:
+设置为：
 
-- **Auto-Delete Files**: If checked, files are auto deleted when the specified amount of storage is used.
-- **Max Storage Usage**: Maximum video file storage before video files are auto deleted.
-- **Video File Format**: File format for the saved video recording: mkv, mov, mp4.
+- **自动删除文件**：如果选中，当使用指定的存储量时，文件将被自动删除。
+- **最大存储使用率**：视频文件自动删除前最大视频存储。
+- **视频文件格式**：保存的视频录制文件格式：mkv、mov、mp4。
 
-## Brand Image
+## 品牌图像
 
-This setting specifies the _brand image_ used for indoor/outdoor colour schemes.
+此设置指定用于室内/户外色彩方案的 _品牌图像_。
 
-The brand image is displayed in place of the icon for the connected autopilot in the top right corner of the toolbar.
-It is provided so that users can easily create screen/video captures that include a company logo/branding.
+品牌图像将以图标取代工具栏右上角的连接自动化图标。
+提供它是为了用户能够轻松创建屏幕/视频捕获，包括公司标志/品牌。
 
-![Brand Image](../../../assets/settings/general/brand_image.jpg)
+![品牌图像](../../../assets/settings/general/brand_image.jpg)
 
-The settings are:
+设置如下：
 
-- **Indoor Image**: Brand image used in [indoor color scheme](#colour_scheme)
-- **Outdoor Image**: Brand image used in [outdoor color scheme](#colour_scheme)
-- **Reset Default Brand Image**: Reset the brand image back to default.
+- **内部图像**：[内部颜色方案]中使用的品牌图像(#colour_scheme)
+- **外部图像**：[外部色彩方案]中使用的品牌图像(#colour_scheme)
+- **重置默认品牌图像**：将品牌图像重置为默认值。

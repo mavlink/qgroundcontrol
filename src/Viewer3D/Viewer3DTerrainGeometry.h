@@ -1,9 +1,19 @@
+/****************************************************************************
+ *
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 #pragma once
 
 #include <QtQuick3D/QQuick3DGeometry>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtGui/QVector3D>
 #include <QtGui/QVector2D>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 class Viewer3DSettings;
 
@@ -12,6 +22,7 @@ class Viewer3DSettings;
 class Viewer3DTerrainGeometry : public QQuick3DGeometry
 {
     Q_OBJECT
+    QML_ELEMENT
 
     Q_PROPERTY(int sectorCount READ sectorCount WRITE setSectorCount NOTIFY sectorCountChanged)
     Q_PROPERTY(int stackCount READ stackCount WRITE setStackCount NOTIFY stackCountChanged)

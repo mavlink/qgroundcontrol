@@ -12,8 +12,8 @@ import QtQuick
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
-import QGroundControl.Vehicle
-import QGroundControl.Palette
+
+
 
 Canvas {
     id:                 control
@@ -23,17 +23,18 @@ Canvas {
 
     property real compassSize
     property real heading
+    property bool simplified:    false
 
     property var _qgcPal: QGroundControl.globalPalette
 
     Connections {
         target:                 _qgcPal
-        onGlobalThemeChanged:   control.requestPaint()
+        function onGlobalThemeChanged() { control.requestPaint() }
     }
 
     onPaint: {
         var ctx = getContext("2d")
-        ctx.strokeStyle = _qgcPal.text
+        ctx.strokeStyle = simplified ? "#EE3424" : _qgcPal.text
         ctx.fillStyle = "#EE3424"
         ctx.lineWidth = 1
         ctx.beginPath()

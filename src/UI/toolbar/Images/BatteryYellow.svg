@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 72 72">
+    <g style="fill:#cf0;fill-opacity:1;stroke:none;stroke-width:.924504;stroke-dasharray:none;stroke-opacity:1">
+        <path d="M171.9-208c0 .2-.2.4-.4.4H155c-.2 0-.4-.2-.4-.4v-4.2c0-.2.2-.4.4-.4h16.5c.2 0 .4.2.4.4z" style="stroke-miterlimit:10;fill:#ff0;fill-opacity:1;stroke:none;stroke-width:.924504;stroke-dasharray:none;stroke-opacity:1" transform="matrix(1.04737 0 0 1.11707 -135.129 239.568)"/>
+    </g>
+    <g transform="translate(-44.382 -.617)">
+        <rect width="40.078" height="57.934" x="60.301" y="9.043" rx="3.866" ry="3.364" style="fill:none;fill-opacity:1;stroke:#ff0;stroke-width:2.80276;stroke-miterlimit:3;stroke-dasharray:none;stroke-opacity:1"/>
+        <rect width="27.592" height="7.538" x="66.446" y="34.912" rx="0" ry=".511" style="fill:#ff0;fill-opacity:1;stroke:none;stroke-width:2.87794;stroke-miterlimit:3;stroke-dasharray:none;stroke-opacity:1"/>
+        <rect width="27.592" height="7.538" x="66.424" y="44.824" rx="0" ry=".511" style="fill:#ff0;fill-opacity:1;stroke:none;stroke-width:2.87794;stroke-miterlimit:3;stroke-dasharray:none;stroke-opacity:1"/>
+        <rect width="27.592" height="7.538" x="66.441" y="54.774" rx="0" ry=".511" style="fill:#ff0;fill-opacity:1;stroke:none;stroke-width:2.87794;stroke-miterlimit:3;stroke-dasharray:none;stroke-opacity:1"/>
+    </g>
+</svg>

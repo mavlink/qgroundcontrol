@@ -16,7 +16,7 @@ import QtQuick.Dialogs
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
-import QGroundControl.Palette
+
 
 QGCPopupDialog {
     id:         root
@@ -77,7 +77,7 @@ QGCPopupDialog {
                     QGCLabel {
                         text:           mavCmdInfo.friendlyName
                         color:          textColor
-                        font.family:    ScreenTools.demiboldFontFamily
+                        font.bold:      true
                     }
 
                     QGCLabel {

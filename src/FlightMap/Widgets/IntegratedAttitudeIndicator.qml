@@ -22,8 +22,8 @@ Item {
     property real compassRadius:        ScreenTools.defaultFontPixelHeight * 6 / 2
     property real attitudeAngleDegrees: 0
 
-    readonly property real attitudeSize:         ScreenTools.defaultFontPixelHeight * 0.75
-    readonly property real attitudeSpacing:      ScreenTools.defaultFontPixelHeight / 4
+    property real attitudeSize:         ScreenTools.defaultFontPixelHeight * 0.75
+    property real attitudeSpacing:      ScreenTools.defaultFontPixelHeight / 4
 
     property real _totalRadius:             compassRadius + attitudeSpacing + attitudeSize
     property real _attitudeRadius:          (width / 2) - (attitudeSize / 2)

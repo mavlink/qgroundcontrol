@@ -1,13 +1,14 @@
-# Offline Maps
+# 离线地图
 
 ![](../../../assets/settings/offline_maps.jpg)
 
-Offline Maps allows you to cache map tiles for use when not connected to the Internet. You can create multiple offline sets, each for a different location.
+离线地图允许您缓存未连接到互联网时使用的地图瓦片。 您可以创建多个离线集合，每个集合为不同的位置。
 
-## Add new set
+## 添加新集合
 
-To create a new offline map set, click "Add new set". Which will take you to this page: ![](../../../assets/settings/offline_maps_add.jpg)
+若要创建新的离线地图，请单击"添加新设置"。 那将把你带到这个页面：
+![](../../../assets/settings/offline_maps_add.jpg)
 
-From here you can name your set as well as specify the zoom levels you want to cache. Move the map to the position you want to cache and then set the zoom levels and click Download to cache the tiles.
+从这里您可以命名您的设置，并指定您想要缓存的缩放级别。 移动地图到您想要缓存的位置，然后设置缩放级别，然后点击下载来缓存瓦片。
 
-To the left you can see previews of the min and max zoom levels you have chosen.
+在左边，您可以看到您选择的最小和最大缩放级别的预览。

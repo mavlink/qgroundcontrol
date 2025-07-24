@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -9,98 +9,119 @@
 
 #pragma once
 
-
-#include "LinkInterface.h"
-#include "LinkConfiguration.h"
-
+#include <QtCore/QByteArray>
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QString>
-#include <QtCore/QMutex>
 #include <QtNetwork/QAbstractSocket>
+#include <QtNetwork/QHostAddress>
 
-//#define TCPLINK_READWRITE_DEBUG   // Use to debug data reads/writes
+#include "LinkConfiguration.h"
+#include "LinkInterface.h"
 
-class TCPLinkTest;
-class LinkManager;
 class QTcpSocket;
+class QThread;
 
-#define QGC_TCP_PORT 5760
+Q_DECLARE_LOGGING_CATEGORY(TCPLinkLog)
+
+/*===========================================================================*/
 
 class TCPConfiguration : public LinkConfiguration
 {
     Q_OBJECT
 
-public:
-
-    Q_PROPERTY(quint16 port READ port WRITE setPort NOTIFY portChanged)
     Q_PROPERTY(QString host READ host WRITE setHost NOTIFY hostChanged)
+    Q_PROPERTY(quint16 port READ port WRITE setPort NOTIFY portChanged)
 
-    TCPConfiguration(const QString& name);
-    TCPConfiguration(TCPConfiguration* source);
+public:
+    explicit TCPConfiguration(const QString &name, QObject *parent = nullptr);
+    explicit TCPConfiguration(const TCPConfiguration *copy, QObject *parent = nullptr);
+    virtual ~TCPConfiguration();
 
-    quint16             port        (void) const                         { return _port; }
-    QString             host        (void) const                         { return _host; }
-    void                setPort     (quint16 port);
-    void                setHost     (const QString host);
+    LinkType type() const override { return LinkConfiguration::TypeTcp; }
+    void copyFrom(const LinkConfiguration *source) override;
+    void loadSettings(QSettings &settings, const QString &root) override;
+    void saveSettings(QSettings &settings, const QString &root) const override;
+    QString settingsURL() const override { return QStringLiteral("TcpSettings.qml"); }
+    QString settingsTitle() const override { return tr("TCP Link Settings"); }
 
-    //LinkConfiguration overrides
-    LinkType    type                (void) override                                         { return LinkConfiguration::TypeTcp; }
-    void        copyFrom            (LinkConfiguration* source) override;
-    void        loadSettings        (QSettings& settings, const QString& root) override;
-    void        saveSettings        (QSettings& settings, const QString& root) override;
-    QString     settingsURL         (void) override                                         { return "TcpSettings.qml"; }
-    QString     settingsTitle       (void) override                                         { return tr("TCP Link Settings"); }
+    QString host() const { return _host.toString(); }
+    void setHost(const QString &host) { if (host != _host.toString()) { _host.setAddress(host); emit hostChanged(); } }
+    quint16 port() const { return _port; }
+    void setPort(quint16 port) { if (port != _port) { _port = port; emit portChanged(); } }
 
 signals:
-    void portChanged(void);
-    void hostChanged(void);
+    void hostChanged();
+    void portChanged();
 
 private:
-    QString         _host;
-    quint16         _port;
+    QHostAddress _host;
+    quint16 _port = 5760;
 };
+
+/*===========================================================================*/
+
+class TCPWorker : public QObject
+{
+    Q_OBJECT
+
+public:
+    explicit TCPWorker(const TCPConfiguration *config, QObject *parent = nullptr);
+    ~TCPWorker();
+
+    bool isConnected() const;
+
+signals:
+    void connected();
+    void disconnected();
+    void errorOccurred(const QString &errorString);
+    void dataReceived(const QByteArray &data);
+    void dataSent(const QByteArray &data);
+
+public slots:
+    void setupSocket();
+    void connectToHost();
+    void disconnectFromHost();
+    void writeData(const QByteArray &data);
+
+private slots:
+    void _onSocketConnected();
+    void _onSocketDisconnected();
+    void _onSocketReadyRead();
+    void _onSocketBytesWritten(qint64 bytes);
+    void _onSocketErrorOccurred(QAbstractSocket::SocketError socketError);
+
+private:
+    const TCPConfiguration *_config = nullptr;
+    QTcpSocket *_socket = nullptr;
+    bool _errorEmitted = false;
+};
+
+/*===========================================================================*/
 
 class TCPLink : public LinkInterface
 {
     Q_OBJECT
 
 public:
-    TCPLink(SharedLinkConfigurationPtr& config);
+    explicit TCPLink(SharedLinkConfigurationPtr &config, QObject *parent = nullptr);
     virtual ~TCPLink();
 
-    QTcpSocket* getSocket           (void) { return _socket; }
-    void        signalBytesWritten  (void);
-
-    // LinkInterface overrides
-    bool isConnected(void) const override;
-    void disconnect (void) override;
+    bool isConnected() const override;
+    void disconnect() override;
+    bool isSecureConnection() const override;
 
 private slots:
-    void _socketError   (QAbstractSocket::SocketError socketError);
-    void _readBytes     (void);
-
-    // LinkInterface overrides
-    void _writeBytes(const QByteArray data) override;
+    void _writeBytes(const QByteArray &bytes) override;
+    void _onConnected();
+    void _onDisconnected();
+    void _onErrorOccurred(const QString &errorString);
+    void _onDataReceived(const QByteArray &data);
+    void _onDataSent(const QByteArray &data);
 
 private:
-    // LinkInterface overrides
-    bool _connect(void) override;
+    bool _connect() override;
 
-    bool _hardwareConnect   (void);
-#ifdef TCPLINK_READWRITE_DEBUG
-    void _writeDebugBytes   (const QByteArray data);
-#endif
-
-    TCPConfiguration* _tcpConfig;
-    QTcpSocket*       _socket;
-    bool              _socketIsConnected;
-
-    quint64 _bitsSentTotal;
-    quint64 _bitsSentCurrent;
-    quint64 _bitsSentMax;
-    quint64 _bitsReceivedTotal;
-    quint64 _bitsReceivedCurrent;
-    quint64 _bitsReceivedMax;
-    quint64 _connectionStartTime;
-    QMutex  _statisticsMutex;
+    const TCPConfiguration *_tcpConfig = nullptr;
+    TCPWorker *_worker = nullptr;
+    QThread *_workerThread = nullptr;
 };
-

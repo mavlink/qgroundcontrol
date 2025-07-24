@@ -10,14 +10,14 @@
 import QtQuick
 import QtQuick.Layouts
 
+import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
 
 RowLayout {
     property alias label:                   label.text
-    property alias fact:                    factSlider.fact
-    property alias from:                    factSlider.from
-    property alias to:                      factSlider.to
+    property alias from:                    slider.from
+    property alias to:                      slider.to
     property real  sliderPreferredWidth:    -1
 
     spacing: ScreenTools.defaultFontPixelWidth * 2
@@ -28,7 +28,7 @@ RowLayout {
     }
 
     QGCSlider {
-        id:                     factSlider
+        id:                     slider
         Layout.preferredWidth:  sliderPreferredWidth
     }
 }

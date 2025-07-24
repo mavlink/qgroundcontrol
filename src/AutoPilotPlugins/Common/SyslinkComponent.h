@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -16,23 +16,18 @@ class SyslinkComponent : public VehicleComponent
 {
     Q_OBJECT
 public:
-    SyslinkComponent            (Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
-    
-    // Virtuals from VehicleComponent
-    QStringList setupCompleteChangedTriggerList() const;
-    
-    // Virtuals from VehicleComponent
-    QString name                () const;
-    QString description         () const;
-    QString iconResource        () const;
-    bool    requiresSetup       () const;
-    bool    setupComplete       () const;
-    QUrl    setupSource         () const;
-    QUrl    summaryQmlSource    () const;
-    QString prerequisiteSetup   () const;
-    
-private:
-    const QString   _name;
-    QVariantList    _summaryItems;
-};
+    explicit SyslinkComponent(Vehicle *vehicle, AutoPilotPlugin *autopilot, QObject *parent = nullptr);
 
+    QStringList setupCompleteChangedTriggerList() const final { return QStringList(); }
+    QString name() const final { return _name; }
+    QString description() const final { return tr("The Syslink Component is used to setup the radio connection on Crazyflies."); }
+    QString iconResource() const final { return "/qmlimages/wifi.svg"; }
+    bool requiresSetup() const final { return false; }
+    bool setupComplete() const final { return true; }
+    QUrl setupSource() const final { return QUrl::fromUserInput("qrc:/qml/SyslinkComponent.qml"); }
+    QUrl summaryQmlSource() const final { return QUrl(); }
+
+private:
+    const QString _name;
+    QVariantList _summaryItems;
+};

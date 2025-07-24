@@ -1,9 +1,9 @@
 import QtQuick
 
-import QGroundControl.Palette
+
 import QGroundControl.ScreenTools
 import QGroundControl
-import QGroundControl.FactSystem
+
 import QGroundControl.FactControls
 Item {
     id: root

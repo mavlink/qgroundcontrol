@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -8,40 +8,34 @@
  ****************************************************************************/
 
 #include "QGCOptions.h"
+#include "QGCLoggingCategory.h"
 
-#include <QtQml/QQmlEngine>
+QGC_LOGGING_CATEGORY(QGCFlyViewOptionsLog, "qgc.api.qgcflyviewoptions");
 
-/// @file
-///     @brief Core Plugin Interface for QGroundControl - Application Options
-///     @author Gus Grubba <gus@auterion.com>
-
-QGCOptions::QGCOptions(QObject* parent)
+QGCFlyViewOptions::QGCFlyViewOptions(QGCOptions *options, QObject *parent)
     : QObject(parent)
+    , _options(options)
 {
-    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
+    // qCDebug(QGCFlyViewOptionsLog) << Q_FUNC_INFO << this;
 }
 
-QColor QGCOptions::toolbarBackgroundLight() const
+QGCFlyViewOptions::~QGCFlyViewOptions()
 {
-    return QColor(255,255,255);
+    // qCDebug(QGCFlyViewOptionsLog) << Q_FUNC_INFO << this;
 }
 
-QColor QGCOptions::toolbarBackgroundDark() const
+/*===========================================================================*/
+
+QGC_LOGGING_CATEGORY(QGCOptionsLog, "qgc.api.qgcoptions");
+
+QGCOptions::QGCOptions(QObject *parent)
+    : QObject(parent)
+    , _defaultFlyViewOptions(new QGCFlyViewOptions(this))
 {
-    return QColor(0,0,0);
+    // qCDebug(QGCOptionsLog) << Q_FUNC_INFO << this;
 }
 
-QGCFlyViewOptions* QGCOptions::flyViewOptions(void)
+QGCOptions::~QGCOptions()
 {
-    if (!_defaultFlyViewOptions) {
-        _defaultFlyViewOptions = new QGCFlyViewOptions(this);
-    }
-    return _defaultFlyViewOptions;
-}
-
-QGCFlyViewOptions::QGCFlyViewOptions(QGCOptions* options, QObject* parent)
-    : QObject   (parent)
-    , _options  (options)
-{
-    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
+    // qCDebug(QGCOptionsLog) << Q_FUNC_INFO << this;
 }

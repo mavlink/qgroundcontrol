@@ -1,55 +1,130 @@
+/****************************************************************************
+ *
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 #include "ExifParser.h"
 #include "QGCLoggingCategory.h"
 
-#include <QtCore/QtEndian>
+#include <QtCore/QByteArray>
 #include <QtCore/QDateTime>
+#include <QtCore/QtEndian>
 
 QGC_LOGGING_CATEGORY(ExifParserLog, "qgc.analyzeview.exifparser")
 
-double ExifParser::readTime(QByteArray& buf)
+namespace ExifParser
 {
-    QByteArray tiffHeader("\x49\x49\x2A", 3);
-    QByteArray createDateHeader("\x04\x90\x02", 3);
 
-    // find header position
-    uint32_t tiffHeaderIndex = buf.indexOf(tiffHeader);
-
-    // find creation date header index
-    uint32_t createDateHeaderIndex = buf.indexOf(createDateHeader);
-
-    // extract size of date-time string, -1 accounting for null-termination
-    uint32_t* sizeString = reinterpret_cast<uint32_t*>(buf.mid(createDateHeaderIndex + 4, 4).data());
-    uint32_t createDateStringSize = qFromLittleEndian(*sizeString) - 1;
-
-    // extract location of date-time string
-    uint32_t* dataIndex = reinterpret_cast<uint32_t*>(buf.mid(createDateHeaderIndex + 8, 4).data());
-    uint32_t createDateStringDataIndex = qFromLittleEndian(*dataIndex) + tiffHeaderIndex;
-
-    // read out data of create date-time field
-    QString createDate = buf.mid(createDateStringDataIndex, createDateStringSize);
-
-    QStringList createDateList = createDate.split(' ');
-    if (createDateList.count() < 2) {
-        qCWarning(ExifParserLog) << "Could not decode creation time and date: " << createDateList;
-        return -1.0;
+uint32_t _readUint32(const QByteArray& buf, size_t offset, bool isLittleEndian)
+{
+    if (buf.size() < offset + 4) {
+        qCWarning(ExifParserLog) << "Buffer too small to read uint32 at offset" << offset;
+        return 0;
     }
-    QStringList dateList = createDateList[0].split(':');
-    if (dateList.count() < 3) {
-        qCWarning(ExifParserLog) << "Could not decode creation date: " << dateList;
-        return -1.0;
-    }
-    QStringList timeList = createDateList[1].split(':');
-    if (timeList.count() < 3) {
-        qCWarning(ExifParserLog) << "Could not decode creation time: " << timeList;
-        return -1.0;
-    }
-    QDate date(dateList[0].toInt(), dateList[1].toInt(), dateList[2].toInt());
-    QTime time(timeList[0].toInt(), timeList[1].toInt(), timeList[2].toInt());
-    QDateTime tagTime(date, time);
-    return tagTime.toMSecsSinceEpoch()/1000.0;
+    uint32_t value = *reinterpret_cast<const uint32_t*>(buf.constData() + offset);
+    return isLittleEndian ? qFromLittleEndian(value) : qFromBigEndian(value);
 }
 
-bool ExifParser::write(QByteArray& buf, GeoTagWorker::cameraFeedbackPacket& geotag)
+uint16_t _readUint16(const QByteArray& buf, size_t offset, bool isLittleEndian)
+{
+    if (buf.size() < offset + 2) {
+        qCWarning(ExifParserLog) << "Buffer too small to read uint16 at offset" << offset;
+        return 0;
+    }
+    uint16_t value = *reinterpret_cast<const uint16_t*>(buf.constData() + offset);
+    return isLittleEndian ? qFromLittleEndian(value) : qFromBigEndian(value);
+}
+
+bool _readIFDTagValue(const QByteArray& buf, size_t ifdOffset, bool isLittleEndian, uint16_t tag, uint32_t& value)
+{
+    const size_t bytesNumDirEntries = 2;
+    const size_t bytesPerIFDEntry = 12;
+
+    if (buf.size() < ifdOffset + bytesNumDirEntries + bytesPerIFDEntry) {
+        qCWarning(ExifParserLog) << "Buffer too small to read IFD tag";
+        return false;
+    }
+
+    // Read the number of directory entries
+    size_t numEntries = _readUint16(buf, ifdOffset, isLittleEndian);
+    ifdOffset += bytesNumDirEntries;
+
+    // Iterate through the IFD entries looking for the specified tag
+    for (size_t i = 0; i < numEntries; ++i) {
+        // IFD entry format: Tag (2 bytes), Type (2 bytes), Count (4 bytes), Value (4 bytes)
+        size_t entryOffset = ifdOffset + (i * bytesPerIFDEntry);
+        const size_t offsetToValue = 8;
+
+        uint16_t foundTag = _readUint16(buf, entryOffset, isLittleEndian);
+
+        if (foundTag == tag) {
+            value = _readUint32(buf, entryOffset + offsetToValue, isLittleEndian);
+            return true;
+        }
+    }
+
+    qCWarning(ExifParserLog) << "EXIF DateTime tag not found";
+    return false;
+}
+
+QDateTime readTime(const QByteArray& buffer)
+{
+    // Check for JPEG SOI marker (Start of Image)
+    QByteArray jpegHeader("\xFF\xD8", 2);
+    if (buffer.size() < 2 || buffer.first(2) != jpegHeader) {
+        qCWarning(ExifParserLog) << "Not a valid JPEG file";
+        return QDateTime();
+    }
+
+    // Search for the APP1 marker (EXIF metadata)
+    size_t offset = 2;
+    QByteArray app1Marker("\xFF\xE1", 2);
+    size_t app1MarkerIndex = buffer.indexOf(app1Marker, offset);
+    if (app1MarkerIndex == -1) {
+        qCWarning(ExifParserLog) << "APP1 marker not found in JPEG file";
+        return QDateTime();
+    }
+
+    // Found APP1 marker
+    size_t exifStart = offset + 4;
+
+    // Check for "Exif\0\0" header
+    QByteArray exifHeader("\x45\x78\x69\x66\x00\x00", 6);
+    if (buffer.mid(exifStart, 6) != exifHeader) {
+        qCWarning(ExifParserLog) << "EXIF header not found in APP1 segment";
+        return QDateTime();
+    }
+
+    // Determine endianness (II for little-endian, MM for big-endian)
+    size_t tiffHeader = exifStart + 6;
+    bool isLittleEndian = (buffer[tiffHeader] == 'I' && buffer[tiffHeader + 1] == 'I');
+
+    // Read the offset to the EXIF IFD from IFD0
+    const size_t ifd0Offset = _readUint32(buffer, tiffHeader + 4, isLittleEndian);
+    const uint16_t tagExifOffset = 0x8769;
+    uint32_t exifIFDOffset = 0;
+    if (!_readIFDTagValue(buffer, tiffHeader + ifd0Offset, isLittleEndian, tagExifOffset, exifIFDOffset)) {
+        qCWarning(ExifParserLog) << "EXIF IFD0 offset tag not found";
+        return QDateTime();
+    }
+
+    // Read the offset value for DateTimeDigitized tag (0x0132)
+    const uint16_t tagDateTimeDigitized = 0x9004;
+    uint32_t dateTimeValueOffset = 0;
+    if (!_readIFDTagValue(buffer, tiffHeader + exifIFDOffset, isLittleEndian, tagDateTimeDigitized, dateTimeValueOffset)) {
+        qCWarning(ExifParserLog) << "EXIF IFD DateTimeDigitized tag not found";
+        return QDateTime();
+    }
+
+    QString strDateTime(buffer.constData() + tiffHeader + dateTimeValueOffset);
+    return QDateTime::fromString(strDateTime, QStringLiteral("yyyy:MM:dd HH:mm:ss"));
+}
+
+bool write(QByteArray &buf, const GeoTagWorker::CameraFeedbackPacket &geotag)
 {
     QByteArray app1Header("\xff\xe1", 2);
     uint32_t app1HeaderInd = buf.indexOf(app1Header);
@@ -64,6 +139,54 @@ bool ExifParser::write(QByteArray& buf, GeoTagWorker::cameraFeedbackPacket& geot
     conversionPointer = reinterpret_cast<uint16_t *>(buf.mid(nextIfdOffsetInd, 2).data());
     uint16_t nextIfdOffset = *conversionPointer;
 
+    // Definition of useful unions and structs
+    union char2uint32_u {
+        char c[4];
+        uint32_t i;
+    };
+    union char2uint16_u {
+        char c[2];
+        uint16_t i;
+    };
+    // This struct describes a standart field used in exif files
+    struct field_s {
+        uint16_t tagID;  // Describes which information is added here, e.g. GPS Lat
+        uint16_t type;  // Describes the data type, e.g. string, uint8_t,...
+        uint32_t size;  // Describes the size
+        uint32_t content;  // Either contains the information, or the offset to the exif header where the information is stored (if 32 bits is not enough)
+    };
+    // This struct contains all the fields that we want to add to the image
+    struct fields_s {
+        field_s gpsVersion;
+        field_s gpsLatRef;
+        field_s gpsLat;
+        field_s gpsLonRef;
+        field_s gpsLon;
+        field_s gpsAltRef;
+        field_s gpsAlt;
+        field_s gpsMapDatum;
+        uint32_t finishedDataField;
+    };
+    // These are the additional information that can not be put into a single uin32_t
+    struct extended_s {
+        uint32_t gpsLat[6];
+        uint32_t gpsLon[6];
+        uint32_t gpsAlt[2];
+        char mapDatum[7];// = {0x57,0x47,0x53,0x2D,0x38,0x34,0x00};
+    };
+    // This struct contains all the information we want to add to the image
+    struct readable_s {
+        fields_s fields;
+        extended_s extendedData;
+    };
+
+    // This union is used because for writing the information we have to use a char array, but we still want the information to be available in a more descriptive way
+    union {
+        char c[0xa3];
+        readable_s readable;
+    } gpsData;
+
+
     char2uint32_u gpsIFDInd;
     gpsIFDInd.i = nextIfdOffset;
 
@@ -76,8 +199,6 @@ bool ExifParser::write(QByteArray& buf, GeoTagWorker::cameraFeedbackPacket& geot
 
     // filling values to gpsData
     uint32_t gpsDataExtInd = gpsIFDInd.i + 2 + sizeof(fields_s);
-
-    gpsData_u gpsData;
 
     // Filling up the fields with the corresponding values
     gpsData.readable.fields.gpsVersion.tagID = 0;
@@ -151,7 +272,7 @@ bool ExifParser::write(QByteArray& buf, GeoTagWorker::cameraFeedbackPacket& geot
     buf.remove(nextIfdOffsetInd + 4, 12);
     // TODO correct size in image description
     // insert Gps Info to image file
-    buf.insert(nextIfdOffsetInd, gpsInfo, 12);
+    buf.insert(nextIfdOffsetInd, gpsInfo.constData(), 12);
     char numberOfFields[2] = {0x08, 0x00};
     // insert number of gps specific fields that we want to add
     buf.insert(gpsIFDInd.i + tiffHeaderInd, numberOfFields, 2);
@@ -169,3 +290,5 @@ bool ExifParser::write(QByteArray& buf, GeoTagWorker::cameraFeedbackPacket& geot
     buf.replace(tiffHeaderInd + 8, 2, converter.c, 2);
     return true;
 }
+
+} // namespace ExifParser

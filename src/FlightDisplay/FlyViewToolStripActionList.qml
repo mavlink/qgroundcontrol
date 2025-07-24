@@ -19,21 +19,13 @@ ToolStripActionList {
 
     model: [
         ToolStripAction {
-            text:           qsTr("Plan")
-            iconSource:     "/qmlimages/Plan.svg"
-            onTriggered:{
-                mainWindow.showPlanView()
-                viewer3DWindow.close()
-            }
-        },
-        ToolStripAction {
             property bool _is3DViewOpen:            viewer3DWindow.isOpen
             property bool   _viewer3DEnabled:       QGroundControl.settingsManager.viewer3DSettings.enabled.rawValue
 
             id: view3DIcon
             visible: _viewer3DEnabled
             text:           qsTr("3D View")
-            iconSource:     "/qmlimages/Viewer3D/City3DMapIcon.svg"
+            iconSource:     "/qml/QGroundControl/Viewer3D/City3DMapIcon.svg"
             onTriggered:{
                 if(_is3DViewOpen === false){
                     viewer3DWindow.open()
@@ -47,7 +39,7 @@ ToolStripActionList {
                     view3DIcon.iconSource =     "/qmlimages/PaperPlane.svg"
                     text=           qsTr("Fly")
                 }else{
-                    iconSource =     "/qmlimages/Viewer3D/City3DMapIcon.svg"
+                    iconSource =     "/qml/QGroundControl/Viewer3D/City3DMapIcon.svg"
                     text =           qsTr("3D View")
                 }
             }
@@ -57,7 +49,7 @@ ToolStripActionList {
         GuidedActionLand { },
         GuidedActionRTL { },
         GuidedActionPause { },
-        GuidedActionActionList { },
+        FlyViewAdditionalActionsButton { },
         GuidedActionGripper { }
     ]
 }

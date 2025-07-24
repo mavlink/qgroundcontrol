@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -9,15 +9,11 @@
 
 #include "InstrumentValueData.h"
 #include "FactValueGrid.h"
-#include "QGCApplication.h"
-#include "QGCCorePlugin.h"
 #include "QGC.h"
 #include "QmlObjectListModel.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
 #include "FactGroup.h"
-
-const char*  InstrumentValueData::vehicleFactGroupName =   "Vehicle";
 
 // Important: The indices of these strings must match the InstrumentValueData::RangeType enum
 const QStringList InstrumentValueData::_rangeTypeNames = {
@@ -30,31 +26,16 @@ const QStringList InstrumentValueData::_rangeTypeNames = {
 InstrumentValueData::InstrumentValueData(FactValueGrid* factValueGrid, QObject* parent)
     : QObject       (parent)
     , _factValueGrid(factValueGrid)
+    , _vehicle      (factValueGrid->currentVehicle())
 {
-    MultiVehicleManager* multiVehicleManager = qgcApp()->toolbox()->multiVehicleManager();
-    connect(multiVehicleManager, &MultiVehicleManager::activeVehicleChanged, this, &InstrumentValueData::_activeVehicleChanged);
-    _activeVehicleChanged(multiVehicleManager->activeVehicle());
-
     connect(this, &InstrumentValueData::rangeTypeChanged,       this, &InstrumentValueData::_resetRangeInfo);
     connect(this, &InstrumentValueData::rangeTypeChanged,       this, &InstrumentValueData::_updateRanges);
     connect(this, &InstrumentValueData::rangeValuesChanged,     this, &InstrumentValueData::_updateRanges);
     connect(this, &InstrumentValueData::rangeColorsChanged,     this, &InstrumentValueData::_updateRanges);
     connect(this, &InstrumentValueData::rangeOpacitiesChanged,  this, &InstrumentValueData::_updateRanges);
     connect(this, &InstrumentValueData::rangeIconsChanged,      this, &InstrumentValueData::_updateRanges);
-}
 
-void InstrumentValueData::_activeVehicleChanged(Vehicle* activeVehicle)
-{
-    if (_activeVehicle) {
-        disconnect(_activeVehicle, &Vehicle::factGroupNamesChanged, this, &InstrumentValueData::_lookForMissingFact);
-    }
-
-    if (!activeVehicle) {
-        activeVehicle = qgcApp()->toolbox()->multiVehicleManager()->offlineEditingVehicle();
-    }
-
-    _activeVehicle = activeVehicle;
-    connect(_activeVehicle, &Vehicle::factGroupNamesChanged, this, &InstrumentValueData::_lookForMissingFact);
+    connect(_vehicle, &Vehicle::factGroupNamesChanged, this, &InstrumentValueData::_lookForMissingFact);
 
     emit factGroupNamesChanged();
 
@@ -98,9 +79,9 @@ void InstrumentValueData::_setFactWorker(void)
 
     FactGroup* factGroup = nullptr;
     if (_factGroupName == vehicleFactGroupName) {
-        factGroup = _activeVehicle;
+        factGroup = _vehicle;
     } else {
-        factGroup = _activeVehicle->getFactGroup(_factGroupName);
+        factGroup = _vehicle->getFactGroup(_factGroupName);
     }
 
     QString nonEmptyFactName;
@@ -352,7 +333,7 @@ int InstrumentValueData::_currentRangeIndex(const QVariant& value)
 
 QStringList InstrumentValueData::factGroupNames(void) const
 {
-    QStringList groupNames = _activeVehicle->factGroupNames();
+    QStringList groupNames = _vehicle->factGroupNames();
 
     for (QString& name: groupNames) {
         name[0] = name[0].toUpper();
@@ -368,9 +349,9 @@ QStringList InstrumentValueData::factValueNames(void) const
 
     FactGroup* factGroup = nullptr;
     if (_factGroupName == vehicleFactGroupName) {
-        factGroup = _activeVehicle;
+        factGroup = _vehicle;
     } else {
-        factGroup = _activeVehicle->getFactGroup(_factGroupName);
+        factGroup = _vehicle->getFactGroup(_factGroupName);
     }
 
     if (factGroup) {

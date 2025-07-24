@@ -1,0 +1,19 @@
+name: Common Setup
+description: Common Setup for All Runners
+runs:
+  using: composite
+  steps:
+    - uses: lukka/get-cmake@latest
+
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '>=3.9'
+
+    - name: Create build directory
+      shell: bash
+      run: mkdir -p "$RUNNER_TEMP/build"
+
+    - name: Fetch all tags (for version-string logic)
+      shell: bash
+      working-directory: ${{ github.workspace }}
+      run: git fetch --all --tags --force --depth 1

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -51,7 +51,7 @@ private:
 
     bool _inclusion;
 
-    static const int _jsonCurrentVersion = 1;
+    static constexpr int _jsonCurrentVersion = 1;
 
-    static const char* _jsonInclusionKey;
+    static constexpr const char* _jsonInclusionKey = "inclusion";
 };

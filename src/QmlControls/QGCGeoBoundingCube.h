@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -12,11 +12,15 @@
 
 #include <QtCore/QObject>
 #include <QtPositioning/QGeoCoordinate>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 // A bounding "cube" for small surface areas (doesn't take in consideration earth's curvature)
 // Coordinate system makes NW Up Left Bottom (0,0,0) and SE Bottom Right Top (y,x,z)
-class QGCGeoBoundingCube : public QObject {
+class QGCGeoBoundingCube : public QObject
+{
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
     QGCGeoBoundingCube(QObject* parent = nullptr);
 

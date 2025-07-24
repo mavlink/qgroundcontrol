@@ -18,7 +18,7 @@ The joystick is _enabled_ as the last step of the calibration process.
 
 ## Enabling PX4 Joystick Support
 
-To enable Joystick support in PX4 you need to set the parameter [`COM_RC_IN_MODE`](h[ttp://localhost:8080/px4_user_guide/en](https://docs.px4.io/en/main/advanced_config/parameter_reference.html#COM_RC_IN_MODE) to `1` - _Joystick_.
+若要在 PX4 中启用操纵杆支持，您需要将参数 [`COM_RC_IN_MODE`](https://docs.px4.io/en/main/advanced_config/parameter_reference.html#COM_RC_IN_MODE) 设置为 `1` - _操纵杆_。
 If this parameter is `0` then _Joystick_ will not be offered as a setup option.
 
 This is enabled by default for PX4 SITL builds (see the [Parameters](../setup_view/parameters.md) topic for information on how to find and set a particular parameter).
@@ -36,22 +36,22 @@ To configure a joystick:
 2. Connect the Joystick or Gamepad to a USB port.
 
 3. Select the **Gear** icon (Vehicle Setup) in the top toolbar and then **Joystick** in the sidebar.
-   The screen below will appear.
+  The screen below will appear.
 
-   ![Joystick setup - PlayStation](../../../assets/setup/joystick_sony_playstation.jpg)
+  ![Joystick setup - PlayStation](../../../assets/setup/joystick_sony_playstation.jpg)
 
 4. Make sure your joystick is selected in the **Active joystick** dropdown.
 
 5. Go to the **Calibrate** Tab, press the **Start** button and then follow the on-screen instructions to calibrate/move the sticks.
 
-   ![Joystick setup - Calibration](../../../assets/setup/joystick_calibration.jpg)
+  ![Joystick setup - Calibration](../../../assets/setup/joystick_calibration.jpg)
 
-   The joystick is _enabled_ as the last step of the calibration process.
+  The joystick is _enabled_ as the last step of the calibration process.
 
 6. Test the buttons and sticks work as intended by pressing them, and viewing the result in the Axis/Button monitor in the **General** tab.
 
 7. Select the flight modes/vehicle functions activated by each joystick button.
-   ![Joystick setup - Buttons](../../../assets/setup/joystick_buttons.jpg)
+  ![Joystick setup - Buttons](../../../assets/setup/joystick_buttons.jpg)
 
 ## Advanced Options
 
@@ -145,20 +145,20 @@ To make the controller work wirelessly under Linux the [jstest-gtk](https://jste
 
 The steps are:
 
-1. Install _jstest-gtk_:
-   ```
-   Install _jstest-gtk_: `sudo apt install jstest-gtk`
-   ```
-2. Install _ds4drv_:
-   ```
-   Install _ds4drv_: `sudo pip install ds4drv`
-   ```
+1. 安装 _jst-gtk_：
+  ```
+  Install _jstest-gtk_: `sudo apt install jstest-gtk`
+  ```
+2. 安装 _ds4drv_:：
+  ```
+  Install _ds4drv_: `sudo pip install ds4drv`
+  ```
 3. Run ds4drv `sudo ds4drv`
-   ```
-   sudo ds4drv
-   ```
+  ```
+  sudo ds4drv
+  ```
 4. Hold **Share** button and then **PS** button until controller LED starts blinking rapidly.
-   The _ds4drv_ should then detect a new device.
+  The _ds4drv_ should then detect a new device.
 5. Last of all, you should check the controller setup by running the _jstest-gtk_ utility.
 
 ### FrSky Taranis XD9 plus

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -28,46 +28,6 @@ QGC_LOGGING_CATEGORY(SurveyComplexItemLog, "SurveyComplexItemLog")
 
 const QString SurveyComplexItem::name(SurveyComplexItem::tr("Survey"));
 
-const char* SurveyComplexItem::jsonComplexItemTypeValue =   "survey";
-const char* SurveyComplexItem::jsonV3ComplexItemTypeValue = "survey";
-
-const char* SurveyComplexItem::settingsGroup =              "Survey";
-const char* SurveyComplexItem::gridAngleName =              "GridAngle";
-const char* SurveyComplexItem::gridEntryLocationName =      "GridEntryLocation";
-const char* SurveyComplexItem::flyAlternateTransectsName =  "FlyAlternateTransects";
-const char* SurveyComplexItem::splitConcavePolygonsName =   "SplitConcavePolygons";
-
-const char* SurveyComplexItem::_jsonGridAngleKey =          "angle";
-const char* SurveyComplexItem::_jsonEntryPointKey =         "entryLocation";
-
-const char* SurveyComplexItem::_jsonV3GridObjectKey =                   "grid";
-const char* SurveyComplexItem::_jsonV3GridAltitudeKey =                 "altitude";
-const char* SurveyComplexItem::_jsonV3GridAltitudeRelativeKey =         "relativeAltitude";
-const char* SurveyComplexItem::_jsonV3GridAngleKey =                    "angle";
-const char* SurveyComplexItem::_jsonV3GridSpacingKey =                  "spacing";
-const char* SurveyComplexItem::_jsonV3EntryPointKey =                   "entryLocation";
-const char* SurveyComplexItem::_jsonV3TurnaroundDistKey =               "turnAroundDistance";
-const char* SurveyComplexItem::_jsonV3CameraTriggerDistanceKey =        "cameraTriggerDistance";
-const char* SurveyComplexItem::_jsonV3CameraTriggerInTurnaroundKey =    "cameraTriggerInTurnaround";
-const char* SurveyComplexItem::_jsonV3HoverAndCaptureKey =              "hoverAndCapture";
-const char* SurveyComplexItem::_jsonV3GroundResolutionKey =             "groundResolution";
-const char* SurveyComplexItem::_jsonV3FrontalOverlapKey =               "imageFrontalOverlap";
-const char* SurveyComplexItem::_jsonV3SideOverlapKey =                  "imageSideOverlap";
-const char* SurveyComplexItem::_jsonV3CameraSensorWidthKey =            "sensorWidth";
-const char* SurveyComplexItem::_jsonV3CameraSensorHeightKey =           "sensorHeight";
-const char* SurveyComplexItem::_jsonV3CameraResolutionWidthKey =        "resolutionWidth";
-const char* SurveyComplexItem::_jsonV3CameraResolutionHeightKey =       "resolutionHeight";
-const char* SurveyComplexItem::_jsonV3CameraFocalLengthKey =            "focalLength";
-const char* SurveyComplexItem::_jsonV3CameraMinTriggerIntervalKey =     "minTriggerInterval";
-const char* SurveyComplexItem::_jsonV3CameraObjectKey =                 "camera";
-const char* SurveyComplexItem::_jsonV3CameraNameKey =                   "name";
-const char* SurveyComplexItem::_jsonV3ManualGridKey =                   "manualGrid";
-const char* SurveyComplexItem::_jsonV3CameraOrientationLandscapeKey =   "orientationLandscape";
-const char* SurveyComplexItem::_jsonV3FixedValueIsAltitudeKey =         "fixedValueIsAltitude";
-const char* SurveyComplexItem::_jsonV3Refly90DegreesKey =               "refly90Degrees";
-const char* SurveyComplexItem::_jsonFlyAlternateTransectsKey =          "flyAlternateTransects";
-const char* SurveyComplexItem::_jsonSplitConcavePolygonsKey =           "splitConcavePolygons";
-
 SurveyComplexItem::SurveyComplexItem(PlanMasterController* masterController, bool flyView, const QString& kmlOrShpFile)
     : TransectStyleComplexItem  (masterController, flyView, settingsGroup)
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/Survey.SettingsGroup.json"), this))
@@ -76,14 +36,7 @@ SurveyComplexItem::SurveyComplexItem(PlanMasterController* masterController, boo
     , _splitConcavePolygonsFact (settingsGroup, _metaDataMap[splitConcavePolygonsName])
     , _entryPoint               (EntryLocationTopLeft)
 {
-    _editorQml = "qrc:/qml/SurveyItemEditor.qml";
-
-    // If the user hasn't changed turnaround from the default (which is a fixed wing default) and we are multi-rotor set the multi-rotor default.
-    // NULL check since object creation during unit testing passes NULL for vehicle
-    if (_controllerVehicle && _controllerVehicle->multiRotor() && _turnAroundDistanceFact.rawValue().toDouble() == _turnAroundDistanceFact.rawDefaultValue().toDouble()) {
-        // Note this is set to 10 meters to work around a problem with PX4 Pro turnaround behavior. Don't change unless firmware gets better as well.
-        _turnAroundDistanceFact.setRawValue(10);
-    }
+    _editorQml = "qrc:/qml/QGroundControl/Controls/SurveyItemEditor.qml";
 
     if (_controllerVehicle && !(_controllerVehicle->fixedWing() || _controllerVehicle->vtol())) {
         // Only fixed wing flight paths support alternate transects
@@ -92,7 +45,7 @@ SurveyComplexItem::SurveyComplexItem(PlanMasterController* masterController, boo
 
     // We override the altitude to the mission default
     if (_cameraCalc.isManualCamera() || !_cameraCalc.valueSetIsDistance()->rawValue().toBool()) {
-        _cameraCalc.distanceToSurface()->setRawValue(qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue());
+        _cameraCalc.distanceToSurface()->setRawValue(SettingsManager::instance()->appSettings()->defaultMissionItemAltitude()->rawValue());
     }
 
     connect(&_gridAngleFact,            &Fact::valueChanged,                        this, &SurveyComplexItem::_setDirty);

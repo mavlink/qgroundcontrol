@@ -15,10 +15,9 @@ import QtQuick.Dialogs
 
 import QGroundControl
 import QGroundControl.ScreenTools
-import QGroundControl.Palette
+
 import QGroundControl.Controls
 import QGroundControl.FlightMap
-import QGroundControl.ShapeFileHelper
 
 /// QGCMapPolyline map visuals
 Item {
@@ -97,8 +96,8 @@ Item {
 
     Connections {
         target: mapPolyline
-        onTraceModeChanged: {
-            if (mapPolyline.traceMode) {
+        function onTraceModeChanged(traceMode) {
+            if (traceMode) {
                 _instructionText = _traceText
                 _objMgrTraceVisuals.createObject(traceMouseAreaComponent, mapControl, false)
             } else {
@@ -122,14 +121,13 @@ Item {
 
     QGCPalette { id: qgcPal }
 
-    QGCFileDialog {
-        id:             kmlLoadDialog
-        folder:         QGroundControl.settingsManager.appSettings.missionSavePath
-        title:          qsTr("Select KML File")
-        nameFilters:    ShapeFileHelper.fileDialogKMLFilters
+    KMLOrSHPFileDialog {
+        id:             kmlOrSHPLoadDialog
+        title:          qsTr("Select Polyline File")
 
         onAcceptedForLoad: (file) => {
-            mapPolyline.loadKMLFile(file)
+            mapPolyline.loadKMLOrSHPFile(file)
+            mapFitFunctions.fitMapViewportToMissionItems()
             close()
         }
     }
@@ -354,8 +352,8 @@ Item {
 
             QGCButton {
                 _horizontalPadding: 0
-                text:               qsTr("Load KML...")
-                onClicked:          kmlLoadDialog.openForLoad()
+                text:               qsTr("Load KML/SHP...")
+                onClicked:          kmlOrSHPLoadDialog.openForLoad()
                 visible:            !mapPolyline.traceMode
             }
         }

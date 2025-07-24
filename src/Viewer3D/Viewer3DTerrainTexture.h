@@ -1,6 +1,16 @@
+/****************************************************************************
+ *
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 #pragma once
 
 #include <QtQuick3D/QQuick3DTextureData>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "Viewer3DTileQuery.h"
 
@@ -13,6 +23,7 @@ class OsmParser;
 class Viewer3DTerrainTexture : public QQuick3DTextureData
 {
     Q_OBJECT
+    QML_ELEMENT
     Q_MOC_INCLUDE("OsmParser.h")
 
     Q_PROPERTY(OsmParser* osmParser READ osmParser WRITE setOsmParser NOTIFY osmParserChanged)

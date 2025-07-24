@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -56,7 +56,7 @@ public:
     /// This will emit downloadComplete() when done, and if there's currently a download in progress
     void cancelDownload();
 
-    static const char* mavlinkFTPScheme;
+    static constexpr const char* mavlinkFTPScheme = "mftp";
 
 signals:
     void downloadComplete       (const QString& file, const QString& errorMsg);

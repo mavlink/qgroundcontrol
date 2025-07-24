@@ -10,6 +10,7 @@
 #pragma once
 
 #include "UnitTest.h"
+#include "QGCMAVLink.h"
 
 /// This unit test is meant to be used stand-alone to generate images for each mission item editor for review
 class MissionCommandTreeEditorTest : public UnitTest

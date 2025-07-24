@@ -1,0 +1,68 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":              "EnableOnScreenControl",
+    "shortDesc":         "Enable on Screen Camera Control",
+    "type":              "bool",
+    "default":           false
+},
+{
+    "name":              "ControlType",
+    "shortDesc":         "Type of on-screen control",
+    "type":              "uint32",
+    "enumStrings":       "Click to point, click and drag",
+    "enumValues":        "0, 1",
+    "default":           0
+},
+{
+    "name":              "CameraVFov",
+    "shortDesc":         "Vertical camera field of view",
+    "type":              "uint32",
+    "default":           70,
+    "units":             "deg"
+},
+{
+    "name":              "CameraHFov",
+    "shortDesc":         "Horizontal camera field of view",
+    "type":              "uint32",
+    "default":           70,
+    "units":             "deg"
+},
+{
+    "name":              "CameraSlideSpeed",
+    "shortDesc":         "Maximum gimbal speed on click and drag (deg/sec)",
+    "type":              "uint32",
+    "default":           30,
+    "units":             "deg/s"
+},
+{
+    "name":              "showAzimuthIndicatorOnMap",
+    "shortDesc":         "Show gimbal Azimuth indicator over vehicle icon in map",
+    "type":              "bool",
+    "default":           true
+},
+{
+    "name":              "toolbarIndicatorShowAzimuth",
+    "shortDesc":         "Show Azimuth instead of local yaw on top toolbar gimbal indicator",
+    "type":              "bool",
+    "default":           true
+},
+{
+    "name":              "toolbarIndicatorShowAcquireReleaseControl",
+    "shortDesc":         "Show Azimuth Acquire/release buttons in the gimbal buttons panel",
+    "type":              "bool",
+    "default":           false
+},
+{
+    "name":              "joystickButtonsSpeed",
+    "shortDesc":         "Rate used for joystick button control (deg/sec)",
+    "longDesc":          "When a joystick button is set to gimbal left/right/up/down, it will send this rate when pressed, and it will stop moving when button is released",
+    "type":              "uint32",
+    "default":           20,
+    "units":             "deg/s"
+}
+]
+}

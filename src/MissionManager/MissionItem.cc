@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -14,19 +14,6 @@
 #include "MissionItem.h"
 #include "JsonHelper.h"
 #include "VisualMissionItem.h"
-
-const char*  MissionItem::_jsonFrameKey =           "frame";
-const char*  MissionItem::_jsonCommandKey =         "command";
-const char*  MissionItem::_jsonAutoContinueKey =    "autoContinue";
-const char*  MissionItem::_jsonCoordinateKey =      "coordinate";
-const char*  MissionItem::_jsonParamsKey =          "params";
-const char*  MissionItem::_jsonDoJumpIdKey =        "doJumpId";
-
-// Deprecated V1 format keys
-const char*  MissionItem::_jsonParam1Key =          "param1";
-const char*  MissionItem::_jsonParam2Key =          "param2";
-const char*  MissionItem::_jsonParam3Key =          "param3";
-const char*  MissionItem::_jsonParam4Key =          "param4";
 
 MissionItem::MissionItem(QObject* parent)
     : QObject(parent)

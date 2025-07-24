@@ -2,12 +2,15 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
+import QGroundControl
 import QGroundControl.ScreenTools
-import QGroundControl.Palette
+
 
 CheckBox {
-    id:         control
-    focusPolicy: Qt.ClickFocus
+    id:             control
+    focusPolicy:    Qt.ClickFocus
+    checked:        true
+    leftPadding:    0
 
     property var            color:          qgcPal.text
     property bool           showSpacer:     true

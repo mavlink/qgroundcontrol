@@ -15,7 +15,7 @@ import QGroundControl
 import QGroundControl.ScreenTools
 import QGroundControl.Controls
 import QGroundControl.FlightDisplay
-import QGroundControl.Vehicle
+
 
 Item {
     property var model: listModel

@@ -16,10 +16,9 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.ScreenTools
-import QGroundControl.Palette
+
 import QGroundControl.Controls
 import QGroundControl.FlightMap
-import QGroundControl.ShapeFileHelper
 
 Item {
     id: _root
@@ -641,7 +640,7 @@ Item {
             availableWidth:                 mapControl.centerViewport.width
 
             QGCButton {
-                _horizontalPadding: 0
+                _horizontalPadding: 2
                 text:               qsTr("Automatic")
                 visible:            !mapPolygon.traceMode
                 onClicked:          _resetPolygon()
@@ -649,7 +648,7 @@ Item {
 
 
             QGCButton {
-                _horizontalPadding: 0
+                _horizontalPadding: 2
                 text:               mapPolygon.traceMode ? qsTr("Done fencing") : qsTr("Mannual")
                 onClicked: {
                     if (mapPolygon.traceMode) {

@@ -13,7 +13,7 @@ import QtQuick.Controls
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
-import QGroundControl.SettingsManager
+
 
 /// Map scale control
 Item {
@@ -147,7 +147,7 @@ Item {
     QGCMapLabel {
         id:                 scaleText
         map:                mapControl
-        font.family:        ScreenTools.demiboldFontFamily
+        font.bold:          true
         anchors.left:       parent.left
         anchors.right:      rightEnd.right
         horizontalAlignment:Text.AlignRight
@@ -190,7 +190,8 @@ Item {
         anchors.bottom:     rightEnd.bottom
         anchors.leftMargin: buttonsOnLeft ? 0 : ScreenTools.defaultFontPixelWidth / 2
         anchors.left:       buttonsOnLeft ? parent.left : rightEnd.right
-        text:               qsTr("T")
+        leftPadding:        topPadding
+        iconSource:         "/res/terrain.svg"
         width:              height
         opacity:            0.75
         visible:            terrainButtonVisible

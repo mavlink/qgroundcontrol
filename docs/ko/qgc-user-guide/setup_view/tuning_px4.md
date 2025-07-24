@@ -18,7 +18,7 @@ Tuning only needs to be done once, and is recommended unless you're using vehicl
 
 :::info
 이 가이드는 자동 튜닝의 기본 사용법을 보여줍니다.
-추가 정보 및 설정은 [PX4 자동 튜닝 가이드](http://docs.px4.io/master/en/config/autotune.html)(PX4 사용자 가이드)을 참고하십시오.
+Additional information and configuration can be found in the [PX4 Autotuning Guide](http://docs.px4.io/main/en/config/autotune.html) (PX4 User Guide).
 :::
 
 ### 사전 자동 튜닝 테스트
@@ -36,18 +36,18 @@ Tuning only needs to be done once, and is recommended unless you're using vehicl
 3. _좌회전 오른쪽 롤 중심_ (전체 기동은 약 3초가 소요됩니다).
    차량은 2번의 진동 내에서 안정되어야 합니다.
 4. 각 시도에서 더 큰 진폭으로 기울이면서 기동을 반복합니다.
-   기체가 \~20도에서 2번의 진동 내에서 안정화될 수 있으면 다음 단계로 이동합니다.
+   기체가 ~20도에서 2번의 진동 내에서 안정화될 수 있으면 다음 단계로 이동합니다.
 5. 피치 축에서 동일한 동작을 반복합니다.
    위의 A에서 작은 각도로 시작하여 기체의 틸트를 증가시키기 전에 2개의 진동 내에서 스스로 움직일 수 있는 지 확인하십시오.
 
 드론이 2번의 진동 내에서 스스로 안정화될 수 있으면 자동 튜닝 절차의 준비가 완료된 것입니다.
 
-그렇지 않으면, [PX4 사용 설명서 > 자동 튜닝 > 문제 해결](http://docs.px4.io/master/en/config/autotune.html#troubleshooting)을 참고하십시오.
+If not, see the [PX4 User Guide > Autotuning > Troubleshooting](http://docs.px4.io/main/en/config/autotune.html#troubleshooting).
 
 ### 자동 튜닝 절차
 
 자동 튜닝은 **충분한 공간이 있는 안전한 지역**에서 진행하여야 합니다.
-약 40초(19\~68초)가 걸립니다.
+약 40초(19~68초)가 걸립니다.
 최상의 결과를 얻으려면 날씨가 좋고 바람이 적을 때 테스트 하는 것이 좋습니다.
 
 :::info
@@ -60,9 +60,9 @@ RC 컨트롤러로 자동 튜닝 프로세스를 중단할 준비를 하십시�
 
 2. RC를 사용하여 이륙하고 테스트 준비:
    - **멀티콥터:** **고도 모드**에서 조종기를 사용하여 이륙합니다.
-     안전한 거리와 지상에서 몇 미터(4\~20m)에서 기체를 호버링하십시오.
+      안전한 거리와 지상에서 몇 미터(4~20m)에서 기체를 호버링하십시오.
    - **고정익 모드의 VTOL:** 순항 속도로 비행하면 **홀드 모드**를 활성화합니다.
-     이렇게 하면 비행기가 일정한 고도와 속도로 원을 그리며 비행합니다.
+      이렇게 하면 비행기가 일정한 고도와 속도로 원을 그리며 비행합니다.
 
 3. QGroundControl에서 메뉴(**기체 PID 튜닝**)를 클릭합니다.
 
@@ -79,11 +79,11 @@ RC 컨트롤러로 자동 튜닝 프로세스를 중단할 준비를 하십시�
 
 7. 튜닝을 적용하려면:
    - **고정익:** 조정이 즉시 자동으로 적용되고 비행 중에 테스트됩니다(기본값).
-     그런 다음, PX4는 4초 테스트를 실행하고 문제가 감지되면 새 튜닝 작업을 이전 상태로 되돌립니다.
+      그런 다음, PX4는 4초 테스트를 실행하고 문제가 감지되면 새 튜닝 작업을 이전 상태로 되돌립니다.
    - **멀티콥터:** 새로운 조정 매개변수를 적용하기 위하여 수동으로 착륙하고 시동을 해제합니다.
-     조심스럽게 이륙하고 기체의 안정성을 수동으로 테스트하십시오.
+      조심스럽게 이륙하고 기체의 안정성을 수동으로 테스트하십시오.
 
-8. 강한 진동이 발생하면 즉시 착지하고 [PX4 사용자 가이드 > 자동 튜닝 > 문제 해결](http://docs.px4.io/master/en/config/autotune.html#troubleshooting)의 지침을 따르십시오.
+8. If any strong oscillations occur, land immediately and follow the instructions in [PX4 User Guide > Autotuning > Troubleshooting](http://docs.px4.io/main/en/config/autotune.html#troubleshooting).
 
 <br/>
 
@@ -101,15 +101,15 @@ A video of the process is shown below:
 수동 튜닝은 비행 중에 이루어지므로 기체는 미리 비행에 적합하게 튜닝되어 있어야 합니다(일반적으로 적절한 기본 기체를 선택한 경우).
 
 아래 지침은 수동 튜닝 UI를 사용하는 방법을 설명합니다.
-PID 값을 변경할 때 사용할 스텝 크기의 종류에 대한 자세한 힌트를 제공하는 [PX4 수동 PID 튜닝 가이드](http://docs.px4.io/master/en/config/autotune.html#see-also)와 함께 읽고/사용하도록 설계되었습니다.
+It is designed to be read/used in conjustion with the [PX4 Manual PID Tuning Guides](http://docs.px4.io/main/en/config/autotune.html#see-also), which provide more detailed hints on the kinds of step sizes to use when changing PID values.
 
 개요:
 
 1. RC를 사용하여 이륙하고 테스트 준비:
    - **멀티콥터:** **고도 모드**에서 조종기를 사용하여 이륙합니다.
-     안전한 거리와 지상에서 몇 미터(4\~20m)에서 기체를 호버링하십시오.
+      안전한 거리와 지상에서 몇 미터(4~20m)에서 기체를 호버링하십시오.
    - **고정익:** 순항 속도로 비행하면 **유지 모드**를 활성화합니다.
-     이렇게 하면 비행기가 일정한 고도와 속도로 원을 그리며 비행합니다.
+      이렇게 하면 비행기가 일정한 고도와 속도로 원을 그리며 비행합니다.
 
 2. QGroundControl에서 메뉴(**차량 설정 PID 조정**)를 클릭합니다.
 

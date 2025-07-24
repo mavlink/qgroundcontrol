@@ -1,39 +1,25 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Network Qml Xml)
-
-qt_add_library(Camera STATIC
-	MavlinkCameraControl.cc
-	MavlinkCameraControl.h
-	QGCCameraIO.cc
-	QGCCameraIO.h
-	QGCCameraManager.cc
-	QGCCameraManager.h
-	SimulatedCameraControl.cc
-	SimulatedCameraControl.h
-	VehicleCameraControl.cc
-	VehicleCameraControl.h
+target_sources(${CMAKE_PROJECT_NAME}
+    PRIVATE
+        CameraMetaData.cc
+        CameraMetaData.h
+        MavlinkCameraControl.cc
+        MavlinkCameraControl.h
+        QGCCameraIO.cc
+        QGCCameraIO.h
+        QGCCameraManager.cc
+        QGCCameraManager.h
+        QGCVideoStreamInfo.cc
+        QGCVideoStreamInfo.h
+        SimulatedCameraControl.cc
+        SimulatedCameraControl.h
+        VehicleCameraControl.cc
+        VehicleCameraControl.h
 )
 
-target_link_libraries(Camera
-	PRIVATE
-		Qt6::Network
-		Qt6::Qml
-		Qt6::Xml
-		API
-		Compression
-		Comms
-		FirmwarePlugin
-		Joystick
-		QGCLocation
-		Settings
-		Vehicle
-		VideoManager
-	PUBLIC
-		Qt6::Core
-		FactSystem
-		MAVLink
-		QmlControls
-		QGC
-)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_include_directories(Camera PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-
+# qt_add_resources(${CMAKE_PROJECT_NAME} "Camera_res"
+#     PREFIX "/"
+#     FILES
+#         CameraMetaData.json
+# )

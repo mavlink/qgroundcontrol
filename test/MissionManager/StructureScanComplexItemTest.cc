@@ -14,6 +14,7 @@
 #include "PlanMasterController.h"
 
 #include <QtCore/QJsonArray>
+#include <QtTest/QTest>
 
 StructureScanComplexItemTest::StructureScanComplexItemTest(void)
 {

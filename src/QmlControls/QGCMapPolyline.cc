@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -12,18 +12,16 @@
 #include "JsonHelper.h"
 #include "QGCQGeoCoordinate.h"
 #include "QGCApplication.h"
-#include "KMLHelper.h"
+#include "ShapeFileHelper.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QLineF>
-
-const char* QGCMapPolyline::jsonPolylineKey = "polyline";
+#include <QMetaMethod>
 
 QGCMapPolyline::QGCMapPolyline(QObject* parent)
     : QObject               (parent)
     , _dirty                (false)
     , _interactive          (false)
-    , _resetActive          (false)
 {
     _init();
 }
@@ -32,11 +30,15 @@ QGCMapPolyline::QGCMapPolyline(const QGCMapPolyline& other, QObject* parent)
     : QObject               (parent)
     , _dirty                (false)
     , _interactive          (false)
-    , _resetActive          (false)
 {
     *this = other;
 
     _init();
+}
+
+QGCMapPolyline::~QGCMapPolyline()
+{
+    qgcApp()->removeCompressedSignal(QMetaMethod::fromSignal(&QGCMapPolyline::pathChanged));
 }
 
 const QGCMapPolyline& QGCMapPolyline::operator=(const QGCMapPolyline& other)
@@ -57,9 +59,12 @@ void QGCMapPolyline::_init(void)
 {
     connect(&_polylineModel, &QmlObjectListModel::dirtyChanged, this, &QGCMapPolyline::_polylineModelDirtyChanged);
     connect(&_polylineModel, &QmlObjectListModel::countChanged, this, &QGCMapPolyline::_polylineModelCountChanged);
+    connect(&_polylineModel, &QmlObjectListModel::modelReset, this, &QGCMapPolyline::pathChanged);
 
     connect(this, &QGCMapPolyline::countChanged, this, &QGCMapPolyline::isValidChanged);
     connect(this, &QGCMapPolyline::countChanged, this, &QGCMapPolyline::isEmptyChanged);
+
+    qgcApp()->addCompressedSignal(QMetaMethod::fromSignal(&QGCMapPolyline::pathChanged));
 }
 
 void QGCMapPolyline::clear(void)
@@ -77,8 +82,14 @@ void QGCMapPolyline::clear(void)
 void QGCMapPolyline::adjustVertex(int vertexIndex, const QGeoCoordinate coordinate)
 {
     _polylinePath[vertexIndex] = QVariant::fromValue(coordinate);
-    emit pathChanged();
     _polylineModel.value<QGCQGeoCoordinate*>(vertexIndex)->setCoordinate(coordinate);
+    if (!_deferredPathChanged) {
+        _deferredPathChanged = true;
+        QTimer::singleShot(0, this, [this]() {
+            emit pathChanged();
+            _deferredPathChanged = false;
+        });
+    }
     setDirty(true);
 }
 
@@ -119,7 +130,7 @@ QPointF QGCMapPolyline::_pointFFromCoord(const QGeoCoordinate& coordinate) const
 
 void QGCMapPolyline::setPath(const QList<QGeoCoordinate>& path)
 {
-    _beginResetIfNotActive();
+    beginReset();
 
     _polylinePath.clear();
     _polylineModel.clearAndDeleteContents();
@@ -130,12 +141,12 @@ void QGCMapPolyline::setPath(const QList<QGeoCoordinate>& path)
 
     setDirty(true);
 
-    _endResetIfNotActive();
+    endReset();
 }
 
 void QGCMapPolyline::setPath(const QVariantList& path)
 {
-    _beginResetIfNotActive();
+    beginReset();
 
     _polylinePath = path;
     _polylineModel.clearAndDeleteContents();
@@ -144,7 +155,7 @@ void QGCMapPolyline::setPath(const QVariantList& path)
     }
     setDirty(true);
 
-    _endResetIfNotActive();
+    endReset();
 }
 
 
@@ -290,7 +301,6 @@ QList<QPointF> QGCMapPolyline::nedPolyline(void)
     return nedPolyline;
 }
 
-
 QList<QGeoCoordinate> QGCMapPolyline::offsetPolyline(double distance)
 {
     QList<QGeoCoordinate> rgNewPolyline;
@@ -348,21 +358,19 @@ QList<QGeoCoordinate> QGCMapPolyline::offsetPolyline(double distance)
     return rgNewPolyline;
 }
 
-bool QGCMapPolyline::loadKMLFile(const QString& kmlFile)
+bool QGCMapPolyline::loadKMLOrSHPFile(const QString &file)
 {
-    _beginResetIfNotActive();
-
     QString errorString;
     QList<QGeoCoordinate> rgCoords;
-    if (!KMLHelper::loadPolylineFromFile(kmlFile, rgCoords, errorString)) {
+    if (!ShapeFileHelper::loadPolylineFromFile(file, rgCoords, errorString)) {
         qgcApp()->showAppMessage(errorString);
         return false;
     }
 
+    beginReset();
     clear();
     appendVertices(rgCoords);
-
-    _endResetIfNotActive();
+    endReset();
 
     return true;
 }
@@ -395,7 +403,7 @@ double QGCMapPolyline::length(void) const
 
 void QGCMapPolyline::appendVertices(const QList<QGeoCoordinate>& coordinates)
 {
-    _beginResetIfNotActive();
+    beginReset();
 
     QList<QObject*> objects;
     for (const QGeoCoordinate& coordinate: coordinates) {
@@ -404,34 +412,19 @@ void QGCMapPolyline::appendVertices(const QList<QGeoCoordinate>& coordinates)
     }
     _polylineModel.append(objects);
 
-    _endResetIfNotActive();
+    endReset();
+
+    emit pathChanged();
 }
 
 void QGCMapPolyline::beginReset(void)
 {
-    _resetActive = true;
-    _polylineModel.beginReset();
+    _polylineModel.beginResetModel();
 }
 
 void QGCMapPolyline::endReset(void)
 {
-    _resetActive = false;
-    _polylineModel.endReset();
-    emit pathChanged();
-}
-
-void QGCMapPolyline::_beginResetIfNotActive(void)
-{
-    if (!_resetActive) {
-        beginReset();
-    }
-}
-
-void QGCMapPolyline::_endResetIfNotActive(void)
-{
-    if (!_resetActive) {
-        endReset();
-    }
+    _polylineModel.endResetModel();
 }
 
 void QGCMapPolyline::setTraceMode(bool traceMode)
@@ -450,9 +443,8 @@ void QGCMapPolyline::selectVertex(int index)
         _selectedVertexIndex = index;
     } else {
         if (!qgcApp()->runningUnitTests()) {
-            qCWarning(ParameterManagerLog)
-                    << QString("QGCMapPolyline: Selected vertex index (%1) is out of bounds! "
-                               "Polyline vertices indexes range is [%2..%3].").arg(index).arg(0).arg(count()-1);
+            qWarning() << QStringLiteral("QGCMapPolyline: Selected vertex index (%1) is out of bounds! "
+                                         "Polyline vertices indexes range is [%2..%3].").arg(index).arg(0).arg(count()-1);
         }
         _selectedVertexIndex = -1;   // deselect vertex
     }

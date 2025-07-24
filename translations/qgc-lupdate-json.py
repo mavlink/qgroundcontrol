@@ -15,18 +15,6 @@ def parseJsonObjectForTranslateKeys(jsonObjectHierarchy, jsonObject, translateKe
     for translateKey in translateKeys:
         if (translateKey in jsonObject):
             locStr = jsonObject[translateKey]
-            if "&" in locStr:
-                print("Error: & in string %s" % locStr)
-                sys.exit()
-            if "<" in locStr:
-                print("Error: < in string %s" % locStr)
-                sys.exit()
-            if ">" in locStr:
-                print("Error: > in string %s" % locStr)
-                sys.exit()
-            if "'" in locStr:    
-                print("Error: ' in string %s" % locStr)
-                sys.exit()
             currentHierarchy = jsonObjectHierarchy + "." + translateKey
             if locStr in locStringDict:
                 # Duplicate of an existing string
@@ -62,7 +50,7 @@ def addLocKeysBasedOnQGCFileType(jsonPath, jsonDict):
             translateKeyValue =         "label,enumStrings,friendlyName,description,category"
             arrayIDKeysKeyValue =       "rawName,comment"
         elif qgcFileType == "FactMetaData":
-            translateKeyValue =         "shortDescription,longDescription,enumStrings"
+            translateKeyValue =         "shortDesc,longDesc,enumStrings"
             arrayIDKeysKeyValue =       "name"
         if translateKeysKey not in jsonDict and translateKeyValue != "":
             jsonDict[translateKeysKey] = translateKeyValue
@@ -98,6 +86,15 @@ def walkDirectoryTreeForJsonFiles(dir, multiFileLocArray):
         if (os.path.isdir(path)):
             walkDirectoryTreeForJsonFiles(path, multiFileLocArray)
 
+def escapeXmlString(xmlStr):
+    # Escape the string so it can be used in XML
+    xmlStr = xmlStr.replace("&", "&amp;")
+    xmlStr = xmlStr.replace("<", "&lt;")
+    xmlStr = xmlStr.replace(">", "&gt;")
+    xmlStr = xmlStr.replace("'", "&apos;")
+    xmlStr = xmlStr.replace('"', "&quot;")
+    return xmlStr
+
 def writeJsonTSFile(multiFileLocArray):
     jsonTSFile = codecs.open('qgc-json.ts', 'w', "utf-8")
     jsonTSFile.write("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n")
@@ -123,7 +120,10 @@ def writeJsonTSFile(multiFileLocArray):
             extraCommentStr = ""
             for jsonHierachy in singleFileLocStringDict[locStr]:
                 extraCommentStr += "%s, " % jsonHierachy
+            locStr = escapeXmlString(locStr)
             jsonTSFile.write("        <extracomment>%s</extracomment>\n" % extraCommentStr)
+            if (extraCommentStr.endswith(".enumStrings, ")):
+                jsonTSFile.write("        <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>\n")
             jsonTSFile.write("        <location filename=\"%s\"/>\n" % entry[1])
             jsonTSFile.write("        <source>%s</source>\n" % locStr)
             jsonTSFile.write("        <translation type=\"unfinished\"></translation>\n")

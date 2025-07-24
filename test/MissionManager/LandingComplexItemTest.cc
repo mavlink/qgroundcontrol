@@ -15,13 +15,15 @@
 #include "CameraSection.h"
 #include "SimpleMissionItem.h"
 
+#include <QtTest/QTest>
+
 const char* SimpleLandingComplexItem::settingsGroup             = "SimpleLandingComplexItemUnitTest";
 const char* SimpleLandingComplexItem::jsonComplexItemTypeValue  = "utSimpleLandingPattern";
 
 LandingComplexItemTest::LandingComplexItemTest(void)
 {    
     rgSignals[finalApproachCoordinateChangedIndex]  = SIGNAL(finalApproachCoordinateChanged(QGeoCoordinate));
-    rgSignals[loiterTangentCoordinateChangedIndex]  = SIGNAL(loiterTangentCoordinateChanged(QGeoCoordinate));
+    rgSignals[slopeStartCoordinateChangedIndex]     = SIGNAL(slopeStartCoordinateChanged(QGeoCoordinate));
     rgSignals[landingCoordinateChangedIndex]        = SIGNAL(landingCoordinateChanged(QGeoCoordinate));
     rgSignals[landingCoordSetChangedIndex]          = SIGNAL(landingCoordSetChanged(bool));
     rgSignals[altitudesAreRelativeChangedIndex]     = SIGNAL(altitudesAreRelativeChanged(bool));
@@ -77,6 +79,8 @@ void LandingComplexItemTest::_testDirty(void)
     // These facts should set dirty when changed
     QList<Fact*> rgFacts;
     rgFacts << _item->finalApproachAltitude()
+            << _item->useDoChangeSpeed()
+            << _item->finalApproachSpeed()
             << _item->landingHeading()
             << _item->loiterRadius()
             << _item->loiterClockwise()
@@ -245,7 +249,7 @@ void LandingComplexItemTest::_testScanForItems(void)
             visualItems->append(simpleItem);
         }
 
-        QVERIFY(LandingComplexItem::_scanForItem(visualItems, false /* flyView */, _masterController, &SimpleLandingComplexItem::_isValidLandItem, &SimpleLandingComplexItem::_createItem));
+        QVERIFY(LandingComplexItem::_scanForItems(visualItems, false /* flyView */, _masterController, &SimpleLandingComplexItem::_isValidLandItem, &SimpleLandingComplexItem::_createItem));
         QCOMPARE(visualItems->count(), 1);
         SimpleLandingComplexItem* scannedItem = visualItems->value<SimpleLandingComplexItem*>(0);
         QVERIFY(scannedItem);
@@ -318,6 +322,8 @@ void LandingComplexItemTest::_validateItem(LandingComplexItem* actualItem, Landi
     QCOMPARE(actualItem->stopTakingVideo()->rawValue().toBool(),        expectedItem->stopTakingVideo()->rawValue().toBool());
     QCOMPARE(actualItem->useLoiterToAlt()->rawValue().toBool(),         expectedItem->useLoiterToAlt()->rawValue().toBool());
     QCOMPARE(actualItem->finalApproachAltitude()->rawValue().toInt(),   expectedItem->finalApproachAltitude()->rawValue().toInt());
+    QCOMPARE(actualItem->useDoChangeSpeed()->rawValue().toBool(),       expectedItem->useDoChangeSpeed()->rawValue().toBool());
+    QCOMPARE(actualItem->finalApproachSpeed()->rawValue().toInt(),      expectedItem->finalApproachSpeed()->rawValue().toInt());
     QCOMPARE(actualItem->landingAltitude()->rawValue().toInt(),         expectedItem->landingAltitude()->rawValue().toInt());
     QCOMPARE(actualItem->landingHeading()->rawValue().toInt(),          expectedItem->landingHeading()->rawValue().toInt());
     QCOMPARE(actualItem->landingDistance()->rawValue().toInt(),         expectedItem->landingDistance()->rawValue().toInt());
@@ -327,7 +333,7 @@ void LandingComplexItemTest::_validateItem(LandingComplexItem* actualItem, Landi
     QVERIFY(fuzzyCompareLatLon(actualItem->finalApproachCoordinate(),   expectedItem->finalApproachCoordinate()));
     QVERIFY(fuzzyCompareLatLon(actualItem->landingCoordinate(),         expectedItem->landingCoordinate()));
     if (actualItem->useLoiterToAlt()->rawValue().toBool()) {
-        QVERIFY(fuzzyCompareLatLon(actualItem->loiterTangentCoordinate(), expectedItem->loiterTangentCoordinate()));
+        QVERIFY(fuzzyCompareLatLon(actualItem->slopeStartCoordinate(),  expectedItem->slopeStartCoordinate()));
         QCOMPARE(actualItem->loiterRadius()->rawValue().toInt(),        expectedItem->loiterRadius()->rawValue().toInt());
         QCOMPARE(actualItem->loiterClockwise()->rawValue().toBool(),    expectedItem->loiterClockwise()->rawValue().toBool());
     }
@@ -338,6 +344,8 @@ SimpleLandingComplexItem::SimpleLandingComplexItem(PlanMasterController* masterC
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/VTOLLandingPattern.FactMetaData.json"), this))
     , _landingDistanceFact      (settingsGroup, _metaDataMap[finalApproachToLandDistanceName])
     , _finalApproachAltitudeFact(settingsGroup, _metaDataMap[finalApproachAltitudeName])
+    , _useDoChangeSpeedFact     (settingsGroup, _metaDataMap[useDoChangeSpeedName])
+    , _finalApproachSpeedFact   (settingsGroup, _metaDataMap[finalApproachSpeedName])
     , _loiterRadiusFact         (settingsGroup, _metaDataMap[loiterRadiusName])
     , _loiterClockwiseFact      (settingsGroup, _metaDataMap[loiterClockwiseName])
     , _landingHeadingFact       (settingsGroup, _metaDataMap[landingHeadingName])
@@ -387,15 +395,15 @@ void SimpleLandingComplexItem::_updateFlightPathSegmentsDontCallDirectly(void)
         emit terrainCollisionChanged(false);
     }
 
-    _flightPathSegments.beginReset();
+    _flightPathSegments.beginResetModel();
     _flightPathSegments.clearAndDeleteContents();
     if (useLoiterToAlt()->rawValue().toBool()) {
-        _appendFlightPathSegment(FlightPathSegment::SegmentTypeGeneric, finalApproachCoordinate(), amslEntryAlt(), loiterTangentCoordinate(),  amslEntryAlt()); // Best we can do to simulate loiter circle terrain profile
-        _appendFlightPathSegment(FlightPathSegment::SegmentTypeLand, loiterTangentCoordinate(), amslEntryAlt(), landingCoordinate(),        amslExitAlt());
+        _appendFlightPathSegment(FlightPathSegment::SegmentTypeGeneric, finalApproachCoordinate(), amslEntryAlt(), slopeStartCoordinate(),  amslEntryAlt()); // Best we can do to simulate loiter circle terrain profile
+        _appendFlightPathSegment(FlightPathSegment::SegmentTypeLand, slopeStartCoordinate(), amslEntryAlt(), landingCoordinate(),        amslExitAlt());
     } else {
         _appendFlightPathSegment(FlightPathSegment::SegmentTypeLand, finalApproachCoordinate(), amslEntryAlt(), landingCoordinate(),        amslExitAlt());
     }
-    _flightPathSegments.endReset();
+    _flightPathSegments.endResetModel();
 
     if (_cTerrainCollisionSegments != 0) {
         emit terrainCollisionChanged(true);

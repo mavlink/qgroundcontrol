@@ -14,10 +14,10 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.Palette
+
 import QGroundControl.ScreenTools
-import QGroundControl.Controllers
-import QGroundControl.FactSystem
+
+
 import QGroundControl.FactControls
 
 Item {
@@ -37,63 +37,15 @@ Item {
         id: controller
     }
 
-    //---------------------------------------------
-    //-- Header
-    Row {
-        id:             header
-        anchors.left:   parent.left
-        anchors.right:  parent.right
-        spacing:        ScreenTools.defaultFontPixelWidth
-
-        Timer {
-            id:         clearTimer
-            interval:   100;
-            running:    false;
-            repeat:     false
-            onTriggered: {
-                searchText.text = ""
-                controller.searchText = ""
-            }
+    Timer {
+        id:         clearTimer
+        interval:   100;
+        running:    false;
+        repeat:     false
+        onTriggered: {
+            searchText.text = ""
+            controller.searchText = ""
         }
-
-        QGCLabel {
-            anchors.verticalCenter: parent.verticalCenter
-            text: qsTr("Search:")
-        }
-
-        QGCTextField {
-            id:                 searchText
-            text:               controller.searchText
-            onDisplayTextChanged: controller.searchText = displayText
-            anchors.verticalCenter: parent.verticalCenter
-        }
-
-        QGCButton {
-            text: qsTr("Clear")
-            onClicked: {
-                if(ScreenTools.isMobile) {
-                    Qt.inputMethod.hide();
-                }
-                clearTimer.start()
-            }
-            anchors.verticalCenter: parent.verticalCenter
-        }
-
-        QGCCheckBox {
-            text:                   qsTr("Show modified only")
-            anchors.verticalCenter: parent.verticalCenter
-            checked:                controller.showModifiedOnly
-            onClicked:              controller.showModifiedOnly = checked
-            visible:                QGroundControl.multiVehicleManager.activeVehicle.px4Firmware
-        }
-    } // Row - Header
-
-    QGCButton {
-        anchors.top:    header.top
-        anchors.bottom: header.bottom
-        anchors.right:  parent.right
-        text:           qsTr("Tools")
-        onClicked:      toolsMenu.popup()
     }
 
     QGCMenu {
@@ -119,7 +71,7 @@ Item {
         }
         QGCMenuSeparator { }
         QGCMenuItem {
-            text:           qsTr("Load from file...")
+            text:           qsTr("Load from file for review...")
             onTriggered: {
                 fileDialog.title =          qsTr("Load Parameters")
                 fileDialog.openForLoad()
@@ -145,6 +97,82 @@ Item {
                                                          qsTr("Select Ok to reboot vehicle."),
                                                          Dialog.Cancel | Dialog.Ok,
                                                          function() { _activeVehicle.rebootVehicle() })
+        }
+    }
+
+
+    QGCFileDialog {
+        id:             fileDialog
+        folder:         _appSettings.parameterSavePath
+        nameFilters:    [ qsTr("Parameter Files (*.%1)").arg(_appSettings.parameterFileExtension) , qsTr("All Files (*)") ]
+
+        onAcceptedForSave: (file) => {
+            controller.saveToFile(file)
+            close()
+        }
+
+        onAcceptedForLoad: (file) => {
+            close()
+            if (controller.buildDiffFromFile(file)) {
+                parameterDiffDialog.createObject(mainWindow).open()
+            }
+        }
+    }
+
+    Component {
+        id: editorDialogComponent
+
+        ParameterEditorDialog {
+            fact:           _editorDialogFact
+            showRCToParam:  _showRCToParam
+        }
+    }
+
+    Component {
+        id: parameterDiffDialog
+
+        ParameterDiffDialog {
+            paramController: _controller
+        }
+    }
+
+    RowLayout {
+        id:             header
+        anchors.left:   parent.left
+        anchors.right:  parent.right
+
+        RowLayout {
+            Layout.alignment:   Qt.AlignLeft
+            spacing:            ScreenTools.defaultFontPixelWidth
+
+            QGCTextField {
+                id:                     searchText
+                placeholderText:        qsTr("Search")
+                onDisplayTextChanged:   controller.searchText = displayText
+            }
+
+            QGCButton {
+                text: qsTr("Clear")
+                onClicked: {
+                    if(ScreenTools.isMobile) {
+                        Qt.inputMethod.hide();
+                    }
+                    clearTimer.start()
+                }
+            }
+
+            QGCCheckBox {
+                text:       qsTr("Show modified only")
+                checked:    controller.showModifiedOnly
+                onClicked:  controller.showModifiedOnly = checked
+                visible:    QGroundControl.multiVehicleManager.activeVehicle.px4Firmware
+            }
+        }
+
+        QGCButton {
+            Layout.alignment:   Qt.AlignRight
+            text:               qsTr("Tools")
+            onClicked:          toolsMenu.popup()
         }
     }
 
@@ -210,119 +238,81 @@ Item {
         }
     }
 
-    /// Parameter list
-    QGCListView {
-        id:                 editorListView
+    TableView {
+        id:                 tableView
         anchors.leftMargin: ScreenTools.defaultFontPixelWidth
-        anchors.left:       _searchFilter ? parent.left : groupScroll.right
-        anchors.right:      parent.right
         anchors.top:        header.bottom
         anchors.bottom:     parent.bottom
-        orientation:        ListView.Vertical
+        anchors.left:       _searchFilter ? parent.left : groupScroll.right
+        anchors.right:      parent.right
+        columnSpacing:      ScreenTools.defaultFontPixelWidth
+        rowSpacing:         ScreenTools.defaultFontPixelHeight / 4
         model:              controller.parameters
-        cacheBuffer:        height > 0 ? height * 2 : 0
+        contentWidth:       width
         clip:               true
 
-        delegate: Rectangle {
-            height: _rowHeight
-            width:  _rowWidth
-            color:  Qt.rgba(0,0,0,0)
+        // Qt is supposed to adjust column widths automatically when larger widths come into view.
+        // But it doesn't work. So we have to do it force a layout manually when we scroll.
+        Timer {
+            id:             forceLayoutTimer
+            interval:       500
+            repeat:         false
+            onTriggered:    tableView.forceLayout()
+        }
 
-            Row {
-                id:     factRow
-                spacing: Math.ceil(ScreenTools.defaultFontPixelWidth * 0.5)
-                anchors.verticalCenter: parent.verticalCenter
+        onTopRowChanged: forceLayoutTimer.start()
+        onModelChanged: {
+            positionViewAtRow(0, TableView.AlignLeft | TableView.AlignTop)
+            forceLayoutTimer.start()
+        }
 
-                property Fact modelFact: object
+        delegate: Item {
+            implicitWidth:  label.contentWidth
+            implicitHeight: label.contentHeight
+            clip:           true
 
-                QGCLabel {
-                    id:     nameLabel
-                    width:  ScreenTools.defaultFontPixelWidth  * 20
-                    text:   factRow.modelFact.name
-                    clip:   true
-                }
-
-                QGCLabel {
-                    id:     valueLabel
-                    width:  ScreenTools.defaultFontPixelWidth  * 20
-                    color:  factRow.modelFact.defaultValueAvailable ? (factRow.modelFact.valueEqualsDefault ? qgcPal.text : qgcPal.warningText) : qgcPal.text
-                    text:   {
-                        if(factRow.modelFact.enumStrings.length === 0) {
-                            return factRow.modelFact.valueString + " " + factRow.modelFact.units
-                        }
-
-                        if(factRow.modelFact.bitmaskStrings.length != 0) {
-                            return factRow.modelFact.selectedBitmaskStrings.join(',')
-                        }
-
-                        return factRow.modelFact.enumStringValue
-                    }
-                    clip:   true
-                }
-
-                QGCLabel {
-                    text:   factRow.modelFact.shortDescription
-                }
+            QGCLabel {
+                id:                 label
+                width:              column == 1 ? ScreenTools.defaultFontPixelWidth * 15 : contentWidth
+                text:               column == 1 ? col1String() : display
+                color:              column == 1 ? col1Color() : qgcPal.text
+                maximumLineCount:   1
+                elide:              column == 1 ? Text.ElideRight : Text.ElideNone
 
                 Component.onCompleted: {
-                    if(_rowWidth < factRow.width + ScreenTools.defaultFontPixelWidth) {
-                        _rowWidth = factRow.width + ScreenTools.defaultFontPixelWidth
+                    return
+                    if (tableView.columnWidth(column) < width) {
+                        console.log("setColumnWidth", column, width)
+                        tableView.setColumnWidth(column, width)
+                    }
+                }
+
+                function col1String() {
+                    if (fact.enumStrings.length === 0) {
+                        return fact.valueString + " " + fact.units
+                    }
+                    if (fact.bitmaskStrings.length != 0) {
+                        return fact.selectedBitmaskStrings.join(',')
+                    }
+                    return fact.enumStringValue
+                }
+
+                function col1Color() {
+                    if (fact.defaultValueAvailable) {
+                        return fact.valueEqualsDefault ? qgcPal.text : qgcPal.warningText
+                    } else {
+                        return qgcPal.text
                     }
                 }
             }
 
-            Rectangle {
-                width:  _rowWidth
-                height: 1
-                color:  qgcPal.text
-                opacity: 0.15
-                anchors.bottom: parent.bottom
-                anchors.left:   parent.left
-            }
-
-            MouseArea {
-                anchors.fill:       parent
-                acceptedButtons:    Qt.LeftButton
-                onClicked: {
-                    _editorDialogFact = factRow.modelFact
+            QGCMouseArea {
+                anchors.fill: parent
+                onClicked: mouse => {
+                    _editorDialogFact = fact
                     editorDialogComponent.createObject(mainWindow).open()
                 }
             }
-        }
-    }
-
-    QGCFileDialog {
-        id:             fileDialog
-        folder:         _appSettings.parameterSavePath
-        nameFilters:    [ qsTr("Parameter Files (*.%1)").arg(_appSettings.parameterFileExtension) , qsTr("All Files (*)") ]
-
-        onAcceptedForSave: (file) => {
-            controller.saveToFile(file)
-            close()
-        }
-
-        onAcceptedForLoad: (file) => {
-            close()
-            if (controller.buildDiffFromFile(file)) {
-                parameterDiffDialog.createObject(mainWindow).open()
-            }
-        }
-    }
-
-    Component {
-        id: editorDialogComponent
-
-        ParameterEditorDialog {
-            fact:           _editorDialogFact
-            showRCToParam:  _showRCToParam
-        }
-    }
-
-    Component {
-        id: parameterDiffDialog
-
-        ParameterDiffDialog {
-            paramController: _controller
         }
     }
 }

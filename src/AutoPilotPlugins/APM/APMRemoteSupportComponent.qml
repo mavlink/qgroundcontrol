@@ -14,9 +14,9 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
-import QGroundControl.Palette
+
 import QGroundControl.FactControls
-import QGroundControl.FactSystem
+
 
 SetupPage {
     pageComponent:  pageComponent
@@ -42,12 +42,12 @@ SetupPage {
                 rowSpacing:             ScreenTools.defaultFontPixelWidth
 
                 QGCLabel {
-                    visible:            QGroundControl.settingsManager.appSettings.forwardMavlinkAPMSupportHostName.visible
+                    visible:            QGroundControl.settingsManager.mavlinkSettings.forwardMavlinkAPMSupportHostName.visible
                     text:               qsTr("Host name:")
                 }
                 FactTextField {
                     id:                     mavlinkForwardingHostNameField
-                    fact:                   QGroundControl.settingsManager.appSettings.forwardMavlinkAPMSupportHostName
+                    fact:                   QGroundControl.settingsManager.mavlinkSettings.forwardMavlinkAPMSupportHostName
                     Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 40
                 }
                 QGCButton {

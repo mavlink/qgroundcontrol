@@ -16,9 +16,9 @@ import QGroundControl.FlightDisplay
 import QGroundControl.FlightMap
 import QGroundControl.ScreenTools
 import QGroundControl.Controls
-import QGroundControl.Palette
-import QGroundControl.Vehicle
-import QGroundControl.Controllers
+
+
+
 
 Item {
     id:     root
@@ -26,8 +26,10 @@ Item {
 
     property bool useSmallFont: true
 
-    property double _ar:                QGroundControl.videoManager.aspectRatio
-    property bool   _showGrid:          QGroundControl.settingsManager.videoSettings.gridLines.rawValue > 0
+    property double _ar:                QGroundControl.videoManager.gstreamerEnabled
+                                            ? QGroundControl.videoManager.videoSize.width / QGroundControl.videoManager.videoSize.height
+                                            : QGroundControl.videoManager.aspectRatio
+    property bool   _showGrid:          QGroundControl.settingsManager.videoSettings.gridLines.rawValue
     property var    _dynamicCameras:    globals.activeVehicle ? globals.activeVehicle.cameraManager : null
     property bool   _connected:         globals.activeVehicle ? !globals.activeVehicle.communicationLost : false
     property int    _curCameraIndex:    _dynamicCameras ? _dynamicCameras.currentCamera : 0
@@ -35,6 +37,11 @@ Item {
     property var    _camera:            _isCamera ? _dynamicCameras.cameras.get(_curCameraIndex) : null
     property bool   _hasZoom:           _camera && _camera.hasZoom
     property int    _fitMode:           QGroundControl.settingsManager.videoSettings.videoFit.rawValue
+
+    property bool   _isMode_FIT_WIDTH:  _fitMode === 0
+    property bool   _isMode_FIT_HEIGHT: _fitMode === 1
+    property bool   _isMode_FILL:       _fitMode === 2
+    property bool   _isMode_NO_CROP:    _fitMode === 3
 
     function getWidth() {
         return videoBackground.getWidth()
@@ -64,7 +71,7 @@ Item {
             QGCLabel {
                 id:                 noVideoLabel
                 text:               QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue ? qsTr("WAITING FOR VIDEO") : qsTr("VIDEO DISABLED")
-                font.family:        ScreenTools.demiboldFontFamily
+                font.bold:          true
                 color:              "white"
                 font.pointSize:     useSmallFont ? ScreenTools.smallFontPointSize : ScreenTools.largeFontPointSize
                 anchors.centerIn:   parent
@@ -77,20 +84,34 @@ Item {
         color:          "black"
         visible:        QGroundControl.videoManager.decoding
         function getWidth() {
-            //-- Fit Width or Stretch
-            if(_fitMode === 0 || _fitMode === 2) {
-                return parent.width
+            if(_ar != 0.0){
+                if(_isMode_FIT_HEIGHT 
+                        || (_isMode_FILL && (root.width/root.height < _ar))
+                        || (_isMode_NO_CROP && (root.width/root.height > _ar))){
+                    // This return value has different implications depending on the mode
+                    // For FIT_HEIGHT and FILL
+                    //    makes so the video width will be larger than (or equal to) the screen width
+                    // For NO_CROP Mode
+                    //    makes so the video width will be smaller than (or equal to) the screen width
+                    return root.height * _ar
+                }
             }
-            //-- Fit Height
-            return _ar != 0.0 ? parent.height * _ar : parent.width
+            return root.width
         }
         function getHeight() {
-            //-- Fit Height or Stretch
-            if(_fitMode === 1 || _fitMode === 2) {
-                return parent.height
+            if(_ar != 0.0){
+                if(_isMode_FIT_WIDTH 
+                        || (_isMode_FILL && (root.width/root.height > _ar)) 
+                        || (_isMode_NO_CROP && (root.width/root.height < _ar))){
+                    // This return value has different implications depending on the mode
+                    // For FIT_WIDTH and FILL
+                    //    makes so the video height will be larger than (or equal to) the screen height
+                    // For NO_CROP Mode
+                    //    makes so the video height will be smaller than (or equal to) the screen height
+                    return root.width * (1 / _ar)
+                }
             }
-            //-- Fit Width
-            return _ar != 0.0 ? parent.width * (1 / _ar) : parent.height
+            return root.height
         }
         Component {
             id: videoBackgroundComponent
@@ -100,14 +121,15 @@ Item {
 
                 Connections {
                     target: QGroundControl.videoManager
-                    function onImageFileChanged() {
+                    function onImageFileChanged(filename) {
                         videoContent.grabToImage(function(result) {
-                            if (!result.saveToFile(QGroundControl.videoManager.imageFile)) {
+                            if (!result.saveToFile(filename)) {
                                 console.error('Error capturing video frame');
                             }
                         });
                     }
                 }
+
                 Rectangle {
                     color:  Qt.rgba(1,1,1,0.5)
                     height: parent.height
@@ -141,8 +163,7 @@ Item {
         Loader {
             // GStreamer is causing crashes on Lenovo laptop OpenGL Intel drivers. In order to workaround this
             // we don't load a QGCVideoBackground object when video is disabled. This prevents any video rendering
-            // code from running. Setting QGCVideoBackground.receiver = null does not work to prevent any
-            // video OpenGL from being generated. Hence the Loader to completely remove it.
+            // code from running. Hence the Loader to completely remove it.
             height:             parent.getHeight()
             width:              parent.getWidth()
             anchors.centerIn:   parent
@@ -178,7 +199,7 @@ Item {
             }
             Connections {
                 target:                 _camera
-                onThermalModeChanged:   thermalItem.pipOrNot()
+                function onThermalModeChanged() { thermalItem.pipOrNot() }
             }
             onVisibleChanged: {
                 thermalItem.pipOrNot()
@@ -187,7 +208,6 @@ Item {
                 id:             thermalVideo
                 objectName:     "thermalVideo"
                 anchors.fill:   parent
-                receiver:       QGroundControl.videoManager.thermalVideoReceiver
                 opacity:        _camera ? (_camera.thermalMode === MavlinkCameraControl.THERMAL_BLEND ? _camera.thermalOpacity / 100 : 1.0) : 0
             }
         }

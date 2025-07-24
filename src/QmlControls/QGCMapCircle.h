@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -11,6 +11,7 @@
 
 #include <QtCore/QObject>
 #include <QtPositioning/QGeoCoordinate>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "Fact.h"
 
@@ -18,6 +19,7 @@
 class QGCMapCircle : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
 
 public:
     QGCMapCircle(QObject* parent = nullptr);
@@ -59,7 +61,7 @@ public:
     void setShowRotation        (bool showRotation);
     void setClockwiseRotation   (bool clockwiseRotation);
 
-    static const char* jsonCircleKey;
+    static constexpr const char* jsonCircleKey =   "circle";
 
 signals:
     void dirtyChanged               (bool dirty);
@@ -83,7 +85,7 @@ private:
 
     QMap<QString, FactMetaData*> _nameToMetaDataMap;
 
-    static const char* _jsonCenterKey;
-    static const char* _jsonRadiusKey;
-    static const char* _radiusFactName;
+    static constexpr const char* _jsonCenterKey =  "center";
+    static constexpr const char* _jsonRadiusKey =  "radius";
+    static constexpr const char* _radiusFactName = "Radius";
 };

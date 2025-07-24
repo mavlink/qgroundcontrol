@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2021 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -40,7 +40,7 @@ public:
     Q_PROPERTY(Mixer::Mixers* mixer                                             READ mixer                     CONSTANT)
     Q_PROPERTY(ActuatorOutputs::ActuatorOutput* selectedActuatorOutput          READ selectedActuatorOutput    NOTIFY selectedActuatorOutputChanged)
 
-    Q_INVOKABLE void imageClicked(float x, float y);
+    Q_INVOKABLE void imageClicked(QSizeF displaySize, float x, float y);
 
     Q_INVOKABLE void selectActuatorOutput(int index);
 

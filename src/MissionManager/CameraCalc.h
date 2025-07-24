@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -8,6 +8,8 @@
  ****************************************************************************/
 
 #pragma once
+
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "CameraSpec.h"
 #include "SettingsFact.h"
@@ -18,7 +20,8 @@ class PlanMasterController;
 class CameraCalc : public CameraSpec
 {
     Q_OBJECT
-
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
     CameraCalc(PlanMasterController* masterController, const QString& settingsGroup, QObject* parent = nullptr);
 
@@ -86,15 +89,15 @@ public:
 
     void _setCameraNameFromV3TransectLoad   (const QString& cameraName);
 
-    static const char* cameraNameName;
-    static const char* valueSetIsDistanceName;
-    static const char* distanceToSurfaceName;
-    static const char* distanceModeName;
-    static const char* imageDensityName;
-    static const char* frontalOverlapName;
-    static const char* sideOverlapName;
-    static const char* adjustedFootprintSideName;
-    static const char* adjustedFootprintFrontalName;
+    static constexpr const char* cameraNameName                  = "CameraName";
+    static constexpr const char* valueSetIsDistanceName          = "ValueSetIsDistance";
+    static constexpr const char* distanceToSurfaceName           = "DistanceToSurface";
+    static constexpr const char* distanceModeName                = "DistanceMode";
+    static constexpr const char* imageDensityName                = "ImageDensity";
+    static constexpr const char* frontalOverlapName              = "FrontalOverlap";
+    static constexpr const char* sideOverlapName                 = "SideOverlap";
+    static constexpr const char* adjustedFootprintFrontalName    = "AdjustedFootprintFrontal";
+    static constexpr const char* adjustedFootprintSideName       = "AdjustedFootprintSide";
 
 signals:
     void imageFootprintSideChanged          (double imageFootprintSide);
@@ -144,8 +147,8 @@ private:
         CameraSpecCustom,
         CameraSpecKnown
     };
-    static const char* _jsonCameraSpecTypeKeyDeprecated;
 
+    static constexpr const char* _jsonCameraSpecTypeKeyDeprecated            = "CameraSpecType";
     // The following are deprecated and only included in order to convert V1 formats
-    static const char* _jsonDistanceToSurfaceRelativeKeyDeprecated;
+    static constexpr const char* _jsonDistanceToSurfaceRelativeKeyDeprecated = "DistanceToSurfaceRelative";
 };
