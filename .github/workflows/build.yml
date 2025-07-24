@@ -29,7 +29,7 @@ jobs:
           cmake --build . --config Release
 
       - name: Upload Linux executable
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: QGroundControl-linux
           path: build/qgroundcontrol
@@ -67,7 +67,7 @@ jobs:
           cmake --build . --config Release
 
       - name: Upload macOS dmg
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: QGroundControl-macos
           path: build/Release/QGroundControl.app
@@ -108,7 +108,7 @@ jobs:
           cmake --build . --config Release
 
       - name: Upload Windows exe
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: QGroundControl-windows
           path: build/Release/QGroundControl.exe
@@ -148,7 +148,7 @@ jobs:
           cmake --build . --config Release
 
       - name: Upload Android APK
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: android-apk
           path: build/android-build/*.apk
