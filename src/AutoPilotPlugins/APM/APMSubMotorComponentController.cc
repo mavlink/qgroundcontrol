@@ -7,13 +7,11 @@
  *
  ****************************************************************************/
 
-
 #include "APMSubMotorComponentController.h"
 #include "Vehicle.h"
 
-
 APMSubMotorComponentController::APMSubMotorComponentController(void)
-{   
+{
     connect(_vehicle, &Vehicle::textMessageReceived, this, &APMSubMotorComponentController::handleNewMessages);
 }
 
@@ -22,8 +20,8 @@ void APMSubMotorComponentController::handleNewMessages(int uasid, int componenti
     Q_UNUSED(uasid);
     Q_UNUSED(componentid);
     Q_UNUSED(severity);
-    if (_vehicle->flightMode() == "Motor Detection"
-        && (text.toLower().contains("thruster") || text.toLower().contains("motor"))) {
+    if (_vehicle->flightMode() == "Motor Detection" && text.toLower().contains("motor"))
+    {
         _motorDetectionMessages += text + QStringLiteral("\n");
         emit motorDetectionMessagesChanged();
     }

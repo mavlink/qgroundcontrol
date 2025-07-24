@@ -7,15 +7,12 @@
  *
  ****************************************************************************/
 
-
 #include "PX4TuningComponent.h"
 #include "QGCMAVLink.h"
 #include "Vehicle.h"
-#include <iostream>
 
-PX4TuningComponent::PX4TuningComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
-    : VehicleComponent(vehicle, autopilot, parent)
-    , _name(tr("PID Tuning"))
+PX4TuningComponent::PX4TuningComponent(Vehicle *vehicle, AutoPilotPlugin *autopilot, QObject *parent)
+    : VehicleComponent(vehicle, autopilot, parent), _name(tr("PID Tuning"))
 {
 }
 
@@ -52,34 +49,34 @@ QStringList PX4TuningComponent::setupCompleteChangedTriggerList(void) const
 QUrl PX4TuningComponent::setupSource(void) const
 {
     QString qmlFile;
-    std::cout << "Vehicle Type: " << _vehicle->vehicleType() << std::endl;
 
-    switch (_vehicle->vehicleType()) {
-        case MAV_TYPE_FIXED_WING:
-            qmlFile = "qrc:/qml/PX4TuningComponentPlane.qml";
-            break;
-        case MAV_TYPE_QUADROTOR:
-        case MAV_TYPE_COAXIAL:
-        case MAV_TYPE_HELICOPTER:
-        case MAV_TYPE_HEXAROTOR:
-        case MAV_TYPE_OCTOROTOR:
-        case MAV_TYPE_TRICOPTER:
-            qmlFile = "qrc:/qml/PX4TuningComponentCopter.qml";
-            break;
-        case MAV_TYPE_VTOL_TAILSITTER_DUOROTOR:
-        case MAV_TYPE_VTOL_TAILSITTER_QUADROTOR:
-        case MAV_TYPE_VTOL_TILTROTOR:
-        case MAV_TYPE_VTOL_FIXEDROTOR:
-        case MAV_TYPE_VTOL_TAILSITTER:
-        case MAV_TYPE_VTOL_TILTWING:
-        case MAV_TYPE_VTOL_RESERVED5:
-            qmlFile = "qrc:/qml/PX4TuningComponentVTOL.qml";
-            break;
-        case 99:
-            // Spacecraft Type
-            qmlFile = "qrc:/qml/PX4TuningComponentSpacecraft.qml";
-        default:
-            break;
+    switch (_vehicle->vehicleType())
+    {
+    case MAV_TYPE_FIXED_WING:
+        qmlFile = "qrc:/qml/PX4TuningComponentPlane.qml";
+        break;
+    case MAV_TYPE_QUADROTOR:
+    case MAV_TYPE_COAXIAL:
+    case MAV_TYPE_HELICOPTER:
+    case MAV_TYPE_HEXAROTOR:
+    case MAV_TYPE_OCTOROTOR:
+    case MAV_TYPE_TRICOPTER:
+        qmlFile = "qrc:/qml/PX4TuningComponentCopter.qml";
+        break;
+    case MAV_TYPE_VTOL_TAILSITTER_DUOROTOR:
+    case MAV_TYPE_VTOL_TAILSITTER_QUADROTOR:
+    case MAV_TYPE_VTOL_TILTROTOR:
+    case MAV_TYPE_VTOL_FIXEDROTOR:
+    case MAV_TYPE_VTOL_TAILSITTER:
+    case MAV_TYPE_VTOL_TILTWING:
+    case MAV_TYPE_VTOL_RESERVED5:
+        qmlFile = "qrc:/qml/PX4TuningComponentVTOL.qml";
+        break;
+    case MAV_TYPE_SPACECRAFT_ORBITER:
+        // Spacecraft Type
+        qmlFile = "qrc:/qml/PX4TuningComponentSpacecraft.qml";
+    default:
+        break;
     }
 
     return QUrl::fromUserInput(qmlFile);
