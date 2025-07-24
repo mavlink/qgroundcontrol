@@ -1,8 +1,0 @@
-name: Disabled Workflow
-on: []  # 不触发任何事件
-
-jobs:
-  noop:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "Workflow disabled"
