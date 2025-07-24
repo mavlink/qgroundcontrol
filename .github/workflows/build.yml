@@ -1,84 +1,106 @@
-name: QGC Multi-Platform Build
+name: QGC Multi‑Platform Build
 
 on:
+  push:
+    branches: [ master ]
   pull_request:
-    branches:
-      - master
+    branches: [ master ]
 
 jobs:
+
+  # ─────────── Linux Build ───────────
   build-linux:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          submodules: recursive
-
-      - name: Install Qt and dependencies
+      - uses: actions/checkout@v4
+        with: { submodules: 'recursive', fetch-tags: true }
+      - name: Install deps
         run: |
           sudo apt-get update
           sudo apt-get install -y qt6-base-dev qt6-tools-dev cmake ninja-build build-essential
-
-      - name: Build QGroundControl (Linux)
+      - name: Build (Release)
         run: |
           mkdir build && cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release
+          cmake .. -DCMAKE_BUILD_TYPE=Release -G Ninja
           cmake --build . --config Release
+      - name: Upload Linux executable
+        uses: actions/upload-artifact@v3
+        with: { name: QGroundControl-linux, path: build/qgroundcontrol }
 
+  # ─────────── macOS Build ───────────
+  build-macos:
+    runs-on: macos-12
+    strategy:
+      matrix:
+        BuildType: [Release]
+    steps:
+      - uses: actions/checkout@v4
+        with: { submodules: 'recursive', fetch-tags: true }
+      - name: Install deps
+        run: |
+          brew update
+          brew install cmake ninja SDL2 ccache gstreamer
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with: { version: '6.6.3', host: macos, target: desktop, dir: ${{ runner.temp }} }
+      - name: Build (Release)
+        run: |
+          mkdir build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -G Ninja
+          cmake --build . --config Release
+      - name: Upload macOS dmg
+        uses: actions/upload-artifact@v3
+        with: { name: QGroundControl-macos, path: build/Release/QGroundControl.app }
+
+  # ─────────── Windows Build ───────────
   build-windows:
     runs-on: windows-latest
+    strategy:
+      matrix:
+        BuildType: [Release]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          submodules: recursive
-
-      - name: Setup Qt and MSVC (example)
-        uses: jurplel/install-qt-action@v2
-        with:
-          version: '6.8.3'
-          host: win64
-          target: desktop
-
-      - name: Build QGroundControl (Windows)
+      - uses: actions/checkout@v4
+        with: { submodules: 'recursive', fetch-tags: true }
+      - name: Install Qt + Vulkan + GStreamer
+        run: |
+          powershell -Command "irm https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe -OutFile vulkan-sdk.exe; Start-Process .\\vulkan-sdk.exe -ArgumentList '/S' -Wait"
+      - uses: blinemedical/setup-gstreamer@v1
+        with: { version: '1.22.12' }
+      - uses: jurplel/install-qt-action@v4
+        with: { version: '6.8.1', host: windows, target: desktop, arch: win64_msvc2022_64, dir: ${{ runner.temp }} }
+      - name: Build (Release)
         run: |
           mkdir build
           cd build
-          cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release
+          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
           cmake --build . --config Release
+      - name: Upload Windows exe
+        uses: actions/upload-artifact@v3
+        with: { name: QGroundControl-windows, path: build/Release/QGroundControl.exe }
 
+  # ─────────── Android Build ───────────
   build-android:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     env:
+      QT_VERSION: 6.6.3
       ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
+      ARTIFACT: QGroundControl.apk
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          submodules: recursive
-
-      - name: Setup JDK 11
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: 11
-
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v2
-        with:
-          api-level: 33
-          ndk-version: 25.2.9519653
-
-      - name: Install Qt for Android
-        uses: jurplel/install-qt-action@v2
-        with:
-          version: '6.8.3'
-          host: macos
-          target: android
-
-      - name: Build QGroundControl (Android)
+      - uses: actions/checkout@v4
+        with: { submodules: 'recursive', fetch-tags: true }
+      - uses: nttld/setup-ndk@v1
+        with: { ndk-version: r21e }
+      - uses: actions/setup-java@v3
+        with: { distribution: temurin, java-version: 11 }
+      - uses: jurplel/install-qt-action@v3
+        with: { version: ${{ env.QT_VERSION }}, host: linux, target: android }
+      - name: Build Android Release
         run: |
-          mkdir build
-          cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release -DANDROID=true
+          mkdir build && cd build
+          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DANDROID=true
           cmake --build . --config Release
+      - name: Upload Android APK
+        uses: actions/upload-artifact@v3
+        with: { name: android-apk, path: build/android-build/*.apk }
+
