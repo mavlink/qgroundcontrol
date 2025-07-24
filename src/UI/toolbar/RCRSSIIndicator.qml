@@ -15,15 +15,16 @@ import QGroundControl.Controls
 
 import QGroundControl.ScreenTools
 
-
 //-------------------------------------------------------------------------
 //-- RC RSSI Indicator
 Item {
     id:             control
-    width:          rssiRow.width * 1.1
     anchors.top:    parent.top
-    anchors.bottom: parent.bottom
+    height: rssiRow.height
+    anchors.verticalCenter: parent.verticalCenter
 
+
+    property real indicatorHeight: ScreenTools.defaultFontPixelHeight * 3.5//my add
     property bool showIndicator: _activeVehicle.supportsRadio && _rcRSSIAvailable
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
@@ -48,26 +49,29 @@ Item {
 
     Row {
         id:             rssiRow
-        anchors.top:    parent.top
-        anchors.bottom: parent.bottom
-        spacing:        ScreenTools.defaultFontPixelWidth
+        height: indicatorHeight
+        anchors.verticalCenter: parent.verticalCenter
+        //spacing:        ScreenTools.defaultFontPixelWidth
+        spacing: indicatorHeight * 0.2
 
         QGCColoredImage {
-            width:              height
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
-            sourceSize.height:  height
-            source:             "/qmlimages/RC.svg"
-            fillMode:           Image.PreserveAspectFit
-            opacity:            _rcRSSIAvailable ? 1 : 0.5
-            color:              qgcPal.buttonText
+            width:  indicatorHeight * 0.6
+            height: indicatorHeight * 0.6
+            anchors.verticalCenter: parent.verticalCenter
+            sourceSize.width:  indicatorHeight * 0.8
+            sourceSize.height: indicatorHeight * 0.8
+            source: "/qmlimages/RC.svg"
+            fillMode: Image.PreserveAspectFit
+            opacity: _rcRSSIAvailable ? 1 : 0.5
+            color: qgcPal.buttonText
         }
 
         SignalStrength {
             anchors.verticalCenter: parent.verticalCenter
-            size:                   parent.height * 0.5
+            size:                   indicatorHeight//parent.height * 0.5
             percent:                _rcRSSIAvailable ? _activeVehicle.rcRSSI : 0
         }
+
     }
 
     MouseArea {

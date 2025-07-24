@@ -12,15 +12,19 @@ import QtQuick
 import QGroundControl
 import QGroundControl.ScreenTools
 import QGroundControl.Toolbar
-
 //-------------------------------------------------------------------------
+import QtQuick.Layouts 1.15
+
+
 //-- Toolbar Indicators
-Row {
+RowLayout {//my change, original is Row
     id:                 indicatorRow
-    anchors.top:        parent.top
-    anchors.bottom:     parent.bottom
+    property real indicatorHeight: ScreenTools.defaultFontPixelHeight * 3.5
+    anchors.verticalCenter: parent.verticalCenter
+    height: indicatorHeight//implicitHeight
+
     anchors.margins:    _toolIndicatorMargins
-    spacing:            ScreenTools.defaultFontPixelWidth * 1.75
+    spacing:            ScreenTools.defaultFontPixelWidth * 2//1.75
 
     property var  _activeVehicle:           QGroundControl.multiVehicleManager.activeVehicle
     property real _toolIndicatorMargins:    ScreenTools.defaultFontPixelHeight * 0.66
@@ -29,8 +33,15 @@ Row {
         id:     appRepeater
         model:  QGroundControl.corePlugin.toolBarIndicators
         Loader {
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
+            Layout.alignment: Qt.AlignVCenter
+            Layout.fillHeight: true
+            Layout.preferredHeight: indicatorHeight
+
+            onLoaded: {
+                if (item && item.hasOwnProperty("indicatorHeight")) {
+                    item.indicatorHeight = indicatorHeight
+                }
+            }
             source:             modelData
             visible:            item.showIndicator
         }
@@ -41,8 +52,15 @@ Row {
         model:  _activeVehicle ? _activeVehicle.toolIndicators : []
 
         Loader {
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
+            Layout.alignment: Qt.AlignVCenter
+            Layout.fillHeight: true
+            Layout.preferredHeight: indicatorHeight
+            onLoaded: {
+                if (item && item.hasOwnProperty("indicatorHeight")) {
+                    item.indicatorHeight = indicatorHeight
+                }
+            }
+
             source:             modelData
             visible:            item.showIndicator
         }
@@ -51,10 +69,18 @@ Row {
     Repeater {
         model: _activeVehicle ? _activeVehicle.modeIndicators : []
         Loader {
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
+            Layout.alignment: Qt.AlignVCenter
+            Layout.fillHeight: true
+            Layout.preferredHeight: indicatorHeight
+            onLoaded: {
+                if (item && item.hasOwnProperty("indicatorHeight")) {
+                    item.indicatorHeight = indicatorHeight
+                }
+            }
             source:             modelData
             visible:            item.showIndicator
         }
     }
+
+    Item { Layout.fillWidth: true }
 }

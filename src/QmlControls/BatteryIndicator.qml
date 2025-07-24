@@ -24,7 +24,10 @@ Item {
     id:             control
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
-    width:          batteryIndicatorRow.width
+    width:          15//batteryIndicatorRow.width
+    scale:          0.8                             // 缩小整体
+    //leftMargin: 10//the position more
+    //transformOrigin: Item.Center                    // 缩放时以中点为中心
 
     property bool       showIndicator:      true
     property bool       waitForParameters:  false   // UI won't show until parameters are ready
@@ -39,7 +42,7 @@ Item {
 
     // Properties to hold the thresholds
     property int threshold1: _batterySettings.threshold1.rawValue
-    property int threshold2: _batterySettings.threshold2.rawValue   
+    property int threshold2: _batterySettings.threshold2.rawValue
 
     Row {
         id:             batteryIndicatorRow
@@ -88,11 +91,11 @@ Item {
                     case MAVLink.MAV_BATTERY_CHARGE_STATE_OK:
                         if (!isNaN(battery.percentRemaining.rawValue)) {
                             if (battery.percentRemaining.rawValue > threshold1) {
-                                return qgcPal.colorGreen 
+                                return qgcPal.colorGreen
                             } else if (battery.percentRemaining.rawValue > threshold2) {
-                                return qgcPal.colorYellowGreen 
+                                return qgcPal.colorYellowGreen
                             } else {
-                                return qgcPal.colorYellow 
+                                return qgcPal.colorYellow
                             }
                         } else {
                             return qgcPal.text
@@ -107,7 +110,7 @@ Item {
                     default:
                         return qgcPal.text
                 }
-            }    
+            }
 
             function getBatterySvgSource() {
                 switch (battery.chargeState.rawValue) {
@@ -118,8 +121,8 @@ Item {
                             } else if (battery.percentRemaining.rawValue > threshold2) {
                                 return "/qmlimages/BatteryYellowGreen.svg"
                             } else {
-                                return "/qmlimages/BatteryYellow.svg"    
-                            } 
+                                return "/qmlimages/BatteryYellow.svg"
+                            }
                         }
                     case MAVLink.MAV_BATTERY_CHARGE_STATE_LOW:
                         return "/qmlimages/BatteryOrange.svg" // Low with orange svg
@@ -157,15 +160,36 @@ Item {
                 }
                 return qsTr("n/a")
             }
-
+/*
             QGCColoredImage {
                 anchors.top:        parent.top
                 anchors.bottom:     parent.bottom
-                width:              height
+                width:              height*0.8//original: height
                 sourceSize.width:   width
                 source:             getBatterySvgSource()
                 fillMode:           Image.PreserveAspectFit
                 color:              getBatteryColor()
+                scale:              0.4//my add, just make the image smaller
+                //anchors.left: parent.left
+                //anchors.leftMargin: 40//my add, position more right
+            }
+            */
+            Item {
+                width: 30    // 这个是整个占位区，略大于图标原始宽度
+                height: parent.height
+
+                QGCColoredImage {
+                    id: batteryIcon
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left: parent.left
+                    anchors.leftMargin: 70// 让图标向右移动
+                    width: parent.height * 0.6
+                    height: width
+                    fillMode: Image.PreserveAspectFit
+                    source: getBatterySvgSource()
+                    color: getBatteryColor()
+                    scale: 0.65
+                }
             }
 
            ColumnLayout {
@@ -173,6 +197,7 @@ Item {
                 anchors.top:            parent.top
                 anchors.bottom:         parent.bottom
                 spacing:                0
+                anchors.leftMargin: 90//my add
 
                 QGCLabel {
                     Layout.alignment:       Qt.AlignHCenter
@@ -357,7 +382,7 @@ Item {
                                 enabled: fact.visible
                                 onEditingFinished: {
                                     // Validate and set the new threshold value
-                                    _batterySettings.setThreshold2(parseInt(text));                                
+                                    _batterySettings.setThreshold2(parseInt(text));
                                 }
                             }
                         }
@@ -408,7 +433,7 @@ Item {
                         mainWindow.showKnownVehicleComponentConfigPage(AutoPilotPlugin.KnownPowerVehicleComponent)
                         mainWindow.closeIndicatorDrawer()
                     }
-                }                
+                }
             }
         }
     }

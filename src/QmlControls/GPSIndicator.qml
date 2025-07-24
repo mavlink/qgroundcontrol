@@ -15,7 +15,6 @@ import QGroundControl.Controls
 
 import QGroundControl.ScreenTools
 
-
 // Used as the base class control for nboth VehicleGPSIndicator and RTKGPSIndicator
 
 Item {
@@ -42,21 +41,23 @@ Item {
                 id:                     gpsLabel
                 rotation:               90
                 text:                   qsTr("RTK")
+                font.pixelSize:         ScreenTools.defaultFontPixelHeight * 0.6//my add
                 color:                  qgcPal.buttonText
                 anchors.verticalCenter: parent.verticalCenter
                 visible:                _rtkConnected
             }
 
             QGCColoredImage {
-                id:                 gpsIcon
-                width:              height
-                anchors.top:        parent.top
-                anchors.bottom:     parent.bottom
-                source:             "/qmlimages/Gps.svg"
-                fillMode:           Image.PreserveAspectFit
-                sourceSize.height:  height
-                opacity:            (_activeVehicle && _activeVehicle.gps.count.value >= 0) ? 1 : 0.5
-                color:              qgcPal.buttonText
+                id: gpsIcon
+                width: 20
+                height: 20
+                anchors.verticalCenter: parent.verticalCenter
+                source: "/qmlimages/Gps.svg"
+                fillMode: Image.PreserveAspectFit
+                sourceSize.width: 16
+                sourceSize.height: 16
+                opacity: (_activeVehicle && _activeVehicle.gps.count.value >= 0) ? 1 : 0.5
+                color: qgcPal.buttonText
             }
         }
 
@@ -70,12 +71,14 @@ Item {
                 anchors.horizontalCenter:   hdopValue.horizontalCenter
                 color:              qgcPal.buttonText
                 text:               _activeVehicle ? _activeVehicle.gps.count.valueString : ""
+                font.pixelSize:             ScreenTools.defaultFontPixelHeight * 0.6//my add
             }
 
             QGCLabel {
                 id:     hdopValue
                 color:  qgcPal.buttonText
                 text:   _activeVehicle ? _activeVehicle.gps.hdop.value.toFixed(1) : ""
+                font.pixelSize:             ScreenTools.defaultFontPixelHeight * 0.6//my add
             }
         }
     }

@@ -19,13 +19,12 @@ import QtQuick
 import QGroundControl
 import QGroundControl.Controls
 
-
 Item {
     id:     signalRoot
     width:  size
     height: size
 
-    property real size:     50
+    property real size:     20
     property real percent:  0
 
     QGCPalette { id: qgcPal }
@@ -45,10 +44,13 @@ Item {
     }
 
     QGCColoredImage {
-        source:             getIcon()
-        fillMode:           Image.PreserveAspectFit
-        anchors.fill:       parent
-        color:              qgcPal.buttonText
-        sourceSize.height:  size
+        source: getIcon()
+        width: size
+        height: size
+        anchors.centerIn: parent
+        fillMode: Image.PreserveAspectFit
+        color: qgcPal.buttonText
+        sourceSize.width: size
+        sourceSize.height: size
     }
 }
