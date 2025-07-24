@@ -153,6 +153,11 @@ int main(int argc, char *argv[])
 #endif
 #endif // Q_OS_WIN
 
+    //my add, tell settings to read which file
+    QCoreApplication::setOrganizationName("QGroundControl");
+    QCoreApplication::setApplicationName("QGroundControl Daily");
+    //end my add
+
     QGCApplication app(argc, argv, runUnitTests, simpleBootTest);
 
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)

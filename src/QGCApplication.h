@@ -45,29 +45,29 @@ class QGCApplication : public QApplication
 {
     Q_OBJECT
 
-    /// Unit Test have access to creating and destroying singletons
+            /// Unit Test have access to creating and destroying singletons
     friend class UnitTest;
-public:
+   public:
     QGCApplication(int &argc, char *argv[], bool unitTesting, bool simpleBootTest);
     ~QGCApplication();
 
-    /// Sets the persistent flag to delete all settings the next time QGroundControl is started.
+            /// Sets the persistent flag to delete all settings the next time QGroundControl is started.
     static void deleteAllSettingsNextBoot();
 
-    /// Clears the persistent flag to delete all settings the next time QGroundControl is started.
+            /// Clears the persistent flag to delete all settings the next time QGroundControl is started.
     static void clearDeleteAllSettingsNextBoot();
 
     bool runningUnitTests() const { return _runningUnitTests; }
     bool simpleBootTest() const { return _simpleBootTest; }
 
-    /// Returns true if Qt debug output should be logged to a file
+            /// Returns true if Qt debug output should be logged to a file
     bool logOutput() const { return _logOutput; }
 
-    /// Used to report a missing Parameter. Warning will be displayed to user. Method may be called
-    /// multiple times.
+            /// Used to report a missing Parameter. Warning will be displayed to user. Method may be called
+            /// multiple times.
     void reportMissingParameter(int componentId, const QString &name);
 
-    /// @return true: Fake ui into showing mobile interface
+            /// @return true: Fake ui into showing mobile interface
     bool fakeMobile() const { return _fakeMobile; }
 
     void setLanguage();
@@ -77,59 +77,65 @@ public:
     QString bigSizeToString(quint64 size);
     QString bigSizeMBToString(quint64 size_MB);
 
-    /// Registers the signal such that only the last duplicate signal added is left in the queue.
+            /// Registers the signal such that only the last duplicate signal added is left in the queue.
     void addCompressedSignal(const QMetaMethod &method);
 
     void removeCompressedSignal(const QMetaMethod &method);
+
+    void exportSettingsToDownload(const QUrl& fileUrl);//my add, for writing file to user file system
 
     bool event(QEvent *e) final;
 
     static QString cachedParameterMetaDataFile();
     static QString cachedAirframeMetaDataFile();
 
-public:
+   public:
     /// Perform initialize which is common to both normal application running and unit tests.
     void init();
     void shutdown();
 
-    /// Although public, these methods are internal and should only be called by UnitTest code
+            /// Although public, these methods are internal and should only be called by UnitTest code
     QQmlApplicationEngine *qmlAppEngine() const { return _qmlAppEngine; }
 
-signals:
+    Q_INVOKABLE void importSettingsFromFile(const QString& filePath);//my add function, for importing setting file
+    Q_INVOKABLE void exportSettingsToDownload();//my add, for exporting
+    void triggerMediaScan(const QString &path);//my add, for immediately see the exporting file
+
+   signals:
     void languageChanged(const QLocale locale);
 
-public slots:
+   public slots:
     void showVehicleConfig();
 
     void qmlAttemptWindowClose();
 
-    /// Get current language
+            /// Get current language
     QLocale getCurrentLanguage() const { return _locale; }
 
-    /// Show non-modal vehicle message to the user
+            /// Show non-modal vehicle message to the user
     void showCriticalVehicleMessage(const QString &message);
 
-    /// Show modal application message to the user
+            /// Show modal application message to the user
     void showAppMessage(const QString &message, const QString &title = QString());
 
-    /// Show modal application message to the user about the need for a reboot. Multiple messages will be supressed if they occur
-    /// one after the other.
+            /// Show modal application message to the user about the need for a reboot. Multiple messages will be supressed if they occur
+            /// one after the other.
     void showRebootAppMessage(const QString &message, const QString &title = QString());
 
     QGCImageProvider *qgcImageProvider();
 
-private slots:
+   private slots:
     /// Called when the delay timer fires to show the missing parameters warning
     void _missingParamsDisplay();
     void _qgcCurrentStableVersionDownloadComplete(const QString &remoteFile, const QString &localFile, const QString &errorMsg);
     static bool _parseVersionText(const QString &versionString, int &majorVersion, int &minorVersion, int &buildVersion);
     void _showDelayedAppMessages();
 
-private:
+   private:
     bool compressEvent(QEvent *event, QObject *receiver, QPostEventList *postedEvents) final;
 
     void _initVideo();
-    
+
     /// Initialize the application for normal application boot. Or in other words we are not going to run unit tests.
     void _initForNormalAppBoot();
 
@@ -137,7 +143,7 @@ private:
     void _checkForNewVersion();
 
     bool _runningUnitTests = false;
-    bool _simpleBootTest = false; 
+    bool _simpleBootTest = false;
     static constexpr int _missingParamsDelayedDisplayTimerTimeout = 1000;   ///< Timeout to wait for next missing fact to come in before display
     QTimer _missingParamsDelayedDisplayTimer;                               ///< Timer use to delay missing fact display
     QList<QPair<int,QString>> _missingParams;                               ///< List of missing parameter component id:name
@@ -162,13 +168,13 @@ private:
 
     class CompressedSignalList
     {
-    public:
+       public:
         CompressedSignalList() {}
         void add(const QMetaMethod &method);
         void remove(const QMetaMethod &method);
         bool contains(const QMetaObject *metaObject, int signalIndex);
 
-    private:
+       private:
         /// Returns a signal index that is can be compared to QMetaCallEvent.signalId
         static int _signalIndex(const QMetaMethod &method);
 

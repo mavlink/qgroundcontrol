@@ -63,6 +63,43 @@ AppSettings::LanguageInfo_t AppSettings::_rgLanguageInfo[] = {
 
 DECLARE_SETTINGGROUP(App, "")
 {
+    //my add
+    //_nameToMetaDataMap.insert("appImportantMsgScaleFactor", new FactMetaData(FactMetaData::valueTypeDouble, "appImportantMsgScaleFactor", this));
+    {
+        auto meta = new FactMetaData(FactMetaData::valueTypeDouble, "appImportantMsgScaleFactor", this);
+        meta->setRawDefaultValue(1.0);     // 默认值为100%
+        meta->setRawMin(0.5);              // 最小0.5倍缩放（可根据你需求修改）
+        meta->setRawMax(3.0);              // 最大3倍缩放
+        meta->setDecimalPlaces(2);        // 保留两位小数
+        meta->setShortDescription("Important Message Scale Factor");
+        meta->setLongDescription("Controls the scaling factor of important message display text.");
+        _nameToMetaDataMap.insert("appImportantMsgScaleFactor", meta);
+    }
+
+    //my add for change WIDTH
+    {
+        auto meta = new FactMetaData(FactMetaData::valueTypeDouble, "appImportantMsgScaleFactor_WIDTH", this);
+        meta->setRawDefaultValue(1.0);     // 默认值为100%
+        meta->setRawMin(0.5);              // 最小0.5倍缩放（可根据你需求修改）
+        meta->setRawMax(3.0);              // 最大3倍缩放
+        meta->setDecimalPlaces(2);        // 保留两位小数
+        meta->setShortDescription("Important Message's WIDTH");
+        meta->setLongDescription("Controls the scaling factor of important message box WIDTH");
+        _nameToMetaDataMap.insert("appImportantMsgScaleFactor_WIDTH", meta);
+    }
+
+    //my add for change FONT
+    {
+        auto meta = new FactMetaData(FactMetaData::valueTypeDouble, "appImportantMsgScaleFactor_FONT", this);
+        meta->setRawDefaultValue(1.0);     // 默认值为100%
+        meta->setRawMin(0.5);              // 最小0.5倍缩放（可根据你需求修改）
+        meta->setRawMax(3.0);              // 最大3倍缩放
+        meta->setDecimalPlaces(2);        // 保留两位小数
+        meta->setShortDescription("Important Message's FONT SIZE");
+        meta->setLongDescription("Controls the scaling factor of important message box FONT SIZE");
+        _nameToMetaDataMap.insert("appImportantMsgScaleFactor_FONT", meta);
+    }
+
     QGCPalette::setGlobalTheme(indoorPalette()->rawValue().toBool() ? QGCPalette::Dark : QGCPalette::Light);
 
     QSettings settings;
@@ -167,6 +204,9 @@ DECLARE_SETTINGSFACT(AppSettings, disableAllPersistence)
 DECLARE_SETTINGSFACT(AppSettings, firstRunPromptIdsShown)
 DECLARE_SETTINGSFACT(AppSettings, loginAirLink)
 DECLARE_SETTINGSFACT(AppSettings, passAirLink)
+DECLARE_SETTINGSFACT(AppSettings, appImportantMsgScaleFactor)//my add
+DECLARE_SETTINGSFACT(AppSettings, appImportantMsgScaleFactor_WIDTH)//my add
+DECLARE_SETTINGSFACT(AppSettings, appImportantMsgScaleFactor_FONT)//my add
 
 DECLARE_SETTINGSFACT_NO_FUNC(AppSettings, indoorPalette)
 {

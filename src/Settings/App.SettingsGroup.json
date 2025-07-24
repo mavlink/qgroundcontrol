@@ -255,5 +255,32 @@
     "type": "string",
     "default": ""
 }
+,
+{
+    "name":             "appImportantMsgScaleFactor",
+    "shortDescription": "Important Message Scale Factor",
+    "type":             "double",
+    "defaultValue":     1.0,
+    "min":              0.5,
+    "max":              2.0
+}
+,
+{
+    "name":             "appImportantMsgScaleFactor_WIDTH",
+    "shortDescription": "Important Message Scale Factor for WIDTH",
+    "type":             "double",
+    "defaultValue":     1.0,
+    "min":              0.5,
+    "max":              2.0
+}
+,
+{
+    "name":             "appImportantMsgScaleFactor_FONT",
+    "shortDescription": "Important Message Scale Factor for FONT SIZE",
+    "type":             "double",
+    "defaultValue":     1.0,
+    "min":              0.5,
+    "max":              2.0
+}
 ]
 }

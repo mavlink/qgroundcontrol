@@ -19,8 +19,6 @@ import QGroundControl.FactControls
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
 
-
-
 SettingsPage {
     property var    _settingsManager:           QGroundControl.settingsManager
     property var    _appSettings:               _settingsManager.appSettings
@@ -33,6 +31,50 @@ SettingsPage {
     SettingsGroupLayout {
         Layout.fillWidth:   true
         heading:            qsTr("General")
+
+        //my add button: for importing settings files
+        QGCButton {
+            text: qsTr("Import Settings File (.txt or .ini)")
+            onClicked: importDialog.openForLoad()
+        }
+        QGCFileDialog {
+            id: importDialog
+            title: qsTr("Select Settings File to Import")
+            nameFilters: [ "All files (*)" ] // 不过滤，用户自由选//maybe need to improve ?
+            selectFolder: false
+            onAcceptedForLoad: (file) => {
+                console.log("Selected file:", file)
+                qgcApp.importSettingsFromFile(file)
+            }
+        }
+
+        //my add button: for exporting settings files
+        /*
+        QGCButton {
+            text: qsTr("Export Settings to Default Path")
+            onClicked: {
+                console.log("Button clicked")
+                if (qgcApp && qgcApp.exportSettingsToDownload) {
+                    console.log("Calling exportSettingsToDownload()")
+                    QGroundControl.qgcApp().importSettingsFromFile(file)
+                } else {
+                    console.log("qgcApp or exportSettingsToDownload() not found")
+                }
+            }
+        }*/
+        QGCButton {
+            text: qsTr("Export Settings to Default Path")
+            onClicked: {
+                console.log("Button clicked")
+                if (qgcApp && qgcApp.exportSettingsToDownload) {
+                    console.log("Calling exportSettingsToDownload()")
+                    qgcApp.exportSettingsToDownload()
+                } else {
+                    console.log("qgcApp or exportSettingsToDownload() not found")
+                }
+            }
+        }
+
 
         LabelledFactComboBox {
             label:      qsTr("Language")
@@ -89,9 +131,9 @@ SettingsPage {
             spacing:            ScreenTools.defaultFontPixelWidth * 2
             visible:            _appFontPointSize.visible
 
-            QGCLabel { 
+            QGCLabel {
                 Layout.fillWidth:   true
-                text:               qsTr("UI Scaling") 
+                text:               qsTr("UI Scaling")
             }
 
             RowLayout {
@@ -127,6 +169,144 @@ SettingsPage {
             }
         }
 
+        //my add for controling the size of the important text label's HEIGHT SIZE
+        RowLayout {
+            Layout.fillWidth:   true
+            spacing:            ScreenTools.defaultFontPixelWidth * 2
+            visible:            true
+
+            QGCLabel {
+                Layout.fillWidth:   true
+                text:               qsTr("Important Msg's HEIGHT")
+            }
+
+            RowLayout {
+                spacing: ScreenTools.defaultFontPixelWidth * 2
+
+                QGCButton {
+                    Layout.preferredWidth:  height
+                    height:                 baseImportantEdit.height * 1.5
+                    text:                   "-"
+                    onClicked: {
+                        var s = QGroundControl.settingsManager.appSettings.appImportantMsgScaleFactor
+                        if (s.value > s.min)
+                            s.value = Math.max(s.min, s.value - 0.1)
+                    }
+                }
+
+                QGCLabel {
+                    id: baseImportantEdit
+                    width: ScreenTools.defaultFontPixelWidth * 6
+                    text: (QGroundControl.settingsManager.appSettings.appImportantMsgScaleFactor.value !== undefined
+                            ? (QGroundControl.settingsManager.appSettings.appImportantMsgScaleFactor.value * 100).toFixed(0)
+                            : "100") + "%"
+                }
+
+                QGCButton {
+                    Layout.preferredWidth:  height
+                    height:                 baseImportantEdit.height * 1.5
+                    text:                   "+"
+                    onClicked: {
+                        var s = QGroundControl.settingsManager.appSettings.appImportantMsgScaleFactor
+                        if (s.value < s.max)
+                            s.value = Math.min(s.max, s.value + 0.1)
+                    }
+                }
+            }
+        }
+
+        //my add for controling the size of the important text label's WIDTH SIZE
+        RowLayout {
+            Layout.fillWidth:   true
+            spacing:            ScreenTools.defaultFontPixelWidth * 2
+            visible:            true
+
+            QGCLabel {
+                Layout.fillWidth:   true
+                text:               qsTr("Important Msg's WIDTH")
+            }
+
+            RowLayout {
+                spacing: ScreenTools.defaultFontPixelWidth * 2
+
+                QGCButton {
+                    Layout.preferredWidth:  height
+                    height:                 baseImportantEdit_Width.height * 1.5
+                    text:                   "-"
+                    onClicked: {
+                        var s = QGroundControl.settingsManager.appSettings.appImportantMsgScaleFactor_WIDTH
+                        if (s.value > s.min)
+                            s.value = Math.max(s.min, s.value - 0.1)
+                    }
+                }
+
+                QGCLabel {
+                    id: baseImportantEdit_Width
+                    width: ScreenTools.defaultFontPixelWidth * 6
+                    text: (QGroundControl.settingsManager.appSettings.appImportantMsgScaleFactor_WIDTH.value !== undefined
+                            ? (QGroundControl.settingsManager.appSettings.appImportantMsgScaleFactor_WIDTH.value * 100).toFixed(0)
+                            : "100") + "%"
+                }
+
+                QGCButton {
+                    Layout.preferredWidth:  height
+                    height:                 baseImportantEdit_Width.height * 1.5
+                    text:                   "+"
+                    onClicked: {
+                        var s = QGroundControl.settingsManager.appSettings.appImportantMsgScaleFactor_WIDTH
+                        if (s.value < s.max)
+                            s.value = Math.min(s.max, s.value + 0.1)
+                    }
+                }
+            }
+        }
+
+        //my add for controling the size of the important text label's FONT SIZE
+        RowLayout {
+            Layout.fillWidth:   true
+            spacing:            ScreenTools.defaultFontPixelWidth * 2
+            visible:            true
+
+            QGCLabel {
+                Layout.fillWidth:   true
+                text:               qsTr("Important Msg's FONT SIZE")
+            }
+
+            RowLayout {
+                spacing: ScreenTools.defaultFontPixelWidth * 2
+
+                QGCButton {
+                    Layout.preferredWidth:  height
+                    height:                 baseImportantEdit_Font.height * 1.5
+                    text:                   "-"
+                    onClicked: {
+                        var s = QGroundControl.settingsManager.appSettings.appImportantMsgScaleFactor_FONT
+                        if (s.value > s.min)
+                            s.value = Math.max(s.min, s.value - 0.1)
+                    }
+                }
+
+                QGCLabel {
+                    id: baseImportantEdit_Font
+                    width: ScreenTools.defaultFontPixelWidth * 6
+                    text: (QGroundControl.settingsManager.appSettings.appImportantMsgScaleFactor_FONT.value !== undefined
+                            ? (QGroundControl.settingsManager.appSettings.appImportantMsgScaleFactor_FONT.value * 100).toFixed(0)
+                            : "100") + "%"
+                }
+
+                QGCButton {
+                    Layout.preferredWidth:  height
+                    height:                 baseImportantEdit_Font.height * 1.5
+                    text:                   "+"
+                    onClicked: {
+                        var s = QGroundControl.settingsManager.appSettings.appImportantMsgScaleFactor_FONT
+                        if (s.value < s.max)
+                            s.value = Math.min(s.max, s.value + 0.1)
+                    }
+                }
+            }
+        }
+
         RowLayout {
             Layout.fillWidth:   true
             spacing:            ScreenTools.defaultFontPixelWidth * 2
@@ -137,7 +317,7 @@ SettingsPage {
                 spacing:            0
 
                 QGCLabel { text: qsTr("Application Load/Save Path") }
-                QGCLabel { 
+                QGCLabel {
                     Layout.fillWidth:   true
                     font.pointSize:     ScreenTools.smallFontPointSize
                     text:               _appSavePath.rawValue === "" ? qsTr("<default location>") : _appSavePath.value
@@ -179,7 +359,7 @@ SettingsPage {
         Layout.fillWidth:   true
         heading:            qsTr("Brand Image")
         visible:            _brandImageSettings.visible && !ScreenTools.isMobile
-        
+
         RowLayout {
             Layout.fillWidth:   true
             spacing:            ScreenTools.defaultFontPixelWidth * 2
@@ -189,14 +369,14 @@ SettingsPage {
                 Layout.fillWidth:   true
                 spacing:            0
 
-                QGCLabel { 
+                QGCLabel {
                     Layout.fillWidth:   true
-                    text:               qsTr("Indoor Image") 
+                    text:               qsTr("Indoor Image")
                 }
-                QGCLabel { 
+                QGCLabel {
                     Layout.fillWidth:   true
                     font.pointSize:     ScreenTools.smallFontPointSize
-                    text:               _userBrandImageIndoor.valueString.replace("file:///", "") 
+                    text:               _userBrandImageIndoor.valueString.replace("file:///", "")
                     elide:              Text.ElideMiddle
                     visible:            _userBrandImageIndoor.valueString.length > 0
                 }
@@ -225,14 +405,14 @@ SettingsPage {
                 Layout.fillWidth:   true
                 spacing:            0
 
-                QGCLabel { 
+                QGCLabel {
                     Layout.fillWidth:   true
-                    text:               qsTr("Outdoor Image") 
+                    text:               qsTr("Outdoor Image")
                 }
-                QGCLabel { 
+                QGCLabel {
                     Layout.fillWidth:   true
                     font.pointSize:     ScreenTools.smallFontPointSize
-                    text:               _userBrandImageOutdoor.valueString.replace("file:///", "") 
+                    text:               _userBrandImageOutdoor.valueString.replace("file:///", "")
                     elide:              Text.ElideMiddle
                     visible:            _userBrandImageOutdoor.valueString.length > 0
                 }

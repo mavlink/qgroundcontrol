@@ -51,7 +51,103 @@
 #include "SerialLink.h"
 #endif
 
+//my add
+#include <QStandardPaths>
+#include <QFile>
+#include <QDir>
+#include <QDebug>
+#include <QCoreApplication>
+#include <QMessageBox>
+#include "Settings/AppSettings.h"
+#ifdef Q_OS_ANDROID
+#include <QJniObject>
+#include <QJniEnvironment>
+#include <QCoreApplication>
+#endif
+
+//#include "VehicleManager.h"
+#include "ParameterManager.h"
+#include "QmlObjectListModel.h"
+#include "FirmwarePlugin.h"
+#include "UnitsSettings.h"
+
+//end my add
+
+
 QGC_LOGGING_CATEGORY(QGCApplicationLog, "qgc.qgcapplication")
+
+
+//my add, import (if android, clear all settings and import new one)
+void QGCApplication::importSettingsFromFile(const QString& filePath)
+{
+    QString path = filePath;
+
+#ifdef Q_OS_ANDROID
+    QString privateDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/QGCImport";
+    QString privatePath = privateDir + "/settings_import_copy.ini";
+
+            // 创建内部目录
+    if (!QDir().exists(privateDir)) {
+        if (!QDir().mkpath(privateDir)) {
+            showAppMessage(tr("Failed to create internal path:\n%1").arg(privateDir));
+            return;
+        }
+    }
+
+            // 检查源文件是否存在
+    if (!QFile::exists(path)) {
+        showAppMessage(tr("Settings file not found:\n%1").arg(path));
+        return;
+    }
+
+            // 强制删除已有目标文件
+    QFile targetFile(privatePath);
+    if (targetFile.exists() && !targetFile.remove()) {
+        showAppMessage(tr("Failed to remove old import file:\n%1").arg(privatePath));
+        return;
+    }
+
+            // 拷贝用户选中的 .txt/.ini/.jpg/.conf 文件到内部路径（作为 .ini）
+    if (!QFile::copy(path, privatePath)) {
+        showAppMessage(tr("Failed to copy to internal location:\n%1").arg(privatePath));
+        return;
+    }
+
+    path = privatePath;
+#endif
+
+            // 只允许特定后缀（防止误操作）
+    QFileInfo fileInfo(path);
+    QString suffix = fileInfo.suffix().toLower();
+    if (suffix != "ini" && suffix != "conf" && suffix != "jpg" && suffix != "txt") {
+        showAppMessage(tr("Invalid settings file:\n%1").arg(path));
+        return;
+    }
+
+            // 导入到 QGroundControl 的真实配置文件
+    QString configDir = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation);
+    QString actualPath = QDir(configDir).filePath("QGroundControl/QGroundControl Daily.ini");
+
+    QSettings newSettings(path, QSettings::IniFormat);
+    QSettings appSettings(actualPath, QSettings::IniFormat);
+
+#ifdef Q_OS_ANDROID
+    appSettings.clear(); // 安卓先清空再合并
+#endif
+
+    for (const QString& key : newSettings.allKeys()) {
+        appSettings.setValue(key, newSettings.value(key));
+    }
+
+    appSettings.sync();
+
+    showAppMessage(tr("Settings imported successfully.\nPlease restart QGroundControl."));
+
+#ifdef Q_OS_ANDROID
+    QTimer::singleShot(1500, qApp, &QCoreApplication::quit);
+#endif
+}
+
 
 QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting, bool simpleBootTest)
     : QApplication(argc, argv)
@@ -165,6 +261,101 @@ QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting, bool s
 #endif
 }
 
+//my add, export
+void QGCApplication::exportSettingsToDownload()
+{
+    QString sourcePath = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation)
+    + "/QGroundControl/QGroundControl Daily.ini";
+
+#ifdef Q_OS_ANDROID
+    QString exportDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/QGCExport";
+#else
+    QString exportDir = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/QGCExport";
+#endif
+
+    QString exportPath = exportDir + "/settings_export.ini";
+
+    QDir dir;
+    if (!dir.exists(exportDir)) {
+        if (!dir.mkpath(exportDir)) {
+            showAppMessage(tr("Failed to create export directory:\n%1").arg(exportDir));
+            return;
+        }
+    }
+
+    if (!QFile::exists(sourcePath)) {
+        showAppMessage(tr("Settings file not found:\n%1").arg(sourcePath));
+        return;
+    }
+
+    if (QFile::exists(exportPath)) {
+        QFile::remove(exportPath);
+    }
+
+    if (!QFile::copy(sourcePath, exportPath)) {
+        showAppMessage(tr("Failed to export settings to:\n%1").arg(exportPath));
+        return;
+    }
+
+#ifdef Q_OS_ANDROID
+    QString downloadDir = "/storage/emulated/0/Download/QGCExport";
+    QString downloadPath = downloadDir + "/settings_export.txt";
+
+    if (!QDir(downloadDir).exists()) {
+        if (!QDir().mkpath(downloadDir)) {
+            qWarning() << "[QGC] Failed to create public export dir:" << downloadDir;
+        }
+    }
+
+    if (QFile::exists(downloadPath)) {
+        QFile::remove(downloadPath);
+    }
+
+    if (!QFile::copy(sourcePath, downloadPath)) {
+        qWarning() << "[QGC] Failed to export to public Download path:" << downloadPath;
+    } else {
+        qDebug() << "[QGC] Also exported to public Download path:" << downloadPath;
+
+                // 关键：触发媒体扫描，确保文件管理器刷新
+        triggerMediaScan(downloadPath);
+    }
+
+    showAppMessage(tr("Settings exported to:\n%1\n\nAlso copied to:\n%2")
+                       .arg(exportPath, downloadPath));
+#else
+    showAppMessage(tr("Settings exported to:\n%1").arg(exportPath));
+#endif
+}
+
+//my add
+void QGCApplication::triggerMediaScan(const QString &path)
+{
+#ifdef Q_OS_ANDROID
+    QJniObject context = QNativeInterface::QAndroidApplication::context();
+
+    QJniObject javaPath = QJniObject::fromString(path);
+
+    QJniEnvironment env;
+
+    jobjectArray pathsArray = env->NewObjectArray(1,
+                                                  env->FindClass("java/lang/String"),
+                                                  javaPath.object<jstring>());
+
+    QJniObject::callStaticMethod<void>(
+        "android/media/MediaScannerConnection",
+        "scanFile",
+        "(Landroid/content/Context;[Ljava/lang/String;[Ljava/lang/String;Landroid/media/MediaScannerConnection$OnScanCompletedListener;)V",
+        context.object(),
+        pathsArray,
+        nullptr,
+        nullptr
+        );
+
+    env->DeleteLocalRef(pathsArray);
+#endif
+}
+
+
 void QGCApplication::setLanguage()
 {
     _locale = QLocale::system();
@@ -262,6 +453,7 @@ void QGCApplication::_initForNormalAppBoot()
     MAVLinkProtocol::instance()->init();
     MultiVehicleManager::instance()->init();
     _qmlAppEngine = QGCCorePlugin::instance()->createQmlApplicationEngine(this);
+    _qmlAppEngine->rootContext()->setContextProperty("qgcApp", this);
     QObject::connect(_qmlAppEngine, &QQmlApplicationEngine::objectCreationFailed, this, QCoreApplication::quit, Qt::QueuedConnection);
     QGCCorePlugin::instance()->createRootWindow(_qmlAppEngine);
 

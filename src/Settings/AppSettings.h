@@ -40,6 +40,9 @@ public:
     DEFINE_SETTINGFACT(virtualJoystickAutoCenterThrottle)
     DEFINE_SETTINGFACT(virtualJoystickLeftHandedMode)
     DEFINE_SETTINGFACT(appFontPointSize)
+    DEFINE_SETTINGFACT(appImportantMsgScaleFactor)//my add
+    DEFINE_SETTINGFACT(appImportantMsgScaleFactor_WIDTH)//my add
+    DEFINE_SETTINGFACT(appImportantMsgScaleFactor_FONT)//my add
     DEFINE_SETTINGFACT(indoorPalette)
     DEFINE_SETTINGFACT(savePath)
     DEFINE_SETTINGFACT(androidSaveToSDCard)
@@ -78,6 +81,9 @@ public:
     Q_PROPERTY(QString shpFileExtension         MEMBER shpFileExtension         CONSTANT)
     Q_PROPERTY(QString logFileExtension         MEMBER logFileExtension         CONSTANT)
     Q_PROPERTY(QString tilesetFileExtension     MEMBER tilesetFileExtension     CONSTANT)
+    Q_PROPERTY(Fact* appImportantMsgScaleFactor READ appImportantMsgScaleFactor CONSTANT)//my add, for changing img's HEIGHT
+    Q_PROPERTY(Fact* appImportantMsgScaleFactor_WIDTH READ appImportantMsgScaleFactor_WIDTH CONSTANT)//my add, for changing img's WIDTH
+    Q_PROPERTY(Fact* appImportantMsgScaleFactor_FONT READ appImportantMsgScaleFactor_FONT CONSTANT)//my add, for changing img's FONT SIZE
 
     QString missionSavePath       ();
     QString parameterSavePath     ();
