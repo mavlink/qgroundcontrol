@@ -14,16 +14,27 @@ import QtQuick.Dialogs
 
 import QGroundControl
 import QGroundControl.Controls
-
-
+import QGroundControl.Palette
+import QGroundControl.MultiVehicleManager
 import QGroundControl.ScreenTools
-
+import QGroundControl.Controllers
 
 Rectangle {
     id:     _root
     width:  parent.width
-    height: ScreenTools.toolbarHeight
+    property real toolbarHeight: ScreenTools.defaultFontPixelHeight * 1.5//my add, here to control the height of the whole toolbar
+    height: toolbarHeight//my change, original: ScreenTools.toolbarHeight
     color:  qgcPal.toolbarBackground
+    //scale: 0.7
+/*
+    transform: Scale {
+        origin.x: 0
+        origin.y: 0
+        xScale: 1.0
+        yScale: 0.9
+    }
+    */
+
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     property bool   _communicationLost: _activeVehicle ? _activeVehicle.vehicleLinkManager.communicationLost : false
@@ -47,7 +58,7 @@ Rectangle {
 
     Rectangle {
         anchors.fill: viewButtonRow
-        
+
         gradient: Gradient {
             orientation: Gradient.Horizontal
             GradientStop { position: 0;                                     color: _mainStatusBGColor }
@@ -65,15 +76,18 @@ Rectangle {
 
         QGCToolBarButton {
             id:                     currentButton
-            Layout.preferredHeight: viewButtonRow.height
+            Layout.preferredHeight: toolbarHeight//viewButtonRow.height
             icon.source:            "/res/QGCLogoFull.svg"
             logo:                   true
             onClicked:              mainWindow.showToolSelectDialog()
+            scale:                  0.65//my add, to control the QGC logo's size
         }
 
         MainStatusIndicator {
             id: mainStatusIndicator
-            Layout.preferredHeight: viewButtonRow.height
+            Layout.preferredHeight: toolbarHeight//viewButtonRow.height
+            Layout.leftMargin: -20    //my add, position turn left
+            scale: 0.9//my add
         }
 
         QGCButton {
@@ -81,6 +95,8 @@ Rectangle {
             text:               qsTr("Disconnect")
             onClicked:          _activeVehicle.closeVehicle()
             visible:            _activeVehicle && _communicationLost
+            //Layout.leftMargin: -40     //my add, position turn left
+            scale: 0.9//my add
         }
     }
 
@@ -96,7 +112,10 @@ Rectangle {
         contentWidth:           toolIndicators.width
         flickableDirection:     Flickable.HorizontalFlick
 
-        FlyViewToolBarIndicators { id: toolIndicators }
+        FlyViewToolBarIndicators{
+            id: toolIndicators
+            scale: 0.85//set the size of the mode
+        }
     }
 
     //-------------------------------------------------------------------------
@@ -209,3 +228,4 @@ Rectangle {
         }
     }
 }
+
