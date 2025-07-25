@@ -13,28 +13,24 @@
 
 QGC_LOGGING_CATEGORY(ActuatorsConfigLog, "ActuatorsConfigLog")
 
-void Parameter::parse(const QJsonValue &jsonValue)
+
+void Parameter::parse(const QJsonValue& jsonValue)
 {
     label = jsonValue["label"].toString();
     name = jsonValue["name"].toString();
     indexOffset = jsonValue["index-offset"].toInt(0);
     QString displayOptionStr = jsonValue["show-as"].toString();
-    if (displayOptionStr == "true-if-positive")
-    {
+    if (displayOptionStr == "true-if-positive") {
         displayOption = DisplayOption::BoolTrueIfPositive;
-    }
-    else if (displayOptionStr == "bitset")
-    {
+    } else if (displayOptionStr == "bitset") {
         displayOption = DisplayOption::Bitset;
-    }
-    else if (displayOptionStr != "")
-    {
+    } else if (displayOptionStr != "") {
         qCDebug(ActuatorsConfigLog) << "Unknown param display option (show-as):" << displayOptionStr;
     }
     advanced = jsonValue["advanced"].toBool(false);
 }
 
-FactBitset::FactBitset(QObject *parent, Fact *integerFact, int offset)
+FactBitset::FactBitset(QObject* parent, Fact* integerFact, int offset)
     : Fact("", new FactMetaData(FactMetaData::valueTypeBool, "", parent), parent),
       _integerFact(integerFact), _offset(offset)
 {
@@ -46,8 +42,7 @@ FactBitset::FactBitset(QObject *parent, Fact *integerFact, int offset)
 
 void FactBitset::onIntegerFactChanged()
 {
-    if (_ignoreChange)
-    {
+    if (_ignoreChange) {
         return;
     }
     _ignoreChange = true;
@@ -58,25 +53,22 @@ void FactBitset::onIntegerFactChanged()
 
 void FactBitset::onThisFactChanged()
 {
-    if (_ignoreChange)
-    {
+    if (_ignoreChange) {
         return;
     }
     _ignoreChange = true;
     // sync to integer fact
     int value = _integerFact->rawValue().toInt();
-    if (rawValue().toBool())
-    {
+    if (rawValue().toBool()) {
         _integerFact->forceSetRawValue(value | (1u << _offset));
-    }
-    else
-    {
+    } else {
         _integerFact->forceSetRawValue(value & ~(1u << _offset));
     }
     _ignoreChange = false;
 }
 
-FactFloatAsBool::FactFloatAsBool(QObject *parent, Fact *floatFact)
+
+FactFloatAsBool::FactFloatAsBool(QObject* parent, Fact* floatFact)
     : Fact("", new FactMetaData(FactMetaData::valueTypeBool, "", parent), parent),
       _floatFact(floatFact)
 {
@@ -87,8 +79,7 @@ FactFloatAsBool::FactFloatAsBool(QObject *parent, Fact *floatFact)
 
 void FactFloatAsBool::onFloatFactChanged()
 {
-    if (_ignoreChange)
-    {
+    if (_ignoreChange) {
         return;
     }
     _ignoreChange = true;
@@ -99,66 +90,44 @@ void FactFloatAsBool::onFloatFactChanged()
 
 void FactFloatAsBool::onThisFactChanged()
 {
-    if (_ignoreChange)
-    {
+    if (_ignoreChange) {
         return;
     }
     _ignoreChange = true;
     // sync to float fact
     float value = _floatFact->rawValue().toFloat();
-    if (rawValue().toBool())
-    {
+    if (rawValue().toBool()) {
         _floatFact->forceSetRawValue(std::abs(value));
-    }
-    else
-    {
+    } else {
         _floatFact->forceSetRawValue(-std::abs(value));
     }
     _ignoreChange = false;
 }
 
-Condition::Condition(const QString &condition, ParameterManager *parameterManager)
+Condition::Condition(const QString &condition, ParameterManager* parameterManager)
 {
     QRegularExpression re("^([0-9A-Za-z_-]+)([\\!=<>]+)(-?\\d+)$");
     QRegularExpressionMatch match = re.match(condition);
-    if (condition == "true")
-    {
+    if (condition == "true") {
         _operation = Operation::AlwaysTrue;
-    }
-    else if (condition == "false")
-    {
+    } else if (condition == "false") {
         _operation = Operation::AlwaysFalse;
-    }
-    else if (match.hasMatch())
-    {
+    } else if (match.hasMatch()) {
         _parameter = match.captured(1);
         QString operation = match.captured(2);
-        if (operation == ">")
-        {
+        if (operation == ">") {
             _operation = Operation::GreaterThan;
-        }
-        else if (operation == ">=")
-        {
+        } else if (operation == ">=") {
             _operation = Operation::GreaterEqual;
-        }
-        else if (operation == "==")
-        {
+        } else if (operation == "==") {
             _operation = Operation::Equal;
-        }
-        else if (operation == "!=")
-        {
+        } else if (operation == "!=") {
             _operation = Operation::NotEqual;
-        }
-        else if (operation == "<")
-        {
+        } else if (operation == "<") {
             _operation = Operation::LessThan;
-        }
-        else if (operation == "<=")
-        {
+        } else if (operation == "<=") {
             _operation = Operation::LessEqual;
-        }
-        else
-        {
+        } else {
             qCWarning(ActuatorsConfigLog) << "Unknown condition operation: " << operation;
         }
         _value = match.captured(3).toInt();
@@ -168,70 +137,51 @@ Condition::Condition(const QString &condition, ParameterManager *parameterManage
         if (parameterManager->parameterExists(ParameterManager::defaultComponentId, _parameter)) {
             Fact* param = parameterManager->getParameter(ParameterManager::defaultComponentId, _parameter);
             if (param->type() == FactMetaData::ValueType_t::valueTypeBool ||
-                param->type() == FactMetaData::ValueType_t::valueTypeInt32)
-            {
+                    param->type() == FactMetaData::ValueType_t::valueTypeInt32) {
                 _fact = param;
-            }
-            else
-            {
+            } else {
                 qCDebug(ActuatorsConfigLog) << "Condition: Unsupported param type:" << (int)param->type();
             }
-        }
-        else
-        {
+        } else {
             qCDebug(ActuatorsConfigLog) << "Condition: Param does not exist:" << _parameter;
         }
     }
+
 }
 
 bool Condition::evaluate() const
 {
-    if (_operation == Operation::AlwaysFalse)
-    {
+    if (_operation == Operation::AlwaysFalse) {
         return false;
     }
 
-    if (_operation == Operation::AlwaysTrue || _parameter.isEmpty())
-    {
+    if (_operation == Operation::AlwaysTrue || _parameter.isEmpty()) {
         return true;
     }
 
-    if (!_fact)
-    {
+    if (!_fact) {
         return false;
     }
 
     int32_t paramValue = _fact->rawValue().toInt();
-    switch (_operation)
-    {
-    case Operation::AlwaysTrue:
-        return true;
-    case Operation::AlwaysFalse:
-        return false;
-    case Operation::GreaterThan:
-        return paramValue > _value;
-    case Operation::GreaterEqual:
-        return paramValue >= _value;
-    case Operation::Equal:
-        return paramValue == _value;
-    case Operation::NotEqual:
-        return paramValue != _value;
-    case Operation::LessThan:
-        return paramValue < _value;
-    case Operation::LessEqual:
-        return paramValue <= _value;
+    switch (_operation) {
+        case Operation::AlwaysTrue: return true;
+        case Operation::AlwaysFalse: return false;
+        case Operation::GreaterThan: return paramValue > _value;
+        case Operation::GreaterEqual: return paramValue >= _value;
+        case Operation::Equal: return paramValue == _value;
+        case Operation::NotEqual: return paramValue != _value;
+        case Operation::LessThan: return paramValue < _value;
+        case Operation::LessEqual: return paramValue <= _value;
     }
     return false;
 }
 
 ActuatorGeometry::Type ActuatorGeometry::typeFromStr(const QString &type)
 {
-    if (type == "motor")
-    {
+    if (type == "motor") {
         return ActuatorGeometry::Type::Motor;
-    }
-    else if (type == "servo")
-    {
+    } else if (type == "servo") {
         return ActuatorGeometry::Type::Servo;
     }
     return ActuatorGeometry::Type::Other;

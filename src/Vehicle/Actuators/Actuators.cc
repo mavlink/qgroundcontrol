@@ -8,25 +8,23 @@
  ****************************************************************************/
 
 #include "Actuators.h"
-
-#include <QtCore/QFile>
-#include <QtCore/QJsonArray>
-#include <QtCore/QJsonObject>
-#include <QtCore/QString>
-#include <algorithm>
-
 #include "GeometryImage.h"
 #include "ParameterManager.h"
 #include "Vehicle.h"
 
+#include <QtCore/QString>
+#include <QtCore/QFile>
+#include <QtCore/QJsonArray>
+#include <QtCore/QJsonObject>
+
+#include <algorithm>
+
 using namespace ActuatorOutputs;
 
 Actuators::Actuators(QObject* parent, Vehicle* vehicle)
-    : QObject(parent),
-      _actuatorTest(vehicle),
-      _mixer(vehicle->parameterManager()),
-      _motorAssignment(nullptr, vehicle, _actuatorOutputs),
-      _vehicle(vehicle) {
+    : QObject(parent), _actuatorTest(vehicle), _mixer(vehicle->parameterManager()),
+      _motorAssignment(nullptr, vehicle, _actuatorOutputs), _vehicle(vehicle)
+{
     connect(&_mixer, &Mixer::Mixers::paramChanged, this, &Actuators::parametersChanged);
     connect(&_mixer, &Mixer::Mixers::geometryParamChanged, this, &Actuators::updateGeometryImage);
     qRegisterMetaType<Actuators*>("Actuators*");
@@ -35,12 +33,12 @@ Actuators::Actuators(QObject* parent, Vehicle* vehicle)
     connect(&_motorAssignment, &MotorAssignment::onAbort, this, [this]() { highlightActuators(false); });
 }
 
-void Actuators::imageClicked(QSizeF displaySize, float x, float y) {
+void Actuators::imageClicked(QSizeF displaySize, float x, float y)
+{
     GeometryImage::VehicleGeometryImageProvider* provider = GeometryImage::VehicleGeometryImageProvider::instance();
-    QPointF clickPosition{x, y};
+    QPointF clickPosition{ x, y };
     int motorIndex = provider->getHighlightedMotorIndexAtPos(displaySize, clickPosition);
-    qCDebug(ActuatorsConfigLog) << "Image clicked: position:" << clickPosition << "displaySize:" << displaySize
-                                << "motor index:" << motorIndex;
+    qCDebug(ActuatorsConfigLog) << "Image clicked: position:" << clickPosition << "displaySize:" << displaySize << "motor index:" << motorIndex;
 
     if (_motorAssignment.active()) {
         QList<ActuatorGeometry>& actuators = provider->actuators();
@@ -60,21 +58,24 @@ void Actuators::imageClicked(QSizeF displaySize, float x, float y) {
     }
 }
 
-void Actuators::selectActuatorOutput(int index) {
+void Actuators::selectActuatorOutput(int index)
+{
     if (index >= _actuatorOutputs->count() || index < 0) {
         index = 0;
     }
     _selectedActuatorOutput = index;
     emit selectedActuatorOutputChanged();
 }
-ActuatorOutput* Actuators::selectedActuatorOutput() const {
+ActuatorOutput* Actuators::selectedActuatorOutput() const
+{
     if (_actuatorOutputs->count() == 0) {
         return nullptr;
     }
     return _actuatorOutputs->value<ActuatorOutputs::ActuatorOutput*>(_selectedActuatorOutput);
 }
 
-void Actuators::updateGeometryImage() {
+void Actuators::updateGeometryImage()
+{
     GeometryImage::VehicleGeometryImageProvider* provider = GeometryImage::VehicleGeometryImageProvider::instance();
 
     QList<ActuatorGeometry>& actuators = provider->actuators();
@@ -85,8 +86,7 @@ void Actuators::updateGeometryImage() {
     for (int mixerGroupIdx = 0; mixerGroupIdx < _mixer.groups()->count(); ++mixerGroupIdx) {
         Mixer::MixerConfigGroup* mixerGroup = _mixer.groups()->value<Mixer::MixerConfigGroup*>(mixerGroupIdx);
         for (int mixerChannelIdx = 0; mixerChannelIdx < mixerGroup->channels()->count(); ++mixerChannelIdx) {
-            const Mixer::MixerChannel* mixerChannel =
-                mixerGroup->channels()->value<Mixer::MixerChannel*>(mixerChannelIdx);
+            const Mixer::MixerChannel* mixerChannel = mixerGroup->channels()->value<Mixer::MixerChannel*>(mixerChannelIdx);
             ActuatorGeometry geometry{};
             if (mixerChannel->getGeometry(_mixer.actuatorTypes(), mixerGroup->group(), geometry)) {
                 actuators.append(geometry);
@@ -111,9 +111,13 @@ void Actuators::updateGeometryImage() {
     emit motorAssignmentEnabledChanged();
 }
 
-bool Actuators::isMultirotor() const { return _mixer.configuredType() == "multirotor"; }
+bool Actuators::isMultirotor() const
+{
+    return _mixer.configuredType() == "multirotor";
+}
 
-void Actuators::load(const QString& json_file) {
+void Actuators::load(const QString &json_file)
+{
     QFile file(json_file);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qCWarning(ActuatorsConfigLog) << "Error opening json file" << file.fileName();
@@ -127,7 +131,8 @@ void Actuators::load(const QString& json_file) {
     _jsonMetadata = QJsonDocument::fromJson(json_data.toUtf8());
 }
 
-void Actuators::init() {
+void Actuators::init()
+{
     if (_init) {
         return;
     }
@@ -156,7 +161,8 @@ void Actuators::init() {
     parametersChanged();
 }
 
-void Actuators::parametersChanged() {
+void Actuators::parametersChanged()
+{
     qCDebug(ActuatorsConfigLog) << "Param update";
 
     _mixer.update();
@@ -170,7 +176,7 @@ void Actuators::parametersChanged() {
         group->getAllChannelFunctions(groupFunctions);
         for (const auto& groupFunction : groupFunctions) {
             int function = groupFunction->rawValue().toInt();
-            if (function != 0) {  // disabled
+            if (function != 0) { // disabled
                 allFunctions.append(function);
             }
 
@@ -186,8 +192,7 @@ void Actuators::parametersChanged() {
 
         // update channel visibility
         for (int subbroupIdx = 0; subbroupIdx < group->subgroups()->count(); subbroupIdx++) {
-            ActuatorOutputSubgroup* subgroup =
-                qobject_cast<ActuatorOutputSubgroup*>(group->subgroups()->get(subbroupIdx));
+            ActuatorOutputSubgroup* subgroup = qobject_cast<ActuatorOutputSubgroup*>(group->subgroups()->get(subbroupIdx));
             for (int channelIdx = 0; channelIdx < subgroup->channelConfigs()->count(); channelIdx++) {
                 ChannelConfig* channel = qobject_cast<ChannelConfig*>(subgroup->channelConfigs()->get(channelIdx));
                 channel->reevaluate();
@@ -200,9 +205,9 @@ void Actuators::parametersChanged() {
     // create list of actuators from configured functions
     QList<ActuatorTesting::Actuator*> actuators;
     QSet<int> uniqueConfiguredFunctions;
-    const Mixer::ActuatorTypes& actuatorTypes = _mixer.actuatorTypes();
+    const Mixer::ActuatorTypes &actuatorTypes = _mixer.actuatorTypes();
     for (int function : allFunctions) {
-        if (uniqueConfiguredFunctions.find(function) != uniqueConfiguredFunctions.end()) {  // only add once
+        if (uniqueConfiguredFunctions.find(function) != uniqueConfiguredFunctions.end()) { // only add once
             continue;
         }
         uniqueConfiguredFunctions.insert(function);
@@ -222,18 +227,18 @@ void Actuators::parametersChanged() {
                 const Mixer::ActuatorType& actuatorType = actuatorTypes[actuatorTypeName];
                 if (function >= actuatorType.functionMin && function <= actuatorType.functionMax) {
                     bool isMotor = ActuatorGeometry::typeFromStr(actuatorTypeName) == ActuatorGeometry::Type::Motor;
-                    actuators.append(new ActuatorTesting::Actuator(&_actuatorTest, label, actuatorType.values.min,
-                                                                   actuatorType.values.max,
-                                                                   actuatorType.values.defaultVal, function, isMotor));
+                    actuators.append(
+                            new ActuatorTesting::Actuator(&_actuatorTest, label, actuatorType.values.min, actuatorType.values.max,
+                                    actuatorType.values.defaultVal, function, isMotor));
                     found = true;
                     break;
                 }
             }
             if (!found && actuatorTypes.find("DEFAULT") != actuatorTypes.end()) {
                 const Mixer::ActuatorType& actuatorType = actuatorTypes["DEFAULT"];
-                actuators.append(new ActuatorTesting::Actuator(&_actuatorTest, label, actuatorType.values.min,
-                                                               actuatorType.values.max, actuatorType.values.defaultVal,
-                                                               function, false));
+                actuators.append(
+                        new ActuatorTesting::Actuator(&_actuatorTest, label, actuatorType.values.min, actuatorType.values.max,
+                                actuatorType.values.defaultVal, function, false));
             }
         }
     }
@@ -256,10 +261,10 @@ void Actuators::parametersChanged() {
     updateGeometryImage();
 }
 
-void Actuators::updateFunctionMetadata() {
+void Actuators::updateFunctionMetadata()
+{
     // Update the function parameter metadata:
-    // - remove the mixer functions that are unused with the current configration (e.g. if 4 motors -> remove motors
-    // 5-N)
+    // - remove the mixer functions that are unused with the current configration (e.g. if 4 motors -> remove motors 5-N)
     // - use the specific labels
     QSet<int> usedMixerFunctions = _mixer.getFunctions(false);
 
@@ -276,9 +281,10 @@ void Actuators::updateFunctionMetadata() {
 
     // Get the unused mixer functions
     QSet<int> removedMixerFunctions;
-    for (Mixer::ActuatorTypes::const_iterator iter = _mixer.actuatorTypes().constBegin();
-         iter != _mixer.actuatorTypes().constEnd(); ++iter) {
-        if (iter.key() == "DEFAULT") continue;
+    for(Mixer::ActuatorTypes::const_iterator iter = _mixer.actuatorTypes().constBegin();
+            iter != _mixer.actuatorTypes().constEnd(); ++iter) {
+        if (iter.key() == "DEFAULT")
+            continue;
 
         for (int i = iter.value().functionMin; i <= iter.value().functionMax; ++i) {
             if (!usedMixerFunctions.contains(i)) {
@@ -291,51 +297,51 @@ void Actuators::updateFunctionMetadata() {
     for (int groupIdx = 0; groupIdx < _actuatorOutputs->count(); groupIdx++) {
         ActuatorOutput* group = qobject_cast<ActuatorOutput*>(_actuatorOutputs->get(groupIdx));
 
-        group->forEachOutputFunction(
-            [&]([[maybe_unused]] ActuatorOutputSubgroup* subgroup, ChannelConfigInstance*, Fact* fact) {
-                QStringList enumStrings = fact->enumStrings();
-                if (!enumStrings.empty()) {
-                    QVariantList enumValues = fact->enumValues();
+        group->forEachOutputFunction([&]([[maybe_unused]] ActuatorOutputSubgroup* subgroup, ChannelConfigInstance*, Fact* fact) {
+            QStringList enumStrings = fact->enumStrings();
+            if (!enumStrings.empty()) {
+                QVariantList enumValues = fact->enumValues();
 
-                    // Replace or add
-                    for (int usedMixerFunction : usedMixerFunctions) {
-                        QString label = usedMixerLabels[usedMixerFunction];
-                        int index = enumValues.indexOf(usedMixerFunction);
-                        if (index == -1) {
-                            // Insert at the right place
-                            bool inserted = false;
-                            for (index = 0; index < enumValues.count() && !inserted; ++index) {
-                                if (enumValues[index].toInt() > usedMixerFunction) {
-                                    enumValues.insert(index, usedMixerFunction);
-                                    enumStrings.insert(index, label);
-                                    inserted = true;
-                                }
+                // Replace or add
+                for (int usedMixerFunction : usedMixerFunctions) {
+                    QString label = usedMixerLabels[usedMixerFunction];
+                    int index = enumValues.indexOf(usedMixerFunction);
+                    if (index == -1) {
+                        // Insert at the right place
+                        bool inserted = false;
+                        for (index = 0; index < enumValues.count() && !inserted; ++index) {
+                            if (enumValues[index].toInt() > usedMixerFunction) {
+                                enumValues.insert(index, usedMixerFunction);
+                                enumStrings.insert(index, label);
+                                inserted = true;
                             }
-                            if (!inserted) {
-                                enumValues.append(usedMixerFunction);
-                                enumStrings.append(label);
-                            }
-                        } else {
-                            enumStrings[index] = label;
                         }
-                    }
-
-                    // Remove
-                    for (int removedMixerFunction : removedMixerFunctions) {
-                        int index = enumValues.indexOf(removedMixerFunction);
-                        if (index != -1) {
-                            enumValues.removeAt(index);
-                            enumStrings.removeAt(index);
+                        if (!inserted) {
+                            enumValues.append(usedMixerFunction);
+                            enumStrings.append(label);
                         }
+                    } else {
+                        enumStrings[index] = label;
                     }
-
-                    fact->setEnumInfo(enumStrings, enumValues);
                 }
-            });
+
+                // Remove
+                for (int removedMixerFunction : removedMixerFunctions) {
+                    int index = enumValues.indexOf(removedMixerFunction);
+                    if (index != -1) {
+                        enumValues.removeAt(index);
+                        enumStrings.removeAt(index);
+                    }
+                }
+
+                fact->setEnumInfo(enumStrings, enumValues);
+            }
+        });
     }
 }
 
-void Actuators::updateActuatorActions() {
+void Actuators::updateActuatorActions()
+{
     _actuatorActions->clearAndDeleteContents();
     QSet<int> addedFunctions;
     for (int groupIdx = 0; groupIdx < _actuatorOutputs->count(); groupIdx++) {
@@ -351,19 +357,17 @@ void Actuators::updateActuatorActions() {
                         if (!action.condition.evaluate()) {
                             continue;
                         }
-                        if (!action.actuatorTypes.empty() &&
-                            action.actuatorTypes.find(outputFunction.actuatorType) == action.actuatorTypes.end()) {
+                        if (!action.actuatorTypes.empty() && action.actuatorTypes.find(outputFunction.actuatorType) == action.actuatorTypes.end()) {
                             continue;
                         }
 
                         // add the action
-                        auto actuatorAction = new ActuatorActions::Action(this, action, outputFunction.label,
-                                                                          outputFunctionVal, _vehicle);
+                        auto actuatorAction = new ActuatorActions::Action(this, action, outputFunction.label, outputFunctionVal, _vehicle);
                         ActuatorActions::ActionGroup* actionGroup = nullptr;
                         // try to find the group
                         for (int groupIdx = 0; groupIdx < _actuatorActions->count(); groupIdx++) {
                             ActuatorActions::ActionGroup* curActionGroup =
-                                qobject_cast<ActuatorActions::ActionGroup*>(_actuatorActions->get(groupIdx));
+                                    qobject_cast<ActuatorActions::ActionGroup*>(_actuatorActions->get(groupIdx));
                             if (curActionGroup->type() == action.type) {
                                 actionGroup = curActionGroup;
                                 break;
@@ -386,7 +390,8 @@ void Actuators::updateActuatorActions() {
     emit actuatorActionsChanged();
 }
 
-bool Actuators::parseJson(const QJsonDocument& json) {
+bool Actuators::parseJson(const QJsonDocument &json)
+{
     _actuatorOutputs->clearAndDeleteContents();
 
     QJsonObject obj = json.object();
@@ -394,15 +399,13 @@ bool Actuators::parseJson(const QJsonDocument& json) {
     QJsonValue functionsJson = obj.value("functions_v1");
     QJsonValue mixerJson = obj.value("mixer_v1");
     if (outputsJson.isNull() || functionsJson.isNull() || mixerJson.isNull()) {
-        qCWarning(ActuatorsConfigLog) << "Missing json section:" << outputsJson << "\n"
-                                      << functionsJson << "\n"
-                                      << mixerJson;
+        qCWarning(ActuatorsConfigLog) << "Missing json section:" << outputsJson << "\n" << functionsJson << "\n" << mixerJson;
         return false;
     }
 
     // parse outputs
     QJsonArray outputs = outputsJson.toArray();
-    for (const auto&& outputJson : outputs) {
+    for (const auto &&outputJson : outputs) {
         QJsonValue output = outputJson.toObject();
         QString label = output["label"].toString();
 
@@ -414,12 +417,11 @@ bool Actuators::parseJson(const QJsonDocument& json) {
         ActuatorOutput* currentActuatorOutput = new ActuatorOutput(this, label, groupVisibilityCondition);
         _actuatorOutputs->append(currentActuatorOutput);
 
-        auto parseParam = [&currentActuatorOutput, this](const QJsonValue& parameter) {
+        auto parseParam = [&currentActuatorOutput, this](const QJsonValue &parameter) {
             Parameter param{};
             param.parse(parameter);
             QString functionStr = parameter["function"].toString("");
-            qCDebug(ActuatorsConfigLog) << "param:" << param.name << "label:" << param.label
-                                        << "function:" << functionStr;
+            qCDebug(ActuatorsConfigLog) << "param:" << param.name << "label:" << param.label << "function:" << functionStr;
             ConfigParameter::Function function = ConfigParameter::Function::Unspecified;
             if (functionStr == "enable") {
                 function = ConfigParameter::Function::Enable;
@@ -469,8 +471,7 @@ bool Actuators::parseJson(const QJsonDocument& json) {
                         for (const auto&& type : actuatorTypesArr) {
                             action.actuatorTypes.insert(type.toString());
                         }
-                        action.condition =
-                            Condition(actionObj["supported-if"].toString(), _vehicle->parameterManager());
+                        action.condition = Condition(actionObj["supported-if"].toString(), _vehicle->parameterManager());
                         subscribeFact(action.condition.fact());
                         actuatorSubgroup->addAction(action);
                     }
@@ -517,9 +518,9 @@ bool Actuators::parseJson(const QJsonDocument& json) {
                 QString channelLabel = channel["label"].toString();
                 int paramIndex = channel["param-index"].toInt();
                 qCDebug(ActuatorsConfigLog) << "channel label:" << channelLabel << "param-index" << paramIndex;
-                actuatorSubgroup->addChannel(new ActuatorOutputChannel(
-                    this, channelLabel, paramIndex, *actuatorSubgroup->channelConfigs(), _vehicle->parameterManager(),
-                    [this](Fact* fact) { subscribeFact(fact); }));
+                actuatorSubgroup->addChannel(
+                        new ActuatorOutputChannel(this, channelLabel, paramIndex, *actuatorSubgroup->channelConfigs(),
+                                _vehicle->parameterManager(), [this](Fact* fact) { subscribeFact(fact); }));
             }
         }
     }
@@ -581,8 +582,7 @@ bool Actuators::parseJson(const QJsonDocument& json) {
     auto actuatorTypeIter = actuatorTypes.constBegin();
     while (actuatorTypeIter != actuatorTypes.constEnd()) {
         if (actuatorTypeIter.key() != "DEFAULT") {
-            for (int function = actuatorTypeIter.value().functionMin; function <= actuatorTypeIter.value().functionMax;
-                 ++function) {
+            for (int function = actuatorTypeIter.value().functionMin; function <= actuatorTypeIter.value().functionMax; ++function) {
                 auto functionIter = outputFunctions.find(function);
                 if (functionIter != outputFunctions.end()) {
                     functionIter->actuatorType = actuatorTypeIter.key();
@@ -658,8 +658,7 @@ bool Actuators::parseJson(const QJsonDocument& json) {
 
                     if (actuator.fixedCount != mixerParameter.values.size() && mixerParameter.values.size() != 1) {
                         invalid = true;
-                        qCWarning(ActuatorsConfigLog) << "Invalid mixer param config:" << actuator.fixedCount << ","
-                                                      << mixerParameter.values.size();
+                        qCWarning(ActuatorsConfigLog) << "Invalid mixer param config:" << actuator.fixedCount << "," << mixerParameter.values.size();
                     }
                 }
                 if (!invalid) {
@@ -675,8 +674,8 @@ bool Actuators::parseJson(const QJsonDocument& json) {
                     actuator.itemLabelPrefix.append(itemLabelPrefix.toString());
                 }
                 if (actuator.fixedCount != actuator.itemLabelPrefix.size() && actuator.itemLabelPrefix.size() > 1) {
-                    qCWarning(ActuatorsConfigLog) << "Invalid mixer config (item-label-prefix):" << actuator.fixedCount
-                                                  << "," << actuator.itemLabelPrefix.size();
+                    qCWarning(ActuatorsConfigLog) << "Invalid mixer config (item-label-prefix):" << actuator.fixedCount << ","
+                            << actuator.itemLabelPrefix.size();
                 }
             }
 
@@ -728,8 +727,7 @@ bool Actuators::parseJson(const QJsonDocument& json) {
                 if (items.size() == rule.applyIdentifiers.size()) {
                     rule.items[key] = items;
                 } else {
-                    qCWarning(ActuatorsConfigLog)
-                        << "Rules: unexpected num items in " << itemsArr << "expected:" << rule.applyIdentifiers.size();
+                    qCWarning(ActuatorsConfigLog) << "Rules: unexpected num items in " << itemsArr << "expected:" << rule.applyIdentifiers.size();
                 }
             }
         }
@@ -741,26 +739,32 @@ bool Actuators::parseJson(const QJsonDocument& json) {
     return true;
 }
 
-Fact* Actuators::getFact(const QString& paramName) {
+Fact* Actuators::getFact(const QString& paramName)
+{
     if (!_vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, paramName)) {
         qCDebug(ActuatorsConfigLog) << "Mixer: Param does not exist:" << paramName;
         return nullptr;
     }
     Fact* fact = _vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, paramName);
-    subscribeFact(fact);
-    return fact;
+	subscribeFact(fact);
+	return fact;
 }
 
-void Actuators::subscribeFact(Fact* fact) {
+void Actuators::subscribeFact(Fact* fact)
+{
     if (fact && !_subscribedFacts.contains(fact)) {
         connect(fact, &Fact::rawValueChanged, this, &Actuators::parametersChanged);
         _subscribedFacts.insert(fact);
     }
 }
 
-bool Actuators::showUi() const { return _init && _showUi.evaluate(); }
+bool Actuators::showUi() const
+{
+    return _init && _showUi.evaluate();
+}
 
-bool Actuators::initMotorAssignment() {
+bool Actuators::initMotorAssignment()
+{
     GeometryImage::VehicleGeometryImageProvider* provider = GeometryImage::VehicleGeometryImageProvider::instance();
     int numMotors = provider->numMotors();
 
@@ -775,7 +779,8 @@ bool Actuators::initMotorAssignment() {
     return ret;
 }
 
-void Actuators::highlightActuators(bool highlight) {
+void Actuators::highlightActuators(bool highlight)
+{
     GeometryImage::VehicleGeometryImageProvider* provider = GeometryImage::VehicleGeometryImageProvider::instance();
     QList<ActuatorGeometry>& actuators = provider->actuators();
     for (auto& actuator : actuators) {
@@ -786,8 +791,12 @@ void Actuators::highlightActuators(bool highlight) {
     updateGeometryImage();
 }
 
-void Actuators::startMotorAssignment() {
+void Actuators::startMotorAssignment()
+{
     highlightActuators(true);
     _motorAssignment.start();
 }
-void Actuators::abortMotorAssignment() { _motorAssignment.abort(); }
+void Actuators::abortMotorAssignment()
+{
+    _motorAssignment.abort();
+}
