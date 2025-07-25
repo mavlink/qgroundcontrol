@@ -186,3 +186,4 @@ ActuatorGeometry::Type ActuatorGeometry::typeFromStr(const QString &type)
     }
     return ActuatorGeometry::Type::Other;
 }
+
