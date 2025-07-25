@@ -7,29 +7,49 @@
  *
  ****************************************************************************/
 
-#include "PX4TuningComponent.h"
 
+#include "PX4TuningComponent.h"
 #include "QGCMAVLink.h"
 #include "Vehicle.h"
 
 PX4TuningComponent::PX4TuningComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
-    : VehicleComponent(vehicle, autopilot, AutoPilotPlugin::UnknownVehicleComponent, parent), _name(tr("PID Tuning")) {}
+    : VehicleComponent(vehicle, autopilot, AutoPilotPlugin::UnknownVehicleComponent, parent)
+    , _name(tr("PID Tuning"))
+{
+}
 
-QString PX4TuningComponent::name(void) const { return _name; }
+QString PX4TuningComponent::name(void) const
+{
+    return _name;
+}
 
-QString PX4TuningComponent::description(void) const {
+QString PX4TuningComponent::description(void) const
+{
     return tr("Tuning Setup is used to tune the flight controllers.");
 }
 
-QString PX4TuningComponent::iconResource(void) const { return "/qmlimages/TuningComponentIcon.png"; }
+QString PX4TuningComponent::iconResource(void) const
+{
+    return "/qmlimages/TuningComponentIcon.png";
+}
 
-bool PX4TuningComponent::requiresSetup(void) const { return false; }
+bool PX4TuningComponent::requiresSetup(void) const
+{
+    return false;
+}
 
-bool PX4TuningComponent::setupComplete(void) const { return true; }
+bool PX4TuningComponent::setupComplete(void) const
+{
+    return true;
+}
 
-QStringList PX4TuningComponent::setupCompleteChangedTriggerList(void) const { return QStringList(); }
+QStringList PX4TuningComponent::setupCompleteChangedTriggerList(void) const
+{
+    return QStringList();
+}
 
-QUrl PX4TuningComponent::setupSource(void) const {
+QUrl PX4TuningComponent::setupSource(void) const
+{
     QString qmlFile;
 
     switch (_vehicle->vehicleType()) {
