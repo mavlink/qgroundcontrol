@@ -84,4 +84,7 @@ QUrl PX4TuningComponent::setupSource(void) const
     return QUrl::fromUserInput(qmlFile);
 }
 
-QUrl PX4TuningComponent::summaryQmlSource(void) const { return QUrl(); }
+QUrl PX4TuningComponent::summaryQmlSource(void) const
+{
+    return QUrl();
+}
