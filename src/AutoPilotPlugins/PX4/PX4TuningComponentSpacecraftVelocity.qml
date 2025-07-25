@@ -74,5 +74,3 @@ ColumnLayout {
         axis: [ position]
     }
 }
-
-
