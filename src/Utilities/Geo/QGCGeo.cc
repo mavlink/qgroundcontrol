@@ -16,16 +16,22 @@
 #include <QtCore/QtMath>
 
 #include <GeographicLib/Constants.hpp>
+#include <GeographicLib/Geocentric.hpp>
+#include <GeographicLib/LocalCartesian.hpp>
 #include <GeographicLib/MGRS.hpp>
 #include <GeographicLib/UTMUPS.hpp>
 
 #include <limits>
 
-QGC_LOGGING_CATEGORY(QGCGeoLog, "qgc.geo.qgcgeo")
+QGC_LOGGING_CATEGORY(QGCGeoLog, "qgc.utilities.geo.qgcgeo")
 
-static constexpr double epsilon = std::numeric_limits<double>::epsilon();
+namespace
+{
+    constexpr double epsilon = std::numeric_limits<double>::epsilon();
+}
 
-namespace QGCGeo {
+namespace QGCGeo
+{
 
 void convertGeoToNed(const QGeoCoordinate &coord, const QGeoCoordinate &origin, double &x, double &y, double &z)
 {
@@ -86,15 +92,15 @@ void convertNedToGeo(double x, double y, double z, const QGeoCoordinate &origin,
     coord.setAltitude(-z + origin.altitude());
 }
 
-int convertGeoToUTM(const QGeoCoordinate& coord, double &easting, double &northing)
+int convertGeoToUTM(const QGeoCoordinate &coord, double &easting, double &northing)
 {
     try {
         int zone;
         bool northp;
         GeographicLib::UTMUPS::Forward(coord.latitude(), coord.longitude(), zone, northp, easting, northing);
         return zone;
-    } catch(const GeographicLib::GeographicErr& e) {
-        qCDebug(QGCGeoLog) << Q_FUNC_INFO << e.what();
+    } catch(const GeographicLib::GeographicErr &e) {
+        qCDebug(QGCGeoLog) << e.what();
         return 0;
     }
 }
@@ -105,8 +111,8 @@ bool convertUTMToGeo(double easting, double northing, int zone, bool southhemi, 
 
     try {
         GeographicLib::UTMUPS::Reverse(zone, !southhemi, easting, northing, lat, lon);
-    } catch(const GeographicLib::GeographicErr& e) {
-        qCDebug(QGCGeoLog) << Q_FUNC_INFO << e.what();
+    } catch(const GeographicLib::GeographicErr &e) {
+        qCDebug(QGCGeoLog) << e.what();
         return false;
     }
 
@@ -126,8 +132,8 @@ QString convertGeoToMGRS(const QGeoCoordinate &coord)
         double x, y;
         GeographicLib::UTMUPS::Forward(coord.latitude(), coord.longitude(), zone, northp, x, y);
         GeographicLib::MGRS::Forward(zone, northp, x, y, coord.latitude(), 5, mgrs);
-    } catch(const GeographicLib::GeographicErr& e) {
-        qCDebug(QGCGeoLog) << Q_FUNC_INFO << e.what();
+    } catch(const GeographicLib::GeographicErr &e) {
+        qCDebug(QGCGeoLog) << e.what();
         mgrs = "";
     }
 
@@ -135,7 +141,7 @@ QString convertGeoToMGRS(const QGeoCoordinate &coord)
     for (int i = qstr.length() - 1; i >= 0; i--) {
         if (!qstr.at(i).isDigit()) {
             const int l = (qstr.length() - i) / 2;
-            return qstr.left(i + 1) + " " + qstr.mid(i + 1, l) + " " + qstr.mid(i + 1 + l);
+            return (qstr.left(i + 1) + " " + qstr.mid(i + 1, l) + " " + qstr.mid(i + 1 + l));
         }
     }
 
@@ -152,8 +158,8 @@ bool convertMGRSToGeo(const QString &mgrs, QGeoCoordinate &coord)
         double x, y;
         GeographicLib::MGRS::Reverse(mgrs.simplified().replace(" ", "").toStdString(), zone, northp, x, y, prec);
         GeographicLib::UTMUPS::Reverse(zone, northp, x, y, lat, lon);
-    } catch(const GeographicLib::GeographicErr& e) {
-        qCDebug(QGCGeoLog) << Q_FUNC_INFO << e.what();
+    } catch(const GeographicLib::GeographicErr &e) {
+        qCDebug(QGCGeoLog) << e.what();
         return false;
     }
 
@@ -163,4 +169,83 @@ bool convertMGRSToGeo(const QString &mgrs, QGeoCoordinate &coord)
     return true;
 }
 
-} // namespace QGCGeo
+QVector3D convertGeodeticToEcef(const QGeoCoordinate &llh)
+{
+    double x, y, z;
+    GeographicLib::Geocentric::WGS84().Forward(
+        llh.latitude(), llh.longitude(), llh.altitude(),
+        x, y, z);
+
+    const QVector3D out_point(x, y, z);
+    return out_point;
+}
+
+QGeoCoordinate convertEcefToGeodetic(const QVector3D &ecef)
+{
+    double lat, lon, alt;
+    GeographicLib::Geocentric::WGS84().Reverse(
+        ecef.x(), ecef.y(), ecef.z(),
+        lat, lon, alt);
+
+    const QGeoCoordinate out_point(lat, lon, alt);
+    return out_point;
+}
+
+QVector3D convertEcefToEnu(const QVector3D &ecef, const QGeoCoordinate &ref)
+{
+    double lat, lon, h;
+    GeographicLib::Geocentric::WGS84().Reverse(
+        ecef.x(), ecef.y(), ecef.z(), lat, lon, h);
+
+    double x, y, z;
+    GeographicLib::LocalCartesian(ref.latitude(),
+                                  ref.longitude(),
+                                  ref.altitude(),
+                                  GeographicLib::Geocentric::WGS84())
+        .Forward(lat, lon, h, x, y, z);
+
+    const QVector3D out_point(x, y, z);
+    return out_point;
+}
+
+QVector3D convertEnuToEcef(const QVector3D &enu, const QGeoCoordinate &ref)
+{
+    double lat, lon, h;
+    GeographicLib::LocalCartesian(ref.latitude(),
+                                  ref.longitude(),
+                                  ref.altitude(),
+                                  GeographicLib::Geocentric::WGS84())
+        .Reverse(enu.x(), enu.y(), enu.z(), lat, lon, h);
+
+    double x, y, z;
+    GeographicLib::Geocentric::WGS84().Forward(lat, lon, h, x, y, z);
+
+    const QVector3D out_point(x, y, z);
+    return out_point;
+}
+
+QVector3D convertGpsToEnu(const QGeoCoordinate &llh, const QGeoCoordinate &ref)
+{
+    double x, y, z;
+    GeographicLib::LocalCartesian(
+        ref.latitude(), ref.longitude(), ref.altitude(),
+        GeographicLib::Geocentric::WGS84()
+    ).Forward(llh.latitude(), llh.longitude(), llh.altitude(), x, y, z);
+
+    const QVector3D out_point(x, y, z);
+    return out_point;
+}
+
+QGeoCoordinate convertEnuToGps(const QVector3D &enu, const QGeoCoordinate &ref)
+{
+    double lat, lon, alt;
+    GeographicLib::LocalCartesian(
+        ref.latitude(), ref.longitude(), ref.altitude(),
+        GeographicLib::Geocentric::WGS84()
+    ).Reverse(enu.x(), enu.y(), enu.z(), lat, lon, alt);
+
+    const QGeoCoordinate out_point(lat, lon, alt);
+    return out_point;
+}
+
+}

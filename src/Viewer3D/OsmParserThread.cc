@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 #include "OsmParserThread.h"
-#include "Viewer3DUtils.h"
+#include "QGCGeo.h"
 
 #include <QtCore/QFile>
 
@@ -173,7 +173,7 @@ void OsmParserThread::decodeBuildings(QDomElement &xmlComponent, QMap<uint64_t, 
             if(ref_id > 0) {
                 gps_pt_tmp = nodeMap[ref_id];
                 bld_points.push_back(gps_pt_tmp);
-                local_pt_tmp = mapGpsToLocalPoint(gps_pt_tmp, gpsRef);
+                local_pt_tmp = QGCGeo::convertGpsToEnu(gps_pt_tmp, gpsRef);
                 bld_points_local.push_back(QVector2D(local_pt_tmp.x(), local_pt_tmp.y()));
 
                 bld_x_max = (bld_x_max < local_pt_tmp.x())?(local_pt_tmp.x()):(bld_x_max);
