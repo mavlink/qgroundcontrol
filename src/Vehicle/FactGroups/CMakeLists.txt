@@ -66,7 +66,7 @@ qt_add_resources(${CMAKE_PROJECT_NAME} json_vehicle_fact_group
     FILES ${JSON_FILES}
 )
 
-# Alis
+# Alias
 set_source_files_properties(LocalPositionFact.json PROPERTIES QT_RESOURCE_ALIAS LocalPositionSetpointFact.json)
 qt_add_resources(${CMAKE_PROJECT_NAME} json_vehicle_fact_group_alias
     PREFIX "/json/Vehicle"
