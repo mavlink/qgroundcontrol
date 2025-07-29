@@ -248,27 +248,8 @@ FlightMap {
         showText: !pipMode
     }
 
-    // Add trajectory lines to the map
-    MapPolyline {
-        id:         trajectoryPolyline
-        line.width: 3
-        line.color: "red"
-        z:          QGroundControl.zOrderTrajectoryLines
-        visible:    !pipMode
-
-        Connections {
-            target:                 QGroundControl.multiVehicleManager
-            function onActiveVehicleChanged(activeVehicle) {
-                trajectoryPolyline.path = _activeVehicle ? _activeVehicle.trajectoryPoints.list() : []
-            }
-        }
-
-        Connections {
-            target:                             _activeVehicle ? _activeVehicle.trajectoryPoints : null
-            function onPointAdded(coordinate) { trajectoryPolyline.addCoordinate(coordinate) }
-            function onUpdateLastPoint(coordinate) { trajectoryPolyline.replaceCoordinate(trajectoryPolyline.pathLength() - 1, coordinate) }
-            function onPointsCleared() { trajectoryPolyline.path = [] }
-        }
+    TrajectoryPolyline {
+        visible: !pipMode
     }
 
     // Add the vehicles to the map

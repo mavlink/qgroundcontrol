@@ -9,10 +9,13 @@
 
 #pragma once
 
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
-#include <QtCore/QVariantList>
 #include <QtPositioning/QGeoCoordinate>
+#include <QtPositioning/QGeoPath>
 #include <QtQmlIntegration/QtQmlIntegration>
+
+Q_DECLARE_LOGGING_CATEGORY(TrajectoryPointsLog)
 
 class Vehicle;
 
@@ -21,31 +24,39 @@ class TrajectoryPoints : public QObject
     Q_OBJECT
     QML_ELEMENT
     QML_UNCREATABLE("")
+    Q_PROPERTY(QList<QGeoCoordinate> path READ path NOTIFY pathChanged)
+
 public:
-    TrajectoryPoints(Vehicle* vehicle, QObject* parent = nullptr);
+    explicit TrajectoryPoints(Vehicle *vehicle, QObject *parent = nullptr);
+    ~TrajectoryPoints();
 
-    Q_INVOKABLE QVariantList list(void) const { return _points; }
+    /// The simplified trajectory of the vehicle
+    const QList<QGeoCoordinate> &path() const { return _path.path(); }
 
-    void start  (void);
-    void stop   (void);
+    /// Begin recording trajectory points (clears any existing path)
+    void start();
+
+    /// Stop recording trajectory points
+    void stop();
 
 public slots:
-    void clear  (void);
+    /// Clear the current path and reset state
+    void clear();
 
 signals:
-    void pointAdded     (QGeoCoordinate coordinate);
-    void updateLastPoint(QGeoCoordinate coordinate);
-    void pointsCleared  (void);
+    /// Emitted whenever the path is changed (added or updated coordinate)
+    void pathChanged(const QGeoPath &path);
 
 private slots:
+    /// Slot connected to Vehicle::coordinateChanged
     void _vehicleCoordinateChanged(QGeoCoordinate coordinate);
 
 private:
-    Vehicle*        _vehicle;
-    QVariantList    _points;
-    QGeoCoordinate  _lastPoint;
-    double          _lastAzimuth;
+    Vehicle *_vehicle = nullptr;
+    QGeoPath _path;                 ///< Accumulated trajectory (graphics‑friendly)
+    QGeoCoordinate _lastPoint;      ///< Cached last point for distance/azimuth checks
+    double _lastAzimuth = qQNaN();
 
-    static constexpr double _distanceTolerance = 2.0;
-    static constexpr double _azimuthTolerance = 1.5;
+    static constexpr double kDistanceTolerance = 2.0;   ///< metres
+    static constexpr double kAzimuthTolerance = 1.5;    ///< degrees
 };

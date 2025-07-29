@@ -8,64 +8,66 @@
  ****************************************************************************/
 
 #include "TrajectoryPoints.h"
+#include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 
-TrajectoryPoints::TrajectoryPoints(Vehicle* vehicle, QObject* parent)
-    : QObject       (parent)
-    , _vehicle      (vehicle)
-    , _lastAzimuth  (qQNaN())
+QGC_LOGGING_CATEGORY(TrajectoryPointsLog, "qgc.vehicle.trajectorypoints")
+
+TrajectoryPoints::TrajectoryPoints(Vehicle *vehicle, QObject *parent)
+    : QObject(parent)
+    , _vehicle(vehicle)
 {
+    qCDebug(TrajectoryPointsLog) << this;
+}
+
+TrajectoryPoints::~TrajectoryPoints()
+{
+    qCDebug(TrajectoryPointsLog) << this;
+}
+
+void TrajectoryPoints::start()
+{
+    clear();
+    (void) connect(_vehicle, &Vehicle::coordinateChanged, this, &TrajectoryPoints::_vehicleCoordinateChanged);
+}
+
+void TrajectoryPoints::stop()
+{
+    (void) disconnect(_vehicle, &Vehicle::coordinateChanged, this, &TrajectoryPoints::_vehicleCoordinateChanged);
+}
+
+void TrajectoryPoints::clear()
+{
+    _path.clearPath();
+    _lastPoint = QGeoCoordinate();
+    _lastAzimuth = qQNaN();
+    emit pathChanged(_path);
 }
 
 void TrajectoryPoints::_vehicleCoordinateChanged(QGeoCoordinate coordinate)
 {
-    // The goal of this algorithm is to limit the number of trajectory points whic represent the vehicle path.
-    // Fewer points means higher performance of map display.
-
     if (_lastPoint.isValid()) {
         double distance = _lastPoint.distanceTo(coordinate);
-        if (distance > _distanceTolerance) {
-            //-- Update flight distance
+        if (distance > kDistanceTolerance) {
+            // Update total flight distance maintained by Vehicle
             _vehicle->updateFlightDistance(distance);
-            // Vehicle has moved far enough from previous point for an update
-            double newAzimuth = _lastPoint.azimuthTo(coordinate);
-            if (qIsNaN(_lastAzimuth) || qAbs(newAzimuth - _lastAzimuth) > _azimuthTolerance) {
-                // The new position IS NOT colinear with the last segment. Append the new position to the list.
-                _lastAzimuth = _lastPoint.azimuthTo(coordinate);
-                _lastPoint = coordinate;
-                _points.append(QVariant::fromValue(coordinate));
-                emit pointAdded(coordinate);
-            } else {
-                // The new position IS colinear with the last segment. Don't add a new point, just update
-                // the last point to be the new position.
-                _lastPoint = coordinate;
-                _points[_points.count() - 1] = QVariant::fromValue(coordinate);
-                emit updateLastPoint(coordinate);
+
+            const double newAzimuth = _lastPoint.azimuthTo(coordinate);
+            if (qIsNaN(_lastAzimuth) || (qAbs(newAzimuth - _lastAzimuth) > kAzimuthTolerance)) {
+                // Not colinear — append a new segment vertex
+                _lastAzimuth = newAzimuth;
+                _path.addCoordinate(coordinate);
+            } else if (!_path.isEmpty()) {
+                // Colinear — replace the end vertex to keep path simplified
+                _path.replaceCoordinate(_path.size() - 1, coordinate);
             }
+            _lastPoint = coordinate;
+            emit pathChanged(_path);
         }
     } else {
-        // Add the very first trajectory point to the list
+        // First point in the trajectory
         _lastPoint = coordinate;
-        _points.append(QVariant::fromValue(coordinate));
-        emit pointAdded(coordinate);
+        _path.addCoordinate(coordinate);
+        emit pathChanged(_path);
     }
-}
-
-void TrajectoryPoints::start(void)
-{
-    clear();
-    connect(_vehicle, &Vehicle::coordinateChanged, this, &TrajectoryPoints::_vehicleCoordinateChanged);
-}
-
-void TrajectoryPoints::stop(void)
-{
-    disconnect(_vehicle, &Vehicle::coordinateChanged, this, &TrajectoryPoints::_vehicleCoordinateChanged);
-}
-
-void TrajectoryPoints::clear(void)
-{
-    _points.clear();
-    _lastPoint = QGeoCoordinate();
-    _lastAzimuth = qQNaN();
-    emit pointsCleared();
 }
