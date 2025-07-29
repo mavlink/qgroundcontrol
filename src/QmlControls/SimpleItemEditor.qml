@@ -1,284 +1,303 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.ScreenTools
 
 import QGroundControl.Controls
+
 import QGroundControl.FactControls
 
+import QGroundControl.FlightMap
 
-// Editor for Simple mission items
 Rectangle {
-    width:  availableWidth
-    height: editorColumn.height + (_margin * 2)
-    color:  qgcPal.windowShadeDark
-    radius: _radius
+    id:         _root
+    height:     childrenRect.y + childrenRect.height + _margin
+    width:      availableWidth
+    color:      qgcPal.windowShadeDark
+    radius:     _radius
 
-    property bool _specifiesAltitude:       missionItem.specifiesAltitude
-    property real _margin:                  ScreenTools.defaultFontPixelHeight / 2
-    property real _altRectMargin:           ScreenTools.defaultFontPixelWidth / 2
-    property var  _controllerVehicle:       missionItem.masterController.controllerVehicle
-    property int  _globalAltMode:           missionItem.masterController.missionController.globalAltitudeMode
-    property bool _globalAltModeIsMixed:    _globalAltMode == QGroundControl.AltitudeModeMixed
-    property real _radius:                  ScreenTools.defaultFontPixelWidth / 2
+    property bool   transectAreaDefinitionComplete: true
+    property string transectAreaDefinitionHelp:     _internalError
+    property string transectValuesHeaderName:       _internalError
+    property var    transectValuesComponent:        undefined
+    property var    presetsTransectValuesComponent: undefined
 
-    function updateAltitudeModeText() {
-        if (missionItem.altitudeMode === QGroundControl.AltitudeModeRelative) {
-            altModeLabel.text = QGroundControl.altitudeModeShortDescription(QGroundControl.AltitudeModeRelative)
-        } else if (missionItem.altitudeMode === QGroundControl.AltitudeModeAbsolute) {
-            altModeLabel.text = QGroundControl.altitudeModeShortDescription(QGroundControl.AltitudeModeAbsolute)
-        } else if (missionItem.altitudeMode === QGroundControl.AltitudeModeCalcAboveTerrain) {
-            altModeLabel.text = QGroundControl.altitudeModeShortDescription(QGroundControl.AltitudeModeCalcAboveTerrain)
-        } else if (missionItem.altitudeMode === QGroundControl.AltitudeModeTerrainFrame) {
-            altModeLabel.text = QGroundControl.altitudeModeShortDescription(QGroundControl.AltitudeModeTerrainFrame)
-        } else {
-            altModeLabel.text = qsTr("Internal Error")
+    readonly property string _internalError: "Internal Error"
+
+    property var    _missionItem:               missionItem
+    property real   _margin:                    ScreenTools.defaultFontPixelWidth / 2
+    property real   _fieldWidth:                ScreenTools.defaultFontPixelWidth * 10.5
+    property var    _vehicle:                   QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
+    property real   _cameraMinTriggerInterval:  _missionItem.cameraCalc.minTriggerInterval.rawValue
+    property string _doneAdjusting:             qsTr("Done")
+    property bool   _presetsAvailable:          _missionItem.presetNames.length !== 0
+
+    function polygonCaptureStarted() {
+        _missionItem.clearPolygon()
+    }
+
+    function polygonCaptureFinished(coordinates) {
+        for (var i=0; i<coordinates.length; i++) {
+            _missionItem.addPolygonCoordinate(coordinates[i])
         }
     }
 
-    Component.onCompleted: updateAltitudeModeText()
-
-    Connections {
-        target:                 missionItem
-        function onAltitudeModeChanged() { updateAltitudeModeText() }
+    function polygonAdjustVertex(vertexIndex, vertexCoordinate) {
+        _missionItem.adjustPolygonCoordinate(vertexIndex, vertexCoordinate)
     }
 
-    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
-    Component { id: altModeDialogComponent; AltModeDialog { } }
+    function polygonAdjustStarted() { }
+    function polygonAdjustFinished() { }
 
-    Column {
+    QGCPalette { id: qgcPal; colorGroupEnabled: true }
+
+    ColumnLayout {
         id:                 editorColumn
         anchors.margins:    _margin
+        anchors.top:        parent.top
         anchors.left:       parent.left
         anchors.right:      parent.right
-        anchors.top:        parent.top
-        spacing:            _margin
 
         QGCLabel {
-            width:          parent.width
-            wrapMode:       Text.WordWrap
-            font.pointSize: ScreenTools.smallFontPointSize
-            text:           missionItem.rawEdit ?
-                                qsTr("Provides advanced access to all commands/parameters. Be very careful!") :
-                                missionItem.commandDescription
+            id:                     transectAreaDefinitionCompleteLabel
+            Layout.fillWidth:       true
+            wrapMode:               Text.WordWrap
+            horizontalAlignment:    Text.AlignHCenter
+            text:                   transectAreaDefinitionHelp
+            visible:                !transectAreaDefinitionComplete || _missionItem.wizardMode
         }
 
         ColumnLayout {
-            anchors.left:       parent.left
-            anchors.right:      parent.right
+            Layout.fillWidth:   true
             spacing:            _margin
-            visible:            missionItem.isTakeoffItem && missionItem.wizardMode // Hack special case for takeoff item
+            visible:            transectAreaDefinitionComplete && !_missionItem.wizardMode
 
-            QGCLabel {
-                text:               qsTr("Move '%1' %2 to the %3 location. %4")
-                .arg(_controllerVehicle.vtol ? qsTr("T") : qsTr("T"))
-                .arg(_controllerVehicle.vtol ? qsTr("Transition Direction") : qsTr("Takeoff"))
-                .arg(_controllerVehicle.vtol ? qsTr("desired") : qsTr("climbout"))
-                .arg(_controllerVehicle.vtol ? (qsTr("Ensure distance from launch to transition direction is far enough to complete transition.")) : "")
+            TransectStyleComplexItemTabBar {
+                id:                 tabBar
                 Layout.fillWidth:   true
-                wrapMode:           Text.WordWrap
-                visible:            !initialClickLabel.visible
             }
 
-            QGCLabel {
-                text:               qsTr("Ensure clear of obstacles and into the wind.")
-                Layout.fillWidth:   true
-                wrapMode:           Text.WordWrap
-                visible:            !initialClickLabel.visible
-            }
-
-            QGCButton {
-                text:               qsTr("Done")
-                Layout.fillWidth:   true
-                visible:            !initialClickLabel.visible
-                onClicked: {
-                    missionItem.wizardMode = false
-                }
-            }
-
-            QGCLabel {
-                id:                 initialClickLabel
-                text:               missionItem.launchTakeoffAtSameLocation ?
-                                        qsTr("Click in map to set planned Takeoff location.") :
-                                        qsTr("Click in map to set planned Launch location.")
-                Layout.fillWidth:   true
-                wrapMode:           Text.WordWrap
-                visible:            missionItem.isTakeoffItem && !missionItem.launchCoordinate.isValid
-            }
-        }
-
-        Column {
-            anchors.left:       parent.left
-            anchors.right:      parent.right
-            spacing:            _altRectMargin
-            visible:            !missionItem.wizardMode
-
+            // Grid tab
             ColumnLayout {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                spacing:        0
-                visible:        _specifiesAltitude
+                Layout.fillWidth:   true
+                spacing:            _margin
+                visible:            tabBar.currentIndex === 0
 
                 QGCLabel {
                     Layout.fillWidth:   true
+                    text:               qsTr("WARNING: Photo interval is below minimum interval (%1 secs) supported by camera.").arg(_cameraMinTriggerInterval.toFixed(1))
                     wrapMode:           Text.WordWrap
-                    font.pointSize:     ScreenTools.smallFontPointSize
-                    text:               qsTr("Altitude below specifies the approximate altitude of the ground. Normally 0 for landing back at original launch location.")
-                    visible:            missionItem.isLandCommand
+                    color:              qgcPal.warningText
+                    visible:            _missionItem.cameraShots > 0 && _cameraMinTriggerInterval !== 0 && _cameraMinTriggerInterval > _missionItem.timeBetweenShots
                 }
 
-                MouseArea {
-                    Layout.preferredWidth:  childrenRect.width
-                    Layout.preferredHeight: childrenRect.height
-
-                    onClicked: {
-                        if (_globalAltModeIsMixed) {
-                            var removeModes = []
-                            var updateFunction = function(altMode){ missionItem.altitudeMode = altMode }
-                            if (!_controllerVehicle.supportsTerrainFrame) {
-                                removeModes.push(QGroundControl.AltitudeModeTerrainFrame)
-                            }
-                            if (!QGroundControl.corePlugin.options.showMissionAbsoluteAltitude && missionItem.altitudeMode !== QGroundControl.AltitudeModeAbsolute) {
-                                removeModes.push(QGroundControl.AltitudeModeAbsolute)
-                            }
-                            removeModes.push(QGroundControl.AltitudeModeMixed)
-                            altModeDialogComponent.createObject(mainWindow, { rgRemoveModes: removeModes, updateAltModeFn: updateFunction }).open()
-                        }
-                    }
-
-                    RowLayout {
-                        spacing: _altRectMargin
-
-                        QGCLabel {
-                            Layout.alignment:   Qt.AlignBaseline
-                            text:               qsTr("Altitude")
-                            font.pointSize:     ScreenTools.smallFontPointSize
-                        }
-                        QGCLabel {
-                            id:                 altModeLabel
-                            Layout.alignment:   Qt.AlignBaseline
-                            visible:            _globalAltMode !== QGroundControl.AltitudeModeRelative
-                        }
-                        QGCColoredImage {
-                            height:     ScreenTools.defaultFontPixelHeight / 2
-                            width:      height
-                            source:     "/res/DropArrow.svg"
-                            color:      qgcPal.text
-                            visible:    _globalAltModeIsMixed
-                        }
-                    }
+                CameraCalcGrid {
+                    Layout.fillWidth:               true
+                    cameraCalc:                     _missionItem.cameraCalc
+                    vehicleFlightIsFrontal:         true
+                    distanceToSurfaceLabel:         qsTr("Altitude")
+                    frontalDistanceLabel:           qsTr("Trigger Dist")
+                    sideDistanceLabel:              qsTr("Spacing")
                 }
 
-                FactTextField {
-                    id:                 altField
+                SectionHeader {
+                    id:                 transectValuesHeader
                     Layout.fillWidth:   true
-                    fact:               missionItem.altitude
+                    text:               transectValuesHeaderName
                 }
+
+                Loader {
+                    Layout.fillWidth:   true
+                    visible:            transectValuesHeader.checked
+                    sourceComponent:    transectValuesComponent
+
+                    property bool forPresets: false
+                }
+
+                QGCButton {
+                    Layout.alignment:   Qt.AlignHCenter
+                    text:               qsTr("Rotate Entry Point")
+                    onClicked:          _missionItem.rotateEntryPoint()
+                    visible:            transectValuesHeader.checked
+                }
+
+                SectionHeader {
+                    id:                 statsHeader
+                    Layout.fillWidth:   true
+                    text:               qsTr("Statistics")
+                }
+
+                TransectStyleComplexItemStats {
+                    Layout.fillWidth:   true
+                    visible:            statsHeader.checked
+                }
+            } // Grid Column
+
+            // Camera Tab
+            CameraCalcCamera {
+                Layout.fillWidth:   true
+                visible:            tabBar.currentIndex === 1
+                cameraCalc:         _missionItem.cameraCalc
+            }
+
+            // Terrain Tab
+            TransectStyleComplexItemTerrainFollow {
+                Layout.fillWidth:   true
+                spacing:            _margin
+                visible:            tabBar.currentIndex === 2
+                missionItem:        _missionItem
+            }
+
+            // Presets Tab
+            ColumnLayout {
+                Layout.fillWidth:   true
+                spacing:            _margin
+                visible:            tabBar.currentIndex === 3
 
                 QGCLabel {
-                    font.pointSize:     ScreenTools.smallFontPointSize
-                    text:               qsTr("Actual AMSL alt sent: %1 %2").arg(missionItem.amslAltAboveTerrain.valueString).arg(missionItem.amslAltAboveTerrain.units)
-                    visible:            missionItem.altitudeMode === QGroundControl.AltitudeModeCalcAboveTerrain
-                }
-            }
-
-            ColumnLayout {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                spacing:        _margin
-
-                Repeater {
-                    model: missionItem.comboboxFacts
-
-                    ColumnLayout {
-                        Layout.fillWidth:   true
-                        spacing:            0
-
-                        QGCLabel {
-                            font.pointSize: ScreenTools.smallFontPointSize
-                            text:           object.name
-                            visible:        object.name !== ""
-                        }
-
-                        FactComboBox {
-                            Layout.fillWidth:   true
-                            indexModel:         false
-                            model:              object.enumStrings
-                            fact:               object
-                        }
-                    }
-                }
-            }
-
-            GridLayout {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                flow:           GridLayout.TopToBottom
-                rows:           missionItem.textFieldFacts.count +
-                                missionItem.nanFacts.count +
-                                (missionItem.speedSection.available ? 1 : 0)
-                columns:        2
-
-                Repeater {
-                    model: missionItem.textFieldFacts
-
-                    QGCLabel { text: object.name }
-                }
-
-                Repeater {
-                    model: missionItem.nanFacts
-
-                    QGCCheckBox {
-                        text:           object.name
-                        checked:        !isNaN(object.rawValue)
-                        onClicked:      object.rawValue = checked ? 0 : NaN
-                    }
-                }
-
-                QGCCheckBox {
-                    id:         flightSpeedCheckbox
-                    text:       qsTr("Flight Speed")
-                    checked:    missionItem.speedSection.specifyFlightSpeed
-                    onClicked:  missionItem.speedSection.specifyFlightSpeed = checked
-                    visible:    missionItem.speedSection.available
-                }
-
-
-                Repeater {
-                    model: missionItem.textFieldFacts
-
-                    FactTextField {
-                        showUnits:          true
-                        fact:               object
-                        Layout.fillWidth:   true
-                        enabled:            !object.readOnly
-                    }
-                }
-
-                Repeater {
-                    model: missionItem.nanFacts
-
-                    FactTextField {
-                        showUnits:          true
-                        fact:               object
-                        Layout.fillWidth:   true
-                        enabled:            !isNaN(object.rawValue)
-                    }
-                }
-
-                FactTextField {
-                    fact:               missionItem.speedSection.flightSpeed
                     Layout.fillWidth:   true
-                    enabled:            flightSpeedCheckbox.checked
-                    visible:            missionItem.speedSection.available
+                    text:               qsTr("Presets")
+                    wrapMode:           Text.WordWrap
                 }
-            }
 
-            CameraSection {
-                checked:    missionItem.cameraSection.settingsSpecified
-                visible:    missionItem.cameraSection.available
+                QGCComboBox {
+                    id:                 presetCombo
+                    Layout.fillWidth:   true
+                    model:              _missionItem.presetNames
+                }
+
+                RowLayout {
+                    Layout.fillWidth:   true
+
+                    QGCButton {
+                        Layout.fillWidth:   true
+                        text:               qsTr("Apply Preset")
+                        enabled:            _missionItem.presetNames.length != 0
+                        onClicked:          _missionItem.loadPreset(presetCombo.textAt(presetCombo.currentIndex))
+                    }
+
+                    QGCButton {
+                        Layout.fillWidth:   true
+                        text:               qsTr("Delete Preset")
+                        enabled:            _missionItem.presetNames.length != 0
+                        onClicked:          deletePresetDialog.createObject(mainWindow, { presetName: presetCombo.textAt(presetCombo.currentIndex) }).open()
+
+                        Component {
+                            id: deletePresetDialog
+
+                            QGCSimpleMessageDialog {
+                                title:      qsTr("Delete Preset")
+                                text:       qsTr("Are you sure you want to delete '%1' preset?").arg(presetName)
+                                buttons:    Dialog.Yes | Dialog.No
+
+                                property string presetName
+
+                                onAccepted: { _missionItem.deletePreset(presetName) }
+                            }
+                        }
+                    }
+                }
+
+                Item { height: ScreenTools.defaultFontPixelHeight; width: 1 }
+
+                QGCButton {
+                    Layout.alignment:   Qt.AlignCenter
+                    Layout.fillWidth:   true
+                    text:               qsTr("Save Settings As New Preset")
+                    onClicked:          savePresetDialog.createObject(mainWindow).open()
+                }
+
+                SectionHeader {
+                    id:                 presectsTransectValuesHeader
+                    Layout.fillWidth:   true
+                    text:               transectValuesHeaderName
+                    visible:            !!presetsTransectValuesComponent
+                }
+
+                Loader {
+                    Layout.fillWidth:   true
+                    visible:            presectsTransectValuesHeader.checked && !!presetsTransectValuesComponent
+                    sourceComponent:    presetsTransectValuesComponent
+
+                    property bool forPresets: true
+                }
+
+                SectionHeader {
+                    id:                 presetsStatsHeader
+                    Layout.fillWidth:   true
+                    text:               qsTr("Statistics")
+                }
+
+                TransectStyleComplexItemStats {
+                    Layout.fillWidth:   true
+                    visible:            presetsStatsHeader.checked
+                }
+            } // Main editing column
+        } // Top level  Column
+
+        Component {
+            id: savePresetDialog
+
+            QGCPopupDialog {
+                id:         popupDialog
+                title:      qsTr("Save Preset")
+                buttons:    Dialog.Save | Dialog.Cancel
+
+                onAccepted: {
+                    if (presetNameField.text != "") {
+                        _missionItem.savePreset(presetNameField.text.trim())
+                    } else {
+                        preventClose = true
+                    }
+                }
+
+                ColumnLayout {
+                    width:      ScreenTools.defaultFontPixelWidth * 30
+                    spacing:    ScreenTools.defaultFontPixelHeight
+
+                    QGCLabel {
+                        Layout.fillWidth:   true
+                        text:               qsTr("Save the current settings as a named preset.")
+                        wrapMode:           Text.WordWrap
+                    }
+
+                    QGCLabel {
+                        text: qsTr("Preset Name")
+                    }
+
+                    QGCTextField {
+                        id:                 presetNameField
+                        Layout.fillWidth:   true
+                        placeholderText:    qsTr("Enter preset name")
+
+                        Component.onCompleted:  validateText(presetNameField.text)
+                        onTextChanged:          validateText(text)
+
+                        function validateText(text) {
+                            if (text.trim() === "") {
+                                nameError.text = qsTr("Preset name cannot be blank.")
+                                popupDialog.acceptButtonEnabled = false
+                            } else if (text.includes("/")) {
+                                nameError.text = qsTr("Preset name cannot include the \"/\" character.")
+                                popupDialog.acceptButtonEnabled = false
+                            } else {
+                                nameError.text = ""
+                                popupDialog.acceptButtonEnabled = true
+                            }
+                        }
+                    }
+
+                    QGCLabel {
+                        id:                 nameError
+                        Layout.fillWidth:   true
+                        wrapMode:           Text.WordWrap
+                        color:              QGroundControl.globalPalette.warningText
+                        visible:            text !== ""
+                    }
+                }
             }
         }
     }

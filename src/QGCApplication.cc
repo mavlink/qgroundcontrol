@@ -70,12 +70,9 @@
 #include "QmlObjectListModel.h"
 #include "FirmwarePlugin.h"
 #include "UnitsSettings.h"
-
 //end my add
 
-
 QGC_LOGGING_CATEGORY(QGCApplicationLog, "qgc.qgcapplication")
-
 
 //my add, import (if android, clear all settings and import new one)
 void QGCApplication::importSettingsFromFile(const QString& filePath)
