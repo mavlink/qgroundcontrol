@@ -99,6 +99,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         ToolbarModule
         UTMSPModule
         VehicleSetupModule
+        PX4FirmwareModule
 )
 
 if(NOT QGC_DISABLE_APM_PLUGIN AND NOT QGC_DISABLE_APM_PLUGIN_FACTORY)
