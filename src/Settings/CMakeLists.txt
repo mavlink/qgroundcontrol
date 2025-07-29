@@ -54,4 +54,11 @@ if(NOT QGC_DISABLE_APM_MAVLINK)
     )
 endif()
 
+# Add JSON files
+file(GLOB_RECURSE JSON_SETTINGS_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.json)
+qt_add_resources(${CMAKE_PROJECT_NAME} json_app_settings
+    PREFIX "/json"
+    FILES ${JSON_SETTINGS_FILES}
+)
+
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

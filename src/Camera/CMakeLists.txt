@@ -18,8 +18,8 @@ target_sources(${CMAKE_PROJECT_NAME}
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-# qt_add_resources(${CMAKE_PROJECT_NAME} "Camera_res"
-#     PREFIX "/"
-#     FILES
-#         CameraMetaData.json
-# )
+# Add JSON files
+qt_add_resources(${CMAKE_PROJECT_NAME} json_mavlink_camera
+    PREFIX "/json"
+    FILES CameraMetaData.json
+)
