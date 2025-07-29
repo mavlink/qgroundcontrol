@@ -22,7 +22,6 @@ class APMFlightModesComponentController : public FactPanelController
 {
     Q_OBJECT
     QML_ELEMENT
-    QML_UNCREATABLE("")
     Q_PROPERTY(QString      modeParamPrefix         MEMBER _modeParamPrefix         CONSTANT)
     Q_PROPERTY(QString      modeChannelParam        MEMBER _modeChannelParam        CONSTANT)
     Q_PROPERTY(int          activeFlightMode        READ activeFlightMode           NOTIFY activeFlightModeChanged)
