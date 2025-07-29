@@ -22,7 +22,7 @@ import QGroundControl.ScreenTools
 Rectangle {
     id:     _root
     width:  parent.width
-    height: ScreenTools.toolbarHeight * 2 //because the height need to be big in this view
+    height: ScreenTools.toolbarHeight * 2.2 //because the height need to be big in this view
     color:  qgcPal.toolbarBackground
 
     property var    planMasterController
