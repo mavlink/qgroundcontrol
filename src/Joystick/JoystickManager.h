@@ -10,7 +10,6 @@
 #pragma once
 
 #include <QtCore/QObject>
-#include <QtCore/QTimer>
 #include <QtCore/QVariantList>
 #include <QtCore/QLoggingCategory>
 #include <QtQmlIntegration/QtQmlIntegration>
@@ -18,6 +17,7 @@
 Q_DECLARE_LOGGING_CATEGORY(JoystickManagerLog)
 
 class Joystick;
+class QTimer;
 
 class JoystickManager : public QObject
 {
@@ -64,8 +64,8 @@ private:
     Joystick *_activeJoystick = nullptr;
     QMap<QString, Joystick*> _name2JoystickMap;
 
-    int _joystickCheckTimerCounter = 0;
-    QTimer _joystickCheckTimer;
+    int _joystickCheckTimerCounter = 0;;
+    QTimer *_joystickCheckTimer = nullptr;
 
     static constexpr int kTimerInterval = 1000;
     static constexpr int kTimeout = 1000;

@@ -14,110 +14,111 @@
 #include <QtCore/QIODevice>
 #include <QtCore/QTextStream>
 
-#include <SDL3/SDL.h>
+#include <SDL.h>
 
 QGC_LOGGING_CATEGORY(JoystickSDLLog, "qgc.joystick.joysticksdl")
 
-JoystickSDL::JoystickSDL(const QString &name, int axisCount, int buttonCount, int hatCount, int instanceId, bool isGamepad, QObject *parent)
+JoystickSDL::JoystickSDL(const QString &name, int axisCount, int buttonCount, int hatCount, int index, bool isGameController, QObject *parent)
     : Joystick(name, axisCount, buttonCount, hatCount, parent)
-    , _isGamepad(isGamepad)
-    , _instanceId(instanceId)
+    , _isGameController(isGameController)
+    , _index(index)
 {
-    qCDebug(JoystickSDLLog) << this;
+    // qCDebug(JoystickSDLLog) << Q_FUNC_INFO << this;
 
-    if (_isGamepad) {
+    if (_isGameController) {
         _setDefaultCalibration();
     }
 }
 
 JoystickSDL::~JoystickSDL()
 {
-    qCDebug(JoystickSDLLog) << this;
+    // qCDebug(JoystickSDLLog) << Q_FUNC_INFO << this;
 }
 
 bool JoystickSDL::init()
 {
-    if (!SDL_InitSubSystem(SDL_INIT_GAMEPAD | SDL_INIT_JOYSTICK)) {
-        SDL_SetJoystickEventsEnabled(false);
+    SDL_SetMainReady();
+    if (SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK) < 0) {
+        (void) SDL_JoystickEventState(SDL_DISABLE);
         qCWarning(JoystickSDLLog) << "Failed to initialize SDL:" << SDL_GetError();
         return false;
     }
 
-    _loadGamepadMappings();
+    _loadGameControllerMappings();
     return true;
 }
 
 QMap<QString, Joystick*> JoystickSDL::discover()
 {
-    static QMap<QString, Joystick*> previous;
-    QMap<QString, Joystick*> current;
+    static QMap<QString, Joystick*> ret;
+
+    QMap<QString, Joystick*> newRet;
 
     qCDebug(JoystickSDLLog) << "Discovering joysticks";
 
-    int count = 0;
-    SDL_JoystickID *ids = SDL_GetJoysticks(&count);
-    if (!ids) {
-        qCWarning(JoystickSDLLog) << "SDL_GetJoysticks failed:" << SDL_GetError();
-        return current;
-    }
-
-    for (int n = 0; n < count; ++n) {
-        const SDL_JoystickID jid = ids[n];
-        QString name = QString::fromUtf8(SDL_GetJoystickNameForID(jid));
-
-        if (previous.contains(name)) {
-            current[name] = previous[name];
-            JoystickSDL *js = static_cast<JoystickSDL*>(current[name]);
-            if (js->instanceId() != jid) {
-                js->setInstanceId(jid);
+    for (int i = 0; i < SDL_NumJoysticks(); i++) {
+        QString name = SDL_JoystickNameForIndex(i);
+        if (ret.contains(name)) {
+            newRet[name] = ret[name];
+            JoystickSDL *const joystick = static_cast<JoystickSDL*>(newRet[name]);
+            if (joystick->index() != i) {
+                joystick->setIndex(i); // This joystick index has been remapped by SDL
             }
-            (void) previous.remove(name);
+
+            // Anything left in ret after we exit the loop has been removed (unplugged) and needs to be cleaned up.
+            // We will handle that in JoystickManager in case the removed joystick was in use.
+            (void) ret.remove(name);
+
+            qCDebug(JoystickSDLLog) << "Skipping duplicate" << name;
             continue;
         }
 
-        SDL_Joystick *tmpJoy = SDL_OpenJoystick(jid);
-        if (!tmpJoy) {
-            qCWarning(JoystickSDLLog) << "Failed to open joystick" << jid << SDL_GetError();
+        SDL_Joystick *const sdlJoystick = SDL_JoystickOpen(i);
+        if (!sdlJoystick) {
+            qCWarning(JoystickSDLLog) << "SDL failed opening joystick" << qPrintable(name) << "error:" << SDL_GetError();
             continue;
         }
 
-        const int axisCount = SDL_GetNumJoystickAxes(tmpJoy);
-        const int buttonCount = SDL_GetNumJoystickButtons(tmpJoy);
-        const int hatCount = SDL_GetNumJoystickHats(tmpJoy);
-        SDL_CloseJoystick(tmpJoy);
+        SDL_ClearError();
+        const int axisCount = SDL_JoystickNumAxes(sdlJoystick);
+        const int buttonCount = SDL_JoystickNumButtons(sdlJoystick);
+        const int hatCount = SDL_JoystickNumHats(sdlJoystick);
+        if ((axisCount < 0) || (buttonCount < 0) || (hatCount < 0)) {
+            qCWarning(JoystickSDLLog) << "SDL error parsing joystick features:" << SDL_GetError();
+        }
+        SDL_JoystickClose(sdlJoystick);
 
-        const bool isGamepad = SDL_IsGamepad(jid);
+        const bool isGameController = SDL_IsGameController(i);
+        qCDebug(JoystickSDLLog) << name << "axes:" << axisCount << "buttons:" << buttonCount << "hats:" << hatCount << "isGC:" << isGameController;
 
-        const QString baseName = name;
-        quint8 dupIdx = 1;
-        while (current.contains(name)) {
-            name = QString("%1 %2").arg(baseName).arg(dupIdx++);
+        // Check for joysticks with duplicate names and differentiate the keys when necessary.
+        // This is required when using an Xbox 360 wireless receiver that always identifies as
+        // 4 individual joysticks, regardless of how many joysticks are actually connected to the
+        // receiver. Using GUID does not help, all of these devices present the same GUID.
+        const QString originalName = name;
+        uint8_t duplicateIdx = 1;
+        while (newRet[name]) {
+            name = QString("%1 %2").arg(originalName).arg(duplicateIdx++);
         }
 
-        current[name] = new JoystickSDL(name,
-                                        qMax(0, axisCount),
-                                        qMax(0, buttonCount),
-                                        qMax(0, hatCount),
-                                        jid,
-                                        isGamepad);
+        newRet[name] = new JoystickSDL(name, qMax(0, axisCount), qMax(0, buttonCount), qMax(0, hatCount), i, isGameController);
     }
 
-    SDL_free(ids);
-    previous = current;
-    return current;
+    if (newRet.isEmpty()) {
+        qCDebug(JoystickSDLLog) << "None found";
+    }
+
+    ret = newRet;
+    return ret;
 }
 
 bool JoystickSDL::_open()
 {
-    if (_isGamepad) {
-        _sdlGamepad = SDL_OpenGamepad(_instanceId);
-        if (!_sdlGamepad) {
-            qCWarning(JoystickSDLLog) << "SDL_OpenGamepad failed:" << SDL_GetError();
-            return false;
-        }
-        _sdlJoystick = SDL_GetGamepadJoystick(_sdlGamepad);
+    if (_isGameController) {
+        _sdlController = SDL_GameControllerOpen(_index);
+        _sdlJoystick = SDL_GameControllerGetJoystick(_sdlController);
     } else {
-        _sdlJoystick = SDL_OpenJoystick(_instanceId);
+        _sdlJoystick = SDL_JoystickOpen(_index);
     }
 
     if (!_sdlJoystick) {
@@ -125,7 +126,7 @@ bool JoystickSDL::_open()
         return false;
     }
 
-    qCDebug(JoystickSDLLog) << "Opened" << SDL_GetJoystickName(_sdlJoystick) << "joystick at" << _sdlJoystick;
+    qCDebug(JoystickSDLLog) << "Opened" << SDL_JoystickName(_sdlJoystick) << "joystick at" << _sdlJoystick;
 
     return true;
 }
@@ -137,71 +138,71 @@ void JoystickSDL::_close()
         return;
     }
 
-    qCDebug(JoystickSDLLog) << "Closing" << SDL_GetJoystickName(_sdlJoystick) << "joystick at" << _sdlJoystick;
+    qCDebug(JoystickSDLLog) << "Closing" << SDL_JoystickName(_sdlJoystick) << "joystick at" << _sdlJoystick;
 
-    if (_isGamepad) {
-        SDL_CloseGamepad(_sdlGamepad);
+    if (_isGameController) {
+        SDL_GameControllerClose(_sdlController);
     } else {
-        SDL_CloseJoystick(_sdlJoystick);
+        SDL_JoystickClose(_sdlJoystick);
     }
 
     _sdlJoystick = nullptr;
-    _sdlGamepad = nullptr;
+    _sdlController = nullptr;
 }
 
 bool JoystickSDL::_update()
 {
-    if (_isGamepad) {
-        SDL_UpdateGamepads();
+    if (_isGameController) {
+        SDL_GameControllerUpdate();
     } else {
-        SDL_UpdateJoysticks();
+        SDL_JoystickUpdate();
     }
 
     return true;
 }
 
-bool JoystickSDL::_getButton(int idx) const
+bool JoystickSDL::_getButton(int i) const
 {
     int button = -1;
 
-    if (_isGamepad) {
-        button = SDL_GetGamepadButton(_sdlGamepad, static_cast<SDL_GamepadButton>(idx));
+    if (_isGameController) {
+        button = SDL_GameControllerGetButton(_sdlController, SDL_GameControllerButton(i));
     } else {
-        button = SDL_GetJoystickButton(_sdlJoystick, idx);
+        button = SDL_JoystickGetButton(_sdlJoystick, i);
     }
 
     return (button == 1);
 }
 
-int JoystickSDL::_getAxis(int idx) const
+int JoystickSDL::_getAxis(int i) const
 {
     int axis = -1;
 
-    if (_isGamepad) {
-        axis = SDL_GetGamepadAxis(_sdlGamepad, static_cast<SDL_GamepadAxis>(idx));
+    if (_isGameController) {
+        axis = SDL_GameControllerGetAxis(_sdlController, SDL_GameControllerAxis(i));
     } else {
-        axis = SDL_GetJoystickAxis(_sdlJoystick, idx);
+        axis = SDL_JoystickGetAxis(_sdlJoystick, i);
     }
 
     return axis;
 }
 
-bool JoystickSDL::_getHat(int hat, int idx) const
+bool JoystickSDL::_getHat(int hat, int i) const
 {
     static constexpr uint8_t hatButtons[] = {SDL_HAT_UP, SDL_HAT_DOWN, SDL_HAT_LEFT, SDL_HAT_RIGHT};
 
-    if (idx >= std::size(hatButtons)) {
+    if (i >= std::size(hatButtons)) {
         return false;
     }
 
-    return ((SDL_GetJoystickHat(_sdlJoystick, hat) & hatButtons[idx]) != 0);
+    return ((SDL_JoystickGetHat(_sdlJoystick, hat) & hatButtons[i]) != 0);
 }
 
-void JoystickSDL::_loadGamepadMappings()
+void JoystickSDL::_loadGameControllerMappings()
 {
     QFile file(QStringLiteral(":/gamecontrollerdb.txt"));
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qCWarning(JoystickSDLLog) << "Couldn't load Gamepad mapping database.";
+        qCWarning(JoystickSDLLog) << "Couldn't load GameController mapping database.";
         return;
     }
 
@@ -211,18 +212,18 @@ void JoystickSDL::_loadGamepadMappings()
         if (line.startsWith('#') || line.isEmpty()) {
             continue;
         }
-        if (SDL_AddGamepadMapping(qPrintable(line)) == -1) {
-            qCWarning(JoystickSDLLog) << "Couldn't add Gamepad mapping:" << SDL_GetError();
+        if (SDL_GameControllerAddMapping(line.toStdString().c_str()) == -1) {
+            qCWarning(JoystickSDLLog) << "Couldn't add GameController mapping:" << SDL_GetError();
         }
     }
 
-#ifdef SDL_GAMECONTROLLERCONFIG
-    const QString mappingsStr = QStringLiteral(SDL_GAMECONTROLLERCONFIG);
-    const QStringList mappingList = mappingsStr.split(u'\n', Qt::SkipEmptyParts);
-    for (const QString &mapping : mappingList) {
-        if (SDL_AddGamepadMapping(qPrintable(mapping)) == -1) {
-            qCWarning(JoystickSDLLog) << "Couldn't add Gamepad mapping:" << mapping << "Error:" << SDL_GetError();
+    if (qEnvironmentVariableIsSet("SDL_GAMECONTROLLERCONFIG")) {
+        const QString mappingsStr = qEnvironmentVariable("SDL_GAMECONTROLLERCONFIG");
+        const QStringList mappingList = mappingsStr.split("\n", Qt::SkipEmptyParts);
+        for (const QString &mapping : mappingList) {
+            if (SDL_GameControllerAddMapping(qPrintable(mapping)) == -1) {
+                qCWarning(JoystickSDLLog) << "Couldn't add GameController mapping:" << mapping << "Error:" << SDL_GetError();
+            }
         }
     }
-#endif
 }

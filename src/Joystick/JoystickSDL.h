@@ -13,24 +13,24 @@
 
 #include "Joystick.h"
 
-struct SDL_Joystick;
-typedef struct SDL_Joystick SDL_Joystick;
+struct _SDL_Joystick;
+typedef struct _SDL_Joystick SDL_Joystick;
 
-struct SDL_Gamepad;
-typedef struct SDL_Gamepad SDL_Gamepad;
+struct _SDL_GameController;
+typedef struct _SDL_GameController SDL_GameController;
 
 Q_DECLARE_LOGGING_CATEGORY(JoystickSDLLog)
 
 class JoystickSDL : public Joystick
 {
 public:
-    explicit JoystickSDL(const QString &name, int axisCount, int buttonCount, int hatCount, int instanceId, bool isGamepad, QObject *parent = nullptr);
-    ~JoystickSDL() override;
+    JoystickSDL(const QString &name, int axisCount, int buttonCount, int hatCount, int index, bool isGameController, QObject *parent = nullptr);
+    ~JoystickSDL();
 
-    int instanceId() const { return _instanceId; }
-    void setInstanceId(int instanceId) { _instanceId = instanceId; }
+    int index() const { return _index; }
+    void setIndex(int index) { _index = index; }
 
-    // bool requiresCalibration() const final { return !_isGamepad; }
+    // bool requiresCalibration() final { return !_isGameController; }
 
     static bool init();
     static QMap<QString, Joystick*> discover();
@@ -40,15 +40,15 @@ private:
     void _close() final;
     bool _update() final;
 
-    bool _getButton(int idx) const final;
-    int _getAxis(int idx) const final;
-    bool _getHat(int hat, int idx) const final;
+    bool _getButton(int i) const final;
+    int  _getAxis(int i) const final;
+    bool _getHat(int hat, int i) const final;
 
-    static void _loadGamepadMappings();
+    static void _loadGameControllerMappings();
 
-    bool _isGamepad = false;
-    int _instanceId = -1;
+    bool _isGameController = false;
+    int _index = -1;
 
     SDL_Joystick *_sdlJoystick = nullptr;
-    SDL_Gamepad *_sdlGamepad = nullptr;
+    SDL_GameController *_sdlController = nullptr;
 };
