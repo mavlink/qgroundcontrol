@@ -196,7 +196,9 @@ FactMetaData* PX4FirmwarePlugin::_getMetaDataForFact(QObject* parameterMetaData,
 
 void PX4FirmwarePlugin::_getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion) const
 {
-    return PX4ParameterMetaData::getParameterMetaDataVersionInfo(metaDataFile, majorVersion, minorVersion);
+    const QVersionNumber version = PX4ParameterMetaData::versionFromFilename(metaDataFile);
+    majorVersion = version.majorVersion();
+    minorVersion = version.minorVersion();
 }
 
 QList<MAV_CMD> PX4FirmwarePlugin::supportedMissionCommands(QGCMAVLink::VehicleClass_t vehicleClass) const
@@ -275,7 +277,7 @@ QObject* PX4FirmwarePlugin::_loadParameterMetaData(const QString& metaDataFile)
 {
     PX4ParameterMetaData* metaData = new PX4ParameterMetaData(this);
     if (!metaDataFile.isEmpty()) {
-        metaData->loadParameterFactMetaDataFile(metaDataFile);
+        metaData->loadFromFile(metaDataFile);
     }
     return metaData;
 }

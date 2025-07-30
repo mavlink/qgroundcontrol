@@ -37,6 +37,8 @@ qt_add_resources(${CMAKE_PROJECT_NAME} firmaware_plugin_px4_resource
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
+# target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE GENERATE_PARAMETER_JSON)
+
 # Add qml module
 qt_add_library(PX4FirmwareModule STATIC)
 

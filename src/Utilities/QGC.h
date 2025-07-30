@@ -9,7 +9,10 @@
 
 #pragma once
 
+#include <QtCore/QString>
 #include <QtCore/QtTypes>
+
+#define _qsl(string) QStringLiteral(string)
 
 namespace QGC
 {

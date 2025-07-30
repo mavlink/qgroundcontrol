@@ -7,179 +7,212 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "PX4ParameterMetaData.h"
 #include "QGCLoggingCategory.h"
 
-#include <QtCore/QFile>
 #include <QtCore/QDir>
-#include <QtCore/QDebug>
+#include <QtCore/QFile>
 #include <QtCore/QXmlStreamReader>
 
-QGC_LOGGING_CATEGORY(PX4ParameterMetaDataLog, "PX4ParameterMetaDataLog")
+QGC_LOGGING_CATEGORY(PX4ParameterMetaDataLog, "qgc.firmwareplugin.px4.px4parametermetadata")
 
-PX4ParameterMetaData::PX4ParameterMetaData(QObject* parent)
-    : QObject(parent)
+PX4ParameterMetaData::PX4ParameterMetaData(QObject *parent)
+    : ParameterMetaData(parent)
 {
-
+    qCDebug(PX4ParameterMetaDataLog) << this;
 }
 
-/// Converts a string to a typed QVariant
-///     @param string String to convert
-///     @param type Type for Fact which dictates the QVariant type as well
-///     @param convertOk Returned: true: conversion success, false: conversion failure
-/// @return Returns the correctly type QVariant
-QVariant PX4ParameterMetaData::_stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool* convertOk)
+PX4ParameterMetaData::~PX4ParameterMetaData()
 {
-    QVariant var(string);
+    qCDebug(PX4ParameterMetaDataLog) << this;
+}
 
-    QMetaType::Type convertTo = QMetaType::Int; // keep compiler warning happy
-    switch (type) {
-    case FactMetaData::valueTypeUint8:
-    case FactMetaData::valueTypeUint16:
-    case FactMetaData::valueTypeUint32:
-    case FactMetaData::valueTypeUint64:
-        convertTo = QMetaType::UInt;
-        break;
-    case FactMetaData::valueTypeInt8:
-    case FactMetaData::valueTypeInt16:
-    case FactMetaData::valueTypeInt32:
-    case FactMetaData::valueTypeInt64:
-        convertTo = QMetaType::Int;
-        break;
-    case FactMetaData::valueTypeFloat:
-        convertTo = QMetaType::Float;
-        break;
-    case FactMetaData::valueTypeElapsedTimeInSeconds:
-    case FactMetaData::valueTypeDouble:
-        convertTo = QMetaType::Double;
-        break;
-    case FactMetaData::valueTypeString:
-        qWarning() << kInvalidConverstion;
-        convertTo = QMetaType::QString;
-        break;
-    case FactMetaData::valueTypeBool:
-        qWarning() << kInvalidConverstion;
-        convertTo = QMetaType::Bool;
-        break;
-    case FactMetaData::valueTypeCustom:
-        qWarning() << kInvalidConverstion;
-        convertTo = QMetaType::QByteArray;
-        break;
+void PX4ParameterMetaData::_jsonWriteLine(QFile &file, int indent, const QString &line)
+{
+    while (indent--) {
+        (void) file.write("  ");
     }
-    
-    *convertOk = var.convert(QMetaType(convertTo));
-    
-    return var;
+    (void) file.write(line.toLocal8Bit().constData());
+    (void) file.write("\n");
 }
 
-void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaDataFile)
+void PX4ParameterMetaData::_generateParameterJson()
 {
-    qCDebug(PX4ParameterMetaDataLog) << "PX4ParameterMetaData::loadParameterFactMetaDataFile" << metaDataFile;
+    int indentLevel = 0;
+    QFile jsonFile(QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).absoluteFilePath("parameter.json"));
+    (void) jsonFile.open(QFile::WriteOnly | QFile::Truncate | QFile::Text);
 
-    if (_parameterMetaDataLoaded) {
-        qWarning() << "Internal error: parameter meta data loaded more than once";
+    _jsonWriteLine(jsonFile, indentLevel++, "{");
+    _jsonWriteLine(jsonFile, indentLevel, "\"version\": 1,");
+    _jsonWriteLine(jsonFile, indentLevel, "\"uid\": 1,");
+    _jsonWriteLine(jsonFile, indentLevel, "\"scope\": \"Firmware\",");
+    _jsonWriteLine(jsonFile, indentLevel++, "\"parameters\": [");
+
+    int keyIndex = 0;
+    for (const QString& paramName: _params.keys()) {
+        const FactMetaData* metaData = _params[paramName];
+        _jsonWriteLine(jsonFile, indentLevel++, "{");
+        _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"name\": \"%1\",").arg(paramName));
+        _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"type\": \"%1\",").arg(metaData->typeToString(metaData->type())));
+        if (!metaData->group().isEmpty()) {
+            _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"group\": \"%1\",").arg(metaData->group()));
+        }
+        if (!metaData->category().isEmpty()) {
+            _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"category\": \"%1\",").arg(metaData->category()));
+        }
+        if (!metaData->shortDescription().isEmpty()) {
+            QString text = metaData->shortDescription();
+            text.replace("\"", "\\\"");
+            _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"shortDescription\": \"%1\",").arg(text));
+        }
+        if (!metaData->longDescription().isEmpty()) {
+            QString text = metaData->longDescription();
+            text.replace("\"", "\\\"");
+            _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"longDescription\": \"%1\",").arg(text));
+        }
+        if (!metaData->rawUnits().isEmpty()) {
+            _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"units\": \"%1\",").arg(metaData->rawUnits()));
+        }
+        if (metaData->defaultValueAvailable()) {
+            _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"defaultValue\": %1,").arg(metaData->rawDefaultValue().toDouble()));
+        }
+        if (!qIsNaN(metaData->rawIncrement())) {
+            _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"increment\": %1,").arg(metaData->rawIncrement()));
+        }
+        if (metaData->enumValues().count()) {
+            _jsonWriteLine(jsonFile, indentLevel++, "\"values\": [");
+            for (int i=0; i<metaData->enumValues().count(); i++) {
+                _jsonWriteLine(jsonFile, indentLevel++, "{");
+                _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"value\": %1,").arg(metaData->enumValues()[i].toDouble()));
+                QString text = metaData->enumStrings()[i];
+                text.replace("\"", "\\\"");
+                _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"description\": \"%1\"").arg(text));
+                _jsonWriteLine(jsonFile, --indentLevel, QStringLiteral("}%1").arg(i == metaData->enumValues().count() - 1 ? "" : ","));
+            }
+            _jsonWriteLine(jsonFile, --indentLevel, "],");
+        }
+        if (metaData->vehicleRebootRequired()) {
+            _jsonWriteLine(jsonFile, indentLevel, "\"rebootRequired\": true,");
+        }
+        if (metaData->volatileValue()) {
+            _jsonWriteLine(jsonFile, indentLevel, "\"volatile\": true,");
+        }
+        _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"decimalPlaces\": %1,").arg(metaData->decimalPlaces()));
+        _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"minValue\": %1,").arg(metaData->rawMin().toDouble()));
+        _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"maxValue\": %1").arg(metaData->rawMax().toDouble()));
+        _jsonWriteLine(jsonFile, --indentLevel, QStringLiteral("}%1").arg(++keyIndex == _params.keys().count() ? "" : ","));
+    }
+
+    _jsonWriteLine(jsonFile, --indentLevel, "]");
+    _jsonWriteLine(jsonFile, --indentLevel, "}");
+}
+
+void PX4ParameterMetaData::loadFromFile(const QString &xmlPath)
+{
+    qCDebug(PX4ParameterMetaDataLog) << xmlPath;
+
+    QWriteLocker guard(&_lock);
+
+    if (_parsed) {
+        qCWarning(PX4ParameterMetaDataLog) << "Internal error: parameter meta data loaded more than once";
         return;
     }
-    _parameterMetaDataLoaded = true;
+    _parsed = true;
 
-    qCDebug(PX4ParameterMetaDataLog) << "Loading parameter meta data:" << metaDataFile;
+    qCDebug(PX4ParameterMetaDataLog) << "Loading parameter meta data:" << xmlPath;
 
-    QFile xmlFile(metaDataFile);
+    QFile xmlFile(xmlPath);
 
     if (!xmlFile.exists()) {
-        qWarning() << "Internal error: metaDataFile mission" << metaDataFile;
+        qCWarning(PX4ParameterMetaDataLog) << "Internal error: xmlPath mission" << xmlPath;
         return;
     }
-    
+
     if (!xmlFile.open(QIODevice::ReadOnly)) {
-        qWarning() << "Internal error: Unable to open parameter file:" << metaDataFile << xmlFile.errorString();
+        qCWarning(PX4ParameterMetaDataLog) << "Internal error: Unable to open parameter file:" << xmlPath << xmlFile.errorString();
         return;
     }
-    
+
     QXmlStreamReader xml(xmlFile.readAll());
     xmlFile.close();
     if (xml.hasError()) {
-        qWarning() << "Badly formed XML" << xml.errorString();
+        qCWarning(PX4ParameterMetaDataLog) << "Badly formed XML" << xml.errorString();
         return;
     }
-    
-    QString         factGroup;
-    QString         errorString;
-    FactMetaData*   metaData = nullptr;
-    int             xmlState = XmlStateNone;
-    bool            badMetaData = true;
-    
+
+    QString factGroup;
+    QString errorString;
+    FactMetaData *metaData = nullptr;
+    XmlState xmlState = XmlState::None;
+    bool badMetaData = true;
+
     while (!xml.atEnd()) {
         if (xml.isStartElement()) {
             QString elementName = xml.name().toString();
-            
+
             if (elementName == "parameters") {
-                if (xmlState != XmlStateNone) {
-                    qWarning() << "Badly formed XML";
+                if (xmlState != XmlState::None) {
+                    qCWarning(PX4ParameterMetaDataLog) << "Badly formed XML";
                     return;
                 }
-                xmlState = XmlStateFoundParameters;
-                
+                xmlState = XmlState::FoundParameters;
+
             } else if (elementName == "version") {
-                if (xmlState != XmlStateFoundParameters) {
-                    qWarning() << "Badly formed XML";
+                if (xmlState != XmlState::FoundParameters) {
+                    qCWarning(PX4ParameterMetaDataLog) << "Badly formed XML";
                     return;
                 }
-                xmlState = XmlStateFoundVersion;
-                
+                xmlState = XmlState::FoundVersion;
+
                 bool convertOk;
                 QString strVersion = xml.readElementText();
                 int intVersion = strVersion.toInt(&convertOk);
                 if (!convertOk) {
-                    qWarning() << "Badly formed XML";
+                    qCWarning(PX4ParameterMetaDataLog) << "Badly formed XML";
                     return;
                 }
                 if (intVersion <= 2) {
                     // We can't read these old files
-                    qDebug() << "Parameter version stamp too old, skipping load. Found:" << intVersion << "Want: 3 File:" << metaDataFile;
+                    qDebug() << "Parameter version stamp too old, skipping load. Found:" << intVersion << "Want: 3 File:" << xmlPath;
                     return;
                 }
-                
+
             } else if (elementName == "parameter_version_major") {
                 // Just skip over for now
             } else if (elementName == "parameter_version_minor") {
                 // Just skip over for now
 
             } else if (elementName == "group") {
-                if (xmlState != XmlStateFoundVersion) {
+                if (xmlState != XmlState::FoundVersion) {
                     // We didn't get a version stamp, assume older version we can't read
-                    qDebug() << "Parameter version stamp not found, skipping load" << metaDataFile;
+                    qDebug() << "Parameter version stamp not found, skipping load" << xmlPath;
                     return;
                 }
-                xmlState = XmlStateFoundGroup;
-                
+                xmlState = XmlState::FoundGroup;
+
                 if (!xml.attributes().hasAttribute("name")) {
-                    qWarning() << "Badly formed XML";
+                    qCWarning(PX4ParameterMetaDataLog) << "Badly formed XML";
                     return;
                 }
                 factGroup = xml.attributes().value("name").toString();
                 qCDebug(PX4ParameterMetaDataLog) << "Found group: " << factGroup;
-                
+
             } else if (elementName == "parameter") {
-                if (xmlState != XmlStateFoundGroup) {
-                    qWarning() << "Badly formed XML";
+                if (xmlState != XmlState::FoundGroup) {
+                    qCWarning(PX4ParameterMetaDataLog) << "Badly formed XML";
                     return;
                 }
-                xmlState = XmlStateFoundParameter;
-                
+                xmlState = XmlState::FoundParameter;
+
                 if (!xml.attributes().hasAttribute("name") || !xml.attributes().hasAttribute("type")) {
-                    qWarning() << "Badly formed XML";
+                    qCWarning(PX4ParameterMetaDataLog) << "Badly formed XML";
                     return;
                 }
-                
+
                 QString name = xml.attributes().value("name").toString();
                 QString type = xml.attributes().value("type").toString();
                 QString strDefault =    xml.attributes().value("default").toString();
-                
+
                 QString category = xml.attributes().value("category").toString();
                 if (category.isEmpty()) {
                     category = QStringLiteral("Standard");
@@ -205,29 +238,29 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                 bool unknownType;
                 FactMetaData::ValueType_t foundType = FactMetaData::stringToType(type, unknownType);
                 if (unknownType) {
-                    qWarning() << "Parameter meta data with bad type:" << type << " name:" << name;
+                    qCWarning(PX4ParameterMetaDataLog) << "Parameter meta data with bad type:" << type << " name:" << name;
                     return;
                 }
-                
+
                 // Now that we know type we can create meta data object and add it to the system
                 metaData = new FactMetaData(foundType, this);
-                if (_mapParameterName2FactMetaData.contains(name)) {
+                if (_params.contains(name)) {
                     // We can't trust the meta data since we have dups
                     qCWarning(PX4ParameterMetaDataLog) << "Duplicate parameter found:" << name;
                     badMetaData = true;
                     // Reset to default meta data
-                    _mapParameterName2FactMetaData[name] = metaData;
+                    _params[name] = metaData;
                 } else {
-                    _mapParameterName2FactMetaData[name] = metaData;
+                    _params[name] = metaData;
                     metaData->setName(name);
                     metaData->setCategory(category);
                     metaData->setGroup(factGroup);
                     metaData->setReadOnly(readOnly);
                     metaData->setVolatileValue(volatileValue);
-                    
+
                     if (xml.attributes().hasAttribute("default") && !strDefault.isEmpty()) {
                         QVariant varDefault;
-                        
+
                         if (metaData->convertAndValidateRaw(strDefault, false, varDefault, errorString)) {
                             metaData->setRawDefaultValue(varDefault);
                         } else {
@@ -235,11 +268,11 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                         }
                     }
                 }
-                
+
             } else {
                 // We should be getting meta data now
-                if (xmlState != XmlStateFoundParameter) {
-                    qWarning() << "Badly formed XML";
+                if (xmlState != XmlState::FoundParameter) {
+                    qCWarning(PX4ParameterMetaDataLog) << "Badly formed XML";
                     return;
                 }
 
@@ -369,7 +402,7 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                             qCDebug(PX4ParameterMetaDataLog) << "Unknown element in XML: " << elementName;
                         }
                     } else {
-                        qWarning() << "Internal error";
+                        qCWarning(PX4ParameterMetaDataLog) << "Internal error";
                     }
                 }
             }
@@ -389,11 +422,11 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                 // Reset for next parameter
                 metaData = nullptr;
                 badMetaData = false;
-                xmlState = XmlStateFoundGroup;
+                xmlState = XmlState::FoundGroup;
             } else if (elementName == "group") {
-                xmlState = XmlStateFoundVersion;
+                xmlState = XmlState::FoundVersion;
             } else if (elementName == "parameters") {
-                xmlState = XmlStateFoundParameters;
+                xmlState = XmlState::FoundParameters;
             }
         }
         xml.readNext();
@@ -404,162 +437,77 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
 #endif
 }
 
-#ifdef GENERATE_PARAMETER_JSON
-void _jsonWriteLine(QFile& file, int indent, const QString& line)
-{
-    while (indent--) {
-        file.write("  ");
-    }
-    file.write(line.toLocal8Bit().constData());
-    file.write("\n");
-}
-
-void PX4ParameterMetaData::_generateParameterJson()
-{
-    qCDebug(PX4ParameterMetaDataLog) << "PX4ParameterMetaData::_generateParameterJson";
-
-    int indentLevel = 0;
-    QFile jsonFile(QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).absoluteFilePath("parameter.json"));
-    jsonFile.open(QFile::WriteOnly | QFile::Truncate | QFile::Text);
-
-    _jsonWriteLine(jsonFile, indentLevel++, "{");
-    _jsonWriteLine(jsonFile, indentLevel, "\"version\": 1,");
-    _jsonWriteLine(jsonFile, indentLevel, "\"uid\": 1,");
-    _jsonWriteLine(jsonFile, indentLevel, "\"scope\": \"Firmware\",");
-    _jsonWriteLine(jsonFile, indentLevel++, "\"parameters\": [");
-
-    int keyIndex = 0;
-    for (const QString& paramName: _mapParameterName2FactMetaData.keys()) {
-        const FactMetaData* metaData = _mapParameterName2FactMetaData[paramName];
-        _jsonWriteLine(jsonFile, indentLevel++, "{");
-        _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"name\": \"%1\",").arg(paramName));
-        _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"type\": \"%1\",").arg(metaData->typeToString(metaData->type())));
-        if (!metaData->group().isEmpty()) {
-            _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"group\": \"%1\",").arg(metaData->group()));
-        }
-        if (!metaData->category().isEmpty()) {
-            _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"category\": \"%1\",").arg(metaData->category()));
-        }
-        if (!metaData->shortDescription().isEmpty()) {
-            QString text = metaData->shortDescription();
-            text.replace("\"", "\\\"");
-            _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"shortDescription\": \"%1\",").arg(text));
-        }
-        if (!metaData->longDescription().isEmpty()) {
-            QString text = metaData->longDescription();
-            text.replace("\"", "\\\"");
-            _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"longDescription\": \"%1\",").arg(text));
-        }
-        if (!metaData->rawUnits().isEmpty()) {
-            _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"units\": \"%1\",").arg(metaData->rawUnits()));
-        }
-        if (metaData->defaultValueAvailable()) {
-            _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"defaultValue\": %1,").arg(metaData->rawDefaultValue().toDouble()));
-        }
-        if (!qIsNaN(metaData->rawIncrement())) {
-            _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"increment\": %1,").arg(metaData->rawIncrement()));
-        }
-        if (metaData->enumValues().count()) {
-            _jsonWriteLine(jsonFile, indentLevel++, "\"values\": [");
-            for (int i=0; i<metaData->enumValues().count(); i++) {
-                _jsonWriteLine(jsonFile, indentLevel++, "{");
-                _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"value\": %1,").arg(metaData->enumValues()[i].toDouble()));
-                QString text = metaData->enumStrings()[i];
-                text.replace("\"", "\\\"");
-                _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"description\": \"%1\"").arg(text));
-                _jsonWriteLine(jsonFile, --indentLevel, QStringLiteral("}%1").arg(i == metaData->enumValues().count() - 1 ? "" : ","));
-            }
-            _jsonWriteLine(jsonFile, --indentLevel, "],");
-        }
-        if (metaData->vehicleRebootRequired()) {
-            _jsonWriteLine(jsonFile, indentLevel, "\"rebootRequired\": true,");
-        }
-        if (metaData->volatileValue()) {
-            _jsonWriteLine(jsonFile, indentLevel, "\"volatile\": true,");
-        }
-        _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"decimalPlaces\": %1,").arg(metaData->decimalPlaces()));
-        _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"minValue\": %1,").arg(metaData->rawMin().toDouble()));
-        _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"maxValue\": %1").arg(metaData->rawMax().toDouble()));
-        _jsonWriteLine(jsonFile, --indentLevel, QStringLiteral("}%1").arg(++keyIndex == _mapParameterName2FactMetaData.keys().count() ? "" : ","));
-    }
-
-    _jsonWriteLine(jsonFile, --indentLevel, "]");
-    _jsonWriteLine(jsonFile, --indentLevel, "}");
-}
-#endif
-
-FactMetaData* PX4ParameterMetaData::getMetaDataForFact(const QString& name, MAV_TYPE vehicleType, FactMetaData::ValueType_t type)
+FactMetaData *PX4ParameterMetaData::getMetaDataForFact(const QString &paramName, MAV_TYPE vehicleType, FactMetaData::ValueType_t type)
 {
     Q_UNUSED(vehicleType)
 
-    if (!_mapParameterName2FactMetaData.contains(name)) {
-        qCDebug(PX4ParameterMetaDataLog) << "No metaData for " << name << "using generic metadata";
-        FactMetaData* metaData = new FactMetaData(type, this);
-        _mapParameterName2FactMetaData[name] = metaData;
+    QReadLocker guard(&_lock);
+
+    if (!_params.contains(paramName)) {
+        qCDebug(PX4ParameterMetaDataLog) << "No metaData for" << paramName << "using generic metadata";
+        FactMetaData *metaData = new FactMetaData(type, this);
+        _params[paramName] = metaData;
     }
 
-    return _mapParameterName2FactMetaData[name];
+    return _params[paramName];
 }
 
-void PX4ParameterMetaData::getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion)
+QVersionNumber PX4ParameterMetaData::versionFromFilename(QStringView path)
 {
-    QFile xmlFile(metaDataFile);
-    QString errorString;
-
-    majorVersion = -1;
-    minorVersion = -1;
+    QFile xmlFile(path.toString());
 
     if (!xmlFile.exists()) {
-        _outputFileWarning(metaDataFile, QStringLiteral("Does not exist"), QString());
-        return;
+        qCWarning(PX4ParameterMetaDataLog) << QStringLiteral("Internal Error: Parameter meta data file '%1'. %2. error: %3").arg(path, QStringLiteral("Does not exist"), QString());
+        return QVersionNumber(-1, -1);
     }
 
     if (!xmlFile.open(QIODevice::ReadOnly)) {
-        _outputFileWarning(metaDataFile, QStringLiteral("Unable to open file"), xmlFile.errorString());
-        return;
+        qCWarning(PX4ParameterMetaDataLog) << QStringLiteral("Internal Error: Parameter meta data file '%1'. %2. error: %3").arg(path, QStringLiteral("Unable to open file"), xmlFile.errorString());
+        return QVersionNumber(-1, -1);
     }
 
     QXmlStreamReader xml(xmlFile.readAll());
     xmlFile.close();
     if (xml.hasError()) {
-        _outputFileWarning(metaDataFile, QStringLiteral("Badly formed XML"), xml.errorString());
-        return;
+        qCWarning(PX4ParameterMetaDataLog) << QStringLiteral("Internal Error: Parameter meta data file '%1'. %2. error: %3").arg(path, QStringLiteral("Badly formed XML"), xml.errorString());
+        return QVersionNumber(-1, -1);
     }
 
-    while (!xml.atEnd() && (majorVersion == -1 || minorVersion == -1)) {
+    int majorVersion = -1;
+    int minorVersion = -1;
+    while (!xml.atEnd() && ((majorVersion == -1) || (minorVersion == -1))) {
         if (xml.isStartElement()) {
-            QString elementName = xml.name().toString();
+            const QString elementName = xml.name().toString();
 
             if (elementName == "parameter_version_major") {
                 bool convertOk;
-                QString strVersion = xml.readElementText();
+                const QString strVersion = xml.readElementText();
                 majorVersion = strVersion.toInt(&convertOk);
                 if (!convertOk) {
-                    _outputFileWarning(metaDataFile, QStringLiteral("Unable to convert parameter_version_major value to int"), QString());
-                    return;
+                    qCWarning(PX4ParameterMetaDataLog) << QStringLiteral("Internal Error: Parameter meta data file '%1'. %2. error: %3").arg(path, QStringLiteral("Unable to convert parameter_version_major value to int"), QString());
+                    return QVersionNumber(-1, -1);
                 }
             } else if (elementName == "parameter_version_minor") {
                 bool convertOk;
-                QString strVersion = xml.readElementText();
+                const QString strVersion = xml.readElementText();
                 minorVersion = strVersion.toInt(&convertOk);
                 if (!convertOk) {
-                    _outputFileWarning(metaDataFile, QStringLiteral("Unable to convert parameter_version_minor value to int"), QString());
-                    return;
+                    qCWarning(PX4ParameterMetaDataLog) << QStringLiteral("Internal Error: Parameter meta data file '%1'. %2. error: %3").arg(path, QStringLiteral("Unable to convert parameter_version_minor value to int"), QString());
+                    return QVersionNumber(-1, -1);
                 }
             }
         }
-        xml.readNext();
+
+        (void) xml.readNext();
     }
 
     if (majorVersion == -1) {
-        _outputFileWarning(metaDataFile, QStringLiteral("parameter_version_major is missing"), QString());
+        qCWarning(PX4ParameterMetaDataLog) << QStringLiteral("Internal Error: Parameter meta data file '%1'. %2. error: %3").arg(path, QStringLiteral("parameter_version_major is missing"), QString());
     }
-    if (minorVersion == -1) {
-        _outputFileWarning(metaDataFile, QStringLiteral("parameter_version_minor tag is missing"), QString());
-    }
-}
 
-void PX4ParameterMetaData::_outputFileWarning(const QString& metaDataFile, const QString& error1, const QString& error2)
-{
-    qWarning() << QStringLiteral("Internal Error: Parameter meta data file '%1'. %2. error: %3").arg(metaDataFile).arg(error1).arg(error2);
+    if (minorVersion == -1) {
+        qCWarning(PX4ParameterMetaDataLog) << QStringLiteral("Internal Error: Parameter meta data file '%1'. %2. error: %3").arg(path, QStringLiteral("parameter_version_minor tag is missing"), QString());
+    }
+
+    return QVersionNumber(majorVersion, minorVersion);
 }

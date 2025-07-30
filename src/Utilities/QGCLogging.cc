@@ -47,9 +47,10 @@ static void msgHandler(QtMsgType type, const QMessageLogContext &context, const 
 {
     // Format the message using Qt's pattern
     const QString message = qFormatLogMessage(type, context, msg);
+    const QString category = QString(context.category);
 
     // Filter out Qt Quick internals
-    if (!QString(context.category).startsWith("qt.quick")) {
+    if (QGCLogging::instance() && !category.startsWith("qt.quick")) {
         QGCLogging::instance()->log(message);
     }
 

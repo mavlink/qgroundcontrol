@@ -9,53 +9,36 @@
 
 #pragma once
 
-
-#include "MAVLinkLib.h"
-#include "FactMetaData.h"
-
-#include <QtCore/QObject>
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QObject>
 
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
+#include "FactMetaData.h"
+#include "MAVLinkLib.h"
+#include "ParameterMetaData.h"
 
 Q_DECLARE_LOGGING_CATEGORY(PX4ParameterMetaDataLog)
 
-//#define GENERATE_PARAMETER_JSON
-
 /// Loads and holds parameter fact meta data for PX4 stack
-class PX4ParameterMetaData : public QObject
+class PX4ParameterMetaData : public ParameterMetaData
 {
     Q_OBJECT
 
 public:
-    PX4ParameterMetaData(QObject* parent = nullptr);
+    explicit PX4ParameterMetaData(QObject *parent = nullptr);
+    ~PX4ParameterMetaData() override;
 
-    void            loadParameterFactMetaDataFile   (const QString& metaDataFile);
-    FactMetaData*   getMetaDataForFact              (const QString& name, MAV_TYPE vehicleType, FactMetaData::ValueType_t type);
+    /// Parse the PX4 XML meta‑data file (thread‑safe; subsequent calls are ignored).
+    void loadFromFile(const QString &xmlPath) final;
 
-    static void getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion);
+    /// Build QGC FactMetaData for @p paramName and @p vehicleType.
+    FactMetaData *getMetaDataForFact(const QString &paramName, MAV_TYPE vehicleType, FactMetaData::ValueType_t type) final;
+
+    /// Return <major, minor> meta‑data version encoded in the filename (e.g. v1.7.xml).
+    static QVersionNumber versionFromFilename(QStringView path);
 
 private:
-    enum {
-        XmlStateNone,
-        XmlStateFoundParameters,
-        XmlStateFoundVersion,
-        XmlStateFoundGroup,
-        XmlStateFoundParameter,
-        XmlStateDone
-    };
-
-    QVariant _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool* convertOk);
-    static void _outputFileWarning(const QString& metaDataFile, const QString& error1, const QString& error2);
-
-#ifdef GENERATE_PARAMETER_JSON
     void _generateParameterJson();
-#endif
+    static void _jsonWriteLine(QFile &file, int indent, const QString &line);
 
-    bool                                _parameterMetaDataLoaded        = false;    ///< true: parameter meta data already loaded
-    FactMetaData::NameToMetaDataMap_t   _mapParameterName2FactMetaData;             ///< Maps from a parameter name to FactMetaData
-
-    static constexpr const char* kInvalidConverstion = "Internal Error: No support for string parameters";
-
+    FactMetaData::NameToMetaDataMap_t _params;
 };
