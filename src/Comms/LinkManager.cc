@@ -49,7 +49,7 @@
 #include <qmdnsengine/service.h>
 #endif
 
-#include <QtCore/qapplicationstatic.h>
+#include <QtCore/QApplicationStatic>
 #include <QtCore/QTimer>
 
 QGC_LOGGING_CATEGORY(LinkManagerLog, "qgc.comms.linkmanager")

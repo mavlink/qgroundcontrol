@@ -14,7 +14,7 @@
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
 
-#include <QtCore/qapplicationstatic.h>
+#include <QtCore/QApplicationStatic>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QJsonArray>
