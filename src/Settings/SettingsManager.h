@@ -26,6 +26,7 @@ class FlightModeSettings;
 class FlyViewSettings;
 class GimbalControllerSettings;
 class MapsSettings;
+class NTRIPSettings;
 class OfflineMapsSettings;
 class PlanViewSettings;
 class RemoteIDSettings;
@@ -58,6 +59,7 @@ class SettingsManager : public QObject
     Q_MOC_INCLUDE("FlyViewSettings.h")
     Q_MOC_INCLUDE("GimbalControllerSettings.h")
     Q_MOC_INCLUDE("MapsSettings.h")
+    Q_MOC_INCLUDE("NTRIPSettings.h")
     Q_MOC_INCLUDE("OfflineMapsSettings.h")
     Q_MOC_INCLUDE("PlanViewSettings.h")
     Q_MOC_INCLUDE("RemoteIDSettings.h")
@@ -83,6 +85,7 @@ class SettingsManager : public QObject
     Q_PROPERTY(QObject *flyViewSettings                 READ flyViewSettings                CONSTANT)
     Q_PROPERTY(QObject *gimbalControllerSettings        READ gimbalControllerSettings       CONSTANT)
     Q_PROPERTY(QObject *mapsSettings                    READ mapsSettings                   CONSTANT)
+    Q_PROPERTY(QObject *ntripSettings                   READ ntripSettings                  CONSTANT)
     Q_PROPERTY(QObject *offlineMapsSettings             READ offlineMapsSettings            CONSTANT)
     Q_PROPERTY(QObject *planViewSettings                READ planViewSettings               CONSTANT)
     Q_PROPERTY(QObject *remoteIDSettings                READ remoteIDSettings               CONSTANT)
@@ -117,6 +120,7 @@ public:
     FlyViewSettings *flyViewSettings() const;
     GimbalControllerSettings *gimbalControllerSettings() const;
     MapsSettings *mapsSettings() const;
+    NTRIPSettings *ntripSettings() const;
     OfflineMapsSettings *offlineMapsSettings() const;
     PlanViewSettings *planViewSettings() const;
     RemoteIDSettings *remoteIDSettings() const;
@@ -144,6 +148,7 @@ private:
     FlyViewSettings *_flyViewSettings = nullptr;
     GimbalControllerSettings *_gimbalControllerSettings = nullptr;
     MapsSettings *_mapsSettings = nullptr;
+    NTRIPSettings *_ntripSettings = nullptr;
     OfflineMapsSettings *_offlineMapsSettings = nullptr;
     PlanViewSettings *_planViewSettings = nullptr;
     RemoteIDSettings *_remoteIDSettings = nullptr;
