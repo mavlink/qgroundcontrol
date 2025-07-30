@@ -83,8 +83,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         Qt6::TextToSpeech
         Qt6::Widgets
         Qt6::Xml
-        # Explicitly link QML modules, needed by Qt 6.6.3
-        # TODO: Remove when support for this version is dropped
         AnalyzeViewModule
         AppSettingsModule
         AutoPilotPluginsCommonModule
