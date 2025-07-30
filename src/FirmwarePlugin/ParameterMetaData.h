@@ -19,20 +19,20 @@
 #include "FactMetaData.h"
 #include "MAVLinkLib.h"
 
-Q_DECLARE_LOGGING_CATEGORY(APMParameterMetaDataLog)
+Q_DECLARE_LOGGING_CATEGORY(ParameterMetaDataLog)
 
 class QXmlStreamReader;
 
-/// Loads and holds parameter fact meta data for ArduPilot stack
-class APMParameterMetaData : public QObject
+/// Loads and holds parameter fact meta data for firmware stack
+class ParameterMetaData : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit APMParameterMetaData(QObject *parent = nullptr);
-    ~APMParameterMetaData();
+    explicit ParameterMetaData(QObject *parent = nullptr) = default;
+    virtual ~ParameterMetaData() = default;
 
-    /// Parse the ArduPilot XML meta‑data file (thread‑safe; subsequent calls are ignored).
+    /// Parse the XML meta‑data file (thread‑safe; subsequent calls are ignored).
     void loadFromFile(const QString &xmlPath);
 
     /// Build QGC FactMetaData for @p paramName and @p vehicleType.
@@ -52,25 +52,6 @@ private:
         FoundGroup,
         FoundVersion,
         Done
-    };
-
-    struct APMFactMetaDataRaw {
-        QString name;
-        QString category;
-        QString group;
-        QString shortDescription;
-        QString longDescription;
-        QString min;
-        QString max;
-        QString incrementSize;
-        QString units;
-        QString unitText;
-        bool rebootRequired = false;
-        bool readOnly = false;
-        using Value = QPair<QString, QString>;
-        QList<Value> values;
-        using Bit = QPair<QString, QString>;
-        QList<Bit> bitmask;
     };
 
     using RawPtr = std::shared_ptr<APMFactMetaDataRaw>;
