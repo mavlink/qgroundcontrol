@@ -47,6 +47,9 @@ apt-get install -y -qq --no-install-recommends \
     wget \
     zsync
 
+pipx ensurepath
+pipx install cmake ninja
+
 # --------------------------------------------------------------------
 # Qt6 compile/runtime dependencies
 # See: https://doc.qt.io/qt-6/linux-requirements.html
