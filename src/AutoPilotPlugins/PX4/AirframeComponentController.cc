@@ -41,7 +41,7 @@ AirframeComponentController::AirframeComponentController(void) :
     
     bool autostartFound = false;
     _autostartId = getParameterFact(ParameterManager::defaultComponentId, "SYS_AUTOSTART")->rawValue().toInt();
-
+    _currentVehicleName = QString::number(_autostartId); // Temp val. Replaced with actual vehicle name if found
     
     for (int tindex = 0; tindex < AirframeComponentAirframes::get().count(); tindex++) {
 
