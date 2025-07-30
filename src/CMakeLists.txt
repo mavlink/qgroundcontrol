@@ -1,9 +1,13 @@
 qt_add_library(QGroundControlModule STATIC)
 
+set_source_files_properties(UI/MainWindow.qml PROPERTIES QT_RESOURCE_ALIAS MainWindow.qml)
+
 qt_add_qml_module(QGroundControlModule
     URI QGroundControl
     VERSION 1.0
     RESOURCE_PREFIX /qml
+    QML_FILES
+        UI/MainWindow.qml
     IMPORTS
         QGC
     NO_PLUGIN
@@ -90,10 +94,8 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         FirstRunPromptDialogsModule
         FlightDisplayModule
         FlightMapModule
-        MainWindowModule
         QGroundControlControlsModule
         QGroundControlModule
-        ScreenToolsModule
         ToolbarModule
         UTMSPModule
         VehicleSetupModule

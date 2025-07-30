@@ -7,7 +7,7 @@ import QGroundControl
 
 import QGroundControl.Controls
 
-import QGroundControl.ScreenTools
+
 
 ChartView {
     id:                 chartView

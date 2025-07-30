@@ -19,7 +19,7 @@ import QGroundControl.FactControls
 
 import QGroundControl.Controls
 
-import QGroundControl.ScreenTools
+
 
 SetupPage {
     id:             airframePage

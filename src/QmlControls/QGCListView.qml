@@ -1,7 +1,7 @@
 import QtQuick
 
 import QGroundControl
-
+import QGroundControl.Controls
 
 /// QGC version of ListVIew control that shows horizontal/vertial scroll indicators
 ListView {

@@ -5,7 +5,7 @@ import QGroundControl
 
 
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
+
 
 Flow {
     spacing: ScreenTools.defaultFontPixelWidth

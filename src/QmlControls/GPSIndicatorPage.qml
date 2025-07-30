@@ -12,7 +12,6 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
 import QGroundControl.FactControls
 
 // This indicator page is used both when showing RTK status only with no vehicle connect and when showing GPS/RTK status with a vehicle connected
@@ -33,7 +32,7 @@ ToolIndicatorPage {
     readonly property var    _ublox:              0b1000
     readonly property var    _all:                0b1111
     property var             settingsDisplayId:     _all
-    
+
     function updateSettingsDisplayId() {
         switch(manufacturer) {
             case 0: // All
@@ -187,7 +186,7 @@ ToolIndicatorPage {
                 label:                  qsTr("Min Duration")
                 fact:                   rtkSettings.surveyInMinObservationDuration
                 majorTickStepSize:      10
-                visible:                ( 
+                visible:                (
                     useFixedPosition == BaseModeDefinition.BaseSurveyIn
                     && rtkSettings.surveyInMinObservationDuration.visible
                     && (settingsDisplayId & (_ublox | _femtomes | _trimble))

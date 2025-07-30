@@ -14,7 +14,7 @@ import QtQuick.Controls
 
 import QGroundControl.Controls
 
-import QGroundControl.ScreenTools
+
 
 Button {
     id:                             button
