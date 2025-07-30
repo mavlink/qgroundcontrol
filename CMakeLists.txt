@@ -207,7 +207,6 @@ qt_add_qml_module(${CMAKE_PROJECT_NAME}
         QtQuick.Controls
         QtQuick.Dialogs
         QtQuick.Layouts
-        QtQuick.Window
 )
 
 add_subdirectory(src)

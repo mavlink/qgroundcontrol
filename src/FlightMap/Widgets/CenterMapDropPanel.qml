@@ -13,7 +13,7 @@ import QtQuick.Layouts
 import QtPositioning
 
 import QGroundControl
-import QGroundControl.ScreenTools
+
 import QGroundControl.Controls
 
 

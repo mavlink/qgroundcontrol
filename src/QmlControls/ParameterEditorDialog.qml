@@ -18,7 +18,7 @@ import QGroundControl.Controls
 
 
 import QGroundControl.FactControls
-import QGroundControl.ScreenTools
+
 
 QGCPopupDialog {
     id:         root

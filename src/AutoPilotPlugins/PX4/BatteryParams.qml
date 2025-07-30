@@ -16,7 +16,7 @@ import QGroundControl
 
 import QGroundControl.FactControls
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
+
 
 
 // Exposes the set of battery parameters taking into account the availability of the parameters.
