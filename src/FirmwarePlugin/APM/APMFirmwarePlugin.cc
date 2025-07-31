@@ -497,9 +497,11 @@ FactMetaData* APMFirmwarePlugin::_getMetaDataForFact(QObject* parameterMetaData,
     return nullptr;
 }
 
-void APMFirmwarePlugin::_getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion) const
+void APMFirmwarePlugin::_getParameterMetaDataVersionInfo(const QString &metaDataFile, int &majorVersion, int &minorVersion) const
 {
-    APMParameterMetaData::getParameterMetaDataVersionInfo(metaDataFile, majorVersion, minorVersion);
+    const QVersionNumber version = APMParameterMetaData::versionFromFilename(metaDataFile);
+    majorVersion = version.majorVersion();
+    minorVersion = version.minorVersion();
 }
 
 QList<MAV_CMD> APMFirmwarePlugin::supportedMissionCommands(QGCMAVLink::VehicleClass_t vehicleClass) const
@@ -583,10 +585,8 @@ QString APMFirmwarePlugin::missionCommandOverrides(QGCMAVLink::VehicleClass_t ve
 
 QObject *APMFirmwarePlugin::_loadParameterMetaData(const QString &metaDataFile)
 {
-    Q_UNUSED(metaDataFile);
-
     APMParameterMetaData *const metaData = new APMParameterMetaData(this);
-    metaData->loadParameterFactMetaDataFile(metaDataFile);
+    metaData->loadFromFile(metaDataFile);
     return metaData;
 }
 

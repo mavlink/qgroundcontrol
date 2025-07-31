@@ -142,8 +142,6 @@ private:
     /// See: https://github.com/ArduPilot/ardupilot/tree/master/libraries/AP_Filesystem
     bool _parseParamFile(const QString &filename);
 
-    static QVariant _stringToTypedVariant(const QString &string, FactMetaData::ValueType_t type, bool failOk = false);
-
     Vehicle *_vehicle = nullptr;
 
     QMap<int /* comp id */, QMap<QString /* parameter name */, Fact*>> _mapCompId2FactMap;
