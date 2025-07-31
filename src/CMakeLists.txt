@@ -9,6 +9,8 @@ qt_add_qml_module(QGroundControlModule
     NO_PLUGIN
 )
 
+add_subdirectory(Utilities)
+
 add_subdirectory(ADSB)
 add_subdirectory(AnalyzeView)
 add_subdirectory(Android)
@@ -31,7 +33,6 @@ add_subdirectory(QmlControls)
 add_subdirectory(Settings)
 add_subdirectory(Terrain)
 add_subdirectory(UI)
-add_subdirectory(Utilities)
 add_subdirectory(UTMSP)
 add_subdirectory(Vehicle)
 add_subdirectory(VideoManager)
