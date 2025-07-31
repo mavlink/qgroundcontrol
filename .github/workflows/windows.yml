@@ -26,6 +26,7 @@ jobs:
   build:
     name: Build ${{ matrix.arch }} ${{ matrix.build_type }}
     runs-on: ${{ matrix.os }}
+
     strategy:
       fail-fast: false
       matrix:
@@ -47,14 +48,21 @@ jobs:
             arch: win64_msvc2022_arm64_cross_compiled
             build_type: Release
             package: QGroundControl-installer-AMD64-ARM64
+
     defaults:
       run:
         shell: cmd
+
     env:
       QT_VERSION: 6.8.3
+
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: true
 
       - name: Common setup
         uses: ./.github/actions/common
@@ -75,7 +83,7 @@ jobs:
           host: ${{ matrix.host }}
           target: ${{ matrix.arch }}
           build-type: ${{ matrix.build_type }}
-          cpm-modules: ${{ runner.temp }}\shadow_build_dir\cpm_modules
+          cpm-modules: ${{ runner.temp }}\build\cpm_modules
 
       - name: Install Qt ${{ env.QT_VERSION }}
         uses: jurplel/install-qt-action@v4
@@ -95,7 +103,7 @@ jobs:
           arch: ${{ (matrix.arch == 'win64_msvc2022_64' && 'x64') || (matrix.arch == 'win64_msvc2022_arm64' && 'arm64') || 'amd64_arm64' }}
 
       - name: Configure
-        working-directory: ${{ runner.temp }}\shadow_build_dir
+        working-directory: ${{ runner.temp }}\build
         run: |
           ${{ env.QT_ROOT_DIR }}\bin\qt-cmake -S ${{ github.workspace }} -B . -G Ninja ^
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ^
@@ -104,16 +112,16 @@ jobs:
             -DQT_HOST_PATH=${{ (matrix.arch == 'win64_msvc2022_arm64_cross_compiled') && format('{0}\\..\\msvc2022_64', env.QT_ROOT_DIR) || '' }}
 
       - name: Build
-        working-directory: ${{ runner.temp }}\shadow_build_dir
+        working-directory: ${{ runner.temp }}\build
         run: cmake --build . --target all --config ${{ matrix.build_type }} --parallel
 
-      - name: Verify executable
+      - name: Verify Executable
         if: matrix.build_type == 'Release' && matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
-        working-directory: ${{ runner.temp }}\shadow_build_dir\${{ matrix.build_type }}
+        working-directory: ${{ runner.temp }}\build\${{ matrix.build_type }}
         run: QGroundControl.exe --simple-boot-test
 
-      - name: Install
-        working-directory: ${{ runner.temp }}\shadow_build_dir
+      - name: Create Installer
+        working-directory: ${{ runner.temp }}\build
         run: cmake --install . --config ${{ matrix.build_type }}
 
       - name: Upload artifact (installer)

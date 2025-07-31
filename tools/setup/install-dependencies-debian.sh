@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+#
 # QGroundControl build‑time dependencies for Ubuntu/Debian‑based images
 # --------------------------------------------------------------------
 # * Designed for non‑interactive CI/containers
@@ -7,7 +7,6 @@
 # * Cleans APT cache at the end to minimise final size
 
 set -euo pipefail
-
 export DEBIAN_FRONTEND=noninteractive
 
 apt-get update -y -qq
@@ -16,9 +15,8 @@ apt-get install -y -qq --no-install-recommends \
     gnupg2 \
     ca-certificates
 
-# Enable the "universe" component (needed for several dev packages)
+# Enable the “universe” component (needed for several dev packages)
 add-apt-repository -y universe
-
 apt-get update -y -qq
 
 # --------------------------------------------------------------------
@@ -35,7 +33,7 @@ apt-get install -y -qq --no-install-recommends \
     gdb \
     git \
     libfuse2 \
-    libfuse3-3 \
+    fuse3 \
     libtool \
     locales \
     mold \
@@ -48,6 +46,9 @@ apt-get install -y -qq --no-install-recommends \
     rsync \
     wget \
     zsync
+
+pipx ensurepath
+pipx install cmake ninja
 
 # --------------------------------------------------------------------
 # Qt6 compile/runtime dependencies
@@ -109,6 +110,18 @@ apt-get install -y -qq --no-install-recommends \
 if apt-cache show gstreamer1.0-qt6 >/dev/null 2>&1; then
     apt-get install -y -qq --no-install-recommends gstreamer1.0-qt6
 fi
+
+# --------------------------------------------------------------------
+# SDL
+# --------------------------------------------------------------------
+apt-get install -y -qq --no-install-recommends \
+    libusb-1.0-0-dev
+
+# --------------------------------------------------------------------
+# Miscellaneous
+# --------------------------------------------------------------------
+apt-get install -y -qq --no-install-recommends \
+    libvulkan-dev
 
 # --------------------------------------------------------------------
 # Clean‑up

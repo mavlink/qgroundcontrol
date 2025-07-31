@@ -664,7 +664,8 @@ Item {
         case actionChangeLoiterRadius:
             _activeVehicle.guidedModeGotoLocation(
                 fwdFlightGotoMapCircle.coordinate,
-                fwdFlightGotoMapCircle.radius.rawValue
+                (fwdFlightGotoMapCircle.clockwiseRotation ? 1 : -1) *
+                        Math.abs(fwdFlightGotoMapCircle.radius.rawValue)
             )
             break
         case actionGoto:

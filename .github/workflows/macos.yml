@@ -34,8 +34,6 @@ jobs:
         shell: bash
 
     env:
-      ARTIFACT: QGroundControl.dmg
-      PACKAGE: QGroundControl
       QT_VERSION: 6.8.3
       QGC_MACOS_SIGNING_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
 
@@ -45,7 +43,7 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 1
-          fetch-tags: false
+          fetch-tags: true
 
       - name: Initial Setup
         uses: ./.github/actions/common
@@ -65,7 +63,7 @@ jobs:
           host: mac
           target: clang_64
           build-type: ${{ matrix.BuildType }}
-          cpm-modules: ${{ runner.temp }}/shadow_build_dir/cpm_modules
+          cpm-modules: ${{ runner.temp }}/build/cpm_modules
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
@@ -87,27 +85,27 @@ jobs:
           p12-password: ${{ secrets.MACOS_SIGNING_CERTS_PASS }}
 
       - name: Configure
-        working-directory: ${{ runner.temp }}/shadow_build_dir
+        working-directory: ${{ runner.temp }}/build
         run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
               -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }}
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
 
       - name: Build
-        working-directory: ${{ runner.temp }}/shadow_build_dir
+        working-directory: ${{ runner.temp }}/build
         run: cmake --build . --target all --config ${{ matrix.BuildType }} --parallel
 
       - name: Sanity check dev build executable
         if: matrix.BuildType == 'Release'
-        working-directory: ${{ runner.temp }}/shadow_build_dir/Release/QGroundControl.app/Contents/MacOS
+        working-directory: ${{ runner.temp }}/build/Release/QGroundControl.app/Contents/MacOS
         run: ./QGroundControl --simple-boot-test
 
       - name: Create DMG
-        working-directory: ${{ runner.temp }}/shadow_build_dir
+        working-directory: ${{ runner.temp }}/build
         run: cmake --install . --config ${{ matrix.BuildType }}
 
       - name: Mount DMG
         if: matrix.BuildType == 'Release'
-        working-directory: ${{ runner.temp }}/shadow_build_dir
+        working-directory: ${{ runner.temp }}/build
         run: hdiutil attach QGroundControl.dmg
 
       - name: Sanity check DMG executable
@@ -119,8 +117,8 @@ jobs:
         if: matrix.BuildType == 'Release'
         uses: ./.github/actions/upload
         with:
-          artifact_name: ${{ env.ARTIFACT }}
-          package_name: ${{ env.PACKAGE }}
+          artifact_name: QGroundControl.dmg
+          package_name: QGroundControl
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}

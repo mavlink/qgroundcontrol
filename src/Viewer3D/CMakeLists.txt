@@ -1,3 +1,5 @@
+# @author Omid Esrafilian <esrafilian.omid@gmail.com>
+
 if(NOT QGC_VIEWER3D)
     return()
 endif()
@@ -24,9 +26,9 @@ target_sources(${CMAKE_PROJECT_NAME}
         Viewer3DTileQuery.h
         Viewer3DTileReply.cc
         Viewer3DTileReply.h
-        Viewer3DUtils.cc
-        Viewer3DUtils.h
 )
+
+find_package(Qt6 REQUIRED COMPONENTS Quick3D)
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Quick3D)
 
@@ -85,5 +87,9 @@ qt_add_qml_module(Viewer3DModule
         Viewer3DQml/Drones/Djif450/DroneModel_propeller22_2/node.mesh
         Viewer3DQml/Drones/Djif450/DroneModel_Base_bottom_1/node.mesh
         Viewer3DQml/Drones/Djif450/DroneModel_Base_Top_1/node.mesh
+    IMPORTS
+        QtPositioning
+        QtQuick
+        QtQuick3D
     NO_PLUGIN
 )
