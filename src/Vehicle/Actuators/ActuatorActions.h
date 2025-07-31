@@ -25,6 +25,7 @@ struct Config {
         set3DModeOff = ACTUATOR_CONFIGURATION_3D_MODE_OFF,             ///< motors: disable 3D mode (reversible)
         setSpinDirection1 = ACTUATOR_CONFIGURATION_SPIN_DIRECTION1,    ///< motors: set spin direction 1
         setSpinDirection2 = ACTUATOR_CONFIGURATION_SPIN_DIRECTION2,    ///< motors: set spin direction 2
+        requestEscSettings = 6, // TODO: add to mavlink spec
     };
 
     QString typeToLabel() const;

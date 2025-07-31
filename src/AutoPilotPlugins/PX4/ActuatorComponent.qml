@@ -107,6 +107,7 @@ SetupPage {
                 }
             }
 
+            // Left Column
             ColumnLayout {
                 spacing:                    ScreenTools.defaultFontPixelHeight
                 implicitWidth:              _leftColumnWidth
@@ -396,12 +397,24 @@ SetupPage {
                                     }
                                 }
                             }
-
                         } // Column
-
                     } // Column
                 } // Rectangle
-            }
+
+                // TODO: add ESC Settings section
+                QGCLabel {
+                    text:               qsTr("ESC Settings")
+                    font.pointSize:     ScreenTools.mediumFontPointSize
+                }
+
+                // Rectangle {
+                //     implicitWidth:            _leftColumnWidth
+                //     implicitHeight:           actuatorTesting.height + (_margins * 2)
+                //     color:
+                // }
+
+
+            } // Column
 
             // Right column
             Column {

@@ -451,6 +451,7 @@ bool Actuators::parseJson(const QJsonDocument &json)
                 for (const auto& actionName : supportedActionsObj.keys()) {
                     QJsonObject actionObj = supportedActionsObj.value(actionName).toObject();
                     ActuatorActions::Config action{};
+                    qDebug() << "Available Action: " << actionName;
                     bool knownAction = true;
                     if (actionName == "beep") {
                         action.type = ActuatorActions::Config::Type::beep;
@@ -462,6 +463,8 @@ bool Actuators::parseJson(const QJsonDocument &json)
                         action.type = ActuatorActions::Config::Type::setSpinDirection1;
                     } else if (actionName == "set-spin-direction2") {
                         action.type = ActuatorActions::Config::Type::setSpinDirection2;
+                    } else if (actionName == "request-esc-settings") {
+                        action.type = ActuatorActions::Config::Type::requestEscSettings;
                     } else {
                         knownAction = false;
                         qCWarning(ActuatorsConfigLog) << "Unknown 'supported-actions':" << actionName;

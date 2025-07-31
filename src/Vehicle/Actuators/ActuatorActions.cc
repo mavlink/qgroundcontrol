@@ -20,6 +20,7 @@ QString Config::typeToLabel() const
         case Type::set3DModeOff: return QCoreApplication::translate("ActuatorAction", "3D mode: Off");
         case Type::setSpinDirection1: return QCoreApplication::translate("ActuatorAction", "Set Spin Direction 1");
         case Type::setSpinDirection2: return QCoreApplication::translate("ActuatorAction", "Set Spin Direction 2");
+        case Type::requestEscSettings: return QCoreApplication::translate("ActuatorAction", "Request ESC Settings");
     }
     return "";
 }
