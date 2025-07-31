@@ -233,7 +233,7 @@ GPSBaseStationSupport *GPSProvider::_connectGPS()
         return nullptr;
     }
 
-    switch(_rtkData.baseMode){
+    switch(_rtkData.useFixedBaseLocation){
         case BaseModeDefinition::Mode::BaseFixed:
             gpsDriver->setBasePosition(_rtkData.fixedBaseLatitude, _rtkData.fixedBaseLongitude, _rtkData.fixedBaseAltitudeMeters, _rtkData.fixedBaseAccuracyMeters * 1000.0f);
             break;

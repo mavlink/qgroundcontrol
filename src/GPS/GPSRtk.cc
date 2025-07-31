@@ -92,7 +92,7 @@ void GPSRtk::connectGPS(const QString &device, QStringView gps_type)
     const GPSProvider::rtk_data_s rtkData = {
         rtkSettings->surveyInAccuracyLimit()->rawValue().toDouble(),
         rtkSettings->surveyInMinObservationDuration()->rawValue().toInt(),
-        static_cast<BaseModeDefinition::Mode>(rtkSettings->baseMode()->rawValue().toInt()),
+        static_cast<BaseModeDefinition::Mode>(rtkSettings->useFixedBasePosition()->rawValue().toInt()),
         rtkSettings->fixedBasePositionLatitude()->rawValue().toDouble(),
         rtkSettings->fixedBasePositionLongitude()->rawValue().toDouble(),
         rtkSettings->fixedBasePositionAltitude()->rawValue().toFloat(),

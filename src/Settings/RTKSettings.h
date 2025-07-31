@@ -39,7 +39,7 @@ public:
     DEFINE_SETTINGFACT(baseReceiverManufacturers)
     DEFINE_SETTINGFACT(surveyInAccuracyLimit)
     DEFINE_SETTINGFACT(surveyInMinObservationDuration)
-    DEFINE_SETTINGFACT(baseMode)
+    DEFINE_SETTINGFACT(useFixedBasePosition)
     DEFINE_SETTINGFACT(fixedBasePositionLatitude)
     DEFINE_SETTINGFACT(fixedBasePositionLongitude)
     DEFINE_SETTINGFACT(fixedBasePositionAltitude)

@@ -43,7 +43,7 @@ public:
     struct rtk_data_s {
         double surveyInAccMeters = 0;
         int surveyInDurationSecs = 0;
-        BaseModeDefinition::Mode baseMode = BaseModeDefinition::Mode::BaseSurveyIn;
+        BaseModeDefinition::Mode useFixedBaseLocation = BaseModeDefinition::Mode::BaseSurveyIn;
         double fixedBaseLatitude = 0.;
         double fixedBaseLongitude = 0.;
         float fixedBaseAltitudeMeters = 0.f;
