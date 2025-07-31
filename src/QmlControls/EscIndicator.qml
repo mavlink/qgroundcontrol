@@ -12,10 +12,7 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.MultiVehicleManager
 import QGroundControl.ScreenTools
-import QGroundControl.Palette
-import MAVLink
 
 //-------------------------------------------------------------------------
 //-- ESC Indicator
