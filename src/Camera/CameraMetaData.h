@@ -43,6 +43,7 @@ public:
                    bool fixedOrientation,
                    double minTriggerInterval,
                    const QString &deprecatedTranslatedName);
+    ~CameraMetaData();
 
     const QString canonicalName;        ///< Canonical name saved in plan files. Not translated.
     const QString brand;                ///< Camera brand. Used for grouping.

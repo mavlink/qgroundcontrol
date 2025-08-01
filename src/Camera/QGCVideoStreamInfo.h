@@ -43,6 +43,7 @@ class QGCVideoStreamInfo : public QObject
 
 public:
     explicit QGCVideoStreamInfo(const mavlink_video_stream_information_t &info, QObject *parent = nullptr);
+    ~QGCVideoStreamInfo();
 
     Q_DECLARE_FLAGS(QVIDEO_STREAM_STATUS_FLAGS, VIDEO_STREAM_STATUS_FLAGS)
 

@@ -37,5 +37,10 @@ CameraMetaData::CameraMetaData(const QString &canonicalName,
     , minTriggerInterval(minTriggerInterval)
     , deprecatedTranslatedName(deprecatedTranslatedName)
 {
-    // qCDebug(AudioOutputLog) << Q_FUNC_INFO << this;
+    qCDebug(CameraMetaDataLog) << this;
+}
+
+CameraMetaData::~CameraMetaData()
+{
+    qCDebug(CameraMetaDataLog) << this;
 }

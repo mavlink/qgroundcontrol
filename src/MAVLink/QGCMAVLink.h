@@ -157,6 +157,24 @@ public:
     };
     Q_ENUM(CalibrationType)
 
+    MAVPACKED(
+    typedef struct param_ext_union {
+        union {
+            float param_float;
+            double param_double;
+            int64_t param_int64;
+            uint64_t param_uint64;
+            int32_t param_int32;
+            uint32_t param_uint32;
+            int16_t param_int16;
+            uint16_t param_uint16;
+            int8_t param_int8;
+            uint8_t param_uint8;
+            uint8_t bytes[MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_VALUE_LEN];
+        };
+        uint8_t type;
+    }) param_ext_union_t;
+
     static bool isValidChannel(uint8_t channel) { return (channel < MAVLINK_COMM_NUM_BUFFERS); }
     static bool isValidChannel(mavlink_channel_t channel) { return isValidChannel(static_cast<uint8_t>(channel)); }
 

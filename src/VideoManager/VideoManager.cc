@@ -735,7 +735,7 @@ void VideoManager::_initVideoReceiver(VideoReceiver *receiver, QQuickWindow *win
             if (!active) {
                 _subtitleWriter->stopCapturingTelemetry();
             }
-            emit recordingChanged();
+            emit recordingChanged(_recording);
         }
     });
 
