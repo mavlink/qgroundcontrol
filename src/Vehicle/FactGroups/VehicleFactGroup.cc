@@ -30,6 +30,7 @@ VehicleFactGroup::VehicleFactGroup(QObject *parent)
     _addFact(&_altitudeRelativeFact);
     _addFact(&_altitudeAMSLFact);
     _addFact(&_altitudeAboveTerrFact);
+    _addFact(&_terrainDataAvailableFact);
     _addFact(&_altitudeTuningFact);
     _addFact(&_altitudeTuningSetpointFact);
     _addFact(&_xTrackErrorFact);
