@@ -165,7 +165,11 @@ Rectangle {
                     border.width:       3
 
                     Rectangle {
-                        anchors.centerIn:   parent
+                        // anchors.centerIn snaps to integer coordinates before
+                        // Qt v6.8.1 (QTBUG-95224), so we need to calculate
+                        // manually for exact subpixel centering
+                        x: (parent.width - width) / 2
+                        y: (parent.height - height) / 2
                         width:              parent.width * (_isShootingInCurrentMode ? 0.5 : 0.75)
                         height:             width
                         radius:             _isShootingInCurrentMode ? 0 : width * 0.5
