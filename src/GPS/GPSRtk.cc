@@ -59,28 +59,40 @@ void GPSRtk::_onGPSSurveyInStatus(float duration, float accuracyMM,  double lati
 void GPSRtk::connectGPS(const QString &device, QStringView gps_type)
 {
     GPSProvider::GPSType type;
+    RTKSettings* rtkSettings = SettingsManager::instance()->rtkSettings();
+
     if (gps_type.contains(QStringLiteral("trimble"), Qt::CaseInsensitive)) {
         type = GPSProvider::GPSType::trimble;
+        rtkSettings->baseReceiverManufacturers()->setRawValue(1); // Trimble
         qCDebug(GPSRtkLog) << "Connecting Trimble device";
+
     } else if (gps_type.contains(QStringLiteral("septentrio"), Qt::CaseInsensitive)) {
         type = GPSProvider::GPSType::septentrio;
+        rtkSettings->baseReceiverManufacturers()->setRawValue(2); // Septentrio
         qCDebug(GPSRtkLog) << "Connecting Septentrio device";
+
     } else if (gps_type.contains(QStringLiteral("femtomes"), Qt::CaseInsensitive)) {
         type = GPSProvider::GPSType::femto;
+        rtkSettings->baseReceiverManufacturers()->setRawValue(3); // Femto
         qCDebug(GPSRtkLog) << "Connecting Femtomes device";
-    } else {
+
+    } else if(gps_type.contains(QStringLiteral("blox"), Qt::CaseInsensitive)) {
         type = GPSProvider::GPSType::u_blox;
+        rtkSettings->baseReceiverManufacturers()->setRawValue(4); // Ublox
         qCDebug(GPSRtkLog) << "Connecting U-blox device";
+    }else{
+        type = GPSProvider::GPSType::u_blox;
+        rtkSettings->baseReceiverManufacturers()->setRawValue(4); // Ublox
+        qCDebug(GPSRtkLog) << "Connecting device has U-blox by default";
     }
 
     disconnectGPS();
 
-    RTKSettings* const rtkSettings = SettingsManager::instance()->rtkSettings();
     _requestGpsStop = false;
     const GPSProvider::rtk_data_s rtkData = {
         rtkSettings->surveyInAccuracyLimit()->rawValue().toDouble(),
         rtkSettings->surveyInMinObservationDuration()->rawValue().toInt(),
-        rtkSettings->useFixedBasePosition()->rawValue().toBool(),
+        static_cast<BaseModeDefinition::Mode>(rtkSettings->useFixedBasePosition()->rawValue().toInt()),
         rtkSettings->fixedBasePositionLatitude()->rawValue().toDouble(),
         rtkSettings->fixedBasePositionLongitude()->rawValue().toDouble(),
         rtkSettings->fixedBasePositionAltitude()->rawValue().toFloat(),
