@@ -110,3 +110,24 @@ set(QGC_ARDUPILOT_PARAMS_RESOURCES
     "${ArduPilotParams_SOURCE_DIR}/Sub-4.5/apm.pdef.xml"
     CACHE STRING "ArduPilot Parameter Resources"
 )
+
+# Add JSON files
+file(GLOB_RECURSE JSON_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.json)
+qt_add_resources(${CMAKE_PROJECT_NAME} json_firmaware_plugin_apm
+    PREFIX "/json"
+    FILES
+    ${JSON_FILES}
+)
+
+# Add other resource
+set_source_files_properties(Copter3.6.OfflineEditing.params PROPERTIES QT_RESOURCE_ALIAS Copter.OfflineEditing.params)
+set_source_files_properties(Plane3.9.OfflineEditing.params PROPERTIES QT_RESOURCE_ALIAS Plane.OfflineEditing.params)
+set_source_files_properties(Rover3.5.OfflineEditing.params PROPERTIES QT_RESOURCE_ALIAS Rover.OfflineEditing.params)
+
+qt_add_resources(${CMAKE_PROJECT_NAME} firmaware_plugin_apm_resource
+    PREFIX "/FirmwarePlugin/APM"
+    FILES
+        Copter3.6.OfflineEditing.params
+        Plane3.9.OfflineEditing.params
+        Rover3.5.OfflineEditing.params
+)

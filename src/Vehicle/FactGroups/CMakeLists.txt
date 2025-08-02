@@ -40,4 +40,37 @@ target_sources(${CMAKE_PROJECT_NAME}
         VehicleHygrometerFactGroup.h
 )
 
+# Add JSON files
+set(JSON_FILES
+    RPMFact.json
+    TemperatureFact.json
+    GPSFact.json
+    EscStatusFactGroup.json
+    LocalPositionFact.json
+    EstimatorStatusFactGroup.json
+    EFIFact.json
+    BatteryFact.json
+    ClockFact.json
+    SubmarineFact.json
+    SetpointFact.json
+    DistanceSensorFact.json
+    GeneratorFact.json
+    HygrometerFact.json
+    TerrainFactGroup.json
+    VehicleFact.json
+    VibrationFact.json
+    WindFact.json
+)
+qt_add_resources(${CMAKE_PROJECT_NAME} json_vehicle_fact_group
+    PREFIX "/json/Vehicle"
+    FILES ${JSON_FILES}
+)
+
+# Alias
+set_source_files_properties(LocalPositionFact.json PROPERTIES QT_RESOURCE_ALIAS LocalPositionSetpointFact.json)
+qt_add_resources(${CMAKE_PROJECT_NAME} json_vehicle_fact_group_alias
+    PREFIX "/json/Vehicle"
+    FILES LocalPositionFact.json
+)
+
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
