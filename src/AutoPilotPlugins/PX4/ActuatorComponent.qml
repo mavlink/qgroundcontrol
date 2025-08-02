@@ -16,6 +16,7 @@ SetupPage {
     showAdvanced:   true
 
     property var actuators:       globals.activeVehicle.actuators
+    property var _escStatus:      globals.activeVehicle ? globals.activeVehicle.escStatus : null
 
     property var _showAdvanced:              advanced
     readonly property real _margins:         ScreenTools.defaultFontPixelHeight
@@ -26,6 +27,85 @@ SetupPage {
         Row {
             spacing:                        ScreenTools.defaultFontPixelWidth * 4
             property var _leftColumnWidth:  Math.max(actuatorTesting.implicitWidth, mixerUi.implicitWidth) + (_margins * 2)
+
+            // ESC data properties
+            property bool   _escDataAvailable:  _escStatus ? _escStatus.telemetryAvailable : false
+            property int    _motorCount:        _escStatus ? _escStatus.count.rawValue : 0
+            property int    _infoBitmask:       _escStatus ? _escStatus.info.rawValue : 0
+
+            function _isMotorOnline(motorIndex) {
+                return (_infoBitmask & (1 << motorIndex)) !== 0
+            }
+
+            function _isMotorHealthy(motorIndex) {
+                if (!_escDataAvailable || !_isMotorOnline(motorIndex)) return false
+                var failureFlags = _getMotorFailureFlags(motorIndex)
+                return failureFlags === 0
+            }
+
+            function _getMotorFailureFlags(motorIndex) {
+                if (!_escStatus) return 0
+
+                switch (motorIndex) {
+                case 0: return _escStatus.failureFlagsFirst.rawValue
+                case 1: return _escStatus.failureFlagsSecond.rawValue
+                case 2: return _escStatus.failureFlagsThird.rawValue
+                case 3: return _escStatus.failureFlagsFourth.rawValue
+                case 4: return _escStatus.failureFlagsFifth.rawValue
+                case 5: return _escStatus.failureFlagsSixth.rawValue
+                case 6: return _escStatus.failureFlagsSeventh.rawValue
+                case 7: return _escStatus.failureFlagsEighth.rawValue
+                default: return 0
+                }
+            }
+
+            function _getMotorRPM(motorIndex) {
+                if (!_escStatus) return 0
+
+                switch (motorIndex) {
+                case 0: return _escStatus.rpmFirst.rawValue
+                case 1: return _escStatus.rpmSecond.rawValue
+                case 2: return _escStatus.rpmThird.rawValue
+                case 3: return _escStatus.rpmFourth.rawValue
+                case 4: return _escStatus.rpmFifth.rawValue
+                case 5: return _escStatus.rpmSixth.rawValue
+                case 6: return _escStatus.rpmSeventh.rawValue
+                case 7: return _escStatus.rpmEighth.rawValue
+                default: return 0
+                }
+            }
+
+            function _getMotorVoltage(motorIndex) {
+                if (!_escStatus) return 0
+
+                switch (motorIndex) {
+                case 0: return _escStatus.voltageFirst.rawValue
+                case 1: return _escStatus.voltageSecond.rawValue
+                case 2: return _escStatus.voltageThird.rawValue
+                case 3: return _escStatus.voltageFourth.rawValue
+                case 4: return _escStatus.voltageFifth.rawValue
+                case 5: return _escStatus.voltageSixth.rawValue
+                case 6: return _escStatus.voltageSeventh.rawValue
+                case 7: return _escStatus.voltageEighth.rawValue
+                default: return 0
+                }
+            }
+
+            function _getMotorCurrent(motorIndex) {
+                if (!_escStatus) return 0
+
+                switch (motorIndex) {
+                case 0: return _escStatus.currentFirst.rawValue
+                case 1: return _escStatus.currentSecond.rawValue
+                case 2: return _escStatus.currentThird.rawValue
+                case 3: return _escStatus.currentFourth.rawValue
+                case 4: return _escStatus.currentFifth.rawValue
+                case 5: return _escStatus.currentSixth.rawValue
+                case 6: return _escStatus.currentSeventh.rawValue
+                case 7: return _escStatus.currentEighth.rawValue
+                default: return 0
+                }
+            }
 
             ColumnLayout {
                 spacing:                    ScreenTools.defaultFontPixelHeight
@@ -252,7 +332,8 @@ SetupPage {
                                 id:                allMotorsComponent
                                 ActuatorSlider {
                                     channel:       actuators.actuatorTest.allMotorsActuator
-                                    rightPadding:  ScreenTools.defaultFontPixelWidth * 3
+                                    motorIndex:    -1  // Special value for "all" slider
+                                    escStatus:     _escStatus
                                     onActuatorValueChanged: {
                                         stopTimer();
                                         for (var channelIdx=0; channelIdx<sliderRepeater.count; channelIdx++) {
@@ -272,6 +353,8 @@ SetupPage {
 
                                 ActuatorSlider {
                                     channel: object
+                                    motorIndex: (object && object.isMotor) ? index : -1
+                                    escStatus: _escStatus
                                     onActuatorValueChanged: (value) =>{
                                         if (isNaN(value)) {
                                             actuators.actuatorTest.stopControl(index);
@@ -281,7 +364,7 @@ SetupPage {
                                         }
                                     }
                                 }
-                            } // Repeater
+                            }
                         } // Row
 
                         // actuator actions
@@ -333,7 +416,6 @@ SetupPage {
                     color:         qgcPal.warningText
                     bottomPadding: ScreenTools.defaultFontPixelHeight
                 }
-
 
                 // actuator output selection tabs
                 QGCTabBar {
