@@ -17,6 +17,7 @@ qt_add_qml_module(FlightMapModule
         MapItems/QGCMapPolygonVisuals.qml
         MapItems/QGCMapPolylineVisuals.qml
         MapItems/SplitIndicator.qml
+        MapItems/TrajectoryPolyline.qml
         MapItems/VehicleMapItem.qml
         Widgets/CenterMapDropButton.qml
         Widgets/CenterMapDropPanel.qml
