@@ -63,6 +63,7 @@ void VehicleDistanceSensorFactGroup::handleMessage(Vehicle *vehicle, const mavli
         }
     }
 
+    minDistance()->setRawValue(distanceSensor.min_distance / 100.0);
     maxDistance()->setRawValue(distanceSensor.max_distance / 100.0);
 
     _setTelemetryAvailable(true);
