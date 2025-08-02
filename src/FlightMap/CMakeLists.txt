@@ -34,5 +34,5 @@ qt_add_qml_module(FlightMapModule
         Widgets/VerticalCompassAttitude.qml
         FlightMap.qml
         MapScale.qml
-    NO_PLUGIN # Required by Qt 6.6.3. TODO: Remove when no longer supported.
+    NO_PLUGIN
 )

@@ -28,7 +28,7 @@
 #endif
 #include "QGCLoggingCategory.h"
 
-#include <QtCore/qapplicationstatic.h>
+#include <QtCore/QApplicationStatic>
 #include <QtCore/QTimer>
 
 QGC_LOGGING_CATEGORY(MultiVehicleManagerLog, "qgc.vehicle.multivehiclemanager")

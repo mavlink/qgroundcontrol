@@ -16,7 +16,7 @@
 #include "QmlObjectListModel.h"
 #include "QGCLoggingCategory.h"
 
-#include <QtCore/qapplicationstatic.h>
+#include <QtCore/QApplicationStatic>
 #include <QtCore/QTimer>
 #include <qassert.h>
 

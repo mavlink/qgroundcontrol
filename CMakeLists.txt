@@ -105,20 +105,6 @@ endif()
 #               Qt6 Configuration
 #######################################################
 
-# The values specified below are the ONLY supported configurations for this version of QGC.
-# Change these to something else at your own risk. Anything other than what is specified
-# here is unsupported so don't expect any help with problems.
-
-if(QGC_ENABLE_HERELINK AND ANDROID)
-    set(QGC_QT_MINIMUM_VERSION "6.6.3" CACHE STRING "Minimum Supported Qt Version")
-    set(QGC_QT_MAXIMUM_VERSION "6.6.3" CACHE STRING "Maximum Supported Qt Version")
-    set(QGC_QT_ANDROID_MIN_SDK_VERSION "25" CACHE STRING "Android Min SDK Version")
-else()
-    set(QGC_QT_MINIMUM_VERSION "6.8.3" CACHE STRING "Minimum Supported Qt Version")
-    set(QGC_QT_MAXIMUM_VERSION "6.8.3" CACHE STRING "Maximum Supported Qt Version")
-    set(QGC_QT_ANDROID_MIN_SDK_VERSION "28" CACHE STRING "Android Min SDK Version")
-endif()
-
 find_package(Qt6
     ${QGC_QT_MINIMUM_VERSION}...${QGC_QT_MAXIMUM_VERSION}
     REQUIRED
@@ -157,16 +143,10 @@ if(LINUX)
     find_package(Qt6 COMPONENTS WaylandClient)
 endif()
 
-# Set extra standard project setup options for Qt 6.7.0 and above
-set(EXTRA_STANDARD_PROJECT_SETUP_OPTIONS)
-if(Qt6_VERSION VERSION_GREATER_EQUAL 6.7.0)
-    list(APPEND EXTRA_STANDARD_PROJECT_SETUP_OPTIONS I18N_SOURCE_LANGUAGE en)
-endif()
-
 qt_standard_project_setup(
     REQUIRES ${QGC_QT_MINIMUM_VERSION}
     SUPPORTS_UP_TO ${QGC_QT_MAXIMUM_VERSION}
-    ${EXTRA_STANDARD_PROJECT_SETUP_OPTIONS}
+    I18N_SOURCE_LANGUAGE en
 )
 
 qt_policy(
@@ -246,16 +226,12 @@ endif()
 file(GLOB TS_SOURCES ${CMAKE_SOURCE_DIR}/translations/qgc_*.ts)
 set_source_files_properties(${TS_SOURCES} PROPERTIES OUTPUT_LOCATION "${CMAKE_BINARY_DIR}/i18n")
 
-set(translations_options_arg)
-if(Qt6_VERSION VERSION_GREATER_EQUAL 6.7.0)
-    list(APPEND translations_options_arg TS_FILE_DIR "${CMAKE_SOURCE_DIR}/translations")
-    list(APPEND translations_options_arg TS_FILE_BASE ${CMAKE_PROJECT_NAME})
-endif()
 qt_add_translations(${CMAKE_PROJECT_NAME}
     TS_FILES ${TS_SOURCES}
     RESOURCE_PREFIX "/"
     LUPDATE_OPTIONS -no-obsolete
-    ${translations_options_arg}
+    TS_FILE_DIR "${CMAKE_SOURCE_DIR}/translations"
+    TS_FILE_BASE ${CMAKE_PROJECT_NAME}
 )
 
 qgc_set_qt_resource_alias(

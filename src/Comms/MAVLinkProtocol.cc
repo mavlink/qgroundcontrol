@@ -18,7 +18,7 @@
 #include "AppSettings.h"
 #include "QmlObjectListModel.h"
 
-#include <QtCore/qapplicationstatic.h>
+#include <QtCore/QApplicationStatic>
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
 #include <QtCore/QMetaType>

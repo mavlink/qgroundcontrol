@@ -9,8 +9,7 @@ install(
 )
 
 set(deploy_tool_options_arg "")
-if(Qt6_VERSION VERSION_GREATER_EQUAL 6.7.0 AND (MACOS OR WIN32))
-    list(APPEND deploy_tool_options_arg DEPLOY_TOOL_OPTIONS)
+if(MACOS OR WIN32)
     list(APPEND deploy_tool_options_arg "-qmldir=${CMAKE_SOURCE_DIR}")
     if(MACOS)
         # if(DEFINED ENV{QGC_MACOS_SIGNING_IDENTITY})
@@ -30,7 +29,7 @@ qt_generate_deploy_qml_app_script(
     MACOS_BUNDLE_POST_BUILD
     NO_UNSUPPORTED_PLATFORM_ERROR
     DEPLOY_USER_QML_MODULES_ON_UNSUPPORTED_PLATFORM
-    ${deploy_tool_options_arg}
+    DEPLOY_TOOL_OPTIONS ${deploy_tool_options_arg}
 )
 install(SCRIPT ${deploy_script})
 

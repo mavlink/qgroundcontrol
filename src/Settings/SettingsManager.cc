@@ -35,7 +35,7 @@
 #include "Viewer3DSettings.h"
 #endif
 
-#include <QtCore/qapplicationstatic.h>
+#include <QtCore/QApplicationStatic>
 #include <QtQml/qqml.h>
 
 QGC_LOGGING_CATEGORY(SettingsManagerLog, "qgc.settings.settingsmanager")

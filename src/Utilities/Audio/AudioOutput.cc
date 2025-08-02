@@ -13,7 +13,7 @@
 #include "QGCApplication.h"
 
 #include <QtCore/QRegularExpression>
-#include <QtCore/qapplicationstatic.h>
+#include <QtCore/QApplicationStatic>
 #include <QtTextToSpeech/QTextToSpeech>
 
 QGC_LOGGING_CATEGORY(AudioOutputLog, "qgc.audio.audiooutput");

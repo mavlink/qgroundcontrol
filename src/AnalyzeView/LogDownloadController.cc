@@ -19,7 +19,7 @@
 #include "SettingsManager.h"
 #include "Vehicle.h"
 
-#include <QtCore/qapplicationstatic.h>
+#include <QtCore/QApplicationStatic>
 #include <QtCore/QTimer>
 
 QGC_LOGGING_CATEGORY(LogDownloadControllerLog, "qgc.analyzeview.logdownloadcontroller")
