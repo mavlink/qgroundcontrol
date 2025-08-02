@@ -34,6 +34,9 @@ option(QGC_ENABLE_GST_VIDEOSTREAMING "Enable GStreamer Video Backend" ON)
 cmake_dependent_option(QGC_CUSTOM_GST_PACKAGE "Enable Using QGC Provided Custom GStreamer Packages" OFF "QGC_ENABLE_GST_VIDEOSTREAMING" OFF)
 option(QGC_ENABLE_QT_VIDEOSTREAMING "Enable QtMultimedia Video Backend" OFF) # Qt6Multimedia_FOUND
 
+# Joystick
+set(SDL_GAMECONTROLLERCONFIG "0300000009120000544f000011010000,OpenTX Radiomaster TX16S Joystick,leftx:a3,lefty:a2,rightx:a0,righty:a1,platform:Linux" CACHE STRING "Custom SDL Joystick Mappings")
+
 # MAVLink
 set(QGC_MAVLINK_GIT_REPO "https://github.com/mavlink/c_library_v2.git" CACHE STRING "URL to MAVLink Git Repo")
 set(QGC_MAVLINK_GIT_TAG "19f9955598af9a9181064619bd2e3c04bd2d848a" CACHE STRING "Tag of MAVLink Git Repo")

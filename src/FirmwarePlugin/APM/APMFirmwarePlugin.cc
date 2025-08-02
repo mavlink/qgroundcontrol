@@ -803,6 +803,19 @@ void APMFirmwarePlugin::guidedModeGotoLocation(Vehicle *vehicle, const QGeoCoord
             handlerInfo.resultHandler = _MAV_CMD_DO_REPOSITION_ResultHandler;
             handlerInfo.resultHandlerData = result_handler_data;
 
+            // For copters, this parameter specifies a yaw heading (heading
+            // reference defined in Bitmask field). NaN to use the current
+            // system yaw heading mode (e.g. yaw towards next waypoint, yaw to
+            // home, etc.).
+            // For planes it indicates loiter direction (0: clockwise, 1:
+            // counter clockwise)
+            float yawParam = NAN;
+            if (forwardFlightLoiterRadius > 0) {
+                yawParam = 0.0f;
+            } else if (forwardFlightLoiterRadius < 0) {
+                yawParam = 1.0f;
+            }
+
             vehicle->sendMavCommandIntWithHandler(
                 &handlerInfo,
                 vehicle->defaultComponentId(),
@@ -810,8 +823,8 @@ void APMFirmwarePlugin::guidedModeGotoLocation(Vehicle *vehicle, const QGeoCoord
                 MAV_FRAME_GLOBAL,
                 -1.0f,
                 MAV_DO_REPOSITION_FLAGS_CHANGE_MODE,
-                static_cast<float>(forwardFlightLoiterRadius),
-                NAN,
+                static_cast<float>(abs(forwardFlightLoiterRadius)),
+                yawParam,
                 gotoCoord.latitude(),
                 gotoCoord.longitude(),
                 vehicle->altitudeAMSL()->rawValue().toFloat()
