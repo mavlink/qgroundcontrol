@@ -576,6 +576,50 @@ void Joystick::_handleButtons()
     }
 }
 
+float applyDeadzone(float value, float deadzone) {
+        if (std::abs(value) < deadzone) {
+            return 0.0f;
+        }else if(value<0){
+            value=value+deadzone;
+        }else if(value>0){
+            value=value-deadzone;
+        }
+        return value;
+    }
+
+void Joystick::setGimbalYawDeadzone(int deadzone) {
+    if (_rgCalibration[4].deadband != deadzone) {
+        _rgCalibration[4].deadband = deadzone;
+        _saveSettings();
+        emit gimbalYawDeadzoneChanged();
+    }
+}
+void Joystick::setGimbalPitchDeadzone(int deadzone) {
+    if (_rgCalibration[5].deadband != deadzone) {
+        _rgCalibration[5].deadband = deadzone;
+        _saveSettings();
+        emit gimbalPitchDeadzoneChanged();
+    }
+}
+void Joystick::setGimbalMaxSpeed(int speed)
+{
+    if (_gimbalMaxSpeed != speed) {
+        _gimbalMaxSpeed = speed;
+        emit gimbalMaxSpeedChanged();
+        _saveSettings();
+    }
+}
+
+void Joystick::setGimbalAxisEnabled(bool enabled)
+{
+    if (_gimbalAxisEnabled != enabled) {
+        _gimbalAxisEnabled = enabled;
+        emit gimbalAxisEnabledChanged(enabled);
+        _saveSettings();
+        _activeVehicle->sendGimbalAbsolutePosition(0, 0);
+    }
+}
+
 void Joystick::_handleAxis()
 {
     const int axisDelay = static_cast<int>(1000.0f / _axisFrequencyHz);
@@ -609,17 +653,60 @@ void Joystick::_handleAxis()
     float throttle = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis], (_throttleMode == ThrottleModeDownZero) ? false :_deadband);
 
     float gimbalPitch = 0.0f;
+    float gimbalYaw = 0.0f;
+
     if (_axisCount > 4) {
         axis = _rgFunctionAxis[gimbalPitchFunction];
         gimbalPitch = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis],_deadband);
     }
 
-    float gimbalYaw = 0.0f;
     if (_axisCount > 5) {
         axis = _rgFunctionAxis[gimbalYawFunction];
         gimbalYaw = _adjustRange(_rgAxisValues[axis],   _rgCalibration[axis],_deadband);
     }
 
+    if (_axisCount > 5 && _gimbalAxisEnabled) {
+        int pitchAxisIndex = 5;
+        float gimbalPitchNorm = _adjustRange(_rgAxisValues[pitchAxisIndex], _rgCalibration[pitchAxisIndex], _deadband);
+        // float gimbalPitchDeg = gimbalPitchNorm * 160.0f - 80.0f;
+        // float gimbalPitchDeg = gimbalPitchNorm * (2.0f * gimbalPitchMax) - gimbalPitchMax;
+        float gimbalPitchDeg = gimbalPitchNorm * (2.0f * static_cast<float>(_gimbalMaxSpeed)) - static_cast<float>(_gimbalMaxSpeed);
+        gimbalPitchDeg=gimbalPitchDeg-5;
+
+        float gimbalPitchDeadzone = static_cast<float>(_rgCalibration[5].deadband);
+        float gimbalPitchOut = applyDeadzone(gimbalPitchDeg, gimbalPitchDeadzone);
+
+        int yawAxisIndex = 4;
+        float gimbalYawNorm = _adjustRange(_rgAxisValues[yawAxisIndex], _rgCalibration[yawAxisIndex], _deadband);
+        // float gimbalYawDeg = gimbalYawNorm * 160.0f - 80.0f;
+        float gimbalYawDeg = gimbalYawNorm * (2.0f * static_cast<float>(_gimbalMaxSpeed)) - static_cast<float>(_gimbalMaxSpeed);
+        gimbalYawDeg=gimbalYawDeg-4;
+
+        float gimbalYawDeadzone = static_cast<float>(_rgCalibration[4].deadband);
+        float gimbalYawOut = applyDeadzone(gimbalYawDeg, gimbalYawDeadzone);
+
+        static int zeroPitchCount = 0;
+        static int zeroYawCount = 0;
+
+        if (std::abs(gimbalPitchOut) == 0) {
+            zeroPitchCount++;
+        } else {
+            zeroPitchCount = 0; 
+        }
+
+        if (std::abs(gimbalYawOut) == 0) {
+            zeroYawCount++;
+        } else {
+            zeroYawCount = 0; 
+        }
+
+        if (zeroPitchCount >= 3 && zeroYawCount >= 3) {
+
+        }else{
+            _activeVehicle->sendGimbalAbsolutePosition(gimbalPitchOut, gimbalYawOut);
+            // qDebug() << gimbalYawOut << gimbalPitchOut;
+        }
+    }
     if (_accumulator) {
         static float throttle_accu = 0.f;
         throttle_accu += (throttle * (40 / 1000.f)); // for throttle to change from min to max it will take 1000ms (40ms is a loop time)
@@ -985,6 +1072,11 @@ void Joystick::setCalibrationMode(bool calibrating)
         _pollingStartedForCalibration = true;
         startPolling(MultiVehicleManager::instance()->activeVehicle());
     } else if (_pollingStartedForCalibration) {
+        if (_axisCount > 5) {
+            _rgFunctionAxis[gimbalYawFunction] = 4;
+            _rgFunctionAxis[gimbalPitchFunction] = 5;
+        }
+        _saveSettings();
         stopPolling();
     }
 }

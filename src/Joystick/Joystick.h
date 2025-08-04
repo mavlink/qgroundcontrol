@@ -82,6 +82,10 @@ class Joystick : public QThread
     Q_PROPERTY(QString                  name                    READ    name                                                CONSTANT)
     Q_PROPERTY(QStringList              assignableActionTitles  READ    assignableActionTitles                              NOTIFY assignableActionsChanged)
     Q_PROPERTY(QStringList              buttonActions           READ    buttonActions                                       NOTIFY buttonActionsChanged)
+    Q_PROPERTY(int gimbalPitchDeadzone READ gimbalPitchDeadzone WRITE setGimbalPitchDeadzone NOTIFY gimbalPitchDeadzoneChanged)
+    Q_PROPERTY(int gimbalYawDeadzone READ gimbalYawDeadzone WRITE setGimbalYawDeadzone NOTIFY gimbalYawDeadzoneChanged)
+    Q_PROPERTY(bool gimbalAxisEnabled READ gimbalAxisEnabled WRITE setGimbalAxisEnabled NOTIFY gimbalAxisEnabledChanged)
+    Q_PROPERTY(int gimbalMaxSpeed READ gimbalMaxSpeed WRITE setGimbalMaxSpeed NOTIFY gimbalMaxSpeedChanged)
 
     enum ButtonEvent_t {
         BUTTON_UP,
@@ -183,6 +187,17 @@ public:
     /// Set joystick button repeat rate (in Hz)
     void setButtonFrequency(float val);
 
+    int gimbalPitchDeadzone() const { return _rgCalibration[5].deadband; }
+    int gimbalYawDeadzone() const { return _rgCalibration[4].deadband; }
+    int gimbalMaxSpeed() const { return _gimbalMaxSpeed; }
+
+    Q_INVOKABLE void setGimbalPitchDeadzone(int deadzone);
+    Q_INVOKABLE void setGimbalYawDeadzone(int deadzone);
+    Q_INVOKABLE void setGimbalMaxSpeed(int speed);
+
+    bool gimbalAxisEnabled() const { return _gimbalAxisEnabled; }
+    Q_INVOKABLE void setGimbalAxisEnabled(bool enabled);
+
 signals:
     // The raw signals are only meant for use by calibration
     void rawAxisValueChanged(int index, int value);
@@ -223,6 +238,11 @@ signals:
     void landingGearRetract();
     void motorInterlock(bool enable);
     void unknownAction(const QString &action);
+
+    void gimbalPitchDeadzoneChanged();
+    void gimbalYawDeadzoneChanged();
+    void gimbalMaxSpeedChanged();
+    void gimbalAxisEnabledChanged(bool enabled);
 
 protected:
     void _setDefaultCalibration();
@@ -366,4 +386,7 @@ private:
     static constexpr const char *_buttonActionLandingGearRetract=  QT_TR_NOOP("Landing gear retract");
     static constexpr const char *_buttonActionMotorInterlockEnable=   QT_TR_NOOP("Motor Interlock enable");
     static constexpr const char *_buttonActionMotorInterlockDisable=  QT_TR_NOOP("Motor Interlock disable");
+
+    bool _gimbalAxisEnabled = true;
+    int _gimbalMaxSpeed = 80;  // Default max speed
 };

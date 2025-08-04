@@ -13,11 +13,11 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-
+import QGroundControl.Palette
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
-
-
+import QGroundControl.Controllers
+import QGroundControl.FactSystem
 import QGroundControl.FactControls
 
 Item {
@@ -197,6 +197,104 @@ Item {
             horizontalAlignment: Text.AlignHCenter
             anchors.horizontalCenter: parent.horizontalCenter
         }
+
+        Rectangle {
+            width: parent.width * 0.9
+            height: 100
+            color: "transparent"
+            radius: 8
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.topMargin: ScreenTools.defaultFontPixelHeight
+
+            Column {
+                anchors.margins: ScreenTools.defaultFontPixelHeight
+                spacing: ScreenTools.defaultFontPixelHeight * 0.5
+
+                QGCLabel {
+                    text: qsTr("Gimbal Control Info")
+                    font.bold: true
+                }
+                QGCLabel {
+                    text: qsTr("Axis 5 = Gimbal Pitch   |   Axis 4 = Gimbal Yaw")
+                    color: qgcPal.text
+                }
+
+                // Gimbal Deadzone Axis 4 (Yaw)
+                Row {
+                    spacing: ScreenTools.defaultFontPixelWidth * 2
+                    QGCLabel {
+                        text: qsTr("Gimbal Yaw Deadzone (Axis 4):")
+                        width: 220
+                    }
+                    Slider {
+                        id: yawDeadzoneSlider
+                        width: 150
+                        from: 0
+                        to: 20
+                        stepSize: 1
+                        value: _activeJoystick ? _activeJoystick.gimbalYawDeadzone : 0
+                        onValueChanged: if (_activeJoystick) _activeJoystick.gimbalYawDeadzone = value
+                    }
+                    QGCLabel { text: yawDeadzoneSlider.value.toFixed(0) }
+                }
+
+                // Gimbal Deadzone Axis 5 Pitch
+                Row {
+                    spacing: ScreenTools.defaultFontPixelWidth * 2
+                    QGCLabel {
+                        text: qsTr("Gimbal Pitch Deadzone (Axis 5):")
+                        width: 220
+                    }
+                    Slider {
+                        id: pitchDeadzoneSlider
+                        width: 150
+                        from: 0
+                        to: 20
+                        stepSize: 1
+                        value: _activeJoystick ? _activeJoystick.gimbalPitchDeadzone : 0
+                        onValueChanged: if (_activeJoystick) _activeJoystick.gimbalPitchDeadzone = value
+                    }
+                    QGCLabel { text: pitchDeadzoneSlider.value.toFixed(0) }
+                }
+
+                // Gimbal Speed
+                Row {
+                    spacing: ScreenTools.defaultFontPixelWidth * 2
+                    QGCLabel {
+                        text: qsTr("Gimbal Max Speed:")
+                        width: 220
+                    }
+                    Slider {
+                        id: speedSlider
+                        width: 150
+                        from: 0
+                        to: 100
+                        stepSize: 1
+                        value: _activeJoystick ? _activeJoystick.gimbalMaxSpeed : 0
+                        onValueChanged: if (_activeJoystick) _activeJoystick.gimbalMaxSpeed = value
+                    }
+                    QGCLabel { text: speedSlider.value.toFixed(0) }
+                }
+
+                Row {
+                    spacing: ScreenTools.defaultFontPixelWidth * 2
+                    QGCLabel {
+                        text: qsTr("Gimbal Axis Control:")
+                        width: 220
+                    }
+                    Switch {
+                        id: gimbalAxisSwitch
+                        checked: _activeJoystick ? _activeJoystick.gimbalAxisEnabled : true
+                        onToggled: if (_activeJoystick) _activeJoystick.gimbalAxisEnabled = checked
+                    }
+                    QGCLabel {
+                        text: gimbalAxisSwitch.checked ? qsTr("Enabled") : qsTr("Disabled")
+                    }
+                }
+
+            }
+        }    
+
     }
 }
 
