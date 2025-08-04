@@ -1,9 +1,9 @@
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
+        BatteryFactGroupListModel.cc
+        BatteryFactGroupListModel.h
         TerrainFactGroup.cc
         TerrainFactGroup.h
-        VehicleBatteryFactGroup.cc
-        VehicleBatteryFactGroup.h
         VehicleClockFactGroup.cc
         VehicleClockFactGroup.h
         VehicleDistanceSensorFactGroup.cc

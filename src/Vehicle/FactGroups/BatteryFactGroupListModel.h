@@ -9,12 +9,26 @@
 
 #pragma once
 
-#include "FactGroup.h"
+#include "FactGroupListModel.h"
 
-class VehicleBatteryFactGroup : public FactGroup
+class BatteryFactGroupListModel : public FactGroupListModel
 {
     Q_OBJECT
-    Q_PROPERTY(Fact *id                 READ id                 CONSTANT)
+    QML_ELEMENT
+    QML_UNCREATABLE("")
+
+public:
+    explicit BatteryFactGroupListModel(QObject* parent = nullptr);
+
+protected:
+    // Overrides from FactGroupListModel
+    bool _shouldHandleMessage(const mavlink_message_t &message, uint32_t &id) const final;
+    FactGroupWithId *_createFactGroupWithId(uint32_t id) final;
+};
+
+class BatteryFactGroup : public FactGroupWithId
+{
+    Q_OBJECT
     Q_PROPERTY(Fact *function           READ function           CONSTANT)
     Q_PROPERTY(Fact *type               READ type               CONSTANT)
     Q_PROPERTY(Fact *temperature        READ temperature        CONSTANT)
@@ -28,9 +42,8 @@ class VehicleBatteryFactGroup : public FactGroup
     Q_PROPERTY(Fact *instantPower       READ instantPower       CONSTANT)
 
 public:
-    explicit VehicleBatteryFactGroup(uint8_t batteryId, QObject *parent = nullptr);
+    explicit BatteryFactGroup(uint32_t batteryId, QObject *parent = nullptr);
 
-    Fact *id() { return &_batteryIdFact; }
     Fact *function() { return &_batteryFunctionFact; }
     Fact *type() { return &_batteryTypeFact; }
     Fact *voltage() { return &_voltageFact; }
@@ -43,9 +56,6 @@ public:
     Fact *timeRemainingStr() { return &_timeRemainingStrFact; }
     Fact *chargeState() { return &_chargeStateFact; }
 
-    /// Creates a new fact group for the battery id as needed and updates the Vehicle with it
-    static void handleMessageForFactGroupCreation(Vehicle *vehicle, const mavlink_message_t &message);
-
     // Overrides from FactGroup
     void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) final;
 
@@ -53,14 +63,10 @@ private slots:
     void _timeRemainingChanged(const QVariant &value);
 
 private:
-    static void _handleHighLatency(Vehicle *vehicle, const mavlink_message_t &message);
-    static void _handleHighLatency2(Vehicle *vehicle, const mavlink_message_t &message);
-    static void _handleBatteryStatus(Vehicle *vehicle, const mavlink_message_t &message);
-    static VehicleBatteryFactGroup *_findOrAddBatteryGroupById(Vehicle *vehicle, uint8_t batteryId);
+    void _handleHighLatency(Vehicle *vehicle, const mavlink_message_t &message);
+    void _handleHighLatency2(Vehicle *vehicle, const mavlink_message_t &message);
+    void _handleBatteryStatus(Vehicle *vehicle, const mavlink_message_t &message);
 
-    static constexpr const char *_batteryFactGroupNamePrefix = "battery";
-
-    Fact _batteryIdFact = Fact(0, QStringLiteral("id"), FactMetaData::valueTypeUint8);
     Fact _batteryFunctionFact = Fact(0, QStringLiteral("batteryFunction"), FactMetaData::valueTypeUint8);
     Fact _batteryTypeFact = Fact(0, QStringLiteral("batteryType"), FactMetaData::valueTypeUint8);
     Fact _voltageFact = Fact(0, QStringLiteral("voltage"), FactMetaData::valueTypeDouble);
