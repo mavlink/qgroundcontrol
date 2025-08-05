@@ -33,7 +33,7 @@ protected:
     virtual FactGroupWithId *_createFactGroupWithId(uint32_t id) = 0;
 
     FactGroupWithId *_findOrAddFactGroupById(Vehicle *vehicle, uint32_t id);
-    QString _factGroupNameWithId(uint32_t id) const;;
+    QString _factGroupNameWithId(uint32_t id) const;
 
     const char* _factGroupNamePrefix;
 };
