@@ -19,11 +19,18 @@ FactGroupListModel::FactGroupListModel(const char* factGroupNamePrefix, QObject*
 
 void FactGroupListModel::handleMessageForFactGroupCreation(Vehicle *vehicle, const mavlink_message_t &message)
 {
-    uint32_t id = 0;
+    QList<uint32_t> ids;
 
-    if (_shouldHandleMessage(message, id)) {
-        _findOrAddFactGroupById(vehicle, id);
+    if (_shouldHandleMessage(message, ids)) {
+        for (const uint32_t id : ids) {
+            _findOrAddFactGroupById(vehicle, id);
+        }
     }
+}
+
+QString FactGroupListModel::_factGroupNameWithId(uint32_t id) const
+{
+    return QStringLiteral("%1%2").arg(_factGroupNamePrefix).arg(id);
 }
 
 FactGroupWithId *FactGroupListModel::_findOrAddFactGroupById(Vehicle *vehicle, uint32_t id)
@@ -43,7 +50,7 @@ FactGroupWithId *FactGroupListModel::_findOrAddFactGroupById(Vehicle *vehicle, u
 
     auto *const newGroup = _createFactGroupWithId(id);
     insert(i, newGroup);
-    vehicle->_addFactGroup(newGroup, QStringLiteral("%1%2").arg(_factGroupNamePrefix).arg(id));
+    vehicle->_addFactGroup(newGroup, _factGroupNameWithId(id));
 
     return newGroup;
 }
