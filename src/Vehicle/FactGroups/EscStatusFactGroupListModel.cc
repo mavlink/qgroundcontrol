@@ -105,7 +105,7 @@ void EscStatusFactGroup::_handleEscInfo(Vehicle *vehicle, const mavlink_message_
 
     uint8_t index = _idFact.rawValue().toUInt();
 
-    if (escInfo.index != index) {
+    if (index < escInfo.index || index >= escInfo.index + 4) {
         // Disregard ESC info messages which are not targeted at this ESC index
         return;
     }
@@ -128,7 +128,7 @@ void EscStatusFactGroup::_handleEscStatus(Vehicle *vehicle, const mavlink_messag
 
     uint8_t index = _idFact.rawValue().toUInt();
 
-    if (escStatus.index != index) {
+    if (index < escStatus.index || index >= escStatus.index + 4) {
         // Disregard ESC info messages which are not targeted at this ESC index
         return;
     }
