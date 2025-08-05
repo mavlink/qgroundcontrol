@@ -14,15 +14,16 @@ import QtQuick.Dialogs
 
 import QGroundControl
 import QGroundControl.Controls
+
+
 import QGroundControl.ScreenTools
+
 
 Rectangle {
     id:     _root
     width:  parent.width
-    property real toolbarHeight: ScreenTools.defaultFontPixelHeight * 1.5//my add, here to control the height of the whole toolbar
-    height: toolbarHeight//my change, original: ScreenTools.toolbarHeight
+    height: ScreenTools.toolbarHeight
     color:  qgcPal.toolbarBackground
-    //scale: 0.7
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     property bool   _communicationLost: _activeVehicle ? _activeVehicle.vehicleLinkManager.communicationLost : false
@@ -64,18 +65,15 @@ Rectangle {
 
         QGCToolBarButton {
             id:                     currentButton
-            Layout.preferredHeight: toolbarHeight//viewButtonRow.height
+            Layout.preferredHeight: viewButtonRow.height
             icon.source:            "/res/QGCLogoFull.svg"
             logo:                   true
             onClicked:              mainWindow.showToolSelectDialog()
-            scale:                  0.65//my add, to control the QGC logo's size
         }
 
         MainStatusIndicator {
             id: mainStatusIndicator
-            Layout.preferredHeight: toolbarHeight//viewButtonRow.height
-            Layout.leftMargin: -20    //my add, position turn left
-            scale: 0.9//my add
+            Layout.preferredHeight: viewButtonRow.height
         }
 
         QGCButton {
@@ -83,8 +81,6 @@ Rectangle {
             text:               qsTr("Disconnect")
             onClicked:          _activeVehicle.closeVehicle()
             visible:            _activeVehicle && _communicationLost
-            //Layout.leftMargin: -40     //my add, position turn left
-            scale: 0.9//my add
         }
     }
 
@@ -100,10 +96,7 @@ Rectangle {
         contentWidth:           toolIndicators.width
         flickableDirection:     Flickable.HorizontalFlick
 
-        FlyViewToolBarIndicators{
-            id: toolIndicators
-            scale: 0.85//set the size of the mode
-        }
+        FlyViewToolBarIndicators { id: toolIndicators }
     }
 
     //-------------------------------------------------------------------------

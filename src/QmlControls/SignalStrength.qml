@@ -24,7 +24,7 @@ Item {
     width:  size
     height: size
 
-    property real size:     20
+    property real size:     50
     property real percent:  0
 
     QGCPalette { id: qgcPal }

@@ -24,10 +24,7 @@ Item {
     id:             control
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
-    width:          15//batteryIndicatorRow.width
-    scale:          0.8                             // 缩小整体
-    //leftMargin: 10//the position more
-    //transformOrigin: Item.Center                    // 缩放时以中点为中心
+    width:          batteryIndicatorRow.width
 
     property bool       showIndicator:      true
     property bool       waitForParameters:  false   // UI won't show until parameters are ready
@@ -160,36 +157,15 @@ Item {
                 }
                 return qsTr("n/a")
             }
-/*
+
             QGCColoredImage {
                 anchors.top:        parent.top
                 anchors.bottom:     parent.bottom
-                width:              height*0.8//original: height
+                width:              height
                 sourceSize.width:   width
                 source:             getBatterySvgSource()
                 fillMode:           Image.PreserveAspectFit
                 color:              getBatteryColor()
-                scale:              0.4//my add, just make the image smaller
-                //anchors.left: parent.left
-                //anchors.leftMargin: 40//my add, position more right
-            }
-            */
-            Item {
-                width: 30    // 这个是整个占位区，略大于图标原始宽度
-                height: parent.height
-
-                QGCColoredImage {
-                    id: batteryIcon
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.left: parent.left
-                    anchors.leftMargin: 70// 让图标向右移动
-                    width: parent.height * 0.6
-                    height: width
-                    fillMode: Image.PreserveAspectFit
-                    source: getBatterySvgSource()
-                    color: getBatteryColor()
-                    scale: 0.65
-                }
             }
 
            ColumnLayout {
@@ -197,7 +173,6 @@ Item {
                 anchors.top:            parent.top
                 anchors.bottom:         parent.bottom
                 spacing:                0
-                anchors.leftMargin: 90//my add
 
                 QGCLabel {
                     Layout.alignment:       Qt.AlignHCenter

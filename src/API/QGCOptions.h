@@ -103,7 +103,7 @@ public:
 
     /// Main ToolBar Multiplier.
     /// @return Factor to use when computing toolbar height
-    virtual double toolbarHeightMultiplier() const { return 1.0; }
+    virtual double toolbarHeightMultiplier() const { return 0.75; }//change toolbar's height
 
     /// Enable Plan View Selector (Mission, Fence or Rally)
     /// @return True or false

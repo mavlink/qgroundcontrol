@@ -166,7 +166,6 @@ Item {
         }
         toolbarHeight           = defaultFontPixelHeight * 3
         toolbarHeight           = toolbarHeight * QGroundControl.corePlugin.options.toolbarHeightMultiplier
-        toolbarHeight           = 30
     }
 
     Text {
