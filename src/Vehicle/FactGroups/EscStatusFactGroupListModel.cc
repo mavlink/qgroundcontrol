@@ -88,10 +88,10 @@ void EscStatusFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t
 {
     switch (message.msgid) {
     case MAVLINK_MSG_ID_ESC_INFO:
-        _handleEscStatus(vehicle, message);
+        _handleEscInfo(vehicle, message);
         break;
     case MAVLINK_MSG_ID_ESC_STATUS:
-        _handleEscInfo(vehicle, message);
+        _handleEscStatus(vehicle, message);
         break;
     default:
         break;
