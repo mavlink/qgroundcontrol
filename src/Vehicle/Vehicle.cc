@@ -1918,7 +1918,7 @@ void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, 
                     static_cast<float>(pitch),
                     static_cast<float>(yaw),
                     static_cast<float>(thrust),
-                    0);
+                    0, 0);
     }
 }
 
@@ -3882,7 +3882,7 @@ void Vehicle::clearAllParamMapRC(void)
     }
 }
 
-void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, float thrust, quint16 buttons)
+void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, float thrust, quint16 buttons, quint16 buttons2)
 {
     SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
@@ -3913,7 +3913,7 @@ void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, flo
         static_cast<int16_t>(newRollCommand),
         static_cast<int16_t>(newThrustCommand),
         static_cast<int16_t>(newYawCommand),
-        buttons, 0,
+        buttons, buttons2,
         0,
         0, 0,
         0, 0, 0, 0, 0, 0
