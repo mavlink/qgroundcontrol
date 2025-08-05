@@ -109,7 +109,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _distanceSensorFactGroup      (this)
     , _localPositionFactGroup       (this)
     , _localPositionSetpointFactGroup(this)
-    , _escStatusFactGroup           (this)
     , _estimatorStatusFactGroup     (this)
     , _hygrometerFactGroup          (this)
     , _generatorFactGroup           (this)
@@ -330,7 +329,6 @@ void Vehicle::_commonInit()
     _addFactGroup(&_distanceSensorFactGroup,    _distanceSensorFactGroupName);
     _addFactGroup(&_localPositionFactGroup,     _localPositionFactGroupName);
     _addFactGroup(&_localPositionSetpointFactGroup,_localPositionSetpointFactGroupName);
-    _addFactGroup(&_escStatusFactGroup,         _escStatusFactGroupName);
     _addFactGroup(&_estimatorStatusFactGroup,   _estimatorStatusFactGroupName);
     _addFactGroup(&_hygrometerFactGroup,        _hygrometerFactGroupName);
     _addFactGroup(&_generatorFactGroup,         _generatorFactGroupName);
@@ -520,6 +518,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
 
     // Handle creation of dynamic fact group lists
     _batteryFactGroupListModel.handleMessageForFactGroupCreation(this, message);
+    _escStatusFactGroupListModel.handleMessageForFactGroupCreation(this, message);
 
     // Let the fact groups take a whack at the mavlink traffic
     for (FactGroup* factGroup : factGroups()) {
