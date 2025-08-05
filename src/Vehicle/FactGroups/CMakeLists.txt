@@ -2,6 +2,8 @@ target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         BatteryFactGroupListModel.cc
         BatteryFactGroupListModel.h
+        EscStatusFactGroupListModel.cc
+        EscStatusFactGroupListModel.h
         TerrainFactGroup.cc
         TerrainFactGroup.h
         VehicleClockFactGroup.cc
@@ -10,8 +12,6 @@ target_sources(${CMAKE_PROJECT_NAME}
         VehicleDistanceSensorFactGroup.h
         VehicleEFIFactGroup.cc
         VehicleEFIFactGroup.h
-        VehicleEscStatusFactGroup.cc
-        VehicleEscStatusFactGroup.h
         VehicleEstimatorStatusFactGroup.cc
         VehicleEstimatorStatusFactGroup.h
         VehicleGeneratorFactGroup.cc
