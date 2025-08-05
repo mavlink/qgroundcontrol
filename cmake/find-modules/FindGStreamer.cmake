@@ -1,6 +1,8 @@
 if(NOT DEFINED GStreamer_FIND_VERSION)
     if(LINUX)
         set(GStreamer_FIND_VERSION 1.20)
+    elseif(ANDROID)
+        set(GStreamer_FIND_VERSION 1.26.2)
     else()
         set(GStreamer_FIND_VERSION 1.22.12)
     endif()
@@ -239,6 +241,7 @@ if(GStreamer_USE_STATIC_LIBS)
         gstreamer-gl-1.0
         gstreamer-gl-prototypes-1.0
         gstreamer-rtsp-1.0
+        gstreamer-controller-1.0 
         # gstreamer-gl-egl-1.0
         # gstreamer-gl-wayland-1.0
         # gstreamer-gl-x11-1.0
@@ -348,7 +351,7 @@ find_gstreamer_component(Video gstreamer-video-1.0)
 find_gstreamer_component(Gl gstreamer-gl-1.0)
 find_gstreamer_component(GlPrototypes gstreamer-gl-prototypes-1.0)
 find_gstreamer_component(Rtsp gstreamer-rtsp-1.0)
-
+find_gstreamer_component(Controller gstreamer-controller-1.0)  
 ################################################################################
 
 if(GlEgl IN_LIST GStreamer_FIND_COMPONENTS)
@@ -415,6 +418,7 @@ if(GStreamer_FOUND AND NOT TARGET GStreamer::GStreamer)
             GStreamer::Gl
             GStreamer::GlPrototypes
             GStreamer::Rtsp
+            GStreamer::Controller
     )
 
     foreach(component IN LISTS GStreamer_FIND_COMPONENTS)
@@ -429,6 +433,49 @@ if(GStreamer_FOUND AND NOT TARGET GStreamer::GStreamer)
         qt_add_library(GStreamer::Plugins INTERFACE IMPORTED)
         target_link_directories(GStreamer::Plugins INTERFACE ${GSTREAMER_PLUGIN_PATH})
 
+        # 添加对JPEG库的查找，特别是在Android平台上
+        if(ANDROID)
+            # 查找libjpeg库
+            find_library(LIBJPEG_LIBRARY 
+                NAMES jpeg libjpeg
+                PATHS ${GSTREAMER_LIB_PATH}
+                NO_DEFAULT_PATH
+            )
+            find_library(GRAPHENE_LIBRARY 
+                NAMES graphene-1.0 graphene
+                PATHS ${GSTREAMER_LIB_PATH}
+                NO_DEFAULT_PATH
+            )
+            # 添加对PNG库的查找
+            find_library(PNG_LIBRARY
+                NAMES png libpng png16 libpng16 png-16 libpng-16
+                PATHS ${GSTREAMER_LIB_PATH}
+                NO_DEFAULT_PATH
+            )
+
+            if(LIBJPEG_LIBRARY)
+                message(STATUS "Found JPEG library for GStreamer: ${LIBJPEG_LIBRARY}")
+                target_link_libraries(GStreamer::Plugins INTERFACE ${LIBJPEG_LIBRARY})
+            else()
+                message(WARNING "JPEG library not found in GStreamer paths. Some plugins like opengl may fail to link.")
+            endif()
+            
+            if(GRAPHENE_LIBRARY)
+                message(STATUS "Found Graphene library for GStreamer: ${GRAPHENE_LIBRARY}")
+                target_link_libraries(GStreamer::Plugins INTERFACE ${GRAPHENE_LIBRARY})
+            else()
+                message(WARNING "Graphene library not found in GStreamer paths. GL plugins may fail to link.")
+            endif()
+
+            # 添加PNG库链接
+            if(PNG_LIBRARY)
+                message(STATUS "Found PNG library for GStreamer: ${PNG_LIBRARY}")
+                target_link_libraries(GStreamer::Plugins INTERFACE ${PNG_LIBRARY})
+            else()
+                message(WARNING "PNG library not found in GStreamer paths. Some plugins like opengl may fail to link.")
+            endif()
+
+        endif()
         foreach(plugin IN LISTS GSTREAMER_PLUGINS)
             pkg_check_modules(GST_PLUGIN_${plugin} QUIET IMPORTED_TARGET gst${plugin})
             if(GST_PLUGIN_${plugin}_FOUND)
