@@ -32,6 +32,10 @@ ArduRoverFirmwarePlugin::ArduRoverFirmwarePlugin(QObject *parent)
         { APMRoverMode::RTL          , _rtlFlightMode          },
         { APMRoverMode::SMART_RTL    , _smartRtlFlightMode     },
         { APMRoverMode::GUIDED       , _guidedFlightMode       },
+        { APMRoverMode::PROPELLER      , QStringLiteral("Propeller")     },
+        { APMRoverMode::OMNI_MANUAL    , QStringLiteral("O-Manual")      },
+        { APMRoverMode::OMNI_HEADING   , QStringLiteral("O-Heading")     },
+        { APMRoverMode::OMNI_POSITION  , QStringLiteral("O-Position")    },
         { APMRoverMode::INITIALIZING , _initializingFlightMode },
     });
 
@@ -51,6 +55,10 @@ ArduRoverFirmwarePlugin::ArduRoverFirmwarePlugin(QObject *parent)
         { _rtlFlightMode          , APMRoverMode::RTL          , true , true},
         { _smartRtlFlightMode     , APMRoverMode::SMART_RTL    , true , true},
         { _guidedFlightMode       , APMRoverMode::GUIDED       , true , true},
+        { QStringLiteral("Propeller")     , APMRoverMode::PROPELLER     , true , true},
+        { QStringLiteral("O-Manual")      , APMRoverMode::OMNI_MANUAL   , true , true},
+        { QStringLiteral("O-Heading")     , APMRoverMode::OMNI_HEADING  , true , true},
+        { QStringLiteral("O-Position")    , APMRoverMode::OMNI_POSITION , true , true},
         { _initializingFlightMode , APMRoverMode::INITIALIZING , true , true},
     };
     updateAvailableFlightModes(availableFlightModes);

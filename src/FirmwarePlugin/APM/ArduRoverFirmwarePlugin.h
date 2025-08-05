@@ -28,7 +28,11 @@ struct APMRoverMode
         RTL             = 11,
         SMART_RTL       = 12,
         GUIDED          = 15,
-        INITIALIZING    = 16
+        INITIALIZING    = 16,
+        PROPELLER       = 20,//in QGC settings, FRAME_TYPE_OMNIBP = 4
+        OMNI_MANUAL     = 21,
+        OMNI_HEADING    = 22,
+        OMNI_POSITION   = 23,
     };
 };
 
