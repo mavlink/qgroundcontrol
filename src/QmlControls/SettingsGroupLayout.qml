@@ -18,6 +18,9 @@ ColumnLayout {
     property string defaultBorderColor  : QGroundControl.globalPalette.groupBorder
     property string outerBorderColor    : defaultBorderColor
 
+    property string defaultHeadingPointSize:    ScreenTools.defaultFontPointSize + 1
+    property string headingPointSize:           defaultHeadingPointSize
+
     property string heading
     property string headingDescription
     property bool   showDividers:       true
@@ -44,7 +47,7 @@ ColumnLayout {
 
         QGCLabel { 
             text:           heading
-            font.pointSize: ScreenTools.defaultFontPointSize + 1
+            font.pointSize: headingPointSize
             font.bold:      true
         }
 
