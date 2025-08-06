@@ -51,19 +51,16 @@ option(QGC_DISABLE_PX4_PLUGIN "Disable PX4 Plugin" OFF)
 option(QGC_DISABLE_PX4_PLUGIN_FACTORY "Disable PX4 Plugin Factory" OFF)
 
 # Android
-set(QGC_QT_ANDROID_TARGET_SDK_VERSION "35" CACHE STRING "Android Target SDK Version")
+set(QGC_QT_ANDROID_TARGET_SDK_VERSION "36" CACHE STRING "Android Target SDK Version")
 set(QGC_ANDROID_PACKAGE_NAME "${QGC_PACKAGE_NAME}" CACHE STRING "Android Package Name")
 set(QGC_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_SOURCE_DIR}/android" CACHE PATH "Android Package Path")
 set(QT_ANDROID_DEPLOYMENT_TYPE "" CACHE STRING "Forces Signing if Set to Release")
 option(QT_ANDROID_SIGN_APK "Enable Signing APK" OFF)
 option(QT_ANDROID_SIGN_AAB "Enable Signing AAB" OFF)
 option(QT_USE_TARGET_ANDROID_BUILD_DIR "Use Target Android Build Dir" OFF)
-# Herelink integrated contollers only support Android 7.1. The latest version of Qt which supports this is 6.6.3.
-# Given the fact that normal QGC builds have moved on to 6.8.3 this option provides a workaround to be able to use
-# 6.6.3 and older android sdk. Note that this is likely the last major QGC release to provide this workaround.
-# This option is only available when building for Android. Usage of this option for something other than integrated
-# controllers workaround is not supported and will likely cause issues.
-option(QGC_ENABLE_HERELINK "Enable Herelink Support" OFF)
+set(QGC_QT_MINIMUM_VERSION "6.8.3" CACHE STRING "Minimum Supported Qt Version")
+set(QGC_QT_MAXIMUM_VERSION "6.8.3" CACHE STRING "Maximum Supported Qt Version")
+set(QGC_QT_ANDROID_MIN_SDK_VERSION "28" CACHE STRING "Android Min SDK Version")
 
 # MacOS
 set(QGC_MACOS_PLIST_PATH "${CMAKE_SOURCE_DIR}/deploy/macos/MacOSXBundleInfo.plist.in" CACHE FILEPATH "MacOS PList Path")

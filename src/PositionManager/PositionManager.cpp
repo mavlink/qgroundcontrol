@@ -14,7 +14,7 @@
 // #include "DeviceInfo.h"
 #include "QGCLoggingCategory.h"
 
-#include <QtCore/qapplicationstatic.h>
+#include <QtCore/QApplicationStatic>
 #include <QtCore/QPermissions>
 #include <QtPositioning/QGeoPositionInfoSource>
 #include <QtPositioning/private/qgeopositioninfosource_p.h>

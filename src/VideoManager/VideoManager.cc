@@ -27,7 +27,7 @@
 #include "QtMultimediaReceiver.h"
 #include "UVCReceiver.h"
 
-#include <QtCore/qapplicationstatic.h>
+#include <QtCore/QApplicationStatic>
 #include <QtCore/QDir>
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
