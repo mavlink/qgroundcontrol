@@ -358,6 +358,13 @@ Item {
                 // Step 5: 更新文本框内容
                 allErrors += finalMsg;
                 messageText.text = allErrors;
+
+                // 自动滚动到底部，延迟等待 messageText.height 更新完成
+                Qt.callLater(() => {
+                    const nearBottom = flickable.contentY >= flickable.contentHeight - flickable.height - 20;
+                    if (nearBottom || flickable.contentY === 0)
+                        flickable.contentY = flickable.contentHeight - flickable.height;
+                });
             }
         }
 
@@ -424,7 +431,9 @@ Item {
             initializeMsgScaleFactor()
             initializeMsgScaleFactor_WIDTH()
             initializeMsgScaleFactor_FONT()
-            flickable.contentY = flickable.contentHeight - flickable.height
+            Qt.callLater(() => {
+                flickable.contentY = flickable.contentHeight - flickable.height
+            })
         }
     }
 }

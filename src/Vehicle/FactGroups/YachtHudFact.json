@@ -1,0 +1,357 @@
+{
+    "version": 1,
+    "fileType": "FactMetaData",
+    "QGC.MetaData.Facts": [
+        {
+            "name": "time_boot_ms",
+            "shortDesc": "time",
+            "type": "uint32",
+            "units": "ms"
+        },
+        {
+            "name": "roll",
+            "shortDesc": "roll",
+            "type": "float",
+            "units": "°",
+            "decimalPlaces": 1
+        },
+        {
+            "name": "pitch",
+            "shortDesc": "pitch",
+            "type": "float",
+            "units": "°",
+            "decimalPlaces": 1
+        },
+        {
+            "name": "heading",
+            "shortDesc": "yaw",
+            "type": "float",
+            "units": "°",
+            "decimalPlaces": 1
+        },
+        {
+            "name": "heading_sp",
+            "shortDesc": "yawSP",
+            "type": "float",
+            "units": "°",
+            "decimalPlaces": 1
+        },
+        {
+            "name": "rtkYaw",
+            "shortDesc": "rtkYaw",
+            "type": "float",
+            "units": "°",
+            "decimalPlaces": 1
+        },
+        {
+            "name": "magYaw",
+            "shortDesc": "magYaw",
+            "type": "float",
+            "units": "°",
+            "decimalPlaces": 1
+        },
+        {
+            "name": "course",
+            "shortDesc": "course",
+            "type": "float",
+            "units": "°",
+            "decimalPlaces": 1
+        },
+        {
+            "name": "speed",
+            "shortDesc": "speed",
+            "type": "float",
+            "units": "m/s",
+            "decimalPlaces": 2
+        },
+        {
+            "name": "vx",
+            "shortDesc": "vx",
+            "type": "float",
+            "units": "m/s",
+            "decimalPlaces": 2
+        },
+        {
+            "name": "vy",
+            "shortDesc": "vy",
+            "type": "float",
+            "units": "m/s",
+            "decimalPlaces": 2
+        },
+        {
+            "name": "vx_sp",
+            "shortDesc": "vx_sp",
+            "type": "float",
+            "units": "m/s",
+            "decimalPlaces": 2
+        },
+        {
+            "name": "vy_sp",
+            "shortDesc": "vy_sp",
+            "type": "float",
+            "units": "m/s",
+            "decimalPlaces": 2
+        },
+        {
+            "name": "yawspeed",
+            "shortDesc": "yawspeed",
+            "type": "float",
+            "units": "°/s",
+            "decimalPlaces": 1
+        },
+        {
+            "name": "yawspeed_sp",
+            "shortDesc": "yawspeed_sp",
+            "type": "float",
+            "units": "°/s",
+            "decimalPlaces": 1
+        },
+
+        {
+            "name": "vin1",
+            "shortDesc": "Vin1",
+            "type": "float",
+            "units": "V",
+            "decimalPlaces": 1
+        },
+        {
+            "name": "pout1",
+            "shortDesc": "Pout1",
+            "type": "float",
+            "units": "kW",
+            "decimalPlaces": 2
+        },
+        {
+            "name": "iout1",
+            "shortDesc": "Iout1",
+            "type": "float",
+            "units": "A",
+            "decimalPlaces": 1
+        },
+        {
+            "name": "rpm1",
+            "shortDesc": "rpm1",
+            "type": "float",
+            "units": "rpm",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "motortemp1",
+            "shortDesc": "temp1",
+            "type": "float",
+            "units": "°C",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "vin2",
+            "shortDesc": "Vin2",
+            "type": "float",
+            "units": "V",
+            "decimalPlaces": 1
+        },
+        {
+            "name": "pout2",
+            "shortDesc": "Pout2",
+            "type": "float",
+            "units": "kW",
+            "decimalPlaces": 2
+        },
+        {
+            "name": "iout2",
+            "shortDesc": "Iout2",
+            "type": "float",
+            "units": "A",
+            "decimalPlaces": 1
+        },
+        {
+            "name": "rpm2",
+            "shortDesc": "rpm2",
+            "type": "float",
+            "units": "rpm",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "motortemp2",
+            "shortDesc": "temp2",
+            "type": "float",
+            "units": "°C",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "vin3",
+            "shortDesc": "Vin3",
+            "type": "float",
+            "units": "V",
+            "decimalPlaces": 1
+        },
+        {
+            "name": "pout3",
+            "shortDesc": "Pout3",
+            "type": "float",
+            "units": "kW",
+            "decimalPlaces": 2
+        },
+        {
+            "name": "iout3",
+            "shortDesc": "Iout3",
+            "type": "float",
+            "units": "A",
+            "decimalPlaces": 1
+        },
+        {
+            "name": "rpm3",
+            "shortDesc": "rpm3",
+            "type": "float",
+            "units": "rpm",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "motortemp3",
+            "shortDesc": "temp3",
+            "type": "float",
+            "units": "°C",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "vin4",
+            "shortDesc": "Vin4",
+            "type": "float",
+            "units": "V",
+            "decimalPlaces": 1
+        },
+        {
+            "name": "pout4",
+            "shortDesc": "Pout4",
+            "type": "float",
+            "units": "kW",
+            "decimalPlaces": 2
+        },
+        {
+            "name": "iout4",
+            "shortDesc": "Iout4",
+            "type": "float",
+            "units": "A",
+            "decimalPlaces": 1
+        },
+        {
+            "name": "rpm4",
+            "shortDesc": "rpm4",
+            "type": "float",
+            "units": "rpm",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "motortemp4",
+            "shortDesc": "temp4",
+            "type": "float",
+            "units": "°C",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "vin5",
+            "shortDesc": "Vin5",
+            "type": "float",
+            "units": "V",
+            "decimalPlaces": 1
+        },
+        {
+            "name": "pout5",
+            "shortDesc": "Pout5",
+            "type": "float",
+            "units": "kW",
+            "decimalPlaces": 2
+        },
+        {
+            "name": "iout5",
+            "shortDesc": "Iout5",
+            "type": "float",
+            "units": "A",
+            "decimalPlaces": 1
+        },
+        {
+            "name": "rpm5",
+            "shortDesc": "rpm5",
+            "type": "float",
+            "units": "rpm",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "motortemp5",
+            "shortDesc": "temp5",
+            "type": "float",
+            "units": "°C",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "vin6",
+            "shortDesc": "Vin6",
+            "type": "float",
+            "units": "V",
+            "decimalPlaces": 1
+        },
+        {
+            "name": "pout6",
+            "shortDesc": "Pout6",
+            "type": "float",
+            "units": "kW",
+            "decimalPlaces": 2
+        },
+        {
+            "name": "iout6",
+            "shortDesc": "Iout6",
+            "type": "float",
+            "units": "A",
+            "decimalPlaces": 1
+        },
+        {
+            "name": "rpm6",
+            "shortDesc": "rpm6",
+            "type": "float",
+            "units": "rpm",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "motortemp6",
+            "shortDesc": "temp6",
+            "type": "float",
+            "units": "°C",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "angleLeft",
+            "shortDesc": "angleL",
+            "type": "float",
+            "units": "°",
+            "decimalPlaces": 1
+        },
+        {
+            "name": "angleRight",
+            "shortDesc": "angleR",
+            "type": "float",
+            "units": "°",
+            "decimalPlaces": 1
+        },
+        {
+            "name": "angleLeftSP",
+            "shortDesc": "angleLSP",
+            "type": "float",
+            "units": "°",
+            "decimalPlaces": 1
+        },
+        {
+            "name": "angleRightSP",
+            "shortDesc": "angleRSP",
+            "type": "float",
+            "units": "°",
+            "decimalPlaces": 1
+        },
+        {
+            "name": "imuTemp",
+            "shortDesc": "imuTemp",
+            "type": "float",
+            "units": "°C",
+            "decimalPlaces": 1
+        }
+    ]
+}
+
