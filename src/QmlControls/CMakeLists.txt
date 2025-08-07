@@ -231,6 +231,13 @@ qt_add_qml_module(QGroundControlControlsModule
     NO_PLUGIN
 )
 
+# Add JSON files
+file(GLOB_RECURSE JSON_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.json)
+qt_add_resources(${CMAKE_PROJECT_NAME} json_controls
+    PREFIX "/json"
+    FILES ${JSON_FILES}
+)
+
 qt_add_library(ScreenToolsModule STATIC)
 
 set_source_files_properties(ScreenTools.qml PROPERTIES

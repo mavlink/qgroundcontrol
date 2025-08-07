@@ -174,13 +174,10 @@ endif()
 list(APPEND QGC_RESOURCES
     ${CMAKE_SOURCE_DIR}/qgcimages.qrc
     ${CMAKE_SOURCE_DIR}/qgcresources.qrc
-    ${CMAKE_SOURCE_DIR}/qgroundcontrol.qrc
 )
 
 list(APPEND QGC_RESOURCES
     ${CMAKE_SOURCE_DIR}/resources/InstrumentValueIcons/InstrumentValueIcons.qrc
-    ${CMAKE_SOURCE_DIR}/src/FirmwarePlugin/APM/APMResources.qrc
-    ${CMAKE_SOURCE_DIR}/src/FirmwarePlugin/PX4/PX4Resources.qrc
 )
 
 if(QGC_BUILD_TESTING)
