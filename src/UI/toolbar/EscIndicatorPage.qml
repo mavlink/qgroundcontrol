@@ -89,7 +89,7 @@ ToolIndicatorPage {
                                     }
                                 }
                             }
-                            return hasTemperature ? maxTemp.toFixed(1) + "°C" : na
+                            return hasTemperature ? maxTemp.toFixed(1) + " C" : na
                         }
                     }
 
@@ -104,7 +104,7 @@ ToolIndicatorPage {
                                     maxCurrent = motorCurrent
                                 }
                             }
-                            return maxCurrent.toFixed(1) + "A"
+                            return maxCurrent.toFixed(1) + " A"
                         }
                     }
                 }
@@ -114,7 +114,7 @@ ToolIndicatorPage {
                 model: _escs
 
                 SettingsGroupLayout {
-                    heading:            qsTr("Motor %1 %2").arg(object.id.rawValue).arg( _isThisMotorHealthy ? "" : qsTr("- OFFLINE"))
+                    heading:            qsTr("Motor %1 %2").arg(object.id.rawValue + 1).arg( _isThisMotorHealthy ? "" : qsTr("- OFFLINE"))
                     headingPointSize:   ScreenTools.defaultFontPointSize * ScreenTools.smallFontPointRatio
                     outerBorderColor:   _isThisMotorHealthy ? QGroundControl.globalPalette.colorGreen : QGroundControl.globalPalette.colorRed
 
@@ -124,29 +124,29 @@ ToolIndicatorPage {
                         columns:    2
                         flow:       GridLayout.LeftToRight
 
-                        LabelledLabel {
+                        LabelledFactLabel {
                             label:      qsTr("RPM")
-                            labelText:  object.rpm.valueString
+                            fact:       object.rpm
                         }
 
                         LabelledLabel {
                             label:      qsTr("Temp")
-                            labelText:  object.temperature !== 32767 ? object.temperature.valueString : na
+                            labelText:  (object.temperature !== 32767 ? object.temperature.valueString : na) + " " + object.temperature.units
                         }
 
-                        LabelledLabel {
+                        LabelledFactLabel {
                             label:      qsTr("Voltage")
-                            labelText:  object.voltage.valueString
+                            fact:       object.voltage
                         }
 
-                        LabelledLabel {
+                        LabelledFactLabel {
                             label:      qsTr("Current")
-                            labelText:  object.current.valueString
+                            fact:       object.current
                         }
 
-                        LabelledLabel {
+                        LabelledFactLabel {
                             label:      qsTr("Errors")
-                            labelText:  object.errorCount.valueString
+                            fact:       object.errorCount
                         }
                     }
                 }
