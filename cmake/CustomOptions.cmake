@@ -35,8 +35,9 @@ cmake_dependent_option(QGC_CUSTOM_GST_PACKAGE "Enable Using QGC Provided Custom 
 option(QGC_ENABLE_QT_VIDEOSTREAMING "Enable QtMultimedia Video Backend" OFF) # Qt6Multimedia_FOUND
 
 # MAVLink
-set(QGC_MAVLINK_GIT_REPO "https://github.com/mavlink/c_library_v2.git" CACHE STRING "URL to MAVLink Git Repo")
-set(QGC_MAVLINK_GIT_TAG "19f9955598af9a9181064619bd2e3c04bd2d848a" CACHE STRING "Tag of MAVLink Git Repo")
+set(QGC_MAVLINK_GIT_REPO "https://github.com/dakejahl/c_library_v2.git" CACHE STRING "URL to MAVLink Git Repo")
+set(QGC_MAVLINK_GIT_TAG "d08fa8504ea7cb3cc98efb59c65fa1e4192518b0" CACHE STRING "Tag of MAVLink Git Repo")
+# set(CPM_mavlink_SOURCE "/home/jake/code/jake/PX4-Autopilot/build/ark_fpv_default/mavlink")
 
 # APM
 option(QGC_DISABLE_APM_MAVLINK "Disable APM Dialect" OFF)

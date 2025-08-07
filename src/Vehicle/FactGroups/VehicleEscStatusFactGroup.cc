@@ -166,5 +166,10 @@ void VehicleEscStatusFactGroup::handleMessage(Vehicle *vehicle, const mavlink_me
         }
 
         _setTelemetryAvailable(true);
+
+    } else if(message.msgid == MAVLINK_MSG_ID_ESC_EEPROM) {
+        mavlink_esc_eeprom_t eeprom{};
+        mavlink_msg_esc_eeprom_decode(&message, &eeprom);
+        qDebug() << "ESC_EEPROM";
     }
 }

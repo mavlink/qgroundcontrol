@@ -21,6 +21,7 @@ QString Config::typeToLabel() const
         case Type::setSpinDirection1: return QCoreApplication::translate("ActuatorAction", "Set Spin Direction 1");
         case Type::setSpinDirection2: return QCoreApplication::translate("ActuatorAction", "Set Spin Direction 2");
         case Type::requestEscSettings: return QCoreApplication::translate("ActuatorAction", "Request ESC Settings");
+        case Type::writeEscSetting: return QCoreApplication::translate("ActuatorAction", "Write ESC Setting");
     }
     return "";
 }
@@ -31,8 +32,7 @@ Action::Action([[maybe_unused]] QObject *parent,
                int outputFunction,
                Vehicle *vehicle)
     : _label(label), _outputFunction(outputFunction), _type(action.type), _vehicle(vehicle)
-{
-}
+{}
 
 void Action::trigger()
 {

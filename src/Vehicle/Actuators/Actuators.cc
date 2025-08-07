@@ -465,6 +465,8 @@ bool Actuators::parseJson(const QJsonDocument &json)
                         action.type = ActuatorActions::Config::Type::setSpinDirection2;
                     } else if (actionName == "request-esc-settings") {
                         action.type = ActuatorActions::Config::Type::requestEscSettings;
+                    } else if (actionName == "write-esc-setting") {
+                        action.type = ActuatorActions::Config::Type::writeEscSetting;
                     } else {
                         knownAction = false;
                         qCWarning(ActuatorsConfigLog) << "Unknown 'supported-actions':" << actionName;

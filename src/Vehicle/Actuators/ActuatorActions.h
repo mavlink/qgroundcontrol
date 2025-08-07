@@ -26,6 +26,8 @@ struct Config {
         setSpinDirection1 = ACTUATOR_CONFIGURATION_SPIN_DIRECTION1,    ///< motors: set spin direction 1
         setSpinDirection2 = ACTUATOR_CONFIGURATION_SPIN_DIRECTION2,    ///< motors: set spin direction 2
         requestEscSettings = 6, // TODO: add to mavlink spec
+        writeEscSetting = 7, // TODO: add to mavlink spec
+
     };
 
     QString typeToLabel() const;
@@ -33,6 +35,10 @@ struct Config {
     Type type;
     Condition condition;
     QSet<QString> actuatorTypes;
+
+    // For write ESC settings
+    uint8_t address;
+    uint8_t value;
 };
 
 class Action : public QObject

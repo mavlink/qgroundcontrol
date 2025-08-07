@@ -263,11 +263,13 @@ SetupPage {
                     font.pointSize:     ScreenTools.mediumFontPointSize
                 }
 
+                // Actuator Testing
                 Rectangle {
                     implicitWidth:            _leftColumnWidth
                     implicitHeight:           actuatorTesting.height + (_margins * 2)
                     color:                    qgcPal.windowShade
 
+                    // Actuator Testing
                     Column {
                         id:                   actuatorTesting
                         spacing:              _margins
@@ -368,7 +370,7 @@ SetupPage {
                             }
                         } // Row
 
-                        // actuator actions
+                        // Actuator Actions
                         Column {
                             visible: actuators.actuatorActions.count > 0
                             enabled: !safetySwitch.checked && !actuators.motorAssignmentActive
@@ -397,9 +399,9 @@ SetupPage {
                                     }
                                 }
                             }
-                        } // Column
-                    } // Column
-                } // Rectangle
+                        } // Column -- Actuator Actions
+                    } // Column -- Actuator Testing
+                } // Rectangle -- Actuator Testing
 
                 // TODO: add ESC Settings section
                 QGCLabel {
