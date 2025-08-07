@@ -30,10 +30,10 @@
     "type":             "float",
     "decimalPlaces":    2,
     "default":          null,
-    "units":            "v"
+    "units":            "V"
 },
 {
-    "name":             "Count",
+    "name":             "count",
     "shortDesc":        "Total number of ESCs",
     "type":             "uint8",
     "default":          0
@@ -91,7 +91,8 @@
 {
     "name":             "temperature",
     "shortDesc":        "Temperature",
-    "type":             "int16",
+    "type":             "float",
+    "decimalPlaces":    1,
     "default":          0,
     "units":            "centi-celsius"
 },

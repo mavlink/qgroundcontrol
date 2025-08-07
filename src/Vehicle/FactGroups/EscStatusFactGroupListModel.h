@@ -61,12 +61,12 @@ private:
     void _handleEscStatus(Vehicle *vehicle, const mavlink_message_t &message);
 
     Fact _rpmFact =             Fact(0, QStringLiteral("rpm"),              FactMetaData::valueTypeInt32);
-    Fact _currentFact =         Fact(0, QStringLiteral("current"),          FactMetaData::valueTypeInt32);
-    Fact _voltageFact =         Fact(0, QStringLiteral("voltage"),          FactMetaData::valueTypeInt32);
+    Fact _currentFact =         Fact(0, QStringLiteral("current"),          FactMetaData::valueTypeFloat);
+    Fact _voltageFact =         Fact(0, QStringLiteral("voltage"),          FactMetaData::valueTypeFloat);
     Fact _countFact =           Fact(0, QStringLiteral("count"),            FactMetaData::valueTypeUint8);
     Fact _connectionTypeFact =  Fact(0, QStringLiteral("connectionType"),   FactMetaData::valueTypeUint8);
     Fact _infoFact =            Fact(0, QStringLiteral("info"),             FactMetaData::valueTypeUint8);
     Fact _failureFlagsFact =    Fact(0, QStringLiteral("failureFlags"),     FactMetaData::valueTypeUint16);
     Fact _errorCountFact =      Fact(0, QStringLiteral("errorCount"),       FactMetaData::valueTypeUint32);
-    Fact _temperatureFact =     Fact(0, QStringLiteral("temperature"),      FactMetaData::valueTypeInt16);
+    Fact _temperatureFact =     Fact(0, QStringLiteral("temperature"),      FactMetaData::valueTypeFloat);
 };

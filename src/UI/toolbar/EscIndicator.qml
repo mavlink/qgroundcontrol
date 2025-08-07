@@ -20,14 +20,14 @@ Item {
     anchors.bottom: parent.bottom
     width:          escIndicatorRow.width
 
-    property bool showIndicator: _motorCount > 0
+    property bool showIndicator: _escs.count > 0
 
     property var  _activeVehicle:   QGroundControl.multiVehicleManager.activeVehicle
     property var  _escs:            _activeVehicle ? _activeVehicle.escs : null
 
     // ESC status properties derived from vehicle data
-    property int    _motorCount:        _escs ? _escs.get(0).count.rawValue : 0
-    property int    _infoBitmask:       _escs ? _escs.get(0).info.rawValue : 0
+    property int    _motorCount:        _escs && _escs.count > 0 ? _escs.get(0).count.rawValue : 0
+    property int    _infoBitmask:       _escs && _escs.count > 0? _escs.get(0).info.rawValue : 0
     property int    _onlineMotorCount:  _getOnlineMotorCount()
     property bool   _escHealthy:        _getEscHealthStatus()
 
