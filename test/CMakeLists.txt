@@ -19,45 +19,6 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_UNITTEST_BUILD)
 
-# /unittest
-# set(QGC_TEST_RESOURCES
-#     MissionManager/PolygonAreaTest.kml
-#     MissionManager/PolygonBadCoordinatesNode.kml
-#     MissionManager/PolygonBadXml.kml
-#     MissionManager/PolygonGood.kml
-#     MissionManager/PolygonMissingNode.kml
-#     MissionManager/SectionTest.plan
-#     Vehicle/ComponentInformation/TranslationTest.json
-#     Vehicle/ComponentInformation/TranslationTest_de_DE.ts
-#     FactSystem/FactSystemTest.qml
-#     MissionManager/MissionPlanner.waypoints
-#     MissionManager/OldFileFormat.mission
-#     MissionManager/UT-MavCmdInfoCommon.json
-#     MissionManager/UT-MavCmdInfoFixedWing.json
-#     MissionManager/UT-MavCmdInfoMultiRotor.json
-#     MissionManager/UT-MavCmdInfoRover.json
-#     MissionManager/UT-MavCmdInfoSub.json
-#     MissionManager/UT-MavCmdInfoVTOL.json
-#     ADSB/ADSB_Simulator.py
-#     AnalyzeView/DSCN0010.jpg
-#     AnalyzeView/SampleULog.ulg
-#     Utilities/arducopter.apj
-#     Utilities/Compression/manifest.json.gz
-#     Utilities/Compression/manifest.json.xz
-#     Utilities/Compression/manifest.json.zip
-#     Utilities/Shape/pline.dbf
-#     Utilities/Shape/pline.prj
-#     Utilities/Shape/pline.shp
-#     Utilities/Shape/pline.shx
-#     Utilities/Shape/polygon.dbf
-#     Utilities/Shape/polygon.prj
-#     Utilities/Shape/polygon.shp
-#     Utilities/Shape/polygon.shx
-#     Utilities/Shape/polyline.kml
-#     Utilities/Shape/polygon.kml
-#     CACHE STRING "Test Resources"
-# )
-
 include(CTest)
 add_custom_target(check
     COMMAND ctest --output-on-failure .
