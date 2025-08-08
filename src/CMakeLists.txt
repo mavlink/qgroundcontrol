@@ -7,8 +7,6 @@ qt_add_qml_module(QGroundControlModule
     IMPORTS
         QGC
     NO_PLUGIN
-    SOURCES Vehicle/FactGroups/VehicleYachtHudFactGroup.h
-    SOURCES Vehicle/FactGroups/VehicleYachtHudFactGroup.cpp
 )
 
 add_subdirectory(ADSB)

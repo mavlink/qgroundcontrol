@@ -82,6 +82,7 @@ QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 #define REQUEST_OPERATOR_CONTROL_ALLOW_TAKEOVER_TIMEOUT_MSECS 10000
 
 const QString guided_mode_not_supported_by_vehicle = QObject::tr("Guided mode not supported by Vehicle.");
+const char* Vehicle::_yachtHudFactGroupName =           "yachtHud";
 
 // Standard connected vehicle
 Vehicle::Vehicle(LinkInterface*             link,
@@ -113,6 +114,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _escStatusFactGroup           (this)
     , _estimatorStatusFactGroup     (this)
     , _hygrometerFactGroup          (this)
+    , _yachtHudFactGroup            (this)
     , _generatorFactGroup           (this)
     , _efiFactGroup                 (this)
     , _rpmFactGroup                 (this)
@@ -337,6 +339,7 @@ void Vehicle::_commonInit()
     _addFactGroup(&_generatorFactGroup,         _generatorFactGroupName);
     _addFactGroup(&_efiFactGroup,               _efiFactGroupName);
     _addFactGroup(&_rpmFactGroup,               _rpmFactGroupName);
+    _addFactGroup(&_yachtHudFactGroup,          _yachtHudFactGroupName);
     _addFactGroup(&_terrainFactGroup,           _terrainFactGroupName);
 
     // Add firmware-specific fact groups, if provided
