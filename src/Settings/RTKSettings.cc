@@ -8,14 +8,8 @@
  ****************************************************************************/
 
 #include "RTKSettings.h"
-// #include "BaseMode.h" // Removed, definition now in RTKSettings.h
 
-DECLARE_SETTINGGROUP(RTK, "RTK")
-{
-    qmlRegisterUncreatableType<RTKSettings>("QGroundControl.SettingsManager", 1, 0, "RTKSettings", "Reference only"); \
-    qRegisterMetaType<BaseModeDefinition::Mode>("BaseModeDefinition::Mode"); \
-    qmlRegisterUncreatableType<BaseModeDefinition>("QGroundControl.SettingsManager", 1, 0, "BaseMode", "Reference to BaseModeDefinition enum holding class");
-}
+DECLARE_SETTINGGROUP(RTK, "RTK") {}
 
 DECLARE_SETTINGSFACT(RTKSettings, baseReceiverManufacturers)
 DECLARE_SETTINGSFACT(RTKSettings, surveyInAccuracyLimit)

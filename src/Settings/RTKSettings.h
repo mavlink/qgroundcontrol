@@ -14,18 +14,20 @@
 #include "SettingsGroup.h"
 #include <QObject>
 
-// Definition of BaseMode moved here
-class BaseModeDefinition {
-    Q_GADGET
+class BaseModeDefinition : public QObject {
+    Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
+
 public:
     enum class Mode {
         BaseSurveyIn = 0,
-        BaseFixed    = 1
+        BaseFixed    = 1,
     };
     Q_ENUM(Mode)
 
 private:
-    explicit BaseModeDefinition(); // Prevent instantiation
+    explicit BaseModeDefinition(QObject* parent = nullptr) : QObject(parent) {}
 };
 
 class RTKSettings : public SettingsGroup

@@ -12,12 +12,8 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-
 import QGroundControl.ScreenTools
-
-
 import QGroundControl.FactControls
-import QGroundControl.SettingsManager 1.0
 
 // This indicator page is used both when showing RTK status only with no vehicle connect and when showing GPS/RTK status with a vehicle connected
 
@@ -159,15 +155,15 @@ ToolIndicatorPage {
             RowLayout {
                 QGCRadioButton {
                     text:       qsTr("Survey-In")
-                    checked:    useFixedPosition == BaseMode.BaseSurveyIn
-                    onClicked:  rtkSettings.useFixedBasePosition.rawValue = BaseMode.BaseSurveyIn
+                    checked:    useFixedPosition == BaseModeDefinition.BaseSurveyIn
+                    onClicked:  rtkSettings.useFixedBasePosition.rawValue = BaseModeDefinition.BaseSurveyIn
                     visible:    settingsDisplayId & _all
                 }
 
                 QGCRadioButton {
                     text: qsTr("Specify position")
-                    checked:    useFixedPosition == BaseMode.BaseFixed
-                    onClicked:  rtkSettings.useFixedBasePosition.rawValue = BaseMode.BaseFixed
+                    checked:    useFixedPosition == BaseModeDefinition.BaseFixed
+                    onClicked:  rtkSettings.useFixedBasePosition.rawValue = BaseModeDefinition.BaseFixed
                     visible:    settingsDisplayId & _all
                 }
             }
@@ -179,7 +175,7 @@ ToolIndicatorPage {
                 fact:                   QGroundControl.settingsManager.rtkSettings.surveyInAccuracyLimit
                 majorTickStepSize:      0.1
                 visible:                (
-                    useFixedPosition == BaseMode.BaseSurveyIn
+                    useFixedPosition == BaseModeDefinition.BaseSurveyIn
                     && rtkSettings.surveyInAccuracyLimit.visible
                     && (settingsDisplayId & _ublox)
                 )
@@ -192,7 +188,7 @@ ToolIndicatorPage {
                 fact:                   rtkSettings.surveyInMinObservationDuration
                 majorTickStepSize:      10
                 visible:                ( 
-                    useFixedPosition == BaseMode.BaseSurveyIn
+                    useFixedPosition == BaseModeDefinition.BaseSurveyIn
                     && rtkSettings.surveyInMinObservationDuration.visible
                     && (settingsDisplayId & (_ublox | _femtomes | _trimble))
                 )
@@ -202,7 +198,7 @@ ToolIndicatorPage {
                 label:                  rtkSettings.fixedBasePositionLatitude.shortDescription
                 fact:                   rtkSettings.fixedBasePositionLatitude
                 visible:                (
-                    useFixedPosition == BaseMode.BaseFixed
+                    useFixedPosition == BaseModeDefinition.BaseFixed
                     && (settingsDisplayId & _all)
                 )
             }
@@ -211,7 +207,7 @@ ToolIndicatorPage {
                 label:              rtkSettings.fixedBasePositionLongitude.shortDescription
                 fact:               rtkSettings.fixedBasePositionLongitude
                 visible:            (
-                    useFixedPosition == BaseMode.BaseFixed
+                    useFixedPosition == BaseModeDefinition.BaseFixed
                     && (settingsDisplayId & _all)
                 )
             }
@@ -220,7 +216,7 @@ ToolIndicatorPage {
                 label:              rtkSettings.fixedBasePositionAltitude.shortDescription
                 fact:               rtkSettings.fixedBasePositionAltitude
                 visible:            (
-                    useFixedPosition == BaseMode.BaseFixed
+                    useFixedPosition == BaseModeDefinition.BaseFixed
                     && (settingsDisplayId & _all)
                 )
             }
@@ -229,7 +225,7 @@ ToolIndicatorPage {
                 label:              rtkSettings.fixedBasePositionAccuracy.shortDescription
                 fact:               rtkSettings.fixedBasePositionAccuracy
                 visible:            (
-                    useFixedPosition == BaseMode.BaseFixed
+                    useFixedPosition == BaseModeDefinition.BaseFixed
                     && (settingsDisplayId & _ublox)
                 )
             }
@@ -237,7 +233,7 @@ ToolIndicatorPage {
             LabelledButton {
                 label:              qsTr("Current Base Position")
                 buttonText:         enabled ? qsTr("Save") : qsTr("Not Yet Valid")
-                visible:            useFixedPosition == BaseMode.BaseFixed
+                visible:            useFixedPosition == BaseModeDefinition.BaseFixed
                 enabled:            QGroundControl.gpsRtk.valid.value
 
                 onClicked: {
