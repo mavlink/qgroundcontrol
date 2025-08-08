@@ -38,7 +38,15 @@ CPMAddPackage(
     DOWNLOAD_ONLY
 )
 
-set(SDL_GAMECONTROLLERDB_PATH "${sdl_gamecontrollerdb_SOURCE_DIR}/gamecontrollerdb.txt" CACHE FILEPATH "SDL GameControllerDB Path")
+set(SDL_GAMECONTROLLERDB_PATH "${sdl_gamecontrollerdb_SOURCE_DIR}/gamecontrollerdb.txt")
+
+qgc_set_qt_resource_alias("${SDL_GAMECONTROLLERDB_PATH}")
+
+qt_add_resources(${CMAKE_PROJECT_NAME} "qgcresources_sdl"
+    PREFIX "/"
+    FILES
+        "${SDL_GAMECONTROLLERDB_PATH}"
+)
 
 #===========================================================================#
 
