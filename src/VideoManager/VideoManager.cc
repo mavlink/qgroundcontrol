@@ -9,6 +9,7 @@
 
 #include "VideoManager.h"
 #include "AppSettings.h"
+#include "MavlinkCameraControl.h"
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
 #include "QGCCameraManager.h"

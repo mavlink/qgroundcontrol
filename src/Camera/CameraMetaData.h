@@ -63,4 +63,4 @@ public:
     /// Newly added CameraMetaData entries should leave this value empty.
     const QString deprecatedTranslatedName;
 };
-Q_DECLARE_METATYPE(CameraMetaData)
+Q_DECLARE_METATYPE(CameraMetaData*)
