@@ -98,7 +98,6 @@ class Vehicle : public VehicleFactGroup
     Q_MOC_INCLUDE("VehicleObjectAvoidance.h")
     Q_MOC_INCLUDE("Autotune.h")
     Q_MOC_INCLUDE("RemoteIDManager.h")
-    Q_MOC_INCLUDE("QGCCameraManager.h")
     Q_MOC_INCLUDE("Actuators.h")
     Q_MOC_INCLUDE("MAVLinkLogManager.h")
     Q_MOC_INCLUDE("LinkInterface.h")
@@ -207,8 +206,6 @@ public:
     Q_PROPERTY(QVariantList         toolIndicators              READ toolIndicators                                                 NOTIFY toolIndicatorsChanged)
     Q_PROPERTY(QVariantList         modeIndicators              READ modeIndicators                                                 NOTIFY modeIndicatorsChanged)
     Q_PROPERTY(bool              initialPlanRequestComplete     READ initialPlanRequestComplete                                     NOTIFY initialPlanRequestCompleteChanged)
-    Q_PROPERTY(QVariantList         staticCameraList            READ staticCameraList                                               CONSTANT)
-    Q_PROPERTY(QGCCameraManager*    cameraManager               READ cameraManager                                                  NOTIFY cameraManagerChanged)
     Q_PROPERTY(QString              hobbsMeter                  READ hobbsMeter                                                     NOTIFY hobbsMeterChanged)
     Q_PROPERTY(bool                 inFwdFlight                 READ inFwdFlight                                                    NOTIFY inFwdFlightChanged)
     Q_PROPERTY(bool                 vtolInFwdFlight             READ vtolInFwdFlight            WRITE setVtolInFwdFlight            NOTIFY vtolInFwdFlightChanged)
@@ -778,12 +775,10 @@ public:
     QVariant                    mainStatusIndicatorContentItem  ();
     const QVariantList&         toolIndicators                  ();
     const QVariantList&         modeIndicators                  ();
-    const QVariantList&         staticCameraList                () const;
 
     bool capabilitiesKnown      () const { return _capabilityBitsKnown; }
     uint64_t capabilityBits     () const { return _capabilityBits; }    // Change signalled by capabilityBitsChanged
 
-    QGCCameraManager*           cameraManager       () { return _cameraManager; }
     QString                     hobbsMeter          ();
 
     /// The vehicle is responsible for making the initial request for the Plan.
@@ -803,9 +798,6 @@ public:
 
     /// Delete gimbal controller, handy for RequestMessageTest.cc, otherwise gimbal controller message requests will mess with this test
     void deleteGimbalController();
-
-    /// Delete camera manager, just for testing
-    void deleteCameraManager();
 
     quint64     mavlinkSentCount        () const{ return _mavlinkSentCount; }        /// Calculated total number of messages sent to us
     quint64     mavlinkReceivedCount    () const{ return _mavlinkReceivedCount; }    /// Total number of sucessful messages received
@@ -850,7 +842,6 @@ signals:
     void defaultHoverSpeedChanged       (double hoverSpeed);
     void firmwareTypeChanged            ();
     void vehicleTypeChanged             ();
-    void cameraManagerChanged           ();
     void hobbsMeterChanged              ();
     void capabilitiesKnownChanged       (bool capabilitiesKnown);
     void initialPlanRequestCompleteChanged(bool initialPlanRequestComplete);
@@ -1066,7 +1057,6 @@ private:
 
     SysStatusSensorInfo _sysStatusSensorInfo;
 
-    QGCCameraManager* _cameraManager = nullptr;
 
     QString             _prearmError;
     QTimer              _prearmErrorTimer;
@@ -1323,6 +1313,7 @@ private:
     QMultiHash<uint8_t, uint16_t> _unsupportedMessageIds;
     uint16_t _lastSetMsgIntervalMsgId = 0;
 
+/*---------------------------------------------------------------------------*/
 /*===========================================================================*/
 /*                         ardupilotmega Dialect                             */
 /*===========================================================================*/
@@ -1331,6 +1322,7 @@ public:
 
     /// Command vehicle to Enable/Disable Motor Interlock
     Q_INVOKABLE void motorInterlock(bool enable);
+
 /*---------------------------------------------------------------------------*/
 /*===========================================================================*/
 /*                         CONTROL STATUS HANDLER                            */
@@ -1423,6 +1415,7 @@ private:
     void _createStatusTextHandler();
 
     StatusTextHandler *m_statusTextHandler = nullptr;
+
 /*---------------------------------------------------------------------------*/
 /*===========================================================================*/
 /*                        Image Protocol Manager                             */
@@ -1440,6 +1433,7 @@ private:
     void _createImageProtocolManager();
 
     ImageProtocolManager *_imageProtocolManager = nullptr;
+
 /*---------------------------------------------------------------------------*/
 /*===========================================================================*/
 /*                         MAVLink Log Manager                               */
@@ -1457,6 +1451,30 @@ private:
     void _createMAVLinkLogManager();
 
     MAVLinkLogManager *_mavlinkLogManager = nullptr;
+
+/*---------------------------------------------------------------------------*/
+/*===========================================================================*/
+/*                             Camera Manager                                */
+/*===========================================================================*/
+private:
+    Q_MOC_INCLUDE("QGCCameraManager.h")
+    Q_PROPERTY(QGCCameraManager *cameraManager READ cameraManager NOTIFY cameraManagerChanged)
+    Q_PROPERTY(QVariantList staticCameraList READ staticCameraList CONSTANT)
+
+public:
+    QGCCameraManager *cameraManager() { return _cameraManager; }
+    const QVariantList &staticCameraList() const;
+
+    /// Stop CameraManager requests, just for testing
+    void stopCameraManager();
+
+signals:
+    void cameraManagerChanged();
+
+private:
+    void _createCameraManager();
+
+    QGCCameraManager *_cameraManager = nullptr;
 
 /*---------------------------------------------------------------------------*/
 };
