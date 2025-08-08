@@ -180,10 +180,6 @@ list(APPEND QGC_RESOURCES
     ${CMAKE_SOURCE_DIR}/resources/InstrumentValueIcons/InstrumentValueIcons.qrc
 )
 
-if(QGC_BUILD_TESTING)
-    list(APPEND QGC_RESOURCES ${CMAKE_SOURCE_DIR}/test/UnitTest.qrc)
-endif()
-
 #######################################################
 #               QGroundControl Target
 #######################################################
