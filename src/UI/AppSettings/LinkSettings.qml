@@ -260,13 +260,20 @@ SettingsPage {
 
                 Loader {
                     id:     linkSettingsLoader
-                    source: subEditConfig.settingsURL
+                    source: editingConfig && editingConfig.settingsURL ? editingConfig.settingsURL : ""
+                    asynchronous: true
 
                     property var subEditConfig:         editingConfig
                     property int _firstColumnWidth:     ScreenTools.defaultFontPixelWidth * 12
                     property int _secondColumnWidth:    ScreenTools.defaultFontPixelWidth * 30
                     property int _rowSpacing:           ScreenTools.defaultFontPixelHeight / 2
                     property int _colSpacing:           ScreenTools.defaultFontPixelWidth / 2
+
+                    onStatusChanged: {
+                        if (status === Loader.Error) {
+                            console.warn("Failed to load link settings page:", source)
+                        }
+                    }
                 }
             }
         }
