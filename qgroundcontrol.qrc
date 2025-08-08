@@ -66,7 +66,8 @@
         <file alias="Viewer3D.SettingsGroup.json">src/Settings/Viewer3D.SettingsGroup.json</file>
         <file alias="GimbalController.SettingsGroup.json">src/Settings/GimbalController.SettingsGroup.json</file>
         <file alias="CameraMetaData.json">src/Camera/CameraMetaData.json</file>
-        <file>src/Vehicle/FactGroups/YachtHudFact.json</file>
+        <file alias="YachtHudFact.json">src/Vehicle/FactGroups/YachtHudFact.json</file>
+	<file alias="APMParameterFactMetaData.Rover.4.4.xml">src/FirmwarePlugin/APM/APMParameterFactMetaData.Rover.4.4.xml</file>
     </qresource>
     <qresource prefix="/MockLink">
         <file alias="APMArduSubMockLink.params">src/Comms/MockLink/APMArduSubMockLink.params</file>

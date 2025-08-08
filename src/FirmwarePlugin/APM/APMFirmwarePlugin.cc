@@ -466,7 +466,7 @@ void APMFirmwarePlugin::initializeVehicle(Vehicle *vehicle)
             break;
         case MAV_TYPE_GROUND_ROVER:
         case MAV_TYPE_SURFACE_BOAT:
-            vehicle->setFirmwareVersion(3, 5, 0);
+            vehicle->setFirmwareVersion(4, 4, 0);
             break;
         case MAV_TYPE_SUBMARINE:
             vehicle->setFirmwareVersion(3, 4, 0);
@@ -710,6 +710,19 @@ QString APMFirmwarePlugin::_internalParameterMetaDataFile(const Vehicle *vehicle
     if(vehicleName.isEmpty()) {
         qCWarning(APMFirmwarePluginLog) << Q_FUNC_INFO << "called with bad VehicleClass_t:" << vehicleClass;
         return QString();
+    }
+
+    // 特殊处理 Rover 4.4 版本，优先返回自定义的 XML
+    if (vehicle->vehicleType() == MAV_TYPE_GROUND_ROVER || vehicle->vehicleType() == MAV_TYPE_SURFACE_BOAT)
+    {
+        if (vehicle->versionCompare(4, 4, 0) >= 0)
+        {
+            qDebug() << "Firmware version:"
+                     << vehicle->firmwareMajorVersion()
+                     << vehicle->firmwareMinorVersion()
+                     << vehicle->firmwarePatchVersion();
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Rover.4.4.xml");
+        }
     }
 
     const QString fileNameFormat = QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.%1.%2.%3.xml");

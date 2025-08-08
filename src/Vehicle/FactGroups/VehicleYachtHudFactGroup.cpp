@@ -54,7 +54,7 @@ const char* VehicleYachtHudFactGroup::_angleRightSPFactName = "angleRightSP";
 const char* VehicleYachtHudFactGroup::_imuTempFactName = "imuTemp";
 
 VehicleYachtHudFactGroup::VehicleYachtHudFactGroup(QObject *parent)
-    : FactGroup{100, ":/json/Vehicle/YachtHudFact.json", parent}
+    : FactGroup{100, ":/json/YachtHudFact.json", parent}
       , _time_boot_msFact (0, _time_boot_msFactName, FactMetaData::valueTypeUint32)
       , _rollFact(0,  _rollFactName, FactMetaData::valueTypeFloat)
       , _pitchFact(0,  _pitchFactName, FactMetaData::valueTypeFloat)
