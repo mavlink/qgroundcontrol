@@ -20,51 +20,6 @@
 
 QGC_LOGGING_CATEGORY(QGCLoggingLog, "qgc.utilities.qgclogging")
 
-#ifdef Q_OS_WIN
-
-#include <crtdbg.h>
-#include <windows.h>
-#include <iostream>
-
-/// CRT Report Hook installed using _CrtSetReportHook. We install this hook when
-/// we don't want asserts to pop a dialog on windows.
-static int __cdecl WindowsCrtReportHook(int reportType, char *message, int *returnValue)
-{
-    int nRet = FALSE;
-
-    printf("CRT report hook 1.\n");
-    printf("CRT report type is \"");
-
-    switch (reportType) {
-        case _CRT_ASSERT:
-            printf("_CRT_ASSERT");
-            // nRet = TRUE;   // Always stop for this type of report
-            break;
-        case _CRT_WARN:
-            printf("_CRT_WARN");
-            break;
-        case _CRT_ERROR:
-            printf("_CRT_ERROR");
-            break;
-        default:
-            printf("???Unknown???");
-            break;
-    }
-
-    printf("\".\nCRT report message is:\n\t");
-    printf("%s", message);
-
-    std::cerr << message << std::endl;
-
-    if (returnValue) {
-        *returnValue = 0;
-    }
-
-    return nRet;
-}
-
-#endif
-
 Q_GLOBAL_STATIC(QGCLogging, _qgcLogging)
 
 static QtMessageHandler defaultHandler = nullptr;
@@ -114,16 +69,8 @@ QGCLogging::~QGCLogging()
     qCDebug(QGCLoggingLog) << this;
 }
 
-void QGCLogging::installHandler(bool quietWindowsAsserts)
+void QGCLogging::installHandler()
 {
-#ifdef Q_OS_WIN
-    if (quietWindowsAsserts) {
-        _CrtSetReportHook(WindowsCrtReportHook);
-    }
-#else
-    Q_UNUSED(quietWindowsAsserts)
-#endif
-
     // Define the format for qDebug/qWarning/etc output
     qSetMessagePattern(QStringLiteral("%{category}:: %{time process} - %{type}: %{message} (%{function}:%{line})"));
 

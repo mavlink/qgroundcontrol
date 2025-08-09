@@ -39,6 +39,7 @@ private:
 
     QSocketNotifier *_notifierInt = nullptr;
     QSocketNotifier *_notifierTerm = nullptr;
+    // TODO: QWinEventNotifier
 
     int _sigIntCount = 0;
 };
