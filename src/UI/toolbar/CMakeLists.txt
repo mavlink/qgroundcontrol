@@ -10,6 +10,8 @@ qt_add_qml_module(ToolbarModule
         APMMainStatusIndicatorContentItem.qml
         APMSupportForwardingIndicator.qml
         ArmedIndicator.qml
+        EscIndicator.qml
+        EscIndicatorPage.qml
         GCSControlIndicator.qml
         GimbalIndicator.qml
         JoystickIndicator.qml

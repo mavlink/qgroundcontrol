@@ -15,18 +15,20 @@ BatteryFactGroupListModel::BatteryFactGroupListModel(QObject* parent)
 
 }
 
-bool BatteryFactGroupListModel::_shouldHandleMessage(const mavlink_message_t &message, uint32_t &id) const
+bool BatteryFactGroupListModel::_shouldHandleMessage(const mavlink_message_t &message, QList<uint32_t> &ids) const
 {
+    ids.clear();
+
     switch (message.msgid) {
     case MAVLINK_MSG_ID_HIGH_LATENCY:
     case MAVLINK_MSG_ID_HIGH_LATENCY2:
-        id = 0; // High latency messages do not have a battery id
+        ids.append(0); // High latency messages do not have a battery id
         return true;
     case MAVLINK_MSG_ID_BATTERY_STATUS:
     {
         mavlink_battery_status_t batteryStatus{};
         mavlink_msg_battery_status_decode(&message, &batteryStatus);
-        id = batteryStatus.id;
+        ids.append(batteryStatus.id);
         return true;
     }
     default:
@@ -110,6 +112,11 @@ void BatteryFactGroup::_handleBatteryStatus(Vehicle *vehicle, const mavlink_mess
 {
     mavlink_battery_status_t batteryStatus{};
     mavlink_msg_battery_status_decode(&message, &batteryStatus);
+
+    if (batteryStatus.id != id()->rawValue().toUInt()) {
+        // Disregard battery status messages which are not targeted at this battery id
+        return;
+    }
 
     double totalVoltage = qQNaN();
     for (int i = 0; i < 10; i++) {

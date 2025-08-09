@@ -22,7 +22,7 @@ public:
 
 protected:
     // Overrides from FactGroupListModel
-    bool _shouldHandleMessage(const mavlink_message_t &message, uint32_t &id) const final;
+    bool _shouldHandleMessage(const mavlink_message_t &message, QList<uint32_t> &ids) const final;
     FactGroupWithId *_createFactGroupWithId(uint32_t id) final;
 };
 
