@@ -27,7 +27,6 @@
 
 #include "QGCLogging.h"
 #include "AudioOutput.h"
-#include "CmdLineOptParser.h"
 #include "FollowMe.h"
 #include "JoystickManager.h"
 #include "JsonHelper.h"
@@ -36,11 +35,13 @@
 #include "MultiVehicleManager.h"
 #include "ParameterManager.h"
 #include "PositionManager.h"
+#include "QGCCommandLineParser.h"
 #include "QGCCorePlugin.h"
 #include "QGCFileDownload.h"
 #include "QGCImageProvider.h"
 #include "QGCLoggingCategory.h"
 #include "SettingsManager.h"
+#include "MavlinkSettings.h"
 #include "AppSettings.h"
 #include "UDPLink.h"
 #include "Vehicle.h"
@@ -53,32 +54,22 @@
 
 QGC_LOGGING_CATEGORY(QGCApplicationLog, "qgc.qgcapplication")
 
-QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting, bool simpleBootTest)
+QGCApplication::QGCApplication(int &argc, char *argv[], const QGCCommandLineParser::CommandLineParseResult &cli)
     : QApplication(argc, argv)
-    , _runningUnitTests(unitTesting)
-    , _simpleBootTest(simpleBootTest)
+    , _runningUnitTests(cli.runningUnitTests)
+    , _simpleBootTest(cli.simpleBootTest)
+    , _fakeMobile(cli.fakeMobile)
+    , _logOutput(cli.logOutput)
+    , _systemId(cli.systemId.value_or(0))
 {
     _msecsElapsedTime.start();
 
     // Setup for network proxy support
     QNetworkProxyFactory::setUseSystemConfiguration(true);
 
-    // Parse command line options
-    bool fClearSettingsOptions = false; // Clear stored settings
-    bool fClearCache = false;           // Clear parameter/airframe caches
-    bool logging = false;               // Turn on logging
-    QString loggingOptions;
-
-    CmdLineOpt_t rgCmdLineOptions[] = {
-        { "--clear-settings",   &fClearSettingsOptions, nullptr },
-        { "--clear-cache",      &fClearCache,           nullptr },
-        { "--logging",          &logging,               &loggingOptions },
-        { "--fake-mobile",      &_fakeMobile,           nullptr },
-        { "--log-output",       &_logOutput,            nullptr },
-        // Add additional command line option flags here
-    };
-
-    ParseCmdLineOptions(argc, argv, rgCmdLineOptions, std::size(rgCmdLineOptions), false);
+    bool fClearSettingsOptions = cli.clearSettingsOptions;  // Clear stored settings
+    const bool fClearCache = cli.clearCache;                // Clear parameter/airframe caches
+    const QString loggingOptions = cli.loggingOptions.value_or(QString(""));
 
     // Set up timer for delayed missing fact display
     _missingParamsDelayedDisplayTimer.setSingleShot(true);
@@ -87,7 +78,7 @@ QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting, bool s
 
     // Set application information
     QString applicationName;
-    if (_runningUnitTests || simpleBootTest) {
+    if (_runningUnitTests || _simpleBootTest) {
         // We don't want unit tests to use the same QSettings space as the normal app. So we tweak the app
         // name. Also we want to run unit tests with clean settings every time.
         applicationName = QStringLiteral("%1_unittest").arg(QGC_APP_NAME);
@@ -117,7 +108,7 @@ QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting, bool s
     // The setting will delete all settings on this boot
     fClearSettingsOptions |= settings.contains(_deleteAllSettingsKey);
 
-    if (_runningUnitTests || simpleBootTest) {
+    if (_runningUnitTests || _simpleBootTest) {
         // Unit tests run with clean settings
         fClearSettingsOptions = true;
     }
@@ -219,13 +210,17 @@ QGCApplication::~QGCApplication()
 void QGCApplication::init()
 {
     SettingsManager::instance()->init();
+    if (_systemId > 0) {
+        qCDebug(QGCApplicationLog) << "Setting MAVLink System ID to:" << _systemId;
+        SettingsManager::instance()->mavlinkSettings()->gcsMavlinkSystemID()->setRawValue(_systemId);
+    }
 
     // Although this should really be in _initForNormalAppBoot putting it here allowws us to create unit tests which pop up more easily
-    if(QFontDatabase::addApplicationFont(":/fonts/opensans") < 0) {
+    if (QFontDatabase::addApplicationFont(":/fonts/opensans") < 0) {
         qCWarning(QGCApplicationLog) << "Could not load /fonts/opensans font";
     }
 
-    if(QFontDatabase::addApplicationFont(":/fonts/opensans-demibold") < 0) {
+    if (QFontDatabase::addApplicationFont(":/fonts/opensans-demibold") < 0) {
         qCWarning(QGCApplicationLog) << "Could not load /fonts/opensans-demibold font";
     }
 

@@ -46,8 +46,6 @@ add_subdirectory(QtLocationPlugin)
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         main.cc
-        CmdLineOptParser.cc
-        CmdLineOptParser.h
         pch.h
         QGCApplication.cc
         QGCApplication.h
