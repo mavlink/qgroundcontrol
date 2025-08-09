@@ -12,8 +12,14 @@
 #include <QtCore/QCoreApplication>
 #include <QtCore/QProcessEnvironment>
 
+#include "QGCCommandLineParser.h"
+
+#ifdef Q_OS_ANDROID
+    #include "AndroidInterface.h"
+#endif
+
 #if !defined(Q_OS_IOS) && !defined(Q_OS_ANDROID)
-#include "SignalHandler.h"
+    #include "SignalHandler.h"
 #endif
 
 #if defined(Q_OS_MACOS)
@@ -126,7 +132,7 @@ void setWindowsErrorModes(bool quietWindowsAsserts)
 
 } // namespace
 
-void Platform::setupPreApp(bool quietWindowsAsserts)
+void Platform::setupPreApp(const QGCCommandLineParser::CommandLineParseResult &cli)
 {
 #ifdef Q_OS_UNIX
     if (!qEnvironmentVariableIsSet("QT_ASSUME_STDERR_HAS_CONSOLE")) {
@@ -138,15 +144,27 @@ void Platform::setupPreApp(bool quietWindowsAsserts)
 #endif
 
 #ifdef Q_OS_WIN
+    // (void) qputenv("QT_OPENGL_BUGLIST", ":/opengl/resources/opengl/buglist.json");
     if (!qEnvironmentVariableIsSet("QT_WIN_DEBUG_CONSOLE")) {
         (void) qputenv("QT_WIN_DEBUG_CONSOLE", "attach");
     }
-    setWindowsErrorModes(quietWindowsAsserts);
+    setWindowsErrorModes(cli.quietWindowsAsserts);
 #endif
 
 #ifdef Q_OS_MACOS
     disableAppNapViaInfoDict();
 #endif
+
+    if (cli.useDesktopGL) {
+        QCoreApplication::setAttribute(Qt::AA_UseDesktopOpenGL);
+    }
+
+    if (cli.useSwRast) {
+        QCoreApplication::setAttribute(Qt::AA_UseSoftwareOpenGL);
+    }
+
+    QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+    QCoreApplication::setAttribute(Qt::AA_CompressTabletEvents);
 }
 
 void Platform::setupPostApp()
@@ -154,5 +172,9 @@ void Platform::setupPostApp()
 #if !defined(Q_OS_IOS) && !defined(Q_OS_ANDROID)
     SignalHandler* signalHandler = new SignalHandler(QCoreApplication::instance());
     (void) signalHandler->setupSignalHandlers();
+#endif
+
+#ifdef Q_OS_ANDROID
+    AndroidInterface::checkStoragePermissions();
 #endif
 }
