@@ -71,6 +71,17 @@ int main(int argc, char *argv[])
 
     ParseCmdLineOptions(argc, argv, rgCmdLineOptions, std::size(rgCmdLineOptions), false);
 
+#ifdef QGC_UNITTEST_BUILD
+    if (stressUnitTests) {
+        runUnitTests = true;
+    }
+#ifdef Q_OS_WIN
+    if (runUnitTests) {
+        quietWindowsAsserts = true;
+    }
+#endif
+#endif
+
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
     // We make the runguard key different for custom and non custom
     // builds, so they can be executed together in the same device.
@@ -118,12 +129,6 @@ int main(int argc, char *argv[])
 
     QGCLogging::installHandler(quietWindowsAsserts);
 
-#ifdef QGC_UNITTEST_BUILD
-    if (stressUnitTests) {
-        runUnitTests = true;
-    }
-#endif
-
 #ifdef Q_OS_MACOS
     Platform::disableAppNapViaInfoDict();
 #endif
@@ -143,18 +148,7 @@ int main(int argc, char *argv[])
             break;
         }
     }
-
-#ifdef QGC_UNITTEST_BUILD
-    if (runUnitTests) {
-        // Don't pop up Windows Error Reporting dialog when app crashes.
-        const DWORD dwMode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
-        SetErrorMode(dwMode | SEM_NOGPFAULTERRORBOX);
-        (void) _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG);
-        (void) _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_DEBUG);
-        (void) _CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);
-    }
 #endif
-#endif // Q_OS_WIN
 
     QGCApplication app(argc, argv, runUnitTests, simpleBootTest);
 
