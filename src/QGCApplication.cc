@@ -9,6 +9,8 @@
 
 #include "QGCApplication.h"
 
+#include <QtCore/QCommandLineOption>
+#include <QtCore/QCommandLineParser>
 #include <QtCore/QEvent>
 #include <QtCore/QFile>
 #include <QtCore/QMetaMethod>
@@ -27,7 +29,6 @@
 
 #include "QGCLogging.h"
 #include "AudioOutput.h"
-#include "CmdLineOptParser.h"
 #include "FollowMe.h"
 #include "JoystickManager.h"
 #include "JsonHelper.h"
@@ -63,22 +64,67 @@ QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting, bool s
     // Setup for network proxy support
     QNetworkProxyFactory::setUseSystemConfiguration(true);
 
-    // Parse command line options
-    bool fClearSettingsOptions = false; // Clear stored settings
-    bool fClearCache = false;           // Clear parameter/airframe caches
-    bool logging = false;               // Turn on logging
+    QCommandLineParser parser;
+
+    parser.setSingleDashWordOptionMode(QCommandLineParser::ParseAsLongOptions);
+    parser.setOptionsAfterPositionalArgumentsMode(QCommandLineParser::ParseAsOptions);
+
+    parser.setApplicationDescription(QStringLiteral("QGroundControl"));
+    const QCommandLineOption helpOpt = parser.addHelpOption();
+    const QCommandLineOption versionOpt = parser.addVersionOption();
+
+    const QCommandLineOption clearSettingsOpt(
+        QStringLiteral("clear-settings"),
+        QStringLiteral("Clear all QGC settings on startup.")
+    );
+    (void) parser.addOption(clearSettingsOpt);
+
+    const QCommandLineOption clearCacheOpt(
+        QStringLiteral("clear-cache"),
+        QStringLiteral("Clear parameter/airframe caches.")
+    );
+    (void) parser.addOption(clearCacheOpt);
+
+    const QCommandLineOption loggingOpt(
+        QStringLiteral("logging"),
+        QStringLiteral("Enable logging with optional filter rules string."),
+        QStringLiteral("rules")
+    );
+    (void) parser.addOption(loggingOpt);
+
+    const QCommandLineOption fakeMobileOpt(
+        QStringLiteral("fake-mobile"),
+        QStringLiteral("Force mobile UI.")
+    );
+    (void) parser.addOption(fakeMobileOpt);
+
+    const QCommandLineOption logOutputOpt(
+        QStringLiteral("log-output"),
+        QStringLiteral("Log to stdout/stderr.")
+    );
+    (void) parser.addOption(logOutputOpt);
+
+    parser.process(*this);
+
+    const QStringList unknown = parser.unknownOptionNames();
+    if (!unknown.isEmpty()) {
+        qCWarning(QGCApplicationLog) << QStringLiteral("Unknown options: %1").arg(unknown.join(", "));
+    }
+
+    const QStringList positional = parser.positionalArguments();
+    if (!positional.isEmpty()) {
+        qCWarning(QGCApplicationLog) << QStringLiteral("Unexpected positional arguments: %1").arg(positional.join(", "));
+    }
+
+    bool fClearSettingsOptions = parser.isSet(clearSettingsOpt);
+    const bool fClearCache = parser.isSet(clearCacheOpt);
+    const bool logging = parser.isSet(loggingOpt);
     QString loggingOptions;
-
-    CmdLineOpt_t rgCmdLineOptions[] = {
-        { "--clear-settings",   &fClearSettingsOptions, nullptr },
-        { "--clear-cache",      &fClearCache,           nullptr },
-        { "--logging",          &logging,               &loggingOptions },
-        { "--fake-mobile",      &_fakeMobile,           nullptr },
-        { "--log-output",       &_logOutput,            nullptr },
-        // Add additional command line option flags here
-    };
-
-    ParseCmdLineOptions(argc, argv, rgCmdLineOptions, std::size(rgCmdLineOptions), false);
+    if (logging) {
+        loggingOptions = parser.value(loggingOpt);
+    }
+    _fakeMobile = parser.isSet(fakeMobileOpt);
+    _logOutput = parser.isSet(logOutputOpt);
 
     // Set up timer for delayed missing fact display
     _missingParamsDelayedDisplayTimer.setSingleShot(true);
