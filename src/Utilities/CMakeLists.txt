@@ -14,6 +14,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         Platform.h
         QGC.cc
         QGC.h
+        QGCCommandLineParser.cc
+        QGCCommandLineParser.h
         QGCLogging.cc
         QGCLogging.h
         QGCLoggingCategory.cc
