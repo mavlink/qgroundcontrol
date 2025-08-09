@@ -28,13 +28,39 @@ QGC_LOGGING_CATEGORY(QGCLoggingLog, "qgc.utilities.qgclogging")
 
 /// CRT Report Hook installed using _CrtSetReportHook. We install this hook when
 /// we don't want asserts to pop a dialog on windows.
-static int WindowsCrtReportHook(int reportType, char *message, int *returnValue)
+static int __cdecl WindowsCrtReportHook(int reportType, char *message, int *returnValue)
 {
-    Q_UNUSED(reportType);
+    int nRet = FALSE;
 
-    std::cerr << message << std::endl;  // Output message to stderr
-    *returnValue = 0;                   // Don't break into debugger
-    return true;                        // We handled this fully ourselves
+    printf("CRT report hook 1.\n");
+    printf("CRT report type is \"");
+
+    switch (reportType) {
+        case _CRT_ASSERT:
+            printf("_CRT_ASSERT");
+            // nRet = TRUE;   // Always stop for this type of report
+            break;
+        case _CRT_WARN:
+            printf("_CRT_WARN");
+            break;
+        case _CRT_ERROR:
+            printf("_CRT_ERROR");
+            break;
+        default:
+            printf("???Unknown???");
+            break;
+    }
+
+    printf("\".\nCRT report message is:\n\t");
+    printf("%s", message);
+
+    std::cerr << message << std::endl;
+
+    if (returnValue) {
+        *returnValue = 0;
+    }
+
+    return nRet;
 }
 
 #endif

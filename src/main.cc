@@ -149,6 +149,9 @@ int main(int argc, char *argv[])
         // Don't pop up Windows Error Reporting dialog when app crashes.
         const DWORD dwMode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
         SetErrorMode(dwMode | SEM_NOGPFAULTERRORBOX);
+        (void) _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG);
+        (void) _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_DEBUG);
+        (void) _CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);
     }
 #endif
 #endif // Q_OS_WIN
