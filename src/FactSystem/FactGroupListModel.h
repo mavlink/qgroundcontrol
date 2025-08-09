@@ -29,11 +29,11 @@ public:
     void handleMessageForFactGroupCreation(Vehicle *vehicle, const mavlink_message_t &message);
 
 protected:
-    virtual bool _shouldHandleMessage(const mavlink_message_t &message, uint32_t &id) const = 0;
+    virtual bool _shouldHandleMessage(const mavlink_message_t &message, QList<uint32_t> &ids) const = 0;
     virtual FactGroupWithId *_createFactGroupWithId(uint32_t id) = 0;
 
     FactGroupWithId *_findOrAddFactGroupById(Vehicle *vehicle, uint32_t id);
-
+    QString _factGroupNameWithId(uint32_t id) const;
 
     const char* _factGroupNamePrefix;
 };
