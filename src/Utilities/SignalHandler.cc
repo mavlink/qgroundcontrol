@@ -50,7 +50,9 @@ void SignalHandler::_onSigInt()
 {
     _notifierInt->setEnabled(false);
     char b;
-    (void) ::read(sigIntFd[1], &b, sizeof(b));
+    if (::read(sigIntFd[1], &b, sizeof(b)) == -1) {
+        qCWarning(SignalHandlerLog) << "Failed to read from SIGINT socketpair:" << strerror(errno);
+    }
 
     _sigIntCount++;
 
@@ -74,7 +76,9 @@ void SignalHandler::_onSigTerm()
 {
     _notifierTerm->setEnabled(false);
     char b;
-    (void) ::read(sigTermFd[1], &b, sizeof(b));
+    if (::read(sigTermFd[1], &b, sizeof(b)) == -1) {
+        qCWarning(SignalHandlerLog) << "Failed to read from SIGTERM socketpair:" << strerror(errno);
+    }
 
     qCDebug(SignalHandlerLog) << "Caught SIGTERM—shutting down gracefully";
     if (qgcApp() && qgcApp()->mainRootWindow()) {
@@ -91,7 +95,9 @@ void SignalHandler::intSignalHandler(int signum)
     Q_ASSERT(signum == SIGINT);
 
     char b = 1;
-    (void) ::write(sigIntFd[0], &b, sizeof(b));
+    if (::write(sigIntFd[0], &b, sizeof(b)) == -1) {
+        qCWarning(SignalHandlerLog) << "Failed to write to SIGINT socketpair:" << strerror(errno);
+    }
 }
 
 void SignalHandler::termSignalHandler(int signum)
@@ -99,7 +105,9 @@ void SignalHandler::termSignalHandler(int signum)
     Q_ASSERT(signum == SIGTERM);
 
     char b = 1;
-    (void) ::write(sigTermFd[0], &b, sizeof(b));
+    if (::write(sigTermFd[0], &b, sizeof(b)) == -1) {
+        qCWarning(SignalHandlerLog) << "Failed to write to SIGTERM socketpair:" << strerror(errno);
+    }
 }
 
 int SignalHandler::setupSignalHandlers()

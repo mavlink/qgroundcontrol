@@ -26,15 +26,36 @@ QGC_LOGGING_CATEGORY(QGCLoggingLog, "qgc.utilities.qgclogging")
 #include <windows.h>
 #include <iostream>
 
-/// CRT Report Hook installed using _CrtSetReportHook. We install this hook when
-/// we don't want asserts to pop a dialog on windows.
-static int WindowsCrtReportHook(int reportType, char *message, int *returnValue)
+static int __cdecl WindowsCrtReportHook(int reportType, char *message, int *returnValue)
 {
-    Q_UNUSED(reportType);
+    // Log the raw CRT message to QGC logging + stderr
+    const char *typeStr = "UNKNOWN";
+    switch (reportType) {
+    case _CRT_ASSERT:
+        typeStr = "_CRT_ASSERT";
+        break;
+    case _CRT_WARN:
+        typeStr = "_CRT_WARN";
+        break;
+    case _CRT_ERROR:
+        typeStr = "_CRT_ERROR";
+        break;
+    default:
+        break;
+    }
+    qCDebug(QGCLoggingLog) << "[CRT]" << typeStr << ":" << QString::fromLocal8Bit(message ? message : "");
+    std::cerr << "[CRT] " << typeStr << ": " << (message ? message : "") << std::endl;
 
-    std::cerr << message << std::endl;  // Output message to stderr
-    *returnValue = 0;                   // Don't break into debugger
-    return true;                        // We handled this fully ourselves
+    // For asserts, suppress any interactive break/GUI. Keep process running.
+    if (reportType == _CRT_ASSERT) {
+        if (returnValue) {
+            *returnValue = 0; // continue execution
+        }
+        return TRUE; // handled: no further CRT processing
+    }
+
+    // For warnings/errors, let CRT continue with our non-GUI report mode.
+    return FALSE;
 }
 
 #endif
@@ -92,7 +113,24 @@ void QGCLogging::installHandler(bool quietWindowsAsserts)
 {
 #ifdef Q_OS_WIN
     if (quietWindowsAsserts) {
-        _CrtSetReportHook(WindowsCrtReportHook);
+        const DWORD dwMode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
+        SetErrorMode(dwMode | SEM_NOGPFAULTERRORBOX);
+
+        // Route CRT reports to stderr. No modal dialogs.
+        (void) _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE);
+        (void) _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
+
+        (void) _CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_FILE);
+        (void) _CrtSetReportFile(_CRT_ERROR, _CRTDBG_FILE_STDERR);
+
+        (void) _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_FILE);
+        (void) _CrtSetReportFile(_CRT_WARN, _CRTDBG_FILE_STDERR);
+
+        // Install our hook to log and suppress assert breaks.
+        (void) _CrtSetReportHook2(_CRT_RPTHOOK_INSTALL, WindowsCrtReportHook);
+    } else {
+        // Ensure default behavior if previously changed.
+        (void) _CrtSetReportHook2(_CRT_RPTHOOK_REMOVE, WindowsCrtReportHook);
     }
 #else
     Q_UNUSED(quietWindowsAsserts)
