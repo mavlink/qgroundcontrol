@@ -22,15 +22,12 @@ ToolIndicatorPage {
     property var    activeVehicle:  QGroundControl.multiVehicleManager.activeVehicle
     property string na:             qsTr("N/A", "No data to display")
     property string valueNA:        qsTr("--.--", "No data to display")
-    property var    _escs:          activeVehicle ? activeVehicle.escs : null
 
-    // ESC data from vehicle fact groups
-    property int    _motorCount:        _escs ? _escs.get(0).count.rawValue : 0
-    property int    _infoBitmask:       _escs ? _escs.get(0).info.rawValue : 0
+    property var    _escs:          activeVehicle ? activeVehicle.escs : null
+    property int    _onlineBitmask: _escs ? _escs.get(0).info.rawValue : 0
 
     function _isMotorOnline(motorIndex) {
-        // Check if the motor is online using the info bitmask
-        return (_infoBitmask & (1 << motorIndex)) !== 0
+        return (_onlineBitmask & (1 << motorIndex)) !== 0
     }
 
     function _isMotorHealthy(motorIndex) {
@@ -55,10 +52,10 @@ ToolIndicatorPage {
                         label:              qsTr("Healthy Motors")
                         labelText:  {
                             let healthyCount = 0
-                            for (let i = 0; i < _motorCount; i++) {
+                            for (let i = 0; i < _escs.count; i++) {
                                 if (_isMotorHealthy(i)) healthyCount++
                             }
-                            return healthyCount + "/" + _motorCount
+                            return healthyCount + "/" + _escs.count
                         }
                     }
 
@@ -67,44 +64,10 @@ ToolIndicatorPage {
                         label:      qsTr("Total Errors")
                         labelText:  {
                             let totalErrors = 0
-                            for (let i = 0; i < _motorCount; i++) {
+                            for (let i = 0; i < _escs.count; i++) {
                                 totalErrors += _escs.get(i).errorCount.rawValue
                             }
                             return totalErrors.toString()
-                        }
-                    }
-
-                    LabelledLabel {
-                        Layout.fillWidth: true
-                        label:      qsTr("Max Temperature")
-                        labelText:  {
-                            let maxTemp = 0
-                            let hasTemperature = false
-                            for (let i = 0; i < _motorCount; i++) {
-                                let motorTemp = _escs.get(i).temperature
-                                if (motorTemp !== 32767) { // 32767 = INT16_MAX = no data
-                                    hasTemperature = true
-                                    if (motorTemp > maxTemp) {
-                                        maxTemp = motorTemp
-                                    }
-                                }
-                            }
-                            return hasTemperature ? maxTemp.toFixed(1) + " C" : na
-                        }
-                    }
-
-                    LabelledLabel {
-                        Layout.fillWidth:   true
-                        label:              qsTr("Max Current")
-                        labelText:  {
-                            let maxCurrent = 0
-                            for (let i = 0; i < _motorCount; i++) {
-                                let motorCurrent = _escs.get(i).current
-                                if (motorCurrent > maxCurrent) {
-                                    maxCurrent = motorCurrent
-                                }
-                            }
-                            return maxCurrent.toFixed(1) + " A"
                         }
                     }
                 }
@@ -121,7 +84,8 @@ ToolIndicatorPage {
                     property bool _isThisMotorHealthy: _isMotorHealthy(index)
 
                     GridLayout {
-                        columns:    2
+                        columns:        2
+                        columnSpacing:  ScreenTools.defaultFontPixelWidth * 2.5
                         flow:       GridLayout.LeftToRight
 
                         LabelledFactLabel {
