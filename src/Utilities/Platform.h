@@ -9,10 +9,14 @@
 
 #pragma once
 
+namespace QGCCommandLineParser {
+    struct CommandLineParseResult;
+}
+
 namespace Platform {
 
 // Call before constructing Q(Core)Application.
-void setupPreApp(bool quietWindowsAsserts);
+void setupPreApp(const QGCCommandLineParser::CommandLineParseResult &cli);
 
 // Call after Q(Core)Application exists and logging is installed.
 void setupPostApp();
