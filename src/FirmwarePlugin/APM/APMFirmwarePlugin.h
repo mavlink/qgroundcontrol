@@ -139,6 +139,15 @@ private:
 
     static uint8_t _reencodeMavlinkChannel();
     static QMutex &_reencodeMavlinkChannelMutex();
+
+    struct FirmwareParameterHeader {
+        MAV_AUTOPILOT firmwareType = MAV_AUTOPILOT_GENERIC;
+        MAV_TYPE vehicleType = MAV_TYPE_GENERIC;
+        QVersionNumber versionNumber;
+        FIRMWARE_VERSION_TYPE versionType;
+        QString gitRevision;
+    };
+    static FirmwareParameterHeader _parseParamsHeader(const QString &filePath);
 };
 
 /*===========================================================================*/

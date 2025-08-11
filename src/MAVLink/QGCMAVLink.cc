@@ -134,6 +134,18 @@ QString QGCMAVLink::firmwareClassToString(FirmwareClass_t firmwareClass)
     }
 }
 
+MAV_AUTOPILOT QGCMAVLink::firmwareTypeFromString(const QString &firmwareTypeStr)
+{
+    const QString type = firmwareTypeStr.trimmed();
+    if (type == QLatin1String("ArduPilot")) {
+        return MAV_AUTOPILOT_ARDUPILOTMEGA;
+    }
+    if (type == QLatin1String("PX4 Pro")) {
+        return MAV_AUTOPILOT_PX4;
+    }
+    return MAV_AUTOPILOT_GENERIC;
+}
+
 bool QGCMAVLink::isAirship(MAV_TYPE mavType)
 {
     return vehicleClass(mavType) == VehicleClassAirship;
@@ -216,6 +228,24 @@ QString QGCMAVLink::vehicleClassToUserVisibleString(VehicleClass_t vehicleClass)
     default:
         return QT_TRANSLATE_NOOP("Vehicle Class", "Unknown");
     }
+}
+
+MAV_TYPE QGCMAVLink::vehicleTypeFromString(const QString &vehicleStr)
+{
+    const QString type = vehicleStr.trimmed();
+    if (type == QLatin1String("Multi-Rotor")) {
+        return MAV_TYPE_QUADROTOR;
+    }
+    if (type == QLatin1String("Fixed Wing")) {
+        return MAV_TYPE_FIXED_WING;
+    }
+    if (type == QLatin1String("Rover")) {
+        return MAV_TYPE_GROUND_ROVER;
+    }
+    if (type == QLatin1String("Sub")) {
+        return MAV_TYPE_SUBMARINE;
+    }
+    return MAV_TYPE_GENERIC;
 }
 
 QString QGCMAVLink::vehicleClassToInternalString(VehicleClass_t vehicleClass)
@@ -363,6 +393,24 @@ QString QGCMAVLink::firmwareVersionTypeToString(FIRMWARE_VERSION_TYPE firmwareVe
     default:
         return QStringLiteral("");
     }
+}
+
+FIRMWARE_VERSION_TYPE QGCMAVLink::firmwareVersionTypeFromString(const QString &typeStr)
+{
+    const QString type = typeStr.trimmed();
+    if (type == QLatin1String("dev")) {
+        return FIRMWARE_VERSION_TYPE_DEV;
+    }
+    if (type == QLatin1String("alpha")) {
+        return FIRMWARE_VERSION_TYPE_ALPHA;
+    }
+    if (type == QLatin1String("beta")) {
+        return FIRMWARE_VERSION_TYPE_BETA;
+    }
+    if (type == QLatin1String("rc")) {
+        return FIRMWARE_VERSION_TYPE_RC;
+    }
+    return FIRMWARE_VERSION_TYPE_OFFICIAL;
 }
 
 int QGCMAVLink::motorCount(MAV_TYPE mavType, uint8_t frameType)
