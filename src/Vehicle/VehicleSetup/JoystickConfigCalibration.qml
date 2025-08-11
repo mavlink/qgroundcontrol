@@ -13,11 +13,7 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.Palette
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
-import QGroundControl.Controllers
-import QGroundControl.FactSystem
 import QGroundControl.FactControls
 
 Item {
