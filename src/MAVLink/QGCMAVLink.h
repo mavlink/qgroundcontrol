@@ -56,7 +56,8 @@ public:
     static FirmwareClass_t          firmwareClass               (MAV_AUTOPILOT autopilot);
     static MAV_AUTOPILOT            firmwareClassToAutopilot    (FirmwareClass_t firmwareClass) { return static_cast<MAV_AUTOPILOT>(firmwareClass); }
     static QString                  firmwareClassToString       (FirmwareClass_t firmwareClass);
-    static QList<FirmwareClass_t>   allFirmwareClasses          (void);
+    static MAV_AUTOPILOT            firmwareTypeFromString      (const QString &firmwareTypeStr);
+    static QList<FirmwareClass_t>   allFirmwareClasses          ();
 
     static bool                     isAirship                   (MAV_TYPE mavType);
     static bool                     isFixedWing                 (MAV_TYPE mavType);
@@ -68,12 +69,14 @@ public:
     static MAV_TYPE                 vehicleClassToMavType       (VehicleClass_t vehicleClass) { return static_cast<MAV_TYPE>(vehicleClass); }
     static QString                  vehicleClassToUserVisibleString(VehicleClass_t vehicleClass);
     static QString                  vehicleClassToInternalString(VehicleClass_t vehicleClass);
+    static MAV_TYPE                 vehicleTypeFromString(const QString &vehicleStr);
     static QList<VehicleClass_t>    allVehicleClasses           (void);
 
     static QString                  mavResultToString           (MAV_RESULT result);
     static QString                  mavSysStatusSensorToString  (MAV_SYS_STATUS_SENSOR sysStatusSensor);
     static QString                  mavTypeToString             (MAV_TYPE mavType);
     static QString                  firmwareVersionTypeToString (FIRMWARE_VERSION_TYPE firmwareVersionType);
+    static FIRMWARE_VERSION_TYPE    firmwareVersionTypeFromString(const QString &typeStr);
     static int                      motorCount                  (MAV_TYPE mavType, uint8_t frameType = 0);
     static uint32_t                 highLatencyFailuresToMavSysStatus(mavlink_high_latency2_t& highLatency2);
 
