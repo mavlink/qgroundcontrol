@@ -479,6 +479,11 @@ ApplicationWindow {
             }
         }
 
+        // This need to block click event leakage to underlying map.
+        DeadMouseArea {
+            anchors.fill: parent
+        }
+
         Rectangle {
             id:             toolDrawerToolbar
             anchors.left:   parent.left
