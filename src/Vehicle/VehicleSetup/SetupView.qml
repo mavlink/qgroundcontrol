@@ -191,6 +191,11 @@ Rectangle {
         }
     }
 
+    // Don't allow clicks to flow further up the hierarchy
+    DeadMouseArea {
+        anchors.fill:   parent
+    }
+
     QGCFlickable {
         id:                 buttonScroll
         width:              buttonColumn.width
