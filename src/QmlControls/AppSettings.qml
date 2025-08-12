@@ -43,6 +43,11 @@ Rectangle {
         }
     }
 
+    // This need to block click event leakage to underlying map.
+    DeadMouseArea {
+        anchors.fill: parent
+    }
+
     QGCPalette { id: qgcPal }
 
     Component.onCompleted: {
