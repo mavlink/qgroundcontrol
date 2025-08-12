@@ -16,7 +16,7 @@ import QGroundControl
 import QGroundControl.FactControls
 
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
+
 
 SetupPage {
     id:                 safetyPage

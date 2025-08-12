@@ -17,7 +17,7 @@ import QtQuick.Window
 
 import QGroundControl
 import QGroundControl.FlightMap
-import QGroundControl.ScreenTools
+
 import QGroundControl.Controls
 
 import QGroundControl.FactControls

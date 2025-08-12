@@ -17,7 +17,7 @@ import QGroundControl
 import QGroundControl.FactControls
 
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
+
 
 
 /// Page for sensor calibration. This control is used within the SensorsComponent control and can also be used

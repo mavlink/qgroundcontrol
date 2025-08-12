@@ -17,7 +17,7 @@
 #endif
 #include "QGCLoggingCategory.h"
 
-#include <QtCore/qapplicationstatic.h>
+#include <QtCore/QApplicationStatic>
 #include <QtCore/QSettings>
 
 QGC_LOGGING_CATEGORY(JoystickManagerLog, "qgc.joystick.joystickmanager")

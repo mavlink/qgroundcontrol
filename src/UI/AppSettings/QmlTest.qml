@@ -5,7 +5,7 @@ import QtQuick.Layouts
 import QGroundControl
 
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
+
 
 Rectangle {
     id: _root

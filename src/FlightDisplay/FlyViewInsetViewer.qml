@@ -21,7 +21,7 @@ import QGroundControl
 import QGroundControl.Controls
 
 import QGroundControl.FlightDisplay
-import QGroundControl.ScreenTools
+
 import QGroundControl.FlightMap
 
 

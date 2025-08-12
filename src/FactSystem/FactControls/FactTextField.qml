@@ -6,7 +6,7 @@ import QGroundControl
 
 
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
+
 
 QGCTextField {
     id:                 control

@@ -19,7 +19,7 @@ import QtQuick.Effects
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
+
 
 
 Item {
