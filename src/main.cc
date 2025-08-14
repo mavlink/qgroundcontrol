@@ -17,10 +17,6 @@
 #include "MavlinkSettings.h"
 #include "Platform.h"
 
-#ifdef Q_OS_WIN
-    #include <windows.h>
-#endif
-
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
     #include <QtWidgets/QMessageBox>
     #include "RunGuard.h"
@@ -75,6 +71,17 @@ int main(int argc, char *argv[])
 
     ParseCmdLineOptions(argc, argv, rgCmdLineOptions, std::size(rgCmdLineOptions), false);
 
+#ifdef QGC_UNITTEST_BUILD
+    if (stressUnitTests) {
+        runUnitTests = true;
+    }
+#ifdef Q_OS_WIN
+    if (runUnitTests) {
+        quietWindowsAsserts = true;
+    }
+#endif
+#endif
+
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
     // We make the runguard key different for custom and non custom
     // builds, so they can be executed together in the same device.
@@ -114,23 +121,19 @@ int main(int argc, char *argv[])
     }
 #endif
 
+#ifdef Q_OS_MACOS
+    Platform::disableAppNapViaInfoDict();
+#endif
+
 #ifdef Q_OS_WIN
     if (!qEnvironmentVariableIsSet("QT_WIN_DEBUG_CONSOLE")) {
         (void) qputenv("QT_WIN_DEBUG_CONSOLE", "attach"); // new
     }
+
+    Platform::setWindowsNativeFunctions(quietWindowsAsserts);
 #endif
 
-    QGCLogging::installHandler(quietWindowsAsserts);
-
-#ifdef QGC_UNITTEST_BUILD
-    if (stressUnitTests) {
-        runUnitTests = true;
-    }
-#endif
-
-#ifdef Q_OS_MACOS
-    Platform::disableAppNapViaInfoDict();
-#endif
+    QGCLogging::installHandler();
 
 #ifdef Q_OS_WIN
     // Set our own OpenGL buglist
@@ -147,15 +150,7 @@ int main(int argc, char *argv[])
             break;
         }
     }
-
-#ifdef QGC_UNITTEST_BUILD
-    if (runUnitTests) {
-        // Don't pop up Windows Error Reporting dialog when app crashes.
-        const DWORD dwMode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
-        SetErrorMode(dwMode | SEM_NOGPFAULTERRORBOX);
-    }
 #endif
-#endif // Q_OS_WIN
 
     QGCApplication app(argc, argv, runUnitTests, simpleBootTest);
 
