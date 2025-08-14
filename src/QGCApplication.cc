@@ -9,6 +9,8 @@
 
 #include "QGCApplication.h"
 
+#include <QtCore/QCommandLineOption>
+#include <QtCore/QCommandLineParser>
 #include <QtCore/QEvent>
 #include <QtCore/QFile>
 #include <QtCore/QMetaMethod>
@@ -27,7 +29,6 @@
 
 #include "QGCLogging.h"
 #include "AudioOutput.h"
-#include "CmdLineOptParser.h"
 #include "FollowMe.h"
 #include "JoystickManager.h"
 #include "JsonHelper.h"
@@ -36,6 +37,7 @@
 #include "MultiVehicleManager.h"
 #include "ParameterManager.h"
 #include "PositionManager.h"
+#include "QGCCommandLineParser.h"
 #include "QGCCorePlugin.h"
 #include "QGCFileDownload.h"
 #include "QGCImageProvider.h"
@@ -53,32 +55,22 @@
 
 QGC_LOGGING_CATEGORY(QGCApplicationLog, "qgc.qgcapplication")
 
-QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting, bool simpleBootTest)
+QGCApplication::QGCApplication(int &argc, char *argv[], const QGCCommandLineParser::CommandLineParseResult &cli)
     : QApplication(argc, argv)
-    , _runningUnitTests(unitTesting)
-    , _simpleBootTest(simpleBootTest)
+    , _runningUnitTests(cli.runningUnitTests)
+    , _simpleBootTest(cli.simpleBootTest)
+    , _fakeMobile(cli.fakeMobile)
+    , _logOutput(cli.logOutput)
 {
     _msecsElapsedTime.start();
 
     // Setup for network proxy support
     QNetworkProxyFactory::setUseSystemConfiguration(true);
 
-    // Parse command line options
-    bool fClearSettingsOptions = false; // Clear stored settings
-    bool fClearCache = false;           // Clear parameter/airframe caches
-    bool logging = false;               // Turn on logging
-    QString loggingOptions;
-
-    CmdLineOpt_t rgCmdLineOptions[] = {
-        { "--clear-settings",   &fClearSettingsOptions, nullptr },
-        { "--clear-cache",      &fClearCache,           nullptr },
-        { "--logging",          &logging,               &loggingOptions },
-        { "--fake-mobile",      &_fakeMobile,           nullptr },
-        { "--log-output",       &_logOutput,            nullptr },
-        // Add additional command line option flags here
-    };
-
-    ParseCmdLineOptions(argc, argv, rgCmdLineOptions, std::size(rgCmdLineOptions), false);
+    bool fClearSettingsOptions = cli.clearSettingsOptions;  // Clear stored settings
+    const bool fClearCache = cli.clearCache;                // Clear parameter/airframe caches
+    // const bool logging = cli.logging;                    // Turn on logging
+    const QString loggingOptions = cli.loggingOptions;
 
     // Set up timer for delayed missing fact display
     _missingParamsDelayedDisplayTimer.setSingleShot(true);
@@ -87,7 +79,7 @@ QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting, bool s
 
     // Set application information
     QString applicationName;
-    if (_runningUnitTests || simpleBootTest) {
+    if (_runningUnitTests || _simpleBootTest) {
         // We don't want unit tests to use the same QSettings space as the normal app. So we tweak the app
         // name. Also we want to run unit tests with clean settings every time.
         applicationName = QStringLiteral("%1_unittest").arg(QGC_APP_NAME);
@@ -117,7 +109,7 @@ QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting, bool s
     // The setting will delete all settings on this boot
     fClearSettingsOptions |= settings.contains(_deleteAllSettingsKey);
 
-    if (_runningUnitTests || simpleBootTest) {
+    if (_runningUnitTests || _simpleBootTest) {
         // Unit tests run with clean settings
         fClearSettingsOptions = true;
     }

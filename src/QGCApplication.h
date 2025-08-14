@@ -17,6 +17,10 @@
 
 #include <QtWidgets/QApplication>
 
+namespace QGCCommandLineParser {
+    struct CommandLineParseResult;
+}
+
 class QQmlApplicationEngine;
 class QQuickWindow;
 class QGCImageProvider;
@@ -48,7 +52,7 @@ class QGCApplication : public QApplication
     /// Unit Test have access to creating and destroying singletons
     friend class UnitTest;
 public:
-    QGCApplication(int &argc, char *argv[], bool unitTesting, bool simpleBootTest);
+    QGCApplication(int &argc, char *argv[], const QGCCommandLineParser::CommandLineParseResult &cli);
     ~QGCApplication();
 
     /// Sets the persistent flag to delete all settings the next time QGroundControl is started.
@@ -137,14 +141,14 @@ private:
     void _checkForNewVersion();
 
     bool _runningUnitTests = false;
-    bool _simpleBootTest = false; 
+    bool _simpleBootTest = false;
+    bool _fakeMobile = false;    ///< true: Fake ui into displaying mobile interface
+    bool _logOutput = false;    ///< true: Log Qt debug output to file
     static constexpr int _missingParamsDelayedDisplayTimerTimeout = 1000;   ///< Timeout to wait for next missing fact to come in before display
     QTimer _missingParamsDelayedDisplayTimer;                               ///< Timer use to delay missing fact display
     QList<QPair<int,QString>> _missingParams;                               ///< List of missing parameter component id:name
 
     QQmlApplicationEngine *_qmlAppEngine = nullptr;
-    bool _logOutput = false;    ///< true: Log Qt debug output to file
-    bool _fakeMobile = false;    ///< true: Fake ui into displaying mobile interface
     bool _settingsUpgraded = false;    ///< true: Settings format has been upgrade to new version
     int _majorVersion = 0;
     int _minorVersion = 0;
