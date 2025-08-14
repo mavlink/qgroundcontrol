@@ -405,6 +405,7 @@ ApplicationWindow {
                         }
 
                         ColumnLayout {
+                            id:                     versionColumnLayout
                             width:                  innerLayout.width
                             spacing:                0
                             Layout.alignment:       Qt.AlignHCenter
@@ -424,10 +425,18 @@ ApplicationWindow {
                                 wrapMode:               QGCLabel.WrapAnywhere
                                 Layout.maximumWidth:    parent.width
                                 Layout.alignment:       Qt.AlignHCenter
+                            }
+
+                            QGCLabel {
+                                text:                   QGroundControl.qgcAppDate
+                                font.pointSize:         ScreenTools.smallFontPointSize
+                                wrapMode:               QGCLabel.WrapAnywhere
+                                Layout.maximumWidth:    parent.width
+                                Layout.alignment:       Qt.AlignHCenter
+                                visible:                QGroundControl.qgcDailyBuild
 
                                 QGCMouseArea {
-                                    id:                 easterEggMouseArea
-                                    anchors.topMargin:  -versionLabel.height
+                                    anchors.topMargin:  -(parent.y - versionLabel.y)
                                     anchors.fill:       parent
 
                                     onClicked: (mouse) => {
