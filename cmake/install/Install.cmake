@@ -1,5 +1,7 @@
 include(InstallRequiredSystemLibraries)
 
+# if(QGC_BUILD_INSTALLER AND CMAKE_INSTALL_CONFIG_NAME MATCHES "^[Rr]elease$")
+
 install(
     TARGETS ${CMAKE_PROJECT_NAME}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -32,6 +34,7 @@ qt_generate_deploy_qml_app_script(
     DEPLOY_TOOL_OPTIONS ${deploy_tool_options_arg}
 )
 install(SCRIPT ${deploy_script})
+message(STATUS "QGC: Deploy Script: ${deploy_script}")
 
 if(ANDROID)
     # get_target_property(QGC_ANDROID_DEPLOY_FILE ${CMAKE_PROJECT_NAME} QT_ANDROID_DEPLOYMENT_SETTINGS_FILE)
@@ -79,10 +82,10 @@ elseif(LINUX)
 elseif(WIN32)
     install(CODE "
         set(CMAKE_PROJECT_NAME ${CMAKE_PROJECT_NAME})
+        set(CMAKE_PROJECT_VERSION ${CMAKE_PROJECT_VERSION})
         set(QGC_ORG_NAME ${QGC_ORG_NAME})
         set(QGC_WINDOWS_ICON_PATH \"${QGC_WINDOWS_ICON_PATH}\")
         set(QGC_WINDOWS_INSTALL_HEADER_PATH \"${QGC_WINDOWS_INSTALL_HEADER_PATH}\")
-        set(QGC_WINDOWS_DRIVER_MSI \"${CMAKE_SOURCE_DIR}/deploy/windows/driver.msi\")
         if(CMAKE_CROSSCOMPILING)
             set(QGC_WINDOWS_OUT \"${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-installer-${CMAKE_HOST_SYSTEM_PROCESSOR}-${CMAKE_SYSTEM_PROCESSOR}.exe\")
         else()
