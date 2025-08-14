@@ -72,9 +72,9 @@ endif()
 
 CPMAddPackage(
     NAME SDL3
-    VERSION 3.2.16
+    VERSION 3.2.20
     GITHUB_REPOSITORY libsdl-org/SDL
-    GIT_TAG release-3.2.16
+    GIT_TAG release-3.2.20
     OPTIONS
         "SDL_INSTALL OFF"
         "SDL_UNINSTALL OFF"

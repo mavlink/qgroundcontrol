@@ -162,15 +162,20 @@ bool JoystickSDL::_update()
 
 bool JoystickSDL::_getButton(int idx) const
 {
-    int button = -1;
-
-    if (_isGamepad) {
-        button = SDL_GetGamepadButton(_sdlGamepad, static_cast<SDL_GamepadButton>(idx));
-    } else {
-        button = SDL_GetJoystickButton(_sdlJoystick, idx);
+    // First try the standardized gamepad set if idx is inside that set
+#ifdef SDL_GAMEPAD_BUTTON_COUNT
+    if (_sdlGamepad && idx >= 0 && idx < SDL_GAMEPAD_BUTTON_COUNT) {
+        if (SDL_GetGamepadButton(_sdlGamepad,
+             static_cast<SDL_GamepadButton>(idx)) == 1) {
+            return true;
+        }
     }
-
-    return (button == 1);
+#endif
+    // Fall back to raw joystick buttons (covers unmapped/extras)
+    if (_sdlJoystick && idx >= 0 && idx < SDL_GetNumJoystickButtons(_sdlJoystick)) {
+        return SDL_GetJoystickButton(_sdlJoystick, idx) == 1;
+    }
+    return false;
 }
 
 int JoystickSDL::_getAxis(int idx) const
