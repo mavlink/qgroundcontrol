@@ -148,6 +148,16 @@ int main(int argc, char *argv[])
         }
     }
 
+    // Prevent Windows Error Reporting dialog from appearing on crash
+    SetErrorMode(SEM_NOGPFAULTERRORBOX | SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
+
+    // Also set unhandled exception filter as backup
+    SetUnhandledExceptionFilter([](EXCEPTION_POINTERS* pExceptionInfo) -> LONG {
+        // Force immediate termination without any cleanup
+        TerminateProcess(GetCurrentProcess(), 1);
+        return EXCEPTION_EXECUTE_HANDLER;
+    });
+
 #ifdef QGC_UNITTEST_BUILD
     if (runUnitTests) {
         // Don't pop up Windows Error Reporting dialog when app crashes.
