@@ -54,6 +54,8 @@
         { "vendorID": 9900, "productID": 4132,      "boardClass": "Pixhawk",    "name": "mRo Control Zero H7 OEM" },
         { "vendorID": 9900, "productID": 4388,      "boardClass": "Pixhawk",    "name": "3DR Control Zero H7 OEM Rev G" },
 
+        { "vendorID": 2106, "productID": 7120,      "boardClass": "Pixhawk",    "name": "PX4 Accton Godwit GA1" },
+
         { "vendorID": 1027, "productID": 24597,     "boardClass": "SiK Radio",  "name": "SiK Radio",            "comment": "3DR Radio" },
         { "vendorID": 4292, "productID": 60000,     "boardClass": "SiK Radio",  "name": "SiK Radio",            "comment": "SILabs Radio" },
         { "vendorID": 12346, "productID": 4097,     "boardClass": "SiK Radio",  "name": "DroneBridge Radio",    "comment": "ESP32-based telemetry radio" },
