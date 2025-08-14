@@ -156,6 +156,16 @@ int main(int argc, char *argv[])
             break;
         }
     }
+
+    // Prevent Windows Error Reporting dialog from appearing on crash
+    SetErrorMode(SEM_NOGPFAULTERRORBOX | SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
+
+    // Also set unhandled exception filter as backup
+    SetUnhandledExceptionFilter([](EXCEPTION_POINTERS* pExceptionInfo) -> LONG {
+        // Force immediate termination without any cleanup
+        TerminateProcess(GetCurrentProcess(), 1);
+        return EXCEPTION_EXECUTE_HANDLER;
+    });
 #endif
 
 #ifdef QT_DEBUG
