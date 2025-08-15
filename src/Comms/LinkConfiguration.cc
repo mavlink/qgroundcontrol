@@ -10,6 +10,7 @@
 #include "LinkConfiguration.h"
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialLink.h"
+#include "AuthenticatedSerialLink.h"
 #endif
 #include "UDPLink.h"
 #include "TCPLink.h"
@@ -69,6 +70,9 @@ LinkConfiguration *LinkConfiguration::createSettings(int type, const QString &na
     case TypeSerial:
         config = new SerialConfiguration(name);
         break;
+    case TypeAuthenticatedSerial:
+        config = new AuthenticatedSerialConfiguration(name);
+        break;
 #endif
     case TypeUdp:
         config = new UDPConfiguration(name);
@@ -110,6 +114,9 @@ LinkConfiguration *LinkConfiguration::duplicateSettings(const LinkConfiguration 
 #ifndef QGC_NO_SERIAL_LINK
     case TypeSerial:
         dupe = new SerialConfiguration(qobject_cast<const SerialConfiguration*>(source));
+        break;
+    case TypeAuthenticatedSerial:
+        dupe = new AuthenticatedSerialConfiguration(qobject_cast<const AuthenticatedSerialConfiguration*>(source));
         break;
 #endif
     case TypeUdp:

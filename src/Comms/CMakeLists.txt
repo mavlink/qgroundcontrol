@@ -35,6 +35,8 @@ if(QGC_NO_SERIAL_LINK)
 else()
     target_sources(${CMAKE_PROJECT_NAME}
         PRIVATE
+            AuthenticatedSerialLink.cc
+            AuthenticatedSerialLink.h
             QGCSerialPortInfo.cc
             QGCSerialPortInfo.h
             SerialLink.cc

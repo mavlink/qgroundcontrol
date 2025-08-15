@@ -79,6 +79,7 @@ public:
     enum LinkType {
 #ifndef QGC_NO_SERIAL_LINK
         TypeSerial,     ///< Serial Link
+        TypeAuthenticatedSerial, ///< Authenticated Serial Link
 #endif
         TypeUdp,        ///< UDP Link
         TypeTcp,        ///< TCP Link

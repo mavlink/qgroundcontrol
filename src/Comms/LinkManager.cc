@@ -27,6 +27,7 @@
 
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialLink.h"
+#include "AuthenticatedSerialLink.h"
 #include "GPSManager.h"
 #include "PositionManager.h"
 #include "UdpIODevice.h"
@@ -116,6 +117,9 @@ bool LinkManager::createConnectedLink(SharedLinkConfigurationPtr &config)
 #ifndef QGC_NO_SERIAL_LINK
     case LinkConfiguration::TypeSerial:
         link = std::make_shared<SerialLink>(config);
+        break;
+    case LinkConfiguration::TypeAuthenticatedSerial:
+        link = std::make_shared<AuthenticatedSerialLink>(config);
         break;
 #endif
     case LinkConfiguration::TypeUdp:
@@ -542,6 +546,7 @@ QStringList LinkManager::linkTypeStrings() const
 
 #ifndef QGC_NO_SERIAL_LINK
     list += tr("Serial");
+    list += tr("Authenticated Serial");
 #endif
     list += tr("UDP");
     list += tr("TCP");
