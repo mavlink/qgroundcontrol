@@ -22,7 +22,7 @@ inputs:
   upload_aws:
     description: Upload artifact to AWS
     required: true
-    default: true
+    default: 'true'
 
 runs:
   using: composite
