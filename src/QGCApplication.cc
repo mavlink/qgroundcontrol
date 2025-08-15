@@ -241,8 +241,13 @@ void QGCApplication::init()
 void QGCApplication::_initVideo()
 {
 #ifdef QGC_GST_STREAMING
+#ifdef Q_OS_WIN
+    // Gstreamer video playback requires D3D11
+    QQuickWindow::setGraphicsApi(QSGRendererInterface::Direct3D11);
+#else
     // Gstreamer video playback requires OpenGL
     QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
+#endif
 #endif
 
     QGCCorePlugin::instance();  // CorePlugin must be initialized before VideoManager for Video Cleanup
