@@ -62,7 +62,7 @@ public:
     explicit MAVLinkInspectorController(QObject *parent = nullptr);
     ~MAVLinkInspectorController();
 
-    Q_INVOKABLE MAVLinkChartController *createChart();
+    Q_INVOKABLE MAVLinkChartController *createChart(int chartIndex);
     Q_INVOKABLE void deleteChart(MAVLinkChartController *chart);
     Q_INVOKABLE void setActiveSystem(int systemId);
     Q_INVOKABLE void setMessageInterval(int32_t rate) const;

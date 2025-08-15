@@ -23,9 +23,9 @@ ChartView {
     property var chartController:   null
     property var seriesColors:      ["#00E04B","#DE8500","#F32836","#BFBFBF","#536DFF","#EECC44"]
 
-    function addDimension(field) {
+    function addDimension(field, chartIndex) {
         if(!chartController) {
-            chartController = controller.createChart()
+            chartController = controller.createChart(chartIndex)
         }
         var color   = chartView.seriesColors[chartView.count]
         var serie   = createSeries(ChartView.SeriesTypeLine, field.label)
