@@ -305,9 +305,9 @@ AnalyzePage {
                                 checked:            object.series !== null && object.chartIndex === 0
                                 onClicked: {
                                     if(checked) {
-                                        chart1.addDimension(object)
+                                        chart1.addDimension(object, 0)
                                     } else {
-                                        chart1.delDimension(object)
+                                        chart1.delDimension(object, 0)
                                     }
                                     updateEnabledStatus(chart1Repeater, curMessage, chart1)
                                     updateEnabledStatus(chart2Repeater, curMessage, chart2)
@@ -325,9 +325,9 @@ AnalyzePage {
                                 checked:            object.series !== null && object.chartIndex === 1
                                 onClicked: {
                                     if(checked) {
-                                        chart2.addDimension(object)
+                                        chart2.addDimension(object, 1)
                                     } else {
-                                        chart2.delDimension(object)
+                                        chart2.delDimension(object, 1)
                                     }
                                     updateEnabledStatus(chart2Repeater, curMessage, chart2)
                                     updateEnabledStatus(chart1Repeater, curMessage, chart1)
