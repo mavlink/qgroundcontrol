@@ -668,8 +668,6 @@ void Joystick::_handleAxis()
     if (_axisCount > 5 && _gimbalAxisEnabled) {
         int pitchAxisIndex = 5;
         float gimbalPitchNorm = _adjustRange(_rgAxisValues[pitchAxisIndex], _rgCalibration[pitchAxisIndex], _deadband);
-        // float gimbalPitchDeg = gimbalPitchNorm * 160.0f - 80.0f;
-        // float gimbalPitchDeg = gimbalPitchNorm * (2.0f * gimbalPitchMax) - gimbalPitchMax;
         float gimbalPitchDeg = gimbalPitchNorm * (2.0f * static_cast<float>(_gimbalMaxSpeed)) - static_cast<float>(_gimbalMaxSpeed);
         gimbalPitchDeg=gimbalPitchDeg-5;
 
@@ -678,15 +676,11 @@ void Joystick::_handleAxis()
 
         int yawAxisIndex = 4;
         float gimbalYawNorm = _adjustRange(_rgAxisValues[yawAxisIndex], _rgCalibration[yawAxisIndex], _deadband);
-        // float gimbalYawDeg = gimbalYawNorm * 160.0f - 80.0f;
         float gimbalYawDeg = gimbalYawNorm * (2.0f * static_cast<float>(_gimbalMaxSpeed)) - static_cast<float>(_gimbalMaxSpeed);
         gimbalYawDeg=gimbalYawDeg-4;
 
         float gimbalYawDeadzone = static_cast<float>(_rgCalibration[4].deadband);
         float gimbalYawOut = applyDeadzone(gimbalYawDeg, gimbalYawDeadzone);
-
-        static int zeroPitchCount = 0;
-        static int zeroYawCount = 0;
 
         if (std::abs(gimbalPitchOut) == 0) {
             zeroPitchCount++;
@@ -700,13 +694,21 @@ void Joystick::_handleAxis()
             zeroYawCount = 0; 
         }
 
-        if (zeroPitchCount >= 3 && zeroYawCount >= 3) {
-
-        }else{
-            _activeVehicle->sendGimbalAbsolutePosition(gimbalPitchOut, gimbalYawOut);
-            // qDebug() << gimbalYawOut << gimbalPitchOut;
+        if (!(zeroPitchCount >= 3 && zeroYawCount >= 3)) {
+            if (_activeVehicle) {
+                if (auto* gc = _activeVehicle->gimbalController()) {
+                    QMetaObject::invokeMethod(
+                        gc,
+                        "sendGimbalRate",
+                        Qt::QueuedConnection,
+                        Q_ARG(float, gimbalPitchOut),
+                        Q_ARG(float, gimbalYawOut)
+                    );
+                }
+            }
         }
     }
+    
     if (_accumulator) {
         static float throttle_accu = 0.f;
         throttle_accu += (throttle * (40 / 1000.f)); // for throttle to change from min to max it will take 1000ms (40ms is a loop time)

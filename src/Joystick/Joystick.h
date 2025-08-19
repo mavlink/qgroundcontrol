@@ -389,4 +389,6 @@ private:
 
     bool _gimbalAxisEnabled = true;
     int _gimbalMaxSpeed = 80;  // Default max speed
+    int  zeroPitchCount = 0;
+    int  zeroYawCount   = 0;
 };
