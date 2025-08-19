@@ -616,7 +616,18 @@ void Joystick::setGimbalAxisEnabled(bool enabled)
         _gimbalAxisEnabled = enabled;
         emit gimbalAxisEnabledChanged(enabled);
         _saveSettings();
-        _activeVehicle->sendGimbalAbsolutePosition(0, 0);
+        // Send a zero-rate command once when the state flips
+        if (_activeVehicle) {
+            if (auto* gc = _activeVehicle->gimbalController()) {
+                QMetaObject::invokeMethod(
+                    gc,
+                    "sendGimbalRate",
+                    Qt::QueuedConnection,
+                    Q_ARG(float, 0.0f),
+                    Q_ARG(float, 0.0f)
+                );
+            }
+        }
     }
 }
 

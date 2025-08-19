@@ -406,36 +406,6 @@ void Vehicle::deleteGimbalController()
     }
 }
 
-void Vehicle::sendGimbalAbsolutePosition(float pitch_rate_deg_s, float yaw_rate_deg_s)
-{
-    auto sharedLink = vehicleLinkManager()->primaryLink().lock();
-    if (!sharedLink) {
-        qCDebug(VehicleLog) << "sendGimbalAbsolutePosition: primary link gone!";
-        return;
-    }
-
-    mavlink_message_t msg;
-    mavlink_msg_command_long_pack_chan(
-        MAVLinkProtocol::instance()->getSystemId(),        
-        MAVLinkProtocol::getComponentId(),                 
-        sharedLink->mavlinkChannel(),                      
-        &msg,
-        id(),                                              
-        MAV_COMP_ID_AUTOPILOT1,                            
-        MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW,                
-        0,                                                 
-        NAN,                                               
-        NAN,                                               
-        pitch_rate_deg_s,                                  
-        yaw_rate_deg_s,                                    
-        0,                                                 
-        NAN,                                               
-        0                                                  
-    );
-
-    sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
-}
-
 void Vehicle::_offlineFirmwareTypeSettingChanged(QVariant varFirmwareType)
 {
     _firmwareType = static_cast<MAV_AUTOPILOT>(varFirmwareType.toInt());
