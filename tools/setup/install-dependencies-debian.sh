@@ -47,6 +47,9 @@ apt-get install -y -qq --no-install-recommends \
     wget \
     zsync
 
+pipx ensurepath
+pipx install cmake ninja
+
 # --------------------------------------------------------------------
 # Qt6 compile/runtime dependencies
 # See: https://doc.qt.io/qt-6/linux-requirements.html
@@ -107,6 +110,18 @@ apt-get install -y -qq --no-install-recommends \
 if apt-cache show gstreamer1.0-qt6 >/dev/null 2>&1; then
     apt-get install -y -qq --no-install-recommends gstreamer1.0-qt6
 fi
+
+# --------------------------------------------------------------------
+# SDL
+# --------------------------------------------------------------------
+apt-get install -y -qq --no-install-recommends \
+    libusb-1.0-0-dev
+
+# --------------------------------------------------------------------
+# Miscellaneous
+# --------------------------------------------------------------------
+apt-get install -y -qq --no-install-recommends \
+    libvulkan-dev
 
 # --------------------------------------------------------------------
 # Clean‑up

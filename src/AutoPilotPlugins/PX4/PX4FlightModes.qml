@@ -19,7 +19,7 @@ import QGroundControl.FactControls
 
 import QGroundControl.Controls
 
-import QGroundControl.ScreenTools
+
 
 /// PX4 Flight Mode configuration. This control will load either the Simple or Advanced Flight Mode config
 /// based on current parameter settings.

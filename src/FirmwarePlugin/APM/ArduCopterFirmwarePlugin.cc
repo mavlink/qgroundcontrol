@@ -78,31 +78,10 @@ ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(QObject *parent)
     updateAvailableFlightModes(availableFlightModes);
 
     if (!_remapParamNameIntialized) {
-        FirmwarePlugin::remapParamNameMap_t &remapV3_6 = _remapParamName[3][6];
-
-        remapV3_6["BATT_AMP_PERVLT"] =  QStringLiteral("BATT_AMP_PERVOL");
-        remapV3_6["BATT2_AMP_PERVLT"] = QStringLiteral("BATT2_AMP_PERVOL");
-        remapV3_6["BATT_LOW_MAH"] =     QStringLiteral("FS_BATT_MAH");
-        remapV3_6["BATT_LOW_VOLT"] =    QStringLiteral("FS_BATT_VOLTAGE");
-        remapV3_6["BATT_FS_LOW_ACT"] =  QStringLiteral("FS_BATT_ENABLE");
-        remapV3_6["PSC_ACCZ_P"] =       QStringLiteral("ACCEL_Z_P");
-        remapV3_6["PSC_ACCZ_I"] =       QStringLiteral("ACCEL_Z_I");
-
-        FirmwarePlugin::remapParamNameMap_t &remapV3_7 = _remapParamName[3][7];
-
-        remapV3_7["BATT_ARM_VOLT"] =    QStringLiteral("ARMING_VOLT_MIN");
-        remapV3_7["BATT2_ARM_VOLT"] =   QStringLiteral("ARMING_VOLT2_MIN");
-        remapV3_7["RC7_OPTION"] =       QStringLiteral("CH7_OPT");
-        remapV3_7["RC8_OPTION"] =       QStringLiteral("CH8_OPT");
-        remapV3_7["RC9_OPTION"] =       QStringLiteral("CH9_OPT");
-        remapV3_7["RC10_OPTION"] =      QStringLiteral("CH10_OPT");
-        remapV3_7["RC11_OPTION"] =      QStringLiteral("CH11_OPT");
-        remapV3_7["RC12_OPTION"] =      QStringLiteral("CH12_OPT");
-
         FirmwarePlugin::remapParamNameMap_t &remapV4_0 = _remapParamName[4][0];
 
-        remapV4_0["TUNE_MIN"] = QStringLiteral("TUNE_HIGH");
-        remapV3_7["TUNE_MAX"] = QStringLiteral("TUNE_LOW");
+        remapV4_0["TUNE_MIN"] = QStringLiteral("TUNE_LOW");
+        remapV4_0["TUNE_MAX"] = QStringLiteral("TUNE_HIGH");
 
         _remapParamNameIntialized = true;
     }
@@ -115,7 +94,7 @@ ArduCopterFirmwarePlugin::~ArduCopterFirmwarePlugin()
 
 int ArduCopterFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const
 {
-    return ((majorVersionNumber == 3) ? 7 : Vehicle::versionNotSetValue);
+    return ((majorVersionNumber == 4) ? 0 : Vehicle::versionNotSetValue);
 }
 
 bool ArduCopterFirmwarePlugin::multiRotorXConfig(Vehicle *vehicle) const

@@ -14,16 +14,11 @@
 #include "Viewer3DSettings.h"
 #include "OsmParser.h"
 
-#define GPS_REF_NOT_SET                 0
-#define GPS_REF_SET_BY_MAP              1
-#define GPS_REF_SET_BY_VEHICLE          2
-
 Viewer3DQmlBackend::Viewer3DQmlBackend(QObject *parent)
     : QObject{parent}
+    , _viewer3DSettings(SettingsManager::instance()->viewer3DSettings())
 {
-    _gpsRefSet = GPS_REF_NOT_SET;
-    _activeVehicle = nullptr;
-    _viewer3DSettings = SettingsManager::instance()->viewer3DSettings();
+
 }
 
 void Viewer3DQmlBackend::init(OsmParser* osmThr)

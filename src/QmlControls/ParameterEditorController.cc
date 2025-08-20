@@ -129,7 +129,7 @@ Fact* ParameterTableModel::factAt(int row) const
         return nullptr;
     }
 
-    return _tableData[row][0].value<Fact*>();
+    return _tableData[row][ValueColumn].value<Fact*>();
 }
 
 

@@ -21,5 +21,5 @@ qt_add_qml_module(AirLinkModule
     RESOURCE_PREFIX /qml
     QML_FILES
         AirLinkSettings.qml
-    NO_PLUGIN # Required by Qt 6.6.3. TODO: Remove when no longer supported.
+    NO_PLUGIN
 )

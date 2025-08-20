@@ -16,7 +16,7 @@ import QGroundControl
 
  Usage:
 
-        import QGroundControl.ScreenTools
+        import QGroundControl.Controls
 
         Rectangle {
             anchors.fill:       parent

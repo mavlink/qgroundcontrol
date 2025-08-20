@@ -17,6 +17,10 @@
 #include "MavlinkSettings.h"
 #include "Platform.h"
 
+#ifdef Q_OS_WIN
+    #include <windows.h>
+#endif
+
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
     #include <QtWidgets/QMessageBox>
     #include "RunGuard.h"

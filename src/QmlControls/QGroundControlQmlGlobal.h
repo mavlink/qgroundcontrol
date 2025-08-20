@@ -103,6 +103,8 @@ public:
     Q_PROPERTY(QString  telemetryFileExtension  READ telemetryFileExtension CONSTANT)
 
     Q_PROPERTY(QString qgcVersion       READ qgcVersion         CONSTANT)
+    Q_PROPERTY(QString qgcAppDate       READ qgcAppDate         CONSTANT)
+    Q_PROPERTY(bool    qgcDailyBuild    READ qgcDailyBuild      CONSTANT)
 
     Q_PROPERTY(qreal zOrderTopMost              READ zOrderTopMost              CONSTANT) ///< z order for top most items, toolbar, main window sub view
     Q_PROPERTY(qreal zOrderWidgets              READ zOrderWidgets              CONSTANT) ///< z order value to widgets, for example: zoom controls, hud widgetss
@@ -221,6 +223,12 @@ public:
     QString telemetryFileExtension  (void) const;
 
     static QString qgcVersion();
+    static QString qgcAppDate() { return QGC_APP_DATE; }
+#ifdef QGC_DAILY_BUILD
+    static bool qgcDailyBuild() { return true; }
+#else
+    static bool qgcDailyBuild() { return false; }
+#endif
 
 #ifdef QGC_UTM_ADAPTER
     UTMSPManager* utmspManager() {return _utmspManager;}

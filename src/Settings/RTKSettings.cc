@@ -9,10 +9,9 @@
 
 #include "RTKSettings.h"
 
-DECLARE_SETTINGGROUP(RTK, "RTK")
-{
-}
+DECLARE_SETTINGGROUP(RTK, "RTK") {}
 
+DECLARE_SETTINGSFACT(RTKSettings, baseReceiverManufacturers)
 DECLARE_SETTINGSFACT(RTKSettings, surveyInAccuracyLimit)
 DECLARE_SETTINGSFACT(RTKSettings, surveyInMinObservationDuration)
 DECLARE_SETTINGSFACT(RTKSettings, useFixedBasePosition)

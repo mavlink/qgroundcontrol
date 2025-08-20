@@ -20,7 +20,7 @@ import QGroundControl.Controls
 import QGroundControl.FlightDisplay
 import QGroundControl.FlightMap
 
-import QGroundControl.ScreenTools
+
 
 
 FlightMap {
@@ -380,6 +380,7 @@ FlightMap {
 
         property alias coordinate: _fwdFlightGotoMapCircle.center
         property alias radius: _fwdFlightGotoMapCircle.radius
+        property alias clockwiseRotation: _fwdFlightGotoMapCircle.clockwiseRotation
 
         Component.onCompleted: {
             // Only allow editing the radius, not the position

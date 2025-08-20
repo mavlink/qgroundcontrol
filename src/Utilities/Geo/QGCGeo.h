@@ -7,22 +7,16 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @brief Coordinate transformation math functions.
-///     @link https://github.com/PX4/Firmware/blob/master/src/lib/geo/geo.c
-///     @link http://psas.pdx.edu/CoordinateSystem/Latitude_to_LocalTangent.pdf
-///     @link http://dspace.dsto.defence.gov.au/dspace/bitstream/1947/3538/1/DSTO-TN-0432.pdf
-///     @author David Goodman <dagoodma@gmail.com>
-
 #pragma once
 
-#include <QtPositioning/QGeoCoordinate>
 #include <QtCore/QLoggingCategory>
+#include <QtGui/QVector3D>
+#include <QtPositioning/QGeoCoordinate>
 
 Q_DECLARE_LOGGING_CATEGORY(QGCGeoLog)
 
-namespace QGCGeo {
+namespace QGCGeo
+{
 
 /**
  * @brief Project a geodetic coordinate on to local tangential plane (LTP) as coordinate with East,
@@ -108,5 +102,17 @@ QString convertGeoToMGRS(const QGeoCoordinate &coord);
 // Returns:
 // The function returns true if conversion succeeded.
 bool convertMGRSToGeo(const QString &mgrs, QGeoCoordinate &coord);
+
+QVector3D convertGeodeticToEcef(const QGeoCoordinate &llh);
+
+QGeoCoordinate convertEcefToGeodetic(const QVector3D &xyz);
+
+QVector3D convertEcefToEnu(const QVector3D &ecef, const QGeoCoordinate &ref);
+
+QVector3D convertEnuToEcef(const QVector3D &enu, const QGeoCoordinate &ref);
+
+QVector3D convertGpsToEnu(const QGeoCoordinate &llh, const QGeoCoordinate &ref);
+
+QGeoCoordinate convertEnuToGps(const QVector3D &enu, const QGeoCoordinate &ref);
 
 } // namespace QGCGeo

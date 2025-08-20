@@ -452,7 +452,7 @@ void APMFirmwarePlugin::initializeVehicle(Vehicle *vehicle)
         case MAV_TYPE_TRICOPTER:
         case MAV_TYPE_COAXIAL:
         case MAV_TYPE_HELICOPTER:
-            vehicle->setFirmwareVersion(3, 6, 0);
+            vehicle->setFirmwareVersion(4, 6, 2);
             break;
         case MAV_TYPE_VTOL_TAILSITTER_DUOROTOR:
         case MAV_TYPE_VTOL_TAILSITTER_QUADROTOR:
@@ -462,14 +462,14 @@ void APMFirmwarePlugin::initializeVehicle(Vehicle *vehicle)
         case MAV_TYPE_VTOL_TILTWING:
         case MAV_TYPE_VTOL_RESERVED5:
         case MAV_TYPE_FIXED_WING:
-            vehicle->setFirmwareVersion(3, 9, 0);
+            vehicle->setFirmwareVersion(4, 6, 2);
             break;
         case MAV_TYPE_GROUND_ROVER:
         case MAV_TYPE_SURFACE_BOAT:
-            vehicle->setFirmwareVersion(3, 5, 0);
+            vehicle->setFirmwareVersion(4, 6, 2);
             break;
         case MAV_TYPE_SUBMARINE:
-            vehicle->setFirmwareVersion(3, 4, 0);
+            vehicle->setFirmwareVersion(4, 6, 0);
             break;
         default:
             // No version set
@@ -717,7 +717,7 @@ QString APMFirmwarePlugin::_internalParameterMetaDataFile(const Vehicle *vehicle
     int currMinor = vehicle->firmwareMinorVersion();
 
     // Find next newest version available
-    while ((currMajor >= 3) && (currMinor > 0)) {
+    while ((currMajor >= 4) && (currMinor > 0)) {
         const QString tempFileName = fileNameFormat.arg(vehicleName).arg(currMajor).arg(currMinor);
         if (QFileInfo::exists(tempFileName)) {
             return tempFileName;
@@ -732,7 +732,7 @@ QString APMFirmwarePlugin::_internalParameterMetaDataFile(const Vehicle *vehicle
 
     // Use oldest version available which should be equivalent to offline params
     for (int i = 0; i < 10; i++) {
-        const QString tempFileName = fileNameFormat.arg(vehicleName).arg(3).arg(i);
+        const QString tempFileName = fileNameFormat.arg(vehicleName).arg(4).arg(i);
         if (QFileInfo::exists(tempFileName)) {
             return tempFileName;
         }
@@ -803,6 +803,19 @@ void APMFirmwarePlugin::guidedModeGotoLocation(Vehicle *vehicle, const QGeoCoord
             handlerInfo.resultHandler = _MAV_CMD_DO_REPOSITION_ResultHandler;
             handlerInfo.resultHandlerData = result_handler_data;
 
+            // For copters, this parameter specifies a yaw heading (heading
+            // reference defined in Bitmask field). NaN to use the current
+            // system yaw heading mode (e.g. yaw towards next waypoint, yaw to
+            // home, etc.).
+            // For planes it indicates loiter direction (0: clockwise, 1:
+            // counter clockwise)
+            float yawParam = NAN;
+            if (forwardFlightLoiterRadius > 0) {
+                yawParam = 0.0f;
+            } else if (forwardFlightLoiterRadius < 0) {
+                yawParam = 1.0f;
+            }
+
             vehicle->sendMavCommandIntWithHandler(
                 &handlerInfo,
                 vehicle->defaultComponentId(),
@@ -810,8 +823,8 @@ void APMFirmwarePlugin::guidedModeGotoLocation(Vehicle *vehicle, const QGeoCoord
                 MAV_FRAME_GLOBAL,
                 -1.0f,
                 MAV_DO_REPOSITION_FLAGS_CHANGE_MODE,
-                static_cast<float>(forwardFlightLoiterRadius),
-                NAN,
+                static_cast<float>(abs(forwardFlightLoiterRadius)),
+                yawParam,
                 gotoCoord.latitude(),
                 gotoCoord.longitude(),
                 vehicle->altitudeAMSL()->rawValue().toFloat()

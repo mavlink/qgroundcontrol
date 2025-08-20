@@ -13,7 +13,7 @@ import QtQuick.Controls
 import QGroundControl
 import QGroundControl.Controls
 
-import QGroundControl.ScreenTools
+
 
 /// Works just like a regular button but it can have a red indicator on the right side displayed
 QGCButton {

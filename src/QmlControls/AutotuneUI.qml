@@ -17,7 +17,7 @@ import QGroundControl.FactControls
 
 
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
+
 
 ColumnLayout {
     spacing: ScreenTools.defaultFontPixelHeight

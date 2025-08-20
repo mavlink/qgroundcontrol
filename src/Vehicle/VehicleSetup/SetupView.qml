@@ -14,13 +14,18 @@ import QtQuick.Layouts
 import QGroundControl
 
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
+
 
 
 Rectangle {
     id:     setupView
     color:  qgcPal.window
     z:      QGroundControl.zOrderTopMost
+
+    // This need to block click event leakage to underlying map.
+    DeadMouseArea {
+        anchors.fill: parent
+    }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 

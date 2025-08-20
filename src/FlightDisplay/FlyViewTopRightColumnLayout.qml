@@ -15,7 +15,7 @@ import QGroundControl.Controls
 import QGroundControl.FlightDisplay
 import QGroundControl.FlightMap
 
-import QGroundControl.ScreenTools
+
 
 ColumnLayout {
     width: _rightPanelWidth
