@@ -14,7 +14,7 @@ import QtQuick.Controls
 import QtQuick.Dialogs
 
 import QGroundControl
-import QGroundControl.ScreenTools
+
 import QGroundControl.Controls
 
 
@@ -165,7 +165,13 @@ Rectangle {
                     border.width:       3
 
                     Rectangle {
-                        anchors.centerIn:   parent
+                        // anchors.centerIn snaps to integer coordinates, which
+                        // depending on DPI can throw the centering off.
+                        // Setting alignWhenCentered to false avoids this issue.
+                        anchors {
+                            centerIn:           parent
+                            alignWhenCentered:  false
+                        }
                         width:              parent.width * (_isShootingInCurrentMode ? 0.5 : 0.75)
                         height:             width
                         radius:             _isShootingInCurrentMode ? 0 : width * 0.5
@@ -278,7 +284,7 @@ Rectangle {
                             onClicked: {
                                 _camera.trackingEnabled = !_camera.trackingEnabled;
                                 if (!_camera.trackingEnabled) {
-                                    !camera.stopTracking()
+                                    _camera.stopTracking()
                                 }
                             }
                         }

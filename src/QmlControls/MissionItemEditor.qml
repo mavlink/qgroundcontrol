@@ -5,7 +5,7 @@ import QtQml
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.ScreenTools
+
 
 import QGroundControl.Controls
 import QGroundControl.FactControls

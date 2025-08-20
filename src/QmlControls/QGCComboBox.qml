@@ -13,7 +13,7 @@ import QtQuick.Controls
 import QtQuick.Templates as T
 
 import QGroundControl
-import QGroundControl.ScreenTools
+
 
 import QGroundControl.Controls
 

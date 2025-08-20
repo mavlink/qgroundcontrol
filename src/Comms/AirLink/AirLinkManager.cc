@@ -12,7 +12,7 @@
 #include "AppSettings.h"
 #include "QGCLoggingCategory.h"
 
-#include <QtCore/qapplicationstatic.h>
+#include <QtCore/QApplicationStatic>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
 #include <QtNetwork/QNetworkReply>

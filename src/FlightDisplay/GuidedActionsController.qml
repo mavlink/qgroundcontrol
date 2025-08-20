@@ -15,7 +15,7 @@ import QtPositioning
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.ScreenTools
+
 import QGroundControl.Controls
 
 
@@ -664,7 +664,8 @@ Item {
         case actionChangeLoiterRadius:
             _activeVehicle.guidedModeGotoLocation(
                 fwdFlightGotoMapCircle.coordinate,
-                fwdFlightGotoMapCircle.radius.rawValue
+                (fwdFlightGotoMapCircle.clockwiseRotation ? 1 : -1) *
+                        Math.abs(fwdFlightGotoMapCircle.radius.rawValue)
             )
             break
         case actionGoto:

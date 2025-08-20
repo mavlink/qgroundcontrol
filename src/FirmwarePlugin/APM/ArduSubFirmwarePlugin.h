@@ -119,6 +119,8 @@ public:
     QString motorDetectionFlightMode() const override;
     void updateAvailableFlightModes(FlightModeList &modeList) override;
 
+    QString offlineEditingParamFile(Vehicle *vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Sub.OfflineEditing.params"); }
+
 protected:
     uint32_t _convertToCustomFlightModeEnum(uint32_t val) const override;
 

@@ -3,6 +3,7 @@ import QtQuick.Controls
 import Qt5Compat.GraphicalEffects
 
 import QGroundControl
+import QGroundControl.Controls
 
 
 Item {

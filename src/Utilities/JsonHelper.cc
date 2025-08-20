@@ -14,7 +14,7 @@
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
 
-#include <QtCore/qapplicationstatic.h>
+#include <QtCore/QApplicationStatic>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QJsonArray>
@@ -254,8 +254,8 @@ QStringList JsonHelper::_addDefaultLocKeys(QJsonObject &jsonObject)
             if (jsonObject.contains(_translateKeysKey)) {
                 translateKeys = jsonObject[_translateKeysKey].toString();
             } else {
-                translateKeys = QStringLiteral("shortDescription,longDescription,enumStrings");
-                jsonObject[_translateKeysKey] = QStringLiteral("shortDescription,longDescription,enumStrings");
+                translateKeys = QStringLiteral("shortDesc,longDesc,enumStrings");
+                jsonObject[_translateKeysKey] = translateKeys;
             }
 
             if (!jsonObject.contains(_arrayIDKeysKey)) {

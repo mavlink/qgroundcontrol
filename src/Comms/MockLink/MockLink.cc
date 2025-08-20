@@ -253,7 +253,7 @@ void MockLink::_loadParams()
         if (_vehicleType == MAV_TYPE_FIXED_WING) {
             paramFile.setFileName(":/FirmwarePlugin/APM/Plane.OfflineEditing.params");
         } else if (_vehicleType == MAV_TYPE_SUBMARINE ) {
-            paramFile.setFileName(":/MockLink/APMArduSubMockLink.params");
+            paramFile.setFileName(":/FirmwarePlugin/APM/Sub.OfflineEditing.params");
         } else if (_vehicleType == MAV_TYPE_GROUND_ROVER ) {
             paramFile.setFileName(":/FirmwarePlugin/APM/Rover.OfflineEditing.params");
         } else {

@@ -13,7 +13,7 @@ import QtQuick.Controls
 import QtQml
 
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
+
 
 
 import QGroundControl.FlightMap

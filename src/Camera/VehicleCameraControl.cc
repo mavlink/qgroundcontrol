@@ -121,8 +121,7 @@ read_value(QDomNode& element, const char* tagName, QString& target)
 
 //-----------------------------------------------------------------------------
 VehicleCameraControl::VehicleCameraControl(const mavlink_camera_information_t *info, Vehicle* vehicle, int compID, QObject* parent)
-    : MavlinkCameraControl(parent)
-    , _vehicle(vehicle)
+    : MavlinkCameraControl(vehicle, parent)
     , _compID(compID)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
@@ -143,14 +142,14 @@ VehicleCameraControl::VehicleCameraControl(const mavlink_camera_information_t *i
         _initWhenReady();
     }
     QSettings settings;
-    _photoMode       = static_cast<PhotoCaptureMode>(settings.value(kPhotoMode, static_cast<int>(PHOTO_CAPTURE_SINGLE)).toInt());
+    _photoCaptureMode       = static_cast<PhotoCaptureMode>(settings.value(kPhotoMode, static_cast<int>(PHOTO_CAPTURE_SINGLE)).toInt());
     _photoLapse      = settings.value(kPhotoLapse, 1.0).toDouble();
     _photoLapseCount = settings.value(kPhotoLapseCount, 0).toInt();
     _thermalOpacity  = settings.value(kThermalOpacity, 85.0).toDouble();
     _thermalMode     = static_cast<ThermalViewMode>(settings.value(kThermalMode, static_cast<uint32_t>(THERMAL_BLEND)).toUInt());
-    _recTimer.setSingleShot(false);
-    _recTimer.setInterval(333);
-    connect(&_recTimer, &QTimer::timeout, this, &VehicleCameraControl::_recTimerHandler);
+    _videoRecordTimeUpdateTimer.setSingleShot(false);
+    _videoRecordTimeUpdateTimer.setInterval(333);
+    connect(&_videoRecordTimeUpdateTimer, &QTimer::timeout, this, &VehicleCameraControl::_recTimerHandler);
     //-- Tracking
     if(_info.flags & CAMERA_CAP_FLAGS_HAS_TRACKING_RECTANGLE) {
         _trackingStatus = static_cast<TrackingStatus>(_trackingStatus | TRACKING_RECTANGLE);
@@ -167,7 +166,7 @@ VehicleCameraControl::~VehicleCameraControl()
 {
     // Stop all timers to prevent them from firing during or after destruction
     _captureStatusTimer.stop();
-    _recTimer.stop();
+    _videoRecordTimeUpdateTimer.stop();
     _streamInfoTimer.stop();
     _streamStatusTimer.stop();
     _cameraSettingsTimer.stop();
@@ -213,7 +212,7 @@ VehicleCameraControl::_initWhenReady()
 
 //-----------------------------------------------------------------------------
 QString
-VehicleCameraControl::firmwareVersion()
+VehicleCameraControl::firmwareVersion() const
 {
     int major = (_info.firmware_version >> 24) & 0xFF;
     int minor = (_info.firmware_version >> 16) & 0xFF;
@@ -223,35 +222,21 @@ VehicleCameraControl::firmwareVersion()
 
 //-----------------------------------------------------------------------------
 QString
-VehicleCameraControl::recordTimeStr()
+VehicleCameraControl::recordTimeStr() const
 {
     return QTime(0, 0).addMSecs(static_cast<int>(recordTime())).toString("hh:mm:ss");
 }
 
 //-----------------------------------------------------------------------------
-VehicleCameraControl::VideoCaptureStatus
-VehicleCameraControl::videoCaptureStatus()
-{
-    return _video_status;
-}
-
-//-----------------------------------------------------------------------------
-VehicleCameraControl::PhotoCaptureStatus
-VehicleCameraControl::photoCaptureStatus()
-{
-    return _photo_status;
-}
-
-//-----------------------------------------------------------------------------
 QString
-VehicleCameraControl::storageFreeStr()
+VehicleCameraControl::storageFreeStr() const
 {
     return qgcApp()->bigSizeMBToString(static_cast<quint64>(_storageFree));
 }
 
 //-----------------------------------------------------------------------------
 QString
-VehicleCameraControl::batteryRemainingStr()
+VehicleCameraControl::batteryRemainingStr() const
 {
     if(_batteryRemaining >= 0) {
         return qgcApp()->numberToString(static_cast<quint64>(_batteryRemaining)) + " %";
@@ -280,7 +265,7 @@ void
 VehicleCameraControl::setPhotoCaptureMode(PhotoCaptureMode mode)
 {
     if(!_resetting) {
-        _photoMode = mode;
+        _photoCaptureMode = mode;
         QSettings settings;
         settings.setValue(kPhotoMode, static_cast<int>(mode));
         emit photoCaptureModeChanged();
@@ -371,8 +356,8 @@ VehicleCameraControl::takePhoto()
                 MAV_CMD_IMAGE_START_CAPTURE,                                                // Command id
                 false,                                                                      // ShowError
                 0,                                                                          // Reserved (Set to 0)
-                static_cast<float>(_photoMode == PHOTO_CAPTURE_SINGLE ? 0 : _photoLapse),   // Duration between two consecutive pictures (in seconds--ignored if single image)
-                _photoMode == PHOTO_CAPTURE_SINGLE ? 1 : _photoLapseCount);                 // Number of images to capture total - 0 for unlimited capture
+                static_cast<float>(_photoCaptureMode == PHOTO_CAPTURE_SINGLE ? 0 : _photoLapse),   // Duration between two consecutive pictures (in seconds--ignored if single image)
+                _photoCaptureMode == PHOTO_CAPTURE_SINGLE ? 1 : _photoLapseCount);                 // Number of images to capture total - 0 for unlimited capture
             _setPhotoStatus(PHOTO_CAPTURE_IN_PROGRESS);
             _captureInfoRetries = 0;
             //-- Capture local image as well
@@ -763,15 +748,15 @@ VehicleCameraControl::_mavCommandResult(int vehicleId, int component, int comman
 void
 VehicleCameraControl::_setVideoStatus(VideoCaptureStatus status)
 {
-    if(_video_status != status) {
-        _video_status = status;
+    if(_videoCaptureStatus != status) {
+        _videoCaptureStatus = status;
         emit videoCaptureStatusChanged();
         if(status == VIDEO_CAPTURE_STATUS_RUNNING) {
              _recordTime = 0;
              _recTime = QTime::currentTime();
-             _recTimer.start();
+             _videoRecordTimeUpdateTimer.start();
         } else {
-             _recTimer.stop();
+             _videoRecordTimeUpdateTimer.stop();
              _recordTime = 0;
              emit recordTimeChanged();
         }
@@ -790,9 +775,9 @@ VehicleCameraControl::_recTimerHandler()
 void
 VehicleCameraControl::_setPhotoStatus(PhotoCaptureStatus status)
 {
-    if(_photo_status != status) {
+    if(_photoCaptureStatus != status) {
         qCDebug(CameraControlLog) << "Set Photo Status:" << status;
-        _photo_status = status;
+        _photoCaptureStatus = status;
         emit photoCaptureStatusChanged();
     }
 }
@@ -1397,8 +1382,6 @@ VehicleCameraControl::_updateRanges(Fact* pFact)
     for (Fact* f: rangesSet.keys()) {
         f->setEnumInfo(rangesSet[f]->optNames, rangesSet[f]->optVariants);
         if(!updates.contains(f->name())) {
-            _paramIO[f->name()]->optNames = rangesSet[f]->optNames;
-            _paramIO[f->name()]->optVariants = rangesSet[f]->optVariants;
             emit f->enumsChanged();
             qCDebug(CameraControlVerboseLog) << "Limited set of options for:" << f->name() << rangesSet[f]->optNames;;
             updates << f->name();
@@ -1408,8 +1391,6 @@ VehicleCameraControl::_updateRanges(Fact* pFact)
     for (Fact* f: rangesReset.keys()) {
         f->setEnumInfo(_originalOptNames[rangesReset[f]], _originalOptValues[rangesReset[f]]);
         if(!updates.contains(f->name())) {
-            _paramIO[f->name()]->optNames = _originalOptNames[rangesReset[f]];
-            _paramIO[f->name()]->optVariants = _originalOptValues[rangesReset[f]];
             emit f->enumsChanged();
             qCDebug(CameraControlVerboseLog) << "Restore full set of options for:" << f->name() << _originalOptNames[f->name()];
             updates << f->name();
@@ -1766,7 +1747,7 @@ VehicleCameraControl::resumeStream()
 
 //-----------------------------------------------------------------------------
 bool
-VehicleCameraControl::autoStream()
+VehicleCameraControl::autoStream() const
 {
     if(hasVideoStream()) {
         return _streams.count() > 0;
@@ -2310,7 +2291,7 @@ VehicleCameraControl::validateParameter(Fact* pFact, QVariant& newValue)
 
 //-----------------------------------------------------------------------------
 QStringList
-VehicleCameraControl::activeSettings()
+VehicleCameraControl::activeSettings() const
 {
     qCDebug(CameraControlLog) << "Active:" << _activeSettings;
     return _activeSettings;

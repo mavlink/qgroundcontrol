@@ -24,7 +24,7 @@ import QGroundControl.Controls
 import QGroundControl.FlightDisplay
 import QGroundControl.FlightMap
 
-import QGroundControl.ScreenTools
+
 
 
 // To implement a custom overlay copy this code to your own control in your custom code source. Then override the

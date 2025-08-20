@@ -15,7 +15,7 @@ import QGroundControl
 
 import QGroundControl.Controls
 
-import QGroundControl.ScreenTools
+
 
 Rectangle {
     id:     _root
@@ -29,6 +29,11 @@ Rectangle {
     readonly property real  _horizontalMargin:      _defaultTextWidth / 2
     readonly property real  _verticalMargin:        _defaultTextHeight / 2
     readonly property real  _buttonWidth:           _defaultTextWidth * 18
+
+    // This need to block click event leakage to underlying map.
+    DeadMouseArea {
+        anchors.fill: parent
+    }
 
     GeoTagController {
         id: geoController

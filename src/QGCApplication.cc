@@ -104,9 +104,6 @@ QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting, bool s
     setOrganizationName(QGC_ORG_NAME);
     setOrganizationDomain(QGC_ORG_DOMAIN);
     setApplicationVersion(QString(QGC_APP_VERSION_STR));
-#ifdef Q_OS_LINUX
-    setWindowIcon(QIcon(":/res/qgroundcontrol.ico"));
-#endif
 
     // Set settings format
     QSettings::setDefaultFormat(QSettings::IniFormat);
@@ -273,6 +270,14 @@ void QGCApplication::_initForNormalAppBoot()
 
     // Image provider for Optical Flow
     _qmlAppEngine->addImageProvider(_qgcImageProviderId, new QGCImageProvider());
+
+    // Set the window icon now that custom plugin has a chance to override it
+#ifdef Q_OS_LINUX
+    QUrl windowIcon = QUrl("qrc:/res/qgroundcontrol.ico");
+    windowIcon = _qmlAppEngine->interceptUrl(windowIcon, QQmlAbstractUrlInterceptor::UrlString);
+    // The interceptor needs "qrc:/path" but QIcon expects ":/path"
+    setWindowIcon(QIcon(":" + windowIcon.path()));
+#endif
 
     // Safe to show popup error messages now that main window is created
     _showErrorsInToolbar = true;

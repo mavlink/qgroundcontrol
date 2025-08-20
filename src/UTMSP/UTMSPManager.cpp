@@ -13,7 +13,7 @@
 
 #include "services/dispatcher.h"
 #include "Vehicle.h"
-#include <QtCore/qapplicationstatic.h>
+#include <QtCore/QApplicationStatic>
 
 Q_APPLICATION_STATIC(UTMSPManager, _UTMSPManagerInstance);
 

@@ -32,7 +32,7 @@ jobs:
       fail-fast: false
       matrix:
         build_type: [Release]
-        qt_version: [6.6.3, 6.8.3]
+        qt_version: [6.8.3]
 
     defaults:
       run:
@@ -45,7 +45,7 @@ jobs:
       QT_ANDROID_KEYSTORE_ALIAS: QGCAndroidKeyStore
       QT_ANDROID_KEYSTORE_STORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       QT_ANDROID_KEYSTORE_KEY_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-      QT_ANDROID_ABIS: ${{ (matrix.build_type == 'Release' && matrix.qt_version == '6.8.3') && 'armeabi-v7a;arm64-v8a' || 'arm64-v8a' }}
+      QT_ANDROID_ABIS: ${{ matrix.build_type == 'Release' && 'arm64-v8a;armeabi-v7a' || 'arm64-v8a' }}
 
     steps:
       - name: Checkout repo
@@ -62,7 +62,7 @@ jobs:
         uses: ./.github/actions/qt-android
         with:
           host: linux
-          arch: ${{ matrix.qt_version == '6.6.3' && 'gcc_64' || 'linux_gcc_64' }}
+          arch: linux_gcc_64
           version: ${{ matrix.qt_version }}
           abis: ${{ env.QT_ANDROID_ABIS }}
           cpm-modules: ${{ runner.temp }}/build/cpm_modules
@@ -77,7 +77,6 @@ jobs:
               -DQT_HOST_PATH="${{ env.QT_ROOT_DIR }}/../gcc_64"
               -DQT_ANDROID_SIGN_APK=${{ env.QT_ANDROID_KEYSTORE_STORE_PASS != '' && 'ON' || 'OFF' }}
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
-              -DQGC_ENABLE_HERELINK=${{ matrix.qt_version == '6.6.3' && 'ON' || 'OFF' }}
 
       - name: Build
         working-directory: ${{ runner.temp }}/build
@@ -86,15 +85,16 @@ jobs:
       - run: cp ${{ runner.temp }}/build/android-build/*.apk ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk
 
       - name: Upload Build File
-        if: matrix.build_type == 'Release' && matrix.qt_version == '6.8.3'
+        if: matrix.build_type == 'Release'
         uses: ./.github/actions/upload
         with:
           artifact_name: ${{ env.PACKAGE }}.apk
           package_name: ${{ env.PACKAGE }}
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_distribution_id: ${{ secrets.AWS_DISTRIBUTION_ID }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          upload_aws: ${{ matrix.qt_version == '6.8.3' && 'true' || 'false' }}
+          upload_aws: true
 
       # - name: Deploy to Play Store
       #   if: matrix.build_type == 'Release'

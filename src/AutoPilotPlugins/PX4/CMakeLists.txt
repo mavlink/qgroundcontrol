@@ -34,6 +34,12 @@ target_sources(${CMAKE_PROJECT_NAME}
         SensorsComponentController.h
 )
 
+# Add metadata file
+qt_add_resources(${CMAKE_PROJECT_NAME} autopilot_plugin_px4_resource
+    PREFIX "/AutoPilotPlugins/PX4"
+    FILES AirframeFactMetaData.xml
+)
+
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 qt_add_library(AutoPilotPluginsPX4Module STATIC)
@@ -81,5 +87,5 @@ qt_add_qml_module(AutoPilotPluginsPX4Module
         SensorsComponentSummary.qml
         SensorsComponentSummaryFixedWing.qml
         SensorsSetup.qml
-    NO_PLUGIN # Required by Qt 6.6.3. TODO: Remove when no longer supported.
+    NO_PLUGIN
 )

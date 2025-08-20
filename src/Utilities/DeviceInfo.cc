@@ -10,7 +10,7 @@
 #include "DeviceInfo.h"
 #include "QGCLoggingCategory.h"
 
-#include <QtCore/qapplicationstatic.h>
+#include <QtCore/QApplicationStatic>
 #include <QtNetwork/QNetworkInformation>
 #ifdef QGC_ENABLE_BLUETOOTH
 #    include <QtBluetooth/QBluetoothLocalDevice>

@@ -75,6 +75,13 @@ target_sources(${CMAKE_PROJECT_NAME}
         VTOLLandingComplexItem.h
 )
 
+# Add JSON files
+file(GLOB_RECURSE JSON_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.json)
+qt_add_resources(${CMAKE_PROJECT_NAME} json_mission_manager
+    PREFIX "/json"
+    FILES ${JSON_FILES}
+)
+
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # qt_add_qml_module(QGC
