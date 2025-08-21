@@ -35,7 +35,7 @@ public:
 
     enum ClassificationType {
         UNDEFINED,
-        EU
+        EU_CLASS
     };
     Q_ENUM(ClassificationType)
 
