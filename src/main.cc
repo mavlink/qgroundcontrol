@@ -7,6 +7,7 @@
  *
  ****************************************************************************/
 
+#include <iterator>                 // std::size
 #include <QtQuick/QQuickWindow>
 #include <QtWidgets/QApplication>
 
@@ -17,48 +18,34 @@
 #include "MavlinkSettings.h"
 #include "Platform.h"
 
-#ifdef Q_OS_WIN
-    #include <windows.h>
-#endif
-
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
     #include <QtWidgets/QMessageBox>
     #include "RunGuard.h"
 #endif
 
-#ifdef Q_OS_LINUX
 #ifdef Q_OS_ANDROID
     #include "AndroidInterface.h"
-#else
+#endif
+
+#ifdef Q_OS_LINUX
     #include <unistd.h>
     #include <sys/types.h>
-    #include "SignalHandler.h"
-#endif
 #endif
 
 #ifdef QGC_UNITTEST_BUILD
     #include "UnitTestList.h"
 #endif
 
-//-----------------------------------------------------------------------------
-/**
- * @brief Starts the application
- *
- * @param argc Number of commandline arguments
- * @param argv Commandline arguments
- * @return exit code, 0 for normal exit and !=0 for error cases
- */
-
 int main(int argc, char *argv[])
 {
     bool runUnitTests = false;
     bool simpleBootTest = false;
-    QString systemIdStr = QString();
+    QString systemIdStr;
     bool hasSystemId = false;
     bool bypassRunGuard = false;
 
     bool stressUnitTests = false;       // Stress test unit tests
-    bool quietWindowsAsserts = false;   // Don't let asserts pop dialog boxes
+    bool quietWindowsAsserts = false;   // Suppress Windows assert UI
     QString unitTestOptions;
 
     CmdLineOpt_t rgCmdLineOptions[] = {
@@ -70,18 +57,24 @@ int main(int argc, char *argv[])
 #endif
         { "--system-id",            &hasSystemId,           &systemIdStr },
         { "--simple-boot-test",     &simpleBootTest,        nullptr },
-        // Add additional command line option flags here
     };
 
     ParseCmdLineOptions(argc, argv, rgCmdLineOptions, std::size(rgCmdLineOptions), false);
 
-#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
-    // We make the runguard key different for custom and non custom
-    // builds, so they can be executed together in the same device.
-    // Stable and Daily have same QGC_APP_NAME so they would
-    // not be able to run at the same time
-    const QString runguardString = QStringLiteral("%1 RunGuardKey").arg(QGC_APP_NAME);
+#ifdef QGC_UNITTEST_BUILD
+    if (stressUnitTests) {
+        runUnitTests = true;
+    }
+#ifdef Q_OS_WIN
+    if (runUnitTests) {
+        quietWindowsAsserts = true;
+    }
+#endif
+#endif
 
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
+    // Single-instance guard for desktop
+    const QString runguardString = QStringLiteral("%1 RunGuardKey").arg(QGC_APP_NAME);
     RunGuard guard(runguardString);
     if (!bypassRunGuard && !guard.tryToRun()) {
         const QApplication errorApp(argc, argv);
@@ -97,46 +90,18 @@ int main(int argc, char *argv[])
         const QApplication errorApp(argc, argv);
         (void) QMessageBox::critical(nullptr, QObject::tr("Error"),
             QObject::tr("You are running %1 as root. "
-                "You should not do this since it will cause other issues with %1."
-                "%1 will now exit.<br/><br/>").arg(QGC_APP_NAME)
+                        "You should not do this since it will cause other issues with %1. "
+                        "%1 will now exit.<br/><br/>").arg(QGC_APP_NAME)
         );
         return -1;
     }
 #endif
 
-#ifdef Q_OS_UNIX
-    if (!qEnvironmentVariableIsSet("QT_ASSUME_STDERR_HAS_CONSOLE")) {
-        (void) qputenv("QT_ASSUME_STDERR_HAS_CONSOLE", "1");
-    }
-
-    if (!qEnvironmentVariableIsSet("QT_FORCE_STDERR_LOGGING")) {
-        (void) qputenv("QT_FORCE_STDERR_LOGGING", "1");
-    }
-#endif
+    // Early platform setup before Qt app construction
+    Platform::setupPreApp(quietWindowsAsserts);
 
 #ifdef Q_OS_WIN
-    if (!qEnvironmentVariableIsSet("QT_WIN_DEBUG_CONSOLE")) {
-        (void) qputenv("QT_WIN_DEBUG_CONSOLE", "attach"); // new
-    }
-#endif
-
-    QGCLogging::installHandler(quietWindowsAsserts);
-
-#ifdef QGC_UNITTEST_BUILD
-    if (stressUnitTests) {
-        runUnitTests = true;
-    }
-#endif
-
-#ifdef Q_OS_MACOS
-    Platform::disableAppNapViaInfoDict();
-#endif
-
-#ifdef Q_OS_WIN
-    // Set our own OpenGL buglist
-    // (void) qputenv("QT_OPENGL_BUGLIST", ":/opengl/resources/opengl/buglist.json");
-
-    // Allow for command line override of renderer
+    // Allow command-line override of renderer
     for (int i = 0; i < argc; i++) {
         const QString arg(argv[i]);
         if (arg == QStringLiteral("-desktop")) {
@@ -147,34 +112,26 @@ int main(int argc, char *argv[])
             break;
         }
     }
-
-#ifdef QGC_UNITTEST_BUILD
-    if (runUnitTests) {
-        // Don't pop up Windows Error Reporting dialog when app crashes.
-        const DWORD dwMode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
-        SetErrorMode(dwMode | SEM_NOGPFAULTERRORBOX);
-    }
 #endif
-#endif // Q_OS_WIN
 
     QGCApplication app(argc, argv, runUnitTests, simpleBootTest);
 
-#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
-    SignalHandler::instance();
-    (void) SignalHandler::setupSignalHandlers();
-#endif
+    QGCLogging::installHandler();
+
+    // Late platform setup after app and logging exist
+    Platform::setupPostApp();
 
     app.init();
 
-    // Set system ID if specified via command line, for example --system-id:255
+    // Optional: set MAVLink System ID from CLI, e.g. --system-id:255
     if (hasSystemId) {
-        bool ok;
+        bool ok = false;
         const int systemId = systemIdStr.toInt(&ok);
-        if (ok && (systemId >= 1) && (systemId <= 255)) {  // MAVLink system IDs are 8-bit
+        if (ok && systemId >= 1 && systemId <= 255) { // MAVLink system IDs are 1..255 for GCS use
             qDebug() << "Setting MAVLink System ID to:" << systemId;
             SettingsManager::instance()->mavlinkSettings()->gcsMavlinkSystemID()->setRawValue(systemId);
         } else {
-            qDebug() << "Not setting MAVLink System ID. It must be between 0 and 255. Invalid system ID value:" << systemIdStr;
+            qDebug() << "Not setting MAVLink System ID. It must be between 1 and 255. Invalid value:" << systemIdStr;
         }
     }
 
@@ -186,18 +143,15 @@ int main(int argc, char *argv[])
     } else
 #endif
     {
-        #ifdef Q_OS_ANDROID
-            AndroidInterface::checkStoragePermissions();
-        #endif
-
+#ifdef Q_OS_ANDROID
+        AndroidInterface::checkStoragePermissions();
+#endif
         if (!simpleBootTest) {
             exitCode = app.exec();
         }
     }
 
     app.shutdown();
-
     qDebug() << "Exiting main";
-
     return exitCode;
 }
