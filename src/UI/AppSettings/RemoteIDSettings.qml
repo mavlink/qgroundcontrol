@@ -55,26 +55,10 @@ SettingsPage {
     property Fact sendOperatorIdFact:   remoteIDSettings.sendOperatorID
     property Fact locationTypeFact:     remoteIDSettings.locationType
     property Fact operatorIDFact:       remoteIDSettings.operatorID
-    property bool isEURegion:           regionFact.rawValue === RegionOperation.EU
-    property bool isFAARegion:          regionFact.rawValue === RegionOperation.FAA
+    property bool isEURegion:           regionFact.rawValue === RemoteIDSettings.RegionOperation.EU
+    property bool isFAARegion:          regionFact.rawValue === RemoteIDSettings.RegionOperation.FAA
     property real textFieldWidth:       ScreenTools.defaultFontPixelWidth * 24
     property real textLabelWidth:       ScreenTools.defaultFontPixelWidth * 30
-
-    enum RegionOperation {
-        FAA,
-        EU
-    }
-
-    enum LocationType {
-        TAKEOFF,
-        LIVE,
-        FIXED
-    }
-
-    enum ClassificationType {
-        UNDEFINED,
-        EU
-    }
 
     // GPS properties
     property var    gcsPosition:        QGroundControl.qgcPositionManger.gcsPosition
@@ -228,7 +212,7 @@ SettingsPage {
                         Layout.preferredWidth:  flagsWidth
                         color:                  _activeRID ? (_remoteIDManager.operatorIDGood ? qgcPal.colorGreen : qgcPal.colorRed) : qgcPal.colorGrey
                         radius:                 radiusFlags
-                        visible:                commsGood && _activeRID ? (QGroundControl.settingsManager.remoteIDSettings.sendOperatorID.value || _regionOperation == RegionOperation.EU) : false
+                        visible:                commsGood && _activeRID ? (QGroundControl.settingsManager.remoteIDSettings.sendOperatorID.value || _regionOperation == RemoteIDSettings.RegionOperation.EU) : false
 
                         QGCLabel {
                             anchors.fill:           parent
@@ -250,10 +234,10 @@ SettingsPage {
         Connections {
             target: regionFact
             function onRawValueChanged(value) {
-                if (value === RegionOperation.EU) {
+                if (value === RemoteIDSettings.RegionOperation.EU) {
                     sendOperatorIdFact.rawValue = true
-                } else if (value === RegionOperation.FAA) {
-                    locationTypeFact.value = LocationType.LIVE
+                } else if (value === RemoteIDSettings.RegionOperation.FAA) {
+                    locationTypeFact.value = RemoteIDSettings.LocationType.LIVE
                 }
             }
         }
@@ -379,7 +363,7 @@ SettingsPage {
                         visible:                operatorIDFact.visible
                         maximumLength:          20                  // Maximum defined by Mavlink definition of OPEN_DRONE_ID_OPERATOR_ID message
 
-                        property bool operatorIDInvalid: ((_regionOperation === RegionOperation.EU || remoteIDSettings.sendOperatorID.value) &&
+                        property bool operatorIDInvalid: ((_regionOperation === RemoteIDSettings.RegionOperation.EU || remoteIDSettings.sendOperatorID.value) &&
                                                             _activeRID && !_remoteIDManager.operatorIDGood)
 
                         onOperatorIDInvalidChanged: {
@@ -493,7 +477,7 @@ SettingsPage {
                     label:                      _fact.shortDescription
                     fact:                       _fact
                     textField.maximumLength:    20
-                    enabled:                    locationTypeFact.rawValue === LocationType.FIXED
+                    enabled:                    locationTypeFact.rawValue === RemoteIDSettings.LocationType.FIXED
                     Layout.fillWidth:           true
                     textFieldPreferredWidth:    textFieldWidth
 
@@ -504,7 +488,7 @@ SettingsPage {
                     label:                      _fact.shortDescription
                     fact:                       _fact
                     textField.maximumLength:    20
-                    enabled:                    locationTypeFact.rawValue === LocationType.FIXED
+                    enabled:                    locationTypeFact.rawValue === RemoteIDSettings.LocationType.FIXED
                     Layout.fillWidth:           true
                     textFieldPreferredWidth:    textFieldWidth
 
@@ -515,7 +499,7 @@ SettingsPage {
                     label:                      _fact.shortDescription
                     fact:                       _fact
                     textField.maximumLength:    20
-                    enabled:                    locationTypeFact.rawValue === LocationType.FIXED
+                    enabled:                    locationTypeFact.rawValue === RemoteIDSettings.LocationType.FIXED
                     Layout.fillWidth:           true
                     textFieldPreferredWidth:    textFieldWidth
 
@@ -527,7 +511,7 @@ SettingsPage {
                     visible:                    !ScreenTools.isMobile
                                                 && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.visible
                                                 && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.visible
-                                                && _locationType !== LocationType.TAKEOFF
+                                                && _locationType !== RemoteIDSettings.LocationType.TAKEOFF
                     anchors.margins:            _margins
                     rowSpacing:                 _margins * 3
                     columns:                    2
@@ -606,7 +590,7 @@ SettingsPage {
                 QGCCheckBoxSlider {
                     id:                 euProvideInfoSlider
                     text:               qsTr("Provide Information")
-                    checked:            _fact.rawValue === ClassificationType.EU
+                    checked:            _fact.rawValue === RemoteIDSettings.ClassificationType.EU
                     visible:            _fact.visible
                     Layout.fillWidth:   true
                     onClicked:          _fact.rawValue = !_fact.rawValue
