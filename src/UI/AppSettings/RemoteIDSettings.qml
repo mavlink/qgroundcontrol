@@ -590,7 +590,7 @@ SettingsPage {
                 QGCCheckBoxSlider {
                     id:                 euProvideInfoSlider
                     text:               qsTr("Provide Information")
-                    checked:            _fact.rawValue === RemoteIDSettings.ClassificationType.EU_CLASS
+                    checked:            _fact.rawValue === RemoteIDSettings.ClassificationType.EU
                     visible:            _fact.visible
                     Layout.fillWidth:   true
                     onClicked:          _fact.rawValue = !_fact.rawValue

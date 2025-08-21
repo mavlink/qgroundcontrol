@@ -20,22 +20,22 @@ class RemoteIDSettings : public SettingsGroup
     QML_UNCREATABLE("")
 
 public:
-    enum RegionOperation {
+    enum class RegionOperation {
         FAA,
         EU
     };
     Q_ENUM(RegionOperation)
 
-    enum LocationType {
+    enum class LocationType {
         TAKEOFF,
         LIVE,
         FIXED
     };
     Q_ENUM(LocationType)
 
-    enum ClassificationType {
+    enum class ClassificationType {
         UNDEFINED,
-        EU_CLASS
+        EU
     };
     Q_ENUM(ClassificationType)
 
