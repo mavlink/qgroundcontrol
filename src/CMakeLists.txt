@@ -101,10 +101,10 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         VehicleSetupModule
 )
 
-if(NOT QGC_DISABLE_APM_PLUGIN AND NOT QGC_DISABLE_APM_PLUGIN_FACTORY)
+if(NOT QGC_DISABLE_APM_PLUGIN)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AutoPilotPluginsAPMModule)
 endif()
-if(NOT QGC_DISABLE_PX4_PLUGIN AND NOT QGC_DISABLE_PX4_PLUGIN_FACTORY)
+if(NOT QGC_DISABLE_PX4_PLUGIN)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AutoPilotPluginsPX4Module)
 endif()
 if(QGC_VIEWER3D)
