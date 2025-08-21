@@ -9,12 +9,12 @@
 
 #pragma once
 
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QMap>
 #include <QtCore/QSet>
 #include <QtCore/QTimer>
 #include <QtCore/QTranslator>
-
 #include <QtWidgets/QApplication>
 
 class QQmlApplicationEngine;
@@ -37,6 +37,8 @@ class QMetaObject;
 #define qGuiApp (static_cast<QGCApplication*>(QGuiApplication::instance()))
 
 #define qgcApp() qApp
+
+Q_DECLARE_LOGGING_CATEGORY(QGCApplicationLog)
 
 /// The main application and management class.
 /// Needs QApplication base to support QtCharts module.
@@ -129,7 +131,7 @@ private:
     bool compressEvent(QEvent *event, QObject *receiver, QPostEventList *postedEvents) final;
 
     void _initVideo();
-    
+
     /// Initialize the application for normal application boot. Or in other words we are not going to run unit tests.
     void _initForNormalAppBoot();
 
@@ -137,7 +139,8 @@ private:
     void _checkForNewVersion();
 
     bool _runningUnitTests = false;
-    bool _simpleBootTest = false; 
+    bool _simpleBootTest = false;
+
     static constexpr int _missingParamsDelayedDisplayTimerTimeout = 1000;   ///< Timeout to wait for next missing fact to come in before display
     QTimer _missingParamsDelayedDisplayTimer;                               ///< Timer use to delay missing fact display
     QList<QPair<int,QString>> _missingParams;                               ///< List of missing parameter component id:name
