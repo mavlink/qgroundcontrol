@@ -47,18 +47,6 @@ runs:
       run: aws s3 cp "${{ inputs.artifact_name }}" "s3://qgroundcontrol/builds/${{ github.ref_name }}/${{ inputs.artifact_name }}" --acl public-read
       shell: bash
 
-    - name: Invalidate daily/continuous push build CloudFront Cache
-      if: ${{ fromJSON(inputs.upload_aws) && github.event_name == 'push' && github.repository_owner == 'mavlink' && github.ref_name == 'master' && inputs.aws_key_id != '' && inputs.aws_secret_access_key != '' && inputs.aws_distribution_id != '' }}
-      run: |
-        aws cloudfront create-invalidation \
-          --distribution-id "${{ inputs.aws_distribution_id }}" \
-          --paths "/builds/${{ github.ref_name }}/${{ inputs.artifact_name }}"
-      shell: bash
-      env:
-        AWS_ACCESS_KEY_ID: ${{ inputs.aws_key_id }}
-        AWS_SECRET_ACCESS_KEY: ${{ inputs.aws_secret_access_key }}
-        AWS_REGION: us-west-2
-
     - name: Upload tagged stable push build to S3 latest Bucket
       if: ${{ fromJSON(inputs.upload_aws) && github.event_name == 'push' && github.repository_owner == 'mavlink' && github.ref_type == 'tag' && inputs.aws_key_id != '' && inputs.aws_secret_access_key != '' }}
       working-directory: ${{ runner.temp }}/build
