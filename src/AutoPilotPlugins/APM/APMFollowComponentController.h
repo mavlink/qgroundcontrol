@@ -9,13 +9,15 @@
 
 #pragma once
 
+#include <QtQmlIntegration/QtQmlIntegration>
+
 #include "FactPanelController.h"
 #include "SettingsFact.h"
 
 class APMFollowComponentController : public FactPanelController
 {
     Q_OBJECT
-
+    QML_ELEMENT
     Q_PROPERTY(Fact *angle          READ angleFact      CONSTANT)
     Q_PROPERTY(Fact *distance       READ distanceFact   CONSTANT)
     Q_PROPERTY(Fact *height         READ heightFact     CONSTANT)

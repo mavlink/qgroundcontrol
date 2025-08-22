@@ -18,6 +18,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
 #include <QtCore/QVariantList>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 Q_DECLARE_LOGGING_CATEGORY(CameraManagerLog)
 
@@ -33,13 +34,13 @@ class QGCCameraManagerTest;
 class QGCCameraManager : public QObject
 {
     Q_OBJECT
-
+    QML_ELEMENT
+    QML_UNCREATABLE("")
+    Q_MOC_INCLUDE("Joystick.h")
     friend class QGCCameraManagerTest;
 public:
     QGCCameraManager(Vehicle* vehicle);
     virtual ~QGCCameraManager();
-
-    static void registerQmlTypes();
 
     Q_PROPERTY(QmlObjectListModel*      cameras                 READ cameras                                        NOTIFY camerasChanged)
     Q_PROPERTY(QStringList              cameraLabels            READ cameraLabels                                   NOTIFY cameraLabelsChanged)
@@ -57,6 +58,9 @@ public:
     /// Returns a list of CameraMetaData objects for available cameras on the vehicle.
     virtual const QVariantList &cameraList();
 
+    // Helper method for static functions to access vehicle
+    Vehicle* vehicle() const { return _vehicle; }
+
     // This is public to avoid some circular include problems caused by statics
     class CameraStruct : public QObject {
     public:
@@ -65,6 +69,8 @@ public:
         bool        infoReceived    = false;
         uint8_t     compID          = 0;
         Vehicle*    vehicle         = nullptr;
+        int         retryCount      = 0;
+        QTimer*     backoffTimer    = nullptr;
     };
 
 signals:

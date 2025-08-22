@@ -12,6 +12,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QSize>
 #include <QtCore/QTimer>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 class QGCVideoStreamInfo;
 class QQuickItem;
@@ -19,7 +20,8 @@ class QQuickItem;
 class VideoReceiver : public QObject
 {
     Q_OBJECT
-
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
     explicit VideoReceiver(QObject *parent = nullptr)
         : QObject(parent)

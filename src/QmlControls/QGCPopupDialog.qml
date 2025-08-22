@@ -14,8 +14,8 @@ import QtQuick.Dialogs
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.Palette
-import QGroundControl.ScreenTools
+
+
 
 // Provides the standard dialog mechanism for QGC. Works 99% like Qml Dialog.
 //

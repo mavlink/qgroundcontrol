@@ -18,7 +18,6 @@
 
 #include <QtCore/QThread>
 #include <QtCore/QVariant>
-#include <QtQml/qqml.h>
 #include <QtGui/QCursor>
 
 bool AirframeComponentController::_typesRegistered = false;
@@ -30,8 +29,6 @@ AirframeComponentController::AirframeComponentController(void) :
 {
     if (!_typesRegistered) {
         _typesRegistered = true;
-        qmlRegisterUncreatableType<AirframeType>("QGroundControl.Controllers", 1, 0, "AiframeType", "Can only reference AirframeType");
-        qmlRegisterUncreatableType<Airframe>("QGroundControl.Controllers", 1, 0, "Aiframe", "Can only reference Airframe");
     }
     
     QStringList usedParams;

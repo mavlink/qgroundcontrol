@@ -13,8 +13,8 @@ import QtLocation
 import QtPositioning
 
 import QGroundControl
-import QGroundControl.ScreenTools
-import QGroundControl.Palette
+
+
 import QGroundControl.Controls
 import QGroundControl.FlightMap
 
@@ -30,9 +30,9 @@ MapQuickItem {
 
     function _updateArrowDetails() {
         if (fromCoord && fromCoord.isValid && toCoord && toCoord.isValid) {
-            _arrowHeading = fromCoord.azimuthTo(toCoord)
             var lineDistanceQuarter = fromCoord.distanceTo(toCoord) / 4
-            coordinate = fromCoord.atDistanceAndAzimuth(lineDistanceQuarter * arrowPosition, _arrowHeading)
+            coordinate = fromCoord.atDistanceAndAzimuth(lineDistanceQuarter * arrowPosition, fromCoord.azimuthTo(toCoord))
+            _arrowHeading = coordinate.azimuthTo(toCoord) // Account for changing bearing along great circle path
         } else {
             coordinate = QtPositioning.coordinate()
             _arrowHeading = 0

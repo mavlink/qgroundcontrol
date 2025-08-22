@@ -13,12 +13,11 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.MultiVehicleManager
-import QGroundControl.ScreenTools
-import QGroundControl.Palette
-import QGroundControl.FactSystem
+
+
+
+
 import QGroundControl.FactControls
-import QGroundControl.AutoPilotPlugin
 
 RowLayout {
     id:         control
@@ -115,7 +114,7 @@ RowLayout {
 
             Connections {
                 target: control
-                onEditModeChanged: {
+                function onEditModeChanged() {
                     if (editMode) {
                         for (var i=0; i<modeRepeater.count; i++) {
                             var button      = modeRepeater.itemAt(i).children[0]

@@ -12,6 +12,7 @@
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QVariantList>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "QGCPalette.h"
 
@@ -35,6 +36,7 @@ Q_DECLARE_LOGGING_CATEGORY(QGCCorePluginLog)
 class QGCCorePlugin : public QObject
 {
     Q_OBJECT
+    QML_UNCREATABLE("")
     Q_MOC_INCLUDE("QGCOptions.h")
     Q_MOC_INCLUDE("QmlObjectListModel.h")
     Q_PROPERTY(bool showAdvancedUI                      READ showAdvancedUI                     WRITE _setShowAdvancedUI    NOTIFY showAdvancedUIChanged)
@@ -55,7 +57,6 @@ public:
     virtual ~QGCCorePlugin();
 
     static QGCCorePlugin *instance();
-    static void registerQmlTypes();
 
     virtual void init() { }
     virtual void cleanup() { }

@@ -16,7 +16,6 @@
 #include "QGCCameraManager.h"
 #include "QGCFileDownload.h"
 #include "QGCLoggingCategory.h"
-#include "RadioComponentController.h"
 #include "VehicleCameraControl.h"
 #include "VehicleComponent.h"
 
@@ -30,14 +29,12 @@ static const QString guided_mode_not_supported_by_vehicle = QObject::tr("Guided 
 FirmwarePlugin::FirmwarePlugin(QObject *parent)
     : QObject(parent)
 {
-    // qCDebug(FirmwarePluginLog) << Q_FUNC_INFO << this;
-
-    (void) qmlRegisterType<RadioComponentController>("QGroundControl.Controllers", 1, 0, "RadioComponentController");
+    qCDebug(FirmwarePluginLog) << this;
 }
 
 FirmwarePlugin::~FirmwarePlugin()
 {
-    // qCDebug(FirmwarePluginLog) << Q_FUNC_INFO << this;
+    qCDebug(FirmwarePluginLog) << this;
 }
 
 AutoPilotPlugin *FirmwarePlugin::autopilotPlugin(Vehicle *vehicle) const
@@ -213,8 +210,9 @@ const QVariantList &FirmwarePlugin::toolIndicators(const Vehicle*)
             QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Controls/BatteryIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/RemoteIDIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/GimbalIndicator.qml")),
-// ControlIndicator is only available in debug builds for the moment
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/EscIndicator.qml")),
 #ifdef QT_DEBUG
+            // ControlIndicator is only available in debug builds for the moment
             QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/GCSControlIndicator.qml")),
 #endif
         });
@@ -470,7 +468,8 @@ void FirmwarePlugin::_addNewFlightMode(FirmwareFlightMode &newFlightMode)
 {
     for (const FirmwareFlightMode &existingFlightMode : _flightModeList) {
         if (existingFlightMode.custom_mode == newFlightMode.custom_mode) {
-            // Already exists
+            qCDebug(FirmwarePluginLog) << "Flight Mode:" << newFlightMode.mode_name << " Custom Mode:" << newFlightMode.custom_mode
+                                       << " already exists, not adding again.";
             return;
         }
     }

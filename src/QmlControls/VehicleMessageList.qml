@@ -13,10 +13,10 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.FactSystem
-import QGroundControl.MultiVehicleManager
-import QGroundControl.ScreenTools
-import QGroundControl.Palette
+
+
+
+
 
 TextArea {
     id:                     messageText
@@ -50,7 +50,7 @@ TextArea {
 
     Connections {
         target: _activeVehicle
-        onNewFormattedMessage: (formattedMessage) => { messageText.insert(0, formatMessage(formattedMessage)) }
+        function onNewFormattedMessage(formattedMessage) { messageText.insert(0, formatMessage(formattedMessage)) }
     }
 
     FactPanelController {

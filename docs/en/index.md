@@ -2,7 +2,7 @@
 layout: home
 
 hero:
-  name: "QGroundControl Guide (v5.0)"
+  name: "QGroundControl Guide (Daily Builds)"
   tagline: For beginners, experienced users, and developers
   actions:
     - theme: brand

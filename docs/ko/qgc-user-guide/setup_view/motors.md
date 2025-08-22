@@ -34,5 +34,5 @@
 
 ## 추가 정보
 
-- [기본 설정 > 모터 설정](http://docs.px4.io/master/en/config/motors.html) (_PX4 사용자 가이드_) - 여기에는 추가 PX4 관련 정보를 설명합니다.
+- [Basic Configuration > Motor Setup](http://docs.px4.io/main/en/config/motors.html) (_PX4 User Guide_) - This contains additional PX4-specific information.
 - [ESCS and Motors](https://ardupilot.org/copter/docs/connect-escs-and-motors.html#motor-order-diagrams) - This is the Motor order diagrams for all frames

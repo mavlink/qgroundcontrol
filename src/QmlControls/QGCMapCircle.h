@@ -11,6 +11,7 @@
 
 #include <QtCore/QObject>
 #include <QtPositioning/QGeoCoordinate>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "Fact.h"
 
@@ -18,6 +19,7 @@
 class QGCMapCircle : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
 
 public:
     QGCMapCircle(QObject* parent = nullptr);

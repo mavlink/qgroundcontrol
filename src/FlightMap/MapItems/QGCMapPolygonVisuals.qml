@@ -15,11 +15,10 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.ScreenTools
-import QGroundControl.Palette
+
+
 import QGroundControl.Controls
 import QGroundControl.FlightMap
-import QGroundControl.ShapeFileHelper
 
 /// QGCMapPolygon map visuals
 Item {
@@ -194,8 +193,8 @@ Item {
 
     Connections {
         target: mapPolygon
-        onTraceModeChanged: {
-            if (mapPolygon.traceMode) {
+        function onTraceModeChanged(traceMode) {
+            if (traceMode) {
                 _instructionText = _traceText
                 _objMgrTraceVisuals.createObject(traceMouseAreaComponent, mapControl, false)
             } else {
@@ -687,7 +686,6 @@ Item {
                 pendingCoord = undefined
                 var radius = mapPolygon.center.distanceTo(coord)
                 _createCircularPolygon(mapPolygon.center, radius)
-                _lastRadius = radius
             }
         }
     }
@@ -698,12 +696,10 @@ Item {
         MissionItemIndicatorDrag {
             mapControl: _root.mapControl
 
-            property real _lastRadius
-
             onItemCoordinateChanged: {
                 var radius = mapPolygon.center.distanceTo(itemCoordinate)
 
-                if (Math.abs(radius - _lastRadius) > 0.1) {
+                if (Math.abs(radius - _circleRadius) > 0.1) {
                     // De-bounced circular polygon re-drawing
                     radiusDragDebounceTimer.pendingCoord = itemCoordinate
                     radiusDragDebounceTimer.start()

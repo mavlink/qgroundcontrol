@@ -14,14 +14,12 @@ import QtQuick.Layouts
 import QtQuick.Window
 
 import QGroundControl
-import QGroundControl.Palette
+
 import QGroundControl.Controls
 import QGroundControl.FactControls
-import QGroundControl.ScreenTools
+
 import QGroundControl.FlightDisplay
 import QGroundControl.FlightMap
-
-import QGroundControl.UTMSP
 
 /// @brief Native QML top level window
 /// All properties defined here are visible to all QML pages.
@@ -30,7 +28,6 @@ ApplicationWindow {
     visible:        true
 
     property bool   _utmspSendActTrigger
-    property bool   _utmspStartTelemetry
 
     Component.onCompleted: {
         // Start the sequence of first run prompt(s)
@@ -266,7 +263,6 @@ ApplicationWindow {
     FlyView { 
         id:                     flyView
         anchors.fill:           parent
-        utmspSendActTrigger:    _utmspSendActTrigger
     }
 
     PlanView {
@@ -409,6 +405,7 @@ ApplicationWindow {
                         }
 
                         ColumnLayout {
+                            id:                     versionColumnLayout
                             width:                  innerLayout.width
                             spacing:                0
                             Layout.alignment:       Qt.AlignHCenter
@@ -428,10 +425,18 @@ ApplicationWindow {
                                 wrapMode:               QGCLabel.WrapAnywhere
                                 Layout.maximumWidth:    parent.width
                                 Layout.alignment:       Qt.AlignHCenter
+                            }
+
+                            QGCLabel {
+                                text:                   QGroundControl.qgcAppDate
+                                font.pointSize:         ScreenTools.smallFontPointSize
+                                wrapMode:               QGCLabel.WrapAnywhere
+                                Layout.maximumWidth:    parent.width
+                                Layout.alignment:       Qt.AlignHCenter
+                                visible:                QGroundControl.qgcDailyBuild
 
                                 QGCMouseArea {
-                                    id:                 easterEggMouseArea
-                                    anchors.topMargin:  -versionLabel.height
+                                    anchors.topMargin:  -(parent.y - versionLabel.y)
                                     anchors.fill:       parent
 
                                     onClicked: (mouse) => {
@@ -477,6 +482,11 @@ ApplicationWindow {
             if (!toolDrawer.visible) {
                 toolDrawerLoader.source = ""
             }
+        }
+
+        // This need to block click event leakage to underlying map.
+        DeadMouseArea {
+            anchors.fill: parent
         }
 
         Rectangle {
@@ -527,7 +537,7 @@ ApplicationWindow {
             Connections {
                 target:                 toolDrawerLoader.item
                 ignoreUnknownSignals:   true
-                onPopout:               toolDrawer.visible = false
+                function onPopout() { toolDrawer.visible = false }
             }
         }
     }
@@ -782,20 +792,5 @@ ApplicationWindow {
                 source = ""
             }
         }
-    }
-
-    Connections{
-         target: activationbar
-         function onActivationTriggered(value){
-              _utmspSendActTrigger= value
-         }
-    }
-
-    UTMSPActivationStatusBar{
-         id:                         activationbar
-         activationStartTimestamp:   UTMSPStateStorage.startTimeStamp
-         activationApproval:         UTMSPStateStorage.showActivationTab && QGroundControl.utmspManager.utmspVehicle.vehicleActivation
-         flightID:                   UTMSPStateStorage.flightID
-         anchors.fill:               parent
     }
 }

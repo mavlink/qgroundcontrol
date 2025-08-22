@@ -2,10 +2,11 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
 
-import QGroundControl.Palette
-import QGroundControl.ScreenTools
+import QGroundControl
+
+
 import QGroundControl.Controls
-import QGroundControl.FactSystem
+
 
 Rectangle {
     height: _itemHeight

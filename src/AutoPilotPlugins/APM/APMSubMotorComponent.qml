@@ -13,9 +13,9 @@ import QtQuick.Dialogs
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.FactSystem
-import QGroundControl.ScreenTools
-import QGroundControl.Controllers
+
+
+
 
 SetupPage {
     id:             motorPage

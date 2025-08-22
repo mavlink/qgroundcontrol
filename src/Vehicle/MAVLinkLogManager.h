@@ -112,8 +112,8 @@ private:
 class MAVLinkLogManager : public QObject
 {
     Q_OBJECT
-    // QML_ELEMENT
-    // QML_UNCREATABLE("")
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_MOC_INCLUDE("QmlObjectListModel.h")
     Q_PROPERTY(QString              emailAddress        READ emailAddress       WRITE setEmailAddress       NOTIFY emailAddressChanged)
     Q_PROPERTY(QString              description         READ description        WRITE setDescription        NOTIFY descriptionChanged)

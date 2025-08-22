@@ -13,12 +13,13 @@ import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
 
-import QGroundControl.FactSystem
+import QGroundControl
+
 import QGroundControl.FactControls
-import QGroundControl.Palette
+
 import QGroundControl.Controls
-import QGroundControl.Controllers
-import QGroundControl.ScreenTools
+
+
 
 SetupPage {
     id:             airframePage
@@ -198,7 +199,7 @@ SetupPage {
                                     Connections {
                                         target:                 _frameTypeAvailable ? _frameType : null
                                         ignoreUnknownSignals:   true
-                                        onRawValueChanged:      combo.selectFrameType()
+                                        function onRawValueChanged(value) { combo.selectFrameType() }
                                     }
                                 }
                             }

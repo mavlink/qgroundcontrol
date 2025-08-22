@@ -3,10 +3,10 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.ScreenTools
+
 import QGroundControl.Controls
 import QGroundControl.FactControls
-import QGroundControl.Palette
+
 
 // Camera calculator "Camera" section for mission item editors
 ColumnLayout {
@@ -38,7 +38,7 @@ ColumnLayout {
 
             Connections {
                 target:                 cameraCalc
-                onCameraBrandChanged:   cameraBrandCombo.selectCurrentBrand()
+                function onCameraBrandChanged() { cameraBrandCombo.selectCurrentBrand() }
             }
 
             function selectCurrentBrand() {
@@ -56,7 +56,7 @@ ColumnLayout {
 
             Connections {
                 target:                 cameraCalc
-                onCameraModelChanged:   cameraModelCombo.selectCurrentModel()
+                function onCameraModelChanged() { cameraModelCombo.selectCurrentModel() }
             }
 
             function selectCurrentModel() {

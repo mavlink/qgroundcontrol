@@ -12,10 +12,6 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.MultiVehicleManager
-import QGroundControl.ScreenTools
-import QGroundControl.Palette
-import QGroundControl.FactSystem
 import QGroundControl.FactControls
 
 // This indicator page is used both when showing RTK status only with no vehicle connect and when showing GPS/RTK status with a vehicle connected
@@ -27,7 +23,46 @@ ToolIndicatorPage {
     property string na:                 qsTr("N/A", "No data to display")
     property string valueNA:            qsTr("--.--", "No data to display")
     property var    rtkSettings:        QGroundControl.settingsManager.rtkSettings
-    property bool   useFixedPosition:   rtkSettings.useFixedBasePosition.rawValue
+    property var    useFixedPosition:           rtkSettings.useFixedBasePosition.rawValue
+    property var    manufacturer:       rtkSettings.baseReceiverManufacturers.rawValue
+
+    readonly property var    _trimble:            0b0001
+    readonly property var    _septentrio:         0b0010
+    readonly property var    _femtomes:           0b0100
+    readonly property var    _ublox:              0b1000
+    readonly property var    _all:                0b1111
+    property var             settingsDisplayId:     _all
+
+    function updateSettingsDisplayId() {
+        switch(manufacturer) {
+            case 0: // All
+                settingsDisplayId = _trimble | _septentrio | _femtomes | _ublox
+                break
+            case 1: // Trimble
+                settingsDisplayId = _trimble
+                break
+            case 2: // Septentrio
+                settingsDisplayId = _septentrio
+                break
+            case 3: // Femtomes
+                settingsDisplayId = _femtomes
+                break
+            case 4: // UBlox
+                settingsDisplayId = _ublox
+                break
+            default:
+                settingsDisplayId = _all
+        }
+    }
+
+    onManufacturerChanged: {
+        updateSettingsDisplayId()
+    }
+
+    Component.onCompleted: {
+        updateSettingsDisplayId()
+    }
+
 
     contentComponent: Component {
         ColumnLayout {
@@ -103,29 +138,46 @@ ToolIndicatorPage {
                 visible:            fact.visible
             }
 
-            RowLayout {
-                visible: rtkSettings.useFixedBasePosition.visible
+            GridLayout {
+                columns: 2
 
+                QGCLabel {
+                    text: qsTr("Settings displayed")
+                }
+                FactComboBox {
+                    Layout.fillWidth:   true
+                    fact:               QGroundControl.settingsManager.rtkSettings.baseReceiverManufacturers
+                    visible:            QGroundControl.settingsManager.rtkSettings.baseReceiverManufacturers.visible
+                }
+            }
+
+            RowLayout {
                 QGCRadioButton {
                     text:       qsTr("Survey-In")
-                    checked:    !useFixedPosition
-                    onClicked:  rtkSettings.useFixedBasePosition.rawValue = false
+                    checked:    useFixedPosition == BaseModeDefinition.BaseSurveyIn
+                    onClicked:  rtkSettings.useFixedBasePosition.rawValue = BaseModeDefinition.BaseSurveyIn
+                    visible:    settingsDisplayId & _all
                 }
 
                 QGCRadioButton {
                     text: qsTr("Specify position")
-                    checked:    useFixedPosition
-                    onClicked:  rtkSettings.useFixedBasePosition.rawValue = true
+                    checked:    useFixedPosition == BaseModeDefinition.BaseFixed
+                    onClicked:  rtkSettings.useFixedBasePosition.rawValue = BaseModeDefinition.BaseFixed
+                    visible:    settingsDisplayId & _all
                 }
             }
 
             FactSlider {
                 Layout.fillWidth:       true
                 Layout.preferredWidth:  sliderWidth
-                label:                  qsTr("Accuracy (u-blox only)")
+                label:                  qsTr("Accuracy")
                 fact:                   QGroundControl.settingsManager.rtkSettings.surveyInAccuracyLimit
                 majorTickStepSize:      0.1
-                visible:                !useFixedPosition && rtkSettings.surveyInAccuracyLimit.visible
+                visible:                (
+                    useFixedPosition == BaseModeDefinition.BaseSurveyIn
+                    && rtkSettings.surveyInAccuracyLimit.visible
+                    && (settingsDisplayId & _ublox)
+                )
             }
 
             FactSlider {
@@ -134,37 +186,53 @@ ToolIndicatorPage {
                 label:                  qsTr("Min Duration")
                 fact:                   rtkSettings.surveyInMinObservationDuration
                 majorTickStepSize:      10
-                visible:                !useFixedPosition && rtkSettings.surveyInMinObservationDuration.visible
+                visible:                (
+                    useFixedPosition == BaseModeDefinition.BaseSurveyIn
+                    && rtkSettings.surveyInMinObservationDuration.visible
+                    && (settingsDisplayId & (_ublox | _femtomes | _trimble))
+                )
             }
 
             LabelledFactTextField {
                 label:                  rtkSettings.fixedBasePositionLatitude.shortDescription
                 fact:                   rtkSettings.fixedBasePositionLatitude
-                visible:                useFixedPosition && rtkSettings.fixedBasePositionLatitude.visible
+                visible:                (
+                    useFixedPosition == BaseModeDefinition.BaseFixed
+                    && (settingsDisplayId & _all)
+                )
             }
 
             LabelledFactTextField {
                 label:              rtkSettings.fixedBasePositionLongitude.shortDescription
                 fact:               rtkSettings.fixedBasePositionLongitude
-                visible:            useFixedPosition && rtkSettings.fixedBasePositionLongitude.visible
+                visible:            (
+                    useFixedPosition == BaseModeDefinition.BaseFixed
+                    && (settingsDisplayId & _all)
+                )
             }
 
             LabelledFactTextField {
                 label:              rtkSettings.fixedBasePositionAltitude.shortDescription
                 fact:               rtkSettings.fixedBasePositionAltitude
-                visible:            useFixedPosition && rtkSettings.fixedBasePositionAltitude.visible
+                visible:            (
+                    useFixedPosition == BaseModeDefinition.BaseFixed
+                    && (settingsDisplayId & _all)
+                )
             }
 
             LabelledFactTextField {
                 label:              rtkSettings.fixedBasePositionAccuracy.shortDescription
                 fact:               rtkSettings.fixedBasePositionAccuracy
-                visible:            useFixedPosition && rtkSettings.fixedBasePositionAccuracy.visible
+                visible:            (
+                    useFixedPosition == BaseModeDefinition.BaseFixed
+                    && (settingsDisplayId & _ublox)
+                )
             }
 
             LabelledButton {
                 label:              qsTr("Current Base Position")
                 buttonText:         enabled ? qsTr("Save") : qsTr("Not Yet Valid")
-                visible:            useFixedPosition
+                visible:            useFixedPosition == BaseModeDefinition.BaseFixed
                 enabled:            QGroundControl.gpsRtk.valid.value
 
                 onClicked: {

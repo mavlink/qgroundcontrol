@@ -10,8 +10,9 @@
 import QtQuick
 import QtQuick.Controls
 
-import QGroundControl.ScreenTools
-import QGroundControl.Palette
+import QGroundControl
+import QGroundControl.Controls
+
 
 Button {
     id:             control

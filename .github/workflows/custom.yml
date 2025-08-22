@@ -4,17 +4,20 @@ on:
   push:
     branches:
       - master
-      - 'Stable*'
+      - Stable*
     tags:
-      - 'v*'
+      - v*
+    paths-ignore:
+      - docs/**
   pull_request:
     paths:
-      - '.github/workflows/custom.yml'
-      - 'deploy/windows/**'
-      - 'src/**'
-      - 'custom-example/**'
-      - 'CMakeLists.txt'
-      - 'cmake/**'
+      - .github/workflows/windows.yml
+      - deploy/windows/**
+      - src/**
+      - custom-example/**
+      - CMakeLists.txt
+      - cmake/**
+      - tools/setup/*windows*
 
 # concurrency:
 #   group: ${{ github.workflow }}-${{ github.ref }}
@@ -24,32 +27,21 @@ jobs:
   build:
     runs-on: windows-latest
 
-    strategy:
-      matrix:
-        BuildType: [Release]
-        Arch: [x64]
-
     defaults:
       run:
         shell: cmd
 
     env:
-      ARTIFACT: QGroundControl-installer.exe
       QT_VERSION: 6.8.3
       GST_VERSION: 1.22.12
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: recursive
           fetch-depth: 1
-          fetch-tags: false
-
-      - name: Get all tags for correct version determination
-        working-directory:  ${{ github.workspace }}
-        run: |
-          git fetch --all --tags -f --depth 1
+          fetch-tags: true
 
       - name: Initial Setup
         uses: ./.github/actions/common
@@ -71,11 +63,10 @@ jobs:
         with:
           host: windows
           target: win64_msvc2022_64
-          build-type: ${{ matrix.BuildType }}
-          cpm-modules: ${{ runner.temp }}/shadow_build_dir/cpm_modules
+          build-type: Release
+          cpm-modules: ${{ runner.temp }}\build\cpm_modules
 
-      - name: Install Qt for Windows (x64)
-        if: matrix.Arch == 'x64'
+      - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
@@ -84,19 +75,23 @@ jobs:
           arch: win64_msvc2022_64
           dir: ${{ runner.temp }}
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
+          setup-python: false
           cache: true
 
-      - name: Set up Visual Studio shell
+      - name: Set up MSVC environment
         uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: x64
 
       - name: Configure
-        working-directory: ${{ runner.temp }}\shadow_build_dir
-        run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
-              -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }}
-              -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
+        working-directory: ${{ runner.temp }}\build
+        run: |
+          ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja ^
+            -DCMAKE_BUILD_TYPE=Release ^
+            -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
 
       - name: Build
-        working-directory: ${{ runner.temp }}\shadow_build_dir
-        run: cmake --build . --target all --config ${{ matrix.BuildType }}
+        working-directory: ${{ runner.temp }}\build
+        run: cmake --build . --target all --config Release --parallel
+
+      - name: Verify executable
+        working-directory: ${{ runner.temp }}\build\Release
+        run: Custom-QGroundControl.exe --simple-boot-test

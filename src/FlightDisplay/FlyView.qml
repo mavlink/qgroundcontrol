@@ -18,17 +18,16 @@ import QtQuick.Window
 import QtQml.Models
 
 import QGroundControl
-import QGroundControl.Controllers
+
 import QGroundControl.Controls
-import QGroundControl.FactSystem
+
 import QGroundControl.FlightDisplay
 import QGroundControl.FlightMap
-import QGroundControl.Palette
-import QGroundControl.ScreenTools
-import QGroundControl.Vehicle
 
-// 3D Viewer modules
-import Viewer3D
+
+import QGroundControl.UTMSP
+
+import QGroundControl.Viewer3D
 
 Item {
     id: _root
@@ -174,9 +173,20 @@ Item {
             visible:            false
         }
 
-        Viewer3D{
-            id:                     viewer3DWindow
-            anchors.fill:           parent
+        Viewer3D {
+            id: viewer3DWindow
+            anchors.fill: parent
+        }
+    }
+
+    UTMSPActivationStatusBar {
+        activationStartTimestamp:   UTMSPStateStorage.startTimeStamp
+        activationApproval:         UTMSPStateStorage.showActivationTab && QGroundControl.utmspManager.utmspVehicle.vehicleActivation
+        flightID:                   UTMSPStateStorage.flightID
+        anchors.fill:               parent
+
+        function onActivationTriggered(value) {
+            _root.utmspSendActTrigger = value
         }
     }
 }

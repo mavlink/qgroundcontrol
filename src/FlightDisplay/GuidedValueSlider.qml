@@ -13,10 +13,10 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.Vehicle
-import QGroundControl.Palette
-import QGroundControl.ScreenTools
-import QGroundControl.SettingsManager
+
+
+
+
 
 Item {
     id:     control
@@ -291,7 +291,7 @@ Item {
 
             Connections {
                 target: control
-                on_SliderValueChanged: sliderValueTextField.visible = false
+                function on_SliderValueChanged() { sliderValueTextField.visible = false }
             }
         }
     }

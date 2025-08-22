@@ -9,11 +9,8 @@
 
 #include "BrandImageSettings.h"
 
-#include <QtQml/QQmlEngine>
-
 DECLARE_SETTINGGROUP(BrandImage, "Branding")
 {
-    qmlRegisterUncreatableType<BrandImageSettings>("QGroundControl.SettingsManager", 1, 0, "BrandImageSettings", "Reference only"); \
 }
 
 DECLARE_SETTINGSFACT(BrandImageSettings, userBrandImageIndoor)

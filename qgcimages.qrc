@@ -86,6 +86,7 @@
         <file alias="DatalinkLossLight.svg">src/AutoPilotPlugins/PX4/Images/DatalinkLossLight.svg</file>
         <file alias="Disarmed.svg">src/UI/toolbar/Images/Disarmed.svg</file>
         <file alias="Disconnect.svg">src/UI/toolbar/Images/Disconnect.svg</file>
+        <file alias="EscIndicator.svg">src/UI/toolbar/Images/EscIndicator.svg</file>
         <file alias="FirmwareUpgradeIcon.png">src/Vehicle/VehicleSetup/FirmwareUpgradeIcon.png</file>
         <file alias="FollowComponentIcon.png">src/AutoPilotPlugins/Common/Images/FlightModesComponentIcon.png</file>
         <file alias="FlightModesComponentIcon.png">src/AutoPilotPlugins/Common/Images/FlightModesComponentIcon.png</file>
@@ -213,6 +214,5 @@
         <file alias="Yield.svg">src/UI/toolbar/Images/Yield.svg</file>
         <file alias="ZoomMinus.svg">src/FlightMap/Images/ZoomMinus.svg</file>
         <file alias="ZoomPlus.svg">src/FlightMap/Images/ZoomPlus.svg</file>
-        <file alias="Viewer3D/City3DMapIcon.svg">src/Viewer3D/Images/city_3d_map_icon.svg</file>
     </qresource>
 </RCC>

@@ -88,5 +88,11 @@ qt_add_qml_module(AutoPilotPluginsAPMModule
         APMSubMotorComponent.qml
         APMTuningComponentCopter.qml
         APMTuningComponentSub.qml
-    NO_PLUGIN # Required by Qt 6.6.3. TODO: Remove when no longer supported.
+    NO_PLUGIN
+)
+
+# Add json file
+qt_add_resources(${CMAKE_PROJECT_NAME} autopilot_plugin_apm_resource
+    PREFIX "/json"
+    FILES APMFollowComponent.FactMetaData.json
 )

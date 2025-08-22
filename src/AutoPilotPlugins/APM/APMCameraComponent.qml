@@ -11,11 +11,12 @@
 import QtQuick
 import QtQuick.Controls
 
-import QGroundControl.FactSystem
+import QGroundControl
+
 import QGroundControl.FactControls
-import QGroundControl.Palette
+
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
+
 
 SetupPage {
     id:             cameraPage
@@ -141,16 +142,16 @@ SetupPage {
             }
 
             // Whenever any SERVO#_FUNCTION parameters changes we need to go looking for gimbal output channels again
-            Connections { target: _rc5Function; onValueChanged: calcGimbalOutValues() }
-            Connections { target: _rc6Function; onValueChanged: calcGimbalOutValues() }
-            Connections { target: _rc7Function; onValueChanged: calcGimbalOutValues() }
-            Connections { target: _rc8Function; onValueChanged: calcGimbalOutValues() }
-            Connections { target: _rc9Function; onValueChanged: calcGimbalOutValues() }
-            Connections { target: _rc10Function; onValueChanged: calcGimbalOutValues() }
-            Connections { target: _rc11Function; onValueChanged: calcGimbalOutValues() }
-            Connections { target: _rc12Function; onValueChanged: calcGimbalOutValues() }
-            Connections { target: _rc13Function; onValueChanged: calcGimbalOutValues() }
-            Connections { target: _rc14Function; onValueChanged: calcGimbalOutValues() }
+            Connections { target: _rc5Function; function onValueChanged(value) { calcGimbalOutValues() } }
+            Connections { target: _rc6Function; function onValueChanged(value) { calcGimbalOutValues() } }
+            Connections { target: _rc7Function; function onValueChanged(value) { calcGimbalOutValues() } }
+            Connections { target: _rc8Function; function onValueChanged(value) { calcGimbalOutValues() } }
+            Connections { target: _rc9Function; function onValueChanged(value) { calcGimbalOutValues() } }
+            Connections { target: _rc10Function; function onValueChanged(value) { calcGimbalOutValues() } }
+            Connections { target: _rc11Function; function onValueChanged(value) { calcGimbalOutValues() } }
+            Connections { target: _rc12Function; function onValueChanged(value) { calcGimbalOutValues() } }
+            Connections { target: _rc13Function; function onValueChanged(value) { calcGimbalOutValues() } }
+            Connections { target: _rc14Function; function onValueChanged(value) { calcGimbalOutValues() } }
 
             // Whenever an MNT_RC_IN_* setting is changed make sure to turn on RC targeting
             Connections {

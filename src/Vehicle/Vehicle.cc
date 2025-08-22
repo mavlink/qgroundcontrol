@@ -47,7 +47,6 @@
 #include "TerrainProtocolHandler.h"
 #include "TerrainQuery.h"
 #include "TrajectoryPoints.h"
-#include "VehicleBatteryFactGroup.h"
 #include "VehicleLinkManager.h"
 #include "VehicleObjectAvoidance.h"
 #include "VideoManager.h"
@@ -110,7 +109,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _distanceSensorFactGroup      (this)
     , _localPositionFactGroup       (this)
     , _localPositionSetpointFactGroup(this)
-    , _escStatusFactGroup           (this)
     , _estimatorStatusFactGroup     (this)
     , _hygrometerFactGroup          (this)
     , _generatorFactGroup           (this)
@@ -256,9 +254,9 @@ void Vehicle::_commonInit()
     connect(_firmwarePlugin, &FirmwarePlugin::toolIndicatorsChanged, this, &Vehicle::toolIndicatorsChanged);
     connect(_firmwarePlugin, &FirmwarePlugin::modeIndicatorsChanged, this, &Vehicle::modeIndicatorsChanged);
 
-    connect(this, &Vehicle::coordinateChanged,      this, &Vehicle::_updateDistanceHeadingToHome);
-    connect(this, &Vehicle::coordinateChanged,      this, &Vehicle::_updateDistanceToGCS);
-    connect(this, &Vehicle::homePositionChanged,    this, &Vehicle::_updateDistanceHeadingToHome);
+    connect(this, &Vehicle::coordinateChanged,      this, &Vehicle::_updateDistanceHeadingHome);
+    connect(this, &Vehicle::coordinateChanged,      this, &Vehicle::_updateDistanceHeadingGCS);
+    connect(this, &Vehicle::homePositionChanged,    this, &Vehicle::_updateDistanceHeadingHome);
     connect(this, &Vehicle::hobbsMeterChanged,      this, &Vehicle::_updateHobbsMeter);
     connect(this, &Vehicle::coordinateChanged,      this, &Vehicle::_updateAltAboveTerrain);
     // Initialize alt above terrain to Nan so frontend can display it correctly in case the terrain query had no response
@@ -267,7 +265,7 @@ void Vehicle::_commonInit()
     connect(this, &Vehicle::vehicleTypeChanged,     this, &Vehicle::inFwdFlightChanged);
     connect(this, &Vehicle::vtolInFwdFlightChanged, this, &Vehicle::inFwdFlightChanged);
 
-    connect(QGCPositionManager::instance(), &QGCPositionManager::gcsPositionChanged, this, &Vehicle::_updateDistanceToGCS);
+    connect(QGCPositionManager::instance(), &QGCPositionManager::gcsPositionChanged, this, &Vehicle::_updateDistanceHeadingGCS);
     connect(QGCPositionManager::instance(), &QGCPositionManager::gcsPositionChanged, this, &Vehicle::_updateHomepoint);
 
     _missionManager = new MissionManager(this);
@@ -331,7 +329,6 @@ void Vehicle::_commonInit()
     _addFactGroup(&_distanceSensorFactGroup,    _distanceSensorFactGroupName);
     _addFactGroup(&_localPositionFactGroup,     _localPositionFactGroupName);
     _addFactGroup(&_localPositionSetpointFactGroup,_localPositionSetpointFactGroupName);
-    _addFactGroup(&_escStatusFactGroup,         _escStatusFactGroupName);
     _addFactGroup(&_estimatorStatusFactGroup,   _estimatorStatusFactGroupName);
     _addFactGroup(&_hygrometerFactGroup,        _hygrometerFactGroupName);
     _addFactGroup(&_generatorFactGroup,         _generatorFactGroupName);
@@ -381,9 +378,7 @@ Vehicle::~Vehicle()
 
 void Vehicle::prepareDelete()
 {
-#if 0
-    // I believe this should no longer be needed with new PhtoVideoControl implmenentation.
-    // Leaving in for now, just in case it need to come back.
+    // Clean up camera manager to stop all timers and prevent crashes during destruction
     if(_cameraManager) {
         // because of _cameraManager QML bindings check for nullptr won't work in the binding pipeline
         // the dangling pointer access will cause a runtime fault
@@ -391,9 +386,8 @@ void Vehicle::prepareDelete()
         _cameraManager = nullptr;
         delete tmpCameras;
         emit cameraManagerChanged();
-        qApp->processEvents();
+        // Note: Removed qApp->processEvents() to prevent MAVLink crashes during destruction
     }
-#endif
 }
 
 void Vehicle::deleteCameraManager()
@@ -522,8 +516,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
 
     _waitForMavlinkMessageMessageReceivedHandler(message);
 
-    // Battery fact groups are created dynamically as new batteries are discovered
-    VehicleBatteryFactGroup::handleMessageForFactGroupCreation(this, message);
+    // Handle creation of dynamic fact group lists
+    _batteryFactGroupListModel.handleMessageForFactGroupCreation(this, message);
+    _escStatusFactGroupListModel.handleMessageForFactGroupCreation(this, message);
 
     // Let the fact groups take a whack at the mavlink traffic
     for (FactGroup* factGroup : factGroups()) {
@@ -1922,7 +1917,7 @@ void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, 
                     static_cast<float>(pitch),
                     static_cast<float>(yaw),
                     static_cast<float>(thrust),
-                    0);
+                    0, 0);
     }
 }
 
@@ -3437,18 +3432,21 @@ bool Vehicle::autoDisarm()
     return false;
 }
 
-void Vehicle::_updateDistanceHeadingToHome()
+void Vehicle::_updateDistanceHeadingHome()
 {
     if (coordinate().isValid() && homePosition().isValid()) {
         _distanceToHomeFact.setRawValue(coordinate().distanceTo(homePosition()));
         if (_distanceToHomeFact.rawValue().toDouble() > 1.0) {
             _headingToHomeFact.setRawValue(coordinate().azimuthTo(homePosition()));
+            _headingFromHomeFact.setRawValue(homePosition().azimuthTo(coordinate()));
         } else {
             _headingToHomeFact.setRawValue(qQNaN());
+            _headingFromHomeFact.setRawValue(qQNaN());
         }
     } else {
         _distanceToHomeFact.setRawValue(qQNaN());
         _headingToHomeFact.setRawValue(qQNaN());
+        _headingFromHomeFact.setRawValue(qQNaN());
     }
 }
 
@@ -3480,13 +3478,15 @@ void Vehicle::_updateMissionItemIndex()
     _missionItemIndexFact.setRawValue(currentIndex + offset);
 }
 
-void Vehicle::_updateDistanceToGCS()
+void Vehicle::_updateDistanceHeadingGCS()
 {
     QGeoCoordinate gcsPosition = QGCPositionManager::instance()->gcsPosition();
     if (coordinate().isValid() && gcsPosition.isValid()) {
         _distanceToGCSFact.setRawValue(coordinate().distanceTo(gcsPosition));
+        _headingFromGCSFact.setRawValue(gcsPosition.azimuthTo(coordinate()));
     } else {
         _distanceToGCSFact.setRawValue(qQNaN());
+        _headingFromGCSFact.setRawValue(qQNaN());
     }
 }
 
@@ -3549,7 +3549,7 @@ void Vehicle::_mavlinkMessageStatus(int uasId, uint64_t totalSent, uint64_t tota
     }
 }
 
-int Vehicle::versionCompare(QString& compare) const
+int Vehicle::versionCompare(const QString& compare) const
 {
     return _firmwarePlugin->versionCompare(this, compare);
 }
@@ -3881,7 +3881,7 @@ void Vehicle::clearAllParamMapRC(void)
     }
 }
 
-void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, float thrust, quint16 buttons)
+void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, float thrust, quint16 buttons, quint16 buttons2)
 {
     SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
@@ -3912,7 +3912,7 @@ void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, flo
         static_cast<int16_t>(newRollCommand),
         static_cast<int16_t>(newThrustCommand),
         static_cast<int16_t>(newYawCommand),
-        buttons, 0,
+        buttons, buttons2,
         0,
         0, 0,
         0, 0, 0, 0, 0, 0

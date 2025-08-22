@@ -1,7 +1,7 @@
 import QtQuick
 
 import QGroundControl
-import QGroundControl.ScreenTools
+import QGroundControl.Controls
 
 /// Works just like a regular MouseArea except:
 ///     1) It supports the ability to show touch extents based on QGroundControl.showTouchAreas

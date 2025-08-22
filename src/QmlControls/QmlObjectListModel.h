@@ -12,13 +12,15 @@
 
 #include <QtCore/QAbstractListModel>
 #include <QtCore/QLoggingCategory>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 Q_DECLARE_LOGGING_CATEGORY(QmlObjectListModelLog)
 
 class QmlObjectListModel : public QAbstractListModel
 {
     Q_OBJECT
-    
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
     QmlObjectListModel(QObject* parent = nullptr);
     ~QmlObjectListModel() override;
@@ -76,6 +78,8 @@ private slots:
     void _childDirtyChanged         (bool dirty);
     
 private:
+    void _signalCountChangedIfNotNested();
+    
     // Overrides from QAbstractListModel
     int         rowCount    (const QModelIndex & parent = QModelIndex()) const override;
     QVariant    data        (const QModelIndex & index, int role = Qt::DisplayRole) const override;

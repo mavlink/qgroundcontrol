@@ -11,6 +11,7 @@
 
 #include <QtCore/QFile>
 #include <QtCore/QLoggingCategory>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "LinkConfiguration.h"
 #include "LinkInterface.h"
@@ -26,7 +27,8 @@ Q_DECLARE_LOGGING_CATEGORY(LogReplayLinkLog)
 class LogReplayConfiguration : public LinkConfiguration
 {
     Q_OBJECT
-
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_PROPERTY(QString filename READ logFilename WRITE setLogFilename NOTIFY filenameChanged)
 
 public:

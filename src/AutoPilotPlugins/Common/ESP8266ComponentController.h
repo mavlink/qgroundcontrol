@@ -11,6 +11,7 @@
 
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QVariant>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "FactPanelController.h"
 #include "MAVLinkLib.h"
@@ -23,6 +24,7 @@ class Vehicle;
 class ESP8266ComponentController : public FactPanelController
 {
     Q_OBJECT
+    QML_ELEMENT
     Q_MOC_INCLUDE("Vehicle.h")
     Q_PROPERTY(int          componentID     READ componentID                                    CONSTANT)
     Q_PROPERTY(QString      version         READ version                                        NOTIFY versionChanged)

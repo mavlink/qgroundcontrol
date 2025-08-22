@@ -13,8 +13,8 @@ import QtQuick
 import QtQuick.Controls
 
 import QGroundControl.Controls
-import QGroundControl.Palette
-import QGroundControl.ScreenTools
+
+
 
 Button {
     id:                             button

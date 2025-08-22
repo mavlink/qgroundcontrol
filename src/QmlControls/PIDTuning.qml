@@ -14,10 +14,10 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.FactSystem
+
 import QGroundControl.FactControls
-import QGroundControl.ScreenTools
-import QGroundControl.Vehicle
+
+
 
 RowLayout {
     spacing: _margins
@@ -77,8 +77,7 @@ RowLayout {
     function saveTuningParamValues() {
         _savedTuningParamValues = [ ]
         for (var i=0; i<axis[_currentAxis].params.count; i++) {
-            var currentTuneParam = controller.getParameterFact(-1,
-                axis[_currentAxis].params.get(i).param)
+            var currentTuneParam = controller.getParameterFact(-1, axis[_currentAxis].params.get(i).param)
             _savedTuningParamValues.push(currentTuneParam.valueString)
         }
         savedRepeater.model = _savedTuningParamValues
@@ -188,18 +187,14 @@ RowLayout {
 
         ChartView {
             id:                     chart
-            width:                  Math.max(_minChartWidth, availableWidth - rightPanel.width - parent.spacing)
-            height:                 Math.max(_minChartHeight, availableHeight - leftPanelBottomColumn.height - parent.spacing)
+            width:                  Math.max(_minChartWidth, availableWidth - rightPanel.width - parent.spacing - _margins)
+            height:                 Math.max(_minChartHeight, availableHeight - leftPanelBottomColumn.height - parent.spacing - _margins)
             antialiasing:           true
             legend.alignment:       Qt.AlignBottom
             legend.font.pointSize:  ScreenTools.defaultFontPointSize
             legend.font.family:     ScreenTools.normalFontFamily
             titleFont.pointSize:    ScreenTools.defaultFontPointSize
             titleFont.family:       ScreenTools.normalFontFamily
-            margins.top:            _chartMargin
-            margins.bottom:         _chartMargin
-            margins.left:           _chartMargin
-            margins.right:          _chartMargin
 
             property real _chartMargin: 0
             property real _minChartWidth:   ScreenTools.defaultFontPixelWidth * 40
@@ -345,14 +340,28 @@ RowLayout {
             }
 
             // Instantiate all sliders (instead of switching the model), so that
-            // values are not changed unexpectedly if they do not match with a tick
-            // value
+            // values are not changed unexpectedly if they do not match with a tick value.
             Repeater {
                 model: axis
-                FactSliderPanel {
-                    Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 40
-                    visible:                _currentAxis === index
-                    sliderModel:            axis[index].params
+
+                Repeater {
+                    model: axis[index].params
+
+                    SettingsGroupLayout {
+                        id:                     tuningGroup
+                        heading:                title
+                        headingDescription:     description
+                        visible:                _currentAxis === index
+                        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 40
+
+                        FactSlider {
+                            fact:                   controller.getParameterFact(-1, param)
+                            from:                   min
+                            to:                     max
+                            majorTickStepSize:      step
+                            Layout.fillWidth:       true
+                        }
+                    }
                 }
             }
 

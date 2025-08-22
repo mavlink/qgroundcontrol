@@ -13,10 +13,10 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.MultiVehicleManager
-import QGroundControl.ScreenTools
-import QGroundControl.Palette
-import QGroundControl.FactSystem
+
+
+
+
 import QGroundControl.FactControls
 
 Item {
@@ -412,7 +412,7 @@ Item {
         id:                         acquirePopupConnection
         property bool isPopupOpen:  false
         target:                     gimbalController
-        onShowAcquireGimbalControlPopup: {
+        function onShowAcquireGimbalControlPopup() {
             if(!acquirePopupConnection.isPopupOpen){
                 acquirePopupConnection.isPopupOpen = true;
                 mainWindow.showMessageDialog(

@@ -38,9 +38,9 @@ _QGroundControl_ can be installed on macOS 12 (Monterey) or later:
 1. Download [QGroundControl.dmg](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl.dmg).
 2. .dmg dosyasına çift tıklayın, ardından çıkan ekranda _QGroundControl_'ü _Application_ dosyasına sürükleyin.
 
-::: info
+:::info
 QGroundControl continues to not be signed. You will not to allow permission for it to install based on you macOS version.
-::
+:::
 
 ## Ubuntu Linux {#ubuntu}
 
@@ -50,27 +50,54 @@ Ubuntu, bir seri bağlantı noktasının (veya USB serisinin) robotikle ilgili k
 _ QGroundControl _ 'ü kurmadan önce modem yöneticisini kaldırmalı ve seri bağlantı noktasına erişim için kendinize izin vermelisiniz.
 Ayrıca video akışını desteklemek için _ GStreamer _ 'ı da yüklemeniz gerekmektedir.
 
-QGroundControl \* 'ı ilk kez kurmadan önce:
+**Before installing _QGroundControl_ for the first time:**
 
-1. On the command prompt enter:
-   ```sh
-   sudo usermod -a -G dialout $USER
-   sudo apt-get remove modemmanager -y
-   sudo apt install gstreamer1.0-plugins-bad gstreamer1.0-libav gstreamer1.0-gl -y
-   sudo apt install libfuse2 -y
-   sudo apt install libxcb-xinerama0 libxkbcommon-x11-0 libxcb-cursor-dev -y
-   ```
-   <!-- Note, remove install of libqt5gui5 https://github.com/mavlink/qgroundcontrol/issues/10176 fixed -->
-2. Logout and login again to enable the change to user permissions.
+1. Enable serial-port access
+  Add your user to the dialout group so you can talk to USB devices without root:
 
-&nbsp; _ QGroundControl _ yüklemek için:
+```
+sudo usermod -aG dialout "$(id -un)"
+```
+
+:::info
+At login, your shell takes a snapshot of your user and group memberships. Because you just changed groups, you need a fresh login shell to pick up “dialout” access. Logging out and back in reloads that snapshot, so you get the new permissions.
+:::
+
+1. (Optional) Disable ModemManager
+  On some Ubuntu-based systems, ModemManager can claim serial ports that QGC needs. If you don't use it elsewhere, mask or remove it.
+
+```
+# preferred: stop and mask the service
+sudo systemctl mask --now ModemManager.service
+
+# or, if you’d rather remove the package
+sudo apt remove --purge modemmanager
+```
+
+1. On the command prompt, enter:
+
+```sh
+sudo apt install gstreamer1.0-plugins-bad gstreamer1.0-libav gstreamer1.0-gl -y
+sudo apt install libfuse2 -y
+sudo apt install libxcb-xinerama0 libxkbcommon-x11-0 libxcb-cursor-dev -y
+```
+
+**To install _QGroundControl_:**
 
 1. Download [QGroundControl-x86_64.AppImage](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl-x86_64.AppImage).
-2. Install (and run) using the terminal commands:
-   ```sh
-   chmod +x ./QGroundControl-x86_64.AppImage
-   ./QGroundControl-x86_64.AppImage  (or double click)
-   ```
+
+2. Make the AppImage executable
+
+```
+chmod +x QGroundControl-<arch>.AppImage
+```
+
+1. Run QGroundControl
+  Either double-click the AppImage in your file manager or launch it from a terminal:
+
+```
+./QGroundControl-<arch>.AppImage
+```
 
 ## Android {#android}
 

@@ -2,7 +2,7 @@
 
 - [Overview](qgc-user-guide/index.md)
   - [Quick Start](qgc-user-guide/getting_started/quick_start.md)
-  - [Download and Install (Daily 5.0)](qgc-user-guide/releases/daily_builds.md)
+  - [Download and Install](qgc-user-guide/getting_started/download_and_install.md)
   - [Support](qgc-user-guide/support/support.md)
 - [Fly View](qgc-user-guide/fly_view/fly_view.md)
   - [Toolbar](qgc-user-guide/fly_view/fly_view_toolbar.md)
@@ -103,7 +103,7 @@
     - [Mock Link](qgc-dev-guide/tools/mock_link.md)
   - [Command Line Options](qgc-dev-guide/command_line_options.md)
   - [Custom Builds](qgc-dev-guide/custom_build/custom_build.md)
-    - [Initial Repository Setup For Custom Build](qgc-dev-guide/custom_build/create_repos.md)
+    - [Initial Repository Setup For Custom Build](qgc-dev-guide/custom_build/fork_repo.md)
     - [Custom Build Plugins](qgc-dev-guide/custom_build/plugins.md)
     - [Resources Overrides](qgc-dev-guide/custom_build/resource_override.md)
     - [Customization](qgc-dev-guide/custom_build/customization.md)

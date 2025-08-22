@@ -18,7 +18,6 @@
 #include "HorizontalFactValueGrid.h"
 #include "InstrumentValueData.h"
 #include "JoystickManager.h"
-#include "LogDownloadController.h"
 #include "MAVLinkLib.h"
 #include "QGCLoggingCategory.h"
 #include "QGCOptions.h"
@@ -34,7 +33,7 @@
 #include CUSTOMHEADER
 #endif
 
-#include <QtCore/qapplicationstatic.h>
+#include <QtCore/QApplicationStatic>
 #include <QtCore/QFile>
 #include <QtQml/qqml.h>
 #include <QtQml/QQmlApplicationEngine>
@@ -52,12 +51,12 @@ QGCCorePlugin::QGCCorePlugin(QObject *parent)
     , _defaultOptions(new QGCOptions(this))
     , _emptyCustomMapItems(new QmlObjectListModel(this))
 {
-    // qCDebug(QGCCorePluginLog) << Q_FUNC_INFO << this;
+    qCDebug(QGCCorePluginLog) << this;
 }
 
 QGCCorePlugin::~QGCCorePlugin()
 {
-    // qCDebug(QGCCorePluginLog) << Q_FUNC_INFO << this;
+    qCDebug(QGCCorePluginLog) << this;
 }
 
 QGCCorePlugin *QGCCorePlugin::instance()
@@ -67,13 +66,6 @@ QGCCorePlugin *QGCCorePlugin::instance()
 #else
     return CUSTOMCLASS::instance();
 #endif
-}
-
-void QGCCorePlugin::registerQmlTypes()
-{
-    (void) qmlRegisterUncreatableType<QGCCorePlugin>("QGroundControl", 1, 0, "QGCCorePlugin", QStringLiteral("Reference only"));
-    (void) qmlRegisterUncreatableType<QGCOptions>("QGroundControl", 1, 0, "QGCOptions", QStringLiteral("Reference only"));
-    (void) qmlRegisterUncreatableType<QGCFlyViewOptions>("QGroundControl", 1, 0, "QGCFlyViewOptions", QStringLiteral("Reference only"));
 }
 
 const QVariantList &QGCCorePlugin::analyzePages()
@@ -269,13 +261,12 @@ QQmlApplicationEngine *QGCCorePlugin::createQmlApplicationEngine(QObject *parent
     qmlEngine->addImportPath(QStringLiteral("qrc:/qml"));
     qmlEngine->rootContext()->setContextProperty(QStringLiteral("joystickManager"), JoystickManager::instance());
     qmlEngine->rootContext()->setContextProperty(QStringLiteral("debugMessageModel"), QGCLogging::instance());
-    qmlEngine->rootContext()->setContextProperty(QStringLiteral("logDownloadController"), LogDownloadController::instance());
     return qmlEngine;
 }
 
 void QGCCorePlugin::createRootWindow(QQmlApplicationEngine *qmlEngine)
 {
-    qmlEngine->load(QUrl(QStringLiteral("qrc:/qml/QGroundControl/MainWindow/MainWindow.qml")));
+    qmlEngine->load(QUrl(QStringLiteral("qrc:/qml/QGroundControl/MainWindow.qml")));
 }
 
 VideoReceiver *QGCCorePlugin::createVideoReceiver(QObject *parent)
@@ -346,9 +337,9 @@ QString QGCCorePlugin::firstRunPromptResource(int id) const
 {
     switch (id) {
     case kUnitsFirstRunPromptId:
-        return QStringLiteral("/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml");
+        return QStringLiteral("/qml/QGroundControl/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml");
     case kOfflineVehicleFirstRunPromptId:
-        return QStringLiteral("/FirstRunPromptDialogs/OfflineVehicleFirstRunPrompt.qml");
+        return QStringLiteral("/qml/QGroundControl/FirstRunPromptDialogs/OfflineVehicleFirstRunPrompt.qml");
     default:
         return QString();
     }

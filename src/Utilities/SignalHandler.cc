@@ -50,13 +50,21 @@ void SignalHandler::_onSigInt()
 {
     _notifierInt->setEnabled(false);
     char b;
-    ::read(sigIntFd[1], &b, sizeof(b));
-    qCDebug(SignalHandlerLog) << "Caught SIGINT—shutting down gracefully";
+    (void) ::read(sigIntFd[1], &b, sizeof(b));
 
-    if (qgcApp() && qgcApp()->mainRootWindow()) {
-        (void) qgcApp()->mainRootWindow()->close();
-        QEvent ev(QEvent::Quit);
-        (void) qgcApp()->event(&ev);
+    _sigIntCount++;
+
+    if (_sigIntCount == 1) {
+        qCDebug(SignalHandlerLog) << "Caught SIGINT—press Ctrl+C again to exit immediately";
+
+        if (qgcApp() && qgcApp()->mainRootWindow()) {
+            (void) qgcApp()->mainRootWindow()->close();
+            QEvent ev(QEvent::Quit);
+            (void) qgcApp()->event(&ev);
+        }
+    } else {
+        qCDebug(SignalHandlerLog) << "Caught second SIGINT—exiting immediately";
+        _exit(0);
     }
 
     _notifierInt->setEnabled(true);
@@ -66,7 +74,7 @@ void SignalHandler::_onSigTerm()
 {
     _notifierTerm->setEnabled(false);
     char b;
-    ::read(sigTermFd[1], &b, sizeof(b));
+    (void) ::read(sigTermFd[1], &b, sizeof(b));
 
     qCDebug(SignalHandlerLog) << "Caught SIGTERM—shutting down gracefully";
     if (qgcApp() && qgcApp()->mainRootWindow()) {

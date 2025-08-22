@@ -14,6 +14,7 @@
 #include <QtCore/QHash>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 class Fact;
 
@@ -23,6 +24,8 @@ Q_DECLARE_LOGGING_CATEGORY(FactValueSliderListModelLog)
 class FactValueSliderListModel : public QAbstractListModel
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     /// The initial value of the Fact at the meta data specified decimal place precision
     Q_PROPERTY(double initialValueAtPrecision READ initialValueAtPrecision NOTIFY initialValueAtPrecisionChanged)
 

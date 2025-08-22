@@ -14,13 +14,12 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.FactSystem
+
 import QGroundControl.FactControls
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
-import QGroundControl.MultiVehicleManager
-import QGroundControl.Palette
+
 import QGroundControl.QGCMapEngineManager
+
 
 Item {
     id: root
@@ -52,7 +51,7 @@ Item {
 
         Connections {
             target:                 _mapEngineManager
-            onErrorMessageChanged:  errorDialogComponent.createObject(mainWindow).open()
+            function onErrorMessageChanged() { errorDialogComponent.createObject(mainWindow).open() }
         }
 
         SettingsGroupLayout {

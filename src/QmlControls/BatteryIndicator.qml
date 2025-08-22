@@ -12,13 +12,11 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.MultiVehicleManager
-import QGroundControl.ScreenTools
-import QGroundControl.Palette
-import QGroundControl.FactSystem
+
+
+
+
 import QGroundControl.FactControls
-import QGroundControl.AutoPilotPlugin
-import MAVLink
 
 //-------------------------------------------------------------------------
 //-- Battery Indicator

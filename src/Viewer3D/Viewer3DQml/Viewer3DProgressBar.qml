@@ -1,16 +1,17 @@
-import QtQuick
-import QtQuick.Controls
+/****************************************************************************
+ *
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
 import QGroundControl
-import QGroundControl.Controllers
 import QGroundControl.Controls
 import QGroundControl.FlightDisplay
 import QGroundControl.FlightMap
-import QGroundControl.Palette
-import QGroundControl.ScreenTools
-
-///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
-
+import QGroundControl.Viewer3D
 
 Rectangle{
     id: progressBody

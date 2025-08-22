@@ -14,11 +14,11 @@ import QtQuick.Controls
 import QGroundControl
 import QGroundControl.FlightDisplay
 import QGroundControl.FlightMap
-import QGroundControl.ScreenTools
+
 import QGroundControl.Controls
-import QGroundControl.Palette
-import QGroundControl.Vehicle
-import QGroundControl.Controllers
+
+
+
 
 Item {
     id:     root
@@ -199,7 +199,7 @@ Item {
             }
             Connections {
                 target:                 _camera
-                onThermalModeChanged:   thermalItem.pipOrNot()
+                function onThermalModeChanged() { thermalItem.pipOrNot() }
             }
             onVisibleChanged: {
                 thermalItem.pipOrNot()

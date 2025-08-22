@@ -13,8 +13,8 @@ import QtLocation
 import QtPositioning
 
 import QGroundControl
-import QGroundControl.ScreenTools
-import QGroundControl.Palette
+
+
 import QGroundControl.Controls
 import QGroundControl.FlightMap
 
@@ -85,13 +85,13 @@ Item {
     Connections {
         target: _missionItem.isSimpleItem ? _missionItem : null
 
-        onLoiterRadiusChanged: {
+        function onLoiterRadiusChanged(loiterRadius) {
             if (loiterVisualLoader.item) {
                 loiterVisualLoader.item.handleLoiterRadiusChange()
             }
         }
 
-        onCoordinateChanged: {
+        function onCoordinateChanged(coordinate) {
             if (loiterVisualLoader.item) {
                 loiterVisualLoader.item.handleCoordinateChange()
             }

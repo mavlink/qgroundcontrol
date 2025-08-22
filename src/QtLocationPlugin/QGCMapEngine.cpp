@@ -26,7 +26,7 @@
 #include "QGCCacheTile.h"
 #include <QGCLoggingCategory.h>
 
-#include <QtCore/qapplicationstatic.h>
+#include <QtCore/QApplicationStatic>
 
 QGC_LOGGING_CATEGORY(QGCMapEngineLog, "qgc.qtlocationplugin.qgcmapengine")
 

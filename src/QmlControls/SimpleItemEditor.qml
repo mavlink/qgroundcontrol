@@ -3,11 +3,11 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.ScreenTools
-import QGroundControl.Vehicle
+
+
 import QGroundControl.Controls
 import QGroundControl.FactControls
-import QGroundControl.Palette
+
 
 // Editor for Simple mission items
 Rectangle {
@@ -42,7 +42,7 @@ Rectangle {
 
     Connections {
         target:                 missionItem
-        onAltitudeModeChanged:  updateAltitudeModeText()
+        function onAltitudeModeChanged() { updateAltitudeModeText() }
     }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }

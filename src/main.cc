@@ -10,56 +10,35 @@
 #include <QtQuick/QQuickWindow>
 #include <QtWidgets/QApplication>
 
-#ifdef Q_OS_MACOS
-    #include <QtCore/QProcessEnvironment>
-#endif
-
 #include "QGCApplication.h"
 #include "QGCLogging.h"
 #include "CmdLineOptParser.h"
 #include "SettingsManager.h"
 #include "MavlinkSettings.h"
+#include "Platform.h"
+
+#ifdef Q_OS_WIN
+    #include <windows.h>
+#endif
 
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
     #include <QtWidgets/QMessageBox>
     #include "RunGuard.h"
 #endif
 
+#ifdef Q_OS_LINUX
 #ifdef Q_OS_ANDROID
     #include "AndroidInterface.h"
-#endif
-
-#ifdef Q_OS_LINUX
-#ifndef Q_OS_ANDROID
+#else
+    #include <unistd.h>
+    #include <sys/types.h>
     #include "SignalHandler.h"
 #endif
 #endif
 
-#ifdef QT_DEBUG
 #ifdef QGC_UNITTEST_BUILD
     #include "UnitTestList.h"
 #endif
-
-#ifdef Q_OS_WIN
-
-#include <crtdbg.h>
-#include <windows.h>
-#include <iostream>
-
-/// @brief CRT Report Hook installed using _CrtSetReportHook. We install this hook when
-/// we don't want asserts to pop a dialog on windows.
-int WindowsCrtReportHook(int reportType, char* message, int* returnValue)
-{
-    Q_UNUSED(reportType);
-
-    std::cerr << message << std::endl;  // Output message to stderr
-    *returnValue = 0;                   // Don't break into debugger
-    return true;                        // We handled this fully ourselves
-}
-
-#endif // Q_OS_WIN
-
-#endif // QT_DEBUG
 
 //-----------------------------------------------------------------------------
 /**
@@ -105,19 +84,18 @@ int main(int argc, char *argv[])
 
     RunGuard guard(runguardString);
     if (!bypassRunGuard && !guard.tryToRun()) {
-        QApplication errorApp(argc, argv);
-        QMessageBox::critical(nullptr, QObject::tr("Error"),
+        const QApplication errorApp(argc, argv);
+        (void) QMessageBox::critical(nullptr, QObject::tr("Error"),
             QObject::tr("A second instance of %1 is already running. Please close the other instance and try again.").arg(QGC_APP_NAME)
         );
         return -1;
     }
 #endif
 
-#ifdef Q_OS_LINUX
-#ifndef Q_OS_ANDROID
-    if (getuid() == 0) {
-        QApplication errorApp(argc, argv);
-        QMessageBox::critical(nullptr, QObject::tr("Error"),
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+    if (::getuid() == 0) {
+        const QApplication errorApp(argc, argv);
+        (void) QMessageBox::critical(nullptr, QObject::tr("Error"),
             QObject::tr("You are running %1 as root. "
                 "You should not do this since it will cause other issues with %1."
                 "%1 will now exit.<br/><br/>").arg(QGC_APP_NAME)
@@ -125,25 +103,38 @@ int main(int argc, char *argv[])
         return -1;
     }
 #endif
-#endif
 
 #ifdef Q_OS_UNIX
-    if (!qEnvironmentVariableIsSet("QT_LOGGING_TO_CONSOLE")) {
-        qputenv("QT_LOGGING_TO_CONSOLE", "1");
+    if (!qEnvironmentVariableIsSet("QT_ASSUME_STDERR_HAS_CONSOLE")) {
+        (void) qputenv("QT_ASSUME_STDERR_HAS_CONSOLE", "1");
+    }
+
+    if (!qEnvironmentVariableIsSet("QT_FORCE_STDERR_LOGGING")) {
+        (void) qputenv("QT_FORCE_STDERR_LOGGING", "1");
     }
 #endif
 
-    QGCLogging::installHandler();
+#ifdef Q_OS_WIN
+    if (!qEnvironmentVariableIsSet("QT_WIN_DEBUG_CONSOLE")) {
+        (void) qputenv("QT_WIN_DEBUG_CONSOLE", "attach"); // new
+    }
+#endif
+
+    QGCLogging::installHandler(quietWindowsAsserts);
+
+#ifdef QGC_UNITTEST_BUILD
+    if (stressUnitTests) {
+        runUnitTests = true;
+    }
+#endif
 
 #ifdef Q_OS_MACOS
-    // Prevent Apple's app nap from screwing us over
-    // tip: the domain can be cross-checked on the command line with <defaults domains>
-    QProcess::execute("defaults", {"write org.qgroundcontrol.qgroundcontrol NSAppSleepDisabled -bool YES"});
+    Platform::disableAppNapViaInfoDict();
 #endif
 
 #ifdef Q_OS_WIN
     // Set our own OpenGL buglist
-    // qputenv("QT_OPENGL_BUGLIST", ":/opengl/resources/opengl/buglist.json");
+    // (void) qputenv("QT_OPENGL_BUGLIST", ":/opengl/resources/opengl/buglist.json");
 
     // Allow for command line override of renderer
     for (int i = 0; i < argc; i++) {
@@ -156,38 +147,21 @@ int main(int argc, char *argv[])
             break;
         }
     }
-#endif
 
-#ifdef QT_DEBUG
-    if (stressUnitTests) {
-        runUnitTests = true;
-    }
-
-#ifdef Q_OS_WIN
-    if (!qEnvironmentVariableIsSet("QT_WIN_DEBUG_CONSOLE")) {
-        qputenv("QT_WIN_DEBUG_CONSOLE", "attach"); // new
-    }
-
-    if (quietWindowsAsserts) {
-        _CrtSetReportHook(WindowsCrtReportHook);
-    }
-
+#ifdef QGC_UNITTEST_BUILD
     if (runUnitTests) {
-        // Don't pop up Windows Error Reporting dialog when app crashes. This prevents TeamCity from
-        // hanging.
+        // Don't pop up Windows Error Reporting dialog when app crashes.
         const DWORD dwMode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
         SetErrorMode(dwMode | SEM_NOGPFAULTERRORBOX);
     }
+#endif
 #endif // Q_OS_WIN
-#endif // QT_DEBUG
 
     QGCApplication app(argc, argv, runUnitTests, simpleBootTest);
 
-#ifdef Q_OS_LINUX
-#ifndef Q_OS_ANDROID
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
     SignalHandler::instance();
     (void) SignalHandler::setupSignalHandlers();
-#endif
 #endif
 
     app.init();
@@ -195,8 +169,8 @@ int main(int argc, char *argv[])
     // Set system ID if specified via command line, for example --system-id:255
     if (hasSystemId) {
         bool ok;
-        int systemId = systemIdStr.toInt(&ok);
-        if (ok && systemId >= 1 && systemId <= 255) {  // MAVLink system IDs are 8-bit
+        const int systemId = systemIdStr.toInt(&ok);
+        if (ok && (systemId >= 1) && (systemId <= 255)) {  // MAVLink system IDs are 8-bit
             qDebug() << "Setting MAVLink System ID to:" << systemId;
             SettingsManager::instance()->mavlinkSettings()->gcsMavlinkSystemID()->setRawValue(systemId);
         } else {

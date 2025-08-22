@@ -11,10 +11,6 @@
 #include "PX4ParameterMetaData.h"
 #include "QGCApplication.h"
 #include "PX4AutoPilotPlugin.h"
-#include "PX4SimpleFlightModesController.h"
-#include "AirframeComponentController.h"
-#include "SensorsComponentController.h"
-#include "PowerComponentController.h"
 #include "SettingsManager.h"
 #include "PlanViewSettings.h"
 #include "ParameterManager.h"
@@ -51,11 +47,6 @@ PX4FirmwarePlugin::PX4FirmwarePlugin()
     , _simpleFlightMode     (tr("Simple"))
     , _orbitFlightMode      (tr("Orbit"))
 {
-    qmlRegisterType<PX4SimpleFlightModesController>     ("QGroundControl.Controllers", 1, 0, "PX4SimpleFlightModesController");
-    qmlRegisterType<AirframeComponentController>        ("QGroundControl.Controllers", 1, 0, "AirframeComponentController");
-    qmlRegisterType<SensorsComponentController>         ("QGroundControl.Controllers", 1, 0, "SensorsComponentController");
-    qmlRegisterType<PowerComponentController>           ("QGroundControl.Controllers", 1, 0, "PowerComponentController");
-
     _setModeEnumToModeStringMapping({
         { PX4CustomMode::MANUAL             ,    _manualFlightMode      },
         { PX4CustomMode::STABILIZED         ,    _stabilizedFlightMode  },
@@ -770,7 +761,7 @@ bool PX4FirmwarePlugin::hasGripper(const Vehicle* vehicle) const
 
 QVariant PX4FirmwarePlugin::mainStatusIndicatorContentItem(const Vehicle*) const
 {
-    return QVariant::fromValue(QUrl::fromUserInput("qrc:/PX4/Indicators/PX4MainStatusIndicatorContentItem.qml"));
+    return QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/FirmwarePlugin/PX4/PX4MainStatusIndicatorContentItem.qml"));
 }
 
 const QVariantList& PX4FirmwarePlugin::toolIndicators(const Vehicle* vehicle)
@@ -782,7 +773,7 @@ const QVariantList& PX4FirmwarePlugin::toolIndicators(const Vehicle* vehicle)
         // Find the generic flight mode indicator and replace with the custom one
         for (int i=0; i<_toolIndicatorList.size(); i++) {
             if (_toolIndicatorList.at(i).toUrl().toString().contains("FlightModeIndicator.qml")) {
-                _toolIndicatorList[i] = QVariant::fromValue(QUrl::fromUserInput("qrc:/PX4/Indicators/PX4FlightModeIndicator.qml"));
+                _toolIndicatorList[i] = QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/FirmwarePlugin/PX4/PX4FlightModeIndicator.qml"));
                 break;
             }
         }
@@ -790,7 +781,7 @@ const QVariantList& PX4FirmwarePlugin::toolIndicators(const Vehicle* vehicle)
         // Find the generic battery indicator and replace with the custom one
         for (int i=0; i<_toolIndicatorList.size(); i++) {
             if (_toolIndicatorList.at(i).toUrl().toString().contains("BatteryIndicator.qml")) {
-                _toolIndicatorList[i] = QVariant::fromValue(QUrl::fromUserInput("qrc:/PX4/Indicators/PX4BatteryIndicator.qml"));
+                _toolIndicatorList[i] = QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/FirmwarePlugin/PX4/PX4BatteryIndicator.qml"));
                 break;
             }
         }

@@ -5,8 +5,6 @@ on:
     branches:
       - master
       - 'Stable*'
-    tags:
-      - 'v*'
     paths:
       - 'docs/**'
       - 'package*.json'
@@ -24,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -54,7 +52,7 @@ jobs:
 
     steps:
       - name: Download Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: qgc_docs_build
           path: ~/_book

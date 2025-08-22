@@ -13,8 +13,8 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.FactSystem
-import QGroundControl.ScreenTools
+
+
 
 PX4TuningComponent {
     model: ListModel {

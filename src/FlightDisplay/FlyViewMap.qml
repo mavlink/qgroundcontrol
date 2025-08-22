@@ -15,13 +15,13 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.Controllers
+
 import QGroundControl.Controls
 import QGroundControl.FlightDisplay
 import QGroundControl.FlightMap
-import QGroundControl.Palette
-import QGroundControl.ScreenTools
-import QGroundControl.Vehicle
+
+
+
 
 FlightMap {
     id:                         _root
@@ -265,9 +265,9 @@ FlightMap {
 
         Connections {
             target:                             _activeVehicle ? _activeVehicle.trajectoryPoints : null
-            onPointAdded: (coordinate) =>       trajectoryPolyline.addCoordinate(coordinate)
-            onUpdateLastPoint: (coordinate) =>  trajectoryPolyline.replaceCoordinate(trajectoryPolyline.pathLength() - 1, coordinate)
-            onPointsCleared:                    trajectoryPolyline.path = []
+            function onPointAdded(coordinate) { trajectoryPolyline.addCoordinate(coordinate) }
+            function onUpdateLastPoint(coordinate) { trajectoryPolyline.replaceCoordinate(trajectoryPolyline.pathLength() - 1, coordinate) }
+            function onPointsCleared() { trajectoryPolyline.path = [] }
         }
     }
 
@@ -380,6 +380,7 @@ FlightMap {
 
         property alias coordinate: _fwdFlightGotoMapCircle.center
         property alias radius: _fwdFlightGotoMapCircle.radius
+        property alias clockwiseRotation: _fwdFlightGotoMapCircle.clockwiseRotation
 
         Component.onCompleted: {
             // Only allow editing the radius, not the position
@@ -569,7 +570,7 @@ FlightMap {
 
         Connections {
             target: _activeVehicle
-            onRoiCoordChanged: (centerCoord) => {
+            function onRoiCoordChanged(centerCoord) {
                 roiLocationItem.show(centerCoord)
             }
         }

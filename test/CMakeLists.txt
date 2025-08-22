@@ -6,9 +6,6 @@ endif()
     # include(AndroidTestUtilities)
 # endif()
 
-# set(UNIT_TESTING_RESOURCES)
-# qt_add_resources(UNIT_TESTING_RESOURCES UnitTest.qrc)
-
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         UnitTestList.cc
@@ -100,13 +97,9 @@ add_subdirectory(qgcunittest)
 # add_qgc_test(MainWindowTest)
 # add_qgc_test(MessageBoxTest)
 
-add_subdirectory(QmlControls)
-
 add_subdirectory(Terrain)
 add_qgc_test(TerrainQueryTest)
 add_qgc_test(TerrainTileTest)
-
-add_subdirectory(UI)
 
 add_subdirectory(Utilities)
 # Audio

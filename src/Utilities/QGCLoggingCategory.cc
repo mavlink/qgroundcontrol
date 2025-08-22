@@ -16,6 +16,21 @@ QGC_LOGGING_CATEGORY(QGCLoggingCategoryRegisterLog, "qgc.utilities.qgcloggingcat
 
 Q_GLOBAL_STATIC(QGCLoggingCategoryRegister, _QGCLoggingCategoryRegisterInstance);
 
+static QLoggingCategory::CategoryFilter defaultCategoryFilter = nullptr;
+
+static void qgcCategoryFilter(QLoggingCategory *category)
+{
+    if (defaultCategoryFilter) {
+        defaultCategoryFilter(category);
+    }
+
+    // const QString categoryName = QString(category->categoryName());
+    // if (qstrncmp(category->categoryName(), "qgc.", 4) == 0) {
+        // QGCLoggingCategoryRegister::instance()->registerCategory(category->categoryName());
+        // category->setEnabled(QtDebugMsg, true);
+    // }
+}
+
 QGCLoggingCategoryRegister *QGCLoggingCategoryRegister::instance()
 {
     return _QGCLoggingCategoryRegisterInstance();
@@ -98,5 +113,9 @@ void QGCLoggingCategoryRegister::setFilterRulesFromSettings(const QString &comma
     filterRules += QStringLiteral("qt.qml.connections=false");
 
     qCDebug(QGCLoggingCategoryRegisterLog) << "Filter rules" << filterRules;
+    const QLoggingCategory::CategoryFilter categoryFilter = QLoggingCategory::installFilter(qgcCategoryFilter);
+    if (!defaultCategoryFilter) {
+        defaultCategoryFilter = categoryFilter;
+    }
     QLoggingCategory::setFilterRules(filterRules);
 }
