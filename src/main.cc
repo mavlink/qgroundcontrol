@@ -48,6 +48,7 @@ int main(int argc, char *argv[])
     {
         const QCoreApplication pre(argc, argv);
         QCoreApplication::setApplicationName(QStringLiteral(QGC_APP_NAME));
+        QCoreApplication::setApplicationVersion(QStringLiteral(QGC_APP_VERSION_STR));
         args = QGCCommandLineParser::parseCommandLine();
         if (args.statusCode == QGCCommandLineParser::CommandLineParseResult::Status::Error) {
             const QString errorMessage = args.errorString.value_or(QStringLiteral("Unknown error occurred"));
