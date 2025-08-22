@@ -798,15 +798,6 @@ public:
     void _setMaxProtoVersion(unsigned version);
     void _setMaxProtoVersionFromBothSources();
 
-    /// Vehicle is about to be deleted
-    void prepareDelete();
-
-    /// Delete gimbal controller, handy for RequestMessageTest.cc, otherwise gimbal controller message requests will mess with this test
-    void deleteGimbalController();
-
-    /// Delete camera manager, just for testing
-    void deleteCameraManager();
-
     quint64     mavlinkSentCount        () const{ return _mavlinkSentCount; }        /// Calculated total number of messages sent to us
     quint64     mavlinkReceivedCount    () const{ return _mavlinkReceivedCount; }    /// Total number of sucessful messages received
     quint64     mavlinkLossCount        () const{ return _mavlinkLossCount; }        /// Total number of lost messages
@@ -1007,6 +998,10 @@ private:
     bool setFlightModeCustom            (const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode);
 
     static void _rebootCommandResultHandler(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, MavCmdResultFailureCode_t failureCode);
+
+    // The following two methods should be only be called by unit tests
+    void _deleteGimbalController();
+    void _deleteCameraManager();
 
     int     _id;                    ///< Mavlink system id
     int     _defaultComponentId;

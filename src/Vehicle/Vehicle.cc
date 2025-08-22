@@ -376,21 +376,7 @@ Vehicle::~Vehicle()
     _autopilotPlugin = nullptr;
 }
 
-void Vehicle::prepareDelete()
-{
-    // Clean up camera manager to stop all timers and prevent crashes during destruction
-    if(_cameraManager) {
-        // because of _cameraManager QML bindings check for nullptr won't work in the binding pipeline
-        // the dangling pointer access will cause a runtime fault
-        auto tmpCameras = _cameraManager;
-        _cameraManager = nullptr;
-        delete tmpCameras;
-        emit cameraManagerChanged();
-        // Note: Removed qApp->processEvents() to prevent MAVLink crashes during destruction
-    }
-}
-
-void Vehicle::deleteCameraManager()
+void Vehicle::_deleteCameraManager()
 {
     if(_cameraManager) {
         delete _cameraManager;
@@ -398,7 +384,7 @@ void Vehicle::deleteCameraManager()
     }
 }
 
-void Vehicle::deleteGimbalController()
+void Vehicle::_deleteGimbalController()
 {
     if (_gimbalController) {
         delete _gimbalController;
