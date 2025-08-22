@@ -63,7 +63,7 @@ CommandLineParseResult parseCommandLine()
     QCommandLineParser& parser = *out.parser;
     parser.setSingleDashWordOptionMode(QCommandLineParser::ParseAsLongOptions);
     parser.setOptionsAfterPositionalArgumentsMode(QCommandLineParser::ParseAsOptions);
-    parser.setApplicationDescription(QCoreApplication::applicationName());
+    parser.setApplicationDescription(QStringLiteral(QGC_APP_DESCRIPTION));
 
     const QCommandLineOption helpOption = parser.addHelpOption();
     const QCommandLineOption versionOption = parser.addVersionOption();
