@@ -1,0 +1,59 @@
+{
+    "version": 6,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 21,
+        "patch": 3
+    },
+    "configurePresets": [
+        {
+            "name": "Windows",
+            "hidden": true,
+            "displayName": "Windows configuration",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/qt6-Windows",
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            },
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "cl",
+                "CMAKE_CXX_COMPILER": "cl",
+                "QT_ROOT_DIR": "D:/Devoloper/Qt/6.8.3/msvc2022_64"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            }
+        },
+        {
+            "name":"Windows-Debug",
+            "displayName": "Windows configuration (Debug)",
+            "inherits": ["Windows"],
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name":"Windows-Release",
+            "displayName": "Windows configuration(Release)",
+            "inherits": ["Windows"],
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+        "name": "Windows-debug",
+        "configurePreset": "Windows-Debug",
+        "configuration": "Debug"
+        },
+        {
+        "name": "Windows-release",
+        "configurePreset": "Windows-Release",
+        "configuration": "Release"
+        }
+    ]
+}

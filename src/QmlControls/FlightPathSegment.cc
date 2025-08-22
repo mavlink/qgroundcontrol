@@ -15,6 +15,8 @@ QGC_LOGGING_CATEGORY(FlightPathSegmentLog, "FlightPathSegmentLog")
 
 FlightPathSegment::FlightPathSegment(SegmentType segmentType, const QGeoCoordinate& coord1, double amslCoord1Alt, const QGeoCoordinate& coord2, double amslCoord2Alt, bool queryTerrainData, QObject* parent)
     : QObject           (parent)
+    , _realCoord1       (coord1)
+    , _realCoord2       (coord2)
     , _coord1           (coord1)
     , _coord2           (coord2)
     , _coord1AMSLAlt     (amslCoord1Alt)
@@ -34,22 +36,38 @@ FlightPathSegment::FlightPathSegment(SegmentType segmentType, const QGeoCoordina
 
 void FlightPathSegment::setCoordinate1(const QGeoCoordinate &coordinate)
 {
-    if (_coord1 != coordinate) {
-        _coord1 = coordinate;
-        emit coordinate1Changed(_coord1);
+    if (_realCoord1 != coordinate) {
+        _realCoord1 = coordinate;
+        emit coordinate1Changed(_realCoord1);
         _delayedTerrainPathQueryTimer.start();
         _updateTotalDistance();
+        adjustCoordinatesForLoiterRadius();
     }
 }
 
 void FlightPathSegment::setCoordinate2(const QGeoCoordinate &coordinate)
 {
-    if (_coord2 != coordinate) {
-        _coord2 = coordinate;
-        emit coordinate2Changed(_coord2);
+    if (_realCoord2 != coordinate) {
+        _realCoord2 = coordinate;
+        emit coordinate2Changed(_realCoord2);
         _delayedTerrainPathQueryTimer.start();
         _updateTotalDistance();
+        adjustCoordinatesForLoiterRadius();
     }
+}
+
+void FlightPathSegment::setCoord1LoiterRadius(double loiterRadius) {
+    if (qFuzzyCompare(_coord1LoiterRadius, loiterRadius)) 
+        return; // No change
+    _coord1LoiterRadius = loiterRadius;
+    adjustCoordinatesForLoiterRadius();
+}
+
+void FlightPathSegment::setCoord2LoiterRadius(double loiterRadius) {
+    if (qFuzzyCompare(_coord2LoiterRadius, loiterRadius)) 
+        return; // No change
+    _coord2LoiterRadius = loiterRadius;
+    adjustCoordinatesForLoiterRadius();
 }
 
 void FlightPathSegment::setCoord1AMSLAlt(double alt)
@@ -80,7 +98,7 @@ void FlightPathSegment::setSpecialVisual(bool specialVisual)
 
 void FlightPathSegment::_sendTerrainPathQuery(void)
 {
-    if (_queryTerrainData && _coord1.isValid() && _coord2.isValid()) {
+    if (_queryTerrainData && _realCoord1.isValid() && _realCoord2.isValid()) {
         qCDebug(FlightPathSegmentLog) << this << "_sendTerrainPathQuery";
         // Clear any previous query
         if (_currentTerrainPathQuery) {
@@ -99,7 +117,7 @@ void FlightPathSegment::_sendTerrainPathQuery(void)
 
         _currentTerrainPathQuery = new TerrainPathQuery(true /* autoDelete */);
         connect(_currentTerrainPathQuery, &TerrainPathQuery::terrainDataReceived, this, &FlightPathSegment::_terrainDataReceived);
-        _currentTerrainPathQuery->requestData(_coord1, _coord2);
+        _currentTerrainPathQuery->requestData(_realCoord1, _realCoord2);
     }
 }
 
@@ -132,8 +150,8 @@ void FlightPathSegment::_terrainDataReceived(bool success, const TerrainPathQuer
 void FlightPathSegment::_updateTotalDistance(void)
 {
     double newTotalDistance = 0;
-    if (_coord1.isValid() && _coord2.isValid()) {
-        newTotalDistance = _coord1.distanceTo(_coord2);
+    if (_realCoord1.isValid() && _realCoord2.isValid()) {
+        newTotalDistance = _realCoord1.distanceTo(_realCoord2);
     }
 
     if (!QGC::fuzzyCompare(newTotalDistance, _totalDistance)) {
@@ -181,4 +199,74 @@ void FlightPathSegment::_updateTerrainCollision(void)
         _terrainCollision = newTerrainCollision;
         emit terrainCollisionChanged(_terrainCollision);
     }
+}
+
+void FlightPathSegment::adjustCoordinatesForLoiterRadius() {
+    bool hasR1 = !qIsNaN(_coord1LoiterRadius);
+    bool hasR2 = !qIsNaN(_coord2LoiterRadius);
+    if (!hasR1 && !hasR2) {
+        _coord1 = _realCoord1;
+        _coord2 = _realCoord2;
+        return;
+    }
+    QGeoCoordinate c1 = _realCoord1;
+    QGeoCoordinate c2 = _realCoord2;
+    double distance = c1.distanceTo(c2);
+    double azimuth = c1.azimuthTo(c2);
+
+    if (hasR1 && hasR2) {
+        if (distance >= fabs(_coord1LoiterRadius - _coord2LoiterRadius)) {
+            // 2) Calculate α (radians) and αdeg
+            double alphaRad = qAcos((_coord1LoiterRadius - _coord2LoiterRadius) / distance);
+            double alphaDeg = alphaRad * 180.0 / M_PI;
+
+            // -- Changed "azimuth + αdeg" to "azimuth - αdeg" to place the first circle tangent point on the other side
+            // --
+            double θ = azimuth - alphaDeg;  // If you want "upper tangent", change back to β + alphaDeg
+
+            // 3) Determine projection direction based on sign
+            double angle1 = (_coord1LoiterRadius >= 0) ? θ : (θ + 180.0);
+            double angle2 = (_coord2LoiterRadius >= 0) ? θ : (θ + 180.0);
+
+            // 4) Generate tangent points
+            _coord1 = c1.atDistanceAndAzimuth(fabs(_coord1LoiterRadius), angle1);
+            _coord2 = c2.atDistanceAndAzimuth(fabs(_coord2LoiterRadius), angle2);
+        } else {
+            _coord1 = QGeoCoordinate();
+            _coord2 = QGeoCoordinate();
+        }
+    }
+    // Handle point-to-circle case
+    else if (hasR2) {
+        // Ensure distance from point to circle center is greater than circle radius
+        if (distance > _coord2LoiterRadius) {
+            // Reverse direction azimuth
+            double azimuth2to1 = c2.azimuthTo(c1);
+            // Calculate tangent angle from point to circle
+            double angleOffset = qAsin(_coord2LoiterRadius / distance) * 180.0 / M_PI;
+            double angle = azimuth2to1 + 90.0 - angleOffset;
+
+            // Calculate tangent point position
+            QGeoCoordinate tangentPoint = c2.atDistanceAndAzimuth(_coord2LoiterRadius, angle);
+            _coord1 = _realCoord1;
+            _coord2 = tangentPoint;
+        } else {
+            _coord2 = QGeoCoordinate();
+        }
+    }
+    // Handle circle-to-point case
+    else if (hasR1) {
+        // Ensure distance from point to circle center is greater than circle radius
+        if (distance > _coord1LoiterRadius) {
+            double angleOffset = qAsin(_coord1LoiterRadius / distance) * 180.0 / M_PI;
+            double angleCCW = azimuth - 90.0 + angleOffset;  // Counter-clockwise tangent point
+
+            QGeoCoordinate tangentPointCCW = c1.atDistanceAndAzimuth(_coord1LoiterRadius, angleCCW);
+
+            _coord1 = tangentPointCCW;
+            _coord2 = _realCoord2;
+        }
+    }
+    emit coordinate1Changed(_coord1);
+    emit coordinate2Changed(_coord2);
 }
