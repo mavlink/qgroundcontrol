@@ -46,8 +46,6 @@ add_subdirectory(QtLocationPlugin)
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         main.cc
-        CmdLineOptParser.cc
-        CmdLineOptParser.h
         pch.h
         QGCApplication.cc
         QGCApplication.h
@@ -101,10 +99,10 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         VehicleSetupModule
 )
 
-if(NOT QGC_DISABLE_APM_PLUGIN AND NOT QGC_DISABLE_APM_PLUGIN_FACTORY)
+if(NOT QGC_DISABLE_APM_PLUGIN)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AutoPilotPluginsAPMModule)
 endif()
-if(NOT QGC_DISABLE_PX4_PLUGIN AND NOT QGC_DISABLE_PX4_PLUGIN_FACTORY)
+if(NOT QGC_DISABLE_PX4_PLUGIN)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AutoPilotPluginsPX4Module)
 endif()
 if(QGC_VIEWER3D)
@@ -120,6 +118,8 @@ target_compile_definitions(${CMAKE_PROJECT_NAME}
         QGC_ORG_NAME="${QGC_ORG_NAME}"
         QGC_ORG_DOMAIN="${QGC_ORG_DOMAIN}"
         QGC_APP_VERSION_STR="${QGC_APP_VERSION_STR}"
+        QGC_APP_DATE="${QGC_APP_DATE}"
+        QGC_APP_DESCRIPTION="${QGC_APP_DESCRIPTION}"
         QGC_SETTINGS_VERSION=${QGC_SETTINGS_VERSION}
         $<$<NOT:$<BOOL:${QGC_STABLE_BUILD}>>:QGC_DAILY_BUILD>
         $<$<BOOL:${QGC_DISABLE_APM_MAVLINK}>:QGC_NO_ARDUPILOT_DIALECT>

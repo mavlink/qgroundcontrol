@@ -441,39 +441,77 @@ void APMFirmwarePlugin::initializeStreamRates(Vehicle *vehicle)
     instanceData->lastBatteryStatusTime = instanceData->lastHomePositionTime = QTime::currentTime();
 }
 
+APMFirmwarePlugin::FirmwareParameterHeader APMFirmwarePlugin::_parseParamsHeader(const QString &filePath)
+{
+    APMFirmwarePlugin::FirmwareParameterHeader data{};
+
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        return data;
+    }
+
+    QTextStream stream(&file);
+    while (!stream.atEnd()) {
+        const QString line = stream.readLine();
+
+        // Stop once non-comment parameter rows begin and we already saw some header
+        if (!line.startsWith('#')) {
+            break;
+        }
+
+        using namespace Qt::StringLiterals;
+
+        static const QRegularExpression reStack(uR"(^#\s*Stack:\s*(.+)\s*$)"_s);
+        auto match = reStack.match(line);
+        if (match.hasMatch()) {
+            const QString firmwareTypeStr = match.captured(1).trimmed();
+            const MAV_AUTOPILOT firmwareType = QGCMAVLink::firmwareTypeFromString(firmwareTypeStr);
+            data.firmwareType = firmwareType;
+            continue;
+        }
+
+        static const QRegularExpression reVehicle(uR"(^#\s*Vehicle:\s*(.+)\s*$)"_s);
+        match = reVehicle.match(line);
+        if (match.hasMatch()) {
+            const QString vehicleTypeStr = match.captured(1).trimmed();
+            const MAV_TYPE vehicleType = QGCMAVLink::vehicleTypeFromString(vehicleTypeStr);
+            data.vehicleType = vehicleType;
+            continue;
+        }
+
+        static const QRegularExpression reVersion(uR"(^#\s*Version:\s*([0-9]+(?:\.[0-9]+){0,2})(?:\s+([A-Za-z0-9]+))?\s*$)"_s);
+        match = reVersion.match(line);
+        if (match.hasMatch()) {
+            const QString versionNumber = match.captured(1).trimmed();
+            data.versionNumber = QVersionNumber::fromString(versionNumber);
+
+            const QString versionType = match.captured(2).trimmed();
+            if (versionType.isEmpty()) {
+                data.versionType = FIRMWARE_VERSION_TYPE_OFFICIAL;
+            } else {
+                data.versionType = QGCMAVLink::firmwareVersionTypeFromString(versionType);
+            }
+            continue;
+        }
+
+        static const QRegularExpression reGit(uR"(^#\s*Git Revision:\s*([0-9a-fA-F]+)\s*$)"_s);
+        match = reGit.match(line);
+        if (match.hasMatch()) {
+            data.gitRevision = match.captured(1).trimmed();
+            continue;
+        }
+    }
+
+    return data;
+}
 
 void APMFirmwarePlugin::initializeVehicle(Vehicle *vehicle)
 {
     if (vehicle->isOfflineEditingVehicle()) {
-        switch (vehicle->vehicleType()) {
-        case MAV_TYPE_QUADROTOR:
-        case MAV_TYPE_HEXAROTOR:
-        case MAV_TYPE_OCTOROTOR:
-        case MAV_TYPE_TRICOPTER:
-        case MAV_TYPE_COAXIAL:
-        case MAV_TYPE_HELICOPTER:
-            vehicle->setFirmwareVersion(4, 6, 2);
-            break;
-        case MAV_TYPE_VTOL_TAILSITTER_DUOROTOR:
-        case MAV_TYPE_VTOL_TAILSITTER_QUADROTOR:
-        case MAV_TYPE_VTOL_TILTROTOR:
-        case MAV_TYPE_VTOL_FIXEDROTOR:
-        case MAV_TYPE_VTOL_TAILSITTER:
-        case MAV_TYPE_VTOL_TILTWING:
-        case MAV_TYPE_VTOL_RESERVED5:
-        case MAV_TYPE_FIXED_WING:
-            vehicle->setFirmwareVersion(4, 6, 2);
-            break;
-        case MAV_TYPE_GROUND_ROVER:
-        case MAV_TYPE_SURFACE_BOAT:
-            vehicle->setFirmwareVersion(4, 6, 2);
-            break;
-        case MAV_TYPE_SUBMARINE:
-            vehicle->setFirmwareVersion(4, 6, 0);
-            break;
-        default:
-            // No version set
-            break;
+        const QString offlineParameterFile = offlineEditingParamFile(vehicle);
+        const APMFirmwarePlugin::FirmwareParameterHeader offlineParameterHeader = _parseParamsHeader(offlineParameterFile);
+        if (offlineParameterHeader.vehicleType != MAV_TYPE_GENERIC) {
+            vehicle->setFirmwareVersion(offlineParameterHeader.versionNumber.majorVersion(), offlineParameterHeader.versionNumber.minorVersion(), offlineParameterHeader.versionNumber.microVersion());
         }
     } else {
         initializeStreamRates(vehicle);
