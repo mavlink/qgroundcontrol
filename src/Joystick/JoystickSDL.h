@@ -24,7 +24,7 @@ Q_DECLARE_LOGGING_CATEGORY(JoystickSDLLog)
 class JoystickSDL : public Joystick
 {
 public:
-    explicit JoystickSDL(const QString &name, int axisCount, int buttonCount, int hatCount, int instanceId, bool isGamepad, QObject *parent = nullptr);
+    explicit JoystickSDL(const QString &name, QList<int> gamepadAxes, QList<int> nonGamepadAxes, int buttonCount, int hatCount, int instanceId, bool isGamepad, QObject *parent = nullptr);
     ~JoystickSDL() override;
 
     int instanceId() const { return _instanceId; }
@@ -46,6 +46,8 @@ private:
 
     static void _loadGamepadMappings();
 
+    QList<int> _gamepadAxes;
+    QList<int> _nonGamepadAxes;
     bool _isGamepad = false;
     int _instanceId = -1;
 
