@@ -2378,6 +2378,9 @@ VehicleCameraControl::startTracking(QRectF rec)
                                  static_cast<float>(rec.y()),
                                  static_cast<float>(rec.x() + rec.width()),
                                  static_cast<float>(rec.y() + rec.height()));
+
+        // Request tracking status
+        _requestTrackingStatus();
     }
 }
 
@@ -2400,6 +2403,9 @@ VehicleCameraControl::startTracking(QPointF point, double radius)
                                  static_cast<float>(point.x()),
                                  static_cast<float>(point.y()),
                                  static_cast<float>(radius));
+
+        // Request tracking status
+        _requestTrackingStatus();
     }
 }
 
