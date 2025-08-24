@@ -8,7 +8,7 @@ then
 fi
 
 brew update
-brew install cmake ninja ccache git pkgconf create-dmg mold
+brew install cmake ninja ccache git pkgconf create-dmg mold proj gdal
 
 # Install GStreamer
 GST_URL=https://gstreamer.freedesktop.org/data/pkg/osx

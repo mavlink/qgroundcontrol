@@ -118,6 +118,15 @@ apt-get install -y -qq --no-install-recommends \
     libusb-1.0-0-dev
 
 # --------------------------------------------------------------------
+# GDAL
+# --------------------------------------------------------------------
+apt-get install -y -qq --no-install-recommends \
+    libproj-dev \
+    proj-bin \
+    libgdal-dev \
+    gdal-bin
+
+# --------------------------------------------------------------------
 # Miscellaneous
 # --------------------------------------------------------------------
 apt-get install -y -qq --no-install-recommends \
