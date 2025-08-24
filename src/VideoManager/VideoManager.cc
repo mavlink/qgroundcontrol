@@ -59,6 +59,9 @@ VideoManager::VideoManager(QObject *parent)
     }
 #else
     (void) qmlRegisterType<VideoItemStub>("org.freedesktop.gstreamer.Qt6GLVideoItem", 1, 0, "GstGLQt6VideoItem");
+    #ifdef Q_OS_WIN
+        (void) qmlRegisterType<GstVideoItemStub>("org.freedesktop.gstreamer.Qt6D3D11VideoItem", 1, 0, "GstD3D11Qt6VideoItem");
+    #endif
 #endif
 }
 
