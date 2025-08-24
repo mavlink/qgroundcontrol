@@ -43,7 +43,7 @@ void RequestMessageTest::_testCaseWorker(TestCase_t& testCase)
     vehicle->deleteGimbalController();
 
     // Camera manager also messes with it.
-    vehicle->deleteCameraManager();
+    vehicle->stopCameraManager();
 
     _mockLink->clearReceivedMavCommandCounts();
     _mockLink->setRequestMessageFailureMode(testCase.failureMode);

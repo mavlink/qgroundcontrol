@@ -361,8 +361,7 @@ void Vehicle::_commonInit()
 
     _gimbalController = new GimbalController(this);
 
-    // Create camera manager instance
-    _cameraManager = _firmwarePlugin->createCameraManager(this);
+    _createCameraManager();
 }
 
 Vehicle::~Vehicle()
@@ -378,24 +377,7 @@ Vehicle::~Vehicle()
 
 void Vehicle::prepareDelete()
 {
-    // Clean up camera manager to stop all timers and prevent crashes during destruction
-    if(_cameraManager) {
-        // because of _cameraManager QML bindings check for nullptr won't work in the binding pipeline
-        // the dangling pointer access will cause a runtime fault
-        auto tmpCameras = _cameraManager;
-        _cameraManager = nullptr;
-        delete tmpCameras;
-        emit cameraManagerChanged();
-        // Note: Removed qApp->processEvents() to prevent MAVLink crashes during destruction
-    }
-}
 
-void Vehicle::deleteCameraManager()
-{
-    if(_cameraManager) {
-        delete _cameraManager;
-        _cameraManager = nullptr;
-    }
 }
 
 void Vehicle::deleteGimbalController()
@@ -3400,15 +3382,6 @@ const QVariantList& Vehicle::modeIndicators()
     return emptyList;
 }
 
-const QVariantList& Vehicle::staticCameraList() const
-{
-    if (_cameraManager) {
-        return _cameraManager->cameraList();
-    }
-    static QVariantList emptyList;
-    return emptyList;
-}
-
 void Vehicle::_setupAutoDisarmSignalling()
 {
     QString param = _firmwarePlugin->autoDisarmParameter(this);
@@ -4400,6 +4373,36 @@ void Vehicle::_createMAVLinkLogManager()
 MAVLinkLogManager *Vehicle::mavlinkLogManager() const
 {
     return _mavlinkLogManager;
+}
+
+/*---------------------------------------------------------------------------*/
+/*===========================================================================*/
+/*                             Camera Manager                                */
+/*===========================================================================*/
+
+void Vehicle::_createCameraManager()
+{
+    if (!_cameraManager && _firmwarePlugin) {
+        _cameraManager = _firmwarePlugin->createCameraManager(this);
+        emit cameraManagerChanged();
+    }
+}
+
+void Vehicle::stopCameraManager()
+{
+    if (_cameraManager) {
+        _cameraManager->stop();
+    }
+}
+
+const QVariantList &Vehicle::staticCameraList() const
+{
+    if (_cameraManager) {
+        return _cameraManager->cameraList();
+    }
+
+    static QVariantList emptyCameraList;
+    return emptyCameraList;
 }
 
 /*---------------------------------------------------------------------------*/
