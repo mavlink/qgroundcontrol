@@ -13,7 +13,6 @@
 
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
-#include <QtCore/QtGlobal> // Qt::HANDLE
 
 #ifdef Q_OS_WIN
     class QWinEventNotifier;
@@ -44,8 +43,6 @@ private slots:
 #endif
 
 private:
-    void _handleExitEvent();
-
 #ifdef Q_OS_WIN
     QWinEventNotifier* _notifier{nullptr};
     Qt::HANDLE _signalEvent{nullptr};
@@ -59,6 +56,6 @@ private:
     QSocketNotifier* _notifierTerm{nullptr};
 #endif
 
-    std::atomic<int> _sigIntCount{0};
+    bool _sigIntTriggered{false};
     static std::atomic<SignalHandler*> s_current;
 };
