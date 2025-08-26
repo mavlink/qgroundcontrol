@@ -86,6 +86,7 @@ void VideoManager::init(QQuickWindow *window)
     // TODO: VideoSettings _configChanged/streamConfiguredChanged
     (void) connect(_videoSettings->videoSource(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
     (void) connect(_videoSettings->udpUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
+    (void) connect(_videoSettings->launchStr(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
     (void) connect(_videoSettings->rtspUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
     (void) connect(_videoSettings->tcpUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
     (void) connect(_videoSettings->aspectRatio(), &Fact::rawValueChanged, this, &VideoManager::aspectRatioChanged);
@@ -324,6 +325,7 @@ bool VideoManager::isStreamSource() const
         VideoSettings::videoSourceUDPH265,
         VideoSettings::videoSourceRTSP,
         VideoSettings::videoSourceTCP,
+        VideoSettings::videoSourceLaunchStr,
         VideoSettings::videoSourceMPEGTS,
         VideoSettings::videoSource3DRSolo,
         VideoSettings::videoSourceParrotDiscovery,
@@ -446,9 +448,14 @@ bool VideoManager::_updateAutoStream(VideoReceiver *receiver)
         url = pInfo->uri().contains("mpegts://") ? pInfo->uri() : QStringLiteral("mpegts://0.0.0.0:%1").arg(pInfo->uri());
         break;
     default:
-        qCWarning(VideoManagerLog) << "Unknown VIDEO_STREAM_TYPE";
-        source = VideoSettings::videoSourceNoVideo;
-        url = pInfo->uri();
+        if(pInfo->uri().contains("gst://")) {
+            source = VideoSettings::videoSourceLaunchStr;
+            url = pInfo->uri().contains("gst://") ? pInfo->uri() : QStringLiteral("gst://%1").arg(pInfo->uri());
+        } else {
+            qCWarning(VideoManagerLog) << "Unknown VIDEO_STREAM_TYPE";
+            source = VideoSettings::videoSourceNoVideo;
+            url = pInfo->uri();
+        }
         break;
     }
 
@@ -513,6 +520,8 @@ bool VideoManager::_updateSettings(VideoReceiver *receiver)
         settingsChanged |= _updateVideoUri(receiver, QStringLiteral("mpegts://%1").arg(_videoSettings->udpUrl()->rawValue().toString()));
     } else if (source == VideoSettings::videoSourceRTSP) {
         settingsChanged |= _updateVideoUri(receiver, _videoSettings->rtspUrl()->rawValue().toString());
+    } else if (source == VideoSettings::videoSourceLaunchStr) {
+        settingsChanged |= _updateVideoUri(receiver, QStringLiteral("gst://%1").arg(_videoSettings->launchStr()->rawValue().toString()));
     } else if (source == VideoSettings::videoSourceTCP) {
         settingsChanged |= _updateVideoUri(receiver, QStringLiteral("tcp://%1").arg(_videoSettings->tcpUrl()->rawValue().toString()));
     } else if (source == VideoSettings::videoSource3DRSolo) {

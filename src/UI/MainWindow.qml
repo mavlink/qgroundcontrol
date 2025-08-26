@@ -106,7 +106,7 @@ ApplicationWindow {
     // This function is used to prevent view switching if there are validation errors
     function allowViewSwitch(previousValidationErrorCount = 0) {
         // Run validation on active focus control to ensure it is valid before switching views
-        if (mainWindow.activeFocusControl instanceof FactTextField) {
+        if ((mainWindow.activeFocusControl instanceof FactTextField) || (mainWindow.activeFocusControl instanceof FactTextArea)){
             mainWindow.activeFocusControl._onEditingFinished()
         }
         return globals.validationErrorCount <= previousValidationErrorCount

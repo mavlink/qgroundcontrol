@@ -29,6 +29,7 @@ SettingsPage {
     property bool   _isUDP265:                  _isStreamSource && (_videoSource === _videoSettings.udp265VideoSource)
     property bool   _isRTSP:                    _isStreamSource && (_videoSource === _videoSettings.rtspVideoSource)
     property bool   _isTCP:                     _isStreamSource && (_videoSource === _videoSettings.tcpVideoSource)
+    property bool   _isLaunchStr:               _isStreamSource && (_videoSource === _videoSettings.launchStrVideoSource)
     property bool   _isMPEGTS:                  _isStreamSource && (_videoSource === _videoSettings.mpegtsVideoSource)
     property bool   _videoAutoStreamConfig:     _videoManager.autoStreamConfigured
     property bool   _videoSourceDisabled:       _videoSource === _videoSettings.disabledVideoSource
@@ -53,7 +54,7 @@ SettingsPage {
     SettingsGroupLayout {
         Layout.fillWidth:   true
         heading:            qsTr("Connection")
-        visible:            !_videoSourceDisabled && !_videoAutoStreamConfig && (_isTCP || _isRTSP | _requiresUDPUrl)
+        visible:            !_videoSourceDisabled && !_videoAutoStreamConfig && (_isTCP || _isLaunchStr || _isRTSP | _requiresUDPUrl)
 
         LabelledFactTextField {
             Layout.fillWidth:           true
@@ -61,6 +62,15 @@ SettingsPage {
             label:                      qsTr("RTSP URL")
             fact:                       _videoSettings.rtspUrl
             visible:                    _isRTSP && _videoSettings.rtspUrl.visible
+        }
+
+        LabelledFactTextArea {
+            Layout.fillWidth:           true
+            height:                     300          
+            textFieldPreferredWidth:    _urlFieldWidth
+            label:                      qsTr("Launch String")
+            fact:                       _videoSettings.launchStr
+            visible:                    _isLaunchStr && _videoSettings.launchStr.visible
         }
 
         LabelledFactTextField {

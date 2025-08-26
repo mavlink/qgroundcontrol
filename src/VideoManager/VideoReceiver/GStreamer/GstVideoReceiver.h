@@ -78,6 +78,9 @@ private:
     GstElement *_makeDecoder(GstCaps *caps = nullptr, GstElement *videoSink = nullptr);
     GstElement *_makeFileSink(const QString &videoFile, FILE_FORMAT format);
 
+    bool _isLaunchStr(const QString &input);
+    GstElement *_getSource(GstElement *pipeline);
+
     void _onNewSourcePad(GstPad *pad);
     void _onNewDecoderPad(GstPad *pad);
     bool _addDecoder(GstElement *src);

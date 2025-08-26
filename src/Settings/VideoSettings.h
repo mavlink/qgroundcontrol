@@ -26,6 +26,7 @@ public:
     DEFINE_SETTINGFACT(udpUrl)
     DEFINE_SETTINGFACT(tcpUrl)
     DEFINE_SETTINGFACT(rtspUrl)
+    DEFINE_SETTINGFACT(launchStr)
     DEFINE_SETTINGFACT(aspectRatio)
     DEFINE_SETTINGFACT(videoFit)
     DEFINE_SETTINGFACT(gridLines)
@@ -45,6 +46,7 @@ public:
     Q_PROPERTY(QString  udp265VideoSource       READ udp265VideoSource      CONSTANT)
     Q_PROPERTY(QString  tcpVideoSource          READ tcpVideoSource         CONSTANT)
     Q_PROPERTY(QString  mpegtsVideoSource       READ mpegtsVideoSource      CONSTANT)
+    Q_PROPERTY(QString  launchStrVideoSource    READ launchStrVideoSource   CONSTANT)
     Q_PROPERTY(QString  disabledVideoSource     READ disabledVideoSource    CONSTANT)
 
     bool     streamConfigured       ();
@@ -53,11 +55,13 @@ public:
     QString  udp265VideoSource      () { return videoSourceUDPH265; }
     QString  tcpVideoSource         () { return videoSourceTCP; }
     QString  mpegtsVideoSource      () { return videoSourceMPEGTS; }
+    QString  launchStrVideoSource   () { return videoSourceLaunchStr; }
     QString  disabledVideoSource    () { return videoDisabled; }
 
     static constexpr const char* videoSourceNoVideo           = QT_TRANSLATE_NOOP("VideoSettings", "No Video Available");
     static constexpr const char* videoDisabled                = QT_TRANSLATE_NOOP("VideoSettings", "Video Stream Disabled");
     static constexpr const char* videoSourceRTSP              = QT_TRANSLATE_NOOP("VideoSettings", "RTSP Video Stream");
+    static constexpr const char* videoSourceLaunchStr         = QT_TRANSLATE_NOOP("VideoSettings", "GStreamer Pipeline");
     static constexpr const char* videoSourceUDPH264           = QT_TRANSLATE_NOOP("VideoSettings", "UDP h.264 Video Stream");
     static constexpr const char* videoSourceUDPH265           = QT_TRANSLATE_NOOP("VideoSettings", "UDP h.265 Video Stream");
     static constexpr const char* videoSourceTCP               = QT_TRANSLATE_NOOP("VideoSettings", "TCP-MPEG2 Video Stream");

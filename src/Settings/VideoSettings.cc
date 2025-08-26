@@ -28,6 +28,7 @@ DECLARE_SETTINGGROUP(Video, "Video")
     videoSourceList.append(videoSourceUDPH264);
     videoSourceList.append(videoSourceUDPH265);
     videoSourceList.append(videoSourceTCP);
+    videoSourceList.append(videoSourceLaunchStr);
     videoSourceList.append(videoSourceMPEGTS);
     videoSourceList.append(videoSource3DRSolo);
     videoSourceList.append(videoSourceParrotDiscovery);
@@ -136,6 +137,18 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, lowLatencyMode)
     return _lowLatencyModeFact;
 }
 
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, launchStr)
+{
+    if (!_launchStrFact) {
+        _launchStrFact = _createSettingsFact(launchStrName);
+
+        _launchStrFact->setVisible(true);
+
+        connect(_launchStrFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
+    }
+    return _launchStrFact;
+}
+
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtspTimeout)
 {
     if (!_rtspTimeoutFact) {
@@ -202,6 +215,12 @@ bool VideoSettings::streamConfigured(void)
     if(vSource == videoSourceRTSP) {
         qCDebug(VideoManagerLog) << "Testing configuration for RTSP Stream:" << rtspUrl()->rawValue().toString();
         return !rtspUrl()->rawValue().toString().isEmpty();
+    }
+
+    //-- If LaunchStr, check for LaunchStr value
+    if(vSource == videoSourceLaunchStr) {
+        qCDebug(VideoManagerLog) << "Testing configuration for LaunchStr:" << launchStr()->rawValue().toString();
+        return !launchStr()->rawValue().toString().isEmpty();
     }
     //-- If TCP, check for URL
     if(vSource == videoSourceTCP) {

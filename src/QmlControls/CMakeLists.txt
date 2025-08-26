@@ -145,6 +145,7 @@ qt_add_qml_module(QGroundControlControlsModule
         QGCSwitch.qml
         QGCTabBar.qml
         QGCTabButton.qml
+        QGCTextArea.qml
         QGCTextField.qml
         QGCToolBarButton.qml
         QGCToolInsets.qml

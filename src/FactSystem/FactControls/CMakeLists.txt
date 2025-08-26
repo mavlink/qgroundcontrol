@@ -19,11 +19,13 @@ qt_add_qml_module(FactControlsModule
         FactCheckBoxSlider.qml
         FactComboBox.qml
         FactLabel.qml
+        FactTextArea.qml
         FactTextField.qml
         FactTextFieldGrid.qml
         FactValueSlider.qml
         LabelledFactComboBox.qml
         LabelledFactLabel.qml
+        LabelledFactTextArea.qml
         LabelledFactTextField.qml
     NO_PLUGIN
 )
