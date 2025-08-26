@@ -26,28 +26,48 @@ bool EscStatusFactGroupListModel::_shouldHandleMessage(const mavlink_message_t &
     switch (message.msgid) {
     case MAVLINK_MSG_ID_ESC_INFO:
     {
-        mavlink_esc_status_t escStatus{};
-        mavlink_msg_esc_status_decode(&message, &escStatus);
-        firstIndex = escStatus.index;
-        shouldHandle = true;
+        mavlink_esc_info_t escInfo{};
+        mavlink_msg_esc_info_decode(&message, &escInfo);
+        firstIndex = escInfo.index;
+        // ESC_INFO should only be handled if index is multiple of 4
+        shouldHandle = (firstIndex % 4 == 0);
     }
         break;
+
     case MAVLINK_MSG_ID_ESC_STATUS:
     {
         mavlink_esc_status_t escStatus{};
         mavlink_msg_esc_status_decode(&message, &escStatus);
         firstIndex = escStatus.index;
+        // ESC_STATUS should only be handled if index is multiple of 4
+        shouldHandle = (firstIndex % 4 == 0);
+    }
+        break;
+
+    case MAVLINK_MSG_ID_AM32_EEPROM:
+    {
+        mavlink_am32_eeprom_t eeprom{};
+        mavlink_msg_am32_eeprom_decode(&message, &eeprom);
+        // AM32_EEPROM uses individual ESC index, not first-of-4
+        firstIndex = eeprom.index;
         shouldHandle = true;
     }
         break;
+
     default:
         shouldHandle = false; // Not a message we care about
         break;
     }
 
     if (shouldHandle) {
-        for (uint32_t index = firstIndex; index <= firstIndex + 3; index++) {
-            ids.append(index);
+        if (message.msgid == MAVLINK_MSG_ID_AM32_EEPROM) {
+            // AM32 messages refer to individual ESCs
+            ids.append(firstIndex);
+        } else {
+            // ESC_STATUS and ESC_INFO cover 4 consecutive ESCs
+            for (uint32_t index = firstIndex; index <= firstIndex + 3; index++) {
+                ids.append(index);
+            }
         }
     }
 
@@ -93,9 +113,46 @@ void EscStatusFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t
     case MAVLINK_MSG_ID_ESC_STATUS:
         _handleEscStatus(vehicle, message);
         break;
+    case MAVLINK_MSG_ID_AM32_EEPROM:
+        _handleAm32Eeprom(vehicle, message);
+        break;
     default:
         break;
     }
+}
+
+void EscStatusFactGroup::_handleAm32Eeprom(Vehicle *vehicle, const mavlink_message_t &message)
+{
+    mavlink_am32_eeprom_t eeprom{};
+    mavlink_msg_am32_eeprom_decode(&message, &eeprom);
+
+    if (eeprom.index != _idFact.rawValue().toUInt()) {
+        // Only handle messages with our index
+        return;
+    }
+
+    if (eeprom.mode > 0) {
+        // We don't handle write requests
+        return;
+    }
+
+    qDebug() << "MAVLINK_MSG_ID_AM32_EEPROM";
+    qDebug() << "index:" << eeprom.index;
+
+    int length = eeprom.length;
+
+    uint8_t buf[48] = {};
+    if (length > sizeof(buf)) {
+        length = sizeof(buf) - 1;
+    }
+
+    memcpy(buf, eeprom.data, length);
+
+    QString hexString;
+    for (int i = 0; i < length; i++) {
+        hexString += QString("%1 ").arg(buf[i], 2, 16, QChar('0'));
+    }
+    qDebug() << hexString.trimmed();
 }
 
 void EscStatusFactGroup::_handleEscInfo(Vehicle *vehicle, const mavlink_message_t &message)
@@ -111,6 +168,15 @@ void EscStatusFactGroup::_handleEscInfo(Vehicle *vehicle, const mavlink_message_
     }
 
     index %= 4; // Convert to 0-based index for the arrays in escInfo
+
+    // qDebug() << "ESC_INFO:";
+    // qDebug() << "escInfo.info:" << escInfo.info;
+    // qDebug() << "escInfo.index:" << escInfo.index;
+    // qDebug() << "escInfo.count:" << escInfo.count;
+    // qDebug() << "escInfo.temperature:" << escInfo.temperature[index];
+    // qDebug() << "escInfo.failure_flags:" << escInfo.failure_flags[index];
+    // qDebug() << "index:" << index;
+
     _countFact.setRawValue(escInfo.count);
     _connectionTypeFact.setRawValue(escInfo.connection_type);
     _infoFact.setRawValue(escInfo.info);

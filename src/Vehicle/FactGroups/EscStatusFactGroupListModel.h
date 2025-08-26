@@ -57,6 +57,7 @@ public:
     void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) final;
 
 private:
+    void _handleAm32Eeprom(Vehicle *vehicle, const mavlink_message_t &message);
     void _handleEscInfo(Vehicle *vehicle, const mavlink_message_t &message);
     void _handleEscStatus(Vehicle *vehicle, const mavlink_message_t &message);
 
