@@ -15,6 +15,7 @@
 #include "PX4RadioComponent.h"
 #include "PX4TuningComponent.h"
 #include "PowerComponent.h"
+#include "ESCComponent.h"
 #include "SafetyComponent.h"
 #include "SensorsComponent.h"
 #include "ParameterManager.h"
@@ -32,6 +33,7 @@ PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     , _airframeComponent(nullptr)
     , _radioComponent(nullptr)
     , _esp8266Component(nullptr)
+    , _escComponent(nullptr)
     , _flightModesComponent(nullptr)
     , _sensorsComponent(nullptr)
     , _safetyComponent(nullptr)
@@ -84,6 +86,29 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
                 _powerComponent = new PowerComponent(_vehicle, this, this);
                 _powerComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_powerComponent)));
+
+                // Add ESC component if we have received AM32 EEPROM data
+                if (_vehicle->escs() && _vehicle->escs()->count() > 0) {
+                    // Check if any ESC has AM32 support
+                    bool hasAM32Support = false;
+                    for (int i = 0; i < _vehicle->escs()->count(); i++) {
+                        auto esc = _vehicle->escs()->get(i);
+                        if (esc) {
+                            // Check if this ESC has am32Eeprom property
+                            QVariant am32EepromProp = esc->property("am32Eeprom");
+                            if (am32EepromProp.isValid() && !am32EepromProp.isNull()) {
+                                hasAM32Support = true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (hasAM32Support) {
+                        _escComponent = new ESCComponent(_vehicle, this, this);
+                        _escComponent->setupTriggerSignals();
+                        _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_escComponent)));
+                    }
+                }
 
                 if (_vehicle->actuators()) {
                     _vehicle->actuators()->init(); // At this point params are loaded, so we can init the actuators

@@ -24,23 +24,73 @@ Rectangle {
 
     Component.onCompleted: {
         if (escStatusModel && escStatusModel.count > 0) {
-            // Auto-select first ESC
-            selectedEscs = [0]
+            // Default: select all ESCs (matching AM32 Configurator behavior)
+            var allEscs = []
+            for (var i = 0; i < escStatusModel.count; i++) {
+                allEscs.push(i)
+            }
+            selectedEscs = allEscs
+            
+            // Request read for first ESC to get initial data
+            if (escStatusModel.get(0).am32Eeprom) {
+                escStatusModel.get(0).am32Eeprom.requestRead(vehicle)
+            }
         }
+    }
+
+    function getEscBorderColor(index) {
+        var escData = escStatusModel.get(index)
+        
+        // Check if ESC has unsaved changes (purple border)
+        if (escData.am32Eeprom && escData.am32Eeprom.hasUnsavedChanges) {
+            return qgcPal.brandingPurple
+        }
+        
+        // Check if ESC is selected (green border)
+        if (selectedEscs.indexOf(index) >= 0) {
+            return qgcPal.brandingGreen
+        }
+        
+        // Check if ESC has mismatched settings or is missing (red border)
+        if (!escData.am32Eeprom || !escData.am32Eeprom.dataLoaded) {
+            return qgcPal.warningText
+        }
+        
+        // First ESC is reference, check if other ESCs match
+        if (index > 0 && escStatusModel.get(0).am32Eeprom) {
+            var firstEsc = escStatusModel.get(0).am32Eeprom
+            // Check a key parameter to see if settings match
+            if (escData.am32Eeprom.inputType.value !== firstEsc.inputType.value ||
+                escData.am32Eeprom.motorKv.value !== firstEsc.motorKv.value) {
+                return qgcPal.warningText
+            }
+        }
+        
+        // Not selected (no border)
+        return "transparent"
     }
 
     function toggleEscSelection(index) {
         var idx = selectedEscs.indexOf(index)
+        var newSelection = selectedEscs.slice()
+        
         if (idx >= 0) {
-            selectedEscs.splice(idx, 1)
+            // Deselect ESC
+            newSelection.splice(idx, 1)
         } else {
-            selectedEscs.push(index)
+            // Select ESC
+            newSelection.push(index)
+            newSelection.sort(function(a, b) { return a - b })
         }
-        selectedEscs = selectedEscs.slice() // Trigger binding update
-
+        
+        selectedEscs = newSelection
+        
         // Load data for first selected ESC if needed
-        if (selectedEscs.length > 0 && !escStatusModel.get(selectedEscs[0]).am32Eeprom.dataLoaded) {
-            escStatusModel.get(selectedEscs[0]).am32Eeprom.requestRead(vehicle)
+        if (selectedEscs.length > 0) {
+            var firstSelected = escStatusModel.get(selectedEscs[0])
+            if (firstSelected.am32Eeprom && !firstSelected.am32Eeprom.dataLoaded) {
+                firstSelected.am32Eeprom.requestRead(vehicle)
+            }
         }
     }
 
@@ -51,79 +101,102 @@ Rectangle {
 
         // ESC Selection Header
         Row {
-            spacing: _margins
+            spacing: _margins / 2
+            anchors.horizontalCenter: parent.horizontalCenter
 
             Repeater {
                 model: escStatusModel ? escStatusModel.count : 0
 
                 Rectangle {
-                    width:          ScreenTools.defaultFontPixelWidth * 15
-                    height:         ScreenTools.defaultFontPixelHeight * 5
+                    width:          ScreenTools.defaultFontPixelWidth * 12
+                    height:         ScreenTools.defaultFontPixelHeight * 6
                     radius:         ScreenTools.defaultFontPixelHeight / 4
-                    border.width:   2
-                    border.color:   selectedEscs.indexOf(index) >= 0 ? qgcPal.brandingPurple : qgcPal.windowShade
-                    color:          selectedEscs.indexOf(index) >= 0 ? Qt.darker(qgcPal.brandingPurple, 1.8) : qgcPal.windowShade
+                    border.width:   3
+                    border.color:   getEscBorderColor(index)
+                    color:          qgcPal.window
 
                     property var escData: escStatusModel.get(index)
-                    property bool isLoading: false  // TODO: Add loading state
+                    property bool isLoading: escData.am32Eeprom ? escData.am32Eeprom.isLoading : false
 
                     MouseArea {
                         anchors.fill: parent
                         onClicked: toggleEscSelection(index)
+                        cursorShape: Qt.PointingHandCursor
                     }
 
                     Column {
                         anchors.centerIn: parent
-                        spacing: 2
+                        spacing: 4
 
-                        Row {
+                        QGCLabel {
+                            text:                   qsTr("ESC %1").arg(index + 1)
+                            font.bold:              true
                             anchors.horizontalCenter: parent.horizontalCenter
-                            spacing: 4
+                        }
 
-                            // Status indicators
-                            Rectangle {
-                                width:      _indicatorSize
-                                height:     _indicatorSize
-                                radius:     _indicatorSize / 2
-                                color:      escData.am32Eeprom && escData.am32Eeprom.directionReversed ? qgcPal.warningText : qgcPal.textFieldText
+                        // Loading indicator
+                        QGCColoredImage {
+                            source:                 "/qmlimages/Sync.svg"
+                            height:                 ScreenTools.defaultFontPixelHeight
+                            width:                  height
+                            sourceSize.height:      height
+                            color:                  qgcPal.text
+                            visible:                parent.parent.isLoading
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            
+                            RotationAnimation on rotation {
+                                loops:      Animation.Infinite
+                                from:       0
+                                to:         360
+                                duration:   1000
+                                running:    parent.visible
+                            }
+                        }
+
+                        // ESC Info when not loading
+                        Column {
+                            visible: !parent.parent.isLoading
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            spacing: 2
+
+                            QGCLabel {
+                                text:                   escData.am32Eeprom ? 
+                                                      "BL: v" + escData.am32Eeprom.bootloaderVersion.value 
+                                                      : "---"
+                                font.pointSize:         ScreenTools.smallFontPointSize
+                                anchors.horizontalCenter: parent.horizontalCenter
                             }
 
-                            Rectangle {
-                                width:      _indicatorSize
-                                height:     _indicatorSize
-                                radius:     _indicatorSize / 2
-                                color:      escData.am32Eeprom && escData.am32Eeprom.bidirectionalMode ? qgcPal.brandingBlue : qgcPal.textFieldText
+                            QGCLabel {
+                                text:                   escData.am32Eeprom ?
+                                                      "FW: v" + escData.am32Eeprom.firmwareMajor.value + 
+                                                      "." + escData.am32Eeprom.firmwareMinor.value
+                                                      : "---"
+                                font.pointSize:         ScreenTools.smallFontPointSize
+                                anchors.horizontalCenter: parent.horizontalCenter
                             }
-                        }
-
-                        QGCLabel {
-                            text:                   qsTr("Bootloader")
-                            font.pointSize:         ScreenTools.smallFontPointSize
-                            anchors.horizontalCenter: parent.horizontalCenter
-                        }
-
-                        QGCLabel {
-                            text:                   escData.am32Eeprom ? "v" + escData.am32Eeprom.bootloaderVersion.value : "---"
-                            font.pointSize:         ScreenTools.smallFontPointSize
-                            anchors.horizontalCenter: parent.horizontalCenter
-                        }
-
-                        QGCLabel {
-                            text:                   qsTr("Firmware")
-                            font.pointSize:         ScreenTools.smallFontPointSize
-                            anchors.horizontalCenter: parent.horizontalCenter
-                        }
-
-                        QGCLabel {
-                            text:                   escData.am32Eeprom ?
-                                                   "v" + escData.am32Eeprom.firmwareMajor.value + "." + escData.am32Eeprom.firmwareMinor.value
-                                                   : "---"
-                            font.pointSize:         ScreenTools.smallFontPointSize
-                            anchors.horizontalCenter: parent.horizontalCenter
                         }
                     }
                 }
             }
+        }
+
+        // Info text
+        QGCLabel {
+            text:                   {
+                if (selectedEscs.length === 0) {
+                    return qsTr("Click an ESC to select it")
+                } else if (selectedEscs.length === 1) {
+                    return qsTr("Settings for ESC %1").arg(selectedEscs[0] + 1)
+                } else if (selectedEscs.length === escStatusModel.count) {
+                    return qsTr("Settings for all ESCs")
+                } else {
+                    return qsTr("Settings for %1 ESCs").arg(selectedEscs.length)
+                }
+            }
+            anchors.horizontalCenter: parent.horizontalCenter
+            font.italic:            true
+            visible:                escStatusModel && escStatusModel.count > 0
         }
 
         // Settings Panel
@@ -254,15 +327,15 @@ Rectangle {
                             fact:       am32Facts.pwmFrequency
                             from:       8
                             to:         48
-                            suffix:     am32Facts.variablePwmFreq.value ? "kHz - " + (am32Facts.pwmFrequency.value * 2) + "kHz" : "kHz"
-                            enabled:    !am32Facts.variablePwmFreq.value
+                            suffix:     am32Facts.variablePwmFreq.value ? " - " + (am32Facts.pwmFrequency.value * 2) + " kHz" : " kHz"
+                            enabled:    am32Facts.variablePwmFreq.value < 2
                         }
                     }
                 }
 
                 // Extended Settings Group
                 SettingsGroup {
-                    title: qsTr("Extended settings")
+                    title: qsTr("Extended Settings")
 
                     GridLayout {
                         columns:        3
@@ -272,7 +345,7 @@ Rectangle {
 
                         FactCheckBox {
                             text:               qsTr("Disable stick calibration")
-                            fact:               am32Facts.directionReversed  // TODO: Add this fact
+                            fact:               am32Facts.directionReversed  // TODO: Add correct fact when available
                             Layout.fillWidth:   true
                             enabled:            false  // Not in current fact model
                         }
@@ -286,7 +359,7 @@ Rectangle {
                             from:       0.1
                             to:         20
                             stepSize:   0.1
-                            suffix:     "% duty cycle per ms"
+                            suffix:     "% duty/ms"
                             showValue:  true
                         }
 
@@ -346,7 +419,7 @@ Rectangle {
                                 fact:       am32Facts.lowVoltageThreshold
                                 from:       2.5
                                 to:         3.5
-                                stepSize:   0.1
+                                stepSize:   0.01
                                 suffix:     "V/cell"
                                 showValue:  true
                                 enabled:    am32Facts.lowVoltageCutoff.value
@@ -357,7 +430,7 @@ Rectangle {
 
                 // Current Control Group
                 SettingsGroup {
-                    title:      qsTr("Current control")
+                    title:      qsTr("Current Control")
                     opacity:    am32Facts.currentLimit.value > 100 ? 0.3 : 1.0
 
                     GridLayout {
@@ -411,7 +484,7 @@ Rectangle {
                             width:          parent.width
 
                             SliderSetting {
-                                label:      qsTr("Sine Mode Range")
+                                label:      qsTr("Sine mode range")
                                 fact:       am32Facts.sineModeRange
                                 from:       5
                                 to:         25
@@ -421,7 +494,7 @@ Rectangle {
                             }
 
                             SliderSetting {
-                                label:      qsTr("Sine Mode Power")
+                                label:      qsTr("Sine mode power")
                                 fact:       am32Facts.sineModeStrength
                                 from:       1
                                 to:         10
@@ -448,7 +521,7 @@ Rectangle {
                             }
 
                             FactCheckBox {
-                                text:   qsTr("Car type reverse breaking")
+                                text:   qsTr("RC car reversing")
                                 fact:   am32Facts.rcCarReversing
                             }
                         }
@@ -479,6 +552,57 @@ Rectangle {
                         }
                     }
                 }
+
+                // Servo Settings Group
+                SettingsGroup {
+                    title: qsTr("Servo Settings")
+
+                    GridLayout {
+                        columns:        3
+                        columnSpacing:  _margins * 2
+                        rowSpacing:     _groupMargins
+                        width:          parent.width
+
+                        SliderSetting {
+                            label:      qsTr("Low threshold")
+                            fact:       am32Facts.servoLowThreshold
+                            from:       750
+                            to:         1250
+                            stepSize:   2
+                            suffix:     "µs"
+                            showValue:  true
+                        }
+
+                        SliderSetting {
+                            label:      qsTr("High threshold")
+                            fact:       am32Facts.servoHighThreshold
+                            from:       1750
+                            to:         2250
+                            stepSize:   2
+                            suffix:     "µs"
+                            showValue:  true
+                        }
+
+                        SliderSetting {
+                            label:      qsTr("Neutral")
+                            fact:       am32Facts.servoNeutral
+                            from:       1374
+                            to:         1630
+                            stepSize:   1
+                            suffix:     "µs"
+                            showValue:  true
+                        }
+
+                        SliderSetting {
+                            label:      qsTr("Dead band")
+                            fact:       am32Facts.servoDeadband
+                            from:       0
+                            to:         100
+                            suffix:     "µs"
+                            showValue:  true
+                        }
+                    }
+                }
             }
         }
 
@@ -491,21 +615,41 @@ Rectangle {
 
             QGCButton {
                 text:       qsTr("Write Settings")
-                enabled:    am32Facts && am32Facts.hasUnsavedChanges
+                enabled:    am32Facts && am32Facts.hasUnsavedChanges && selectedEscs.length > 0
                 highlighted: am32Facts && am32Facts.hasUnsavedChanges
                 onClicked:  {
+                    // Write settings to all selected ESCs
                     for (var i = 0; i < selectedEscs.length; i++) {
-                        escStatusModel.get(selectedEscs[i]).am32Eeprom.requestWrite(vehicle)
+                        var escData = escStatusModel.get(selectedEscs[i])
+                        if (escData.am32Eeprom) {
+                            // Copy settings from first selected ESC to this one
+                            if (i > 0) {
+                                // TODO: Copy facts from am32Facts to escData.am32Eeprom
+                            }
+                            escData.am32Eeprom.requestWrite(vehicle)
+                        }
                     }
                 }
             }
 
             QGCButton {
                 text:       qsTr("Read Settings")
+                enabled:    selectedEscs.length > 0
                 onClicked:  {
                     for (var i = 0; i < selectedEscs.length; i++) {
-                        escStatusModel.get(selectedEscs[i]).am32Eeprom.requestRead(vehicle)
+                        var escData = escStatusModel.get(selectedEscs[i])
+                        if (escData.am32Eeprom) {
+                            escData.am32Eeprom.requestRead(vehicle)
+                        }
                     }
+                }
+            }
+
+            QGCButton {
+                text:       qsTr("Reset to Defaults")
+                enabled:    am32Facts && selectedEscs.length > 0
+                onClicked:  {
+                    // TODO: Implement reset to defaults
                 }
             }
         }
@@ -544,7 +688,7 @@ Rectangle {
         }
     }
 
-    // SettingsGroup component - Fixed cyclic alias issue
+    // SettingsGroup component
     component SettingsGroup: Loader {
         property string title: ""
         default property alias content: contentStore.children
@@ -601,7 +745,7 @@ Rectangle {
         FactSlider {
             id:             factSlider
             width:          parent.width
-            majorTickStepSize: stepSize > 0 ? stepSize : (to - from) / 10  // Calculate reasonable tick spacing
+            majorTickStepSize: stepSize > 0 ? stepSize : (to - from) / 10
         }
     }
 }

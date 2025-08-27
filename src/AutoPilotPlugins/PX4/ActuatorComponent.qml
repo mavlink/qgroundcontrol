@@ -318,37 +318,6 @@ SetupPage {
 
                     } // Column
                 } // Rectangle
-
-                // AM32 ESC Settings Section
-                QGCLabel {
-                    text:               qsTr("ESC Configuration")
-                    font.pointSize:     ScreenTools.mediumFontPointSize
-                    visible:            vehicle && vehicle.escs && vehicle.escs.count > 0
-                }
-
-                // Check if we have AM32 ESCs by trying to access the first ESC's AM32 data
-                Loader {
-                    id:                 am32SettingsLoader
-                    active:             false
-                    sourceComponent:    am32SettingsComponent
-
-                    Component.onCompleted: {
-                        if (vehicle && vehicle.escs && vehicle.escs.count > 0) {
-                            // Check if ESCs support AM32 by checking if am32Eeprom exists
-                            var firstEsc = vehicle.escs.get(0)
-                            if (firstEsc && firstEsc.am32Eeprom) {
-                                active = true
-                            }
-                        }
-                    }
-                }
-
-                Component {
-                    id: am32SettingsComponent
-                    AM32SettingsComponent {
-                        vehicle: actuatorPage.vehicle
-                    }
-                }
             }
 
             // Right column
