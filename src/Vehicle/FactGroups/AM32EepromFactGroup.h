@@ -40,6 +40,7 @@ class AM32EepromFactGroup : public FactGroup
     Q_PROPERTY(Fact* rcCarReversing        READ rcCarReversing         CONSTANT)
     Q_PROPERTY(Fact* hallSensors           READ hallSensors            CONSTANT)
     Q_PROPERTY(Fact* autoTiming            READ autoTiming             CONSTANT)
+    Q_PROPERTY(Fact* disableStickCalibration READ disableStickCalibration CONSTANT)
 
     // Numeric settings
     Q_PROPERTY(Fact* maxRampSpeed          READ maxRampSpeed           CONSTANT)
@@ -62,6 +63,11 @@ class AM32EepromFactGroup : public FactGroup
     Q_PROPERTY(Fact* currentPidP           READ currentPidP            CONSTANT)
     Q_PROPERTY(Fact* currentPidI           READ currentPidI            CONSTANT)
     Q_PROPERTY(Fact* currentPidD           READ currentPidD            CONSTANT)
+    Q_PROPERTY(Fact* absoluteVoltageCutoff READ absoluteVoltageCutoff  CONSTANT)
+    Q_PROPERTY(Fact* servoLowThreshold     READ servoLowThreshold      CONSTANT)
+    Q_PROPERTY(Fact* servoHighThreshold    READ servoHighThreshold     CONSTANT)
+    Q_PROPERTY(Fact* servoNeutral          READ servoNeutral           CONSTANT)
+    Q_PROPERTY(Fact* servoDeadband         READ servoDeadband          CONSTANT)
 
     Q_PROPERTY(bool  dataLoaded            READ dataLoaded             NOTIFY dataLoadedChanged)
     Q_PROPERTY(bool  hasUnsavedChanges     READ hasUnsavedChanges      NOTIFY hasUnsavedChangesChanged)
@@ -90,6 +96,7 @@ public:
     Fact* rcCarReversing()       { return &_rcCarReversingFact; }
     Fact* hallSensors()          { return &_hallSensorsFact; }
     Fact* autoTiming()           { return &_autoTimingFact; }
+    Fact* disableStickCalibration() { return &_disableStickCalibrationFact; }
 
     // Numeric setting facts
     Fact* maxRampSpeed()         { return &_maxRampSpeedFact; }
@@ -112,6 +119,11 @@ public:
     Fact* currentPidP()          { return &_currentPidPFact; }
     Fact* currentPidI()          { return &_currentPidIFact; }
     Fact* currentPidD()          { return &_currentPidDFact; }
+    Fact* absoluteVoltageCutoff() { return &_absoluteVoltageCutoffFact; }
+    Fact* servoLowThreshold()    { return &_servoLowThresholdFact; }
+    Fact* servoHighThreshold()   { return &_servoHighThresholdFact; }
+    Fact* servoNeutral()         { return &_servoNeutralFact; }
+    Fact* servoDeadband()        { return &_servoDeadbandFact; }
 
     // Status
     bool dataLoaded() const { return _dataLoaded; }
@@ -223,6 +235,7 @@ private:
     Fact _rcCarReversingFact        = Fact(0, QStringLiteral("rcCarReversing"), FactMetaData::valueTypeBool);
     Fact _hallSensorsFact           = Fact(0, QStringLiteral("hallSensors"), FactMetaData::valueTypeBool);
     Fact _autoTimingFact            = Fact(0, QStringLiteral("autoTiming"), FactMetaData::valueTypeBool);
+    Fact _disableStickCalibrationFact = Fact(0, QStringLiteral("disableStickCalibration"), FactMetaData::valueTypeBool);
 
     // Numeric setting facts
     Fact _maxRampSpeedFact          = Fact(0, QStringLiteral("maxRampSpeed"), FactMetaData::valueTypeDouble);
@@ -245,6 +258,11 @@ private:
     Fact _currentPidPFact           = Fact(0, QStringLiteral("currentPidP"), FactMetaData::valueTypeDouble);
     Fact _currentPidIFact           = Fact(0, QStringLiteral("currentPidI"), FactMetaData::valueTypeUint8);
     Fact _currentPidDFact           = Fact(0, QStringLiteral("currentPidD"), FactMetaData::valueTypeDouble);
+    Fact _absoluteVoltageCutoffFact = Fact(0, QStringLiteral("absoluteVoltageCutoff"), FactMetaData::valueTypeDouble);
+    Fact _servoLowThresholdFact     = Fact(0, QStringLiteral("servoLowThreshold"), FactMetaData::valueTypeDouble);
+    Fact _servoHighThresholdFact    = Fact(0, QStringLiteral("servoHighThreshold"), FactMetaData::valueTypeDouble);
+    Fact _servoNeutralFact          = Fact(0, QStringLiteral("servoNeutral"), FactMetaData::valueTypeDouble);
+    Fact _servoDeadbandFact         = Fact(0, QStringLiteral("servoDeadband"), FactMetaData::valueTypeUint8);
 
     bool _dataLoaded = false;
     int _escIndex = 0;

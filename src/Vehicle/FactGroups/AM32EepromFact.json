@@ -292,6 +292,61 @@
     "min":              0,
     "max":              2550,
     "default":          500
+},
+{
+    "name":             "servoLowThreshold",
+    "shortDesc":        "Servo Low Threshold",
+    "type":             "double",
+    "decimalPlaces":    0,
+    "units":            "µs",
+    "min":              750,
+    "max":              1250,
+    "default":          1006
+},
+{
+    "name":             "servoHighThreshold",
+    "shortDesc":        "Servo High Threshold",
+    "type":             "double",
+    "decimalPlaces":    0,
+    "units":            "µs",
+    "min":              1750,
+    "max":              2250,
+    "default":          2006
+},
+{
+    "name":             "servoNeutral",
+    "shortDesc":        "Servo Neutral",
+    "type":             "double",
+    "decimalPlaces":    0,
+    "units":            "µs",
+    "min":              1374,
+    "max":              1630,
+    "default":          1502
+},
+{
+    "name":             "servoDeadband",
+    "shortDesc":        "Servo Dead Band",
+    "type":             "uint8",
+    "units":            "µs",
+    "min":              0,
+    "max":              100,
+    "default":          50
+},
+{
+    "name":             "disableStickCalibration",
+    "shortDesc":        "Disable Stick Calibration",
+    "type":             "bool",
+    "default":          false
+},
+{
+    "name":             "absoluteVoltageCutoff",
+    "shortDesc":        "Absolute Voltage Cutoff",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "V",
+    "min":              0.5,
+    "max":              50.0,
+    "default":          5.0
 }
 ]
 }

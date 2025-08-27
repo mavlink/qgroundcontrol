@@ -39,30 +39,38 @@ Rectangle {
     }
 
     function getEscBorderColor(index) {
+        if (!escStatusModel || index >= escStatusModel.count) {
+            return "transparent"
+        }
+        
         var escData = escStatusModel.get(index)
+        if (!escData) {
+            return "transparent"
+        }
         
         // Check if ESC has unsaved changes (purple border)
         if (escData.am32Eeprom && escData.am32Eeprom.hasUnsavedChanges) {
-            return qgcPal.brandingPurple
+            return qgcPal.brandingPurple || "#8B008B"
         }
         
         // Check if ESC is selected (green border)
         if (selectedEscs.indexOf(index) >= 0) {
-            return qgcPal.brandingGreen
+            return qgcPal.brandingGreen || "#00AA00"
         }
         
         // Check if ESC has mismatched settings or is missing (red border)
         if (!escData.am32Eeprom || !escData.am32Eeprom.dataLoaded) {
-            return qgcPal.warningText
+            return qgcPal.warningText || "#FF4444"
         }
         
         // First ESC is reference, check if other ESCs match
-        if (index > 0 && escStatusModel.get(0).am32Eeprom) {
+        if (index > 0 && escStatusModel.get(0) && escStatusModel.get(0).am32Eeprom) {
             var firstEsc = escStatusModel.get(0).am32Eeprom
             // Check a key parameter to see if settings match
-            if (escData.am32Eeprom.inputType.value !== firstEsc.inputType.value ||
-                escData.am32Eeprom.motorKv.value !== firstEsc.motorKv.value) {
-                return qgcPal.warningText
+            if (escData.am32Eeprom && escData.am32Eeprom.inputType && firstEsc.inputType &&
+                (escData.am32Eeprom.inputType.value !== firstEsc.inputType.value ||
+                 (escData.am32Eeprom.motorKv && firstEsc.motorKv && escData.am32Eeprom.motorKv.value !== firstEsc.motorKv.value))) {
+                return qgcPal.warningText || "#FF4444"
             }
         }
         
@@ -115,8 +123,8 @@ Rectangle {
                     border.color:   getEscBorderColor(index)
                     color:          qgcPal.window
 
-                    property var escData: escStatusModel.get(index)
-                    property bool isLoading: escData.am32Eeprom ? escData.am32Eeprom.isLoading : false
+                    property var escData: escStatusModel ? escStatusModel.get(index) : null
+                    property bool isLoading: escData && escData.am32Eeprom ? escData.am32Eeprom.isLoading : false
 
                     MouseArea {
                         anchors.fill: parent
@@ -136,7 +144,7 @@ Rectangle {
 
                         // Loading indicator
                         QGCColoredImage {
-                            source:                 "/qmlimages/Sync.svg"
+                            source:                 "/InstrumentValueIcons/refresh.svg"
                             height:                 ScreenTools.defaultFontPixelHeight
                             width:                  height
                             sourceSize.height:      height
@@ -160,7 +168,7 @@ Rectangle {
                             spacing: 2
 
                             QGCLabel {
-                                text:                   escData.am32Eeprom ? 
+                                text:                   (escData && escData.am32Eeprom && escData.am32Eeprom.bootloaderVersion) ? 
                                                       "BL: v" + escData.am32Eeprom.bootloaderVersion.value 
                                                       : "---"
                                 font.pointSize:         ScreenTools.smallFontPointSize
@@ -168,7 +176,7 @@ Rectangle {
                             }
 
                             QGCLabel {
-                                text:                   escData.am32Eeprom ?
+                                text:                   (escData && escData.am32Eeprom && escData.am32Eeprom.firmwareMajor && escData.am32Eeprom.firmwareMinor) ?
                                                       "FW: v" + escData.am32Eeprom.firmwareMajor.value + 
                                                       "." + escData.am32Eeprom.firmwareMinor.value
                                                       : "---"
@@ -327,7 +335,7 @@ Rectangle {
                             fact:       am32Facts.pwmFrequency
                             from:       8
                             to:         48
-                            suffix:     am32Facts.variablePwmFreq.value ? " - " + (am32Facts.pwmFrequency.value * 2) + " kHz" : " kHz"
+                            suffix:     " kHz"
                             enabled:    am32Facts.variablePwmFreq.value < 2
                         }
                     }
@@ -345,9 +353,8 @@ Rectangle {
 
                         FactCheckBox {
                             text:               qsTr("Disable stick calibration")
-                            fact:               am32Facts.directionReversed  // TODO: Add correct fact when available
+                            fact:               am32Facts.disableStickCalibration
                             Layout.fillWidth:   true
-                            enabled:            false  // Not in current fact model
                         }
 
                         Item { Layout.fillWidth: true }  // Spacer
@@ -423,6 +430,16 @@ Rectangle {
                                 suffix:     "V/cell"
                                 showValue:  true
                                 enabled:    am32Facts.lowVoltageCutoff.value
+                            }
+
+                            SliderSetting {
+                                label:      qsTr("Absolute voltage cutoff")
+                                fact:       am32Facts.absoluteVoltageCutoff
+                                from:       0.5
+                                to:         50.0
+                                stepSize:   0.5
+                                suffix:     "V"
+                                showValue:  true
                             }
                         }
                     }
@@ -603,6 +620,7 @@ Rectangle {
                         }
                     }
                 }
+
             }
         }
 

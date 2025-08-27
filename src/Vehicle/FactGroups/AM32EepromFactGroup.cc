@@ -33,6 +33,7 @@ AM32EepromFactGroup::AM32EepromFactGroup(QObject* parent)
     _addFact(&_rcCarReversingFact);
     _addFact(&_hallSensorsFact);
     _addFact(&_autoTimingFact);
+    _addFact(&_disableStickCalibrationFact);
 
     _addFact(&_maxRampSpeedFact);
     _addFact(&_minDutyCycleFact);
@@ -54,6 +55,11 @@ AM32EepromFactGroup::AM32EepromFactGroup(QObject* parent)
     _addFact(&_currentPidPFact);
     _addFact(&_currentPidIFact);
     _addFact(&_currentPidDFact);
+    _addFact(&_absoluteVoltageCutoffFact);
+    _addFact(&_servoLowThresholdFact);
+    _addFact(&_servoHighThresholdFact);
+    _addFact(&_servoNeutralFact);
+    _addFact(&_servoDeadbandFact);
 
     // Map facts to their EEPROM byte indices
     _factToByteIndex[&_maxRampSpeedFact] = BYTE_MAX_RAMP_SPEED;
@@ -89,6 +95,12 @@ AM32EepromFactGroup::AM32EepromFactGroup(QObject* parent)
     _factToByteIndex[&_sineModeStrengthFact] = BYTE_SINE_MODE_STRENGTH;
     _factToByteIndex[&_inputTypeFact] = BYTE_INPUT_TYPE;
     _factToByteIndex[&_autoTimingFact] = BYTE_AUTO_TIMING;
+    _factToByteIndex[&_disableStickCalibrationFact] = BYTE_STICK_CALIBRATION;
+    _factToByteIndex[&_absoluteVoltageCutoffFact] = BYTE_VOLTAGE_CUTOFF;
+    _factToByteIndex[&_servoLowThresholdFact] = BYTE_SERVO_LOW;
+    _factToByteIndex[&_servoHighThresholdFact] = BYTE_SERVO_HIGH;
+    _factToByteIndex[&_servoNeutralFact] = BYTE_SERVO_NEUTRAL;
+    _factToByteIndex[&_servoDeadbandFact] = BYTE_SERVO_DEADBAND;
 
     // Connect change signals for all editable facts
     _connectFactChangeSignals();
@@ -154,10 +166,11 @@ void AM32EepromFactGroup::handleEepromData(const uint8_t* data, int length)
     _maxRampSpeedFact.setRawValue(data[5] / 10.0);  // value/10 percent per ms
     _minDutyCycleFact.setRawValue(data[6] / 2.0);   // value/2 percent
 
-    // Skip stick calibration (index 7)
+    // Stick calibration setting
+    _disableStickCalibrationFact.setRawValue(data[7] != 0);
 
     // Voltage and PID settings
-    // Note: voltage_cutoff at index 8 is absolute voltage, not used in UI
+    _absoluteVoltageCutoffFact.setRawValue(data[8] * 0.5);  // value * 0.5 volts
     _currentPidPFact.setRawValue(data[9] * 2.0);    // P value x2
     _currentPidIFact.setRawValue(data[10]);         // I value
     _currentPidDFact.setRawValue(data[11] * 10.0);  // D value x10
@@ -192,7 +205,11 @@ void AM32EepromFactGroup::handleEepromData(const uint8_t* data, int length)
     _beepVolumeFact.setRawValue(data[30]);
     _telemetry30msFact.setRawValue(data[31] != 0);
 
-    // Skip servo settings (32-35)
+    // Servo settings
+    _servoLowThresholdFact.setRawValue(data[32] * 2 + 750);   // (value*2) + 750us
+    _servoHighThresholdFact.setRawValue(data[33] * 2 + 1750); // (value*2) + 1750us
+    _servoNeutralFact.setRawValue(data[34] + 1374);           // 1374 + value us
+    _servoDeadbandFact.setRawValue(data[35]);                 // direct value
 
     // Protection settings
     _lowVoltageCutoffFact.setRawValue(data[36] != 0);
@@ -253,8 +270,8 @@ QByteArray AM32EepromFactGroup::packEepromData() const
     // Configurable settings with proper conversions
     packed[5] = static_cast<uint8_t>(_maxRampSpeedFact.rawValue().toDouble() * 10);  // %/ms to value/10
     packed[6] = static_cast<uint8_t>(_minDutyCycleFact.rawValue().toDouble() * 2);   // % to value/2
-    packed[7] = 0;  // stick_calibration (keep default)
-    packed[8] = 10; // voltage_cutoff (keep default)
+    packed[7] = _disableStickCalibrationFact.rawValue().toBool() ? 1 : 0;
+    packed[8] = static_cast<uint8_t>(_absoluteVoltageCutoffFact.rawValue().toDouble() / 0.5);  // V to value/0.5
     packed[9] = static_cast<uint8_t>(_currentPidPFact.rawValue().toDouble() / 2);    // P value / 2
     packed[10] = _currentPidIFact.rawValue().toUInt();
     packed[11] = static_cast<uint8_t>(_currentPidDFact.rawValue().toDouble() / 10);  // D value / 10
@@ -283,11 +300,11 @@ QByteArray AM32EepromFactGroup::packEepromData() const
     packed[30] = _beepVolumeFact.rawValue().toUInt();
     packed[31] = _telemetry30msFact.rawValue().toBool() ? 1 : 0;
 
-    // Servo settings (keep defaults)
-    packed[32] = 0;  // servo_low
-    packed[33] = 0;  // servo_high
-    packed[34] = 128;  // servo_neutral
-    packed[35] = 0;  // servo_deadband
+    // Servo settings
+    packed[32] = static_cast<uint8_t>((_servoLowThresholdFact.rawValue().toDouble() - 750) / 2);   // (us - 750) / 2
+    packed[33] = static_cast<uint8_t>((_servoHighThresholdFact.rawValue().toDouble() - 1750) / 2); // (us - 1750) / 2
+    packed[34] = static_cast<uint8_t>(_servoNeutralFact.rawValue().toDouble() - 1374);             // us - 1374
+    packed[35] = _servoDeadbandFact.rawValue().toUInt();                                           // direct value
 
     // Protection settings
     packed[36] = _lowVoltageCutoffFact.rawValue().toBool() ? 1 : 0;
