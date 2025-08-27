@@ -1,0 +1,297 @@
+{
+    "version":      1,
+    "fileType":     "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":             "escIndex",
+    "shortDesc":        "ESC Index",
+    "type":             "uint32",
+    "default":          0
+},
+{
+    "name":             "firmwareMajor",
+    "shortDesc":        "Firmware Major",
+    "type":             "uint8",
+    "default":          0,
+    "readOnly":         true
+},
+{
+    "name":             "firmwareMinor",
+    "shortDesc":        "Firmware Minor",
+    "type":             "uint8",
+    "default":          0,
+    "readOnly":         true
+},
+{
+    "name":             "bootloaderVersion",
+    "shortDesc":        "Bootloader Version",
+    "type":             "uint8",
+    "default":          0,
+    "readOnly":         true
+},
+{
+    "name":             "eepromVersion",
+    "shortDesc":        "EEPROM Version",
+    "type":             "uint8",
+    "default":          0,
+    "readOnly":         true
+},
+{
+    "name":             "directionReversed",
+    "shortDesc":        "Direction Reversed",
+    "type":             "bool",
+    "default":          false
+},
+{
+    "name":             "bidirectionalMode",
+    "shortDesc":        "Bidirectional Mode",
+    "type":             "bool",
+    "default":          false
+},
+{
+    "name":             "sineStartup",
+    "shortDesc":        "Sine Startup",
+    "type":             "bool",
+    "default":          false
+},
+{
+    "name":             "complementaryPwm",
+    "shortDesc":        "Complementary PWM",
+    "type":             "bool",
+    "default":          false
+},
+{
+    "name":             "variablePwmFreq",
+    "shortDesc":        "Variable PWM Frequency",
+    "type":             "bool",
+    "default":          false
+},
+{
+    "name":             "stuckRotorProtection",
+    "shortDesc":        "Stuck Rotor Protection",
+    "type":             "bool",
+    "default":          false
+},
+{
+    "name":             "brakeOnStop",
+    "shortDesc":        "Brake on Stop",
+    "type":             "bool",
+    "default":          false
+},
+{
+    "name":             "antiStall",
+    "shortDesc":        "Anti-Stall Protection",
+    "type":             "bool",
+    "default":          false
+},
+{
+    "name":             "telemetry30ms",
+    "shortDesc":        "30ms Telemetry",
+    "type":             "bool",
+    "default":          false
+},
+{
+    "name":             "lowVoltageCutoff",
+    "shortDesc":        "Low Voltage Cutoff",
+    "type":             "bool",
+    "default":          false
+},
+{
+    "name":             "rcCarReversing",
+    "shortDesc":        "RC Car Reversing",
+    "type":             "bool",
+    "default":          false
+},
+{
+    "name":             "hallSensors",
+    "shortDesc":        "Hall Sensors",
+    "type":             "bool",
+    "default":          false
+},
+{
+    "name":             "autoTiming",
+    "shortDesc":        "Auto Timing",
+    "type":             "bool",
+    "default":          false
+},
+{
+    "name":             "maxRampSpeed",
+    "shortDesc":        "Max Ramp Speed",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "%/ms",
+    "min":              0.1,
+    "max":              25.5,
+    "default":          16.0
+},
+{
+    "name":             "minDutyCycle",
+    "shortDesc":        "Minimum Duty Cycle",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "%",
+    "min":              0.2,
+    "max":              51.0,
+    "default":          2.0
+},
+{
+    "name":             "timingAdvance",
+    "shortDesc":        "Timing Advance",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "deg",
+    "min":              0,
+    "max":              30,
+    "default":          15.0
+},
+{
+    "name":             "pwmFrequency",
+    "shortDesc":        "PWM Frequency",
+    "type":             "uint8",
+    "units":            "kHz",
+    "min":              8,
+    "max":              48,
+    "default":          24
+},
+{
+    "name":             "startupPower",
+    "shortDesc":        "Startup Power",
+    "type":             "uint8",
+    "units":            "%",
+    "min":              50,
+    "max":              150,
+    "default":          100
+},
+{
+    "name":             "motorKv",
+    "shortDesc":        "Motor KV",
+    "type":             "uint32",
+    "units":            "rpm/V",
+    "min":              20,
+    "max":              10240,
+    "default":          2200
+},
+{
+    "name":             "motorPoles",
+    "shortDesc":        "Motor Poles",
+    "type":             "uint8",
+    "min":              2,
+    "max":              36,
+    "default":          14
+},
+{
+    "name":             "beepVolume",
+    "shortDesc":        "Beep Volume",
+    "type":             "uint8",
+    "min":              0,
+    "max":              11,
+    "default":          5
+},
+{
+    "name":             "activeBrakePower",
+    "shortDesc":        "Active Brake Power",
+    "type":             "uint8",
+    "units":            "%",
+    "min":              0,
+    "max":              255,
+    "default":          0
+},
+{
+    "name":             "dragBrakeStrength",
+    "shortDesc":        "Drag Brake Strength",
+    "type":             "uint8",
+    "min":              1,
+    "max":              10,
+    "default":          10
+},
+{
+    "name":             "runningBrakeAmount",
+    "shortDesc":        "Running Brake Amount",
+    "type":             "uint8",
+    "min":              0,
+    "max":              255,
+    "default":          10
+},
+{
+    "name":             "temperatureLimit",
+    "shortDesc":        "Temperature Limit",
+    "type":             "uint8",
+    "units":            "C",
+    "min":              70,
+    "max":              141,
+    "default":          141
+},
+{
+    "name":             "currentLimit",
+    "shortDesc":        "Current Limit",
+    "type":             "double",
+    "decimalPlaces":    0,
+    "units":            "A",
+    "min":              0,
+    "max":              204,
+    "default":          204
+},
+{
+    "name":             "lowVoltageThreshold",
+    "shortDesc":        "Low Voltage Threshold",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "V/cell",
+    "min":              2.5,
+    "max":              3.5,
+    "default":          3.0
+},
+{
+    "name":             "sineModeRange",
+    "shortDesc":        "Sine Mode Range",
+    "type":             "uint8",
+    "units":            "%",
+    "min":              5,
+    "max":              25,
+    "default":          15
+},
+{
+    "name":             "sineModeStrength",
+    "shortDesc":        "Sine Mode Strength",
+    "type":             "uint8",
+    "min":              1,
+    "max":              10,
+    "default":          6
+},
+{
+    "name":             "inputType",
+    "shortDesc":        "Input Type",
+    "type":             "uint8",
+    "enumStrings":      "Auto,PWM,DShot",
+    "enumValues":       "0,1,2",
+    "default":          0
+},
+{
+    "name":             "currentPidP",
+    "shortDesc":        "Current PID P",
+    "type":             "double",
+    "decimalPlaces":    0,
+    "min":              0,
+    "max":              510,
+    "default":          200
+},
+{
+    "name":             "currentPidI",
+    "shortDesc":        "Current PID I",
+    "type":             "uint8",
+    "min":              0,
+    "max":              255,
+    "default":          0
+},
+{
+    "name":             "currentPidD",
+    "shortDesc":        "Current PID D",
+    "type":             "double",
+    "decimalPlaces":    0,
+    "min":              0,
+    "max":              2550,
+    "default":          500
+}
+]
+}

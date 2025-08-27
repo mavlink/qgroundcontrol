@@ -10,6 +10,7 @@
 #pragma once
 
 #include "FactGroupListModel.h"
+#include "AM32EepromFactGroup.h"
 
 class EscStatusFactGroupListModel : public FactGroupListModel
 {
@@ -40,6 +41,8 @@ class EscStatusFactGroup : public FactGroupWithId
     Q_PROPERTY(Fact *errorCount     READ errorCount     CONSTANT)
     Q_PROPERTY(Fact *temperature    READ temperature    CONSTANT)
 
+    Q_PROPERTY(AM32EepromFactGroup* am32Eeprom READ am32Eeprom CONSTANT)
+
 public:
     explicit EscStatusFactGroup(uint32_t escIndex, QObject *parent = nullptr);
 
@@ -52,6 +55,8 @@ public:
     Fact *failureFlags() { return &_failureFlagsFact; }
     Fact *errorCount() { return &_errorCountFact; }
     Fact *temperature() { return &_temperatureFact; }
+
+   AM32EepromFactGroup* am32Eeprom() { return _am32EepromFactGroup; }
 
     // Overrides from FactGroup
     void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) final;
@@ -70,4 +75,6 @@ private:
     Fact _failureFlagsFact =    Fact(0, QStringLiteral("failureFlags"),     FactMetaData::valueTypeUint16);
     Fact _errorCountFact =      Fact(0, QStringLiteral("errorCount"),       FactMetaData::valueTypeUint32);
     Fact _temperatureFact =     Fact(0, QStringLiteral("temperature"),      FactMetaData::valueTypeFloat);
+
+    AM32EepromFactGroup* _am32EepromFactGroup;
 };

@@ -1,5 +1,6 @@
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
+        AM32EepromFactGroup.cc
         BatteryFactGroupListModel.cc
         BatteryFactGroupListModel.h
         EscStatusFactGroupListModel.cc
@@ -42,6 +43,7 @@ target_sources(${CMAKE_PROJECT_NAME}
 
 # Add JSON files
 set(JSON_FILES
+    AM32EepromFact.json
     RPMFact.json
     TemperatureFact.json
     GPSFact.json

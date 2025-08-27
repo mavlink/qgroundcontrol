@@ -92,6 +92,9 @@ EscStatusFactGroup::EscStatusFactGroup(uint32_t escIndex, QObject *parent)
     _addFact(&_errorCountFact);
     _addFact(&_temperatureFact);
 
+    _am32EepromFactGroup = new AM32EepromFactGroup(this);
+    _am32EepromFactGroup->setEscIndex(escIndex);
+
     _idFact.setRawValue(escIndex);
     _rpmFact.setRawValue(0);
     _currentFact.setRawValue(0);
@@ -127,32 +130,23 @@ void EscStatusFactGroup::_handleAm32Eeprom(Vehicle *vehicle, const mavlink_messa
     mavlink_msg_am32_eeprom_decode(&message, &eeprom);
 
     if (eeprom.index != _idFact.rawValue().toUInt()) {
-        // Only handle messages with our index
+        // Only handle messages for our ESC index
         return;
     }
 
-    if (eeprom.mode > 0) {
-        // We don't handle write requests
-        return;
+    if (eeprom.mode == 0) {
+        // Read response - parse the EEPROM data
+        _am32EepromFactGroup->handleEepromData(eeprom.data, eeprom.length);
+
+        // qDebug() << "AM32 EEPROM data received for ESC" << eeprom.index;
+        // qDebug() << "Firmware:" << _am32EepromFactGroup->firmwareMajor()->rawValue().toUInt()
+        //          << "." << _am32EepromFactGroup->firmwareMinor()->rawValue().toUInt();
     }
-
-    qDebug() << "MAVLINK_MSG_ID_AM32_EEPROM";
-    qDebug() << "index:" << eeprom.index;
-
-    int length = eeprom.length;
-
-    uint8_t buf[48] = {};
-    if (length > sizeof(buf)) {
-        length = sizeof(buf) - 1;
+    else if (eeprom.mode == 1) {
+        // Write acknowledgment
+        emit _am32EepromFactGroup->writeComplete(true);
+        qDebug() << "AM32 EEPROM write acknowledged for ESC" << eeprom.index;
     }
-
-    memcpy(buf, eeprom.data, length);
-
-    QString hexString;
-    for (int i = 0; i < length; i++) {
-        hexString += QString("%1 ").arg(buf[i], 2, 16, QChar('0'));
-    }
-    qDebug() << hexString.trimmed();
 }
 
 void EscStatusFactGroup::_handleEscInfo(Vehicle *vehicle, const mavlink_message_t &message)

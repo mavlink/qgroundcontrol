@@ -7,7 +7,6 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FactControls
 
-
 import QGroundControl.AutoPilotPlugins.PX4
 
 SetupPage {
@@ -16,6 +15,7 @@ SetupPage {
     showAdvanced:   true
 
     property var actuators:       globals.activeVehicle.actuators
+    property var vehicle:         globals.activeVehicle
 
     property var _showAdvanced:              advanced
     readonly property real _margins:         ScreenTools.defaultFontPixelHeight
@@ -25,7 +25,7 @@ SetupPage {
 
         Row {
             spacing:                        ScreenTools.defaultFontPixelWidth * 4
-            property var _leftColumnWidth:  Math.max(actuatorTesting.implicitWidth, mixerUi.implicitWidth) + (_margins * 2)
+            property var _leftColumnWidth:  Math.max(actuatorTesting.implicitWidth, mixerUi.implicitWidth, am32SettingsLoader.implicitWidth) + (_margins * 2)
 
             ColumnLayout {
                 spacing:                    ScreenTools.defaultFontPixelHeight
@@ -318,6 +318,37 @@ SetupPage {
 
                     } // Column
                 } // Rectangle
+
+                // AM32 ESC Settings Section
+                QGCLabel {
+                    text:               qsTr("ESC Configuration")
+                    font.pointSize:     ScreenTools.mediumFontPointSize
+                    visible:            vehicle && vehicle.escs && vehicle.escs.count > 0
+                }
+
+                // Check if we have AM32 ESCs by trying to access the first ESC's AM32 data
+                Loader {
+                    id:                 am32SettingsLoader
+                    active:             false
+                    sourceComponent:    am32SettingsComponent
+
+                    Component.onCompleted: {
+                        if (vehicle && vehicle.escs && vehicle.escs.count > 0) {
+                            // Check if ESCs support AM32 by checking if am32Eeprom exists
+                            var firstEsc = vehicle.escs.get(0)
+                            if (firstEsc && firstEsc.am32Eeprom) {
+                                active = true
+                            }
+                        }
+                    }
+                }
+
+                Component {
+                    id: am32SettingsComponent
+                    AM32SettingsComponent {
+                        vehicle: actuatorPage.vehicle
+                    }
+                }
             }
 
             // Right column
