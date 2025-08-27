@@ -15,7 +15,7 @@
 #include "PX4RadioComponent.h"
 #include "PX4TuningComponent.h"
 #include "PowerComponent.h"
-#include "ESCComponent.h"
+#include "AM32Component.h"
 #include "SafetyComponent.h"
 #include "SensorsComponent.h"
 #include "ParameterManager.h"
@@ -33,7 +33,7 @@ PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     , _airframeComponent(nullptr)
     , _radioComponent(nullptr)
     , _esp8266Component(nullptr)
-    , _escComponent(nullptr)
+    , _am32Component(nullptr)
     , _flightModesComponent(nullptr)
     , _sensorsComponent(nullptr)
     , _safetyComponent(nullptr)
@@ -87,7 +87,7 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
                 _powerComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_powerComponent)));
 
-                // Add ESC component if we have received AM32 EEPROM data
+                // Add AM32 component if we have received AM32 EEPROM data
                 if (_vehicle->escs() && _vehicle->escs()->count() > 0) {
                     // Check if any ESC has AM32 support
                     bool hasAM32Support = false;
@@ -104,9 +104,9 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
                     }
                     
                     if (hasAM32Support) {
-                        _escComponent = new ESCComponent(_vehicle, this, this);
-                        _escComponent->setupTriggerSignals();
-                        _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_escComponent)));
+                        _am32Component = new AM32Component(_vehicle, this, this);
+                        _am32Component->setupTriggerSignals();
+                        _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_am32Component)));
                     }
                 }
 

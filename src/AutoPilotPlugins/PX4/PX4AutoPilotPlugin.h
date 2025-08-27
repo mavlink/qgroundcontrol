@@ -16,7 +16,7 @@
 #include "AirframeComponent.h"
 #include "PX4RadioComponent.h"
 #include "ESP8266Component.h"
-#include "ESCComponent.h"
+#include "AM32Component.h"
 #include "FlightModesComponent.h"
 #include "SensorsComponent.h"
 #include "SafetyComponent.h"
@@ -51,7 +51,7 @@ protected:
     AirframeComponent*      _airframeComponent;
     PX4RadioComponent*      _radioComponent;
     ESP8266Component*       _esp8266Component;
-    ESCComponent*           _escComponent;
+    AM32Component*          _am32Component;
     FlightModesComponent*   _flightModesComponent;
     SensorsComponent*       _sensorsComponent;
     SafetyComponent*        _safetyComponent;

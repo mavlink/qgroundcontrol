@@ -8,8 +8,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         AirframeComponentAirframes.h
         AirframeComponentController.cc
         AirframeComponentController.h
-        ESCComponent.cc
-        ESCComponent.h
+        AM32Component.cc
+        AM32Component.h
         FlightModesComponent.cc
         FlightModesComponent.h
         PowerComponent.cc
@@ -58,8 +58,8 @@ qt_add_qml_module(AutoPilotPluginsPX4Module
         AirframeComponentSummary.qml
         AM32SettingsComponent.qml
         BatteryParams.qml
-        ESCComponent.qml
-        ESCComponentSummary.qml
+        AM32Component.qml
+        AM32ComponentSummary.qml
         FlightModesComponentSummary.qml
         PowerComponent.qml
         PowerComponentSummary.qml

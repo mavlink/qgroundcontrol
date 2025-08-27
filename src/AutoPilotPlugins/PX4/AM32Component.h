@@ -11,12 +11,12 @@
 
 #include "VehicleComponent.h"
 
-class ESCComponent : public VehicleComponent
+class AM32Component : public VehicleComponent
 {
     Q_OBJECT
     
 public:
-    ESCComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
+    AM32Component(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
     
     // Overrides from VehicleComponent
     QStringList setupCompleteChangedTriggerList(void) const override;

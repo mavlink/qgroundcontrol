@@ -7,11 +7,9 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FactControls
 
-Rectangle {
+Item {
     id:                 root
-    color:              qgcPal.window
-    implicitWidth:      mainColumn.width + (_margins * 2)
-    implicitHeight:     mainColumn.height + (_margins * 2)
+    anchors.fill:       parent
 
     property var vehicle:           globals.activeVehicle
     property var escStatusModel:    vehicle ? vehicle.escs : null
@@ -104,7 +102,8 @@ Rectangle {
 
     Column {
         id:                 mainColumn
-        anchors.centerIn:   parent
+        anchors.fill:       parent
+        anchors.margins:    _margins
         spacing:            _margins
 
         // ESC Selection Header
@@ -124,7 +123,7 @@ Rectangle {
                     color:          qgcPal.window
 
                     property var escData: escStatusModel ? escStatusModel.get(index) : null
-                    property bool isLoading: escData && escData.am32Eeprom ? escData.am32Eeprom.isLoading : false
+                    property bool isLoading: escData && escData.am32Eeprom && escData.am32Eeprom.hasOwnProperty("isLoading") ? escData.am32Eeprom.isLoading : false
 
                     MouseArea {
                         anchors.fill: parent
@@ -207,10 +206,46 @@ Rectangle {
             visible:                escStatusModel && escStatusModel.count > 0
         }
 
+        // Status message when no ESC data available
+        Column {
+            anchors.centerIn: parent
+            spacing: _margins
+            visible: !am32Facts || !am32Facts.dataLoaded
+
+            QGCLabel {
+                text: qsTr("No ESC data available")
+                font.bold: true
+                font.pointSize: ScreenTools.largeFontPointSize
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+
+            QGCLabel {
+                text: qsTr("Connect an ESC with AM32 firmware to configure settings.")
+                anchors.horizontalCenter: parent.horizontalCenter
+                wrapMode: Text.WordWrap
+            }
+
+            QGCButton {
+                text: qsTr("Request ESC Data")
+                anchors.horizontalCenter: parent.horizontalCenter
+                enabled: escStatusModel && escStatusModel.count > 0
+                onClicked: {
+                    if (escStatusModel && escStatusModel.count > 0) {
+                        for (var i = 0; i < escStatusModel.count; i++) {
+                            var escData = escStatusModel.get(i)
+                            if (escData && escData.am32Eeprom) {
+                                escData.am32Eeprom.requestRead(vehicle)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         // Settings Panel
         Flickable {
-            width:              ScreenTools.defaultFontPixelWidth * 100
-            height:             ScreenTools.defaultFontPixelHeight * 40
+            width:              parent.width
+            height:             parent.height - y - actionButtons.height - (_margins * 2)
             contentHeight:      settingsColumn.height
             clip:               true
             visible:            am32Facts && am32Facts.dataLoaded
@@ -626,6 +661,7 @@ Rectangle {
 
         // Action Buttons
         Row {
+            id:                 actionButtons
             spacing:            _margins
             layoutDirection:    Qt.RightToLeft
             width:              parent.width
@@ -738,6 +774,7 @@ Rectangle {
 
         Layout.fillWidth: true
         spacing: 2
+        visible: fact !== null && fact !== undefined
 
         Row {
             width: parent.width
@@ -763,7 +800,8 @@ Rectangle {
         FactSlider {
             id:             factSlider
             width:          parent.width
-            majorTickStepSize: stepSize > 0 ? stepSize : (to - from) / 10
+            majorTickStepSize: stepSize > 0 ? stepSize : (factSlider.to - factSlider.from) / 10
+            visible:        fact !== null && fact !== undefined
         }
     }
 }

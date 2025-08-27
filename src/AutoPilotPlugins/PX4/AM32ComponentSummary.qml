@@ -18,7 +18,6 @@ Item {
     anchors.fill:   parent
 
     property var vehicle: globals.activeVehicle
-
     property string _naString: qsTr("N/A")
 
     Column {

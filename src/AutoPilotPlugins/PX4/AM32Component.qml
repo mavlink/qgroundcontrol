@@ -17,18 +17,17 @@ import QGroundControl.Controls
 import QGroundControl.AutoPilotPlugins.PX4
 
 SetupPage {
-    id:             escPage
+    id:             am32Page
     pageComponent:  pageComponent
 
     Component {
         id: pageComponent
 
         Item {
-            width:  Math.max(availableWidth, am32Settings.width)
-            height: am32Settings.height
+            width:  availableWidth
+            height: availableHeight
 
             AM32SettingsComponent {
-                id: am32Settings
                 anchors.fill: parent
             }
         }
