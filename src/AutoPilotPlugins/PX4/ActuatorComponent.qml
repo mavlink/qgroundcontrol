@@ -7,6 +7,7 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FactControls
 
+
 import QGroundControl.AutoPilotPlugins.PX4
 
 SetupPage {
@@ -15,7 +16,6 @@ SetupPage {
     showAdvanced:   true
 
     property var actuators:       globals.activeVehicle.actuators
-    property var vehicle:         globals.activeVehicle
 
     property var _showAdvanced:              advanced
     readonly property real _margins:         ScreenTools.defaultFontPixelHeight
@@ -25,7 +25,7 @@ SetupPage {
 
         Row {
             spacing:                        ScreenTools.defaultFontPixelWidth * 4
-            property var _leftColumnWidth:  Math.max(actuatorTesting.implicitWidth, mixerUi.implicitWidth, am32SettingsLoader.implicitWidth) + (_margins * 2)
+            property var _leftColumnWidth:  Math.max(actuatorTesting.implicitWidth, mixerUi.implicitWidth) + (_margins * 2)
 
             ColumnLayout {
                 spacing:                    ScreenTools.defaultFontPixelHeight
