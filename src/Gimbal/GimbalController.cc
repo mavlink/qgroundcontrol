@@ -15,6 +15,7 @@
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
+#include <cmath> // for NAN
 
 QGC_LOGGING_CATEGORY(GimbalControllerLog, "qgc.gimbal.gimbalcontroller")
 
@@ -588,6 +589,60 @@ void GimbalController::sendRate()
     } else {
         _rateSenderTimer.start();
     }
+}
+
+void GimbalController::sendGimbalRate(float pitch_rate_deg_s, float yaw_rate_deg_s)
+{
+    if (!_tryGetGimbalControl()) {
+        return;
+    }
+
+    uint32_t flags = GIMBAL_MANAGER_FLAGS_ROLL_LOCK | GIMBAL_MANAGER_FLAGS_PITCH_LOCK;
+    if (_activeGimbal && _activeGimbal->yawLock()) {
+        flags |= GIMBAL_MANAGER_FLAGS_YAW_LOCK;
+    }
+
+    _sendGimbalRateCommandLong(pitch_rate_deg_s, yaw_rate_deg_s, flags);
+
+    if (pitch_rate_deg_s == 0.f && yaw_rate_deg_s == 0.f) {
+        _rateSenderTimer.stop();
+    } else {
+        _rateSenderTimer.start();
+    }
+}
+
+/// Build and send MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW with rate fields,
+/// using Vehicle::sendMessageOnLinkThreadSafe
+void GimbalController::_sendGimbalRateCommandLong(float pitch_rate_deg_s,
+                                                  float yaw_rate_deg_s,
+                                                  uint32_t flags)
+{
+    auto sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
+    if (!sharedLink) {
+        qCDebug(GimbalControllerLog) << "_sendGimbalRateCommandLong: primary link gone!";
+        return;
+    }
+
+    mavlink_message_t msg;
+    mavlink_msg_command_long_pack_chan(
+        MAVLinkProtocol::instance()->getSystemId(),
+        MAVLinkProtocol::getComponentId(),
+        sharedLink->mavlinkChannel(),
+        &msg,
+        _vehicle->id(),
+        _activeGimbal->managerCompid()->rawValue().toUInt(),
+        MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW,
+        0,
+        NAN,
+        NAN,
+        pitch_rate_deg_s,
+        yaw_rate_deg_s,
+        flags,
+        0,
+        _activeGimbal->deviceId()->rawValue().toUInt()
+    );
+
+    _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
 }
 
 void GimbalController::_rateSenderTimeout()
