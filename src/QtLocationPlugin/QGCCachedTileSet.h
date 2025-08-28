@@ -7,15 +7,6 @@
  *
  ****************************************************************************/
 
-
-/**
- * @file
- *   @brief Map Tile Set
- *
- *   @author Gus Grubba <gus@auterion.com>
- *
- */
-
 #pragma once
 
 #include <QtCore/QDateTime>

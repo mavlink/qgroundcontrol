@@ -9,7 +9,7 @@
 
 #include "QGeoServiceProviderPluginQGC.h"
 #include "QGeoTiledMappingManagerEngineQGC.h"
-#include <QGCLoggingCategory.h>
+#include "QGCLoggingCategory.h"
 
 #include <QtQml/QQmlEngine>
 
@@ -18,12 +18,12 @@ QGC_LOGGING_CATEGORY(QGeoServiceProviderFactoryQGCLog, "qgc.qtlocationplugin.qge
 QGeoServiceProviderFactoryQGC::QGeoServiceProviderFactoryQGC(QObject *parent)
     : QObject(parent)
 {
-    qCDebug(QGeoServiceProviderFactoryQGCLog) << Q_FUNC_INFO << this;
+    qCDebug(QGeoServiceProviderFactoryQGCLog) << this;
 }
 
 QGeoServiceProviderFactoryQGC::~QGeoServiceProviderFactoryQGC()
 {
-    qCDebug(QGeoServiceProviderFactoryQGCLog) << Q_FUNC_INFO << this;
+    qCDebug(QGeoServiceProviderFactoryQGCLog) << this;
 }
 
 QGeoCodingManagerEngine *QGeoServiceProviderFactoryQGC::createGeocodingManagerEngine(
@@ -34,7 +34,7 @@ QGeoCodingManagerEngine *QGeoServiceProviderFactoryQGC::createGeocodingManagerEn
         *error = QGeoServiceProvider::NotSupportedError;
     }
     if (errorString) {
-        *errorString = "Geocoding Not Supported";
+        *errorString = QStringLiteral("Geocoding Not Supported");
     }
 
     return nullptr;
@@ -66,7 +66,7 @@ QGeoRoutingManagerEngine *QGeoServiceProviderFactoryQGC::createRoutingManagerEng
         *error = QGeoServiceProvider::NotSupportedError;
     }
     if (errorString) {
-        *errorString = "Routing Not Supported";
+        *errorString = QStringLiteral("Routing Not Supported");
     }
 
     return nullptr;
@@ -80,7 +80,7 @@ QPlaceManagerEngine *QGeoServiceProviderFactoryQGC::createPlaceManagerEngine(
         *error = QGeoServiceProvider::NotSupportedError;
     }
     if (errorString) {
-        *errorString = "Place Not Supported";
+        *errorString = QStringLiteral("Place Not Supported");
     }
 
     return nullptr;
