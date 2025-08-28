@@ -23,13 +23,12 @@
 QGC_LOGGING_CATEGORY(QGCMapUrlEngineLog, "QtLocationPlugin.QGCMapUrlEngine")
 
 const QList<SharedMapProvider> UrlFactory::_providers = {
-#ifndef QGC_NO_GOOGLE_MAPS
     std::make_shared<GoogleStreetMapProvider>(),
     std::make_shared<GoogleSatelliteMapProvider>(),
     std::make_shared<GoogleTerrainMapProvider>(),
     std::make_shared<GoogleHybridMapProvider>(),
     std::make_shared<GoogleLabelsMapProvider>(),
-#endif
+
     std::make_shared<BingRoadMapProvider>(),
     std::make_shared<BingSatelliteMapProvider>(),
     std::make_shared<BingHybridMapProvider>(),
@@ -173,9 +172,9 @@ QGCTileSet UrlFactory::getTileCount(int zoom, double topleftLon, double topleftL
 
 QString UrlFactory::getProviderTypeFromQtMapId(int qtMapId)
 {
-    // Default Set
+    // Default Set or unknown type
     if (qtMapId == -1) {
-        return nullptr;
+        return QString();
     }
 
     for (const SharedMapProvider &provider : _providers) {
@@ -185,7 +184,7 @@ QString UrlFactory::getProviderTypeFromQtMapId(int qtMapId)
     }
 
     qCWarning(QGCMapUrlEngineLog) << "map id not found:" << qtMapId;
-    return QString("");
+    return QString();
 }
 
 SharedMapProvider UrlFactory::getMapProviderFromQtMapId(int qtMapId)

@@ -397,22 +397,21 @@ bool QGCMapEngineManager::exportSets(const QString &path)
         return false;
     }
 
-    QList<QGCCachedTileSet*> sets;
-
+    QList<quint64> setIDs;
     for (qsizetype i = 0; i < _tileSets->count(); i++) {
-        QGCCachedTileSet* const set = qobject_cast<QGCCachedTileSet*>(_tileSets->get(i));
+        const QGCCachedTileSet *set = qobject_cast<const QGCCachedTileSet*>(_tileSets->get(i));
         if (set->selected()) {
-            sets.append(set);
+            setIDs.append(set->id());
         }
     }
 
-    if (sets.isEmpty()) {
+    if (setIDs.isEmpty()) {
         return false;
     }
 
     setImportAction(ImportAction::ActionExporting);
 
-    QGCExportTileTask *task = new QGCExportTileTask(sets, path);
+    QGCExportTileTask *task = new QGCExportTileTask(setIDs, path);
     (void) connect(task, &QGCExportTileTask::actionCompleted, this, &QGCMapEngineManager::_actionCompleted);
     (void) connect(task, &QGCExportTileTask::actionProgress, this, &QGCMapEngineManager::_actionProgressHandler);
     (void) connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);

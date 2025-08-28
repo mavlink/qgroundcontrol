@@ -34,6 +34,8 @@ qt_add_plugin(QGCLocation
     QGCMapUrlEngine.cpp
     QGCMapUrlEngine.h
     QGCTile.h
+    QGCTileCacheDatabase.cpp
+    QGCTileCacheDatabase.h
     QGCTileCacheWorker.cpp
     QGCTileCacheWorker.h
     QGCTileSet.h
@@ -50,14 +52,6 @@ qt_add_plugin(QGCLocation
     QGeoTileFetcherQGC.cpp
     QGeoTileFetcherQGC.h
 )
-
-# ----------------------------------------------------------------------------
-# Platform-Specific Configuration
-# ----------------------------------------------------------------------------
-# Google Maps not available on iOS
-if(IOS)
-    target_compile_definitions(QGCLocation PRIVATE QGC_NO_GOOGLE_MAPS)
-endif()
 
 # ----------------------------------------------------------------------------
 # Dependencies
