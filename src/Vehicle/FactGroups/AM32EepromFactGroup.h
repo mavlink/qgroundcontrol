@@ -12,6 +12,8 @@
 #include "FactGroup.h"
 #include "QGCMAVLink.h"
 #include <QtCore/QSet>
+#include <QtCore/QVariantMap>
+#include <QtCore/QHash>
 
 class Vehicle;
 
@@ -127,9 +129,9 @@ public:
 
     // Status
     bool dataLoaded() const { return _dataLoaded; }
-    bool hasUnsavedChanges() const { return !_modifiedBytes.isEmpty(); }
+    bool hasUnsavedChanges() const { return !_pendingChanges.isEmpty(); }
     int escIndex() const { return _escIndex; }
-    void setEscIndex(int index);;
+    void setEscIndex(int index);
 
     /// Parse EEPROM data from AM32_EEPROM message
     void handleEepromData(const uint8_t* data, int length);
@@ -146,11 +148,23 @@ public:
     /// Write EEPROM data to ESC (only modified bytes)
     Q_INVOKABLE void requestWrite(Vehicle* vehicle);
 
-    /// Mark all changes as saved
-    Q_INVOKABLE void markChangesSaved();
+    /// Apply pending changes to this ESC
+    Q_INVOKABLE void applyPendingChanges(const QVariantMap& changes);
 
-    /// Reset to last saved values
+    /// Get pending changes
+    Q_INVOKABLE QVariantMap getPendingChanges() const { return _pendingChanges; }
+
+    /// Clear pending changes (after write)
+    Q_INVOKABLE void clearPendingChanges();
+
+    /// Discard pending changes and revert to fact values
     Q_INVOKABLE void discardChanges();
+
+    /// Check if settings match another ESC
+    Q_INVOKABLE bool settingsMatch(AM32EepromFactGroup* other) const;
+
+    /// Get a fact value by name (includes pending changes)
+    Q_INVOKABLE QVariant getFactValue(const QString& factName) const;
 
 signals:
     void dataLoadedChanged();
@@ -158,13 +172,11 @@ signals:
     void escIndexChanged();
     void readComplete(bool success);
     void writeComplete(bool success);
-
-private slots:
-    void _factValueChanged(QVariant value);
+    void pendingChangesUpdated();
 
 private:
-    void _connectFactChangeSignals();
-    int _getByteIndexForFact(Fact* fact) const;
+    void _initializeByteMapping();
+    Fact* _getFactByName(const QString& name) const;
 
     // EEPROM byte indices for each setting
     enum EepromIndices {
@@ -213,6 +225,14 @@ private:
         BYTE_SINE_MODE_STRENGTH = 45,
         BYTE_INPUT_TYPE = 46,
         BYTE_AUTO_TIMING = 47
+    };
+
+    // Struct to organize byte mapping
+    struct ByteMapping {
+        Fact* fact;
+        int byteIndex;
+
+        ByteMapping(Fact* f = nullptr, int idx = -1) : fact(f), byteIndex(idx) {}
     };
 
     // Info facts (read-only)
@@ -270,5 +290,11 @@ private:
     // Change tracking
     QSet<int> _modifiedBytes;              // Set of byte indices that have been modified
     QByteArray _originalEepromData;        // Original EEPROM data from last read
-    QMap<Fact*, int> _factToByteIndex;     // Maps facts to their EEPROM byte index
+
+    // Maps for efficient lookups
+    QHash<QString, Fact*> _factsByName;    // Map fact names to fact pointers
+    QHash<Fact*, int> _factToByteIndex;    // Map facts to their EEPROM byte index
+
+    // Pending changes not yet written
+    QVariantMap _pendingChanges;           // Map of fact name to pending value
 };

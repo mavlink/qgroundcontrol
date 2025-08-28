@@ -61,78 +61,72 @@ AM32EepromFactGroup::AM32EepromFactGroup(QObject* parent)
     _addFact(&_servoNeutralFact);
     _addFact(&_servoDeadbandFact);
 
-    // Map facts to their EEPROM byte indices
-    _factToByteIndex[&_maxRampSpeedFact] = BYTE_MAX_RAMP_SPEED;
-    _factToByteIndex[&_minDutyCycleFact] = BYTE_MIN_DUTY_CYCLE;
-    _factToByteIndex[&_currentPidPFact] = BYTE_CURRENT_PID_P;
-    _factToByteIndex[&_currentPidIFact] = BYTE_CURRENT_PID_I;
-    _factToByteIndex[&_currentPidDFact] = BYTE_CURRENT_PID_D;
-    _factToByteIndex[&_activeBrakePowerFact] = BYTE_ACTIVE_BRAKE_POWER;
-    _factToByteIndex[&_directionReversedFact] = BYTE_DIR_REVERSED;
-    _factToByteIndex[&_bidirectionalModeFact] = BYTE_BI_DIRECTION;
-    _factToByteIndex[&_sineStartupFact] = BYTE_USE_SINE_START;
-    _factToByteIndex[&_complementaryPwmFact] = BYTE_COMP_PWM;
-    _factToByteIndex[&_variablePwmFreqFact] = BYTE_VARIABLE_PWM;
-    _factToByteIndex[&_stuckRotorProtectionFact] = BYTE_STUCK_ROTOR;
-    _factToByteIndex[&_timingAdvanceFact] = BYTE_TIMING_ADVANCE;
-    _factToByteIndex[&_pwmFrequencyFact] = BYTE_PWM_FREQUENCY;
-    _factToByteIndex[&_startupPowerFact] = BYTE_STARTUP_POWER;
-    _factToByteIndex[&_motorKvFact] = BYTE_MOTOR_KV;
-    _factToByteIndex[&_motorPolesFact] = BYTE_MOTOR_POLES;
-    _factToByteIndex[&_brakeOnStopFact] = BYTE_BRAKE_ON_STOP;
-    _factToByteIndex[&_antiStallFact] = BYTE_ANTI_STALL;
-    _factToByteIndex[&_beepVolumeFact] = BYTE_BEEP_VOLUME;
-    _factToByteIndex[&_telemetry30msFact] = BYTE_TELEMETRY_30MS;
-    _factToByteIndex[&_lowVoltageCutoffFact] = BYTE_LOW_VOLTAGE_CUTOFF;
-    _factToByteIndex[&_lowVoltageThresholdFact] = BYTE_LOW_VOLTAGE_THRESHOLD;
-    _factToByteIndex[&_rcCarReversingFact] = BYTE_RC_CAR_REVERSING;
-    _factToByteIndex[&_hallSensorsFact] = BYTE_HALL_SENSORS;
-    _factToByteIndex[&_sineModeRangeFact] = BYTE_SINE_MODE_RANGE;
-    _factToByteIndex[&_dragBrakeStrengthFact] = BYTE_DRAG_BRAKE;
-    _factToByteIndex[&_runningBrakeAmountFact] = BYTE_RUNNING_BRAKE;
-    _factToByteIndex[&_temperatureLimitFact] = BYTE_TEMP_LIMIT;
-    _factToByteIndex[&_currentLimitFact] = BYTE_CURRENT_LIMIT;
-    _factToByteIndex[&_sineModeStrengthFact] = BYTE_SINE_MODE_STRENGTH;
-    _factToByteIndex[&_inputTypeFact] = BYTE_INPUT_TYPE;
-    _factToByteIndex[&_autoTimingFact] = BYTE_AUTO_TIMING;
-    _factToByteIndex[&_disableStickCalibrationFact] = BYTE_STICK_CALIBRATION;
-    _factToByteIndex[&_absoluteVoltageCutoffFact] = BYTE_VOLTAGE_CUTOFF;
-    _factToByteIndex[&_servoLowThresholdFact] = BYTE_SERVO_LOW;
-    _factToByteIndex[&_servoHighThresholdFact] = BYTE_SERVO_HIGH;
-    _factToByteIndex[&_servoNeutralFact] = BYTE_SERVO_NEUTRAL;
-    _factToByteIndex[&_servoDeadbandFact] = BYTE_SERVO_DEADBAND;
-
-    // Connect change signals for all editable facts
-    _connectFactChangeSignals();
+    // Initialize the byte mapping
+    _initializeByteMapping();
 }
 
-void AM32EepromFactGroup::_connectFactChangeSignals()
+void AM32EepromFactGroup::_initializeByteMapping()
 {
-    // Connect all editable facts to change tracking
-    for (auto it = _factToByteIndex.begin(); it != _factToByteIndex.end(); ++it) {
-        connect(it.key(), &Fact::rawValueChanged, this, [this, fact = it.key()](QVariant value) {
-            _factValueChanged(value);
+    // Build the name-to-fact map for all facts
+    auto addToMaps = [this](Fact* fact, int byteIndex = -1) {
+        _factsByName[fact->name()] = fact;
+        if (byteIndex >= 0) {
+            _factToByteIndex[fact] = byteIndex;
+        }
+    };
 
-            // Mark the byte(s) this fact affects as modified
-            int byteIndex = _factToByteIndex[fact];
-            if (byteIndex >= 0) {
-                _modifiedBytes.insert(byteIndex);
+    // Read-only facts (no byte index)
+    addToMaps(&_firmwareMajorFact);
+    addToMaps(&_firmwareMinorFact);
+    addToMaps(&_bootloaderVersionFact);
+    addToMaps(&_eepromVersionFact);
 
-                // Some facts affect multiple bytes or require special handling
-                if (fact == &_lowVoltageThresholdFact && _lowVoltageCutoffFact.rawValue().toBool()) {
-                    _modifiedBytes.insert(BYTE_LOW_VOLTAGE_CUTOFF);
-                }
+    // Editable facts with their byte indices
+    const QList<ByteMapping> mappings = {
+        {&_maxRampSpeedFact, BYTE_MAX_RAMP_SPEED},
+        {&_minDutyCycleFact, BYTE_MIN_DUTY_CYCLE},
+        {&_disableStickCalibrationFact, BYTE_STICK_CALIBRATION},
+        {&_absoluteVoltageCutoffFact, BYTE_VOLTAGE_CUTOFF},
+        {&_currentPidPFact, BYTE_CURRENT_PID_P},
+        {&_currentPidIFact, BYTE_CURRENT_PID_I},
+        {&_currentPidDFact, BYTE_CURRENT_PID_D},
+        {&_activeBrakePowerFact, BYTE_ACTIVE_BRAKE_POWER},
+        {&_directionReversedFact, BYTE_DIR_REVERSED},
+        {&_bidirectionalModeFact, BYTE_BI_DIRECTION},
+        {&_sineStartupFact, BYTE_USE_SINE_START},
+        {&_complementaryPwmFact, BYTE_COMP_PWM},
+        {&_variablePwmFreqFact, BYTE_VARIABLE_PWM},
+        {&_stuckRotorProtectionFact, BYTE_STUCK_ROTOR},
+        {&_timingAdvanceFact, BYTE_TIMING_ADVANCE},
+        {&_pwmFrequencyFact, BYTE_PWM_FREQUENCY},
+        {&_startupPowerFact, BYTE_STARTUP_POWER},
+        {&_motorKvFact, BYTE_MOTOR_KV},
+        {&_motorPolesFact, BYTE_MOTOR_POLES},
+        {&_brakeOnStopFact, BYTE_BRAKE_ON_STOP},
+        {&_antiStallFact, BYTE_ANTI_STALL},
+        {&_beepVolumeFact, BYTE_BEEP_VOLUME},
+        {&_telemetry30msFact, BYTE_TELEMETRY_30MS},
+        {&_servoLowThresholdFact, BYTE_SERVO_LOW},
+        {&_servoHighThresholdFact, BYTE_SERVO_HIGH},
+        {&_servoNeutralFact, BYTE_SERVO_NEUTRAL},
+        {&_servoDeadbandFact, BYTE_SERVO_DEADBAND},
+        {&_lowVoltageCutoffFact, BYTE_LOW_VOLTAGE_CUTOFF},
+        {&_lowVoltageThresholdFact, BYTE_LOW_VOLTAGE_THRESHOLD},
+        {&_rcCarReversingFact, BYTE_RC_CAR_REVERSING},
+        {&_hallSensorsFact, BYTE_HALL_SENSORS},
+        {&_sineModeRangeFact, BYTE_SINE_MODE_RANGE},
+        {&_dragBrakeStrengthFact, BYTE_DRAG_BRAKE},
+        {&_runningBrakeAmountFact, BYTE_RUNNING_BRAKE},
+        {&_temperatureLimitFact, BYTE_TEMP_LIMIT},
+        {&_currentLimitFact, BYTE_CURRENT_LIMIT},
+        {&_sineModeStrengthFact, BYTE_SINE_MODE_STRENGTH},
+        {&_inputTypeFact, BYTE_INPUT_TYPE},
+        {&_autoTimingFact, BYTE_AUTO_TIMING}
+    };
 
-                emit hasUnsavedChangesChanged();
-            }
-        });
+    for (const auto& mapping : mappings) {
+        addToMaps(mapping.fact, mapping.byteIndex);
     }
-}
-
-void AM32EepromFactGroup::_factValueChanged(QVariant value)
-{
-    Q_UNUSED(value)
-    // Additional logic if needed
 }
 
 void AM32EepromFactGroup::setEscIndex(int index)
@@ -153,7 +147,8 @@ void AM32EepromFactGroup::handleEepromData(const uint8_t* data, int length)
     // Store original data for comparison
     _originalEepromData = QByteArray(reinterpret_cast<const char*>(data), length);
 
-    // Clear modified bytes since we're loading fresh data
+    // Clear pending changes since we're loading fresh data
+    _pendingChanges.clear();
     _modifiedBytes.clear();
 
     // Parse read-only info
@@ -234,6 +229,100 @@ void AM32EepromFactGroup::handleEepromData(const uint8_t* data, int length)
     emit dataLoadedChanged();
     emit hasUnsavedChangesChanged();
     emit readComplete(true);
+}
+
+void AM32EepromFactGroup::applyPendingChanges(const QVariantMap& changes)
+{
+    // Apply the pending changes from the UI
+    for (auto it = changes.begin(); it != changes.end(); ++it) {
+        const QString& factName = it.key();
+        const QVariant& value = it.value();
+
+        _pendingChanges[factName] = value;
+
+        // Also update the fact value so packEepromData works correctly
+        Fact* fact = _factsByName.value(factName, nullptr);
+        if (fact) {
+            fact->setRawValue(value);
+
+            // Track which byte was modified
+            if (_factToByteIndex.contains(fact)) {
+                _modifiedBytes.insert(_factToByteIndex[fact]);
+
+                // Special case: low voltage threshold affects cutoff byte too
+                if (fact == &_lowVoltageThresholdFact && _lowVoltageCutoffFact.rawValue().toBool()) {
+                    _modifiedBytes.insert(BYTE_LOW_VOLTAGE_CUTOFF);
+                }
+            }
+        }
+    }
+
+    emit pendingChangesUpdated();
+    emit hasUnsavedChangesChanged();
+}
+
+void AM32EepromFactGroup::clearPendingChanges()
+{
+    _pendingChanges.clear();
+    _modifiedBytes.clear();
+    emit hasUnsavedChangesChanged();
+    emit pendingChangesUpdated();
+}
+
+void AM32EepromFactGroup::discardChanges()
+{
+    // Revert facts back to their current hardware values (re-parse EEPROM data)
+    if (!_originalEepromData.isEmpty() && _dataLoaded) {
+        handleEepromData(reinterpret_cast<const uint8_t*>(_originalEepromData.data()),
+                         _originalEepromData.size());
+    }
+}
+
+bool AM32EepromFactGroup::settingsMatch(AM32EepromFactGroup* other) const
+{
+    if (!other || !other->dataLoaded() || !_dataLoaded) {
+        return false;
+    }
+
+    // Compare all editable facts
+    for (auto it = _factToByteIndex.begin(); it != _factToByteIndex.end(); ++it) {
+        Fact* myFact = it.key();
+        Fact* otherFact = other->_factsByName.value(myFact->name(), nullptr);
+
+        if (!otherFact) {
+            return false;
+        }
+
+        // Get the effective values (including pending changes)
+        QVariant myValue = getFactValue(myFact->name());
+        QVariant otherValue = other->getFactValue(myFact->name());
+
+        if (myValue != otherValue) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+QVariant AM32EepromFactGroup::getFactValue(const QString& factName) const
+{
+    // If there's a pending change, return that, otherwise return the fact value
+    if (_pendingChanges.contains(factName)) {
+        return _pendingChanges[factName];
+    }
+
+    Fact* fact = _factsByName.value(factName, nullptr);
+    if (fact) {
+        return fact->rawValue();
+    }
+
+    return QVariant();
+}
+
+Fact* AM32EepromFactGroup::_getFactByName(const QString& name) const
+{
+    return _factsByName.value(name, nullptr);
 }
 
 void AM32EepromFactGroup::calculateWriteMask(uint32_t writeMask[6]) const
@@ -359,10 +448,12 @@ void AM32EepromFactGroup::requestWrite(Vehicle* vehicle)
     calculateWriteMask(writeMask);
 
     // Log which bytes we're writing
+    qDebug() << "ESC" << _escIndex;
     qDebug() << "Writing AM32 EEPROM bytes:" << _modifiedBytes;
     qDebug() << "Write mask:" << Qt::hex
              << writeMask[0] << writeMask[1] << writeMask[2]
              << writeMask[3] << writeMask[4] << writeMask[5];
+    qDebug() << "\n";
 
     // Send AM32_EEPROM message with write mode
     mavlink_message_t msg;
@@ -388,23 +479,8 @@ void AM32EepromFactGroup::requestWrite(Vehicle* vehicle)
         );
 
         vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+
+        // Clear pending changes after successful write
+        clearPendingChanges();
     }
-}
-
-void AM32EepromFactGroup::markChangesSaved()
-{
-    _modifiedBytes.clear();
-    _originalEepromData = packEepromData();
-    emit hasUnsavedChangesChanged();
-}
-
-void AM32EepromFactGroup::discardChanges()
-{
-    if (_originalEepromData.isEmpty() || !_dataLoaded) {
-        return;
-    }
-
-    // Restore facts from original EEPROM data
-    handleEepromData(reinterpret_cast<const uint8_t*>(_originalEepromData.data()),
-                     _originalEepromData.size());
 }

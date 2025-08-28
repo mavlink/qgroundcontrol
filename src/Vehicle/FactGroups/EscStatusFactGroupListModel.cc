@@ -92,6 +92,7 @@ EscStatusFactGroup::EscStatusFactGroup(uint32_t escIndex, QObject *parent)
     _addFact(&_errorCountFact);
     _addFact(&_temperatureFact);
 
+    qDebug() << "Creating AM32EepromFactGroup for ESC" << escIndex;
     _am32EepromFactGroup = new AM32EepromFactGroup(this);
     _am32EepromFactGroup->setEscIndex(escIndex);
 
@@ -162,14 +163,6 @@ void EscStatusFactGroup::_handleEscInfo(Vehicle *vehicle, const mavlink_message_
     }
 
     index %= 4; // Convert to 0-based index for the arrays in escInfo
-
-    // qDebug() << "ESC_INFO:";
-    // qDebug() << "escInfo.info:" << escInfo.info;
-    // qDebug() << "escInfo.index:" << escInfo.index;
-    // qDebug() << "escInfo.count:" << escInfo.count;
-    // qDebug() << "escInfo.temperature:" << escInfo.temperature[index];
-    // qDebug() << "escInfo.failure_flags:" << escInfo.failure_flags[index];
-    // qDebug() << "index:" << index;
 
     _countFact.setRawValue(escInfo.count);
     _connectionTypeFact.setRawValue(escInfo.connection_type);

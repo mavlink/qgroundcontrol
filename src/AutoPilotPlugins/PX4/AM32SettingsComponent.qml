@@ -13,23 +13,31 @@ Item {
     property var vehicle:           globals.activeVehicle
     property var escStatusModel:    vehicle ? vehicle.escs : null
     property var selectedEscs:      []  // Array of selected ESC indices
-    property var am32Facts:         selectedEscs.length > 0 && escStatusModel ? escStatusModel.get(selectedEscs[0]).am32Eeprom : null
+
+    // Pending changes that haven't been written yet
+    property var pendingValues:     ({})  // Map of setting names to values
+
+    // The reference ESC is always the first selected ESC
+    property var referenceEsc:      selectedEscs.length > 0 && escStatusModel ? escStatusModel.get(selectedEscs[0]) : null
+    property var referenceFacts:     referenceEsc ? referenceEsc.am32Eeprom : null
 
     readonly property real _margins:        ScreenTools.defaultFontPixelHeight
     readonly property real _groupMargins:   ScreenTools.defaultFontPixelHeight / 2
 
     Component.onCompleted: {
         if (escStatusModel && escStatusModel.count > 0) {
-            // Default: select all ESCs (matching AM32 Configurator behavior)
+            // Default: select all ESCs
             var allEscs = []
             for (var i = 0; i < escStatusModel.count; i++) {
                 allEscs.push(i)
             }
             selectedEscs = allEscs
 
-            // Request read for first ESC to get initial data
-            if (escStatusModel.get(0).am32Eeprom) {
-                escStatusModel.get(0).am32Eeprom.requestRead(vehicle)
+            // Request read for all ESCs to get initial data
+            for (var j = 0; j < escStatusModel.count; j++) {
+                if (escStatusModel.get(j).am32Eeprom) {
+                    escStatusModel.get(j).am32Eeprom.requestRead(vehicle)
+                }
             }
         }
     }
@@ -40,28 +48,35 @@ Item {
         }
 
         var escData = escStatusModel.get(index)
-
-        // TODO: something else?
-        if (!escData) {
+        if (!escData || !escData.am32Eeprom) {
             return qgcPal.colorGrey
         }
 
         // Check if ESC has unsaved changes
-        if (escData.am32Eeprom && escData.am32Eeprom.hasUnsavedChanges) {
-            return qgcPal.colorYellow
+        if (escData.am32Eeprom.hasUnsavedChanges) {
+            return qgcPal.colorYellow  // Yellow for pending changes
         }
 
-        // Check if ESC is selected
-        if (selectedEscs.indexOf(index) >= 0) {
-            return qgcPal.colorGreen
+        var isSelected = selectedEscs.indexOf(index) >= 0
+        if (!isSelected) {
+            return qgcPal.colorGrey  // Grey for unselected
         }
 
-        // Check if ESC has mismatched settings or is missing
-        if (!escData.am32Eeprom || !escData.am32Eeprom.dataLoaded) {
-            return qgcPal.colorRed
+        // For selected ESCs, check if settings match the reference
+        if (!escData.am32Eeprom.dataLoaded) {
+            return qgcPal.colorRed  // Red if data not loaded
         }
 
-        return qgcPal.colorGrey
+        if (index === selectedEscs[0]) {
+            return qgcPal.colorGreen  // First selected is always green
+        }
+
+        // Check if this ESC's settings match the reference ESC
+        if (referenceEsc && referenceEsc.am32Eeprom && escData.am32Eeprom.settingsMatch(referenceEsc.am32Eeprom)) {
+            return qgcPal.colorGreen  // Green if matches
+        } else {
+            return qgcPal.colorRed  // Red if doesn't match
+        }
     }
 
     function toggleEscSelection(index) {
@@ -85,7 +100,90 @@ Item {
             if (firstSelected.am32Eeprom && !firstSelected.am32Eeprom.dataLoaded) {
                 firstSelected.am32Eeprom.requestRead(vehicle)
             }
+
+            // Reset pending values when selection changes
+            pendingValues = {}
         }
+    }
+
+    function updatePendingValue(settingName, value) {
+        // Update the pending value
+        var newPending = Object.assign({}, pendingValues)
+        newPending[settingName] = value
+        pendingValues = newPending
+
+        // Apply to all selected ESCs
+        for (var i = 0; i < selectedEscs.length; i++) {
+            var escData = escStatusModel.get(selectedEscs[i])
+            if (escData && escData.am32Eeprom) {
+                var changes = {}
+                changes[settingName] = value
+                escData.am32Eeprom.applyPendingChanges(changes)
+            }
+        }
+    }
+
+    function getDisplayValue(settingName) {
+        // If we have a pending value, use that
+        if (pendingValues.hasOwnProperty(settingName)) {
+            return pendingValues[settingName]
+        }
+
+        // Otherwise use the value from the reference ESC
+        if (referenceFacts) {
+            return referenceFacts.getFactValue(settingName)
+        }
+
+        return null
+    }
+
+    function writeSettings() {
+        // Write settings to all selected ESCs
+        for (var i = 0; i < selectedEscs.length; i++) {
+            var escData = escStatusModel.get(selectedEscs[i])
+            if (escData && escData.am32Eeprom && escData.am32Eeprom.hasUnsavedChanges) {
+                escData.am32Eeprom.requestWrite(vehicle)
+            }
+        }
+
+        // Clear pending values after write
+        pendingValues = {}
+    }
+
+    function readSettings() {
+        // Read settings from all selected ESCs
+        for (var i = 0; i < selectedEscs.length; i++) {
+            var escData = escStatusModel.get(selectedEscs[i])
+            if (escData && escData.am32Eeprom) {
+                escData.am32Eeprom.requestRead(vehicle)
+            }
+        }
+
+        // Clear pending values after read
+        pendingValues = {}
+    }
+
+    function discardChanges() {
+        // Discard changes on all selected ESCs
+        for (var i = 0; i < selectedEscs.length; i++) {
+            var escData = escStatusModel.get(selectedEscs[i])
+            if (escData && escData.am32Eeprom) {
+                escData.am32Eeprom.discardChanges()
+            }
+        }
+
+        // Clear pending values
+        pendingValues = {}
+    }
+
+    function hasAnyUnsavedChanges() {
+        for (var i = 0; i < selectedEscs.length; i++) {
+            var escData = escStatusModel.get(selectedEscs[i])
+            if (escData && escData.am32Eeprom && escData.am32Eeprom.hasUnsavedChanges) {
+                return true
+            }
+        }
+        return false
     }
 
     // Main layout using ColumnLayout for proper spacing
@@ -154,24 +252,6 @@ Item {
             }
         }
 
-        // // Info text
-        // QGCLabel {
-        //     Layout.alignment: Qt.AlignHCenter
-        //     text: {
-        //         if (selectedEscs.length === 0) {
-        //             return qsTr("Click an ESC to select it")
-        //         } else if (selectedEscs.length === 1) {
-        //             return qsTr("Settings for ESC %1").arg(selectedEscs[0] + 1)
-        //         } else if (selectedEscs.length === escStatusModel.count) {
-        //             return qsTr("Settings for all ESCs")
-        //         } else {
-        //             return qsTr("Settings for %1 ESCs").arg(selectedEscs.length)
-        //         }
-        //     }
-        //     font.italic:        true
-        //     visible:            escStatusModel && escStatusModel.count > 0
-        // }
-
         // Settings Panel
         Flickable {
             Layout.fillWidth:   true
@@ -179,7 +259,7 @@ Item {
             contentHeight:      settingsColumn.height
             contentWidth:       width
             clip:               true
-            visible:            am32Facts && am32Facts.dataLoaded
+            visible:            referenceFacts && referenceFacts.dataLoaded
 
             ScrollBar.vertical: ScrollBar {
                 policy: ScrollBar.AsNeeded
@@ -197,10 +277,15 @@ Item {
 
                     RowLayout {
                         QGCLabel { text: qsTr("Protocol:") }
-                        FactComboBox {
-                            fact:           am32Facts.inputType
-                            indexModel:     false
-                            sizeToContents: true
+                        ComboBox {
+                            model: ["Auto", "PWM", "DShot"]
+                            currentIndex: {
+                                var val = getDisplayValue("inputType")
+                                return val !== null ? val : 0
+                            }
+                            onActivated: function(index) {
+                                updatePendingValue("inputType", index)
+                            }
                         }
                     }
                 }
@@ -215,101 +300,122 @@ Item {
                         spacing: _margins
 
                         // Row 1 - Checkboxes
-                        FactCheckBox {
+                        QGCCheckBox {
                             text:   qsTr("Stuck rotor protection")
-                            fact:   am32Facts.stuckRotorProtection
+                            checked: getDisplayValue("stuckRotorProtection") === true
+                            onClicked: updatePendingValue("stuckRotorProtection", checked)
                         }
-                        FactCheckBox {
+                        QGCCheckBox {
                             text:   qsTr("Stall protection")
-                            fact:   am32Facts.antiStall
+                            checked: getDisplayValue("antiStall") === true
+                            onClicked: updatePendingValue("antiStall", checked)
                         }
-                        FactCheckBox {
+                        QGCCheckBox {
                             text:   qsTr("Use hall sensors")
-                            fact:   am32Facts.hallSensors
+                            checked: getDisplayValue("hallSensors") === true
+                            onClicked: updatePendingValue("hallSensors", checked)
                         }
-                        FactCheckBox {
+                        QGCCheckBox {
                             text:   qsTr("30ms interval telemetry")
-                            fact:   am32Facts.telemetry30ms
+                            checked: getDisplayValue("telemetry30ms") === true
+                            onClicked: updatePendingValue("telemetry30ms", checked)
                         }
-                        FactCheckBox {
+                        QGCCheckBox {
                             text:   qsTr("Variable PWM")
-                            fact:   am32Facts.variablePwmFreq
+                            checked: getDisplayValue("variablePwmFreq") === true
+                            onClicked: updatePendingValue("variablePwmFreq", checked)
                         }
-                        FactCheckBox {
+                        QGCCheckBox {
                             text:   qsTr("Complementary PWM")
-                            fact:   am32Facts.complementaryPwm
+                            checked: getDisplayValue("complementaryPwm") === true
+                            onClicked: updatePendingValue("complementaryPwm", checked)
                         }
-                        FactCheckBox {
+                        QGCCheckBox {
+                            id: autoTimingCheckbox
                             text:   qsTr("Auto timing advance")
-                            fact:   am32Facts.autoTiming
+                            checked: getDisplayValue("autoTiming") === true
+                            onClicked: updatePendingValue("autoTiming", checked)
                         }
 
                         // Sliders with inline labels
                         Column {
                             QGCLabel { text: qsTr("Timing advance") }
-                            FactSlider {
+                            ValueSlider {
                                 width:              ScreenTools.defaultFontPixelWidth * 30
                                 from:               0
                                 to:                 30
                                 majorTickStepSize:  1
-                                fact:               am32Facts.timingAdvance
-                                enabled:            !am32Facts.autoTiming.value
+                                decimalPlaces:      1
+                                value:              getDisplayValue("timingAdvance") || 15
+                                enabled:            !autoTimingCheckbox.checked
+                                onValueChanged:     updatePendingValue("timingAdvance", value)
                             }
                         }
 
                         Column {
                             QGCLabel { text: qsTr("Startup power") }
-                            FactSlider {
+                            ValueSlider {
                                 width:              ScreenTools.defaultFontPixelWidth * 30
                                 from:               50
                                 to:                 150
-                                majorTickStepSize:  1
-                                fact:               am32Facts.startupPower
+                                majorTickStepSize:  10
+                                decimalPlaces:      0
+                                value:              getDisplayValue("startupPower") || 100
+                                onValueChanged:     updatePendingValue("startupPower", value)
                             }
                         }
 
                         Column {
                             QGCLabel { text: qsTr("Motor KV") }
-                            FactSlider {
+                            ValueSlider {
                                 width:              ScreenTools.defaultFontPixelWidth * 30
                                 from:               20
                                 to:                 10220
-                                majorTickStepSize:  40
-                                fact:               am32Facts.motorKv
+                                majorTickStepSize:  1000
+                                decimalPlaces:      0
+                                value:              getDisplayValue("motorKv") || 2200
+                                onValueChanged:     updatePendingValue("motorKv", value)
                             }
                         }
 
                         Column {
                             QGCLabel { text: qsTr("Motor poles") }
-                            FactSlider {
+                            ValueSlider {
                                 width:              ScreenTools.defaultFontPixelWidth * 30
                                 from:               2
                                 to:                 36
                                 majorTickStepSize:  2
-                                fact:               am32Facts.motorPoles
+                                decimalPlaces:      0
+                                value:              getDisplayValue("motorPoles") || 14
+                                onValueChanged:     updatePendingValue("motorPoles", value)
                             }
                         }
 
                         Column {
                             QGCLabel { text: qsTr("Beeper volume") }
-                            FactSlider {
+                            ValueSlider {
                                 width:              ScreenTools.defaultFontPixelWidth * 30
                                 from:               0
                                 to:                 11
                                 majorTickStepSize:  1
-                                fact:               am32Facts.beepVolume
+                                decimalPlaces:      0
+                                value:              getDisplayValue("beepVolume") || 5
+                                onValueChanged:     updatePendingValue("beepVolume", value)
                             }
                         }
 
                         Column {
                             QGCLabel { text: qsTr("PWM Frequency") }
-                            FactSlider {
+                            ValueSlider {
+                                id: pwmFreqSlider
                                 width:              ScreenTools.defaultFontPixelWidth * 30
                                 from:               8
                                 to:                 48
-                                majorTickStepSize:  1
-                                fact:               am32Facts.pwmFrequency
-                                enabled:            am32Facts.variablePwmFreq.value < 2
+                                majorTickStepSize:  5
+                                decimalPlaces:      0
+                                value:              getDisplayValue("pwmFrequency") || 24
+                                enabled:            getDisplayValue("variablePwmFreq") !== true
+                                onValueChanged:     updatePendingValue("pwmFrequency", value)
                             }
                         }
                     }
@@ -324,30 +430,35 @@ Item {
                         width: parent.width
                         spacing: _margins
 
-                        FactCheckBox {
+                        QGCCheckBox {
                             text:   qsTr("Disable stick calibration")
-                            fact:   am32Facts.disableStickCalibration
+                            checked: getDisplayValue("disableStickCalibration") === true
+                            onClicked: updatePendingValue("disableStickCalibration", checked)
                         }
 
                         Column {
                             QGCLabel { text: qsTr("Ramp rate") }
-                            FactSlider {
+                            ValueSlider {
                                 width:              ScreenTools.defaultFontPixelWidth * 30
                                 from:               0.1
                                 to:                 20
-                                majorTickStepSize:  0.1
-                                fact:               am32Facts.maxRampSpeed
+                                majorTickStepSize:  2
+                                decimalPlaces:      1
+                                value:              getDisplayValue("maxRampSpeed") || 16.0
+                                onValueChanged:     updatePendingValue("maxRampSpeed", value)
                             }
                         }
 
                         Column {
                             QGCLabel { text: qsTr("Minimum duty cycle") }
-                            FactSlider {
+                            ValueSlider {
                                 width:              ScreenTools.defaultFontPixelWidth * 30
                                 from:               0
                                 to:                 25
-                                majorTickStepSize:  0.5
-                                fact:               am32Facts.minDutyCycle
+                                majorTickStepSize:  5
+                                decimalPlaces:      1
+                                value:              getDisplayValue("minDutyCycle") || 2.0
+                                onValueChanged:     updatePendingValue("minDutyCycle", value)
                             }
                         }
                     }
@@ -362,63 +473,74 @@ Item {
                         width: parent.width
                         spacing: _margins
 
-                        FactCheckBox {
+                        QGCCheckBox {
+                            id: lowVoltageCutoffCheckbox
                             text:   qsTr("Low voltage cut off")
-                            fact:   am32Facts.lowVoltageCutoff
+                            checked: getDisplayValue("lowVoltageCutoff") === true
+                            onClicked: updatePendingValue("lowVoltageCutoff", checked)
                         }
 
                         Column {
                             QGCLabel { text: qsTr("Temperature limit") }
-                            FactSlider {
+                            ValueSlider {
                                 width:              ScreenTools.defaultFontPixelWidth * 30
                                 from:               70
                                 to:                 141
-                                majorTickStepSize:  1
-                                fact:               am32Facts.temperatureLimit
+                                majorTickStepSize:  10
+                                decimalPlaces:      0
+                                value:              getDisplayValue("temperatureLimit") || 141
+                                onValueChanged:     updatePendingValue("temperatureLimit", value)
                             }
                         }
 
                         Column {
                             QGCLabel { text: qsTr("Current limit") }
-                            FactSlider {
+                            ValueSlider {
+                                id: currentLimitSlider
                                 width:              ScreenTools.defaultFontPixelWidth * 30
                                 from:               0
                                 to:                 202
-                                majorTickStepSize:  2
-                                fact:               am32Facts.currentLimit
+                                majorTickStepSize:  20
+                                decimalPlaces:      0
+                                value:              getDisplayValue("currentLimit") || 204
+                                onValueChanged:     updatePendingValue("currentLimit", value)
                             }
                         }
 
                         Column {
                             QGCLabel { text: qsTr("Low voltage threshold") }
-                            FactSlider {
+                            ValueSlider {
                                 width:              ScreenTools.defaultFontPixelWidth * 30
                                 from:               2.5
                                 to:                 3.5
-                                majorTickStepSize:  0.1
-                                fact:               am32Facts.lowVoltageThreshold
-                                enabled:            am32Facts.lowVoltageCutoff.value
+                                majorTickStepSize:  0.2
+                                decimalPlaces:      1
+                                value:              getDisplayValue("lowVoltageThreshold") || 3.0
+                                enabled:            lowVoltageCutoffCheckbox.checked
+                                onValueChanged:     updatePendingValue("lowVoltageThreshold", value)
                             }
                         }
 
                         Column {
                             QGCLabel { text: qsTr("Absolute voltage cutoff") }
-                            FactSlider {
+                            ValueSlider {
                                 width:              ScreenTools.defaultFontPixelWidth * 30
                                 from:               0.5
                                 to:                 50.0
-                                majorTickStepSize:  0.5
-                                fact:               am32Facts.absoluteVoltageCutoff
+                                majorTickStepSize:  5
+                                decimalPlaces:      1
+                                value:              getDisplayValue("absoluteVoltageCutoff") || 5.0
+                                onValueChanged:     updatePendingValue("absoluteVoltageCutoff", value)
                             }
                         }
                     }
                 }
 
-                // Current Control Group
+                // Current Control Group (opacity reduced when current limit > 100)
                 SettingsGroupLayout {
                     heading:            qsTr("Current Control")
                     Layout.fillWidth:   true
-                    opacity:            am32Facts.currentLimit.value > 100 ? 0.3 : 1.0
+                    opacity:            currentLimitSlider.value > 100 ? 0.3 : 1.0
 
                     Flow {
                         width: parent.width
@@ -426,264 +548,71 @@ Item {
 
                         Column {
                             QGCLabel { text: qsTr("Current P") }
-                            FactSlider {
+                            ValueSlider {
                                 width:              ScreenTools.defaultFontPixelWidth * 30
                                 from:               0
                                 to:                 510
-                                majorTickStepSize:  10
-                                fact:               am32Facts.currentPidP
+                                majorTickStepSize:  50
+                                decimalPlaces:      0
+                                value:              getDisplayValue("currentPidP") || 200
+                                onValueChanged:     updatePendingValue("currentPidP", value)
                             }
                         }
 
                         Column {
                             QGCLabel { text: qsTr("Current I") }
-                            FactSlider {
+                            ValueSlider {
                                 width:              ScreenTools.defaultFontPixelWidth * 30
                                 from:               0
                                 to:                 255
-                                majorTickStepSize:  10
-                                fact:               am32Facts.currentPidI
+                                majorTickStepSize:  25
+                                decimalPlaces:      0
+                                value:              getDisplayValue("currentPidI") || 0
+                                onValueChanged:     updatePendingValue("currentPidI", value)
                             }
                         }
 
                         Column {
                             QGCLabel { text: qsTr("Current D") }
-                            FactSlider {
+                            ValueSlider {
                                 width:              ScreenTools.defaultFontPixelWidth * 30
                                 from:               0
                                 to:                 2550
-                                majorTickStepSize:  10
-                                fact:               am32Facts.currentPidD
+                                majorTickStepSize:  250
+                                decimalPlaces:      0
+                                value:              getDisplayValue("currentPidD") || 500
+                                onValueChanged:     updatePendingValue("currentPidD", value)
                             }
                         }
                     }
                 }
 
-                // Sinusoidal Startup Group
-                SettingsGroupLayout {
-                    heading: qsTr("Sinusoidal Startup")
-                    Layout.fillWidth: true
+                // Action Buttons
+                RowLayout {
+                    Layout.fillWidth:   true
+                    layoutDirection:    Qt.RightToLeft
+                    spacing:            _margins
 
-                    Flow {
-                        width: parent.width
-                        spacing: _margins
-
-                        FactCheckBox {
-                            text:   qsTr("Sinusoidal startup")
-                            fact:   am32Facts.sineStartup
-                        }
-
-                        Column {
-                            QGCLabel { text: qsTr("Sine mode range") }
-                            FactSlider {
-                                width:              ScreenTools.defaultFontPixelWidth * 30
-                                from:               5
-                                to:                 25
-                                majorTickStepSize:  1
-                                fact:               am32Facts.sineModeRange
-                                enabled:            am32Facts.sineStartup.value && !am32Facts.rcCarReversing.value
-                            }
-                        }
-
-                        Column {
-                            QGCLabel { text: qsTr("Sine mode power") }
-                            FactSlider {
-                                width:              ScreenTools.defaultFontPixelWidth * 30
-                                from:               1
-                                to:                 10
-                                majorTickStepSize:  1
-                                fact:               am32Facts.sineModeStrength
-                                enabled:            am32Facts.sineStartup.value && !am32Facts.rcCarReversing.value
-                            }
-                        }
+                    QGCButton {
+                        text:       qsTr("Write Settings")
+                        enabled:    hasAnyUnsavedChanges() && selectedEscs.length > 0
+                        highlighted: hasAnyUnsavedChanges()
+                        onClicked:  writeSettings()
                     }
-                }
 
-                // Brake Group
-                SettingsGroupLayout {
-                    heading: qsTr("Brake")
-                    Layout.fillWidth: true
-
-                    Flow {
-                        width: parent.width
-                        spacing: _margins
-
-                        FactCheckBox {
-                            text:   qsTr("Brake on stop")
-                            fact:   am32Facts.brakeOnStop
-                        }
-
-                        FactCheckBox {
-                            text:   qsTr("RC car reversing")
-                            fact:   am32Facts.rcCarReversing
-                        }
-
-                        Column {
-                            QGCLabel { text: qsTr("Brake strength") }
-                            FactSlider {
-                                width:              ScreenTools.defaultFontPixelWidth * 30
-                                from:               1
-                                to:                 10
-                                majorTickStepSize:  1
-                                fact:               am32Facts.dragBrakeStrength
-                                enabled:            am32Facts.brakeOnStop.value && !am32Facts.rcCarReversing.value
-                            }
-                        }
-
-                        Column {
-                            QGCLabel { text: qsTr("Running brake level") }
-                            FactSlider {
-                                width:              ScreenTools.defaultFontPixelWidth * 30
-                                from:               1
-                                to:                 10
-                                majorTickStepSize:  1
-                                fact:               am32Facts.runningBrakeAmount
-                                enabled:            !am32Facts.rcCarReversing.value
-                            }
-                        }
+                    QGCButton {
+                        text:       qsTr("Read Settings")
+                        enabled:    selectedEscs.length > 0
+                        onClicked:  readSettings()
                     }
-                }
 
-                // Servo Settings Group
-                SettingsGroupLayout {
-                    heading: qsTr("Servo Settings")
-                    Layout.fillWidth: true
-
-                    Flow {
-                        width: parent.width
-                        spacing: _margins
-
-                        Column {
-                            QGCLabel { text: qsTr("Low threshold") }
-                            FactSlider {
-                                width:              ScreenTools.defaultFontPixelWidth * 30
-                                from:               750
-                                to:                 1250
-                                majorTickStepSize:  1
-                                fact:               am32Facts.servoLowThreshold
-                            }
-                        }
-
-                        Column {
-                            QGCLabel { text: qsTr("High threshold") }
-                            FactSlider {
-                                width:              ScreenTools.defaultFontPixelWidth * 30
-                                from:               1750
-                                to:                 2250
-                                majorTickStepSize:  1
-                                fact:               am32Facts.servoHighThreshold
-                            }
-                        }
-
-                        Column {
-                            QGCLabel { text: qsTr("Neutral") }
-                            FactSlider {
-                                width:              ScreenTools.defaultFontPixelWidth * 30
-                                from:               1374
-                                to:                 1630
-                                majorTickStepSize:  1
-                                fact:               am32Facts.servoNeutral
-                            }
-                        }
-
-                        Column {
-                            QGCLabel { text: qsTr("Dead band") }
-                            FactSlider {
-                                width:              ScreenTools.defaultFontPixelWidth * 30
-                                from:               0
-                                to:                 100
-                                majorTickStepSize:  1
-                                fact:               am32Facts.servoDeadband
-                            }
-                        }
+                    QGCButton {
+                        text:       qsTr("Discard Changes")
+                        enabled:    hasAnyUnsavedChanges()
+                        onClicked:  discardChanges()
                     }
-                }
-            }
-        }
-
-        // Action Buttons
-        RowLayout {
-            Layout.fillWidth:   true
-            layoutDirection:    Qt.RightToLeft
-            spacing:            _margins
-            visible:            am32Facts && am32Facts.dataLoaded
-
-            QGCButton {
-                text:       qsTr("Write Settings")
-                enabled:    am32Facts && am32Facts.hasUnsavedChanges && selectedEscs.length > 0
-                highlighted: am32Facts && am32Facts.hasUnsavedChanges
-                onClicked:  {
-                    // Write settings to all selected ESCs
-                    for (var i = 0; i < selectedEscs.length; i++) {
-                        var escData = escStatusModel.get(selectedEscs[i])
-                        if (escData.am32Eeprom) {
-                            escData.am32Eeprom.requestWrite(vehicle)
-                        }
-                    }
-                }
-            }
-
-            QGCButton {
-                text:       qsTr("Read Settings")
-                enabled:    selectedEscs.length > 0
-                onClicked:  {
-                    for (var i = 0; i < selectedEscs.length; i++) {
-                        var escData = escStatusModel.get(selectedEscs[i])
-                        if (escData.am32Eeprom) {
-                            escData.am32Eeprom.requestRead(vehicle)
-                        }
-                    }
-                }
-            }
-
-            QGCButton {
-                text:       qsTr("Reset to Defaults")
-                enabled:    am32Facts && selectedEscs.length > 0
-                onClicked:  {
-                    // TODO: Implement reset to defaults
                 }
             }
         }
     }
-
-    // Status message overlay when no ESC data available
-    // Item {
-    //     anchors.fill: parent
-    //     visible: !am32Facts || !am32Facts.dataLoaded
-
-    //     Column {
-    //         anchors.centerIn: parent
-    //         spacing: _margins
-
-    //         QGCLabel {
-    //             text: qsTr("No ESC data available")
-    //             font.bold: true
-    //             font.pointSize: ScreenTools.largeFontPointSize
-    //             anchors.horizontalCenter: parent.horizontalCenter
-    //         }
-
-    //         QGCLabel {
-    //             text: qsTr("Connect an ESC with AM32 firmware to configure settings.")
-    //             anchors.horizontalCenter: parent.horizontalCenter
-    //             wrapMode: Text.WordWrap
-    //             width: root.width * 0.8
-    //         }
-
-    //         QGCButton {
-    //             text: qsTr("Request ESC Data")
-    //             anchors.horizontalCenter: parent.horizontalCenter
-    //             enabled: escStatusModel && escStatusModel.count > 0
-    //             onClicked: {
-    //                 if (escStatusModel && escStatusModel.count > 0) {
-    //                     for (var i = 0; i < escStatusModel.count; i++) {
-    //                         var escData = escStatusModel.get(i)
-    //                         if (escData && escData.am32Eeprom) {
-    //                             escData.am32Eeprom.requestRead(vehicle)
-    //                         }
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
 }
