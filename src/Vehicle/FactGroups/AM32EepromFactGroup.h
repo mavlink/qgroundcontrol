@@ -143,7 +143,7 @@ public:
     void calculateWriteMask(uint32_t writeMask[6]) const;
 
     /// Request EEPROM read from ESC
-    Q_INVOKABLE void requestRead(Vehicle* vehicle);
+    Q_INVOKABLE void requestReadAll(Vehicle* vehicle);
 
     /// Write EEPROM data to ESC (only modified bytes)
     Q_INVOKABLE void requestWrite(Vehicle* vehicle);

@@ -229,6 +229,8 @@ void AM32EepromFactGroup::handleEepromData(const uint8_t* data, int length)
     emit dataLoadedChanged();
     emit hasUnsavedChangesChanged();
     emit readComplete(true);
+
+    qDebug() << "ESC" << _escIndex << " received eeprom data";
 }
 
 void AM32EepromFactGroup::applyPendingChanges(const QVariantMap& changes)
@@ -248,6 +250,8 @@ void AM32EepromFactGroup::applyPendingChanges(const QVariantMap& changes)
             // Track which byte was modified
             if (_factToByteIndex.contains(fact)) {
                 _modifiedBytes.insert(_factToByteIndex[fact]);
+
+                qDebug() << "ESC" << _escIndex << " updating " << fact->name();
 
                 // Special case: low voltage threshold affects cutoff byte too
                 if (fact == &_lowVoltageThresholdFact && _lowVoltageCutoffFact.rawValue().toBool()) {
@@ -418,7 +422,7 @@ QByteArray AM32EepromFactGroup::packEepromData() const
     return packed;
 }
 
-void AM32EepromFactGroup::requestRead(Vehicle* vehicle)
+void AM32EepromFactGroup::requestReadAll(Vehicle* vehicle)
 {
     if (!vehicle) {
         return;
@@ -429,7 +433,7 @@ void AM32EepromFactGroup::requestRead(Vehicle* vehicle)
         vehicle->defaultComponentId(),
         MAV_CMD_AM32_REQUEST_EEPROM,
         false,  // showError
-        _escIndex,  // param1: ESC index
+        255,  // param1: ESC index -- 255 means read all
         0, 0, 0, 0, 0, 0  // unused params
     );
 }

@@ -36,10 +36,38 @@ Item {
             // Request read for all ESCs to get initial data
             for (var j = 0; j < escStatusModel.count; j++) {
                 if (escStatusModel.get(j).am32Eeprom) {
-                    escStatusModel.get(j).am32Eeprom.requestRead(vehicle)
+                    escStatusModel.get(j).am32Eeprom.requestReadAll(vehicle)
                 }
             }
         }
+    }
+
+    // Listen for EEPROM data updates to clear pending changes
+    Connections {
+        target: referenceFacts
+        function onReadComplete() {
+            pendingValues = {}
+            updateSliderValues()
+        }
+    }
+
+    function updateSliderValues() {
+        // Update all slider values when data changes externally
+        if (timingAdvanceSlider) timingAdvanceSlider.setValue(getDisplayValue("timingAdvance") || 15)
+        if (startupPowerSlider) startupPowerSlider.setValue(getDisplayValue("startupPower") || 100)
+        if (motorKvSlider) motorKvSlider.setValue(getDisplayValue("motorKv") || 2200)
+        if (motorPolesSlider) motorPolesSlider.setValue(getDisplayValue("motorPoles") || 14)
+        if (beeperVolumeSlider) beeperVolumeSlider.setValue(getDisplayValue("beepVolume") || 5)
+        if (pwmFreqSlider) pwmFreqSlider.setValue(getDisplayValue("pwmFrequency") || 24)
+        if (rampRateSlider) rampRateSlider.setValue(getDisplayValue("maxRampSpeed") || 16.0)
+        if (minDutyCycleSlider) minDutyCycleSlider.setValue(getDisplayValue("minDutyCycle") || 2.0)
+        if (tempLimitSlider) tempLimitSlider.setValue(getDisplayValue("temperatureLimit") || 141)
+        if (currentLimitSlider) currentLimitSlider.setValue(getDisplayValue("currentLimit") || 204)
+        if (lowVoltageThresholdSlider) lowVoltageThresholdSlider.setValue(getDisplayValue("lowVoltageThreshold") || 3.0)
+        if (absoluteVoltageCutoffSlider) absoluteVoltageCutoffSlider.setValue(getDisplayValue("absoluteVoltageCutoff") || 5.0)
+        if (currentPidPSlider) currentPidPSlider.setValue(getDisplayValue("currentPidP") || 200)
+        if (currentPidISlider) currentPidISlider.setValue(getDisplayValue("currentPidI") || 0)
+        if (currentPidDSlider) currentPidDSlider.setValue(getDisplayValue("currentPidD") || 500)
     }
 
     function getEscBorderColor(index) {
@@ -98,11 +126,12 @@ Item {
         if (selectedEscs.length > 0) {
             var firstSelected = escStatusModel.get(selectedEscs[0])
             if (firstSelected.am32Eeprom && !firstSelected.am32Eeprom.dataLoaded) {
-                firstSelected.am32Eeprom.requestRead(vehicle)
+                firstSelected.am32Eeprom.requestReadAll(vehicle)
             }
 
-            // Reset pending values when selection changes
+            // Reset pending values and update sliders when selection changes
             pendingValues = {}
+            updateSliderValues()
         }
     }
 
@@ -155,7 +184,7 @@ Item {
         for (var i = 0; i < selectedEscs.length; i++) {
             var escData = escStatusModel.get(selectedEscs[i])
             if (escData && escData.am32Eeprom) {
-                escData.am32Eeprom.requestRead(vehicle)
+                escData.am32Eeprom.requestReadAll(vehicle)
             }
         }
 
@@ -172,8 +201,9 @@ Item {
             }
         }
 
-        // Clear pending values
+        // Clear pending values and update UI
         pendingValues = {}
+        updateSliderValues()
     }
 
     function hasAnyUnsavedChanges() {
@@ -341,13 +371,14 @@ Item {
                         Column {
                             QGCLabel { text: qsTr("Timing advance") }
                             ValueSlider {
+                                id: timingAdvanceSlider
                                 width:              ScreenTools.defaultFontPixelWidth * 30
                                 from:               0
                                 to:                 30
                                 majorTickStepSize:  1
                                 decimalPlaces:      1
-                                value:              getDisplayValue("timingAdvance") || 15
                                 enabled:            !autoTimingCheckbox.checked
+                                Component.onCompleted: setValue(getDisplayValue("timingAdvance") || 15)
                                 onValueChanged:     updatePendingValue("timingAdvance", value)
                             }
                         }
@@ -355,12 +386,13 @@ Item {
                         Column {
                             QGCLabel { text: qsTr("Startup power") }
                             ValueSlider {
+                                id: startupPowerSlider
                                 width:              ScreenTools.defaultFontPixelWidth * 30
                                 from:               50
                                 to:                 150
                                 majorTickStepSize:  10
                                 decimalPlaces:      0
-                                value:              getDisplayValue("startupPower") || 100
+                                Component.onCompleted: setValue(getDisplayValue("startupPower") || 100)
                                 onValueChanged:     updatePendingValue("startupPower", value)
                             }
                         }
@@ -368,12 +400,13 @@ Item {
                         Column {
                             QGCLabel { text: qsTr("Motor KV") }
                             ValueSlider {
+                                id: motorKvSlider
                                 width:              ScreenTools.defaultFontPixelWidth * 30
                                 from:               20
                                 to:                 10220
                                 majorTickStepSize:  1000
                                 decimalPlaces:      0
-                                value:              getDisplayValue("motorKv") || 2200
+                                Component.onCompleted: setValue(getDisplayValue("motorKv") || 2200)
                                 onValueChanged:     updatePendingValue("motorKv", value)
                             }
                         }
@@ -381,12 +414,13 @@ Item {
                         Column {
                             QGCLabel { text: qsTr("Motor poles") }
                             ValueSlider {
+                                id: motorPolesSlider
                                 width:              ScreenTools.defaultFontPixelWidth * 30
                                 from:               2
                                 to:                 36
                                 majorTickStepSize:  2
                                 decimalPlaces:      0
-                                value:              getDisplayValue("motorPoles") || 14
+                                Component.onCompleted: setValue(getDisplayValue("motorPoles") || 14)
                                 onValueChanged:     updatePendingValue("motorPoles", value)
                             }
                         }
@@ -394,12 +428,13 @@ Item {
                         Column {
                             QGCLabel { text: qsTr("Beeper volume") }
                             ValueSlider {
+                                id: beeperVolumeSlider
                                 width:              ScreenTools.defaultFontPixelWidth * 30
                                 from:               0
                                 to:                 11
                                 majorTickStepSize:  1
                                 decimalPlaces:      0
-                                value:              getDisplayValue("beepVolume") || 5
+                                Component.onCompleted: setValue(getDisplayValue("beepVolume") || 5)
                                 onValueChanged:     updatePendingValue("beepVolume", value)
                             }
                         }
@@ -413,8 +448,8 @@ Item {
                                 to:                 48
                                 majorTickStepSize:  5
                                 decimalPlaces:      0
-                                value:              getDisplayValue("pwmFrequency") || 24
                                 enabled:            getDisplayValue("variablePwmFreq") !== true
+                                Component.onCompleted: setValue(getDisplayValue("pwmFrequency") || 24)
                                 onValueChanged:     updatePendingValue("pwmFrequency", value)
                             }
                         }
@@ -439,12 +474,13 @@ Item {
                         Column {
                             QGCLabel { text: qsTr("Ramp rate") }
                             ValueSlider {
+                                id: rampRateSlider
                                 width:              ScreenTools.defaultFontPixelWidth * 30
                                 from:               0.1
                                 to:                 20
                                 majorTickStepSize:  2
                                 decimalPlaces:      1
-                                value:              getDisplayValue("maxRampSpeed") || 16.0
+                                Component.onCompleted: setValue(getDisplayValue("maxRampSpeed") || 16.0)
                                 onValueChanged:     updatePendingValue("maxRampSpeed", value)
                             }
                         }
@@ -452,12 +488,13 @@ Item {
                         Column {
                             QGCLabel { text: qsTr("Minimum duty cycle") }
                             ValueSlider {
+                                id: minDutyCycleSlider
                                 width:              ScreenTools.defaultFontPixelWidth * 30
                                 from:               0
                                 to:                 25
                                 majorTickStepSize:  5
                                 decimalPlaces:      1
-                                value:              getDisplayValue("minDutyCycle") || 2.0
+                                Component.onCompleted: setValue(getDisplayValue("minDutyCycle") || 2.0)
                                 onValueChanged:     updatePendingValue("minDutyCycle", value)
                             }
                         }
@@ -483,12 +520,13 @@ Item {
                         Column {
                             QGCLabel { text: qsTr("Temperature limit") }
                             ValueSlider {
+                                id: tempLimitSlider
                                 width:              ScreenTools.defaultFontPixelWidth * 30
                                 from:               70
                                 to:                 141
                                 majorTickStepSize:  10
                                 decimalPlaces:      0
-                                value:              getDisplayValue("temperatureLimit") || 141
+                                Component.onCompleted: setValue(getDisplayValue("temperatureLimit") || 141)
                                 onValueChanged:     updatePendingValue("temperatureLimit", value)
                             }
                         }
@@ -502,7 +540,7 @@ Item {
                                 to:                 202
                                 majorTickStepSize:  20
                                 decimalPlaces:      0
-                                value:              getDisplayValue("currentLimit") || 204
+                                Component.onCompleted: setValue(getDisplayValue("currentLimit") || 204)
                                 onValueChanged:     updatePendingValue("currentLimit", value)
                             }
                         }
@@ -510,13 +548,14 @@ Item {
                         Column {
                             QGCLabel { text: qsTr("Low voltage threshold") }
                             ValueSlider {
+                                id: lowVoltageThresholdSlider
                                 width:              ScreenTools.defaultFontPixelWidth * 30
                                 from:               2.5
                                 to:                 3.5
                                 majorTickStepSize:  0.2
                                 decimalPlaces:      1
-                                value:              getDisplayValue("lowVoltageThreshold") || 3.0
                                 enabled:            lowVoltageCutoffCheckbox.checked
+                                Component.onCompleted: setValue(getDisplayValue("lowVoltageThreshold") || 3.0)
                                 onValueChanged:     updatePendingValue("lowVoltageThreshold", value)
                             }
                         }
@@ -524,19 +563,20 @@ Item {
                         Column {
                             QGCLabel { text: qsTr("Absolute voltage cutoff") }
                             ValueSlider {
+                                id: absoluteVoltageCutoffSlider
                                 width:              ScreenTools.defaultFontPixelWidth * 30
                                 from:               0.5
                                 to:                 50.0
                                 majorTickStepSize:  5
                                 decimalPlaces:      1
-                                value:              getDisplayValue("absoluteVoltageCutoff") || 5.0
+                                Component.onCompleted: setValue(getDisplayValue("absoluteVoltageCutoff") || 5.0)
                                 onValueChanged:     updatePendingValue("absoluteVoltageCutoff", value)
                             }
                         }
                     }
                 }
 
-                // Current Control Group (opacity reduced when current limit > 100)
+                // Current Control Group
                 SettingsGroupLayout {
                     heading:            qsTr("Current Control")
                     Layout.fillWidth:   true
@@ -549,12 +589,13 @@ Item {
                         Column {
                             QGCLabel { text: qsTr("Current P") }
                             ValueSlider {
+                                id: currentPidPSlider
                                 width:              ScreenTools.defaultFontPixelWidth * 30
                                 from:               0
                                 to:                 510
                                 majorTickStepSize:  50
                                 decimalPlaces:      0
-                                value:              getDisplayValue("currentPidP") || 200
+                                Component.onCompleted: setValue(getDisplayValue("currentPidP") || 200)
                                 onValueChanged:     updatePendingValue("currentPidP", value)
                             }
                         }
@@ -562,12 +603,13 @@ Item {
                         Column {
                             QGCLabel { text: qsTr("Current I") }
                             ValueSlider {
+                                id: currentPidISlider
                                 width:              ScreenTools.defaultFontPixelWidth * 30
                                 from:               0
                                 to:                 255
                                 majorTickStepSize:  25
                                 decimalPlaces:      0
-                                value:              getDisplayValue("currentPidI") || 0
+                                Component.onCompleted: setValue(getDisplayValue("currentPidI") || 0)
                                 onValueChanged:     updatePendingValue("currentPidI", value)
                             }
                         }
@@ -575,12 +617,13 @@ Item {
                         Column {
                             QGCLabel { text: qsTr("Current D") }
                             ValueSlider {
+                                id: currentPidDSlider
                                 width:              ScreenTools.defaultFontPixelWidth * 30
                                 from:               0
                                 to:                 2550
                                 majorTickStepSize:  250
                                 decimalPlaces:      0
-                                value:              getDisplayValue("currentPidD") || 500
+                                Component.onCompleted: setValue(getDisplayValue("currentPidD") || 500)
                                 onValueChanged:     updatePendingValue("currentPidD", value)
                             }
                         }
