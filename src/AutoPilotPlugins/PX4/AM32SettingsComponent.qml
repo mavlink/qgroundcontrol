@@ -25,9 +25,40 @@ Item {
     readonly property real _groupMargins:   ScreenTools.defaultFontPixelHeight / 2
 
     // Track which ESCs have loaded data
-    property var loadedEscs:        new Set()
+    property var loadedEscs:        []
     property bool allDataLoaded:    false
     property bool initializationComplete: false
+
+    // Store slider references for updates
+    property var sliderRefs: ({})
+
+    // Slider configurations
+    readonly property var motorSliderConfigs: [
+        {factName: "timingAdvance", label: qsTr("Timing advance"), from: 0, to: 30, step: 1, decimals: 1, conditionalEnable: "autoTiming"},
+        {factName: "startupPower", label: qsTr("Startup power"), from: 50, to: 150, step: 10, decimals: 0},
+        {factName: "motorKv", label: qsTr("Motor KV"), from: 20, to: 10220, step: 1000, decimals: 0},
+        {factName: "motorPoles", label: qsTr("Motor poles"), from: 2, to: 36, step: 2, decimals: 0},
+        {factName: "beepVolume", label: qsTr("Beeper volume"), from: 0, to: 11, step: 1, decimals: 0},
+        {factName: "pwmFrequency", label: qsTr("PWM Frequency"), from: 8, to: 48, step: 5, decimals: 0, conditionalEnable: "variablePwmFreq"}
+    ]
+
+    readonly property var extendedSliderConfigs: [
+        {factName: "maxRampSpeed", label: qsTr("Ramp rate"), from: 0.1, to: 20, step: 2, decimals: 1},
+        {factName: "minDutyCycle", label: qsTr("Minimum duty cycle"), from: 0, to: 25, step: 5, decimals: 1}
+    ]
+
+    readonly property var limitsSliderConfigs: [
+        {factName: "temperatureLimit", label: qsTr("Temperature limit"), from: 70, to: 255, step: 10, decimals: 0},
+        {factName: "currentLimit", label: qsTr("Current limit"), from: 0, to: 206, step: 20, decimals: 0},
+        {factName: "lowVoltageThreshold", label: qsTr("Low voltage threshold"), from: 2.5, to: 3.5, step: 0.2, decimals: 1, conditionalEnable: "lowVoltageCutoff"},
+        {factName: "absoluteVoltageCutoff", label: qsTr("Absolute voltage cutoff"), from: 0.5, to: 50.0, step: 5, decimals: 1}
+    ]
+
+    readonly property var currentControlSliderConfigs: [
+        {factName: "currentPidP", label: qsTr("Current P"), from: 0, to: 510, step: 50, decimals: 0},
+        {factName: "currentPidI", label: qsTr("Current I"), from: 0, to: 255, step: 25, decimals: 0},
+        {factName: "currentPidD", label: qsTr("Current D"), from: 0, to: 2550, step: 250, decimals: 0}
+    ]
 
     // Timer for timeout mechanism
     Timer {
@@ -79,10 +110,14 @@ Item {
         var conn = esc.am32Eeprom.dataLoadedChanged.connect(function() {
             if (esc.am32Eeprom.dataLoaded) {
                 console.info("ESC " + (escIndex + 1) + " data loaded")
-                loadedEscs.add(escIndex)
+
+                // Add to loaded ESCs list if not already there
+                if (loadedEscs.indexOf(escIndex) === -1) {
+                    loadedEscs.push(escIndex)
+                }
 
                 // Check if all ESCs have loaded
-                if (loadedEscs.size === escStatusModel.count) {
+                if (loadedEscs.length === escStatusModel.count) {
                     console.info("All ESC data loaded")
                     dataLoadTimeout.stop()
                     finalizeInitialization()
@@ -93,8 +128,8 @@ Item {
 
     function finalizeInitialization() {
         if (!initializationComplete) {
-            console.info("Finalizing initialization with " + loadedEscs.size + "/" + escStatusModel.count + " ESCs loaded")
-            allDataLoaded = loadedEscs.size === escStatusModel.count
+            console.info("Finalizing initialization with " + loadedEscs.length + "/" + escStatusModel.count + " ESCs loaded")
+            allDataLoaded = loadedEscs.length === escStatusModel.count
             initializationComplete = true
 
             // Initialize sliders and checkboxes with loaded data
@@ -123,32 +158,14 @@ Item {
         }
 
         // Update all slider values when data changes externally
-        if (timingAdvanceSlider) timingAdvanceSlider.setValue(getDisplayValue("timingAdvance"))
-        if (startupPowerSlider) startupPowerSlider.setValue(getDisplayValue("startupPower"))
-        if (motorKvSlider) motorKvSlider.setValue(getDisplayValue("motorKv"))
-        if (motorPolesSlider) motorPolesSlider.setValue(getDisplayValue("motorPoles"))
-        if (beeperVolumeSlider) beeperVolumeSlider.setValue(getDisplayValue("beepVolume"))
-        if (pwmFreqSlider) pwmFreqSlider.setValue(getDisplayValue("pwmFrequency"))
-        if (rampRateSlider) rampRateSlider.setValue(getDisplayValue("maxRampSpeed"))
-        if (minDutyCycleSlider) minDutyCycleSlider.setValue(getDisplayValue("minDutyCycle"))
-        if (tempLimitSlider) tempLimitSlider.setValue(getDisplayValue("temperatureLimit"))
-        if (currentLimitSlider) currentLimitSlider.setValue(getDisplayValue("currentLimit"))
-        if (lowVoltageThresholdSlider) lowVoltageThresholdSlider.setValue(getDisplayValue("lowVoltageThreshold"))
-        if (absoluteVoltageCutoffSlider) absoluteVoltageCutoffSlider.setValue(getDisplayValue("absoluteVoltageCutoff"))
-        if (currentPidPSlider) currentPidPSlider.setValue(getDisplayValue("currentPidP"))
-        if (currentPidISlider) currentPidISlider.setValue(getDisplayValue("currentPidI"))
-        if (currentPidDSlider) currentPidDSlider.setValue(getDisplayValue("currentPidD"))
-
-        // Also update checkboxes
-        updateCheckboxValues()
-    }
-
-    function updateCheckboxValues() {
-        // Update checkbox values when data changes
-        // These are handled through their bindings in the checked property
-        // Force a re-evaluation of bindings
-
-        // TODO: Jake: Why is this here?
+        for (var key in sliderRefs) {
+            if (sliderRefs[key]) {
+                var value = getDisplayValue(key)
+                if (value !== null) {
+                    sliderRefs[key].setValue(value)
+                }
+            }
+        }
     }
 
     function getEscBorderColor(index) {
@@ -230,11 +247,12 @@ Item {
         for (var i = 0; i < selectedEscs.length; i++) {
             var escData = escStatusModel.get(selectedEscs[i])
             if (escData && escData.am32Eeprom) {
-                var valueChanged = value != escData.am32Eeprom.getFactValue(factName);
-                if (valueChanged) {
+                var currentValue = escData.am32Eeprom.getFactValue(factName)
+                if (value != currentValue) {
+                    valueChanged = true
                     var changes = {}
                     changes[factName] = value
-                    console.info("updatePendingValue")
+                    console.info("updatePendingValue: " + factName + " = " + value)
                     escData.am32Eeprom.applyPendingChanges(changes)
                 }
             }
@@ -251,7 +269,6 @@ Item {
     function getDisplayValue(factName) {
         // If we have a pending value, use that
         if (pendingValues.hasOwnProperty(factName)) {
-            console.info("getDisplayValue --> we have a pending value: ", factName)
             return pendingValues[factName]
         }
 
@@ -415,7 +432,7 @@ Item {
                 }
 
                 QGCLabel {
-                    text: loadedEscs.size + " / " + escStatusModel.count + qsTr(" ESCs loaded")
+                    text: loadedEscs.length + " / " + escStatusModel.count + qsTr(" ESCs loaded")
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
 
@@ -444,185 +461,133 @@ Item {
                 width:      parent.width
                 spacing:    _margins
 
-                // Essentials Group
-                SettingsGroupLayout {
-                    heading: qsTr("Essentials")
-                    Layout.fillWidth: true
-
-                    RowLayout {
-                        QGCLabel {
-                            text: qsTr("Protocol:") + (hasUnsavedChange("inputType") ? " *" : "")
-                            color: hasUnsavedChange("inputType") ? qgcPal.colorOrange : qgcPal.text
-                        }
-                        ComboBox {
-                            model: ["Auto", "PWM", "DShot"]
-                            currentIndex: {
-                                var val = getDisplayValue("inputType")
-                                return val !== null ? val : 0
-                            }
-                            onActivated: function(index) {
-                                updatePendingValue("inputType", index)
-                            }
-                        }
-                    }
-                }
-
                 // Motor Group
                 SettingsGroupLayout {
                     heading: qsTr("Motor")
                     Layout.fillWidth: true
 
-                    Flow {
+                    RowLayout {
                         width: parent.width
-                        spacing: _margins
+                        spacing: _margins * 2
 
-                        // Row 1 - Checkboxes
-                        QGCCheckBox {
-                            text:   qsTr("Stuck rotor protection") + (hasUnsavedChange("stuckRotorProtection") ? " *" : "")
-                            checked: getDisplayValue("stuckRotorProtection") === true
-                            textColor: hasUnsavedChange("stuckRotorProtection") ? qgcPal.colorOrange : qgcPal.text
-                            onClicked: updatePendingValue("stuckRotorProtection", checked)
-                        }
-                        QGCCheckBox {
-                            text:   qsTr("Stall protection") + (hasUnsavedChange("antiStall") ? " *" : "")
-                            checked: getDisplayValue("antiStall") === true
-                            textColor: hasUnsavedChange("antiStall") ? qgcPal.colorOrange : qgcPal.text
-                            onClicked: updatePendingValue("antiStall", checked)
-                        }
-                        QGCCheckBox {
-                            text:   qsTr("Use hall sensors") + (hasUnsavedChange("hallSensors") ? " *" : "")
-                            checked: getDisplayValue("hallSensors") === true
-                            textColor: hasUnsavedChange("hallSensors") ? qgcPal.colorOrange : qgcPal.text
-                            onClicked: updatePendingValue("hallSensors", checked)
-                        }
-                        QGCCheckBox {
-                            text:   qsTr("30ms interval telemetry") + (hasUnsavedChange("telemetry30ms") ? " *" : "")
-                            checked: getDisplayValue("telemetry30ms") === true
-                            textColor: hasUnsavedChange("telemetry30ms") ? qgcPal.colorOrange : qgcPal.text
-                            onClicked: updatePendingValue("telemetry30ms", checked)
-                        }
-                        QGCCheckBox {
-                            text:   qsTr("Variable PWM") + (hasUnsavedChange("variablePwmFreq") ? " *" : "")
-                            checked: getDisplayValue("variablePwmFreq") === true
-                            textColor: hasUnsavedChange("variablePwmFreq") ? qgcPal.colorOrange : qgcPal.text
-                            onClicked: updatePendingValue("variablePwmFreq", checked)
-                        }
-                        QGCCheckBox {
-                            text:   qsTr("Complementary PWM") + (hasUnsavedChange("complementaryPwm") ? " *" : "")
-                            checked: getDisplayValue("complementaryPwm") === true
-                            textColor: hasUnsavedChange("complementaryPwm") ? qgcPal.colorOrange : qgcPal.text
-                            onClicked: updatePendingValue("complementaryPwm", checked)
-                        }
-                        QGCCheckBox {
-                            id: autoTimingCheckbox
-                            text:   qsTr("Auto timing advance") + (hasUnsavedChange("autoTiming") ? " *" : "")
-                            textColor: hasUnsavedChange("autoTiming") ? qgcPal.colorOrange : qgcPal.text
-                            checked: getDisplayValue("autoTiming") === true
-                            onClicked: updatePendingValue("autoTiming", checked)
-                        }
+                        // Left column with checkboxes
+                        ColumnLayout {
+                            Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 25
+                            spacing: _groupMargins
 
-                        // Sliders with inline labels
-                        Column {
-                            QGCLabel {
-                                text: qsTr("Timing advance") + (hasUnsavedChange("timingAdvance") ? " *" : "")
-                                color: hasUnsavedChange("timingAdvance") ? qgcPal.colorOrange : qgcPal.text
+                            QGCCheckBox {
+                                text:   qsTr("Stuck rotor protection") + (hasUnsavedChange("stuckRotorProtection") ? " *" : "")
+                                checked: getDisplayValue("stuckRotorProtection") === true
+                                textColor: hasUnsavedChange("stuckRotorProtection") ? qgcPal.colorOrange : qgcPal.text
+                                onClicked: updatePendingValue("stuckRotorProtection", checked)
                             }
-                            ValueSlider {
-                                id: timingAdvanceSlider
-                                width:              ScreenTools.defaultFontPixelWidth * 30
-                                from:               0
-                                to:                 30
-                                majorTickStepSize:  1
-                                decimalPlaces:      1
-                                enabled:            !autoTimingCheckbox.checked
-                                // Value set by updateSliderValues() after data is loaded
-                                onValueChanged:     updatePendingValue("timingAdvance", value)
+                            QGCCheckBox {
+                                text:   qsTr("Stall protection") + (hasUnsavedChange("antiStall") ? " *" : "")
+                                checked: getDisplayValue("antiStall") === true
+                                textColor: hasUnsavedChange("antiStall") ? qgcPal.colorOrange : qgcPal.text
+                                onClicked: updatePendingValue("antiStall", checked)
                             }
+                            QGCCheckBox {
+                                text:   qsTr("Use hall sensors") + (hasUnsavedChange("hallSensors") ? " *" : "")
+                                checked: getDisplayValue("hallSensors") === true
+                                textColor: hasUnsavedChange("hallSensors") ? qgcPal.colorOrange : qgcPal.text
+                                onClicked: updatePendingValue("hallSensors", checked)
+                            }
+                            QGCCheckBox {
+                                text:   qsTr("30ms interval telemetry") + (hasUnsavedChange("telemetry30ms") ? " *" : "")
+                                checked: getDisplayValue("telemetry30ms") === true
+                                textColor: hasUnsavedChange("telemetry30ms") ? qgcPal.colorOrange : qgcPal.text
+                                onClicked: updatePendingValue("telemetry30ms", checked)
+                            }
+                            QGCCheckBox {
+                                id: variablePwmCheckbox
+                                text:   qsTr("Variable PWM") + (hasUnsavedChange("variablePwmFreq") ? " *" : "")
+                                checked: getDisplayValue("variablePwmFreq") === true
+                                textColor: hasUnsavedChange("variablePwmFreq") ? qgcPal.colorOrange : qgcPal.text
+                                onClicked: updatePendingValue("variablePwmFreq", checked)
+                            }
+                            QGCCheckBox {
+                                text:   qsTr("Complementary PWM") + (hasUnsavedChange("complementaryPwm") ? " *" : "")
+                                checked: getDisplayValue("complementaryPwm") === true
+                                textColor: hasUnsavedChange("complementaryPwm") ? qgcPal.colorOrange : qgcPal.text
+                                onClicked: updatePendingValue("complementaryPwm", checked)
+                            }
+                            QGCCheckBox {
+                                id: autoTimingCheckbox
+                                text:   qsTr("Auto timing advance") + (hasUnsavedChange("autoTiming") ? " *" : "")
+                                textColor: hasUnsavedChange("autoTiming") ? qgcPal.colorOrange : qgcPal.text
+                                checked: getDisplayValue("autoTiming") === true
+                                onClicked: updatePendingValue("autoTiming", checked)
+                            }
+
+                            Item { Layout.fillHeight: true } // Spacer
                         }
 
-                        Column {
-                            QGCLabel {
-                                text: qsTr("Startup power") + (hasUnsavedChange("startupPower") ? " *" : "")
-                                color: hasUnsavedChange("startupPower") ? qgcPal.colorOrange : qgcPal.text
-                            }
-                            ValueSlider {
-                                id: startupPowerSlider
-                                width:              ScreenTools.defaultFontPixelWidth * 30
-                                from:               50
-                                to:                 150
-                                majorTickStepSize:  10
-                                decimalPlaces:      0
-                                // Value set by updateSliderValues() after data is loaded
-                                onValueChanged:     updatePendingValue("startupPower", value)
-                            }
-                        }
+                        // Right side with 3x2 grid of sliders
+                        GridLayout {
+                            Layout.fillWidth: true
+                            columns: 3
+                            rowSpacing: _margins
+                            columnSpacing: _margins * 1.5
 
-                        Column {
-                            QGCLabel {
-                                text: qsTr("Motor KV") + (hasUnsavedChange("motorKv") ? " *" : "")
-                                color: hasUnsavedChange("motorKv") ? qgcPal.colorOrange : qgcPal.text
-                            }
-                            ValueSlider {
-                                id: motorKvSlider
-                                width:              ScreenTools.defaultFontPixelWidth * 30
-                                from:               20
-                                to:                 10220
-                                majorTickStepSize:  1000
-                                decimalPlaces:      0
-                                // Value set by updateSliderValues() after data is loaded
-                                onValueChanged:     updatePendingValue("motorKv", value)
-                            }
-                        }
+                            Repeater {
+                                model: motorSliderConfigs
 
-                        Column {
-                            QGCLabel {
-                                text: qsTr("Motor poles") + (hasUnsavedChange("motorPoles") ? " *" : "")
-                                color: hasUnsavedChange("motorPoles") ? qgcPal.colorOrange : qgcPal.text
-                            }
-                            ValueSlider {
-                                id: motorPolesSlider
-                                width:              ScreenTools.defaultFontPixelWidth * 30
-                                from:               2
-                                to:                 36
-                                majorTickStepSize:  2
-                                decimalPlaces:      0
-                                // Value set by updateSliderValues() after data is loaded
-                                onValueChanged:     updatePendingValue("motorPoles", value)
-                            }
-                        }
+                                Rectangle {
+                                    color: qgcPal.windowShade
+                                    border.color: qgcPal.text
+                                    border.width: 1
+                                    radius: 4
+                                    implicitWidth: sliderColumn.width + _groupMargins * 2
+                                    implicitHeight: sliderColumn.height + _groupMargins * 2
 
-                        Column {
-                            QGCLabel {
-                                text: qsTr("Beeper volume") + (hasUnsavedChange("beepVolume") ? " *" : "")
-                                color: hasUnsavedChange("beepVolume") ? qgcPal.colorOrange : qgcPal.text
-                            }
-                            ValueSlider {
-                                id: beeperVolumeSlider
-                                width:              ScreenTools.defaultFontPixelWidth * 30
-                                from:               0
-                                to:                 11
-                                majorTickStepSize:  1
-                                decimalPlaces:      0
-                                // Value set by updateSliderValues() after data is loaded
-                                onValueChanged:     updatePendingValue("beepVolume", value)
-                            }
-                        }
+                                    property var config: modelData
 
-                        Column {
-                            QGCLabel {
-                                text: qsTr("PWM Frequency") + (hasUnsavedChange("pwmFrequency") ? " *" : "")
-                                color: hasUnsavedChange("pwmFrequency") ? qgcPal.colorOrange : qgcPal.text
-                            }
-                            ValueSlider {
-                                id: pwmFreqSlider
-                                width:              ScreenTools.defaultFontPixelWidth * 30
-                                from:               8
-                                to:                 48
-                                majorTickStepSize:  5
-                                decimalPlaces:      0
-                                enabled:            getDisplayValue("variablePwmFreq") !== true
-                                // Value set by updateSliderValues() after data is loaded
-                                onValueChanged:     updatePendingValue("pwmFrequency", value)
+                                    Column {
+                                        id: sliderColumn
+                                        anchors.centerIn: parent
+                                        spacing: _groupMargins / 2
+
+                                        QGCLabel {
+                                            text: config.label + (hasUnsavedChange(config.factName) ? " *" : "")
+                                            color: hasUnsavedChange(config.factName) ? qgcPal.colorOrange : qgcPal.text
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                        }
+
+                                        ValueSlider {
+                                            id: slider
+                                            width: ScreenTools.defaultFontPixelWidth * 25
+                                            from: config.from
+                                            to: config.to
+                                            majorTickStepSize: config.step
+                                            decimalPlaces: config.decimals
+                                            enabled: {
+                                                if (config.conditionalEnable === "autoTiming") {
+                                                    return !autoTimingCheckbox.checked
+                                                } else if (config.conditionalEnable === "variablePwmFreq") {
+                                                    return !variablePwmCheckbox.checked
+                                                }
+                                                return true
+                                            }
+
+                                            property string factName: config.factName
+
+                                            Component.onCompleted: {
+                                                sliderRefs[factName] = slider
+                                                var initialValue = getDisplayValue(factName)
+                                                if (initialValue !== null) {
+                                                    setValue(initialValue)
+                                                }
+                                            }
+
+                                            onValueChanged: {
+                                                if (factName) {
+                                                    updatePendingValue(factName, value)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -633,48 +598,82 @@ Item {
                     heading: qsTr("Extended Settings")
                     Layout.fillWidth: true
 
-                    Flow {
+                    RowLayout {
                         width: parent.width
-                        spacing: _margins
+                        spacing: _margins * 2
 
-                        QGCCheckBox {
-                            text:   qsTr("Disable stick calibration") + (hasUnsavedChange("disableStickCalibration") ? " *" : "")
-                            textColor: hasUnsavedChange("disableStickCalibration") ? qgcPal.colorOrange : qgcPal.text
-                            checked: getDisplayValue("disableStickCalibration") === true
-                            onClicked: updatePendingValue("disableStickCalibration", checked)
+                        // Left column with checkbox
+                        ColumnLayout {
+                            Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 25
+                            spacing: _groupMargins
+
+                            QGCCheckBox {
+                                text:   qsTr("Disable stick calibration") + (hasUnsavedChange("disableStickCalibration") ? " *" : "")
+                                textColor: hasUnsavedChange("disableStickCalibration") ? qgcPal.colorOrange : qgcPal.text
+                                checked: getDisplayValue("disableStickCalibration") === true
+                                onClicked: updatePendingValue("disableStickCalibration", checked)
+                            }
+
+                            Item { Layout.fillHeight: true } // Spacer
                         }
 
-                        Column {
-                            QGCLabel {
-                                text: qsTr("Ramp rate") + (hasUnsavedChange("maxRampSpeed") ? " *" : "")
-                                color: hasUnsavedChange("maxRampSpeed") ? qgcPal.colorOrange : qgcPal.text
-                            }
-                            ValueSlider {
-                                id: rampRateSlider
-                                width:              ScreenTools.defaultFontPixelWidth * 30
-                                from:               0.1
-                                to:                 20
-                                majorTickStepSize:  2
-                                decimalPlaces:      1
-                                // Value set by updateSliderValues() after data is loaded
-                                onValueChanged:     updatePendingValue("maxRampSpeed", value)
-                            }
-                        }
+                        // Right side with sliders
+                        GridLayout {
+                            Layout.fillWidth: true
+                            columns: 3
+                            rowSpacing: _margins
+                            columnSpacing: _margins * 1.5
 
-                        Column {
-                            QGCLabel {
-                                text: qsTr("Minimum duty cycle") + (hasUnsavedChange("minDutyCycle") ? " *" : "")
-                                color: hasUnsavedChange("minDutyCycle") ? qgcPal.colorOrange : qgcPal.text
-                            }
-                            ValueSlider {
-                                id: minDutyCycleSlider
-                                width:              ScreenTools.defaultFontPixelWidth * 30
-                                from:               0
-                                to:                 25
-                                majorTickStepSize:  5
-                                decimalPlaces:      1
-                                // Value set by updateSliderValues() after data is loaded
-                                onValueChanged:     updatePendingValue("minDutyCycle", value)
+                            Repeater {
+                                model: extendedSliderConfigs
+
+                                Rectangle {
+                                    color: qgcPal.windowShade
+                                    border.color: qgcPal.text
+                                    border.width: 1
+                                    radius: 4
+                                    implicitWidth: sliderColumn.width + _groupMargins * 2
+                                    implicitHeight: sliderColumn.height + _groupMargins * 2
+
+                                    property var config: modelData
+
+                                    Column {
+                                        id: sliderColumn
+                                        anchors.centerIn: parent
+                                        spacing: _groupMargins / 2
+
+                                        QGCLabel {
+                                            text: config.label + (hasUnsavedChange(config.factName) ? " *" : "")
+                                            color: hasUnsavedChange(config.factName) ? qgcPal.colorOrange : qgcPal.text
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                        }
+
+                                        ValueSlider {
+                                            id: slider
+                                            width: ScreenTools.defaultFontPixelWidth * 25
+                                            from: config.from
+                                            to: config.to
+                                            majorTickStepSize: config.step
+                                            decimalPlaces: config.decimals
+
+                                            property string factName: config.factName
+
+                                            Component.onCompleted: {
+                                                sliderRefs[factName] = slider
+                                                var initialValue = getDisplayValue(factName)
+                                                if (initialValue !== null) {
+                                                    setValue(initialValue)
+                                                }
+                                            }
+
+                                            onValueChanged: {
+                                                if (factName) {
+                                                    updatePendingValue(factName, value)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -685,84 +684,89 @@ Item {
                     heading: qsTr("Limits")
                     Layout.fillWidth: true
 
-                    Flow {
+                    RowLayout {
                         width: parent.width
-                        spacing: _margins
+                        spacing: _margins * 2
 
-                        QGCCheckBox {
-                            id: lowVoltageCutoffCheckbox
-                            text:   qsTr("Low voltage cut off") + (hasUnsavedChange("lowVoltageCutoff") ? " *" : "")
-                            textColor: hasUnsavedChange("lowVoltageCutoff") ? qgcPal.colorOrange : qgcPal.text
-                            checked: getDisplayValue("lowVoltageCutoff") === true
-                            onClicked: updatePendingValue("lowVoltageCutoff", checked)
+                        // Left column with checkbox
+                        ColumnLayout {
+                            Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 25
+                            spacing: _groupMargins
+
+                            QGCCheckBox {
+                                id: lowVoltageCutoffCheckbox
+                                text:   qsTr("Low voltage cut off") + (hasUnsavedChange("lowVoltageCutoff") ? " *" : "")
+                                textColor: hasUnsavedChange("lowVoltageCutoff") ? qgcPal.colorOrange : qgcPal.text
+                                checked: getDisplayValue("lowVoltageCutoff") === true
+                                onClicked: updatePendingValue("lowVoltageCutoff", checked)
+                            }
+
+                            Item { Layout.fillHeight: true } // Spacer
                         }
 
-                        Column {
-                            QGCLabel {
-                                text: qsTr("Temperature limit") + (hasUnsavedChange("temperatureLimit") ? " *" : "")
-                                color: hasUnsavedChange("temperatureLimit") ? qgcPal.colorOrange : qgcPal.text
-                            }
-                            ValueSlider {
-                                id: tempLimitSlider
-                                width:              ScreenTools.defaultFontPixelWidth * 30
-                                from:               70
-                                to:                 255
-                                majorTickStepSize:  10
-                                decimalPlaces:      0
-                                // Value set by updateSliderValues() after data is loaded
-                                onValueChanged:     updatePendingValue("temperatureLimit", value)
-                            }
-                        }
+                        // Right side with 2x2 grid of sliders
+                        GridLayout {
+                            Layout.fillWidth: true
+                            columns: 2
+                            rowSpacing: _margins
+                            columnSpacing: _margins * 1.5
 
-                        Column {
-                            QGCLabel {
-                                text: qsTr("Current limit") + (hasUnsavedChange("currentLimit") ? " *" : "")
-                                color: hasUnsavedChange("currentLimit") ? qgcPal.colorOrange : qgcPal.text
-                            }
-                            ValueSlider {
-                                id: currentLimitSlider
-                                width:              ScreenTools.defaultFontPixelWidth * 30
-                                from:               0
-                                to:                 206 // TODO: we need to use the min/max from the fact itself
-                                majorTickStepSize:  20
-                                decimalPlaces:      0
-                                // Value set by updateSliderValues() after data is loaded
-                                onValueChanged:     updatePendingValue("currentLimit", value)
-                            }
-                        }
+                            Repeater {
+                                model: limitsSliderConfigs
 
-                        Column {
-                            QGCLabel {
-                                text: qsTr("Low voltage threshold") + (hasUnsavedChange("lowVoltageThreshold") ? " *" : "")
-                                color: hasUnsavedChange("lowVoltageThreshold") ? qgcPal.colorOrange : qgcPal.text
-                            }
-                            ValueSlider {
-                                id: lowVoltageThresholdSlider
-                                width:              ScreenTools.defaultFontPixelWidth * 30
-                                from:               2.5
-                                to:                 3.5
-                                majorTickStepSize:  0.2
-                                decimalPlaces:      1
-                                enabled:            lowVoltageCutoffCheckbox.checked
-                                // Value set by updateSliderValues() after data is loaded
-                                onValueChanged:     updatePendingValue("lowVoltageThreshold", value)
-                            }
-                        }
+                                Rectangle {
+                                    color: qgcPal.windowShade
+                                    border.color: qgcPal.text
+                                    border.width: 1
+                                    radius: 4
+                                    implicitWidth: sliderColumn.width + _groupMargins * 2
+                                    implicitHeight: sliderColumn.height + _groupMargins * 2
 
-                        Column {
-                            QGCLabel {
-                                text: qsTr("Absolute voltage cutoff") + (hasUnsavedChange("absoluteVoltageCutoff") ? " *" : "")
-                                color: hasUnsavedChange("absoluteVoltageCutoff") ? qgcPal.colorOrange : qgcPal.text
-                            }
-                            ValueSlider {
-                                id: absoluteVoltageCutoffSlider
-                                width:              ScreenTools.defaultFontPixelWidth * 30
-                                from:               0.5
-                                to:                 50.0
-                                majorTickStepSize:  5
-                                decimalPlaces:      1
-                                // Value set by updateSliderValues() after data is loaded
-                                onValueChanged:     updatePendingValue("absoluteVoltageCutoff", value)
+                                    property var config: modelData
+
+                                    Column {
+                                        id: sliderColumn
+                                        anchors.centerIn: parent
+                                        spacing: _groupMargins / 2
+
+                                        QGCLabel {
+                                            text: config.label + (hasUnsavedChange(config.factName) ? " *" : "")
+                                            color: hasUnsavedChange(config.factName) ? qgcPal.colorOrange : qgcPal.text
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                        }
+
+                                        ValueSlider {
+                                            id: slider
+                                            width: ScreenTools.defaultFontPixelWidth * 25
+                                            from: config.from
+                                            to: config.to
+                                            majorTickStepSize: config.step
+                                            decimalPlaces: config.decimals
+                                            enabled: {
+                                                if (config.conditionalEnable === "lowVoltageCutoff") {
+                                                    return lowVoltageCutoffCheckbox.checked
+                                                }
+                                                return true
+                                            }
+
+                                            property string factName: config.factName
+
+                                            Component.onCompleted: {
+                                                sliderRefs[factName] = slider
+                                                var initialValue = getDisplayValue(factName)
+                                                if (initialValue !== null) {
+                                                    setValue(initialValue)
+                                                }
+                                            }
+
+                                            onValueChanged: {
+                                                if (factName) {
+                                                    updatePendingValue(factName, value)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -772,60 +776,66 @@ Item {
                 SettingsGroupLayout {
                     heading:            qsTr("Current Control")
                     Layout.fillWidth:   true
-                    opacity:            currentLimitSlider.value > 100 ? 0.3 : 1.0
+                    opacity:            {
+                        var currentLimitSlider = sliderRefs["currentLimit"]
+                        return (currentLimitSlider && currentLimitSlider.value > 100) ? 0.3 : 1.0
+                    }
 
-                    Flow {
+                    GridLayout {
                         width: parent.width
-                        spacing: _margins
+                        columns: 3
+                        rowSpacing: _margins
+                        columnSpacing: _margins * 1.5
 
-                        Column {
-                            QGCLabel {
-                                text: qsTr("Current P") + (hasUnsavedChange("currentPidP") ? " *" : "")
-                                color: hasUnsavedChange("currentPidP") ? qgcPal.colorOrange : qgcPal.text
-                            }
-                            ValueSlider {
-                                id: currentPidPSlider
-                                width:              ScreenTools.defaultFontPixelWidth * 30
-                                from:               0
-                                to:                 510
-                                majorTickStepSize:  50
-                                decimalPlaces:      0
-                                // Value set by updateSliderValues() after data is loaded
-                                onValueChanged:     updatePendingValue("currentPidP", value)
-                            }
-                        }
+                        Repeater {
+                            model: currentControlSliderConfigs
 
-                        Column {
-                            QGCLabel {
-                                text: qsTr("Current I") + (hasUnsavedChange("currentPidI") ? " *" : "")
-                                color: hasUnsavedChange("currentPidI") ? qgcPal.colorOrange : qgcPal.text
-                            }
-                            ValueSlider {
-                                id: currentPidISlider
-                                width:              ScreenTools.defaultFontPixelWidth * 30
-                                from:               0
-                                to:                 255
-                                majorTickStepSize:  25
-                                decimalPlaces:      0
-                                // Value set by updateSliderValues() after data is loaded
-                                onValueChanged:     updatePendingValue("currentPidI", value)
-                            }
-                        }
+                            Rectangle {
+                                color: qgcPal.windowShade
+                                border.color: qgcPal.text
+                                border.width: 1
+                                radius: 4
+                                implicitWidth: sliderColumn.width + _groupMargins * 2
+                                implicitHeight: sliderColumn.height + _groupMargins * 2
 
-                        Column {
-                            QGCLabel {
-                                text: qsTr("Current D") + (hasUnsavedChange("currentPidD") ? " *" : "")
-                                color: hasUnsavedChange("currentPidD") ? qgcPal.colorOrange : qgcPal.text
-                            }
-                            ValueSlider {
-                                id: currentPidDSlider
-                                width:              ScreenTools.defaultFontPixelWidth * 30
-                                from:               0
-                                to:                 2550
-                                majorTickStepSize:  250
-                                decimalPlaces:      0
-                                // Value set by updateSliderValues() after data is loaded
-                                onValueChanged:     updatePendingValue("currentPidD", value)
+                                property var config: modelData
+
+                                Column {
+                                    id: sliderColumn
+                                    anchors.centerIn: parent
+                                    spacing: _groupMargins / 2
+
+                                    QGCLabel {
+                                        text: config.label + (hasUnsavedChange(config.factName) ? " *" : "")
+                                        color: hasUnsavedChange(config.factName) ? qgcPal.colorOrange : qgcPal.text
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                    }
+
+                                    ValueSlider {
+                                        id: slider
+                                        width: ScreenTools.defaultFontPixelWidth * 25
+                                        from: config.from
+                                        to: config.to
+                                        majorTickStepSize: config.step
+                                        decimalPlaces: config.decimals
+
+                                        property string factName: config.factName
+
+                                        Component.onCompleted: {
+                                            sliderRefs[factName] = slider
+                                            var initialValue = getDisplayValue(factName)
+                                            if (initialValue !== null) {
+                                                setValue(initialValue)
+                                            }
+                                        }
+
+                                        onValueChanged: {
+                                            if (factName) {
+                                                updatePendingValue(factName, value)
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
