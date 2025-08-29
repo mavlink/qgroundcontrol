@@ -24,6 +24,22 @@ Item {
     readonly property real _margins:        ScreenTools.defaultFontPixelHeight
     readonly property real _groupMargins:   ScreenTools.defaultFontPixelHeight / 2
 
+    // Track which ESCs have loaded data
+    property var loadedEscs:        new Set()
+    property bool allDataLoaded:    false
+    property bool initializationComplete: false
+
+    // Timer for timeout mechanism
+    Timer {
+        id: dataLoadTimeout
+        interval: 3000  // 3 second timeout
+        repeat: false
+        onTriggered: {
+            console.info("Data load timeout - initializing UI with available data")
+            finalizeInitialization()
+        }
+    }
+
     Component.onCompleted: {
         if (escStatusModel && escStatusModel.count > 0) {
             // Default: select all ESCs
@@ -33,28 +49,79 @@ Item {
             }
             selectedEscs = allEscs
 
+            // Start timeout timer
+            dataLoadTimeout.start()
+
             // Request read for all ESCs to get initial data
             for (var j = 0; j < escStatusModel.count; j++) {
-                if (escStatusModel.get(j).am32Eeprom) {
-                    console.info("requestReadAll")
-                    escStatusModel.get(j).am32Eeprom.requestReadAll(vehicle)
+                var esc = escStatusModel.get(j)
+                if (esc && esc.am32Eeprom) {
+                    console.info("Requesting EEPROM data for ESC " + (j + 1))
+
+                    // Set up connection to monitor data loading for this ESC
+                    setupEscDataConnection(j)
+
+                    // Request the data
+                    esc.am32Eeprom.requestReadAll(vehicle)
                 }
             }
+        } else {
+            // No ESCs available, complete initialization immediately
+            initializationComplete = true
         }
     }
 
-    // Listen for EEPROM data updates to clear pending changes
-    Connections {
-        target: referenceFacts
-        function onDataLoadedChanged() {
-            console.info("onDataLoadedChanged")
+    function setupEscDataConnection(escIndex) {
+        var esc = escStatusModel.get(escIndex)
+        if (!esc || !esc.am32Eeprom) return
+
+        // Create a connection to monitor when this ESC's data loads
+        var conn = esc.am32Eeprom.dataLoadedChanged.connect(function() {
+            if (esc.am32Eeprom.dataLoaded) {
+                console.info("ESC " + (escIndex + 1) + " data loaded")
+                loadedEscs.add(escIndex)
+
+                // Check if all ESCs have loaded
+                if (loadedEscs.size === escStatusModel.count) {
+                    console.info("All ESC data loaded")
+                    dataLoadTimeout.stop()
+                    finalizeInitialization()
+                }
+            }
+        })
+    }
+
+    function finalizeInitialization() {
+        if (!initializationComplete) {
+            console.info("Finalizing initialization with " + loadedEscs.size + "/" + escStatusModel.count + " ESCs loaded")
+            allDataLoaded = loadedEscs.size === escStatusModel.count
+            initializationComplete = true
+
+            // Initialize sliders and checkboxes with loaded data
             pendingValues = {}
-            console.info("updateSliderValues")
             updateSliderValues()
         }
     }
 
+    // Listen for EEPROM data updates after initialization
+    Connections {
+        target: referenceFacts
+        enabled: initializationComplete  // Only listen after initialization
+        function onDataLoadedChanged() {
+            if (initializationComplete && referenceFacts.dataLoaded) {
+                console.info("Reference ESC data updated")
+                pendingValues = {}
+                updateSliderValues()
+            }
+        }
+    }
+
     function updateSliderValues() {
+        // Only update sliders after initialization is complete
+        if (!initializationComplete) {
+            return
+        }
+
         // Update all slider values when data changes externally
         if (timingAdvanceSlider) timingAdvanceSlider.setValue(getDisplayValue("timingAdvance") || 15)
         if (startupPowerSlider) startupPowerSlider.setValue(getDisplayValue("startupPower") || 100)
@@ -71,6 +138,17 @@ Item {
         if (currentPidPSlider) currentPidPSlider.setValue(getDisplayValue("currentPidP") || 200)
         if (currentPidISlider) currentPidISlider.setValue(getDisplayValue("currentPidI") || 0)
         if (currentPidDSlider) currentPidDSlider.setValue(getDisplayValue("currentPidD") || 500)
+
+        // Also update checkboxes
+        updateCheckboxValues()
+    }
+
+    function updateCheckboxValues() {
+        // Update checkbox values when data changes
+        // These are handled through their bindings in the checked property
+        // Force a re-evaluation of bindings
+
+        // TODO: Jake: Why is this here?
     }
 
     function getEscBorderColor(index) {
@@ -234,10 +312,24 @@ Item {
         anchors.margins:    _margins
         spacing:            _margins
 
+        // No ESCs available message
+        Item {
+            Layout.fillWidth:   true
+            Layout.fillHeight:  true
+            visible:            !escStatusModel || escStatusModel.count === 0
+
+            QGCLabel {
+                anchors.centerIn: parent
+                text: qsTr("No AM32 ESCs detected. Please ensure your vehicle is connected and powered.")
+                font.pointSize: ScreenTools.largeFontPointSize
+            }
+        }
+
         // ESC Selection Header
         Row {
             Layout.alignment: Qt.AlignHCenter
             spacing: _margins / 2
+            visible: escStatusModel && escStatusModel.count > 0
 
             Repeater {
                 model: escStatusModel ? escStatusModel.count : 0
@@ -294,6 +386,34 @@ Item {
             }
         }
 
+        // Loading indicator
+        Item {
+            Layout.fillWidth:   true
+            Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 10
+            visible:            !initializationComplete && escStatusModel && escStatusModel.count > 0
+
+            Column {
+                anchors.centerIn: parent
+                spacing: _margins
+
+                QGCLabel {
+                    text: qsTr("Loading ESC data...")
+                    font.pointSize: ScreenTools.largeFontPointSize
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+
+                QGCLabel {
+                    text: loadedEscs.size + " / " + escStatusModel.count + qsTr(" ESCs loaded")
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+
+                BusyIndicator {
+                    running: true
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+            }
+        }
+
         // Settings Panel
         Flickable {
             Layout.fillWidth:   true
@@ -301,7 +421,7 @@ Item {
             contentHeight:      settingsColumn.height
             contentWidth:       width
             clip:               true
-            visible:            referenceFacts && referenceFacts.dataLoaded
+            visible:            initializationComplete && referenceFacts && referenceFacts.dataLoaded
 
             ScrollBar.vertical: ScrollBar {
                 policy: ScrollBar.AsNeeded
@@ -390,7 +510,7 @@ Item {
                                 majorTickStepSize:  1
                                 decimalPlaces:      1
                                 enabled:            !autoTimingCheckbox.checked
-                                Component.onCompleted: setValue(getDisplayValue("timingAdvance") || 15)
+                                // Value set by updateSliderValues() after data is loaded
                                 onValueChanged:     updatePendingValue("timingAdvance", value)
                             }
                         }
@@ -404,7 +524,7 @@ Item {
                                 to:                 150
                                 majorTickStepSize:  10
                                 decimalPlaces:      0
-                                Component.onCompleted: setValue(getDisplayValue("startupPower") || 100)
+                                // Value set by updateSliderValues() after data is loaded
                                 onValueChanged:     updatePendingValue("startupPower", value)
                             }
                         }
@@ -418,7 +538,7 @@ Item {
                                 to:                 10220
                                 majorTickStepSize:  1000
                                 decimalPlaces:      0
-                                Component.onCompleted: setValue(getDisplayValue("motorKv") || 2200)
+                                // Value set by updateSliderValues() after data is loaded
                                 onValueChanged:     updatePendingValue("motorKv", value)
                             }
                         }
@@ -432,7 +552,7 @@ Item {
                                 to:                 36
                                 majorTickStepSize:  2
                                 decimalPlaces:      0
-                                Component.onCompleted: setValue(getDisplayValue("motorPoles") || 14)
+                                // Value set by updateSliderValues() after data is loaded
                                 onValueChanged:     updatePendingValue("motorPoles", value)
                             }
                         }
@@ -446,7 +566,7 @@ Item {
                                 to:                 11
                                 majorTickStepSize:  1
                                 decimalPlaces:      0
-                                Component.onCompleted: setValue(getDisplayValue("beepVolume") || 5)
+                                // Value set by updateSliderValues() after data is loaded
                                 onValueChanged:     updatePendingValue("beepVolume", value)
                             }
                         }
@@ -461,7 +581,7 @@ Item {
                                 majorTickStepSize:  5
                                 decimalPlaces:      0
                                 enabled:            getDisplayValue("variablePwmFreq") !== true
-                                Component.onCompleted: setValue(getDisplayValue("pwmFrequency") || 24)
+                                // Value set by updateSliderValues() after data is loaded
                                 onValueChanged:     updatePendingValue("pwmFrequency", value)
                             }
                         }
@@ -492,7 +612,7 @@ Item {
                                 to:                 20
                                 majorTickStepSize:  2
                                 decimalPlaces:      1
-                                Component.onCompleted: setValue(getDisplayValue("maxRampSpeed") || 16.0)
+                                // Value set by updateSliderValues() after data is loaded
                                 onValueChanged:     updatePendingValue("maxRampSpeed", value)
                             }
                         }
@@ -506,7 +626,7 @@ Item {
                                 to:                 25
                                 majorTickStepSize:  5
                                 decimalPlaces:      1
-                                Component.onCompleted: setValue(getDisplayValue("minDutyCycle") || 2.0)
+                                // Value set by updateSliderValues() after data is loaded
                                 onValueChanged:     updatePendingValue("minDutyCycle", value)
                             }
                         }
@@ -538,7 +658,7 @@ Item {
                                 to:                 141
                                 majorTickStepSize:  10
                                 decimalPlaces:      0
-                                Component.onCompleted: setValue(getDisplayValue("temperatureLimit") || 141)
+                                // Value set by updateSliderValues() after data is loaded
                                 onValueChanged:     updatePendingValue("temperatureLimit", value)
                             }
                         }
@@ -552,7 +672,7 @@ Item {
                                 to:                 202
                                 majorTickStepSize:  20
                                 decimalPlaces:      0
-                                Component.onCompleted: setValue(getDisplayValue("currentLimit") || 204)
+                                // Value set by updateSliderValues() after data is loaded
                                 onValueChanged:     updatePendingValue("currentLimit", value)
                             }
                         }
@@ -567,7 +687,7 @@ Item {
                                 majorTickStepSize:  0.2
                                 decimalPlaces:      1
                                 enabled:            lowVoltageCutoffCheckbox.checked
-                                Component.onCompleted: setValue(getDisplayValue("lowVoltageThreshold") || 3.0)
+                                // Value set by updateSliderValues() after data is loaded
                                 onValueChanged:     updatePendingValue("lowVoltageThreshold", value)
                             }
                         }
@@ -581,7 +701,7 @@ Item {
                                 to:                 50.0
                                 majorTickStepSize:  5
                                 decimalPlaces:      1
-                                Component.onCompleted: setValue(getDisplayValue("absoluteVoltageCutoff") || 5.0)
+                                // Value set by updateSliderValues() after data is loaded
                                 onValueChanged:     updatePendingValue("absoluteVoltageCutoff", value)
                             }
                         }
@@ -607,7 +727,7 @@ Item {
                                 to:                 510
                                 majorTickStepSize:  50
                                 decimalPlaces:      0
-                                Component.onCompleted: setValue(getDisplayValue("currentPidP") || 200)
+                                // Value set by updateSliderValues() after data is loaded
                                 onValueChanged:     updatePendingValue("currentPidP", value)
                             }
                         }
@@ -621,7 +741,7 @@ Item {
                                 to:                 255
                                 majorTickStepSize:  25
                                 decimalPlaces:      0
-                                Component.onCompleted: setValue(getDisplayValue("currentPidI") || 0)
+                                // Value set by updateSliderValues() after data is loaded
                                 onValueChanged:     updatePendingValue("currentPidI", value)
                             }
                         }
@@ -635,7 +755,7 @@ Item {
                                 to:                 2550
                                 majorTickStepSize:  250
                                 decimalPlaces:      0
-                                Component.onCompleted: setValue(getDisplayValue("currentPidD") || 500)
+                                // Value set by updateSliderValues() after data is loaded
                                 onValueChanged:     updatePendingValue("currentPidD", value)
                             }
                         }

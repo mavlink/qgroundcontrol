@@ -230,7 +230,7 @@ void AM32EepromFactGroup::handleEepromData(const uint8_t* data, int length)
     _dataLoaded = true;
     emit dataLoadedChanged();
 
-    qDebug() << "ESC" << _escIndex << " received eeprom data";
+    qDebug() << "ESC" << (_escIndex + 1) << " received eeprom data";
 }
 
 void AM32EepromFactGroup::applyPendingChanges(const QVariantMap& changes)
@@ -273,7 +273,7 @@ void AM32EepromFactGroup::clearPendingChanges()
     _modifiedBytes.clear();
     emit hasUnsavedChangesChanged();
     emit pendingChangesUpdated();
-    qDebug() << "ESC" << _escIndex << "clearPendingChanges, pendingChangesUpdated";
+    qDebug() << "ESC" << (_escIndex + 1) << "clearPendingChanges, pendingChangesUpdated";
 }
 
 void AM32EepromFactGroup::discardChanges()
@@ -455,7 +455,7 @@ void AM32EepromFactGroup::requestWrite(Vehicle* vehicle)
     calculateWriteMask(writeMask);
 
     // Log which bytes we're writing
-    qDebug() << "ESC" << _escIndex;
+    qDebug() << "ESC" << (_escIndex + 1);
     qDebug() << "Writing AM32 EEPROM bytes:" << _modifiedBytes;
     qDebug() << "Write mask:" << Qt::hex
              << writeMask[0] << writeMask[1] << writeMask[2]
