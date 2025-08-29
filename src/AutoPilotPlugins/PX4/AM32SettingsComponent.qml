@@ -123,21 +123,21 @@ Item {
         }
 
         // Update all slider values when data changes externally
-        if (timingAdvanceSlider) timingAdvanceSlider.setValue(getDisplayValue("timingAdvance") || 15)
-        if (startupPowerSlider) startupPowerSlider.setValue(getDisplayValue("startupPower") || 100)
-        if (motorKvSlider) motorKvSlider.setValue(getDisplayValue("motorKv") || 2200)
-        if (motorPolesSlider) motorPolesSlider.setValue(getDisplayValue("motorPoles") || 14)
-        if (beeperVolumeSlider) beeperVolumeSlider.setValue(getDisplayValue("beepVolume") || 5)
-        if (pwmFreqSlider) pwmFreqSlider.setValue(getDisplayValue("pwmFrequency") || 24)
-        if (rampRateSlider) rampRateSlider.setValue(getDisplayValue("maxRampSpeed") || 16.0)
-        if (minDutyCycleSlider) minDutyCycleSlider.setValue(getDisplayValue("minDutyCycle") || 2.0)
-        if (tempLimitSlider) tempLimitSlider.setValue(getDisplayValue("temperatureLimit") || 141)
-        if (currentLimitSlider) currentLimitSlider.setValue(getDisplayValue("currentLimit") || 204)
-        if (lowVoltageThresholdSlider) lowVoltageThresholdSlider.setValue(getDisplayValue("lowVoltageThreshold") || 3.0)
-        if (absoluteVoltageCutoffSlider) absoluteVoltageCutoffSlider.setValue(getDisplayValue("absoluteVoltageCutoff") || 5.0)
-        if (currentPidPSlider) currentPidPSlider.setValue(getDisplayValue("currentPidP") || 200)
-        if (currentPidISlider) currentPidISlider.setValue(getDisplayValue("currentPidI") || 0)
-        if (currentPidDSlider) currentPidDSlider.setValue(getDisplayValue("currentPidD") || 500)
+        if (timingAdvanceSlider) timingAdvanceSlider.setValue(getDisplayValue("timingAdvance"))
+        if (startupPowerSlider) startupPowerSlider.setValue(getDisplayValue("startupPower"))
+        if (motorKvSlider) motorKvSlider.setValue(getDisplayValue("motorKv"))
+        if (motorPolesSlider) motorPolesSlider.setValue(getDisplayValue("motorPoles"))
+        if (beeperVolumeSlider) beeperVolumeSlider.setValue(getDisplayValue("beepVolume"))
+        if (pwmFreqSlider) pwmFreqSlider.setValue(getDisplayValue("pwmFrequency"))
+        if (rampRateSlider) rampRateSlider.setValue(getDisplayValue("maxRampSpeed"))
+        if (minDutyCycleSlider) minDutyCycleSlider.setValue(getDisplayValue("minDutyCycle"))
+        if (tempLimitSlider) tempLimitSlider.setValue(getDisplayValue("temperatureLimit"))
+        if (currentLimitSlider) currentLimitSlider.setValue(getDisplayValue("currentLimit"))
+        if (lowVoltageThresholdSlider) lowVoltageThresholdSlider.setValue(getDisplayValue("lowVoltageThreshold"))
+        if (absoluteVoltageCutoffSlider) absoluteVoltageCutoffSlider.setValue(getDisplayValue("absoluteVoltageCutoff"))
+        if (currentPidPSlider) currentPidPSlider.setValue(getDisplayValue("currentPidP"))
+        if (currentPidISlider) currentPidISlider.setValue(getDisplayValue("currentPidI"))
+        if (currentPidDSlider) currentPidDSlider.setValue(getDisplayValue("currentPidD"))
 
         // Also update checkboxes
         updateCheckboxValues()
@@ -161,40 +161,46 @@ Item {
             return qgcPal.colorGrey
         }
 
-        // Check if ESC has unsaved changes
-        if (escData.am32Eeprom.hasUnsavedChanges) {
-            return qgcPal.colorYellow  // Yellow for pending changes
-        }
-
         var isSelected = selectedEscs.indexOf(index) >= 0
+
+        // Grey for unselected ESCs
         if (!isSelected) {
-            return qgcPal.colorGrey  // Grey for unselected
+            return qgcPal.colorGrey
         }
 
-        // For selected ESCs, check if settings match the reference
+        // Yellow for selected ESCs with unsaved changes
+        if (escData.am32Eeprom.hasUnsavedChanges) {
+            return qgcPal.colorYellow
+        }
+
+        // For selected ESCs without unsaved changes
         if (!escData.am32Eeprom.dataLoaded) {
             return qgcPal.colorRed  // Red if data not loaded
         }
 
         if (index === selectedEscs[0]) {
-            return qgcPal.colorGreen  // First selected is always green
+            return qgcPal.colorGreen  // First selected is always green (reference)
         }
 
         // Check if this ESC's settings match the reference ESC
         if (referenceEsc && referenceEsc.am32Eeprom && escData.am32Eeprom.settingsMatch(referenceEsc.am32Eeprom)) {
-            return qgcPal.colorGreen  // Green if matches
+            return qgcPal.colorGreen  // Green if matches reference
         } else {
-            return qgcPal.colorRed  // Red if doesn't match
+            return qgcPal.colorRed  // Red if doesn't match reference
         }
     }
 
     function toggleEscSelection(index) {
         var idx = selectedEscs.indexOf(index)
         var newSelection = selectedEscs.slice()
+        var escData = escStatusModel.get(index)
 
         if (idx >= 0) {
-            // Deselect ESC
+            // Deselect ESC - clear any unsaved changes
             newSelection.splice(idx, 1)
+            if (escData && escData.am32Eeprom && escData.am32Eeprom.hasUnsavedChanges) {
+                escData.am32Eeprom.discardChanges()
+            }
         } else {
             // Select ESC
             newSelection.push(index)
@@ -245,6 +251,7 @@ Item {
     function getDisplayValue(factName) {
         // If we have a pending value, use that
         if (pendingValues.hasOwnProperty(factName)) {
+            console.info("getDisplayValue --> we have a pending value: ", factName)
             return pendingValues[factName]
         }
 
@@ -254,6 +261,11 @@ Item {
         }
 
         return null
+    }
+
+    function hasUnsavedChange(factName) {
+        // Check if this specific setting has an unsaved change
+        return pendingValues.hasOwnProperty(factName)
     }
 
     function writeSettings() {
@@ -438,7 +450,10 @@ Item {
                     Layout.fillWidth: true
 
                     RowLayout {
-                        QGCLabel { text: qsTr("Protocol:") }
+                        QGCLabel {
+                            text: qsTr("Protocol:") + (hasUnsavedChange("inputType") ? " *" : "")
+                            color: hasUnsavedChange("inputType") ? qgcPal.colorOrange : qgcPal.text
+                        }
                         ComboBox {
                             model: ["Auto", "PWM", "DShot"]
                             currentIndex: {
@@ -463,45 +478,55 @@ Item {
 
                         // Row 1 - Checkboxes
                         QGCCheckBox {
-                            text:   qsTr("Stuck rotor protection")
+                            text:   qsTr("Stuck rotor protection") + (hasUnsavedChange("stuckRotorProtection") ? " *" : "")
                             checked: getDisplayValue("stuckRotorProtection") === true
+                            textColor: hasUnsavedChange("stuckRotorProtection") ? qgcPal.colorOrange : qgcPal.text
                             onClicked: updatePendingValue("stuckRotorProtection", checked)
                         }
                         QGCCheckBox {
-                            text:   qsTr("Stall protection")
+                            text:   qsTr("Stall protection") + (hasUnsavedChange("antiStall") ? " *" : "")
                             checked: getDisplayValue("antiStall") === true
+                            textColor: hasUnsavedChange("antiStall") ? qgcPal.colorOrange : qgcPal.text
                             onClicked: updatePendingValue("antiStall", checked)
                         }
                         QGCCheckBox {
-                            text:   qsTr("Use hall sensors")
+                            text:   qsTr("Use hall sensors") + (hasUnsavedChange("hallSensors") ? " *" : "")
                             checked: getDisplayValue("hallSensors") === true
+                            textColor: hasUnsavedChange("hallSensors") ? qgcPal.colorOrange : qgcPal.text
                             onClicked: updatePendingValue("hallSensors", checked)
                         }
                         QGCCheckBox {
-                            text:   qsTr("30ms interval telemetry")
+                            text:   qsTr("30ms interval telemetry") + (hasUnsavedChange("telemetry30ms") ? " *" : "")
                             checked: getDisplayValue("telemetry30ms") === true
+                            textColor: hasUnsavedChange("telemetry30ms") ? qgcPal.colorOrange : qgcPal.text
                             onClicked: updatePendingValue("telemetry30ms", checked)
                         }
                         QGCCheckBox {
-                            text:   qsTr("Variable PWM")
+                            text:   qsTr("Variable PWM") + (hasUnsavedChange("variablePwmFreq") ? " *" : "")
                             checked: getDisplayValue("variablePwmFreq") === true
+                            textColor: hasUnsavedChange("variablePwmFreq") ? qgcPal.colorOrange : qgcPal.text
                             onClicked: updatePendingValue("variablePwmFreq", checked)
                         }
                         QGCCheckBox {
-                            text:   qsTr("Complementary PWM")
+                            text:   qsTr("Complementary PWM") + (hasUnsavedChange("complementaryPwm") ? " *" : "")
                             checked: getDisplayValue("complementaryPwm") === true
+                            textColor: hasUnsavedChange("complementaryPwm") ? qgcPal.colorOrange : qgcPal.text
                             onClicked: updatePendingValue("complementaryPwm", checked)
                         }
                         QGCCheckBox {
                             id: autoTimingCheckbox
-                            text:   qsTr("Auto timing advance")
+                            text:   qsTr("Auto timing advance") + (hasUnsavedChange("autoTiming") ? " *" : "")
+                            textColor: hasUnsavedChange("autoTiming") ? qgcPal.colorOrange : qgcPal.text
                             checked: getDisplayValue("autoTiming") === true
                             onClicked: updatePendingValue("autoTiming", checked)
                         }
 
                         // Sliders with inline labels
                         Column {
-                            QGCLabel { text: qsTr("Timing advance") }
+                            QGCLabel {
+                                text: qsTr("Timing advance") + (hasUnsavedChange("timingAdvance") ? " *" : "")
+                                color: hasUnsavedChange("timingAdvance") ? qgcPal.colorOrange : qgcPal.text
+                            }
                             ValueSlider {
                                 id: timingAdvanceSlider
                                 width:              ScreenTools.defaultFontPixelWidth * 30
@@ -516,7 +541,10 @@ Item {
                         }
 
                         Column {
-                            QGCLabel { text: qsTr("Startup power") }
+                            QGCLabel {
+                                text: qsTr("Startup power") + (hasUnsavedChange("startupPower") ? " *" : "")
+                                color: hasUnsavedChange("startupPower") ? qgcPal.colorOrange : qgcPal.text
+                            }
                             ValueSlider {
                                 id: startupPowerSlider
                                 width:              ScreenTools.defaultFontPixelWidth * 30
@@ -530,7 +558,10 @@ Item {
                         }
 
                         Column {
-                            QGCLabel { text: qsTr("Motor KV") }
+                            QGCLabel {
+                                text: qsTr("Motor KV") + (hasUnsavedChange("motorKv") ? " *" : "")
+                                color: hasUnsavedChange("motorKv") ? qgcPal.colorOrange : qgcPal.text
+                            }
                             ValueSlider {
                                 id: motorKvSlider
                                 width:              ScreenTools.defaultFontPixelWidth * 30
@@ -544,7 +575,10 @@ Item {
                         }
 
                         Column {
-                            QGCLabel { text: qsTr("Motor poles") }
+                            QGCLabel {
+                                text: qsTr("Motor poles") + (hasUnsavedChange("motorPoles") ? " *" : "")
+                                color: hasUnsavedChange("motorPoles") ? qgcPal.colorOrange : qgcPal.text
+                            }
                             ValueSlider {
                                 id: motorPolesSlider
                                 width:              ScreenTools.defaultFontPixelWidth * 30
@@ -558,7 +592,10 @@ Item {
                         }
 
                         Column {
-                            QGCLabel { text: qsTr("Beeper volume") }
+                            QGCLabel {
+                                text: qsTr("Beeper volume") + (hasUnsavedChange("beepVolume") ? " *" : "")
+                                color: hasUnsavedChange("beepVolume") ? qgcPal.colorOrange : qgcPal.text
+                            }
                             ValueSlider {
                                 id: beeperVolumeSlider
                                 width:              ScreenTools.defaultFontPixelWidth * 30
@@ -572,7 +609,10 @@ Item {
                         }
 
                         Column {
-                            QGCLabel { text: qsTr("PWM Frequency") }
+                            QGCLabel {
+                                text: qsTr("PWM Frequency") + (hasUnsavedChange("pwmFrequency") ? " *" : "")
+                                color: hasUnsavedChange("pwmFrequency") ? qgcPal.colorOrange : qgcPal.text
+                            }
                             ValueSlider {
                                 id: pwmFreqSlider
                                 width:              ScreenTools.defaultFontPixelWidth * 30
@@ -598,13 +638,17 @@ Item {
                         spacing: _margins
 
                         QGCCheckBox {
-                            text:   qsTr("Disable stick calibration")
+                            text:   qsTr("Disable stick calibration") + (hasUnsavedChange("disableStickCalibration") ? " *" : "")
+                            textColor: hasUnsavedChange("disableStickCalibration") ? qgcPal.colorOrange : qgcPal.text
                             checked: getDisplayValue("disableStickCalibration") === true
                             onClicked: updatePendingValue("disableStickCalibration", checked)
                         }
 
                         Column {
-                            QGCLabel { text: qsTr("Ramp rate") }
+                            QGCLabel {
+                                text: qsTr("Ramp rate") + (hasUnsavedChange("maxRampSpeed") ? " *" : "")
+                                color: hasUnsavedChange("maxRampSpeed") ? qgcPal.colorOrange : qgcPal.text
+                            }
                             ValueSlider {
                                 id: rampRateSlider
                                 width:              ScreenTools.defaultFontPixelWidth * 30
@@ -618,7 +662,10 @@ Item {
                         }
 
                         Column {
-                            QGCLabel { text: qsTr("Minimum duty cycle") }
+                            QGCLabel {
+                                text: qsTr("Minimum duty cycle") + (hasUnsavedChange("minDutyCycle") ? " *" : "")
+                                color: hasUnsavedChange("minDutyCycle") ? qgcPal.colorOrange : qgcPal.text
+                            }
                             ValueSlider {
                                 id: minDutyCycleSlider
                                 width:              ScreenTools.defaultFontPixelWidth * 30
@@ -644,18 +691,22 @@ Item {
 
                         QGCCheckBox {
                             id: lowVoltageCutoffCheckbox
-                            text:   qsTr("Low voltage cut off")
+                            text:   qsTr("Low voltage cut off") + (hasUnsavedChange("lowVoltageCutoff") ? " *" : "")
+                            textColor: hasUnsavedChange("lowVoltageCutoff") ? qgcPal.colorOrange : qgcPal.text
                             checked: getDisplayValue("lowVoltageCutoff") === true
                             onClicked: updatePendingValue("lowVoltageCutoff", checked)
                         }
 
                         Column {
-                            QGCLabel { text: qsTr("Temperature limit") }
+                            QGCLabel {
+                                text: qsTr("Temperature limit") + (hasUnsavedChange("temperatureLimit") ? " *" : "")
+                                color: hasUnsavedChange("temperatureLimit") ? qgcPal.colorOrange : qgcPal.text
+                            }
                             ValueSlider {
                                 id: tempLimitSlider
                                 width:              ScreenTools.defaultFontPixelWidth * 30
                                 from:               70
-                                to:                 141
+                                to:                 255
                                 majorTickStepSize:  10
                                 decimalPlaces:      0
                                 // Value set by updateSliderValues() after data is loaded
@@ -664,12 +715,15 @@ Item {
                         }
 
                         Column {
-                            QGCLabel { text: qsTr("Current limit") }
+                            QGCLabel {
+                                text: qsTr("Current limit") + (hasUnsavedChange("currentLimit") ? " *" : "")
+                                color: hasUnsavedChange("currentLimit") ? qgcPal.colorOrange : qgcPal.text
+                            }
                             ValueSlider {
                                 id: currentLimitSlider
                                 width:              ScreenTools.defaultFontPixelWidth * 30
                                 from:               0
-                                to:                 202
+                                to:                 206 // TODO: we need to use the min/max from the fact itself
                                 majorTickStepSize:  20
                                 decimalPlaces:      0
                                 // Value set by updateSliderValues() after data is loaded
@@ -678,7 +732,10 @@ Item {
                         }
 
                         Column {
-                            QGCLabel { text: qsTr("Low voltage threshold") }
+                            QGCLabel {
+                                text: qsTr("Low voltage threshold") + (hasUnsavedChange("lowVoltageThreshold") ? " *" : "")
+                                color: hasUnsavedChange("lowVoltageThreshold") ? qgcPal.colorOrange : qgcPal.text
+                            }
                             ValueSlider {
                                 id: lowVoltageThresholdSlider
                                 width:              ScreenTools.defaultFontPixelWidth * 30
@@ -693,7 +750,10 @@ Item {
                         }
 
                         Column {
-                            QGCLabel { text: qsTr("Absolute voltage cutoff") }
+                            QGCLabel {
+                                text: qsTr("Absolute voltage cutoff") + (hasUnsavedChange("absoluteVoltageCutoff") ? " *" : "")
+                                color: hasUnsavedChange("absoluteVoltageCutoff") ? qgcPal.colorOrange : qgcPal.text
+                            }
                             ValueSlider {
                                 id: absoluteVoltageCutoffSlider
                                 width:              ScreenTools.defaultFontPixelWidth * 30
@@ -719,7 +779,10 @@ Item {
                         spacing: _margins
 
                         Column {
-                            QGCLabel { text: qsTr("Current P") }
+                            QGCLabel {
+                                text: qsTr("Current P") + (hasUnsavedChange("currentPidP") ? " *" : "")
+                                color: hasUnsavedChange("currentPidP") ? qgcPal.colorOrange : qgcPal.text
+                            }
                             ValueSlider {
                                 id: currentPidPSlider
                                 width:              ScreenTools.defaultFontPixelWidth * 30
@@ -733,7 +796,10 @@ Item {
                         }
 
                         Column {
-                            QGCLabel { text: qsTr("Current I") }
+                            QGCLabel {
+                                text: qsTr("Current I") + (hasUnsavedChange("currentPidI") ? " *" : "")
+                                color: hasUnsavedChange("currentPidI") ? qgcPal.colorOrange : qgcPal.text
+                            }
                             ValueSlider {
                                 id: currentPidISlider
                                 width:              ScreenTools.defaultFontPixelWidth * 30
@@ -747,7 +813,10 @@ Item {
                         }
 
                         Column {
-                            QGCLabel { text: qsTr("Current D") }
+                            QGCLabel {
+                                text: qsTr("Current D") + (hasUnsavedChange("currentPidD") ? " *" : "")
+                                color: hasUnsavedChange("currentPidD") ? qgcPal.colorOrange : qgcPal.text
+                            }
                             ValueSlider {
                                 id: currentPidDSlider
                                 width:              ScreenTools.defaultFontPixelWidth * 30

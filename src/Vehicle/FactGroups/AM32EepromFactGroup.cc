@@ -219,7 +219,7 @@ void AM32EepromFactGroup::handleEepromData(const uint8_t* data, int length)
 
     // Temperature and current limits
     _temperatureLimitFact.setRawValue(data[43]);  // 141 = disabled
-    _currentLimitFact.setRawValue(data[44] == 102 ? 0.0 : data[44] * 2.0);  // value x2, 102 = disabled
+    _currentLimitFact.setRawValue(data[44]);
 
     _sineModeStrengthFact.setRawValue(data[45]);
     _inputTypeFact.setRawValue(data[46]);
@@ -415,8 +415,7 @@ QByteArray AM32EepromFactGroup::packEepromData() const
 
     // Temperature and current limits
     packed[43] = _temperatureLimitFact.rawValue().toUInt();
-    double currentLimit = _currentLimitFact.rawValue().toDouble();
-    packed[44] = (currentLimit == 0) ? 102 : static_cast<uint8_t>(currentLimit / 2);  // 0 means disabled (102)
+    packed[44] = _currentLimitFact.rawValue().toUInt() / 2;
 
     packed[45] = _sineModeStrengthFact.rawValue().toUInt();
     packed[46] = _inputTypeFact.rawValue().toUInt();

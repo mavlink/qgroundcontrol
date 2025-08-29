@@ -216,21 +216,23 @@
 {
     "name":             "temperatureLimit",
     "shortDesc":        "Temperature Limit",
+    "longDesc":         "Above 140 disables the limit",
     "type":             "uint8",
     "units":            "C",
     "min":              70,
-    "max":              141,
+    "max":              255,
     "default":          141
 },
 {
     "name":             "currentLimit",
     "shortDesc":        "Current Limit",
-    "type":             "double",
+    "longDesc":         "Above 100A disables the limit. TODO: determine max",
+    "type":             "uint8",
     "decimalPlaces":    0,
     "units":            "A",
     "min":              0,
-    "max":              204,
-    "default":          204
+    "max":              206,
+    "default":          40
 },
 {
     "name":             "lowVoltageThreshold",
