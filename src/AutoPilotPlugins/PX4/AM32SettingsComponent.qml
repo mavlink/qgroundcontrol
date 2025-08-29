@@ -243,11 +243,19 @@ Item {
         // Get the original value from the reference ESC
         var originalValue = null
         if (referenceFacts) {
+            // TODO: FIXME: referenceFacts is the first ESC not the original data!
             originalValue = referenceFacts.getFactValue(factName)
         }
 
+        console.info("factName: ", factName)
+        console.info("value: ", originalValue, "-->", value)
+
         // Check if value equals the original (no changes needed)
-        var isOriginalValue = (value == originalValue)
+        var isOriginalValue = false
+        if (originalValue !== null) {
+            var diff = Math.abs(value - originalValue)
+            isOriginalValue = diff < 0.001  // Consider values equal if difference is less than 0.001
+        }
 
         // Apply to all selected ESCs
         for (var i = 0; i < selectedEscs.length; i++) {

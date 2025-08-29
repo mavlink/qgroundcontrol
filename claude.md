@@ -5,4 +5,12 @@ Adding AM32 ESC configuration capabilities to QGroundControl (QGC) to allow user
 
 Current Task:
 
-There is a race condition right now between initializing the sliders and checkboxes and the reception of eeprom data from the hardware. The way the flow should work is this: AM32 ESC page is selected, if there are ESCs already instantiated in the Vehicle class we create the ESC boxes (that are in a row that we can select) and emit the request for ESC info. If there is no ESCs then we should never have shown the AM32 ESC selection in the toolbar anyway. We wait until the ESC info has been received from all of the ESCs or until a timeout elapses (3 seconds). We then initialize all of the sliders and checkboxes. Please update the implementation.
+Fix the fixme in AM32SettingsComponent.qml. You'll have to add to AM32EepromFactGroup. I suggest you implement a setting name/fact/byteIndex mapping with a nice helper function and maybe even some qml if you need it. It should track the reported value and the user selected value. When those are the same (the initialization state of the whole page) we don't mark any changes as pending. I think we could really simpify things in AM32EepromFactGroup by doing that. Then it will make our qml logic easier to follow as well.
+
+relevant files:
+/home/jake/code/jake/qgroundcontrol/src/AutoPilotPlugins/PX4/AM32SettingsComponent.qml
+/home/jake/code/jake/qgroundcontrol/src/AutoPilotPlugins/PX4/AM32SettingSlider.qml
+/home/jake/code/jake/qgroundcontrol/src/Vehicle/FactGroups/AM32EepromFactGroup.cc
+/home/jake/code/jake/qgroundcontrol/src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.cc
+
+You might want to look at the fact system files too (src/FactSystem/)
