@@ -36,6 +36,7 @@ Item {
             // Request read for all ESCs to get initial data
             for (var j = 0; j < escStatusModel.count; j++) {
                 if (escStatusModel.get(j).am32Eeprom) {
+                    console.info("requestReadAll")
                     escStatusModel.get(j).am32Eeprom.requestReadAll(vehicle)
                 }
             }
@@ -45,8 +46,10 @@ Item {
     // Listen for EEPROM data updates to clear pending changes
     Connections {
         target: referenceFacts
-        function onReadComplete() {
+        function onDataLoadedChanged() {
+            console.info("onDataLoadedChanged")
             pendingValues = {}
+            console.info("updateSliderValues")
             updateSliderValues()
         }
     }
@@ -135,32 +138,41 @@ Item {
         }
     }
 
-    function updatePendingValue(settingName, value) {
-        // Update the pending value
-        var newPending = Object.assign({}, pendingValues)
-        newPending[settingName] = value
-        pendingValues = newPending
+    function updatePendingValue(factName, value) {
+        // Only update the value if it's different
+        var valueChanged = false;
 
         // Apply to all selected ESCs
         for (var i = 0; i < selectedEscs.length; i++) {
             var escData = escStatusModel.get(selectedEscs[i])
             if (escData && escData.am32Eeprom) {
-                var changes = {}
-                changes[settingName] = value
-                escData.am32Eeprom.applyPendingChanges(changes)
+                var valueChanged = value != escData.am32Eeprom.getFactValue(factName);
+                if (valueChanged) {
+                    var changes = {}
+                    changes[factName] = value
+                    console.info("updatePendingValue")
+                    escData.am32Eeprom.applyPendingChanges(changes)
+                }
             }
+        }
+
+        // Update the pending value if it's changed
+        if (valueChanged) {
+            var newPending = Object.assign({}, pendingValues)
+            newPending[factName] = value
+            pendingValues = newPending
         }
     }
 
-    function getDisplayValue(settingName) {
+    function getDisplayValue(factName) {
         // If we have a pending value, use that
-        if (pendingValues.hasOwnProperty(settingName)) {
-            return pendingValues[settingName]
+        if (pendingValues.hasOwnProperty(factName)) {
+            return pendingValues[factName]
         }
 
         // Otherwise use the value from the reference ESC
         if (referenceFacts) {
-            return referenceFacts.getFactValue(settingName)
+            return referenceFacts.getFactValue(factName)
         }
 
         return null

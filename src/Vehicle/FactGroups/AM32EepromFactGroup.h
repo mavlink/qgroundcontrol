@@ -170,7 +170,6 @@ signals:
     void dataLoadedChanged();
     void hasUnsavedChangesChanged();
     void escIndexChanged();
-    void readComplete(bool success);
     void writeComplete(bool success);
     void pendingChangesUpdated();
 

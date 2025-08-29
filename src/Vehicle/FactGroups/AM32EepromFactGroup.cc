@@ -225,10 +225,10 @@ void AM32EepromFactGroup::handleEepromData(const uint8_t* data, int length)
     _inputTypeFact.setRawValue(data[46]);
     _autoTimingFact.setRawValue(data[47] != 0);
 
+    clearPendingChanges();
+
     _dataLoaded = true;
     emit dataLoadedChanged();
-    emit hasUnsavedChangesChanged();
-    emit readComplete(true);
 
     qDebug() << "ESC" << _escIndex << " received eeprom data";
 }
@@ -240,6 +240,8 @@ void AM32EepromFactGroup::applyPendingChanges(const QVariantMap& changes)
         const QString& factName = it.key();
         const QVariant& value = it.value();
 
+        qDebug() << "applyPendingChanges";
+        qDebug() << "ESC " << _escIndex << factName << value;
         _pendingChanges[factName] = value;
 
         // Also update the fact value so packEepromData works correctly
@@ -251,7 +253,7 @@ void AM32EepromFactGroup::applyPendingChanges(const QVariantMap& changes)
             if (_factToByteIndex.contains(fact)) {
                 _modifiedBytes.insert(_factToByteIndex[fact]);
 
-                qDebug() << "ESC" << _escIndex << " updating " << fact->name();
+                // qDebug() << "ESC" << _escIndex << " updating " << fact->name();
 
                 // Special case: low voltage threshold affects cutoff byte too
                 if (fact == &_lowVoltageThresholdFact && _lowVoltageCutoffFact.rawValue().toBool()) {
@@ -271,6 +273,7 @@ void AM32EepromFactGroup::clearPendingChanges()
     _modifiedBytes.clear();
     emit hasUnsavedChangesChanged();
     emit pendingChangesUpdated();
+    qDebug() << "ESC" << _escIndex << "clearPendingChanges, pendingChangesUpdated";
 }
 
 void AM32EepromFactGroup::discardChanges()
