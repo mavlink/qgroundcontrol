@@ -157,6 +157,9 @@ public:
     /// Clear pending changes (after write)
     Q_INVOKABLE void clearPendingChanges();
 
+    /// Clear a specific pending change for a fact
+    Q_INVOKABLE void clearPendingChange(const QString& factName);
+
     /// Discard pending changes and revert to fact values
     Q_INVOKABLE void discardChanges();
 

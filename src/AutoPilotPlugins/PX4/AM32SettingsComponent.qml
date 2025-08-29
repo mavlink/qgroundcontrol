@@ -34,30 +34,30 @@ Item {
 
     // Slider configurations
     readonly property var motorSliderConfigs: [
-        {factName: "timingAdvance", label: qsTr("Timing advance"), from: 0, to: 30, step: 1, decimals: 1, conditionalEnable: "autoTiming"},
-        {factName: "startupPower", label: qsTr("Startup power"), from: 50, to: 150, step: 10, decimals: 0},
-        {factName: "motorKv", label: qsTr("Motor KV"), from: 20, to: 10220, step: 1000, decimals: 0},
-        {factName: "motorPoles", label: qsTr("Motor poles"), from: 2, to: 36, step: 2, decimals: 0},
-        {factName: "beepVolume", label: qsTr("Beeper volume"), from: 0, to: 11, step: 1, decimals: 0},
-        {factName: "pwmFrequency", label: qsTr("PWM Frequency"), from: 8, to: 48, step: 5, decimals: 0, conditionalEnable: "variablePwmFreq"}
+        {factName: "timingAdvance", label: qsTr("Timing advance"), from: 0, to: 30, step: 1, decimals: 1, snap: false},
+        {factName: "startupPower", label: qsTr("Startup power"), from: 50, to: 150, step: 10, decimals: 0, snap: true},
+        {factName: "motorKv", label: qsTr("Motor KV"), from: 20, to: 10220, step: 40, decimals: 0, snap: true},
+        {factName: "motorPoles", label: qsTr("Motor poles"), from: 2, to: 36, step: 2, decimals: 0, snap: true},
+        {factName: "beepVolume", label: qsTr("Beeper volume"), from: 0, to: 11, step: 1, decimals: 0, snap: true},
+        {factName: "pwmFrequency", label: qsTr("PWM Frequency"), from: 8, to: 48, step: 1, decimals: 0, snap: true, conditionalEnable: "variablePwmFreq"}
     ]
 
     readonly property var extendedSliderConfigs: [
-        {factName: "maxRampSpeed", label: qsTr("Ramp rate"), from: 0.1, to: 20, step: 2, decimals: 1},
-        {factName: "minDutyCycle", label: qsTr("Minimum duty cycle"), from: 0, to: 25, step: 5, decimals: 1}
+        {factName: "maxRampSpeed", label: qsTr("Ramp rate"), from: 0.1, to: 20, step: 0.1, decimals: 1, snap: 1},
+        {factName: "minDutyCycle", label: qsTr("Minimum duty cycle"), from: 0, to: 25, step: 0.5, decimals: 1, snap: 1}
     ]
 
     readonly property var limitsSliderConfigs: [
-        {factName: "temperatureLimit", label: qsTr("Temperature limit"), from: 70, to: 255, step: 10, decimals: 0},
-        {factName: "currentLimit", label: qsTr("Current limit"), from: 0, to: 206, step: 20, decimals: 0},
-        {factName: "lowVoltageThreshold", label: qsTr("Low voltage threshold"), from: 2.5, to: 3.5, step: 0.2, decimals: 1, conditionalEnable: "lowVoltageCutoff"},
-        {factName: "absoluteVoltageCutoff", label: qsTr("Absolute voltage cutoff"), from: 0.5, to: 50.0, step: 5, decimals: 1}
+        {factName: "temperatureLimit", label: qsTr("Temperature limit"), from: 70, to: 255, step: 1, decimals: 0, snap: 1},
+        {factName: "currentLimit", label: qsTr("Current limit"), from: 0, to: 206, step: 1, decimals: 0, snap: 1},
+        {factName: "lowVoltageThreshold", label: qsTr("Low voltage threshold"), from: 2.5, to: 3.5, step: 0.1, decimals: 1, snap: 1, conditionalEnable: "lowVoltageCutoff"},
+        {factName: "absoluteVoltageCutoff", label: qsTr("Absolute voltage cutoff"), from: 0.5, to: 50.0, step: 0.5, decimals: 1, snap: 1}
     ]
 
     readonly property var currentControlSliderConfigs: [
-        {factName: "currentPidP", label: qsTr("Current P"), from: 0, to: 510, step: 50, decimals: 0},
-        {factName: "currentPidI", label: qsTr("Current I"), from: 0, to: 255, step: 25, decimals: 0},
-        {factName: "currentPidD", label: qsTr("Current D"), from: 0, to: 2550, step: 250, decimals: 0}
+        {factName: "currentPidP", label: qsTr("Current P"), from: 0, to: 510, step: 2, decimals: 0, snap: 1},
+        {factName: "currentPidI", label: qsTr("Current I"), from: 0, to: 255, step: 1, decimals: 0, snap: 1},
+        {factName: "currentPidD", label: qsTr("Current D"), from: 0, to: 2550, step: 10, decimals: 0, snap: 1}
     ]
 
     // Timer for timeout mechanism
@@ -240,16 +240,25 @@ Item {
     }
 
     function updatePendingValue(factName, value) {
-        // Only update the value if it's different
-        var valueChanged = false;
+        // Get the original value from the reference ESC
+        var originalValue = null
+        if (referenceFacts) {
+            originalValue = referenceFacts.getFactValue(factName)
+        }
+
+        // Check if value equals the original (no changes needed)
+        var isOriginalValue = (value == originalValue)
 
         // Apply to all selected ESCs
         for (var i = 0; i < selectedEscs.length; i++) {
             var escData = escStatusModel.get(selectedEscs[i])
             if (escData && escData.am32Eeprom) {
-                var currentValue = escData.am32Eeprom.getFactValue(factName)
-                if (value != currentValue) {
-                    valueChanged = true
+                if (isOriginalValue) {
+                    // Clear any pending changes for this fact
+                    console.info("clr pnd chng")
+                    escData.am32Eeprom.clearPendingChange(factName)
+                } else {
+                    // Apply the change
                     var changes = {}
                     changes[factName] = value
                     console.info("updatePendingValue: " + factName + " = " + value)
@@ -258,8 +267,14 @@ Item {
             }
         }
 
-        // Update the pending value if it's changed
-        if (valueChanged) {
+        // Update local pending values tracking
+        if (isOriginalValue) {
+            // Remove from pending values if it's back to original
+            var newPending = Object.assign({}, pendingValues)
+            delete newPending[factName]
+            pendingValues = newPending
+        } else {
+            // Add to pending values
             var newPending = Object.assign({}, pendingValues)
             newPending[factName] = value
             pendingValues = newPending
@@ -473,7 +488,7 @@ Item {
                         // Left column with checkboxes
                         ColumnLayout {
                             Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 25
-                            spacing: _groupMargins
+                            spacing: _groupMargins / 2  // Reduced spacing between checkboxes
 
                             QGCCheckBox {
                                 text:   qsTr("Stuck rotor protection") + (hasUnsavedChange("stuckRotorProtection") ? " *" : "")
@@ -534,56 +549,32 @@ Item {
                                 model: motorSliderConfigs
 
                                 Rectangle {
-                                    color: qgcPal.windowShade
+                                    color: "transparent"  // No background color
                                     border.color: qgcPal.text
                                     border.width: 1
                                     radius: 4
                                     implicitWidth: sliderColumn.width + _groupMargins * 2
                                     implicitHeight: sliderColumn.height + _groupMargins * 2
 
-                                    property var config: modelData
-
-                                    Column {
+                                    AM32SettingSlider {
                                         id: sliderColumn
                                         anchors.centerIn: parent
-                                        spacing: _groupMargins / 2
+                                        factName: modelData.factName
+                                        label: modelData.label + (hasUnsavedChange(modelData.factName) ? " *" : "")
+                                        from: modelData.from
+                                        to: modelData.to
+                                        stepSize: modelData.step
+                                        decimalPlaces: modelData.decimals
+                                        snapToStep: modelData.snap
+                                        // enabled: /* your conditional logic */
+                                        enabled: true
+                                        onValueChange: updatePendingValue
 
-                                        QGCLabel {
-                                            text: config.label + (hasUnsavedChange(config.factName) ? " *" : "")
-                                            color: hasUnsavedChange(config.factName) ? qgcPal.colorOrange : qgcPal.text
-                                            anchors.horizontalCenter: parent.horizontalCenter
-                                        }
-
-                                        ValueSlider {
-                                            id: slider
-                                            width: ScreenTools.defaultFontPixelWidth * 25
-                                            from: config.from
-                                            to: config.to
-                                            majorTickStepSize: config.step
-                                            decimalPlaces: config.decimals
-                                            enabled: {
-                                                if (config.conditionalEnable === "autoTiming") {
-                                                    return !autoTimingCheckbox.checked
-                                                } else if (config.conditionalEnable === "variablePwmFreq") {
-                                                    return !variablePwmCheckbox.checked
-                                                }
-                                                return true
-                                            }
-
-                                            property string factName: config.factName
-
-                                            Component.onCompleted: {
-                                                sliderRefs[factName] = slider
-                                                var initialValue = getDisplayValue(factName)
-                                                if (initialValue !== null) {
-                                                    setValue(initialValue)
-                                                }
-                                            }
-
-                                            onValueChanged: {
-                                                if (factName) {
-                                                    updatePendingValue(factName, value)
-                                                }
+                                        Component.onCompleted: {
+                                            sliderRefs[factName] = this
+                                            var initialValue = getDisplayValue(factName)
+                                            if (initialValue !== null) {
+                                                setValue(initialValue)
                                             }
                                         }
                                     }
@@ -598,8 +589,12 @@ Item {
                     heading: qsTr("Extended Settings")
                     Layout.fillWidth: true
 
+                    // TODO: do we need to set the width here such that changes to RowLayout and GridLayout don't screw with
+                    // the spacing? Do we just need to enforce spacing?
+
                     RowLayout {
                         width: parent.width
+                        // TODO: do we need to set the width based on the child?
                         spacing: _margins * 2
 
                         // Left column with checkbox
@@ -628,48 +623,32 @@ Item {
                                 model: extendedSliderConfigs
 
                                 Rectangle {
-                                    color: qgcPal.windowShade
+                                    color: "transparent"  // No background color
                                     border.color: qgcPal.text
                                     border.width: 1
                                     radius: 4
                                     implicitWidth: sliderColumn.width + _groupMargins * 2
                                     implicitHeight: sliderColumn.height + _groupMargins * 2
 
-                                    property var config: modelData
-
-                                    Column {
+                                    AM32SettingSlider {
                                         id: sliderColumn
                                         anchors.centerIn: parent
-                                        spacing: _groupMargins / 2
+                                        factName: modelData.factName
+                                        label: modelData.label + (hasUnsavedChange(modelData.factName) ? " *" : "")
+                                        from: modelData.from
+                                        to: modelData.to
+                                        stepSize: modelData.step
+                                        decimalPlaces: modelData.decimals
+                                        snapToStep: modelData.snap
+                                        // enabled: /* your conditional logic */
+                                        enabled: true
+                                        onValueChange: updatePendingValue
 
-                                        QGCLabel {
-                                            text: config.label + (hasUnsavedChange(config.factName) ? " *" : "")
-                                            color: hasUnsavedChange(config.factName) ? qgcPal.colorOrange : qgcPal.text
-                                            anchors.horizontalCenter: parent.horizontalCenter
-                                        }
-
-                                        ValueSlider {
-                                            id: slider
-                                            width: ScreenTools.defaultFontPixelWidth * 25
-                                            from: config.from
-                                            to: config.to
-                                            majorTickStepSize: config.step
-                                            decimalPlaces: config.decimals
-
-                                            property string factName: config.factName
-
-                                            Component.onCompleted: {
-                                                sliderRefs[factName] = slider
-                                                var initialValue = getDisplayValue(factName)
-                                                if (initialValue !== null) {
-                                                    setValue(initialValue)
-                                                }
-                                            }
-
-                                            onValueChanged: {
-                                                if (factName) {
-                                                    updatePendingValue(factName, value)
-                                                }
+                                        Component.onCompleted: {
+                                            sliderRefs[factName] = this
+                                            var initialValue = getDisplayValue(factName)
+                                            if (initialValue !== null) {
+                                                setValue(initialValue)
                                             }
                                         }
                                     }
@@ -715,54 +694,32 @@ Item {
                                 model: limitsSliderConfigs
 
                                 Rectangle {
-                                    color: qgcPal.windowShade
+                                    color: "transparent"  // No background color
                                     border.color: qgcPal.text
                                     border.width: 1
                                     radius: 4
                                     implicitWidth: sliderColumn.width + _groupMargins * 2
                                     implicitHeight: sliderColumn.height + _groupMargins * 2
 
-                                    property var config: modelData
-
-                                    Column {
+                                    AM32SettingSlider {
                                         id: sliderColumn
                                         anchors.centerIn: parent
-                                        spacing: _groupMargins / 2
+                                        factName: modelData.factName
+                                        label: modelData.label + (hasUnsavedChange(modelData.factName) ? " *" : "")
+                                        from: modelData.from
+                                        to: modelData.to
+                                        stepSize: modelData.step
+                                        decimalPlaces: modelData.decimals
+                                        snapToStep: modelData.snap
+                                        // enabled: /* your conditional logic */
+                                        enabled: true
+                                        onValueChange: updatePendingValue
 
-                                        QGCLabel {
-                                            text: config.label + (hasUnsavedChange(config.factName) ? " *" : "")
-                                            color: hasUnsavedChange(config.factName) ? qgcPal.colorOrange : qgcPal.text
-                                            anchors.horizontalCenter: parent.horizontalCenter
-                                        }
-
-                                        ValueSlider {
-                                            id: slider
-                                            width: ScreenTools.defaultFontPixelWidth * 25
-                                            from: config.from
-                                            to: config.to
-                                            majorTickStepSize: config.step
-                                            decimalPlaces: config.decimals
-                                            enabled: {
-                                                if (config.conditionalEnable === "lowVoltageCutoff") {
-                                                    return lowVoltageCutoffCheckbox.checked
-                                                }
-                                                return true
-                                            }
-
-                                            property string factName: config.factName
-
-                                            Component.onCompleted: {
-                                                sliderRefs[factName] = slider
-                                                var initialValue = getDisplayValue(factName)
-                                                if (initialValue !== null) {
-                                                    setValue(initialValue)
-                                                }
-                                            }
-
-                                            onValueChanged: {
-                                                if (factName) {
-                                                    updatePendingValue(factName, value)
-                                                }
+                                        Component.onCompleted: {
+                                            sliderRefs[factName] = this
+                                            var initialValue = getDisplayValue(factName)
+                                            if (initialValue !== null) {
+                                                setValue(initialValue)
                                             }
                                         }
                                     }
@@ -791,48 +748,32 @@ Item {
                             model: currentControlSliderConfigs
 
                             Rectangle {
-                                color: qgcPal.windowShade
+                                color: "transparent"  // No background color
                                 border.color: qgcPal.text
                                 border.width: 1
                                 radius: 4
                                 implicitWidth: sliderColumn.width + _groupMargins * 2
                                 implicitHeight: sliderColumn.height + _groupMargins * 2
 
-                                property var config: modelData
-
-                                Column {
+                                AM32SettingSlider {
                                     id: sliderColumn
                                     anchors.centerIn: parent
-                                    spacing: _groupMargins / 2
+                                    factName: modelData.factName
+                                    label: modelData.label + (hasUnsavedChange(modelData.factName) ? " *" : "")
+                                    from: modelData.from
+                                    to: modelData.to
+                                    stepSize: modelData.step
+                                    decimalPlaces: modelData.decimals
+                                    snapToStep: modelData.snap
+                                    // enabled: /* your conditional logic */
+                                    enabled: true
+                                    onValueChange: updatePendingValue
 
-                                    QGCLabel {
-                                        text: config.label + (hasUnsavedChange(config.factName) ? " *" : "")
-                                        color: hasUnsavedChange(config.factName) ? qgcPal.colorOrange : qgcPal.text
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                    }
-
-                                    ValueSlider {
-                                        id: slider
-                                        width: ScreenTools.defaultFontPixelWidth * 25
-                                        from: config.from
-                                        to: config.to
-                                        majorTickStepSize: config.step
-                                        decimalPlaces: config.decimals
-
-                                        property string factName: config.factName
-
-                                        Component.onCompleted: {
-                                            sliderRefs[factName] = slider
-                                            var initialValue = getDisplayValue(factName)
-                                            if (initialValue !== null) {
-                                                setValue(initialValue)
-                                            }
-                                        }
-
-                                        onValueChanged: {
-                                            if (factName) {
-                                                updatePendingValue(factName, value)
-                                            }
+                                    Component.onCompleted: {
+                                        sliderRefs[factName] = this
+                                        var initialValue = getDisplayValue(factName)
+                                        if (initialValue !== null) {
+                                            setValue(initialValue)
                                         }
                                     }
                                 }

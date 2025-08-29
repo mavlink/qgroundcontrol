@@ -276,6 +276,69 @@ void AM32EepromFactGroup::clearPendingChanges()
     qDebug() << "ESC" << (_escIndex + 1) << "clearPendingChanges, pendingChangesUpdated";
 }
 
+void AM32EepromFactGroup::clearPendingChange(const QString& factName)
+{
+    // Remove the specific fact from pending changes
+    if (_pendingChanges.contains(factName)) {
+        _pendingChanges.remove(factName);
+
+        // Also remove from modified bytes if present
+        Fact* fact = _factsByName.value(factName, nullptr);
+        if (fact && _factToByteIndex.contains(fact)) {
+            _modifiedBytes.remove(_factToByteIndex[fact]);
+
+            // Special case: if clearing low voltage threshold, also clear cutoff byte
+            if (fact == &_lowVoltageThresholdFact) {
+                _modifiedBytes.remove(BYTE_LOW_VOLTAGE_CUTOFF);
+            }
+        }
+
+        // Restore the fact to its original value
+        if (fact && !_originalEepromData.isEmpty()) {
+            // Re-parse just this fact from original EEPROM data
+            const uint8_t* data = reinterpret_cast<const uint8_t*>(_originalEepromData.data());
+
+            // Find the byte index and restore the original value
+            if (_factToByteIndex.contains(fact)) {
+                int byteIndex = _factToByteIndex[fact];
+
+                // Re-apply the appropriate conversion based on which fact it is
+                if (factName == "maxRampSpeed") {
+                    fact->setRawValue(data[BYTE_MAX_RAMP_SPEED] / 10.0);
+                } else if (factName == "minDutyCycle") {
+                    fact->setRawValue(data[BYTE_MIN_DUTY_CYCLE] / 2.0);
+                } else if (factName == "currentPidP") {
+                    fact->setRawValue(data[BYTE_CURRENT_PID_P] * 2.0);
+                } else if (factName == "currentPidD") {
+                    fact->setRawValue(data[BYTE_CURRENT_PID_D] * 10.0);
+                } else if (factName == "absoluteVoltageCutoff") {
+                    fact->setRawValue(data[BYTE_VOLTAGE_CUTOFF] * 0.5);
+                } else if (factName == "motorKv") {
+                    fact->setRawValue(data[BYTE_MOTOR_KV] * 40 + 20);
+                } else if (factName == "lowVoltageThreshold") {
+                    fact->setRawValue((data[BYTE_LOW_VOLTAGE_THRESHOLD] + 250) / 100.0);
+                } else if (factName == "timingAdvance") {
+                    if (data[BYTE_TIMING_ADVANCE] < 10) {
+                        fact->setRawValue(data[BYTE_TIMING_ADVANCE] * 8 * 0.9375);
+                    } else if (data[BYTE_TIMING_ADVANCE] <= 42) {
+                        fact->setRawValue((data[BYTE_TIMING_ADVANCE] - 10) * 0.9375);
+                    } else {
+                        fact->setRawValue(15.0);
+                    }
+                } else if (factName == "currentLimit") {
+                    fact->setRawValue(data[BYTE_CURRENT_LIMIT]);
+                } else {
+                    // For boolean and direct value facts
+                    fact->setRawValue(data[byteIndex]);
+                }
+            }
+        }
+
+        emit pendingChangesUpdated();
+        emit hasUnsavedChangesChanged();
+    }
+}
+
 void AM32EepromFactGroup::discardChanges()
 {
     // Revert facts back to their current hardware values (re-parse EEPROM data)
